@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2025, #10; Thu, 25)
-X-master-at: bb69721404348ea2db0a081c41ab6ebfe75bdec8
-X-next-at: de9c8c526cb441e136815397089584f539713c71
+Subject: What's cooking in git.git (Sep 2025, #11; Mon, 29)
+X-master-at: 821f583da6d30a84249f75f33501504d597bc16b
+X-next-at: 236ee7b076decfb1705c4b47c2af13735720bd19
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Sep 2025, #10; Thu, 25)
+What's cooking in git.git (Sep 2025, #11; Mon, 29)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -48,54 +48,263 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* cc/promisor-remote-capability (2025-09-07) 7 commits
-  (merged to 'next' on 2025-09-15 at 367d83c08c)
- + promisor-remote: use string_list_split() in mark_remotes_as_accepted()
- + promisor-remote: allow a client to check fields
- + promisor-remote: use string_list_split() in filter_promisor_remote()
- + promisor-remote: refactor how we parse advertised fields
- + promisor-remote: use string constants for 'name' and 'url' too
- + promisor-remote: allow a server to advertise more fields
- + promisor-remote: refactor to get rid of 'struct strvec'
+* dk/stash-apply-index (2025-09-21) 4 commits
+  (merged to 'next' on 2025-09-23 at 04e76cf5be)
+ + stash: honor stash.index in apply, pop modes
+ + stash: refactor private config globals
+ + t3905: remove unneeded blank line
+ + t3903: reduce dependencies on previous tests
 
- The "promisor-remote" capability mechanism has been updated to
- allow the "partialCloneFilter" settings and the "token" value to be
- communicated from the server side.
- source: <20250908053056.956907-1-christian.couder@gmail.com>
+ The stash.index configuration variable can be set to make "git stash
+ pop/apply" pretend that it was invoked with "--index".
+ source: <cover.1758505011.git.ben.knoble+github@gmail.com>
 
 
-* cs/subtree-squash-split-fix (2025-09-09) 1 commit
-  (merged to 'next' on 2025-09-15 at 4206316342)
- + contrib/subtree: fix split with squashed subtrees
+* jc/3.0-default-initial-branch-to-main-addendum (2025-09-17) 1 commit
+  (merged to 'next' on 2025-09-22 at dc4168c337)
+ + initial branch: give hints after switching the default name
+ (this branch uses pw/3.0-default-initial-branch-to-main.)
 
- "git subtree" (in contrib/) did not work correctly when splitting
- squashed subtrees, which has been improved.
- source: <20250910031124.1807856-1-ask+git@howdoi.land>
+ Keep giving hint about the default initial branch name for users
+ who may be surprised after Git 3.0 switch-over.
+ source: <cover.1757518141.git.phillip.wood@dunelm.org.uk>
 
 
-* jk/add-i-color (2025-09-08) 4 commits
-  (merged to 'next' on 2025-09-15 at 48aae5184a)
- + contrib/diff-highlight: mention interactive.diffFilter
- + add-interactive: manually fall back color config to color.ui
- + add-interactive: respect color.diff for diff coloring
- + stash: pass --no-color to diff plumbing child processes
- (this branch is used by jk/color-variable-fixes.)
+* je/doc-checkout (2025-09-10) 7 commits
+  (merged to 'next' on 2025-09-23 at b776ac7a24)
+ + doc: git-checkout: clarify restoring files section
+ + doc: git-checkout: split up restoring files section
+ + doc: git-checkout: deduplicate --detach explanation
+ + doc: git-checkout: clarify `-b` and `-B`
+ + doc: git-checkout: clarify `git checkout <branch>`
+ + doc: git-checkout: clarify ARGUMENT DISAMBIGUATION
+ + doc: git-checkout: clarify intro sentence
 
- Some among "git add -p" and friends ignored color.diff and/or
- color.ui configuration variables, which is an old regression, which
+ Doc updates.
+ cf. <236a79f4-e9a2-4335-bbff-79ae0cc67e9b@app.fastmail.com>
+ source: <pull.1962.v4.git.1757531669.gitgitgadget@gmail.com>
+
+
+* jk/color-variable-fixes (2025-09-16) 13 commits
+  (merged to 'next' on 2025-09-23 at 8aa3006a1e)
+ + config: store want_color() result in a separate bool
+ + add-interactive: retain colorbool values longer
+ + color: return bool from want_color()
+ + color: use git_colorbool enum type to store colorbools
+ + pretty: use format_commit_context.auto_color as colorbool
+ + diff: stop passing ecbdata->use_color as boolean
+ + diff: pass o->use_color directly to fill_metainfo()
+ + diff: don't use diff_options.use_color as a strict bool
+ + diff: simplify color_moved check when flushing
+ + grep: don't treat grep_opt.color as a strict bool
+ + color: return enum from git_config_colorbool()
+ + color: use GIT_COLOR_* instead of numeric constants
+ + Merge branch 'jk/add-i-color' into jk/color-variable-fixes
+
+ Some places in the code confused a variable that is *not* a boolean
+ to enable color but is an enum that records what the user requested
+ to do about color.  A couple of bugs of this sort have been fixed,
+ while the code has been cleaned up to prevent similar bugs in the
+ future.
+ source: <20250916201036.GA612463@coredump.intra.peff.net>
+ source: <20250916202408.GI612873@coredump.intra.peff.net>
+
+
+* jk/setup-revisions-freefix (2025-09-19) 6 commits
+  (merged to 'next' on 2025-09-23 at e30036fad0)
+ + revision: retain argv NULL invariant in setup_revisions()
+ + treewide: pass strvecs around for setup_revisions_from_strvec()
+ + treewide: use setup_revisions_from_strvec() when we have a strvec
+ + revision: add wrapper to setup_revisions() from a strvec
+ + revision: manage memory ownership of argv in setup_revisions()
+ + stash: tell setup_revisions() to free our allocated strings
+
+ There are double frees and leaks around setup_revisions() API used
+ in "git stash show", which has been fixed, and setup_revisions()
+ API gained a wrapper to make it more ergonomic when using it with
+ strvec-manged argc/argv pairs.
+ source: <20250919223351.GA3906184@coredump.intra.peff.net>
+
+
+* kn/refs-files-case-insensitive (2025-09-17) 4 commits
+  (merged to 'next' on 2025-09-23 at 51c2a665f0)
+ + refs/files: handle D/F conflicts during locking
+ + refs/files: handle F/D conflicts in case-insensitive FS
+ + refs/files: use correct error type when lock exists
+ + refs/files: catch conflicts on case-insensitive file-systems
+
+ Deal more gracefully with directory / file conflicts when the files
+ backend is used for ref storage, by failing only the ones that are
+ involved in the conflict while allowing others.
+ source: <20250917-587-git-fetch-1-fails-fetches-on-case-insensitive-repositories-v4-0-da3c74a08ed0@gmail.com>
+
+
+* nb/send-email-no-dup-reply-to (2025-09-16) 1 commit
+  (merged to 'next' on 2025-09-18 at d7081e00ec)
+ + send-email: don't duplicate Reply-to: in intro message
+
+ "git send-email --compose --reply-to=<address>" used to add
+ duplicated Reply-To: header, which made mailservers unhappy.  This
  has been corrected.
- source: <20250908164157.GA1323487@coredump.intra.peff.net>
+ source: <175809074627.1696783.67425889158412786@noble.neil.brown.name>
 
 
-* rs/get-oid-with-flags-cleanup (2025-09-10) 1 commit
-  (merged to 'next' on 2025-09-15 at ff8d1faae9)
- + use repo_get_oid_with_flags()
+* ps/clar-updates (2025-09-22) 2 commits
+  (merged to 'next' on 2025-09-22 at c811e8c172)
+ + t/unit-tests: update to 10e96bc
+  (merged to 'next' on 2025-09-15 at 73402f7652)
+ + t/unit-tests: update clar to fcbed04
 
- Code clean-up.
- source: <906196ac-2fd7-4c07-9e8f-22d67b0b64f9@web.de>
+ Import a newer version of the clar unit testing framework.
+ source: <20250910-b4-pks-clar-update-v1-1-26a196237e0a@pks.im>
+ source: <20250922-pks-clar-update-v1-1-9154e7d1b7a1@pks.im>
+
+
+* pw/3.0-default-initial-branch-to-main (2025-09-10) 4 commits
+  (merged to 'next' on 2025-09-22 at 01bbebdab6)
+ + t0613: stop setting default initial branch
+ + t9902: switch default branch name to main
+ + t4013: switch default branch name to main
+ + breaking-changes: switch default branch to main
+ (this branch is used by jc/3.0-default-initial-branch-to-main-addendum.)
+
+ Declare that "git init" that is not otherwise configured uses
+ 'main' as the initial branch, not 'master', starting Git 3.0.
+ source: <cover.1757518141.git.phillip.wood@dunelm.org.uk>
+
+
+* pw/rebase-i-cleanup-fix (2025-09-18) 2 commits
+  (merged to 'next' on 2025-09-22 at 2d0aec7821)
+ + sequencer: remove VERBATIM_MSG flag
+ + rebase -i: respect commit.cleanup when picking fixups
+
+ "git rebase -i" failed to clean-up the commit log message when the
+ command commits the final one in a chain of "fixup" commands, which
+ has been corrected.
+ source: <cover.1758186038.git.phillip.wood@dunelm.org.uk>
+
+
+* tc/last-modified-recursive-fix (2025-09-18) 1 commit
+  (merged to 'next' on 2025-09-23 at 3be2b08060)
+ + last-modified: fix bug when some paths remain unhandled
+
+ "git last-modified" operating in non-recursive mode used to trigger
+ a BUG(), which has been corrected.
+ source: <20250918-toon-fix-last-modified-v3-1-0c3910e224f6@iotcl.com>
 
 --------------------------------------------------
 [New Topics]
+
+* rj/doc-missing-technical-docs (2025-09-25) 1 commit
+ - doc: add some missing technical documents
+ (this branch is used by rj/doc-technical-rfc.)
+
+ Doc updates.
+
+ Will merge to 'next'?
+ source: <2326e1c8-19a3-4454-ab71-0a6cfa8cf8e9@ramsayjones.plus.com>
+
+
+* rj/doc-technical-rfc (2025-09-25) 3 commits
+ - doc: commit-graph.adoc: fix up some formatting
+ - doc: sparse-checkout.adoc: fix asciidoc warnings
+ - doc: remembering-renames.adoc: fix asciidoc warnings
+ (this branch uses rj/doc-missing-technical-docs.)
+
+ Documenation mark-up fixes.
+
+ RFC.
+ source: <875fb7a0-6dd9-412b-a34a-21758c339871@ramsayjones.plus.com>
+
+
+* ja/doc-markup-attached-paragraph-fix (2025-09-27) 1 commit
+ - doc: change the markup of paragraphs following a nested list item
+
+ Documentation mark-up fix.
+
+ Will merge to 'next'.
+ source: <20250927195032.37223-1-jn.avila@free.fr>
+
+
+* jc/optional-path (2025-09-28) 3 commits
+ - parseopt: values of pathname type can be prefixed with :(optional)
+ - config: values of pathname type can be prefixed with :(optional)
+ - t7500: make each piece more independent
+
+ Configuration variables that take a pathname as a value
+ (e.g. blame.ignorerevsfile) can be marked as optional by prefixing
+ ":(optoinal)" before its value.
+
+ Comments?
+ source: <cover.1759094936.git.ben.knoble+github@gmail.com>
+
+
+* jt/clang-format-foreach-wo-space-before-parenthesis (2025-09-27) 1 commit
+ - clang-format: exclude control macros from SpaceBeforeParens
+
+ Clang-format update to let our control macros formatted the way we
+ had them traditionally, e.g., "for_each_string_list_item()" without
+ space before the parentheses.
+
+ Will merge to 'next'.
+ source: <20250927145049.723341-4-jltobler@gmail.com>
+
+
+* kh/doc-patch-id-markup-fix (2025-09-28) 1 commit
+ - doc: patch-id: fix accidental literal blocks
+
+ Documenaotin mark-up fix.
+
+ Will merge to 'next'?
+ source: <0520e8f9caf.1759067095.git.code@khaugsbakk.name>
+
+
+* sa/replay-atomic-ref-updates (2025-09-26) 1 commit
+ - replay: make atomic ref updates the default behavior
+
+ "git replay" (experimental) learned to perform ref updates itself
+ in a transaction by default, instead of emitting where each refs
+ should point at and leaving the actual update to another command.
+
+ Comments?
+ source: <20250926230838.35870-2-siddharthasthana31@gmail.com>
+
+--------------------------------------------------
+[Stalled]
+
+These topics have been expecting updates for quite some time.  I'll
+eject any of them when they start to conflict with other topics in
+'seen' and may drop them from my tree when they are dormant for too
+long (let's say 8 weeks is way too long, for now).  After that, they
+can be proposed again by rerolling them in a shape that would work
+well with other topics in 'seen' (and of course 'next' and
+"master').
+
+* lc/rebase-trailer (2025-08-03) 2 commits
+ - rebase: support --trailer
+ - trailer: append trailers in-process and drop the fork to `interpret-trailers`
+
+ Expecting a reroll.
+ cf. <198826af571.62b85cb31711042.2415806544948206668@linux.beauty>
+ cf. <xmqqiki7qasu.fsf@gitster.g>
+ source: <20250803150059.402017-1-me@linux.beauty>
+
+
+* ac/deglobal-sparse-variables (2025-07-18) 3 commits
+ . environment: remove the global variable 'sparse_expect_files_outside_of_patterns'
+ . environment: move access to "core.sparsecheckoutcone" into repo_settings
+ . environment: move access to "core.sparsecheckout" into repo_settings
+
+ Two global variables related to sparse checkout have been moved to
+ the repository settings structure.
+
+ Expecting a reroll.
+ cf. <CAE7as+bnG6KgA8X_n36pqP15bmyM6re+xEb1MOXKvZSUdJ8Arg@mail.gmail.com>
+ Ejected out of 'seen' for now.
+ source: <cover.1752882401.git.ayu.chandekar@gmail.com>
+
+--------------------------------------------------
+[Cooking]
 
 * kh/format-patch-range-diff-notes (2025-09-25) 3 commits
  - format-patch: handle range-diff on notes correctly for single patches
@@ -142,7 +351,7 @@ Release tarballs are available at:
  source: <20250924-jk-fix-no-index-path-with-slash-v1-1-6b2028c0de92@intel.com>
 
 
-* jt/repo-stats (2025-09-24) 6 commits
+* jt/repo-stats (2025-09-27) 6 commits
  - builtin/repo: add progress meter for stats
  - builtin/repo: add keyvalue and nul format for stats
  - builtin/repo: add object counts in stats output
@@ -151,64 +360,12 @@ Release tarballs are available at:
  - builtin/repo: rename repo_info() to cmd_repo_info()
 
  "git repo stats", a new command.
- source: <20250924212426.2930029-1-jltobler@gmail.com>
 
---------------------------------------------------
-[Stalled]
-
-These topics have been expecting updates for quite some time.  I'll
-eject any of them when they start to conflict with other topics in
-'seen' and may drop them from my tree when they are dormant for too
-long (let's say 8 weeks is way too long, for now).  After that, they
-can be proposed again by rerolling them in a shape that would work
-well with other topics in 'seen' (and of course 'next' and
-"master').
-
-* lc/rebase-trailer (2025-08-03) 2 commits
- - rebase: support --trailer
- - trailer: append trailers in-process and drop the fork to `interpret-trailers`
-
- Expecting a reroll.
- cf. <198826af571.62b85cb31711042.2415806544948206668@linux.beauty>
- cf. <xmqqiki7qasu.fsf@gitster.g>
- source: <20250803150059.402017-1-me@linux.beauty>
+ Comments?
+ source: <20250927145049.723341-1-jltobler@gmail.com>
 
 
-* ac/deglobal-sparse-variables (2025-07-18) 3 commits
- . environment: remove the global variable 'sparse_expect_files_outside_of_patterns'
- . environment: move access to "core.sparsecheckoutcone" into repo_settings
- . environment: move access to "core.sparsecheckout" into repo_settings
-
- Two global variables related to sparse checkout have been moved to
- the repository settings structure.
-
- Expecting a reroll.
- cf. <CAE7as+bnG6KgA8X_n36pqP15bmyM6re+xEb1MOXKvZSUdJ8Arg@mail.gmail.com>
- Ejected out of 'seen' for now.
- source: <cover.1752882401.git.ayu.chandekar@gmail.com>
-
---------------------------------------------------
-[Cooking]
-
-* jk/setup-revisions-freefix (2025-09-19) 6 commits
-  (merged to 'next' on 2025-09-23 at e30036fad0)
- + revision: retain argv NULL invariant in setup_revisions()
- + treewide: pass strvecs around for setup_revisions_from_strvec()
- + treewide: use setup_revisions_from_strvec() when we have a strvec
- + revision: add wrapper to setup_revisions() from a strvec
- + revision: manage memory ownership of argv in setup_revisions()
- + stash: tell setup_revisions() to free our allocated strings
-
- There are double frees and leaks around setup_revisions() API used
- in "git stash show", which has been fixed, and setup_revisions()
- API gained a wrapper to make it more ergonomic when using it with
- strvec-manged argc/argv pairs.
-
- Will merge to 'master'.
- source: <20250919223351.GA3906184@coredump.intra.peff.net>
-
-
-* js/curl-off-t-fixes (2025-09-21) 3 commits
+* js/curl-off-t-fixes (2025-09-26) 3 commits
  - http-push: avoid new compile error
  - imap-send: be more careful when casting to `curl_off_t`
  - http: offer to cast `size_t` to `curl_off_t` safely
@@ -216,18 +373,15 @@ well with other topics in 'seen' (and of course 'next' and
  A few places where an size_t value was cast to curl_off_t without
  checking has been updated to use the existing helper function.
 
- Expecting a (hopefully small) reroll to clarify log message.
- cf. <pull.1974.git.1758457356.gitgitgadget@gmail.com>
- source: <pull.1974.git.1758457356.gitgitgadget@gmail.com>
+ Will merge to 'next'.
+ source: <pull.1974.v2.git.1758882772.gitgitgadget@gmail.com>
 
 
-* kn/reftable-consistency-checks (2025-09-18) 9 commits
- - fixup! reftable: check for trailing newline in 'tables.list'
+* kn/reftable-consistency-checks (2025-09-26) 7 commits
  - refs/reftable: add fsck check for checking the table name
  - reftable: add code to facilitate consistency checks
  - fsck: order 'fsck_msg_type' alphabetically
  - Documentation/fsck-msgids: remove duplicate msg id
- - reftable: ensure tables in a stack use sequential update indices
  - reftable: check for trailing newline in 'tables.list'
  - refs: move consistency check msg to generic layer
  - refs: remove unused headers
@@ -235,57 +389,8 @@ well with other topics in 'seen' (and of course 'next' and
  The reftable backend learned to sanity check its on-disk data more
  carefully.
 
- Expecting a reroll.
- cf. <CAOLa=ZQMDjpMLeyHxeePY3VQjD1GhotXA6-GDhTNY_BDu4zSVQ@mail.gmail.com>
- source: <20250918-228-reftable-introduce-consistency-checks-v3-0-271af03eb34d@gmail.com>
-
-
-* pw/rebase-i-cleanup-fix (2025-09-18) 2 commits
-  (merged to 'next' on 2025-09-22 at 2d0aec7821)
- + sequencer: remove VERBATIM_MSG flag
- + rebase -i: respect commit.cleanup when picking fixups
-
- "git rebase -i" failed to clean-up the commit log message when the
- command commits the final one in a chain of "fixup" commands, which
- has been corrected.
-
- Will merge to 'master'.
- source: <cover.1758186038.git.phillip.wood@dunelm.org.uk>
-
-
-* tc/last-modified-recursive-fix (2025-09-18) 1 commit
-  (merged to 'next' on 2025-09-23 at 3be2b08060)
- + last-modified: fix bug when some paths remain unhandled
-
- "git last-modified" operating in non-recursive mode used to trigger
- a BUG(), which has been corrected.
-
- Will merge to 'master'.
- source: <20250918-toon-fix-last-modified-v3-1-0c3910e224f6@iotcl.com>
-
-
-* en/rust-wip (2025-09-16) 18 commits
- . misc::varint: reimplement as test balloon for Rust
- . misc: use BuildHelper
- . build: new crate, misc
- . varint: use explicit width for integers
- . build-helper: cbindgen, let crates generate a header file
- . build-helper: link against libgit.a and any other required C libraries
- . build: new crate, build-helper
- . github workflows: upload Cargo.lock
- . win+Meson: do allow linking with the Rust-built xdiff
- . github workflows: install rust
- . help: report on whether or not Rust is enabled
- . build: introduce rust
- . BreakingChanges: announce Rust becoming mandatory
- . doc: add a policy for using Rust
- . make: merge reftable lib into libgit.a
- . make: merge xdiff lib into libgit.a
- . make: add -fPIE flag
- . cleanup: rename variables that collide with Rust primitive type names
-
- Expecting a reroll, but probably xdiff stuff comes first?
- source: <pull.2043.v2.git.git.1758071798.gitgitgadget@gmail.com>
+ Comments?
+ source: <20250926-228-reftable-introduce-consistency-checks-v4-0-c96fd8551c0d@gmail.com>
 
 
 * bc/sha1-256-interop-01 (2025-09-19) 10 commits
@@ -319,57 +424,15 @@ well with other topics in 'seen' (and of course 'next' and
  source: <pull.1863.v3.git.1758813038.gitgitgadget@gmail.com>
 
 
-* dk/stash-apply-index (2025-09-21) 4 commits
-  (merged to 'next' on 2025-09-23 at 04e76cf5be)
- + stash: honor stash.index in apply, pop modes
- + stash: refactor private config globals
- + t3905: remove unneeded blank line
- + t3903: reduce dependencies on previous tests
-
- The stash.index configuration variable can be set to make "git stash
- pop/apply" pretend that it was invoked with "--index".
-
- Will merge to 'master'.
- source: <cover.1758505011.git.ben.knoble+github@gmail.com>
-
-
-* jk/color-variable-fixes (2025-09-16) 13 commits
-  (merged to 'next' on 2025-09-23 at 8aa3006a1e)
- + config: store want_color() result in a separate bool
- + add-interactive: retain colorbool values longer
- + color: return bool from want_color()
- + color: use git_colorbool enum type to store colorbools
- + pretty: use format_commit_context.auto_color as colorbool
- + diff: stop passing ecbdata->use_color as boolean
- + diff: pass o->use_color directly to fill_metainfo()
- + diff: don't use diff_options.use_color as a strict bool
- + diff: simplify color_moved check when flushing
- + grep: don't treat grep_opt.color as a strict bool
- + color: return enum from git_config_colorbool()
- + color: use GIT_COLOR_* instead of numeric constants
- + Merge branch 'jk/add-i-color' into jk/color-variable-fixes
-
- Some places in the code confused a variable that is *not* a boolean
- to enable color but is an enum that records what the user requested
- to do about color.  A couple of bugs of this sort have been fixed,
- while the code has been cleaned up to prevent similar bugs in the
- future.
-
- Will merge to 'master'.
- source: <20250916201036.GA612463@coredump.intra.peff.net>
- source: <20250916202408.GI612873@coredump.intra.peff.net>
-
-
-* en/xdiff-cleanup (2025-09-23) 13 commits
+* en/xdiff-cleanup (2025-09-26) 12 commits
  - xdiff: change type of xdfile_t.changed from char to bool
- - xdiff: use enum macros NONE(0), SOME(1), TOO_MANY(2) in xprepare.c
+ - xdiff: add macros DISCARD(0), KEEP(1), INVESTIGATE(2) in xprepare.c
  - xdiff: rename rchg -> changed in xdfile_t
- - xdiff: delete rchg aliasing
  - xdiff: delete chastore from xdfile_t
  - xdiff: delete fields ha, line, size in xdlclass_t in favor of an xrecord_t
  - xdiff: delete redundant array xdfile_t.ha
  - xdiff: delete struct diffdata_t
- - xdiff: delete superfluous local variables that alias fields in xrecord_t
+ - xdiff: delete local variables that alias fields in xrecord_t
  - xdiff: delete superfluous function xdl_get_rec() in xemit
  - xdiff: delete unnecessary fields from xrecord_t and xdfile_t
  - xdiff: delete local variables and initialize/free xdfile_t directly
@@ -378,33 +441,8 @@ well with other topics in 'seen' (and of course 'next' and
  A lot of code clean-up of xdiff.
  Split out of a larger topic.
 
- Expecting a reroll with better log messages.
- cf. <CAH=ZcbC-cB35AGmiKgEQdFa5ee+DftwOQ_dUe4=T+Vq-dxR+qQ@mail.gmail.com>
- source: <pull.2048.v5.git.git.1758662670.gitgitgadget@gmail.com>
-
-
-* jc/3.0-default-initial-branch-to-main-addendum (2025-09-17) 1 commit
-  (merged to 'next' on 2025-09-22 at dc4168c337)
- + initial branch: give hints after switching the default name
- (this branch uses pw/3.0-default-initial-branch-to-main.)
-
- Keep giving hint about the default initial branch name for users
- who may be surprised after Git 3.0 switchover.
-
- Will merge to 'master'.
- source: <cover.1757518141.git.phillip.wood@dunelm.org.uk>
-
-
-* nb/send-email-no-dup-reply-to (2025-09-16) 1 commit
-  (merged to 'next' on 2025-09-18 at d7081e00ec)
- + send-email: don't duplicate Reply-to: in intro message
-
- "git send-email --compose --reply-to=<address>" used to add
- duplicated Reply-To: header, which made mailservers unhappy.  This
- has been corrected.
-
- Will merge to 'master'.
- source: <175809074627.1696783.67425889158412786@noble.neil.brown.name>
+ Will merge to 'next'?
+ source: <pull.2048.v6.git.git.1758926520.gitgitgadget@gmail.com>
 
 
 * ar/submodule-gitdir-tweak (2025-09-08) 10 commits
@@ -429,26 +467,14 @@ well with other topics in 'seen' (and of course 'next' and
 
 
 * je/doc-push (2025-09-23) 2 commits
- - doc: git-push: rewrite refspec specification
- - doc: git-push: create PUSH RULES section
+  (merged to 'next' on 2025-09-29 at 4ff1b675ed)
+ + doc: git-push: rewrite refspec specification
+ + doc: git-push: create PUSH RULES section
 
  Doc updates.
 
- Will merge to 'next'.
- source: <pull.1973.v2.git.1758651049.gitgitgadget@gmail.com>
-
-
-* ps/clar-updates (2025-09-22) 2 commits
-  (merged to 'next' on 2025-09-22 at c811e8c172)
- + t/unit-tests: update to 10e96bc
-  (merged to 'next' on 2025-09-15 at 73402f7652)
- + t/unit-tests: update clar to fcbed04
-
- Import a newer version of the clar unit testing framework.
-
  Will merge to 'master'.
- source: <20250910-b4-pks-clar-update-v1-1-26a196237e0a@pks.im>
- source: <20250922-pks-clar-update-v1-1-9154e7d1b7a1@pks.im>
+ source: <pull.1973.v2.git.1758651049.gitgitgadget@gmail.com>
 
 
 * ps/config-get-color-fixes (2025-09-22) 5 commits
@@ -517,21 +543,6 @@ well with other topics in 'seen' (and of course 'next' and
 
  Will merge to 'master'.
  source: <20250917181427.3193500-1-christian.couder@gmail.com>
-
-
-* pw/3.0-default-initial-branch-to-main (2025-09-10) 4 commits
-  (merged to 'next' on 2025-09-22 at 01bbebdab6)
- + t0613: stop setting default initial branch
- + t9902: switch default branch name to main
- + t4013: switch default branch name to main
- + breaking-changes: switch default branch to main
- (this branch is used by jc/3.0-default-initial-branch-to-main-addendum.)
-
- Declare that "git init" that is not otherwise configured uses
- 'main' as the initial branch, not 'master', starting Git 3.0.
-
- Will merge to 'master'.
- source: <cover.1757518141.git.phillip.wood@dunelm.org.uk>
 
 
 * ps/commit-graph-per-object-source (2025-09-04) 6 commits
@@ -603,79 +614,31 @@ well with other topics in 'seen' (and of course 'next' and
 
 
 * ps/packfile-store (2025-09-23) 16 commits
- - packfile: refactor `get_packed_git_mru()` to work on packfile store
- - packfile: refactor `get_all_packs()` to work on packfile store
- - packfile: refactor `get_packed_git()` to work on packfile store
- - packfile: move `get_multi_pack_index()` into "midx.c"
- - packfile: introduce function to load and add packfiles
- - packfile: refactor `install_packed_git()` to work on packfile store
- - packfile: split up responsibilities of `reprepare_packed_git()`
- - packfile: refactor `prepare_packed_git()` to work on packfile store
- - packfile: reorder functions to avoid function declaration
- - odb: move kept cache into `struct packfile_store`
- - odb: move MRU list of packfiles into `struct packfile_store`
- - odb: move packfile map into `struct packfile_store`
- - odb: move initialization bit into `struct packfile_store`
- - odb: move list of packfiles into `struct packfile_store`
- - packfile: introduce a new `struct packfile_store`
- - Merge branch 'ps/object-store-midx-dedup-info' into ps/packfile-store
+  (merged to 'next' on 2025-09-29 at 342bb57fc2)
+ + packfile: refactor `get_packed_git_mru()` to work on packfile store
+ + packfile: refactor `get_all_packs()` to work on packfile store
+ + packfile: refactor `get_packed_git()` to work on packfile store
+ + packfile: move `get_multi_pack_index()` into "midx.c"
+ + packfile: introduce function to load and add packfiles
+ + packfile: refactor `install_packed_git()` to work on packfile store
+ + packfile: split up responsibilities of `reprepare_packed_git()`
+ + packfile: refactor `prepare_packed_git()` to work on packfile store
+ + packfile: reorder functions to avoid function declaration
+ + odb: move kept cache into `struct packfile_store`
+ + odb: move MRU list of packfiles into `struct packfile_store`
+ + odb: move packfile map into `struct packfile_store`
+ + odb: move initialization bit into `struct packfile_store`
+ + odb: move list of packfiles into `struct packfile_store`
+ + packfile: introduce a new `struct packfile_store`
+ + Merge branch 'ps/object-store-midx-dedup-info' into ps/packfile-store
+ (this branch is used by tb/incremental-midx-part-3.1.)
 
  Code clean-up around the in-core list of all the pack files and
  object database(s).
 
- Will merge to 'next'.
+ Will merge to 'master'.
+ cf. <aNmxQqV3+1Ad12qC@nand.local>
  source: <20250923-b4-pks-packfiles-store-v6-0-b48f2a882759@pks.im>
-
-
-* kn/refs-files-case-insensitive (2025-09-17) 4 commits
-  (merged to 'next' on 2025-09-23 at 51c2a665f0)
- + refs/files: handle D/F conflicts during locking
- + refs/files: handle F/D conflicts in case-insensitive FS
- + refs/files: use correct error type when lock exists
- + refs/files: catch conflicts on case-insensitive file-systems
-
- Deal more gracefully with directory / file conflicts when the files
- backend is used for ref storage, by failing only the ones that are
- involved in the conflict while allowing others.
-
- Will merge to 'master'.
- source: <20250917-587-git-fetch-1-fails-fetches-on-case-insensitive-repositories-v4-0-da3c74a08ed0@gmail.com>
-
-
-* en/rust-xdiff (2025-09-07) 8 commits
- . xdiff: change the types of dstart, dend, rchg, and rindex in xdfile_t
- . xdiff: make xdfile_t.nreff a usize instead of long
- . xdiff: make xdfile_t.nrec a usize instead of long
- . xdiff: split xrecord_t.ha into line_hash and minimal_perfect_hash
- . xdiff: make xrecord_t.size a usize instead of long
- . xdiff: make xrecord_t.ptr a u8 instead of char
- . xdiff: include compat/rust_types.h
- . compat/rust_types.h: define rust primitive types
- . Merge branch 'en/xdiff-cleanup' into en/rust-xdiff
-
- Use Rust-friendly types in xdiff code.
-
- Expecting a reroll based on the updated base topic, but the base
- topic may further be updated first?
- cf. <CAH=ZcbA5hAM9kmO410KzVW7RXWWiwX2oJk6GGPP+6oVYatRVOw@mail.gmail.com>
- source: <pull.2048.git.git.1757274320.gitgitgadget@gmail.com>
-
-
-* je/doc-checkout (2025-09-10) 7 commits
-  (merged to 'next' on 2025-09-23 at b776ac7a24)
- + doc: git-checkout: clarify restoring files section
- + doc: git-checkout: split up restoring files section
- + doc: git-checkout: deduplicate --detach explanation
- + doc: git-checkout: clarify `-b` and `-B`
- + doc: git-checkout: clarify `git checkout <branch>`
- + doc: git-checkout: clarify ARGUMENT DISAMBIGUATION
- + doc: git-checkout: clarify intro sentence
-
- Doc updates.
-
- Will merge to 'master'.
- cf. <236a79f4-e9a2-4335-bbff-79ae0cc67e9b@app.fastmail.com>
- source: <pull.1962.v4.git.1757531669.gitgitgadget@gmail.com>
 
 
 * kh/you-still-use-whatchanged-fix (2025-09-17) 9 commits
@@ -711,5 +674,55 @@ well with other topics in 'seen' (and of course 'next' and
  prune otherwise unused working-tree files that are outside the
  areas of interest.
 
- Will merge to 'master'.
+ On hold.
+ cf. <3537e220-44b6-4e37-a568-cef34a2fddfd@gmail.com>
  source: <pull.1941.v3.git.1757673011.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[Discarded]
+
+These have been kept outside 'seen' for some time, and were removed
+for now, until they are resubmit in a shape that plays well with
+other topics in 'seen'.
+
+* en/rust-xdiff (2025-09-07) 8 commits
+ . xdiff: change the types of dstart, dend, rchg, and rindex in xdfile_t
+ . xdiff: make xdfile_t.nreff a usize instead of long
+ . xdiff: make xdfile_t.nrec a usize instead of long
+ . xdiff: split xrecord_t.ha into line_hash and minimal_perfect_hash
+ . xdiff: make xrecord_t.size a usize instead of long
+ . xdiff: make xrecord_t.ptr a u8 instead of char
+ . xdiff: include compat/rust_types.h
+ . compat/rust_types.h: define rust primitive types
+ . Merge branch 'en/xdiff-cleanup' into en/rust-xdiff
+
+ Use Rust-friendly types in xdiff code.
+
+ Expecting a reroll based on the updated base topic, but the base
+ topic may further be updated first?
+ cf. <CAH=ZcbA5hAM9kmO410KzVW7RXWWiwX2oJk6GGPP+6oVYatRVOw@mail.gmail.com>
+ source: <pull.2048.git.git.1757274320.gitgitgadget@gmail.com>
+
+
+* en/rust-wip (2025-09-16) 18 commits
+ . misc::varint: reimplement as test balloon for Rust
+ . misc: use BuildHelper
+ . build: new crate, misc
+ . varint: use explicit width for integers
+ . build-helper: cbindgen, let crates generate a header file
+ . build-helper: link against libgit.a and any other required C libraries
+ . build: new crate, build-helper
+ . github workflows: upload Cargo.lock
+ . win+Meson: do allow linking with the Rust-built xdiff
+ . github workflows: install rust
+ . help: report on whether or not Rust is enabled
+ . build: introduce rust
+ . BreakingChanges: announce Rust becoming mandatory
+ . doc: add a policy for using Rust
+ . make: merge reftable lib into libgit.a
+ . make: merge xdiff lib into libgit.a
+ . make: add -fPIE flag
+ . cleanup: rename variables that collide with Rust primitive type names
+
+ Expecting a reroll, but probably xdiff stuff comes first?
+ source: <pull.2043.v2.git.git.1758071798.gitgitgadget@gmail.com>
