@@ -11861,6 +11861,23 @@ proc choose_extdiff {} {
     }
 }
 
+proc run_themeloader {f} {
+    if {![info exists ::_themefiles_seen]} {
+        set ::_themefiles_seen [dict create]
+    }
+
+    set fn [file normalize $f]
+    if {![dict exists $::_themefiles_seen $fn]} {
+        if {[catch {source $fn} err]} {
+            error_popup "could not interpret: $fn\n$err"
+            dict set ::_themefiles_seen $fn 0
+        } else {
+            dict set ::_themefiles_seen $fn 1
+        }
+    }
+    return [dict get $::_themefiles_seen $fn]
+}
+
 proc choosecolor {v vi prefspage x} {
     global $v
 
@@ -12742,7 +12759,10 @@ set nullid2 "0000000000000000000000000000000000000001"
 set nullfile "/dev/null"
 
 if {[file exists $themeloader]} {
-    source $themeloader
+    if {[run_themeloader $themeloader] == 0} {
+        puts stderr "Could not interpret themeloader: $themeloader"
+        exit 1
+    }
 }
 
 set appname "gitk"
