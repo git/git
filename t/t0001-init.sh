@@ -868,7 +868,7 @@ test_expect_success 'overridden default initial branch name (config)' '
 	grep nmb actual
 '
 
-test_expect_success 'advice on unconfigured init.defaultBranch' '
+test_expect_success !WITH_BREAKING_CHANGES 'advice on unconfigured init.defaultBranch' '
 	GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME= git -c color.advice=always \
 		init unconfigured-default-branch-name 2>err &&
 	test_decode_color <err >decoded &&
@@ -881,6 +881,22 @@ test_expect_success 'advice on unconfigured init.defaultBranch disabled' '
 	GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME= \
 		git -c advice.defaultBranchName=false init no-advice 2>err &&
 	test_grep ! "hint: " err
+'
+
+test_expect_success 'default branch name' '
+	if test_have_prereq WITH_BREAKING_CHANGES
+	then
+		expect=main
+	else
+		expect=master
+	fi &&
+	echo "refs/heads/$expect" >expect &&
+	(
+		sane_unset GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME &&
+		git init default-initial-branch-name
+	) &&
+	git -C default-initial-branch-name symbolic-ref HEAD >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'overridden default main branch name (env)' '

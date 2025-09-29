@@ -1,0 +1,3 @@
+$ git diff --dirstat main~1 main~2
+  40.0% dir/
+$
