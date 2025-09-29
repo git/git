@@ -95,7 +95,7 @@ struct ref_format {
 	const char *format;
 	const char *rest;
 	int quote_style;
-	int use_color;
+	enum git_colorbool use_color;
 
 	/* Internal state to ref-filter */
 	int need_color_reset_at_eol;
@@ -111,7 +111,7 @@ struct ref_format {
 	.exclude = STRVEC_INIT, \
 }
 #define REF_FORMAT_INIT {             \
-	.use_color = -1,              \
+	.use_color = GIT_COLOR_UNKNOWN, \
 }
 
 /*  Macros for checking --merged and --no-merged options */

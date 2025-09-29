@@ -200,7 +200,7 @@ static int edit_patch(struct repository *repo,
 
 	argc = setup_revisions(argc, argv, &rev, NULL);
 	rev.diffopt.output_format = DIFF_FORMAT_PATCH;
-	rev.diffopt.use_color = 0;
+	rev.diffopt.use_color = GIT_COLOR_NEVER;
 	rev.diffopt.flags.ignore_dirty_submodules = 1;
 	out = xopen(file, O_CREAT | O_WRONLY | O_TRUNC, 0666);
 	rev.diffopt.file = xfdopen(out, "w");

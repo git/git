@@ -7,6 +7,7 @@
 #include "range-diff.h"
 #include "config.h"
 #include "parse.h"
+#include "color.h"
 
 
 static const char * const builtin_range_diff_usage[] = {
@@ -87,7 +88,7 @@ int cmd_range_diff(int argc,
 
 	/* force color when --dual-color was used */
 	if (!simple_color)
-		diffopt.use_color = 1;
+		diffopt.use_color = GIT_COLOR_ALWAYS;
 
 	/* If `--diff-merges` was specified, imply `--merges` */
 	if (diff_merges_arg.nr) {

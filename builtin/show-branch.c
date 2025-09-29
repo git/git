@@ -29,7 +29,7 @@ static const char*const show_branch_usage[] = {
     NULL
 };
 
-static int showbranch_use_color = -1;
+static enum git_colorbool showbranch_use_color = GIT_COLOR_UNKNOWN;
 
 static struct strvec default_args = STRVEC_INIT;
 

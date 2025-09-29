@@ -7,7 +7,7 @@
 #include "help.h"
 #include "string-list.h"
 
-static int advice_use_color = -1;
+static enum git_colorbool advice_use_color = GIT_COLOR_UNKNOWN;
 static char advice_colors[][COLOR_MAXLEN] = {
 	GIT_COLOR_RESET,
 	GIT_COLOR_YELLOW,	/* HINT */
