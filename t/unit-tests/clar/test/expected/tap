@@ -1,0 +1,92 @@
+TAP version 13
+# start of suite 1: combined
+not ok 1 - combined::1
+    ---
+    reason: |
+      Function call failed: -1
+    at:
+      file: 'file'
+      line: 42
+      function: 'func'
+    ---
+not ok 2 - combined::2
+    ---
+    reason: |
+      Expression is not true: 100 == 101
+    at:
+      file: 'file'
+      line: 42
+      function: 'func'
+    ---
+not ok 3 - combined::strings
+    ---
+    reason: |
+      String mismatch: "mismatched" != actual ("this one fails")
+      'mismatched' != 'expected' (at byte 0)
+    at:
+      file: 'file'
+      line: 42
+      function: 'func'
+    ---
+not ok 4 - combined::strings_with_length
+    ---
+    reason: |
+      String mismatch: "exactly" != actual ("this one fails")
+      'exa' != 'exp' (at byte 2)
+    at:
+      file: 'file'
+      line: 42
+      function: 'func'
+    ---
+not ok 5 - combined::int
+    ---
+    reason: |
+      101 != value ("extra note on failing test")
+      101 != 100
+    at:
+      file: 'file'
+      line: 42
+      function: 'func'
+    ---
+not ok 6 - combined::int_fmt
+    ---
+    reason: |
+      022 != value
+      0022 != 0144
+    at:
+      file: 'file'
+      line: 42
+      function: 'func'
+    ---
+not ok 7 - combined::bool
+    ---
+    reason: |
+      0 != value
+      0 != 1
+    at:
+      file: 'file'
+      line: 42
+      function: 'func'
+    ---
+not ok 8 - combined::multiline_description
+    ---
+    reason: |
+      Function call failed: -1
+      description line 1
+      description line 2
+    at:
+      file: 'file'
+      line: 42
+      function: 'func'
+    ---
+not ok 9 - combined::null_string
+    ---
+    reason: |
+      String mismatch: "expected" != actual ("this one fails")
+      'expected' != NULL
+    at:
+      file: 'file'
+      line: 42
+      function: 'func'
+    ---
+1..9

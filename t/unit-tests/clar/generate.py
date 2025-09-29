@@ -158,17 +158,24 @@ class TestSuite(object):
 
     def find_modules(self):
         modules = []
-        for root, _, files in os.walk(self.path):
-            module_root = root[len(self.path):]
-            module_root = [c for c in module_root.split(os.sep) if c]
 
-            tests_in_module = fnmatch.filter(files, "*.c")
+        if os.path.isfile(self.path):
+            full_path = os.path.abspath(self.path)
+            module_name = os.path.basename(self.path)
+            module_name = os.path.splitext(module_name)[0]
+            modules.append((full_path, module_name))
+        else:
+            for root, _, files in os.walk(self.path):
+                module_root = root[len(self.path):]
+                module_root = [c for c in module_root.split(os.sep) if c]
 
-            for test_file in tests_in_module:
-                full_path = os.path.join(root, test_file)
-                module_name = "_".join(module_root + [test_file[:-2]]).replace("-", "_")
+                tests_in_module = fnmatch.filter(files, "*.c")
 
-                modules.append((full_path, module_name))
+                for test_file in tests_in_module:
+                    full_path = os.path.join(root, test_file)
+                    module_name = "_".join(module_root + [test_file[:-2]]).replace("-", "_")
+
+                    modules.append((full_path, module_name))
 
         return modules
 
@@ -217,6 +224,7 @@ class TestSuite(object):
 
     def write(self):
         output = os.path.join(self.output, 'clar.suite')
+        os.makedirs(self.output, exist_ok=True)
 
         if not self.should_generate(output):
             return False
@@ -258,7 +266,11 @@ if __name__ == '__main__':
         sys.exit(1)
 
     path = args.pop() if args else '.'
+    if os.path.isfile(path) and not options.output:
+        print("Must provide --output when specifying a file")
+        sys.exit(1)
     output = options.output or path
+
     suite = TestSuite(path, output)
     suite.load(options.force)
     suite.disable(options.excluded)

@@ -8,12 +8,6 @@
 
 #ifdef _WIN32
 
-#ifdef CLAR_WIN32_LONGPATHS
-# define CLAR_MAX_PATH 4096
-#else
-# define CLAR_MAX_PATH MAX_PATH
-#endif
-
 #define RM_RETRY_COUNT	5
 #define RM_RETRY_DELAY	10
 
@@ -296,7 +290,7 @@ void
 cl_fs_cleanup(void)
 {
 #ifdef CLAR_FIXTURE_PATH
-	fs_rm(fixture_path(_clar_path, "*"));
+	fs_rm(fixture_path(clar_tempdir_path(), "*"));
 #else
 	((void)fs_copy); /* unused */
 #endif
@@ -371,17 +365,19 @@ static void
 fs_copydir_helper(const char *source, const char *dest, int dest_mode)
 {
 	DIR *source_dir;
-	struct dirent *d;
 
 	mkdir(dest, dest_mode);
 
 	cl_assert_(source_dir = opendir(source), "Could not open source dir");
-	for (;;) {
+	while (1) {
+		struct dirent *d;
 		char *child;
 
 		errno = 0;
-		if ((d = readdir(source_dir)) == NULL)
+		d = readdir(source_dir);
+		if (!d)
 			break;
+
 		if (!strcmp(d->d_name, ".") || !strcmp(d->d_name, ".."))
 			continue;
 
@@ -479,15 +475,18 @@ static void
 fs_rmdir_helper(const char *path)
 {
 	DIR *dir;
-	struct dirent *d;
 
 	cl_assert_(dir = opendir(path), "Could not open dir");
-	for (;;) {
+
+	while (1) {
+		struct dirent *d;
 		char *child;
 
 		errno = 0;
-		if ((d = readdir(dir)) == NULL)
+		d = readdir(dir);
+		if (!d)
 			break;
+
 		if (!strcmp(d->d_name, ".") || !strcmp(d->d_name, ".."))
 			continue;
 
@@ -524,7 +523,7 @@ fs_rm(const char *path)
 void
 cl_fs_cleanup(void)
 {
-	clar_unsandbox();
-	clar_sandbox();
+	clar_tempdir_shutdown();
+	clar_tempdir_init();
 }
 #endif

@@ -8,6 +8,25 @@
 #define __CLAR_TEST_H__
 
 #include <stdlib.h>
+#include <limits.h>
+
+#if defined(_WIN32) && defined(CLAR_WIN32_LONGPATHS)
+# define CLAR_MAX_PATH 4096
+#elif defined(_WIN32)
+# define CLAR_MAX_PATH MAX_PATH
+#else
+# define CLAR_MAX_PATH PATH_MAX
+#endif
+
+#ifndef CLAR_SELFTEST
+# define CLAR_CURRENT_FILE __FILE__
+# define CLAR_CURRENT_LINE __LINE__
+# define CLAR_CURRENT_FUNC __func__
+#else
+# define CLAR_CURRENT_FILE "file"
+# define CLAR_CURRENT_LINE 42
+# define CLAR_CURRENT_FUNC "func"
+#endif
 
 enum cl_test_status {
 	CL_TEST_OK,
@@ -30,6 +49,7 @@ void clar_test_shutdown(void);
 int clar_test(int argc, char *argv[]);
 
 const char *clar_sandbox_path(void);
+const char *clar_tempdir_path(void);
 
 void cl_set_cleanup(void (*cleanup)(void *), void *opaque);
 void cl_fs_cleanup(void);
@@ -84,18 +104,32 @@ const char *cl_fixture_basename(const char *fixture_name);
 #endif
 
 /**
+ * Invoke a helper function, which itself will use `cl_assert`
+ * constructs. This will preserve the stack information of the
+ * current call point, so that function name and line number
+ * information is shown from the line of the test, instead of
+ * the helper function.
+ */
+#define cl_invoke(expr) \
+	do { \
+		clar__set_invokepoint(CLAR_CURRENT_FILE, CLAR_CURRENT_FUNC, CLAR_CURRENT_LINE); \
+		expr; \
+		clar__clear_invokepoint(); \
+	} while(0)
+
+/**
  * Assertion macros with explicit error message
  */
-#define cl_must_pass_(expr, desc) clar__assert((expr) >= 0, __FILE__, __func__, __LINE__, "Function call failed: " #expr, desc, 1)
-#define cl_must_fail_(expr, desc) clar__assert((expr) < 0, __FILE__, __func__, __LINE__, "Expected function call to fail: " #expr, desc, 1)
-#define cl_assert_(expr, desc) clar__assert((expr) != 0, __FILE__, __func__, __LINE__, "Expression is not true: " #expr, desc, 1)
+#define cl_must_pass_(expr, desc) clar__assert((expr) >= 0, CLAR_CURRENT_FILE, CLAR_CURRENT_FUNC, CLAR_CURRENT_LINE, "Function call failed: " #expr, desc, 1)
+#define cl_must_fail_(expr, desc) clar__assert((expr) < 0, CLAR_CURRENT_FILE, CLAR_CURRENT_FUNC, CLAR_CURRENT_LINE, "Expected function call to fail: " #expr, desc, 1)
+#define cl_assert_(expr, desc) clar__assert((expr) != 0, CLAR_CURRENT_FILE, CLAR_CURRENT_FUNC, CLAR_CURRENT_LINE, "Expression is not true: " #expr, desc, 1)
 
 /**
  * Check macros with explicit error message
  */
-#define cl_check_pass_(expr, desc) clar__assert((expr) >= 0, __FILE__, __func__, __LINE__, "Function call failed: " #expr, desc, 0)
-#define cl_check_fail_(expr, desc) clar__assert((expr) < 0, __FILE__, __func__, __LINE__, "Expected function call to fail: " #expr, desc, 0)
-#define cl_check_(expr, desc) clar__assert((expr) != 0, __FILE__, __func__, __LINE__, "Expression is not true: " #expr, desc, 0)
+#define cl_check_pass_(expr, desc) clar__assert((expr) >= 0, CLAR_CURRENT_FILE, CLAR_CURRENT_FUNC, CLAR_CURRENT_LINE, "Function call failed: " #expr, desc, 0)
+#define cl_check_fail_(expr, desc) clar__assert((expr) < 0, CLAR_CURRENT_FILE, CLAR_CURRENT_FUNC, CLAR_CURRENT_LINE, "Expected function call to fail: " #expr, desc, 0)
+#define cl_check_(expr, desc) clar__assert((expr) != 0, CLAR_CURRENT_FILE, CLAR_CURRENT_FUNC, CLAR_CURRENT_LINE, "Expression is not true: " #expr, desc, 0)
 
 /**
  * Assertion macros with no error message
@@ -114,33 +148,33 @@ const char *cl_fixture_basename(const char *fixture_name);
 /**
  * Forced failure/warning
  */
-#define cl_fail(desc) clar__fail(__FILE__, __func__, __LINE__, "Test failed.", desc, 1)
-#define cl_warning(desc) clar__fail(__FILE__, __func__, __LINE__, "Warning during test execution:", desc, 0)
+#define cl_fail(desc) clar__fail(CLAR_CURRENT_FILE, CLAR_CURRENT_FUNC, CLAR_CURRENT_LINE, "Test failed.", desc, 1)
+#define cl_warning(desc) clar__fail(CLAR_CURRENT_FILE, CLAR_CURRENT_FUNC, CLAR_CURRENT_LINE, "Warning during test execution:", desc, 0)
 
 #define cl_skip() clar__skip()
 
 /**
  * Typed assertion macros
  */
-#define cl_assert_equal_s(s1,s2) clar__assert_equal(__FILE__,__func__,__LINE__,"String mismatch: " #s1 " != " #s2, 1, "%s", (s1), (s2))
-#define cl_assert_equal_s_(s1,s2,note) clar__assert_equal(__FILE__,__func__,__LINE__,"String mismatch: " #s1 " != " #s2 " (" #note ")", 1, "%s", (s1), (s2))
+#define cl_assert_equal_s(s1,s2) clar__assert_equal(CLAR_CURRENT_FILE,CLAR_CURRENT_FUNC,CLAR_CURRENT_LINE,"String mismatch: " #s1 " != " #s2, 1, "%s", (s1), (s2))
+#define cl_assert_equal_s_(s1,s2,note) clar__assert_equal(CLAR_CURRENT_FILE,CLAR_CURRENT_FUNC,CLAR_CURRENT_LINE,"String mismatch: " #s1 " != " #s2 " (" #note ")", 1, "%s", (s1), (s2))
 
-#define cl_assert_equal_wcs(wcs1,wcs2) clar__assert_equal(__FILE__,__func__,__LINE__,"String mismatch: " #wcs1 " != " #wcs2, 1, "%ls", (wcs1), (wcs2))
-#define cl_assert_equal_wcs_(wcs1,wcs2,note) clar__assert_equal(__FILE__,__func__,__LINE__,"String mismatch: " #wcs1 " != " #wcs2 " (" #note ")", 1, "%ls", (wcs1), (wcs2))
+#define cl_assert_equal_wcs(wcs1,wcs2) clar__assert_equal(CLAR_CURRENT_FILE,CLAR_CURRENT_FUNC,CLAR_CURRENT_LINE,"String mismatch: " #wcs1 " != " #wcs2, 1, "%ls", (wcs1), (wcs2))
+#define cl_assert_equal_wcs_(wcs1,wcs2,note) clar__assert_equal(CLAR_CURRENT_FILE,CLAR_CURRENT_FUNC,CLAR_CURRENT_LINE,"String mismatch: " #wcs1 " != " #wcs2 " (" #note ")", 1, "%ls", (wcs1), (wcs2))
 
-#define cl_assert_equal_strn(s1,s2,len) clar__assert_equal(__FILE__,__func__,__LINE__,"String mismatch: " #s1 " != " #s2, 1, "%.*s", (s1), (s2), (int)(len))
-#define cl_assert_equal_strn_(s1,s2,len,note) clar__assert_equal(__FILE__,__func__,__LINE__,"String mismatch: " #s1 " != " #s2 " (" #note ")", 1, "%.*s", (s1), (s2), (int)(len))
+#define cl_assert_equal_strn(s1,s2,len) clar__assert_equal(CLAR_CURRENT_FILE,CLAR_CURRENT_FUNC,CLAR_CURRENT_LINE,"String mismatch: " #s1 " != " #s2, 1, "%.*s", (s1), (s2), (int)(len))
+#define cl_assert_equal_strn_(s1,s2,len,note) clar__assert_equal(CLAR_CURRENT_FILE,CLAR_CURRENT_FUNC,CLAR_CURRENT_LINE,"String mismatch: " #s1 " != " #s2 " (" #note ")", 1, "%.*s", (s1), (s2), (int)(len))
 
-#define cl_assert_equal_wcsn(wcs1,wcs2,len) clar__assert_equal(__FILE__,__func__,__LINE__,"String mismatch: " #wcs1 " != " #wcs2, 1, "%.*ls", (wcs1), (wcs2), (int)(len))
-#define cl_assert_equal_wcsn_(wcs1,wcs2,len,note) clar__assert_equal(__FILE__,__func__,__LINE__,"String mismatch: " #wcs1 " != " #wcs2 " (" #note ")", 1, "%.*ls", (wcs1), (wcs2), (int)(len))
+#define cl_assert_equal_wcsn(wcs1,wcs2,len) clar__assert_equal(CLAR_CURRENT_FILE,CLAR_CURRENT_FUNC,CLAR_CURRENT_LINE,"String mismatch: " #wcs1 " != " #wcs2, 1, "%.*ls", (wcs1), (wcs2), (int)(len))
+#define cl_assert_equal_wcsn_(wcs1,wcs2,len,note) clar__assert_equal(CLAR_CURRENT_FILE,CLAR_CURRENT_FUNC,CLAR_CURRENT_LINE,"String mismatch: " #wcs1 " != " #wcs2 " (" #note ")", 1, "%.*ls", (wcs1), (wcs2), (int)(len))
 
-#define cl_assert_equal_i(i1,i2) clar__assert_equal(__FILE__,__func__,__LINE__,#i1 " != " #i2, 1, "%d", (int)(i1), (int)(i2))
-#define cl_assert_equal_i_(i1,i2,note) clar__assert_equal(__FILE__,__func__,__LINE__,#i1 " != " #i2 " (" #note ")", 1, "%d", (i1), (i2))
-#define cl_assert_equal_i_fmt(i1,i2,fmt) clar__assert_equal(__FILE__,__func__,__LINE__,#i1 " != " #i2, 1, (fmt), (int)(i1), (int)(i2))
+#define cl_assert_equal_i(i1,i2) clar__assert_equal(CLAR_CURRENT_FILE,CLAR_CURRENT_FUNC,CLAR_CURRENT_LINE,#i1 " != " #i2, 1, "%d", (int)(i1), (int)(i2))
+#define cl_assert_equal_i_(i1,i2,note) clar__assert_equal(CLAR_CURRENT_FILE,CLAR_CURRENT_FUNC,CLAR_CURRENT_LINE,#i1 " != " #i2 " (" #note ")", 1, "%d", (i1), (i2))
+#define cl_assert_equal_i_fmt(i1,i2,fmt) clar__assert_equal(CLAR_CURRENT_FILE,CLAR_CURRENT_FUNC,CLAR_CURRENT_LINE,#i1 " != " #i2, 1, (fmt), (int)(i1), (int)(i2))
 
-#define cl_assert_equal_b(b1,b2) clar__assert_equal(__FILE__,__func__,__LINE__,#b1 " != " #b2, 1, "%d", (int)((b1) != 0),(int)((b2) != 0))
+#define cl_assert_equal_b(b1,b2) clar__assert_equal(CLAR_CURRENT_FILE,CLAR_CURRENT_FUNC,CLAR_CURRENT_LINE,#b1 " != " #b2, 1, "%d", (int)((b1) != 0),(int)((b2) != 0))
 
-#define cl_assert_equal_p(p1,p2) clar__assert_equal(__FILE__,__func__,__LINE__,"Pointer mismatch: " #p1 " != " #p2, 1, "%p", (p1), (p2))
+#define cl_assert_equal_p(p1,p2) clar__assert_equal(CLAR_CURRENT_FILE,CLAR_CURRENT_FUNC,CLAR_CURRENT_LINE,"Pointer mismatch: " #p1 " != " #p2, 1, "%p", (p1), (p2))
 
 void clar__skip(void);
 
@@ -169,5 +203,12 @@ void clar__assert_equal(
 	int should_abort,
 	const char *fmt,
 	...);
+
+void clar__set_invokepoint(
+	const char *file,
+	const char *func,
+	size_t line);
+
+void clar__clear_invokepoint(void);
 
 #endif
