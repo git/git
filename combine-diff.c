@@ -1515,8 +1515,9 @@ void diff_tree_combined(const struct object_id *oid,
 
 	diffopts = *opt;
 	copy_pathspec(&diffopts.pathspec, &opt->pathspec);
-	diffopts.flags.recursive = 1;
 	diffopts.flags.allow_external = 0;
+	if (!opt->flags.no_recursive_diff_tree_combined)
+		diffopts.flags.recursive = 1;
 
 	/* find set of paths that everybody touches
 	 *

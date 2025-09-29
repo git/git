@@ -127,6 +127,13 @@ struct diff_flags {
 	unsigned recursive;
 	unsigned tree_in_recursive;
 
+	/*
+	 * Historically diff_tree_combined() overrides recursive to 1. To
+	 * suppress this behavior, set the flag below.
+	 * It has no effect if recursive is already set to 1.
+	 */
+	unsigned no_recursive_diff_tree_combined;
+
 	/* Affects the way how a file that is seemingly binary is treated. */
 	unsigned binary;
 	unsigned text;
