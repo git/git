@@ -12,25 +12,29 @@ git checkout [-q] [-f] [-m] [<branch>]
 git checkout [-q] [-f] [-m] --detach [<branch>]
 git checkout [-q] [-f] [-m] [--detach] <commit>
 git checkout [-q] [-f] [-m] [[-b|-B|--orphan] <new-branch>] [<start-point>]
-git checkout [-f] <tree-ish> [--] <pathspec>...
-git checkout [-f] <tree-ish> --pathspec-from-file=<file> [--pathspec-file-nul]
+git checkout <tree-ish> [--] <pathspec>...
+git checkout <tree-ish> --pathspec-from-file=<file> [--pathspec-file-nul]
 git checkout [-f|--ours|--theirs|-m|--conflict=<style>] [--] <pathspec>...
 git checkout [-f|--ours|--theirs|-m|--conflict=<style>] --pathspec-from-file=<file> [--pathspec-file-nul]
 git checkout (-p|--patch) [<tree-ish>] [--] [<pathspec>...]
 
 DESCRIPTION
 -----------
-Updates files in the working tree to match the version in the index
-or the specified tree.  If no pathspec was given, `git checkout` will
-also update `HEAD` to set the specified branch as the current
-branch.
+
+`git checkout` has two main modes:
+
+1. **Switch branches**, with `git checkout <branch>`
+2. **Restore a different version of a file**, for example with
+   `git checkout <commit> <filename>` or `git checkout <filename>`
+
+See ARGUMENT DISAMBIGUATION below for how Git decides which one to do.
 
 `git checkout [<branch>]`::
-	To prepare for working on _<branch>_, switch to it by updating
-	the index and the files in the working tree, and by pointing
-	`HEAD` at the branch. Local modifications to the files in the
-	working tree are kept, so that they can be committed to the
-	_<branch>_.
+	Switch to _<branch>_. This sets the current branch to _<branch>_ and
+	updates the files in your working directory. The checkout will fail
+	if there are uncommitted changes to any files where _<branch>_ and
+	your current commit have different content. Uncommitted changes will
+	otherwise be kept.
 +
 If _<branch>_ is not found but there does exist a tracking branch in
 exactly one remote (call it _<remote>_) with a matching name and
@@ -40,68 +44,63 @@ exactly one remote (call it _<remote>_) with a matching name and
 $ git checkout -b <branch> --track <remote>/<branch>
 ------------
 +
-You could omit _<branch>_, in which case the command degenerates to
-"check out the current branch", which is a glorified no-op with
-rather expensive side-effects to show only the tracking information,
-if it exists, for the current branch.
+Running `git checkout` without specifying a branch has no effect except
+to print out the tracking information for the current branch.
 
-`git checkout (-b|-B) <new-branch> [<start-point>]`::
+`git checkout -b <new-branch> [<start-point>]`::
 
-	Specifying `-b` causes a new branch to be created as if
-	linkgit:git-branch[1] were called and then checked out.  In
-	this case you can use the `--track` or `--no-track` options,
-	which will be passed to `git branch`.  As a convenience,
-	`--track` without `-b` implies branch creation; see the
-	description of `--track` below.
+	Create a new branch named _<new-branch>_, start it at _<start-point>_
+	(defaults to the current commit), and check out the new branch.
+	You can use the `--track` or `--no-track` options to set the branch's
+	upstream tracking information.
 +
-If `-B` is given, _<new-branch>_ is created if it doesn't exist; otherwise, it
-is reset. This is the transactional equivalent of
-+
-------------
-$ git branch -f <branch> [<start-point>]
-$ git checkout <branch>
-------------
-+
-that is to say, the branch is not reset/created unless "git checkout" is
-successful (e.g., when the branch is in use in another worktree, not
-just the current branch stays the same, but the branch is not reset to
-the start-point, either).
+This will fail if there's an error checking out _<new-branch>_, for
+example if checking out the `<start-point>` commit would overwrite your
+uncommitted changes.
+
+`git checkout -B <branch> [<start-point>]`::
+
+	The same as `-b`, except that if the branch already exists it
+	resets `_<branch>_` to the start point instead of failing.
 
 `git checkout --detach [<branch>]`::
 `git checkout [--detach] <commit>`::
 
-	Prepare to work on top of _<commit>_, by detaching `HEAD` at it
-	(see "DETACHED HEAD" section), and updating the index and the
-	files in the working tree.  Local modifications to the files
-	in the working tree are kept, so that the resulting working
-	tree will be the state recorded in the commit plus the local
-	modifications.
-+
-When the _<commit>_ argument is a branch name, the `--detach` option can
-be used to detach `HEAD` at the tip of the branch (`git checkout
-<branch>` would check out that branch without detaching `HEAD`).
+	The same as `git checkout <branch>`, except that instead of pointing
+	`HEAD` at the branch, it points `HEAD` at the commit ID.
+	See the "DETACHED HEAD" section below for more.
 +
 Omitting _<branch>_ detaches `HEAD` at the tip of the current branch.
 
-`git checkout [-f|--ours|--theirs|-m|--conflict=<style>] [<tree-ish>] [--] <pathspec>...`::
-`git checkout [-f|--ours|--theirs|-m|--conflict=<style>] [<tree-ish>] --pathspec-from-file=<file> [--pathspec-file-nul]`::
+`git checkout <tree-ish> [--] <pathspec>...`::
+`git checkout <tree-ish> --pathspec-from-file=<file> [--pathspec-file-nul]`::
 
-	Overwrite the contents of the files that match the pathspec.
-	When the _<tree-ish>_ (most often a commit) is not given,
-	overwrite working tree with the contents in the index.
-	When the _<tree-ish>_ is given, overwrite both the index and
-	the working tree with the contents at the _<tree-ish>_.
+	Replace the specified files and/or directories with the version from
+	the given commit or tree and add them to the index
+	(also known as "staging area").
 +
-The index may contain unmerged entries because of a previous failed merge.
-By default, if you try to check out such an entry from the index, the
-checkout operation will fail and nothing will be checked out.
-Using `-f` will ignore these unmerged entries.  The contents from a
-specific side of the merge can be checked out of the index by
-using `--ours` or `--theirs`.  With `-m`, changes made to the working tree
-file can be discarded to re-create the original conflicted merge result.
+For example, `git checkout main file.txt` will replace `file.txt`
+with the version from `main`.
+
+`git checkout [-f|--ours|--theirs|-m|--conflict=<style>] [--] <pathspec>...`::
+`git checkout [-f|--ours|--theirs|-m|--conflict=<style>] --pathspec-from-file=<file> [--pathspec-file-nul]`::
+
+	Replace the specified files and/or directories with the version from
+	the index.
++
+For example, if you check out a commit, edit `file.txt`, and then
+decide those changes were a mistake, `git checkout file.txt` will
+discard any unstaged changes to `file.txt`.
++
+This will fail if the file has a merge conflict and you haven't yet run
+`git add file.txt` (or something equivalent) to mark it as resolved.
+You can use `-f` to ignore the unmerged files instead of failing, use
+`--ours` or `--theirs` to replace them with the version from a specific
+side of the merge, or use `-m` to replace them with the original
+conflicted merge result.
 
 `git checkout (-p|--patch) [<tree-ish>] [--] [<pathspec>...]`::
-	This is similar to the previous mode, but lets you use the
+	This is similar to the previous two modes, but lets you use the
 	interactive interface to show the "diff" output and choose which
 	hunks to use in the result.  See below for the description of
 	`--patch` option.
@@ -155,16 +154,14 @@ of it").
 	see linkgit:git-branch[1] for details.
 
 `-B <new-branch>`::
-	Creates the branch _<new-branch>_, start it at _<start-point>_;
-	if it already exists, then reset it to _<start-point>_. And then
-	check the resulting branch out.  This is equivalent to running
-	`git branch` with `-f` followed by `git checkout` of that branch;
-	see linkgit:git-branch[1] for details.
+	The same as `-b`, except that if the branch already exists it
+	resets `_<branch>_` to the start point instead of failing.
 
 `-t`::
 `--track[=(direct|inherit)]`::
 	When creating a new branch, set up "upstream" configuration. See
-	`--track` in linkgit:git-branch[1] for details.
+	`--track` in linkgit:git-branch[1] for details. As a convenience,
+	--track without -b implies branch creation.
 +
 If no `-b` option is given, the name of the new branch will be
 derived from the remote-tracking branch, by looking at the local part of
@@ -511,14 +508,18 @@ $ git log -g -2 HEAD
 ARGUMENT DISAMBIGUATION
 -----------------------
 
-When there is only one argument given and it is not `--` (e.g. `git
-checkout abc`), and when the argument is both a valid _<tree-ish>_
-(e.g. a branch `abc` exists) and a valid _<pathspec>_ (e.g. a file
-or a directory whose name is "abc" exists), Git would usually ask
-you to disambiguate.  Because checking out a branch is so common an
-operation, however, `git checkout abc` takes "abc" as a _<tree-ish>_
-in such a situation.  Use `git checkout -- <pathspec>` if you want
-to checkout these paths out of the index.
+When you run `git checkout <something>`, Git tries to guess whether
+`<something>` is intended to be a branch, a commit, or a set of file(s),
+and then either switches to that branch or commit, or restores the
+specified files.
+
+If there's any ambiguity, Git will treat `<something>` as a branch or
+commit, but you can use the double dash `--` to force Git to treat the
+parameter as a list of files and/or directories, like this:
+
+----------
+git checkout -- file.txt
+----------
 
 EXAMPLES
 --------
