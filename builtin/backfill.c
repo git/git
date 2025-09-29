@@ -53,7 +53,7 @@ static void download_batch(struct backfill_context *ctx)
 	 * We likely have a new packfile. Add it to the packed list to
 	 * avoid possible duplicate downloads of the same objects.
 	 */
-	reprepare_packed_git(ctx->repo);
+	odb_reprepare(ctx->repo->objects);
 }
 
 static int fill_missing_blobs(const char *path UNUSED,
