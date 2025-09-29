@@ -641,9 +641,17 @@ static const char default_branch_name_advice[] = N_(
 "\n"
 "\tgit branch -m <name>\n"
 );
+#else
+static const char default_branch_name_advice[] = N_(
+"Using '%s' as the name for the initial branch since Git 3.0.\n"
+"If you expected Git to create 'master', the just-created\n"
+"branch can be renamed via this command:\n"
+"\n"
+"\tgit branch -m master\n"
+);
 #endif /* WITH_BREAKING_CHANGES */
 
-char *repo_default_branch_name(struct repository *r, MAYBE_UNUSED int quiet)
+char *repo_default_branch_name(struct repository *r, int quiet)
 {
 	const char *config_key = "init.defaultbranch";
 	const char *config_display_key = "init.defaultBranch";
@@ -660,10 +668,10 @@ char *repo_default_branch_name(struct repository *r, MAYBE_UNUSED int quiet)
 		ret = xstrdup("main");
 #else
 		ret = xstrdup("master");
+#endif /* WITH_BREAKING_CHANGES */
 		if (!quiet)
 			advise_if_enabled(ADVICE_DEFAULT_BRANCH_NAME,
 					  _(default_branch_name_advice), ret);
-#endif /* WITH_BREAKING_CHANGES */
 	}
 
 	full_ref = xstrfmt("refs/heads/%s", ret);

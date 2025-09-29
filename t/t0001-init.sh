@@ -868,7 +868,7 @@ test_expect_success 'overridden default initial branch name (config)' '
 	grep nmb actual
 '
 
-test_expect_success !WITH_BREAKING_CHANGES 'advice on unconfigured init.defaultBranch' '
+test_expect_success 'advice on unconfigured init.defaultBranch' '
 	GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME= git -c color.advice=always \
 		init unconfigured-default-branch-name 2>err &&
 	test_decode_color <err >decoded &&
