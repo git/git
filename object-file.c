@@ -1504,7 +1504,7 @@ clear_exit:
 
 	strbuf_release(&packname);
 	/* Make objects we just wrote available to ourselves */
-	reprepare_packed_git(repo);
+	odb_reprepare(repo->objects);
 }
 
 /*
