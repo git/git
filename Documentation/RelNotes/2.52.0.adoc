@@ -35,6 +35,15 @@ UI, Workflows & Features
    allow the "partialCloneFilter" settings and the "token" value to be
    communicated from the server side.
 
+ * Declare that "git init" that is not otherwise configured uses
+   'main' as the initial branch, not 'master', starting Git 3.0.
+
+ * Keep giving hint about the default initial branch name for users
+   who may be surprised after Git 3.0 switch-over.
+
+ * The stash.index configuration variable can be set to make "git stash
+   pop/apply" pretend that it was invoked with "--index".
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -86,6 +95,12 @@ Performance, Internal Implementation, Development Support etc.
 
  * "git range-diff" learned a way to limit the memory consumed by
    O(N*N) cost matrix.
+
+ * Some places in the code confused a variable that is *not* a boolean
+   to enable color but is an enum that records what the user requested
+   to do about color.  A couple of bugs of this sort have been fixed,
+   while the code has been cleaned up to prevent similar bugs in the
+   future.
 
 
 Fixes since v2.51
@@ -216,6 +231,33 @@ including security updates, are included in this release.
 
  * "git subtree" (in contrib/) did not work correctly when splitting
    squashed subtrees, which has been improved.
+
+ * Import a newer version of the clar unit testing framework.
+   (merge 93dbb6b3c5 ps/clar-updates later to maint).
+
+ * "git send-email --compose --reply-to=<address>" used to add
+   duplicated Reply-To: header, which made mailservers unhappy.  This
+   has been corrected.
+   (merge f448f65719 nb/send-email-no-dup-reply-to later to maint).
+
+ * "git rebase -i" failed to clean-up the commit log message when the
+   command commits the final one in a chain of "fixup" commands, which
+   has been corrected.
+   (merge 82a0a73e15 pw/rebase-i-cleanup-fix later to maint).
+
+ * There are double frees and leaks around setup_revisions() API used
+   in "git stash show", which has been fixed, and setup_revisions()
+   API gained a wrapper to make it more ergonomic when using it with
+   strvec-manged argc/argv pairs.
+   (merge a04bc71725 jk/setup-revisions-freefix later to maint).
+
+ * Deal more gracefully with directory / file conflicts when the files
+   backend is used for ref storage, by failing only the ones that are
+   involved in the conflict while allowing others.
+   (merge 948b2ab0d8 kn/refs-files-case-insensitive later to maint).
+
+ * "git last-modified" operating in non-recursive mode used to trigger
+   a BUG(), which has been corrected.
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 823d537fa7 kh/doc-git-log-markup-fix later to maint).
