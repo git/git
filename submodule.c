@@ -900,7 +900,7 @@ static void collect_changed_submodules(struct repository *r,
 	save_warning = warn_on_object_refname_ambiguity;
 	warn_on_object_refname_ambiguity = 0;
 	repo_init_revisions(r, &rev, NULL);
-	setup_revisions(argv->nr, argv->v, &rev, &s_r_opt);
+	setup_revisions_from_strvec(argv, &rev, &s_r_opt);
 	warn_on_object_refname_ambiguity = save_warning;
 	if (prepare_revision_walk(&rev))
 		die(_("revision walk setup failed"));

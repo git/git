@@ -213,7 +213,7 @@ static void show_commit(struct commit *commit, void *data)
  * are marked with shallow_flag. The list of border/shallow commits
  * are also returned.
  */
-struct commit_list *get_shallow_commits_by_rev_list(int ac, const char **av,
+struct commit_list *get_shallow_commits_by_rev_list(struct strvec *argv,
 						    int shallow_flag,
 						    int not_shallow_flag)
 {
@@ -232,7 +232,7 @@ struct commit_list *get_shallow_commits_by_rev_list(int ac, const char **av,
 
 	repo_init_revisions(the_repository, &revs, NULL);
 	save_commit_buffer = 0;
-	setup_revisions(ac, av, &revs, NULL);
+	setup_revisions_from_strvec(argv, &revs, NULL);
 
 	if (prepare_revision_walk(&revs))
 		die("revision walk setup failed");

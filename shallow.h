@@ -7,6 +7,7 @@
 #include "strbuf.h"
 
 struct oid_array;
+struct strvec;
 
 void set_alternate_shallow_file(struct repository *r, const char *path, int override);
 int register_shallow(struct repository *r, const struct object_id *oid);
@@ -36,8 +37,8 @@ void rollback_shallow_file(struct repository *r, struct shallow_lock *lk);
 
 struct commit_list *get_shallow_commits(struct object_array *heads,
 					int depth, int shallow_flag, int not_shallow_flag);
-struct commit_list *get_shallow_commits_by_rev_list(
-		int ac, const char **av, int shallow_flag, int not_shallow_flag);
+struct commit_list *get_shallow_commits_by_rev_list(struct strvec *argv,
+						    int shallow_flag, int not_shallow_flag);
 int write_shallow_commits(struct strbuf *out, int use_pack_protocol,
 			  const struct oid_array *extra);
 

@@ -6052,8 +6052,8 @@ static int make_script_with_merges(struct pretty_print_context *pp,
 	return 0;
 }
 
-int sequencer_make_script(struct repository *r, struct strbuf *out, int argc,
-			  const char **argv, unsigned flags)
+int sequencer_make_script(struct repository *r, struct strbuf *out,
+			  struct strvec *argv, unsigned flags)
 {
 	char *format = NULL;
 	struct pretty_print_context pp = {0};
@@ -6094,7 +6094,8 @@ int sequencer_make_script(struct repository *r, struct strbuf *out, int argc,
 	pp.fmt = revs.commit_format;
 	pp.output_encoding = get_log_output_encoding();
 
-	if (setup_revisions(argc, argv, &revs, NULL) > 1) {
+	setup_revisions_from_strvec(argv, &revs, NULL);
+	if (argv->nr > 1) {
 		ret = error(_("make_script: unhandled options"));
 		goto cleanup;
 	}
