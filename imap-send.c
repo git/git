@@ -1721,7 +1721,7 @@ static int curl_append_msgs_to_imap(struct imap_server_conf *server,
 		lf_to_crlf(&msgbuf.buf);
 
 		curl_easy_setopt(curl, CURLOPT_INFILESIZE_LARGE,
-				 (curl_off_t)(msgbuf.buf.len-prev_len));
+				 cast_size_t_to_curl_off_t(msgbuf.buf.len-prev_len));
 
 		res = curl_easy_perform(curl);
 
