@@ -11567,9 +11567,10 @@ proc mkfontdisp {font top which} {
     set fontpref($font) [set $font]
     ttk::button $top.${font}but -text $which \
         -command [list choosefont $font $which]
-    ttk::label $top.$font -relief flat -font $font \
-        -text $fontattr($font,family) -justify left
+    ttk::label $top.$font -font $font \
+        -text $fontattr($font,family)
     grid x $top.${font}but $top.$font -sticky w
+    grid configure $top.$font -sticky ew
 }
 
 proc centertext {w} {
@@ -11665,11 +11666,9 @@ proc prefspage_general {notebook} {
     grid x $page.hideremotes -sticky w
 
     ttk::entry $page.refstohide -textvariable refstohide
-    ttk::frame $page.refstohidef
-    ttk::label $page.refstohidef.l -text [mc "Refs to hide (space-separated globs)" ]
-    pack $page.refstohidef.l -side left
-    pack configure $page.refstohidef.l -padx 10
-    grid x $page.refstohidef $page.refstohide -sticky ew
+    ttk::label $page.refstohidel -text [mc "Refs to hide (space-separated globs)"]
+    grid x $page.refstohidel $page.refstohide -sticky ew
+    grid configure $page.refstohide -padx {0 5}
 
     ttk::checkbutton $page.autocopy -text [mc "Copy commit ID to clipboard"] \
         -variable autocopy
@@ -11718,16 +11717,17 @@ proc prefspage_general {notebook} {
     ttk::frame $page.extdifff
     ttk::label $page.extdifff.l -text [mc "External diff tool" ]
     ttk::button $page.extdifff.b -text [mc "Choose..."] -command choose_extdiff
-    pack $page.extdifff.l $page.extdifff.b -side left
-    pack configure $page.extdifff.l -padx 10
+    pack $page.extdifff.l -side left
+    pack $page.extdifff.b -side right -padx {0 5}
     grid x $page.extdifff $page.extdifft -sticky ew
+    grid configure $page.extdifft -padx {0 5}
 
     ttk::entry $page.webbrowser -textvariable web_browser
-    ttk::frame $page.webbrowserf
-    ttk::label $page.webbrowserf.l -text [mc "Web browser" ]
-    pack $page.webbrowserf.l -side left
-    pack configure $page.webbrowserf.l -padx 10
-    grid x $page.webbrowserf $page.webbrowser -sticky ew
+    ttk::label $page.webbrowserl -text [mc "Web browser" ]
+    grid x $page.webbrowserl $page.webbrowser -sticky ew
+    grid configure $page.webbrowser -padx {0 5}
+
+    grid columnconfigure $page 2 -weight 1
 
     return $page
 }
@@ -11751,9 +11751,11 @@ proc prefspage_colors {notebook} {
     ttk::label $page.tloadframe.l -text [mc "Theme definition file"]
     ttk::button $page.tloadframe.b -text [mc "Choose..."] \
         -command [list choose_themeloader $page]
-    pack $page.tloadframe.l $page.tloadframe.b -side left -padx 2
+    pack $page.tloadframe.l -side left
+    pack $page.tloadframe.b -side right -padx {0 5}
     pack configure $page.tloadframe.l -padx 0
     grid x $page.tloadframe $page.tloadvar -sticky ew
+    grid configure $page.tloadvar -padx {0 5}
 
     ttk::label $page.themelabel2 -text \
         [mc "The theme definition file may affect all themes."]
@@ -11799,6 +11801,9 @@ proc prefspage_colors {notebook} {
     ttk::button $page.selbgbut -text [mc "Select bg"] \
         -command [list choosecolor selectbgcolor {} $page [mc "background"]]
     grid x $page.selbgbut $page.selbgsep -sticky w
+
+    grid columnconfigure $page 2 -weight 1
+
     return $page
 }
 
@@ -11824,6 +11829,7 @@ proc prefspage_fonts {notebook} {
     mkfontdisp mainfont $page [mc "Main font"]
     mkfontdisp textfont $page [mc "Diff display font"]
     mkfontdisp uifont $page [mc "User interface font"]
+    grid columnconfigure $page 2 -weight 1
     return $page
 }
 
@@ -11858,7 +11864,7 @@ proc doprefs {} {
     grid rowconfigure $notebook 1 -weight 1
     raise [lindex $pages 0]
 
-    grid $notebook -sticky news -padx 2 -pady 2
+    grid $notebook -sticky news -padx 3 -pady 3
     grid rowconfigure $top 0 -weight 1
     grid columnconfigure $top 0 -weight 1
 
@@ -11867,11 +11873,8 @@ proc doprefs {} {
     ttk::button $top.buts.can -text [mc "Cancel"] -command prefscan -default normal
     bind $top <Key-Return> prefsok
     bind $top <Key-Escape> prefscan
-    grid $top.buts.ok $top.buts.can
-    grid columnconfigure $top.buts 0 -weight 1 -uniform a
-    grid columnconfigure $top.buts 1 -weight 1 -uniform a
-    grid $top.buts - - -pady 10 -sticky ew
-    grid columnconfigure $top 2 -weight 1
+    grid $top.buts.ok $top.buts.can -padx 20
+    grid $top.buts -sticky w -pady 10
     bind $top <Visibility> [list focus $top.buts.ok]
 }
 
