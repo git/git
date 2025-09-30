@@ -149,7 +149,7 @@ SpaceBeforeCaseColon: false
 #     f();
 #   }
 # }
-SpaceBeforeParens: ControlStatements
+SpaceBeforeParens: ControlStatementsExceptControlMacros
 
 # Don't insert spaces inside empty '()'
 SpaceInEmptyParentheses: false
