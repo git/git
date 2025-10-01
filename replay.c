@@ -90,6 +90,9 @@ struct commit *replay_pick_regular_commit(struct repository *repo,
 	struct commit *base, *replayed_base;
 	struct tree *pickme_tree, *base_tree;
 
+	if (repo_parse_commit(repo, pickme))
+		return NULL;
+
 	base = pickme->parents->item;
 	replayed_base = mapped_commit(replayed_commits, base, onto);
 
