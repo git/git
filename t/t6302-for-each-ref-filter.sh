@@ -754,4 +754,69 @@ test_expect_success 'start after used with custom sort order' '
 	test_cmp expect actual
 '
 
+test_expect_success 'start after with packed refs' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		test_commit default &&
+
+		git update-ref --stdin <<-\EOF &&
+		create refs/heads/branch @
+		create refs/heads/side @
+		create refs/odd/spot @
+		create refs/tags/one @
+		create refs/tags/two @
+		commit
+		EOF
+
+		cat >expect <<-\EOF &&
+		refs/tags/default
+		refs/tags/one
+		refs/tags/two
+		EOF
+
+		git pack-refs --all &&
+		git for-each-ref --format="%(refname)" --start-after=refs/odd/spot >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'start after with packed refs and some loose refs' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		test_commit default &&
+
+		git update-ref --stdin <<-\EOF &&
+		create refs/heads/branch @
+		create refs/heads/side @
+		create refs/odd/spot @
+		create refs/tags/one @
+		create refs/tags/two @
+		commit
+		EOF
+
+		git pack-refs --all &&
+
+		git update-ref --stdin <<-\EOF &&
+		create refs/heads/foo @
+		create refs/odd/tee @
+		commit
+		EOF
+
+		cat >expect <<-\EOF &&
+		refs/odd/tee
+		refs/tags/default
+		refs/tags/one
+		refs/tags/two
+		EOF
+
+
+		git for-each-ref --format="%(refname)" --start-after=refs/odd/spot >actual &&
+		test_cmp expect actual
+	)
+'
+
 test_done

@@ -539,7 +539,7 @@ static int cache_ref_iterator_seek(struct ref_iterator *ref_iterator,
 				 */
 				break;
 			}
-		} while (slash);
+		} while (slash && dir->nr);
 	}
 
 	return 0;
