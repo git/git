@@ -9,6 +9,7 @@ SYNOPSIS
 --------
 [synopsis]
 git history [<options>]
+git history reword [<options>] <commit>
 
 DESCRIPTION
 -----------
@@ -32,6 +33,12 @@ COMMANDS
 
 This command requires a subcommand. Several subcommands are available to
 rewrite history in different ways:
+
+`reword <commit> [--message=<message>]`::
+	Rewrite the commit message of the specified commit. All the other
+	details of this commit remain unchanged. If no commit message is
+	provided, then this command will spawn an editor with the current
+	message of that commit.
 
 CONFIGURATION
 -------------
