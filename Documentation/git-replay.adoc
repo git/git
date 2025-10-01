@@ -9,16 +9,16 @@ git-replay - EXPERIMENTAL: Replay commits on a new base, works with bare repos t
 SYNOPSIS
 --------
 [verse]
-(EXPERIMENTAL!) 'git replay' ([--contained] --onto <newbase> | --advance <branch>) <revision-range>...
+(EXPERIMENTAL!) 'git replay' ([--contained] --onto <newbase> | --advance <branch>) [--output-commands | --allow-partial] <revision-range>...
 
 DESCRIPTION
 -----------
 
 Takes ranges of commits and replays them onto a new location. Leaves
-the working tree and the index untouched, and updates no references.
-The output of this command is meant to be used as input to
-`git update-ref --stdin`, which would update the relevant branches
-(see the OUTPUT section below).
+the working tree and the index untouched, and by default updates the
+relevant references using atomic transactions. Use `--output-commands`
+to get the old default behavior where update commands that can be piped
+to `git update-ref --stdin` are emitted (see the OUTPUT section below).
 
 THIS COMMAND IS EXPERIMENTAL. THE BEHAVIOR MAY CHANGE.
 
@@ -42,6 +42,20 @@ When `--advance` is specified, the update-ref command(s) in the output
 will update the branch passed as an argument to `--advance` to point at
 the new commits (in other words, this mimics a cherry-pick operation).
 
+--output-commands::
+	Output update-ref commands instead of updating refs directly.
+	When this option is used, the output can be piped to `git update-ref --stdin`
+	for successive, relatively slow, ref updates. This is equivalent to the
+	old default behavior.
+
+--allow-partial::
+	Allow some ref updates to succeed even if others fail. By default,
+	ref updates are atomic (all succeed or all fail). With this option,
+	failed updates are reported as warnings rather than causing the entire
+	command to fail. The command exits with code 0 only if all updates
+	succeed; any failures result in exit code 1. Cannot be used with
+	`--output-commands`.
+
 <revision-range>::
 	Range of commits to replay. More than one <revision-range> can
 	be passed, but in `--advance <branch>` mode, they should have
@@ -54,15 +68,20 @@ include::rev-list-options.adoc[]
 OUTPUT
 ------
 
-When there are no conflicts, the output of this command is usable as
-input to `git update-ref --stdin`.  It is of the form:
+By default, when there are no conflicts, this command updates the relevant
+references using atomic transactions and produces no output. All ref updates
+succeed or all fail (atomic behavior). Use `--allow-partial` to allow some
+updates to succeed while others fail.
+
+When `--output-commands` is used, the output is usable as input to
+`git update-ref --stdin`. It is of the form:
 
 	update refs/heads/branch1 ${NEW_branch1_HASH} ${OLD_branch1_HASH}
 	update refs/heads/branch2 ${NEW_branch2_HASH} ${OLD_branch2_HASH}
 	update refs/heads/branch3 ${NEW_branch3_HASH} ${OLD_branch3_HASH}
 
 where the number of refs updated depends on the arguments passed and
-the shape of the history being replayed.  When using `--advance`, the
+the shape of the history being replayed. When using `--advance`, the
 number of refs updated is always one, but for `--onto`, it can be one
 or more (rebasing multiple branches simultaneously is supported).
 
@@ -77,30 +96,50 @@ is something other than 0 or 1.
 EXAMPLES
 --------
 
-To simply rebase `mybranch` onto `target`:
+To simply rebase `mybranch` onto `target` (default behavior):
 
 ------------
 $ git replay --onto target origin/main..mybranch
-update refs/heads/mybranch ${NEW_mybranch_HASH} ${OLD_mybranch_HASH}
 ------------
 
 To cherry-pick the commits from mybranch onto target:
 
 ------------
 $ git replay --advance target origin/main..mybranch
-update refs/heads/target ${NEW_target_HASH} ${OLD_target_HASH}
 ------------
 
 Note that the first two examples replay the exact same commits and on
 top of the exact same new base, they only differ in that the first
-provides instructions to make mybranch point at the new commits and
-the second provides instructions to make target point at them.
+updates mybranch to point at the new commits and the second updates
+target to point at them.
+
+To get the old default behavior where update commands are emitted:
+
+------------
+$ git replay --output-commands --onto target origin/main..mybranch
+update refs/heads/mybranch ${NEW_mybranch_HASH} ${OLD_mybranch_HASH}
+------------
+
+To rebase multiple branches with partial failure tolerance:
+
+------------
+$ git replay --allow-partial --contained --onto origin/main origin/main..tipbranch
+------------
 
 What if you have a stack of branches, one depending upon another, and
 you'd really like to rebase the whole set?
 
 ------------
 $ git replay --contained --onto origin/main origin/main..tipbranch
+------------
+
+This automatically finds and rebases all branches contained within the
+`origin/main..tipbranch` range.
+
+Or if you want to see the old default behavior where update commands are emitted:
+
+------------
+$ git replay --output-commands --contained --onto origin/main origin/main..tipbranch
 update refs/heads/branch1 ${NEW_branch1_HASH} ${OLD_branch1_HASH}
 update refs/heads/branch2 ${NEW_branch2_HASH} ${OLD_branch2_HASH}
 update refs/heads/tipbranch ${NEW_tipbranch_HASH} ${OLD_tipbranch_HASH}
@@ -108,10 +147,19 @@ update refs/heads/tipbranch ${NEW_tipbranch_HASH} ${OLD_tipbranch_HASH}
 
 When calling `git replay`, one does not need to specify a range of
 commits to replay using the syntax `A..B`; any range expression will
-do:
+do. Here's an example where you explicitly specify which branches to rebase:
 
 ------------
 $ git replay --onto origin/main ^base branch1 branch2 branch3
+------------
+
+This gives you explicit control over exactly which branches are rebased,
+unlike the previous `--contained` example which automatically discovers them.
+
+To see the update commands that would be executed:
+
+------------
+$ git replay --output-commands --onto origin/main ^base branch1 branch2 branch3
 update refs/heads/branch1 ${NEW_branch1_HASH} ${OLD_branch1_HASH}
 update refs/heads/branch2 ${NEW_branch2_HASH} ${OLD_branch2_HASH}
 update refs/heads/branch3 ${NEW_branch3_HASH} ${OLD_branch3_HASH}
