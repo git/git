@@ -113,7 +113,10 @@ test:osx:
     when: on_failure
 
 .windows_before_script: &windows_before_script
-  - Set-MpPreference -DisableRealtimeMonitoring $true
+  # Disabling realtime monitoring fails on some of the runners, but it
+  # significantly speeds up test execution in the case where it works. We thus
+  # try our luck, but ignore any failures.
+  - Set-MpPreference -DisableRealtimeMonitoring $true; $true
 
 build:mingw64:
   stage: build
