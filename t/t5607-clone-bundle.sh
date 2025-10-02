@@ -211,4 +211,16 @@ test_expect_success 'git bundle v3 rejects unknown capabilities' '
 	test_grep "unknown capability .unknown=silly." output
 '
 
+test_expect_success 'cloning bundle suppresses default branch name advice' '
+	test_when_finished "rm -rf bundle-repo clone-repo" &&
+
+	git init bundle-repo &&
+	git -C bundle-repo commit --allow-empty -m init &&
+	git -C bundle-repo bundle create repo.bundle --all &&
+	GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME= \
+		git clone --single-branch bundle-repo/repo.bundle clone-repo 2>err &&
+
+	test_grep ! "hint: " err
+'
+
 test_done

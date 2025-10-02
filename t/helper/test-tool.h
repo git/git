@@ -39,6 +39,7 @@ int cmd__mergesort(int argc, const char **argv);
 int cmd__mktemp(int argc, const char **argv);
 int cmd__name_hash(int argc, const char **argv);
 int cmd__online_cpus(int argc, const char **argv);
+int cmd__pack_deltas(int argc, const char **argv);
 int cmd__pack_mtimes(int argc, const char **argv);
 int cmd__parse_options(int argc, const char **argv);
 int cmd__parse_options_flags(int argc, const char **argv);
@@ -83,6 +84,7 @@ int cmd__wildmatch(int argc, const char **argv);
 int cmd__windows_named_pipe(int argc, const char **argv);
 #endif
 int cmd__write_cache(int argc, const char **argv);
+int cmd__zlib(int argc, const char **argv);
 
 int cmd_hash_impl(int ac, const char **av, int algo, int unsafe);
 

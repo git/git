@@ -2,13 +2,135 @@
 #define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
+#include "config.h"
+#include "environment.h"
 #include "gettext.h"
-#include "object-store-ll.h"
+#include "parse-options.h"
+#include "odb.h"
 #include "reflog.h"
 #include "refs.h"
 #include "revision.h"
 #include "tree.h"
 #include "tree-walk.h"
+#include "wildmatch.h"
+
+static struct reflog_expire_entry_option *find_cfg_ent(struct reflog_expire_options *opts,
+						       const char *pattern, size_t len)
+{
+	struct reflog_expire_entry_option *ent;
+
+	if (!opts->entries_tail)
+		opts->entries_tail = &opts->entries;
+
+	for (ent = opts->entries; ent; ent = ent->next)
+		if (!xstrncmpz(ent->pattern, pattern, len))
+			return ent;
+
+	FLEX_ALLOC_MEM(ent, pattern, pattern, len);
+	*opts->entries_tail = ent;
+	opts->entries_tail = &(ent->next);
+	return ent;
+}
+
+int reflog_expire_config(const char *var, const char *value,
+			 const struct config_context *ctx, void *cb)
+{
+	struct reflog_expire_options *opts = cb;
+	const char *pattern, *key;
+	size_t pattern_len;
+	timestamp_t expire;
+	int slot;
+	struct reflog_expire_entry_option *ent;
+
+	if (parse_config_key(var, "gc", &pattern, &pattern_len, &key) < 0)
+		return git_default_config(var, value, ctx, cb);
+
+	if (!strcmp(key, "reflogexpire")) {
+		slot = REFLOG_EXPIRE_TOTAL;
+		if (git_config_expiry_date(&expire, var, value))
+			return -1;
+	} else if (!strcmp(key, "reflogexpireunreachable")) {
+		slot = REFLOG_EXPIRE_UNREACH;
+		if (git_config_expiry_date(&expire, var, value))
+			return -1;
+	} else
+		return git_default_config(var, value, ctx, cb);
+
+	if (!pattern) {
+		switch (slot) {
+		case REFLOG_EXPIRE_TOTAL:
+			opts->default_expire_total = expire;
+			break;
+		case REFLOG_EXPIRE_UNREACH:
+			opts->default_expire_unreachable = expire;
+			break;
+		}
+		return 0;
+	}
+
+	ent = find_cfg_ent(opts, pattern, pattern_len);
+	if (!ent)
+		return -1;
+	switch (slot) {
+	case REFLOG_EXPIRE_TOTAL:
+		ent->expire_total = expire;
+		break;
+	case REFLOG_EXPIRE_UNREACH:
+		ent->expire_unreachable = expire;
+		break;
+	}
+	return 0;
+}
+
+void reflog_clear_expire_config(struct reflog_expire_options *opts)
+{
+	struct reflog_expire_entry_option *ent = opts->entries, *tmp;
+
+	while (ent) {
+		tmp = ent;
+		ent = ent->next;
+		free(tmp);
+	}
+
+	opts->entries = NULL;
+	opts->entries_tail = NULL;
+}
+
+void reflog_expire_options_set_refname(struct reflog_expire_options *cb,
+				       const char *ref)
+{
+	struct reflog_expire_entry_option *ent;
+
+	if (cb->explicit_expiry == (REFLOG_EXPIRE_TOTAL|REFLOG_EXPIRE_UNREACH))
+		return; /* both given explicitly -- nothing to tweak */
+
+	for (ent = cb->entries; ent; ent = ent->next) {
+		if (!wildmatch(ent->pattern, ref, 0)) {
+			if (!(cb->explicit_expiry & REFLOG_EXPIRE_TOTAL))
+				cb->expire_total = ent->expire_total;
+			if (!(cb->explicit_expiry & REFLOG_EXPIRE_UNREACH))
+				cb->expire_unreachable = ent->expire_unreachable;
+			return;
+		}
+	}
+
+	/*
+	 * If unconfigured, make stash never expire
+	 */
+	if (!strcmp(ref, "refs/stash")) {
+		if (!(cb->explicit_expiry & REFLOG_EXPIRE_TOTAL))
+			cb->expire_total = 0;
+		if (!(cb->explicit_expiry & REFLOG_EXPIRE_UNREACH))
+			cb->expire_unreachable = 0;
+		return;
+	}
+
+	/* Nothing matched -- use the default value */
+	if (!(cb->explicit_expiry & REFLOG_EXPIRE_TOTAL))
+		cb->expire_total = cb->default_expire_total;
+	if (!(cb->explicit_expiry & REFLOG_EXPIRE_UNREACH))
+		cb->expire_unreachable = cb->default_expire_unreachable;
+}
 
 /* Remember to update object flag allocation in object.h */
 #define INCOMPLETE	(1u<<10)
@@ -33,8 +155,8 @@ static int tree_is_complete(const struct object_id *oid)
 	if (!tree->buffer) {
 		enum object_type type;
 		unsigned long size;
-		void *data = repo_read_object_file(the_repository, oid, &type,
-						   &size);
+		void *data = odb_read_object(the_repository->objects, oid,
+					     &type, &size);
 		if (!data) {
 			tree->object.flags |= INCOMPLETE;
 			return 0;
@@ -45,7 +167,8 @@ static int tree_is_complete(const struct object_id *oid)
 	init_tree_desc(&desc, &tree->object.oid, tree->buffer, tree->size);
 	complete = 1;
 	while (tree_entry(&desc, &entry)) {
-		if (!repo_has_object_file(the_repository, &entry.oid) ||
+		if (!odb_has_object(the_repository->objects, &entry.oid,
+				HAS_OBJECT_RECHECK_PACKED | HAS_OBJECT_FETCH_PROMISOR) ||
 		    (S_ISDIR(entry.mode) && !tree_is_complete(&entry.oid))) {
 			tree->object.flags |= INCOMPLETE;
 			complete = 0;
@@ -252,15 +375,15 @@ int should_expire_reflog_ent(struct object_id *ooid, struct object_id *noid,
 	struct expire_reflog_policy_cb *cb = cb_data;
 	struct commit *old_commit, *new_commit;
 
-	if (timestamp < cb->cmd.expire_total)
+	if (timestamp < cb->opts.expire_total)
 		return 1;
 
 	old_commit = new_commit = NULL;
-	if (cb->cmd.stalefix &&
+	if (cb->opts.stalefix &&
 	    (!keep_entry(&old_commit, ooid) || !keep_entry(&new_commit, noid)))
 		return 1;
 
-	if (timestamp < cb->cmd.expire_unreachable) {
+	if (timestamp < cb->opts.expire_unreachable) {
 		switch (cb->unreachable_expire_kind) {
 		case UE_ALWAYS:
 			return 1;
@@ -272,7 +395,7 @@ int should_expire_reflog_ent(struct object_id *ooid, struct object_id *noid,
 		}
 	}
 
-	if (cb->cmd.recno && --(cb->cmd.recno) == 0)
+	if (cb->opts.recno && --(cb->opts.recno) == 0)
 		return 1;
 
 	return 0;
@@ -331,7 +454,7 @@ void reflog_expiry_prepare(const char *refname,
 	struct commit_list *elem;
 	struct commit *commit = NULL;
 
-	if (!cb->cmd.expire_unreachable || is_head(refname)) {
+	if (!cb->opts.expire_unreachable || is_head(refname)) {
 		cb->unreachable_expire_kind = UE_HEAD;
 	} else {
 		commit = lookup_commit_reference_gently(the_repository,
@@ -341,7 +464,7 @@ void reflog_expiry_prepare(const char *refname,
 		cb->unreachable_expire_kind = commit ? UE_NORMAL : UE_ALWAYS;
 	}
 
-	if (cb->cmd.expire_unreachable <= cb->cmd.expire_total)
+	if (cb->opts.expire_unreachable <= cb->opts.expire_total)
 		cb->unreachable_expire_kind = UE_ALWAYS;
 
 	switch (cb->unreachable_expire_kind) {
@@ -358,7 +481,7 @@ void reflog_expiry_prepare(const char *refname,
 		/* For reflog_expiry_cleanup() below */
 		cb->tip_commit = commit;
 	}
-	cb->mark_limit = cb->cmd.expire_total;
+	cb->mark_limit = cb->opts.expire_total;
 	mark_reachable(cb);
 }
 
@@ -384,13 +507,14 @@ void reflog_expiry_cleanup(void *cb_data)
 	free_commit_list(cb->mark_list);
 }
 
-int count_reflog_ent(struct object_id *ooid UNUSED,
+int count_reflog_ent(const char *refname UNUSED,
+		     struct object_id *ooid UNUSED,
 		     struct object_id *noid UNUSED,
 		     const char *email UNUSED,
 		     timestamp_t timestamp, int tz UNUSED,
 		     const char *message UNUSED, void *cb_data)
 {
-	struct cmd_reflog_expire_cb *cb = cb_data;
+	struct reflog_expire_options *cb = cb_data;
 	if (!cb->expire_total || timestamp < cb->expire_total)
 		cb->recno++;
 	return 0;
@@ -398,7 +522,7 @@ int count_reflog_ent(struct object_id *ooid UNUSED,
 
 int reflog_delete(const char *rev, enum expire_reflog_flags flags, int verbose)
 {
-	struct cmd_reflog_expire_cb cmd = { 0 };
+	struct reflog_expire_options opts = { 0 };
 	int status = 0;
 	reflog_expiry_should_prune_fn *should_prune_fn = should_expire_reflog_ent;
 	const char *spec = strstr(rev, "@{");
@@ -421,17 +545,17 @@ int reflog_delete(const char *rev, enum expire_reflog_flags flags, int verbose)
 
 	recno = strtoul(spec + 2, &ep, 10);
 	if (*ep == '}') {
-		cmd.recno = -recno;
+		opts.recno = -recno;
 		refs_for_each_reflog_ent(get_main_ref_store(the_repository),
-					 ref, count_reflog_ent, &cmd);
+					 ref, count_reflog_ent, &opts);
 	} else {
-		cmd.expire_total = approxidate(spec + 2);
+		opts.expire_total = approxidate(spec + 2);
 		refs_for_each_reflog_ent(get_main_ref_store(the_repository),
-					 ref, count_reflog_ent, &cmd);
-		cmd.expire_total = 0;
+					 ref, count_reflog_ent, &opts);
+		opts.expire_total = 0;
 	}
 
-	cb.cmd = cmd;
+	cb.opts = opts;
 	status |= refs_reflog_expire(get_main_ref_store(the_repository), ref,
 				     flags,
 				     reflog_expiry_prepare,

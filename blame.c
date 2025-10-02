@@ -3,7 +3,7 @@
 
 #include "git-compat-util.h"
 #include "refs.h"
-#include "object-store-ll.h"
+#include "odb.h"
 #include "cache-tree.h"
 #include "mergesort.h"
 #include "commit.h"
@@ -116,7 +116,7 @@ static void verify_working_tree_path(struct repository *r,
 		unsigned short mode;
 
 		if (!get_tree_entry(r, commit_oid, path, &blob_oid, &mode) &&
-		    oid_object_info(r, &blob_oid, NULL) == OBJ_BLOB)
+		    odb_read_object_info(r->objects, &blob_oid, NULL) == OBJ_BLOB)
 			return;
 	}
 
@@ -255,7 +255,7 @@ static struct commit *fake_working_tree_commit(struct repository *r,
 		switch (st.st_mode & S_IFMT) {
 		case S_IFREG:
 			if (opt->flags.allow_textconv &&
-			    textconv_object(r, read_from, mode, null_oid(), 0, &buf_ptr, &buf_len))
+			    textconv_object(r, read_from, mode, null_oid(the_hash_algo), 0, &buf_ptr, &buf_len))
 				strbuf_attach(&buf, buf_ptr, buf_len, buf_len + 1);
 			else if (strbuf_read_file(&buf, read_from, st.st_size) != st.st_size)
 				die_errno("cannot open or read '%s'", read_from);
@@ -277,7 +277,8 @@ static struct commit *fake_working_tree_commit(struct repository *r,
 	convert_to_git(r->index, path, buf.buf, buf.len, &buf, 0);
 	origin->file.ptr = buf.buf;
 	origin->file.size = buf.len;
-	pretend_object_file(buf.buf, buf.len, OBJ_BLOB, &origin->blob_oid);
+	odb_pretend_object(the_repository->objects, buf.buf, buf.len,
+			   OBJ_BLOB, &origin->blob_oid);
 
 	/*
 	 * Read the current index, replace the path entry with
@@ -1041,9 +1042,9 @@ static void fill_origin_blob(struct diff_options *opt,
 				    &o->blob_oid, 1, &file->ptr, &file_size))
 			;
 		else
-			file->ptr = repo_read_object_file(the_repository,
-							  &o->blob_oid, &type,
-							  &file_size);
+			file->ptr = odb_read_object(the_repository->objects,
+						    &o->blob_oid, &type,
+						    &file_size);
 		file->size = file_size;
 
 		if (!file->ptr)
@@ -1245,7 +1246,7 @@ static int fill_blob_sha1_and_mode(struct repository *r,
 		return 0;
 	if (get_tree_entry(r, &origin->commit->object.oid, origin->path, &origin->blob_oid, &origin->mode))
 		goto error_out;
-	if (oid_object_info(r, &origin->blob_oid, NULL) != OBJ_BLOB)
+	if (odb_read_object_info(r->objects, &origin->blob_oid, NULL) != OBJ_BLOB)
 		goto error_out;
 	return 0;
  error_out:
@@ -1310,7 +1311,7 @@ static void add_bloom_key(struct blame_bloom_data *bd,
 	}
 
 	bd->keys[bd->nr] = xmalloc(sizeof(struct bloom_key));
-	fill_bloom_key(path, strlen(path), bd->keys[bd->nr], bd->settings);
+	bloom_key_fill(bd->keys[bd->nr], path, strlen(path), bd->settings);
 	bd->nr++;
 }
 
@@ -2869,10 +2870,9 @@ void setup_scoreboard(struct blame_scoreboard *sb,
 				    &sb->final_buf_size))
 			;
 		else
-			sb->final_buf = repo_read_object_file(the_repository,
-							      &o->blob_oid,
-							      &type,
-							      &sb->final_buf_size);
+			sb->final_buf = odb_read_object(the_repository->objects,
+							&o->blob_oid, &type,
+							&sb->final_buf_size);
 
 		if (!sb->final_buf)
 			die(_("cannot read blob %s for path %s"),

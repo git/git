@@ -3,6 +3,7 @@
 #include "git-compat-util.h"
 #include "credential.h"
 #include "builtin.h"
+#include "environment.h"
 #include "config.h"
 
 static const char usage_msg[] =
@@ -16,7 +17,7 @@ int cmd_credential(int argc,
 	const char *op;
 	struct credential c = CREDENTIAL_INIT;
 
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 
 	show_usage_if_asked(argc, argv, usage_msg);
 	if (argc != 2)

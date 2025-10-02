@@ -46,6 +46,10 @@ test_expect_success 'setup' '
 			echo "create refs/heads/$name/$i $base" || return 1
 		done || return 1
 	done >in &&
+	for i in 5 6 7
+	do
+		echo "create refs/heads/bar/4/$i $base" || return 1
+	done >>in &&
 	echo "delete refs/heads/main" >>in &&
 
 	git update-ref --stdin <in &&
@@ -99,9 +103,17 @@ test_expect_success 'adjacent, non-overlapping excluded regions' '
 	esac
 '
 
-test_expect_success 'overlapping excluded regions' '
+test_expect_success 'non-directory excluded regions' '
 	for_each_ref__exclude refs/heads refs/heads/ba refs/heads/baz >actual 2>perf &&
-	for_each_ref refs/heads/foo refs/heads/quux >expect &&
+	for_each_ref refs/heads/bar refs/heads/foo refs/heads/quux >expect &&
+
+	test_cmp expect actual &&
+	assert_jumps 1 perf
+'
+
+test_expect_success 'overlapping excluded regions' '
+	for_each_ref__exclude refs/heads refs/heads/bar refs/heads/bar/4 >actual 2>perf &&
+	for_each_ref refs/heads/baz refs/heads/foo refs/heads/quux >expect &&
 
 	test_cmp expect actual &&
 	assert_jumps 1 perf
@@ -149,6 +161,16 @@ test_expect_success 'non-matching excluded section' '
 
 test_expect_success 'meta-characters are discarded' '
 	for_each_ref__exclude refs/heads "refs/heads/ba*" >actual 2>perf &&
+	for_each_ref >expect &&
+
+	test_cmp expect actual &&
+	assert_no_jumps perf
+'
+
+test_expect_success 'empty string exclude pattern is ignored' '
+	git update-ref refs/heads/loose $(git rev-parse refs/heads/foo/1) &&
+
+	for_each_ref__exclude refs/heads "" >actual 2>perf &&
 	for_each_ref >expect &&
 
 	test_cmp expect actual &&

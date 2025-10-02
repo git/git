@@ -5,6 +5,10 @@
 #include "strvec.h"
 
 #define RANGE_DIFF_CREATION_FACTOR_DEFAULT 60
+#define RANGE_DIFF_MAX_MEMORY_DEFAULT \
+	(sizeof(void*) >= 8 ? \
+		((size_t)(1024L * 1024L) * (size_t)(4L * 1024L)) : /* 4GB on 64-bit */ \
+		((size_t)(1024L * 1024L) * (size_t)(2L * 1024L)))   /* 2GB on 32-bit */
 
 /*
  * A much higher value than the default, when we KNOW we are comparing
@@ -17,6 +21,7 @@ struct range_diff_options {
 	unsigned dual_color:1;
 	unsigned left_only:1, right_only:1;
 	unsigned include_merges:1;
+	size_t max_memory;
 	const struct diff_options *diffopt; /* may be NULL */
 	const struct strvec *other_arg; /* may be NULL */
 };

@@ -9,6 +9,7 @@
 #include "run-command.h"
 #include "levenshtein.h"
 #include "gettext.h"
+#include "hash.h"
 #include "help.h"
 #include "command-list.h"
 #include "string-list.h"
@@ -213,7 +214,7 @@ void exclude_cmds(struct cmdnames *cmds, struct cmdnames *excludes)
 		else if (cmp == 0) {
 			ei++;
 			free(cmds->names[ci++]);
-		} else if (cmp > 0)
+		} else
 			ei++;
 	}
 
@@ -331,7 +332,7 @@ static int get_colopts(const char *var, const char *value,
 void list_commands(struct cmdnames *main_cmds, struct cmdnames *other_cmds)
 {
 	unsigned int colopts = 0;
-	git_config(get_colopts, &colopts);
+	repo_config(the_repository, get_colopts, &colopts);
 
 	if (main_cmds->cnt) {
 		const char *exec_path = git_exec_path();
@@ -416,7 +417,7 @@ void list_cmds_by_config(struct string_list *list)
 {
 	const char *cmd_list;
 
-	if (git_config_get_string_tmp("completion.commands", &cmd_list))
+	if (repo_config_get_string_tmp(the_repository, "completion.commands", &cmd_list))
 		return;
 
 	string_list_sort(list);
@@ -501,7 +502,7 @@ static void list_all_cmds_help_aliases(int longest)
 	struct cmdname_help *aliases;
 	int i;
 
-	git_config(get_alias, &alias_list);
+	repo_config(the_repository, get_alias, &alias_list);
 	string_list_sort(&alias_list);
 
 	for (i = 0; i < alias_list.nr; i++) {
@@ -803,6 +804,15 @@ void get_version_info(struct strbuf *buf, int show_build_options)
 #elif defined ZLIB_VERSION
 		strbuf_addf(buf, "zlib: %s\n", ZLIB_VERSION);
 #endif
+		strbuf_addf(buf, "SHA-1: %s\n", SHA1_BACKEND);
+#if defined SHA1_UNSAFE_BACKEND
+		strbuf_addf(buf, "non-collision-detecting-SHA-1: %s\n",
+			    SHA1_UNSAFE_BACKEND);
+#endif
+		strbuf_addf(buf, "SHA-256: %s\n", SHA256_BACKEND);
+		strbuf_addf(buf, "default-ref-format: %s\n",
+			    ref_storage_format_to_name(REF_STORAGE_FORMAT_DEFAULT));
+		strbuf_addf(buf, "default-hash: %s\n", hash_algos[GIT_HASH_DEFAULT].name);
 	}
 }
 

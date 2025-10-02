@@ -91,7 +91,7 @@ proc save_config {} {
 proc do_options {} {
 	global repo_config global_config font_descs
 	global repo_config_new global_config_new
-	global ui_comm_spell use_ttk NS
+	global ui_comm_spell
 
 	array unset repo_config_new
 	array unset global_config_new
@@ -115,23 +115,23 @@ proc do_options {} {
 	wm transient $w [winfo parent $w]
 	wm geometry $w "+[winfo rootx .]+[winfo rooty .]"
 
-	${NS}::frame $w.buttons
-	${NS}::button $w.buttons.restore -text [mc "Restore Defaults"] \
+	ttk::frame $w.buttons
+	ttk::button $w.buttons.restore -text [mc "Restore Defaults"] \
 		-default normal \
 		-command do_restore_defaults
 	pack $w.buttons.restore -side left
-	${NS}::button $w.buttons.save -text [mc Save] \
+	ttk::button $w.buttons.save -text [mc Save] \
 		-default active \
 		-command [list do_save_config $w]
 	pack $w.buttons.save -side right
-	${NS}::button $w.buttons.cancel -text [mc "Cancel"] \
+	ttk::button $w.buttons.cancel -text [mc "Cancel"] \
 		-default normal \
 		-command [list destroy $w]
 	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
-	${NS}::labelframe $w.repo -text [mc "%s Repository" [reponame]]
-	${NS}::labelframe $w.global -text [mc "Global (All Repositories)"]
+	ttk::labelframe $w.repo -text [mc "%s Repository" [reponame]]
+	ttk::labelframe $w.global -text [mc "Global (All Repositories)"]
 	pack $w.repo -side left -fill both -expand 1 -pady 5 -padx 5
 	pack $w.global -side right -fill both -expand 1 -pady 5 -padx 5
 
@@ -170,7 +170,7 @@ proc do_options {} {
 		foreach f {repo global} {
 			switch -glob -- $type {
 			b {
-				${NS}::checkbutton $w.$f.$optid -text $text \
+				ttk::checkbutton $w.$f.$optid -text $text \
 					-variable ${f}_config_new($name) \
 					-onvalue true \
 					-offvalue false
@@ -178,8 +178,8 @@ proc do_options {} {
 			}
 			i-* {
 				regexp -- {-(\d+)\.\.(\d+)$} $type _junk min max
-				${NS}::frame $w.$f.$optid
-				${NS}::label $w.$f.$optid.l -text [mc "%s:" $text]
+				ttk::frame $w.$f.$optid
+				ttk::label $w.$f.$optid.l -text [mc "%s:" $text]
 				pack $w.$f.$optid.l -side left -anchor w -fill x
 				tspinbox $w.$f.$optid.v \
 					-textvariable ${f}_config_new($name) \
@@ -193,9 +193,9 @@ proc do_options {} {
 			}
 			c -
 			t {
-				${NS}::frame $w.$f.$optid
-				${NS}::label $w.$f.$optid.l -text [mc "%s:" $text]
-				${NS}::entry $w.$f.$optid.v \
+				ttk::frame $w.$f.$optid
+				ttk::label $w.$f.$optid.l -text [mc "%s:" $text]
+				ttk::entry $w.$f.$optid.v \
 					-width 20 \
 					-textvariable ${f}_config_new($name)
 				pack $w.$f.$optid.l -side left -anchor w
@@ -206,7 +206,7 @@ proc do_options {} {
 					menu $w.$f.$optid.m
 					build_encoding_menu $w.$f.$optid.m \
 						[list set ${f}_config_new($name)] 1
-					${NS}::button $w.$f.$optid.b \
+					ttk::button $w.$f.$optid.b \
 						-text [mc "Change"] \
 						-command [list popup_btn_menu \
 							$w.$f.$optid.m $w.$f.$optid.b]
@@ -216,17 +216,11 @@ proc do_options {} {
 			}
 			s {
 				set opts [eval [lindex $option 3]]
-				${NS}::frame $w.$f.$optid
-				${NS}::label $w.$f.$optid.l -text [mc "%s:" $text]
-				if {$use_ttk} {
-					ttk::combobox $w.$f.$optid.v \
-						-textvariable ${f}_config_new($name) \
-						-values $opts -state readonly
-				} else {
-					eval tk_optionMenu $w.$f.$optid.v \
-						${f}_config_new($name) \
-						$opts
-				}
+				ttk::frame $w.$f.$optid
+				ttk::label $w.$f.$optid.l -text [mc "%s:" $text]
+				ttk::combobox $w.$f.$optid.v \
+					-textvariable ${f}_config_new($name) \
+					-values $opts -state readonly
 				pack $w.$f.$optid.l -side left -anchor w -fill x
 				pack $w.$f.$optid.v -side right -anchor e -padx 5
 				pack $w.$f.$optid -side top -anchor w -fill x
@@ -250,17 +244,11 @@ proc do_options {} {
 			set ${f}_config_new(gui.spellingdictionary) $value
 		}
 
-		${NS}::frame $w.$f.$optid
-		${NS}::label $w.$f.$optid.l -text [mc "Spelling Dictionary:"]
-		if {$use_ttk} {
-			ttk::combobox $w.$f.$optid.v \
-				-textvariable ${f}_config_new(gui.spellingdictionary) \
-				-values $all_dicts -state readonly
-		} else {
-			eval tk_optionMenu $w.$f.$optid.v \
-				${f}_config_new(gui.spellingdictionary) \
-				$all_dicts
-		}
+		ttk::frame $w.$f.$optid
+		ttk::label $w.$f.$optid.l -text [mc "Spelling Dictionary:"]
+		ttk::combobox $w.$f.$optid.v \
+			-textvariable ${f}_config_new(gui.spellingdictionary) \
+			-values $all_dicts -state readonly
 		pack $w.$f.$optid.l -side left -anchor w -fill x
 		pack $w.$f.$optid.v -side right -anchor e -padx 5
 		pack $w.$f.$optid -side top -anchor w -fill x
@@ -278,9 +266,9 @@ proc do_options {} {
 		set global_config_new(gui.$font^^size) \
 			[font configure $font -size]
 
-		${NS}::frame $w.global.$name
-		${NS}::label $w.global.$name.l -text [mc "%s:" $text]
-		${NS}::button $w.global.$name.b \
+		ttk::frame $w.global.$name
+		ttk::label $w.global.$name.l -text [mc "%s:" $text]
+		ttk::button $w.global.$name.b \
 			-text [mc "Change Font"] \
 			-command [list \
 				tchoosefont \
@@ -289,9 +277,9 @@ proc do_options {} {
 				global_config_new(gui.$font^^family) \
 				global_config_new(gui.$font^^size) \
 				]
-		${NS}::label $w.global.$name.f -textvariable global_config_new(gui.$font^^family)
-		${NS}::label $w.global.$name.s -textvariable global_config_new(gui.$font^^size)
-		${NS}::label $w.global.$name.pt -text [mc "pt."]
+		ttk::label $w.global.$name.f -textvariable global_config_new(gui.$font^^family)
+		ttk::label $w.global.$name.s -textvariable global_config_new(gui.$font^^size)
+		ttk::label $w.global.$name.pt -text [mc "pt."]
 		pack $w.global.$name.l -side left -anchor w
 		pack $w.global.$name.b -side right -anchor e
 		pack $w.global.$name.pt -side right -anchor w

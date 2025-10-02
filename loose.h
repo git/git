@@ -4,6 +4,7 @@
 #include "khash.h"
 
 struct repository;
+struct odb_source;
 
 struct loose_object_map {
 	kh_oid_map_t *to_compat;
@@ -16,7 +17,8 @@ int repo_loose_object_map_oid(struct repository *repo,
 			      const struct object_id *src,
 			      const struct git_hash_algo *dest_algo,
 			      struct object_id *dest);
-int repo_add_loose_object_map(struct repository *repo, const struct object_id *oid,
+int repo_add_loose_object_map(struct odb_source *source,
+			      const struct object_id *oid,
 			      const struct object_id *compat_oid);
 int repo_read_loose_object_map(struct repository *repo);
 int repo_write_loose_object_map(struct repository *repo);

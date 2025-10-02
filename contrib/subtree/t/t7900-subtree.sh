@@ -9,8 +9,12 @@ This test verifies the basic operation of the add, merge, split, pull,
 and push subcommands of git subtree.
 '
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 TEST_DIRECTORY=$(pwd)/../../../t
 . "$TEST_DIRECTORY"/test-lib.sh
+. "$TEST_DIRECTORY"/lib-gpg.sh
 
 # Use our own wrapper around test-lib.sh's test_create_repo, in order
 # to set log.date=relative.  `git subtree` parses the output of `git
@@ -65,6 +69,33 @@ test_create_pre2_32_repo () {
 	git clone --no-local "$1" "$1-clone" &&
 	new_commit=$(sed -e "s/$commit/$tag/" msg | git -C "$1-clone" commit-tree HEAD^2^{tree}) &&
 	git -C "$1-clone" replace HEAD^2 $new_commit
+}
+
+# test_create_subtree_add REPO ORPHAN PREFIX FILENAME ...
+#
+# Create a simple subtree on a new branch named ORPHAN in REPO.
+# The subtree is then merged into the current branch of REPO,
+# under PREFIX. The generated subtree has has one commit
+# with subject and tag FILENAME with a single file "FILENAME.t"
+#
+# When this method returns:
+# - the current branch of REPO will have file PREFIX/FILENAME.t
+# - REPO will have a branch named ORPHAN with subtree history
+#
+# additional arguments are forwarded to "subtree add"
+test_create_subtree_add () {
+	(
+		cd "$1" &&
+		orphan="$2" &&
+		prefix="$3" &&
+		filename="$4" &&
+		shift 4 &&
+		last="$(git branch --show-current)" &&
+		git switch --orphan "$orphan" &&
+		test_commit "$filename" &&
+		git checkout "$last" &&
+		git subtree add --prefix="$prefix" "$@" "$orphan"
+	)
 }
 
 test_expect_success 'shows short help text for -h' '
@@ -424,6 +455,47 @@ test_expect_success 'split with multiple subtrees' '
 	test "$(git -C "$test_count" subtree split --prefix=subBDir \
 		--squash --rejoin -d -m "Sub B Split 1" 2>&1 | grep -w "\[1\]")" = ""
 '
+
+# When subtree split-ing a directory that has other subtree
+# *merges* underneath it, the split must include those subtrees.
+# This test creates a nested subtree, `subA/subB`, and tests
+# that the tree is correct after a subtree split of `subA/`.
+# The test covers:
+# - An initial `subtree add`; and
+# - A follow-up `subtree merge`
+# both with and without `--squashed`.
+for is_squashed in '' 'y'
+do
+	test_expect_success "split keeps nested ${is_squashed:+--squash }subtrees that are part of the split" '
+		subtree_test_create_repo "$test_count" &&
+		(
+			cd "$test_count" &&
+			mkdir subA &&
+			test_commit subA/file1 &&
+			test_create_subtree_add \
+				. mksubtree subA/subB file2 ${is_squashed:+--squash} &&
+			test_path_is_file subA/file1.t &&
+			test_path_is_file subA/subB/file2.t &&
+			git subtree split --prefix=subA --branch=bsplit &&
+			git checkout bsplit &&
+			test_path_is_file file1.t &&
+			test_path_is_file subB/file2.t &&
+			git checkout mksubtree &&
+			git branch -D bsplit &&
+			test_commit file3 &&
+			git checkout main &&
+			git subtree merge \
+				${is_squashed:+--squash} \
+				--prefix=subA/subB mksubtree &&
+			test_path_is_file subA/subB/file3.t &&
+			git subtree split --prefix=subA --branch=bsplit &&
+			git checkout bsplit &&
+			test_path_is_file file1.t &&
+			test_path_is_file subB/file2.t &&
+			test_path_is_file subB/file3.t
+		)
+	'
+done
 
 test_expect_success 'split sub dir/ with --rejoin from scratch' '
 	subtree_test_create_repo "$test_count" &&
@@ -1560,6 +1632,118 @@ test_expect_success 'subtree descendant check' '
 		git subtree split --prefix folder_subtree/ --branch subtree_tip $defaultBranch &&
 		git subtree split --prefix folder_subtree/ --branch subtree_branch branch &&
 		test $(git rev-list --count subtree_tip..subtree_branch) = 0
+	)
+'
+
+test_expect_success GPG 'add subproj with GPG signing using -S flag' '
+	subtree_test_create_repo "$test_count" &&
+	subtree_test_create_repo "$test_count/sub proj" &&
+	test_create_commit "$test_count" main1 &&
+	test_create_commit "$test_count/sub proj" sub1 &&
+	(
+		cd "$test_count" &&
+		git fetch ./"sub proj" HEAD &&
+		git subtree add --prefix="sub dir" -S FETCH_HEAD &&
+		git verify-commit HEAD &&
+		test "$(last_commit_subject)" = "Add '\''sub dir/'\'' from commit '\''$(git rev-parse FETCH_HEAD)'\''"
+	)
+'
+
+test_expect_success GPG 'add subproj with GPG signing using --gpg-sign flag' '
+	subtree_test_create_repo "$test_count" &&
+	subtree_test_create_repo "$test_count/sub proj" &&
+	test_create_commit "$test_count" main1 &&
+	test_create_commit "$test_count/sub proj" sub1 &&
+	(
+		cd "$test_count" &&
+		git fetch ./"sub proj" HEAD &&
+		git subtree add --prefix="sub dir" --gpg-sign FETCH_HEAD &&
+		git verify-commit HEAD &&
+		test "$(last_commit_subject)" = "Add '\''sub dir/'\'' from commit '\''$(git rev-parse FETCH_HEAD)'\''"
+	)
+'
+
+test_expect_success GPG 'add subproj with GPG signing using specific key ID' '
+	subtree_test_create_repo "$test_count" &&
+	subtree_test_create_repo "$test_count/sub proj" &&
+	test_create_commit "$test_count" main1 &&
+	test_create_commit "$test_count/sub proj" sub1 &&
+	(
+		cd "$test_count" &&
+		git fetch ./"sub proj" HEAD &&
+		git subtree add --prefix="sub dir" -S"$GIT_COMMITTER_EMAIL" FETCH_HEAD &&
+		git verify-commit HEAD &&
+		test "$(last_commit_subject)" = "Add '\''sub dir/'\'' from commit '\''$(git rev-parse FETCH_HEAD)'\''"
+	)
+'
+
+test_expect_success GPG 'merge with GPG signing' '
+	subtree_test_create_repo "$test_count" &&
+	subtree_test_create_repo "$test_count/sub proj" &&
+	test_create_commit "$test_count" main1 &&
+	test_create_commit "$test_count/sub proj" sub1 &&
+	(
+		cd "$test_count" &&
+		git fetch ./"sub proj" HEAD &&
+		git subtree add --prefix="sub dir" FETCH_HEAD
+	) &&
+	test_create_commit "$test_count/sub proj" sub2 &&
+	(
+		cd "$test_count" &&
+		git fetch ./"sub proj" HEAD &&
+		git subtree merge --prefix="sub dir" -S FETCH_HEAD &&
+		git verify-commit HEAD
+	)
+'
+
+test_expect_success GPG 'split with GPG signing and --rejoin' '
+	subtree_test_create_repo "$test_count" &&
+	subtree_test_create_repo "$test_count/sub proj" &&
+	test_create_commit "$test_count" main1 &&
+	test_create_commit "$test_count/sub proj" sub1 &&
+	(
+		cd "$test_count" &&
+		git fetch ./"sub proj" HEAD &&
+		git subtree add --prefix="sub dir" FETCH_HEAD
+	) &&
+	test_create_commit "$test_count" "sub dir/main-sub1" &&
+	(
+		cd "$test_count" &&
+		git subtree split --prefix="sub dir" --rejoin -S &&
+		git verify-commit HEAD
+	)
+'
+
+test_expect_success GPG 'add with --squash and GPG signing' '
+	subtree_test_create_repo "$test_count" &&
+	subtree_test_create_repo "$test_count/sub proj" &&
+	test_create_commit "$test_count" main1 &&
+	test_create_commit "$test_count/sub proj" sub1 &&
+	(
+		cd "$test_count" &&
+		git fetch ./"sub proj" HEAD &&
+		git subtree add --prefix="sub dir" --squash -S FETCH_HEAD &&
+		git verify-commit HEAD &&
+		# With --squash, the commit subject should reference the squash commit (first parent of merge)
+		squash_commit=$(git rev-parse HEAD^2) &&
+		test "$(last_commit_subject)" = "Merge commit '\''$squash_commit'\'' as '\''sub dir'\''"
+	)
+'
+
+test_expect_success GPG 'pull with GPG signing' '
+	subtree_test_create_repo "$test_count" &&
+	subtree_test_create_repo "$test_count/sub proj" &&
+	test_create_commit "$test_count" main1 &&
+	test_create_commit "$test_count/sub proj" sub1 &&
+	(
+		cd "$test_count" &&
+		git subtree add --prefix="sub dir" ./"sub proj" HEAD
+	) &&
+	test_create_commit "$test_count/sub proj" sub2 &&
+	(
+		cd "$test_count" &&
+		git subtree pull --prefix="sub dir" -S ./"sub proj" HEAD &&
+		git verify-commit HEAD
 	)
 '
 

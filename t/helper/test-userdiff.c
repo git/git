@@ -41,7 +41,7 @@ int cmd__userdiff(int argc, const char **argv)
 
 	if (want & USERDIFF_DRIVER_TYPE_CUSTOM) {
 		setup_git_directory();
-		git_config(cmd__userdiff_config, NULL);
+		repo_config(the_repository, cmd__userdiff_config, NULL);
 	}
 
 	for_each_userdiff_driver(driver_cb, &want);

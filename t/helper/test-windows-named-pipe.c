@@ -3,7 +3,7 @@
 #include "strbuf.h"
 
 #ifdef GIT_WINDOWS_NATIVE
-static const char *usage_string = "<pipe-filename>";
+static const char *const usage_string = "<pipe-filename>";
 
 #define TEST_BUFSIZE (4096)
 

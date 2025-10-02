@@ -84,18 +84,26 @@ test_expect_success GPGSSH 'sign commits using literal public keys with ssh-agen
 	test_config gpg.format ssh &&
 	eval $(ssh-agent) &&
 	test_when_finished "kill ${SSH_AGENT_PID}" &&
-	ssh-add "${GPGSSH_KEY_PRIMARY}" &&
-	echo 1 >file && git add file &&
-	git commit -a -m rsa-inline -S"$(cat "${GPGSSH_KEY_PRIMARY}.pub")" &&
-	echo 2 >file &&
-	test_config user.signingkey "$(cat "${GPGSSH_KEY_PRIMARY}.pub")" &&
-	git commit -a -m rsa-config -S &&
-	ssh-add "${GPGSSH_KEY_ECDSA}" &&
-	echo 3 >file &&
-	git commit -a -m ecdsa-inline -S"key::$(cat "${GPGSSH_KEY_ECDSA}.pub")" &&
-	echo 4 >file &&
-	test_config user.signingkey "key::$(cat "${GPGSSH_KEY_ECDSA}.pub")" &&
-	git commit -a -m ecdsa-config -S
+	test_when_finished "test_unconfig user.signingkey" &&
+	mkdir tmpdir &&
+	TMPDIR="$(pwd)/tmpdir" &&
+	(
+		export TMPDIR &&
+		ssh-add "${GPGSSH_KEY_PRIMARY}" &&
+		echo 1 >file && git add file &&
+		git commit -a -m rsa-inline -S"$(cat "${GPGSSH_KEY_PRIMARY}.pub")" &&
+		echo 2 >file &&
+		git config user.signingkey "$(cat "${GPGSSH_KEY_PRIMARY}.pub")" &&
+		git commit -a -m rsa-config -S &&
+		ssh-add "${GPGSSH_KEY_ECDSA}" &&
+		echo 3 >file &&
+		git commit -a -m ecdsa-inline -S"key::$(cat "${GPGSSH_KEY_ECDSA}.pub")" &&
+		echo 4 >file &&
+		git config user.signingkey "key::$(cat "${GPGSSH_KEY_ECDSA}.pub")" &&
+		git commit -a -m ecdsa-config -S
+	) &&
+	find tmpdir -type f >tmpfiles &&
+	test_must_be_empty tmpfiles
 '
 
 test_expect_success GPGSSH,GPGSSH_VERIFYTIME 'create signed commits with keys having defined lifetimes' '

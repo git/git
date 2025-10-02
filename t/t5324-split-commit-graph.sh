@@ -401,7 +401,7 @@ test_expect_success 'verify across alternates' '
 	)
 '
 
-test_expect_success 'reader bounds-checks base-graph chunk' '
+test_expect_success PERL_TEST_HELPERS 'reader bounds-checks base-graph chunk' '
 	git clone --no-hardlinks . corrupt-base-chunk &&
 	(
 		cd corrupt-base-chunk &&

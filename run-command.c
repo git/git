@@ -515,7 +515,13 @@ static void atfork_prepare(struct atfork_state *as)
 {
 	sigset_t all;
 
-	if (sigfillset(&all))
+	/*
+	 * POSIX says sigfillset() can fail, but an overly clever
+	 * compiler can see through the header files and decide
+	 * it cannot fail on a particular platform it is compiling for,
+	 * triggering -Wunreachable-code false positive.
+	 */
+	if (NOT_CONSTANT(sigfillset(&all)))
 		die_errno("sigfillset");
 #ifdef NO_PTHREADS
 	if (sigprocmask(SIG_SETMASK, &all, &as->old))
@@ -1811,7 +1817,7 @@ int prepare_auto_maintenance(int quiet, struct child_process *maint)
 {
 	int enabled, auto_detach;
 
-	if (!git_config_get_bool("maintenance.auto", &enabled) &&
+	if (!repo_config_get_bool(the_repository, "maintenance.auto", &enabled) &&
 	    !enabled)
 		return 0;
 
@@ -1820,8 +1826,8 @@ int prepare_auto_maintenance(int quiet, struct child_process *maint)
 	 * honoring `gc.autoDetach`. This is somewhat weird, but required to
 	 * retain behaviour from when we used to run git-gc(1) here.
 	 */
-	if (git_config_get_bool("maintenance.autodetach", &auto_detach) &&
-	    git_config_get_bool("gc.autodetach", &auto_detach))
+	if (repo_config_get_bool(the_repository, "maintenance.autodetach", &auto_detach) &&
+	    repo_config_get_bool(the_repository, "gc.autodetach", &auto_detach))
 		auto_detach = 1;
 
 	maint->git_cmd = 1;

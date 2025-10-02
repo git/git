@@ -13,13 +13,5 @@ if { $argc >=2 && [lindex $argv 0] == "--working-dir" } {
 	incr argc -2
 }
 
-set basedir [file dirname \
-            [file dirname \
-             [file dirname [info script]]]]
-set bindir [file join $basedir bin]
-set bindir "$bindir;[file join $basedir mingw bin]"
-regsub -all ";" $bindir "\\;" bindir
-set env(PATH) "$bindir;$env(PATH)"
-unset bindir
-
-source [file join [file dirname [info script]] git-gui.tcl]
+set thisdir [file normalize [file dirname [info script]]]
+source [file join $thisdir git-gui.tcl]

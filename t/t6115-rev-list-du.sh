@@ -22,7 +22,7 @@ test_expect_success 'set up repository' '
 disk_usage_slow () {
 	git rev-list --no-object-names "$@" |
 	git cat-file --batch-check="%(objectsize:disk)" |
-	perl -lne '$total += $_; END { print $total}'
+	awk '{ i += $1 } END { print i }'
 }
 
 # check behavior with given rev-list options; note that

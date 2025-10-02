@@ -4240,7 +4240,7 @@ command `git`.  The source side of a builtin is
 - an entry in `BUILTIN_OBJECTS` in the `Makefile`.
 
 Sometimes, more than one builtin is contained in one source file.  For
-example, `cmd_whatchanged()` and `cmd_log()` both reside in `builtin/log.c`,
+example, `cmd_show()` and `cmd_log()` both reside in `builtin/log.c`,
 since they share quite a bit of code.  In that case, the commands which are
 _not_ named like the `.c` file in which they live have to be listed in
 `BUILT_INS` in the `Makefile`.
@@ -4270,7 +4270,7 @@ So, look into `builtin/cat-file.c`, search for `cmd_cat_file()` and look what
 it does.
 
 ------------------------------------------------------------------
-        git_config(git_default_config);
+        repo_config(the_repository, git_default_config);
         if (argc != 3)
 		usage("git cat-file [-t|-s|-e|-p|<type>] <sha1>");
         if (get_sha1(argv[2], sha1))
@@ -4301,11 +4301,11 @@ Now, for the meat:
 
 -----------------------------------------------------------------------------
         case 0:
-                buf = read_object_with_reference(sha1, argv[1], &size, NULL);
+                buf = odb_read_object_peeled(r->objects, sha1, argv[1], &size, NULL);
 -----------------------------------------------------------------------------
 
 This is how you read a blob (actually, not only a blob, but any type of
-object).  To know how the function `read_object_with_reference()` actually
+object).  To know how the function `odb_read_object_peeled()` actually
 works, find the source code for it (something like `git grep
 read_object_with | grep ":[a-z]"` in the Git repository), and read
 the source.

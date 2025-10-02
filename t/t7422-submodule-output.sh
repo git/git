@@ -180,17 +180,14 @@ test_expect_success !MINGW 'git submodule status --recursive propagates SIGPIPE'
 		COMMIT=$(git rev-parse HEAD) &&
 		for i in $(test_seq 2000)
 		do
-			printf "[submodule \"sm-$i\"]\npath = recursive-submodule-path-$i\n" "$i" ||
+			echo "[submodule \"sm-$i\"]" &&
+			echo "path = recursive-submodule-path-$i" ||
 			return 1
 		done >gitmodules &&
 		BLOB=$(git hash-object -w --stdin <gitmodules) &&
 
 		printf "100644 blob $BLOB\t.gitmodules\n" >tree &&
-		for i in $(test_seq 2000)
-		do
-			printf "160000 commit $COMMIT\trecursive-submodule-path-%d\n" "$i" ||
-			return 1
-		done >>tree &&
+		test_seq -f "160000 commit $COMMIT\trecursive-submodule-path-%d" 2000 >>tree &&
 		TREE=$(git mktree <tree) &&
 
 		COMMIT=$(git commit-tree "$TREE") &&

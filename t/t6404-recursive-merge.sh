@@ -108,12 +108,7 @@ test_expect_success 'refuse to merge binary files' '
 	printf "\0\0" >binary-file &&
 	git add binary-file &&
 	git commit -m binary2 &&
-	if test "$GIT_TEST_MERGE_ALGORITHM" = ort
-	then
-		test_must_fail git merge F >merge_output
-	else
-		test_must_fail git merge F 2>merge_output
-	fi &&
+	test_must_fail git merge F >merge_output &&
 	grep "Cannot merge binary files: binary-file (HEAD vs. F)" merge_output
 '
 
@@ -129,22 +124,12 @@ test_expect_success 'mark rename/delete as unmerged' '
 	test_tick &&
 	git commit -m rename &&
 	test_must_fail git merge delete &&
-	if test "$GIT_TEST_MERGE_ALGORITHM" = ort
-	then
-		test 2 = $(git ls-files --unmerged | wc -l)
-	else
-		test 1 = $(git ls-files --unmerged | wc -l)
-	fi &&
+	test 2 = $(git ls-files --unmerged | wc -l) &&
 	git rev-parse --verify :2:a2 &&
 	test_must_fail git rev-parse --verify :3:a2 &&
 	git checkout -f delete &&
 	test_must_fail git merge rename &&
-	if test "$GIT_TEST_MERGE_ALGORITHM" = ort
-	then
-		test 2 = $(git ls-files --unmerged | wc -l)
-	else
-		test 1 = $(git ls-files --unmerged | wc -l)
-	fi &&
+	test 2 = $(git ls-files --unmerged | wc -l) &&
 	test_must_fail git rev-parse --verify :2:a2 &&
 	git rev-parse --verify :3:a2
 '

@@ -1,0 +1,10 @@
+LEFT = function(a, b) {
+    c = mean(a, b)
+    RIGHT = function(d, e) {
+        f = var(d, e)
+        g = f + 1
+        ChangeMe()
+        return (g)
+    }
+    return (RIGHT(2, 3))
+}

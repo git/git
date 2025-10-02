@@ -12,23 +12,25 @@ failing, and produces maximally sane output in git.'
 ## SECTION REPEATED IN t9836 ##
 ###############################
 
+EXTRA_PATH="$(pwd)/temp_python"
+mkdir "$EXTRA_PATH"
+PATH="$EXTRA_PATH:$PATH"
+export PATH
+
 # These tests are specific to Python 2. Write a custom script that executes
 # git-p4 directly with the Python 2 interpreter to ensure that we use that
 # version even if Git was compiled with Python 3.
-python_target_binary=$(which python2)
-if test -n "$python_target_binary"
-then
-	mkdir temp_python
-	PATH="$(pwd)/temp_python:$PATH"
-	export PATH
-
-	write_script temp_python/git-p4-python2 <<-EOF
+test_lazy_prereq P4_PYTHON2 '
+	python_target_binary=$(which python2) &&
+	test -n "$python_target_binary" &&
+	write_script "$EXTRA_PATH"/git-p4-python2 <<-EOF &&
 	exec "$python_target_binary" "$(git --exec-path)/git-p4" "\$@"
 	EOF
-fi
+	( git p4-python2 || true ) >err &&
+	test_grep "valid commands" err
+'
 
-git p4-python2 >err
-if ! grep 'valid commands' err
+if ! test_have_prereq P4_PYTHON2
 then
 	skip_all="skipping python2 git p4 tests; python2 not available"
 	test_done

@@ -708,7 +708,6 @@ int cmd_rev_parse(int argc,
 	struct object_id oid;
 	unsigned int flags = 0;
 	const char *name = NULL;
-	struct object_context unused;
 	struct strbuf buf = STRBUF_INIT;
 	int seen_end_of_options = 0;
 	enum format_type format = FORMAT_DEFAULT;
@@ -734,7 +733,7 @@ int cmd_rev_parse(int argc,
 	/* No options; just report on whether we're in a git repo or not. */
 	if (argc == 1) {
 		setup_git_directory();
-		git_config(git_default_config, NULL);
+		repo_config(the_repository, git_default_config, NULL);
 		return 0;
 	}
 
@@ -769,7 +768,7 @@ int cmd_rev_parse(int argc,
 		/* The rest of the options require a git repository. */
 		if (!did_repo_setup) {
 			prefix = setup_git_directory();
-			git_config(git_default_config, NULL);
+			repo_config(the_repository, git_default_config, NULL);
 			did_repo_setup = 1;
 
 			prepare_repo_settings(the_repository);
@@ -1141,9 +1140,8 @@ int cmd_rev_parse(int argc,
 			name++;
 			type = REVERSED;
 		}
-		if (!get_oid_with_context(the_repository, name,
-					  flags, &oid, &unused)) {
-			object_context_release(&unused);
+		if (!repo_get_oid_with_flags(the_repository, name, &oid,
+					     flags)) {
 			if (output_algo)
 				repo_oid_to_algop(the_repository, &oid,
 						  output_algo, &oid);
@@ -1153,7 +1151,6 @@ int cmd_rev_parse(int argc,
 				show_rev(type, &oid, name);
 			continue;
 		}
-		object_context_release(&unused);
 		if (verify)
 			die_no_single_rev(quiet);
 		if (has_dashdash)

@@ -7,7 +7,7 @@ git-grep. Make sure to include a leading space,
 e.g. GIT_PERF_7821_GREP_OPTS=' -w'. See p7820-grep-engines.sh for more
 options to try.
 
-If GIT_PERF_7821_THREADS is set to a list of threads (e.g. '1 4 8'
+If GIT_PERF_GREP_THREADS is set to a list of threads (e.g. '1 4 8'
 etc.) we will test the patterns under those numbers of threads.
 "
 
@@ -33,13 +33,13 @@ do
 		fi
 		if ! test_have_prereq PERF_GREP_ENGINES_THREADS
 		then
-			test_perf $prereq "$engine grep$GIT_PERF_7821_GREP_OPTS $pattern" "
+			test_perf "$engine grep$GIT_PERF_7821_GREP_OPTS $pattern" --prereq "$prereq" "
 				git -c grep.patternType=$engine grep$GIT_PERF_7821_GREP_OPTS $pattern >'out.$engine' || :
 			"
 		else
 			for threads in $GIT_PERF_GREP_THREADS
 			do
-				test_perf PTHREADS,$prereq "$engine grep$GIT_PERF_7821_GREP_OPTS $pattern with $threads threads" "
+				test_perf "$engine grep$GIT_PERF_7821_GREP_OPTS $pattern with $threads threads" --prereq "PTHREADS,$prereq" "
 					git -c grep.patternType=$engine -c grep.threads=$threads grep$GIT_PERF_7821_GREP_OPTS $pattern >'out.$engine.$threads' || :
 				"
 			done

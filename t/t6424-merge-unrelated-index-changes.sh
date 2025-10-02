@@ -176,9 +176,11 @@ test_expect_success 'merge-recursive, when index==head but head!=HEAD' '
 	# Make index match B
 	git diff C B -- | git apply --cached &&
 	test_when_finished "git clean -fd" &&  # Do not leave untracked around
+	git write-tree >index-before &&
 	# Merge B & F, with B as "head"
 	git merge-recursive A -- B F > out &&
-	test_grep "Already up to date" out
+	git write-tree >index-after &&
+	test_cmp index-before index-after
 '
 
 test_expect_success 'recursive, when file has staged changes not matching HEAD nor what a merge would give' '
@@ -294,10 +296,8 @@ test_expect_success 'with multiple strategies, recursive or ort failure do not e
 	git add a &&
 	git rev-parse :a >expect &&
 
-	sane_unset GIT_TEST_MERGE_ALGORITHM &&
-	test_must_fail git merge -s recursive -s ort -s octopus C^0 >output 2>&1 &&
+	test_must_fail git merge -s ort -s octopus C^0 >output 2>&1 &&
 
-	grep "Trying merge strategy recursive..." output &&
 	grep "Trying merge strategy ort..." output &&
 	grep "Trying merge strategy octopus..." output &&
 	grep "No merge strategy handled the merge." output &&

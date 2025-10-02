@@ -25,7 +25,8 @@ expression s;
 // functions, then the recommended transformation will be bogus with
 // repo_get_commit_tree() on the LHS.
 @@
-identifier f !~ "^(repo_get_commit_tree|get_commit_tree_in_graph_one|load_tree_for_commit|set_commit_tree)$";
+identifier f != { repo_get_commit_tree, get_commit_tree_in_graph_one,
+		  load_tree_for_commit, set_commit_tree };
 expression c;
 @@
   f(...) {<...

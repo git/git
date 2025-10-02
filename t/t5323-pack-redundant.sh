@@ -36,7 +36,7 @@ relationship between packs and objects is as follows:
 
 . ./test-lib.sh
 
-if ! test_have_prereq WITHOUT_BREAKING_CHANGES
+if test_have_prereq WITH_BREAKING_CHANGES
 then
 	skip_all='skipping git-pack-redundant tests; built with breaking changes'
 	test_done
@@ -44,6 +44,11 @@ fi
 
 main_repo=main.git
 shared_repo=shared.git
+
+test_expect_success 'pack-redundant needs --i-still-use-this' '
+	test_must_fail git pack-redundant >message 2>&1 &&
+	test_grep "nominated for removal" message
+'
 
 git_pack_redundant='git pack-redundant --i-still-use-this'
 

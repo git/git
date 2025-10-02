@@ -103,6 +103,7 @@ if the file was renamed on any side of history.  With
 followed by the name of the path in the merge commit.
 
 Examples for `-c` and `--cc` without `--combined-all-paths`:
+
 ------------------------------------------------
 ::100644 100644 100644 fabadb8 cc95eb0 4866510 MM	desc.c
 ::100755 100755 100755 52b7a2d 6d1ac04 d2ac7d7 RM	bar.sh

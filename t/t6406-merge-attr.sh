@@ -259,12 +259,7 @@ test_expect_success 'binary files with union attribute' '
 	printf "two\0" >bin.txt &&
 	git commit -am two &&
 
-	if test "$GIT_TEST_MERGE_ALGORITHM" = ort
-	then
-		test_must_fail git merge bin-main >output
-	else
-		test_must_fail git merge bin-main 2>output
-	fi &&
+	test_must_fail git merge bin-main >output &&
 	grep -i "warning.*cannot merge.*HEAD vs. bin-main" output
 '
 

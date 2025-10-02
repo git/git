@@ -88,6 +88,8 @@ ifndef V
 
 	QUIET_LINT_GITLINK	= @echo '   ' LINT GITLINK $<;
 	QUIET_LINT_MANSEC	= @echo '   ' LINT MAN SEC $<;
+	QUIET_LINT_DELIMSEC	= @echo '   ' LINT DEL SEC $<;
+	QUIET_LINT_DOCSTYLE	= @echo '   ' LINT DOCSTYLE $<;
 	QUIET_LINT_MANEND	= @echo '   ' LINT MAN END $<;
 
 	export V

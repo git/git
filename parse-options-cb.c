@@ -50,12 +50,12 @@ int parse_opt_expiry_date_cb(const struct option *opt, const char *arg,
 int parse_opt_color_flag_cb(const struct option *opt, const char *arg,
 			    int unset)
 {
-	int value;
+	enum git_colorbool value;
 
 	if (!arg)
 		arg = unset ? "never" : (const char *)opt->defval;
 	value = git_config_colorbool(NULL, arg);
-	if (value < 0)
+	if (value == GIT_COLOR_UNKNOWN)
 		return error(_("option `%s' expects \"always\", \"auto\", or \"never\""),
 			     opt->long_name);
 	*(int *)opt->value = value;
@@ -145,7 +145,7 @@ int parse_opt_object_id(const struct option *opt, const char *arg, int unset)
 	struct object_id *target = opt->value;
 
 	if (unset) {
-		oidcpy(target, null_oid());
+		oidcpy(target, null_oid(the_hash_algo));
 		return 0;
 	}
 	if (!arg)

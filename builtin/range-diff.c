@@ -6,6 +6,8 @@
 #include "parse-options.h"
 #include "range-diff.h"
 #include "config.h"
+#include "parse.h"
+#include "color.h"
 
 
 static const char * const builtin_range_diff_usage[] = {
@@ -14,6 +16,21 @@ N_("git range-diff [<options>] <old-tip>...<new-tip>"),
 N_("git range-diff [<options>] <base> <old-tip> <new-tip>"),
 NULL
 };
+
+static int parse_max_memory(const struct option *opt, const char *arg, int unset)
+{
+	size_t *max_memory = opt->value;
+	uintmax_t val;
+
+	if (unset)
+		return 0;
+
+	if (!git_parse_unsigned(arg, &val, SIZE_MAX))
+		return error(_("invalid max-memory value: %s"), arg);
+
+	*max_memory = (size_t)val;
+	return 0;
+}
 
 int cmd_range_diff(int argc,
 		   const char **argv,
@@ -25,6 +42,7 @@ int cmd_range_diff(int argc,
 	struct strvec diff_merges_arg = STRVEC_INIT;
 	struct range_diff_options range_diff_opts = {
 		.creation_factor = RANGE_DIFF_CREATION_FACTOR_DEFAULT,
+		.max_memory = RANGE_DIFF_MAX_MEMORY_DEFAULT,
 		.diffopt = &diffopt,
 		.other_arg = &other_arg
 	};
@@ -40,6 +58,10 @@ int cmd_range_diff(int argc,
 				  PARSE_OPT_OPTARG),
 		OPT_PASSTHRU_ARGV(0, "diff-merges", &diff_merges_arg,
 				  N_("style"), N_("passed to 'git log'"), 0),
+		OPT_CALLBACK(0, "max-memory", &range_diff_opts.max_memory,
+			     N_("size"),
+			     N_("maximum memory for cost matrix (default 4G)"),
+			     parse_max_memory),
 		OPT_PASSTHRU_ARGV(0, "remerge-diff", &diff_merges_arg, NULL,
 				  N_("passed to 'git log'"), PARSE_OPT_NOARG),
 		OPT_BOOL(0, "left-only", &left_only,
@@ -54,7 +76,7 @@ int cmd_range_diff(int argc,
 	struct object_id oid;
 	const char *three_dots = NULL;
 
-	git_config(git_diff_ui_config, NULL);
+	repo_config(the_repository, git_diff_ui_config, NULL);
 
 	repo_diff_setup(the_repository, &diffopt);
 
@@ -66,7 +88,7 @@ int cmd_range_diff(int argc,
 
 	/* force color when --dual-color was used */
 	if (!simple_color)
-		diffopt.use_color = 1;
+		diffopt.use_color = GIT_COLOR_ALWAYS;
 
 	/* If `--diff-merges` was specified, imply `--merges` */
 	if (diff_merges_arg.nr) {

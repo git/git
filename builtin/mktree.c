@@ -11,7 +11,8 @@
 #include "strbuf.h"
 #include "tree.h"
 #include "parse-options.h"
-#include "object-store-ll.h"
+#include "object-file.h"
+#include "odb.h"
 
 static struct treeent {
 	unsigned mode;
@@ -62,11 +63,11 @@ static void write_tree(struct object_id *oid)
 		strbuf_add(&buf, ent->oid.hash, the_hash_algo->rawsz);
 	}
 
-	write_object_file(buf.buf, buf.len, OBJ_TREE, oid);
+	odb_write_object(the_repository->objects, buf.buf, buf.len, OBJ_TREE, oid);
 	strbuf_release(&buf);
 }
 
-static const char *mktree_usage[] = {
+static const char *const mktree_usage[] = {
 	"git mktree [-z] [--missing] [--batch]",
 	NULL
 };
@@ -123,10 +124,10 @@ static void mktree_line(char *buf, int nul_term_line, int allow_missing)
 
 	/* Check the type of object identified by oid without fetching objects */
 	oi.typep = &obj_type;
-	if (oid_object_info_extended(the_repository, &oid, &oi,
-				     OBJECT_INFO_LOOKUP_REPLACE |
-				     OBJECT_INFO_QUICK |
-				     OBJECT_INFO_SKIP_FETCH_OBJECT) < 0)
+	if (odb_read_object_info_extended(the_repository->objects, &oid, &oi,
+					  OBJECT_INFO_LOOKUP_REPLACE |
+					  OBJECT_INFO_QUICK |
+					  OBJECT_INFO_SKIP_FETCH_OBJECT) < 0)
 		obj_type = -1;
 
 	if (obj_type < 0) {

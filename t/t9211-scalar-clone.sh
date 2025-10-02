@@ -177,7 +177,16 @@ test_expect_success 'progress without tty' '
 test_expect_success 'scalar clone warns when background maintenance fails' '
 	GIT_TEST_MAINT_SCHEDULER="crontab:false,launchctl:false,schtasks:false" \
 		scalar clone "file://$(pwd)/to-clone" maint-fail 2>err &&
-	grep "could not turn on maintenance" err
+	grep "could not toggle maintenance" err
+'
+
+test_expect_success 'scalar clone --no-maintenance' '
+	GIT_TEST_MAINT_SCHEDULER="crontab:false,launchctl:false,schtasks:false" \
+	GIT_TRACE2_EVENT="$(pwd)/no-maint.event" \
+	GIT_TRACE2_EVENT_DEPTH=100 \
+		scalar clone --no-maintenance "file://$(pwd)/to-clone" no-maint 2>err &&
+	! grep "could not toggle maintenance" err &&
+	test_subcommand ! git maintenance unregister --force <no-maint.event
 '
 
 test_expect_success '`scalar clone --no-src`' '

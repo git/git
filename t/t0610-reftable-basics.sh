@@ -14,6 +14,13 @@ export GIT_TEST_DEFAULT_REF_FORMAT
 
 INVALID_OID=$(test_oid 001)
 
+test_expect_success 'pack-refs does not crash with -h' '
+	test_expect_code 129 git pack-refs -h >usage &&
+	test_grep "[Uu]sage: git pack-refs " usage &&
+	test_expect_code 129 nongit git pack-refs -h >usage &&
+	test_grep "[Uu]sage: git pack-refs " usage
+'
+
 test_expect_success 'init: creates basic reftable structures' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
@@ -470,11 +477,7 @@ test_expect_success !CYGWIN 'ref transaction: many concurrent writers' '
 		test_commit --no-tag initial &&
 
 		head=$(git rev-parse HEAD) &&
-		for i in $(test_seq 100)
-		do
-			printf "%s commit\trefs/heads/branch-%s\n" "$head" "$i" ||
-			return 1
-		done >expect &&
+		test_seq -f "$head commit\trefs/heads/branch-%d" 100 >expect &&
 		printf "%s commit\trefs/heads/main\n" "$head" >>expect &&
 
 		for i in $(test_seq 100)
@@ -646,9 +649,8 @@ test_expect_success 'basic: commit and list refs' '
 test_expect_success 'basic: can write large commit message' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
-	perl -e "
-		print \"this is a long commit message\" x 50000
-	" >commit-msg &&
+
+	awk "BEGIN { for (i = 0; i < 50000; i++) printf \"%s\", \"this is a long commit message\" }" >commit-msg &&
 	git -C repo commit --allow-empty --file=../commit-msg
 '
 

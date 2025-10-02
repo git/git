@@ -81,7 +81,7 @@ do
 		git blame --root -C --$output combined >output
 	'
 
-	test_expect_success "$output output finds correct commits" '
+	test_expect_success PERL_TEST_HELPERS "$output output finds correct commits" '
 		generate_expect >expect <<-\EOF &&
 		5 base
 		1 modified
@@ -93,7 +93,7 @@ do
 		test_cmp expect actual
 	'
 
-	test_expect_success "$output output shows correct filenames" '
+	test_expect_success PERL_TEST_HELPERS "$output output shows correct filenames" '
 		generate_expect >expect <<-\EOF &&
 		11 one
 		11 two
@@ -102,7 +102,7 @@ do
 		test_cmp expect actual
 	'
 
-	test_expect_success "$output output shows correct previous pointer" '
+	test_expect_success PERL_TEST_HELPERS "$output output shows correct previous pointer" '
 		generate_expect >expect <<-EOF &&
 		5 NONE
 		1 $(git rev-parse modified^) one

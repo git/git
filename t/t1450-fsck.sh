@@ -7,6 +7,7 @@ test_description='git fsck random collection of tests
 '
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY/lib-loose.sh"
 
 test_expect_success setup '
 	git config gc.auto 0 &&
@@ -68,30 +69,6 @@ test_expect_success 'object with hash mismatch' '
 
 		test_must_fail git fsck 2>out &&
 		grep "$oldoid: hash-path mismatch, found at: .*$new" out
-	)
-'
-
-test_expect_success 'object with hash and type mismatch' '
-	git init --bare hash-type-mismatch &&
-	(
-		cd hash-type-mismatch &&
-
-		oid=$(echo blob | git hash-object -w --stdin -t garbage --literally) &&
-		oldoid=$oid &&
-		old=$(test_oid_to_path "$oid") &&
-		new=$(dirname $old)/$(test_oid ff_2) &&
-		oid="$(dirname $new)$(basename $new)" &&
-
-		mv objects/$old objects/$new &&
-		git update-index --add --cacheinfo 100644 $oid foo &&
-		tree=$(git write-tree) &&
-		cmt=$(echo bogus | git commit-tree $tree) &&
-		git update-ref refs/heads/bogus $cmt &&
-
-
-		test_must_fail git fsck 2>out &&
-		grep "^error: $oldoid: hash-path mismatch, found at: .*$new" out &&
-		grep "^error: $oldoid: object is of unknown type '"'"'garbage'"'"'" out
 	)
 '
 
@@ -346,7 +323,7 @@ test_expect_success 'unparseable tree object' '
 	test_grep ! "fatal: empty filename in tree entry" out
 '
 
-test_expect_success 'tree entry with type mismatch' '
+test_expect_success PERL_TEST_HELPERS 'tree entry with type mismatch' '
 	test_when_finished "remove_object \$blob" &&
 	test_when_finished "remove_object \$tree" &&
 	test_when_finished "remove_object \$commit" &&
@@ -364,7 +341,7 @@ test_expect_success 'tree entry with type mismatch' '
 	test_grep ! "dangling blob" out
 '
 
-test_expect_success 'tree entry with bogus mode' '
+test_expect_success PERL_TEST_HELPERS 'tree entry with bogus mode' '
 	test_when_finished "remove_object \$blob" &&
 	test_when_finished "remove_object \$tree" &&
 	blob=$(echo blob | git hash-object -w --stdin) &&
@@ -984,7 +961,7 @@ corrupt_index_checksum () {
 
 # Corrupt the checksum on the index and then
 # verify that only fsck notices.
-test_expect_success 'detect corrupt index file in fsck' '
+test_expect_success PERL_TEST_HELPERS 'detect corrupt index file in fsck' '
 	cp .git/index .git/index.backup &&
 	test_when_finished "mv .git/index.backup .git/index" &&
 	corrupt_index_checksum &&
@@ -997,12 +974,13 @@ test_expect_success 'fsck error and recovery on invalid object type' '
 	(
 		cd garbage-type &&
 
-		garbage_blob=$(git hash-object --stdin -w -t garbage --literally </dev/null) &&
+		garbage_blob=$(loose_obj objects garbage </dev/null) &&
 
 		test_must_fail git fsck 2>err &&
 		grep -e "^error" -e "^fatal" err >errors &&
-		test_line_count = 1 errors &&
-		grep "$garbage_blob: object is of unknown type '"'"'garbage'"'"':" err
+		test_line_count = 2 errors &&
+		test_grep "unable to parse type from header .garbage" err &&
+		test_grep "$garbage_blob: object corrupt or missing:" err
 	)
 '
 

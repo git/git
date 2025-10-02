@@ -1,0 +1,286 @@
+Git v2.52 Release Notes
+=======================
+
+UI, Workflows & Features
+------------------------
+
+ * The "list" subcommand of "git refs" acts as a front-end for
+   "git for-each-ref".
+
+ * "git cmd --help-all" now works outside repositories.
+
+ * "git diff-tree" learned "--max-depth" option.
+
+ * A new subcommand "git repo" gives users a way to grab various
+   repository characteristics.
+
+ * A new command "git last-modified" has been added to show the closest
+   ancestor commit that touched each path.
+
+ * "git refs exists" that works like "git show-ref --exists" has been
+   added.
+
+ * "repo info" learns a short-hand option "-z" that is the same as
+   "--format=nul", and learns to report the objects format used in the
+   repository.
+
+ * "core.commentChar=auto" that attempts to dynamically pick a
+   suitable comment character is non-workable, as it is too much
+   trouble to support for little benefit, and is marked as deprecated.
+
+ * "git send-email" learned to drive "git imap-send" to store already
+   sent e-mails in an IMAP folder.
+
+ * The "promisor-remote" capability mechanism has been updated to
+   allow the "partialCloneFilter" settings and the "token" value to be
+   communicated from the server side.
+
+ * Declare that "git init" that is not otherwise configured uses
+   'main' as the initial branch, not 'master', starting Git 3.0.
+
+ * Keep giving hint about the default initial branch name for users
+   who may be surprised after Git 3.0 switch-over.
+
+ * The stash.index configuration variable can be set to make "git stash
+   pop/apply" pretend that it was invoked with "--index".
+
+
+Performance, Internal Implementation, Development Support etc.
+--------------------------------------------------------------
+
+ * string_list_split*() family of functions have been extended to
+   simplify common use cases.
+
+ * Arrays of strbuf is often a wrong data structure to use, and
+   strbuf_split*() family of functions that create them often have
+   better alternatives.  Update several code paths and replace
+   strbuf_split*().
+
+ * Revision traversal limited with pathspec, like "git log dir/*",
+   used to ignore changed-paths Bloom filter when the pathspec
+   contained wildcards; now they take advantage of the filter when
+   they can.
+
+ * Doc lint updates to encourage the newer and easier-to-use
+   `synopsis` format, with fixes to a handful of existing uses.
+
+ * Remove dependency on the_repository and other globals from the
+   commit-graph code, and other changes unrelated to de-globaling.
+
+ * Discord has been added to the first contribution documentation as
+   another way to ask for help.
+
+ * Inspired by Ezekiel's recent effort to showcase Rust interface, the
+   hash function implementation used to hash lines have been updated
+   to the one used for ELF symbol lookup by Glibc.
+
+ * Instead of scanning for the remaining items to see if there are
+   still commits to be explored in the queue, use khash to remember
+   which items are still on the queue (an unacceptable alternative is
+   to reserve one object flag bits).
+
+ * The bulk-checkin code used to depend on a file-scope static
+   singleton variable, which has been updated to pass an instance
+   throughout the callchain.
+
+ * CodingGuidelines now spells out how bitfields are to be written.
+
+ * Adjust to the way newer versions of cURL selectivel enables tracing
+   options, so that our tests can continue to work.
+   (merge 1b5a6bfff3 jk/curl-global-trace-components later to maint).
+
+ * The clear_alloc_state() API function was not fully clearing the
+   structure for reuse, but since nobody reuses it, replace it with a
+   variant that frees the structure as well, making the callers simpler.
+
+ * "git range-diff" learned a way to limit the memory consumed by
+   O(N*N) cost matrix.
+
+ * Some places in the code confused a variable that is *not* a boolean
+   to enable color but is an enum that records what the user requested
+   to do about color.  A couple of bugs of this sort have been fixed,
+   while the code has been cleaned up to prevent similar bugs in the
+   future.
+
+
+Fixes since v2.51
+-----------------
+
+Unless otherwise noted, all the changes in 2.51.X maintenance track,
+including security updates, are included in this release.
+
+ * During interactive rebase, using 'drop' on a merge commit lead to
+   an error, which was incorrect.
+   (merge 4d491ade8f js/rebase-i-allow-drop-on-a-merge later to maint).
+
+ * "git refs migrate" to migrate the reflog entries from a refs
+   backend to another had a handful of bugs squashed.
+   (merge 465eff81de ps/reflog-migrate-fixes later to maint).
+
+ * "git remote rename origin upstream" failed to move origin/HEAD to
+   upstream/HEAD when origin/HEAD is unborn and performed other
+   renames extremely inefficiently, which has been corrected.
+   (merge 16c4fa26b9 ps/remote-rename-fix later to maint).
+
+ * "git describe" has been optimized by using better data structure.
+   (merge 08bb69d70f rs/describe-with-prio-queue later to maint).
+
+ * "git push" had a code path that led to BUG() but it should have
+   been a die(), as it is a response to a usual but invalid end-user
+   action to attempt pushing an object that does not exist.
+   (merge dfbfc2221b dl/push-missing-object-error later to maint).
+
+ * Various bugs about rename handling in "ort" merge strategy have
+   been fixed.
+   (merge f6ecb603ff en/ort-rename-fixes later to maint).
+
+ * "git jump" (in contrib/) fails to parse the diff header correctly
+   when a file has a space in its name, which has been corrected.
+   (merge 621ce9c1c6 gh/git-jump-pathname-with-sp later to maint).
+
+ * "git diff --no-index" run inside a subdirectory under control of a
+   Git repository operated at the top of the working tree and stripped
+   the prefix from the output, and oddballs like "-" (stdin) did not
+   work correctly because of it.  Correct the set-up by undoing what
+   the set-up sequence did to cwd and prefix.
+   (merge e1d3d61a45 jc/diff-no-index-in-subdir later to maint).
+
+ * Various options to "git diff" that makes comparison ignore certain
+   aspects of the differences (like "space changes are ignored",
+   "differences in lines that match these regular expressions are
+   ignored") did not work well with "--name-only" and friends.
+   (merge b55e6d36eb ly/diff-name-only-with-diff-from-content later to maint).
+
+ * Documentation for "git rebase" has been updated.
+   (merge 3f7f2b0359 je/doc-rebase later to maint).
+
+ * The start_delayed_progress() function in the progress eye-candy API
+   did not clear its internal state, making an initial delay value
+   larger than 1 second ineffective, which has been corrected.
+   (merge 457534d041 js/progress-delay-fix later to maint).
+
+ * The compatObjectFormat extension is used to hide an incomplete
+   feature that is not yet usable for any purpose other than
+   developing the feature further.  Document it as such to discourage
+   its use by mere mortals.
+   (merge 716d905792 bc/doc-compat-object-format-not-working later to maint).
+
+ * "git log -L..." compared trees of multiple parents with the tree of the
+   merge result in an unnecessarily inefficient way.
+   (merge 0a15bb634c sg/line-log-merge-optim later to maint).
+
+ * Under a race against another process that is repacking the
+   repository, especially a partially cloned one, "git fetch" may
+   mistakenly think some objects we do have are missing, which has
+   been corrected.
+   (merge 8f32a5a6c0 jk/fetch-check-graph-objects-fix later to maint).
+
+ * "git fetch" can clobber a symref that is dangling when the
+   remote-tracking HEAD is set to auto update, which has been
+   corrected.
+
+ * "git describe <blob>" misbehaves and/or crashes in some corner
+   cases, which has been taught to exit with failure gracefully.
+   (merge 7c10e48e81 jk/describe-blob later to maint).
+
+ * Manual page for "gitk" is updated with the current maintainer's
+   name.
+   (merge bcb20dda83 js/doc-gitk-history later to maint).
+
+ * Update the instruction to use of GGG in the MyFirstContribution
+   document to say that a GitHub PR could be made against `git/git`
+   instead of `gitgitgadget/git`.
+   (merge 37001cdbc4 ds/doc-ggg-pr-fork-clarify later to maint).
+
+ * Makefile tried to run multiple "cargo build" which would not work
+   very well; serialize their execution to work it around.
+   (merge 0eeacde50e da/cargo-serialize later to maint).
+
+ * "git repack --path-walk" lost objects in some corner cases, which
+   has been corrected.
+   (merge 93afe9b060 ds/path-walk-repack-fix later to maint).
+
+ * "git ls-files <pathspec>..." should not necessarily have to expand
+   the index fully if a sparsified directory is excluded by the
+   pathspec; the code is taught to expand the index on demand to avoid
+   this.
+   (merge 681f26bccc ds/ls-files-lazy-unsparse later to maint).
+
+ * Windows "real-time monitoring" interferes with the execution of
+   tests and affects negatively in both correctness and performance,
+   which has been disabled in Gitlab CI.
+   (merge 608cf5b793 ps/gitlab-ci-disable-windows-monitoring later to maint).
+
+ * A broken or malicious "git fetch" can say that it has the same
+   object for many many times, and the upload-pack serving it can
+   exhaust memory storing them redundantly, which has been corrected.
+   (merge 88a2dc68c8 ps/upload-pack-oom-protection later to maint).
+
+ * A corner case bug in "git log -L..." has been corrected.
+   (merge e3106998ff sg/line-log-boundary-fixes later to maint).
+
+ * "git rev-parse --short" and friends failed to disambiguate two
+   objects with object names that share common prefix longer than 32
+   characters, which has been fixed.
+   (merge 8655908b9e jc/longer-disambiguation-fix later to maint).
+
+ * Some among "git add -p" and friends ignored color.diff and/or
+   color.ui configuration variables, which is an old regression, which
+   has been corrected.
+   (merge 1092cd6435 jk/add-i-color later to maint).
+
+ * "git subtree" (in contrib/) did not work correctly when splitting
+   squashed subtrees, which has been improved.
+
+ * Import a newer version of the clar unit testing framework.
+   (merge 93dbb6b3c5 ps/clar-updates later to maint).
+
+ * "git send-email --compose --reply-to=<address>" used to add
+   duplicated Reply-To: header, which made mailservers unhappy.  This
+   has been corrected.
+   (merge f448f65719 nb/send-email-no-dup-reply-to later to maint).
+
+ * "git rebase -i" failed to clean-up the commit log message when the
+   command commits the final one in a chain of "fixup" commands, which
+   has been corrected.
+   (merge 82a0a73e15 pw/rebase-i-cleanup-fix later to maint).
+
+ * There are double frees and leaks around setup_revisions() API used
+   in "git stash show", which has been fixed, and setup_revisions()
+   API gained a wrapper to make it more ergonomic when using it with
+   strvec-manged argc/argv pairs.
+   (merge a04bc71725 jk/setup-revisions-freefix later to maint).
+
+ * Deal more gracefully with directory / file conflicts when the files
+   backend is used for ref storage, by failing only the ones that are
+   involved in the conflict while allowing others.
+   (merge 948b2ab0d8 kn/refs-files-case-insensitive later to maint).
+
+ * "git last-modified" operating in non-recursive mode used to trigger
+   a BUG(), which has been corrected.
+
+ * Other code cleanup, docfix, build fix, etc.
+   (merge 823d537fa7 kh/doc-git-log-markup-fix later to maint).
+   (merge cf7efa4f33 rj/t6137-cygwin-fix later to maint).
+   (merge 529a60a885 ua/t1517-short-help-tests later to maint).
+   (merge 22d421fed9 ac/deglobal-fmt-merge-log-config later to maint).
+   (merge 741f36c7d9 kr/clone-synopsis-fix later to maint).
+   (merge a60203a015 dk/t7005-editor-updates later to maint).
+   (merge 7d4a5fef7d ds/doc-count-objects-fix later to maint).
+   (merge 16684b6fae ps/reftable-libgit2-cleanup later to maint).
+   (merge f38786baa7 ja/asciidoc-doctor-verbatim-fixes later to maint).
+   (merge 374579c6d4 kh/doc-interpret-trailers-markup-fix later to maint).
+   (merge 44dce6541c kh/doc-config-typofix later to maint).
+   (merge 785628b173 js/doc-sending-patch-via-thunderbird later to maint).
+   (merge e5c27bd3d8 je/doc-add later to maint).
+   (merge 13296ac909 ps/object-store-midx-dedup-info later to maint).
+   (merge 2f4bf83ffc km/alias-doc-markup-fix later to maint).
+   (merge b0d97aac19 kh/doc-markup-fixes later to maint).
+   (merge f9a6705d9a tc/t0450-harden later to maint).
+   (merge c25651aefd ds/midx-write-fixes later to maint).
+   (merge 069c15d256 rs/object-name-extend-abbrev-len-update later to maint).
+   (merge bf5c224537 mm/worktree-doc-typofix later to maint).
+   (merge 31397bc4f7 kh/doc-fast-import-markup-fix later to maint).
+   (merge ac7096723b jc/doc-includeif-hasconfig-remote-url-fix later to maint).
+   (merge fafc9b08b8 ag/doc-sendmail-gmail-example-update later to maint).
+   (merge a66fc22bf9 rs/get-oid-with-flags-cleanup later to maint).

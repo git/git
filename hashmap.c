@@ -205,8 +205,9 @@ void hashmap_clear_(struct hashmap *map, ssize_t entry_offset)
 		return;
 	if (entry_offset >= 0)  /* called by hashmap_clear_and_free */
 		free_individual_entries(map, entry_offset);
-	free(map->table);
-	memset(map, 0, sizeof(*map));
+	FREE_AND_NULL(map->table);
+	map->tablesize = 0;
+	map->private_size = 0;
 }
 
 struct hashmap_entry *hashmap_get(const struct hashmap *map,

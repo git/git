@@ -1,0 +1,12 @@
+[LEFT]
+
+      [LEFT "CENTER"]
+      # comment
+      ; comment
+      name = value
+
+      [LEFT "RIGHT"]
+      # comment
+      ; comment
+      name = value
+      ChangeMe

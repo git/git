@@ -37,7 +37,8 @@ OPTIONS
 -------
 -s::
 --strip-comments::
-	Skip and remove all lines starting with a comment character (default '#').
+	Skip and remove all lines starting with a comment character
+	(`core.commentChar`, default `#`).
 
 -c::
 --comment-lines::

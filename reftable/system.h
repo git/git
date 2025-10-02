@@ -1,18 +1,25 @@
 /*
-Copyright 2020 Google LLC
-
-Use of this source code is governed by a BSD-style
-license that can be found in the LICENSE file or at
-https://developers.google.com/open-source/licenses/bsd
-*/
+ * Copyright 2020 Google LLC
+ *
+ * Use of this source code is governed by a BSD-style
+ * license that can be found in the LICENSE file or at
+ * https://developers.google.com/open-source/licenses/bsd
+ */
 
 #ifndef SYSTEM_H
 #define SYSTEM_H
 
 /* This header glues the reftable library to the rest of Git */
 
-#include "git-compat-util.h"
+#define MINGW_DONT_HANDLE_IN_USE_ERROR
+#include "compat/posix.h"
 #include "compat/zlib-compat.h"
+
+/*
+ * Return a random 32 bit integer. This function is expected to return
+ * pre-seeded data.
+ */
+uint32_t reftable_rand(void);
 
 /*
  * An implementation-specific temporary file. By making this specific to the
@@ -74,7 +81,9 @@ struct reftable_flock {
  * to acquire the lock. If `timeout_ms` is 0 we don't wait, if it is negative
  * we block indefinitely.
  *
- * Retrun 0 on success, a reftable error code on error.
+ * Retrun 0 on success, a reftable error code on error. Specifically,
+ * `REFTABLE_LOCK_ERROR` should be returned in case the target path is already
+ * locked.
  */
 int flock_acquire(struct reftable_flock *l, const char *target_path,
 		  long timeout_ms);

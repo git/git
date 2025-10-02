@@ -68,12 +68,70 @@ static char *fix_filename(const char *prefix, const char *file)
 		return prefix_filename_except_for_dash(prefix, file);
 }
 
+static int do_get_int_value(const void *value, size_t precision, intmax_t *ret)
+{
+	switch (precision) {
+	case sizeof(int8_t):
+		*ret = *(int8_t *)value;
+		return 0;
+	case sizeof(int16_t):
+		*ret = *(int16_t *)value;
+		return 0;
+	case sizeof(int32_t):
+		*ret = *(int32_t *)value;
+		return 0;
+	case sizeof(int64_t):
+		*ret = *(int64_t *)value;
+		return 0;
+	default:
+		return -1;
+	}
+}
+
+static intmax_t get_int_value(const struct option *opt, enum opt_parsed flags)
+{
+	intmax_t ret;
+	if (do_get_int_value(opt->value, opt->precision, &ret))
+		BUG("invalid precision for option %s", optname(opt, flags));
+	return ret;
+}
+
+static enum parse_opt_result set_int_value(const struct option *opt,
+					   enum opt_parsed flags,
+					   intmax_t value)
+{
+	switch (opt->precision) {
+	case sizeof(int8_t):
+		*(int8_t *)opt->value = value;
+		return 0;
+	case sizeof(int16_t):
+		*(int16_t *)opt->value = value;
+		return 0;
+	case sizeof(int32_t):
+		*(int32_t *)opt->value = value;
+		return 0;
+	case sizeof(int64_t):
+		*(int64_t *)opt->value = value;
+		return 0;
+	default:
+		BUG("invalid precision for option %s", optname(opt, flags));
+	}
+}
+
+static int signed_int_fits(intmax_t value, size_t precision)
+{
+	size_t bits = precision * CHAR_BIT;
+	intmax_t upper_bound = INTMAX_MAX >> (bitsizeof(intmax_t) - bits);
+	intmax_t lower_bound = -upper_bound - 1;
+	return lower_bound <= value && value <= upper_bound;
+}
+
 static enum parse_opt_result do_get_value(struct parse_opt_ctx_t *p,
 					  const struct option *opt,
 					  enum opt_parsed flags,
 					  const char **argp)
 {
-	const char *s, *arg;
+	const char *arg;
 	const int unset = flags & OPT_UNSET;
 	int err;
 
@@ -89,35 +147,55 @@ static enum parse_opt_result do_get_value(struct parse_opt_ctx_t *p,
 		return opt->ll_callback(p, opt, NULL, unset);
 
 	case OPTION_BIT:
+	{
+		intmax_t value = get_int_value(opt, flags);
 		if (unset)
-			*(int *)opt->value &= ~opt->defval;
+			value &= ~opt->defval;
 		else
-			*(int *)opt->value |= opt->defval;
-		return 0;
+			value |= opt->defval;
+		return set_int_value(opt, flags, value);
+	}
 
 	case OPTION_NEGBIT:
+	{
+		intmax_t value = get_int_value(opt, flags);
 		if (unset)
-			*(int *)opt->value |= opt->defval;
+			value |= opt->defval;
 		else
-			*(int *)opt->value &= ~opt->defval;
-		return 0;
+			value &= ~opt->defval;
+		return set_int_value(opt, flags, value);
+	}
 
 	case OPTION_BITOP:
+	{
+		intmax_t value = get_int_value(opt, flags);
 		if (unset)
 			BUG("BITOP can't have unset form");
-		*(int *)opt->value &= ~opt->extra;
-		*(int *)opt->value |= opt->defval;
-		return 0;
+		value &= ~opt->extra;
+		value |= opt->defval;
+		return set_int_value(opt, flags, value);
+	}
 
 	case OPTION_COUNTUP:
-		if (*(int *)opt->value < 0)
-			*(int *)opt->value = 0;
-		*(int *)opt->value = unset ? 0 : *(int *)opt->value + 1;
-		return 0;
+	{
+		size_t bits = CHAR_BIT * opt->precision;
+		intmax_t upper_bound = INTMAX_MAX >> (bitsizeof(intmax_t) - bits);
+		intmax_t value = get_int_value(opt, flags);
+
+		if (value < 0)
+			value = 0;
+		if (unset)
+			value = 0;
+		else if (value < upper_bound)
+			value++;
+		else
+			return error(_("value for %s exceeds %"PRIdMAX),
+				     optname(opt, flags), upper_bound);
+		return set_int_value(opt, flags, value);
+	}
 
 	case OPTION_SET_INT:
-		*(int *)opt->value = unset ? 0 : opt->defval;
-		return 0;
+		return set_int_value(opt, flags, unset ? 0 : opt->defval);
 
 	case OPTION_STRING:
 		if (unset)
@@ -172,41 +250,77 @@ static enum parse_opt_result do_get_value(struct parse_opt_ctx_t *p,
 			return (*opt->ll_callback)(p, opt, p_arg, p_unset);
 	}
 	case OPTION_INTEGER:
-		if (unset) {
-			*(int *)opt->value = 0;
-			return 0;
-		}
-		if (opt->flags & PARSE_OPT_OPTARG && !p->opt) {
-			*(int *)opt->value = opt->defval;
-			return 0;
-		}
-		if (get_arg(p, opt, flags, &arg))
-			return -1;
-		if (!*arg)
-			return error(_("%s expects a numerical value"),
-				     optname(opt, flags));
-		*(int *)opt->value = strtol(arg, (char **)&s, 10);
-		if (*s)
-			return error(_("%s expects a numerical value"),
-				     optname(opt, flags));
-		return 0;
+	{
+		intmax_t upper_bound = INTMAX_MAX >> (bitsizeof(intmax_t) - CHAR_BIT * opt->precision);
+		intmax_t lower_bound = -upper_bound - 1;
+		intmax_t value;
 
-	case OPTION_MAGNITUDE:
 		if (unset) {
-			*(unsigned long *)opt->value = 0;
-			return 0;
-		}
-		if (opt->flags & PARSE_OPT_OPTARG && !p->opt) {
-			*(unsigned long *)opt->value = opt->defval;
-			return 0;
-		}
-		if (get_arg(p, opt, flags, &arg))
+			value = 0;
+		} else if (opt->flags & PARSE_OPT_OPTARG && !p->opt) {
+			value = opt->defval;
+		} else if (get_arg(p, opt, flags, &arg)) {
 			return -1;
-		if (!git_parse_ulong(arg, opt->value))
+		} else if (!*arg) {
+			return error(_("%s expects a numerical value"),
+				     optname(opt, flags));
+		} else if (!git_parse_signed(arg, &value, upper_bound)) {
+			if (errno == ERANGE)
+				return error(_("value %s for %s not in range [%"PRIdMAX",%"PRIdMAX"]"),
+					     arg, optname(opt, flags), lower_bound, upper_bound);
+
+			return error(_("%s expects an integer value with an optional k/m/g suffix"),
+				     optname(opt, flags));
+		}
+
+		if (value < lower_bound)
+			return error(_("value %s for %s not in range [%"PRIdMAX",%"PRIdMAX"]"),
+				     arg, optname(opt, flags), (intmax_t)lower_bound, (intmax_t)upper_bound);
+
+		return set_int_value(opt, flags, value);
+	}
+	case OPTION_UNSIGNED:
+	{
+		uintmax_t upper_bound = UINTMAX_MAX >> (bitsizeof(uintmax_t) - CHAR_BIT * opt->precision);
+		uintmax_t value;
+
+		if (unset) {
+			value = 0;
+		} else if (opt->flags & PARSE_OPT_OPTARG && !p->opt) {
+			value = opt->defval;
+		} else if (get_arg(p, opt, flags, &arg)) {
+			return -1;
+		} else if (!*arg) {
+			return error(_("%s expects a numerical value"),
+				     optname(opt, flags));
+		} else if (!git_parse_unsigned(arg, &value, upper_bound)) {
+			if (errno == ERANGE)
+				return error(_("value %s for %s not in range [%"PRIdMAX",%"PRIdMAX"]"),
+					     arg, optname(opt, flags), (uintmax_t) 0, upper_bound);
+
 			return error(_("%s expects a non-negative integer value"
 				       " with an optional k/m/g suffix"),
 				     optname(opt, flags));
-		return 0;
+		}
+
+		switch (opt->precision) {
+		case 1:
+			*(uint8_t *)opt->value = value;
+			return 0;
+		case 2:
+			*(uint16_t *)opt->value = value;
+			return 0;
+		case 4:
+			*(uint32_t *)opt->value = value;
+			return 0;
+		case 8:
+			*(uint64_t *)opt->value = value;
+			return 0;
+		default:
+			BUG("invalid precision for option %s",
+			    optname(opt, flags));
+		}
+	}
 
 	default:
 		BUG("opt->type %d should not happen", opt->type);
@@ -214,7 +328,9 @@ static enum parse_opt_result do_get_value(struct parse_opt_ctx_t *p,
 }
 
 struct parse_opt_cmdmode_list {
-	int value, *value_ptr;
+	intmax_t value;
+	void *value_ptr;
+	size_t precision;
 	const struct option *opt;
 	const char *arg;
 	enum opt_parsed flags;
@@ -228,7 +344,7 @@ static void build_cmdmode_list(struct parse_opt_ctx_t *ctx,
 
 	for (; opts->type != OPTION_END; opts++) {
 		struct parse_opt_cmdmode_list *elem = ctx->cmdmode_list;
-		int *value_ptr = opts->value;
+		void *value_ptr = opts->value;
 
 		if (!(opts->flags & PARSE_OPT_CMDMODE) || !value_ptr)
 			continue;
@@ -240,10 +356,13 @@ static void build_cmdmode_list(struct parse_opt_ctx_t *ctx,
 
 		CALLOC_ARRAY(elem, 1);
 		elem->value_ptr = value_ptr;
-		elem->value = *value_ptr;
+		elem->precision = opts->precision;
+		if (do_get_int_value(value_ptr, opts->precision, &elem->value))
+			optbug(opts, "has invalid precision");
 		elem->next = ctx->cmdmode_list;
 		ctx->cmdmode_list = elem;
 	}
+	BUG_if_bug("invalid 'struct option'");
 }
 
 static char *optnamearg(const struct option *opt, const char *arg,
@@ -265,7 +384,13 @@ static enum parse_opt_result get_value(struct parse_opt_ctx_t *p,
 	char *opt_name, *other_opt_name;
 
 	for (; elem; elem = elem->next) {
-		if (*elem->value_ptr == elem->value)
+		intmax_t new_value;
+
+		if (do_get_int_value(elem->value_ptr, elem->precision,
+				     &new_value))
+			BUG("impossible: invalid precision");
+
+		if (new_value == elem->value)
 			continue;
 
 		if (elem->opt &&
@@ -275,7 +400,7 @@ static enum parse_opt_result get_value(struct parse_opt_ctx_t *p,
 		elem->opt = opt;
 		elem->arg = arg;
 		elem->flags = flags;
-		elem->value = *elem->value_ptr;
+		elem->value = new_value;
 	}
 
 	if (result || !elem)
@@ -534,10 +659,14 @@ static void parse_options_check(const struct option *opts)
 		    opts->long_name && !(opts->flags & PARSE_OPT_NONEG))
 			optbug(opts, "OPTION_SET_INT 0 should not be negatable");
 		switch (opts->type) {
-		case OPTION_COUNTUP:
+		case OPTION_SET_INT:
 		case OPTION_BIT:
 		case OPTION_NEGBIT:
-		case OPTION_SET_INT:
+		case OPTION_BITOP:
+		case OPTION_COUNTUP:
+			if (!signed_int_fits(opts->defval, opts->precision))
+				optbug(opts, "has invalid defval");
+			/* fallthru */
 		case OPTION_NUMBER:
 			if ((opts->flags & PARSE_OPT_OPTARG) ||
 			    !(opts->flags & PARSE_OPT_NOARG))
@@ -656,7 +785,7 @@ static void show_negated_gitcomp(const struct option *opts, int show_all,
 		case OPTION_STRING:
 		case OPTION_FILENAME:
 		case OPTION_INTEGER:
-		case OPTION_MAGNITUDE:
+		case OPTION_UNSIGNED:
 		case OPTION_CALLBACK:
 		case OPTION_BIT:
 		case OPTION_NEGBIT:
@@ -708,7 +837,7 @@ static int show_gitcomp(const struct option *opts, int show_all)
 		case OPTION_STRING:
 		case OPTION_FILENAME:
 		case OPTION_INTEGER:
-		case OPTION_MAGNITUDE:
+		case OPTION_UNSIGNED:
 		case OPTION_CALLBACK:
 			if (opts->flags & PARSE_OPT_NOARG)
 				break;
@@ -824,10 +953,16 @@ static void free_preprocessed_options(struct option *options)
 	free(options);
 }
 
+#define USAGE_NORMAL 0
+#define USAGE_FULL 1
+#define USAGE_TO_STDOUT 0
+#define USAGE_TO_STDERR 1
+
 static enum parse_opt_result usage_with_options_internal(struct parse_opt_ctx_t *,
 							 const char * const *,
 							 const struct option *,
-							 int, int);
+							 int full_usage,
+							 int usage_to_stderr);
 
 enum parse_opt_result parse_options_step(struct parse_opt_ctx_t *ctx,
 					 const struct option *options,
@@ -959,7 +1094,8 @@ enum parse_opt_result parse_options_step(struct parse_opt_ctx_t *ctx,
 		}
 
 		if (internal_help && !strcmp(arg + 2, "help-all"))
-			return usage_with_options_internal(ctx, usagestr, options, 1, 0);
+			return usage_with_options_internal(ctx, usagestr, options,
+							   USAGE_FULL, USAGE_TO_STDOUT);
 		if (internal_help && !strcmp(arg + 2, "help"))
 			goto show_usage;
 		switch (parse_long_opt(ctx, arg + 2, options)) {
@@ -1000,7 +1136,8 @@ unknown:
 	return PARSE_OPT_DONE;
 
  show_usage:
-	return usage_with_options_internal(ctx, usagestr, options, 0, 0);
+	return usage_with_options_internal(ctx, usagestr, options,
+					   USAGE_NORMAL, USAGE_TO_STDOUT);
 }
 
 int parse_options_end(struct parse_opt_ctx_t *ctx)
@@ -1209,7 +1346,7 @@ static enum parse_opt_result usage_with_options_internal(struct parse_opt_ctx_t 
 		if (!saw_empty_line && !*str)
 			saw_empty_line = 1;
 
-		string_list_split(&list, str, '\n', -1);
+		string_list_split(&list, str, "\n", -1);
 		for (j = 0; j < list.nr; j++) {
 			const char *line = list.items[j].string;
 
@@ -1315,7 +1452,8 @@ static enum parse_opt_result usage_with_options_internal(struct parse_opt_ctx_t 
 void NORETURN usage_with_options(const char * const *usagestr,
 			const struct option *opts)
 {
-	usage_with_options_internal(NULL, usagestr, opts, 0, 1);
+	usage_with_options_internal(NULL, usagestr, opts,
+				    USAGE_NORMAL, USAGE_TO_STDERR);
 	exit(129);
 }
 
@@ -1323,9 +1461,16 @@ void show_usage_with_options_if_asked(int ac, const char **av,
 				      const char * const *usagestr,
 				      const struct option *opts)
 {
-	if (ac == 2 && !strcmp(av[1], "-h")) {
-		usage_with_options_internal(NULL, usagestr, opts, 0, 0);
-		exit(129);
+	if (ac == 2) {
+		if (!strcmp(av[1], "-h")) {
+			usage_with_options_internal(NULL, usagestr, opts,
+						    USAGE_NORMAL, USAGE_TO_STDOUT);
+			exit(129);
+		} else if (!strcmp(av[1], "--help-all")) {
+			usage_with_options_internal(NULL, usagestr, opts,
+						    USAGE_FULL, USAGE_TO_STDOUT);
+			exit(129);
+		}
 	}
 }
 

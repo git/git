@@ -7,8 +7,8 @@ proc load_all_heads {} {
 	set rh refs/heads
 	set rh_len [expr {[string length $rh] + 1}]
 	set all_heads [list]
-	set fd [git_read for-each-ref --format=%(refname) $rh]
-	fconfigure $fd -translation binary -encoding utf-8
+	set fd [git_read [list for-each-ref --format=%(refname) $rh]]
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] > 0} {
 		if {!$some_heads_tracking || ![is_tracking_branch $line]} {
 			lappend all_heads [string range $line $rh_len end]
@@ -21,11 +21,11 @@ proc load_all_heads {} {
 
 proc load_all_tags {} {
 	set all_tags [list]
-	set fd [git_read for-each-ref \
+	set fd [git_read [list for-each-ref \
 		--sort=-taggerdate \
 		--format=%(refname) \
-		refs/tags]
-	fconfigure $fd -translation binary -encoding utf-8
+		refs/tags]]
+	fconfigure $fd -encoding utf-8
 	while {[gets $fd line] > 0} {
 		if {![regsub ^refs/tags/ $line {} name]} continue
 		lappend all_tags $name

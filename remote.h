@@ -9,6 +9,7 @@
 
 struct option;
 struct transport_ls_refs_options;
+struct repository;
 
 /**
  * The API gives access to the configuration related to remotes. It handles
@@ -315,8 +316,8 @@ struct branch {
 
 	char *pushremote_name;
 
-	/* An array of the "merge" lines in the configuration. */
-	const char **merge_name;
+	/* True if set_merge() has been called to finalize the merge array */
+	int set_merge;
 
 	/**
 	 * An array of the struct refspecs used for the merge lines. That is,
@@ -337,6 +338,9 @@ struct branch *branch_get(const char *name);
 const char *remote_for_branch(struct branch *branch, int *explicit);
 const char *pushremote_for_branch(struct branch *branch, int *explicit);
 char *remote_ref_for_branch(struct branch *branch, int for_push);
+
+const char *repo_default_remote(struct repository *repo);
+const char *repo_remote_from_url(struct repository *repo, const char *url);
 
 /* returns true if the given branch has merge configuration given. */
 int branch_has_merge_config(struct branch *branch);
@@ -387,15 +391,18 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb,
 			 int show_divergence_advice);
 
 struct ref *get_local_heads(void);
+
 /*
  * Find refs from a list which are likely to be pointed to by the given HEAD
- * ref. If 'all' is false, returns the most likely ref; otherwise, returns a
- * list of all candidate refs. If no match is found (or 'head' is NULL),
- * returns NULL. All returns are newly allocated and should be freed.
+ * ref. If REMOTE_GUESS_HEAD_ALL is set, return a list of all candidate refs;
+ * otherwise, return the most likely ref. If no match is found (or 'head' is
+ * NULL), returns NULL. All returns are newly allocated and should be freed.
  */
+#define REMOTE_GUESS_HEAD_ALL	(1 << 0)
+#define REMOTE_GUESS_HEAD_QUIET (1 << 1)
 struct ref *guess_remote_head(const struct ref *head,
 			      const struct ref *refs,
-			      int all);
+			      unsigned flags);
 
 /* Return refs which no longer exist on remote */
 struct ref *get_stale_heads(struct refspec *rs, struct ref *fetch_map);

@@ -15,5 +15,5 @@ worktree.useRelativePaths::
 	different locations or environments. Defaults to "false".
 +
 Note that setting `worktree.useRelativePaths` to "true" implies enabling the
-`extension.relativeWorktrees` config (see linkgit:git-config[1]),
+`extensions.relativeWorktrees` config (see linkgit:git-config[1]),
 thus making it incompatible with older versions of Git.

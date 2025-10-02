@@ -4,8 +4,8 @@
 #ifdef HAVE_ZLIB_NG
 # include <zlib-ng.h>
 
-# define z_stream zng_stream
-#define gz_header_s zng_gz_header_s
+# define z_stream_s zng_stream_s
+# define gz_header_s zng_gz_header_s
 
 # define crc32(crc, buf, len) zng_crc32(crc, buf, len)
 

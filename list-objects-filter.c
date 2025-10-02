@@ -12,7 +12,7 @@
 #include "oidmap.h"
 #include "oidset.h"
 #include "object-name.h"
-#include "object-store-ll.h"
+#include "odb.h"
 
 /* Remember to update object flag allocation in object.h */
 /*
@@ -244,7 +244,7 @@ static void filter_trees_free(void *filter_data) {
 	struct filter_trees_depth_data *d = filter_data;
 	if (!d)
 		return;
-	oidmap_free(&d->seen_at_depth, 1);
+	oidmap_clear(&d->seen_at_depth, 1);
 	free(d);
 }
 
@@ -310,7 +310,7 @@ static enum list_objects_filter_result filter_blobs_limit(
 		assert(obj->type == OBJ_BLOB);
 		assert((obj->flags & SEEN) == 0);
 
-		t = oid_object_info(r, &obj->oid, &object_length);
+		t = odb_read_object_info(r->objects, &obj->oid, &object_length);
 		if (t != OBJ_BLOB) { /* probably OBJ_NONE */
 			/*
 			 * We DO NOT have the blob locally, so we cannot
@@ -524,12 +524,11 @@ static void filter_sparse_oid__init(
 	struct filter *filter)
 {
 	struct filter_sparse_data *d = xcalloc(1, sizeof(*d));
-	struct object_context oc;
 	struct object_id sparse_oid;
 
-	if (get_oid_with_context(the_repository,
-				 filter_options->sparse_oid_name,
-				 GET_OID_BLOB, &sparse_oid, &oc))
+	if (repo_get_oid_with_flags(the_repository,
+				    filter_options->sparse_oid_name,
+				    &sparse_oid, GET_OID_BLOB))
 		die(_("unable to access sparse blob in '%s'"),
 		    filter_options->sparse_oid_name);
 	if (add_patterns_from_blob_to_list(&sparse_oid, "", 0, &d->pl) < 0)
@@ -544,8 +543,6 @@ static void filter_sparse_oid__init(
 	filter->filter_data = d;
 	filter->filter_object_fn = filter_sparse;
 	filter->free_fn = filter_sparse_free;
-
-	object_context_release(&oc);
 }
 
 /*

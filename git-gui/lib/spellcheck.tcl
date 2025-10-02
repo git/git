@@ -33,7 +33,6 @@ constructor init {pipe_fd ui_text ui_menu} {
 method _connect {pipe_fd} {
 	fconfigure $pipe_fd \
 		-encoding utf-8 \
-		-eofchar {} \
 		-translation lf
 
 	if {[gets $pipe_fd s_version] <= 0} {

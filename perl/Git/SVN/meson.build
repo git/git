@@ -13,7 +13,7 @@ foreach source : [
     output: source,
     command: generate_perl_command,
     install: true,
-    install_dir: get_option('datadir') / 'perl5/Git/SVN',
+    install_dir: perllibdir / 'Git/SVN',
     depends: [git_version_file],
   )
 endforeach

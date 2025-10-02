@@ -27,20 +27,20 @@ constructor embed {path title} {
 }
 
 method _init {} {
-	global M1B use_ttk NS
+	global M1B
 
 	if {$is_toplevel} {
 		make_dialog top w -autodelete 0
 		wm title $top "[appname] ([reponame]): $t_short"
 	} else {
-		${NS}::frame $w
+		ttk::frame $w
 	}
 
 	set console_cr 1.0
 	set w_t $w.m.t
 
-	${NS}::frame $w.m
-	${NS}::label $w.m.l1 \
+	ttk::frame $w.m
+	ttk::label $w.m.l1 \
 		-textvariable @t_long  \
 		-anchor w \
 		-justify left \
@@ -78,7 +78,7 @@ method _init {} {
 		"
 
 	if {$is_toplevel} {
-		${NS}::button $w.ok -text [mc "Close"] \
+		ttk::button $w.ok -text [mc "Close"] \
 			-state disabled \
 			-command [list destroy $w]
 		pack $w.ok -side bottom -anchor e -pady 10 -padx 10
@@ -92,10 +92,9 @@ method _init {} {
 
 method exec {cmd {after {}}} {
 	if {[lindex $cmd 0] eq {git}} {
-		set fd_f [eval git_read --stderr [lrange $cmd 1 end]]
+		set fd_f [git_read [lrange $cmd 1 end] [list 2>@1]]
 	} else {
-		lappend cmd 2>@1
-		set fd_f [_open_stdout_stderr $cmd]
+		set fd_f [safe_open_command $cmd [list 2>@1]]
 	}
 	fconfigure $fd_f -blocking 0 -translation binary -encoding [encoding system]
 	fileevent $fd_f readable [cb _read $fd_f $after]
@@ -208,14 +207,13 @@ method done {ok} {
 }
 
 method _sb_set {sb orient first last} {
-	global NS
 	if {![winfo exists $sb]} {
 		if {$first == $last || ($first == 0 && $last == 1)} return
 		if {$orient eq {h}} {
-			${NS}::scrollbar $sb -orient h -command [list $w_t xview]
+			ttk::scrollbar $sb -orient h -command [list $w_t xview]
 			pack $sb -fill x -side bottom -before $w_t
 		} else {
-			${NS}::scrollbar $sb -orient v -command [list $w_t yview]
+			ttk::scrollbar $sb -orient v -command [list $w_t yview]
 			pack $sb -fill y -side right -before $w_t
 		}
 	}

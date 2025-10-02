@@ -4986,13 +4986,13 @@ sub gethistorydense
     return $result;
 }
 
-=head2 escapeRefName
+=head2 unescapeRefName
 
-Apply an escape mechanism to compensate for characters that
+Undo an escape mechanism to compensate for characters that
 git ref names can have that CVS tags can not.
 
 =cut
-sub escapeRefName
+sub unescapeRefName
 {
     my($self,$refName)=@_;
 
@@ -5008,27 +5008,6 @@ sub escapeRefName
     #     a tag name.
     #   = "_-xx-" Where "xx" is the hexadecimal representation of the
     #     desired ASCII character byte. (for anything else)
-
-    if(! $refName=~/^[1-9][0-9]*(\.[1-9][0-9]*)*$/)
-    {
-        $refName=~s/_-/_-u--/g;
-        $refName=~s/\./_-p-/g;
-        $refName=~s%/%_-s-%g;
-        $refName=~s/[^-_a-zA-Z0-9]/sprintf("_-%02x-",$1)/eg;
-    }
-}
-
-=head2 unescapeRefName
-
-Undo an escape mechanism to compensate for characters that
-git ref names can have that CVS tags can not.
-
-=cut
-sub unescapeRefName
-{
-    my($self,$refName)=@_;
-
-    # see escapeRefName() for description of escape mechanism.
 
     $refName=~s/_-([spu]|[0-9a-f][0-9a-f])-/unescapeRefNameChar($1)/eg;
 

@@ -13,6 +13,12 @@ test_description='test tree diff when trees have duplicate entries'
 
 . ./test-lib.sh
 
+if ! test_have_prereq PERL_TEST_HELPERS
+then
+	skip_all='skipping diff duplicates tests; Perl not available'
+	test_done
+fi
+
 # make_tree_entry <mode> <mode> <sha1>
 #
 # We have to rely on perl here because not all printfs understand

@@ -14,8 +14,9 @@
 #include "object.h"
 #include "object-name.h"
 #include "object-file.h"
-#include "object-store-ll.h"
+#include "odb.h"
 #include "pack-bitmap.h"
+#include "parse-options.h"
 #include "log-tree.h"
 #include "graph.h"
 #include "bisect.h"
@@ -26,6 +27,14 @@
 #include "packfile.h"
 #include "quote.h"
 #include "strbuf.h"
+
+struct rev_list_info {
+	struct rev_info *revs;
+	int flags;
+	int show_timestamp;
+	int hdr_termination;
+	const char *header_prefix;
+};
 
 static const char rev_list_usage[] =
 "git rev-list [<options>] <commit>... [--] [<path>...]\n"
@@ -64,6 +73,7 @@ static const char rev_list_usage[] =
 "    --abbrev-commit\n"
 "    --left-right\n"
 "    --count\n"
+"    -z\n"
 "  special purpose:\n"
 "    --bisect\n"
 "    --bisect-vars\n"
@@ -96,6 +106,9 @@ static int arg_show_object_names = 1;
 
 #define DEFAULT_OIDSET_SIZE     (16*1024)
 
+static char line_term = '\n';
+static char info_term = ' ';
+
 static int show_disk_usage;
 static off_t total_disk_usage;
 static int human_readable;
@@ -105,7 +118,8 @@ static off_t get_object_disk_usage(struct object *obj)
 	off_t size;
 	struct object_info oi = OBJECT_INFO_INIT;
 	oi.disk_sizep = &size;
-	if (oid_object_info_extended(the_repository, &obj->oid, &oi, 0) < 0)
+	if (odb_read_object_info_extended(the_repository->objects,
+					  &obj->oid, &oi, 0) < 0)
 		die(_("unable to get disk usage of %s"), oid_to_hex(&obj->oid));
 	return size;
 }
@@ -131,24 +145,37 @@ static void print_missing_object(struct missing_objects_map_entry *entry,
 {
 	struct strbuf sb = STRBUF_INIT;
 
+	if (line_term)
+		printf("?%s", oid_to_hex(&entry->entry.oid));
+	else
+		printf("%s%cmissing=yes", oid_to_hex(&entry->entry.oid),
+		       info_term);
+
 	if (!print_missing_info) {
-		printf("?%s\n", oid_to_hex(&entry->entry.oid));
+		putchar(line_term);
 		return;
 	}
 
 	if (entry->path && *entry->path) {
-		struct strbuf path = STRBUF_INIT;
+		strbuf_addf(&sb, "%cpath=", info_term);
 
-		strbuf_addstr(&sb, " path=");
-		quote_path(entry->path, NULL, &path, QUOTE_PATH_QUOTE_SP);
-		strbuf_addbuf(&sb, &path);
+		if (line_term) {
+			struct strbuf path = STRBUF_INIT;
 
-		strbuf_release(&path);
+			quote_path(entry->path, NULL, &path, QUOTE_PATH_QUOTE_SP);
+			strbuf_addbuf(&sb, &path);
+
+			strbuf_release(&path);
+		} else {
+			strbuf_addstr(&sb, entry->path);
+		}
 	}
 	if (entry->type)
-		strbuf_addf(&sb, " type=%s", type_name(entry->type));
+		strbuf_addf(&sb, "%ctype=%s", info_term, type_name(entry->type));
 
-	printf("?%s%s\n", oid_to_hex(&entry->entry.oid), sb.buf);
+	fwrite(sb.buf, sizeof(char), sb.len, stdout);
+	putchar(line_term);
+
 	strbuf_release(&sb);
 }
 
@@ -235,13 +262,18 @@ static void show_commit(struct commit *commit, void *data)
 		fputs(info->header_prefix, stdout);
 
 	if (revs->include_header) {
-		if (!revs->graph)
+		if (!revs->graph && line_term)
 			fputs(get_revision_mark(revs, commit), stdout);
 		if (revs->abbrev_commit && revs->abbrev)
 			fputs(repo_find_unique_abbrev(the_repository, &commit->object.oid, revs->abbrev),
 			      stdout);
 		else
 			fputs(oid_to_hex(&commit->object.oid), stdout);
+
+		if (!line_term) {
+			if (commit->object.flags & BOUNDARY)
+				printf("%cboundary=yes", info_term);
+		}
 	}
 	if (revs->print_parents) {
 		struct commit_list *parents = commit->parents;
@@ -263,7 +295,7 @@ static void show_commit(struct commit *commit, void *data)
 	if (revs->commit_format == CMIT_FMT_ONELINE)
 		putchar(' ');
 	else if (revs->include_header)
-		putchar('\n');
+		putchar(line_term);
 
 	if (revs->verbose_header) {
 		struct strbuf buf = STRBUF_INIT;
@@ -323,7 +355,8 @@ static void show_commit(struct commit *commit, void *data)
 static int finish_object(struct object *obj, const char *name, void *cb_data)
 {
 	struct rev_list_info *info = cb_data;
-	if (oid_object_info_extended(the_repository, &obj->oid, NULL, 0) < 0) {
+	if (odb_read_object_info_extended(the_repository->objects,
+					  &obj->oid, NULL, 0) < 0) {
 		finish_object__ma(obj, name);
 		return 1;
 	}
@@ -357,10 +390,19 @@ static void show_object(struct object *obj, const char *name, void *cb_data)
 		return;
 	}
 
-	if (arg_show_object_names)
-		show_object_with_name(stdout, obj, name);
-	else
-		printf("%s\n", oid_to_hex(&obj->oid));
+	printf("%s", oid_to_hex(&obj->oid));
+
+	if (arg_show_object_names) {
+		if (line_term) {
+			putchar(info_term);
+			for (const char *p = name; *p && *p != '\n'; p++)
+				putchar(*p);
+		} else if (*name) {
+			printf("%cpath=%s", info_term, name);
+		}
+	}
+
+	putchar(line_term);
 }
 
 static void show_edge(struct commit *commit)
@@ -429,7 +471,8 @@ static int show_object_fast(
 	int exclude UNUSED,
 	uint32_t name_hash UNUSED,
 	struct packed_git *found_pack UNUSED,
-	off_t found_offset UNUSED)
+	off_t found_offset UNUSED,
+	void *payload UNUSED)
 {
 	fprintf(stdout, "%s\n", oid_to_hex(oid));
 	return 1;
@@ -601,7 +644,7 @@ int cmd_rev_list(int argc,
 
 	show_usage_if_asked(argc, argv, rev_list_usage);
 
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 	repo_init_revisions(the_repository, &revs, prefix);
 	revs.abbrev = DEFAULT_ABBREV;
 	revs.commit_format = CMIT_FMT_UNSPECIFIED;
@@ -617,35 +660,38 @@ int cmd_rev_list(int argc,
 	 *
 	 * Let "--missing" to conditionally set fetch_if_missing.
 	 */
+
 	/*
-	 * NEEDSWORK: These loops that attempt to find presence of
-	 * options without understanding that the options they are
-	 * skipping are broken (e.g., it would not know "--grep
+	 * NEEDSWORK: The next loop is utterly broken.  It tries to
+	 * notice an option is used, but without understanding if each
+	 * option takes an argument, which fundamentally would not
+	 * work.  It would not know "--grep
 	 * --exclude-promisor-objects" is not triggering
-	 * "--exclude-promisor-objects" option).  We really need
-	 * setup_revisions() to have a mechanism to allow and disallow
-	 * some sets of options for different commands (like rev-list,
-	 * replay, etc). Such a mechanism should do an early parsing
-	 * of options and be able to manage the `--missing=...` and
-	 * `--exclude-promisor-objects` options below.
+	 * "--exclude-promisor-objects" option, for example.
+	 *
+	 * We really need setup_revisions() to have a mechanism to
+	 * allow and disallow some sets of options for different
+	 * commands (like rev-list, replay, etc). Such a mechanism
+	 * should do an early parsing of options and be able to manage
+	 * the `--missing=...` and `--exclude-promisor-objects`
+	 * options below.
 	 */
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 		if (!strcmp(arg, "--exclude-promisor-objects")) {
 			fetch_if_missing = 0;
 			revs.exclude_promisor_objects = 1;
-			break;
+		} else if (skip_prefix(arg, "--missing=", &arg)) {
+			parse_missing_action_value(arg);
+		} else if (!strcmp(arg, "-z")) {
+			line_term = '\0';
+			info_term = '\0';
 		}
 	}
-	for (i = 1; i < argc; i++) {
-		const char *arg = argv[i];
-		if (skip_prefix(arg, "--missing=", &arg)) {
-			if (revs.exclude_promisor_objects)
-				die(_("options '%s' and '%s' cannot be used together"), "--exclude-promisor-objects", "--missing");
-			if (parse_missing_action_value(arg))
-				break;
-		}
-	}
+
+	die_for_incompatible_opt2(revs.exclude_promisor_objects,
+				  "--exclude_promisor_objects",
+				  arg_missing_action, "--missing");
 
 	if (arg_missing_action)
 		revs.do_not_die_on_missing_objects = 1;
@@ -755,6 +801,20 @@ int cmd_rev_list(int argc,
 		usage(rev_list_usage);
 
 	}
+
+	/*
+	 * Reject options currently incompatible with -z. For some options, this
+	 * is not an inherent limitation and support may be implemented in the
+	 * future.
+	 */
+	if (!line_term) {
+		if (revs.graph || revs.verbose_header || show_disk_usage ||
+		    info.show_timestamp || info.header_prefix || bisect_list ||
+		    use_bitmap_index || revs.edge_hint || revs.left_right ||
+		    revs.cherry_mark)
+			die(_("-z option used with unsupported option"));
+	}
+
 	if (revs.commit_format != CMIT_FMT_USERFORMAT)
 		revs.include_header = 1;
 	if (revs.commit_format != CMIT_FMT_UNSPECIFIED) {
@@ -878,7 +938,7 @@ int cmd_rev_list(int argc,
 			free((void *)entry->path);
 		}
 
-		oidmap_free(&missing_objects, true);
+		oidmap_clear(&missing_objects, true);
 	}
 
 	stop_progress(&progress);

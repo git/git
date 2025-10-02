@@ -7,12 +7,17 @@ test_description='Clone repositories with non ASCII paths'
 UTF8_ESCAPED="a-\303\244_o-\303\266_u-\303\274.txt"
 ISO8859_ESCAPED="a-\344_o-\366_u-\374.txt"
 
-ISO8859="$(printf "$ISO8859_ESCAPED")" &&
-echo content123 >"$ISO8859" &&
-rm "$ISO8859" || {
+test_lazy_prereq FS_ACCEPTS_ISO_8859_1 '
+	ISO8859="$(printf "$ISO8859_ESCAPED")" &&
+	echo content123 >"$ISO8859" &&
+	rm "$ISO8859"
+'
+
+if ! test_have_prereq FS_ACCEPTS_ISO_8859_1
+then
 	skip_all="fs does not accept ISO-8859-1 filenames"
 	test_done
-}
+fi
 
 test_expect_success 'start p4d' '
 	start_p4d

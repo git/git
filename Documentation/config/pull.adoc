@@ -29,5 +29,21 @@ pull.octopus::
 	The default merge strategy to use when pulling multiple branches
 	at once.
 
+pull.autoStash::
+	When set to true, automatically create a temporary stash entry
+	to record the local changes before the operation begins, and
+	restore them after the operation completes.  When your "git
+	pull" rebases (instead of merges), this may be convenient, since
+	unlike merging pull that tolerates local changes that do not
+	interfere with the merge, rebasing pull refuses to work with any
+	local changes.
++
+If `pull.autostash` is set (either to true or false),
+`merge.autostash` and `rebase.autostash` are ignored.  If
+`pull.autostash` is not set at all, depending on the value of
+`pull.rebase`, `merge.autostash` or `rebase.autostash` is used
+instead.  Can be overridden by the `--[no-]autostash` command line
+option.
+
 pull.twohead::
 	The default merge strategy to use when pulling a single branch.

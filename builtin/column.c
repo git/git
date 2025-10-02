@@ -31,7 +31,7 @@ int cmd_column(int argc,
 	struct option options[] = {
 		OPT_STRING(0, "command", &real_command, N_("name"), N_("lookup config vars")),
 		OPT_COLUMN(0, "mode", &colopts, N_("layout to use")),
-		OPT_INTEGER(0, "raw-mode", &colopts, N_("layout to use")),
+		OPT_UNSIGNED(0, "raw-mode", &colopts, N_("layout to use")),
 		OPT_INTEGER(0, "width", &copts.width, N_("maximum width")),
 		OPT_STRING(0, "indent", &copts.indent, N_("string"), N_("padding space on left border")),
 		OPT_STRING(0, "nl", &copts.nl, N_("string"), N_("padding space on right border")),
@@ -42,9 +42,9 @@ int cmd_column(int argc,
 	/* This one is special and must be the first one */
 	if (argc > 1 && starts_with(argv[1], "--command=")) {
 		command = argv[1] + 10;
-		git_config(column_config, (void *)command);
+		repo_config(the_repository, column_config, (void *)command);
 	} else
-		git_config(column_config, NULL);
+		repo_config(the_repository, column_config, NULL);
 
 	memset(&copts, 0, sizeof(copts));
 	copts.padding = 1;

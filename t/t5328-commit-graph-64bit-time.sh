@@ -74,7 +74,7 @@ test_expect_success 'single commit with generation data exceeding UINT32_MAX' '
 	git -C repo-uint32-max commit-graph verify
 '
 
-test_expect_success 'reader notices out-of-bounds generation overflow' '
+test_expect_success PERL_TEST_HELPERS 'reader notices out-of-bounds generation overflow' '
 	graph=.git/objects/info/commit-graph &&
 	test_when_finished "rm -rf $graph" &&
 	git commit-graph write --reachable &&

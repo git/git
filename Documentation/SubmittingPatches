@@ -408,8 +408,15 @@ your patch differs from project to project, so it may be different
 from that of the project you are accustomed to.
 
 [[real-name]]
-Also notice that a real name is used in the `Signed-off-by` trailer. Please
-don't hide your real name.
+Please use a known identity in the `Signed-off-by` trailer, since we cannot
+accept anonymous contributions. It is common, but not required, to use some form
+of your real name. We realize that some contributors are not comfortable doing
+so or prefer to contribute under a pseudonym or preferred name and we can accept
+your patch either way, as long as the name and email you use are distinctive,
+identifying, and not misleading.
+
+The goal of this policy is to allow us to have sufficient information to contact
+you if questions arise about your contribution.
 
 [[commit-trailers]]
 If you like, you can put extra trailers at the end:

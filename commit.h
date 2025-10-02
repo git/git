@@ -2,6 +2,7 @@
 #define COMMIT_H
 
 #include "object.h"
+#include "add-interactive.h"
 
 struct signature_check;
 struct strbuf;
@@ -201,10 +202,10 @@ const char *repo_logmsg_reencode(struct repository *r,
 
 const char *skip_blank_lines(const char *msg);
 
-/** Removes the first commit from a list sorted by date, and adds all
- * of its parents.
- **/
-struct commit *pop_most_recent_commit(struct commit_list **list,
+struct prio_queue;
+
+/* Removes the first commit from a prio_queue and adds its parents. */
+struct commit *pop_most_recent_commit(struct prio_queue *queue,
 				      unsigned int mark);
 
 struct commit *pop_commit(struct commit_list **stack);
@@ -257,7 +258,7 @@ int for_each_commit_graft(each_commit_graft_fn, void *);
 int interactive_add(struct repository *repo,
 		    const char **argv,
 		    const char *prefix,
-		    int patch);
+		    int patch, struct add_p_opt *add_p_opt);
 
 struct commit_extra_header {
 	struct commit_extra_header *next;

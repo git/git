@@ -34,7 +34,9 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 get_expected_stages () {
 	git checkout rename -- $1-new &&
 	git ls-files --stage $1-new >expected-stages-undetected-$1 &&
-	sed "s/ 0	/ 2	/" <expected-stages-undetected-$1 \
+	git ls-tree HEAD^ $1-old >tmp &&
+	git ls-tree HEAD  $1-new >>tmp &&
+	cat tmp | awk '{print $1 " " $3 " " NR "\t" '$1'"-new"}' \
 		>expected-stages-detected-$1 &&
 	git read-tree -u --reset HEAD
 }
@@ -51,11 +53,11 @@ rename_undetected () {
 
 check_common () {
 	git ls-files --stage >stages-actual &&
-	test_line_count = 4 stages-actual
+	test_line_count = $1 stages-actual
 }
 
 check_threshold_0 () {
-	check_common &&
+	check_common 8 &&
 	rename_detected 0 &&
 	rename_detected 1 &&
 	rename_detected 2 &&
@@ -63,7 +65,7 @@ check_threshold_0 () {
 }
 
 check_threshold_1 () {
-	check_common &&
+	check_common 7 &&
 	rename_undetected 0 &&
 	rename_detected 1 &&
 	rename_detected 2 &&
@@ -71,7 +73,7 @@ check_threshold_1 () {
 }
 
 check_threshold_2 () {
-	check_common &&
+	check_common 6 &&
 	rename_undetected 0 &&
 	rename_undetected 1 &&
 	rename_detected 2 &&
@@ -79,7 +81,7 @@ check_threshold_2 () {
 }
 
 check_exact_renames () {
-	check_common &&
+	check_common 5 &&
 	rename_undetected 0 &&
 	rename_undetected 1 &&
 	rename_undetected 2 &&
@@ -87,7 +89,7 @@ check_exact_renames () {
 }
 
 check_no_renames () {
-	check_common &&
+	check_common 4 &&
 	rename_undetected 0 &&
 	rename_undetected 1 &&
 	rename_undetected 2 &&

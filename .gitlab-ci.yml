@@ -119,6 +119,7 @@ build:mingw64:
   variables:
     NO_PERL: 1
   before_script:
+    - Set-MpPreference -DisableRealtimeMonitoring $true
     - ./ci/install-sdk.ps1 -directory "git-sdk"
   script:
     - git-sdk/usr/bin/bash.exe -l -c 'ci/make-test-artifacts.sh artifacts'
@@ -135,6 +136,7 @@ test:mingw64:
     - job: "build:mingw64"
       artifacts: true
   before_script:
+    - Set-MpPreference -DisableRealtimeMonitoring $true
     - git-sdk/usr/bin/bash.exe -l -c 'tar xf artifacts/artifacts.tar.gz'
     - New-Item -Path .git/info -ItemType Directory
     - New-Item .git/info/exclude -ItemType File -Value "/git-sdk"
@@ -148,6 +150,7 @@ test:mingw64:
   tags:
     - saas-windows-medium-amd64
   before_script:
+    - Set-MpPreference -DisableRealtimeMonitoring $true
     - choco install -y git meson ninja openssl
     - Import-Module $env:ChocolateyInstall\helpers\chocolateyProfile.psm1
     - refreshenv
@@ -164,7 +167,7 @@ build:msvc-meson:
   extends: .msvc-meson
   stage: build
   script:
-    - meson setup build -Dperl=disabled -Dbackend_max_links=1 -Dcredential_helpers=wincred
+    - meson setup build --vsenv -Dperl=disabled -Dbackend_max_links=1 -Dcredential_helpers=wincred
     - meson compile -C build
   artifacts:
     paths:
@@ -173,13 +176,12 @@ build:msvc-meson:
 test:msvc-meson:
   extends: .msvc-meson
   stage: test
-  when: manual
   timeout: 6h
   needs:
     - job: "build:msvc-meson"
       artifacts: true
   script:
-    - meson test -C build --list | Select-Object -Skip 1 | Select-String .* | Group-Object -Property { $_.LineNumber % $Env:CI_NODE_TOTAL + 1 } | Where-Object Name -EQ $Env:CI_NODE_INDEX | ForEach-Object { meson test -C build --no-rebuild --print-errorlogs $_.Group; if (!$?) { exit $LASTEXITCODE } }
+    - meson test -C build --no-rebuild --print-errorlogs --slice $Env:CI_NODE_INDEX/$Env:CI_NODE_TOTAL
   parallel: 10
 
 test:fuzz-smoke-tests:

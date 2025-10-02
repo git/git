@@ -28,11 +28,11 @@ midx_read_expect () {
 		EOF
 		if test $NUM_PACKS -ge 1
 		then
-			ls $OBJECT_DIR/pack/ | grep idx | sort
+			ls "$OBJECT_DIR"/pack/ | grep idx | sort
 		fi &&
 		printf "object-dir: $OBJECT_DIR\n"
 	} >expect &&
-	test-tool read-midx $OBJECT_DIR >actual &&
+	test-tool read-midx "$OBJECT_DIR" >actual &&
 	test_cmp expect actual
 }
 
@@ -305,7 +305,7 @@ test_expect_success 'midx picks objects from preferred pack' '
 
 		ofs=$(git show-index <objects/pack/test-BC-$bc.idx | grep $b |
 			cut -d" " -f1) &&
-		printf "%s %s\tobjects/pack/test-BC-%s.pack\n" \
+		printf "%s %s\t./objects/pack/test-BC-%s.pack\n" \
 			"$b" "$ofs" "$bc" >expect &&
 		grep ^$b out >actual &&
 
@@ -639,7 +639,7 @@ test_expect_success 'force some 64-bit offsets with pack-objects' '
 		( cd ../objects64 && pwd ) >.git/objects/info/alternates &&
 		midx64=$(git multi-pack-index --object-dir=../objects64 write)
 	) &&
-	midx_read_expect 1 63 5 objects64 " large-offsets"
+	midx_read_expect 1 63 5 "$(pwd)/objects64" " large-offsets"
 '
 
 test_expect_success 'verify multi-pack-index with 64-bit offsets' '
@@ -989,6 +989,23 @@ test_expect_success 'repack --batch-size=0 repacks everything' '
 	)
 '
 
+test_expect_success EXPENSIVE 'repack/expire with many packs' '
+	cp -r dup many &&
+	(
+		cd many &&
+
+		for i in $(test_seq 1 100)
+		do
+			test_commit extra$i &&
+			git maintenance run --task=loose-objects || return 1
+		done &&
+
+		git multi-pack-index write &&
+		git multi-pack-index repack &&
+		git multi-pack-index expire
+	)
+'
+
 test_expect_success 'repack --batch-size=<large> repacks everything' '
 	(
 		cd dup2 &&
@@ -1083,7 +1100,10 @@ test_expect_success 'load reverse index when missing .idx, .pack' '
 		mv $idx.bak $idx &&
 
 		mv $pack $pack.bak &&
-		git cat-file --batch-check="%(objectsize:disk)" <tip
+		git cat-file --batch-check="%(objectsize:disk)" <tip &&
+
+		test_must_fail git multi-pack-index write 2>err &&
+		test_grep "could not load pack" err
 	)
 '
 
@@ -1120,7 +1140,7 @@ corrupt_chunk () {
 	corrupt_chunk_file $midx "$@"
 }
 
-test_expect_success 'reader notices too-small oid fanout chunk' '
+test_expect_success PERL_TEST_HELPERS 'reader notices too-small oid fanout chunk' '
 	corrupt_chunk OIDF clear 00000000 &&
 	test_must_fail git log 2>err &&
 	cat >expect <<-\EOF &&
@@ -1130,7 +1150,7 @@ test_expect_success 'reader notices too-small oid fanout chunk' '
 	test_cmp expect err
 '
 
-test_expect_success 'reader notices too-small oid lookup chunk' '
+test_expect_success PERL_TEST_HELPERS 'reader notices too-small oid lookup chunk' '
 	corrupt_chunk OIDL clear 00000000 &&
 	test_must_fail git log 2>err &&
 	cat >expect <<-\EOF &&
@@ -1140,7 +1160,7 @@ test_expect_success 'reader notices too-small oid lookup chunk' '
 	test_cmp expect err
 '
 
-test_expect_success 'reader notices too-small pack names chunk' '
+test_expect_success PERL_TEST_HELPERS 'reader notices too-small pack names chunk' '
 	# There is no NUL to terminate the name here, so the
 	# chunk is too short.
 	corrupt_chunk PNAM clear 70656666 &&
@@ -1151,7 +1171,7 @@ test_expect_success 'reader notices too-small pack names chunk' '
 	test_cmp expect err
 '
 
-test_expect_success 'reader handles unaligned chunks' '
+test_expect_success PERL_TEST_HELPERS 'reader handles unaligned chunks' '
 	# A 9-byte PNAM means all of the subsequent chunks
 	# will no longer be 4-byte aligned, but it is still
 	# a valid one-pack chunk on its own (it is "foo.pack\0").
@@ -1165,7 +1185,7 @@ test_expect_success 'reader handles unaligned chunks' '
 	test_cmp expect.err err
 '
 
-test_expect_success 'reader notices too-small object offset chunk' '
+test_expect_success PERL_TEST_HELPERS 'reader notices too-small object offset chunk' '
 	corrupt_chunk OOFF clear 00000000 &&
 	test_must_fail git log 2>err &&
 	cat >expect <<-\EOF &&
@@ -1175,7 +1195,7 @@ test_expect_success 'reader notices too-small object offset chunk' '
 	test_cmp expect err
 '
 
-test_expect_success 'reader bounds-checks large offset table' '
+test_expect_success PERL_TEST_HELPERS 'reader bounds-checks large offset table' '
 	# re-use the objects64 dir here to cheaply get access to a midx
 	# with large offsets.
 	git init repo &&
@@ -1197,7 +1217,7 @@ test_expect_success 'reader bounds-checks large offset table' '
 	)
 '
 
-test_expect_success 'reader notices too-small revindex chunk' '
+test_expect_success PERL_TEST_HELPERS 'reader notices too-small revindex chunk' '
 	# We only get a revindex with bitmaps (and likewise only
 	# load it when they are asked for).
 	test_config repack.writeBitmaps true &&
@@ -1214,7 +1234,7 @@ test_expect_success 'reader notices too-small revindex chunk' '
 	test_cmp expect.err err
 '
 
-test_expect_success 'reader notices out-of-bounds fanout' '
+test_expect_success PERL_TEST_HELPERS 'reader notices out-of-bounds fanout' '
 	# This is similar to the out-of-bounds fanout test in t5318. The values
 	# in adjacent entries should be large but not identical (they
 	# are used as hi/lo starts for a binary search, which would then abort

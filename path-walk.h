@@ -51,6 +51,13 @@ struct path_walk_info {
 	int prune_all_uninteresting;
 
 	/**
+	 * When 'edge_aggressive' is set, then the revision walk will use
+	 * the '--object-edge-aggressive' option to mark even more objects
+	 * as uninteresting.
+	 */
+	int edge_aggressive;
+
+	/**
 	 * Specify a sparse-checkout definition to match our paths to. Do not
 	 * walk outside of this sparse definition. If the patterns are in
 	 * cone mode, then the search may prune directories that are outside

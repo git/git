@@ -617,7 +617,7 @@ void packet_reader_init(struct packet_reader *reader, int fd,
 	reader->buffer_size = sizeof(packet_buffer);
 	reader->options = options;
 	reader->me = "git";
-	reader->hash_algo = &hash_algos[GIT_HASH_SHA1];
+	reader->hash_algo = &hash_algos[GIT_HASH_SHA1_LEGACY];
 	strbuf_init(&reader->scratch, 0);
 }
 

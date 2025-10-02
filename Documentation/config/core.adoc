@@ -512,6 +512,11 @@ centrally configure your Git hooks instead of configuring them on a
 per-repository basis, or as a more flexible and centralized
 alternative to having an `init.templateDir` where you've changed
 default hooks.
++
+You can also disable all hooks entirely by setting `core.hooksPath`
+to `/dev/null`. This is usually only advisable for expert users and
+on a per-command basis using configuration parameters of the form
+`git -c core.hooksPath=/dev/null ...`.
 
 core.editor::
 	Commands such as `commit` and `tag` that let you edit
@@ -526,9 +531,25 @@ core.commentString::
 	commented, and removes them after the editor returns
 	(default '#').
 +
-If set to "auto", `git-commit` would select a character that is not
+ifndef::with-breaking-changes[]
+If set to "auto", `git-commit` will select a character that is not
 the beginning character of any line in existing commit messages.
+Support for this value is deprecated and will be removed in Git 3.0
+due to the following limitations:
 +
+--
+* It is incompatible with adding comments in a commit message
+  template. This includes the conflicts comments added to
+  the commit message by `cherry-pick`, `merge`, `rebase` and
+  `revert`.
+* It is incompatible with adding comments to the commit message
+  in the `prepare-commit-msg` hook.
+* It is incompatible with the `fixup` and `squash` commands when
+  rebasing,
+* It is not respected by `git notes`
+--
++
+endif::with-breaking-changes[]
 Note that these two variables are aliases of each other, and in modern
 versions of Git you are free to use a string (e.g., `//` or `⁑⁕⁑`) with
 `commentChar`. Versions of Git prior to v2.45.0 will ignore
@@ -690,12 +711,6 @@ core.unsetenvvars::
 	names that need to be unset before spawning any other process.
 	Defaults to `PERL5LIB` to account for the fact that Git for
 	Windows insists on using its own Perl interpreter.
-
-core.restrictinheritedhandles::
-	Windows-only: override whether spawned processes inherit only standard
-	file handles (`stdin`, `stdout` and `stderr`) or all handles. Can be
-	`auto`, `true` or `false`. Defaults to `auto`, which means `true` on
-	Windows 7 and later, and `false` on older Windows versions.
 
 core.createObject::
 	You can set this to 'link', in which case a hardlink followed by

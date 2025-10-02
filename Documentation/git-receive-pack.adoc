@@ -46,6 +46,18 @@ OPTIONS
 	`$GIT_URL/info/refs?service=git-receive-pack` requests. See
 	`--http-backend-info-refs` in linkgit:git-upload-pack[1].
 
+--skip-connectivity-check::
+	Bypasses the connectivity checks that validate the existence of all
+	objects in the transitive closure of reachable objects. This option is
+	intended for server operators that want to implement their own object
+	connectivity validation outside of Git. This is useful in such cases
+	where the server-side knows additional information about how Git is
+	being used and thus can rely on certain guarantees to more efficiently
+	compute object connectivity that Git itself cannot make. Usage of this
+	option without a reliable external mechanism to ensure full reachable
+	object connectivity risks corrupting the repository and should not be
+	used in the general case.
+
 PRE-RECEIVE HOOK
 ----------------
 Before any ref is updated, if $GIT_DIR/hooks/pre-receive file exists

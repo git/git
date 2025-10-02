@@ -6,7 +6,7 @@
 #include "strbuf.h"
 #include "replace-object.h"
 #include "object-file.h"
-#include "object-store-ll.h"
+#include "odb.h"
 #include "fsck.h"
 #include "config.h"
 
@@ -41,7 +41,7 @@ static int mktag_fsck_error_func(struct fsck_options *o UNUSED,
 		fprintf_ln(stderr, _("error: tag input does not pass fsck: %s"), message);
 		return 1;
 	default:
-		BUG(_("%d (FSCK_IGNORE?) should never trigger this callback"),
+		BUG("%d (FSCK_IGNORE?) should never trigger this callback",
 		    msg_type);
 	}
 }
@@ -54,8 +54,8 @@ static int verify_object_in_tag(struct object_id *tagged_oid, int *tagged_type)
 	void *buffer;
 	const struct object_id *repl;
 
-	buffer = repo_read_object_file(the_repository, tagged_oid, &type,
-				       &size);
+	buffer = odb_read_object(the_repository->objects, tagged_oid,
+				 &type, &size);
 	if (!buffer)
 		die(_("could not read tagged object '%s'"),
 		    oid_to_hex(tagged_oid));
@@ -98,7 +98,7 @@ int cmd_mktag(int argc,
 	fsck_set_msg_type_from_ids(&fsck_options, FSCK_MSG_EXTRA_HEADER_ENTRY,
 				   FSCK_WARN);
 	/* config might set fsck.extraHeaderEntry=* again */
-	git_config(git_fsck_config, &fsck_options);
+	repo_config(the_repository, git_fsck_config, &fsck_options);
 	if (fsck_tag_standalone(NULL, buf.buf, buf.len, &fsck_options,
 				&tagged_oid, &tagged_type))
 		die(_("tag on stdin did not pass our strict fsck check"));
@@ -106,7 +106,7 @@ int cmd_mktag(int argc,
 	if (verify_object_in_tag(&tagged_oid, &tagged_type) < 0)
 		die(_("tag on stdin did not refer to a valid object"));
 
-	if (write_object_file(buf.buf, buf.len, OBJ_TAG, &result) < 0)
+	if (odb_write_object(the_repository->objects, buf.buf, buf.len, OBJ_TAG, &result) < 0)
 		die(_("unable to write tag file"));
 
 	strbuf_release(&buf);

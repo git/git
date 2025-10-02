@@ -1,6 +1,7 @@
 #define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
+#include "environment.h"
 #include "gettext.h"
 #include "hook.h"
 #include "parse-options.h"
@@ -55,7 +56,7 @@ static int run(int argc, const char **argv, const char *prefix,
 		strvec_push(&opt.args, argv[i]);
 
 	/* Need to take into account core.hooksPath */
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 
 	hook_name = argv[0];
 	if (!ignore_missing)

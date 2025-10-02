@@ -119,7 +119,7 @@ int cmd_check_attr(int argc,
 	if (!is_bare_repository())
 		setup_work_tree();
 
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 
 	argc = parse_options(argc, argv, prefix, check_attr_options,
 			     check_attr_usage, PARSE_OPT_KEEP_DASHDASH);

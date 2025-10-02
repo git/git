@@ -257,8 +257,8 @@ test_expect_success 'auto squash of fixup commit that matches branch name which 
 	GIT_SEQUENCE_EDITOR="cat >tmp" git rebase --autosquash -i HEAD^^ &&
 	sed -ne "/^[^#]/{s/[0-9a-f]\{7,\}/HASH/g;p;}" tmp >actual &&
 	cat <<-EOF >expect &&
-	pick HASH second commit
-	pick HASH fixup! self-cycle # empty
+	pick HASH # second commit
+	pick HASH # fixup! self-cycle # empty
 	EOF
 	test_cmp expect actual
 '
@@ -311,10 +311,10 @@ test_auto_fixup_fixup () {
 		parent2=$(git rev-parse --short HEAD^^) &&
 		parent3=$(git rev-parse --short HEAD^^^) &&
 		cat >expected <<-EOF &&
-		pick $parent3 first commit
-		$1 $parent1 $1! first
-		$1 $head $1! $2! first
-		pick $parent2 second commit
+		pick $parent3 # first commit
+		$1 $parent1 # $1! first
+		$1 $head # $1! $2! first
+		pick $parent2 # second commit
 		EOF
 		test_cmp expected actual
 	) &&
@@ -389,8 +389,18 @@ test_expect_success 'autosquash with empty custom instructionFormat' '
 		set_cat_todo_editor &&
 		test_must_fail git -c rebase.instructionFormat= \
 			rebase --autosquash  --force-rebase -i HEAD^ >actual &&
-		git log -1 --format="pick %h %s" >expect &&
+		git log -1 --format="pick %h # %s" >expect &&
 		test_cmp expect actual
+	)
+'
+
+test_expect_success 'autosquash with invalid custom instructionFormat' '
+	git reset --hard base &&
+	test_commit invalid-instructionFormat-test &&
+	(
+		test_must_fail git -c rebase.instructionFormat=blah \
+			rebase --autosquash  --force-rebase -i HEAD^ &&
+		test_path_is_missing .git/rebase-merge
 	)
 '
 
@@ -476,12 +486,28 @@ test_expect_success 'fixup a fixup' '
 	test XZWY = $(git show | tr -cd W-Z)
 '
 
-test_expect_success 'fixup does not clean up commit message' '
-	oneline="#818" &&
-	git commit --allow-empty -m "$oneline" &&
-	git commit --fixup HEAD --allow-empty &&
-	git -c commit.cleanup=strip rebase -ki --autosquash HEAD~2 &&
-	test "$oneline" = "$(git show -s --format=%s)"
+test_expect_success 'pick and fixup respect commit.cleanup' '
+	git reset --hard base &&
+	test_commit --no-tag "fixup! second commit" file1 fixup &&
+	test_commit something &&
+	write_script .git/hooks/prepare-commit-msg <<-\EOF &&
+	printf "\n# Prepared\n" >> "$1"
+	EOF
+	git rebase -i --autosquash HEAD~3 &&
+	test_commit_message HEAD~1 <<-\EOF &&
+	second commit
+
+	# Prepared
+	EOF
+	test_commit_message HEAD <<-\EOF &&
+	something
+
+	# Prepared
+	EOF
+	git reset --hard something &&
+	git -c commit.cleanup=strip rebase -i --autosquash HEAD~3 &&
+	test_commit_message HEAD~1 -m "second commit" &&
+	test_commit_message HEAD -m "something"
 '
 
 test_done

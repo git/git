@@ -3,7 +3,7 @@ test_dependencies += custom_target(
   output: 'Git.pm',
   command: generate_perl_command,
   install: true,
-  install_dir: get_option('datadir') / 'perl5',
+  install_dir: perllibdir,
   depends: [git_version_file],
 )
 

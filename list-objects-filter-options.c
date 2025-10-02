@@ -350,7 +350,7 @@ void partial_clone_register(
 
 		/* Add promisor config for the remote */
 		cfg_name = xstrfmt("remote.%s.promisor", remote);
-		git_config_set(cfg_name, "true");
+		repo_config_set(the_repository, cfg_name, "true");
 		free(cfg_name);
 	}
 
@@ -360,8 +360,8 @@ void partial_clone_register(
 	 */
 	filter_name = xstrfmt("remote.%s.partialclonefilter", remote);
 	/* NEEDSWORK: 'expand' result leaking??? */
-	git_config_set(filter_name,
-		       expand_list_objects_filter_spec(filter_options));
+	repo_config_set(the_repository, filter_name,
+			expand_list_objects_filter_spec(filter_options));
 	free(filter_name);
 
 	/* Make sure the config info are reset */

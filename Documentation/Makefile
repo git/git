@@ -109,6 +109,7 @@ SP_ARTICLES += howto/coordinate-embargoed-releases
 API_DOCS = $(patsubst %.adoc,%,$(filter-out technical/api-index-skel.adoc technical/api-index.adoc, $(wildcard technical/api-*.adoc)))
 SP_ARTICLES += $(API_DOCS)
 
+TECH_DOCS += BreakingChanges
 TECH_DOCS += DecisionMaking
 TECH_DOCS += ReviewingGuidelines
 TECH_DOCS += MyFirstContribution
@@ -316,8 +317,8 @@ cmds_txt = cmds-ancillaryinterrogators.adoc \
 
 $(cmds_txt): cmd-list.made
 
-cmd-list.made: cmd-list.perl ../command-list.txt $(MAN1_TXT)
-	$(QUIET_GEN)$(PERL_PATH) ./cmd-list.perl .. . $(cmds_txt) && \
+cmd-list.made: cmd-list.sh ../command-list.txt $(MAN1_TXT)
+	$(QUIET_GEN)$(SHELL_PATH) ./cmd-list.sh .. . $(cmds_txt) && \
 	date >$@
 
 mergetools-%.adoc: generate-mergetool-list.sh ../git-mergetool--lib.sh $(wildcard ../mergetools/*)
@@ -397,9 +398,9 @@ user-manual.html: user-manual.xml $(XSLT)
 git.info: user-manual.texi
 	$(QUIET_MAKEINFO)$(MAKEINFO) --no-split -o $@ user-manual.texi
 
-user-manual.texi: user-manual.xml
+user-manual.texi: user-manual.xml fix-texi.sh
 	$(QUIET_DB2TEXI)$(DOCBOOK2X_TEXI) user-manual.xml --encoding=UTF-8 --to-stdout >$@+ && \
-	$(PERL_PATH) fix-texi.perl <$@+ >$@ && \
+	$(SHELL_PATH) fix-texi.sh <$@+ >$@ && \
 	$(RM) $@+
 
 user-manual.pdf: user-manual.xml
@@ -496,8 +497,25 @@ $(LINT_DOCS_FSCK_MSGIDS): ../fsck.h fsck-msgids.adoc
 	$(call mkdir_p_parent_template)
 	$(QUIET_GEN)$(PERL_PATH) lint-fsck-msgids.perl \
 		../fsck.h fsck-msgids.adoc $@
-
 lint-docs-fsck-msgids: $(LINT_DOCS_FSCK_MSGIDS)
+
+## Lint: delimited sections
+LINT_DOCS_DELIMITED_SECTIONS = $(patsubst %.adoc,.build/lint-docs/delimited-sections/%.ok,$(MAN_TXT))
+$(LINT_DOCS_DELIMITED_SECTIONS): lint-delimited-sections.perl
+$(LINT_DOCS_DELIMITED_SECTIONS): .build/lint-docs/delimited-sections/%.ok: %.adoc
+	$(call mkdir_p_parent_template)
+	$(QUIET_LINT_DELIMSEC)$(PERL_PATH) lint-delimited-sections.perl $< >$@
+.PHONY: lint-docs-delimited-sections
+lint-docs-delimited-sections: $(LINT_DOCS_DELIMITED_SECTIONS)
+
+## Lint: Documentation style
+LINT_DOCS_DOC_STYLE = $(patsubst %.adoc,.build/lint-docs/doc-style/%.ok,$(DOC_DEP_TXT))
+$(LINT_DOCS_DOC_STYLE): lint-documentation-style.perl
+$(LINT_DOCS_DOC_STYLE): .build/lint-docs/doc-style/%.ok: %.adoc
+	$(call mkdir_p_parent_template)
+	$(QUIET_LINT_DOCSTYLE)$(PERL_PATH) lint-documentation-style.perl $< >$@
+.PHONY: lint-docs-doc-style
+lint-docs-doc-style: $(LINT_DOCS_DOC_STYLE)
 
 lint-docs-manpages:
 	$(QUIET_GEN)./lint-manpages.sh
@@ -509,7 +527,12 @@ lint-docs-meson:
 	awk "/^manpages = {$$/ {flag=1 ; next } /^}$$/ { flag=0 } flag { gsub(/^  \047/, \"\"); gsub(/\047 : [157],\$$/, \"\"); print }" meson.build | \
 		grep -v -e '#' -e '^$$' | \
 		sort >tmp-meson-diff/meson.adoc && \
-	ls git*.adoc scalar.adoc | grep -v -e git-bisect-lk2009.adoc -e git-tools.adoc >tmp-meson-diff/actual.adoc && \
+	ls git*.adoc scalar.adoc | \
+		grep -v -e git-bisect-lk2009.adoc \
+			-e git-pack-redundant.adoc \
+			-e git-tools.adoc \
+			-e git-whatchanged.adoc \
+			>tmp-meson-diff/actual.adoc && \
 	if ! cmp tmp-meson-diff/meson.adoc tmp-meson-diff/actual.adoc; then \
 		echo "Meson man pages differ from actual man pages:"; \
 		diff -u tmp-meson-diff/meson.adoc tmp-meson-diff/actual.adoc; \
@@ -522,6 +545,8 @@ lint-docs: lint-docs-fsck-msgids
 lint-docs: lint-docs-gitlink
 lint-docs: lint-docs-man-end-blurb
 lint-docs: lint-docs-man-section-order
+lint-docs: lint-docs-delimited-sections
+lint-docs: lint-docs-doc-style
 lint-docs: lint-docs-manpages
 lint-docs: lint-docs-meson
 

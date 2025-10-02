@@ -3,6 +3,6 @@ test_dependencies += custom_target(
   output: 'Address.pm',
   command: generate_perl_command,
   install: true,
-  install_dir: get_option('datadir') / 'perl5/Git/LoadCPAN/Mail',
+  install_dir: perllibdir / 'Git/LoadCPAN/Mail',
   depends: [git_version_file],
 )

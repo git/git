@@ -47,7 +47,8 @@ gitcvs.dbDriver::
 	May not contain double colons (`:`). Default: 'SQLite'.
 	See linkgit:git-cvsserver[1].
 
-gitcvs.dbUser, gitcvs.dbPass::
+gitcvs.dbUser::
+gitcvs.dbPass::
 	Database user and password. Only useful if setting `gitcvs.dbDriver`,
 	since SQLite has no concept of database users and/or passwords.
 	'gitcvs.dbUser' supports variable substitution (see

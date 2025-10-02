@@ -3,6 +3,8 @@
 #include "builtin.h"
 #include "config.h"
 #include "gettext.h"
+#include "hex.h"
+#include "odb.h"
 #include "revision.h"
 #include "reachable.h"
 #include "wildmatch.h"
@@ -17,17 +19,23 @@
 #define BUILTIN_REFLOG_LIST_USAGE \
 	N_("git reflog list")
 
-#define BUILTIN_REFLOG_EXPIRE_USAGE \
-	N_("git reflog expire [--expire=<time>] [--expire-unreachable=<time>]\n" \
-	   "                  [--rewrite] [--updateref] [--stale-fix]\n" \
-	   "                  [--dry-run | -n] [--verbose] [--all [--single-worktree] | <refs>...]")
+#define BUILTIN_REFLOG_EXISTS_USAGE \
+	N_("git reflog exists <ref>")
+
+#define BUILTIN_REFLOG_WRITE_USAGE \
+	N_("git reflog write <ref> <old-oid> <new-oid> <message>")
 
 #define BUILTIN_REFLOG_DELETE_USAGE \
 	N_("git reflog delete [--rewrite] [--updateref]\n" \
 	   "                  [--dry-run | -n] [--verbose] <ref>@{<specifier>}...")
 
-#define BUILTIN_REFLOG_EXISTS_USAGE \
-	N_("git reflog exists <ref>")
+#define BUILTIN_REFLOG_DROP_USAGE \
+	N_("git reflog drop [--all [--single-worktree] | <refs>...]")
+
+#define BUILTIN_REFLOG_EXPIRE_USAGE \
+	N_("git reflog expire [--expire=<time>] [--expire-unreachable=<time>]\n" \
+	   "                  [--rewrite] [--updateref] [--stale-fix]\n" \
+	   "                  [--dry-run | -n] [--verbose] [--all [--single-worktree] | <refs>...]")
 
 static const char *const reflog_show_usage[] = {
 	BUILTIN_REFLOG_SHOW_USAGE,
@@ -39,9 +47,14 @@ static const char *const reflog_list_usage[] = {
 	NULL,
 };
 
-static const char *const reflog_expire_usage[] = {
-	BUILTIN_REFLOG_EXPIRE_USAGE,
-	NULL
+static const char *const reflog_exists_usage[] = {
+	BUILTIN_REFLOG_EXISTS_USAGE,
+	NULL,
+};
+
+static const char *const reflog_write_usage[] = {
+	BUILTIN_REFLOG_WRITE_USAGE,
+	NULL,
 };
 
 static const char *const reflog_delete_usage[] = {
@@ -49,22 +62,26 @@ static const char *const reflog_delete_usage[] = {
 	NULL
 };
 
-static const char *const reflog_exists_usage[] = {
-	BUILTIN_REFLOG_EXISTS_USAGE,
+static const char *const reflog_drop_usage[] = {
+	BUILTIN_REFLOG_DROP_USAGE,
 	NULL,
+};
+
+static const char *const reflog_expire_usage[] = {
+	BUILTIN_REFLOG_EXPIRE_USAGE,
+	NULL
 };
 
 static const char *const reflog_usage[] = {
 	BUILTIN_REFLOG_SHOW_USAGE,
 	BUILTIN_REFLOG_LIST_USAGE,
-	BUILTIN_REFLOG_EXPIRE_USAGE,
-	BUILTIN_REFLOG_DELETE_USAGE,
 	BUILTIN_REFLOG_EXISTS_USAGE,
+	BUILTIN_REFLOG_WRITE_USAGE,
+	BUILTIN_REFLOG_DELETE_USAGE,
+	BUILTIN_REFLOG_DROP_USAGE,
+	BUILTIN_REFLOG_EXPIRE_USAGE,
 	NULL
 };
-
-static timestamp_t default_reflog_expire;
-static timestamp_t default_reflog_expire_unreachable;
 
 struct worktree_reflogs {
 	struct worktree *worktree;
@@ -91,131 +108,19 @@ static int collect_reflog(const char *ref, void *cb_data)
 	return 0;
 }
 
-static struct reflog_expire_cfg {
-	struct reflog_expire_cfg *next;
-	timestamp_t expire_total;
-	timestamp_t expire_unreachable;
-	char pattern[FLEX_ARRAY];
-} *reflog_expire_cfg, **reflog_expire_cfg_tail;
-
-static struct reflog_expire_cfg *find_cfg_ent(const char *pattern, size_t len)
-{
-	struct reflog_expire_cfg *ent;
-
-	if (!reflog_expire_cfg_tail)
-		reflog_expire_cfg_tail = &reflog_expire_cfg;
-
-	for (ent = reflog_expire_cfg; ent; ent = ent->next)
-		if (!xstrncmpz(ent->pattern, pattern, len))
-			return ent;
-
-	FLEX_ALLOC_MEM(ent, pattern, pattern, len);
-	*reflog_expire_cfg_tail = ent;
-	reflog_expire_cfg_tail = &(ent->next);
-	return ent;
-}
-
-/* expiry timer slot */
-#define EXPIRE_TOTAL   01
-#define EXPIRE_UNREACH 02
-
-static int reflog_expire_config(const char *var, const char *value,
-				const struct config_context *ctx, void *cb)
-{
-	const char *pattern, *key;
-	size_t pattern_len;
-	timestamp_t expire;
-	int slot;
-	struct reflog_expire_cfg *ent;
-
-	if (parse_config_key(var, "gc", &pattern, &pattern_len, &key) < 0)
-		return git_default_config(var, value, ctx, cb);
-
-	if (!strcmp(key, "reflogexpire")) {
-		slot = EXPIRE_TOTAL;
-		if (git_config_expiry_date(&expire, var, value))
-			return -1;
-	} else if (!strcmp(key, "reflogexpireunreachable")) {
-		slot = EXPIRE_UNREACH;
-		if (git_config_expiry_date(&expire, var, value))
-			return -1;
-	} else
-		return git_default_config(var, value, ctx, cb);
-
-	if (!pattern) {
-		switch (slot) {
-		case EXPIRE_TOTAL:
-			default_reflog_expire = expire;
-			break;
-		case EXPIRE_UNREACH:
-			default_reflog_expire_unreachable = expire;
-			break;
-		}
-		return 0;
-	}
-
-	ent = find_cfg_ent(pattern, pattern_len);
-	if (!ent)
-		return -1;
-	switch (slot) {
-	case EXPIRE_TOTAL:
-		ent->expire_total = expire;
-		break;
-	case EXPIRE_UNREACH:
-		ent->expire_unreachable = expire;
-		break;
-	}
-	return 0;
-}
-
-static void set_reflog_expiry_param(struct cmd_reflog_expire_cb *cb, const char *ref)
-{
-	struct reflog_expire_cfg *ent;
-
-	if (cb->explicit_expiry == (EXPIRE_TOTAL|EXPIRE_UNREACH))
-		return; /* both given explicitly -- nothing to tweak */
-
-	for (ent = reflog_expire_cfg; ent; ent = ent->next) {
-		if (!wildmatch(ent->pattern, ref, 0)) {
-			if (!(cb->explicit_expiry & EXPIRE_TOTAL))
-				cb->expire_total = ent->expire_total;
-			if (!(cb->explicit_expiry & EXPIRE_UNREACH))
-				cb->expire_unreachable = ent->expire_unreachable;
-			return;
-		}
-	}
-
-	/*
-	 * If unconfigured, make stash never expire
-	 */
-	if (!strcmp(ref, "refs/stash")) {
-		if (!(cb->explicit_expiry & EXPIRE_TOTAL))
-			cb->expire_total = 0;
-		if (!(cb->explicit_expiry & EXPIRE_UNREACH))
-			cb->expire_unreachable = 0;
-		return;
-	}
-
-	/* Nothing matched -- use the default value */
-	if (!(cb->explicit_expiry & EXPIRE_TOTAL))
-		cb->expire_total = default_reflog_expire;
-	if (!(cb->explicit_expiry & EXPIRE_UNREACH))
-		cb->expire_unreachable = default_reflog_expire_unreachable;
-}
-
 static int expire_unreachable_callback(const struct option *opt,
 				 const char *arg,
 				 int unset)
 {
-	struct cmd_reflog_expire_cb *cmd = opt->value;
+	struct reflog_expire_options *opts = opt->value;
 
 	BUG_ON_OPT_NEG(unset);
 
-	if (parse_expiry_date(arg, &cmd->expire_unreachable))
+	if (parse_expiry_date(arg, &opts->expire_unreachable))
 		die(_("invalid timestamp '%s' given to '--%s'"),
 		    arg, opt->long_name);
 
-	cmd->explicit_expiry |= EXPIRE_UNREACH;
+	opts->explicit_expiry |= REFLOG_EXPIRE_UNREACH;
 	return 0;
 }
 
@@ -223,15 +128,15 @@ static int expire_total_callback(const struct option *opt,
 				 const char *arg,
 				 int unset)
 {
-	struct cmd_reflog_expire_cb *cmd = opt->value;
+	struct reflog_expire_options *opts = opt->value;
 
 	BUG_ON_OPT_NEG(unset);
 
-	if (parse_expiry_date(arg, &cmd->expire_total))
+	if (parse_expiry_date(arg, &opts->expire_total))
 		die(_("invalid timestamp '%s' given to '--%s'"),
 		    arg, opt->long_name);
 
-	cmd->explicit_expiry |= EXPIRE_TOTAL;
+	opts->explicit_expiry |= REFLOG_EXPIRE_TOTAL;
 	return 0;
 }
 
@@ -276,8 +181,8 @@ static int cmd_reflog_list(int argc, const char **argv, const char *prefix,
 static int cmd_reflog_expire(int argc, const char **argv, const char *prefix,
 			     struct repository *repo UNUSED)
 {
-	struct cmd_reflog_expire_cb cmd = { 0 };
 	timestamp_t now = time(NULL);
+	struct reflog_expire_options opts = REFLOG_EXPIRE_OPTIONS_INIT(now);
 	int i, status, do_all, single_worktree = 0;
 	unsigned int flags = 0;
 	int verbose = 0;
@@ -292,15 +197,15 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix,
 			N_("update the reference to the value of the top reflog entry"),
 			EXPIRE_REFLOGS_UPDATE_REF),
 		OPT_BOOL(0, "verbose", &verbose, N_("print extra information on screen")),
-		OPT_CALLBACK_F(0, "expire", &cmd, N_("timestamp"),
+		OPT_CALLBACK_F(0, "expire", &opts, N_("timestamp"),
 			       N_("prune entries older than the specified time"),
 			       PARSE_OPT_NONEG,
 			       expire_total_callback),
-		OPT_CALLBACK_F(0, "expire-unreachable", &cmd, N_("timestamp"),
+		OPT_CALLBACK_F(0, "expire-unreachable", &opts, N_("timestamp"),
 			       N_("prune entries older than <time> that are not reachable from the current tip of the branch"),
 			       PARSE_OPT_NONEG,
 			       expire_unreachable_callback),
-		OPT_BOOL(0, "stale-fix", &cmd.stalefix,
+		OPT_BOOL(0, "stale-fix", &opts.stalefix,
 			 N_("prune any reflog entries that point to broken commits")),
 		OPT_BOOL(0, "all", &do_all, N_("process the reflogs of all references")),
 		OPT_BOOL(0, "single-worktree", &single_worktree,
@@ -308,16 +213,10 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix,
 		OPT_END()
 	};
 
-	default_reflog_expire_unreachable = now - 30 * 24 * 3600;
-	default_reflog_expire = now - 90 * 24 * 3600;
-	git_config(reflog_expire_config, NULL);
+	repo_config(the_repository, reflog_expire_config, &opts);
 
 	save_commit_buffer = 0;
 	do_all = status = 0;
-
-	cmd.explicit_expiry = 0;
-	cmd.expire_total = default_reflog_expire;
-	cmd.expire_unreachable = default_reflog_expire_unreachable;
 
 	argc = parse_options(argc, argv, prefix, options, reflog_expire_usage, 0);
 
@@ -329,7 +228,7 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix,
 	 * even in older repository.  We cannot trust what's reachable
 	 * from reflog if the repository was pruned with older git.
 	 */
-	if (cmd.stalefix) {
+	if (opts.stalefix) {
 		struct rev_info revs;
 
 		repo_init_revisions(the_repository, &revs, prefix);
@@ -363,11 +262,11 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix,
 
 		for_each_string_list_item(item, &collected.reflogs) {
 			struct expire_reflog_policy_cb cb = {
-				.cmd = cmd,
+				.opts = opts,
 				.dry_run = !!(flags & EXPIRE_REFLOGS_DRY_RUN),
 			};
 
-			set_reflog_expiry_param(&cb.cmd,  item->string);
+			reflog_expire_options_set_refname(&cb.opts,  item->string);
 			status |= refs_reflog_expire(get_main_ref_store(the_repository),
 						     item->string, flags,
 						     reflog_expiry_prepare,
@@ -380,13 +279,13 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix,
 
 	for (i = 0; i < argc; i++) {
 		char *ref;
-		struct expire_reflog_policy_cb cb = { .cmd = cmd };
+		struct expire_reflog_policy_cb cb = { .opts = opts };
 
 		if (!repo_dwim_log(the_repository, argv[i], strlen(argv[i]), NULL, &ref)) {
-			status |= error(_("%s points nowhere!"), argv[i]);
+			status |= error(_("reflog could not be found: '%s'"), argv[i]);
 			continue;
 		}
-		set_reflog_expiry_param(&cb.cmd, ref);
+		reflog_expire_options_set_refname(&cb.opts, ref);
 		status |= refs_reflog_expire(get_main_ref_store(the_repository),
 					     ref, flags,
 					     reflog_expiry_prepare,
@@ -395,6 +294,9 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix,
 					     &cb);
 		free(ref);
 	}
+
+	reflog_clear_expire_config(&opts);
+
 	return status;
 }
 
@@ -449,10 +351,117 @@ static int cmd_reflog_exists(int argc, const char **argv, const char *prefix,
 				   refname);
 }
 
+static int cmd_reflog_drop(int argc, const char **argv, const char *prefix,
+			   struct repository *repo)
+{
+	int ret = 0, do_all = 0, single_worktree = 0;
+	const struct option options[] = {
+		OPT_BOOL(0, "all", &do_all, N_("drop the reflogs of all references")),
+		OPT_BOOL(0, "single-worktree", &single_worktree,
+			 N_("drop reflogs from the current worktree only")),
+		OPT_END()
+	};
+
+	argc = parse_options(argc, argv, prefix, options, reflog_drop_usage, 0);
+
+	if (argc && do_all)
+		usage(_("references specified along with --all"));
+
+	if (do_all) {
+		struct worktree_reflogs collected = {
+			.reflogs = STRING_LIST_INIT_DUP,
+		};
+		struct string_list_item *item;
+		struct worktree **worktrees, **p;
+
+		worktrees = get_worktrees();
+		for (p = worktrees; *p; p++) {
+			if (single_worktree && !(*p)->is_current)
+				continue;
+			collected.worktree = *p;
+			refs_for_each_reflog(get_worktree_ref_store(*p),
+					     collect_reflog, &collected);
+		}
+		free_worktrees(worktrees);
+
+		for_each_string_list_item(item, &collected.reflogs)
+			ret |= refs_delete_reflog(get_main_ref_store(repo),
+						     item->string);
+		string_list_clear(&collected.reflogs, 0);
+
+		return ret;
+	}
+
+	for (int i = 0; i < argc; i++) {
+		char *ref;
+		if (!repo_dwim_log(repo, argv[i], strlen(argv[i]), NULL, &ref)) {
+			ret |= error(_("reflog could not be found: '%s'"), argv[i]);
+			continue;
+		}
+
+		ret |= refs_delete_reflog(get_main_ref_store(repo), ref);
+		free(ref);
+	}
+
+	return ret;
+}
+
+static int cmd_reflog_write(int argc, const char **argv, const char *prefix,
+			    struct repository *repo)
+{
+	const struct option options[] = {
+		OPT_END()
+	};
+	struct object_id old_oid, new_oid;
+	struct strbuf err = STRBUF_INIT;
+	struct ref_transaction *tx;
+	const char *ref, *message;
+	int ret;
+
+	argc = parse_options(argc, argv, prefix, options, reflog_write_usage, 0);
+	if (argc != 4)
+		usage_with_options(reflog_write_usage, options);
+
+	ref = argv[0];
+	if (!is_root_ref(ref) && check_refname_format(ref, 0))
+		die(_("invalid reference name: %s"), ref);
+
+	ret = get_oid_hex_algop(argv[1], &old_oid, repo->hash_algo);
+	if (ret)
+		die(_("invalid old object ID: '%s'"), argv[1]);
+	if (!is_null_oid(&old_oid) && !odb_has_object(repo->objects, &old_oid, 0))
+		die(_("old object '%s' does not exist"), argv[1]);
+
+	ret = get_oid_hex_algop(argv[2], &new_oid, repo->hash_algo);
+	if (ret)
+		die(_("invalid new object ID: '%s'"), argv[2]);
+	if (!is_null_oid(&new_oid) && !odb_has_object(repo->objects, &new_oid, 0))
+		die(_("new object '%s' does not exist"), argv[2]);
+
+	message = argv[3];
+
+	tx = ref_store_transaction_begin(get_main_ref_store(repo), 0, &err);
+	if (!tx)
+		die(_("cannot start transaction: %s"), err.buf);
+
+	ret = ref_transaction_update_reflog(tx, ref, &new_oid, &old_oid,
+					    git_committer_info(0),
+					    message, 0, &err);
+	if (ret)
+		die(_("cannot queue reflog update: %s"), err.buf);
+
+	ret = ref_transaction_commit(tx, &err);
+	if (ret)
+		die(_("cannot commit reflog update: %s"), err.buf);
+
+	ref_transaction_free(tx);
+	strbuf_release(&err);
+	return 0;
+}
+
 /*
  * main "reflog"
  */
-
 int cmd_reflog(int argc,
 	       const char **argv,
 	       const char *prefix,
@@ -462,9 +471,11 @@ int cmd_reflog(int argc,
 	struct option options[] = {
 		OPT_SUBCOMMAND("show", &fn, cmd_reflog_show),
 		OPT_SUBCOMMAND("list", &fn, cmd_reflog_list),
-		OPT_SUBCOMMAND("expire", &fn, cmd_reflog_expire),
-		OPT_SUBCOMMAND("delete", &fn, cmd_reflog_delete),
 		OPT_SUBCOMMAND("exists", &fn, cmd_reflog_exists),
+		OPT_SUBCOMMAND("write", &fn, cmd_reflog_write),
+		OPT_SUBCOMMAND("delete", &fn, cmd_reflog_delete),
+		OPT_SUBCOMMAND("drop", &fn, cmd_reflog_drop),
+		OPT_SUBCOMMAND("expire", &fn, cmd_reflog_expire),
 		OPT_END()
 	};
 

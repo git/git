@@ -102,25 +102,11 @@ void tr2_update_final_timers(void)
 		struct tr2_timer *t_final = &final_timer_block.timer[tid];
 		struct tr2_timer *t = &ctx->timer_block.timer[tid];
 
-		if (t->recursion_count) {
-			/*
-			 * The current thread is exiting with
-			 * timer[tid] still running.
-			 *
-			 * Technically, this is a bug, but I'm going
-			 * to ignore it.
-			 *
-			 * I don't think it is worth calling die()
-			 * for.  I don't think it is worth killing the
-			 * process for this bookkeeping error.  We
-			 * might want to call warning(), but I'm going
-			 * to wait on that.
-			 *
-			 * The downside here is that total_ns won't
-			 * include the current open interval (now -
-			 * start_ns).  I can live with that.
-			 */
-		}
+		/*
+		 * `t->recursion_count` could technically be non-zero, which
+		 * would constitute a bug. Reporting the bug would potentially
+		 * cause an infinite recursion, though, so let's ignore it.
+		 */
 
 		if (!t->interval_count)
 			continue; /* this timer was not used by this thread */

@@ -1,10 +1,10 @@
 /*
-Copyright 2020 Google LLC
-
-Use of this source code is governed by a BSD-style
-license that can be found in the LICENSE file or at
-https://developers.google.com/open-source/licenses/bsd
-*/
+ * Copyright 2020 Google LLC
+ *
+ * Use of this source code is governed by a BSD-style
+ * license that can be found in the LICENSE file or at
+ * https://developers.google.com/open-source/licenses/bsd
+ */
 
 #ifndef STACK_H
 #define STACK_H
@@ -22,8 +22,8 @@ struct reftable_stack {
 
 	struct reftable_write_options opts;
 
-	struct reftable_reader **readers;
-	size_t readers_len;
+	struct reftable_table **tables;
+	size_t tables_len;
 	struct reftable_merged_table *merged;
 	struct reftable_compaction_stats stats;
 };

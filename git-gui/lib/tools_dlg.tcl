@@ -16,7 +16,7 @@ field ask_branch    0; # ask for a revision
 field ask_args      0; # ask for additional args
 
 constructor dialog {} {
-	global repo_config use_ttk NS
+	global repo_config
 
 	make_dialog top w
 	wm title $top [mc "%s (%s): Add Tool" [appname] [reponame]]
@@ -25,41 +25,41 @@ constructor dialog {} {
 		wm transient $top .
 	}
 
-	${NS}::label $w.header -text [mc "Add New Tool Command"] \
+	ttk::label $w.header -text [mc "Add New Tool Command"] \
 		-font font_uibold -anchor center
 	pack $w.header -side top -fill x
 
-	${NS}::frame $w.buttons
-	${NS}::checkbutton $w.buttons.global \
+	ttk::frame $w.buttons
+	ttk::checkbutton $w.buttons.global \
 		-text [mc "Add globally"] \
 		-variable @add_global
 	pack $w.buttons.global -side left -padx 5
-	${NS}::button $w.buttons.create -text [mc Add] \
+	ttk::button $w.buttons.create -text [mc Add] \
 		-default active \
 		-command [cb _add]
 	pack $w.buttons.create -side right
-	${NS}::button $w.buttons.cancel -text [mc Cancel] \
+	ttk::button $w.buttons.cancel -text [mc Cancel] \
 		-command [list destroy $w]
 	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
-	${NS}::labelframe $w.desc -text [mc "Tool Details"]
+	ttk::labelframe $w.desc -text [mc "Tool Details"]
 
-	${NS}::label $w.desc.name_cmnt -anchor w\
+	ttk::label $w.desc.name_cmnt -anchor w\
 		-text [mc "Use '/' separators to create a submenu tree:"]
 	grid x $w.desc.name_cmnt -sticky we -padx {0 5} -pady {0 2}
-	${NS}::label $w.desc.name_l -text [mc "Name:"]
+	ttk::label $w.desc.name_l -text [mc "Name:"]
 	set w_name $w.desc.name_t
-	${NS}::entry $w_name \
+	ttk::entry $w_name \
 		-width 40 \
 		-textvariable @name \
 		-validate key \
 		-validatecommand [cb _validate_name %d %S]
 	grid $w.desc.name_l $w_name -sticky we -padx {0 5}
 
-	${NS}::label $w.desc.cmd_l -text [mc "Command:"]
+	ttk::label $w.desc.cmd_l -text [mc "Command:"]
 	set w_cmd $w.desc.cmd_t
-	${NS}::entry $w_cmd \
+	ttk::entry $w_cmd \
 		-width 40 \
 		-textvariable @command
 	grid $w.desc.cmd_l $w_cmd -sticky we -padx {0 5} -pady {0 3}
@@ -67,30 +67,30 @@ constructor dialog {} {
 	grid columnconfigure $w.desc 1 -weight 1
 	pack $w.desc -anchor nw -fill x -pady 5 -padx 5
 
-	${NS}::checkbutton $w.confirm \
+	ttk::checkbutton $w.confirm \
 		-text [mc "Show a dialog before running"] \
 		-variable @confirm -command [cb _check_enable_dlg]
 
-	${NS}::labelframe $w.dlg -labelwidget $w.confirm
+	ttk::labelframe $w.dlg -labelwidget $w.confirm
 
-	${NS}::checkbutton $w.dlg.askbranch \
+	ttk::checkbutton $w.dlg.askbranch \
 		-text [mc "Ask the user to select a revision (sets \$REVISION)"] \
 		-variable @ask_branch -state disabled
 	pack $w.dlg.askbranch -anchor w -padx 15
 
-	${NS}::checkbutton $w.dlg.askargs \
+	ttk::checkbutton $w.dlg.askargs \
 		-text [mc "Ask the user for additional arguments (sets \$ARGS)"] \
 		-variable @ask_args -state disabled
 	pack $w.dlg.askargs -anchor w -padx 15
 
 	pack $w.dlg -anchor nw -fill x -pady {0 8} -padx 5
 
-	${NS}::checkbutton $w.noconsole \
+	ttk::checkbutton $w.noconsole \
 		-text [mc "Don't show the command output window"] \
 		-variable @no_console
 	pack $w.noconsole -anchor w -padx 5
 
-	${NS}::checkbutton $w.needsfile \
+	ttk::checkbutton $w.needsfile \
 		-text [mc "Run only if a diff is selected (\$FILENAME not empty)"] \
 		-variable @needs_file
 	pack $w.needsfile -anchor w -padx 5
@@ -179,7 +179,7 @@ field w              ; # widget path
 field w_names        ; # name list
 
 constructor dialog {} {
-	global repo_config global_config system_config use_ttk NS
+	global repo_config global_config system_config
 
 	load_config 1
 
@@ -190,21 +190,21 @@ constructor dialog {} {
 		wm transient $top .
 	}
 
-	${NS}::label $w.header -text [mc "Remove Tool Commands"] \
+	ttk::label $w.header -text [mc "Remove Tool Commands"] \
 		-font font_uibold -anchor center
 	pack $w.header -side top -fill x
 
-	${NS}::frame $w.buttons
-	${NS}::button $w.buttons.create -text [mc Remove] \
+	ttk::frame $w.buttons
+	ttk::button $w.buttons.create -text [mc Remove] \
 		-default active \
 		-command [cb _remove]
 	pack $w.buttons.create -side right
-	${NS}::button $w.buttons.cancel -text [mc Cancel] \
+	ttk::button $w.buttons.cancel -text [mc Cancel] \
 		-command [list destroy $w]
 	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
-	${NS}::frame $w.list
+	ttk::frame $w.list
 	set w_names $w.list.l
 	slistbox $w_names \
 		-height 10 \
@@ -227,7 +227,7 @@ constructor dialog {} {
 	}
 
 	if {$local_cnt > 0} {
-		${NS}::label $w.colorlbl -foreground blue \
+		ttk::label $w.colorlbl -foreground blue \
 			-text [mc "(Blue denotes repository-local tools)"]
 		pack $w.colorlbl -fill x -pady 5 -padx 5
 	}
@@ -272,7 +272,7 @@ field is_ok         0; # ok to start
 field argstr       {}; # arguments
 
 constructor dialog {fullname} {
-	global M1B use_ttk NS
+	global M1B
 
 	set title [get_config "guitool.$fullname.title"]
 	if {$title eq {}} {
@@ -292,7 +292,7 @@ constructor dialog {fullname} {
 		set prompt [mc "Run Command: %s" $command]
 	}
 
-	${NS}::label $w.header -text $prompt -font font_uibold -anchor center
+	ttk::label $w.header -text $prompt -font font_uibold -anchor center
 	pack $w.header -side top -fill x
 
 	set argprompt [get_config "guitool.$fullname.argprompt"]
@@ -306,10 +306,10 @@ constructor dialog {fullname} {
 			set argprompt [mc "Arguments"]
 		}
 
-		${NS}::labelframe $w.arg -text $argprompt
+		ttk::labelframe $w.arg -text $argprompt
 
 		set w_args $w.arg.txt
-		${NS}::entry $w_args \
+		ttk::entry $w_args \
 			-width 40 \
 			-textvariable @argstr
 		pack $w_args -padx 5 -pady 5 -fill both
@@ -330,18 +330,18 @@ constructor dialog {fullname} {
 		pack $w.rev -anchor nw -fill both -expand 1 -pady 5 -padx 5
 	}
 
-	${NS}::frame $w.buttons
+	ttk::frame $w.buttons
 	if {$is_ask_revs} {
-		${NS}::button $w.buttons.visualize \
+		ttk::button $w.buttons.visualize \
 			-text [mc Visualize] \
 			-command [cb _visualize]
 		pack $w.buttons.visualize -side left
 	}
-	${NS}::button $w.buttons.ok \
+	ttk::button $w.buttons.ok \
 		-text [mc OK] \
 		-command [cb _start]
 	pack $w.buttons.ok -side right
-	${NS}::button $w.buttons.cancel \
+	ttk::button $w.buttons.cancel \
 		-text [mc "Cancel"] \
 		-command [cb _cancel]
 	pack $w.buttons.cancel -side right -padx 5

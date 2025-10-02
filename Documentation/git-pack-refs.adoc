@@ -66,7 +66,10 @@ Pack refs as needed depending on the current state of the ref database. The
 behavior depends on the ref format used by the repository and may change in the
 future.
 +
-	- "files": No special handling for `--auto` has been implemented.
+	- "files": Loose references are packed into the `packed-refs` file
+	  based on the ratio of loose references to the size of the
+	  `packed-refs` file. The bigger the `packed-refs` file, the more loose
+	  references need to exist before we repack.
 +
 	- "reftable": Tables are compacted such that they form a geometric
 	  sequence. For two tables N and N+1, where N+1 is newer, this
@@ -88,10 +91,10 @@ Do not pack refs matching the given `glob(7)` pattern. Repetitions of this optio
 accumulate exclusion patterns. Use `--no-exclude` to clear and reset the list of
 patterns. If a ref is already packed, including it with `--exclude` will not
 unpack it.
-
++
 When used with `--all`, pack only loose refs which do not match any of
 the provided `--exclude` patterns.
-
++
 When used with `--include`, refs provided to `--include`, minus refs that are
 provided to `--exclude` will be packed.
 

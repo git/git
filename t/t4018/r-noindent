@@ -1,0 +1,6 @@
+RIGHT <- function(a, b) {
+c = mean(a, b)
+d = c + 2
+ChangeMe()
+return (c)
+}

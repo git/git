@@ -11,6 +11,7 @@
 #include "builtin.h"
 #include "advice.h"
 #include "config.h"
+#include "environment.h"
 #include "gettext.h"
 #include "hex.h"
 #include "merge.h"
@@ -90,7 +91,8 @@ static char *opt_ff;
 static const char *opt_verify_signatures;
 static const char *opt_verify;
 static int opt_autostash = -1;
-static int config_autostash;
+static int config_rebase_autostash;
+static int config_pull_autostash = -1;
 static int check_trust_level = 1;
 static struct strvec opt_strategies = STRVEC_INIT;
 static struct strvec opt_strategy_opts = STRVEC_INIT;
@@ -143,6 +145,9 @@ static struct option pull_options[] = {
 	OPT_PASSTHRU(0, "summary", &opt_diffstat, NULL,
 		N_("(synonym to --stat)"),
 		PARSE_OPT_NOARG | PARSE_OPT_HIDDEN),
+	OPT_PASSTHRU(0, "compact-summary", &opt_diffstat, NULL,
+		N_("show a compact-summary at the end of the merge"),
+		PARSE_OPT_NOARG),
 	OPT_PASSTHRU(0, "log", &opt_log, N_("n"),
 		N_("add (at most <n>) entries from shortlog to merge commit message"),
 		PARSE_OPT_OPTARG),
@@ -309,7 +314,7 @@ static const char *config_get_ff(void)
 {
 	const char *value;
 
-	if (git_config_get_value("pull.ff", &value))
+	if (repo_config_get_value(the_repository, "pull.ff", &value))
 		return NULL;
 
 	switch (git_parse_maybe_bool(value)) {
@@ -340,7 +345,7 @@ static enum rebase_type config_get_rebase(int *rebase_unspecified)
 	if (curr_branch) {
 		char *key = xstrfmt("branch.%s.rebase", curr_branch->name);
 
-		if (!git_config_get_value(key, &value)) {
+		if (!repo_config_get_value(the_repository, key, &value)) {
 			enum rebase_type ret = parse_config_rebase(key, value, 1);
 			free(key);
 			return ret;
@@ -349,7 +354,7 @@ static enum rebase_type config_get_rebase(int *rebase_unspecified)
 		free(key);
 	}
 
-	if (!git_config_get_value("pull.rebase", &value))
+	if (!repo_config_get_value(the_repository, "pull.rebase", &value))
 		return parse_config_rebase("pull.rebase", value, 1);
 
 	*rebase_unspecified = 1;
@@ -364,7 +369,18 @@ static int git_pull_config(const char *var, const char *value,
 			   const struct config_context *ctx, void *cb)
 {
 	if (!strcmp(var, "rebase.autostash")) {
-		config_autostash = git_config_bool(var, value);
+		/*
+		 * run_rebase() also reads this option. The reason we handle it here is
+		 * that when pull.rebase is true, a fast-forward may occur without
+		 * invoking run_rebase(). We need to ensure that autostash is set even
+		 * in the fast-forward case.
+		 *
+		 * run_merge() handles merge.autostash, so we don't handle it here.
+		 */
+		config_rebase_autostash = git_config_bool(var, value);
+		return 0;
+	} else if (!strcmp(var, "pull.autostash")) {
+		config_pull_autostash = git_config_bool(var, value);
 		return 0;
 	} else if (!strcmp(var, "submodule.recurse")) {
 		recurse_submodules = git_config_bool(var, value) ?
@@ -487,7 +503,7 @@ static void NORETURN die_no_merge_candidates(const char *repo, const char **refs
 	} else
 		fprintf_ln(stderr, _("Your configuration specifies to merge with the ref '%s'\n"
 			"from the remote, but no such ref was fetched."),
-			*curr_branch->merge_name);
+			curr_branch->merge[0]->src);
 	exit(1);
 }
 
@@ -738,7 +754,8 @@ static const char *get_tracking_branch(const char *remote, const char *refspec)
 	const char *spec_src;
 	const char *merge_branch;
 
-	refspec_item_init_or_die(&spec, refspec, REFSPEC_FETCH);
+	if (!refspec_item_init_fetch(&spec, refspec))
+		die(_("invalid refspec '%s'"), refspec);
 	spec_src = spec.src;
 	if (!*spec_src || !strcmp(spec_src, "HEAD"))
 		spec_src = "HEAD";
@@ -995,13 +1012,15 @@ int cmd_pull(int argc,
 	if (!getenv("GIT_REFLOG_ACTION"))
 		set_reflog_message(argc, argv);
 
-	git_config(git_pull_config, NULL);
+	repo_config(the_repository, git_pull_config, NULL);
 	if (the_repository->gitdir) {
 		prepare_repo_settings(the_repository);
 		the_repository->settings.command_requires_full_index = 0;
 	}
 
 	argc = parse_options(argc, argv, prefix, pull_options, pull_usage, 0);
+	if (opt_autostash == -1)
+		opt_autostash = config_pull_autostash;
 
 	if (recurse_submodules_cli != RECURSE_SUBMODULES_DEFAULT)
 		recurse_submodules = recurse_submodules_cli;
@@ -1048,7 +1067,7 @@ int cmd_pull(int argc,
 
 	if (opt_rebase) {
 		if (opt_autostash == -1)
-			opt_autostash = config_autostash;
+			opt_autostash = config_rebase_autostash;
 
 		if (is_null_oid(&orig_head) && !is_index_unborn(the_repository->index))
 			die(_("Updating an unborn branch with changes added to the index."));

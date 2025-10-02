@@ -115,6 +115,9 @@ void run_diff_files(struct rev_info *revs, unsigned int option)
 	uint64_t start = getnanotime();
 	struct index_state *istate = revs->diffopt.repo->index;
 
+	if (revs->diffopt.max_depth_valid)
+		die(_("max-depth is not supported for worktree diffs"));
+
 	diff_set_mnemonic_prefix(&revs->diffopt, "i/", "w/");
 
 	refresh_fsmonitor(istate);
@@ -172,7 +175,7 @@ void run_diff_files(struct rev_info *revs, unsigned int option)
 			 * these from (stage - 2).
 			 */
 			dpath = combine_diff_path_new(ce->name, ce_namelen(ce),
-						      wt_mode, null_oid(), 2);
+						      wt_mode, null_oid(the_hash_algo), 2);
 
 			while (i < entries) {
 				struct cache_entry *nce = istate->cache[i];
@@ -257,7 +260,7 @@ void run_diff_files(struct rev_info *revs, unsigned int option)
 				   ce_intent_to_add(ce)) {
 				newmode = ce_mode_from_stat(ce, st.st_mode);
 				diff_addremove(&revs->diffopt, '+', newmode,
-					       null_oid(), 0, ce->name, 0);
+					       null_oid(the_hash_algo), 0, ce->name, 0);
 				continue;
 			}
 
@@ -274,7 +277,7 @@ void run_diff_files(struct rev_info *revs, unsigned int option)
 		}
 		oldmode = ce->ce_mode;
 		old_oid = &ce->oid;
-		new_oid = changed ? null_oid() : &ce->oid;
+		new_oid = changed ? null_oid(the_hash_algo) : &ce->oid;
 		diff_change(&revs->diffopt, oldmode, newmode,
 			    old_oid, new_oid,
 			    !is_null_oid(old_oid),
@@ -330,7 +333,7 @@ static int get_stat_data(const struct cache_entry *ce,
 						    0, dirty_submodule);
 		if (changed) {
 			mode = ce_mode_from_stat(ce, st.st_mode);
-			oid = null_oid();
+			oid = null_oid(the_hash_algo);
 		}
 	}
 
@@ -402,7 +405,7 @@ static int show_modified(struct rev_info *revs,
 
 		p = combine_diff_path_new(new_entry->name,
 					  ce_namelen(new_entry),
-					  mode, null_oid(), 2);
+					  mode, null_oid(the_hash_algo), 2);
 		p->parent[0].status = DIFF_STATUS_MODIFIED;
 		p->parent[0].mode = new_entry->ce_mode;
 		oidcpy(&p->parent[0].oid, &new_entry->oid);
@@ -560,6 +563,8 @@ static int diff_cache(struct rev_info *revs,
 	opts.dst_index = NULL;
 	opts.pathspec = &revs->diffopt.pathspec;
 	opts.pathspec->recursive = 1;
+	if (revs->diffopt.max_depth_valid)
+		die(_("max-depth is not supported for index diffs"));
 
 	init_tree_desc(&t, &tree->object.oid, tree->buffer, tree->size);
 	return unpack_trees(1, &t, &opts);

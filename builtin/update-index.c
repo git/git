@@ -77,7 +77,7 @@ static void report(const char *fmt, ...)
 	 * objects invisible while a transaction is active, so flush the
 	 * transaction here before reporting a change made by update-index.
 	 */
-	flush_odb_transaction();
+	flush_odb_transaction(the_repository->objects->transaction);
 	va_start(vp, fmt);
 	vprintf(fmt, vp);
 	putchar('\n');
@@ -304,7 +304,7 @@ static int add_one_path(const struct cache_entry *old, const char *path, int len
 	ce->ce_mode = ce_mode_from_stat(old, st->st_mode);
 
 	if (index_path(the_repository->index, &ce->oid, path, st,
-		       info_only ? 0 : HASH_WRITE_OBJECT)) {
+		       info_only ? 0 : INDEX_WRITE_OBJECT)) {
 		discard_cache_entry(ce);
 		return -1;
 	}
@@ -940,6 +940,7 @@ int cmd_update_index(int argc,
 	strbuf_getline_fn getline_fn;
 	int parseopt_state = PARSE_OPT_UNKNOWN;
 	struct repository *r = the_repository;
+	struct odb_transaction *transaction;
 	struct option options[] = {
 		OPT_BIT('q', NULL, &refresh_args.flags,
 			N_("continue refresh even when index needs update"),
@@ -964,29 +965,55 @@ int cmd_update_index(int argc,
 			N_("like --refresh, but ignore assume-unchanged setting"),
 			PARSE_OPT_NOARG | PARSE_OPT_NONEG,
 			really_refresh_callback),
-		{OPTION_LOWLEVEL_CALLBACK, 0, "cacheinfo", NULL,
-			N_("<mode>,<object>,<path>"),
-			N_("add the specified entry to the index"),
-			PARSE_OPT_NOARG | /* disallow --cacheinfo=<mode> form */
-			PARSE_OPT_NONEG | PARSE_OPT_LITERAL_ARGHELP,
-			NULL, 0,
-			cacheinfo_callback},
+		{
+			.type = OPTION_LOWLEVEL_CALLBACK,
+			.long_name = "cacheinfo",
+			.argh = N_("<mode>,<object>,<path>"),
+			.help = N_("add the specified entry to the index"),
+			.flags = PARSE_OPT_NOARG | /* disallow --cacheinfo=<mode> form */
+				 PARSE_OPT_NONEG | PARSE_OPT_LITERAL_ARGHELP,
+			.ll_callback = cacheinfo_callback,
+		},
 		OPT_CALLBACK_F(0, "chmod", &set_executable_bit, "(+|-)x",
 			N_("override the executable bit of the listed files"),
 			PARSE_OPT_NONEG,
 			chmod_callback),
-		{OPTION_SET_INT, 0, "assume-unchanged", &mark_valid_only, NULL,
-			N_("mark files as \"not changing\""),
-			PARSE_OPT_NOARG | PARSE_OPT_NONEG, NULL, MARK_FLAG},
-		{OPTION_SET_INT, 0, "no-assume-unchanged", &mark_valid_only, NULL,
-			N_("clear assumed-unchanged bit"),
-			PARSE_OPT_NOARG | PARSE_OPT_NONEG, NULL, UNMARK_FLAG},
-		{OPTION_SET_INT, 0, "skip-worktree", &mark_skip_worktree_only, NULL,
-			N_("mark files as \"index-only\""),
-			PARSE_OPT_NOARG | PARSE_OPT_NONEG, NULL, MARK_FLAG},
-		{OPTION_SET_INT, 0, "no-skip-worktree", &mark_skip_worktree_only, NULL,
-			N_("clear skip-worktree bit"),
-			PARSE_OPT_NOARG | PARSE_OPT_NONEG, NULL, UNMARK_FLAG},
+		{
+			.type = OPTION_SET_INT,
+			.long_name = "assume-unchanged",
+			.value = &mark_valid_only,
+			.precision = sizeof(mark_valid_only),
+			.help = N_("mark files as \"not changing\""),
+			.flags = PARSE_OPT_NOARG | PARSE_OPT_NONEG,
+			.defval = MARK_FLAG,
+		},
+		{
+			.type = OPTION_SET_INT,
+			.long_name = "no-assume-unchanged",
+			.value = &mark_valid_only,
+			.precision = sizeof(mark_valid_only),
+			.help = N_("clear assumed-unchanged bit"),
+			.flags = PARSE_OPT_NOARG | PARSE_OPT_NONEG,
+			.defval = UNMARK_FLAG,
+		},
+		{
+			.type = OPTION_SET_INT,
+			.long_name = "skip-worktree",
+			.value = &mark_skip_worktree_only,
+			.precision = sizeof(mark_skip_worktree_only),
+			.help = N_("mark files as \"index-only\""),
+			.flags = PARSE_OPT_NOARG | PARSE_OPT_NONEG,
+			.defval = MARK_FLAG,
+		},
+		{
+			.type = OPTION_SET_INT,
+			.long_name = "no-skip-worktree",
+			.value = &mark_skip_worktree_only,
+			.precision = sizeof(mark_skip_worktree_only),
+			.help = N_("clear skip-worktree bit"),
+			.flags = PARSE_OPT_NOARG | PARSE_OPT_NONEG,
+			.defval = UNMARK_FLAG,
+		},
 		OPT_BOOL(0, "ignore-skip-worktree-entries", &ignore_skip_worktree_entries,
 			 N_("do not touch index-only entries")),
 		OPT_SET_INT(0, "info-only", &info_only,
@@ -995,22 +1022,39 @@ int cmd_update_index(int argc,
 			N_("remove named paths even if present in worktree"), 1),
 		OPT_BOOL('z', NULL, &nul_term_line,
 			 N_("with --stdin: input lines are terminated by null bytes")),
-		{OPTION_LOWLEVEL_CALLBACK, 0, "stdin", &read_from_stdin, NULL,
-			N_("read list of paths to be updated from standard input"),
-			PARSE_OPT_NONEG | PARSE_OPT_NOARG,
-			NULL, 0, stdin_callback},
-		{OPTION_LOWLEVEL_CALLBACK, 0, "index-info", &nul_term_line, NULL,
-			N_("add entries from standard input to the index"),
-			PARSE_OPT_NONEG | PARSE_OPT_NOARG,
-			NULL, 0, stdin_cacheinfo_callback},
-		{OPTION_LOWLEVEL_CALLBACK, 0, "unresolve", &has_errors, NULL,
-			N_("repopulate stages #2 and #3 for the listed paths"),
-			PARSE_OPT_NONEG | PARSE_OPT_NOARG,
-			NULL, 0, unresolve_callback},
-		{OPTION_LOWLEVEL_CALLBACK, 'g', "again", &has_errors, NULL,
-			N_("only update entries that differ from HEAD"),
-			PARSE_OPT_NONEG | PARSE_OPT_NOARG,
-			NULL, 0, reupdate_callback},
+		{
+			.type = OPTION_LOWLEVEL_CALLBACK,
+			.long_name = "stdin",
+			.value = &read_from_stdin,
+			.help = N_("read list of paths to be updated from standard input"),
+			.flags = PARSE_OPT_NONEG | PARSE_OPT_NOARG,
+			.ll_callback = stdin_callback,
+		},
+		{
+			.type = OPTION_LOWLEVEL_CALLBACK,
+			.long_name = "index-info",
+			.value = &nul_term_line,
+			.help = N_("add entries from standard input to the index"),
+			.flags = PARSE_OPT_NONEG | PARSE_OPT_NOARG,
+			.ll_callback = stdin_cacheinfo_callback,
+		},
+		{
+			.type = OPTION_LOWLEVEL_CALLBACK,
+			.long_name = "unresolve",
+			.value = &has_errors,
+			.help = N_("repopulate stages #2 and #3 for the listed paths"),
+			.flags = PARSE_OPT_NONEG | PARSE_OPT_NOARG,
+			.ll_callback = unresolve_callback,
+		},
+		{
+			.type = OPTION_LOWLEVEL_CALLBACK,
+			.short_name = 'g',
+			.long_name = "again",
+			.value = &has_errors,
+			.help = N_("only update entries that differ from HEAD"),
+			.flags = PARSE_OPT_NONEG | PARSE_OPT_NOARG,
+			.ll_callback = reupdate_callback,
+		},
 		OPT_BIT(0, "ignore-missing", &refresh_args.flags,
 			N_("ignore files missing from worktree"),
 			REFRESH_IGNORE_MISSING),
@@ -1036,19 +1080,31 @@ int cmd_update_index(int argc,
 			N_("write out the index even if is not flagged as changed"), 1),
 		OPT_BOOL(0, "fsmonitor", &fsmonitor,
 			N_("enable or disable file system monitor")),
-		{OPTION_SET_INT, 0, "fsmonitor-valid", &mark_fsmonitor_only, NULL,
-			N_("mark files as fsmonitor valid"),
-			PARSE_OPT_NOARG | PARSE_OPT_NONEG, NULL, MARK_FLAG},
-		{OPTION_SET_INT, 0, "no-fsmonitor-valid", &mark_fsmonitor_only, NULL,
-			N_("clear fsmonitor valid bit"),
-			PARSE_OPT_NOARG | PARSE_OPT_NONEG, NULL, UNMARK_FLAG},
+		{
+			.type = OPTION_SET_INT,
+			.long_name = "fsmonitor-valid",
+			.value = &mark_fsmonitor_only,
+			.precision = sizeof(mark_fsmonitor_only),
+			.help = N_("mark files as fsmonitor valid"),
+			.flags = PARSE_OPT_NOARG | PARSE_OPT_NONEG,
+			.defval = MARK_FLAG,
+		},
+		{
+			.type = OPTION_SET_INT,
+			.long_name = "no-fsmonitor-valid",
+			.value = &mark_fsmonitor_only,
+			.precision = sizeof(mark_fsmonitor_only),
+			.help = N_("clear fsmonitor valid bit"),
+			.flags = PARSE_OPT_NOARG | PARSE_OPT_NONEG,
+			.defval = UNMARK_FLAG,
+		},
 		OPT_END()
 	};
 
 	show_usage_with_options_if_asked(argc, argv,
 					 update_index_usage, options);
 
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 
 	prepare_repo_settings(r);
 	the_repository->settings.command_requires_full_index = 0;
@@ -1075,7 +1131,7 @@ int cmd_update_index(int argc,
 	 * Allow the object layer to optimize adding multiple objects in
 	 * a batch.
 	 */
-	begin_odb_transaction();
+	transaction = begin_odb_transaction(the_repository->objects);
 	while (ctx.argc) {
 		if (parseopt_state != PARSE_OPT_DONE)
 			parseopt_state = parse_options_step(&ctx, options,
@@ -1158,7 +1214,7 @@ int cmd_update_index(int argc,
 	/*
 	 * By now we have added all of the new objects
 	 */
-	end_odb_transaction();
+	end_odb_transaction(transaction);
 
 	if (split_index > 0) {
 		if (repo_config_get_split_index(the_repository) == 0)

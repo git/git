@@ -499,7 +499,7 @@ test_expect_success 'set-head --auto has no problem w/multiple HEADs' '
 		cd test &&
 		git fetch two "refs/heads/*:refs/remotes/two/*" &&
 		git remote set-head --auto two >output 2>&1 &&
-		echo "${SQ}two/HEAD${SQ} is unchanged and points to ${SQ}main${SQ}" >expect &&
+		echo "${SQ}two/HEAD${SQ} is now created and points to ${SQ}main${SQ}" >expect &&
 		test_cmp expect output
 	)
 '
@@ -1123,7 +1123,7 @@ Pull: refs/heads/main:refs/heads/origin
 Pull: refs/heads/next:refs/heads/origin2
 EOF
 
-test_expect_success WITHOUT_BREAKING_CHANGES 'migrate a remote from named file in $GIT_DIR/remotes' '
+test_expect_success !WITH_BREAKING_CHANGES 'migrate a remote from named file in $GIT_DIR/remotes' '
 	git clone one five &&
 	origin_url=$(pwd)/one &&
 	(
@@ -1149,7 +1149,7 @@ test_expect_success WITHOUT_BREAKING_CHANGES 'migrate a remote from named file i
 	)
 '
 
-test_expect_success WITHOUT_BREAKING_CHANGES 'migrate a remote from named file in $GIT_DIR/branches' '
+test_expect_success !WITH_BREAKING_CHANGES 'migrate a remote from named file in $GIT_DIR/branches' '
 	git clone --template= one six &&
 	origin_url=$(pwd)/one &&
 	(
@@ -1165,7 +1165,7 @@ test_expect_success WITHOUT_BREAKING_CHANGES 'migrate a remote from named file i
 	)
 '
 
-test_expect_success WITHOUT_BREAKING_CHANGES 'migrate a remote from named file in $GIT_DIR/branches (2)' '
+test_expect_success !WITH_BREAKING_CHANGES 'migrate a remote from named file in $GIT_DIR/branches (2)' '
 	git clone --template= one seven &&
 	(
 		cd seven &&
@@ -1642,6 +1642,93 @@ test_expect_success 'empty config clears remote.*.pushurl list' '
 	  Push  URL: right-push-two
 	EOF
 	test_cmp expect actual
+'
+
+test_expect_success 'forbid adding subset of existing remote' '
+	test_when_finished "git remote rm outer" &&
+	git remote add outer url &&
+	test_must_fail git remote add outer/inner url 2>err &&
+	test_grep ".outer/inner. is a subset of existing remote .outer." err
+'
+
+test_expect_success 'forbid adding superset of existing remote' '
+	test_when_finished "git remote rm outer/inner" &&
+	git remote add outer/inner url &&
+	test_must_fail git remote add outer url 2>err &&
+	test_grep ".outer. is a superset of existing remote .outer/inner." err
+'
+
+test_expect_success 'rename handles unborn HEAD' '
+	test_when_finished "git remote remove unborn-renamed" &&
+	git remote add unborn url &&
+	git symbolic-ref refs/remotes/unborn/HEAD refs/remotes/unborn/nonexistent &&
+	git remote rename unborn unborn-renamed &&
+	git symbolic-ref refs/remotes/unborn-renamed/HEAD >actual &&
+	echo refs/remotes/unborn-renamed/nonexistent >expected &&
+	test_cmp expected actual
+'
+
+test_expect_success 'rename can nest a remote into itself' '
+	test_commit parent-commit &&
+	COMMIT_ID=$(git rev-parse HEAD) &&
+	test_when_finished "git remote remove parent || true" &&
+	git remote add parent url &&
+	git update-ref refs/remotes/parent/branch $COMMIT_ID &&
+	test_when_finished "git remote remove parent/child" &&
+	git remote rename parent parent/child &&
+	git for-each-ref refs/remotes/ >actual &&
+	printf "$COMMIT_ID commit\trefs/remotes/parent/child/branch\n" >expected &&
+	test_cmp expected actual
+'
+
+test_expect_success 'rename can nest a remote into itself with a conflicting branch name' '
+	test_commit parent-conflict &&
+	COMMIT_ID=$(git rev-parse HEAD) &&
+	test_when_finished "git remote remove parent || true" &&
+	git remote add parent url &&
+	git update-ref refs/remotes/parent/child $COMMIT_ID &&
+	test_when_finished "git remote remove parent/child" &&
+	test_must_fail git remote rename parent parent/child 2>err &&
+	test_grep "renaming remote references failed" err &&
+	test_grep "The remote you are trying to rename has conflicting references" err &&
+	git for-each-ref refs/remotes/ >actual &&
+	printf "$COMMIT_ID commit\trefs/remotes/parent/child\n" >expected &&
+	test_cmp expected actual
+'
+
+test_expect_success 'rename can unnest a remote' '
+	test_commit parent-child-commit &&
+	COMMIT_ID=$(git rev-parse HEAD) &&
+	test_when_finished "git remote remove parent/child || true" &&
+	git remote add parent/child url &&
+	git update-ref refs/remotes/parent/child/branch $COMMIT_ID &&
+	git remote rename parent/child parent &&
+	git for-each-ref refs/remotes/ >actual &&
+	printf "$COMMIT_ID commit\trefs/remotes/parent/branch\n" >expected &&
+	test_cmp expected actual
+'
+
+test_expect_success 'rename moves around the reflog' '
+	test_commit reflog-old &&
+	COMMIT_ID=$(git rev-parse HEAD) &&
+	test_config core.logAllRefUpdates true &&
+	test_when_finished "git remote remove reflog-old || true" &&
+	git remote add reflog-old url &&
+	git update-ref refs/remotes/reflog-old/branch $COMMIT_ID &&
+	test-tool ref-store main for-each-reflog >actual &&
+	test_grep refs/remotes/reflog-old/branch actual &&
+	test-tool ref-store main for-each-reflog-ent refs/remotes/reflog-old/branch >reflog-entries-old &&
+	test_line_count = 1 reflog-entries-old &&
+	git remote rename reflog-old reflog-new &&
+	test-tool ref-store main for-each-reflog >actual &&
+	test_grep ! refs/remotes/reflog-old actual &&
+	test_grep refs/remotes/reflog-new/branch actual &&
+	test-tool ref-store main for-each-reflog-ent refs/remotes/reflog-new/branch >reflog-entries-new &&
+	cat >expect <<-EOF &&
+	$(cat reflog-entries-old)
+	$COMMIT_ID $COMMIT_ID $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1112912173 -0700	remote: renamed refs/remotes/reflog-old/branch to refs/remotes/reflog-new/branch
+	EOF
+	test_cmp expect reflog-entries-new
 '
 
 test_done

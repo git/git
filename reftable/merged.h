@@ -1,10 +1,10 @@
 /*
-Copyright 2020 Google LLC
-
-Use of this source code is governed by a BSD-style
-license that can be found in the LICENSE file or at
-https://developers.google.com/open-source/licenses/bsd
-*/
+ * Copyright 2020 Google LLC
+ *
+ * Use of this source code is governed by a BSD-style
+ * license that can be found in the LICENSE file or at
+ * https://developers.google.com/open-source/licenses/bsd
+ */
 
 #ifndef MERGED_H
 #define MERGED_H
@@ -13,8 +13,8 @@ https://developers.google.com/open-source/licenses/bsd
 #include "reftable-basics.h"
 
 struct reftable_merged_table {
-	struct reftable_reader **readers;
-	size_t readers_len;
+	struct reftable_table **tables;
+	size_t tables_len;
 	enum reftable_hash hash_id;
 
 	/* If unset, produce deletions. This is useful for compaction. For the

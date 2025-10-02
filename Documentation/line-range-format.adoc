@@ -1,30 +1,30 @@
-'<start>' and '<end>' can take one of these forms:
+_<start>_ and _<end>_ can take one of these forms:
 
-- number
+- _<number>_
 +
-If '<start>' or '<end>' is a number, it specifies an
+If _<start>_ or _<end>_ is a number, it specifies an
 absolute line number (lines count from 1).
 +
 
-- `/regex/`
+- `/<regex>/`
 +
 This form will use the first line matching the given
-POSIX regex. If '<start>' is a regex, it will search from the end of
+POSIX _<regex>_. If _<start>_ is a regex, it will search from the end of
 the previous `-L` range, if any, otherwise from the start of file.
-If '<start>' is `^/regex/`, it will search from the start of file.
-If '<end>' is a regex, it will search
-starting at the line given by '<start>'.
+If _<start>_ is `^/<regex>/`, it will search from the start of file.
+If _<end>_ is a regex, it will search starting at the line given by
+_<start>_.
 +
 
-- +offset or -offset
+- `+<offset>` or `-<offset>`
 +
-This is only valid for '<end>' and will specify a number
-of lines before or after the line given by '<start>'.
+This is only valid for _<end>_ and will specify a number
+of lines before or after the line given by _<start>_.
 
 +
-If `:<funcname>` is given in place of '<start>' and '<end>', it is a
+If `:<funcname>` is given in place of _<start>_ and _<end>_, it is a
 regular expression that denotes the range from the first funcname line
-that matches '<funcname>', up to the next funcname line. `:<funcname>`
+that matches _<funcname>_, up to the next funcname line. `:<funcname>`
 searches from the end of the previous `-L` range, if any, otherwise
 from the start of file. `^:<funcname>` searches from the start of
 file. The function names are determined in the same way as `git diff`

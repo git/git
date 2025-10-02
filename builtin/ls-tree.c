@@ -7,10 +7,11 @@
 #include "builtin.h"
 
 #include "config.h"
+#include "environment.h"
 #include "gettext.h"
 #include "hex.h"
 #include "object-name.h"
-#include "object-store-ll.h"
+#include "odb.h"
 #include "tree.h"
 #include "path.h"
 #include "quote.h"
@@ -27,7 +28,7 @@ static void expand_objectsize(struct strbuf *line, const struct object_id *oid,
 {
 	if (type == OBJ_BLOB) {
 		unsigned long size;
-		if (oid_object_info(the_repository, oid, &size) < 0)
+		if (odb_read_object_info(the_repository->objects, oid, &size) < 0)
 			die(_("could not get object info about '%s'"),
 			    oid_to_hex(oid));
 		if (padded)
@@ -217,7 +218,7 @@ static int show_tree_long(const struct object_id *oid, struct strbuf *base,
 
 	if (type == OBJ_BLOB) {
 		unsigned long size;
-		if (oid_object_info(the_repository, oid, &size) == OBJ_BAD)
+		if (odb_read_object_info(the_repository->objects, oid, &size) == OBJ_BAD)
 			xsnprintf(size_text, sizeof(size_text), "BAD");
 		else
 			xsnprintf(size_text, sizeof(size_text),
@@ -372,10 +373,9 @@ int cmd_ls_tree(int argc,
 		OPT_END()
 	};
 	struct ls_tree_cmdmode_to_fmt *m2f = ls_tree_cmdmode_format;
-	struct object_context obj_context = {0};
 	int ret;
 
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 
 	argc = parse_options(argc, argv, prefix, ls_tree_options,
 			     ls_tree_usage, 0);
@@ -404,9 +404,8 @@ int cmd_ls_tree(int argc,
 			ls_tree_usage, ls_tree_options);
 	if (argc < 1)
 		usage_with_options(ls_tree_usage, ls_tree_options);
-	if (get_oid_with_context(the_repository, argv[0],
-				 GET_OID_HASH_ANY, &oid,
-				 &obj_context))
+	if (repo_get_oid_with_flags(the_repository, argv[0], &oid,
+				    GET_OID_HASH_ANY))
 		die("Not a valid object name %s", argv[0]);
 
 	/*
@@ -446,6 +445,5 @@ int cmd_ls_tree(int argc,
 
 	ret = !!read_tree(the_repository, tree, &options.pathspec, fn, &options);
 	clear_pathspec(&options.pathspec);
-	object_context_release(&obj_context);
 	return ret;
 }

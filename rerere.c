@@ -5,6 +5,7 @@
 #include "abspath.h"
 #include "config.h"
 #include "copy.h"
+#include "environment.h"
 #include "gettext.h"
 #include "hex.h"
 #include "lockfile.h"
@@ -18,7 +19,7 @@
 #include "path.h"
 #include "pathspec.h"
 #include "object-file.h"
-#include "object-store-ll.h"
+#include "odb.h"
 #include "strmap.h"
 
 #define RESOLVED 0
@@ -860,7 +861,7 @@ static int do_plain_rerere(struct repository *r,
 		string_list_insert(rr, path)->util = id;
 
 		/* Ensure that the directory exists. */
-		mkdir_in_gitdir(rerere_path(&buf, id, NULL));
+		safe_create_dir_in_gitdir(the_repository, rerere_path(&buf, id, NULL));
 	}
 
 	for (i = 0; i < rr->nr; i++)
@@ -877,9 +878,9 @@ static int do_plain_rerere(struct repository *r,
 
 static void git_rerere_config(void)
 {
-	git_config_get_bool("rerere.enabled", &rerere_enabled);
-	git_config_get_bool("rerere.autoupdate", &rerere_autoupdate);
-	git_config(git_default_config, NULL);
+	repo_config_get_bool(the_repository, "rerere.enabled", &rerere_enabled);
+	repo_config_get_bool(the_repository, "rerere.autoupdate", &rerere_autoupdate);
+	repo_config(the_repository, git_default_config, NULL);
 }
 
 static GIT_PATH_FUNC(git_path_rr_cache, "rr-cache")
@@ -895,7 +896,8 @@ static int is_rerere_enabled(void)
 	if (rerere_enabled < 0)
 		return rr_cache_exists;
 
-	if (!rr_cache_exists && mkdir_in_gitdir(git_path_rr_cache()))
+	if (!rr_cache_exists &&
+	    safe_create_dir_in_gitdir(the_repository, git_path_rr_cache()))
 		die(_("could not create directory '%s'"), git_path_rr_cache());
 	return 1;
 }
@@ -999,9 +1001,8 @@ static int handle_cache(struct index_state *istate,
 			break;
 		i = ce_stage(ce) - 1;
 		if (!mmfile[i].ptr) {
-			mmfile[i].ptr = repo_read_object_file(the_repository,
-							      &ce->oid, &type,
-							      &size);
+			mmfile[i].ptr = odb_read_object(the_repository->objects,
+							&ce->oid, &type, &size);
 			if (!mmfile[i].ptr)
 				die(_("unable to read %s"),
 				    oid_to_hex(&ce->oid));
@@ -1247,7 +1248,7 @@ void rerere_gc(struct repository *r, struct string_list *rr)
 				       &cutoff_resolve, now);
 	repo_config_get_expiry_in_days(the_repository, "gc.rerereunresolved",
 				       &cutoff_noresolve, now);
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 	dir = opendir(repo_git_path_replace(the_repository, &buf, "rr-cache"));
 	if (!dir)
 		die_errno(_("unable to open rr-cache directory"));

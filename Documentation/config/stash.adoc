@@ -1,3 +1,8 @@
+stash.index::
+	If this is set to true, `git stash apply` and `git stash pop` will
+	behave as if `--index` was supplied. Defaults to false. See the
+	descriptions in linkgit:git-stash[1].
+
 stash.showIncludeUntracked::
 	If this is set to true, the `git stash show` command will show
 	the untracked files of a stash entry.  Defaults to false. See

@@ -1,0 +1,12 @@
+Usage: combined [options]
+
+Options:
+  -sname        Run only the suite with `name` (can go to individual test name)
+  -iname        Include the suite with `name`
+  -xname        Exclude the suite with `name`
+  -v            Increase verbosity (show suite names)
+  -q            Decrease verbosity, inverse to -v
+  -Q            Quit as soon as a test fails
+  -t            Display results in tap format
+  -l            Print suite names
+  -r[filename]  Write summary file (to the optional filename)

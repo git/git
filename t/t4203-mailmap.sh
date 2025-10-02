@@ -1133,4 +1133,37 @@ test_expect_success 'git cat-file --batch-command returns correct size with --us
 	test_cmp expect actual
 '
 
+test_expect_success 'git cat-file --mailmap works with different author and committer' '
+	test_when_finished "rm .mailmap" &&
+	cat >.mailmap <<-\EOF &&
+	Mailmapped User <mailmapped-user@gitlab.com> C O Mitter <committer@example.com>
+	EOF
+	git commit --allow-empty -m "different author/committer" \
+		--author="Different Author <different@example.com>" &&
+	cat >expect <<-\EOF &&
+	author Different Author <different@example.com>
+	committer Mailmapped User <mailmapped-user@gitlab.com>
+	EOF
+	git cat-file --mailmap commit HEAD >log &&
+	sed -n -e "/^author /s/>.*/>/p" -e "/^committer /s/>.*/>/p" log >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'git cat-file --mailmap maps both author and committer when both need mapping' '
+	test_when_finished "rm .mailmap" &&
+	cat >.mailmap <<-\EOF &&
+	Mapped Author <mapped-author@example.com> <different@example.com>
+	Mapped Committer <mapped-committer@example.com> C O Mitter <committer@example.com>
+	EOF
+	git commit --allow-empty -m "both author and committer mapped" \
+		--author="Different Author <different@example.com>" &&
+	cat >expect <<-\EOF &&
+	author Mapped Author <mapped-author@example.com>
+	committer Mapped Committer <mapped-committer@example.com>
+	EOF
+	git cat-file --mailmap commit HEAD >log &&
+	sed -n -e "/^author /s/>.*/>/p" -e "/^committer /s/>.*/>/p" log >actual &&
+	test_cmp expect actual
+'
+
 test_done

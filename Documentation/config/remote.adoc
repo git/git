@@ -108,7 +108,8 @@ the values inherited from a lower priority configuration files (e.g.
 `$HOME/.gitconfig`).
 
 remote.<name>.followRemoteHEAD::
-	How linkgit:git-fetch[1] should handle updates to `remotes/<name>/HEAD`.
+	How linkgit:git-fetch[1] should handle updates to `remotes/<name>/HEAD`
+	when fetching using the configured refspecs of a remote.
 	The default value is "create", which will create `remotes/<name>/HEAD`
 	if it exists on the remote, but not locally; this will not touch an
 	already existing local reference. Setting it to "warn" will print

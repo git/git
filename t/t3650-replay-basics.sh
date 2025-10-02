@@ -195,4 +195,26 @@ test_expect_success 'using replay on bare repo to rebase multiple divergent bran
 	done
 '
 
+test_expect_success 'merge.directoryRenames=false' '
+	# create a test case that stress-tests the rename caching
+	git switch -c rename-onto &&
+
+	mkdir -p to-rename &&
+	test_commit to-rename/move &&
+
+	mkdir -p renamed-directory &&
+	git mv to-rename/move* renamed-directory/ &&
+	test_tick &&
+	git commit -m renamed-directory &&
+
+	git switch -c rename-from HEAD^ &&
+	test_commit to-rename/add-a-file &&
+	echo modified >to-rename/add-a-file.t &&
+	test_tick &&
+	git commit -m modified to-rename/add-a-file.t &&
+
+	git -c merge.directoryRenames=false replay \
+		--onto rename-onto rename-onto..rename-from
+'
+
 test_done

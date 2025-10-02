@@ -20,7 +20,7 @@
 #include "commit-slab.h"
 #include "commit-reach.h"
 #include "object-name.h"
-#include "object-store-ll.h"
+#include "odb.h"
 #include "path.h"
 #include "dir.h"
 
@@ -155,9 +155,9 @@ static void show_list(const char *debug, int counted, int nr,
 		unsigned commit_flags = commit->object.flags;
 		enum object_type type;
 		unsigned long size;
-		char *buf = repo_read_object_file(the_repository,
-						  &commit->object.oid, &type,
-						  &size);
+		char *buf = odb_read_object(the_repository->objects,
+					    &commit->object.oid, &type,
+					    &size);
 		const char *subject_start;
 		int subject_len;
 
@@ -674,9 +674,6 @@ static void bisect_rev_setup(struct repository *r, struct rev_info *revs,
 			     const char *bad_format, const char *good_format,
 			     int read_paths)
 {
-	struct setup_revision_opt opt = {
-		.free_removed_argv_elements = 1,
-	};
 	int i;
 
 	repo_init_revisions(r, revs, prefix);
@@ -693,7 +690,7 @@ static void bisect_rev_setup(struct repository *r, struct rev_info *revs,
 	if (read_paths)
 		read_bisect_paths(rev_argv);
 
-	setup_revisions(rev_argv->nr, rev_argv->v, revs, &opt);
+	setup_revisions_from_strvec(rev_argv, revs, NULL);
 }
 
 static void bisect_common(struct rev_info *revs)

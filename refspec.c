@@ -153,18 +153,22 @@ static int parse_refspec(struct refspec_item *item, const char *refspec, int fet
 	return 1;
 }
 
-int refspec_item_init(struct refspec_item *item, const char *refspec, int fetch)
+static int refspec_item_init(struct refspec_item *item, const char *refspec,
+			     int fetch)
 {
 	memset(item, 0, sizeof(*item));
 	item->raw = xstrdup(refspec);
 	return parse_refspec(item, refspec, fetch);
 }
 
-void refspec_item_init_or_die(struct refspec_item *item, const char *refspec,
-			      int fetch)
+int refspec_item_init_fetch(struct refspec_item *item, const char *refspec)
 {
-	if (!refspec_item_init(item, refspec, fetch))
-		die(_("invalid refspec '%s'"), refspec);
+	return refspec_item_init(item, refspec, 1);
+}
+
+int refspec_item_init_push(struct refspec_item *item, const char *refspec)
+{
+	return refspec_item_init(item, refspec, 0);
 }
 
 void refspec_item_clear(struct refspec_item *item)
@@ -178,17 +182,29 @@ void refspec_item_clear(struct refspec_item *item)
 	item->exact_sha1 = 0;
 }
 
-void refspec_init(struct refspec *rs, int fetch)
+void refspec_init_fetch(struct refspec *rs)
 {
-	memset(rs, 0, sizeof(*rs));
-	rs->fetch = fetch;
+	struct refspec blank = REFSPEC_INIT_FETCH;
+	memcpy(rs, &blank, sizeof(*rs));
+}
+
+void refspec_init_push(struct refspec *rs)
+{
+	struct refspec blank = REFSPEC_INIT_PUSH;
+	memcpy(rs, &blank, sizeof(*rs));
 }
 
 void refspec_append(struct refspec *rs, const char *refspec)
 {
 	struct refspec_item item;
+	int ret;
 
-	refspec_item_init_or_die(&item, refspec, rs->fetch);
+	if (rs->fetch)
+		ret = refspec_item_init_fetch(&item, refspec);
+	else
+		ret = refspec_item_init_push(&item, refspec);
+	if (!ret)
+		die(_("invalid refspec '%s'"), refspec);
 
 	ALLOC_GROW(rs->items, rs->nr + 1, rs->alloc);
 	rs->items[rs->nr] = item;
@@ -233,7 +249,7 @@ void refspec_clear(struct refspec *rs)
 int valid_fetch_refspec(const char *fetch_refspec_str)
 {
 	struct refspec_item refspec;
-	int ret = refspec_item_init(&refspec, fetch_refspec_str, REFSPEC_FETCH);
+	int ret = refspec_item_init_fetch(&refspec, fetch_refspec_str);
 	refspec_item_clear(&refspec);
 	return ret;
 }
@@ -246,14 +262,24 @@ void refspec_ref_prefixes(const struct refspec *rs,
 		const struct refspec_item *item = &rs->items[i];
 		const char *prefix = NULL;
 
-		if (item->exact_sha1 || item->negative)
+		if (item->negative)
 			continue;
-		if (rs->fetch == REFSPEC_FETCH)
+
+		if (rs->fetch) {
+			if (item->exact_sha1)
+				continue;
 			prefix = item->src;
-		else if (item->dst)
-			prefix = item->dst;
-		else if (item->src && !item->exact_sha1)
-			prefix = item->src;
+		} else {
+			/*
+			 * Pushes can have an explicit destination like
+			 * "foo:bar", or can implicitly use the src for both
+			 * ("foo" is the same as "foo:foo").
+			 */
+			if (item->dst)
+				prefix = item->dst;
+			else if (item->src && !item->exact_sha1)
+				prefix = item->src;
+		}
 
 		if (!prefix)
 			continue;

@@ -359,7 +359,7 @@ test_expect_success \
 	grep "Cannot demote unterminatedheader" act
 '
 
-test_expect_success 'badFilemode is not a strict error' '
+test_expect_success PERL_TEST_HELPERS 'badFilemode is not a strict error' '
 	git init --bare badmode.git &&
 	tree=$(
 		cd badmode.git &&

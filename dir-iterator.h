@@ -28,7 +28,7 @@
  *
  *     while ((ok = dir_iterator_advance(iter)) == ITER_OK) {
  *             if (want_to_stop_iteration()) {
- *                     ok = dir_iterator_abort(iter);
+ *                     ok = ITER_DONE;
  *                     break;
  *             }
  *
@@ -39,6 +39,7 @@
  *
  *     if (ok != ITER_DONE)
  *             handle_error();
+ *     dir_iterator_free(iter);
  *
  * Callers are allowed to modify iter->path while they are working,
  * but they must restore it to its original contents before calling
@@ -107,11 +108,7 @@ struct dir_iterator *dir_iterator_begin(const char *path, unsigned int flags);
  */
 int dir_iterator_advance(struct dir_iterator *iterator);
 
-/*
- * End the iteration before it has been exhausted. Free the
- * dir_iterator and any associated resources and return ITER_DONE. On
- * error, free the dir_iterator and return ITER_ERROR.
- */
-int dir_iterator_abort(struct dir_iterator *iterator);
+/* Free the dir_iterator and any associated resources. */
+void dir_iterator_free(struct dir_iterator *iterator);
 
 #endif

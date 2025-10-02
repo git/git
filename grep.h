@@ -159,7 +159,7 @@ struct grep_opt {
 	int pathname;
 	int null_following_name;
 	int only_matching;
-	int color;
+	enum git_colorbool color;
 	int max_depth;
 	int funcname;
 	int funcbody;
@@ -198,7 +198,7 @@ struct grep_opt {
 		[GREP_COLOR_SEP] = GIT_COLOR_CYAN, \
 	}, \
 	.only_matching = 0, \
-	.color = -1, \
+	.color = GIT_COLOR_UNKNOWN, \
 	.output = std_output, \
 }
 

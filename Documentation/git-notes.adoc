@@ -87,6 +87,9 @@ In `--stdin` mode, take lines in the format
 on standard input, and copy the notes from each _<from-object>_ to its
 corresponding _<to-object>_.  (The optional _<rest>_ is ignored so that
 the command can read the input given to the `post-rewrite` hook.)
++
+`--stdin` cannot be combined with object names given on the command
+line.
 
 `append`::
 	Append new message(s) given by `-m` or `-F` options to an
@@ -124,6 +127,10 @@ When done, the user can either finalize the merge with
 	giving zero or one object from the command line, this is
 	equivalent to specifying an empty note message to
 	the `edit` subcommand.
++
+In `--stdin` mode, also remove the object names given on standard
+input. In other words, `--stdin` can be combined with object names from
+the command line.
 
 `prune`::
 	Remove all notes for non-existing/unreachable objects.
@@ -144,26 +151,18 @@ OPTIONS
 	Use the given note message (instead of prompting).
 	If multiple `-m` options are given, their values
 	are concatenated as separate paragraphs.
-	Lines starting with `#` and empty lines other than a
-	single line between paragraphs will be stripped out.
-	If you wish to keep them verbatim, use `--no-stripspace`.
 
 `-F <file>`::
 `--file=<file>`::
 	Take the note message from the given file.  Use `-` to
 	read the note message from the standard input.
-	Lines starting with `#` and empty lines other than a
-	single line between paragraphs will be stripped out.
-	If you wish to keep them verbatim, use `--no-stripspace`.
 
 `-C <object>`::
 `--reuse-message=<object>`::
 	Take the given blob object (for example, another note) as the
 	note message. (Use `git notes copy <object>` instead to
-	copy notes between objects.).  By default, message will be
-	copied verbatim, but if you wish to strip out the lines
-	starting with `#` and empty lines other than a single line
-	between paragraphs, use with `--stripspace` option.
+	copy notes between objects.)  Implies `--no-stripspace` since
+	the default behavior is to copy the message verbatim.
 
 `-c <object>`::
 `--reedit-message=<object>`::
@@ -174,21 +173,34 @@ OPTIONS
 	Allow an empty note object to be stored. The default behavior is
 	to automatically remove empty notes.
 
-`--[no-]separator`::
 `--separator=<paragraph-break>`::
+`--separator`::
+`--no-separator`::
 	Specify a string used as a custom inter-paragraph separator
 	(a newline is added at the end as needed). If `--no-separator`, no
 	separators will be added between paragraphs.  Defaults to a blank
 	line.
 
-`--[no-]stripspace`::
-	Strip leading and trailing whitespace from the note message.
-	Also strip out empty lines other than a single line between
-	paragraphs. Lines starting with `#` will be stripped out
-	in non-editor cases like `-m`, `-F` and `-C`, but not in
-	editor case like `git notes edit`, `-c`, etc.
+`--stripspace`::
+`--no-stripspace`::
+	Clean up whitespace. Specifically (see
+	linkgit:git-stripspace[1]):
++
+--
+- remove trailing whitespace from all lines
+- collapse multiple consecutive empty lines into one empty line
+- remove empty lines from the beginning and end of the input
+- add a missing `\n` to the last line if necessary.
+--
++
+`--stripspace` is the default except for
+`-C`/`--reuse-message`. However, keep in mind that this depends on the
+order of similar options. For example, for `-C <object> -m<message>`,
+`--stripspace` will be used because the default for `-m` overrides the
+previous `-C`. This is a known limitation that may be fixed in the
+future.
 
-`--ref <ref>`::
+`--ref=<ref>`::
 	Manipulate the notes tree in _<ref>_.  This overrides
 	`GIT_NOTES_REF` and the `core.notesRef` configuration.  The ref
 	specifies the full refname when it begins with `refs/notes/`; when it
@@ -200,9 +212,7 @@ OPTIONS
 	object that does not have notes attached to it.
 
 `--stdin`::
-	Also read the object names to remove notes from the standard
-	input (there is no reason you cannot combine this with object
-	names from the command line).
+	Only valid for `remove` and `copy`. See the respective subcommands.
 
 `-n`::
 `--dry-run`::

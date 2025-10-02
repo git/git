@@ -104,7 +104,7 @@ test_expect_success setup '
 	git config remote.config-glob.fetch refs/heads/*:refs/remotes/rem/* &&
 	remotes="$remotes config-glob" &&
 
-	if test_have_prereq WITHOUT_BREAKING_CHANGES
+	if ! test_have_prereq WITH_BREAKING_CHANGES
 	then
 		mkdir -p .git/remotes &&
 		cat >.git/remotes/remote-explicit <<-\EOF &&

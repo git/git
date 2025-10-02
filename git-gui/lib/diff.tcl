@@ -2,15 +2,13 @@
 # Copyright (C) 2006, 2007 Shawn Pearce
 
 proc apply_tab_size {{firsttab {}}} {
-	global have_tk85 repo_config ui_diff
+	global repo_config ui_diff
 
 	set w [font measure font_diff "0"]
-	if {$have_tk85 && $firsttab != 0} {
+	if {$firsttab != 0} {
 		$ui_diff configure -tabs [list [expr {$firsttab * $w}] [expr {($firsttab + $repo_config(gui.tabsize)) * $w}]]
-	} elseif {$have_tk85 || $repo_config(gui.tabsize) != 8} {
-		$ui_diff configure -tabs [expr {$repo_config(gui.tabsize) * $w}]
 	} else {
-		$ui_diff configure -tabs {}
+		$ui_diff configure -tabs [expr {$repo_config(gui.tabsize) * $w}]
 	}
 }
 
@@ -191,9 +189,8 @@ proc show_other_diff {path w m cont_info} {
 					set sz [string length $content]
 				}
 				file {
-					set fd [open $path r]
+					set fd [safe_open_file $path r]
 					fconfigure $fd \
-						-eofchar {} \
 						-encoding [get_path_encoding $path]
 					set content [read $fd $max_sz]
 					close $fd
@@ -215,7 +212,7 @@ proc show_other_diff {path w m cont_info} {
 			$ui_diff insert end \
 				"* [mc "Git Repository (subproject)"]\n" \
 				d_info
-		} elseif {![catch {set type [exec file $path]}]} {
+		} elseif {![catch {set type [safe_exec [list file $path]]}]} {
 			set n [string length $path]
 			if {[string equal -length $n $path $type]} {
 				set type [string range $type $n end]
@@ -280,9 +277,7 @@ proc start_show_diff {cont_info {add_opts {}}} {
 	if {$w eq $ui_index} {
 		lappend cmd diff-index
 		lappend cmd --cached
-		if {[git-version >= "1.7.2"]} {
-			lappend cmd --ignore-submodules=dirty
-		}
+		lappend cmd --ignore-submodules=dirty
 	} elseif {$w eq $ui_workdir} {
 		if {[string first {U} $m] >= 0} {
 			lappend cmd diff
@@ -290,17 +285,14 @@ proc start_show_diff {cont_info {add_opts {}}} {
 			lappend cmd diff-files
 		}
 	}
-	if {![is_config_false gui.textconv] && [git-version >= 1.6.1]} {
+	if {![is_config_false gui.textconv]} {
 		lappend cmd --textconv
 	}
 
 	if {[string match {160000 *} [lindex $s 2]]
 	 || [string match {160000 *} [lindex $s 3]]} {
 		set is_submodule_diff 1
-
-		if {[git-version >= "1.6.6"]} {
-			lappend cmd --submodule
-		}
+		lappend cmd --submodule
 	}
 
 	lappend cmd -p
@@ -319,15 +311,7 @@ proc start_show_diff {cont_info {add_opts {}}} {
 		lappend cmd $path
 	}
 
-	if {$is_submodule_diff && [git-version < "1.6.6"]} {
-		if {$w eq $ui_index} {
-			set cmd [list submodule summary --cached -- $path]
-		} else {
-			set cmd [list submodule summary --files -- $path]
-		}
-	}
-
-	if {[catch {set fd [eval git_read --nice $cmd]} err]} {
+	if {[catch {set fd [git_read_nice $cmd]} err]} {
 		set diff_active 0
 		unlock_index
 		ui_status [mc "Unable to display %s" [escape_path $path]]
@@ -340,6 +324,8 @@ proc start_show_diff {cont_info {add_opts {}}} {
 	# '++' lines which is not bijective. Thus, we need to maintain a state
 	# across lines.
 	set ::conflict_in_pre_image 0
+
+	# git-diff has eol==\n, \r if present is part of the text
 	fconfigure $fd \
 		-blocking 0 \
 		-encoding [get_path_encoding $path] \
@@ -603,7 +589,7 @@ proc apply_or_revert_hunk {x y revert} {
 
 	if {[catch {
 		set enc [get_path_encoding $current_diff_path]
-		set p [eval git_write $apply_cmd]
+		set p [git_write $apply_cmd]
 		fconfigure $p -translation binary -encoding $enc
 		puts -nonewline $p $wholepatch
 		close $p} err]} {
@@ -839,7 +825,7 @@ proc apply_or_revert_range_or_line {x y revert} {
 
 	if {[catch {
 		set enc [get_path_encoding $current_diff_path]
-		set p [eval git_write $apply_cmd]
+		set p [git_write $apply_cmd]
 		fconfigure $p -translation binary -encoding $enc
 		puts -nonewline $p $current_diff_header
 		puts -nonewline $p $wholepatch
@@ -876,7 +862,7 @@ proc undo_last_revert {} {
 
 	if {[catch {
 		set enc $last_revert_enc
-		set p [eval git_write $apply_cmd]
+		set p [git_write $apply_cmd]
 		fconfigure $p -translation binary -encoding $enc
 		puts -nonewline $p $last_revert
 		close $p} err]} {

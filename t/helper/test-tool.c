@@ -46,6 +46,7 @@ static struct test_cmd cmds[] = {
 	{ "mktemp", cmd__mktemp },
 	{ "name-hash", cmd__name_hash },
 	{ "online-cpus", cmd__online_cpus },
+	{ "pack-deltas", cmd__pack_deltas },
 	{ "pack-mtimes", cmd__pack_mtimes },
 	{ "parse-options", cmd__parse_options },
 	{ "parse-options-flags", cmd__parse_options_flags },
@@ -90,6 +91,7 @@ static struct test_cmd cmds[] = {
 	{ "windows-named-pipe", cmd__windows_named_pipe },
 #endif
 	{ "write-cache", cmd__write_cache },
+	{ "zlib", cmd__zlib },
 };
 
 static NORETURN void die_usage(void)

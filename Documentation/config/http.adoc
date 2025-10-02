@@ -289,12 +289,31 @@ for most push problems, but can increase memory consumption
 significantly since the entire buffer is allocated even for small
 pushes.
 
-http.lowSpeedLimit, http.lowSpeedTime::
+http.lowSpeedLimit::
+http.lowSpeedTime::
 	If the HTTP transfer speed, in bytes per second, is less than
 	'http.lowSpeedLimit' for longer than 'http.lowSpeedTime' seconds,
 	the transfer is aborted.
 	Can be overridden by the `GIT_HTTP_LOW_SPEED_LIMIT` and
 	`GIT_HTTP_LOW_SPEED_TIME` environment variables.
+
+http.keepAliveIdle::
+	Specifies how long in seconds to wait on an idle connection
+	before sending TCP keepalive probes (if supported by the OS). If
+	unset, curl's default value is used. Can be overridden by the
+	`GIT_HTTP_KEEPALIVE_IDLE` environment variable.
+
+http.keepAliveInterval::
+	Specifies how long in seconds to wait between TCP keepalive
+	probes (if supported by the OS). If unset, curl's default value
+	is used. Can be overridden by the `GIT_HTTP_KEEPALIVE_INTERVAL`
+	environment variable.
+
+http.keepAliveCount::
+	Specifies how many TCP keepalive probes to send before giving up
+	and terminating the connection (if supported by the OS). If
+	unset, curl's default value is used. Can be overridden by the
+	`GIT_HTTP_KEEPALIVE_COUNT` environment variable.
 
 http.noEPSV::
 	A boolean which disables using of EPSV ftp command by curl.

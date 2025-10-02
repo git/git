@@ -292,15 +292,23 @@ test_expect_success 'name-rev --annotate-stdin' '
 		echo "$rev ($name)" >>expect.unsorted || return 1
 	done &&
 	sort <expect.unsorted >expect &&
-	git rev-list --all | git name-rev --annotate-stdin >actual.unsorted &&
+	git rev-list --all >list &&
+	git name-rev --annotate-stdin <list >actual.unsorted &&
 	sort <actual.unsorted >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success 'name-rev --stdin deprecated' "
-	git rev-list --all | git name-rev --stdin 2>actual &&
-	grep -E 'warning: --stdin is deprecated' actual
-"
+test_expect_success 'name-rev --stdin deprecated' '
+	git rev-list --all >list &&
+	if ! test_have_prereq WITH_BREAKING_CHANGES
+	then
+		git name-rev --stdin <list 2>actual &&
+		test_grep "warning: --stdin is deprecated" actual
+	else
+		test_must_fail git name-rev --stdin <list 2>actual &&
+		test_grep "unknown option .stdin." actual
+	fi
+'
 
 test_expect_success 'describe --contains with the exact tags' '
 	echo "A^0" >expect &&
@@ -399,6 +407,36 @@ test_expect_success 'describe tag object' '
 	git tag test-blob-1 -a -m msg unique-file:file &&
 	test_must_fail git describe test-blob-1 2>actual &&
 	test_grep "fatal: test-blob-1 is neither a commit nor blob" actual
+'
+
+test_expect_success 'describe an unreachable blob' '
+	blob=$(echo not-found-anywhere | git hash-object -w --stdin) &&
+	test_must_fail git describe $blob 2>actual &&
+	test_grep "blob .$blob. not reachable from HEAD" actual
+'
+
+test_expect_success 'describe blob on an unborn branch' '
+	oldbranch=$(git symbolic-ref HEAD) &&
+	test_when_finished "git symbolic-ref HEAD $oldbranch" &&
+	git symbolic-ref HEAD refs/heads/does-not-exist &&
+	test_must_fail git describe test-blob 2>actual &&
+	test_grep "cannot search .* on an unborn branch" actual
+'
+
+# This test creates a repository state that we generally try to disallow: HEAD
+# is pointing to an object that is not a commit. The ref update code forbids
+# non-commit writes directly to HEAD or to any branch in refs/heads/.  But we
+# can use the loophole of pointing HEAD to another non-branch ref (something we
+# should forbid, but don't for historical reasons).
+#
+# Do not take this test as an endorsement of the loophole! If we ever tighten
+# it, it is reasonable to just drop this test entirely.
+test_expect_success 'describe blob on a non-commit HEAD' '
+	oldbranch=$(git symbolic-ref HEAD) &&
+	test_when_finished "git symbolic-ref HEAD $oldbranch" &&
+	git symbolic-ref HEAD refs/tags/test-blob &&
+	test_must_fail git describe test-blob 2>actual &&
+	test_grep "blob .* not reachable from HEAD" actual
 '
 
 test_expect_success ULIMIT_STACK_SIZE 'name-rev works in a deep repo' '

@@ -21,6 +21,9 @@
 #include "gettext.h"
 #define SECURITY_WIN32
 #include <sspi.h>
+#include <winternl.h>
+
+#define STATUS_DELETE_PENDING ((NTSTATUS) 0xC0000056)
 
 #define HCAST(type, handle) ((type)(intptr_t)handle)
 
@@ -241,7 +244,6 @@ enum hide_dotfiles_type {
 	HIDE_DOTFILES_DOTGITONLY
 };
 
-static int core_restrict_inherited_handles = -1;
 static enum hide_dotfiles_type hide_dotfiles = HIDE_DOTFILES_DOTGITONLY;
 static char *unset_environment_variables;
 
@@ -262,15 +264,6 @@ int mingw_core_config(const char *var, const char *value,
 			return config_error_nonbool(var);
 		free(unset_environment_variables);
 		unset_environment_variables = xstrdup(value);
-		return 0;
-	}
-
-	if (!strcmp(var, "core.restrictinheritedhandles")) {
-		if (value && !strcasecmp(value, "auto"))
-			core_restrict_inherited_handles = -1;
-		else
-			core_restrict_inherited_handles =
-				git_config_bool(var, value);
 		return 0;
 	}
 
@@ -302,7 +295,7 @@ static wchar_t *normalize_ntpath(wchar_t *wbuf)
 	return wbuf;
 }
 
-int mingw_unlink(const char *pathname)
+int mingw_unlink(const char *pathname, int handle_in_use_error)
 {
 	int ret, tries = 0;
 	wchar_t wpathname[MAX_PATH];
@@ -317,6 +310,9 @@ int mingw_unlink(const char *pathname)
 	while ((ret = _wunlink(wpathname)) == -1 && tries < ARRAY_SIZE(delay)) {
 		if (!is_file_in_use_error(GetLastError()))
 			break;
+		if (!handle_in_use_error)
+			return ret;
+
 		/*
 		 * We assume that some other process had the source or
 		 * destination file open at the wrong moment and retry.
@@ -582,13 +578,24 @@ static int mingw_open_existing(const wchar_t *filename, int oflags, ...)
 			     &security_attributes, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (handle == INVALID_HANDLE_VALUE) {
 		DWORD err = GetLastError();
+		if (err == ERROR_ACCESS_DENIED) {
+			DWORD attrs = GetFileAttributesW(filename);
+			if (attrs != INVALID_FILE_ATTRIBUTES && (attrs & FILE_ATTRIBUTE_DIRECTORY))
+				handle = CreateFileW(filename, access,
+							FILE_SHARE_WRITE | FILE_SHARE_READ | FILE_SHARE_DELETE,
+							&security_attributes, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL| FILE_FLAG_BACKUP_SEMANTICS, NULL);
+		}
 
-		/* See `mingw_open_append()` for why we have this conversion. */
-		if (err == ERROR_INVALID_PARAMETER)
-			err = ERROR_PATH_NOT_FOUND;
+		if (handle == INVALID_HANDLE_VALUE) {
+			err = GetLastError();
 
-		errno = err_win_to_posix(err);
-		return -1;
+			/* See `mingw_open_append()` for why we have this conversion. */
+			if (err == ERROR_INVALID_PARAMETER)
+				err = ERROR_PATH_NOT_FOUND;
+
+			errno = err_win_to_posix(err);
+			return -1;
+		}
 	}
 
 	fd = _open_osfhandle((intptr_t)handle, oflags | O_BINARY);
@@ -621,6 +628,8 @@ int mingw_open (const char *filename, int oflags, ...)
 	wchar_t wfilename[MAX_PATH];
 	open_fn_t open_fn;
 
+	DECLARE_PROC_ADDR(ntdll.dll, NTSTATUS, NTAPI, RtlGetLastNtStatus, void);
+
 	va_start(args, oflags);
 	mode = va_arg(args, int);
 	va_end(args);
@@ -644,6 +653,21 @@ int mingw_open (const char *filename, int oflags, ...)
 
 	fd = open_fn(wfilename, oflags, mode);
 
+	/*
+	 * Internally, `_wopen()` uses the `CreateFile()` API with CREATE_NEW,
+	 * which may error out with ERROR_ACCESS_DENIED and an NtStatus of
+	 * STATUS_DELETE_PENDING when the file is scheduled for deletion via
+	 * `DeleteFileW()`. The file essentially exists, so we map errno to
+	 * EEXIST instead of EACCESS so that callers don't have to special-case
+	 * this.
+	 *
+	 * This fixes issues for example with the lockfile interface when one
+	 * process has a lock that it is about to commit or release while
+	 * another process wants to acquire it.
+	 */
+	if (fd < 0 && create && GetLastError() == ERROR_ACCESS_DENIED &&
+	    INIT_PROC_ADDR(RtlGetLastNtStatus) && RtlGetLastNtStatus() == STATUS_DELETE_PENDING)
+		errno = EEXIST;
 	if (fd < 0 && (oflags & O_ACCMODE) != O_RDONLY && errno == EACCES) {
 		DWORD attrs = GetFileAttributesW(wfilename);
 		if (attrs != INVALID_FILE_ATTRIBUTES && (attrs & FILE_ATTRIBUTE_DIRECTORY))
@@ -1633,7 +1657,6 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 			      const char *dir,
 			      int prepend_cmd, int fhin, int fhout, int fherr)
 {
-	static int restrict_handle_inheritance = -1;
 	STARTUPINFOEXW si;
 	PROCESS_INFORMATION pi;
 	LPPROC_THREAD_ATTRIBUTE_LIST attr_list = NULL;
@@ -1652,16 +1675,6 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 
 	/* Make sure to override previous errors, if any */
 	errno = 0;
-
-	if (restrict_handle_inheritance < 0)
-		restrict_handle_inheritance = core_restrict_inherited_handles;
-	/*
-	 * The following code to restrict which handles are inherited seems
-	 * to work properly only on Windows 7 and later, so let's disable it
-	 * on Windows Vista and 2008.
-	 */
-	if (restrict_handle_inheritance < 0)
-		restrict_handle_inheritance = GetVersion() >> 16 >= 7601;
 
 	do_unset_environment_variables();
 
@@ -1764,7 +1777,7 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 	wenvblk = make_environment_block(deltaenv);
 
 	memset(&pi, 0, sizeof(pi));
-	if (restrict_handle_inheritance && stdhandles_count &&
+	if (stdhandles_count &&
 	    (InitializeProcThreadAttributeList(NULL, 1, 0, &size) ||
 	     GetLastError() == ERROR_INSUFFICIENT_BUFFER) &&
 	    (attr_list = (LPPROC_THREAD_ATTRIBUTE_LIST)
@@ -1785,52 +1798,13 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 			     &si.StartupInfo, &pi);
 
 	/*
-	 * On Windows 2008 R2, it seems that specifying certain types of handles
-	 * (such as FILE_TYPE_CHAR or FILE_TYPE_PIPE) will always produce an
-	 * error. Rather than playing finicky and fragile games, let's just try
-	 * to detect this situation and simply try again without restricting any
-	 * handle inheritance. This is still better than failing to create
-	 * processes.
+	 * On the off-chance that something with the file handle restriction
+	 * went wrong, silently fall back to trying without it.
 	 */
-	if (!ret && restrict_handle_inheritance && stdhandles_count) {
+	if (!ret && stdhandles_count) {
 		DWORD err = GetLastError();
 		struct strbuf buf = STRBUF_INIT;
 
-		if (err != ERROR_NO_SYSTEM_RESOURCES &&
-		    /*
-		     * On Windows 7 and earlier, handles on pipes and character
-		     * devices are inherited automatically, and cannot be
-		     * specified in the thread handle list. Rather than trying
-		     * to catch each and every corner case (and running the
-		     * chance of *still* forgetting a few), let's just fall
-		     * back to creating the process without trying to limit the
-		     * handle inheritance.
-		     */
-		    !(err == ERROR_INVALID_PARAMETER &&
-		      GetVersion() >> 16 < 9200) &&
-		    !getenv("SUPPRESS_HANDLE_INHERITANCE_WARNING")) {
-			DWORD fl = 0;
-			int i;
-
-			setenv("SUPPRESS_HANDLE_INHERITANCE_WARNING", "1", 1);
-
-			for (i = 0; i < stdhandles_count; i++) {
-				HANDLE h = stdhandles[i];
-				strbuf_addf(&buf, "handle #%d: %p (type %lx, "
-					    "handle info (%d) %lx\n", i, h,
-					    GetFileType(h),
-					    GetHandleInformation(h, &fl),
-					    fl);
-			}
-			strbuf_addstr(&buf, "\nThis is a bug; please report it "
-				      "at\nhttps://github.com/git-for-windows/"
-				      "git/issues/new\n\n"
-				      "To suppress this warning, please set "
-				      "the environment variable\n\n"
-				      "\tSUPPRESS_HANDLE_INHERITANCE_WARNING=1"
-				      "\n");
-		}
-		restrict_handle_inheritance = 0;
 		flags &= ~EXTENDED_STARTUPINFO_PRESENT;
 		ret = CreateProcessW(*wcmd ? wcmd : NULL, wargs, NULL, NULL,
 				     TRUE, flags, wenvblk, dir ? wdir : NULL,
@@ -2303,7 +2277,9 @@ repeat:
 		 * current system doesn't support FileRenameInfoEx. Keep us
 		 * from using it in future calls and retry.
 		 */
-		if (gle == ERROR_INVALID_PARAMETER) {
+		if (gle == ERROR_INVALID_PARAMETER ||
+		    gle == ERROR_NOT_SUPPORTED ||
+		    gle == ERROR_INVALID_FUNCTION) {
 			supports_file_rename_info_ex = 0;
 			goto repeat;
 		}
@@ -2538,7 +2514,9 @@ int setitimer(int type UNUSED, struct itimerval *in, struct itimerval *out)
 
 int sigaction(int sig, struct sigaction *in, struct sigaction *out)
 {
-	if (sig != SIGALRM)
+	if (sig == SIGCHLD)
+		return -1;
+	else if (sig != SIGALRM)
 		return errno = EINVAL,
 			error("sigaction only implemented for SIGALRM");
 	if (out)
@@ -2826,31 +2804,44 @@ static void setup_windows_environment(void)
 	}
 }
 
-static PSID get_current_user_sid(void)
+static void get_current_user_sid(PSID *sid, HANDLE *linked_token)
 {
 	HANDLE token;
 	DWORD len = 0;
-	PSID result = NULL;
+	TOKEN_ELEVATION_TYPE elevationType;
+	DWORD size;
+
+	*sid = NULL;
+	*linked_token = NULL;
 
 	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token))
-		return NULL;
+		return;
 
 	if (!GetTokenInformation(token, TokenUser, NULL, 0, &len)) {
 		TOKEN_USER *info = xmalloc((size_t)len);
 		if (GetTokenInformation(token, TokenUser, info, len, &len)) {
 			len = GetLengthSid(info->User.Sid);
-			result = xmalloc(len);
-			if (!CopySid(len, result, info->User.Sid)) {
+			*sid = xmalloc(len);
+			if (!CopySid(len, *sid, info->User.Sid)) {
 				error(_("failed to copy SID (%ld)"),
 				      GetLastError());
-				FREE_AND_NULL(result);
+				FREE_AND_NULL(*sid);
 			}
 		}
 		FREE_AND_NULL(info);
 	}
-	CloseHandle(token);
 
-	return result;
+	if (GetTokenInformation(token, TokenElevationType, &elevationType, sizeof(elevationType), &size) &&
+	    elevationType == TokenElevationTypeLimited) {
+		/*
+		 * The current process is run by a member of the Administrators
+		 * group, but is not running elevated.
+		 */
+		if (!GetTokenInformation(token, TokenLinkedToken, linked_token, sizeof(*linked_token), &size))
+			linked_token = NULL; /* there is no linked token */
+	}
+
+	CloseHandle(token);
 }
 
 static BOOL user_sid_to_user_name(PSID sid, LPSTR *str)
@@ -2931,18 +2922,22 @@ int is_path_owned_by_current_sid(const char *path, struct strbuf *report)
 	else if (sid && IsValidSid(sid)) {
 		/* Now, verify that the SID matches the current user's */
 		static PSID current_user_sid;
+		static HANDLE linked_token;
 		BOOL is_member;
 
 		if (!current_user_sid)
-			current_user_sid = get_current_user_sid();
+			get_current_user_sid(&current_user_sid, &linked_token);
 
 		if (current_user_sid &&
 		    IsValidSid(current_user_sid) &&
 		    EqualSid(sid, current_user_sid))
 			result = 1;
 		else if (IsWellKnownSid(sid, WinBuiltinAdministratorsSid) &&
-			 CheckTokenMembership(NULL, sid, &is_member) &&
-			 is_member)
+			 ((CheckTokenMembership(NULL, sid, &is_member) &&
+			   is_member) ||
+			  (linked_token &&
+			   CheckTokenMembership(linked_token, sid, &is_member) &&
+			   is_member)))
 			/*
 			 * If owned by the Administrators group, and the
 			 * current user is an administrator, we consider that

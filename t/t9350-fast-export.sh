@@ -8,6 +8,7 @@ GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY/lib-gpg.sh"
 
 test_expect_success 'setup' '
 
@@ -47,12 +48,11 @@ test_expect_success 'fast-export | fast-import' '
 	mkdir new &&
 	git --git-dir=new/.git init &&
 	git fast-export --all >actual &&
-	(cd new &&
-	 git fast-import &&
-	 test $MAIN = $(git rev-parse --verify refs/heads/main) &&
-	 test $REIN = $(git rev-parse --verify refs/tags/rein) &&
-	 test $WER = $(git rev-parse --verify refs/heads/wer) &&
-	 test $MUSS = $(git rev-parse --verify refs/tags/muss)) <actual
+	git -C new fast-import <actual &&
+	test $MAIN = $(git -C new rev-parse --verify refs/heads/main) &&
+	test $REIN = $(git -C new rev-parse --verify refs/tags/rein) &&
+	test $WER = $(git -C new rev-parse --verify refs/heads/wer) &&
+	test $MUSS = $(git -C new rev-parse --verify refs/tags/muss)
 
 '
 
@@ -86,13 +86,11 @@ test_expect_success 'fast-export --mark-tags ^muss^{commit} muss' '
 test_expect_success 'fast-export main~2..main' '
 
 	git fast-export main~2..main >actual &&
-	sed "s/main/partial/" actual |
-		(cd new &&
-		 git fast-import &&
-		 test $MAIN != $(git rev-parse --verify refs/heads/partial) &&
-		 git diff --exit-code main partial &&
-		 git diff --exit-code main^ partial^ &&
-		 test_must_fail git rev-parse partial~2)
+	sed "s/main/partial/" actual | git -C new fast-import &&
+	test $MAIN != $(git -C new rev-parse --verify refs/heads/partial) &&
+	git -C new diff --exit-code main partial &&
+	git -C new diff --exit-code main^ partial^ &&
+	test_must_fail git -C new rev-parse partial~2
 
 '
 
@@ -101,10 +99,8 @@ test_expect_success 'fast-export --reference-excluded-parents main~2..main' '
 	git fast-export --reference-excluded-parents main~2..main >actual &&
 	grep commit.refs/heads/main actual >commit-count &&
 	test_line_count = 2 commit-count &&
-	sed "s/main/rewrite/" actual |
-		(cd new &&
-		 git fast-import &&
-		 test $MAIN = $(git rev-parse --verify refs/heads/rewrite))
+	sed "s/main/rewrite/" actual | git -C new fast-import &&
+	test $MAIN = $(git -C new rev-parse --verify refs/heads/rewrite)
 '
 
 test_expect_success 'fast-export --show-original-ids' '
@@ -132,20 +128,19 @@ test_expect_success ICONV 'reencoding iso-8859-7' '
 	echo rosten >file &&
 	git commit -s -F "$TEST_DIRECTORY/t9350/simple-iso-8859-7-commit-message.txt" file &&
 	git fast-export --reencode=yes wer^..wer >iso-8859-7.fi &&
-	sed "s/wer/i18n/" iso-8859-7.fi |
-		(cd new &&
-		 git fast-import &&
-		 # The commit object, if not re-encoded, would be 200 bytes plus hash.
-		 # Removing the "encoding iso-8859-7\n" header drops 20 bytes.
-		 # Re-encoding the Pi character from \xF0 (\360) in iso-8859-7
-		 # to \xCF\x80 (\317\200) in UTF-8 adds a byte.  Check for
-		 # the expected size.
-		 test $(($(test_oid hexsz) + 181)) -eq "$(git cat-file -s i18n)" &&
-		 # ...and for the expected translation of bytes.
-		 git cat-file commit i18n >actual &&
-		 grep $(printf "\317\200") actual &&
-		 # Also make sure the commit does not have the "encoding" header
-		 ! grep ^encoding actual)
+	sed "s/wer/i18n/" iso-8859-7.fi | git -C new fast-import &&
+
+	# The commit object, if not re-encoded, would be 200 bytes plus hash.
+	# Removing the "encoding iso-8859-7\n" header drops 20 bytes.
+	# Re-encoding the Pi character from \xF0 (\360) in iso-8859-7
+	# to \xCF\x80 (\317\200) in UTF-8 adds a byte.  Check for
+	# the expected size.
+	test $(($(test_oid hexsz) + 181)) -eq "$(git -C new cat-file -s i18n)" &&
+	# ...and for the expected translation of bytes.
+	git -C new cat-file commit i18n >actual &&
+	grep $(printf "\317\200") actual &&
+	# Also make sure the commit does not have the "encoding" header
+	! grep ^encoding actual
 '
 
 test_expect_success 'aborting on iso-8859-7' '
@@ -164,20 +159,19 @@ test_expect_success 'preserving iso-8859-7' '
 	echo rosten >file &&
 	git commit -s -F "$TEST_DIRECTORY/t9350/simple-iso-8859-7-commit-message.txt" file &&
 	git fast-export --reencode=no wer^..wer >iso-8859-7.fi &&
-	sed "s/wer/i18n-no-recoding/" iso-8859-7.fi |
-		(cd new &&
-		 git fast-import &&
-		 # The commit object, if not re-encoded, is 200 bytes plus hash.
-		 # Removing the "encoding iso-8859-7\n" header would drops 20
-		 # bytes.  Re-encoding the Pi character from \xF0 (\360) in
-		 # iso-8859-7 to \xCF\x80 (\317\200) in UTF-8 adds a byte.
-		 # Check for the expected size...
-		 test $(($(test_oid hexsz) + 200)) -eq "$(git cat-file -s i18n-no-recoding)" &&
-		 # ...as well as the expected byte.
-		 git cat-file commit i18n-no-recoding >actual &&
-		 grep $(printf "\360") actual &&
-		 # Also make sure the commit has the "encoding" header
-		 grep ^encoding actual)
+	sed "s/wer/i18n-no-recoding/" iso-8859-7.fi | git -C new fast-import &&
+
+	# The commit object, if not re-encoded, is 200 bytes plus hash.
+	# Removing the "encoding iso-8859-7\n" header would drops 20
+	# bytes.  Re-encoding the Pi character from \xF0 (\360) in
+	# iso-8859-7 to \xCF\x80 (\317\200) in UTF-8 adds a byte.
+	# Check for the expected size...
+	test $(($(test_oid hexsz) + 200)) -eq "$(git -C new cat-file -s i18n-no-recoding)" &&
+	# ...as well as the expected byte.
+	git -C new cat-file commit i18n-no-recoding >actual &&
+	grep $(printf "\360") actual &&
+	# Also make sure the commit has the "encoding" header
+	grep ^encoding actual
 '
 
 test_expect_success 'encoding preserved if reencoding fails' '
@@ -187,18 +181,17 @@ test_expect_success 'encoding preserved if reencoding fails' '
 	echo rosten >file &&
 	git commit -s -F "$TEST_DIRECTORY/t9350/broken-iso-8859-7-commit-message.txt" file &&
 	git fast-export --reencode=yes wer^..wer >iso-8859-7.fi &&
-	sed "s/wer/i18n-invalid/" iso-8859-7.fi |
-		(cd new &&
-		 git fast-import &&
-		 git cat-file commit i18n-invalid >actual &&
-		 # Make sure the commit still has the encoding header
-		 grep ^encoding actual &&
-		 # Verify that the commit has the expected size; i.e.
-		 # that no bytes were re-encoded to a different encoding.
-		 test $(($(test_oid hexsz) + 212)) -eq "$(git cat-file -s i18n-invalid)" &&
-		 # ...and check for the original special bytes
-		 grep $(printf "\360") actual &&
-		 grep $(printf "\377") actual)
+	sed "s/wer/i18n-invalid/" iso-8859-7.fi | git -C new fast-import &&
+	git -C new cat-file commit i18n-invalid >actual &&
+
+	# Make sure the commit still has the encoding header
+	grep ^encoding actual &&
+	# Verify that the commit has the expected size; i.e.
+	# that no bytes were re-encoded to a different encoding.
+	test $(($(test_oid hexsz) + 212)) -eq "$(git -C new cat-file -s i18n-invalid)" &&
+	# ...and check for the original special bytes
+	grep $(printf "\360") actual &&
+	grep $(printf "\377") actual
 '
 
 test_expect_success 'import/export-marks' '
@@ -253,6 +246,24 @@ test_expect_success 'signed-tags=verbatim' '
 
 '
 
+test_expect_success 'signed-tags=warn-verbatim' '
+
+	git fast-export --signed-tags=warn-verbatim sign-your-name >output 2>err &&
+	grep PGP output &&
+	test -s err
+
+'
+
+# 'warn' is a backward-compatibility alias for 'warn-verbatim'; test
+# that it keeps working.
+test_expect_success 'signed-tags=warn' '
+
+	git fast-export --signed-tags=warn sign-your-name >output 2>err &&
+	grep PGP output &&
+	test -s err
+
+'
+
 test_expect_success 'signed-tags=strip' '
 
 	git fast-export --signed-tags=strip sign-your-name > output &&
@@ -266,10 +277,133 @@ test_expect_success 'signed-tags=warn-strip' '
 	test -s err
 '
 
+test_expect_success GPG 'set up signed commit' '
+
+	# Generate a commit with both "gpgsig" and "encoding" set, so
+	# that we can test that fast-import gets the ordering correct
+	# between the two.
+	test_config i18n.commitEncoding ISO-8859-1 &&
+	git checkout -f -b commit-signing main &&
+	echo Sign your name >file-sign &&
+	git add file-sign &&
+	git commit -S -m "signed commit" &&
+	COMMIT_SIGNING=$(git rev-parse --verify commit-signing)
+
+'
+
+test_expect_success GPG 'signed-commits default is same as strip' '
+	git fast-export --reencode=no commit-signing >out1 2>err &&
+	git fast-export --reencode=no --signed-commits=strip commit-signing >out2 &&
+	test_cmp out1 out2
+'
+
+test_expect_success GPG 'signed-commits=abort' '
+
+	test_must_fail git fast-export --signed-commits=abort commit-signing
+
+'
+
+test_expect_success GPG 'signed-commits=verbatim' '
+
+	git fast-export --signed-commits=verbatim --reencode=no commit-signing >output &&
+	test_grep -E "^gpgsig $GIT_DEFAULT_HASH openpgp" output &&
+	grep "encoding ISO-8859-1" output &&
+	git -C new fast-import <output &&
+	STRIPPED=$(git -C new rev-parse --verify refs/heads/commit-signing) &&
+	test $COMMIT_SIGNING = $STRIPPED
+
+'
+
+test_expect_success GPG 'signed-commits=warn-verbatim' '
+
+	git fast-export --signed-commits=warn-verbatim --reencode=no commit-signing >output 2>err &&
+	test_grep -E "^gpgsig $GIT_DEFAULT_HASH openpgp" output &&
+	grep "encoding ISO-8859-1" output &&
+	test -s err &&
+	git -C new fast-import <output &&
+	STRIPPED=$(git -C new rev-parse --verify refs/heads/commit-signing) &&
+	test $COMMIT_SIGNING = $STRIPPED
+
+'
+
+test_expect_success GPG 'signed-commits=strip' '
+
+	git fast-export --signed-commits=strip --reencode=no commit-signing >output &&
+	! grep ^gpgsig output &&
+	grep "^encoding ISO-8859-1" output &&
+	sed "s/commit-signing/commit-strip-signing/" output | git -C new fast-import &&
+	STRIPPED=$(git -C new rev-parse --verify refs/heads/commit-strip-signing) &&
+	test $COMMIT_SIGNING != $STRIPPED
+
+'
+
+test_expect_success GPG 'signed-commits=warn-strip' '
+
+	git fast-export --signed-commits=warn-strip --reencode=no commit-signing >output 2>err &&
+	! grep ^gpgsig output &&
+	grep "^encoding ISO-8859-1" output &&
+	test -s err &&
+	sed "s/commit-signing/commit-strip-signing/" output | git -C new fast-import &&
+	STRIPPED=$(git -C new rev-parse --verify refs/heads/commit-strip-signing) &&
+	test $COMMIT_SIGNING != $STRIPPED
+
+'
+
+test_expect_success GPGSM 'setup X.509 signed commit' '
+
+	git checkout -b x509-signing main &&
+	test_config gpg.format x509 &&
+	test_config user.signingkey $GIT_COMMITTER_EMAIL &&
+	echo "X.509 content" >file &&
+	git add file &&
+	git commit -S -m "X.509 signed commit" &&
+	X509_COMMIT=$(git rev-parse HEAD) &&
+	git checkout main
+
+'
+
+test_expect_success GPGSM 'round-trip X.509 signed commit' '
+
+	git fast-export --signed-commits=verbatim x509-signing >output &&
+	test_grep -E "^gpgsig $GIT_DEFAULT_HASH x509" output &&
+	git -C new fast-import <output &&
+	git -C new cat-file commit refs/heads/x509-signing >actual &&
+	grep "^gpgsig" actual &&
+	IMPORTED=$(git -C new rev-parse refs/heads/x509-signing) &&
+	test $X509_COMMIT = $IMPORTED
+
+'
+
+test_expect_success GPGSSH 'setup SSH signed commit' '
+
+	git checkout -b ssh-signing main &&
+	test_config gpg.format ssh &&
+	test_config user.signingkey "${GPGSSH_KEY_PRIMARY}" &&
+	echo "SSH content" >file &&
+	git add file &&
+	git commit -S -m "SSH signed commit" &&
+	SSH_COMMIT=$(git rev-parse HEAD) &&
+	git checkout main
+
+'
+
+test_expect_success GPGSSH 'round-trip SSH signed commit' '
+
+	git fast-export --signed-commits=verbatim ssh-signing >output &&
+	test_grep -E "^gpgsig $GIT_DEFAULT_HASH ssh" output &&
+	git -C new fast-import <output &&
+	git -C new cat-file commit refs/heads/ssh-signing >actual &&
+	grep "^gpgsig" actual &&
+	IMPORTED=$(git -C new rev-parse refs/heads/ssh-signing) &&
+	test $SSH_COMMIT = $IMPORTED
+
+'
+
 test_expect_success 'setup submodule' '
 
 	test_config_global protocol.file.allow always &&
 	git checkout -f main &&
+	test_might_fail git update-ref -d refs/heads/commit-signing &&
 	mkdir sub &&
 	(
 		cd sub &&
@@ -301,14 +435,13 @@ test_expect_success 'submodule fast-export | fast-import' '
 	mkdir new &&
 	git --git-dir=new/.git init &&
 	git fast-export --signed-tags=strip --all >actual &&
-	(cd new &&
-	 git fast-import &&
-	 test "$SUBENT1" = "$(git ls-tree refs/heads/main^ sub)" &&
-	 test "$SUBENT2" = "$(git ls-tree refs/heads/main sub)" &&
-	 git checkout main &&
-	 git submodule init &&
-	 git submodule update &&
-	 cmp sub/file ../sub/file) <actual
+	git -C new fast-import <actual &&
+	test "$SUBENT1" = "$(git -C new ls-tree refs/heads/main^ sub)" &&
+	test "$SUBENT2" = "$(git -C new ls-tree refs/heads/main sub)" &&
+	git -C new checkout main &&
+	git -C new submodule init &&
+	git -C new submodule update &&
+	cmp new/sub/file sub/file
 
 '
 
@@ -350,10 +483,8 @@ test_expect_success 'fast-export -C -C | fast-import' '
 	git --git-dir=new/.git init &&
 	git fast-export -C -C --signed-tags=strip --all > output &&
 	grep "^C file2 file4\$" output &&
-	cat output |
-	(cd new &&
-	 git fast-import &&
-	 test $ENTRY = $(git rev-parse --verify refs/heads/copy))
+	git -C new fast-import <output &&
+	test $ENTRY = $(git -C new rev-parse --verify refs/heads/copy)
 
 '
 
@@ -610,7 +741,7 @@ test_expect_success 'directory becomes symlink'        '
 	(cd result && git show main:foo)
 '
 
-test_expect_success 'fast-export quotes pathnames' '
+test_expect_success PERL_TEST_HELPERS 'fast-export quotes pathnames' '
 	git init crazy-paths &&
 	test_config -C crazy-paths core.protectNTFS false &&
 	(cd crazy-paths &&
@@ -799,6 +930,44 @@ test_expect_success 'fast-export handles --end-of-options' '
 	# fix up lines which mention the ref for comparison
 	sed s/--dashes/nodash/ <actual.raw >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success GPG 'setup a commit with dual signatures on its SHA-1 and SHA-256 formats' '
+	# Create a signed SHA-256 commit
+	git init --object-format=sha256 explicit-sha256 &&
+	git -C explicit-sha256 config extensions.compatObjectFormat sha1 &&
+	git -C explicit-sha256 checkout -b dual-signed &&
+	test_commit -C explicit-sha256 A &&
+	echo B >explicit-sha256/B &&
+	git -C explicit-sha256 add B &&
+	test_tick &&
+	git -C explicit-sha256 commit -S -m "signed" B &&
+	SHA256_B=$(git -C explicit-sha256 rev-parse dual-signed) &&
+
+	# Create the corresponding SHA-1 commit
+	SHA1_B=$(git -C explicit-sha256 rev-parse --output-object-format=sha1 dual-signed) &&
+
+	# Check that the resulting SHA-1 commit has both signatures
+	echo $SHA1_B | git -C explicit-sha256 cat-file --batch >out &&
+	test_grep -E "^gpgsig " out &&
+	test_grep -E "^gpgsig-sha256 " out
+'
+
+test_expect_success GPG 'export and import of doubly signed commit' '
+	git -C explicit-sha256 fast-export --signed-commits=verbatim dual-signed >output &&
+	test_grep -E "^gpgsig sha1 openpgp" output &&
+	test_grep -E "^gpgsig sha256 openpgp" output &&
+	git -C new fast-import <output &&
+	git -C new cat-file commit refs/heads/dual-signed >actual &&
+	test_grep -E "^gpgsig " actual &&
+	test_grep -E "^gpgsig-sha256 " actual &&
+	IMPORTED=$(git -C new rev-parse refs/heads/dual-signed) &&
+	if test "$GIT_DEFAULT_HASH" = "sha1"
+	then
+		test $SHA1_B = $IMPORTED
+	else
+		test $SHA256_B = $IMPORTED
+	fi
 '
 
 test_done

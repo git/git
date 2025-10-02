@@ -67,6 +67,8 @@ static NORETURN void usage_builtin(const char *err, va_list params)
 
 static void die_message_builtin(const char *err, va_list params)
 {
+	if (!err)
+		return;
 	trace2_cmd_error_va(err, params);
 	vreportf(_("fatal: "), err, params);
 }
@@ -190,7 +192,8 @@ static void show_usage_if_asked_helper(const char *err, ...)
 
 void show_usage_if_asked(int ac, const char **av, const char *err)
 {
-	if (ac == 2 && !strcmp(av[1], "-h"))
+	if (ac == 2 && (!strcmp(av[1], "-h") ||
+			!strcmp(av[1], "--help-all")))
 		show_usage_if_asked_helper(err);
 }
 
@@ -371,4 +374,16 @@ void bug_fl(const char *file, int line, const char *fmt, ...)
 	va_start(ap, fmt);
 	trace2_cmd_error_va(fmt, ap);
 	va_end(ap);
+}
+
+NORETURN void you_still_use_that(const char *command_name)
+{
+	fprintf(stderr,
+		_("'%s' is nominated for removal.\n"
+		  "If you still use this command, please add an extra\n"
+		  "option, '--i-still-use-this', on the command line\n"
+		  "and let us know you still use it by sending an e-mail\n"
+		  "to <git@vger.kernel.org>.  Thanks.\n"),
+		command_name);
+	die(_("refusing to run without --i-still-use-this"));
 }

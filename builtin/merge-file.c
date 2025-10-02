@@ -5,8 +5,9 @@
 #include "abspath.h"
 #include "diff.h"
 #include "hex.h"
+#include "object-file.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "odb.h"
 #include "config.h"
 #include "gettext.h"
 #include "setup.h"
@@ -96,7 +97,7 @@ int cmd_merge_file(int argc,
 
 	if (startup_info->have_repository) {
 		/* Read the configuration file */
-		git_config(git_xmerge_config, NULL);
+		repo_config(the_repository, git_xmerge_config, NULL);
 		if (0 <= git_xmerge_style)
 			xmp.style = git_xmerge_style;
 	}
@@ -154,7 +155,8 @@ int cmd_merge_file(int argc,
 		if (object_id && !to_stdout) {
 			struct object_id oid;
 			if (result.size) {
-				if (write_object_file(result.ptr, result.size, OBJ_BLOB, &oid) < 0)
+				if (odb_write_object(the_repository->objects, result.ptr,
+						     result.size, OBJ_BLOB, &oid) < 0)
 					ret = error(_("Could not write object file"));
 			} else {
 				oidcpy(&oid, the_hash_algo->empty_blob);

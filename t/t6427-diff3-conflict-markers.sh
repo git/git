@@ -207,7 +207,7 @@ test_expect_success 'rebase --apply describes fake ancestor base' '
 		cd rebase &&
 		git rebase --abort &&
 		test_must_fail git -c merge.conflictstyle=diff3 rebase --apply main &&
-		grep "||||||| constructed merge base" file
+		grep "||||||| constructed fake ancestor" file
 	)
 '
 

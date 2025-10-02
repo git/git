@@ -1,8 +1,15 @@
+#include "../git-compat-util.h"
+
 #include "system.h"
 #include "basics.h"
 #include "reftable-error.h"
 #include "../lockfile.h"
 #include "../tempfile.h"
+
+uint32_t reftable_rand(void)
+{
+	return git_rand(CSPRNG_BYTES_INSECURE);
+}
 
 int tmpfile_from_pattern(struct reftable_tmpfile *out, const char *pattern)
 {
@@ -65,7 +72,7 @@ int flock_acquire(struct reftable_flock *l, const char *target_path,
 		reftable_free(lockfile);
 		if (errno == EEXIST)
 			return REFTABLE_LOCK_ERROR;
-		return -1;
+		return REFTABLE_IO_ERROR;
 	}
 
 	l->fd = get_lock_file_fd(lockfile);

@@ -201,7 +201,7 @@ static void range_set_difference(struct range_set *out,
 				 * b: ------|
 				 */
 				j++;
-			if (j >= b->nr || end < b->ranges[j].start) {
+			if (j >= b->nr || end <= b->ranges[j].start) {
 				/*
 				 * b exhausted, or
 				 * a:  ----|
@@ -408,7 +408,7 @@ static void diff_ranges_filter_touched(struct diff_ranges *out,
 	assert(out->target.nr == 0);
 
 	for (i = 0; i < diff->target.nr; i++) {
-		while (diff->target.ranges[i].start > rs->ranges[j].end) {
+		while (diff->target.ranges[i].start >= rs->ranges[j].end) {
 			j++;
 			if (j == rs->nr)
 				return;
@@ -939,9 +939,18 @@ static void dump_diff_hacky_one(struct rev_info *rev, struct line_log_data *rang
 		long t_cur = t_start;
 		unsigned int j_last;
 
+		/*
+		 * If a diff range touches multiple line ranges, then all
+		 * those line ranges should be shown, so take a step back if
+		 * the current line range is still in the previous diff range
+		 * (even if only partially).
+		 */
+		if (j > 0 && diff->target.ranges[j-1].end > t_start)
+			j--;
+
 		while (j < diff->target.nr && diff->target.ranges[j].end < t_start)
 			j++;
-		if (j == diff->target.nr || diff->target.ranges[j].start > t_end)
+		if (j == diff->target.nr || diff->target.ranges[j].start >= t_end)
 			continue;
 
 		/* Scan ahead to determine the last diff that falls in this range */
@@ -1087,13 +1096,6 @@ static struct diff_filepair *diff_filepair_dup(struct diff_filepair *pair)
 	return new_filepair;
 }
 
-static void free_diffqueues(int n, struct diff_queue_struct *dq)
-{
-	for (int i = 0; i < n; i++)
-		diff_queue_clear(&dq[i]);
-	free(dq);
-}
-
 static int process_all_files(struct line_log_data **range_out,
 			     struct rev_info *rev,
 			     struct diff_queue_struct *queue,
@@ -1172,12 +1174,13 @@ static int bloom_filter_check(struct rev_info *rev,
 		return 0;
 
 	while (!result && range) {
-		fill_bloom_key(range->path, strlen(range->path), &key, rev->bloom_filter_settings);
+		bloom_key_fill(&key, range->path, strlen(range->path),
+			       rev->bloom_filter_settings);
 
 		if (bloom_filter_contains(filter, &key, rev->bloom_filter_settings))
 			result = 1;
 
-		clear_bloom_key(&key);
+		bloom_key_clear(&key);
 		range = range->next;
 	}
 
@@ -1188,7 +1191,7 @@ static int process_ranges_ordinary_commit(struct rev_info *rev, struct commit *c
 					  struct line_log_data *range)
 {
 	struct commit *parent = NULL;
-	struct diff_queue_struct queue;
+	struct diff_queue_struct queue = DIFF_QUEUE_INIT;
 	struct line_log_data *parent_range;
 	int changed;
 
@@ -1208,9 +1211,7 @@ static int process_ranges_ordinary_commit(struct rev_info *rev, struct commit *c
 static int process_ranges_merge_commit(struct rev_info *rev, struct commit *commit,
 				       struct line_log_data *range)
 {
-	struct diff_queue_struct *diffqueues;
 	struct line_log_data **cand;
-	struct commit **parents;
 	struct commit_list *p;
 	int i;
 	int nparents = commit_list_count(commit->parents);
@@ -1219,28 +1220,27 @@ static int process_ranges_merge_commit(struct rev_info *rev, struct commit *comm
 	if (nparents > 1 && rev->first_parent_only)
 		nparents = 1;
 
-	ALLOC_ARRAY(diffqueues, nparents);
 	CALLOC_ARRAY(cand, nparents);
-	ALLOC_ARRAY(parents, nparents);
 
-	p = commit->parents;
-	for (i = 0; i < nparents; i++) {
-		parents[i] = p->item;
-		p = p->next;
-		queue_diffs(range, &rev->diffopt, &diffqueues[i], commit, parents[i]);
-	}
-
-	for (i = 0; i < nparents; i++) {
+	for (p = commit->parents, i = 0;
+	     p && i < nparents;
+	     p = p->next, i++) {
+		struct commit *parent = p->item;
+		struct diff_queue_struct diffqueue = DIFF_QUEUE_INIT;
 		int changed;
-		changed = process_all_files(&cand[i], rev, &diffqueues[i], range);
+
+		queue_diffs(range, &rev->diffopt, &diffqueue, commit, parent);
+
+		changed = process_all_files(&cand[i], rev, &diffqueue, range);
+		diff_queue_clear(&diffqueue);
 		if (!changed) {
 			/*
 			 * This parent can take all the blame, so we
 			 * don't follow any other path in history
 			 */
-			add_line_range(rev, parents[i], cand[i]);
+			add_line_range(rev, parent, cand[i]);
 			free_commit_list(commit->parents);
-			commit_list_append(parents[i], &commit->parents);
+			commit_list_append(parent, &commit->parents);
 
 			ret = 0;
 			goto out;
@@ -1251,14 +1251,15 @@ static int process_ranges_merge_commit(struct rev_info *rev, struct commit *comm
 	 * No single parent took the blame.  We add the candidates
 	 * from the above loop to the parents.
 	 */
-	for (i = 0; i < nparents; i++)
-		add_line_range(rev, parents[i], cand[i]);
+	for (p = commit->parents, i = 0;
+	     p && i < nparents;
+	     p = p->next, i++)
+		add_line_range(rev, p->item, cand[i]);
 
 	ret = 1;
 
 out:
 	clear_commit_line_range(rev, commit);
-	free(parents);
 	for (i = 0; i < nparents; i++) {
 		if (!cand[i])
 			continue;
@@ -1266,7 +1267,6 @@ out:
 		free(cand[i]);
 	}
 	free(cand);
-	free_diffqueues(nparents, diffqueues);
 	return ret;
 
 	/* NEEDSWORK evil merge detection stuff */
@@ -1282,10 +1282,10 @@ int line_log_process_ranges_arbitrary_commit(struct rev_info *rev, struct commit
 			struct line_log_data *prange = line_log_data_copy(range);
 			add_line_range(rev, commit->parents->item, prange);
 			clear_commit_line_range(rev, commit);
-		} else if (!commit->parents || !commit->parents->next)
-			changed = process_ranges_ordinary_commit(rev, commit, range);
-		else
+		} else if (commit->parents && commit->parents->next)
 			changed = process_ranges_merge_commit(rev, commit, range);
+		else
+			changed = process_ranges_ordinary_commit(rev, commit, range);
 	}
 
 	if (!changed)

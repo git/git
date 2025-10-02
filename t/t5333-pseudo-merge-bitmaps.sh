@@ -28,9 +28,8 @@ test_pseudo_merges_reused () {
 
 tag_everything () {
 	git rev-list --all --no-object-names >in &&
-	perl -lne '
-		print "create refs/tags/" . $. . " " . $1 if /([0-9a-f]+)/
-	' <in | git update-ref --stdin
+	sed 's|\(.*\)|create refs/tags/\1 \1|' in |
+	git update-ref --stdin
 }
 
 test_expect_success 'setup' '
@@ -102,7 +101,7 @@ test_expect_success 'stale bitmap traversal with pseudo-merges' '
 	test_cmp expect actual
 '
 
-test_expect_success 'bitmapPseudoMerge.sampleRate adjusts commit selection rate' '
+test_expect_success PERL_TEST_HELPERS 'bitmapPseudoMerge.sampleRate adjusts commit selection rate' '
 	test_config bitmapPseudoMerge.test.pattern "refs/tags/" &&
 	test_config bitmapPseudoMerge.test.maxMerges 1 &&
 	test_config bitmapPseudoMerge.test.stableThreshold never &&
@@ -235,9 +234,8 @@ test_expect_success 'pseudo-merge pattern with capture groups' '
 			test_commit_bulk 16 &&
 
 			git rev-list HEAD~16.. >in &&
-
-			perl -lne "print \"create refs/remotes/$r/tags/\$. \$_\"" <in |
-			git update-ref --stdin || return 1
+			sed "s|\(.*\)|create refs/remotes/$r/tags/\1 \1|" in >refs &&
+			git update-ref --stdin <refs || return 1
 		done &&
 
 		git \
@@ -252,7 +250,7 @@ test_expect_success 'pseudo-merge pattern with capture groups' '
 		do
 			test_pseudo_merge_commits $m >oids &&
 			grep -f oids refs |
-			perl -lne "print \$1 if /refs\/remotes\/([0-9]+)/" |
+			sed -n "s|refs/remotes/\([0-9][0-9]*\)/|\1|p" &&
 			sort -u || return 1
 		done >remotes &&
 
@@ -444,6 +442,23 @@ test_expect_success 'pseudo-merge closure' '
 		test_cmp expect actual &&
 		test-tool bitmap dump-pseudo-merge-commits 0 >actual &&
 		test_cmp expect actual
+	)
+'
+
+test_expect_success 'use pseudo-merge in boundary traversal' '
+	git init pseudo-merge-boundary-traversal &&
+	(
+		cd pseudo-merge-boundary-traversal &&
+
+		git config bitmapPseudoMerge.test.pattern refs/ &&
+		git config pack.useBitmapBoundaryTraversal true &&
+
+		test_commit A &&
+		git repack -adb &&
+		test_commit B &&
+
+		nr=$(git rev-list --count --use-bitmap-index HEAD~1..HEAD) &&
+		test 1 -eq "$nr"
 	)
 '
 

@@ -5,11 +5,13 @@ freebsd_task:
   env:
     GIT_PROVE_OPTS: "--timer --jobs 10"
     GIT_TEST_OPTS: "--no-chain-lint --no-bin-wrappers"
-    MAKEFLAGS: "-j4"
+    GIT_SKIP_TESTS: t7815.12
+    MAKEFLAGS: -j4
     DEFAULT_TEST_TARGET: prove
+    DEFAULT_UNIT_TEST_TARGET: unit-tests-prove
     DEVELOPER: 1
   freebsd_instance:
-    image_family: freebsd-13-4
+    image_family: freebsd-14-3
     memory: 2G
   install_script:
     pkg install -y gettext gmake perl5
@@ -19,4 +21,4 @@ freebsd_task:
   build_script:
     - su git -c gmake
   test_script:
-    - su git -c 'gmake DEFAULT_UNIT_TEST_TARGET=unit-tests-prove test unit-tests'
+    - su git -c 'gmake test unit-tests'

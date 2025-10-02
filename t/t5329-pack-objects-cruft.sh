@@ -360,43 +360,6 @@ test_expect_success 'expired objects are pruned' '
 	)
 '
 
-test_expect_success 'repack --cruft generates a cruft pack' '
-	git init repo &&
-	test_when_finished "rm -fr repo" &&
-	(
-		cd repo &&
-
-		test_commit reachable &&
-		git branch -M main &&
-		git checkout --orphan other &&
-		test_commit unreachable &&
-
-		git checkout main &&
-		git branch -D other &&
-		git tag -d unreachable &&
-		# objects are not cruft if they are contained in the reflogs
-		git reflog expire --all --expire=all &&
-
-		git rev-list --objects --all --no-object-names >reachable.raw &&
-		git cat-file --batch-all-objects --batch-check="%(objectname)" >objects &&
-		sort <reachable.raw >reachable &&
-		comm -13 reachable objects >unreachable &&
-
-		git repack --cruft -d &&
-
-		cruft=$(basename $(ls $packdir/pack-*.mtimes) .mtimes) &&
-		pack=$(basename $(ls $packdir/pack-*.pack | grep -v $cruft) .pack) &&
-
-		git show-index <$packdir/$pack.idx >actual.raw &&
-		cut -f2 -d" " actual.raw | sort >actual &&
-		test_cmp reachable actual &&
-
-		git show-index <$packdir/$cruft.idx >actual.raw &&
-		cut -f2 -d" " actual.raw | sort >actual &&
-		test_cmp unreachable actual
-	)
-'
-
 test_expect_success 'loose objects mtimes upsert others' '
 	git init repo &&
 	test_when_finished "rm -fr repo" &&
@@ -467,219 +430,6 @@ test_expect_success 'expiring cruft objects with git gc' '
 		comm -23 unreachable objects >removed &&
 		test_cmp unreachable removed &&
 		test_path_is_missing $mtimes
-	)
-'
-
-test_expect_success 'cruft packs are not included in geometric repack' '
-	git init repo &&
-	test_when_finished "rm -fr repo" &&
-	(
-		cd repo &&
-
-		test_commit reachable &&
-		git repack -Ad &&
-		git branch -M main &&
-
-		git checkout --orphan other &&
-		test_commit cruft &&
-		git repack -d &&
-
-		git checkout main &&
-		git branch -D other &&
-		git tag -d cruft &&
-		git reflog expire --all --expire=all &&
-
-		git repack --cruft &&
-
-		find $packdir -type f | sort >before &&
-		git repack --geometric=2 -d &&
-		find $packdir -type f | sort >after &&
-
-		test_cmp before after
-	)
-'
-
-test_expect_success 'repack --geometric collects once-cruft objects' '
-	git init repo &&
-	test_when_finished "rm -fr repo" &&
-	(
-		cd repo &&
-
-		test_commit reachable &&
-		git repack -Ad &&
-		git branch -M main &&
-
-		git checkout --orphan other &&
-		git rm -rf . &&
-		test_commit --no-tag cruft &&
-		cruft="$(git rev-parse HEAD)" &&
-
-		git checkout main &&
-		git branch -D other &&
-		git reflog expire --all --expire=all &&
-
-		# Pack the objects created in the previous step into a cruft
-		# pack. Intentionally leave loose copies of those objects
-		# around so we can pick them up in a subsequent --geometric
-		# reapack.
-		git repack --cruft &&
-
-		# Now make those objects reachable, and ensure that they are
-		# packed into the new pack created via a --geometric repack.
-		git update-ref refs/heads/other $cruft &&
-
-		# Without this object, the set of unpacked objects is exactly
-		# the set of objects already in the cruft pack. Tweak that set
-		# to ensure we do not overwrite the cruft pack entirely.
-		test_commit reachable2 &&
-
-		find $packdir -name "pack-*.idx" | sort >before &&
-		git repack --geometric=2 -d &&
-		find $packdir -name "pack-*.idx" | sort >after &&
-
-		{
-			git rev-list --objects --no-object-names $cruft &&
-			git rev-list --objects --no-object-names reachable..reachable2
-		} >want.raw &&
-		sort want.raw >want &&
-
-		pack=$(comm -13 before after) &&
-		git show-index <$pack >objects.raw &&
-
-		cut -d" " -f2 objects.raw | sort >got &&
-
-		test_cmp want got
-	)
-'
-
-test_expect_success 'cruft repack with no reachable objects' '
-	git init repo &&
-	test_when_finished "rm -fr repo" &&
-	(
-		cd repo &&
-
-		test_commit base &&
-		git repack -ad &&
-
-		base="$(git rev-parse base)" &&
-
-		git for-each-ref --format="delete %(refname)" >in &&
-		git update-ref --stdin <in &&
-		git reflog expire --all --expire=all &&
-		rm -fr .git/index &&
-
-		git repack --cruft -d &&
-
-		git cat-file -t $base
-	)
-'
-
-write_blob () {
-	test-tool genrandom "$@" >in &&
-	git hash-object -w -t blob in
-}
-
-find_pack () {
-	for idx in $(ls $packdir/pack-*.idx)
-	do
-		git show-index <$idx >out &&
-		if grep -q "$1" out
-		then
-			echo $idx
-		fi || return 1
-	done
-}
-
-test_expect_success 'cruft repack with --max-pack-size' '
-	git init max-pack-size &&
-	(
-		cd max-pack-size &&
-		test_commit base &&
-
-		# two cruft objects which exceed the maximum pack size
-		foo=$(write_blob foo 1048576) &&
-		bar=$(write_blob bar 1048576) &&
-		test-tool chmtime --get -1000 \
-			"$objdir/$(test_oid_to_path $foo)" >foo.mtime &&
-		test-tool chmtime --get -2000 \
-			"$objdir/$(test_oid_to_path $bar)" >bar.mtime &&
-		git repack --cruft --max-pack-size=1M &&
-		find $packdir -name "*.mtimes" >cruft &&
-		test_line_count = 2 cruft &&
-
-		foo_mtimes="$(basename $(find_pack $foo) .idx).mtimes" &&
-		bar_mtimes="$(basename $(find_pack $bar) .idx).mtimes" &&
-		test-tool pack-mtimes $foo_mtimes >foo.actual &&
-		test-tool pack-mtimes $bar_mtimes >bar.actual &&
-
-		echo "$foo $(cat foo.mtime)" >foo.expect &&
-		echo "$bar $(cat bar.mtime)" >bar.expect &&
-
-		test_cmp foo.expect foo.actual &&
-		test_cmp bar.expect bar.actual &&
-		test "$foo_mtimes" != "$bar_mtimes"
-	)
-'
-
-test_expect_success 'cruft repack with pack.packSizeLimit' '
-	(
-		cd max-pack-size &&
-		# repack everything back together to remove the existing cruft
-		# pack (but to keep its objects)
-		git repack -adk &&
-		git -c pack.packSizeLimit=1M repack --cruft &&
-		# ensure the same post condition is met when --max-pack-size
-		# would otherwise be inferred from the configuration
-		find $packdir -name "*.mtimes" >cruft &&
-		test_line_count = 2 cruft &&
-		for pack in $(cat cruft)
-		do
-			test-tool pack-mtimes "$(basename $pack)" >objects &&
-			test_line_count = 1 objects || return 1
-		done
-	)
-'
-
-test_expect_success 'cruft repack respects repack.cruftWindow' '
-	git init repo &&
-	test_when_finished "rm -fr repo" &&
-	(
-		cd repo &&
-
-		test_commit base &&
-
-		GIT_TRACE2_EVENT=$(pwd)/event.trace \
-		git -c pack.window=1 -c repack.cruftWindow=2 repack \
-		       --cruft --window=3 &&
-
-		grep "pack-objects.*--window=2.*--cruft" event.trace
-	)
-'
-
-test_expect_success 'cruft repack respects --window by default' '
-	git init repo &&
-	test_when_finished "rm -fr repo" &&
-	(
-		cd repo &&
-
-		test_commit base &&
-
-		GIT_TRACE2_EVENT=$(pwd)/event.trace \
-		git -c pack.window=2 repack --cruft --window=3 &&
-
-		grep "pack-objects.*--window=3.*--cruft" event.trace
-	)
-'
-
-test_expect_success 'cruft repack respects --quiet' '
-	git init repo &&
-	test_when_finished "rm -fr repo" &&
-	(
-		cd repo &&
-
-		test_commit base &&
-		GIT_PROGRESS_DELAY=0 git repack --cruft --quiet 2>err &&
-		test_must_be_empty err
 	)
 '
 
@@ -941,6 +691,58 @@ test_expect_success 'additional cruft blobs via gc.recentObjectsHook' '
 		git show-index <${mtimes%.mtimes}.idx >cruft &&
 		cut -d" " -f2 cruft >actual &&
 		echo $blob >expect &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'split cruft packs with --max-cruft-size' '
+	repo=cruft-with--max-cruft-size &&
+	test_when_finished "rm -fr $repo" &&
+
+	git init "$repo" &&
+
+	(
+		cd "$repo" &&
+
+		git config core.compression 0 &&
+
+		sz=$((1024 * 1024)) && # 1MiB
+		test-tool genrandom foo $sz >foo &&
+		test-tool genrandom bar $sz >bar &&
+		foo="$(git hash-object -w -t blob foo)" &&
+		bar="$(git hash-object -w -t blob bar)" &&
+
+		to=$packdir/pack &&
+		# Pack together foo and bar into a single 2MiB pack.
+		pack="$(git pack-objects $to <<-EOF
+		$foo
+		$bar
+		EOF
+		)" &&
+
+		# Then generate a cruft pack containing foo and bar.
+		#
+		# Generate the pack with --max-pack-size equal to the
+		# size of one object, forcing us to write two cruft
+		# packs.
+		git pack-objects --cruft --max-pack-size=$sz $to <<-EOF &&
+		-pack-$pack.pack
+		EOF
+
+		ls $packdir/pack-*.mtimes >crufts &&
+		test_line_count = 2 crufts &&
+
+		for cruft in $(cat crufts)
+		do
+			test-tool pack-mtimes "$(basename "$cruft")" || return 1
+		done >actual.raw &&
+
+		cut -d" " -f1 <actual.raw | sort >actual &&
+		sort >expect <<-EOF &&
+		$foo
+		$bar
+		EOF
+
 		test_cmp expect actual
 	)
 '

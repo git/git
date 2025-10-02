@@ -3,7 +3,7 @@
 #include "advice.h"
 #include "gettext.h"
 #include "hash.h"
-#include "merge-recursive.h"
+#include "merge-ort-wrappers.h"
 #include "object-name.h"
 
 static const char builtin_merge_recursive_usage[] =
@@ -38,7 +38,8 @@ int cmd_merge_recursive(int argc,
 	if (argv[0] && ends_with(argv[0], "-subtree"))
 		o.subtree_shift = "";
 
-	if (argc == 2 && !strcmp(argv[1], "-h")) {
+	if (argc == 2 && (!strcmp(argv[1], "-h") ||
+			  !strcmp(argv[1], "--help-all"))) {
 		struct strbuf msg = STRBUF_INIT;
 		strbuf_addf(&msg, builtin_merge_recursive_usage, argv[0]);
 		show_usage_if_asked(argc, argv, msg.buf);
@@ -89,7 +90,7 @@ int cmd_merge_recursive(int argc,
 	if (o.verbosity >= 3)
 		printf(_("Merging %s with %s\n"), o.branch1, o.branch2);
 
-	failed = merge_recursive_generic(&o, &h1, &h2, bases_count, bases, &result);
+	failed = merge_ort_generic(&o, &h1, &h2, bases_count, bases, &result);
 
 	free(better1);
 	free(better2);

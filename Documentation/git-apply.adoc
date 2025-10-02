@@ -75,13 +75,14 @@ OPTIONS
 	tree. If `--check` is in effect, merely check that it would
 	apply cleanly to the index entry.
 
+-N::
 --intent-to-add::
 	When applying the patch only to the working tree, mark new
 	files to be added to the index later (see `--intent-to-add`
-	option in linkgit:git-add[1]). This option is ignored unless
-	running in a Git repository and `--index` is not specified.
-	Note that `--index` could be implied by other options such
-	as `--cached` or `--3way`.
+	option in linkgit:git-add[1]). This option is ignored if
+	`--index` or `--cached` are used, and has no effect outside a Git
+	repository. Note that `--index` could be implied by other options
+	such as `--3way`.
 
 -3::
 --3way::

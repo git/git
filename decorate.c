@@ -3,8 +3,6 @@
  * data.
  */
 
-#define DISABLE_SIGN_COMPARE_WARNINGS
-
 #include "git-compat-util.h"
 #include "object.h"
 #include "decorate.h"
@@ -16,9 +14,8 @@ static unsigned int hash_obj(const struct object *obj, unsigned int n)
 
 static void *insert_decoration(struct decoration *n, const struct object *base, void *decoration)
 {
-	int size = n->size;
 	struct decoration_entry *entries = n->entries;
-	unsigned int j = hash_obj(base, size);
+	unsigned int j = hash_obj(base, n->size);
 
 	while (entries[j].base) {
 		if (entries[j].base == base) {
@@ -26,7 +23,7 @@ static void *insert_decoration(struct decoration *n, const struct object *base, 
 			entries[j].decoration = decoration;
 			return old;
 		}
-		if (++j >= size)
+		if (++j >= n->size)
 			j = 0;
 	}
 	entries[j].base = base;
@@ -37,8 +34,8 @@ static void *insert_decoration(struct decoration *n, const struct object *base, 
 
 static void grow_decoration(struct decoration *n)
 {
-	int i;
-	int old_size = n->size;
+	unsigned int i;
+	unsigned int old_size = n->size;
 	struct decoration_entry *old_entries = n->entries;
 
 	n->size = (old_size + 1000) * 3 / 2;
@@ -59,9 +56,7 @@ static void grow_decoration(struct decoration *n)
 void *add_decoration(struct decoration *n, const struct object *obj,
 		void *decoration)
 {
-	int nr = n->nr + 1;
-
-	if (nr > n->size * 2 / 3)
+	if ((n->nr + 1) > n->size * 2 / 3)
 		grow_decoration(n);
 	return insert_decoration(n, obj, decoration);
 }

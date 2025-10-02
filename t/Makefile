@@ -59,8 +59,13 @@ CHAINLINTSUPPRESS = GIT_TEST_EXT_CHAIN_LINT=0 && export GIT_TEST_EXT_CHAIN_LINT 
 
 all:: $(DEFAULT_TEST_TARGET)
 
-test: pre-clean check-chainlint check-meson $(TEST_LINT)
+test: pre-clean check-meson $(TEST_LINT)
 	$(CHAINLINTSUPPRESS) $(MAKE) aggregate-results-and-cleanup
+
+ifneq ($(PERL_PATH),)
+test: check-chainlint
+prove: check-chainlint
+endif
 
 failed:
 	@failed=$$(cd '$(TEST_RESULTS_DIRECTORY_SQ)' && \
@@ -68,7 +73,7 @@ failed:
 		sed -n 's/\.counts$$/.sh/p') && \
 	test -z "$$failed" || $(MAKE) $$failed
 
-prove: pre-clean check-chainlint $(TEST_LINT)
+prove: pre-clean $(TEST_LINT)
 	@echo "*** prove (shell & unit tests) ***"
 	@$(CHAINLINTSUPPRESS) TEST_OPTIONS='$(GIT_TEST_OPTS)' TEST_SHELL_PATH='$(TEST_SHELL_PATH_SQ)' $(PROVE) --exec ./run-test.sh $(GIT_PROVE_OPTS) $(T) $(UNIT_TESTS)
 	$(MAKE) clean-except-prove-cache
@@ -120,7 +125,6 @@ check-meson:
 	@mkdir -p mesontmp && \
 	printf "%s\n" \
 		"integration_tests t[0-9][0-9][0-9][0-9]-*.sh" \
-		"unit_test_programs unit-tests/t-*.c" \
 		"clar_test_suites unit-tests/u-*.c" | \
 	while read -r variable pattern; do \
 		awk "/^$$variable = \[\$$/ {flag=1 ; next } /^]$$/ { flag=0 } flag { gsub(/^  \047/, \"\"); gsub(/\047,\$$/, \"\"); print }" meson.build >mesontmp/meson.txt && \
@@ -132,8 +136,13 @@ check-meson:
 		fi; \
 	done
 
-test-lint: test-lint-duplicates test-lint-executable test-lint-shell-syntax \
+test-lint: test-lint-duplicates test-lint-executable \
 	test-lint-filenames
+ifneq ($(PERL_PATH),)
+test-lint: test-lint-shell-syntax
+else
+GIT_TEST_CHAIN_LINT = 0
+endif
 ifneq ($(GIT_TEST_CHAIN_LINT),0)
 test-lint: test-chainlint
 endif
@@ -180,15 +189,9 @@ perf:
 
 .PHONY: libgit-sys-test libgit-rs-test
 libgit-sys-test:
-	$(QUIET)(\
-		cd ../contrib/libgit-sys && \
-		cargo test \
-	)
-libgit-rs-test:
-	$(QUIET)(\
-		cd ../contrib/libgit-rs && \
-		cargo test \
-	)
+	$(QUIET)cargo test --manifest-path ../contrib/libgit-sys/Cargo.toml
+libgit-rs-test: libgit-sys-test
+	$(QUIET)cargo test --manifest-path ../contrib/libgit-rs/Cargo.toml
 ifdef INCLUDE_LIBGIT_RS
-all:: libgit-sys-test libgit-rs-test
+all:: libgit-rs-test
 endif

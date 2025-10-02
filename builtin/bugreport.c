@@ -4,13 +4,13 @@
 #include "editor.h"
 #include "gettext.h"
 #include "parse-options.h"
+#include "path.h"
 #include "strbuf.h"
 #include "help.h"
 #include "compat/compiler.h"
 #include "hook.h"
 #include "hook-list.h"
 #include "diagnose.h"
-#include "object-file.h"
 #include "setup.h"
 #include "version.h"
 
@@ -141,7 +141,7 @@ int cmd_bugreport(int argc,
 	}
 	strbuf_addstr(&report_path, ".txt");
 
-	switch (safe_create_leading_directories(report_path.buf)) {
+	switch (safe_create_leading_directories(the_repository, report_path.buf)) {
 	case SCLD_OK:
 	case SCLD_EXISTS:
 		break;

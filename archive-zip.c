@@ -12,7 +12,7 @@
 #include "hex.h"
 #include "streaming.h"
 #include "utf8.h"
-#include "object-store-ll.h"
+#include "odb.h"
 #include "strbuf.h"
 #include "userdiff.h"
 #include "write-or-die.h"
@@ -492,14 +492,22 @@ static int write_zip_entry(struct archiver_args *args,
 
 		zstream.next_in = buf;
 		zstream.avail_in = 0;
-		result = git_deflate(&zstream, Z_FINISH);
-		if (result != Z_STREAM_END)
-			die("deflate error (%d)", result);
+
+		do {
+			result = git_deflate(&zstream, Z_FINISH);
+			if (result != Z_OK && result != Z_STREAM_END)
+				die("deflate error (%d)", result);
+
+			out_len = zstream.next_out - compressed;
+			if (out_len > 0) {
+				write_or_die(1, compressed, out_len);
+				compressed_size += out_len;
+				zstream.next_out = compressed;
+				zstream.avail_out = sizeof(compressed);
+			}
+		} while (result != Z_STREAM_END);
 
 		git_deflate_end(&zstream);
-		out_len = zstream.next_out - compressed;
-		write_or_die(1, compressed, out_len);
-		compressed_size += out_len;
 		zip_offset += compressed_size;
 
 		write_zip_data_desc(size, compressed_size, crc);
@@ -632,7 +640,7 @@ static int write_zip_archive(const struct archiver *ar UNUSED,
 {
 	int err;
 
-	git_config(archive_zip_config, NULL);
+	repo_config(the_repository, archive_zip_config, NULL);
 
 	dos_time(&args->time, &zip_date, &zip_time);
 

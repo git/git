@@ -10,7 +10,7 @@
 #include "streaming.h"
 #include "repository.h"
 #include "object-file.h"
-#include "object-store-ll.h"
+#include "odb.h"
 #include "replace-object.h"
 #include "packfile.h"
 
@@ -44,7 +44,7 @@ struct git_istream {
 
 	union {
 		struct {
-			char *buf; /* from oid_object_info_extended() */
+			char *buf; /* from odb_read_object_info_extended() */
 			unsigned long read_ptr;
 		} incore;
 
@@ -238,7 +238,7 @@ static int open_istream_loose(struct git_istream *st, struct repository *r,
 		return -1;
 	switch (unpack_loose_header(&st->z, st->u.loose.mapped,
 				    st->u.loose.mapsize, st->u.loose.hdr,
-				    sizeof(st->u.loose.hdr), NULL)) {
+				    sizeof(st->u.loose.hdr))) {
 	case ULHR_OK:
 		break;
 	case ULHR_BAD:
@@ -403,8 +403,8 @@ static int open_istream_incore(struct git_istream *st, struct repository *r,
 	oi.typep = type;
 	oi.sizep = &st->size;
 	oi.contentp = (void **)&st->u.incore.buf;
-	return oid_object_info_extended(r, oid, &oi,
-					OBJECT_INFO_DIE_IF_CORRUPT);
+	return odb_read_object_info_extended(r->objects, oid, &oi,
+					     OBJECT_INFO_DIE_IF_CORRUPT);
 }
 
 /*****************************************************************************
@@ -422,7 +422,7 @@ static int istream_source(struct git_istream *st,
 
 	oi.typep = type;
 	oi.sizep = &size;
-	status = oid_object_info_extended(r, oid, &oi, 0);
+	status = odb_read_object_info_extended(r->objects, oid, &oi, 0);
 	if (status < 0)
 		return status;
 
@@ -431,7 +431,8 @@ static int istream_source(struct git_istream *st,
 		st->open = open_istream_loose;
 		return 0;
 	case OI_PACKED:
-		if (!oi.u.packed.is_delta && big_file_threshold < size) {
+		if (!oi.u.packed.is_delta &&
+		    repo_settings_get_big_file_threshold(the_repository) < size) {
 			st->u.in_pack.pack = oi.u.packed.pack;
 			st->u.in_pack.pos = oi.u.packed.offset;
 			st->open = open_istream_pack_non_delta;

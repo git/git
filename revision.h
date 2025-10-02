@@ -62,7 +62,7 @@ struct repository;
 struct rev_info;
 struct string_list;
 struct saved_parents;
-struct bloom_key;
+struct bloom_keyvec;
 struct bloom_filter_settings;
 struct option;
 struct parse_opt_ctx_t;
@@ -159,8 +159,6 @@ struct rev_info {
 
 	/* topo-sort */
 	enum rev_sort_order sort_order;
-
-	unsigned int early_output;
 
 	unsigned int	ignore_missing:1,
 			ignore_missing_links:1;
@@ -292,7 +290,6 @@ struct rev_info {
 	struct string_list *ref_message_ids;
 	int		add_signoff;
 	const char	*extra_headers;
-	const char	*log_reencode;
 	const char	*subject_prefix;
 	int		patch_name_max;
 	int		no_inline;
@@ -361,8 +358,8 @@ struct rev_info {
 
 	/* Commit graph bloom filter fields */
 	/* The bloom filter key(s) for the pathspec */
-	struct bloom_key *bloom_keys;
-	int bloom_keys_nr;
+	struct bloom_keyvec **bloom_keyvecs;
+	int bloom_keyvecs_nr;
 
 	/*
 	 * The bloom filter settings used to generate the key.
@@ -444,6 +441,8 @@ struct setup_revision_opt {
 };
 int setup_revisions(int argc, const char **argv, struct rev_info *revs,
 		    struct setup_revision_opt *);
+void setup_revisions_from_strvec(struct strvec *argv, struct rev_info *revs,
+				 struct setup_revision_opt *);
 
 /**
  * Free data allocated in a "struct rev_info" after it's been
@@ -488,8 +487,6 @@ void put_revision_mark(const struct rev_info *revs,
 void mark_parents_uninteresting(struct rev_info *revs, struct commit *commit);
 void mark_tree_uninteresting(struct repository *r, struct tree *tree);
 void mark_trees_uninteresting_sparse(struct repository *r, struct oidset *trees);
-
-void show_object_with_name(FILE *, struct object *, const char *);
 
 /**
  * Helpers to check if a reference should be excluded.
@@ -555,11 +552,5 @@ int rewrite_parents(struct rev_info *revs,
  * history simplification is off.
  */
 struct commit_list *get_saved_parents(struct rev_info *revs, const struct commit *commit);
-
-/**
- * Global for the (undocumented) "--early-output" flag for "git log".
- */
-typedef void (*show_early_output_fn_t)(struct rev_info *, struct commit_list *);
-extern volatile show_early_output_fn_t show_early_output;
 
 #endif

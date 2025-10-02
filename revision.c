@@ -8,7 +8,7 @@
 #include "hex.h"
 #include "object-name.h"
 #include "object-file.h"
-#include "object-store-ll.h"
+#include "odb.h"
 #include "oidset.h"
 #include "tag.h"
 #include "blob.h"
@@ -50,22 +50,12 @@
 #include "parse-options.h"
 #include "wildmatch.h"
 
-volatile show_early_output_fn_t show_early_output;
-
 static char *term_bad;
 static char *term_good;
 
 implement_shared_commit_slab(revision_sources, char *);
 
 static inline int want_ancestry(const struct rev_info *revs);
-
-void show_object_with_name(FILE *out, struct object *obj, const char *name)
-{
-	fprintf(out, "%s ", oid_to_hex(&obj->oid));
-	for (const char *p = name; *p && *p != '\n'; p++)
-		fputc(*p, out);
-	fputc('\n', out);
-}
 
 static void mark_blob_uninteresting(struct blob *blob)
 {
@@ -681,26 +671,66 @@ static void trace2_bloom_filter_statistics_atexit(void)
 
 static int forbid_bloom_filters(struct pathspec *spec)
 {
-	if (spec->has_wildcard)
+	unsigned int allowed_magic =
+		PATHSPEC_FROMTOP |
+		PATHSPEC_MAXDEPTH |
+		PATHSPEC_LITERAL |
+		PATHSPEC_GLOB |
+		PATHSPEC_ATTR;
+
+	if (spec->magic & ~allowed_magic)
 		return 1;
-	if (spec->nr > 1)
-		return 1;
-	if (spec->magic & ~PATHSPEC_LITERAL)
-		return 1;
-	if (spec->nr && (spec->items[0].magic & ~PATHSPEC_LITERAL))
-		return 1;
+	for (size_t nr = 0; nr < spec->nr; nr++)
+		if (spec->items[nr].magic & ~allowed_magic)
+			return 1;
 
 	return 0;
 }
 
+static void release_revisions_bloom_keyvecs(struct rev_info *revs);
+
+static int convert_pathspec_to_bloom_keyvec(struct bloom_keyvec **out,
+					    const struct pathspec_item *pi,
+					    const struct bloom_filter_settings *settings)
+{
+	char *path_alloc = NULL;
+	const char *path;
+	size_t len;
+	int res = -1;
+
+	len = pi->nowildcard_len;
+	if (len != pi->len) {
+		/*
+		 * for path like "dir/file*", nowildcard part would be
+		 * "dir/file", but only "dir" should be used for the
+		 * bloom filter.
+		 */
+		while (len > 0 && pi->match[len - 1] != '/')
+			len--;
+	}
+	/* remove single trailing slash from path, if needed */
+	if (len > 0 && pi->match[len - 1] == '/')
+		len--;
+
+	if (!len)
+		goto cleanup;
+
+	if (len != pi->len) {
+		path_alloc = xmemdupz(pi->match, len);
+		path = path_alloc;
+	} else
+		path = pi->match;
+
+	*out = bloom_keyvec_new(path, len, settings);
+
+	res = 0;
+cleanup:
+	free(path_alloc);
+	return res;
+}
+
 static void prepare_to_use_bloom_filter(struct rev_info *revs)
 {
-	struct pathspec_item *pi;
-	char *path_alloc = NULL;
-	const char *path, *p;
-	size_t len;
-	int path_component_nr = 1;
-
 	if (!revs->commits)
 		return;
 
@@ -716,48 +746,14 @@ static void prepare_to_use_bloom_filter(struct rev_info *revs)
 	if (!revs->pruning.pathspec.nr)
 		return;
 
-	pi = &revs->pruning.pathspec.items[0];
+	revs->bloom_keyvecs_nr = revs->pruning.pathspec.nr;
+	CALLOC_ARRAY(revs->bloom_keyvecs, revs->bloom_keyvecs_nr);
 
-	/* remove single trailing slash from path, if needed */
-	if (pi->len > 0 && pi->match[pi->len - 1] == '/') {
-		path_alloc = xmemdupz(pi->match, pi->len - 1);
-		path = path_alloc;
-	} else
-		path = pi->match;
-
-	len = strlen(path);
-	if (!len) {
-		revs->bloom_filter_settings = NULL;
-		free(path_alloc);
-		return;
-	}
-
-	p = path;
-	while (*p) {
-		/*
-		 * At this point, the path is normalized to use Unix-style
-		 * path separators. This is required due to how the
-		 * changed-path Bloom filters store the paths.
-		 */
-		if (*p == '/')
-			path_component_nr++;
-		p++;
-	}
-
-	revs->bloom_keys_nr = path_component_nr;
-	ALLOC_ARRAY(revs->bloom_keys, revs->bloom_keys_nr);
-
-	fill_bloom_key(path, len, &revs->bloom_keys[0],
-		       revs->bloom_filter_settings);
-	path_component_nr = 1;
-
-	p = path + len - 1;
-	while (p > path) {
-		if (*p == '/')
-			fill_bloom_key(path, p - path,
-				       &revs->bloom_keys[path_component_nr++],
-				       revs->bloom_filter_settings);
-		p--;
+	for (int i = 0; i < revs->pruning.pathspec.nr; i++) {
+		if (convert_pathspec_to_bloom_keyvec(&revs->bloom_keyvecs[i],
+						     &revs->pruning.pathspec.items[i],
+						     revs->bloom_filter_settings))
+			goto fail;
 	}
 
 	if (trace2_is_enabled() && !bloom_filter_atexit_registered) {
@@ -765,14 +761,18 @@ static void prepare_to_use_bloom_filter(struct rev_info *revs)
 		bloom_filter_atexit_registered = 1;
 	}
 
-	free(path_alloc);
+	return;
+
+fail:
+	revs->bloom_filter_settings = NULL;
+	release_revisions_bloom_keyvecs(revs);
 }
 
 static int check_maybe_different_in_bloom_filter(struct rev_info *revs,
 						 struct commit *commit)
 {
 	struct bloom_filter *filter;
-	int result = 1, j;
+	int result = 0;
 
 	if (!revs->repo->objects->commit_graph)
 		return -1;
@@ -787,10 +787,10 @@ static int check_maybe_different_in_bloom_filter(struct rev_info *revs,
 		return -1;
 	}
 
-	for (j = 0; result && j < revs->bloom_keys_nr; j++) {
-		result = bloom_filter_contains(filter,
-					       &revs->bloom_keys[j],
-					       revs->bloom_filter_settings);
+	for (size_t nr = 0; !result && nr < revs->bloom_keyvecs_nr; nr++) {
+		result = bloom_filter_contains_vec(filter,
+						   revs->bloom_keyvecs[nr],
+						   revs->bloom_filter_settings);
 	}
 
 	if (result)
@@ -831,7 +831,7 @@ static int rev_compare_tree(struct rev_info *revs,
 			return REV_TREE_SAME;
 	}
 
-	if (revs->bloom_keys_nr && !nth_parent) {
+	if (revs->bloom_keyvecs_nr && !nth_parent) {
 		bloom_ret = check_maybe_different_in_bloom_filter(revs, commit);
 
 		if (bloom_ret == 0)
@@ -858,7 +858,7 @@ static int rev_same_tree_as_empty(struct rev_info *revs, struct commit *commit,
 	if (!t1)
 		return 0;
 
-	if (!nth_parent && revs->bloom_keys_nr) {
+	if (!nth_parent && revs->bloom_keyvecs_nr) {
 		bloom_ret = check_maybe_different_in_bloom_filter(revs, commit);
 		if (!bloom_ret)
 			return 1;
@@ -1487,7 +1487,6 @@ static int limit_list(struct rev_info *revs)
 	while (original_list) {
 		struct commit *commit = pop_commit(&original_list);
 		struct object *obj = &commit->object;
-		show_early_output_fn_t show;
 
 		if (commit == interesting_cache)
 			interesting_cache = NULL;
@@ -1511,13 +1510,6 @@ static int limit_list(struct rev_info *revs)
 			continue;
 		date = commit->date;
 		p = &commit_list_insert(commit, p)->next;
-
-		show = show_early_output;
-		if (!show)
-			continue;
-
-		show(revs, newlist);
-		show_early_output = NULL;
 	}
 	if (revs->cherry_pick || revs->cherry_mark)
 		cherry_pick_list(newlist, revs);
@@ -1644,7 +1636,7 @@ void exclude_hidden_refs(struct ref_exclusions *exclusions, const char *section)
 	cb.exclusions = exclusions;
 	cb.section = section;
 
-	git_config(hide_refs_config, &cb);
+	repo_config(the_repository, hide_refs_config, &cb);
 }
 
 struct all_refs_cb {
@@ -1713,7 +1705,8 @@ static void handle_one_reflog_commit(struct object_id *oid, void *cb_data)
 	}
 }
 
-static int handle_one_reflog_ent(struct object_id *ooid, struct object_id *noid,
+static int handle_one_reflog_ent(const char *refname UNUSED,
+				 struct object_id *ooid, struct object_id *noid,
 				 const char *email UNUSED,
 				 timestamp_t timestamp UNUSED,
 				 int tz UNUSED,
@@ -1915,7 +1908,8 @@ static void add_alternate_refs_to_pending(struct rev_info *revs,
 	struct add_alternate_refs_data data;
 	data.revs = revs;
 	data.flags = flags;
-	for_each_alternate_ref(add_one_alternate_ref, &data);
+	odb_for_each_alternate_ref(the_repository->objects,
+				   add_one_alternate_ref, &data);
 }
 
 static int add_parents_only(struct rev_info *revs, const char *arg_, int flags,
@@ -2068,6 +2062,7 @@ static void prepare_show_merge(struct rev_info *revs)
 	parse_pathspec(&revs->prune_data, PATHSPEC_ALL_MAGIC & ~PATHSPEC_LITERAL,
 		       PATHSPEC_PREFER_FULL | PATHSPEC_LITERAL_PATH, "", prune);
 	revs->limited = 1;
+	free(prune);
 }
 
 static int dotdot_missing(const char *arg, char *dotdot,
@@ -2326,6 +2321,24 @@ static timestamp_t parse_age(const char *arg)
 	return num;
 }
 
+static void overwrite_argv(int *argc, const char **argv,
+			   const char **value,
+			   const struct setup_revision_opt *opt)
+{
+	/*
+	 * Detect the case when we are overwriting ourselves. The assignment
+	 * itself would be a noop either way, but this lets us avoid corner
+	 * cases around the free() and NULL operations.
+	 */
+	if (*value != argv[*argc]) {
+		if (opt && opt->free_removed_argv_elements)
+			free((char *)argv[*argc]);
+		argv[*argc] = *value;
+		*value = NULL;
+	}
+	(*argc)++;
+}
+
 static int handle_revision_opt(struct rev_info *revs, int argc, const char **argv,
 			       int *unkc, const char **unkv,
 			       const struct setup_revision_opt* opt)
@@ -2347,7 +2360,7 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 	    starts_with(arg, "--branches=") || starts_with(arg, "--tags=") ||
 	    starts_with(arg, "--remotes=") || starts_with(arg, "--no-walk="))
 	{
-		unkv[(*unkc)++] = arg;
+		overwrite_argv(unkc, unkv, &argv[0], opt);
 		return 1;
 	}
 
@@ -2449,13 +2462,6 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 	} else if (!strcmp(arg, "--author-date-order")) {
 		revs->sort_order = REV_SORT_BY_AUTHOR_DATE;
 		revs->topo_order = 1;
-	} else if (!strcmp(arg, "--early-output")) {
-		revs->early_output = 100;
-		revs->topo_order = 1;
-	} else if (skip_prefix(arg, "--early-output=", &optarg)) {
-		if (strtoul_ui(optarg, 10, &revs->early_output) < 0)
-			die("'%s': not a non-negative integer", optarg);
-		revs->topo_order = 1;
 	} else if (!strcmp(arg, "--parents")) {
 		revs->rewrite_parents = 1;
 		revs->print_parents = 1;
@@ -2488,10 +2494,12 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 			die(_("options '%s' and '%s' cannot be used together"),
 			    "--left-only", "--right-only/--cherry");
 		revs->left_only = 1;
+		revs->limited = 1;
 	} else if (!strcmp(arg, "--right-only")) {
 		if (revs->left_only)
 			die(_("options '%s' and '%s' cannot be used together"), "--right-only", "--left-only");
 		revs->right_only = 1;
+		revs->limited = 1;
 	} else if (!strcmp(arg, "--cherry")) {
 		if (revs->left_only)
 			die(_("options '%s' and '%s' cannot be used together"), "--cherry", "--left-only");
@@ -2716,7 +2724,7 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 	} else {
 		int opts = diff_opt_parse(&revs->diffopt, argv, argc, revs->prefix);
 		if (!opts)
-			unkv[(*unkc)++] = arg;
+			overwrite_argv(unkc, unkv, &argv[0], opt);
 		return opts;
 	}
 
@@ -3028,7 +3036,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 
 			if (!strcmp(arg, "--stdin")) {
 				if (revs->disable_stdin) {
-					argv[left++] = arg;
+					overwrite_argv(&left, argv, &argv[i], opt);
 					continue;
 				}
 				if (revs->read_from_stdin++)
@@ -3117,7 +3125,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 
 	/* Pickaxe, diff-filter and rename following need diffs */
 	if ((revs->diffopt.pickaxe_opts & DIFF_PICKAXE_KINDS_MASK) ||
-	    revs->diffopt.filter ||
+	    revs->diffopt.filter || revs->diffopt.filter_not ||
 	    revs->diffopt.flags.follow_renames)
 		revs->diff = 1;
 
@@ -3184,7 +3192,32 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 		revs->show_notes_given = 1;
 	}
 
+	if (argv) {
+		if (opt && opt->free_removed_argv_elements)
+			free((char *)argv[left]);
+		argv[left] = NULL;
+	}
+
 	return left;
+}
+
+void setup_revisions_from_strvec(struct strvec *argv, struct rev_info *revs,
+				 struct setup_revision_opt *opt)
+{
+	struct setup_revision_opt fallback_opt;
+	int ret;
+
+	if (!opt) {
+		memset(&fallback_opt, 0, sizeof(fallback_opt));
+		opt = &fallback_opt;
+	}
+	opt->free_removed_argv_elements = 1;
+
+	ret = setup_revisions(argv->nr, argv->v, revs, opt);
+
+	for (size_t i = ret; i < argv->nr; i++)
+		free((char *)argv->v[i]);
+	argv->nr = ret;
 }
 
 static void release_revisions_cmdline(struct rev_cmdline_info *cmdline)
@@ -3205,6 +3238,14 @@ static void release_revisions_mailmap(struct string_list *mailmap)
 }
 
 static void release_revisions_topo_walk_info(struct topo_walk_info *info);
+
+static void release_revisions_bloom_keyvecs(struct rev_info *revs)
+{
+	for (size_t nr = 0; nr < revs->bloom_keyvecs_nr; nr++)
+		bloom_keyvec_free(revs->bloom_keyvecs[nr]);
+	FREE_AND_NULL(revs->bloom_keyvecs);
+	revs->bloom_keyvecs_nr = 0;
+}
 
 static void free_void_commit_list(void *list)
 {
@@ -3234,11 +3275,7 @@ void release_revisions(struct rev_info *revs)
 	clear_decoration(&revs->treesame, free);
 	line_log_free(revs);
 	oidset_clear(&revs->missing_commits);
-
-	for (int i = 0; i < revs->bloom_keys_nr; i++)
-		clear_bloom_key(&revs->bloom_keys[i]);
-	FREE_AND_NULL(revs->bloom_keys);
-	revs->bloom_keys_nr = 0;
+	release_revisions_bloom_keyvecs(revs);
 }
 
 static void add_child(struct rev_info *revs, struct commit *parent, struct commit *child)
@@ -3612,7 +3649,8 @@ static void set_children(struct rev_info *revs)
 
 void reset_revision_walk(void)
 {
-	clear_object_flags(SEEN | ADDED | SHOWN | TOPO_WALK_EXPLORED | TOPO_WALK_INDEGREE);
+	clear_object_flags(the_repository,
+			   SEEN | ADDED | SHOWN | TOPO_WALK_EXPLORED | TOPO_WALK_INDEGREE);
 }
 
 static int mark_uninteresting(const struct object_id *oid,

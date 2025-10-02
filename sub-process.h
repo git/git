@@ -73,7 +73,7 @@ static inline struct child_process *subprocess_get_child_process(
 
 /*
  * Perform the version and capability negotiation as described in the
- * "Handshake" section of long-running-process-protocol.txt using the
+ * "Handshake" section of long-running-process-protocol.adoc using the
  * given requested versions and capabilities. The "versions" and "capabilities"
  * parameters are arrays terminated by a 0 or blank struct.
  *

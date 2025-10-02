@@ -32,11 +32,8 @@ struct refspec_item {
 
 struct string_list;
 
-#define REFSPEC_FETCH 1
-#define REFSPEC_PUSH 0
-
-#define REFSPEC_INIT_FETCH { .fetch = REFSPEC_FETCH }
-#define REFSPEC_INIT_PUSH { .fetch = REFSPEC_PUSH }
+#define REFSPEC_INIT_FETCH { .fetch = 1 }
+#define REFSPEC_INIT_PUSH { .fetch = 0 }
 
 /**
  * An array of strings can be parsed into a struct refspec using
@@ -47,15 +44,14 @@ struct refspec {
 	int alloc;
 	int nr;
 
-	int fetch;
+	unsigned fetch : 1;
 };
 
-int refspec_item_init(struct refspec_item *item, const char *refspec,
-		      int fetch);
-void refspec_item_init_or_die(struct refspec_item *item, const char *refspec,
-			      int fetch);
+int refspec_item_init_fetch(struct refspec_item *item, const char *refspec);
+int refspec_item_init_push(struct refspec_item *item, const char *refspec);
 void refspec_item_clear(struct refspec_item *item);
-void refspec_init(struct refspec *rs, int fetch);
+void refspec_init_fetch(struct refspec *rs);
+void refspec_init_push(struct refspec *rs);
 void refspec_append(struct refspec *rs, const char *refspec);
 __attribute__((format (printf,2,3)))
 void refspec_appendf(struct refspec *rs, const char *fmt, ...);

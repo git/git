@@ -323,6 +323,19 @@ int cmd__path_utils(int argc, const char **argv)
 		return 0;
 	}
 
+	if (argc >= 2 && !strcmp(argv[1], "readlink")) {
+		struct strbuf target = STRBUF_INIT;
+		while (argc > 2) {
+			if (strbuf_readlink(&target, argv[2], 0) < 0)
+				die_errno("cannot read link at '%s'", argv[2]);
+			puts(target.buf);
+			argc--;
+			argv++;
+		}
+		strbuf_release(&target);
+		return 0;
+	}
+
 	if (argc >= 2 && !strcmp(argv[1], "absolute_path")) {
 		while (argc > 2) {
 			puts(absolute_path(argv[2]));
@@ -335,6 +348,7 @@ int cmd__path_utils(int argc, const char **argv)
 	if (argc == 4 && !strcmp(argv[1], "longest_ancestor_length")) {
 		int len;
 		struct string_list ceiling_dirs = STRING_LIST_INIT_DUP;
+		const char path_sep[] = { PATH_SEP, '\0' };
 		char *path = xstrdup(argv[2]);
 
 		/*
@@ -349,7 +363,7 @@ int cmd__path_utils(int argc, const char **argv)
 		 */
 		if (normalize_path_copy(path, path))
 			die("Path \"%s\" could not be normalized", argv[2]);
-		string_list_split(&ceiling_dirs, argv[3], PATH_SEP, -1);
+		string_list_split(&ceiling_dirs, argv[3], path_sep, -1);
 		filter_string_list(&ceiling_dirs, 0,
 				   normalize_ceiling_entry, NULL);
 		len = longest_ancestor_length(path, &ceiling_dirs);
@@ -502,6 +516,25 @@ int cmd__path_utils(int argc, const char **argv)
 					argv[i], expect ? "" : " not");
 
 		return !!res;
+	}
+
+	if (argc > 1 && !strcmp(argv[1], "is_path_owned_by_current_user")) {
+		int res = 0;
+
+		for (int i = 2; i < argc; i++) {
+			struct strbuf buf = STRBUF_INIT;
+
+			if (is_path_owned_by_current_user(argv[i], &buf))
+				printf("'%s' is owned by current SID\n", argv[i]);
+			else {
+				printf("'%s' is not owned by current SID: %s\n", argv[i], buf.buf);
+				res = 1;
+			}
+
+			strbuf_release(&buf);
+		}
+
+		return res;
 	}
 
 	fprintf(stderr, "%s: unknown function name: %s\n", argv[0],

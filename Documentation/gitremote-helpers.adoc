@@ -498,7 +498,7 @@ set by Git if the remote helper has the 'option' capability.
 	ask for the tag specifically.  Some helpers may be able to
 	use this option to avoid a second network connection.
 
-'option dry-run' {'true'|'false'}:
+'option dry-run' {'true'|'false'}::
 	If true, pretend the operation completed successfully,
 	but don't actually change any repository data.  For most
 	helpers this only applies to the 'push', if supported.

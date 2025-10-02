@@ -298,6 +298,17 @@ For C programs:
    . since late 2021 with 44ba10d6, we have had variables declared in
      the for loop "for (int i = 0; i < 10; i++)".
 
+   . since late 2023 with 8277dbe987 we have been using the bool type
+     from <stdbool.h>.
+
+   C99 features we have test balloons for:
+
+   . since late 2024 with v2.48.0-rc0~20, we have test balloons for
+     compound literal syntax, e.g., (struct foo){ .member = value };
+     our hope is that no platforms we care about have trouble using
+     them, and officially adopt its wider use in mid 2026.  Do not add
+     more use of the syntax until that happens.
+
    New C99 features that we cannot use yet:
 
    . %z and %zu as a printf() argument for a size_t (the %z being for
@@ -314,6 +325,9 @@ For C programs:
    the first statement (i.e. -Wdeclaration-after-statement).  It is
    encouraged to have a blank line between the end of the declarations
    and the first statement in the block.
+
+ - Do not explicitly initialize global variables to 0 or NULL;
+   instead, let BSS take care of the zero initialization.
 
  - NULL pointers shall be written as NULL, not as 0.
 
@@ -610,8 +624,9 @@ For C programs:
     - `S_init()` initializes a structure without allocating the
       structure itself.
 
-    - `S_release()` releases a structure's contents without freeing the
-      structure.
+    - `S_release()` releases a structure's contents without reinitializing
+      the structure for immediate reuse, and without freeing the structure
+      itself.
 
     - `S_clear()` is equivalent to `S_release()` followed by `S_init()`
       such that the structure is directly usable after clearing it. When
@@ -634,6 +649,12 @@ For C programs:
    The '_1' suffix can be used as a concise way to indicate these specific
    cases. However, it is recommended to find a more descriptive name wherever
    possible to improve the readability and maintainability of the code.
+
+ - Bit fields should be defined without a space around the colon. E.g.
+
+   unsigned my_field:1;
+   unsigned other_field:1;
+   unsigned field_with_longer_name:1;
 
 For Perl programs:
 
@@ -861,6 +882,9 @@ Markup:
    _<git-dir>_
    _<key-id>_
 
+Characters are also surrounded by underscores:
+   _LF_, _CR_, _CR_/_LF_, _NUL_, _EOF_
+
  Git's Asciidoc processor has been tailored to treat backticked text
  as complex synopsis. When literal and placeholders are mixed, you can
  use the backtick notation which will take care of correctly typesetting
@@ -873,6 +897,17 @@ Markup:
 
 As a side effect, backquoted placeholders are correctly typeset, but
 this style is not recommended.
+
+ When documenting multiple related `git config` variables, place them on
+ a separate line instead of separating them by commas.  For example, do
+ not write this:
+   `core.var1`, `core.var2`::
+	Description common to `core.var1` and `core.var2`.
+
+Instead write this:
+   `core.var1`::
+   `core.var2`::
+	Description common to `core.var1` and `core.var2`.
 
 Synopsis Syntax
 

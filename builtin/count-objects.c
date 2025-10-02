@@ -7,12 +7,13 @@
 #include "builtin.h"
 #include "config.h"
 #include "dir.h"
+#include "environment.h"
 #include "gettext.h"
 #include "path.h"
 #include "parse-options.h"
 #include "quote.h"
 #include "packfile.h"
-#include "object-store-ll.h"
+#include "object-file.h"
 
 static unsigned long garbage;
 static off_t size_garbage;
@@ -80,10 +81,10 @@ static int count_cruft(const char *basename UNUSED, const char *path,
 	return 0;
 }
 
-static int print_alternate(struct object_directory *odb, void *data UNUSED)
+static int print_alternate(struct odb_source *alternate, void *data UNUSED)
 {
 	printf("alternate: ");
-	quote_c_style(odb->path, NULL, stdout, 0);
+	quote_c_style(alternate->path, NULL, stdout, 0);
 	putchar('\n');
 	return 0;
 }
@@ -106,7 +107,7 @@ int cmd_count_objects(int argc,
 		OPT_END(),
 	};
 
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 
 	argc = parse_options(argc, argv, prefix, opts, count_objects_usage, 0);
 	/* we do not take arguments other than flags for now */
@@ -117,7 +118,7 @@ int cmd_count_objects(int argc,
 		report_linked_checkout_garbage(the_repository);
 	}
 
-	for_each_loose_file_in_objdir(repo_get_object_directory(the_repository),
+	for_each_loose_file_in_source(the_repository->objects->sources,
 				      count_loose, count_cruft, NULL, NULL);
 
 	if (verbose) {
@@ -159,7 +160,7 @@ int cmd_count_objects(int argc,
 		printf("prune-packable: %lu\n", packed_loose);
 		printf("garbage: %lu\n", garbage);
 		printf("size-garbage: %s\n", garbage_buf.buf);
-		foreach_alt_odb(print_alternate, NULL);
+		odb_for_each_alternate(the_repository->objects, print_alternate, NULL);
 		strbuf_release(&loose_buf);
 		strbuf_release(&pack_buf);
 		strbuf_release(&garbage_buf);

@@ -48,6 +48,18 @@ struct signature_check {
 void signature_check_clear(struct signature_check *sigc);
 
 /*
+ * Return the format of the signature (like "openpgp", "x509", "ssh"
+ * or "unknown").
+ */
+const char *get_signature_format(const char *buf);
+
+/*
+ * Is the signature format valid (like "openpgp", "x509", "ssh" or
+ * "unknown")
+ */
+int valid_signature_format(const char *format);
+
+/*
  * Look at a GPG signed tag object.  If such a signature exists, store it in
  * signature and the signed content in payload.  Return 1 if a signature was
  * found, and 0 otherwise.

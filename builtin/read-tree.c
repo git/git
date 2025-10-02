@@ -6,6 +6,7 @@
 #define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
+#include "environment.h"
 #include "gettext.h"
 #include "hex.h"
 #include "lockfile.h"
@@ -135,9 +136,14 @@ int cmd_read_tree(int argc,
 			 N_("3-way merge in presence of adds and removes")),
 		OPT_BOOL(0, "reset", &opts.reset,
 			 N_("same as -m, but discard unmerged entries")),
-		{ OPTION_STRING, 0, "prefix", &opts.prefix, N_("<subdirectory>/"),
-		  N_("read the tree into the index under <subdirectory>/"),
-		  PARSE_OPT_NONEG },
+		{
+			.type = OPTION_STRING,
+			.long_name = "prefix",
+			.value = &opts.prefix,
+			.argh = N_("<subdirectory>/"),
+			.help = N_("read the tree into the index under <subdirectory>/"),
+			.flags = PARSE_OPT_NONEG,
+		},
 		OPT_BOOL('u', NULL, &opts.update,
 			 N_("update working tree with merge result")),
 		OPT_CALLBACK_F(0, "exclude-per-directory", &opts,
@@ -163,7 +169,7 @@ int cmd_read_tree(int argc,
 	opts.src_index = the_repository->index;
 	opts.dst_index = the_repository->index;
 
-	git_config(git_read_tree_config, NULL);
+	repo_config(the_repository, git_read_tree_config, NULL);
 
 	argc = parse_options(argc, argv, cmd_prefix, read_tree_options,
 			     read_tree_usage, 0);

@@ -126,13 +126,17 @@ loose-objects::
 	objects that already exist in a pack-file; concurrent Git processes
 	will examine the pack-file for the object data instead of the loose
 	object. Second, it creates a new pack-file (starting with "loose-")
-	containing a batch of loose objects. The batch size is limited to 50
-	thousand objects to prevent the job from taking too long on a
-	repository with many loose objects. The `gc` task writes unreachable
-	objects as loose objects to be cleaned up by a later step only if
-	they are not re-added to a pack-file; for this reason it is not
-	advisable to enable both the `loose-objects` and `gc` tasks at the
-	same time.
+	containing a batch of loose objects.
++
+The batch size defaults to fifty thousand objects to prevent the job from
+taking too long on a repository with many loose objects. Use the
+`maintenance.loose-objects.batchSize` config option to adjust this size,
+including a value of `0` to remove the limit.
++
+The `gc` task writes unreachable objects as loose objects to be cleaned up
+by a later step only if they are not re-added to a pack-file; for this
+reason it is not advisable to enable both the `loose-objects` and `gc`
+tasks at the same time.
 
 incremental-repack::
 	The `incremental-repack` job repacks the object directory
@@ -157,6 +161,18 @@ pack-refs::
 	collects them into a single file. This speeds up operations that
 	need to iterate across many references. See linkgit:git-pack-refs[1]
 	for more information.
+
+reflog-expire::
+	The `reflog-expire` task deletes any entries in the reflog older than the
+	expiry threshold. See linkgit:git-reflog[1] for more information.
+
+rerere-gc::
+	The `rerere-gc` task invokes garbage collection for stale entries in
+	the rerere cache. See linkgit:git-rerere[1] for more information.
+
+worktree-prune::
+	The `worktree-prune` task deletes stale or broken worktrees. See
+	linkgit:git-worktree[1] for more information.
 
 OPTIONS
 -------

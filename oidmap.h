@@ -36,12 +36,13 @@ struct oidmap {
 void oidmap_init(struct oidmap *map, size_t initial_size);
 
 /*
- * Frees an oidmap structure and allocated memory.
+ * Clear an oidmap, freeing any allocated memory. The map is empty and
+ * can be reused without another explicit init.
  *
  * If `free_entries` is true, each oidmap_entry in the map is freed as well
  * using stdlibs free().
  */
-void oidmap_free(struct oidmap *map, int free_entries);
+void oidmap_clear(struct oidmap *map, int free_entries);
 
 /*
  * Returns the oidmap entry for the specified oid, or NULL if not found.
@@ -66,6 +67,10 @@ void *oidmap_put(struct oidmap *map, void *entry);
  */
 void *oidmap_remove(struct oidmap *map, const struct object_id *key);
 
+static inline unsigned int oidmap_get_size(struct oidmap *map)
+{
+	return hashmap_get_size(&map->map);
+}
 
 struct oidmap_iter {
 	struct hashmap_iter h_iter;

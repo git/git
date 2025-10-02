@@ -46,11 +46,11 @@ int online_cpus(void)
 	mib[0] = CTL_HW;
 #  ifdef HW_AVAILCPU
 	mib[1] = HW_AVAILCPU;
-	len = sizeof(cpucount);
-	if (!sysctl(mib, 2, &cpucount, &len, NULL, 0))
-		return cpucount;
-#  endif /* HW_AVAILCPU */
+#  elif defined(HW_NCPUONLINE)
+	mib[1] = HW_NCPUONLINE;
+#  else
 	mib[1] = HW_NCPU;
+#  endif /* HW_AVAILCPU */
 	len = sizeof(cpucount);
 	if (!sysctl(mib, 2, &cpucount, &len, NULL, 0))
 		return cpucount;

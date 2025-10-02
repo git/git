@@ -5,7 +5,7 @@
 #include "gettext.h"
 #include "grep.h"
 #include "hex.h"
-#include "object-store-ll.h"
+#include "odb.h"
 #include "pretty.h"
 #include "userdiff.h"
 #include "xdiff-interface.h"
@@ -1263,12 +1263,12 @@ static void show_line(struct grep_opt *opt,
 		 */
 		show_line_header(opt, name, lno, cno, sign);
 	}
-	if (opt->color || opt->only_matching) {
+	if (want_color(opt->color) || opt->only_matching) {
 		regmatch_t match;
 		enum grep_context ctx = GREP_CONTEXT_BODY;
 		int eflags = 0;
 
-		if (opt->color) {
+		if (want_color(opt->color)) {
 			if (sign == ':')
 				match_color = opt->colors[GREP_COLOR_MATCH_SELECTED];
 			else
@@ -1517,7 +1517,7 @@ static int fill_textconv_grep(struct repository *r,
 		fill_filespec(df, gs->identifier, 1, 0100644);
 		break;
 	case GREP_SOURCE_FILE:
-		fill_filespec(df, null_oid(), 0, 0100644);
+		fill_filespec(df, null_oid(r->hash_algo), 0, 0100644);
 		break;
 	default:
 		BUG("attempt to textconv something without a path?");
@@ -1931,8 +1931,8 @@ static int grep_source_load_oid(struct grep_source *gs)
 {
 	enum object_type type;
 
-	gs->buf = repo_read_object_file(gs->repo, gs->identifier, &type,
-					&gs->size);
+	gs->buf = odb_read_object(gs->repo->objects, gs->identifier,
+				  &type, &gs->size);
 	if (!gs->buf)
 		return error(_("'%s': unable to read %s"),
 			     gs->name,

@@ -3,26 +3,40 @@
 
 proc do_windows_shortcut {} {
 	global _gitworktree
-	set fn [tk_getSaveFile \
-		-parent . \
-		-title [mc "%s (%s): Create Desktop Icon" [appname] [reponame]] \
-		-initialfile "Git [reponame].lnk"]
-	if {$fn != {}} {
-		if {[file extension $fn] ne {.lnk}} {
-			set fn ${fn}.lnk
+
+	set desktop [safe_exec [list cygpath -mD]]
+	set link_file "Git [reponame].lnk"
+	set link_path [file normalize [file join $desktop $link_file]]
+
+	# on Windows, tk_getSaveFile dereferences .lnk files, so no simple
+	# filename chooser is available. Use the default or quit.
+	if {[file exists $link_path]} {
+		set answer [tk_messageBox \
+			-type yesno \
+			-title [mc "%s (%s): Create Desktop Icon" [appname] [reponame]] \
+			-default yes \
+			-message [mc "Replace existing shortcut: %s?" $link_file]]
+		if {$answer == no} {
+			return
 		}
-		# Use git-gui.exe if available (ie: git-for-windows)
-		set cmdLine [auto_execok git-gui.exe]
-		if {$cmdLine eq {}} {
-			set cmdLine [list [info nameofexecutable] \
-							 [file normalize $::argv0]]
-		}
-		if {[catch {
-				win32_create_lnk $fn $cmdLine \
-					[file normalize $_gitworktree]
-			} err]} {
-			error_popup [strcat [mc "Cannot write shortcut:"] "\n\n$err"]
-		}
+	}
+
+	# Use git-gui.exe if found, fall back to wish + launcher
+	set link_arguments {}
+	set link_target [safe_exec [list cygpath -m /cmd/git-gui.exe]]
+	if {![file executable $link_target]} {
+		set link_target [_which git-gui]
+	}
+	if {![file executable $link_target]} {
+		set link_target [file normalize [info nameofexecutable]]
+		set link_arguments [file normalize $::argv0]
+	}
+	set cmdLine [list $link_target $link_arguments]
+	if {[catch {
+		win32_create_lnk $link_path $cmdLine \
+			[file normalize $_gitworktree]
+	} err]} {
+		error_popup [strcat [mc "Cannot write shortcut:"] "\n\n$err"]
 	}
 }
 
@@ -30,8 +44,8 @@ proc do_cygwin_shortcut {} {
 	global argv0 _gitworktree oguilib
 
 	if {[catch {
-		set desktop [exec cygpath \
-			--desktop]
+		set desktop [safe_exec [list cygpath \
+			--desktop]]
 		}]} {
 			set desktop .
 	}
@@ -50,14 +64,14 @@ proc do_cygwin_shortcut {} {
 					"CHERE_INVOKING=1 \
 					source /etc/profile; \
 					git gui"}
-				exec /bin/mkshortcut.exe \
+				safe_exec [list /bin/mkshortcut.exe \
 					--arguments $shargs \
 					--desc "git-gui on $repodir" \
 					--icon $oguilib/git-gui.ico \
 					--name $fn \
 					--show min \
 					--workingdir $repodir \
-					/bin/sh.exe
+					/bin/sh.exe]
 			} err]} {
 			error_popup [strcat [mc "Cannot write shortcut:"] "\n\n$err"]
 		}
@@ -83,7 +97,7 @@ proc do_macosx_app {} {
 
 				file mkdir $MacOS
 
-				set fd [open [file join $Contents Info.plist] w]
+				set fd [safe_open_file [file join $Contents Info.plist] w]
 				puts $fd {<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -108,7 +122,7 @@ proc do_macosx_app {} {
 </plist>}
 				close $fd
 
-				set fd [open $exe w]
+				set fd [safe_open_file $exe w]
 				puts $fd "#!/bin/sh"
 				foreach name [lsort [array names env]] {
 					set value $env($name)

@@ -122,14 +122,12 @@ struct key_value_info {
 	int linenr;
 	enum config_origin_type origin_type;
 	enum config_scope scope;
-	const char *path;
 };
 #define KVI_INIT { \
 	.filename = NULL, \
 	.linenr = -1, \
 	.origin_type = CONFIG_ORIGIN_UNKNOWN, \
 	.scope = CONFIG_SCOPE_UNKNOWN, \
-	.path = NULL, \
 }
 
 /* Captures additional information that a config callback can use. */
@@ -164,9 +162,6 @@ struct config_context {
  */
 typedef int (*config_fn_t)(const char *, const char *,
 			   const struct config_context *, void *);
-
-int git_default_config(const char *, const char *,
-		       const struct config_context *, void *);
 
 /**
  * Read a specific file in git-config format.
@@ -218,6 +213,15 @@ void read_very_early_config(config_fn_t cb, void *data);
  * will first feed the user-wide one to the callback, and then the
  * repo-specific one; by overwriting, the higher-priority repo-specific
  * value is left at the end).
+ *
+ * In cases where the repository variable is NULL, repo_config() will
+ * skip the per-repository config but retain system and global configs
+ * by calling read_very_early_config() which also ignores one-time
+ * overrides like "git -c var=val". This is to support handling "git foo -h"
+ * (which lets git.c:run_builtin() to pass NULL and have the cmd_foo()
+ * call repo_config() before calling parse_options() to notice "-h", give
+ * help and exit) for a command that ordinarily require a repository
+ * so this limitation may be OK (but if needed you are welcome to fix it).
  *
  * Unlike git_config_from_file(), this function respects includes.
  */
@@ -708,141 +712,5 @@ NORETURN void git_die_config_linenr(const char *key, const char *filename, int l
 #define LOOKUP_CONFIG(mapping, var) \
 	lookup_config(mapping, ARRAY_SIZE(mapping), var)
 int lookup_config(const char **mapping, int nr_mapping, const char *var);
-
-# ifdef USE_THE_REPOSITORY_VARIABLE
-static inline void git_config(config_fn_t fn, void *data)
-{
-	repo_config(the_repository, fn, data);
-}
-
-static inline void git_config_clear(void)
-{
-	repo_config_clear(the_repository);
-}
-
-static inline int git_config_get(const char *key)
-{
-	return repo_config_get(the_repository, key);
-}
-
-static inline int git_config_get_value(const char *key, const char **value)
-{
-	return repo_config_get_value(the_repository, key, value);
-}
-
-static inline int git_config_get_value_multi(const char *key, const struct string_list **dest)
-{
-	return repo_config_get_value_multi(the_repository, key, dest);
-}
-
-static inline int git_config_get_string_multi(const char *key,
-				const struct string_list **dest)
-{
-	return repo_config_get_string_multi(the_repository, key, dest);
-}
-
-static inline int git_config_get_string(const char *key, char **dest)
-{
-	return repo_config_get_string(the_repository, key, dest);
-}
-
-static inline int git_config_get_string_tmp(const char *key, const char **dest)
-{
-	return repo_config_get_string_tmp(the_repository, key, dest);
-}
-
-static inline int git_config_get_int(const char *key, int *dest)
-{
-	return repo_config_get_int(the_repository, key, dest);
-}
-
-static inline int git_config_get_ulong(const char *key, unsigned long *dest)
-{
-	return repo_config_get_ulong(the_repository, key, dest);
-}
-
-static inline int git_config_get_bool(const char *key, int *dest)
-{
-	return repo_config_get_bool(the_repository, key, dest);
-}
-
-static inline int git_config_get_bool_or_int(const char *key, int *is_bool, int *dest)
-{
-	return repo_config_get_bool_or_int(the_repository, key, is_bool, dest);
-}
-
-static inline int git_config_get_maybe_bool(const char *key, int *dest)
-{
-	return repo_config_get_maybe_bool(the_repository, key, dest);
-}
-
-static inline int git_config_get_pathname(const char *key, char **dest)
-{
-	return repo_config_get_pathname(the_repository, key, dest);
-}
-
-static inline void git_config_set_in_file(const char *config_filename,
-					  const char *key, const char *value)
-{
-	repo_config_set_in_file(the_repository, config_filename, key, value);
-}
-
-static inline int git_config_set_gently(const char *key, const char *value)
-{
-	return repo_config_set_gently(the_repository, key, value);
-}
-
-static inline void git_config_set(const char *key, const char *value)
-{
-	repo_config_set(the_repository, key, value);
-}
-
-static inline int git_config_set_in_file_gently(
-	const char *config_filename,
-	const char *key,
-	const char *comment,
-	const char *value)
-{
-	return repo_config_set_in_file_gently(the_repository, config_filename,
-					      key, comment, value);
-}
-
-static inline int git_config_set_multivar_in_file_gently(
-	const char *config_filename,
-	const char *key, const char *value,
-	const char *value_pattern,
-	const char *comment,
-	unsigned flags)
-{
-	return repo_config_set_multivar_in_file_gently(the_repository, config_filename,
-						       key, value, value_pattern,
-						       comment, flags);
-}
-
-static inline void git_config_set_multivar_in_file(
-	const char *config_filename,
-	const char *key,
-	const char *value,
-	const char *value_pattern,
-	unsigned flags)
-{
-	repo_config_set_multivar_in_file(the_repository, config_filename,
-					 key, value, value_pattern, flags);
-}
-
-static inline int git_config_set_multivar_gently(const char *key, const char *value,
-				   const char *value_pattern, unsigned flags)
-{
-	return repo_config_set_multivar_gently(the_repository, key, value,
-					       value_pattern, flags);
-}
-
-static inline void git_config_set_multivar(const char *key, const char *value,
-			     const char *value_pattern, unsigned flags)
-{
-	repo_config_set_multivar(the_repository, key, value,
-				 value_pattern, flags);
-}
-# endif /* USE_THE_REPOSITORY_VARIABLE */
 
 #endif /* CONFIG_H */

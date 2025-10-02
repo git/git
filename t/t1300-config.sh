@@ -2851,4 +2851,15 @@ test_expect_success 'writing to stdin is rejected' '
 
 done
 
+test_expect_success 'writing value with trailing CR not stripped on read' '
+	test_when_finished "rm -rf cr-test" &&
+
+	printf "bar\r\n" >expect &&
+	git init cr-test &&
+	git -C cr-test config set core.foo $(printf "bar\r") &&
+	git -C cr-test config get core.foo >actual &&
+
+	test_cmp expect actual
+'
+
 test_done

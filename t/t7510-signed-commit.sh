@@ -8,6 +8,13 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 GNUPGHOME_NOT_USED=$GNUPGHOME
 . "$TEST_DIRECTORY/lib-gpg.sh"
 
+test_expect_success GPG 'verify-commit does not crash with -h' '
+	test_expect_code 129 git verify-commit -h >usage &&
+	test_grep "[Uu]sage: git verify-commit " usage &&
+	test_expect_code 129 nongit git verify-commit -h >usage &&
+	test_grep "[Uu]sage: git verify-commit " usage
+'
+
 test_expect_success GPG 'create signed commits' '
 	test_oid_cache <<-\EOF &&
 	header sha1:gpgsig
@@ -442,7 +449,17 @@ test_expect_success 'custom `gpg.program`' '
 
 	test_must_fail env LET_GPG_PROGRAM_FAIL=1 \
 	git commit -S --allow-empty -m must-fail 2>err &&
-	grep zOMG err
+	grep zOMG err &&
+
+	# `gpg.program` starts with `~`, the path should be interpreted to be relative to `$HOME`
+	test_config gpg.program "~/fake-gpg" &&
+	env HOME="$(pwd)" \
+	git commit -S --allow-empty -m signed-commit &&
+
+	# `gpg.program` does not specify an absolute path, it should find a program in `$PATH`
+	test_config gpg.program "fake-gpg" &&
+	env PATH="$PWD:$PATH" \
+	git commit -S --allow-empty -m signed-commit
 '
 
 test_done

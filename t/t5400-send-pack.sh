@@ -55,6 +55,13 @@ test_expect_success setup '
 	echo Rebase &&
 	git log'
 
+test_expect_success 'send-pack does not crash with -h' '
+	test_expect_code 129 git send-pack -h >usage &&
+	test_grep "[Uu]sage: git send-pack " usage &&
+	test_expect_code 129 nongit git send-pack -h >usage &&
+	test_grep "[Uu]sage: git send-pack " usage
+'
+
 test_expect_success 'pack the source repository' '
 	git repack -a -d &&
 	git prune
@@ -268,7 +275,7 @@ extract_ref_advertisement () {
 	'
 }
 
-test_expect_success 'receive-pack de-dupes .have lines' '
+test_expect_success PERL_TEST_HELPERS 'receive-pack de-dupes .have lines' '
 	git init shared &&
 	git -C shared commit --allow-empty -m both &&
 	git clone -s shared fork &&

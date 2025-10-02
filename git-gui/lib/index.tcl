@@ -22,8 +22,6 @@ proc _close_updateindex {fd} {
 }
 
 proc rescan_on_error {err {after {}}} {
-	global use_ttk NS
-
 	set w .indexfried
 	Dialog $w
 	wm withdraw $w
@@ -35,14 +33,14 @@ proc rescan_on_error {err {after {}}} {
 		-borderwidth 0 -highlightthickness 0 \
 		-background [get_bg_color $w]
 	$w.msg tag configure bold -font font_uibold -justify center
-	${NS}::scrollbar $w.vs -command [list $w.msg yview]
+	ttk::scrollbar $w.vs -command [list $w.msg yview]
 	$w.msg insert end $s bold \n\n$err {}
 	$w.msg configure -state disabled
 
-	${NS}::button $w.continue \
+	ttk::button $w.continue \
 		-text [mc "Continue"] \
 		-command [list destroy $w]
-	${NS}::button $w.unlock \
+	ttk::button $w.unlock \
 		-text [mc "Unlock Index"] \
 		-command "destroy $w; _delete_indexlock"
 	grid $w.msg - $w.vs -sticky news
@@ -75,12 +73,11 @@ proc update_indexinfo {msg path_list after} {
 	if {$batch > 25} {set batch 25}
 
 	set status_bar_operation [$::main_status start $msg [mc "files"]]
-	set fd [git_write update-index -z --index-info]
+	set fd [git_write [list update-index -z --index-info]]
 	fconfigure $fd \
 		-blocking 0 \
 		-buffering full \
 		-buffersize 512 \
-		-encoding binary \
 		-translation binary
 	fileevent $fd writable [list \
 		write_update_indexinfo \
@@ -144,12 +141,11 @@ proc update_index {msg path_list after} {
 	if {$batch > 25} {set batch 25}
 
 	set status_bar_operation [$::main_status start $msg [mc "files"]]
-	set fd [git_write update-index --add --remove -z --stdin]
+	set fd [git_write [list update-index --add --remove -z --stdin]]
 	fconfigure $fd \
 		-blocking 0 \
 		-buffering full \
 		-buffersize 512 \
-		-encoding binary \
 		-translation binary
 	fileevent $fd writable [list \
 		write_update_index \
@@ -218,18 +214,17 @@ proc checkout_index {msg path_list after capture_error} {
 	if {$batch > 25} {set batch 25}
 
 	set status_bar_operation [$::main_status start $msg [mc "files"]]
-	set fd [git_write checkout-index \
+	set fd [git_write [list checkout-index \
 		--index \
 		--quiet \
 		--force \
 		-z \
 		--stdin \
-		]
+		]]
 	fconfigure $fd \
 		-blocking 0 \
 		-buffering full \
 		-buffersize 512 \
-		-encoding binary \
 		-translation binary
 	fileevent $fd writable [list \
 		write_checkout_index \
@@ -430,6 +425,11 @@ proc revert_helper {txt paths} {
 
 	if {![lock_index begin-update]} return
 
+	# Workaround for Tcl < 9.0: chord namespaces are not obeyed and
+	# operated in the global namespace. This clears an error that could
+	# have been left over from a previous operation.
+	set ::err {}
+
 	# Common "after" functionality that waits until multiple asynchronous
 	# operations are complete (by waiting for them to activate their notes
 	# on the chord).
@@ -437,7 +437,7 @@ proc revert_helper {txt paths} {
 	# The asynchronous operations are each indicated below by a comment
 	# before the code block that starts the async operation.
 	set after_chord [SimpleChord::new {
-		if {[string trim $err] != ""} {
+		if {[info exists err] && [string trim $err] ne ""} {
 			rescan_on_error $err
 		} else {
 			unlock_index

@@ -1,11 +1,12 @@
 #define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
+#include "environment.h"
 #include "gettext.h"
 #include "hex.h"
 #include "refs/refs-internal.h"
 #include "object-name.h"
-#include "object-store-ll.h"
+#include "odb.h"
 #include "object.h"
 #include "string-list.h"
 #include "parse-options.h"
@@ -35,7 +36,8 @@ static void show_one(const struct show_one_options *opts,
 	const char *hex;
 	struct object_id peeled;
 
-	if (!repo_has_object_file(the_repository, oid))
+	if (!odb_has_object(the_repository->objects, oid,
+			    HAS_OBJECT_RECHECK_PACKED | HAS_OBJECT_FETCH_PROMISOR))
 		die("git show-ref: bad ref %s (%s)", refname,
 		    oid_to_hex(oid));
 
@@ -323,7 +325,7 @@ struct repository *repo UNUSED)
 		OPT_END()
 	};
 
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 
 	argc = parse_options(argc, argv, prefix, show_ref_options,
 			     show_ref_usage, 0);

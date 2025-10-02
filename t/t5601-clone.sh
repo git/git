@@ -649,7 +649,7 @@ test_expect_success 'GIT_TRACE_PACKFILE produces a usable pack' '
 	git -C replay.git index-pack -v --stdin <tmp.pack
 '
 
-test_expect_success 'clone on case-insensitive fs' '
+test_expect_success PERL_TEST_HELPERS 'clone on case-insensitive fs' '
 	git init icasefs &&
 	(
 		cd icasefs &&
@@ -662,7 +662,7 @@ test_expect_success 'clone on case-insensitive fs' '
 	)
 '
 
-test_expect_success CASE_INSENSITIVE_FS 'colliding file detection' '
+test_expect_success PERL_TEST_HELPERS,CASE_INSENSITIVE_FS 'colliding file detection' '
 	grep X icasefs/warning &&
 	grep x icasefs/warning &&
 	test_grep "the following paths have collided" icasefs/warning

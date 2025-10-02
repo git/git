@@ -8,10 +8,11 @@ endif::git-commit[]
 	This setting overrides the default of the `--cleanup` option in
 	`git commit`. {see-git-commit} Changing the default can be useful
 	when you always want to keep lines that begin
-	with the comment character `#` in your log message, in which case you
+	with the comment character (`core.commentChar`, default `#`)
+	in your log message, in which case you
 	would do `git config commit.cleanup whitespace` (note that you will
-	have to remove the help lines that begin with `#` in the commit log
-	template yourself, if you do this).
+	have to remove the help lines that begin with the comment character
+	in the commit log template yourself, if you do this).
 
 `commit.gpgSign`::
 	A boolean to specify whether all commits should be GPG signed.

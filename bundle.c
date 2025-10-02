@@ -7,7 +7,7 @@
 #include "environment.h"
 #include "gettext.h"
 #include "hex.h"
-#include "object-store-ll.h"
+#include "odb.h"
 #include "repository.h"
 #include "object.h"
 #include "commit.h"
@@ -95,7 +95,7 @@ int read_bundle_header_fd(int fd, struct bundle_header *header,
 	 * by an "object-format=" capability, which is being handled in
 	 * `parse_capability()`.
 	 */
-	header->hash_algo = &hash_algos[GIT_HASH_SHA1];
+	header->hash_algo = &hash_algos[GIT_HASH_SHA1_LEGACY];
 
 	/* The bundle header ends with an empty line */
 	while (!strbuf_getwholeline_fd(&buf, fd, '\n') &&
@@ -233,7 +233,7 @@ int verify_bundle(struct repository *r,
 		.quiet = 1,
 	};
 
-	if (!r || !r->objects || !r->objects->odb)
+	if (!r || !r->objects || !r->objects->sources)
 		return error(_("need a repository to verify a bundle"));
 
 	for (i = 0; i < p->nr; i++) {
@@ -305,7 +305,7 @@ static int is_tag_in_date_range(struct object *tag, struct rev_info *revs)
 	if (revs->max_age == -1 && revs->min_age == -1)
 		goto out;
 
-	buf = repo_read_object_file(the_repository, &tag->oid, &type, &size);
+	buf = odb_read_object(the_repository->objects, &tag->oid, &type, &size);
 	if (!buf)
 		goto out;
 	line = memmem(buf, size, "\ntagger ", 8);
@@ -384,6 +384,7 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 {
 	int i;
 	int ref_count = 0;
+	struct strset objects = STRSET_INIT;
 
 	for (i = 0; i < revs->pending.nr; i++) {
 		struct object_array_entry *e = revs->pending.objects + i;
@@ -400,6 +401,9 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 		if (refs_read_ref_full(get_main_ref_store(the_repository), e->name, RESOLVE_REF_READING, &oid, &flag))
 			flag = 0;
 		display_ref = (flag & REF_ISSYMREF) ? e->name : ref;
+
+		if (strset_contains(&objects, display_ref))
+			goto skip_write_ref;
 
 		if (e->item->type == OBJ_TAG &&
 				!is_tag_in_date_range(e->item, revs)) {
@@ -423,6 +427,7 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 		}
 
 		ref_count++;
+		strset_add(&objects, display_ref);
 		write_or_die(bundle_fd, oid_to_hex(&e->item->oid), the_hash_algo->hexsz);
 		write_or_die(bundle_fd, " ", 1);
 		write_or_die(bundle_fd, display_ref, strlen(display_ref));
@@ -430,6 +435,8 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
  skip_write_ref:
 		free(ref);
 	}
+
+	strset_clear(&objects);
 
 	/* end header */
 	write_or_die(bundle_fd, "\n", 1);
@@ -500,7 +507,7 @@ int create_bundle(struct repository *r, const char *path,
 	 *    SHA1.
 	 * 2. @filter is required because we parsed an object filter.
 	 */
-	if (the_hash_algo != &hash_algos[GIT_HASH_SHA1] || revs.filter.choice)
+	if (the_hash_algo != &hash_algos[GIT_HASH_SHA1_LEGACY] || revs.filter.choice)
 		min_version = 3;
 
 	if (argc > 1) {
@@ -566,7 +573,6 @@ int create_bundle(struct repository *r, const char *path,
 	 */
 	revs.blob_objects = revs.tree_objects = 0;
 	traverse_commit_list(&revs, write_bundle_prerequisites, NULL, &bpi);
-	object_array_remove_duplicates(&revs_copy.pending);
 
 	/* write bundle refs */
 	ref_count = write_bundle_refs(bundle_fd, &revs_copy);

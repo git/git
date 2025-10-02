@@ -251,7 +251,7 @@ static void process_capabilities(struct packet_reader *reader, size_t *linelen)
 			reader->hash_algo = &hash_algos[hash_algo];
 		free(hash_name);
 	} else {
-		reader->hash_algo = &hash_algos[GIT_HASH_SHA1];
+		reader->hash_algo = &hash_algos[GIT_HASH_SHA1_LEGACY];
 	}
 }
 
@@ -407,7 +407,7 @@ static int process_ref_v2(struct packet_reader *reader, struct ref ***list,
 	 * name.  Subsequent fields (symref-target and peeled) are optional and
 	 * don't have a particular order.
 	 */
-	if (string_list_split(&line_sections, line, ' ', -1) < 2) {
+	if (string_list_split(&line_sections, line, " ", -1) < 2) {
 		ret = 0;
 		goto out;
 	}
@@ -500,7 +500,7 @@ static void send_capabilities(int fd_out, struct packet_reader *reader)
 		reader->hash_algo = &hash_algos[hash_algo];
 		packet_write_fmt(fd_out, "object-format=%s", reader->hash_algo->name);
 	} else {
-		reader->hash_algo = &hash_algos[GIT_HASH_SHA1];
+		reader->hash_algo = &hash_algos[GIT_HASH_SHA1_LEGACY];
 	}
 	if (server_feature_v2("promisor-remote", &promisor_remote_info)) {
 		char *reply = promisor_remote_reply(promisor_remote_info);
@@ -665,7 +665,7 @@ int server_supports_hash(const char *desired, int *feature_supported)
 	if (feature_supported)
 		*feature_supported = !!hash;
 	if (!hash) {
-		hash = hash_algos[GIT_HASH_SHA1].name;
+		hash = hash_algos[GIT_HASH_SHA1_LEGACY].name;
 		len = strlen(hash);
 	}
 	while (hash) {
@@ -1028,7 +1028,7 @@ static int git_proxy_command_options(const char *var, const char *value,
 static int git_use_proxy(const char *host)
 {
 	git_proxy_command = getenv("GIT_PROXY_COMMAND");
-	git_config(git_proxy_command_options, (void*)host);
+	repo_config(the_repository, git_proxy_command_options, (void*)host);
 	return (git_proxy_command && *git_proxy_command);
 }
 
@@ -1154,7 +1154,7 @@ static const char *get_ssh_command(void)
 	if ((ssh = getenv("GIT_SSH_COMMAND")))
 		return ssh;
 
-	if (!git_config_get_string_tmp("core.sshcommand", &ssh))
+	if (!repo_config_get_string_tmp(the_repository, "core.sshcommand", &ssh))
 		return ssh;
 
 	return NULL;
@@ -1173,7 +1173,7 @@ static void override_ssh_variant(enum ssh_variant *ssh_variant)
 {
 	const char *variant = getenv("GIT_SSH_VARIANT");
 
-	if (!variant && git_config_get_string_tmp("ssh.variant", &variant))
+	if (!variant && repo_config_get_string_tmp(the_repository, "ssh.variant", &variant))
 		return;
 
 	if (!strcmp(variant, "auto"))

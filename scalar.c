@@ -101,9 +101,9 @@ static int set_scalar_config(const struct scalar_config *config, int reconfigure
 	int res;
 
 	if ((reconfigure && config->overwrite_on_reconfigure) ||
-	    git_config_get_string(config->key, &value)) {
+	    repo_config_get_string(the_repository, config->key, &value)) {
 		trace2_data_string("scalar", the_repository, config->key, "created");
-		res = git_config_set_gently(config->key, config->value);
+		res = repo_config_set_gently(the_repository, config->key, config->value);
 	} else {
 		trace2_data_string("scalar", the_repository, config->key, "exists");
 		res = 0;
@@ -170,6 +170,7 @@ static int set_recommended_config(int reconfigure)
 		{ "core.autoCRLF", "false" },
 		{ "core.safeCRLF", "false" },
 		{ "fetch.showForcedUpdates", "false" },
+		{ "pack.usePathWalk", "true" },
 		{ NULL, NULL },
 	};
 	int i;
@@ -192,12 +193,12 @@ static int set_recommended_config(int reconfigure)
 	 * The `log.excludeDecoration` setting is special because it allows
 	 * for multiple values.
 	 */
-	if (git_config_get_string("log.excludeDecoration", &value)) {
+	if (repo_config_get_string(the_repository, "log.excludeDecoration", &value)) {
 		trace2_data_string("scalar", the_repository,
 				   "log.excludeDecoration", "created");
-		if (git_config_set_multivar_gently("log.excludeDecoration",
-						   "refs/prefetch/*",
-						   CONFIG_REGEX_NONE, 0))
+		if (repo_config_set_multivar_gently(the_repository, "log.excludeDecoration",
+						    "refs/prefetch/*",
+						    CONFIG_REGEX_NONE, 0))
 			return error(_("could not configure "
 				       "log.excludeDecoration"));
 	} else {
@@ -209,6 +210,12 @@ static int set_recommended_config(int reconfigure)
 	return 0;
 }
 
+/**
+ * Enable or disable the maintenance mode for the current repository:
+ *
+ * * If 'enable' is nonzero, run 'git maintenance start'.
+ * * If 'enable' is zero, run 'git maintenance unregister --force'.
+ */
 static int toggle_maintenance(int enable)
 {
 	return run_git("maintenance",
@@ -241,7 +248,7 @@ static int add_or_remove_enlistment(int add)
 
 static int start_fsmonitor_daemon(void)
 {
-	assert(have_fsmonitor_support());
+	ASSERT(have_fsmonitor_support());
 
 	if (fsmonitor_ipc__get_state() != IPC_STATE__LISTENING)
 		return run_git("fsmonitor--daemon", "start", NULL);
@@ -251,7 +258,7 @@ static int start_fsmonitor_daemon(void)
 
 static int stop_fsmonitor_daemon(void)
 {
-	assert(have_fsmonitor_support());
+	ASSERT(have_fsmonitor_support());
 
 	if (fsmonitor_ipc__get_state() == IPC_STATE__LISTENING)
 		return run_git("fsmonitor--daemon", "stop", NULL);
@@ -259,7 +266,15 @@ static int stop_fsmonitor_daemon(void)
 	return 0;
 }
 
-static int register_dir(void)
+/**
+ * Register the current directory as a Scalar enlistment, and set the
+ * recommended configuration.
+ *
+ * * If 'maintenance' is non-zero, then enable background maintenance.
+ * * If 'maintenance' is zero, then leave background maintenance as it is
+ *   currently configured.
+ */
+static int register_dir(int maintenance)
 {
 	if (add_or_remove_enlistment(1))
 		return error(_("could not add enlistment"));
@@ -267,8 +282,9 @@ static int register_dir(void)
 	if (set_recommended_config(0))
 		return error(_("could not set recommended config"));
 
-	if (toggle_maintenance(1))
-		warning(_("could not turn on maintenance"));
+	if (maintenance &&
+	    toggle_maintenance(maintenance))
+		warning(_("could not toggle maintenance"));
 
 	if (have_fsmonitor_support() && start_fsmonitor_daemon()) {
 		return error(_("could not start the FSMonitor daemon"));
@@ -306,7 +322,7 @@ static int set_config(const char *fmt, ...)
 	value = strchr(buf.buf, '=');
 	if (value)
 		*(value++) = '\0';
-	res = git_config_set_gently(buf.buf, value);
+	res = repo_config_set_gently(the_repository, buf.buf, value);
 	strbuf_release(&buf);
 
 	return res;
@@ -411,7 +427,7 @@ static int cmd_clone(int argc, const char **argv)
 	const char *branch = NULL;
 	char *branch_to_free = NULL;
 	int full_clone = 0, single_branch = 0, show_progress = isatty(2);
-	int src = 1, tags = 1;
+	int src = 1, tags = 1, maintenance = 1;
 	struct option clone_options[] = {
 		OPT_STRING('b', "branch", &branch, N_("<branch>"),
 			   N_("branch to checkout after clone")),
@@ -424,11 +440,13 @@ static int cmd_clone(int argc, const char **argv)
 			 N_("create repository within 'src' directory")),
 		OPT_BOOL(0, "tags", &tags,
 			 N_("specify if tags should be fetched during clone")),
+		OPT_BOOL(0, "maintenance", &maintenance,
+			 N_("specify if background maintenance should be enabled")),
 		OPT_END(),
 	};
 	const char * const clone_usage[] = {
 		N_("scalar clone [--single-branch] [--branch <main-branch>] [--full-clone]\n"
-		   "\t[--[no-]src] [--[no-]tags] <url> [<enlistment>]"),
+		   "\t[--[no-]src] [--[no-]tags] [--[no-]maintenance] <url> [<enlistment>]"),
 		NULL
 	};
 	const char *url;
@@ -550,7 +568,8 @@ static int cmd_clone(int argc, const char **argv)
 	if (res)
 		goto cleanup;
 
-	res = register_dir();
+	/* If --no-maintenance, then skip maintenance command entirely. */
+	res = register_dir(maintenance);
 
 cleanup:
 	free(branch_to_free);
@@ -597,11 +616,14 @@ static int cmd_list(int argc, const char **argv UNUSED)
 
 static int cmd_register(int argc, const char **argv)
 {
+	int maintenance = 1;
 	struct option options[] = {
+		OPT_BOOL(0, "maintenance", &maintenance,
+			 N_("specify if background maintenance should be enabled")),
 		OPT_END(),
 	};
 	const char * const usage[] = {
-		N_("scalar register [<enlistment>]"),
+		N_("scalar register [--[no-]maintenance] [<enlistment>]"),
 		NULL
 	};
 
@@ -610,7 +632,8 @@ static int cmd_register(int argc, const char **argv)
 
 	setup_enlistment_directory(argc, argv, usage, options, NULL);
 
-	return register_dir();
+	/* If --no-maintenance, then leave maintenance as-is. */
+	return register_dir(maintenance);
 }
 
 static int get_scalar_repos(const char *key, const char *value,
@@ -646,13 +669,19 @@ static int remove_deleted_enlistment(struct strbuf *path)
 static int cmd_reconfigure(int argc, const char **argv)
 {
 	int all = 0;
+	const char *maintenance_str = NULL;
+	int maintenance = 1; /* Enable maintenance by default. */
+
 	struct option options[] = {
 		OPT_BOOL('a', "all", &all,
 			 N_("reconfigure all registered enlistments")),
+		OPT_STRING(0, "maintenance", &maintenance_str,
+			 N_("(enable|disable|keep)"),
+			 N_("signal how to adjust background maintenance")),
 		OPT_END(),
 	};
 	const char * const usage[] = {
-		N_("scalar reconfigure [--all | <enlistment>]"),
+		N_("scalar reconfigure [--maintenance=(enable|disable|keep)] [--all | <enlistment>]"),
 		NULL
 	};
 	struct string_list scalar_repos = STRING_LIST_INIT_DUP;
@@ -672,7 +701,19 @@ static int cmd_reconfigure(int argc, const char **argv)
 		usage_msg_opt(_("--all or <enlistment>, but not both"),
 			      usage, options);
 
-	git_config(get_scalar_repos, &scalar_repos);
+	if (maintenance_str) {
+		if (!strcmp(maintenance_str, "enable"))
+			maintenance = 1;
+		else if (!strcmp(maintenance_str, "disable"))
+			maintenance = 0;
+		else if (!strcmp(maintenance_str, "keep"))
+			maintenance = -1;
+		else
+			die(_("unknown mode for --maintenance option: %s"),
+			    maintenance_str);
+	}
+
+	repo_config(the_repository, get_scalar_repos, &scalar_repos);
 
 	for (size_t i = 0; i < scalar_repos.nr; i++) {
 		int succeeded = 0;
@@ -722,7 +763,7 @@ static int cmd_reconfigure(int argc, const char **argv)
 			break;
 		}
 
-		git_config_clear();
+		repo_config_clear(the_repository);
 
 		if (repo_init(&r, gitdir.buf, commondir.buf))
 			goto loop_end;
@@ -736,7 +777,8 @@ static int cmd_reconfigure(int argc, const char **argv)
 		the_repository = old_repo;
 		repo_clear(&r);
 
-		if (toggle_maintenance(1) >= 0)
+		if (maintenance >= 0 &&
+		    toggle_maintenance(maintenance) >= 0)
 			succeeded = 1;
 
 loop_end:
@@ -803,13 +845,13 @@ static int cmd_run(int argc, const char **argv)
 	strbuf_release(&buf);
 
 	if (i == 0)
-		return register_dir();
+		return register_dir(1);
 
 	if (i > 0)
 		return run_git("maintenance", "run",
 			       "--task", tasks[i].task, NULL);
 
-	if (register_dir())
+	if (register_dir(1))
 		return -1;
 	for (i = 1; tasks[i].arg; i++)
 		if (run_git("maintenance", "run",

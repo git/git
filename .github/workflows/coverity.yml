@@ -147,9 +147,13 @@ jobs:
           key: cov-build-${{ env.COVERITY_LANGUAGE }}-${{ env.COVERITY_PLATFORM }}-${{ steps.lookup.outputs.hash }}
       - name: build with cov-build
         run: |
-          export PATH="$RUNNER_TEMP/cov-analysis/bin:$PATH" &&
+          export PATH="$PATH:$RUNNER_TEMP/cov-analysis/bin" &&
           cov-configure --gcc &&
-          cov-build --dir cov-int make
+          if ! cov-build --dir cov-int make
+          then
+            cat cov-int/build-log.txt
+            exit 1
+          fi
       - name: package the build
         run: tar -czvf cov-int.tgz cov-int
       - name: submit the build to Coverity Scan
