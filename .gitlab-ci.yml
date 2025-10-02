@@ -70,6 +70,8 @@ test:linux:
   artifacts:
     paths:
       - t/failed-test-artifacts
+    reports:
+      junit: build/meson-logs/testlog.junit.xml
     when: on_failure
 
 test:osx:
@@ -110,6 +112,8 @@ test:osx:
   artifacts:
     paths:
       - t/failed-test-artifacts
+    reports:
+      junit: build/meson-logs/testlog.junit.xml
     when: on_failure
 
 .windows_before_script: &windows_before_script
@@ -181,6 +185,9 @@ test:msvc-meson:
   script:
     - meson test -C build --no-rebuild --print-errorlogs --slice $Env:CI_NODE_INDEX/$Env:CI_NODE_TOTAL
   parallel: 10
+  artifacts:
+    reports:
+      junit: build/meson-logs/testlog.junit.xml
 
 test:fuzz-smoke-tests:
   image: ubuntu:latest
