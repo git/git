@@ -2304,6 +2304,11 @@ int refs_pack_refs(struct ref_store *refs, struct pack_refs_opts *opts)
 	return refs->be->pack_refs(refs, opts);
 }
 
+int refs_optimize(struct ref_store *refs, struct pack_refs_opts *opts)
+{
+	return refs->be->optimize(refs, opts);
+}
+
 int peel_iterated_oid(struct repository *r, const struct object_id *base, struct object_id *peeled)
 {
 	if (current_ref_iter &&

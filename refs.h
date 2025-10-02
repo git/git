@@ -483,6 +483,12 @@ struct pack_refs_opts {
 int refs_pack_refs(struct ref_store *refs, struct pack_refs_opts *opts);
 
 /*
+ * Optimize the ref store. The exact behavior is up to the backend.
+ * For the files backend, this is equivalent to packing refs.
+ */
+int refs_optimize(struct ref_store *refs, struct pack_refs_opts *opts);
+
+/*
  * Setup reflog before using. Fill in err and return -1 on failure.
  */
 int refs_create_reflog(struct ref_store *refs, const char *refname,

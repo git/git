@@ -1528,6 +1528,15 @@ static int files_pack_refs(struct ref_store *ref_store,
 	return 0;
 }
 
+static int files_optimize(struct ref_store *ref_store, struct pack_refs_opts *opts)
+{
+	/*
+	 * For the "files" backend, "optimizing" is the same as "packing".
+	 * So, we just call the existing worker function for packing.
+	 */
+	return files_pack_refs(ref_store, opts);
+}
+
 /*
  * People using contrib's git-new-workdir have .git/logs/refs ->
  * /some/other/path/.git/logs/refs, and that may live on another device.
@@ -3989,6 +3998,7 @@ struct ref_storage_be refs_be_files = {
 	.transaction_abort = files_transaction_abort,
 
 	.pack_refs = files_pack_refs,
+	.optimize = files_optimize,
 	.rename_ref = files_rename_ref,
 	.copy_ref = files_copy_ref,
 
