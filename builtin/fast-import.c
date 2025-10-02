@@ -188,6 +188,8 @@ static int global_argc;
 static const char **global_argv;
 static const char *global_prefix;
 
+static enum sign_mode signed_commit_mode = SIGN_VERBATIM;
+
 /* Memory pools */
 static struct mem_pool fi_mem_pool = {
 	.block_alloc = 2*1024*1024 - sizeof(struct mp_block),
@@ -2752,6 +2754,15 @@ static void parse_one_signature(struct signature_data *sig, const char *v)
 	parse_data(&sig->data, 0, NULL);
 }
 
+static void discard_one_signature(void)
+{
+	struct strbuf data = STRBUF_INIT;
+
+	read_next_command();
+	parse_data(&data, 0, NULL);
+	strbuf_release(&data);
+}
+
 static void add_gpgsig_to_commit(struct strbuf *commit_data,
 				 const char *header,
 				 struct signature_data *sig)
@@ -2783,6 +2794,22 @@ static void store_signature(struct signature_data *stored_sig,
 	} else {
 		*stored_sig = *new_sig;
 	}
+}
+
+static void import_one_signature(struct signature_data *sig_sha1,
+				 struct signature_data *sig_sha256,
+				 const char *v)
+{
+	struct signature_data sig = { NULL, NULL, STRBUF_INIT };
+
+	parse_one_signature(&sig, v);
+
+	if (!strcmp(sig.hash_algo, "sha1"))
+		store_signature(sig_sha1, &sig, "SHA-1");
+	else if (!strcmp(sig.hash_algo, "sha256"))
+		store_signature(sig_sha256, &sig, "SHA-256");
+	else
+		die(_("parse_one_signature() returned unknown hash algo"));
 }
 
 static void parse_new_commit(const char *arg)
@@ -2817,19 +2844,32 @@ static void parse_new_commit(const char *arg)
 	if (!committer)
 		die("Expected committer but didn't get one");
 
-	/* Process signatures (up to 2: one "sha1" and one "sha256") */
 	while (skip_prefix(command_buf.buf, "gpgsig ", &v)) {
-		struct signature_data sig = { NULL, NULL, STRBUF_INIT };
+		switch (signed_commit_mode) {
 
-		parse_one_signature(&sig, v);
+		/* First, modes that don't need the signature to be parsed */
+		case SIGN_ABORT:
+			die("encountered signed commit; use "
+			    "--signed-commits=<mode> to handle it");
+		case SIGN_WARN_STRIP:
+			warning(_("stripping a commit signature"));
+			/* fallthru */
+		case SIGN_STRIP:
+			discard_one_signature();
+			break;
 
-		if (!strcmp(sig.hash_algo, "sha1"))
-			store_signature(&sig_sha1, &sig, "SHA-1");
-		else if (!strcmp(sig.hash_algo, "sha256"))
-			store_signature(&sig_sha256, &sig, "SHA-256");
-		else
-			BUG("parse_one_signature() returned unknown hash algo");
+		/* Second, modes that parse the signature */
+		case SIGN_WARN_VERBATIM:
+			warning(_("importing a commit signature verbatim"));
+			/* fallthru */
+		case SIGN_VERBATIM:
+			import_one_signature(&sig_sha1, &sig_sha256, v);
+			break;
 
+		/* Third, BUG */
+		default:
+			BUG("invalid signed_commit_mode value %d", signed_commit_mode);
+		}
 		read_next_command();
 	}
 
@@ -3501,6 +3541,9 @@ static int parse_one_option(const char *option)
 		option_active_branches(option);
 	} else if (skip_prefix(option, "export-pack-edges=", &option)) {
 		option_export_pack_edges(option);
+	} else if (skip_prefix(option, "signed-commits=", &option)) {
+		if (parse_sign_mode(option, &signed_commit_mode))
+			usagef(_("unknown --signed-commits mode '%s'"), option);
 	} else if (!strcmp(option, "quiet")) {
 		show_stats = 0;
 		quiet = 1;
