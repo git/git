@@ -2101,10 +2101,19 @@ endif
 
 subdir('bin-wrappers')
 if get_option('docs') != []
+  doc_targets = []
   subdir('Documentation')
+else
+  docs_backend = 'none'
 endif
 
 subdir('contrib')
+
+# Note that the target is intentionally configured after including the
+# 'contrib' directory, as some tool there also have their own manpages.
+if get_option('docs') != []
+  alias_target('docs', doc_targets)
+endif
 
 exclude_from_check_headers = [
   'compat/',
@@ -2244,6 +2253,7 @@ summary({
 
 summary({
   'csprng': csprng_backend,
+  'docs': docs_backend,
   'https': https_backend,
   'sha1': sha1_backend,
   'sha1_unsafe': sha1_unsafe_backend,

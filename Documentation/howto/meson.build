@@ -29,7 +29,7 @@ howto_index = custom_target(
   output: 'howto-index.adoc',
 )
 
-custom_target(
+doc_targets += custom_target(
   command: asciidoc_html_options,
   input: howto_index,
   output: 'howto-index.html',
@@ -51,7 +51,7 @@ foreach howto : howto_sources
     capture: true,
   )
 
-  custom_target(
+  doc_targets += custom_target(
     command: asciidoc_html_options,
     input: howto_stripped,
     output: fs.stem(howto_stripped.full_path()) + '.html',

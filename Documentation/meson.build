@@ -377,7 +377,7 @@ foreach manpage, category : manpages
       output: fs.stem(manpage) + '.xml',
     )
 
-    custom_target(
+    doc_targets += custom_target(
       command: [
         xmlto,
         '-m', '@INPUT0@',
@@ -400,7 +400,7 @@ foreach manpage, category : manpages
   endif
 
   if get_option('docs').contains('html')
-    custom_target(
+    doc_targets += custom_target(
       command: asciidoc_common_options + [
         '--backend=' + asciidoc_html,
         '--doctype=manpage',
@@ -452,7 +452,7 @@ if get_option('docs').contains('html')
     depends: documentation_deps,
   )
 
-  custom_target(
+  doc_targets += custom_target(
     command: [
       xsltproc,
       '--xinclude',
@@ -481,7 +481,7 @@ if get_option('docs').contains('html')
   ]
 
   foreach article : articles
-    custom_target(
+    doc_targets += custom_target(
       command: asciidoc_common_options + [
         '--backend=' + asciidoc_html,
         '--out-file=@OUTPUT@',
