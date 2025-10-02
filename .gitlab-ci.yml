@@ -157,17 +157,9 @@ test:mingw64:
     - saas-windows-medium-amd64
   before_script:
     - *windows_before_script
-    - choco install -y git meson ninja openssl
+    - choco install -y git meson ninja
     - Import-Module $env:ChocolateyInstall\helpers\chocolateyProfile.psm1
     - refreshenv
-    # The certificate store for Python on Windows is broken and fails to fetch
-    # certificates, see https://bugs.python.org/issue36011. This seems to
-    # mostly be an issue with how the GitLab image is set up as it is a
-    # non-issue on GitHub Actions. Work around the issue by importing
-    # cetrificates manually.
-    - Invoke-WebRequest https://curl.haxx.se/ca/cacert.pem -OutFile cacert.pem
-    - openssl pkcs12 -export -nokeys -in cacert.pem -out certs.pfx -passout "pass:"
-    - Import-PfxCertificate -CertStoreLocation Cert:\LocalMachine\Root -FilePath certs.pfx
 
 build:msvc-meson:
   extends: .msvc-meson
