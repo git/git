@@ -44,6 +44,9 @@ UI, Workflows & Features
  * The stash.index configuration variable can be set to make "git stash
    pop/apply" pretend that it was invoked with "--index".
 
+ * "git fast-import" learned that "--signed-commits=<how>" option that
+   corresponds to that of "git fast-export".
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -83,6 +86,10 @@ Performance, Internal Implementation, Development Support etc.
    singleton variable, which has been updated to pass an instance
    throughout the callchain.
 
+ * The work to build on the bulk-checkin infrastructure to create many
+   objects at once in a transaction and to abstract it into the
+   generic object layer continues.
+
  * CodingGuidelines now spells out how bitfields are to be written.
 
  * Adjust to the way newer versions of cURL selectivel enables tracing
@@ -101,6 +108,10 @@ Performance, Internal Implementation, Development Support etc.
    to do about color.  A couple of bugs of this sort have been fixed,
    while the code has been cleaned up to prevent similar bugs in the
    future.
+
+ * The build procedure based on meson learned a target to only build
+   documentation, similar to "make doc".
+   (merge ff4ec8ded0 ps/meson-build-docs later to maint).
 
 
 Fixes since v2.51
@@ -258,6 +269,16 @@ including security updates, are included in this release.
 
  * "git last-modified" operating in non-recursive mode used to trigger
    a BUG(), which has been corrected.
+
+ * The use of "git config get" command to learn how ANSI color
+   sequence is for a particular type, e.g., "git config get
+   --type=color --default=reset no.such.thing", isn't very ergonomic.
+   (merge e4dabf4fd6 ps/config-get-color-fixes later to maint).
+
+ * The "do you still use it?" message given by a command that is
+   deeply deprecated and allow us to suggest alternatives has been
+   updated.
+   (merge 54a60e5b38 kh/you-still-use-whatchanged-fix later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 823d537fa7 kh/doc-git-log-markup-fix later to maint).
