@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2025, #11; Mon, 29)
-X-master-at: 821f583da6d30a84249f75f33501504d597bc16b
-X-next-at: 236ee7b076decfb1705c4b47c2af13735720bd19
+Subject: What's cooking in git.git (Oct 2025, #01; Thu, 2)
+X-master-at: 5099f64a82ccc80f3c6567589bfeb5e9a1b9fd6b
+X-next-at: e8671fe553c8b23de1b9a0f494eb2b7ff9064e62
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Sep 2025, #11; Mon, 29)
+What's cooking in git.git (Oct 2025, #01; Thu, 2)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -48,226 +48,253 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* dk/stash-apply-index (2025-09-21) 4 commits
-  (merged to 'next' on 2025-09-23 at 04e76cf5be)
- + stash: honor stash.index in apply, pop modes
- + stash: refactor private config globals
- + t3905: remove unneeded blank line
- + t3903: reduce dependencies on previous tests
+* cc/fast-import-strip-signed-commits (2025-09-17) 2 commits
+  (merged to 'next' on 2025-09-25 at 6c9a275f43)
+ + fast-import: add '--signed-commits=<mode>' option
+ + gpg-interface: refactor 'enum sign_mode' parsing
 
- The stash.index configuration variable can be set to make "git stash
- pop/apply" pretend that it was invoked with "--index".
- source: <cover.1758505011.git.ben.knoble+github@gmail.com>
-
-
-* jc/3.0-default-initial-branch-to-main-addendum (2025-09-17) 1 commit
-  (merged to 'next' on 2025-09-22 at dc4168c337)
- + initial branch: give hints after switching the default name
- (this branch uses pw/3.0-default-initial-branch-to-main.)
-
- Keep giving hint about the default initial branch name for users
- who may be surprised after Git 3.0 switch-over.
- source: <cover.1757518141.git.phillip.wood@dunelm.org.uk>
+ "git fast-import" learned that "--signed-commits=<how>" option that
+ corresponds to that of "git fast-export".
+ 
+ source: <20250917181427.3193500-1-christian.couder@gmail.com>
 
 
-* je/doc-checkout (2025-09-10) 7 commits
-  (merged to 'next' on 2025-09-23 at b776ac7a24)
- + doc: git-checkout: clarify restoring files section
- + doc: git-checkout: split up restoring files section
- + doc: git-checkout: deduplicate --detach explanation
- + doc: git-checkout: clarify `-b` and `-B`
- + doc: git-checkout: clarify `git checkout <branch>`
- + doc: git-checkout: clarify ARGUMENT DISAMBIGUATION
- + doc: git-checkout: clarify intro sentence
+* jt/odb-transaction (2025-09-16) 7 commits
+  (merged to 'next' on 2025-09-25 at 1a5c704fb9)
+ + odb: add transaction interface
+ + object-file: update naming from bulk-checkin
+ + object-file: relocate ODB transaction code
+ + bulk-checkin: drop flush_odb_transaction()
+ + builtin/update-index: end ODB transaction when --verbose is specified
+ + bulk-checkin: remove ODB transaction nesting
+ + Merge branch 'jt/de-global-bulk-checkin' into jt/odb-transaction
 
- Doc updates.
- cf. <236a79f4-e9a2-4335-bbff-79ae0cc67e9b@app.fastmail.com>
- source: <pull.1962.v4.git.1757531669.gitgitgadget@gmail.com>
-
-
-* jk/color-variable-fixes (2025-09-16) 13 commits
-  (merged to 'next' on 2025-09-23 at 8aa3006a1e)
- + config: store want_color() result in a separate bool
- + add-interactive: retain colorbool values longer
- + color: return bool from want_color()
- + color: use git_colorbool enum type to store colorbools
- + pretty: use format_commit_context.auto_color as colorbool
- + diff: stop passing ecbdata->use_color as boolean
- + diff: pass o->use_color directly to fill_metainfo()
- + diff: don't use diff_options.use_color as a strict bool
- + diff: simplify color_moved check when flushing
- + grep: don't treat grep_opt.color as a strict bool
- + color: return enum from git_config_colorbool()
- + color: use GIT_COLOR_* instead of numeric constants
- + Merge branch 'jk/add-i-color' into jk/color-variable-fixes
-
- Some places in the code confused a variable that is *not* a boolean
- to enable color but is an enum that records what the user requested
- to do about color.  A couple of bugs of this sort have been fixed,
- while the code has been cleaned up to prevent similar bugs in the
- future.
- source: <20250916201036.GA612463@coredump.intra.peff.net>
- source: <20250916202408.GI612873@coredump.intra.peff.net>
+ The work to build on the bulk-checkin infrastructure to create many
+ objects at once in a transaction and to abstract it into the
+ generic object layer continues.
+ 
+ source: <20250916182938.2193476-1-jltobler@gmail.com>
 
 
-* jk/setup-revisions-freefix (2025-09-19) 6 commits
-  (merged to 'next' on 2025-09-23 at e30036fad0)
- + revision: retain argv NULL invariant in setup_revisions()
- + treewide: pass strvecs around for setup_revisions_from_strvec()
- + treewide: use setup_revisions_from_strvec() when we have a strvec
- + revision: add wrapper to setup_revisions() from a strvec
- + revision: manage memory ownership of argv in setup_revisions()
- + stash: tell setup_revisions() to free our allocated strings
+* kh/you-still-use-whatchanged-fix (2025-09-17) 9 commits
+  (merged to 'next' on 2025-09-25 at de9c8c526c)
+ + BreakingChanges: remove claim about whatchanged reports
+ + whatchanged: remove not-even-shorter clause
+ + whatchanged: hint about git-log(1) and aliasing
+ + you-still-use-that??: help the user help themselves
+ + t0014: test shadowing of aliases for a sample of builtins
+ + git: allow alias-shadowing deprecated builtins
+ + git: move seen-alias bookkeeping into handle_alias(...)
+ + git: add `deprecated` category to --list-cmds
+ + Makefile: don’t add whatchanged after it has been removed
 
- There are double frees and leaks around setup_revisions() API used
- in "git stash show", which has been fixed, and setup_revisions()
- API gained a wrapper to make it more ergonomic when using it with
- strvec-manged argc/argv pairs.
- source: <20250919223351.GA3906184@coredump.intra.peff.net>
-
-
-* kn/refs-files-case-insensitive (2025-09-17) 4 commits
-  (merged to 'next' on 2025-09-23 at 51c2a665f0)
- + refs/files: handle D/F conflicts during locking
- + refs/files: handle F/D conflicts in case-insensitive FS
- + refs/files: use correct error type when lock exists
- + refs/files: catch conflicts on case-insensitive file-systems
-
- Deal more gracefully with directory / file conflicts when the files
- backend is used for ref storage, by failing only the ones that are
- involved in the conflict while allowing others.
- source: <20250917-587-git-fetch-1-fails-fetches-on-case-insensitive-repositories-v4-0-da3c74a08ed0@gmail.com>
+ The "do you still use it?" message given by a command that is
+ deeply deprecated and allow us to suggest alternatives has been
+ updated.
+ 
+ source: <cover.1758139856.short.code@khaugsbakk.name>
 
 
-* nb/send-email-no-dup-reply-to (2025-09-16) 1 commit
-  (merged to 'next' on 2025-09-18 at d7081e00ec)
- + send-email: don't duplicate Reply-to: in intro message
+* ms/refs-optimize (2025-09-19) 9 commits
+  (merged to 'next' on 2025-09-25 at 5fd0825882)
+ + t: add test for git refs optimize subcommand
+ + t0601: refactor tests to be shareable
+ + builtin/refs: add optimize subcommand
+ + doc: pack-refs: factor out common options
+ + builtin/pack-refs: factor out core logic into a shared library
+ + builtin/pack-refs: convert to use the generic refs_optimize() API
+ + reftable-backend: implement 'optimize' action
+ + files-backend: implement 'optimize' action
+ + refs: add a generic 'optimize' API
 
- "git send-email --compose --reply-to=<address>" used to add
- duplicated Reply-To: header, which made mailservers unhappy.  This
- has been corrected.
- source: <175809074627.1696783.67425889158412786@noble.neil.brown.name>
-
-
-* ps/clar-updates (2025-09-22) 2 commits
-  (merged to 'next' on 2025-09-22 at c811e8c172)
- + t/unit-tests: update to 10e96bc
-  (merged to 'next' on 2025-09-15 at 73402f7652)
- + t/unit-tests: update clar to fcbed04
-
- Import a newer version of the clar unit testing framework.
- source: <20250910-b4-pks-clar-update-v1-1-26a196237e0a@pks.im>
- source: <20250922-pks-clar-update-v1-1-9154e7d1b7a1@pks.im>
+ "git refs optimize" is added for not very well explained reason
+ despite it does the same thing as "git pack-refs"...
+ 
+ source: <20250919082647.535213-1-meetsoni3017@gmail.com>
 
 
-* pw/3.0-default-initial-branch-to-main (2025-09-10) 4 commits
-  (merged to 'next' on 2025-09-22 at 01bbebdab6)
- + t0613: stop setting default initial branch
- + t9902: switch default branch name to main
- + t4013: switch default branch name to main
- + breaking-changes: switch default branch to main
- (this branch is used by jc/3.0-default-initial-branch-to-main-addendum.)
+* ps/config-get-color-fixes (2025-09-22) 5 commits
+  (merged to 'next' on 2025-09-25 at 7b69f57ef6)
+ + builtin/config: do not spawn pager when printing color codes
+ + builtin/config: special-case retrieving colors without a key
+ + builtin/config: do not die in `get_color()`
+ + t1300: small style fixups
+ + t1300: write test expectations in the test's body
 
- Declare that "git init" that is not otherwise configured uses
- 'main' as the initial branch, not 'master', starting Git 3.0.
- source: <cover.1757518141.git.phillip.wood@dunelm.org.uk>
-
-
-* pw/rebase-i-cleanup-fix (2025-09-18) 2 commits
-  (merged to 'next' on 2025-09-22 at 2d0aec7821)
- + sequencer: remove VERBATIM_MSG flag
- + rebase -i: respect commit.cleanup when picking fixups
-
- "git rebase -i" failed to clean-up the commit log message when the
- command commits the final one in a chain of "fixup" commands, which
- has been corrected.
- source: <cover.1758186038.git.phillip.wood@dunelm.org.uk>
+ The use of "git config get" command to learn how ANSI color
+ sequence is for a particular type, e.g., "git config get
+ --type=color --default=reset no.such.thing", isn't very ergonomic.
+ 
+ source: <20250922-pks-config-color-v4-0-28b7d2697eed@pks.im>
 
 
-* tc/last-modified-recursive-fix (2025-09-18) 1 commit
-  (merged to 'next' on 2025-09-23 at 3be2b08060)
- + last-modified: fix bug when some paths remain unhandled
+* ps/meson-build-docs (2025-09-11) 3 commits
+  (merged to 'next' on 2025-09-25 at d531b1afdc)
+ + ci: don't compile whole project when testing docs with Meson
+ + meson: print docs backend as part of the summary
+ + meson: introduce a "docs" alias to compile documentation only
 
- "git last-modified" operating in non-recursive mode used to trigger
- a BUG(), which has been corrected.
- source: <20250918-toon-fix-last-modified-v3-1-0c3910e224f6@iotcl.com>
+ The build procedure based on meson learned a target to only build
+ documentation, similar to "make doc".
+ 
+ source: <20250911-b4-pks-meson-docs-target-v1-0-a92c666ecef9@pks.im>
 
 --------------------------------------------------
 [New Topics]
 
-* rj/doc-missing-technical-docs (2025-09-25) 1 commit
- - doc: add some missing technical documents
- (this branch is used by rj/doc-technical-rfc.)
+* tb/incremental-midx-part-3.1 (2025-09-29) 51 commits
+ - SQUASH??? play well with other topics by preemptively including "repository.h"
+ - builtin/repack.c: clean up unused `#include`s
+ - repack: move `write_cruft_pack()` out of the builtin
+ - repack: move `write_filtered_pack()` out of the builtin
+ - repack: move `pack_kept_objects` to `struct pack_objects_args`
+ - repack: move `finish_pack_objects_cmd()` out of the builtin
+ - builtin/repack.c: pass `write_pack_opts` to `finish_pack_objects_cmd()`
+ - repack: extract `write_pack_opts_is_local()`
+ - repack: move `find_pack_prefix()` out of the builtin
+ - builtin/repack.c: use `write_pack_opts` within `write_cruft_pack()`
+ - builtin/repack.c: introduce `struct write_pack_opts`
+ - repack: 'write_midx_included_packs' API from the builtin
+ - builtin/repack.c: inline packs within `write_midx_included_packs()`
+ - builtin/repack.c: pass `repack_write_midx_opts` to `midx_included_packs`
+ - builtin/repack.c: inline `remove_redundant_bitmaps()`
+ - builtin/repack.c: reorder `remove_redundant_bitmaps()`
+ - repack: keep track of MIDX pack names using existing_packs
+ - builtin/repack.c: use a string_list for 'midx_pack_names'
+ - builtin/repack.c: extract opts struct for 'write_midx_included_packs()'
+ - builtin/repack.c: remove ref snapshotting from builtin
+ - repack: remove pack_geometry API from the builtin
+ - builtin/repack.c: pass 'packdir' to `pack_geometry_remove_redundant()`
+ - builtin/repack.c: pass 'pack_kept_objects' to `pack_geometry_init()`
+ - builtin/repack.c: rename various pack_geometry functions
+ - builtin/repack.c: remove "repack_promisor_objects()" from the builtin
+ - builtin/repack.c: pass "packtmp" to `repack_promisor_objects()`
+ - repack: remove 'generated_pack' API from the builtin
+ - builtin/repack.c: provide pack locations to `generated_pack_install()`
+ - builtin/repack.c: pass "packtmp" to `generated_pack_populate()`
+ - builtin/repack.c: factor our "generated_pack_install"
+ - builtin/repack.c: rename "struct generated_pack_data"
+ - repack: remove 'existing_packs' API from the builtin
+ - builtin/repack.c: avoid unnecessary numeric casts in existing_packs
+ - builtin/repack.c: pass "packdir" when removing packs
+ - repack: remove 'remove_redundant_pack' from the builtin
+ - builtin/repack.c: rename many 'struct existing_packs' functions
+ - repack: remove 'prepare_pack_objects' from the builtin
+ - repack: move 'delta_base_offset' to 'struct pack_objects_args'
+ - builtin/repack.c: pass both pack_objects args to repack_config
+ - repack: introduce new compilation unit
+ - builtin/repack.c: avoid using `hash_to_hex()` in pack geometry
+ - builtin/repack.c: avoid "the_hash_algo" in `finish_pack_objects_cmd()`
+ - builtin/repack: avoid "the_hash_algo" in `repack_promisor_objects()`
+ - builtin/repack.c: avoid "the_hash_algo" in `write_oid()`
+ - builtin/repack.c: avoid "the_hash_algo" when deleting packs
+ - builtin/repack.c: avoid "the_repository" when repacking promisor objects
+ - builtin/repack.c: avoid "the_repository" when removing packs
+ - builtin/repack.c: avoid "the_repository" when taking a ref snapshot
+ - builtin/repack.c: avoid "the_repository" in existing packs API
+ - builtin/repack.c: avoid "the_repository" in `cmd_repack()`
+ - Merge branch 'ps/packfile-store' into tb/incremental-midx-part-3.1
+ (this branch uses ps/packfile-store.)
 
- Doc updates.
-
- Will merge to 'next'?
- source: <2326e1c8-19a3-4454-ab71-0a6cfa8cf8e9@ramsayjones.plus.com>
+ source: <cover.1759097191.git.me@ttaylorr.com>
 
 
-* rj/doc-technical-rfc (2025-09-25) 3 commits
- - doc: commit-graph.adoc: fix up some formatting
- - doc: sparse-checkout.adoc: fix asciidoc warnings
- - doc: remembering-renames.adoc: fix asciidoc warnings
- (this branch uses rj/doc-missing-technical-docs.)
+* cc/doc-submitting-patches-with-ai (2025-10-01) 1 commit
+ - SubmittingPatches: add section about AI
 
- Documenation mark-up fixes.
-
- RFC.
- source: <875fb7a0-6dd9-412b-a34a-21758c339871@ramsayjones.plus.com>
+ AI guidelines.
+ source: <20251001140310.527097-1-christian.couder@gmail.com>
 
 
-* ja/doc-markup-attached-paragraph-fix (2025-09-27) 1 commit
- - doc: change the markup of paragraphs following a nested list item
+* kn/ref-cache-seek-fix (2025-10-01) 1 commit
+  (merged to 'next' on 2025-10-02 at 5896b8c896)
+ + refs/ref-cache: fix SEGFAULT when seeking in empty directories
 
- Documentation mark-up fix.
+ Fix handling of an empty subdirectory of .git/refs/ in the
+ ref-files backend.
 
- Will merge to 'next'.
- source: <20250927195032.37223-1-jn.avila@free.fr>
+ Will merge to 'master'.
+ source: <20251001-583-git-for-each-ref-start-after-v3-1-000f03837a92@gmail.com>
 
 
-* jc/optional-path (2025-09-28) 3 commits
- - parseopt: values of pathname type can be prefixed with :(optional)
- - config: values of pathname type can be prefixed with :(optional)
- - t7500: make each piece more independent
+* mh/doc-credential-url-prefix (2025-10-01) 1 commit
+  (merged to 'next' on 2025-10-02 at dd0d9a1c59)
+ + docs/gitcredentials: describe URL prefix matching
 
- Configuration variables that take a pathname as a value
- (e.g. blame.ignorerevsfile) can be marked as optional by prefixing
- ":(optoinal)" before its value.
+ Doc update to describe a feature that has already been implemented.
+
+ Will merge to 'master'.
+ source: <pull.1979.git.1759352209657.gitgitgadget@gmail.com>
+
+
+* ml/reflog-write-committer-info-fix (2025-09-30) 1 commit
+  (merged to 'next' on 2025-10-02 at 9a61d07bac)
+ + builtin/reflog: respect user config in "write" subcommand
+
+ "git reflog write" did not honor the configured user.name/email
+ which has been corrected.
+
+ Will merge to 'master'.
+ source: <20250930195320.23825-1-git@lohmann.sh>
+
+
+* ps/history (2025-10-01) 13 commits
+ - builtin/history: implement "split" subcommand
+ - cache-tree: allow writing in-memory index as tree
+ - add-patch: add support for in-memory index patching
+ - add-patch: remove dependency on "add-interactive" subsystem
+ - add-patch: split out `struct interactive_options`
+ - add-patch: split out header from "add-interactive.h"
+ - builtin/history: implement "reword" subcommand
+ - builtin: add new "history" command
+ - replay: parse commits before dereferencing them
+ - replay: stop using `the_repository`
+ - replay: extract logic to pick commits
+ - wt-status: provide function to expose status for trees
+ - Merge branch 'sa/replay-atomic-ref-updates' into ps/history
+ (this branch uses sa/replay-atomic-ref-updates.)
+
+ "git history" history rewriting UI.
+ source: <20251001-b4-pks-history-builtin-v4-0-8e61ddb86317@pks.im>
+
+
+* en/make-libgit-a (2025-10-01) 3 commits
+ - make: delete REFTABLE_LIB, add reftable to LIB_OBJS
+ - make: delete XDIFF_LIB, add xdiff to LIB_OBJS
+ - make: move xdiff and reftable objects before GITLIBS
+
+ Instead of three library archives (one for git, one for reftable,
+ and one for xdiff), roll everything into a single libgit.a archive.
+ This would help later effort to FFI into Rust.
 
  Comments?
- source: <cover.1759094936.git.ben.knoble+github@gmail.com>
+ source: <pull.2065.git.git.1759341748.gitgitgadget@gmail.com>
 
 
-* jt/clang-format-foreach-wo-space-before-parenthesis (2025-09-27) 1 commit
- - clang-format: exclude control macros from SpaceBeforeParens
+* ms/doc-worktree-side-by-side (2025-10-02) 4 commits
+ - amend! doc: git-worktree: Add side by side branch checkout example
+ - doc: git-worktree: Add side by side branch checkout example
+ - amend! doc: git-worktree: Link to examples
+ - doc: git-worktree: Link to examples
 
- Clang-format update to let our control macros formatted the way we
- had them traditionally, e.g., "for_each_string_list_item()" without
- space before the parentheses.
-
- Will merge to 'next'.
- source: <20250927145049.723341-4-jltobler@gmail.com>
-
-
-* kh/doc-patch-id-markup-fix (2025-09-28) 1 commit
- - doc: patch-id: fix accidental literal blocks
-
- Documenaotin mark-up fix.
-
- Will merge to 'next'?
- source: <0520e8f9caf.1759067095.git.code@khaugsbakk.name>
-
-
-* sa/replay-atomic-ref-updates (2025-09-26) 1 commit
- - replay: make atomic ref updates the default behavior
-
- "git replay" (experimental) learned to perform ref updates itself
- in a transaction by default, instead of emitting where each refs
- should point at and leaving the actual update to another command.
+ Document "git worktree add" and use of out-of-tree worktrees with
+ examples.
 
  Comments?
- source: <20250926230838.35870-2-siddharthasthana31@gmail.com>
+ source: <xmqqseg1xwc1.fsf@gitster.g>
+
+
+* ps/gitlab-ci-windows-improvements (2025-10-02) 5 commits
+ - t8020: fix test failure due to indeterministic tag sorting
+ - gitlab-ci: upload Meson test logs as JUnit reports
+ - gitlab-ci: drop workaround for Python certificate store on Windows
+ - gitlab-ci: ignore failures to disable realtime monitoring
+ - gitlab-ci: dedup instructions to disable realtime monitoring
+
+ GitLab CI improvements.
+
+ Will merge to 'next'.
+ source: <20251002-pks-gitlab-ci-windows-improvements-v1-0-6a8b6b45d728@pks.im>
 
 --------------------------------------------------
 [Stalled]
@@ -306,6 +333,84 @@ well with other topics in 'seen' (and of course 'next' and
 --------------------------------------------------
 [Cooking]
 
+* rj/doc-missing-technical-docs (2025-09-25) 1 commit
+ - doc: add some missing technical documents
+ (this branch is used by rj/doc-technical-rfc.)
+
+ Doc updates.
+
+ Will merge to 'next'?
+ source: <2326e1c8-19a3-4454-ab71-0a6cfa8cf8e9@ramsayjones.plus.com>
+
+
+* rj/doc-technical-rfc (2025-09-25) 3 commits
+ - doc: commit-graph.adoc: fix up some formatting
+ - doc: sparse-checkout.adoc: fix asciidoc warnings
+ - doc: remembering-renames.adoc: fix asciidoc warnings
+ (this branch uses rj/doc-missing-technical-docs.)
+
+ Documenation mark-up fixes.
+
+ RFC.
+ source: <875fb7a0-6dd9-412b-a34a-21758c339871@ramsayjones.plus.com>
+
+
+* ja/doc-markup-attached-paragraph-fix (2025-09-27) 1 commit
+  (merged to 'next' on 2025-09-30 at a91ca5db03)
+ + doc: change the markup of paragraphs following a nested list item
+
+ Documentation mark-up fix.
+
+ Will merge to 'master'.
+ source: <20250927195032.37223-1-jn.avila@free.fr>
+
+
+* jc/optional-path (2025-09-28) 3 commits
+ - parseopt: values of pathname type can be prefixed with :(optional)
+ - config: values of pathname type can be prefixed with :(optional)
+ - t7500: make each piece more independent
+
+ Configuration variables that take a pathname as a value
+ (e.g. blame.ignorerevsfile) can be marked as optional by prefixing
+ ":(optoinal)" before its value.
+
+ Comments?
+ source: <cover.1759094936.git.ben.knoble+github@gmail.com>
+
+
+* jt/clang-format-foreach-wo-space-before-parenthesis (2025-09-27) 1 commit
+  (merged to 'next' on 2025-09-30 at c32668ab36)
+ + clang-format: exclude control macros from SpaceBeforeParens
+
+ Clang-format update to let our control macros formatted the way we
+ had them traditionally, e.g., "for_each_string_list_item()" without
+ space before the parentheses.
+
+ Will merge to 'master'.
+ source: <20250927145049.723341-4-jltobler@gmail.com>
+
+
+* kh/doc-patch-id-markup-fix (2025-09-29) 1 commit
+ - doc: patch-id: fix accidental literal blocks
+
+ Documenaotin mark-up fix.
+
+ Will merge to 'next'?
+ source: <v2-e5ad12cc3b3.1759178715.git.code@khaugsbakk.name>
+
+
+* sa/replay-atomic-ref-updates (2025-09-26) 1 commit
+ - replay: make atomic ref updates the default behavior
+ (this branch is used by ps/history.)
+
+ "git replay" (experimental) learned to perform ref updates itself
+ in a transaction by default, instead of emitting where each refs
+ should point at and leaving the actual update to another command.
+
+ Comments?
+ source: <20250926230838.35870-2-siddharthasthana31@gmail.com>
+
+
 * kh/format-patch-range-diff-notes (2025-09-25) 3 commits
  - format-patch: handle range-diff on notes correctly for single patches
  - revision: add rdiff_log_arg to rev_info
@@ -331,14 +436,19 @@ well with other topics in 'seen' (and of course 'next' and
  source: <pull.1976.git.1758656702.gitgitgadget@gmail.com>
 
 
-* je/doc-push-upstream (2025-09-23) 4 commits
+* je/doc-push-upstream (2025-09-30) 6 commits
+ - SQUASH???
+ - doc: git-push: add explanation of `git push origin main`
  - doc: git-push: clarify "what to push"
  - doc: git-push: clarify "where to push"
  - doc: add an UPSTREAM BRANCHES section to pull/push/fetch
  - doc: git-push: clarify intro
 
  Documentation updates.
- source: <pull.1964.v3.git.1758649472.gitgitgadget@gmail.com>
+
+ Expecting a reroll.
+ cf. <5044672.31r3eYUQgx@cayenne>
+ source: <pull.1964.v4.git.1759262314.gitgitgadget@gmail.com>
 
 
 * jk/diff-no-index-with-pathspec-fix (2025-09-24) 1 commit
@@ -366,14 +476,15 @@ well with other topics in 'seen' (and of course 'next' and
 
 
 * js/curl-off-t-fixes (2025-09-26) 3 commits
- - http-push: avoid new compile error
- - imap-send: be more careful when casting to `curl_off_t`
- - http: offer to cast `size_t` to `curl_off_t` safely
+  (merged to 'next' on 2025-09-30 at 6d1e5fd288)
+ + http-push: avoid new compile error
+ + imap-send: be more careful when casting to `curl_off_t`
+ + http: offer to cast `size_t` to `curl_off_t` safely
 
  A few places where an size_t value was cast to curl_off_t without
  checking has been updated to use the existing helper function.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1974.v2.git.1758882772.gitgitgadget@gmail.com>
 
 
@@ -477,72 +588,14 @@ well with other topics in 'seen' (and of course 'next' and
  source: <pull.1973.v2.git.1758651049.gitgitgadget@gmail.com>
 
 
-* ps/config-get-color-fixes (2025-09-22) 5 commits
-  (merged to 'next' on 2025-09-25 at 7b69f57ef6)
- + builtin/config: do not spawn pager when printing color codes
- + builtin/config: special-case retrieving colors without a key
- + builtin/config: do not die in `get_color()`
- + t1300: small style fixups
- + t1300: write test expectations in the test's body
-
- The use of "git config get" command to learn how ANSI color
- sequence is for a particular type, e.g., "git config get
- --type=color --default=reset no.such.thing", isn't very ergonomic.
-
- Will merge to 'master'.
- source: <20250922-pks-config-color-v4-0-28b7d2697eed@pks.im>
-
-
-* ps/meson-build-docs (2025-09-11) 3 commits
-  (merged to 'next' on 2025-09-25 at d531b1afdc)
- + ci: don't compile whole project when testing docs with Meson
- + meson: print docs backend as part of the summary
- + meson: introduce a "docs" alias to compile documentation only
-
- The build procedure based on meson learned a target to only build
- documentation, similar to "make doc".
-
- Will merge to 'master'.
- source: <20250911-b4-pks-meson-docs-target-v1-0-a92c666ecef9@pks.im>
-
-
 * ps/odb-clean-stale-wrappers (2025-09-10) 1 commit
- - odb: drop deprecated wrapper functions
+  (merged to 'next' on 2025-09-30 at 90f1033b8c)
+ + odb: drop deprecated wrapper functions
 
  Code clean-up.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20250910-b4-pks-odb-drop-wrappers-v1-1-6ed660cb1eec@pks.im>
-
-
-* jt/odb-transaction (2025-09-16) 7 commits
-  (merged to 'next' on 2025-09-25 at 1a5c704fb9)
- + odb: add transaction interface
- + object-file: update naming from bulk-checkin
- + object-file: relocate ODB transaction code
- + bulk-checkin: drop flush_odb_transaction()
- + builtin/update-index: end ODB transaction when --verbose is specified
- + bulk-checkin: remove ODB transaction nesting
- + Merge branch 'jt/de-global-bulk-checkin' into jt/odb-transaction
-
- Continue the work to build on the bulk-checkin infrastructure to
- create many objects at once in a transaction and abstract it into
- the generic object layer.
-
- Will merge to 'master'.
- source: <20250916182938.2193476-1-jltobler@gmail.com>
-
-
-* cc/fast-import-strip-signed-commits (2025-09-17) 2 commits
-  (merged to 'next' on 2025-09-25 at 6c9a275f43)
- + fast-import: add '--signed-commits=<mode>' option
- + gpg-interface: refactor 'enum sign_mode' parsing
-
- "git fast-import" learned that "--signed-commits=<how>" option that
- corresponds to that of "git fast-export".
-
- Will merge to 'master'.
- source: <20250917181427.3193500-1-christian.couder@gmail.com>
 
 
 * ps/commit-graph-per-object-source (2025-09-04) 6 commits
@@ -560,41 +613,24 @@ well with other topics in 'seen' (and of course 'next' and
  source: <20250904-b4-pks-commit-graph-via-source-v1-0-d932c2481e1a@pks.im>
 
 
-* ps/rust-balloon (2025-09-24) 9 commits
- - ci: enable Rust for breaking-changes jobs
- - ci: convert "pedantic" job into full build with breaking changes
- - BreakingChanges: announce Rust becoming mandatory
- - varint: reimplement as test balloon for Rust
- - varint: use explicit width for integers
- - help: report on whether or not Rust is enabled
- - Makefile: introduce infrastructure to build internal Rust library
- - Makefile: reorder sources after includes
- - meson: add infrastructure to build internal Rust library
+* ps/rust-balloon (2025-10-02) 9 commits
+  (merged to 'next' on 2025-10-02 at fe4cdc2dfa)
+ + ci: enable Rust for breaking-changes jobs
+ + ci: convert "pedantic" job into full build with breaking changes
+ + BreakingChanges: announce Rust becoming mandatory
+ + varint: reimplement as test balloon for Rust
+ + varint: use explicit width for integers
+ + help: report on whether or not Rust is enabled
+ + Makefile: introduce infrastructure to build internal Rust library
+ + Makefile: reorder sources after includes
+ + meson: add infrastructure to build internal Rust library
 
  Dip our toes a bit to (optionally) use Rust implemented helper
  called from our C code.
 
- Comments?
- source: <20250925-b4-pks-rust-breaking-change-v7-0-4e49dcb904d5@pks.im>
-
-
-* ms/refs-optimize (2025-09-19) 9 commits
-  (merged to 'next' on 2025-09-25 at 5fd0825882)
- + t: add test for git refs optimize subcommand
- + t0601: refactor tests to be shareable
- + builtin/refs: add optimize subcommand
- + doc: pack-refs: factor out common options
- + builtin/pack-refs: factor out core logic into a shared library
- + builtin/pack-refs: convert to use the generic refs_optimize() API
- + reftable-backend: implement 'optimize' action
- + files-backend: implement 'optimize' action
- + refs: add a generic 'optimize' API
-
- "git refs optimize" is added for not very well explained reason
- despite it does the same thing as "git pack-refs"...
-
  Will merge to 'master'.
- source: <20250919082647.535213-1-meetsoni3017@gmail.com>
+ cf. <aNsQ5UjjbqJr8_Ik@fruit.crustytoothpaste.net>
+ source: <20251002-b4-pks-rust-breaking-change-v8-0-3a89fd5b1ce7@pks.im>
 
 
 * sj/string-list (2025-09-17) 4 commits
@@ -639,25 +675,6 @@ well with other topics in 'seen' (and of course 'next' and
  Will merge to 'master'.
  cf. <aNmxQqV3+1Ad12qC@nand.local>
  source: <20250923-b4-pks-packfiles-store-v6-0-b48f2a882759@pks.im>
-
-
-* kh/you-still-use-whatchanged-fix (2025-09-17) 9 commits
-  (merged to 'next' on 2025-09-25 at de9c8c526c)
- + BreakingChanges: remove claim about whatchanged reports
- + whatchanged: remove not-even-shorter clause
- + whatchanged: hint about git-log(1) and aliasing
- + you-still-use-that??: help the user help themselves
- + t0014: test shadowing of aliases for a sample of builtins
- + git: allow alias-shadowing deprecated builtins
- + git: move seen-alias bookkeeping into handle_alias(...)
- + git: add `deprecated` category to --list-cmds
- + Makefile: don’t add whatchanged after it has been removed
-
- Update "do you still use it?" message given by a command that is
- deeply deprecated and allow us to suggest alternatives.
-
- Will merge to 'master'.
- source: <cover.1758139856.short.code@khaugsbakk.name>
 
 
 * ds/sparse-checkout-clean (2025-09-12) 7 commits
