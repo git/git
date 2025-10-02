@@ -78,11 +78,17 @@ OPTIONS
 
 --merge-base=<tree-ish>::
 	Instead of finding the merge-bases for <branch1> and <branch2>,
-	specify a merge-base for the merge, and specifying multiple bases is
-	currently not supported. This option is incompatible with `--stdin`.
+	specify a merge-base for the merge.  This option is incompatible with
+	`--stdin`.
 +
-As the merge-base is provided directly, <branch1> and <branch2> do not need
-to specify commits; trees are enough.
+Specifying multiple bases is currently not supported, which means that when
+merging two branches with more than one merge-base, using this option may
+cause merge results to differ from what `git merge` would compute.  This
+can include potentially losing some changes made on one side of the history
+in the resulting merge.
++
+With this option, since the merge-base is provided directly, <branch1> and
+<branch2> do not need to specify commits; trees are enough.
 
 -X<option>::
 --strategy-option=<option>::
