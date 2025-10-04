@@ -10294,7 +10294,9 @@ proc refill_reflist {} {
         if {![string match "remotes/*" $n] && [string match $reflistfilter $n]} {
             if {[commitinview $headids($n) $curview]} {
                 lappend localrefs [list $n H]
-                if {[info exists upstreamofref($n)] && [commitinview $headids($upstreamofref($n)) $curview]} {
+                if {[info exists upstreamofref($n)] && \
+                        [info exists headids($upstreamofref($n))] && \
+                        [commitinview $headids($upstreamofref($n)) $curview]} {
                     lappend trackedremoterefs [list $upstreamofref($n) R]
                 }
             } else {
