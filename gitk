@@ -11894,6 +11894,10 @@ proc doprefs {} {
     grid $top.buts.ok $top.buts.can -padx 20
     grid $top.buts -sticky w -pady 10
     bind $top <Visibility> [list focus $top.buts.ok]
+
+    # let geometry manager determine run, set minimum size
+    update idletasks
+    wm minsize $top [winfo reqwidth $top] [winfo reqheight $top]
 }
 
 proc choose_extdiff {} {
