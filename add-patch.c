@@ -1397,10 +1397,10 @@ static size_t display_hunks(struct add_p_state *s,
 }
 
 static const char help_patch_remainder[] =
-N_("j - leave this hunk undecided, see next undecided hunk\n"
-   "J - leave this hunk undecided, see next hunk\n"
-   "k - leave this hunk undecided, see previous undecided hunk\n"
-   "K - leave this hunk undecided, see previous hunk\n"
+N_("j - go to the next undecided hunk\n"
+   "J - go to the next hunk\n"
+   "k - go to the previous undecided hunk\n"
+   "K - go to the previous hunk\n"
    "g - select a hunk to go to\n"
    "/ - search for a hunk matching the given regex\n"
    "s - split the current hunk into smaller hunks\n"
