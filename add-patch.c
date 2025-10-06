@@ -1397,7 +1397,7 @@ static size_t display_hunks(struct add_p_state *s,
 }
 
 static const char help_patch_remainder[] =
-N_("j - go to the next undecided hunk\n"
+N_("j - go to the next undecided hunk, roll over at the bottom\n"
    "J - go to the next hunk, roll over at the bottom\n"
    "k - go to the previous undecided hunk\n"
    "K - go to the previous hunk\n"
@@ -1407,6 +1407,11 @@ N_("j - go to the next undecided hunk\n"
    "e - manually edit the current hunk\n"
    "p - print the current hunk, 'P' to use the pager\n"
    "? - print help\n");
+
+static size_t inc_mod(size_t a, size_t m)
+{
+	return a < m - 1 ? a + 1 : 0;
+}
 
 static int patch_update_file(struct add_p_state *s,
 			     struct file_diff *file_diff)
@@ -1451,7 +1456,9 @@ static int patch_update_file(struct add_p_state *s,
 					break;
 				}
 
-			for (i = hunk_index + 1; i < file_diff->hunk_nr; i++)
+			for (i = inc_mod(hunk_index, file_diff->hunk_nr);
+			     i != hunk_index;
+			     i = inc_mod(i, file_diff->hunk_nr))
 				if (file_diff->hunk[i].use == UNDECIDED_HUNK) {
 					undecided_next = i;
 					break;
@@ -1594,7 +1601,7 @@ soft_increment:
 			if (permitted & ALLOW_GOTO_NEXT_UNDECIDED_HUNK)
 				hunk_index = undecided_next;
 			else
-				err(s, _("No next hunk"));
+				err(s, _("No other undecided hunk"));
 		} else if (s->answer.buf[0] == 'g') {
 			char *pend;
 			unsigned long response;
