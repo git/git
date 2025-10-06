@@ -1386,4 +1386,18 @@ test_expect_success 'options y, n, a, d, j, k, e roll over to next undecided (2)
 	test_cmp expect actual
 '
 
+test_expect_success 'invalid option s is rejected' '
+	test_write_lines a b c d e f g h i j k >file &&
+	git add file &&
+	test_write_lines X b X d e f g h i j X >file &&
+	test_write_lines j s q | git add -p >out &&
+	sed -ne "s/ @@.*//" -e "s/ \$//" -e "/^(/p" <out >actual &&
+	cat >expect <<-EOF &&
+	(1/2) Stage this hunk [y,n,q,a,d,k,K,j,J,g,/,s,e,p,?]?
+	(2/2) Stage this hunk [y,n,q,a,d,k,K,j,J,g,/,e,p,?]? Sorry, cannot split this hunk
+	(2/2) Stage this hunk [y,n,q,a,d,k,K,j,J,g,/,e,p,?]?
+	EOF
+	test_cmp expect actual
+'
+
 test_done

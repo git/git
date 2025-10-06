@@ -1439,15 +1439,6 @@ static int patch_update_file(struct add_p_state *s,
 	struct child_process cp = CHILD_PROCESS_INIT;
 	int colored = !!s->colored.len, quit = 0, use_pager = 0;
 	enum prompt_mode_type prompt_mode_type;
-	enum {
-		ALLOW_GOTO_PREVIOUS_HUNK = 1 << 0,
-		ALLOW_GOTO_PREVIOUS_UNDECIDED_HUNK = 1 << 1,
-		ALLOW_GOTO_NEXT_HUNK = 1 << 2,
-		ALLOW_GOTO_NEXT_UNDECIDED_HUNK = 1 << 3,
-		ALLOW_SEARCH_AND_GOTO = 1 << 4,
-		ALLOW_SPLIT = 1 << 5,
-		ALLOW_EDIT = 1 << 6
-	} permitted = 0;
 
 	/* Empty added files have no hunks */
 	if (!file_diff->hunk_nr && !file_diff->added)
@@ -1457,6 +1448,16 @@ static int patch_update_file(struct add_p_state *s,
 	render_diff_header(s, file_diff, colored, &s->buf);
 	fputs(s->buf.buf, stdout);
 	for (;;) {
+		enum {
+			ALLOW_GOTO_PREVIOUS_HUNK = 1 << 0,
+			ALLOW_GOTO_PREVIOUS_UNDECIDED_HUNK = 1 << 1,
+			ALLOW_GOTO_NEXT_HUNK = 1 << 2,
+			ALLOW_GOTO_NEXT_UNDECIDED_HUNK = 1 << 3,
+			ALLOW_SEARCH_AND_GOTO = 1 << 4,
+			ALLOW_SPLIT = 1 << 5,
+			ALLOW_EDIT = 1 << 6
+		} permitted = 0;
+
 		if (hunk_index >= file_diff->hunk_nr)
 			hunk_index = 0;
 		hunk = file_diff->hunk_nr
