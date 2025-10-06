@@ -334,7 +334,7 @@ test_expect_success 'different prompts for mode change/deleted' '
 	cat >expect <<-\EOF &&
 	(1/1) Stage deletion [y,n,q,a,d,p,?]?
 	(1/2) Stage mode change [y,n,q,a,d,j,J,g,/,p,?]?
-	(2/2) Stage this hunk [y,n,q,a,d,K,g,/,e,p,?]?
+	(2/2) Stage this hunk [y,n,q,a,d,K,J,g,/,e,p,?]?
 	EOF
 	test_cmp expect actual.filtered
 '
@@ -521,7 +521,7 @@ test_expect_success 'split hunk setup' '
 test_expect_success 'goto hunk 1 with "g 1"' '
 	test_when_finished "git reset" &&
 	tr _ " " >expect <<-EOF &&
-	(2/2) Stage this hunk [y,n,q,a,d,K,g,/,e,p,?]? + 1:  -1,2 +1,3          +15
+	(2/2) Stage this hunk [y,n,q,a,d,K,J,g,/,e,p,?]? + 1:  -1,2 +1,3          +15
 	_ 2:  -2,4 +3,8          +21
 	go to which hunk? @@ -1,2 +1,3 @@
 	_10
@@ -550,7 +550,7 @@ test_expect_success 'goto hunk 1 with "g1"' '
 test_expect_success 'navigate to hunk via regex /pattern' '
 	test_when_finished "git reset" &&
 	tr _ " " >expect <<-EOF &&
-	(2/2) Stage this hunk [y,n,q,a,d,K,g,/,e,p,?]? @@ -1,2 +1,3 @@
+	(2/2) Stage this hunk [y,n,q,a,d,K,J,g,/,e,p,?]? @@ -1,2 +1,3 @@
 	_10
 	+15
 	_20
@@ -805,7 +805,7 @@ test_expect_success 'colors can be overridden' '
 	<YELLOW>(1/2) Stage this hunk [y,n,q,a,d,j,J,g,/,e,p,?]? <RESET><MAGENTA>@@ -3 +3,2 @@<RESET>
 	<CYAN> more-context<RESET>
 	<BLUE>+<RESET><BLUE>another-one<RESET>
-	<YELLOW>(2/2) Stage this hunk [y,n,q,a,d,K,g,/,e,p,?]? <RESET><MAGENTA>@@ -1,3 +1,3 @@<RESET>
+	<YELLOW>(2/2) Stage this hunk [y,n,q,a,d,K,J,g,/,e,p,?]? <RESET><MAGENTA>@@ -1,3 +1,3 @@<RESET>
 	<CYAN> context<RESET>
 	<BOLD>-old<RESET>
 	<BLUE>+new<RESET>
@@ -1353,5 +1353,15 @@ do
 		test_cmp output.raw output
 	'
 done
+
+test_expect_success 'option J rolls over' '
+	test_write_lines a b c d e f g h i >file &&
+	git add file &&
+	test_write_lines X b c d e f g h X >file &&
+	test_write_lines J J q | git add -p >out &&
+	test_write_lines 1 2 1 >expect &&
+	sed -n -e "s-/.*--" -e "s/^(//p" <out >actual &&
+	test_cmp expect actual
+'
 
 test_done

@@ -343,7 +343,7 @@ patch::
        g - select a hunk to go to
        / - search for a hunk matching the given regex
        j - go to the next undecided hunk
-       J - go to the next hunk
+       J - go to the next hunk, roll over at the bottom
        k - go to the previous undecided hunk
        K - go to the previous hunk
        s - split the current hunk into smaller hunks

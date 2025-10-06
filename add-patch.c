@@ -1398,7 +1398,7 @@ static size_t display_hunks(struct add_p_state *s,
 
 static const char help_patch_remainder[] =
 N_("j - go to the next undecided hunk\n"
-   "J - go to the next hunk\n"
+   "J - go to the next hunk, roll over at the bottom\n"
    "k - go to the previous undecided hunk\n"
    "K - go to the previous hunk\n"
    "g - select a hunk to go to\n"
@@ -1493,7 +1493,7 @@ static int patch_update_file(struct add_p_state *s,
 				permitted |= ALLOW_GOTO_NEXT_UNDECIDED_HUNK;
 				strbuf_addstr(&s->buf, ",j");
 			}
-			if (hunk_index + 1 < file_diff->hunk_nr) {
+			if (file_diff->hunk_nr > 1) {
 				permitted |= ALLOW_GOTO_NEXT_HUNK;
 				strbuf_addstr(&s->buf, ",J");
 			}
@@ -1584,7 +1584,7 @@ soft_increment:
 			if (permitted & ALLOW_GOTO_NEXT_HUNK)
 				hunk_index++;
 			else
-				err(s, _("No next hunk"));
+				err(s, _("No other hunk"));
 		} else if (s->answer.buf[0] == 'k') {
 			if (permitted & ALLOW_GOTO_PREVIOUS_UNDECIDED_HUNK)
 				hunk_index = undecided_previous;
