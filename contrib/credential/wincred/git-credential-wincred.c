@@ -165,7 +165,7 @@ static void get_credential(void)
 			write_item("username", creds[i]->UserName,
 				creds[i]->UserName ? wcslen(creds[i]->UserName) : 0);
 			if (creds[i]->CredentialBlobSize > 0) {
-				secret = xmalloc(creds[i]->CredentialBlobSize);
+				secret = xmalloc(creds[i]->CredentialBlobSize + sizeof(WCHAR));
 				wcsncpy_s(secret, creds[i]->CredentialBlobSize, (LPCWSTR)creds[i]->CredentialBlob, creds[i]->CredentialBlobSize / sizeof(WCHAR));
 				line = wcstok_s(secret, L"\r\n", &remaining_lines);
 				write_item("password", line, line ? wcslen(line) : 0);
