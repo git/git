@@ -2,6 +2,10 @@ stash.index::
 	If this is set to true, `git stash apply` and `git stash pop` will
 	behave as if `--index` was supplied. Defaults to false. See the
 	descriptions in linkgit:git-stash[1].
++
+This also affects invocations of linkgit:git-stash[1] via `--autostash` from
+commands like linkgit:git-merge[1], linkgit:git-rebase[1], and
+linkgit:git-pull[1].
 
 stash.showIncludeUntracked::
 	If this is set to true, the `git stash show` command will show
