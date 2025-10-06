@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Oct 2025, #01; Thu, 2)
-X-master-at: 5099f64a82ccc80f3c6567589bfeb5e9a1b9fd6b
-X-next-at: e8671fe553c8b23de1b9a0f494eb2b7ff9064e62
+Subject: What's cooking in git.git (Oct 2025, #02; Mon, 6)
+X-master-at: 45547b60aca32b45d2f1ef93462cf9df28637c13
+X-next-at: 787ff6f08aa94a0b11d31482879f7efece126361
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Oct 2025, #01; Thu, 2)
+What's cooking in git.git (Oct 2025, #02; Mon, 6)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,101 +46,64 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
+[New Topics]
 
-* cc/fast-import-strip-signed-commits (2025-09-17) 2 commits
-  (merged to 'next' on 2025-09-25 at 6c9a275f43)
- + fast-import: add '--signed-commits=<mode>' option
- + gpg-interface: refactor 'enum sign_mode' parsing
+* en/doc-merge-tree-describe-merge-base (2025-10-02) 1 commit
+  (merged to 'next' on 2025-10-06 at 787ff6f08a)
+ + Documentation/git-merge-tree.adoc: clarify the --merge-base option
 
- "git fast-import" learned that "--signed-commits=<how>" option that
- corresponds to that of "git fast-export".
- 
- source: <20250917181427.3193500-1-christian.couder@gmail.com>
+ Clarify the "--merge-base" command line option in "git merge-tree".
 
-
-* jt/odb-transaction (2025-09-16) 7 commits
-  (merged to 'next' on 2025-09-25 at 1a5c704fb9)
- + odb: add transaction interface
- + object-file: update naming from bulk-checkin
- + object-file: relocate ODB transaction code
- + bulk-checkin: drop flush_odb_transaction()
- + builtin/update-index: end ODB transaction when --verbose is specified
- + bulk-checkin: remove ODB transaction nesting
- + Merge branch 'jt/de-global-bulk-checkin' into jt/odb-transaction
-
- The work to build on the bulk-checkin infrastructure to create many
- objects at once in a transaction and to abstract it into the
- generic object layer continues.
- 
- source: <20250916182938.2193476-1-jltobler@gmail.com>
+ Will merge to 'master'.
+ source: <pull.1980.git.1759444487406.gitgitgadget@gmail.com>
 
 
-* kh/you-still-use-whatchanged-fix (2025-09-17) 9 commits
-  (merged to 'next' on 2025-09-25 at de9c8c526c)
- + BreakingChanges: remove claim about whatchanged reports
- + whatchanged: remove not-even-shorter clause
- + whatchanged: hint about git-log(1) and aliasing
- + you-still-use-that??: help the user help themselves
- + t0014: test shadowing of aliases for a sample of builtins
- + git: allow alias-shadowing deprecated builtins
- + git: move seen-alias bookkeeping into handle_alias(...)
- + git: add `deprecated` category to --list-cmds
- + Makefile: don’t add whatchanged after it has been removed
+* je/doc-data-model (2025-10-03) 1 commit
+ - doc: add a explanation of Git's data model
 
- The "do you still use it?" message given by a command that is
- deeply deprecated and allow us to suggest alternatives has been
- updated.
- 
- source: <cover.1758139856.short.code@khaugsbakk.name>
+ Add a new manual that describes the data model.
+
+ Comments?
+ source: <pull.1981.git.1759512876284.gitgitgadget@gmail.com>
 
 
-* ms/refs-optimize (2025-09-19) 9 commits
-  (merged to 'next' on 2025-09-25 at 5fd0825882)
- + t: add test for git refs optimize subcommand
- + t0601: refactor tests to be shareable
- + builtin/refs: add optimize subcommand
- + doc: pack-refs: factor out common options
- + builtin/pack-refs: factor out core logic into a shared library
- + builtin/pack-refs: convert to use the generic refs_optimize() API
- + reftable-backend: implement 'optimize' action
- + files-backend: implement 'optimize' action
- + refs: add a generic 'optimize' API
+* rs/add-patch-options-fix (2025-10-06) 6 commits
+ - add-patch: reset "permitted" at loop start
+ - add-patch: let options a and d roll over like y and n
+ - add-patch: let options k and K roll over like j and J
+ - add-patch: let options y, n, j, and e roll over to next undecided
+ - add-patch: document that option J rolls over
+ - add-patch: improve help for options j, J, k, and K
 
- "git refs optimize" is added for not very well explained reason
- despite it does the same thing as "git pack-refs"...
- 
- source: <20250919082647.535213-1-meetsoni3017@gmail.com>
+ The code in "git add -p" and friends to iterate over hunks was
+ riddled with bugs, which has been corrected.
+
+ Will merge to 'next'?
+ source: <fe8e8097-2b05-4dd2-a754-f59e4ba5f95a@web.de>
 
 
-* ps/config-get-color-fixes (2025-09-22) 5 commits
-  (merged to 'next' on 2025-09-25 at 7b69f57ef6)
- + builtin/config: do not spawn pager when printing color codes
- + builtin/config: special-case retrieving colors without a key
- + builtin/config: do not die in `get_color()`
- + t1300: small style fixups
- + t1300: write test expectations in the test's body
+* jn/doc-help-translaing-pretty-options (2025-10-05) 1 commit
+ - doc: do not break sentences into "lego" pieces
 
- The use of "git config get" command to learn how ANSI color
- sequence is for a particular type, e.g., "git config get
- --type=color --default=reset no.such.thing", isn't very ergonomic.
- 
- source: <20250922-pks-config-color-v4-0-28b7d2697eed@pks.im>
+ Documentation for "git log --pretty" options has been updated
+ to make it easier to translate.
+
+ Will merge to 'next'.
+ source: <pull.1982.git.1759698724134.gitgitgadget@gmail.com>
 
 
-* ps/meson-build-docs (2025-09-11) 3 commits
-  (merged to 'next' on 2025-09-25 at d531b1afdc)
- + ci: don't compile whole project when testing docs with Meson
- + meson: print docs backend as part of the summary
- + meson: introduce a "docs" alias to compile documentation only
+* jn/doc-synopsis (2025-10-05) 3 commits
+ - doc: convert git worktree to synopsis style
+ - doc: convert git tag to synopsis style
+ - doc: convert git-stash.adoc to synopis style
 
- The build procedure based on meson learned a target to only build
- documentation, similar to "make doc".
- 
- source: <20250911-b4-pks-meson-docs-target-v1-0-a92c666ecef9@pks.im>
+ Doc-mark-up modernization continues.
+
+ Will merge to 'next'.
+ source: <pull.1969.git.1759698702.gitgitgadget@gmail.com>
 
 --------------------------------------------------
-[New Topics]
+[Cooking]
 
 * tb/incremental-midx-part-3.1 (2025-09-29) 51 commits
  - SQUASH??? play well with other topics by preemptively including "repository.h"
@@ -196,6 +159,7 @@ Release tarballs are available at:
  - Merge branch 'ps/packfile-store' into tb/incremental-midx-part-3.1
  (this branch uses ps/packfile-store.)
 
+ Comments?
  source: <cover.1759097191.git.me@ttaylorr.com>
 
 
@@ -203,6 +167,9 @@ Release tarballs are available at:
  - SubmittingPatches: add section about AI
 
  AI guidelines.
+
+ Perhaps we should adopt what QEMU uses for simplicity?
+ cf. <aOBMHqLxNd86vgjH@fruit.crustytoothpaste.net>
  source: <20251001140310.527097-1-christian.couder@gmail.com>
 
 
@@ -258,17 +225,16 @@ Release tarballs are available at:
  source: <20251001-b4-pks-history-builtin-v4-0-8e61ddb86317@pks.im>
 
 
-* en/make-libgit-a (2025-10-01) 3 commits
+* en/make-libgit-a (2025-10-02) 2 commits
  - make: delete REFTABLE_LIB, add reftable to LIB_OBJS
  - make: delete XDIFF_LIB, add xdiff to LIB_OBJS
- - make: move xdiff and reftable objects before GITLIBS
 
  Instead of three library archives (one for git, one for reftable,
  and one for xdiff), roll everything into a single libgit.a archive.
  This would help later effort to FFI into Rust.
 
- Comments?
- source: <pull.2065.git.git.1759341748.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ source: <pull.2065.v2.git.git.1759447647.gitgitgadget@gmail.com>
 
 
 * ms/doc-worktree-side-by-side (2025-10-02) 4 commits
@@ -285,65 +251,31 @@ Release tarballs are available at:
 
 
 * ps/gitlab-ci-windows-improvements (2025-10-02) 5 commits
- - t8020: fix test failure due to indeterministic tag sorting
- - gitlab-ci: upload Meson test logs as JUnit reports
- - gitlab-ci: drop workaround for Python certificate store on Windows
- - gitlab-ci: ignore failures to disable realtime monitoring
- - gitlab-ci: dedup instructions to disable realtime monitoring
+  (merged to 'next' on 2025-10-03 at 6adb054d12)
+ + t8020: fix test failure due to indeterministic tag sorting
+ + gitlab-ci: upload Meson test logs as JUnit reports
+ + gitlab-ci: drop workaround for Python certificate store on Windows
+ + gitlab-ci: ignore failures to disable realtime monitoring
+ + gitlab-ci: dedup instructions to disable realtime monitoring
 
  GitLab CI improvements.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20251002-pks-gitlab-ci-windows-improvements-v1-0-6a8b6b45d728@pks.im>
 
---------------------------------------------------
-[Stalled]
 
-These topics have been expecting updates for quite some time.  I'll
-eject any of them when they start to conflict with other topics in
-'seen' and may drop them from my tree when they are dormant for too
-long (let's say 8 weeks is way too long, for now).  After that, they
-can be proposed again by rerolling them in a shape that would work
-well with other topics in 'seen' (and of course 'next' and
-"master').
-
-* lc/rebase-trailer (2025-08-03) 2 commits
- - rebase: support --trailer
- - trailer: append trailers in-process and drop the fork to `interpret-trailers`
-
- Expecting a reroll.
- cf. <198826af571.62b85cb31711042.2415806544948206668@linux.beauty>
- cf. <xmqqiki7qasu.fsf@gitster.g>
- source: <20250803150059.402017-1-me@linux.beauty>
-
-
-* ac/deglobal-sparse-variables (2025-07-18) 3 commits
- . environment: remove the global variable 'sparse_expect_files_outside_of_patterns'
- . environment: move access to "core.sparsecheckoutcone" into repo_settings
- . environment: move access to "core.sparsecheckout" into repo_settings
-
- Two global variables related to sparse checkout have been moved to
- the repository settings structure.
-
- Expecting a reroll.
- cf. <CAE7as+bnG6KgA8X_n36pqP15bmyM6re+xEb1MOXKvZSUdJ8Arg@mail.gmail.com>
- Ejected out of 'seen' for now.
- source: <cover.1752882401.git.ayu.chandekar@gmail.com>
-
---------------------------------------------------
-[Cooking]
-
-* rj/doc-missing-technical-docs (2025-09-25) 1 commit
- - doc: add some missing technical documents
- (this branch is used by rj/doc-technical-rfc.)
+* rj/doc-missing-technical-docs (2025-10-02) 1 commit
+  (merged to 'next' on 2025-10-06 at f639955fdc)
+ + doc: add some missing technical documents
+ (this branch is used by rj/doc-technical-fixes.)
 
  Doc updates.
 
- Will merge to 'next'?
- source: <2326e1c8-19a3-4454-ab71-0a6cfa8cf8e9@ramsayjones.plus.com>
+ Will merge to 'master'.
+ source: <20251002221233.541844-2-ramsay@ramsayjones.plus.com>
 
 
-* rj/doc-technical-rfc (2025-09-25) 3 commits
+* rj/doc-technical-fixes (2025-10-02) 3 commits
  - doc: commit-graph.adoc: fix up some formatting
  - doc: sparse-checkout.adoc: fix asciidoc warnings
  - doc: remembering-renames.adoc: fix asciidoc warnings
@@ -351,8 +283,8 @@ well with other topics in 'seen' (and of course 'next' and
 
  Documenation mark-up fixes.
 
- RFC.
- source: <875fb7a0-6dd9-412b-a34a-21758c339871@ramsayjones.plus.com>
+ Comments?
+ source: <20251002221233.541844-1-ramsay@ramsayjones.plus.com>
 
 
 * ja/doc-markup-attached-paragraph-fix (2025-09-27) 1 commit
@@ -361,20 +293,22 @@ well with other topics in 'seen' (and of course 'next' and
 
  Documentation mark-up fix.
 
- Will merge to 'master'.
+ Expecting an incremental follow-up to avoid regerssion.
+ cf. <2239952.irdbgypaU6@cayenne>
  source: <20250927195032.37223-1-jn.avila@free.fr>
 
 
-* jc/optional-path (2025-09-28) 3 commits
+* jc/optional-path (2025-09-28) 4 commits
  - parseopt: values of pathname type can be prefixed with :(optional)
  - config: values of pathname type can be prefixed with :(optional)
+ - t7500: fix GIT_EDITOR shell snippet
  - t7500: make each piece more independent
 
  Configuration variables that take a pathname as a value
  (e.g. blame.ignorerevsfile) can be marked as optional by prefixing
  ":(optoinal)" before its value.
 
- Comments?
+ Will merge to 'next'?
  source: <cover.1759094936.git.ben.knoble+github@gmail.com>
 
 
@@ -436,8 +370,7 @@ well with other topics in 'seen' (and of course 'next' and
  source: <pull.1976.git.1758656702.gitgitgadget@gmail.com>
 
 
-* je/doc-push-upstream (2025-09-30) 6 commits
- - SQUASH???
+* je/doc-push-upstream (2025-10-06) 5 commits
  - doc: git-push: add explanation of `git push origin main`
  - doc: git-push: clarify "what to push"
  - doc: git-push: clarify "where to push"
@@ -446,9 +379,8 @@ well with other topics in 'seen' (and of course 'next' and
 
  Documentation updates.
 
- Expecting a reroll.
- cf. <5044672.31r3eYUQgx@cayenne>
- source: <pull.1964.v4.git.1759262314.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ source: <pull.1964.v5.git.1759777131.gitgitgadget@gmail.com>
 
 
 * jk/diff-no-index-with-pathspec-fix (2025-09-24) 1 commit
@@ -488,7 +420,7 @@ well with other topics in 'seen' (and of course 'next' and
  source: <pull.1974.v2.git.1758882772.gitgitgadget@gmail.com>
 
 
-* kn/reftable-consistency-checks (2025-09-26) 7 commits
+* kn/reftable-consistency-checks (2025-10-06) 7 commits
  - refs/reftable: add fsck check for checking the table name
  - reftable: add code to facilitate consistency checks
  - fsck: order 'fsck_msg_type' alphabetically
@@ -501,13 +433,12 @@ well with other topics in 'seen' (and of course 'next' and
  carefully.
 
  Comments?
- source: <20250926-228-reftable-introduce-consistency-checks-v4-0-c96fd8551c0d@gmail.com>
+ source: <20251006-228-reftable-introduce-consistency-checks-v5-0-f196d386214f@gmail.com>
 
 
-* bc/sha1-256-interop-01 (2025-09-19) 10 commits
- - fixup! docs: add documentation for loose objects
- - t: add a prerequisite for a compatibility hash
- - Allow specifying compatibility hash
+* bc/sha1-256-interop-01 (2025-10-02) 9 commits
+ - t1010: use BROKEN_OBJECTS prerequisite
+ - t: allow specifying compatibility hash
  - fsck: consider gpgsig headers expected in tags
  - rev-parse: allow printing compatibility hash
  - docs: add documentation for loose objects
@@ -518,9 +449,8 @@ well with other topics in 'seen' (and of course 'next' and
 
  The beginning of SHA1-SHA256 interoperability work.
 
- Expecting a reroll.
- cf. <aNHB4V7figj9lmfk@fruit.crustytoothpaste.net>
- source: <20250919010911.649831-1-sandals@crustytoothpaste.net>
+ Will merge to 'next'?
+ source: <20251002223855.1022847-1-sandals@crustytoothpaste.net>
 
 
 * pw/add-p-hunk-splitting-fix (2025-09-25) 2 commits
@@ -556,25 +486,19 @@ well with other topics in 'seen' (and of course 'next' and
  source: <pull.2048.v6.git.git.1758926520.gitgitgadget@gmail.com>
 
 
-* ar/submodule-gitdir-tweak (2025-09-08) 10 commits
- - t7425: add gitdir encoding tests
- - t7450: move nested gitdir tests to t7425
- - submodule: remove validate_submodule_git_dir()
+* ar/submodule-gitdir-tweak (2025-10-06) 5 commits
  - submodule: error out if gitdir name is too long
  - submodule: encode gitdir paths to avoid conflicts
  - strbuf: bring back is_rfc3986_unreserved
- - t7425: add basic mixed submodule gitdir path tests
  - submodule: add gitdir path config override
- - submodule: create new gitdirs under submodules path
  - submodule--helper: use submodule_name_to_gitdir in add_submodule
 
  Avoid local submodule repository directory paths overlapping with
  each other by encoding submodule names before using them as path
  components.
 
- Expecting a reroll.
- cf. <87ecsf7g84.fsf@collabora.com> etc.
- source: <20250908140117.262205-1-adrian.ratiu@collabora.com>
+ Comments?
+ source: <20251006112518.3764240-1-adrian.ratiu@collabora.com>
 
 
 * je/doc-push (2025-09-23) 2 commits
@@ -598,8 +522,7 @@ well with other topics in 'seen' (and of course 'next' and
  source: <20250910-b4-pks-odb-drop-wrappers-v1-1-6ed660cb1eec@pks.im>
 
 
-* ps/commit-graph-per-object-source (2025-09-04) 6 commits
- - odb: move commit-graph into the object sources
+* ps/commit-graph-per-object-source (2025-09-04) 5 commits
  - commit-graph: pass graphs that are to be merged as parameter
  - commit-graph: return commit graph from `repo_find_commit_pos_in_graph()`
  - commit-graph: return the prepared commit graph from `prepare_commit_graph()`
@@ -608,8 +531,9 @@ well with other topics in 'seen' (and of course 'next' and
 
  Declare commit-graph is per object_source, which may not be a good idea.
 
- Comments?
+ Will merge to 'next'.
  cf. <cf7aeda1-297a-4805-b0ae-e379ce11bbcf@gmail.com>
+ cf. <aN5gPoPC4WEYw9CF@pks.im>
  source: <20250904-b4-pks-commit-graph-via-source-v1-0-d932c2481e1a@pks.im>
 
 
@@ -633,7 +557,7 @@ well with other topics in 'seen' (and of course 'next' and
  source: <20251002-b4-pks-rust-breaking-change-v8-0-3a89fd5b1ce7@pks.im>
 
 
-* sj/string-list (2025-09-17) 4 commits
+* sj/string-list (2025-10-05) 4 commits
  - refs: enable sign compare warnings check
  - string-list: change "string_list_find_insert_index" return type to "size_t"
  - string-list: replace negative index encoding with "exact_match" parameter
@@ -644,9 +568,8 @@ well with other topics in 'seen' (and of course 'next' and
  array index that would only fit in size_t but not int or ssize_t
  to achieve unstated goal.
 
- Expecting a reroll.
- cf. <CAOLa=ZShms1D-cq=x04dtT2ULTVE3ZDo8DODFnJRP2wcJz0EgQ@mail.gmail.com>
- source: <aMp8yNFiXDyk2hP4@ArchLinux>
+ Will merge to 'next'?
+ source: <aONhmrE0otiyZ16f@ArchLinux>
 
 
 * ps/packfile-store (2025-09-23) 16 commits
@@ -699,47 +622,29 @@ well with other topics in 'seen' (and of course 'next' and
 [Discarded]
 
 These have been kept outside 'seen' for some time, and were removed
-for now, until they are resubmit in a shape that plays well with
+for now, until they get resubmit in a shape that plays well with
 other topics in 'seen'.
 
-* en/rust-xdiff (2025-09-07) 8 commits
- . xdiff: change the types of dstart, dend, rchg, and rindex in xdfile_t
- . xdiff: make xdfile_t.nreff a usize instead of long
- . xdiff: make xdfile_t.nrec a usize instead of long
- . xdiff: split xrecord_t.ha into line_hash and minimal_perfect_hash
- . xdiff: make xrecord_t.size a usize instead of long
- . xdiff: make xrecord_t.ptr a u8 instead of char
- . xdiff: include compat/rust_types.h
- . compat/rust_types.h: define rust primitive types
- . Merge branch 'en/xdiff-cleanup' into en/rust-xdiff
+* lc/rebase-trailer (2025-08-03) 2 commits
+ . rebase: support --trailer
+ . trailer: append trailers in-process and drop the fork to `interpret-trailers`
 
- Use Rust-friendly types in xdiff code.
-
- Expecting a reroll based on the updated base topic, but the base
- topic may further be updated first?
- cf. <CAH=ZcbA5hAM9kmO410KzVW7RXWWiwX2oJk6GGPP+6oVYatRVOw@mail.gmail.com>
- source: <pull.2048.git.git.1757274320.gitgitgadget@gmail.com>
+ Has been expecting a reroll for way too long.
+ cf. <198826af571.62b85cb31711042.2415806544948206668@linux.beauty>
+ cf. <xmqqiki7qasu.fsf@gitster.g>
+ cf. <1995bf77c93.3eeb42b4972717.3783775021840050008@linux.beauty>
+ source: <20250803150059.402017-1-me@linux.beauty>
 
 
-* en/rust-wip (2025-09-16) 18 commits
- . misc::varint: reimplement as test balloon for Rust
- . misc: use BuildHelper
- . build: new crate, misc
- . varint: use explicit width for integers
- . build-helper: cbindgen, let crates generate a header file
- . build-helper: link against libgit.a and any other required C libraries
- . build: new crate, build-helper
- . github workflows: upload Cargo.lock
- . win+Meson: do allow linking with the Rust-built xdiff
- . github workflows: install rust
- . help: report on whether or not Rust is enabled
- . build: introduce rust
- . BreakingChanges: announce Rust becoming mandatory
- . doc: add a policy for using Rust
- . make: merge reftable lib into libgit.a
- . make: merge xdiff lib into libgit.a
- . make: add -fPIE flag
- . cleanup: rename variables that collide with Rust primitive type names
+* ac/deglobal-sparse-variables (2025-07-18) 3 commits
+ . environment: remove the global variable 'sparse_expect_files_outside_of_patterns'
+ . environment: move access to "core.sparsecheckoutcone" into repo_settings
+ . environment: move access to "core.sparsecheckout" into repo_settings
 
- Expecting a reroll, but probably xdiff stuff comes first?
- source: <pull.2043.v2.git.git.1758071798.gitgitgadget@gmail.com>
+ Two global variables related to sparse checkout have been moved to
+ the repository settings structure.
+
+ Has been expecting a reroll for way too long.
+ cf. <CAE7as+bnG6KgA8X_n36pqP15bmyM6re+xEb1MOXKvZSUdJ8Arg@mail.gmail.com>
+ Ejected out of 'seen' for now.
+ source: <cover.1752882401.git.ayu.chandekar@gmail.com>
