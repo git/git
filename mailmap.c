@@ -1,5 +1,4 @@
 #define USE_THE_REPOSITORY_VARIABLE
-#define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
 #include "environment.h"
@@ -244,7 +243,7 @@ static struct string_list_item *lookup_prefix(struct string_list *map,
 					      const char *string, size_t len)
 {
 	bool exact_match;
-	int i = string_list_find_insert_index(map, string, &exact_match);
+	size_t i = string_list_find_insert_index(map, string, &exact_match);
 	if (exact_match) {
 		if (!string[len])
 			return &map->items[i];
@@ -266,7 +265,7 @@ static struct string_list_item *lookup_prefix(struct string_list *map,
 	 * overlong key would be inserted, which must come after the
 	 * real location of the key if one exists.
 	 */
-	while (0 <= --i && i < map->nr) {
+	while (i-- && i < map->nr) {
 		int cmp = strncasecmp(map->items[i].string, string, len);
 		if (cmp < 0)
 			/*

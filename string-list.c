@@ -91,8 +91,8 @@ bool string_list_has_string(const struct string_list *list, const char *string)
 	return exact_match;
 }
 
-int string_list_find_insert_index(const struct string_list *list, const char *string,
-				  bool *exact_match)
+size_t string_list_find_insert_index(const struct string_list *list, const char *string,
+				     bool *exact_match)
 {
 	return get_entry_index(list, string, exact_match);
 }

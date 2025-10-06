@@ -222,7 +222,7 @@ static void find_unique_prefixes(struct prefix_item_list *list)
 static ssize_t find_unique(const char *string, struct prefix_item_list *list)
 {
 	bool exact_match;
-	int index = string_list_find_insert_index(&list->sorted, string, &exact_match);
+	size_t index = string_list_find_insert_index(&list->sorted, string, &exact_match);
 	struct string_list_item *item;
 
 	if (list->items.nr != list->sorted.nr)
