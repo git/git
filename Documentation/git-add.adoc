@@ -344,8 +344,8 @@ patch::
        / - search for a hunk matching the given regex
        j - go to the next undecided hunk, roll over at the bottom
        J - go to the next hunk, roll over at the bottom
-       k - go to the previous undecided hunk
-       K - go to the previous hunk
+       k - go to the previous undecided hunk, roll over at the top
+       K - go to the previous hunk, roll over at the top
        s - split the current hunk into smaller hunks
        e - manually edit the current hunk
        p - print the current hunk

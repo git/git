@@ -1399,14 +1399,19 @@ static size_t display_hunks(struct add_p_state *s,
 static const char help_patch_remainder[] =
 N_("j - go to the next undecided hunk, roll over at the bottom\n"
    "J - go to the next hunk, roll over at the bottom\n"
-   "k - go to the previous undecided hunk\n"
-   "K - go to the previous hunk\n"
+   "k - go to the previous undecided hunk, roll over at the top\n"
+   "K - go to the previous hunk, roll over at the top\n"
    "g - select a hunk to go to\n"
    "/ - search for a hunk matching the given regex\n"
    "s - split the current hunk into smaller hunks\n"
    "e - manually edit the current hunk\n"
    "p - print the current hunk, 'P' to use the pager\n"
    "? - print help\n");
+
+static size_t dec_mod(size_t a, size_t m)
+{
+	return a > 0 ? a - 1 : m - 1;
+}
 
 static size_t inc_mod(size_t a, size_t m)
 {
@@ -1450,7 +1455,9 @@ static int patch_update_file(struct add_p_state *s,
 		undecided_next = -1;
 
 		if (file_diff->hunk_nr) {
-			for (i = hunk_index - 1; i >= 0; i--)
+			for (i = dec_mod(hunk_index, file_diff->hunk_nr);
+			     i != hunk_index;
+			     i = dec_mod(i, file_diff->hunk_nr))
 				if (file_diff->hunk[i].use == UNDECIDED_HUNK) {
 					undecided_previous = i;
 					break;
@@ -1492,7 +1499,7 @@ static int patch_update_file(struct add_p_state *s,
 				permitted |= ALLOW_GOTO_PREVIOUS_UNDECIDED_HUNK;
 				strbuf_addstr(&s->buf, ",k");
 			}
-			if (hunk_index) {
+			if (file_diff->hunk_nr > 1) {
 				permitted |= ALLOW_GOTO_PREVIOUS_HUNK;
 				strbuf_addstr(&s->buf, ",K");
 			}
@@ -1584,9 +1591,10 @@ soft_increment:
 			}
 		} else if (s->answer.buf[0] == 'K') {
 			if (permitted & ALLOW_GOTO_PREVIOUS_HUNK)
-				hunk_index--;
+				hunk_index = dec_mod(hunk_index,
+						     file_diff->hunk_nr);
 			else
-				err(s, _("No previous hunk"));
+				err(s, _("No other hunk"));
 		} else if (s->answer.buf[0] == 'J') {
 			if (permitted & ALLOW_GOTO_NEXT_HUNK)
 				hunk_index++;
@@ -1596,7 +1604,7 @@ soft_increment:
 			if (permitted & ALLOW_GOTO_PREVIOUS_UNDECIDED_HUNK)
 				hunk_index = undecided_previous;
 			else
-				err(s, _("No previous hunk"));
+				err(s, _("No other undecided hunk"));
 		} else if (s->answer.buf[0] == 'j') {
 			if (permitted & ALLOW_GOTO_NEXT_UNDECIDED_HUNK)
 				hunk_index = undecided_next;
