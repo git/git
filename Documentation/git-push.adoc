@@ -23,6 +23,10 @@ Updates one or more branches, tags, or other references in a remote
 repository from your local repository, and sends all necessary data
 that isn't already on the remote.
 
+The simplest way to push is `git push <remote> <branch>`.
+`git push origin main` will push the local `main` branch to the `main`
+branch on the remote named `origin`.
+
 The `<repository>` argument defaults to the upstream for the current branch,
 or `origin` if there's no configured upstream.
 
