@@ -1418,6 +1418,17 @@ static size_t inc_mod(size_t a, size_t m)
 	return a < m - 1 ? a + 1 : 0;
 }
 
+static bool get_first_undecided(const struct file_diff *file_diff, size_t *idx)
+{
+	for (size_t i = 0; i < file_diff->hunk_nr; i++) {
+		if (file_diff->hunk[i].use == UNDECIDED_HUNK) {
+			*idx = i;
+			return true;
+		}
+	}
+	return false;
+}
+
 static int patch_update_file(struct add_p_state *s,
 			     struct file_diff *file_diff)
 {
@@ -1572,6 +1583,8 @@ soft_increment:
 					if (hunk->use == UNDECIDED_HUNK)
 						hunk->use = USE_HUNK;
 				}
+				if (!get_first_undecided(file_diff, &hunk_index))
+					hunk_index = 0;
 			} else if (hunk->use == UNDECIDED_HUNK) {
 				hunk->use = USE_HUNK;
 			}
@@ -1582,6 +1595,8 @@ soft_increment:
 					if (hunk->use == UNDECIDED_HUNK)
 						hunk->use = SKIP_HUNK;
 				}
+				if (!get_first_undecided(file_diff, &hunk_index))
+					hunk_index = 0;
 			} else if (hunk->use == UNDECIDED_HUNK) {
 				hunk->use = SKIP_HUNK;
 			}

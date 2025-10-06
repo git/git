@@ -1364,24 +1364,24 @@ test_expect_success 'options J, K roll over' '
 	test_cmp expect actual
 '
 
-test_expect_success 'options y, n, j, k, e roll over to next undecided (1)' '
+test_expect_success 'options y, n, a, d, j, k, e roll over to next undecided (1)' '
 	test_write_lines a b c d e f g h i j k l m n o p q >file &&
 	git add file &&
 	test_write_lines X b c d e f g h X j k l m n o p X >file &&
 	test_set_editor : &&
-	test_write_lines g3 y g3 n g3 j g3 e k q | git add -p >out &&
-	test_write_lines 1  3 1  3 1  3 1  3 1 2 >expect &&
+	test_write_lines g3 y g3 n g3 a g3 d g3 j g3 e k q | git add -p >out &&
+	test_write_lines 1  3 1  3 1  3 1  3 1  3 1  3 1 2 >expect &&
 	sed -n -e "s-/.*--" -e "s/^(//p" <out >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success 'options y, n, j, k, e roll over to next undecided (2)' '
+test_expect_success 'options y, n, a, d, j, k, e roll over to next undecided (2)' '
 	test_write_lines a b c d e f g h i j k l m n o p q >file &&
 	git add file &&
 	test_write_lines X b c d e f g h X j k l m n o p X >file &&
 	test_set_editor : &&
-	test_write_lines y g3 y g3 n g3 j g3 e g1 k q | git add -p >out &&
-	test_write_lines 1 2  3 2  3 2  3 2  3 2  1 2 >expect &&
+	test_write_lines y g3 y g3 n g3 a g3 d g3 j g3 e g1 k q | git add -p >out &&
+	test_write_lines 1 2  3 2  3 2  3 2  3 2  3 2  3 2  1 2 >expect &&
 	sed -n -e "s-/.*--" -e "s/^(//p" <out >actual &&
 	test_cmp expect actual
 '
