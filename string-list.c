@@ -29,12 +29,14 @@ static size_t get_entry_index(const struct string_list *list, const char *string
 		else if (compare > 0)
 			left = middle + 1;
 		else {
-			*exact_match = true;
+			if (exact_match)
+				*exact_match = true;
 			return middle;
 		}
 	}
 
-	*exact_match = false;
+	if (exact_match)
+		*exact_match = false;
 	return right;
 }
 
@@ -90,13 +92,9 @@ bool string_list_has_string(const struct string_list *list, const char *string)
 }
 
 int string_list_find_insert_index(const struct string_list *list, const char *string,
-				  int negative_existing_index)
+				  bool *exact_match)
 {
-	bool exact_match;
-	int index = get_entry_index(list, string, &exact_match);
-	if (exact_match)
-		index = -1 - (negative_existing_index ? index : 0);
-	return index;
+	return get_entry_index(list, string, exact_match);
 }
 
 struct string_list_item *string_list_lookup(struct string_list *list, const char *string)

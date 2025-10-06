@@ -174,7 +174,7 @@ void string_list_remove_empty_items(struct string_list *list, int free_util);
 /** Determine if the string_list has a given string or not. */
 bool string_list_has_string(const struct string_list *list, const char *string);
 int string_list_find_insert_index(const struct string_list *list, const char *string,
-				  int negative_existing_index);
+				  bool *exact_match);
 
 /**
  * Insert a new element to the string_list. The returned pointer can
