@@ -593,6 +593,14 @@ description of what your topic does.  For a single-patch series, use
 the space between the three-dash line and the diffstat, as described
 earlier.
 
+[[multi-series-efforts]]
+If your patch series is part of a larger effort spanning multiple
+patch series, briefly describe the broader goal, and state where the
+current series fits into that goal.  If you are suggesting a topic
+name as in <<the-topic-summary, section above>>, consider
+"XX/the-broader-goal-part-one", "XX/the-broader-goal-part-two", and so
+on.
+
 [[attachment]]
 Do not attach the patch as a MIME attachment, compressed or not.
 Do not let your e-mail client send quoted-printable.  Do not let
