@@ -55,8 +55,9 @@ For historical reasons, this extension is respected regardless of the
 refStorage:::
 	Specify the ref storage format to use. The acceptable values are:
 +
+--
 include::../ref-storage-format.adoc[]
-
+--
 +
 Note that this setting should only be set by linkgit:git-init[1] or
 linkgit:git-clone[1]. Trying to change it after initialization will not
