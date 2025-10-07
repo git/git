@@ -8,6 +8,7 @@ struct packed_git;
 #include <curl/curl.h>
 #include <curl/easy.h>
 
+#include "gettext.h"
 #include "strbuf.h"
 #include "remote.h"
 
@@ -94,6 +95,15 @@ static inline int missing__target(int code, int result)
 }
 
 #define missing_target(a) missing__target((a)->http_code, (a)->curl_result)
+
+static inline curl_off_t cast_size_t_to_curl_off_t(size_t a)
+{
+	uintmax_t size = a;
+	if (size > maximum_signed_value_of_type(curl_off_t))
+		die(_("number too large to represent as curl_off_t "
+		      "on this platform: %"PRIuMAX), (uintmax_t)a);
+	return (curl_off_t)a;
+}
 
 /*
  * Normalize curl results to handle CURL_FAILONERROR (or lack thereof). Failing
