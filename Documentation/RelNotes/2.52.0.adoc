@@ -280,6 +280,15 @@ including security updates, are included in this release.
    updated.
    (merge 54a60e5b38 kh/you-still-use-whatchanged-fix later to maint).
 
+ * Clang-format update to let our control macros formatted the way we
+   had them traditionally, e.g., "for_each_string_list_item()" without
+   space before the parentheses.
+   (merge 3721541d35 jt/clang-format-foreach-wo-space-before-parenthesis later to maint).
+
+ * A few places where an size_t value was cast to curl_off_t without
+   checking has been updated to use the existing helper function.
+   (merge ecc5749578 js/curl-off-t-fixes later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 823d537fa7 kh/doc-git-log-markup-fix later to maint).
    (merge cf7efa4f33 rj/t6137-cygwin-fix later to maint).
@@ -305,3 +314,4 @@ including security updates, are included in this release.
    (merge ac7096723b jc/doc-includeif-hasconfig-remote-url-fix later to maint).
    (merge fafc9b08b8 ag/doc-sendmail-gmail-example-update later to maint).
    (merge a66fc22bf9 rs/get-oid-with-flags-cleanup later to maint).
+   (merge e1d062e8ba ps/odb-clean-stale-wrappers later to maint).
