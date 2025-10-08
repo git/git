@@ -113,6 +113,9 @@ Performance, Internal Implementation, Development Support etc.
    documentation, similar to "make doc".
    (merge ff4ec8ded0 ps/meson-build-docs later to maint).
 
+ * Dip our toes a bit to (optionally) use Rust implemented helper
+   called from our C code.
+
 
 Fixes since v2.51
 -----------------
@@ -289,6 +292,12 @@ including security updates, are included in this release.
    checking has been updated to use the existing helper function.
    (merge ecc5749578 js/curl-off-t-fixes later to maint).
 
+ * "git reflog write" did not honor the configured user.name/email
+   which has been corrected.
+
+ * Handling of an empty subdirectory of .git/refs/ in the ref-files
+   backend has been corrected.
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 823d537fa7 kh/doc-git-log-markup-fix later to maint).
    (merge cf7efa4f33 rj/t6137-cygwin-fix later to maint).
@@ -315,3 +324,4 @@ including security updates, are included in this release.
    (merge fafc9b08b8 ag/doc-sendmail-gmail-example-update later to maint).
    (merge a66fc22bf9 rs/get-oid-with-flags-cleanup later to maint).
    (merge e1d062e8ba ps/odb-clean-stale-wrappers later to maint).
+   (merge fdd21ba116 mh/doc-credential-url-prefix later to maint).
