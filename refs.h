@@ -333,27 +333,28 @@ struct ref_transaction;
  * stored in ref_iterator::flags. Other bits are for internal use
  * only:
  */
+enum reference_status {
+	/* Reference is a symbolic reference. */
+	REF_ISSYMREF = (1 << 0),
 
-/* Reference is a symbolic reference. */
-#define REF_ISSYMREF 0x01
+	/* Reference is a packed reference. */
+	REF_ISPACKED = (1 << 1),
 
-/* Reference is a packed reference. */
-#define REF_ISPACKED 0x02
+	/*
+	 * Reference cannot be resolved to an object name: dangling symbolic
+	 * reference (directly or indirectly), corrupt reference file,
+	 * reference exists but name is bad, or symbolic reference refers to
+	 * ill-formatted reference name.
+	 */
+	REF_ISBROKEN = (1 << 2),
 
-/*
- * Reference cannot be resolved to an object name: dangling symbolic
- * reference (directly or indirectly), corrupt reference file,
- * reference exists but name is bad, or symbolic reference refers to
- * ill-formatted reference name.
- */
-#define REF_ISBROKEN 0x04
-
-/*
- * Reference name is not well formed.
- *
- * See git-check-ref-format(1) for the definition of well formed ref names.
- */
-#define REF_BAD_NAME 0x08
+	/*
+	 * Reference name is not well formed.
+	 *
+	 * See git-check-ref-format(1) for the definition of well formed ref names.
+	 */
+	REF_BAD_NAME = (1 << 3),
+};
 
 /* A reference passed to `for_each_ref()`-style callbacks. */
 struct reference {
@@ -370,8 +371,8 @@ struct reference {
 	 */
 	const struct object_id *oid;
 
-	/* A bitfield of `REF_` flags. */
-	int flags;
+	/* A bitfield of `enum reference_status` flags. */
+	unsigned flags;
 };
 
 /*
