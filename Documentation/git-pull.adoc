@@ -15,17 +15,25 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-Incorporates changes from a remote repository into the current branch.
-If the current branch is behind the remote, then by default it will
-fast-forward the current branch to match the remote.  If the current
-branch and the remote have diverged, the user needs to specify how to
-reconcile the divergent branches with `--rebase` or `--no-rebase` (or
-the corresponding configuration option in `pull.rebase`).
+Integrate changes from a remote repository into the current branch.
 
-More precisely, `git pull` runs `git fetch` with the given parameters
-and then depending on configuration options or command line flags,
-will call either `git rebase` or `git merge` to reconcile diverging
-branches.
+First, `git pull` runs `git fetch` with the same arguments
+(excluding merge options) to fetch remote branch(es).
+Then it decides which remote branch to integrate: if you run `git pull`
+with no arguments this defaults to the <<UPSTREAM-BRANCHES,upstream>>
+for the current branch.
+Then it integrates that branch into the current branch.
+
+There are 4 main options for integrating the remote branch:
+
+1. `git pull --ff-only` will only do "fast-forward" updates: it
+   fails if the remote branch has diverged. This is the default.
+2. `git pull --rebase` runs `git rebase`
+3. `git pull --no-rebase` runs `git merge`.
+4. `git pull --squash` runs `git merge --squash`
+
+You can also set the configuration options `pull.rebase`, `pull.squash`,
+or `pull.ff` with your preferred behaviour.
 
 Assume the following history exists and the current branch is
 "`master`":
