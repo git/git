@@ -358,12 +358,6 @@ typedef int ref_iterator_seek_fn(struct ref_iterator *ref_iterator,
 				 const char *refname, unsigned int flags);
 
 /*
- * Peels the current ref, returning 0 for success or -1 for failure.
- */
-typedef int ref_iterator_peel_fn(struct ref_iterator *ref_iterator,
-				 struct object_id *peeled);
-
-/*
  * Implementations of this function should free any resources specific
  * to the derived class.
  */
@@ -372,7 +366,6 @@ typedef void ref_iterator_release_fn(struct ref_iterator *ref_iterator);
 struct ref_iterator_vtable {
 	ref_iterator_advance_fn *advance;
 	ref_iterator_seek_fn *seek;
-	ref_iterator_peel_fn *peel;
 	ref_iterator_release_fn *release;
 };
 

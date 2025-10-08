@@ -21,12 +21,6 @@ int ref_iterator_seek(struct ref_iterator *ref_iterator, const char *refname,
 	return ref_iterator->vtable->seek(ref_iterator, refname, flags);
 }
 
-int ref_iterator_peel(struct ref_iterator *ref_iterator,
-		      struct object_id *peeled)
-{
-	return ref_iterator->vtable->peel(ref_iterator, peeled);
-}
-
 void ref_iterator_free(struct ref_iterator *ref_iterator)
 {
 	if (ref_iterator) {
@@ -60,12 +54,6 @@ static int empty_ref_iterator_seek(struct ref_iterator *ref_iterator UNUSED,
 	return 0;
 }
 
-static int empty_ref_iterator_peel(struct ref_iterator *ref_iterator UNUSED,
-				   struct object_id *peeled UNUSED)
-{
-	BUG("peel called for empty iterator");
-}
-
 static void empty_ref_iterator_release(struct ref_iterator *ref_iterator UNUSED)
 {
 }
@@ -73,7 +61,6 @@ static void empty_ref_iterator_release(struct ref_iterator *ref_iterator UNUSED)
 static struct ref_iterator_vtable empty_ref_iterator_vtable = {
 	.advance = empty_ref_iterator_advance,
 	.seek = empty_ref_iterator_seek,
-	.peel = empty_ref_iterator_peel,
 	.release = empty_ref_iterator_release,
 };
 
@@ -240,18 +227,6 @@ static int merge_ref_iterator_seek(struct ref_iterator *ref_iterator,
 	return 0;
 }
 
-static int merge_ref_iterator_peel(struct ref_iterator *ref_iterator,
-				   struct object_id *peeled)
-{
-	struct merge_ref_iterator *iter =
-		(struct merge_ref_iterator *)ref_iterator;
-
-	if (!iter->current) {
-		BUG("peel called before advance for merge iterator");
-	}
-	return ref_iterator_peel(*iter->current, peeled);
-}
-
 static void merge_ref_iterator_release(struct ref_iterator *ref_iterator)
 {
 	struct merge_ref_iterator *iter =
@@ -263,7 +238,6 @@ static void merge_ref_iterator_release(struct ref_iterator *ref_iterator)
 static struct ref_iterator_vtable merge_ref_iterator_vtable = {
 	.advance = merge_ref_iterator_advance,
 	.seek = merge_ref_iterator_seek,
-	.peel = merge_ref_iterator_peel,
 	.release = merge_ref_iterator_release,
 };
 
@@ -412,15 +386,6 @@ static int prefix_ref_iterator_seek(struct ref_iterator *ref_iterator,
 	return ref_iterator_seek(iter->iter0, refname, flags);
 }
 
-static int prefix_ref_iterator_peel(struct ref_iterator *ref_iterator,
-				    struct object_id *peeled)
-{
-	struct prefix_ref_iterator *iter =
-		(struct prefix_ref_iterator *)ref_iterator;
-
-	return ref_iterator_peel(iter->iter0, peeled);
-}
-
 static void prefix_ref_iterator_release(struct ref_iterator *ref_iterator)
 {
 	struct prefix_ref_iterator *iter =
@@ -432,7 +397,6 @@ static void prefix_ref_iterator_release(struct ref_iterator *ref_iterator)
 static struct ref_iterator_vtable prefix_ref_iterator_vtable = {
 	.advance = prefix_ref_iterator_advance,
 	.seek = prefix_ref_iterator_seek,
-	.peel = prefix_ref_iterator_peel,
 	.release = prefix_ref_iterator_release,
 };
 
