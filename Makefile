@@ -929,10 +929,17 @@ TEST_SHELL_PATH = $(SHELL_PATH)
 LIB_FILE = libgit.a
 XDIFF_LIB = xdiff/lib.a
 REFTABLE_LIB = reftable/libreftable.a
+
 ifdef DEBUG
-RUST_LIB = target/debug/libgitcore.a
+RUST_TARGET_DIR = target/debug
 else
-RUST_LIB = target/release/libgitcore.a
+RUST_TARGET_DIR = target/release
+endif
+
+ifeq ($(uname_S),Windows)
+RUST_LIB = $(RUST_TARGET_DIR)/gitcore.lib
+else
+RUST_LIB = $(RUST_TARGET_DIR)/libgitcore.a
 endif
 
 # xdiff and reftable libs may in turn depend on what is in libgit.a
@@ -1538,6 +1545,9 @@ ALL_LDFLAGS = $(LDFLAGS) $(LDFLAGS_APPEND)
 ifdef WITH_RUST
 BASIC_CFLAGS += -DWITH_RUST
 GITLIBS += $(RUST_LIB)
+ifeq ($(uname_S),Windows)
+EXTLIBS += -luserenv
+endif
 endif
 
 ifdef SANITIZE
