@@ -983,7 +983,7 @@ static int stash_count_refs(struct object_id *ooid UNUSED,
 	return 0;
 }
 
-static int count_stash_entries(void)
+int count_stash_entries(void)
 {
 	int n = 0;
 	refs_for_each_reflog_ent(get_main_ref_store(the_repository),

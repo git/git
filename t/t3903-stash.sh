@@ -49,7 +49,7 @@ diff_cmp () {
 	rm -f "$1.compare" "$2.compare"
 }
 
-setup_stash() {
+setup_stash () {
 	echo 1 >file &&
 	git add file &&
 	echo unrelated >other-file &&
@@ -60,13 +60,15 @@ setup_stash() {
 	git add file &&
 	echo 3 >file &&
 	test_tick &&
-	git stash &&
+	git stash | tail -n 1 >actual &&
 	git diff-files --quiet &&
 	git diff-index --cached --quiet HEAD
 }
 
-test_expect_success 'stash some dirty working directory' '
-	setup_stash
+test_expect_success 'stash reports stash count' '
+	setup_stash &&
+	echo "Your stash now has 1 entry" >expect &&
+	test_cmp expect actual
 '
 
 cat >expect <<EOF
@@ -145,12 +147,14 @@ test_expect_success 'stash drop complains of extra options' '
 
 test_expect_success 'drop top stash' '
 	git reset --hard &&
-	git stash list >expected &&
+	git stash list >expect &&
 	echo 7 >file &&
 	git stash &&
-	git stash drop &&
+	git stash drop | tail -n 1 >msg-actual &&
+	echo "Your stash now has 1 entry" >msg-expect &&
+	test_cmp msg-expect msg-actual &&
 	git stash list >actual &&
-	test_cmp expected actual &&
+	test_cmp expect actual &&
 	git stash apply &&
 	test 3 = $(cat file) &&
 	test 1 = $(git show :file) &&
@@ -236,14 +240,18 @@ test_expect_success 'drop stash reflog updates refs/stash with rewrite' '
 
 test_expect_success 'stash pop' '
 	git reset --hard &&
-	git stash pop &&
+	git stash pop | tail -n 1 >actual &&
+	echo "Your stash now has 0 entries" >expect &&
+	test_cmp expect actual &&
 	test 3 = $(cat file) &&
 	test 1 = $(git show :file) &&
 	test 1 = $(git show HEAD:file) &&
 	test 0 = $(git stash list | wc -l)
 '
 
-cat >expect <<EOF
+echo "Your stash now has 0 entries" >expect
+
+cat >expect1 <<EOF
 diff --git a/file2 b/file2
 new file mode 100644
 index 0000000..1fe912c
@@ -253,7 +261,7 @@ index 0000000..1fe912c
 +bar2
 EOF
 
-cat >expect1 <<EOF
+cat >expect2 <<EOF
 diff --git a/file b/file
 index 257cc56..5716ca5 100644
 --- a/file
@@ -263,7 +271,7 @@ index 257cc56..5716ca5 100644
 +bar
 EOF
 
-cat >expect2 <<EOF
+cat >expect3 <<EOF
 diff --git a/file b/file
 index 7601807..5716ca5 100644
 --- a/file
@@ -289,17 +297,18 @@ test_expect_success 'stash branch' '
 	git stash &&
 	echo baz >file &&
 	git commit file -m second &&
-	git stash branch stashbranch &&
+	git stash branch stashbranch | tail -n 1 >actual &&
+	test_cmp expect actual &&
 	test refs/heads/stashbranch = $(git symbolic-ref HEAD) &&
 	test $(git rev-parse HEAD) = $(git rev-parse main^) &&
 	git diff --cached >output &&
-	diff_cmp expect output &&
-	git diff >output &&
 	diff_cmp expect1 output &&
+	git diff >output &&
+	diff_cmp expect2 output &&
 	git add file &&
 	git commit -m alternate\ second &&
 	git diff main..stashbranch >output &&
-	diff_cmp output expect2 &&
+	diff_cmp output expect3 &&
 	test 0 = $(git stash list | wc -l)
 '
 
@@ -427,7 +436,9 @@ test_expect_success 'stash an added file' '
 	git reset --hard &&
 	echo new >file3 &&
 	git add file3 &&
-	git stash save "added file" &&
+	git stash save "added file" | tail -n 1 >actual &&
+	echo "Your stash now has 6 entries" >expect &&
+	test_cmp expect actual &&
 	! test -r file3 &&
 	git stash apply &&
 	test new = "$(cat file3)"
@@ -683,12 +694,12 @@ test_expect_success 'stash show format defaults to --stat' '
 	echo bar >>file &&
 	STASH_ID=$(git stash create) &&
 	git reset --hard &&
-	cat >expected <<-EOF &&
+	cat >expect <<-EOF &&
 	 file | 1 +
 	 1 file changed, 1 insertion(+)
 	EOF
 	git stash show ${STASH_ID} >actual &&
-	test_cmp expected actual
+	test_cmp expect actual
 '
 
 test_expect_success 'stash show - stashes on stack, stash-like argument' '
@@ -701,9 +712,9 @@ test_expect_success 'stash show - stashes on stack, stash-like argument' '
 	echo bar >>file &&
 	STASH_ID=$(git stash create) &&
 	git reset --hard &&
-	echo "1	0	file" >expected &&
+	echo "1	0	file" >expect &&
 	git stash show --numstat ${STASH_ID} >actual &&
-	test_cmp expected actual
+	test_cmp expect actual
 '
 
 test_expect_success 'stash show -p - stashes on stack, stash-like argument' '
@@ -716,7 +727,7 @@ test_expect_success 'stash show -p - stashes on stack, stash-like argument' '
 	echo bar >>file &&
 	STASH_ID=$(git stash create) &&
 	git reset --hard &&
-	cat >expected <<-EOF &&
+	cat >expect <<-EOF &&
 	diff --git a/file b/file
 	index 7601807..935fbd3 100644
 	--- a/file
@@ -726,7 +737,7 @@ test_expect_success 'stash show -p - stashes on stack, stash-like argument' '
 	+bar
 	EOF
 	git stash show -p ${STASH_ID} >actual &&
-	diff_cmp expected actual
+	diff_cmp expect actual
 '
 
 test_expect_success 'stash show - no stashes on stack, stash-like argument' '
@@ -736,9 +747,9 @@ test_expect_success 'stash show - no stashes on stack, stash-like argument' '
 	echo foo >>file &&
 	STASH_ID=$(git stash create) &&
 	git reset --hard &&
-	echo "1	0	file" >expected &&
+	echo "1	0	file" >expect &&
 	git stash show --numstat ${STASH_ID} >actual &&
-	test_cmp expected actual
+	test_cmp expect actual
 '
 
 test_expect_success 'stash show -p - no stashes on stack, stash-like argument' '
@@ -748,7 +759,7 @@ test_expect_success 'stash show -p - no stashes on stack, stash-like argument' '
 	echo foo >>file &&
 	STASH_ID=$(git stash create) &&
 	git reset --hard &&
-	cat >expected <<-EOF &&
+	cat >expect <<-EOF &&
 	diff --git a/file b/file
 	index 7601807..71b52c4 100644
 	--- a/file
@@ -758,7 +769,7 @@ test_expect_success 'stash show -p - no stashes on stack, stash-like argument' '
 	+foo
 	EOF
 	git stash show -p ${STASH_ID} >actual &&
-	diff_cmp expected actual
+	diff_cmp expect actual
 '
 
 test_expect_success 'stash show --patience shows diff' '
@@ -766,7 +777,7 @@ test_expect_success 'stash show --patience shows diff' '
 	echo foo >>file &&
 	STASH_ID=$(git stash create) &&
 	git reset --hard &&
-	cat >expected <<-EOF &&
+	cat >expect <<-EOF &&
 	diff --git a/file b/file
 	index 7601807..71b52c4 100644
 	--- a/file
@@ -776,7 +787,7 @@ test_expect_success 'stash show --patience shows diff' '
 	+foo
 	EOF
 	git stash show --patience ${STASH_ID} >actual &&
-	diff_cmp expected actual
+	diff_cmp expect actual
 '
 
 test_expect_success 'drop: fail early if specified stash is not a stash ref' '
@@ -915,7 +926,7 @@ test_expect_success 'apply: show same status as git status (relative to ./)' '
 		sane_unset GIT_MERGE_VERBOSITY &&
 		git stash apply
 	) |
-	sed -e 1d >actual && # drop "Saved..."
+	sed -e 1,2d >actual && # drop "Your stash now has 1 entry" and "Saved..."
 	test_cmp expect actual
 '
 
@@ -959,9 +970,11 @@ test_expect_success 'store updates stash ref and reflog' '
 	STASH_ID=$(git stash create) &&
 	git reset --hard &&
 	test_path_is_missing bazzy &&
-	git stash store -m quuxery $STASH_ID &&
+	git stash store -m quuxery $STASH_ID | tail -n 1 >actual &&
+	echo "Your stash now has 1 entry" >expect &&
+	test_cmp expect actual &&
 	test $(git rev-parse stash) = $STASH_ID &&
-	git reflog --format=%H stash| grep $STASH_ID &&
+	git reflog --format=%H stash | grep $STASH_ID &&
 	git stash pop &&
 	grep quux bazzy
 '
