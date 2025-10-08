@@ -2954,14 +2954,15 @@ struct ref_filter_cbdata {
  * A call-back given to for_each_ref().  Filter refs and keep them for
  * later object processing.
  */
-static int filter_one(const char *refname, const char *referent, const struct object_id *oid, int flag, void *cb_data)
+static int filter_one(const struct reference *ref, void *cb_data)
 {
 	struct ref_filter_cbdata *ref_cbdata = cb_data;
-	struct ref_array_item *ref;
+	struct ref_array_item *item;
 
-	ref = apply_ref_filter(refname, referent, oid, flag, ref_cbdata->filter);
-	if (ref)
-		ref_array_append(ref_cbdata->array, ref);
+	item = apply_ref_filter(ref->name, ref->target, ref->oid,
+				ref->flags, ref_cbdata->filter);
+	if (item)
+		ref_array_append(ref_cbdata->array, item);
 
 	return 0;
 }
@@ -2990,17 +2991,18 @@ struct ref_filter_and_format_cbdata {
 	} internal;
 };
 
-static int filter_and_format_one(const char *refname, const char *referent, const struct object_id *oid, int flag, void *cb_data)
+static int filter_and_format_one(const struct reference *ref, void *cb_data)
 {
 	struct ref_filter_and_format_cbdata *ref_cbdata = cb_data;
-	struct ref_array_item *ref;
+	struct ref_array_item *item;
 	struct strbuf output = STRBUF_INIT, err = STRBUF_INIT;
 
-	ref = apply_ref_filter(refname, referent, oid, flag, ref_cbdata->filter);
-	if (!ref)
+	item = apply_ref_filter(ref->name, ref->target, ref->oid,
+				ref->flags, ref_cbdata->filter);
+	if (!item)
 		return 0;
 
-	if (format_ref_array_item(ref, ref_cbdata->format, &output, &err))
+	if (format_ref_array_item(item, ref_cbdata->format, &output, &err))
 		die("%s", err.buf);
 
 	if (output.len || !ref_cbdata->format->array_opts.omit_empty) {
@@ -3010,7 +3012,7 @@ static int filter_and_format_one(const char *refname, const char *referent, cons
 
 	strbuf_release(&output);
 	strbuf_release(&err);
-	free_array_item(ref);
+	free_array_item(item);
 
 	/*
 	 * Increment the running count of refs that match the filter. If

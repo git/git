@@ -870,8 +870,8 @@ static void send_unshallow(struct upload_pack_data *data)
 	}
 }
 
-static int check_ref(const char *refname_full, const char *referent UNUSED, const struct object_id *oid,
-		     int flag, void *cb_data);
+static int check_ref(const struct reference *ref, void *cb_data);
+
 static void deepen(struct upload_pack_data *data, int depth)
 {
 	if (depth == INFINITE_DEPTH && !is_repository_shallow(the_repository)) {
@@ -1224,13 +1224,12 @@ static int mark_our_ref(const char *refname, const char *refname_full,
 	return 0;
 }
 
-static int check_ref(const char *refname_full, const char *referent UNUSED,const struct object_id *oid,
-		     int flag UNUSED, void *cb_data)
+static int check_ref(const struct reference *ref, void *cb_data)
 {
-	const char *refname = strip_namespace(refname_full);
+	const char *refname = strip_namespace(ref->name);
 	struct upload_pack_data *data = cb_data;
 
-	mark_our_ref(refname, refname_full, oid, &data->hidden_refs);
+	mark_our_ref(refname, ref->name, ref->oid, &data->hidden_refs);
 	return 0;
 }
 
@@ -1292,27 +1291,25 @@ static void write_v0_ref(struct upload_pack_data *data,
 	return;
 }
 
-static int send_ref(const char *refname, const char *referent UNUSED, const struct object_id *oid,
-		    int flag UNUSED, void *cb_data)
+static int send_ref(const struct reference *ref, void *cb_data)
 {
-	write_v0_ref(cb_data, refname, strip_namespace(refname), oid);
+	write_v0_ref(cb_data, ref->name, strip_namespace(ref->name), ref->oid);
 	return 0;
 }
 
-static int find_symref(const char *refname, const char *referent UNUSED,
-		       const struct object_id *oid UNUSED,
-		       int flag, void *cb_data)
+static int find_symref(const struct reference *ref, void *cb_data)
 {
 	const char *symref_target;
 	struct string_list_item *item;
+	int flag;
 
-	if ((flag & REF_ISSYMREF) == 0)
+	if ((ref->flags & REF_ISSYMREF) == 0)
 		return 0;
 	symref_target = refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
-						refname, 0, NULL, &flag);
+						ref->name, 0, NULL, &flag);
 	if (!symref_target || (flag & REF_ISSYMREF) == 0)
-		die("'%s' is a symref but it is not?", refname);
-	item = string_list_append(cb_data, strip_namespace(refname));
+		die("'%s' is a symref but it is not?", ref->name);
+	item = string_list_append(cb_data, strip_namespace(ref->name));
 	item->util = xstrdup(strip_namespace(symref_target));
 	return 0;
 }

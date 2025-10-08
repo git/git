@@ -355,14 +355,32 @@ struct ref_transaction;
  */
 #define REF_BAD_NAME 0x08
 
+/* A reference passed to `for_each_ref()`-style callbacks. */
+struct reference {
+	/* The fully-qualified name of the reference. */
+	const char *name;
+
+	/* The target of a symbolic ref. `NULL` for direct references. */
+	const char *target;
+
+	/*
+	 * The object ID of a reference. Either the direct object ID or the
+	 * resolved object ID in the case of a symbolic ref. May be the zero
+	 * object ID in case the symbolic ref cannot be resolved.
+	 */
+	const struct object_id *oid;
+
+	/* A bitfield of `REF_` flags. */
+	int flags;
+};
+
 /*
  * The signature for the callback function for the for_each_*()
- * functions below.  The memory pointed to by the refname and oid
- * arguments is only guaranteed to be valid for the duration of a
+ * functions below.  The memory pointed to by the `struct reference`
+ * argument is only guaranteed to be valid for the duration of a
  * single callback invocation.
  */
-typedef int each_ref_fn(const char *refname, const char *referent,
-			const struct object_id *oid, int flags, void *cb_data);
+typedef int each_ref_fn(const struct reference *ref, void *cb_data);
 
 /*
  * The following functions invoke the specified callback function for

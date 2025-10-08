@@ -413,34 +413,32 @@ static int append_ref(const char *refname, const struct object_id *oid,
 	return 0;
 }
 
-static int append_head_ref(const char *refname, const char *referent UNUSED, const struct object_id *oid,
-			   int flag UNUSED, void *cb_data UNUSED)
+static int append_head_ref(const struct reference *ref, void *cb_data UNUSED)
 {
 	struct object_id tmp;
 	int ofs = 11;
-	if (!starts_with(refname, "refs/heads/"))
+	if (!starts_with(ref->name, "refs/heads/"))
 		return 0;
 	/* If both heads/foo and tags/foo exists, get_sha1 would
 	 * get confused.
 	 */
-	if (repo_get_oid(the_repository, refname + ofs, &tmp) || !oideq(&tmp, oid))
+	if (repo_get_oid(the_repository, ref->name + ofs, &tmp) || !oideq(&tmp, ref->oid))
 		ofs = 5;
-	return append_ref(refname + ofs, oid, 0);
+	return append_ref(ref->name + ofs, ref->oid, 0);
 }
 
-static int append_remote_ref(const char *refname, const char *referent UNUSED, const struct object_id *oid,
-			     int flag UNUSED, void *cb_data UNUSED)
+static int append_remote_ref(const struct reference *ref, void *cb_data UNUSED)
 {
 	struct object_id tmp;
 	int ofs = 13;
-	if (!starts_with(refname, "refs/remotes/"))
+	if (!starts_with(ref->name, "refs/remotes/"))
 		return 0;
 	/* If both heads/foo and tags/foo exists, get_sha1 would
 	 * get confused.
 	 */
-	if (repo_get_oid(the_repository, refname + ofs, &tmp) || !oideq(&tmp, oid))
+	if (repo_get_oid(the_repository, ref->name + ofs, &tmp) || !oideq(&tmp, ref->oid))
 		ofs = 5;
-	return append_ref(refname + ofs, oid, 0);
+	return append_ref(ref->name + ofs, ref->oid, 0);
 }
 
 static int append_tag_ref(const char *refname, const struct object_id *oid,
@@ -454,27 +452,26 @@ static int append_tag_ref(const char *refname, const struct object_id *oid,
 static const char *match_ref_pattern = NULL;
 static int match_ref_slash = 0;
 
-static int append_matching_ref(const char *refname, const char *referent UNUSED, const struct object_id *oid,
-			       int flag, void *cb_data)
+static int append_matching_ref(const struct reference *ref, void *cb_data)
 {
 	/* we want to allow pattern hold/<asterisk> to show all
 	 * branches under refs/heads/hold/, and v0.99.9? to show
 	 * refs/tags/v0.99.9a and friends.
 	 */
 	const char *tail;
-	int slash = count_slashes(refname);
-	for (tail = refname; *tail && match_ref_slash < slash; )
+	int slash = count_slashes(ref->name);
+	for (tail = ref->name; *tail && match_ref_slash < slash; )
 		if (*tail++ == '/')
 			slash--;
 	if (!*tail)
 		return 0;
 	if (wildmatch(match_ref_pattern, tail, 0))
 		return 0;
-	if (starts_with(refname, "refs/heads/"))
-		return append_head_ref(refname, NULL, oid, flag, cb_data);
-	if (starts_with(refname, "refs/tags/"))
-		return append_tag_ref(refname, oid, flag, cb_data);
-	return append_ref(refname, oid, 0);
+	if (starts_with(ref->name, "refs/heads/"))
+		return append_head_ref(ref, cb_data);
+	if (starts_with(ref->name, "refs/tags/"))
+		return append_tag_ref(ref->name, ref->oid, ref->flags, cb_data);
+	return append_ref(ref->name, ref->oid, 0);
 }
 
 static void snarf_refs(int head, int remotes)

@@ -530,14 +530,13 @@ static int fsck_handle_reflog(const char *logname, void *cb_data)
 	return 0;
 }
 
-static int fsck_handle_ref(const char *refname, const char *referent UNUSED, const struct object_id *oid,
-			   int flag UNUSED, void *cb_data UNUSED)
+static int fsck_handle_ref(const struct reference *ref, void *cb_data UNUSED)
 {
 	struct object *obj;
 
-	obj = parse_object(the_repository, oid);
+	obj = parse_object(the_repository, ref->oid);
 	if (!obj) {
-		if (is_promisor_object(the_repository, oid)) {
+		if (is_promisor_object(the_repository, ref->oid)) {
 			/*
 			 * Increment default_refs anyway, because this is a
 			 * valid ref.
@@ -546,19 +545,19 @@ static int fsck_handle_ref(const char *refname, const char *referent UNUSED, con
 			 return 0;
 		}
 		error(_("%s: invalid sha1 pointer %s"),
-		      refname, oid_to_hex(oid));
+		      ref->name, oid_to_hex(ref->oid));
 		errors_found |= ERROR_REACHABLE;
 		/* We'll continue with the rest despite the error.. */
 		return 0;
 	}
-	if (obj->type != OBJ_COMMIT && is_branch(refname)) {
-		error(_("%s: not a commit"), refname);
+	if (obj->type != OBJ_COMMIT && is_branch(ref->name)) {
+		error(_("%s: not a commit"), ref->name);
 		errors_found |= ERROR_REFS;
 	}
 	default_refs++;
 	obj->flags |= USED;
 	fsck_put_object_name(&fsck_walk_options,
-			     oid, "%s", refname);
+			     ref->oid, "%s", ref->name);
 	mark_object_reachable(obj);
 
 	return 0;
@@ -580,13 +579,19 @@ static void get_default_heads(void)
 	worktrees = get_worktrees();
 	for (p = worktrees; *p; p++) {
 		struct worktree *wt = *p;
-		struct strbuf ref = STRBUF_INIT;
+		struct strbuf refname = STRBUF_INIT;
 
-		strbuf_worktree_ref(wt, &ref, "HEAD");
-		fsck_head_link(ref.buf, &head_points_at, &head_oid);
-		if (head_points_at && !is_null_oid(&head_oid))
-			fsck_handle_ref(ref.buf, NULL, &head_oid, 0, NULL);
-		strbuf_release(&ref);
+		strbuf_worktree_ref(wt, &refname, "HEAD");
+		fsck_head_link(refname.buf, &head_points_at, &head_oid);
+		if (head_points_at && !is_null_oid(&head_oid)) {
+			struct reference ref = {
+				.name = refname.buf,
+				.oid = &head_oid,
+			};
+
+			fsck_handle_ref(&ref, NULL);
+		}
+		strbuf_release(&refname);
 
 		if (include_reflogs)
 			refs_for_each_reflog(get_worktree_ref_store(wt),
