@@ -709,7 +709,7 @@ static int add_ref_to_pending(const struct reference *ref, void *cb_data)
 		return 0;
 	}
 
-	if (!peel_iterated_oid(revs->repo, ref->oid, &peeled))
+	if (!reference_get_peeled_oid(revs->repo, ref, &peeled))
 		maybe_peeled = &peeled;
 
 	object = parse_object_or_die(revs->repo, maybe_peeled, ref->name);
