@@ -108,6 +108,42 @@ test_expect_success 'simple writes' '
 	)
 '
 
+test_expect_success 'uses user.name and user.email config' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		test_commit initial &&
+		COMMIT_OID=$(git rev-parse HEAD) &&
+
+		sane_unset GIT_COMMITTER_NAME &&
+		sane_unset GIT_COMMITTER_EMAIL &&
+		git config --local user.name "Author" &&
+		git config --local user.email "a@uth.or" &&
+		git reflog write refs/heads/something $ZERO_OID $COMMIT_OID first &&
+		test_reflog_matches . refs/heads/something <<-EOF
+		$ZERO_OID $COMMIT_OID Author <a@uth.or> $GIT_COMMITTER_DATE	first
+		EOF
+	)
+'
+
+test_expect_success 'environment variables take precedence over config' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		test_commit initial &&
+		COMMIT_OID=$(git rev-parse HEAD) &&
+
+		git config --local user.name "Author" &&
+		git config --local user.email "a@uth.or" &&
+		git reflog write refs/heads/something $ZERO_OID $COMMIT_OID first &&
+		test_reflog_matches . refs/heads/something <<-EOF
+		$ZERO_OID $COMMIT_OID $SIGNATURE	first
+		EOF
+	)
+'
+
 test_expect_success 'can write to root ref' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&

@@ -418,6 +418,8 @@ static int cmd_reflog_write(int argc, const char **argv, const char *prefix,
 	const char *ref, *message;
 	int ret;
 
+	repo_config(repo, git_ident_config, NULL);
+
 	argc = parse_options(argc, argv, prefix, options, reflog_write_usage, 0);
 	if (argc != 4)
 		usage_with_options(reflog_write_usage, options);
