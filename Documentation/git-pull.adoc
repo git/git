@@ -27,17 +27,6 @@ and then depending on configuration options or command line flags,
 will call either `git rebase` or `git merge` to reconcile diverging
 branches.
 
-<repository> should be the name of a remote repository as
-passed to linkgit:git-fetch[1].  <refspec> can name an
-arbitrary remote ref (for example, the name of a tag) or even
-a collection of refs with corresponding remote-tracking branches
-(e.g., refs/heads/{asterisk}:refs/remotes/origin/{asterisk}),
-but usually it is the name of a branch in the remote repository.
-
-Default values for <repository> and <branch> are read from the
-"remote" and "merge" configuration for the current branch
-as set by linkgit:git-branch[1] `--track`.
-
 Assume the following history exists and the current branch is
 "`master`":
 
@@ -76,6 +65,26 @@ pulling or stash them away with linkgit:git-stash[1].
 
 OPTIONS
 -------
+
+<repository>::
+	The "remote" repository to pull from.  This can be either
+	a URL (see the section <<URLS,GIT URLS>> below) or the name
+	of a remote (see the section <<REMOTES,REMOTES>> below).
++
+Defaults to the configured upstream for the current branch, or `origin`.
+See <<UPSTREAM-BRANCHES,UPSTREAM BRANCHES>> below for more on how to
+configure upstreams.
+
+<refspec>::
+	Which branch or other reference(s) to fetch and integrate into the
+	current branch, for example `main` in `git pull origin main`.
+	Defaults to the configured upstream for the current branch.
++
+This can be a branch, tag, or other collection of reference(s).
+See <<fetch-refspec,<refspec>>> below under "Options related to fetching"
+for the full syntax, and <<DEFAULT-BEHAVIOUR,DEFAULT BEHAVIOUR>> below
+for how `git pull` uses this argument to determine which remote branch
+to integrate.
 
 -q::
 --quiet::
@@ -145,6 +154,7 @@ include::urls-remotes.adoc[]
 
 include::merge-strategies.adoc[]
 
+[[DEFAULT-BEHAVIOUR]]
 DEFAULT BEHAVIOUR
 -----------------
 
