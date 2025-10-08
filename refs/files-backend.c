@@ -3210,11 +3210,13 @@ static int files_transaction_finish_initial(struct files_ref_store *refs,
 		string_list_append(&refnames_to_check, update->refname);
 
 		/*
-		 * packed-refs don't support symbolic refs, root refs and reflogs,
-		 * so we have to queue these references via the loose transaction.
+		 * packed-refs don't support symbolic refs, root refs, per-worktree
+		 * refs, and reflogs, so we have to queue these references via the
+		 * loose transaction.
 		 */
 		if (update->new_target ||
 		    is_root_ref(update->refname) ||
+		    is_per_worktree_ref(update->refname) ||
 		    (update->flags & REF_LOG_ONLY)) {
 			if (!loose_transaction) {
 				loose_transaction = ref_store_transaction_begin(&refs->base, 0, err);
