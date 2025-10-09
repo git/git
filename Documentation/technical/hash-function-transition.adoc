@@ -429,17 +429,19 @@ ordinary unsigned commit.
 
 Signed Tags
 ~~~~~~~~~~~
-We add a new field "gpgsig-sha256" to the tag object format to allow
-signing tags without relying on SHA-1. Its signed payload is the
-SHA-256 content of the tag with its gpgsig-sha256 field and "-----BEGIN PGP
-SIGNATURE-----" delimited in-body signature removed.
+We add new fields "gpgsig" and "gpgsig-sha256" to the tag object format to
+allow signing tags in both formats.  The in-body signature is used for the
+signature in the current hash algorithm and the header is used for the
+signature in the other algorithm.  Thus, a dual-signature tag will contain both
+an in-body signature and a gpgsig-sha256 header for the SHA-1 format of an
+object or both an in-body signature and a gpgsig header for the SHA-256 format
+of and object.
 
-This means tags can be signed
+The signed payload of the tag is the content of the tag in the current
+algorithm with both its gpgsig and gpgsig-sha256 fields and
+"-----BEGIN PGP SIGNATURE-----" delimited in-body signature removed.
 
-1. using SHA-1 only, as in existing signed tag objects
-2. using both SHA-1 and SHA-256, by using gpgsig-sha256 and an in-body
-   signature.
-3. using only SHA-256, by only using the gpgsig-sha256 field.
+This means tags can be signed using one or both algorithms.
 
 Mergetag embedding
 ~~~~~~~~~~~~~~~~~~
