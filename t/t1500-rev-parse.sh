@@ -207,6 +207,40 @@ test_expect_success 'rev-parse --show-object-format in repo' '
 	grep "unknown mode for --show-object-format: squeamish-ossifrage" err
 '
 
+
+test_expect_success 'rev-parse --show-object-format in repo with compat mode' '
+	mkdir repo &&
+	(
+		sane_unset GIT_DEFAULT_HASH &&
+		cd repo &&
+		git init --object-format=sha256 &&
+		git config extensions.compatobjectformat sha1 &&
+		echo sha256 >expect &&
+		git rev-parse --show-object-format >actual &&
+		test_cmp expect actual &&
+		git rev-parse --show-object-format=storage >actual &&
+		test_cmp expect actual &&
+		git rev-parse --show-object-format=input >actual &&
+		test_cmp expect actual &&
+		git rev-parse --show-object-format=output >actual &&
+		test_cmp expect actual &&
+		echo sha1 >expect &&
+		git rev-parse --show-object-format=compat >actual &&
+		test_cmp expect actual &&
+		test_must_fail git rev-parse --show-object-format=squeamish-ossifrage 2>err &&
+		grep "unknown mode for --show-object-format: squeamish-ossifrage" err
+	) &&
+	mkdir repo2 &&
+	(
+		sane_unset GIT_DEFAULT_HASH &&
+		cd repo2 &&
+		git init --object-format=sha256 &&
+		echo >expect &&
+		git rev-parse --show-object-format=compat >actual &&
+		test_cmp expect actual
+	)
+'
+
 test_expect_success 'rev-parse --show-ref-format' '
 	test_detect_ref_format >expect &&
 	git rev-parse --show-ref-format >actual &&

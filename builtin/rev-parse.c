@@ -1108,11 +1108,20 @@ int cmd_rev_parse(int argc,
 				const char *val = arg ? arg : "storage";
 
 				if (strcmp(val, "storage") &&
+				    strcmp(val, "compat") &&
 				    strcmp(val, "input") &&
 				    strcmp(val, "output"))
 					die(_("unknown mode for --show-object-format: %s"),
 					    arg);
-				puts(the_hash_algo->name);
+
+				if (!strcmp(val, "compat")) {
+					if (the_repository->compat_hash_algo)
+						puts(the_repository->compat_hash_algo->name);
+					else
+						putchar('\n');
+				} else {
+					puts(the_hash_algo->name);
+				}
 				continue;
 			}
 			if (!strcmp(arg, "--show-ref-format")) {
