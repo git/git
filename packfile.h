@@ -137,12 +137,6 @@ void packfile_store_add_pack(struct packfile_store *store,
 			     struct packed_git *pack);
 
 /*
- * Get packs managed by the given store. Does not load the MIDX or any packs
- * referenced by it.
- */
-struct packed_git *packfile_store_get_packs(struct packfile_store *store);
-
-/*
  * Get all packs managed by the given store, including packfiles that are
  * referenced by multi-pack indices.
  */
