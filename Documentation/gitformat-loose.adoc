@@ -1,0 +1,53 @@
+gitformat-loose(5)
+==================
+
+NAME
+----
+gitformat-loose - Git loose object format
+
+
+SYNOPSIS
+--------
+[verse]
+$GIT_DIR/objects/[0-9a-f][0-9a-f]/*
+
+DESCRIPTION
+-----------
+
+Loose objects are how Git stores individual objects, where every object is
+written as a separate file.
+
+Over the lifetime of a repository, objects are usually written as loose objects
+initially.  Eventually, these loose objects will be compacted into packfiles
+via repository maintenance to improve disk space usage and speed up the lookup
+of these objects.
+
+== Loose objects
+
+Each loose object contains a prefix, followed immediately by the data of the
+object.  The prefix contains `<type> <size>\0`.  `<type>` is one of `blob`,
+`tree`, `commit`, or `tag` and `size` is the size of the data (without the
+prefix) as a decimal integer expressed in ASCII.
+
+The entire contents, prefix and data concatenated, is then compressed with zlib
+and the compressed data is stored in the file.  The object ID of the object is
+the SHA-1 or SHA-256 (as appropriate) hash of the uncompressed data.
+
+The file for the loose object is stored under the `objects` directory, with the
+first two hex characters of the object ID being the directory and the remaining
+characters being the file name.  This is done to shard the data and avoid too
+many files being in one directory, since some file systems perform poorly with
+many items in a directory.
+
+As an example, the empty tree contains the data (when uncompressed) `tree 0\0`
+and, in a SHA-256 repository, would have the object ID
+`6ef19b41225c5369f1c104d45d8d85efa9b057b53b14b4b9b939dd74decc5321` and would be
+stored under
+`$GIT_DIR/objects/6e/f19b41225c5369f1c104d45d8d85efa9b057b53b14b4b9b939dd74decc5321`.
+
+Similarly, a blob containing the contents `abc` would have the uncompressed
+data of `blob 3\0abc`.
+
+GIT
+---
+Part of the linkgit:git[1] suite
