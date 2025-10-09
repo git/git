@@ -227,9 +227,9 @@ network byte order):
     ** 4-byte length in bytes of shortened object names. This is the
       shortest possible length needed to make names in the shortened
       object name table unambiguous.
-    ** 4-byte integer, recording where tables relating to this format
+    ** 8-byte integer, recording where tables relating to this format
       are stored in this index file, as an offset from the beginning.
-  * 4-byte offset to the trailer from the beginning of this file.
+  * 8-byte offset to the trailer from the beginning of this file.
   * Zero or more additional key/value pairs (4-byte key, 4-byte
     value). Only one key is supported: 'PSRC'. See the "Loose objects
     and unreachable objects" section for supported values and how this
@@ -276,10 +276,14 @@ network byte order):
   up to and not including the table of CRC32 values.
 - Zero or more NUL bytes.
 - The trailer consists of the following:
-  * A copy of the 20-byte SHA-256 checksum at the end of the
+  * A copy of the full main hash checksum at the end of the
     corresponding packfile.
 
-  * 20-byte SHA-256 checksum of all of the above.
+  * Full main hash checksum of all of the above.
+
+The "full main hash" is a full-length hash of the main (not compatibility)
+algorithm in the repository.  Thus, if the main algorithm is SHA-256, this is
+a 32-byte SHA-256 hash and for SHA-1, it's a 20-byte SHA-1 hash.
 
 Loose object index
 ~~~~~~~~~~~~~~~~~~
