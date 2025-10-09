@@ -142,13 +142,13 @@ void packfile_store_add_pack(struct packfile_store *store,
  * repository.
  */
 #define repo_for_each_pack(repo, p) \
-	for (p = packfile_store_get_all_packs(repo->objects->packfiles); p; p = p->next)
+	for (p = packfile_store_get_packs(repo->objects->packfiles); p; p = p->next)
 
 /*
  * Get all packs managed by the given store, including packfiles that are
  * referenced by multi-pack indices.
  */
-struct packed_git *packfile_store_get_all_packs(struct packfile_store *store);
+struct packed_git *packfile_store_get_packs(struct packfile_store *store);
 
 /*
  * Get all packs in most-recently-used order.
