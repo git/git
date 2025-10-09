@@ -1027,12 +1027,6 @@ void packfile_store_reprepare(struct packfile_store *store)
 	packfile_store_prepare(store);
 }
 
-struct packed_git *packfile_store_get_packs(struct packfile_store *store)
-{
-	packfile_store_prepare(store);
-	return store->packs;
-}
-
 struct packed_git *packfile_store_get_all_packs(struct packfile_store *store)
 {
 	packfile_store_prepare(store);
