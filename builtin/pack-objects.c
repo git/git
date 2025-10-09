@@ -4394,7 +4394,7 @@ static int has_sha1_pack_kept_or_nonlocal(const struct object_id *oid)
 	struct packed_git *p;
 
 	p = (last_found != (void *)1) ? last_found :
-					packfile_store_get_all_packs(packs);
+					packfile_store_get_packs(packs);
 
 	while (p) {
 		if ((!p->pack_local || p->pack_keep ||
@@ -4404,7 +4404,7 @@ static int has_sha1_pack_kept_or_nonlocal(const struct object_id *oid)
 			return 1;
 		}
 		if (p == last_found)
-			p = packfile_store_get_all_packs(packs);
+			p = packfile_store_get_packs(packs);
 		else
 			p = p->next;
 		if (p == last_found)
