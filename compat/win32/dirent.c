@@ -30,6 +30,9 @@ DIR *opendir(const char *name)
 	if ((len = xutftowcs_path(pattern, name)) < 0)
 		return NULL;
 
+	if (len + 2 >= MAX_PATH)
+		return NULL;
+
 	/* append optional '/' and wildcard '*' */
 	if (len && !is_dir_sep(pattern[len - 1]))
 		pattern[len++] = '/';
