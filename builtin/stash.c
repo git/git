@@ -32,6 +32,7 @@
 #include "add-interactive.h"
 #include "oid-array.h"
 #include "commit.h"
+#include "wt-status.h"
 
 #define INCLUDE_ALL_FILES 2
 
@@ -585,6 +586,20 @@ static void unstage_changes_unless_new(struct object_id *orig_tree)
 		die(_("could not write index"));
 }
 
+static int previous_stash_count = -1;
+
+static void print_stash_status(bool quiet)
+{
+	int stash_count;
+	stash_count = count_stash_entries();
+
+	if (quiet || stash_count == previous_stash_count || previous_stash_count == -1)
+		return;
+
+	printf_ln(Q_("Your stash now has %d entry",
+		"Your stash now has %d entries", stash_count), stash_count);
+}
+
 static int do_apply_stash(const char *prefix, struct stash_info *info,
 			  int index, int quiet)
 {
@@ -705,7 +720,7 @@ restore_untracked:
 			     absolute_path(repo_get_work_tree(the_repository)));
 		strvec_pushf(&cp.env, GIT_DIR_ENVIRONMENT"=%s",
 			     absolute_path(repo_get_git_dir(the_repository)));
-		strvec_push(&cp.args, "status");
+		strvec_pushl(&cp.args, "status", "--no-show-stash", NULL);
 		run_command(&cp);
 	}
 
@@ -756,6 +771,8 @@ static int reflog_is_empty(const char *refname)
 
 static int do_drop_stash(struct stash_info *info, int quiet)
 {
+	previous_stash_count = count_stash_entries();
+
 	if (!reflog_delete(info->revision.buf,
 			   EXPIRE_REFLOGS_REWRITE | EXPIRE_REFLOGS_UPDATE_REF,
 			   0)) {
@@ -805,6 +822,8 @@ static int drop_stash(int argc, const char **argv, const char *prefix,
 		goto cleanup;
 
 	ret = do_drop_stash(&info, quiet);
+	print_stash_status(quiet);
+
 cleanup:
 	free_stash_info(&info);
 	return ret;
@@ -835,6 +854,8 @@ static int pop_stash(int argc, const char **argv, const char *prefix,
 			    "you need it again."));
 	else
 		ret = do_drop_stash(&info, quiet);
+
+	print_stash_status(quiet);
 
 cleanup:
 	free_stash_info(&info);
@@ -874,6 +895,8 @@ static int branch_stash(int argc, const char **argv, const char *prefix,
 		ret = do_apply_stash(prefix, &info, 1, 0);
 	if (!ret && info.is_stash_ref)
 		ret = do_drop_stash(&info, 0);
+
+	print_stash_status(0);
 
 cleanup:
 	free_stash_info(&info);
@@ -1062,6 +1085,7 @@ static int do_store_stash(const struct object_id *w_commit, const char *stash_ms
 	struct stash_info info;
 	char revision[GIT_MAX_HEXSZ];
 
+	previous_stash_count = count_stash_entries();
 	oid_to_hex_r(revision, w_commit);
 	assert_stash_like(&info, revision);
 
@@ -1119,6 +1143,7 @@ static int store_stash(int argc, const char **argv, const char *prefix,
 	}
 
 	ret = do_store_stash(&obj, stash_msg, quiet);
+	print_stash_status(quiet);
 
 out:
 	object_context_release(&dummy);
@@ -1914,6 +1939,7 @@ static int push_stash(int argc, const char **argv, const char *prefix,
 
 	ret = do_push_stash(&ps, stash_msg, quiet, keep_index, patch_mode,
 			    &add_p_opt, include_untracked, only_staged);
+	print_stash_status(quiet);
 
 	clear_pathspec(&ps);
 	free(pathspec_from_file);
@@ -1982,6 +2008,7 @@ static int save_stash(int argc, const char **argv, const char *prefix,
 	ret = do_push_stash(&ps, stash_msg, quiet, keep_index,
 			    patch_mode, &add_p_opt, include_untracked,
 			    only_staged);
+	print_stash_status(quiet);
 
 	strbuf_release(&stash_msg_buf);
 	return ret;
@@ -2291,7 +2318,7 @@ static int do_export_stash(struct repository *r,
 			.r = r, .items = iter,
 		};
 		if (refs_for_each_reflog_ent_reverse(get_main_ref_store(r),
-						     "refs/stash",
+						     ref_stash,
 						     collect_stash_entries,
 						     &cb_data) && cb_data.count)
 			goto out;
