@@ -1067,6 +1067,24 @@ int fsck_tag_standalone(const struct object_id *oid, const char *buffer,
 	else
 		ret = fsck_ident(&buffer, oid, OBJ_TAG, options);
 
+	if (buffer < buffer_end && (skip_prefix(buffer, "gpgsig ", &buffer) || skip_prefix(buffer, "gpgsig-sha256 ", &buffer))) {
+		eol = memchr(buffer, '\n', buffer_end - buffer);
+		if (!eol) {
+			ret = report(options, oid, OBJ_TAG, FSCK_MSG_BAD_GPGSIG, "invalid format - unexpected end after 'gpgsig' or 'gpgsig-sha256' line");
+			goto done;
+		}
+		buffer = eol + 1;
+
+		while (buffer < buffer_end && starts_with(buffer, " ")) {
+			eol = memchr(buffer, '\n', buffer_end - buffer);
+			if (!eol) {
+				ret = report(options, oid, OBJ_TAG, FSCK_MSG_BAD_HEADER_CONTINUATION, "invalid format - unexpected end in 'gpgsig' or 'gpgsig-sha256' continuation line");
+				goto done;
+			}
+			buffer = eol + 1;
+		}
+	}
+
 	if (buffer < buffer_end && !starts_with(buffer, "\n")) {
 		/*
 		 * The verify_headers() check will allow
