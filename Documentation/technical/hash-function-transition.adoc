@@ -260,12 +260,10 @@ network byte order):
     compressed data to be copied directly from pack to pack during
     repacking without undetected data corruption.
 
-  * A table of 4-byte offset values. For an object in the table of
-    sorted shortened object names, the value at the corresponding
-    index in this table indicates where that object can be found in
-    the pack file. These are usually 31-bit pack file offsets, but
-    large offsets are encoded as an index into the next table with the
-    most significant bit set.
+  * A table of 4-byte offset values. The index of this table in pack order
+    indicates where that object can be found in the pack file. These are
+    usually 31-bit pack file offsets, but large offsets are encoded as
+    an index into the next table with the most significant bit set.
 
   * A table of 8-byte offset entries (empty for pack files less than
     2 GiB). Pack files are organized with heavily used objects toward
