@@ -123,11 +123,10 @@ int finish_pack_objects_cmd(const struct git_hash_algo *algop,
 void existing_packs_collect(struct existing_packs *existing,
 			    const struct string_list *extra_keep)
 {
-	struct packfile_store *packs = existing->repo->objects->packfiles;
 	struct packed_git *p;
 	struct strbuf buf = STRBUF_INIT;
 
-	for (p = packfile_store_get_all_packs(packs); p; p = p->next) {
+	repo_for_each_pack(existing->repo, p) {
 		size_t i;
 		const char *base;
 
