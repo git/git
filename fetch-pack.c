@@ -188,13 +188,9 @@ static int rev_list_insert_ref(struct fetch_negotiator *negotiator,
 	return 0;
 }
 
-static int rev_list_insert_ref_oid(const char *refname UNUSED,
-				   const char *referent UNUSED,
-				   const struct object_id *oid,
-				   int flag UNUSED,
-				   void *cb_data)
+static int rev_list_insert_ref_oid(const struct reference *ref, void *cb_data)
 {
-	return rev_list_insert_ref(cb_data, oid);
+	return rev_list_insert_ref(cb_data, ref->oid);
 }
 
 enum ack_type {
@@ -616,13 +612,9 @@ static int mark_complete(const struct object_id *oid)
 	return 0;
 }
 
-static int mark_complete_oid(const char *refname UNUSED,
-			     const char *referent UNUSED,
-			     const struct object_id *oid,
-			     int flag UNUSED,
-			     void *cb_data UNUSED)
+static int mark_complete_oid(const struct reference *ref, void *cb_data UNUSED)
 {
-	return mark_complete(oid);
+	return mark_complete(ref->oid);
 }
 
 static void mark_recent_complete_commits(struct fetch_pack_args *args,
