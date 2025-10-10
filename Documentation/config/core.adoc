@@ -75,8 +75,8 @@ The built-in file system monitor is currently available only on a
 limited set of supported platforms.  Currently, this includes Windows
 and MacOS.
 +
-	Otherwise, this variable contains the pathname of the "fsmonitor"
-	hook command.
+Otherwise, this variable contains the pathname of the "fsmonitor"
+hook command.
 +
 This hook command is used to identify all files that may have changed
 since the requested date/time. This information is used to speed up
