@@ -1708,11 +1708,16 @@ test_set_hash () {
 # Detect the hash algorithm in use.
 test_detect_hash () {
 	case "${GIT_TEST_DEFAULT_HASH:-$GIT_TEST_BUILTIN_HASH}" in
-	"sha256")
+	*:*)
+	    test_hash_algo="${GIT_TEST_DEFAULT_HASH%%:*}"
+	    test_compat_hash_algo="${GIT_TEST_DEFAULT_HASH##*:}"
+	    test_repo_compat_hash_algo="$test_compat_hash_algo"
+	    ;;
+	sha256)
 	    test_hash_algo=sha256
 	    test_compat_hash_algo=sha1
 	    ;;
-	*)
+	sha1)
 	    test_hash_algo=sha1
 	    test_compat_hash_algo=sha256
 	    ;;
