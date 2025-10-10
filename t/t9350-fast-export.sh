@@ -35,6 +35,7 @@ test_expect_success 'setup' '
 	git commit -m sitzt file2 &&
 	test_tick &&
 	git tag -a -m valentin muss &&
+	ANNOTATED_TAG_COUNT=1 &&
 	git merge -s ours main
 
 '
@@ -229,7 +230,8 @@ EOF
 
 test_expect_success 'set up faked signed tag' '
 
-	git fast-import <signed-tag-import
+	git fast-import <signed-tag-import &&
+	ANNOTATED_TAG_COUNT=$((ANNOTATED_TAG_COUNT + 1))
 
 '
 
@@ -275,6 +277,42 @@ test_expect_success 'signed-tags=warn-strip' '
 	git fast-export --signed-tags=warn-strip sign-your-name >output 2>err &&
 	! grep PGP output &&
 	test -s err
+'
+
+test_expect_success GPGSM 'setup X.509 signed tag' '
+	test_config gpg.format x509 &&
+	test_config user.signingkey $GIT_COMMITTER_EMAIL &&
+
+	git tag -s -m "X.509 signed tag" x509-signed $(git rev-parse HEAD) &&
+	ANNOTATED_TAG_COUNT=$((ANNOTATED_TAG_COUNT + 1))
+'
+
+test_expect_success GPGSM 'signed-tags=verbatim with X.509' '
+	git fast-export --signed-tags=verbatim x509-signed > output &&
+	test_grep "SIGNED MESSAGE" output
+'
+
+test_expect_success GPGSM 'signed-tags=strip with X.509' '
+	git fast-export --signed-tags=strip x509-signed > output &&
+	test_grep ! "SIGNED MESSAGE" output
+'
+
+test_expect_success GPGSSH 'setup SSH signed tag' '
+	test_config gpg.format ssh &&
+	test_config user.signingkey "${GPGSSH_KEY_PRIMARY}" &&
+
+	git tag -s -m "SSH signed tag" ssh-signed $(git rev-parse HEAD) &&
+	ANNOTATED_TAG_COUNT=$((ANNOTATED_TAG_COUNT + 1))
+'
+
+test_expect_success GPGSSH 'signed-tags=verbatim with SSH' '
+	git fast-export --signed-tags=verbatim ssh-signed > output &&
+	test_grep "SSH SIGNATURE" output
+'
+
+test_expect_success GPGSSH 'signed-tags=strip with SSH' '
+	git fast-export --signed-tags=strip ssh-signed > output &&
+	test_grep ! "SSH SIGNATURE" output
 '
 
 test_expect_success GPG 'set up signed commit' '
@@ -491,8 +529,9 @@ test_expect_success 'fast-export -C -C | fast-import' '
 test_expect_success 'fast-export | fast-import when main is tagged' '
 
 	git tag -m msg last &&
+	ANNOTATED_TAG_COUNT=$((ANNOTATED_TAG_COUNT + 1)) &&
 	git fast-export -C -C --signed-tags=strip --all > output &&
-	test $(grep -c "^tag " output) = 3
+	test $(grep -c "^tag " output) = $ANNOTATED_TAG_COUNT
 
 '
 
@@ -506,12 +545,13 @@ test_expect_success 'cope with tagger-less tags' '
 
 	TAG=$(git hash-object --literally -t tag -w tag-content) &&
 	git update-ref refs/tags/sonnenschein $TAG &&
+	ANNOTATED_TAG_COUNT=$((ANNOTATED_TAG_COUNT + 1)) &&
 	git fast-export -C -C --signed-tags=strip --all > output &&
-	test $(grep -c "^tag " output) = 4 &&
+	test $(grep -c "^tag " output) = $ANNOTATED_TAG_COUNT &&
 	! grep "Unspecified Tagger" output &&
 	git fast-export -C -C --signed-tags=strip --all \
 		--fake-missing-tagger > output &&
-	test $(grep -c "^tag " output) = 4 &&
+	test $(grep -c "^tag " output) = $ANNOTATED_TAG_COUNT &&
 	grep "Unspecified Tagger" output
 
 '
