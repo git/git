@@ -342,10 +342,10 @@ patch::
        d - do not stage this hunk or any of the later hunks in the file
        g - select a hunk to go to
        / - search for a hunk matching the given regex
-       j - leave this hunk undecided, see next undecided hunk
-       J - leave this hunk undecided, see next hunk
-       k - leave this hunk undecided, see previous undecided hunk
-       K - leave this hunk undecided, see previous hunk
+       j - go to the next undecided hunk, roll over at the bottom
+       J - go to the next hunk, roll over at the bottom
+       k - go to the previous undecided hunk, roll over at the top
+       K - go to the previous hunk, roll over at the top
        s - split the current hunk into smaller hunks
        e - manually edit the current hunk
        p - print the current hunk
