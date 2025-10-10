@@ -23,7 +23,7 @@ struct range_diff_options {
 	unsigned include_merges:1;
 	size_t max_memory;
 	const struct diff_options *diffopt; /* may be NULL */
-	const struct strvec *other_arg; /* may be NULL */
+	const struct strvec *log_arg; /* may be NULL */
 };
 
 /*
