@@ -61,6 +61,15 @@ ubuntu-*|i386/ubuntu-*|debian-*)
 		libsecret-1-dev libpcre2-dev meson ninja-build pkg-config \
 		${CC_PACKAGE:-${CC:-gcc}} $PYTHON_PACKAGE
 
+	# Starting with Ubuntu 25.10, sudo can now be provided via either
+	# sudo(1) or sudo-rs(1), with the latter being the default. The problem
+	# is that it does not support `--preserve-env` though, which we rely on
+	# in our CI. We thus revert back to the C implementation.
+	if test -f /etc/alternatives/sudo
+	then
+		sudo update-alternatives --set sudo /usr/bin/sudo.ws
+	fi
+
 	case "$distro" in
 	ubuntu-*)
 		mkdir --parents "$CUSTOM_PATH"
