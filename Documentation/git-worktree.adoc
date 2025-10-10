@@ -79,6 +79,9 @@ with a matching name, treat as equivalent to:
 $ git worktree add --track -b <branch> <path> <remote>/<branch>
 ------------
 +
+For best results it is advised to specify _<path>_ outside of the repository
+and existing worktrees - see <<EXAMPLES,EXAMPLES>>
++
 If the branch exists in multiple remotes and one of them is named by
 the `checkout.defaultRemote` configuration variable, we'll use that
 one for the purposes of disambiguation, even if the _<branch>_ isn't
@@ -502,6 +505,7 @@ locked "reason\nwhy is locked"
 ...
 ------------
 
+[[EXAMPLES]]
 EXAMPLES
 --------
 You are in the middle of a refactoring session and your boss comes in and
@@ -520,6 +524,16 @@ $ pushd ../temp
 $ git commit -a -m 'emergency fix for boss'
 $ popd
 $ git worktree remove ../temp
+------------
+
+Side by side branch checkouts for a repository using multiple worktrees
+
+------------
+mkdir some-repository
+cd some-repository
+git clone --bare gitforge@someforge.example.com:some-org/some-repository some-repository.git
+git --git-dir=some-repository.git worktree add some-branch
+git --git-dir=some-repository.git worktree add another-branch
 ------------
 
 CONFIGURATION
