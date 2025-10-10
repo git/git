@@ -216,6 +216,20 @@ $ git describe --abbrev=10 HEAD  # correct
 $ git describe --abbrev 10 HEAD  # NOT WHAT YOU MEANT
 ----------------------------
 
+
+Magic filename options
+~~~~~~~~~~~~~~~~~~~~~~
+Options that take a filename allow a prefix `:(optional)`. For example:
+
+----------------------------
+git commit -F :(optional)COMMIT_EDITMSG
+# if COMMIT_EDITMSG does not exist, equivalent to
+git commit
+----------------------------
+
+Like with configuration values, if the named file is missing Git behaves as if
+the option was not given at all. See "Values" in linkgit:git-config[1].
+
 NOTES ON FREQUENTLY CONFUSED OPTIONS
 ------------------------------------
 

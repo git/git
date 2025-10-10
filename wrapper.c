@@ -721,6 +721,19 @@ int xgethostname(char *buf, size_t len)
 	return ret;
 }
 
+int is_missing_file(const char *filename)
+{
+	struct stat st;
+
+	if (stat(filename, &st) < 0) {
+		if (errno == ENOENT)
+			return 1;
+		die_errno(_("could not stat %s"), filename);
+	}
+
+	return 0;
+}
+
 int is_empty_or_missing_file(const char *filename)
 {
 	struct stat st;
