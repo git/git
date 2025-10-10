@@ -2,7 +2,7 @@
 #
 # Test Git in parallel
 #
-
+ 
 . ${0%/*}/lib.sh
 
 group "Run tests" make --quiet -C t T="$(cd t &&
