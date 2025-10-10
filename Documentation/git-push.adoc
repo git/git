@@ -19,30 +19,35 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-Updates remote refs using local refs, while sending objects
-necessary to complete the given refs.
+Updates one or more branches, tags, or other references in a remote
+repository from your local repository, and sends all necessary data
+that isn't already on the remote.
+
+The simplest way to push is `git push <remote> <branch>`.
+`git push origin main` will push the local `main` branch to the `main`
+branch on the remote named `origin`.
+
+The `<repository>` argument defaults to the upstream for the current branch,
+or `origin` if there's no configured upstream.
+
+To decide which branches, tags, or other refs to push, Git uses
+(in order of precedence):
+
+1. The `<refspec>` argument(s) (for example `main` in `git push origin main`)
+   or the `--all`, `--mirror`, or `--tags` options
+2. The `remote.*.push` configuration for the repository being pushed to
+3. The `push.default` configuration. The default is `push.default=simple`,
+   which will push to a branch with the same name as the current branch.
+   See the <<CONFIGURATION,CONFIGURATION>> section below for more on `push.default`.
+
+`git push` may fail if you haven't set an upstream for the current branch,
+depending on what `push.default` is set to.
+See the <<UPSTREAM-BRANCHES,UPSTREAM BRANCHES>> section below for more
+on how to set and use upstreams.
 
 You can make interesting things happen to a repository
 every time you push into it, by setting up 'hooks' there.  See
 documentation for linkgit:git-receive-pack[1].
-
-When the command line does not specify where to push with the
-`<repository>` argument, `branch.*.remote` configuration for the
-current branch is consulted to determine where to push.  If the
-configuration is missing, it defaults to 'origin'.
-
-When the command line does not specify what to push with `<refspec>...`
-arguments or `--all`, `--mirror`, `--tags` options, the command finds
-the default `<refspec>` by consulting `remote.*.push` configuration,
-and if it is not found, honors `push.default` configuration to decide
-what to push (See linkgit:git-config[1] for the meaning of `push.default`).
-
-When neither the command-line nor the configuration specifies what to
-push, the default behavior is used, which corresponds to the `simple`
-value for `push.default`: the current branch is pushed to the
-corresponding upstream branch, but as a safety measure, the push is
-aborted if the upstream branch does not have the same name as the
-local one.
 
 
 OPTIONS[[OPTIONS]]
@@ -710,6 +715,7 @@ a `git gc` command on the origin repository.
 
 include::transfer-data-leaks.adoc[]
 
+[[CONFIGURATION]]
 CONFIGURATION
 -------------
 
