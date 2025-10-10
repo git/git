@@ -1030,12 +1030,6 @@ void packfile_store_reprepare(struct packfile_store *store)
 struct packed_git *packfile_store_get_packs(struct packfile_store *store)
 {
 	packfile_store_prepare(store);
-	return store->packs;
-}
-
-struct packed_git *packfile_store_get_all_packs(struct packfile_store *store)
-{
-	packfile_store_prepare(store);
 
 	for (struct odb_source *source = store->odb->sources; source; source = source->next) {
 		struct multi_pack_index *m = source->midx;
@@ -2105,7 +2099,7 @@ struct packed_git **kept_pack_cache(struct repository *r, unsigned flags)
 		 * covers, one kept and one not kept, but the midx returns only
 		 * the non-kept version.
 		 */
-		for (p = packfile_store_get_all_packs(r->objects->packfiles); p; p = p->next) {
+		repo_for_each_pack(r, p) {
 			if ((p->pack_keep && (flags & ON_DISK_KEEP_PACKS)) ||
 			    (p->pack_keep_in_core && (flags & IN_CORE_KEEP_PACKS))) {
 				ALLOC_GROW(packs, nr + 1, alloc);
@@ -2202,7 +2196,7 @@ int for_each_packed_object(struct repository *repo, each_packed_object_fn cb,
 	int r = 0;
 	int pack_errors = 0;
 
-	for (p = packfile_store_get_all_packs(repo->objects->packfiles); p; p = p->next) {
+	repo_for_each_pack(repo, p) {
 		if ((flags & FOR_EACH_OBJECT_LOCAL_ONLY) && !p->pack_local)
 			continue;
 		if ((flags & FOR_EACH_OBJECT_PROMISOR_ONLY) &&

@@ -664,7 +664,7 @@ static int open_pack_bitmap(struct repository *r,
 	struct packed_git *p;
 	int ret = -1;
 
-	for (p = packfile_store_get_all_packs(r->objects->packfiles); p; p = p->next) {
+	repo_for_each_pack(r, p) {
 		if (open_pack_bitmap_1(bitmap_git, p) == 0) {
 			ret = 0;
 			/*
@@ -3347,6 +3347,7 @@ static int verify_bitmap_file(const struct git_hash_algo *algop,
 int verify_bitmap_files(struct repository *r)
 {
 	struct odb_source *source;
+	struct packed_git *p;
 	int res = 0;
 
 	odb_prepare_alternates(r->objects);
@@ -3362,8 +3363,7 @@ int verify_bitmap_files(struct repository *r)
 		free(midx_bitmap_name);
 	}
 
-	for (struct packed_git *p = packfile_store_get_all_packs(r->objects->packfiles);
-	     p; p = p->next) {
+	repo_for_each_pack(r, p) {
 		char *pack_bitmap_name = pack_bitmap_filename(p);
 		res |= verify_bitmap_file(r->hash_algo, pack_bitmap_name);
 		free(pack_bitmap_name);
