@@ -73,6 +73,15 @@ relativeWorktrees:::
 	repaired with either the `--relative-paths` option or with the
 	`worktree.useRelativePaths` config set to `true`.
 
+submoduleEncoding:::
+	If enabled, submodule gitdir paths are encoded to avoid filesystem
+	conflicts due to nested gitdirs or case insensitivity. For now, only
+	url-encoding (rfc3986) is available, with a small addition to encode
+	uppercase to lowercase letters (`A  -> _a`, `B -> _b` and so on).
+	Other encoding or hashing methods may be added in the future.
+	Any preexisting non-encoded submodule gitdirs are used as-is, to
+	ease migration and reduce risk of gitdirs not being recognized.
+
 worktreeConfig:::
 	If enabled, then worktrees will load config settings from the
 	`$GIT_DIR/config.worktree` file in addition to the

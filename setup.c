@@ -687,6 +687,9 @@ static enum extension_result handle_extension(const char *var,
 	} else if (!strcmp(ext, "relativeworktrees")) {
 		data->relative_worktrees = git_config_bool(var, value);
 		return EXTENSION_OK;
+	} else if (!strcmp(ext, "submoduleencoding")) {
+		data->submodule_encoding = git_config_bool(var, value);
+		return EXTENSION_OK;
 	}
 	return EXTENSION_UNKNOWN;
 }
@@ -1865,6 +1868,8 @@ const char *setup_git_directory_gently(int *nongit_ok)
 				repo_fmt.worktree_config;
 			the_repository->repository_format_relative_worktrees =
 				repo_fmt.relative_worktrees;
+			the_repository->repository_format_submodule_encoding =
+				repo_fmt.submodule_encoding;
 			/* take ownership of repo_fmt.partial_clone */
 			the_repository->repository_format_partial_clone =
 				repo_fmt.partial_clone;
@@ -1963,6 +1968,8 @@ void check_repository_format(struct repository_format *fmt)
 				    fmt->ref_storage_format);
 	the_repository->repository_format_worktree_config =
 		fmt->worktree_config;
+	the_repository->repository_format_submodule_encoding =
+		fmt->submodule_encoding;
 	the_repository->repository_format_relative_worktrees =
 		fmt->relative_worktrees;
 	the_repository->repository_format_partial_clone =
