@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Oct 2025, #03; Wed, 8)
-X-master-at: 60f3f52f17cceefa5299709b189ce6fe2d181e7b
-X-next-at: 76037df0d4c651b3a9a2f6bee29233c1598da27c
+Subject: What's cooking in git.git (Oct 2025, #04; Fri, 10)
+X-master-at: 4b71b294773cc4f7fe48ec3a70079aa8783f373d
+X-next-at: f9c4a03a3a780b23d84ed893d98c5c8141d26374
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Oct 2025, #03; Wed, 8)
+What's cooking in git.git (Oct 2025, #04; Fri, 10)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,20 +46,127 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* en/doc-merge-tree-describe-merge-base (2025-10-02) 1 commit
+  (merged to 'next' on 2025-10-06 at 787ff6f08a)
+ + Documentation/git-merge-tree.adoc: clarify the --merge-base option
+
+ Clarify the "--merge-base" command line option in "git merge-tree".
+ 
+ source: <pull.1980.git.1759444487406.gitgitgadget@gmail.com>
+
+
+* ps/gitlab-ci-windows-improvements (2025-10-02) 5 commits
+  (merged to 'next' on 2025-10-03 at 6adb054d12)
+ + t8020: fix test failure due to indeterministic tag sorting
+ + gitlab-ci: upload Meson test logs as JUnit reports
+ + gitlab-ci: drop workaround for Python certificate store on Windows
+ + gitlab-ci: ignore failures to disable realtime monitoring
+ + gitlab-ci: dedup instructions to disable realtime monitoring
+ (this branch is used by ps/ci-rust.)
+
+ GitLab CI improvements.
+ 
+ source: <20251002-pks-gitlab-ci-windows-improvements-v1-0-6a8b6b45d728@pks.im>
+
+
+* rj/doc-missing-technical-docs (2025-10-02) 1 commit
+  (merged to 'next' on 2025-10-06 at f639955fdc)
+ + doc: add some missing technical documents
+ (this branch is used by rj/doc-technical-fixes.)
+
+ Doc updates.
+ 
+ source: <20251002221233.541844-2-ramsay@ramsayjones.plus.com>
+
+--------------------------------------------------
 [New Topics]
 
-* cc/fast-import-strip-signed-tags (2025-10-07) 5 commits
+* dk/stash-apply-index (2025-10-06) 1 commit
+ - doc: explain the impact of stash.index on --autostash options
+
+ Doc update.
+
+ Will merge to 'next'.
+ source: <d4a277b6b0695d86636562f4c07efae17f9249f9.1759755379.git.ben.knoble+github@gmail.com>
+
+
+* js/mingw-includes-cleanup (2025-10-09) 2 commits
+ - mingw: order `#include`s alphabetically
+ - mingw: avoid relative `#include`s
+
+ Code clean-up.
+
+ Will merge to 'next'.
+ source: <pull.1985.git.1759995961.gitgitgadget@gmail.com>
+
+
+* js/unreachable-workaround-for-no-symlink-head (2025-10-09) 1 commit
+ - refs: forbid clang to complain about unreachable code
+
+ Code clean-up.
+
+ Will merge to 'next'.
+ source: <pull.1984.git.1759995982220.gitgitgadget@gmail.com>
+
+
+* kh/doc-patch-id-1 (2025-10-09) 2 commits
+ - doc: patch-id: convert to the modern synopsis style
+ - Merge branch 'kh/doc-patch-id-markup-fix' into kh/doc-patch-id-1
+ (this branch uses kh/doc-patch-id-markup-fix.)
+
+ Expecting a reroll.
+ cf. <d0dcaea3-844f-497a-adca-6241bf39db41@free.fr>
+ source: <978261e3be4.1760043036.git.code@khaugsbakk.name>
+
+
+* tz/test-prepare-gnupghome (2024-07-03) 2 commits
+ - t/lib-gpg: call prepare_gnupghome() in GPG2 prereq
+ - t/lib-gpg: add prepare_gnupghome() to create GNUPGHOME dir
+
+ Tests did not set up GNUPGHOME correctly, which is fixed but some
+ bugs are exposed in t1016, which needs to be addressed before this
+ topic can move forward.
+
+ On hold.
+ cf. <ZoV8b2RvYxLOotSJ@teonanacatl.net>
+ source: <20240703153738.916469-1-tmz@pobox.com>
+
+
+* jc/t1016-setup-fix (2025-10-10) 1 commit
+ - t1016: make sure to use specified GPG
+
+ GPG signing test set-up has been broken for a year, which has been
+ corrected.
+
+ Comments?
+ source: <xmqqsefq7947.fsf@gitster.g>
+
+* kh/doc-continued-paragraph-fix (2025-10-08) 1 commit
+ - doc: fix accidental literal blocks
+
+ Doc mark-up fixes.
+
+ Will merge to 'next'.
+ source: <7a955ecb1b5.1759923933.git.code@khaugsbakk.name>
+
+--------------------------------------------------
+[Cooking]
+
+* cc/fast-import-strip-signed-tags (2025-10-09) 5 commits
  - fast-import: add '--signed-tags=<mode>' option
  - fast-export: handle all kinds of tag signatures
  - t9350: properly count annotated tags
- - lib-gpg: allow tests with the GPGSM prereq first
- - doc: git-tag: stop focussing on GPG signed tags
+ - lib-gpg: allow tests with GPGSM or GPGSSH prereq first
+ - doc: git-tag: stop focusing on GPG signed tags
 
  "git fast-import" is taught to handle signed tags, just like it
  recently learned to handle signed commits, in different ways.
 
- Comments?
- source: <20251007122958.1089680-1-christian.couder@gmail.com>
+ Expecting v3.
+ cf. <CAP8UFD10eMwKdacEzLumdXUghV2nYZViDT4o44u1qgXVU5Pzew@mail.gmail.com>
+ source: <20251009122457.1273701-1-christian.couder@gmail.com>
 
 
 * ps/ci-rust (2025-10-07) 8 commits
@@ -71,15 +178,15 @@ Release tarballs are available at:
  - ci: deduplicate calls to `apt-get update`
  - Merge branch 'ps/gitlab-ci-windows-improvements' into ps/ci-rust
  - Merge branch 'ps/rust-balloon' into ps/ci-rust
- (this branch uses ps/gitlab-ci-windows-improvements.)
 
  CI improvements to handle the recent Rust integration better.
 
- Comments?
- source: <20251007-b4-pks-ci-rust-v1-0-394502abe7ea@pks.im>
+ Expecting an update.
+ cf. <aOdIRnB-SGQwj935@pks.im>
+ source: <20251008-b4-pks-ci-rust-v2-0-d556ee83c381@pks.im>
 
 
-* ps/ref-peeled-tags (2025-10-07) 13 commits
+* ps/ref-peeled-tags (2025-10-08) 14 commits
  - ref-filter: parse objects on demand
  - ref-filter: detect broken tags when dereferencing them
  - refs: don't store peeled object IDs for invalid tags
@@ -91,19 +198,17 @@ Release tarballs are available at:
  - upload-pack: convert to use `reference_get_peeled_oid()`
  - refs: expose peeled object ID via the iterator
  - refs: refactor reference status flags
+ - refs: fully reset `struct ref_iterator::ref` on iteration
  - refs: introduce `.ref` field for the base iterator
  - refs: introduce wrapper struct for `each_ref_fn`
 
  Some ref backend storage can hold not just the object name of an
  annotated tag, but the object name of the object the tag points at.
  The code to handle this information has been streamlined.
-
- Expecting v2.
- cf. <aOZqVAOjVboM3sm3@pks.im>
- source: <20251007-b4-pks-ref-filter-skip-parsing-objects-v1-0-916cc7c6886b@pks.im>
+ source: <20251008-b4-pks-ref-filter-skip-parsing-objects-v2-0-76e30d5c9542@pks.im>
 
 
-* ps/remove-packfile-store-get-packs (2025-10-07) 7 commits
+* ps/remove-packfile-store-get-packs (2025-10-09) 7 commits
  - packfile: rename `packfile_store_get_all_packs()`
  - packfile: introduce macro to iterate through packs
  - packfile: drop `packfile_store_get_packs()`
@@ -117,165 +222,41 @@ Release tarballs are available at:
  has been cleaned up.
 
  Comments?
- source: <20251007-pks-packfiles-convert-get-all-v1-0-428227657a89@pks.im>
+ source: <20251009-pks-packfiles-convert-get-all-v2-0-0d73b87ce711@pks.im>
 
 
 * tb/doc-submitting-patches (2025-10-07) 2 commits
- - SubmittingPatches: guidance for multi-series efforts
- - SubmittingPatches: extend release-notes experiment to topic names
+  (merged to 'next' on 2025-10-10 at b63283990d)
+ + SubmittingPatches: guidance for multi-series efforts
+ + SubmittingPatches: extend release-notes experiment to topic names
 
  A few more things that patch authors can do to help maintainer to
  keep track of their topics better.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cover.1759873165.git.me@ttaylorr.com>
 
---------------------------------------------------
-[Graduated to 'master']
 
-* je/doc-push (2025-09-23) 2 commits
-  (merged to 'next' on 2025-09-29 at 4ff1b675ed)
- + doc: git-push: rewrite refspec specification
- + doc: git-push: create PUSH RULES section
-
- Doc updates.
- source: <pull.1973.v2.git.1758651049.gitgitgadget@gmail.com>
-
-
-* js/curl-off-t-fixes (2025-09-26) 3 commits
-  (merged to 'next' on 2025-09-30 at 6d1e5fd288)
- + http-push: avoid new compile error
- + imap-send: be more careful when casting to `curl_off_t`
- + http: offer to cast `size_t` to `curl_off_t` safely
-
- A few places where an size_t value was cast to curl_off_t without
- checking has been updated to use the existing helper function.
- source: <pull.1974.v2.git.1758882772.gitgitgadget@gmail.com>
-
-
-* jt/clang-format-foreach-wo-space-before-parenthesis (2025-09-27) 1 commit
-  (merged to 'next' on 2025-09-30 at c32668ab36)
- + clang-format: exclude control macros from SpaceBeforeParens
-
- Clang-format update to let our control macros formatted the way we
- had them traditionally, e.g., "for_each_string_list_item()" without
- space before the parentheses.
- source: <20250927145049.723341-4-jltobler@gmail.com>
-
-
-* kn/ref-cache-seek-fix (2025-10-01) 1 commit
-  (merged to 'next' on 2025-10-02 at 5896b8c896)
- + refs/ref-cache: fix SEGFAULT when seeking in empty directories
-
- Handling of an empty subdirectory of .git/refs/ in the ref-files
- backend has been corrected.
- source: <20251001-583-git-for-each-ref-start-after-v3-1-000f03837a92@gmail.com>
-
-
-* mh/doc-credential-url-prefix (2025-10-01) 1 commit
-  (merged to 'next' on 2025-10-02 at dd0d9a1c59)
- + docs/gitcredentials: describe URL prefix matching
-
- Doc update to describe a feature that has already been implemented.
- source: <pull.1979.git.1759352209657.gitgitgadget@gmail.com>
-
-
-* ml/reflog-write-committer-info-fix (2025-09-30) 1 commit
-  (merged to 'next' on 2025-10-02 at 9a61d07bac)
- + builtin/reflog: respect user config in "write" subcommand
-
- "git reflog write" did not honor the configured user.name/email
- which has been corrected.
- source: <20250930195320.23825-1-git@lohmann.sh>
-
-
-* ps/odb-clean-stale-wrappers (2025-09-10) 1 commit
-  (merged to 'next' on 2025-09-30 at 90f1033b8c)
- + odb: drop deprecated wrapper functions
-
- Code clean-up.
- source: <20250910-b4-pks-odb-drop-wrappers-v1-1-6ed660cb1eec@pks.im>
-
-
-* ps/packfile-store (2025-09-23) 16 commits
-  (merged to 'next' on 2025-09-29 at 342bb57fc2)
- + packfile: refactor `get_packed_git_mru()` to work on packfile store
- + packfile: refactor `get_all_packs()` to work on packfile store
- + packfile: refactor `get_packed_git()` to work on packfile store
- + packfile: move `get_multi_pack_index()` into "midx.c"
- + packfile: introduce function to load and add packfiles
- + packfile: refactor `install_packed_git()` to work on packfile store
- + packfile: split up responsibilities of `reprepare_packed_git()`
- + packfile: refactor `prepare_packed_git()` to work on packfile store
- + packfile: reorder functions to avoid function declaration
- + odb: move kept cache into `struct packfile_store`
- + odb: move MRU list of packfiles into `struct packfile_store`
- + odb: move packfile map into `struct packfile_store`
- + odb: move initialization bit into `struct packfile_store`
- + odb: move list of packfiles into `struct packfile_store`
- + packfile: introduce a new `struct packfile_store`
- + Merge branch 'ps/object-store-midx-dedup-info' into ps/packfile-store
- (this branch is used by tb/incremental-midx-part-3.1.)
-
- Code clean-up around the in-core list of all the pack files and
- object database(s).
- cf. <aNmxQqV3+1Ad12qC@nand.local>
- source: <20250923-b4-pks-packfiles-store-v6-0-b48f2a882759@pks.im>
-
-
-* ps/rust-balloon (2025-10-02) 9 commits
-  (merged to 'next' on 2025-10-02 at fe4cdc2dfa)
- + ci: enable Rust for breaking-changes jobs
- + ci: convert "pedantic" job into full build with breaking changes
- + BreakingChanges: announce Rust becoming mandatory
- + varint: reimplement as test balloon for Rust
- + varint: use explicit width for integers
- + help: report on whether or not Rust is enabled
- + Makefile: introduce infrastructure to build internal Rust library
- + Makefile: reorder sources after includes
- + meson: add infrastructure to build internal Rust library
- (this branch is used by ps/ci-rust.)
-
- Dip our toes a bit to (optionally) use Rust implemented helper
- called from our C code.
- cf. <aNsQ5UjjbqJr8_Ik@fruit.crustytoothpaste.net>
- source: <20251002-b4-pks-rust-breaking-change-v8-0-3a89fd5b1ce7@pks.im>
-
---------------------------------------------------
-[Cooking]
-
-* en/doc-merge-tree-describe-merge-base (2025-10-02) 1 commit
-  (merged to 'next' on 2025-10-06 at 787ff6f08a)
- + Documentation/git-merge-tree.adoc: clarify the --merge-base option
-
- Clarify the "--merge-base" command line option in "git merge-tree".
-
- Will merge to 'master'.
- source: <pull.1980.git.1759444487406.gitgitgadget@gmail.com>
-
-
-* je/doc-data-model (2025-10-07) 2 commits
- - fixup! doc: add a explanation of Git's data model
+* je/doc-data-model (2025-10-08) 1 commit
  - doc: add a explanation of Git's data model
 
  Add a new manual that describes the data model.
-
- Comments?
- source: <pull.1981.git.1759512876284.gitgitgadget@gmail.com>
+ source: <pull.1981.v2.git.1759931621272.gitgitgadget@gmail.com>
 
 
 * rs/add-patch-options-fix (2025-10-06) 6 commits
- - add-patch: reset "permitted" at loop start
- - add-patch: let options a and d roll over like y and n
- - add-patch: let options k and K roll over like j and J
- - add-patch: let options y, n, j, and e roll over to next undecided
- - add-patch: document that option J rolls over
- - add-patch: improve help for options j, J, k, and K
+  (merged to 'next' on 2025-10-10 at ef52e0377e)
+ + add-patch: reset "permitted" at loop start
+ + add-patch: let options a and d roll over like y and n
+ + add-patch: let options k and K roll over like j and J
+ + add-patch: let options y, n, j, and e roll over to next undecided
+ + add-patch: document that option J rolls over
+ + add-patch: improve help for options j, J, k, and K
 
  The code in "git add -p" and friends to iterate over hunks was
  riddled with bugs, which has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <fe8e8097-2b05-4dd2-a754-f59e4ba5f95a@web.de>
 
 
@@ -391,65 +372,37 @@ Release tarballs are available at:
 
 
 * en/make-libgit-a (2025-10-02) 2 commits
- - make: delete REFTABLE_LIB, add reftable to LIB_OBJS
- - make: delete XDIFF_LIB, add xdiff to LIB_OBJS
+  (merged to 'next' on 2025-10-10 at 913fc0337a)
+ + make: delete REFTABLE_LIB, add reftable to LIB_OBJS
+ + make: delete XDIFF_LIB, add xdiff to LIB_OBJS
 
  Instead of three library archives (one for git, one for reftable,
  and one for xdiff), roll everything into a single libgit.a archive.
  This would help later effort to FFI into Rust.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.2065.v2.git.git.1759447647.gitgitgadget@gmail.com>
 
 
-* ms/doc-worktree-side-by-side (2025-10-02) 4 commits
- - amend! doc: git-worktree: Add side by side branch checkout example
+* ms/doc-worktree-side-by-side (2025-10-10) 2 commits
  - doc: git-worktree: Add side by side branch checkout example
- - amend! doc: git-worktree: Link to examples
  - doc: git-worktree: Link to examples
 
  Document "git worktree add" and use of out-of-tree worktrees with
  examples.
 
- Comments?
- source: <xmqqseg1xwc1.fsf@gitster.g>
-
-
-* ps/gitlab-ci-windows-improvements (2025-10-02) 5 commits
-  (merged to 'next' on 2025-10-03 at 6adb054d12)
- + t8020: fix test failure due to indeterministic tag sorting
- + gitlab-ci: upload Meson test logs as JUnit reports
- + gitlab-ci: drop workaround for Python certificate store on Windows
- + gitlab-ci: ignore failures to disable realtime monitoring
- + gitlab-ci: dedup instructions to disable realtime monitoring
- (this branch is used by ps/ci-rust.)
-
- GitLab CI improvements.
-
- Will merge to 'master'.
- source: <20251002-pks-gitlab-ci-windows-improvements-v1-0-6a8b6b45d728@pks.im>
-
-
-* rj/doc-missing-technical-docs (2025-10-02) 1 commit
-  (merged to 'next' on 2025-10-06 at f639955fdc)
- + doc: add some missing technical documents
- (this branch is used by rj/doc-technical-fixes.)
-
- Doc updates.
-
- Will merge to 'master'.
- source: <20251002221233.541844-2-ramsay@ramsayjones.plus.com>
+ Will merge to 'next'?
+ source: <a203b35538847f3c9358a5ae26fb4ebea5734cfc.1759420102.git.msuchanek@suse.de>
 
 
 * rj/doc-technical-fixes (2025-10-02) 3 commits
  - doc: commit-graph.adoc: fix up some formatting
  - doc: sparse-checkout.adoc: fix asciidoc warnings
  - doc: remembering-renames.adoc: fix asciidoc warnings
- (this branch uses rj/doc-missing-technical-docs.)
 
  Documentation mark-up fixes.
 
- Expecting v3.
+ Expecting v3. 
  cf. <20251002221233.541844-1-ramsay@ramsayjones.plus.com>
  source: <20251002221233.541844-1-ramsay@ramsayjones.plus.com>
 
@@ -483,6 +436,7 @@ Release tarballs are available at:
 * kh/doc-patch-id-markup-fix (2025-09-29) 1 commit
   (merged to 'next' on 2025-10-08 at a81dc9f7e6)
  + doc: patch-id: fix accidental literal blocks
+ (this branch is used by kh/doc-patch-id-1.)
 
  Documentation mark-up fix.
 
@@ -519,7 +473,7 @@ Release tarballs are available at:
  source: <v2-cover.1758819879.git.code@khaugsbakk.name>
 
 
-* je/doc-pull (2025-09-23) 4 commits
+* je/doc-pull (2025-10-08) 4 commits
  - doc: git-pull: clarify how to exit a conflicted merge
  - doc: git-pull: delete the example
  - doc: git-pull: clarify options for integrating remote branch
@@ -527,8 +481,8 @@ Release tarballs are available at:
 
  Documentation updates.
 
- Will replace with v2.
- source: <pull.1976.git.1758656702.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ source: <pull.1976.v2.git.1759951536.gitgitgadget@gmail.com>
 
 
 * je/doc-push-upstream (2025-10-06) 5 commits
@@ -546,12 +500,15 @@ Release tarballs are available at:
 
 
 * jk/diff-no-index-with-pathspec-fix (2025-09-24) 1 commit
- - diff --no-index: fix logic for paths ending in '/'
+  (merged to 'next' on 2025-10-10 at 75721dbc16)
+ + diff --no-index: fix logic for paths ending in '/'
 
  An earlier addition to "git diff --no-index A B" to limit the
  output with pathspec after the two directories misbehaved when
  these directories were given with a trailing slash, which has been
  corrected.
+
+ Will merge to 'master'.
  source: <20250924-jk-fix-no-index-path-with-slash-v1-1-6b2028c0de92@intel.com>
 
 
@@ -586,7 +543,7 @@ Release tarballs are available at:
  source: <20251007-228-reftable-introduce-consistency-checks-v6-0-638cff42f0b0@gmail.com>
 
 
-* bc/sha1-256-interop-01 (2025-10-02) 9 commits
+* bc/sha1-256-interop-01 (2025-10-09) 9 commits
  - t1010: use BROKEN_OBJECTS prerequisite
  - t: allow specifying compatibility hash
  - fsck: consider gpgsig headers expected in tags
@@ -599,9 +556,8 @@ Release tarballs are available at:
 
  The beginning of SHA1-SHA256 interoperability work.
 
- Expecting v3.
- cf. <aOA6z-kFCd78XtxX@fruit.crustytoothpaste.net>
- source: <20251002223855.1022847-1-sandals@crustytoothpaste.net>
+ Will merge to 'next'?
+ source: <20251009215626.3089287-1-sandals@crustytoothpaste.net>
 
 
 * pw/add-p-hunk-splitting-fix (2025-09-25) 2 commits
