@@ -38,6 +38,9 @@
 `badReferentName`::
 	(ERROR) The referent name of a symref is invalid.
 
+`badReftableTableName`::
+	(WARN) A reftable table has an invalid name.
+
 `badTagName`::
 	(INFO) A tag has an invalid format.
 
@@ -103,9 +106,6 @@
 
 `gitmodulesParse`::
 	(INFO) Could not parse `.gitmodules` blob.
-
-`gitmodulesLarge`;
-	(ERROR) `.gitmodules` blob is too large to parse.
 
 `gitmodulesPath`::
 	(ERROR) `.gitmodules` path is invalid.
