@@ -70,6 +70,8 @@ test:linux:
   artifacts:
     paths:
       - t/failed-test-artifacts
+    reports:
+      junit: build/meson-logs/testlog.junit.xml
     when: on_failure
 
 test:osx:
@@ -110,7 +112,15 @@ test:osx:
   artifacts:
     paths:
       - t/failed-test-artifacts
+    reports:
+      junit: build/meson-logs/testlog.junit.xml
     when: on_failure
+
+.windows_before_script: &windows_before_script
+  # Disabling realtime monitoring fails on some of the runners, but it
+  # significantly speeds up test execution in the case where it works. We thus
+  # try our luck, but ignore any failures.
+  - Set-MpPreference -DisableRealtimeMonitoring $true; $true
 
 build:mingw64:
   stage: build
@@ -119,7 +129,7 @@ build:mingw64:
   variables:
     NO_PERL: 1
   before_script:
-    - Set-MpPreference -DisableRealtimeMonitoring $true
+    - *windows_before_script
     - ./ci/install-sdk.ps1 -directory "git-sdk"
   script:
     - git-sdk/usr/bin/bash.exe -l -c 'ci/make-test-artifacts.sh artifacts'
@@ -136,7 +146,7 @@ test:mingw64:
     - job: "build:mingw64"
       artifacts: true
   before_script:
-    - Set-MpPreference -DisableRealtimeMonitoring $true
+    - *windows_before_script
     - git-sdk/usr/bin/bash.exe -l -c 'tar xf artifacts/artifacts.tar.gz'
     - New-Item -Path .git/info -ItemType Directory
     - New-Item .git/info/exclude -ItemType File -Value "/git-sdk"
@@ -150,18 +160,10 @@ test:mingw64:
   tags:
     - saas-windows-medium-amd64
   before_script:
-    - Set-MpPreference -DisableRealtimeMonitoring $true
-    - choco install -y git meson ninja openssl
+    - *windows_before_script
+    - choco install -y git meson ninja
     - Import-Module $env:ChocolateyInstall\helpers\chocolateyProfile.psm1
     - refreshenv
-    # The certificate store for Python on Windows is broken and fails to fetch
-    # certificates, see https://bugs.python.org/issue36011. This seems to
-    # mostly be an issue with how the GitLab image is set up as it is a
-    # non-issue on GitHub Actions. Work around the issue by importing
-    # cetrificates manually.
-    - Invoke-WebRequest https://curl.haxx.se/ca/cacert.pem -OutFile cacert.pem
-    - openssl pkcs12 -export -nokeys -in cacert.pem -out certs.pfx -passout "pass:"
-    - Import-PfxCertificate -CertStoreLocation Cert:\LocalMachine\Root -FilePath certs.pfx
 
 build:msvc-meson:
   extends: .msvc-meson
@@ -183,6 +185,9 @@ test:msvc-meson:
   script:
     - meson test -C build --no-rebuild --print-errorlogs --slice $Env:CI_NODE_INDEX/$Env:CI_NODE_TOTAL
   parallel: 10
+  artifacts:
+    reports:
+      junit: build/meson-logs/testlog.junit.xml
 
 test:fuzz-smoke-tests:
   image: ubuntu:latest
