@@ -86,7 +86,7 @@ struct region {
 	((LINE_MAP(index, ptr))->cnt)
 
 #define REC(env, s, l) \
-	(env->xdf##s.recs[l - 1])
+	(&env->xdf##s.recs[l - 1])
 
 static int cmp_recs(xrecord_t *r1, xrecord_t *r2)
 {
@@ -318,11 +318,11 @@ redo:
 
 	if (!count1) {
 		while(count2--)
-			env->xdf2.rchg[line2++ - 1] = 1;
+			env->xdf2.changed[line2++ - 1] = true;
 		return 0;
 	} else if (!count2) {
 		while(count1--)
-			env->xdf1.rchg[line1++ - 1] = 1;
+			env->xdf1.changed[line1++ - 1] = true;
 		return 0;
 	}
 
@@ -335,9 +335,9 @@ redo:
 	else {
 		if (lcs.begin1 == 0 && lcs.begin2 == 0) {
 			while (count1--)
-				env->xdf1.rchg[line1++ - 1] = 1;
+				env->xdf1.changed[line1++ - 1] = true;
 			while (count2--)
-				env->xdf2.rchg[line2++ - 1] = 1;
+				env->xdf2.changed[line2++ - 1] = true;
 			result = 0;
 		} else {
 			result = histogram_diff(xpp, env,
