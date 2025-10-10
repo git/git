@@ -325,3 +325,4 @@ including security updates, are included in this release.
    (merge a66fc22bf9 rs/get-oid-with-flags-cleanup later to maint).
    (merge e1d062e8ba ps/odb-clean-stale-wrappers later to maint).
    (merge fdd21ba116 mh/doc-credential-url-prefix later to maint).
+   (merge 1c573a3451 en/doc-merge-tree-describe-merge-base later to maint).
