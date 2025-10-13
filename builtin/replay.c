@@ -8,6 +8,7 @@
 #include "git-compat-util.h"
 
 #include "builtin.h"
+#include "config.h"
 #include "environment.h"
 #include "hex.h"
 #include "lockfile.h"
@@ -359,9 +360,22 @@ int cmd_replay(int argc,
 	die_for_incompatible_opt2(!!advance_name_opt, "--advance",
 				  contained, "--contained");
 
-	/* Set default mode if not specified */
-	if (!update_refs_mode)
-		update_refs_mode = "yes";
+	/* Set default mode from config if not specified on command line */
+	if (!update_refs_mode) {
+		const char *config_value = NULL;
+		if (!repo_config_get_string_tmp(repo, "replay.defaultaction", &config_value)) {
+			if (!strcmp(config_value, "update-refs"))
+				update_refs_mode = "yes";
+			else if (!strcmp(config_value, "show-commands"))
+				update_refs_mode = "print";
+			else
+				die(_("invalid value for replay.defaultAction: '%s' "
+				      "(expected 'update-refs' or 'show-commands')"),
+				    config_value);
+		} else {
+			update_refs_mode = "yes";
+		}
+	}
 
 	/* Validate update-refs mode */
 	if (strcmp(update_refs_mode, "yes") && strcmp(update_refs_mode, "print"))
