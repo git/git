@@ -279,6 +279,42 @@ test_expect_success 'signed-tags=warn-strip' '
 	test -s err
 '
 
+test_expect_success GPGSM 'setup X.509 signed tag' '
+	test_config gpg.format x509 &&
+	test_config user.signingkey $GIT_COMMITTER_EMAIL &&
+
+	git tag -s -m "X.509 signed tag" x509-signed $(git rev-parse HEAD) &&
+	ANNOTATED_TAG_COUNT=$((ANNOTATED_TAG_COUNT + 1))
+'
+
+test_expect_success GPGSM 'signed-tags=verbatim with X.509' '
+	git fast-export --signed-tags=verbatim x509-signed > output &&
+	test_grep "SIGNED MESSAGE" output
+'
+
+test_expect_success GPGSM 'signed-tags=strip with X.509' '
+	git fast-export --signed-tags=strip x509-signed > output &&
+	test_grep ! "SIGNED MESSAGE" output
+'
+
+test_expect_success GPGSSH 'setup SSH signed tag' '
+	test_config gpg.format ssh &&
+	test_config user.signingkey "${GPGSSH_KEY_PRIMARY}" &&
+
+	git tag -s -m "SSH signed tag" ssh-signed $(git rev-parse HEAD) &&
+	ANNOTATED_TAG_COUNT=$((ANNOTATED_TAG_COUNT + 1))
+'
+
+test_expect_success GPGSSH 'signed-tags=verbatim with SSH' '
+	git fast-export --signed-tags=verbatim ssh-signed > output &&
+	test_grep "SSH SIGNATURE" output
+'
+
+test_expect_success GPGSSH 'signed-tags=strip with SSH' '
+	git fast-export --signed-tags=strip ssh-signed > output &&
+	test_grep ! "SSH SIGNATURE" output
+'
+
 test_expect_success GPG 'set up signed commit' '
 
 	# Generate a commit with both "gpgsig" and "encoding" set, so
