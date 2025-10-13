@@ -35,6 +35,7 @@ test_expect_success 'setup' '
 	git commit -m sitzt file2 &&
 	test_tick &&
 	git tag -a -m valentin muss &&
+	ANNOTATED_TAG_COUNT=1 &&
 	git merge -s ours main
 
 '
@@ -229,7 +230,8 @@ EOF
 
 test_expect_success 'set up faked signed tag' '
 
-	git fast-import <signed-tag-import
+	git fast-import <signed-tag-import &&
+	ANNOTATED_TAG_COUNT=$((ANNOTATED_TAG_COUNT + 1))
 
 '
 
@@ -491,8 +493,9 @@ test_expect_success 'fast-export -C -C | fast-import' '
 test_expect_success 'fast-export | fast-import when main is tagged' '
 
 	git tag -m msg last &&
+	ANNOTATED_TAG_COUNT=$((ANNOTATED_TAG_COUNT + 1)) &&
 	git fast-export -C -C --signed-tags=strip --all > output &&
-	test $(grep -c "^tag " output) = 3
+	test $(grep -c "^tag " output) = $ANNOTATED_TAG_COUNT
 
 '
 
@@ -506,12 +509,13 @@ test_expect_success 'cope with tagger-less tags' '
 
 	TAG=$(git hash-object --literally -t tag -w tag-content) &&
 	git update-ref refs/tags/sonnenschein $TAG &&
+	ANNOTATED_TAG_COUNT=$((ANNOTATED_TAG_COUNT + 1)) &&
 	git fast-export -C -C --signed-tags=strip --all > output &&
-	test $(grep -c "^tag " output) = 4 &&
+	test $(grep -c "^tag " output) = $ANNOTATED_TAG_COUNT &&
 	! grep "Unspecified Tagger" output &&
 	git fast-export -C -C --signed-tags=strip --all \
 		--fake-missing-tagger > output &&
-	test $(grep -c "^tag " output) = 4 &&
+	test $(grep -c "^tag " output) = $ANNOTATED_TAG_COUNT &&
 	grep "Unspecified Tagger" output
 
 '
