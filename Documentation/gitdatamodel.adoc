@@ -1,0 +1,281 @@
+gitdatamodel(7)
+===============
+
+NAME
+----
+gitdatamodel - Git's core data model
+
+SYNOPSIS
+--------
+gitdatamodel
+
+DESCRIPTION
+-----------
+
+It's not necessary to understand Git's data model to use Git, but it's
+very helpful when reading Git's documentation so that you know what it
+means when the documentation says "object", "reference" or "index".
+
+Git's core operations use 4 kinds of data:
+
+1. <<objects,Objects>>: commits, trees, blobs, and tag objects
+2. <<references,References>>: branches, tags,
+   remote-tracking branches, etc
+3. <<index,The index>>, also known as the staging area
+4. <<reflogs,Reflogs>>: logs of changes to references ("ref log")
+
+[[objects]]
+OBJECTS
+-------
+
+Commits, trees, blobs, and tag objects are all stored in Git's object database.
+Every object has:
+
+[[object-id]]
+1. an *ID* (aka "object name"), which is a cryptographic hash of its
+  type and contents.
+  It's fast to look up a Git object using its ID.
+  This is usually represented in hexadecimal, like
+  `1b61de420a21a2f1aaef93e38ecd0e45e8bc9f0a`.
+2. a *type*. There are 4 types of objects:
+   <<commit,commits>>, <<tree,trees>>, <<blob,blobs>>,
+   and <<tag-object,tag objects>>.
+3. *contents*. The structure of the contents depends on the type.
+
+Once an object is created, it can never be changed.
+Here are the 4 types of objects:
+
+[[commit]]
+commits::
+    A commit contains these required fields
+    (though there are other optional fields):
++
+1. All the *files* in the commit, stored as the *<<tree,tree>>* ID of
+   the commit's base directory.
+2. Its *parent commit ID(s)*. The first commit in a repository has 0 parents,
+  regular commits have 1 parent, merge commits have 2 or more parents
+3. An *author* and the time the commit was authored
+4. A *committer* and the time the commit was committed.
+   If you cherry-pick (linkgit:git-cherry-pick[1]) someone else's commit,
+   then they will be the author and you'll be the committer.
+5. A *commit message*
++
+Here's how an example commit is stored:
++
+----
+tree 1b61de420a21a2f1aaef93e38ecd0e45e8bc9f0a
+parent 4ccb6d7b8869a86aae2e84c56523f8705b50c647
+author Maya <maya@example.com> 1759173425 -0400
+committer Maya <maya@example.com> 1759173425 -0400
+
+Add README
+----
++
+Like all other objects, commits can never be changed after they're created.
+For example, "amending" a commit with `git commit --amend` creates a new
+commit with the same parent.
++
+Git does not store the diff for a commit: when you ask Git for a
+diff it calculates it on the fly.
+
+[[tree]]
+trees::
+    A tree is how Git represents a directory. It lists, for each item in
+    the tree:
++
+[[file-mode]]
+1. The *file mode*, for example `100644`. The format is inspired by Unix
+   permissions, but Git's modes are much more limited. Git only supports these file modes:
++
+  - `100644`: regular file (with type `blob`)
+  - `100755`: executable file (with type `blob`)
+  - `120000`: symbolic link (with type `blob`)
+  - `040000`: directory (with type `tree`)
+  - `160000`: gitlink, for use with submodules (with type `commit`)
+
+2. The *type*: either <<blob,`blob`>> (a file), `tree` (a directory),
+  or <<commit,`commit`>> (a Git submodule, which is a
+  commit from a different Git repository)
+3. The <<object-id,*object ID*>>
+4. The *filename*
++
+For example, this is how a tree containing one directory (`src`) and one file
+(`README.md`) is stored:
++
+----
+100644 blob 8728a858d9d21a8c78488c8b4e70e531b659141f README.md
+040000 tree 89b1d2e0495f66d6929f4ff76ff1bb07fc41947d src
+----
+
+
+[[blob]]
+blobs::
+    A blob is how Git represents a file. A blob object contains the
+    file's contents.
++
+When you make a new commit, Git only needs to store new versions of
+files which were changed in that commit. This means that commits
+can use relatively little disk space even in a very large repository.
+
+[[tag-object]]
+tag objects::
+    Tag objects contain these required fields
+    (though there are other optional fields):
++
+1. The *ID* and *type* of the object (often a commit) that they reference
+2. The *tagger* and tag date
+3. A *tag message*, similar to a commit message
+
+Here's how an example tag object is stored:
+
+----
+object 750b4ead9c87ceb3ddb7a390e6c7074521797fb3
+type commit
+tag v1.0.0
+tagger Maya <maya@example.com> 1759927359 -0400
+
+Release version 1.0.0
+----
+
+NOTE: All of the examples in this section were generated with
+`git cat-file -p <object-id>`, which shows the contents of a Git object.
+
+[[references]]
+REFERENCES
+----------
+
+References are a way to give a name to a commit.
+It's easier to remember "the changes I'm working on are on the `turtle`
+branch" than "the changes are in commit bb69721404348e".
+Git often uses "ref" as shorthand for "reference".
+
+References can either be:
+
+1. References to an object ID, usually a <<commit,commit>> ID
+2. References to another reference. This is called a "symbolic reference".
+
+References are stored in a hierarchy, and Git handles references
+differently based on where they are in the hierarchy.
+Most references are under `refs/`. Here are the main types:
+
+[[branch]]
+branches: `refs/heads/<name>`::
+    A branch is a name for a commit ID.
+    That commit is the latest commit on the branch.
++
+To get the history of commits on a branch, Git will start at the commit
+ID the branch references, and then look at the commit's parent(s),
+the parent's parent, etc.
+
+[[tag]]
+tags: `refs/tags/<name>`::
+    A tag is a name for a commit ID, tag object ID, or other object ID.
+    Tags that reference a tag object ID are called "annotated tags",
+    because the tag object contains a tag message.
+    Tags that reference a commit, blob, or tree ID are
+    called "lightweight tags".
++
+Even though branches and tags are both "a name for a commit ID", Git
+treats them very differently.
+Branches are expected to change over time: when you make a commit, Git
+will update your <<HEAD,current branch>> to reference the new changes.
+Tags are usually not changed after they're created.
+
+[[HEAD]]
+HEAD: `HEAD`::
+    `HEAD` is where Git stores your current <<branch,branch>>.
+    `HEAD` can either be:
+    1. A symbolic reference to your current branch, for example `ref:
+       refs/heads/main` if your current branch is `main`.
+    2. A direct reference to a commit ID. This is called "detached HEAD
+	   state", see the DETACHED HEAD section of linkgit:git-checkout[1] for more.
+
+[[remote-tracking-branch]]
+remote tracking branches: `refs/remotes/<remote>/<branch>`::
+    A remote-tracking branch is a name for a commit ID.
+    It's how Git stores the last-known state of a branch in a remote
+    repository. `git fetch` updates remote-tracking branches. When
+    `git status` says "you're up to date with origin/main", it's looking at
+    this.
++
+`refs/remotes/<remote>/HEAD` is a symbolic reference to the remote's
+default branch. This is the branch that `git clone` checks out by default.
+
+[[other-refs]]
+Other references::
+    Git tools may create references anywhere under `refs/`.
+    For example, linkgit:git-stash[1], linkgit:git-bisect[1],
+    and linkgit:git-notes[1] all create their own references
+    in `refs/stash`, `refs/bisect`, etc.
+    Third-party Git tools may also create their own references.
++
+Git may also create references other than `HEAD` at the base of the
+hierarchy, like `ORIG_HEAD`.
++
+NOTE: By default, Git references are stored as files in the `.git` directory.
+For example, the branch `main` is stored in `.git/refs/heads/main`.
+This means that you can't have branches named both `maya` and `maya/some-task`,
+because there can't be a file and a directory with the same name.
+
+[[index]]
+THE INDEX
+---------
+
+The index, also known as the "staging area", contains a list of every
+file in the repository and its contents. When you commit, the files in
+the index are used as the files in the next commit.
+
+You can add files to the index or update the version in the index with
+linkgit:git-add[1]. Adding a file to the index or updating its version
+is called "staging" the file for commit.
+
+Unlike a <<tree,tree>>, the index is a flat list of files.
+Each index entry has 4 fields:
+
+1. The *<<file-mode,file mode>>*
+2. The *<<blob,blob>> ID* of the file
+3. The *file path*, for example `src/hello.py`
+4. The *stage number*, either 0, 1, 2, or 3. This is normally 0, but if
+   there's a merge conflict there can be multiple versions of the same
+   filename in the index.
+
+It's extremely uncommon to look at the index directly: normally you'd
+run `git status` to see a list of changes between the index and <<HEAD,HEAD>>.
+But you can use `git ls-files --stage` to see the index.
+Here's the output of `git ls-files --stage` in a repository with 2 files:
+
+----
+100644 8728a858d9d21a8c78488c8b4e70e531b659141f 0 README.md
+100644 665c637a360874ce43bf74018768a96d2d4d219a 0 src/hello.py
+----
+
+[[reflogs]]
+REFLOGS
+-------
+
+Git stores a history called a "reflog" for every branch, remote-tracking
+branch, and HEAD. This means that if you make a mistake and "lose" a
+commit, you can generally recover the commit ID by running
+`git reflog <reference>`.
+
+Each reflog entry has:
+
+1. Before/after *commit IDs*
+2. *User* who made the change, for example `Maya <maya@example.com>`
+3. *Timestamp* when the change was made
+4. *Log message*, for example `pull: Fast-forward`
+
+Reflogs only log changes made in your local repository.
+They are not shared with remotes.
+
+For example, here's how the reflog for `HEAD` in a repository with 2
+commits is stored:
+
+----
+0000000000000000000000000000000000000000 4ccb6d7b8869a86aae2e84c56523f8705b50c647 Maya <maya@example.com> 1759173408 -0400      commit (initial): Initial commit
+4ccb6d7b8869a86aae2e84c56523f8705b50c647 750b4ead9c87ceb3ddb7a390e6c7074521797fb3 Maya <maya@example.com> 1759173425 -0400      commit: Add README
+----
+
+GIT
+---
+Part of the linkgit:git[1] suite
