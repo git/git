@@ -1348,6 +1348,14 @@ void http_init(struct remote *remote, const char *url, int proactive_auth)
 	if (curl_global_init(CURL_GLOBAL_ALL) != CURLE_OK)
 		die("curl_global_init failed");
 
+#ifdef GIT_CURL_HAVE_GLOBAL_TRACE
+	{
+		const char *comp = getenv("GIT_TRACE_CURL_COMPONENTS");
+		if (comp)
+			curl_global_trace(comp);
+	}
+#endif
+
 	if (proactive_auth && http_proactive_auth == PROACTIVE_AUTH_NONE)
 		http_proactive_auth = PROACTIVE_AUTH_IF_CREDENTIALS;
 
