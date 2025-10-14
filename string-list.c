@@ -16,7 +16,7 @@ void string_list_init_dup(struct string_list *list)
 /* if there is no exact match, point to the index where the entry could be
  * inserted */
 static size_t get_entry_index(const struct string_list *list, const char *string,
-			      int *exact_match)
+			      bool *exact_match)
 {
 	size_t left = 0, right = list->nr;
 	compare_strings_fn cmp = list->cmp ? list->cmp : strcmp;
@@ -29,18 +29,20 @@ static size_t get_entry_index(const struct string_list *list, const char *string
 		else if (compare > 0)
 			left = middle + 1;
 		else {
-			*exact_match = 1;
+			if (exact_match)
+				*exact_match = true;
 			return middle;
 		}
 	}
 
-	*exact_match = 0;
+	if (exact_match)
+		*exact_match = false;
 	return right;
 }
 
 static size_t add_entry(struct string_list *list, const char *string)
 {
-	int exact_match = 0;
+	bool exact_match;
 	size_t index = get_entry_index(list, string, &exact_match);
 
 	if (exact_match)
@@ -68,7 +70,7 @@ struct string_list_item *string_list_insert(struct string_list *list, const char
 void string_list_remove(struct string_list *list, const char *string,
 			int free_util)
 {
-	int exact_match;
+	bool exact_match;
 	int i = get_entry_index(list, string, &exact_match);
 
 	if (exact_match) {
@@ -82,26 +84,23 @@ void string_list_remove(struct string_list *list, const char *string,
 	}
 }
 
-int string_list_has_string(const struct string_list *list, const char *string)
+bool string_list_has_string(const struct string_list *list, const char *string)
 {
-	int exact_match;
+	bool exact_match;
 	get_entry_index(list, string, &exact_match);
 	return exact_match;
 }
 
-int string_list_find_insert_index(const struct string_list *list, const char *string,
-				  int negative_existing_index)
+size_t string_list_find_insert_index(const struct string_list *list, const char *string,
+				     bool *exact_match)
 {
-	int exact_match;
-	int index = get_entry_index(list, string, &exact_match);
-	if (exact_match)
-		index = -1 - (negative_existing_index ? index : 0);
-	return index;
+	return get_entry_index(list, string, exact_match);
 }
 
 struct string_list_item *string_list_lookup(struct string_list *list, const char *string)
 {
-	int exact_match, i = get_entry_index(list, string, &exact_match);
+	bool exact_match;
+	size_t i = get_entry_index(list, string, &exact_match);
 	if (!exact_match)
 		return NULL;
 	return list->items + i;
