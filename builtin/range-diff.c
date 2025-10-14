@@ -38,13 +38,13 @@ int cmd_range_diff(int argc,
 		   struct repository *repo UNUSED)
 {
 	struct diff_options diffopt = { NULL };
-	struct strvec other_arg = STRVEC_INIT;
+	struct strvec log_arg = STRVEC_INIT;
 	struct strvec diff_merges_arg = STRVEC_INIT;
 	struct range_diff_options range_diff_opts = {
 		.creation_factor = RANGE_DIFF_CREATION_FACTOR_DEFAULT,
 		.max_memory = RANGE_DIFF_MAX_MEMORY_DEFAULT,
 		.diffopt = &diffopt,
-		.other_arg = &other_arg
+		.log_arg = &log_arg
 	};
 	int simple_color = -1, left_only = 0, right_only = 0;
 	struct option range_diff_options[] = {
@@ -53,7 +53,7 @@ int cmd_range_diff(int argc,
 			    N_("percentage by which creation is weighted")),
 		OPT_BOOL(0, "no-dual-color", &simple_color,
 			    N_("use simple diff colors")),
-		OPT_PASSTHRU_ARGV(0, "notes", &other_arg,
+		OPT_PASSTHRU_ARGV(0, "notes", &log_arg,
 				  N_("notes"), N_("passed to 'git log'"),
 				  PARSE_OPT_OPTARG),
 		OPT_PASSTHRU_ARGV(0, "diff-merges", &diff_merges_arg,
@@ -93,7 +93,7 @@ int cmd_range_diff(int argc,
 	/* If `--diff-merges` was specified, imply `--merges` */
 	if (diff_merges_arg.nr) {
 		range_diff_opts.include_merges = 1;
-		strvec_pushv(&other_arg, diff_merges_arg.v);
+		strvec_pushv(&log_arg, diff_merges_arg.v);
 	}
 
 	for (i = 0; i < argc; i++)
@@ -125,7 +125,7 @@ int cmd_range_diff(int argc,
 		strbuf_addf(&range1, "%s..%s", argv[0], argv[1]);
 		strbuf_addf(&range2, "%s..%s", argv[0], argv[2]);
 
-		strvec_pushv(&other_arg, argv +
+		strvec_pushv(&log_arg, argv +
 			     (dash_dash < 0 ? 3 : dash_dash));
 	} else if (dash_dash == 2 ||
 		   (dash_dash < 0 && argc > 1 &&
@@ -145,7 +145,7 @@ int cmd_range_diff(int argc,
 		strbuf_addstr(&range1, argv[0]);
 		strbuf_addstr(&range2, argv[1]);
 
-		strvec_pushv(&other_arg, argv +
+		strvec_pushv(&log_arg, argv +
 			     (dash_dash < 0 ? 2 : dash_dash));
 	} else if (dash_dash == 1 ||
 		   (dash_dash < 0 && argc > 0 &&
@@ -176,7 +176,7 @@ int cmd_range_diff(int argc,
 		strbuf_addf(&range1, "%s..%.*s", b, a_len, a);
 		strbuf_addf(&range2, "%.*s..%s", a_len, a, b);
 
-		strvec_pushv(&other_arg, argv +
+		strvec_pushv(&log_arg, argv +
 			     (dash_dash < 0 ? 1 : dash_dash));
 	} else
 		usage_msg_opt(_("need two commit ranges"),
@@ -188,7 +188,7 @@ int cmd_range_diff(int argc,
 	range_diff_opts.right_only = right_only;
 	res = show_range_diff(range1.buf, range2.buf, &range_diff_opts);
 
-	strvec_clear(&other_arg);
+	strvec_clear(&log_arg);
 	strvec_clear(&diff_merges_arg);
 	strbuf_release(&range1);
 	strbuf_release(&range2);

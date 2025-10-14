@@ -718,7 +718,8 @@ static void show_diff_of_diff(struct rev_info *opt)
 			.creation_factor = opt->creation_factor,
 			.dual_color = 1,
 			.max_memory = RANGE_DIFF_MAX_MEMORY_DEFAULT,
-			.diffopt = &opts
+			.diffopt = &opts,
+			.log_arg = &opt->rdiff_log_arg
 		};
 
 		memcpy(&dq, &diff_queued_diff, sizeof(diff_queued_diff));
