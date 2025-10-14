@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Oct 2025, #04; Fri, 10)
-X-master-at: 4b71b294773cc4f7fe48ec3a70079aa8783f373d
-X-next-at: f9c4a03a3a780b23d84ed893d98c5c8141d26374
+Subject: What's cooking in git.git (Oct 2025, #05; Tue, 14)
+X-master-at: b660e2dcb98ed4eafe2781b7ba31b70d2fcbad80
+X-next-at: 61a8936c2151ce465d7d3286fe1d38bfb821753f
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Oct 2025, #04; Fri, 10)
+What's cooking in git.git (Oct 2025, #05; Tue, 14)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -20,6 +20,11 @@ arise).
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
 repositories have only a subset of branches.
+
+Since we have been seeing so many "I still use whatchanged" --
+"Well, log replaced it 12 yearas ago" exchanges, let's have a
+maintenance release 2.51.1 that updates the message when the
+deprecated command is used, among other things.
 
 With maint, master, next, seen, todo:
 
@@ -48,77 +53,240 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* en/doc-merge-tree-describe-merge-base (2025-10-02) 1 commit
-  (merged to 'next' on 2025-10-06 at 787ff6f08a)
- + Documentation/git-merge-tree.adoc: clarify the --merge-base option
+* en/xdiff-cleanup (2025-09-26) 12 commits
+  (merged to 'next' on 2025-10-08 at 5bc21d0f06)
+ + xdiff: change type of xdfile_t.changed from char to bool
+ + xdiff: add macros DISCARD(0), KEEP(1), INVESTIGATE(2) in xprepare.c
+ + xdiff: rename rchg -> changed in xdfile_t
+ + xdiff: delete chastore from xdfile_t
+ + xdiff: delete fields ha, line, size in xdlclass_t in favor of an xrecord_t
+ + xdiff: delete redundant array xdfile_t.ha
+ + xdiff: delete struct diffdata_t
+ + xdiff: delete local variables that alias fields in xrecord_t
+ + xdiff: delete superfluous function xdl_get_rec() in xemit
+ + xdiff: delete unnecessary fields from xrecord_t and xdfile_t
+ + xdiff: delete local variables and initialize/free xdfile_t directly
+ + xdiff: delete static forward declarations in xprepare
 
- Clarify the "--merge-base" command line option in "git merge-tree".
- 
- source: <pull.1980.git.1759444487406.gitgitgadget@gmail.com>
-
-
-* ps/gitlab-ci-windows-improvements (2025-10-02) 5 commits
-  (merged to 'next' on 2025-10-03 at 6adb054d12)
- + t8020: fix test failure due to indeterministic tag sorting
- + gitlab-ci: upload Meson test logs as JUnit reports
- + gitlab-ci: drop workaround for Python certificate store on Windows
- + gitlab-ci: ignore failures to disable realtime monitoring
- + gitlab-ci: dedup instructions to disable realtime monitoring
- (this branch is used by ps/ci-rust.)
-
- GitLab CI improvements.
- 
- source: <20251002-pks-gitlab-ci-windows-improvements-v1-0-6a8b6b45d728@pks.im>
+ A lot of code clean-up of xdiff.
+ Split out of a larger topic.
+ source: <pull.2048.v6.git.git.1758926520.gitgitgadget@gmail.com>
 
 
-* rj/doc-missing-technical-docs (2025-10-02) 1 commit
-  (merged to 'next' on 2025-10-06 at f639955fdc)
- + doc: add some missing technical documents
- (this branch is used by rj/doc-technical-fixes.)
+* ja/doc-markup-attached-paragraph-fix (2025-10-07) 2 commits
+  (merged to 'next' on 2025-10-07 at 5b991a7b14)
+ + doc: fix indentation of refStorage item in git-config(1)
+  (merged to 'next' on 2025-09-30 at a91ca5db03)
+ + doc: change the markup of paragraphs following a nested list item
 
- Doc updates.
- 
- source: <20251002221233.541844-2-ramsay@ramsayjones.plus.com>
+ Documentation mark-up fix.
+ source: <20250927195032.37223-1-jn.avila@free.fr>
+ source: <20251007082223.GA3336685@coredump.intra.peff.net>
+
+
+* jc/optional-path (2025-09-28) 4 commits
+  (merged to 'next' on 2025-10-08 at a1e8af9952)
+ + parseopt: values of pathname type can be prefixed with :(optional)
+ + config: values of pathname type can be prefixed with :(optional)
+ + t7500: fix GIT_EDITOR shell snippet
+ + t7500: make each piece more independent
+
+ Configuration variables that take a pathname as a value
+ (e.g. blame.ignorerevsfile) can be marked as optional by prefixing
+ ":(optoinal)" before its value.
+ source: <cover.1759094936.git.ben.knoble+github@gmail.com>
+
+
+* je/doc-push-upstream (2025-10-06) 5 commits
+  (merged to 'next' on 2025-10-08 at 7bda6929b1)
+ + doc: git-push: add explanation of `git push origin main`
+ + doc: git-push: clarify "what to push"
+ + doc: git-push: clarify "where to push"
+ + doc: add an UPSTREAM BRANCHES section to pull/push/fetch
+ + doc: git-push: clarify intro
+
+ Documentation updates.
+ source: <pull.1964.v5.git.1759777131.gitgitgadget@gmail.com>
+
+
+* jn/doc-help-translaing-pretty-options (2025-10-05) 1 commit
+  (merged to 'next' on 2025-10-08 at 8962b8d1f0)
+ + doc: do not break sentences into "lego" pieces
+
+ Documentation for "git log --pretty" options has been updated
+ to make it easier to translate.
+ source: <pull.1982.git.1759698724134.gitgitgadget@gmail.com>
+
+
+* jn/doc-synopsis (2025-10-05) 3 commits
+  (merged to 'next' on 2025-10-08 at fd4f96ff5e)
+ + doc: convert git worktree to synopsis style
+ + doc: convert git tag to synopsis style
+ + doc: convert git-stash.adoc to synopis style
+
+ Doc-mark-up modernization continues.
+ source: <pull.1969.git.1759698702.gitgitgadget@gmail.com>
+
+
+* kh/doc-patch-id-markup-fix (2025-09-29) 1 commit
+  (merged to 'next' on 2025-10-08 at a81dc9f7e6)
+ + doc: patch-id: fix accidental literal blocks
+ (this branch is used by kh/doc-patch-id-1.)
+
+ Documentation mark-up fix.
+ source: <v2-e5ad12cc3b3.1759178715.git.code@khaugsbakk.name>
+
+
+* kh/format-patch-range-diff-notes (2025-09-25) 3 commits
+  (merged to 'next' on 2025-10-08 at e06aae4166)
+ + format-patch: handle range-diff on notes correctly for single patches
+ + revision: add rdiff_log_arg to rev_info
+ + range-diff: rename other_arg to log_arg
+
+ "git format-patch --range-diff=... --notes=..." did not drive the
+ underlying range-diff with correct --notes parameter, ending up
+ comparing with different set of notes from its main patch output
+ you would get from "git format-patch --notes=..." for a singleton
+ patch.
+ source: <v2-cover.1758819879.git.code@khaugsbakk.name>
+
+
+* kn/reftable-consistency-checks (2025-10-07) 7 commits
+  (merged to 'next' on 2025-10-07 at b9f4bd79f9)
+ + refs/reftable: add fsck check for checking the table name
+ + reftable: add code to facilitate consistency checks
+ + fsck: order 'fsck_msg_type' alphabetically
+ + Documentation/fsck-msgids: remove duplicate msg id
+ + reftable: check for trailing newline in 'tables.list'
+ + refs: move consistency check msg to generic layer
+ + refs: remove unused headers
+
+ The reftable backend learned to sanity check its on-disk data more
+ carefully.
+ source: <20251007-228-reftable-introduce-consistency-checks-v6-0-638cff42f0b0@gmail.com>
+
+
+* ps/ci-avoid-broken-sudo-on-ubuntu (2025-10-10) 1 commit
+  (merged to 'next' on 2025-10-13 at fd60b6d14b)
+ + ci: fix broken jobs on Ubuntu 25.10 caused by switch to sudo-rs(1)
+
+ Our CI script requires "sudo" that can be told to preserve
+ environment, but Ubuntu replaced with "sudo" with an implementation
+ that lacks the feature.  Work this around by reinstalling the
+ original version.
+ source: <20251010-b4-pks-ci-ubuntu-sudo-rs-v1-1-88cc846d251c@pks.im>
+
+
+* ps/commit-graph-per-object-source (2025-09-04) 5 commits
+  (merged to 'next' on 2025-10-07 at 6c9690a649)
+ + commit-graph: pass graphs that are to be merged as parameter
+ + commit-graph: return commit graph from `repo_find_commit_pos_in_graph()`
+ + commit-graph: return the prepared commit graph from `prepare_commit_graph()`
+ + revision: drop explicit check for commit graph
+ + blame: drop explicit check for commit graph
+
+ Code clean-up around commit-graph.
+ cf. <cf7aeda1-297a-4805-b0ae-e379ce11bbcf@gmail.com>
+ cf. <aN5gPoPC4WEYw9CF@pks.im>
+ source: <20250904-b4-pks-commit-graph-via-source-v1-0-d932c2481e1a@pks.im>
+
+
+* pw/add-p-hunk-splitting-fix (2025-09-25) 2 commits
+  (merged to 'next' on 2025-10-08 at 3fdb4a84ce)
+ + add-patch: update hunk splitability after editing
+ + add -p: mark split hunks as undecided
+
+ Marking a hunk 'selected' in "git add -p" and then splitting made
+ all the split pieces 'selected'; this has been changed to make them
+ all 'undecided', which gives better end-user experience.
+ source: <pull.1863.v3.git.1758813038.gitgitgadget@gmail.com>
+
+
+* sj/string-list (2025-10-05) 4 commits
+  (merged to 'next' on 2025-10-08 at cf0fc3ea18)
+ + refs: enable sign compare warnings check
+ + string-list: change "string_list_find_insert_index" return type to "size_t"
+ + string-list: replace negative index encoding with "exact_match" parameter
+ + string-list: use bool instead of int for "exact_match"
+
+ The "string-list" API function to find where a given string would
+ be inserted got updated so that it can use unrealistically huge
+ array index that would only fit in size_t but not int or ssize_t
+ to achieve unstated goal.
+ source: <aONhmrE0otiyZ16f@ArchLinux>
 
 --------------------------------------------------
 [New Topics]
 
+* tu/credential-makefile-updates (2025-10-10) 1 commit
+ - contrib/credential: Amend and harmonize Makefiles
+
+ Build procedure for a few credential helpers (in contrib/) have
+ been updated.
+
+ Expecting a reroll.
+ source: <48d92664-41af-bb59-1844-7bb57f21924f@mailbox.tu-dresden.de>
+
+
+* tb/cat-file-objectmode-update (2025-10-13) 1 commit
+  (merged to 'next' on 2025-10-13 at 4fd0f1b5b5)
+ + builtin/cat-file.c: simplify calling `report_object_status()`
+
+ Code clean-up.
+
+ Will merge to 'master'.
+ source: <9236fa6e654a59337266430a2a8807da21210cd4.1760392502.git.me@ttaylorr.com>
+
+
+* ps/symlink-symref-deprecation (2025-10-14) 1 commit
+ - refs/files: deprecate writing symrefs as symbolic links
+
+ "Symlink symref" has been added to the list of things that will
+ disappear at Git 3.0 boundary.
+
+ Comments?
+ source: <20251014-pks-ref-files-deprecate-symbolic-links-v1-1-4bcd6a4ef6f5@pks.im>
+
+--------------------------------------------------
+[Cooking]
+
 * dk/stash-apply-index (2025-10-06) 1 commit
- - doc: explain the impact of stash.index on --autostash options
+  (merged to 'next' on 2025-10-13 at 2187046f6c)
+ + doc: explain the impact of stash.index on --autostash options
 
  Doc update.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <d4a277b6b0695d86636562f4c07efae17f9249f9.1759755379.git.ben.knoble+github@gmail.com>
 
 
 * js/mingw-includes-cleanup (2025-10-09) 2 commits
- - mingw: order `#include`s alphabetically
- - mingw: avoid relative `#include`s
+  (merged to 'next' on 2025-10-13 at b7144c1feb)
+ + mingw: order `#include`s alphabetically
+ + mingw: avoid relative `#include`s
 
  Code clean-up.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1985.git.1759995961.gitgitgadget@gmail.com>
 
 
 * js/unreachable-workaround-for-no-symlink-head (2025-10-09) 1 commit
- - refs: forbid clang to complain about unreachable code
+  (merged to 'next' on 2025-10-13 at 0e970d5e4e)
+ + refs: forbid clang to complain about unreachable code
 
  Code clean-up.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1984.git.1759995982220.gitgitgadget@gmail.com>
 
 
-* kh/doc-patch-id-1 (2025-10-09) 2 commits
+* kh/doc-patch-id-1 (2025-10-13) 2 commits
  - doc: patch-id: convert to the modern synopsis style
  - Merge branch 'kh/doc-patch-id-markup-fix' into kh/doc-patch-id-1
- (this branch uses kh/doc-patch-id-markup-fix.)
 
- Expecting a reroll.
- cf. <d0dcaea3-844f-497a-adca-6241bf39db41@free.fr>
- source: <978261e3be4.1760043036.git.code@khaugsbakk.name>
+ Will merge to 'next'?
+ source: <v2-38645ea253c.1760369708.git.code@khaugsbakk.name>
 
 
 * tz/test-prepare-gnupghome (2024-07-03) 2 commits
@@ -143,18 +311,18 @@ Release tarballs are available at:
  Comments?
  source: <xmqqsefq7947.fsf@gitster.g>
 
+
 * kh/doc-continued-paragraph-fix (2025-10-08) 1 commit
- - doc: fix accidental literal blocks
+  (merged to 'next' on 2025-10-13 at e66316f041)
+ + doc: fix accidental literal blocks
 
  Doc mark-up fixes.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <7a955ecb1b5.1759923933.git.code@khaugsbakk.name>
 
---------------------------------------------------
-[Cooking]
 
-* cc/fast-import-strip-signed-tags (2025-10-09) 5 commits
+* cc/fast-import-strip-signed-tags (2025-10-13) 5 commits
  - fast-import: add '--signed-tags=<mode>' option
  - fast-export: handle all kinds of tag signatures
  - t9350: properly count annotated tags
@@ -164,9 +332,8 @@ Release tarballs are available at:
  "git fast-import" is taught to handle signed tags, just like it
  recently learned to handle signed commits, in different ways.
 
- Expecting v3.
- cf. <CAP8UFD10eMwKdacEzLumdXUghV2nYZViDT4o44u1qgXVU5Pzew@mail.gmail.com>
- source: <20251009122457.1273701-1-christian.couder@gmail.com>
+ Will merge to 'next'?
+ source: <20251013084857.1646783-1-christian.couder@gmail.com>
 
 
 * ps/ci-rust (2025-10-07) 8 commits
@@ -260,29 +427,6 @@ Release tarballs are available at:
  source: <fe8e8097-2b05-4dd2-a754-f59e4ba5f95a@web.de>
 
 
-* jn/doc-help-translaing-pretty-options (2025-10-05) 1 commit
-  (merged to 'next' on 2025-10-08 at 8962b8d1f0)
- + doc: do not break sentences into "lego" pieces
-
- Documentation for "git log --pretty" options has been updated
- to make it easier to translate.
-
- Will merge to 'master'.
- source: <pull.1982.git.1759698724134.gitgitgadget@gmail.com>
-
-
-* jn/doc-synopsis (2025-10-05) 3 commits
-  (merged to 'next' on 2025-10-08 at fd4f96ff5e)
- + doc: convert git worktree to synopsis style
- + doc: convert git tag to synopsis style
- + doc: convert git-stash.adoc to synopis style
-
- Doc-mark-up modernization continues.
-
- Will merge to 'master'.
- source: <pull.1969.git.1759698702.gitgitgadget@gmail.com>
-
-
 * tb/incremental-midx-part-3.1 (2025-09-29) 51 commits
  - SQUASH??? play well with other topics by preemptively including "repository.h"
  - builtin/repack.c: clean up unused `#include`s
@@ -368,6 +512,8 @@ Release tarballs are available at:
  (this branch uses sa/replay-atomic-ref-updates.)
 
  "git history" history rewriting UI.
+
+ Stomps on each others toes with sa/replay-atomic-ref-updates topic.
  source: <20251001-b4-pks-history-builtin-v4-0-8e61ddb86317@pks.im>
 
 
@@ -391,7 +537,8 @@ Release tarballs are available at:
  Document "git worktree add" and use of out-of-tree worktrees with
  examples.
 
- Will merge to 'next'?
+ Under discussion.
+ cf. <CAPig+cSNesf0UwS4=Bxe-Qn+G9y3YYPyOK+7y3q8QJk+o7jaVg@mail.gmail.com>
  source: <a203b35538847f3c9358a5ae26fb4ebea5734cfc.1759420102.git.msuchanek@suse.de>
 
 
@@ -402,75 +549,24 @@ Release tarballs are available at:
 
  Documentation mark-up fixes.
 
- Expecting v3. 
+ Expecting v3.
  cf. <20251002221233.541844-1-ramsay@ramsayjones.plus.com>
  source: <20251002221233.541844-1-ramsay@ramsayjones.plus.com>
 
 
-* ja/doc-markup-attached-paragraph-fix (2025-10-07) 2 commits
-  (merged to 'next' on 2025-10-07 at 5b991a7b14)
- + doc: fix indentation of refStorage item in git-config(1)
-  (merged to 'next' on 2025-09-30 at a91ca5db03)
- + doc: change the markup of paragraphs following a nested list item
-
- Documentation mark-up fix.
- source: <20250927195032.37223-1-jn.avila@free.fr>
- source: <20251007082223.GA3336685@coredump.intra.peff.net>
-
-
-* jc/optional-path (2025-09-28) 4 commits
-  (merged to 'next' on 2025-10-08 at a1e8af9952)
- + parseopt: values of pathname type can be prefixed with :(optional)
- + config: values of pathname type can be prefixed with :(optional)
- + t7500: fix GIT_EDITOR shell snippet
- + t7500: make each piece more independent
-
- Configuration variables that take a pathname as a value
- (e.g. blame.ignorerevsfile) can be marked as optional by prefixing
- ":(optoinal)" before its value.
-
- Will merge to 'master'.
- source: <cover.1759094936.git.ben.knoble+github@gmail.com>
-
-
-* kh/doc-patch-id-markup-fix (2025-09-29) 1 commit
-  (merged to 'next' on 2025-10-08 at a81dc9f7e6)
- + doc: patch-id: fix accidental literal blocks
- (this branch is used by kh/doc-patch-id-1.)
-
- Documentation mark-up fix.
-
- Will merge to 'master'.
- source: <v2-e5ad12cc3b3.1759178715.git.code@khaugsbakk.name>
-
-
-* sa/replay-atomic-ref-updates (2025-09-26) 1 commit
+* sa/replay-atomic-ref-updates (2025-10-14) 4 commits
+ - SQAUASH??? t0450 band-aid
+ - replay: add replay.defaultAction config option
  - replay: make atomic ref updates the default behavior
+ - replay: use die_for_incompatible_opt2() for option validation
  (this branch is used by ps/history.)
 
  "git replay" (experimental) learned to perform ref updates itself
  in a transaction by default, instead of emitting where each refs
  should point at and leaving the actual update to another command.
 
- Expecting v3.
- cf. <64b63d62-482d-42b2-8090-60aac8f505d4@gmail.com>
- source: <20250926230838.35870-2-siddharthasthana31@gmail.com>
-
-
-* kh/format-patch-range-diff-notes (2025-09-25) 3 commits
-  (merged to 'next' on 2025-10-08 at e06aae4166)
- + format-patch: handle range-diff on notes correctly for single patches
- + revision: add rdiff_log_arg to rev_info
- + range-diff: rename other_arg to log_arg
-
- "git format-patch --range-diff=... --notes=..." did not drive the
- underlying range-diff with correct --notes parameter, ending up
- comparing with different set of notes from its main patch output
- you would get from "git format-patch --notes=..." for a singleton
- patch.
-
- Will merge to 'master'.
- source: <v2-cover.1758819879.git.code@khaugsbakk.name>
+ Expecting a reroll.
+ source: <20251013183311.33329-1-siddharthasthana31@gmail.com>
 
 
 * je/doc-pull (2025-10-08) 4 commits
@@ -483,20 +579,6 @@ Release tarballs are available at:
 
  Will merge to 'next'?
  source: <pull.1976.v2.git.1759951536.gitgitgadget@gmail.com>
-
-
-* je/doc-push-upstream (2025-10-06) 5 commits
-  (merged to 'next' on 2025-10-08 at 7bda6929b1)
- + doc: git-push: add explanation of `git push origin main`
- + doc: git-push: clarify "what to push"
- + doc: git-push: clarify "where to push"
- + doc: add an UPSTREAM BRANCHES section to pull/push/fetch
- + doc: git-push: clarify intro
-
- Documentation updates.
-
- Will merge to 'master'.
- source: <pull.1964.v5.git.1759777131.gitgitgadget@gmail.com>
 
 
 * jk/diff-no-index-with-pathspec-fix (2025-09-24) 1 commit
@@ -526,73 +608,22 @@ Release tarballs are available at:
  source: <20250927145049.723341-1-jltobler@gmail.com>
 
 
-* kn/reftable-consistency-checks (2025-10-07) 7 commits
-  (merged to 'next' on 2025-10-07 at b9f4bd79f9)
- + refs/reftable: add fsck check for checking the table name
- + reftable: add code to facilitate consistency checks
- + fsck: order 'fsck_msg_type' alphabetically
- + Documentation/fsck-msgids: remove duplicate msg id
- + reftable: check for trailing newline in 'tables.list'
- + refs: move consistency check msg to generic layer
- + refs: remove unused headers
-
- The reftable backend learned to sanity check its on-disk data more
- carefully.
-
- Will merge to 'master'.
- source: <20251007-228-reftable-introduce-consistency-checks-v6-0-638cff42f0b0@gmail.com>
-
-
 * bc/sha1-256-interop-01 (2025-10-09) 9 commits
- - t1010: use BROKEN_OBJECTS prerequisite
- - t: allow specifying compatibility hash
- - fsck: consider gpgsig headers expected in tags
- - rev-parse: allow printing compatibility hash
- - docs: add documentation for loose objects
- - docs: improve ambiguous areas of pack format documentation
- - docs: reflect actual double signature for tags
- - docs: update offset order for pack index v3
- - docs: update pack index v3 format
+  (merged to 'next' on 2025-10-14 at c571bab975)
+ + t1010: use BROKEN_OBJECTS prerequisite
+ + t: allow specifying compatibility hash
+ + fsck: consider gpgsig headers expected in tags
+ + rev-parse: allow printing compatibility hash
+ + docs: add documentation for loose objects
+ + docs: improve ambiguous areas of pack format documentation
+ + docs: reflect actual double signature for tags
+ + docs: update offset order for pack index v3
+ + docs: update pack index v3 format
 
  The beginning of SHA1-SHA256 interoperability work.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <20251009215626.3089287-1-sandals@crustytoothpaste.net>
-
-
-* pw/add-p-hunk-splitting-fix (2025-09-25) 2 commits
-  (merged to 'next' on 2025-10-08 at 3fdb4a84ce)
- + add-patch: update hunk splitability after editing
- + add -p: mark split hunks as undecided
-
- Marking a hunk 'selected' in "git add -p" and then splitting made
- all the split pieces 'selected'; this has been changed to make them
- all 'undecided', which gives better end-user experience.
-
- Will merge to 'master'.
- source: <pull.1863.v3.git.1758813038.gitgitgadget@gmail.com>
-
-
-* en/xdiff-cleanup (2025-09-26) 12 commits
-  (merged to 'next' on 2025-10-08 at 5bc21d0f06)
- + xdiff: change type of xdfile_t.changed from char to bool
- + xdiff: add macros DISCARD(0), KEEP(1), INVESTIGATE(2) in xprepare.c
- + xdiff: rename rchg -> changed in xdfile_t
- + xdiff: delete chastore from xdfile_t
- + xdiff: delete fields ha, line, size in xdlclass_t in favor of an xrecord_t
- + xdiff: delete redundant array xdfile_t.ha
- + xdiff: delete struct diffdata_t
- + xdiff: delete local variables that alias fields in xrecord_t
- + xdiff: delete superfluous function xdl_get_rec() in xemit
- + xdiff: delete unnecessary fields from xrecord_t and xdfile_t
- + xdiff: delete local variables and initialize/free xdfile_t directly
- + xdiff: delete static forward declarations in xprepare
-
- A lot of code clean-up of xdiff.
- Split out of a larger topic.
-
- Will merge to 'master'.
- source: <pull.2048.v6.git.git.1758926520.gitgitgadget@gmail.com>
 
 
 * ar/submodule-gitdir-tweak (2025-10-06) 5 commits
@@ -609,38 +640,6 @@ Release tarballs are available at:
  Expecting v4.
  cf. <20251006112518.3764240-1-adrian.ratiu@collabora.com>
  source: <20251006112518.3764240-1-adrian.ratiu@collabora.com>
-
-
-* ps/commit-graph-per-object-source (2025-09-04) 5 commits
-  (merged to 'next' on 2025-10-07 at 6c9690a649)
- + commit-graph: pass graphs that are to be merged as parameter
- + commit-graph: return commit graph from `repo_find_commit_pos_in_graph()`
- + commit-graph: return the prepared commit graph from `prepare_commit_graph()`
- + revision: drop explicit check for commit graph
- + blame: drop explicit check for commit graph
-
- Code clean-up around commit-graph.
-
- Will merge to 'master'.
- cf. <cf7aeda1-297a-4805-b0ae-e379ce11bbcf@gmail.com>
- cf. <aN5gPoPC4WEYw9CF@pks.im>
- source: <20250904-b4-pks-commit-graph-via-source-v1-0-d932c2481e1a@pks.im>
-
-
-* sj/string-list (2025-10-05) 4 commits
-  (merged to 'next' on 2025-10-08 at cf0fc3ea18)
- + refs: enable sign compare warnings check
- + string-list: change "string_list_find_insert_index" return type to "size_t"
- + string-list: replace negative index encoding with "exact_match" parameter
- + string-list: use bool instead of int for "exact_match"
-
- The "string-list" API function to find where a given string would
- be inserted got updated so that it can use unrealistically huge
- array index that would only fit in size_t but not int or ssize_t
- to achieve unstated goal.
-
- Will merge to 'master'.
- source: <aONhmrE0otiyZ16f@ArchLinux>
 
 
 * ds/sparse-checkout-clean (2025-09-12) 7 commits
