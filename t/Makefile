@@ -189,15 +189,9 @@ perf:
 
 .PHONY: libgit-sys-test libgit-rs-test
 libgit-sys-test:
-	$(QUIET)(\
-		cd ../contrib/libgit-sys && \
-		cargo test \
-	)
-libgit-rs-test:
-	$(QUIET)(\
-		cd ../contrib/libgit-rs && \
-		cargo test \
-	)
+	$(QUIET)cargo test --manifest-path ../contrib/libgit-sys/Cargo.toml
+libgit-rs-test: libgit-sys-test
+	$(QUIET)cargo test --manifest-path ../contrib/libgit-rs/Cargo.toml
 ifdef INCLUDE_LIBGIT_RS
-all:: libgit-sys-test libgit-rs-test
+all:: libgit-rs-test
 endif
