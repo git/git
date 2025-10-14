@@ -47,6 +47,14 @@ UI, Workflows & Features
  * "git fast-import" learned that "--signed-commits=<how>" option that
    corresponds to that of "git fast-export".
 
+ * Marking a hunk 'selected' in "git add -p" and then splitting made
+   all the split pieces 'selected'; this has been changed to make them
+   all 'undecided', which gives better end-user experience.
+
+ * Configuration variables that take a pathname as a value
+   (e.g. blame.ignorerevsfile) can be marked as optional by prefixing
+   ":(optoinal)" before its value.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -115,6 +123,9 @@ Performance, Internal Implementation, Development Support etc.
 
  * Dip our toes a bit to (optionally) use Rust implemented helper
    called from our C code.
+
+ * Documentation for "git log --pretty" options has been updated
+   to make it easier to translate.
 
 
 Fixes since v2.51
@@ -308,6 +319,16 @@ including security updates, are included in this release.
    carefully.
    (merge 466a3a1afd kn/reftable-consistency-checks later to maint).
 
+ * A lot of code clean-up of xdiff.
+   Split out of a larger topic.
+   (merge 8b9c5d2e3a en/xdiff-cleanup later to maint).
+
+ * "git format-patch --range-diff=... --notes=..." did not drive the
+   underlying range-diff with correct --notes parameter, ending up
+   comparing with different set of notes from its main patch output
+   you would get from "git format-patch --notes=..." for a singleton
+   patch.
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 823d537fa7 kh/doc-git-log-markup-fix later to maint).
    (merge cf7efa4f33 rj/t6137-cygwin-fix later to maint).
@@ -337,3 +358,4 @@ including security updates, are included in this release.
    (merge fdd21ba116 mh/doc-credential-url-prefix later to maint).
    (merge 1c573a3451 en/doc-merge-tree-describe-merge-base later to maint).
    (merge 84a6bf7965 ja/doc-markup-attached-paragraph-fix later to maint).
+   (merge 399694384b kh/doc-patch-id-markup-fix later to maint).
