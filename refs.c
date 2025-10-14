@@ -32,6 +32,7 @@
 #include "commit.h"
 #include "wildmatch.h"
 #include "ident.h"
+#include "fsck.h"
 
 /*
  * List of all available backends
@@ -323,6 +324,9 @@ int check_refname_format(const char *refname, int flags)
 int refs_fsck(struct ref_store *refs, struct fsck_options *o,
 	      struct worktree *wt)
 {
+	if (o->verbose)
+		fprintf_ln(stderr, _("Checking references consistency"));
+
 	return refs->be->fsck(refs, o, wt);
 }
 

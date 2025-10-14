@@ -9,6 +9,7 @@ https://developers.google.com/open-source/licenses/bsd
 #include "unit-test.h"
 #include "lib-reftable.h"
 #include "reftable/basics.h"
+#include "reftable/reftable-error.h"
 
 struct integer_needle_lesseq_args {
 	int needle;
@@ -79,14 +80,18 @@ void test_reftable_basics__names_equal(void)
 void test_reftable_basics__parse_names(void)
 {
 	char in1[] = "line\n";
-	char in2[] = "a\nb\nc";
-	char **out = parse_names(in1, strlen(in1));
+	char in2[] = "a\nb\nc\n";
+	char **out = NULL;
+	int err = parse_names(in1, strlen(in1), &out);
+	cl_assert(err == 0);
 	cl_assert(out != NULL);
 	cl_assert_equal_s(out[0], "line");
 	cl_assert(!out[1]);
 	free_names(out);
 
-	out = parse_names(in2, strlen(in2));
+	out = NULL;
+	err = parse_names(in2, strlen(in2), &out);
+	cl_assert(err == 0);
 	cl_assert(out != NULL);
 	cl_assert_equal_s(out[0], "a");
 	cl_assert_equal_s(out[1], "b");
@@ -95,10 +100,21 @@ void test_reftable_basics__parse_names(void)
 	free_names(out);
 }
 
+void test_reftable_basics__parse_names_missing_newline(void)
+{
+	char in1[] = "line\nline2";
+	char **out = NULL;
+	int err = parse_names(in1, strlen(in1), &out);
+	cl_assert(err == REFTABLE_FORMAT_ERROR);
+	cl_assert(out == NULL);
+}
+
 void test_reftable_basics__parse_names_drop_empty_string(void)
 {
 	char in[] = "a\n\nb\n";
-	char **out = parse_names(in, strlen(in));
+	char **out = NULL;
+	int err = parse_names(in, strlen(in), &out);
+	cl_assert(err == 0);
 	cl_assert(out != NULL);
 	cl_assert_equal_s(out[0], "a");
 	/* simply '\n' should be dropped as empty string */
