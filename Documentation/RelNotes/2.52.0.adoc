@@ -298,6 +298,16 @@ including security updates, are included in this release.
  * Handling of an empty subdirectory of .git/refs/ in the ref-files
    backend has been corrected.
 
+ * Our CI script requires "sudo" that can be told to preserve
+   environment, but Ubuntu replaced with "sudo" with an implementation
+   that lacks the feature.  Work this around by reinstalling the
+   original version.
+   (merge fddb484255 ps/ci-avoid-broken-sudo-on-ubuntu later to maint).
+
+ * The reftable backend learned to sanity check its on-disk data more
+   carefully.
+   (merge 466a3a1afd kn/reftable-consistency-checks later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 823d537fa7 kh/doc-git-log-markup-fix later to maint).
    (merge cf7efa4f33 rj/t6137-cygwin-fix later to maint).
@@ -326,3 +336,4 @@ including security updates, are included in this release.
    (merge e1d062e8ba ps/odb-clean-stale-wrappers later to maint).
    (merge fdd21ba116 mh/doc-credential-url-prefix later to maint).
    (merge 1c573a3451 en/doc-merge-tree-describe-merge-base later to maint).
+   (merge 84a6bf7965 ja/doc-markup-attached-paragraph-fix later to maint).
