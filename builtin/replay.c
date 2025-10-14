@@ -330,7 +330,7 @@ int cmd_replay(int argc,
 
 	const char *const replay_usage[] = {
 		N_("(EXPERIMENTAL!) git replay "
-		   "([--contained] --onto <newbase> | --advance <branch>) "
+		   "([--contained] --onto <newbase> | --advance <branch>)\n"
 		   "[--update-refs[=<mode>]] <revision-range>..."),
 		NULL
 	};
