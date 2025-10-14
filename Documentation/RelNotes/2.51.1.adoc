@@ -1,0 +1,46 @@
+Git 2.51.1 Release Notes
+========================
+
+There shouldn't be anything exciting to see here.  This is primarily
+to flush the "do you still use it?" improvements that has landed on
+the master front, together with a handful of low-hanging low-impact
+fixes that should be safe.
+
+
+Fixes since Git 2.51.0
+----------------------
+
+ * The "do you still use it?" message given by a command that is
+   deeply deprecated and allow us to suggest alternatives has been
+   updated.
+
+ * The compatObjectFormat extension is used to hide an incomplete
+   feature that is not yet usable for any purpose other than
+   developing the feature further.  Document it as such to discourage
+   its use by mere mortals.
+
+ * Manual page for "gitk" is updated with the current maintainer's
+   name.
+
+ * Update the instruction to use of GGG in the MyFirstContribution
+   document to say that a GitHub PR could be made against `git/git`
+   instead of `gitgitgadget/git`.
+
+ * Clang-format update to let our control macros formatted the way we
+   had them traditionally, e.g., "for_each_string_list_item()" without
+   space before the parentheses.
+
+ * A few places where an size_t value was cast to curl_off_t without
+   checking has been updated to use the existing helper function.
+
+ * The start_delayed_progress() function in the progress eye-candy API
+   did not clear its internal state, making an initial delay value
+   larger than 1 second ineffective, which has been corrected.
+
+ * Makefile tried to run multiple "cargo build" which would not work
+   very well; serialize their execution to work it around.
+
+ * Adjust to the way newer versions of cURL selectivel enables tracing
+   options, so that our tests can continue to work.
+
+Also contains various documentation updates, code clean-ups and minor fixups.
