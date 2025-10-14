@@ -2909,9 +2909,6 @@ void setup_blame_bloom_data(struct blame_scoreboard *sb)
 	struct blame_bloom_data *bd;
 	struct bloom_filter_settings *bs;
 
-	if (!sb->repo->objects->commit_graph)
-		return;
-
 	bs = get_bloom_filter_settings(sb->repo);
 	if (!bs)
 		return;
