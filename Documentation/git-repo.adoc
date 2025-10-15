@@ -49,6 +49,7 @@ supported:
 	following kinds of information are reported:
 +
 * Reference counts categorized by type
+* Reachable object counts categorized by type
 
 +
 The table output format may change and is not intended for machine parsing.
