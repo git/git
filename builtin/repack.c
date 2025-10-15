@@ -1247,7 +1247,7 @@ static const char *find_pack_prefix(const char *packdir, const char *packtmp)
 int cmd_repack(int argc,
 	       const char **argv,
 	       const char *prefix,
-	       struct repository *repo UNUSED)
+	       struct repository *repo)
 {
 	struct child_process cmd = CHILD_PROCESS_INIT;
 	struct string_list_item *item;
@@ -1344,7 +1344,7 @@ int cmd_repack(int argc,
 
 	list_objects_filter_init(&po_args.filter_options);
 
-	repo_config(the_repository, repack_config, &cruft_po_args);
+	repo_config(repo, repack_config, &cruft_po_args);
 
 	argc = parse_options(argc, argv, prefix, builtin_repack_options,
 				git_repack_usage, 0);
@@ -1354,7 +1354,7 @@ int cmd_repack(int argc,
 	po_args.depth = xstrdup_or_null(opt_depth);
 	po_args.threads = xstrdup_or_null(opt_threads);
 
-	if (delete_redundant && the_repository->repository_format_precious_objects)
+	if (delete_redundant && repo->repository_format_precious_objects)
 		die(_("cannot delete packs in a precious-objects repo"));
 
 	die_for_incompatible_opt3(unpack_unreachable || (pack_everything & LOOSEN_UNREACHABLE), "-A",
@@ -1376,7 +1376,7 @@ int cmd_repack(int argc,
 		die(_(incremental_bitmap_conflict_error));
 
 	if (write_bitmaps && po_args.local &&
-	    odb_has_alternates(the_repository->objects)) {
+	    odb_has_alternates(repo->objects)) {
 		/*
 		 * When asked to do a local repack, but we have
 		 * packfiles that are inherited from an alternate, then
@@ -1391,7 +1391,8 @@ int cmd_repack(int argc,
 	if (write_midx && write_bitmaps) {
 		struct strbuf path = STRBUF_INIT;
 
-		strbuf_addf(&path, "%s/%s_XXXXXX", repo_get_object_directory(the_repository),
+		strbuf_addf(&path, "%s/%s_XXXXXX",
+			    repo_get_object_directory(repo),
 			    "bitmap-ref-tips");
 
 		refs_snapshot = xmks_tempfile(path.buf);
@@ -1400,7 +1401,7 @@ int cmd_repack(int argc,
 		strbuf_release(&path);
 	}
 
-	packdir = mkpathdup("%s/pack", repo_get_object_directory(the_repository));
+	packdir = mkpathdup("%s/pack", repo_get_object_directory(repo));
 	packtmp_name = xstrfmt(".tmp-%d-pack", (int)getpid());
 	packtmp = mkpathdup("%s/%s", packdir, packtmp_name);
 
@@ -1439,7 +1440,7 @@ int cmd_repack(int argc,
 		strvec_push(&cmd.args, "--reflog");
 		strvec_push(&cmd.args, "--indexed-objects");
 	}
-	if (repo_has_promisor_remote(the_repository))
+	if (repo_has_promisor_remote(repo))
 		strvec_push(&cmd.args, "--exclude-promisor-objects");
 	if (!write_midx) {
 		if (write_bitmaps > 0)
@@ -1535,7 +1536,7 @@ int cmd_repack(int argc,
 		 * midx_has_unknown_packs() will make the decision for
 		 * us.
 		 */
-		if (!get_multi_pack_index(the_repository->objects->sources))
+		if (!get_multi_pack_index(repo->objects->sources))
 			midx_must_contain_cruft = 1;
 	}
 
@@ -1618,9 +1619,9 @@ int cmd_repack(int argc,
 
 	string_list_sort(&names);
 
-	if (get_multi_pack_index(the_repository->objects->sources)) {
+	if (get_multi_pack_index(repo->objects->sources)) {
 		struct multi_pack_index *m =
-			get_multi_pack_index(the_repository->objects->sources);
+			get_multi_pack_index(repo->objects->sources);
 
 		ALLOC_ARRAY(midx_pack_names,
 			    m->num_packs + m->num_packs_in_base);
@@ -1631,7 +1632,7 @@ int cmd_repack(int argc,
 					xstrdup(m->pack_names[i]);
 	}
 
-	close_object_store(the_repository->objects);
+	close_object_store(repo->objects);
 
 	/*
 	 * Ok we have prepared all new packfiles.
@@ -1688,7 +1689,7 @@ int cmd_repack(int argc,
 			goto cleanup;
 	}
 
-	odb_reprepare(the_repository->objects);
+	odb_reprepare(repo->objects);
 
 	if (delete_redundant) {
 		int opts = 0;
@@ -1704,18 +1705,18 @@ int cmd_repack(int argc,
 		if (!keep_unreachable &&
 		    (!(pack_everything & LOOSEN_UNREACHABLE) ||
 		     unpack_unreachable) &&
-		    is_repository_shallow(the_repository))
+		    is_repository_shallow(repo))
 			prune_shallow(PRUNE_QUICK);
 	}
 
 	if (run_update_server_info)
-		update_server_info(the_repository, 0);
+		update_server_info(repo, 0);
 
 	if (git_env_bool(GIT_TEST_MULTI_PACK_INDEX, 0)) {
 		unsigned flags = 0;
 		if (git_env_bool(GIT_TEST_MULTI_PACK_INDEX_WRITE_INCREMENTAL, 0))
 			flags |= MIDX_WRITE_INCREMENTAL;
-		write_midx_file(the_repository->objects->sources,
+		write_midx_file(repo->objects->sources,
 				NULL, NULL, flags);
 	}
 
