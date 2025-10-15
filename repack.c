@@ -80,6 +80,9 @@ void existing_packs_collect(struct existing_packs *existing,
 		size_t i;
 		const char *base;
 
+		if (p->multi_pack_index)
+			string_list_append(&existing->midx_packs,
+					    pack_basename(p));
 		if (!p->pack_local)
 			continue;
 
@@ -104,6 +107,7 @@ void existing_packs_collect(struct existing_packs *existing,
 	string_list_sort(&existing->kept_packs);
 	string_list_sort(&existing->non_kept_packs);
 	string_list_sort(&existing->cruft_packs);
+	string_list_sort(&existing->midx_packs);
 	strbuf_release(&buf);
 }
 
@@ -220,6 +224,7 @@ void existing_packs_release(struct existing_packs *existing)
 	string_list_clear(&existing->kept_packs, 0);
 	string_list_clear(&existing->non_kept_packs, 0);
 	string_list_clear(&existing->cruft_packs, 0);
+	string_list_clear(&existing->midx_packs, 0);
 }
 
 static struct {

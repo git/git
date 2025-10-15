@@ -40,6 +40,7 @@ struct existing_packs {
 	struct string_list kept_packs;
 	struct string_list non_kept_packs;
 	struct string_list cruft_packs;
+	struct string_list midx_packs;
 };
 
 #define EXISTING_PACKS_INIT { \
