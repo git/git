@@ -407,7 +407,8 @@ static int has_pack_ext(const struct generated_pack_data *data,
 	BUG("unknown pack extension: '%s'", ext);
 }
 
-static void repack_promisor_objects(const struct pack_objects_args *args,
+static void repack_promisor_objects(struct repository *repo,
+				    const struct pack_objects_args *args,
 				    struct string_list *names)
 {
 	struct child_process cmd = CHILD_PROCESS_INIT;
@@ -424,7 +425,7 @@ static void repack_promisor_objects(const struct pack_objects_args *args,
 	 * {type -> existing pack order} ordering when computing deltas instead
 	 * of a {type -> size} ordering, which may produce better deltas.
 	 */
-	for_each_packed_object(the_repository, write_oid, &cmd,
+	for_each_packed_object(repo, write_oid, &cmd,
 			       FOR_EACH_OBJECT_PROMISOR_ONLY);
 
 	if (cmd.in == -1) {
@@ -1458,7 +1459,7 @@ int cmd_repack(int argc,
 		strvec_push(&cmd.args, "--delta-islands");
 
 	if (pack_everything & ALL_INTO_ONE) {
-		repack_promisor_objects(&po_args, &names);
+		repack_promisor_objects(repo, &po_args, &names);
 
 		if (has_existing_non_kept_packs(&existing) &&
 		    delete_redundant &&
