@@ -78,4 +78,24 @@ void repack_promisor_objects(struct repository *repo,
 			     const struct pack_objects_args *args,
 			     struct string_list *names, const char *packtmp);
 
+struct pack_geometry {
+	struct packed_git **pack;
+	uint32_t pack_nr, pack_alloc;
+	uint32_t split;
+
+	int split_factor;
+};
+
+void pack_geometry_init(struct pack_geometry *geometry,
+			struct existing_packs *existing,
+			const struct pack_objects_args *args,
+			int pack_kept_objects);
+void pack_geometry_split(struct pack_geometry *geometry);
+struct packed_git *pack_geometry_preferred_pack(struct pack_geometry *geometry);
+void pack_geometry_remove_redundant(struct pack_geometry *geometry,
+				    struct string_list *names,
+				    struct existing_packs *existing,
+				    const char *packdir);
+void pack_geometry_release(struct pack_geometry *geometry);
+
 #endif /* REPACK_H */
