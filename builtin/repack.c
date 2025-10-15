@@ -296,6 +296,35 @@ static void midx_included_packs(struct string_list *include,
 	strbuf_release(&buf);
 }
 
+static void remove_redundant_bitmaps(struct string_list *include,
+				     const char *packdir)
+{
+	struct strbuf path = STRBUF_INIT;
+	struct string_list_item *item;
+	size_t packdir_len;
+
+	strbuf_addstr(&path, packdir);
+	strbuf_addch(&path, '/');
+	packdir_len = path.len;
+
+	/*
+	 * Remove any pack bitmaps corresponding to packs which are now
+	 * included in the MIDX.
+	 */
+	for_each_string_list_item(item, include) {
+		strbuf_addstr(&path, item->string);
+		strbuf_strip_suffix(&path, ".idx");
+		strbuf_addstr(&path, ".bitmap");
+
+		if (unlink(path.buf) && errno != ENOENT)
+			warning_errno(_("could not remove stale bitmap: %s"),
+				      path.buf);
+
+		strbuf_setlen(&path, packdir_len);
+	}
+	strbuf_release(&path);
+}
+
 static int write_midx_included_packs(struct repack_write_midx_opts *opts)
 {
 	struct child_process cmd = CHILD_PROCESS_INIT;
@@ -371,35 +400,6 @@ static int write_midx_included_packs(struct repack_write_midx_opts *opts)
 	fclose(in);
 
 	return finish_command(&cmd);
-}
-
-static void remove_redundant_bitmaps(struct string_list *include,
-				     const char *packdir)
-{
-	struct strbuf path = STRBUF_INIT;
-	struct string_list_item *item;
-	size_t packdir_len;
-
-	strbuf_addstr(&path, packdir);
-	strbuf_addch(&path, '/');
-	packdir_len = path.len;
-
-	/*
-	 * Remove any pack bitmaps corresponding to packs which are now
-	 * included in the MIDX.
-	 */
-	for_each_string_list_item(item, include) {
-		strbuf_addstr(&path, item->string);
-		strbuf_strip_suffix(&path, ".idx");
-		strbuf_addstr(&path, ".bitmap");
-
-		if (unlink(path.buf) && errno != ENOENT)
-			warning_errno(_("could not remove stale bitmap: %s"),
-				      path.buf);
-
-		strbuf_setlen(&path, packdir_len);
-	}
-	strbuf_release(&path);
 }
 
 static int finish_pack_objects_cmd(const struct git_hash_algo *algop,
