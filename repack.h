@@ -133,4 +133,8 @@ struct repack_write_midx_opts {
 void midx_snapshot_refs(struct repository *repo, struct tempfile *f);
 int write_midx_included_packs(struct repack_write_midx_opts *opts);
 
+int write_filtered_pack(const struct write_pack_opts *opts,
+			struct existing_packs *existing,
+			struct string_list *names);
+
 #endif /* REPACK_H */
