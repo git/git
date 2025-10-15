@@ -452,7 +452,7 @@ static void repack_promisor_objects(struct repository *repo,
 		struct string_list_item *item;
 		char *promisor_name;
 
-		if (line.len != the_hash_algo->hexsz)
+		if (line.len != repo->hash_algo->hexsz)
 			die(_("repack: Expecting full hex object ID lines only from pack-objects."));
 		item = string_list_append(names, line.buf);
 
