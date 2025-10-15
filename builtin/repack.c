@@ -121,39 +121,39 @@ struct existing_packs {
 	.cruft_packs = STRING_LIST_INIT_DUP, \
 }
 
-static int has_existing_non_kept_packs(const struct existing_packs *existing)
+static int existing_packs_has_non_kept(const struct existing_packs *existing)
 {
 	return existing->non_kept_packs.nr || existing->cruft_packs.nr;
 }
 
-static void pack_mark_for_deletion(struct string_list_item *item)
+static void existing_pack_mark_for_deletion(struct string_list_item *item)
 {
 	item->util = (void*)((uintptr_t)item->util | DELETE_PACK);
 }
 
-static void pack_unmark_for_deletion(struct string_list_item *item)
+static void existing_pack_unmark_for_deletion(struct string_list_item *item)
 {
 	item->util = (void*)((uintptr_t)item->util & ~DELETE_PACK);
 }
 
-static int pack_is_marked_for_deletion(struct string_list_item *item)
+static int existing_pack_is_marked_for_deletion(struct string_list_item *item)
 {
 	return (uintptr_t)item->util & DELETE_PACK;
 }
 
-static void pack_mark_retained(struct string_list_item *item)
+static void existing_packs_mark_retained(struct string_list_item *item)
 {
 	item->util = (void*)((uintptr_t)item->util | RETAIN_PACK);
 }
 
-static int pack_is_retained(struct string_list_item *item)
+static int existing_pack_is_retained(struct string_list_item *item)
 {
 	return (uintptr_t)item->util & RETAIN_PACK;
 }
 
-static void mark_packs_for_deletion_1(const struct git_hash_algo *algop,
-				      struct string_list *names,
-				      struct string_list *list)
+static void existing_packs_mark_for_deletion_1(const struct git_hash_algo *algop,
+					       struct string_list *names,
+					       struct string_list *list)
 {
 	struct string_list_item *item;
 	const int hexsz = algop->hexsz;
@@ -165,8 +165,8 @@ static void mark_packs_for_deletion_1(const struct git_hash_algo *algop,
 			continue;
 		sha1 = item->string + len - hexsz;
 
-		if (pack_is_retained(item)) {
-			pack_unmark_for_deletion(item);
+		if (existing_pack_is_retained(item)) {
+			existing_pack_unmark_for_deletion(item);
 		} else if (!string_list_has_string(names, sha1)) {
 			/*
 			 * Mark this pack for deletion, which ensures
@@ -175,13 +175,13 @@ static void mark_packs_for_deletion_1(const struct git_hash_algo *algop,
 			 * will actually delete this pack (if `-d` was
 			 * given).
 			 */
-			pack_mark_for_deletion(item);
+			existing_pack_mark_for_deletion(item);
 		}
 	}
 }
 
-static void retain_cruft_pack(struct existing_packs *existing,
-			      struct packed_git *cruft)
+static void existing_packs_retain_cruft(struct existing_packs *existing,
+					struct packed_git *cruft)
 {
 	struct strbuf buf = STRBUF_INIT;
 	struct string_list_item *item;
@@ -193,17 +193,19 @@ static void retain_cruft_pack(struct existing_packs *existing,
 	if (!item)
 		BUG("could not find cruft pack '%s'", pack_basename(cruft));
 
-	pack_mark_retained(item);
+	existing_packs_mark_retained(item);
 	strbuf_release(&buf);
 }
 
-static void mark_packs_for_deletion(struct existing_packs *existing,
-				    struct string_list *names)
+static void existing_packs_mark_for_deletion(struct existing_packs *existing,
+					     struct string_list *names)
 
 {
 	const struct git_hash_algo *algop = existing->repo->hash_algo;
-	mark_packs_for_deletion_1(algop, names, &existing->non_kept_packs);
-	mark_packs_for_deletion_1(algop, names, &existing->cruft_packs);
+	existing_packs_mark_for_deletion_1(algop, names,
+					   &existing->non_kept_packs);
+	existing_packs_mark_for_deletion_1(algop, names,
+					   &existing->cruft_packs);
 }
 
 static void remove_redundant_pack(struct repository *repo,
@@ -225,13 +227,13 @@ static void remove_redundant_packs_1(struct repository *repo,
 {
 	struct string_list_item *item;
 	for_each_string_list_item(item, packs) {
-		if (!pack_is_marked_for_deletion(item))
+		if (!existing_pack_is_marked_for_deletion(item))
 			continue;
 		remove_redundant_pack(repo, packdir, item->string);
 	}
 }
 
-static void remove_redundant_existing_packs(struct existing_packs *existing)
+static void existing_packs_remove_redundant(struct existing_packs *existing)
 {
 	remove_redundant_packs_1(existing->repo, &existing->non_kept_packs);
 	remove_redundant_packs_1(existing->repo, &existing->cruft_packs);
@@ -250,7 +252,7 @@ static void existing_packs_release(struct existing_packs *existing)
  * .keep file or not.  Packs without a .keep file are not to be kept
  * if we are going to pack everything into one file.
  */
-static void collect_pack_filenames(struct existing_packs *existing,
+static void existing_packs_collect(struct existing_packs *existing,
 				   const struct string_list *extra_keep)
 {
 	struct packfile_store *packs = existing->repo->objects->packfiles;
@@ -721,7 +723,7 @@ static int midx_has_unknown_packs(char **midx_pack_names,
 
 			item = string_list_lookup(&existing->non_kept_packs,
 						  pack_name);
-			if (item && !pack_is_marked_for_deletion(item))
+			if (item && !existing_pack_is_marked_for_deletion(item))
 				continue;
 		}
 
@@ -851,7 +853,7 @@ static void midx_included_packs(struct string_list *include,
 		}
 	} else {
 		for_each_string_list_item(item, &existing->non_kept_packs) {
-			if (pack_is_marked_for_deletion(item))
+			if (existing_pack_is_marked_for_deletion(item))
 				continue;
 
 			strbuf_reset(&buf);
@@ -888,10 +890,10 @@ static void midx_included_packs(struct string_list *include,
 			 * --geometric case, but doing so is unnecessary
 			 *  since no packs are marked as pending
 			 *  deletion (since we only call
-			 *  `mark_packs_for_deletion()` when doing an
-			 *  all-into-one repack).
+			 *  `existing_packs_mark_for_deletion()` when
+			 *  doing an all-into-one repack).
 			 */
-			if (pack_is_marked_for_deletion(item))
+			if (existing_pack_is_marked_for_deletion(item))
 				continue;
 
 			strbuf_reset(&buf);
@@ -1128,7 +1130,7 @@ static void combine_small_cruft_packs(FILE *in, size_t combine_cruft_below_size,
 		if (p->pack_size < combine_cruft_below_size) {
 			fprintf(in, "-%s\n", pack_basename(p));
 		} else {
-			retain_cruft_pack(existing, p);
+			existing_packs_retain_cruft(existing, p);
 			fprintf(in, "%s\n", pack_basename(p));
 		}
 	}
@@ -1382,7 +1384,7 @@ int cmd_repack(int argc,
 	packtmp = mkpathdup("%s/%s", packdir, packtmp_name);
 
 	existing.repo = repo;
-	collect_pack_filenames(&existing, &keep_pack_list);
+	existing_packs_collect(&existing, &keep_pack_list);
 
 	if (geometry.split_factor) {
 		if (pack_everything)
@@ -1431,7 +1433,7 @@ int cmd_repack(int argc,
 	if (pack_everything & ALL_INTO_ONE) {
 		repack_promisor_objects(repo, &po_args, &names);
 
-		if (has_existing_non_kept_packs(&existing) &&
+		if (existing_packs_has_non_kept(&existing) &&
 		    delete_redundant &&
 		    !(pack_everything & PACK_CRUFT)) {
 			for_each_string_list_item(item, &names) {
@@ -1647,7 +1649,7 @@ int cmd_repack(int argc,
 	/* End of pack replacement. */
 
 	if (delete_redundant && pack_everything & ALL_INTO_ONE)
-		mark_packs_for_deletion(&existing, &names);
+		existing_packs_mark_for_deletion(&existing, &names);
 
 	if (write_midx) {
 		struct string_list include = STRING_LIST_INIT_DUP;
@@ -1671,7 +1673,7 @@ int cmd_repack(int argc,
 
 	if (delete_redundant) {
 		int opts = 0;
-		remove_redundant_existing_packs(&existing);
+		existing_packs_remove_redundant(&existing);
 
 		if (geometry.split_factor)
 			geometry_remove_redundant_packs(&geometry, &names,
