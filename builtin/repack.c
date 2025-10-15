@@ -183,6 +183,38 @@ static int generated_pack_has_ext(const struct generated_pack *pack,
 	BUG("unknown pack extension: '%s'", ext);
 }
 
+static void generated_pack_install(struct generated_pack *pack,
+				   const char *name)
+{
+	int ext;
+	for (ext = 0; ext < ARRAY_SIZE(exts); ext++) {
+		char *fname;
+
+		fname = mkpathdup("%s/pack-%s%s", packdir, name,
+				  exts[ext].name);
+
+		if (pack->tempfiles[ext]) {
+			const char *fname_old = get_tempfile_path(pack->tempfiles[ext]);
+			struct stat statbuffer;
+
+			if (!stat(fname_old, &statbuffer)) {
+				statbuffer.st_mode &= ~(S_IWUSR | S_IWGRP | S_IWOTH);
+				chmod(fname_old, statbuffer.st_mode);
+			}
+
+			if (rename_tempfile(&pack->tempfiles[ext], fname))
+				die_errno(_("renaming pack to '%s' failed"),
+					  fname);
+		} else if (!exts[ext].optional)
+			die(_("pack-objects did not write a '%s' file for pack %s-%s"),
+			    exts[ext].name, packtmp, name);
+		else if (unlink(fname) < 0 && errno != ENOENT)
+			die_errno(_("could not unlink: %s"), fname);
+
+		free(fname);
+	}
+}
+
 static void repack_promisor_objects(struct repository *repo,
 				    const struct pack_objects_args *args,
 				    struct string_list *names)
@@ -1045,7 +1077,7 @@ int cmd_repack(int argc,
 	struct existing_packs existing = EXISTING_PACKS_INIT;
 	struct pack_geometry geometry = { 0 };
 	struct tempfile *refs_snapshot = NULL;
-	int i, ext, ret;
+	int i, ret;
 	int show_progress;
 	char **midx_pack_names = NULL;
 	size_t midx_pack_names_nr = 0;
@@ -1434,35 +1466,8 @@ int cmd_repack(int argc,
 	/*
 	 * Ok we have prepared all new packfiles.
 	 */
-	for_each_string_list_item(item, &names) {
-		struct generated_pack *pack = item->util;
-
-		for (ext = 0; ext < ARRAY_SIZE(exts); ext++) {
-			char *fname;
-
-			fname = mkpathdup("%s/pack-%s%s",
-					packdir, item->string, exts[ext].name);
-
-			if (pack->tempfiles[ext]) {
-				const char *fname_old = get_tempfile_path(pack->tempfiles[ext]);
-				struct stat statbuffer;
-
-				if (!stat(fname_old, &statbuffer)) {
-					statbuffer.st_mode &= ~(S_IWUSR | S_IWGRP | S_IWOTH);
-					chmod(fname_old, statbuffer.st_mode);
-				}
-
-				if (rename_tempfile(&pack->tempfiles[ext], fname))
-					die_errno(_("renaming pack to '%s' failed"), fname);
-			} else if (!exts[ext].optional)
-				die(_("pack-objects did not write a '%s' file for pack %s-%s"),
-				    exts[ext].name, packtmp, item->string);
-			else if (unlink(fname) < 0 && errno != ENOENT)
-				die_errno(_("could not unlink: %s"), fname);
-
-			free(fname);
-		}
-	}
+	for_each_string_list_item(item, &names)
+		generated_pack_install(item->util, item->string);
 	/* End of pack replacement. */
 
 	if (delete_redundant && pack_everything & ALL_INTO_ONE)
