@@ -42,6 +42,11 @@ struct write_pack_opts {
 const char *write_pack_opts_pack_prefix(const struct write_pack_opts *opts);
 bool write_pack_opts_is_local(const struct write_pack_opts *opts);
 
+int finish_pack_objects_cmd(const struct git_hash_algo *algop,
+			    const struct write_pack_opts *opts,
+			    struct child_process *cmd,
+			    struct string_list *names);
+
 struct repository;
 struct packed_git;
 

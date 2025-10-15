@@ -107,39 +107,6 @@ static int repack_config(const char *var, const char *value,
 	return git_default_config(var, value, ctx, cb);
 }
 
-static int finish_pack_objects_cmd(const struct git_hash_algo *algop,
-				   const struct write_pack_opts *opts,
-				   struct child_process *cmd,
-				   struct string_list *names)
-{
-	FILE *out;
-	bool local = write_pack_opts_is_local(opts);
-	struct strbuf line = STRBUF_INIT;
-
-	out = xfdopen(cmd->out, "r");
-	while (strbuf_getline_lf(&line, out) != EOF) {
-		struct string_list_item *item;
-
-		if (line.len != algop->hexsz)
-			die(_("repack: Expecting full hex object ID lines only "
-			      "from pack-objects."));
-		/*
-		 * Avoid putting packs written outside of the repository in the
-		 * list of names.
-		 */
-		if (local) {
-			item = string_list_append(names, line.buf);
-			item->util = generated_pack_populate(line.buf,
-							     opts->packtmp);
-		}
-	}
-	fclose(out);
-
-	strbuf_release(&line);
-
-	return finish_command(cmd);
-}
-
 static int write_filtered_pack(const struct write_pack_opts *opts,
 			       struct existing_packs *existing,
 			       struct string_list *names)
