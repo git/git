@@ -74,4 +74,8 @@ int generated_pack_has_ext(const struct generated_pack *pack, const char *ext);
 void generated_pack_install(struct generated_pack *pack, const char *name,
 			    const char *packdir, const char *packtmp);
 
+void repack_promisor_objects(struct repository *repo,
+			     const struct pack_objects_args *args,
+			     struct string_list *names, const char *packtmp);
+
 #endif /* REPACK_H */
