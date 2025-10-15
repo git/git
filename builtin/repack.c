@@ -136,7 +136,8 @@ static int write_oid(const struct object_id *oid,
 
 static void repack_promisor_objects(struct repository *repo,
 				    const struct pack_objects_args *args,
-				    struct string_list *names)
+				    struct string_list *names,
+				    const char *packtmp)
 {
 	struct write_oid_context ctx;
 	struct child_process cmd = CHILD_PROCESS_INIT;
@@ -1199,7 +1200,7 @@ int cmd_repack(int argc,
 		strvec_push(&cmd.args, "--delta-islands");
 
 	if (pack_everything & ALL_INTO_ONE) {
-		repack_promisor_objects(repo, &po_args, &names);
+		repack_promisor_objects(repo, &po_args, &names, packtmp);
 
 		if (existing_packs_has_non_kept(&existing) &&
 		    delete_redundant &&
