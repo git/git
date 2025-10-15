@@ -100,3 +100,9 @@ diff --git a/a.c b/a.c
 +		s++;
 +	}
 +}
+@@ -0,0 +16,5 @@
++int main ()
++{
++	printf("%d\n", f(15));
++	return 0;
++}
