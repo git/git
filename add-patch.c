@@ -1408,16 +1408,37 @@ static size_t display_hunks(struct add_p_state *s,
 }
 
 static const char help_patch_remainder[] =
-N_("j - leave this hunk undecided, see next undecided hunk\n"
-   "J - leave this hunk undecided, see next hunk\n"
-   "k - leave this hunk undecided, see previous undecided hunk\n"
-   "K - leave this hunk undecided, see previous hunk\n"
+N_("j - go to the next undecided hunk, roll over at the bottom\n"
+   "J - go to the next hunk, roll over at the bottom\n"
+   "k - go to the previous undecided hunk, roll over at the top\n"
+   "K - go to the previous hunk, roll over at the top\n"
    "g - select a hunk to go to\n"
    "/ - search for a hunk matching the given regex\n"
    "s - split the current hunk into smaller hunks\n"
    "e - manually edit the current hunk\n"
    "p - print the current hunk, 'P' to use the pager\n"
    "? - print help\n");
+
+static size_t dec_mod(size_t a, size_t m)
+{
+	return a > 0 ? a - 1 : m - 1;
+}
+
+static size_t inc_mod(size_t a, size_t m)
+{
+	return a < m - 1 ? a + 1 : 0;
+}
+
+static bool get_first_undecided(const struct file_diff *file_diff, size_t *idx)
+{
+	for (size_t i = 0; i < file_diff->hunk_nr; i++) {
+		if (file_diff->hunk[i].use == UNDECIDED_HUNK) {
+			*idx = i;
+			return true;
+		}
+	}
+	return false;
+}
 
 static int patch_update_file(struct add_p_state *s,
 			     struct file_diff *file_diff)
@@ -1429,15 +1450,6 @@ static int patch_update_file(struct add_p_state *s,
 	struct child_process cp = CHILD_PROCESS_INIT;
 	int colored = !!s->colored.len, quit = 0, use_pager = 0;
 	enum prompt_mode_type prompt_mode_type;
-	enum {
-		ALLOW_GOTO_PREVIOUS_HUNK = 1 << 0,
-		ALLOW_GOTO_PREVIOUS_UNDECIDED_HUNK = 1 << 1,
-		ALLOW_GOTO_NEXT_HUNK = 1 << 2,
-		ALLOW_GOTO_NEXT_UNDECIDED_HUNK = 1 << 3,
-		ALLOW_SEARCH_AND_GOTO = 1 << 4,
-		ALLOW_SPLIT = 1 << 5,
-		ALLOW_EDIT = 1 << 6
-	} permitted = 0;
 
 	/* Empty added files have no hunks */
 	if (!file_diff->hunk_nr && !file_diff->added)
@@ -1447,6 +1459,16 @@ static int patch_update_file(struct add_p_state *s,
 	render_diff_header(s, file_diff, colored, &s->buf);
 	fputs(s->buf.buf, stdout);
 	for (;;) {
+		enum {
+			ALLOW_GOTO_PREVIOUS_HUNK = 1 << 0,
+			ALLOW_GOTO_PREVIOUS_UNDECIDED_HUNK = 1 << 1,
+			ALLOW_GOTO_NEXT_HUNK = 1 << 2,
+			ALLOW_GOTO_NEXT_UNDECIDED_HUNK = 1 << 3,
+			ALLOW_SEARCH_AND_GOTO = 1 << 4,
+			ALLOW_SPLIT = 1 << 5,
+			ALLOW_EDIT = 1 << 6
+		} permitted = 0;
+
 		if (hunk_index >= file_diff->hunk_nr)
 			hunk_index = 0;
 		hunk = file_diff->hunk_nr
@@ -1456,13 +1478,17 @@ static int patch_update_file(struct add_p_state *s,
 		undecided_next = -1;
 
 		if (file_diff->hunk_nr) {
-			for (i = hunk_index - 1; i >= 0; i--)
+			for (i = dec_mod(hunk_index, file_diff->hunk_nr);
+			     i != hunk_index;
+			     i = dec_mod(i, file_diff->hunk_nr))
 				if (file_diff->hunk[i].use == UNDECIDED_HUNK) {
 					undecided_previous = i;
 					break;
 				}
 
-			for (i = hunk_index + 1; i < file_diff->hunk_nr; i++)
+			for (i = inc_mod(hunk_index, file_diff->hunk_nr);
+			     i != hunk_index;
+			     i = inc_mod(i, file_diff->hunk_nr))
 				if (file_diff->hunk[i].use == UNDECIDED_HUNK) {
 					undecided_next = i;
 					break;
@@ -1496,7 +1522,7 @@ static int patch_update_file(struct add_p_state *s,
 				permitted |= ALLOW_GOTO_PREVIOUS_UNDECIDED_HUNK;
 				strbuf_addstr(&s->buf, ",k");
 			}
-			if (hunk_index) {
+			if (file_diff->hunk_nr > 1) {
 				permitted |= ALLOW_GOTO_PREVIOUS_HUNK;
 				strbuf_addstr(&s->buf, ",K");
 			}
@@ -1504,7 +1530,7 @@ static int patch_update_file(struct add_p_state *s,
 				permitted |= ALLOW_GOTO_NEXT_UNDECIDED_HUNK;
 				strbuf_addstr(&s->buf, ",j");
 			}
-			if (hunk_index + 1 < file_diff->hunk_nr) {
+			if (file_diff->hunk_nr > 1) {
 				permitted |= ALLOW_GOTO_NEXT_HUNK;
 				strbuf_addstr(&s->buf, ",J");
 			}
@@ -1569,6 +1595,8 @@ soft_increment:
 					if (hunk->use == UNDECIDED_HUNK)
 						hunk->use = USE_HUNK;
 				}
+				if (!get_first_undecided(file_diff, &hunk_index))
+					hunk_index = 0;
 			} else if (hunk->use == UNDECIDED_HUNK) {
 				hunk->use = USE_HUNK;
 			}
@@ -1579,6 +1607,8 @@ soft_increment:
 					if (hunk->use == UNDECIDED_HUNK)
 						hunk->use = SKIP_HUNK;
 				}
+				if (!get_first_undecided(file_diff, &hunk_index))
+					hunk_index = 0;
 			} else if (hunk->use == UNDECIDED_HUNK) {
 				hunk->use = SKIP_HUNK;
 			}
@@ -1588,24 +1618,25 @@ soft_increment:
 			}
 		} else if (s->answer.buf[0] == 'K') {
 			if (permitted & ALLOW_GOTO_PREVIOUS_HUNK)
-				hunk_index--;
+				hunk_index = dec_mod(hunk_index,
+						     file_diff->hunk_nr);
 			else
-				err(s, _("No previous hunk"));
+				err(s, _("No other hunk"));
 		} else if (s->answer.buf[0] == 'J') {
 			if (permitted & ALLOW_GOTO_NEXT_HUNK)
 				hunk_index++;
 			else
-				err(s, _("No next hunk"));
+				err(s, _("No other hunk"));
 		} else if (s->answer.buf[0] == 'k') {
 			if (permitted & ALLOW_GOTO_PREVIOUS_UNDECIDED_HUNK)
 				hunk_index = undecided_previous;
 			else
-				err(s, _("No previous hunk"));
+				err(s, _("No other undecided hunk"));
 		} else if (s->answer.buf[0] == 'j') {
 			if (permitted & ALLOW_GOTO_NEXT_UNDECIDED_HUNK)
 				hunk_index = undecided_next;
 			else
-				err(s, _("No next hunk"));
+				err(s, _("No other undecided hunk"));
 		} else if (s->answer.buf[0] == 'g') {
 			char *pend;
 			unsigned long response;
