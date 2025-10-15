@@ -118,18 +118,17 @@ struct repack_write_midx_opts {
 	int midx_must_contain_cruft;
 };
 
-static int midx_has_unknown_packs(char **midx_pack_names,
-				  size_t midx_pack_names_nr,
+static int midx_has_unknown_packs(struct string_list *midx_pack_names,
 				  struct string_list *include,
 				  struct pack_geometry *geometry,
 				  struct existing_packs *existing)
 {
-	size_t i;
+	struct string_list_item *item;
 
 	string_list_sort(include);
 
-	for (i = 0; i < midx_pack_names_nr; i++) {
-		const char *pack_name = midx_pack_names[i];
+	for_each_string_list_item(item, midx_pack_names) {
+		const char *pack_name = item->string;
 
 		/*
 		 * Determine whether or not each MIDX'd pack from the existing
@@ -191,8 +190,7 @@ static int midx_has_unknown_packs(char **midx_pack_names,
 
 static void midx_included_packs(struct string_list *include,
 				struct existing_packs *existing,
-				char **midx_pack_names,
-				size_t midx_pack_names_nr,
+				struct string_list *midx_pack_names,
 				struct string_list *names,
 				struct pack_geometry *geometry)
 {
@@ -247,8 +245,8 @@ static void midx_included_packs(struct string_list *include,
 	}
 
 	if (midx_must_contain_cruft ||
-	    midx_has_unknown_packs(midx_pack_names, midx_pack_names_nr,
-				   include, geometry, existing)) {
+	    midx_has_unknown_packs(midx_pack_names, include, geometry,
+				   existing)) {
 		/*
 		 * If there are one or more unknown pack(s) present (see
 		 * midx_has_unknown_packs() for what makes a pack
@@ -606,13 +604,12 @@ int cmd_repack(int argc,
 	struct child_process cmd = CHILD_PROCESS_INIT;
 	struct string_list_item *item;
 	struct string_list names = STRING_LIST_INIT_DUP;
+	struct string_list midx_pack_names = STRING_LIST_INIT_DUP;
 	struct existing_packs existing = EXISTING_PACKS_INIT;
 	struct pack_geometry geometry = { 0 };
 	struct tempfile *refs_snapshot = NULL;
 	int i, ret;
 	int show_progress;
-	char **midx_pack_names = NULL;
-	size_t midx_pack_names_nr = 0;
 
 	/* variables to be filled by option parsing */
 	struct repack_config_ctx config_ctx;
@@ -985,13 +982,12 @@ int cmd_repack(int argc,
 		struct multi_pack_index *m =
 			get_multi_pack_index(repo->objects->sources);
 
-		ALLOC_ARRAY(midx_pack_names,
-			    m->num_packs + m->num_packs_in_base);
-
-		for (; m; m = m->base_midx)
-			for (uint32_t i = 0; i < m->num_packs; i++)
-				midx_pack_names[midx_pack_names_nr++] =
-					xstrdup(m->pack_names[i]);
+		for (; m; m = m->base_midx) {
+			for (uint32_t i = 0; i < m->num_packs; i++) {
+				string_list_append(&midx_pack_names,
+						   m->pack_names[i]);
+			}
+		}
 	}
 
 	close_object_store(repo->objects);
@@ -1019,8 +1015,8 @@ int cmd_repack(int argc,
 			.write_bitmaps = write_bitmaps > 0,
 			.midx_must_contain_cruft = midx_must_contain_cruft
 		};
-		midx_included_packs(&include, &existing, midx_pack_names,
-				    midx_pack_names_nr, &names, &geometry);
+		midx_included_packs(&include, &existing, &midx_pack_names,
+				    &names, &geometry);
 
 		ret = write_midx_included_packs(&opts);
 
@@ -1067,11 +1063,9 @@ int cmd_repack(int argc,
 cleanup:
 	string_list_clear(&keep_pack_list, 0);
 	string_list_clear(&names, 1);
+	string_list_clear(&midx_pack_names, 0);
 	existing_packs_release(&existing);
 	pack_geometry_release(&geometry);
-	for (size_t i = 0; i < midx_pack_names_nr; i++)
-		free(midx_pack_names[i]);
-	free(midx_pack_names);
 	pack_objects_args_release(&po_args);
 	pack_objects_args_release(&cruft_po_args);
 
