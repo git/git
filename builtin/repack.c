@@ -683,12 +683,14 @@ static void geometry_remove_redundant_packs(struct pack_geometry *geometry,
 					    struct string_list *names,
 					    struct existing_packs *existing)
 {
+	const struct git_hash_algo *algop = existing->repo->hash_algo;
 	struct strbuf buf = STRBUF_INIT;
 	uint32_t i;
 
 	for (i = 0; i < geometry->split; i++) {
 		struct packed_git *p = geometry->pack[i];
-		if (string_list_has_string(names, hash_to_hex(p->hash)))
+		if (string_list_has_string(names, hash_to_hex_algop(p->hash,
+								    algop)))
 			continue;
 
 		strbuf_reset(&buf);
