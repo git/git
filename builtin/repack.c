@@ -208,20 +208,6 @@ static void existing_packs_mark_for_deletion(struct existing_packs *existing,
 					   &existing->cruft_packs);
 }
 
-static void remove_redundant_pack(struct repository *repo,
-				  const char *dir_name, const char *base_name)
-{
-	struct strbuf buf = STRBUF_INIT;
-	struct odb_source *source = repo->objects->sources;
-	struct multi_pack_index *m = get_multi_pack_index(source);
-	strbuf_addf(&buf, "%s.pack", base_name);
-	if (m && source->local && midx_contains_pack(m, buf.buf))
-		clear_midx_file(repo);
-	strbuf_insertf(&buf, 0, "%s/", dir_name);
-	unlink_pack_path(buf.buf, 1);
-	strbuf_release(&buf);
-}
-
 static void remove_redundant_packs_1(struct repository *repo,
 				     struct string_list *packs)
 {
@@ -229,7 +215,7 @@ static void remove_redundant_packs_1(struct repository *repo,
 	for_each_string_list_item(item, packs) {
 		if (!existing_pack_is_marked_for_deletion(item))
 			continue;
-		remove_redundant_pack(repo, packdir, item->string);
+		repack_remove_redundant_pack(repo, packdir, item->string);
 	}
 }
 
@@ -652,7 +638,7 @@ static void geometry_remove_redundant_packs(struct pack_geometry *geometry,
 		    (string_list_has_string(&existing->kept_packs, buf.buf)))
 			continue;
 
-		remove_redundant_pack(existing->repo, packdir, buf.buf);
+		repack_remove_redundant_pack(existing->repo, packdir, buf.buf);
 	}
 
 	strbuf_release(&buf);

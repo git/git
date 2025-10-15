@@ -28,4 +28,7 @@ void prepare_pack_objects(struct child_process *cmd,
 			  const char *out);
 void pack_objects_args_release(struct pack_objects_args *args);
 
+void repack_remove_redundant_pack(struct repository *repo, const char *dir_name,
+				  const char *base_name);
+
 #endif /* REPACK_H */
