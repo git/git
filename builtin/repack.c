@@ -1073,7 +1073,8 @@ static void remove_redundant_bitmaps(struct string_list *include,
 	strbuf_release(&path);
 }
 
-static int finish_pack_objects_cmd(struct child_process *cmd,
+static int finish_pack_objects_cmd(const struct git_hash_algo *algop,
+				   struct child_process *cmd,
 				   struct string_list *names,
 				   int local)
 {
@@ -1084,7 +1085,7 @@ static int finish_pack_objects_cmd(struct child_process *cmd,
 	while (strbuf_getline_lf(&line, out) != EOF) {
 		struct string_list_item *item;
 
-		if (line.len != the_hash_algo->hexsz)
+		if (line.len != algop->hexsz)
 			die(_("repack: Expecting full hex object ID lines only "
 			      "from pack-objects."));
 		/*
@@ -1150,7 +1151,8 @@ static int write_filtered_pack(const struct pack_objects_args *args,
 		fprintf(in, "%s%s.pack\n", caret, item->string);
 	fclose(in);
 
-	return finish_pack_objects_cmd(&cmd, names, local);
+	return finish_pack_objects_cmd(existing->repo->hash_algo, &cmd, names,
+				       local);
 }
 
 static void combine_small_cruft_packs(FILE *in, size_t combine_cruft_below_size,
@@ -1247,7 +1249,8 @@ static int write_cruft_pack(const struct pack_objects_args *args,
 		fprintf(in, "%s.pack\n", item->string);
 	fclose(in);
 
-	return finish_pack_objects_cmd(&cmd, names, local);
+	return finish_pack_objects_cmd(existing->repo->hash_algo, &cmd, names,
+				       local);
 }
 
 static const char *find_pack_prefix(const char *packdir, const char *packtmp)
@@ -1534,7 +1537,7 @@ int cmd_repack(int argc,
 		fclose(in);
 	}
 
-	ret = finish_pack_objects_cmd(&cmd, &names, 1);
+	ret = finish_pack_objects_cmd(repo->hash_algo, &cmd, &names, 1);
 	if (ret)
 		goto cleanup;
 
