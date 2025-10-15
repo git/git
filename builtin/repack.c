@@ -771,6 +771,7 @@ static int midx_has_unknown_packs(char **midx_pack_names,
 }
 
 struct midx_snapshot_ref_data {
+	struct repository *repo;
 	struct tempfile *f;
 	struct oidset seen;
 	int preferred;
@@ -784,13 +785,13 @@ static int midx_snapshot_ref_one(const char *refname UNUSED,
 	struct midx_snapshot_ref_data *data = _data;
 	struct object_id peeled;
 
-	if (!peel_iterated_oid(the_repository, oid, &peeled))
+	if (!peel_iterated_oid(data->repo, oid, &peeled))
 		oid = &peeled;
 
 	if (oidset_insert(&data->seen, oid))
 		return 0; /* already seen */
 
-	if (odb_read_object_info(the_repository->objects, oid, NULL) != OBJ_COMMIT)
+	if (odb_read_object_info(data->repo->objects, oid, NULL) != OBJ_COMMIT)
 		return 0;
 
 	fprintf(data->f->fp, "%s%s\n", data->preferred ? "+" : "",
@@ -799,11 +800,12 @@ static int midx_snapshot_ref_one(const char *refname UNUSED,
 	return 0;
 }
 
-static void midx_snapshot_refs(struct tempfile *f)
+static void midx_snapshot_refs(struct repository *repo, struct tempfile *f)
 {
 	struct midx_snapshot_ref_data data;
-	const struct string_list *preferred = bitmap_preferred_tips(the_repository);
+	const struct string_list *preferred = bitmap_preferred_tips(repo);
 
+	data.repo = repo;
 	data.f = f;
 	data.preferred = 0;
 	oidset_init(&data.seen, 0);
@@ -817,13 +819,13 @@ static void midx_snapshot_refs(struct tempfile *f)
 
 		data.preferred = 1;
 		for_each_string_list_item(item, preferred)
-			refs_for_each_ref_in(get_main_ref_store(the_repository),
+			refs_for_each_ref_in(get_main_ref_store(repo),
 					     item->string,
 					     midx_snapshot_ref_one, &data);
 		data.preferred = 0;
 	}
 
-	refs_for_each_ref(get_main_ref_store(the_repository),
+	refs_for_each_ref(get_main_ref_store(repo),
 			  midx_snapshot_ref_one, &data);
 
 	if (close_tempfile_gently(f)) {
@@ -1397,7 +1399,7 @@ int cmd_repack(int argc,
 			    "bitmap-ref-tips");
 
 		refs_snapshot = xmks_tempfile(path.buf);
-		midx_snapshot_refs(refs_snapshot);
+		midx_snapshot_refs(repo, refs_snapshot);
 
 		strbuf_release(&path);
 	}
