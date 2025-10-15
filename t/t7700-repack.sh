@@ -838,4 +838,67 @@ test_expect_success '-n overrides repack.updateServerInfo=true' '
 	test_server_info_missing
 '
 
+test_expect_success 'pending objects are repacked appropriately' '
+	test_when_finished rm -rf pending &&
+	git init pending &&
+
+	(
+		cd pending &&
+
+		# Commit file, a/b/c and never change them.
+		mkdir -p a/b &&
+		echo singleton >file &&
+		echo stuff >a/b/c &&
+		echo more >a/d &&
+		git add file a &&
+		git commit -m "single blobs" &&
+
+		# Files a/d and a/e will not be singletons.
+		echo d >a/d &&
+		echo e >a/e &&
+		git add a &&
+		git commit -m "more blobs" &&
+
+		# This use of a sparse index helps to force
+		# test that the cache-tree is walked, too.
+		git sparse-checkout set --sparse-index a x &&
+
+		# Create staged changes:
+		# * a/e now has multiple versions.
+		# * a/i now has only one version.
+		echo f >a/d &&
+		echo h >a/e &&
+		echo i >a/i &&
+		git add a &&
+
+		# Stage and unstage a change to make use of
+		# resolve-undo cache and how that impacts fsck.
+		mkdir x &&
+		echo y >x/y &&
+		git add x &&
+		xy=$(git rev-parse :x/y) &&
+		git rm --cached x/y &&
+
+		# The blob for x/y must persist through repacks,
+		# but fsck currently ignores the REUC extension
+		# for finding links to the blob.
+		cat >expect <<-EOF &&
+		dangling blob $xy
+		EOF
+
+		# Bring the loose objects into a packfile to avoid
+		# leftovers in next test. Without this, the loose
+		# objects persist and the test succeeds for other
+		# reasons.
+		git repack -adf &&
+		git fsck >out &&
+		test_cmp expect out &&
+
+		# Test path walk version with pack.useSparse.
+		git -c pack.useSparse=true repack -adf --path-walk &&
+		git fsck >out &&
+		test_cmp expect out
+	)
+'
+
 test_done
