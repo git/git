@@ -54,10 +54,16 @@ static const char incremental_bitmap_conflict_error[] = N_(
 "--no-write-bitmap-index or disable the pack.writeBitmaps configuration."
 );
 
+struct repack_config_ctx {
+	struct pack_objects_args *po_args;
+	struct pack_objects_args *cruft_po_args;
+};
+
 static int repack_config(const char *var, const char *value,
 			 const struct config_context *ctx, void *cb)
 {
-	struct pack_objects_args *cruft_po_args = cb;
+	struct repack_config_ctx *repack_ctx = cb;
+	struct pack_objects_args *cruft_po_args = repack_ctx->cruft_po_args;
 	if (!strcmp(var, "repack.usedeltabaseoffset")) {
 		delta_base_offset = git_config_bool(var, value);
 		return 0;
@@ -1260,6 +1266,7 @@ int cmd_repack(int argc,
 	size_t midx_pack_names_nr = 0;
 
 	/* variables to be filled by option parsing */
+	struct repack_config_ctx config_ctx;
 	int delete_redundant = 0;
 	const char *unpack_unreachable = NULL;
 	int keep_unreachable = 0;
@@ -1343,7 +1350,11 @@ int cmd_repack(int argc,
 
 	list_objects_filter_init(&po_args.filter_options);
 
-	repo_config(repo, repack_config, &cruft_po_args);
+	memset(&config_ctx, 0, sizeof(config_ctx));
+	config_ctx.po_args = &po_args;
+	config_ctx.cruft_po_args = &cruft_po_args;
+
+	repo_config(repo, repack_config, &config_ctx);
 
 	argc = parse_options(argc, argv, prefix, builtin_repack_options,
 				git_repack_usage, 0);
