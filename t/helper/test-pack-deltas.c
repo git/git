@@ -51,16 +51,14 @@ static void write_ref_delta(struct hashfile *f,
 	unsigned long size, base_size, delta_size, compressed_size, hdrlen;
 	enum object_type type;
 	void *base_buf, *delta_buf;
-	void *buf = repo_read_object_file(the_repository,
-					  oid, &type,
-					  &size);
+	void *buf = odb_read_object(the_repository->objects,
+				    oid, &type, &size);
 
 	if (!buf)
 		die("unable to read %s", oid_to_hex(oid));
 
-	base_buf = repo_read_object_file(the_repository,
-					 base, &type,
-					 &base_size);
+	base_buf = odb_read_object(the_repository->objects,
+				   base, &type, &base_size);
 
 	if (!base_buf)
 		die("unable to read %s", oid_to_hex(base));

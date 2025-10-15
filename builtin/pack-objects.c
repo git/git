@@ -3774,7 +3774,7 @@ static void show_object_pack_hint(struct object *object, const char *name,
 	enum stdin_packs_mode mode = *(enum stdin_packs_mode *)data;
 	if (mode == STDIN_PACKS_MODE_FOLLOW) {
 		if (object->type == OBJ_BLOB &&
-		    !has_object(the_repository, &object->oid, 0))
+		    !odb_has_object(the_repository->objects, &object->oid, 0))
 			return;
 		add_object_entry(&object->oid, object->type, name, 0);
 	} else {
@@ -4591,8 +4591,8 @@ static int add_objects_by_path(const char *path,
 
 		/* Skip objects that do not exist locally. */
 		if ((exclude_promisor_objects || arg_missing_action != MA_ERROR) &&
-		    oid_object_info_extended(the_repository, oid, &oi,
-					     OBJECT_INFO_FOR_PREFETCH) < 0)
+		    odb_read_object_info_extended(the_repository->objects, oid, &oi,
+						  OBJECT_INFO_FOR_PREFETCH) < 0)
 			continue;
 
 		exclude = is_oid_uninteresting(the_repository, oid);

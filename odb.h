@@ -475,37 +475,4 @@ static inline int odb_write_object(struct object_database *odb,
 	return odb_write_object_ext(odb, buf, len, type, oid, NULL, 0);
 }
 
-/* Compatibility wrappers, to be removed once Git 2.51 has been released. */
-#include "repository.h"
-
-static inline int oid_object_info_extended(struct repository *r,
-					   const struct object_id *oid,
-					   struct object_info *oi,
-					   unsigned flags)
-{
-	return odb_read_object_info_extended(r->objects, oid, oi, flags);
-}
-
-static inline int oid_object_info(struct repository *r,
-				  const struct object_id *oid,
-				  unsigned long *sizep)
-{
-	return odb_read_object_info(r->objects, oid, sizep);
-}
-
-static inline void *repo_read_object_file(struct repository *r,
-					  const struct object_id *oid,
-					  enum object_type *type,
-					  unsigned long *size)
-{
-	return odb_read_object(r->objects, oid, type, size);
-}
-
-static inline int has_object(struct repository *r,
-			     const struct object_id *oid,
-			     unsigned flags)
-{
-	return odb_has_object(r->objects, oid, flags);
-}
-
 #endif /* ODB_H */
