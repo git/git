@@ -107,6 +107,17 @@ static int repack_config(const char *var, const char *value,
 	return git_default_config(var, value, ctx, cb);
 }
 
+struct repack_write_midx_opts {
+	struct string_list *include;
+	struct pack_geometry *geometry;
+	struct string_list *names;
+	const char *refs_snapshot;
+	const char *packdir;
+	int show_progress;
+	int write_bitmaps;
+	int midx_must_contain_cruft;
+};
+
 static int midx_has_unknown_packs(char **midx_pack_names,
 				  size_t midx_pack_names_nr,
 				  struct string_list *include,
@@ -290,19 +301,15 @@ static void midx_included_packs(struct string_list *include,
 	strbuf_release(&buf);
 }
 
-static int write_midx_included_packs(struct string_list *include,
-				     struct pack_geometry *geometry,
-				     struct string_list *names,
-				     const char *refs_snapshot,
-				     int show_progress, int write_bitmaps)
+static int write_midx_included_packs(struct repack_write_midx_opts *opts)
 {
 	struct child_process cmd = CHILD_PROCESS_INIT;
 	struct string_list_item *item;
-	struct packed_git *preferred = pack_geometry_preferred_pack(geometry);
+	struct packed_git *preferred = pack_geometry_preferred_pack(opts->geometry);
 	FILE *in;
 	int ret;
 
-	if (!include->nr)
+	if (!opts->include->nr)
 		return 0;
 
 	cmd.in = -1;
@@ -311,18 +318,18 @@ static int write_midx_included_packs(struct string_list *include,
 	strvec_push(&cmd.args, "multi-pack-index");
 	strvec_pushl(&cmd.args, "write", "--stdin-packs", NULL);
 
-	if (show_progress)
+	if (opts->show_progress)
 		strvec_push(&cmd.args, "--progress");
 	else
 		strvec_push(&cmd.args, "--no-progress");
 
-	if (write_bitmaps)
+	if (opts->write_bitmaps)
 		strvec_push(&cmd.args, "--bitmap");
 
 	if (preferred)
 		strvec_pushf(&cmd.args, "--preferred-pack=%s",
 			     pack_basename(preferred));
-	else if (names->nr) {
+	else if (opts->names->nr) {
 		/* The largest pack was repacked, meaning that either
 		 * one or two packs exist depending on whether the
 		 * repository has a cruft pack or not.
@@ -335,7 +342,7 @@ static int write_midx_included_packs(struct string_list *include,
 		 * `--max-pack-size` was given, but any one of them
 		 * will suffice, so pick the first one.)
 		 */
-		for_each_string_list_item(item, names) {
+		for_each_string_list_item(item, opts->names) {
 			struct generated_pack *pack = item->util;
 			if (generated_pack_has_ext(pack, ".mtimes"))
 				continue;
@@ -355,15 +362,16 @@ static int write_midx_included_packs(struct string_list *include,
 		;
 	}
 
-	if (refs_snapshot)
-		strvec_pushf(&cmd.args, "--refs-snapshot=%s", refs_snapshot);
+	if (opts->refs_snapshot)
+		strvec_pushf(&cmd.args, "--refs-snapshot=%s",
+			     opts->refs_snapshot);
 
 	ret = start_command(&cmd);
 	if (ret)
 		return ret;
 
 	in = xfdopen(cmd.in, "w");
-	for_each_string_list_item(item, include)
+	for_each_string_list_item(item, opts->include)
 		fprintf(in, "%s\n", item->string);
 	fclose(in);
 
@@ -1001,15 +1009,23 @@ int cmd_repack(int argc,
 
 	if (write_midx) {
 		struct string_list include = STRING_LIST_INIT_DUP;
+		struct repack_write_midx_opts opts = {
+			.include = &include,
+			.geometry = &geometry,
+			.names = &names,
+			.refs_snapshot = refs_snapshot ? get_tempfile_path(refs_snapshot) : NULL,
+			.packdir = packdir,
+			.show_progress = show_progress,
+			.write_bitmaps = write_bitmaps > 0,
+			.midx_must_contain_cruft = midx_must_contain_cruft
+		};
 		midx_included_packs(&include, &existing, midx_pack_names,
 				    midx_pack_names_nr, &names, &geometry);
 
-		ret = write_midx_included_packs(&include, &geometry, &names,
-						refs_snapshot ? get_tempfile_path(refs_snapshot) : NULL,
-						show_progress, write_bitmaps > 0);
+		ret = write_midx_included_packs(&opts);
 
 		if (!ret && write_bitmaps)
-			remove_redundant_bitmaps(&include, packdir);
+			remove_redundant_bitmaps(&include, opts.packdir);
 
 		string_list_clear(&include, 0);
 
