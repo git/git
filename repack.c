@@ -66,6 +66,17 @@ void repack_remove_redundant_pack(struct repository *repo, const char *dir_name,
 	strbuf_release(&buf);
 }
 
+const char *write_pack_opts_pack_prefix(const struct write_pack_opts *opts)
+{
+	const char *pack_prefix;
+	if (!skip_prefix(opts->packtmp, opts->packdir, &pack_prefix))
+		die(_("pack prefix %s does not begin with objdir %s"),
+		    opts->packtmp, opts->packdir);
+	if (*pack_prefix == '/')
+		pack_prefix++;
+	return pack_prefix;
+}
+
 #define DELETE_PACK 1
 #define RETAIN_PACK 2
 

@@ -149,6 +149,7 @@ static int write_filtered_pack(const struct write_pack_opts *opts,
 	const char *caret;
 	const char *scratch;
 	int local = skip_prefix(opts->destination, opts->packdir, &scratch);
+	const char *pack_prefix = write_pack_opts_pack_prefix(opts);
 
 	prepare_pack_objects(&cmd, opts->po_args, opts->destination);
 
@@ -173,7 +174,7 @@ static int write_filtered_pack(const struct write_pack_opts *opts,
 	 */
 	in = xfdopen(cmd.in, "w");
 	for_each_string_list_item(item, names)
-		fprintf(in, "^%s-%s.pack\n", opts->pack_prefix, item->string);
+		fprintf(in, "^%s-%s.pack\n", pack_prefix, item->string);
 	for_each_string_list_item(item, &existing->non_kept_packs)
 		fprintf(in, "%s.pack\n", item->string);
 	for_each_string_list_item(item, &existing->cruft_packs)
@@ -233,6 +234,7 @@ static int write_cruft_pack(const struct write_pack_opts *opts,
 	int ret;
 	const char *scratch;
 	int local = skip_prefix(opts->destination, opts->packdir, &scratch);
+	const char *pack_prefix = write_pack_opts_pack_prefix(opts);
 
 	prepare_pack_objects(&cmd, opts->po_args, opts->destination);
 
@@ -265,7 +267,7 @@ static int write_cruft_pack(const struct write_pack_opts *opts,
 	 */
 	in = xfdopen(cmd.in, "w");
 	for_each_string_list_item(item, names)
-		fprintf(in, "%s-%s.pack\n", opts->pack_prefix, item->string);
+		fprintf(in, "%s-%s.pack\n", pack_prefix, item->string);
 	if (combine_cruft_below_size && !cruft_expiration) {
 		combine_small_cruft_packs(in, combine_cruft_below_size,
 					  existing);
@@ -281,17 +283,6 @@ static int write_cruft_pack(const struct write_pack_opts *opts,
 
 	return finish_pack_objects_cmd(existing->repo->hash_algo, &cmd, names,
 				       local);
-}
-
-static const char *find_pack_prefix(const char *packdir, const char *packtmp)
-{
-	const char *pack_prefix;
-	if (!skip_prefix(packtmp, packdir, &pack_prefix))
-		die(_("pack prefix %s does not begin with objdir %s"),
-		    packtmp, packdir);
-	if (*pack_prefix == '/')
-		pack_prefix++;
-	return pack_prefix;
 }
 
 int cmd_repack(int argc,
@@ -596,11 +587,9 @@ int cmd_repack(int argc,
 	}
 
 	if (pack_everything & PACK_CRUFT) {
-		const char *pack_prefix = find_pack_prefix(packdir, packtmp);
 		struct write_pack_opts opts = {
 			.po_args = &cruft_po_args,
 			.destination = packtmp,
-			.pack_prefix = pack_prefix,
 			.packtmp = packtmp,
 			.packdir = packdir,
 		};
@@ -667,7 +656,6 @@ int cmd_repack(int argc,
 		struct write_pack_opts opts = {
 			.po_args = &po_args,
 			.destination = filter_to,
-			.pack_prefix = find_pack_prefix(packdir, packtmp),
 			.packdir = packdir,
 			.packtmp = packtmp,
 		};

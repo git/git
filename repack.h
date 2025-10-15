@@ -35,10 +35,11 @@ void repack_remove_redundant_pack(struct repository *repo, const char *dir_name,
 struct write_pack_opts {
 	struct pack_objects_args *po_args;
 	const char *destination;
-	const char *pack_prefix;
 	const char *packdir;
 	const char *packtmp;
 };
+
+const char *write_pack_opts_pack_prefix(const struct write_pack_opts *opts);
 
 struct repository;
 struct packed_git;
