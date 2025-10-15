@@ -339,6 +339,11 @@ static void prepare_pack_objects(struct child_process *cmd,
 	cmd->out = -1;
 }
 
+struct write_oid_context {
+	struct child_process *cmd;
+	const struct git_hash_algo *algop;
+};
+
 /*
  * Write oid to the given struct child_process's stdin, starting it first if
  * necessary.
@@ -347,14 +352,15 @@ static int write_oid(const struct object_id *oid,
 		     struct packed_git *pack UNUSED,
 		     uint32_t pos UNUSED, void *data)
 {
-	struct child_process *cmd = data;
+	struct write_oid_context *ctx = data;
+	struct child_process *cmd = ctx->cmd;
 
 	if (cmd->in == -1) {
 		if (start_command(cmd))
 			die(_("could not start pack-objects to repack promisor objects"));
 	}
 
-	if (write_in_full(cmd->in, oid_to_hex(oid), the_hash_algo->hexsz) < 0 ||
+	if (write_in_full(cmd->in, oid_to_hex(oid), ctx->algop->hexsz) < 0 ||
 	    write_in_full(cmd->in, "\n", 1) < 0)
 		die(_("failed to feed promisor objects to pack-objects"));
 	return 0;
@@ -413,6 +419,7 @@ static void repack_promisor_objects(struct repository *repo,
 				    const struct pack_objects_args *args,
 				    struct string_list *names)
 {
+	struct write_oid_context ctx;
 	struct child_process cmd = CHILD_PROCESS_INIT;
 	FILE *out;
 	struct strbuf line = STRBUF_INIT;
@@ -427,7 +434,9 @@ static void repack_promisor_objects(struct repository *repo,
 	 * {type -> existing pack order} ordering when computing deltas instead
 	 * of a {type -> size} ordering, which may produce better deltas.
 	 */
-	for_each_packed_object(repo, write_oid, &cmd,
+	ctx.cmd = &cmd;
+	ctx.algop = repo->hash_algo;
+	for_each_packed_object(repo, write_oid, &ctx,
 			       FOR_EACH_OBJECT_PROMISOR_ONLY);
 
 	if (cmd.in == -1) {
