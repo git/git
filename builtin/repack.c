@@ -185,7 +185,8 @@ static int generated_pack_has_ext(const struct generated_pack *pack,
 }
 
 static void generated_pack_install(struct generated_pack *pack,
-				   const char *name)
+				   const char *name,
+				   const char *packdir, const char *packtmp)
 {
 	int ext;
 	for (ext = 0; ext < ARRAY_SIZE(exts); ext++) {
@@ -1468,7 +1469,8 @@ int cmd_repack(int argc,
 	 * Ok we have prepared all new packfiles.
 	 */
 	for_each_string_list_item(item, &names)
-		generated_pack_install(item->util, item->string);
+		generated_pack_install(item->util, item->string, packdir,
+				       packtmp);
 	/* End of pack replacement. */
 
 	if (delete_redundant && pack_everything & ALL_INTO_ONE)
