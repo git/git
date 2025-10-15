@@ -126,6 +126,7 @@ static void pack_objects_args_release(struct pack_objects_args *args)
 }
 
 struct existing_packs {
+	struct repository *repo;
 	struct string_list kept_packs;
 	struct string_list non_kept_packs;
 	struct string_list cruft_packs;
@@ -265,7 +266,7 @@ static void existing_packs_release(struct existing_packs *existing)
 static void collect_pack_filenames(struct existing_packs *existing,
 				   const struct string_list *extra_keep)
 {
-	struct packfile_store *packs = the_repository->objects->packfiles;
+	struct packfile_store *packs = existing->repo->objects->packfiles;
 	struct packed_git *p;
 	struct strbuf buf = STRBUF_INIT;
 
@@ -498,7 +499,7 @@ static void init_pack_geometry(struct pack_geometry *geometry,
 			       struct existing_packs *existing,
 			       const struct pack_objects_args *args)
 {
-	struct packfile_store *packs = the_repository->objects->packfiles;
+	struct packfile_store *packs = existing->repo->objects->packfiles;
 	struct packed_git *p;
 	struct strbuf buf = STRBUF_INIT;
 
@@ -1139,7 +1140,7 @@ static int write_filtered_pack(const struct pack_objects_args *args,
 static void combine_small_cruft_packs(FILE *in, size_t combine_cruft_below_size,
 				      struct existing_packs *existing)
 {
-	struct packfile_store *packs = the_repository->objects->packfiles;
+	struct packfile_store *packs = existing->repo->objects->packfiles;
 	struct packed_git *p;
 	struct strbuf buf = STRBUF_INIT;
 	size_t i;
@@ -1405,6 +1406,7 @@ int cmd_repack(int argc,
 	packtmp_name = xstrfmt(".tmp-%d-pack", (int)getpid());
 	packtmp = mkpathdup("%s/%s", packdir, packtmp_name);
 
+	existing.repo = repo;
 	collect_pack_filenames(&existing, &keep_pack_list);
 
 	if (geometry.split_factor) {
