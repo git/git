@@ -47,10 +47,10 @@ typedef struct s_xrecord {
 typedef struct s_xdfile {
 	xrecord_t *recs;
 	long nrec;
-	long dstart, dend;
 	bool *changed;
 	long *rindex;
 	long nreff;
+	ssize_t dstart, dend;
 } xdfile_t;
 
 typedef struct s_xdfenv {
