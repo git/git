@@ -9,6 +9,7 @@ SYNOPSIS
 --------
 [synopsis]
 git repo info [--format=(keyvalue|nul)] [-z] [<key>...]
+git repo structure
 
 DESCRIPTION
 -----------
@@ -42,6 +43,15 @@ supported:
 	`keyvalue`. Unlike in the `keyvalue` format, the values are never quoted.
 +
 `-z` is an alias for `--format=nul`.
+
+`structure`::
+	Retrieve statistics about the current repository structure. The
+	following kinds of information are reported:
++
+* Reference counts categorized by type
+
++
+The table output format may change and is not intended for machine parsing.
 
 INFO KEYS
 ---------

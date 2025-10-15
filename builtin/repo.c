@@ -4,12 +4,16 @@
 #include "environment.h"
 #include "parse-options.h"
 #include "quote.h"
+#include "ref-filter.h"
 #include "refs.h"
 #include "strbuf.h"
+#include "string-list.h"
 #include "shallow.h"
+#include "utf8.h"
 
 static const char *const repo_usage[] = {
 	"git repo info [--format=(keyvalue|nul)] [-z] [<key>...]",
+	"git repo structure",
 	NULL
 };
 
@@ -156,12 +160,201 @@ static int cmd_repo_info(int argc, const char **argv, const char *prefix,
 	return print_fields(argc, argv, repo, format);
 }
 
+struct ref_stats {
+	size_t branches;
+	size_t remotes;
+	size_t tags;
+	size_t others;
+};
+
+struct stats_table {
+	struct string_list rows;
+
+	int name_col_width;
+	int value_col_width;
+};
+
+/*
+ * Holds column data that gets stored for each row.
+ */
+struct stats_table_entry {
+	char *value;
+};
+
+static void stats_table_vaddf(struct stats_table *table,
+			      struct stats_table_entry *entry,
+			      const char *format, va_list ap)
+{
+	struct strbuf buf = STRBUF_INIT;
+	struct string_list_item *item;
+	char *formatted_name;
+	int name_width;
+
+	strbuf_vaddf(&buf, format, ap);
+	formatted_name = strbuf_detach(&buf, NULL);
+	name_width = utf8_strwidth(formatted_name);
+
+	item = string_list_append_nodup(&table->rows, formatted_name);
+	item->util = entry;
+
+	if (name_width > table->name_col_width)
+		table->name_col_width = name_width;
+	if (entry) {
+		int value_width = utf8_strwidth(entry->value);
+		if (value_width > table->value_col_width)
+			table->value_col_width = value_width;
+	}
+}
+
+static void stats_table_addf(struct stats_table *table, const char *format, ...)
+{
+	va_list ap;
+
+	va_start(ap, format);
+	stats_table_vaddf(table, NULL, format, ap);
+	va_end(ap);
+}
+
+static void stats_table_count_addf(struct stats_table *table, size_t value,
+				   const char *format, ...)
+{
+	struct stats_table_entry *entry;
+	va_list ap;
+
+	CALLOC_ARRAY(entry, 1);
+	entry->value = xstrfmt("%" PRIuMAX, (uintmax_t)value);
+
+	va_start(ap, format);
+	stats_table_vaddf(table, entry, format, ap);
+	va_end(ap);
+}
+
+static void stats_table_setup_structure(struct stats_table *table,
+					struct ref_stats *refs)
+{
+	size_t ref_total;
+
+	ref_total = refs->branches + refs->remotes + refs->tags + refs->others;
+	stats_table_addf(table, "* %s", _("References"));
+	stats_table_count_addf(table, ref_total, "  * %s", _("Count"));
+	stats_table_count_addf(table, refs->branches, "    * %s", _("Branches"));
+	stats_table_count_addf(table, refs->tags, "    * %s", _("Tags"));
+	stats_table_count_addf(table, refs->remotes, "    * %s", _("Remotes"));
+	stats_table_count_addf(table, refs->others, "    * %s", _("Others"));
+}
+
+static void stats_table_print_structure(const struct stats_table *table)
+{
+	const char *name_col_title = _("Repository structure");
+	const char *value_col_title = _("Value");
+	int name_col_width = utf8_strwidth(name_col_title);
+	int value_col_width = utf8_strwidth(value_col_title);
+	struct string_list_item *item;
+
+	if (table->name_col_width > name_col_width)
+		name_col_width = table->name_col_width;
+	if (table->value_col_width > value_col_width)
+		value_col_width = table->value_col_width;
+
+	printf("| %-*s | %-*s |\n", name_col_width, name_col_title,
+	       value_col_width, value_col_title);
+	printf("| ");
+	for (int i = 0; i < name_col_width; i++)
+		putchar('-');
+	printf(" | ");
+	for (int i = 0; i < value_col_width; i++)
+		putchar('-');
+	printf(" |\n");
+
+	for_each_string_list_item(item, &table->rows) {
+		struct stats_table_entry *entry = item->util;
+		const char *value = "";
+
+		if (entry) {
+			struct stats_table_entry *entry = item->util;
+			value = entry->value;
+		}
+
+		printf("| %-*s | %*s |\n", name_col_width, item->string,
+		       value_col_width, value);
+	}
+}
+
+static void stats_table_clear(struct stats_table *table)
+{
+	struct stats_table_entry *entry;
+	struct string_list_item *item;
+
+	for_each_string_list_item(item, &table->rows) {
+		entry = item->util;
+		if (entry)
+			free(entry->value);
+	}
+
+	string_list_clear(&table->rows, 1);
+}
+
+static void structure_count_references(struct ref_stats *stats,
+				       struct ref_array *refs)
+{
+	for (int i = 0; i < refs->nr; i++) {
+		struct ref_array_item *ref = refs->items[i];
+
+		switch (ref->kind) {
+		case FILTER_REFS_BRANCHES:
+			stats->branches++;
+			break;
+		case FILTER_REFS_REMOTES:
+			stats->remotes++;
+			break;
+		case FILTER_REFS_TAGS:
+			stats->tags++;
+			break;
+		case FILTER_REFS_OTHERS:
+			stats->others++;
+			break;
+		default:
+			BUG("unexpected reference type");
+		}
+	}
+}
+
+static int cmd_repo_structure(int argc, const char **argv, const char *prefix,
+			      struct repository *repo UNUSED)
+{
+	struct ref_filter filter = REF_FILTER_INIT;
+	struct stats_table table = {
+		.rows = STRING_LIST_INIT_DUP,
+	};
+	struct ref_stats stats = { 0 };
+	struct ref_array refs = { 0 };
+	struct option options[] = { 0 };
+
+	argc = parse_options(argc, argv, prefix, options, repo_usage, 0);
+	if (argc)
+		usage(_("too many arguments"));
+
+	if (filter_refs(&refs, &filter, FILTER_REFS_REGULAR))
+		die(_("unable to filter refs"));
+
+	structure_count_references(&stats, &refs);
+
+	stats_table_setup_structure(&table, &stats);
+	stats_table_print_structure(&table);
+
+	stats_table_clear(&table);
+	ref_array_clear(&refs);
+
+	return 0;
+}
+
 int cmd_repo(int argc, const char **argv, const char *prefix,
 	     struct repository *repo)
 {
 	parse_opt_subcommand_fn *fn = NULL;
 	struct option options[] = {
 		OPT_SUBCOMMAND("info", &fn, cmd_repo_info),
+		OPT_SUBCOMMAND("structure", &fn, cmd_repo_structure),
 		OPT_END()
 	};
 
