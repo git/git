@@ -66,4 +66,12 @@ void existing_packs_remove_redundant(struct existing_packs *existing,
 				     const char *packdir);
 void existing_packs_release(struct existing_packs *existing);
 
+struct generated_pack;
+
+struct generated_pack *generated_pack_populate(const char *name,
+					       const char *packtmp);
+int generated_pack_has_ext(const struct generated_pack *pack, const char *ext);
+void generated_pack_install(struct generated_pack *pack, const char *name,
+			    const char *packdir, const char *packtmp);
+
 #endif /* REPACK_H */
