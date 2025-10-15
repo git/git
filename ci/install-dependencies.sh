@@ -129,7 +129,7 @@ StaticAnalysis)
 RustAnalysis)
 	sudo apt-get -q -y install rustup
 	rustup default stable
-	rustup component add rustfmt
+	rustup component add clippy rustfmt
 	;;
 sparse)
 	sudo apt-get -q -y install libssl-dev libcurl4-openssl-dev \

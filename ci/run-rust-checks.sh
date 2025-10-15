@@ -9,4 +9,9 @@ then
 	RET=1
 fi
 
+if ! group "Check for common Rust mistakes" cargo clippy --all-targets --all-features -- -Dwarnings
+then
+	RET=1
+fi
+
 exit $RET
