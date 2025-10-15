@@ -156,7 +156,7 @@ static void existing_packs_mark_for_deletion_1(const struct git_hash_algo *algop
 					       struct string_list *list)
 {
 	struct string_list_item *item;
-	const int hexsz = algop->hexsz;
+	const size_t hexsz = algop->hexsz;
 
 	for_each_string_list_item(item, list) {
 		char *sha1;
@@ -250,7 +250,7 @@ static void existing_packs_collect(struct existing_packs *existing,
 	struct strbuf buf = STRBUF_INIT;
 
 	for (p = packfile_store_get_all_packs(packs); p; p = p->next) {
-		int i;
+		size_t i;
 		const char *base;
 
 		if (!p->pack_local)
