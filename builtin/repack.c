@@ -108,6 +108,7 @@ static int repack_config(const char *var, const char *value,
 }
 
 struct repack_write_midx_opts {
+	struct existing_packs *existing;
 	struct string_list *include;
 	struct pack_geometry *geometry;
 	struct string_list *names;
@@ -188,10 +189,11 @@ static int midx_has_unknown_packs(struct string_list *include,
 }
 
 static void midx_included_packs(struct string_list *include,
-				struct existing_packs *existing,
-				struct string_list *names,
-				struct pack_geometry *geometry)
+				struct repack_write_midx_opts *opts)
 {
+	struct existing_packs *existing = opts->existing;
+	struct pack_geometry *geometry = opts->geometry;
+	struct string_list *names = opts->names;
 	struct string_list_item *item;
 	struct strbuf buf = STRBUF_INIT;
 
@@ -242,7 +244,7 @@ static void midx_included_packs(struct string_list *include,
 		}
 	}
 
-	if (midx_must_contain_cruft ||
+	if (opts->midx_must_contain_cruft ||
 	    midx_has_unknown_packs(include, geometry, existing)) {
 		/*
 		 * If there are one or more unknown pack(s) present (see
@@ -994,6 +996,7 @@ int cmd_repack(int argc,
 	if (write_midx) {
 		struct string_list include = STRING_LIST_INIT_DUP;
 		struct repack_write_midx_opts opts = {
+			.existing = &existing,
 			.include = &include,
 			.geometry = &geometry,
 			.names = &names,
@@ -1003,7 +1006,7 @@ int cmd_repack(int argc,
 			.write_bitmaps = write_bitmaps > 0,
 			.midx_must_contain_cruft = midx_must_contain_cruft
 		};
-		midx_included_packs(&include, &existing, &names, &geometry);
+		midx_included_packs(&include, &opts);
 
 		ret = write_midx_included_packs(&opts);
 
