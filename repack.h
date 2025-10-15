@@ -101,6 +101,18 @@ void pack_geometry_release(struct pack_geometry *geometry);
 
 struct tempfile;
 
+struct repack_write_midx_opts {
+	struct existing_packs *existing;
+	struct pack_geometry *geometry;
+	struct string_list *names;
+	const char *refs_snapshot;
+	const char *packdir;
+	int show_progress;
+	int write_bitmaps;
+	int midx_must_contain_cruft;
+};
+
 void midx_snapshot_refs(struct repository *repo, struct tempfile *f);
+int write_midx_included_packs(struct repack_write_midx_opts *opts);
 
 #endif /* REPACK_H */
