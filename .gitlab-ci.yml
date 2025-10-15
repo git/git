@@ -212,6 +212,17 @@ static-analysis:
     - ./ci/run-static-analysis.sh
     - ./ci/check-directional-formatting.bash
 
+rust-analysis:
+  image: ubuntu:rolling
+  stage: analyze
+  needs: [ ]
+  variables:
+    jobname: RustAnalysis
+  before_script:
+    - ./ci/install-dependencies.sh
+  script:
+    - ./ci/run-rust-checks.sh
+
 check-whitespace:
   image: ubuntu:latest
   stage: analyze

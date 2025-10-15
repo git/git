@@ -126,6 +126,11 @@ StaticAnalysis)
 	sudo apt-get -q -y install coccinelle libcurl4-openssl-dev libssl-dev \
 		libexpat-dev gettext make
 	;;
+RustAnalysis)
+	sudo apt-get -q -y install rustup
+	rustup default stable
+	rustup component add rustfmt
+	;;
 sparse)
 	sudo apt-get -q -y install libssl-dev libcurl4-openssl-dev \
 		libexpat-dev gettext zlib1g-dev sparse
