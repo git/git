@@ -462,6 +462,7 @@ libgit_sources = [
   'reftable/tree.c',
   'reftable/writer.c',
   'remote.c',
+  'repack.c',
   'replace-object.c',
   'repo-settings.c',
   'repository.c',

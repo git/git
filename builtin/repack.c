@@ -19,6 +19,7 @@
 #include "prune-packed.h"
 #include "odb.h"
 #include "promisor-remote.h"
+#include "repack.h"
 #include "shallow.h"
 #include "pack.h"
 #include "pack-bitmap.h"
@@ -52,21 +53,6 @@ static const char incremental_bitmap_conflict_error[] = N_(
 "Incremental repacks are incompatible with bitmap indexes.  Use\n"
 "--no-write-bitmap-index or disable the pack.writeBitmaps configuration."
 );
-
-struct pack_objects_args {
-	char *window;
-	char *window_memory;
-	char *depth;
-	char *threads;
-	unsigned long max_pack_size;
-	int no_reuse_delta;
-	int no_reuse_object;
-	int quiet;
-	int local;
-	int name_hash_version;
-	int path_walk;
-	struct list_objects_filter_options filter_options;
-};
 
 static int repack_config(const char *var, const char *value,
 			 const struct config_context *ctx, void *cb)
@@ -114,15 +100,6 @@ static int repack_config(const char *var, const char *value,
 		return 0;
 	}
 	return git_default_config(var, value, ctx, cb);
-}
-
-static void pack_objects_args_release(struct pack_objects_args *args)
-{
-	free(args->window);
-	free(args->window_memory);
-	free(args->depth);
-	free(args->threads);
-	list_objects_filter_release(&args->filter_options);
 }
 
 struct existing_packs {
