@@ -15,8 +15,11 @@ struct pack_objects_args {
 	int local;
 	int name_hash_version;
 	int path_walk;
+	int delta_base_offset;
 	struct list_objects_filter_options filter_options;
 };
+
+#define PACK_OBJECTS_ARGS_INIT { .delta_base_offset = 1 }
 
 void pack_objects_args_release(struct pack_objects_args *args);
 

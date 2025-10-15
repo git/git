@@ -34,7 +34,6 @@
 #define RETAIN_PACK 2
 
 static int pack_everything;
-static int delta_base_offset = 1;
 static int pack_kept_objects = -1;
 static int write_bitmaps = -1;
 static int use_delta_islands;
@@ -63,9 +62,10 @@ static int repack_config(const char *var, const char *value,
 			 const struct config_context *ctx, void *cb)
 {
 	struct repack_config_ctx *repack_ctx = cb;
+	struct pack_objects_args *po_args = repack_ctx->po_args;
 	struct pack_objects_args *cruft_po_args = repack_ctx->cruft_po_args;
 	if (!strcmp(var, "repack.usedeltabaseoffset")) {
-		delta_base_offset = git_config_bool(var, value);
+		po_args->delta_base_offset = git_config_bool(var, value);
 		return 0;
 	}
 	if (!strcmp(var, "repack.packkeptobjects")) {
@@ -315,7 +315,7 @@ static void prepare_pack_objects(struct child_process *cmd,
 		strvec_push(&cmd->args,  "--local");
 	if (args->quiet)
 		strvec_push(&cmd->args,  "--quiet");
-	if (delta_base_offset)
+	if (args->delta_base_offset)
 		strvec_push(&cmd->args,  "--delta-base-offset");
 	strvec_push(&cmd->args, out);
 	cmd->git_cmd = 1;
@@ -1271,8 +1271,8 @@ int cmd_repack(int argc,
 	const char *unpack_unreachable = NULL;
 	int keep_unreachable = 0;
 	struct string_list keep_pack_list = STRING_LIST_INIT_NODUP;
-	struct pack_objects_args po_args = { 0 };
-	struct pack_objects_args cruft_po_args = { 0 };
+	struct pack_objects_args po_args = PACK_OBJECTS_ARGS_INIT;
+	struct pack_objects_args cruft_po_args = PACK_OBJECTS_ARGS_INIT;
 	int write_midx = 0;
 	const char *cruft_expiration = NULL;
 	const char *expire_to = NULL;
@@ -1567,6 +1567,7 @@ int cmd_repack(int argc,
 
 		cruft_po_args.local = po_args.local;
 		cruft_po_args.quiet = po_args.quiet;
+		cruft_po_args.delta_base_offset = po_args.delta_base_offset;
 
 		ret = write_cruft_pack(&cruft_po_args, packtmp, pack_prefix,
 				       cruft_expiration,
