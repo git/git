@@ -1087,7 +1087,6 @@ N_("you have staged changes in your working tree\n"
 #define CLEANUP_MSG (1<<3)
 #define VERIFY_MSG  (1<<4)
 #define CREATE_ROOT_COMMIT (1<<5)
-#define VERBATIM_MSG (1<<6)
 
 static int run_command_silent_on_success(struct child_process *cmd)
 {
@@ -1124,9 +1123,6 @@ static int run_git_commit(const char *defmsg,
 			  unsigned int flags)
 {
 	struct child_process cmd = CHILD_PROCESS_INIT;
-
-	if ((flags & CLEANUP_MSG) && (flags & VERBATIM_MSG))
-		BUG("CLEANUP_MSG and VERBATIM_MSG are mutually exclusive");
 
 	cmd.git_cmd = 1;
 
@@ -1166,8 +1162,6 @@ static int run_git_commit(const char *defmsg,
 		strvec_pushl(&cmd.args, "-C", "HEAD", NULL);
 	if ((flags & CLEANUP_MSG))
 		strvec_push(&cmd.args, "--cleanup=strip");
-	if ((flags & VERBATIM_MSG))
-		strvec_push(&cmd.args, "--cleanup=verbatim");
 	if ((flags & EDIT_MSG))
 		strvec_push(&cmd.args, "-e");
 	else if (!(flags & CLEANUP_MSG) &&
@@ -1540,9 +1534,6 @@ static int try_to_commit(struct repository *r,
 	enum commit_msg_cleanup_mode cleanup;
 	int res = 0;
 
-	if ((flags & CLEANUP_MSG) && (flags & VERBATIM_MSG))
-		BUG("CLEANUP_MSG and VERBATIM_MSG are mutually exclusive");
-
 	if (parse_head(r, &current_head))
 		return -1;
 
@@ -1618,8 +1609,6 @@ static int try_to_commit(struct repository *r,
 
 	if (flags & CLEANUP_MSG)
 		cleanup = COMMIT_MSG_CLEANUP_ALL;
-	else if (flags & VERBATIM_MSG)
-		cleanup = COMMIT_MSG_CLEANUP_NONE;
 	else if ((opts->signoff || opts->record_origin) &&
 		 !opts->explicit_cleanup)
 		cleanup = COMMIT_MSG_CLEANUP_SPACE;
@@ -2436,7 +2425,6 @@ static int do_pick_commit(struct repository *r,
 		if (!final_fixup)
 			msg_file = rebase_path_squash_msg();
 		else if (file_exists(rebase_path_fixup_msg())) {
-			flags |= VERBATIM_MSG;
 			msg_file = rebase_path_fixup_msg();
 		} else {
 			const char *dest = git_path_squash_msg(r);
