@@ -108,11 +108,12 @@ static int repack_config(const char *var, const char *value,
 }
 
 static int finish_pack_objects_cmd(const struct git_hash_algo *algop,
+				   const struct write_pack_opts *opts,
 				   struct child_process *cmd,
-				   struct string_list *names,
-				   int local)
+				   struct string_list *names)
 {
 	FILE *out;
+	bool local = write_pack_opts_is_local(opts);
 	struct strbuf line = STRBUF_INIT;
 
 	out = xfdopen(cmd->out, "r");
@@ -128,7 +129,8 @@ static int finish_pack_objects_cmd(const struct git_hash_algo *algop,
 		 */
 		if (local) {
 			item = string_list_append(names, line.buf);
-			item->util = generated_pack_populate(line.buf, packtmp);
+			item->util = generated_pack_populate(line.buf,
+							     opts->packtmp);
 		}
 	}
 	fclose(out);
@@ -147,7 +149,6 @@ static int write_filtered_pack(const struct write_pack_opts *opts,
 	FILE *in;
 	int ret;
 	const char *caret;
-	bool local = write_pack_opts_is_local(opts);
 	const char *pack_prefix = write_pack_opts_pack_prefix(opts);
 
 	prepare_pack_objects(&cmd, opts->po_args, opts->destination);
@@ -183,8 +184,8 @@ static int write_filtered_pack(const struct write_pack_opts *opts,
 		fprintf(in, "%s%s.pack\n", caret, item->string);
 	fclose(in);
 
-	return finish_pack_objects_cmd(existing->repo->hash_algo, &cmd, names,
-				       local);
+	return finish_pack_objects_cmd(existing->repo->hash_algo, opts, &cmd,
+				       names);
 }
 
 static void combine_small_cruft_packs(FILE *in, size_t combine_cruft_below_size,
@@ -231,7 +232,6 @@ static int write_cruft_pack(const struct write_pack_opts *opts,
 	struct string_list_item *item;
 	FILE *in;
 	int ret;
-	bool local = write_pack_opts_is_local(opts);
 	const char *pack_prefix = write_pack_opts_pack_prefix(opts);
 
 	prepare_pack_objects(&cmd, opts->po_args, opts->destination);
@@ -279,8 +279,8 @@ static int write_cruft_pack(const struct write_pack_opts *opts,
 		fprintf(in, "%s.pack\n", item->string);
 	fclose(in);
 
-	return finish_pack_objects_cmd(existing->repo->hash_algo, &cmd, names,
-				       local);
+	return finish_pack_objects_cmd(existing->repo->hash_algo, opts, &cmd,
+				       names);
 }
 
 int cmd_repack(int argc,
@@ -560,9 +560,17 @@ int cmd_repack(int argc,
 		fclose(in);
 	}
 
-	ret = finish_pack_objects_cmd(repo->hash_algo, &cmd, &names, 1);
-	if (ret)
-		goto cleanup;
+	{
+		struct write_pack_opts opts = {
+			.packdir = packdir,
+			.destination = packdir,
+			.packtmp = packtmp,
+		};
+		ret = finish_pack_objects_cmd(repo->hash_algo, &opts, &cmd,
+					      &names);
+		if (ret)
+			goto cleanup;
+	}
 
 	if (!names.nr) {
 		if (!po_args.quiet)
