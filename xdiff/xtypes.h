@@ -50,7 +50,7 @@ typedef struct s_xdfile {
 	size_t nrec;
 	bool *changed;
 	long *rindex;
-	long nreff;
+	size_t nreff;
 	ssize_t dstart, dend;
 } xdfile_t;
 
