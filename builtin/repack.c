@@ -209,7 +209,8 @@ static void existing_packs_mark_for_deletion(struct existing_packs *existing,
 }
 
 static void remove_redundant_packs_1(struct repository *repo,
-				     struct string_list *packs)
+				     struct string_list *packs,
+				     const char *packdir)
 {
 	struct string_list_item *item;
 	for_each_string_list_item(item, packs) {
@@ -219,10 +220,13 @@ static void remove_redundant_packs_1(struct repository *repo,
 	}
 }
 
-static void existing_packs_remove_redundant(struct existing_packs *existing)
+static void existing_packs_remove_redundant(struct existing_packs *existing,
+					    const char *packdir)
 {
-	remove_redundant_packs_1(existing->repo, &existing->non_kept_packs);
-	remove_redundant_packs_1(existing->repo, &existing->cruft_packs);
+	remove_redundant_packs_1(existing->repo, &existing->non_kept_packs,
+				 packdir);
+	remove_redundant_packs_1(existing->repo, &existing->cruft_packs,
+				 packdir);
 }
 
 static void existing_packs_release(struct existing_packs *existing)
@@ -1659,7 +1663,7 @@ int cmd_repack(int argc,
 
 	if (delete_redundant) {
 		int opts = 0;
-		existing_packs_remove_redundant(&existing);
+		existing_packs_remove_redundant(&existing, packdir);
 
 		if (geometry.split_factor)
 			geometry_remove_redundant_packs(&geometry, &names,
