@@ -32,6 +32,10 @@ In a repository using the traditional SHA-1, pack checksums, index checksums,
 and object IDs (object names) mentioned below are all computed using SHA-1.
 Similarly, in SHA-256 repositories, these values are computed using SHA-256.
 
+CRC32 checksums are always computed over the entire packed object, including
+the header (n-byte type and length); the base object name or offset, if any;
+and the entire compressed object.  The CRC32 algorithm used is that of zlib.
+
 == pack-*.pack files have the following format:
 
    - A header appears at the beginning and consists of the following:
@@ -80,6 +84,16 @@ Valid object types are:
 
 Type 5 is reserved for future expansion. Type 0 is invalid.
 
+=== Object encoding
+
+Unlike loose objects, packed objects do not have a prefix containing the type,
+size, and a NUL byte. These are not necessary because they can be determined by
+the n-byte type and length that prefixes the data and so they are omitted from
+the compressed and deltified data.
+
+The computation of the object ID still uses this prefix by reconstructing it
+from the type and length as needed.
+
 === Size encoding
 
 This document uses the following "size encoding" of non-negative
@@ -91,6 +105,11 @@ values are more significant.
 
 This size encoding should not be confused with the "offset encoding",
 which is also used in this document.
+
+When encoding the size of an undeltified object in a pack, the size is that of
+the uncompressed raw object. For deltified objects, it is the size of the
+uncompressed delta.  The base object name or offset is not included in the size
+computation.
 
 === Deltified representation
 
