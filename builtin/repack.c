@@ -146,15 +146,15 @@ static struct {
 	{".idx"},
 };
 
-struct generated_pack_data {
+struct generated_pack {
 	struct tempfile *tempfiles[ARRAY_SIZE(exts)];
 };
 
-static struct generated_pack_data *populate_pack_exts(const char *name)
+static struct generated_pack *generated_pack_populate(const char *name)
 {
 	struct stat statbuf;
 	struct strbuf path = STRBUF_INIT;
-	struct generated_pack_data *data = xcalloc(1, sizeof(*data));
+	struct generated_pack *pack = xcalloc(1, sizeof(*pack));
 	int i;
 
 	for (i = 0; i < ARRAY_SIZE(exts); i++) {
@@ -164,21 +164,21 @@ static struct generated_pack_data *populate_pack_exts(const char *name)
 		if (stat(path.buf, &statbuf))
 			continue;
 
-		data->tempfiles[i] = register_tempfile(path.buf);
+		pack->tempfiles[i] = register_tempfile(path.buf);
 	}
 
 	strbuf_release(&path);
-	return data;
+	return pack;
 }
 
-static int has_pack_ext(const struct generated_pack_data *data,
-			const char *ext)
+static int generated_pack_has_ext(const struct generated_pack *pack,
+				  const char *ext)
 {
 	int i;
 	for (i = 0; i < ARRAY_SIZE(exts); i++) {
 		if (strcmp(exts[i].name, ext))
 			continue;
-		return !!data->tempfiles[i];
+		return !!pack->tempfiles[i];
 	}
 	BUG("unknown pack extension: '%s'", ext);
 }
@@ -239,7 +239,7 @@ static void repack_promisor_objects(struct repository *repo,
 					  line.buf);
 		write_promisor_file(promisor_name, NULL, 0);
 
-		item->util = populate_pack_exts(item->string);
+		item->util = generated_pack_populate(item->string);
 
 		free(promisor_name);
 	}
@@ -780,8 +780,8 @@ static int write_midx_included_packs(struct string_list *include,
 		 * will suffice, so pick the first one.)
 		 */
 		for_each_string_list_item(item, names) {
-			struct generated_pack_data *data = item->util;
-			if (has_pack_ext(data, ".mtimes"))
+			struct generated_pack *pack = item->util;
+			if (generated_pack_has_ext(pack, ".mtimes"))
 				continue;
 
 			strvec_pushf(&cmd.args, "--preferred-pack=pack-%s.pack",
@@ -864,7 +864,7 @@ static int finish_pack_objects_cmd(const struct git_hash_algo *algop,
 		 */
 		if (local) {
 			item = string_list_append(names, line.buf);
-			item->util = populate_pack_exts(line.buf);
+			item->util = generated_pack_populate(line.buf);
 		}
 	}
 	fclose(out);
@@ -1435,7 +1435,7 @@ int cmd_repack(int argc,
 	 * Ok we have prepared all new packfiles.
 	 */
 	for_each_string_list_item(item, &names) {
-		struct generated_pack_data *data = item->util;
+		struct generated_pack *pack = item->util;
 
 		for (ext = 0; ext < ARRAY_SIZE(exts); ext++) {
 			char *fname;
@@ -1443,8 +1443,8 @@ int cmd_repack(int argc,
 			fname = mkpathdup("%s/pack-%s%s",
 					packdir, item->string, exts[ext].name);
 
-			if (data->tempfiles[ext]) {
-				const char *fname_old = get_tempfile_path(data->tempfiles[ext]);
+			if (pack->tempfiles[ext]) {
+				const char *fname_old = get_tempfile_path(pack->tempfiles[ext]);
 				struct stat statbuffer;
 
 				if (!stat(fname_old, &statbuffer)) {
@@ -1452,7 +1452,7 @@ int cmd_repack(int argc,
 					chmod(fname_old, statbuffer.st_mode);
 				}
 
-				if (rename_tempfile(&data->tempfiles[ext], fname))
+				if (rename_tempfile(&pack->tempfiles[ext], fname))
 					die_errno(_("renaming pack to '%s' failed"), fname);
 			} else if (!exts[ext].optional)
 				die(_("pack-objects did not write a '%s' file for pack %s-%s"),
