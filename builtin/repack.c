@@ -331,10 +331,10 @@ static int write_midx_included_packs(struct repack_write_midx_opts *opts)
 	struct string_list_item *item;
 	struct packed_git *preferred = pack_geometry_preferred_pack(opts->geometry);
 	FILE *in;
-	int ret;
+	int ret = 0;
 
 	if (!opts->include->nr)
-		return 0;
+		goto done;
 
 	cmd.in = -1;
 	cmd.git_cmd = 1;
@@ -392,14 +392,18 @@ static int write_midx_included_packs(struct repack_write_midx_opts *opts)
 
 	ret = start_command(&cmd);
 	if (ret)
-		return ret;
+		goto done;
 
 	in = xfdopen(cmd.in, "w");
 	for_each_string_list_item(item, opts->include)
 		fprintf(in, "%s\n", item->string);
 	fclose(in);
 
-	return finish_command(&cmd);
+	ret = finish_command(&cmd);
+done:
+	if (!ret && opts->write_bitmaps)
+		remove_redundant_bitmaps(opts->include, opts->packdir);
+	return ret;
 }
 
 static int finish_pack_objects_cmd(const struct git_hash_algo *algop,
@@ -1002,9 +1006,6 @@ int cmd_repack(int argc,
 		midx_included_packs(&include, &existing, &names, &geometry);
 
 		ret = write_midx_included_packs(&opts);
-
-		if (!ret && write_bitmaps)
-			remove_redundant_bitmaps(&include, opts.packdir);
 
 		string_list_clear(&include, 0);
 
