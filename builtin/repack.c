@@ -150,7 +150,8 @@ struct generated_pack {
 	struct tempfile *tempfiles[ARRAY_SIZE(exts)];
 };
 
-static struct generated_pack *generated_pack_populate(const char *name)
+static struct generated_pack *generated_pack_populate(const char *name,
+						      const char *packtmp)
 {
 	struct stat statbuf;
 	struct strbuf path = STRBUF_INIT;
@@ -271,7 +272,7 @@ static void repack_promisor_objects(struct repository *repo,
 					  line.buf);
 		write_promisor_file(promisor_name, NULL, 0);
 
-		item->util = generated_pack_populate(item->string);
+		item->util = generated_pack_populate(item->string, packtmp);
 
 		free(promisor_name);
 	}
@@ -896,7 +897,7 @@ static int finish_pack_objects_cmd(const struct git_hash_algo *algop,
 		 */
 		if (local) {
 			item = string_list_append(names, line.buf);
-			item->util = generated_pack_populate(line.buf);
+			item->util = generated_pack_populate(line.buf, packtmp);
 		}
 	}
 	fclose(out);
