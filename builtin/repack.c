@@ -221,9 +221,7 @@ static void combine_small_cruft_packs(FILE *in, size_t combine_cruft_below_size,
 	strbuf_release(&buf);
 }
 
-static int write_cruft_pack(const struct pack_objects_args *args,
-			    const char *destination,
-			    const char *pack_prefix,
+static int write_cruft_pack(const struct write_pack_opts *opts,
 			    const char *cruft_expiration,
 			    unsigned long combine_cruft_below_size,
 			    struct string_list *names,
@@ -234,9 +232,9 @@ static int write_cruft_pack(const struct pack_objects_args *args,
 	FILE *in;
 	int ret;
 	const char *scratch;
-	int local = skip_prefix(destination, packdir, &scratch);
+	int local = skip_prefix(opts->destination, opts->packdir, &scratch);
 
-	prepare_pack_objects(&cmd, args, destination);
+	prepare_pack_objects(&cmd, opts->po_args, opts->destination);
 
 	strvec_push(&cmd.args, "--cruft");
 	if (cruft_expiration)
@@ -267,7 +265,7 @@ static int write_cruft_pack(const struct pack_objects_args *args,
 	 */
 	in = xfdopen(cmd.in, "w");
 	for_each_string_list_item(item, names)
-		fprintf(in, "%s-%s.pack\n", pack_prefix, item->string);
+		fprintf(in, "%s-%s.pack\n", opts->pack_prefix, item->string);
 	if (combine_cruft_below_size && !cruft_expiration) {
 		combine_small_cruft_packs(in, combine_cruft_below_size,
 					  existing);
@@ -599,6 +597,13 @@ int cmd_repack(int argc,
 
 	if (pack_everything & PACK_CRUFT) {
 		const char *pack_prefix = find_pack_prefix(packdir, packtmp);
+		struct write_pack_opts opts = {
+			.po_args = &cruft_po_args,
+			.destination = packtmp,
+			.pack_prefix = pack_prefix,
+			.packtmp = packtmp,
+			.packdir = packdir,
+		};
 
 		if (!cruft_po_args.window)
 			cruft_po_args.window = xstrdup_or_null(po_args.window);
@@ -615,8 +620,7 @@ int cmd_repack(int argc,
 		cruft_po_args.quiet = po_args.quiet;
 		cruft_po_args.delta_base_offset = po_args.delta_base_offset;
 
-		ret = write_cruft_pack(&cruft_po_args, packtmp, pack_prefix,
-				       cruft_expiration,
+		ret = write_cruft_pack(&opts, cruft_expiration,
 				       combine_cruft_below_size, &names,
 				       &existing);
 		if (ret)
@@ -651,11 +655,8 @@ int cmd_repack(int argc,
 			 * pack, but rather removing all cruft packs from the
 			 * main repository regardless of size.
 			 */
-			ret = write_cruft_pack(&cruft_po_args, expire_to,
-					       pack_prefix,
-					       NULL,
-					       0ul,
-					       &names,
+			opts.destination = expire_to;
+			ret = write_cruft_pack(&opts, NULL, 0ul, &names,
 					       &existing);
 			if (ret)
 				goto cleanup;
