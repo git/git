@@ -307,7 +307,8 @@ static struct packed_git *pack_geometry_preferred_pack(struct pack_geometry *geo
 
 static void pack_geometry_remove_redundant(struct pack_geometry *geometry,
 					   struct string_list *names,
-					   struct existing_packs *existing)
+					   struct existing_packs *existing,
+					   const char *packdir)
 {
 	const struct git_hash_algo *algop = existing->repo->hash_algo;
 	struct strbuf buf = STRBUF_INIT;
@@ -1327,7 +1328,7 @@ int cmd_repack(int argc,
 
 		if (geometry.split_factor)
 			pack_geometry_remove_redundant(&geometry, &names,
-						       &existing);
+						       &existing, packdir);
 		if (show_progress)
 			opts |= PRUNE_PACKED_VERBOSE;
 		prune_packed_objects(opts);
