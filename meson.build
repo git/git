@@ -464,6 +464,7 @@ libgit_sources = [
   'remote.c',
   'repack.c',
   'repack-geometry.c',
+  'repack-midx.c',
   'repack-promisor.c',
   'replace-object.c',
   'repo-settings.c',

@@ -98,4 +98,8 @@ void pack_geometry_remove_redundant(struct pack_geometry *geometry,
 				    const char *packdir);
 void pack_geometry_release(struct pack_geometry *geometry);
 
+struct tempfile;
+
+void midx_snapshot_refs(struct repository *repo, struct tempfile *f);
+
 #endif /* REPACK_H */
