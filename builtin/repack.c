@@ -168,11 +168,12 @@ static int pack_is_retained(struct string_list_item *item)
 	return (uintptr_t)item->util & RETAIN_PACK;
 }
 
-static void mark_packs_for_deletion_1(struct string_list *names,
+static void mark_packs_for_deletion_1(const struct git_hash_algo *algop,
+				      struct string_list *names,
 				      struct string_list *list)
 {
 	struct string_list_item *item;
-	const int hexsz = the_hash_algo->hexsz;
+	const int hexsz = algop->hexsz;
 
 	for_each_string_list_item(item, list) {
 		char *sha1;
@@ -217,8 +218,9 @@ static void mark_packs_for_deletion(struct existing_packs *existing,
 				    struct string_list *names)
 
 {
-	mark_packs_for_deletion_1(names, &existing->non_kept_packs);
-	mark_packs_for_deletion_1(names, &existing->cruft_packs);
+	const struct git_hash_algo *algop = existing->repo->hash_algo;
+	mark_packs_for_deletion_1(algop, names, &existing->non_kept_packs);
+	mark_packs_for_deletion_1(algop, names, &existing->cruft_packs);
 }
 
 static void remove_redundant_pack(struct repository *repo,
