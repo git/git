@@ -1,4 +1,5 @@
 #include "git-compat-util.h"
+#include "dir.h"
 #include "midx.h"
 #include "odb.h"
 #include "packfile.h"
@@ -61,4 +62,160 @@ void repack_remove_redundant_pack(struct repository *repo, const char *dir_name,
 	strbuf_insertf(&buf, 0, "%s/", dir_name);
 	unlink_pack_path(buf.buf, 1);
 	strbuf_release(&buf);
+}
+
+#define DELETE_PACK 1
+#define RETAIN_PACK 2
+
+void existing_packs_collect(struct existing_packs *existing,
+			    const struct string_list *extra_keep)
+{
+	struct packfile_store *packs = existing->repo->objects->packfiles;
+	struct packed_git *p;
+	struct strbuf buf = STRBUF_INIT;
+
+	for (p = packfile_store_get_all_packs(packs); p; p = p->next) {
+		size_t i;
+		const char *base;
+
+		if (!p->pack_local)
+			continue;
+
+		base = pack_basename(p);
+
+		for (i = 0; i < extra_keep->nr; i++)
+			if (!fspathcmp(base, extra_keep->items[i].string))
+				break;
+
+		strbuf_reset(&buf);
+		strbuf_addstr(&buf, base);
+		strbuf_strip_suffix(&buf, ".pack");
+
+		if ((extra_keep->nr > 0 && i < extra_keep->nr) || p->pack_keep)
+			string_list_append(&existing->kept_packs, buf.buf);
+		else if (p->is_cruft)
+			string_list_append(&existing->cruft_packs, buf.buf);
+		else
+			string_list_append(&existing->non_kept_packs, buf.buf);
+	}
+
+	string_list_sort(&existing->kept_packs);
+	string_list_sort(&existing->non_kept_packs);
+	string_list_sort(&existing->cruft_packs);
+	strbuf_release(&buf);
+}
+
+int existing_packs_has_non_kept(const struct existing_packs *existing)
+{
+	return existing->non_kept_packs.nr || existing->cruft_packs.nr;
+}
+
+static void existing_pack_mark_for_deletion(struct string_list_item *item)
+{
+	item->util = (void*)((uintptr_t)item->util | DELETE_PACK);
+}
+
+static void existing_pack_unmark_for_deletion(struct string_list_item *item)
+{
+	item->util = (void*)((uintptr_t)item->util & ~DELETE_PACK);
+}
+
+int existing_pack_is_marked_for_deletion(struct string_list_item *item)
+{
+	return (uintptr_t)item->util & DELETE_PACK;
+}
+
+static void existing_packs_mark_retained(struct string_list_item *item)
+{
+	item->util = (void*)((uintptr_t)item->util | RETAIN_PACK);
+}
+
+static int existing_pack_is_retained(struct string_list_item *item)
+{
+	return (uintptr_t)item->util & RETAIN_PACK;
+}
+
+static void existing_packs_mark_for_deletion_1(const struct git_hash_algo *algop,
+					       struct string_list *names,
+					       struct string_list *list)
+{
+	struct string_list_item *item;
+	const size_t hexsz = algop->hexsz;
+
+	for_each_string_list_item(item, list) {
+		char *sha1;
+		size_t len = strlen(item->string);
+		if (len < hexsz)
+			continue;
+		sha1 = item->string + len - hexsz;
+
+		if (existing_pack_is_retained(item)) {
+			existing_pack_unmark_for_deletion(item);
+		} else if (!string_list_has_string(names, sha1)) {
+			/*
+			 * Mark this pack for deletion, which ensures
+			 * that this pack won't be included in a MIDX
+			 * (if `--write-midx` was given) and that we
+			 * will actually delete this pack (if `-d` was
+			 * given).
+			 */
+			existing_pack_mark_for_deletion(item);
+		}
+	}
+}
+
+void existing_packs_retain_cruft(struct existing_packs *existing,
+				 struct packed_git *cruft)
+{
+	struct strbuf buf = STRBUF_INIT;
+	struct string_list_item *item;
+
+	strbuf_addstr(&buf, pack_basename(cruft));
+	strbuf_strip_suffix(&buf, ".pack");
+
+	item = string_list_lookup(&existing->cruft_packs, buf.buf);
+	if (!item)
+		BUG("could not find cruft pack '%s'", pack_basename(cruft));
+
+	existing_packs_mark_retained(item);
+	strbuf_release(&buf);
+}
+
+void existing_packs_mark_for_deletion(struct existing_packs *existing,
+				      struct string_list *names)
+
+{
+	const struct git_hash_algo *algop = existing->repo->hash_algo;
+	existing_packs_mark_for_deletion_1(algop, names,
+					   &existing->non_kept_packs);
+	existing_packs_mark_for_deletion_1(algop, names,
+					   &existing->cruft_packs);
+}
+
+static void remove_redundant_packs_1(struct repository *repo,
+				     struct string_list *packs,
+				     const char *packdir)
+{
+	struct string_list_item *item;
+	for_each_string_list_item(item, packs) {
+		if (!existing_pack_is_marked_for_deletion(item))
+			continue;
+		repack_remove_redundant_pack(repo, packdir, item->string);
+	}
+}
+
+void existing_packs_remove_redundant(struct existing_packs *existing,
+				     const char *packdir)
+{
+	remove_redundant_packs_1(existing->repo, &existing->non_kept_packs,
+				 packdir);
+	remove_redundant_packs_1(existing->repo, &existing->cruft_packs,
+				 packdir);
+}
+
+void existing_packs_release(struct existing_packs *existing)
+{
+	string_list_clear(&existing->kept_packs, 0);
+	string_list_clear(&existing->non_kept_packs, 0);
+	string_list_clear(&existing->cruft_packs, 0);
 }
