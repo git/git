@@ -109,7 +109,6 @@ static int repack_config(const char *var, const char *value,
 
 struct repack_write_midx_opts {
 	struct existing_packs *existing;
-	struct string_list *include;
 	struct pack_geometry *geometry;
 	struct string_list *names;
 	const char *refs_snapshot;
@@ -330,12 +329,14 @@ static void remove_redundant_bitmaps(struct string_list *include,
 static int write_midx_included_packs(struct repack_write_midx_opts *opts)
 {
 	struct child_process cmd = CHILD_PROCESS_INIT;
+	struct string_list include = STRING_LIST_INIT_DUP;
 	struct string_list_item *item;
 	struct packed_git *preferred = pack_geometry_preferred_pack(opts->geometry);
 	FILE *in;
 	int ret = 0;
 
-	if (!opts->include->nr)
+	midx_included_packs(&include, opts);
+	if (!include.nr)
 		goto done;
 
 	cmd.in = -1;
@@ -397,14 +398,17 @@ static int write_midx_included_packs(struct repack_write_midx_opts *opts)
 		goto done;
 
 	in = xfdopen(cmd.in, "w");
-	for_each_string_list_item(item, opts->include)
+	for_each_string_list_item(item, &include)
 		fprintf(in, "%s\n", item->string);
 	fclose(in);
 
 	ret = finish_command(&cmd);
 done:
 	if (!ret && opts->write_bitmaps)
-		remove_redundant_bitmaps(opts->include, opts->packdir);
+		remove_redundant_bitmaps(&include, opts->packdir);
+
+	string_list_clear(&include, 0);
+
 	return ret;
 }
 
@@ -994,10 +998,8 @@ int cmd_repack(int argc,
 		existing_packs_mark_for_deletion(&existing, &names);
 
 	if (write_midx) {
-		struct string_list include = STRING_LIST_INIT_DUP;
 		struct repack_write_midx_opts opts = {
 			.existing = &existing,
-			.include = &include,
 			.geometry = &geometry,
 			.names = &names,
 			.refs_snapshot = refs_snapshot ? get_tempfile_path(refs_snapshot) : NULL,
@@ -1006,11 +1008,8 @@ int cmd_repack(int argc,
 			.write_bitmaps = write_bitmaps > 0,
 			.midx_must_contain_cruft = midx_must_contain_cruft
 		};
-		midx_included_packs(&include, &opts);
 
 		ret = write_midx_included_packs(&opts);
-
-		string_list_clear(&include, 0);
 
 		if (ret)
 			goto cleanup;
