@@ -147,8 +147,7 @@ static int write_filtered_pack(const struct write_pack_opts *opts,
 	FILE *in;
 	int ret;
 	const char *caret;
-	const char *scratch;
-	int local = skip_prefix(opts->destination, opts->packdir, &scratch);
+	bool local = write_pack_opts_is_local(opts);
 	const char *pack_prefix = write_pack_opts_pack_prefix(opts);
 
 	prepare_pack_objects(&cmd, opts->po_args, opts->destination);
@@ -232,8 +231,7 @@ static int write_cruft_pack(const struct write_pack_opts *opts,
 	struct string_list_item *item;
 	FILE *in;
 	int ret;
-	const char *scratch;
-	int local = skip_prefix(opts->destination, opts->packdir, &scratch);
+	bool local = write_pack_opts_is_local(opts);
 	const char *pack_prefix = write_pack_opts_pack_prefix(opts);
 
 	prepare_pack_objects(&cmd, opts->po_args, opts->destination);

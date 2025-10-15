@@ -77,6 +77,11 @@ const char *write_pack_opts_pack_prefix(const struct write_pack_opts *opts)
 	return pack_prefix;
 }
 
+bool write_pack_opts_is_local(const struct write_pack_opts *opts)
+{
+	return starts_with(opts->destination, opts->packdir);
+}
+
 #define DELETE_PACK 1
 #define RETAIN_PACK 2
 
