@@ -115,17 +115,17 @@ struct pack_geometry {
 	int split_factor;
 };
 
-static uint32_t geometry_pack_weight(struct packed_git *p)
+static uint32_t pack_geometry_weight(struct packed_git *p)
 {
 	if (open_pack_index(p))
 		die(_("cannot open index for %s"), p->pack_name);
 	return p->num_objects;
 }
 
-static int geometry_cmp(const void *va, const void *vb)
+static int pack_geometry_cmp(const void *va, const void *vb)
 {
-	uint32_t aw = geometry_pack_weight(*(struct packed_git **)va),
-		 bw = geometry_pack_weight(*(struct packed_git **)vb);
+	uint32_t aw = pack_geometry_weight(*(struct packed_git **)va),
+		 bw = pack_geometry_weight(*(struct packed_git **)vb);
 
 	if (aw < bw)
 		return -1;
@@ -134,7 +134,7 @@ static int geometry_cmp(const void *va, const void *vb)
 	return 0;
 }
 
-static void init_pack_geometry(struct pack_geometry *geometry,
+static void pack_geometry_init(struct pack_geometry *geometry,
 			       struct existing_packs *existing,
 			       const struct pack_objects_args *args)
 {
@@ -184,11 +184,11 @@ static void init_pack_geometry(struct pack_geometry *geometry,
 		geometry->pack_nr++;
 	}
 
-	QSORT(geometry->pack, geometry->pack_nr, geometry_cmp);
+	QSORT(geometry->pack, geometry->pack_nr, pack_geometry_cmp);
 	strbuf_release(&buf);
 }
 
-static void split_pack_geometry(struct pack_geometry *geometry)
+static void pack_geometry_split(struct pack_geometry *geometry)
 {
 	uint32_t i;
 	uint32_t split;
@@ -208,13 +208,13 @@ static void split_pack_geometry(struct pack_geometry *geometry)
 		struct packed_git *prev = geometry->pack[i - 1];
 
 		if (unsigned_mult_overflows(geometry->split_factor,
-					    geometry_pack_weight(prev)))
+					    pack_geometry_weight(prev)))
 			die(_("pack %s too large to consider in geometric "
 			      "progression"),
 			    prev->pack_name);
 
-		if (geometry_pack_weight(ours) <
-		    geometry->split_factor * geometry_pack_weight(prev))
+		if (pack_geometry_weight(ours) <
+		    geometry->split_factor * pack_geometry_weight(prev))
 			break;
 	}
 
@@ -242,9 +242,9 @@ static void split_pack_geometry(struct pack_geometry *geometry)
 	for (i = 0; i < split; i++) {
 		struct packed_git *p = geometry->pack[i];
 
-		if (unsigned_add_overflows(total_size, geometry_pack_weight(p)))
+		if (unsigned_add_overflows(total_size, pack_geometry_weight(p)))
 			die(_("pack %s too large to roll up"), p->pack_name);
-		total_size += geometry_pack_weight(p);
+		total_size += pack_geometry_weight(p);
 	}
 	for (i = split; i < geometry->pack_nr; i++) {
 		struct packed_git *ours = geometry->pack[i];
@@ -253,15 +253,15 @@ static void split_pack_geometry(struct pack_geometry *geometry)
 					    total_size))
 			die(_("pack %s too large to roll up"), ours->pack_name);
 
-		if (geometry_pack_weight(ours) <
+		if (pack_geometry_weight(ours) <
 		    geometry->split_factor * total_size) {
 			if (unsigned_add_overflows(total_size,
-						   geometry_pack_weight(ours)))
+						   pack_geometry_weight(ours)))
 				die(_("pack %s too large to roll up"),
 				    ours->pack_name);
 
 			split++;
-			total_size += geometry_pack_weight(ours);
+			total_size += pack_geometry_weight(ours);
 		} else
 			break;
 	}
@@ -269,7 +269,7 @@ static void split_pack_geometry(struct pack_geometry *geometry)
 	geometry->split = split;
 }
 
-static struct packed_git *get_preferred_pack(struct pack_geometry *geometry)
+static struct packed_git *pack_geometry_preferred_pack(struct pack_geometry *geometry)
 {
 	uint32_t i;
 
@@ -304,9 +304,9 @@ static struct packed_git *get_preferred_pack(struct pack_geometry *geometry)
 	return NULL;
 }
 
-static void geometry_remove_redundant_packs(struct pack_geometry *geometry,
-					    struct string_list *names,
-					    struct existing_packs *existing)
+static void pack_geometry_remove_redundant(struct pack_geometry *geometry,
+					   struct string_list *names,
+					   struct existing_packs *existing)
 {
 	const struct git_hash_algo *algop = existing->repo->hash_algo;
 	struct strbuf buf = STRBUF_INIT;
@@ -332,7 +332,7 @@ static void geometry_remove_redundant_packs(struct pack_geometry *geometry,
 	strbuf_release(&buf);
 }
 
-static void free_pack_geometry(struct pack_geometry *geometry)
+static void pack_geometry_release(struct pack_geometry *geometry)
 {
 	if (!geometry)
 		return;
@@ -599,7 +599,7 @@ static int write_midx_included_packs(struct string_list *include,
 {
 	struct child_process cmd = CHILD_PROCESS_INIT;
 	struct string_list_item *item;
-	struct packed_git *preferred = get_preferred_pack(geometry);
+	struct packed_git *preferred = pack_geometry_preferred_pack(geometry);
 	FILE *in;
 	int ret;
 
@@ -1063,8 +1063,8 @@ int cmd_repack(int argc,
 	if (geometry.split_factor) {
 		if (pack_everything)
 			die(_("options '%s' and '%s' cannot be used together"), "--geometric", "-A/-a");
-		init_pack_geometry(&geometry, &existing, &po_args);
-		split_pack_geometry(&geometry);
+		pack_geometry_init(&geometry, &existing, &po_args);
+		pack_geometry_split(&geometry);
 	}
 
 	prepare_pack_objects(&cmd, &po_args, packtmp);
@@ -1324,8 +1324,8 @@ int cmd_repack(int argc,
 		existing_packs_remove_redundant(&existing, packdir);
 
 		if (geometry.split_factor)
-			geometry_remove_redundant_packs(&geometry, &names,
-							&existing);
+			pack_geometry_remove_redundant(&geometry, &names,
+						       &existing);
 		if (show_progress)
 			opts |= PRUNE_PACKED_VERBOSE;
 		prune_packed_objects(opts);
@@ -1352,7 +1352,7 @@ cleanup:
 	string_list_clear(&keep_pack_list, 0);
 	string_list_clear(&names, 1);
 	existing_packs_release(&existing);
-	free_pack_geometry(&geometry);
+	pack_geometry_release(&geometry);
 	for (size_t i = 0; i < midx_pack_names_nr; i++)
 		free(midx_pack_names[i]);
 	free(midx_pack_names);
