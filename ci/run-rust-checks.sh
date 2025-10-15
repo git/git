@@ -14,4 +14,9 @@ then
 	RET=1
 fi
 
+if ! group "Check for minimum required Rust version" cargo msrv verify
+then
+	RET=1
+fi
+
 exit $RET

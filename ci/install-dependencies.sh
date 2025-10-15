@@ -10,6 +10,8 @@ begin_group "Install dependencies"
 P4WHENCE=https://cdist2.perforce.com/perforce/r23.2
 LFSWHENCE=https://github.com/github/git-lfs/releases/download/v$LINUX_GIT_LFS_VERSION
 JGITWHENCE=https://repo1.maven.org/maven2/org/eclipse/jgit/org.eclipse.jgit.pgm/6.8.0.202311291450-r/org.eclipse.jgit.pgm-6.8.0.202311291450-r.sh
+CARGO_MSRV_VERSION=0.18.4
+CARGO_MSRV_WHENCE=https://github.com/foresterre/cargo-msrv/releases/download/v$CARGO_MSRV_VERSION/cargo-msrv-x86_64-unknown-linux-musl-v$CARGO_MSRV_VERSION.tgz
 
 # Make sudo a no-op and execute the command directly when running as root.
 # While using sudo would be fine on most platforms when we are root already,
@@ -130,6 +132,12 @@ RustAnalysis)
 	sudo apt-get -q -y install rustup
 	rustup default stable
 	rustup component add clippy rustfmt
+
+	wget -q "$CARGO_MSRV_WHENCE" -O "cargo-msvc.tgz"
+	sudo mkdir -p "$CUSTOM_PATH"
+	sudo tar -xf "cargo-msvc.tgz" --strip-components=1 \
+		--directory "$CUSTOM_PATH" --wildcards "*/cargo-msrv"
+	sudo chmod a+x "$CUSTOM_PATH/cargo-msrv"
 	;;
 sparse)
 	sudo apt-get -q -y install libssl-dev libcurl4-openssl-dev \
