@@ -38,6 +38,8 @@ void prepare_pack_objects(struct child_process *cmd,
 		strvec_push(&cmd->args,  "--quiet");
 	if (args->delta_base_offset)
 		strvec_push(&cmd->args,  "--delta-base-offset");
+	if (!args->pack_kept_objects)
+		strvec_push(&cmd->args,  "--honor-pack-keep");
 	strvec_push(&cmd->args, out);
 	cmd->git_cmd = 1;
 	cmd->out = -1;

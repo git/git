@@ -17,10 +17,14 @@ struct pack_objects_args {
 	int name_hash_version;
 	int path_walk;
 	int delta_base_offset;
+	int pack_kept_objects;
 	struct list_objects_filter_options filter_options;
 };
 
-#define PACK_OBJECTS_ARGS_INIT { .delta_base_offset = 1 }
+#define PACK_OBJECTS_ARGS_INIT { \
+	.delta_base_offset = 1, \
+	.pack_kept_objects = -1, \
+}
 
 struct child_process;
 
@@ -104,8 +108,7 @@ struct pack_geometry {
 
 void pack_geometry_init(struct pack_geometry *geometry,
 			struct existing_packs *existing,
-			const struct pack_objects_args *args,
-			int pack_kept_objects);
+			const struct pack_objects_args *args);
 void pack_geometry_split(struct pack_geometry *geometry);
 struct packed_git *pack_geometry_preferred_pack(struct pack_geometry *geometry);
 void pack_geometry_remove_redundant(struct pack_geometry *geometry,

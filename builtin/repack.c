@@ -33,7 +33,6 @@
 #define RETAIN_PACK 2
 
 static int pack_everything;
-static int pack_kept_objects = -1;
 static int write_bitmaps = -1;
 static int use_delta_islands;
 static int run_update_server_info = 1;
@@ -68,7 +67,7 @@ static int repack_config(const char *var, const char *value,
 		return 0;
 	}
 	if (!strcmp(var, "repack.packkeptobjects")) {
-		pack_kept_objects = git_config_bool(var, value);
+		po_args->pack_kept_objects = git_config_bool(var, value);
 		return 0;
 	}
 	if (!strcmp(var, "repack.writebitmaps") ||
@@ -122,8 +121,6 @@ static int write_filtered_pack(const struct write_pack_opts *opts,
 
 	strvec_push(&cmd.args, "--stdin-packs");
 
-	if (!pack_kept_objects)
-		strvec_push(&cmd.args, "--honor-pack-keep");
 	for_each_string_list_item(item, &existing->kept_packs)
 		strvec_pushf(&cmd.args, "--keep-pack=%s", item->string);
 
@@ -146,7 +143,7 @@ static int write_filtered_pack(const struct write_pack_opts *opts,
 		fprintf(in, "%s.pack\n", item->string);
 	for_each_string_list_item(item, &existing->cruft_packs)
 		fprintf(in, "%s.pack\n", item->string);
-	caret = pack_kept_objects ? "" : "^";
+	caret = opts->po_args->pack_kept_objects ? "" : "^";
 	for_each_string_list_item(item, &existing->kept_packs)
 		fprintf(in, "%s%s.pack\n", caret, item->string);
 	fclose(in);
@@ -208,7 +205,6 @@ static int write_cruft_pack(const struct write_pack_opts *opts,
 		strvec_pushf(&cmd.args, "--cruft-expiration=%s",
 			     cruft_expiration);
 
-	strvec_push(&cmd.args, "--honor-pack-keep");
 	strvec_push(&cmd.args, "--non-empty");
 
 	cmd.in = -1;
@@ -332,7 +328,7 @@ int cmd_repack(int argc,
 		OPT_UNSIGNED(0, "max-pack-size", &po_args.max_pack_size,
 			     N_("maximum size of each packfile")),
 		OPT_PARSE_LIST_OBJECTS_FILTER(&po_args.filter_options),
-		OPT_BOOL(0, "pack-kept-objects", &pack_kept_objects,
+		OPT_BOOL(0, "pack-kept-objects", &po_args.pack_kept_objects,
 				N_("repack objects in packs marked with .keep")),
 		OPT_STRING_LIST(0, "keep-pack", &keep_pack_list, N_("name"),
 				N_("do not repack this pack")),
@@ -378,8 +374,8 @@ int cmd_repack(int argc,
 		    (!(pack_everything & ALL_INTO_ONE) || !is_bare_repository()))
 			write_bitmaps = 0;
 	}
-	if (pack_kept_objects < 0)
-		pack_kept_objects = write_bitmaps > 0 && !write_midx;
+	if (po_args.pack_kept_objects < 0)
+		po_args.pack_kept_objects = write_bitmaps > 0 && !write_midx;
 
 	if (write_bitmaps && !(pack_everything & ALL_INTO_ONE) && !write_midx)
 		die(_(incremental_bitmap_conflict_error));
@@ -420,8 +416,7 @@ int cmd_repack(int argc,
 	if (geometry.split_factor) {
 		if (pack_everything)
 			die(_("options '%s' and '%s' cannot be used together"), "--geometric", "-A/-a");
-		pack_geometry_init(&geometry, &existing, &po_args,
-				   pack_kept_objects);
+		pack_geometry_init(&geometry, &existing, &po_args);
 		pack_geometry_split(&geometry);
 	}
 
@@ -430,8 +425,6 @@ int cmd_repack(int argc,
 	show_progress = !po_args.quiet && isatty(2);
 
 	strvec_push(&cmd.args, "--keep-true-parents");
-	if (!pack_kept_objects)
-		strvec_push(&cmd.args, "--honor-pack-keep");
 	for (i = 0; i < keep_pack_list.nr; i++)
 		strvec_pushf(&cmd.args, "--keep-pack=%s",
 			     keep_pack_list.items[i].string);
@@ -581,6 +574,7 @@ int cmd_repack(int argc,
 		cruft_po_args.local = po_args.local;
 		cruft_po_args.quiet = po_args.quiet;
 		cruft_po_args.delta_base_offset = po_args.delta_base_offset;
+		cruft_po_args.pack_kept_objects = 0;
 
 		ret = write_cruft_pack(&opts, cruft_expiration,
 				       combine_cruft_below_size, &names,

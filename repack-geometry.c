@@ -27,8 +27,7 @@ static int pack_geometry_cmp(const void *va, const void *vb)
 
 void pack_geometry_init(struct pack_geometry *geometry,
 			struct existing_packs *existing,
-			const struct pack_objects_args *args,
-			int pack_kept_objects)
+			const struct pack_objects_args *args)
 {
 	struct packfile_store *packs = existing->repo->objects->packfiles;
 	struct packed_git *p;
@@ -43,7 +42,7 @@ void pack_geometry_init(struct pack_geometry *geometry,
 			 */
 			continue;
 
-		if (!pack_kept_objects) {
+		if (!args->pack_kept_objects) {
 			/*
 			 * Any pack that has its pack_keep bit set will
 			 * appear in existing->kept_packs below, but
