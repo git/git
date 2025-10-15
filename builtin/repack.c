@@ -138,9 +138,7 @@ static int finish_pack_objects_cmd(const struct git_hash_algo *algop,
 	return finish_command(cmd);
 }
 
-static int write_filtered_pack(const struct pack_objects_args *args,
-			       const char *destination,
-			       const char *pack_prefix,
+static int write_filtered_pack(const struct write_pack_opts *opts,
 			       struct existing_packs *existing,
 			       struct string_list *names)
 {
@@ -150,9 +148,9 @@ static int write_filtered_pack(const struct pack_objects_args *args,
 	int ret;
 	const char *caret;
 	const char *scratch;
-	int local = skip_prefix(destination, packdir, &scratch);
+	int local = skip_prefix(opts->destination, opts->packdir, &scratch);
 
-	prepare_pack_objects(&cmd, args, destination);
+	prepare_pack_objects(&cmd, opts->po_args, opts->destination);
 
 	strvec_push(&cmd.args, "--stdin-packs");
 
@@ -175,7 +173,7 @@ static int write_filtered_pack(const struct pack_objects_args *args,
 	 */
 	in = xfdopen(cmd.in, "w");
 	for_each_string_list_item(item, names)
-		fprintf(in, "^%s-%s.pack\n", pack_prefix, item->string);
+		fprintf(in, "^%s-%s.pack\n", opts->pack_prefix, item->string);
 	for_each_string_list_item(item, &existing->non_kept_packs)
 		fprintf(in, "%s.pack\n", item->string);
 	for_each_string_list_item(item, &existing->cruft_packs)
@@ -665,14 +663,18 @@ int cmd_repack(int argc,
 	}
 
 	if (po_args.filter_options.choice) {
-		if (!filter_to)
-			filter_to = packtmp;
+		struct write_pack_opts opts = {
+			.po_args = &po_args,
+			.destination = filter_to,
+			.pack_prefix = find_pack_prefix(packdir, packtmp),
+			.packdir = packdir,
+			.packtmp = packtmp,
+		};
 
-		ret = write_filtered_pack(&po_args,
-					  filter_to,
-					  find_pack_prefix(packdir, packtmp),
-					  &existing,
-					  &names);
+		if (!opts.destination)
+			opts.destination = packtmp;
+
+		ret = write_filtered_pack(&opts, &existing, &names);
 		if (ret)
 			goto cleanup;
 	}

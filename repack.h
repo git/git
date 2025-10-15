@@ -32,6 +32,14 @@ void pack_objects_args_release(struct pack_objects_args *args);
 void repack_remove_redundant_pack(struct repository *repo, const char *dir_name,
 				  const char *base_name);
 
+struct write_pack_opts {
+	struct pack_objects_args *po_args;
+	const char *destination;
+	const char *pack_prefix;
+	const char *packdir;
+	const char *packtmp;
+};
+
 struct repository;
 struct packed_git;
 
