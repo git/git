@@ -52,6 +52,13 @@ submodule.<name>.active::
 	submodule.active config option. See linkgit:gitsubmodules[7] for
 	details.
 
+submodule.<name>.gitdir::
+	This option sets the gitdir path for submodule <name>, allowing users
+	to override the default path or change the default path name encoding.
+	Submodule gitdir encoding is enabled via `extensions.submoduleEncoding`
+	(see linkgit:git-config[1]). This config works both with the extension
+	enabled or disabled.
+
 submodule.active::
 	A repeated field which contains a pathspec used to match against a
 	submodule's path to determine if the submodule is of interest to git
