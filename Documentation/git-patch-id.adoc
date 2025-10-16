@@ -7,8 +7,8 @@ git-patch-id - Compute unique ID for a patch
 
 SYNOPSIS
 --------
-[verse]
-'git patch-id' [--stable | --unstable | --verbatim]
+[synopsis]
+git patch-id [--stable | --unstable | --verbatim]
 
 DESCRIPTION
 -----------
@@ -21,7 +21,7 @@ the same time also reasonably unique, i.e., two patches that have the same
 
 The main usecase for this command is to look for likely duplicate commits.
 
-When dealing with 'git diff-tree' output, it takes advantage of
+When dealing with `git diff-tree` output, it takes advantage of
 the fact that the patch is prefixed with the object name of the
 commit, and outputs two 40-byte hexadecimal strings.  The first
 string is the patch ID, and the second string is the commit ID.
@@ -30,35 +30,35 @@ This can be used to make a mapping from patch ID to commit ID.
 OPTIONS
 -------
 
---verbatim::
+`--verbatim`::
 	Calculate the patch-id of the input as it is given, do not strip
 	any whitespace.
 +
-This is the default if patchid.verbatim is true.
+This is the default if `patchid.verbatim` is `true`.
 
---stable::
+`--stable`::
 	Use a "stable" sum of hashes as the patch ID. With this option:
 +
 --
 - Reordering file diffs that make up a patch does not affect the ID.
   In particular, two patches produced by comparing the same two trees
-  with two different settings for "-O<orderfile>" result in the same
+  with two different settings for `-O<orderfile>` result in the same
   patch ID signature, thereby allowing the computed result to be used
   as a key to index some meta-information about the change between
   the two trees;
 
 - Result is different from the value produced by git 1.9 and older
-  or produced when an "unstable" hash (see --unstable below) is
+  or produced when an "unstable" hash (see `--unstable` below) is
   configured - even when used on a diff output taken without any use
-  of "-O<orderfile>", thereby making existing databases storing such
+  of `-O<orderfile>`, thereby making existing databases storing such
   "unstable" or historical patch-ids unusable.
 
 - All whitespace within the patch is ignored and does not affect the id.
 --
 +
-This is the default if patchid.stable is set to true.
+This is the default if `patchid.stable` is set to `true`.
 
---unstable::
+`--unstable`::
 	Use an "unstable" hash as the patch ID. With this option,
 	the result produced is compatible with the patch-id value produced
 	by git 1.9 and older and whitespace is ignored.  Users with pre-existing
