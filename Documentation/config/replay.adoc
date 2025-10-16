@@ -1,0 +1,14 @@
+replay.defaultAction::
+	Control the default behavior of `git replay` for updating references.
+	Can be set to:
++
+--
+* `update-refs` (default): Update refs directly using an atomic transaction.
+* `show-commands`: Output update-ref commands that can be piped to
+  `git update-ref --stdin`.
+--
++
+This can be overridden with the `--update-refs` command-line option.
+Note that the command-line option uses slightly different values
+(`yes` and `print`) for brevity, but they map to the same behavior
+as the config values.

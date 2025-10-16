@@ -52,7 +52,7 @@ test_expect_success 'setup bare' '
 '
 
 test_expect_success 'using replay to rebase two branches, one on top of other' '
-	git replay --onto main topic1..topic2 >result &&
+	git replay --update-refs=print --onto main topic1..topic2 >result &&
 
 	test_line_count = 1 result &&
 
@@ -67,8 +67,34 @@ test_expect_success 'using replay to rebase two branches, one on top of other' '
 	test_cmp expect result
 '
 
+test_expect_success 'using replay with default atomic behavior (no output)' '
+	# Store the original state
+	START=$(git rev-parse topic2) &&
+	test_when_finished "git branch -f topic2 $START" &&
+
+	# Default behavior: atomic ref updates (no output)
+	git replay --onto main topic1..topic2 >output &&
+	test_must_be_empty output &&
+
+	# Verify the history is correct
+	git log --format=%s topic2 >actual &&
+	test_write_lines E D M L B A >expect &&
+	test_cmp expect actual
+'
+
 test_expect_success 'using replay on bare repo to rebase two branches, one on top of other' '
-	git -C bare replay --onto main topic1..topic2 >result-bare &&
+	git -C bare replay --update-refs=print --onto main topic1..topic2 >result-bare &&
+
+	test_line_count = 1 result-bare &&
+
+	git log --format=%s $(cut -f 3 -d " " result-bare) >actual &&
+	test_write_lines E D M L B A >expect &&
+	test_cmp expect actual &&
+
+	printf "update refs/heads/topic2 " >expect &&
+	printf "%s " $(cut -f 3 -d " " result-bare) >>expect &&
+	git -C bare rev-parse topic2 >>expect &&
+
 	test_cmp expect result-bare
 '
 
@@ -86,7 +112,7 @@ test_expect_success 'using replay to perform basic cherry-pick' '
 	# 2nd field of result is refs/heads/main vs. refs/heads/topic2
 	# 4th field of result is hash for main instead of hash for topic2
 
-	git replay --advance main topic1..topic2 >result &&
+	git replay --update-refs=print --advance main topic1..topic2 >result &&
 
 	test_line_count = 1 result &&
 
@@ -102,7 +128,18 @@ test_expect_success 'using replay to perform basic cherry-pick' '
 '
 
 test_expect_success 'using replay on bare repo to perform basic cherry-pick' '
-	git -C bare replay --advance main topic1..topic2 >result-bare &&
+	git -C bare replay --update-refs=print --advance main topic1..topic2 >result-bare &&
+
+	test_line_count = 1 result-bare &&
+
+	git log --format=%s $(cut -f 3 -d " " result-bare) >actual &&
+	test_write_lines E D M L B A >expect &&
+	test_cmp expect actual &&
+
+	printf "update refs/heads/main " >expect &&
+	printf "%s " $(cut -f 3 -d " " result-bare) >>expect &&
+	git -C bare rev-parse main >>expect &&
+
 	test_cmp expect result-bare
 '
 
@@ -115,7 +152,7 @@ test_expect_success 'replay fails when both --advance and --onto are omitted' '
 '
 
 test_expect_success 'using replay to also rebase a contained branch' '
-	git replay --contained --onto main main..topic3 >result &&
+	git replay --update-refs=print --contained --onto main main..topic3 >result &&
 
 	test_line_count = 2 result &&
 	cut -f 3 -d " " result >new-branch-tips &&
@@ -139,12 +176,31 @@ test_expect_success 'using replay to also rebase a contained branch' '
 '
 
 test_expect_success 'using replay on bare repo to also rebase a contained branch' '
-	git -C bare replay --contained --onto main main..topic3 >result-bare &&
+	git -C bare replay --update-refs=print --contained --onto main main..topic3 >result-bare &&
+
+	test_line_count = 2 result-bare &&
+	cut -f 3 -d " " result-bare >new-branch-tips &&
+
+	git log --format=%s $(head -n 1 new-branch-tips) >actual &&
+	test_write_lines F C M L B A >expect &&
+	test_cmp expect actual &&
+
+	git log --format=%s $(tail -n 1 new-branch-tips) >actual &&
+	test_write_lines H G F C M L B A >expect &&
+	test_cmp expect actual &&
+
+	printf "update refs/heads/topic1 " >expect &&
+	printf "%s " $(head -n 1 new-branch-tips) >>expect &&
+	git -C bare rev-parse topic1 >>expect &&
+	printf "update refs/heads/topic3 " >>expect &&
+	printf "%s " $(tail -n 1 new-branch-tips) >>expect &&
+	git -C bare rev-parse topic3 >>expect &&
+
 	test_cmp expect result-bare
 '
 
 test_expect_success 'using replay to rebase multiple divergent branches' '
-	git replay --onto main ^topic1 topic2 topic4 >result &&
+	git replay --update-refs=print --onto main ^topic1 topic2 topic4 >result &&
 
 	test_line_count = 2 result &&
 	cut -f 3 -d " " result >new-branch-tips &&
@@ -168,7 +224,7 @@ test_expect_success 'using replay to rebase multiple divergent branches' '
 '
 
 test_expect_success 'using replay on bare repo to rebase multiple divergent branches, including contained ones' '
-	git -C bare replay --contained --onto main ^main topic2 topic3 topic4 >result &&
+	git -C bare replay --update-refs=print --contained --onto main ^main topic2 topic3 topic4 >result &&
 
 	test_line_count = 4 result &&
 	cut -f 3 -d " " result >new-branch-tips &&
@@ -215,6 +271,132 @@ test_expect_success 'merge.directoryRenames=false' '
 
 	git -c merge.directoryRenames=false replay \
 		--onto rename-onto rename-onto..rename-from
+'
+
+# Tests for atomic ref update behavior
+
+test_expect_success 'replay with --contained updates multiple branches atomically' '
+	# Store original states
+	START_TOPIC1=$(git rev-parse topic1) &&
+	START_TOPIC3=$(git rev-parse topic3) &&
+	test_when_finished "git branch -f topic1 $START_TOPIC1 && git branch -f topic3 $START_TOPIC3" &&
+
+	# Use --contained to update multiple branches
+	git replay --contained --onto main main..topic3 >output &&
+	test_must_be_empty output &&
+
+	# Verify both branches were updated with correct commit sequences
+	git log --format=%s topic1 >actual &&
+	test_write_lines F C M L B A >expect &&
+	test_cmp expect actual &&
+
+	git log --format=%s topic3 >actual &&
+	test_write_lines H G F C M L B A >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'replay atomic guarantee: all refs updated or none' '
+	# Store original states
+	START_TOPIC1=$(git rev-parse topic1) &&
+	START_TOPIC3=$(git rev-parse topic3) &&
+	test_when_finished "git branch -f topic1 $START_TOPIC1 && git branch -f topic3 $START_TOPIC3" &&
+
+	# Create a lock on topic1 to simulate a concurrent update
+	>.git/refs/heads/topic1.lock &&
+
+	# Try to update multiple branches with --contained
+	# This should fail atomically - neither branch should be updated
+	test_must_fail git replay --contained --onto main main..topic3 2>error &&
+
+	# Remove the lock before checking refs
+	rm -f .git/refs/heads/topic1.lock &&
+
+	# Verify the transaction failed
+	grep "failed to commit ref transaction" error &&
+
+	# Verify NEITHER branch was updated (all-or-nothing guarantee)
+	test_cmp_rev $START_TOPIC1 topic1 &&
+	test_cmp_rev $START_TOPIC3 topic3
+'
+
+test_expect_success 'traditional pipeline and atomic update produce equivalent results' '
+	# Store original states
+	START_TOPIC2=$(git rev-parse topic2) &&
+	test_when_finished "git branch -f topic2 $START_TOPIC2" &&
+
+	# Traditional method: output commands and pipe to update-ref
+	git replay --update-refs=print --onto main topic1..topic2 >update-commands &&
+	git update-ref --stdin <update-commands &&
+	git log --format=%s topic2 >traditional-result &&
+
+	# Reset topic2
+	git branch -f topic2 $START_TOPIC2 &&
+
+	# Atomic method: direct ref updates
+	git replay --onto main topic1..topic2 &&
+	git log --format=%s topic2 >atomic-result &&
+
+	# Both methods should produce identical commit histories
+	test_cmp traditional-result atomic-result
+'
+
+test_expect_success 'replay works correctly with bare repositories' '
+	# Test atomic behavior in bare repo
+	git -C bare fetch .. topic1:bare-test-branch &&
+	git -C bare replay --onto main main..bare-test-branch >output &&
+	test_must_be_empty output &&
+
+	# Verify the bare repo was updated correctly
+	git -C bare log --format=%s bare-test-branch >actual &&
+	test_write_lines F C M L B A >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'replay validates --update-refs mode values' '
+	test_must_fail git replay --update-refs=invalid --onto main topic1..topic2 2>error &&
+	grep "invalid value for --update-refs" error
+'
+
+test_expect_success 'replay.defaultAction config option' '
+	# Store original state
+	START=$(git rev-parse topic2) &&
+	test_when_finished "git branch -f topic2 $START && git config --unset replay.defaultAction" &&
+
+	# Set config to show-commands
+	git config replay.defaultAction show-commands &&
+	git replay --onto main topic1..topic2 >output &&
+	test_line_count = 1 output &&
+	grep "^update refs/heads/topic2 " output &&
+
+	# Reset and test update-refs mode
+	git branch -f topic2 $START &&
+	git config replay.defaultAction update-refs &&
+	git replay --onto main topic1..topic2 >output &&
+	test_must_be_empty output &&
+
+	# Verify ref was updated
+	git log --format=%s topic2 >actual &&
+	test_write_lines E D M L B A >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'command-line --update-refs overrides config' '
+	# Store original state
+	START=$(git rev-parse topic2) &&
+	test_when_finished "git branch -f topic2 $START && git config --unset replay.defaultAction" &&
+
+	# Set config to update-refs but use --update-refs=print
+	git config replay.defaultAction update-refs &&
+	git replay --update-refs=print --onto main topic1..topic2 >output &&
+	test_line_count = 1 output &&
+	grep "^update refs/heads/topic2 " output
+'
+
+test_expect_success 'invalid replay.defaultAction value' '
+	test_when_finished "git config --unset replay.defaultAction" &&
+	git config replay.defaultAction invalid &&
+	test_must_fail git replay --onto main topic1..topic2 2>error &&
+	grep "invalid value for replay.defaultAction" error
 '
 
 test_done

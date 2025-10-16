@@ -9,15 +9,17 @@ git-replay - EXPERIMENTAL: Replay commits on a new base, works with bare repos t
 SYNOPSIS
 --------
 [verse]
-(EXPERIMENTAL!) 'git replay' ([--contained] --onto <newbase> | --advance <branch>) <revision-range>...
+(EXPERIMENTAL!) 'git replay' ([--contained] --onto <newbase> | --advance <branch>)
+		[--update-refs[=<mode>]] <revision-range>...
 
 DESCRIPTION
 -----------
 
 Takes ranges of commits and replays them onto a new location. Leaves
-the working tree and the index untouched, and updates no references.
-The output of this command is meant to be used as input to
-`git update-ref --stdin`, which would update the relevant branches
+the working tree and the index untouched. By default, updates the
+relevant references using an atomic transaction (all refs update or
+none). Use `--update-refs=print` to avoid automatic ref updates and
+instead get update commands that can be piped to `git update-ref --stdin`
 (see the OUTPUT section below).
 
 THIS COMMAND IS EXPERIMENTAL. THE BEHAVIOR MAY CHANGE.
@@ -29,18 +31,28 @@ OPTIONS
 	Starting point at which to create the new commits.  May be any
 	valid commit, and not just an existing branch name.
 +
-When `--onto` is specified, the update-ref command(s) in the output will
-update the branch(es) in the revision range to point at the new
-commits, similar to the way how `git rebase --update-refs` updates
-multiple branches in the affected range.
+When `--onto` is specified, the branch(es) in the revision range will be
+updated to point at the new commits (or update commands will be printed
+if `--update-refs=print` is used), similar to the way how
+`git rebase --update-refs` updates multiple branches in the affected range.
 
 --advance <branch>::
 	Starting point at which to create the new commits; must be a
 	branch name.
 +
-When `--advance` is specified, the update-ref command(s) in the output
-will update the branch passed as an argument to `--advance` to point at
-the new commits (in other words, this mimics a cherry-pick operation).
+When `--advance` is specified, the branch passed as an argument will be
+updated to point at the new commits (or an update command will be printed
+if `--update-refs=print` is used). This mimics a cherry-pick operation.
+
+--update-refs[=<mode>]::
+	Control how references are updated. The mode can be:
++
+--
+* `yes` (default): Update refs directly using an atomic transaction.
+  All ref updates succeed or all fail.
+* `print`: Output update-ref commands instead of updating refs.
+  The output can be piped as-is to `git update-ref --stdin`.
+--
 
 <revision-range>::
 	Range of commits to replay. More than one <revision-range> can
@@ -54,15 +66,19 @@ include::rev-list-options.adoc[]
 OUTPUT
 ------
 
-When there are no conflicts, the output of this command is usable as
-input to `git update-ref --stdin`.  It is of the form:
+By default, when there are no conflicts, this command updates the relevant
+references using an atomic transaction and produces no output. All ref
+updates succeed or all fail.
+
+When `--update-refs=print` is used, the output is usable as input to
+`git update-ref --stdin`. It is of the form:
 
 	update refs/heads/branch1 ${NEW_branch1_HASH} ${OLD_branch1_HASH}
 	update refs/heads/branch2 ${NEW_branch2_HASH} ${OLD_branch2_HASH}
 	update refs/heads/branch3 ${NEW_branch3_HASH} ${OLD_branch3_HASH}
 
 where the number of refs updated depends on the arguments passed and
-the shape of the history being replayed.  When using `--advance`, the
+the shape of the history being replayed. When using `--advance`, the
 number of refs updated is always one, but for `--onto`, it can be one
 or more (rebasing multiple branches simultaneously is supported).
 
@@ -77,44 +93,45 @@ is something other than 0 or 1.
 EXAMPLES
 --------
 
-To simply rebase `mybranch` onto `target`:
+To simply rebase `mybranch` onto `target` (default behavior):
 
 ------------
 $ git replay --onto target origin/main..mybranch
-update refs/heads/mybranch ${NEW_mybranch_HASH} ${OLD_mybranch_HASH}
 ------------
 
 To cherry-pick the commits from mybranch onto target:
 
 ------------
 $ git replay --advance target origin/main..mybranch
-update refs/heads/target ${NEW_target_HASH} ${OLD_target_HASH}
 ------------
 
 Note that the first two examples replay the exact same commits and on
 top of the exact same new base, they only differ in that the first
-provides instructions to make mybranch point at the new commits and
-the second provides instructions to make target point at them.
+updates mybranch to point at the new commits and the second updates
+target to point at them.
+
+To get the traditional pipeline output:
+
+------------
+$ git replay --update-refs=print --onto target origin/main..mybranch
+update refs/heads/mybranch ${NEW_mybranch_HASH} ${OLD_mybranch_HASH}
+------------
 
 What if you have a stack of branches, one depending upon another, and
 you'd really like to rebase the whole set?
 
 ------------
 $ git replay --contained --onto origin/main origin/main..tipbranch
-update refs/heads/branch1 ${NEW_branch1_HASH} ${OLD_branch1_HASH}
-update refs/heads/branch2 ${NEW_branch2_HASH} ${OLD_branch2_HASH}
-update refs/heads/tipbranch ${NEW_tipbranch_HASH} ${OLD_tipbranch_HASH}
 ------------
 
+This automatically finds and rebases all branches contained within the
+`origin/main..tipbranch` range.
+
 When calling `git replay`, one does not need to specify a range of
-commits to replay using the syntax `A..B`; any range expression will
-do:
+commits to replay using the syntax `A..B`; any range expression will do:
 
 ------------
 $ git replay --onto origin/main ^base branch1 branch2 branch3
-update refs/heads/branch1 ${NEW_branch1_HASH} ${OLD_branch1_HASH}
-update refs/heads/branch2 ${NEW_branch2_HASH} ${OLD_branch2_HASH}
-update refs/heads/branch3 ${NEW_branch3_HASH} ${OLD_branch3_HASH}
 ------------
 
 This will simultaneously rebase `branch1`, `branch2`, and `branch3`,
