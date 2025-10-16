@@ -7,12 +7,11 @@
 static void combine_small_cruft_packs(FILE *in, off_t combine_cruft_below_size,
 				      struct existing_packs *existing)
 {
-	struct packfile_store *packs = existing->repo->objects->packfiles;
 	struct packed_git *p;
 	struct strbuf buf = STRBUF_INIT;
 	size_t i;
 
-	for (p = packfile_store_get_all_packs(packs); p; p = p->next) {
+	repo_for_each_pack(existing->repo, p) {
 		if (!(p->is_cruft && p->pack_local))
 			continue;
 

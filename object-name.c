@@ -213,9 +213,11 @@ static void find_short_packed_object(struct disambiguate_state *ds)
 			unique_in_midx(m, ds);
 	}
 
-	for (p = packfile_store_get_packs(ds->repo->objects->packfiles); p && !ds->ambiguous;
-	     p = p->next)
+	repo_for_each_pack(ds->repo, p) {
+		if (ds->ambiguous)
+			break;
 		unique_in_pack(p, ds);
+	}
 }
 
 static int finish_object_disambiguation(struct disambiguate_state *ds,
@@ -805,7 +807,7 @@ static void find_abbrev_len_packed(struct min_abbrev_data *mad)
 			find_abbrev_len_for_midx(m, mad);
 	}
 
-	for (p = packfile_store_get_packs(mad->repo->objects->packfiles); p; p = p->next)
+	repo_for_each_pack(mad->repo, p)
 		find_abbrev_len_for_pack(p, mad);
 }
 

@@ -29,11 +29,10 @@ void pack_geometry_init(struct pack_geometry *geometry,
 			struct existing_packs *existing,
 			const struct pack_objects_args *args)
 {
-	struct packfile_store *packs = existing->repo->objects->packfiles;
 	struct packed_git *p;
 	struct strbuf buf = STRBUF_INIT;
 
-	for (p = packfile_store_get_all_packs(packs); p; p = p->next) {
+	repo_for_each_pack(existing->repo, p) {
 		if (args->local && !p->pack_local)
 			/*
 			 * When asked to only repack local packfiles we skip
