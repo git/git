@@ -100,7 +100,7 @@ Performance, Internal Implementation, Development Support etc.
 
  * CodingGuidelines now spells out how bitfields are to be written.
 
- * Adjust to the way newer versions of cURL selectivel enables tracing
+ * Adjust to the way newer versions of cURL selectively enable tracing
    options, so that our tests can continue to work.
    (merge 1b5a6bfff3 jk/curl-global-trace-components later to maint).
 
@@ -212,13 +212,13 @@ including security updates, are included in this release.
    name.
    (merge bcb20dda83 js/doc-gitk-history later to maint).
 
- * Update the instruction to use of GGG in the MyFirstContribution
+ * Update the instructions for using GGG in the MyFirstContribution
    document to say that a GitHub PR could be made against `git/git`
    instead of `gitgitgadget/git`.
    (merge 37001cdbc4 ds/doc-ggg-pr-fork-clarify later to maint).
 
  * Makefile tried to run multiple "cargo build" which would not work
-   very well; serialize their execution to work it around.
+   very well; serialize their execution to work around this problem.
    (merge 0eeacde50e da/cargo-serialize later to maint).
 
  * "git repack --path-walk" lost objects in some corner cases, which
@@ -294,12 +294,12 @@ including security updates, are included in this release.
    updated.
    (merge 54a60e5b38 kh/you-still-use-whatchanged-fix later to maint).
 
- * Clang-format update to let our control macros formatted the way we
+ * Clang-format update to let our control macros be formatted the way we
    had them traditionally, e.g., "for_each_string_list_item()" without
    space before the parentheses.
    (merge 3721541d35 jt/clang-format-foreach-wo-space-before-parenthesis later to maint).
 
- * A few places where an size_t value was cast to curl_off_t without
+ * A few places where a size_t value was cast to curl_off_t without
    checking has been updated to use the existing helper function.
    (merge ecc5749578 js/curl-off-t-fixes later to maint).
 
