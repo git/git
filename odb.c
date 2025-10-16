@@ -694,7 +694,7 @@ static int do_oid_object_info_extended(struct object_database *odb,
 
 		/* Not a loose object; someone else may have just packed it. */
 		if (!(flags & OBJECT_INFO_QUICK)) {
-			reprepare_packed_git(odb->repo);
+			odb_reprepare(odb->repo->objects);
 			if (find_pack_entry(odb->repo, real, &e))
 				break;
 		}
@@ -996,8 +996,7 @@ struct object_database *odb_new(struct repository *repo)
 
 	memset(o, 0, sizeof(*o));
 	o->repo = repo;
-	INIT_LIST_HEAD(&o->packed_git_mru);
-	hashmap_init(&o->pack_map, pack_map_entry_cmp, NULL, 0);
+	o->packfiles = packfile_store_new(o);
 	pthread_mutex_init(&o->replace_mutex, NULL);
 	string_list_init_dup(&o->submodule_source_paths);
 	return o;
@@ -1035,19 +1034,34 @@ void odb_clear(struct object_database *o)
 		free((char *) o->cached_objects[i].value.buf);
 	FREE_AND_NULL(o->cached_objects);
 
-	INIT_LIST_HEAD(&o->packed_git_mru);
 	close_object_store(o);
+	packfile_store_free(o->packfiles);
+	o->packfiles = NULL;
+
+	string_list_clear(&o->submodule_source_paths, 0);
+}
+
+void odb_reprepare(struct object_database *o)
+{
+	struct odb_source *source;
+
+	obj_read_lock();
 
 	/*
-	 * `close_object_store()` only closes the packfiles, but doesn't free
-	 * them. We thus have to do this manually.
+	 * Reprepare alt odbs, in case the alternates file was modified
+	 * during the course of this process. This only _adds_ odbs to
+	 * the linked list, so existing odbs will continue to exist for
+	 * the lifetime of the process.
 	 */
-	for (struct packed_git *p = o->packed_git, *next; p; p = next) {
-		next = p->next;
-		free(p);
-	}
-	o->packed_git = NULL;
+	o->loaded_alternates = 0;
+	odb_prepare_alternates(o);
 
-	hashmap_clear(&o->pack_map);
-	string_list_clear(&o->submodule_source_paths, 0);
+	for (source = o->sources; source; source = source->next)
+		odb_clear_loose_cache(source);
+
+	o->approximate_object_count_valid = 0;
+
+	packfile_store_reprepare(o->packfiles);
+
+	obj_read_unlock();
 }
