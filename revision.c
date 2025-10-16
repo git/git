@@ -1644,19 +1644,17 @@ struct all_refs_cb {
 	struct worktree *wt;
 };
 
-static int handle_one_ref(const char *path, const char *referent UNUSED, const struct object_id *oid,
-			  int flag UNUSED,
-			  void *cb_data)
+static int handle_one_ref(const struct reference *ref, void *cb_data)
 {
 	struct all_refs_cb *cb = cb_data;
 	struct object *object;
 
-	if (ref_excluded(&cb->all_revs->ref_excludes, path))
+	if (ref_excluded(&cb->all_revs->ref_excludes, ref->name))
 	    return 0;
 
-	object = get_reference(cb->all_revs, path, oid, cb->all_flags);
-	add_rev_cmdline(cb->all_revs, object, path, REV_CMD_REF, cb->all_flags);
-	add_pending_object(cb->all_revs, object, path);
+	object = get_reference(cb->all_revs, ref->name, ref->oid, cb->all_flags);
+	add_rev_cmdline(cb->all_revs, object, ref->name, REV_CMD_REF, cb->all_flags);
+	add_pending_object(cb->all_revs, object, ref->name);
 	return 0;
 }
 

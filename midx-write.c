@@ -697,28 +697,27 @@ static void prepare_midx_packing_data(struct packing_data *pdata,
 	trace2_region_leave("midx", "prepare_midx_packing_data", ctx->repo);
 }
 
-static int add_ref_to_pending(const char *refname, const char *referent UNUSED,
-			      const struct object_id *oid,
-			      int flag, void *cb_data)
+static int add_ref_to_pending(const struct reference *ref, void *cb_data)
 {
 	struct rev_info *revs = (struct rev_info*)cb_data;
+	const struct object_id *maybe_peeled = ref->oid;
 	struct object_id peeled;
 	struct object *object;
 
-	if ((flag & REF_ISSYMREF) && (flag & REF_ISBROKEN)) {
-		warning("symbolic ref is dangling: %s", refname);
+	if ((ref->flags & REF_ISSYMREF) && (ref->flags & REF_ISBROKEN)) {
+		warning("symbolic ref is dangling: %s", ref->name);
 		return 0;
 	}
 
-	if (!peel_iterated_oid(revs->repo, oid, &peeled))
-		oid = &peeled;
+	if (!reference_get_peeled_oid(revs->repo, ref, &peeled))
+		maybe_peeled = &peeled;
 
-	object = parse_object_or_die(revs->repo, oid, refname);
+	object = parse_object_or_die(revs->repo, maybe_peeled, ref->name);
 	if (object->type != OBJ_COMMIT)
 		return 0;
 
 	add_pending_object(revs, object, "");
-	if (bitmap_is_preferred_refname(revs->repo, refname))
+	if (bitmap_is_preferred_refname(revs->repo, ref->name))
 		object->flags |= NEEDS_BITMAP;
 	return 0;
 }

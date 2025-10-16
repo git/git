@@ -154,10 +154,9 @@ static int cmd_rename_ref(struct ref_store *refs, const char **argv)
 	return refs_rename_ref(refs, oldref, newref, logmsg);
 }
 
-static int each_ref(const char *refname, const char *referent UNUSED, const struct object_id *oid,
-		    int flags, void *cb_data UNUSED)
+static int each_ref(const struct reference *ref, void *cb_data UNUSED)
 {
-	printf("%s %s 0x%x\n", oid_to_hex(oid), refname, flags);
+	printf("%s %s 0x%x\n", oid_to_hex(ref->oid), ref->name, ref->flags);
 	return 0;
 }
 
