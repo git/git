@@ -931,9 +931,8 @@ static void handle_tag(const char *name, struct tag *tag)
 
 	/* handle signed tags */
 	if (message) {
-		const char *signature = strstr(message,
-					       "\n-----BEGIN PGP SIGNATURE-----\n");
-		if (signature)
+		size_t sig_offset = parse_signed_buffer(message, message_size);
+		if (sig_offset < message_size)
 			switch (signed_tag_mode) {
 			case SIGN_ABORT:
 				die("encountered signed tag %s; use "
@@ -950,7 +949,7 @@ static void handle_tag(const char *name, struct tag *tag)
 					oid_to_hex(&tag->object.oid));
 				/* fallthru */
 			case SIGN_STRIP:
-				message_size = signature + 1 - message;
+				message_size = sig_offset;
 				break;
 			}
 	}
