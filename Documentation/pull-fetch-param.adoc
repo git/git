@@ -11,6 +11,7 @@ ifndef::git-pull[]
 	(See linkgit:git-config[1]).
 endif::git-pull[]
 
+[[fetch-refspec]]
 <refspec>::
 	Specifies which refs to fetch and which local refs to update.
 	When no <refspec>s appear on the command line, the refs to fetch
