@@ -34,8 +34,8 @@ a new object representation for large blobs as discussed in:
 
 https://lore.kernel.org/git/xmqqbkdometi.fsf@gitster.g/
 
-0) Non goals
-------------
+Non goals
+---------
 
 - We will not discuss those client side improvements here, as they
   would require changes in different parts of Git than this effort.
@@ -90,8 +90,8 @@ later in this document:
     even more to host content with larger blobs or more large blobs
     than currently.
 
-I) Issues with the current situation
-------------------------------------
+I Issues with the current situation
+-----------------------------------
 
 - Some statistics made on GitLab repos have shown that more than 75%
   of the disk space is used by blobs that are larger than 1MB and
@@ -138,8 +138,8 @@ I) Issues with the current situation
   complaining that these tools require significant effort to set up,
   learn and use correctly.
 
-II) Main features of the "Large Object Promisors" solution
-----------------------------------------------------------
+II Main features of the "Large Object Promisors" solution
+---------------------------------------------------------
 
 The main features below should give a rough overview of how the
 solution may work. Details about needed elements can be found in
@@ -166,7 +166,7 @@ format. They should be used along with main remotes that contain the
 other objects.
 
 Note 1
-++++++
+^^^^^^
 
 To clarify, a LOP is a normal promisor remote, except that:
 
@@ -178,7 +178,7 @@ To clarify, a LOP is a normal promisor remote, except that:
   itself.
 
 Note 2
-++++++
+^^^^^^
 
 Git already makes it possible for a main remote to also be a promisor
 remote storing both regular objects and large blobs for a client that
@@ -186,13 +186,13 @@ clones from it with a filter on blob size. But here we explicitly want
 to avoid that.
 
 Rationale
-+++++++++
+^^^^^^^^^
 
 LOPs aim to be good at handling large blobs while main remotes are
 already good at handling other objects.
 
 Implementation
-++++++++++++++
+^^^^^^^^^^^^^^
 
 Git already has support for multiple promisor remotes, see
 link:partial-clone.html#using-many-promisor-remotes[the partial clone documentation].
@@ -213,19 +213,19 @@ remote helper (see linkgit:gitremote-helpers[7]) which makes the
 underlying object storage appear like a remote to Git.
 
 Note
-++++
+^^^^
 
 A LOP can be a promisor remote accessed using a remote helper by
 both some clients and the main remote.
 
 Rationale
-+++++++++
+^^^^^^^^^
 
 This looks like the simplest way to create LOPs that can cheaply
 handle many large blobs.
 
 Implementation
-++++++++++++++
+^^^^^^^^^^^^^^
 
 Remote helpers are quite easy to write as shell scripts, but it might
 be more efficient and maintainable to write them using other languages
@@ -247,7 +247,7 @@ The underlying object storage that a LOP uses could also serve as
 storage for large files handled by Git LFS.
 
 Rationale
-+++++++++
+^^^^^^^^^
 
 This would simplify the server side if it wants to both use a LOP and
 act as a Git LFS server.
@@ -259,7 +259,7 @@ On the server side, a main remote should have a way to offload to a
 LOP all its blobs with a size over a configurable threshold.
 
 Rationale
-+++++++++
+^^^^^^^^^
 
 This makes it easy to set things up and to clean things up. For
 example, an admin could use this to manually convert a repo not using
@@ -268,7 +268,7 @@ some users would sometimes push large blobs, a cron job could use this
 to regularly make sure the large blobs are moved to the LOP.
 
 Implementation
-++++++++++++++
+^^^^^^^^^^^^^^
 
 Using something based on `git repack --filter=...` to separate the
 blobs we want to offload from the other Git objects could be a good
@@ -284,13 +284,13 @@ should have ways to prevent oversize blobs to be fetched, and also
 perhaps pushed, into it.
 
 Rationale
-+++++++++
+^^^^^^^^^
 
 A main remote containing many oversize blobs would defeat the purpose
 of LOPs.
 
 Implementation
-++++++++++++++
+^^^^^^^^^^^^^^
 
 The way to offload to a LOP discussed in 4) above can be used to
 regularly offload oversize blobs. About preventing oversize blobs from
@@ -326,18 +326,18 @@ large blobs directly from the LOP and the server would not need to
 fetch those blobs from the LOP to be able to serve the client.
 
 Note
-++++
+^^^^
 
 For fetches instead of clones, a protocol negotiation might not always
 happen, see the "What about fetches?" FAQ entry below for details.
 
 Rationale
-+++++++++
+^^^^^^^^^
 
 Security, configurability and efficiency of setting things up.
 
 Implementation
-++++++++++++++
+^^^^^^^^^^^^^^
 
 A "promisor-remote" protocol v2 capability looks like a good way to
 implement this. The way the client and server use this capability
@@ -356,7 +356,7 @@ the client should be able to offload some large blobs it has fetched,
 but might not need anymore, to the LOP.
 
 Note
-++++
+^^^^
 
 It might depend on the context if it should be OK or not for clients
 to offload large blobs they have created, instead of fetched, directly
@@ -367,13 +367,13 @@ This should be discussed and refined when we get closer to
 implementing this feature.
 
 Rationale
-+++++++++
+^^^^^^^^^
 
 On the client, the easiest way to deal with unneeded large blobs is to
 offload them.
 
 Implementation
-++++++++++++++
+^^^^^^^^^^^^^^
 
 This is very similar to what 4) above is about, except on the client
 side instead of the server side. So a good solution to 4) could likely
@@ -385,8 +385,8 @@ when cloning (see 6) above). Also if the large blobs were fetched from
 a LOP, it is likely, and can easily be confirmed, that the LOP still
 has them, so that they can just be removed from the client.
 
-III) Benefits of using LOPs
----------------------------
+III Benefits of using LOPs
+--------------------------
 
 Many benefits are related to the issues discussed in "I) Issues with
 the current situation" above:
@@ -406,8 +406,8 @@ the current situation" above:
 
 - Reduced storage needs on the client side.
 
-IV) FAQ
--------
+IV FAQ
+------
 
 What about using multiple LOPs on the server and client side?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -533,7 +533,7 @@ some objects it already knows about but doesn't have because they are
 on a promisor remote.
 
 Regular fetch
-+++++++++++++
+^^^^^^^^^^^^^
 
 In a regular fetch, the client will contact the main remote and a
 protocol negotiation will happen between them. It's a good thing that
@@ -551,7 +551,7 @@ new fetch will happen in the same way as the previous clone or fetch,
 using, or not using, the same LOP(s) as last time.
 
 "Backfill" or "lazy" fetch
-++++++++++++++++++++++++++
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 When there is a backfill fetch, the client doesn't necessarily contact
 the main remote first. It will try to fetch from its promisor remotes
@@ -576,8 +576,8 @@ from the client when it fetches from them. The client could get the
 token when performing a protocol negotiation with the main remote (see
 section II.6 above).
 
-V) Future improvements
-----------------------
+V Future improvements
+---------------------
 
 It is expected that at the beginning using LOPs will be mostly worth
 it either in a corporate context where the Git version that clients

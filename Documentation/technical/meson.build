@@ -13,6 +13,7 @@ articles = [
   'commit-graph.adoc',
   'directory-rename-detection.adoc',
   'hash-function-transition.adoc',
+  'large-object-promisors.adoc',
   'long-running-process-protocol.adoc',
   'multi-pack-index.adoc',
   'packfile-uri.adoc',
