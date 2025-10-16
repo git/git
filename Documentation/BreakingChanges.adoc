@@ -295,6 +295,26 @@ The command will be removed.
 +
 cf. <xmqqa59i45wc.fsf@gitster.g>
 
+* Support for `core.preferSymlinkRefs=true` has been deprecated and will be
+  removed in Git 3.0. Writing symbolic refs as symbolic links will be phased
+  out in favor of using plain files using the textual representation of
+  symbolic refs.
++
+Symbolic references were initially always stored as a symbolic link. This was
+changed in 9b143c6e15 (Teach update-ref about a symbolic ref stored in a
+textfile., 2005-09-25), where a new textual symref format was introduced to
+store those symbolic refs in a plain file. In 9f0bb90d16
+(core.prefersymlinkrefs: use symlinks for .git/HEAD, 2006-05-02), the Git
+project switched the default to use the textual symrefs in favor of symbolic
+links.
++
+The migration away from symbolic links has happened almost 20 years ago by now,
+and there is no known reason why one should prefer them nowadays. Furthermore,
+symbolic links are not supported on some platforms.
++
+Note that only the writing side for such symbolic links is deprecated. Reading
+such symbolic links is still supported for now.
+
 == Superseded features that will not be deprecated
 
 Some features have gained newer replacements that aim to improve the design in
