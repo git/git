@@ -9,6 +9,7 @@ SYNOPSIS
 --------
 [synopsis]
 git repo info [--format=(keyvalue|nul)] [-z] [<key>...]
+git repo structure [--format=(table|keyvalue|nul)]
 
 DESCRIPTION
 -----------
@@ -42,6 +43,35 @@ supported:
 	`keyvalue`. Unlike in the `keyvalue` format, the values are never quoted.
 +
 `-z` is an alias for `--format=nul`.
+
+`structure [--format=(table|keyvalue|nul)]`::
+	Retrieve statistics about the current repository structure. The
+	following kinds of information are reported:
++
+* Reference counts categorized by type
+* Reachable object counts categorized by type
+
++
+The output format can be chosen through the flag `--format`. Three formats are
+supported:
++
+`table`:::
+	Outputs repository stats in a human-friendly table. This format may
+	change and is not intended for machine parsing. This is the default
+	format.
+
+`keyvalue`:::
+	Each line of output contains a key-value pair for a repository stat.
+	The '=' character is used to delimit between the key and the value.
+	Values containing "unusual" characters are quoted as explained for the
+	configuration variable `core.quotePath` (see linkgit:git-config[1]).
+
+`nul`:::
+	Similar to `keyvalue`, but uses a NUL character to delimit between
+	key-value pairs instead of a newline. Also uses a newline character as
+	the delimiter between the key and value instead of '='. Unlike the
+	`keyvalue` format, values containing "unusual" characters are never
+	quoted.
 
 INFO KEYS
 ---------
