@@ -717,6 +717,17 @@ test_expect_success TTY 'status -s with color.status' '
 
 '
 
+test_expect_success TTY 'status -s keeps colors with -z' '
+	test_when_finished "rm -f output.*" &&
+	test_terminal git status -s -z >output.raw &&
+	# convert back to newlines to avoid portability issues with
+	# test_decode_color and test_cmp, and to let us use the same expected
+	# output as earlier tests
+	tr "\0" "\n" <output.raw >output.nl &&
+	test_decode_color <output.nl >output &&
+	test_cmp expect output
+'
+
 cat >expect <<\EOF
 ## <YELLOW>main<RESET>...<CYAN>upstream<RESET> [ahead <YELLOW>1<RESET>, behind <CYAN>2<RESET>]
  <RED>M<RESET> dir1/modified
