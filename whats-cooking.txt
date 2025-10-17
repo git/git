@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Oct 2025, #05; Tue, 14)
-X-master-at: b660e2dcb98ed4eafe2781b7ba31b70d2fcbad80
-X-next-at: 61a8936c2151ce465d7d3286fe1d38bfb821753f
+Subject: What's cooking in git.git (Oct 2025, #06; Fri, 17)
+X-master-at: f229982df19c327876ce7ded40f6efefe20da5d4
+X-next-at: 3bde8961571d1368c1015e64b907e8f87cf1a2aa
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Oct 2025, #05; Tue, 14)
+What's cooking in git.git (Oct 2025, #06; Fri, 17)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -20,11 +20,6 @@ arise).
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
 repositories have only a subset of branches.
-
-Since we have been seeing so many "I still use whatchanged" --
-"Well, log replaced it 12 yearas ago" exchanges, let's have a
-maintenance release 2.51.1 that updates the message when the
-deprecated command is used, among other things.
 
 With maint, master, next, seen, todo:
 
@@ -53,170 +48,155 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* en/xdiff-cleanup (2025-09-26) 12 commits
-  (merged to 'next' on 2025-10-08 at 5bc21d0f06)
- + xdiff: change type of xdfile_t.changed from char to bool
- + xdiff: add macros DISCARD(0), KEEP(1), INVESTIGATE(2) in xprepare.c
- + xdiff: rename rchg -> changed in xdfile_t
- + xdiff: delete chastore from xdfile_t
- + xdiff: delete fields ha, line, size in xdlclass_t in favor of an xrecord_t
- + xdiff: delete redundant array xdfile_t.ha
- + xdiff: delete struct diffdata_t
- + xdiff: delete local variables that alias fields in xrecord_t
- + xdiff: delete superfluous function xdl_get_rec() in xemit
- + xdiff: delete unnecessary fields from xrecord_t and xdfile_t
- + xdiff: delete local variables and initialize/free xdfile_t directly
- + xdiff: delete static forward declarations in xprepare
+* en/make-libgit-a (2025-10-02) 2 commits
+  (merged to 'next' on 2025-10-10 at 913fc0337a)
+ + make: delete REFTABLE_LIB, add reftable to LIB_OBJS
+ + make: delete XDIFF_LIB, add xdiff to LIB_OBJS
 
- A lot of code clean-up of xdiff.
- Split out of a larger topic.
- source: <pull.2048.v6.git.git.1758926520.gitgitgadget@gmail.com>
+ Instead of three library archives (one for git, one for reftable,
+ and one for xdiff), roll everything into a single libgit.a archive.
+ This would help later effort to FFI into Rust.
+ 
+ source: <pull.2065.v2.git.git.1759447647.gitgitgadget@gmail.com>
 
 
-* ja/doc-markup-attached-paragraph-fix (2025-10-07) 2 commits
-  (merged to 'next' on 2025-10-07 at 5b991a7b14)
- + doc: fix indentation of refStorage item in git-config(1)
-  (merged to 'next' on 2025-09-30 at a91ca5db03)
- + doc: change the markup of paragraphs following a nested list item
+* jk/diff-no-index-with-pathspec-fix (2025-09-24) 1 commit
+  (merged to 'next' on 2025-10-10 at 75721dbc16)
+ + diff --no-index: fix logic for paths ending in '/'
 
- Documentation mark-up fix.
- source: <20250927195032.37223-1-jn.avila@free.fr>
- source: <20251007082223.GA3336685@coredump.intra.peff.net>
-
-
-* jc/optional-path (2025-09-28) 4 commits
-  (merged to 'next' on 2025-10-08 at a1e8af9952)
- + parseopt: values of pathname type can be prefixed with :(optional)
- + config: values of pathname type can be prefixed with :(optional)
- + t7500: fix GIT_EDITOR shell snippet
- + t7500: make each piece more independent
-
- Configuration variables that take a pathname as a value
- (e.g. blame.ignorerevsfile) can be marked as optional by prefixing
- ":(optoinal)" before its value.
- source: <cover.1759094936.git.ben.knoble+github@gmail.com>
+ An earlier addition to "git diff --no-index A B" to limit the
+ output with pathspec after the two directories misbehaved when
+ these directories were given with a trailing slash, which has been
+ corrected.
+ 
+ source: <20250924-jk-fix-no-index-path-with-slash-v1-1-6b2028c0de92@intel.com>
 
 
-* je/doc-push-upstream (2025-10-06) 5 commits
-  (merged to 'next' on 2025-10-08 at 7bda6929b1)
- + doc: git-push: add explanation of `git push origin main`
- + doc: git-push: clarify "what to push"
- + doc: git-push: clarify "where to push"
- + doc: add an UPSTREAM BRANCHES section to pull/push/fetch
- + doc: git-push: clarify intro
+* rs/add-patch-options-fix (2025-10-06) 6 commits
+  (merged to 'next' on 2025-10-10 at ef52e0377e)
+ + add-patch: reset "permitted" at loop start
+ + add-patch: let options a and d roll over like y and n
+ + add-patch: let options k and K roll over like j and J
+ + add-patch: let options y, n, j, and e roll over to next undecided
+ + add-patch: document that option J rolls over
+ + add-patch: improve help for options j, J, k, and K
 
- Documentation updates.
- source: <pull.1964.v5.git.1759777131.gitgitgadget@gmail.com>
-
-
-* jn/doc-help-translaing-pretty-options (2025-10-05) 1 commit
-  (merged to 'next' on 2025-10-08 at 8962b8d1f0)
- + doc: do not break sentences into "lego" pieces
-
- Documentation for "git log --pretty" options has been updated
- to make it easier to translate.
- source: <pull.1982.git.1759698724134.gitgitgadget@gmail.com>
+ The code in "git add -p" and friends to iterate over hunks was
+ riddled with bugs, which has been corrected.
+ 
+ source: <fe8e8097-2b05-4dd2-a754-f59e4ba5f95a@web.de>
 
 
-* jn/doc-synopsis (2025-10-05) 3 commits
-  (merged to 'next' on 2025-10-08 at fd4f96ff5e)
- + doc: convert git worktree to synopsis style
- + doc: convert git tag to synopsis style
- + doc: convert git-stash.adoc to synopis style
+* tb/doc-submitting-patches (2025-10-07) 2 commits
+  (merged to 'next' on 2025-10-10 at b63283990d)
+ + SubmittingPatches: guidance for multi-series efforts
+ + SubmittingPatches: extend release-notes experiment to topic names
 
- Doc-mark-up modernization continues.
- source: <pull.1969.git.1759698702.gitgitgadget@gmail.com>
-
-
-* kh/doc-patch-id-markup-fix (2025-09-29) 1 commit
-  (merged to 'next' on 2025-10-08 at a81dc9f7e6)
- + doc: patch-id: fix accidental literal blocks
- (this branch is used by kh/doc-patch-id-1.)
-
- Documentation mark-up fix.
- source: <v2-e5ad12cc3b3.1759178715.git.code@khaugsbakk.name>
-
-
-* kh/format-patch-range-diff-notes (2025-09-25) 3 commits
-  (merged to 'next' on 2025-10-08 at e06aae4166)
- + format-patch: handle range-diff on notes correctly for single patches
- + revision: add rdiff_log_arg to rev_info
- + range-diff: rename other_arg to log_arg
-
- "git format-patch --range-diff=... --notes=..." did not drive the
- underlying range-diff with correct --notes parameter, ending up
- comparing with different set of notes from its main patch output
- you would get from "git format-patch --notes=..." for a singleton
- patch.
- source: <v2-cover.1758819879.git.code@khaugsbakk.name>
-
-
-* kn/reftable-consistency-checks (2025-10-07) 7 commits
-  (merged to 'next' on 2025-10-07 at b9f4bd79f9)
- + refs/reftable: add fsck check for checking the table name
- + reftable: add code to facilitate consistency checks
- + fsck: order 'fsck_msg_type' alphabetically
- + Documentation/fsck-msgids: remove duplicate msg id
- + reftable: check for trailing newline in 'tables.list'
- + refs: move consistency check msg to generic layer
- + refs: remove unused headers
-
- The reftable backend learned to sanity check its on-disk data more
- carefully.
- source: <20251007-228-reftable-introduce-consistency-checks-v6-0-638cff42f0b0@gmail.com>
-
-
-* ps/ci-avoid-broken-sudo-on-ubuntu (2025-10-10) 1 commit
-  (merged to 'next' on 2025-10-13 at fd60b6d14b)
- + ci: fix broken jobs on Ubuntu 25.10 caused by switch to sudo-rs(1)
-
- Our CI script requires "sudo" that can be told to preserve
- environment, but Ubuntu replaced with "sudo" with an implementation
- that lacks the feature.  Work this around by reinstalling the
- original version.
- source: <20251010-b4-pks-ci-ubuntu-sudo-rs-v1-1-88cc846d251c@pks.im>
-
-
-* ps/commit-graph-per-object-source (2025-09-04) 5 commits
-  (merged to 'next' on 2025-10-07 at 6c9690a649)
- + commit-graph: pass graphs that are to be merged as parameter
- + commit-graph: return commit graph from `repo_find_commit_pos_in_graph()`
- + commit-graph: return the prepared commit graph from `prepare_commit_graph()`
- + revision: drop explicit check for commit graph
- + blame: drop explicit check for commit graph
-
- Code clean-up around commit-graph.
- cf. <cf7aeda1-297a-4805-b0ae-e379ce11bbcf@gmail.com>
- cf. <aN5gPoPC4WEYw9CF@pks.im>
- source: <20250904-b4-pks-commit-graph-via-source-v1-0-d932c2481e1a@pks.im>
-
-
-* pw/add-p-hunk-splitting-fix (2025-09-25) 2 commits
-  (merged to 'next' on 2025-10-08 at 3fdb4a84ce)
- + add-patch: update hunk splitability after editing
- + add -p: mark split hunks as undecided
-
- Marking a hunk 'selected' in "git add -p" and then splitting made
- all the split pieces 'selected'; this has been changed to make them
- all 'undecided', which gives better end-user experience.
- source: <pull.1863.v3.git.1758813038.gitgitgadget@gmail.com>
-
-
-* sj/string-list (2025-10-05) 4 commits
-  (merged to 'next' on 2025-10-08 at cf0fc3ea18)
- + refs: enable sign compare warnings check
- + string-list: change "string_list_find_insert_index" return type to "size_t"
- + string-list: replace negative index encoding with "exact_match" parameter
- + string-list: use bool instead of int for "exact_match"
-
- The "string-list" API function to find where a given string would
- be inserted got updated so that it can use unrealistically huge
- array index that would only fit in size_t but not int or ssize_t
- to achieve unstated goal.
- source: <aONhmrE0otiyZ16f@ArchLinux>
+ A few more things that patch authors can do to help maintainer to
+ keep track of their topics better.
+ 
+ source: <cover.1759873165.git.me@ttaylorr.com>
 
 --------------------------------------------------
 [New Topics]
+
+* so/t2401-use-test-path-helpers (2025-10-15) 1 commit
+  (merged to 'next' on 2025-10-16 at b6fe4d2222)
+ + t2401: update path checks using test_path helpers
+
+ Test modernization.
+
+ Will merge to 'master'.
+ source: <20251015140329.13691-2-solobarine@gmail.com>
+
+
+* en/xdiff-cleanup-2 (2025-10-15) 9 commits
+ - xdiff: rename rindex -> reference_index
+ - xdiff: change rindex from long to size_t in xdfile_t
+ - xdiff: make xdfile_t.nreff a size_t instead of long
+ - xdiff: make xdfile_t.nrec a size_t instead of long
+ - xdiff: split xrecord_t.ha into line_hash and minimal_perfect_hash
+ - xdiff: use unambiguous types in xdl_hash_record()
+ - xdiff: use size_t for xrecord_t.size
+ - xdiff: make xrecord_t.ptr a uint8_t instead of char
+ - xdiff: use ssize_t for dstart/dend, make them last in xdfile_t
+
+ Code clean-up.
+
+ Comments?
+ source: <pull.2070.git.git.1760563101.gitgitgadget@gmail.com>
+
+
+* js/ci-github-actions-update (2025-10-16) 4 commits
+  (merged to 'next' on 2025-10-17 at 6fa7439b70)
+ + build(deps): bump actions/github-script from 7 to 8
+ + build(deps): bump actions/setup-python from 5 to 6
+ + build(deps): bump actions/checkout from 4 to 5
+ + build(deps): bump actions/download-artifact from 4 to 5
+
+ CI update.
+
+ Will merge to 'master'.
+ source: <pull.1990.git.1760629692.gitgitgadget@gmail.com>
+
+
+* ar/run-command-hook (2025-10-17) 10 commits
+ - receive-pack: convert receive hooks to hook API
+ - receive-pack: convert update hooks to new API
+ - hooks: allow callers to capture output
+ - run-command: allow capturing of collated output
+ - reference-transaction: use hook API instead of run-command
+ - hook: allow overriding the ungroup option
+ - transport: convert pre-push to hook API
+ - hook: convert 'post-rewrite' hook in sequencer.c to hook API
+ - hook: provide stdin via callback
+ - run-command: add stdin callback for parallelization
+
+ Use hook API to replace ad-hoc invocation of hook scripts with the
+ run_command() API.
+
+ Comments?
+ source: <20251017141544.1538542-1-adrian.ratiu@collabora.com>
+
+
+* je/doc-reset (2025-10-17) 4 commits
+ - doc: git-reset: clarify `git reset <pathspec>`
+ - doc: git-reset: clarify `git reset [mode]`
+ - doc: git-reset: clarify intro
+ - doc: git-reset: reorder the forms
+
+ Documentation updates.
+
+ Comments?
+ source: <pull.1991.git.1760731558.gitgitgadget@gmail.com>
+
+
+* jk/diff-from-contents-fix (2025-10-17) 2 commits
+ - diff: restore redirection to /dev/null for diff_from_contents
+ - Merge branch 'ly/diff-name-only-with-diff-from-content' into jk/diff-from-contents-fix
+
+ Recently we attempted to improve "git diff -w" and friends to
+ handle cases where patch output would be suppressed, but it
+ introduced a bug that emits unnecessary output, which has been
+ corrected.
+
+ Will merge to 'next' and then to 'master' and then to 'maint'.
+ source: <20251017083641.GB4073661@coredump.intra.peff.net>
+
+
+* jk/status-z-short-fix (2025-10-17) 1 commit
+ - status: make coloring of "-z --short" consistent
+
+ The "--short" option of "git status" that meant output for humans
+ and "-z" option to show NUL delimited output format did not mix
+ well, and colored some but not all things.  The command has been
+ updated to color all elements consistently in such a case.
+
+ Will merge to 'next'.
+ source: <20251017084455.GA4096702@coredump.intra.peff.net>
+
+--------------------------------------------------
+[Cooking]
 
 * tu/credential-makefile-updates (2025-10-10) 1 commit
  - contrib/credential: Amend and harmonize Makefiles
@@ -247,8 +227,6 @@ Release tarballs are available at:
  Comments?
  source: <20251014-pks-ref-files-deprecate-symbolic-links-v1-1-4bcd6a4ef6f5@pks.im>
 
---------------------------------------------------
-[Cooking]
 
 * dk/stash-apply-index (2025-10-06) 1 commit
   (merged to 'next' on 2025-10-13 at 2187046f6c)
@@ -336,7 +314,7 @@ Release tarballs are available at:
  source: <20251013084857.1646783-1-christian.couder@gmail.com>
 
 
-* ps/ci-rust (2025-10-07) 8 commits
+* ps/ci-rust (2025-10-14) 8 commits
  - rust: support for Windows
  - ci: verify minimum supported Rust version
  - ci: check for common Rust mistakes via Clippy
@@ -348,9 +326,8 @@ Release tarballs are available at:
 
  CI improvements to handle the recent Rust integration better.
 
- Expecting an update.
- cf. <aOdIRnB-SGQwj935@pks.im>
- source: <20251008-b4-pks-ci-rust-v2-0-d556ee83c381@pks.im>
+ Will merge to 'next'?
+ source: <20251015-b4-pks-ci-rust-v3-0-13810af33bd5@pks.im>
 
 
 * ps/ref-peeled-tags (2025-10-08) 14 commits
@@ -392,43 +369,16 @@ Release tarballs are available at:
  source: <20251009-pks-packfiles-convert-get-all-v2-0-0d73b87ce711@pks.im>
 
 
-* tb/doc-submitting-patches (2025-10-07) 2 commits
-  (merged to 'next' on 2025-10-10 at b63283990d)
- + SubmittingPatches: guidance for multi-series efforts
- + SubmittingPatches: extend release-notes experiment to topic names
-
- A few more things that patch authors can do to help maintainer to
- keep track of their topics better.
-
- Will merge to 'master'.
- source: <cover.1759873165.git.me@ttaylorr.com>
-
-
-* je/doc-data-model (2025-10-08) 1 commit
+* je/doc-data-model (2025-10-14) 1 commit
  - doc: add a explanation of Git's data model
 
  Add a new manual that describes the data model.
- source: <pull.1981.v2.git.1759931621272.gitgitgadget@gmail.com>
+
+ Comments?
+ source: <pull.1981.v3.git.1760476346040.gitgitgadget@gmail.com>
 
 
-* rs/add-patch-options-fix (2025-10-06) 6 commits
-  (merged to 'next' on 2025-10-10 at ef52e0377e)
- + add-patch: reset "permitted" at loop start
- + add-patch: let options a and d roll over like y and n
- + add-patch: let options k and K roll over like j and J
- + add-patch: let options y, n, j, and e roll over to next undecided
- + add-patch: document that option J rolls over
- + add-patch: improve help for options j, J, k, and K
-
- The code in "git add -p" and friends to iterate over hunks was
- riddled with bugs, which has been corrected.
-
- Will merge to 'master'.
- source: <fe8e8097-2b05-4dd2-a754-f59e4ba5f95a@web.de>
-
-
-* tb/incremental-midx-part-3.1 (2025-09-29) 51 commits
- - SQUASH??? play well with other topics by preemptively including "repository.h"
+* tb/incremental-midx-part-3.1 (2025-10-15) 50 commits
  - builtin/repack.c: clean up unused `#include`s
  - repack: move `write_cruft_pack()` out of the builtin
  - repack: move `write_filtered_pack()` out of the builtin
@@ -457,7 +407,7 @@ Release tarballs are available at:
  - repack: remove 'generated_pack' API from the builtin
  - builtin/repack.c: provide pack locations to `generated_pack_install()`
  - builtin/repack.c: pass "packtmp" to `generated_pack_populate()`
- - builtin/repack.c: factor our "generated_pack_install"
+ - builtin/repack.c: factor out "generated_pack_install"
  - builtin/repack.c: rename "struct generated_pack_data"
  - repack: remove 'existing_packs' API from the builtin
  - builtin/repack.c: avoid unnecessary numeric casts in existing_packs
@@ -481,8 +431,11 @@ Release tarballs are available at:
  - Merge branch 'ps/packfile-store' into tb/incremental-midx-part-3.1
  (this branch is used by ps/remove-packfile-store-get-packs.)
 
- Comments?
- source: <cover.1759097191.git.me@ttaylorr.com>
+ Clean-up "git repack" machinery to prepare for incremental update
+ of midx files.
+
+ Will merge to 'next'?
+ source: <cover.1760567210.git.me@ttaylorr.com>
 
 
 * cc/doc-submitting-patches-with-ai (2025-10-01) 1 commit
@@ -490,8 +443,8 @@ Release tarballs are available at:
 
  AI guidelines.
 
- Perhaps we should adopt what QEMU uses for simplicity?
- cf. <aOBMHqLxNd86vgjH@fruit.crustytoothpaste.net>
+ Will merge to 'next'?
+ cf. <xmqqv7ki1xf1.fsf@gitster.g>
  source: <20251001140310.527097-1-christian.couder@gmail.com>
 
 
@@ -517,19 +470,6 @@ Release tarballs are available at:
  source: <20251001-b4-pks-history-builtin-v4-0-8e61ddb86317@pks.im>
 
 
-* en/make-libgit-a (2025-10-02) 2 commits
-  (merged to 'next' on 2025-10-10 at 913fc0337a)
- + make: delete REFTABLE_LIB, add reftable to LIB_OBJS
- + make: delete XDIFF_LIB, add xdiff to LIB_OBJS
-
- Instead of three library archives (one for git, one for reftable,
- and one for xdiff), roll everything into a single libgit.a archive.
- This would help later effort to FFI into Rust.
-
- Will merge to 'master'.
- source: <pull.2065.v2.git.git.1759447647.gitgitgadget@gmail.com>
-
-
 * ms/doc-worktree-side-by-side (2025-10-10) 2 commits
  - doc: git-worktree: Add side by side branch checkout example
  - doc: git-worktree: Link to examples
@@ -542,16 +482,16 @@ Release tarballs are available at:
  source: <a203b35538847f3c9358a5ae26fb4ebea5734cfc.1759420102.git.msuchanek@suse.de>
 
 
-* rj/doc-technical-fixes (2025-10-02) 3 commits
+* rj/doc-technical-fixes (2025-10-16) 4 commits
+ - doc: add large-object-promisors.adoc to the docs build
  - doc: commit-graph.adoc: fix up some formatting
  - doc: sparse-checkout.adoc: fix asciidoc warnings
  - doc: remembering-renames.adoc: fix asciidoc warnings
 
  Documentation mark-up fixes.
 
- Expecting v3.
- cf. <20251002221233.541844-1-ramsay@ramsayjones.plus.com>
- source: <20251002221233.541844-1-ramsay@ramsayjones.plus.com>
+ Will merge to 'next'?
+ source: <20251016200301.1595204-1-ramsay@ramsayjones.plus.com>
 
 
 * sa/replay-atomic-ref-updates (2025-10-14) 4 commits
@@ -569,43 +509,32 @@ Release tarballs are available at:
  source: <20251013183311.33329-1-siddharthasthana31@gmail.com>
 
 
-* je/doc-pull (2025-10-08) 4 commits
- - doc: git-pull: clarify how to exit a conflicted merge
- - doc: git-pull: delete the example
- - doc: git-pull: clarify options for integrating remote branch
- - doc: git-pull: move <repository> and <refspec> params
+* je/doc-pull (2025-10-15) 4 commits
+  (merged to 'next' on 2025-10-16 at 71e7a0cac0)
+ + doc: git-pull: clarify how to exit a conflicted merge
+ + doc: git-pull: delete the example
+ + doc: git-pull: clarify options for integrating remote branch
+ + doc: git-pull: move <repository> and <refspec> params
 
  Documentation updates.
 
- Will merge to 'next'?
- source: <pull.1976.v2.git.1759951536.gitgitgadget@gmail.com>
-
-
-* jk/diff-no-index-with-pathspec-fix (2025-09-24) 1 commit
-  (merged to 'next' on 2025-10-10 at 75721dbc16)
- + diff --no-index: fix logic for paths ending in '/'
-
- An earlier addition to "git diff --no-index A B" to limit the
- output with pathspec after the two directories misbehaved when
- these directories were given with a trailing slash, which has been
- corrected.
-
  Will merge to 'master'.
- source: <20250924-jk-fix-no-index-path-with-slash-v1-1-6b2028c0de92@intel.com>
+ source: <pull.1976.v3.git.1760534011.gitgitgadget@gmail.com>
 
 
-* jt/repo-stats (2025-09-27) 6 commits
- - builtin/repo: add progress meter for stats
- - builtin/repo: add keyvalue and nul format for stats
- - builtin/repo: add object counts in stats output
- - builtin/repo: introduce stats subcommand
+* jt/repo-stats (2025-10-15) 6 commits
+ - builtin/repo: add progress meter for structure stats
+ - builtin/repo: add keyvalue and nul format for structure stats
+ - builtin/repo: add object counts in structure output
+ - builtin/repo: introduce structure subcommand
  - ref-filter: allow NULL filter pattern
  - builtin/repo: rename repo_info() to cmd_repo_info()
 
  "git repo stats", a new command.
 
- Comments?
- source: <20250927145049.723341-1-jltobler@gmail.com>
+ Expecting a (hopefully small and final) reroll.
+ cf. <aPDPyEVOTSU6NuOH@pks.im>
+ source: <20251015211213.361797-1-jltobler@gmail.com>
 
 
 * bc/sha1-256-interop-01 (2025-10-09) 9 commits
