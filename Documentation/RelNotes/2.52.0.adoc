@@ -127,6 +127,10 @@ Performance, Internal Implementation, Development Support etc.
  * Documentation for "git log --pretty" options has been updated
    to make it easier to translate.
 
+ * Instead of three library archives (one for git, one for reftable,
+   and one for xdiff), roll everything into a single libgit.a archive.
+   This would help later effort to FFI into Rust.
+
 
 Fixes since v2.51
 -----------------
@@ -328,6 +332,19 @@ including security updates, are included in this release.
    comparing with different set of notes from its main patch output
    you would get from "git format-patch --notes=..." for a singleton
    patch.
+
+ * The code in "git add -p" and friends to iterate over hunks was
+   riddled with bugs, which has been corrected.
+
+ * A few more things that patch authors can do to help maintainer to
+   keep track of their topics better.
+   (merge 1a41698841 tb/doc-submitting-patches later to maint).
+
+ * An earlier addition to "git diff --no-index A B" to limit the
+   output with pathspec after the two directories misbehaved when
+   these directories were given with a trailing slash, which has been
+   corrected.
+   (merge c0bec06cfe jk/diff-no-index-with-pathspec-fix later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 823d537fa7 kh/doc-git-log-markup-fix later to maint).
