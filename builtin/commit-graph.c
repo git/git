@@ -210,6 +210,8 @@ static int git_commit_graph_write_config(const char *var, const char *value,
 {
 	if (!strcmp(var, "commitgraph.maxnewfilters"))
 		write_opts.max_new_filters = git_config_int(var, value, ctx->kvi);
+	else if (!strcmp(var, "commitgraph.changedpaths"))
+		opts.enable_changed_paths = git_config_bool(var, value) ? 1 : -1;
 	/*
 	 * No need to fall-back to 'git_default_config', since this was already
 	 * called in 'cmd_commit_graph()'.

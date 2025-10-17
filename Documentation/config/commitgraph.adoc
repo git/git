@@ -8,6 +8,17 @@ commitGraph.maxNewFilters::
 	Specifies the default value for the `--max-new-filters` option of `git
 	commit-graph write` (c.f., linkgit:git-commit-graph[1]).
 
+commitGraph.changedPaths::
+	If true, then `git commit-graph write` will compute and write
+	changed-path Bloom filters by default, equivalent to passing
+	`--changed-paths`. If false or unset, changed-paths Bloom filters will
+	be written during `git commit-graph write` only if the filters already
+	exist in the current commit-graph file. This matches the default
+	behavior of `git commit-graph write` without any `--[no-]changed-paths`
+	option. To rewrite a commit-graph file without any filters, use the
+	`--no-changed-paths` option. Command-line option `--[no-]changed-paths`
+	always takes precedence over this configuration. Defaults to unset.
+
 commitGraph.readChangedPaths::
 	Deprecated. Equivalent to commitGraph.changedPathsVersion=-1 if true, and
 	commitGraph.changedPathsVersion=0 if false. (If commitGraph.changedPathVersion

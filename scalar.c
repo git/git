@@ -166,6 +166,7 @@ static int set_recommended_config(int reconfigure)
 #endif
 		/* Optional */
 		{ "status.aheadBehind", "false" },
+		{ "commitGraph.changedPaths", "true" },
 		{ "commitGraph.generationVersion", "1" },
 		{ "core.autoCRLF", "false" },
 		{ "core.safeCRLF", "false" },
