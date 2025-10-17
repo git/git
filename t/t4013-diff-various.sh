@@ -661,6 +661,27 @@ test_expect_success 'diff -I<regex>: ignore matching file' '
 	test_grep ! "file1" actual
 '
 
+test_expect_success 'diff -I<regex>: ignore all content changes' '
+	test_when_finished "git rm -f file1 file2" &&
+	: >file1 &&
+	git add file1 &&
+	: >file2 &&
+	git add file2 &&
+
+	rm -f file1 file2 &&
+	mkdir file2 &&
+	test_diff_no_content_changes () {
+		git diff $1 --ignore-blank-lines -I".*" >actual &&
+		test_line_count = 2 actual &&
+		test_grep "file1" actual &&
+		test_grep "file2" actual &&
+		test_grep ! "diff --git" actual
+	} &&
+	test_diff_no_content_changes "--raw" &&
+	test_diff_no_content_changes "--name-only" &&
+	test_diff_no_content_changes "--name-status"
+'
+
 # check_prefix <patch> <src> <dst>
 # check only lines with paths to avoid dependency on exact oid/contents
 check_prefix () {
