@@ -2131,12 +2131,14 @@ proc ttk_toplevel {w args} {
     return $w
 }
 
-proc make_transient {window origin} {
+proc make_transient {window origin {geometry ""}} {
     wm transient $window $origin
 
-    # Windows fails to place transient windows normally, so
-    # schedule a callback to center them on the parent.
-    if {[tk windowingsystem] eq {win32}} {
+    if {$geometry ne ""} {
+        after idle [list wm geometry $window $geometry]
+    } elseif {[tk windowingsystem] eq {win32}} {
+        # Windows fails to place transient windows normally, so
+        # schedule a callback to center them on the parent.
         after idle [list tk::PlaceWindow $window widget $origin]
     }
 }
@@ -3106,6 +3108,11 @@ proc savestuff {w} {
         puts $f "set geometry(pwsash1) \"[.tf.histframe.pwclist sashpos 1] 1\""
         puts $f "set geometry(botwidth) [winfo width .bleft]"
         puts $f "set geometry(botheight) [winfo height .bleft]"
+        unset -nocomplain geometry
+        global geometry
+        if {[info exists geometry(showrefs)]} {
+            puts $f "set geometry(showrefs) $geometry(showrefs)"
+        }
 
         array set view_save {}
         array set views {}
@@ -10193,6 +10200,7 @@ proc rmbranch {} {
 proc showrefs {} {
     global showrefstop bgcolor fgcolor selectbgcolor
     global bglist fglist reflistfilter reflist maincursor
+    global geometry
 
     set top .showrefs
     set showrefstop $top
@@ -10203,7 +10211,11 @@ proc showrefs {} {
     }
     ttk_toplevel $top
     wm title $top [mc "Tags and heads: %s" [file tail [pwd]]]
-    make_transient $top .
+    if {[info exists geometry(showrefs)]} {
+        make_transient $top . $geometry(showrefs)
+    } else {
+        make_transient $top .
+    }
     text $top.list -background $bgcolor -foreground $fgcolor \
         -selectbackground $selectbgcolor -font mainfont \
         -xscrollcommand "$top.xsb set" -yscrollcommand "$top.ysb set" \
@@ -10239,6 +10251,9 @@ proc showrefs {} {
     bind $top.list <ButtonRelease-1> {sel_reflist %W %x %y; break}
     set reflist {}
     refill_reflist
+    # avoid <Configure> being bound to child windows
+    bindtags $top [linsert [bindtags $top] 1 bind$top]
+    bind bind$top <Configure> {set geometry(showrefs) [wm geometry %W]}
 }
 
 proc sel_reflist {w x y} {
