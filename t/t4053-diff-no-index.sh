@@ -339,6 +339,22 @@ test_expect_success 'diff --no-index with pathspec' '
 	test_cmp expect actual
 '
 
+test_expect_success 'diff --no-index first path ending in slash with pathspec' '
+	test_expect_code 1 git diff --name-status --no-index a/ b 1 >actual &&
+	cat >expect <<-EOF &&
+	D	a/1
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'diff --no-index second path ending in slash with pathspec' '
+	test_expect_code 1 git diff --name-status --no-index a b/ 1 >actual &&
+	cat >expect <<-EOF &&
+	D	a/1
+	EOF
+	test_cmp expect actual
+'
+
 test_expect_success 'diff --no-index with pathspec no matches' '
 	test_expect_code 0 git diff --name-status --no-index a b missing
 '
