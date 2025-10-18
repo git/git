@@ -14,6 +14,7 @@
 #include "sigchain.h"
 #include "tempfile.h"
 #include "alias.h"
+#include "string-list.h"
 
 static int git_gpg_config(const char *, const char *,
 			  const struct config_context *, void *);
@@ -821,7 +822,7 @@ static char *get_ssh_key_fingerprint(const char *signing_key)
 	struct child_process ssh_keygen = CHILD_PROCESS_INIT;
 	int ret = -1;
 	struct strbuf fingerprint_stdout = STRBUF_INIT;
-	struct strbuf **fingerprint;
+	struct string_list split = STRING_LIST_INIT_NODUP;
 	char *fingerprint_ret;
 	const char *literal_key = NULL;
 
@@ -845,13 +846,12 @@ static char *get_ssh_key_fingerprint(const char *signing_key)
 		die_errno(_("failed to get the ssh fingerprint for key '%s'"),
 			  signing_key);
 
-	fingerprint = strbuf_split_max(&fingerprint_stdout, ' ', 3);
-	if (!fingerprint[1])
+	if (string_list_split_in_place(&split, fingerprint_stdout.buf, " ", 2) <= 1)
 		die_errno(_("failed to get the ssh fingerprint for key '%s'"),
 			  signing_key);
 
-	fingerprint_ret = strbuf_detach(fingerprint[1], NULL);
-	strbuf_list_free(fingerprint);
+	fingerprint_ret = xstrdup(split.items[1].string);
+	string_list_clear(&split, 0);
 	strbuf_release(&fingerprint_stdout);
 	return fingerprint_ret;
 }
