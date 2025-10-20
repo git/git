@@ -376,3 +376,7 @@ including security updates, are included in this release.
    (merge 1c573a3451 en/doc-merge-tree-describe-merge-base later to maint).
    (merge 84a6bf7965 ja/doc-markup-attached-paragraph-fix later to maint).
    (merge 399694384b kh/doc-patch-id-markup-fix later to maint).
+   (merge 15b8abde07 js/mingw-includes-cleanup later to maint).
+   (merge 3860985105 js/unreachable-workaround-for-no-symlink-head later to maint).
+   (merge b3ac6e737d kh/doc-continued-paragraph-fix later to maint).
+   (merge 2cebca0582 tb/cat-file-objectmode-update later to maint).
