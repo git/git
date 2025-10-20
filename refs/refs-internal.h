@@ -423,7 +423,7 @@ typedef int ref_transaction_commit_fn(struct ref_store *refs,
 				      struct strbuf *err);
 
 typedef int optimize_fn(struct ref_store *ref_store,
-			struct pack_refs_opts *opts);
+			struct refs_optimize_opts *opts);
 typedef int rename_ref_fn(struct ref_store *ref_store,
 			  const char *oldref, const char *newref,
 			  const char *logmsg);

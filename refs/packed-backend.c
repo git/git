@@ -1774,7 +1774,7 @@ cleanup:
 }
 
 static int packed_optimize(struct ref_store *ref_store UNUSED,
-			   struct pack_refs_opts *pack_opts UNUSED)
+			   struct refs_optimize_opts *opts UNUSED)
 {
 	/*
 	 * Packed refs are already packed. It might be that loose refs

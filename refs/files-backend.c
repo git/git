@@ -1355,7 +1355,7 @@ static void prune_refs(struct files_ref_store *refs, struct ref_to_prune **refs_
  */
 static int should_pack_ref(struct files_ref_store *refs,
 			   const struct reference *ref,
-			   struct pack_refs_opts *opts)
+			   struct refs_optimize_opts *opts)
 {
 	struct string_list_item *item;
 
@@ -1383,7 +1383,7 @@ static int should_pack_ref(struct files_ref_store *refs,
 }
 
 static int should_pack_refs(struct files_ref_store *refs,
-			    struct pack_refs_opts *opts)
+			    struct refs_optimize_opts *opts)
 {
 	struct ref_iterator *iter;
 	size_t packed_size;
@@ -1391,7 +1391,7 @@ static int should_pack_refs(struct files_ref_store *refs,
 	size_t limit;
 	int ret;
 
-	if (!(opts->flags & PACK_REFS_AUTO))
+	if (!(opts->flags & REFS_OPTIMIZE_AUTO))
 		return 1;
 
 	ret = packed_refs_size(refs->packed_ref_store, &packed_size);
@@ -1445,7 +1445,7 @@ static int should_pack_refs(struct files_ref_store *refs,
 }
 
 static int files_optimize(struct ref_store *ref_store,
-			  struct pack_refs_opts *opts)
+			  struct refs_optimize_opts *opts)
 {
 	struct files_ref_store *refs =
 		files_downcast(ref_store, REF_STORE_WRITE | REF_STORE_ODB,
@@ -1488,7 +1488,7 @@ static int files_optimize(struct ref_store *ref_store,
 			    iter->ref.name, err.buf);
 
 		/* Schedule the loose reference for pruning if requested. */
-		if ((opts->flags & PACK_REFS_PRUNE)) {
+		if ((opts->flags & REFS_OPTIMIZE_PRUNE)) {
 			struct ref_to_prune *n;
 			FLEX_ALLOC_STR(n, name, iter->ref.name);
 			oidcpy(&n->oid, iter->ref.oid);

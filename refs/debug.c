@@ -116,7 +116,7 @@ static int debug_transaction_abort(struct ref_store *refs,
 	return res;
 }
 
-static int debug_optimize(struct ref_store *ref_store, struct pack_refs_opts *opts)
+static int debug_optimize(struct ref_store *ref_store, struct refs_optimize_opts *opts)
 {
 	struct debug_ref_store *drefs = (struct debug_ref_store *)ref_store;
 	int res = drefs->refs->be->optimize(drefs->refs, opts);

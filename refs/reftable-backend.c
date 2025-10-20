@@ -1701,7 +1701,7 @@ done:
 }
 
 static int reftable_be_optimize(struct ref_store *ref_store,
-				struct pack_refs_opts *opts)
+				struct refs_optimize_opts *opts)
 {
 	struct reftable_ref_store *refs =
 		reftable_be_downcast(ref_store, REF_STORE_WRITE | REF_STORE_ODB, "optimize_refs");
@@ -1715,7 +1715,7 @@ static int reftable_be_optimize(struct ref_store *ref_store,
 	if (!stack)
 		stack = refs->main_backend.stack;
 
-	if (opts->flags & PACK_REFS_AUTO)
+	if (opts->flags & REFS_OPTIMIZE_AUTO)
 		ret = reftable_stack_auto_compact(stack);
 	else
 		ret = reftable_stack_compact_all(stack, NULL);
