@@ -495,7 +495,7 @@ static void batch_object_write(const char *obj_name,
 							    OBJECT_INFO_LOOKUP_REPLACE);
 		if (ret < 0) {
 			if (data->mode == S_IFGITLINK)
-				report_object_status(opt, oid_to_hex(&data->oid), &data->oid, "submodule");
+				report_object_status(opt, NULL, &data->oid, "submodule");
 			else
 				report_object_status(opt, obj_name, &data->oid, "missing");
 			return;
