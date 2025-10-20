@@ -515,12 +515,6 @@ struct pack_refs_opts {
 };
 
 /*
- * Write a packed-refs file for the current repository.
- * flags: Combination of the above PACK_REFS_* flags.
- */
-int refs_pack_refs(struct ref_store *refs, struct pack_refs_opts *opts);
-
-/*
  * Optimize the ref store. The exact behavior is up to the backend.
  * For the files backend, this is equivalent to packing refs.
  */

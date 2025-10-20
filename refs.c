@@ -2313,12 +2313,6 @@ void base_ref_store_init(struct ref_store *refs, struct repository *repo,
 	refs->gitdir = xstrdup(path);
 }
 
-/* backend functions */
-int refs_pack_refs(struct ref_store *refs, struct pack_refs_opts *opts)
-{
-	return refs->be->pack_refs(refs, opts);
-}
-
 int refs_optimize(struct ref_store *refs, struct pack_refs_opts *opts)
 {
 	return refs->be->optimize(refs, opts);
