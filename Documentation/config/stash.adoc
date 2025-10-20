@@ -11,6 +11,10 @@ endif::git-stash[]
 	behave as if `--index` was supplied. Defaults to false.
 ifndef::git-stash[]
 See the descriptions in linkgit:git-stash[1].
++
+This also affects invocations of linkgit:git-stash[1] via `--autostash` from
+commands like linkgit:git-merge[1], linkgit:git-rebase[1], and
+linkgit:git-pull[1].
 endif::git-stash[]
 
 `stash.showIncludeUntracked`::
