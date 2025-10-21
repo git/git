@@ -3,9 +3,11 @@
 #include "builtin.h"
 #include "environment.h"
 #include "parse-options.h"
+#include "path-walk.h"
 #include "quote.h"
 #include "ref-filter.h"
 #include "refs.h"
+#include "revision.h"
 #include "strbuf.h"
 #include "string-list.h"
 #include "shallow.h"
@@ -167,6 +169,18 @@ struct ref_stats {
 	size_t others;
 };
 
+struct object_stats {
+	size_t tags;
+	size_t commits;
+	size_t trees;
+	size_t blobs;
+};
+
+struct repo_structure {
+	struct ref_stats refs;
+	struct object_stats objects;
+};
+
 struct stats_table {
 	struct string_list rows;
 
@@ -234,9 +248,17 @@ static inline size_t get_total_reference_count(struct ref_stats *stats)
 	return stats->branches + stats->remotes + stats->tags + stats->others;
 }
 
-static void stats_table_setup_structure(struct stats_table *table,
-					struct ref_stats *refs)
+static inline size_t get_total_object_count(struct object_stats *stats)
 {
+	return stats->tags + stats->commits + stats->trees + stats->blobs;
+}
+
+static void stats_table_setup_structure(struct stats_table *table,
+					struct repo_structure *stats)
+{
+	struct object_stats *objects = &stats->objects;
+	struct ref_stats *refs = &stats->refs;
+	size_t object_total;
 	size_t ref_total;
 
 	ref_total = get_total_reference_count(refs);
@@ -246,6 +268,15 @@ static void stats_table_setup_structure(struct stats_table *table,
 	stats_table_count_addf(table, refs->tags, "    * %s", _("Tags"));
 	stats_table_count_addf(table, refs->remotes, "    * %s", _("Remotes"));
 	stats_table_count_addf(table, refs->others, "    * %s", _("Others"));
+
+	object_total = get_total_object_count(objects);
+	stats_table_addf(table, "");
+	stats_table_addf(table, "* %s", _("Reachable objects"));
+	stats_table_count_addf(table, object_total, "  * %s", _("Count"));
+	stats_table_count_addf(table, objects->commits, "    * %s", _("Commits"));
+	stats_table_count_addf(table, objects->trees, "    * %s", _("Trees"));
+	stats_table_count_addf(table, objects->blobs, "    * %s", _("Blobs"));
+	stats_table_count_addf(table, objects->tags, "    * %s", _("Tags"));
 }
 
 static void stats_table_print_structure(const struct stats_table *table)
@@ -299,12 +330,18 @@ static void stats_table_clear(struct stats_table *table)
 	string_list_clear(&table->rows, 1);
 }
 
+struct count_references_data {
+	struct ref_stats *stats;
+	struct rev_info *revs;
+};
+
 static int count_references(const char *refname,
 			    const char *referent UNUSED,
-			    const struct object_id *oid UNUSED,
+			    const struct object_id *oid,
 			    int flags UNUSED, void *cb_data)
 {
-	struct ref_stats *stats = cb_data;
+	struct count_references_data *data = cb_data;
+	struct ref_stats *stats = data->stats;
 
 	switch (ref_kind_from_refname(refname)) {
 	case FILTER_REFS_BRANCHES:
@@ -323,13 +360,64 @@ static int count_references(const char *refname,
 		BUG("unexpected reference type");
 	}
 
+	/*
+	 * While iterating through references for counting, also add OIDs in
+	 * preparation for the path walk.
+	 */
+	add_pending_oid(data->revs, NULL, oid, 0);
+
 	return 0;
 }
 
 static void structure_count_references(struct ref_stats *stats,
+				       struct rev_info *revs,
 				       struct repository *repo)
 {
-	refs_for_each_ref(get_main_ref_store(repo), count_references, &stats);
+	struct count_references_data data = {
+		.stats = stats,
+		.revs = revs,
+	};
+
+	refs_for_each_ref(get_main_ref_store(repo), count_references, &data);
+}
+
+
+static int count_objects(const char *path UNUSED, struct oid_array *oids,
+			 enum object_type type, void *cb_data)
+{
+	struct object_stats *stats = cb_data;
+
+	switch (type) {
+	case OBJ_TAG:
+		stats->tags += oids->nr;
+		break;
+	case OBJ_COMMIT:
+		stats->commits += oids->nr;
+		break;
+	case OBJ_TREE:
+		stats->trees += oids->nr;
+		break;
+	case OBJ_BLOB:
+		stats->blobs += oids->nr;
+		break;
+	default:
+		BUG("invalid object type");
+	}
+
+	return 0;
+}
+
+static void structure_count_objects(struct object_stats *stats,
+				    struct rev_info *revs)
+{
+	struct path_walk_info info = PATH_WALK_INFO_INIT;
+
+	info.revs = revs;
+	info.path_fn = count_objects;
+	info.path_fn_data = stats;
+
+	walk_objects_by_path(&info);
+	path_walk_info_clear(&info);
 }
 
 static int cmd_repo_structure(int argc, const char **argv, const char *prefix,
@@ -338,19 +426,24 @@ static int cmd_repo_structure(int argc, const char **argv, const char *prefix,
 	struct stats_table table = {
 		.rows = STRING_LIST_INIT_DUP,
 	};
-	struct ref_stats stats = { 0 };
+	struct repo_structure stats = { 0 };
+	struct rev_info revs;
 	struct option options[] = { 0 };
 
 	argc = parse_options(argc, argv, prefix, options, repo_usage, 0);
 	if (argc)
 		usage(_("too many arguments"));
 
-	structure_count_references(&stats, repo);
+	repo_init_revisions(repo, &revs, prefix);
+
+	structure_count_references(&stats.refs, &revs, repo);
+	structure_count_objects(&stats.objects, &revs);
 
 	stats_table_setup_structure(&table, &stats);
 	stats_table_print_structure(&table);
 
 	stats_table_clear(&table);
+	release_revisions(&revs);
 
 	return 0;
 }
