@@ -1453,9 +1453,13 @@ int cmd_bisect(int argc,
 		if (!argc)
 			usage_msg_opt(_("need a command"), git_bisect_usage, options);
 
+		if (!strcmp(argv[0], "help"))
+			usage_with_options(git_bisect_usage, options);
+
 		set_terms(&terms, "bad", "good");
 		get_terms(&terms);
-		if (check_and_set_terms(&terms, argv[0]))
+		if (check_and_set_terms(&terms, argv[0]) ||
+		    !one_of(argv[0], terms.term_good, terms.term_bad, NULL))
 			usage_msg_optf(_("unknown command: '%s'"), git_bisect_usage,
 				       options, argv[0]);
 		res = bisect_state(&terms, argc, argv);
