@@ -4,6 +4,7 @@
 #include "environment.h"
 #include "parse-options.h"
 #include "path-walk.h"
+#include "progress.h"
 #include "quote.h"
 #include "ref-filter.h"
 #include "refs.h"
@@ -362,6 +363,7 @@ static void structure_keyvalue_print(struct repo_structure *stats,
 struct count_references_data {
 	struct ref_stats *stats;
 	struct rev_info *revs;
+	struct progress *progress;
 };
 
 static int count_references(const char *refname,
@@ -371,6 +373,7 @@ static int count_references(const char *refname,
 {
 	struct count_references_data *data = cb_data;
 	struct ref_stats *stats = data->stats;
+	size_t ref_count;
 
 	switch (ref_kind_from_refname(refname)) {
 	case FILTER_REFS_BRANCHES:
@@ -395,26 +398,41 @@ static int count_references(const char *refname,
 	 */
 	add_pending_oid(data->revs, NULL, oid, 0);
 
+	ref_count = get_total_reference_count(stats);
+	display_progress(data->progress, ref_count);
+
 	return 0;
 }
 
 static void structure_count_references(struct ref_stats *stats,
 				       struct rev_info *revs,
-				       struct repository *repo)
+				       struct repository *repo,
+				       int show_progress)
 {
 	struct count_references_data data = {
 		.stats = stats,
 		.revs = revs,
 	};
 
+	if (show_progress)
+		data.progress = start_delayed_progress(repo,
+						       _("Counting references"), 0);
+
 	refs_for_each_ref(get_main_ref_store(repo), count_references, &data);
+	stop_progress(&data.progress);
 }
 
+struct count_objects_data {
+	struct object_stats *stats;
+	struct progress *progress;
+};
 
 static int count_objects(const char *path UNUSED, struct oid_array *oids,
 			 enum object_type type, void *cb_data)
 {
-	struct object_stats *stats = cb_data;
+	struct count_objects_data *data = cb_data;
+	struct object_stats *stats = data->stats;
+	size_t object_count;
 
 	switch (type) {
 	case OBJ_TAG:
@@ -433,20 +451,31 @@ static int count_objects(const char *path UNUSED, struct oid_array *oids,
 		BUG("invalid object type");
 	}
 
+	object_count = get_total_object_count(stats);
+	display_progress(data->progress, object_count);
+
 	return 0;
 }
 
 static void structure_count_objects(struct object_stats *stats,
-				    struct rev_info *revs)
+				    struct rev_info *revs,
+				    struct repository *repo, int show_progress)
 {
 	struct path_walk_info info = PATH_WALK_INFO_INIT;
+	struct count_objects_data data = {
+		.stats = stats,
+	};
 
 	info.revs = revs;
 	info.path_fn = count_objects;
-	info.path_fn_data = stats;
+	info.path_fn_data = &data;
+
+	if (show_progress)
+		data.progress = start_delayed_progress(repo, _("Counting objects"), 0);
 
 	walk_objects_by_path(&info);
 	path_walk_info_clear(&info);
+	stop_progress(&data.progress);
 }
 
 static int cmd_repo_structure(int argc, const char **argv, const char *prefix,
@@ -458,10 +487,12 @@ static int cmd_repo_structure(int argc, const char **argv, const char *prefix,
 	enum output_format format = FORMAT_TABLE;
 	struct repo_structure stats = { 0 };
 	struct rev_info revs;
+	int show_progress = -1;
 	struct option options[] = {
 		OPT_CALLBACK_F(0, "format", &format, N_("format"),
 			       N_("output format"),
 			       PARSE_OPT_NONEG, parse_format_cb),
+		OPT_BOOL(0, "progress", &show_progress, N_("show progress")),
 		OPT_END()
 	};
 
@@ -471,8 +502,11 @@ static int cmd_repo_structure(int argc, const char **argv, const char *prefix,
 
 	repo_init_revisions(repo, &revs, prefix);
 
-	structure_count_references(&stats.refs, &revs, repo);
-	structure_count_objects(&stats.objects, &revs);
+	if (show_progress < 0)
+		show_progress = isatty(2);
+
+	structure_count_references(&stats.refs, &revs, repo, show_progress);
+	structure_count_objects(&stats.objects, &revs, repo, show_progress);
 
 	switch (format) {
 	case FORMAT_TABLE:

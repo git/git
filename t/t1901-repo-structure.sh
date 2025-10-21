@@ -106,4 +106,24 @@ test_expect_success 'keyvalue and nul format' '
 	)
 '
 
+test_expect_success 'progress meter option' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		test_commit foo &&
+
+		GIT_PROGRESS_DELAY=0 git repo structure --progress >out 2>err &&
+
+		test_file_not_empty out &&
+		test_grep "Counting references: 2, done." err &&
+		test_grep "Counting objects: 3, done." err &&
+
+		GIT_PROGRESS_DELAY=0 git repo structure --no-progress >out 2>err &&
+
+		test_file_not_empty out &&
+		test_line_count = 0 err
+	)
+'
+
 test_done
