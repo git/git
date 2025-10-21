@@ -15,13 +15,14 @@
 
 static const char *const repo_usage[] = {
 	"git repo info [--format=(keyvalue|nul)] [-z] [<key>...]",
-	"git repo structure",
+	"git repo structure [--format=(table|keyvalue|nul)]",
 	NULL
 };
 
 typedef int get_value_fn(struct repository *repo, struct strbuf *buf);
 
 enum output_format {
+	FORMAT_TABLE,
 	FORMAT_KEYVALUE,
 	FORMAT_NUL_TERMINATED,
 };
@@ -136,6 +137,8 @@ static int parse_format_cb(const struct option *opt,
 		*format = FORMAT_NUL_TERMINATED;
 	else if (!strcmp(arg, "keyvalue"))
 		*format = FORMAT_KEYVALUE;
+	else if (!strcmp(arg, "table"))
+		*format = FORMAT_TABLE;
 	else
 		die(_("invalid format '%s'"), arg);
 
@@ -158,6 +161,8 @@ static int cmd_repo_info(int argc, const char **argv, const char *prefix,
 	};
 
 	argc = parse_options(argc, argv, prefix, options, repo_usage, 0);
+	if (format != FORMAT_KEYVALUE && format != FORMAT_NUL_TERMINATED)
+		die(_("unsupported output format"));
 
 	return print_fields(argc, argv, repo, format);
 }
@@ -330,6 +335,30 @@ static void stats_table_clear(struct stats_table *table)
 	string_list_clear(&table->rows, 1);
 }
 
+static void structure_keyvalue_print(struct repo_structure *stats,
+				     char key_delim, char value_delim)
+{
+	printf("references.branches.count%c%" PRIuMAX "%c", key_delim,
+	       (uintmax_t)stats->refs.branches, value_delim);
+	printf("references.tags.count%c%" PRIuMAX "%c", key_delim,
+	       (uintmax_t)stats->refs.tags, value_delim);
+	printf("references.remotes.count%c%" PRIuMAX "%c", key_delim,
+	       (uintmax_t)stats->refs.remotes, value_delim);
+	printf("references.others.count%c%" PRIuMAX "%c", key_delim,
+	       (uintmax_t)stats->refs.others, value_delim);
+
+	printf("objects.commits.count%c%" PRIuMAX "%c", key_delim,
+	       (uintmax_t)stats->objects.commits, value_delim);
+	printf("objects.trees.count%c%" PRIuMAX "%c", key_delim,
+	       (uintmax_t)stats->objects.trees, value_delim);
+	printf("objects.blobs.count%c%" PRIuMAX "%c", key_delim,
+	       (uintmax_t)stats->objects.blobs, value_delim);
+	printf("objects.tags.count%c%" PRIuMAX "%c", key_delim,
+	       (uintmax_t)stats->objects.tags, value_delim);
+
+	fflush(stdout);
+}
+
 struct count_references_data {
 	struct ref_stats *stats;
 	struct rev_info *revs;
@@ -426,9 +455,15 @@ static int cmd_repo_structure(int argc, const char **argv, const char *prefix,
 	struct stats_table table = {
 		.rows = STRING_LIST_INIT_DUP,
 	};
+	enum output_format format = FORMAT_TABLE;
 	struct repo_structure stats = { 0 };
 	struct rev_info revs;
-	struct option options[] = { 0 };
+	struct option options[] = {
+		OPT_CALLBACK_F(0, "format", &format, N_("format"),
+			       N_("output format"),
+			       PARSE_OPT_NONEG, parse_format_cb),
+		OPT_END()
+	};
 
 	argc = parse_options(argc, argv, prefix, options, repo_usage, 0);
 	if (argc)
@@ -439,8 +474,20 @@ static int cmd_repo_structure(int argc, const char **argv, const char *prefix,
 	structure_count_references(&stats.refs, &revs, repo);
 	structure_count_objects(&stats.objects, &revs);
 
-	stats_table_setup_structure(&table, &stats);
-	stats_table_print_structure(&table);
+	switch (format) {
+	case FORMAT_TABLE:
+		stats_table_setup_structure(&table, &stats);
+		stats_table_print_structure(&table);
+		break;
+	case FORMAT_KEYVALUE:
+		structure_keyvalue_print(&stats, '=', '\n');
+		break;
+	case FORMAT_NUL_TERMINATED:
+		structure_keyvalue_print(&stats, '\n', '\0');
+		break;
+	default:
+		BUG("invalid output format");
+	}
 
 	stats_table_clear(&table);
 	release_revisions(&revs);
