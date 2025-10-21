@@ -2833,7 +2833,7 @@ struct ref_array_item *ref_array_push(struct ref_array *array,
 	return ref;
 }
 
-static int ref_kind_from_refname(const char *refname)
+int ref_kind_from_refname(const char *refname)
 {
 	unsigned int i;
 
