@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Oct 2025, #06; Fri, 17)
-X-master-at: f229982df19c327876ce7ded40f6efefe20da5d4
-X-next-at: 3bde8961571d1368c1015e64b907e8f87cf1a2aa
+Subject: What's cooking in git.git (Oct 2025, #07; Tue, 21)
+X-master-at: 133d151831d32bdcc02422599a3f26cef44f929b
+X-next-at: 4ebd6896fd8600877adbfde68a5d313d77bc0f18
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Oct 2025, #06; Fri, 17)
+What's cooking in git.git (Oct 2025, #07; Tue, 21)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -48,57 +48,159 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* en/make-libgit-a (2025-10-02) 2 commits
-  (merged to 'next' on 2025-10-10 at 913fc0337a)
- + make: delete REFTABLE_LIB, add reftable to LIB_OBJS
- + make: delete XDIFF_LIB, add xdiff to LIB_OBJS
+* dk/stash-apply-index (2025-10-06) 1 commit
+  (merged to 'next' on 2025-10-13 at 2187046f6c)
+ + doc: explain the impact of stash.index on --autostash options
 
- Instead of three library archives (one for git, one for reftable,
- and one for xdiff), roll everything into a single libgit.a archive.
- This would help later effort to FFI into Rust.
- 
- source: <pull.2065.v2.git.git.1759447647.gitgitgadget@gmail.com>
+ Doc update.
+ source: <d4a277b6b0695d86636562f4c07efae17f9249f9.1759755379.git.ben.knoble+github@gmail.com>
 
 
-* jk/diff-no-index-with-pathspec-fix (2025-09-24) 1 commit
-  (merged to 'next' on 2025-10-10 at 75721dbc16)
- + diff --no-index: fix logic for paths ending in '/'
+* js/mingw-includes-cleanup (2025-10-09) 2 commits
+  (merged to 'next' on 2025-10-13 at b7144c1feb)
+ + mingw: order `#include`s alphabetically
+ + mingw: avoid relative `#include`s
 
- An earlier addition to "git diff --no-index A B" to limit the
- output with pathspec after the two directories misbehaved when
- these directories were given with a trailing slash, which has been
- corrected.
- 
- source: <20250924-jk-fix-no-index-path-with-slash-v1-1-6b2028c0de92@intel.com>
+ Code clean-up.
+ source: <pull.1985.git.1759995961.gitgitgadget@gmail.com>
 
 
-* rs/add-patch-options-fix (2025-10-06) 6 commits
-  (merged to 'next' on 2025-10-10 at ef52e0377e)
- + add-patch: reset "permitted" at loop start
- + add-patch: let options a and d roll over like y and n
- + add-patch: let options k and K roll over like j and J
- + add-patch: let options y, n, j, and e roll over to next undecided
- + add-patch: document that option J rolls over
- + add-patch: improve help for options j, J, k, and K
+* js/unreachable-workaround-for-no-symlink-head (2025-10-09) 1 commit
+  (merged to 'next' on 2025-10-13 at 0e970d5e4e)
+ + refs: forbid clang to complain about unreachable code
 
- The code in "git add -p" and friends to iterate over hunks was
- riddled with bugs, which has been corrected.
- 
- source: <fe8e8097-2b05-4dd2-a754-f59e4ba5f95a@web.de>
+ Code clean-up.
+ source: <pull.1984.git.1759995982220.gitgitgadget@gmail.com>
 
 
-* tb/doc-submitting-patches (2025-10-07) 2 commits
-  (merged to 'next' on 2025-10-10 at b63283990d)
- + SubmittingPatches: guidance for multi-series efforts
- + SubmittingPatches: extend release-notes experiment to topic names
+* kh/doc-continued-paragraph-fix (2025-10-08) 1 commit
+  (merged to 'next' on 2025-10-13 at e66316f041)
+ + doc: fix accidental literal blocks
 
- A few more things that patch authors can do to help maintainer to
- keep track of their topics better.
- 
- source: <cover.1759873165.git.me@ttaylorr.com>
+ Doc mark-up fixes.
+ source: <7a955ecb1b5.1759923933.git.code@khaugsbakk.name>
+
+
+* tb/cat-file-objectmode-update (2025-10-13) 1 commit
+  (merged to 'next' on 2025-10-13 at 4fd0f1b5b5)
+ + builtin/cat-file.c: simplify calling `report_object_status()`
+
+ Code clean-up.
+ source: <9236fa6e654a59337266430a2a8807da21210cd4.1760392502.git.me@ttaylorr.com>
 
 --------------------------------------------------
 [New Topics]
+
+* js/t7500-pwd-windows-fix (2025-10-20) 1 commit
+  (merged to 'next' on 2025-10-20 at d3996041e8)
+ + t7500: fix tests with absolute path following ":(optional)" on Windows
+
+ Test fix.
+
+ Will merge to 'master'.
+ source: <6a83c7d1-7cd4-432e-a0ab-7b18ce3af08d@kdbg.org>
+
+
+* kf/log-shortlog-completion-fix (2025-10-20) 1 commit
+ - completion: complete some 'git log' options
+
+ "git shortlog" knows "--committer" and "--author" options, which
+ the command line completion (in contrib/) did not handle well,
+ which has been corrected.
+
+ Will merge to 'next'?
+ source: <pull.2073.v2.git.git.1760981577441.gitgitgadget@gmail.com>
+
+
+* kn/refs-optim-cleanup (2025-10-20) 4 commits
+ . t/pack-refs-tests: move the 'test_done' to callees
+ . refs: rename 'pack_refs_opts' to 'refs_optimize_opts'
+ . refs: move to using the '.optimize' functions
+ . Merge branch 'ps/ref-peeled-tags' into kn/refs-optim-cleanup
+ (this branch uses ps/ref-peeled-tags.)
+
+ Code clean-up.
+
+ Comments?
+ source: <20251020-refs-code-cleanup-v2-0-f5349ed0f6a5@gmail.com>
+
+
+* lo/repo-info-all (2025-10-20) 2 commits
+ - repo: add --all to git-repo-info
+ - repo: factor out field printing to dedicated function
+
+ "git repo info" learned "--all" option.
+
+ Comments?
+ cf. <aPcduvnjD0yphja2@pks.im>
+ source: <20251020181943.6314-1-lucasseikioshiro@gmail.com>
+
+
+* ly/diff-name-only-with-diff-from-content (2025-10-19) 1 commit
+  (merged to 'next' on 2025-10-20 at 8a271653ce)
+ + diff: stop output garbled message in dry run mode
+
+ Regression fixes for a topic that has already been merged.
+
+ Will merge to 'master'.
+ source: <20251019163024.18939-1-yldhome2d2@gmail.com>
+
+
+* jt/repo-structure (2025-10-21) 7 commits
+ - builtin/repo: add progress meter for structure stats
+ - builtin/repo: add keyvalue and nul format for structure stats
+ - builtin/repo: add object counts in structure output
+ - builtin/repo: introduce structure subcommand
+ - ref-filter: export ref_kind_from_refname()
+ - ref-filter: allow NULL filter pattern
+ - builtin/repo: rename repo_info() to cmd_repo_info()
+
+ "git repo structure", a new command.
+
+ Comments?
+ source: <20251021182601.2687284-1-jltobler@gmail.com>
+
+
+* ps/maintenance-geometric (2025-10-21) 10 commits
+ - builtin/maintenance: introduce "geometric" strategy
+ - builtin/maintenance: make "gc" strategy accessible
+ - builtin/maintenance: extend "maintenance.strategy" to manual maintenance
+ - builtin/maintenance: run maintenance tasks depending on type
+ - builtin/maintenance: don't silently ignore invalid strategy
+ - builtin/maintenance: make the geometric factor configurable
+ - builtin/maintenance: introduce "geometric-repack" task
+ - builtin/gc: make `too_many_loose_objects()` reusable without GC config
+ - builtin/gc: remove global `repack` variable
+ - Merge branch 'tb/incremental-midx-part-3.1' into ps/maintenance-geometric
+ (this branch uses tb/incremental-midx-part-3.1.)
+
+ "git maintenance" command learns the "geometric" strategy where it
+ avoids doing maintenance tasks that rebuilds everything from
+ scratch.
+
+ Comments?
+ source: <20251021-pks-maintenance-geometric-strategy-v2-0-f0d727832b80@pks.im>
+
+
+* rs/add-patch-document-p-for-pager (2025-10-21) 1 commit
+ - add-patch: fully document option P
+
+ Show 'P'ipe command in "git add -p".
+
+ Will merge to 'next'.
+ source: <0188c766-d788-476d-a4d4-f95a6f59b31b@web.de>
+
+
+* tb/unicode-width-table-17 (2025-10-21) 1 commit
+ - unicode: update the width tables to Unicode 17
+
+ Unicode width table update.
+
+ Will merge to 'next'.
+ source: <20251021094849.93284-1-tboegi@web.de>
+
+--------------------------------------------------
+[Cooking]
 
 * so/t2401-use-test-path-helpers (2025-10-15) 1 commit
   (merged to 'next' on 2025-10-16 at b6fe4d2222)
@@ -172,50 +274,40 @@ Release tarballs are available at:
 
 
 * jk/diff-from-contents-fix (2025-10-17) 2 commits
- - diff: restore redirection to /dev/null for diff_from_contents
- - Merge branch 'ly/diff-name-only-with-diff-from-content' into jk/diff-from-contents-fix
+  (merged to 'next' on 2025-10-20 at 19442a804e)
+ + diff: restore redirection to /dev/null for diff_from_contents
+ + Merge branch 'ly/diff-name-only-with-diff-from-content' into jk/diff-from-contents-fix
 
  Recently we attempted to improve "git diff -w" and friends to
  handle cases where patch output would be suppressed, but it
  introduced a bug that emits unnecessary output, which has been
  corrected.
 
- Will merge to 'next' and then to 'master' and then to 'maint'.
+ Will merge to 'master' and then to 'maint'.
  source: <20251017083641.GB4073661@coredump.intra.peff.net>
 
 
 * jk/status-z-short-fix (2025-10-17) 1 commit
- - status: make coloring of "-z --short" consistent
+  (merged to 'next' on 2025-10-20 at 0d649c97b7)
+ + status: make coloring of "-z --short" consistent
 
  The "--short" option of "git status" that meant output for humans
  and "-z" option to show NUL delimited output format did not mix
  well, and colored some but not all things.  The command has been
  updated to color all elements consistently in such a case.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20251017084455.GA4096702@coredump.intra.peff.net>
 
---------------------------------------------------
-[Cooking]
 
-* tu/credential-makefile-updates (2025-10-10) 1 commit
- - contrib/credential: Amend and harmonize Makefiles
+* tu/credential-makefile-updates (2025-10-20) 1 commit
+ - contrib/credential: harmonize Makefiles
 
  Build procedure for a few credential helpers (in contrib/) have
  been updated.
 
- Expecting a reroll.
- source: <48d92664-41af-bb59-1844-7bb57f21924f@mailbox.tu-dresden.de>
-
-
-* tb/cat-file-objectmode-update (2025-10-13) 1 commit
-  (merged to 'next' on 2025-10-13 at 4fd0f1b5b5)
- + builtin/cat-file.c: simplify calling `report_object_status()`
-
- Code clean-up.
-
- Will merge to 'master'.
- source: <9236fa6e654a59337266430a2a8807da21210cd4.1760392502.git.me@ttaylorr.com>
+ Will merge to 'next'.
+ source: <0a61b0b3-365b-c198-6afd-f26fcd5a9c20@mailbox.tu-dresden.de>
 
 
 * ps/symlink-symref-deprecation (2025-10-14) 1 commit
@@ -226,37 +318,6 @@ Release tarballs are available at:
 
  Comments?
  source: <20251014-pks-ref-files-deprecate-symbolic-links-v1-1-4bcd6a4ef6f5@pks.im>
-
-
-* dk/stash-apply-index (2025-10-06) 1 commit
-  (merged to 'next' on 2025-10-13 at 2187046f6c)
- + doc: explain the impact of stash.index on --autostash options
-
- Doc update.
-
- Will merge to 'master'.
- source: <d4a277b6b0695d86636562f4c07efae17f9249f9.1759755379.git.ben.knoble+github@gmail.com>
-
-
-* js/mingw-includes-cleanup (2025-10-09) 2 commits
-  (merged to 'next' on 2025-10-13 at b7144c1feb)
- + mingw: order `#include`s alphabetically
- + mingw: avoid relative `#include`s
-
- Code clean-up.
-
- Will merge to 'master'.
- source: <pull.1985.git.1759995961.gitgitgadget@gmail.com>
-
-
-* js/unreachable-workaround-for-no-symlink-head (2025-10-09) 1 commit
-  (merged to 'next' on 2025-10-13 at 0e970d5e4e)
- + refs: forbid clang to complain about unreachable code
-
- Code clean-up.
-
- Will merge to 'master'.
- source: <pull.1984.git.1759995982220.gitgitgadget@gmail.com>
 
 
 * kh/doc-patch-id-1 (2025-10-13) 2 commits
@@ -290,16 +351,6 @@ Release tarballs are available at:
  source: <xmqqsefq7947.fsf@gitster.g>
 
 
-* kh/doc-continued-paragraph-fix (2025-10-08) 1 commit
-  (merged to 'next' on 2025-10-13 at e66316f041)
- + doc: fix accidental literal blocks
-
- Doc mark-up fixes.
-
- Will merge to 'master'.
- source: <7a955ecb1b5.1759923933.git.code@khaugsbakk.name>
-
-
 * cc/fast-import-strip-signed-tags (2025-10-13) 5 commits
  - fast-import: add '--signed-tags=<mode>' option
  - fast-export: handle all kinds of tag signatures
@@ -310,7 +361,7 @@ Release tarballs are available at:
  "git fast-import" is taught to handle signed tags, just like it
  recently learned to handle signed commits, in different ways.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <20251013084857.1646783-1-christian.couder@gmail.com>
 
 
@@ -326,29 +377,33 @@ Release tarballs are available at:
 
  CI improvements to handle the recent Rust integration better.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <20251015-b4-pks-ci-rust-v3-0-13810af33bd5@pks.im>
 
 
 * ps/ref-peeled-tags (2025-10-08) 14 commits
- - ref-filter: parse objects on demand
- - ref-filter: detect broken tags when dereferencing them
- - refs: don't store peeled object IDs for invalid tags
- - object: add flag to `peel_object()` to verify object type
- - refs: drop infrastructure to peel via iterators
- - refs: drop `current_ref_iter` hack
- - builtin/show-ref: convert to use `reference_get_peeled_oid()`
- - ref-filter: propagate peeled object ID
- - upload-pack: convert to use `reference_get_peeled_oid()`
- - refs: expose peeled object ID via the iterator
- - refs: refactor reference status flags
- - refs: fully reset `struct ref_iterator::ref` on iteration
- - refs: introduce `.ref` field for the base iterator
- - refs: introduce wrapper struct for `each_ref_fn`
+ . ref-filter: parse objects on demand
+ . ref-filter: detect broken tags when dereferencing them
+ . refs: don't store peeled object IDs for invalid tags
+ . object: add flag to `peel_object()` to verify object type
+ . refs: drop infrastructure to peel via iterators
+ . refs: drop `current_ref_iter` hack
+ . builtin/show-ref: convert to use `reference_get_peeled_oid()`
+ . ref-filter: propagate peeled object ID
+ . upload-pack: convert to use `reference_get_peeled_oid()`
+ . refs: expose peeled object ID via the iterator
+ . refs: refactor reference status flags
+ . refs: fully reset `struct ref_iterator::ref` on iteration
+ . refs: introduce `.ref` field for the base iterator
+ . refs: introduce wrapper struct for `each_ref_fn`
+ (this branch is used by kn/refs-optim-cleanup.)
 
  Some ref backend storage can hold not just the object name of an
  annotated tag, but the object name of the object the tag points at.
  The code to handle this information has been streamlined.
+
+ Tentatively kicked out of 'seen'.
+ Needs larger merge-fix to adjust other topics to "struct reference".
  source: <20251008-b4-pks-ref-filter-skip-parsing-objects-v2-0-76e30d5c9542@pks.im>
 
 
@@ -365,11 +420,12 @@ Release tarballs are available at:
  Two slightly different ways to get at "all the packfiles" in API
  has been cleaned up.
 
- Comments?
+ Will merge to 'next' after tb/incremental-midx-part-3.1 settles.
  source: <20251009-pks-packfiles-convert-get-all-v2-0-0d73b87ce711@pks.im>
 
 
-* je/doc-data-model (2025-10-14) 1 commit
+* je/doc-data-model (2025-10-20) 2 commits
+ - SQUASH??? work around AsciiDoc xml that does not validate
  - doc: add a explanation of Git's data model
 
  Add a new manual that describes the data model.
@@ -429,12 +485,12 @@ Release tarballs are available at:
  - builtin/repack.c: avoid "the_repository" in existing packs API
  - builtin/repack.c: avoid "the_repository" in `cmd_repack()`
  - Merge branch 'ps/packfile-store' into tb/incremental-midx-part-3.1
- (this branch is used by ps/remove-packfile-store-get-packs.)
+ (this branch is used by ps/maintenance-geometric and ps/remove-packfile-store-get-packs.)
 
  Clean-up "git repack" machinery to prepare for incremental update
  of midx files.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <cover.1760567210.git.me@ttaylorr.com>
 
 
@@ -448,7 +504,7 @@ Release tarballs are available at:
  source: <20251001140310.527097-1-christian.couder@gmail.com>
 
 
-* ps/history (2025-10-01) 13 commits
+* ps/history (2025-10-21) 13 commits
  - builtin/history: implement "split" subcommand
  - cache-tree: allow writing in-memory index as tree
  - add-patch: add support for in-memory index patching
@@ -465,9 +521,7 @@ Release tarballs are available at:
  (this branch uses sa/replay-atomic-ref-updates.)
 
  "git history" history rewriting UI.
-
- Stomps on each others toes with sa/replay-atomic-ref-updates topic.
- source: <20251001-b4-pks-history-builtin-v4-0-8e61ddb86317@pks.im>
+ source: <20251021-b4-pks-history-builtin-v5-0-78d23f578fe6@pks.im>
 
 
 * ms/doc-worktree-side-by-side (2025-10-10) 2 commits
@@ -522,21 +576,6 @@ Release tarballs are available at:
  source: <pull.1976.v3.git.1760534011.gitgitgadget@gmail.com>
 
 
-* jt/repo-stats (2025-10-15) 6 commits
- - builtin/repo: add progress meter for structure stats
- - builtin/repo: add keyvalue and nul format for structure stats
- - builtin/repo: add object counts in structure output
- - builtin/repo: introduce structure subcommand
- - ref-filter: allow NULL filter pattern
- - builtin/repo: rename repo_info() to cmd_repo_info()
-
- "git repo stats", a new command.
-
- Expecting a (hopefully small and final) reroll.
- cf. <aPDPyEVOTSU6NuOH@pks.im>
- source: <20251015211213.361797-1-jltobler@gmail.com>
-
-
 * bc/sha1-256-interop-01 (2025-10-09) 9 commits
   (merged to 'next' on 2025-10-14 at c571bab975)
  + t1010: use BROKEN_OBJECTS prerequisite
@@ -571,7 +610,9 @@ Release tarballs are available at:
  source: <20251006112518.3764240-1-adrian.ratiu@collabora.com>
 
 
-* ds/sparse-checkout-clean (2025-09-12) 7 commits
+* ds/sparse-checkout-clean (2025-10-20) 8 commits
+  (merged to 'next' on 2025-10-20 at afc50f3401)
+ + sparse-index: improve advice message instructions
   (merged to 'next' on 2025-09-25 at 00b296f153)
  + t: expand tests around sparse merges and clean
  + sparse-index: point users to new 'clean' action
@@ -585,9 +626,7 @@ Release tarballs are available at:
  prune otherwise unused working-tree files that are outside the
  areas of interest.
 
- Expecting a (hopefully small) incremental update.
- cf. <3537e220-44b6-4e37-a568-cef34a2fddfd@gmail.com>
- cf. <xmqq5xcpgy9t.fsf@gitster.g>
+ Will merge to 'master'.
  source: <pull.1941.v3.git.1757673011.gitgitgadget@gmail.com>
 
 --------------------------------------------------
