@@ -454,6 +454,60 @@ test_expect_success 'tag with NUL in header' '
 	test_grep "error in tag $tag.*unterminated header: NUL at offset" out
 '
 
+test_expect_success 'tag accepts gpgsig header even if not validly signed' '
+	test_oid_cache <<-\EOF &&
+	header sha1:gpgsig-sha256
+	header sha256:gpgsig
+	EOF
+	header=$(test_oid header) &&
+	sha=$(git rev-parse HEAD) &&
+	cat >good-tag <<-EOF &&
+	object $sha
+	type commit
+	tag good
+	tagger T A Gger <tagger@example.com> 1234567890 -0000
+	$header -----BEGIN PGP SIGNATURE-----
+	 Not a valid signature
+	 -----END PGP SIGNATURE-----
+
+	This is a good tag.
+	EOF
+
+	tag=$(git hash-object --literally -t tag -w --stdin <good-tag) &&
+	test_when_finished "remove_object $tag" &&
+	git update-ref refs/tags/good $tag &&
+	test_when_finished "git update-ref -d refs/tags/good" &&
+	git -c fsck.extraHeaderEntry=error fsck --tags
+'
+
+test_expect_success 'tag rejects invalid headers' '
+	test_oid_cache <<-\EOF &&
+	header sha1:gpgsig-sha256
+	header sha256:gpgsig
+	EOF
+	header=$(test_oid header) &&
+	sha=$(git rev-parse HEAD) &&
+	cat >bad-tag <<-EOF &&
+	object $sha
+	type commit
+	tag good
+	tagger T A Gger <tagger@example.com> 1234567890 -0000
+	$header -----BEGIN PGP SIGNATURE-----
+	 Not a valid signature
+	 -----END PGP SIGNATURE-----
+	junk
+
+	This is a bad tag with junk at the end of the headers.
+	EOF
+
+	tag=$(git hash-object --literally -t tag -w --stdin <bad-tag) &&
+	test_when_finished "remove_object $tag" &&
+	git update-ref refs/tags/bad $tag &&
+	test_when_finished "git update-ref -d refs/tags/bad" &&
+	test_must_fail git -c fsck.extraHeaderEntry=error fsck --tags 2>out &&
+	test_grep "error in tag $tag.*invalid format - extra header" out
+'
+
 test_expect_success 'cleaned up' '
 	git fsck >actual 2>&1 &&
 	test_must_be_empty actual

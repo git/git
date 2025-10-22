@@ -10,6 +10,12 @@
 `badFilemode`::
 	(INFO) A tree contains a bad filemode entry.
 
+`badGpgsig`::
+	(ERROR) A tag contains a bad (truncated) signature (e.g., `gpgsig`) header.
+
+`badHeaderContinuation`::
+	(ERROR) A continuation header (such as for `gpgsig`) is unexpectedly truncated.
+
 `badName`::
 	(ERROR) An author/committer name is empty.
 
