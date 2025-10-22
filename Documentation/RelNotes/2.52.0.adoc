@@ -131,6 +131,8 @@ Performance, Internal Implementation, Development Support etc.
    and one for xdiff), roll everything into a single libgit.a archive.
    This would help later effort to FFI into Rust.
 
+ * The beginning of SHA1-SHA256 interoperability work.
+
 
 Fixes since v2.51
 -----------------
@@ -380,3 +382,5 @@ including security updates, are included in this release.
    (merge 3860985105 js/unreachable-workaround-for-no-symlink-head later to maint).
    (merge b3ac6e737d kh/doc-continued-paragraph-fix later to maint).
    (merge 2cebca0582 tb/cat-file-objectmode-update later to maint).
+   (merge 96978d7545 js/ci-github-actions-update later to maint).
+   (merge 0c4f1346ca so/t2401-use-test-path-helpers later to maint).
