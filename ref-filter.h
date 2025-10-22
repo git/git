@@ -135,6 +135,8 @@ struct ref_format {
 	OPT_STRVEC(0, "exclude", &(var)->exclude, \
 		   N_("pattern"), N_("exclude refs which match pattern"))
 
+/* Get the reference kind from the provided reference name. */
+int ref_kind_from_refname(const char *refname);
 /*
  * API for filtering a set of refs. Based on the type of refs the user
  * has requested, we iterate through those refs and apply filters
