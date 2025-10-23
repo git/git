@@ -2333,7 +2333,7 @@ int reference_get_peeled_oid(struct repository *repo,
 		return 0;
 	}
 
-	return peel_object(repo, ref->oid, peeled_oid) ? -1 : 0;
+	return peel_object(repo, ref->oid, peeled_oid, 0) ? -1 : 0;
 }
 
 int refs_update_symref(struct ref_store *refs, const char *ref,
