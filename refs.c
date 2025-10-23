@@ -2324,16 +2324,6 @@ int refs_optimize(struct ref_store *refs, struct pack_refs_opts *opts)
 	return refs->be->optimize(refs, opts);
 }
 
-int peel_iterated_oid(struct repository *r, const struct object_id *base, struct object_id *peeled)
-{
-	if (current_ref_iter &&
-	    (current_ref_iter->ref.oid == base ||
-	     oideq(current_ref_iter->ref.oid, base)))
-		return ref_iterator_peel(current_ref_iter, peeled);
-
-	return peel_object(r, base, peeled) ? -1 : 0;
-}
-
 int reference_get_peeled_oid(struct repository *repo,
 			     const struct reference *ref,
 			     struct object_id *peeled_oid)
