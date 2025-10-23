@@ -75,6 +75,7 @@ void object_array_init(struct object_array *array);
  * http-push.c:                          11-----14
  * commit-graph.c:                                15
  * commit-reach.c:                                  16-----19
+ * builtin/last-modified.c:                         1617
  * sha1-name.c:                                              20
  * list-objects-filter.c:                                      21
  * bloom.c:                                                    2122
