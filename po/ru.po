@@ -11849,7 +11849,7 @@ msgstr ""
 
 #, c-format
 msgid "Cannot update %s with %s"
-msgstr "Не удолось обновить %s с %s"
+msgstr "Не удалось обновить %s с %s"
 
 msgid "stash message"
 msgstr "описание спрятанных изменений"
@@ -20674,7 +20674,7 @@ msgid ""
 "Cannot update submodule:\n"
 "%s"
 msgstr ""
-"Не удолось обновить подмодуль:\n"
+"Не удалось обновить подмодуль:\n"
 "%s"
 
 #, c-format
