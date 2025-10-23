@@ -1857,7 +1857,7 @@ static int add_ref_to_set(const struct reference *ref, void *cb_data)
 	struct object_id peeled;
 	struct refs_cb_data *data = (struct refs_cb_data *)cb_data;
 
-	if (!peel_iterated_oid(data->repo, ref->oid, &peeled))
+	if (!reference_get_peeled_oid(data->repo, ref, &peeled))
 		maybe_peeled = &peeled;
 	if (odb_read_object_info(data->repo->objects, maybe_peeled, NULL) == OBJ_COMMIT)
 		oidset_insert(data->commits, maybe_peeled);

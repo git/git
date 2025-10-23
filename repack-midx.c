@@ -22,7 +22,7 @@ static int midx_snapshot_ref_one(const struct reference *ref, void *_data)
 	const struct object_id *maybe_peeled = ref->oid;
 	struct object_id peeled;
 
-	if (!peel_iterated_oid(data->repo, ref->oid, &peeled))
+	if (!reference_get_peeled_oid(data->repo, ref, &peeled))
 		maybe_peeled = &peeled;
 
 	if (oidset_insert(&data->seen, maybe_peeled))

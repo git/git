@@ -963,6 +963,7 @@ static int next_record(struct packed_ref_iterator *iter)
 			iter->base.ref.flags &= ~REF_KNOWS_PEELED;
 		} else {
 			iter->base.ref.flags |= REF_KNOWS_PEELED;
+			iter->base.ref.peeled_oid = &iter->peeled;
 		}
 	} else {
 		oidclr(&iter->peeled, iter->repo->hash_algo);

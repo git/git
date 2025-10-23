@@ -2334,6 +2334,18 @@ int peel_iterated_oid(struct repository *r, const struct object_id *base, struct
 	return peel_object(r, base, peeled) ? -1 : 0;
 }
 
+int reference_get_peeled_oid(struct repository *repo,
+			     const struct reference *ref,
+			     struct object_id *peeled_oid)
+{
+	if (ref->peeled_oid) {
+		oidcpy(peeled_oid, ref->peeled_oid);
+		return 0;
+	}
+
+	return peel_object(repo, ref->oid, peeled_oid) ? -1 : 0;
+}
+
 int refs_update_symref(struct ref_store *refs, const char *ref,
 		       const char *target, const char *logmsg)
 {

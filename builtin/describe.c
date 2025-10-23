@@ -208,7 +208,7 @@ static int get_name(const struct reference *ref, void *cb_data UNUSED)
 	}
 
 	/* Is it annotated? */
-	if (!peel_iterated_oid(the_repository, ref->oid, &peeled)) {
+	if (!reference_get_peeled_oid(the_repository, ref, &peeled)) {
 		is_annotated = !oideq(ref->oid, &peeled);
 	} else {
 		oidcpy(&peeled, ref->oid);

@@ -371,9 +371,28 @@ struct reference {
 	 */
 	const struct object_id *oid;
 
+	/*
+	 * An optional peeled object ID. This field _may_ be set for tags in
+	 * case the peeled value is present in the backend. Please refer to
+	 * `reference_get_peeled_oid()`.
+	 */
+	const struct object_id *peeled_oid;
+
 	/* A bitfield of `enum reference_status` flags. */
 	unsigned flags;
 };
+
+/*
+ * Peel the tag to a non-tag commit. If present, this uses the peeled object ID
+ * exposed by the reference backend. Otherwise, the object is peeled via the
+ * object database, which is less efficient.
+ *
+ * Return `0` if the reference could be peeled, a negative error code
+ * otherwise.
+ */
+int reference_get_peeled_oid(struct repository *repo,
+			     const struct reference *ref,
+			     struct object_id *peeled_oid);
 
 /*
  * The signature for the callback function for the for_each_*()
