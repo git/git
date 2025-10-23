@@ -3150,14 +3150,11 @@ static int parse_and_write_reflog(struct files_ref_store *refs,
 	return 0;
 }
 
-static int ref_present(const char *refname, const char *referent UNUSED,
-		       const struct object_id *oid UNUSED,
-		       int flags UNUSED,
-		       void *cb_data)
+static int ref_present(const struct reference *ref, void *cb_data)
 {
 	struct string_list *affected_refnames = cb_data;
 
-	return string_list_has_string(affected_refnames, refname);
+	return string_list_has_string(affected_refnames, ref->name);
 }
 
 static int files_transaction_finish_initial(struct files_ref_store *refs,

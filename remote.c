@@ -2315,21 +2315,19 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb,
 	return 1;
 }
 
-static int one_local_ref(const char *refname, const char *referent UNUSED, const struct object_id *oid,
-			 int flag UNUSED,
-			 void *cb_data)
+static int one_local_ref(const struct reference *ref, void *cb_data)
 {
 	struct ref ***local_tail = cb_data;
-	struct ref *ref;
+	struct ref *local_ref;
 
 	/* we already know it starts with refs/ to get here */
-	if (check_refname_format(refname + 5, 0))
+	if (check_refname_format(ref->name + 5, 0))
 		return 0;
 
-	ref = alloc_ref(refname);
-	oidcpy(&ref->new_oid, oid);
-	**local_tail = ref;
-	*local_tail = &ref->next;
+	local_ref = alloc_ref(ref->name);
+	oidcpy(&local_ref->new_oid, ref->oid);
+	**local_tail = local_ref;
+	*local_tail = &local_ref->next;
 	return 0;
 }
 
@@ -2402,15 +2400,14 @@ struct stale_heads_info {
 	struct refspec *rs;
 };
 
-static int get_stale_heads_cb(const char *refname, const char *referent UNUSED, const struct object_id *oid,
-			      int flags, void *cb_data)
+static int get_stale_heads_cb(const struct reference *ref, void *cb_data)
 {
 	struct stale_heads_info *info = cb_data;
 	struct string_list matches = STRING_LIST_INIT_DUP;
 	struct refspec_item query;
 	int i, stale = 1;
 	memset(&query, 0, sizeof(struct refspec_item));
-	query.dst = (char *)refname;
+	query.dst = (char *)ref->name;
 
 	refspec_find_all_matches(info->rs, &query, &matches);
 	if (matches.nr == 0)
@@ -2423,7 +2420,7 @@ static int get_stale_heads_cb(const char *refname, const char *referent UNUSED, 
 	 * overlapping refspecs, we need to go over all of the
 	 * matching refs.
 	 */
-	if (flags & REF_ISSYMREF)
+	if (ref->flags & REF_ISSYMREF)
 		goto clean_exit;
 
 	for (i = 0; stale && i < matches.nr; i++)
@@ -2431,8 +2428,8 @@ static int get_stale_heads_cb(const char *refname, const char *referent UNUSED, 
 			stale = 0;
 
 	if (stale) {
-		struct ref *ref = make_linked_ref(refname, &info->stale_refs_tail);
-		oidcpy(&ref->new_oid, oid);
+		struct ref *linked_ref = make_linked_ref(ref->name, &info->stale_refs_tail);
+		oidcpy(&linked_ref->new_oid, ref->oid);
 	}
 
 clean_exit:

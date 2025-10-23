@@ -938,13 +938,11 @@ out:
 	return ret;
 }
 
-static int string_list_add_one_ref(const char *refname, const char *referent UNUSED,
-				   const struct object_id *oid UNUSED,
-				   int flag UNUSED, void *cb)
+static int string_list_add_one_ref(const struct reference *ref, void *cb)
 {
 	struct string_list *refs = cb;
-	if (!unsorted_string_list_has_string(refs, refname))
-		string_list_append(refs, refname);
+	if (!unsorted_string_list_has_string(refs, ref->name))
+		string_list_append(refs, ref->name);
 	return 0;
 }
 
