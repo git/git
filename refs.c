@@ -2327,8 +2327,8 @@ int refs_optimize(struct ref_store *refs, struct pack_refs_opts *opts)
 int peel_iterated_oid(struct repository *r, const struct object_id *base, struct object_id *peeled)
 {
 	if (current_ref_iter &&
-	    (current_ref_iter->oid == base ||
-	     oideq(current_ref_iter->oid, base)))
+	    (current_ref_iter->ref.oid == base ||
+	     oideq(current_ref_iter->ref.oid, base)))
 		return ref_iterator_peel(current_ref_iter, peeled);
 
 	return peel_object(r, base, peeled) ? -1 : 0;
@@ -2703,7 +2703,7 @@ enum ref_transaction_error refs_verify_refnames_available(struct ref_store *refs
 
 			while ((ok = ref_iterator_advance(iter)) == ITER_OK) {
 				if (skip &&
-				    string_list_has_string(skip, iter->refname))
+				    string_list_has_string(skip, iter->ref.name))
 					continue;
 
 				if (transaction && ref_transaction_maybe_set_rejected(
@@ -2712,7 +2712,7 @@ enum ref_transaction_error refs_verify_refnames_available(struct ref_store *refs
 					continue;
 
 				strbuf_addf(err, _("'%s' exists; cannot create '%s'"),
-					    iter->refname, refname);
+					    iter->ref.name, refname);
 				goto cleanup;
 			}
 
