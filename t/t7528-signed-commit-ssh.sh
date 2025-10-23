@@ -82,7 +82,7 @@ test_expect_success GPGSSH 'create signed commits' '
 test_expect_success GPGSSH 'sign commits using literal public keys with ssh-agent' '
 	test_when_finished "test_unconfig commit.gpgsign" &&
 	test_config gpg.format ssh &&
-	eval $(ssh-agent) &&
+	eval $(ssh-agent -T || ssh-agent) &&
 	test_when_finished "kill ${SSH_AGENT_PID}" &&
 	test_when_finished "test_unconfig user.signingkey" &&
 	mkdir tmpdir &&
