@@ -425,6 +425,7 @@ static int cache_ref_iterator_advance(struct ref_iterator *ref_iterator)
 			level->prefix_state = entry_prefix_state;
 			level->index = -1;
 		} else {
+			memset(&iter->base.ref, 0, sizeof(iter->base.ref));
 			iter->base.ref.name = entry->name;
 			iter->base.ref.target = entry->u.value.referent;
 			iter->base.ref.oid = &entry->u.value.oid;

@@ -882,6 +882,7 @@ static int next_record(struct packed_ref_iterator *iter)
 {
 	const char *p, *eol;
 
+	memset(&iter->base.ref, 0, sizeof(iter->base.ref));
 	strbuf_reset(&iter->refname_buf);
 
 	/*
@@ -916,6 +917,7 @@ static int next_record(struct packed_ref_iterator *iter)
 	    !isspace(*p++))
 		die_invalid_line(iter->snapshot->refs->path,
 				 iter->pos, iter->eof - iter->pos);
+	iter->base.ref.oid = &iter->oid;
 
 	eol = memchr(p, '\n', iter->eof - p);
 	if (!eol)
@@ -1194,7 +1196,6 @@ static struct ref_iterator *packed_ref_iterator_begin(
 	iter->snapshot = snapshot;
 	acquire_snapshot(snapshot);
 	strbuf_init(&iter->refname_buf, 0);
-	iter->base.ref.oid = &iter->oid;
 	iter->repo = ref_store->repo;
 	iter->flags = flags;
 
