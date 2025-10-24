@@ -408,8 +408,6 @@ struct diff_options {
 	#define COLOR_MOVED_WS_ERROR (1<<0)
 	unsigned color_moved_ws_handling;
 
-	bool dry_run;
-
 	struct repository *repo;
 	struct strmap *additional_path_headers;
 

@@ -1351,7 +1351,7 @@ static void emit_diff_symbol_from_struct(struct diff_options *o,
 	int len = eds->len;
 	unsigned flags = eds->flags;
 
-	if (o->dry_run)
+	if (!o->file)
 		return;
 
 	switch (s) {
@@ -3765,9 +3765,9 @@ static void builtin_diff(const char *name_a,
 
 		if (o->word_diff)
 			init_diff_words_data(&ecbdata, o, one, two);
-		if (o->dry_run) {
+		if (!o->file) {
 			/*
-			 * Unlike the !dry_run case, we need to ignore the
+			 * Unlike the normal output case, we need to ignore the
 			 * return value from xdi_diff_outf() here, because
 			 * xdi_diff_outf() takes non-zero return from its
 			 * callback function as a sign of error and returns
@@ -4423,7 +4423,7 @@ static void run_external_diff(const struct external_diff *pgm,
 {
 	struct child_process cmd = CHILD_PROCESS_INIT;
 	struct diff_queue_struct *q = &diff_queued_diff;
-	int quiet = !(o->output_format & DIFF_FORMAT_PATCH) || o->dry_run;
+	int quiet = !(o->output_format & DIFF_FORMAT_PATCH) || !o->file;
 	int rc;
 
 	/*
@@ -4621,7 +4621,7 @@ static void run_diff_cmd(const struct external_diff *pgm,
 		    p->status == DIFF_STATUS_RENAMED)
 			o->found_changes = 1;
 	} else {
-		if (!o->dry_run)
+		if (o->file)
 			fprintf(o->file, "* Unmerged path %s\n", name);
 		o->found_changes = 1;
 	}
@@ -6199,15 +6199,15 @@ static void diff_flush_patch(struct diff_filepair *p, struct diff_options *o)
 /* return 1 if any change is found; otherwise, return 0 */
 static int diff_flush_patch_quietly(struct diff_filepair *p, struct diff_options *o)
 {
-	int saved_dry_run = o->dry_run;
+	FILE *saved_file = o->file;
 	int saved_found_changes = o->found_changes;
 	int ret;
 
-	o->dry_run = 1;
+	o->file = NULL;
 	o->found_changes = 0;
 	diff_flush_patch(p, o);
 	ret = o->found_changes;
-	o->dry_run = saved_dry_run;
+	o->file = saved_file;
 	o->found_changes |= saved_found_changes;
 	return ret;
 }
