@@ -60,6 +60,7 @@ static int paint_down_to_common(struct repository *r,
 	struct prio_queue queue = { compare_commits_by_gen_then_commit_date };
 	int i;
 	timestamp_t last_gen = GENERATION_NUMBER_INFINITY;
+	struct commit_list **tail = result;
 
 	if (!min_generation && !corrected_commit_dates_enabled(r))
 		queue.compare = compare_commits_by_commit_date;
@@ -95,7 +96,7 @@ static int paint_down_to_common(struct repository *r,
 		if (flags == (PARENT1 | PARENT2)) {
 			if (!(commit->object.flags & RESULT)) {
 				commit->object.flags |= RESULT;
-				commit_list_insert_by_date(commit, result);
+				tail = commit_list_append(commit, tail);
 			}
 			/* Mark parents of a found merge stale */
 			flags |= STALE;
@@ -128,6 +129,7 @@ static int paint_down_to_common(struct repository *r,
 	}
 
 	clear_prio_queue(&queue);
+	commit_list_sort_by_date(result);
 	return 0;
 }
 
@@ -136,7 +138,7 @@ static int merge_bases_many(struct repository *r,
 			    struct commit **twos,
 			    struct commit_list **result)
 {
-	struct commit_list *list = NULL;
+	struct commit_list *list = NULL, **tail = result;
 	int i;
 
 	for (i = 0; i < n; i++) {
@@ -171,8 +173,9 @@ static int merge_bases_many(struct repository *r,
 	while (list) {
 		struct commit *commit = pop_commit(&list);
 		if (!(commit->object.flags & STALE))
-			commit_list_insert_by_date(commit, result);
+			tail = commit_list_append(commit, tail);
 	}
+	commit_list_sort_by_date(result);
 	return 0;
 }
 
@@ -425,7 +428,7 @@ static int get_merge_bases_many_0(struct repository *r,
 				  int cleanup,
 				  struct commit_list **result)
 {
-	struct commit_list *list;
+	struct commit_list *list, **tail = result;
 	struct commit **rslt;
 	size_t cnt, i;
 	int ret;
@@ -461,7 +464,8 @@ static int get_merge_bases_many_0(struct repository *r,
 		return -1;
 	}
 	for (i = 0; i < cnt; i++)
-		commit_list_insert_by_date(rslt[i], result);
+		tail = commit_list_append(rslt[i], tail);
+	commit_list_sort_by_date(result);
 	free(rslt);
 	return 0;
 }
