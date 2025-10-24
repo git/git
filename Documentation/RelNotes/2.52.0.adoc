@@ -55,6 +55,8 @@ UI, Workflows & Features
    (e.g. blame.ignorerevsfile) can be marked as optional by prefixing
    ":(optoinal)" before its value.
 
+ * Show 'P'ipe command in "git add -p".
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -132,6 +134,9 @@ Performance, Internal Implementation, Development Support etc.
    This would help later effort to FFI into Rust.
 
  * The beginning of SHA1-SHA256 interoperability work.
+
+ * Build procedure for a few credential helpers (in contrib/) have
+   been updated.
 
 
 Fixes since v2.51
@@ -351,6 +356,25 @@ including security updates, are included in this release.
    these directories were given with a trailing slash, which has been
    corrected.
    (merge c0bec06cfe jk/diff-no-index-with-pathspec-fix later to maint).
+
+ * The "--short" option of "git status" that meant output for humans
+   and "-z" option to show NUL delimited output format did not mix
+   well, and colored some but not all things.  The command has been
+   updated to color all elements consistently in such a case.
+   (merge 50927f4f68 jk/status-z-short-fix later to maint).
+
+ * Unicode width table update.
+   (merge 330a54099e tb/unicode-width-table-17 later to maint).
+
+ * GPG signing test set-up has been broken for a year, which has been
+   corrected.
+   (merge 516bf45749 jc/t1016-setup-fix later to maint).
+
+ * Recent OpenSSH creates the Unix domain socket to communicate with
+   ssh-agent under $HOME instead of /tmp, which causes our test to
+   fail doe to overly long pathname in our test environment, which has
+   been worked around by using "ssh-agent -T".
+   (merge b7fb2194b9 ps/t7528-ssh-agent-uds-workaround later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 823d537fa7 kh/doc-git-log-markup-fix later to maint).
