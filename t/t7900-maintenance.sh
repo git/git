@@ -1263,6 +1263,11 @@ test_expect_success 'fails when running outside of a repository' '
 	nongit test_must_fail git maintenance unregister
 '
 
+test_expect_success 'fails when configured to use an invalid strategy' '
+	test_must_fail git -c maintenance.strategy=invalid maintenance run --schedule=hourly 2>err &&
+	test_grep "unknown maintenance strategy: .invalid." err
+'
+
 test_expect_success 'register and unregister bare repo' '
 	test_when_finished "git config --global --unset-all maintenance.repo || :" &&
 	test_might_fail git config --global --unset-all maintenance.repo &&

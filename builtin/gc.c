@@ -1855,6 +1855,13 @@ static const struct maintenance_strategy incremental_strategy = {
 	},
 };
 
+static struct maintenance_strategy parse_maintenance_strategy(const char *name)
+{
+	if (!strcasecmp(name, "incremental"))
+		return incremental_strategy;
+	die(_("unknown maintenance strategy: '%s'"), name);
+}
+
 static void initialize_task_config(struct maintenance_run_opts *opts,
 				   const struct string_list *selected_tasks)
 {
@@ -1890,12 +1897,10 @@ static void initialize_task_config(struct maintenance_run_opts *opts,
 	 * override specific aspects of our strategy.
 	 */
 	if (opts->schedule) {
-		strategy = none_strategy;
-
-		if (!repo_config_get_string_tmp(the_repository, "maintenance.strategy", &config_str)) {
-			if (!strcasecmp(config_str, "incremental"))
-				strategy = incremental_strategy;
-		}
+		if (!repo_config_get_string_tmp(the_repository, "maintenance.strategy", &config_str))
+			strategy = parse_maintenance_strategy(config_str);
+		else
+			strategy = none_strategy;
 	} else {
 		strategy = default_strategy;
 	}
