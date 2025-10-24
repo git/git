@@ -915,13 +915,25 @@ test_expect_success 'maintenance.strategy is respected' '
 		git gc --quiet --no-detach --skip-foreground-tasks
 		EOF
 
-		test_strategy incremental --schedule=weekly <<-\EOF
+		test_strategy incremental --schedule=weekly <<-\EOF &&
 		git pack-refs --all --prune
 		git prune-packed --quiet
 		git multi-pack-index write --no-progress
 		git multi-pack-index expire --no-progress
 		git multi-pack-index repack --no-progress --batch-size=1
 		git commit-graph write --split --reachable --no-progress
+		EOF
+
+		test_strategy gc <<-\EOF &&
+		git pack-refs --all --prune
+		git reflog expire --all
+		git gc --quiet --no-detach --skip-foreground-tasks
+		EOF
+
+		test_strategy gc --schedule=weekly <<-\EOF
+		git pack-refs --all --prune
+		git reflog expire --all
+		git gc --quiet --no-detach --skip-foreground-tasks
 		EOF
 	)
 '

@@ -1843,10 +1843,11 @@ struct maintenance_strategy {
 
 static const struct maintenance_strategy none_strategy = { 0 };
 
-static const struct maintenance_strategy default_strategy = {
+static const struct maintenance_strategy gc_strategy = {
 	.tasks = {
 		[TASK_GC] = {
-			.type = MAINTENANCE_TYPE_MANUAL,
+			.type = MAINTENANCE_TYPE_MANUAL | MAINTENANCE_TYPE_SCHEDULED,
+			.schedule = SCHEDULE_DAILY,
 		},
 	},
 };
@@ -1894,6 +1895,8 @@ static struct maintenance_strategy parse_maintenance_strategy(const char *name)
 {
 	if (!strcasecmp(name, "incremental"))
 		return incremental_strategy;
+	if (!strcasecmp(name, "gc"))
+		return gc_strategy;
 	die(_("unknown maintenance strategy: '%s'"), name);
 }
 
@@ -1937,7 +1940,7 @@ static void initialize_task_config(struct maintenance_run_opts *opts,
 		strategy = none_strategy;
 		type = MAINTENANCE_TYPE_SCHEDULED;
 	} else {
-		strategy = default_strategy;
+		strategy = gc_strategy;
 		type = MAINTENANCE_TYPE_MANUAL;
 	}
 
