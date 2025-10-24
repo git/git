@@ -182,6 +182,10 @@ including security updates, are included in this release.
    ignored") did not work well with "--name-only" and friends.
    (merge b55e6d36eb ly/diff-name-only-with-diff-from-content later to maint).
 
+ * The above caused regressions, which has been corrected.
+   (merge 623f7af2 jk/diff-from-contents-fix later to maint).
+   (merge 3da4413d jc/diff-from-contents-fix later to maint).
+
  * Documentation for "git rebase" has been updated.
    (merge 3f7f2b0359 je/doc-rebase later to maint).
 
