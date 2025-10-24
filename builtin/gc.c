@@ -55,7 +55,6 @@ static const char * const builtin_gc_usage[] = {
 };
 
 static timestamp_t gc_log_expire_time;
-static struct strvec repack = STRVEC_INIT;
 static struct tempfile *pidfile;
 static struct lock_file log_lock;
 static struct string_list pack_garbage = STRING_LIST_INIT_DUP;
@@ -618,48 +617,50 @@ static uint64_t estimate_repack_memory(struct gc_config *cfg,
 	return os_cache + heap;
 }
 
-static int keep_one_pack(struct string_list_item *item, void *data UNUSED)
+static int keep_one_pack(struct string_list_item *item, void *data)
 {
-	strvec_pushf(&repack, "--keep-pack=%s", basename(item->string));
+	struct strvec *args = data;
+	strvec_pushf(args, "--keep-pack=%s", basename(item->string));
 	return 0;
 }
 
 static void add_repack_all_option(struct gc_config *cfg,
-				  struct string_list *keep_pack)
+				  struct string_list *keep_pack,
+				  struct strvec *args)
 {
 	if (cfg->prune_expire && !strcmp(cfg->prune_expire, "now")
 		&& !(cfg->cruft_packs && cfg->repack_expire_to))
-		strvec_push(&repack, "-a");
+		strvec_push(args, "-a");
 	else if (cfg->cruft_packs) {
-		strvec_push(&repack, "--cruft");
+		strvec_push(args, "--cruft");
 		if (cfg->prune_expire)
-			strvec_pushf(&repack, "--cruft-expiration=%s", cfg->prune_expire);
+			strvec_pushf(args, "--cruft-expiration=%s", cfg->prune_expire);
 		if (cfg->max_cruft_size)
-			strvec_pushf(&repack, "--max-cruft-size=%lu",
+			strvec_pushf(args, "--max-cruft-size=%lu",
 				     cfg->max_cruft_size);
 		if (cfg->repack_expire_to)
-			strvec_pushf(&repack, "--expire-to=%s", cfg->repack_expire_to);
+			strvec_pushf(args, "--expire-to=%s", cfg->repack_expire_to);
 	} else {
-		strvec_push(&repack, "-A");
+		strvec_push(args, "-A");
 		if (cfg->prune_expire)
-			strvec_pushf(&repack, "--unpack-unreachable=%s", cfg->prune_expire);
+			strvec_pushf(args, "--unpack-unreachable=%s", cfg->prune_expire);
 	}
 
 	if (keep_pack)
-		for_each_string_list(keep_pack, keep_one_pack, NULL);
+		for_each_string_list(keep_pack, keep_one_pack, args);
 
 	if (cfg->repack_filter && *cfg->repack_filter)
-		strvec_pushf(&repack, "--filter=%s", cfg->repack_filter);
+		strvec_pushf(args, "--filter=%s", cfg->repack_filter);
 	if (cfg->repack_filter_to && *cfg->repack_filter_to)
-		strvec_pushf(&repack, "--filter-to=%s", cfg->repack_filter_to);
+		strvec_pushf(args, "--filter-to=%s", cfg->repack_filter_to);
 }
 
-static void add_repack_incremental_option(void)
+static void add_repack_incremental_option(struct strvec *args)
 {
-	strvec_push(&repack, "--no-write-bitmap-index");
+	strvec_push(args, "--no-write-bitmap-index");
 }
 
-static int need_to_gc(struct gc_config *cfg)
+static int need_to_gc(struct gc_config *cfg, struct strvec *repack_args)
 {
 	/*
 	 * Setting gc.auto to 0 or negative can disable the
@@ -700,10 +701,10 @@ static int need_to_gc(struct gc_config *cfg)
 				string_list_clear(&keep_pack, 0);
 		}
 
-		add_repack_all_option(cfg, &keep_pack);
+		add_repack_all_option(cfg, &keep_pack, repack_args);
 		string_list_clear(&keep_pack, 0);
 	} else if (too_many_loose_objects(cfg))
-		add_repack_incremental_option();
+		add_repack_incremental_option(repack_args);
 	else
 		return 0;
 
@@ -852,6 +853,7 @@ int cmd_gc(int argc,
 	int keep_largest_pack = -1;
 	int skip_foreground_tasks = 0;
 	timestamp_t dummy;
+	struct strvec repack_args = STRVEC_INIT;
 	struct maintenance_run_opts opts = MAINTENANCE_RUN_OPTS_INIT;
 	struct gc_config cfg = GC_CONFIG_INIT;
 	const char *prune_expire_sentinel = "sentinel";
@@ -891,7 +893,7 @@ int cmd_gc(int argc,
 	show_usage_with_options_if_asked(argc, argv,
 					 builtin_gc_usage, builtin_gc_options);
 
-	strvec_pushl(&repack, "repack", "-d", "-l", NULL);
+	strvec_pushl(&repack_args, "repack", "-d", "-l", NULL);
 
 	gc_config(&cfg);
 
@@ -914,14 +916,14 @@ int cmd_gc(int argc,
 		die(_("failed to parse prune expiry value %s"), cfg.prune_expire);
 
 	if (aggressive) {
-		strvec_push(&repack, "-f");
+		strvec_push(&repack_args, "-f");
 		if (cfg.aggressive_depth > 0)
-			strvec_pushf(&repack, "--depth=%d", cfg.aggressive_depth);
+			strvec_pushf(&repack_args, "--depth=%d", cfg.aggressive_depth);
 		if (cfg.aggressive_window > 0)
-			strvec_pushf(&repack, "--window=%d", cfg.aggressive_window);
+			strvec_pushf(&repack_args, "--window=%d", cfg.aggressive_window);
 	}
 	if (opts.quiet)
-		strvec_push(&repack, "-q");
+		strvec_push(&repack_args, "-q");
 
 	if (opts.auto_flag) {
 		if (cfg.detach_auto && opts.detach < 0)
@@ -930,7 +932,7 @@ int cmd_gc(int argc,
 		/*
 		 * Auto-gc should be least intrusive as possible.
 		 */
-		if (!need_to_gc(&cfg)) {
+		if (!need_to_gc(&cfg, &repack_args)) {
 			ret = 0;
 			goto out;
 		}
@@ -952,7 +954,7 @@ int cmd_gc(int argc,
 			find_base_packs(&keep_pack, cfg.big_pack_threshold);
 		}
 
-		add_repack_all_option(&cfg, &keep_pack);
+		add_repack_all_option(&cfg, &keep_pack, &repack_args);
 		string_list_clear(&keep_pack, 0);
 	}
 
@@ -1014,9 +1016,9 @@ int cmd_gc(int argc,
 
 		repack_cmd.git_cmd = 1;
 		repack_cmd.close_object_store = 1;
-		strvec_pushv(&repack_cmd.args, repack.v);
+		strvec_pushv(&repack_cmd.args, repack_args.v);
 		if (run_command(&repack_cmd))
-			die(FAILED_RUN, repack.v[0]);
+			die(FAILED_RUN, repack_args.v[0]);
 
 		if (cfg.prune_expire) {
 			struct child_process prune_cmd = CHILD_PROCESS_INIT;
@@ -1067,6 +1069,7 @@ int cmd_gc(int argc,
 
 out:
 	maintenance_run_opts_release(&opts);
+	strvec_clear(&repack_args);
 	gc_config_release(&cfg);
 	return 0;
 }
@@ -1267,6 +1270,19 @@ static int maintenance_task_gc_background(struct maintenance_run_opts *opts,
 	strvec_push(&child.args, "--skip-foreground-tasks");
 
 	return run_command(&child);
+}
+
+static int gc_condition(struct gc_config *cfg)
+{
+	/*
+	 * Note that it's fine to drop the repack arguments here, as we execute
+	 * git-gc(1) as a separate child process anyway. So it knows to compute
+	 * these arguments again.
+	 */
+	struct strvec repack_args = STRVEC_INIT;
+	int ret = need_to_gc(cfg, &repack_args);
+	strvec_clear(&repack_args);
+	return ret;
 }
 
 static int prune_packed(struct maintenance_run_opts *opts)
@@ -1596,7 +1612,7 @@ static const struct maintenance_task tasks[] = {
 		.name = "gc",
 		.foreground = maintenance_task_gc_foreground,
 		.background = maintenance_task_gc_background,
-		.auto_condition = need_to_gc,
+		.auto_condition = gc_condition,
 	},
 	[TASK_COMMIT_GRAPH] = {
 		.name = "commit-graph",
