@@ -661,6 +661,43 @@ test_expect_success 'diff -I<regex>: ignore matching file' '
 	test_grep ! "file1" actual
 '
 
+test_expect_success 'diff -I<regex>: ignore all content changes' '
+	test_when_finished "git rm -f file1 file2 file3" &&
+	: >file1 &&
+	git add file1 &&
+	: >file2 &&
+	git add file2 &&
+	: >file3 &&
+	git add file3 &&
+
+	rm -f file1 file2 &&
+	mkdir file2 &&
+	echo "A" >file3 &&
+	A_hash=$(git hash-object -w file3) &&
+	echo "B" >file3 &&
+	B_hash=$(git hash-object -w file3) &&
+	cat <<-EOF | git update-index --index-info &&
+	100644 $A_hash 1	file3
+	100644 $B_hash 2	file3
+	EOF
+
+	test_diff_no_content_changes () {
+		git diff $1 --ignore-blank-lines -I".*" >actual &&
+		test_line_count = 3 actual &&
+		test_grep "file1" actual &&
+		test_grep "file2" actual &&
+		test_grep "file3" actual &&
+		test_grep ! "diff --git" actual
+	} &&
+	test_diff_no_content_changes "--raw" &&
+	test_diff_no_content_changes "--name-only" &&
+	test_diff_no_content_changes "--name-status" &&
+
+	: >actual &&
+	test_must_fail git diff --quiet -I".*" >actual &&
+	test_must_be_empty actual
+'
+
 # check_prefix <patch> <src> <dst>
 # check only lines with paths to avoid dependency on exact oid/contents
 check_prefix () {
