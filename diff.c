@@ -6835,34 +6835,17 @@ void diff_flush(struct diff_options *options)
 			     DIFF_FORMAT_NAME |
 			     DIFF_FORMAT_NAME_STATUS |
 			     DIFF_FORMAT_CHECKDIFF)) {
-		/*
-		 * make sure diff_Flush_patch_quietly() to be silent.
-		 */
-		FILE *dev_null = NULL;
-
-		if (options->flags.diff_from_contents) {
-			dev_null = xfopen("/dev/null", "w");
-		}
 		for (i = 0; i < q->nr; i++) {
 			struct diff_filepair *p = q->queue[i];
 
 			if (!check_pair_status(p))
 				continue;
 
-			if (options->flags.diff_from_contents) {
-				FILE *saved_file = options->file;
-				int found_changes;
+			if (options->flags.diff_from_contents &&
+			    !diff_flush_patch_quietly(p, options))
+				continue;
 
-				options->file = dev_null;
-				found_changes = diff_flush_patch_quietly(p, options);
-				options->file = saved_file;
-				if (!found_changes)
-					continue;
-			}
 			flush_one_pair(p, options);
-		}
-		if (options->flags.diff_from_contents) {
-			fclose(dev_null);
 		}
 		separator++;
 	}
@@ -6914,14 +6897,6 @@ void diff_flush(struct diff_options *options)
 	if (output_format & DIFF_FORMAT_NO_OUTPUT &&
 	    options->flags.exit_with_status &&
 	    options->flags.diff_from_contents) {
-		/*
-		 * run diff_flush_patch for the exit status. setting
-		 * options->file to /dev/null should be safe, because we
-		 * aren't supposed to produce any output anyway.
-		 */
-		diff_free_file(options);
-		options->file = xfopen("/dev/null", "w");
-		options->close_file = 1;
 		for (i = 0; i < q->nr; i++) {
 			struct diff_filepair *p = q->queue[i];
 			if (check_pair_status(p))
