@@ -32,6 +32,15 @@ The possible strategies are:
   strategy for scheduled maintenance.
 * `gc`: This strategy runs the `gc` task. This is the default strategy for
   manual maintenance.
+* `geometric`: This strategy performs geometric repacking of packfiles and
+  keeps auxiliary data structures up-to-date. The strategy expires data in the
+  reflog and removes worktrees that cannot be located anymore. When the
+  geometric repacking strategy would decide to do an all-into-one repack, then
+  the strategy generates a cruft pack for all unreachable objects. Objects that
+  are already part of a cruft pack will be expired.
++
+This repacking strategy is a full replacement for the `gc` strategy and is
+recommended for large repositories.
 * `incremental`: This setting optimizes for performing small maintenance
   activities that do not delete any data. This does not schedule the `gc`
   task, but runs the `prefetch` and `commit-graph` tasks hourly, the
