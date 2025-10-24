@@ -1582,6 +1582,9 @@ static int maintenance_task_geometric_repack(struct maintenance_run_opts *opts,
 	struct child_process child = CHILD_PROCESS_INIT;
 	int ret;
 
+	repo_config_get_int(the_repository, "maintenance.geometric-repack.splitFactor",
+			    &geometry.split_factor);
+
 	existing_packs.repo = the_repository;
 	existing_packs_collect(&existing_packs, &kept_packs);
 	pack_geometry_init(&geometry, &existing_packs, &po_args);
@@ -1591,7 +1594,8 @@ static int maintenance_task_geometric_repack(struct maintenance_run_opts *opts,
 
 	strvec_pushl(&child.args, "repack", "-d", "-l", NULL);
 	if (geometry.split < geometry.pack_nr)
-		strvec_push(&child.args, "--geometric=2");
+		strvec_pushf(&child.args, "--geometric=%d",
+			     geometry.split_factor);
 	else
 		add_repack_all_option(cfg, NULL, &child.args);
 	if (opts->quiet)
@@ -1631,6 +1635,9 @@ static int geometric_repack_auto_condition(struct gc_config *cfg UNUSED)
 		return 0;
 	if (auto_value < 0)
 		return 1;
+
+	repo_config_get_int(the_repository, "maintenance.geometric-repack.splitFactor",
+			    &geometry.split_factor);
 
 	existing_packs.repo = the_repository;
 	existing_packs_collect(&existing_packs, &kept_packs);

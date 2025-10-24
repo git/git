@@ -86,6 +86,11 @@ maintenance.geometric-repack.auto::
 	objects that would be written into a new packfile. The default value is
 	100.
 
+maintenance.geometric-repack.splitFactor::
+	This integer config option controls the factor used for the geometric
+	sequence. See the `--geometric=` option in linkgit:git-repack[1] for
+	more details. Defaults to `2`.
+
 maintenance.reflog-expire.auto::
 	This integer config option controls how often the `reflog-expire` task
 	should be run as part of `git maintenance run --auto`. If zero, then

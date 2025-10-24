@@ -603,6 +603,38 @@ test_expect_success 'geometric repacking with --auto' '
 	)
 '
 
+test_expect_success 'geometric repacking honors configured split factor' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		git config set maintenance.auto false &&
+
+		# Create three different packs with 9, 2 and 1 object, respectively.
+		# This is done so that only a subset of packs would be merged
+		# together so that we can verify that `git repack` receives the
+		# correct geometric factor.
+		for i in $(test_seq 9)
+		do
+			echo first-$i | git hash-object -w --stdin -t blob || return 1
+		done &&
+		git repack --geometric=2 -d &&
+
+		for i in $(test_seq 2)
+		do
+			echo second-$i | git hash-object -w --stdin -t blob || return 1
+		done &&
+		git repack --geometric=2 -d &&
+
+		echo third | git hash-object -w --stdin -t blob &&
+		git repack --geometric=2 -d &&
+
+		test_geometric_repack_needed false splitFactor=2 &&
+		test_geometric_repack_needed true splitFactor=3 &&
+		test_subcommand git repack -d -l --geometric=3 --quiet --write-midx <trace2.txt
+	)
+'
+
 test_expect_success 'pack-refs task' '
 	for n in $(test_seq 1 5)
 	do
