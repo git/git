@@ -33,7 +33,7 @@ test_expect_success 'nonexistent template file should return error' '
 	(
 		GIT_EDITOR="echo hello >" &&
 		export GIT_EDITOR &&
-		test_must_fail git commit --template "$PWD"/notexist
+		test_must_fail git commit --template "$(pwd)"/notexist
 	)
 '
 
@@ -43,12 +43,12 @@ test_expect_success 'nonexistent optional template file on command line' '
 	(
 		GIT_EDITOR="echo hello >\"\$1\"" &&
 		export GIT_EDITOR &&
-		git commit --template ":(optional)$PWD/notexist"
+		git commit --template ":(optional)$(pwd)/notexist"
 	)
 '
 
 test_expect_success 'nonexistent template file in config should return error' '
-	test_config commit.template "$PWD"/notexist &&
+	test_config commit.template "$(pwd)"/notexist &&
 	(
 		GIT_EDITOR="echo hello >" &&
 		export GIT_EDITOR &&
@@ -57,7 +57,7 @@ test_expect_success 'nonexistent template file in config should return error' '
 '
 
 test_expect_success 'nonexistent optional template file in config' '
-	test_config commit.template ":(optional)$PWD"/notexist &&
+	test_config commit.template ":(optional)$(pwd)"/notexist &&
 	GIT_EDITOR="echo hello >" git commit --allow-empty &&
 	git cat-file commit HEAD | sed -e "1,/^$/d" >actual &&
 	echo hello >expect &&
@@ -65,7 +65,7 @@ test_expect_success 'nonexistent optional template file in config' '
 '
 
 # From now on we'll use a template file that exists.
-TEMPLATE="$PWD"/template
+TEMPLATE="$(pwd)"/template
 
 test_expect_success 'unedited template should not commit' '
 	echo "template line" >"$TEMPLATE" &&
@@ -97,6 +97,15 @@ test_expect_success 'adding real content to a template should commit' '
 		git commit --allow-empty --template "$TEMPLATE"
 	) &&
 	commit_msg_is "template linecommit message"
+'
+
+test_expect_success 'existent template marked optional should commit' '
+	echo "existent template" >"$TEMPLATE" &&
+	(
+		test_set_editor "$TEST_DIRECTORY"/t7500/add-content &&
+		git commit --allow-empty --template ":(optional)$TEMPLATE"
+	) &&
+	commit_msg_is "existent templatecommit message"
 '
 
 test_expect_success '-t option should be short for --template' '
