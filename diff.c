@@ -4423,7 +4423,6 @@ static void run_external_diff(const struct external_diff *pgm,
 {
 	struct child_process cmd = CHILD_PROCESS_INIT;
 	struct diff_queue_struct *q = &diff_queued_diff;
-	int quiet = !(o->output_format & DIFF_FORMAT_PATCH) || !o->file;
 	int rc;
 
 	/*
@@ -4432,7 +4431,7 @@ static void run_external_diff(const struct external_diff *pgm,
 	 * external diff program lacks the ability to tell us whether
 	 * it's empty then we consider it non-empty without even asking.
 	 */
-	if (!pgm->trust_exit_code && quiet) {
+	if (!pgm->trust_exit_code && !o->file) {
 		o->found_changes = 1;
 		return;
 	}
@@ -4457,7 +4456,7 @@ static void run_external_diff(const struct external_diff *pgm,
 	diff_free_filespec_data(one);
 	diff_free_filespec_data(two);
 	cmd.use_shell = 1;
-	if (quiet)
+	if (!o->file)
 		cmd.no_stdout = 1;
 	else if (o->file != stdout)
 		cmd.out = xdup(fileno(o->file));
