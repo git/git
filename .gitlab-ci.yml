@@ -67,6 +67,12 @@ test:linux:
         image: alpine:latest
       - jobname: linux32
         image: i386/ubuntu:20.04
+      # A RHEL 8 compatible distro.  Supported until 2029-05-31.
+      - jobname: almalinux-8
+        image: almalinux:8
+      # Supported until 2026-08-31.
+      - jobname: debian-11
+        image: debian:11
   artifacts:
     paths:
       - t/failed-test-artifacts
