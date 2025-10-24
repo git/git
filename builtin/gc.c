@@ -1873,6 +1873,20 @@ static const struct maintenance_strategy incremental_strategy = {
 			.type = MAINTENANCE_TYPE_SCHEDULED,
 			.schedule = SCHEDULE_WEEKLY,
 		},
+		/*
+		 * Historically, the "incremental" strategy was only available
+		 * in the context of scheduled maintenance when set up via
+		 * "maintenance.strategy". We have later expanded that config
+		 * to also cover manual maintenance.
+		 *
+		 * To retain backwards compatibility with the previous status
+		 * quo we thus run git-gc(1) in case manual maintenance was
+		 * requested. This is the same as the default strategy, which
+		 * would have been in use beforehand.
+		 */
+		[TASK_GC] = {
+			.type = MAINTENANCE_TYPE_MANUAL,
+		},
 	},
 };
 
@@ -1916,18 +1930,19 @@ static void initialize_task_config(struct maintenance_run_opts *opts,
 	 *   - Unscheduled maintenance uses our default strategy.
 	 *
 	 * Both of these are affected by the gitconfig though, which may
-	 * override specific aspects of our strategy.
+	 * override specific aspects of our strategy. Furthermore, both
+	 * strategies can be overridden by setting "maintenance.strategy".
 	 */
 	if (opts->schedule) {
-		if (!repo_config_get_string_tmp(the_repository, "maintenance.strategy", &config_str))
-			strategy = parse_maintenance_strategy(config_str);
-		else
-			strategy = none_strategy;
+		strategy = none_strategy;
 		type = MAINTENANCE_TYPE_SCHEDULED;
 	} else {
 		strategy = default_strategy;
 		type = MAINTENANCE_TYPE_MANUAL;
 	}
+
+	if (!repo_config_get_string_tmp(the_repository, "maintenance.strategy", &config_str))
+		strategy = parse_maintenance_strategy(config_str);
 
 	for (size_t i = 0; i < TASK__COUNT; i++) {
 		int config_value;

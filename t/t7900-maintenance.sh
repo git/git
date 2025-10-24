@@ -886,6 +886,46 @@ test_expect_success 'maintenance.strategy inheritance' '
 		<modified-daily.txt
 '
 
+test_strategy () {
+	STRATEGY="$1"
+	shift
+
+	cat >expect &&
+	rm -f trace2.txt &&
+	GIT_TRACE2_EVENT="$(pwd)/trace2.txt" \
+		git -c maintenance.strategy=$STRATEGY maintenance run --quiet "$@" &&
+	sed -n 's/{"event":"child_start","sid":"[^/"]*",.*,"argv":\["\(.*\)\"]}/\1/p' <trace2.txt |
+		sed 's/","/ /g'  >actual
+	test_cmp expect actual
+}
+
+test_expect_success 'maintenance.strategy is respected' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		test_commit initial &&
+
+		test_must_fail git -c maintenance.strategy=unknown maintenance run 2>err &&
+		test_grep "unknown maintenance strategy: .unknown." err &&
+
+		test_strategy incremental <<-\EOF &&
+		git pack-refs --all --prune
+		git reflog expire --all
+		git gc --quiet --no-detach --skip-foreground-tasks
+		EOF
+
+		test_strategy incremental --schedule=weekly <<-\EOF
+		git pack-refs --all --prune
+		git prune-packed --quiet
+		git multi-pack-index write --no-progress
+		git multi-pack-index expire --no-progress
+		git multi-pack-index repack --no-progress --batch-size=1
+		git commit-graph write --split --reachable --no-progress
+		EOF
+	)
+'
+
 test_expect_success 'register and unregister' '
 	test_when_finished git config --global --unset-all maintenance.repo &&
 

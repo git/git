@@ -16,19 +16,25 @@ detach.
 
 maintenance.strategy::
 	This string config option provides a way to specify one of a few
-	recommended schedules for background maintenance. This only affects
-	which tasks are run during `git maintenance run --schedule=X`
-	commands, provided no `--task=<task>` arguments are provided.
-	Further, if a `maintenance.<task>.schedule` config value is set,
-	then that value is used instead of the one provided by
-	`maintenance.strategy`. The possible strategy strings are:
+	recommended strategies for repository maintenance. This affects
+	which tasks are run during `git maintenance run`, provided no
+	`--task=<task>` arguments are provided. This setting impacts manual
+	maintenance, auto-maintenance as well as scheduled maintenance. The
+	tasks that run may be different depending on the maintenance type.
 +
-* `none`: This default setting implies no tasks are run at any schedule.
+The maintenance strategy can be further tweaked by setting
+`maintenance.<task>.enabled` and `maintenance.<task>.schedule`. If set, these
+values are used instead of the defaults provided by `maintenance.strategy`.
++
+The possible strategies are:
++
+* `none`: This strategy implies no tasks are run at all. This is the default
+  strategy for scheduled maintenance.
 * `incremental`: This setting optimizes for performing small maintenance
   activities that do not delete any data. This does not schedule the `gc`
   task, but runs the `prefetch` and `commit-graph` tasks hourly, the
   `loose-objects` and `incremental-repack` tasks daily, and the `pack-refs`
-  task weekly.
+  task weekly. Manual repository maintenance uses the `gc` task.
 
 maintenance.<task>.enabled::
 	This boolean config option controls whether the maintenance task
