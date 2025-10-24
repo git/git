@@ -57,6 +57,7 @@ ifndef V
 
 ## Used in "Makefile"
 	QUIET_CARGO    = @echo '   ' CARGO $@;
+	QUIET_CBINDGEN = @echo '   ' CBINDGEN $@;
 	QUIET_CC       = @echo '   ' CC $@;
 	QUIET_AR       = @echo '   ' AR $@;
 	QUIET_LINK     = @echo '   ' LINK $@;

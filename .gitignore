@@ -197,6 +197,7 @@
 /gitweb/gitweb.cgi
 /gitweb/static/gitweb.js
 /gitweb/static/gitweb.min.*
+/c-bindings.h
 /config-list.h
 /command-list.h
 /hook-list.h
