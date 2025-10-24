@@ -1835,23 +1835,37 @@ struct maintenance_strategy {
 };
 
 static const struct maintenance_strategy none_strategy = { 0 };
+
 static const struct maintenance_strategy default_strategy = {
 	.tasks = {
-		[TASK_GC].enabled = 1,
+		[TASK_GC] = {
+			.enabled = 1,
+		},
 	},
 };
+
 static const struct maintenance_strategy incremental_strategy = {
 	.tasks = {
-		[TASK_COMMIT_GRAPH].enabled = 1,
-		[TASK_COMMIT_GRAPH].schedule = SCHEDULE_HOURLY,
-		[TASK_PREFETCH].enabled = 1,
-		[TASK_PREFETCH].schedule = SCHEDULE_HOURLY,
-		[TASK_INCREMENTAL_REPACK].enabled = 1,
-		[TASK_INCREMENTAL_REPACK].schedule = SCHEDULE_DAILY,
-		[TASK_LOOSE_OBJECTS].enabled = 1,
-		[TASK_LOOSE_OBJECTS].schedule = SCHEDULE_DAILY,
-		[TASK_PACK_REFS].enabled = 1,
-		[TASK_PACK_REFS].schedule = SCHEDULE_WEEKLY,
+		[TASK_COMMIT_GRAPH] = {
+			.enabled = 1,
+			.schedule = SCHEDULE_HOURLY,
+		},
+		[TASK_PREFETCH] = {
+			.enabled = 1,
+			.schedule = SCHEDULE_HOURLY,
+		},
+		[TASK_INCREMENTAL_REPACK] = {
+			.enabled = 1,
+			.schedule = SCHEDULE_DAILY,
+		},
+		[TASK_LOOSE_OBJECTS] = {
+			.enabled = 1,
+			.schedule = SCHEDULE_DAILY,
+		},
+		[TASK_PACK_REFS] = {
+			.enabled = 1,
+			.schedule = SCHEDULE_WEEKLY,
+		},
 	},
 };
 
