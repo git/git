@@ -114,7 +114,7 @@ do
 		git config core.repositoryformatversion 1 &&
 		git config extensions.objectformat $hash &&
 		git config extensions.compatobjectformat $(compat_hash $hash) &&
-		test_config gpg.program $TEST_DIRECTORY/t1016/gpg &&
+		git config gpg.program $TEST_DIRECTORY/t1016/gpg &&
 		echo "Hello World!" >hello &&
 		eval hello_${hash}_oid=$(git hash-object hello) &&
 		git update-index --add hello &&
