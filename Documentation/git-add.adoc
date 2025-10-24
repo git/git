@@ -349,6 +349,7 @@ patch::
        s - split the current hunk into smaller hunks
        e - manually edit the current hunk
        p - print the current hunk
+       P - print the current hunk using the pager
        ? - print help
 +
 After deciding the fate for all hunks, if there is any hunk

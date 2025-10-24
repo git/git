@@ -1416,7 +1416,8 @@ N_("j - go to the next undecided hunk, roll over at the bottom\n"
    "/ - search for a hunk matching the given regex\n"
    "s - split the current hunk into smaller hunks\n"
    "e - manually edit the current hunk\n"
-   "p - print the current hunk, 'P' to use the pager\n"
+   "p - print the current hunk\n"
+   "P - print the current hunk using the pager\n"
    "? - print help\n");
 
 static size_t dec_mod(size_t a, size_t m)
@@ -1547,7 +1548,7 @@ static int patch_update_file(struct add_p_state *s,
 				permitted |= ALLOW_EDIT;
 				strbuf_addstr(&s->buf, ",e");
 			}
-			strbuf_addstr(&s->buf, ",p");
+			strbuf_addstr(&s->buf, ",p,P");
 		}
 		if (file_diff->deleted)
 			prompt_mode_type = PROMPT_DELETION;
