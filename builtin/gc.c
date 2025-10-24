@@ -1827,9 +1827,16 @@ static int maintenance_run_tasks(struct maintenance_run_opts *opts,
 	return result;
 }
 
+enum maintenance_type {
+	/* As invoked via `git maintenance run --schedule=`. */
+	MAINTENANCE_TYPE_SCHEDULED = (1 << 0),
+	/* As invoked via `git maintenance run` and with `--auto`. */
+	MAINTENANCE_TYPE_MANUAL    = (1 << 1),
+};
+
 struct maintenance_strategy {
 	struct {
-		int enabled;
+		unsigned type;
 		enum schedule_priority schedule;
 	} tasks[TASK__COUNT];
 };
@@ -1839,7 +1846,7 @@ static const struct maintenance_strategy none_strategy = { 0 };
 static const struct maintenance_strategy default_strategy = {
 	.tasks = {
 		[TASK_GC] = {
-			.enabled = 1,
+			.type = MAINTENANCE_TYPE_MANUAL,
 		},
 	},
 };
@@ -1847,23 +1854,23 @@ static const struct maintenance_strategy default_strategy = {
 static const struct maintenance_strategy incremental_strategy = {
 	.tasks = {
 		[TASK_COMMIT_GRAPH] = {
-			.enabled = 1,
+			.type = MAINTENANCE_TYPE_SCHEDULED,
 			.schedule = SCHEDULE_HOURLY,
 		},
 		[TASK_PREFETCH] = {
-			.enabled = 1,
+			.type = MAINTENANCE_TYPE_SCHEDULED,
 			.schedule = SCHEDULE_HOURLY,
 		},
 		[TASK_INCREMENTAL_REPACK] = {
-			.enabled = 1,
+			.type = MAINTENANCE_TYPE_SCHEDULED,
 			.schedule = SCHEDULE_DAILY,
 		},
 		[TASK_LOOSE_OBJECTS] = {
-			.enabled = 1,
+			.type = MAINTENANCE_TYPE_SCHEDULED,
 			.schedule = SCHEDULE_DAILY,
 		},
 		[TASK_PACK_REFS] = {
-			.enabled = 1,
+			.type = MAINTENANCE_TYPE_SCHEDULED,
 			.schedule = SCHEDULE_WEEKLY,
 		},
 	},
@@ -1881,6 +1888,7 @@ static void initialize_task_config(struct maintenance_run_opts *opts,
 {
 	struct strbuf config_name = STRBUF_INIT;
 	struct maintenance_strategy strategy;
+	enum maintenance_type type;
 	const char *config_str;
 
 	/*
@@ -1915,8 +1923,10 @@ static void initialize_task_config(struct maintenance_run_opts *opts,
 			strategy = parse_maintenance_strategy(config_str);
 		else
 			strategy = none_strategy;
+		type = MAINTENANCE_TYPE_SCHEDULED;
 	} else {
 		strategy = default_strategy;
+		type = MAINTENANCE_TYPE_MANUAL;
 	}
 
 	for (size_t i = 0; i < TASK__COUNT; i++) {
@@ -1926,8 +1936,8 @@ static void initialize_task_config(struct maintenance_run_opts *opts,
 		strbuf_addf(&config_name, "maintenance.%s.enabled",
 			    tasks[i].name);
 		if (!repo_config_get_bool(the_repository, config_name.buf, &config_value))
-			strategy.tasks[i].enabled = config_value;
-		if (!strategy.tasks[i].enabled)
+			strategy.tasks[i].type = config_value ? type : 0;
+		if (!(strategy.tasks[i].type & type))
 			continue;
 
 		if (opts->schedule) {
