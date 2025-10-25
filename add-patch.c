@@ -1569,8 +1569,10 @@ static int patch_update_file(struct add_p_state *s,
 		if (*s->s.reset_color_interactive)
 			fputs(s->s.reset_color_interactive, stdout);
 		fflush(stdout);
-		if (read_single_character(s) == EOF)
+		if (read_single_character(s) == EOF) {
+			quit = 1;
 			break;
+		}
 
 		if (!s->answer.len)
 			continue;
