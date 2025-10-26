@@ -1369,6 +1369,12 @@ int match_pathname(const char *pathname, int pathlen,
 		if (patternlen == prefix && namelen == prefix)
 			return 1;
 
+		/*
+		 * Retain one character of the prefix to
+		 * pass to fnmatch, which lets it distinguish
+		 * the start of a directory component correctly.
+		 */
+		prefix--;
 		pattern += prefix;
 		patternlen -= prefix;
 		name    += prefix;
