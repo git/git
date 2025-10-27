@@ -500,9 +500,9 @@ test_expect_success 'geometric repacking task' '
 
 		# Repacking should now cause a no-op geometric repack because
 		# no packfiles need to be combined.
-		ls -l .git/objects/pack >before &&
+		ls -l .git/objects/pack/*.pack >before &&
 		run_and_verify_geometric_pack 1 &&
-		ls -l .git/objects/pack >after &&
+		ls -l .git/objects/pack/*.pack >after &&
 		test_cmp before after &&
 
 		# This incremental change creates a new packfile that only
