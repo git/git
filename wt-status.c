@@ -2051,13 +2051,13 @@ static void wt_shortstatus_status(struct string_list_item *it,
 static void wt_shortstatus_other(struct string_list_item *it,
 				 struct wt_status *s, const char *sign)
 {
+	color_fprintf(s->fp, color(WT_STATUS_UNTRACKED, s), "%s", sign);
 	if (s->null_termination) {
-		fprintf(s->fp, "%s %s%c", sign, it->string, 0);
+		fprintf(s->fp, " %s%c", it->string, 0);
 	} else {
 		struct strbuf onebuf = STRBUF_INIT;
 		const char *one;
 		one = quote_path(it->string, s->prefix, &onebuf, QUOTE_PATH_QUOTE_SP);
-		color_fprintf(s->fp, color(WT_STATUS_UNTRACKED, s), "%s", sign);
 		fprintf(s->fp, " %s\n", one);
 		strbuf_release(&onebuf);
 	}
