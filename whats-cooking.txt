@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Oct 2025, #09; Sat, 25)
-X-master-at: 4e98b730f18d59b670ee57b803e5048b9d14b968
-X-next-at: 1543da99c27235b2546b704d05475f87972d1197
+Subject: What's cooking in git.git (Oct 2025, #10; Mon, 27)
+X-master-at: 419c72cb8ada252b260efc38ff91fe201de7c8c3
+X-next-at: 38ec6c3e3b6da97b0b11a99adc78c386d413d9d8
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Oct 2025, #09; Sat, 25)
+What's cooking in git.git (Oct 2025, #10; Mon, 27)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,126 +46,35 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* jc/diff-from-contents-fix (2025-10-22) 1 commit
-  (merged to 'next' on 2025-10-23 at fae07d2113)
- + diff: make sure the other caller of diff_flush_patch_quietly() is silent
- (this branch is used by ly/diff-name-only-with-diff-from-content; uses jk/diff-from-contents-fix.)
-
- The code to squelch output from "git diff -w --name-status"
- etc. for paths that "git diff -w -p" would have stayed silent
- leaked output from dry-run patch generation, which has been
- corrected.
- source: <xmqqy0p4wcac.fsf@gitster.g>
-
-
-* jc/t1016-setup-fix (2025-10-10) 1 commit
-  (merged to 'next' on 2025-10-24 at 7d5464a96f)
- + t1016: make sure to use specified GPG
-
- GPG signing test set-up has been broken for a year, which has been
- corrected.
- source: <xmqqsefq7947.fsf@gitster.g>
-
-
-* jk/diff-from-contents-fix (2025-10-17) 2 commits
-  (merged to 'next' on 2025-10-20 at 19442a804e)
- + diff: restore redirection to /dev/null for diff_from_contents
- + Merge branch 'ly/diff-name-only-with-diff-from-content' into jk/diff-from-contents-fix
- (this branch is used by jc/diff-from-contents-fix and ly/diff-name-only-with-diff-from-content.)
-
- Recently we attempted to improve "git diff -w" and friends to
- handle cases where patch output would be suppressed, but it
- introduced a bug that emits unnecessary output, which has been
- corrected.
-
- Will merge to 'master' and then to 'maint'.
- source: <20251017083641.GB4073661@coredump.intra.peff.net>
-
-
-* jk/status-z-short-fix (2025-10-17) 1 commit
-  (merged to 'next' on 2025-10-20 at 0d649c97b7)
- + status: make coloring of "-z --short" consistent
-
- The "--short" option of "git status" that meant output for humans
- and "-z" option to show NUL delimited output format did not mix
- well, and colored some but not all things.  The command has been
- updated to color all elements consistently in such a case.
- source: <20251017084455.GA4096702@coredump.intra.peff.net>
-
-
-* js/t7500-pwd-windows-fix (2025-10-20) 1 commit
-  (merged to 'next' on 2025-10-20 at d3996041e8)
- + t7500: fix tests with absolute path following ":(optional)" on Windows
-
- Test fix.
- source: <6a83c7d1-7cd4-432e-a0ab-7b18ce3af08d@kdbg.org>
-
-
-* ps/t7528-ssh-agent-uds-workaround (2025-10-23) 1 commit
-  (merged to 'next' on 2025-10-23 at 9642f0746a)
- + t7528: work around ETOOMANY in OpenSSH 10.1 and newer
-
- Recent OpenSSH creates the Unix domain socket to communicate with
- ssh-agent under $HOME instead of /tmp, which causes our test to
- fail doe to overly long pathname in our test environment, which has
- been worked around by using "ssh-agent -T".
- source: <20251023-b4-pks-t7528-ssh-agent-socket-name-too-long-v1-1-f15eeec199f3@pks.im>
-
-
-* rj/doc-technical-fixes (2025-10-16) 4 commits
-  (merged to 'next' on 2025-10-23 at 0af15d1860)
- + doc: add large-object-promisors.adoc to the docs build
- + doc: commit-graph.adoc: fix up some formatting
- + doc: sparse-checkout.adoc: fix asciidoc warnings
- + doc: remembering-renames.adoc: fix asciidoc warnings
-
- Documentation mark-up fixes.
- source: <20251016200301.1595204-1-ramsay@ramsayjones.plus.com>
-
-
-* rs/add-patch-document-p-for-pager (2025-10-21) 1 commit
-  (merged to 'next' on 2025-10-22 at 7937ae0274)
- + add-patch: fully document option P
-
- Show 'P'ipe command in "git add -p".
- source: <0188c766-d788-476d-a4d4-f95a6f59b31b@web.de>
-
-
-* tb/unicode-width-table-17 (2025-10-21) 1 commit
-  (merged to 'next' on 2025-10-22 at 6382b8bd44)
- + unicode: update the width tables to Unicode 17
-
- Unicode width table update.
- source: <20251021094849.93284-1-tboegi@web.de>
-
-
-* tu/credential-makefile-updates (2025-10-20) 1 commit
-  (merged to 'next' on 2025-10-22 at 1a8d65324c)
- + contrib/credential: harmonize Makefiles
-
- Build procedure for a few credential helpers (in contrib/) have
- been updated.
- source: <0a61b0b3-365b-c198-6afd-f26fcd5a9c20@mailbox.tu-dresden.de>
-
---------------------------------------------------
 [New Topics]
 
+* tu/credential-install (2025-10-25) 1 commit
+ - contrib/credential: add install target
+
+ Contributed credential helpers (obviously in contrib/) now have "cd
+ $there && make install" target.
+
+ Will merge to 'next'.
+ source: <f67b3cbd-a117-a863-37ba-fbba7a2ca17a@mailbox.tu-dresden.de>
+
+--------------------------------------------------
+[Cooking]
+
 * jk/diff-patch-dry-run-cleanup (2025-10-24) 6 commits
- - diff: simplify run_external_diff() quiet logic
- - diff: drop dry-run redirection to /dev/null
- - diff: replace diff_options.dry_run flag with NULL file
- - diff: drop save/restore of color_moved in dry-run mode
- - diff: send external diff output to diff_options.file
- - Merge branch 'ly/diff-name-only-with-diff-from-content' into jk/diff-patch-dry-run-cleanup
+  (merged to 'next' on 2025-10-26 at 28426e9102)
+ + diff: simplify run_external_diff() quiet logic
+ + diff: drop dry-run redirection to /dev/null
+ + diff: replace diff_options.dry_run flag with NULL file
+ + diff: drop save/restore of color_moved in dry-run mode
+ + diff: send external diff output to diff_options.file
+ + Merge branch 'ly/diff-name-only-with-diff-from-content' into jk/diff-patch-dry-run-cleanup
  (this branch uses ly/diff-name-only-with-diff-from-content.)
 
  Finishing touches to fixes to the recent regression in "git diff -w
  --quiet" and anything that needs to internally generate patch to
  see if it turns empty.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20251024170522.GA2344972@coredump.intra.peff.net>
 
 
@@ -180,28 +89,28 @@ Release tarballs are available at:
 
 
 * rs/merge-base-optim (2025-10-24) 1 commit
- - commit-reach: avoid commit_list_insert_by_date()
+  (merged to 'next' on 2025-10-26 at 45f9bd4b81)
+ + commit-reach: avoid commit_list_insert_by_date()
 
  The code to walk revision graph to compute merge base has been
  optimized.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <87a00cb8-8faf-48ec-91aa-009e6e906363@web.de>
 
 
 * rs/add-patch-quit (2025-10-24) 2 commits
- - add-patch: quit on EOF
- - add-patch: quit without skipping undecided hunks
+  (merged to 'next' on 2025-10-26 at 859e2555b2)
+ + add-patch: quit on EOF
+ + add-patch: quit without skipping undecided hunks
 
  The 'q'(uit) command in "git add -p" has been improved to quit
  without doing any meaningless work before leaving, and giving EOF
  (typically control-D) to the prompt is made to behave the same way.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <13529bee-1e02-4c20-9461-6569312bfe4f@web.de>
 
---------------------------------------------------
-[Cooking]
 
 * ey/commit-graph-changed-paths-config (2025-10-17) 1 commit
   (merged to 'next' on 2025-10-23 at 48fd936ff1)
@@ -255,14 +164,16 @@ Release tarballs are available at:
  source: <20251024-b4-pks-rust-cbindgen-v2-0-4b4bd4f18490@pks.im>
 
 
-* jk/match-pathname-fix (2025-10-13) 1 commit
- - match_pathname(): give fnmatch one char of prefix context
+* jk/match-pathname-fix (2025-10-26) 2 commits
+  (merged to 'next' on 2025-10-26 at f18b45f0df)
+ + match_pathname(): give fnmatch one char of prefix context
+ + match_pathname(): reorder prefix-match check
 
  The wildmatch code had a corner case bug that mistakenly makes
  "foo**/bar" match with "foobar", which has been corrected.
 
- Will merge to 'next'.
- source: <20251014003404.GC1507@coredump.intra.peff.net>
+ Will merge to 'master'.
+ source: <20251026154036.GA2173430@coredump.intra.peff.net>
 
 
 * kf/log-shortlog-completion-fix (2025-10-20) 1 commit
@@ -290,15 +201,14 @@ Release tarballs are available at:
  source: <20251020-refs-code-cleanup-v2-0-f5349ed0f6a5@gmail.com>
 
 
-* lo/repo-info-all (2025-10-20) 2 commits
+* lo/repo-info-all (2025-10-26) 2 commits
  - repo: add --all to git-repo-info
  - repo: factor out field printing to dedicated function
 
  "git repo info" learned "--all" option.
 
- Expecting a reroll.
- cf. <aPcduvnjD0yphja2@pks.im>
- source: <20251020181943.6314-1-lucasseikioshiro@gmail.com>
+ Will merge to 'next'?
+ source: <20251026225409.46647-1-lucasseikioshiro@gmail.com>
 
 
 * ly/diff-name-only-with-diff-from-content (2025-10-19) 3 commits
@@ -332,24 +242,25 @@ Release tarballs are available at:
 
 
 * ps/maintenance-geometric (2025-10-23) 11 commits
- - builtin/maintenance: introduce "geometric" strategy
- - builtin/maintenance: make "gc" strategy accessible
- - builtin/maintenance: extend "maintenance.strategy" to manual maintenance
- - builtin/maintenance: run maintenance tasks depending on type
- - builtin/maintenance: improve readability of strategies
- - builtin/maintenance: don't silently ignore invalid strategy
- - builtin/maintenance: make the geometric factor configurable
- - builtin/maintenance: introduce "geometric-repack" task
- - builtin/gc: make `too_many_loose_objects()` reusable without GC config
- - builtin/gc: remove global `repack` variable
- - Merge branch 'tb/incremental-midx-part-3.1' into ps/maintenance-geometric
+  (merged to 'next' on 2025-10-26 at 505f26dcf7)
+ + builtin/maintenance: introduce "geometric" strategy
+ + builtin/maintenance: make "gc" strategy accessible
+ + builtin/maintenance: extend "maintenance.strategy" to manual maintenance
+ + builtin/maintenance: run maintenance tasks depending on type
+ + builtin/maintenance: improve readability of strategies
+ + builtin/maintenance: don't silently ignore invalid strategy
+ + builtin/maintenance: make the geometric factor configurable
+ + builtin/maintenance: introduce "geometric-repack" task
+ + builtin/gc: make `too_many_loose_objects()` reusable without GC config
+ + builtin/gc: remove global `repack` variable
+ + Merge branch 'tb/incremental-midx-part-3.1' into ps/maintenance-geometric
  (this branch uses tb/incremental-midx-part-3.1.)
 
  "git maintenance" command learns the "geometric" strategy where it
  avoids doing maintenance tasks that rebuilds everything from
  scratch.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20251024-pks-maintenance-geometric-strategy-v3-0-9b5b3bdb4387@pks.im>
 
 
@@ -412,23 +323,26 @@ Release tarballs are available at:
 
 
 * kh/doc-patch-id-1 (2025-10-13) 2 commits
- - doc: patch-id: convert to the modern synopsis style
- - Merge branch 'kh/doc-patch-id-markup-fix' into kh/doc-patch-id-1
+  (merged to 'next' on 2025-10-26 at e284077116)
+ + doc: patch-id: convert to the modern synopsis style
+ + Merge branch 'kh/doc-patch-id-markup-fix' into kh/doc-patch-id-1
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <v2-38645ea253c.1760369708.git.code@khaugsbakk.name>
 
 
-* tz/test-prepare-gnupghome (2024-07-03) 2 commits
+* tz/test-prepare-gnupghome (2025-10-25) 3 commits
+ - t1016: disable flakey tests
  - t/lib-gpg: call prepare_gnupghome() in GPG2 prereq
  - t/lib-gpg: add prepare_gnupghome() to create GNUPGHOME dir
 
  Tests did not set up GNUPGHOME correctly, which is fixed but some
- bugs are exposed in t1016, which needs to be addressed before this
- topic can move forward.
+ flaky tests are exposed in t1016, which needs to be addressed
+ before this topic can move forward.
 
  On hold.
  cf. <ZoV8b2RvYxLOotSJ@teonanacatl.net>
+ cf. <xmqqbjlump3m.fsf@gitster.g>
  source: <20240703153738.916469-1-tmz@pobox.com>
 
 
