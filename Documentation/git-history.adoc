@@ -8,7 +8,7 @@ git-history - EXPERIMENTAL: Rewrite history of the current branch
 SYNOPSIS
 --------
 [synopsis]
-git history [<options>]
+git history reword <commit>
 
 DESCRIPTION
 -----------
@@ -31,6 +31,11 @@ COMMANDS
 --------
 
 Several commands are available to rewrite history in different ways:
+
+`reword <commit>`::
+	Rewrite the commit message of the specified commit. All the other
+	details of this commit remain unchanged. This command will spawn an
+	editor with the current message of that commit.
 
 CONFIGURATION
 -------------
