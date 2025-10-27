@@ -104,7 +104,6 @@ Performance, Internal Implementation, Development Support etc.
 
  * Adjust to the way newer versions of cURL selectively enable tracing
    options, so that our tests can continue to work.
-   (merge 1b5a6bfff3 jk/curl-global-trace-components later to maint).
 
  * The clear_alloc_state() API function was not fully clearing the
    structure for reuse, but since nobody reuses it, replace it with a
@@ -147,11 +146,9 @@ including security updates, are included in this release.
 
  * During interactive rebase, using 'drop' on a merge commit lead to
    an error, which was incorrect.
-   (merge 4d491ade8f js/rebase-i-allow-drop-on-a-merge later to maint).
 
  * "git refs migrate" to migrate the reflog entries from a refs
    backend to another had a handful of bugs squashed.
-   (merge 465eff81de ps/reflog-migrate-fixes later to maint).
 
  * "git remote rename origin upstream" failed to move origin/HEAD to
    upstream/HEAD when origin/HEAD is unborn and performed other
@@ -164,11 +161,9 @@ including security updates, are included in this release.
  * "git push" had a code path that led to BUG() but it should have
    been a die(), as it is a response to a usual but invalid end-user
    action to attempt pushing an object that does not exist.
-   (merge dfbfc2221b dl/push-missing-object-error later to maint).
 
  * Various bugs about rename handling in "ort" merge strategy have
    been fixed.
-   (merge f6ecb603ff en/ort-rename-fixes later to maint).
 
  * "git jump" (in contrib/) fails to parse the diff header correctly
    when a file has a space in its name, which has been corrected.
@@ -179,7 +174,6 @@ including security updates, are included in this release.
    the prefix from the output, and oddballs like "-" (stdin) did not
    work correctly because of it.  Correct the set-up by undoing what
    the set-up sequence did to cwd and prefix.
-   (merge e1d3d61a45 jc/diff-no-index-in-subdir later to maint).
 
  * Various options to "git diff" that makes comparison ignore certain
    aspects of the differences (like "space changes are ignored",
@@ -188,8 +182,6 @@ including security updates, are included in this release.
    (merge b55e6d36eb ly/diff-name-only-with-diff-from-content later to maint).
 
  * The above caused regressions, which has been corrected.
-   (merge 623f7af2 jk/diff-from-contents-fix later to maint).
-   (merge 3da4413d jc/diff-from-contents-fix later to maint).
 
  * Documentation for "git rebase" has been updated.
    (merge 3f7f2b0359 je/doc-rebase later to maint).
@@ -197,13 +189,11 @@ including security updates, are included in this release.
  * The start_delayed_progress() function in the progress eye-candy API
    did not clear its internal state, making an initial delay value
    larger than 1 second ineffective, which has been corrected.
-   (merge 457534d041 js/progress-delay-fix later to maint).
 
  * The compatObjectFormat extension is used to hide an incomplete
    feature that is not yet usable for any purpose other than
    developing the feature further.  Document it as such to discourage
    its use by mere mortals.
-   (merge 716d905792 bc/doc-compat-object-format-not-working later to maint).
 
  * "git log -L..." compared trees of multiple parents with the tree of the
    merge result in an unnecessarily inefficient way.
@@ -213,7 +203,6 @@ including security updates, are included in this release.
    repository, especially a partially cloned one, "git fetch" may
    mistakenly think some objects we do have are missing, which has
    been corrected.
-   (merge 8f32a5a6c0 jk/fetch-check-graph-objects-fix later to maint).
 
  * "git fetch" can clobber a symref that is dangling when the
    remote-tracking HEAD is set to auto update, which has been
@@ -225,20 +214,16 @@ including security updates, are included in this release.
 
  * Manual page for "gitk" is updated with the current maintainer's
    name.
-   (merge bcb20dda83 js/doc-gitk-history later to maint).
 
  * Update the instructions for using GGG in the MyFirstContribution
    document to say that a GitHub PR could be made against `git/git`
    instead of `gitgitgadget/git`.
-   (merge 37001cdbc4 ds/doc-ggg-pr-fork-clarify later to maint).
 
  * Makefile tried to run multiple "cargo build" which would not work
    very well; serialize their execution to work around this problem.
-   (merge 0eeacde50e da/cargo-serialize later to maint).
 
  * "git repack --path-walk" lost objects in some corner cases, which
    has been corrected.
-   (merge 93afe9b060 ds/path-walk-repack-fix later to maint).
 
  * "git ls-files <pathspec>..." should not necessarily have to expand
    the index fully if a sparsified directory is excluded by the
@@ -249,15 +234,12 @@ including security updates, are included in this release.
  * Windows "real-time monitoring" interferes with the execution of
    tests and affects negatively in both correctness and performance,
    which has been disabled in Gitlab CI.
-   (merge 608cf5b793 ps/gitlab-ci-disable-windows-monitoring later to maint).
 
  * A broken or malicious "git fetch" can say that it has the same
    object for many many times, and the upload-pack serving it can
    exhaust memory storing them redundantly, which has been corrected.
-   (merge 88a2dc68c8 ps/upload-pack-oom-protection later to maint).
 
  * A corner case bug in "git log -L..." has been corrected.
-   (merge e3106998ff sg/line-log-boundary-fixes later to maint).
 
  * "git rev-parse --short" and friends failed to disambiguate two
    objects with object names that share common prefix longer than 32
@@ -267,7 +249,6 @@ including security updates, are included in this release.
  * Some among "git add -p" and friends ignored color.diff and/or
    color.ui configuration variables, which is an old regression, which
    has been corrected.
-   (merge 1092cd6435 jk/add-i-color later to maint).
 
  * "git subtree" (in contrib/) did not work correctly when splitting
    squashed subtrees, which has been improved.
@@ -283,7 +264,6 @@ including security updates, are included in this release.
  * "git rebase -i" failed to clean-up the commit log message when the
    command commits the final one in a chain of "fixup" commands, which
    has been corrected.
-   (merge 82a0a73e15 pw/rebase-i-cleanup-fix later to maint).
 
  * There are double frees and leaks around setup_revisions() API used
    in "git stash show", which has been fixed, and setup_revisions()
@@ -294,7 +274,6 @@ including security updates, are included in this release.
  * Deal more gracefully with directory / file conflicts when the files
    backend is used for ref storage, by failing only the ones that are
    involved in the conflict while allowing others.
-   (merge 948b2ab0d8 kn/refs-files-case-insensitive later to maint).
 
  * "git last-modified" operating in non-recursive mode used to trigger
    a BUG(), which has been corrected.
@@ -307,16 +286,13 @@ including security updates, are included in this release.
  * The "do you still use it?" message given by a command that is
    deeply deprecated and allow us to suggest alternatives has been
    updated.
-   (merge 54a60e5b38 kh/you-still-use-whatchanged-fix later to maint).
 
  * Clang-format update to let our control macros be formatted the way we
    had them traditionally, e.g., "for_each_string_list_item()" without
    space before the parentheses.
-   (merge 3721541d35 jt/clang-format-foreach-wo-space-before-parenthesis later to maint).
 
  * A few places where a size_t value was cast to curl_off_t without
    checking has been updated to use the existing helper function.
-   (merge ecc5749578 js/curl-off-t-fixes later to maint).
 
  * "git reflog write" did not honor the configured user.name/email
    which has been corrected.
@@ -328,7 +304,6 @@ including security updates, are included in this release.
    environment, but Ubuntu replaced with "sudo" with an implementation
    that lacks the feature.  Work this around by reinstalling the
    original version.
-   (merge fddb484255 ps/ci-avoid-broken-sudo-on-ubuntu later to maint).
 
  * The reftable backend learned to sanity check its on-disk data more
    carefully.
@@ -355,16 +330,13 @@ including security updates, are included in this release.
    output with pathspec after the two directories misbehaved when
    these directories were given with a trailing slash, which has been
    corrected.
-   (merge c0bec06cfe jk/diff-no-index-with-pathspec-fix later to maint).
 
  * The "--short" option of "git status" that meant output for humans
    and "-z" option to show NUL delimited output format did not mix
    well, and colored some but not all things.  The command has been
    updated to color all elements consistently in such a case.
-   (merge 50927f4f68 jk/status-z-short-fix later to maint).
 
  * Unicode width table update.
-   (merge 330a54099e tb/unicode-width-table-17 later to maint).
 
  * GPG signing test set-up has been broken for a year, which has been
    corrected.
@@ -374,41 +346,15 @@ including security updates, are included in this release.
    ssh-agent under $HOME instead of /tmp, which causes our test to
    fail doe to overly long pathname in our test environment, which has
    been worked around by using "ssh-agent -T".
-   (merge b7fb2194b9 ps/t7528-ssh-agent-uds-workaround later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
-   (merge 823d537fa7 kh/doc-git-log-markup-fix later to maint).
-   (merge cf7efa4f33 rj/t6137-cygwin-fix later to maint).
    (merge 529a60a885 ua/t1517-short-help-tests later to maint).
    (merge 22d421fed9 ac/deglobal-fmt-merge-log-config later to maint).
-   (merge 741f36c7d9 kr/clone-synopsis-fix later to maint).
    (merge a60203a015 dk/t7005-editor-updates later to maint).
-   (merge 7d4a5fef7d ds/doc-count-objects-fix later to maint).
    (merge 16684b6fae ps/reftable-libgit2-cleanup later to maint).
-   (merge f38786baa7 ja/asciidoc-doctor-verbatim-fixes later to maint).
-   (merge 374579c6d4 kh/doc-interpret-trailers-markup-fix later to maint).
-   (merge 44dce6541c kh/doc-config-typofix later to maint).
-   (merge 785628b173 js/doc-sending-patch-via-thunderbird later to maint).
    (merge e5c27bd3d8 je/doc-add later to maint).
    (merge 13296ac909 ps/object-store-midx-dedup-info later to maint).
-   (merge 2f4bf83ffc km/alias-doc-markup-fix later to maint).
-   (merge b0d97aac19 kh/doc-markup-fixes later to maint).
    (merge f9a6705d9a tc/t0450-harden later to maint).
-   (merge c25651aefd ds/midx-write-fixes later to maint).
-   (merge 069c15d256 rs/object-name-extend-abbrev-len-update later to maint).
-   (merge bf5c224537 mm/worktree-doc-typofix later to maint).
-   (merge 31397bc4f7 kh/doc-fast-import-markup-fix later to maint).
-   (merge ac7096723b jc/doc-includeif-hasconfig-remote-url-fix later to maint).
-   (merge fafc9b08b8 ag/doc-sendmail-gmail-example-update later to maint).
    (merge a66fc22bf9 rs/get-oid-with-flags-cleanup later to maint).
-   (merge e1d062e8ba ps/odb-clean-stale-wrappers later to maint).
-   (merge fdd21ba116 mh/doc-credential-url-prefix later to maint).
-   (merge 1c573a3451 en/doc-merge-tree-describe-merge-base later to maint).
-   (merge 84a6bf7965 ja/doc-markup-attached-paragraph-fix later to maint).
-   (merge 399694384b kh/doc-patch-id-markup-fix later to maint).
    (merge 15b8abde07 js/mingw-includes-cleanup later to maint).
-   (merge 3860985105 js/unreachable-workaround-for-no-symlink-head later to maint).
-   (merge b3ac6e737d kh/doc-continued-paragraph-fix later to maint).
    (merge 2cebca0582 tb/cat-file-objectmode-update later to maint).
-   (merge 96978d7545 js/ci-github-actions-update later to maint).
-   (merge 0c4f1346ca so/t2401-use-test-path-helpers later to maint).
