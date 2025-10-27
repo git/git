@@ -1,0 +1,45 @@
+Git 2.51.2 Release Notes
+========================
+
+In addition to fixes for an unfortunate regression introduced in Git
+2.51.1 that caused "git diff --quiet -w" to be not so quiet when there
+are additions, deletions and conflicts, this maintenance release merges
+more fixes/improvements that have landed on the master front, primarily
+to make the CI part of the system a bit more robust.
+
+
+Fixes since Git 2.51.1
+----------------------
+
+ * Recently we attempted to improve "git diff -w --quiet" and friends
+   to handle cases where patch output would be suppressed, but it
+   introduced a bug that emits unnecessary output, which has been
+   corrected.
+
+ * The code to squelch output from "git diff -w --name-status"
+   etc. for paths that "git diff -w -p" would have stayed silent
+   leaked output from dry-run patch generation, which has been
+   corrected.
+
+ * Windows "real-time monitoring" interferes with the execution of
+   tests and affects negatively in both correctness and performance,
+   which has been disabled in Gitlab CI.
+
+ * An earlier addition to "git diff --no-index A B" to limit the
+   output with pathspec after the two directories misbehaved when
+   these directories were given with a trailing slash, which has been
+   corrected.
+
+ * The "--short" option of "git status" that meant output for humans
+   and "-z" option to show NUL delimited output format did not mix
+   well, and colored some but not all things.  The command has been
+   updated to color all elements consistently in such a case.
+
+ * Unicode width table update.
+
+ * Recent OpenSSH creates the Unix domain socket to communicate with
+   ssh-agent under $HOME instead of /tmp, which causes our test to
+   fail doe to overly long pathname in our test environment, which has
+   been worked around by using "ssh-agent -T".
+
+Also contains various documentation updates, code cleanups and minor fixups.
