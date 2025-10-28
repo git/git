@@ -32,7 +32,9 @@ int give_advice_on_expansion = 1;
 	"Your working directory likely has contents that are outside of\n"     \
 	"your sparse-checkout patterns. Use 'git sparse-checkout list' to\n"   \
 	"see your sparse-checkout definition and compare it to your working\n" \
-	"directory contents. Running 'git clean' may assist in this cleanup."
+	"directory contents. Cleaning up any merge conflicts or staged\n"      \
+	"changes before running 'git sparse-checkout clean' or 'git\n"         \
+	"sparse-checkout reapply' may assist in this cleanup."
 
 struct modify_index_context {
 	struct index_state *write;
