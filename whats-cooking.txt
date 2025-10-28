@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Oct 2025, #10; Mon, 27)
-X-master-at: 419c72cb8ada252b260efc38ff91fe201de7c8c3
-X-next-at: 38ec6c3e3b6da97b0b11a99adc78c386d413d9d8
+Subject: What's cooking in git.git (Oct 2025, #11; Tue, 28)
+X-master-at: 57da342c786f59eaeb436c18635cc1c7597733d9
+X-next-at: a50a493c49d755bf293be8b21ea65208572816ae
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Oct 2025, #10; Mon, 27)
+What's cooking in git.git (Oct 2025, #11; Tue, 28)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,19 +46,130 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* cc/fast-import-strip-signed-tags (2025-10-13) 5 commits
+  (merged to 'next' on 2025-10-22 at c25f8aa54a)
+ + fast-import: add '--signed-tags=<mode>' option
+ + fast-export: handle all kinds of tag signatures
+ + t9350: properly count annotated tags
+ + lib-gpg: allow tests with GPGSM or GPGSSH prereq first
+ + doc: git-tag: stop focusing on GPG signed tags
+
+ "git fast-import" is taught to handle signed tags, just like it
+ recently learned to handle signed commits, in different ways.
+ 
+ source: <20251013084857.1646783-1-christian.couder@gmail.com>
+
+
+* ds/sparse-checkout-clean (2025-10-20) 8 commits
+  (merged to 'next' on 2025-10-20 at afc50f3401)
+ + sparse-index: improve advice message instructions
+  (merged to 'next' on 2025-09-25 at 00b296f153)
+ + t: expand tests around sparse merges and clean
+ + sparse-index: point users to new 'clean' action
+ + sparse-checkout: add --verbose option to 'clean'
+ + dir: add generic "walk all files" helper
+ + sparse-checkout: match some 'clean' behavior
+ + sparse-checkout: add basics of 'clean' command
+ + sparse-checkout: remove use of the_repository
+
+ "git sparse-checkout" subcommand learned a new "clean" action to
+ prune otherwise unused working-tree files that are outside the
+ areas of interest.
+ 
+ source: <pull.1941.v3.git.1757673011.gitgitgadget@gmail.com>
+
+
+* ps/ci-rust (2025-10-14) 8 commits
+  (merged to 'next' on 2025-10-22 at 89129fa777)
+ + rust: support for Windows
+ + ci: verify minimum supported Rust version
+ + ci: check for common Rust mistakes via Clippy
+ + rust/varint: add safety comments
+ + ci: check formatting of our Rust code
+ + ci: deduplicate calls to `apt-get update`
+ + Merge branch 'ps/gitlab-ci-windows-improvements' into ps/ci-rust
+ + Merge branch 'ps/rust-balloon' into ps/ci-rust
+ (this branch is used by ps/rust-cbindgen and qj/doc-first-contrib-check-lore.)
+
+ CI improvements to handle the recent Rust integration better.
+ 
+ source: <20251015-b4-pks-ci-rust-v3-0-13810af33bd5@pks.im>
+
+--------------------------------------------------
 [New Topics]
 
+* qj/doc-my1stcontrib-email-verify (2025-10-27) 1 commit
+ - MyFirstContribution: add note on confirming patches
+
+ The "MyFirstContribution" tutorial tells the reader how to send out
+ their patches; the section gained a hint to verify the message
+ reached the mailing list.
+
+ Will merge to 'next'.
+ source: <20251027111600.1481-1-qjessa662@gmail.com>
+
+
+* xr/ref-debug-remove-on-disk (2025-10-24) 1 commit
+ - refs: add missing remove_on_disk implementation for debug backend
+
+ The "debug" ref-backend was missing a method implementation, which
+ has been corrected.
+
+ Will merge to 'next'.
+ source: <pull.2082.git.git.1761295094982.gitgitgadget@gmail.com>
+
+
+* ad/blame-diff-algorithm (2025-10-28) 1 commit
+ - blame: make diff algorithm configurable
+
+ source: <pull.2075.v2.git.git.1761658643278.gitgitgadget@gmail.com>
+
+
+* cc/fast-import-export-i18n-cleanup (2025-10-28) 5 commits
+ - gpg-interface: mark a string for translation
+ - fast-import: mark strings for translation
+ - fast-export: mark strings for translation
+ - gpg-interface: use left shift to define GPG_VERIFY_*
+ - gpg-interface: simplify ssh fingerprint parsing
+
+ source: <20251028081232.3068147-1-christian.couder@gmail.com>
+
+
+* eb/t1016-hash-transition-fix (2025-10-28) 1 commit
+ - t1016-compatObjectFormat: really freeze time for reproduciblity
+
+ source: <87frb310d2.fsf_-_@email.froward.int.ebiederm.org>
+
+
+* ps/packed-git-in-object-store (2025-10-28) 9 commits
+ - packfile: track packs via the MRU list exclusively
+ - packfile: always add packfiles to MRU when adding a pack
+ - packfile: move list of packs into the packfile store
+ - builtin/pack-objects: simplify logic to find kept or nonlocal objects
+ - packfile: fix approximation of object counts
+ - http: refactor subsystem to use `packfile_list`s
+ - packfile: move the MRU list into the packfile store
+ - packfile: use a `strmap` to store packs by name
+ - Merge branch 'ps/remove-packfile-store-get-packs' into ps/packed-git-in-object-store
+ (this branch uses ps/remove-packfile-store-get-packs and tb/incremental-midx-part-3.1.)
+
+ source: <20251028-pks-packfiles-store-drop-list-v1-0-1a3b82030a7a@pks.im>
+
+--------------------------------------------------
+[Cooking]
+
 * tu/credential-install (2025-10-25) 1 commit
- - contrib/credential: add install target
+  (merged to 'next' on 2025-10-28 at 43589c4832)
+ + contrib/credential: add install target
 
  Contributed credential helpers (obviously in contrib/) now have "cd
  $there && make install" target.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <f67b3cbd-a117-a863-37ba-fbba7a2ca17a@mailbox.tu-dresden.de>
 
---------------------------------------------------
-[Cooking]
 
 * jk/diff-patch-dry-run-cleanup (2025-10-24) 6 commits
   (merged to 'next' on 2025-10-26 at 28426e9102)
@@ -80,7 +191,7 @@ Release tarballs are available at:
 
 * qj/doc-first-contrib-check-lore (2025-10-24) 1 commit
  - MyFirstContribution: add tip to confirm patches reached the mailing list
- (this branch uses ps/ci-rust and ps/rust-cbindgen.)
+ (this branch uses ps/rust-cbindgen.)
 
  Doc update.
 
@@ -155,12 +266,12 @@ Release tarballs are available at:
  - gitlab-ci: backfill missing Linux jobs
  - gitlab-ci: reorder Linux job matrix to match GitHub's order
  - Merge branch 'ps/ci-rust' into ps/rust-cbindgen
- (this branch is used by qj/doc-first-contrib-check-lore; uses ps/ci-rust.)
+ (this branch is used by qj/doc-first-contrib-check-lore.)
 
  Introduce cbindgen in the build framework to help interfacing with
  Rust.
 
- Comments?
+ Another dependency in an ecosystem that is not mature yet complicates things a bit too much?
  source: <20251024-b4-pks-rust-cbindgen-v2-0-4b4bd4f18490@pks.im>
 
 
@@ -236,12 +347,15 @@ Release tarballs are available at:
 
  "git repo structure", a new command.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  cf. <eesy5qhqzi56qrzv7wlpenxag23l2zykakvpmr6p5rnak6cril@ap3rugp44bcz>
+ cf. <aPsLS6lbzG27W-C8@pks.im>
  source: <20251021182601.2687284-1-jltobler@gmail.com>
 
 
-* ps/maintenance-geometric (2025-10-23) 11 commits
+* ps/maintenance-geometric (2025-10-27) 12 commits
+  (merged to 'next' on 2025-10-27 at 839fc31de9)
+ + t7900: fix a flaky test due to git-repack always regenerating MIDX
   (merged to 'next' on 2025-10-26 at 505f26dcf7)
  + builtin/maintenance: introduce "geometric" strategy
  + builtin/maintenance: make "gc" strategy accessible
@@ -262,6 +376,7 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <20251024-pks-maintenance-geometric-strategy-v3-0-9b5b3bdb4387@pks.im>
+ source: <20251027-pks-maintenance-geometric-strategy-v4-0-18049e4a0adf@pks.im>
 
 
 * en/xdiff-cleanup-2 (2025-10-15) 9 commits
@@ -331,8 +446,7 @@ Release tarballs are available at:
  source: <v2-38645ea253c.1760369708.git.code@khaugsbakk.name>
 
 
-* tz/test-prepare-gnupghome (2025-10-25) 3 commits
- - t1016: disable flakey tests
+* tz/test-prepare-gnupghome (2024-07-03) 2 commits
  - t/lib-gpg: call prepare_gnupghome() in GPG2 prereq
  - t/lib-gpg: add prepare_gnupghome() to create GNUPGHOME dir
 
@@ -340,43 +454,11 @@ Release tarballs are available at:
  flaky tests are exposed in t1016, which needs to be addressed
  before this topic can move forward.
 
- On hold.
+ Will merge to 'next'.
  cf. <ZoV8b2RvYxLOotSJ@teonanacatl.net>
  cf. <xmqqbjlump3m.fsf@gitster.g>
+ cf. <87frb310d2.fsf_-_@email.froward.int.ebiederm.org>
  source: <20240703153738.916469-1-tmz@pobox.com>
-
-
-* cc/fast-import-strip-signed-tags (2025-10-13) 5 commits
-  (merged to 'next' on 2025-10-22 at c25f8aa54a)
- + fast-import: add '--signed-tags=<mode>' option
- + fast-export: handle all kinds of tag signatures
- + t9350: properly count annotated tags
- + lib-gpg: allow tests with GPGSM or GPGSSH prereq first
- + doc: git-tag: stop focusing on GPG signed tags
-
- "git fast-import" is taught to handle signed tags, just like it
- recently learned to handle signed commits, in different ways.
-
- Will merge to 'master'.
- source: <20251013084857.1646783-1-christian.couder@gmail.com>
-
-
-* ps/ci-rust (2025-10-14) 8 commits
-  (merged to 'next' on 2025-10-22 at 89129fa777)
- + rust: support for Windows
- + ci: verify minimum supported Rust version
- + ci: check for common Rust mistakes via Clippy
- + rust/varint: add safety comments
- + ci: check formatting of our Rust code
- + ci: deduplicate calls to `apt-get update`
- + Merge branch 'ps/gitlab-ci-windows-improvements' into ps/ci-rust
- + Merge branch 'ps/rust-balloon' into ps/ci-rust
- (this branch is used by ps/rust-cbindgen and qj/doc-first-contrib-check-lore.)
-
- CI improvements to handle the recent Rust integration better.
-
- Will merge to 'master'.
- source: <20251015-b4-pks-ci-rust-v3-0-13810af33bd5@pks.im>
 
 
 * ps/ref-peeled-tags (2025-10-23) 16 commits
@@ -415,7 +497,7 @@ Release tarballs are available at:
  + builtin/gc: convert to use `packfile_store_get_all_packs()`
  + object-name: convert to use `packfile_store_get_all_packs()`
  + Merge branch 'tb/incremental-midx-part-3.1' into ps/remove-packfile-store-get-packs
- (this branch uses tb/incremental-midx-part-3.1.)
+ (this branch is used by ps/packed-git-in-object-store; uses tb/incremental-midx-part-3.1.)
 
  Two slightly different ways to get at "all the packfiles" in API
  has been cleaned up.
@@ -424,15 +506,13 @@ Release tarballs are available at:
  source: <20251009-pks-packfiles-convert-get-all-v2-0-0d73b87ce711@pks.im>
 
 
-* je/doc-data-model (2025-10-20) 2 commits
- - SQUASH??? work around AsciiDoc xml that does not validate
- - doc: add a explanation of Git's data model
+* je/doc-data-model (2025-10-27) 1 commit
+ - doc: add an explanation of Git's data model
 
  Add a new manual that describes the data model.
 
- Expecting a reroll.
- cf. <0eb276ef-7b1a-4e79-93da-13a83226aa01@app.fastmail.com>
- source: <pull.1981.v3.git.1760476346040.gitgitgadget@gmail.com>
+ Comments?
+ source: <pull.1981.v4.git.1761593537924.gitgitgadget@gmail.com>
 
 
 * tb/incremental-midx-part-3.1 (2025-10-15) 50 commits
@@ -487,7 +567,7 @@ Release tarballs are available at:
  + builtin/repack.c: avoid "the_repository" in existing packs API
  + builtin/repack.c: avoid "the_repository" in `cmd_repack()`
  + Merge branch 'ps/packfile-store' into tb/incremental-midx-part-3.1
- (this branch is used by kn/refs-optim-cleanup, ps/maintenance-geometric, ps/ref-peeled-tags and ps/remove-packfile-store-get-packs.)
+ (this branch is used by kn/refs-optim-cleanup, ps/maintenance-geometric, ps/packed-git-in-object-store, ps/ref-peeled-tags and ps/remove-packfile-store-get-packs.)
 
  Clean-up "git repack" machinery to prepare for incremental update
  of midx files.
@@ -497,16 +577,17 @@ Release tarballs are available at:
 
 
 * cc/doc-submitting-patches-with-ai (2025-10-01) 1 commit
- - SubmittingPatches: add section about AI
+  (merged to 'next' on 2025-10-28 at 9b5e0701fa)
+ + SubmittingPatches: add section about AI
 
  AI guidelines.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  cf. <xmqqv7ki1xf1.fsf@gitster.g>
  source: <20251001140310.527097-1-christian.couder@gmail.com>
 
 
-* ps/history (2025-10-21) 13 commits
+* ps/history (2025-10-27) 12 commits
  - builtin/history: implement "split" subcommand
  - cache-tree: allow writing in-memory index as tree
  - add-patch: add support for in-memory index patching
@@ -515,7 +596,6 @@ Release tarballs are available at:
  - add-patch: split out header from "add-interactive.h"
  - builtin/history: implement "reword" subcommand
  - builtin: add new "history" command
- - replay: parse commits before dereferencing them
  - replay: stop using `the_repository`
  - replay: extract logic to pick commits
  - wt-status: provide function to expose status for trees
@@ -523,7 +603,9 @@ Release tarballs are available at:
  (this branch uses sa/replay-atomic-ref-updates.)
 
  "git history" history rewriting UI.
- source: <20251021-b4-pks-history-builtin-v5-0-78d23f578fe6@pks.im>
+
+ Comments?
+ source: <20251027-b4-pks-history-builtin-v6-0-407dd3f57ad3@pks.im>
 
 
 * ms/doc-worktree-side-by-side (2025-10-10) 2 commits
@@ -567,54 +649,3 @@ Release tarballs are available at:
  Expecting v4.
  cf. <878qh4qxsl.fsf@gentoo.mail-host-address-is-not-set>
  source: <20251006112518.3764240-1-adrian.ratiu@collabora.com>
-
-
-* ds/sparse-checkout-clean (2025-10-20) 8 commits
-  (merged to 'next' on 2025-10-20 at afc50f3401)
- + sparse-index: improve advice message instructions
-  (merged to 'next' on 2025-09-25 at 00b296f153)
- + t: expand tests around sparse merges and clean
- + sparse-index: point users to new 'clean' action
- + sparse-checkout: add --verbose option to 'clean'
- + dir: add generic "walk all files" helper
- + sparse-checkout: match some 'clean' behavior
- + sparse-checkout: add basics of 'clean' command
- + sparse-checkout: remove use of the_repository
-
- "git sparse-checkout" subcommand learned a new "clean" action to
- prune otherwise unused working-tree files that are outside the
- areas of interest.
-
- Will merge to 'master'.
- source: <pull.1941.v3.git.1757673011.gitgitgadget@gmail.com>
-
---------------------------------------------------
-[Discarded]
-
-These have been kept outside 'seen' for some time, and were removed
-for now, until they get resubmit in a shape that plays well with
-other topics in 'seen'.
-
-* lc/rebase-trailer (2025-08-03) 2 commits
- . rebase: support --trailer
- . trailer: append trailers in-process and drop the fork to `interpret-trailers`
-
- Has been expecting a reroll for way too long.
- cf. <198826af571.62b85cb31711042.2415806544948206668@linux.beauty>
- cf. <xmqqiki7qasu.fsf@gitster.g>
- cf. <1995bf77c93.3eeb42b4972717.3783775021840050008@linux.beauty>
- source: <20250803150059.402017-1-me@linux.beauty>
-
-
-* ac/deglobal-sparse-variables (2025-07-18) 3 commits
- . environment: remove the global variable 'sparse_expect_files_outside_of_patterns'
- . environment: move access to "core.sparsecheckoutcone" into repo_settings
- . environment: move access to "core.sparsecheckout" into repo_settings
-
- Two global variables related to sparse checkout have been moved to
- the repository settings structure.
-
- Has been expecting a reroll for way too long.
- cf. <CAE7as+bnG6KgA8X_n36pqP15bmyM6re+xEb1MOXKvZSUdJ8Arg@mail.gmail.com>
- Ejected out of 'seen' for now.
- source: <cover.1752882401.git.ayu.chandekar@gmail.com>
