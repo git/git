@@ -1037,6 +1037,7 @@ integration_tests = [
   't9303-fast-import-compression.sh',
   't9304-fast-import-marks.sh',
   't9305-fast-import-signatures.sh',
+  't9306-fast-import-signed-tags.sh',
   't9350-fast-export.sh',
   't9351-fast-export-anonymize.sh',
   't9400-git-cvsserver-server.sh',

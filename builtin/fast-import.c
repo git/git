@@ -188,6 +188,7 @@ static int global_argc;
 static const char **global_argv;
 static const char *global_prefix;
 
+static enum sign_mode signed_tag_mode = SIGN_VERBATIM;
 static enum sign_mode signed_commit_mode = SIGN_VERBATIM;
 
 /* Memory pools */
@@ -2963,6 +2964,43 @@ static void parse_new_commit(const char *arg)
 	b->last_commit = object_count_by_type[OBJ_COMMIT];
 }
 
+static void handle_tag_signature(struct strbuf *msg, const char *name)
+{
+	size_t sig_offset = parse_signed_buffer(msg->buf, msg->len);
+
+	/* If there is no signature, there is nothing to do. */
+	if (sig_offset >= msg->len)
+		return;
+
+	switch (signed_tag_mode) {
+
+	/* First, modes that don't change anything */
+	case SIGN_ABORT:
+		die(_("encountered signed tag; use "
+		      "--signed-tags=<mode> to handle it"));
+	case SIGN_WARN_VERBATIM:
+		warning(_("importing a tag signature verbatim for tag '%s'"), name);
+		/* fallthru */
+	case SIGN_VERBATIM:
+		/* Nothing to do, the signature will be put into the imported tag. */
+		break;
+
+	/* Second, modes that remove the signature */
+	case SIGN_WARN_STRIP:
+		warning(_("stripping a tag signature for tag '%s'"), name);
+		/* fallthru */
+	case SIGN_STRIP:
+		/* Truncate the buffer to remove the signature */
+		strbuf_setlen(msg, sig_offset);
+		break;
+
+	/* Third, BUG */
+	default:
+		BUG("invalid signed_tag_mode value %d from tag '%s'",
+		    signed_tag_mode, name);
+	}
+}
+
 static void parse_new_tag(const char *arg)
 {
 	static struct strbuf msg = STRBUF_INIT;
@@ -3025,6 +3063,8 @@ static void parse_new_tag(const char *arg)
 
 	/* tag payload/message */
 	parse_data(&msg, 0, NULL);
+
+	handle_tag_signature(&msg, t->name);
 
 	/* build the tag object */
 	strbuf_reset(&new_data);
@@ -3546,6 +3586,9 @@ static int parse_one_option(const char *option)
 	} else if (skip_prefix(option, "signed-commits=", &option)) {
 		if (parse_sign_mode(option, &signed_commit_mode))
 			usagef(_("unknown --signed-commits mode '%s'"), option);
+	} else if (skip_prefix(option, "signed-tags=", &option)) {
+		if (parse_sign_mode(option, &signed_tag_mode))
+			usagef(_("unknown --signed-tags mode '%s'"), option);
 	} else if (!strcmp(option, "quiet")) {
 		show_stats = 0;
 		quiet = 1;

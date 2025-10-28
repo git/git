@@ -3,7 +3,7 @@ git-tag(1)
 
 NAME
 ----
-git-tag - Create, list, delete or verify a tag object signed with GPG
+git-tag - Create, list, delete or verify tags
 
 
 SYNOPSIS
@@ -38,15 +38,17 @@ and `-a`, `-s`, and `-u <key-id>` are absent, `-a` is implied.
 Otherwise, a tag reference that points directly at the given object
 (i.e., a lightweight tag) is created.
 
-A GnuPG signed tag object will be created when `-s` or `-u
-<key-id>` is used.  When `-u <key-id>` is not used, the
-committer identity for the current user is used to find the
-GnuPG key for signing. 	The configuration variable `gpg.program`
-is used to specify custom GnuPG binary.
+A cryptographically signed tag object will be created when `-s` or
+`-u <key-id>` is used. The signing backend (GPG, X.509, SSH, etc.) is
+controlled by the `gpg.format` configuration variable, defaulting to
+OpenPGP. When `-u <key-id>` is not used, the committer identity for
+the current user is used to find the key for signing. The
+configuration variable `gpg.program` is used to specify a custom
+signing binary.
 
 Tag objects (created with `-a`, `-s`, or `-u`) are called "annotated"
 tags; they contain a creation date, the tagger name and e-mail, a
-tagging message, and an optional GnuPG signature. Whereas a
+tagging message, and an optional cryptographic signature. Whereas a
 "lightweight" tag is simply a name for an object (usually a commit
 object).
 
@@ -64,10 +66,12 @@ OPTIONS
 
 `-s`::
 `--sign`::
-	Make a GPG-signed tag, using the default e-mail address's key.
-	The default behavior of tag GPG-signing is controlled by `tag.gpgSign`
-	configuration variable if it exists, or disabled otherwise.
-	See linkgit:git-config[1].
+	Make a cryptographically signed tag, using the default signing
+	key. The signing backend used depends on the `gpg.format`
+	configuration variable. The default key is determined by the
+	backend. For GPG, it's based on the committer's email address,
+	while for SSH it may be a specific key file or agent
+	identity. See linkgit:git-config[1].
 
 `--no-sign`::
 	Override `tag.gpgSign` configuration variable that is
@@ -75,7 +79,10 @@ OPTIONS
 
 `-u <key-id>`::
 `--local-user=<key-id>`::
-	Make a GPG-signed tag, using the given key.
+	Make a cryptographically signed tag using the given key. The
+	format of the <key-id> and the backend used depend on the
+	`gpg.format` configuration variable. See
+	linkgit:git-config[1].
 
 `-f`::
 `--force`::
@@ -87,7 +94,7 @@ OPTIONS
 
 `-v`::
 `--verify`::
-	Verify the GPG signature of the given tag names.
+	Verify the cryptographic signature of the given tags.
 
 `-n<num>`::
 	_<num>_ specifies how many lines from the annotation, if any,
@@ -235,12 +242,23 @@ it in the repository configuration as follows:
 
 -------------------------------------
 [user]
-    signingKey = <gpg-key-id>
+    signingKey = <key-id>
 -------------------------------------
+
+The signing backend can be chosen via the `gpg.format` configuration
+variable, which defaults to `openpgp`. See linkgit:git-config[1]
+for a list of other supported formats.
+
+The path to the program used for each signing backend can be specified
+with the `gpg.<format>.program` configuration variable. For the
+`openpgp` backend, `gpg.program` can be used as a synonym for
+`gpg.openpgp.program`. See linkgit:git-config[1] for details.
 
 `pager.tag` is only respected when listing tags, i.e., when `-l` is
 used or implied. The default is to use a pager.
-See linkgit:git-config[1].
+
+See linkgit:git-config[1] for more details and other configuration
+variables.
 
 DISCUSSION
 ----------
