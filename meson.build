@@ -1708,6 +1708,10 @@ rust_option = get_option('rust').disable_auto_if(not cargo.found())
 if rust_option.allowed()
   subdir('src')
   libgit_c_args += '-DWITH_RUST'
+
+  if host_machine.system() == 'windows'
+    libgit_dependencies += compiler.find_library('userenv')
+  endif
 else
   libgit_sources += [
     'varint.c',

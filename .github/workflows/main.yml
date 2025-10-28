@@ -458,6 +458,21 @@ jobs:
     - run: ci/install-dependencies.sh
     - run: ci/run-static-analysis.sh
     - run: ci/check-directional-formatting.bash
+  rust-analysis:
+    needs: ci-config
+    if: needs.ci-config.outputs.enabled == 'yes'
+    env:
+      jobname: RustAnalysis
+      CI_JOB_IMAGE: ubuntu:rolling
+    runs-on: ubuntu-latest
+    container: ubuntu:rolling
+    concurrency:
+      group: rust-analysis-${{ github.ref }}
+      cancel-in-progress: ${{ needs.ci-config.outputs.skip_concurrent == 'yes' }}
+    steps:
+    - uses: actions/checkout@v4
+    - run: ci/install-dependencies.sh
+    - run: ci/run-rust-checks.sh
   sparse:
     needs: ci-config
     if: needs.ci-config.outputs.enabled == 'yes'

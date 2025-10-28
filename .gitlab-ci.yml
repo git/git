@@ -161,7 +161,7 @@ test:mingw64:
     - saas-windows-medium-amd64
   before_script:
     - *windows_before_script
-    - choco install -y git meson ninja
+    - choco install -y git meson ninja rust-ms
     - Import-Module $env:ChocolateyInstall\helpers\chocolateyProfile.psm1
     - refreshenv
 
@@ -211,6 +211,17 @@ static-analysis:
   script:
     - ./ci/run-static-analysis.sh
     - ./ci/check-directional-formatting.bash
+
+rust-analysis:
+  image: ubuntu:rolling
+  stage: analyze
+  needs: [ ]
+  variables:
+    jobname: RustAnalysis
+  before_script:
+    - ./ci/install-dependencies.sh
+  script:
+    - ./ci/run-rust-checks.sh
 
 check-whitespace:
   image: ubuntu:latest
