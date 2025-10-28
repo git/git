@@ -2,7 +2,6 @@ add
 am
 apply
 archive
-bisect
 blame
 branch
 check-ref-format
