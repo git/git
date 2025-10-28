@@ -57,6 +57,13 @@ UI, Workflows & Features
 
  * Show 'P'ipe command in "git add -p".
 
+ * "git sparse-checkout" subcommand learned a new "clean" action to
+   prune otherwise unused working-tree files that are outside the
+   areas of interest.
+
+ * "git fast-import" is taught to handle signed tags, just like it
+   recently learned to handle signed commits, in different ways.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -136,6 +143,8 @@ Performance, Internal Implementation, Development Support etc.
 
  * Build procedure for a few credential helpers (in contrib/) have
    been updated.
+
+ * CI improvements to handle the recent Rust integration better.
 
 
 Fixes since v2.51
