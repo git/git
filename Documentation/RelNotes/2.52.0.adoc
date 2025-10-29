@@ -146,6 +146,9 @@ Performance, Internal Implementation, Development Support etc.
 
  * CI improvements to handle the recent Rust integration better.
 
+ * The code in "git repack" machinery has been cleaned up to prepare
+   for incremental update of midx files.
+
 
 Fixes since v2.51
 -----------------
