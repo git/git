@@ -11,7 +11,6 @@
 struct object_info;
 
 struct packed_git {
-	struct packed_git *next;
 	struct pack_window *windows;
 	off_t pack_size;
 	const void *index_data;
@@ -83,7 +82,7 @@ struct packfile_store {
 	 * The list of packfiles in the order in which they are being added to
 	 * the store.
 	 */
-	struct packed_git *packs;
+	struct packfile_list packs;
 
 	/*
 	 * Cache of packfiles which are marked as "kept", either because there
@@ -163,13 +162,14 @@ void packfile_store_add_pack(struct packfile_store *store,
  * repository.
  */
 #define repo_for_each_pack(repo, p) \
-	for (p = packfile_store_get_packs(repo->objects->packfiles); p; p = p->next)
+	for (struct packfile_list_entry *e = packfile_store_get_packs(repo->objects->packfiles); \
+	     ((p) = (e ? e->pack : NULL)); e = e->next)
 
 /*
  * Get all packs managed by the given store, including packfiles that are
  * referenced by multi-pack indices.
  */
-struct packed_git *packfile_store_get_packs(struct packfile_store *store);
+struct packfile_list_entry *packfile_store_get_packs(struct packfile_store *store);
 
 /*
  * Get all packs in most-recently-used order.
@@ -265,14 +265,6 @@ extern void (*report_garbage)(unsigned seen_bits, const char *path);
  * for speed.
  */
 unsigned long repo_approximate_object_count(struct repository *r);
-
-/*
- * Find the pack within the "packs" list whose index contains the object "oid".
- * For general object lookups, you probably don't want this; use
- * find_pack_entry() instead.
- */
-struct packed_git *find_oid_pack(const struct object_id *oid,
-				 struct packed_git *packs);
 
 void pack_report(struct repository *repo);
 
