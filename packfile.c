@@ -871,6 +871,7 @@ void packfile_store_add_pack(struct packfile_store *store,
 		pack_open_fds++;
 
 	packfile_list_prepend(&store->packs, pack);
+	packfile_list_append(&store->mru, pack);
 
 	strmap_put(&store->packs_by_path, pack->pack_name, pack);
 }
