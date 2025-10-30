@@ -219,7 +219,8 @@ test_expect_success 'merge.directoryRenames=false' '
 
 test_expect_success 'default atomic behavior updates refs directly' '
 	# Store original state for cleanup
-	test_when_finished "git branch -f topic2 topic1" &&
+	START=$(git rev-parse topic2) &&
+	test_when_finished "git branch -f topic2 $START" &&
 
 	# Test default atomic behavior (no output, refs updated)
 	git replay --onto main topic1..topic2 >output &&
@@ -232,6 +233,10 @@ test_expect_success 'default atomic behavior updates refs directly' '
 '
 
 test_expect_success 'atomic behavior in bare repository' '
+	# Store original state for cleanup
+	START=$(git rev-parse topic2) &&
+	test_when_finished "git branch -f topic2 $START" &&
+
 	# Test atomic updates work in bare repo
 	git -C bare replay --onto main topic1..topic2 >output &&
 	test_must_be_empty output &&
@@ -243,6 +248,47 @@ test_expect_success 'atomic behavior in bare repository' '
 
 	# Reset for other tests
 	git -C bare update-ref refs/heads/topic2 $(git -C bare rev-parse topic1)
+'
+
+test_expect_success 'replay.refAction config option' '
+	# Store original state
+	START=$(git rev-parse topic2) &&
+	test_when_finished "git branch -f topic2 $START" &&
+
+	# Set config to print
+	test_config replay.refAction print &&
+	git replay --onto main topic1..topic2 >output &&
+	test_line_count = 1 output &&
+	test_grep "^update refs/heads/topic2 " output &&
+
+	# Reset and test update mode
+	git branch -f topic2 $START &&
+	test_config replay.refAction update &&
+	git replay --onto main topic1..topic2 >output &&
+	test_must_be_empty output &&
+
+	# Verify ref was updated
+	git log --format=%s topic2 >actual &&
+	test_write_lines E D M L B A >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'command-line --ref-action overrides config' '
+	# Store original state
+	START=$(git rev-parse topic2) &&
+	test_when_finished "git branch -f topic2 $START" &&
+
+	# Set config to update but use --ref-action=print
+	test_config replay.refAction update &&
+	git replay --ref-action=print --onto main topic1..topic2 >output &&
+	test_line_count = 1 output &&
+	test_grep "^update refs/heads/topic2 " output
+'
+
+test_expect_success 'invalid replay.refAction value' '
+	test_config replay.refAction invalid &&
+	test_must_fail git replay --onto main topic1..topic2 2>error &&
+	test_grep "invalid.*replay.refAction.*value" error
 '
 
 test_done
