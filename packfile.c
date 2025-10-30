@@ -1143,16 +1143,16 @@ unsigned long repo_approximate_object_count(struct repository *r)
 		unsigned long count = 0;
 		struct packed_git *p;
 
-		packfile_store_prepare(r->objects->packfiles);
+		odb_prepare_alternates(r->objects);
 
 		for (source = r->objects->sources; source; source = source->next) {
 			struct multi_pack_index *m = get_multi_pack_index(source);
 			if (m)
-				count += m->num_objects;
+				count += m->num_objects + m->num_objects_in_base;
 		}
 
-		for (p = r->objects->packfiles->packs; p; p = p->next) {
-			if (open_pack_index(p))
+		repo_for_each_pack(r, p) {
+			if (p->multi_pack_index || open_pack_index(p))
 				continue;
 			count += p->num_objects;
 		}
