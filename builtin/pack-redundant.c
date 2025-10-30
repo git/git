@@ -566,29 +566,23 @@ static struct pack_list * add_pack(struct packed_git *p)
 
 static struct pack_list * add_pack_file(const char *filename)
 {
-	struct packfile_store *packs = the_repository->objects->packfiles;
-	struct packed_git *p = packfile_store_get_all_packs(packs);
+	struct packed_git *p;
 
 	if (strlen(filename) < 40)
 		die("Bad pack filename: %s", filename);
 
-	while (p) {
+	repo_for_each_pack(the_repository, p)
 		if (strstr(p->pack_name, filename))
 			return add_pack(p);
-		p = p->next;
-	}
 	die("Filename %s not found in packed_git", filename);
 }
 
 static void load_all(void)
 {
-	struct packfile_store *packs = the_repository->objects->packfiles;
-	struct packed_git *p = packfile_store_get_all_packs(packs);
+	struct packed_git *p;
 
-	while (p) {
+	repo_for_each_pack(the_repository, p)
 		add_pack(p);
-		p = p->next;
-	}
 }
 
 int cmd_pack_redundant(int argc, const char **argv, const char *prefix UNUSED, struct repository *repo UNUSED) {

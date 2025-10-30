@@ -487,10 +487,9 @@ static int too_many_loose_objects(struct gc_config *cfg)
 static struct packed_git *find_base_packs(struct string_list *packs,
 					  unsigned long limit)
 {
-	struct packfile_store *packfiles = the_repository->objects->packfiles;
 	struct packed_git *p, *base = NULL;
 
-	for (p = packfile_store_get_all_packs(packfiles); p; p = p->next) {
+	repo_for_each_pack(the_repository, p) {
 		if (!p->pack_local || p->is_cruft)
 			continue;
 		if (limit) {
@@ -509,14 +508,13 @@ static struct packed_git *find_base_packs(struct string_list *packs,
 
 static int too_many_packs(struct gc_config *cfg)
 {
-	struct packfile_store *packs = the_repository->objects->packfiles;
 	struct packed_git *p;
-	int cnt;
+	int cnt = 0;
 
 	if (cfg->gc_auto_pack_limit <= 0)
 		return 0;
 
-	for (cnt = 0, p = packfile_store_get_all_packs(packs); p; p = p->next) {
+	repo_for_each_pack(the_repository, p) {
 		if (!p->pack_local)
 			continue;
 		if (p->pack_keep)
@@ -1425,9 +1423,9 @@ static int incremental_repack_auto_condition(struct gc_config *cfg UNUSED)
 	if (incremental_repack_auto_limit < 0)
 		return 1;
 
-	for (p = packfile_store_get_packs(the_repository->objects->packfiles);
-	     count < incremental_repack_auto_limit && p;
-	     p = p->next) {
+	repo_for_each_pack(the_repository, p) {
+		if (count >= incremental_repack_auto_limit)
+			break;
 		if (!p->multi_pack_index)
 			count++;
 	}
@@ -1494,7 +1492,7 @@ static off_t get_auto_pack_size(void)
 	struct repository *r = the_repository;
 
 	odb_reprepare(r->objects);
-	for (p = packfile_store_get_all_packs(r->objects->packfiles); p; p = p->next) {
+	repo_for_each_pack(r, p) {
 		if (p->pack_size > max_size) {
 			second_largest_size = max_size;
 			max_size = p->pack_size;

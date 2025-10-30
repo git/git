@@ -137,16 +137,18 @@ void packfile_store_add_pack(struct packfile_store *store,
 			     struct packed_git *pack);
 
 /*
- * Get packs managed by the given store. Does not load the MIDX or any packs
- * referenced by it.
+ * Load and iterate through all packs of the given repository. This helper
+ * function will yield packfiles from all object sources connected to the
+ * repository.
  */
-struct packed_git *packfile_store_get_packs(struct packfile_store *store);
+#define repo_for_each_pack(repo, p) \
+	for (p = packfile_store_get_packs(repo->objects->packfiles); p; p = p->next)
 
 /*
  * Get all packs managed by the given store, including packfiles that are
  * referenced by multi-pack indices.
  */
-struct packed_git *packfile_store_get_all_packs(struct packfile_store *store);
+struct packed_git *packfile_store_get_packs(struct packfile_store *store);
 
 /*
  * Get all packs in most-recently-used order.

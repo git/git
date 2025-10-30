@@ -74,10 +74,9 @@ int check_connected(oid_iterate_fn fn, void *cb_data,
 		 */
 		odb_reprepare(the_repository->objects);
 		do {
-			struct packfile_store *packs = the_repository->objects->packfiles;
 			struct packed_git *p;
 
-			for (p = packfile_store_get_all_packs(packs); p; p = p->next) {
+			repo_for_each_pack(the_repository, p) {
 				if (!p->pack_promisor)
 					continue;
 				if (find_pack_entry_one(oid, p))
