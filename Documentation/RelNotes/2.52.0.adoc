@@ -64,6 +64,12 @@ UI, Workflows & Features
  * "git fast-import" is taught to handle signed tags, just like it
    recently learned to handle signed commits, in different ways.
 
+ * A new configuration variable commitGraph.changedPaths allows to
+   turn "--changed-paths" on by default for "git commit-graph".
+
+ * "Symlink symref" has been added to the list of things that will
+   disappear at Git 3.0 boundary.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -148,6 +154,9 @@ Performance, Internal Implementation, Development Support etc.
 
  * The code in "git repack" machinery has been cleaned up to prepare
    for incremental update of midx files.
+
+ * Two slightly different ways to get at "all the packfiles" in API
+   has been cleaned up.
 
 
 Fixes since v2.51
@@ -358,6 +367,20 @@ including security updates, are included in this release.
    ssh-agent under $HOME instead of /tmp, which causes our test to
    fail doe to overly long pathname in our test environment, which has
    been worked around by using "ssh-agent -T".
+
+ * strbuf_split*() to split a string into multiple strbufs is often a
+   wrong API to use.  A few uses of it have been removed by
+   simplifying the code.
+   (merge 2ab72a16d9 ob/gpg-interface-cleanup later to maint).
+
+ * "git shortlog" knows "--committer" and "--author" options, which
+   the command line completion (in contrib/) did not handle well,
+   which has been corrected.
+   (merge c568fa8e1c kf/log-shortlog-completion-fix later to maint).
+
+ * "git bisect" command did not react correctly to "git bisect help"
+   and "git bisect unknown", which has been corrected.
+   (merge 2bb3a012f3 rz/bisect-help-unknown later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 529a60a885 ua/t1517-short-help-tests later to maint).
