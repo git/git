@@ -15,7 +15,7 @@
 struct alt_base {
 	char *base;
 	int got_indices;
-	struct packed_git *packs;
+	struct packfile_list packs;
 	struct alt_base *next;
 };
 
@@ -324,11 +324,8 @@ static void process_alternates_response(void *callback_data)
 				} else if (is_alternate_allowed(target.buf)) {
 					warning("adding alternate object store: %s",
 						target.buf);
-					newalt = xmalloc(sizeof(*newalt));
-					newalt->next = NULL;
+					CALLOC_ARRAY(newalt, 1);
 					newalt->base = strbuf_detach(&target, NULL);
-					newalt->got_indices = 0;
-					newalt->packs = NULL;
 
 					while (tail->next != NULL)
 						tail = tail->next;
@@ -435,7 +432,7 @@ static int http_fetch_pack(struct walker *walker, struct alt_base *repo,
 
 	if (fetch_indices(walker, repo))
 		return -1;
-	target = find_oid_pack(oid, repo->packs);
+	target = packfile_list_find_oid(repo->packs.head, oid);
 	if (!target)
 		return -1;
 	close_pack_index(target);
@@ -584,17 +581,15 @@ static void cleanup(struct walker *walker)
 	if (data) {
 		alt = data->alt;
 		while (alt) {
-			struct packed_git *pack;
+			struct packfile_list_entry *e;
 
 			alt_next = alt->next;
 
-			pack = alt->packs;
-			while (pack) {
-				struct packed_git *pack_next = pack->next;
-				close_pack(pack);
-				free(pack);
-				pack = pack_next;
+			for (e = alt->packs.head; e; e = e->next) {
+				close_pack(e->pack);
+				free(e->pack);
 			}
+			packfile_list_clear(&alt->packs);
 
 			free(alt->base);
 			free(alt);
@@ -612,14 +607,11 @@ struct walker *get_http_walker(const char *url)
 	struct walker_data *data = xmalloc(sizeof(struct walker_data));
 	struct walker *walker = xmalloc(sizeof(struct walker));
 
-	data->alt = xmalloc(sizeof(*data->alt));
+	CALLOC_ARRAY(data->alt, 1);
 	data->alt->base = xstrdup(url);
 	for (s = data->alt->base + strlen(data->alt->base) - 1; *s == '/'; --s)
 		*s = 0;
 
-	data->alt->got_indices = 0;
-	data->alt->packs = NULL;
-	data->alt->next = NULL;
 	data->got_alternates = -1;
 
 	walker->corrupt_object_found = 0;

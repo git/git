@@ -2413,8 +2413,9 @@ static char *fetch_pack_index(unsigned char *hash, const char *base_url)
 	return tmp;
 }
 
-static int fetch_and_setup_pack_index(struct packed_git **packs_head,
-	unsigned char *sha1, const char *base_url)
+static int fetch_and_setup_pack_index(struct packfile_list *packs,
+				      unsigned char *sha1,
+				      const char *base_url)
 {
 	struct packed_git *new_pack, *p;
 	char *tmp_idx = NULL;
@@ -2448,12 +2449,11 @@ static int fetch_and_setup_pack_index(struct packed_git **packs_head,
 	if (ret)
 		return -1;
 
-	new_pack->next = *packs_head;
-	*packs_head = new_pack;
+	packfile_list_prepend(packs, new_pack);
 	return 0;
 }
 
-int http_get_info_packs(const char *base_url, struct packed_git **packs_head)
+int http_get_info_packs(const char *base_url, struct packfile_list *packs)
 {
 	struct http_get_options options = {0};
 	int ret = 0;
@@ -2477,7 +2477,7 @@ int http_get_info_packs(const char *base_url, struct packed_git **packs_head)
 		    !parse_oid_hex(data, &oid, &data) &&
 		    skip_prefix(data, ".pack", &data) &&
 		    (*data == '\n' || *data == '\0')) {
-			fetch_and_setup_pack_index(packs_head, oid.hash, base_url);
+			fetch_and_setup_pack_index(packs, oid.hash, base_url);
 		} else {
 			data = strchrnul(data, '\n');
 		}
@@ -2541,14 +2541,9 @@ cleanup:
 }
 
 void http_install_packfile(struct packed_git *p,
-			   struct packed_git **list_to_remove_from)
+			   struct packfile_list *list_to_remove_from)
 {
-	struct packed_git **lst = list_to_remove_from;
-
-	while (*lst != p)
-		lst = &((*lst)->next);
-	*lst = (*lst)->next;
-
+	packfile_list_remove(list_to_remove_from, p);
 	packfile_store_add_pack(the_repository->objects->packfiles, p);
 }
 

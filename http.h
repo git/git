@@ -2,6 +2,7 @@
 #define HTTP_H
 
 struct packed_git;
+struct packfile_list;
 
 #include "git-zlib.h"
 
@@ -190,7 +191,7 @@ struct curl_slist *http_append_auth_header(const struct credential *c,
 
 /* Helpers for fetching packs */
 int http_get_info_packs(const char *base_url,
-			struct packed_git **packs_head);
+			struct packfile_list *packs);
 
 /* Helper for getting Accept-Language header */
 const char *http_get_accept_language_header(void);
@@ -226,7 +227,7 @@ void release_http_pack_request(struct http_pack_request *preq);
  * from http_get_info_packs() and have chosen a specific pack to fetch.
  */
 void http_install_packfile(struct packed_git *p,
-			   struct packed_git **list_to_remove_from);
+			   struct packfile_list *list_to_remove_from);
 
 /* Helpers for fetching object */
 struct http_object_request {

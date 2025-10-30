@@ -121,6 +121,15 @@ void packfile_list_append(struct packfile_list *list, struct packed_git *pack)
 	}
 }
 
+struct packed_git *packfile_list_find_oid(struct packfile_list_entry *packs,
+					  const struct object_id *oid)
+{
+	for (; packs; packs = packs->next)
+		if (find_pack_entry_one(oid, packs->pack))
+			return packs->pack;
+	return NULL;
+}
+
 void pack_report(struct repository *repo)
 {
 	fprintf(stderr,

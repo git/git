@@ -66,6 +66,14 @@ void packfile_list_prepend(struct packfile_list *list, struct packed_git *pack);
 void packfile_list_append(struct packfile_list *list, struct packed_git *pack);
 
 /*
+ * Find the pack within the "packs" list whose index contains the object
+ * "oid". For general object lookups, you probably don't want this; use
+ * find_pack_entry() instead.
+ */
+struct packed_git *packfile_list_find_oid(struct packfile_list_entry *packs,
+					  const struct object_id *oid);
+
+/*
  * A store that manages packfiles for a given object database.
  */
 struct packfile_store {
