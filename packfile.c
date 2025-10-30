@@ -47,6 +47,80 @@ static size_t pack_mapped;
 #define SZ_FMT PRIuMAX
 static inline uintmax_t sz_fmt(size_t s) { return s; }
 
+void packfile_list_clear(struct packfile_list *list)
+{
+	struct packfile_list_entry *e, *next;
+
+	for (e = list->head; e; e = next) {
+		next = e->next;
+		free(e);
+	}
+
+	list->head = list->tail = NULL;
+}
+
+static struct packfile_list_entry *packfile_list_remove_internal(struct packfile_list *list,
+								 struct packed_git *pack)
+{
+	struct packfile_list_entry *e, *prev;
+
+	for (e = list->head, prev = NULL; e; prev = e, e = e->next) {
+		if (e->pack != pack)
+			continue;
+
+		if (prev)
+			prev->next = e->next;
+		if (list->head == e)
+			list->head = e->next;
+		if (list->tail == e)
+			list->tail = prev;
+
+		return e;
+	}
+
+	return NULL;
+}
+
+void packfile_list_remove(struct packfile_list *list, struct packed_git *pack)
+{
+	free(packfile_list_remove_internal(list, pack));
+}
+
+void packfile_list_prepend(struct packfile_list *list, struct packed_git *pack)
+{
+	struct packfile_list_entry *entry;
+
+	entry = packfile_list_remove_internal(list, pack);
+	if (!entry) {
+		entry = xmalloc(sizeof(*entry));
+		entry->pack = pack;
+	}
+	entry->next = list->head;
+
+	list->head = entry;
+	if (!list->tail)
+		list->tail = entry;
+}
+
+void packfile_list_append(struct packfile_list *list, struct packed_git *pack)
+{
+	struct packfile_list_entry *entry;
+
+	entry = packfile_list_remove_internal(list, pack);
+	if (!entry) {
+		entry = xmalloc(sizeof(*entry));
+		entry->pack = pack;
+	}
+	entry->next = NULL;
+
+	if (list->tail) {
+		list->tail->next = entry;
+		list->tail = entry;
+	} else {
+		list->head = list->tail = entry;
+	}
+}
+
 void pack_report(struct repository *repo)
 {
 	fprintf(stderr,
@@ -995,10 +1069,10 @@ static void packfile_store_prepare_mru(struct packfile_store *store)
 {
 	struct packed_git *p;
 
-	INIT_LIST_HEAD(&store->mru);
+	packfile_list_clear(&store->mru);
 
 	for (p = store->packs; p; p = p->next)
-		list_add_tail(&p->mru, &store->mru);
+		packfile_list_append(&store->mru, p);
 }
 
 void packfile_store_prepare(struct packfile_store *store)
@@ -1040,10 +1114,10 @@ struct packed_git *packfile_store_get_packs(struct packfile_store *store)
 	return store->packs;
 }
 
-struct list_head *packfile_store_get_packs_mru(struct packfile_store *store)
+struct packfile_list_entry *packfile_store_get_packs_mru(struct packfile_store *store)
 {
 	packfile_store_prepare(store);
-	return &store->mru;
+	return store->mru.head;
 }
 
 /*
@@ -2048,7 +2122,7 @@ static int fill_pack_entry(const struct object_id *oid,
 
 int find_pack_entry(struct repository *r, const struct object_id *oid, struct pack_entry *e)
 {
-	struct list_head *pos;
+	struct packfile_list_entry *l;
 
 	packfile_store_prepare(r->objects->packfiles);
 
@@ -2059,10 +2133,11 @@ int find_pack_entry(struct repository *r, const struct object_id *oid, struct pa
 	if (!r->objects->packfiles->packs)
 		return 0;
 
-	list_for_each(pos, &r->objects->packfiles->mru) {
-		struct packed_git *p = list_entry(pos, struct packed_git, mru);
+	for (l = r->objects->packfiles->mru.head; l; l = l->next) {
+		struct packed_git *p = l->pack;
+
 		if (!p->multi_pack_index && fill_pack_entry(oid, e, p)) {
-			list_move(&p->mru, &r->objects->packfiles->mru);
+			packfile_list_prepend(&r->objects->packfiles->mru, p);
 			return 1;
 		}
 	}
@@ -2314,7 +2389,6 @@ struct packfile_store *packfile_store_new(struct object_database *odb)
 	struct packfile_store *store;
 	CALLOC_ARRAY(store, 1);
 	store->odb = odb;
-	INIT_LIST_HEAD(&store->mru);
 	strmap_init(&store->packs_by_path);
 	return store;
 }

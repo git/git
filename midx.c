@@ -463,7 +463,7 @@ int prepare_midx_pack(struct multi_pack_index *m,
 	p = packfile_store_load_pack(r->objects->packfiles,
 				     pack_name.buf, m->source->local);
 	if (p)
-		list_add_tail(&p->mru, &r->objects->packfiles->mru);
+		packfile_list_append(&m->source->odb->packfiles->mru, p);
 	strbuf_release(&pack_name);
 
 	if (!p) {

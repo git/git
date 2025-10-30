@@ -1706,8 +1706,8 @@ static int want_object_in_pack_mtime(const struct object_id *oid,
 				     uint32_t found_mtime)
 {
 	int want;
+	struct packfile_list_entry *e;
 	struct odb_source *source;
-	struct list_head *pos;
 
 	if (!exclude && local) {
 		/*
@@ -1748,12 +1748,11 @@ static int want_object_in_pack_mtime(const struct object_id *oid,
 		}
 	}
 
-	list_for_each(pos, packfile_store_get_packs_mru(the_repository->objects->packfiles)) {
-		struct packed_git *p = list_entry(pos, struct packed_git, mru);
+	for (e = the_repository->objects->packfiles->mru.head; e; e = e->next) {
+		struct packed_git *p = e->pack;
 		want = want_object_in_pack_one(p, oid, exclude, found_pack, found_offset, found_mtime);
 		if (!exclude && want > 0)
-			list_move(&p->mru,
-				  packfile_store_get_packs_mru(the_repository->objects->packfiles));
+			packfile_list_prepend(&the_repository->objects->packfiles->mru, p);
 		if (want != -1)
 			return want;
 	}

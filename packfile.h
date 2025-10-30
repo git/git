@@ -12,7 +12,6 @@ struct object_info;
 
 struct packed_git {
 	struct packed_git *next;
-	struct list_head mru;
 	struct pack_window *windows;
 	off_t pack_size;
 	const void *index_data;
@@ -52,6 +51,20 @@ struct packed_git {
 	char pack_name[FLEX_ARRAY]; /* more */
 };
 
+struct packfile_list {
+	struct packfile_list_entry *head, *tail;
+};
+
+struct packfile_list_entry {
+	struct packfile_list_entry *next;
+	struct packed_git *pack;
+};
+
+void packfile_list_clear(struct packfile_list *list);
+void packfile_list_remove(struct packfile_list *list, struct packed_git *pack);
+void packfile_list_prepend(struct packfile_list *list, struct packed_git *pack);
+void packfile_list_append(struct packfile_list *list, struct packed_git *pack);
+
 /*
  * A store that manages packfiles for a given object database.
  */
@@ -79,7 +92,7 @@ struct packfile_store {
 	} kept_cache;
 
 	/* A most-recently-used ordered version of the packs list. */
-	struct list_head mru;
+	struct packfile_list mru;
 
 	/*
 	 * A map of packfile names to packed_git structs for tracking which
@@ -153,7 +166,7 @@ struct packed_git *packfile_store_get_packs(struct packfile_store *store);
 /*
  * Get all packs in most-recently-used order.
  */
-struct list_head *packfile_store_get_packs_mru(struct packfile_store *store);
+struct packfile_list_entry *packfile_store_get_packs_mru(struct packfile_store *store);
 
 /*
  * Open the packfile and add it to the store if it isn't yet known. Returns
