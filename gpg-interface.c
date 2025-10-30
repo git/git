@@ -443,7 +443,7 @@ static void parse_ssh_output(struct signature_check *sigc)
 
 	key = strstr(line, "key ");
 	if (key) {
-		sigc->fingerprint = xstrdup(strstr(line, "key ") + 4);
+		sigc->fingerprint = xstrdup(key + 4);
 		sigc->key = xstrdup(sigc->fingerprint);
 	} else {
 		/*
