@@ -1748,11 +1748,11 @@ static int want_object_in_pack_mtime(const struct object_id *oid,
 		}
 	}
 
-	for (e = the_repository->objects->packfiles->mru.head; e; e = e->next) {
+	for (e = the_repository->objects->packfiles->packs.head; e; e = e->next) {
 		struct packed_git *p = e->pack;
 		want = want_object_in_pack_one(p, oid, exclude, found_pack, found_offset, found_mtime);
 		if (!exclude && want > 0)
-			packfile_list_prepend(&the_repository->objects->packfiles->mru, p);
+			packfile_list_prepend(&the_repository->objects->packfiles->packs, p);
 		if (want != -1)
 			return want;
 	}

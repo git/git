@@ -870,9 +870,7 @@ void packfile_store_add_pack(struct packfile_store *store,
 	if (pack->pack_fd != -1)
 		pack_open_fds++;
 
-	packfile_list_prepend(&store->packs, pack);
-	packfile_list_append(&store->mru, pack);
-
+	packfile_list_append(&store->packs, pack);
 	strmap_put(&store->packs_by_path, pack->pack_name, pack);
 }
 
@@ -1077,14 +1075,6 @@ static int sort_pack(const struct packfile_list_entry *a,
 	return -1;
 }
 
-static void packfile_store_prepare_mru(struct packfile_store *store)
-{
-	packfile_list_clear(&store->mru);
-
-	for (struct packfile_list_entry *e = store->packs.head; e; e = e->next)
-		packfile_list_append(&store->mru, e->pack);
-}
-
 void packfile_store_prepare(struct packfile_store *store)
 {
 	struct odb_source *source;
@@ -1103,7 +1093,6 @@ void packfile_store_prepare(struct packfile_store *store)
 		if (!e->next)
 			store->packs.tail = e;
 
-	packfile_store_prepare_mru(store);
 	store->initialized = true;
 }
 
@@ -1126,12 +1115,6 @@ struct packfile_list_entry *packfile_store_get_packs(struct packfile_store *stor
 	}
 
 	return store->packs.head;
-}
-
-struct packfile_list_entry *packfile_store_get_packs_mru(struct packfile_store *store)
-{
-	packfile_store_prepare(store);
-	return store->mru.head;
 }
 
 /*
@@ -2134,11 +2117,12 @@ int find_pack_entry(struct repository *r, const struct object_id *oid, struct pa
 	if (!r->objects->packfiles->packs.head)
 		return 0;
 
-	for (l = r->objects->packfiles->mru.head; l; l = l->next) {
+	for (l = r->objects->packfiles->packs.head; l; l = l->next) {
 		struct packed_git *p = l->pack;
 
 		if (!p->multi_pack_index && fill_pack_entry(oid, e, p)) {
-			packfile_list_prepend(&r->objects->packfiles->mru, p);
+			if (!r->objects->packfiles->skip_mru_updates)
+				packfile_list_prepend(&r->objects->packfiles->packs, p);
 			return 1;
 		}
 	}
@@ -2270,6 +2254,7 @@ int for_each_packed_object(struct repository *repo, each_packed_object_fn cb,
 	int r = 0;
 	int pack_errors = 0;
 
+	repo->objects->packfiles->skip_mru_updates = true;
 	repo_for_each_pack(repo, p) {
 		if ((flags & FOR_EACH_OBJECT_LOCAL_ONLY) && !p->pack_local)
 			continue;
@@ -2290,6 +2275,8 @@ int for_each_packed_object(struct repository *repo, each_packed_object_fn cb,
 		if (r)
 			break;
 	}
+	repo->objects->packfiles->skip_mru_updates = false;
+
 	return r ? r : pack_errors;
 }
 

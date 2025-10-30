@@ -79,8 +79,8 @@ struct packfile_store {
 	struct object_database *odb;
 
 	/*
-	 * The list of packfiles in the order in which they are being added to
-	 * the store.
+	 * The list of packfiles in the order in which they have been most
+	 * recently used.
 	 */
 	struct packfile_list packs;
 
@@ -98,9 +98,6 @@ struct packfile_store {
 		unsigned flags;
 	} kept_cache;
 
-	/* A most-recently-used ordered version of the packs list. */
-	struct packfile_list mru;
-
 	/*
 	 * A map of packfile names to packed_git structs for tracking which
 	 * packs have been loaded already.
@@ -112,6 +109,21 @@ struct packfile_store {
 	 * packs.
 	 */
 	bool initialized;
+
+	/*
+	 * Usually, packfiles will be reordered to the front of the `packs`
+	 * list whenever an object is looked up via them. This has the effect
+	 * that packs that contain a lot of accessed objects will be located
+	 * towards the front.
+	 *
+	 * This is usually desireable, but there are exceptions. One exception
+	 * is when the looking up multiple objects in a loop for each packfile.
+	 * In that case, we may easily end up with an infinite loop as the
+	 * packfiles get reordered to the front repeatedly.
+	 *
+	 * Setting this field to `true` thus disables these reorderings.
+	 */
+	bool skip_mru_updates;
 };
 
 /*
@@ -170,11 +182,6 @@ void packfile_store_add_pack(struct packfile_store *store,
  * referenced by multi-pack indices.
  */
 struct packfile_list_entry *packfile_store_get_packs(struct packfile_store *store);
-
-/*
- * Get all packs in most-recently-used order.
- */
-struct packfile_list_entry *packfile_store_get_packs_mru(struct packfile_store *store);
 
 /*
  * Open the packfile and add it to the store if it isn't yet known. Returns
