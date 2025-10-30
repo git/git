@@ -71,7 +71,7 @@ take a while on large repositories. It provides significant performance gains
 for getting history of a directory or a file with `git log -- <path>`. If
 this option is given, future commit-graph writes will automatically assume
 that this option was intended. Use `--no-changed-paths` to stop storing this
-data.
+data. `--changed-paths` is implied by config `commitGraph.changedPaths=true`.
 +
 With the `--max-new-filters=<n>` option, generate at most `n` new Bloom
 filters (if `--changed-paths` is specified). If `n` is `-1`, no limit is
