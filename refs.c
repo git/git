@@ -5,6 +5,7 @@
 #define USE_THE_REPOSITORY_VARIABLE
 
 #include "git-compat-util.h"
+#include "abspath.h"
 #include "advice.h"
 #include "config.h"
 #include "environment.h"
@@ -28,6 +29,7 @@
 #include "setup.h"
 #include "sigchain.h"
 #include "date.h"
+#include "dir.h"
 #include "commit.h"
 #include "wildmatch.h"
 #include "ident.h"
@@ -2974,7 +2976,295 @@ struct migration_data {
 	struct strbuf *errbuf;
 	struct strbuf sb, name, mail;
 	uint64_t index;
+	int is_main_worktree;
 };
+
+/*
+ * Holds the state for migrating a single worktree's ref storage.
+ */
+struct worktree_migration_data {
+	struct worktree *worktree;
+	struct ref_store *old_refs;
+	struct ref_store *new_refs;
+	struct strbuf new_dir;
+	struct strbuf backup_dir;
+	int is_main;
+};
+
+static void worktree_migration_data_release(struct worktree_migration_data *wt_data)
+{
+	if (wt_data->new_refs) {
+		ref_store_release(wt_data->new_refs);
+		FREE_AND_NULL(wt_data->new_refs);
+	}
+	strbuf_release(&wt_data->new_dir);
+	strbuf_release(&wt_data->backup_dir);
+}
+
+static void worktree_migration_data_array_release(struct worktree_migration_data *wt_data,
+						   size_t nr)
+{
+	for (size_t i = 0; i < nr; i++)
+		worktree_migration_data_release(&wt_data[i]);
+	free(wt_data);
+}
+
+/*
+ * Create a commondir file in the temporary migration directory for a linked
+ * worktree. The files backend needs this to locate the common git directory.
+ * Returns 0 on success, -1 on failure.
+ */
+static int create_commondir_file(const char *new_dir, const char *worktree_path,
+				  struct strbuf *errbuf)
+{
+	struct strbuf commondir_path = STRBUF_INIT;
+	struct strbuf commondir_content = STRBUF_INIT;
+	int fd = -1;
+	int ret = 0;
+
+	strbuf_addf(&commondir_path, "%s/commondir", new_dir);
+	strbuf_addstr(&commondir_content, "../..\n");
+
+	fd = open(commondir_path.buf, O_WRONLY | O_CREAT | O_EXCL, 0666);
+	if (fd < 0) {
+		strbuf_addf(errbuf, _("cannot create commondir file for worktree '%s': %s"),
+			    worktree_path, strerror(errno));
+		ret = -1;
+		goto done;
+	}
+
+	if (write_in_full(fd, commondir_content.buf, commondir_content.len) < 0) {
+		strbuf_addf(errbuf, _("cannot write commondir file for worktree '%s': %s"),
+			    worktree_path, strerror(errno));
+		ret = -1;
+		goto done;
+	}
+
+done:
+	if (fd >= 0)
+		close(fd);
+	strbuf_release(&commondir_path);
+	strbuf_release(&commondir_content);
+	return ret;
+}
+
+/*
+ * Returns the list of ref storage items to backup/restore for a worktree.
+ * Main worktrees include packed-refs, linked worktrees do not.
+ */
+static const char **get_ref_storage_items(int is_main_worktree)
+{
+	static const char *main_items[] = {"refs", "logs", "reftable", "packed-refs", NULL};
+	static const char *linked_items[] = {"refs", "logs", "reftable", NULL};
+
+	return is_main_worktree ? main_items : linked_items;
+}
+
+/*
+ * Move root ref files from one directory to another. Root refs are individual
+ * files in the git directory like HEAD, ORIG_HEAD, etc. If remove_dest is set,
+ * unlink the destination file before moving.
+ *
+ * Returns -1 on fatal error (cannot open source directory), 0 on success,
+ * or positive count of files that failed to move. Detailed error messages
+ * are appended to errbuf if provided.
+ */
+static int move_root_refs(const char *from_dir, const char *to_dir,
+			  int remove_dest, struct strbuf *errbuf)
+{
+	struct strbuf from = STRBUF_INIT, to = STRBUF_INIT;
+	DIR *dir = opendir(from_dir);
+	struct dirent *e;
+	int ret = 0;
+	int failed_moves = 0;
+
+	if (!dir) {
+		ret = -1;
+		goto done;
+	}
+
+	while ((e = readdir(dir))) {
+		struct stat st;
+
+		if (!strcmp(e->d_name, ".") || !strcmp(e->d_name, ".."))
+			continue;
+
+		/* Only process files that are root refs */
+		if (!is_root_ref(e->d_name))
+			continue;
+
+		strbuf_reset(&from);
+		strbuf_addf(&from, "%s/%s", from_dir, e->d_name);
+
+		if (stat(from.buf, &st) < 0) {
+			if (errno != ENOENT && errbuf) {
+				strbuf_addf(errbuf, _("could not stat '%s': %s; "),
+					    from.buf, strerror(errno));
+				failed_moves++;
+			}
+			continue;
+		}
+
+		if (!S_ISREG(st.st_mode))
+			continue; /* skip non-files */
+
+		strbuf_reset(&to);
+		strbuf_addf(&to, "%s/%s", to_dir, e->d_name);
+
+		if (remove_dest) {
+			if (unlink(to.buf) < 0 && errno != ENOENT && errbuf) {
+				strbuf_addf(errbuf, _("could not unlink '%s': %s; "),
+					    to.buf, strerror(errno));
+				failed_moves++;
+				continue;
+			}
+		}
+
+		if (rename(from.buf, to.buf) < 0) {
+			if (errbuf) {
+				strbuf_addf(errbuf, _("could not move '%s' to '%s': %s; "),
+					    from.buf, to.buf, strerror(errno));
+				failed_moves++;
+			}
+		}
+	}
+	closedir(dir);
+	ret = failed_moves;
+
+done:
+	strbuf_release(&from);
+	strbuf_release(&to);
+	return ret;
+}
+
+/*
+ * Backup ref storage by moving ref-related files/directories to a backup
+ * location. Returns 0 on success, -1 on failure.
+ */
+static int backup_ref_storage(const char *gitdir, const char *backup_dir,
+			       int is_main_worktree, struct strbuf *errbuf)
+{
+	struct strbuf from = STRBUF_INIT, to = STRBUF_INIT;
+	const char **items = get_ref_storage_items(is_main_worktree);
+	size_t i;
+	int ret = 0;
+
+	/*
+	 * Move ref-related files and directories. Not all will exist depending
+	 * on the backend, which is fine.
+	 */
+	for (i = 0; items[i]; i++) {
+		const char *item;
+		struct stat st;
+
+		item = items[i];
+		strbuf_reset(&from);
+		strbuf_addf(&from, "%s/%s", gitdir, item);
+
+		if (stat(from.buf, &st) < 0) {
+			if (errno == ENOENT)
+				continue; /* doesn't exist, skip */
+			strbuf_addf(errbuf, _("could not stat '%s': %s"),
+				    from.buf, strerror(errno));
+			ret = -1;
+			goto done;
+		}
+
+		strbuf_reset(&to);
+		strbuf_addf(&to, "%s/%s", backup_dir, item);
+
+		if (rename(from.buf, to.buf) < 0) {
+			strbuf_addf(errbuf, _("could not move '%s' to '%s': %s"),
+				    from.buf, to.buf, strerror(errno));
+			ret = -1;
+			goto done;
+		}
+	}
+
+	/* Backup root refs (HEAD, ORIG_HEAD, etc.) */
+	ret = move_root_refs(gitdir, backup_dir, 0, errbuf);
+	if (ret < 0) {
+		strbuf_addf(errbuf, _("could not open directory '%s' to backup root refs: %s"),
+			    gitdir, strerror(errno));
+		ret = -1;
+		goto done;
+	} else if (ret > 0) {
+		/* Some root refs failed to backup - this is fatal */
+		strbuf_addstr(errbuf, _("failed to backup some root refs"));
+		ret = -1;
+		goto done;
+	}
+	ret = 0;
+
+done:
+	strbuf_release(&from);
+	strbuf_release(&to);
+	return ret;
+}
+
+/*
+ * Restore ref storage from backup by moving files back.
+ */
+static void restore_ref_storage_from_backup(const char *gitdir,
+					     const char *backup_dir,
+					     int is_main_worktree)
+{
+	struct strbuf from = STRBUF_INIT, to = STRBUF_INIT;
+	const char **items = get_ref_storage_items(is_main_worktree);
+	size_t i;
+
+	for (i = 0; items[i]; i++) {
+		const char *item;
+		struct stat st;
+
+		item = items[i];
+		strbuf_reset(&from);
+		strbuf_addf(&from, "%s/%s", backup_dir, item);
+
+		if (stat(from.buf, &st) < 0)
+			continue; /* doesn't exist in backup */
+
+		strbuf_reset(&to);
+		strbuf_addf(&to, "%s/%s", gitdir, item);
+
+		/* Remove what's currently there (new storage that failed) */
+		if (stat(to.buf, &st) == 0) {
+			if (S_ISDIR(st.st_mode))
+				remove_dir_recursively(&to, 0);
+			else
+				unlink(to.buf);
+		}
+
+		rename(from.buf, to.buf);
+	}
+
+	/* Restore root refs from backup */
+	{
+		struct strbuf restore_err = STRBUF_INIT;
+		int restore_ret = move_root_refs(backup_dir, gitdir, 1, &restore_err);
+		if (restore_ret < 0) {
+			warning_errno(_("could not open directory '%s' to restore root refs"), backup_dir);
+		} else if (restore_ret > 0) {
+			warning(_("failed to restore some root refs: %s"), restore_err.buf);
+		}
+		strbuf_release(&restore_err);
+	}
+
+	strbuf_release(&from);
+	strbuf_release(&to);
+}
+
+/*
+ * Delete backup directory and its contents.
+ */
+static void delete_backup(const char *backup_dir)
+{
+	struct strbuf path = STRBUF_INIT;
+
+	strbuf_addstr(&path, backup_dir);
+	remove_dir_recursively(&path, 0);
+	strbuf_release(&path);
+}
 
 static int migrate_one_ref(const char *refname, const char *referent UNUSED, const struct object_id *oid,
 			   int flags, void *cb_data)
@@ -2982,6 +3272,16 @@ static int migrate_one_ref(const char *refname, const char *referent UNUSED, con
 	struct migration_data *data = cb_data;
 	struct strbuf symref_target = STRBUF_INIT;
 	int ret;
+
+	/*
+	 * For linked worktrees, only migrate per-worktree refs. Shared refs
+	 * are migrated once in the main worktree.
+	 */
+	if (!data->is_main_worktree) {
+		enum ref_worktree_type type = parse_worktree_ref(refname, NULL, NULL, NULL);
+		if (type != REF_WORKTREE_CURRENT)
+			return 0;
+	}
 
 	if (flags & REF_ISSYMREF) {
 		ret = refs_read_symbolic_ref(data->old_refs, refname, &symref_target);
@@ -3052,7 +3352,7 @@ static int move_files(const char *from_path, const char *to_path, struct strbuf 
 
 	from_dir = opendir(from_path);
 	if (!from_dir) {
-		strbuf_addf(errbuf, "could not open source directory '%s': %s",
+		strbuf_addf(errbuf, _("could not open source directory '%s': %s"),
 			    from_path, strerror(errno));
 		ret = -1;
 		goto done;
@@ -3086,14 +3386,14 @@ static int move_files(const char *from_path, const char *to_path, struct strbuf 
 
 		ret = rename(from_buf.buf, to_buf.buf);
 		if (ret < 0) {
-			strbuf_addf(errbuf, "could not link file '%s' to '%s': %s",
+			strbuf_addf(errbuf, _("could not link file '%s' to '%s': %s"),
 				    from_buf.buf, to_buf.buf, strerror(errno));
 			goto done;
 		}
 	}
 
 	if (errno) {
-		strbuf_addf(errbuf, "could not read entry from directory '%s': %s",
+		strbuf_addf(errbuf, _("could not read entry from directory '%s': %s"),
 			    from_path, strerror(errno));
 		ret = -1;
 		goto done;
@@ -3109,211 +3409,339 @@ done:
 	return ret;
 }
 
-static int has_worktrees(void)
-{
-	struct worktree **worktrees = get_worktrees();
-	int ret = 0;
-	size_t i;
-
-	for (i = 0; worktrees[i]; i++) {
-		if (is_main_worktree(worktrees[i]))
-			continue;
-		ret = 1;
-	}
-
-	free_worktrees(worktrees);
-	return ret;
-}
-
 int repo_migrate_ref_storage_format(struct repository *repo,
 				    enum ref_storage_format format,
 				    unsigned int flags,
 				    struct strbuf *errbuf)
 {
-	struct ref_store *old_refs = NULL, *new_refs = NULL;
-	struct ref_transaction *transaction = NULL;
-	struct strbuf new_gitdir = STRBUF_INIT;
-	struct migration_data data = {
-		.sb = STRBUF_INIT,
-		.name = STRBUF_INIT,
-		.mail = STRBUF_INIT,
-	};
-	int did_migrate_refs = 0;
+	struct worktree **worktrees = NULL;
+	struct worktree_migration_data *wt_migrations = NULL;
+	size_t nr_worktrees = 0;
 	int ret;
 
 	if (repo->ref_storage_format == format) {
-		strbuf_addstr(errbuf, "current and new ref storage format are equal");
+		strbuf_addstr(errbuf, _("current and new ref storage format are equal"));
 		ret = -1;
 		goto done;
 	}
-
-	old_refs = get_main_ref_store(repo);
 
 	/*
-	 * Worktrees complicate the migration because every worktree has a
-	 * separate ref storage. While it should be feasible to implement, this
-	 * is pushed out to a future iteration.
-	 *
-	 * TODO: we should really be passing the caller-provided repository to
-	 * `has_worktrees()`, but our worktree subsystem doesn't yet support
-	 * that.
+	 * Enumerate all worktrees. We use the variant that doesn't try to read
+	 * HEAD both because we don't need it (we'll migrate all refs including
+	 * HEAD anyway) and to avoid failures if the ref storage is already
+	 * inconsistent (e.g., from a previous interrupted migration or corruption).
 	 */
-	if (has_worktrees()) {
-		strbuf_addstr(errbuf, "migrating repositories with worktrees is not supported yet");
-		ret = -1;
-		goto done;
+	worktrees = get_worktrees_without_reading_head();
+	for (nr_worktrees = 0; worktrees[nr_worktrees]; nr_worktrees++)
+		; /* count worktrees */
+
+	/*
+	 * Migration must be run from the main worktree. When running from a
+	 * linked worktree, the_repository context points to the worktree's
+	 * gitdir, causing the migration logic to operate on the wrong
+	 * directory structure.
+	 */
+	for (size_t i = 0; i < nr_worktrees; i++) {
+		if (worktrees[i]->is_current && !is_main_worktree(worktrees[i])) {
+			strbuf_addf(errbuf, _("migration must be run from the main worktree at %s"),
+				    worktrees[0]->path);
+			ret = -1;
+			goto done;
+		}
 	}
+
+	CALLOC_ARRAY(wt_migrations, nr_worktrees);
 
 	/*
 	 * The overall logic looks like this:
 	 *
-	 *   1. Set up a new temporary directory and initialize it with the new
-	 *      format. This is where all refs will be migrated into.
+	 *   1. For each worktree, set up a new temporary directory and
+	 *      initialize it with the new format. This is where all refs for
+	 *      that worktree will be migrated into.
 	 *
-	 *   2. Enumerate all refs and write them into the new ref storage.
-	 *      This operation is safe as we do not yet modify the main
-	 *      repository.
+	 *   2. For each worktree, enumerate all refs and write them into the
+	 *      new ref storage. This operation is safe as we do not yet modify
+	 *      the main repository.
 	 *
-	 *   3. Enumerate all reflogs and write them into the new ref storage.
-	 *      This operation is safe as we do not yet modify the main
-	 *      repository.
+	 *   3. For each worktree, enumerate all reflogs and write them into
+	 *      the new ref storage. This operation is safe as we do not yet
+	 *      modify the main repository.
 	 *
 	 *   4. If we're in dry-run mode then we are done and can hand over the
-	 *      directory to the caller for inspection. If not, we now start
+	 *      directories to the caller for inspection. If not, we now start
 	 *      with the destructive part.
 	 *
-	 *   5. Delete the old ref storage from disk. As we have a copy of refs
-	 *      in the new ref storage it's okay(ish) if we now get interrupted
-	 *      as there is an equivalent copy of all refs available.
+	 *   5. For each worktree, create a backup of the old ref storage by
+	 *      moving it to a backup location.
 	 *
-	 *   6. Move the new ref storage files into place.
+	 *   6. For each worktree, move the new ref storage files into place.
+	 *      As we have a backup it's okay if we now get interrupted as the
+	 *      repository can be restored to its original state.
 	 *
-	 *  7. Change the repository format to the new ref format.
+	 *   7. Change the repository format to the new ref format. Clear any
+	 *      cached ref stores so they get reloaded with the new format.
+	 *
+	 *   8. Delete the backup directories.
+	 *
+	 * All worktrees are processed sequentially. Parallelization would add
+	 * complexity for minimal benefit since most repos have few worktrees
+	 * and migration is a one-time operation.
 	 */
-	strbuf_addf(&new_gitdir, "%s/%s", old_refs->gitdir, "ref_migration.XXXXXX");
-	if (!mkdtemp(new_gitdir.buf)) {
-		strbuf_addf(errbuf, "cannot create migration directory: %s",
-			    strerror(errno));
-		ret = -1;
-		goto done;
-	}
+	for (size_t i = 0; i < nr_worktrees; i++) {
+		struct worktree_migration_data *wt_data = &wt_migrations[i];
+		struct ref_transaction *transaction = NULL;
+		struct migration_data data = {
+			.sb = STRBUF_INIT,
+			.name = STRBUF_INIT,
+			.mail = STRBUF_INIT,
+		};
+		int create_flags = 0;
 
-	new_refs = ref_store_init(repo, format, new_gitdir.buf,
-				  REF_STORE_ALL_CAPS);
-	ret = ref_store_create_on_disk(new_refs, 0, errbuf);
-	if (ret < 0)
-		goto done;
+		wt_data->worktree = worktrees[i];
+		wt_data->is_main = is_main_worktree(worktrees[i]);
+		wt_data->old_refs = get_worktree_ref_store(worktrees[i]);
+		strbuf_init(&wt_data->new_dir, 0);
+		strbuf_init(&wt_data->backup_dir, 0);
 
-	transaction = ref_store_transaction_begin(new_refs, REF_TRANSACTION_FLAG_INITIAL,
-						  errbuf);
-	if (!transaction)
-		goto done;
+		/* Create temporary directory for new ref storage */
+		strbuf_addf(&wt_data->new_dir, "%s/ref_migration.XXXXXX",
+			    wt_data->old_refs->gitdir);
 
-	data.old_refs = old_refs;
-	data.transaction = transaction;
-	data.errbuf = errbuf;
+		if (!mkdtemp(wt_data->new_dir.buf)) {
+			strbuf_addf(errbuf, _("cannot create migration directory for worktree '%s': %s"),
+				    worktrees[i]->path, strerror(errno));
+			ret = -1;
+			goto done;
+		}
 
-	/*
-	 * We need to use the internal `do_for_each_ref()` here so that we can
-	 * also include broken refs and symrefs. These would otherwise be
-	 * skipped silently.
-	 *
-	 * Ideally, we would do this call while locking the old ref storage
-	 * such that there cannot be any concurrent modifications. We do not
-	 * have the infra for that though, and the "files" backend does not
-	 * allow for a central lock due to its design. It's thus on the user to
-	 * ensure that there are no concurrent writes.
-	 */
-	ret = do_for_each_ref(old_refs, "", NULL, migrate_one_ref, 0,
-			      DO_FOR_EACH_INCLUDE_ROOT_REFS | DO_FOR_EACH_INCLUDE_BROKEN,
-			      &data);
-	if (ret < 0)
-		goto done;
+		/*
+		 * For linked worktrees migrating to files format, create a commondir
+		 * file in the temp directory so the files backend knows where the
+		 * common git directory is. Reftable doesn't use commondir files.
+		 */
+		if (!wt_data->is_main && format == REF_STORAGE_FORMAT_FILES) {
+			if (create_commondir_file(wt_data->new_dir.buf,
+						  worktrees[i]->path, errbuf) < 0) {
+				ret = -1;
+				goto done;
+			}
+		}
 
-	if (!(flags & REPO_MIGRATE_REF_STORAGE_FORMAT_SKIP_REFLOG)) {
-		ret = refs_for_each_reflog(old_refs, migrate_one_reflog, &data);
+		/* Initialize new ref store */
+		wt_data->new_refs = ref_store_init(repo, format, wt_data->new_dir.buf,
+						   REF_STORE_ALL_CAPS);
+
+		/* For linked worktrees, we only need to create the worktree-specific structure */
+		if (!wt_data->is_main)
+			create_flags = REF_STORE_CREATE_ON_DISK_IS_WORKTREE;
+
+		ret = ref_store_create_on_disk(wt_data->new_refs, create_flags, errbuf);
 		if (ret < 0)
 			goto done;
+
+		/*
+		 * Begin transaction for migrating refs. For linked worktrees,
+		 * we don't use REF_TRANSACTION_FLAG_INITIAL because that flag
+		 * causes refs to be written to packed-refs, which should not
+		 * exist in linked worktree directories.
+		 */
+		transaction = ref_store_transaction_begin(wt_data->new_refs,
+							  wt_data->is_main ? REF_TRANSACTION_FLAG_INITIAL : 0,
+							  errbuf);
+		if (!transaction) {
+			ret = -1;
+			goto done;
+		}
+
+		data.old_refs = wt_data->old_refs;
+		data.transaction = transaction;
+		data.errbuf = errbuf;
+		data.is_main_worktree = wt_data->is_main;
+
+		/*
+		 * We need to use the internal `do_for_each_ref()` here so that
+		 * we can also include broken refs and symrefs. These would
+		 * otherwise be skipped silently.
+		 *
+		 * Ideally, we would do this call while locking the old ref
+		 * storage such that there cannot be any concurrent modifications.
+		 * We do not have the infra for that though, and the "files"
+		 * backend does not allow for a central lock due to its design.
+		 * It's thus on the user to ensure that there are no concurrent
+		 * writes.
+		 */
+		ret = do_for_each_ref(wt_data->old_refs, "", NULL, migrate_one_ref, 0,
+				      DO_FOR_EACH_INCLUDE_ROOT_REFS | DO_FOR_EACH_INCLUDE_BROKEN,
+				      &data);
+		if (ret < 0) {
+			ref_transaction_free(transaction);
+			strbuf_release(&data.sb);
+			strbuf_release(&data.name);
+			strbuf_release(&data.mail);
+			goto done;
+		}
+
+		if (!(flags & REPO_MIGRATE_REF_STORAGE_FORMAT_SKIP_REFLOG)) {
+			ret = refs_for_each_reflog(wt_data->old_refs, migrate_one_reflog, &data);
+			if (ret < 0) {
+				ref_transaction_free(transaction);
+				strbuf_release(&data.sb);
+				strbuf_release(&data.name);
+				strbuf_release(&data.mail);
+				goto done;
+			}
+		}
+
+		ret = ref_transaction_commit(transaction, errbuf);
+		ref_transaction_free(transaction);
+		strbuf_release(&data.sb);
+		strbuf_release(&data.name);
+		strbuf_release(&data.mail);
+
+		if (ret < 0)
+			goto done;
+
+		/*
+		 * Linked worktrees should not have a packed-refs file. If one
+		 * was created during the transaction, remove it before moving
+		 * files into place.
+		 */
+		if (!wt_data->is_main) {
+			struct strbuf packed_refs = STRBUF_INIT;
+			strbuf_addf(&packed_refs, "%s/packed-refs", wt_data->new_dir.buf);
+			if (unlink(packed_refs.buf) < 0 && errno != ENOENT)
+				warning_errno(_("could not remove packed-refs from linked worktree at '%s'"),
+					      packed_refs.buf);
+			strbuf_release(&packed_refs);
+		}
+
+		/*
+		 * Release the new ref store to close any open files. This is
+		 * required for platforms like Cygwin where renaming an open
+		 * file results in EPERM.
+		 */
+		ref_store_release(wt_data->new_refs);
+		FREE_AND_NULL(wt_data->new_refs);
 	}
 
-	ret = ref_transaction_commit(transaction, errbuf);
-	if (ret < 0)
-		goto done;
-	did_migrate_refs = 1;
-
 	if (flags & REPO_MIGRATE_REF_STORAGE_FORMAT_DRYRUN) {
-		printf(_("Finished dry-run migration of refs, "
-			 "the result can be found at '%s'\n"), new_gitdir.buf);
+		printf(_("Finished dry-run migration of refs for %"PRIuMAX" worktree(s)\n"),
+		       (uintmax_t)nr_worktrees);
+		for (size_t i = 0; i < nr_worktrees; i++) {
+			const char *path = wt_migrations[i].new_dir.buf;
+
+			/* Show absolute paths consistently for both main and linked worktrees */
+			if (!is_absolute_path(path))
+				path = absolute_path(path);
+
+			printf(_("  Worktree '%s': %s\n"),
+			       worktrees[i]->path,
+			       path);
+		}
 		ret = 0;
 		goto done;
 	}
 
-	/*
-	 * Release the new ref store such that any potentially-open files will
-	 * be closed. This is required for platforms like Cygwin, where
-	 * renaming an open file results in EPERM.
-	 */
-	ref_store_release(new_refs);
-	FREE_AND_NULL(new_refs);
+	for (size_t i = 0; i < nr_worktrees; i++) {
+		struct worktree_migration_data *wt_data = &wt_migrations[i];
+
+		/* Create backup directory */
+		strbuf_addf(&wt_data->backup_dir, "%s/ref_migration_backup.XXXXXX",
+			    wt_data->old_refs->gitdir);
+		if (!mkdtemp(wt_data->backup_dir.buf)) {
+			strbuf_addf(errbuf, _("cannot create backup directory for worktree '%s': %s"),
+				    worktrees[i]->path, strerror(errno));
+			ret = -1;
+			goto done;
+		}
+
+		/* Backup old ref storage by moving it to backup directory */
+		ret = backup_ref_storage(wt_data->old_refs->gitdir,
+					 wt_data->backup_dir.buf,
+					 wt_data->is_main, errbuf);
+		if (ret < 0) {
+			strbuf_addf(errbuf, _(" (worktree: %s)"), worktrees[i]->path);
+			goto done;
+		}
+
+		/* Move new ref storage into place */
+		ret = move_files(wt_data->new_dir.buf, wt_data->old_refs->gitdir, errbuf);
+		if (ret < 0) {
+			strbuf_addf(errbuf, _(" (worktree: %s)"), worktrees[i]->path);
+			goto done;
+		}
+
+		/* Remove temporary migration directory */
+		if (rmdir(wt_data->new_dir.buf) < 0)
+			warning_errno(_("could not remove temporary migration directory '%s'"),
+				      wt_data->new_dir.buf);
+	}
 
 	/*
-	 * Until now we were in the non-destructive phase, where we only
-	 * populated the new ref store. From hereon though we are about
-	 * to get hands by deleting the old ref store and then moving
-	 * the new one into place.
-	 *
-	 * Assuming that there were no concurrent writes, the new ref
-	 * store should have all information. So if we fail from hereon
-	 * we may be in an in-between state, but it would still be able
-	 * to recover by manually moving remaining files from the
-	 * temporary migration directory into place.
-	 */
-	ret = ref_store_remove_on_disk(old_refs, errbuf);
-	if (ret < 0)
-		goto done;
-
-	ret = move_files(new_gitdir.buf, old_refs->gitdir, errbuf);
-	if (ret < 0)
-		goto done;
-
-	if (rmdir(new_gitdir.buf) < 0)
-		warning_errno(_("could not remove temporary migration directory '%s'"),
-			      new_gitdir.buf);
-
-	/*
-	 * We have migrated the repository, so we now need to adjust the
-	 * repository format so that clients will use the new ref store.
-	 * We also need to swap out the repository's main ref store.
+	 * Update the repository format so that clients will use the new ref
+	 * store.
 	 */
 	initialize_repository_version(hash_algo_by_ptr(repo->hash_algo), format, 1);
 
 	/*
-	 * Unset the old ref store and release it. `get_main_ref_store()` will
-	 * make sure to lazily re-initialize the repository's ref store with
-	 * the new format.
+	 * Reinitialize all worktree ref stores with the new format. We release
+	 * the old ones and clear cached pointers so they get lazily
+	 * reinitialized with the new format.
 	 */
-	ref_store_release(old_refs);
-	FREE_AND_NULL(old_refs);
-	repo->refs_private = NULL;
+	for (size_t i = 0; i < nr_worktrees; i++) {
+		if (wt_migrations[i].is_main) {
+			/* Main worktree: clear the cached main ref store */
+			if (repo->refs_private) {
+				ref_store_release(repo->refs_private);
+				FREE_AND_NULL(repo->refs_private);
+			}
+		}
+		/* Worktree ref stores will be lazily reinitialized on next access */
+	}
+
+	/* Delete backup directories since migration succeeded */
+	for (size_t i = 0; i < nr_worktrees; i++) {
+		if (wt_migrations[i].backup_dir.len)
+			delete_backup(wt_migrations[i].backup_dir.buf);
+	}
 
 	ret = 0;
 
 done:
-	if (ret && did_migrate_refs) {
-		strbuf_complete(errbuf, '\n');
-		strbuf_addf(errbuf, _("migrated refs can be found at '%s'"),
-			    new_gitdir.buf);
+	if (ret) {
+		/*
+		 * Migration failed. Attempt to restore from backups if we made
+		 * it to Phase 2.
+		 */
+		for (size_t i = 0; wt_migrations && i < nr_worktrees; i++) {
+			if (wt_migrations[i].backup_dir.len) {
+				restore_ref_storage_from_backup(
+					wt_migrations[i].old_refs->gitdir,
+					wt_migrations[i].backup_dir.buf,
+					wt_migrations[i].is_main);
+				delete_backup(wt_migrations[i].backup_dir.buf);
+			}
+		}
+
+		/*
+		 * Report where migrated refs can be found for manual recovery.
+		 * We keep these directories as insurance - if the restore failed,
+		 * they may be the only way to recover the migrated refs.
+		 */
+		for (size_t i = 0; wt_migrations && i < nr_worktrees; i++) {
+			if (wt_migrations[i].new_dir.len) {
+				strbuf_complete(errbuf, '\n');
+				strbuf_addf(errbuf, _("migrated refs for worktree '%s' can be found at '%s'"),
+					    worktrees[i]->path, wt_migrations[i].new_dir.buf);
+			}
+		}
 	}
 
-	if (new_refs) {
-		ref_store_release(new_refs);
-		free(new_refs);
-	}
-	ref_transaction_free(transaction);
-	strbuf_release(&new_gitdir);
-	strbuf_release(&data.sb);
-	strbuf_release(&data.name);
-	strbuf_release(&data.mail);
+	if (wt_migrations)
+		worktree_migration_data_array_release(wt_migrations, nr_worktrees);
+	if (worktrees)
+		free_worktrees(worktrees);
+
 	return ret;
 }
 
