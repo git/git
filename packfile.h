@@ -5,12 +5,12 @@
 #include "object.h"
 #include "odb.h"
 #include "oidset.h"
+#include "strmap.h"
 
 /* in odb.h */
 struct object_info;
 
 struct packed_git {
-	struct hashmap_entry packmap_ent;
 	struct packed_git *next;
 	struct list_head mru;
 	struct pack_window *windows;
@@ -85,7 +85,7 @@ struct packfile_store {
 	 * A map of packfile names to packed_git structs for tracking which
 	 * packs have been loaded already.
 	 */
-	struct hashmap map;
+	struct strmap packs_by_path;
 
 	/*
 	 * Whether packfiles have already been populated with this store's
