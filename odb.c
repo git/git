@@ -86,17 +86,16 @@ int odb_mkstemp(struct object_database *odb,
 /*
  * Return non-zero iff the path is usable as an alternate object database.
  */
-static int alt_odb_usable(struct object_database *o,
-			  struct strbuf *path,
-			  const char *normalized_objdir, khiter_t *pos)
+static int alt_odb_usable(struct object_database *o, const char *path,
+			  const char *normalized_objdir)
 {
 	int r;
 
 	/* Detect cases where alternate disappeared */
-	if (!is_directory(path->buf)) {
+	if (!is_directory(path)) {
 		error(_("object directory %s does not exist; "
 			"check .git/objects/info/alternates"),
-		      path->buf);
+		      path);
 		return 0;
 	}
 
@@ -113,11 +112,14 @@ static int alt_odb_usable(struct object_database *o,
 		assert(r == 1); /* never used */
 		kh_value(o->source_by_path, p) = o->sources;
 	}
-	if (fspatheq(path->buf, normalized_objdir))
+
+	if (fspatheq(path, normalized_objdir))
 		return 0;
-	*pos = kh_put_odb_path_map(o->source_by_path, path->buf, &r);
-	/* r: 0 = exists, 1 = never used, 2 = deleted */
-	return r == 0 ? 0 : 1;
+
+	if (kh_get_odb_path_map(o->source_by_path, path) < kh_end(o->source_by_path))
+		return 0;
+
+	return 1;
 }
 
 /*
@@ -148,6 +150,7 @@ static struct odb_source *link_alt_odb_entry(struct object_database *odb,
 	struct strbuf pathbuf = STRBUF_INIT;
 	struct strbuf tmp = STRBUF_INIT;
 	khiter_t pos;
+	int ret;
 
 	if (!is_absolute_path(dir) && relative_base) {
 		strbuf_realpath(&pathbuf, relative_base, 1);
@@ -172,20 +175,21 @@ static struct odb_source *link_alt_odb_entry(struct object_database *odb,
 	strbuf_reset(&tmp);
 	strbuf_realpath(&tmp, odb->sources->path, 1);
 
-	if (!alt_odb_usable(odb, &pathbuf, tmp.buf, &pos))
+	if (!alt_odb_usable(odb, pathbuf.buf, tmp.buf))
 		goto error;
 
 	CALLOC_ARRAY(alternate, 1);
 	alternate->odb = odb;
 	alternate->local = false;
-	/* pathbuf.buf is already in r->objects->source_by_path */
 	alternate->path = strbuf_detach(&pathbuf, NULL);
 
 	/* add the alternate entry */
 	*odb->sources_tail = alternate;
 	odb->sources_tail = &(alternate->next);
-	alternate->next = NULL;
-	assert(odb->source_by_path);
+
+	pos = kh_put_odb_path_map(odb->source_by_path, alternate->path, &ret);
+	if (!ret)
+		BUG("source must not yet exist");
 	kh_value(odb->source_by_path, pos) = alternate;
 
 	/* recursively add alternates */
