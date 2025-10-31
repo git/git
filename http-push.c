@@ -104,7 +104,7 @@ struct repo {
 	int has_info_refs;
 	int can_update_info_refs;
 	int has_info_packs;
-	struct packed_git *packs;
+	struct packfile_list packs;
 	struct remote_lock *locks;
 };
 
@@ -311,7 +311,7 @@ static void start_fetch_packed(struct transfer_request *request)
 	struct transfer_request *check_request = request_queue_head;
 	struct http_pack_request *preq;
 
-	target = find_oid_pack(&request->obj->oid, repo->packs);
+	target = packfile_list_find_oid(repo->packs.head, &request->obj->oid);
 	if (!target) {
 		fprintf(stderr, "Unable to fetch %s, will not be able to update server info refs\n", oid_to_hex(&request->obj->oid));
 		repo->can_update_info_refs = 0;
@@ -683,7 +683,7 @@ static int add_send_request(struct object *obj, struct remote_lock *lock)
 		get_remote_object_list(obj->oid.hash[0]);
 	if (obj->flags & (REMOTE | PUSHING))
 		return 0;
-	target = find_oid_pack(&obj->oid, repo->packs);
+	target = packfile_list_find_oid(repo->packs.head, &obj->oid);
 	if (target) {
 		obj->flags |= REMOTE;
 		return 0;
