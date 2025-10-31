@@ -57,9 +57,9 @@ test_expect_success 'last-modified recursive' '
 
 test_expect_success 'last-modified recursive with show-trees' '
 	check_last_modified -r -t <<-\EOF
-	3 a
 	3 a/b
 	3 a/b/file
+	3 a
 	2 a/file
 	1 file
 	EOF
