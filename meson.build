@@ -529,6 +529,7 @@ libgit_sources = [
   'usage.c',
   'userdiff.c',
   'utf8.c',
+  'varint.c',
   'version.c',
   'versioncmp.c',
   'walker.c',
@@ -1710,7 +1711,9 @@ version_def_h = custom_target(
 libgit_sources += version_def_h
 
 cargo = find_program('cargo', dirs: program_path, native: true, required: get_option('rust'))
-rust_option = get_option('rust').disable_auto_if(not cargo.found())
+cbindgen = find_program('cbindgen', dirs: program_path, native: true, required: get_option('rust'))
+
+rust_option = get_option('rust').disable_auto_if(not cargo.found() or not cbindgen.found())
 if rust_option.allowed()
   subdir('src')
   libgit_c_args += '-DWITH_RUST'
@@ -1718,10 +1721,22 @@ if rust_option.allowed()
   if host_machine.system() == 'windows'
     libgit_dependencies += compiler.find_library('userenv')
   endif
-else
-  libgit_sources += [
-    'varint.c',
-  ]
+
+  cbindgen_input = [ 'cbindgen.toml' ]
+  foreach source : libgit_rs_sources
+    cbindgen_input += 'src' / source
+  endforeach
+
+  libgit_sources += custom_target('c-bindings.h',
+    input: cbindgen_input,
+    output: 'c-bindings.h',
+    command: [
+      cbindgen,
+      '--output',
+      '@OUTPUT@',
+      meson.current_source_dir(),
+    ],
+  )
 endif
 
 libgit = declare_dependency(

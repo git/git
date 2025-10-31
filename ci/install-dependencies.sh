@@ -32,14 +32,20 @@ alpine-*)
 		bash cvs gnupg perl-cgi perl-dbd-sqlite perl-io-tty >/dev/null
 	;;
 fedora-*|almalinux-*)
+	RUST_DEPS="cargo cbindgen"
 	case "$jobname" in
+	almalinux-8)
+		# AlmaLinux 8 does not have cbindgen, it was only added in version 9.
+		RUST_DEPS=;;
 	*-meson)
 		MESON_DEPS="meson ninja";;
 	esac
+
 	dnf -yq update >/dev/null &&
-	dnf -yq install shadow-utils sudo make pkg-config gcc findutils diffutils perl python3 gawk gettext zlib-devel expat-devel openssl-devel curl-devel pcre2-devel $MESON_DEPS cargo >/dev/null
+	dnf -yq install shadow-utils sudo make pkg-config gcc findutils diffutils perl python3 gawk gettext \
+		zlib-devel expat-devel openssl-devel curl-devel pcre2-devel $MESON_DEPS $RUST_DEPS >/dev/null
 	;;
-ubuntu-*|i386/ubuntu-*|debian-*)
+ubuntu-*|i386/debian-*|debian-*)
 	# Required so that apt doesn't wait for user input on certain packages.
 	export DEBIAN_FRONTEND=noninteractive
 
@@ -48,9 +54,9 @@ ubuntu-*|i386/ubuntu-*|debian-*)
 		SVN='libsvn-perl subversion'
 		LANGUAGES='language-pack-is'
 		;;
-	i386/ubuntu-*)
+	i386/debian-*)
 		SVN=
-		LANGUAGES='language-pack-is'
+		LANGUAGES='locales-all'
 		;;
 	*)
 		SVN='libsvn-perl subversion'
@@ -64,7 +70,7 @@ ubuntu-*|i386/ubuntu-*|debian-*)
 		make libssl-dev libcurl4-openssl-dev libexpat-dev wget sudo default-jre \
 		tcl tk gettext zlib1g-dev perl-modules liberror-perl libauthen-sasl-perl \
 		libemail-valid-perl libio-pty-perl libio-socket-ssl-perl libnet-smtp-ssl-perl libdbd-sqlite3-perl libcgi-pm-perl \
-		libsecret-1-dev libpcre2-dev meson ninja-build pkg-config cargo \
+		libsecret-1-dev libpcre2-dev meson ninja-build pkg-config cargo cbindgen \
 		${CC_PACKAGE:-${CC:-gcc}} $PYTHON_PACKAGE
 
 	# Starting with Ubuntu 25.10, sudo can now be provided via either

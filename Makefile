@@ -1333,9 +1333,7 @@ LIB_OBJS += urlmatch.o
 LIB_OBJS += usage.o
 LIB_OBJS += userdiff.o
 LIB_OBJS += utf8.o
-ifndef WITH_RUST
 LIB_OBJS += varint.o
-endif
 LIB_OBJS += version.o
 LIB_OBJS += versioncmp.o
 LIB_OBJS += walker.o
@@ -1569,6 +1567,14 @@ ALL_LDFLAGS = $(LDFLAGS) $(LDFLAGS_APPEND)
 ifdef WITH_RUST
 BASIC_CFLAGS += -DWITH_RUST
 GITLIBS += $(RUST_LIB)
+
+C_BINDINGS = c-bindings.h
+
+GENERATED_H += $(C_BINDINGS)
+
+$(C_BINDINGS): cbindgen.toml $(RUST_SOURCES)
+	$(QUIET_CBINDGEN)cbindgen --output $@
+
 ifeq ($(uname_S),Windows)
 EXTLIBS += -luserenv
 endif
@@ -2625,6 +2631,8 @@ PAGER_ENV_CQ = "$(subst ",\",$(subst \,\\,$(PAGER_ENV)))"
 PAGER_ENV_CQ_SQ = $(subst ','\'',$(PAGER_ENV_CQ))
 pager.sp pager.s pager.o: EXTRA_CPPFLAGS = \
 	-DPAGER_ENV='$(PAGER_ENV_CQ_SQ)'
+
+varint.sp varint.s varint.o: $(C_BINDINGS)
 
 version-def.h: version-def.h.in GIT-VERSION-GEN GIT-VERSION-FILE GIT-USER-AGENT
 	$(QUIET_GEN)$(call version_gen,"$(shell pwd)",$<,$@)
@@ -3813,7 +3821,7 @@ clean: profile-clean coverage-clean cocciclean
 	$(RM) $(FUZZ_PROGRAMS)
 	$(RM) $(SP_OBJ)
 	$(RM) $(HCC)
-	$(RM) -r Cargo.lock target/
+	$(RM) -r Cargo.lock target/ $(C_BINDINGS)
 	$(RM) version-def.h
 	$(RM) -r $(dep_dirs) $(compdb_dir) compile_commands.json
 	$(RM) $(test_bindir_programs)

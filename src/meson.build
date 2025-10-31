@@ -17,7 +17,7 @@ if get_option('buildtype') == 'release'
   cargo_command += '--release'
 endif
 
-libgit_rs = custom_target('git_rs',
+libgit_rs = custom_target('rust',
   input: libgit_rs_sources + [
     meson.project_source_root() / 'Cargo.toml',
   ],

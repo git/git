@@ -42,15 +42,15 @@ test:linux:
       - jobname: linux-reftable
         image: ubuntu:rolling
         CC: clang
+      - jobname: linux-TEST-vars
+        image: ubuntu:20.04
+        CC: gcc
+        CC_PACKAGE: gcc-8
       - jobname: linux-breaking-changes
         image: ubuntu:20.04
         CC: gcc
       - jobname: fedora-breaking-changes-meson
         image: fedora:latest
-      - jobname: linux-TEST-vars
-        image: ubuntu:20.04
-        CC: gcc
-        CC_PACKAGE: gcc-8
       - jobname: linux-leaks
         image: ubuntu:rolling
         CC: gcc
@@ -60,13 +60,19 @@ test:linux:
       - jobname: linux-asan-ubsan
         image: ubuntu:rolling
         CC: clang
-      - jobname: linux-musl-meson
-        image: alpine:latest
-      - jobname: linux32
-        image: i386/ubuntu:20.04
       - jobname: linux-meson
         image: ubuntu:rolling
         CC: gcc
+      - jobname: linux-musl-meson
+        image: alpine:latest
+      - jobname: linux32
+        image: i386/debian:latest
+      # A RHEL 8 compatible distro.  Supported until 2029-05-31.
+      - jobname: almalinux-8
+        image: almalinux:8
+      # Supported until 2026-08-31.
+      - jobname: debian-11
+        image: debian:11
   artifacts:
     paths:
       - t/failed-test-artifacts
