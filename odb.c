@@ -365,7 +365,7 @@ struct odb_source *odb_set_temporary_primary_source(struct object_database *odb,
 	return source->next;
 }
 
-static void free_object_directory(struct odb_source *source)
+static void odb_source_free(struct odb_source *source)
 {
 	free(source->path);
 	odb_clear_loose_cache(source);
@@ -387,7 +387,7 @@ void odb_restore_primary_source(struct object_database *odb,
 		BUG("we expect the old primary object store to be the first alternate");
 
 	odb->sources = restore_source;
-	free_object_directory(cur_source);
+	odb_source_free(cur_source);
 }
 
 char *compute_alternate_path(const char *path, struct strbuf *err)
@@ -1015,13 +1015,13 @@ struct object_database *odb_new(struct repository *repo)
 	return o;
 }
 
-static void free_object_directories(struct object_database *o)
+static void odb_free_sources(struct object_database *o)
 {
 	while (o->sources) {
 		struct odb_source *next;
 
 		next = o->sources->next;
-		free_object_directory(o->sources);
+		odb_source_free(o->sources);
 		o->sources = next;
 	}
 	kh_destroy_odb_path_map(o->source_by_path);
@@ -1039,7 +1039,7 @@ void odb_clear(struct object_database *o)
 	o->commit_graph = NULL;
 	o->commit_graph_attempted = 0;
 
-	free_object_directories(o);
+	odb_free_sources(o);
 	o->sources_tail = NULL;
 	o->loaded_alternates = 0;
 
