@@ -161,20 +161,24 @@ void repo_set_gitdir(struct repository *repo,
 	 * until after xstrdup(root). Then we can free it.
 	 */
 	char *old_gitdir = repo->gitdir;
+	char *objects_path = NULL;
 
 	repo->gitdir = xstrdup(gitfile ? gitfile : root);
 	free(old_gitdir);
 
 	repo_set_commondir(repo, o->commondir);
+	expand_base_dir(&objects_path, o->object_dir,
+			repo->commondir, "objects");
 
 	if (!repo->objects->sources) {
-		CALLOC_ARRAY(repo->objects->sources, 1);
-		repo->objects->sources->odb = repo->objects;
-		repo->objects->sources->local = true;
+		repo->objects->sources = odb_source_new(repo->objects,
+							objects_path, true);
 		repo->objects->sources_tail = &repo->objects->sources->next;
+		free(objects_path);
+	} else {
+		free(repo->objects->sources->path);
+		repo->objects->sources->path = objects_path;
 	}
-	expand_base_dir(&repo->objects->sources->path, o->object_dir,
-			repo->commondir, "objects");
 
 	repo->objects->sources->disable_ref_updates = o->disable_ref_updates;
 
