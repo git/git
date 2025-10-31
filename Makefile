@@ -2288,6 +2288,11 @@ ifndef HAVE_PLATFORM_PROCINFO
 	COMPAT_OBJS += compat/stub/procinfo.o
 endif
 
+ifdef NO_PATHCONF
+	COMPAT_CFLAGS += -DNO_PATHCONF
+	COMPAT_OBJS += compat/pathconf.o
+endif
+
 ifdef RUNTIME_PREFIX
 
         ifdef HAVE_BSD_KERN_PROC_SYSCTL
