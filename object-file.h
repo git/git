@@ -7,14 +7,6 @@
 
 struct index_state;
 
-/*
- * Set this to 0 to prevent odb_read_object_info_extended() from fetching missing
- * blobs. This has a difference only if extensions.partialClone is set.
- *
- * Its default value is 1.
- */
-extern int fetch_if_missing;
-
 enum {
 	INDEX_WRITE_OBJECT = (1 << 0),
 	INDEX_FORMAT_CHECK = (1 << 1),
