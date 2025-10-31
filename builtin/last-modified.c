@@ -493,7 +493,7 @@ static int last_modified_init(struct last_modified *lm, struct repository *r,
 	if (populate_paths_from_revs(lm) < 0)
 		return error(_("unable to setup last-modified"));
 
-	lm->all_paths = xcalloc(hashmap_get_size(&lm->paths), sizeof(const char *));
+	CALLOC_ARRAY(lm->all_paths, hashmap_get_size(&lm->paths));
 	lm->all_paths_nr = 0;
 	hashmap_for_each_entry(&lm->paths, &iter, ent, hashent) {
 		ent->diff_idx = lm->all_paths_nr++;
