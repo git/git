@@ -163,6 +163,9 @@ struct list_head *packfile_store_get_packs_mru(struct packfile_store *store);
 struct packed_git *packfile_store_load_pack(struct packfile_store *store,
 					    const char *idx_path, int local);
 
+int packfile_store_freshen_object(struct packfile_store *store,
+				  const struct object_id *oid);
+
 struct pack_window {
 	struct pack_window *next;
 	unsigned char *base;
