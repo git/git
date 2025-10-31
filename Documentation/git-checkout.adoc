@@ -61,7 +61,7 @@ uncommitted changes.
 `git checkout -B <branch> [<start-point>]`::
 
 	The same as `-b`, except that if the branch already exists it
-	resets `_<branch>_` to the start point instead of failing.
+	resets _<branch>_ to the start point instead of failing.
 
 `git checkout --detach [<branch>]`::
 `git checkout [--detach] <commit>`::
@@ -155,7 +155,7 @@ of it").
 
 `-B <new-branch>`::
 	The same as `-b`, except that if the branch already exists it
-	resets `_<branch>_` to the start point instead of failing.
+	resets _<branch>_ to the start point instead of failing.
 
 `-t`::
 `--track[=(direct|inherit)]`::
