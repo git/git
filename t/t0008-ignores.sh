@@ -847,6 +847,17 @@ test_expect_success 'directories and ** matches' '
 	test_cmp expect actual
 '
 
+test_expect_success '** not confused by matching leading prefix' '
+	cat >.gitignore <<-\EOF &&
+	foo**/bar
+	EOF
+	git check-ignore foobar foo/bar >actual &&
+	cat >expect <<-\EOF &&
+	foo/bar
+	EOF
+	test_cmp expect actual
+'
+
 ############################################################################
 #
 # test whitespace handling
