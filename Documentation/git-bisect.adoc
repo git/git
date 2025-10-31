@@ -9,26 +9,22 @@ git-bisect - Use binary search to find the commit that introduced a bug
 SYNOPSIS
 --------
 [verse]
-'git bisect' <subcommand> <options>
+'git bisect' start [--term-(bad|new)=<term-new> --term-(good|old)=<term-old>]
+		   [--no-checkout] [--first-parent] [<bad> [<good>...]] [--] [<pathspec>...]
+'git bisect' (bad|new|<term-new>) [<rev>]
+'git bisect' (good|old|<term-old>) [<rev>...]
+'git bisect' terms [--term-(good|old) | --term-(bad|new)]
+'git bisect' skip [(<rev>|<range>)...]
+'git bisect' next
+'git bisect' reset [<commit>]
+'git bisect' (visualize|view)
+'git bisect' replay <logfile>
+'git bisect' log
+'git bisect' run <cmd> [<arg>...]
+'git bisect' help
 
 DESCRIPTION
 -----------
-The command takes various subcommands, and different options depending
-on the subcommand:
-
- git bisect start [--term-(bad|new)=<term-new> --term-(good|old)=<term-old>]
-		  [--no-checkout] [--first-parent] [<bad> [<good>...]] [--] [<pathspec>...]
- git bisect (bad|new|<term-new>) [<rev>]
- git bisect (good|old|<term-old>) [<rev>...]
- git bisect terms [--term-(good|old) | --term-(bad|new)]
- git bisect skip [(<rev>|<range>)...]
- git bisect reset [<commit>]
- git bisect (visualize|view)
- git bisect replay <logfile>
- git bisect log
- git bisect run <cmd> [<arg>...]
- git bisect help
-
 This command uses a binary search algorithm to find which commit in
 your project's history introduced a bug. You use it by first telling
 it a "bad" commit that is known to contain the bug, and a "good"
@@ -295,6 +291,19 @@ $ git bisect skip v2.5 v2.5..v2.6
 This tells the bisect process that the commits between `v2.5` and
 `v2.6` (inclusive) should be skipped.
 
+Bisect next
+~~~~~~~~~~~
+
+Normally, after marking a revision as good or bad, Git automatically
+computes and checks out the next revision to test. However, if you need to
+explicitly request the next bisection step, you can use:
+
+------------
+$ git bisect next
+------------
+
+You might use this to resume the bisection process after interrupting it
+by checking out a different revision.
 
 Cutting down bisection by giving more parameters to bisect start
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
