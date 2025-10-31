@@ -37,15 +37,15 @@ struct odb_loose_source {
 struct odb_loose_source *odb_loose_source_new(struct odb_source *source);
 void odb_loose_source_free(struct odb_loose_source *loose);
 
+/* Reprepare the loose source by emptying the loose object cache. */
+void odb_loose_source_reprepare(struct odb_source *source);
+
 /*
  * Populate and return the loose object cache array corresponding to the
  * given object ID.
  */
 struct oidtree *odb_loose_source_cache(struct odb_source *source,
 				       const struct object_id *oid);
-
-/* Empty the loose object cache for the specified object directory. */
-void odb_clear_loose_cache(struct odb_source *source);
 
 /*
  * Put in `buf` the name of the file in the local object database that
