@@ -8,6 +8,7 @@
 #include "git-compat-util.h"
 
 #include "builtin.h"
+#include "config.h"
 #include "environment.h"
 #include "hex.h"
 #include "lockfile.h"
@@ -19,6 +20,11 @@
 #include "strmap.h"
 #include <oidset.h>
 #include <tree.h>
+
+enum ref_action_mode {
+	REF_ACTION_UPDATE,
+	REF_ACTION_PRINT,
+};
 
 static const char *short_commit_name(struct repository *repo,
 				     struct commit *commit)
@@ -284,6 +290,53 @@ static struct commit *pick_regular_commit(struct repository *repo,
 	return create_commit(repo, result->tree, pickme, replayed_base);
 }
 
+static enum ref_action_mode parse_ref_action_mode(const char *ref_action, const char *source)
+{
+	if (!ref_action || !strcmp(ref_action, "update"))
+		return REF_ACTION_UPDATE;
+	if (!strcmp(ref_action, "print"))
+		return REF_ACTION_PRINT;
+	die(_("invalid %s value: '%s'"), source, ref_action);
+}
+
+static enum ref_action_mode get_ref_action_mode(struct repository *repo, const char *ref_action_str)
+{
+	const char *config_value = NULL;
+
+	/* Command line option takes precedence */
+	if (ref_action_str)
+		return parse_ref_action_mode(ref_action_str, "--ref-action");
+
+	/* Check config value */
+	if (!repo_config_get_string_tmp(repo, "replay.refAction", &config_value))
+		return parse_ref_action_mode(config_value, "replay.refAction");
+
+	/* Default to update mode */
+	return REF_ACTION_UPDATE;
+}
+
+static int handle_ref_update(enum ref_action_mode mode,
+			     struct ref_transaction *transaction,
+			     const char *refname,
+			     const struct object_id *new_oid,
+			     const struct object_id *old_oid,
+			     struct strbuf *err)
+{
+	switch (mode) {
+	case REF_ACTION_PRINT:
+		printf("update %s %s %s\n",
+		       refname,
+		       oid_to_hex(new_oid),
+		       oid_to_hex(old_oid));
+		return 0;
+	case REF_ACTION_UPDATE:
+		return ref_transaction_update(transaction, refname, new_oid, old_oid,
+					      NULL, NULL, 0, "git replay", err);
+	default:
+		BUG("unknown ref_action_mode %d", mode);
+	}
+}
+
 int cmd_replay(int argc,
 	       const char **argv,
 	       const char *prefix,
@@ -294,6 +347,8 @@ int cmd_replay(int argc,
 	struct commit *onto = NULL;
 	const char *onto_name = NULL;
 	int contained = 0;
+	const char *ref_action_str = NULL;
+	enum ref_action_mode ref_action = REF_ACTION_UPDATE;
 
 	struct rev_info revs;
 	struct commit *last_commit = NULL;
@@ -302,12 +357,14 @@ int cmd_replay(int argc,
 	struct merge_result result;
 	struct strset *update_refs = NULL;
 	kh_oid_map_t *replayed_commits;
+	struct ref_transaction *transaction = NULL;
+	struct strbuf transaction_err = STRBUF_INIT;
 	int ret = 0;
 
-	const char * const replay_usage[] = {
+	const char *const replay_usage[] = {
 		N_("(EXPERIMENTAL!) git replay "
 		   "([--contained] --onto <newbase> | --advance <branch>) "
-		   "<revision-range>..."),
+		   "[--ref-action[=<mode>]] <revision-range>..."),
 		NULL
 	};
 	struct option replay_options[] = {
@@ -319,6 +376,9 @@ int cmd_replay(int argc,
 			   N_("replay onto given commit")),
 		OPT_BOOL(0, "contained", &contained,
 			 N_("advance all branches contained in revision-range")),
+		OPT_STRING(0, "ref-action", &ref_action_str,
+			   N_("mode"),
+			   N_("control ref update behavior (update|print)")),
 		OPT_END()
 	};
 
@@ -330,9 +390,12 @@ int cmd_replay(int argc,
 		usage_with_options(replay_usage, replay_options);
 	}
 
-	if (advance_name_opt && contained)
-		die(_("options '%s' and '%s' cannot be used together"),
-		    "--advance", "--contained");
+	die_for_incompatible_opt2(!!advance_name_opt, "--advance",
+				  contained, "--contained");
+
+	/* Parse ref action mode from command line or config */
+	ref_action = get_ref_action_mode(repo, ref_action_str);
+
 	advance_name = xstrdup_or_null(advance_name_opt);
 
 	repo_init_revisions(repo, &revs, prefix);
@@ -389,6 +452,17 @@ int cmd_replay(int argc,
 	determine_replay_mode(repo, &revs.cmdline, onto_name, &advance_name,
 			      &onto, &update_refs);
 
+	/* Initialize ref transaction if using update mode */
+	if (ref_action == REF_ACTION_UPDATE) {
+		transaction = ref_store_transaction_begin(get_main_ref_store(repo),
+							  0, &transaction_err);
+		if (!transaction) {
+			ret = error(_("failed to begin ref transaction: %s"),
+				    transaction_err.buf);
+			goto cleanup;
+		}
+	}
+
 	if (!onto) /* FIXME: Should handle replaying down to root commit */
 		die("Replaying down to root commit is not supported yet!");
 
@@ -434,10 +508,15 @@ int cmd_replay(int argc,
 			if (decoration->type == DECORATION_REF_LOCAL &&
 			    (contained || strset_contains(update_refs,
 							  decoration->name))) {
-				printf("update %s %s %s\n",
-				       decoration->name,
-				       oid_to_hex(&last_commit->object.oid),
-				       oid_to_hex(&commit->object.oid));
+				if (handle_ref_update(ref_action, transaction,
+						      decoration->name,
+						      &last_commit->object.oid,
+						      &commit->object.oid,
+						      &transaction_err) < 0) {
+					ret = error(_("failed to update ref '%s': %s"),
+						    decoration->name, transaction_err.buf);
+					goto cleanup;
+				}
 			}
 			decoration = decoration->next;
 		}
@@ -445,10 +524,23 @@ int cmd_replay(int argc,
 
 	/* In --advance mode, advance the target ref */
 	if (result.clean == 1 && advance_name) {
-		printf("update %s %s %s\n",
-		       advance_name,
-		       oid_to_hex(&last_commit->object.oid),
-		       oid_to_hex(&onto->object.oid));
+		if (handle_ref_update(ref_action, transaction, advance_name,
+				      &last_commit->object.oid,
+				      &onto->object.oid,
+				      &transaction_err) < 0) {
+			ret = error(_("failed to update ref '%s': %s"),
+				    advance_name, transaction_err.buf);
+			goto cleanup;
+		}
+	}
+
+	/* Commit the ref transaction if we have one */
+	if (transaction && result.clean == 1) {
+		if (ref_transaction_commit(transaction, &transaction_err)) {
+			ret = error(_("failed to commit ref transaction: %s"),
+				    transaction_err.buf);
+			goto cleanup;
+		}
 	}
 
 	merge_finalize(&merge_opt, &result);
@@ -460,6 +552,9 @@ int cmd_replay(int argc,
 	ret = result.clean;
 
 cleanup:
+	if (transaction)
+		ref_transaction_free(transaction);
+	strbuf_release(&transaction_err);
 	release_revisions(&revs);
 	free(advance_name);
 
