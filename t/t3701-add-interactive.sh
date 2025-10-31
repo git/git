@@ -1431,4 +1431,15 @@ test_expect_success 'invalid option s is rejected' '
 	test_cmp expect actual
 '
 
+test_expect_success 'EOF quits' '
+	echo a >file &&
+	echo a >file2 &&
+	git add file file2 &&
+	echo X >file &&
+	echo X >file2 &&
+	git add -p </dev/null >out &&
+	test_grep file out &&
+	test_grep ! file2 out
+'
+
 test_done
