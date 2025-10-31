@@ -124,6 +124,13 @@ test_expect_success 'pull --set-upstream upstream main sets branch main but not 
 	check_config_missing other
 '
 
+test_expect_success 'pull -u upstream main sets branch main but not other' '
+	clear_config main other &&
+	git pull --no-rebase -u upstream main &&
+	check_config main upstream refs/heads/main &&
+	check_config_missing other
+'
+
 test_expect_success 'pull --set-upstream main:other2 does not set the branch other2' '
 	clear_config other2 &&
 	git pull --no-rebase --set-upstream upstream main:other2 &&
