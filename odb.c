@@ -141,6 +141,20 @@ static void read_info_alternates(struct object_database *odb,
 				 const char *relative_base,
 				 int depth);
 
+struct odb_source *odb_source_new(struct object_database *odb,
+				  const char *path,
+				  bool local)
+{
+	struct odb_source *source;
+
+	CALLOC_ARRAY(source, 1);
+	source->odb = odb;
+	source->local = local;
+	source->path = xstrdup(path);
+
+	return source;
+}
+
 static struct odb_source *link_alt_odb_entry(struct object_database *odb,
 					     const char *dir,
 					     const char *relative_base,
@@ -178,10 +192,7 @@ static struct odb_source *link_alt_odb_entry(struct object_database *odb,
 	if (!alt_odb_usable(odb, pathbuf.buf, tmp.buf))
 		goto error;
 
-	CALLOC_ARRAY(alternate, 1);
-	alternate->odb = odb;
-	alternate->local = false;
-	alternate->path = strbuf_detach(&pathbuf, NULL);
+	alternate = odb_source_new(odb, pathbuf.buf, false);
 
 	/* add the alternate entry */
 	*odb->sources_tail = alternate;
@@ -341,9 +352,7 @@ struct odb_source *odb_set_temporary_primary_source(struct object_database *odb,
 	 * Make a new primary odb and link the old primary ODB in as an
 	 * alternate
 	 */
-	source = xcalloc(1, sizeof(*source));
-	source->odb = odb;
-	source->path = xstrdup(dir);
+	source = odb_source_new(odb, dir, false);
 
 	/*
 	 * Disable ref updates while a temporary odb is active, since
