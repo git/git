@@ -1,6 +1,7 @@
 #include "git-compat-util.h"
 #include "hash.h"
 #include "path.h"
+#include "object-file.h"
 #include "odb.h"
 #include "hex.h"
 #include "repository.h"
@@ -54,7 +55,7 @@ static int insert_loose_map(struct odb_source *source,
 	inserted |= insert_oid_pair(map->to_compat, oid, compat_oid);
 	inserted |= insert_oid_pair(map->to_storage, compat_oid, oid);
 	if (inserted)
-		oidtree_insert(source->loose_objects_cache, compat_oid);
+		oidtree_insert(source->loose->cache, compat_oid);
 
 	return inserted;
 }
@@ -66,9 +67,9 @@ static int load_one_loose_object_map(struct repository *repo, struct odb_source 
 
 	if (!source->loose_map)
 		loose_object_map_init(&source->loose_map);
-	if (!source->loose_objects_cache) {
-		ALLOC_ARRAY(source->loose_objects_cache, 1);
-		oidtree_init(source->loose_objects_cache);
+	if (!source->loose->cache) {
+		ALLOC_ARRAY(source->loose->cache, 1);
+		oidtree_init(source->loose->cache);
 	}
 
 	insert_loose_map(source, repo->hash_algo->empty_tree, repo->compat_hash_algo->empty_tree);
