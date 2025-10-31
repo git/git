@@ -1,0 +1,46 @@
+From ad52256dcdfa5080dcba9451a67af1d3f89ba26d Mon Sep 17 00:00:00 2001
+From: QueenJcloud <qjessa662@gmail.com>
+Date: Fri, 24 Oct 2025 13:58:14 +0100
+Subject: [PATCH v3] MyFirstContribution: add note on confirming patches
+
+Add a note after the `git send-email` section explaining how
+contributors can confirm that their patches reached the mailing
+list by checking https://lore.kernel.org/git/. This helps
+contributors verify that their emails were successfully delivered.
+
+Signed-off-by: QueenJcloud <qjessa662@gmail.com>
+---
+Changes since v2:
+- Distinctive/correct name to the email
+- Added changelog note after '---'
+- Removed extra blank line at the end of the section
+- No other text or formatting changes
+---
+ Documentation/MyFirstContribution.adoc | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/Documentation/MyFirstContribution.adoc b/Documentation/MyFirstContribution.adoc
+index 02ba8ba5f6..6e7f3036bb 100644
+--- a/Documentation/MyFirstContribution.adoc
++++ b/Documentation/MyFirstContribution.adoc
+@@ -1153,11 +1153,17 @@ NOTE: When you are sending a real patch, it will go to git@vger.kernel.org - but
+ please don't send your patchset from the tutorial to the real mailing list! For
+ now, you can send it to yourself, to make sure you understand how it will look.
+ 
++NOTE: After sending your patches, you can confirm that they reached the mailing
++list by visiting https://lore.kernel.org/git/. Use the search bar to find your
++name or the subject of your patch. If it appears, your email was successfully
++delivered.
++
+ After you run the command above, you will be presented with an interactive
+ prompt for each patch that's about to go out. This gives you one last chance to
+ edit or quit sending something (but again, don't edit code this way). Once you
+ press `y` or `a` at these prompts your emails will be sent! Congratulations!
+ 
++
+ Awesome, now the community will drop everything and review your changes. (Just
+ kidding - be patient!)
+ 
+-- 
+2.51.0.573.gb660e2dcb9
+
