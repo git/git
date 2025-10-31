@@ -18,6 +18,13 @@ int index_path(struct index_state *istate, struct object_id *oid, const char *pa
 
 struct odb_source;
 
+struct odb_loose_source {
+	struct odb_source *source;
+};
+
+struct odb_loose_source *odb_loose_source_new(struct odb_source *source);
+void odb_loose_source_free(struct odb_loose_source *loose);
+
 /*
  * Populate and return the loose object cache array corresponding to the
  * given object ID.
