@@ -21,6 +21,12 @@ test_description='Test how well compatObjectFormat works'
 # different hash functions result in the same content in the commits.
 # This means that when the commit is translated between hash functions
 # the commit is identical to the commit in the other repository.
+#
+# Similarly this test relies on:
+#	gpg --faked-system-time '20230918T154812!
+# freezing the system time from gpg perspective so that two different
+# runs of gpg applied to the same data result in identical signatures.
+#
 
 compat_hash () {
 	case "$1" in
