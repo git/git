@@ -363,10 +363,7 @@ static int check_and_set_terms(struct bisect_terms *terms, const char *cmd)
 	return 0;
 }
 
-static int inc_nr(const char *refname UNUSED,
-		  const char *referent UNUSED,
-		  const struct object_id *oid UNUSED,
-		  int flag UNUSED, void *cb_data)
+static int inc_nr(const struct reference *ref UNUSED, void *cb_data)
 {
 	unsigned int *nr = (unsigned int *)cb_data;
 	(*nr)++;
@@ -554,12 +551,11 @@ finish:
 	return res;
 }
 
-static int add_bisect_ref(const char *refname, const char *referent UNUSED, const struct object_id *oid,
-			  int flags UNUSED, void *cb)
+static int add_bisect_ref(const struct reference *ref, void *cb)
 {
 	struct add_bisect_ref_data *data = cb;
 
-	add_pending_oid(data->revs, refname, oid, data->object_flags);
+	add_pending_oid(data->revs, ref->name, ref->oid, data->object_flags);
 
 	return 0;
 }
@@ -1170,12 +1166,9 @@ static int bisect_visualize(struct bisect_terms *terms, int argc,
 	return run_command(&cmd);
 }
 
-static int get_first_good(const char *refname UNUSED,
-			  const char *referent UNUSED,
-			  const struct object_id *oid,
-			  int flag UNUSED, void *cb_data)
+static int get_first_good(const struct reference *ref, void *cb_data)
 {
-	oidcpy(cb_data, oid);
+	oidcpy(cb_data, ref->oid);
 	return 1;
 }
 

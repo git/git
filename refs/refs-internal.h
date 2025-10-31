@@ -249,10 +249,7 @@ const char *find_descendant_ref(const char *dirname,
  */
 struct ref_iterator {
 	struct ref_iterator_vtable *vtable;
-	const char *refname;
-	const char *referent;
-	const struct object_id *oid;
-	unsigned int flags;
+	struct reference ref;
 };
 
 /*
@@ -361,12 +358,6 @@ typedef int ref_iterator_seek_fn(struct ref_iterator *ref_iterator,
 				 const char *refname, unsigned int flags);
 
 /*
- * Peels the current ref, returning 0 for success or -1 for failure.
- */
-typedef int ref_iterator_peel_fn(struct ref_iterator *ref_iterator,
-				 struct object_id *peeled);
-
-/*
  * Implementations of this function should free any resources specific
  * to the derived class.
  */
@@ -375,22 +366,8 @@ typedef void ref_iterator_release_fn(struct ref_iterator *ref_iterator);
 struct ref_iterator_vtable {
 	ref_iterator_advance_fn *advance;
 	ref_iterator_seek_fn *seek;
-	ref_iterator_peel_fn *peel;
 	ref_iterator_release_fn *release;
 };
-
-/*
- * current_ref_iter is a performance hack: when iterating over
- * references using the for_each_ref*() functions, current_ref_iter is
- * set to the reference iterator before calling the callback function.
- * If the callback function calls peel_ref(), then peel_ref() first
- * checks whether the reference to be peeled is the one referred to by
- * the iterator (it usually is) and if so, asks the iterator for the
- * peeled version of the reference if it is available. This avoids a
- * refname lookup in a common case. current_ref_iter is set to NULL
- * when the iteration is over.
- */
-extern struct ref_iterator *current_ref_iter;
 
 struct ref_store;
 

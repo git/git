@@ -38,11 +38,10 @@ static void rev_list_push(struct negotiation_state *ns,
 	}
 }
 
-static int clear_marks(const char *refname, const char *referent UNUSED, const struct object_id *oid,
-		       int flag UNUSED,
-		       void *cb_data UNUSED)
+static int clear_marks(const struct reference *ref, void *cb_data UNUSED)
 {
-	struct object *o = deref_tag(the_repository, parse_object(the_repository, oid), refname, 0);
+	struct object *o = deref_tag(the_repository, parse_object(the_repository, ref->oid),
+				     ref->name, 0);
 
 	if (o && o->type == OBJ_COMMIT)
 		clear_commit_marks((struct commit *)o,

@@ -21,12 +21,6 @@ int ref_iterator_seek(struct ref_iterator *ref_iterator, const char *refname,
 	return ref_iterator->vtable->seek(ref_iterator, refname, flags);
 }
 
-int ref_iterator_peel(struct ref_iterator *ref_iterator,
-		      struct object_id *peeled)
-{
-	return ref_iterator->vtable->peel(ref_iterator, peeled);
-}
-
 void ref_iterator_free(struct ref_iterator *ref_iterator)
 {
 	if (ref_iterator) {
@@ -41,10 +35,7 @@ void base_ref_iterator_init(struct ref_iterator *iter,
 			    struct ref_iterator_vtable *vtable)
 {
 	iter->vtable = vtable;
-	iter->refname = NULL;
-	iter->referent = NULL;
-	iter->oid = NULL;
-	iter->flags = 0;
+	memset(&iter->ref, 0, sizeof(iter->ref));
 }
 
 struct empty_ref_iterator {
@@ -63,12 +54,6 @@ static int empty_ref_iterator_seek(struct ref_iterator *ref_iterator UNUSED,
 	return 0;
 }
 
-static int empty_ref_iterator_peel(struct ref_iterator *ref_iterator UNUSED,
-				   struct object_id *peeled UNUSED)
-{
-	BUG("peel called for empty iterator");
-}
-
 static void empty_ref_iterator_release(struct ref_iterator *ref_iterator UNUSED)
 {
 }
@@ -76,7 +61,6 @@ static void empty_ref_iterator_release(struct ref_iterator *ref_iterator UNUSED)
 static struct ref_iterator_vtable empty_ref_iterator_vtable = {
 	.advance = empty_ref_iterator_advance,
 	.seek = empty_ref_iterator_seek,
-	.peel = empty_ref_iterator_peel,
 	.release = empty_ref_iterator_release,
 };
 
@@ -127,8 +111,8 @@ enum iterator_selection ref_iterator_select(struct ref_iterator *iter_worktree,
 		 * latter.
 		 */
 		if (iter_worktree) {
-			int cmp = strcmp(iter_worktree->refname,
-					 iter_common->refname);
+			int cmp = strcmp(iter_worktree->ref.name,
+					 iter_common->ref.name);
 			if (cmp < 0)
 				return ITER_SELECT_0;
 			else if (!cmp)
@@ -139,7 +123,7 @@ enum iterator_selection ref_iterator_select(struct ref_iterator *iter_worktree,
 		  * We now know that the lexicographically-next ref is a common
 		  * ref. When the common ref is a shared one we return it.
 		  */
-		if (parse_worktree_ref(iter_common->refname, NULL, NULL,
+		if (parse_worktree_ref(iter_common->ref.name, NULL, NULL,
 				       NULL) == REF_WORKTREE_SHARED)
 			return ITER_SELECT_1;
 
@@ -212,10 +196,7 @@ static int merge_ref_iterator_advance(struct ref_iterator *ref_iterator)
 		}
 
 		if (selection & ITER_YIELD_CURRENT) {
-			iter->base.referent = (*iter->current)->referent;
-			iter->base.refname = (*iter->current)->refname;
-			iter->base.oid = (*iter->current)->oid;
-			iter->base.flags = (*iter->current)->flags;
+			iter->base.ref = (*iter->current)->ref;
 			return ITER_OK;
 		}
 	}
@@ -246,18 +227,6 @@ static int merge_ref_iterator_seek(struct ref_iterator *ref_iterator,
 	return 0;
 }
 
-static int merge_ref_iterator_peel(struct ref_iterator *ref_iterator,
-				   struct object_id *peeled)
-{
-	struct merge_ref_iterator *iter =
-		(struct merge_ref_iterator *)ref_iterator;
-
-	if (!iter->current) {
-		BUG("peel called before advance for merge iterator");
-	}
-	return ref_iterator_peel(*iter->current, peeled);
-}
-
 static void merge_ref_iterator_release(struct ref_iterator *ref_iterator)
 {
 	struct merge_ref_iterator *iter =
@@ -269,7 +238,6 @@ static void merge_ref_iterator_release(struct ref_iterator *ref_iterator)
 static struct ref_iterator_vtable merge_ref_iterator_vtable = {
 	.advance = merge_ref_iterator_advance,
 	.seek = merge_ref_iterator_seek,
-	.peel = merge_ref_iterator_peel,
 	.release = merge_ref_iterator_release,
 };
 
@@ -313,7 +281,7 @@ static enum iterator_selection overlay_iterator_select(
 	else if (!front)
 		return ITER_SELECT_1;
 
-	cmp = strcmp(front->refname, back->refname);
+	cmp = strcmp(front->ref.name, back->ref.name);
 
 	if (cmp < 0)
 		return ITER_SELECT_0;
@@ -371,7 +339,7 @@ static int prefix_ref_iterator_advance(struct ref_iterator *ref_iterator)
 	int ok;
 
 	while ((ok = ref_iterator_advance(iter->iter0)) == ITER_OK) {
-		int cmp = compare_prefix(iter->iter0->refname, iter->prefix);
+		int cmp = compare_prefix(iter->iter0->ref.name, iter->prefix);
 		if (cmp < 0)
 			continue;
 		/*
@@ -381,6 +349,8 @@ static int prefix_ref_iterator_advance(struct ref_iterator *ref_iterator)
 		 */
 		if (cmp > 0)
 			return ITER_DONE;
+
+		iter->base.ref = iter->iter0->ref;
 
 		if (iter->trim) {
 			/*
@@ -392,15 +362,11 @@ static int prefix_ref_iterator_advance(struct ref_iterator *ref_iterator)
 			 * one character left in the refname after
 			 * trimming, report it as a bug:
 			 */
-			if (strlen(iter->iter0->refname) <= iter->trim)
+			if (strlen(iter->base.ref.name) <= iter->trim)
 				BUG("attempt to trim too many characters");
-			iter->base.refname = iter->iter0->refname + iter->trim;
-		} else {
-			iter->base.refname = iter->iter0->refname;
+			iter->base.ref.name += iter->trim;
 		}
 
-		iter->base.oid = iter->iter0->oid;
-		iter->base.flags = iter->iter0->flags;
 		return ITER_OK;
 	}
 
@@ -420,15 +386,6 @@ static int prefix_ref_iterator_seek(struct ref_iterator *ref_iterator,
 	return ref_iterator_seek(iter->iter0, refname, flags);
 }
 
-static int prefix_ref_iterator_peel(struct ref_iterator *ref_iterator,
-				    struct object_id *peeled)
-{
-	struct prefix_ref_iterator *iter =
-		(struct prefix_ref_iterator *)ref_iterator;
-
-	return ref_iterator_peel(iter->iter0, peeled);
-}
-
 static void prefix_ref_iterator_release(struct ref_iterator *ref_iterator)
 {
 	struct prefix_ref_iterator *iter =
@@ -440,7 +397,6 @@ static void prefix_ref_iterator_release(struct ref_iterator *ref_iterator)
 static struct ref_iterator_vtable prefix_ref_iterator_vtable = {
 	.advance = prefix_ref_iterator_advance,
 	.seek = prefix_ref_iterator_seek,
-	.peel = prefix_ref_iterator_peel,
 	.release = prefix_ref_iterator_release,
 };
 
@@ -466,23 +422,18 @@ struct ref_iterator *prefix_ref_iterator_begin(struct ref_iterator *iter0,
 	return ref_iterator;
 }
 
-struct ref_iterator *current_ref_iter = NULL;
-
 int do_for_each_ref_iterator(struct ref_iterator *iter,
 			     each_ref_fn fn, void *cb_data)
 {
 	int retval = 0, ok;
-	struct ref_iterator *old_ref_iter = current_ref_iter;
 
-	current_ref_iter = iter;
 	while ((ok = ref_iterator_advance(iter)) == ITER_OK) {
-		retval = fn(iter->refname, iter->referent, iter->oid, iter->flags, cb_data);
+		retval = fn(&iter->ref, cb_data);
 		if (retval)
 			goto out;
 	}
 
 out:
-	current_ref_iter = old_ref_iter;
 	if (ok == ITER_ERROR)
 		retval = -1;
 	ref_iterator_free(iter);

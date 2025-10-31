@@ -450,21 +450,20 @@ void find_bisection(struct commit_list **commit_list, int *reaches,
 	clear_commit_weight(&commit_weight);
 }
 
-static int register_ref(const char *refname, const char *referent UNUSED, const struct object_id *oid,
-			int flags UNUSED, void *cb_data UNUSED)
+static int register_ref(const struct reference *ref, void *cb_data UNUSED)
 {
 	struct strbuf good_prefix = STRBUF_INIT;
 	strbuf_addstr(&good_prefix, term_good);
 	strbuf_addstr(&good_prefix, "-");
 
-	if (!strcmp(refname, term_bad)) {
+	if (!strcmp(ref->name, term_bad)) {
 		free(current_bad_oid);
 		current_bad_oid = xmalloc(sizeof(*current_bad_oid));
-		oidcpy(current_bad_oid, oid);
-	} else if (starts_with(refname, good_prefix.buf)) {
-		oid_array_append(&good_revs, oid);
-	} else if (starts_with(refname, "skip-")) {
-		oid_array_append(&skipped_revs, oid);
+		oidcpy(current_bad_oid, ref->oid);
+	} else if (starts_with(ref->name, good_prefix.buf)) {
+		oid_array_append(&good_revs, ref->oid);
+	} else if (starts_with(ref->name, "skip-")) {
+		oid_array_append(&skipped_revs, ref->oid);
 	}
 
 	strbuf_release(&good_prefix);
@@ -1178,14 +1177,11 @@ int estimate_bisect_steps(int all)
 	return (e < 3 * x) ? n : n - 1;
 }
 
-static int mark_for_removal(const char *refname,
-			    const char *referent UNUSED,
-			    const struct object_id *oid UNUSED,
-			    int flag UNUSED, void *cb_data)
+static int mark_for_removal(const struct reference *ref, void *cb_data)
 {
 	struct string_list *refs = cb_data;
-	char *ref = xstrfmt("refs/bisect%s", refname);
-	string_list_append(refs, ref);
+	char *bisect_ref = xstrfmt("refs/bisect%s", ref->name);
+	string_list_append(refs, bisect_ref);
 	return 0;
 }
 

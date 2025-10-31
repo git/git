@@ -961,26 +961,23 @@ static int files_ref_iterator_advance(struct ref_iterator *ref_iterator)
 
 	while ((ok = ref_iterator_advance(iter->iter0)) == ITER_OK) {
 		if (iter->flags & DO_FOR_EACH_PER_WORKTREE_ONLY &&
-		    parse_worktree_ref(iter->iter0->refname, NULL, NULL,
+		    parse_worktree_ref(iter->iter0->ref.name, NULL, NULL,
 				       NULL) != REF_WORKTREE_CURRENT)
 			continue;
 
 		if ((iter->flags & DO_FOR_EACH_OMIT_DANGLING_SYMREFS) &&
-		    (iter->iter0->flags & REF_ISSYMREF) &&
-		    (iter->iter0->flags & REF_ISBROKEN))
+		    (iter->iter0->ref.flags & REF_ISSYMREF) &&
+		    (iter->iter0->ref.flags & REF_ISBROKEN))
 			continue;
 
 		if (!(iter->flags & DO_FOR_EACH_INCLUDE_BROKEN) &&
-		    !ref_resolves_to_object(iter->iter0->refname,
+		    !ref_resolves_to_object(iter->iter0->ref.name,
 					    iter->repo,
-					    iter->iter0->oid,
-					    iter->iter0->flags))
+					    iter->iter0->ref.oid,
+					    iter->iter0->ref.flags))
 			continue;
 
-		iter->base.refname = iter->iter0->refname;
-		iter->base.oid = iter->iter0->oid;
-		iter->base.flags = iter->iter0->flags;
-		iter->base.referent = iter->iter0->referent;
+		iter->base.ref = iter->iter0->ref;
 
 		return ITER_OK;
 	}
@@ -996,15 +993,6 @@ static int files_ref_iterator_seek(struct ref_iterator *ref_iterator,
 	return ref_iterator_seek(iter->iter0, refname, flags);
 }
 
-static int files_ref_iterator_peel(struct ref_iterator *ref_iterator,
-				   struct object_id *peeled)
-{
-	struct files_ref_iterator *iter =
-		(struct files_ref_iterator *)ref_iterator;
-
-	return ref_iterator_peel(iter->iter0, peeled);
-}
-
 static void files_ref_iterator_release(struct ref_iterator *ref_iterator)
 {
 	struct files_ref_iterator *iter =
@@ -1015,7 +1003,6 @@ static void files_ref_iterator_release(struct ref_iterator *ref_iterator)
 static struct ref_iterator_vtable files_ref_iterator_vtable = {
 	.advance = files_ref_iterator_advance,
 	.seek = files_ref_iterator_seek,
-	.peel = files_ref_iterator_peel,
 	.release = files_ref_iterator_release,
 };
 
@@ -1367,30 +1354,29 @@ static void prune_refs(struct files_ref_store *refs, struct ref_to_prune **refs_
  * Return true if the specified reference should be packed.
  */
 static int should_pack_ref(struct files_ref_store *refs,
-			   const char *refname,
-			   const struct object_id *oid, unsigned int ref_flags,
+			   const struct reference *ref,
 			   struct pack_refs_opts *opts)
 {
 	struct string_list_item *item;
 
 	/* Do not pack per-worktree refs: */
-	if (parse_worktree_ref(refname, NULL, NULL, NULL) !=
+	if (parse_worktree_ref(ref->name, NULL, NULL, NULL) !=
 	    REF_WORKTREE_SHARED)
 		return 0;
 
 	/* Do not pack symbolic refs: */
-	if (ref_flags & REF_ISSYMREF)
+	if (ref->flags & REF_ISSYMREF)
 		return 0;
 
 	/* Do not pack broken refs: */
-	if (!ref_resolves_to_object(refname, refs->base.repo, oid, ref_flags))
+	if (!ref_resolves_to_object(ref->name, refs->base.repo, ref->oid, ref->flags))
 		return 0;
 
-	if (ref_excluded(opts->exclusions, refname))
+	if (ref_excluded(opts->exclusions, ref->name))
 		return 0;
 
 	for_each_string_list_item(item, opts->includes)
-		if (!wildmatch(item->string, refname, 0))
+		if (!wildmatch(item->string, ref->name, 0))
 			return 1;
 
 	return 0;
@@ -1443,8 +1429,7 @@ static int should_pack_refs(struct files_ref_store *refs,
 	iter = cache_ref_iterator_begin(get_loose_ref_cache(refs, 0), NULL,
 					refs->base.repo, 0);
 	while ((ret = ref_iterator_advance(iter)) == ITER_OK) {
-		if (should_pack_ref(refs, iter->refname, iter->oid,
-				    iter->flags, opts))
+		if (should_pack_ref(refs, &iter->ref, opts))
 			refcount++;
 		if (refcount >= limit) {
 			ref_iterator_free(iter);
@@ -1489,24 +1474,24 @@ static int files_pack_refs(struct ref_store *ref_store,
 		 * in the packed ref cache. If the reference should be
 		 * pruned, also add it to refs_to_prune.
 		 */
-		if (!should_pack_ref(refs, iter->refname, iter->oid, iter->flags, opts))
+		if (!should_pack_ref(refs, &iter->ref, opts))
 			continue;
 
 		/*
 		 * Add a reference creation for this reference to the
 		 * packed-refs transaction:
 		 */
-		if (ref_transaction_update(transaction, iter->refname,
-					   iter->oid, NULL, NULL, NULL,
+		if (ref_transaction_update(transaction, iter->ref.name,
+					   iter->ref.oid, NULL, NULL, NULL,
 					   REF_NO_DEREF, NULL, &err))
 			die("failure preparing to create packed reference %s: %s",
-			    iter->refname, err.buf);
+			    iter->ref.name, err.buf);
 
 		/* Schedule the loose reference for pruning if requested. */
 		if ((opts->flags & PACK_REFS_PRUNE)) {
 			struct ref_to_prune *n;
-			FLEX_ALLOC_STR(n, name, iter->refname);
-			oidcpy(&n->oid, iter->oid);
+			FLEX_ALLOC_STR(n, name, iter->ref.name);
+			oidcpy(&n->oid, iter->ref.oid);
 			n->next = refs_to_prune;
 			refs_to_prune = n;
 		}
@@ -2394,7 +2379,7 @@ static int files_reflog_iterator_advance(struct ref_iterator *ref_iterator)
 					 REFNAME_ALLOW_ONELEVEL))
 			continue;
 
-		iter->base.refname = diter->relative_path;
+		iter->base.ref.name = diter->relative_path;
 		return ITER_OK;
 	}
 
@@ -2408,12 +2393,6 @@ static int files_reflog_iterator_seek(struct ref_iterator *ref_iterator UNUSED,
 	BUG("ref_iterator_seek() called for reflog_iterator");
 }
 
-static int files_reflog_iterator_peel(struct ref_iterator *ref_iterator UNUSED,
-				      struct object_id *peeled UNUSED)
-{
-	BUG("ref_iterator_peel() called for reflog_iterator");
-}
-
 static void files_reflog_iterator_release(struct ref_iterator *ref_iterator)
 {
 	struct files_reflog_iterator *iter =
@@ -2424,7 +2403,6 @@ static void files_reflog_iterator_release(struct ref_iterator *ref_iterator)
 static struct ref_iterator_vtable files_reflog_iterator_vtable = {
 	.advance = files_reflog_iterator_advance,
 	.seek = files_reflog_iterator_seek,
-	.peel = files_reflog_iterator_peel,
 	.release = files_reflog_iterator_release,
 };
 
@@ -3165,14 +3143,11 @@ static int parse_and_write_reflog(struct files_ref_store *refs,
 	return 0;
 }
 
-static int ref_present(const char *refname, const char *referent UNUSED,
-		       const struct object_id *oid UNUSED,
-		       int flags UNUSED,
-		       void *cb_data)
+static int ref_present(const struct reference *ref, void *cb_data)
 {
 	struct string_list *affected_refnames = cb_data;
 
-	return string_list_has_string(affected_refnames, refname);
+	return string_list_has_string(affected_refnames, ref->name);
 }
 
 static int files_transaction_finish_initial(struct files_ref_store *refs,

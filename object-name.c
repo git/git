@@ -1446,18 +1446,16 @@ struct handle_one_ref_cb {
 	struct commit_list **list;
 };
 
-static int handle_one_ref(const char *path, const char *referent UNUSED, const struct object_id *oid,
-			  int flag UNUSED,
-			  void *cb_data)
+static int handle_one_ref(const struct reference *ref, void *cb_data)
 {
 	struct handle_one_ref_cb *cb = cb_data;
 	struct commit_list **list = cb->list;
-	struct object *object = parse_object(cb->repo, oid);
+	struct object *object = parse_object(cb->repo, ref->oid);
 	if (!object)
 		return 0;
 	if (object->type == OBJ_TAG) {
-		object = deref_tag(cb->repo, object, path,
-				   strlen(path));
+		object = deref_tag(cb->repo, object, ref->name,
+				   strlen(ref->name));
 		if (!object)
 			return 0;
 	}
