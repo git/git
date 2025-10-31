@@ -23,8 +23,7 @@ int cmd__delete_gpgsig(int argc, const char **argv)
 	if (!strcmp(pattern, "trailer")) {
 		size_t payload_size = parse_signed_buffer(buf.buf, buf.len);
 		fwrite(buf.buf, 1, payload_size, stdout);
-		fflush(stdout);
-		return 0;
+		goto out;
 	}
 
 	bufptr = buf.buf;
@@ -56,7 +55,9 @@ int cmd__delete_gpgsig(int argc, const char **argv)
 		fwrite(bufptr, 1, (eol - bufptr) + 1, stdout);
 		bufptr = eol + 1;
 	}
-	fflush(stdout);
 
+out:
+	fflush(stdout);
+	strbuf_release(&buf);
 	return 0;
 }
