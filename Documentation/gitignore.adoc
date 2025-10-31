@@ -111,6 +111,11 @@ PATTERN FORMAT
    one of the characters in a range. See fnmatch(3) and the
    FNM_PATHNAME flag for a more detailed description.
 
+ - A backslash ("`\`") can be used to escape any character. E.g., "`\*`"
+   matches a literal asterisk (and "`\a`" matches "`a`", even though
+   there is no need for escaping there). As with fnmatch(3), a backslash
+   at the end of a pattern is an invalid pattern that never matches.
+
 Two consecutive asterisks ("`**`") in patterns matched against
 full pathname may have special meaning:
 
