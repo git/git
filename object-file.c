@@ -2014,5 +2014,6 @@ void odb_loose_source_free(struct odb_loose_source *loose)
 	if (!loose)
 		return;
 	odb_loose_source_clear_cache(loose);
+	loose_object_map_clear(&loose->map);
 	free(loose);
 }

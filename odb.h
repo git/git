@@ -51,9 +51,6 @@ struct odb_source {
 	/* Private state for loose objects. */
 	struct odb_loose_source *loose;
 
-	/* Map between object IDs for loose objects. */
-	struct loose_object_map *loose_map;
-
 	/*
 	 * private data
 	 *
