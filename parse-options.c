@@ -213,7 +213,7 @@ static enum parse_opt_result do_get_value(struct parse_opt_ctx_t *p,
 		if (unset)
 			value = NULL;
 		else if (opt->flags & PARSE_OPT_OPTARG && !p->opt)
-			value = (char *)opt->defval;
+			value = (const char *)opt->defval;
 		else {
 			int err = get_arg(p, opt, flags, &value);
 			if (err)
