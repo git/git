@@ -223,7 +223,7 @@ Options that take a filename allow a prefix `:(optional)`. For example:
 
 ----------------------------
 git commit -F :(optional)COMMIT_EDITMSG
-# if COMMIT_EDITMSG does not exist, equivalent to
+# if COMMIT_EDITMSG does not exist, the above is equivalent to
 git commit
 ----------------------------
 
