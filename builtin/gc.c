@@ -34,6 +34,7 @@
 #include "pack-objects.h"
 #include "path.h"
 #include "reflog.h"
+#include "repack.h"
 #include "rerere.h"
 #include "blob.h"
 #include "tree.h"
@@ -55,7 +56,6 @@ static const char * const builtin_gc_usage[] = {
 };
 
 static timestamp_t gc_log_expire_time;
-static struct strvec repack = STRVEC_INIT;
 static struct tempfile *pidfile;
 static struct lock_file log_lock;
 static struct string_list pack_garbage = STRING_LIST_INIT_DUP;
@@ -255,6 +255,7 @@ enum maintenance_task_label {
 	TASK_PREFETCH,
 	TASK_LOOSE_OBJECTS,
 	TASK_INCREMENTAL_REPACK,
+	TASK_GEOMETRIC_REPACK,
 	TASK_GC,
 	TASK_COMMIT_GRAPH,
 	TASK_PACK_REFS,
@@ -448,7 +449,7 @@ out:
 	return should_gc;
 }
 
-static int too_many_loose_objects(struct gc_config *cfg)
+static int too_many_loose_objects(int limit)
 {
 	/*
 	 * Quickly check if a "gc" is needed, by estimating how
@@ -470,7 +471,7 @@ static int too_many_loose_objects(struct gc_config *cfg)
 	if (!dir)
 		return 0;
 
-	auto_threshold = DIV_ROUND_UP(cfg->gc_auto_threshold, 256);
+	auto_threshold = DIV_ROUND_UP(limit, 256);
 	while ((ent = readdir(dir)) != NULL) {
 		if (strspn(ent->d_name, "0123456789abcdef") != hexsz_loose ||
 		    ent->d_name[hexsz_loose] != '\0')
@@ -616,48 +617,50 @@ static uint64_t estimate_repack_memory(struct gc_config *cfg,
 	return os_cache + heap;
 }
 
-static int keep_one_pack(struct string_list_item *item, void *data UNUSED)
+static int keep_one_pack(struct string_list_item *item, void *data)
 {
-	strvec_pushf(&repack, "--keep-pack=%s", basename(item->string));
+	struct strvec *args = data;
+	strvec_pushf(args, "--keep-pack=%s", basename(item->string));
 	return 0;
 }
 
 static void add_repack_all_option(struct gc_config *cfg,
-				  struct string_list *keep_pack)
+				  struct string_list *keep_pack,
+				  struct strvec *args)
 {
 	if (cfg->prune_expire && !strcmp(cfg->prune_expire, "now")
 		&& !(cfg->cruft_packs && cfg->repack_expire_to))
-		strvec_push(&repack, "-a");
+		strvec_push(args, "-a");
 	else if (cfg->cruft_packs) {
-		strvec_push(&repack, "--cruft");
+		strvec_push(args, "--cruft");
 		if (cfg->prune_expire)
-			strvec_pushf(&repack, "--cruft-expiration=%s", cfg->prune_expire);
+			strvec_pushf(args, "--cruft-expiration=%s", cfg->prune_expire);
 		if (cfg->max_cruft_size)
-			strvec_pushf(&repack, "--max-cruft-size=%lu",
+			strvec_pushf(args, "--max-cruft-size=%lu",
 				     cfg->max_cruft_size);
 		if (cfg->repack_expire_to)
-			strvec_pushf(&repack, "--expire-to=%s", cfg->repack_expire_to);
+			strvec_pushf(args, "--expire-to=%s", cfg->repack_expire_to);
 	} else {
-		strvec_push(&repack, "-A");
+		strvec_push(args, "-A");
 		if (cfg->prune_expire)
-			strvec_pushf(&repack, "--unpack-unreachable=%s", cfg->prune_expire);
+			strvec_pushf(args, "--unpack-unreachable=%s", cfg->prune_expire);
 	}
 
 	if (keep_pack)
-		for_each_string_list(keep_pack, keep_one_pack, NULL);
+		for_each_string_list(keep_pack, keep_one_pack, args);
 
 	if (cfg->repack_filter && *cfg->repack_filter)
-		strvec_pushf(&repack, "--filter=%s", cfg->repack_filter);
+		strvec_pushf(args, "--filter=%s", cfg->repack_filter);
 	if (cfg->repack_filter_to && *cfg->repack_filter_to)
-		strvec_pushf(&repack, "--filter-to=%s", cfg->repack_filter_to);
+		strvec_pushf(args, "--filter-to=%s", cfg->repack_filter_to);
 }
 
-static void add_repack_incremental_option(void)
+static void add_repack_incremental_option(struct strvec *args)
 {
-	strvec_push(&repack, "--no-write-bitmap-index");
+	strvec_push(args, "--no-write-bitmap-index");
 }
 
-static int need_to_gc(struct gc_config *cfg)
+static int need_to_gc(struct gc_config *cfg, struct strvec *repack_args)
 {
 	/*
 	 * Setting gc.auto to 0 or negative can disable the
@@ -698,10 +701,10 @@ static int need_to_gc(struct gc_config *cfg)
 				string_list_clear(&keep_pack, 0);
 		}
 
-		add_repack_all_option(cfg, &keep_pack);
+		add_repack_all_option(cfg, &keep_pack, repack_args);
 		string_list_clear(&keep_pack, 0);
-	} else if (too_many_loose_objects(cfg))
-		add_repack_incremental_option();
+	} else if (too_many_loose_objects(cfg->gc_auto_threshold))
+		add_repack_incremental_option(repack_args);
 	else
 		return 0;
 
@@ -850,6 +853,7 @@ int cmd_gc(int argc,
 	int keep_largest_pack = -1;
 	int skip_foreground_tasks = 0;
 	timestamp_t dummy;
+	struct strvec repack_args = STRVEC_INIT;
 	struct maintenance_run_opts opts = MAINTENANCE_RUN_OPTS_INIT;
 	struct gc_config cfg = GC_CONFIG_INIT;
 	const char *prune_expire_sentinel = "sentinel";
@@ -889,7 +893,7 @@ int cmd_gc(int argc,
 	show_usage_with_options_if_asked(argc, argv,
 					 builtin_gc_usage, builtin_gc_options);
 
-	strvec_pushl(&repack, "repack", "-d", "-l", NULL);
+	strvec_pushl(&repack_args, "repack", "-d", "-l", NULL);
 
 	gc_config(&cfg);
 
@@ -912,14 +916,14 @@ int cmd_gc(int argc,
 		die(_("failed to parse prune expiry value %s"), cfg.prune_expire);
 
 	if (aggressive) {
-		strvec_push(&repack, "-f");
+		strvec_push(&repack_args, "-f");
 		if (cfg.aggressive_depth > 0)
-			strvec_pushf(&repack, "--depth=%d", cfg.aggressive_depth);
+			strvec_pushf(&repack_args, "--depth=%d", cfg.aggressive_depth);
 		if (cfg.aggressive_window > 0)
-			strvec_pushf(&repack, "--window=%d", cfg.aggressive_window);
+			strvec_pushf(&repack_args, "--window=%d", cfg.aggressive_window);
 	}
 	if (opts.quiet)
-		strvec_push(&repack, "-q");
+		strvec_push(&repack_args, "-q");
 
 	if (opts.auto_flag) {
 		if (cfg.detach_auto && opts.detach < 0)
@@ -928,7 +932,7 @@ int cmd_gc(int argc,
 		/*
 		 * Auto-gc should be least intrusive as possible.
 		 */
-		if (!need_to_gc(&cfg)) {
+		if (!need_to_gc(&cfg, &repack_args)) {
 			ret = 0;
 			goto out;
 		}
@@ -950,7 +954,7 @@ int cmd_gc(int argc,
 			find_base_packs(&keep_pack, cfg.big_pack_threshold);
 		}
 
-		add_repack_all_option(&cfg, &keep_pack);
+		add_repack_all_option(&cfg, &keep_pack, &repack_args);
 		string_list_clear(&keep_pack, 0);
 	}
 
@@ -1012,9 +1016,9 @@ int cmd_gc(int argc,
 
 		repack_cmd.git_cmd = 1;
 		repack_cmd.close_object_store = 1;
-		strvec_pushv(&repack_cmd.args, repack.v);
+		strvec_pushv(&repack_cmd.args, repack_args.v);
 		if (run_command(&repack_cmd))
-			die(FAILED_RUN, repack.v[0]);
+			die(FAILED_RUN, repack_args.v[0]);
 
 		if (cfg.prune_expire) {
 			struct child_process prune_cmd = CHILD_PROCESS_INIT;
@@ -1053,7 +1057,7 @@ int cmd_gc(int argc,
 					     !opts.quiet && !daemonized ? COMMIT_GRAPH_WRITE_PROGRESS : 0,
 					     NULL);
 
-	if (opts.auto_flag && too_many_loose_objects(&cfg))
+	if (opts.auto_flag && too_many_loose_objects(cfg.gc_auto_threshold))
 		warning(_("There are too many unreachable loose objects; "
 			"run 'git prune' to remove them."));
 
@@ -1065,6 +1069,7 @@ int cmd_gc(int argc,
 
 out:
 	maintenance_run_opts_release(&opts);
+	strvec_clear(&repack_args);
 	gc_config_release(&cfg);
 	return 0;
 }
@@ -1265,6 +1270,19 @@ static int maintenance_task_gc_background(struct maintenance_run_opts *opts,
 	strvec_push(&child.args, "--skip-foreground-tasks");
 
 	return run_command(&child);
+}
+
+static int gc_condition(struct gc_config *cfg)
+{
+	/*
+	 * Note that it's fine to drop the repack arguments here, as we execute
+	 * git-gc(1) as a separate child process anyway. So it knows to compute
+	 * these arguments again.
+	 */
+	struct strvec repack_args = STRVEC_INIT;
+	int ret = need_to_gc(cfg, &repack_args);
+	strvec_clear(&repack_args);
+	return ret;
 }
 
 static int prune_packed(struct maintenance_run_opts *opts)
@@ -1548,6 +1566,108 @@ static int maintenance_task_incremental_repack(struct maintenance_run_opts *opts
 	return 0;
 }
 
+static int maintenance_task_geometric_repack(struct maintenance_run_opts *opts,
+					     struct gc_config *cfg)
+{
+	struct pack_geometry geometry = {
+		.split_factor = 2,
+	};
+	struct pack_objects_args po_args = {
+		.local = 1,
+	};
+	struct existing_packs existing_packs = EXISTING_PACKS_INIT;
+	struct string_list kept_packs = STRING_LIST_INIT_DUP;
+	struct child_process child = CHILD_PROCESS_INIT;
+	int ret;
+
+	repo_config_get_int(the_repository, "maintenance.geometric-repack.splitFactor",
+			    &geometry.split_factor);
+
+	existing_packs.repo = the_repository;
+	existing_packs_collect(&existing_packs, &kept_packs);
+	pack_geometry_init(&geometry, &existing_packs, &po_args);
+	pack_geometry_split(&geometry);
+
+	child.git_cmd = 1;
+
+	strvec_pushl(&child.args, "repack", "-d", "-l", NULL);
+	if (geometry.split < geometry.pack_nr)
+		strvec_pushf(&child.args, "--geometric=%d",
+			     geometry.split_factor);
+	else
+		add_repack_all_option(cfg, NULL, &child.args);
+	if (opts->quiet)
+		strvec_push(&child.args, "--quiet");
+	if (the_repository->settings.core_multi_pack_index)
+		strvec_push(&child.args, "--write-midx");
+
+	if (run_command(&child)) {
+		ret = error(_("failed to perform geometric repack"));
+		goto out;
+	}
+
+	ret = 0;
+
+out:
+	existing_packs_release(&existing_packs);
+	pack_geometry_release(&geometry);
+	return ret;
+}
+
+static int geometric_repack_auto_condition(struct gc_config *cfg UNUSED)
+{
+	struct pack_geometry geometry = {
+		.split_factor = 2,
+	};
+	struct pack_objects_args po_args = {
+		.local = 1,
+	};
+	struct existing_packs existing_packs = EXISTING_PACKS_INIT;
+	struct string_list kept_packs = STRING_LIST_INIT_DUP;
+	int auto_value = 100;
+	int ret;
+
+	repo_config_get_int(the_repository, "maintenance.geometric-repack.auto",
+			    &auto_value);
+	if (!auto_value)
+		return 0;
+	if (auto_value < 0)
+		return 1;
+
+	repo_config_get_int(the_repository, "maintenance.geometric-repack.splitFactor",
+			    &geometry.split_factor);
+
+	existing_packs.repo = the_repository;
+	existing_packs_collect(&existing_packs, &kept_packs);
+	pack_geometry_init(&geometry, &existing_packs, &po_args);
+	pack_geometry_split(&geometry);
+
+	/*
+	 * When we'd merge at least two packs with one another we always
+	 * perform the repack.
+	 */
+	if (geometry.split) {
+		ret = 1;
+		goto out;
+	}
+
+	/*
+	 * Otherwise, we estimate the number of loose objects to determine
+	 * whether we want to create a new packfile or not.
+	 */
+	if (too_many_loose_objects(auto_value)) {
+		ret = 1;
+		goto out;
+	}
+
+	ret = 0;
+
+out:
+	existing_packs_release(&existing_packs);
+	pack_geometry_release(&geometry);
+	return ret;
+}
+
 typedef int (*maintenance_task_fn)(struct maintenance_run_opts *opts,
 				   struct gc_config *cfg);
 typedef int (*maintenance_auto_fn)(struct gc_config *cfg);
@@ -1590,11 +1710,16 @@ static const struct maintenance_task tasks[] = {
 		.background = maintenance_task_incremental_repack,
 		.auto_condition = incremental_repack_auto_condition,
 	},
+	[TASK_GEOMETRIC_REPACK] = {
+		.name = "geometric-repack",
+		.background = maintenance_task_geometric_repack,
+		.auto_condition = geometric_repack_auto_condition,
+	},
 	[TASK_GC] = {
 		.name = "gc",
 		.foreground = maintenance_task_gc_foreground,
 		.background = maintenance_task_gc_background,
-		.auto_condition = need_to_gc,
+		.auto_condition = gc_condition,
 	},
 	[TASK_COMMIT_GRAPH] = {
 		.name = "commit-graph",
@@ -1700,39 +1825,116 @@ static int maintenance_run_tasks(struct maintenance_run_opts *opts,
 	return result;
 }
 
+enum maintenance_type {
+	/* As invoked via `git maintenance run --schedule=`. */
+	MAINTENANCE_TYPE_SCHEDULED = (1 << 0),
+	/* As invoked via `git maintenance run` and with `--auto`. */
+	MAINTENANCE_TYPE_MANUAL    = (1 << 1),
+};
+
 struct maintenance_strategy {
 	struct {
-		int enabled;
+		unsigned type;
 		enum schedule_priority schedule;
 	} tasks[TASK__COUNT];
 };
 
 static const struct maintenance_strategy none_strategy = { 0 };
-static const struct maintenance_strategy default_strategy = {
+
+static const struct maintenance_strategy gc_strategy = {
 	.tasks = {
-		[TASK_GC].enabled = 1,
+		[TASK_GC] = {
+			.type = MAINTENANCE_TYPE_MANUAL | MAINTENANCE_TYPE_SCHEDULED,
+			.schedule = SCHEDULE_DAILY,
+		},
 	},
 };
+
 static const struct maintenance_strategy incremental_strategy = {
 	.tasks = {
-		[TASK_COMMIT_GRAPH].enabled = 1,
-		[TASK_COMMIT_GRAPH].schedule = SCHEDULE_HOURLY,
-		[TASK_PREFETCH].enabled = 1,
-		[TASK_PREFETCH].schedule = SCHEDULE_HOURLY,
-		[TASK_INCREMENTAL_REPACK].enabled = 1,
-		[TASK_INCREMENTAL_REPACK].schedule = SCHEDULE_DAILY,
-		[TASK_LOOSE_OBJECTS].enabled = 1,
-		[TASK_LOOSE_OBJECTS].schedule = SCHEDULE_DAILY,
-		[TASK_PACK_REFS].enabled = 1,
-		[TASK_PACK_REFS].schedule = SCHEDULE_WEEKLY,
+		[TASK_COMMIT_GRAPH] = {
+			.type = MAINTENANCE_TYPE_SCHEDULED,
+			.schedule = SCHEDULE_HOURLY,
+		},
+		[TASK_PREFETCH] = {
+			.type = MAINTENANCE_TYPE_SCHEDULED,
+			.schedule = SCHEDULE_HOURLY,
+		},
+		[TASK_INCREMENTAL_REPACK] = {
+			.type = MAINTENANCE_TYPE_SCHEDULED,
+			.schedule = SCHEDULE_DAILY,
+		},
+		[TASK_LOOSE_OBJECTS] = {
+			.type = MAINTENANCE_TYPE_SCHEDULED,
+			.schedule = SCHEDULE_DAILY,
+		},
+		[TASK_PACK_REFS] = {
+			.type = MAINTENANCE_TYPE_SCHEDULED,
+			.schedule = SCHEDULE_WEEKLY,
+		},
+		/*
+		 * Historically, the "incremental" strategy was only available
+		 * in the context of scheduled maintenance when set up via
+		 * "maintenance.strategy". We have later expanded that config
+		 * to also cover manual maintenance.
+		 *
+		 * To retain backwards compatibility with the previous status
+		 * quo we thus run git-gc(1) in case manual maintenance was
+		 * requested. This is the same as the default strategy, which
+		 * would have been in use beforehand.
+		 */
+		[TASK_GC] = {
+			.type = MAINTENANCE_TYPE_MANUAL,
+		},
 	},
 };
+
+static const struct maintenance_strategy geometric_strategy = {
+	.tasks = {
+		[TASK_COMMIT_GRAPH] = {
+			.type = MAINTENANCE_TYPE_SCHEDULED | MAINTENANCE_TYPE_MANUAL,
+			.schedule = SCHEDULE_HOURLY,
+		},
+		[TASK_GEOMETRIC_REPACK] = {
+			.type = MAINTENANCE_TYPE_SCHEDULED | MAINTENANCE_TYPE_MANUAL,
+			.schedule = SCHEDULE_DAILY,
+		},
+		[TASK_PACK_REFS] = {
+			.type = MAINTENANCE_TYPE_SCHEDULED | MAINTENANCE_TYPE_MANUAL,
+			.schedule = SCHEDULE_DAILY,
+		},
+		[TASK_RERERE_GC] = {
+			.type = MAINTENANCE_TYPE_SCHEDULED | MAINTENANCE_TYPE_MANUAL,
+			.schedule = SCHEDULE_WEEKLY,
+		},
+		[TASK_REFLOG_EXPIRE] = {
+			.type = MAINTENANCE_TYPE_SCHEDULED | MAINTENANCE_TYPE_MANUAL,
+			.schedule = SCHEDULE_WEEKLY,
+		},
+		[TASK_WORKTREE_PRUNE] = {
+			.type = MAINTENANCE_TYPE_SCHEDULED | MAINTENANCE_TYPE_MANUAL,
+			.schedule = SCHEDULE_WEEKLY,
+		},
+	},
+};
+
+static struct maintenance_strategy parse_maintenance_strategy(const char *name)
+{
+	if (!strcasecmp(name, "incremental"))
+		return incremental_strategy;
+	if (!strcasecmp(name, "gc"))
+		return gc_strategy;
+	if (!strcasecmp(name, "geometric"))
+		return geometric_strategy;
+	die(_("unknown maintenance strategy: '%s'"), name);
+}
 
 static void initialize_task_config(struct maintenance_run_opts *opts,
 				   const struct string_list *selected_tasks)
 {
 	struct strbuf config_name = STRBUF_INIT;
 	struct maintenance_strategy strategy;
+	enum maintenance_type type;
 	const char *config_str;
 
 	/*
@@ -1760,18 +1962,19 @@ static void initialize_task_config(struct maintenance_run_opts *opts,
 	 *   - Unscheduled maintenance uses our default strategy.
 	 *
 	 * Both of these are affected by the gitconfig though, which may
-	 * override specific aspects of our strategy.
+	 * override specific aspects of our strategy. Furthermore, both
+	 * strategies can be overridden by setting "maintenance.strategy".
 	 */
 	if (opts->schedule) {
 		strategy = none_strategy;
-
-		if (!repo_config_get_string_tmp(the_repository, "maintenance.strategy", &config_str)) {
-			if (!strcasecmp(config_str, "incremental"))
-				strategy = incremental_strategy;
-		}
+		type = MAINTENANCE_TYPE_SCHEDULED;
 	} else {
-		strategy = default_strategy;
+		strategy = gc_strategy;
+		type = MAINTENANCE_TYPE_MANUAL;
 	}
+
+	if (!repo_config_get_string_tmp(the_repository, "maintenance.strategy", &config_str))
+		strategy = parse_maintenance_strategy(config_str);
 
 	for (size_t i = 0; i < TASK__COUNT; i++) {
 		int config_value;
@@ -1780,8 +1983,8 @@ static void initialize_task_config(struct maintenance_run_opts *opts,
 		strbuf_addf(&config_name, "maintenance.%s.enabled",
 			    tasks[i].name);
 		if (!repo_config_get_bool(the_repository, config_name.buf, &config_value))
-			strategy.tasks[i].enabled = config_value;
-		if (!strategy.tasks[i].enabled)
+			strategy.tasks[i].type = config_value ? type : 0;
+		if (!(strategy.tasks[i].type & type))
 			continue;
 
 		if (opts->schedule) {
