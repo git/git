@@ -11,14 +11,13 @@ test_description="remember regular & dir renames in sequence of merges"
 #         sure that we are triggering rename caching rather than rename
 #         bypassing.
 #
-# NOTE 2: this testfile uses 'test-tool fast-rebase' instead of either
-#         cherry-pick or rebase.  sequencer.c is only superficially
-#         integrated with merge-ort; it calls merge_switch_to_result()
-#         after EACH merge, which updates the index and working copy AND
-#         throws away the cached results (because merge_switch_to_result()
-#         is only supposed to be called at the end of the sequence).
-#         Integrating them more deeply is a big task, so for now the tests
-#         use 'test-tool fast-rebase'.
+# NOTE 2: this testfile uses replay instead of either cherry-pick or rebase.
+#         sequencer.c is only superficially integrated with merge-ort; it
+#         calls merge_switch_to_result() after EACH merge, which updates the
+#         index and working copy AND throws away the cached results (because
+#         merge_switch_to_result() is only supposed to be called at the end
+#         of the sequence).  Integrating them more deeply is a big task, so
+#         for now the tests use 'git replay'.
 #
 
 
