@@ -1021,7 +1021,8 @@ int odb_write_object_ext(struct object_database *odb,
 			 struct object_id *compat_oid,
 			 unsigned flags)
 {
-	return write_object_file(odb->sources, buf, len, type, oid, compat_oid, flags);
+	return odb_source_loose_write_object(odb->sources, buf, len, type,
+					     oid, compat_oid, flags);
 }
 
 struct object_database *odb_new(struct repository *repo)

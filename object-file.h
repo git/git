@@ -62,6 +62,11 @@ int odb_source_loose_has_object(struct odb_source *source,
 int odb_source_loose_freshen_object(struct odb_source *source,
 				    const struct object_id *oid);
 
+int odb_source_loose_write_object(struct odb_source *source,
+				  const void *buf, unsigned long len,
+				  enum object_type type, struct object_id *oid,
+				  struct object_id *compat_oid_in, unsigned flags);
+
 /*
  * Populate and return the loose object cache array corresponding to the
  * given object ID.
@@ -167,11 +172,6 @@ enum unpack_loose_header_result unpack_loose_header(git_zstream *stream,
  */
 struct object_info;
 int parse_loose_header(const char *hdr, struct object_info *oi);
-
-int write_object_file(struct odb_source *source,
-		      const void *buf, unsigned long len,
-		      enum object_type type, struct object_id *oid,
-		      struct object_id *compat_oid_in, unsigned flags);
 
 struct input_stream {
 	const void *(*read)(struct input_stream *, unsigned long *len);
