@@ -1716,7 +1716,7 @@ static int want_object_in_pack_mtime(const struct object_id *oid,
 		 */
 		struct odb_source *source = the_repository->objects->sources->next;
 		for (; source; source = source->next)
-			if (has_loose_object(source, oid))
+			if (odb_source_loose_has_object(source, oid))
 				return 0;
 	}
 
@@ -3978,7 +3978,7 @@ static void add_cruft_object_entry(const struct object_id *oid, enum object_type
 			int found = 0;
 
 			for (; !found && source; source = source->next)
-				if (has_loose_object(source, oid))
+				if (odb_source_loose_has_object(source, oid))
 					found = 1;
 
 			/*

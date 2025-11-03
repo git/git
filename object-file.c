@@ -99,8 +99,8 @@ static int check_and_freshen_source(struct odb_source *source,
 	return check_and_freshen_file(path.buf, freshen);
 }
 
-int has_loose_object(struct odb_source *source,
-		     const struct object_id *oid)
+int odb_source_loose_has_object(struct odb_source *source,
+				const struct object_id *oid)
 {
 	return check_and_freshen_source(source, oid, 0);
 }
@@ -1161,7 +1161,7 @@ int force_object_loose(struct odb_source *source,
 	int ret;
 
 	for (struct odb_source *s = source->odb->sources; s; s = s->next)
-		if (has_loose_object(s, oid))
+		if (odb_source_loose_has_object(s, oid))
 			return 0;
 
 	oi.typep = &type;

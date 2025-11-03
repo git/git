@@ -52,6 +52,14 @@ void *odb_source_loose_map_object(struct odb_source *source,
 				  unsigned long *size);
 
 /*
+ * Return true iff an object database source has a loose object
+ * with the specified name.  This function does not respect replace
+ * references.
+ */
+int odb_source_loose_has_object(struct odb_source *source,
+				const struct object_id *oid);
+
+/*
  * Populate and return the loose object cache array corresponding to the
  * given object ID.
  */
@@ -65,14 +73,6 @@ struct oidtree *odb_source_loose_cache(struct odb_source *source,
 const char *odb_loose_path(struct odb_source *source,
 			   struct strbuf *buf,
 			   const struct object_id *oid);
-
-/*
- * Return true iff an object database source has a loose object
- * with the specified name.  This function does not respect replace
- * references.
- */
-int has_loose_object(struct odb_source *source,
-		     const struct object_id *oid);
 
 /*
  * Iterate over the files in the loose-object parts of the object
