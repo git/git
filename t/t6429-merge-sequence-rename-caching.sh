@@ -768,4 +768,82 @@ test_expect_success 'avoid assuming we detected renames' '
 	)
 '
 
+#
+# In the following testcase:
+#   Base:     olddir/{valuesX_1, valuesY_1, valuesZ_1}
+#             other/content
+#   Upstream: rename olddir/valuesX_1 -> newdir/valuesX_2
+#   Topic_1:  modify olddir/valuesX_1 -> olddir/valuesX_3
+#   Topic_2:  modify olddir/valuesY,
+#             modify other/content
+#   Expected Pick1: olddir/{valuesY, valuesZ}, newdir/valuesX, other/content
+#   Expected Pick2: olddir/{valuesY, valuesZ}, newdir/valuesX, other/content
+#
+# This testcase presents no problems for git traditionally, but the fact that
+#    olddir/valuesX -> newdir/valuesX
+# gets cached after the first pick presents a problem for the second commit to
+# be replayed, because it appears to be an irrelevant rename, so the trivial
+# directory resolution will resolve newdir/ without recursing into it, giving
+# us no way to apply the cached rename to anything.
+#
+test_expect_success 'rename a file, use it on first pick, but irrelevant on second' '
+	git init rename_a_file_use_it_once_irrelevant_on_second &&
+	(
+		cd rename_a_file_use_it_once_irrelevant_on_second &&
+
+		mkdir olddir/ other/ &&
+		test_seq 3 8 >olddir/valuesX &&
+		test_seq 3 8 >olddir/valuesY &&
+		test_seq 3 8 >olddir/valuesZ &&
+		printf "%s\n" A B C D E F G >other/content &&
+		git add olddir other &&
+		git commit -m orig &&
+
+		git branch upstream &&
+		git branch topic &&
+
+		git switch upstream &&
+		test_seq 1 8 >olddir/valuesX &&
+		git add olddir &&
+		mkdir newdir &&
+		git mv olddir/valuesX newdir &&
+		git commit -m "Renamed (and modified) olddir/valuesX into newdir/" &&
+
+		git switch topic &&
+
+		test_seq 3 10 >olddir/valuesX &&
+		git add olddir &&
+		git commit -m A &&
+
+		test_seq 1 8 >olddir/valuesY &&
+		printf "%s\n" A B C D E F G H I >other/content &&
+		git add olddir/valuesY other &&
+		git commit -m B &&
+
+		#
+		# Actual testing; mostly we want to verify that we do not hit
+		#     git: merge-ort.c:3032: process_renames: Assertion `newinfo && !newinfo->merged.clean` failed.
+		#
+
+		git switch upstream &&
+		git config merge.directoryRenames true &&
+
+		git replay --onto HEAD upstream~1..topic >out &&
+
+		#
+		# ...but we may as well check that the replay gave us a reasonable result
+		#
+
+		git update-ref --stdin <out &&
+		git checkout topic &&
+
+		git ls-files >tracked &&
+		test_line_count = 4 tracked &&
+		test_path_is_file newdir/valuesX &&
+		test_path_is_file olddir/valuesY &&
+		test_path_is_file olddir/valuesZ &&
+		test_path_is_file other/content
+	)
+'
+
 test_done
