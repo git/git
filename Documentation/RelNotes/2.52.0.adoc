@@ -70,6 +70,10 @@ UI, Workflows & Features
  * "Symlink symref" has been added to the list of things that will
    disappear at Git 3.0 boundary.
 
+ * "git maintenance" command learns the "geometric" strategy where it
+   avoids doing maintenance tasks that rebuilds everything from
+   scratch.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -157,6 +161,9 @@ Performance, Internal Implementation, Development Support etc.
 
  * Two slightly different ways to get at "all the packfiles" in API
    has been cleaned up.
+
+ * The code to walk revision graph to compute merge base has been
+   optimized.
 
 
 Fixes since v2.51
@@ -382,6 +389,14 @@ including security updates, are included in this release.
    and "git bisect unknown", which has been corrected.
    (merge 2bb3a012f3 rz/bisect-help-unknown later to maint).
 
+ * The 'q'(uit) command in "git add -p" has been improved to quit
+   without doing any meaningless work before leaving, and giving EOF
+   (typically control-D) to the prompt is made to behave the same way.
+
+ * The wildmatch code had a corner case bug that mistakenly makes
+   "foo**/bar" match with "foobar", which has been corrected.
+   (merge 1940a02dc1 jk/match-pathname-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 529a60a885 ua/t1517-short-help-tests later to maint).
    (merge 22d421fed9 ac/deglobal-fmt-merge-log-config later to maint).
@@ -393,3 +408,4 @@ including security updates, are included in this release.
    (merge a66fc22bf9 rs/get-oid-with-flags-cleanup later to maint).
    (merge 15b8abde07 js/mingw-includes-cleanup later to maint).
    (merge 2cebca0582 tb/cat-file-objectmode-update later to maint).
+   (merge 8f487db07a kh/doc-patch-id-1 later to maint).
