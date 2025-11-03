@@ -32,6 +32,9 @@ struct odb_source_loose {
 	 */
 	uint32_t subdir_seen[8]; /* 256 bits */
 	struct oidtree *cache;
+
+	/* Map between object IDs for loose objects. */
+	struct loose_object_map *map;
 };
 
 struct odb_source_loose *odb_source_loose_new(struct odb_source *source);
