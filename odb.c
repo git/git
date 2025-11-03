@@ -151,6 +151,7 @@ struct odb_source *odb_source_new(struct object_database *odb,
 	source->odb = odb;
 	source->local = local;
 	source->path = xstrdup(path);
+	source->loose = odb_source_loose_new(source);
 
 	return source;
 }
@@ -368,6 +369,7 @@ struct odb_source *odb_set_temporary_primary_source(struct object_database *odb,
 static void odb_source_free(struct odb_source *source)
 {
 	free(source->path);
+	odb_source_loose_free(source->loose);
 	odb_clear_loose_cache(source);
 	loose_object_map_clear(&source->loose_map);
 	free(source);

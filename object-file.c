@@ -1995,3 +1995,16 @@ void object_file_transaction_commit(struct odb_transaction *transaction)
 	transaction->odb->transaction = NULL;
 	free(transaction);
 }
+
+struct odb_source_loose *odb_source_loose_new(struct odb_source *source)
+{
+	struct odb_source_loose *loose;
+	CALLOC_ARRAY(loose, 1);
+	loose->source = source;
+	return loose;
+}
+
+void odb_source_loose_free(struct odb_source_loose *loose)
+{
+	free(loose);
+}
