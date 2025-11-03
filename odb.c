@@ -1071,7 +1071,7 @@ void odb_reprepare(struct object_database *o)
 	odb_prepare_alternates(o);
 
 	for (source = o->sources; source; source = source->next)
-		odb_clear_loose_cache(source);
+		odb_source_loose_reprepare(source);
 
 	o->approximate_object_count_valid = 0;
 

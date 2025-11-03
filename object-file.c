@@ -1834,12 +1834,17 @@ struct oidtree *odb_source_loose_cache(struct odb_source *source,
 	return source->loose->cache;
 }
 
-void odb_clear_loose_cache(struct odb_source *source)
+static void odb_source_loose_clear_cache(struct odb_source_loose *loose)
 {
-	oidtree_clear(source->loose->cache);
-	FREE_AND_NULL(source->loose->cache);
-	memset(&source->loose->subdir_seen, 0,
-	       sizeof(source->loose->subdir_seen));
+	oidtree_clear(loose->cache);
+	FREE_AND_NULL(loose->cache);
+	memset(&loose->subdir_seen, 0,
+	       sizeof(loose->subdir_seen));
+}
+
+void odb_source_loose_reprepare(struct odb_source *source)
+{
+	odb_source_loose_clear_cache(source->loose);
 }
 
 static int check_stream_oid(git_zstream *stream,
@@ -2008,6 +2013,6 @@ void odb_source_loose_free(struct odb_source_loose *loose)
 {
 	if (!loose)
 		return;
-	odb_clear_loose_cache(loose->source);
+	odb_source_loose_clear_cache(loose);
 	free(loose);
 }
