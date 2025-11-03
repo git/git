@@ -968,30 +968,10 @@ static int write_loose_object(struct odb_source *source,
 					  FOF_SKIP_COLLISION_CHECK);
 }
 
-static int freshen_loose_object(struct object_database *odb,
-				const struct object_id *oid)
+int odb_source_loose_freshen_object(struct odb_source *source,
+				    const struct object_id *oid)
 {
-	odb_prepare_alternates(odb);
-	for (struct odb_source *source = odb->sources; source; source = source->next)
-		if (check_and_freshen_source(source, oid, 1))
-			return 1;
-	return 0;
-}
-
-static int freshen_packed_object(struct object_database *odb,
-				 const struct object_id *oid)
-{
-	struct pack_entry e;
-	if (!find_pack_entry(odb->repo, oid, &e))
-		return 0;
-	if (e.p->is_cruft)
-		return 0;
-	if (e.p->freshened)
-		return 1;
-	if (!freshen_file(e.p->pack_name))
-		return 0;
-	e.p->freshened = 1;
-	return 1;
+	return !!check_and_freshen_source(source, oid, 1);
 }
 
 int stream_loose_object(struct odb_source *source,
@@ -1073,12 +1053,10 @@ int stream_loose_object(struct odb_source *source,
 		die(_("deflateEnd on stream object failed (%d)"), ret);
 	close_loose_object(source, fd, tmp_file.buf);
 
-	if (freshen_packed_object(source->odb, oid) ||
-	    freshen_loose_object(source->odb, oid)) {
+	if (odb_freshen_object(source->odb, oid)) {
 		unlink_or_warn(tmp_file.buf);
 		goto cleanup;
 	}
-
 	odb_loose_path(source, &filename, oid);
 
 	/* We finally know the object path, and create the missing dir. */
@@ -1137,8 +1115,7 @@ int write_object_file(struct odb_source *source,
 	 * it out into .git/objects/??/?{38} file.
 	 */
 	write_object_file_prepare(algo, buf, len, type, oid, hdr, &hdrlen);
-	if (freshen_packed_object(source->odb, oid) ||
-	    freshen_loose_object(source->odb, oid))
+	if (odb_freshen_object(source->odb, oid))
 		return 0;
 	if (write_loose_object(source, oid, hdr, hdrlen, buf, len, 0, flags))
 		return -1;

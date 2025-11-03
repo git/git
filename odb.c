@@ -987,6 +987,22 @@ int odb_has_object(struct object_database *odb, const struct object_id *oid,
 	return odb_read_object_info_extended(odb, oid, NULL, object_info_flags) >= 0;
 }
 
+int odb_freshen_object(struct object_database *odb,
+		       const struct object_id *oid)
+{
+	struct odb_source *source;
+
+	if (packfile_store_freshen_object(odb->packfiles, oid))
+		return 1;
+
+	odb_prepare_alternates(odb);
+	for (source = odb->sources; source; source = source->next)
+		if (odb_source_loose_freshen_object(source, oid))
+			return 1;
+
+	return 0;
+}
+
 void odb_assert_oid_type(struct object_database *odb,
 			 const struct object_id *oid, enum object_type expect)
 {

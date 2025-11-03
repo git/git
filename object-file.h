@@ -59,6 +59,9 @@ void *odb_source_loose_map_object(struct odb_source *source,
 int odb_source_loose_has_object(struct odb_source *source,
 				const struct object_id *oid);
 
+int odb_source_loose_freshen_object(struct odb_source *source,
+				    const struct object_id *oid);
+
 /*
  * Populate and return the loose object cache array corresponding to the
  * given object ID.
