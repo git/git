@@ -1569,8 +1569,10 @@ static int patch_update_file(struct add_p_state *s,
 		if (*s->s.reset_color_interactive)
 			fputs(s->s.reset_color_interactive, stdout);
 		fflush(stdout);
-		if (read_single_character(s) == EOF)
+		if (read_single_character(s) == EOF) {
+			quit = 1;
 			break;
+		}
 
 		if (!s->answer.len)
 			continue;
@@ -1601,7 +1603,7 @@ soft_increment:
 			} else if (hunk->use == UNDECIDED_HUNK) {
 				hunk->use = USE_HUNK;
 			}
-		} else if (ch == 'd' || ch == 'q') {
+		} else if (ch == 'd') {
 			if (file_diff->hunk_nr) {
 				for (; hunk_index < file_diff->hunk_nr; hunk_index++) {
 					hunk = file_diff->hunk + hunk_index;
@@ -1613,10 +1615,9 @@ soft_increment:
 			} else if (hunk->use == UNDECIDED_HUNK) {
 				hunk->use = SKIP_HUNK;
 			}
-			if (ch == 'q') {
-				quit = 1;
-				break;
-			}
+		} else if (ch == 'q') {
+			quit = 1;
+			break;
 		} else if (s->answer.buf[0] == 'K') {
 			if (permitted & ALLOW_GOTO_PREVIOUS_HUNK)
 				hunk_index = dec_mod(hunk_index,
