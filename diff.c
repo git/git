@@ -1351,7 +1351,7 @@ static void emit_diff_symbol_from_struct(struct diff_options *o,
 	int len = eds->len;
 	unsigned flags = eds->flags;
 
-	if (o->dry_run)
+	if (!o->file)
 		return;
 
 	switch (s) {
@@ -3765,9 +3765,9 @@ static void builtin_diff(const char *name_a,
 
 		if (o->word_diff)
 			init_diff_words_data(&ecbdata, o, one, two);
-		if (o->dry_run) {
+		if (!o->file) {
 			/*
-			 * Unlike the !dry_run case, we need to ignore the
+			 * Unlike the normal output case, we need to ignore the
 			 * return value from xdi_diff_outf() here, because
 			 * xdi_diff_outf() takes non-zero return from its
 			 * callback function as a sign of error and returns
@@ -4423,7 +4423,6 @@ static void run_external_diff(const struct external_diff *pgm,
 {
 	struct child_process cmd = CHILD_PROCESS_INIT;
 	struct diff_queue_struct *q = &diff_queued_diff;
-	int quiet = !(o->output_format & DIFF_FORMAT_PATCH) || o->dry_run;
 	int rc;
 
 	/*
@@ -4432,7 +4431,7 @@ static void run_external_diff(const struct external_diff *pgm,
 	 * external diff program lacks the ability to tell us whether
 	 * it's empty then we consider it non-empty without even asking.
 	 */
-	if (!pgm->trust_exit_code && quiet) {
+	if (!pgm->trust_exit_code && !o->file) {
 		o->found_changes = 1;
 		return;
 	}
@@ -4457,7 +4456,10 @@ static void run_external_diff(const struct external_diff *pgm,
 	diff_free_filespec_data(one);
 	diff_free_filespec_data(two);
 	cmd.use_shell = 1;
-	cmd.no_stdout = quiet;
+	if (!o->file)
+		cmd.no_stdout = 1;
+	else if (o->file != stdout)
+		cmd.out = xdup(fileno(o->file));
 	rc = run_command(&cmd);
 	if (!pgm->trust_exit_code && rc == 0)
 		o->found_changes = 1;
@@ -4618,7 +4620,7 @@ static void run_diff_cmd(const struct external_diff *pgm,
 		    p->status == DIFF_STATUS_RENAMED)
 			o->found_changes = 1;
 	} else {
-		if (!o->dry_run)
+		if (o->file)
 			fprintf(o->file, "* Unmerged path %s\n", name);
 		o->found_changes = 1;
 	}
@@ -6196,15 +6198,15 @@ static void diff_flush_patch(struct diff_filepair *p, struct diff_options *o)
 /* return 1 if any change is found; otherwise, return 0 */
 static int diff_flush_patch_quietly(struct diff_filepair *p, struct diff_options *o)
 {
-	int saved_dry_run = o->dry_run;
+	FILE *saved_file = o->file;
 	int saved_found_changes = o->found_changes;
 	int ret;
 
-	o->dry_run = 1;
+	o->file = NULL;
 	o->found_changes = 0;
 	diff_flush_patch(p, o);
 	ret = o->found_changes;
-	o->dry_run = saved_dry_run;
+	o->file = saved_file;
 	o->found_changes |= saved_found_changes;
 	return ret;
 }
@@ -6832,37 +6834,17 @@ void diff_flush(struct diff_options *options)
 			     DIFF_FORMAT_NAME |
 			     DIFF_FORMAT_NAME_STATUS |
 			     DIFF_FORMAT_CHECKDIFF)) {
-		/*
-		 * make sure diff_Flush_patch_quietly() to be silent.
-		 */
-		FILE *dev_null = NULL;
-		int saved_color_moved = options->color_moved;
-
-		if (options->flags.diff_from_contents) {
-			dev_null = xfopen("/dev/null", "w");
-			options->color_moved = 0;
-		}
 		for (i = 0; i < q->nr; i++) {
 			struct diff_filepair *p = q->queue[i];
 
 			if (!check_pair_status(p))
 				continue;
 
-			if (options->flags.diff_from_contents) {
-				FILE *saved_file = options->file;
-				int found_changes;
+			if (options->flags.diff_from_contents &&
+			    !diff_flush_patch_quietly(p, options))
+				continue;
 
-				options->file = dev_null;
-				found_changes = diff_flush_patch_quietly(p, options);
-				options->file = saved_file;
-				if (!found_changes)
-					continue;
-			}
 			flush_one_pair(p, options);
-		}
-		if (options->flags.diff_from_contents) {
-			fclose(dev_null);
-			options->color_moved = saved_color_moved;
 		}
 		separator++;
 	}
@@ -6914,15 +6896,6 @@ void diff_flush(struct diff_options *options)
 	if (output_format & DIFF_FORMAT_NO_OUTPUT &&
 	    options->flags.exit_with_status &&
 	    options->flags.diff_from_contents) {
-		/*
-		 * run diff_flush_patch for the exit status. setting
-		 * options->file to /dev/null should be safe, because we
-		 * aren't supposed to produce any output anyway.
-		 */
-		diff_free_file(options);
-		options->file = xfopen("/dev/null", "w");
-		options->close_file = 1;
-		options->color_moved = 0;
 		for (i = 0; i < q->nr; i++) {
 			struct diff_filepair *p = q->queue[i];
 			if (check_pair_status(p))
