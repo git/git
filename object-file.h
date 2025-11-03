@@ -43,6 +43,14 @@ void odb_source_loose_free(struct odb_source_loose *loose);
 /* Reprepare the loose source by emptying the loose object cache. */
 void odb_source_loose_reprepare(struct odb_source *source);
 
+int odb_source_loose_read_object_info(struct odb_source *source,
+				      const struct object_id *oid,
+				      struct object_info *oi, int flags);
+
+void *odb_source_loose_map_object(struct odb_source *source,
+				  const struct object_id *oid,
+				  unsigned long *size);
+
 /*
  * Populate and return the loose object cache array corresponding to the
  * given object ID.
@@ -65,9 +73,6 @@ const char *odb_loose_path(struct odb_source *source,
  */
 int has_loose_object(struct odb_source *source,
 		     const struct object_id *oid);
-
-void *map_loose_object(struct repository *r, const struct object_id *oid,
-		       unsigned long *size);
 
 /*
  * Iterate over the files in the loose-object parts of the object
@@ -195,10 +200,6 @@ int check_object_signature(struct repository *r, const struct object_id *oid,
  * the streaming interface and rehash it to do the same.
  */
 int stream_object_signature(struct repository *r, const struct object_id *oid);
-
-int loose_object_info(struct repository *r,
-		      const struct object_id *oid,
-		      struct object_info *oi, int flags);
 
 enum finalize_object_file_flags {
 	FOF_SKIP_COLLISION_CHECK = 1,

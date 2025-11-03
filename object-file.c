@@ -167,25 +167,22 @@ int stream_object_signature(struct repository *r, const struct object_id *oid)
 }
 
 /*
- * Find "oid" as a loose object in the local repository or in an alternate.
+ * Find "oid" as a loose object in given source.
  * Returns 0 on success, negative on failure.
  *
  * The "path" out-parameter will give the path of the object we found (if any).
  * Note that it may point to static storage and is only valid until another
  * call to stat_loose_object().
  */
-static int stat_loose_object(struct repository *r, const struct object_id *oid,
+static int stat_loose_object(struct odb_source_loose *loose,
+			     const struct object_id *oid,
 			     struct stat *st, const char **path)
 {
-	struct odb_source *source;
 	static struct strbuf buf = STRBUF_INIT;
 
-	odb_prepare_alternates(r->objects);
-	for (source = r->objects->sources; source; source = source->next) {
-		*path = odb_loose_path(source, &buf, oid);
-		if (!lstat(*path, st))
-			return 0;
-	}
+	*path = odb_loose_path(loose->source, &buf, oid);
+	if (!lstat(*path, st))
+		return 0;
 
 	return -1;
 }
@@ -194,39 +191,24 @@ static int stat_loose_object(struct repository *r, const struct object_id *oid,
  * Like stat_loose_object(), but actually open the object and return the
  * descriptor. See the caveats on the "path" parameter above.
  */
-static int open_loose_object(struct repository *r,
+static int open_loose_object(struct odb_source_loose *loose,
 			     const struct object_id *oid, const char **path)
 {
-	int fd;
-	struct odb_source *source;
-	int most_interesting_errno = ENOENT;
 	static struct strbuf buf = STRBUF_INIT;
+	int fd;
 
-	odb_prepare_alternates(r->objects);
-	for (source = r->objects->sources; source; source = source->next) {
-		*path = odb_loose_path(source, &buf, oid);
-		fd = git_open(*path);
-		if (fd >= 0)
-			return fd;
+	*path = odb_loose_path(loose->source, &buf, oid);
+	fd = git_open(*path);
+	if (fd >= 0)
+		return fd;
 
-		if (most_interesting_errno == ENOENT)
-			most_interesting_errno = errno;
-	}
-	errno = most_interesting_errno;
 	return -1;
 }
 
-static int quick_has_loose(struct repository *r,
+static int quick_has_loose(struct odb_source_loose *loose,
 			   const struct object_id *oid)
 {
-	struct odb_source *source;
-
-	odb_prepare_alternates(r->objects);
-	for (source = r->objects->sources; source; source = source->next) {
-		if (oidtree_contains(odb_source_loose_cache(source, oid), oid))
-			return 1;
-	}
-	return 0;
+	return !!oidtree_contains(odb_source_loose_cache(loose->source, oid), oid);
 }
 
 /*
@@ -252,12 +234,12 @@ static void *map_fd(int fd, const char *path, unsigned long *size)
 	return map;
 }
 
-void *map_loose_object(struct repository *r,
-		       const struct object_id *oid,
-		       unsigned long *size)
+void *odb_source_loose_map_object(struct odb_source *source,
+				  const struct object_id *oid,
+				  unsigned long *size)
 {
 	const char *p;
-	int fd = open_loose_object(r, oid, &p);
+	int fd = open_loose_object(source->loose, oid, &p);
 
 	if (fd < 0)
 		return NULL;
@@ -407,9 +389,9 @@ int parse_loose_header(const char *hdr, struct object_info *oi)
 	return 0;
 }
 
-int loose_object_info(struct repository *r,
-		      const struct object_id *oid,
-		      struct object_info *oi, int flags)
+int odb_source_loose_read_object_info(struct odb_source *source,
+				      const struct object_id *oid,
+				      struct object_info *oi, int flags)
 {
 	int status = 0;
 	int fd;
@@ -422,7 +404,7 @@ int loose_object_info(struct repository *r,
 	enum object_type type_scratch;
 
 	if (oi->delta_base_oid)
-		oidclr(oi->delta_base_oid, r->hash_algo);
+		oidclr(oi->delta_base_oid, source->odb->repo->hash_algo);
 
 	/*
 	 * If we don't care about type or size, then we don't
@@ -435,15 +417,15 @@ int loose_object_info(struct repository *r,
 	if (!oi->typep && !oi->sizep && !oi->contentp) {
 		struct stat st;
 		if (!oi->disk_sizep && (flags & OBJECT_INFO_QUICK))
-			return quick_has_loose(r, oid) ? 0 : -1;
-		if (stat_loose_object(r, oid, &st, &path) < 0)
+			return quick_has_loose(source->loose, oid) ? 0 : -1;
+		if (stat_loose_object(source->loose, oid, &st, &path) < 0)
 			return -1;
 		if (oi->disk_sizep)
 			*oi->disk_sizep = st.st_size;
 		return 0;
 	}
 
-	fd = open_loose_object(r, oid, &path);
+	fd = open_loose_object(source->loose, oid, &path);
 	if (fd < 0) {
 		if (errno != ENOENT)
 			error_errno(_("unable to open loose object %s"), oid_to_hex(oid));

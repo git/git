@@ -697,13 +697,18 @@ static int do_oid_object_info_extended(struct object_database *odb,
 		return 0;
 	}
 
+	odb_prepare_alternates(odb);
+
 	while (1) {
+		struct odb_source *source;
+
 		if (find_pack_entry(odb->repo, real, &e))
 			break;
 
 		/* Most likely it's a loose object. */
-		if (!loose_object_info(odb->repo, real, oi, flags))
-			return 0;
+		for (source = odb->sources; source; source = source->next)
+			if (!odb_source_loose_read_object_info(source, real, oi, flags))
+				return 0;
 
 		/* Not a loose object; someone else may have just packed it. */
 		if (!(flags & OBJECT_INFO_QUICK)) {
