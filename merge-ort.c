@@ -3438,7 +3438,7 @@ static int collect_renames(struct merge_options *opt,
 			continue;
 		}
 		if (opt->detect_directory_renames == MERGE_DIRECTORY_RENAMES_NONE &&
-		    p->status == 'R' && 1) {
+		    p->status == 'R') {
 			possibly_cache_new_pair(renames, p, side_index, NULL);
 			goto skip_directory_renames;
 		}
