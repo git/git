@@ -974,9 +974,9 @@ int odb_source_loose_freshen_object(struct odb_source *source,
 	return !!check_and_freshen_source(source, oid, 1);
 }
 
-int stream_loose_object(struct odb_source *source,
-			struct input_stream *in_stream, size_t len,
-			struct object_id *oid)
+int odb_source_loose_write_stream(struct odb_source *source,
+				  struct odb_write_stream *in_stream, size_t len,
+				  struct object_id *oid)
 {
 	const struct git_hash_algo *compat = source->odb->repo->compat_hash_algo;
 	struct object_id compat_oid;
