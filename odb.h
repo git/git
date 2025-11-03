@@ -15,6 +15,14 @@ struct repository;
 struct multi_pack_index;
 
 /*
+ * Set this to 0 to prevent odb_read_object_info_extended() from fetching missing
+ * blobs. This has a difference only if extensions.partialClone is set.
+ *
+ * Its default value is 1.
+ */
+extern int fetch_if_missing;
+
+/*
  * Compute the exact path an alternate is at and returns it. In case of
  * error NULL is returned and the human readable error is added to `err`
  * `path` may be relative and should point to $GIT_DIR.
