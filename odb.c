@@ -370,7 +370,6 @@ static void odb_source_free(struct odb_source *source)
 {
 	free(source->path);
 	odb_source_loose_free(source->loose);
-	odb_clear_loose_cache(source);
 	loose_object_map_clear(&source->loose_map);
 	free(source);
 }

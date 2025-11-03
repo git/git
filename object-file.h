@@ -20,6 +20,18 @@ struct odb_source;
 
 struct odb_source_loose {
 	struct odb_source *source;
+
+	/*
+	 * Used to store the results of readdir(3) calls when we are OK
+	 * sacrificing accuracy due to races for speed. That includes
+	 * object existence with OBJECT_INFO_QUICK, as well as
+	 * our search for unique abbreviated hashes. Don't use it for tasks
+	 * requiring greater accuracy!
+	 *
+	 * Be sure to call odb_load_loose_cache() before using.
+	 */
+	uint32_t subdir_seen[8]; /* 256 bits */
+	struct oidtree *cache;
 };
 
 struct odb_source_loose *odb_source_loose_new(struct odb_source *source);
@@ -29,8 +41,8 @@ void odb_source_loose_free(struct odb_source_loose *loose);
  * Populate and return the loose object cache array corresponding to the
  * given object ID.
  */
-struct oidtree *odb_loose_cache(struct odb_source *source,
-				const struct object_id *oid);
+struct oidtree *odb_source_loose_cache(struct odb_source *source,
+				       const struct object_id *oid);
 
 /* Empty the loose object cache for the specified object directory. */
 void odb_clear_loose_cache(struct odb_source *source);
