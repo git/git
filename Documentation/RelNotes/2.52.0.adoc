@@ -74,6 +74,8 @@ UI, Workflows & Features
    avoids doing maintenance tasks that rebuilds everything from
    scratch.
 
+ * "git repo structure", a new command.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -164,6 +166,18 @@ Performance, Internal Implementation, Development Support etc.
 
  * The code to walk revision graph to compute merge base has been
    optimized.
+
+ * AI guidelines has been added to our documentation set.
+
+ * Contributed credential helpers (obviously in contrib/) now have "cd
+   $there && make install" target.
+
+ * The "MyFirstContribution" tutorial tells the reader how to send out
+   their patches; the section gained a hint to verify the message
+   reached the mailing list.
+
+ * The "debug" ref-backend was missing a method implementation, which
+   has been corrected.
 
 
 Fixes since v2.51
@@ -397,6 +411,15 @@ including security updates, are included in this release.
    "foo**/bar" match with "foobar", which has been corrected.
    (merge 1940a02dc1 jk/match-pathname-fix later to maint).
 
+ * Tests did not set up GNUPGHOME correctly, which is fixed but some
+   flaky tests are exposed in t1016, which needs to be addressed
+   before this topic can move forward.
+   (merge 6cd8369ef3 tz/test-prepare-gnupghome later to maint).
+
+ * The patterns used in the .gitignore files use backslash in the way
+   documented for fnmatch(3); document as such to reduce confusion.
+   (merge 8a6d158a1d jk/doc-backslash-in-exclude later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 529a60a885 ua/t1517-short-help-tests later to maint).
    (merge 22d421fed9 ac/deglobal-fmt-merge-log-config later to maint).
@@ -409,3 +432,5 @@ including security updates, are included in this release.
    (merge 15b8abde07 js/mingw-includes-cleanup later to maint).
    (merge 2cebca0582 tb/cat-file-objectmode-update later to maint).
    (merge 8f487db07a kh/doc-patch-id-1 later to maint).
+   (merge f711f37b05 eb/t1016-hash-transition-fix later to maint).
+   (merge 85333aa1af jk/test-delete-gpgsig-leakfix later to maint).
