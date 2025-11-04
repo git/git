@@ -1851,18 +1851,16 @@ struct refs_cb_data {
 	struct progress *progress;
 };
 
-static int add_ref_to_set(const char *refname UNUSED,
-			  const char *referent UNUSED,
-			  const struct object_id *oid,
-			  int flags UNUSED, void *cb_data)
+static int add_ref_to_set(const struct reference *ref, void *cb_data)
 {
+	const struct object_id *maybe_peeled = ref->oid;
 	struct object_id peeled;
 	struct refs_cb_data *data = (struct refs_cb_data *)cb_data;
 
-	if (!peel_iterated_oid(data->repo, oid, &peeled))
-		oid = &peeled;
-	if (odb_read_object_info(data->repo->objects, oid, NULL) == OBJ_COMMIT)
-		oidset_insert(data->commits, oid);
+	if (!reference_get_peeled_oid(data->repo, ref, &peeled))
+		maybe_peeled = &peeled;
+	if (odb_read_object_info(data->repo->objects, maybe_peeled, NULL) == OBJ_COMMIT)
+		oidset_insert(data->commits, maybe_peeled);
 
 	display_progress(data->progress, oidset_size(data->commits));
 

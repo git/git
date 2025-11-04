@@ -8,31 +8,27 @@
 #include "repository.h"
 #include "commit.h"
 
-static int register_replace_ref(const char *refname,
-				const char *referent UNUSED,
-				const struct object_id *oid,
-				int flag UNUSED,
-				void *cb_data)
+static int register_replace_ref(const struct reference *ref, void *cb_data)
 {
 	struct repository *r = cb_data;
 
 	/* Get sha1 from refname */
-	const char *slash = strrchr(refname, '/');
-	const char *hash = slash ? slash + 1 : refname;
+	const char *slash = strrchr(ref->name, '/');
+	const char *hash = slash ? slash + 1 : ref->name;
 	struct replace_object *repl_obj = xmalloc(sizeof(*repl_obj));
 
 	if (get_oid_hex_algop(hash, &repl_obj->original.oid, r->hash_algo)) {
 		free(repl_obj);
-		warning(_("bad replace ref name: %s"), refname);
+		warning(_("bad replace ref name: %s"), ref->name);
 		return 0;
 	}
 
 	/* Copy sha1 from the read ref */
-	oidcpy(&repl_obj->replacement, oid);
+	oidcpy(&repl_obj->replacement, ref->oid);
 
 	/* Register new object */
 	if (oidmap_put(&r->objects->replace_map, repl_obj))
-		die(_("duplicate replace ref: %s"), refname);
+		die(_("duplicate replace ref: %s"), ref->name);
 
 	return 0;
 }

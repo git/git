@@ -425,10 +425,11 @@ static int cache_ref_iterator_advance(struct ref_iterator *ref_iterator)
 			level->prefix_state = entry_prefix_state;
 			level->index = -1;
 		} else {
-			iter->base.refname = entry->name;
-			iter->base.referent = entry->u.value.referent;
-			iter->base.oid = &entry->u.value.oid;
-			iter->base.flags = entry->flag;
+			memset(&iter->base.ref, 0, sizeof(iter->base.ref));
+			iter->base.ref.name = entry->name;
+			iter->base.ref.target = entry->u.value.referent;
+			iter->base.ref.oid = &entry->u.value.oid;
+			iter->base.ref.flags = entry->flag;
 			return ITER_OK;
 		}
 	}
@@ -545,14 +546,6 @@ static int cache_ref_iterator_seek(struct ref_iterator *ref_iterator,
 	return 0;
 }
 
-static int cache_ref_iterator_peel(struct ref_iterator *ref_iterator,
-				   struct object_id *peeled)
-{
-	struct cache_ref_iterator *iter =
-		(struct cache_ref_iterator *)ref_iterator;
-	return peel_object(iter->repo, ref_iterator->oid, peeled) ? -1 : 0;
-}
-
 static void cache_ref_iterator_release(struct ref_iterator *ref_iterator)
 {
 	struct cache_ref_iterator *iter =
@@ -564,7 +557,6 @@ static void cache_ref_iterator_release(struct ref_iterator *ref_iterator)
 static struct ref_iterator_vtable cache_ref_iterator_vtable = {
 	.advance = cache_ref_iterator_advance,
 	.seek = cache_ref_iterator_seek,
-	.peel = cache_ref_iterator_peel,
 	.release = cache_ref_iterator_release,
 };
 
