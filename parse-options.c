@@ -223,8 +223,6 @@ static enum parse_opt_result do_get_value(struct parse_opt_ctx_t *p,
 			return 0;
 
 		is_optional = skip_prefix(value, ":(optional)", &value);
-		if (!value)
-			is_optional = false;
 		value = fix_filename(p->prefix, value);
 		if (is_optional && is_missing_file(value)) {
 			free((char *)value);
