@@ -71,6 +71,7 @@ test_lazy_prereq GPG2 '
 		exit 1
 		;;
 	*)
+		prepare_gnupghome &&
 		(gpgconf --kill all || : ) &&
 
 		# NEEDSWORK: prepare_gnupghome() should definitely be
