@@ -47,6 +47,14 @@ static int debug_create_on_disk(struct ref_store *refs, int flags, struct strbuf
 	return res;
 }
 
+static int debug_remove_on_disk(struct ref_store *refs, struct strbuf *err)
+{
+	struct debug_ref_store *drefs = (struct debug_ref_store *)refs;
+	int res = drefs->refs->be->remove_on_disk(drefs->refs, err);
+	trace_printf_key(&trace_refs, "remove_on_disk: %d\n", res);
+	return res;
+}
+
 static int debug_transaction_prepare(struct ref_store *refs,
 				     struct ref_transaction *transaction,
 				     struct strbuf *err)
@@ -432,6 +440,7 @@ struct ref_storage_be refs_be_debug = {
 	.init = NULL,
 	.release = debug_release,
 	.create_on_disk = debug_create_on_disk,
+	.remove_on_disk = debug_remove_on_disk,
 
 	/*
 	 * None of these should be NULL. If the "files" backend (in
