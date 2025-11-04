@@ -2293,24 +2293,26 @@ test_expect_success '--contains combined with --no-contains' '
 # don't recurse down to tags for trees or blobs pointed to by *those*
 # commits.
 test_expect_success 'Does --[no-]contains stop at commits? Yes!' '
-	cd no-contains &&
-	blob=$(git rev-parse v0.3:v0.3.t) &&
-	tree=$(git rev-parse v0.3^{tree}) &&
-	git tag tag-blob $blob &&
-	git tag tag-tree $tree &&
-	git tag --contains v0.3 >actual &&
-	cat >expected <<-\EOF &&
-	v0.3
-	v0.4
-	v0.5
-	EOF
-	test_cmp expected actual &&
-	git tag --no-contains v0.3 >actual &&
-	cat >expected <<-\EOF &&
-	v0.1
-	v0.2
-	EOF
-	test_cmp expected actual
+	(
+		cd no-contains &&
+		blob=$(git rev-parse v0.3:v0.3.t) &&
+		tree=$(git rev-parse v0.3^{tree}) &&
+		git tag tag-blob $blob &&
+		git tag tag-tree $tree &&
+		git tag --contains v0.3 >actual &&
+		cat >expected <<-\EOF &&
+		v0.3
+		v0.4
+		v0.5
+		EOF
+		test_cmp expected actual &&
+		git tag --no-contains v0.3 >actual &&
+		cat >expected <<-\EOF &&
+		v0.1
+		v0.2
+		EOF
+		test_cmp expected actual
+	)
 '
 
 test_expect_success 'If tag is created then tag message file is unlinked' '
