@@ -2332,4 +2332,24 @@ test_expect_success 'If tag cannot be created then tag message file is not unlin
 	test_path_exists .git/TAG_EDITMSG
 '
 
+test_expect_success 'annotated tag version sort' '
+	git tag -a -m "sample 1.0" vsample-1.0 &&
+	git tag -a -m "sample 2.0" vsample-2.0 &&
+	git tag -a -m "sample 10.0" vsample-10.0 &&
+	cat >expect <<-EOF &&
+	vsample-1.0
+	vsample-2.0
+	vsample-10.0
+	EOF
+
+	git tag --list --sort=version:tag vsample-\* >actual &&
+	test_cmp expect actual &&
+
+	# Ensure that we also handle this case alright in the case we have the
+	# peeled values cached e.g. via the packed-refs file.
+	git pack-refs --all &&
+	git tag --list --sort=version:tag vsample-\* &&
+	test_cmp expect actual
+'
+
 test_done

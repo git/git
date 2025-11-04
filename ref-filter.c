@@ -2367,6 +2367,8 @@ static int get_object(struct ref_array_item *ref, int deref,
 	int eaten = 0;
 	int ret;
 
+	oi->maybe_object = NULL;
+
 	if (oi->info.contentp) {
 		/* We need to know that to use parse_object_buffer properly */
 		oi->info.sizep = &oi->size;
