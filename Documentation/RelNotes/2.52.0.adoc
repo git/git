@@ -100,7 +100,7 @@ Performance, Internal Implementation, Development Support etc.
 
  * CodingGuidelines now spells out how bitfields are to be written.
 
- * Adjust to the way newer versions of cURL selectivel enables tracing
+ * Adjust to the way newer versions of cURL selectively enable tracing
    options, so that our tests can continue to work.
    (merge 1b5a6bfff3 jk/curl-global-trace-components later to maint).
 
@@ -126,6 +126,10 @@ Performance, Internal Implementation, Development Support etc.
 
  * Documentation for "git log --pretty" options has been updated
    to make it easier to translate.
+
+ * Instead of three library archives (one for git, one for reftable,
+   and one for xdiff), roll everything into a single libgit.a archive.
+   This would help later effort to FFI into Rust.
 
 
 Fixes since v2.51
@@ -212,13 +216,13 @@ including security updates, are included in this release.
    name.
    (merge bcb20dda83 js/doc-gitk-history later to maint).
 
- * Update the instruction to use of GGG in the MyFirstContribution
+ * Update the instructions for using GGG in the MyFirstContribution
    document to say that a GitHub PR could be made against `git/git`
    instead of `gitgitgadget/git`.
    (merge 37001cdbc4 ds/doc-ggg-pr-fork-clarify later to maint).
 
  * Makefile tried to run multiple "cargo build" which would not work
-   very well; serialize their execution to work it around.
+   very well; serialize their execution to work around this problem.
    (merge 0eeacde50e da/cargo-serialize later to maint).
 
  * "git repack --path-walk" lost objects in some corner cases, which
@@ -294,12 +298,12 @@ including security updates, are included in this release.
    updated.
    (merge 54a60e5b38 kh/you-still-use-whatchanged-fix later to maint).
 
- * Clang-format update to let our control macros formatted the way we
+ * Clang-format update to let our control macros be formatted the way we
    had them traditionally, e.g., "for_each_string_list_item()" without
    space before the parentheses.
    (merge 3721541d35 jt/clang-format-foreach-wo-space-before-parenthesis later to maint).
 
- * A few places where an size_t value was cast to curl_off_t without
+ * A few places where a size_t value was cast to curl_off_t without
    checking has been updated to use the existing helper function.
    (merge ecc5749578 js/curl-off-t-fixes later to maint).
 
@@ -328,6 +332,19 @@ including security updates, are included in this release.
    comparing with different set of notes from its main patch output
    you would get from "git format-patch --notes=..." for a singleton
    patch.
+
+ * The code in "git add -p" and friends to iterate over hunks was
+   riddled with bugs, which has been corrected.
+
+ * A few more things that patch authors can do to help maintainer to
+   keep track of their topics better.
+   (merge 1a41698841 tb/doc-submitting-patches later to maint).
+
+ * An earlier addition to "git diff --no-index A B" to limit the
+   output with pathspec after the two directories misbehaved when
+   these directories were given with a trailing slash, which has been
+   corrected.
+   (merge c0bec06cfe jk/diff-no-index-with-pathspec-fix later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 823d537fa7 kh/doc-git-log-markup-fix later to maint).
@@ -359,3 +376,7 @@ including security updates, are included in this release.
    (merge 1c573a3451 en/doc-merge-tree-describe-merge-base later to maint).
    (merge 84a6bf7965 ja/doc-markup-attached-paragraph-fix later to maint).
    (merge 399694384b kh/doc-patch-id-markup-fix later to maint).
+   (merge 15b8abde07 js/mingw-includes-cleanup later to maint).
+   (merge 3860985105 js/unreachable-workaround-for-no-symlink-head later to maint).
+   (merge b3ac6e737d kh/doc-continued-paragraph-fix later to maint).
+   (merge 2cebca0582 tb/cat-file-objectmode-update later to maint).

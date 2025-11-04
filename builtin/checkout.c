@@ -1063,11 +1063,9 @@ static void update_refs_for_switch(const struct checkout_opts *opts,
 		report_tracking(new_branch_info);
 }
 
-static int add_pending_uninteresting_ref(const char *refname, const char *referent UNUSED,
-					 const struct object_id *oid,
-					 int flags UNUSED, void *cb_data)
+static int add_pending_uninteresting_ref(const struct reference *ref, void *cb_data)
 {
-	add_pending_oid(cb_data, refname, oid, UNINTERESTING);
+	add_pending_oid(cb_data, ref->name, ref->oid, UNINTERESTING);
 	return 0;
 }
 

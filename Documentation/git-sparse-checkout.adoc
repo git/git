@@ -264,34 +264,50 @@ patterns in non-cone mode has a number of shortcomings:
     inconsistent.
 
   * It has edge cases where the "right" behavior is unclear.  Two examples:
-
-    First, two users are in a subdirectory, and the first runs
-       git sparse-checkout set '/toplevel-dir/*.c'
-    while the second runs
-       git sparse-checkout set relative-dir
-    Should those arguments be transliterated into
-       current/subdirectory/toplevel-dir/*.c
-    and
-       current/subdirectory/relative-dir
-    before inserting into the sparse-checkout file?  The user who typed
-    the first command is probably aware that arguments to set/add are
-    supposed to be patterns in non-cone mode, and probably would not be
-    happy with such a transliteration.  However, many gitignore-style
-    patterns are just paths, which might be what the user who typed the
-    second command was thinking, and they'd be upset if their argument
-    wasn't transliterated.
-
-    Second, what should bash-completion complete on for set/add commands
-    for non-cone users?  If it suggests paths, is it exacerbating the
-    problem above?  Also, if it suggests paths, what if the user has a
-    file or directory that begins with either a '!' or '#' or has a '*',
-    '\', '?', '[', or ']' in its name?  And if it suggests paths, will
-    it complete "/pro" to "/proc" (in the root filesystem) rather than to
-    "/progress.txt" in the current directory?  (Note that users are
-    likely to want to start paths with a leading '/' in non-cone mode,
-    for the same reason that .gitignore files often have one.)
-    Completing on files or directories might give nasty surprises in
-    all these cases.
++
+First, two users are in a subdirectory, and the first runs
++
+----
+git sparse-checkout set '/toplevel-dir/*.c'
+----
++
+while the second runs
++
+----
+git sparse-checkout set relative-dir
+----
++
+Should those arguments be transliterated into
++
+----
+current/subdirectory/toplevel-dir/*.c
+----
++
+and
++
+----
+current/subdirectory/relative-dir
+----
++
+before inserting into the sparse-checkout file?  The user who typed
+the first command is probably aware that arguments to set/add are
+supposed to be patterns in non-cone mode, and probably would not be
+happy with such a transliteration.  However, many gitignore-style
+patterns are just paths, which might be what the user who typed the
+second command was thinking, and they'd be upset if their argument
+wasn't transliterated.
++
+Second, what should bash-completion complete on for set/add commands
+for non-cone users?  If it suggests paths, is it exacerbating the
+problem above?  Also, if it suggests paths, what if the user has a
+file or directory that begins with either a '!' or '#' or has a '*',
+'\', '?', '[', or ']' in its name?  And if it suggests paths, will
+it complete "/pro" to "/proc" (in the root filesystem) rather than to
+"/progress.txt" in the current directory?  (Note that users are
+likely to want to start paths with a leading '/' in non-cone mode,
+for the same reason that .gitignore files often have one.)
+Completing on files or directories might give nasty surprises in
+all these cases.
 
   * The excessive flexibility made other extensions essentially
     impractical.  `--sparse-index` is likely impossible in non-cone
