@@ -9,6 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'git svn' <command> [<options>] [<arguments>]
+(UNSUPPORTED!)
 
 DESCRIPTION
 -----------
