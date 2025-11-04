@@ -313,16 +313,16 @@ jobs:
         vector:
           - jobname: osx-clang
             cc: clang
-            pool: macos-13
+            pool: macos-14
           - jobname: osx-reftable
             cc: clang
-            pool: macos-13
+            pool: macos-14
           - jobname: osx-gcc
             cc: gcc-13
-            pool: macos-13
+            pool: macos-14
           - jobname: osx-meson
             cc: clang
-            pool: macos-13
+            pool: macos-14
     env:
       CC: ${{matrix.vector.cc}}
       CC_PACKAGE: ${{matrix.vector.cc_package}}
