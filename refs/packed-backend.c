@@ -1773,8 +1773,8 @@ cleanup:
 	return ret;
 }
 
-static int packed_pack_refs(struct ref_store *ref_store UNUSED,
-			    struct pack_refs_opts *pack_opts UNUSED)
+static int packed_optimize(struct ref_store *ref_store UNUSED,
+			   struct refs_optimize_opts *opts UNUSED)
 {
 	/*
 	 * Packed refs are already packed. It might be that loose refs
@@ -2129,7 +2129,7 @@ struct ref_storage_be refs_be_packed = {
 	.transaction_finish = packed_transaction_finish,
 	.transaction_abort = packed_transaction_abort,
 
-	.pack_refs = packed_pack_refs,
+	.optimize = packed_optimize,
 	.rename_ref = NULL,
 	.copy_ref = NULL,
 

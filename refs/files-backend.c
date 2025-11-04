@@ -1355,7 +1355,7 @@ static void prune_refs(struct files_ref_store *refs, struct ref_to_prune **refs_
  */
 static int should_pack_ref(struct files_ref_store *refs,
 			   const struct reference *ref,
-			   struct pack_refs_opts *opts)
+			   struct refs_optimize_opts *opts)
 {
 	struct string_list_item *item;
 
@@ -1383,7 +1383,7 @@ static int should_pack_ref(struct files_ref_store *refs,
 }
 
 static int should_pack_refs(struct files_ref_store *refs,
-			    struct pack_refs_opts *opts)
+			    struct refs_optimize_opts *opts)
 {
 	struct ref_iterator *iter;
 	size_t packed_size;
@@ -1391,7 +1391,7 @@ static int should_pack_refs(struct files_ref_store *refs,
 	size_t limit;
 	int ret;
 
-	if (!(opts->flags & PACK_REFS_AUTO))
+	if (!(opts->flags & REFS_OPTIMIZE_AUTO))
 		return 1;
 
 	ret = packed_refs_size(refs->packed_ref_store, &packed_size);
@@ -1444,8 +1444,8 @@ static int should_pack_refs(struct files_ref_store *refs,
 	return 0;
 }
 
-static int files_pack_refs(struct ref_store *ref_store,
-			   struct pack_refs_opts *opts)
+static int files_optimize(struct ref_store *ref_store,
+			  struct refs_optimize_opts *opts)
 {
 	struct files_ref_store *refs =
 		files_downcast(ref_store, REF_STORE_WRITE | REF_STORE_ODB,
@@ -1488,7 +1488,7 @@ static int files_pack_refs(struct ref_store *ref_store,
 			    iter->ref.name, err.buf);
 
 		/* Schedule the loose reference for pruning if requested. */
-		if ((opts->flags & PACK_REFS_PRUNE)) {
+		if ((opts->flags & REFS_OPTIMIZE_PRUNE)) {
 			struct ref_to_prune *n;
 			FLEX_ALLOC_STR(n, name, iter->ref.name);
 			oidcpy(&n->oid, iter->ref.oid);
@@ -1510,15 +1510,6 @@ static int files_pack_refs(struct ref_store *ref_store,
 	ref_iterator_free(iter);
 	strbuf_release(&err);
 	return 0;
-}
-
-static int files_optimize(struct ref_store *ref_store, struct pack_refs_opts *opts)
-{
-	/*
-	 * For the "files" backend, "optimizing" is the same as "packing".
-	 * So, we just call the existing worker function for packing.
-	 */
-	return files_pack_refs(ref_store, opts);
 }
 
 /*
@@ -3990,7 +3981,6 @@ struct ref_storage_be refs_be_files = {
 	.transaction_finish = files_transaction_finish,
 	.transaction_abort = files_transaction_abort,
 
-	.pack_refs = files_pack_refs,
 	.optimize = files_optimize,
 	.rename_ref = files_rename_ref,
 	.copy_ref = files_copy_ref,

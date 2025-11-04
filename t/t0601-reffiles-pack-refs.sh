@@ -18,3 +18,5 @@ export GIT_TEST_DEFAULT_REF_FORMAT
 . ./test-lib.sh
 
 . "$TEST_DIRECTORY"/pack-refs-tests.sh
+
+test_done
