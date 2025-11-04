@@ -9,6 +9,7 @@ gitexecdir ?= $(prefix)/libexec/git-core
 
 CC ?= gcc
 CFLAGS ?= -g -O2 -Wall
+INSTALL ?= install
 RM ?= rm -f
 
 %.o: %.c
@@ -18,7 +19,11 @@ git-credential-osxkeychain: git-credential-osxkeychain.o
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) \
 		-framework Security -framework CoreFoundation
 
+install: git-credential-osxkeychain
+	$(INSTALL) -d -m 755 $(DESTDIR)$(gitexecdir)
+	$(INSTALL) -m 755 $< $(DESTDIR)$(gitexecdir)
+
 clean:
 	$(RM) git-credential-osxkeychain git-credential-osxkeychain.o
 
-.PHONY: all clean
+.PHONY: all install clean
