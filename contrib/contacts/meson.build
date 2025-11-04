@@ -50,6 +50,6 @@ if get_option('docs').contains('html')
     input: 'git-contacts.adoc',
     output: 'git-contacts.html',
     install: true,
-    install_dir: get_option('datadir') / 'doc/git-doc',
+    install_dir: htmldir,
   )
 endif
