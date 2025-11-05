@@ -76,6 +76,9 @@ UI, Workflows & Features
 
  * "git repo structure", a new command.
 
+ * The help text and manual page of "git bisect" command have been
+   made consistent with each other.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -419,6 +422,10 @@ including security updates, are included in this release.
  * The patterns used in the .gitignore files use backslash in the way
    documented for fnmatch(3); document as such to reduce confusion.
    (merge 8a6d158a1d jk/doc-backslash-in-exclude later to maint).
+
+ * The version of macos image used in GitHub CI has been updated to
+   macos-14, as the macos-13 that we have been using got deprecated.
+   (merge 73b9cdb7c4 jc/ci-use-macos-14 later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 529a60a885 ua/t1517-short-help-tests later to maint).
