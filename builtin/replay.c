@@ -8,6 +8,7 @@
 #include "git-compat-util.h"
 
 #include "builtin.h"
+#include "config.h"
 #include "environment.h"
 #include "hex.h"
 #include "lockfile.h"
@@ -298,6 +299,22 @@ static enum ref_action_mode parse_ref_action_mode(const char *ref_action, const 
 	die(_("invalid %s value: '%s'"), source, ref_action);
 }
 
+static enum ref_action_mode get_ref_action_mode(struct repository *repo, const char *ref_action)
+{
+	const char *config_value = NULL;
+
+	/* Command line option takes precedence */
+	if (ref_action)
+		return parse_ref_action_mode(ref_action, "--ref-action");
+
+	/* Check config value */
+	if (!repo_config_get_string_tmp(repo, "replay.refAction", &config_value))
+		return parse_ref_action_mode(config_value, "replay.refAction");
+
+	/* Default to update mode */
+	return REF_ACTION_UPDATE;
+}
+
 static int handle_ref_update(enum ref_action_mode mode,
 			     struct ref_transaction *transaction,
 			     const char *refname,
@@ -332,7 +349,7 @@ int cmd_replay(int argc,
 	const char *onto_name = NULL;
 	int contained = 0;
 	const char *ref_action = NULL;
-	enum ref_action_mode ref_mode = REF_ACTION_UPDATE;
+	enum ref_action_mode ref_mode;
 
 	struct rev_info revs;
 	struct commit *last_commit = NULL;
@@ -378,9 +395,8 @@ int cmd_replay(int argc,
 	die_for_incompatible_opt2(!!advance_name_opt, "--advance",
 				  contained, "--contained");
 
-	/* Parse ref action mode */
-	if (ref_action)
-		ref_mode = parse_ref_action_mode(ref_action, "--ref-action");
+	/* Parse ref action mode from command line or config */
+	ref_mode = get_ref_action_mode(repo, ref_action);
 
 	advance_name = xstrdup_or_null(advance_name_opt);
 

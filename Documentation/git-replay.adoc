@@ -51,6 +51,8 @@ which uses the target only as a starting point without updating it.
 	* `print`: Output update-ref commands for pipeline use. This is the
 	  traditional behavior where output can be piped to `git update-ref --stdin`.
 --
++
+The default mode can be configured via the `replay.refAction` configuration variable.
 
 <revision-range>::
 	Range of commits to replay. More than one <revision-range> can
