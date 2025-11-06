@@ -2654,7 +2654,7 @@ static int populate_value(struct ref_array_item *ref, struct strbuf *err)
 		if (!is_null_oid(&ref->peeled_oid)) {
 			oidcpy(&oi_deref.oid, &ref->peeled_oid);
 		} else if (!peel_object(the_repository, &oi.oid, &oi_deref.oid,
-					PEEL_OBJECT_VERIFY_OBJECT_TYPE)) {
+					PEEL_OBJECT_VERIFY_TAGGED_OBJECT_TYPE)) {
 			/* We managed to peel the object ourselves. */
 		} else {
 			die("bad tag");

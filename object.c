@@ -214,7 +214,7 @@ enum peel_status peel_object(struct repository *r,
 {
 	struct object *o = lookup_unknown_object(r, name);
 
-	if (o->type == OBJ_NONE || flags & PEEL_OBJECT_VERIFY_OBJECT_TYPE) {
+	if (o->type == OBJ_NONE) {
 		int type = odb_read_object_info(r->objects, name, NULL);
 		if (type < 0 || !object_as_type(o, type, 0))
 			return PEEL_INVALID;
@@ -228,7 +228,7 @@ enum peel_status peel_object(struct repository *r,
 		if (o && o->type == OBJ_TAG && ((struct tag *)o)->tagged) {
 			o = ((struct tag *)o)->tagged;
 
-			if (flags & PEEL_OBJECT_VERIFY_OBJECT_TYPE) {
+			if (flags & PEEL_OBJECT_VERIFY_TAGGED_OBJECT_TYPE) {
 				int type = odb_read_object_info(r->objects, &o->oid, NULL);
 				if (type < 0 || !object_as_type(o, type, 0))
 					return PEEL_INVALID;
