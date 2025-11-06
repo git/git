@@ -3124,7 +3124,7 @@ static int parse_and_write_reflog(struct files_ref_store *refs,
 		if (!(update->flags & REF_HAVE_OLD) ||
 		    !(update->flags & REF_HAVE_NEW) ||
 		    !(update->flags & REF_LOG_ONLY)) {
-			strbuf_addf(err, _("trying to write reflog for '%s'"
+			strbuf_addf(err, _("trying to write reflog for '%s' "
 					   "with incomplete values"), update->refname);
 			return REF_TRANSACTION_ERROR_GENERIC;
 		}

@@ -1103,7 +1103,7 @@ static enum ref_transaction_error prepare_single_update(struct reftable_ref_stor
 		if (!(u->flags & REF_HAVE_OLD) ||
 		    !(u->flags & REF_HAVE_NEW) ||
 		    !(u->flags & REF_LOG_ONLY)) {
-			strbuf_addf(err, _("trying to write reflog for '%s'"
+			strbuf_addf(err, _("trying to write reflog for '%s' "
 					   "with incomplete values"), u->refname);
 			return REF_TRANSACTION_ERROR_GENERIC;
 		}
