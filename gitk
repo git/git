@@ -8296,7 +8296,7 @@ proc parseblobdiffline {ids line} {
         if {![regexp {^diff (--cc|--git) } $line m type]} {
             set line [convertfrom utf-8 $line]
             $ctext insert end "$line\n" hunksep
-            continue
+            return
         }
         # start of a new file
         set diffinhdr 1
