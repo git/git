@@ -208,12 +208,12 @@ static enum parse_opt_result do_get_value(struct parse_opt_ctx_t *p,
 	case OPTION_FILENAME:
 	{
 		const char *value;
-		int is_optional;
+		bool is_optional;
 
 		if (unset)
 			value = NULL;
 		else if (opt->flags & PARSE_OPT_OPTARG && !p->opt)
-			value = (char *)opt->defval;
+			value = (const char *)opt->defval;
 		else {
 			int err = get_arg(p, opt, flags, &value);
 			if (err)
@@ -223,10 +223,8 @@ static enum parse_opt_result do_get_value(struct parse_opt_ctx_t *p,
 			return 0;
 
 		is_optional = skip_prefix(value, ":(optional)", &value);
-		if (!value)
-			is_optional = 0;
 		value = fix_filename(p->prefix, value);
-		if (is_optional && is_empty_or_missing_file(value)) {
+		if (is_optional && is_missing_file(value)) {
 			free((char *)value);
 		} else {
 			FREE_AND_NULL(*(char **)opt->value);

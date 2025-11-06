@@ -1278,7 +1278,7 @@ int git_config_string(char **dest, const char *var, const char *value)
 
 int git_config_pathname(char **dest, const char *var, const char *value)
 {
-	int is_optional;
+	bool is_optional;
 	char *path;
 
 	if (!value)
