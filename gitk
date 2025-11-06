@@ -8401,6 +8401,7 @@ proc parseblobdiffline {ids line} {
             if {$i >= 0} {
                 setinlist difffilestart $i $curdiffstart
             }
+            set line "rename from $fname"
         } elseif {![string compare -length 10 $line "rename to "] ||
                   ![string compare -length 8 $line "copy to "]} {
             set fname [string range $line [expr 4 + [string first " to " $line] ] end]
@@ -8408,6 +8409,13 @@ proc parseblobdiffline {ids line} {
                 set fname [lindex $fname 0]
             }
             makediffhdr $fname $ids
+            set line "[lindex $line 0] to $fname"
+        } elseif {![string compare -length 10 $line "copy from "]} {
+            set fname [string range $line 10 end]
+            if {[string index $fname 0] eq "\""} {
+                set fname [lindex $fname 0]
+            }
+            set line "copy from $fname"
         } elseif {[string compare -length 3 $line "---"] == 0} {
             # do nothing
             return
