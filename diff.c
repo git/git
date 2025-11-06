@@ -3526,8 +3526,6 @@ static int set_diff_algorithm(struct diff_options *opts,
 	if (value < 0)
 		return -1;
 
-	/* clear out previous settings */
-	DIFF_XDL_CLR(opts, NEED_MINIMAL);
 	opts->xdl_opts &= ~XDF_DIFF_ALGORITHM_MASK;
 	opts->xdl_opts |= value;
 
