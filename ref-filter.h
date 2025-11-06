@@ -41,6 +41,7 @@ enum ref_sorting_order {
 
 struct ref_array_item {
 	struct object_id objectname;
+	struct object_id peeled_oid;
 	const char *rest;
 	int flag;
 	unsigned int kind;
@@ -187,6 +188,7 @@ void print_formatted_ref_array(struct ref_array *array, struct ref_format *forma
  * name must be a fully qualified refname.
  */
 void pretty_print_ref(const char *name, const struct object_id *oid,
+		      const struct object_id *peeled_oid,
 		      struct ref_format *format);
 
 /*
@@ -195,7 +197,8 @@ void pretty_print_ref(const char *name, const struct object_id *oid,
  */
 struct ref_array_item *ref_array_push(struct ref_array *array,
 				      const char *refname,
-				      const struct object_id *oid);
+				      const struct object_id *oid,
+				      const struct object_id *peeled_oid);
 
 /*
  * If the provided format includes ahead-behind atoms, then compute the

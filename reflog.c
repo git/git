@@ -423,16 +423,13 @@ int should_expire_reflog_ent_verbose(struct object_id *ooid,
 	return expire;
 }
 
-static int push_tip_to_list(const char *refname UNUSED,
-			    const char *referent UNUSED,
-			    const struct object_id *oid,
-			    int flags, void *cb_data)
+static int push_tip_to_list(const struct reference *ref, void *cb_data)
 {
 	struct commit_list **list = cb_data;
 	struct commit *tip_commit;
-	if (flags & REF_ISSYMREF)
+	if (ref->flags & REF_ISSYMREF)
 		return 0;
-	tip_commit = lookup_commit_reference_gently(the_repository, oid, 1);
+	tip_commit = lookup_commit_reference_gently(the_repository, ref->oid, 1);
 	if (!tip_commit)
 		return 0;
 	commit_list_insert(tip_commit, list);

@@ -570,17 +570,14 @@ struct branches_for_remote {
 	struct known_remotes *keep;
 };
 
-static int add_branch_for_removal(const char *refname,
-				  const char *referent UNUSED,
-				  const struct object_id *oid UNUSED,
-				  int flags UNUSED, void *cb_data)
+static int add_branch_for_removal(const struct reference *ref, void *cb_data)
 {
 	struct branches_for_remote *branches = cb_data;
 	struct refspec_item refspec;
 	struct known_remote *kr;
 
 	memset(&refspec, 0, sizeof(refspec));
-	refspec.dst = (char *)refname;
+	refspec.dst = (char *)ref->name;
 	if (remote_find_tracking(branches->remote, &refspec))
 		return 0;
 	free(refspec.src);
@@ -588,7 +585,7 @@ static int add_branch_for_removal(const char *refname,
 	/* don't delete a branch if another remote also uses it */
 	for (kr = branches->keep->list; kr; kr = kr->next) {
 		memset(&refspec, 0, sizeof(refspec));
-		refspec.dst = (char *)refname;
+		refspec.dst = (char *)ref->name;
 		if (!remote_find_tracking(kr->remote, &refspec)) {
 			free(refspec.src);
 			return 0;
@@ -596,16 +593,16 @@ static int add_branch_for_removal(const char *refname,
 	}
 
 	/* don't delete non-remote-tracking refs */
-	if (!starts_with(refname, "refs/remotes/")) {
+	if (!starts_with(ref->name, "refs/remotes/")) {
 		/* advise user how to delete local branches */
-		if (starts_with(refname, "refs/heads/"))
+		if (starts_with(ref->name, "refs/heads/"))
 			string_list_append(branches->skipped,
-					   abbrev_branch(refname));
+					   abbrev_branch(ref->name));
 		/* silently skip over other non-remote refs */
 		return 0;
 	}
 
-	string_list_append(branches->branches, refname);
+	string_list_append(branches->branches, ref->name);
 
 	return 0;
 }
@@ -713,18 +710,18 @@ out:
 	return error;
 }
 
-static int rename_one_ref(const char *old_refname, const char *referent,
-			  const struct object_id *oid,
-			  int flags, void *cb_data)
+static int rename_one_ref(const struct reference *ref, void *cb_data)
 {
 	struct strbuf new_referent = STRBUF_INIT;
 	struct strbuf new_refname = STRBUF_INIT;
 	struct rename_info *rename = cb_data;
+	const struct object_id *oid = ref->oid;
+	const char *referent = ref->target;
 	int error;
 
-	compute_renamed_ref(rename, old_refname, &new_refname);
+	compute_renamed_ref(rename, ref->name, &new_refname);
 
-	if (flags & REF_ISSYMREF) {
+	if (ref->flags & REF_ISSYMREF) {
 		/*
 		 * Stupidly enough `referent` is not pointing to the immediate
 		 * target of a symref, but it's the recursively resolved value.
@@ -732,25 +729,25 @@ static int rename_one_ref(const char *old_refname, const char *referent,
 		 * unborn symrefs don't have any value for the `referent` at all.
 		 */
 		referent = refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
-						   old_refname, RESOLVE_REF_NO_RECURSE,
+						   ref->name, RESOLVE_REF_NO_RECURSE,
 						   NULL, NULL);
 		compute_renamed_ref(rename, referent, &new_referent);
 		oid = NULL;
 	}
 
-	error = ref_transaction_delete(rename->transaction, old_refname,
+	error = ref_transaction_delete(rename->transaction, ref->name,
 				       oid, referent, REF_NO_DEREF, NULL, rename->err);
 	if (error < 0)
 		goto out;
 
 	error = ref_transaction_update(rename->transaction, new_refname.buf, oid, null_oid(the_hash_algo),
-				       (flags & REF_ISSYMREF) ? new_referent.buf : NULL, NULL,
+				       (ref->flags & REF_ISSYMREF) ? new_referent.buf : NULL, NULL,
 				       REF_SKIP_CREATE_REFLOG | REF_NO_DEREF | REF_SKIP_OID_VERIFICATION,
 				       NULL, rename->err);
 	if (error < 0)
 		goto out;
 
-	error = rename_one_reflog(old_refname, oid, rename);
+	error = rename_one_reflog(ref->name, oid, rename);
 	if (error < 0)
 		goto out;
 
@@ -1125,19 +1122,16 @@ static void free_remote_ref_states(struct ref_states *states)
 	string_list_clear_func(&states->push, clear_push_info);
 }
 
-static int append_ref_to_tracked_list(const char *refname,
-				      const char *referent UNUSED,
-				      const struct object_id *oid UNUSED,
-				      int flags, void *cb_data)
+static int append_ref_to_tracked_list(const struct reference *ref, void *cb_data)
 {
 	struct ref_states *states = cb_data;
 	struct refspec_item refspec;
 
-	if (flags & REF_ISSYMREF)
+	if (ref->flags & REF_ISSYMREF)
 		return 0;
 
 	memset(&refspec, 0, sizeof(refspec));
-	refspec.dst = (char *)refname;
+	refspec.dst = (char *)ref->name;
 	if (!remote_find_tracking(states->remote, &refspec)) {
 		string_list_append(&states->tracked, abbrev_branch(refspec.src));
 		free(refspec.src);

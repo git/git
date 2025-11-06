@@ -366,16 +366,13 @@ struct count_references_data {
 	struct progress *progress;
 };
 
-static int count_references(const char *refname,
-			    const char *referent UNUSED,
-			    const struct object_id *oid,
-			    int flags UNUSED, void *cb_data)
+static int count_references(const struct reference *ref, void *cb_data)
 {
 	struct count_references_data *data = cb_data;
 	struct ref_stats *stats = data->stats;
 	size_t ref_count;
 
-	switch (ref_kind_from_refname(refname)) {
+	switch (ref_kind_from_refname(ref->name)) {
 	case FILTER_REFS_BRANCHES:
 		stats->branches++;
 		break;
@@ -396,7 +393,7 @@ static int count_references(const char *refname,
 	 * While iterating through references for counting, also add OIDs in
 	 * preparation for the path walk.
 	 */
-	add_pending_oid(data->revs, NULL, oid, 0);
+	add_pending_oid(data->revs, NULL, ref->oid, 0);
 
 	ref_count = get_total_reference_count(stats);
 	display_progress(data->progress, ref_count);

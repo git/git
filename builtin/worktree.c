@@ -635,11 +635,7 @@ static void print_preparing_worktree_line(int detach,
  *
  * Returns 0 on failure and non-zero on success.
  */
-static int first_valid_ref(const char *refname UNUSED,
-			   const char *referent UNUSED,
-			   const struct object_id *oid UNUSED,
-			   int flags UNUSED,
-			   void *cb_data UNUSED)
+static int first_valid_ref(const struct reference *ref UNUSED, void *cb_data UNUSED)
 {
 	return 1;
 }

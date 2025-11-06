@@ -147,9 +147,7 @@ static int ref_filter_match(const char *refname,
 	return 1;
 }
 
-static int add_ref_decoration(const char *refname, const char *referent UNUSED, const struct object_id *oid,
-			      int flags UNUSED,
-			      void *cb_data)
+static int add_ref_decoration(const struct reference *ref, void *cb_data)
 {
 	int i;
 	struct object *obj;
@@ -158,16 +156,16 @@ static int add_ref_decoration(const char *refname, const char *referent UNUSED, 
 	struct decoration_filter *filter = (struct decoration_filter *)cb_data;
 	const char *git_replace_ref_base = ref_namespace[NAMESPACE_REPLACE].ref;
 
-	if (filter && !ref_filter_match(refname, filter))
+	if (filter && !ref_filter_match(ref->name, filter))
 		return 0;
 
-	if (starts_with(refname, git_replace_ref_base)) {
+	if (starts_with(ref->name, git_replace_ref_base)) {
 		struct object_id original_oid;
 		if (!replace_refs_enabled(the_repository))
 			return 0;
-		if (get_oid_hex(refname + strlen(git_replace_ref_base),
+		if (get_oid_hex(ref->name + strlen(git_replace_ref_base),
 				&original_oid)) {
-			warning("invalid replace ref %s", refname);
+			warning("invalid replace ref %s", ref->name);
 			return 0;
 		}
 		obj = parse_object(the_repository, &original_oid);
@@ -176,10 +174,10 @@ static int add_ref_decoration(const char *refname, const char *referent UNUSED, 
 		return 0;
 	}
 
-	objtype = odb_read_object_info(the_repository->objects, oid, NULL);
+	objtype = odb_read_object_info(the_repository->objects, ref->oid, NULL);
 	if (objtype < 0)
 		return 0;
-	obj = lookup_object_by_type(the_repository, oid, objtype);
+	obj = lookup_object_by_type(the_repository, ref->oid, objtype);
 
 	for (i = 0; i < ARRAY_SIZE(ref_namespace); i++) {
 		struct ref_namespace_info *info = &ref_namespace[i];
@@ -187,24 +185,24 @@ static int add_ref_decoration(const char *refname, const char *referent UNUSED, 
 		if (!info->decoration)
 			continue;
 		if (info->exact) {
-			if (!strcmp(refname, info->ref)) {
+			if (!strcmp(ref->name, info->ref)) {
 				deco_type = info->decoration;
 				break;
 			}
-		} else if (starts_with(refname, info->ref)) {
+		} else if (starts_with(ref->name, info->ref)) {
 			deco_type = info->decoration;
 			break;
 		}
 	}
 
-	add_name_decoration(deco_type, refname, obj);
+	add_name_decoration(deco_type, ref->name, obj);
 	while (obj->type == OBJ_TAG) {
 		if (!obj->parsed)
 			parse_object(the_repository, &obj->oid);
 		obj = ((struct tag *)obj)->tagged;
 		if (!obj)
 			break;
-		add_name_decoration(DECORATION_REF_TAG, refname, obj);
+		add_name_decoration(DECORATION_REF_TAG, ref->name, obj);
 	}
 	return 0;
 }
