@@ -143,4 +143,19 @@ test_expect_success 'submodule git dir nesting detection must work with parallel
 	verify_submodule_gitdir_path clone_parallel hippo/hooks modules/hippo%2fhooks
 '
 
+test_expect_success 'verify case-folding conflict is correctly encoded' '
+	git clone -c extensions.submoduleEncoding=true -c core.ignoreCase=true main cloned-folding &&
+	(
+		cd cloned-folding &&
+
+		git submodule add ../new-sub "folding" &&
+		test_commit lowercase &&
+
+		git submodule add ../new-sub "FoldinG" &&
+		test_commit uppercase
+	) &&
+	verify_submodule_gitdir_path cloned-folding "folding" "modules/folding" &&
+	verify_submodule_gitdir_path cloned-folding "FoldinG" "modules/%46oldin%47"
+'
+
 test_done

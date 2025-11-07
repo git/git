@@ -22,5 +22,6 @@ void end_url_with_slash(struct strbuf *buf, const char *url);
 void str_end_url_with_slash(const char *url, char **dest);
 
 int is_rfc3986_unreserved(char ch);
+int is_casefolding_rfc3986_unreserved(char c);
 
 #endif /* URL_H */

@@ -2280,7 +2280,7 @@ int validate_submodule_git_dir(char *git_dir, const char *submodule_name)
 	size_t len = strlen(git_dir), suffix_len = strlen(submodule_name);
 	char *p = git_dir + len - suffix_len;
 	bool suffixes_match = !strcmp(p, submodule_name);
-	int ret = 0;
+	int ret = 0, config_ignorecase = 0;
 
 	/*
 	 * We prevent the contents of sibling submodules' git directories to
@@ -2317,6 +2317,42 @@ int validate_submodule_git_dir(char *git_dir, const char *submodule_name)
 	p = find_last_submodule_name(git_dir);
 	if (p && strchr(p, '/') != NULL)
 		return error("submodule gitdir name '%s' contains unexpected '/'", p);
+
+	/* Prevent conflicts on case-folding filesystems */
+	repo_config_get_bool(the_repository, "core.ignorecase", &config_ignorecase);
+	if (ignore_case || config_ignorecase) {
+		char *lower_gitdir = xstrdup(git_dir);
+		char *module_name = find_last_submodule_name(lower_gitdir);
+
+		if (module_name) {
+			for (p = module_name; *p; p++)
+				*p = tolower(*p);
+
+			/*
+			 * If lower path is different and already exists, check for collision.
+			 * Intentionally double-check to eliminate false-positives.
+			 */
+			if (strcmp(lower_gitdir, git_dir) && is_git_directory(lower_gitdir)) {
+				char *canonical = real_pathdup(git_dir, 0);
+				if (canonical) {
+					struct strbuf norm_git_dir = STRBUF_INIT;
+					strbuf_addstr(&norm_git_dir, git_dir);
+					strbuf_normalize_path(&norm_git_dir);
+
+					if (strcmp(canonical, norm_git_dir.buf))
+						ret = error(_("submodule git dir '%s' "
+							      "collides with '%s'"),
+							    canonical, norm_git_dir.buf);
+
+					strbuf_release(&norm_git_dir);
+					FREE_AND_NULL(canonical);
+				}
+			}
+		}
+
+		FREE_AND_NULL(lower_gitdir);
+		return ret;
+	}
 
 	return 0;
 }
@@ -2653,10 +2689,17 @@ void submodule_name_to_gitdir(struct strbuf *buf, struct repository *r,
 	if (!validate_and_set_submodule_gitdir(buf, submodule_name))
 		return;
 
-	/* Case 2: Try URI-safe (RFC3986) encoding first, this fixes nested gitdirs */
+	/* Case 2.1: Try URI-safe (RFC3986) encoding first, this fixes nested gitdirs */
 	strbuf_reset(buf);
 	repo_git_path_append(r, buf, "modules/");
 	strbuf_addstr_urlencode(buf, submodule_name, is_rfc3986_unreserved);
+	if (!validate_and_set_submodule_gitdir(buf, submodule_name))
+		return;
+
+	/* Case 2.2: Try extended uppercase URI (RFC3986) encoding, to fix case-folding */
+	strbuf_reset(buf);
+	repo_git_path_append(r, buf, "modules/");
+	strbuf_addstr_urlencode(buf, submodule_name, is_casefolding_rfc3986_unreserved);
 	if (!validate_and_set_submodule_gitdir(buf, submodule_name))
 		return;
 
