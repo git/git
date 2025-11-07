@@ -1,11 +1,11 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Nov 2025, #02; Thu, 6)
-X-master-at: 77b7284ccab768981a2cd08b6b2f164d91201e18
-X-next-at: 9fd864c43e7dcfed42e2da05363d2eb4888719f4
+Subject: What's cooking in git.git (Nov 2025, #03; Fri, 7)
+X-master-at: 4badef0c3503dc29059d678abba7fac0f042bc84
+X-next-at: 30608eb744ed5714313f016f8dabdd2811e7cf7c
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Nov 2025, #02; Thu, 6)
--------------------------------------------------
+What's cooking in git.git (Nov 2025, #03; Fri, 7)
+--------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
 prefixed with '+' are in 'next' (being in 'next' is a sign that a
@@ -53,137 +53,16 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* cc/doc-submitting-patches-with-ai (2025-10-01) 1 commit
-  (merged to 'next' on 2025-10-28 at 9b5e0701fa)
- + SubmittingPatches: add section about AI
+* cc/fast-import-export-i18n-cleanup (2025-10-30) 5 commits
+  (merged to 'next' on 2025-11-03 at 41a35c3e52)
+ + gpg-interface: mark a string for translation
+ + fast-import: mark strings for translation
+ + fast-export: mark strings for translation
+ + gpg-interface: use left shift to define GPG_VERIFY_*
+ + gpg-interface: simplify ssh fingerprint parsing
 
- AI guidelines.
- cf. <xmqqv7ki1xf1.fsf@gitster.g>
- source: <20251001140310.527097-1-christian.couder@gmail.com>
-
-
-* eb/t1016-hash-transition-fix (2025-10-28) 1 commit
-  (merged to 'next' on 2025-10-30 at b743410ab6)
- + t1016-compatObjectFormat: really freeze time for reproduciblity
-
- Test fix.
- source: <87frb310d2.fsf_-_@email.froward.int.ebiederm.org>
-
-
-* jc/ci-use-macos-14 (2025-11-04) 1 commit
-  (merged to 'next' on 2025-11-05 at 5fe2c4be6a)
- + GitHub CI: macos-13 images are no more
-
- The version of macos image used in GitHub CI has been updated to
- macos-14, as the macos-13 that we have been using got deprecated.
- source: <xmqqh5v9o0hb.fsf@gitster.g>
-
-
-* jk/doc-backslash-in-exclude (2025-10-29) 1 commit
-  (merged to 'next' on 2025-10-30 at 29790121d5)
- + doc: document backslash in gitignore patterns
-
- The patterns used in the .gitignore files use backslash in the way
- documented for fnmatch(3); document as such to reduce confusion.
- source: <20251029153237.GA1133542@coredump.intra.peff.net>
-
-
-* jk/test-delete-gpgsig-leakfix (2025-10-29) 1 commit
-  (merged to 'next' on 2025-10-30 at 097810cb65)
- + test-tool: fix leak in delete-gpgsig command
-
- Leakfix.
- source: <20251029191031.GA1257596@coredump.intra.peff.net>
-
-
-* jt/repo-structure (2025-10-21) 7 commits
-  (merged to 'next' on 2025-10-28 at c4d81a2da9)
- + builtin/repo: add progress meter for structure stats
- + builtin/repo: add keyvalue and nul format for structure stats
- + builtin/repo: add object counts in structure output
- + builtin/repo: introduce structure subcommand
- + ref-filter: export ref_kind_from_refname()
- + ref-filter: allow NULL filter pattern
- + builtin/repo: rename repo_info() to cmd_repo_info()
- (this branch is used by kn/refs-optim-cleanup and ps/ref-peeled-tags.)
-
- "git repo structure", a new command.
- cf. <eesy5qhqzi56qrzv7wlpenxag23l2zykakvpmr6p5rnak6cril@ap3rugp44bcz>
- cf. <aPsLS6lbzG27W-C8@pks.im>
- source: <20251021182601.2687284-1-jltobler@gmail.com>
-
-
-* kh/doc-checkout-markup-fix (2025-10-28) 1 commit
-  (merged to 'next' on 2025-10-29 at f106c77f74)
- + doc: git-checkout: fix placeholder markup
-
- Doc mark-up fix.
- source: <v2-cb38c701537.1761675472.git.code@khaugsbakk.name>
-
-
-* qj/doc-my1stcontrib-email-verify (2025-10-27) 1 commit
-  (merged to 'next' on 2025-10-29 at 33f961f37a)
- + MyFirstContribution: add note on confirming patches
-
- The "MyFirstContribution" tutorial tells the reader how to send out
- their patches; the section gained a hint to verify the message
- reached the mailing list.
- source: <20251027111600.1481-1-qjessa662@gmail.com>
-
-
-* rz/t0450-bisect-doc-update (2025-10-28) 1 commit
-  (merged to 'next' on 2025-10-31 at f563b543eb)
- + bisect: update usage and docs to match each other
-
- The help text and manual page of "git bisect" command have been
- made consistent with each other.
- source: <pull.2084.git.git.1761690461697.gitgitgadget@gmail.com>
-
-
-* tu/credential-install (2025-10-25) 1 commit
-  (merged to 'next' on 2025-10-28 at 43589c4832)
- + contrib/credential: add install target
-
- Contributed credential helpers (obviously in contrib/) now have "cd
- $there && make install" target.
- source: <f67b3cbd-a117-a863-37ba-fbba7a2ca17a@mailbox.tu-dresden.de>
-
-
-* tz/test-prepare-gnupghome (2024-07-03) 2 commits
-  (merged to 'next' on 2025-10-28 at f612107bf9)
- + t/lib-gpg: call prepare_gnupghome() in GPG2 prereq
- + t/lib-gpg: add prepare_gnupghome() to create GNUPGHOME dir
-
- Tests did not set up GNUPGHOME correctly, which is fixed but some
- flaky tests are exposed in t1016, which needs to be addressed
- before this topic can move forward.
- cf. <ZoV8b2RvYxLOotSJ@teonanacatl.net>
- cf. <xmqqbjlump3m.fsf@gitster.g>
- cf. <87frb310d2.fsf_-_@email.froward.int.ebiederm.org>
- source: <20240703153738.916469-1-tmz@pobox.com>
-
-
-* xr/ref-debug-remove-on-disk (2025-10-24) 1 commit
-  (merged to 'next' on 2025-10-29 at 316e4afdbf)
- + refs: add missing remove_on_disk implementation for debug backend
-
- The "debug" ref-backend was missing a method implementation, which
- has been corrected.
- source: <pull.2082.git.git.1761295094982.gitgitgadget@gmail.com>
-
---------------------------------------------------
-[New Topics]
-
-* en/ort-rename-another-fix (2025-11-03) 3 commits
- - merge-ort: fix failing merges in special corner case
- - merge-ort: remove debugging crud
- - t6429: update comment to mention correct tool
-
- Yet another corner case fix around renames in the "ort" merge
- strategy.
-
- Will merge to 'next'?
- source: <pull.1992.git.1762192908.gitgitgadget@gmail.com>
+ Messages from fast-import/export are now marked for i18n.
+ source: <20251030123332.3337684-1-christian.couder@gmail.com>
 
 
 * dk/parseopt-optional-filename-fixes (2025-11-04) 6 commits
@@ -200,33 +79,99 @@ Release tarballs are available at:
  inconsistently behaved on an empty file (configuration took it
  happily, while the command line option pretended as if it did not
  exist), which has been corrected.
-
- Will merge to 'master'.
  source: <cover.1762100242.git.ben.knoble+github@gmail.com>
  source: <xmqq1pmdr9qu.fsf@gitster.g>
 
 
+* js/ci-github-actions-update (2025-11-06) 1 commit
+  (merged to 'next' on 2025-11-06 at 68957de207)
+ + ci: update {download,upload}-artifact Action versions
+
+ CI updates.
+ source: <pull.1996.git.1762437576488.gitgitgadget@gmail.com>
+
+
+* pk/reflog-migrate-message-fix (2025-11-05) 1 commit
+  (merged to 'next' on 2025-11-06 at c9c574a496)
+ + refs: add missing space in messages
+
+ Message fix.
+ source: <a8220721-3260-15cb-6960-ca8b6433d7b5@softwolves.pp.se>
+
+--------------------------------------------------
+[New Topics]
+
+* lc/rebase-trailer (2025-11-05) 4 commits
+ - rebase: support --trailer
+ - trailer: append trailers in-process and drop the fork to `interpret-trailers`
+ - trailer: move process_trailers to trailer.h
+ - interpret-trailers: factor out buffer-based processing to process_trailers()
+
+ Refactor code paths to run "interpret-trailers" from "git
+ commit/tag" and use it in "git rebase".
+
+ Comments?
+ source: <20251105142944.73061-1-me@linux.beauty>
+
+
+* ps/ref-peeled-tags-fixes (2025-11-06) 2 commits
+ - object: fix performance regression when peeling tags
+ - Merge branch 'ps/ref-peeled-tags' into ps/ref-peeled-tags-fixes
+ (this branch uses ps/ref-peeled-tags.)
+
+ Another fix-up to "peeled-tags" topic.
+
+ Will merge to 'next'.
+ source: <20251106-b4-pks-peel-object-performance-regression-v1-1-a386147750b0@pks.im>
+
+
+* tu/credential-wincred-makefile-update (2025-11-05) 1 commit
+  (merged to 'next' on 2025-11-07 at ed74befe91)
+ + wincred: align Makefile with other Makefiles in contrib
+
+ Build procedure for Wincred credential helper has been updated.
+
+ Will cook in 'next'.
+ source: <3869ec21-e20d-cf9b-5913-6389c372a5f0@mailbox.tu-dresden.de>
+
+--------------------------------------------------
+[Cooking]
+
+* en/ort-rename-another-fix (2025-11-03) 3 commits
+ - merge-ort: fix failing merges in special corner case
+ - merge-ort: remove debugging crud
+ - t6429: update comment to mention correct tool
+
+ Yet another corner case fix around renames in the "ort" merge
+ strategy.
+
+ Will merge to 'next'?
+ source: <pull.1992.git.1762192908.gitgitgadget@gmail.com>
+
+
 * dk/make-git-contacts-executable (2025-11-04) 1 commit
- - perl: also mark git-contacts executable
+  (merged to 'next' on 2025-11-07 at 30608eb744)
+ + perl: also mark git-contacts executable
 
  Building "git contacts" script (in contrib/) leaves the resulting
  file unexecutable, which has been corrected.
 
- Will merge to 'next'?
+ Will cook in 'next'.
  source: <7fbb341e8f05fcde3a1543e3bb4e5a3ec1101692.1762280097.git.ben.knoble+github@gmail.com>
 
 
 * dk/meson-html-dir (2025-11-04) 1 commit
- - meson: make GIT_HTML_PATH configurable
+  (merged to 'next' on 2025-11-07 at b30cf1f060)
+ + meson: make GIT_HTML_PATH configurable
 
  The build procedure based on meson learned to allow builders to
  specify the directory to install HTML documents.
 
- Will merge to 'next'?
+ Will cook in 'next'.
  source: <385992f6020703558f0ba75a1be6c4f9dae08b83.1762264709.git.ben.knoble+github@gmail.com>
 
 
-* kn/maintenance-is-needed (2025-11-04) 7 commits
+* kn/maintenance-is-needed (2025-11-06) 7 commits
  - maintenance: add 'is-needed' subcommand
  - maintenance: add checking logic in `pack_refs_condition()`
  - refs: add a `optimize_required` field to `struct ref_storage_be`
@@ -239,17 +184,17 @@ Release tarballs are available at:
  "git maintenance" command learned "is-needed" subcommand to tell if
  it is necessary to perform various maintenance tasks.
 
- Comments?
- source: <20251104-562-add-sub-command-to-check-if-maintenance-is-needed-v2-0-303462a9e4ed@gmail.com>
+ Will merge to 'next'?
+ source: <20251106-562-add-sub-command-to-check-if-maintenance-is-needed-v3-0-d611a2a95cf5@gmail.com>
 
 
-* qj/doc-http-bad-want-response (2025-11-04) 1 commit
+* qj/doc-http-bad-want-response (2025-11-05) 1 commit
  - doc: clarify server behavior for invalid 'want' lines in HTTP protocol
 
  Doc update.
 
- Comments?
- source: <20251104100653.2152-1-qjessa662@gmail.com>
+ Will merge to 'next'?
+ source: <20251105143849.1192-1-qjessa662@gmail.com>
 
 
 * jc/exclude-with-gitignore (2025-11-04) 1 commit
@@ -268,6 +213,10 @@ Release tarballs are available at:
  - commit: refactor verify_commit_buffer()
  - fast-import: refactor finalize_commit_buffer()
 
+ "git fast-import" learns "--strip-if-invalid" option to drop
+ invalid cryptographic signature from objects.
+
+ Comments?
  source: <20251105061918.3688870-1-christian.couder@gmail.com>
 
 
@@ -285,10 +234,12 @@ Release tarballs are available at:
  - diff: emit_line_ws_markup() if/else style fix
  - whitespace: correct bit assignment comments
 
+ Both "git apply" and "git diff" learn a new whitespace error class,
+ "incomplete-line".
+
+ Comments?
  source: <20251105213052.1499224-1-gitster@pobox.com>
 
---------------------------------------------------
-[Cooking]
 
 * tc/last-modified-active-paths-optimization (2025-10-23) 1 commit
   (merged to 'next' on 2025-11-03 at 9ab444edfb)
@@ -347,28 +298,14 @@ Release tarballs are available at:
  source: <20251027004404.2152927-1-sandals@crustytoothpaste.net>
 
 
-* ad/blame-diff-algorithm (2025-11-01) 2 commits
+* ad/blame-diff-algorithm (2025-11-06) 2 commits
  - blame: make diff algorithm configurable
  - xdiff: add 'minimal' to XDF_DIFF_ALGORITHM_MASK
 
  "git blame" learns "--diff-algorithm=<algo>" option.
 
- Ready?
- source: <pull.2075.v4.git.git.1762034252.gitgitgadget@gmail.com>
-
-
-* cc/fast-import-export-i18n-cleanup (2025-10-30) 5 commits
-  (merged to 'next' on 2025-11-03 at 41a35c3e52)
- + gpg-interface: mark a string for translation
- + fast-import: mark strings for translation
- + fast-export: mark strings for translation
- + gpg-interface: use left shift to define GPG_VERIFY_*
- + gpg-interface: simplify ssh fingerprint parsing
-
- Messages from fast-import/export are now marked for i18n.
-
- Will merge to 'master'.
- source: <20251030123332.3337684-1-christian.couder@gmail.com>
+ Will merge to 'next'?
+ source: <pull.2075.v5.git.git.1762468914.gitgitgadget@gmail.com>
 
 
 * ps/packed-git-in-object-store (2025-10-30) 9 commits
@@ -388,22 +325,6 @@ Release tarballs are available at:
 
  Will cook in 'next'.
  source: <20251030-pks-packfiles-store-drop-list-v2-0-84654f080cc0@pks.im>
-
-
-* ps/rust-cbindgen (2025-10-24) 6 commits
- . rust: generate bindings via cbindgen
- . meson: rename Rust library target
- . ci: use Debian instead of deprecated i386/ubuntu
- . gitlab-ci: backfill missing Linux jobs
- . gitlab-ci: reorder Linux job matrix to match GitHub's order
- . Merge branch 'ps/ci-rust' into ps/rust-cbindgen
-
- Introduce cbindgen in the build framework to help interfacing with
- Rust.
-
- More discussion?
- cf. <20251024-b4-pks-rust-cbindgen-v2-0-4b4bd4f18490@pks.im>
- source: <20251024-b4-pks-rust-cbindgen-v2-0-4b4bd4f18490@pks.im>
 
 
 * kn/refs-optim-cleanup (2025-10-20) 4 commits
@@ -501,7 +422,7 @@ Release tarballs are available at:
  + refs: introduce wrapper struct for `each_ref_fn`
  + Merge branch 'jt/repo-structure' into ps/ref-peeled-tags
  + Merge branch 'tb/incremental-midx-part-3.1' into ps/ref-peeled-tags
- (this branch is used by kn/maintenance-is-needed and kn/refs-optim-cleanup.)
+ (this branch is used by kn/maintenance-is-needed, kn/refs-optim-cleanup and ps/ref-peeled-tags-fixes.)
 
  Some ref backend storage can hold not just the object name of an
  annotated tag, but the object name of the object the tag points at.
@@ -569,17 +490,33 @@ Release tarballs are available at:
  source: <20251105191650.89975-1-siddharthasthana31@gmail.com>
 
 
-* ar/submodule-gitdir-tweak (2025-10-06) 5 commits
- - submodule: error out if gitdir name is too long
- - submodule: encode gitdir paths to avoid conflicts
- - strbuf: bring back is_rfc3986_unreserved
- - submodule: add gitdir path config override
+* ar/submodule-gitdir-tweak (2025-11-07) 4 commits
+ - submodule: fix case-folding gitdir filesystem colisions
+ - submodule: add extension to encode gitdir paths
+ - builtin/credential-store: move is_rfc3986_unreserved to url.[ch]
  - submodule--helper: use submodule_name_to_gitdir in add_submodule
 
  Avoid local submodule repository directory paths overlapping with
  each other by encoding submodule names before using them as path
  components.
 
- Expecting v4.
- cf. <878qh4qxsl.fsf@gentoo.mail-host-address-is-not-set>
- source: <20251006112518.3764240-1-adrian.ratiu@collabora.com>
+ Comments?
+ source: <20251107150547.3272180-1-adrian.ratiu@collabora.com>
+
+--------------------------------------------------
+[Discarded]
+
+* ps/rust-cbindgen (2025-10-24) 6 commits
+ . rust: generate bindings via cbindgen
+ . meson: rename Rust library target
+ . ci: use Debian instead of deprecated i386/ubuntu
+ . gitlab-ci: backfill missing Linux jobs
+ . gitlab-ci: reorder Linux job matrix to match GitHub's order
+ . Merge branch 'ps/ci-rust' into ps/rust-cbindgen
+
+ Introduce cbindgen in the build framework to help interfacing with
+ Rust.
+
+ Retracted.
+ cf. <aQ3XOTX0AT_eFc5P@pks.im>
+ source: <20251024-b4-pks-rust-cbindgen-v2-0-4b4bd4f18490@pks.im>
