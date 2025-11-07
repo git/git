@@ -30,7 +30,7 @@ sed -e '1{' \
     "$INPUT" >"$OUTPUT"
 
 case "$INPUT" in
-*.perl)
+*.perl|*git-contacts)
 	chmod a+x "$OUTPUT";;
 *)
 	;;
