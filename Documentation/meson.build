@@ -412,7 +412,7 @@ foreach manpage, category : manpages
       input: manpage,
       output: fs.stem(manpage) + '.html',
       install: true,
-      install_dir: get_option('datadir') / 'doc/git-doc',
+      install_dir: htmldir,
     )
   endif
 endforeach
@@ -423,7 +423,7 @@ if get_option('docs').contains('html')
     output: 'docinfo.html',
     copy: true,
     install: true,
-    install_dir: get_option('datadir') / 'doc/git-doc',
+    install_dir: htmldir,
   )
 
   configure_file(
@@ -431,11 +431,11 @@ if get_option('docs').contains('html')
     output: 'docbook-xsl.css',
     copy: true,
     install: true,
-    install_dir: get_option('datadir') / 'doc/git-doc',
+    install_dir: htmldir,
   )
 
   install_symlink('index.html',
-    install_dir: get_option('datadir') / 'doc/git-doc',
+    install_dir: htmldir,
     pointing_to: 'git.html',
   )
 
@@ -466,7 +466,7 @@ if get_option('docs').contains('html')
     input: 'docbook.xsl',
     output: 'user-manual.html',
     install: true,
-    install_dir: get_option('datadir') / 'doc/git-doc',
+    install_dir: htmldir,
   )
 
   articles = [
@@ -492,7 +492,7 @@ if get_option('docs').contains('html')
       output: fs.stem(article) + '.html',
       depends: documentation_deps,
       install: true,
-      install_dir: get_option('datadir') / 'doc/git-doc',
+      install_dir: htmldir,
     )
   endforeach
 

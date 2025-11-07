@@ -35,7 +35,7 @@ doc_targets += custom_target(
   output: 'howto-index.html',
   depends: documentation_deps,
   install: true,
-  install_dir: get_option('datadir') / 'doc/git-doc',
+  install_dir: htmldir,
 )
 
 foreach howto : howto_sources
@@ -57,6 +57,6 @@ foreach howto : howto_sources
     output: fs.stem(howto_stripped.full_path()) + '.html',
     depends: documentation_deps,
     install: true,
-    install_dir: get_option('datadir') / 'doc/git-doc/howto',
+    install_dir: htmldir / 'howto',
   )
 endforeach
