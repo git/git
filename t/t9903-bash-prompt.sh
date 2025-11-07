@@ -520,11 +520,11 @@ test_expect_success 'prompt - untracked files status indicator - not shown insid
 
 ################################################################
 # Show Upstream
-options=(          short  verbose   'verbose name'    )
-expected_equal=(   ' ='   '|u='     '|u= origin/main' )
-expected_ahead=(   ' >'   '|u+1'    '|u+1 origin/main')
-expected_behind=(  ' <'   '|u-1'    '|u-1 origin/b1'  )
-expected_diverged=(' <>'  '|u+1-1'  '|u+1-1 origin/b1')
+options=(          short  verbose   'verbose name'      quiet   'verbose quiet'  'verbose name quiet')
+expected_equal=(   ' ='   '|u='     '|u= origin/main'   ''      '|u'             '|u origin/main'    )
+expected_ahead=(   ' >'   '|u+1'    '|u+1 origin/main'  ' >'    '|u+1'           '|u+1 origin/main'  )
+expected_behind=(  ' <'   '|u-1'    '|u-1 origin/b1'    ' <'    '|u-1'           '|u-1 origin/b1'    )
+expected_diverged=(' <>'  '|u+1-1'  '|u+1-1 origin/b1'  ' <>'   '|u+1-1'         '|u+1-1 origin/b1'  )
 
 for i in ${!options[@]}
 do
