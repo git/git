@@ -1647,19 +1647,51 @@ static int stack_segments_for_compaction(struct reftable_stack *st,
 	return 0;
 }
 
-int reftable_stack_auto_compact(struct reftable_stack *st)
+static int update_segment_if_compaction_required(struct reftable_stack *st,
+						 struct segment *seg,
+						 bool use_geometric,
+						 bool *required)
 {
-	struct segment seg;
 	int err;
 
-	if (st->merged->tables_len < 2)
+	if (st->merged->tables_len < 2) {
+		*required = false;
 		return 0;
+	}
 
-	err = stack_segments_for_compaction(st, &seg);
+	if (!use_geometric) {
+		*required = true;
+		return 0;
+	}
+
+	err = stack_segments_for_compaction(st, seg);
 	if (err)
 		return err;
 
-	if (segment_size(&seg) > 0)
+	*required = segment_size(seg) > 0;
+	return 0;
+}
+
+int reftable_stack_compaction_required(struct reftable_stack *st,
+				       bool use_heuristics,
+				       bool *required)
+{
+	struct segment seg;
+	return update_segment_if_compaction_required(st, &seg, use_heuristics,
+						     required);
+}
+
+int reftable_stack_auto_compact(struct reftable_stack *st)
+{
+	struct segment seg;
+	bool required;
+	int err;
+
+	err = update_segment_if_compaction_required(st, &seg, true, &required);
+	if (err)
+		return err;
+
+	if (required)
 		return stack_compact_range(st, seg.start, seg.end - 1,
 					   NULL, STACK_COMPACT_RANGE_BEST_EFFORT);
 
