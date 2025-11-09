@@ -18,26 +18,21 @@ c_green='\001\e[32m\002'
 c_lblue='\001\e[1;34m\002'
 c_clear='\001\e[0m\002'
 
+# (main)                     (b1)
+# initial (t1) - second-b1 - third-b1 (t2)
+#             \
+#              second-b2 - another-b2 - yet-another-b2
+#                                       (b2)
 test_expect_success 'setup for prompt tests' '
 	git init otherrepo &&
-	echo 1 >file &&
-	git add file &&
-	test_tick &&
-	git commit -m initial &&
-	git tag -a -m msg1 t1 &&
+	test_commit --annotate initial file contents1 t1 &&
 	git checkout -b b1 &&
-	echo 2 >file &&
-	git commit -m "second b1" file &&
-	echo 3 >file &&
-	git commit -m "third b1" file &&
-	git tag -a -m msg2 t2 &&
+	test_commit --no-tag second-b1 file &&
+	test_commit --annotate third-b1 file contents2 t2 &&
 	git checkout -b b2 main &&
-	echo 0 >file &&
-	git commit -m "second b2" file &&
-	echo 00 >file &&
-	git commit -m "another b2" file &&
-	echo 000 >file &&
-	git commit -m "yet another b2" file &&
+	test_commit --no-tag second-b2 file &&
+	test_commit --no-tag another-b2 file &&
+	test_commit --no-tag yet-another-b2 file &&
 	mkdir ignored_dir &&
 	echo "ignored_dir/" >>.gitignore &&
 	git checkout main
