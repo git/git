@@ -25,6 +25,8 @@ c_clear='\001\e[0m\002'
 #                                       (b2)
 test_expect_success 'setup for prompt tests' '
 	git init otherrepo &&
+	git init --bare origin.git &&
+	git remote add origin origin.git &&
 	test_commit --annotate initial file contents1 t1 &&
 	git checkout -b b1 &&
 	test_commit --no-tag second-b1 file &&
@@ -35,6 +37,7 @@ test_expect_success 'setup for prompt tests' '
 	test_commit --no-tag yet-another-b2 file &&
 	mkdir ignored_dir &&
 	echo "ignored_dir/" >>.gitignore &&
+	git push --set-upstream origin main b1 b2 &&
 	git checkout main
 '
 
@@ -514,6 +517,62 @@ test_expect_success 'prompt - untracked files status indicator - not shown insid
 	) &&
 	test_cmp expected "$actual"
 '
+
+################################################################
+# Show Upstream
+options=(          short  verbose   'verbose name'    )
+expected_equal=(   ' ='   '|u='     '|u= origin/main' )
+expected_ahead=(   ' >'   '|u+1'    '|u+1 origin/main')
+expected_behind=(  ' <'   '|u-1'    '|u-1 origin/b1'  )
+expected_diverged=(' <>'  '|u+1-1'  '|u+1-1 origin/b1')
+
+for i in ${!options[@]}
+do
+	option=${options[$i]}
+
+	test_expect_success "prompt - upstream status indicator - $option - equal" '
+		printf " (main${expected_equal[$i]})" >expected &&
+		GIT_PS1_SHOWUPSTREAM=$option &&
+		test_when_finished "sane_unset GIT_PS1_SHOWUPSTREAM" &&
+		__git_ps1 >"$actual" &&
+		test_cmp expected "$actual"
+	'
+
+	test_expect_success "prompt - upstream status indicator - $option - ahead" '
+		printf " (main${expected_ahead[$i]})" >expected &&
+		GIT_PS1_SHOWUPSTREAM=$option &&
+		test_when_finished "sane_unset GIT_PS1_SHOWUPSTREAM" &&
+		test_commit --no-tag ahead &&
+		test_when_finished "git reset HEAD^" &&
+		__git_ps1 >"$actual" &&
+		test_cmp expected "$actual"
+	'
+
+	test_expect_success "prompt - upstream status indicator - $option - behind" '
+		printf " (b1${expected_behind[$i]})" >expected &&
+		GIT_PS1_SHOWUPSTREAM=$option &&
+		test_when_finished "sane_unset GIT_PS1_SHOWUPSTREAM" &&
+		git checkout b1 &&
+		test_when_finished "git checkout main" &&
+		git reset HEAD^ &&
+		test_when_finished "git reset @{u}" &&
+		__git_ps1 >"$actual" &&
+		test_cmp expected "$actual"
+	'
+
+	test_expect_success "prompt - upstream status indicator - $option - diverged" '
+		printf " (b1${expected_diverged[$i]})" >expected &&
+		GIT_PS1_SHOWUPSTREAM=$option &&
+		test_when_finished "sane_unset GIT_PS1_SHOWUPSTREAM" &&
+		git checkout b1 &&
+		test_when_finished "git checkout main" &&
+		git reset HEAD^ &&
+		test_when_finished "git reset @{u}" &&
+		test_commit --no-tag ahead &&
+		__git_ps1 >"$actual" &&
+		test_cmp expected "$actual"
+	'
+done
 
 test_expect_success 'prompt - format string starting with dash' '
 	printf -- "-main" >expected &&
