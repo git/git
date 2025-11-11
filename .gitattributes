@@ -1,4 +1,4 @@
-* whitespace=!indent,trail,space
+* whitespace=trail,space
 *.[ch] whitespace=indent,trail,space diff=cpp
 *.sh whitespace=indent,trail,space text eol=lf
 *.perl text eol=lf diff=perl
