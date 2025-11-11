@@ -953,7 +953,7 @@ rust-compile:
 	done
 
 rust-clean:
-	$(RM) $(RUST_LIBS) Cargo.lock
+	$(RM) $(RUST_LIBS) Cargo.lock generated/
 	cargo clean
 
 $(GIT_BUILD_DIR)/lib%.a:
