@@ -1064,24 +1064,52 @@ static int path_matches(const char *pathname, int pathlen,
 			      pattern, prefix, pat->patternlen);
 }
 
-static int macroexpand_one(struct all_attrs_item *all_attrs, int nr, int rem);
+struct attr_state_queue {
+	const struct attr_state **items;
+	size_t alloc, nr;
+};
+
+static void attr_state_queue_push(struct attr_state_queue *t,
+				 const struct match_attr *a)
+{
+	for (size_t i = 0; i < a->num_attr; i++) {
+		ALLOC_GROW(t->items, t->nr + 1, t->alloc);
+		t->items[t->nr++] = &a->state[i];
+	}
+}
+
+static const struct attr_state *attr_state_queue_pop(struct attr_state_queue *t)
+{
+	return t->nr ? t->items[--t->nr] : NULL;
+}
+
+static void attr_state_queue_release(struct attr_state_queue *t)
+{
+	free(t->items);
+}
 
 static int fill_one(struct all_attrs_item *all_attrs,
 		    const struct match_attr *a, int rem)
 {
-	size_t i;
+	struct attr_state_queue todo = { 0 };
+	const struct attr_state *state;
 
-	for (i = a->num_attr; rem > 0 && i > 0; i--) {
-		const struct git_attr *attr = a->state[i - 1].attr;
+	attr_state_queue_push(&todo, a);
+	while (rem > 0 && (state = attr_state_queue_pop(&todo))) {
+		const struct git_attr *attr = state->attr;
 		const char **n = &(all_attrs[attr->attr_nr].value);
-		const char *v = a->state[i - 1].setto;
+		const char *v = state->setto;
 
 		if (*n == ATTR__UNKNOWN) {
+			const struct all_attrs_item *item =
+				&all_attrs[attr->attr_nr];
 			*n = v;
 			rem--;
-			rem = macroexpand_one(all_attrs, attr->attr_nr, rem);
+			if (item->macro && item->value == ATTR__TRUE)
+				attr_state_queue_push(&todo, item->macro);
 		}
 	}
+	attr_state_queue_release(&todo);
 	return rem;
 }
 
@@ -1104,16 +1132,6 @@ static int fill(const char *path, int pathlen, int basename_offset,
 	}
 
 	return rem;
-}
-
-static int macroexpand_one(struct all_attrs_item *all_attrs, int nr, int rem)
-{
-	const struct all_attrs_item *item = &all_attrs[nr];
-
-	if (item->macro && item->value == ATTR__TRUE)
-		return fill_one(all_attrs, item->macro, rem);
-	else
-		return rem;
 }
 
 /*

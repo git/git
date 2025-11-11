@@ -664,4 +664,24 @@ test_expect_success 'user defined builtin_objectmode values are ignored' '
 	test_cmp expect err
 '
 
+test_expect_success ULIMIT_STACK_SIZE 'deep macro recursion' '
+	n=3000 &&
+	{
+		i=0 &&
+		while test $i -lt $n; do
+			echo "[attr]a$i a$((i+1))" &&
+			i=$((i+1)) ||
+			return 1
+		done &&
+		echo "[attr]a$n -text" &&
+		echo "file a0"
+	} >.gitattributes &&
+	{
+		echo "file: text: unset" &&
+		test_seq -f "file: a%d: set" 0 $n
+	} >expect &&
+	run_with_limited_stack git check-attr -a file >actual &&
+	test_cmp expect actual
+'
+
 test_done
