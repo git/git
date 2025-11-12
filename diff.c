@@ -1321,6 +1321,11 @@ static void emit_line_ws_markup(struct diff_options *o,
 	const char *ws = NULL;
 	int sign = o->output_indicators[sign_index];
 
+	if (diff_suppress_blank_empty &&
+	    sign_index == OUTPUT_INDICATOR_CONTEXT &&
+	    len == 1 && line[0] == '\n')
+		sign = 0;
+
 	if (o->ws_error_highlight & ws_rule) {
 		ws = diff_get_color_opt(o, DIFF_WHITESPACE);
 		if (!*ws)
@@ -1498,15 +1503,9 @@ static void emit_diff_symbol_from_struct(struct diff_options *o,
 	case DIFF_SYMBOL_WORDS:
 		context = diff_get_color_opt(o, DIFF_CONTEXT);
 		reset = diff_get_color_opt(o, DIFF_RESET);
-		/*
-		 * Skip the prefix character, if any.  With
-		 * diff_suppress_blank_empty, there may be
-		 * none.
-		 */
-		if (line[0] != '\n') {
-			line++;
-			len--;
-		}
+
+		/* Skip the prefix character */
+		line++; len--;
 		emit_line(o, context, reset, line, len);
 		break;
 	case DIFF_SYMBOL_FILEPAIR_PLUS:
@@ -2375,12 +2374,6 @@ static int fn_out_consume(void *priv, char *line, unsigned long len)
 		ecbdata->label_path[0] = ecbdata->label_path[1] = NULL;
 	}
 
-	if (diff_suppress_blank_empty
-	    && len == 2 && line[0] == ' ' && line[1] == '\n') {
-		line[0] = '\n';
-		len = 1;
-	}
-
 	if (line[0] == '@') {
 		if (ecbdata->diff_words)
 			diff_words_flush(ecbdata);
@@ -2431,12 +2424,14 @@ static int fn_out_consume(void *priv, char *line, unsigned long len)
 		ecbdata->lno_in_preimage++;
 		emit_context_line(ecbdata, line + 1, len - 1);
 		break;
-	default:
+	case '\\':
 		/* incomplete line at the end */
 		ecbdata->lno_in_preimage++;
 		emit_diff_symbol(o, DIFF_SYMBOL_CONTEXT_INCOMPLETE,
 				 line, len, 0);
 		break;
+	default:
+		BUG("fn_out_consume: unknown line '%s'", line);
 	}
 	return 0;
 }
