@@ -541,6 +541,33 @@ test_expect_success 'all statuses changed in folder if . is given' '
 	)
 '
 
+test_expect_success 'cannot add a submodule of a different algorithm' '
+	git init --object-format=sha256 sha256 &&
+	(
+		cd sha256 &&
+		test_commit abc &&
+		git init --object-format=sha1 submodule &&
+		(
+			cd submodule &&
+			test_commit def
+		) &&
+		test_must_fail git add submodule &&
+		test $(git ls-files --stage | grep ^160000 | wc -l) -eq 0
+	) &&
+	git init --object-format=sha1 sha1 &&
+	(
+		cd sha1 &&
+		test_commit abc &&
+		git init --object-format=sha256 submodule &&
+		(
+			cd submodule &&
+			test_commit def
+		) &&
+		test_must_fail git add submodule &&
+		test $(git ls-files --stage | grep ^160000 | wc -l) -eq 0
+	)
+'
+
 test_expect_success CASE_INSENSITIVE_FS 'path is case-insensitive' '
 	path="$(pwd)/BLUB" &&
 	touch "$path" &&
