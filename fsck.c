@@ -874,18 +874,30 @@ static int fsck_ident(const char **ident, const char *ident_end,
 
 	if (*p == '<')
 		return report(options, oid, type, FSCK_MSG_MISSING_NAME_BEFORE_EMAIL, "invalid author/committer line - missing space before email");
-	p += strcspn(p, "<>\n");
-	if (*p == '>')
-		return report(options, oid, type, FSCK_MSG_BAD_NAME, "invalid author/committer line - bad name");
-	if (*p != '<')
-		return report(options, oid, type, FSCK_MSG_MISSING_EMAIL, "invalid author/committer line - missing email");
+	for (;;) {
+		if (p >= ident_end || *p == '\n')
+			return report(options, oid, type, FSCK_MSG_MISSING_EMAIL, "invalid author/committer line - missing email");
+		if (*p == '>')
+			return report(options, oid, type, FSCK_MSG_BAD_NAME, "invalid author/committer line - bad name");
+		if (*p == '<')
+			break; /* end of name, beginning of email */
+
+		/* otherwise, skip past arbitrary name char */
+		p++;
+	}
 	if (p[-1] != ' ')
 		return report(options, oid, type, FSCK_MSG_MISSING_SPACE_BEFORE_EMAIL, "invalid author/committer line - missing space before email");
-	p++;
-	p += strcspn(p, "<>\n");
-	if (*p != '>')
-		return report(options, oid, type, FSCK_MSG_BAD_EMAIL, "invalid author/committer line - bad email");
-	p++;
+	p++; /* skip past '<' we found */
+	for (;;) {
+		if (p >= ident_end || *p == '<' || *p == '\n')
+			return report(options, oid, type, FSCK_MSG_BAD_EMAIL, "invalid author/committer line - bad email");
+		if (*p == '>')
+			break; /* end of email */
+
+		/* otherwise, skip past arbitrary email char */
+		p++;
+	}
+	p++; /* skip past '>' we found */
 	if (*p != ' ')
 		return report(options, oid, type, FSCK_MSG_MISSING_SPACE_BEFORE_DATE, "invalid author/committer line - missing space before date");
 	p++;
