@@ -77,6 +77,7 @@ prepend_var GIT_SAN_OPTIONS : strip_path_prefix="$GIT_BUILD_DIR/"
 # want that one to complain to stderr).
 prepend_var ASAN_OPTIONS : $GIT_SAN_OPTIONS
 prepend_var ASAN_OPTIONS : detect_leaks=0
+prepend_var ASAN_OPTIONS : strict_string_checks=1
 export ASAN_OPTIONS
 
 prepend_var LSAN_OPTIONS : $GIT_SAN_OPTIONS
