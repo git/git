@@ -768,13 +768,18 @@ if test_output_directory == ''
   test_output_directory = meson.project_build_root() / 'test-output'
 endif
 
+htmldir = get_option('htmldir')
+if htmldir == ''
+  htmldir = get_option('datadir') / 'doc/git-doc'
+endif
+
 # These variables are used for building libgit.a.
 libgit_c_args = [
   '-DBINDIR="' + get_option('bindir') + '"',
   '-DDEFAULT_GIT_TEMPLATE_DIR="' + get_option('datadir') / 'git-core/templates' + '"',
   '-DFALLBACK_RUNTIME_PREFIX="' + get_option('prefix') + '"',
   '-DGIT_HOST_CPU="' + host_machine.cpu_family() + '"',
-  '-DGIT_HTML_PATH="' + get_option('datadir') / 'doc/git-doc"',
+  '-DGIT_HTML_PATH="' + htmldir + '"',
   '-DGIT_INFO_PATH="' + get_option('infodir') + '"',
   '-DGIT_LOCALE_PATH="' + get_option('localedir') + '"',
   '-DGIT_MAN_PATH="' + get_option('mandir') + '"',
