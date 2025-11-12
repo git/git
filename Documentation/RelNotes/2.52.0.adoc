@@ -182,6 +182,14 @@ Performance, Internal Implementation, Development Support etc.
  * The "debug" ref-backend was missing a method implementation, which
    has been corrected.
 
+ * Build procedure for Wincred credential helper has been updated.
+
+ * The build procedure based on meson learned to allow builders to
+   specify the directory to install HTML documents.
+
+ * Building "git contacts" script (in contrib/) left the resulting
+   file unexecutable, which has been corrected.
+
 
 Fixes since v2.51
 -----------------
