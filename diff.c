@@ -1780,7 +1780,7 @@ static void add_line_count(struct strbuf *out, int count)
 	}
 }
 
-static void emit_rewrite_lines(struct emit_callback *ecb,
+static void emit_rewrite_lines(struct emit_callback *ecbdata,
 			       int prefix, const char *data, int size)
 {
 	const char *endp = NULL;
@@ -1791,17 +1791,17 @@ static void emit_rewrite_lines(struct emit_callback *ecb,
 		endp = memchr(data, '\n', size);
 		len = endp ? (endp - data + 1) : size;
 		if (prefix != '+') {
-			ecb->lno_in_preimage++;
-			emit_del_line(ecb, data, len);
+			ecbdata->lno_in_preimage++;
+			emit_del_line(ecbdata, data, len);
 		} else {
-			ecb->lno_in_postimage++;
-			emit_add_line(ecb, data, len);
+			ecbdata->lno_in_postimage++;
+			emit_add_line(ecbdata, data, len);
 		}
 		size -= len;
 		data += len;
 	}
 	if (!endp)
-		emit_diff_symbol(ecb->opt, DIFF_SYMBOL_NO_LF_EOF, NULL, 0, 0);
+		emit_diff_symbol(ecbdata->opt, DIFF_SYMBOL_NO_LF_EOF, NULL, 0, 0);
 }
 
 static void emit_rewrite_diff(const char *name_a,
