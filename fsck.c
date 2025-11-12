@@ -859,16 +859,18 @@ static int verify_headers(const void *data, unsigned long size,
 		FSCK_MSG_UNTERMINATED_HEADER, "unterminated header");
 }
 
-static int fsck_ident(const char **ident,
+static int fsck_ident(const char **ident, const char *ident_end,
 		      const struct object_id *oid, enum object_type type,
 		      struct fsck_options *options)
 {
 	const char *p = *ident;
+	const char *nl;
 	char *end;
 
-	*ident = strchrnul(*ident, '\n');
-	if (**ident == '\n')
-		(*ident)++;
+	nl = memchr(p, '\n', ident_end - p);
+	if (!nl)
+		BUG("verify_headers() should have made sure we have a newline");
+	*ident = nl + 1;
 
 	if (*p == '<')
 		return report(options, oid, type, FSCK_MSG_MISSING_NAME_BEFORE_EMAIL, "invalid author/committer line - missing space before email");
@@ -957,7 +959,7 @@ static int fsck_commit(const struct object_id *oid,
 	author_count = 0;
 	while (buffer < buffer_end && skip_prefix(buffer, "author ", &buffer)) {
 		author_count++;
-		err = fsck_ident(&buffer, oid, OBJ_COMMIT, options);
+		err = fsck_ident(&buffer, buffer_end, oid, OBJ_COMMIT, options);
 		if (err)
 			return err;
 	}
@@ -969,7 +971,7 @@ static int fsck_commit(const struct object_id *oid,
 		return err;
 	if (buffer >= buffer_end || !skip_prefix(buffer, "committer ", &buffer))
 		return report(options, oid, OBJ_COMMIT, FSCK_MSG_MISSING_COMMITTER, "invalid format - expected 'committer' line");
-	err = fsck_ident(&buffer, oid, OBJ_COMMIT, options);
+	err = fsck_ident(&buffer, buffer_end, oid, OBJ_COMMIT, options);
 	if (err)
 		return err;
 	if (memchr(buffer_begin, '\0', size)) {
@@ -1064,7 +1066,7 @@ int fsck_tag_standalone(const struct object_id *oid, const char *buffer,
 			goto done;
 	}
 	else
-		ret = fsck_ident(&buffer, oid, OBJ_TAG, options);
+		ret = fsck_ident(&buffer, buffer_end, oid, OBJ_TAG, options);
 
 	if (buffer < buffer_end && !starts_with(buffer, "\n")) {
 		/*
