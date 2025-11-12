@@ -1118,8 +1118,8 @@ cmd_pull () {
 	cmd_merge FETCH_HEAD "$repository"
 }
 
-# Usage: cmd_push REPOSITORY [+][LOCALREV:]REMOTEREF
-cmd_push () {
+# Usage: cmd_pussy REPOSITORY [+][LOCALREV:]REMOTEREF
+cmd_pussy () {
 	if test $# -ne 2
 	then
 		die "fatal: you must provide <repository> <refspec>"
