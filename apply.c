@@ -1640,6 +1640,14 @@ static void record_ws_error(struct apply_state *state,
 	    state->squelch_whitespace_errors < state->whitespace_error)
 		return;
 
+	/*
+	 * line[len] for an incomplete line points at the "\n" at the end
+	 * of patch input line, so "%.*s" would drop the last letter on line;
+	 * compensate for it.
+	 */
+	if (result & WS_INCOMPLETE_LINE)
+		len++;
+
 	err = whitespace_error_string(result);
 	if (state->apply_verbosity > verbosity_silent)
 		fprintf(stderr, "%s:%d: %s.\n%.*s\n",
@@ -1794,7 +1802,10 @@ static int parse_fragment(struct apply_state *state,
 		}
 
 		/* eat the "\\ No newline..." as well, if exists */
-		len += skip_len;
+		if (skip_len) {
+			len += skip_len;
+			state->linenr++;
+		}
 	}
 	if (oldlines || newlines)
 		return -1;
