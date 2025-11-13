@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "rust/generate-headers",
     "rust/gitcore",
 ]
 resolver = "2"
