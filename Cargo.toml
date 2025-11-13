@@ -2,5 +2,6 @@
 members = [
     "rust/generate-headers",
     "rust/gitcore",
+    "rust/link-with-c",
 ]
 resolver = "2"
