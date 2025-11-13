@@ -53,7 +53,7 @@ UI, Workflows & Features
 
  * Configuration variables that take a pathname as a value
    (e.g. blame.ignorerevsfile) can be marked as optional by prefixing
-   ":(optoinal)" before its value.
+   ":(optional)" before its value.
 
  * Show 'P'ipe command in "git add -p".
 
