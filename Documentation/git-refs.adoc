@@ -30,7 +30,8 @@ COMMANDS
 --------
 
 `migrate`::
-	Migrate ref store between different formats.
+	Migrate ref store between different formats. Supports repositories
+	with worktrees; migration must be run from the main worktree.
 
 `verify`::
 	Verify reference database consistency.
@@ -95,7 +96,7 @@ KNOWN LIMITATIONS
 
 The ref format migration has several known limitations in its current form:
 
-* It is not possible to migrate repositories that have worktrees.
+* Migration must be run from the main worktree.
 
 * There is no way to block concurrent writes to the repository during an
   ongoing migration. Concurrent writes can lead to an inconsistent migrated
