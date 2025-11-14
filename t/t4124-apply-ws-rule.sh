@@ -556,4 +556,191 @@ test_expect_success 'whitespace check skipped for excluded paths' '
 	git apply --include=used --stat --whitespace=error <patch
 '
 
+test_expect_success 'check incomplete lines (setup)' '
+	rm -f .gitattributes &&
+	git config core.whitespace incomplete-line
+'
+
+test_expect_success 'incomplete context line (not an error)' '
+	(test_write_lines 1 2 3 4 5 && printf 6) >sample-i &&
+	(test_write_lines 1 2 3 0 5 && printf 6) >sample2-i &&
+	cat sample-i >target &&
+	git add target &&
+	cat sample2-i >target &&
+	git diff-files -p target >patch &&
+
+	cat sample-i >target &&
+	git apply --whitespace=error <patch &&
+	test_cmp sample2-i target &&
+
+	cat sample-i >target &&
+	git apply --whitespace=error --check <patch 2>error &&
+	test_cmp sample-i target &&
+	test_must_be_empty error &&
+
+	cat sample2-i >target &&
+	git apply --whitespace=error -R <patch &&
+	test_cmp sample-i target &&
+
+	cat sample2-i >target &&
+	git apply -R --whitespace=error --check <patch 2>error &&
+	test_cmp sample2-i target &&
+	test_must_be_empty error
+'
+
+test_expect_success 'last line made incomplete (error)' '
+	test_write_lines 1 2 3 4 5 6 >sample &&
+	(test_write_lines 1 2 3 4 5 && printf 6) >sample-i &&
+	cat sample >target &&
+	git add target &&
+	cat sample-i >target &&
+	git diff-files -p target >patch &&
+
+	cat sample >target &&
+	test_must_fail git apply --whitespace=error <patch 2>error &&
+	test_grep "no newline" error &&
+
+	cat sample >target &&
+	test_must_fail git apply --whitespace=error --check <patch 2>actual &&
+	test_cmp sample target &&
+	cat >expect <<-\EOF &&
+	<stdin>:10: no newline at the end of file.
+	6
+	error: 1 line adds whitespace errors.
+	EOF
+	test_cmp expect actual &&
+
+	cat sample-i >target &&
+	git apply --whitespace=error -R <patch &&
+	test_cmp sample target &&
+
+	cat sample-i >target &&
+	git apply --whitespace=error --check -R <patch 2>error &&
+	test_cmp sample-i target &&
+	test_must_be_empty error &&
+
+	cat sample >target &&
+	git apply --whitespace=fix <patch &&
+	test_cmp sample target
+'
+
+test_expect_success 'incomplete line removed at the end (not an error)' '
+	(test_write_lines 1 2 3 4 5 && printf 6) >sample-i &&
+	test_write_lines 1 2 3 4 5 6 >sample &&
+	cat sample-i >target &&
+	git add target &&
+	cat sample >target &&
+	git diff-files -p target >patch &&
+
+	cat sample-i >target &&
+	git apply --whitespace=error <patch &&
+	test_cmp sample target &&
+
+	cat sample-i >target &&
+	git apply --whitespace=error --check <patch 2>error &&
+	test_cmp sample-i target &&
+	test_must_be_empty error &&
+
+	cat sample >target &&
+	test_must_fail git apply --whitespace=error -R <patch 2>error &&
+	test_grep "no newline" error &&
+
+	cat sample >target &&
+	test_must_fail git apply --whitespace=error --check -R <patch 2>actual &&
+	test_cmp sample target &&
+	cat >expect <<-\EOF &&
+	<stdin>:9: no newline at the end of file.
+	6
+	error: 1 line adds whitespace errors.
+	EOF
+	test_cmp expect actual &&
+
+	cat sample >target &&
+	git apply --whitespace=fix -R <patch &&
+	test_cmp sample target
+'
+
+test_expect_success 'incomplete line corrected at the end (not an error)' '
+	(test_write_lines 1 2 3 4 5 && printf 6) >sample-i &&
+	test_write_lines 1 2 3 4 5 7 >sample3 &&
+	cat sample-i >target &&
+	git add target &&
+	cat sample3 >target &&
+	git diff-files -p target >patch &&
+
+	cat sample-i >target &&
+	git apply --whitespace=error <patch &&
+	test_cmp sample3 target &&
+
+	cat sample-i >target &&
+	git apply --whitespace=error --check <patch 2>error &&
+	test_cmp sample-i target &&
+	test_must_be_empty error &&
+
+	cat sample3 >target &&
+	test_must_fail git apply --whitespace=error -R <patch 2>error &&
+	test_grep "no newline" error &&
+
+	cat sample3 >target &&
+	test_must_fail git apply --whitespace=error -R --check <patch 2>actual &&
+	test_cmp sample3 target &&
+	cat >expect <<-\EOF &&
+	<stdin>:9: no newline at the end of file.
+	6
+	error: 1 line adds whitespace errors.
+	EOF
+	test_cmp expect actual &&
+
+	cat sample3 >target &&
+	git apply --whitespace=fix -R <patch &&
+	test_cmp sample target
+'
+
+test_expect_success 'incomplete line modified at the end (error)' '
+	(test_write_lines 1 2 3 4 5 && printf 6) >sample-i &&
+	(test_write_lines 1 2 3 4 5 && printf 7) >sample3-i &&
+	test_write_lines 1 2 3 4 5 6 >sample &&
+	test_write_lines 1 2 3 4 5 7 >sample3 &&
+	cat sample-i >target &&
+	git add target &&
+	cat sample3-i >target &&
+	git diff-files -p target >patch &&
+
+	cat sample-i >target &&
+	test_must_fail git apply --whitespace=error <patch 2>error &&
+	test_grep "no newline" error &&
+
+	cat sample-i >target &&
+	test_must_fail git apply --whitespace=error --check <patch 2>actual &&
+	test_cmp sample-i target &&
+	cat >expect <<-\EOF &&
+	<stdin>:11: no newline at the end of file.
+	7
+	error: 1 line adds whitespace errors.
+	EOF
+	test_cmp expect actual &&
+
+	cat sample3-i >target &&
+	test_must_fail git apply --whitespace=error -R <patch 2>error &&
+	test_grep "no newline" error &&
+
+	cat sample3-i >target &&
+	test_must_fail git apply --whitespace=error --check -R <patch 2>actual &&
+	test_cmp sample3-i target &&
+	cat >expect <<-\EOF &&
+	<stdin>:9: no newline at the end of file.
+	6
+	error: 1 line adds whitespace errors.
+	EOF
+	test_cmp expect actual &&
+
+	cat sample-i >target &&
+	git apply --whitespace=fix <patch &&
+	test_cmp sample3 target &&
+
+	cat sample3-i >target &&
+	git apply --whitespace=fix -R <patch &&
+	test_cmp sample target
+'
+
 test_done
