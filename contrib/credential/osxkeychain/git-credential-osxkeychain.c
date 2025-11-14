@@ -2,6 +2,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <Security/Security.h>
+#include "git-compat-util.h"
+#include "strbuf.h"
+#include "wrapper.h"
 
 #define ENCODING kCFStringEncodingUTF8
 static CFStringRef protocol; /* Stores constant strings - not memory managed */
@@ -12,7 +15,7 @@ static CFStringRef username;
 static CFDataRef password;
 static CFDataRef password_expiry_utc;
 static CFDataRef oauth_refresh_token;
-static int state_seen;
+static char *state_seen;
 
 static void clear_credential(void)
 {
@@ -47,27 +50,6 @@ static void clear_credential(void)
 }
 
 #define STRING_WITH_LENGTH(s) s, sizeof(s) - 1
-
-__attribute__((format (printf, 1, 2), __noreturn__))
-static void die(const char *err, ...)
-{
-	char msg[4096];
-	va_list params;
-	va_start(params, err);
-	vsnprintf(msg, sizeof(msg), err, params);
-	fprintf(stderr, "%s\n", msg);
-	va_end(params);
-	clear_credential();
-	exit(1);
-}
-
-static void *xmalloc(size_t len)
-{
-	void *ret = malloc(len);
-	if (!ret)
-		die("Out of memory");
-	return ret;
-}
 
 static CFDictionaryRef create_dictionary(CFAllocatorRef allocator, ...)
 {
@@ -112,6 +94,66 @@ static void write_item(const char *what, const char *buf, size_t len)
 	putchar('\n');
 }
 
+static void write_item_strbuf(struct strbuf *sb, const char *what, const char *buf, int n)
+{
+	char s[32];
+
+	xsnprintf(s, sizeof(s), "__%s=", what);
+	strbuf_add(sb, s, strlen(s));
+	strbuf_add(sb, buf, n);
+}
+
+static void write_item_strbuf_cfstring(struct strbuf *sb, const char *what, CFStringRef ref)
+{
+	char *buf;
+	int len;
+
+	if (!ref)
+		return;
+	len = CFStringGetMaximumSizeForEncoding(CFStringGetLength(ref), ENCODING) + 1;
+	buf = xmalloc(len);
+	if (CFStringGetCString(ref, buf, len, ENCODING))
+		write_item_strbuf(sb, what, buf, strlen(buf));
+	free(buf);
+}
+
+static void write_item_strbuf_cfnumber(struct strbuf *sb, const char *what, CFNumberRef ref)
+{
+	short n;
+	char buf[32];
+
+	if (!ref)
+		return;
+	if (!CFNumberGetValue(ref, kCFNumberShortType, &n))
+		return;
+	xsnprintf(buf, sizeof(buf), "%d", n);
+	write_item_strbuf(sb, what, buf, strlen(buf));
+}
+
+static void write_item_strbuf_cfdata(struct strbuf *sb, const char *what, CFDataRef ref)
+{
+	char *buf;
+	int len;
+
+	if (!ref)
+		return;
+	buf = (char *)CFDataGetBytePtr(ref);
+	if (!buf || strlen(buf) == 0)
+		return;
+	len = CFDataGetLength(ref);
+	write_item_strbuf(sb, what, buf, len);
+}
+
+static void encode_state_seen(struct strbuf *sb)
+{
+	strbuf_add(sb, "osxkeychain:seen=", strlen("osxkeychain:seen="));
+	write_item_strbuf_cfstring(sb, "host", host);
+	write_item_strbuf_cfnumber(sb, "port", port);
+	write_item_strbuf_cfstring(sb, "path", path);
+	write_item_strbuf_cfstring(sb, "username", username);
+	write_item_strbuf_cfdata(sb, "password", password);
+}
+
 static void find_username_in_item(CFDictionaryRef item)
 {
 	CFStringRef account_ref;
@@ -124,6 +166,7 @@ static void find_username_in_item(CFDictionaryRef item)
 		write_item("username", "", 0);
 		return;
 	}
+	username = CFStringCreateCopy(kCFAllocatorDefault, account_ref);
 
 	username_buf = (char *)CFStringGetCStringPtr(account_ref, ENCODING);
 	if (username_buf)
@@ -163,6 +206,7 @@ static OSStatus find_internet_password(void)
 	}
 
 	data = CFDictionaryGetValue(item, kSecValueData);
+	password = CFDataCreateCopy(kCFAllocatorDefault, data);
 
 	write_item("password",
 		   (const char *)CFDataGetBytePtr(data),
@@ -173,7 +217,14 @@ static OSStatus find_internet_password(void)
 	CFRelease(item);
 
 	write_item("capability[]", "state", strlen("state"));
-	write_item("state[]", "osxkeychain:seen=1", strlen("osxkeychain:seen=1"));
+	{
+		struct strbuf sb;
+
+		strbuf_init(&sb, 1024);
+		encode_state_seen(&sb);
+		write_item("state[]", sb.buf, strlen(sb.buf));
+		strbuf_release(&sb);
+	}
 
 out:
 	CFRelease(attrs);
@@ -288,12 +339,21 @@ static OSStatus add_internet_password(void)
 	CFDictionaryRef attrs;
 	OSStatus result;
 
-	if (state_seen)
-		return errSecSuccess;
-
 	/* Only store complete credentials */
 	if (!protocol || !host || !username || !password)
 		return -1;
+
+	if (state_seen) {
+		struct strbuf sb;
+
+		strbuf_init(&sb, 1024);
+		encode_state_seen(&sb);
+		if (!strcmp(state_seen, sb.buf)) {
+			strbuf_release(&sb);
+			return errSecSuccess;
+		}
+		strbuf_release(&sb);
+	}
 
 	data = CFDataCreateMutableCopy(kCFAllocatorDefault, 0, password);
 	if (password_expiry_utc) {
@@ -403,8 +463,9 @@ static void read_credential(void)
 							   (UInt8 *)v,
 							   strlen(v));
 		else if (!strcmp(buf, "state[]")) {
-			if (!strcmp(v, "osxkeychain:seen=1"))
-				state_seen = 1;
+			int len = strlen("osxkeychain:seen=");
+			if (!strncmp(v, "osxkeychain:seen=", len))
+				state_seen = xstrdup(v);
 		}
 		/*
 		 * Ignore other lines; we don't know what they mean, but
@@ -442,6 +503,9 @@ int main(int argc, const char **argv)
 		die("failed to %s: %d", argv[1], (int)result);
 
 	clear_credential();
+
+	if (state_seen)
+		free(state_seen);
 
 	return 0;
 }
