@@ -462,8 +462,6 @@ int prepare_midx_pack(struct multi_pack_index *m,
 		    m->pack_names[pack_int_id]);
 	p = packfile_store_load_pack(r->objects->packfiles,
 				     pack_name.buf, m->source->local);
-	if (p)
-		list_add_tail(&p->mru, &r->objects->packfiles->mru);
 	strbuf_release(&pack_name);
 
 	if (!p) {
