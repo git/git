@@ -3916,6 +3916,16 @@ __git_main ()
 			--help
 			"
 			;;
+		-*)
+			__gitcomp "
+			-C
+			-P
+			-c
+			-h
+			-p
+			-v
+			"
+			;;
 		*)
 			if test -n "${GIT_TESTING_PORCELAIN_COMMAND_LIST-}"
 			then
