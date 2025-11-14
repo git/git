@@ -86,17 +86,16 @@ int odb_mkstemp(struct object_database *odb,
 /*
  * Return non-zero iff the path is usable as an alternate object database.
  */
-static int alt_odb_usable(struct object_database *o,
-			  struct strbuf *path,
-			  const char *normalized_objdir, khiter_t *pos)
+static int alt_odb_usable(struct object_database *o, const char *path,
+			  const char *normalized_objdir)
 {
 	int r;
 
 	/* Detect cases where alternate disappeared */
-	if (!is_directory(path->buf)) {
+	if (!is_directory(path)) {
 		error(_("object directory %s does not exist; "
 			"check .git/objects/info/alternates"),
-		      path->buf);
+		      path);
 		return 0;
 	}
 
@@ -113,11 +112,14 @@ static int alt_odb_usable(struct object_database *o,
 		assert(r == 1); /* never used */
 		kh_value(o->source_by_path, p) = o->sources;
 	}
-	if (fspatheq(path->buf, normalized_objdir))
+
+	if (fspatheq(path, normalized_objdir))
 		return 0;
-	*pos = kh_put_odb_path_map(o->source_by_path, path->buf, &r);
-	/* r: 0 = exists, 1 = never used, 2 = deleted */
-	return r == 0 ? 0 : 1;
+
+	if (kh_get_odb_path_map(o->source_by_path, path) < kh_end(o->source_by_path))
+		return 0;
+
+	return 1;
 }
 
 /*
@@ -139,6 +141,21 @@ static void read_info_alternates(struct object_database *odb,
 				 const char *relative_base,
 				 int depth);
 
+struct odb_source *odb_source_new(struct object_database *odb,
+				  const char *path,
+				  bool local)
+{
+	struct odb_source *source;
+
+	CALLOC_ARRAY(source, 1);
+	source->odb = odb;
+	source->local = local;
+	source->path = xstrdup(path);
+	source->loose = odb_source_loose_new(source);
+
+	return source;
+}
+
 static struct odb_source *link_alt_odb_entry(struct object_database *odb,
 					     const char *dir,
 					     const char *relative_base,
@@ -148,6 +165,7 @@ static struct odb_source *link_alt_odb_entry(struct object_database *odb,
 	struct strbuf pathbuf = STRBUF_INIT;
 	struct strbuf tmp = STRBUF_INIT;
 	khiter_t pos;
+	int ret;
 
 	if (!is_absolute_path(dir) && relative_base) {
 		strbuf_realpath(&pathbuf, relative_base, 1);
@@ -172,20 +190,18 @@ static struct odb_source *link_alt_odb_entry(struct object_database *odb,
 	strbuf_reset(&tmp);
 	strbuf_realpath(&tmp, odb->sources->path, 1);
 
-	if (!alt_odb_usable(odb, &pathbuf, tmp.buf, &pos))
+	if (!alt_odb_usable(odb, pathbuf.buf, tmp.buf))
 		goto error;
 
-	CALLOC_ARRAY(alternate, 1);
-	alternate->odb = odb;
-	alternate->local = false;
-	/* pathbuf.buf is already in r->objects->source_by_path */
-	alternate->path = strbuf_detach(&pathbuf, NULL);
+	alternate = odb_source_new(odb, pathbuf.buf, false);
 
 	/* add the alternate entry */
 	*odb->sources_tail = alternate;
 	odb->sources_tail = &(alternate->next);
-	alternate->next = NULL;
-	assert(odb->source_by_path);
+
+	pos = kh_put_odb_path_map(odb->source_by_path, alternate->path, &ret);
+	if (!ret)
+		BUG("source must not yet exist");
 	kh_value(odb->source_by_path, pos) = alternate;
 
 	/* recursively add alternates */
@@ -337,9 +353,7 @@ struct odb_source *odb_set_temporary_primary_source(struct object_database *odb,
 	 * Make a new primary odb and link the old primary ODB in as an
 	 * alternate
 	 */
-	source = xcalloc(1, sizeof(*source));
-	source->odb = odb;
-	source->path = xstrdup(dir);
+	source = odb_source_new(odb, dir, false);
 
 	/*
 	 * Disable ref updates while a temporary odb is active, since
@@ -352,11 +366,10 @@ struct odb_source *odb_set_temporary_primary_source(struct object_database *odb,
 	return source->next;
 }
 
-static void free_object_directory(struct odb_source *source)
+static void odb_source_free(struct odb_source *source)
 {
 	free(source->path);
-	odb_clear_loose_cache(source);
-	loose_object_map_clear(&source->loose_map);
+	odb_source_loose_free(source->loose);
 	free(source);
 }
 
@@ -374,7 +387,7 @@ void odb_restore_primary_source(struct object_database *odb,
 		BUG("we expect the old primary object store to be the first alternate");
 
 	odb->sources = restore_source;
-	free_object_directory(cur_source);
+	odb_source_free(cur_source);
 }
 
 char *compute_alternate_path(const char *path, struct strbuf *err)
@@ -684,13 +697,18 @@ static int do_oid_object_info_extended(struct object_database *odb,
 		return 0;
 	}
 
+	odb_prepare_alternates(odb);
+
 	while (1) {
+		struct odb_source *source;
+
 		if (find_pack_entry(odb->repo, real, &e))
 			break;
 
 		/* Most likely it's a loose object. */
-		if (!loose_object_info(odb->repo, real, oi, flags))
-			return 0;
+		for (source = odb->sources; source; source = source->next)
+			if (!odb_source_loose_read_object_info(source, real, oi, flags))
+				return 0;
 
 		/* Not a loose object; someone else may have just packed it. */
 		if (!(flags & OBJECT_INFO_QUICK)) {
@@ -969,6 +987,22 @@ int odb_has_object(struct object_database *odb, const struct object_id *oid,
 	return odb_read_object_info_extended(odb, oid, NULL, object_info_flags) >= 0;
 }
 
+int odb_freshen_object(struct object_database *odb,
+		       const struct object_id *oid)
+{
+	struct odb_source *source;
+
+	if (packfile_store_freshen_object(odb->packfiles, oid))
+		return 1;
+
+	odb_prepare_alternates(odb);
+	for (source = odb->sources; source; source = source->next)
+		if (odb_source_loose_freshen_object(source, oid))
+			return 1;
+
+	return 0;
+}
+
 void odb_assert_oid_type(struct object_database *odb,
 			 const struct object_id *oid, enum object_type expect)
 {
@@ -987,7 +1021,15 @@ int odb_write_object_ext(struct object_database *odb,
 			 struct object_id *compat_oid,
 			 unsigned flags)
 {
-	return write_object_file(odb->sources, buf, len, type, oid, compat_oid, flags);
+	return odb_source_loose_write_object(odb->sources, buf, len, type,
+					     oid, compat_oid, flags);
+}
+
+int odb_write_object_stream(struct object_database *odb,
+			    struct odb_write_stream *stream, size_t len,
+			    struct object_id *oid)
+{
+	return odb_source_loose_write_stream(odb->sources, stream, len, oid);
 }
 
 struct object_database *odb_new(struct repository *repo)
@@ -1002,13 +1044,13 @@ struct object_database *odb_new(struct repository *repo)
 	return o;
 }
 
-static void free_object_directories(struct object_database *o)
+static void odb_free_sources(struct object_database *o)
 {
 	while (o->sources) {
 		struct odb_source *next;
 
 		next = o->sources->next;
-		free_object_directory(o->sources);
+		odb_source_free(o->sources);
 		o->sources = next;
 	}
 	kh_destroy_odb_path_map(o->source_by_path);
@@ -1026,7 +1068,7 @@ void odb_clear(struct object_database *o)
 	o->commit_graph = NULL;
 	o->commit_graph_attempted = 0;
 
-	free_object_directories(o);
+	odb_free_sources(o);
 	o->sources_tail = NULL;
 	o->loaded_alternates = 0;
 
@@ -1057,7 +1099,7 @@ void odb_reprepare(struct object_database *o)
 	odb_prepare_alternates(o);
 
 	for (source = o->sources; source; source = source->next)
-		odb_clear_loose_cache(source);
+		odb_source_loose_reprepare(source);
 
 	o->approximate_object_count_valid = 0;
 

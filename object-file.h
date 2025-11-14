@@ -7,14 +7,6 @@
 
 struct index_state;
 
-/*
- * Set this to 0 to prevent odb_read_object_info_extended() from fetching missing
- * blobs. This has a difference only if extensions.partialClone is set.
- *
- * Its default value is 1.
- */
-extern int fetch_if_missing;
-
 enum {
 	INDEX_WRITE_OBJECT = (1 << 0),
 	INDEX_FORMAT_CHECK = (1 << 1),
@@ -26,15 +18,65 @@ int index_path(struct index_state *istate, struct object_id *oid, const char *pa
 
 struct odb_source;
 
+struct odb_source_loose {
+	struct odb_source *source;
+
+	/*
+	 * Used to store the results of readdir(3) calls when we are OK
+	 * sacrificing accuracy due to races for speed. That includes
+	 * object existence with OBJECT_INFO_QUICK, as well as
+	 * our search for unique abbreviated hashes. Don't use it for tasks
+	 * requiring greater accuracy!
+	 *
+	 * Be sure to call odb_load_loose_cache() before using.
+	 */
+	uint32_t subdir_seen[8]; /* 256 bits */
+	struct oidtree *cache;
+
+	/* Map between object IDs for loose objects. */
+	struct loose_object_map *map;
+};
+
+struct odb_source_loose *odb_source_loose_new(struct odb_source *source);
+void odb_source_loose_free(struct odb_source_loose *loose);
+
+/* Reprepare the loose source by emptying the loose object cache. */
+void odb_source_loose_reprepare(struct odb_source *source);
+
+int odb_source_loose_read_object_info(struct odb_source *source,
+				      const struct object_id *oid,
+				      struct object_info *oi, int flags);
+
+void *odb_source_loose_map_object(struct odb_source *source,
+				  const struct object_id *oid,
+				  unsigned long *size);
+
+/*
+ * Return true iff an object database source has a loose object
+ * with the specified name.  This function does not respect replace
+ * references.
+ */
+int odb_source_loose_has_object(struct odb_source *source,
+				const struct object_id *oid);
+
+int odb_source_loose_freshen_object(struct odb_source *source,
+				    const struct object_id *oid);
+
+int odb_source_loose_write_object(struct odb_source *source,
+				  const void *buf, unsigned long len,
+				  enum object_type type, struct object_id *oid,
+				  struct object_id *compat_oid_in, unsigned flags);
+
+int odb_source_loose_write_stream(struct odb_source *source,
+				  struct odb_write_stream *stream, size_t len,
+				  struct object_id *oid);
+
 /*
  * Populate and return the loose object cache array corresponding to the
  * given object ID.
  */
-struct oidtree *odb_loose_cache(struct odb_source *source,
-				const struct object_id *oid);
-
-/* Empty the loose object cache for the specified object directory. */
-void odb_clear_loose_cache(struct odb_source *source);
+struct oidtree *odb_source_loose_cache(struct odb_source *source,
+				       const struct object_id *oid);
 
 /*
  * Put in `buf` the name of the file in the local object database that
@@ -43,17 +85,6 @@ void odb_clear_loose_cache(struct odb_source *source);
 const char *odb_loose_path(struct odb_source *source,
 			   struct strbuf *buf,
 			   const struct object_id *oid);
-
-/*
- * Return true iff an object database source has a loose object
- * with the specified name.  This function does not respect replace
- * references.
- */
-int has_loose_object(struct odb_source *source,
-		     const struct object_id *oid);
-
-void *map_loose_object(struct repository *r, const struct object_id *oid,
-		       unsigned long *size);
 
 /*
  * Iterate over the files in the loose-object parts of the object
@@ -146,21 +177,6 @@ enum unpack_loose_header_result unpack_loose_header(git_zstream *stream,
 struct object_info;
 int parse_loose_header(const char *hdr, struct object_info *oi);
 
-int write_object_file(struct odb_source *source,
-		      const void *buf, unsigned long len,
-		      enum object_type type, struct object_id *oid,
-		      struct object_id *compat_oid_in, unsigned flags);
-
-struct input_stream {
-	const void *(*read)(struct input_stream *, unsigned long *len);
-	void *data;
-	int is_finished;
-};
-
-int stream_loose_object(struct odb_source *source,
-			struct input_stream *in_stream, size_t len,
-			struct object_id *oid);
-
 int force_object_loose(struct odb_source *source,
 		       const struct object_id *oid, time_t mtime);
 
@@ -181,10 +197,6 @@ int check_object_signature(struct repository *r, const struct object_id *oid,
  * the streaming interface and rehash it to do the same.
  */
 int stream_object_signature(struct repository *r, const struct object_id *oid);
-
-int loose_object_info(struct repository *r,
-		      const struct object_id *oid,
-		      struct object_info *oi, int flags);
 
 enum finalize_object_file_flags {
 	FOF_SKIP_COLLISION_CHECK = 1,

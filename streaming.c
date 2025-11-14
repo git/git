@@ -230,12 +230,21 @@ static int open_istream_loose(struct git_istream *st, struct repository *r,
 			      enum object_type *type)
 {
 	struct object_info oi = OBJECT_INFO_INIT;
+	struct odb_source *source;
+
 	oi.sizep = &st->size;
 	oi.typep = type;
 
-	st->u.loose.mapped = map_loose_object(r, oid, &st->u.loose.mapsize);
+	odb_prepare_alternates(r->objects);
+	for (source = r->objects->sources; source; source = source->next) {
+		st->u.loose.mapped = odb_source_loose_map_object(source, oid,
+								 &st->u.loose.mapsize);
+		if (st->u.loose.mapped)
+			break;
+	}
 	if (!st->u.loose.mapped)
 		return -1;
+
 	switch (unpack_loose_header(&st->z, st->u.loose.mapped,
 				    st->u.loose.mapsize, st->u.loose.hdr,
 				    sizeof(st->u.loose.hdr))) {
