@@ -548,12 +548,36 @@ void cache_tree_write(struct strbuf *sb, struct cache_tree *root)
 	trace2_region_leave("cache_tree", "write", the_repository);
 }
 
+static long parse_long(const char **ptr, unsigned long *len_p)
+{
+	const char *s = *ptr;
+	unsigned long len = *len_p;
+	long ret = 0;
+	int sign = 1;
+
+	while (len && *s == '-') {
+		sign *= -1;
+		s++;
+		len--;
+	}
+
+	while (len) {
+		if (!isdigit(*s))
+			break;
+		ret *= 10;
+		ret += *s - '0';
+		s++;
+		len--;
+	}
+	*ptr = s;
+	*len_p = len;
+	return sign * ret;
+}
+
 static struct cache_tree *read_one(const char **buffer, unsigned long *size_p)
 {
 	const char *buf = *buffer;
 	unsigned long size = *size_p;
-	const char *cp;
-	char *ep;
 	struct cache_tree *it;
 	int i, subtree_nr;
 	const unsigned rawsz = the_hash_algo->rawsz;
@@ -569,19 +593,12 @@ static struct cache_tree *read_one(const char **buffer, unsigned long *size_p)
 	buf++; size--;
 	it = cache_tree();
 
-	cp = buf;
-	it->entry_count = strtol(cp, &ep, 10);
-	if (cp == ep)
+	it->entry_count = parse_long(&buf, &size);
+	if (!size || *buf != ' ')
 		goto free_return;
-	cp = ep;
-	subtree_nr = strtol(cp, &ep, 10);
-	if (cp == ep)
-		goto free_return;
-	while (size && *buf && *buf != '\n') {
-		size--;
-		buf++;
-	}
-	if (!size)
+	buf++; size--;
+	subtree_nr = parse_long(&buf, &size);
+	if (!size || *buf != '\n')
 		goto free_return;
 	buf++; size--;
 	if (0 <= it->entry_count) {
