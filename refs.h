@@ -521,6 +521,13 @@ struct refs_optimize_opts {
 int refs_optimize(struct ref_store *refs, struct refs_optimize_opts *opts);
 
 /*
+ * Check if refs backend can be optimized by calling 'refs_optimize'.
+ */
+int refs_optimize_required(struct ref_store *ref_store,
+			   struct refs_optimize_opts *opts,
+			   bool *required);
+
+/*
  * Setup reflog before using. Fill in err and return -1 on failure.
  */
 int refs_create_reflog(struct ref_store *refs, const char *refname,

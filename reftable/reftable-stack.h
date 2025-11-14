@@ -123,6 +123,17 @@ struct reftable_log_expiry_config {
 int reftable_stack_compact_all(struct reftable_stack *st,
 			       struct reftable_log_expiry_config *config);
 
+/*
+ * Check if compaction is required.
+ *
+ * When `use_heuristics` is false, check if all tables can be compacted to a
+ * single table. If true, use heuristics to determine if the tables need to be
+ * compacted to maintain geometric progression.
+ */
+int reftable_stack_compaction_required(struct reftable_stack *st,
+				       bool use_heuristics,
+				       bool *required);
+
 /* heuristically compact unbalanced table stack. */
 int reftable_stack_auto_compact(struct reftable_stack *st);
 
