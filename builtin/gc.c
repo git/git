@@ -1103,24 +1103,21 @@ struct cg_auto_data {
 	int limit;
 };
 
-static int dfs_on_ref(const char *refname UNUSED,
-		      const char *referent UNUSED,
-		      const struct object_id *oid,
-		      int flags UNUSED,
-		      void *cb_data)
+static int dfs_on_ref(const struct reference *ref, void *cb_data)
 {
 	struct cg_auto_data *data = (struct cg_auto_data *)cb_data;
 	int result = 0;
+	const struct object_id *maybe_peeled = ref->oid;
 	struct object_id peeled;
 	struct commit_list *stack = NULL;
 	struct commit *commit;
 
-	if (!peel_iterated_oid(the_repository, oid, &peeled))
-		oid = &peeled;
-	if (odb_read_object_info(the_repository->objects, oid, NULL) != OBJ_COMMIT)
+	if (!reference_get_peeled_oid(the_repository, ref, &peeled))
+		maybe_peeled = &peeled;
+	if (odb_read_object_info(the_repository->objects, maybe_peeled, NULL) != OBJ_COMMIT)
 		return 0;
 
-	commit = lookup_commit(the_repository, oid);
+	commit = lookup_commit(the_repository, maybe_peeled);
 	if (!commit)
 		return 0;
 	if (repo_parse_commit(the_repository, commit) ||

@@ -595,8 +595,15 @@ int other_head_refs(each_ref_fn fn, void *cb_data)
 		if (refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
 					    refname.buf,
 					    RESOLVE_REF_READING,
-					    &oid, &flag))
-			ret = fn(refname.buf, NULL, &oid, flag, cb_data);
+					    &oid, &flag)) {
+			struct reference ref = {
+				.name = refname.buf,
+				.oid = &oid,
+				.flags = flag,
+			};
+
+			ret = fn(&ref, cb_data);
+		}
 		if (ret)
 			break;
 	}

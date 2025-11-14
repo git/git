@@ -305,13 +305,12 @@ static void show_ref(const char *path, const struct object_id *oid)
 	}
 }
 
-static int show_ref_cb(const char *path_full, const char *referent UNUSED, const struct object_id *oid,
-		       int flag UNUSED, void *data)
+static int show_ref_cb(const struct reference *ref, void *data)
 {
 	struct oidset *seen = data;
-	const char *path = strip_namespace(path_full);
+	const char *path = strip_namespace(ref->name);
 
-	if (ref_is_hidden(path, path_full, &hidden_refs))
+	if (ref_is_hidden(path, ref->name, &hidden_refs))
 		return 0;
 
 	/*
@@ -320,13 +319,13 @@ static int show_ref_cb(const char *path_full, const char *referent UNUSED, const
 	 * transfer but will otherwise ignore them.
 	 */
 	if (!path) {
-		if (oidset_insert(seen, oid))
+		if (oidset_insert(seen, ref->oid))
 			return 0;
 		path = ".have";
 	} else {
-		oidset_insert(seen, oid);
+		oidset_insert(seen, ref->oid);
 	}
-	show_ref(path, oid);
+	show_ref(path, ref->oid);
 	return 0;
 }
 
