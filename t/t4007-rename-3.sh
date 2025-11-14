@@ -41,6 +41,16 @@ test_expect_success 'copy detection, cached' '
 	compare_diff_raw current expected
 '
 
+test_expect_success 'exit code of quiet copy detection' '
+	test_expect_code 1 \
+	git diff --quiet --cached --find-copies-harder $tree
+'
+
+test_expect_success 'exit code of quiet copy detection with --no-ext-diff' '
+	test_expect_code 1 \
+	git diff --quiet --cached --find-copies-harder --no-ext-diff $tree
+'
+
 # In the tree, there is only path0/COPYING.  In the cache, path0 and
 # path1 both have COPYING and the latter is a copy of path0/COPYING.
 # However when we say we care only about path1, we should just see

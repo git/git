@@ -4987,6 +4987,8 @@ void diff_setup_done(struct diff_options *options)
 	if (options->flags.quick) {
 		options->output_format = DIFF_FORMAT_NO_OUTPUT;
 		options->flags.exit_with_status = 1;
+		options->detect_rename = 0;
+		options->flags.find_copies_harder = 0;
 	}
 
 	/*
