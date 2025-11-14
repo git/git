@@ -14,10 +14,10 @@ int pack_refs_core(int argc,
 {
 	struct ref_exclusions excludes = REF_EXCLUSIONS_INIT;
 	struct string_list included_refs = STRING_LIST_INIT_NODUP;
-	struct pack_refs_opts pack_refs_opts = {
+	struct refs_optimize_opts optimize_opts = {
 		.exclusions = &excludes,
 		.includes = &included_refs,
-		.flags = PACK_REFS_PRUNE,
+		.flags = REFS_OPTIMIZE_PRUNE,
 	};
 	struct string_list option_excluded_refs = STRING_LIST_INIT_NODUP;
 	struct string_list_item *item;
@@ -26,9 +26,9 @@ int pack_refs_core(int argc,
 
 	struct option opts[] = {
 		OPT_BOOL(0, "all",   &pack_all, N_("pack everything")),
-		OPT_BIT(0, "prune", &pack_refs_opts.flags, N_("prune loose refs (default)"), PACK_REFS_PRUNE),
-		OPT_BIT(0, "auto", &pack_refs_opts.flags, N_("auto-pack refs as needed"), PACK_REFS_AUTO),
-		OPT_STRING_LIST(0, "include", pack_refs_opts.includes, N_("pattern"),
+		OPT_BIT(0, "prune", &optimize_opts.flags, N_("prune loose refs (default)"), REFS_OPTIMIZE_PRUNE),
+		OPT_BIT(0, "auto", &optimize_opts.flags, N_("auto-pack refs as needed"), REFS_OPTIMIZE_AUTO),
+		OPT_STRING_LIST(0, "include", optimize_opts.includes, N_("pattern"),
 			N_("references to include")),
 		OPT_STRING_LIST(0, "exclude", &option_excluded_refs, N_("pattern"),
 			N_("references to exclude")),
@@ -39,15 +39,15 @@ int pack_refs_core(int argc,
 		usage_with_options(usage_opts, opts);
 
 	for_each_string_list_item(item, &option_excluded_refs)
-		add_ref_exclusion(pack_refs_opts.exclusions, item->string);
+		add_ref_exclusion(optimize_opts.exclusions, item->string);
 
 	if (pack_all)
-		string_list_append(pack_refs_opts.includes, "*");
+		string_list_append(optimize_opts.includes, "*");
 
-	if (!pack_refs_opts.includes->nr)
-		string_list_append(pack_refs_opts.includes, "refs/tags/*");
+	if (!optimize_opts.includes->nr)
+		string_list_append(optimize_opts.includes, "refs/tags/*");
 
-	ret = refs_optimize(get_main_ref_store(repo), &pack_refs_opts);
+	ret = refs_optimize(get_main_ref_store(repo), &optimize_opts);
 
 	clear_ref_exclusions(&excludes);
 	string_list_clear(&included_refs, 0);
