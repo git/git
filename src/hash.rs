@@ -310,7 +310,7 @@ mod tests {
             ];
             for (data, oid) in tests {
                 let mut h = algo.hasher();
-                assert_eq!(h.is_safe(), true);
+                assert!(h.is_safe());
                 // Test that this works incrementally.
                 h.update(&data[0..2]);
                 h.update(&data[2..]);

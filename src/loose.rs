@@ -700,7 +700,8 @@ mod tests {
         }
     }
 
-    fn test_entries() -> &'static [(&'static str, &'static [u8], &'static [u8], MapType, bool)] {
+    type TwoHashesTestVectorEntry = (&'static str, &'static [u8], &'static [u8], MapType, bool);
+    fn test_entries() -> &'static [TwoHashesTestVectorEntry] {
         // These are all example blobs containing the content in the first argument.
         &[
             ("abc", b"\xf2\xba\x8f\x84\xab\x5c\x1b\xce\x84\xa7\xb4\x41\xcb\x19\x59\xcf\xc7\x09\x3b\x7f", b"\xc1\xcf\x6e\x46\x50\x77\x93\x0e\x88\xdc\x51\x36\x64\x1d\x40\x2f\x72\xa2\x29\xdd\xd9\x96\xf6\x27\xd6\x0e\x96\x39\xea\xba\x35\xa6", MapType::LooseObject, false),
@@ -741,7 +742,7 @@ mod tests {
             let mut wrtr = TrailingWriter::new();
             map.finish_batch(&mut wrtr).unwrap();
 
-            assert_eq!(map.has_batch(), false);
+            assert!(!map.has_batch());
 
             let data = wrtr.finalize();
             MmapedLooseObjectMap::new(&data, HashAlgorithm::SHA256).unwrap();
@@ -754,7 +755,7 @@ mod tests {
         let mut wrtr = TrailingWriter::new();
         map.finish_batch(&mut wrtr).unwrap();
 
-        assert_eq!(map.has_batch(), false);
+        assert!(!map.has_batch());
 
         let data = wrtr.finalize();
         let entries = test_entries();
@@ -886,16 +887,16 @@ mod tests {
             let s256 = f(HashAlgorithm::SHA256);
             let s1 = f(HashAlgorithm::SHA1);
 
-            let res = map.map_object(&s256, HashAlgorithm::SHA1).unwrap();
+            let res = map.map_object(s256, HashAlgorithm::SHA1).unwrap();
             assert_eq!(res.oid, *s1);
             assert_eq!(res.kind, MapType::Reserved);
-            let res = map.map_oid(&s256, HashAlgorithm::SHA1).unwrap();
+            let res = map.map_oid(s256, HashAlgorithm::SHA1).unwrap();
             assert_eq!(*res, *s1);
 
-            let res = map.map_object(&s1, HashAlgorithm::SHA256).unwrap();
+            let res = map.map_object(s1, HashAlgorithm::SHA256).unwrap();
             assert_eq!(res.oid, *s256);
             assert_eq!(res.kind, MapType::Reserved);
-            let res = map.map_oid(&s1, HashAlgorithm::SHA256).unwrap();
+            let res = map.map_oid(s1, HashAlgorithm::SHA256).unwrap();
             assert_eq!(*res, *s256);
         }
     }
