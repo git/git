@@ -108,11 +108,12 @@ macos-*)
 	# brew install gnu-time
 	brew link --force gettext
 
-	mkdir -p "$CUSTOM_PATH"
-	wget -q "$P4WHENCE/bin.macosx12arm64/helix-core-server.tgz" &&
-	tar -xf helix-core-server.tgz -C "$CUSTOM_PATH" p4 p4d &&
-	sudo xattr -d com.apple.quarantine "$CUSTOM_PATH/p4" "$CUSTOM_PATH/p4d" 2>/dev/null || true
-	rm helix-core-server.tgz
+	# Uncomment this block if you want to run `git p4` tests:
+	# mkdir -p "$CUSTOM_PATH"
+	# wget -q "$P4WHENCE/bin.macosx12arm64/helix-core-server.tgz" &&
+	# tar -xf helix-core-server.tgz -C "$CUSTOM_PATH" p4 p4d &&
+	# sudo xattr -d com.apple.quarantine "$CUSTOM_PATH/p4" "$CUSTOM_PATH/p4d" 2>/dev/null || true
+	# rm helix-core-server.tgz
 
 	case "$jobname" in
 	osx-meson)
