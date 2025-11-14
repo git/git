@@ -146,7 +146,8 @@ See linkgit:git-rebase[1] for details.
 	linkgit:git-status[1] for details. Implies `--dry-run`.
 
 `--branch`::
-	Show the branch and tracking info even in short-format.
+	Show the branch and tracking info even in short-format. See
+	linkgit:git-status[1] for details.
 
 `--porcelain`::
 	When doing a dry-run, give the output in a porcelain-ready
@@ -154,12 +155,13 @@ See linkgit:git-rebase[1] for details.
 	`--dry-run`.
 
 `--long`::
-	When doing a dry-run, give the output in the long-format.
-	Implies `--dry-run`.
+	When doing a dry-run, give the output in the long-format. This
+	is the default output of linkgit:git-status[1]. Implies
+	`--dry-run`.
 
 `-z`::
 `--null`::
-	When showing `short` or `porcelain` status output, print the
+	When showing `short` or `porcelain` linkgit:git-status[1] output, print the
 	filename verbatim and terminate the entries with _NUL_, instead of _LF_.
 	If no format is given, implies the `--porcelain` output format.
 	Without the `-z` option, filenames with "unusual" characters are
