@@ -339,7 +339,7 @@ int cmd_send_pack(int argc,
 
 	if (!ret && !transport_refs_pushed(remote_refs))
 		/* stable plumbing output; do not modify or localize */
-		fprintf(stderr, "Everything up-to-date\n");
+		fprintf(stderr, "Already up to date.\n");
 
 cleanup:
 	string_list_clear(&push_options, 0);
