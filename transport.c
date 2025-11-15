@@ -1316,65 +1316,56 @@ static void die_with_unpushed_submodules(struct string_list *needs_pushing)
 	die(_("Aborting."));
 }
 
+static int pre_push_hook_feed_stdin(int hook_stdin_fd, void *pp_cb, void *pp_task_cb UNUSED)
+{
+	struct hook_cb_data *hook_cb = pp_cb;
+	struct ref *r = hook_cb->options->feed_pipe_ctx;
+	struct strbuf *buf = hook_cb->options->feed_pipe_cb_data;
+	int ret = 0;
+
+	if (!r)
+		return 1; /* no more refs */
+
+	if (!buf)
+		BUG("pipe_task_cb must contain a valid strbuf");
+
+	hook_cb->options->feed_pipe_ctx = r->next;
+	strbuf_reset(buf);
+
+	if (!r->peer_ref) return 0;
+	if (r->status == REF_STATUS_REJECT_NONFASTFORWARD) return 0;
+	if (r->status == REF_STATUS_REJECT_STALE) return 0;
+	if (r->status == REF_STATUS_REJECT_REMOTE_UPDATED) return 0;
+	if (r->status == REF_STATUS_UPTODATE) return 0;
+
+	strbuf_addf(buf, "%s %s %s %s\n",
+		    r->peer_ref->name, oid_to_hex(&r->new_oid),
+		    r->name, oid_to_hex(&r->old_oid));
+
+	ret = write_in_full(hook_stdin_fd, buf->buf, buf->len);
+	if (ret < 0 && errno != EPIPE)
+		return ret; /* We do not mind if a hook does not read all refs. */
+
+	return 0;
+}
+
 static int run_pre_push_hook(struct transport *transport,
 			     struct ref *remote_refs)
 {
-	int ret = 0, x;
-	struct ref *r;
-	struct child_process proc = CHILD_PROCESS_INIT;
-	struct strbuf buf;
-	const char *hook_path = find_hook(the_repository, "pre-push");
+	struct run_hooks_opt opt = RUN_HOOKS_OPT_INIT;
+	struct strbuf buf = STRBUF_INIT;
+	int ret = 0;
 
-	if (!hook_path)
-		return 0;
+	strvec_push(&opt.args, transport->remote->name);
+	strvec_push(&opt.args, transport->url);
 
-	strvec_push(&proc.args, hook_path);
-	strvec_push(&proc.args, transport->remote->name);
-	strvec_push(&proc.args, transport->url);
+	opt.feed_pipe = pre_push_hook_feed_stdin;
+	opt.feed_pipe_ctx = remote_refs;
+	opt.feed_pipe_cb_data = &buf;
 
-	proc.in = -1;
-	proc.trace2_hook_name = "pre-push";
-
-	if (start_command(&proc)) {
-		finish_command(&proc);
-		return -1;
-	}
-
-	sigchain_push(SIGPIPE, SIG_IGN);
-
-	strbuf_init(&buf, 256);
-
-	for (r = remote_refs; r; r = r->next) {
-		if (!r->peer_ref) continue;
-		if (r->status == REF_STATUS_REJECT_NONFASTFORWARD) continue;
-		if (r->status == REF_STATUS_REJECT_STALE) continue;
-		if (r->status == REF_STATUS_REJECT_REMOTE_UPDATED) continue;
-		if (r->status == REF_STATUS_UPTODATE) continue;
-
-		strbuf_reset(&buf);
-		strbuf_addf( &buf, "%s %s %s %s\n",
-			 r->peer_ref->name, oid_to_hex(&r->new_oid),
-			 r->name, oid_to_hex(&r->old_oid));
-
-		if (write_in_full(proc.in, buf.buf, buf.len) < 0) {
-			/* We do not mind if a hook does not read all refs. */
-			if (errno != EPIPE)
-				ret = -1;
-			break;
-		}
-	}
+	ret = run_hooks_opt(the_repository, "pre-push", &opt);
 
 	strbuf_release(&buf);
-
-	x = close(proc.in);
-	if (!ret)
-		ret = x;
-
-	sigchain_pop(SIGPIPE);
-
-	x = finish_command(&proc);
-	if (!ret)
-		ret = x;
 
 	return ret;
 }
