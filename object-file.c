@@ -1297,7 +1297,7 @@ int index_path(struct index_state *istate, struct object_id *oid,
 		break;
 	case S_IFDIR:
 		if (repo_resolve_gitlink_ref(istate->repo, path, "HEAD", oid))
-			return -1;
+			return error(_("'%s' does not have a commit checked out"), path);
 		if (&hash_algos[oid->algo] != istate->repo->hash_algo)
 			return error(_("cannot add a submodule of a different hash algorithm"));
 		break;

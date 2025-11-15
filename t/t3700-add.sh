@@ -388,6 +388,7 @@ test_expect_success 'error on a repository with no commits' '
 	test_must_fail git add empty >actual 2>&1 &&
 	cat >expect <<-EOF &&
 	error: '"'empty/'"' does not have a commit checked out
+	error: unable to index file '"'empty/'"'
 	fatal: adding files failed
 	EOF
 	test_cmp expect actual
