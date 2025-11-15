@@ -385,6 +385,7 @@ integration_tests = [
   't3436-rebase-more-options.sh',
   't3437-rebase-fixup-options.sh',
   't3438-rebase-broken-files.sh',
+  't3440-rebase-trailer.sh',
   't3450-history.sh',
   't3451-history-reword.sh',
   't3452-history-split.sh',

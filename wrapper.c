@@ -688,6 +688,22 @@ void write_file_buf(const char *path, const char *buf, size_t len)
 		die_errno(_("could not close '%s'"), path);
 }
 
+int write_file_buf_gently(const char *path, const char *buf, size_t len)
+{
+	int fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
+
+	if (fd < 0)
+		return error_errno(_("could not open '%s'"), path);
+	if (write_in_full(fd, buf, len) < 0) {
+		int ret = error_errno(_("could not write to '%s'"), path);
+		close(fd);
+		return ret;
+	}
+	if (close(fd))
+		return error_errno(_("could not close '%s'"), path);
+	return 0;
+}
+
 void write_file(const char *path, const char *fmt, ...)
 {
 	va_list params;

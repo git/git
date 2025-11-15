@@ -487,8 +487,15 @@ See also INCOMPATIBLE OPTIONS below.
 	Add a `Signed-off-by` trailer to all the rebased commits. Note
 	that if `--interactive` is given then only commits marked to be
 	picked, edited or reworded will have the trailer added.
-+
+
 See also INCOMPATIBLE OPTIONS below.
+
+--trailer=<trailer>::
+       Append the given trailer line(s) to every rebased commit
+       message, processed via linkgit:git-interpret-trailers[1].
+       When this option is present *rebase automatically implies*
+       `--force-rebase` so that fast‑forwarded commits are also
+       rewritten.
 
 -i::
 --interactive::
