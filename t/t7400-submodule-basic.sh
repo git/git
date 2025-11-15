@@ -407,6 +407,31 @@ test_expect_success 'submodule add in subdirectory with relative path should fai
 	test_grep toplevel output.err
 '
 
+test_expect_success 'submodule add of a different algorithm fails' '
+	git init --object-format=sha256 sha256 &&
+	(
+		cd sha256 &&
+		test_commit abc &&
+		git init --object-format=sha1 submodule &&
+		test_commit -C submodule def &&
+		test_must_fail git submodule add "$submodurl" submodule 2>err &&
+		test_grep "cannot add a submodule of a different hash algorithm" err &&
+		git ls-files --stage >entries &&
+		test_grep ! ^160000 entries
+	) &&
+	git init --object-format=sha1 sha1 &&
+	(
+		cd sha1 &&
+		test_commit abc &&
+		git init --object-format=sha256 submodule &&
+		test_commit -C submodule def &&
+		test_must_fail git submodule add "$submodurl" submodule 2>err &&
+		test_grep "cannot add a submodule of a different hash algorithm" err &&
+		git ls-files --stage >entries &&
+		test_grep ! ^160000 entries
+	)
+'
+
 test_expect_success 'setup - add an example entry to .gitmodules' '
 	git config --file=.gitmodules submodule.example.url git://example.com/init.git
 '
