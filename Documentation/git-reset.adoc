@@ -3,86 +3,65 @@ git-reset(1)
 
 NAME
 ----
-git-reset - Reset current HEAD to the specified state
+git-reset - Set HEAD to point at the specified commit
 
 SYNOPSIS
 --------
 [synopsis]
+git reset [--soft | --mixed [-N] | --hard | --merge | --keep] [-q] [<commit>]
 git reset [-q] [<tree-ish>] [--] <pathspec>...
 git reset [-q] [--pathspec-from-file=<file> [--pathspec-file-nul]] [<tree-ish>]
 git reset (--patch | -p) [<tree-ish>] [--] [<pathspec>...]
-git reset [--soft | --mixed [-N] | --hard | --merge | --keep] [-q] [<commit>]
 
 DESCRIPTION
 -----------
-In the first three forms, copy entries from _<tree-ish>_ to the index.
-In the last form, set the current branch head (`HEAD`) to _<commit>_,
-optionally modifying index and working tree to match.
-The _<tree-ish>_/_<commit>_ defaults to `HEAD` in all forms.
+`git reset [<mode>] <commit>` changes which commit HEAD points to.
+This makes it possible to undo various Git operations, for example
+commit, merge, rebase, and pull.
 
-`git reset [-q] [<tree-ish>] [--] <pathspec>...`::
-`git reset [-q] [--pathspec-from-file=<file> [--pathspec-file-nul]] [<tree-ish>]`::
-	These forms reset the index entries for all paths that match the
-	_<pathspec>_ to their state at _<tree-ish>_.  (It does not affect
-	the working tree or the current branch.)
-+
-This means that `git reset <pathspec>` is the opposite of `git add
-<pathspec>`. This command is equivalent to
-`git restore [--source=<tree-ish>] --staged <pathspec>...`.
-+
-After running `git reset <pathspec>` to update the index entry, you can
-use linkgit:git-restore[1] to check the contents out of the index to
-the working tree. Alternatively, using linkgit:git-restore[1]
-and specifying a commit with `--source`, you
-can copy the contents of a path out of a commit to the index and to the
-working tree in one go.
-
-`git reset (--patch | -p) [<tree-ish>] [--] [<pathspec>...]`::
-	Interactively select hunks in the difference between the index
-	and _<tree-ish>_ (defaults to `HEAD`).  The chosen hunks are applied
-	in reverse to the index.
-+
-This means that `git reset -p` is the opposite of `git add -p`, i.e.
-you can use it to selectively reset hunks. See the "Interactive Mode"
-section of linkgit:git-add[1] to learn how to operate the `--patch` mode.
+However, when you specify files or directories or pass `--patch`,
+`git reset` will instead update the staged version of the specified
+files without updating HEAD.
 
 `git reset [<mode>] [<commit>]`::
-	This form resets the current branch head to _<commit>_ and
-	possibly updates the index (resetting it to the tree of _<commit>_) and
-	the working tree depending on _<mode>_. Before the operation, `ORIG_HEAD`
-	is set to the tip of the current branch. If _<mode>_ is omitted,
-	defaults to `--mixed`. The _<mode>_ must be one of the following:
+	Set the current branch head (`HEAD`) to point at _<commit>_.
+	Depending on _<mode>_, also update the working directory and/or index
+	to match the contents of _<commit>_.
+	_<commit>_ defaults to `HEAD`.
+	Before the operation, `ORIG_HEAD` is set to the tip of the current branch.
 +
---
-`--soft`::
-	Does not touch the index file or the working tree at all (but
-	resets the head to _<commit>_, just like all modes do). This leaves
-	all your changed files "Changes to be committed", as `git status`
-	would put it.
+The _<mode>_ must be one of the following (default `--mixed`):
++
 
+--
 `--mixed`::
-	Resets the index but not the working tree (i.e., the changed files
-	are preserved but not marked for commit) and reports what has not
-	been updated. This is the default action.
+	Leaves your working directory unchanged.
+	Updates the index to match the new HEAD, so nothing will be staged.
 +
 If `-N` is specified, removed paths are marked as intent-to-add (see
 linkgit:git-add[1]).
 
+`--soft`::
+	Leaves your working directory unchanged. The index is left unchanged,
+	so everything in your current commit will be staged.
+	For example, if you have no staged changes, you can use
+	`git reset --soft HEAD~5; git commit`
+	to combine the last 5 commits into 1 commit.
+
 `--hard`::
-	Resets the index and working tree. Any changes to tracked files in the
-	working tree since _<commit>_ are discarded.  Any untracked files or
-	directories in the way of writing any tracked files are simply deleted.
+	Overwrites all files and directories with the version from _<commit>_,
+	and may overwrite untracked files.
+	Updates the index to match the new HEAD, so nothing will be staged.
 
 `--merge`::
+	Mainly exists for backwards compatibility: `git merge --abort` is the
+	usual way to abort a merge. See linkgit:git-merge[1] for the differences.
 	Resets the index and updates the files in the working tree that are
 	different between _<commit>_ and `HEAD`, but keeps those which are
 	different between the index and working tree (i.e. which have changes
 	which have not been added).
 	If a file that is different between _<commit>_ and the index has
 	unstaged changes, reset is aborted.
-+
-In other words, `--merge` does something like a `git read-tree -u -m <commit>`,
-but carries forward unmerged index entries.
 
 `--keep`::
 	Resets index entries and updates files in the working tree that are
@@ -97,6 +76,27 @@ but carries forward unmerged index entries.
 	according to the commit recorded in the superproject, also setting
 	the submodules' `HEAD` to be detached at that commit.
 --
+
+`git reset [-q] [<tree-ish>] [--] <pathspec>...`::
+`git reset [-q] [--pathspec-from-file=<file> [--pathspec-file-nul]] [<tree-ish>]`::
+	For all specified files or directories, set the staged version to
+	the version from the given commit or tree (which defaults to `HEAD`).
++
+This means that `git reset <pathspec>` is the opposite of `git add
+<pathspec>`: it unstages all changes to the specified file(s) or
+directories. This is equivalent to `git restore --staged <pathspec>...`.
++
+`git reset` only modifies the index: use linkgit:git-restore[1] instead
+if you'd like to also update the file in your working directory.
+
+`git reset (--patch | -p) [<tree-ish>] [--] [<pathspec>...]`::
+	Interactively select changes from the difference between the index
+	and the specified commit or tree (which defaults to `HEAD`).
+	The chosen changes are unstaged.
++
+This means that `git reset -p` is the opposite of `git add -p`, i.e.
+you can use it to selectively unstage changes. See the "Interactive Mode"
+section of linkgit:git-add[1] to learn how to use the `--patch` option.
 
 See "Reset, restore and revert" in linkgit:git[1] for the differences
 between the three commands.
