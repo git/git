@@ -109,10 +109,6 @@ macos-*)
 	brew link --force gettext
 
 	mkdir -p "$CUSTOM_PATH"
-	wget -q "$P4WHENCE/bin.macosx1015x86_64/helix-core-server.tgz" &&
-	tar -xf helix-core-server.tgz -C "$CUSTOM_PATH" p4 p4d &&
-	sudo xattr -d com.apple.quarantine "$CUSTOM_PATH/p4" "$CUSTOM_PATH/p4d" 2>/dev/null || true
-	rm helix-core-server.tgz
 
 	case "$jobname" in
 	osx-meson)
