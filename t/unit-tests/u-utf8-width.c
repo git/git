@@ -95,3 +95,40 @@ void test_utf8_width__strnwidth_cjk_with_ansi(void)
 	/* "Hello"(5) + "世界"(4) + "!"(1) = 10 */
 	cl_assert_equal_i(10, width);
 }
+
+/*
+ * Test the strbuf_utf8_align function with CJK characters
+ */
+void test_utf8_width__strbuf_utf8_align(void)
+{
+	struct strbuf buf = STRBUF_INIT;
+
+	/* Test left alignment with CJK */
+	strbuf_utf8_align(&buf, ALIGN_LEFT, 10, "你好");
+	/* Since "你好" is 4 display columns, we need 6 more spaces to reach 10 */
+	cl_assert_equal_s("你好      ", buf.buf);
+	strbuf_reset(&buf);
+
+	/* Test right alignment with CJK */
+	strbuf_utf8_align(&buf, ALIGN_RIGHT, 8, "世界");
+	/* "世界" is 4 display columns, so we need 4 leading spaces */
+	cl_assert_equal_s("    世界", buf.buf);
+	strbuf_reset(&buf);
+
+	/* Test center alignment with CJK */
+	strbuf_utf8_align(&buf, ALIGN_MIDDLE, 10, "中");
+	/* "中" is 2 display columns, so (10-2)/2 = 4 spaces on left, 4 on right */
+	cl_assert_equal_s("    中    ", buf.buf);
+	strbuf_reset(&buf);
+
+	strbuf_utf8_align(&buf, ALIGN_MIDDLE, 5, "中");
+	/* "中" is 2 display columns, so (5-2)/2 = 1 spaces on left, 2 on right */
+	cl_assert_equal_s(" 中  ", buf.buf);
+	strbuf_reset(&buf);
+
+	/* Test alignment that is smaller than string width */
+	strbuf_utf8_align(&buf, ALIGN_LEFT, 2, "你好");
+	/* Since "你好" is 4 display columns, it should not be truncated */
+	cl_assert_equal_s("你好", buf.buf);
+	strbuf_release(&buf);
+}
