@@ -10,6 +10,8 @@ SYNOPSIS
 --------
 [verse]
 $GIT_DIR/objects/[0-9a-f][0-9a-f]/*
+$GIT_DIR/objects/loose-object-idx
+$GIT_DIR/objects/loose-map/map-*.map
 
 DESCRIPTION
 -----------
@@ -47,6 +49,108 @@ stored under
 
 Similarly, a blob containing the contents `abc` would have the uncompressed
 data of `blob 3\0abc`.
+
+== Loose object mapping
+
+When the `compatObjectFormat` option is used, Git needs to store a mapping
+between the repository's main algorithm and the compatibility algorithm. There
+are two formats for this: the legacy mapping and the modern mapping.
+
+=== Legacy mapping
+
+The compatibility mapping is stored in a file called
+`$GIT_DIR/objects/loose-object-idx`.  The format of this file looks like this:
+
+  # loose-object-idx
+  (main-name SP compat-name LF)*
+
+`main-name` refers to hexadecimal object ID of the object in the main
+repository format and `compat-name` refers to the same thing, but for the
+compatibility format.
+
+This format is read if it exists but is not written.
+
+Note that carriage returns are not permitted in this file, regardless of the
+host system or configuration.
+
+=== Modern mapping
+
+The modern mapping consists of a set of files under `$GIT_DIR/objects/loose`
+ending in `.map`.  The portion of the filename before the extension is that of
+the hash checksum in hex format.
+
+`git pack-objects` will repack existing entries into one file, removing any
+unnecessary objects, such as obsolete shallow entries or loose objects that
+have been packed.
+
+==== Mapping file format
+
+- A header appears at the beginning and consists of the following:
+	* A 4-byte mapping signature: `LMAP`
+	* 4-byte version number: 1
+	* 4-byte length of the header section.
+	* 4-byte number of objects declared in this map file.
+	* 4-byte number of object formats declared in this map file.
+  * For each object format:
+    ** 4-byte format identifier (e.g., `sha1` for SHA-1)
+    ** 4-byte length in bytes of shortened object names. This is the
+      shortest possible length needed to make names in the shortened
+      object name table unambiguous.
+    ** 8-byte integer, recording where tables relating to this format
+      are stored in this index file, as an offset from the beginning.
+  * 8-byte offset to the trailer from the beginning of this file.
+	* Zero or more additional key/value pairs (4-byte key, 4-byte value), which
+		may optionally declare one or more chunks.  No chunks are currently
+		defined. Readers must ignore unrecognized keys.
+- Zero or more NUL bytes.  These are used to improve the alignment of the
+	4-byte quantities below.
+- Tables for the first object format:
+	* A sorted table of shortened object names.  These are prefixes of the names
+		of all objects in this file, packed together without offset values to
+		reduce the cache footprint of the binary search for a specific object name.
+  * A sorted table of full object names.
+	* A table of 4-byte metadata values.
+	* Zero or more chunks.  A chunk starts with a four-byte chunk identifier and
+		a four-byte parameter (which, if unneeded, is all zeros) and an eight-byte
+		size (not including the identifier, parameter, or size), plus the chunk
+		data.
+- Zero or more NUL bytes.
+- Tables for subsequent object formats:
+	* A sorted table of shortened object names.  These are prefixes of the names
+		of all objects in this file, packed together without offset values to
+		reduce the cache footprint of the binary search for a specific object name.
+  * A table of full object names in the order specified by the first object format.
+	* A table of 4-byte values mapping object name order to the order of the
+		first object format. For an object in the table of sorted shortened object
+		names, the value at the corresponding index in this table is the index in
+		the previous table for that same object.
+	* Zero or more NUL bytes.
+- The trailer consists of the following:
+  * Hash checksum of all of the above.
+
+The lower six bits of each metadata table contain a type field indicating the
+reason that this object is stored:
+
+0::
+	Reserved.
+1::
+	This object is stored as a loose object in the repository.
+2::
+	This object is a shallow entry.  The mapping refers to a shallow value
+	returned by a remote server.
+3::
+	This object is a submodule entry.  The mapping refers to the commit stored
+	representing a submodule.
+
+Other data may be stored in this field in the future.  Bits that are not used
+must be zero.
+
+All 4-byte numbers are in network order and must be 4-byte aligned in the file,
+so the NUL padding may be required in some cases.
+
+Note that the hash at the end of the file is in whatever the repository's main
+algorithm is.  In the usual case when there are multiple algorithms, the main
+algorithm will be SHA-256 and the compatibility algorithm will be SHA-1.
 
 GIT
 ---

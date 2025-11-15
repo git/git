@@ -110,7 +110,7 @@ void discard_hashfile(struct hashfile *f)
 	free_hashfile(f);
 }
 
-void hashwrite(struct hashfile *f, const void *buf, unsigned int count)
+void hashwrite(struct hashfile *f, const void *buf, uint32_t count)
 {
 	while (count) {
 		unsigned left = f->buffer_len - f->offset;
