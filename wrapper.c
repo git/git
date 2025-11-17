@@ -421,24 +421,7 @@ FILE *fopen_or_warn(const char *path, const char *mode)
 
 int xmkstemp(char *filename_template)
 {
-	int fd;
-	char origtemplate[PATH_MAX];
-	strlcpy(origtemplate, filename_template, sizeof(origtemplate));
-
-	fd = mkstemp(filename_template);
-	if (fd < 0) {
-		int saved_errno = errno;
-		const char *nonrelative_template;
-
-		if (strlen(filename_template) != strlen(origtemplate))
-			filename_template = origtemplate;
-
-		nonrelative_template = absolute_path(filename_template);
-		errno = saved_errno;
-		die_errno("Unable to create temporary file '%s'",
-			nonrelative_template);
-	}
-	return fd;
+	return xmkstemp_mode(filename_template, 0600);
 }
 
 /* Adapted from libiberty's mkstemp.c. */
