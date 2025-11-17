@@ -797,10 +797,8 @@ static void handle_commit(struct commit *commit, struct rev_info *rev,
 	       (int)(committer_end - committer), committer);
 	if (signatures.nr) {
 		switch (signed_commit_mode) {
-		case SIGN_ABORT:
-			die("encountered signed commit %s; use "
-			    "--signed-commits=<mode> to handle it",
-			    oid_to_hex(&commit->object.oid));
+
+		/* Exporting modes */
 		case SIGN_WARN_VERBATIM:
 			warning("exporting %"PRIuMAX" signature(s) for commit %s",
 				(uintmax_t)signatures.nr, oid_to_hex(&commit->object.oid));
@@ -811,12 +809,25 @@ static void handle_commit(struct commit *commit, struct rev_info *rev,
 				print_signature(item->string, item->util);
 			}
 			break;
+
+		/* Stripping modes */
 		case SIGN_WARN_STRIP:
 			warning("stripping signature(s) from commit %s",
 				oid_to_hex(&commit->object.oid));
 			/* fallthru */
 		case SIGN_STRIP:
 			break;
+
+		/* Aborting modes */
+		case SIGN_ABORT:
+			die(_("encountered signed commit %s; use "
+			      "--signed-commits=<mode> to handle it"),
+			    oid_to_hex(&commit->object.oid));
+		case SIGN_STRIP_IF_INVALID:
+			die(_("'strip-if-invalid' is not a valid mode for "
+			      "git fast-export with --signed-commits=<mode>"));
+		default:
+			BUG("invalid signed_commit_mode value %d", signed_commit_mode);
 		}
 		string_list_clear(&signatures, 0);
 	}
@@ -934,16 +945,16 @@ static void handle_tag(const char *name, struct tag *tag)
 		size_t sig_offset = parse_signed_buffer(message, message_size);
 		if (sig_offset < message_size)
 			switch (signed_tag_mode) {
-			case SIGN_ABORT:
-				die("encountered signed tag %s; use "
-				    "--signed-tags=<mode> to handle it",
-				    oid_to_hex(&tag->object.oid));
+
+			/* Exporting modes */
 			case SIGN_WARN_VERBATIM:
 				warning("exporting signed tag %s",
 					oid_to_hex(&tag->object.oid));
 				/* fallthru */
 			case SIGN_VERBATIM:
 				break;
+
+			/* Stripping modes */
 			case SIGN_WARN_STRIP:
 				warning("stripping signature from tag %s",
 					oid_to_hex(&tag->object.oid));
@@ -951,6 +962,17 @@ static void handle_tag(const char *name, struct tag *tag)
 			case SIGN_STRIP:
 				message_size = sig_offset;
 				break;
+
+			/* Aborting modes */
+			case SIGN_ABORT:
+				die(_("encountered signed tag %s; use "
+				      "--signed-tags=<mode> to handle it"),
+				    oid_to_hex(&tag->object.oid));
+			case SIGN_STRIP_IF_INVALID:
+				die(_("'strip-if-invalid' is not a valid mode for "
+				      "git fast-export with --signed-tags=<mode>"));
+			default:
+				BUG("invalid signed_commit_mode value %d", signed_commit_mode);
 			}
 	}
 
