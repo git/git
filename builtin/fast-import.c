@@ -2815,6 +2815,18 @@ static void import_one_signature(struct signature_data *sig_sha1,
 		die(_("parse_one_signature() returned unknown hash algo"));
 }
 
+static void finalize_commit_buffer(struct strbuf *new_data,
+				   struct signature_data *sig_sha1,
+				   struct signature_data *sig_sha256,
+				   struct strbuf *msg)
+{
+	add_gpgsig_to_commit(new_data, "gpgsig ", sig_sha1);
+	add_gpgsig_to_commit(new_data, "gpgsig-sha256 ", sig_sha256);
+
+	strbuf_addch(new_data, '\n');
+	strbuf_addbuf(new_data, msg);
+}
+
 static void parse_new_commit(const char *arg)
 {
 	static struct strbuf msg = STRBUF_INIT;
@@ -2950,11 +2962,8 @@ static void parse_new_commit(const char *arg)
 			"encoding %s\n",
 			encoding);
 
-	add_gpgsig_to_commit(&new_data, "gpgsig ", &sig_sha1);
-	add_gpgsig_to_commit(&new_data, "gpgsig-sha256 ", &sig_sha256);
+	finalize_commit_buffer(&new_data, &sig_sha1, &sig_sha256, &msg);
 
-	strbuf_addch(&new_data, '\n');
-	strbuf_addbuf(&new_data, &msg);
 	free(author);
 	free(committer);
 	free(encoding);
