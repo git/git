@@ -17,10 +17,10 @@ UI, Workflows & Features
  * A new command "git last-modified" has been added to show the closest
    ancestor commit that touched each path.
 
- * "git refs exists" that works like "git show-ref --exists" has been
-   added.
+ * The "git refs exists" command that works like "git show-ref --exists"
+   has been added.
 
- * "repo info" learns a short-hand option "-z" that is the same as
+ * "git repo info" learns the short-hand option "-z" that is the same as
    "--format=nul", and learns to report the objects format used in the
    repository.
 
@@ -433,7 +433,10 @@ including security updates, are included in this release.
 
  * The version of macos image used in GitHub CI has been updated to
    macos-14, as the macos-13 that we have been using got deprecated.
+   Perforce binary used there has been changed to arm64 version to
+   match.
    (merge 73b9cdb7c4 jc/ci-use-macos-14 later to maint).
+   (merge ffff0bb0da jc/ci-use-arm64-p4-on-macos later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 529a60a885 ua/t1517-short-help-tests later to maint).
