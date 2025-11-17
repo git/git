@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Nov 2025, #04; Fri, 14)
-X-master-at: fd372d9b1a69a01a676398882bbe3840bf51fe72
-X-next-at: 230fcf2819a6e6e5372cd128168db10ebbe23885
+Subject: What's cooking in git.git (Nov 2025, #05; Mon, 17)
+X-master-at: 9a2fb147f2c61d0cab52c883e7e26f5b7948e3ed
+X-next-at: d25c4c69ec8b0378f9f865f96ae5cd33842cdcb3
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Nov 2025, #04; Fri, 14)
+What's cooking in git.git (Nov 2025, #05; Mon, 17)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,6 +16,11 @@ to a message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
+
+Git 2.52 (final) has been tagged.  We'll see if there is a need for
+a quick brown paper bag fix necessary for some days and then reopen
+the tree for the 2.53 cycle, to start merging topics that have been
+cooking in "next" down to "master".
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -48,42 +53,32 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* dk/make-git-contacts-executable (2025-11-04) 1 commit
-  (merged to 'next' on 2025-11-07 at 30608eb744)
- + perl: also mark git-contacts executable
+* jc/ci-use-arm64-p4-on-macos (2025-11-16) 1 commit
+  (merged to 'next' on 2025-11-16 at c784b1ea9f)
+ + Use Perforce arm64 binary on macOS CI jobs
 
- Building "git contacts" script (in contrib/) left the resulting
- file unexecutable, which has been corrected.
- source: <7fbb341e8f05fcde3a1543e3bb4e5a3ec1101692.1762280097.git.ben.knoble+github@gmail.com>
-
-
-* dk/meson-html-dir (2025-11-04) 1 commit
-  (merged to 'next' on 2025-11-07 at b30cf1f060)
- + meson: make GIT_HTML_PATH configurable
-
- The build procedure based on meson learned to allow builders to
- specify the directory to install HTML documents.
- source: <385992f6020703558f0ba75a1be6c4f9dae08b83.1762264709.git.ben.knoble+github@gmail.com>
-
-
-* tc/last-modified-active-paths-optimization (2025-10-23) 1 commit
-  (merged to 'next' on 2025-11-03 at 9ab444edfb)
- + last-modified: implement faster algorithm
-
- "git last-modified" was optimized by narrowing the set of paths to
- follow as it dug deeper in the history.
- source: <20251023-b4-toon-last-modified-faster-v3-1-40a4ddbbadec@iotcl.com>
-
-
-* tu/credential-wincred-makefile-update (2025-11-05) 1 commit
-  (merged to 'next' on 2025-11-07 at ed74befe91)
- + wincred: align Makefile with other Makefiles in contrib
-
- Build procedure for Wincred credential helper has been updated.
- source: <3869ec21-e20d-cf9b-5913-6389c372a5f0@mailbox.tu-dresden.de>
+ We replaced deprecated macos-13 with macos-14 image in GitHub
+ Actions CI, but we forgot that the image is for arm64.  We have
+ been seeing a lot of test failures ever since.  Switch to arm64
+ binary for Perforce tests.
+ source: <xmqqy0o5bml7.fsf@gitster.g>
 
 --------------------------------------------------
 [New Topics]
+
+* jc/submodule-add (2025-11-15) 1 commit
+ - submodule add: sanity check existing .gitmodules
+
+ "git submodule add" to add a submodule under <name> segfaulted,
+ when a submodule.<name>.something is already in .gitmodules file
+ without defining where its submodule.<name>.path is, which has been
+ corrected.
+
+ Comments?
+ source: <xmqqv7jacvdq.fsf@gitster.g>
+
+--------------------------------------------------
+[Cooking]
 
 * rs/diff-quiet-no-rename (2025-11-09) 1 commit
   (merged to 'next' on 2025-11-14 at 2d94808185)
@@ -117,6 +112,7 @@ Release tarballs are available at:
  has been corrected.
 
  Will merge to 'next'?
+ cf. <xmqqtsytbk5w.fsf@gitster.g>
  source: <20251113-fix-tags-not-fetching-v5-0-371ea7ec638d@gmail.com>
 
 
@@ -140,36 +136,30 @@ Release tarballs are available at:
 
 
 * jk/attr-macroexpand-wo-recursion (2025-11-11) 1 commit
- - attr: avoid recursion when expanding attribute macros
+  (merged to 'next' on 2025-11-16 at c4e4a7348e)
+ + attr: avoid recursion when expanding attribute macros
 
  The code to expand attribute macros has been rewritten to avoid
  recursion to avoid running out of stack space in an uncontrolled
  way.
 
- Will merge to 'next'?
+ Will cook in 'next'.
  source: <20251111223647.GA4055973@coredump.intra.peff.net>
 
 
-* bc/submodule-force-same-hash (2025-11-12) 1 commit
- - object-file: disallow adding submodules of different hash algo
+* bc/submodule-force-same-hash (2025-11-14) 2 commits
+  (merged to 'next' on 2025-11-16 at aa765fefd0)
+ + read-cache: drop submodule check from add_to_cache()
+ + object-file: disallow adding submodules of different hash algo
 
  Adding a repository that uses a different hash function is a no-no,
  but "git submodule add" did nt prevent it, which has been corrected.
 
- Will merge to 'next'?
+ Will cook in 'next'.
  source: <20251112235434.1499699-1-sandals@crustytoothpaste.net>
 
 
-* jc/ci-drop-p4-macosx (2025-11-14) 1 commit
- - CI: drop Perforce tests from macOSX jobs
-
- Drop P4 tests on macOSX platform on GitHub Actions CI.
-
- Comments?
- source: <xmqqqzu0gxq2.fsf_-_@gitster.g>
-
-
-* jx/repo-struct-utf8width-fix (2025-11-13) 2 commits
+* jx/repo-struct-utf8width-fix (2025-11-15) 2 commits
  - builtin/repo: fix table alignment for UTF-8 characters
  - t/unit-tests: add UTF-8 width tests for CJK chars
 
@@ -177,8 +167,8 @@ Release tarballs are available at:
  mixed up byte count and display column width, which has been
  corrected.
 
- Comments?
- source: <cover.1763098804.git.worldhello.net@gmail.com>
+ Will merge to 'next'.
+ source: <cover.1763213290.git.worldhello.net@gmail.com>
 
 
 * kh/doc-commit-extra-references (2025-11-14) 1 commit
@@ -186,7 +176,7 @@ Release tarballs are available at:
 
  Doc update.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <c4349a03724.1763129061.git.code@khaugsbakk.name>
 
 
@@ -198,11 +188,9 @@ Release tarballs are available at:
  credential material supplied by other helper backends that it would
  have wanted to store, which has been corrected.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <pull.1999.v2.git.1763100270949.gitgitgadget@gmail.com>
 
---------------------------------------------------
-[Cooking]
 
 * lc/rebase-trailer (2025-11-05) 4 commits
  - rebase: support --trailer
@@ -213,7 +201,8 @@ Release tarballs are available at:
  Refactor code paths to run "interpret-trailers" from "git
  commit/tag" and use it in "git rebase".
 
- Comments?
+ Expecting a reroll.
+ cf. <19a8fe42354.3909481a3912041.7970296104893780556@linux.beauty>
  source: <20251105142944.73061-1-me@linux.beauty>
 
 
@@ -237,7 +226,8 @@ Release tarballs are available at:
  Yet another corner case fix around renames in the "ort" merge
  strategy.
 
- Will merge to 'next'?
+ Will merge to 'next' after locally amending?
+ cf. <xmqqfradbhgi.fsf@gitster.g>
  source: <pull.1992.git.1762192908.gitgitgadget@gmail.com>
 
 
@@ -264,7 +254,7 @@ Release tarballs are available at:
 
  Doc update.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <20251105143849.1192-1-qjessa662@gmail.com>
 
 
@@ -279,17 +269,16 @@ Release tarballs are available at:
  source: <xmqqtsz9o3cn.fsf@gitster.g>
 
 
-* cc/fast-import-strip-if-invalid (2025-11-04) 3 commits
- . fast-import: add 'strip-if-invalid' mode to --signed-commits=<mode>
- . commit: refactor verify_commit_buffer()
- . fast-import: refactor finalize_commit_buffer()
+* cc/fast-import-strip-if-invalid (2025-11-16) 3 commits
+ - fast-import: add 'strip-if-invalid' mode to --signed-commits=<mode>
+ - commit: refactor verify_commit_buffer()
+ - fast-import: refactor finalize_commit_buffer()
 
  "git fast-import" learns "--strip-if-invalid" option to drop
  invalid cryptographic signature from objects.
 
- Expecting a reroll.  Its test does not work well with existing tests
- cf. <xmqqjz00e5ns.fsf@gitster.g>
- source: <20251105061918.3688870-1-christian.couder@gmail.com>
+ Comments?
+ source: <20251117043450.322644-1-christian.couder@gmail.com>
 
 
 * jc/whitespace-incomplete-line (2025-11-12) 12 commits
@@ -309,7 +298,7 @@ Release tarballs are available at:
  Both "git apply" and "git diff" learn a new whitespace error class,
  "incomplete-line".
 
- Comments?
+ Will merge to 'next'?
  source: <20251112220258.1009253-1-gitster@pobox.com>
 
 
@@ -331,7 +320,7 @@ Release tarballs are available at:
  A part of code paths that deals with loose objects has been cleaned
  up.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <20251103-b4-pks-odb-loose-backend-v3-0-6a61ea977393@pks.im>
 
 
@@ -367,6 +356,7 @@ Release tarballs are available at:
  "git blame" learns "--diff-algorithm=<algo>" option.
 
  Will merge to 'next'?
+ cf. <xmqq5xb9bgx2.fsf@gitster.g>
  source: <pull.2075.v5.git.git.1762468914.gitgitgadget@gmail.com>
 
 
@@ -414,7 +404,7 @@ Release tarballs are available at:
  source: <20251026225409.46647-1-lucasseikioshiro@gmail.com>
 
 
-* en/xdiff-cleanup-2 (2025-11-11) 10 commits
+* en/xdiff-cleanup-2 (2025-11-14) 10 commits
  - xdiff: rename rindex -> reference_index
  - xdiff: change rindex from long to size_t in xdfile_t
  - xdiff: make xdfile_t.nreff a size_t instead of long
@@ -428,8 +418,10 @@ Release tarballs are available at:
 
  Code clean-up.
 
- Comments?
- source: <pull.2070.v3.git.git.1762890152.gitgitgadget@gmail.com>
+ Expecting a (hopefully small and final) reroll.
+ cf. <xmqqy0o7g0rk.fsf@gitster.g>
+ cf. <xmqqzf8la20o.fsf@gitster.g>
+ source: <pull.2070.v4.git.git.1763159816.gitgitgadget@gmail.com>
 
 
 * ar/run-command-hook (2025-10-17) 10 commits
@@ -520,7 +512,7 @@ Release tarballs are available at:
 
  "git history" history rewriting UI.
 
- Comments?
+ Will merge to 'next' after the base topic.
  source: <20251027-b4-pks-history-builtin-v6-0-407dd3f57ad3@pks.im>
 
 
@@ -546,7 +538,8 @@ Release tarballs are available at:
  in a transaction by default, instead of emitting where each refs
  should point at and leaving the actual update to another command.
 
- Will merge to 'next'?
+ Will merge to 'next'.
+ cf. <00a5a8f3-f761-46e8-84cc-4bd95db68b49@gmail.com>
  source: <20251105191650.89975-1-siddharthasthana31@gmail.com>
 
 
@@ -560,7 +553,8 @@ Release tarballs are available at:
  each other by encoding submodule names before using them as path
  components.
 
- Comments?
+ Seems to leak and break CI
+ cf. <xmqq346ff56h.fsf@gitster.g>
  source: <20251107150547.3272180-1-adrian.ratiu@collabora.com>
 
 --------------------------------------------------
@@ -580,3 +574,12 @@ Release tarballs are available at:
  Retracted.
  cf. <aQ3XOTX0AT_eFc5P@pks.im>
  source: <20251024-b4-pks-rust-cbindgen-v2-0-4b4bd4f18490@pks.im>
+
+
+* jc/ci-drop-p4-macosx (2025-11-14) 1 commit
+ . CI: drop Perforce tests from macOSX jobs
+
+ Drop P4 tests on macOSX platform on GitHub Actions CI.
+
+ Retracted.  Superseded by jc/ci-use-arm64-p4-on-macos topic.
+ source: <xmqqqzu0gxq2.fsf_-_@gitster.g>
