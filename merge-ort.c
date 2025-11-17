@@ -5496,7 +5496,6 @@ int parse_merge_opt(struct merge_options *opt, const char *s)
 		if (value < 0)
 			return -1;
 		/* clear out previous settings */
-		DIFF_XDL_CLR(opt, NEED_MINIMAL);
 		opt->xdl_opts &= ~XDF_DIFF_ALGORITHM_MASK;
 		opt->xdl_opts |= value;
 	}
