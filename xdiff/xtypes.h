@@ -47,7 +47,7 @@ typedef struct s_xrecord {
 
 typedef struct s_xdfile {
 	xrecord_t *recs;
-	long nrec;
+	size_t nrec;
 	ptrdiff_t dstart, dend;
 	bool *changed;
 	long *rindex;
