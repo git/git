@@ -979,14 +979,17 @@ static void show_worktree_porcelain(struct worktree *wt, int line_terminator)
 	fputc(line_terminator, stdout);
 }
 
-static void show_worktree(struct worktree *wt, int path_maxlen, int abbrev_len)
+struct worktree_display {
+	int width;
+};
+
+static void show_worktree(struct worktree *wt, struct worktree_display *display,
+			  int path_maxwidth, int abbrev_len)
 {
 	struct strbuf sb = STRBUF_INIT;
-	int cur_path_len = strlen(wt->path);
-	int path_adj = cur_path_len - utf8_strwidth(wt->path);
 	const char *reason;
 
-	strbuf_addf(&sb, "%-*s ", 1 + path_maxlen + path_adj, wt->path);
+	strbuf_addf(&sb, "%s%*s", wt->path, 1 + path_maxwidth - display->width, "");
 	if (wt->is_bare)
 		strbuf_addstr(&sb, "(bare)");
 	else {
@@ -1020,20 +1023,24 @@ static void show_worktree(struct worktree *wt, int path_maxlen, int abbrev_len)
 	strbuf_release(&sb);
 }
 
-static void measure_widths(struct worktree **wt, int *abbrev, int *maxlen)
+static void measure_widths(struct worktree **wt, int *abbrev,
+			   struct worktree_display **d, int *maxwidth)
 {
-	int i;
+	int i, display_alloc = 0;
+	struct worktree_display *display = NULL;
 
 	for (i = 0; wt[i]; i++) {
 		int sha1_len;
-		int path_len = strlen(wt[i]->path);
+		ALLOC_GROW(display, i + 1, display_alloc);
+		display[i].width = utf8_strwidth(wt[i]->path);
 
-		if (path_len > *maxlen)
-			*maxlen = path_len;
+		if (display[i].width > *maxwidth)
+			*maxwidth = display[i].width;
 		sha1_len = strlen(repo_find_unique_abbrev(the_repository, &wt[i]->head_oid, *abbrev));
 		if (sha1_len > *abbrev)
 			*abbrev = sha1_len;
 	}
+	*d = display;
 }
 
 static int pathcmp(const void *a_, const void *b_)
@@ -1079,21 +1086,25 @@ static int list(int ac, const char **av, const char *prefix,
 		die(_("the option '%s' requires '%s'"), "-z", "--porcelain");
 	else {
 		struct worktree **worktrees = get_worktrees();
-		int path_maxlen = 0, abbrev = DEFAULT_ABBREV, i;
+		int path_maxwidth = 0, abbrev = DEFAULT_ABBREV, i;
+		struct worktree_display *display = NULL;
 
 		/* sort worktrees by path but keep main worktree at top */
 		pathsort(worktrees + 1);
 
 		if (!porcelain)
-			measure_widths(worktrees, &abbrev, &path_maxlen);
+			measure_widths(worktrees, &abbrev,
+				       &display, &path_maxwidth);
 
 		for (i = 0; worktrees[i]; i++) {
 			if (porcelain)
 				show_worktree_porcelain(worktrees[i],
 							line_terminator);
 			else
-				show_worktree(worktrees[i], path_maxlen, abbrev);
+				show_worktree(worktrees[i],
+					      &display[i], path_maxwidth, abbrev);
 		}
+		free(display);
 		free_worktrees(worktrees);
 	}
 	return 0;
