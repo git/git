@@ -37,20 +37,14 @@ int pthread_create(pthread_t *thread, const void *attr UNUSED,
 
 int win32_pthread_join(pthread_t *thread, void **value_ptr)
 {
-	DWORD result = WaitForSingleObject(thread->handle, INFINITE);
-	switch (result) {
-	case WAIT_OBJECT_0:
-		if (value_ptr)
-			*value_ptr = thread->arg;
-		CloseHandle(thread->handle);
-		return 0;
-	case WAIT_ABANDONED:
-		CloseHandle(thread->handle);
-		return EINVAL;
-	default:
-		/* the wait failed, so do not detach */
+	if (WaitForSingleObjectEx(thread->handle, INFINITE, FALSE) == WAIT_FAILED)
 		return err_win_to_posix(GetLastError());
-	}
+
+	if (value_ptr)
+		*value_ptr = thread->arg;
+
+	CloseHandle(thread->handle);
+	return 0;
 }
 
 pthread_t pthread_self(void)
