@@ -980,6 +980,7 @@ static void show_worktree_porcelain(struct worktree *wt, int line_terminator)
 }
 
 struct worktree_display {
+	char *path;
 	int width;
 };
 
@@ -989,7 +990,7 @@ static void show_worktree(struct worktree *wt, struct worktree_display *display,
 	struct strbuf sb = STRBUF_INIT;
 	const char *reason;
 
-	strbuf_addf(&sb, "%s%*s", wt->path, 1 + path_maxwidth - display->width, "");
+	strbuf_addf(&sb, "%s%*s", display->path, 1 + path_maxwidth - display->width, "");
 	if (wt->is_bare)
 		strbuf_addstr(&sb, "(bare)");
 	else {
@@ -1028,11 +1029,14 @@ static void measure_widths(struct worktree **wt, int *abbrev,
 {
 	int i, display_alloc = 0;
 	struct worktree_display *display = NULL;
+	struct strbuf buf = STRBUF_INIT;
 
 	for (i = 0; wt[i]; i++) {
 		int sha1_len;
 		ALLOC_GROW(display, i + 1, display_alloc);
-		display[i].width = utf8_strwidth(wt[i]->path);
+		quote_path(wt[i]->path, NULL, &buf, 0);
+		display[i].width = utf8_strwidth(buf.buf);
+		display[i].path = strbuf_detach(&buf, NULL);
 
 		if (display[i].width > *maxwidth)
 			*maxwidth = display[i].width;
@@ -1104,6 +1108,8 @@ static int list(int ac, const char **av, const char *prefix,
 				show_worktree(worktrees[i],
 					      &display[i], path_maxwidth, abbrev);
 		}
+		for (i = 0; display && worktrees[i]; i++)
+			free(display[i].path);
 		free(display);
 		free_worktrees(worktrees);
 	}
