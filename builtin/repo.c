@@ -15,7 +15,7 @@
 #include "utf8.h"
 
 static const char *const repo_usage[] = {
-	"git repo info [--format=(keyvalue|nul)] [-z] [<key>...]",
+	"git repo info [--format=(keyvalue|nul)] [-z] [--all | <key>...]",
 	"git repo structure [--format=(table|keyvalue|nul)]",
 	NULL
 };
@@ -129,6 +129,23 @@ static int print_fields(int argc, const char **argv,
 	return ret;
 }
 
+static int print_all_fields(struct repository *repo,
+			    enum output_format format)
+{
+	struct strbuf valbuf = STRBUF_INIT;
+
+	for (size_t i = 0; i < ARRAY_SIZE(repo_info_fields); i++) {
+		const struct field *field = &repo_info_fields[i];
+
+		strbuf_reset(&valbuf);
+		field->get_value(repo, &valbuf);
+		print_field(format, field->key, valbuf.buf);
+	}
+
+	strbuf_release(&valbuf);
+	return 0;
+}
+
 static int parse_format_cb(const struct option *opt,
 			   const char *arg, int unset UNUSED)
 {
@@ -152,6 +169,7 @@ static int cmd_repo_info(int argc, const char **argv, const char *prefix,
 			 struct repository *repo)
 {
 	enum output_format format = FORMAT_KEYVALUE;
+	int all_keys = 0;
 	struct option options[] = {
 		OPT_CALLBACK_F(0, "format", &format, N_("format"),
 			       N_("output format"),
@@ -160,6 +178,7 @@ static int cmd_repo_info(int argc, const char **argv, const char *prefix,
 			       N_("synonym for --format=nul"),
 			       PARSE_OPT_NONEG | PARSE_OPT_NOARG,
 			       parse_format_cb),
+		OPT_BOOL(0, "all", &all_keys, N_("print all keys/values")),
 		OPT_END()
 	};
 
@@ -167,7 +186,13 @@ static int cmd_repo_info(int argc, const char **argv, const char *prefix,
 	if (format != FORMAT_KEYVALUE && format != FORMAT_NUL_TERMINATED)
 		die(_("unsupported output format"));
 
-	return print_fields(argc, argv, repo, format);
+	if (all_keys && argc)
+		die(_("--all and <key> cannot be used together"));
+
+	if (all_keys)
+		return print_all_fields(repo, format);
+	else
+		return print_fields(argc, argv, repo, format);
 }
 
 struct ref_stats {
