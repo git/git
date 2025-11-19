@@ -1617,7 +1617,7 @@ int cmd_clone(int argc,
 	transport_disconnect(transport);
 
 	if (option_dissociate) {
-		close_object_store(the_repository->objects);
+		odb_close(the_repository->objects);
 		dissociate_from_references();
 	}
 

@@ -9,6 +9,7 @@
 #include "khash.h"
 #include "lockfile.h"
 #include "loose.h"
+#include "midx.h"
 #include "object-file-convert.h"
 #include "object-file.h"
 #include "odb.h"
@@ -1044,6 +1045,21 @@ struct object_database *odb_new(struct repository *repo)
 	return o;
 }
 
+void odb_close(struct object_database *o)
+{
+	struct odb_source *source;
+
+	packfile_store_close(o->packfiles);
+
+	for (source = o->sources; source; source = source->next) {
+		if (source->midx)
+			close_midx(source->midx);
+		source->midx = NULL;
+	}
+
+	close_commit_graph(o);
+}
+
 static void odb_free_sources(struct object_database *o)
 {
 	while (o->sources) {
@@ -1076,7 +1092,7 @@ void odb_clear(struct object_database *o)
 		free((char *) o->cached_objects[i].value.buf);
 	FREE_AND_NULL(o->cached_objects);
 
-	close_object_store(o);
+	odb_close(o);
 	packfile_store_free(o->packfiles);
 	o->packfiles = NULL;
 
