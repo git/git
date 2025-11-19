@@ -1,0 +1,12 @@
+Git v2.53 Release Notes
+=======================
+
+Performance, Internal Implementation, Development Support etc.
+--------------------------------------------------------------
+
+ * The list of packfiles used in a running Git process is moved from
+   the packed_git structure into the packfile store.
+
+ * Some ref backend storage can hold not just the object name of an
+   annotated tag, but the object name of the object the tag points at.
+   The code to handle this information has been streamlined.
