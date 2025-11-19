@@ -78,10 +78,6 @@ struct odb_source {
 	char *path;
 };
 
-struct odb_source *odb_source_new(struct object_database *odb,
-				  const char *path,
-				  bool local);
-
 struct packed_git;
 struct packfile_store;
 struct cached_object_entry;

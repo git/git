@@ -1002,10 +1002,51 @@ cleanup_return:
 	return error_code ? NULL : path;
 }
 
-static void set_git_dir_1(const char *path)
+static void setup_git_env_internal(const char *git_dir,
+				   bool skip_initializing_odb)
+{
+	char *git_replace_ref_base;
+	const char *shallow_file;
+	const char *replace_ref_base;
+	struct set_gitdir_args args = { NULL };
+	struct strvec to_free = STRVEC_INIT;
+
+	args.commondir = getenv_safe(&to_free, GIT_COMMON_DIR_ENVIRONMENT);
+	args.object_dir = getenv_safe(&to_free, DB_ENVIRONMENT);
+	args.graft_file = getenv_safe(&to_free, GRAFT_ENVIRONMENT);
+	args.index_file = getenv_safe(&to_free, INDEX_ENVIRONMENT);
+	args.alternate_db = getenv_safe(&to_free, ALTERNATE_DB_ENVIRONMENT);
+	if (getenv(GIT_QUARANTINE_ENVIRONMENT))
+		args.disable_ref_updates = true;
+	args.skip_initializing_odb = skip_initializing_odb;
+
+	repo_set_gitdir(the_repository, git_dir, &args);
+	strvec_clear(&to_free);
+
+	if (getenv(NO_REPLACE_OBJECTS_ENVIRONMENT))
+		disable_replace_refs();
+	replace_ref_base = getenv(GIT_REPLACE_REF_BASE_ENVIRONMENT);
+	git_replace_ref_base = xstrdup(replace_ref_base ? replace_ref_base
+							  : "refs/replace/");
+	update_ref_namespace(NAMESPACE_REPLACE, git_replace_ref_base);
+
+	shallow_file = getenv(GIT_SHALLOW_FILE_ENVIRONMENT);
+	if (shallow_file)
+		set_alternate_shallow_file(the_repository, shallow_file, 0);
+
+	if (git_env_bool(NO_LAZY_FETCH_ENVIRONMENT, 0))
+		fetch_if_missing = 0;
+}
+
+void setup_git_env(const char *git_dir)
+{
+	setup_git_env_internal(git_dir, false);
+}
+
+static void set_git_dir_1(const char *path, bool skip_initializing_odb)
 {
 	xsetenv(GIT_DIR_ENVIRONMENT, path, 1);
-	setup_git_env(path);
+	setup_git_env_internal(path, skip_initializing_odb);
 }
 
 static void update_relative_gitdir(const char *name UNUSED,
@@ -1020,7 +1061,7 @@ static void update_relative_gitdir(const char *name UNUSED,
 	trace_printf_key(&trace_setup_key,
 			 "setup: move $GIT_DIR to '%s'",
 			 path);
-	set_git_dir_1(path);
+	set_git_dir_1(path, true);
 	if (tmp_objdir)
 		tmp_objdir_reapply_primary_odb(tmp_objdir, old_cwd, new_cwd);
 	free(path);
@@ -1035,7 +1076,7 @@ static void set_git_dir(const char *path, int make_realpath)
 		path = realpath.buf;
 	}
 
-	set_git_dir_1(path);
+	set_git_dir_1(path, false);
 	if (!is_absolute_path(path))
 		chdir_notify_register(NULL, update_relative_gitdir, NULL);
 
@@ -1666,41 +1707,6 @@ enum discovery_result discover_git_directory_reason(struct strbuf *commondir,
 
 	clear_repository_format(&candidate);
 	return result;
-}
-
-void setup_git_env(const char *git_dir)
-{
-	char *git_replace_ref_base;
-	const char *shallow_file;
-	const char *replace_ref_base;
-	struct set_gitdir_args args = { NULL };
-	struct strvec to_free = STRVEC_INIT;
-
-	args.commondir = getenv_safe(&to_free, GIT_COMMON_DIR_ENVIRONMENT);
-	args.object_dir = getenv_safe(&to_free, DB_ENVIRONMENT);
-	args.graft_file = getenv_safe(&to_free, GRAFT_ENVIRONMENT);
-	args.index_file = getenv_safe(&to_free, INDEX_ENVIRONMENT);
-	args.alternate_db = getenv_safe(&to_free, ALTERNATE_DB_ENVIRONMENT);
-	if (getenv(GIT_QUARANTINE_ENVIRONMENT)) {
-		args.disable_ref_updates = true;
-	}
-
-	repo_set_gitdir(the_repository, git_dir, &args);
-	strvec_clear(&to_free);
-
-	if (getenv(NO_REPLACE_OBJECTS_ENVIRONMENT))
-		disable_replace_refs();
-	replace_ref_base = getenv(GIT_REPLACE_REF_BASE_ENVIRONMENT);
-	git_replace_ref_base = xstrdup(replace_ref_base ? replace_ref_base
-							  : "refs/replace/");
-	update_ref_namespace(NAMESPACE_REPLACE, git_replace_ref_base);
-
-	shallow_file = getenv(GIT_SHALLOW_FILE_ENVIRONMENT);
-	if (shallow_file)
-		set_alternate_shallow_file(the_repository, shallow_file, 0);
-
-	if (git_env_bool(NO_LAZY_FETCH_ENVIRONMENT, 0))
-		fetch_if_missing = 0;
 }
 
 const char *enter_repo(const char *path, unsigned flags)

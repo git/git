@@ -165,17 +165,10 @@ void repo_set_gitdir(struct repository *repo,
 
 	repo_set_commondir(repo, o->commondir);
 
-	if (!repo->objects) {
+	if (!repo->objects)
 		repo->objects = odb_new(repo, o->object_dir, o->alternate_db);
-	} else {
-		char *objects_path = NULL;
-		expand_base_dir(&objects_path, o->object_dir,
-				repo->commondir, "objects");
-		free(repo->objects->sources->path);
-		repo->objects->sources->path = objects_path;
-		free(repo->objects->alternate_db);
-		repo->objects->alternate_db = xstrdup_or_null(o->alternate_db);
-	}
+	else if (!o->skip_initializing_odb)
+		BUG("cannot reinitialize an already-initialized object directory");
 
 	repo->disable_ref_updates = o->disable_ref_updates;
 

@@ -195,6 +195,7 @@ struct set_gitdir_args {
 	const char *index_file;
 	const char *alternate_db;
 	bool disable_ref_updates;
+	bool skip_initializing_odb;
 };
 
 void repo_set_gitdir(struct repository *repo, const char *root,
