@@ -67,13 +67,6 @@ struct odb_source {
 	bool local;
 
 	/*
-	 * This is a temporary object store created by the tmp_objdir
-	 * facility. Disable ref updates since the objects in the store
-	 * might be discarded on rollback.
-	 */
-	int disable_ref_updates;
-
-	/*
 	 * This object store is ephemeral, so there is no need to fsync.
 	 */
 	int will_destroy;

@@ -360,7 +360,7 @@ struct odb_source *odb_set_temporary_primary_source(struct object_database *odb,
 	 * Disable ref updates while a temporary odb is active, since
 	 * the objects in the database may roll back.
 	 */
-	source->disable_ref_updates = 1;
+	odb->repo->disable_ref_updates = true;
 	source->will_destroy = will_destroy;
 	source->next = odb->sources;
 	odb->sources = source;
@@ -387,6 +387,7 @@ void odb_restore_primary_source(struct object_database *odb,
 	if (cur_source->next != restore_source)
 		BUG("we expect the old primary object store to be the first alternate");
 
+	odb->repo->disable_ref_updates = false;
 	odb->sources = restore_source;
 	odb_source_free(cur_source);
 }

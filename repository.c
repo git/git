@@ -179,7 +179,7 @@ void repo_set_gitdir(struct repository *repo,
 		repo->objects->sources->path = objects_path;
 	}
 
-	repo->objects->sources->disable_ref_updates = o->disable_ref_updates;
+	repo->disable_ref_updates = o->disable_ref_updates;
 
 	free(repo->objects->alternate_db);
 	repo->objects->alternate_db = xstrdup_or_null(o->alternate_db);
