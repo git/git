@@ -47,7 +47,7 @@
 static const char * const builtin_fetch_usage[] = {
 	N_("git fetch [<options>] [<repository> [<refspec>...]]"),
 	N_("git fetch [<options>] <group>"),
-	N_("git fetch --multiple [<options>] [(<repository> | <group>)...]"),
+	N_("git fetch --multiple [<options>] [(<repository>|<group>)...]"),
 	N_("git fetch --all [<options>]"),
 	NULL
 };
