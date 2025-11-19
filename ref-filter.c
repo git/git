@@ -91,6 +91,7 @@ static struct expand_data {
 	struct object_id delta_base_oid;
 	void *content;
 
+	struct object *maybe_object;
 	struct object_info info;
 } oi, oi_deref;
 
@@ -1475,11 +1476,29 @@ static void grab_common_values(struct atom_value *val, int deref, struct expand_
 	}
 }
 
-/* See grab_values */
-static void grab_tag_values(struct atom_value *val, int deref, struct object *obj)
+static struct object *get_or_parse_object(struct expand_data *data, const char *refname,
+					  struct strbuf *err, int *eaten)
 {
+	if (!data->maybe_object) {
+		data->maybe_object = parse_object_buffer(the_repository, &data->oid, data->type,
+							 data->size, data->content, eaten);
+		if (!data->maybe_object) {
+			strbuf_addf(err, _("parse_object_buffer failed on %s for %s"),
+				    oid_to_hex(&data->oid), refname);
+			return NULL;
+		}
+	}
+
+	return data->maybe_object;
+}
+
+/* See grab_values */
+static int grab_tag_values(struct atom_value *val, int deref,
+			   struct expand_data *data, const char *refname,
+			   struct strbuf *err, int *eaten)
+{
+	struct tag *tag = NULL;
 	int i;
-	struct tag *tag = (struct tag *) obj;
 
 	for (i = 0; i < used_atom_cnt; i++) {
 		const char *name = used_atom[i].name;
@@ -1487,6 +1506,14 @@ static void grab_tag_values(struct atom_value *val, int deref, struct object *ob
 		struct atom_value *v = &val[i];
 		if (!!deref != (*name == '*'))
 			continue;
+
+		if (!tag) {
+			tag = (struct tag *) get_or_parse_object(data, refname,
+								 err, eaten);
+			if (!tag)
+				return -1;
+		}
+
 		if (deref)
 			name++;
 		if (atom_type == ATOM_TAG)
@@ -1496,22 +1523,35 @@ static void grab_tag_values(struct atom_value *val, int deref, struct object *ob
 		else if (atom_type == ATOM_OBJECT && tag->tagged)
 			v->s = xstrdup(oid_to_hex(&tag->tagged->oid));
 	}
+
+	return 0;
 }
 
 /* See grab_values */
-static void grab_commit_values(struct atom_value *val, int deref, struct object *obj)
+static int grab_commit_values(struct atom_value *val, int deref,
+			      struct expand_data *data, const char *refname,
+			      struct strbuf *err, int *eaten)
 {
 	int i;
-	struct commit *commit = (struct commit *) obj;
+	struct commit *commit = NULL;
 
 	for (i = 0; i < used_atom_cnt; i++) {
 		const char *name = used_atom[i].name;
 		enum atom_type atom_type = used_atom[i].atom_type;
 		struct atom_value *v = &val[i];
+
 		if (!!deref != (*name == '*'))
 			continue;
 		if (deref)
 			name++;
+
+		if (!commit) {
+			commit = (struct commit *) get_or_parse_object(data, refname,
+								       err, eaten);
+			if (!commit)
+				return -1;
+		}
+
 		if (atom_type == ATOM_TREE &&
 		    grab_oid(name, "tree", get_commit_tree_oid(commit), v, &used_atom[i]))
 			continue;
@@ -1531,6 +1571,8 @@ static void grab_commit_values(struct atom_value *val, int deref, struct object 
 			v->s = strbuf_detach(&s, NULL);
 		}
 	}
+
+	return 0;
 }
 
 static const char *find_wholine(const char *who, int wholen, const char *buf)
@@ -1759,10 +1801,12 @@ static void grab_person(const char *who, struct atom_value *val, int deref, void
 	}
 }
 
-static void grab_signature(struct atom_value *val, int deref, struct object *obj)
+static int grab_signature(struct atom_value *val, int deref,
+			  struct expand_data *data, const char *refname,
+			  struct strbuf *err, int *eaten)
 {
 	int i;
-	struct commit *commit = (struct commit *) obj;
+	struct commit *commit = NULL;
 	struct signature_check sigc = { 0 };
 	int signature_checked = 0;
 
@@ -1790,6 +1834,13 @@ static void grab_signature(struct atom_value *val, int deref, struct object *obj
 			continue;
 
 		if (!signature_checked) {
+			if (!commit) {
+				commit = (struct commit *) get_or_parse_object(data, refname,
+									       err, eaten);
+				if (!commit)
+					return -1;
+			}
+
 			check_commit_signature(commit, &sigc);
 			signature_checked = 1;
 		}
@@ -1843,6 +1894,8 @@ static void grab_signature(struct atom_value *val, int deref, struct object *obj
 
 	if (signature_checked)
 		signature_check_clear(&sigc);
+
+	return 0;
 }
 
 static void find_subpos(const char *buf,
@@ -1920,9 +1973,8 @@ static void append_lines(struct strbuf *out, const char *buf, unsigned long size
 }
 
 static void grab_describe_values(struct atom_value *val, int deref,
-				 struct object *obj)
+				 struct expand_data *data)
 {
-	struct commit *commit = (struct commit *)obj;
 	int i;
 
 	for (i = 0; i < used_atom_cnt; i++) {
@@ -1944,7 +1996,7 @@ static void grab_describe_values(struct atom_value *val, int deref,
 		cmd.git_cmd = 1;
 		strvec_push(&cmd.args, "describe");
 		strvec_pushv(&cmd.args, atom->u.describe_args.v);
-		strvec_push(&cmd.args, oid_to_hex(&commit->object.oid));
+		strvec_push(&cmd.args, oid_to_hex(&data->oid));
 		if (pipe_command(&cmd, NULL, 0, &out, 0, &err, 0) < 0) {
 			error(_("failed to run 'describe'"));
 			v->s = xstrdup("");
@@ -2066,24 +2118,36 @@ static void fill_missing_values(struct atom_value *val)
  * pointed at by the ref itself; otherwise it is the object the
  * ref (which is a tag) refers to.
  */
-static void grab_values(struct atom_value *val, int deref, struct object *obj, struct expand_data *data)
+static int grab_values(struct atom_value *val, int deref, struct expand_data *data,
+		       const char *refname, struct strbuf *err, int *eaten)
 {
 	void *buf = data->content;
+	int ret;
 
-	switch (obj->type) {
+	switch (data->type) {
 	case OBJ_TAG:
-		grab_tag_values(val, deref, obj);
+		ret = grab_tag_values(val, deref, data, refname, err, eaten);
+		if (ret < 0)
+			goto out;
+
 		grab_sub_body_contents(val, deref, data);
 		grab_person("tagger", val, deref, buf);
-		grab_describe_values(val, deref, obj);
+		grab_describe_values(val, deref, data);
 		break;
 	case OBJ_COMMIT:
-		grab_commit_values(val, deref, obj);
+		ret = grab_commit_values(val, deref, data, refname, err, eaten);
+		if (ret < 0)
+			goto out;
+
 		grab_sub_body_contents(val, deref, data);
 		grab_person("author", val, deref, buf);
 		grab_person("committer", val, deref, buf);
-		grab_signature(val, deref, obj);
-		grab_describe_values(val, deref, obj);
+
+		ret = grab_signature(val, deref, data, refname, err, eaten);
+		if (ret < 0)
+			goto out;
+
+		grab_describe_values(val, deref, data);
 		break;
 	case OBJ_TREE:
 		/* grab_tree_values(val, deref, obj, buf, sz); */
@@ -2094,8 +2158,12 @@ static void grab_values(struct atom_value *val, int deref, struct object *obj, s
 		grab_sub_body_contents(val, deref, data);
 		break;
 	default:
-		die("Eh?  Object of type %d?", obj->type);
+		die("Eh?  Object of type %d?", data->type);
 	}
+
+	ret = 0;
+out:
+	return ret;
 }
 
 static inline char *copy_advance(char *dst, const char *src)
@@ -2292,38 +2360,43 @@ static const char *get_refname(struct used_atom *atom, struct ref_array_item *re
 	return show_ref(&atom->u.refname, ref->refname);
 }
 
-static int get_object(struct ref_array_item *ref, int deref, struct object **obj,
+static int get_object(struct ref_array_item *ref, int deref,
 		      struct expand_data *oi, struct strbuf *err)
 {
-	/* parse_object_buffer() will set eaten to 0 if free() will be needed */
-	int eaten = 1;
+	/* parse_object_buffer() will set eaten to 1 if free() will be needed */
+	int eaten = 0;
+	int ret;
+
+	oi->maybe_object = NULL;
+
 	if (oi->info.contentp) {
 		/* We need to know that to use parse_object_buffer properly */
 		oi->info.sizep = &oi->size;
 		oi->info.typep = &oi->type;
 	}
+
 	if (odb_read_object_info_extended(the_repository->objects, &oi->oid, &oi->info,
-					  OBJECT_INFO_LOOKUP_REPLACE))
-		return strbuf_addf_ret(err, -1, _("missing object %s for %s"),
-				       oid_to_hex(&oi->oid), ref->refname);
+					  OBJECT_INFO_LOOKUP_REPLACE)) {
+		ret = strbuf_addf_ret(err, -1, _("missing object %s for %s"),
+				      oid_to_hex(&oi->oid), ref->refname);
+		goto out;
+	}
 	if (oi->info.disk_sizep && oi->disk_size < 0)
 		BUG("Object size is less than zero.");
 
 	if (oi->info.contentp) {
-		*obj = parse_object_buffer(the_repository, &oi->oid, oi->type, oi->size, oi->content, &eaten);
-		if (!*obj) {
-			if (!eaten)
-				free(oi->content);
-			return strbuf_addf_ret(err, -1, _("parse_object_buffer failed on %s for %s"),
-					       oid_to_hex(&oi->oid), ref->refname);
-		}
-		grab_values(ref->value, deref, *obj, oi);
+		ret = grab_values(ref->value, deref, oi, ref->refname, err, &eaten);
+		if (ret < 0)
+			goto out;
 	}
 
 	grab_common_values(ref->value, deref, oi);
+	ret = 0;
+
+out:
 	if (!eaten)
 		free(oi->content);
-	return 0;
+	return ret;
 }
 
 static void populate_worktree_map(struct hashmap *map, struct worktree **worktrees)
@@ -2376,7 +2449,6 @@ static char *get_worktree_path(const struct ref_array_item *ref)
  */
 static int populate_value(struct ref_array_item *ref, struct strbuf *err)
 {
-	struct object *obj;
 	int i;
 	struct object_info empty = OBJECT_INFO_INIT;
 	int ahead_behind_atoms = 0;
@@ -2564,24 +2636,32 @@ static int populate_value(struct ref_array_item *ref, struct strbuf *err)
 
 
 	oi.oid = ref->objectname;
-	if (get_object(ref, 0, &obj, &oi, err))
+	if (get_object(ref, 0, &oi, err))
 		return -1;
 
 	/*
 	 * If there is no atom that wants to know about tagged
 	 * object, we are done.
 	 */
-	if (!need_tagged || (obj->type != OBJ_TAG))
+	if (!need_tagged || (oi.type != OBJ_TAG))
 		return 0;
 
 	/*
 	 * If it is a tag object, see if we use the peeled value. If we do,
 	 * grab the peeled OID.
 	 */
-	if (need_tagged && peel_iterated_oid(the_repository, &obj->oid, &oi_deref.oid))
-		die("bad tag");
+	if (need_tagged) {
+		if (!is_null_oid(&ref->peeled_oid)) {
+			oidcpy(&oi_deref.oid, &ref->peeled_oid);
+		} else if (!peel_object(the_repository, &oi.oid, &oi_deref.oid,
+					PEEL_OBJECT_VERIFY_OBJECT_TYPE)) {
+			/* We managed to peel the object ourselves. */
+		} else {
+			die("bad tag");
+		}
+	}
 
-	return get_object(ref, 1, &obj, &oi_deref, err);
+	return get_object(ref, 1, &oi_deref, err);
 }
 
 /*
@@ -2807,12 +2887,15 @@ static int match_points_at(struct oid_array *points_at,
  * Callers can then fill in other struct members at their leisure.
  */
 static struct ref_array_item *new_ref_array_item(const char *refname,
-						 const struct object_id *oid)
+						 const struct object_id *oid,
+						 const struct object_id *peeled_oid)
 {
 	struct ref_array_item *ref;
 
 	FLEX_ALLOC_STR(ref, refname, refname);
 	oidcpy(&ref->objectname, oid);
+	if (peeled_oid)
+		oidcpy(&ref->peeled_oid, peeled_oid);
 	ref->rest = NULL;
 
 	return ref;
@@ -2826,9 +2909,10 @@ static void ref_array_append(struct ref_array *array, struct ref_array_item *ref
 
 struct ref_array_item *ref_array_push(struct ref_array *array,
 				      const char *refname,
-				      const struct object_id *oid)
+				      const struct object_id *oid,
+				      const struct object_id *peeled_oid)
 {
-	struct ref_array_item *ref = new_ref_array_item(refname, oid);
+	struct ref_array_item *ref = new_ref_array_item(refname, oid, peeled_oid);
 	ref_array_append(array, ref);
 	return ref;
 }
@@ -2871,25 +2955,25 @@ static int filter_ref_kind(struct ref_filter *filter, const char *refname)
 	return ref_kind_from_refname(refname);
 }
 
-static struct ref_array_item *apply_ref_filter(const char *refname, const char *referent, const struct object_id *oid,
-			    int flag, struct ref_filter *filter)
+static struct ref_array_item *apply_ref_filter(const struct reference *ref,
+					       struct ref_filter *filter)
 {
-	struct ref_array_item *ref;
+	struct ref_array_item *item;
 	struct commit *commit = NULL;
 	unsigned int kind;
 
-	if (flag & REF_BAD_NAME) {
-		warning(_("ignoring ref with broken name %s"), refname);
+	if (ref->flags & REF_BAD_NAME) {
+		warning(_("ignoring ref with broken name %s"), ref->name);
 		return NULL;
 	}
 
-	if (flag & REF_ISBROKEN) {
-		warning(_("ignoring broken ref %s"), refname);
+	if (ref->flags & REF_ISBROKEN) {
+		warning(_("ignoring broken ref %s"), ref->name);
 		return NULL;
 	}
 
 	/* Obtain the current ref kind from filter_ref_kind() and ignore unwanted refs. */
-	kind = filter_ref_kind(filter, refname);
+	kind = filter_ref_kind(filter, ref->name);
 
 	/*
 	 * Generally HEAD refs are printed with special description denoting a rebase,
@@ -2902,13 +2986,13 @@ static struct ref_array_item *apply_ref_filter(const char *refname, const char *
 	else if (!(kind & filter->kind))
 		return NULL;
 
-	if (!filter_pattern_match(filter, refname))
+	if (!filter_pattern_match(filter, ref->name))
 		return NULL;
 
-	if (filter_exclude_match(filter, refname))
+	if (filter_exclude_match(filter, ref->name))
 		return NULL;
 
-	if (filter->points_at.nr && !match_points_at(&filter->points_at, oid, refname))
+	if (filter->points_at.nr && !match_points_at(&filter->points_at, ref->oid, ref->name))
 		return NULL;
 
 	/*
@@ -2918,7 +3002,7 @@ static struct ref_array_item *apply_ref_filter(const char *refname, const char *
 	 */
 	if (filter->reachable_from || filter->unreachable_from ||
 	    filter->with_commit || filter->no_commit || filter->verbose) {
-		commit = lookup_commit_reference_gently(the_repository, oid, 1);
+		commit = lookup_commit_reference_gently(the_repository, ref->oid, 1);
 		if (!commit)
 			return NULL;
 		/* We perform the filtering for the '--contains' option... */
@@ -2936,13 +3020,13 @@ static struct ref_array_item *apply_ref_filter(const char *refname, const char *
 	 * to do its job and the resulting list may yet to be pruned
 	 * by maxcount logic.
 	 */
-	ref = new_ref_array_item(refname, oid);
-	ref->commit = commit;
-	ref->flag = flag;
-	ref->kind = kind;
-	ref->symref = xstrdup_or_null(referent);
+	item = new_ref_array_item(ref->name, ref->oid, ref->peeled_oid);
+	item->commit = commit;
+	item->flag = ref->flags;
+	item->kind = kind;
+	item->symref = xstrdup_or_null(ref->target);
 
-	return ref;
+	return item;
 }
 
 struct ref_filter_cbdata {
@@ -2954,14 +3038,14 @@ struct ref_filter_cbdata {
  * A call-back given to for_each_ref().  Filter refs and keep them for
  * later object processing.
  */
-static int filter_one(const char *refname, const char *referent, const struct object_id *oid, int flag, void *cb_data)
+static int filter_one(const struct reference *ref, void *cb_data)
 {
 	struct ref_filter_cbdata *ref_cbdata = cb_data;
-	struct ref_array_item *ref;
+	struct ref_array_item *item;
 
-	ref = apply_ref_filter(refname, referent, oid, flag, ref_cbdata->filter);
-	if (ref)
-		ref_array_append(ref_cbdata->array, ref);
+	item = apply_ref_filter(ref, ref_cbdata->filter);
+	if (item)
+		ref_array_append(ref_cbdata->array, item);
 
 	return 0;
 }
@@ -2990,17 +3074,17 @@ struct ref_filter_and_format_cbdata {
 	} internal;
 };
 
-static int filter_and_format_one(const char *refname, const char *referent, const struct object_id *oid, int flag, void *cb_data)
+static int filter_and_format_one(const struct reference *ref, void *cb_data)
 {
 	struct ref_filter_and_format_cbdata *ref_cbdata = cb_data;
-	struct ref_array_item *ref;
+	struct ref_array_item *item;
 	struct strbuf output = STRBUF_INIT, err = STRBUF_INIT;
 
-	ref = apply_ref_filter(refname, referent, oid, flag, ref_cbdata->filter);
-	if (!ref)
+	item = apply_ref_filter(ref, ref_cbdata->filter);
+	if (!item)
 		return 0;
 
-	if (format_ref_array_item(ref, ref_cbdata->format, &output, &err))
+	if (format_ref_array_item(item, ref_cbdata->format, &output, &err))
 		die("%s", err.buf);
 
 	if (output.len || !ref_cbdata->format->array_opts.omit_empty) {
@@ -3010,7 +3094,7 @@ static int filter_and_format_one(const char *refname, const char *referent, cons
 
 	strbuf_release(&output);
 	strbuf_release(&err);
-	free_array_item(ref);
+	free_array_item(item);
 
 	/*
 	 * Increment the running count of refs that match the filter. If
@@ -3583,13 +3667,14 @@ void print_formatted_ref_array(struct ref_array *array, struct ref_format *forma
 }
 
 void pretty_print_ref(const char *name, const struct object_id *oid,
+		      const struct object_id *peeled_oid,
 		      struct ref_format *format)
 {
 	struct ref_array_item *ref_item;
 	struct strbuf output = STRBUF_INIT;
 	struct strbuf err = STRBUF_INIT;
 
-	ref_item = new_ref_array_item(name, oid);
+	ref_item = new_ref_array_item(name, oid, peeled_oid);
 	ref_item->kind = ref_kind_from_refname(name);
 	if (format_ref_array_item(ref_item, format, &output, &err))
 		die("%s", err.buf);

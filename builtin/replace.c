@@ -47,30 +47,27 @@ struct show_data {
 	enum replace_format format;
 };
 
-static int show_reference(const char *refname,
-			  const char *referent UNUSED,
-			  const struct object_id *oid,
-			  int flag UNUSED, void *cb_data)
+static int show_reference(const struct reference *ref, void *cb_data)
 {
 	struct show_data *data = cb_data;
 
-	if (!wildmatch(data->pattern, refname, 0)) {
+	if (!wildmatch(data->pattern, ref->name, 0)) {
 		if (data->format == REPLACE_FORMAT_SHORT)
-			printf("%s\n", refname);
+			printf("%s\n", ref->name);
 		else if (data->format == REPLACE_FORMAT_MEDIUM)
-			printf("%s -> %s\n", refname, oid_to_hex(oid));
+			printf("%s -> %s\n", ref->name, oid_to_hex(ref->oid));
 		else { /* data->format == REPLACE_FORMAT_LONG */
 			struct object_id object;
 			enum object_type obj_type, repl_type;
 
-			if (repo_get_oid(data->repo, refname, &object))
-				return error(_("failed to resolve '%s' as a valid ref"), refname);
+			if (repo_get_oid(data->repo, ref->name, &object))
+				return error(_("failed to resolve '%s' as a valid ref"), ref->name);
 
 			obj_type = odb_read_object_info(data->repo->objects, &object, NULL);
-			repl_type = odb_read_object_info(data->repo->objects, oid, NULL);
+			repl_type = odb_read_object_info(data->repo->objects, ref->oid, NULL);
 
-			printf("%s (%s) -> %s (%s)\n", refname, type_name(obj_type),
-			       oid_to_hex(oid), type_name(repl_type));
+			printf("%s (%s) -> %s (%s)\n", ref->name, type_name(obj_type),
+			       oid_to_hex(ref->oid), type_name(repl_type));
 		}
 	}
 

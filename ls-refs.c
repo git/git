@@ -75,42 +75,42 @@ struct ls_refs_data {
 	unsigned unborn : 1;
 };
 
-static int send_ref(const char *refname, const char *referent UNUSED, const struct object_id *oid,
-		    int flag, void *cb_data)
+static int send_ref(const struct reference *ref, void *cb_data)
 {
 	struct ls_refs_data *data = cb_data;
-	const char *refname_nons = strip_namespace(refname);
+	const char *refname_nons = strip_namespace(ref->name);
 
 	strbuf_reset(&data->buf);
 
-	if (ref_is_hidden(refname_nons, refname, &data->hidden_refs))
+	if (ref_is_hidden(refname_nons, ref->name, &data->hidden_refs))
 		return 0;
 
 	if (!ref_match(&data->prefixes, refname_nons))
 		return 0;
 
-	if (oid)
-		strbuf_addf(&data->buf, "%s %s", oid_to_hex(oid), refname_nons);
+	if (ref->oid)
+		strbuf_addf(&data->buf, "%s %s", oid_to_hex(ref->oid), refname_nons);
 	else
 		strbuf_addf(&data->buf, "unborn %s", refname_nons);
-	if (data->symrefs && flag & REF_ISSYMREF) {
+	if (data->symrefs && ref->flags & REF_ISSYMREF) {
+		int unused_flag;
 		struct object_id unused;
 		const char *symref_target = refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
-								    refname,
+								    ref->name,
 								    0,
 								    &unused,
-								    &flag);
+								    &unused_flag);
 
 		if (!symref_target)
-			die("'%s' is a symref but it is not?", refname);
+			die("'%s' is a symref but it is not?", ref->name);
 
 		strbuf_addf(&data->buf, " symref-target:%s",
 			    strip_namespace(symref_target));
 	}
 
-	if (data->peel && oid) {
+	if (data->peel && ref->oid) {
 		struct object_id peeled;
-		if (!peel_iterated_oid(the_repository, oid, &peeled))
+		if (!reference_get_peeled_oid(the_repository, ref, &peeled))
 			strbuf_addf(&data->buf, " peeled:%s", oid_to_hex(&peeled));
 	}
 
@@ -131,9 +131,17 @@ static void send_possibly_unborn_head(struct ls_refs_data *data)
 	if (!refs_resolve_ref_unsafe(get_main_ref_store(the_repository), namespaced.buf, 0, &oid, &flag))
 		return; /* bad ref */
 	oid_is_null = is_null_oid(&oid);
+
 	if (!oid_is_null ||
-	    (data->unborn && data->symrefs && (flag & REF_ISSYMREF)))
-		send_ref(namespaced.buf, NULL, oid_is_null ? NULL : &oid, flag, data);
+	    (data->unborn && data->symrefs && (flag & REF_ISSYMREF))) {
+		struct reference ref = {
+			.name = namespaced.buf,
+			.oid = oid_is_null ? NULL : &oid,
+			.flags = flag,
+		};
+
+		send_ref(&ref, data);
+	}
 	strbuf_release(&namespaced);
 }
 
