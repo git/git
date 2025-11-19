@@ -2913,6 +2913,32 @@ static int process_renames(struct merge_options *opt,
 			continue;
 
 		/*
+		 * Rename caching from a previous commit might give us an
+		 * irrelevant rename for the current commit.
+		 *
+		 * Imagine:
+		 *     foo/A -> bar/A
+		 * was a cached rename for the upstream side from the
+		 * previous commit (without the directories being renamed),
+		 * but the next commit being replayed
+		 *     * does NOT add or delete files
+		 *     * does NOT have directory renames
+		 *     * does NOT modify any files under bar/
+		 *     * does NOT modify foo/A
+		 *     * DOES modify other files under foo/ (otherwise the
+		 *       !oldinfo check above would have already exited for
+		 *       us)
+		 * In such a case, our trivial directory resolution will
+		 * have already merged bar/, and our attempt to process
+		 * the cached
+		 *     foo/A -> bar/A
+		 * would be counterproductive, and lack the necessary
+		 * information anyway.  Skip such renames.
+		 */
+		if (!newinfo)
+			continue;
+
+		/*
 		 * diff_filepairs have copies of pathnames, thus we have to
 		 * use standard 'strcmp()' (negated) instead of '=='.
 		 */
@@ -3438,7 +3464,7 @@ static int collect_renames(struct merge_options *opt,
 			continue;
 		}
 		if (opt->detect_directory_renames == MERGE_DIRECTORY_RENAMES_NONE &&
-		    p->status == 'R' && 1) {
+		    p->status == 'R') {
 			possibly_cache_new_pair(renames, p, side_index, NULL);
 			goto skip_directory_renames;
 		}
@@ -5118,7 +5144,8 @@ static void merge_check_renames_reusable(struct merge_options *opt,
 	 * optimization" comment near that case).
 	 *
 	 * This could be revisited in the future; see the commit message
-	 * where this comment was added for some possible pointers.
+	 * where this comment was added for some possible pointers, or the
+	 * later commit where this comment was added.
 	 */
 	if (opt->detect_directory_renames == MERGE_DIRECTORY_RENAMES_NONE) {
 		renames->cached_pairs_valid_side = 0; /* neither side valid */
