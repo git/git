@@ -5,14 +5,12 @@
 #include "object.h"
 #include "odb.h"
 #include "oidset.h"
+#include "strmap.h"
 
 /* in odb.h */
 struct object_info;
 
 struct packed_git {
-	struct hashmap_entry packmap_ent;
-	struct packed_git *next;
-	struct list_head mru;
 	struct pack_window *windows;
 	off_t pack_size;
 	const void *index_data;
@@ -52,6 +50,28 @@ struct packed_git {
 	char pack_name[FLEX_ARRAY]; /* more */
 };
 
+struct packfile_list {
+	struct packfile_list_entry *head, *tail;
+};
+
+struct packfile_list_entry {
+	struct packfile_list_entry *next;
+	struct packed_git *pack;
+};
+
+void packfile_list_clear(struct packfile_list *list);
+void packfile_list_remove(struct packfile_list *list, struct packed_git *pack);
+void packfile_list_prepend(struct packfile_list *list, struct packed_git *pack);
+void packfile_list_append(struct packfile_list *list, struct packed_git *pack);
+
+/*
+ * Find the pack within the "packs" list whose index contains the object
+ * "oid". For general object lookups, you probably don't want this; use
+ * find_pack_entry() instead.
+ */
+struct packed_git *packfile_list_find_oid(struct packfile_list_entry *packs,
+					  const struct object_id *oid);
+
 /*
  * A store that manages packfiles for a given object database.
  */
@@ -59,10 +79,10 @@ struct packfile_store {
 	struct object_database *odb;
 
 	/*
-	 * The list of packfiles in the order in which they are being added to
-	 * the store.
+	 * The list of packfiles in the order in which they have been most
+	 * recently used.
 	 */
-	struct packed_git *packs;
+	struct packfile_list packs;
 
 	/*
 	 * Cache of packfiles which are marked as "kept", either because there
@@ -78,20 +98,32 @@ struct packfile_store {
 		unsigned flags;
 	} kept_cache;
 
-	/* A most-recently-used ordered version of the packs list. */
-	struct list_head mru;
-
 	/*
 	 * A map of packfile names to packed_git structs for tracking which
 	 * packs have been loaded already.
 	 */
-	struct hashmap map;
+	struct strmap packs_by_path;
 
 	/*
 	 * Whether packfiles have already been populated with this store's
 	 * packs.
 	 */
 	bool initialized;
+
+	/*
+	 * Usually, packfiles will be reordered to the front of the `packs`
+	 * list whenever an object is looked up via them. This has the effect
+	 * that packs that contain a lot of accessed objects will be located
+	 * towards the front.
+	 *
+	 * This is usually desireable, but there are exceptions. One exception
+	 * is when the looking up multiple objects in a loop for each packfile.
+	 * In that case, we may easily end up with an infinite loop as the
+	 * packfiles get reordered to the front repeatedly.
+	 *
+	 * Setting this field to `true` thus disables these reorderings.
+	 */
+	bool skip_mru_updates;
 };
 
 /*
@@ -142,18 +174,14 @@ void packfile_store_add_pack(struct packfile_store *store,
  * repository.
  */
 #define repo_for_each_pack(repo, p) \
-	for (p = packfile_store_get_packs(repo->objects->packfiles); p; p = p->next)
+	for (struct packfile_list_entry *e = packfile_store_get_packs(repo->objects->packfiles); \
+	     ((p) = (e ? e->pack : NULL)); e = e->next)
 
 /*
  * Get all packs managed by the given store, including packfiles that are
  * referenced by multi-pack indices.
  */
-struct packed_git *packfile_store_get_packs(struct packfile_store *store);
-
-/*
- * Get all packs in most-recently-used order.
- */
-struct list_head *packfile_store_get_packs_mru(struct packfile_store *store);
+struct packfile_list_entry *packfile_store_get_packs(struct packfile_store *store);
 
 /*
  * Open the packfile and add it to the store if it isn't yet known. Returns
@@ -244,14 +272,6 @@ extern void (*report_garbage)(unsigned seen_bits, const char *path);
  * for speed.
  */
 unsigned long repo_approximate_object_count(struct repository *r);
-
-/*
- * Find the pack within the "packs" list whose index contains the object "oid".
- * For general object lookups, you probably don't want this; use
- * find_pack_entry() instead.
- */
-struct packed_git *find_oid_pack(const struct object_id *oid,
-				 struct packed_git *packs);
 
 void pack_report(struct repository *repo);
 

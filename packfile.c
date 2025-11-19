@@ -47,6 +47,89 @@ static size_t pack_mapped;
 #define SZ_FMT PRIuMAX
 static inline uintmax_t sz_fmt(size_t s) { return s; }
 
+void packfile_list_clear(struct packfile_list *list)
+{
+	struct packfile_list_entry *e, *next;
+
+	for (e = list->head; e; e = next) {
+		next = e->next;
+		free(e);
+	}
+
+	list->head = list->tail = NULL;
+}
+
+static struct packfile_list_entry *packfile_list_remove_internal(struct packfile_list *list,
+								 struct packed_git *pack)
+{
+	struct packfile_list_entry *e, *prev;
+
+	for (e = list->head, prev = NULL; e; prev = e, e = e->next) {
+		if (e->pack != pack)
+			continue;
+
+		if (prev)
+			prev->next = e->next;
+		if (list->head == e)
+			list->head = e->next;
+		if (list->tail == e)
+			list->tail = prev;
+
+		return e;
+	}
+
+	return NULL;
+}
+
+void packfile_list_remove(struct packfile_list *list, struct packed_git *pack)
+{
+	free(packfile_list_remove_internal(list, pack));
+}
+
+void packfile_list_prepend(struct packfile_list *list, struct packed_git *pack)
+{
+	struct packfile_list_entry *entry;
+
+	entry = packfile_list_remove_internal(list, pack);
+	if (!entry) {
+		entry = xmalloc(sizeof(*entry));
+		entry->pack = pack;
+	}
+	entry->next = list->head;
+
+	list->head = entry;
+	if (!list->tail)
+		list->tail = entry;
+}
+
+void packfile_list_append(struct packfile_list *list, struct packed_git *pack)
+{
+	struct packfile_list_entry *entry;
+
+	entry = packfile_list_remove_internal(list, pack);
+	if (!entry) {
+		entry = xmalloc(sizeof(*entry));
+		entry->pack = pack;
+	}
+	entry->next = NULL;
+
+	if (list->tail) {
+		list->tail->next = entry;
+		list->tail = entry;
+	} else {
+		list->head = list->tail = entry;
+	}
+}
+
+struct packed_git *packfile_list_find_oid(struct packfile_list_entry *packs,
+					  const struct object_id *oid)
+{
+	for (; packs; packs = packs->next)
+		if (find_pack_entry_one(oid, packs->pack))
+			return packs->pack;
+	return NULL;
+}
+
 void pack_report(struct repository *repo)
 {
 	fprintf(stderr,
@@ -273,13 +356,14 @@ static void scan_windows(struct packed_git *p,
 
 static int unuse_one_window(struct packed_git *current)
 {
-	struct packed_git *p, *lru_p = NULL;
+	struct packfile_list_entry *e;
+	struct packed_git *lru_p = NULL;
 	struct pack_window *lru_w = NULL, *lru_l = NULL;
 
 	if (current)
 		scan_windows(current, &lru_p, &lru_w, &lru_l);
-	for (p = current->repo->objects->packfiles->packs; p; p = p->next)
-		scan_windows(p, &lru_p, &lru_w, &lru_l);
+	for (e = current->repo->objects->packfiles->packs.head; e; e = e->next)
+		scan_windows(e->pack, &lru_p, &lru_w, &lru_l);
 	if (lru_p) {
 		munmap(lru_w->base, lru_w->len);
 		pack_mapped -= lru_w->len;
@@ -459,14 +543,15 @@ static void find_lru_pack(struct packed_git *p, struct packed_git **lru_p, struc
 
 static int close_one_pack(struct repository *r)
 {
-	struct packed_git *p, *lru_p = NULL;
+	struct packfile_list_entry *e;
+	struct packed_git *lru_p = NULL;
 	struct pack_window *mru_w = NULL;
 	int accept_windows_inuse = 1;
 
-	for (p = r->objects->packfiles->packs; p; p = p->next) {
-		if (p->pack_fd == -1)
+	for (e = r->objects->packfiles->packs.head; e; e = e->next) {
+		if (e->pack->pack_fd == -1)
 			continue;
-		find_lru_pack(p, &lru_p, &mru_w, &accept_windows_inuse);
+		find_lru_pack(e->pack, &lru_p, &mru_w, &accept_windows_inuse);
 	}
 
 	if (lru_p)
@@ -785,11 +870,8 @@ void packfile_store_add_pack(struct packfile_store *store,
 	if (pack->pack_fd != -1)
 		pack_open_fds++;
 
-	pack->next = store->packs;
-	store->packs = pack;
-
-	hashmap_entry_init(&pack->packmap_ent, strhash(pack->pack_name));
-	hashmap_add(&store->map, &pack->packmap_ent);
+	packfile_list_append(&store->packs, pack);
+	strmap_put(&store->packs_by_path, pack->pack_name, pack);
 }
 
 struct packed_git *packfile_store_load_pack(struct packfile_store *store,
@@ -806,8 +888,7 @@ struct packed_git *packfile_store_load_pack(struct packfile_store *store,
 	strbuf_strip_suffix(&key, ".idx");
 	strbuf_addstr(&key, ".pack");
 
-	p = hashmap_get_entry_from_hash(&store->map, strhash(key.buf), key.buf,
-					struct packed_git, packmap_ent);
+	p = strmap_get(&store->packs_by_path, key.buf);
 	if (!p) {
 		p = add_packed_git(store->odb->repo, idx_path,
 				   strlen(idx_path), local);
@@ -965,9 +1046,10 @@ static void prepare_packed_git_one(struct odb_source *source)
 	string_list_clear(data.garbage, 0);
 }
 
-DEFINE_LIST_SORT(static, sort_packs, struct packed_git, next);
+DEFINE_LIST_SORT(static, sort_packs, struct packfile_list_entry, next);
 
-static int sort_pack(const struct packed_git *a, const struct packed_git *b)
+static int sort_pack(const struct packfile_list_entry *a,
+		     const struct packfile_list_entry *b)
 {
 	int st;
 
@@ -977,7 +1059,7 @@ static int sort_pack(const struct packed_git *a, const struct packed_git *b)
 	 * remote ones could be on a network mounted filesystem.
 	 * Favor local ones for these reasons.
 	 */
-	st = a->pack_local - b->pack_local;
+	st = a->pack->pack_local - b->pack->pack_local;
 	if (st)
 		return -st;
 
@@ -986,21 +1068,11 @@ static int sort_pack(const struct packed_git *a, const struct packed_git *b)
 	 * and more recent objects tend to get accessed more
 	 * often.
 	 */
-	if (a->mtime < b->mtime)
+	if (a->pack->mtime < b->pack->mtime)
 		return 1;
-	else if (a->mtime == b->mtime)
+	else if (a->pack->mtime == b->pack->mtime)
 		return 0;
 	return -1;
-}
-
-static void packfile_store_prepare_mru(struct packfile_store *store)
-{
-	struct packed_git *p;
-
-	INIT_LIST_HEAD(&store->mru);
-
-	for (p = store->packs; p; p = p->next)
-		list_add_tail(&p->mru, &store->mru);
 }
 
 void packfile_store_prepare(struct packfile_store *store)
@@ -1015,9 +1087,12 @@ void packfile_store_prepare(struct packfile_store *store)
 		prepare_multi_pack_index_one(source);
 		prepare_packed_git_one(source);
 	}
-	sort_packs(&store->packs, sort_pack);
 
-	packfile_store_prepare_mru(store);
+	sort_packs(&store->packs.head, sort_pack);
+	for (struct packfile_list_entry *e = store->packs.head; e; e = e->next)
+		if (!e->next)
+			store->packs.tail = e;
+
 	store->initialized = true;
 }
 
@@ -1027,7 +1102,7 @@ void packfile_store_reprepare(struct packfile_store *store)
 	packfile_store_prepare(store);
 }
 
-struct packed_git *packfile_store_get_packs(struct packfile_store *store)
+struct packfile_list_entry *packfile_store_get_packs(struct packfile_store *store)
 {
 	packfile_store_prepare(store);
 
@@ -1039,13 +1114,7 @@ struct packed_git *packfile_store_get_packs(struct packfile_store *store)
 			prepare_midx_pack(m, i);
 	}
 
-	return store->packs;
-}
-
-struct list_head *packfile_store_get_packs_mru(struct packfile_store *store)
-{
-	packfile_store_prepare(store);
-	return &store->mru;
+	return store->packs.head;
 }
 
 /*
@@ -1062,16 +1131,16 @@ unsigned long repo_approximate_object_count(struct repository *r)
 		unsigned long count = 0;
 		struct packed_git *p;
 
-		packfile_store_prepare(r->objects->packfiles);
+		odb_prepare_alternates(r->objects);
 
 		for (source = r->objects->sources; source; source = source->next) {
 			struct multi_pack_index *m = get_multi_pack_index(source);
 			if (m)
-				count += m->num_objects;
+				count += m->num_objects + m->num_objects_in_base;
 		}
 
-		for (p = r->objects->packfiles->packs; p; p = p->next) {
-			if (open_pack_index(p))
+		repo_for_each_pack(r, p) {
+			if (p->multi_pack_index || open_pack_index(p))
 				continue;
 			count += p->num_objects;
 		}
@@ -1195,11 +1264,11 @@ void mark_bad_packed_object(struct packed_git *p, const struct object_id *oid)
 const struct packed_git *has_packed_and_bad(struct repository *r,
 					    const struct object_id *oid)
 {
-	struct packed_git *p;
+	struct packfile_list_entry *e;
 
-	for (p = r->objects->packfiles->packs; p; p = p->next)
-		if (oidset_contains(&p->bad_objects, oid))
-			return p;
+	for (e = r->objects->packfiles->packs.head; e; e = e->next)
+		if (oidset_contains(&e->pack->bad_objects, oid))
+			return e->pack;
 	return NULL;
 }
 
@@ -2007,19 +2076,6 @@ int is_pack_valid(struct packed_git *p)
 	return !open_packed_git(p);
 }
 
-struct packed_git *find_oid_pack(const struct object_id *oid,
-				 struct packed_git *packs)
-{
-	struct packed_git *p;
-
-	for (p = packs; p; p = p->next) {
-		if (find_pack_entry_one(oid, p))
-			return p;
-	}
-	return NULL;
-
-}
-
 static int fill_pack_entry(const struct object_id *oid,
 			   struct pack_entry *e,
 			   struct packed_git *p)
@@ -2050,7 +2106,7 @@ static int fill_pack_entry(const struct object_id *oid,
 
 int find_pack_entry(struct repository *r, const struct object_id *oid, struct pack_entry *e)
 {
-	struct list_head *pos;
+	struct packfile_list_entry *l;
 
 	packfile_store_prepare(r->objects->packfiles);
 
@@ -2058,13 +2114,15 @@ int find_pack_entry(struct repository *r, const struct object_id *oid, struct pa
 		if (source->midx && fill_midx_entry(source->midx, oid, e))
 			return 1;
 
-	if (!r->objects->packfiles->packs)
+	if (!r->objects->packfiles->packs.head)
 		return 0;
 
-	list_for_each(pos, &r->objects->packfiles->mru) {
-		struct packed_git *p = list_entry(pos, struct packed_git, mru);
+	for (l = r->objects->packfiles->packs.head; l; l = l->next) {
+		struct packed_git *p = l->pack;
+
 		if (!p->multi_pack_index && fill_pack_entry(oid, e, p)) {
-			list_move(&p->mru, &r->objects->packfiles->mru);
+			if (!r->objects->packfiles->skip_mru_updates)
+				packfile_list_prepend(&r->objects->packfiles->packs, p);
 			return 1;
 		}
 	}
@@ -2196,6 +2254,7 @@ int for_each_packed_object(struct repository *repo, each_packed_object_fn cb,
 	int r = 0;
 	int pack_errors = 0;
 
+	repo->objects->packfiles->skip_mru_updates = true;
 	repo_for_each_pack(repo, p) {
 		if ((flags & FOR_EACH_OBJECT_LOCAL_ONLY) && !p->pack_local)
 			continue;
@@ -2216,6 +2275,8 @@ int for_each_packed_object(struct repository *repo, each_packed_object_fn cb,
 		if (r)
 			break;
 	}
+	repo->objects->packfiles->skip_mru_updates = false;
+
 	return r ? r : pack_errors;
 }
 
@@ -2311,45 +2372,30 @@ int parse_pack_header_option(const char *in, unsigned char *out, unsigned int *l
 	return 0;
 }
 
-static int pack_map_entry_cmp(const void *cmp_data UNUSED,
-			      const struct hashmap_entry *entry,
-			      const struct hashmap_entry *entry2,
-			      const void *keydata)
-{
-	const char *key = keydata;
-	const struct packed_git *pg1, *pg2;
-
-	pg1 = container_of(entry, const struct packed_git, packmap_ent);
-	pg2 = container_of(entry2, const struct packed_git, packmap_ent);
-
-	return strcmp(pg1->pack_name, key ? key : pg2->pack_name);
-}
-
 struct packfile_store *packfile_store_new(struct object_database *odb)
 {
 	struct packfile_store *store;
 	CALLOC_ARRAY(store, 1);
 	store->odb = odb;
-	INIT_LIST_HEAD(&store->mru);
-	hashmap_init(&store->map, pack_map_entry_cmp, NULL, 0);
+	strmap_init(&store->packs_by_path);
 	return store;
 }
 
 void packfile_store_free(struct packfile_store *store)
 {
-	for (struct packed_git *p = store->packs, *next; p; p = next) {
-		next = p->next;
-		free(p);
-	}
-	hashmap_clear(&store->map);
+	for (struct packfile_list_entry *e = store->packs.head; e; e = e->next)
+		free(e->pack);
+	packfile_list_clear(&store->packs);
+
+	strmap_clear(&store->packs_by_path, 0);
 	free(store);
 }
 
 void packfile_store_close(struct packfile_store *store)
 {
-	for (struct packed_git *p = store->packs; p; p = p->next) {
-		if (p->do_not_close)
+	for (struct packfile_list_entry *e = store->packs.head; e; e = e->next) {
+		if (e->pack->do_not_close)
 			BUG("want to close pack marked 'do-not-close'");
-		close_pack(p);
+		close_pack(e->pack);
 	}
 }
