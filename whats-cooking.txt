@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Nov 2025, #05; Mon, 17)
-X-master-at: 9a2fb147f2c61d0cab52c883e7e26f5b7948e3ed
-X-next-at: d25c4c69ec8b0378f9f865f96ae5cd33842cdcb3
+Subject: What's cooking in git.git (Nov 2025, #06; Wed, 19)
+X-master-at: 5e6e4854e086ba0025bc7dc11e6b475c92a2f556
+X-next-at: 4c43c53c49517f9a5002d3e8f38395bde77dd998
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Nov 2025, #05; Mon, 17)
+What's cooking in git.git (Nov 2025, #06; Wed, 19)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -17,10 +17,8 @@ topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
 
-Git 2.52 (final) has been tagged.  We'll see if there is a need for
-a quick brown paper bag fix necessary for some days and then reopen
-the tree for the 2.53 cycle, to start merging topics that have been
-cooking in "next" down to "master".
+The 'master' branch now has the first batch of topics for the new
+cycle.  The tip of 'next' branch has been rewound.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -53,18 +51,252 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* jc/ci-use-arm64-p4-on-macos (2025-11-16) 1 commit
-  (merged to 'next' on 2025-11-16 at c784b1ea9f)
- + Use Perforce arm64 binary on macOS CI jobs
+* kn/refs-optim-cleanup (2025-10-20) 4 commits
+  (merged to 'next' on 2025-11-04 at dbab18969a)
+ + t/pack-refs-tests: move the 'test_done' to callees
+ + refs: rename 'pack_refs_opts' to 'refs_optimize_opts'
+ + refs: move to using the '.optimize' functions
+ + Merge branch 'ps/ref-peeled-tags' into kn/refs-optim-cleanup
+ (this branch is used by kn/maintenance-is-needed; uses ps/ref-peeled-tags.)
 
- We replaced deprecated macos-13 with macos-14 image in GitHub
- Actions CI, but we forgot that the image is for arm64.  We have
- been seeing a lot of test failures ever since.  Switch to arm64
- binary for Perforce tests.
- source: <xmqqy0o5bml7.fsf@gitster.g>
+ Code clean-up.
+ source: <20251020-refs-code-cleanup-v2-0-f5349ed0f6a5@gmail.com>
+
+
+* ps/packed-git-in-object-store (2025-10-30) 9 commits
+  (merged to 'next' on 2025-11-03 at 1eb3440abd)
+ + packfile: track packs via the MRU list exclusively
+ + packfile: always add packfiles to MRU when adding a pack
+ + packfile: move list of packs into the packfile store
+ + builtin/pack-objects: simplify logic to find kept or nonlocal objects
+ + packfile: fix approximation of object counts
+ + http: refactor subsystem to use `packfile_list`s
+ + packfile: move the MRU list into the packfile store
+ + packfile: use a `strmap` to store packs by name
+ + Merge branch 'ps/remove-packfile-store-get-packs' into ps/packed-git-in-object-store
+
+ The list of packfiles used in a running Git process is moved from
+ the packed_git structure into the packfile store.
+ source: <20251030-pks-packfiles-store-drop-list-v2-0-84654f080cc0@pks.im>
+
+
+* ps/ref-peeled-tags (2025-11-04) 18 commits
+  (merged to 'next' on 2025-11-04 at 3818774c94)
+ + t7004: do not chdir around in the main process
+ + ref-filter: fix stale parsed objects
+ + ref-filter: parse objects on demand
+ + ref-filter: detect broken tags when dereferencing them
+ + refs: don't store peeled object IDs for invalid tags
+ + object: add flag to `peel_object()` to verify object type
+ + refs: drop infrastructure to peel via iterators
+ + refs: drop `current_ref_iter` hack
+ + builtin/show-ref: convert to use `reference_get_peeled_oid()`
+ + ref-filter: propagate peeled object ID
+ + upload-pack: convert to use `reference_get_peeled_oid()`
+ + refs: expose peeled object ID via the iterator
+ + refs: refactor reference status flags
+ + refs: fully reset `struct ref_iterator::ref` on iteration
+ + refs: introduce `.ref` field for the base iterator
+ + refs: introduce wrapper struct for `each_ref_fn`
+ + Merge branch 'jt/repo-structure' into ps/ref-peeled-tags
+ + Merge branch 'tb/incremental-midx-part-3.1' into ps/ref-peeled-tags
+ (this branch is used by kn/maintenance-is-needed, kn/refs-optim-cleanup and ps/ref-peeled-tags-fixes.)
+
+ Some ref backend storage can hold not just the object name of an
+ annotated tag, but the object name of the object the tag points at.
+ The code to handle this information has been streamlined.
+ source: <20251023-b4-pks-ref-filter-skip-parsing-objects-v4-0-2be68ce82c9a@pks.im>
+
+
+* ps/ref-peeled-tags-fixes (2025-11-06) 2 commits
+  (merged to 'next' on 2025-11-11 at 3549877a16)
+ + object: fix performance regression when peeling tags
+ + Merge branch 'ps/ref-peeled-tags' into ps/ref-peeled-tags-fixes
+ (this branch uses ps/ref-peeled-tags.)
+
+ Another fix-up to "peeled-tags" topic.
+ source: <20251106-b4-pks-peel-object-performance-regression-v1-1-a386147750b0@pks.im>
 
 --------------------------------------------------
 [New Topics]
+
+* jk/ci-windows-meson-test-fix (2025-11-18) 2 commits
+ - ci(windows-meson-test): handle options and output like other test jobs
+ - unit-test: ignore --no-chain-lint
+
+ "Windows+meson" job at the GitHub Actions CI was hard to debug, as
+ it did not show and save failed test artifacts, which has been
+ corrected.
+
+ Will merge to 'next'.
+ source: <20251118093221.GA530337@coredump.intra.peff.net>
+
+
+* jk/test-mktemp-leakfix (2025-11-18) 1 commit
+  (merged to 'next' on 2025-11-19 at 1da34f8b26)
+ + test-mktemp: plug memory and descriptor leaks
+
+ Test leakfix.
+
+ Will merge to 'master'.
+ source: <20251118122124.GA1117960@coredump.intra.peff.net>
+
+
+* js/ci-github-setup-go-update (2025-11-17) 1 commit
+  (merged to 'next' on 2025-11-19 at 9922384c2b)
+ + ci: bump actions/setup-go from 5 to 6
+
+ Update a version of action used at the GitHub Actrions CI.
+
+ Will merge to 'master'.
+ source: <ebc68ec5b2abbc4702b94f833b9b3bf1adb79f1a.1763450087.git.zhiyou.jx@alibaba-inc.com>
+
+
+* js/ci-show-breakage-in-dockerized-jobs (2025-11-17) 1 commit
+ - ci(dockerized): do show the result of failing tests again
+
+ Dockerised jobs at the GitHub Actions CI have been taught to show
+ more details of failed tests.
+
+ Will merge to 'next'?
+ cf. <xmqqpl9gike6.fsf@gitster.g>
+ source: <pull.2003.git.1763399064983.gitgitgadget@gmail.com>
+
+
+* js/cmake-libgit-fix (2025-11-17) 1 commit
+  (merged to 'next' on 2025-11-19 at 1593640ab0)
+ + cmake: stop trying to build the reftable and xdiff libraries
+
+ Makefile based build have recently been updated to build a
+ libgit.a that also has reftable and xdiff objects; CMake based
+ build procedure has been updated to match.
+
+ Will merge to 'master'.
+ source: <pull.2006.git.1763412008722.gitgitgadget@gmail.com>
+
+
+* js/mingw-assign-comma-fix (2025-11-17) 1 commit
+  (merged to 'next' on 2025-11-19 at d1a5807e11)
+ + mingw: avoid the comma operator
+
+ The "return errno = EFOO, -1" construct, which is heavily used in
+ compat/mingw.c and triggers warnings under "-Wcomma", has been
+ rewritten to avoid the warnings.
+
+ Will merge to 'master'.
+ source: <pull.2007.git.1763412374866.gitgitgadget@gmail.com>
+
+
+* js/strip-scalar-too (2025-11-17) 1 commit
+ - make strip: include `scalar`
+
+ "make strip" has been taught to strip "scalar" as well as "git".
+
+ Will merge to 'next'?
+ cf. <xmqq7bvoiadg.fsf@gitster.g>
+ source: <pull.2004.git.1763409086322.gitgitgadget@gmail.com>
+
+
+* js/wincred-get-credential-alloc-fix (2025-11-17) 1 commit
+  (merged to 'next' on 2025-11-19 at 4c43c53c49)
+ + wincred: avoid memory corruption
+
+ Under-allocation fix.
+
+ Will merge to 'master'.
+ source: <pull.2005.git.1763411984773.gitgitgadget@gmail.com>
+
+
+* pw/worktree-list-display-width-fix (2025-11-18) 2 commits
+ - worktree list: quote paths
+ - worktree list: fix column spacing
+
+ "git worktree list" attempts to show paths to worktrees while
+ aligning them, but miscounted display columns for the paths when
+ non-ASCII characters were involved, which has been corrected.
+
+ Will merge to 'next'.
+ source: <cover.1763482051.git.phillip.wood@dunelm.org.uk>
+
+
+* rs/xmkstemp-simplify (2025-11-17) 1 commit
+  (merged to 'next' on 2025-11-19 at 228e9f54ab)
+ + wrapper: simplify xmkstemp()
+
+ Code simplification.
+
+ Will merge to 'master'.
+ source: <058c5722-30f5-4bc5-90f5-24e4c6f3ff8f@web.de>
+
+
+* dw/config-global-list (2025-10-09) 4 commits
+ - config: keep bailing on unreadable global files
+ - config: read global scope via config_sequence
+ - config: test home and xdg files in `list --global`
+ - cleanup_path: force forward slashes on Windows
+
+ "git config --list --global", unlike "git config --list", did not
+ consult both of the two possible per-user sources of the
+ configuration files, i.e. $HOME/.gitconfig and the XDG one, which
+ has been corrected.
+
+ Comments?
+ source: <pull.1938.git.1760058849.gitgitgadget@gmail.com>
+
+
+* ps/object-read-stream (2025-11-18) 19 commits
+ - streaming: move into object database subsystem
+ - streaming: refactor interface to be object-database-centric
+ - streaming: move logic to read packed objects streams into backend
+ - streaming: move logic to read loose objects streams into backend
+ - streaming: make the `odb_read_stream` definition public
+ - streaming: get rid of `the_repository`
+ - streaming: rely on object sources to create object stream
+ - packfile: introduce function to read object info from a store
+ - streaming: move zlib stream into backends
+ - streaming: create structure for filtered object streams
+ - streaming: create structure for packed object streams
+ - streaming: create structure for loose object streams
+ - streaming: create structure for in-core object streams
+ - streaming: allocate stream inside the backend-specific logic
+ - streaming: explicitly pass packfile info when streaming a packed object
+ - streaming: propagate final object type via the stream
+ - streaming: drop the `open()` callback function
+ - streaming: rename `git_istream` into `odb_read_stream`
+ - Merge branch 'ps/object-source-loose' into HEAD
+ (this branch uses ps/object-source-loose.)
+
+ The "git_istream" abstraction has been revamped to make it easier
+ to interface with pluggable object database design.
+
+ Comments?
+ source: <20251119-b4-pks-odb-read-stream-v1-0-adacf03c2ccf@pks.im>
+
+
+* ps/object-source-management (2025-11-18) 14 commits
+ - odb: handle recreation of quarantine directories
+ - odb: handle changing a repository's commondir
+ - chdir-notify: add function to unregister listeners
+ - odb: handle initialization of sources in `odb_new()`
+ - http-push: stop setting up `the_repository` for each reference
+ - t/helper: stop setting up `the_repository` repeatedly
+ - builtin/index-pack: fix deferred fsck outside repos
+ - oidset: introduce `oidset_equal()`
+ - odb: move logic to disable ref updates into repo
+ - odb: refactor `odb_clear()` to `odb_free()`
+ - odb: adopt logic to close object databases
+ - setup: convert `set_git_dir()` to have file scope
+ - path: move `enter_repo()` into "setup.c"
+ - Merge branch 'ps/object-source-loose' into HEAD
+ (this branch uses ps/object-source-loose.)
+
+ Code refactoring around object database sources.
+
+ Comments?
+ source: <20251119-b4-pks-odb-creation-v1-0-2b2ed2612cb6@pks.im>
+
+--------------------------------------------------
+[Cooking]
 
 * jc/submodule-add (2025-11-15) 1 commit
  - submodule add: sanity check existing .gitmodules
@@ -77,33 +309,36 @@ Release tarballs are available at:
  Comments?
  source: <xmqqv7jacvdq.fsf@gitster.g>
 
---------------------------------------------------
-[Cooking]
 
 * rs/diff-quiet-no-rename (2025-11-09) 1 commit
-  (merged to 'next' on 2025-11-14 at 2d94808185)
+  (merged to 'next' on 2025-11-19 at dc0b078446)
  + diff: disable rename detection with --quiet
+
+ Originally merged to 'next' on 2025-11-14
 
  As "git diff --quiet" only cares about the existence of any
  changes, disable rename/copy detection to skip more expensive
  processing whose result will be discarded anyway.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <8796cd59-2335-4674-823d-d682ce7b7f8e@web.de>
 
 
 * jc/gitattributes-whitespace-no-indent-fix (2025-11-11) 1 commit
-  (merged to 'next' on 2025-11-14 at 230fcf2819)
+  (merged to 'next' on 2025-11-19 at cd849a23a1)
  + .gitattributes: remove misspelled no-op whitespace attribute
+
+ Originally merged to 'next' on 2025-11-14
 
  Ever since we added whitespace rules for this project, we misspelt
  an entry, which has been corrected.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <xmqqv7jgwgxb.fsf@gitster.g>
 
 
-* kn/fix-fetch-backfill-tag-with-batched-ref-updates (2025-11-13) 2 commits
+* kn/fix-fetch-backfill-tag-with-batched-ref-updates (2025-11-18) 3 commits
+ - fetch: fix failed batched updates skipping operations
  - fetch: fix non-conflicting tags not being committed
  - fetch: extract out reference committing logic
 
@@ -112,12 +347,10 @@ Release tarballs are available at:
  has been corrected.
 
  Will merge to 'next'?
- cf. <xmqqtsytbk5w.fsf@gitster.g>
- source: <20251113-fix-tags-not-fetching-v5-0-371ea7ec638d@gmail.com>
+ source: <20251118-fix-tags-not-fetching-v6-0-2a2f15fc137e@gmail.com>
 
 
-* jk/asan-bonanza (2025-11-12) 10 commits
- - amend! Makefile: turn on NO_MMAP when building with ASan
+* jk/asan-bonanza (2025-11-18) 9 commits
  - t: enable ASan's strict_string_checks option
  - fsck: avoid parse_timestamp() on buffer that isn't NUL-terminated
  - fsck: remove redundant date timestamp check
@@ -130,65 +363,77 @@ Release tarballs are available at:
 
  Various issues detected by Asan have been corrected.
 
- Expecting a reroll?
- cf. <aRbToFLhzewwBaSv@pks.im>
- source: <20251112075522.GA978866@coredump.intra.peff.net>
+ Will merge to 'next'?
+ source: <20251118091127.GA4175601@coredump.intra.peff.net>
 
 
 * jk/attr-macroexpand-wo-recursion (2025-11-11) 1 commit
-  (merged to 'next' on 2025-11-16 at c4e4a7348e)
+  (merged to 'next' on 2025-11-19 at 5d5f74f4f0)
  + attr: avoid recursion when expanding attribute macros
+
+ Originally merged to 'next' on 2025-11-16
 
  The code to expand attribute macros has been rewritten to avoid
  recursion to avoid running out of stack space in an uncontrolled
  way.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20251111223647.GA4055973@coredump.intra.peff.net>
 
 
 * bc/submodule-force-same-hash (2025-11-14) 2 commits
-  (merged to 'next' on 2025-11-16 at aa765fefd0)
+  (merged to 'next' on 2025-11-19 at eec9dca32c)
  + read-cache: drop submodule check from add_to_cache()
  + object-file: disallow adding submodules of different hash algo
+
+ Originally merged to 'next' on 2025-11-16
 
  Adding a repository that uses a different hash function is a no-no,
  but "git submodule add" did nt prevent it, which has been corrected.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20251112235434.1499699-1-sandals@crustytoothpaste.net>
 
 
 * jx/repo-struct-utf8width-fix (2025-11-15) 2 commits
- - builtin/repo: fix table alignment for UTF-8 characters
- - t/unit-tests: add UTF-8 width tests for CJK chars
+  (merged to 'next' on 2025-11-19 at 35bff72b75)
+ + builtin/repo: fix table alignment for UTF-8 characters
+ + t/unit-tests: add UTF-8 width tests for CJK chars
+
+ Originally merged to 'next' on 2025-11-18
 
  The "git repo structure" subcommand tried to align its output but
  mixed up byte count and display column width, which has been
  corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cover.1763213290.git.worldhello.net@gmail.com>
 
 
 * kh/doc-commit-extra-references (2025-11-14) 1 commit
- - doc: commit: link to git-status(1) on all format options
+  (merged to 'next' on 2025-11-19 at 9c89891116)
+ + doc: commit: link to git-status(1) on all format options
+
+ Originally merged to 'next' on 2025-11-18
 
  Doc update.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <c4349a03724.1763129061.git.code@khaugsbakk.name>
 
 
 * kn/osxkeychain-idempotent-store-fix (2025-11-13) 1 commit
- - osxkeychain: avoid incorrectly skipping store operation
+  (merged to 'next' on 2025-11-19 at 335d6bb2ea)
+ + osxkeychain: avoid incorrectly skipping store operation
+
+ Originally merged to 'next' on 2025-11-18
 
  An earlier check added to osx keychain credential helper to avoid
  storing the credential itself supplied was overeager and rejected
  credential material supplied by other helper backends that it would
  have wanted to store, which has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1999.v2.git.1763100270949.gitgitgadget@gmail.com>
 
 
@@ -206,33 +451,21 @@ Release tarballs are available at:
  source: <20251105142944.73061-1-me@linux.beauty>
 
 
-* ps/ref-peeled-tags-fixes (2025-11-06) 2 commits
-  (merged to 'next' on 2025-11-11 at 3549877a16)
- + object: fix performance regression when peeling tags
- + Merge branch 'ps/ref-peeled-tags' into ps/ref-peeled-tags-fixes
- (this branch uses ps/ref-peeled-tags.)
-
- Another fix-up to "peeled-tags" topic.
-
- Will cook in 'next'.
- source: <20251106-b4-pks-peel-object-performance-regression-v1-1-a386147750b0@pks.im>
-
-
 * en/ort-rename-another-fix (2025-11-03) 3 commits
- - merge-ort: fix failing merges in special corner case
- - merge-ort: remove debugging crud
- - t6429: update comment to mention correct tool
+  (merged to 'next' on 2025-11-19 at 53d94af6b4)
+ + merge-ort: fix failing merges in special corner case
+ + merge-ort: remove debugging crud
+ + t6429: update comment to mention correct tool
 
  Yet another corner case fix around renames in the "ort" merge
  strategy.
 
- Will merge to 'next' after locally amending?
- cf. <xmqqfradbhgi.fsf@gitster.g>
+ Will merge to 'master'.
  source: <pull.1992.git.1762192908.gitgitgadget@gmail.com>
 
 
 * kn/maintenance-is-needed (2025-11-08) 7 commits
-  (merged to 'next' on 2025-11-14 at ed70525e16)
+  (merged to 'next' on 2025-11-19 at faaa24f412)
  + maintenance: add 'is-needed' subcommand
  + maintenance: add checking logic in `pack_refs_condition()`
  + refs: add a `optimize_required` field to `struct ref_storage_be`
@@ -240,21 +473,25 @@ Release tarballs are available at:
  + reftable/stack: return stack segments directly
  + Merge branch 'kn/refs-optim-cleanup' into kn/maintenance-is-needed
  + Merge branch 'ps/ref-peeled-tags' into kn/maintenance-is-needed
- (this branch uses kn/refs-optim-cleanup and ps/ref-peeled-tags.)
+
+ Originally merged to 'next' on 2025-11-14
 
  "git maintenance" command learned "is-needed" subcommand to tell if
  it is necessary to perform various maintenance tasks.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20251108-562-add-sub-command-to-check-if-maintenance-is-needed-v4-0-a90f229b6023@gmail.com>
 
 
 * qj/doc-http-bad-want-response (2025-11-05) 1 commit
- - doc: clarify server behavior for invalid 'want' lines in HTTP protocol
+  (merged to 'next' on 2025-11-19 at a602cd96eb)
+ + doc: clarify server behavior for invalid 'want' lines in HTTP protocol
+
+ Originally merged to 'next' on 2025-11-18
 
  Doc update.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20251105143849.1192-1-qjessa662@gmail.com>
 
 
@@ -303,38 +540,41 @@ Release tarballs are available at:
 
 
 * ps/object-source-loose (2025-11-02) 13 commits
- - object-file: refactor writing objects via a stream
- - object-file: rename `write_object_file()`
- - object-file: refactor freshening of objects
- - object-file: rename `has_loose_object()`
- - object-file: read objects via the loose object source
- - object-file: move loose object map into loose source
- - object-file: hide internals when we need to reprepare loose sources
- - object-file: move loose object cache into loose source
- - object-file: introduce `struct odb_source_loose`
- - object-file: move `fetch_if_missing`
- - odb: adjust naming to free object sources
- - odb: introduce `odb_source_new()`
- - odb: fix subtle logic to check whether an alternate is usable
+  (merged to 'next' on 2025-11-19 at 8bb0269243)
+ + object-file: refactor writing objects via a stream
+ + object-file: rename `write_object_file()`
+ + object-file: refactor freshening of objects
+ + object-file: rename `has_loose_object()`
+ + object-file: read objects via the loose object source
+ + object-file: move loose object map into loose source
+ + object-file: hide internals when we need to reprepare loose sources
+ + object-file: move loose object cache into loose source
+ + object-file: introduce `struct odb_source_loose`
+ + object-file: move `fetch_if_missing`
+ + odb: adjust naming to free object sources
+ + odb: introduce `odb_source_new()`
+ + odb: fix subtle logic to check whether an alternate is usable
+ (this branch is used by ps/object-read-stream and ps/object-source-management.)
+
+ Originally merged to 'next' on 2025-11-18
 
  A part of code paths that deals with loose objects has been cleaned
  up.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20251103-b4-pks-odb-loose-backend-v3-0-6a61ea977393@pks.im>
 
 
-* bc/sha1-256-interop-02 (2025-11-14) 16 commits
- - SQUASH??? cargo clippy
- - SQUASH??? downgrade build.rs syntax
+* bc/sha1-256-interop-02 (2025-11-17) 15 commits
  - object-file-convert: always make sure object ID algo is valid
  - rust: add a small wrapper around the hashfile code
- - rust: add a new binary loose object map format
+ - rust: add a new binary object map format
  - rust: add functionality to hash an object
  - rust: add a build.rs script for tests
  - hash: expose hash context functions to Rust
- - write-or-die: add an fsync component for the loose object map
+ - write-or-die: add an fsync component for the object map
  - csum-file: define hashwrite's count as a uint32_t
+ - rust: add additional helpers for ObjectID
  - hash: add a function to look up hash algo structs
  - rust: add a hash algorithm abstraction
  - rust: add a ObjectID struct
@@ -344,67 +584,32 @@ Release tarballs are available at:
 
  The code to maintain mapping between object names in multiple hash
  functions is being added, written in Rust.
-
- Expecting a reroll.
- source: <20251027004404.2152927-1-sandals@crustytoothpaste.net>
+ source: <20251117221621.2863243-1-sandals@crustytoothpaste.net>
 
 
-* ad/blame-diff-algorithm (2025-11-06) 2 commits
- - blame: make diff algorithm configurable
- - xdiff: add 'minimal' to XDF_DIFF_ALGORITHM_MASK
+* ad/blame-diff-algorithm (2025-11-17) 2 commits
+  (merged to 'next' on 2025-11-19 at e1e456469f)
+ + blame: make diff algorithm configurable
+ + xdiff: add 'minimal' to XDF_DIFF_ALGORITHM_MASK
 
  "git blame" learns "--diff-algorithm=<algo>" option.
 
- Will merge to 'next'?
- cf. <xmqq5xb9bgx2.fsf@gitster.g>
- source: <pull.2075.v5.git.git.1762468914.gitgitgadget@gmail.com>
+ Will merge to 'master'.
+ cf. <fd03f2a5-bf9e-453f-97d1-d5a66bc87470@gmail.com>
+ source: <pull.2075.v6.git.git.1763366672.gitgitgadget@gmail.com>
 
 
-* ps/packed-git-in-object-store (2025-10-30) 9 commits
-  (merged to 'next' on 2025-11-03 at 1eb3440abd)
- + packfile: track packs via the MRU list exclusively
- + packfile: always add packfiles to MRU when adding a pack
- + packfile: move list of packs into the packfile store
- + builtin/pack-objects: simplify logic to find kept or nonlocal objects
- + packfile: fix approximation of object counts
- + http: refactor subsystem to use `packfile_list`s
- + packfile: move the MRU list into the packfile store
- + packfile: use a `strmap` to store packs by name
- + Merge branch 'ps/remove-packfile-store-get-packs' into ps/packed-git-in-object-store
-
- The list of packfiles used in a running Git process is moved from
- the packed_git structure into the packfile store.
-
- Will cook in 'next'.
- source: <20251030-pks-packfiles-store-drop-list-v2-0-84654f080cc0@pks.im>
-
-
-* kn/refs-optim-cleanup (2025-10-20) 4 commits
-  (merged to 'next' on 2025-11-04 at dbab18969a)
- + t/pack-refs-tests: move the 'test_done' to callees
- + refs: rename 'pack_refs_opts' to 'refs_optimize_opts'
- + refs: move to using the '.optimize' functions
- + Merge branch 'ps/ref-peeled-tags' into kn/refs-optim-cleanup
- (this branch is used by kn/maintenance-is-needed; uses ps/ref-peeled-tags.)
-
- Code clean-up.
-
- Will cook in 'next'.
- source: <20251020-refs-code-cleanup-v2-0-f5349ed0f6a5@gmail.com>
-
-
-* lo/repo-info-all (2025-10-26) 2 commits
+* lo/repo-info-all (2025-11-18) 2 commits
  - repo: add --all to git-repo-info
  - repo: factor out field printing to dedicated function
 
  "git repo info" learned "--all" option.
 
- Expecting a (hopefully small and final) reroll.
- cf. <xmqqpla43wcp.fsf@gitster.g> <aQRaRuBtt_r7SamL@pks.im>
- source: <20251026225409.46647-1-lucasseikioshiro@gmail.com>
+ Will merge to 'next'.
+ source: <20251118204929.43597-1-lucasseikioshiro@gmail.com>
 
 
-* en/xdiff-cleanup-2 (2025-11-14) 10 commits
+* en/xdiff-cleanup-2 (2025-11-18) 10 commits
  - xdiff: rename rindex -> reference_index
  - xdiff: change rindex from long to size_t in xdfile_t
  - xdiff: make xdfile_t.nreff a size_t instead of long
@@ -418,10 +623,8 @@ Release tarballs are available at:
 
  Code clean-up.
 
- Expecting a (hopefully small and final) reroll.
- cf. <xmqqy0o7g0rk.fsf@gitster.g>
- cf. <xmqqzf8la20o.fsf@gitster.g>
- source: <pull.2070.v4.git.git.1763159816.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ source: <pull.2070.v5.git.git.1763505262.gitgitgadget@gmail.com>
 
 
 * ar/run-command-hook (2025-10-17) 10 commits
@@ -439,7 +642,8 @@ Release tarballs are available at:
  Use hook API to replace ad-hoc invocation of hook scripts with the
  run_command() API.
 
- Comments?
+ Seems to leak and break CI
+ cf. <xmqq346ff56h.fsf@gitster.g>
  source: <20251017141544.1538542-1-adrian.ratiu@collabora.com>
 
 
@@ -454,36 +658,6 @@ Release tarballs are available at:
  Expecting a reroll.
  cf. <8099e7ef-2673-407e-8cca-e6b566b99549@app.fastmail.com>
  source: <pull.1991.git.1760731558.gitgitgadget@gmail.com>
-
-
-* ps/ref-peeled-tags (2025-11-04) 18 commits
-  (merged to 'next' on 2025-11-04 at 3818774c94)
- + t7004: do not chdir around in the main process
- + ref-filter: fix stale parsed objects
- + ref-filter: parse objects on demand
- + ref-filter: detect broken tags when dereferencing them
- + refs: don't store peeled object IDs for invalid tags
- + object: add flag to `peel_object()` to verify object type
- + refs: drop infrastructure to peel via iterators
- + refs: drop `current_ref_iter` hack
- + builtin/show-ref: convert to use `reference_get_peeled_oid()`
- + ref-filter: propagate peeled object ID
- + upload-pack: convert to use `reference_get_peeled_oid()`
- + refs: expose peeled object ID via the iterator
- + refs: refactor reference status flags
- + refs: fully reset `struct ref_iterator::ref` on iteration
- + refs: introduce `.ref` field for the base iterator
- + refs: introduce wrapper struct for `each_ref_fn`
- + Merge branch 'jt/repo-structure' into ps/ref-peeled-tags
- + Merge branch 'tb/incremental-midx-part-3.1' into ps/ref-peeled-tags
- (this branch is used by kn/maintenance-is-needed, kn/refs-optim-cleanup and ps/ref-peeled-tags-fixes.)
-
- Some ref backend storage can hold not just the object name of an
- annotated tag, but the object name of the object the tag points at.
- The code to handle this information has been streamlined.
-
- Will cook in 'next'.
- source: <20251023-b4-pks-ref-filter-skip-parsing-objects-v4-0-2be68ce82c9a@pks.im>
 
 
 * je/doc-data-model (2025-11-12) 1 commit
@@ -512,7 +686,8 @@ Release tarballs are available at:
 
  "git history" history rewriting UI.
 
- Will merge to 'next' after the base topic.
+ Expecting a reroll.
+ cf. <aRxDYkeAi8T-HH8M@pks.im>
  source: <20251027-b4-pks-history-builtin-v6-0-407dd3f57ad3@pks.im>
 
 
@@ -529,33 +704,36 @@ Release tarballs are available at:
 
 
 * sa/replay-atomic-ref-updates (2025-11-05) 3 commits
- - replay: add replay.refAction config option
- - replay: make atomic ref updates the default behavior
- - replay: use die_for_incompatible_opt2() for option validation
+  (merged to 'next' on 2025-11-19 at ae19b06a22)
+ + replay: add replay.refAction config option
+ + replay: make atomic ref updates the default behavior
+ + replay: use die_for_incompatible_opt2() for option validation
  (this branch is used by ps/history.)
+
+ Originally merged to 'next' on 2025-11-18
 
  "git replay" (experimental) learned to perform ref updates itself
  in a transaction by default, instead of emitting where each refs
  should point at and leaving the actual update to another command.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  cf. <00a5a8f3-f761-46e8-84cc-4bd95db68b49@gmail.com>
  source: <20251105191650.89975-1-siddharthasthana31@gmail.com>
 
 
-* ar/submodule-gitdir-tweak (2025-11-07) 4 commits
+* ar/submodule-gitdir-tweak (2025-11-19) 7 commits
+ - meson/Makefile: allow setting submodule encoding at build time
+ - submodule: use hashed name for gitdir
  - submodule: fix case-folding gitdir filesystem colisions
  - submodule: add extension to encode gitdir paths
+ - submodule: always validate gitdirs inside submodule_name_to_gitdir
  - builtin/credential-store: move is_rfc3986_unreserved to url.[ch]
  - submodule--helper: use submodule_name_to_gitdir in add_submodule
 
  Avoid local submodule repository directory paths overlapping with
  each other by encoding submodule names before using them as path
  components.
-
- Seems to leak and break CI
- cf. <xmqq346ff56h.fsf@gitster.g>
- source: <20251107150547.3272180-1-adrian.ratiu@collabora.com>
+ source: <20251119211030.2008441-1-adrian.ratiu@collabora.com>
 
 --------------------------------------------------
 [Discarded]
