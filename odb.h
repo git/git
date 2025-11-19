@@ -159,7 +159,20 @@ struct object_database {
 	struct string_list submodule_source_paths;
 };
 
-struct object_database *odb_new(struct repository *repo);
+/*
+ * Create a new object database for the given repository.
+ *
+ * If the primary source parameter is set it will override the usual primary
+ * object directory derived from the repository's common directory. The
+ * alternate sources are expected to be a PATH_SEP-separated list of secondary
+ * sources. Note that these alternate sources will be added in addition to, not
+ * instead of, the alternates identified by the primary source.
+ *
+ * Returns the newly created object database.
+ */
+struct object_database *odb_new(struct repository *repo,
+				const char *primary_source,
+				const char *alternate_sources);
 
 /* Free the object database and release all resources. */
 void odb_free(struct object_database *o);

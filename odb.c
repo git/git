@@ -1034,15 +1034,27 @@ int odb_write_object_stream(struct object_database *odb,
 	return odb_source_loose_write_stream(odb->sources, stream, len, oid);
 }
 
-struct object_database *odb_new(struct repository *repo)
+struct object_database *odb_new(struct repository *repo,
+				const char *primary_source,
+				const char *secondary_sources)
 {
 	struct object_database *o = xmalloc(sizeof(*o));
+	char *to_free = NULL;
 
 	memset(o, 0, sizeof(*o));
 	o->repo = repo;
 	o->packfiles = packfile_store_new(o);
 	pthread_mutex_init(&o->replace_mutex, NULL);
 	string_list_init_dup(&o->submodule_source_paths);
+
+	if (!primary_source)
+		primary_source = to_free = xstrfmt("%s/objects", repo->commondir);
+	o->sources = odb_source_new(o, primary_source, true);
+	o->sources_tail = &o->sources->next;
+	o->alternate_db = xstrdup_or_null(secondary_sources);
+
+	free(to_free);
+
 	return o;
 }
 
