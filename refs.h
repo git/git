@@ -499,32 +499,26 @@ void refs_warn_dangling_symrefs(struct ref_store *refs, FILE *fp,
 				const struct string_list *refnames);
 
 /*
- * Flags for controlling behaviour of pack_refs()
- * PACK_REFS_PRUNE: Prune loose refs after packing
- * PACK_REFS_AUTO: Pack refs on a best effort basis. The heuristics and end
- *                 result are decided by the ref backend. Backends may ignore
- *                 this flag and fall back to a normal repack.
+ * Flags for controlling behaviour of refs_optimize()
+ * REFS_OPTIMIZE_PRUNE: Prune loose refs after packing
+ * REFS_OPTIMIZE_AUTO: Pack refs on a best effort basis. The heuristics and end
+ *                     result are decided by the ref backend. Backends may ignore
+ *                     this flag and fall back to a normal repack.
  */
-#define PACK_REFS_PRUNE (1 << 0)
-#define PACK_REFS_AUTO  (1 << 1)
+#define REFS_OPTIMIZE_PRUNE (1 << 0)
+#define REFS_OPTIMIZE_AUTO  (1 << 1)
 
-struct pack_refs_opts {
+struct refs_optimize_opts {
 	unsigned int flags;
 	struct ref_exclusions *exclusions;
 	struct string_list *includes;
 };
 
 /*
- * Write a packed-refs file for the current repository.
- * flags: Combination of the above PACK_REFS_* flags.
- */
-int refs_pack_refs(struct ref_store *refs, struct pack_refs_opts *opts);
-
-/*
  * Optimize the ref store. The exact behavior is up to the backend.
  * For the files backend, this is equivalent to packing refs.
  */
-int refs_optimize(struct ref_store *refs, struct pack_refs_opts *opts);
+int refs_optimize(struct ref_store *refs, struct refs_optimize_opts *opts);
 
 /*
  * Setup reflog before using. Fill in err and return -1 on failure.
