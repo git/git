@@ -76,7 +76,7 @@ _<URL>_ is required; `#<head>` is optional.
 
 Depending on the operation, git will use one of the following
 refspecs, if you don't provide one on the command line.
-_<branch> is the name of this file in `$GIT_DIR/branches` and
+_<branch>_ is the name of this file in `$GIT_DIR/branches` and
 _<head>_ defaults to `master`.
 
 git fetch uses:
@@ -111,7 +111,7 @@ Git defaults to using the upstream branch for remote operations, for example:
   'origin/main' have diverged, and have 2 and 3 different commits each
   respectively".
 
-The upstream is stored in `.git/config`, in the "remote" and "merge"
+The upstream is stored in `.git/config`, in the "`remote`" and "`merge`"
 fields. For example, if `main`'s upstream is `origin/main`:
 
 ------------

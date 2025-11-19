@@ -56,7 +56,7 @@ ifdef::git-pull[]
 `--ff-only`::
 	Only update to the new history if there is no divergent local
 	history.  This is the default when no method for reconciling
-	divergent histories is provided (via the --rebase=* flags).
+	divergent histories is provided (via the `--rebase` flags).
 
 `--ff`::
 `--no-ff`::
