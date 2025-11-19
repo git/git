@@ -290,13 +290,13 @@ enum peel_status {
 
 enum peel_object_flags {
 	/*
-	 * Always verify the object type, even in the case where the looked-up
-	 * object already has an object type. This can be useful when the
-	 * stored object type may be invalid. One such case is when looking up
-	 * objects via tags, where we blindly trust the object type declared by
-	 * the tag.
+	 * Always verify the object type of the tagged object, even in the case
+	 * where the looked-up object already has an object type. This can be
+	 * useful when the tagged object type may be invalid. One such case is
+	 * when looking up objects via tags, where we blindly trust the object
+	 * type declared by the tag.
 	 */
-	PEEL_OBJECT_VERIFY_OBJECT_TYPE = (1 << 0),
+	PEEL_OBJECT_VERIFY_TAGGED_OBJECT_TYPE = (1 << 0),
 };
 
 /*
