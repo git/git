@@ -1073,30 +1073,27 @@ static void odb_free_sources(struct object_database *o)
 	o->source_by_path = NULL;
 }
 
-void odb_clear(struct object_database *o)
+void odb_free(struct object_database *o)
 {
-	FREE_AND_NULL(o->alternate_db);
+	if (!o)
+		return;
+
+	free(o->alternate_db);
 
 	oidmap_clear(&o->replace_map, 1);
 	pthread_mutex_destroy(&o->replace_mutex);
 
-	free_commit_graph(o->commit_graph);
-	o->commit_graph = NULL;
-	o->commit_graph_attempted = 0;
-
 	odb_free_sources(o);
-	o->sources_tail = NULL;
-	o->loaded_alternates = 0;
 
 	for (size_t i = 0; i < o->cached_object_nr; i++)
 		free((char *) o->cached_objects[i].value.buf);
-	FREE_AND_NULL(o->cached_objects);
+	free(o->cached_objects);
 
 	odb_close(o);
 	packfile_store_free(o->packfiles);
-	o->packfiles = NULL;
-
 	string_list_clear(&o->submodule_source_paths, 0);
+
+	free(o);
 }
 
 void odb_reprepare(struct object_database *o)

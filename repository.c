@@ -382,8 +382,8 @@ void repo_clear(struct repository *repo)
 	FREE_AND_NULL(repo->worktree);
 	FREE_AND_NULL(repo->submodule_prefix);
 
-	odb_clear(repo->objects);
-	FREE_AND_NULL(repo->objects);
+	odb_free(repo->objects);
+	repo->objects = NULL;
 
 	parsed_object_pool_clear(repo->parsed_objects);
 	FREE_AND_NULL(repo->parsed_objects);

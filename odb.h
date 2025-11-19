@@ -167,7 +167,9 @@ struct object_database {
 };
 
 struct object_database *odb_new(struct repository *repo);
-void odb_clear(struct object_database *o);
+
+/* Free the object database and release all resources. */
+void odb_free(struct object_database *o);
 
 /*
  * Close the object database and all of its sources so that any held resources
