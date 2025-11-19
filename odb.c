@@ -24,6 +24,7 @@
 #include "strbuf.h"
 #include "strvec.h"
 #include "submodule.h"
+#include "tmp-objdir.h"
 #include "trace2.h"
 #include "write-or-die.h"
 
@@ -1041,7 +1042,10 @@ static void odb_update_commondir(const char *name UNUSED,
 				 void *cb_data)
 {
 	struct object_database *odb = cb_data;
+	struct tmp_objdir *tmp_objdir;
 	struct odb_source *source;
+
+	tmp_objdir = tmp_objdir_unapply_primary_odb();
 
 	/*
 	 * In theory, we only have to do this for the primary object source, as
@@ -1059,6 +1063,9 @@ static void odb_update_commondir(const char *name UNUSED,
 		free(source->path);
 		source->path = path;
 	}
+
+	if (tmp_objdir)
+		tmp_objdir_reapply_primary_odb(tmp_objdir, old_cwd, new_cwd);
 }
 
 struct object_database *odb_new(struct repository *repo,
