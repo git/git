@@ -292,14 +292,20 @@ static void stats_table_print_structure(const struct stats_table *table)
 	int name_col_width = utf8_strwidth(name_col_title);
 	int value_col_width = utf8_strwidth(value_col_title);
 	struct string_list_item *item;
+	struct strbuf buf = STRBUF_INIT;
 
 	if (table->name_col_width > name_col_width)
 		name_col_width = table->name_col_width;
 	if (table->value_col_width > value_col_width)
 		value_col_width = table->value_col_width;
 
-	printf("| %-*s | %-*s |\n", name_col_width, name_col_title,
-	       value_col_width, value_col_title);
+	strbuf_addstr(&buf, "| ");
+	strbuf_utf8_align(&buf, ALIGN_LEFT, name_col_width, name_col_title);
+	strbuf_addstr(&buf, " | ");
+	strbuf_utf8_align(&buf, ALIGN_LEFT, value_col_width, value_col_title);
+	strbuf_addstr(&buf, " |");
+	printf("%s\n", buf.buf);
+
 	printf("| ");
 	for (int i = 0; i < name_col_width; i++)
 		putchar('-');
@@ -317,9 +323,16 @@ static void stats_table_print_structure(const struct stats_table *table)
 			value = entry->value;
 		}
 
-		printf("| %-*s | %*s |\n", name_col_width, item->string,
-		       value_col_width, value);
+		strbuf_reset(&buf);
+		strbuf_addstr(&buf, "| ");
+		strbuf_utf8_align(&buf, ALIGN_LEFT, name_col_width, item->string);
+		strbuf_addstr(&buf, " | ");
+		strbuf_utf8_align(&buf, ALIGN_RIGHT, value_col_width, value);
+		strbuf_addstr(&buf, " |");
+		printf("%s\n", buf.buf);
 	}
+
+	strbuf_release(&buf);
 }
 
 static void stats_table_clear(struct stats_table *table)
