@@ -1292,6 +1292,7 @@ int git_config_pathname(char **dest, const char *var, const char *value)
 
 	if (is_optional && is_missing_file(path)) {
 		free(path);
+		*dest = NULL;
 		return 0;
 	}
 
