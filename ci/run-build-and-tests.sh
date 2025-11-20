@@ -5,6 +5,15 @@
 
 . ${0%/*}/lib.sh
 
+## ensure rustup is in the PATH variable
+if [ "$CARGO_HOME" = "" ]; then
+  echo >&2 "::error:: CARGO_HOME is not set"
+  exit 2
+fi
+. $CARGO_HOME/env
+
+rustc -vV || exit $?
+
 case "$jobname" in
 fedora-breaking-changes-musl|linux-breaking-changes)
 	export WITH_BREAKING_CHANGES=YesPlease
@@ -59,6 +68,10 @@ case "$jobname" in
 	handle_failed_tests
 	;;
 esac
+
+if [ -d "$CARGO_HOME" ]; then
+  rm -rf $CARGO_HOME
+fi
 
 check_unignored_build_artifacts
 save_good_tree
