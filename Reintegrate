@@ -194,7 +194,12 @@ no)
 
 	while read branch eh
 	do
-		case "$branch" in '###') cut_seen=$(( $cut_seen + 1 )) ;; esac
+		case "$branch" in
+		'###')
+			cut_seen=$(( $cut_seen + 1 ))
+			echo >&2 "$branch $eh"
+			;;
+		esac
 		if test -n "$stop_at_cut" && test $stop_at_cut -le $cut_seen
 		then
 			continue ;# slurp the remainder and skip
@@ -206,7 +211,6 @@ no)
 			then
 				prev_cut=
 			else
-				echo >&2 "$branch $eh"
 				prev_cut="$branch $eh"
 				count_since_last_cut=0
 			fi
