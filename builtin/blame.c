@@ -739,7 +739,8 @@ static int git_blame_config(const char *var, const char *value,
 		ret = git_config_pathname(&str, var, value);
 		if (ret)
 			return ret;
-		string_list_insert(&ignore_revs_file_list, str);
+		if (str)
+			string_list_insert(&ignore_revs_file_list, str);
 		free(str);
 		return 0;
 	}
