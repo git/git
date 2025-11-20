@@ -1,5 +1,23 @@
 #!/bin/sh
 
+R=:rendezvous
+if ! test -p "$R"
+then
+	rm -f "$R"
+	mkfifo "$R" || exit
+fi
+
+export CC=clang
+
+while cat "$R"
+do
+	time nice -20 Meta/Dothem -j32 --meson CC="clang -O2" USE_ASCIIDOCTOR=
+	uptime; date
+	Meta/V
+done
+
+exit
+
 ssleep () {
 	seconds=$1
 	now=$(date "+%s")
