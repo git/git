@@ -8,9 +8,9 @@
 case "$jobname" in
 fedora-breaking-changes-musl|linux-breaking-changes)
 	export WITH_BREAKING_CHANGES=YesPlease
-	export WITH_RUST=YesPlease
+	export WITH_RUST=true
 	MESONFLAGS="$MESONFLAGS -Dbreaking_changes=true"
-	MESONFLAGS="$MESONFLAGS -Drust=enabled"
+	MESONFLAGS="$MESONFLAGS -Dwith_rust=enabled"
 	;;
 linux-TEST-vars)
 	export OPENSSL_SHA1_UNSAFE=YesPlease
