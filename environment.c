@@ -91,16 +91,22 @@ int max_allowed_tree_depth =
 	 * the stack overflow can occur.
 	 */
 	512;
-#elif defined(GIT_WINDOWS_NATIVE) && defined(__clang__) && defined(__aarch64__)
+#elif defined(GIT_WINDOWS_NATIVE) && defined(__clang__)
 	/*
-	 * Similar to Visual C, it seems that on Windows/ARM64 the clang-based
-	 * builds have a smaller stack space available. When running out of
-	 * that stack space, a `STATUS_STACK_OVERFLOW` is produced. When the
+	 * Similar to Visual C, it seems that clang-based builds on Windows
+	 * have a smaller stack space available. When running out of that
+	 * stack space, a `STATUS_STACK_OVERFLOW` is produced. When the
 	 * Git command was run from an MSYS2 Bash, this unfortunately results
 	 * in an exit code 127. Let's prevent that by lowering the maximal
-	 * tree depth; This value seems to be low enough.
+	 * tree depth; Unfortunately, it seems that the exact limit differs
+	 * for aarch64 vs x86_64, and the difference is too large to simply
+	 * use a single limit.
 	 */
+#if defined(__aarch64__)
 	1280;
+#else
+	1152;
+#endif
 #else
 	2048;
 #endif
