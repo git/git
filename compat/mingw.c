@@ -3625,7 +3625,7 @@ int xwcstoutf(char *utf, const wchar_t *wcs, size_t utflen)
 }
 
 #ifdef ENSURE_MSYSTEM_IS_SET
-#if !defined(RUNTIME_PREFIX) || !defined(HAVE_WPGMPTR)
+#if !defined(RUNTIME_PREFIX) || !defined(HAVE_WPGMPTR) || !defined(MINGW_PREFIX)
 static size_t append_system_bin_dirs(char *path UNUSED, size_t size UNUSED)
 {
 	return 0;
@@ -3643,25 +3643,16 @@ static size_t append_system_bin_dirs(char *path, size_t size)
 	/* strip trailing `git.exe` */
 	len = slash - prefix;
 
-	/* strip trailing `cmd` or `mingw64\bin` or `mingw32\bin` or `bin` or `libexec\git-core` */
-	if (strip_suffix_mem(prefix, &len, "\\mingw64\\libexec\\git-core") ||
-	    strip_suffix_mem(prefix, &len, "\\mingw64\\bin"))
+	/* strip trailing `cmd` or `<mingw-prefix>\bin` or `bin` or `libexec\git-core` */
+	if (strip_suffix_mem(prefix, &len, "\\" MINGW_PREFIX "\\libexec\\git-core") ||
+	    strip_suffix_mem(prefix, &len, "\\" MINGW_PREFIX "\\bin"))
 		off += xsnprintf(path + off, size - off,
-				 "%.*s\\mingw64\\bin;", (int)len, prefix);
-	else if (strip_suffix_mem(prefix, &len, "\\clangarm64\\libexec\\git-core") ||
-	    strip_suffix_mem(prefix, &len, "\\clangarm64\\bin"))
-		off += xsnprintf(path + off, size - off,
-				 "%.*s\\clangarm64\\bin;", (int)len, prefix);
-	else if (strip_suffix_mem(prefix, &len, "\\mingw32\\libexec\\git-core") ||
-		 strip_suffix_mem(prefix, &len, "\\mingw32\\bin"))
-		off += xsnprintf(path + off, size - off,
-				 "%.*s\\mingw32\\bin;", (int)len, prefix);
+				 "%.*s\\" MINGW_PREFIX "\\bin;", (int)len, prefix);
 	else if (strip_suffix_mem(prefix, &len, "\\cmd") ||
 		 strip_suffix_mem(prefix, &len, "\\bin") ||
 		 strip_suffix_mem(prefix, &len, "\\libexec\\git-core"))
 		off += xsnprintf(path + off, size - off,
-				 "%.*s\\mingw%d\\bin;", (int)len, prefix,
-				 (int)(sizeof(void *) * 8));
+				 "%.*s\\" MINGW_PREFIX "\\bin;", (int)len, prefix);
 	else
 		return 0;
 
@@ -3757,13 +3748,7 @@ static void setup_windows_environment(void)
 		char buf[32768];
 		size_t off = 0;
 
-#if defined(__aarch64__) || defined(_M_ARM64) || defined(_M_ARM64EC)
-		setenv("MSYSTEM", "CLANGARM64", 1);
-#elif defined(__MINGW64__) || defined(_M_AMD64)
-		setenv("MSYSTEM", "MINGW64", 1);
-#else
-		setenv("MSYSTEM", "MINGW32", 1);
-#endif
+		setenv("MSYSTEM", ENSURE_MSYSTEM_IS_SET, 1);
 
 		if (home)
 			off += xsnprintf(buf + off, sizeof(buf) - off,
