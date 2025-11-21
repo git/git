@@ -1,6 +1,13 @@
 Git v2.53 Release Notes
 =======================
 
+UI, Workflows & Features
+------------------------
+
+ * "git maintenance" command learned "is-needed" subcommand to tell if
+   it is necessary to perform various maintenance tasks.
+
+
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
 
@@ -10,3 +17,15 @@ Performance, Internal Implementation, Development Support etc.
  * Some ref backend storage can hold not just the object name of an
    annotated tag, but the object name of the object the tag points at.
    The code to handle this information has been streamlined.
+
+ * As "git diff --quiet" only cares about the existence of any
+   changes, disable rename/copy detection to skip more expensive
+   processing whose result will be discarded anyway.
+
+
+Fixes since v2.51
+-----------------
+
+ * Ever since we added whitespace rules for this project, we misspelt
+   an entry, which has been corrected.
+   (merge 358e94dc70 jc/gitattributes-whitespace-no-indent-fix later to maint).
