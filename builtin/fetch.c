@@ -1890,7 +1890,11 @@ static int do_fetch(struct transport *transport,
 
 	retcode = commit_ref_transaction(&transaction, atomic_fetch,
 					 transport->remote->name, &err);
-	if (retcode)
+	/*
+	 * With '--atomic', bail out if the transaction fails. Without '--atomic',
+	 * continue to fetch head and perform other post-fetch operations.
+	 */
+	if (retcode && atomic_fetch)
 		goto cleanup;
 
 	commit_fetch_head(&fetch_head);
