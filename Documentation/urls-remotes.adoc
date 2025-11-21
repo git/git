@@ -4,7 +4,7 @@ REMOTES[[REMOTES]]
 ------------------
 
 The name of one of the following can be used instead
-of a URL as `<repository>` argument:
+of a URL as _<repository>_ argument:
 
 * a remote in the Git configuration file: `$GIT_DIR/config`,
 * a file in the `$GIT_DIR/remotes` directory, or
@@ -32,8 +32,8 @@ config file would appear like this:
 		fetch = <refspec>
 ------------
 
-The `<pushurl>` is used for pushes only. It is optional and defaults
-to `<URL>`. Pushing to a remote affects all defined pushurls or all
+The _<pushurl>_ is used for pushes only. It is optional and defaults
+to _<URL>_. Pushing to a remote affects all defined pushurls or all
 defined urls if no pushurls are defined. Fetch, however, will only
 fetch from the first defined url if multiple urls are defined.
 
@@ -54,8 +54,8 @@ following format:
 
 ------------
 
-`Push:` lines are used by 'git push' and
-`Pull:` lines are used by 'git pull' and 'git fetch'.
+`Push:` lines are used by `git push` and
+`Pull:` lines are used by `git pull` and `git fetch`.
 Multiple `Push:` and `Pull:` lines may
 be specified for additional branch mappings.
 
@@ -72,12 +72,12 @@ This file should have the following format:
 	<URL>#<head>
 ------------
 
-`<URL>` is required; `#<head>` is optional.
+_<URL>_ is required; `#<head>` is optional.
 
 Depending on the operation, git will use one of the following
 refspecs, if you don't provide one on the command line.
-`<branch>` is the name of this file in `$GIT_DIR/branches` and
-`<head>` defaults to `master`.
+_<branch>_ is the name of this file in `$GIT_DIR/branches` and
+_<head>_ defaults to `master`.
 
 git fetch uses:
 
@@ -111,7 +111,7 @@ Git defaults to using the upstream branch for remote operations, for example:
   'origin/main' have diverged, and have 2 and 3 different commits each
   respectively".
 
-The upstream is stored in `.git/config`, in the "remote" and "merge"
+The upstream is stored in `.git/config`, in the "`remote`" and "`merge`"
 fields. For example, if `main`'s upstream is `origin/main`:
 
 ------------
