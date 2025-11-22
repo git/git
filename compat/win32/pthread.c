@@ -59,3 +59,10 @@ pthread_t pthread_self(void)
 	t.tid = GetCurrentThreadId();
 	return t;
 }
+
+int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex)
+{
+	if (SleepConditionVariableCS(cond, mutex, INFINITE) == 0)
+		return err_win_to_posix(GetLastError());
+	return 0;
+}
