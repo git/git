@@ -931,6 +931,8 @@ EXTLIBS =
 
 GIT_BUILD_DIR := $(CURDIR)
 export GIT_BUILD_DIR
+MAKEFILE_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
+export MAKEFILE_DIR
 
 RUST_CRATES := gitcore
 .PHONY: rust-compile rust-clean
@@ -949,7 +951,7 @@ RUST_LIBS := $(foreach c,$(RUST_CRATES),$(GIT_BUILD_DIR)/lib$(c).a)
 rust-compile:
 	@for c in $(RUST_CRATES); do \
 		echo "Building $$c..."; \
-		./rust/build-crate.sh $(GIT_BUILD_DIR) $(RUST_BUILD_MODE) $$c || exit $$?; \
+		./rust/build-crate.sh $(MAKEFILE_DIR) $(GIT_BUILD_DIR) $(RUST_BUILD_MODE) $$c || exit $$?; \
 	done
 
 rust-clean:
@@ -958,7 +960,7 @@ rust-clean:
 
 $(GIT_BUILD_DIR)/lib%.a:
 	echo $(RUST_LIBS)
-	./rust/build-crate.sh $(GIT_BUILD_DIR) $(RUST_BUILD_MODE) $*
+	./rust/build-crate.sh $(MAKEFILE_DIR) $(GIT_BUILD_DIR) $(RUST_BUILD_MODE) $*
 
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Linux)

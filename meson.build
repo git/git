@@ -305,6 +305,7 @@ if with_rust
       build_always_stale: true,
       command: [
         meson.project_source_root() / 'rust' / 'build-crate.sh',
+        meson.project_source_root(),
         meson.current_build_dir(), rust_build_profile, crate,
       ],
       install: false,

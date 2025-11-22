@@ -3,10 +3,12 @@
 rustc -vV || exit $?
 cargo --version || exit $?
 
-dir_git_root=${0%/*}
-dir_build=$1
-rust_build_profile=$2
-crate=$3
+dir_git_root=$1
+cd $dir_git_root || exit $?
+dir_git_root=$PWD
+dir_build=$2
+rust_build_profile=$3
+crate=$4
 
 if [ "$dir_git_root" = "" ]; then
   echo "did not specify the directory for the root of git"
@@ -38,9 +40,12 @@ libfile="lib${crate}.a"
 if rustc -vV | grep windows-msvc; then
   libfile="${crate}.lib"
   PATH="$(echo $PATH | tr ':' '\n' | grep -Ev "^(/mingw64/bin|/usr/bin)$" | paste -sd: -):/mingw64/bin:/usr/bin"
+  echo "PATH=$PATH"
 fi
 
-CARGO_TARGET_DIR=$dir_git_root/.build/rust/$crate
+echo "libfile=$libfile"
+
+CARGO_TARGET_DIR=$dir_build/.build/rust/$crate
 export CARGO_TARGET_DIR
 
 cargo clean && pwd && USE_LINKING="false" cargo build -p $crate $rust_args
