@@ -443,7 +443,21 @@ If no "want" objects are received, send an error:
 TODO: Define error if no "want" lines are requested.
 
 If any "want" object is not reachable, send an error:
-TODO: Define error if an invalid "want" is requested.
+
+If the client sends a `want` line referring to an object that does not
+exist on the server, or that is not reachable from any advertised
+reference, the server must reject the request. In such cases, the
+server terminates the negotiation with an error response.
+
+This ensures that the client only receives valid objects that are part
+of the repository’s reachable history. The server may return an error
+message such as:
+
+    error: invalid want <object-id>
+
+to indicate that the requested object could not be found. No packfile
+is generated for invalid requests, and the client should not retry
+with the same object ID.
 
 Create an empty list, `s_common`.
 

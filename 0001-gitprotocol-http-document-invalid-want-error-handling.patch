@@ -1,0 +1,196 @@
+From 18ae332f0a6675f890fa328d541fc9203d66b871 Mon Sep 17 00:00:00 2001
+From: QueenJcloud <qjessa662@gmail.com>
+Date: Fri, 24 Oct 2025 13:58:14 +0100
+Subject: [PATCH 1/2] MyFirstContribution: add note on confirming patches
+
+Add a note after the `git send-email` section explaining how
+contributors can confirm that their patches reached the mailing
+list by checking https://lore.kernel.org/git/. This helps
+contributors verify that their emails were successfully delivered.
+
+Signed-off-by: QueenJcloud <qjessa662@gmail.com>
+---
+Changes since v2:
+- Distinctive/correct name to the email
+- Added changelog note after '---'
+- Removed extra blank line at the end of the section
+- No other text or formatting changes
+---
+ Documentation/MyFirstContribution.adoc        |  6 ++-
+ ...bution-add-note-on-confirming-patche.patch | 39 ++++++++++++++++
+ ...bution-add-note-on-confirming-patche.patch | 46 +++++++++++++++++++
+ 3 files changed, 90 insertions(+), 1 deletion(-)
+ create mode 100644 v2-0001-MyFirstContribution-add-note-on-confirming-patche.patch
+ create mode 100644 v3-0001-MyFirstContribution-add-note-on-confirming-patche.patch
+
+diff --git a/Documentation/MyFirstContribution.adoc b/Documentation/MyFirstContribution.adoc
+index 02ba8ba5f6..95f96b8451 100644
+--- a/Documentation/MyFirstContribution.adoc
++++ b/Documentation/MyFirstContribution.adoc
+@@ -1153,11 +1153,15 @@ NOTE: When you are sending a real patch, it will go to git@vger.kernel.org - but
+ please don't send your patchset from the tutorial to the real mailing list! For
+ now, you can send it to yourself, to make sure you understand how it will look.
+ 
++NOTE: After sending your patches, you can confirm that they reached the mailing
++list by visiting https://lore.kernel.org/git/. Use the search bar to find your
++name or the subject of your patch. If it appears, your email was successfully
++delivered.
++
+ After you run the command above, you will be presented with an interactive
+ prompt for each patch that's about to go out. This gives you one last chance to
+ edit or quit sending something (but again, don't edit code this way). Once you
+ press `y` or `a` at these prompts your emails will be sent! Congratulations!
+-
+ Awesome, now the community will drop everything and review your changes. (Just
+ kidding - be patient!)
+ 
+diff --git a/v2-0001-MyFirstContribution-add-note-on-confirming-patche.patch b/v2-0001-MyFirstContribution-add-note-on-confirming-patche.patch
+new file mode 100644
+index 0000000000..0e29510cba
+--- /dev/null
++++ b/v2-0001-MyFirstContribution-add-note-on-confirming-patche.patch
+@@ -0,0 +1,39 @@
++From b6e46728e3ce0714c03b9af548b734deadd95ca3 Mon Sep 17 00:00:00 2001
++From: QueenJcloud <qjessa662@gmail.com>
++Date: Fri, 24 Oct 2025 13:58:14 +0100
++Subject: [PATCH v2] MyFirstContribution: add note on confirming patches
++
++Add a note after the `git send-email` section explaining how
++contributors can confirm that their patches reached the mailing
++list by checking https://lore.kernel.org/git/.
++
++Signed-off-by: QueenJcloud <qjessa662@gmail.com>
++---
++ Documentation/MyFirstContribution.adoc | 6 ++++++
++ 1 file changed, 6 insertions(+)
++
++diff --git a/Documentation/MyFirstContribution.adoc b/Documentation/MyFirstContribution.adoc
++index 02ba8ba5f6..6e7f3036bb 100644
++--- a/Documentation/MyFirstContribution.adoc
+++++ b/Documentation/MyFirstContribution.adoc
++@@ -1153,11 +1153,17 @@ NOTE: When you are sending a real patch, it will go to git@vger.kernel.org - but
++ please don't send your patchset from the tutorial to the real mailing list! For
++ now, you can send it to yourself, to make sure you understand how it will look.
++ 
+++NOTE: After sending your patches, you can confirm that they reached the mailing
+++list by visiting https://lore.kernel.org/git/. Use the search bar to find your
+++name or the subject of your patch. If it appears, your email was successfully
+++delivered.
+++
++ After you run the command above, you will be presented with an interactive
++ prompt for each patch that's about to go out. This gives you one last chance to
++ edit or quit sending something (but again, don't edit code this way). Once you
++ press `y` or `a` at these prompts your emails will be sent! Congratulations!
++ 
+++
++ Awesome, now the community will drop everything and review your changes. (Just
++ kidding - be patient!)
++ 
++-- 
++2.51.0.573.gb660e2dcb9
++
+diff --git a/v3-0001-MyFirstContribution-add-note-on-confirming-patche.patch b/v3-0001-MyFirstContribution-add-note-on-confirming-patche.patch
+new file mode 100644
+index 0000000000..d5fe3e0bae
+--- /dev/null
++++ b/v3-0001-MyFirstContribution-add-note-on-confirming-patche.patch
+@@ -0,0 +1,46 @@
++From ad52256dcdfa5080dcba9451a67af1d3f89ba26d Mon Sep 17 00:00:00 2001
++From: QueenJcloud <qjessa662@gmail.com>
++Date: Fri, 24 Oct 2025 13:58:14 +0100
++Subject: [PATCH v3] MyFirstContribution: add note on confirming patches
++
++Add a note after the `git send-email` section explaining how
++contributors can confirm that their patches reached the mailing
++list by checking https://lore.kernel.org/git/. This helps
++contributors verify that their emails were successfully delivered.
++
++Signed-off-by: QueenJcloud <qjessa662@gmail.com>
++---
++Changes since v2:
++- Distinctive/correct name to the email
++- Added changelog note after '---'
++- Removed extra blank line at the end of the section
++- No other text or formatting changes
++---
++ Documentation/MyFirstContribution.adoc | 6 ++++++
++ 1 file changed, 6 insertions(+)
++
++diff --git a/Documentation/MyFirstContribution.adoc b/Documentation/MyFirstContribution.adoc
++index 02ba8ba5f6..6e7f3036bb 100644
++--- a/Documentation/MyFirstContribution.adoc
+++++ b/Documentation/MyFirstContribution.adoc
++@@ -1153,11 +1153,17 @@ NOTE: When you are sending a real patch, it will go to git@vger.kernel.org - but
++ please don't send your patchset from the tutorial to the real mailing list! For
++ now, you can send it to yourself, to make sure you understand how it will look.
++ 
+++NOTE: After sending your patches, you can confirm that they reached the mailing
+++list by visiting https://lore.kernel.org/git/. Use the search bar to find your
+++name or the subject of your patch. If it appears, your email was successfully
+++delivered.
+++
++ After you run the command above, you will be presented with an interactive
++ prompt for each patch that's about to go out. This gives you one last chance to
++ edit or quit sending something (but again, don't edit code this way). Once you
++ press `y` or `a` at these prompts your emails will be sent! Congratulations!
++ 
+++
++ Awesome, now the community will drop everything and review your changes. (Just
++ kidding - be patient!)
++ 
++-- 
++2.51.0.573.gb660e2dcb9
++
+-- 
+2.51.0.573.gb660e2dcb9
+
+
+From 7527b2986f3175a2746f0b6221fe56f9fc126440 Mon Sep 17 00:00:00 2001
+From: QueenJcloud <qjessa662@gmail.com>
+Date: Thu, 30 Oct 2025 22:21:35 +0100
+Subject: [PATCH 2/2] gitprotocol-http: document invalid 'want' error handling
+
+Add documentation explaining how the server should handle invalid
+'want' requests in the HTTP protocol. When a client requests an object
+that does not exist or is not reachable from any advertised reference,
+the server must reject the request with an error message.
+
+This clarification ensures contributors understand how Git prevents
+clients from requesting non-existent objects, and improves the accuracy
+of the protocol documentation.
+
+Signed-off-by: Queen Ediri Jessa <qjessa662@gmail.com>
+---
+ Documentation/gitprotocol-http.adoc | 16 +++++++++++++++-
+ 1 file changed, 15 insertions(+), 1 deletion(-)
+
+diff --git a/Documentation/gitprotocol-http.adoc b/Documentation/gitprotocol-http.adoc
+index d024010414..19b5628e73 100644
+--- a/Documentation/gitprotocol-http.adoc
++++ b/Documentation/gitprotocol-http.adoc
+@@ -443,7 +443,21 @@ If no "want" objects are received, send an error:
+ TODO: Define error if no "want" lines are requested.
+ 
+ If any "want" object is not reachable, send an error:
+-TODO: Define error if an invalid "want" is requested.
++
++If the client sends a `want` line referring to an object that does not
++exist on the server, or that is not reachable from any advertised
++reference, the server must reject the request. In such cases, the
++server terminates the negotiation with an error response.
++
++This ensures that the client only receives valid objects that are part
++of the repository’s reachable history. The server may return an error
++message such as:
++
++    error: invalid want <object-id>
++
++to indicate that the requested object could not be found. No packfile
++is generated for invalid requests, and the client should not retry
++with the same object ID.
+ 
+ Create an empty list, `s_common`.
+ 
+-- 
+2.51.0.573.gb660e2dcb9
+
