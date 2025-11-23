@@ -798,8 +798,6 @@ static int compare_objects(const unsigned char *buf, unsigned long size,
 static int check_collison(struct object_entry *entry)
 {
 	struct compare_data data;
-	enum object_type type;
-	unsigned long size;
 
 	if (entry->size <= repo_settings_get_big_file_threshold(the_repository) ||
 	    entry->type != OBJ_BLOB)
@@ -807,11 +805,10 @@ static int check_collison(struct object_entry *entry)
 
 	memset(&data, 0, sizeof(data));
 	data.entry = entry;
-	data.st = odb_read_stream_open(the_repository->objects, &entry->idx.oid,
-				       &type, &size, NULL);
+	data.st = odb_read_stream_open(the_repository->objects, &entry->idx.oid, NULL);
 	if (!data.st)
 		return -1;
-	if (size != entry->size || type != entry->type)
+	if (data.st->size != entry->size || data.st->type != entry->type)
 		die(_("SHA1 COLLISION FOUND WITH %s !"),
 		    oid_to_hex(&entry->idx.oid));
 	unpack_data(entry, compare_objects, &data);

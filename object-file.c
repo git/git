@@ -132,19 +132,17 @@ int check_object_signature(struct repository *r, const struct object_id *oid,
 int stream_object_signature(struct repository *r, const struct object_id *oid)
 {
 	struct object_id real_oid;
-	unsigned long size;
-	enum object_type obj_type;
 	struct odb_read_stream *st;
 	struct git_hash_ctx c;
 	char hdr[MAX_HEADER_LEN];
 	int hdrlen;
 
-	st = odb_read_stream_open(r->objects, oid, &obj_type, &size, NULL);
+	st = odb_read_stream_open(r->objects, oid, NULL);
 	if (!st)
 		return -1;
 
 	/* Generate the header */
-	hdrlen = format_object_header(hdr, sizeof(hdr), obj_type, size);
+	hdrlen = format_object_header(hdr, sizeof(hdr), st->type, st->size);
 
 	/* Sha1.. */
 	r->hash_algo->init_fn(&c);

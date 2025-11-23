@@ -347,12 +347,11 @@ static int write_zip_entry(struct archiver_args *args,
 			method = ZIP_METHOD_DEFLATE;
 
 		if (!buffer) {
-			enum object_type type;
-			stream = odb_read_stream_open(args->repo->objects, oid,
-						      &type, &size, NULL);
+			stream = odb_read_stream_open(args->repo->objects, oid, NULL);
 			if (!stream)
 				return error(_("cannot stream blob %s"),
 					     oid_to_hex(oid));
+			size = stream->size;
 			flags |= ZIP_STREAM;
 			out = NULL;
 		} else {

@@ -25,16 +25,13 @@ struct odb_read_stream {
 };
 
 /*
- * Create a new object stream for the given object database. Populates the type
- * and size pointers with the object's info. An optional filter can be used to
- * transform the object's content.
+ * Create a new object stream for the given object database. An optional filter
+ * can be used to transform the object's content.
  *
  * Returns the stream on success, a `NULL` pointer otherwise.
  */
 struct odb_read_stream *odb_read_stream_open(struct object_database *odb,
 					     const struct object_id *oid,
-					     enum object_type *type,
-					     unsigned long *size,
 					     struct stream_filter *filter);
 
 /*

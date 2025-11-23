@@ -521,9 +521,11 @@ static unsigned long write_no_reuse_object(struct hashfile *f, struct object_ent
 		    oe_size_greater_than(&to_pack, entry,
 					 repo_settings_get_big_file_threshold(the_repository)) &&
 		    (st = odb_read_stream_open(the_repository->objects, &entry->idx.oid,
-					       &type, &size, NULL)) != NULL)
+					       NULL)) != NULL) {
 			buf = NULL;
-		else {
+			type = st->type;
+			size = st->size;
+		} else {
 			buf = odb_read_object(the_repository->objects,
 					      &entry->idx.oid, &type,
 					      &size);
