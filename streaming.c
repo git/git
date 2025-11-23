@@ -116,140 +116,6 @@ static struct odb_read_stream *attach_stream_filter(struct odb_read_stream *st,
 
 /*****************************************************************
  *
- * Non-delta packed object stream
- *
- *****************************************************************/
-
-struct odb_packed_read_stream {
-	struct odb_read_stream base;
-	struct packed_git *pack;
-	git_zstream z;
-	enum {
-		ODB_PACKED_READ_STREAM_UNINITIALIZED,
-		ODB_PACKED_READ_STREAM_INUSE,
-		ODB_PACKED_READ_STREAM_DONE,
-		ODB_PACKED_READ_STREAM_ERROR,
-	} z_state;
-	off_t pos;
-};
-
-static ssize_t read_istream_pack_non_delta(struct odb_read_stream *_st, char *buf,
-					   size_t sz)
-{
-	struct odb_packed_read_stream *st = (struct odb_packed_read_stream *)_st;
-	size_t total_read = 0;
-
-	switch (st->z_state) {
-	case ODB_PACKED_READ_STREAM_UNINITIALIZED:
-		memset(&st->z, 0, sizeof(st->z));
-		git_inflate_init(&st->z);
-		st->z_state = ODB_PACKED_READ_STREAM_INUSE;
-		break;
-	case ODB_PACKED_READ_STREAM_DONE:
-		return 0;
-	case ODB_PACKED_READ_STREAM_ERROR:
-		return -1;
-	case ODB_PACKED_READ_STREAM_INUSE:
-		break;
-	}
-
-	while (total_read < sz) {
-		int status;
-		struct pack_window *window = NULL;
-		unsigned char *mapped;
-
-		mapped = use_pack(st->pack, &window,
-				  st->pos, &st->z.avail_in);
-
-		st->z.next_out = (unsigned char *)buf + total_read;
-		st->z.avail_out = sz - total_read;
-		st->z.next_in = mapped;
-		status = git_inflate(&st->z, Z_FINISH);
-
-		st->pos += st->z.next_in - mapped;
-		total_read = st->z.next_out - (unsigned char *)buf;
-		unuse_pack(&window);
-
-		if (status == Z_STREAM_END) {
-			git_inflate_end(&st->z);
-			st->z_state = ODB_PACKED_READ_STREAM_DONE;
-			break;
-		}
-
-		/*
-		 * Unlike the loose object case, we do not have to worry here
-		 * about running out of input bytes and spinning infinitely. If
-		 * we get Z_BUF_ERROR due to too few input bytes, then we'll
-		 * replenish them in the next use_pack() call when we loop. If
-		 * we truly hit the end of the pack (i.e., because it's corrupt
-		 * or truncated), then use_pack() catches that and will die().
-		 */
-		if (status != Z_OK && status != Z_BUF_ERROR) {
-			git_inflate_end(&st->z);
-			st->z_state = ODB_PACKED_READ_STREAM_ERROR;
-			return -1;
-		}
-	}
-	return total_read;
-}
-
-static int close_istream_pack_non_delta(struct odb_read_stream *_st)
-{
-	struct odb_packed_read_stream *st = (struct odb_packed_read_stream *)_st;
-	if (st->z_state == ODB_PACKED_READ_STREAM_INUSE)
-		git_inflate_end(&st->z);
-	return 0;
-}
-
-static int open_istream_pack_non_delta(struct odb_read_stream **out,
-				       struct object_database *odb,
-				       const struct object_id *oid)
-{
-	struct odb_packed_read_stream *stream;
-	struct pack_window *window = NULL;
-	struct object_info oi = OBJECT_INFO_INIT;
-	enum object_type in_pack_type;
-	unsigned long size;
-
-	oi.sizep = &size;
-
-	if (packfile_store_read_object_info(odb->packfiles, oid, &oi, 0) ||
-	    oi.u.packed.is_delta ||
-	    repo_settings_get_big_file_threshold(odb->repo) >= size)
-		return -1;
-
-	in_pack_type = unpack_object_header(oi.u.packed.pack,
-					    &window,
-					    &oi.u.packed.offset,
-					    &size);
-	unuse_pack(&window);
-	switch (in_pack_type) {
-	default:
-		return -1; /* we do not do deltas for now */
-	case OBJ_COMMIT:
-	case OBJ_TREE:
-	case OBJ_BLOB:
-	case OBJ_TAG:
-		break;
-	}
-
-	CALLOC_ARRAY(stream, 1);
-	stream->base.close = close_istream_pack_non_delta;
-	stream->base.read = read_istream_pack_non_delta;
-	stream->base.type = in_pack_type;
-	stream->base.size = size;
-	stream->z_state = ODB_PACKED_READ_STREAM_UNINITIALIZED;
-	stream->pack = oi.u.packed.pack;
-	stream->pos = oi.u.packed.offset;
-
-	*out = &stream->base;
-
-	return 0;
-}
-
-
-/*****************************************************************
- *
  * In-core stream
  *
  *****************************************************************/
@@ -319,7 +185,7 @@ static int istream_source(struct odb_read_stream **out,
 {
 	struct odb_source *source;
 
-	if (!open_istream_pack_non_delta(out, r->objects, oid))
+	if (!packfile_store_read_object_stream(out, r->objects->packfiles, oid))
 		return 0;
 
 	odb_prepare_alternates(r->objects);

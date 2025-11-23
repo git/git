@@ -8,6 +8,7 @@
 
 /* in odb.h */
 struct object_info;
+struct odb_read_stream;
 
 struct packed_git {
 	struct hashmap_entry packmap_ent;
@@ -143,6 +144,10 @@ void packfile_store_add_pack(struct packfile_store *store,
  */
 #define repo_for_each_pack(repo, p) \
 	for (p = packfile_store_get_packs(repo->objects->packfiles); p; p = p->next)
+
+int packfile_store_read_object_stream(struct odb_read_stream **out,
+				      struct packfile_store *store,
+				      const struct object_id *oid);
 
 /*
  * Try to read the object identified by its ID from the object store and
