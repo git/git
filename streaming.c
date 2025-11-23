@@ -40,14 +40,6 @@ struct odb_read_stream {
 
 	union {
 		struct {
-			void *mapped;
-			unsigned long mapsize;
-			char hdr[32];
-			int hdr_avail;
-			int hdr_used;
-		} loose;
-
-		struct {
 			struct packed_git *pack;
 			off_t pos;
 		} in_pack;
@@ -165,11 +157,21 @@ static struct odb_read_stream *attach_stream_filter(struct odb_read_stream *st,
  *
  *****************************************************************/
 
-static ssize_t read_istream_loose(struct odb_read_stream *st, char *buf, size_t sz)
+struct odb_loose_read_stream {
+	struct odb_read_stream base;
+	void *mapped;
+	unsigned long mapsize;
+	char hdr[32];
+	int hdr_avail;
+	int hdr_used;
+};
+
+static ssize_t read_istream_loose(struct odb_read_stream *_st, char *buf, size_t sz)
 {
+	struct odb_loose_read_stream *st = (struct odb_loose_read_stream *)_st;
 	size_t total_read = 0;
 
-	switch (st->z_state) {
+	switch (st->base.z_state) {
 	case z_done:
 		return 0;
 	case z_error:
@@ -178,42 +180,43 @@ static ssize_t read_istream_loose(struct odb_read_stream *st, char *buf, size_t 
 		break;
 	}
 
-	if (st->u.loose.hdr_used < st->u.loose.hdr_avail) {
-		size_t to_copy = st->u.loose.hdr_avail - st->u.loose.hdr_used;
+	if (st->hdr_used < st->hdr_avail) {
+		size_t to_copy = st->hdr_avail - st->hdr_used;
 		if (sz < to_copy)
 			to_copy = sz;
-		memcpy(buf, st->u.loose.hdr + st->u.loose.hdr_used, to_copy);
-		st->u.loose.hdr_used += to_copy;
+		memcpy(buf, st->hdr + st->hdr_used, to_copy);
+		st->hdr_used += to_copy;
 		total_read += to_copy;
 	}
 
 	while (total_read < sz) {
 		int status;
 
-		st->z.next_out = (unsigned char *)buf + total_read;
-		st->z.avail_out = sz - total_read;
-		status = git_inflate(&st->z, Z_FINISH);
+		st->base.z.next_out = (unsigned char *)buf + total_read;
+		st->base.z.avail_out = sz - total_read;
+		status = git_inflate(&st->base.z, Z_FINISH);
 
-		total_read = st->z.next_out - (unsigned char *)buf;
+		total_read = st->base.z.next_out - (unsigned char *)buf;
 
 		if (status == Z_STREAM_END) {
-			git_inflate_end(&st->z);
-			st->z_state = z_done;
+			git_inflate_end(&st->base.z);
+			st->base.z_state = z_done;
 			break;
 		}
 		if (status != Z_OK && (status != Z_BUF_ERROR || total_read < sz)) {
-			git_inflate_end(&st->z);
-			st->z_state = z_error;
+			git_inflate_end(&st->base.z);
+			st->base.z_state = z_error;
 			return -1;
 		}
 	}
 	return total_read;
 }
 
-static int close_istream_loose(struct odb_read_stream *st)
+static int close_istream_loose(struct odb_read_stream *_st)
 {
-	close_deflated_stream(st);
-	munmap(st->u.loose.mapped, st->u.loose.mapsize);
+	struct odb_loose_read_stream *st = (struct odb_loose_read_stream *)_st;
+	close_deflated_stream(&st->base);
+	munmap(st->mapped, st->mapsize);
 	return 0;
 }
 
@@ -222,7 +225,7 @@ static int open_istream_loose(struct odb_read_stream **out,
 			      const struct object_id *oid)
 {
 	struct object_info oi = OBJECT_INFO_INIT;
-	struct odb_read_stream *st;
+	struct odb_loose_read_stream *st;
 	struct odb_source *source;
 	unsigned long mapsize;
 	void *mapped;
@@ -244,8 +247,8 @@ static int open_istream_loose(struct odb_read_stream **out,
 	 */
 	CALLOC_ARRAY(st, 1);
 
-	switch (unpack_loose_header(&st->z, mapped, mapsize, st->u.loose.hdr,
-				    sizeof(st->u.loose.hdr))) {
+	switch (unpack_loose_header(&st->base.z, mapped, mapsize, st->hdr,
+				    sizeof(st->hdr))) {
 	case ULHR_OK:
 		break;
 	case ULHR_BAD:
@@ -253,26 +256,26 @@ static int open_istream_loose(struct odb_read_stream **out,
 		goto error;
 	}
 
-	oi.sizep = &st->size;
-	oi.typep = &st->type;
+	oi.sizep = &st->base.size;
+	oi.typep = &st->base.type;
 
-	if (parse_loose_header(st->u.loose.hdr, &oi) < 0 || st->type < 0)
+	if (parse_loose_header(st->hdr, &oi) < 0 || st->base.type < 0)
 		goto error;
 
-	st->u.loose.mapped = mapped;
-	st->u.loose.mapsize = mapsize;
-	st->u.loose.hdr_used = strlen(st->u.loose.hdr) + 1;
-	st->u.loose.hdr_avail = st->z.total_out;
-	st->z_state = z_used;
-	st->close = close_istream_loose;
-	st->read = read_istream_loose;
+	st->mapped = mapped;
+	st->mapsize = mapsize;
+	st->hdr_used = strlen(st->hdr) + 1;
+	st->hdr_avail = st->base.z.total_out;
+	st->base.z_state = z_used;
+	st->base.close = close_istream_loose;
+	st->base.read = read_istream_loose;
 
-	*out = st;
+	*out = &st->base;
 
 	return 0;
 error:
-	git_inflate_end(&st->z);
-	munmap(st->u.loose.mapped, st->u.loose.mapsize);
+	git_inflate_end(&st->base.z);
+	munmap(st->mapped, st->mapsize);
 	free(st);
 	return -1;
 }
