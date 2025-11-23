@@ -14,10 +14,6 @@
 #include "replace-object.h"
 #include "packfile.h"
 
-typedef int (*open_istream_fn)(struct odb_read_stream *,
-			       struct repository *,
-			       const struct object_id *,
-			       enum object_type *);
 typedef int (*close_istream_fn)(struct odb_read_stream *);
 typedef ssize_t (*read_istream_fn)(struct odb_read_stream *, char *, size_t);
 
@@ -34,7 +30,6 @@ struct filtered_istream {
 };
 
 struct odb_read_stream {
-	open_istream_fn open;
 	close_istream_fn close;
 	read_istream_fn read;
 
@@ -437,21 +432,25 @@ static int istream_source(struct odb_read_stream *st,
 
 	switch (oi.whence) {
 	case OI_LOOSE:
-		st->open = open_istream_loose;
+		if (open_istream_loose(st, r, oid, type) < 0)
+			break;
 		return 0;
 	case OI_PACKED:
-		if (!oi.u.packed.is_delta &&
-		    repo_settings_get_big_file_threshold(the_repository) < size) {
-			st->u.in_pack.pack = oi.u.packed.pack;
-			st->u.in_pack.pos = oi.u.packed.offset;
-			st->open = open_istream_pack_non_delta;
-			return 0;
-		}
-		/* fallthru */
-	default:
-		st->open = open_istream_incore;
+		if (oi.u.packed.is_delta ||
+		    repo_settings_get_big_file_threshold(the_repository) >= size)
+			break;
+
+		st->u.in_pack.pack = oi.u.packed.pack;
+		st->u.in_pack.pos = oi.u.packed.offset;
+		if (open_istream_pack_non_delta(st, r, oid, type) < 0)
+			break;
+
 		return 0;
+	default:
+		break;
 	}
+
+	return open_istream_incore(st, r, oid, type);
 }
 
 /****************************************************************
@@ -485,12 +484,6 @@ struct odb_read_stream *open_istream(struct repository *r,
 		return NULL;
 	}
 
-	if (st->open(st, r, real, type)) {
-		if (open_istream_incore(st, r, real, type)) {
-			free(st);
-			return NULL;
-		}
-	}
 	if (filter) {
 		/* Add "&& !is_null_stream_filter(filter)" for performance */
 		struct odb_read_stream *nst = attach_stream_filter(st, filter);
