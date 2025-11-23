@@ -40,11 +40,6 @@ struct odb_read_stream {
 
 	union {
 		struct {
-			char *buf; /* from odb_read_object_info_extended() */
-			unsigned long read_ptr;
-		} incore;
-
-		struct {
 			void *mapped;
 			unsigned long mapsize;
 			char hdr[32];
@@ -401,22 +396,30 @@ static int open_istream_pack_non_delta(struct odb_read_stream **out,
  *
  *****************************************************************/
 
-static int close_istream_incore(struct odb_read_stream *st)
+struct odb_incore_read_stream {
+	struct odb_read_stream base;
+	char *buf; /* from odb_read_object_info_extended() */
+	unsigned long read_ptr;
+};
+
+static int close_istream_incore(struct odb_read_stream *_st)
 {
-	free(st->u.incore.buf);
+	struct odb_incore_read_stream *st = (struct odb_incore_read_stream *)_st;
+	free(st->buf);
 	return 0;
 }
 
-static ssize_t read_istream_incore(struct odb_read_stream *st, char *buf, size_t sz)
+static ssize_t read_istream_incore(struct odb_read_stream *_st, char *buf, size_t sz)
 {
+	struct odb_incore_read_stream *st = (struct odb_incore_read_stream *)_st;
 	size_t read_size = sz;
-	size_t remainder = st->size - st->u.incore.read_ptr;
+	size_t remainder = st->base.size - st->read_ptr;
 
 	if (remainder <= read_size)
 		read_size = remainder;
 	if (read_size) {
-		memcpy(buf, st->u.incore.buf + st->u.incore.read_ptr, read_size);
-		st->u.incore.read_ptr += read_size;
+		memcpy(buf, st->buf + st->read_ptr, read_size);
+		st->read_ptr += read_size;
 	}
 	return read_size;
 }
@@ -426,22 +429,25 @@ static int open_istream_incore(struct odb_read_stream **out,
 			       const struct object_id *oid)
 {
 	struct object_info oi = OBJECT_INFO_INIT;
-	struct odb_read_stream stream = {
-		.close = close_istream_incore,
-		.read = read_istream_incore,
+	struct odb_incore_read_stream stream = {
+		.base.close = close_istream_incore,
+		.base.read = read_istream_incore,
 	};
+	struct odb_incore_read_stream *st;
 	int ret;
 
-	oi.typep = &stream.type;
-	oi.sizep = &stream.size;
-	oi.contentp = (void **)&stream.u.incore.buf;
+	oi.typep = &stream.base.type;
+	oi.sizep = &stream.base.size;
+	oi.contentp = (void **)&stream.buf;
 	ret = odb_read_object_info_extended(r->objects, oid, &oi,
 					    OBJECT_INFO_DIE_IF_CORRUPT);
 	if (ret)
 		return ret;
 
-	CALLOC_ARRAY(*out, 1);
-	**out = stream;
+	CALLOC_ARRAY(st, 1);
+	*st = stream;
+	*out = &st->base;
+
 	return 0;
 }
 
