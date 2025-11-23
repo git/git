@@ -25,22 +25,7 @@ struct odb_read_stream {
 
 	enum object_type type;
 	unsigned long size; /* inflated size of full object */
-	git_zstream z;
-	enum { z_unused, z_used, z_done, z_error } z_state;
 };
-
-/*****************************************************************
- *
- * Common helpers
- *
- *****************************************************************/
-
-static void close_deflated_stream(struct odb_read_stream *st)
-{
-	if (st->z_state == z_used)
-		git_inflate_end(&st->z);
-}
-
 
 /*****************************************************************
  *
@@ -150,6 +135,12 @@ static struct odb_read_stream *attach_stream_filter(struct odb_read_stream *st,
 
 struct odb_loose_read_stream {
 	struct odb_read_stream base;
+	git_zstream z;
+	enum {
+		ODB_LOOSE_READ_STREAM_INUSE,
+		ODB_LOOSE_READ_STREAM_DONE,
+		ODB_LOOSE_READ_STREAM_ERROR,
+	} z_state;
 	void *mapped;
 	unsigned long mapsize;
 	char hdr[32];
@@ -162,10 +153,10 @@ static ssize_t read_istream_loose(struct odb_read_stream *_st, char *buf, size_t
 	struct odb_loose_read_stream *st = (struct odb_loose_read_stream *)_st;
 	size_t total_read = 0;
 
-	switch (st->base.z_state) {
-	case z_done:
+	switch (st->z_state) {
+	case ODB_LOOSE_READ_STREAM_DONE:
 		return 0;
-	case z_error:
+	case ODB_LOOSE_READ_STREAM_ERROR:
 		return -1;
 	default:
 		break;
@@ -183,20 +174,20 @@ static ssize_t read_istream_loose(struct odb_read_stream *_st, char *buf, size_t
 	while (total_read < sz) {
 		int status;
 
-		st->base.z.next_out = (unsigned char *)buf + total_read;
-		st->base.z.avail_out = sz - total_read;
-		status = git_inflate(&st->base.z, Z_FINISH);
+		st->z.next_out = (unsigned char *)buf + total_read;
+		st->z.avail_out = sz - total_read;
+		status = git_inflate(&st->z, Z_FINISH);
 
-		total_read = st->base.z.next_out - (unsigned char *)buf;
+		total_read = st->z.next_out - (unsigned char *)buf;
 
 		if (status == Z_STREAM_END) {
-			git_inflate_end(&st->base.z);
-			st->base.z_state = z_done;
+			git_inflate_end(&st->z);
+			st->z_state = ODB_LOOSE_READ_STREAM_DONE;
 			break;
 		}
 		if (status != Z_OK && (status != Z_BUF_ERROR || total_read < sz)) {
-			git_inflate_end(&st->base.z);
-			st->base.z_state = z_error;
+			git_inflate_end(&st->z);
+			st->z_state = ODB_LOOSE_READ_STREAM_ERROR;
 			return -1;
 		}
 	}
@@ -206,7 +197,8 @@ static ssize_t read_istream_loose(struct odb_read_stream *_st, char *buf, size_t
 static int close_istream_loose(struct odb_read_stream *_st)
 {
 	struct odb_loose_read_stream *st = (struct odb_loose_read_stream *)_st;
-	close_deflated_stream(&st->base);
+	if (st->z_state == ODB_LOOSE_READ_STREAM_INUSE)
+		git_inflate_end(&st->z);
 	munmap(st->mapped, st->mapsize);
 	return 0;
 }
@@ -238,7 +230,7 @@ static int open_istream_loose(struct odb_read_stream **out,
 	 */
 	CALLOC_ARRAY(st, 1);
 
-	switch (unpack_loose_header(&st->base.z, mapped, mapsize, st->hdr,
+	switch (unpack_loose_header(&st->z, mapped, mapsize, st->hdr,
 				    sizeof(st->hdr))) {
 	case ULHR_OK:
 		break;
@@ -256,8 +248,8 @@ static int open_istream_loose(struct odb_read_stream **out,
 	st->mapped = mapped;
 	st->mapsize = mapsize;
 	st->hdr_used = strlen(st->hdr) + 1;
-	st->hdr_avail = st->base.z.total_out;
-	st->base.z_state = z_used;
+	st->hdr_avail = st->z.total_out;
+	st->z_state = ODB_LOOSE_READ_STREAM_INUSE;
 	st->base.close = close_istream_loose;
 	st->base.read = read_istream_loose;
 
@@ -265,7 +257,7 @@ static int open_istream_loose(struct odb_read_stream **out,
 
 	return 0;
 error:
-	git_inflate_end(&st->base.z);
+	git_inflate_end(&st->z);
 	munmap(st->mapped, st->mapsize);
 	free(st);
 	return -1;
@@ -281,6 +273,13 @@ error:
 struct odb_packed_read_stream {
 	struct odb_read_stream base;
 	struct packed_git *pack;
+	git_zstream z;
+	enum {
+		ODB_PACKED_READ_STREAM_UNINITIALIZED,
+		ODB_PACKED_READ_STREAM_INUSE,
+		ODB_PACKED_READ_STREAM_DONE,
+		ODB_PACKED_READ_STREAM_ERROR,
+	} z_state;
 	off_t pos;
 };
 
@@ -290,17 +289,17 @@ static ssize_t read_istream_pack_non_delta(struct odb_read_stream *_st, char *bu
 	struct odb_packed_read_stream *st = (struct odb_packed_read_stream *)_st;
 	size_t total_read = 0;
 
-	switch (st->base.z_state) {
-	case z_unused:
-		memset(&st->base.z, 0, sizeof(st->base.z));
-		git_inflate_init(&st->base.z);
-		st->base.z_state = z_used;
+	switch (st->z_state) {
+	case ODB_PACKED_READ_STREAM_UNINITIALIZED:
+		memset(&st->z, 0, sizeof(st->z));
+		git_inflate_init(&st->z);
+		st->z_state = ODB_PACKED_READ_STREAM_INUSE;
 		break;
-	case z_done:
+	case ODB_PACKED_READ_STREAM_DONE:
 		return 0;
-	case z_error:
+	case ODB_PACKED_READ_STREAM_ERROR:
 		return -1;
-	case z_used:
+	case ODB_PACKED_READ_STREAM_INUSE:
 		break;
 	}
 
@@ -310,20 +309,20 @@ static ssize_t read_istream_pack_non_delta(struct odb_read_stream *_st, char *bu
 		unsigned char *mapped;
 
 		mapped = use_pack(st->pack, &window,
-				  st->pos, &st->base.z.avail_in);
+				  st->pos, &st->z.avail_in);
 
-		st->base.z.next_out = (unsigned char *)buf + total_read;
-		st->base.z.avail_out = sz - total_read;
-		st->base.z.next_in = mapped;
-		status = git_inflate(&st->base.z, Z_FINISH);
+		st->z.next_out = (unsigned char *)buf + total_read;
+		st->z.avail_out = sz - total_read;
+		st->z.next_in = mapped;
+		status = git_inflate(&st->z, Z_FINISH);
 
-		st->pos += st->base.z.next_in - mapped;
-		total_read = st->base.z.next_out - (unsigned char *)buf;
+		st->pos += st->z.next_in - mapped;
+		total_read = st->z.next_out - (unsigned char *)buf;
 		unuse_pack(&window);
 
 		if (status == Z_STREAM_END) {
-			git_inflate_end(&st->base.z);
-			st->base.z_state = z_done;
+			git_inflate_end(&st->z);
+			st->z_state = ODB_PACKED_READ_STREAM_DONE;
 			break;
 		}
 
@@ -336,8 +335,8 @@ static ssize_t read_istream_pack_non_delta(struct odb_read_stream *_st, char *bu
 		 * or truncated), then use_pack() catches that and will die().
 		 */
 		if (status != Z_OK && status != Z_BUF_ERROR) {
-			git_inflate_end(&st->base.z);
-			st->base.z_state = z_error;
+			git_inflate_end(&st->z);
+			st->z_state = ODB_PACKED_READ_STREAM_ERROR;
 			return -1;
 		}
 	}
@@ -347,7 +346,8 @@ static ssize_t read_istream_pack_non_delta(struct odb_read_stream *_st, char *bu
 static int close_istream_pack_non_delta(struct odb_read_stream *_st)
 {
 	struct odb_packed_read_stream *st = (struct odb_packed_read_stream *)_st;
-	close_deflated_stream(&st->base);
+	if (st->z_state == ODB_PACKED_READ_STREAM_INUSE)
+		git_inflate_end(&st->z);
 	return 0;
 }
 
@@ -384,7 +384,7 @@ static int open_istream_pack_non_delta(struct odb_read_stream **out,
 	stream->base.read = read_istream_pack_non_delta;
 	stream->base.type = in_pack_type;
 	stream->base.size = size;
-	stream->base.z_state = z_unused;
+	stream->z_state = ODB_PACKED_READ_STREAM_UNINITIALIZED;
 	stream->pack = pack;
 	stream->pos = offset;
 
