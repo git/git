@@ -7,9 +7,22 @@
 #include "object.h"
 
 struct object_database;
-/* opaque */
 struct odb_read_stream;
 struct stream_filter;
+
+typedef int (*odb_read_stream_close_fn)(struct odb_read_stream *);
+typedef ssize_t (*odb_read_stream_read_fn)(struct odb_read_stream *, char *, size_t);
+
+/*
+ * A stream that can be used to read an object from the object database without
+ * loading all of it into memory.
+ */
+struct odb_read_stream {
+	odb_read_stream_close_fn close;
+	odb_read_stream_read_fn read;
+	enum object_type type;
+	unsigned long size; /* inflated size of full object */
+};
 
 struct odb_read_stream *open_istream(struct repository *, const struct object_id *,
 				     enum object_type *, unsigned long *,

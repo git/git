@@ -12,18 +12,7 @@
 #include "replace-object.h"
 #include "packfile.h"
 
-typedef int (*close_istream_fn)(struct odb_read_stream *);
-typedef ssize_t (*read_istream_fn)(struct odb_read_stream *, char *, size_t);
-
 #define FILTER_BUFFER (1024*16)
-
-struct odb_read_stream {
-	close_istream_fn close;
-	read_istream_fn read;
-
-	enum object_type type;
-	unsigned long size; /* inflated size of full object */
-};
 
 /*****************************************************************
  *
