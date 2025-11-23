@@ -33,6 +33,7 @@ struct odb_read_stream {
 	close_istream_fn close;
 	read_istream_fn read;
 
+	enum object_type type;
 	unsigned long size; /* inflated size of full object */
 	git_zstream z;
 	enum { z_unused, z_used, z_done, z_error } z_state;
@@ -159,6 +160,7 @@ static struct odb_read_stream *attach_stream_filter(struct odb_read_stream *st,
 	fs->o_end = fs->o_ptr = 0;
 	fs->input_finished = 0;
 	ifs->size = -1; /* unknown */
+	ifs->type = st->type;
 	return ifs;
 }
 
@@ -221,14 +223,13 @@ static int close_istream_loose(struct odb_read_stream *st)
 }
 
 static int open_istream_loose(struct odb_read_stream *st, struct repository *r,
-			      const struct object_id *oid,
-			      enum object_type *type)
+			      const struct object_id *oid)
 {
 	struct object_info oi = OBJECT_INFO_INIT;
 	struct odb_source *source;
 
 	oi.sizep = &st->size;
-	oi.typep = type;
+	oi.typep = &st->type;
 
 	odb_prepare_alternates(r->objects);
 	for (source = r->objects->sources; source; source = source->next) {
@@ -249,7 +250,7 @@ static int open_istream_loose(struct odb_read_stream *st, struct repository *r,
 	case ULHR_TOO_LONG:
 		goto error;
 	}
-	if (parse_loose_header(st->u.loose.hdr, &oi) < 0 || *type < 0)
+	if (parse_loose_header(st->u.loose.hdr, &oi) < 0 || st->type < 0)
 		goto error;
 
 	st->u.loose.hdr_used = strlen(st->u.loose.hdr) + 1;
@@ -339,8 +340,7 @@ static int close_istream_pack_non_delta(struct odb_read_stream *st)
 
 static int open_istream_pack_non_delta(struct odb_read_stream *st,
 				       struct repository *r UNUSED,
-				       const struct object_id *oid UNUSED,
-				       enum object_type *type UNUSED)
+				       const struct object_id *oid UNUSED)
 {
 	struct pack_window *window;
 	enum object_type in_pack_type;
@@ -361,6 +361,7 @@ static int open_istream_pack_non_delta(struct odb_read_stream *st,
 	case OBJ_TAG:
 		break;
 	}
+	st->type = in_pack_type;
 	st->z_state = z_unused;
 	st->close = close_istream_pack_non_delta;
 	st->read = read_istream_pack_non_delta;
@@ -396,7 +397,7 @@ static ssize_t read_istream_incore(struct odb_read_stream *st, char *buf, size_t
 }
 
 static int open_istream_incore(struct odb_read_stream *st, struct repository *r,
-			       const struct object_id *oid, enum object_type *type)
+			       const struct object_id *oid)
 {
 	struct object_info oi = OBJECT_INFO_INIT;
 
@@ -404,7 +405,7 @@ static int open_istream_incore(struct odb_read_stream *st, struct repository *r,
 	st->close = close_istream_incore;
 	st->read = read_istream_incore;
 
-	oi.typep = type;
+	oi.typep = &st->type;
 	oi.sizep = &st->size;
 	oi.contentp = (void **)&st->u.incore.buf;
 	return odb_read_object_info_extended(r->objects, oid, &oi,
@@ -417,14 +418,12 @@ static int open_istream_incore(struct odb_read_stream *st, struct repository *r,
 
 static int istream_source(struct odb_read_stream *st,
 			  struct repository *r,
-			  const struct object_id *oid,
-			  enum object_type *type)
+			  const struct object_id *oid)
 {
 	unsigned long size;
 	int status;
 	struct object_info oi = OBJECT_INFO_INIT;
 
-	oi.typep = type;
 	oi.sizep = &size;
 	status = odb_read_object_info_extended(r->objects, oid, &oi, 0);
 	if (status < 0)
@@ -432,7 +431,7 @@ static int istream_source(struct odb_read_stream *st,
 
 	switch (oi.whence) {
 	case OI_LOOSE:
-		if (open_istream_loose(st, r, oid, type) < 0)
+		if (open_istream_loose(st, r, oid) < 0)
 			break;
 		return 0;
 	case OI_PACKED:
@@ -442,7 +441,7 @@ static int istream_source(struct odb_read_stream *st,
 
 		st->u.in_pack.pack = oi.u.packed.pack;
 		st->u.in_pack.pos = oi.u.packed.offset;
-		if (open_istream_pack_non_delta(st, r, oid, type) < 0)
+		if (open_istream_pack_non_delta(st, r, oid) < 0)
 			break;
 
 		return 0;
@@ -450,7 +449,7 @@ static int istream_source(struct odb_read_stream *st,
 		break;
 	}
 
-	return open_istream_incore(st, r, oid, type);
+	return open_istream_incore(st, r, oid);
 }
 
 /****************************************************************
@@ -477,7 +476,7 @@ struct odb_read_stream *open_istream(struct repository *r,
 {
 	struct odb_read_stream *st = xmalloc(sizeof(*st));
 	const struct object_id *real = lookup_replace_object(r, oid);
-	int ret = istream_source(st, r, real, type);
+	int ret = istream_source(st, r, real);
 
 	if (ret) {
 		free(st);
@@ -495,6 +494,7 @@ struct odb_read_stream *open_istream(struct repository *r,
 	}
 
 	*size = st->size;
+	*type = st->type;
 	return st;
 }
 
