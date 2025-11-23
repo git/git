@@ -2,8 +2,6 @@
  * Copyright (c) 2011, Google Inc.
  */
 
-#define USE_THE_REPOSITORY_VARIABLE
-
 #include "git-compat-util.h"
 #include "convert.h"
 #include "environment.h"
@@ -359,7 +357,7 @@ static int open_istream_pack_non_delta(struct odb_read_stream **out,
 
 	if (packfile_store_read_object_info(odb->packfiles, oid, &oi, 0) ||
 	    oi.u.packed.is_delta ||
-	    repo_settings_get_big_file_threshold(the_repository) >= size)
+	    repo_settings_get_big_file_threshold(odb->repo) >= size)
 		return -1;
 
 	in_pack_type = unpack_object_header(oi.u.packed.pack,
@@ -518,8 +516,11 @@ struct odb_read_stream *open_istream(struct repository *r,
 	return st;
 }
 
-int stream_blob_to_fd(int fd, const struct object_id *oid, struct stream_filter *filter,
-		      int can_seek)
+int odb_stream_blob_to_fd(struct object_database *odb,
+			  int fd,
+			  const struct object_id *oid,
+			  struct stream_filter *filter,
+			  int can_seek)
 {
 	struct odb_read_stream *st;
 	enum object_type type;
@@ -527,7 +528,7 @@ int stream_blob_to_fd(int fd, const struct object_id *oid, struct stream_filter 
 	ssize_t kept = 0;
 	int result = -1;
 
-	st = open_istream(the_repository, oid, &type, &sz, filter);
+	st = open_istream(odb->repo, oid, &type, &sz, filter);
 	if (!st) {
 		if (filter)
 			free_stream_filter(filter);
