@@ -762,7 +762,7 @@ static void find_ref_delta_children(const struct object_id *oid,
 
 struct compare_data {
 	struct object_entry *entry;
-	struct git_istream *st;
+	struct odb_read_stream *st;
 	unsigned char *buf;
 	unsigned long buf_size;
 };

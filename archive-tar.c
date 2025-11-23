@@ -129,7 +129,7 @@ static void write_trailer(void)
  */
 static int stream_blocked(struct repository *r, const struct object_id *oid)
 {
-	struct git_istream *st;
+	struct odb_read_stream *st;
 	enum object_type type;
 	unsigned long sz;
 	char buf[BLOCKSIZE];

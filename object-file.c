@@ -134,7 +134,7 @@ int stream_object_signature(struct repository *r, const struct object_id *oid)
 	struct object_id real_oid;
 	unsigned long size;
 	enum object_type obj_type;
-	struct git_istream *st;
+	struct odb_read_stream *st;
 	struct git_hash_ctx c;
 	char hdr[MAX_HEADER_LEN];
 	int hdrlen;

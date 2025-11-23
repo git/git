@@ -14,17 +14,17 @@
 #include "replace-object.h"
 #include "packfile.h"
 
-typedef int (*open_istream_fn)(struct git_istream *,
+typedef int (*open_istream_fn)(struct odb_read_stream *,
 			       struct repository *,
 			       const struct object_id *,
 			       enum object_type *);
-typedef int (*close_istream_fn)(struct git_istream *);
-typedef ssize_t (*read_istream_fn)(struct git_istream *, char *, size_t);
+typedef int (*close_istream_fn)(struct odb_read_stream *);
+typedef ssize_t (*read_istream_fn)(struct odb_read_stream *, char *, size_t);
 
 #define FILTER_BUFFER (1024*16)
 
 struct filtered_istream {
-	struct git_istream *upstream;
+	struct odb_read_stream *upstream;
 	struct stream_filter *filter;
 	char ibuf[FILTER_BUFFER];
 	char obuf[FILTER_BUFFER];
@@ -33,7 +33,7 @@ struct filtered_istream {
 	int input_finished;
 };
 
-struct git_istream {
+struct odb_read_stream {
 	open_istream_fn open;
 	close_istream_fn close;
 	read_istream_fn read;
@@ -71,7 +71,7 @@ struct git_istream {
  *
  *****************************************************************/
 
-static void close_deflated_stream(struct git_istream *st)
+static void close_deflated_stream(struct odb_read_stream *st)
 {
 	if (st->z_state == z_used)
 		git_inflate_end(&st->z);
@@ -84,13 +84,13 @@ static void close_deflated_stream(struct git_istream *st)
  *
  *****************************************************************/
 
-static int close_istream_filtered(struct git_istream *st)
+static int close_istream_filtered(struct odb_read_stream *st)
 {
 	free_stream_filter(st->u.filtered.filter);
 	return close_istream(st->u.filtered.upstream);
 }
 
-static ssize_t read_istream_filtered(struct git_istream *st, char *buf,
+static ssize_t read_istream_filtered(struct odb_read_stream *st, char *buf,
 				     size_t sz)
 {
 	struct filtered_istream *fs = &(st->u.filtered);
@@ -150,10 +150,10 @@ static ssize_t read_istream_filtered(struct git_istream *st, char *buf,
 	return filled;
 }
 
-static struct git_istream *attach_stream_filter(struct git_istream *st,
-						struct stream_filter *filter)
+static struct odb_read_stream *attach_stream_filter(struct odb_read_stream *st,
+						    struct stream_filter *filter)
 {
-	struct git_istream *ifs = xmalloc(sizeof(*ifs));
+	struct odb_read_stream *ifs = xmalloc(sizeof(*ifs));
 	struct filtered_istream *fs = &(ifs->u.filtered);
 
 	ifs->close = close_istream_filtered;
@@ -173,7 +173,7 @@ static struct git_istream *attach_stream_filter(struct git_istream *st,
  *
  *****************************************************************/
 
-static ssize_t read_istream_loose(struct git_istream *st, char *buf, size_t sz)
+static ssize_t read_istream_loose(struct odb_read_stream *st, char *buf, size_t sz)
 {
 	size_t total_read = 0;
 
@@ -218,14 +218,14 @@ static ssize_t read_istream_loose(struct git_istream *st, char *buf, size_t sz)
 	return total_read;
 }
 
-static int close_istream_loose(struct git_istream *st)
+static int close_istream_loose(struct odb_read_stream *st)
 {
 	close_deflated_stream(st);
 	munmap(st->u.loose.mapped, st->u.loose.mapsize);
 	return 0;
 }
 
-static int open_istream_loose(struct git_istream *st, struct repository *r,
+static int open_istream_loose(struct odb_read_stream *st, struct repository *r,
 			      const struct object_id *oid,
 			      enum object_type *type)
 {
@@ -277,7 +277,7 @@ error:
  *
  *****************************************************************/
 
-static ssize_t read_istream_pack_non_delta(struct git_istream *st, char *buf,
+static ssize_t read_istream_pack_non_delta(struct odb_read_stream *st, char *buf,
 					   size_t sz)
 {
 	size_t total_read = 0;
@@ -336,13 +336,13 @@ static ssize_t read_istream_pack_non_delta(struct git_istream *st, char *buf,
 	return total_read;
 }
 
-static int close_istream_pack_non_delta(struct git_istream *st)
+static int close_istream_pack_non_delta(struct odb_read_stream *st)
 {
 	close_deflated_stream(st);
 	return 0;
 }
 
-static int open_istream_pack_non_delta(struct git_istream *st,
+static int open_istream_pack_non_delta(struct odb_read_stream *st,
 				       struct repository *r UNUSED,
 				       const struct object_id *oid UNUSED,
 				       enum object_type *type UNUSED)
@@ -380,13 +380,13 @@ static int open_istream_pack_non_delta(struct git_istream *st,
  *
  *****************************************************************/
 
-static int close_istream_incore(struct git_istream *st)
+static int close_istream_incore(struct odb_read_stream *st)
 {
 	free(st->u.incore.buf);
 	return 0;
 }
 
-static ssize_t read_istream_incore(struct git_istream *st, char *buf, size_t sz)
+static ssize_t read_istream_incore(struct odb_read_stream *st, char *buf, size_t sz)
 {
 	size_t read_size = sz;
 	size_t remainder = st->size - st->u.incore.read_ptr;
@@ -400,7 +400,7 @@ static ssize_t read_istream_incore(struct git_istream *st, char *buf, size_t sz)
 	return read_size;
 }
 
-static int open_istream_incore(struct git_istream *st, struct repository *r,
+static int open_istream_incore(struct odb_read_stream *st, struct repository *r,
 			       const struct object_id *oid, enum object_type *type)
 {
 	struct object_info oi = OBJECT_INFO_INIT;
@@ -420,7 +420,7 @@ static int open_istream_incore(struct git_istream *st, struct repository *r,
  * static helpers variables and functions for users of streaming interface
  *****************************************************************************/
 
-static int istream_source(struct git_istream *st,
+static int istream_source(struct odb_read_stream *st,
 			  struct repository *r,
 			  const struct object_id *oid,
 			  enum object_type *type)
@@ -458,25 +458,25 @@ static int istream_source(struct git_istream *st,
  * Users of streaming interface
  ****************************************************************/
 
-int close_istream(struct git_istream *st)
+int close_istream(struct odb_read_stream *st)
 {
 	int r = st->close(st);
 	free(st);
 	return r;
 }
 
-ssize_t read_istream(struct git_istream *st, void *buf, size_t sz)
+ssize_t read_istream(struct odb_read_stream *st, void *buf, size_t sz)
 {
 	return st->read(st, buf, sz);
 }
 
-struct git_istream *open_istream(struct repository *r,
-				 const struct object_id *oid,
-				 enum object_type *type,
-				 unsigned long *size,
-				 struct stream_filter *filter)
+struct odb_read_stream *open_istream(struct repository *r,
+				     const struct object_id *oid,
+				     enum object_type *type,
+				     unsigned long *size,
+				     struct stream_filter *filter)
 {
-	struct git_istream *st = xmalloc(sizeof(*st));
+	struct odb_read_stream *st = xmalloc(sizeof(*st));
 	const struct object_id *real = lookup_replace_object(r, oid);
 	int ret = istream_source(st, r, real, type);
 
@@ -493,7 +493,7 @@ struct git_istream *open_istream(struct repository *r,
 	}
 	if (filter) {
 		/* Add "&& !is_null_stream_filter(filter)" for performance */
-		struct git_istream *nst = attach_stream_filter(st, filter);
+		struct odb_read_stream *nst = attach_stream_filter(st, filter);
 		if (!nst) {
 			close_istream(st);
 			return NULL;
@@ -508,7 +508,7 @@ struct git_istream *open_istream(struct repository *r,
 int stream_blob_to_fd(int fd, const struct object_id *oid, struct stream_filter *filter,
 		      int can_seek)
 {
-	struct git_istream *st;
+	struct odb_read_stream *st;
 	enum object_type type;
 	unsigned long sz;
 	ssize_t kept = 0;
