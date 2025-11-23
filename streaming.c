@@ -204,21 +204,15 @@ static int close_istream_loose(struct odb_read_stream *_st)
 }
 
 static int open_istream_loose(struct odb_read_stream **out,
-			      struct repository *r,
+			      struct odb_source *source,
 			      const struct object_id *oid)
 {
 	struct object_info oi = OBJECT_INFO_INIT;
 	struct odb_loose_read_stream *st;
-	struct odb_source *source;
 	unsigned long mapsize;
 	void *mapped;
 
-	odb_prepare_alternates(r->objects);
-	for (source = r->objects->sources; source; source = source->next) {
-		mapped = odb_source_loose_map_object(source, oid, &mapsize);
-		if (mapped)
-			break;
-	}
+	mapped = odb_source_loose_map_object(source, oid, &mapsize);
 	if (!mapped)
 		return -1;
 
@@ -352,21 +346,25 @@ static int close_istream_pack_non_delta(struct odb_read_stream *_st)
 }
 
 static int open_istream_pack_non_delta(struct odb_read_stream **out,
-				       struct repository *r UNUSED,
-				       const struct object_id *oid UNUSED,
-				       struct packed_git *pack,
-				       off_t offset)
+				       struct object_database *odb,
+				       const struct object_id *oid)
 {
 	struct odb_packed_read_stream *stream;
-	struct pack_window *window;
+	struct pack_window *window = NULL;
+	struct object_info oi = OBJECT_INFO_INIT;
 	enum object_type in_pack_type;
-	size_t size;
+	unsigned long size;
 
-	window = NULL;
+	oi.sizep = &size;
 
-	in_pack_type = unpack_object_header(pack,
+	if (packfile_store_read_object_info(odb->packfiles, oid, &oi, 0) ||
+	    oi.u.packed.is_delta ||
+	    repo_settings_get_big_file_threshold(the_repository) >= size)
+		return -1;
+
+	in_pack_type = unpack_object_header(oi.u.packed.pack,
 					    &window,
-					    &offset,
+					    &oi.u.packed.offset,
 					    &size);
 	unuse_pack(&window);
 	switch (in_pack_type) {
@@ -385,8 +383,8 @@ static int open_istream_pack_non_delta(struct odb_read_stream **out,
 	stream->base.type = in_pack_type;
 	stream->base.size = size;
 	stream->z_state = ODB_PACKED_READ_STREAM_UNINITIALIZED;
-	stream->pack = pack;
-	stream->pos = offset;
+	stream->pack = oi.u.packed.pack;
+	stream->pos = oi.u.packed.offset;
 
 	*out = &stream->base;
 
@@ -463,30 +461,15 @@ static int istream_source(struct odb_read_stream **out,
 			  struct repository *r,
 			  const struct object_id *oid)
 {
-	unsigned long size;
-	int status;
-	struct object_info oi = OBJECT_INFO_INIT;
+	struct odb_source *source;
 
-	oi.sizep = &size;
-	status = odb_read_object_info_extended(r->objects, oid, &oi, 0);
-	if (status < 0)
-		return status;
+	if (!open_istream_pack_non_delta(out, r->objects, oid))
+		return 0;
 
-	switch (oi.whence) {
-	case OI_LOOSE:
-		if (open_istream_loose(out, r, oid) < 0)
-			break;
-		return 0;
-	case OI_PACKED:
-		if (oi.u.packed.is_delta ||
-		    repo_settings_get_big_file_threshold(the_repository) >= size ||
-		    open_istream_pack_non_delta(out, r, oid, oi.u.packed.pack,
-						oi.u.packed.offset) < 0)
-			break;
-		return 0;
-	default:
-		break;
-	}
+	odb_prepare_alternates(r->objects);
+	for (source = r->objects->sources; source; source = source->next)
+		if (!open_istream_loose(out, source, oid))
+			return 0;
 
 	return open_istream_incore(out, r, oid);
 }
