@@ -13,7 +13,7 @@
 #include "read-cache-ll.h"
 #include "run-command.h"
 #include "sigchain.h"
-#include "streaming.h"
+#include "odb/streaming.h"
 #include "symlinks.h"
 #include "thread-utils.h"
 #include "trace2.h"

@@ -12,8 +12,8 @@
 #include "tar.h"
 #include "archive.h"
 #include "odb.h"
+#include "odb/streaming.h"
 #include "strbuf.h"
-#include "streaming.h"
 #include "run-command.h"
 #include "write-or-die.h"
 

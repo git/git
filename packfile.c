@@ -20,7 +20,7 @@
 #include "tree.h"
 #include "object-file.h"
 #include "odb.h"
-#include "streaming.h"
+#include "odb/streaming.h"
 #include "midx.h"
 #include "commit-graph.h"
 #include "pack-revindex.h"

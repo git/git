@@ -5,10 +5,10 @@
 #include "git-compat-util.h"
 #include "convert.h"
 #include "environment.h"
-#include "streaming.h"
 #include "repository.h"
 #include "object-file.h"
 #include "odb.h"
+#include "odb/streaming.h"
 #include "replace-object.h"
 #include "packfile.h"
 
