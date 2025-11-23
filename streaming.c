@@ -39,11 +39,6 @@ struct odb_read_stream {
 	enum { z_unused, z_used, z_done, z_error } z_state;
 
 	union {
-		struct {
-			struct packed_git *pack;
-			off_t pos;
-		} in_pack;
-
 		struct filtered_istream filtered;
 	} u;
 };
@@ -287,16 +282,23 @@ error:
  *
  *****************************************************************/
 
-static ssize_t read_istream_pack_non_delta(struct odb_read_stream *st, char *buf,
+struct odb_packed_read_stream {
+	struct odb_read_stream base;
+	struct packed_git *pack;
+	off_t pos;
+};
+
+static ssize_t read_istream_pack_non_delta(struct odb_read_stream *_st, char *buf,
 					   size_t sz)
 {
+	struct odb_packed_read_stream *st = (struct odb_packed_read_stream *)_st;
 	size_t total_read = 0;
 
-	switch (st->z_state) {
+	switch (st->base.z_state) {
 	case z_unused:
-		memset(&st->z, 0, sizeof(st->z));
-		git_inflate_init(&st->z);
-		st->z_state = z_used;
+		memset(&st->base.z, 0, sizeof(st->base.z));
+		git_inflate_init(&st->base.z);
+		st->base.z_state = z_used;
 		break;
 	case z_done:
 		return 0;
@@ -311,21 +313,21 @@ static ssize_t read_istream_pack_non_delta(struct odb_read_stream *st, char *buf
 		struct pack_window *window = NULL;
 		unsigned char *mapped;
 
-		mapped = use_pack(st->u.in_pack.pack, &window,
-				  st->u.in_pack.pos, &st->z.avail_in);
+		mapped = use_pack(st->pack, &window,
+				  st->pos, &st->base.z.avail_in);
 
-		st->z.next_out = (unsigned char *)buf + total_read;
-		st->z.avail_out = sz - total_read;
-		st->z.next_in = mapped;
-		status = git_inflate(&st->z, Z_FINISH);
+		st->base.z.next_out = (unsigned char *)buf + total_read;
+		st->base.z.avail_out = sz - total_read;
+		st->base.z.next_in = mapped;
+		status = git_inflate(&st->base.z, Z_FINISH);
 
-		st->u.in_pack.pos += st->z.next_in - mapped;
-		total_read = st->z.next_out - (unsigned char *)buf;
+		st->pos += st->base.z.next_in - mapped;
+		total_read = st->base.z.next_out - (unsigned char *)buf;
 		unuse_pack(&window);
 
 		if (status == Z_STREAM_END) {
-			git_inflate_end(&st->z);
-			st->z_state = z_done;
+			git_inflate_end(&st->base.z);
+			st->base.z_state = z_done;
 			break;
 		}
 
@@ -338,17 +340,18 @@ static ssize_t read_istream_pack_non_delta(struct odb_read_stream *st, char *buf
 		 * or truncated), then use_pack() catches that and will die().
 		 */
 		if (status != Z_OK && status != Z_BUF_ERROR) {
-			git_inflate_end(&st->z);
-			st->z_state = z_error;
+			git_inflate_end(&st->base.z);
+			st->base.z_state = z_error;
 			return -1;
 		}
 	}
 	return total_read;
 }
 
-static int close_istream_pack_non_delta(struct odb_read_stream *st)
+static int close_istream_pack_non_delta(struct odb_read_stream *_st)
 {
-	close_deflated_stream(st);
+	struct odb_packed_read_stream *st = (struct odb_packed_read_stream *)_st;
+	close_deflated_stream(&st->base);
 	return 0;
 }
 
@@ -358,19 +361,17 @@ static int open_istream_pack_non_delta(struct odb_read_stream **out,
 				       struct packed_git *pack,
 				       off_t offset)
 {
-	struct odb_read_stream stream = {
-		.close = close_istream_pack_non_delta,
-		.read = read_istream_pack_non_delta,
-	};
+	struct odb_packed_read_stream *stream;
 	struct pack_window *window;
 	enum object_type in_pack_type;
+	size_t size;
 
 	window = NULL;
 
 	in_pack_type = unpack_object_header(pack,
 					    &window,
 					    &offset,
-					    &stream.size);
+					    &size);
 	unuse_pack(&window);
 	switch (in_pack_type) {
 	default:
@@ -381,13 +382,17 @@ static int open_istream_pack_non_delta(struct odb_read_stream **out,
 	case OBJ_TAG:
 		break;
 	}
-	stream.type = in_pack_type;
-	stream.z_state = z_unused;
-	stream.u.in_pack.pack = pack;
-	stream.u.in_pack.pos = offset;
 
-	CALLOC_ARRAY(*out, 1);
-	**out = stream;
+	CALLOC_ARRAY(stream, 1);
+	stream->base.close = close_istream_pack_non_delta;
+	stream->base.read = read_istream_pack_non_delta;
+	stream->base.type = in_pack_type;
+	stream->base.size = size;
+	stream->base.z_state = z_unused;
+	stream->pack = pack;
+	stream->pos = offset;
+
+	*out = &stream->base;
 
 	return 0;
 }
