@@ -340,16 +340,18 @@ static int close_istream_pack_non_delta(struct odb_read_stream *st)
 
 static int open_istream_pack_non_delta(struct odb_read_stream *st,
 				       struct repository *r UNUSED,
-				       const struct object_id *oid UNUSED)
+				       const struct object_id *oid UNUSED,
+				       struct packed_git *pack,
+				       off_t offset)
 {
 	struct pack_window *window;
 	enum object_type in_pack_type;
 
 	window = NULL;
 
-	in_pack_type = unpack_object_header(st->u.in_pack.pack,
+	in_pack_type = unpack_object_header(pack,
 					    &window,
-					    &st->u.in_pack.pos,
+					    &offset,
 					    &st->size);
 	unuse_pack(&window);
 	switch (in_pack_type) {
@@ -365,6 +367,8 @@ static int open_istream_pack_non_delta(struct odb_read_stream *st,
 	st->z_state = z_unused;
 	st->close = close_istream_pack_non_delta;
 	st->read = read_istream_pack_non_delta;
+	st->u.in_pack.pack = pack;
+	st->u.in_pack.pos = offset;
 
 	return 0;
 }
@@ -436,14 +440,10 @@ static int istream_source(struct odb_read_stream *st,
 		return 0;
 	case OI_PACKED:
 		if (oi.u.packed.is_delta ||
-		    repo_settings_get_big_file_threshold(the_repository) >= size)
+		    repo_settings_get_big_file_threshold(the_repository) >= size ||
+		    open_istream_pack_non_delta(st, r, oid, oi.u.packed.pack,
+						oi.u.packed.offset) < 0)
 			break;
-
-		st->u.in_pack.pack = oi.u.packed.pack;
-		st->u.in_pack.pos = oi.u.packed.offset;
-		if (open_istream_pack_non_delta(st, r, oid) < 0)
-			break;
-
 		return 0;
 	default:
 		break;
