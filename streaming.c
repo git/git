@@ -19,16 +19,6 @@ typedef ssize_t (*read_istream_fn)(struct odb_read_stream *, char *, size_t);
 
 #define FILTER_BUFFER (1024*16)
 
-struct filtered_istream {
-	struct odb_read_stream *upstream;
-	struct stream_filter *filter;
-	char ibuf[FILTER_BUFFER];
-	char obuf[FILTER_BUFFER];
-	int i_end, i_ptr;
-	int o_end, o_ptr;
-	int input_finished;
-};
-
 struct odb_read_stream {
 	close_istream_fn close;
 	read_istream_fn read;
@@ -37,10 +27,6 @@ struct odb_read_stream {
 	unsigned long size; /* inflated size of full object */
 	git_zstream z;
 	enum { z_unused, z_used, z_done, z_error } z_state;
-
-	union {
-		struct filtered_istream filtered;
-	} u;
 };
 
 /*****************************************************************
@@ -62,16 +48,28 @@ static void close_deflated_stream(struct odb_read_stream *st)
  *
  *****************************************************************/
 
-static int close_istream_filtered(struct odb_read_stream *st)
+struct odb_filtered_read_stream {
+	struct odb_read_stream base;
+	struct odb_read_stream *upstream;
+	struct stream_filter *filter;
+	char ibuf[FILTER_BUFFER];
+	char obuf[FILTER_BUFFER];
+	int i_end, i_ptr;
+	int o_end, o_ptr;
+	int input_finished;
+};
+
+static int close_istream_filtered(struct odb_read_stream *_fs)
 {
-	free_stream_filter(st->u.filtered.filter);
-	return close_istream(st->u.filtered.upstream);
+	struct odb_filtered_read_stream *fs = (struct odb_filtered_read_stream *)_fs;
+	free_stream_filter(fs->filter);
+	return close_istream(fs->upstream);
 }
 
-static ssize_t read_istream_filtered(struct odb_read_stream *st, char *buf,
+static ssize_t read_istream_filtered(struct odb_read_stream *_fs, char *buf,
 				     size_t sz)
 {
-	struct filtered_istream *fs = &(st->u.filtered);
+	struct odb_filtered_read_stream *fs = (struct odb_filtered_read_stream *)_fs;
 	size_t filled = 0;
 
 	while (sz) {
@@ -131,19 +129,17 @@ static ssize_t read_istream_filtered(struct odb_read_stream *st, char *buf,
 static struct odb_read_stream *attach_stream_filter(struct odb_read_stream *st,
 						    struct stream_filter *filter)
 {
-	struct odb_read_stream *ifs = xmalloc(sizeof(*ifs));
-	struct filtered_istream *fs = &(ifs->u.filtered);
+	struct odb_filtered_read_stream *fs;
 
-	ifs->close = close_istream_filtered;
-	ifs->read = read_istream_filtered;
+	CALLOC_ARRAY(fs, 1);
+	fs->base.close = close_istream_filtered;
+	fs->base.read = read_istream_filtered;
 	fs->upstream = st;
 	fs->filter = filter;
-	fs->i_end = fs->i_ptr = 0;
-	fs->o_end = fs->o_ptr = 0;
-	fs->input_finished = 0;
-	ifs->size = -1; /* unknown */
-	ifs->type = st->type;
-	return ifs;
+	fs->base.size = -1; /* unknown */
+	fs->base.type = st->type;
+
+	return &fs->base;
 }
 
 /*****************************************************************
