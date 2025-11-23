@@ -139,7 +139,7 @@ int stream_object_signature(struct repository *r, const struct object_id *oid)
 	char hdr[MAX_HEADER_LEN];
 	int hdrlen;
 
-	st = open_istream(r, oid, &obj_type, &size, NULL);
+	st = odb_read_stream_open(r->objects, oid, &obj_type, &size, NULL);
 	if (!st)
 		return -1;
 
@@ -151,10 +151,10 @@ int stream_object_signature(struct repository *r, const struct object_id *oid)
 	git_hash_update(&c, hdr, hdrlen);
 	for (;;) {
 		char buf[1024 * 16];
-		ssize_t readlen = read_istream(st, buf, sizeof(buf));
+		ssize_t readlen = odb_read_stream_read(st, buf, sizeof(buf));
 
 		if (readlen < 0) {
-			close_istream(st);
+			odb_read_stream_close(st);
 			return -1;
 		}
 		if (!readlen)
@@ -162,7 +162,7 @@ int stream_object_signature(struct repository *r, const struct object_id *oid)
 		git_hash_update(&c, buf, readlen);
 	}
 	git_hash_final_oid(&real_oid, &c);
-	close_istream(st);
+	odb_read_stream_close(st);
 	return !oideq(oid, &real_oid) ? -1 : 0;
 }
 

@@ -348,8 +348,8 @@ static int write_zip_entry(struct archiver_args *args,
 
 		if (!buffer) {
 			enum object_type type;
-			stream = open_istream(args->repo, oid, &type, &size,
-					      NULL);
+			stream = odb_read_stream_open(args->repo->objects, oid,
+						      &type, &size, NULL);
 			if (!stream)
 				return error(_("cannot stream blob %s"),
 					     oid_to_hex(oid));
@@ -429,7 +429,7 @@ static int write_zip_entry(struct archiver_args *args,
 		ssize_t readlen;
 
 		for (;;) {
-			readlen = read_istream(stream, buf, sizeof(buf));
+			readlen = odb_read_stream_read(stream, buf, sizeof(buf));
 			if (readlen <= 0)
 				break;
 			crc = crc32(crc, buf, readlen);
@@ -439,7 +439,7 @@ static int write_zip_entry(struct archiver_args *args,
 							    buf, readlen);
 			write_or_die(1, buf, readlen);
 		}
-		close_istream(stream);
+		odb_read_stream_close(stream);
 		if (readlen)
 			return readlen;
 
@@ -462,7 +462,7 @@ static int write_zip_entry(struct archiver_args *args,
 		zstream.avail_out = sizeof(compressed);
 
 		for (;;) {
-			readlen = read_istream(stream, buf, sizeof(buf));
+			readlen = odb_read_stream_read(stream, buf, sizeof(buf));
 			if (readlen <= 0)
 				break;
 			crc = crc32(crc, buf, readlen);
@@ -486,7 +486,7 @@ static int write_zip_entry(struct archiver_args *args,
 			}
 
 		}
-		close_istream(stream);
+		odb_read_stream_close(stream);
 		if (readlen)
 			return readlen;
 

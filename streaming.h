@@ -24,11 +24,31 @@ struct odb_read_stream {
 	unsigned long size; /* inflated size of full object */
 };
 
-struct odb_read_stream *open_istream(struct repository *, const struct object_id *,
-				     enum object_type *, unsigned long *,
-				     struct stream_filter *);
-int close_istream(struct odb_read_stream *);
-ssize_t read_istream(struct odb_read_stream *, void *, size_t);
+/*
+ * Create a new object stream for the given object database. Populates the type
+ * and size pointers with the object's info. An optional filter can be used to
+ * transform the object's content.
+ *
+ * Returns the stream on success, a `NULL` pointer otherwise.
+ */
+struct odb_read_stream *odb_read_stream_open(struct object_database *odb,
+					     const struct object_id *oid,
+					     enum object_type *type,
+					     unsigned long *size,
+					     struct stream_filter *filter);
+
+/*
+ * Close the given read stream and release all resources associated with it.
+ * Returns 0 on success, a negative error code otherwise.
+ */
+int odb_read_stream_close(struct odb_read_stream *stream);
+
+/*
+ * Read data from the stream into the buffer. Returns 0 on EOF and the number
+ * of bytes read on success. Returns a negative error code in case reading from
+ * the stream fails.
+ */
+ssize_t odb_read_stream_read(struct odb_read_stream *stream, void *buf, size_t len);
 
 /*
  * Look up the object by its ID and write the full contents to the file
