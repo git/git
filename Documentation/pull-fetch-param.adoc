@@ -91,7 +91,7 @@ object.
 When the remote branch you want to fetch is known to
 be rewound and rebased regularly, it is expected that
 its new tip will not be a descendant of its previous tip
-(as stored in your remote-tracking branch the last time_
+(as stored in your remote-tracking branch the last time
 you fetched).  You would want
 to use the `+` sign to indicate non-fast-forward updates
 will be needed for such branches.  There is no way to
