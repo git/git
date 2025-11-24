@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Nov 2025, #06; Wed, 19)
-X-master-at: 5e6e4854e086ba0025bc7dc11e6b475c92a2f556
-X-next-at: 4c43c53c49517f9a5002d3e8f38395bde77dd998
+Subject: What's cooking in git.git (Nov 2025, #07; Sun, 23)
+X-master-at: debbc87557487aa9a8ed8a35367d17f8b4081c76
+X-next-at: 89d9e04f91292258263fb94060e466f84fbfc9d4
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Nov 2025, #06; Wed, 19)
+What's cooking in git.git (Nov 2025, #07; Sun, 23)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,9 +16,6 @@ to a message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
-
-The 'master' branch now has the first batch of topics for the new
-cycle.  The tip of 'next' branch has been rewound.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -51,84 +48,124 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* kn/refs-optim-cleanup (2025-10-20) 4 commits
-  (merged to 'next' on 2025-11-04 at dbab18969a)
- + t/pack-refs-tests: move the 'test_done' to callees
- + refs: rename 'pack_refs_opts' to 'refs_optimize_opts'
- + refs: move to using the '.optimize' functions
- + Merge branch 'ps/ref-peeled-tags' into kn/refs-optim-cleanup
- (this branch is used by kn/maintenance-is-needed; uses ps/ref-peeled-tags.)
+* jc/gitattributes-whitespace-no-indent-fix (2025-11-11) 1 commit
+  (merged to 'next' on 2025-11-19 at cd849a23a1)
+ + .gitattributes: remove misspelled no-op whitespace attribute
 
- Code clean-up.
- source: <20251020-refs-code-cleanup-v2-0-f5349ed0f6a5@gmail.com>
+ Originally merged to 'next' on 2025-11-14
 
-
-* ps/packed-git-in-object-store (2025-10-30) 9 commits
-  (merged to 'next' on 2025-11-03 at 1eb3440abd)
- + packfile: track packs via the MRU list exclusively
- + packfile: always add packfiles to MRU when adding a pack
- + packfile: move list of packs into the packfile store
- + builtin/pack-objects: simplify logic to find kept or nonlocal objects
- + packfile: fix approximation of object counts
- + http: refactor subsystem to use `packfile_list`s
- + packfile: move the MRU list into the packfile store
- + packfile: use a `strmap` to store packs by name
- + Merge branch 'ps/remove-packfile-store-get-packs' into ps/packed-git-in-object-store
-
- The list of packfiles used in a running Git process is moved from
- the packed_git structure into the packfile store.
- source: <20251030-pks-packfiles-store-drop-list-v2-0-84654f080cc0@pks.im>
+ Ever since we added whitespace rules for this project, we misspelt
+ an entry, which has been corrected.
+ source: <xmqqv7jgwgxb.fsf@gitster.g>
 
 
-* ps/ref-peeled-tags (2025-11-04) 18 commits
-  (merged to 'next' on 2025-11-04 at 3818774c94)
- + t7004: do not chdir around in the main process
- + ref-filter: fix stale parsed objects
- + ref-filter: parse objects on demand
- + ref-filter: detect broken tags when dereferencing them
- + refs: don't store peeled object IDs for invalid tags
- + object: add flag to `peel_object()` to verify object type
- + refs: drop infrastructure to peel via iterators
- + refs: drop `current_ref_iter` hack
- + builtin/show-ref: convert to use `reference_get_peeled_oid()`
- + ref-filter: propagate peeled object ID
- + upload-pack: convert to use `reference_get_peeled_oid()`
- + refs: expose peeled object ID via the iterator
- + refs: refactor reference status flags
- + refs: fully reset `struct ref_iterator::ref` on iteration
- + refs: introduce `.ref` field for the base iterator
- + refs: introduce wrapper struct for `each_ref_fn`
- + Merge branch 'jt/repo-structure' into ps/ref-peeled-tags
- + Merge branch 'tb/incremental-midx-part-3.1' into ps/ref-peeled-tags
- (this branch is used by kn/maintenance-is-needed, kn/refs-optim-cleanup and ps/ref-peeled-tags-fixes.)
+* kn/maintenance-is-needed (2025-11-08) 7 commits
+  (merged to 'next' on 2025-11-19 at faaa24f412)
+ + maintenance: add 'is-needed' subcommand
+ + maintenance: add checking logic in `pack_refs_condition()`
+ + refs: add a `optimize_required` field to `struct ref_storage_be`
+ + reftable/stack: add function to check if optimization is required
+ + reftable/stack: return stack segments directly
+ + Merge branch 'kn/refs-optim-cleanup' into kn/maintenance-is-needed
+ + Merge branch 'ps/ref-peeled-tags' into kn/maintenance-is-needed
 
- Some ref backend storage can hold not just the object name of an
- annotated tag, but the object name of the object the tag points at.
- The code to handle this information has been streamlined.
- source: <20251023-b4-pks-ref-filter-skip-parsing-objects-v4-0-2be68ce82c9a@pks.im>
+ Originally merged to 'next' on 2025-11-14
+
+ "git maintenance" command learned "is-needed" subcommand to tell if
+ it is necessary to perform various maintenance tasks.
+ source: <20251108-562-add-sub-command-to-check-if-maintenance-is-needed-v4-0-a90f229b6023@gmail.com>
 
 
-* ps/ref-peeled-tags-fixes (2025-11-06) 2 commits
-  (merged to 'next' on 2025-11-11 at 3549877a16)
- + object: fix performance regression when peeling tags
- + Merge branch 'ps/ref-peeled-tags' into ps/ref-peeled-tags-fixes
- (this branch uses ps/ref-peeled-tags.)
+* rs/diff-quiet-no-rename (2025-11-09) 1 commit
+  (merged to 'next' on 2025-11-19 at dc0b078446)
+ + diff: disable rename detection with --quiet
 
- Another fix-up to "peeled-tags" topic.
- source: <20251106-b4-pks-peel-object-performance-regression-v1-1-a386147750b0@pks.im>
+ Originally merged to 'next' on 2025-11-14
+
+ As "git diff --quiet" only cares about the existence of any
+ changes, disable rename/copy detection to skip more expensive
+ processing whose result will be discarded anyway.
+ source: <8796cd59-2335-4674-823d-d682ce7b7f8e@web.de>
 
 --------------------------------------------------
 [New Topics]
 
+* ja/doc-synopsis-style (2025-11-19) 3 commits
+  (merged to 'next' on 2025-11-21 at eb9c1703c0)
+ + doc: convert git push to synopsis style
+ + doc: convert git pull to synopsis style
+ + doc: convert git fetch to synopsis style
+
+ Doc mark-up updates.
+
+ Will merge to 'master'.
+ source: <pull.2002.git.1763588404.gitgitgadget@gmail.com>
+
+
+* jc/optional-path (2025-11-20) 3 commits
+ - config: really treat missing optional path as not configured
+ - config: really pretend missing :(optional) value is not there
+ - config: mark otherwise unused function as file-scope static
+
+ "git config get --path" segfaulted on an ":(optional)path" that
+ does not exist, which has been corrected.
+
+ Will merge to 'next'?
+ source: <xmqqikf47ajk.fsf@gitster.g>
+
+
+* kh/doc-committer-date-is-author-date (2025-11-20) 1 commit
+ - doc: warn against --committer-date-is-author-date
+
+ The "--committer-date-is-author-date" option of "git am/rebase" is
+ a misguided one.  The documentation is updated to discourage its
+ use.
+
+ Will merge to 'next'?
+ source: <V2_committer-date-is-author-date.1@msgid.xyz>
+
+
+* gf/win32-pthread-cond-init (2025-11-20) 1 commit
+ - win32: pthread_cond_init should return a value
+
+ Emulation code clean-up.
+
+ Will merge to 'next'?
+ source: <pull.2103.v3.git.git.1763675016637.gitgitgadget@gmail.com>
+
+
+* gf/win32-pthread-cond-wait-err (2025-11-18) 1 commit
+  (merged to 'next' on 2025-11-21 at 89d9e04f91)
+ + win32: return error if SleepConditionVariableCS fails
+
+ Emulation code clean-up.
+
+ Will merge to 'master'.
+ source: <pull.2104.v2.git.git.1763480514065.gitgitgadget@gmail.com>
+
+
+* kn/ref-location (2025-11-19) 2 commits
+ - refs: add GIT_REF_URI to specify reference backend and directory
+ - refs: support obtaining ref_store for given dir
+
+ A mechanism to specify what reference backend to use and store
+ references in which directory is introduced, which would likely to
+ be useful during ref migration.
+ source: <20251119-kn-alternate-ref-dir-v1-0-4cf4a94c8bed@gmail.com>
+
+--------------------------------------------------
+[Cooking]
+
 * jk/ci-windows-meson-test-fix (2025-11-18) 2 commits
- - ci(windows-meson-test): handle options and output like other test jobs
- - unit-test: ignore --no-chain-lint
+  (merged to 'next' on 2025-11-20 at a0afd4fd5b)
+ + ci(windows-meson-test): handle options and output like other test jobs
+ + unit-test: ignore --no-chain-lint
 
  "Windows+meson" job at the GitHub Actions CI was hard to debug, as
  it did not show and save failed test artifacts, which has been
  corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20251118093221.GA530337@coredump.intra.peff.net>
 
 
@@ -158,7 +195,7 @@ Release tarballs are available at:
  Dockerised jobs at the GitHub Actions CI have been taught to show
  more details of failed tests.
 
- Will merge to 'next'?
+ Will merge to 'next' after amending?
  cf. <xmqqpl9gike6.fsf@gitster.g>
  source: <pull.2003.git.1763399064983.gitgitgadget@gmail.com>
 
@@ -208,14 +245,15 @@ Release tarballs are available at:
 
 
 * pw/worktree-list-display-width-fix (2025-11-18) 2 commits
- - worktree list: quote paths
- - worktree list: fix column spacing
+  (merged to 'next' on 2025-11-20 at 3a341524cb)
+ + worktree list: quote paths
+ + worktree list: fix column spacing
 
  "git worktree list" attempts to show paths to worktrees while
  aligning them, but miscounted display columns for the paths when
  non-ASCII characters were involved, which has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cover.1763482051.git.phillip.wood@dunelm.org.uk>
 
 
@@ -244,7 +282,8 @@ Release tarballs are available at:
  source: <pull.1938.git.1760058849.gitgitgadget@gmail.com>
 
 
-* ps/object-read-stream (2025-11-18) 19 commits
+* ps/object-read-stream (2025-11-23) 20 commits
+ - streaming: drop redundant type and size pointers
  - streaming: move into object database subsystem
  - streaming: refactor interface to be object-database-centric
  - streaming: move logic to read packed objects streams into backend
@@ -263,14 +302,14 @@ Release tarballs are available at:
  - streaming: propagate final object type via the stream
  - streaming: drop the `open()` callback function
  - streaming: rename `git_istream` into `odb_read_stream`
- - Merge branch 'ps/object-source-loose' into HEAD
+ - Merge branch 'ps/object-source-loose' into ps/object-read-stream
  (this branch uses ps/object-source-loose.)
 
  The "git_istream" abstraction has been revamped to make it easier
  to interface with pluggable object database design.
 
- Comments?
- source: <20251119-b4-pks-odb-read-stream-v1-0-adacf03c2ccf@pks.im>
+ Will merge to 'next'?
+ source: <20251123-b4-pks-odb-read-stream-v3-0-1a129182822b@pks.im>
 
 
 * ps/object-source-management (2025-11-18) 14 commits
@@ -287,7 +326,7 @@ Release tarballs are available at:
  - odb: adopt logic to close object databases
  - setup: convert `set_git_dir()` to have file scope
  - path: move `enter_repo()` into "setup.c"
- - Merge branch 'ps/object-source-loose' into HEAD
+ - Merge branch 'ps/object-source-loose' into ps/object-source-management
  (this branch uses ps/object-source-loose.)
 
  Code refactoring around object database sources.
@@ -295,8 +334,6 @@ Release tarballs are available at:
  Comments?
  source: <20251119-b4-pks-odb-creation-v1-0-2b2ed2612cb6@pks.im>
 
---------------------------------------------------
-[Cooking]
 
 * jc/submodule-add (2025-11-15) 1 commit
  - submodule add: sanity check existing .gitmodules
@@ -310,34 +347,7 @@ Release tarballs are available at:
  source: <xmqqv7jacvdq.fsf@gitster.g>
 
 
-* rs/diff-quiet-no-rename (2025-11-09) 1 commit
-  (merged to 'next' on 2025-11-19 at dc0b078446)
- + diff: disable rename detection with --quiet
-
- Originally merged to 'next' on 2025-11-14
-
- As "git diff --quiet" only cares about the existence of any
- changes, disable rename/copy detection to skip more expensive
- processing whose result will be discarded anyway.
-
- Will merge to 'master'.
- source: <8796cd59-2335-4674-823d-d682ce7b7f8e@web.de>
-
-
-* jc/gitattributes-whitespace-no-indent-fix (2025-11-11) 1 commit
-  (merged to 'next' on 2025-11-19 at cd849a23a1)
- + .gitattributes: remove misspelled no-op whitespace attribute
-
- Originally merged to 'next' on 2025-11-14
-
- Ever since we added whitespace rules for this project, we misspelt
- an entry, which has been corrected.
-
- Will merge to 'master'.
- source: <xmqqv7jgwgxb.fsf@gitster.g>
-
-
-* kn/fix-fetch-backfill-tag-with-batched-ref-updates (2025-11-18) 3 commits
+* kn/fix-fetch-backfill-tag-with-batched-ref-updates (2025-11-21) 3 commits
  - fetch: fix failed batched updates skipping operations
  - fetch: fix non-conflicting tags not being committed
  - fetch: extract out reference committing logic
@@ -347,7 +357,7 @@ Release tarballs are available at:
  has been corrected.
 
  Will merge to 'next'?
- source: <20251118-fix-tags-not-fetching-v6-0-2a2f15fc137e@gmail.com>
+ source: <20251121-fix-tags-not-fetching-v8-0-23b53a8a8334@gmail.com>
 
 
 * jk/asan-bonanza (2025-11-18) 9 commits
@@ -363,7 +373,7 @@ Release tarballs are available at:
 
  Various issues detected by Asan have been corrected.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <20251118091127.GA4175601@coredump.intra.peff.net>
 
 
@@ -464,25 +474,6 @@ Release tarballs are available at:
  source: <pull.1992.git.1762192908.gitgitgadget@gmail.com>
 
 
-* kn/maintenance-is-needed (2025-11-08) 7 commits
-  (merged to 'next' on 2025-11-19 at faaa24f412)
- + maintenance: add 'is-needed' subcommand
- + maintenance: add checking logic in `pack_refs_condition()`
- + refs: add a `optimize_required` field to `struct ref_storage_be`
- + reftable/stack: add function to check if optimization is required
- + reftable/stack: return stack segments directly
- + Merge branch 'kn/refs-optim-cleanup' into kn/maintenance-is-needed
- + Merge branch 'ps/ref-peeled-tags' into kn/maintenance-is-needed
-
- Originally merged to 'next' on 2025-11-14
-
- "git maintenance" command learned "is-needed" subcommand to tell if
- it is necessary to perform various maintenance tasks.
-
- Will merge to 'master'.
- source: <20251108-562-add-sub-command-to-check-if-maintenance-is-needed-v4-0-a90f229b6023@gmail.com>
-
-
 * qj/doc-http-bad-want-response (2025-11-05) 1 commit
   (merged to 'next' on 2025-11-19 at a602cd96eb)
  + doc: clarify server behavior for invalid 'want' lines in HTTP protocol
@@ -535,7 +526,7 @@ Release tarballs are available at:
  Both "git apply" and "git diff" learn a new whitespace error class,
  "incomplete-line".
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <20251112220258.1009253-1-gitster@pobox.com>
 
 
@@ -600,12 +591,13 @@ Release tarballs are available at:
 
 
 * lo/repo-info-all (2025-11-18) 2 commits
- - repo: add --all to git-repo-info
- - repo: factor out field printing to dedicated function
+  (merged to 'next' on 2025-11-21 at bb6bddcfc7)
+ + repo: add --all to git-repo-info
+ + repo: factor out field printing to dedicated function
 
  "git repo info" learned "--all" option.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20251118204929.43597-1-lucasseikioshiro@gmail.com>
 
 
@@ -665,7 +657,7 @@ Release tarballs are available at:
 
  Add a new manual that describes the data model.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <pull.1981.v7.git.1762977200244.gitgitgadget@gmail.com>
 
 
@@ -734,30 +726,3 @@ Release tarballs are available at:
  each other by encoding submodule names before using them as path
  components.
  source: <20251119211030.2008441-1-adrian.ratiu@collabora.com>
-
---------------------------------------------------
-[Discarded]
-
-* ps/rust-cbindgen (2025-10-24) 6 commits
- . rust: generate bindings via cbindgen
- . meson: rename Rust library target
- . ci: use Debian instead of deprecated i386/ubuntu
- . gitlab-ci: backfill missing Linux jobs
- . gitlab-ci: reorder Linux job matrix to match GitHub's order
- . Merge branch 'ps/ci-rust' into ps/rust-cbindgen
-
- Introduce cbindgen in the build framework to help interfacing with
- Rust.
-
- Retracted.
- cf. <aQ3XOTX0AT_eFc5P@pks.im>
- source: <20251024-b4-pks-rust-cbindgen-v2-0-4b4bd4f18490@pks.im>
-
-
-* jc/ci-drop-p4-macosx (2025-11-14) 1 commit
- . CI: drop Perforce tests from macOSX jobs
-
- Drop P4 tests on macOSX platform on GitHub Actions CI.
-
- Retracted.  Superseded by jc/ci-use-arm64-p4-on-macos topic.
- source: <xmqqqzu0gxq2.fsf_-_@gitster.g>
