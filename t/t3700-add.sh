@@ -388,6 +388,7 @@ test_expect_success 'error on a repository with no commits' '
 	test_must_fail git add empty >actual 2>&1 &&
 	cat >expect <<-EOF &&
 	error: '"'empty/'"' does not have a commit checked out
+	error: unable to index file '"'empty/'"'
 	fatal: adding files failed
 	EOF
 	test_cmp expect actual
@@ -538,6 +539,31 @@ test_expect_success 'all statuses changed in folder if . is given' '
 		test $(git ls-files --stage | grep ^100644 | wc -l) -eq 0 &&
 		git add --chmod=-x . &&
 		test $(git ls-files --stage | grep ^100755 | wc -l) -eq 0
+	)
+'
+
+test_expect_success 'cannot add a submodule of a different algorithm' '
+	git init --object-format=sha256 sha256 &&
+	(
+		cd sha256 &&
+		test_commit abc &&
+		git init --object-format=sha1 submodule &&
+		test_commit -C submodule def &&
+		test_must_fail git add submodule 2>err &&
+		test_grep "cannot add a submodule of a different hash algorithm" err &&
+		git ls-files --stage >entries &&
+		test_grep ! ^160000 entries
+	) &&
+	git init --object-format=sha1 sha1 &&
+	(
+		cd sha1 &&
+		test_commit abc &&
+		git init --object-format=sha256 submodule &&
+		test_commit -C submodule def &&
+		test_must_fail git add submodule 2>err &&
+		test_grep "cannot add a submodule of a different hash algorithm" err &&
+		git ls-files --stage >entries &&
+		test_grep ! ^160000 entries
 	)
 '
 

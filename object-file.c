@@ -1661,7 +1661,11 @@ int index_path(struct index_state *istate, struct object_id *oid,
 		strbuf_release(&sb);
 		break;
 	case S_IFDIR:
-		return repo_resolve_gitlink_ref(istate->repo, path, "HEAD", oid);
+		if (repo_resolve_gitlink_ref(istate->repo, path, "HEAD", oid))
+			return error(_("'%s' does not have a commit checked out"), path);
+		if (&hash_algos[oid->algo] != istate->repo->hash_algo)
+			return error(_("cannot add a submodule of a different hash algorithm"));
+		break;
 	default:
 		return error(_("%s: unsupported file type"), path);
 	}
