@@ -7,6 +7,10 @@ UI, Workflows & Features
  * "git maintenance" command learned "is-needed" subcommand to tell if
    it is necessary to perform various maintenance tasks.
 
+ * "git replay" (experimental) learned to perform ref updates itself
+   in a transaction by default, instead of emitting where each refs
+   should point at and leaving the actual update to another command.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -22,10 +26,37 @@ Performance, Internal Implementation, Development Support etc.
    changes, disable rename/copy detection to skip more expensive
    processing whose result will be discarded anyway.
 
+ * A part of code paths that deals with loose objects has been cleaned
+   up.
 
-Fixes since v2.51
+
+Fixes since v2.52
 -----------------
 
  * Ever since we added whitespace rules for this project, we misspelt
    an entry, which has been corrected.
    (merge 358e94dc70 jc/gitattributes-whitespace-no-indent-fix later to maint).
+
+ * The code to expand attribute macros has been rewritten to avoid
+   recursion to avoid running out of stack space in an uncontrolled
+   way.
+   (merge 42ed046866 jk/attr-macroexpand-wo-recursion later to maint).
+
+ * Adding a repository that uses a different hash function is a no-no,
+   but "git submodule add" did nt prevent it, which has been corrected.
+   (merge 6fe288bfbc bc/submodule-force-same-hash later to maint).
+
+ * An earlier check added to osx keychain credential helper to avoid
+   storing the credential itself supplied was overeager and rejected
+   credential material supplied by other helper backends that it would
+   have wanted to store, which has been corrected.
+   (merge 4580bcd235 kn/osxkeychain-idempotent-store-fix later to maint).
+
+ * The "git repo structure" subcommand tried to align its output but
+   mixed up byte count and display column width, which has been
+   corrected.
+   (merge 7a03a10a3a jx/repo-struct-utf8width-fix later to maint).
+
+ * Other code cleanup, docfix, build fix, etc.
+   (merge 46207a54cc qj/doc-http-bad-want-response later to maint).
+   (merge df90eccd93 kh/doc-commit-extra-references later to maint).
