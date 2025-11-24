@@ -1588,6 +1588,7 @@ SANITIZE_LEAK = YesCompiledWithIt
 endif
 ifneq ($(filter address,$(SANITIZERS)),)
 NO_REGEX = NeededForASAN
+NO_MMAP = NeededForASAN
 SANITIZE_ADDRESS = YesCompiledWithIt
 endif
 endif
