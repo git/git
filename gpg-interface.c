@@ -794,8 +794,16 @@ static int git_gpg_config(const char *var, const char *value,
 		fmtname = "ssh";
 
 	if (fmtname) {
+		char *program;
+		int status;
+
 		fmt = get_format_by_name(fmtname);
-		return git_config_pathname((char **) &fmt->program, var, value);
+		status = git_config_pathname(&program, var, value);
+		if (status)
+			return status;
+		if (program)
+			fmt->program = program;
+		return status;
 	}
 
 	return 0;
