@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Nov 2025, #07; Sun, 23)
-X-master-at: debbc87557487aa9a8ed8a35367d17f8b4081c76
-X-next-at: 89d9e04f91292258263fb94060e466f84fbfc9d4
+Subject: What's cooking in git.git (Nov 2025, #08; Tue, 25)
+X-master-at: 6ab38b7e9cc7adafc304f3204616a4debd49c6e9
+X-next-at: 9f829587aff1b6c6d7a88078af6c6011bf5bcd19
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Nov 2025, #07; Sun, 23)
+What's cooking in git.git (Nov 2025, #08; Tue, 25)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -48,49 +48,168 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* jc/gitattributes-whitespace-no-indent-fix (2025-11-11) 1 commit
-  (merged to 'next' on 2025-11-19 at cd849a23a1)
- + .gitattributes: remove misspelled no-op whitespace attribute
+* bc/submodule-force-same-hash (2025-11-14) 2 commits
+  (merged to 'next' on 2025-11-19 at eec9dca32c)
+ + read-cache: drop submodule check from add_to_cache()
+ + object-file: disallow adding submodules of different hash algo
 
- Originally merged to 'next' on 2025-11-14
+ Originally merged to 'next' on 2025-11-16
 
- Ever since we added whitespace rules for this project, we misspelt
- an entry, which has been corrected.
- source: <xmqqv7jgwgxb.fsf@gitster.g>
-
-
-* kn/maintenance-is-needed (2025-11-08) 7 commits
-  (merged to 'next' on 2025-11-19 at faaa24f412)
- + maintenance: add 'is-needed' subcommand
- + maintenance: add checking logic in `pack_refs_condition()`
- + refs: add a `optimize_required` field to `struct ref_storage_be`
- + reftable/stack: add function to check if optimization is required
- + reftable/stack: return stack segments directly
- + Merge branch 'kn/refs-optim-cleanup' into kn/maintenance-is-needed
- + Merge branch 'ps/ref-peeled-tags' into kn/maintenance-is-needed
-
- Originally merged to 'next' on 2025-11-14
-
- "git maintenance" command learned "is-needed" subcommand to tell if
- it is necessary to perform various maintenance tasks.
- source: <20251108-562-add-sub-command-to-check-if-maintenance-is-needed-v4-0-a90f229b6023@gmail.com>
+ Adding a repository that uses a different hash function is a no-no,
+ but "git submodule add" didn't prevent it, which has been corrected.
+ source: <20251112235434.1499699-1-sandals@crustytoothpaste.net>
 
 
-* rs/diff-quiet-no-rename (2025-11-09) 1 commit
-  (merged to 'next' on 2025-11-19 at dc0b078446)
- + diff: disable rename detection with --quiet
+* jk/attr-macroexpand-wo-recursion (2025-11-11) 1 commit
+  (merged to 'next' on 2025-11-19 at 5d5f74f4f0)
+ + attr: avoid recursion when expanding attribute macros
 
- Originally merged to 'next' on 2025-11-14
+ Originally merged to 'next' on 2025-11-16
 
- As "git diff --quiet" only cares about the existence of any
- changes, disable rename/copy detection to skip more expensive
- processing whose result will be discarded anyway.
- source: <8796cd59-2335-4674-823d-d682ce7b7f8e@web.de>
+ The code to expand attribute macros has been rewritten without
+ recursion to avoid running out of stack space in an uncontrolled
+ way.
+ source: <20251111223647.GA4055973@coredump.intra.peff.net>
+
+
+* jx/repo-struct-utf8width-fix (2025-11-15) 2 commits
+  (merged to 'next' on 2025-11-19 at 35bff72b75)
+ + builtin/repo: fix table alignment for UTF-8 characters
+ + t/unit-tests: add UTF-8 width tests for CJK chars
+
+ Originally merged to 'next' on 2025-11-18
+
+ The "git repo structure" subcommand tried to align its output but
+ mixed up byte count and display column width, which has been
+ corrected.
+ source: <cover.1763213290.git.worldhello.net@gmail.com>
+
+
+* kh/doc-commit-extra-references (2025-11-14) 1 commit
+  (merged to 'next' on 2025-11-19 at 9c89891116)
+ + doc: commit: link to git-status(1) on all format options
+
+ Originally merged to 'next' on 2025-11-18
+
+ Doc update.
+ source: <c4349a03724.1763129061.git.code@khaugsbakk.name>
+
+
+* kn/osxkeychain-idempotent-store-fix (2025-11-13) 1 commit
+  (merged to 'next' on 2025-11-19 at 335d6bb2ea)
+ + osxkeychain: avoid incorrectly skipping store operation
+
+ Originally merged to 'next' on 2025-11-18
+
+ An earlier check added to osx keychain credential helper to avoid
+ storing the credential itself supplied was overeager and rejected
+ credential material supplied by other helper backends that it would
+ have wanted to store, which has been corrected.
+ source: <pull.1999.v2.git.1763100270949.gitgitgadget@gmail.com>
+
+
+* ps/object-source-loose (2025-11-02) 13 commits
+  (merged to 'next' on 2025-11-19 at 8bb0269243)
+ + object-file: refactor writing objects via a stream
+ + object-file: rename `write_object_file()`
+ + object-file: refactor freshening of objects
+ + object-file: rename `has_loose_object()`
+ + object-file: read objects via the loose object source
+ + object-file: move loose object map into loose source
+ + object-file: hide internals when we need to reprepare loose sources
+ + object-file: move loose object cache into loose source
+ + object-file: introduce `struct odb_source_loose`
+ + object-file: move `fetch_if_missing`
+ + odb: adjust naming to free object sources
+ + odb: introduce `odb_source_new()`
+ + odb: fix subtle logic to check whether an alternate is usable
+ (this branch is used by ps/object-read-stream and ps/object-source-management.)
+
+ Originally merged to 'next' on 2025-11-18
+
+ A part of the code path that deals with loose objects has been cleaned
+ up.
+ source: <20251103-b4-pks-odb-loose-backend-v3-0-6a61ea977393@pks.im>
+
+
+* qj/doc-http-bad-want-response (2025-11-05) 1 commit
+  (merged to 'next' on 2025-11-19 at a602cd96eb)
+ + doc: clarify server behavior for invalid 'want' lines in HTTP protocol
+
+ Originally merged to 'next' on 2025-11-18
+
+ Doc update.
+ source: <20251105143849.1192-1-qjessa662@gmail.com>
+
+
+* sa/replay-atomic-ref-updates (2025-11-05) 3 commits
+  (merged to 'next' on 2025-11-19 at ae19b06a22)
+ + replay: add replay.refAction config option
+ + replay: make atomic ref updates the default behavior
+ + replay: use die_for_incompatible_opt2() for option validation
+ (this branch is used by ps/history.)
+
+ Originally merged to 'next' on 2025-11-18
+
+ "git replay" (experimental) learned to perform ref updates itself
+ in a transaction by default, instead of emitting where each refs
+ should point at and leaving the actual update to another command.
+ cf. <00a5a8f3-f761-46e8-84cc-4bd95db68b49@gmail.com>
+ source: <20251105191650.89975-1-siddharthasthana31@gmail.com>
 
 --------------------------------------------------
 [New Topics]
 
-* ja/doc-synopsis-style (2025-11-19) 3 commits
+* sp/shallow-time-boundary (2025-11-23) 1 commit
+ - shallow: set borders which are all reachable after clone shallow since
+
+ The set of shallow boundary "git clone --shallow-since" leaves
+ contained commits that are not on the boundary, which has been
+ corrected.
+
+ Comments?
+ source: <pull.2107.v2.git.git.1763926552033.gitgitgadget@gmail.com>
+
+
+* rs/config-set-multi-error-message-fix (2025-11-24) 1 commit
+ - config: fix suggestion for failed set of multi-valued option
+
+ The error message given by "git config set", when the variable
+ being updated has more than one values defined, used old style "git
+ config" syntax with an incorrect option in its hint, both of which
+ have been corrected.
+
+ Will merge to 'next'.
+ source: <c09945fe-fee2-47f6-8193-ac60d7245209@web.de>
+
+
+* rs/config-unset-opthelp-fix (2025-11-24) 1 commit
+ - config: fix short help of unset flags
+
+ The option help text given by "git config unset -h" described
+ the "--all" option to "replace", not "unset", multiple variables,
+ which has been corrected.
+
+ Will merge to 'next'.
+ source: <06997dce-e4d5-4889-8e70-5f44da3dc800@web.de>
+
+
+* wm/complete-git-short-opts (2025-11-24) 1 commit
+ - Add completion for short options
+
+ The command line completion script (in contrib/) learned to
+ complete "git -<TAB>" to give single-letter options like "-C".
+
+ Expecting a reroll.
+ cf. <xmqq5xayt66k.fsf@gitster.g>
+ source: <pull.2100.git.git.1764052739534.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[Cooking]
+
+* ja/doc-synopsis-style (2025-11-24) 4 commits
+  (merged to 'next' on 2025-11-24 at 10610d9a57)
+ + doc: pull-fetch-param typofix
   (merged to 'next' on 2025-11-21 at eb9c1703c0)
  + doc: convert git push to synopsis style
  + doc: convert git pull to synopsis style
@@ -103,25 +222,27 @@ Release tarballs are available at:
 
 
 * jc/optional-path (2025-11-20) 3 commits
- - config: really treat missing optional path as not configured
- - config: really pretend missing :(optional) value is not there
- - config: mark otherwise unused function as file-scope static
+  (merged to 'next' on 2025-11-25 at 5e75404281)
+ + config: really treat missing optional path as not configured
+ + config: really pretend missing :(optional) value is not there
+ + config: mark otherwise unused function as file-scope static
 
  "git config get --path" segfaulted on an ":(optional)path" that
  does not exist, which has been corrected.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <xmqqikf47ajk.fsf@gitster.g>
 
 
 * kh/doc-committer-date-is-author-date (2025-11-20) 1 commit
- - doc: warn against --committer-date-is-author-date
+  (merged to 'next' on 2025-11-25 at 9f829587af)
+ + doc: warn against --committer-date-is-author-date
 
  The "--committer-date-is-author-date" option of "git am/rebase" is
  a misguided one.  The documentation is updated to discourage its
  use.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <V2_committer-date-is-author-date.1@msgid.xyz>
 
 
@@ -153,8 +274,6 @@ Release tarballs are available at:
  be useful during ref migration.
  source: <20251119-kn-alternate-ref-dir-v1-0-4cf4a94c8bed@gmail.com>
 
---------------------------------------------------
-[Cooking]
 
 * jk/ci-windows-meson-test-fix (2025-11-18) 2 commits
   (merged to 'next' on 2025-11-20 at a0afd4fd5b)
@@ -189,7 +308,8 @@ Release tarballs are available at:
  source: <ebc68ec5b2abbc4702b94f833b9b3bf1adb79f1a.1763450087.git.zhiyou.jx@alibaba-inc.com>
 
 
-* js/ci-show-breakage-in-dockerized-jobs (2025-11-17) 1 commit
+* js/ci-show-breakage-in-dockerized-jobs (2025-11-25) 2 commits
+ - amend! ci(dockerized): do show the result of failing tests again
  - ci(dockerized): do show the result of failing tests again
 
  Dockerised jobs at the GitHub Actions CI have been taught to show
@@ -197,6 +317,7 @@ Release tarballs are available at:
 
  Will merge to 'next' after amending?
  cf. <xmqqpl9gike6.fsf@gitster.g>
+ cf. <CABPp-BErdhTjbqDem4Xvc-XbhgLUEpy9-eiaaR1F_diMca--6A@mail.gmail.com>
  source: <pull.2003.git.1763399064983.gitgitgadget@gmail.com>
 
 
@@ -225,11 +346,12 @@ Release tarballs are available at:
 
 
 * js/strip-scalar-too (2025-11-17) 1 commit
- - make strip: include `scalar`
+  (merged to 'next' on 2025-11-25 at 9f2607acfb)
+ + make strip: include `scalar`
 
  "make strip" has been taught to strip "scalar" as well as "git".
 
- Will merge to 'next'?
+ Will merge to 'master'.
  cf. <xmqq7bvoiadg.fsf@gitster.g>
  source: <pull.2004.git.1763409086322.gitgitgadget@gmail.com>
 
@@ -278,7 +400,8 @@ Release tarballs are available at:
  configuration files, i.e. $HOME/.gitconfig and the XDG one, which
  has been corrected.
 
- Comments?
+ Expecting a reroll.
+ cf. <20251122020047.GB3947@linuxonhyperv3.guj3yctzbm1etfxqx2vob5hsef.xx.internal.cloudapp.net>
  source: <pull.1938.git.1760058849.gitgitgadget@gmail.com>
 
 
@@ -303,7 +426,6 @@ Release tarballs are available at:
  - streaming: drop the `open()` callback function
  - streaming: rename `git_istream` into `odb_read_stream`
  - Merge branch 'ps/object-source-loose' into ps/object-read-stream
- (this branch uses ps/object-source-loose.)
 
  The "git_istream" abstraction has been revamped to make it easier
  to interface with pluggable object database design.
@@ -327,11 +449,11 @@ Release tarballs are available at:
  - setup: convert `set_git_dir()` to have file scope
  - path: move `enter_repo()` into "setup.c"
  - Merge branch 'ps/object-source-loose' into ps/object-source-management
- (this branch uses ps/object-source-loose.)
 
  Code refactoring around object database sources.
 
- Comments?
+ Will merge to 'next' after amending a typo?
+ cf. <aSAZSyUzIMvn-IvR@pks.im>
  source: <20251119-b4-pks-odb-creation-v1-0-2b2ed2612cb6@pks.im>
 
 
@@ -361,90 +483,21 @@ Release tarballs are available at:
 
 
 * jk/asan-bonanza (2025-11-18) 9 commits
- - t: enable ASan's strict_string_checks option
- - fsck: avoid parse_timestamp() on buffer that isn't NUL-terminated
- - fsck: remove redundant date timestamp check
- - fsck: avoid strcspn() in fsck_ident()
- - fsck: assert newline presence in fsck_ident()
- - cache-tree: avoid strtol() on non-string buffer
- - Makefile: turn on NO_MMAP when building with ASan
- - pack-bitmap: handle name-hash lookups in incremental bitmaps
- - compat/mmap: mark unused argument in git_munmap()
+  (merged to 'next' on 2025-11-24 at 066fc38a19)
+ + t: enable ASan's strict_string_checks option
+ + fsck: avoid parse_timestamp() on buffer that isn't NUL-terminated
+ + fsck: remove redundant date timestamp check
+ + fsck: avoid strcspn() in fsck_ident()
+ + fsck: assert newline presence in fsck_ident()
+ + cache-tree: avoid strtol() on non-string buffer
+ + Makefile: turn on NO_MMAP when building with ASan
+ + pack-bitmap: handle name-hash lookups in incremental bitmaps
+ + compat/mmap: mark unused argument in git_munmap()
 
  Various issues detected by Asan have been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20251118091127.GA4175601@coredump.intra.peff.net>
-
-
-* jk/attr-macroexpand-wo-recursion (2025-11-11) 1 commit
-  (merged to 'next' on 2025-11-19 at 5d5f74f4f0)
- + attr: avoid recursion when expanding attribute macros
-
- Originally merged to 'next' on 2025-11-16
-
- The code to expand attribute macros has been rewritten to avoid
- recursion to avoid running out of stack space in an uncontrolled
- way.
-
- Will merge to 'master'.
- source: <20251111223647.GA4055973@coredump.intra.peff.net>
-
-
-* bc/submodule-force-same-hash (2025-11-14) 2 commits
-  (merged to 'next' on 2025-11-19 at eec9dca32c)
- + read-cache: drop submodule check from add_to_cache()
- + object-file: disallow adding submodules of different hash algo
-
- Originally merged to 'next' on 2025-11-16
-
- Adding a repository that uses a different hash function is a no-no,
- but "git submodule add" did nt prevent it, which has been corrected.
-
- Will merge to 'master'.
- source: <20251112235434.1499699-1-sandals@crustytoothpaste.net>
-
-
-* jx/repo-struct-utf8width-fix (2025-11-15) 2 commits
-  (merged to 'next' on 2025-11-19 at 35bff72b75)
- + builtin/repo: fix table alignment for UTF-8 characters
- + t/unit-tests: add UTF-8 width tests for CJK chars
-
- Originally merged to 'next' on 2025-11-18
-
- The "git repo structure" subcommand tried to align its output but
- mixed up byte count and display column width, which has been
- corrected.
-
- Will merge to 'master'.
- source: <cover.1763213290.git.worldhello.net@gmail.com>
-
-
-* kh/doc-commit-extra-references (2025-11-14) 1 commit
-  (merged to 'next' on 2025-11-19 at 9c89891116)
- + doc: commit: link to git-status(1) on all format options
-
- Originally merged to 'next' on 2025-11-18
-
- Doc update.
-
- Will merge to 'master'.
- source: <c4349a03724.1763129061.git.code@khaugsbakk.name>
-
-
-* kn/osxkeychain-idempotent-store-fix (2025-11-13) 1 commit
-  (merged to 'next' on 2025-11-19 at 335d6bb2ea)
- + osxkeychain: avoid incorrectly skipping store operation
-
- Originally merged to 'next' on 2025-11-18
-
- An earlier check added to osx keychain credential helper to avoid
- storing the credential itself supplied was overeager and rejected
- credential material supplied by other helper backends that it would
- have wanted to store, which has been corrected.
-
- Will merge to 'master'.
- source: <pull.1999.v2.git.1763100270949.gitgitgadget@gmail.com>
 
 
 * lc/rebase-trailer (2025-11-05) 4 commits
@@ -474,18 +527,6 @@ Release tarballs are available at:
  source: <pull.1992.git.1762192908.gitgitgadget@gmail.com>
 
 
-* qj/doc-http-bad-want-response (2025-11-05) 1 commit
-  (merged to 'next' on 2025-11-19 at a602cd96eb)
- + doc: clarify server behavior for invalid 'want' lines in HTTP protocol
-
- Originally merged to 'next' on 2025-11-18
-
- Doc update.
-
- Will merge to 'master'.
- source: <20251105143849.1192-1-qjessa662@gmail.com>
-
-
 * jc/exclude-with-gitignore (2025-11-04) 1 commit
  - dir.c: do not be fooled by :(exclude) pathspec elements
 
@@ -505,55 +546,30 @@ Release tarballs are available at:
  "git fast-import" learns "--strip-if-invalid" option to drop
  invalid cryptographic signature from objects.
 
- Comments?
+ Will merge to 'next'.
  source: <20251117043450.322644-1-christian.couder@gmail.com>
 
 
 * jc/whitespace-incomplete-line (2025-11-12) 12 commits
- - attr: enable incomplete-line whitespace error for this project
- - diff: highlight and error out on incomplete lines
- - apply: check and fix incomplete lines
- - whitespace: allocate a few more bits and define WS_INCOMPLETE_LINE
- - apply: revamp the parsing of incomplete lines
- - diff: update the way rewrite diff handles incomplete lines
- - diff: call emit_callback ecbdata everywhere
- - diff: refactor output of incomplete line
- - diff: keep track of the type of the last line seen
- - diff: correct suppress_blank_empty hack
- - diff: emit_line_ws_markup() if/else style fix
- - whitespace: correct bit assignment comments
+  (merged to 'next' on 2025-11-24 at 9682c7f652)
+ + attr: enable incomplete-line whitespace error for this project
+ + diff: highlight and error out on incomplete lines
+ + apply: check and fix incomplete lines
+ + whitespace: allocate a few more bits and define WS_INCOMPLETE_LINE
+ + apply: revamp the parsing of incomplete lines
+ + diff: update the way rewrite diff handles incomplete lines
+ + diff: call emit_callback ecbdata everywhere
+ + diff: refactor output of incomplete line
+ + diff: keep track of the type of the last line seen
+ + diff: correct suppress_blank_empty hack
+ + diff: emit_line_ws_markup() if/else style fix
+ + whitespace: correct bit assignment comments
 
  Both "git apply" and "git diff" learn a new whitespace error class,
  "incomplete-line".
 
- Will merge to 'next'.
- source: <20251112220258.1009253-1-gitster@pobox.com>
-
-
-* ps/object-source-loose (2025-11-02) 13 commits
-  (merged to 'next' on 2025-11-19 at 8bb0269243)
- + object-file: refactor writing objects via a stream
- + object-file: rename `write_object_file()`
- + object-file: refactor freshening of objects
- + object-file: rename `has_loose_object()`
- + object-file: read objects via the loose object source
- + object-file: move loose object map into loose source
- + object-file: hide internals when we need to reprepare loose sources
- + object-file: move loose object cache into loose source
- + object-file: introduce `struct odb_source_loose`
- + object-file: move `fetch_if_missing`
- + odb: adjust naming to free object sources
- + odb: introduce `odb_source_new()`
- + odb: fix subtle logic to check whether an alternate is usable
- (this branch is used by ps/object-read-stream and ps/object-source-management.)
-
- Originally merged to 'next' on 2025-11-18
-
- A part of code paths that deals with loose objects has been cleaned
- up.
-
  Will merge to 'master'.
- source: <20251103-b4-pks-odb-loose-backend-v3-0-6a61ea977393@pks.im>
+ source: <20251112220258.1009253-1-gitster@pobox.com>
 
 
 * bc/sha1-256-interop-02 (2025-11-17) 15 commits
@@ -602,30 +618,31 @@ Release tarballs are available at:
 
 
 * en/xdiff-cleanup-2 (2025-11-18) 10 commits
- - xdiff: rename rindex -> reference_index
- - xdiff: change rindex from long to size_t in xdfile_t
- - xdiff: make xdfile_t.nreff a size_t instead of long
- - xdiff: make xdfile_t.nrec a size_t instead of long
- - xdiff: split xrecord_t.ha into line_hash and minimal_perfect_hash
- - xdiff: use unambiguous types in xdl_hash_record()
- - xdiff: use size_t for xrecord_t.size
- - xdiff: make xrecord_t.ptr a uint8_t instead of char
- - xdiff: use ptrdiff_t for dstart/dend
- - doc: define unambiguous type mappings across C and Rust
+  (merged to 'next' on 2025-11-25 at 452b7107da)
+ + xdiff: rename rindex -> reference_index
+ + xdiff: change rindex from long to size_t in xdfile_t
+ + xdiff: make xdfile_t.nreff a size_t instead of long
+ + xdiff: make xdfile_t.nrec a size_t instead of long
+ + xdiff: split xrecord_t.ha into line_hash and minimal_perfect_hash
+ + xdiff: use unambiguous types in xdl_hash_record()
+ + xdiff: use size_t for xrecord_t.size
+ + xdiff: make xrecord_t.ptr a uint8_t instead of char
+ + xdiff: use ptrdiff_t for dstart/dend
+ + doc: define unambiguous type mappings across C and Rust
 
  Code clean-up.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <pull.2070.v5.git.git.1763505262.gitgitgadget@gmail.com>
 
 
-* ar/run-command-hook (2025-10-17) 10 commits
+* ar/run-command-hook (2025-11-24) 10 commits
  - receive-pack: convert receive hooks to hook API
  - receive-pack: convert update hooks to new API
  - hooks: allow callers to capture output
  - run-command: allow capturing of collated output
- - reference-transaction: use hook API instead of run-command
  - hook: allow overriding the ungroup option
+ - reference-transaction: use hook API instead of run-command
  - transport: convert pre-push to hook API
  - hook: convert 'post-rewrite' hook in sequencer.c to hook API
  - hook: provide stdin via callback
@@ -634,9 +651,8 @@ Release tarballs are available at:
  Use hook API to replace ad-hoc invocation of hook scripts with the
  run_command() API.
 
- Seems to leak and break CI
- cf. <xmqq346ff56h.fsf@gitster.g>
- source: <20251017141544.1538542-1-adrian.ratiu@collabora.com>
+ Will merge to 'next'?
+ source: <20251124172043.1650014-1-adrian.ratiu@collabora.com>
 
 
 * je/doc-reset (2025-10-17) 4 commits
@@ -653,11 +669,12 @@ Release tarballs are available at:
 
 
 * je/doc-data-model (2025-11-12) 1 commit
- - doc: add an explanation of Git's data model
+  (merged to 'next' on 2025-11-24 at 50e59df383)
+ + doc: add an explanation of Git's data model
 
  Add a new manual that describes the data model.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1981.v7.git.1762977200244.gitgitgadget@gmail.com>
 
 
@@ -674,7 +691,6 @@ Release tarballs are available at:
  - replay: extract logic to pick commits
  - wt-status: provide function to expose status for trees
  - Merge branch 'sa/replay-atomic-ref-updates' into ps/history
- (this branch uses sa/replay-atomic-ref-updates.)
 
  "git history" history rewriting UI.
 
@@ -695,24 +711,6 @@ Release tarballs are available at:
  source: <a203b35538847f3c9358a5ae26fb4ebea5734cfc.1759420102.git.msuchanek@suse.de>
 
 
-* sa/replay-atomic-ref-updates (2025-11-05) 3 commits
-  (merged to 'next' on 2025-11-19 at ae19b06a22)
- + replay: add replay.refAction config option
- + replay: make atomic ref updates the default behavior
- + replay: use die_for_incompatible_opt2() for option validation
- (this branch is used by ps/history.)
-
- Originally merged to 'next' on 2025-11-18
-
- "git replay" (experimental) learned to perform ref updates itself
- in a transaction by default, instead of emitting where each refs
- should point at and leaving the actual update to another command.
-
- Will merge to 'master'.
- cf. <00a5a8f3-f761-46e8-84cc-4bd95db68b49@gmail.com>
- source: <20251105191650.89975-1-siddharthasthana31@gmail.com>
-
-
 * ar/submodule-gitdir-tweak (2025-11-19) 7 commits
  - meson/Makefile: allow setting submodule encoding at build time
  - submodule: use hashed name for gitdir
@@ -725,4 +723,6 @@ Release tarballs are available at:
  Avoid local submodule repository directory paths overlapping with
  each other by encoding submodule names before using them as path
  components.
+
+ Will merge to 'next'?
  source: <20251119211030.2008441-1-adrian.ratiu@collabora.com>
