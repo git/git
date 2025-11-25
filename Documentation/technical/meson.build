@@ -32,6 +32,7 @@ articles = [
   'sparse-checkout.adoc',
   'sparse-index.adoc',
   'trivial-merge.adoc',
+  'unambiguous-types.adoc',
   'unit-tests.adoc',
 ]
 
