@@ -596,16 +596,22 @@ static inline bool strip_suffix(const char *str, const char *suffix,
    * the stack overflow can occur.
    */
 #define DEFAULT_MAX_ALLOWED_TREE_DEPTH 512
-#elif defined(GIT_WINDOWS_NATIVE) && defined(__clang__) && defined(__aarch64__)
+#elif defined(GIT_WINDOWS_NATIVE) && defined(__clang__)
   /*
-   * Similar to Visual C, it seems that on Windows/ARM64 the clang-based
-   * builds have a smaller stack space available. When running out of
-   * that stack space, a `STATUS_STACK_OVERFLOW` is produced. When the
+   * Similar to Visual C, it seems that clang-based builds on Windows
+   * have a smaller stack space available. When running out of that
+   * stack space, a `STATUS_STACK_OVERFLOW` is produced. When the
    * Git command was run from an MSYS2 Bash, this unfortunately results
    * in an exit code 127. Let's prevent that by lowering the maximal
-   * tree depth; This value seems to be low enough.
+   * tree depth; Unfortunately, it seems that the exact limit differs
+   * for aarch64 vs x86_64, and the difference is too large to simply
+   * use a single limit.
    */
+#if defined(__aarch64__)
 #define DEFAULT_MAX_ALLOWED_TREE_DEPTH 1280
+#else
+#define DEFAULT_MAX_ALLOWED_TREE_DEPTH 1152
+#endif
 #else
 #define DEFAULT_MAX_ALLOWED_TREE_DEPTH 2048
 #endif
