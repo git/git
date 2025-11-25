@@ -452,14 +452,8 @@ ifeq ($(uname_S),Windows)
 	GIT_VERSION := $(GIT_VERSION).MSVC
 	pathsep = ;
 	# Assume that this is built in Git for Windows' SDK
-        ifeq (MINGW32,$(MSYSTEM))
-		prefix = /mingw32
-        else
-                ifeq (CLANGARM64,$(MSYSTEM))
-			prefix = /clangarm64
-                else
-			prefix = /mingw64
-                endif
+        ifneq (,$(MSYSTEM))
+		prefix = $(MINGW_PREFIX)
         endif
 	# Prepend MSVC 64-bit tool-chain to PATH.
 	#
@@ -513,7 +507,7 @@ ifeq ($(uname_S),Windows)
 	NATIVE_CRLF = YesPlease
 	DEFAULT_HELP_FORMAT = html
 	SKIP_DASHED_BUILT_INS = YabbaDabbaDoo
-ifeq (/mingw64,$(subst 32,64,$(subst clangarm,mingw,$(prefix))))
+ifneq (,$(MINGW_PREFIX))
 	# Move system config into top-level /etc/
 	ETC_GITCONFIG = ../etc/gitconfig
 	ETC_GITATTRIBUTES = ../etc/gitattributes
@@ -529,7 +523,9 @@ endif
 		compat/win32/pthread.o compat/win32/syslog.o \
 		compat/win32/trace2_win32_process_info.o \
 		compat/win32/dirent.o compat/win32/fscache.o compat/win32/wsl.o
-	COMPAT_CFLAGS = -D__USE_MINGW_ACCESS -DDETECT_MSYS_TTY -DENSURE_MSYSTEM_IS_SET -DNOGDI -DHAVE_STRING_H -Icompat -Icompat/regex -Icompat/win32 -DSTRIP_EXTENSION=\".exe\"
+	COMPAT_CFLAGS = -D__USE_MINGW_ACCESS -DDETECT_MSYS_TTY \
+		-DENSURE_MSYSTEM_IS_SET="\"$(MSYSTEM)\"" -DMINGW_PREFIX="\"$(patsubst /%,%,$(MINGW_PREFIX))\"" \
+		-DNOGDI -DHAVE_STRING_H -Icompat -Icompat/regex -Icompat/win32 -DSTRIP_EXTENSION=\".exe\"
 	BASIC_LDFLAGS = -IGNORE:4217 -IGNORE:4049 -NOLOGO
 	# invalidcontinue.obj allows Git's source code to close the same file
 	# handle twice, or to access the osfhandle of an already-closed stdout
@@ -747,26 +743,25 @@ ifeq ($(uname_S),MINGW)
         ifneq (,$(findstring -O,$(filter-out -O0 -Og,$(CFLAGS))))
 		BASIC_LDFLAGS += -Wl,--dynamicbase
         endif
-        ifeq (MINGW32,$(MSYSTEM))
-		prefix = /mingw32
-		HOST_CPU = i686
-		BASIC_LDFLAGS += -Wl,--pic-executable,-e,_mainCRTStartup
+        ifneq (,$(MSYSTEM))
+                ifeq ($(MINGW_PREFIX),$(filter-out /%,$(MINGW_PREFIX)))
+			# Override if empty or does not start with a slash
+			MINGW_PREFIX := /$(shell echo '$(MSYSTEM)' | tr A-Z a-z)
+                endif
+		prefix = $(MINGW_PREFIX)
+		HOST_CPU = $(patsubst %-w64-mingw32,%,$(MINGW_CHOST))
+		BASIC_LDFLAGS += -Wl,--pic-executable
+		COMPAT_CFLAGS += -DDETECT_MSYS_TTY \
+			-DENSURE_MSYSTEM_IS_SET="\"$(MSYSTEM)\"" \
+			-DMINGW_PREFIX="\"$(patsubst /%,%,$(MINGW_PREFIX))\""
+                ifeq (MINGW32,$(MSYSTEM))
+			BASIC_LDFLAGS += -Wl,--large-address-aware
+                endif
+		# Move system config into top-level /etc/
+		ETC_GITCONFIG = ../etc/gitconfig
+		ETC_GITATTRIBUTES = ../etc/gitattributes
         endif
-        ifeq (MINGW64,$(MSYSTEM))
-		prefix = /mingw64
-		HOST_CPU = x86_64
-		BASIC_LDFLAGS += -Wl,--pic-executable,-e,mainCRTStartup
-        else ifeq (CLANGARM64,$(MSYSTEM))
-		prefix = /clangarm64
-		HOST_CPU = aarch64
-		BASIC_LDFLAGS += -Wl,--pic-executable,-e,mainCRTStartup
-        else
-		COMPAT_CFLAGS += -D_USE_32BIT_TIME_T
-		BASIC_LDFLAGS += -Wl,--large-address-aware
-        endif
-	CC = gcc
-	COMPAT_CFLAGS += -D__USE_MINGW_ANSI_STDIO=0 -DDETECT_MSYS_TTY \
-		-DENSURE_MSYSTEM_IS_SET -fstack-protector-strong
+	COMPAT_CFLAGS += -D__USE_MINGW_ANSI_STDIO=0 -fstack-protector-strong
 	EXTLIBS += -lntdll
 	EXTRA_PROGRAMS += headless-git$X
 	INSTALL = /bin/install
@@ -776,62 +771,6 @@ ifeq ($(uname_S),MINGW)
 	USE_LIBPCRE = YesPlease
 	USE_MIMALLOC = YesPlease
 	NO_PYTHON =
-        ifeq (/mingw64,$(subst 32,64,$(subst clangarm,mingw,$(prefix))))
-		# Move system config into top-level /etc/
-		ETC_GITCONFIG = ../etc/gitconfig
-		ETC_GITATTRIBUTES = ../etc/gitattributes
-        endif
-	MINGW_PREFIX := $(subst /,,$(prefix))
-
-	DESTDIR_WINDOWS = $(shell cygpath -aw '$(DESTDIR_SQ)')
-	DESTDIR_MIXED = $(shell cygpath -am '$(DESTDIR_SQ)')
-install-mingit-test-artifacts:
-	install -m755 -d '$(DESTDIR_SQ)/usr/bin'
-	printf '%s\n%s\n' >'$(DESTDIR_SQ)/usr/bin/perl' \
-		"#!/mingw64/bin/busybox sh" \
-		"exec \"$(shell cygpath -am /usr/bin/perl.exe)\" \"\$$@\""
-
-	install -m755 -d '$(DESTDIR_SQ)'
-	printf '%s%s\n%s\n%s\n%s\n%s\n' >'$(DESTDIR_SQ)/init.bat' \
-		"PATH=$(DESTDIR_WINDOWS)\\$(MINGW_PREFIX)\\bin;" \
-		"C:\\WINDOWS;C:\\WINDOWS\\system32" \
-		"@set GIT_TEST_INSTALLED=$(DESTDIR_MIXED)/$(MINGW_PREFIX)/bin" \
-		"@`echo "$(DESTDIR_WINDOWS)" | sed 's/:.*/:/'`" \
-		"@cd `echo "$(DESTDIR_WINDOWS)" | sed 's/^.://'`\\test-git\\t" \
-		"@echo Now, run 'helper\\test-run-command testsuite'"
-
-	install -m755 -d '$(DESTDIR_SQ)/test-git'
-	sed 's/^\(NO_PERL\|NO_PYTHON\)=.*/\1=YesPlease/' \
-		<GIT-BUILD-OPTIONS >'$(DESTDIR_SQ)/test-git/GIT-BUILD-OPTIONS'
-
-	install -m755 -d '$(DESTDIR_SQ)/test-git/t/helper'
-	install -m755 $(TEST_PROGRAMS) '$(DESTDIR_SQ)/test-git/t/helper'
-	(cd t && $(TAR) cf - t[0-9][0-9][0-9][0-9] lib-diff) | \
-	(cd '$(DESTDIR_SQ)/test-git/t' && $(TAR) xf -)
-	install -m755 t/t556x_common t/*.sh '$(DESTDIR_SQ)/test-git/t'
-
-	install -m755 -d '$(DESTDIR_SQ)/test-git/templates'
-	(cd templates && $(TAR) cf - blt) | \
-	(cd '$(DESTDIR_SQ)/test-git/templates' && $(TAR) xf -)
-
-	# po/build/locale for t0200
-	install -m755 -d '$(DESTDIR_SQ)/test-git/po/build/locale'
-	(cd po/build/locale && $(TAR) cf - .) | \
-	(cd '$(DESTDIR_SQ)/test-git/po/build/locale' && $(TAR) xf -)
-
-	# git-daemon.exe for t5802, git-http-backend.exe for t5560
-	install -m755 -d '$(DESTDIR_SQ)/$(MINGW_PREFIX)/bin'
-	install -m755 git-daemon.exe git-http-backend.exe \
-		'$(DESTDIR_SQ)/$(MINGW_PREFIX)/bin'
-
-	# git-upload-archive (dashed) for t5000
-	install -m755 -d '$(DESTDIR_SQ)/$(MINGW_PREFIX)/bin'
-	install -m755 git-upload-archive.exe '$(DESTDIR_SQ)/$(MINGW_PREFIX)/bin'
-
-	# git-difftool--helper for t7800
-	install -m755 -d '$(DESTDIR_SQ)/$(MINGW_PREFIX)/libexec/git-core'
-	install -m755 git-difftool--helper \
-		'$(DESTDIR_SQ)/$(MINGW_PREFIX)/libexec/git-core'
 endif
 ifeq ($(uname_S),QNX)
 	COMPAT_CFLAGS += -DSA_RESTART=0
