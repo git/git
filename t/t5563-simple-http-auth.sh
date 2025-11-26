@@ -686,7 +686,8 @@ test_expect_success NTLM 'access using NTLM auth' '
 
 	test_config_global credential.helper test-helper &&
 	test_must_fail env GIT_TRACE_CURL=1 git \
-		ls-remote "$HTTPD_URL/ntlm_auth/repo.git" &&
+		ls-remote "$HTTPD_URL/ntlm_auth/repo.git" 2>err &&
+	test_grep "allowNTLMAuth" err &&
 	GIT_TRACE_CURL=1 git -c http.$HTTPD_URL.allowNTLMAuth=true \
 		ls-remote "$HTTPD_URL/ntlm_auth/repo.git"
 '
