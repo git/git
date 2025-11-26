@@ -443,21 +443,6 @@ void close_pack(struct packed_git *p)
 	oidset_clear(&p->bad_objects);
 }
 
-void close_object_store(struct object_database *o)
-{
-	struct odb_source *source;
-
-	packfile_store_close(o->packfiles);
-
-	for (source = o->sources; source; source = source->next) {
-		if (source->midx)
-			close_midx(source->midx);
-		source->midx = NULL;
-	}
-
-	close_commit_graph(o);
-}
-
 void unlink_pack_path(const char *pack_name, int force_delete)
 {
 	static const char *exts[] = {".idx", ".pack", ".rev", ".keep", ".bitmap", ".promisor", ".mtimes"};

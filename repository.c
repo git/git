@@ -52,7 +52,6 @@ static void set_default_hash_algo(struct repository *repo)
 
 void initialize_repository(struct repository *repo)
 {
-	repo->objects = odb_new(repo);
 	repo->remote_state = remote_state_new();
 	repo->parsed_objects = parsed_object_pool_new(repo);
 	ALLOC_ARRAY(repo->index, 1);
@@ -160,29 +159,19 @@ void repo_set_gitdir(struct repository *repo,
 	 * until after xstrdup(root). Then we can free it.
 	 */
 	char *old_gitdir = repo->gitdir;
-	char *objects_path = NULL;
 
 	repo->gitdir = xstrdup(gitfile ? gitfile : root);
 	free(old_gitdir);
 
 	repo_set_commondir(repo, o->commondir);
-	expand_base_dir(&objects_path, o->object_dir,
-			repo->commondir, "objects");
 
-	if (!repo->objects->sources) {
-		repo->objects->sources = odb_source_new(repo->objects,
-							objects_path, true);
-		repo->objects->sources_tail = &repo->objects->sources->next;
-		free(objects_path);
-	} else {
-		free(repo->objects->sources->path);
-		repo->objects->sources->path = objects_path;
-	}
+	if (!repo->objects)
+		repo->objects = odb_new(repo, o->object_dir, o->alternate_db);
+	else if (!o->skip_initializing_odb)
+		BUG("cannot reinitialize an already-initialized object directory");
 
-	repo->objects->sources->disable_ref_updates = o->disable_ref_updates;
+	repo->disable_ref_updates = o->disable_ref_updates;
 
-	free(repo->objects->alternate_db);
-	repo->objects->alternate_db = xstrdup_or_null(o->alternate_db);
 	expand_base_dir(&repo->graft_file, o->graft_file,
 			repo->commondir, "info/grafts");
 	expand_base_dir(&repo->index_file, o->index_file,
@@ -382,8 +371,8 @@ void repo_clear(struct repository *repo)
 	FREE_AND_NULL(repo->worktree);
 	FREE_AND_NULL(repo->submodule_prefix);
 
-	odb_clear(repo->objects);
-	FREE_AND_NULL(repo->objects);
+	odb_free(repo->objects);
+	repo->objects = NULL;
 
 	parsed_object_pool_clear(repo->parsed_objects);
 	FREE_AND_NULL(repo->parsed_objects);

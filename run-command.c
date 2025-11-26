@@ -743,7 +743,7 @@ fail_pipe:
 	fflush(NULL);
 
 	if (cmd->close_object_store)
-		close_object_store(the_repository->objects);
+		odb_close(the_repository->objects);
 
 #ifndef GIT_WINDOWS_NATIVE
 {
