@@ -11,6 +11,8 @@ UI, Workflows & Features
    in a transaction by default, instead of emitting where each refs
    should point at and leaving the actual update to another command.
 
+ * "git blame" learns "--diff-algorithm=<algo>" option.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -57,6 +59,43 @@ Fixes since v2.52
    corrected.
    (merge 7a03a10a3a jx/repo-struct-utf8width-fix later to maint).
 
+ * Yet another corner case fix around renames in the "ort" merge
+   strategy.
+   (merge a562d90a35 en/ort-rename-another-fix later to maint).
+
+ * Test leakfix.
+   (merge 14b561e768 jk/test-mktemp-leakfix later to maint).
+
+ * Update a version of action used at the GitHub Actrions CI.
+   (merge cd99203f86 js/ci-github-setup-go-update later to maint).
+
+ * The "return errno = EFOO, -1" construct, which is heavily used in
+   compat/mingw.c and triggers warnings under "-Wcomma", has been
+   rewritten to avoid the warnings.
+   (merge af3919816f js/mingw-assign-comma-fix later to maint).
+
+ * Makefile based build have recently been updated to build a
+   libgit.a that also has reftable and xdiff objects; CMake based
+   build procedure has been updated to match.
+   (merge b0d5c88cca js/cmake-libgit-fix later to maint).
+
+ * Under-allocation fix.
+   (merge d22a488482 js/wincred-get-credential-alloc-fix later to maint).
+
+ * "git worktree list" attempts to show paths to worktrees while
+   aligning them, but miscounted display columns for the paths when
+   non-ASCII characters were involved, which has been corrected.
+   (merge 08dfa59835 pw/worktree-list-display-width-fix later to maint).
+
+ * "Windows+meson" job at the GitHub Actions CI was hard to debug, as
+   it did not show and save failed test artifacts, which has been
+   corrected.
+   (merge 17bd1108ea jk/ci-windows-meson-test-fix later to maint).
+
+ * Emulation code clean-up.
+   (merge 2367c6bcd6 gf/win32-pthread-cond-wait-err later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 46207a54cc qj/doc-http-bad-want-response later to maint).
    (merge df90eccd93 kh/doc-commit-extra-references later to maint).
+   (merge f18aa68861 rs/xmkstemp-simplify later to maint).
