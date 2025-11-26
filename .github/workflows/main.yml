@@ -298,7 +298,17 @@ jobs:
         path: build
     - name: Test
       shell: pwsh
-      run: meson test -C build --no-rebuild --print-errorlogs --slice "$(1+${{ matrix.nr }})/10"
+      run: ci/run-test-slice-meson.sh build ${{matrix.nr}} 10
+    - name: print test failures
+      if: failure() && env.FAILED_TEST_ARTIFACTS != ''
+      shell: bash
+      run: ci/print-test-failures.sh
+    - name: Upload failed tests' directories
+      if: failure() && env.FAILED_TEST_ARTIFACTS != ''
+      uses: actions/upload-artifact@v4
+      with:
+        name: failed-tests-windows-meson-${{ matrix.nr }}
+        path: ${{env.FAILED_TEST_ARTIFACTS}}
 
   regular:
     name: ${{matrix.vector.jobname}} (${{matrix.vector.pool}})
