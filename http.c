@@ -1900,6 +1900,17 @@ static int handle_curl_result(struct slot_results *results)
 			credential_reject(the_repository, &http_auth);
 			if (always_auth_proactively())
 				http_proactive_auth = PROACTIVE_AUTH_NONE;
+			if ((results->auth_avail & CURLAUTH_NTLM) &&
+			    !(http_auth_any & CURLAUTH_NTLM)) {
+				warning(_("Due to its cryptographic weaknesses, "
+					  "NTLM authentication has been\n"
+					  "disabled in Git by default. You can "
+					  "re-enable it for trusted servers\n"
+					  "by running:\n\n"
+					  "git config set "
+					  "http.%s://%s.allowNTLMAuth true"),
+					http_auth.protocol, http_auth.host);
+			}
 			return HTTP_NOAUTH;
 		} else {
 			http_auth_methods &= ~CURLAUTH_GSSNEGOTIATE;
