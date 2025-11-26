@@ -29,23 +29,34 @@ test_expect_success 'rev-parse --git-path objects linked worktree' '
 	test_cmp expect actual
 '
 
-test_expect_success '"list" all worktrees from main' '
-	echo "$(git rev-parse --show-toplevel) $(git rev-parse --short HEAD) [$(git symbolic-ref --short HEAD)]" >expect &&
-	test_when_finished "rm -rf here out actual expect && git worktree prune" &&
-	git worktree add --detach here main &&
-	echo "$(git -C here rev-parse --show-toplevel) $(git rev-parse --short HEAD) (detached HEAD)" >>expect &&
-	git worktree list >out &&
-	sed "s/  */ /g" <out >actual &&
+test_expect_success '"list" all worktrees from main core.quotepath=false' '
+	test_config core.quotepath false &&
+	echo "$(git rev-parse --show-toplevel)      $(git rev-parse --short HEAD) [$(git symbolic-ref --short HEAD)]" >expect &&
+	test_when_finished "rm -rf áááá out actual expect && git worktree prune" &&
+	git worktree add --detach áááá main &&
+	echo "$(git -C áááá rev-parse --show-toplevel) $(git rev-parse --short HEAD) (detached HEAD)" >>expect &&
+	git worktree list >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '"list" all worktrees from main core.quotepath=true' '
+	test_config core.quotepath true &&
+	echo "$(git rev-parse --show-toplevel)            $(git rev-parse --short HEAD) [$(git symbolic-ref --short HEAD)]" >expect &&
+	test_when_finished "rm -rf á out actual expect && git worktree prune" &&
+	git worktree add --detach á main &&
+	echo "\"$(git -C á rev-parse --show-toplevel)\" $(git rev-parse --short HEAD) (detached HEAD)" |
+		sed s/á/\\\\303\\\\241/g >>expect &&
+	git worktree list >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success '"list" all worktrees from linked' '
-	echo "$(git rev-parse --show-toplevel) $(git rev-parse --short HEAD) [$(git symbolic-ref --short HEAD)]" >expect &&
-	test_when_finished "rm -rf here out actual expect && git worktree prune" &&
-	git worktree add --detach here main &&
-	echo "$(git -C here rev-parse --show-toplevel) $(git rev-parse --short HEAD) (detached HEAD)" >>expect &&
-	git -C here worktree list >out &&
-	sed "s/  */ /g" <out >actual &&
+	test_config core.quotepath false &&
+	echo "$(git rev-parse --show-toplevel)      $(git rev-parse --short HEAD) [$(git symbolic-ref --short HEAD)]" >expect &&
+	test_when_finished "rm -rf áááá out actual expect && git worktree prune" &&
+	git worktree add --detach áááá main &&
+	echo "$(git -C áááá rev-parse --show-toplevel) $(git rev-parse --short HEAD) (detached HEAD)" >>expect &&
+	git -C áááá worktree list >actual &&
 	test_cmp expect actual
 '
 
