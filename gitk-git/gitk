@@ -2131,12 +2131,14 @@ proc ttk_toplevel {w args} {
     return $w
 }
 
-proc make_transient {window origin} {
+proc make_transient {window origin {geometry ""}} {
     wm transient $window $origin
 
-    # Windows fails to place transient windows normally, so
-    # schedule a callback to center them on the parent.
-    if {[tk windowingsystem] eq {win32}} {
+    if {$geometry ne ""} {
+        after idle [list wm geometry $window $geometry]
+    } elseif {[tk windowingsystem] eq {win32}} {
+        # Windows fails to place transient windows normally, so
+        # schedule a callback to center them on the parent.
         after idle [list tk::PlaceWindow $window widget $origin]
     }
 }
@@ -2723,17 +2725,9 @@ proc makewindow {} {
     .pwbottom add .bright
     .ctop add .pwbottom
 
-    # restore window width & height if known
+    # restore window position if known
     if {[info exists geometry(main)]} {
-        if {[scan $geometry(main) "%dx%d" w h] >= 2} {
-            if {$w > [winfo screenwidth .]} {
-                set w [winfo screenwidth .]
-            }
-            if {$h > [winfo screenheight .]} {
-                set h [winfo screenheight .]
-            }
-            wm geometry . "${w}x$h"
-        }
+        wm geometry . "$geometry(main)"
     }
 
     if {[info exists geometry(state)] && $geometry(state) eq "zoomed"} {
@@ -3073,6 +3067,11 @@ proc savestuff {w} {
         puts $f "set geometry(pwsash1) \"[.tf.histframe.pwclist sashpos 1] 1\""
         puts $f "set geometry(botwidth) [winfo width .bleft]"
         puts $f "set geometry(botheight) [winfo height .bleft]"
+        unset -nocomplain geometry
+        global geometry
+        if {[info exists geometry(showrefs)]} {
+            puts $f "set geometry(showrefs) $geometry(showrefs)"
+        }
 
         array set view_save {}
         array set views {}
@@ -3788,6 +3787,34 @@ proc external_diff_get_one_file {diffid filename diffdir} {
                "revision $diffid"]
 }
 
+proc check_for_renames_in_diff {filepath} { # renames
+    global difffilestart ctext
+
+    set filename [file tail $filepath]
+    set renames {}
+
+    foreach loc $difffilestart {
+        set loclineend [string map {.0 .end} $loc]
+        set fromlineloc "$loc + 2 lines"
+        set tolineloc "$loc + 3 lines"
+        set renfromline [$ctext get $fromlineloc [string map {.0 .end} $fromlineloc]]
+        set rentoline [$ctext get $tolineloc [string map {.0 .end} $tolineloc]]
+        if {[string equal -length 12 "rename from " $renfromline]
+            && [string equal -length 10 "rename to " $rentoline]} {
+            set renfrom [string range $renfromline 12 end]
+            set rento [string range $rentoline 10 end]
+            if {[string first $filename $renfrom] != -1
+                || [string first $filename $rento] != -1} {
+                lappend renames $renfrom
+                lappend renames $rento
+                break
+            }
+        }
+    }
+
+    return $renames
+}
+
 proc external_diff {} {
     global nullid nullid2
     global flist_menu_file
@@ -3818,8 +3845,16 @@ proc external_diff {} {
     if {$diffdir eq {}} return
 
     # gather files to diff
-    set difffromfile [external_diff_get_one_file $diffidfrom $flist_menu_file $diffdir]
-    set difftofile [external_diff_get_one_file $diffidto $flist_menu_file $diffdir]
+    set renames [check_for_renames_in_diff $flist_menu_file]
+    set renamefrom [lindex $renames 0]
+    set renameto [lindex $renames 1]
+    if {$renamefrom ne {} && $renameto ne {}} {
+        set difffromfile [external_diff_get_one_file $diffidfrom $renamefrom $diffdir]
+        set difftofile [external_diff_get_one_file $diffidto $renameto $diffdir]
+    } else {
+        set difffromfile [external_diff_get_one_file $diffidfrom $flist_menu_file $diffdir]
+        set difftofile [external_diff_get_one_file $diffidto $flist_menu_file $diffdir]
+    }
 
     if {$difffromfile ne {} && $difftofile ne {}} {
         set cmd [list [shellsplit $extdifftool] $difffromfile $difftofile]
@@ -8296,7 +8331,7 @@ proc parseblobdiffline {ids line} {
         if {![regexp {^diff (--cc|--git) } $line m type]} {
             set line [convertfrom utf-8 $line]
             $ctext insert end "$line\n" hunksep
-            continue
+            return
         }
         # start of a new file
         set diffinhdr 1
@@ -8401,6 +8436,7 @@ proc parseblobdiffline {ids line} {
             if {$i >= 0} {
                 setinlist difffilestart $i $curdiffstart
             }
+            set line "rename from $fname"
         } elseif {![string compare -length 10 $line "rename to "] ||
                   ![string compare -length 8 $line "copy to "]} {
             set fname [string range $line [expr 4 + [string first " to " $line] ] end]
@@ -8408,6 +8444,13 @@ proc parseblobdiffline {ids line} {
                 set fname [lindex $fname 0]
             }
             makediffhdr $fname $ids
+            set line "[lindex $line 0] to $fname"
+        } elseif {![string compare -length 10 $line "copy from "]} {
+            set fname [string range $line 10 end]
+            if {[string index $fname 0] eq "\""} {
+                set fname [lindex $fname 0]
+            }
+            set line "copy from $fname"
         } elseif {[string compare -length 3 $line "---"] == 0} {
             # do nothing
             return
@@ -10160,6 +10203,7 @@ proc rmbranch {} {
 proc showrefs {} {
     global showrefstop bgcolor fgcolor selectbgcolor
     global bglist fglist reflistfilter reflist maincursor
+    global geometry
 
     set top .showrefs
     set showrefstop $top
@@ -10170,7 +10214,11 @@ proc showrefs {} {
     }
     ttk_toplevel $top
     wm title $top [mc "Tags and heads: %s" [file tail [pwd]]]
-    make_transient $top .
+    if {[info exists geometry(showrefs)]} {
+        make_transient $top . $geometry(showrefs)
+    } else {
+        make_transient $top .
+    }
     text $top.list -background $bgcolor -foreground $fgcolor \
         -selectbackground $selectbgcolor -font mainfont \
         -xscrollcommand "$top.xsb set" -yscrollcommand "$top.ysb set" \
@@ -10206,6 +10254,9 @@ proc showrefs {} {
     bind $top.list <ButtonRelease-1> {sel_reflist %W %x %y; break}
     set reflist {}
     refill_reflist
+    # avoid <Configure> being bound to child windows
+    bindtags $top [linsert [bindtags $top] 1 bind$top]
+    bind bind$top <Configure> {set geometry(showrefs) [wm geometry %W]}
 }
 
 proc sel_reflist {w x y} {
