@@ -78,6 +78,14 @@ test_expect_success 'last-modified subdir' '
 	EOF
 '
 
+test_expect_success 'last-modified in sparse checkout' '
+	test_when_finished "git sparse-checkout disable" &&
+	git sparse-checkout set b &&
+	check_last_modified -- a <<-\EOF
+	3 a
+	EOF
+'
+
 test_expect_success 'last-modified subdir recursive' '
 	check_last_modified -r a <<-\EOF
 	3 a/b/file
