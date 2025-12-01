@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Nov 2025, #09; Fri, 28)
-X-master-at: b31ab939fe8e3cbe8be48dddd1c6ac0265991f45
-X-next-at: f5cc29aaa48b979583a3fbe972e9795efbe8d134
+Subject: What's cooking in git.git (Nov 2025, #10; Sun, 30)
+X-master-at: f0ef5b6d9bcc258e4cbef93839d1b7465d5212b9
+X-next-at: d5f0c6e74e9a802622dcc0000e49faff0f38e160
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Nov 2025, #09; Fri, 28)
+What's cooking in git.git (Nov 2025, #10; Sun, 30)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,6 +16,9 @@ to a message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
+
+The maintainer will only be online for a few days during the first
+week of December, so please expect things to be slower in my tree.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -48,119 +51,157 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ad/blame-diff-algorithm (2025-11-17) 2 commits
-  (merged to 'next' on 2025-11-19 at e1e456469f)
- + blame: make diff algorithm configurable
- + xdiff: add 'minimal' to XDF_DIFF_ALGORITHM_MASK
+* ja/doc-synopsis-style (2025-11-24) 4 commits
+  (merged to 'next' on 2025-11-24 at 10610d9a57)
+ + doc: pull-fetch-param typofix
+  (merged to 'next' on 2025-11-21 at eb9c1703c0)
+ + doc: convert git push to synopsis style
+ + doc: convert git pull to synopsis style
+ + doc: convert git fetch to synopsis style
 
- "git blame" learns "--diff-algorithm=<algo>" option.
- cf. <fd03f2a5-bf9e-453f-97d1-d5a66bc87470@gmail.com>
- source: <pull.2075.v6.git.git.1763366672.gitgitgadget@gmail.com>
-
-
-* en/ort-rename-another-fix (2025-11-03) 3 commits
-  (merged to 'next' on 2025-11-19 at 53d94af6b4)
- + merge-ort: fix failing merges in special corner case
- + merge-ort: remove debugging crud
- + t6429: update comment to mention correct tool
-
- Yet another corner case fix around renames in the "ort" merge
- strategy.
- source: <pull.1992.git.1762192908.gitgitgadget@gmail.com>
+ Doc mark-up updates.
+ 
+ source: <pull.2002.git.1763588404.gitgitgadget@gmail.com>
 
 
-* gf/win32-pthread-cond-wait-err (2025-11-18) 1 commit
-  (merged to 'next' on 2025-11-21 at 89d9e04f91)
- + win32: return error if SleepConditionVariableCS fails
+* jc/whitespace-incomplete-line (2025-11-12) 12 commits
+  (merged to 'next' on 2025-11-24 at 9682c7f652)
+ + attr: enable incomplete-line whitespace error for this project
+ + diff: highlight and error out on incomplete lines
+ + apply: check and fix incomplete lines
+ + whitespace: allocate a few more bits and define WS_INCOMPLETE_LINE
+ + apply: revamp the parsing of incomplete lines
+ + diff: update the way rewrite diff handles incomplete lines
+ + diff: call emit_callback ecbdata everywhere
+ + diff: refactor output of incomplete line
+ + diff: keep track of the type of the last line seen
+ + diff: correct suppress_blank_empty hack
+ + diff: emit_line_ws_markup() if/else style fix
+ + whitespace: correct bit assignment comments
 
- Emulation code clean-up.
- source: <pull.2104.v2.git.git.1763480514065.gitgitgadget@gmail.com>
-
-
-* jk/ci-windows-meson-test-fix (2025-11-18) 2 commits
-  (merged to 'next' on 2025-11-20 at a0afd4fd5b)
- + ci(windows-meson-test): handle options and output like other test jobs
- + unit-test: ignore --no-chain-lint
-
- "Windows+meson" job at the GitHub Actions CI was hard to debug, as
- it did not show and save failed test artifacts, which has been
- corrected.
- source: <20251118093221.GA530337@coredump.intra.peff.net>
-
-
-* jk/test-mktemp-leakfix (2025-11-18) 1 commit
-  (merged to 'next' on 2025-11-19 at 1da34f8b26)
- + test-mktemp: plug memory and descriptor leaks
-
- Test leakfix.
- source: <20251118122124.GA1117960@coredump.intra.peff.net>
+ Both "git apply" and "git diff" learn a new whitespace error class,
+ "incomplete-line".
+ 
+ source: <20251112220258.1009253-1-gitster@pobox.com>
 
 
-* js/ci-github-setup-go-update (2025-11-17) 1 commit
-  (merged to 'next' on 2025-11-19 at 9922384c2b)
- + ci: bump actions/setup-go from 5 to 6
+* je/doc-data-model (2025-11-12) 1 commit
+  (merged to 'next' on 2025-11-24 at 50e59df383)
+ + doc: add an explanation of Git's data model
 
- Update a version of action used at the GitHub Actrions CI.
- source: <ebc68ec5b2abbc4702b94f833b9b3bf1adb79f1a.1763450087.git.zhiyou.jx@alibaba-inc.com>
-
-
-* js/cmake-libgit-fix (2025-11-17) 1 commit
-  (merged to 'next' on 2025-11-19 at 1593640ab0)
- + cmake: stop trying to build the reftable and xdiff libraries
-
- Makefile based build have recently been updated to build a
- libgit.a that also has reftable and xdiff objects; CMake based
- build procedure has been updated to match.
- source: <pull.2006.git.1763412008722.gitgitgadget@gmail.com>
+ Add a new manual that describes the data model.
+ 
+ source: <pull.1981.v7.git.1762977200244.gitgitgadget@gmail.com>
 
 
-* js/mingw-assign-comma-fix (2025-11-17) 1 commit
-  (merged to 'next' on 2025-11-19 at d1a5807e11)
- + mingw: avoid the comma operator
+* jk/asan-bonanza (2025-11-18) 9 commits
+  (merged to 'next' on 2025-11-24 at 066fc38a19)
+ + t: enable ASan's strict_string_checks option
+ + fsck: avoid parse_timestamp() on buffer that isn't NUL-terminated
+ + fsck: remove redundant date timestamp check
+ + fsck: avoid strcspn() in fsck_ident()
+ + fsck: assert newline presence in fsck_ident()
+ + cache-tree: avoid strtol() on non-string buffer
+ + Makefile: turn on NO_MMAP when building with ASan
+ + pack-bitmap: handle name-hash lookups in incremental bitmaps
+ + compat/mmap: mark unused argument in git_munmap()
 
- The "return errno = EFOO, -1" construct, which is heavily used in
- compat/mingw.c and triggers warnings under "-Wcomma", has been
- rewritten to avoid the warnings.
- source: <pull.2007.git.1763412374866.gitgitgadget@gmail.com>
-
-
-* js/wincred-get-credential-alloc-fix (2025-11-17) 1 commit
-  (merged to 'next' on 2025-11-19 at 4c43c53c49)
- + wincred: avoid memory corruption
-
- Under-allocation fix.
- source: <pull.2005.git.1763411984773.gitgitgadget@gmail.com>
-
-
-* pw/worktree-list-display-width-fix (2025-11-18) 2 commits
-  (merged to 'next' on 2025-11-20 at 3a341524cb)
- + worktree list: quote paths
- + worktree list: fix column spacing
-
- "git worktree list" attempts to show paths to worktrees while
- aligning them, but miscounted display columns for the paths when
- non-ASCII characters were involved, which has been corrected.
- source: <cover.1763482051.git.phillip.wood@dunelm.org.uk>
+ Various issues detected by Asan have been corrected.
+ 
+ source: <20251118091127.GA4175601@coredump.intra.peff.net>
 
 
-* rs/xmkstemp-simplify (2025-11-17) 1 commit
-  (merged to 'next' on 2025-11-19 at 228e9f54ab)
- + wrapper: simplify xmkstemp()
+* lo/repo-info-all (2025-11-18) 2 commits
+  (merged to 'next' on 2025-11-21 at bb6bddcfc7)
+ + repo: add --all to git-repo-info
+ + repo: factor out field printing to dedicated function
 
- Code simplification.
- source: <058c5722-30f5-4bc5-90f5-24e4c6f3ff8f@web.de>
+ "git repo info" learned "--all" option.
+ 
+ source: <20251118204929.43597-1-lucasseikioshiro@gmail.com>
 
 --------------------------------------------------
 [New Topics]
 
+* tc/last-modified-active-paths-optimization (2025-11-28) 1 commit
+ - last-modified: fix use of uninitialized memory
+
+ Recent optimization to "last-modified" command introduced use of
+ uninitialized block of memory, which has been corrected.
+
+ Will merge to 'next'.
+ source: <20251128-toon-big-endian-ci-v1-1-80da0f629c1e@iotcl.com>
+
+
+* en/replay-doc-revision-range (2025-11-28) 1 commit
+  (merged to 'next' on 2025-11-30 at 37ba09bea2)
+ + Documentation/git-replay.adoc: fix errors around revision range
+
+ The use of "revision" (a connected set of commits) has been
+ clarified in the "git replay" documentation.
+
+ Will merge to 'master'.
+ source: <pull.2012.git.1764391464952.gitgitgadget@gmail.com>
+
+
+* jk/parse-int (2025-11-30) 5 commits
+ - fsck: use parse_unsigned_from_buf() for parsing timestamp
+ - cache-tree: use parse_int_from_buf()
+ - parse: add functions for parsing from non-string buffers
+ - parse: prefer bool to int for boolean returns
+ - Merge branch 'jk/asan-bonanza' into jk/parse-int
+
+ Introduce a more robust way to parse a decimal integer stored in a
+ piece of memory that is not necessarily terminated with NUL (which
+ Asan strict-string-check complains even when use of strtol() is
+ safe due to varified existence of whitespace after the digits).
+
+ Will merge to 'next'?
+ source: <20251130131351.GA198697@coredump.intra.peff.net>
+
+
+* js/test-symlink-windows (2025-11-29) 10 commits
+ - t7800: work around the MSYS path conversion on Windows
+ - t6423: introduce Windows-specific handling for symlinking to /dev/null
+ - t1305: skip symlink tests that do not apply to Windows
+ - t1006: accommodate for symlink support in MSYS2
+ - t0600: fix incomplete prerequisite for a test case
+ - t0301: another fix for Windows compatibility
+ - t0001: handle `diff --no-index` gracefully
+ - mingw: special-case `open(symlink, O_CREAT | O_EXCL)`
+ - apply: symbolic links lack a "trustable executable bit"
+ - t9700: accommodate for Windows paths
+
+ Prepare test suite 
+
+ Comments?
+ cf. <xmqqms44cb7p.fsf@gitster.g>
+ cf. <xmqqecpgc8wd.fsf@gitster.g>
+ source: <pull.2009.git.1764440906.gitgitgadget@gmail.com>
+
+
+* rs/diff-index-find-copies-harder-optim (2025-11-30) 1 commit
+ - diff-index: don't queue unchanged filepairs with diff_change()
+
+ Halve the memory consumed by artificial filepairs created during
+ "git diff --find-copioes-harder", also making the operation run
+ faster.
+
+ Will merge to 'next'.
+ source: <aa28974b-ec73-4562-bfc8-4745ad58b55a@web.de>
+
+--------------------------------------------------
+[Cooking]
+
 * pw/replay-exclude-gpgsig-fix (2025-11-26) 1 commit
- - replay: do not copy "gpgsign-sha256" header
+  (merged to 'next' on 2025-11-30 at 3dda1242db)
+ + replay: do not copy "gpgsign-sha256" header
 
  "git replay" forgot to omit the "gpgsig-sha256" extended header
  from the resulting commit the same way it omits "gpgsig", which has
  been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <4f04af5790353b074cf122c450c1cd3f8d1cecf3.1764167611.git.phillip.wood@dunelm.org.uk>
 
 
@@ -178,22 +219,24 @@ Release tarballs are available at:
 
 
 * yc/xdiff-patience-optim (2025-11-26) 1 commit
- - xdiff: optimize patience diff's LCS search
+  (merged to 'next' on 2025-11-30 at db62d67599)
+ + xdiff: optimize patience diff's LCS search
 
  The way patience diff finds LCS has been optimized.
 
- Will merge to 'next'.
- source: <pull.2109.git.git.1764152756908.gitgitgadget@gmail.com>
+ Will merge to 'master'.
+ source: <pull.2109.v2.git.git.1764209766305.gitgitgadget@gmail.com>
 
 
 * bc/zsh-testsuite (2025-11-27) 2 commits
- - t5564: fix test hang under zsh's sh mode
- - t0614: use numerical comparison with test_line_count
+  (merged to 'next' on 2025-11-30 at b4a3081f6f)
+ + t5564: fix test hang under zsh's sh mode
+ + t0614: use numerical comparison with test_line_count
 
  A few tests have been updated to work under the shell compatible
  mode of zsh.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20251128012107.101431-1-sandals@crustytoothpaste.net>
 
 
@@ -206,7 +249,8 @@ Release tarballs are available at:
 
  Documentation updates.
 
- Comments?
+ Expecting a reroll.
+ cf. <089c3225-82cb-4039-83df-f97ea9fd49b2@gmail.com>
  source: <pull.2010.git.1764195516.gitgitgadget@gmail.com>
 
 
@@ -221,8 +265,6 @@ Release tarballs are available at:
  On hold, until the base topic stabilizes.
  source: <8a2a1215306452147cc7b803530ab2429bf57f15.1764260150.git.phillip.wood@dunelm.org.uk>
 
---------------------------------------------------
-[Cooking]
 
 * sp/shallow-time-boundary (2025-11-23) 1 commit
  - shallow: set borders which are all reachable after clone shallow since
@@ -268,20 +310,6 @@ Release tarballs are available at:
 
  Will merge to 'next'?
  source: <pull.2100.v2.git.git.1764174391776.gitgitgadget@gmail.com>
-
-
-* ja/doc-synopsis-style (2025-11-24) 4 commits
-  (merged to 'next' on 2025-11-24 at 10610d9a57)
- + doc: pull-fetch-param typofix
-  (merged to 'next' on 2025-11-21 at eb9c1703c0)
- + doc: convert git push to synopsis style
- + doc: convert git pull to synopsis style
- + doc: convert git fetch to synopsis style
-
- Doc mark-up updates.
-
- Will merge to 'master'.
- source: <pull.2002.git.1763588404.gitgitgadget@gmail.com>
 
 
 * jc/optional-path (2025-11-20) 3 commits
@@ -448,24 +476,6 @@ Release tarballs are available at:
  source: <20251121-fix-tags-not-fetching-v8-0-23b53a8a8334@gmail.com>
 
 
-* jk/asan-bonanza (2025-11-18) 9 commits
-  (merged to 'next' on 2025-11-24 at 066fc38a19)
- + t: enable ASan's strict_string_checks option
- + fsck: avoid parse_timestamp() on buffer that isn't NUL-terminated
- + fsck: remove redundant date timestamp check
- + fsck: avoid strcspn() in fsck_ident()
- + fsck: assert newline presence in fsck_ident()
- + cache-tree: avoid strtol() on non-string buffer
- + Makefile: turn on NO_MMAP when building with ASan
- + pack-bitmap: handle name-hash lookups in incremental bitmaps
- + compat/mmap: mark unused argument in git_munmap()
-
- Various issues detected by Asan have been corrected.
-
- Will merge to 'master'.
- source: <20251118091127.GA4175601@coredump.intra.peff.net>
-
-
 * lc/rebase-trailer (2025-11-05) 4 commits
  - rebase: support --trailer
  - trailer: append trailers in-process and drop the fork to `interpret-trailers`
@@ -504,28 +514,6 @@ Release tarballs are available at:
  source: <20251117043450.322644-1-christian.couder@gmail.com>
 
 
-* jc/whitespace-incomplete-line (2025-11-12) 12 commits
-  (merged to 'next' on 2025-11-24 at 9682c7f652)
- + attr: enable incomplete-line whitespace error for this project
- + diff: highlight and error out on incomplete lines
- + apply: check and fix incomplete lines
- + whitespace: allocate a few more bits and define WS_INCOMPLETE_LINE
- + apply: revamp the parsing of incomplete lines
- + diff: update the way rewrite diff handles incomplete lines
- + diff: call emit_callback ecbdata everywhere
- + diff: refactor output of incomplete line
- + diff: keep track of the type of the last line seen
- + diff: correct suppress_blank_empty hack
- + diff: emit_line_ws_markup() if/else style fix
- + whitespace: correct bit assignment comments
-
- Both "git apply" and "git diff" learn a new whitespace error class,
- "incomplete-line".
-
- Will merge to 'master'.
- source: <20251112220258.1009253-1-gitster@pobox.com>
-
-
 * bc/sha1-256-interop-02 (2025-11-17) 15 commits
  - object-file-convert: always make sure object ID algo is valid
  - rust: add a small wrapper around the hashfile code
@@ -546,17 +534,6 @@ Release tarballs are available at:
  The code to maintain mapping between object names in multiple hash
  functions is being added, written in Rust.
  source: <20251117221621.2863243-1-sandals@crustytoothpaste.net>
-
-
-* lo/repo-info-all (2025-11-18) 2 commits
-  (merged to 'next' on 2025-11-21 at bb6bddcfc7)
- + repo: add --all to git-repo-info
- + repo: factor out field printing to dedicated function
-
- "git repo info" learned "--all" option.
-
- Will merge to 'master'.
- source: <20251118204929.43597-1-lucasseikioshiro@gmail.com>
 
 
 * en/xdiff-cleanup-2 (2025-11-18) 10 commits
@@ -608,16 +585,6 @@ Release tarballs are available at:
  Expecting a reroll.
  cf. <8099e7ef-2673-407e-8cca-e6b566b99549@app.fastmail.com>
  source: <pull.1991.git.1760731558.gitgitgadget@gmail.com>
-
-
-* je/doc-data-model (2025-11-12) 1 commit
-  (merged to 'next' on 2025-11-24 at 50e59df383)
- + doc: add an explanation of Git's data model
-
- Add a new manual that describes the data model.
-
- Will merge to 'master'.
- source: <pull.1981.v7.git.1762977200244.gitgitgadget@gmail.com>
 
 
 * ps/history (2025-10-27) 12 commits
