@@ -6,7 +6,6 @@
 #include "wt-status.h"
 #include "object.h"
 #include "dir.h"
-#include "commit.h"
 #include "diff.h"
 #include "environment.h"
 #include "gettext.h"
