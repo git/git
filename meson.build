@@ -220,7 +220,7 @@ project('git', 'c',
   # learned to define __STDC_VERSION__ with C11 and later. We thus require
   # GNU C99 and fall back to C11. Meson only learned to handle the fallback
   # with version 1.3.0, so on older versions we use GNU C99 unconditionally.
-  default_options: meson.version().version_compare('>=1.3.0') ? ['rust_std=2018', 'c_std=gnu99,c11'] : ['rust_std=2018', 'c_std=gnu99'],
+  default_options: meson.version().version_compare('>=1.3.0') ? ['c_std=gnu99,c11'] : ['c_std=gnu99'],
 )
 
 fs = import('fs')
@@ -266,6 +266,56 @@ version_gen_environment.set('GIT_BUILT_FROM_COMMIT', get_option('built_from_comm
 version_gen_environment.set('GIT_DATE', get_option('build_date'))
 version_gen_environment.set('GIT_USER_AGENT', get_option('user_agent'))
 version_gen_environment.set('GIT_VERSION', get_option('version'))
+
+rust_crates = ['gitcore']
+
+rust_builds = []
+with_rust = get_option('with_rust')
+if with_rust
+  rustc = find_program('rustc', required : false)
+  cargo = find_program('cargo', required : false)
+
+  if not rustc.found() or not cargo.found()
+    error('Rust toolchain not found. Reconfigure with -Dwith_rust=false')
+  endif
+
+  if get_option('optimization') in ['2', '3', 's', 'z']
+    rust_build_profile = 'release'
+  else
+    rust_build_profile = 'debug'
+  endif
+
+  # Run `rustup show active-toolchain` and capture output
+  rustup_out = run_command('rustup', 'show', 'active-toolchain',
+                           check: true).stdout().strip()
+
+  rust_environment = script_environment
+
+  foreach crate : rust_crates
+    if rustup_out.contains('windows-msvc')
+      libfile = crate + '.lib'
+    else
+      libfile = 'lib' + crate + '.a'
+    endif
+
+    rust_builds += custom_target(
+      'rust_build_'+crate,
+      output: libfile,
+      build_by_default: true,
+      build_always_stale: true,
+      command: [
+        meson.project_source_root() / 'rust' / 'build-crate.sh',
+        meson.project_source_root(),
+        meson.current_build_dir(), rust_build_profile, crate,
+      ],
+      install: false,
+      env: rust_environment,
+    )
+  endforeach
+else
+  message('Rust components disabled (-Dwith_rust=false)')
+endif
+
 
 compiler = meson.get_compiler('c')
 
@@ -548,6 +598,10 @@ libgit_sources = [
   'xdiff/xutils.c',
 ]
 
+if not with_rust
+  libgit_sources += 'varint.c'
+endif
+
 libgit_sources += custom_target(
   input: 'command-list.txt',
   output: 'command-list.h',
@@ -786,6 +840,10 @@ libgit_c_args = [
   '-DPAGER_ENV="' + get_option('pager_environment') + '"',
   '-DSHELL_PATH="' + fs.as_posix(target_shell.full_path()) + '"',
 ]
+
+if with_rust
+  libgit_c_args += '-DWITH_RUST'
+endif
 
 system_attributes = get_option('gitattributes')
 if system_attributes != ''
@@ -1279,6 +1337,7 @@ elif host_machine.system() == 'windows'
   ]
 
   libgit_dependencies += compiler.find_library('ntdll')
+  libgit_dependencies += compiler.find_library('userenv')
   libgit_include_directories += 'compat/win32'
   if compiler.get_id() == 'msvc'
     libgit_include_directories += 'compat/vcbuild/include'
@@ -1720,30 +1779,16 @@ version_def_h = custom_target(
 )
 libgit_sources += version_def_h
 
-cargo = find_program('cargo', dirs: program_path, native: true, required: get_option('rust'))
-rust_option = get_option('rust').disable_auto_if(not cargo.found())
-if rust_option.allowed()
-  subdir('src')
-  libgit_c_args += '-DWITH_RUST'
-
-  if host_machine.system() == 'windows'
-    libgit_dependencies += compiler.find_library('userenv')
-  endif
-else
-  libgit_sources += [
-    'varint.c',
-  ]
-endif
-
 libgit = declare_dependency(
-  link_with: static_library('git',
+  link_with: [
+    static_library('git',
     sources: libgit_sources,
     c_args: libgit_c_args + [
       '-DGIT_VERSION_H="' + version_def_h.full_path() + '"',
     ],
     dependencies: libgit_dependencies,
     include_directories: libgit_include_directories,
-  ),
+  )] + rust_builds,
   compile_args: libgit_c_args,
   dependencies: libgit_dependencies,
   include_directories: libgit_include_directories,
@@ -2281,7 +2326,7 @@ summary({
   'pcre2': pcre2,
   'perl': perl_features_enabled,
   'python': target_python.found(),
-  'rust': rust_option.allowed(),
+  'rust': get_option('with_rust'),
 }, section: 'Auto-detected features', bool_yn: true)
 
 summary({

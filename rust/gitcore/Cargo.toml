@@ -1,0 +1,12 @@
+[package]
+name = "gitcore"
+version = "0.1.0"
+edition = "2018"
+
+[lib]
+crate-type = ["staticlib", "rlib"]
+
+[dependencies]
+
+[build-dependencies]
+link-with-c = { path = "../link-with-c" }

@@ -485,9 +485,9 @@ include shared.mak
 #
 # == Optional Rust support ==
 #
-# Define WITH_RUST if you want to include features and subsystems written in
-# Rust into Git. For now, Rust is still an optional feature of the build
-# process. With Git 3.0 though, Rust will always be enabled.
+# Define WITH_RUST=false if you don't want to include features and subsystems
+# written in Rust into Git. For now, Rust is still an optional feature of the
+# build process. With Git 3.0 though, Rust will be mandatory.
 #
 # Building Rust code requires Cargo.
 #
@@ -691,7 +691,6 @@ OBJECTS =
 OTHER_PROGRAMS =
 PROGRAM_OBJS =
 PROGRAMS =
-RUST_SOURCES =
 EXCLUDED_PROGRAMS =
 SCRIPT_PERL =
 SCRIPT_PYTHON =
@@ -928,20 +927,56 @@ TEST_SHELL_PATH = $(SHELL_PATH)
 
 LIB_FILE = libgit.a
 
-ifdef DEBUG
-RUST_TARGET_DIR = target/debug
+EXTLIBS =
+
+GIT_BUILD_DIR := $(CURDIR)
+export GIT_BUILD_DIR
+MAKEFILE_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
+export MAKEFILE_DIR
+
+RUST_CRATES := gitcore
+.PHONY: rust-compile rust-clean
+
+WITH_RUST ?= true
+ifeq ($(WITH_RUST),true)
+
+ifeq ($(DEBUG), 1)
+	RUST_BUILD_MODE := debug
 else
-RUST_TARGET_DIR = target/release
+	RUST_BUILD_MODE := release
 endif
 
-ifeq ($(uname_S),Windows)
-RUST_LIB = $(RUST_TARGET_DIR)/gitcore.lib
+RUST_LIBS := $(foreach c,$(RUST_CRATES),$(GIT_BUILD_DIR)/lib$(c).a)
+
+rust-compile:
+	@for c in $(RUST_CRATES); do \
+		echo "Building $$c..."; \
+		./rust/build-crate.sh $(MAKEFILE_DIR) $(GIT_BUILD_DIR) $(RUST_BUILD_MODE) $$c || exit $$?; \
+	done
+
+rust-clean:
+	$(RM) $(RUST_LIBS) Cargo.lock generated/*.h
+	cargo clean
+
+$(GIT_BUILD_DIR)/lib%.a:
+	echo $(RUST_LIBS)
+	./rust/build-crate.sh $(MAKEFILE_DIR) $(GIT_BUILD_DIR) $(RUST_BUILD_MODE) $*
+
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Linux)
+	EXTLIBS += -ldl
+endif
+
+else ifeq ($(WITH_RUST),false)
+rust-compile:
+	:
+rust-clean:
+	:
 else
-RUST_LIB = $(RUST_TARGET_DIR)/libgitcore.a
+$(error 'WITH_RUST' must be true or false)
 endif
 
 GITLIBS = common-main.o $(LIB_FILE)
-EXTLIBS =
 
 GIT_USER_AGENT = git/$(GIT_VERSION)
 
@@ -959,18 +994,14 @@ CC_LD_DYNPATH = -Wl,-rpath,
 BASIC_CFLAGS = -I.
 BASIC_LDFLAGS =
 
+ifeq ($(WITH_RUST),true)
+	BASIC_CFLAGS += -DWITH_RUST
+	BASIC_CFLAGS += -fPIE
+endif
+
 # library flags
 ARFLAGS = rcs
 PTHREAD_CFLAGS =
-
-# Rust flags
-CARGO_ARGS =
-ifndef V
-CARGO_ARGS += --quiet
-endif
-ifndef DEBUG
-CARGO_ARGS += --release
-endif
 
 # For the 'sparse' target
 SPARSE_FLAGS ?= -std=gnu99 -D__STDC_NO_VLA__
@@ -1333,7 +1364,7 @@ LIB_OBJS += urlmatch.o
 LIB_OBJS += usage.o
 LIB_OBJS += userdiff.o
 LIB_OBJS += utf8.o
-ifndef WITH_RUST
+ifeq ($(WITH_RUST),false)
 LIB_OBJS += varint.o
 endif
 LIB_OBJS += version.o
@@ -1535,9 +1566,6 @@ CLAR_TEST_OBJS += $(UNIT_TEST_DIR)/unit-test.o
 
 UNIT_TEST_OBJS += $(UNIT_TEST_DIR)/test-lib.o
 
-RUST_SOURCES += src/lib.rs
-RUST_SOURCES += src/varint.rs
-
 GIT-VERSION-FILE: FORCE
 	@OLD=$$(cat $@ 2>/dev/null || :) && \
 	$(call version_gen,"$(shell pwd)",GIT-VERSION-FILE.in,$@) && \
@@ -1566,14 +1594,6 @@ endif
 
 ALL_CFLAGS = $(DEVELOPER_CFLAGS) $(CPPFLAGS) $(CFLAGS) $(CFLAGS_APPEND)
 ALL_LDFLAGS = $(LDFLAGS) $(LDFLAGS_APPEND)
-
-ifdef WITH_RUST
-BASIC_CFLAGS += -DWITH_RUST
-GITLIBS += $(RUST_LIB)
-ifeq ($(uname_S),Windows)
-EXTLIBS += -luserenv
-endif
-endif
 
 ifdef SANITIZE
 SANITIZERS := $(foreach flag,$(subst $(comma),$(space),$(SANITIZE)),$(flag))
@@ -2454,6 +2474,10 @@ endif
 # from the dependency list, that would make each entry appear twice.
 LIBS = $(filter-out %.o, $(GITLIBS)) $(EXTLIBS)
 
+ifeq ($(WITH_RUST),true)
+LIBS += $(RUST_LIBS)
+endif
+
 BASIC_CFLAGS += $(COMPAT_CFLAGS)
 LIB_OBJS += $(COMPAT_OBJS)
 
@@ -2609,7 +2633,7 @@ git.sp git.s git.o: EXTRA_CPPFLAGS = \
 	'-DGIT_MAN_PATH="$(mandir_relative_SQ)"' \
 	'-DGIT_INFO_PATH="$(infodir_relative_SQ)"'
 
-git$X: git.o GIT-LDFLAGS $(BUILTIN_OBJS) $(GITLIBS)
+git$X: git.o GIT-LDFLAGS $(BUILTIN_OBJS) $(GITLIBS) rust-compile
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) \
 		$(filter %.o,$^) $(LIBS)
 
@@ -2934,17 +2958,17 @@ headless-git.o: compat/win32/headless.c GIT-CFLAGS
 headless-git$X: headless-git.o git.res GIT-LDFLAGS
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) $(ALL_LDFLAGS) -mwindows -o $@ $< git.res
 
-git-%$X: %.o GIT-LDFLAGS $(GITLIBS)
+git-%$X: %.o GIT-LDFLAGS $(GITLIBS) rust-compile
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) $(LIBS)
 
-git-imap-send$X: imap-send.o $(IMAP_SEND_BUILDDEPS) GIT-LDFLAGS $(GITLIBS)
+git-imap-send$X: imap-send.o $(IMAP_SEND_BUILDDEPS) GIT-LDFLAGS $(GITLIBS) rust-compile
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(IMAP_SEND_LDFLAGS) $(LIBS)
 
-git-http-fetch$X: http.o http-walker.o http-fetch.o GIT-LDFLAGS $(GITLIBS)
+git-http-fetch$X: http.o http-walker.o http-fetch.o GIT-LDFLAGS $(GITLIBS) rust-compile
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(CURL_LIBCURL) $(LIBS)
-git-http-push$X: http.o http-push.o GIT-LDFLAGS $(GITLIBS)
+git-http-push$X: http.o http-push.o GIT-LDFLAGS $(GITLIBS) rust-compile
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(CURL_LIBCURL) $(EXPAT_LIBEXPAT) $(LIBS)
 
@@ -2954,22 +2978,16 @@ $(REMOTE_CURL_ALIASES): $(REMOTE_CURL_PRIMARY)
 	ln -s $< $@ 2>/dev/null || \
 	cp $< $@
 
-$(REMOTE_CURL_PRIMARY): remote-curl.o http.o http-walker.o GIT-LDFLAGS $(GITLIBS)
+$(REMOTE_CURL_PRIMARY): remote-curl.o http.o http-walker.o GIT-LDFLAGS $(GITLIBS) rust-compile
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(CURL_LIBCURL) $(EXPAT_LIBEXPAT) $(LIBS)
 
-scalar$X: scalar.o GIT-LDFLAGS $(GITLIBS)
+scalar$X: scalar.o GIT-LDFLAGS $(GITLIBS) rust-compile
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) \
 		$(filter %.o,$^) $(LIBS)
 
 $(LIB_FILE): $(LIB_OBJS)
 	$(QUIET_AR)$(RM) $@ && $(AR) $(ARFLAGS) $@ $^
-
-$(RUST_LIB): Cargo.toml $(RUST_SOURCES)
-	$(QUIET_CARGO)cargo build $(CARGO_ARGS)
-
-.PHONY: rust
-rust: $(RUST_LIB)
 
 export DEFAULT_EDITOR DEFAULT_PAGER
 
@@ -3337,7 +3355,7 @@ perf: all
 
 t/helper/test-tool$X: $(patsubst %,t/helper/%,$(TEST_BUILTINS_OBJS)) $(UNIT_TEST_DIR)/test-lib.o
 
-t/helper/test-%$X: t/helper/test-%.o GIT-LDFLAGS $(GITLIBS)
+t/helper/test-%$X: t/helper/test-%.o GIT-LDFLAGS $(GITLIBS) rust-compile
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) $(filter %.a,$^) $(LIBS)
 
 check-sha1:: t/helper/test-tool$X
@@ -3802,7 +3820,7 @@ cocciclean:
 	$(RM) -r .build/contrib/coccinelle
 	$(RM) contrib/coccinelle/*.cocci.patch
 
-clean: profile-clean coverage-clean cocciclean
+clean: profile-clean coverage-clean cocciclean rust-clean
 	$(RM) -r .build $(UNIT_TEST_BIN)
 	$(RM) GIT-TEST-SUITES
 	$(RM) po/git.pot po/git-core.pot
@@ -3958,13 +3976,13 @@ FUZZ_CXXFLAGS ?= $(ALL_CFLAGS)
 .PHONY: fuzz-all
 fuzz-all: $(FUZZ_PROGRAMS)
 
-$(FUZZ_PROGRAMS): %: %.o oss-fuzz/dummy-cmd-main.o $(GITLIBS) GIT-LDFLAGS
+$(FUZZ_PROGRAMS): %: %.o oss-fuzz/dummy-cmd-main.o $(GITLIBS) GIT-LDFLAGS rust-compile
 	$(QUIET_LINK)$(FUZZ_CXX) $(FUZZ_CXXFLAGS) -o $@ $(ALL_LDFLAGS) \
 		-Wl,--allow-multiple-definition \
 		$(filter %.o,$^) $(filter %.a,$^) $(LIBS) $(LIB_FUZZING_ENGINE)
 
 $(UNIT_TEST_PROGS): $(UNIT_TEST_BIN)/%$X: $(UNIT_TEST_DIR)/%.o $(UNIT_TEST_OBJS) \
-	$(GITLIBS) GIT-LDFLAGS
+	$(GITLIBS) GIT-LDFLAGS rust-compile
 	$(call mkdir_p_parent_template)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) \
 		$(filter %.o,$^) $(filter %.a,$^) $(LIBS)
@@ -3983,7 +4001,7 @@ $(UNIT_TEST_DIR)/clar.suite: $(UNIT_TEST_DIR)/clar-decls.h $(UNIT_TEST_DIR)/gene
 $(UNIT_TEST_DIR)/clar/clar.o: $(UNIT_TEST_DIR)/clar.suite
 $(CLAR_TEST_OBJS): $(UNIT_TEST_DIR)/clar-decls.h
 $(CLAR_TEST_OBJS): EXTRA_CPPFLAGS = -I$(UNIT_TEST_DIR)
-$(CLAR_TEST_PROG): $(UNIT_TEST_DIR)/clar.suite $(CLAR_TEST_OBJS) $(GITLIBS) GIT-LDFLAGS
+$(CLAR_TEST_PROG): $(UNIT_TEST_DIR)/clar.suite $(CLAR_TEST_OBJS) $(GITLIBS) GIT-LDFLAGS rust-compile
 	$(call mkdir_p_parent_template)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) $(LIBS)
 
