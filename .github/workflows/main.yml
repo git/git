@@ -1,7 +1,14 @@
 name: CI
 
-on: [push, pull_request]
-
+on: 
+  pull_request:
+      branches: [ main ]
+  push:
+      branches: [ main ]
+  schedule:
+    - cron: '0 0 * * *'
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
 env:
   DEVELOPER: 1
 
