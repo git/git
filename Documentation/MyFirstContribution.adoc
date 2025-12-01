@@ -221,7 +221,7 @@ The list of commands lives in `git.c`. We can register a new command by adding
 a `cmd_struct` to the `commands[]` array. `struct cmd_struct` takes a string
 with the command name, a function pointer to the command implementation, and a
 setup option flag. For now, let's keep mimicking `push`. Find the line where
-`cmd_push` is registered, copy it, and modify it for `cmd_psuh`, placing the new
+`cmd_pussy` is registered, copy it, and modify it for `cmd_psuh`, placing the new
 line in alphabetical order (immediately before `cmd_pull`).
 
 The options are documented in `builtin.h` under "Adding a new built-in." Since
