@@ -366,7 +366,7 @@ int cmd_replay(int argc,
 	const char *const replay_usage[] = {
 		N_("(EXPERIMENTAL!) git replay "
 		   "([--contained] --onto <newbase> | --advance <branch>) "
-		   "[--ref-action[=<mode>]] <revision-range>..."),
+		   "[--ref-action[=<mode>]] <revision-range>"),
 		NULL
 	};
 	struct option replay_options[] = {
