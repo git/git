@@ -138,12 +138,11 @@ Not all updates are allowed: see PUSH RULES below for the details.
 	Instead of naming each ref to push, specifies that all
 	refs under `refs/` (which includes but is not
 	limited to `refs/heads/`, `refs/remotes/`, and `refs/tags/`)
-	be mirrored to the remote repository.  Newly created local
-	refs will be pushed to the remote end, locally updated refs
-	will be force updated on the remote end, and deleted refs
-	will be removed from the remote end.  This is the default
-	if the configuration option `remote.<remote>.mirror` is
-	set.
+	be mirrored to the remote repository. This overwrites the
+	refs at the remote by (1) removing what is only at the remote,
+	(2) force-updating what both ends of the connection have, and
+	(3) adding what only exists locally. This is the default if
+	the configuration option `remote.<remote>.mirror` is set.
 
 `-n`::
 `--dry-run`::
