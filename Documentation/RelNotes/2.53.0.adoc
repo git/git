@@ -13,6 +13,13 @@ UI, Workflows & Features
 
  * "git blame" learns "--diff-algorithm=<algo>" option.
 
+ * "git repo info" learned "--all" option.
+
+ * Both "git apply" and "git diff" learn a new whitespace error class,
+   "incomplete-line".
+
+ * Add a new manual that describes the data model.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -95,7 +102,11 @@ Fixes since v2.52
  * Emulation code clean-up.
    (merge 2367c6bcd6 gf/win32-pthread-cond-wait-err later to maint).
 
+ * Various issues detected by Asan have been corrected.
+   (merge a031b6181a jk/asan-bonanza later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 46207a54cc qj/doc-http-bad-want-response later to maint).
    (merge df90eccd93 kh/doc-commit-extra-references later to maint).
    (merge f18aa68861 rs/xmkstemp-simplify later to maint).
+   (merge fddba8f737 ja/doc-synopsis-style later to maint).
