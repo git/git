@@ -663,6 +663,7 @@ MSGFMT = msgfmt
 MSGMERGE = msgmerge
 CURL_CONFIG = curl-config
 GCOV = gcov
+PERF = perf
 STRIP = strip
 SPATCH = spatch
 LD = ld
@@ -3885,6 +3886,7 @@ check-builtins::
 .PHONY: coverage coverage-clean coverage-compile coverage-test coverage-report
 .PHONY: coverage-untested-functions cover_db cover_db_html
 .PHONY: coverage-clean-results
+.PHONY: trace trace-clean script
 
 coverage:
 	$(MAKE) coverage-test
@@ -3937,6 +3939,25 @@ cover_db: coverage-report
 
 cover_db_html: cover_db
 	cover -report html -outputdir cover_db_html cover_db
+
+
+### Perf tracing with CoreSight
+#
+trace-clean:
+	$(RM) perf.data perf.data.old
+	$(RM) -r trace/
+
+trace:
+	$(MAKE) all
+	$(PERF) record -e cs_etm/@tmc_etr0/u --per-thread -- \
+		$(MAKE) DEFAULT_TEST_TARGET=test test
+	@echo "Trace data collected in perf.data"
+
+script: trace
+	@mkdir -p trace
+	$(PERF) script > trace/perf.script
+	$(PERF) script --fields comm,pid,tid,time,event,ip,sym,dso > trace/detailed.script
+	@echo "Trace analysis completed in trace/ directory"
 
 
 ### Fuzz testing
