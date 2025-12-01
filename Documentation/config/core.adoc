@@ -629,6 +629,8 @@ core.whitespace::
   part of the line terminator, i.e. with it, `trailing-space`
   does not trigger if the character before such a carriage-return
   is not a whitespace (not enabled by default).
+* `incomplete-line` treats the last line of a file that is missing the
+  newline at the end as an error (not enabled by default).
 * `tabwidth=<n>` tells how many character positions a tab occupies; this
   is relevant for `indent-with-non-tab` and when Git fixes `tab-in-indent`
   errors. The default tab width is 8. Allowed values are 1 to 63.
