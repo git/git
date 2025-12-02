@@ -3988,7 +3988,7 @@ disable-aslr:
 
 trace: all disable-aslr
 	$(PERF) record $(PERF_TRC_OPTS) -- \
-		$(MAKE) DEFAULT_TEST_TARGET=test test
+		$(MAKE) DEFAULT_TEST_TARGET=test GIT_TEST_CHAIN_LINT=0 test
 	@mv perf.data trace.perf.data
 	@echo "Trace data collected in trace.perf.data"
 
