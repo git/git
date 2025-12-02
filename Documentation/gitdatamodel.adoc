@@ -235,8 +235,6 @@ there will no longer be a branch that points at the old commit.
 The old commit is recorded in the current branch's <<reflogs,reflog>>,
 so it is still "reachable", but when the reflog entry expires it may
 become unreachable and get deleted.
-
-the old commit will usually not be reachable, so it may be deleted eventually.
 Reachable objects will never be deleted.
 
 [[index]]
