@@ -1064,7 +1064,7 @@ if iconv.found()
     }
   '''
 
-  if compiler.run(iconv_omits_bom_source,
+  if meson.can_run_host_binaries() and compiler.run(iconv_omits_bom_source,
     dependencies: iconv,
     name: 'iconv omits BOM',
   ).returncode() != 0
