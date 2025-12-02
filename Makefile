@@ -3886,7 +3886,7 @@ check-builtins::
 .PHONY: coverage coverage-clean coverage-compile coverage-test coverage-report
 .PHONY: coverage-untested-functions cover_db cover_db_html
 .PHONY: coverage-clean-results
-.PHONY: trace trace-clean script
+.PHONY: trace trace-clean script disable-aslr
 
 coverage:
 	$(MAKE) coverage-test
@@ -3943,21 +3943,76 @@ cover_db_html: cover_db
 
 ### Perf tracing with CoreSight
 #
+# CoreSight configuration options
+CS_TRACER ?= cs_etm
+CS_SINK ?= tmc_etr0
+CS_MODE ?= u
+# Additional trace options (timestamps, cycle count, etc.)
+# Note: Should end with a comma if specified, e.g., timestamp,cycacc,
+CS_OPTIONS ?=
+
+# Memory filtering for perf trace
+# Example: PERF_FILTER='filter 0x0000aaaaaaaa0000/0x1000'
+# To filter only through a specific function like 'main':
+#   1. Extract offset and size: nm -S <binary> | awk '/ main$$/ {print $$1, $$2}'
+#   2. Use: PERF_FILTER='filter <offset>/<size>@<full_path>'
+PERF_FILTER ?=
+
+# Disassembly script (typically /usr/libexec/perf-core/scripts/python/arm-cs-trace-disasm.py)
+PERF_ARM_DISASM_SCRIPT ?= /usr/libexec/perf-core/scripts/python/arm-cs-trace-disasm.py
+
+# perf options
+PERF_TRC_OPTS = -e $(CS_TRACER)/$(CS_OPTIONS)@$(CS_SINK)/$(CS_MODE) --per-thread
+ifneq ($(PERF_FILTER),)
+PERF_TRC_OPTS += --filter $(PERF_FILTER)
+endif
+PERF_REP_OPTS = -D --stdio --dump --header -I
+PERF_SCR_OPTS = -s $(PERF_ARM_DISASM_SCRIPT)
+PERF_DIS_OPTS = $(PERF_SCR_OPTS) -- -d $(OBJDUMP)
+
+.PHONY: disable-aslr
+
 trace-clean:
 	$(RM) perf.data perf.data.old
 	$(RM) -r trace/
+	$(RM) -r $(HOME)/.debug
 
-trace:
-	$(MAKE) all
-	$(PERF) record -e cs_etm/@tmc_etr0/u --per-thread -- \
+disable-aslr:
+	@echo "Checking ASLR status..."
+	@if [ "$$(cat /proc/sys/kernel/randomize_va_space)" -ne 0 ]; then \
+		echo "ASLR is enabled, disabling it..."; \
+		sudo sysctl -w kernel.randomize_va_space=0; \
+	else \
+		echo "ASLR is already disabled."; \
+	fi
+
+trace: all disable-aslr
+	$(PERF) record $(PERF_TRC_OPTS) -- \
 		$(MAKE) DEFAULT_TEST_TARGET=test test
-	@echo "Trace data collected in perf.data"
+	@mv perf.data trace.perf.data
+	@echo "Trace data collected in trace.perf.data"
 
 script: trace
 	@mkdir -p trace
-	$(PERF) script > trace/perf.script
-	$(PERF) script --fields comm,pid,tid,time,event,ip,sym,dso > trace/detailed.script
-	@echo "Trace analysis completed in trace/ directory"
+	@echo "Generating trace reports..."
+	$(PERF) report -i trace.perf.data $(PERF_REP_OPTS) > trace/perf.report
+	@if [ -f $(PERF_ARM_DISASM_SCRIPT) ]; then \
+		echo "Generating disassembled trace with $(PERF_ARM_DISASM_SCRIPT)..."; \
+		$(PERF) script -i trace.perf.data $(PERF_DIS_OPTS) > trace/perf.script 2>&1 || \
+			echo "Disassembly script failed, falling back to standard script"; \
+		$(PERF) script -i trace.perf.data $(PERF_SCR_OPTS) > trace/perf.script.reduced 2>&1 || \
+			echo "Reduced script failed"; \
+	fi
+	$(PERF) script -i trace.perf.data > trace/perf.script.basic
+	$(PERF) script -i trace.perf.data --fields comm,pid,tid,time,event,ip,sym,dso > trace/perf.script.detailed
+	@echo "Trace analysis completed in trace/ directory:"
+	@echo "  - perf.report: Raw packet succession"
+	@echo "  - perf.script.basic: Standard trace output"
+	@echo "  - perf.script.detailed: Detailed field output"
+	@if [ -f trace/perf.script ]; then \
+		echo "  - perf.script: Disassembled trace"; \
+		echo "  - perf.script.reduced: Trace without instructions"; \
+	fi
 
 
 ### Fuzz testing
