@@ -1449,7 +1449,7 @@ if compiler.has_header('sys/sysctl.h')
   endif
 endif
 
-if not meson.is_cross_build() and compiler.run('''
+if meson.can_run_host_binaries() and compiler.run('''
   #include <stdio.h>
 
   int main(int argc, const char **argv)
