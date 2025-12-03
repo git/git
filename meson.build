@@ -1492,7 +1492,7 @@ if not has_bsd_sysctl
   endif
 endif
 
-if not meson.is_cross_build() and compiler.run('''
+if meson.can_run_host_binaries() and compiler.run('''
   #include <stdio.h>
 
   int main(int argc, const char **argv)
