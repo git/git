@@ -21,7 +21,8 @@ A submodule is a repository embedded inside another repository.
 The submodule has its own history; the repository it is embedded
 in is called a superproject.
 
-On the filesystem, a submodule usually (but not always - see FORMS below)
+On the filesystem, a submodule usually
+(but not always - see <<FORMS,FORMS>> below)
 consists of (i) a Git directory located under the `$GIT_DIR/modules/`
 directory of its superproject, (ii) a working directory inside the
 superproject's working directory, and a `.git` file at the root of
@@ -102,8 +103,8 @@ remotes are configured in the submodule as usual in the `$GIT_DIR/config`
 file.
 
  * The configuration file `$GIT_DIR/config` in the superproject.
-   Git only recurses into active submodules (see "ACTIVE SUBMODULES"
-   section below).
+   Git only recurses into active submodules
+   (see <<ACTIVE_SUBMODULES,"ACTIVE SUBMODULES">> section below).
 +
 If the submodule is not yet initialized, then the configuration
 inside the submodule does not exist yet, so where to
@@ -122,6 +123,7 @@ If the submodule has never been initialized, this is the only place
 where submodule configuration is found. It serves as the last fallback
 to specify where to obtain the submodule from.
 
+[[FORMS]]
 FORMS
 -----
 
@@ -165,6 +167,7 @@ from another repository.
 To completely remove a submodule, manually delete
 `$GIT_DIR/modules/<name>/`.
 
+[[ACTIVE_SUBMODULES]]
 ACTIVE SUBMODULES
 -----------------
 

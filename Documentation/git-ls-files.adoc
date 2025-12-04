@@ -98,7 +98,7 @@ OPTIONS
 
 -z::
 	\0 line termination on output and do not quote filenames.
-	See OUTPUT below for more information.
+	See <<OUTPUT,OUTPUT>> below for more information.
 
 --deduplicate::
 	When only filenames are shown, suppress duplicates that may
@@ -110,8 +110,8 @@ OPTIONS
 -x <pattern>::
 --exclude=<pattern>::
 	Skip untracked files matching pattern.
-	Note that pattern is a shell wildcard pattern. See EXCLUDE PATTERNS
-	below for more information.
+	Note that pattern is a shell wildcard pattern.
+	See <<EXCLUDE_PATTERNS,EXCLUDE PATTERNS>> below for more information.
 
 -X <file>::
 --exclude-from=<file>::
@@ -231,6 +231,7 @@ followed by the  ("attr/<eolattr>").
 	Files to show. If no files are given all files which match the other
 	specified criteria are shown.
 
+[[OUTPUT]]
 OUTPUT
 ------
 'git ls-files' just outputs the filenames unless `--stage` is specified in
@@ -292,6 +293,7 @@ eolattr::
 path::
 	The pathname of the file which is recorded in the index.
 
+[[EXCLUDE_PATTERNS]]
 EXCLUDE PATTERNS
 ----------------
 
