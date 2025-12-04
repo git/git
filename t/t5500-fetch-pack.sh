@@ -955,6 +955,31 @@ test_expect_success 'fetching deepen' '
 	)
 '
 
+test_expect_success 'fetching deepen beyond merged branch' '
+	test_create_repo shallow-deepen-merged &&
+	(
+	cd shallow-deepen-merged &&
+	git commit --allow-empty -m one &&
+	git commit --allow-empty -m two &&
+	git commit --allow-empty -m three &&
+	git switch -c branch &&
+	git commit --allow-empty -m four &&
+	git commit --allow-empty -m five &&
+	git switch main &&
+	git merge --no-ff branch &&
+	pwd && git log --all --graph &&
+	cd - &&
+	git clone --depth 3 "file://$(pwd)/shallow-deepen-merged" deepen &&
+	cd deepen &&
+	pwd && git log --all --graph &&
+	git fetch origin --deepen=1 &&
+	pwd && git log --all --graph &&
+	echo "Shallow:" && cat .git/shallow &&
+	echo "All rev-lis:" && git rev-list --all &&
+	for commit in $(cat .git/shallow); do if [ "$(git rev-list --all | grep $commit)" != "$commit" ]; then exit 1; fi done
+	)
+'
+
 test_negotiation_algorithm_default () {
 	test_when_finished rm -rf clientv0 clientv2 &&
 	rm -rf server client &&
