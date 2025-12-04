@@ -9,7 +9,7 @@ SYNOPSIS
 --------
 [synopsis]
 git repo info [--format=(keyvalue|nul) | -z] [--all | <key>...]
-git repo structure [--format=(table|keyvalue|nul)]
+git repo structure [--format=(table|keyvalue|nul) | -z]
 
 DESCRIPTION
 -----------
@@ -44,7 +44,7 @@ supported:
 +
 `-z` is an alias for `--format=nul`.
 
-`structure [--format=(table|keyvalue|nul)]`::
+`structure [--format=(table|keyvalue|nul) | -z]`::
 	Retrieve statistics about the current repository structure. The
 	following kinds of information are reported:
 +
@@ -71,6 +71,8 @@ supported:
 	the delimiter between the key and value instead of '='. Unlike the
 	`keyvalue` format, values containing "unusual" characters are never
 	quoted.
++
+`-z` is an alias for `--format=nul`.
 
 INFO KEYS
 ---------
