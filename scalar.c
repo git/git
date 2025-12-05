@@ -931,7 +931,7 @@ static int cmd_delete(int argc, const char **argv)
 	if (dir_inside_of(cwd, enlistment.buf) >= 0)
 		res = error(_("refusing to delete current working directory"));
 	else {
-		close_object_store(the_repository->objects);
+		odb_close(the_repository->objects);
 		res = delete_enlistment(&enlistment);
 	}
 	strbuf_release(&enlistment);

@@ -5,11 +5,11 @@
 #include "gettext.h"
 #include "pkt-line.h"
 #include "parse-options.h"
-#include "path.h"
 #include "protocol.h"
 #include "replace-object.h"
 #include "upload-pack.h"
 #include "serve.h"
+#include "setup.h"
 #include "commit.h"
 #include "environment.h"
 

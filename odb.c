@@ -1,5 +1,6 @@
 #include "git-compat-util.h"
 #include "abspath.h"
+#include "chdir-notify.h"
 #include "commit-graph.h"
 #include "config.h"
 #include "dir.h"
@@ -9,6 +10,7 @@
 #include "khash.h"
 #include "lockfile.h"
 #include "loose.h"
+#include "midx.h"
 #include "object-file-convert.h"
 #include "object-file.h"
 #include "odb.h"
@@ -22,6 +24,7 @@
 #include "strbuf.h"
 #include "strvec.h"
 #include "submodule.h"
+#include "tmp-objdir.h"
 #include "trace2.h"
 #include "write-or-die.h"
 
@@ -141,9 +144,9 @@ static void read_info_alternates(struct object_database *odb,
 				 const char *relative_base,
 				 int depth);
 
-struct odb_source *odb_source_new(struct object_database *odb,
-				  const char *path,
-				  bool local)
+static struct odb_source *odb_source_new(struct object_database *odb,
+					 const char *path,
+					 bool local)
 {
 	struct odb_source *source;
 
@@ -359,7 +362,7 @@ struct odb_source *odb_set_temporary_primary_source(struct object_database *odb,
 	 * Disable ref updates while a temporary odb is active, since
 	 * the objects in the database may roll back.
 	 */
-	source->disable_ref_updates = 1;
+	odb->repo->disable_ref_updates = true;
 	source->will_destroy = will_destroy;
 	source->next = odb->sources;
 	odb->sources = source;
@@ -386,6 +389,7 @@ void odb_restore_primary_source(struct object_database *odb,
 	if (cur_source->next != restore_source)
 		BUG("we expect the old primary object store to be the first alternate");
 
+	odb->repo->disable_ref_updates = false;
 	odb->sources = restore_source;
 	odb_source_free(cur_source);
 }
@@ -1032,16 +1036,77 @@ int odb_write_object_stream(struct object_database *odb,
 	return odb_source_loose_write_stream(odb->sources, stream, len, oid);
 }
 
-struct object_database *odb_new(struct repository *repo)
+static void odb_update_commondir(const char *name UNUSED,
+				 const char *old_cwd,
+				 const char *new_cwd,
+				 void *cb_data)
+{
+	struct object_database *odb = cb_data;
+	struct tmp_objdir *tmp_objdir;
+	struct odb_source *source;
+
+	tmp_objdir = tmp_objdir_unapply_primary_odb();
+
+	/*
+	 * In theory, we only have to do this for the primary object source, as
+	 * alternates' paths are always resolved to an absolute path.
+	 */
+	for (source = odb->sources; source; source = source->next) {
+		char *path;
+
+		if (is_absolute_path(source->path))
+			continue;
+
+		path = reparent_relative_path(old_cwd, new_cwd,
+					      source->path);
+
+		free(source->path);
+		source->path = path;
+	}
+
+	if (tmp_objdir)
+		tmp_objdir_reapply_primary_odb(tmp_objdir, old_cwd, new_cwd);
+}
+
+struct object_database *odb_new(struct repository *repo,
+				const char *primary_source,
+				const char *secondary_sources)
 {
 	struct object_database *o = xmalloc(sizeof(*o));
+	char *to_free = NULL;
 
 	memset(o, 0, sizeof(*o));
 	o->repo = repo;
 	o->packfiles = packfile_store_new(o);
 	pthread_mutex_init(&o->replace_mutex, NULL);
 	string_list_init_dup(&o->submodule_source_paths);
+
+	if (!primary_source)
+		primary_source = to_free = xstrfmt("%s/objects", repo->commondir);
+	o->sources = odb_source_new(o, primary_source, true);
+	o->sources_tail = &o->sources->next;
+	o->alternate_db = xstrdup_or_null(secondary_sources);
+
+	free(to_free);
+
+	chdir_notify_register(NULL, odb_update_commondir, o);
+
 	return o;
+}
+
+void odb_close(struct object_database *o)
+{
+	struct odb_source *source;
+
+	packfile_store_close(o->packfiles);
+
+	for (source = o->sources; source; source = source->next) {
+		if (source->midx)
+			close_midx(source->midx);
+		source->midx = NULL;
+	}
+
+	close_commit_graph(o);
 }
 
 static void odb_free_sources(struct object_database *o)
@@ -1057,30 +1122,29 @@ static void odb_free_sources(struct object_database *o)
 	o->source_by_path = NULL;
 }
 
-void odb_clear(struct object_database *o)
+void odb_free(struct object_database *o)
 {
-	FREE_AND_NULL(o->alternate_db);
+	if (!o)
+		return;
+
+	free(o->alternate_db);
 
 	oidmap_clear(&o->replace_map, 1);
 	pthread_mutex_destroy(&o->replace_mutex);
 
-	free_commit_graph(o->commit_graph);
-	o->commit_graph = NULL;
-	o->commit_graph_attempted = 0;
-
 	odb_free_sources(o);
-	o->sources_tail = NULL;
-	o->loaded_alternates = 0;
 
 	for (size_t i = 0; i < o->cached_object_nr; i++)
 		free((char *) o->cached_objects[i].value.buf);
-	FREE_AND_NULL(o->cached_objects);
+	free(o->cached_objects);
 
-	close_object_store(o);
+	odb_close(o);
 	packfile_store_free(o->packfiles);
-	o->packfiles = NULL;
-
 	string_list_clear(&o->submodule_source_paths, 0);
+
+	chdir_notify_unregister(NULL, odb_update_commondir, o);
+
+	free(o);
 }
 
 void odb_reprepare(struct object_database *o)

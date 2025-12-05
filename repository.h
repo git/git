@@ -72,6 +72,13 @@ struct repository {
 	struct ref_store *refs_private;
 
 	/*
+	 * Disable ref updates. This is especially used in contexts where
+	 * transactions may still be rolled back so that we don't start to
+	 * reference objects that may vanish.
+	 */
+	bool disable_ref_updates;
+
+	/*
 	 * A strmap of ref_stores, stored by submodule name, accessible via
 	 * `repo_get_submodule_ref_store()`.
 	 */
@@ -187,7 +194,8 @@ struct set_gitdir_args {
 	const char *graft_file;
 	const char *index_file;
 	const char *alternate_db;
-	int disable_ref_updates;
+	bool disable_ref_updates;
+	bool skip_initializing_odb;
 };
 
 void repo_set_gitdir(struct repository *repo, const char *root,
