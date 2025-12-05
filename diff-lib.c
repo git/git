@@ -418,13 +418,12 @@ static int show_modified(struct rev_info *revs,
 	}
 
 	oldmode = old_entry->ce_mode;
-	if (mode == oldmode && oideq(oid, &old_entry->oid) && !dirty_submodule &&
-	    !revs->diffopt.flags.find_copies_harder)
-		return 0;
-
-	diff_change(&revs->diffopt, oldmode, mode,
-		    &old_entry->oid, oid, 1, !is_null_oid(oid),
-		    old_entry->name, 0, dirty_submodule);
+	if (mode != oldmode || !oideq(oid, &old_entry->oid) || dirty_submodule)
+		diff_change(&revs->diffopt, oldmode, mode,
+			    &old_entry->oid, oid, 1, !is_null_oid(oid),
+			    old_entry->name, 0, dirty_submodule);
+	else if (revs->diffopt.flags.find_copies_harder)
+		diff_same(&revs->diffopt, mode, oid, old_entry->name);
 	return 0;
 }
 
