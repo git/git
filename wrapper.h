@@ -57,6 +57,12 @@ static inline ssize_t write_str_in_full(int fd, const char *str)
 void write_file_buf(const char *path, const char *buf, size_t len);
 
 /**
+ * Like write_file_buf(), but report errors instead of exiting. Returns 0 on
+ * success or a negative value on error after emitting a message.
+ */
+int write_file_buf_gently(const char *path, const char *buf, size_t len);
+
+/**
  * Like write_file_buf(), but format the contents into a buffer first.
  * Additionally, write_file() will append a newline if one is not already
  * present, making it convenient to write text files:
