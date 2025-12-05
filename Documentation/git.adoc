@@ -584,6 +584,14 @@ double-quotes and respecting backslash escapes. E.g., the value
 	repositories will be set to this value. The default is "files".
 	See `--ref-format` in linkgit:git-init[1].
 
+`GIT_REF_URI`::
+    Specify which reference backend to be used along with its URI. Reference
+    backends like the files, reftable backend use the $GIT_DIR as their URI.
++
+Expects the format `<ref_backend>://<URI-for-resource>`, where the
+_<ref_backend>_ specifies the reference backend and the _<URI-for-resource>_
+specifies the URI used by the backend.
+
 Git Commits
 ~~~~~~~~~~~
 `GIT_AUTHOR_NAME`::
