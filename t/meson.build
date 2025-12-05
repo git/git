@@ -185,6 +185,7 @@ integration_tests = [
   't1308-config-set.sh',
   't1309-early-config.sh',
   't1310-config-default.sh',
+  't1311-config-optional.sh',
   't1350-config-hooks-path.sh',
   't1400-update-ref.sh',
   't1401-symbolic-ref.sh',

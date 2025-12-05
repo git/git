@@ -1398,14 +1398,16 @@ int git_fsck_config(const char *var, const char *value,
 
 	if (strcmp(var, "fsck.skiplist") == 0) {
 		char *path;
-		struct strbuf sb = STRBUF_INIT;
 
 		if (git_config_pathname(&path, var, value))
 			return -1;
-		strbuf_addf(&sb, "skiplist=%s", path);
-		free(path);
-		fsck_set_msg_types(options, sb.buf);
-		strbuf_release(&sb);
+		if (path) {
+			struct strbuf sb = STRBUF_INIT;
+			strbuf_addf(&sb, "skiplist=%s", path);
+			free(path);
+			fsck_set_msg_types(options, sb.buf);
+			strbuf_release(&sb);
+		}
 		return 0;
 	}
 
