@@ -1,0 +1,224 @@
+= Unambiguous types
+
+Most of these mappings are obvious, but there are some nuances and gotchas with
+Rust FFI (Foreign Function Interface).
+
+This document defines clear, one-to-one mappings between primitive types in C,
+Rust (and possible other languages in the future). Its purpose is to eliminate
+ambiguity in type widths, signedness, and binary representation across
+platforms and languages.
+
+For Git, the only header required to use these unambiguous types in C is
+`git-compat-util.h`.
+
+== Boolean types
+[cols="1,1", options="header"]
+|===
+| C Type | Rust Type
+| bool^1^       | bool
+|===
+
+== Integer types
+
+In C, `<stdint.h>` (or an equivalent) must be included.
+
+[cols="1,1", options="header"]
+|===
+| C Type | Rust Type
+| uint8_t    | u8
+| uint16_t   | u16
+| uint32_t   | u32
+| uint64_t   | u64
+
+| int8_t     | i8
+| int16_t    | i16
+| int32_t    | i32
+| int64_t    | i64
+|===
+
+== Floating-point types
+
+Rust requires IEEE-754 semantics.
+In C, that is typically true, but not guaranteed by the standard.
+
+[cols="1,1", options="header"]
+|===
+| C Type | Rust Type
+| float^2^      | f32
+| double^2^     | f64
+|===
+
+== Size types
+
+These types represent pointer-sized integers and are typically defined in
+`<stddef.h>` or an equivalent header.
+
+Size types should be used any time pointer arithmetic is performed e.g.
+indexing an array, describing the number of elements in memory, etc...
+
+[cols="1,1", options="header"]
+|===
+| C Type | Rust Type
+| size_t^3^     | usize
+| ptrdiff_t^3^  | isize
+|===
+
+== Character types
+
+This is where C and Rust don't have a clean one-to-one mapping.
+
+A C `char` and a Rust `u8` share the same bit width, so any C struct containing
+a `char` will have the same size as the corresponding Rust struct using `u8`.
+In that sense, such structs are safe to pass over the FFI boundary, because
+their fields will be laid out identically. However, beyond bit width, C `char`
+has additional semantics and platform-dependent behavior that can cause
+problems, as discussed below.
+
+The C language leaves the signedness of `char` implementation defined. Because
+our developer build enables -Wsign-compare, comparison of a value of `char`
+type with either signed or unsigned integers may trigger warnings from the
+compiler.
+
+Note: Rust's `char` type is an unsigned 32-bit integer that is used to describe
+Unicode code points.
+
+=== Notes
+^1^ This is only true if stdbool.h (or equivalent) is used. +
+^2^ C does not enforce IEEE-754 compatibility, but Rust expects it. If the
+platform/arch for C does not follow IEEE-754 then this equivalence does not
+hold. Also, it's assumed that `float` is 32 bits and `double` is 64, but
+there may be a strange platform/arch where even this isn't true. +
+^3^ C also defines uintptr_t, ssize_t and intptr_t, but these types are
+discouraged for FFI purposes. For functions like `read()` and `write()` ssize_t
+should be cast to a different, and unambiguous, type before being passed over
+the FFI boundary. +
+
+== Problems with std::ffi::c_* types in Rust
+TL;DR: In practice, Rust's `c_*` types aren't guaranteed to match C types for
+all possible C compilers, platforms, or architectures, because Rust only
+ensures correctness of C types on officially supported targets. These
+definitions have changed over time to match more targets which means that the
+c_* definitions will differ based on which Rust version Git chooses to use.
+
+Current list of safe, Rust side, FFI types in Git: +
+
+* `c_void`
+* `CStr`
+* `CString`
+
+Even then, they should be used sparingly, and only where the semantics match
+exactly.
+
+The std::os::raw::c_* directly inherits the problems of core::ffi, which
+changes over time and seems to make a best guess at the correct definition for
+a given platform/target. This probably isn't a problem for all other platforms
+that Rust supports currently, but can anyone say that Rust got it right for all
+C compilers of all platforms/targets?
+
+To give an example: c_long is defined in
+footnote:[https://doc.rust-lang.org/1.63.0/src/core/ffi/mod.rs.html#175-189[c_long in 1.63.0]]
+footnote:[https://doc.rust-lang.org/1.89.0/src/core/ffi/primitives.rs.html#135-151[c_long in 1.89.0]]
+
+=== Rust version 1.63.0
+
+```
+mod c_long_definition {
+    cfg_if! {
+        if #[cfg(all(target_pointer_width = "64", not(windows)))] {
+            pub type c_long = i64;
+            pub type NonZero_c_long = crate::num::NonZeroI64;
+            pub type c_ulong = u64;
+            pub type NonZero_c_ulong = crate::num::NonZeroU64;
+        } else {
+            // The minimal size of `long` in the C standard is 32 bits
+            pub type c_long = i32;
+            pub type NonZero_c_long = crate::num::NonZeroI32;
+            pub type c_ulong = u32;
+            pub type NonZero_c_ulong = crate::num::NonZeroU32;
+        }
+    }
+}
+```
+
+=== Rust version 1.89.0
+
+```
+mod c_long_definition {
+    crate::cfg_select! {
+        any(
+            all(target_pointer_width = "64", not(windows)),
+            // wasm32 Linux ABI uses 64-bit long
+            all(target_arch = "wasm32", target_os = "linux")
+        ) => {
+            pub(super) type c_long = i64;
+            pub(super) type c_ulong = u64;
+        }
+        _ => {
+            // The minimal size of `long` in the C standard is 32 bits
+            pub(super) type c_long = i32;
+            pub(super) type c_ulong = u32;
+        }
+    }
+}
+```
+
+Even for the cases where C types are correctly mapped to Rust types via
+std::ffi::c_* there are still problems. Let's take c_char for example. On some
+platforms it's u8 on others it's i8.
+
+=== Subtraction underflow in debug mode
+
+The following code will panic in debug on platforms that define c_char as u8,
+but won't if it's an i8.
+
+```
+let mut x: std::ffi::c_char = 0;
+x -= 1;
+```
+
+=== Inconsistent shift behavior
+
+`x` will be 0xC0 for platforms that use i8, but will be 0x40 where it's u8.
+
+```
+let mut x: std::ffi::c_char = 0x80;
+x >>= 1;
+```
+
+=== Equality fails to compile on some platforms
+
+The following will not compile on platforms that define c_char as i8, but will
+if it's u8. You can cast x e.g. `assert_eq!(x as u8, b'a');`, but then you get
+a warning on platforms that use u8 and a clean compilation where i8 is used.
+
+```
+let mut x: std::ffi::c_char = 0x61;
+assert_eq!(x, b'a');
+```
+
+== Enum types
+Rust enum types should not be used as FFI types. Rust enum types are more like
+C union types than C enum's. For something like:
+
+```
+#[repr(C, u8)]
+enum Fruit {
+    Apple,
+    Banana,
+    Cherry,
+}
+```
+
+It's easy enough to make sure the Rust enum matches what C would expect, but a
+more complex type like.
+
+```
+enum HashResult {
+    SHA1([u8; 20]),
+    SHA256([u8; 32]),
+}
+```
+
+The Rust compiler has to add a discriminant to the enum to distinguish between
+the variants. The width, location, and values for that discriminant is up to
+the Rust compiler and is not ABI stable.
