@@ -1640,7 +1640,7 @@ static void final(const char *final_pack_name, const char *curr_pack_name,
 	rename_tmp_packfile(&final_index_name, curr_index_name, &index_name,
 			    hash, "idx", 1);
 
-	if (do_fsck_object)
+	if (do_fsck_object && startup_info->have_repository)
 		packfile_store_load_pack(the_repository->objects->packfiles,
 					 final_index_name, 0);
 
@@ -2110,8 +2110,23 @@ int cmd_index_pack(int argc,
 	else
 		close(input_fd);
 
-	if (do_fsck_object && fsck_finish(&fsck_options))
-		die(_("fsck error in pack objects"));
+	if (do_fsck_object) {
+		/*
+		 * We cannot perform queued consistency checks when running
+		 * outside of a repository because those require us to read
+		 * from the object database, which is uninitialized.
+		 *
+		 * TODO: we may eventually set up an in-memory object database,
+		 * which would allow us to perform these queued checks.
+		 */
+		if (!startup_info->have_repository &&
+		    fsck_has_queued_checks(&fsck_options))
+			die(_("cannot perform queued object checks outside "
+			      "of a repository"));
+
+		if (fsck_finish(&fsck_options))
+			die(_("fsck error in pack objects"));
+	}
 
 	free(opts.anomaly);
 	free(objects);
