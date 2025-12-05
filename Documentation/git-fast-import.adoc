@@ -66,15 +66,26 @@ fast-import stream! This option is enabled automatically for
 remote-helpers that use the `import` capability, as they are
 already trusted to run their own code.
 
---signed-tags=(verbatim|warn-verbatim|warn-strip|strip|abort)::
-	Specify how to handle signed tags.  Behaves in the same way
-	as the same option in linkgit:git-fast-export[1], except that
-	default is 'verbatim' (instead of 'abort').
+`--signed-tags=(verbatim|warn-verbatim|warn-strip|strip|abort)`::
+	Specify how to handle signed tags. Behaves in the same way as
+	the `--signed-commits=<mode>` below, except that the
+	`strip-if-invalid` mode is not yet supported. Like for signed
+	commits, the default mode is `verbatim`.
 
---signed-commits=(verbatim|warn-verbatim|warn-strip|strip|abort)::
-	Specify how to handle signed commits.  Behaves in the same way
-	as the same option in linkgit:git-fast-export[1], except that
-	default is 'verbatim' (instead of 'abort').
+`--signed-commits=<mode>`::
+	Specify how to handle signed commits. The following <mode>s
+	are supported:
++
+* `verbatim`, which is the default, will silently import commit
+  signatures.
+* `warn-verbatim` will import them, but will display a warning.
+* `abort` will make this program die when encountering a signed
+  commit.
+* `strip` will silently make the commits unsigned.
+* `warn-strip` will make them unsigned, but will display a warning.
+* `strip-if-invalid` will check signatures and, if they are invalid,
+  will strip them and display a warning. The validation is performed
+  in the same way as linkgit:git-verify-commit[1] does it.
 
 Options for Frontends
 ~~~~~~~~~~~~~~~~~~~~~

@@ -111,6 +111,7 @@ enum sign_mode {
 	SIGN_VERBATIM,
 	SIGN_WARN_STRIP,
 	SIGN_STRIP,
+	SIGN_STRIP_IF_INVALID,
 };
 
 /*
