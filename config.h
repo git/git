@@ -564,7 +564,6 @@ int git_configset_get_ulong(struct config_set *cs, const char *key, unsigned lon
 int git_configset_get_bool(struct config_set *cs, const char *key, int *dest);
 int git_configset_get_bool_or_int(struct config_set *cs, const char *key, int *is_bool, int *dest);
 int git_configset_get_maybe_bool(struct config_set *cs, const char *key, int *dest);
-int git_configset_get_pathname(struct config_set *cs, const char *key, char **dest);
 
 /**
  * Run only the discover part of the repo_config_get_*() functions

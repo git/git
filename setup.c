@@ -1248,7 +1248,7 @@ static int safe_directory_cb(const char *key, const char *value,
 	} else {
 		char *allowed = NULL;
 
-		if (!git_config_pathname(&allowed, key, value)) {
+		if (!git_config_pathname(&allowed, key, value) && allowed) {
 			char *normalized = NULL;
 
 			/*

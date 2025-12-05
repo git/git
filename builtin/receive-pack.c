@@ -177,8 +177,9 @@ static int receive_pack_config(const char *var, const char *value,
 
 		if (git_config_pathname(&path, var, value))
 			return -1;
-		strbuf_addf(&fsck_msg_types, "%cskiplist=%s",
-			fsck_msg_types.len ? ',' : '=', path);
+		if (path)
+			strbuf_addf(&fsck_msg_types, "%cskiplist=%s",
+				    fsck_msg_types.len ? ',' : '=', path);
 		free(path);
 		return 0;
 	}
