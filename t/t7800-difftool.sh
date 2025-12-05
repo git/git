@@ -752,11 +752,11 @@ test_expect_success SYMLINKS 'difftool --dir-diff handles modified symlinks' '
 		c
 	EOF
 	git difftool --symlinks --dir-diff --extcmd ls >output &&
-	grep -v ^/ output >actual &&
+	grep -v ":\$" output >actual &&
 	test_cmp expect actual &&
 
 	git difftool --no-symlinks --dir-diff --extcmd ls >output &&
-	grep -v ^/ output >actual &&
+	grep -v ":\$" output >actual &&
 	test_cmp expect actual &&
 
 	# The left side contains symlink "c" that points to "b"
@@ -786,11 +786,11 @@ test_expect_success SYMLINKS 'difftool --dir-diff handles modified symlinks' '
 
 	EOF
 	git difftool --symlinks --dir-diff --extcmd ls >output &&
-	grep -v ^/ output >actual &&
+	grep -v ":\$" output >actual &&
 	test_cmp expect actual &&
 
 	git difftool --no-symlinks --dir-diff --extcmd ls >output &&
-	grep -v ^/ output >actual &&
+	grep -v ":\$" output >actual &&
 	test_cmp expect actual
 '
 

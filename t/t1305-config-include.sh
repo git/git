@@ -286,7 +286,7 @@ test_expect_success SYMLINKS 'conditional include, relative path with symlinks' 
 	)
 '
 
-test_expect_success SYMLINKS 'conditional include, gitdir matching symlink' '
+test_expect_success SYMLINKS,!MINGW 'conditional include, gitdir matching symlink' '
 	ln -s foo bar &&
 	(
 		cd bar &&
@@ -298,7 +298,7 @@ test_expect_success SYMLINKS 'conditional include, gitdir matching symlink' '
 	)
 '
 
-test_expect_success SYMLINKS 'conditional include, gitdir matching symlink, icase' '
+test_expect_success SYMLINKS,!MINGW 'conditional include, gitdir matching symlink, icase' '
 	(
 		cd bar &&
 		echo "[includeIf \"gitdir/i:BAR/\"]path=bar8" >>.git/config &&
