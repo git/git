@@ -1379,6 +1379,12 @@ int fsck_finish(struct fsck_options *options)
 	return ret;
 }
 
+bool fsck_has_queued_checks(struct fsck_options *options)
+{
+	return !oidset_equal(&options->gitmodules_found, &options->gitmodules_done) ||
+	       !oidset_equal(&options->gitattributes_found, &options->gitattributes_done);
+}
+
 void fsck_options_clear(struct fsck_options *options)
 {
 	free(options->msg_type);

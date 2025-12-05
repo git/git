@@ -1063,7 +1063,7 @@ int cmd_gc(int argc,
 	report_garbage = report_pack_garbage;
 	odb_reprepare(the_repository->objects);
 	if (pack_garbage.nr > 0) {
-		close_object_store(the_repository->objects);
+		odb_close(the_repository->objects);
 		clean_pack_garbage();
 	}
 

@@ -16,6 +16,22 @@ int oidset_contains(const struct oidset *set, const struct object_id *oid)
 	return pos != kh_end(&set->set);
 }
 
+bool oidset_equal(const struct oidset *a, const struct oidset *b)
+{
+	struct oidset_iter iter;
+	struct object_id *a_oid;
+
+	if (oidset_size(a) != oidset_size(b))
+		return false;
+
+	oidset_iter_init(a, &iter);
+	while ((a_oid = oidset_iter_next(&iter)))
+		if (!oidset_contains(b, a_oid))
+			return false;
+
+	return true;
+}
+
 int oidset_insert(struct oidset *set, const struct object_id *oid)
 {
 	int added;

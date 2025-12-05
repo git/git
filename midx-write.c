@@ -1458,7 +1458,7 @@ static int write_midx_internal(struct odb_source *source,
 	}
 
 	if (ctx.m || ctx.base_midx)
-		close_object_store(ctx.repo->objects);
+		odb_close(ctx.repo->objects);
 
 	if (commit_lock_file(&lk) < 0)
 		die_errno(_("could not write multi-pack-index"));

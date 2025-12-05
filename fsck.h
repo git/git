@@ -249,6 +249,13 @@ int fsck_tag_standalone(const struct object_id *oid, const char *buffer,
 int fsck_finish(struct fsck_options *options);
 
 /*
+ * Check whether there are any checks that have been queued up and that still
+ * need to be run. Returns `false` iff `fsck_finish()` wouldn't perform any
+ * actions, `true` otherwise.
+ */
+bool fsck_has_queued_checks(struct fsck_options *options);
+
+/*
  * Clear the fsck_options struct, freeing any allocated memory.
  */
 void fsck_options_clear(struct fsck_options *options);
