@@ -2332,6 +2332,17 @@ static int add_promisor_object(const struct object_id *oid,
 	if (obj && obj->parsed) {
 		we_parsed_object = 0;
 	} else {
+		/*
+		 * Blobs don't reference other objects, so skip parsing them
+		 * to save time.
+		 */
+		enum object_type type;
+		type = odb_read_object_info(pack->repo->objects, oid, NULL);
+		if (type == OBJ_BLOB) {
+			oidset_insert(set, oid);
+			return 0;
+		}
+
 		we_parsed_object = 1;
 		obj = parse_object(pack->repo, oid);
 	}
