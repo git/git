@@ -89,4 +89,21 @@ do
 	'
 done
 
+test_expect_success "exclude magic would not interfere with .gitignore" '
+	test_write_lines dir file sub ign err out "*.o" >.gitignore &&
+	>foo.o &&
+	>foo.c &&
+	test_must_fail git add foo.o 2>err &&
+	test_grep "are ignored by one" err &&
+	test_grep "hint: Use -f" err &&
+
+	git add ":(exclude)foo.o" &&
+	git ls-files >actual &&
+	cat >expect <<-\EOF &&
+	.gitignore
+	foo.c
+	EOF
+	test_cmp expect actual
+'
+
 test_done
