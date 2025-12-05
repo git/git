@@ -40,10 +40,10 @@ test_expect_success 'clone can prompt for proxy password' '
 
 start_socks() {
 	mkfifo socks_output &&
-	{
+	(
 		"$PERL_PATH" "$TEST_DIRECTORY/socks4-proxy.pl" "$1" >socks_output &
 		echo $! > "$TRASH_DIRECTORY/socks.pid"
-	} &&
+	) &&
 	read line <socks_output &&
 	test "$line" = ready
 }
