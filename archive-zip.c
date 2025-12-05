@@ -10,9 +10,9 @@
 #include "gettext.h"
 #include "git-zlib.h"
 #include "hex.h"
-#include "streaming.h"
 #include "utf8.h"
 #include "odb.h"
+#include "odb/streaming.h"
 #include "strbuf.h"
 #include "userdiff.h"
 #include "write-or-die.h"
@@ -309,7 +309,7 @@ static int write_zip_entry(struct archiver_args *args,
 	enum zip_method method;
 	unsigned char *out;
 	void *deflated = NULL;
-	struct git_istream *stream = NULL;
+	struct odb_read_stream *stream = NULL;
 	unsigned long flags = 0;
 	int is_binary = -1;
 	const char *path_without_prefix = path + args->baselen;
@@ -347,12 +347,11 @@ static int write_zip_entry(struct archiver_args *args,
 			method = ZIP_METHOD_DEFLATE;
 
 		if (!buffer) {
-			enum object_type type;
-			stream = open_istream(args->repo, oid, &type, &size,
-					      NULL);
+			stream = odb_read_stream_open(args->repo->objects, oid, NULL);
 			if (!stream)
 				return error(_("cannot stream blob %s"),
 					     oid_to_hex(oid));
+			size = stream->size;
 			flags |= ZIP_STREAM;
 			out = NULL;
 		} else {
@@ -429,7 +428,7 @@ static int write_zip_entry(struct archiver_args *args,
 		ssize_t readlen;
 
 		for (;;) {
-			readlen = read_istream(stream, buf, sizeof(buf));
+			readlen = odb_read_stream_read(stream, buf, sizeof(buf));
 			if (readlen <= 0)
 				break;
 			crc = crc32(crc, buf, readlen);
@@ -439,7 +438,7 @@ static int write_zip_entry(struct archiver_args *args,
 							    buf, readlen);
 			write_or_die(1, buf, readlen);
 		}
-		close_istream(stream);
+		odb_read_stream_close(stream);
 		if (readlen)
 			return readlen;
 
@@ -462,7 +461,7 @@ static int write_zip_entry(struct archiver_args *args,
 		zstream.avail_out = sizeof(compressed);
 
 		for (;;) {
-			readlen = read_istream(stream, buf, sizeof(buf));
+			readlen = odb_read_stream_read(stream, buf, sizeof(buf));
 			if (readlen <= 0)
 				break;
 			crc = crc32(crc, buf, readlen);
@@ -486,7 +485,7 @@ static int write_zip_entry(struct archiver_args *args,
 			}
 
 		}
-		close_istream(stream);
+		odb_read_stream_close(stream);
 		if (readlen)
 			return readlen;
 
