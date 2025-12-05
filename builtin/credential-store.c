@@ -7,6 +7,7 @@
 #include "path.h"
 #include "string-list.h"
 #include "parse-options.h"
+#include "url.h"
 #include "write-or-die.h"
 
 static struct lock_file credential_lock;
@@ -74,12 +75,6 @@ static void rewrite_credential_file(const char *fn, struct credential *c,
 	parse_credential_file(fn, c, NULL, print_line, match_password);
 	if (commit_lock_file(&credential_lock) < 0)
 		die_errno("unable to write credential store");
-}
-
-static int is_rfc3986_unreserved(char ch)
-{
-	return isalnum(ch) ||
-		ch == '-' || ch == '_' || ch == '.' || ch == '~';
 }
 
 static int is_rfc3986_reserved_or_unreserved(char ch)

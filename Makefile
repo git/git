@@ -2346,6 +2346,11 @@ ifdef INCLUDE_LIBGIT_RS
 	BASIC_CFLAGS += -fvisibility=hidden
 endif
 
+ifdef SUBMODULE_ENCODING_BY_DEFAULT
+	# Set submoduleEncoding extension default specified at build time
+	BASIC_CFLAGS += -DSUBMODULE_ENCODING_BY_DEFAULT=$(SUBMODULE_ENCODING_BY_DEFAULT)
+endif
+
 ifeq ($(TCLTK_PATH),)
 NO_TCLTK = NoThanks
 endif
