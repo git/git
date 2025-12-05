@@ -37,8 +37,8 @@ You can also set the configuration options `pull.rebase`, `pull.squash`,
 or `pull.ff` with your preferred behaviour.
 
 If there's a merge conflict during the merge or rebase that you don't
-want to handle, you can safely abort it with `git merge --abort` or `git
---rebase abort`.
+want to handle, you can safely abort it with `git merge --abort` or
+`git rebase --abort`.
 
 OPTIONS
 -------
