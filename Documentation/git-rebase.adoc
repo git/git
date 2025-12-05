@@ -474,6 +474,13 @@ See also INCOMPATIBLE OPTIONS below.
 	Instead of using the current time as the committer date, use
 	the author date of the commit being rebased as the committer
 	date. This option implies `--force-rebase`.
++
+WARNING: The history walking machinery assumes that commits have
+non-decreasing commit timestamps. You should consider if you really need
+to use this option. Then you should only use this option to override the
+committer date when rebasing commits on top of a base which commit is
+older (in terms of the commit date) than the oldest commit you are
+applying (in terms of the author date).
 
 --ignore-date::
 --reset-author-date::
