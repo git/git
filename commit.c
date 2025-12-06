@@ -1315,7 +1315,8 @@ free_return:
 	free(buf);
 }
 
-int check_commit_signature(const struct commit *commit, struct signature_check *sigc)
+int verify_commit_buffer(const char *buffer, size_t size,
+			 struct signature_check *sigc)
 {
 	struct strbuf payload = STRBUF_INIT;
 	struct strbuf signature = STRBUF_INIT;
@@ -1323,7 +1324,8 @@ int check_commit_signature(const struct commit *commit, struct signature_check *
 
 	sigc->result = 'N';
 
-	if (parse_signed_commit(commit, &payload, &signature, the_hash_algo) <= 0)
+	if (parse_buffer_signed_by_header(buffer, size, &payload,
+					  &signature, the_hash_algo) <= 0)
 		goto out;
 
 	sigc->payload_type = SIGNATURE_PAYLOAD_COMMIT;
@@ -1333,6 +1335,17 @@ int check_commit_signature(const struct commit *commit, struct signature_check *
  out:
 	strbuf_release(&payload);
 	strbuf_release(&signature);
+
+	return ret;
+}
+
+int check_commit_signature(const struct commit *commit, struct signature_check *sigc)
+{
+	unsigned long size;
+	const char *buffer = repo_get_commit_buffer(the_repository, commit, &size);
+	int ret = verify_commit_buffer(buffer, size, sigc);
+
+	repo_unuse_commit_buffer(the_repository, commit, buffer);
 
 	return ret;
 }

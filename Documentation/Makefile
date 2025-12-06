@@ -143,6 +143,7 @@ TECH_DOCS += technical/shallow
 TECH_DOCS += technical/sparse-checkout
 TECH_DOCS += technical/sparse-index
 TECH_DOCS += technical/trivial-merge
+TECH_DOCS += technical/unambiguous-types
 TECH_DOCS += technical/unit-tests
 SP_ARTICLES += $(TECH_DOCS)
 SP_ARTICLES += technical/api-index

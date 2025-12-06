@@ -41,6 +41,8 @@ typedef void (*chdir_notify_callback)(const char *name,
 				      const char *new_cwd,
 				      void *data);
 void chdir_notify_register(const char *name, chdir_notify_callback cb, void *data);
+void chdir_notify_unregister(const char *name, chdir_notify_callback cb,
+			     void *data);
 void chdir_notify_reparent(const char *name, char **path);
 
 /*

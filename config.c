@@ -1291,6 +1291,7 @@ int git_config_pathname(char **dest, const char *var, const char *value)
 
 	if (is_optional && is_missing_file(path)) {
 		free(path);
+		*dest = NULL;
 		return 0;
 	}
 
@@ -1953,7 +1954,7 @@ int git_configset_get_maybe_bool(struct config_set *set, const char *key, int *d
 		return 1;
 }
 
-int git_configset_get_pathname(struct config_set *set, const char *key, char **dest)
+static int git_configset_get_pathname(struct config_set *set, const char *key, char **dest)
 {
 	const char *value;
 	if (!git_configset_get_value(set, key, &value, NULL))

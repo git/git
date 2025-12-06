@@ -94,8 +94,45 @@ static inline int discover_git_directory(struct strbuf *commondir,
 	return 0;
 }
 
-void set_git_dir(const char *path, int make_realpath);
 void set_git_work_tree(const char *tree);
+
+/* Flags that can be passed to `enter_repo()`. */
+enum {
+	/*
+	 * Callers that require exact paths (as opposed to allowing known
+	 * suffixes like ".git", ".git/.git" to be omitted) can set this bit.
+	 */
+	ENTER_REPO_STRICT = (1<<0),
+
+	/*
+	 * Callers that are willing to run without ownership check can set this
+	 * bit.
+	 */
+	ENTER_REPO_ANY_OWNER_OK = (1<<1),
+};
+
+/*
+ * Discover and enter a repository.
+ *
+ * First, one directory to try is determined by the following algorithm.
+ *
+ * (0) If "strict" is given, the path is used as given and no DWIM is
+ *     done. Otherwise:
+ * (1) "~/path" to mean path under the running user's home directory;
+ * (2) "~user/path" to mean path under named user's home directory;
+ * (3) "relative/path" to mean cwd relative directory; or
+ * (4) "/absolute/path" to mean absolute directory.
+ *
+ * Unless "strict" is given, we check "%s/.git", "%s", "%s.git/.git", "%s.git"
+ * in this order. We select the first one that is a valid git repository, and
+ * chdir() to it. If none match, or we fail to chdir, we return NULL.
+ *
+ * If all goes well, we return the directory we used to chdir() (but
+ * before ~user is expanded), avoiding getcwd() resolving symbolic
+ * links.  User relative paths are also returned as they are given,
+ * except DWIM suffixing.
+ */
+const char *enter_repo(const char *path, unsigned flags);
 
 const char *setup_git_directory_gently(int *);
 const char *setup_git_directory(void);

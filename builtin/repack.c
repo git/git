@@ -488,7 +488,7 @@ int cmd_repack(int argc,
 
 	string_list_sort(&names);
 
-	close_object_store(repo->objects);
+	odb_close(repo->objects);
 
 	/*
 	 * Ok we have prepared all new packfiles.

@@ -34,7 +34,6 @@
 #include "object-file.h"
 #include "object-name.h"
 #include "odb.h"
-#include "path.h"
 #include "protocol.h"
 #include "commit-reach.h"
 #include "server-info.h"
@@ -42,6 +41,7 @@
 #include "trace2.h"
 #include "worktree.h"
 #include "shallow.h"
+#include "setup.h"
 #include "parse-options.h"
 
 static const char * const receive_pack_usage[] = {
@@ -177,8 +177,9 @@ static int receive_pack_config(const char *var, const char *value,
 
 		if (git_config_pathname(&path, var, value))
 			return -1;
-		strbuf_addf(&fsck_msg_types, "%cskiplist=%s",
-			fsck_msg_types.len ? ',' : '=', path);
+		if (path)
+			strbuf_addf(&fsck_msg_types, "%cskiplist=%s",
+				    fsck_msg_types.len ? ',' : '=', path);
 		free(path);
 		return 0;
 	}

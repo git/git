@@ -333,6 +333,13 @@ int remove_signature(struct strbuf *buf);
  */
 int check_commit_signature(const struct commit *commit, struct signature_check *sigc);
 
+/*
+ * Same as check_commit_signature() but accepts a commit buffer and
+ * its size, instead of a `struct commit *`.
+ */
+int verify_commit_buffer(const char *buffer, size_t size,
+			 struct signature_check *sigc);
+
 /* record author-date for each commit object */
 struct author_date_slab;
 void record_author_date(struct author_date_slab *author_date,
