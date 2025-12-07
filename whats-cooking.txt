@@ -1,11 +1,11 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Nov 2025, #10; Sun, 30)
-X-master-at: f0ef5b6d9bcc258e4cbef93839d1b7465d5212b9
-X-next-at: d5f0c6e74e9a802622dcc0000e49faff0f38e160
+Subject: What's cooking in git.git (Dec 2025, #01)
+X-master-at: bdc5341ff65278a3cc80b2e8a02a2f02aa1fac06
+X-next-at: 3f4935d65f8d04f04e16a208ba4f77a42d207db3
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Nov 2025, #10; Sun, 30)
---------------------------------------------------
+What's cooking in git.git (Dec 2025, #01)
+-----------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
 prefixed with '+' are in 'next' (being in 'next' is a sign that a
@@ -51,85 +51,289 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ja/doc-synopsis-style (2025-11-24) 4 commits
-  (merged to 'next' on 2025-11-24 at 10610d9a57)
- + doc: pull-fetch-param typofix
-  (merged to 'next' on 2025-11-21 at eb9c1703c0)
- + doc: convert git push to synopsis style
- + doc: convert git pull to synopsis style
- + doc: convert git fetch to synopsis style
+* cc/fast-import-strip-if-invalid (2025-11-16) 3 commits
+  (merged to 'next' on 2025-11-26 at 7235cd0d18)
+ + fast-import: add 'strip-if-invalid' mode to --signed-commits=<mode>
+ + commit: refactor verify_commit_buffer()
+ + fast-import: refactor finalize_commit_buffer()
 
- Doc mark-up updates.
- 
- source: <pull.2002.git.1763588404.gitgitgadget@gmail.com>
+ "git fast-import" learns "--strip-if-invalid" option to drop
+ invalid cryptographic signature from objects.
+ source: <20251117043450.322644-1-christian.couder@gmail.com>
 
 
-* jc/whitespace-incomplete-line (2025-11-12) 12 commits
-  (merged to 'next' on 2025-11-24 at 9682c7f652)
- + attr: enable incomplete-line whitespace error for this project
- + diff: highlight and error out on incomplete lines
- + apply: check and fix incomplete lines
- + whitespace: allocate a few more bits and define WS_INCOMPLETE_LINE
- + apply: revamp the parsing of incomplete lines
- + diff: update the way rewrite diff handles incomplete lines
- + diff: call emit_callback ecbdata everywhere
- + diff: refactor output of incomplete line
- + diff: keep track of the type of the last line seen
- + diff: correct suppress_blank_empty hack
- + diff: emit_line_ws_markup() if/else style fix
- + whitespace: correct bit assignment comments
+* en/xdiff-cleanup-2 (2025-11-18) 10 commits
+  (merged to 'next' on 2025-11-25 at 452b7107da)
+ + xdiff: rename rindex -> reference_index
+ + xdiff: change rindex from long to size_t in xdfile_t
+ + xdiff: make xdfile_t.nreff a size_t instead of long
+ + xdiff: make xdfile_t.nrec a size_t instead of long
+ + xdiff: split xrecord_t.ha into line_hash and minimal_perfect_hash
+ + xdiff: use unambiguous types in xdl_hash_record()
+ + xdiff: use size_t for xrecord_t.size
+ + xdiff: make xrecord_t.ptr a uint8_t instead of char
+ + xdiff: use ptrdiff_t for dstart/dend
+ + doc: define unambiguous type mappings across C and Rust
 
- Both "git apply" and "git diff" learn a new whitespace error class,
- "incomplete-line".
- 
- source: <20251112220258.1009253-1-gitster@pobox.com>
+ Code clean-up.
+ source: <pull.2070.v5.git.git.1763505262.gitgitgadget@gmail.com>
 
 
-* je/doc-data-model (2025-11-12) 1 commit
-  (merged to 'next' on 2025-11-24 at 50e59df383)
- + doc: add an explanation of Git's data model
+* jc/optional-path (2025-11-20) 3 commits
+  (merged to 'next' on 2025-11-25 at 5e75404281)
+ + config: really treat missing optional path as not configured
+ + config: really pretend missing :(optional) value is not there
+ + config: mark otherwise unused function as file-scope static
 
- Add a new manual that describes the data model.
- 
- source: <pull.1981.v7.git.1762977200244.gitgitgadget@gmail.com>
-
-
-* jk/asan-bonanza (2025-11-18) 9 commits
-  (merged to 'next' on 2025-11-24 at 066fc38a19)
- + t: enable ASan's strict_string_checks option
- + fsck: avoid parse_timestamp() on buffer that isn't NUL-terminated
- + fsck: remove redundant date timestamp check
- + fsck: avoid strcspn() in fsck_ident()
- + fsck: assert newline presence in fsck_ident()
- + cache-tree: avoid strtol() on non-string buffer
- + Makefile: turn on NO_MMAP when building with ASan
- + pack-bitmap: handle name-hash lookups in incremental bitmaps
- + compat/mmap: mark unused argument in git_munmap()
-
- Various issues detected by Asan have been corrected.
- 
- source: <20251118091127.GA4175601@coredump.intra.peff.net>
+ "git config get --path" segfaulted on an ":(optional)path" that
+ does not exist, which has been corrected.
+ source: <xmqqikf47ajk.fsf@gitster.g>
 
 
-* lo/repo-info-all (2025-11-18) 2 commits
-  (merged to 'next' on 2025-11-21 at bb6bddcfc7)
- + repo: add --all to git-repo-info
- + repo: factor out field printing to dedicated function
+* js/ci-show-breakage-in-dockerized-jobs (2025-11-17) 1 commit
+  (merged to 'next' on 2025-11-26 at 3c4a8c430f)
+ + ci(dockerized): do show the result of failing tests again
 
- "git repo info" learned "--all" option.
- 
- source: <20251118204929.43597-1-lucasseikioshiro@gmail.com>
+ Dockerised jobs at the GitHub Actions CI have been taught to show
+ more details of failed tests.
+ cf. <xmqqpl9gike6.fsf@gitster.g>
+ cf. <CABPp-BErdhTjbqDem4Xvc-XbhgLUEpy9-eiaaR1F_diMca--6A@mail.gmail.com>
+ source: <pull.2003.git.1763399064983.gitgitgadget@gmail.com>
+
+
+* js/strip-scalar-too (2025-11-17) 1 commit
+  (merged to 'next' on 2025-11-25 at 9f2607acfb)
+ + make strip: include `scalar`
+
+ "make strip" has been taught to strip "scalar" as well as "git".
+ cf. <xmqq7bvoiadg.fsf@gitster.g>
+ source: <pull.2004.git.1763409086322.gitgitgadget@gmail.com>
+
+
+* kh/doc-committer-date-is-author-date (2025-11-20) 1 commit
+  (merged to 'next' on 2025-11-25 at 9f829587af)
+ + doc: warn against --committer-date-is-author-date
+
+ The "--committer-date-is-author-date" option of "git am/rebase" is
+ a misguided one.  The documentation is updated to discourage its
+ use.
+ source: <V2_committer-date-is-author-date.1@msgid.xyz>
+
+
+* ps/object-source-management (2025-11-18) 14 commits
+  (merged to 'next' on 2025-11-26 at 6f98745b4a)
+ + odb: handle recreation of quarantine directories
+ + odb: handle changing a repository's commondir
+ + chdir-notify: add function to unregister listeners
+ + odb: handle initialization of sources in `odb_new()`
+ + http-push: stop setting up `the_repository` for each reference
+ + t/helper: stop setting up `the_repository` repeatedly
+ + builtin/index-pack: fix deferred fsck outside repos
+ + oidset: introduce `oidset_equal()`
+ + odb: move logic to disable ref updates into repo
+ + odb: refactor `odb_clear()` to `odb_free()`
+ + odb: adopt logic to close object databases
+ + setup: convert `set_git_dir()` to have file scope
+ + path: move `enter_repo()` into "setup.c"
+ + Merge branch 'ps/object-source-loose' into ps/object-source-management
+
+ Code refactoring around object database sources.
+ cf. <aSAZSyUzIMvn-IvR@pks.im>
+ source: <20251119-b4-pks-odb-creation-v1-0-2b2ed2612cb6@pks.im>
+
+
+* rs/config-set-multi-error-message-fix (2025-11-24) 1 commit
+  (merged to 'next' on 2025-11-26 at 639a1e26d2)
+ + config: fix suggestion for failed set of multi-valued option
+
+ The error message given by "git config set", when the variable
+ being updated has more than one values defined, used old style "git
+ config" syntax with an incorrect option in its hint, both of which
+ have been corrected.
+ source: <c09945fe-fee2-47f6-8193-ac60d7245209@web.de>
+
+
+* rs/config-unset-opthelp-fix (2025-11-24) 1 commit
+  (merged to 'next' on 2025-11-26 at 31e282f4ae)
+ + config: fix short help of unset flags
+
+ The option help text given by "git config unset -h" described
+ the "--all" option to "replace", not "unset", multiple variables,
+ which has been corrected.
+ source: <06997dce-e4d5-4889-8e70-5f44da3dc800@web.de>
 
 --------------------------------------------------
 [New Topics]
 
+* ap/packfile-promisor-object-optim (2025-12-05) 1 commit
+ - packfile: skip decompressing and hashing blobs in add_promisor_object()
+
+ The code path that enumerates promisor objects have been optimized
+ to skip pointlessly parsing blob objects.
+
+ Comments?
+ source: <20251206002014.2066644-1-aplattner@nvidia.com>
+
+
+* je/doc-pull (2025-12-03) 1 commit
+  (merged to 'next' on 2025-12-05 at 601711e5f2)
+ + doc: git-pull: fix 'git --rebase abort' typo
+
+ Doc fixup.
+
+ Will merge to 'master'.
+ source: <pull.2015.git.1764776095597.gitgitgadget@gmail.com>
+
+
+* js/last-modified-with-sparse-checkouts (2025-11-29) 1 commit
+  (merged to 'next' on 2025-12-05 at f1d5abdd14)
+ + last-modified: support sparse checkouts
+
+ "git last-modified" used to mishandle "--" to mark the beginning of
+ pathspec, which has been corrected.
+
+ Will merge to 'master'.
+ source: <pull.2013.git.1764423826908.gitgitgadget@gmail.com>
+
+
+* kh/advise-w-git-help-in-branch (2025-12-02) 1 commit
+  (merged to 'next' on 2025-12-05 at 3b7b03150e)
+ + branch: advice using git-help(1) instead of man(1)
+
+ A help message from "git branch" now mentions "git help" instead of
+ "man" when suggesting to read some documentation.
+
+ Will merge to 'master'.
+ source: <V2_advice_git-help.53@msgid.xyz>
+
+
+* lo/repo-struct-z (2025-12-04) 3 commits
+  (merged to 'next' on 2025-12-06 at 4f602e14d8)
+ + repo: add -z as an alias for --format=nul to git-repo-structure
+ + repo: use [--format=... | -z] instead of [-z] in git-repo-info synopsis
+ + repo: remove blank line from Documentation/git-repo.adoc
+
+ "git repo struct" learned to take "-z" as a synonym to "--format=nul".
+
+ Will merge to 'master'.
+ cf. <aTK9X6ptrqs_9agD@pks.im>
+ source: <20251204210843.79411-1-lucasseikioshiro@gmail.com>
+
+
+* tc/meson-cross-compile-fix (2025-12-03) 3 commits
+  (merged to 'next' on 2025-12-05 at c45b57ca74)
+ + meson: use is_cross_build() where possible
+ + meson: only detect ICONV_OMITS_BOM if possible
+ + meson: ignore subprojects/.wraplock
+
+ Build fix.
+
+ Will merge to 'master'.
+ source: <20251202-toon-cross-compile-v1-0-cabc8bce529f@iotcl.com>
+
+
+* je/doc-data-model (2025-12-02) 1 commit
+  (merged to 'next' on 2025-12-06 at 3f4935d65f)
+ + doc: remove stray text in Git data model
+
+ Docfix.
+
+ Will merge to 'master'.
+ source: <pull.2014.git.1764699084703.gitgitgadget@gmail.com>
+
+
+* ps/odb-misc-fixes (2025-12-05) 4 commits
+ - odb: properly close sources before freeing them
+ - builtin/gc: fix condition for whether to write commit graphs
+ - builtin/repack: fix geometric repacks with promisor remotes
+ - Merge branch 'ps/object-source-management' into ps/odb-misc-fixes
+
+ Miscellaneous fixes on object database layer.
+
+ Comments?
+ source: <20251205-odb-related-fixes-v1-0-ef4250abb584@pks.im>
+
+
+* ps/clar-integers (2025-12-06) 3 commits
+ - gitattributes: disable blank-at-eof errors for clar test expectations
+ - t/unit-tests: demonstrate use of integer comparison assertions
+ - t/unit-tests: update clar to 39f11fe
+
+ Import newer version of "clar", unit testing framework.
+
+ Comments?
+ source: <20251206-b4-pks-clar-update-v2-0-9a14b10c1a36@pks.im>
+
+
+* rs/ban-mktemp (2025-12-06) 5 commits
+ - compat: remove gitmkdtemp()
+ - banned.h: ban mktemp(3)
+ - compat: remove mingw_mktemp()
+ - compat: use git_mkdtemp()
+ - wrapper: add git_mkdtemp()
+
+ Rewrite the only use of "mktemp()" that is subject to TOCTOU race
+ and Stop using the insecure "mktemp()" function.
+
+ Will merge to 'next'.
+ source: <64e62623-b911-4ddd-a481-05191853c0a6@web.de>
+
+
+* tb/incremental-midx-part-3.2 (2025-12-06) 17 commits
+ - midx: enable reachability bitmaps during MIDX compaction
+ - midx: implement MIDX compaction
+ - t/helper/test-read-midx.c: plug memory leak when selecting layer
+ - midx-write.c: factor fanout layering from `compute_sorted_entries()`
+ - midx-write.c: enumerate `pack_int_id` values directly
+ - midx-write.c: extract `fill_pack_from_midx()`
+ - midx-write.c: introduce `midx_pack_perm()` helper
+ - git-compat-util.h: introduce `u32_add()`
+ - midx: do not require packs to be sorted in lexicographic order
+ - midx-write.c: introduce `struct write_midx_opts`
+ - midx-write.c: don't use `pack_perm` when assigning `bitmap_pos`
+ - t/t5319-multi-pack-index.sh: fix copy-and-paste error in t5319.39
+ - git-multi-pack-index(1): align SYNOPSIS with 'git multi-pack-index -h'
+ - git-multi-pack-index(1): remove non-existent incompatibility
+ - builtin/multi-pack-index.c: make '--progress' a common option
+ - midx: split `get_midx_checksum()` by adding `get_midx_hash()`
+ - midx: mark `get_midx_checksum()` arguments as const
+
+ Further work on incremental repacking using MIDX/bitmap
+
+ Comments?
+ source: <cover.1765053054.git.me@ttaylorr.com>
+
+
+* yc/histogram-hunk-shift-fix (2025-12-06) 1 commit
+ - xdiff: re-diff shifted change groups when using histogram algorithm
+
+ The final clean-up phase of the diff output could turn the result of
+ histogram diff algorithm suboptimal, which has been corrected.
+
+ Comments?
+ source: <pull.2120.git.git.1765054287938.gitgitgadget@gmail.com>
+
+
+* jc/completion-no-single-letter-options (2025-12-06) 1 commit
+ - completion: clarify support for short options and arguments
+
+ In-code comment update to clarify that single-letter options are
+ outside of the scope of command line completion script.
+
+ Comments?
+ source: <xmqqzf7vm7b7.fsf@gitster.g>
+
+--------------------------------------------------
+[Cooking]
+
 * tc/last-modified-active-paths-optimization (2025-11-28) 1 commit
- - last-modified: fix use of uninitialized memory
+  (merged to 'next' on 2025-12-05 at 42c18b607f)
+ + last-modified: fix use of uninitialized memory
 
  Recent optimization to "last-modified" command introduced use of
  uninitialized block of memory, which has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20251128-toon-big-endian-ci-v1-1-80da0f629c1e@iotcl.com>
 
 
@@ -156,11 +360,13 @@ Release tarballs are available at:
  Asan strict-string-check complains even when use of strtol() is
  safe due to varified existence of whitespace after the digits).
 
- Will merge to 'next'?
+ Expecting a reroll.
+ cf. <aTFvKOHlm4zfT9dU@pks.im>
+ cf. <4d83375b-76e2-4420-80dd-6a04d3201532@gmail.com>
  source: <20251130131351.GA198697@coredump.intra.peff.net>
 
 
-* js/test-symlink-windows (2025-11-29) 10 commits
+* js/test-symlink-windows (2025-12-05) 10 commits
  - t7800: work around the MSYS path conversion on Windows
  - t6423: introduce Windows-specific handling for symlinking to /dev/null
  - t1305: skip symlink tests that do not apply to Windows
@@ -172,30 +378,31 @@ Release tarballs are available at:
  - apply: symbolic links lack a "trustable executable bit"
  - t9700: accommodate for Windows paths
 
- Prepare test suite 
+ Prepare test suite for Git for Windows that supports symbolic
+ links.
 
  Comments?
  cf. <xmqqms44cb7p.fsf@gitster.g>
  cf. <xmqqecpgc8wd.fsf@gitster.g>
- source: <pull.2009.git.1764440906.gitgitgadget@gmail.com>
+ source: <pull.2009.v2.git.1764946945.gitgitgadget@gmail.com>
 
 
 * rs/diff-index-find-copies-harder-optim (2025-11-30) 1 commit
- - diff-index: don't queue unchanged filepairs with diff_change()
+  (merged to 'next' on 2025-12-05 at 539b086bfc)
+ + diff-index: don't queue unchanged filepairs with diff_change()
 
  Halve the memory consumed by artificial filepairs created during
  "git diff --find-copioes-harder", also making the operation run
  faster.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <aa28974b-ec73-4562-bfc8-4745ad58b55a@web.de>
 
---------------------------------------------------
-[Cooking]
 
 * pw/replay-exclude-gpgsig-fix (2025-11-26) 1 commit
   (merged to 'next' on 2025-11-30 at 3dda1242db)
  + replay: do not copy "gpgsign-sha256" header
+ (this branch is used by ps/history and pw/replay-drop-empty.)
 
  "git replay" forgot to omit the "gpgsig-sha256" extended header
  from the resulting commit the same way it omits "gpgsig", which has
@@ -240,7 +447,7 @@ Release tarballs are available at:
  source: <20251128012107.101431-1-sandals@crustytoothpaste.net>
 
 
-* ds/doc-scalar-config (2025-11-26) 5 commits
+* ds/doc-scalar-config (2025-12-01) 5 commits
  - scalar: document config settings
  - scalar: alphabetize and simplify config
  - scalar: remove stale config values
@@ -250,14 +457,14 @@ Release tarballs are available at:
  Documentation updates.
 
  Expecting a reroll.
- cf. <089c3225-82cb-4039-83df-f97ea9fd49b2@gmail.com>
- source: <pull.2010.git.1764195516.gitgitgadget@gmail.com>
+ cf. <aS88bnmZXMZCV5oS@pks.im>
+ source: <pull.2010.v2.git.1764607847.gitgitgadget@gmail.com>
 
 
 * pw/replay-drop-empty (2025-11-27) 2 commits
  - replay: drop commits that become empty
  - Merge branch 'ps/history' into pw/replay-drop-empty
- (this branch uses ps/history.)
+ (this branch uses ps/history and pw/replay-exclude-gpgsig-fix.)
 
  "git replay" is taught to drop commits that become empty (not the
  ones that are empty in the original).
@@ -277,76 +484,16 @@ Release tarballs are available at:
  source: <pull.2107.v2.git.git.1763926552033.gitgitgadget@gmail.com>
 
 
-* rs/config-set-multi-error-message-fix (2025-11-24) 1 commit
-  (merged to 'next' on 2025-11-26 at 639a1e26d2)
- + config: fix suggestion for failed set of multi-valued option
-
- The error message given by "git config set", when the variable
- being updated has more than one values defined, used old style "git
- config" syntax with an incorrect option in its hint, both of which
- have been corrected.
-
- Will merge to 'master'.
- source: <c09945fe-fee2-47f6-8193-ac60d7245209@web.de>
-
-
-* rs/config-unset-opthelp-fix (2025-11-24) 1 commit
-  (merged to 'next' on 2025-11-26 at 31e282f4ae)
- + config: fix short help of unset flags
-
- The option help text given by "git config unset -h" described
- the "--all" option to "replace", not "unset", multiple variables,
- which has been corrected.
-
- Will merge to 'master'.
- source: <06997dce-e4d5-4889-8e70-5f44da3dc800@web.de>
-
-
-* wm/complete-git-short-opts (2025-11-26) 1 commit
- - completion: complete "git -<TAB>" with short options
-
- The command line completion script (in contrib/) learned to
- complete "git -<TAB>" to give single-letter options like "-C".
-
- Will merge to 'next'?
- source: <pull.2100.v2.git.git.1764174391776.gitgitgadget@gmail.com>
-
-
-* jc/optional-path (2025-11-20) 3 commits
-  (merged to 'next' on 2025-11-25 at 5e75404281)
- + config: really treat missing optional path as not configured
- + config: really pretend missing :(optional) value is not there
- + config: mark otherwise unused function as file-scope static
-
- "git config get --path" segfaulted on an ":(optional)path" that
- does not exist, which has been corrected.
-
- Will merge to 'master'.
- source: <xmqqikf47ajk.fsf@gitster.g>
-
-
-* kh/doc-committer-date-is-author-date (2025-11-20) 1 commit
-  (merged to 'next' on 2025-11-25 at 9f829587af)
- + doc: warn against --committer-date-is-author-date
-
- The "--committer-date-is-author-date" option of "git am/rebase" is
- a misguided one.  The documentation is updated to discourage its
- use.
-
- Will merge to 'master'.
- source: <V2_committer-date-is-author-date.1@msgid.xyz>
-
-
 * gf/win32-pthread-cond-init (2025-11-20) 1 commit
  - win32: pthread_cond_init should return a value
 
  Emulation code clean-up.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <pull.2103.v3.git.git.1763675016637.gitgitgadget@gmail.com>
 
 
-* kn/ref-location (2025-11-26) 2 commits
+* kn/ref-location (2025-12-01) 2 commits
  - refs: add GIT_REF_URI to specify reference backend and directory
  - refs: support obtaining ref_store for given dir
 
@@ -355,31 +502,7 @@ Release tarballs are available at:
  be useful during ref migration.
 
  Comments?
- source: <20251126-kn-alternate-ref-dir-v2-0-8b9f6f18f635@gmail.com>
-
-
-* js/ci-show-breakage-in-dockerized-jobs (2025-11-17) 1 commit
-  (merged to 'next' on 2025-11-26 at 3c4a8c430f)
- + ci(dockerized): do show the result of failing tests again
-
- Dockerised jobs at the GitHub Actions CI have been taught to show
- more details of failed tests.
-
- Will merge to 'master'.
- cf. <xmqqpl9gike6.fsf@gitster.g>
- cf. <CABPp-BErdhTjbqDem4Xvc-XbhgLUEpy9-eiaaR1F_diMca--6A@mail.gmail.com>
- source: <pull.2003.git.1763399064983.gitgitgadget@gmail.com>
-
-
-* js/strip-scalar-too (2025-11-17) 1 commit
-  (merged to 'next' on 2025-11-25 at 9f2607acfb)
- + make strip: include `scalar`
-
- "make strip" has been taught to strip "scalar" as well as "git".
-
- Will merge to 'master'.
- cf. <xmqq7bvoiadg.fsf@gitster.g>
- source: <pull.2004.git.1763409086322.gitgitgadget@gmail.com>
+ source: <20251201-kn-alternate-ref-dir-v3-0-c11b946bc2fa@gmail.com>
 
 
 * dw/config-global-list (2025-10-09) 4 commits
@@ -423,32 +546,8 @@ Release tarballs are available at:
  The "git_istream" abstraction has been revamped to make it easier
  to interface with pluggable object database design.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <20251123-b4-pks-odb-read-stream-v3-0-1a129182822b@pks.im>
-
-
-* ps/object-source-management (2025-11-18) 14 commits
-  (merged to 'next' on 2025-11-26 at 6f98745b4a)
- + odb: handle recreation of quarantine directories
- + odb: handle changing a repository's commondir
- + chdir-notify: add function to unregister listeners
- + odb: handle initialization of sources in `odb_new()`
- + http-push: stop setting up `the_repository` for each reference
- + t/helper: stop setting up `the_repository` repeatedly
- + builtin/index-pack: fix deferred fsck outside repos
- + oidset: introduce `oidset_equal()`
- + odb: move logic to disable ref updates into repo
- + odb: refactor `odb_clear()` to `odb_free()`
- + odb: adopt logic to close object databases
- + setup: convert `set_git_dir()` to have file scope
- + path: move `enter_repo()` into "setup.c"
- + Merge branch 'ps/object-source-loose' into ps/object-source-management
-
- Code refactoring around object database sources.
-
- Will merge to 'master'.
- cf. <aSAZSyUzIMvn-IvR@pks.im>
- source: <20251119-b4-pks-odb-creation-v1-0-2b2ed2612cb6@pks.im>
 
 
 * jc/submodule-add (2025-11-15) 1 commit
@@ -472,7 +571,8 @@ Release tarballs are available at:
  needs to overwrite existing one, failed to fetch other tags, which
  has been corrected.
 
- Will merge to 'next'?
+ Expecting a (hopefully small and final) reroll.
+ cf. <CAOLa=ZQ-O7V9qHbgeuQ78R1bHGDmGEM6fP5Kr9aC0AfvSF8MZA@mail.gmail.com>
  source: <20251121-fix-tags-not-fetching-v8-0-23b53a8a8334@gmail.com>
 
 
@@ -501,19 +601,6 @@ Release tarballs are available at:
  source: <xmqqtsz9o3cn.fsf@gitster.g>
 
 
-* cc/fast-import-strip-if-invalid (2025-11-16) 3 commits
-  (merged to 'next' on 2025-11-26 at 7235cd0d18)
- + fast-import: add 'strip-if-invalid' mode to --signed-commits=<mode>
- + commit: refactor verify_commit_buffer()
- + fast-import: refactor finalize_commit_buffer()
-
- "git fast-import" learns "--strip-if-invalid" option to drop
- invalid cryptographic signature from objects.
-
- Will merge to 'master'.
- source: <20251117043450.322644-1-christian.couder@gmail.com>
-
-
 * bc/sha1-256-interop-02 (2025-11-17) 15 commits
  - object-file-convert: always make sure object ID algo is valid
  - rust: add a small wrapper around the hashfile code
@@ -536,26 +623,7 @@ Release tarballs are available at:
  source: <20251117221621.2863243-1-sandals@crustytoothpaste.net>
 
 
-* en/xdiff-cleanup-2 (2025-11-18) 10 commits
-  (merged to 'next' on 2025-11-25 at 452b7107da)
- + xdiff: rename rindex -> reference_index
- + xdiff: change rindex from long to size_t in xdfile_t
- + xdiff: make xdfile_t.nreff a size_t instead of long
- + xdiff: make xdfile_t.nrec a size_t instead of long
- + xdiff: split xrecord_t.ha into line_hash and minimal_perfect_hash
- + xdiff: use unambiguous types in xdl_hash_record()
- + xdiff: use size_t for xrecord_t.size
- + xdiff: make xrecord_t.ptr a uint8_t instead of char
- + xdiff: use ptrdiff_t for dstart/dend
- + doc: define unambiguous type mappings across C and Rust
-
- Code clean-up.
-
- Will merge to 'master'.
- source: <pull.2070.v5.git.git.1763505262.gitgitgadget@gmail.com>
-
-
-* ar/run-command-hook (2025-11-24) 10 commits
+* ar/run-command-hook (2025-12-04) 11 commits
  - receive-pack: convert receive hooks to hook API
  - receive-pack: convert update hooks to new API
  - hooks: allow callers to capture output
@@ -566,12 +634,13 @@ Release tarballs are available at:
  - hook: convert 'post-rewrite' hook in sequencer.c to hook API
  - hook: provide stdin via callback
  - run-command: add stdin callback for parallelization
+ - run-command: add first helper for pp child states
 
  Use hook API to replace ad-hoc invocation of hook scripts with the
  run_command() API.
 
  Will merge to 'next'?
- source: <20251124172043.1650014-1-adrian.ratiu@collabora.com>
+ source: <20251204141535.1986263-1-adrian.ratiu@collabora.com>
 
 
 * je/doc-reset (2025-10-17) 4 commits
@@ -587,9 +656,10 @@ Release tarballs are available at:
  source: <pull.1991.git.1760731558.gitgitgadget@gmail.com>
 
 
-* ps/history (2025-10-27) 12 commits
+* ps/history (2025-12-03) 13 commits
  - builtin/history: implement "split" subcommand
  - cache-tree: allow writing in-memory index as tree
+ - add-patch: allow disabling editing of hunks
  - add-patch: add support for in-memory index patching
  - add-patch: remove dependency on "add-interactive" subsystem
  - add-patch: split out `struct interactive_options`
@@ -599,14 +669,13 @@ Release tarballs are available at:
  - replay: stop using `the_repository`
  - replay: extract logic to pick commits
  - wt-status: provide function to expose status for trees
- - Merge branch 'sa/replay-atomic-ref-updates' into ps/history
- (this branch is used by pw/replay-drop-empty.)
+ - Merge branch 'pw/replay-exclude-gpgsig-fix' into ps/history
+ (this branch is used by pw/replay-drop-empty; uses pw/replay-exclude-gpgsig-fix.)
 
  "git history" history rewriting UI.
 
- Expecting a reroll.
- cf. <aRxDYkeAi8T-HH8M@pks.im>
- source: <20251027-b4-pks-history-builtin-v6-0-407dd3f57ad3@pks.im>
+ Ready?
+ source: <20251203-b4-pks-history-builtin-v7-0-9e9f849bfd0e@pks.im>
 
 
 * ms/doc-worktree-side-by-side (2025-10-10) 2 commits
@@ -634,5 +703,18 @@ Release tarballs are available at:
  each other by encoding submodule names before using them as path
  components.
 
- Will merge to 'next'?
+ Expecting a reroll.
  source: <20251119211030.2008441-1-adrian.ratiu@collabora.com>
+
+--------------------------------------------------
+[Discarded]
+
+* wm/complete-git-short-opts (2025-11-26) 1 commit
+ - completion: complete "git -<TAB>" with short options
+
+ The command line completion script (in contrib/) learned to
+ complete "git -<TAB>" to give single-letter options like "-C".
+
+ Will discard.  We do not complete single-letter options themselves.
+ cf. <xmqqo6onjfwl.fsf@gitster.g>
+ source: <pull.2100.v2.git.git.1764174391776.gitgitgadget@gmail.com>
