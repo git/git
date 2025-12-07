@@ -13,7 +13,8 @@
 #    *) git email aliases for git-send-email
 #    *) tree paths within 'ref:path/to/file' expressions
 #    *) file paths within current working directory and index
-#    *) common --long-options
+#    *) common --long-options but not single-letter options
+#    *) arguments to long and single-letter options
 #
 # To use these routines:
 #
