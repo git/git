@@ -9,12 +9,12 @@ git-replay - EXPERIMENTAL: Replay commits on a new base, works with bare repos t
 SYNOPSIS
 --------
 [verse]
-(EXPERIMENTAL!) 'git replay' ([--contained] --onto <newbase> | --advance <branch>) [--ref-action[=<mode>]] <revision-range>...
+(EXPERIMENTAL!) 'git replay' ([--contained] --onto <newbase> | --advance <branch>) [--ref-action[=<mode>]] <revision-range>
 
 DESCRIPTION
 -----------
 
-Takes ranges of commits and replays them onto a new location. Leaves
+Takes a range of commits and replays them onto a new location. Leaves
 the working tree and the index untouched. By default, updates the
 relevant references using an atomic transaction (all refs update or
 none). Use `--ref-action=print` to avoid automatic ref updates and
@@ -55,11 +55,10 @@ which uses the target only as a starting point without updating it.
 The default mode can be configured via the `replay.refAction` configuration variable.
 
 <revision-range>::
-	Range of commits to replay. More than one <revision-range> can
-	be passed, but in `--advance <branch>` mode, they should have
-	a single tip, so that it's clear where <branch> should point
-	to. See "Specifying Ranges" in linkgit:git-rev-parse[1] and the
-	"Commit Limiting" options below.
+	Range of commits to replay; see "Specifying Ranges" in
+	linkgit:git-rev-parse[1]. In `--advance <branch>` mode, the
+	range should have a single tip, so that it's clear to which tip the
+	advanced <branch> should point.
 
 include::rev-list-options.adoc[]
 
