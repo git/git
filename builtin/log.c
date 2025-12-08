@@ -16,6 +16,7 @@
 #include "refs.h"
 #include "object-name.h"
 #include "odb.h"
+#include "odb/streaming.h"
 #include "pager.h"
 #include "color.h"
 #include "commit.h"
@@ -35,7 +36,6 @@
 #include "parse-options.h"
 #include "line-log.h"
 #include "branch.h"
-#include "streaming.h"
 #include "version.h"
 #include "mailmap.h"
 #include "progress.h"
@@ -584,7 +584,7 @@ static int show_blob_object(const struct object_id *oid, struct rev_info *rev, c
 	fflush(rev->diffopt.file);
 	if (!rev->diffopt.flags.textconv_set_via_cmdline ||
 	    !rev->diffopt.flags.allow_textconv)
-		return stream_blob_to_fd(1, oid, NULL, 0);
+		return odb_stream_blob_to_fd(the_repository->objects, 1, oid, NULL, 0);
 
 	if (get_oid_with_context(the_repository, obj_name,
 				 GET_OID_RECORD_PATH,
@@ -594,7 +594,7 @@ static int show_blob_object(const struct object_id *oid, struct rev_info *rev, c
 	    !textconv_object(the_repository, obj_context.path,
 			     obj_context.mode, &oidc, 1, &buf, &size)) {
 		object_context_release(&obj_context);
-		return stream_blob_to_fd(1, oid, NULL, 0);
+		return odb_stream_blob_to_fd(the_repository->objects, 1, oid, NULL, 0);
 	}
 
 	if (!buf)

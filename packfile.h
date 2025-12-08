@@ -9,6 +9,7 @@
 
 /* in odb.h */
 struct object_info;
+struct odb_read_stream;
 
 struct packed_git {
 	struct pack_window *windows;
@@ -176,6 +177,21 @@ void packfile_store_add_pack(struct packfile_store *store,
 #define repo_for_each_pack(repo, p) \
 	for (struct packfile_list_entry *e = packfile_store_get_packs(repo->objects->packfiles); \
 	     ((p) = (e ? e->pack : NULL)); e = e->next)
+
+int packfile_store_read_object_stream(struct odb_read_stream **out,
+				      struct packfile_store *store,
+				      const struct object_id *oid);
+
+/*
+ * Try to read the object identified by its ID from the object store and
+ * populate the object info with its data. Returns 1 in case the object was
+ * not found, 0 if it was and read successfully, and a negative error code in
+ * case the object was corrupted.
+ */
+int packfile_store_read_object_info(struct packfile_store *store,
+				    const struct object_id *oid,
+				    struct object_info *oi,
+				    unsigned flags);
 
 /*
  * Get all packs managed by the given store, including packfiles that are
@@ -376,7 +392,6 @@ const struct packed_git *has_packed_and_bad(struct repository *, const struct ob
  * Iff a pack file in the given repository contains the object named by sha1,
  * return true and store its location to e.
  */
-int find_pack_entry(struct repository *r, const struct object_id *oid, struct pack_entry *e);
 int find_kept_pack_entry(struct repository *r, const struct object_id *oid, unsigned flags, struct pack_entry *e);
 
 int has_object_pack(struct repository *r, const struct object_id *oid);

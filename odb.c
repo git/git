@@ -670,8 +670,6 @@ static int do_oid_object_info_extended(struct object_database *odb,
 {
 	static struct object_info blank_oi = OBJECT_INFO_INIT;
 	const struct cached_object *co;
-	struct pack_entry e;
-	int rtype;
 	const struct object_id *real = oid;
 	int already_retried = 0;
 
@@ -706,8 +704,8 @@ static int do_oid_object_info_extended(struct object_database *odb,
 	while (1) {
 		struct odb_source *source;
 
-		if (find_pack_entry(odb->repo, real, &e))
-			break;
+		if (!packfile_store_read_object_info(odb->packfiles, real, oi, flags))
+			return 0;
 
 		/* Most likely it's a loose object. */
 		for (source = odb->sources; source; source = source->next)
@@ -717,8 +715,8 @@ static int do_oid_object_info_extended(struct object_database *odb,
 		/* Not a loose object; someone else may have just packed it. */
 		if (!(flags & OBJECT_INFO_QUICK)) {
 			odb_reprepare(odb->repo->objects);
-			if (find_pack_entry(odb->repo, real, &e))
-				break;
+			if (!packfile_store_read_object_info(odb->packfiles, real, oi, flags))
+				return 0;
 		}
 
 		/*
@@ -751,25 +749,6 @@ static int do_oid_object_info_extended(struct object_database *odb,
 		}
 		return -1;
 	}
-
-	if (oi == &blank_oi)
-		/*
-		 * We know that the caller doesn't actually need the
-		 * information below, so return early.
-		 */
-		return 0;
-	rtype = packed_object_info(odb->repo, e.p, e.offset, oi);
-	if (rtype < 0) {
-		mark_bad_packed_object(e.p, real);
-		return do_oid_object_info_extended(odb, real, oi, 0);
-	} else if (oi->whence == OI_PACKED) {
-		oi->u.packed.offset = e.offset;
-		oi->u.packed.pack = e.p;
-		oi->u.packed.is_delta = (rtype == OBJ_REF_DELTA ||
-					 rtype == OBJ_OFS_DELTA);
-	}
-
-	return 0;
 }
 
 static int oid_object_info_convert(struct repository *r,
