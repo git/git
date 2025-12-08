@@ -439,7 +439,8 @@ void show_decorations(struct rev_info *opt, struct commit *commit)
 
 void fmt_output_subject(struct strbuf *filename,
 			const char *subject,
-			struct rev_info *info)
+			struct rev_info *info,
+			int numbered)
 {
 	const char *suffix = info->patch_suffix;
 	int nr = info->nr;
@@ -454,7 +455,10 @@ void fmt_output_subject(struct strbuf *filename,
 		strbuf_addstr(filename, "-");
 		strbuf_release(&temp);
 	}
-	strbuf_addf(filename, "%04d-%s", nr, subject);
+	if (numbered)
+		strbuf_addf(filename, "%04d-%s", nr, subject);
+	else
+		strbuf_addstr(filename, subject);
 
 	if (max_len < filename->len)
 		strbuf_setlen(filename, max_len);
@@ -463,14 +467,16 @@ void fmt_output_subject(struct strbuf *filename,
 
 void fmt_output_commit(struct strbuf *filename,
 		       struct commit *commit,
-		       struct rev_info *info)
+		       struct rev_info *info,
+		       int numbered)
 {
 	struct pretty_print_context ctx = {0};
 	struct strbuf subject = STRBUF_INIT;
 
 	repo_format_commit_message(the_repository, commit, "%f", &subject,
 				   &ctx);
-	fmt_output_subject(filename, subject.buf, info);
+
+	fmt_output_subject(filename, subject.buf, info, numbered);
 	strbuf_release(&subject);
 }
 
@@ -543,7 +549,7 @@ void log_write_email_headers(struct rev_info *opt, struct commit *commit,
 		if (opt->numbered_files)
 			strbuf_addf(&filename, "%d", opt->nr);
 		else
-			fmt_output_commit(&filename, commit, opt);
+			fmt_output_commit(&filename, commit, opt, 1);
 		strbuf_addf(&buffer,
 			 "\n--%s%s\n"
 			 "Content-Type: text/x-patch;"
