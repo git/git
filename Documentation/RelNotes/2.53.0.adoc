@@ -20,6 +20,9 @@ UI, Workflows & Features
 
  * Add a new manual that describes the data model.
 
+ * "git fast-import" learns "--strip-if-invalid" option to drop
+   invalid cryptographic signature from objects.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -37,6 +40,13 @@ Performance, Internal Implementation, Development Support etc.
 
  * A part of code paths that deals with loose objects has been cleaned
    up.
+
+ * "make strip" has been taught to strip "scalar" as well as "git".
+
+ * Dockerised jobs at the GitHub Actions CI have been taught to show
+   more details of failed tests.
+
+ * Code refactoring around object database sources.
 
 
 Fixes since v2.52
@@ -105,8 +115,29 @@ Fixes since v2.52
  * Various issues detected by Asan have been corrected.
    (merge a031b6181a jk/asan-bonanza later to maint).
 
+ * "git config get --path" segfaulted on an ":(optional)path" that
+   does not exist, which has been corrected.
+   (merge 0bd16856ff jc/optional-path later to maint).
+
+ * The "--committer-date-is-author-date" option of "git am/rebase" is
+   a misguided one.  The documentation is updated to discourage its
+   use.
+   (merge fbf3d0669f kh/doc-committer-date-is-author-date later to maint).
+
+ * The option help text given by "git config unset -h" described
+   the "--all" option to "replace", not "unset", multiple variables,
+   which has been corrected.
+   (merge 18bf67b753 rs/config-unset-opthelp-fix later to maint).
+
+ * The error message given by "git config set", when the variable
+   being updated has more than one values defined, used old style "git
+   config" syntax with an incorrect option in its hint, both of which
+   have been corrected.
+   (merge df963f0df4 rs/config-set-multi-error-message-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 46207a54cc qj/doc-http-bad-want-response later to maint).
    (merge df90eccd93 kh/doc-commit-extra-references later to maint).
    (merge f18aa68861 rs/xmkstemp-simplify later to maint).
    (merge fddba8f737 ja/doc-synopsis-style later to maint).
+   (merge 22ce0cb639 en/xdiff-cleanup-2 later to maint).
