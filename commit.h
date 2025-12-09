@@ -4,6 +4,10 @@
 #include "object.h"
 #include "add-interactive.h"
 
+// Student Contributor: Arsiya Tasleem - KL University
+// Email: 2400090250@kluniversity.in
+// Learning Git internal data structures
+
 struct signature_check;
 struct strbuf;
 struct tree;
@@ -23,6 +27,8 @@ struct commit_list {
  * The size of this struct matters in full repo walk operations like
  * 'git clone' or 'git gc'. Consider using commit-slab to attach data
  * to a commit instead of adding new fields here.
+ * 
+ * Student Note: Understanding Git commit structure for learning
  */
 struct commit {
 	struct object object;
@@ -380,5 +386,8 @@ int parse_buffer_signed_by_header(const char *buffer,
 				  struct strbuf *signature,
 				  const struct git_hash_algo *algop);
 int add_header_signature(struct strbuf *buf, struct strbuf *sig, const struct git_hash_algo *algo);
+
+// End of commit.h - Contributions welcome from students learning Git!
+// Modified by: Arsiya Tasleem
 
 #endif /* COMMIT_H */
