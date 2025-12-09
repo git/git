@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Dec 2025, #01)
-X-master-at: bdc5341ff65278a3cc80b2e8a02a2f02aa1fac06
-X-next-at: 3f4935d65f8d04f04e16a208ba4f77a42d207db3
+Subject: What's cooking in git.git (Dec 2025, #02)
+X-master-at: e85ae279b0d58edc2f4c3fd5ac391b51e1223985
+X-next-at: 3fc767764aec198db34053b394419bf8a1e8e5d2
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Dec 2025, #01)
+What's cooking in git.git (Dec 2025, #02)
 -----------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -51,128 +51,151 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* cc/fast-import-strip-if-invalid (2025-11-16) 3 commits
-  (merged to 'next' on 2025-11-26 at 7235cd0d18)
- + fast-import: add 'strip-if-invalid' mode to --signed-commits=<mode>
- + commit: refactor verify_commit_buffer()
- + fast-import: refactor finalize_commit_buffer()
+* bc/zsh-testsuite (2025-11-27) 2 commits
+  (merged to 'next' on 2025-11-30 at b4a3081f6f)
+ + t5564: fix test hang under zsh's sh mode
+ + t0614: use numerical comparison with test_line_count
 
- "git fast-import" learns "--strip-if-invalid" option to drop
- invalid cryptographic signature from objects.
- source: <20251117043450.322644-1-christian.couder@gmail.com>
-
-
-* en/xdiff-cleanup-2 (2025-11-18) 10 commits
-  (merged to 'next' on 2025-11-25 at 452b7107da)
- + xdiff: rename rindex -> reference_index
- + xdiff: change rindex from long to size_t in xdfile_t
- + xdiff: make xdfile_t.nreff a size_t instead of long
- + xdiff: make xdfile_t.nrec a size_t instead of long
- + xdiff: split xrecord_t.ha into line_hash and minimal_perfect_hash
- + xdiff: use unambiguous types in xdl_hash_record()
- + xdiff: use size_t for xrecord_t.size
- + xdiff: make xrecord_t.ptr a uint8_t instead of char
- + xdiff: use ptrdiff_t for dstart/dend
- + doc: define unambiguous type mappings across C and Rust
-
- Code clean-up.
- source: <pull.2070.v5.git.git.1763505262.gitgitgadget@gmail.com>
+ A few tests have been updated to work under the shell compatible
+ mode of zsh.
+ source: <20251128012107.101431-1-sandals@crustytoothpaste.net>
 
 
-* jc/optional-path (2025-11-20) 3 commits
-  (merged to 'next' on 2025-11-25 at 5e75404281)
- + config: really treat missing optional path as not configured
- + config: really pretend missing :(optional) value is not there
- + config: mark otherwise unused function as file-scope static
+* en/replay-doc-revision-range (2025-11-28) 1 commit
+  (merged to 'next' on 2025-11-30 at 37ba09bea2)
+ + Documentation/git-replay.adoc: fix errors around revision range
 
- "git config get --path" segfaulted on an ":(optional)path" that
- does not exist, which has been corrected.
- source: <xmqqikf47ajk.fsf@gitster.g>
+ The use of "revision" (a connected set of commits) has been
+ clarified in the "git replay" documentation.
+ source: <pull.2012.git.1764391464952.gitgitgadget@gmail.com>
 
 
-* js/ci-show-breakage-in-dockerized-jobs (2025-11-17) 1 commit
-  (merged to 'next' on 2025-11-26 at 3c4a8c430f)
- + ci(dockerized): do show the result of failing tests again
+* pw/replay-exclude-gpgsig-fix (2025-11-26) 1 commit
+  (merged to 'next' on 2025-11-30 at 3dda1242db)
+ + replay: do not copy "gpgsign-sha256" header
+ (this branch is used by ps/history and pw/replay-drop-empty.)
 
- Dockerised jobs at the GitHub Actions CI have been taught to show
- more details of failed tests.
- cf. <xmqqpl9gike6.fsf@gitster.g>
- cf. <CABPp-BErdhTjbqDem4Xvc-XbhgLUEpy9-eiaaR1F_diMca--6A@mail.gmail.com>
- source: <pull.2003.git.1763399064983.gitgitgadget@gmail.com>
-
-
-* js/strip-scalar-too (2025-11-17) 1 commit
-  (merged to 'next' on 2025-11-25 at 9f2607acfb)
- + make strip: include `scalar`
-
- "make strip" has been taught to strip "scalar" as well as "git".
- cf. <xmqq7bvoiadg.fsf@gitster.g>
- source: <pull.2004.git.1763409086322.gitgitgadget@gmail.com>
+ "git replay" forgot to omit the "gpgsig-sha256" extended header
+ from the resulting commit the same way it omits "gpgsig", which has
+ been corrected.
+ source: <4f04af5790353b074cf122c450c1cd3f8d1cecf3.1764167611.git.phillip.wood@dunelm.org.uk>
 
 
-* kh/doc-committer-date-is-author-date (2025-11-20) 1 commit
-  (merged to 'next' on 2025-11-25 at 9f829587af)
- + doc: warn against --committer-date-is-author-date
+* yc/xdiff-patience-optim (2025-11-26) 1 commit
+  (merged to 'next' on 2025-11-30 at db62d67599)
+ + xdiff: optimize patience diff's LCS search
 
- The "--committer-date-is-author-date" option of "git am/rebase" is
- a misguided one.  The documentation is updated to discourage its
- use.
- source: <V2_committer-date-is-author-date.1@msgid.xyz>
-
-
-* ps/object-source-management (2025-11-18) 14 commits
-  (merged to 'next' on 2025-11-26 at 6f98745b4a)
- + odb: handle recreation of quarantine directories
- + odb: handle changing a repository's commondir
- + chdir-notify: add function to unregister listeners
- + odb: handle initialization of sources in `odb_new()`
- + http-push: stop setting up `the_repository` for each reference
- + t/helper: stop setting up `the_repository` repeatedly
- + builtin/index-pack: fix deferred fsck outside repos
- + oidset: introduce `oidset_equal()`
- + odb: move logic to disable ref updates into repo
- + odb: refactor `odb_clear()` to `odb_free()`
- + odb: adopt logic to close object databases
- + setup: convert `set_git_dir()` to have file scope
- + path: move `enter_repo()` into "setup.c"
- + Merge branch 'ps/object-source-loose' into ps/object-source-management
-
- Code refactoring around object database sources.
- cf. <aSAZSyUzIMvn-IvR@pks.im>
- source: <20251119-b4-pks-odb-creation-v1-0-2b2ed2612cb6@pks.im>
-
-
-* rs/config-set-multi-error-message-fix (2025-11-24) 1 commit
-  (merged to 'next' on 2025-11-26 at 639a1e26d2)
- + config: fix suggestion for failed set of multi-valued option
-
- The error message given by "git config set", when the variable
- being updated has more than one values defined, used old style "git
- config" syntax with an incorrect option in its hint, both of which
- have been corrected.
- source: <c09945fe-fee2-47f6-8193-ac60d7245209@web.de>
-
-
-* rs/config-unset-opthelp-fix (2025-11-24) 1 commit
-  (merged to 'next' on 2025-11-26 at 31e282f4ae)
- + config: fix short help of unset flags
-
- The option help text given by "git config unset -h" described
- the "--all" option to "replace", not "unset", multiple variables,
- which has been corrected.
- source: <06997dce-e4d5-4889-8e70-5f44da3dc800@web.de>
+ The way patience diff finds LCS has been optimized.
+ source: <pull.2109.v2.git.git.1764209766305.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [New Topics]
 
-* ap/packfile-promisor-object-optim (2025-12-05) 1 commit
- - packfile: skip decompressing and hashing blobs in add_promisor_object()
+* jc/capability-leak (2025-12-06) 1 commit
+ - connect: plug protocol capability leak
+
+ Leakfix.
+
+ Will merge to 'next'.
+ source: <xmqqfr9mnbu9.fsf@gitster.g>
+
+
+* kh/doc-replay-updates (2025-12-07) 3 commits
+ - doc: replay: link section using markup
+ - doc: replay: document --contained
+ - doc: replay: mention no output on conflicts
+
+ "git replay" documentation updates.
+
+ Will merge to 'next'.
+ source: <CV_replay_conflict.101@msgid.xyz>
+
+
+* lo/repo-info-keys (2025-12-07) 1 commit
+ - repo: add new flag --keys to git-repo-info
+ (this branch uses lo/repo-struct-z.)
+
+ "git repo info" learns "--keys" action to list known keys.
+
+ Expecting a reroll.
+ source: <20251204210843.79411-1-lucasseikioshiro@gmail.com>
+
+
+* kh/doc-pre-commit-fix (2025-12-07) 1 commit
+ - doc: join default pre-commit paragraphs
+
+ Docfix.
+
+ Will merge to 'next'.
+ source: <pre-commit_when_enabled.10a@msgid.xyz>
+
+
+* kh/doc-send-email-paragraph-fix (2025-12-08) 1 commit
+ - doc: send-email: fix broken list continuation
+
+ Docfix.
+
+ Will merge to 'next'.
+ source: <send-email_list_contin.112@msgid.xyz>
+
+
+* mh/doc-config-gui-gcwarning (2025-12-08) 1 commit
+ - config: document 'gui.GCWarning'
+
+ Docfix.
+
+ Will merge to 'next'.
+ source: <20251208190400.64920-1-matthewhughes934@gmail.com>
+
+
+* ps/odb-alternates-object-sources (2025-12-08) 8 commits
+ - odb: write alternates via sources
+ - odb: read alternates via sources
+ - odb: drop forward declaration of `read_info_alternates()`
+ - odb: remove mutual recursion when parsing alternates
+ - odb: adapt `odb_add_to_alternates_file()` to call `odb_add_source()`
+ - odb: move computation of normalized objdir into `alt_odb_usable()`
+ - odb: resolve relative alternative paths when parsing
+ - odb: refactor parsing of alternates to be self-contained
+
+ Code refactoring around alternate object store.
+
+ Comments?
+ source: <20251208-b4-pks-odb-alternates-via-source-v1-0-e7ebb8b18c03@pks.im>
+
+
+* ps/repack-avoid-noop-midx-rewrite (2025-12-08) 2 commits
+ - builtin/repack: don't regenerate MIDX unless needed
+ - midx: fix `BUG()` when getting preferred pack without a reverse index
+
+ Even when there is no changes in the packfile and no need to
+ recompute bitmaps, "git repack" recomputed and updated the MIDX
+ file, which has been corrected.
+
+ Comments?
+ source: <20251208-pks-skip-noop-rewrite-v1-0-430d52dba9f0@pks.im>
+
+
+* sb/doc-update-ref-markup-fix (2025-12-08) 1 commit
+ - doc: fix `update-ref` `symref-create` formatting
+
+ Doc mark-up fix.
+
+ Will merget to 'next'.
+ source: <pull.2123.git.git.1765261419802.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[Cooking]
+
+* ap/packfile-promisor-object-optim (2025-12-08) 2 commits
+ - packfile: skip hash checks in add_promisor_object()
+ - object: apply skip_hash and discard_tree optimizations to unknown blobs too
 
  The code path that enumerates promisor objects have been optimized
  to skip pointlessly parsing blob objects.
 
  Comments?
- source: <20251206002014.2066644-1-aplattner@nvidia.com>
+ source: <20251209014900.402637-1-aplattner@nvidia.com>
 
 
 * je/doc-pull (2025-12-03) 1 commit
@@ -212,6 +235,7 @@ Release tarballs are available at:
  + repo: add -z as an alias for --format=nul to git-repo-structure
  + repo: use [--format=... | -z] instead of [-z] in git-repo-info synopsis
  + repo: remove blank line from Documentation/git-repo.adoc
+ (this branch is used by lo/repo-info-keys.)
 
  "git repo struct" learned to take "-z" as a synonym to "--format=nul".
 
@@ -266,16 +290,17 @@ Release tarballs are available at:
 
 
 * rs/ban-mktemp (2025-12-06) 5 commits
- - compat: remove gitmkdtemp()
- - banned.h: ban mktemp(3)
- - compat: remove mingw_mktemp()
- - compat: use git_mkdtemp()
- - wrapper: add git_mkdtemp()
+  (merged to 'next' on 2025-12-09 at d459e9d8dd)
+ + compat: remove gitmkdtemp()
+ + banned.h: ban mktemp(3)
+ + compat: remove mingw_mktemp()
+ + compat: use git_mkdtemp()
+ + wrapper: add git_mkdtemp()
 
  Rewrite the only use of "mktemp()" that is subject to TOCTOU race
  and Stop using the insecure "mktemp()" function.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <64e62623-b911-4ddd-a481-05191853c0a6@web.de>
 
 
@@ -300,7 +325,8 @@ Release tarballs are available at:
 
  Further work on incremental repacking using MIDX/bitmap
 
- Comments?
+ Expecting a reroll.
+ cf. <aTd+fxpflcLuJXDn@nand.local>
  source: <cover.1765053054.git.me@ttaylorr.com>
 
 
@@ -323,8 +349,6 @@ Release tarballs are available at:
  Comments?
  source: <xmqqzf7vm7b7.fsf@gitster.g>
 
---------------------------------------------------
-[Cooking]
 
 * tc/last-modified-active-paths-optimization (2025-11-28) 1 commit
   (merged to 'next' on 2025-12-05 at 42c18b607f)
@@ -335,17 +359,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <20251128-toon-big-endian-ci-v1-1-80da0f629c1e@iotcl.com>
-
-
-* en/replay-doc-revision-range (2025-11-28) 1 commit
-  (merged to 'next' on 2025-11-30 at 37ba09bea2)
- + Documentation/git-replay.adoc: fix errors around revision range
-
- The use of "revision" (a connected set of commits) has been
- clarified in the "git replay" documentation.
-
- Will merge to 'master'.
- source: <pull.2012.git.1764391464952.gitgitgadget@gmail.com>
 
 
 * jk/parse-int (2025-11-30) 5 commits
@@ -399,19 +412,6 @@ Release tarballs are available at:
  source: <aa28974b-ec73-4562-bfc8-4745ad58b55a@web.de>
 
 
-* pw/replay-exclude-gpgsig-fix (2025-11-26) 1 commit
-  (merged to 'next' on 2025-11-30 at 3dda1242db)
- + replay: do not copy "gpgsign-sha256" header
- (this branch is used by ps/history and pw/replay-drop-empty.)
-
- "git replay" forgot to omit the "gpgsig-sha256" extended header
- from the resulting commit the same way it omits "gpgsig", which has
- been corrected.
-
- Will merge to 'master'.
- source: <4f04af5790353b074cf122c450c1cd3f8d1cecf3.1764167611.git.phillip.wood@dunelm.org.uk>
-
-
 * tc/last-modified-options-cleanup (2025-11-26) 4 commits
  - fixup! last-modified: document option --max-depth
  - last-modified: document how depth is handled better
@@ -423,28 +423,6 @@ Release tarballs are available at:
 
  Expecting a reroll.
  source: <20251126-toon-last-modified-zzzz-v1-0-608350df0caa@iotcl.com>
-
-
-* yc/xdiff-patience-optim (2025-11-26) 1 commit
-  (merged to 'next' on 2025-11-30 at db62d67599)
- + xdiff: optimize patience diff's LCS search
-
- The way patience diff finds LCS has been optimized.
-
- Will merge to 'master'.
- source: <pull.2109.v2.git.git.1764209766305.gitgitgadget@gmail.com>
-
-
-* bc/zsh-testsuite (2025-11-27) 2 commits
-  (merged to 'next' on 2025-11-30 at b4a3081f6f)
- + t5564: fix test hang under zsh's sh mode
- + t0614: use numerical comparison with test_line_count
-
- A few tests have been updated to work under the shell compatible
- mode of zsh.
-
- Will merge to 'master'.
- source: <20251128012107.101431-1-sandals@crustytoothpaste.net>
 
 
 * ds/doc-scalar-config (2025-12-01) 5 commits
@@ -464,7 +442,7 @@ Release tarballs are available at:
 * pw/replay-drop-empty (2025-11-27) 2 commits
  - replay: drop commits that become empty
  - Merge branch 'ps/history' into pw/replay-drop-empty
- (this branch uses ps/history and pw/replay-exclude-gpgsig-fix.)
+ (this branch uses ps/history.)
 
  "git replay" is taught to drop commits that become empty (not the
  ones that are empty in the original).
@@ -485,11 +463,12 @@ Release tarballs are available at:
 
 
 * gf/win32-pthread-cond-init (2025-11-20) 1 commit
- - win32: pthread_cond_init should return a value
+  (merged to 'next' on 2025-12-09 at 202516d20c)
+ + win32: pthread_cond_init should return a value
 
  Emulation code clean-up.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.2103.v3.git.git.1763675016637.gitgitgadget@gmail.com>
 
 
@@ -522,31 +501,32 @@ Release tarballs are available at:
 
 
 * ps/object-read-stream (2025-11-23) 20 commits
- - streaming: drop redundant type and size pointers
- - streaming: move into object database subsystem
- - streaming: refactor interface to be object-database-centric
- - streaming: move logic to read packed objects streams into backend
- - streaming: move logic to read loose objects streams into backend
- - streaming: make the `odb_read_stream` definition public
- - streaming: get rid of `the_repository`
- - streaming: rely on object sources to create object stream
- - packfile: introduce function to read object info from a store
- - streaming: move zlib stream into backends
- - streaming: create structure for filtered object streams
- - streaming: create structure for packed object streams
- - streaming: create structure for loose object streams
- - streaming: create structure for in-core object streams
- - streaming: allocate stream inside the backend-specific logic
- - streaming: explicitly pass packfile info when streaming a packed object
- - streaming: propagate final object type via the stream
- - streaming: drop the `open()` callback function
- - streaming: rename `git_istream` into `odb_read_stream`
- - Merge branch 'ps/object-source-loose' into ps/object-read-stream
+  (merged to 'next' on 2025-12-09 at c8d645f8ea)
+ + streaming: drop redundant type and size pointers
+ + streaming: move into object database subsystem
+ + streaming: refactor interface to be object-database-centric
+ + streaming: move logic to read packed objects streams into backend
+ + streaming: move logic to read loose objects streams into backend
+ + streaming: make the `odb_read_stream` definition public
+ + streaming: get rid of `the_repository`
+ + streaming: rely on object sources to create object stream
+ + packfile: introduce function to read object info from a store
+ + streaming: move zlib stream into backends
+ + streaming: create structure for filtered object streams
+ + streaming: create structure for packed object streams
+ + streaming: create structure for loose object streams
+ + streaming: create structure for in-core object streams
+ + streaming: allocate stream inside the backend-specific logic
+ + streaming: explicitly pass packfile info when streaming a packed object
+ + streaming: propagate final object type via the stream
+ + streaming: drop the `open()` callback function
+ + streaming: rename `git_istream` into `odb_read_stream`
+ + Merge branch 'ps/object-source-loose' into ps/object-read-stream
 
  The "git_istream" abstraction has been revamped to make it easier
  to interface with pluggable object database design.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20251123-b4-pks-odb-read-stream-v3-0-1a129182822b@pks.im>
 
 
@@ -670,7 +650,7 @@ Release tarballs are available at:
  - replay: extract logic to pick commits
  - wt-status: provide function to expose status for trees
  - Merge branch 'pw/replay-exclude-gpgsig-fix' into ps/history
- (this branch is used by pw/replay-drop-empty; uses pw/replay-exclude-gpgsig-fix.)
+ (this branch is used by pw/replay-drop-empty.)
 
  "git history" history rewriting UI.
 
