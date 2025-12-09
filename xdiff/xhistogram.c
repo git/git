@@ -43,9 +43,6 @@
 
 #include "xinclude.h"
 
-#define MAX_PTR	UINT_MAX
-#define MAX_CNT	UINT_MAX
-
 #define LINE_END(n) (line##n + count##n - 1)
 #define LINE_END_PTR(n) (*line##n + *count##n - 1)
 
@@ -121,8 +118,6 @@ static int scanA(struct histindex *index, int line1, int count1)
 				 */
 				NEXT_PTR(index, ptr) = rec->ptr;
 				rec->ptr = ptr;
-				/* cap rec->cnt at MAX_CNT */
-				rec->cnt = XDL_MIN(MAX_CNT, rec->cnt + 1);
 				LINE_MAP(index, ptr) = rec;
 				goto continue_scan;
 			}
@@ -312,9 +307,6 @@ redo:
 
 	if (count1 <= 0 && count2 <= 0)
 		return 0;
-
-	if ((unsigned int)LINE_END(1) >= MAX_PTR)
-		return -1;
 
 	if (!count1) {
 		while(count2--)
