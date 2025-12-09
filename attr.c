@@ -879,14 +879,6 @@ const char *git_attr_system_file(void)
 	return system_wide;
 }
 
-const char *git_attr_global_file(void)
-{
-	if (!git_attributes_file)
-		git_attributes_file = xdg_config_home("attributes");
-
-	return git_attributes_file;
-}
-
 int git_attr_system_is_enabled(void)
 {
 	return !git_env_bool("GIT_ATTR_NOSYSTEM", 0);
@@ -912,6 +904,8 @@ static void bootstrap_attr_stack(struct index_state *istate,
 {
 	struct attr_stack *e;
 	unsigned flags = READ_ATTR_MACRO_OK;
+	const char *attributes_file_path;
+	struct repository *repo;
 
 	if (*stack)
 		return;
@@ -927,8 +921,13 @@ static void bootstrap_attr_stack(struct index_state *istate,
 	}
 
 	/* home directory */
-	if (git_attr_global_file()) {
-		e = read_attr_from_file(git_attr_global_file(), flags);
+	if (istate && istate->repo)
+		repo = istate->repo;
+	else
+		repo = the_repository;
+	attributes_file_path = repo_settings_get_attributesfile_path(repo);
+	if (attributes_file_path) {
+		e = read_attr_from_file(attributes_file_path, flags);
 		push_stack(stack, e, NULL, 0);
 	}
 
