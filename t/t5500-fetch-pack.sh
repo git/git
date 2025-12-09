@@ -904,6 +904,25 @@ test_expect_success 'shallow since with commit graph and already-seen commit' '
 	)
 '
 
+test_expect_success 'clone shallow since all borders reachable' '
+	test_create_repo shallow-since-all-borders-reachable &&
+	(
+	rm -rf shallow123 &&
+	cd shallow-since-all-borders-reachable &&
+	GIT_COMMITTER_DATE="2025-08-19 12:34:56" git commit --allow-empty -m one &&
+	GIT_COMMITTER_DATE="2025-08-20 12:34:56" git switch -c branch &&
+	GIT_COMMITTER_DATE="2025-08-21 12:34:56" git commit --allow-empty -m two &&
+	GIT_COMMITTER_DATE="2025-08-22 12:34:56" git commit --allow-empty -m three &&
+	GIT_COMMITTER_DATE="2025-08-23 12:34:56" git switch main &&
+	GIT_COMMITTER_DATE="2025-08-24 12:34:56" git merge branch --no-ff &&
+	GIT_COMMITTER_DATE="2025-08-26 12:34:56" git clone --shallow-since "2025-08-21 12:34:56" "file://$(pwd)/." ../shallow123 &&
+	cd ../shallow123 &&
+	echo "Shallow borders:" &&
+	cat .git/shallow &&
+	$(for commit in $(cat .git/shallow); do git rev-list $commit 1>/dev/null || exit 1; done)
+	)
+'
+
 test_expect_success 'shallow clone exclude tag two' '
 	test_create_repo shallow-exclude &&
 	(
