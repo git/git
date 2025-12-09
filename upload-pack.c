@@ -33,6 +33,7 @@
 #include "json-writer.h"
 #include "strmap.h"
 #include "promisor-remote.h"
+#include "tag.h"
 
 /* Remember to update object flag allocation in object.h */
 #define THEY_HAVE	(1u << 11)
@@ -704,54 +705,82 @@ error:
 	return -1;
 }
 
-static int get_reachable_list(struct upload_pack_data *data,
-			      struct object_array *reachable)
+define_commit_slab(commit_depth, int *);
+static void free_depth_in_slab(int **ptr)
 {
-	struct child_process cmd = CHILD_PROCESS_INIT;
-	int i;
-	struct object *o;
-	char namebuf[GIT_MAX_HEXSZ + 2]; /* ^ + hash + LF */
-	const unsigned hexsz = the_hash_algo->hexsz;
-	int ret;
+	FREE_AND_NULL(*ptr);
+}
+static void get_shallows_depth(struct upload_pack_data *data)
+{
+	size_t i = 0, j;
+	int cur_depth = 0, cur_depth_shallow = 0;
+	struct object_array stack = OBJECT_ARRAY_INIT;
+	struct commit *commit = NULL;
+	struct commit_graft *graft;
+	struct commit_depth depths;
+	struct object_array *heads = &data->want_obj;
+	struct object_array *shallows = &data->shallows;
 
-	if (do_reachable_revlist(&cmd, &data->shallows, reachable,
-				 data->allow_uor) < 0) {
-		ret = -1;
-		goto out;
-	}
+	init_commit_depth(&depths);
+	while (commit || i < heads->nr || stack.nr) {
+		struct commit_list *p;
+		if (!commit) {
+			if (i < heads->nr) {
+				int **depth_slot;
+				commit = (struct commit *)
+					deref_tag(the_repository,
+						  heads->objects[i++].item,
+						  NULL, 0);
+				if (!commit || commit->object.type != OBJ_COMMIT) {
+					commit = NULL;
+					continue;
+				}
+				depth_slot = commit_depth_at(&depths, commit);
+				if (!*depth_slot)
+					*depth_slot = xmalloc(sizeof(int));
+				**depth_slot = 0;
+				cur_depth = 0;
+			} else {
+				commit = (struct commit *)
+					object_array_pop(&stack);
+				cur_depth = **commit_depth_at(&depths, commit);
+			}
+		}
+		parse_commit_or_die(commit);
+		cur_depth++;
+		for (j = 0; j < shallows->nr; j++)
+			if (oideq(&commit->object.oid, &shallows->objects[j].item->oid))
+				if ((!cur_depth_shallow) || (cur_depth < cur_depth_shallow))
+					cur_depth_shallow = cur_depth;
 
-	while ((i = read_in_full(cmd.out, namebuf, hexsz + 1)) == hexsz + 1) {
-		struct object_id oid;
-		const char *p;
-
-		if (parse_oid_hex(namebuf, &oid, &p) || *p != '\n')
-			break;
-
-		o = lookup_object(the_repository, &oid);
-		if (o && o->type == OBJ_COMMIT) {
-			o->flags &= ~TMP_MARK;
+		if ((is_repository_shallow(the_repository) && !commit->parents &&
+		     (graft = lookup_commit_graft(the_repository, &commit->object.oid)) != NULL &&
+		     graft->nr_parent < 0)) {
+			commit = NULL;
+			continue;
+		}
+		for (p = commit->parents, commit = NULL; p; p = p->next) {
+			int **depth_slot = commit_depth_at(&depths, p->item);
+			if (!*depth_slot) {
+				*depth_slot = xmalloc(sizeof(int));
+				**depth_slot = cur_depth;
+			} else {
+				if (cur_depth >= **depth_slot)
+					continue;
+				**depth_slot = cur_depth;
+			}
+			if (p->next)
+				add_object_array(&p->item->object,
+						NULL, &stack);
+			else {
+				commit = p->item;
+				cur_depth = **commit_depth_at(&depths, commit);
+			}
 		}
 	}
-	for (i = get_max_object_index(the_repository); 0 < i; i--) {
-		o = get_indexed_object(the_repository, i - 1);
-		if (o && o->type == OBJ_COMMIT &&
-		    (o->flags & TMP_MARK)) {
-			add_object_array(o, NULL, reachable);
-				o->flags &= ~TMP_MARK;
-		}
-	}
-	close(cmd.out);
-
-	if (finish_command(&cmd)) {
-		ret = -1;
-		goto out;
-	}
-
-	ret = 0;
-
-out:
-	child_process_clear(&cmd);
-	return ret;
+	deep_clear_commit_depth(&depths, free_depth_in_slab);
+	object_array_clear(&stack);
+	data->deepen_relative = cur_depth_shallow;
 }
 
 static int has_unreachable(struct object_array *src, enum allow_uor allow_uor)
@@ -881,29 +910,14 @@ static void deepen(struct upload_pack_data *data, int depth)
 			struct object *object = data->shallows.objects[i].item;
 			object->flags |= NOT_SHALLOW;
 		}
-	} else if (data->deepen_relative) {
-		struct object_array reachable_shallows = OBJECT_ARRAY_INIT;
-		struct commit_list *result;
-
-		/*
-		 * Checking for reachable shallows requires that our refs be
-		 * marked with OUR_REF.
-		 */
-		refs_head_ref_namespaced(get_main_ref_store(the_repository),
-					 check_ref, data);
-		for_each_namespaced_ref_1(check_ref, data);
-
-		get_reachable_list(data, &reachable_shallows);
-		result = get_shallow_commits(&reachable_shallows,
-					     depth + 1,
-					     SHALLOW, NOT_SHALLOW);
-		send_shallow(data, result);
-		free_commit_list(result);
-		object_array_clear(&reachable_shallows);
 	} else {
 		struct commit_list *result;
 
-		result = get_shallow_commits(&data->want_obj, depth,
+		if (data->deepen_relative)
+			get_shallows_depth(data);
+
+		result = get_shallow_commits(&data->want_obj,
+					     data->deepen_relative + depth,
 					     SHALLOW, NOT_SHALLOW);
 		send_shallow(data, result);
 		free_commit_list(result);
