@@ -690,6 +690,7 @@ integration_tests = [
   't5562-http-backend-content-length.sh',
   't5563-simple-http-auth.sh',
   't5564-http-proxy.sh',
+  't5565-push-multiple.sh',
   't5570-git-daemon.sh',
   't5571-pre-push-hook.sh',
   't5572-pull-submodule.sh',
