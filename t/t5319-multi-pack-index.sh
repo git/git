@@ -350,7 +350,20 @@ test_expect_success 'preferred pack from existing MIDX without bitmaps' '
 		# the new MIDX
 		git multi-pack-index write --preferred-pack=pack-$pack.pack
 	)
+'
 
+test_expect_success 'preferred pack cannot be determined without bitmap' '
+	test_when_finished "rm -fr preferred-can-be-queried" &&
+	git init preferred-can-be-queried &&
+	(
+		cd preferred-can-be-queried &&
+		test_commit initial &&
+		git repack -Adl --write-midx --no-write-bitmap-index &&
+		test_must_fail test-tool read-midx --preferred-pack .git/objects 2>err &&
+		test_grep "could not determine MIDX preferred pack" err &&
+		git repack -Adl --write-midx --write-bitmap-index &&
+		test-tool read-midx --preferred-pack .git/objects
+	)
 '
 
 test_expect_success 'verify multi-pack-index success' '
