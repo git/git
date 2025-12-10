@@ -1015,6 +1015,41 @@ static void clear_midx_files(struct odb_source *source,
 	strbuf_release(&buf);
 }
 
+static bool midx_needs_update(struct write_midx_context *ctx)
+{
+	struct multi_pack_index *midx = ctx->m;
+	bool needed = true;
+
+	/*
+	 * Ignore incremental updates for now. The assumption is that any
+	 * incremental update would be either empty (in which case we will bail
+	 * out later) or it would actually cover at least one new pack.
+	 */
+	if (ctx->incremental)
+		goto out;
+
+	/*
+	 * If there is no MIDX then either it doesn't exist, or we're doing a
+	 * geometric repack. We cannot (yet) determine whether we need to
+	 * update the multi-pack index in the second case.
+	 */
+	if (!midx)
+		goto out;
+
+	/*
+	 * Otherwise, we need to verify that the packs covered by the existing
+	 * MIDX match the packs that we already have. This test is somewhat
+	 * lenient and will be fixed.
+	 */
+	if (ctx->nr != midx->num_packs + midx->num_packs_in_base)
+		goto out;
+
+	needed = false;
+
+out:
+	return needed;
+}
+
 static int write_midx_internal(struct odb_source *source,
 			       struct string_list *packs_to_include,
 			       struct string_list *packs_to_drop,
@@ -1112,9 +1147,7 @@ static int write_midx_internal(struct odb_source *source,
 	for_each_file_in_pack_dir(source->path, add_pack_to_midx, &ctx);
 	stop_progress(&ctx.progress);
 
-	if ((ctx.m && ctx.nr == ctx.m->num_packs + ctx.m->num_packs_in_base) &&
-	    !ctx.incremental &&
-	    !(packs_to_include || packs_to_drop)) {
+	if (!packs_to_include && !packs_to_drop && !midx_needs_update(&ctx)) {
 		struct bitmap_index *bitmap_git;
 		int bitmap_exists;
 		int want_bitmap = flags & MIDX_WRITE_BITMAP;
