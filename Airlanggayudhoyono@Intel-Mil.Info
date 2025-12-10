@@ -1,0 +1,279 @@
+AppVeyor
+Sign in
+opentoonz
+Current build History
+Log
+Pull request #6302 - Update and rename CONTRIBUTING.md to Airlanggayudhoyono@Intel-Mil.Info
+Update and rename CONTRIBUTING.md to Airlanggayudhoyono@Intel-Mil.Info
+Skip to content
+Navigation Menu
+runner-images
+
+Code
+Issues
+42
+runner-images/images/macos
+/macos-26-arm64-Readme.md
+github-actions[bot]Hosted Runners Images Bot.
+github-actions[bot]
+and
+Hosted Runners Images Bot.
+last week
+248 lines (224 loc) · 15.1 KB
+
+Preview
+
+Code
+
+Blame
+Announcements
+[macOS] Deprecation of Xcode 16.4 on macOS 26 on December 8th.
+[macOS] The macOS 13 Ventura based runner images will begin deprecation on September 22nd and will be fully unsupported by December 4th for GitHub and ADO
+[macOS] The additional macOS 15 Sonoma Intel-based image will be available in GitHub Actions
+macOS 26 (Tahoe) is now available as a public beta in GitHub Actions
+[macOS] Deprecation of 4 tools on November 3rd.
+macOS 26
+OS Version: macOS 26.0.1 (25A362)
+Kernel Version: Darwin 25.0.0
+Image Version: 20251126.0052
+Installed Software
+Language and Runtime
+.NET Core SDK: 8.0.101, 8.0.204, 8.0.303, 8.0.416, 9.0.102, 9.0.203, 9.0.308, 10.0.100
+Bash 3.2.57(1)-release
+Clang/LLVM 17.0.0
+Clang/LLVM (Homebrew) 20.1.8 - available on $(brew --prefix llvm@20)/bin/clang
+GCC 13 (Homebrew GCC 13.4.0) - available by gcc-13 alias
+GCC 14 (Homebrew GCC 14.3.0) - available by gcc-14 alias
+GCC 15 (Homebrew GCC 15.2.0) - available by gcc-15 alias
+GNU Fortran 13 (Homebrew GCC 13.4.0) - available by gfortran-13 alias
+GNU Fortran 14 (Homebrew GCC 14.3.0) - available by gfortran-14 alias
+GNU Fortran 15 (Homebrew GCC 15.2.0) - available by gfortran-15 alias
+Kotlin 2.2.21-release-469
+Node.js 24.11.1
+Perl 5.40.2
+Python3 3.14.0
+Ruby 3.4.7
+Package Management
+Bundler 2.7.2
+Carthage 0.40.0
+CocoaPods 1.16.2
+Homebrew 5.0.3
+NPM 11.6.2
+Pip3 25.3 (python 3.14)
+Pipx 1.8.0
+RubyGems 3.7.2
+Vcpkg 2025 (build from commit 4c5ae6b55f)
+Yarn 1.22.22
+Project Management
+Apache Ant 1.10.15
+Apache Maven 3.9.11
+Gradle 9.2.1
+Utilities
+7-Zip 17.05
+aria2 1.37.0
+azcopy 10.31.0
+bazel 8.4.2
+bazelisk 1.27.0
+bsdtar 3.5.3 - available by 'tar' alias
+Curl 8.7.1
+Git 2.50.1
+Git LFS 3.7.1
+GitHub CLI 2.83.1
+GNU Tar 1.35 - available by 'gtar' alias
+GNU Wget 1.25.0
+gpg (GnuPG) 2.4.8
+jq 1.8.1
+OpenSSL 3.6.0 1 Oct 2025 (Library: OpenSSL 3.6.0 1 Oct 2025)
+Packer 1.14.3
+pkgconf 2.5.1
+Unxip 3.2
+yq 4.49.2
+zstd 1.5.7
+Ninja 1.13.2
+Tools
+AWS CLI 2.32.5
+AWS SAM CLI 1.148.0
+AWS Session Manager CLI 1.2.764.0
+Azure CLI 2.80.0
+Azure CLI (azure-devops) 1.0.2
+Bicep CLI 0.39.26
+Cmake 4.2.0
+CodeQL Action Bundle 2.23.6
+Fastlane 2.229.1
+SwiftFormat 0.58.6
+Xcbeautify 3.1.1
+Xcode Command Line Tools 26.1.0.0.1.1761104275
+Xcodes 1.6.2
+Browsers
+Safari 26.0.1 (21622.1.22.11.15)
+SafariDriver 26.0.1 (21622.1.22.11.15)
+Google Chrome 142.0.7444.176
+Google Chrome for Testing 142.0.7444.175
+ChromeDriver 142.0.7444.175
+Microsoft Edge 142.0.3595.94
+Microsoft Edge WebDriver 142.0.3595.94
+Mozilla Firefox 145.0.2
+geckodriver 0.36.0
+Selenium server 4.38.0
+Environment variables
+Name	Value
+CHROMEWEBDRIVER	/usr/local/share/chromedriver-mac-arm64
+EDGEWEBDRIVER	/usr/local/share/edge_driver
+GECKOWEBDRIVER	/opt/homebrew/opt/geckodriver/bin
+Java
+Version	Environment Variable
+11.0.29+7	JAVA_HOME_11_arm64
+17.0.17+10	JAVA_HOME_17_arm64
+21.0.9+10.0 (default)	JAVA_HOME_21_arm64
+25.0.1+8.0	JAVA_HOME_25_arm64
+Cached Tools
+Ruby
+3.2.9
+3.3.10
+3.4.7
+Python
+3.11.9
+3.12.10
+3.13.9
+3.14.0
+Node.js
+20.19.6
+22.21.1
+24.11.1
+Go
+1.23.12
+1.24.10
+1.25.4
+Rust Tools
+Cargo 1.91.1
+Rust 1.91.1
+Rustdoc 1.91.1
+Rustup 1.28.2
+Packages
+Clippy 0.1.91
+Rustfmt 1.8.0-stable
+PowerShell Tools
+PowerShell 7.4.13
+PowerShell Modules
+Az: 14.3.0
+Pester: 5.7.1
+PSScriptAnalyzer: 1.24.0
+Xcode
+Version	Build	Path	Symlinks
+26.2 (beta)	17C5038g	/Applications/Xcode_26.2_beta_2.app	/Applications/Xcode_26.2.0.app
+/Applications/Xcode_26.2.app
+26.1.1	17B100	/Applications/Xcode_26.1.1.app	/Applications/Xcode_26.1.app
+26.0.1 (default)	17A400	/Applications/Xcode_26.0.1.app	/Applications/Xcode_26.0.app
+/Applications/Xcode.app
+16.4	16F6	/Applications/Xcode_16.4.app	/Applications/Xcode_16.4.0.app
+Installed SDKs
+SDK	SDK Name	Xcode Version
+macOS 15.5	macosx15.5	16.4
+macOS 26.0	macosx26.0	26.0.1
+macOS 26.1	macosx26.1	26.1.1
+macOS 26.2	macosx26.2	26.2
+iOS 18.5	iphoneos18.5	16.4
+iOS 26.0	iphoneos26.0	26.0.1
+iOS 26.1	iphoneos26.1	26.1.1
+iOS 26.2	iphoneos26.2	26.2
+Simulator - iOS 18.5	iphonesimulator18.5	16.4
+Simulator - iOS 26.0	iphonesimulator26.0	26.0.1
+Simulator - iOS 26.1	iphonesimulator26.1	26.1.1
+Simulator - iOS 26.2	iphonesimulator26.2	26.2
+tvOS 18.5	appletvos18.5	16.4
+tvOS 26.0	appletvos26.0	26.0.1
+tvOS 26.1	appletvos26.1	26.1.1
+tvOS 26.2	appletvos26.2	26.2
+Simulator - tvOS 18.5	appletvsimulator18.5	16.4
+Simulator - tvOS 26.0	appletvsimulator26.0	26.0.1
+Simulator - tvOS 26.1	appletvsimulator26.1	26.1.1
+Simulator - tvOS 26.2	appletvsimulator26.2	26.2
+watchOS 11.5	watchos11.5	16.4
+watchOS 26.0	watchos26.0	26.0.1
+watchOS 26.1	watchos26.1	26.1.1
+watchOS 26.2	watchos26.2	26.2
+Simulator - watchOS 11.5	watchsimulator11.5	16.4
+Simulator - watchOS 26.0	watchsimulator26.0	26.0.1
+Simulator - watchOS 26.1	watchsimulator26.1	26.1.1
+S...truncated (10000 bytes)
+1.7.1.1990-pbvnhxid
+2 minutes ago by Airlanggayudhoyono@Intel-Mil.Info (committed by GitHub)
+master 6d97f521 ← patch-1 fc2622a9
+1 min 9 sec
+Console Messages Tests Artifacts
+Build started
+git lfs install --skip-smudge
+Git LFS initialized.
+git clone -q --depth=1 https://github.com/opentoonz/opentoonz.git C:\projects\opentoonz
+git checkout -qf FETCH_HEAD
+Restoring build cache
+Cache 'C:\Tools\opencv' - Restored
+Running Install scripts
+if exist "C:\Tools\opencv\build\x64\vc16\bin\opencv_world4110.dll" (echo OpenCV cached, skipping install) else (choco install opencv --version=4.11.0 --no-progress --yes --force || exit /b 1 & echo Installed OpenCV)
+OpenCV cached, skipping install
+mkdir thirdparty\qt
+curl -fsSL -o Qt5.15.2_wintab.zip https://github.com/shun-iwasawa/qt5/releases/download/v5.15.2_wintab/Qt5.15.2_wintab.zip || exit /b 1
+7z x Qt5.15.2_wintab.zip -o%APPVEYOR_BUILD_FOLDER% || exit /b 1
+7-Zip 25.01 (x64) : Copyright (c) 1999-2025 Igor Pavlov : 2025-08-03
+Scanning the drive for archives:
+1 file, 143421017 bytes (137 MiB)
+Extracting archive: Qt5.15.2_wintab.zip
+--
+Path = Qt5.15.2_wintab.zip
+Type = zip
+Physical Size = 143421017
+Everything is Ok
+Folders: 797
+Files: 11213
+Size:       575923463
+Compressed: 143421017
+echo Extracted Qt5.15.2_wintab.zip
+Extracted Qt5.15.2_wintab.zip
+move Qt5.15.2_wintab\5.15.2_wintab thirdparty\qt || exit /b 1
+        1 dir(s) moved.
+echo Moved Qt directory to thirdparty\qt
+Moved Qt directory to thirdparty\qt
+REM Create directories for symbolic link
+mkdir C:\Qt\5.15.2
+REM Create junction to point to the downloaded folder
+cmd /c mklink /J C:\Qt\5.15.2\msvc2019_64 %APPVEYOR_BUILD_FOLDER%\thirdparty\qt\5.15.2_wintab\msvc2019_64
+Junction created for C:\Qt\5.15.2\msvc2019_64 <<===>> C:\projects\opentoonz\thirdparty\qt\5.15.2_wintab\msvc2019_64
+echo Created junction C:\Qt\5.15.2\msvc2019_64 pointing to %APPVEYOR_BUILD_FOLDER%\thirdparty\qt\5.15.2_wintab\msvc2019_64
+Created junction C:\Qt\5.15.2\msvc2019_64 pointing to C:\projects\opentoonz\thirdparty\qt\5.15.2_wintab\msvc2019_64
+curl -fsSL -o thirdparty-libs.zip https://github.com/andeon/opentoonz-thirdparty-libs/releases/download/prebuilt-libs-v1/thirdparty-libs.zip || exit /b 1
+7z x -y thirdparty-libs.zip -o%APPVEYOR_BUILD_FOLDER% || exit /b 1
+7-Zip 25.01 (x64) : Copyright (c) 1999-2025 Igor Pavlov : 2025-08-03
+Scanning the drive for archives:
+1 file, 22846319 bytes (22 MiB)
+Extracting archive: thirdparty-libs.zip
+--
+Path = thirdparty-libs.zip
+Type = zip
+Physical Size = 22846319
+Everything is Ok
+Folders: 29
+Files: 42
+Size:       86150003
+Compressed: 22846319
+echo Extracted third-party libraries
+Extracted third-party libraries
+cd thirdparty
+if not exist tiff-4.0.3\libtiff\tif_config.vc.h (echo tif_config.vc.h not found & exit /b 1)
+copy /Y tiff-4.0.3\libtiff\tif_config.vc.h tiff-4.0.3\libtiff\tif_config.h || exit /b 1
+        1 file(s) copied.
+if not exist tiff-4.0.3\libtiff\tiffconf.vc.h (echo tiffconf.vc.h not found & exit /b 1)
+copy /Y tiff-4.0.3\libtiff\tiffconf.vc.h tiff-4.0.3\libtiff\tiffconf.h || exit /b 1
+        1 file(s) copied.
+if not exist libpng-1.6.21\scripts\pnglibconf.h.prebuilt (echo pnglibconf.h.prebuilt not found & exit /b 1)
+copy /Y libpng-1.6.21\scripts\pnglibconf.h.prebuilt libpng-1.6.21\pnglibconf.h || exit /b 1
+        1 file(s) copied.
+cd ..\
+echo Configured third-party libraries
+Configured third-party libraries
+if not exist "%QT_PATH%\bin\qmake.exe" (echo QT_PATH does not exist or is invalid: %QT_PATH% & exit /b 1)
+if not exist "C:\Libraries\boost_1_89_0" (echo Boost not found at C:\Libraries\boost_1_89_0 & exit /b 1)
+cd toonz
+mkdir %PLATFORM% && cd %PLATFORM%
+cmake ..\sources -G "Visual Studio 16 2019" -Ax64 -DQT_PATH="%QT_PATH%" -DBOOST_ROOT="C:\Libraries\boost_1_89_0" -DOpenCV_DIR="C:\Tools\opencv\build" -DWITH_WINTAB=ON || exit /b 1
+-- Selecting Windows SDK version 10.0.26100.0 to target Windows 10.0.17763.
+-- The C compiler identification is MSVC 19.29.30159.0
