@@ -50,6 +50,11 @@ foreach header : headers_to_check
   coccinelle_headers += meson.project_source_root() / header
 endforeach
 
+coccinelle_includes = []
+foreach path : ['compat', 'ewah', 'refs', 'sha256', 'trace2', 'win32', 'xdiff']
+  coccinelle_includes += ['-I', meson.project_source_root() / path]
+endforeach
+
 patches = [ ]
 foreach source : coccinelle_sources
   patches += custom_target(
@@ -58,6 +63,7 @@ foreach source : coccinelle_sources
       '--all-includes',
       '--sp-file', concatenated_rules,
       '--patch', meson.project_source_root(),
+      coccinelle_includes,
       '@INPUT@',
     ],
     input: meson.project_source_root() / source,
