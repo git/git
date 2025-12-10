@@ -321,7 +321,6 @@ for instructions.
 	If disabled with `--no-use-imap-only`, the emails will be sent like usual.
 	Disabled by default, but the `sendemail.useImapOnly` configuration
 	variable can be used to enable it.
-
 +
 This feature requires setting up `git imap-send`. See linkgit:git-imap-send[1]
 for instructions.
