@@ -147,9 +147,8 @@ out:
  * of the object ID, an extra slash for the first level indirection, and
  * the terminating NUL.
  */
-static void read_info_alternates(struct object_database *odb,
-				 const char *relative_base,
-				 int depth);
+static void read_info_alternates(const char *relative_base,
+				 struct strvec *out);
 
 static struct odb_source *odb_source_new(struct object_database *odb,
 					 const char *path,
@@ -171,6 +170,7 @@ static struct odb_source *odb_add_alternate_recursively(struct object_database *
 							int depth)
 {
 	struct odb_source *alternate = NULL;
+	struct strvec sources = STRVEC_INIT;
 	khiter_t pos;
 	int ret;
 
@@ -189,9 +189,17 @@ static struct odb_source *odb_add_alternate_recursively(struct object_database *
 	kh_value(odb->source_by_path, pos) = alternate;
 
 	/* recursively add alternates */
-	read_info_alternates(odb, alternate->path, depth + 1);
+	read_info_alternates(alternate->path, &sources);
+	if (sources.nr && depth + 1 > 5) {
+		error(_("%s: ignoring alternate object stores, nesting too deep"),
+		      source);
+	} else {
+		for (size_t i = 0; i < sources.nr; i++)
+			odb_add_alternate_recursively(odb, sources.v[i], depth + 1);
+	}
 
  error:
+	strvec_clear(&sources);
 	return alternate;
 }
 
@@ -202,6 +210,9 @@ static void parse_alternates(const char *string,
 {
 	struct strbuf pathbuf = STRBUF_INIT;
 	struct strbuf buf = STRBUF_INIT;
+
+	if (!string || !*string)
+		return;
 
 	while (*string) {
 		const char *end;
@@ -259,34 +270,11 @@ static void parse_alternates(const char *string,
 	strbuf_release(&buf);
 }
 
-static void link_alt_odb_entries(struct object_database *odb, const char *alt,
-				 int sep, const char *relative_base, int depth)
+static void read_info_alternates(const char *relative_base,
+				 struct strvec *out)
 {
-	struct strvec alternates = STRVEC_INIT;
-
-	if (!alt || !*alt)
-		return;
-
-	if (depth > 5) {
-		error(_("%s: ignoring alternate object stores, nesting too deep"),
-				relative_base);
-		return;
-	}
-
-	parse_alternates(alt, sep, relative_base, &alternates);
-
-	for (size_t i = 0; i < alternates.nr; i++)
-		odb_add_alternate_recursively(odb, alternates.v[i], depth);
-
-	strvec_clear(&alternates);
-}
-
-static void read_info_alternates(struct object_database *odb,
-				 const char *relative_base,
-				 int depth)
-{
-	char *path;
 	struct strbuf buf = STRBUF_INIT;
+	char *path;
 
 	path = xstrfmt("%s/info/alternates", relative_base);
 	if (strbuf_read_file(&buf, path, 1024) < 0) {
@@ -294,8 +282,8 @@ static void read_info_alternates(struct object_database *odb,
 		free(path);
 		return;
 	}
+	parse_alternates(buf.buf, '\n', relative_base, out);
 
-	link_alt_odb_entries(odb, buf.buf, '\n', relative_base, depth);
 	strbuf_release(&buf);
 	free(path);
 }
@@ -622,13 +610,19 @@ int odb_for_each_alternate(struct object_database *odb,
 
 void odb_prepare_alternates(struct object_database *odb)
 {
+	struct strvec sources = STRVEC_INIT;
+
 	if (odb->loaded_alternates)
 		return;
 
-	link_alt_odb_entries(odb, odb->alternate_db, PATH_SEP, NULL, 0);
+	parse_alternates(odb->alternate_db, PATH_SEP, NULL, &sources);
+	read_info_alternates(odb->sources->path, &sources);
+	for (size_t i = 0; i < sources.nr; i++)
+		odb_add_alternate_recursively(odb, sources.v[i], 0);
 
-	read_info_alternates(odb, odb->sources->path, 0);
 	odb->loaded_alternates = 1;
+
+	strvec_clear(&sources);
 }
 
 int odb_has_alternates(struct object_database *odb)
