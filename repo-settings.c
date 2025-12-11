@@ -59,7 +59,23 @@ void prepare_repo_settings(struct repository *r)
 	if (manyfiles) {
 		r->settings.index_version = 4;
 		r->settings.index_skip_hash = 1;
+#ifndef WIN32
 		r->settings.core_untracked_cache = UNTRACKED_CACHE_WRITE;
+#else
+		/*
+		 * Unfortunately, Scalar's Functional Tests demonstrated
+		 * that the untracked cache feature is unreliable on Windows
+		 * (which is a bummer because that platform would benefit the
+		 * most from it). For some reason, freshly created files seem
+		 * not to update the directory's `lastModified` time
+		 * immediately, but the untracked cache would need to rely on
+		 * that.
+		 *
+		 * Therefore, with a sad heart, we disable this very useful
+		 * feature on Windows.
+		 */
+		r->settings.core_untracked_cache = UNTRACKED_CACHE_REMOVE;
+#endif
 		r->settings.pack_use_path_walk = 1;
 	}
 
