@@ -159,44 +159,21 @@ static struct odb_source *odb_source_new(struct object_database *odb,
 	return source;
 }
 
-static struct odb_source *link_alt_odb_entry(struct object_database *odb,
-					     const char *dir,
-					     const char *relative_base,
-					     int depth)
+static struct odb_source *odb_add_alternate_recursively(struct object_database *odb,
+							const char *source,
+							int depth)
 {
 	struct odb_source *alternate = NULL;
-	struct strbuf pathbuf = STRBUF_INIT;
 	struct strbuf tmp = STRBUF_INIT;
 	khiter_t pos;
 	int ret;
 
-	if (!is_absolute_path(dir) && relative_base) {
-		strbuf_realpath(&pathbuf, relative_base, 1);
-		strbuf_addch(&pathbuf, '/');
-	}
-	strbuf_addstr(&pathbuf, dir);
-
-	if (!strbuf_realpath(&tmp, pathbuf.buf, 0)) {
-		error(_("unable to normalize alternate object path: %s"),
-		      pathbuf.buf);
-		goto error;
-	}
-	strbuf_swap(&pathbuf, &tmp);
-
-	/*
-	 * The trailing slash after the directory name is given by
-	 * this function at the end. Remove duplicates.
-	 */
-	while (pathbuf.len && pathbuf.buf[pathbuf.len - 1] == '/')
-		strbuf_setlen(&pathbuf, pathbuf.len - 1);
-
-	strbuf_reset(&tmp);
 	strbuf_realpath(&tmp, odb->sources->path, 1);
 
-	if (!alt_odb_usable(odb, pathbuf.buf, tmp.buf))
+	if (!alt_odb_usable(odb, source, tmp.buf))
 		goto error;
 
-	alternate = odb_source_new(odb, pathbuf.buf, false);
+	alternate = odb_source_new(odb, source, false);
 
 	/* add the alternate entry */
 	*odb->sources_tail = alternate;
@@ -212,20 +189,22 @@ static struct odb_source *link_alt_odb_entry(struct object_database *odb,
 
  error:
 	strbuf_release(&tmp);
-	strbuf_release(&pathbuf);
 	return alternate;
 }
 
 static void parse_alternates(const char *string,
 			     int sep,
+			     const char *relative_base,
 			     struct strvec *out)
 {
+	struct strbuf pathbuf = STRBUF_INIT;
 	struct strbuf buf = STRBUF_INIT;
 
 	while (*string) {
 		const char *end;
 
 		strbuf_reset(&buf);
+		strbuf_reset(&pathbuf);
 
 		if (*string == '#') {
 			/* comment; consume up to next separator */
@@ -250,9 +229,30 @@ static void parse_alternates(const char *string,
 		if (!buf.len)
 			continue;
 
+		if (!is_absolute_path(buf.buf) && relative_base) {
+			strbuf_realpath(&pathbuf, relative_base, 1);
+			strbuf_addch(&pathbuf, '/');
+		}
+		strbuf_addbuf(&pathbuf, &buf);
+
+		strbuf_reset(&buf);
+		if (!strbuf_realpath(&buf, pathbuf.buf, 0)) {
+			error(_("unable to normalize alternate object path: %s"),
+			      pathbuf.buf);
+			continue;
+		}
+
+		/*
+		 * The trailing slash after the directory name is given by
+		 * this function at the end. Remove duplicates.
+		 */
+		while (buf.len && buf.buf[buf.len - 1] == '/')
+			strbuf_setlen(&buf, buf.len - 1);
+
 		strvec_push(out, buf.buf);
 	}
 
+	strbuf_release(&pathbuf);
 	strbuf_release(&buf);
 }
 
@@ -270,10 +270,10 @@ static void link_alt_odb_entries(struct object_database *odb, const char *alt,
 		return;
 	}
 
-	parse_alternates(alt, sep, &alternates);
+	parse_alternates(alt, sep, relative_base, &alternates);
 
 	for (size_t i = 0; i < alternates.nr; i++)
-		link_alt_odb_entry(odb, alternates.v[i], relative_base, depth);
+		odb_add_alternate_recursively(odb, alternates.v[i], depth);
 
 	strvec_clear(&alternates);
 }
@@ -348,7 +348,7 @@ struct odb_source *odb_add_to_alternates_memory(struct object_database *odb,
 	 * overwritten when they are.
 	 */
 	odb_prepare_alternates(odb);
-	return link_alt_odb_entry(odb, dir, NULL, 0);
+	return odb_add_alternate_recursively(odb, dir, 0);
 }
 
 struct odb_source *odb_set_temporary_primary_source(struct object_database *odb,
