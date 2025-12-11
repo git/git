@@ -271,25 +271,28 @@ static struct odb_source *odb_add_alternate_recursively(struct object_database *
 	return alternate;
 }
 
-void odb_add_to_alternates_file(struct object_database *odb,
-				const char *dir)
+static int odb_source_write_alternate(struct odb_source *source,
+				      const char *alternate)
 {
 	struct lock_file lock = LOCK_INIT;
-	char *alts = repo_git_path(odb->repo, "objects/info/alternates");
+	char *path = xstrfmt("%s/%s", source->path, "info/alternates");
 	FILE *in, *out;
 	int found = 0;
+	int ret;
 
-	hold_lock_file_for_update(&lock, alts, LOCK_DIE_ON_ERROR);
+	hold_lock_file_for_update(&lock, path, LOCK_DIE_ON_ERROR);
 	out = fdopen_lock_file(&lock, "w");
-	if (!out)
-		die_errno(_("unable to fdopen alternates lockfile"));
+	if (!out) {
+		ret = error_errno(_("unable to fdopen alternates lockfile"));
+		goto out;
+	}
 
-	in = fopen(alts, "r");
+	in = fopen(path, "r");
 	if (in) {
 		struct strbuf line = STRBUF_INIT;
 
 		while (strbuf_getline(&line, in) != EOF) {
-			if (!strcmp(dir, line.buf)) {
+			if (!strcmp(alternate, line.buf)) {
 				found = 1;
 				break;
 			}
@@ -298,20 +301,36 @@ void odb_add_to_alternates_file(struct object_database *odb,
 
 		strbuf_release(&line);
 		fclose(in);
+	} else if (errno != ENOENT) {
+		ret = error_errno(_("unable to read alternates file"));
+		goto out;
 	}
-	else if (errno != ENOENT)
-		die_errno(_("unable to read alternates file"));
 
 	if (found) {
 		rollback_lock_file(&lock);
 	} else {
-		fprintf_or_die(out, "%s\n", dir);
-		if (commit_lock_file(&lock))
-			die_errno(_("unable to move new alternates file into place"));
-		if (odb->loaded_alternates)
-			odb_add_alternate_recursively(odb, dir, 0);
+		fprintf_or_die(out, "%s\n", alternate);
+		if (commit_lock_file(&lock)) {
+			ret = error_errno(_("unable to move new alternates file into place"));
+			goto out;
+		}
 	}
-	free(alts);
+
+	ret = 0;
+
+out:
+	free(path);
+	return ret;
+}
+
+void odb_add_to_alternates_file(struct object_database *odb,
+				const char *dir)
+{
+	int ret = odb_source_write_alternate(odb->sources, dir);
+	if (ret < 0)
+		die(NULL);
+	if (odb->loaded_alternates)
+		odb_add_alternate_recursively(odb, dir, 0);
 }
 
 struct odb_source *odb_add_to_alternates_memory(struct object_database *odb,
