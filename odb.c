@@ -216,39 +216,50 @@ static struct odb_source *link_alt_odb_entry(struct object_database *odb,
 	return alternate;
 }
 
-static const char *parse_alt_odb_entry(const char *string,
-				       int sep,
-				       struct strbuf *out)
+static void parse_alternates(const char *string,
+			     int sep,
+			     struct strvec *out)
 {
-	const char *end;
+	struct strbuf buf = STRBUF_INIT;
 
-	strbuf_reset(out);
+	while (*string) {
+		const char *end;
 
-	if (*string == '#') {
-		/* comment; consume up to next separator */
-		end = strchrnul(string, sep);
-	} else if (*string == '"' && !unquote_c_style(out, string, &end)) {
-		/*
-		 * quoted path; unquote_c_style has copied the
-		 * data for us and set "end". Broken quoting (e.g.,
-		 * an entry that doesn't end with a quote) falls
-		 * back to the unquoted case below.
-		 */
-	} else {
-		/* normal, unquoted path */
-		end = strchrnul(string, sep);
-		strbuf_add(out, string, end - string);
+		strbuf_reset(&buf);
+
+		if (*string == '#') {
+			/* comment; consume up to next separator */
+			end = strchrnul(string, sep);
+		} else if (*string == '"' && !unquote_c_style(&buf, string, &end)) {
+			/*
+			 * quoted path; unquote_c_style has copied the
+			 * data for us and set "end". Broken quoting (e.g.,
+			 * an entry that doesn't end with a quote) falls
+			 * back to the unquoted case below.
+			 */
+		} else {
+			/* normal, unquoted path */
+			end = strchrnul(string, sep);
+			strbuf_add(&buf, string, end - string);
+		}
+
+		if (*end)
+			end++;
+		string = end;
+
+		if (!buf.len)
+			continue;
+
+		strvec_push(out, buf.buf);
 	}
 
-	if (*end)
-		end++;
-	return end;
+	strbuf_release(&buf);
 }
 
 static void link_alt_odb_entries(struct object_database *odb, const char *alt,
 				 int sep, const char *relative_base, int depth)
 {
-	struct strbuf dir = STRBUF_INIT;
+	struct strvec alternates = STRVEC_INIT;
 
 	if (!alt || !*alt)
 		return;
@@ -259,13 +270,12 @@ static void link_alt_odb_entries(struct object_database *odb, const char *alt,
 		return;
 	}
 
-	while (*alt) {
-		alt = parse_alt_odb_entry(alt, sep, &dir);
-		if (!dir.len)
-			continue;
-		link_alt_odb_entry(odb, dir.buf, relative_base, depth);
-	}
-	strbuf_release(&dir);
+	parse_alternates(alt, sep, &alternates);
+
+	for (size_t i = 0; i < alternates.nr; i++)
+		link_alt_odb_entry(odb, alternates.v[i], relative_base, depth);
+
+	strvec_clear(&alternates);
 }
 
 static void read_info_alternates(struct object_database *odb,
