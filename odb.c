@@ -338,7 +338,7 @@ void odb_add_to_alternates_file(struct object_database *odb,
 		if (commit_lock_file(&lock))
 			die_errno(_("unable to move new alternates file into place"));
 		if (odb->loaded_alternates)
-			link_alt_odb_entries(odb, dir, '\n', NULL, 0);
+			odb_add_alternate_recursively(odb, dir, 0);
 	}
 	free(alts);
 }
