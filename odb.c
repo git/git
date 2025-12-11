@@ -89,17 +89,20 @@ int odb_mkstemp(struct object_database *odb,
 /*
  * Return non-zero iff the path is usable as an alternate object database.
  */
-static int alt_odb_usable(struct object_database *o, const char *path,
-			  const char *normalized_objdir)
+static bool odb_is_source_usable(struct object_database *o, const char *path)
 {
 	int r;
+	struct strbuf normalized_objdir = STRBUF_INIT;
+	bool usable = false;
+
+	strbuf_realpath(&normalized_objdir, o->sources->path, 1);
 
 	/* Detect cases where alternate disappeared */
 	if (!is_directory(path)) {
 		error(_("object directory %s does not exist; "
 			"check .git/objects/info/alternates"),
 		      path);
-		return 0;
+		goto out;
 	}
 
 	/*
@@ -116,13 +119,17 @@ static int alt_odb_usable(struct object_database *o, const char *path,
 		kh_value(o->source_by_path, p) = o->sources;
 	}
 
-	if (fspatheq(path, normalized_objdir))
-		return 0;
+	if (fspatheq(path, normalized_objdir.buf))
+		goto out;
 
 	if (kh_get_odb_path_map(o->source_by_path, path) < kh_end(o->source_by_path))
-		return 0;
+		goto out;
 
-	return 1;
+	usable = true;
+
+out:
+	strbuf_release(&normalized_objdir);
+	return usable;
 }
 
 /*
@@ -164,13 +171,10 @@ static struct odb_source *odb_add_alternate_recursively(struct object_database *
 							int depth)
 {
 	struct odb_source *alternate = NULL;
-	struct strbuf tmp = STRBUF_INIT;
 	khiter_t pos;
 	int ret;
 
-	strbuf_realpath(&tmp, odb->sources->path, 1);
-
-	if (!alt_odb_usable(odb, source, tmp.buf))
+	if (!odb_is_source_usable(odb, source))
 		goto error;
 
 	alternate = odb_source_new(odb, source, false);
@@ -188,7 +192,6 @@ static struct odb_source *odb_add_alternate_recursively(struct object_database *
 	read_info_alternates(odb, alternate->path, depth + 1);
 
  error:
-	strbuf_release(&tmp);
 	return alternate;
 }
 
