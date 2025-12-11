@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Dec 2025, #02)
+Subject: What's cooking in git.git (Dec 2025, #03)
 X-master-at: e85ae279b0d58edc2f4c3fd5ac391b51e1223985
-X-next-at: 3fc767764aec198db34053b394419bf8a1e8e5d2
+X-next-at: 674ac2bdf7c6f0d156df6d082f5137cb019b8bec
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Dec 2025, #02)
+What's cooking in git.git (Dec 2025, #03)
 -----------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,9 +16,6 @@ to a message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
-
-The maintainer will only be online for a few days during the first
-week of December, so please expect things to be slower in my tree.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -49,54 +46,32 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* bc/zsh-testsuite (2025-11-27) 2 commits
-  (merged to 'next' on 2025-11-30 at b4a3081f6f)
- + t5564: fix test hang under zsh's sh mode
- + t0614: use numerical comparison with test_line_count
-
- A few tests have been updated to work under the shell compatible
- mode of zsh.
- source: <20251128012107.101431-1-sandals@crustytoothpaste.net>
-
-
-* en/replay-doc-revision-range (2025-11-28) 1 commit
-  (merged to 'next' on 2025-11-30 at 37ba09bea2)
- + Documentation/git-replay.adoc: fix errors around revision range
-
- The use of "revision" (a connected set of commits) has been
- clarified in the "git replay" documentation.
- source: <pull.2012.git.1764391464952.gitgitgadget@gmail.com>
-
-
-* pw/replay-exclude-gpgsig-fix (2025-11-26) 1 commit
-  (merged to 'next' on 2025-11-30 at 3dda1242db)
- + replay: do not copy "gpgsign-sha256" header
- (this branch is used by ps/history and pw/replay-drop-empty.)
-
- "git replay" forgot to omit the "gpgsig-sha256" extended header
- from the resulting commit the same way it omits "gpgsig", which has
- been corrected.
- source: <4f04af5790353b074cf122c450c1cd3f8d1cecf3.1764167611.git.phillip.wood@dunelm.org.uk>
-
-
-* yc/xdiff-patience-optim (2025-11-26) 1 commit
-  (merged to 'next' on 2025-11-30 at db62d67599)
- + xdiff: optimize patience diff's LCS search
-
- The way patience diff finds LCS has been optimized.
- source: <pull.2109.v2.git.git.1764209766305.gitgitgadget@gmail.com>
-
---------------------------------------------------
 [New Topics]
 
+* jt/repo-struct-more-objinfo (2025-12-09) 6 commits
+ - builtin/repo: add object disk size info to structure table
+ - builtin/repo: add disk size info to keyvalue stucture output
+ - builtin/repo: add inflated object info to structure table
+ - builtin/repo: add inflated object info to keyvalue structure output
+ - builtin/repo: humanise count values in structure output
+ - builtin/repo: group per-type object values into struct
+
+ More object database related information are shown in "git repo
+ structure" output.
+
+ Comments?
+ source: <20251209225820.2861276-1-jltobler@gmail.com>
+
+--------------------------------------------------
+[Cooking]
+
 * jc/capability-leak (2025-12-06) 1 commit
- - connect: plug protocol capability leak
+  (merged to 'next' on 2025-12-10 at cfe8ce92b1)
+ + connect: plug protocol capability leak
 
  Leakfix.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <xmqqfr9mnbu9.fsf@gitster.g>
 
 
@@ -107,48 +82,54 @@ Release tarballs are available at:
 
  "git replay" documentation updates.
 
- Will merge to 'next'.
+ Expecting a (hopefully small and final) reroll.
+ cf. <39b57721-ab9e-489d-a382-16d9fe94c300@app.fastmail.com>
  source: <CV_replay_conflict.101@msgid.xyz>
 
 
-* lo/repo-info-keys (2025-12-07) 1 commit
+* lo/repo-info-keys (2025-12-09) 3 commits
  - repo: add new flag --keys to git-repo-info
+ - repo: add a default output format to enum output_format
+ - Merge branch 'lo/repo-struct-z' into lo/repo-info-keys
  (this branch uses lo/repo-struct-z.)
 
  "git repo info" learns "--keys" action to list known keys.
 
- Expecting a reroll.
- source: <20251204210843.79411-1-lucasseikioshiro@gmail.com>
+ Comments?
+ source: <20251209194616.61620-1-lucasseikioshiro@gmail.com>
 
 
 * kh/doc-pre-commit-fix (2025-12-07) 1 commit
- - doc: join default pre-commit paragraphs
+  (merged to 'next' on 2025-12-10 at f21f000140)
+ + doc: join default pre-commit paragraphs
 
  Docfix.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pre-commit_when_enabled.10a@msgid.xyz>
 
 
 * kh/doc-send-email-paragraph-fix (2025-12-08) 1 commit
- - doc: send-email: fix broken list continuation
+  (merged to 'next' on 2025-12-10 at 674ac2bdf7)
+ + doc: send-email: fix broken list continuation
 
  Docfix.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <send-email_list_contin.112@msgid.xyz>
 
 
 * mh/doc-config-gui-gcwarning (2025-12-08) 1 commit
- - config: document 'gui.GCWarning'
+  (merged to 'next' on 2025-12-10 at 15d6df9a04)
+ + config: document 'gui.GCWarning'
 
  Docfix.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20251208190400.64920-1-matthewhughes934@gmail.com>
 
 
-* ps/odb-alternates-object-sources (2025-12-08) 8 commits
+* ps/odb-alternates-object-sources (2025-12-10) 8 commits
  - odb: write alternates via sources
  - odb: read alternates via sources
  - odb: drop forward declaration of `read_info_alternates()`
@@ -160,12 +141,13 @@ Release tarballs are available at:
 
  Code refactoring around alternate object store.
 
- Comments?
- source: <20251208-b4-pks-odb-alternates-via-source-v1-0-e7ebb8b18c03@pks.im>
+ Will merge to 'next'.
+ source: <20251210-b4-pks-odb-alternates-via-source-v2-0-eb336815f9ab@pks.im>
 
 
-* ps/repack-avoid-noop-midx-rewrite (2025-12-08) 2 commits
- - builtin/repack: don't regenerate MIDX unless needed
+* ps/repack-avoid-noop-midx-rewrite (2025-12-10) 3 commits
+ - midx-write: skip rewriting MIDX with `--stdin-packs` unless needed
+ - midx-write: extract function to test whether MIDX needs updating
  - midx: fix `BUG()` when getting preferred pack without a reverse index
 
  Even when there is no changes in the packfile and no need to
@@ -173,7 +155,7 @@ Release tarballs are available at:
  file, which has been corrected.
 
  Comments?
- source: <20251208-pks-skip-noop-rewrite-v1-0-430d52dba9f0@pks.im>
+ source: <20251210-pks-skip-noop-rewrite-v2-0-f813a9e44f28@pks.im>
 
 
 * sb/doc-update-ref-markup-fix (2025-12-08) 1 commit
@@ -184,8 +166,6 @@ Release tarballs are available at:
  Will merget to 'next'.
  source: <pull.2123.git.git.1765261419802.gitgitgadget@gmail.com>
 
---------------------------------------------------
-[Cooking]
 
 * ap/packfile-promisor-object-optim (2025-12-08) 2 commits
  - packfile: skip hash checks in add_promisor_object()
@@ -353,6 +333,7 @@ Release tarballs are available at:
 * tc/last-modified-active-paths-optimization (2025-11-28) 1 commit
   (merged to 'next' on 2025-12-05 at 42c18b607f)
  + last-modified: fix use of uninitialized memory
+ (this branch is used by tc/memzero-array.)
 
  Recent optimization to "last-modified" command introduced use of
  uninitialized block of memory, which has been corrected.
