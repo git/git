@@ -132,77 +132,6 @@ out:
 	return usable;
 }
 
-/*
- * Prepare alternate object database registry.
- *
- * The variable alt_odb_list points at the list of struct
- * odb_source.  The elements on this list come from
- * non-empty elements from colon separated ALTERNATE_DB_ENVIRONMENT
- * environment variable, and $GIT_OBJECT_DIRECTORY/info/alternates,
- * whose contents is similar to that environment variable but can be
- * LF separated.  Its base points at a statically allocated buffer that
- * contains "/the/directory/corresponding/to/.git/objects/...", while
- * its name points just after the slash at the end of ".git/objects/"
- * in the example above, and has enough space to hold all hex characters
- * of the object ID, an extra slash for the first level indirection, and
- * the terminating NUL.
- */
-static void read_info_alternates(const char *relative_base,
-				 struct strvec *out);
-
-static struct odb_source *odb_source_new(struct object_database *odb,
-					 const char *path,
-					 bool local)
-{
-	struct odb_source *source;
-
-	CALLOC_ARRAY(source, 1);
-	source->odb = odb;
-	source->local = local;
-	source->path = xstrdup(path);
-	source->loose = odb_source_loose_new(source);
-
-	return source;
-}
-
-static struct odb_source *odb_add_alternate_recursively(struct object_database *odb,
-							const char *source,
-							int depth)
-{
-	struct odb_source *alternate = NULL;
-	struct strvec sources = STRVEC_INIT;
-	khiter_t pos;
-	int ret;
-
-	if (!odb_is_source_usable(odb, source))
-		goto error;
-
-	alternate = odb_source_new(odb, source, false);
-
-	/* add the alternate entry */
-	*odb->sources_tail = alternate;
-	odb->sources_tail = &(alternate->next);
-
-	pos = kh_put_odb_path_map(odb->source_by_path, alternate->path, &ret);
-	if (!ret)
-		BUG("source must not yet exist");
-	kh_value(odb->source_by_path, pos) = alternate;
-
-	/* recursively add alternates */
-	read_info_alternates(alternate->path, &sources);
-	if (sources.nr && depth + 1 > 5) {
-		error(_("%s: ignoring alternate object stores, nesting too deep"),
-		      source);
-	} else {
-		for (size_t i = 0; i < sources.nr; i++)
-			odb_add_alternate_recursively(odb, sources.v[i], depth + 1);
-	}
-
- error:
-	strvec_clear(&sources);
-	return alternate;
-}
-
 static void parse_alternates(const char *string,
 			     int sep,
 			     const char *relative_base,
@@ -286,6 +215,60 @@ static void read_info_alternates(const char *relative_base,
 
 	strbuf_release(&buf);
 	free(path);
+}
+
+
+static struct odb_source *odb_source_new(struct object_database *odb,
+					 const char *path,
+					 bool local)
+{
+	struct odb_source *source;
+
+	CALLOC_ARRAY(source, 1);
+	source->odb = odb;
+	source->local = local;
+	source->path = xstrdup(path);
+	source->loose = odb_source_loose_new(source);
+
+	return source;
+}
+
+static struct odb_source *odb_add_alternate_recursively(struct object_database *odb,
+							const char *source,
+							int depth)
+{
+	struct odb_source *alternate = NULL;
+	struct strvec sources = STRVEC_INIT;
+	khiter_t pos;
+	int ret;
+
+	if (!odb_is_source_usable(odb, source))
+		goto error;
+
+	alternate = odb_source_new(odb, source, false);
+
+	/* add the alternate entry */
+	*odb->sources_tail = alternate;
+	odb->sources_tail = &(alternate->next);
+
+	pos = kh_put_odb_path_map(odb->source_by_path, alternate->path, &ret);
+	if (!ret)
+		BUG("source must not yet exist");
+	kh_value(odb->source_by_path, pos) = alternate;
+
+	/* recursively add alternates */
+	read_info_alternates(alternate->path, &sources);
+	if (sources.nr && depth + 1 > 5) {
+		error(_("%s: ignoring alternate object stores, nesting too deep"),
+		      source);
+	} else {
+		for (size_t i = 0; i < sources.nr; i++)
+			odb_add_alternate_recursively(odb, sources.v[i], depth + 1);
+	}
+
+ error:
+	strvec_clear(&sources);
+	return alternate;
 }
 
 void odb_add_to_alternates_file(struct object_database *odb,
