@@ -1064,7 +1064,7 @@ if iconv.found()
     }
   '''
 
-  if compiler.run(iconv_omits_bom_source,
+  if meson.can_run_host_binaries() and compiler.run(iconv_omits_bom_source,
     dependencies: iconv,
     name: 'iconv omits BOM',
   ).returncode() != 0
@@ -1492,7 +1492,7 @@ if not has_bsd_sysctl
   endif
 endif
 
-if not meson.is_cross_build() and compiler.run('''
+if meson.can_run_host_binaries() and compiler.run('''
   #include <stdio.h>
 
   int main(int argc, const char **argv)
