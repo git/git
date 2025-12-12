@@ -89,17 +89,20 @@ int odb_mkstemp(struct object_database *odb,
 /*
  * Return non-zero iff the path is usable as an alternate object database.
  */
-static int alt_odb_usable(struct object_database *o, const char *path,
-			  const char *normalized_objdir)
+static bool odb_is_source_usable(struct object_database *o, const char *path)
 {
 	int r;
+	struct strbuf normalized_objdir = STRBUF_INIT;
+	bool usable = false;
+
+	strbuf_realpath(&normalized_objdir, o->sources->path, 1);
 
 	/* Detect cases where alternate disappeared */
 	if (!is_directory(path)) {
 		error(_("object directory %s does not exist; "
 			"check .git/objects/info/alternates"),
 		      path);
-		return 0;
+		goto out;
 	}
 
 	/*
@@ -116,33 +119,104 @@ static int alt_odb_usable(struct object_database *o, const char *path,
 		kh_value(o->source_by_path, p) = o->sources;
 	}
 
-	if (fspatheq(path, normalized_objdir))
-		return 0;
+	if (fspatheq(path, normalized_objdir.buf))
+		goto out;
 
 	if (kh_get_odb_path_map(o->source_by_path, path) < kh_end(o->source_by_path))
-		return 0;
+		goto out;
 
-	return 1;
+	usable = true;
+
+out:
+	strbuf_release(&normalized_objdir);
+	return usable;
 }
 
-/*
- * Prepare alternate object database registry.
- *
- * The variable alt_odb_list points at the list of struct
- * odb_source.  The elements on this list come from
- * non-empty elements from colon separated ALTERNATE_DB_ENVIRONMENT
- * environment variable, and $GIT_OBJECT_DIRECTORY/info/alternates,
- * whose contents is similar to that environment variable but can be
- * LF separated.  Its base points at a statically allocated buffer that
- * contains "/the/directory/corresponding/to/.git/objects/...", while
- * its name points just after the slash at the end of ".git/objects/"
- * in the example above, and has enough space to hold all hex characters
- * of the object ID, an extra slash for the first level indirection, and
- * the terminating NUL.
- */
-static void read_info_alternates(struct object_database *odb,
-				 const char *relative_base,
-				 int depth);
+static void parse_alternates(const char *string,
+			     int sep,
+			     const char *relative_base,
+			     struct strvec *out)
+{
+	struct strbuf pathbuf = STRBUF_INIT;
+	struct strbuf buf = STRBUF_INIT;
+
+	if (!string || !*string)
+		return;
+
+	while (*string) {
+		const char *end;
+
+		strbuf_reset(&buf);
+		strbuf_reset(&pathbuf);
+
+		if (*string == '#') {
+			/* comment; consume up to next separator */
+			end = strchrnul(string, sep);
+		} else if (*string == '"' && !unquote_c_style(&buf, string, &end)) {
+			/*
+			 * quoted path; unquote_c_style has copied the
+			 * data for us and set "end". Broken quoting (e.g.,
+			 * an entry that doesn't end with a quote) falls
+			 * back to the unquoted case below.
+			 */
+		} else {
+			/* normal, unquoted path */
+			end = strchrnul(string, sep);
+			strbuf_add(&buf, string, end - string);
+		}
+
+		if (*end)
+			end++;
+		string = end;
+
+		if (!buf.len)
+			continue;
+
+		if (!is_absolute_path(buf.buf) && relative_base) {
+			strbuf_realpath(&pathbuf, relative_base, 1);
+			strbuf_addch(&pathbuf, '/');
+		}
+		strbuf_addbuf(&pathbuf, &buf);
+
+		strbuf_reset(&buf);
+		if (!strbuf_realpath(&buf, pathbuf.buf, 0)) {
+			error(_("unable to normalize alternate object path: %s"),
+			      pathbuf.buf);
+			continue;
+		}
+
+		/*
+		 * The trailing slash after the directory name is given by
+		 * this function at the end. Remove duplicates.
+		 */
+		while (buf.len && buf.buf[buf.len - 1] == '/')
+			strbuf_setlen(&buf, buf.len - 1);
+
+		strvec_push(out, buf.buf);
+	}
+
+	strbuf_release(&pathbuf);
+	strbuf_release(&buf);
+}
+
+static void odb_source_read_alternates(struct odb_source *source,
+				       struct strvec *out)
+{
+	struct strbuf buf = STRBUF_INIT;
+	char *path;
+
+	path = xstrfmt("%s/info/alternates", source->path);
+	if (strbuf_read_file(&buf, path, 1024) < 0) {
+		warn_on_fopen_errors(path);
+		free(path);
+		return;
+	}
+	parse_alternates(buf.buf, '\n', source->path, out);
+
+	strbuf_release(&buf);
+	free(path);
+}
+
 
 static struct odb_source *odb_source_new(struct object_database *odb,
 					 const char *path,
@@ -159,44 +233,19 @@ static struct odb_source *odb_source_new(struct object_database *odb,
 	return source;
 }
 
-static struct odb_source *link_alt_odb_entry(struct object_database *odb,
-					     const char *dir,
-					     const char *relative_base,
-					     int depth)
+static struct odb_source *odb_add_alternate_recursively(struct object_database *odb,
+							const char *source,
+							int depth)
 {
 	struct odb_source *alternate = NULL;
-	struct strbuf pathbuf = STRBUF_INIT;
-	struct strbuf tmp = STRBUF_INIT;
+	struct strvec sources = STRVEC_INIT;
 	khiter_t pos;
 	int ret;
 
-	if (!is_absolute_path(dir) && relative_base) {
-		strbuf_realpath(&pathbuf, relative_base, 1);
-		strbuf_addch(&pathbuf, '/');
-	}
-	strbuf_addstr(&pathbuf, dir);
-
-	if (!strbuf_realpath(&tmp, pathbuf.buf, 0)) {
-		error(_("unable to normalize alternate object path: %s"),
-		      pathbuf.buf);
-		goto error;
-	}
-	strbuf_swap(&pathbuf, &tmp);
-
-	/*
-	 * The trailing slash after the directory name is given by
-	 * this function at the end. Remove duplicates.
-	 */
-	while (pathbuf.len && pathbuf.buf[pathbuf.len - 1] == '/')
-		strbuf_setlen(&pathbuf, pathbuf.len - 1);
-
-	strbuf_reset(&tmp);
-	strbuf_realpath(&tmp, odb->sources->path, 1);
-
-	if (!alt_odb_usable(odb, pathbuf.buf, tmp.buf))
+	if (!odb_is_source_usable(odb, source))
 		goto error;
 
-	alternate = odb_source_new(odb, pathbuf.buf, false);
+	alternate = odb_source_new(odb, source, false);
 
 	/* add the alternate entry */
 	*odb->sources_tail = alternate;
@@ -208,104 +257,42 @@ static struct odb_source *link_alt_odb_entry(struct object_database *odb,
 	kh_value(odb->source_by_path, pos) = alternate;
 
 	/* recursively add alternates */
-	read_info_alternates(odb, alternate->path, depth + 1);
+	odb_source_read_alternates(alternate, &sources);
+	if (sources.nr && depth + 1 > 5) {
+		error(_("%s: ignoring alternate object stores, nesting too deep"),
+		      source);
+	} else {
+		for (size_t i = 0; i < sources.nr; i++)
+			odb_add_alternate_recursively(odb, sources.v[i], depth + 1);
+	}
 
  error:
-	strbuf_release(&tmp);
-	strbuf_release(&pathbuf);
+	strvec_clear(&sources);
 	return alternate;
 }
 
-static const char *parse_alt_odb_entry(const char *string,
-				       int sep,
-				       struct strbuf *out)
-{
-	const char *end;
-
-	strbuf_reset(out);
-
-	if (*string == '#') {
-		/* comment; consume up to next separator */
-		end = strchrnul(string, sep);
-	} else if (*string == '"' && !unquote_c_style(out, string, &end)) {
-		/*
-		 * quoted path; unquote_c_style has copied the
-		 * data for us and set "end". Broken quoting (e.g.,
-		 * an entry that doesn't end with a quote) falls
-		 * back to the unquoted case below.
-		 */
-	} else {
-		/* normal, unquoted path */
-		end = strchrnul(string, sep);
-		strbuf_add(out, string, end - string);
-	}
-
-	if (*end)
-		end++;
-	return end;
-}
-
-static void link_alt_odb_entries(struct object_database *odb, const char *alt,
-				 int sep, const char *relative_base, int depth)
-{
-	struct strbuf dir = STRBUF_INIT;
-
-	if (!alt || !*alt)
-		return;
-
-	if (depth > 5) {
-		error(_("%s: ignoring alternate object stores, nesting too deep"),
-				relative_base);
-		return;
-	}
-
-	while (*alt) {
-		alt = parse_alt_odb_entry(alt, sep, &dir);
-		if (!dir.len)
-			continue;
-		link_alt_odb_entry(odb, dir.buf, relative_base, depth);
-	}
-	strbuf_release(&dir);
-}
-
-static void read_info_alternates(struct object_database *odb,
-				 const char *relative_base,
-				 int depth)
-{
-	char *path;
-	struct strbuf buf = STRBUF_INIT;
-
-	path = xstrfmt("%s/info/alternates", relative_base);
-	if (strbuf_read_file(&buf, path, 1024) < 0) {
-		warn_on_fopen_errors(path);
-		free(path);
-		return;
-	}
-
-	link_alt_odb_entries(odb, buf.buf, '\n', relative_base, depth);
-	strbuf_release(&buf);
-	free(path);
-}
-
-void odb_add_to_alternates_file(struct object_database *odb,
-				const char *dir)
+static int odb_source_write_alternate(struct odb_source *source,
+				      const char *alternate)
 {
 	struct lock_file lock = LOCK_INIT;
-	char *alts = repo_git_path(odb->repo, "objects/info/alternates");
+	char *path = xstrfmt("%s/%s", source->path, "info/alternates");
 	FILE *in, *out;
 	int found = 0;
+	int ret;
 
-	hold_lock_file_for_update(&lock, alts, LOCK_DIE_ON_ERROR);
+	hold_lock_file_for_update(&lock, path, LOCK_DIE_ON_ERROR);
 	out = fdopen_lock_file(&lock, "w");
-	if (!out)
-		die_errno(_("unable to fdopen alternates lockfile"));
+	if (!out) {
+		ret = error_errno(_("unable to fdopen alternates lockfile"));
+		goto out;
+	}
 
-	in = fopen(alts, "r");
+	in = fopen(path, "r");
 	if (in) {
 		struct strbuf line = STRBUF_INIT;
 
 		while (strbuf_getline(&line, in) != EOF) {
-			if (!strcmp(dir, line.buf)) {
+			if (!strcmp(alternate, line.buf)) {
 				found = 1;
 				break;
 			}
@@ -314,20 +301,36 @@ void odb_add_to_alternates_file(struct object_database *odb,
 
 		strbuf_release(&line);
 		fclose(in);
+	} else if (errno != ENOENT) {
+		ret = error_errno(_("unable to read alternates file"));
+		goto out;
 	}
-	else if (errno != ENOENT)
-		die_errno(_("unable to read alternates file"));
 
 	if (found) {
 		rollback_lock_file(&lock);
 	} else {
-		fprintf_or_die(out, "%s\n", dir);
-		if (commit_lock_file(&lock))
-			die_errno(_("unable to move new alternates file into place"));
-		if (odb->loaded_alternates)
-			link_alt_odb_entries(odb, dir, '\n', NULL, 0);
+		fprintf_or_die(out, "%s\n", alternate);
+		if (commit_lock_file(&lock)) {
+			ret = error_errno(_("unable to move new alternates file into place"));
+			goto out;
+		}
 	}
-	free(alts);
+
+	ret = 0;
+
+out:
+	free(path);
+	return ret;
+}
+
+void odb_add_to_alternates_file(struct object_database *odb,
+				const char *dir)
+{
+	int ret = odb_source_write_alternate(odb->sources, dir);
+	if (ret < 0)
+		die(NULL);
+	if (odb->loaded_alternates)
+		odb_add_alternate_recursively(odb, dir, 0);
 }
 
 struct odb_source *odb_add_to_alternates_memory(struct object_database *odb,
@@ -338,7 +341,7 @@ struct odb_source *odb_add_to_alternates_memory(struct object_database *odb,
 	 * overwritten when they are.
 	 */
 	odb_prepare_alternates(odb);
-	return link_alt_odb_entry(odb, dir, NULL, 0);
+	return odb_add_alternate_recursively(odb, dir, 0);
 }
 
 struct odb_source *odb_set_temporary_primary_source(struct object_database *odb,
@@ -609,13 +612,19 @@ int odb_for_each_alternate(struct object_database *odb,
 
 void odb_prepare_alternates(struct object_database *odb)
 {
+	struct strvec sources = STRVEC_INIT;
+
 	if (odb->loaded_alternates)
 		return;
 
-	link_alt_odb_entries(odb, odb->alternate_db, PATH_SEP, NULL, 0);
+	parse_alternates(odb->alternate_db, PATH_SEP, NULL, &sources);
+	odb_source_read_alternates(odb->sources, &sources);
+	for (size_t i = 0; i < sources.nr; i++)
+		odb_add_alternate_recursively(odb, sources.v[i], 0);
 
-	read_info_alternates(odb, odb->sources->path, 0);
 	odb->loaded_alternates = 1;
+
+	strvec_clear(&sources);
 }
 
 int odb_has_alternates(struct object_database *odb)
