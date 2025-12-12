@@ -429,7 +429,11 @@ int xmkstemp(char *filename_template)
 #undef TMP_MAX
 #define TMP_MAX 16384
 
-int git_mkstemps_mode(char *pattern, int suffix_len, int mode)
+/*
+ * Returns -1 on error, 0 if it created a directory, or an open file
+ * descriptor to the created regular file.
+ */
+static int git_mkdstemps_mode(char *pattern, int suffix_len, int mode, bool dir)
 {
 	static const char letters[] =
 		"abcdefghijklmnopqrstuvwxyz"
@@ -471,7 +475,10 @@ int git_mkstemps_mode(char *pattern, int suffix_len, int mode)
 			v /= num_letters;
 		}
 
-		fd = open(pattern, O_CREAT | O_EXCL | O_RDWR, mode);
+		if (dir)
+			fd = mkdir(pattern, mode);
+		else
+			fd = open(pattern, O_CREAT | O_EXCL | O_RDWR, mode);
 		if (fd >= 0)
 			return fd;
 		/*
@@ -484,6 +491,16 @@ int git_mkstemps_mode(char *pattern, int suffix_len, int mode)
 	/* We return the null string if we can't find a unique file name.  */
 	pattern[0] = '\0';
 	return -1;
+}
+
+char *git_mkdtemp(char *pattern)
+{
+	return git_mkdstemps_mode(pattern, 0, 0700, true) ? NULL : pattern;
+}
+
+int git_mkstemps_mode(char *pattern, int suffix_len, int mode)
+{
+	return git_mkdstemps_mode(pattern, suffix_len, mode, false);
 }
 
 int git_mkstemp_mode(char *pattern, int mode)

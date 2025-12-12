@@ -411,10 +411,6 @@ if(NOT HAVE_SETENV)
 	list(APPEND compat_SOURCES compat/setenv.c)
 endif()
 
-if(NOT HAVE_MKDTEMP)
-	list(APPEND compat_SOURCES compat/mkdtemp.c)
-endif()
-
 if(NOT HAVE_PREAD)
 	list(APPEND compat_SOURCES compat/pread.c)
 endif()

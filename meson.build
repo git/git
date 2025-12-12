@@ -1401,7 +1401,7 @@ checkfuncs = {
   'strlcpy' : ['strlcpy.c'],
   'strtoull' : [],
   'setenv' : ['setenv.c'],
-  'mkdtemp' : ['mkdtemp.c'],
+  'mkdtemp' : [],
   'initgroups' : [],
   'strtoumax' : ['strtoumax.c', 'strtoimax.c'],
   'pread' : ['pread.c'],
