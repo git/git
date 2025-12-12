@@ -1,7 +1,7 @@
 To: git@vger.kernel.org
 Subject: What's cooking in git.git (Dec 2025, #03)
 X-master-at: e85ae279b0d58edc2f4c3fd5ac391b51e1223985
-X-next-at: 674ac2bdf7c6f0d156df6d082f5137cb019b8bec
+X-next-at: 1dd061c0dc5afb29e4658344357c7edeef2ab3b0
 Bcc: lwn@lwn.net, gitster@pobox.com
 
 What's cooking in git.git (Dec 2025, #03)
@@ -61,6 +61,61 @@ Release tarballs are available at:
 
  Comments?
  source: <20251209225820.2861276-1-jltobler@gmail.com>
+
+
+* jc/c99-fam (2025-12-11) 1 commit
+ - 3.0: require C99 flexible-array member syntax
+
+ Require C99 style flexible array member support after Git 3.0
+ boundary.
+
+ Comments?
+ source: <xmqqbjk5e32q.fsf@gitster.g>
+
+
+* jc/macports-darwinports (2025-12-10) 1 commit
+ - Makefile: help macOS novices by mentioning MacPorts
+
+ Makefile in-comment doc update.
+
+ Will merge to 'next'.
+ source: <xmqq7buthgq4.fsf@gitster.g>
+
+
+* rs/macos-iconv-workaround (2025-12-09) 1 commit
+ - config.mak.uname: use iconv from Homebrew on macOS
+
+ Workaround that "iconv" shipped as part of macOS, which is broken
+ handling ISO-2022 encoded strings.
+
+ Will merge to 'next'?
+ source: <16efc726-34be-44f5-aa92-4e82b663ab3d@web.de>
+
+
+* rs/replay-wrong-onto-fix (2025-12-11) 2 commits
+ - replay: move onto NULL check before first use
+ - Merge branch 'sa/replay-atomic-ref-updates' into rs/replay-wrong-onto-fix
+
+ "git replay --onto=<commit> ...", when <commit> is mistyped,
+ started to segfault with recent change, which has been corrected.
+
+ Will merge to 'next'.
+ source: <9db2b913-b5d6-4617-b079-b4612eaa2b97@web.de>
+
+
+* tc/memzero-array (2025-12-10) 3 commits
+ - contrib/coccinelle: pass include paths to spatch(1)
+ - git-compat-util: introduce MEMZERO_ARRAY() macro
+ - Merge branch 'tc/last-modified-active-paths-optimization' into tc/memzero-array
+ (this branch uses tc/last-modified-active-paths-optimization.)
+
+ MEMZERO_ARRAY() helper is introduced to avoid clearing only the
+ first N bytes of an N-element array whose elements are larger than
+ a byte.
+
+ Will merge to 'next'?
+ cf. <aTpieqFoMmZiSzWS@pks.im>
+ source: <20251210-toon-cocci-memzero-v1-0-ae916a79065b@iotcl.com>
 
 --------------------------------------------------
 [Cooking]
@@ -129,20 +184,21 @@ Release tarballs are available at:
  source: <20251208190400.64920-1-matthewhughes934@gmail.com>
 
 
-* ps/odb-alternates-object-sources (2025-12-10) 8 commits
- - odb: write alternates via sources
- - odb: read alternates via sources
- - odb: drop forward declaration of `read_info_alternates()`
- - odb: remove mutual recursion when parsing alternates
- - odb: adapt `odb_add_to_alternates_file()` to call `odb_add_source()`
- - odb: move computation of normalized objdir into `alt_odb_usable()`
- - odb: resolve relative alternative paths when parsing
- - odb: refactor parsing of alternates to be self-contained
+* ps/odb-alternates-object-sources (2025-12-11) 8 commits
+  (merged to 'next' on 2025-12-12 at 1dd061c0dc)
+ + odb: write alternates via sources
+ + odb: read alternates via sources
+ + odb: drop forward declaration of `read_info_alternates()`
+ + odb: remove mutual recursion when parsing alternates
+ + odb: stop splitting alternate in `odb_add_to_alternates_file()`
+ + odb: move computation of normalized objdir into `alt_odb_usable()`
+ + odb: resolve relative alternative paths when parsing
+ + odb: refactor parsing of alternates to be self-contained
 
  Code refactoring around alternate object store.
 
- Will merge to 'next'.
- source: <20251210-b4-pks-odb-alternates-via-source-v2-0-eb336815f9ab@pks.im>
+ Will merge to 'master'.
+ source: <20251211-b4-pks-odb-alternates-via-source-v3-0-00e3f54d07ba@pks.im>
 
 
 * ps/repack-avoid-noop-midx-rewrite (2025-12-10) 3 commits
@@ -246,16 +302,15 @@ Release tarballs are available at:
  source: <pull.2014.git.1764699084703.gitgitgadget@gmail.com>
 
 
-* ps/odb-misc-fixes (2025-12-05) 4 commits
+* ps/odb-misc-fixes (2025-12-10) 3 commits
  - odb: properly close sources before freeing them
  - builtin/gc: fix condition for whether to write commit graphs
- - builtin/repack: fix geometric repacks with promisor remotes
  - Merge branch 'ps/object-source-management' into ps/odb-misc-fixes
 
  Miscellaneous fixes on object database layer.
 
  Comments?
- source: <20251205-odb-related-fixes-v1-0-ef4250abb584@pks.im>
+ source: <20251211-odb-related-fixes-v2-0-bdf875ce51fc@pks.im>
 
 
 * ps/clar-integers (2025-12-06) 3 commits
