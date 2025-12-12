@@ -2191,17 +2191,79 @@ void ref_store_release(struct ref_store *ref_store)
 	free(ref_store->gitdir);
 }
 
+static struct ref_store *get_ref_store_for_dir(struct repository *r,
+					       char *dir,
+					       enum ref_storage_format format)
+{
+	struct ref_store *ref_store = ref_store_init(r, format, dir,
+						     REF_STORE_ALL_CAPS);
+	return maybe_debug_wrap_ref_store(dir, ref_store);
+}
+
+static struct ref_store *get_ref_store_from_uri(struct repository *repo,
+						const char *uri)
+{
+	struct string_list ref_backend_info = STRING_LIST_INIT_DUP;
+	enum ref_storage_format format;
+	struct ref_store *store = NULL;
+	char *format_string;
+	char *dir;
+
+	if (!uri) {
+		error(_("reference backend uri is not provided"));
+		goto cleanup;
+	}
+
+	if (string_list_split(&ref_backend_info, uri, ":", 2) != 2) {
+		error(_("invalid reference backend uri format '%s'"), uri);
+		goto cleanup;
+	}
+
+	format_string = ref_backend_info.items[0].string;
+	if (!starts_with(ref_backend_info.items[1].string, "//")) {
+		error(_("invalid reference backend uri format '%s'"), uri);
+		goto cleanup;
+	}
+	dir = ref_backend_info.items[1].string + 2;
+
+	if (!dir[0]) {
+		error(_("invalid path in uri '%s'"), uri);
+		goto cleanup;
+	}
+
+	format = ref_storage_format_by_name(format_string);
+	if (format == REF_STORAGE_FORMAT_UNKNOWN) {
+		error(_("unknown reference backend '%s'"), format_string);
+		goto cleanup;
+	}
+
+	store = get_ref_store_for_dir(repo, dir, format);
+
+cleanup:
+	string_list_clear(&ref_backend_info, 0);
+	return store;
+}
+
 struct ref_store *get_main_ref_store(struct repository *r)
 {
+	char *ref_uri;
+
 	if (r->refs_private)
 		return r->refs_private;
 
 	if (!r->gitdir)
 		BUG("attempting to get main_ref_store outside of repository");
 
-	r->refs_private = ref_store_init(r, r->ref_storage_format,
-					 r->gitdir, REF_STORE_ALL_CAPS);
-	r->refs_private = maybe_debug_wrap_ref_store(r->gitdir, r->refs_private);
+	ref_uri = getenv(GIT_REF_URI_ENVIRONMENT);
+	if (ref_uri) {
+		r->refs_private = get_ref_store_from_uri(r, ref_uri);
+		if (!r->refs_private)
+			die("failed to initialize ref store from URI: %s", ref_uri);
+
+	} else {
+		r->refs_private = get_ref_store_for_dir(r, r->gitdir,
+							r->ref_storage_format);
+	}
 	return r->refs_private;
 }
 
