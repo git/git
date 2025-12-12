@@ -135,9 +135,6 @@ static int set_recommended_config(int reconfigure)
 	struct scalar_config config[] = {
 		/* Required */
 		{ "am.keepCR", "true", 1 },
-		{ "core.FSCache", "true", 1 },
-		{ "core.multiPackIndex", "true", 1 },
-		{ "core.preloadIndex", "true", 1 },
 #ifndef WIN32
 		{ "core.untrackedCache", "true", 1 },
 #else
@@ -157,7 +154,6 @@ static int set_recommended_config(int reconfigure)
 #endif
 		{ "core.logAllRefUpdates", "true", 1 },
 		{ "credential.https://dev.azure.com.useHttpPath", "true", 1 },
-		{ "credential.validate", "false", 1 }, /* GCM4W-only */
 		{ "gc.auto", "0", 1 },
 		{ "gui.GCWarning", "false", 1 },
 		{ "index.skipHash", "true", 1 },
@@ -166,7 +162,6 @@ static int set_recommended_config(int reconfigure)
 		{ "merge.stat", "false", 1 },
 		{ "merge.renames", "true", 1 },
 		{ "pack.useBitmaps", "false", 1 },
-		{ "pack.useSparse", "true", 1 },
 		{ "receive.autoGC", "false", 1 },
 		{ "feature.manyFiles", "false", 1 },
 		{ "feature.experimental", "false", 1 },
