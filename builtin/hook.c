@@ -44,6 +44,12 @@ static int run(int argc, const char **argv, const char *prefix,
 		goto usage;
 
 	/*
+	 * All current "hook run" use-cases require ungrouped child output.
+	 * If this changes, a hook run argument can be added to toggle it.
+	 */
+	opt.ungroup = 1;
+
+	/*
 	 * Having a -- for "run" when providing <hook-args> is
 	 * mandatory.
 	 */
