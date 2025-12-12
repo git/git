@@ -132,6 +132,10 @@ static int have_fsmonitor_support(void)
 
 static int set_recommended_config(int reconfigure)
 {
+	/*
+	 * Be sure to update Documentation/scalar.adoc if you add, update,
+	 * or remove any of these recommended settings.
+	 */
 	struct scalar_config config[] = {
 		{ "am.keepCR", "true" },
 		{ "commitGraph.changedPaths", "true" },
