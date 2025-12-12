@@ -19,6 +19,7 @@
 #include "help.h"
 #include "setup.h"
 #include "trace2.h"
+#include "path.h"
 
 static void setup_enlistment_directory(int argc, const char **argv,
 				       const char * const *usagestr,
@@ -95,7 +96,17 @@ struct scalar_config {
 	int overwrite_on_reconfigure;
 };
 
-static int set_scalar_config(const struct scalar_config *config, int reconfigure)
+static int set_scalar_config(const char *key, const char *value)
+{
+	char *file = repo_git_path(the_repository, "config");
+	int res = repo_config_set_multivar_in_file_gently(the_repository, file,
+							  key, value, NULL,
+							  " # set by scalar", 0);
+	free(file);
+	return res;
+}
+
+static int set_config_if_missing(const struct scalar_config *config, int reconfigure)
 {
 	char *value = NULL;
 	int res;
@@ -103,7 +114,7 @@ static int set_scalar_config(const struct scalar_config *config, int reconfigure
 	if ((reconfigure && config->overwrite_on_reconfigure) ||
 	    repo_config_get_string(the_repository, config->key, &value)) {
 		trace2_data_string("scalar", the_repository, config->key, "created");
-		res = repo_config_set_gently(the_repository, config->key, config->value);
+		res = set_scalar_config(config->key, config->value);
 	} else {
 		trace2_data_string("scalar", the_repository, config->key, "exists");
 		res = 0;
@@ -178,14 +189,14 @@ static int set_recommended_config(int reconfigure)
 	char *value;
 
 	for (i = 0; config[i].key; i++) {
-		if (set_scalar_config(config + i, reconfigure))
+		if (set_config_if_missing(config + i, reconfigure))
 			return error(_("could not configure %s=%s"),
 				     config[i].key, config[i].value);
 	}
 
 	if (have_fsmonitor_support()) {
 		struct scalar_config fsmonitor = { "core.fsmonitor", "true" };
-		if (set_scalar_config(&fsmonitor, reconfigure))
+		if (set_config_if_missing(&fsmonitor, reconfigure))
 			return error(_("could not configure %s=%s"),
 				     fsmonitor.key, fsmonitor.value);
 	}
@@ -197,9 +208,8 @@ static int set_recommended_config(int reconfigure)
 	if (repo_config_get_string(the_repository, "log.excludeDecoration", &value)) {
 		trace2_data_string("scalar", the_repository,
 				   "log.excludeDecoration", "created");
-		if (repo_config_set_multivar_gently(the_repository, "log.excludeDecoration",
-						    "refs/prefetch/*",
-						    CONFIG_REGEX_NONE, 0))
+		if (set_scalar_config("log.excludeDecoration",
+					    "refs/prefetch/*"))
 			return error(_("could not configure "
 				       "log.excludeDecoration"));
 	} else {
