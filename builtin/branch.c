@@ -591,7 +591,7 @@ static void copy_or_rename_branch(const char *oldname, const char *newname, int 
 		else {
 			int code = die_message(_("invalid branch name: '%s'"), oldname);
 			advise_if_enabled(ADVICE_REF_SYNTAX,
-					  _("See `man git check-ref-format`"));
+					  _("See 'git help check-ref-format'"));
 			exit(code);
 		}
 	}
