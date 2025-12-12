@@ -572,6 +572,11 @@ void diff_change(struct diff_options *,
 		 const char *fullpath,
 		 unsigned dirty_submodule1, unsigned dirty_submodule2);
 
+void diff_same(struct diff_options *,
+	       unsigned mode,
+	       const struct object_id *oid,
+	       const char *fullpath);
+
 struct diff_filepair *diff_unmerge(struct diff_options *, const char *path);
 
 void compute_diffstat(struct diff_options *options, struct diffstat_t *diffstat,

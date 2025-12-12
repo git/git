@@ -7399,6 +7399,26 @@ void diff_change(struct diff_options *options,
 			  concatpath, old_dirty_submodule, new_dirty_submodule);
 }
 
+void diff_same(struct diff_options *options,
+	       unsigned mode,
+	       const struct object_id *oid,
+	       const char *concatpath)
+{
+	struct diff_filespec *one;
+
+	if (S_ISGITLINK(mode) && is_submodule_ignored(concatpath, options))
+		return;
+
+	if (options->prefix &&
+	    strncmp(concatpath, options->prefix, options->prefix_length))
+		return;
+
+	one = alloc_filespec(concatpath);
+	fill_filespec(one, oid, 1, mode);
+	one->count++;
+	diff_queue(&diff_queued_diff, one, one);
+}
+
 struct diff_filepair *diff_unmerge(struct diff_options *options, const char *path)
 {
 	struct diff_filepair *pair;
