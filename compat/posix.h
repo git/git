@@ -253,6 +253,8 @@ char *gitdirname(char *);
 typedef uintmax_t timestamp_t;
 #define PRItime PRIuMAX
 #define parse_timestamp strtoumax
+#define parse_timestamp_from_buf(buf, len, ep, result) \
+	parse_unsigned_from_buf((buf), (len), (ep), (result), TIME_MAX)
 #define TIME_MAX UINTMAX_MAX
 #define TIME_MIN 0
 
