@@ -33,8 +33,8 @@ test_expect_success 'shell metachars in filenames' '
 	(
 		cd "$cli" &&
 		p4 sync ... &&
-		test -e "file with spaces" &&
-		test -e "foo\$bar"
+		test_path_exists "file with spaces" &&
+		test_path_exists "foo\$bar"
 	)
 '
 
@@ -52,8 +52,8 @@ test_expect_success 'deleting with shell metachars' '
 	(
 		cd "$cli" &&
 		p4 sync ... &&
-		test ! -e "file with spaces" &&
-		test ! -e foo\$bar
+		test_path_is_missing "file with spaces" &&
+		test_path_is_missing foo\$bar
 	)
 '
 
@@ -100,8 +100,8 @@ test_expect_success 'branch with shell char' '
 		git p4 clone --dest=. --detect-branches //depot@all &&
 		git log --all --graph --decorate --stat &&
 		git reset --hard p4/depot/branch\$3 &&
-		test -f shell_char_branch_file &&
-		test -f f1
+		test_path_is_file shell_char_branch_file &&
+		test_path_is_file f1
 	)
 '
 
