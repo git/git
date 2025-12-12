@@ -945,6 +945,10 @@ else
   build_options_config.set('NO_PERL_CPAN_FALLBACKS', '')
 endif
 
+submodule_encoding_by_default = get_option('submodule-encoding').to_int()
+libgit_c_args += '-DSUBMODULE_ENCODING_BY_DEFAULT=' + submodule_encoding_by_default.to_string()
+build_options_config.set('SUBMODULE_ENCODING_BY_DEFAULT', submodule_encoding_by_default)
+
 zlib_backend = get_option('zlib_backend')
 if zlib_backend in ['auto', 'zlib-ng']
   zlib_ng = dependency('zlib-ng', required: zlib_backend == 'zlib-ng')

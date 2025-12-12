@@ -229,6 +229,29 @@ AC_ARG_ENABLE([cssmin],
   GIT_CONF_SUBST([CSSMIN])
 ])
 
+# Define option to enable the submodule encoding extension by default
+AC_ARG_ENABLE([submodule-encoding],
+ [AS_HELP_STRING([--enable-submodule-encoding],
+  [Enable the submoduleEncoding extension by default at build time.]
+  [--disable-submodule-encoding will keep the current default (disabled).])],
+[
+case "$enableval" in
+  yes) SUBMODULE_ENCODING_BY_DEFAULT=1
+       AC_MSG_NOTICE([Submodule encoding will be enabled by default.])
+       ;;
+  no)  SUBMODULE_ENCODING_BY_DEFAULT=0
+       AC_MSG_NOTICE([Submodule encoding will not be enabled by default.])
+       ;;
+  *)   AC_MSG_ERROR([--enable-submodule-encoding takes yes or no.])
+       ;;
+esac
+],
+[
+  SUBMODULE_ENCODING_BY_DEFAULT=0
+])
+
+GIT_CONF_SUBST([SUBMODULE_ENCODING_BY_DEFAULT])
+
 ## Site configuration (override autodetection)
 ## --with-PACKAGE[=ARG] and --without-PACKAGE
 AC_MSG_NOTICE([CHECKS for site configuration])
