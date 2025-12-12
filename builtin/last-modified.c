@@ -525,7 +525,8 @@ int cmd_last_modified(int argc, const char **argv, const char *prefix,
 
 	argc = parse_options(argc, argv, prefix, last_modified_options,
 			     last_modified_usage,
-			     PARSE_OPT_KEEP_ARGV0 | PARSE_OPT_KEEP_UNKNOWN_OPT);
+			     PARSE_OPT_KEEP_ARGV0 | PARSE_OPT_KEEP_UNKNOWN_OPT |
+			     PARSE_OPT_KEEP_DASHDASH);
 
 	repo_config(repo, git_default_config, NULL);
 
