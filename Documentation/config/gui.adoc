@@ -55,3 +55,8 @@ gui.blamehistoryctx::
 	linkgit:gitk[1] for the selected commit, when the `Show History
 	Context` menu item is invoked from 'git gui blame'. If this
 	variable is set to zero, the whole history is shown.
+
+gui.GCWarning::
+	Determines whether linkgit:git-gui[1] should prompt for garbage
+	collection when git detects a large number of loose objects in
+	the repository. The default value is "true".
