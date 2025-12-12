@@ -102,6 +102,13 @@ test_expect_success 'keyvalue and nul format' '
 		git repo structure --format=nul >out 2>err &&
 
 		test_cmp expect_nul out &&
+		test_line_count = 0 err &&
+
+		# "-z", as a synonym to "--format=nul", participates in the
+		# usual "last one wins" rule.
+		git repo structure --format=table -z >out 2>err &&
+
+		test_cmp expect_nul out &&
 		test_line_count = 0 err
 	)
 '
