@@ -133,10 +133,33 @@ static int have_fsmonitor_support(void)
 static int set_recommended_config(int reconfigure)
 {
 	struct scalar_config config[] = {
-		/* Required */
-		{ "am.keepCR", "true", 1 },
+		{ "am.keepCR", "true" },
+		{ "commitGraph.changedPaths", "true" },
+		{ "commitGraph.generationVersion", "1" },
+		{ "core.autoCRLF", "false" },
+		{ "core.logAllRefUpdates", "true" },
+		{ "core.safeCRLF", "false" },
+		{ "credential.https://dev.azure.com.useHttpPath", "true" },
+		{ "feature.experimental", "false" },
+		{ "feature.manyFiles", "false" },
+		{ "fetch.showForcedUpdates", "false" },
+		{ "fetch.unpackLimit", "1" },
+		{ "fetch.writeCommitGraph", "false" },
+		{ "gc.auto", "0" },
+		{ "gui.GCWarning", "false" },
+		{ "index.skipHash", "true", 1 /* Fix previous setting. */ },
+		{ "index.threads", "true"},
+		{ "index.version", "4" },
+		{ "merge.renames", "true" },
+		{ "merge.stat", "false" },
+		{ "pack.useBitmaps", "false" },
+		{ "pack.usePathWalk", "true" },
+		{ "receive.autoGC", "false" },
+		{ "status.aheadBehind", "false" },
+
+		/* platform-specific */
 #ifndef WIN32
-		{ "core.untrackedCache", "true", 1 },
+		{ "core.untrackedCache", "true" },
 #else
 		/*
 		 * Unfortunately, Scalar's Functional Tests demonstrated
@@ -150,34 +173,11 @@ static int set_recommended_config(int reconfigure)
 		 * Therefore, with a sad heart, we disable this very useful
 		 * feature on Windows.
 		 */
-		{ "core.untrackedCache", "false", 1 },
+		{ "core.untrackedCache", "false" },
+
+		/* Other Windows-specific required settings: */
+		{ "http.sslBackend", "schannel" },
 #endif
-		{ "core.logAllRefUpdates", "true", 1 },
-		{ "credential.https://dev.azure.com.useHttpPath", "true", 1 },
-		{ "gc.auto", "0", 1 },
-		{ "gui.GCWarning", "false", 1 },
-		{ "index.skipHash", "true", 1 },
-		{ "index.threads", "true", 1 },
-		{ "index.version", "4", 1 },
-		{ "merge.stat", "false", 1 },
-		{ "merge.renames", "true", 1 },
-		{ "pack.useBitmaps", "false", 1 },
-		{ "receive.autoGC", "false", 1 },
-		{ "feature.manyFiles", "false", 1 },
-		{ "feature.experimental", "false", 1 },
-		{ "fetch.unpackLimit", "1", 1 },
-		{ "fetch.writeCommitGraph", "false", 1 },
-#ifdef WIN32
-		{ "http.sslBackend", "schannel", 1 },
-#endif
-		/* Optional */
-		{ "status.aheadBehind", "false" },
-		{ "commitGraph.changedPaths", "true" },
-		{ "commitGraph.generationVersion", "1" },
-		{ "core.autoCRLF", "false" },
-		{ "core.safeCRLF", "false" },
-		{ "fetch.showForcedUpdates", "false" },
-		{ "pack.usePathWalk", "true" },
 		{ NULL, NULL },
 	};
 	int i;
