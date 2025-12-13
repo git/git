@@ -19,7 +19,7 @@ the working tree and the index untouched. By default, updates the
 relevant references using an atomic transaction (all refs update or
 none). Use `--ref-action=print` to avoid automatic ref updates and
 instead get update commands that can be piped to `git update-ref --stdin`
-(see the OUTPUT section below).
+(see the <<output,OUTPUT>> section below).
 
 THIS COMMAND IS EXPERIMENTAL. THE BEHAVIOR MAY CHANGE.
 
@@ -67,6 +67,7 @@ The default mode can be configured via the `replay.refAction` configuration vari
 
 include::rev-list-options.adoc[]
 
+[[output]]
 OUTPUT
 ------
 
