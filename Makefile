@@ -982,7 +982,7 @@ SANITIZE_LEAK =
 SANITIZE_ADDRESS =
 
 # For the 'coccicheck' target
-SPATCH_INCLUDE_FLAGS = --all-includes
+SPATCH_INCLUDE_FLAGS = --all-includes $(addprefix -I ,compat ewah refs sha256 trace2 win32 xdiff)
 SPATCH_FLAGS =
 SPATCH_TEST_FLAGS =
 

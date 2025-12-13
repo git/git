@@ -334,7 +334,7 @@ static void process_parent(struct last_modified *lm,
 	if (!(parent->object.flags & PARENT1))
 		active_paths_free(lm, parent);
 
-	memset(lm->scratch->words, 0x0, lm->scratch->word_alloc * sizeof(eword_t));
+	MEMZERO_ARRAY(lm->scratch->words, lm->scratch->word_alloc);
 	diff_queue_clear(&diff_queued_diff);
 }
 
