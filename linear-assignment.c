@@ -20,8 +20,8 @@ void compute_assignment(int column_count, int row_count, int *cost,
 	int i, j, phase;
 
 	if (column_count < 2) {
-		memset(column2row, 0, sizeof(int) * column_count);
-		memset(row2column, 0, sizeof(int) * row_count);
+		MEMZERO_ARRAY(column2row, column_count);
+		MEMZERO_ARRAY(row2column, row_count);
 		return;
 	}
 
