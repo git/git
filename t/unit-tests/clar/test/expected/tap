@@ -8,7 +8,7 @@ not ok 1 - combined::1
       file: 'file'
       line: 42
       function: 'func'
-    ---
+    ...
 not ok 2 - combined::2
     ---
     reason: |
@@ -17,7 +17,7 @@ not ok 2 - combined::2
       file: 'file'
       line: 42
       function: 'func'
-    ---
+    ...
 not ok 3 - combined::strings
     ---
     reason: |
@@ -27,7 +27,7 @@ not ok 3 - combined::strings
       file: 'file'
       line: 42
       function: 'func'
-    ---
+    ...
 not ok 4 - combined::strings_with_length
     ---
     reason: |
@@ -37,28 +37,38 @@ not ok 4 - combined::strings_with_length
       file: 'file'
       line: 42
       function: 'func'
-    ---
+    ...
 not ok 5 - combined::int
     ---
     reason: |
-      101 != value ("extra note on failing test")
+      Expected comparison to hold: 101 == value
       101 != 100
     at:
       file: 'file'
       line: 42
       function: 'func'
-    ---
-not ok 6 - combined::int_fmt
+    ...
+not ok 6 - combined::int_note
     ---
     reason: |
-      022 != value
+      Expected comparison to hold: 101 == value
+      extra note on failing test
+    at:
+      file: 'file'
+      line: 42
+      function: 'func'
+    ...
+not ok 7 - combined::int_fmt
+    ---
+    reason: |
+      Expected comparison to hold: 022 == value
       0022 != 0144
     at:
       file: 'file'
       line: 42
       function: 'func'
-    ---
-not ok 7 - combined::bool
+    ...
+not ok 8 - combined::bool
     ---
     reason: |
       0 != value
@@ -67,8 +77,8 @@ not ok 7 - combined::bool
       file: 'file'
       line: 42
       function: 'func'
-    ---
-not ok 8 - combined::multiline_description
+    ...
+not ok 9 - combined::multiline_description
     ---
     reason: |
       Function call failed: -1
@@ -78,8 +88,8 @@ not ok 8 - combined::multiline_description
       file: 'file'
       line: 42
       function: 'func'
-    ---
-not ok 9 - combined::null_string
+    ...
+not ok 10 - combined::null_string
     ---
     reason: |
       String mismatch: "expected" != actual ("this one fails")
@@ -88,5 +98,55 @@ not ok 9 - combined::null_string
       file: 'file'
       line: 42
       function: 'func'
+    ...
+not ok 11 - combined::failf
     ---
-1..9
+    reason: |
+      Test failed.
+      some reason: foo
+    at:
+      file: 'file'
+      line: 42
+      function: 'func'
+    ...
+not ok 12 - combined::compare_i
+    ---
+    reason: |
+      Expected comparison to hold: two < 1
+      2 >= 1
+    at:
+      file: 'file'
+      line: 42
+      function: 'func'
+    ...
+not ok 13 - combined::compare_i_with_format
+    ---
+    reason: |
+      Expected comparison to hold: two < 1
+      foo: bar
+    at:
+      file: 'file'
+      line: 42
+      function: 'func'
+    ...
+not ok 14 - combined::compare_u
+    ---
+    reason: |
+      Expected comparison to hold: two < 1
+      2 >= 1
+    at:
+      file: 'file'
+      line: 42
+      function: 'func'
+    ...
+not ok 15 - combined::compare_u_with_format
+    ---
+    reason: |
+      Expected comparison to hold: two < 1
+      foo: bar
+    at:
+      file: 'file'
+      line: 42
+      function: 'func'
+    ...
+1..15

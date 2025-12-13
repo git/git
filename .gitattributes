@@ -17,3 +17,4 @@ CODE_OF_CONDUCT.md -whitespace
 /Documentation/gitk.adoc conflict-marker-size=32
 /Documentation/user-manual.adoc conflict-marker-size=32
 /t/t????-*.sh conflict-marker-size=32
+/t/unit-tests/clar/test/expected/* whitespace=-blank-at-eof
