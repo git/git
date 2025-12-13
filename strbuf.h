@@ -367,6 +367,23 @@ void strbuf_addbuf_percentquote(struct strbuf *dst, const struct strbuf *src);
  */
 void strbuf_add_percentencode(struct strbuf *dst, const char *src, int flags);
 
+#define STRBUF_HUMANISE_RATE	1 << 0
+#define STRBUF_HUMANISE_COMPACT 1 << 1
+
+/**
+ * Append the given byte size as a human-readable string that is downscaled by
+ * some factor. A string with the corresponding unit prefix is returned
+ * separately.
+ */
+char *strbuf_humanise_bytes_value(struct strbuf *buf, off_t bytes, unsigned flags);
+
+/**
+ * Append the given count value as a human-readable string that is downsacled by
+ * some factor. A string with the corresponding unit prefix is returned
+ * separately.
+ */
+char *strbuf_humanise_count_value(struct strbuf *buf, size_t value);
+
 /**
  * Append the given byte size as a human-readable string (i.e. 12.23 KiB,
  * 3.50 MiB).

@@ -836,55 +836,76 @@ void strbuf_addstr_urlencode(struct strbuf *sb, const char *s,
 	strbuf_add_urlencode(sb, s, strlen(s), allow_unencoded_fn);
 }
 
-static void strbuf_humanise(struct strbuf *buf, off_t bytes,
-				 int humanise_rate)
+char *strbuf_humanise_count_value(struct strbuf *buf, size_t value)
 {
-	if (bytes > 1 << 30) {
-		strbuf_addf(buf,
-				humanise_rate == 0 ?
-					/* TRANSLATORS: IEC 80000-13:2008 gibibyte */
-					_("%u.%2.2u GiB") :
-					/* TRANSLATORS: IEC 80000-13:2008 gibibyte/second */
-					_("%u.%2.2u GiB/s"),
-			    (unsigned)(bytes >> 30),
-			    (unsigned)(bytes & ((1 << 30) - 1)) / 10737419);
-	} else if (bytes > 1 << 20) {
-		unsigned x = bytes + 5243;  /* for rounding */
-		strbuf_addf(buf,
-				humanise_rate == 0 ?
-					/* TRANSLATORS: IEC 80000-13:2008 mebibyte */
-					_("%u.%2.2u MiB") :
-					/* TRANSLATORS: IEC 80000-13:2008 mebibyte/second */
-					_("%u.%2.2u MiB/s"),
-			    x >> 20, ((x & ((1 << 20) - 1)) * 100) >> 20);
-	} else if (bytes > 1 << 10) {
-		unsigned x = bytes + 5;  /* for rounding */
-		strbuf_addf(buf,
-				humanise_rate == 0 ?
-					/* TRANSLATORS: IEC 80000-13:2008 kibibyte */
-					_("%u.%2.2u KiB") :
-					/* TRANSLATORS: IEC 80000-13:2008 kibibyte/second */
-					_("%u.%2.2u KiB/s"),
-			    x >> 10, ((x & ((1 << 10) - 1)) * 100) >> 10);
+	if (value >= 1000000000) {
+		uintmax_t x = (uintmax_t)value + 5000000; /* for rounding */
+		strbuf_addf(buf, "%" PRIuMAX ".%02" PRIuMAX,
+			    x / 1000000000, x % 1000000000 / 10000000);
+		return xstrfmt(_("G"));
+	} else if (value >= 1000000) {
+		uintmax_t x = (uintmax_t)value + 5000; /* for rounding */
+		strbuf_addf(buf, "%" PRIuMAX ".%02" PRIuMAX,
+			    x / 1000000, x % 1000000 / 10000);
+		return xstrfmt(_("M"));
+	} else if (value >= 1000) {
+		uintmax_t x = (uintmax_t)value + 5; /* for rounding */
+		strbuf_addf(buf, "%" PRIuMAX ".%02" PRIuMAX,
+			    x / 1000, x % 1000 / 10);
+		return xstrfmt(_("k"));
 	} else {
-		strbuf_addf(buf,
-				humanise_rate == 0 ?
-					/* TRANSLATORS: IEC 80000-13:2008 byte */
-					Q_("%u byte", "%u bytes", bytes) :
-					/* TRANSLATORS: IEC 80000-13:2008 byte/second */
-					Q_("%u byte/s", "%u bytes/s", bytes),
-				(unsigned)bytes);
+		strbuf_addf(buf, "%" PRIuMAX, (uintmax_t)value);
+		return NULL;
+	}
+}
+
+char *strbuf_humanise_bytes_value(struct strbuf *buf, off_t bytes, unsigned flags)
+{
+	int humanise_rate = flags & STRBUF_HUMANISE_RATE;
+
+	if (bytes > 1 << 30) {
+		strbuf_addf(buf, "%u.%2.2u", (unsigned)(bytes >> 30),
+			    (unsigned)(bytes & ((1 << 30) - 1)) / 10737419);
+		/* TRANSLATORS: IEC 80000-13:2008 gibibyte/second and gibibyte */
+		return humanise_rate ? xstrfmt(_("GiB/s")) : xstrfmt(_("GiB"));
+	} else if (bytes > 1 << 20) {
+		unsigned x = bytes + 5243; /* for rounding */
+		strbuf_addf(buf, "%u.%2.2u", x >> 20,
+			    ((x & ((1 << 20) - 1)) * 100) >> 20);
+		/* TRANSLATORS: IEC 80000-13:2008 mebibyte/second and mebibyte */
+		return humanise_rate ? xstrfmt(_("MiB/s")) : xstrfmt(_("MiB"));
+	} else if (bytes > 1 << 10) {
+		unsigned x = bytes + 5; /* for rounding */
+		strbuf_addf(buf, "%u.%2.2u", x >> 10,
+			    ((x & ((1 << 10) - 1)) * 100) >> 10);
+		/* TRANSLATORS: IEC 80000-13:2008 kibibyte/second and kibibyte */
+		return humanise_rate ? xstrfmt(_("KiB/s")) : xstrfmt(_("KiB"));
+	} else {
+		strbuf_addf(buf, "%u", (unsigned)bytes);
+		if (flags & STRBUF_HUMANISE_COMPACT)
+			return humanise_rate ?
+				       xstrfmt(_("B/s")) :
+				       xstrfmt(_("B"));
+		return humanise_rate ?
+			       /* TRANSLATORS: IEC 80000-13:2008 byte/second */
+			       xstrfmt(Q_("byte/s", "bytes/s", bytes)) :
+			       /* TRANSLATORS: IEC 80000-13:2008 byte */
+			       xstrfmt(Q_("byte", "bytes", bytes));
 	}
 }
 
 void strbuf_humanise_bytes(struct strbuf *buf, off_t bytes)
 {
-	strbuf_humanise(buf, bytes, 0);
+	char *unit = strbuf_humanise_bytes_value(buf, bytes, 0);
+	strbuf_addf(buf, " %s", unit);
+	free(unit);
 }
 
 void strbuf_humanise_rate(struct strbuf *buf, off_t bytes)
 {
-	strbuf_humanise(buf, bytes, 1);
+	char *unit = strbuf_humanise_bytes_value(buf, bytes, STRBUF_HUMANISE_RATE);
+	strbuf_addf(buf, " %s", unit);
+	free(unit);
 }
 
 int printf_ln(const char *fmt, ...)
