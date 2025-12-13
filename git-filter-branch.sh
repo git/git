@@ -83,7 +83,8 @@ set_ident () {
 	finish_ident COMMITTER
 }
 
-if test -z "$FILTER_BRANCH_SQUELCH_WARNING$GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS"
+if test -z "$FILTER_BRANCH_SQUELCH_WARNING$GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS" &&
+   test "$(git config --bool filter-branch.squelchWarning)" != true
 then
 	cat <<EOF
 WARNING: git-filter-branch has a glut of gotchas generating mangled history
@@ -91,7 +92,12 @@ WARNING: git-filter-branch has a glut of gotchas generating mangled history
 	 alternative filtering tool such as 'git filter-repo'
 	 (https://github.com/newren/git-filter-repo/) instead.  See the
 	 filter-branch manual page for more details; to squelch this warning,
-	 set FILTER_BRANCH_SQUELCH_WARNING=1.
+	 set FILTER_BRANCH_SQUELCH_WARNING=1 or run the following command:
+
+	    git config filter-branch.squelchWarning true
+
+	 You can replace "git config" with "git config --global" to disable
+	 the warning for all repositories.
 EOF
 	sleep 10
 	printf "Proceeding with filter-branch...\n\n"
