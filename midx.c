@@ -24,7 +24,13 @@ void clear_incremental_midx_files_ext(struct odb_source *source, const char *ext
 int cmp_idx_or_pack_name(const char *idx_or_pack_name,
 			 const char *idx_name);
 
-const unsigned char *get_midx_checksum(struct multi_pack_index *m)
+const char *get_midx_checksum(const struct multi_pack_index *m)
+{
+	return hash_to_hex_algop(get_midx_hash(m),
+				 m->source->odb->repo->hash_algo);
+}
+
+const unsigned char *get_midx_hash(const struct multi_pack_index *m)
 {
 	return m->data + m->data_len - m->source->odb->repo->hash_algo->rawsz;
 }
@@ -203,11 +209,6 @@ static struct multi_pack_index *load_multi_pack_index_one(struct odb_source *sou
 		if (!end)
 			die(_("multi-pack-index pack-name chunk is too short"));
 		cur_pack_name = end + 1;
-
-		if (i && strcmp(m->pack_names[i], m->pack_names[i - 1]) <= 0)
-			die(_("multi-pack-index pack names out of order: '%s' before '%s'"),
-			      m->pack_names[i - 1],
-			      m->pack_names[i]);
 	}
 
 	trace2_data_intmax("midx", r, "load/num_packs", m->num_packs);
@@ -405,6 +406,7 @@ void close_midx(struct multi_pack_index *m)
 	}
 	FREE_AND_NULL(m->packs);
 	FREE_AND_NULL(m->pack_names);
+	FREE_AND_NULL(m->pack_names_sorted);
 	free(m);
 }
 
@@ -650,17 +652,37 @@ int cmp_idx_or_pack_name(const char *idx_or_pack_name,
 	return strcmp(idx_or_pack_name, idx_name);
 }
 
+
+static int midx_pack_names_cmp(const void *a, const void *b, void *m_)
+{
+	struct multi_pack_index *m = m_;
+	return strcmp(m->pack_names[*(const size_t *)a],
+		      m->pack_names[*(const size_t *)b]);
+}
+
 static int midx_contains_pack_1(struct multi_pack_index *m,
 				const char *idx_or_pack_name)
 {
 	uint32_t first = 0, last = m->num_packs;
+
+	if (!m->pack_names_sorted) {
+		uint32_t i;
+
+		ALLOC_ARRAY(m->pack_names_sorted, m->num_packs);
+
+		for (i = 0; i < m->num_packs; i++)
+			m->pack_names_sorted[i] = i;
+
+		QSORT_S(m->pack_names_sorted, m->num_packs, midx_pack_names_cmp,
+			m);
+	}
 
 	while (first < last) {
 		uint32_t mid = first + (last - first) / 2;
 		const char *current;
 		int cmp;
 
-		current = m->pack_names[mid];
+		current = m->pack_names[m->pack_names_sorted[mid]];
 		cmp = cmp_idx_or_pack_name(idx_or_pack_name, current);
 		if (!cmp)
 			return 1;
