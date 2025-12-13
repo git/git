@@ -1048,18 +1048,28 @@ test_expect_success 'git cat-file --batch-check --follow-symlinks works for out-
 	echo .. >>expect &&
 	echo HEAD:dir/subdir/out-of-repo-link-dir | git cat-file --batch-check --follow-symlinks >actual &&
 	test_cmp expect actual &&
-	echo symlink 3 >expect &&
-	echo ../ >>expect &&
+	if test_have_prereq MINGW,SYMLINKS
+	then
+		test_write_lines "symlink 2" ..
+	else
+		test_write_lines "symlink 3" ../
+	fi >expect &&
 	echo HEAD:dir/subdir/out-of-repo-link-dir-trailing | git cat-file --batch-check --follow-symlinks >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'git cat-file --batch-check --follow-symlinks works for symlinks with internal ..' '
-	echo HEAD: | git cat-file --batch-check >expect &&
-	echo HEAD:up-down | git cat-file --batch-check --follow-symlinks >actual &&
-	test_cmp expect actual &&
-	echo HEAD:up-down-trailing | git cat-file --batch-check --follow-symlinks >actual &&
-	test_cmp expect actual &&
+	if test_have_prereq !MINGW
+	then
+		# The `up-down` and `up-down-trailing` symlinks are normalized
+		# in MSYS in `winsymlinks` mode and are therefore in a
+		# different shape than Git expects them.
+		echo HEAD: | git cat-file --batch-check >expect &&
+		echo HEAD:up-down | git cat-file --batch-check --follow-symlinks >actual &&
+		test_cmp expect actual &&
+		echo HEAD:up-down-trailing | git cat-file --batch-check --follow-symlinks >actual &&
+		test_cmp expect actual
+	fi &&
 	echo HEAD:up-down-file | git cat-file --batch-check --follow-symlinks >actual &&
 	test_cmp found actual &&
 	echo symlink 7 >expect &&

@@ -467,7 +467,7 @@ test_expect_success POSIXPERM 'git reflog expire honors core.sharedRepository' '
 	esac
 '
 
-test_expect_success SYMLINKS 'symref transaction supports symlinks' '
+test_expect_success SYMLINKS,!MINGW 'symref transaction supports symlinks' '
 	test_when_finished "git symbolic-ref -d TEST_SYMREF_HEAD" &&
 	git update-ref refs/heads/new @ &&
 	test_config core.prefersymlinkrefs true &&
