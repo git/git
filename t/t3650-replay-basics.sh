@@ -25,6 +25,8 @@ test_expect_success 'setup' '
 	git switch -c topic3 &&
 	test_commit G &&
 	test_commit H &&
+	git switch -c empty &&
+	git commit --allow-empty --only -m empty &&
 	git switch -c topic4 main &&
 	test_commit I &&
 	test_commit J &&
@@ -104,6 +106,29 @@ test_expect_success 'using replay to perform basic cherry-pick' '
 test_expect_success 'using replay on bare repo to perform basic cherry-pick' '
 	git -C bare replay --ref-action=print --advance main topic1..topic2 >result-bare &&
 	test_cmp expect result-bare
+'
+
+test_expect_success 'commits that become empty are dropped' '
+	git replay --ref-action=print --advance main topic1^! >result &&
+	ONTO=$(cut -f 3 -d " " result) &&
+	git replay --ref-action=print --onto $ONTO \
+		--branches --ancestry-path=empty ^A >result &&
+	# Write the new value of refs/heads/empty to "new-empty" and
+	# generate a sed script that annotates the output of
+	# `git log --format="%H %s"` with the updated branches
+	SCRIPT="$(sed -e "
+		/empty/{
+			h
+			s|^.*empty \([^ ]*\) .*|\1|wnew-empty
+			g
+		}
+		s|^.*/\([^/ ]*\) \([^ ]*\).*|/^\2/s/\\\$/ (\1)/|
+		\$s|\$|;s/^[^ ]* //|" result)" &&
+	git log --format="%H %s" --stdin <new-empty >actual.raw &&
+	sed -e "$SCRIPT" actual.raw >actual &&
+	test_write_lines >expect \
+		"empty (empty)" "H (topic3)" G "C (topic1)" F M L B A &&
+	test_cmp expect actual
 '
 
 test_expect_success 'replay on bare repo fails with both --advance and --onto' '
