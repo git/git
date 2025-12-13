@@ -197,6 +197,170 @@ delete <enlistment>::
 	This subcommand lets you delete an existing Scalar enlistment from your
 	local file system, unregistering the repository.
 
+RECOMMENDED CONFIG VALUES
+-------------------------
+
+As part of both `scalar clone` and `scalar register`, certain Git config
+values are set to optimize for large repositories or cross-platform support.
+These options are updated in new Git versions according to the best known
+advice for large repositories, and users can get the latest recommendations
+by running `scalar reconfigure [--all]`.
+
+This section lists justifications for the config values that are set in the
+latest version.
+
+am.keepCR=true::
+	This setting is important for cross-platform development across Windows
+	and non-Windows platforms and keeping carriage return (`\r`) characters
+	in certain workflows.
+
+commitGraph.changedPaths=true::
+	This setting helps the background maintenance steps that compute the
+	serialized commit-graph to also store changed-path Bloom filters. This
+	accelerates file history commands and allows users to automatically
+	benefit without running a foreground command.
+
+commitGraph.generationVersion=1::
+	While the preferred version is 2 for performance reasons, existing users
+	that had version 1 by default will need special care in upgrading to
+	version 2. This is likely to change in the future as the upgrade story
+	solidifies.
+
+core.autoCRLF=false::
+	This removes the transformation of worktree files to add CRLF line
+	endings when only LF line endings exist. This is removed for performance
+	reasons. Repositories that use tools that care about CRLF line endings
+	should commit the necessary files with those line endings instead.
+
+core.logAllRefUpdates=true::
+	This enables the reflog on all branches. While this is a performance
+	cost for large repositories, it is frequently an important data source
+	for users to get out of bad situations or to seek support from experts.
+
+core.safeCRLF=false::
+	Similar to `core.autoCRLF=false`, this disables checks around whether
+	the CRLF conversion is reversible. This is a performance improvement,
+	but can be dangerous if `core.autoCRLF` is reenabled by the user.
+
+credential.https://dev.azure.com.useHttpPath=true::
+	This setting enables the `credential.useHttpPath` feature only for web
+	URLs for Azure DevOps. This is important for users interacting with that
+	service using multiple organizations and thus multiple credential
+	tokens.
+
+feature.experimental=false::
+	This disables the "experimental" optimizations grouped under this
+	feature config. The expectation is that all valuable optimizations are
+	also set explicitly by Scalar config, and any differences are
+	intentional. Notable differences include several bitmap-related config
+	options which are disabled for client-focused Scalar repos.
+
+feature.manyFiles=false::
+	This disables the "many files" optimizations grouped under this feature
+	config. The expectation is that all valuable optimizations are also set
+	explicitly by Scalar config, and any differences are intentional.
+
+fetch.showForcedUpdates=false::
+	This disables the check at the end of `git fetch` that notifies the user
+	if the ref update was a forced update (one where the previous position
+	is not reachable from the latest position). This check can be very
+	expensive in large repositories, so is disabled and replaced with an
+	advice message. Set `advice.fetchShowForcedUpdates=false` to disable
+	this advice message.
+
+fetch.unpackLimit=1::
+	This setting prevents Git from unpacking packfiles into loose objects
+	as they are downloaded from the server. The default limit of 100 was
+	intended as a way to prevent performance issues from too many packfiles,
+	but Scalar uses background maintenance to group packfiles and cover them
+	with a multi-pack-index, removing this issue.
+
+fetch.writeCommitGraph=false::
+	This config setting was created to help users automatically update their
+	commit-graph files as they perform fetches. However, this takes time
+	from foreground fetches and pulls and Scalar uses background maintenance
+	for this function instead.
+
+gc.auto=0::
+	This disables automatic garbage collection, since Scalar uses background
+	maintenance to keep the repository data in good shape.
+
+gui.GCWarning=false::
+	Since Scalar disables garbage collection by setting `gc.auto=0`, the
+	`git-gui` tool may start to warn about this setting. Disable this
+	warning as Scalar's background maintenance configuration makes the
+	warning irrelevant.
+
+index.skipHash=true::
+	Disable computing the hash of the index contents as it is being written.
+	This assists with performance, especially for large index files.
+
+index.threads=true::
+	This tells Git to automatically detect how many threads it should use
+	when reading the index due the default value of	`core.preloadIndex`,
+	which enables parallel index reads. This explicit setting also enables
+	`index.recordOffsetTable=true` to speed up parallel index reads.
+
+index.version=4::
+	This index version adds compression to the path names, reducing the size
+	of the index in a significant way for large repos. This is an important
+	performance boost.
+
+log.excludeDecoration=refs/prefetch/*::
+	Since Scalar enables background maintenance with the `incremental`
+	strategy, this setting avoids polluting `git log` output with refs
+	stored by the background prefetch operations.
+
+merge.renames=true::
+	When computing merges in large repos, it is particularly important to
+	detect renames to maximize the potential for a result that will validate
+	correctly. Users performing merges locally are more likely to be doing
+	so because a server-side merge (via pull request or similar) resulted in
+	conflicts. While this is the default setting, it is set specifically to
+	override a potential change to `diff.renames` which a user may set for
+	performance reasons.
+
+merge.stat=false::
+	This disables a diff output after computing a merge. This improves
+	performance of `git merge` for large repos while reducing noisy output.
+
+pack.useBitmaps=false::
+	This disables the use of `.bitmap` files attached to packfiles. Bitmap
+	files are optimized for server-side use, not client-side use. Scalar
+	disables this to avoid some performance issues that can occur if a user
+	accidentally creates `.bitmap` files.
+
+pack.usePathWalk=true::
+	This enables the `--path-walk` option to `git pack-objects` by default.
+	This can accelerate the computation and compression of packfiles created
+	by `git push` and other repack operations.
+
+receive.autoGC=false::
+	Similar to `gc.auto`, this setting is disabled in preference of
+	background maintenance.
+
+status.aheadBehind=false::
+	This disables the ahead/behind calculation that would normally happen
+	during a `git status` command. This information is frequently ignored by
+	users but can be expensive to calculate in large repos that receive
+	thousands of commits per day. The calculation is replaced with an advice
+	message that can be disabled by disabling the `advice.statusAheadBehind`
+	config.
+
+The following settings are different based on which platform is in use:
+
+core.untrackedCache=(true|false)::
+	The untracked cache feature is important for performance benefits on
+	large repositories, but has demonstrated some bugs on Windows
+	filesystems. Thus, this is set for other platforms but disabled on
+	Windows.
+
+http.sslBackend=schannel::
+	On Windows, the `openssl` backend has some issues with certain types of
+	remote providers and certificate types. Override the default setting to
+	avoid these common problems.
+
+
 SEE ALSO
 --------
 linkgit:git-clone[1], linkgit:git-maintenance[1].
