@@ -182,6 +182,13 @@ ifeq ($(uname_S),Darwin)
         endif
         endif
 
+	ifeq ($(shell test -d /opt/homebrew/opt/libiconv/ && echo y),y)
+		ICONVDIR ?= /opt/homebrew/opt/libiconv
+	endif
+	ifeq ($(shell test -d /usr/local/opt/libiconv/ && echo y),y)
+		ICONVDIR ?= /usr/local/opt/libiconv
+	endif
+
 	BASIC_LDFLAGS += -framework CoreServices
 endif
 ifeq ($(uname_S),SunOS)
