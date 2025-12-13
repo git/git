@@ -206,6 +206,31 @@ test_expect_success 'commit-graph auto condition' '
 	test_subcommand $COMMIT_GRAPH_WRITE <cg-two-satisfied.txt
 '
 
+test_expect_success 'commit-graph auto condition with merges' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		git config set maintenance.auto false &&
+		git commit --allow-empty -m initial &&
+		git switch --create feature &&
+		git commit --allow-empty -m feature-1 &&
+		git commit --allow-empty -m feature-2 &&
+		git switch - &&
+		git commit --allow-empty -m main-1 &&
+		git commit --allow-empty -m main-2 &&
+		git merge feature &&
+
+		# We have 6 commit, none of which are covered by a commit
+		# graph. So this must be the boundary at which we start to
+		# perform maintenance.
+		test_must_fail git -c maintenance.commit-graph.auto=7 \
+			maintenance is-needed --auto --task=commit-graph &&
+		git -c maintenance.commit-graph.auto=6 \
+			maintenance is-needed --auto --task=commit-graph
+	)
+'
+
 test_expect_success 'run --task=bogus' '
 	test_must_fail git maintenance run --task=bogus 2>err &&
 	test_grep "is not a valid task" err
