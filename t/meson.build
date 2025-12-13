@@ -500,6 +500,7 @@ integration_tests = [
   't4070-diff-pairs.sh',
   't4071-diff-minimal.sh',
   't4072-diff-max-depth.sh',
+  't4073-diff-shifted-matched-group.sh',
   't4100-apply-stat.sh',
   't4101-apply-nonl.sh',
   't4102-apply-rename.sh',
