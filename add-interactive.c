@@ -3,7 +3,6 @@
 #include "git-compat-util.h"
 #include "add-interactive.h"
 #include "color.h"
-#include "config.h"
 #include "diffcore.h"
 #include "gettext.h"
 #include "hash.h"
@@ -20,119 +19,18 @@
 #include "prompt.h"
 #include "tree.h"
 
-static void init_color(struct repository *r, enum git_colorbool use_color,
-		       const char *section_and_slot, char *dst,
-		       const char *default_color)
-{
-	char *key = xstrfmt("color.%s", section_and_slot);
-	const char *value;
-
-	if (!want_color(use_color))
-		dst[0] = '\0';
-	else if (repo_config_get_value(r, key, &value) ||
-		 color_parse(value, dst))
-		strlcpy(dst, default_color, COLOR_MAXLEN);
-
-	free(key);
-}
-
-static enum git_colorbool check_color_config(struct repository *r, const char *var)
-{
-	const char *value;
-	enum git_colorbool ret;
-
-	if (repo_config_get_value(r, var, &value))
-		ret = GIT_COLOR_UNKNOWN;
-	else
-		ret = git_config_colorbool(var, value);
-
-	/*
-	 * Do not rely on want_color() to fall back to color.ui for us. It uses
-	 * the value parsed by git_color_config(), which may not have been
-	 * called by the main command.
-	 */
-	if (ret == GIT_COLOR_UNKNOWN &&
-	    !repo_config_get_value(r, "color.ui", &value))
-		ret = git_config_colorbool("color.ui", value);
-
-	return ret;
-}
-
 void init_add_i_state(struct add_i_state *s, struct repository *r,
-		      struct add_p_opt *add_p_opt)
+		      struct interactive_options *opts)
 {
 	s->r = r;
-	s->context = -1;
-	s->interhunkcontext = -1;
-
-	s->use_color_interactive = check_color_config(r, "color.interactive");
-
-	init_color(r, s->use_color_interactive, "interactive.header",
-		   s->header_color, GIT_COLOR_BOLD);
-	init_color(r, s->use_color_interactive, "interactive.help",
-		   s->help_color, GIT_COLOR_BOLD_RED);
-	init_color(r, s->use_color_interactive, "interactive.prompt",
-		   s->prompt_color, GIT_COLOR_BOLD_BLUE);
-	init_color(r, s->use_color_interactive, "interactive.error",
-		   s->error_color, GIT_COLOR_BOLD_RED);
-	strlcpy(s->reset_color_interactive,
-		want_color(s->use_color_interactive) ? GIT_COLOR_RESET : "", COLOR_MAXLEN);
-
-	s->use_color_diff = check_color_config(r, "color.diff");
-
-	init_color(r, s->use_color_diff, "diff.frag", s->fraginfo_color,
-		   diff_get_color(s->use_color_diff, DIFF_FRAGINFO));
-	init_color(r, s->use_color_diff, "diff.context", s->context_color,
-		   "fall back");
-	if (!strcmp(s->context_color, "fall back"))
-		init_color(r, s->use_color_diff, "diff.plain",
-			   s->context_color,
-			   diff_get_color(s->use_color_diff, DIFF_CONTEXT));
-	init_color(r, s->use_color_diff, "diff.old", s->file_old_color,
-		   diff_get_color(s->use_color_diff, DIFF_FILE_OLD));
-	init_color(r, s->use_color_diff, "diff.new", s->file_new_color,
-		   diff_get_color(s->use_color_diff, DIFF_FILE_NEW));
-	strlcpy(s->reset_color_diff,
-		want_color(s->use_color_diff) ? GIT_COLOR_RESET : "", COLOR_MAXLEN);
-
-	FREE_AND_NULL(s->interactive_diff_filter);
-	repo_config_get_string(r, "interactive.difffilter",
-			       &s->interactive_diff_filter);
-
-	FREE_AND_NULL(s->interactive_diff_algorithm);
-	repo_config_get_string(r, "diff.algorithm",
-			       &s->interactive_diff_algorithm);
-
-	if (!repo_config_get_int(r, "diff.context", &s->context))
-		if (s->context < 0)
-			die(_("%s cannot be negative"), "diff.context");
-	if (!repo_config_get_int(r, "diff.interHunkContext", &s->interhunkcontext))
-		if (s->interhunkcontext < 0)
-			die(_("%s cannot be negative"), "diff.interHunkContext");
-
-	repo_config_get_bool(r, "interactive.singlekey", &s->use_single_key);
-	if (s->use_single_key)
-		setbuf(stdin, NULL);
-
-	if (add_p_opt->context != -1) {
-		if (add_p_opt->context < 0)
-			die(_("%s cannot be negative"), "--unified");
-		s->context = add_p_opt->context;
-	}
-	if (add_p_opt->interhunkcontext != -1) {
-		if (add_p_opt->interhunkcontext < 0)
-			die(_("%s cannot be negative"), "--inter-hunk-context");
-		s->interhunkcontext = add_p_opt->interhunkcontext;
-	}
+	interactive_config_init(&s->cfg, r, opts);
 }
 
 void clear_add_i_state(struct add_i_state *s)
 {
-	FREE_AND_NULL(s->interactive_diff_filter);
-	FREE_AND_NULL(s->interactive_diff_algorithm);
+	interactive_config_clear(&s->cfg);
 	memset(s, 0, sizeof(*s));
-	s->use_color_interactive = GIT_COLOR_UNKNOWN;
-	s->use_color_diff = GIT_COLOR_UNKNOWN;
+	interactive_config_clear(&s->cfg);
 }
 
 /*
@@ -286,7 +184,7 @@ static void list(struct add_i_state *s, struct string_list *list, int *selected,
 		return;
 
 	if (opts->header)
-		color_fprintf_ln(stdout, s->header_color,
+		color_fprintf_ln(stdout, s->cfg.header_color,
 				 "%s", opts->header);
 
 	for (i = 0; i < list->nr; i++) {
@@ -354,7 +252,7 @@ static ssize_t list_and_choose(struct add_i_state *s,
 
 		list(s, &items->items, items->selected, &opts->list_opts);
 
-		color_fprintf(stdout, s->prompt_color, "%s", opts->prompt);
+		color_fprintf(stdout, s->cfg.prompt_color, "%s", opts->prompt);
 		fputs(singleton ? "> " : ">> ", stdout);
 		fflush(stdout);
 
@@ -432,7 +330,7 @@ static ssize_t list_and_choose(struct add_i_state *s,
 
 			if (from < 0 || from >= items->items.nr ||
 			    (singleton && from + 1 != to)) {
-				color_fprintf_ln(stderr, s->error_color,
+				color_fprintf_ln(stderr, s->cfg.error_color,
 						 _("Huh (%s)?"), p);
 				break;
 			} else if (singleton) {
@@ -992,7 +890,7 @@ static int run_patch(struct add_i_state *s, const struct pathspec *ps,
 				free(files->items.items[i].string);
 			} else if (item->index.unmerged ||
 				 item->worktree.unmerged) {
-				color_fprintf_ln(stderr, s->error_color,
+				color_fprintf_ln(stderr, s->cfg.error_color,
 						 _("ignoring unmerged: %s"),
 						 files->items.items[i].string);
 				free(item);
@@ -1014,9 +912,9 @@ static int run_patch(struct add_i_state *s, const struct pathspec *ps,
 	opts->prompt = N_("Patch update");
 	count = list_and_choose(s, files, opts);
 	if (count > 0) {
-		struct add_p_opt add_p_opt = {
-			.context = s->context,
-			.interhunkcontext = s->interhunkcontext,
+		struct interactive_options opts = {
+			.context = s->cfg.context,
+			.interhunkcontext = s->cfg.interhunkcontext,
 		};
 		struct strvec args = STRVEC_INIT;
 		struct pathspec ps_selected = { 0 };
@@ -1028,7 +926,7 @@ static int run_patch(struct add_i_state *s, const struct pathspec *ps,
 		parse_pathspec(&ps_selected,
 			       PATHSPEC_ALL_MAGIC & ~PATHSPEC_LITERAL,
 			       PATHSPEC_LITERAL_PATH, "", args.v);
-		res = run_add_p(s->r, ADD_P_ADD, &add_p_opt, NULL, &ps_selected);
+		res = run_add_p(s->r, ADD_P_ADD, &opts, NULL, &ps_selected, 0);
 		strvec_clear(&args);
 		clear_pathspec(&ps_selected);
 	}
@@ -1064,10 +962,10 @@ static int run_diff(struct add_i_state *s, const struct pathspec *ps,
 		struct child_process cmd = CHILD_PROCESS_INIT;
 
 		strvec_pushl(&cmd.args, "git", "diff", "-p", "--cached", NULL);
-		if (s->context != -1)
-			strvec_pushf(&cmd.args, "--unified=%i", s->context);
-		if (s->interhunkcontext != -1)
-			strvec_pushf(&cmd.args, "--inter-hunk-context=%i", s->interhunkcontext);
+		if (s->cfg.context != -1)
+			strvec_pushf(&cmd.args, "--unified=%i", s->cfg.context);
+		if (s->cfg.interhunkcontext != -1)
+			strvec_pushf(&cmd.args, "--inter-hunk-context=%i", s->cfg.interhunkcontext);
 		strvec_pushl(&cmd.args, oid_to_hex(!is_initial ? &oid :
 			     s->r->hash_algo->empty_tree), "--", NULL);
 		for (i = 0; i < files->items.nr; i++)
@@ -1085,17 +983,17 @@ static int run_help(struct add_i_state *s, const struct pathspec *ps UNUSED,
 		    struct prefix_item_list *files UNUSED,
 		    struct list_and_choose_options *opts UNUSED)
 {
-	color_fprintf_ln(stdout, s->help_color, "status        - %s",
+	color_fprintf_ln(stdout, s->cfg.help_color, "status        - %s",
 			 _("show paths with changes"));
-	color_fprintf_ln(stdout, s->help_color, "update        - %s",
+	color_fprintf_ln(stdout, s->cfg.help_color, "update        - %s",
 			 _("add working tree state to the staged set of changes"));
-	color_fprintf_ln(stdout, s->help_color, "revert        - %s",
+	color_fprintf_ln(stdout, s->cfg.help_color, "revert        - %s",
 			 _("revert staged set of changes back to the HEAD version"));
-	color_fprintf_ln(stdout, s->help_color, "patch         - %s",
+	color_fprintf_ln(stdout, s->cfg.help_color, "patch         - %s",
 			 _("pick hunks and update selectively"));
-	color_fprintf_ln(stdout, s->help_color, "diff          - %s",
+	color_fprintf_ln(stdout, s->cfg.help_color, "diff          - %s",
 			 _("view diff between HEAD and index"));
-	color_fprintf_ln(stdout, s->help_color, "add untracked - %s",
+	color_fprintf_ln(stdout, s->cfg.help_color, "add untracked - %s",
 			 _("add contents of untracked files to the staged set of changes"));
 
 	return 0;
@@ -1103,21 +1001,21 @@ static int run_help(struct add_i_state *s, const struct pathspec *ps UNUSED,
 
 static void choose_prompt_help(struct add_i_state *s)
 {
-	color_fprintf_ln(stdout, s->help_color, "%s",
+	color_fprintf_ln(stdout, s->cfg.help_color, "%s",
 			 _("Prompt help:"));
-	color_fprintf_ln(stdout, s->help_color, "1          - %s",
+	color_fprintf_ln(stdout, s->cfg.help_color, "1          - %s",
 			 _("select a single item"));
-	color_fprintf_ln(stdout, s->help_color, "3-5        - %s",
+	color_fprintf_ln(stdout, s->cfg.help_color, "3-5        - %s",
 			 _("select a range of items"));
-	color_fprintf_ln(stdout, s->help_color, "2-3,6-9    - %s",
+	color_fprintf_ln(stdout, s->cfg.help_color, "2-3,6-9    - %s",
 			 _("select multiple ranges"));
-	color_fprintf_ln(stdout, s->help_color, "foo        - %s",
+	color_fprintf_ln(stdout, s->cfg.help_color, "foo        - %s",
 			 _("select item based on unique prefix"));
-	color_fprintf_ln(stdout, s->help_color, "-...       - %s",
+	color_fprintf_ln(stdout, s->cfg.help_color, "-...       - %s",
 			 _("unselect specified items"));
-	color_fprintf_ln(stdout, s->help_color, "*          - %s",
+	color_fprintf_ln(stdout, s->cfg.help_color, "*          - %s",
 			 _("choose all items"));
-	color_fprintf_ln(stdout, s->help_color, "           - %s",
+	color_fprintf_ln(stdout, s->cfg.help_color, "           - %s",
 			 _("(empty) finish selecting"));
 }
 
@@ -1152,7 +1050,7 @@ static void print_command_item(int i, int selected UNUSED,
 
 static void command_prompt_help(struct add_i_state *s)
 {
-	const char *help_color = s->help_color;
+	const char *help_color = s->cfg.help_color;
 	color_fprintf_ln(stdout, help_color, "%s", _("Prompt help:"));
 	color_fprintf_ln(stdout, help_color, "1          - %s",
 			 _("select a numbered item"));
@@ -1163,7 +1061,7 @@ static void command_prompt_help(struct add_i_state *s)
 }
 
 int run_add_i(struct repository *r, const struct pathspec *ps,
-	      struct add_p_opt *add_p_opt)
+	      struct interactive_options *interactive_opts)
 {
 	struct add_i_state s = { NULL };
 	struct print_command_item_data data = { "[", "]" };
@@ -1206,15 +1104,15 @@ int run_add_i(struct repository *r, const struct pathspec *ps,
 			->util = util;
 	}
 
-	init_add_i_state(&s, r, add_p_opt);
+	init_add_i_state(&s, r, interactive_opts);
 
 	/*
 	 * When color was asked for, use the prompt color for
 	 * highlighting, otherwise use square brackets.
 	 */
-	if (want_color(s.use_color_interactive)) {
-		data.color = s.prompt_color;
-		data.reset = s.reset_color_interactive;
+	if (want_color(s.cfg.use_color_interactive)) {
+		data.color = s.cfg.prompt_color;
+		data.reset = s.cfg.reset_color_interactive;
 	}
 	print_file_item_data.color = data.color;
 	print_file_item_data.reset = data.reset;
