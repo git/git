@@ -75,7 +75,7 @@ static void sort_revindex(struct revindex_entry *entries, unsigned n, off_t max)
 	for (bits = 0; max >> bits; bits += DIGIT_SIZE) {
 		unsigned i;
 
-		memset(pos, 0, BUCKETS * sizeof(*pos));
+		MEMZERO_ARRAY(pos, BUCKETS);
 
 		/*
 		 * We want pos[i] to store the index of the last element that
