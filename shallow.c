@@ -745,7 +745,7 @@ void assign_shallow_commits_to_refs(struct shallow_info *info,
 
 	if (used) {
 		int bitmap_size = DIV_ROUND_UP(pi.nr_bits, 32) * sizeof(uint32_t);
-		memset(used, 0, sizeof(*used) * info->shallow->nr);
+		MEMZERO_ARRAY(used, info->shallow->nr);
 		for (i = 0; i < nr_shallow; i++) {
 			const struct commit *c = lookup_commit(the_repository,
 							       &oid[shallow[i]]);
@@ -810,7 +810,7 @@ static void post_assign_shallow(struct shallow_info *info,
 
 	trace_printf_key(&trace_shallow, "shallow: post_assign_shallow\n");
 	if (ref_status)
-		memset(ref_status, 0, sizeof(*ref_status) * info->ref->nr);
+		MEMZERO_ARRAY(ref_status, info->ref->nr);
 
 	/* Remove unreachable shallow commits from "theirs" */
 	for (i = dst = 0; i < info->nr_theirs; i++) {
