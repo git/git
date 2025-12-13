@@ -81,6 +81,10 @@ the shape of the history being replayed.  When using `--advance`, the
 number of refs updated is always one, but for `--onto`, it can be one
 or more (rebasing multiple branches simultaneously is supported).
 
+There is no stderr output on conflicts; see the <<exit-status,EXIT
+STATUS>> section below.
+
+[[exit-status]]
 EXIT STATUS
 -----------
 
