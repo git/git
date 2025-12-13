@@ -10,6 +10,7 @@ SYNOPSIS
 --------
 [verse]
 $GIT_DIR/objects/[0-9a-f][0-9a-f]/*
+$GIT_DIR/objects/object-map/map-*.map
 
 DESCRIPTION
 -----------
@@ -47,6 +48,83 @@ stored under
 
 Similarly, a blob containing the contents `abc` would have the uncompressed
 data of `blob 3\0abc`.
+
+== Loose object mapping
+
+When the `compatObjectFormat` option is used, Git needs to store a mapping
+between the repository's main algorithm and the compatibility algorithm for
+loose objects as well as some auxiliary information.
+
+The mapping consists of a set of files under `$GIT_DIR/objects/object-map`
+ending in `.map`.  The portion of the filename before the extension is that of
+the main hash checksum (that is, the one specified in
+`extensions.objectformat`) in hex format.
+
+`git gc` will repack existing entries into one file, removing any unnecessary
+objects, such as obsolete shallow entries or loose objects that have been
+packed.
+
+The file format is as follows.  All values are in network byte order and all
+4-byte and 8-byte values must be 4-byte aligned in the file, so the NUL padding
+may be required in some cases.  Git always uses the smallest number of NUL
+bytes (including zero) that is required for the padding in order to make
+writing files deterministic.
+
+- A header appears at the beginning and consists of the following:
+	* A 4-byte mapping signature: `LMAP`
+	* 4-byte version number: 1
+	* 4-byte length of the header section (including reserved entries but
+		excluding any NUL padding).
+	* 4-byte number of objects declared in this map file.
+	* 4-byte number of object formats declared in this map file.
+	* For each object format:
+		** 4-byte format identifier (e.g., `sha1` for SHA-1)
+		** 4-byte length in bytes of shortened object names (that is, prefixes of
+			 the full object names). This is the shortest possible length needed to
+			 make names in the shortened object name table unambiguous.
+		** 8-byte integer, recording where tables relating to this format
+		are stored in this index file, as an offset from the beginning.
+	* 8-byte offset to the trailer from the beginning of this file.
+	* The remainder of the header section is reserved for future use.
+		Readers must ignore unrecognized data here.
+- Zero or more NUL bytes.  These are used to improve the alignment of the
+	4-byte quantities below.
+- Tables for the first object format:
+	* A sorted table of shortened object names.  These are prefixes of the names
+		of all objects in this file, packed together to reduce the cache footprint
+		of the binary search for a specific object name.
+  * A sorted table of full object names.
+	* A table of 4-byte metadata values.
+- Zero or more NUL bytes.
+- Tables for subsequent object formats:
+	* A sorted table of shortened object names.  These are prefixes of the names
+		of all objects in this file, packed together without offset values to
+		reduce the cache footprint of the binary search for a specific object name.
+	* A table of full object names in the order specified by the first object format.
+	* A table of 4-byte values mapping object name order to the order of the
+		first object format. For an object in the table of sorted shortened object
+		names, the value at the corresponding index in this table is the index in
+		the previous table for that same object.
+	* Zero or more NUL bytes.
+- The trailer consists of the following:
+	* Hash checksum of all of the above using the main hash.
+
+The lower six bits of each metadata table contain a type field indicating the
+reason that this object is stored:
+
+0::
+	Reserved.
+1::
+	This object is stored as a loose object in the repository.
+2::
+	This object is a shallow entry.  The mapping refers to a shallow value
+	returned by a remote server.
+3::
+	This object is a submodule entry.  The mapping refers to the commit stored
+	representing a submodule.
+
+Other data may be stored in this field in the future.  Bits that are not used
+must be zero.
 
 GIT
 ---
