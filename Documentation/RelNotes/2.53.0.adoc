@@ -26,6 +26,11 @@ UI, Workflows & Features
  * The use of "revision" (a connected set of commits) has been
    clarified in the "git replay" documentation.
 
+ * A help message from "git branch" now mentions "git help" instead of
+   "man" when suggesting to read some documentation.
+
+ * "git repo struct" learned to take "-z" as a synonym to "--format=nul".
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -50,6 +55,10 @@ Performance, Internal Implementation, Development Support etc.
    more details of failed tests.
 
  * Code refactoring around object database sources.
+
+ * Halve the memory consumed by artificial filepairs created during
+   "git diff --find-copioes-harder", also making the operation run
+   faster.
 
 
 Fixes since v2.52
@@ -150,9 +159,18 @@ Fixes since v2.52
  * The way patience diff finds LCS has been optimized.
    (merge c7e3b8085b yc/xdiff-patience-optim later to maint).
 
+ * Recent optimization to "last-modified" command introduced use of
+   uninitialized block of memory, which has been corrected.
+   (merge fe4e60759b tc/last-modified-active-paths-optimization later to maint).
+
+ * "git last-modified" used to mishandle "--" to mark the beginning of
+   pathspec, which has been corrected.
+   (merge 05491b90ce js/last-modified-with-sparse-checkouts later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 46207a54cc qj/doc-http-bad-want-response later to maint).
    (merge df90eccd93 kh/doc-commit-extra-references later to maint).
    (merge f18aa68861 rs/xmkstemp-simplify later to maint).
    (merge fddba8f737 ja/doc-synopsis-style later to maint).
    (merge 22ce0cb639 en/xdiff-cleanup-2 later to maint).
+   (merge 8ef7355a8f je/doc-pull later to maint).
