@@ -19,6 +19,7 @@
 #include "help.h"
 #include "setup.h"
 #include "trace2.h"
+#include "path.h"
 
 static void setup_enlistment_directory(int argc, const char **argv,
 				       const char * const *usagestr,
@@ -95,7 +96,17 @@ struct scalar_config {
 	int overwrite_on_reconfigure;
 };
 
-static int set_scalar_config(const struct scalar_config *config, int reconfigure)
+static int set_scalar_config(const char *key, const char *value)
+{
+	char *file = repo_git_path(the_repository, "config");
+	int res = repo_config_set_multivar_in_file_gently(the_repository, file,
+							  key, value, NULL,
+							  " # set by scalar", 0);
+	free(file);
+	return res;
+}
+
+static int set_config_if_missing(const struct scalar_config *config, int reconfigure)
 {
 	char *value = NULL;
 	int res;
@@ -103,7 +114,7 @@ static int set_scalar_config(const struct scalar_config *config, int reconfigure
 	if ((reconfigure && config->overwrite_on_reconfigure) ||
 	    repo_config_get_string(the_repository, config->key, &value)) {
 		trace2_data_string("scalar", the_repository, config->key, "created");
-		res = repo_config_set_gently(the_repository, config->key, config->value);
+		res = set_scalar_config(config->key, config->value);
 	} else {
 		trace2_data_string("scalar", the_repository, config->key, "exists");
 		res = 0;
@@ -121,14 +132,38 @@ static int have_fsmonitor_support(void)
 
 static int set_recommended_config(int reconfigure)
 {
+	/*
+	 * Be sure to update Documentation/scalar.adoc if you add, update,
+	 * or remove any of these recommended settings.
+	 */
 	struct scalar_config config[] = {
-		/* Required */
-		{ "am.keepCR", "true", 1 },
-		{ "core.FSCache", "true", 1 },
-		{ "core.multiPackIndex", "true", 1 },
-		{ "core.preloadIndex", "true", 1 },
+		{ "am.keepCR", "true" },
+		{ "commitGraph.changedPaths", "true" },
+		{ "commitGraph.generationVersion", "1" },
+		{ "core.autoCRLF", "false" },
+		{ "core.logAllRefUpdates", "true" },
+		{ "core.safeCRLF", "false" },
+		{ "credential.https://dev.azure.com.useHttpPath", "true" },
+		{ "feature.experimental", "false" },
+		{ "feature.manyFiles", "false" },
+		{ "fetch.showForcedUpdates", "false" },
+		{ "fetch.unpackLimit", "1" },
+		{ "fetch.writeCommitGraph", "false" },
+		{ "gc.auto", "0" },
+		{ "gui.GCWarning", "false" },
+		{ "index.skipHash", "true", 1 /* Fix previous setting. */ },
+		{ "index.threads", "true"},
+		{ "index.version", "4" },
+		{ "merge.renames", "true" },
+		{ "merge.stat", "false" },
+		{ "pack.useBitmaps", "false" },
+		{ "pack.usePathWalk", "true" },
+		{ "receive.autoGC", "false" },
+		{ "status.aheadBehind", "false" },
+
+		/* platform-specific */
 #ifndef WIN32
-		{ "core.untrackedCache", "true", 1 },
+		{ "core.untrackedCache", "true" },
 #else
 		/*
 		 * Unfortunately, Scalar's Functional Tests demonstrated
@@ -142,50 +177,25 @@ static int set_recommended_config(int reconfigure)
 		 * Therefore, with a sad heart, we disable this very useful
 		 * feature on Windows.
 		 */
-		{ "core.untrackedCache", "false", 1 },
+		{ "core.untrackedCache", "false" },
+
+		/* Other Windows-specific required settings: */
+		{ "http.sslBackend", "schannel" },
 #endif
-		{ "core.logAllRefUpdates", "true", 1 },
-		{ "credential.https://dev.azure.com.useHttpPath", "true", 1 },
-		{ "credential.validate", "false", 1 }, /* GCM4W-only */
-		{ "gc.auto", "0", 1 },
-		{ "gui.GCWarning", "false", 1 },
-		{ "index.skipHash", "false", 1 },
-		{ "index.threads", "true", 1 },
-		{ "index.version", "4", 1 },
-		{ "merge.stat", "false", 1 },
-		{ "merge.renames", "true", 1 },
-		{ "pack.useBitmaps", "false", 1 },
-		{ "pack.useSparse", "true", 1 },
-		{ "receive.autoGC", "false", 1 },
-		{ "feature.manyFiles", "false", 1 },
-		{ "feature.experimental", "false", 1 },
-		{ "fetch.unpackLimit", "1", 1 },
-		{ "fetch.writeCommitGraph", "false", 1 },
-#ifdef WIN32
-		{ "http.sslBackend", "schannel", 1 },
-#endif
-		/* Optional */
-		{ "status.aheadBehind", "false" },
-		{ "commitGraph.changedPaths", "true" },
-		{ "commitGraph.generationVersion", "1" },
-		{ "core.autoCRLF", "false" },
-		{ "core.safeCRLF", "false" },
-		{ "fetch.showForcedUpdates", "false" },
-		{ "pack.usePathWalk", "true" },
 		{ NULL, NULL },
 	};
 	int i;
 	char *value;
 
 	for (i = 0; config[i].key; i++) {
-		if (set_scalar_config(config + i, reconfigure))
+		if (set_config_if_missing(config + i, reconfigure))
 			return error(_("could not configure %s=%s"),
 				     config[i].key, config[i].value);
 	}
 
 	if (have_fsmonitor_support()) {
 		struct scalar_config fsmonitor = { "core.fsmonitor", "true" };
-		if (set_scalar_config(&fsmonitor, reconfigure))
+		if (set_config_if_missing(&fsmonitor, reconfigure))
 			return error(_("could not configure %s=%s"),
 				     fsmonitor.key, fsmonitor.value);
 	}
@@ -197,9 +207,8 @@ static int set_recommended_config(int reconfigure)
 	if (repo_config_get_string(the_repository, "log.excludeDecoration", &value)) {
 		trace2_data_string("scalar", the_repository,
 				   "log.excludeDecoration", "created");
-		if (repo_config_set_multivar_gently(the_repository, "log.excludeDecoration",
-						    "refs/prefetch/*",
-						    CONFIG_REGEX_NONE, 0))
+		if (set_scalar_config("log.excludeDecoration",
+					    "refs/prefetch/*"))
 			return error(_("could not configure "
 				       "log.excludeDecoration"));
 	} else {
