@@ -1,22 +1,7 @@
 #!/bin/sh
 
-MASTER=master
+Meta/Dothem -j32 "$@" --noinstall -- CC=clang SANITIZE=leak
+# Meta/Dothem -j32 "$@" --noinstall -- CC=clang SANITIZE=address
+Meta/Dothem -j32 "$@" -- CC=clang
 
-test -n "$branches" || branches="next $MASTER maint jch seen"
-
-changed=
-for b in $branches
-do
-	installed=$(rungit "$b" version) &&
-	installed=${installed##* } &&
-	case "$installed" in
-	*-g*) installed=$(git describe "$installed") ;;
-	*)    installed=$(git describe "v$installed") ;;
-	esac &&
-	latest=$(git describe "$b") &&
-	test "z$latest" = "z$installed" ||
-	changed="$changed $b"
-done
-
-Meta/Dothem -j8 &&
-Meta/Dothem -j8 --dash --branches="$changed" --scratch --force CC=clang
+Meta/V
