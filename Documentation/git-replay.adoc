@@ -19,7 +19,7 @@ the working tree and the index untouched. By default, updates the
 relevant references using an atomic transaction (all refs update or
 none). Use `--ref-action=print` to avoid automatic ref updates and
 instead get update commands that can be piped to `git update-ref --stdin`
-(see the OUTPUT section below).
+(see the <<output,OUTPUT>> section below).
 
 THIS COMMAND IS EXPERIMENTAL. THE BEHAVIOR MAY CHANGE.
 
@@ -42,6 +42,10 @@ The history is replayed on top of the <branch> and <branch> is updated to
 point at the tip of the resulting history. This is different from `--onto`,
 which uses the target only as a starting point without updating it.
 
+--contained::
+	Update all branches that point at commits in
+	<revision-range>. Requires `--onto`.
+
 --ref-action[=<mode>]::
 	Control how references are updated. The mode can be:
 +
@@ -62,6 +66,7 @@ The default mode can be configured via the `replay.refAction` configuration vari
 
 include::rev-list-options.adoc[]
 
+[[output]]
 OUTPUT
 ------
 
@@ -80,6 +85,10 @@ the shape of the history being replayed.  When using `--advance`, the
 number of refs updated is always one, but for `--onto`, it can be one
 or more (rebasing multiple branches simultaneously is supported).
 
+There is no stderr output on conflicts; see the <<exit-status,EXIT
+STATUS>> section below.
+
+[[exit-status]]
 EXIT STATUS
 -----------
 
