@@ -77,14 +77,14 @@ to the new separate pack will be written.
 	Only useful with `--cruft -d`.
 
 --max-cruft-size=<n>::
-	Overrides `--max-pack-size` for cruft packs. Inherits the value of
+	Override `--max-pack-size` for cruft packs. Inherits the value of
 	`--max-pack-size` (if any) by default. See the documentation for
 	`--max-pack-size` for more details.
 
 --combine-cruft-below-size=<n>::
 	When generating cruft packs without pruning, only repack
-	existing cruft packs whose size is strictly less than `<n>`,
-	where `<n>` represents a number of bytes, which can optionally
+	existing cruft packs whose size is strictly less than `<n>`
+	bytes, which can optionally
 	be suffixed with "k", "m", or "g". Cruft packs whose size is
 	greater than or equal to `<n>` are left as-is and not repacked.
 	Useful when you want to avoid repacking large cruft pack(s) in
