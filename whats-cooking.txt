@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Dec 2025, #03)
-X-master-at: e85ae279b0d58edc2f4c3fd5ac391b51e1223985
-X-next-at: 1dd061c0dc5afb29e4658344357c7edeef2ab3b0
+Subject: What's cooking in git.git (Dec 2025, #04)
+X-master-at: d8af7cadaa79d5837d73ec949e10b57dedb43e9b
+X-next-at: be84eed79ebb4e77ce9add3476f309913f2d8cba
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Dec 2025, #03)
+What's cooking in git.git (Dec 2025, #04)
 -----------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,60 +46,218 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* je/doc-data-model (2025-12-02) 1 commit
+  (merged to 'next' on 2025-12-06 at 3f4935d65f)
+ + doc: remove stray text in Git data model
+
+ Docfix.
+ source: <pull.2014.git.1764699084703.gitgitgadget@gmail.com>
+
+
+* je/doc-pull (2025-12-03) 1 commit
+  (merged to 'next' on 2025-12-05 at 601711e5f2)
+ + doc: git-pull: fix 'git --rebase abort' typo
+
+ Doc fixup.
+ source: <pull.2015.git.1764776095597.gitgitgadget@gmail.com>
+
+
+* js/last-modified-with-sparse-checkouts (2025-11-29) 1 commit
+  (merged to 'next' on 2025-12-05 at f1d5abdd14)
+ + last-modified: support sparse checkouts
+
+ "git last-modified" used to mishandle "--" to mark the beginning of
+ pathspec, which has been corrected.
+ source: <pull.2013.git.1764423826908.gitgitgadget@gmail.com>
+
+
+* kh/advise-w-git-help-in-branch (2025-12-02) 1 commit
+  (merged to 'next' on 2025-12-05 at 3b7b03150e)
+ + branch: advice using git-help(1) instead of man(1)
+
+ A help message from "git branch" now mentions "git help" instead of
+ "man" when suggesting to read some documentation.
+ source: <V2_advice_git-help.53@msgid.xyz>
+
+
+* lo/repo-struct-z (2025-12-04) 3 commits
+  (merged to 'next' on 2025-12-06 at 4f602e14d8)
+ + repo: add -z as an alias for --format=nul to git-repo-structure
+ + repo: use [--format=... | -z] instead of [-z] in git-repo-info synopsis
+ + repo: remove blank line from Documentation/git-repo.adoc
+ (this branch is used by lo/repo-info-keys.)
+
+ "git repo struct" learned to take "-z" as a synonym to "--format=nul".
+ cf. <aTK9X6ptrqs_9agD@pks.im>
+ source: <20251204210843.79411-1-lucasseikioshiro@gmail.com>
+
+
+* rs/diff-index-find-copies-harder-optim (2025-11-30) 1 commit
+  (merged to 'next' on 2025-12-05 at 539b086bfc)
+ + diff-index: don't queue unchanged filepairs with diff_change()
+
+ Halve the memory consumed by artificial filepairs created during
+ "git diff --find-copioes-harder", also making the operation run
+ faster.
+ source: <aa28974b-ec73-4562-bfc8-4745ad58b55a@web.de>
+
+
+* tc/last-modified-active-paths-optimization (2025-11-28) 1 commit
+  (merged to 'next' on 2025-12-05 at 42c18b607f)
+ + last-modified: fix use of uninitialized memory
+ (this branch is used by jc/memzero-array and tc/memzero-array.)
+
+ Recent optimization to "last-modified" command introduced use of
+ uninitialized block of memory, which has been corrected.
+ source: <20251128-toon-big-endian-ci-v1-1-80da0f629c1e@iotcl.com>
+
+
+* tc/meson-cross-compile-fix (2025-12-03) 3 commits
+  (merged to 'next' on 2025-12-05 at c45b57ca74)
+ + meson: use is_cross_build() where possible
+ + meson: only detect ICONV_OMITS_BOM if possible
+ + meson: ignore subprojects/.wraplock
+
+ Build fix.
+ source: <20251202-toon-cross-compile-v1-0-cabc8bce529f@iotcl.com>
+
+--------------------------------------------------
 [New Topics]
 
-* jt/repo-struct-more-objinfo (2025-12-09) 6 commits
+* kj/pull-options-decl-cleanup (2025-12-11) 1 commit
+  (merged to 'next' on 2025-12-14 at f59cad1d37)
+ + pull: move options[] array into function scope
+
+ Code clean-up.
+
+ Will merge to 'master'.
+ source: <20251212074433.38027-1-jayatheerthkulkarni2005@gmail.com>
+
+
+* jc/memzero-array (2025-12-12) 3 commits
+ - cocci: use MEMZERO_ARRAY() a bit more
+ - coccicheck: emit the contents of cocci patch
+ - Merge branch 'tc/memzero-array' into jc/memzero-array
+ (this branch uses tc/memzero-array.)
+
+ Further application of MEMZERO_ARRAY() macro to the rest of the
+ code base.
+
+ Will merge to 'next' together with the base topic?
+ source: <20251213014628.3380826-1-gitster@pobox.com>
+
+
+* rs/t4014-git-version-string-fix (2025-12-13) 1 commit
+  (merged to 'next' on 2025-12-14 at eef802176c)
+ + t4014: support Git version strings with spaces
+
+ Test fix.
+
+ Will merge to 'master'.
+ source: <b79cba1d-f32b-4034-979e-fb9528d05f18@web.de>
+
+
+* jc/doc-commit-signoff-config (2025-12-14) 1 commit
+ - commit: document that $command.signoff will not be added
+
+ Documentation update.
+
+ Will merge to 'next'?
+ source: <xmqqldj48pyl.fsf@gitster.g>
+
+
+* ps/packfile-store-in-odb-source (2025-12-14) 12 commits
+ - packfile: move MIDX into packfile store
+ - packfile: refactor `find_pack_entry()` to work on the packfile store
+ - packfile: inline `find_kept_pack_entry()`
+ - packfile: only prepare owning store in `packfile_store_prepare()`
+ - packfile: only prepare owning store in `packfile_store_get_packs()`
+ - packfile: move packfile store into object source
+ - packfile: refactor misleading code when unusing pack windows
+ - packfile: refactor kept-pack cache to work with packfile stores
+ - packfile: pass source to `prepare_pack()`
+ - packfile: create store via its owning source
+ - Merge branch 'ps/odb-misc-fixes' into ps/packfile-store-in-odb-source
+ - Merge branch 'ps/object-read-stream' into ps/packfile-store-in-odb-source
+ (this branch uses ps/object-read-stream and ps/odb-misc-fixes.)
+
+ The packfile_store data structure is moved from object store to odb
+ source.
+
+ Comments?
+ source: <20251215-b4-pks-pack-store-via-source-v1-0-433aac465295@pks.im>
+
+
+* rs/diff-files-r-find-copies-fix (2025-12-14) 1 commit
+ - diff-files: fix copy detection
+
+ "git diff-files -R --find-copies-harder" has been taught to use
+ the potential copy sources from the index correctly.
+
+ Will merge to 'next'?
+ source: <4b06a448-0935-4f2a-9061-238c7cc800c3@web.de>
+
+--------------------------------------------------
+[Cooking]
+
+* jt/repo-struct-more-objinfo (2025-12-12) 7 commits
  - builtin/repo: add object disk size info to structure table
  - builtin/repo: add disk size info to keyvalue stucture output
  - builtin/repo: add inflated object info to structure table
  - builtin/repo: add inflated object info to keyvalue structure output
  - builtin/repo: humanise count values in structure output
+ - strbuf: split out logic to humanise byte values
  - builtin/repo: group per-type object values into struct
 
  More object database related information are shown in "git repo
  structure" output.
 
  Comments?
- source: <20251209225820.2861276-1-jltobler@gmail.com>
+ source: <20251212223644.3090879-1-jltobler@gmail.com>
 
 
-* jc/c99-fam (2025-12-11) 1 commit
- - 3.0: require C99 flexible-array member syntax
+* jc/c99-fam (2025-12-12) 1 commit
+ - FLEX_ARRAY: require platforms to support the C99 syntax
 
- Require C99 style flexible array member support after Git 3.0
- boundary.
+ Require C99 style flexible array member support from all platforms.
 
- Comments?
- source: <xmqqbjk5e32q.fsf@gitster.g>
+ Will merge to 'next'?
+ source: <xmqqqzszc13d.fsf@gitster.g>
 
 
 * jc/macports-darwinports (2025-12-10) 1 commit
- - Makefile: help macOS novices by mentioning MacPorts
+  (merged to 'next' on 2025-12-14 at 5c608e07fe)
+ + Makefile: help macOS novices by mentioning MacPorts
 
  Makefile in-comment doc update.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <xmqq7buthgq4.fsf@gitster.g>
 
 
-* rs/macos-iconv-workaround (2025-12-09) 1 commit
+* rs/macos-iconv-workaround (2025-12-13) 2 commits
  - config.mak.uname: use iconv from Homebrew on macOS
+ - Makefile: add NO_HOMEBREW
 
  Workaround that "iconv" shipped as part of macOS, which is broken
- handling ISO-2022 encoded strings.
+ handling stateful ISO-2022 encoded strings.
 
- Will merge to 'next'?
- source: <16efc726-34be-44f5-aa92-4e82b663ab3d@web.de>
+ Comments?
+ cf. <435e4190-6c46-4404-b769-234f704f608a@web.de>
+ source: <53690064-1c98-40e9-8b9a-7ba6bee63703@web.de>
 
 
 * rs/replay-wrong-onto-fix (2025-12-11) 2 commits
- - replay: move onto NULL check before first use
- - Merge branch 'sa/replay-atomic-ref-updates' into rs/replay-wrong-onto-fix
+  (merged to 'next' on 2025-12-14 at d34966465f)
+ + replay: move onto NULL check before first use
+ + Merge branch 'sa/replay-atomic-ref-updates' into rs/replay-wrong-onto-fix
 
  "git replay --onto=<commit> ...", when <commit> is mistyped,
  started to segfault with recent change, which has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <9db2b913-b5d6-4617-b079-b4612eaa2b97@web.de>
 
 
@@ -107,7 +265,7 @@ Release tarballs are available at:
  - contrib/coccinelle: pass include paths to spatch(1)
  - git-compat-util: introduce MEMZERO_ARRAY() macro
  - Merge branch 'tc/last-modified-active-paths-optimization' into tc/memzero-array
- (this branch uses tc/last-modified-active-paths-optimization.)
+ (this branch is used by jc/memzero-array.)
 
  MEMZERO_ARRAY() helper is introduced to avoid clearing only the
  first N bytes of an N-element array whose elements are larger than
@@ -117,8 +275,6 @@ Release tarballs are available at:
  cf. <aTpieqFoMmZiSzWS@pks.im>
  source: <20251210-toon-cocci-memzero-v1-0-ae916a79065b@iotcl.com>
 
---------------------------------------------------
-[Cooking]
 
 * jc/capability-leak (2025-12-06) 1 commit
   (merged to 'next' on 2025-12-10 at cfe8ce92b1)
@@ -130,23 +286,22 @@ Release tarballs are available at:
  source: <xmqqfr9mnbu9.fsf@gitster.g>
 
 
-* kh/doc-replay-updates (2025-12-07) 3 commits
- - doc: replay: link section using markup
- - doc: replay: document --contained
- - doc: replay: mention no output on conflicts
+* kh/doc-replay-updates (2025-12-13) 3 commits
+  (merged to 'next' on 2025-12-14 at 71a8f83876)
+ + doc: replay: link section using markup
+ + replay: improve --contained and add to doc
+ + doc: replay: mention no output on conflicts
 
  "git replay" documentation updates.
 
- Expecting a (hopefully small and final) reroll.
- cf. <39b57721-ab9e-489d-a382-16d9fe94c300@app.fastmail.com>
- source: <CV_replay_conflict.101@msgid.xyz>
+ Will merge to 'master'.
+ source: <V2_CV_replay_conflict.12f@msgid.xyz>
 
 
 * lo/repo-info-keys (2025-12-09) 3 commits
  - repo: add new flag --keys to git-repo-info
  - repo: add a default output format to enum output_format
  - Merge branch 'lo/repo-struct-z' into lo/repo-info-keys
- (this branch uses lo/repo-struct-z.)
 
  "git repo info" learns "--keys" action to list known keys.
 
@@ -234,78 +389,11 @@ Release tarballs are available at:
  source: <20251209014900.402637-1-aplattner@nvidia.com>
 
 
-* je/doc-pull (2025-12-03) 1 commit
-  (merged to 'next' on 2025-12-05 at 601711e5f2)
- + doc: git-pull: fix 'git --rebase abort' typo
-
- Doc fixup.
-
- Will merge to 'master'.
- source: <pull.2015.git.1764776095597.gitgitgadget@gmail.com>
-
-
-* js/last-modified-with-sparse-checkouts (2025-11-29) 1 commit
-  (merged to 'next' on 2025-12-05 at f1d5abdd14)
- + last-modified: support sparse checkouts
-
- "git last-modified" used to mishandle "--" to mark the beginning of
- pathspec, which has been corrected.
-
- Will merge to 'master'.
- source: <pull.2013.git.1764423826908.gitgitgadget@gmail.com>
-
-
-* kh/advise-w-git-help-in-branch (2025-12-02) 1 commit
-  (merged to 'next' on 2025-12-05 at 3b7b03150e)
- + branch: advice using git-help(1) instead of man(1)
-
- A help message from "git branch" now mentions "git help" instead of
- "man" when suggesting to read some documentation.
-
- Will merge to 'master'.
- source: <V2_advice_git-help.53@msgid.xyz>
-
-
-* lo/repo-struct-z (2025-12-04) 3 commits
-  (merged to 'next' on 2025-12-06 at 4f602e14d8)
- + repo: add -z as an alias for --format=nul to git-repo-structure
- + repo: use [--format=... | -z] instead of [-z] in git-repo-info synopsis
- + repo: remove blank line from Documentation/git-repo.adoc
- (this branch is used by lo/repo-info-keys.)
-
- "git repo struct" learned to take "-z" as a synonym to "--format=nul".
-
- Will merge to 'master'.
- cf. <aTK9X6ptrqs_9agD@pks.im>
- source: <20251204210843.79411-1-lucasseikioshiro@gmail.com>
-
-
-* tc/meson-cross-compile-fix (2025-12-03) 3 commits
-  (merged to 'next' on 2025-12-05 at c45b57ca74)
- + meson: use is_cross_build() where possible
- + meson: only detect ICONV_OMITS_BOM if possible
- + meson: ignore subprojects/.wraplock
-
- Build fix.
-
- Will merge to 'master'.
- source: <20251202-toon-cross-compile-v1-0-cabc8bce529f@iotcl.com>
-
-
-* je/doc-data-model (2025-12-02) 1 commit
-  (merged to 'next' on 2025-12-06 at 3f4935d65f)
- + doc: remove stray text in Git data model
-
- Docfix.
-
- Will merge to 'master'.
- source: <pull.2014.git.1764699084703.gitgitgadget@gmail.com>
-
-
 * ps/odb-misc-fixes (2025-12-10) 3 commits
  - odb: properly close sources before freeing them
  - builtin/gc: fix condition for whether to write commit graphs
  - Merge branch 'ps/object-source-management' into ps/odb-misc-fixes
+ (this branch is used by ps/packfile-store-in-odb-source.)
 
  Miscellaneous fixes on object database layer.
 
@@ -381,20 +469,8 @@ Release tarballs are available at:
  In-code comment update to clarify that single-letter options are
  outside of the scope of command line completion script.
 
- Comments?
+ Will merge to 'next'?
  source: <xmqqzf7vm7b7.fsf@gitster.g>
-
-
-* tc/last-modified-active-paths-optimization (2025-11-28) 1 commit
-  (merged to 'next' on 2025-12-05 at 42c18b607f)
- + last-modified: fix use of uninitialized memory
- (this branch is used by tc/memzero-array.)
-
- Recent optimization to "last-modified" command introduced use of
- uninitialized block of memory, which has been corrected.
-
- Will merge to 'master'.
- source: <20251128-toon-big-endian-ci-v1-1-80da0f629c1e@iotcl.com>
 
 
 * jk/parse-int (2025-11-30) 5 commits
@@ -436,18 +512,6 @@ Release tarballs are available at:
  source: <pull.2009.v2.git.1764946945.gitgitgadget@gmail.com>
 
 
-* rs/diff-index-find-copies-harder-optim (2025-11-30) 1 commit
-  (merged to 'next' on 2025-12-05 at 539b086bfc)
- + diff-index: don't queue unchanged filepairs with diff_change()
-
- Halve the memory consumed by artificial filepairs created during
- "git diff --find-copioes-harder", also making the operation run
- faster.
-
- Will merge to 'master'.
- source: <aa28974b-ec73-4562-bfc8-4745ad58b55a@web.de>
-
-
 * tc/last-modified-options-cleanup (2025-11-26) 4 commits
  - fixup! last-modified: document option --max-depth
  - last-modified: document how depth is handled better
@@ -461,18 +525,18 @@ Release tarballs are available at:
  source: <20251126-toon-last-modified-zzzz-v1-0-608350df0caa@iotcl.com>
 
 
-* ds/doc-scalar-config (2025-12-01) 5 commits
- - scalar: document config settings
- - scalar: alphabetize and simplify config
- - scalar: remove stale config values
- - scalar: use index.skipHash=true for performance
- - scalar: annotate config file with "set by scalar"
+* ds/doc-scalar-config (2025-12-12) 5 commits
+  (merged to 'next' on 2025-12-14 at 2a7406f512)
+ + scalar: document config settings
+ + scalar: alphabetize and simplify config
+ + scalar: remove stale config values
+ + scalar: use index.skipHash=true for performance
+ + scalar: annotate config file with "set by scalar"
 
  Documentation updates.
 
- Expecting a reroll.
- cf. <aS88bnmZXMZCV5oS@pks.im>
- source: <pull.2010.v2.git.1764607847.gitgitgadget@gmail.com>
+ Will merge to 'master'.
+ source: <pull.2010.v3.git.1765552528.gitgitgadget@gmail.com>
 
 
 * pw/replay-drop-empty (2025-11-27) 2 commits
@@ -558,6 +622,7 @@ Release tarballs are available at:
  + streaming: drop the `open()` callback function
  + streaming: rename `git_istream` into `odb_read_stream`
  + Merge branch 'ps/object-source-loose' into ps/object-read-stream
+ (this branch is used by ps/packfile-store-in-odb-source.)
 
  The "git_istream" abstraction has been revamped to make it easier
  to interface with pluggable object database design.
@@ -574,7 +639,7 @@ Release tarballs are available at:
  without defining where its submodule.<name>.path is, which has been
  corrected.
 
- Comments?
+ Will merge to 'next'?
  source: <xmqqv7jacvdq.fsf@gitster.g>
 
 
@@ -706,21 +771,24 @@ Release tarballs are available at:
  source: <a203b35538847f3c9358a5ae26fb4ebea5734cfc.1759420102.git.msuchanek@suse.de>
 
 
-* ar/submodule-gitdir-tweak (2025-11-19) 7 commits
- - meson/Makefile: allow setting submodule encoding at build time
- - submodule: use hashed name for gitdir
- - submodule: fix case-folding gitdir filesystem colisions
- - submodule: add extension to encode gitdir paths
- - submodule: always validate gitdirs inside submodule_name_to_gitdir
+* ar/submodule-gitdir-tweak (2025-12-13) 10 commits
+ - submodule: hash the submodule name for the gitdir path
+ - submodule: fix case-folding gitdir filesystem collisions
+ - submodule--helper: fix filesystem collisions by encoding gitdir paths
  - builtin/credential-store: move is_rfc3986_unreserved to url.[ch]
+ - submodule--helper: add gitdir migration command
+ - submodule: allow runtime enabling extensions.submodulePathConfig
+ - submodule: introduce extensions.submodulePathConfig
+ - builtin/submodule--helper: add gitdir command
+ - submodule: always validate gitdirs inside submodule_name_to_gitdir
  - submodule--helper: use submodule_name_to_gitdir in add_submodule
 
  Avoid local submodule repository directory paths overlapping with
  each other by encoding submodule names before using them as path
  components.
 
- Expecting a reroll.
- source: <20251119211030.2008441-1-adrian.ratiu@collabora.com>
+ Comments?
+ source: <20251213080817.347922-1-adrian.ratiu@collabora.com>
 
 --------------------------------------------------
 [Discarded]
