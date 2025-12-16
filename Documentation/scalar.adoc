@@ -297,7 +297,7 @@ index.skipHash=true::
 
 index.threads=true::
 	This tells Git to automatically detect how many threads it should use
-	when reading the index due the default value of	`core.preloadIndex`,
+	when reading the index due to the default value of `core.preloadIndex`,
 	which enables parallel index reads. This explicit setting also enables
 	`index.recordOffsetTable=true` to speed up parallel index reads.
 
