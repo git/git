@@ -60,6 +60,13 @@ Performance, Internal Implementation, Development Support etc.
    "git diff --find-copioes-harder", also making the operation run
    faster.
 
+ * The "git_istream" abstraction has been revamped to make it easier
+   to interface with pluggable object database design.
+
+ * Rewrite the only use of "mktemp()" that is subject to TOCTOU race
+   and Stop using the insecure "mktemp()" function.
+   (merge 10bba537c4 rs/ban-mktemp later to maint).
+
 
 Fixes since v2.52
 -----------------
@@ -166,6 +173,9 @@ Fixes since v2.52
  * "git last-modified" used to mishandle "--" to mark the beginning of
    pathspec, which has been corrected.
    (merge 05491b90ce js/last-modified-with-sparse-checkouts later to maint).
+
+ * Emulation code clean-up.
+   (merge 42aa7603aa gf/win32-pthread-cond-init later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 46207a54cc qj/doc-http-bad-want-response later to maint).
