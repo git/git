@@ -83,6 +83,25 @@ Windows would be the configuration `"C:\Program Files\Vim\gvim.exe" --nofork`,
 which quotes the filename with spaces and specifies the `--nofork` option to
 avoid backgrounding the process.
 
+[[sign-off]]
+Why not have `commit.signoff` and other configuration variables?::
+	Git intentionally does not (and will not) provide a
+	configuration variable, such as `commit.signoff`, to
+	automatically add `--signoff` by default.  The reason is to
+	protect the legal and intentional significance of a sign-off.
+	If there were more automated and widely publicized ways for
+	sign-offs to be appended, it would become easier for someone
+	to argue later that a "Signed-off-by" trailer was just added
+	out of habit or by automation, without the committer's full
+	awareness or intent to certify their agreement with the
+	Developer Certificate of Origin (DCO) or a similar statement.
+	This could undermine the sign-off’s credibility in legal or
+	contractual situations.
++
+There exists `format.signoff`, but that is a historical mistake, and
+it is not an excuse to add more mistakes of the same kind on top.
+
+
 Credentials
 -----------
 
