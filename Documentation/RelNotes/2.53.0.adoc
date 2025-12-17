@@ -184,3 +184,7 @@ Fixes since v2.52
    (merge fddba8f737 ja/doc-synopsis-style later to maint).
    (merge 22ce0cb639 en/xdiff-cleanup-2 later to maint).
    (merge 8ef7355a8f je/doc-pull later to maint).
+   (merge 48176f953f jc/capability-leak later to maint).
+   (merge 8cbbdc92f7 kh/doc-pre-commit-fix later to maint).
+   (merge d4bc39a4d9 mh/doc-config-gui-gcwarning later to maint).
+   (merge 41d425008a kh/doc-send-email-paragraph-fix later to maint).
