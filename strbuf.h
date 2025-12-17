@@ -372,6 +372,11 @@ enum humanise_flags {
 	 * Use rate based units for humanised values.
 	 */
 	HUMANISE_RATE = (1 << 0),
+	/*
+	 * Use compact "B" unit symbol instead of "byte/bytes" for humanised
+	 * values.
+	 */
+	HUMANISE_COMPACT = (1 << 1),
 };
 
 /**

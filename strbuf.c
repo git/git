@@ -886,11 +886,15 @@ void humanise_bytes(off_t bytes, char **value, const char **unit,
 		*unit = humanise_rate ? _("KiB/s") : _("KiB");
 	} else {
 		*value = xstrfmt("%u", (unsigned)bytes);
-		*unit = humanise_rate ?
-			       /* TRANSLATORS: IEC 80000-13:2008 byte/second */
-			       Q_("byte/s", "bytes/s", bytes) :
-			       /* TRANSLATORS: IEC 80000-13:2008 byte */
-			       Q_("byte", "bytes", bytes);
+		if (flags & HUMANISE_COMPACT)
+			/* TRANSLATORS: IEC 80000-13:2008 byte/second and byte */
+			*unit = humanise_rate ? _("B/s") : _("B");
+		else
+			*unit = humanise_rate ?
+					/* TRANSLATORS: IEC 80000-13:2008 byte/second */
+					Q_("byte/s", "bytes/s", bytes) :
+					/* TRANSLATORS: IEC 80000-13:2008 byte */
+					Q_("byte", "bytes", bytes);
 	}
 }
 
