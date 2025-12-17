@@ -425,7 +425,11 @@ test_expect_success SYMLINKS 're-init to move gitdir symlink' '
 	git init --separate-git-dir ../realgitdir
 	) &&
 	echo "gitdir: $(pwd)/realgitdir" >expected &&
-	test_cmp expected newdir/.git &&
+	case "$GIT_TEST_CMP" in
+	# `git diff --no-index` does not resolve symlinks
+	*--no-index*) cmp expected newdir/.git;;
+	*) test_cmp expected newdir/.git;;
+	esac &&
 	test_cmp expected newdir/here &&
 	test_path_is_dir realgitdir/refs
 '
