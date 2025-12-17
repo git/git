@@ -226,8 +226,12 @@ void run_diff_files(struct rev_info *revs, unsigned int option)
 				continue;
 		}
 
-		if (ce_uptodate(ce) || ce_skip_worktree(ce))
+		if (ce_uptodate(ce) || ce_skip_worktree(ce)) {
+			if (revs->diffopt.flags.find_copies_harder)
+				diff_same(&revs->diffopt, ce->ce_mode,
+					  &ce->oid, ce->name);
 			continue;
+		}
 
 		/*
 		 * When CE_VALID is set (via "update-index --assume-unchanged"
@@ -272,8 +276,10 @@ void run_diff_files(struct rev_info *revs, unsigned int option)
 		if (!changed && !dirty_submodule) {
 			ce_mark_uptodate(ce);
 			mark_fsmonitor_valid(istate, ce);
-			if (!revs->diffopt.flags.find_copies_harder)
-				continue;
+			if (revs->diffopt.flags.find_copies_harder)
+				diff_same(&revs->diffopt, newmode,
+					  &ce->oid, ce->name);
+			continue;
 		}
 		oldmode = ce->ce_mode;
 		old_oid = &ce->oid;
