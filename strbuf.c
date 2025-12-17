@@ -836,6 +836,32 @@ void strbuf_addstr_urlencode(struct strbuf *sb, const char *s,
 	strbuf_add_urlencode(sb, s, strlen(s), allow_unencoded_fn);
 }
 
+void humanise_count(size_t count, char **value, const char **unit)
+{
+	if (count >= 1000000000) {
+		size_t x = count + 5000000; /* for rounding */
+		*value = xstrfmt(_("%u.%2.2u"), (unsigned)(x / 1000000000),
+				 (unsigned)(x % 1000000000 / 10000000));
+		/* TRANSLATORS: SI decimal prefix symbol for 10^9 */
+		*unit = _("G");
+	} else if (count >= 1000000) {
+		size_t x = count + 5000; /* for rounding */
+		*value = xstrfmt(_("%u.%2.2u"), (unsigned)(x / 1000000),
+				 (unsigned)(x % 1000000 / 10000));
+		/* TRANSLATORS: SI decimal prefix symbol for 10^6 */
+		*unit = _("M");
+	} else if (count >= 1000) {
+		size_t x = count + 5; /* for rounding */
+		*value = xstrfmt(_("%u.%2.2u"), (unsigned)(x / 1000),
+				 (unsigned)(x % 1000 / 10));
+		/* TRANSLATORS: SI decimal prefix symbol for 10^3 */
+		*unit = _("k");
+	} else {
+		*value = xstrfmt("%u", (unsigned)count);
+		*unit = NULL;
+	}
+}
+
 void humanise_bytes(off_t bytes, char **value, const char **unit,
 		    unsigned flags)
 {

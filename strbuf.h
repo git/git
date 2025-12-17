@@ -382,6 +382,12 @@ void humanise_bytes(off_t bytes, char **value, const char **unit,
 		    unsigned flags);
 
 /**
+ * Converts the given count into a downscaled human-readable value and
+ * corresponding unit as two separate strings.
+ */
+void humanise_count(size_t count, char **value, const char **unit);
+
+/**
  * Append the given byte size as a human-readable string (i.e. 12.23 KiB,
  * 3.50 MiB).
  */
