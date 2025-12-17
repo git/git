@@ -4,6 +4,11 @@ test_description='test git repo structure'
 
 . ./test-lib.sh
 
+object_type_disk_usage() {
+	git rev-list --all --objects --disk-usage --filter=object:type=$1 \
+		--filter-provided-objects
+}
+
 test_expect_success 'empty repository' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
@@ -91,7 +96,7 @@ test_expect_success SHA1 'keyvalue and nul format' '
 		test_commit_bulk 42 &&
 		git tag -a foo -m bar &&
 
-		cat >expect <<-\EOF &&
+		cat >expect <<-EOF &&
 		references.branches.count=1
 		references.tags.count=1
 		references.remotes.count=0
@@ -104,6 +109,10 @@ test_expect_success SHA1 'keyvalue and nul format' '
 		objects.trees.inflated_size=28554
 		objects.blobs.inflated_size=453
 		objects.tags.inflated_size=132
+		objects.commits.disk_size=$(object_type_disk_usage commit)
+		objects.trees.disk_size=$(object_type_disk_usage tree)
+		objects.blobs.disk_size=$(object_type_disk_usage blob)
+		objects.tags.disk_size=$(object_type_disk_usage tag)
 		EOF
 
 		git repo structure --format=keyvalue >out 2>err &&
