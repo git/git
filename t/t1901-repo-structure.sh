@@ -5,8 +5,20 @@ test_description='test git repo structure'
 . ./test-lib.sh
 
 object_type_disk_usage() {
-	git rev-list --all --objects --disk-usage --filter=object:type=$1 \
-		--filter-provided-objects
+	disk_usage_opt="--disk-usage"
+
+	if test "$2" = "true"
+	then
+		disk_usage_opt="--disk-usage=human"
+	fi
+
+	if test "$1" = "all"
+	then
+		git rev-list --all --objects $disk_usage_opt
+	else
+		git rev-list --all --objects $disk_usage_opt \
+			--filter=object:type=$1 --filter-provided-objects
+	fi
 }
 
 test_expect_success 'empty repository' '
@@ -35,6 +47,11 @@ test_expect_success 'empty repository' '
 		|     * Trees          |    0 B |
 		|     * Blobs          |    0 B |
 		|     * Tags           |    0 B |
+		|   * Disk size        |    0 B |
+		|     * Commits        |    0 B |
+		|     * Trees          |    0 B |
+		|     * Blobs          |    0 B |
+		|     * Tags           |    0 B |
 		EOF
 
 		git repo structure >out 2>err &&
@@ -58,7 +75,10 @@ test_expect_success SHA1 'repository with references and objects' '
 		# Also creates a commit, tree, and blob.
 		git notes add -m foo &&
 
-		cat >expect <<-\EOF &&
+		# The tags disk size is handled specially due to the
+		# git-rev-list(1) --disk-usage=human option printing the full
+		# "byte/bytes" unit string instead of just "B".
+		cat >expect <<-EOF &&
 		| Repository structure | Value      |
 		| -------------------- | ---------- |
 		| * References         |            |
@@ -79,6 +99,11 @@ test_expect_success SHA1 'repository with references and objects' '
 		|     * Trees          |  15.81 MiB |
 		|     * Blobs          |  11.68 KiB |
 		|     * Tags           |    132 B   |
+		|   * Disk size        | $(object_type_disk_usage all true) |
+		|     * Commits        | $(object_type_disk_usage commit true) |
+		|     * Trees          | $(object_type_disk_usage tree true) |
+		|     * Blobs          |  $(object_type_disk_usage blob true) |
+		|     * Tags           |    $(object_type_disk_usage tag) B   |
 		EOF
 
 		git repo structure >out 2>err &&
