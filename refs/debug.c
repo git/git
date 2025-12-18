@@ -139,7 +139,7 @@ static int debug_optimize_required(struct ref_store *ref_store,
 	struct debug_ref_store *drefs = (struct debug_ref_store *)ref_store;
 	int res = drefs->refs->be->optimize_required(drefs->refs, opts, required);
 	trace_printf_key(&trace_refs, "optimize_required: %s, res: %d\n",
-			 required ? "yes" : "no", res);
+			 *required ? "yes" : "no", res);
 	return res;
 }
 
