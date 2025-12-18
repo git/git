@@ -26,7 +26,7 @@ then
 	exit $RET
 fi
 
-case "$(cargo -vV | sed -s 's/^host: \(.*\)$/\1/')" in
+case "$(cargo -vV | sed -n 's/^host: \(.*\)$/\1/p')" in
 	*-windows-*)
 		LIBNAME=gitcore.lib;;
 	*)
