@@ -62,7 +62,9 @@ The default mode can be configured via the `replay.refAction` configuration vari
 	Range of commits to replay; see "Specifying Ranges" in
 	linkgit:git-rev-parse[1]. In `--advance <branch>` mode, the
 	range should have a single tip, so that it's clear to which tip the
-	advanced <branch> should point.
+	advanced <branch> should point. Any commits in the range whose
+	changes are already present in the branch the commits are being
+	replayed onto will be dropped.
 
 include::rev-list-options.adoc[]
 
