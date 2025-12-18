@@ -87,7 +87,7 @@ of the to-be-rebased branch. However, `ORIG_HEAD` is not guaranteed to still
 point to that commit at the end of the rebase if other commands that change
 `ORIG_HEAD` (like `git reset`) are used during the rebase. The previous branch
 tip, however, is accessible using the reflog of the current branch (i.e. `@{1}`,
-see linkgit:gitrevisions[7].
+see linkgit:gitrevisions[7]).
 
 TRANSPLANTING A TOPIC BRANCH WITH --ONTO
 ----------------------------------------
