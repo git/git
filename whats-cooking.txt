@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Dec 2025, #05)
+Subject: What's cooking in git.git (Dec 2025, #06)
 X-master-at: c4a0c8845e2426375ad257b6c221a3a7d92ecfda
-X-next-at: 4f9b5a96bc0fa2f5a21362322d05332258d15bee
+X-next-at: 0814c687bbf7a1a1cb97b2be79c742b582fa80ea
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Dec 2025, #05)
+What's cooking in git.git (Dec 2025, #06)
 -----------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,102 +46,154 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* gf/win32-pthread-cond-init (2025-11-20) 1 commit
-  (merged to 'next' on 2025-12-09 at 202516d20c)
- + win32: pthread_cond_init should return a value
-
- Emulation code clean-up.
- source: <pull.2103.v3.git.git.1763675016637.gitgitgadget@gmail.com>
-
-
-* jc/capability-leak (2025-12-06) 1 commit
-  (merged to 'next' on 2025-12-10 at cfe8ce92b1)
- + connect: plug protocol capability leak
-
- Leakfix.
- 
- source: <xmqqfr9mnbu9.fsf@gitster.g>
-
-
-* kh/doc-pre-commit-fix (2025-12-07) 1 commit
-  (merged to 'next' on 2025-12-10 at f21f000140)
- + doc: join default pre-commit paragraphs
-
- Docfix.
- 
- source: <pre-commit_when_enabled.10a@msgid.xyz>
-
-
-* kh/doc-send-email-paragraph-fix (2025-12-08) 1 commit
-  (merged to 'next' on 2025-12-10 at 674ac2bdf7)
- + doc: send-email: fix broken list continuation
-
- Docfix.
- 
- source: <send-email_list_contin.112@msgid.xyz>
-
-
-* mh/doc-config-gui-gcwarning (2025-12-08) 1 commit
-  (merged to 'next' on 2025-12-10 at 15d6df9a04)
- + config: document 'gui.GCWarning'
-
- Docfix.
- 
- source: <20251208190400.64920-1-matthewhughes934@gmail.com>
-
-
-* ps/object-read-stream (2025-11-23) 20 commits
-  (merged to 'next' on 2025-12-09 at c8d645f8ea)
- + streaming: drop redundant type and size pointers
- + streaming: move into object database subsystem
- + streaming: refactor interface to be object-database-centric
- + streaming: move logic to read packed objects streams into backend
- + streaming: move logic to read loose objects streams into backend
- + streaming: make the `odb_read_stream` definition public
- + streaming: get rid of `the_repository`
- + streaming: rely on object sources to create object stream
- + packfile: introduce function to read object info from a store
- + streaming: move zlib stream into backends
- + streaming: create structure for filtered object streams
- + streaming: create structure for packed object streams
- + streaming: create structure for loose object streams
- + streaming: create structure for in-core object streams
- + streaming: allocate stream inside the backend-specific logic
- + streaming: explicitly pass packfile info when streaming a packed object
- + streaming: propagate final object type via the stream
- + streaming: drop the `open()` callback function
- + streaming: rename `git_istream` into `odb_read_stream`
- + Merge branch 'ps/object-source-loose' into ps/object-read-stream
- (this branch is used by ps/packfile-store-in-odb-source.)
-
- The "git_istream" abstraction has been revamped to make it easier
- to interface with pluggable object database design.
- source: <20251123-b4-pks-odb-read-stream-v3-0-1a129182822b@pks.im>
-
-
-* rs/ban-mktemp (2025-12-06) 5 commits
-  (merged to 'next' on 2025-12-09 at d459e9d8dd)
- + compat: remove gitmkdtemp()
- + banned.h: ban mktemp(3)
- + compat: remove mingw_mktemp()
- + compat: use git_mkdtemp()
- + wrapper: add git_mkdtemp()
-
- Rewrite the only use of "mktemp()" that is subject to TOCTOU race
- and Stop using the insecure "mktemp()" function.
- source: <64e62623-b911-4ddd-a481-05191853c0a6@web.de>
-
---------------------------------------------------
 [New Topics]
 
+* js/symlink-windows (2025-12-17) 19 commits
+ - mingw: special-case index entries for symlinks with buggy size
+ - mingw: emulate `stat()` a little more faithfully
+ - mingw: try to create symlinks without elevated permissions
+ - mingw: add support for symlinks to directories
+ - mingw: implement basic `symlink()` functionality (file symlinks only)
+ - mingw: implement `readlink()`
+ - mingw: allow `mingw_chdir()` to change to symlink-resolved directories
+ - mingw: support renaming symlinks
+ - mingw: handle symlinks to directories in `mingw_unlink()`
+ - mingw: add symlink-specific error codes
+ - mingw: change default of `core.symlinks` to false
+ - mingw: factor out the retry logic
+ - mingw: compute the correct size for symlinks in `mingw_lstat()`
+ - mingw: teach dirent about symlinks
+ - mingw: let `mingw_lstat()` error early upon problems with reparse points
+ - mingw: drop the separate `do_lstat()` function
+ - mingw: implement `stat()` with symlink support
+ - mingw: don't call `GetFileAttributes()` twice in `mingw_lstat()`
+ - Merge branch 'js/prep-symlink-windows' into js/symlink-windows
+ (this branch uses js/prep-symlink-windows and js/test-symlink-windows.)
+
+ Upstream symbolic link support on Windows from Git-for-Windows.
+
+ Will merge to 'next'?
+ source: <pull.2018.git.1765980535.gitgitgadget@gmail.com>
+
+
+* mh/doc-core-attributesfile (2025-12-17) 1 commit
+ - docs: note the type of core.attributesfile
+
+ Doc update.
+
+ Will merge to 'next'.
+ source: <20251217195917.25710-1-matthewhughes934@gmail.com>
+
+
+* pc/lockfile-pid (2025-12-17) 1 commit
+ - lockfile: add PID file for debugging stale locks
+
+ Allow recording process ID of the process that holds the lock next
+ to a lockfile for diagnosis.
+ source: <pull.2011.v2.git.1765997966593.gitgitgadget@gmail.com>
+
+
+* jc/object-read-stream-fix (2025-12-17) 2 commits
+ - odb: do not use "blank" substitute for NULL
+ - Merge branch 'ps/object-read-stream' into jc/object-read-stream-fix
+ (this branch is used by ps/read-object-info-improvements.)
+
+ Fix a performance regression in recently graduated topic.
+
+ Will merge to 'next'.
+ source: <xmqqpl8cxy0j.fsf@gitster.g>
+
+
+* js/neuter-sideband (2025-12-17) 4 commits
+ - sideband: add options to allow more control sequences to be passed through
+ - sideband: do allow ANSI color sequences by default
+ - sideband: introduce an "escape hatch" to allow control characters
+ - sideband: mask control characters
+
+ Invalidate control characters in sideband messages, to avoid
+ terminal state getting messed up.
+
+ Comments?
+ cf. <aS-D5lD2Kk6BHNIl@fruit.crustytoothpaste.net>
+ source: <pull.1853.v2.git.1765981422.gitgitgadget@gmail.com>
+
+
+* ps/read-object-info-improvements (2025-12-18) 8 commits
+ - packfile: drop repository parameter from `packed_object_info()`
+ - packfile: skip unpacking object header for disk size requests
+ - packfile: disentangle return value of `packed_object_info()`
+ - packfile: always populate pack-specific info when reading object info
+ - packfile: extend `is_delta` field to allow for "unknown" state
+ - packfile: always declare object info to be OI_PACKED
+ - object-file: always set OI_LOOSE when reading object info
+ - Merge branch 'jc/object-read-stream-fix' into ps/read-object-info-improvements
+ (this branch uses jc/object-read-stream-fix.)
+
+ The object-info API has been cleaned up.
+
+ Comments?
+ source: <20251218-b4-pks-odb-read-object-info-improvements-v2-0-62e3e49072bc@pks.im>
+
+
+* jk/test-curl-updates (2025-12-18) 3 commits
+ - t5563: relax whitespace assumptions for unfolded headers
+ - t5563: add missing end-of-line in HTTP header
+ - t5551: handle trailing slashes in expected cookies output
+
+ Update HTTP tests to adjust for changes in curl 8.18.0
+
+ Will merge to 'next'?
+ cf. <613s97no-7021-pp15-79s4-302o39p7n5r8@unkk.fr>
+ source: <20251218121120.GA3252258@coredump.intra.peff.net>
+
+
+* dk/ci-rust-fix (2025-12-18) 2 commits
+ - rust: build correctly without GNU sed
+ - Merge branch 'ps/ci-rust' into dk/ci-rust-fix
+
+ Build fix.
+
+ Will merge to 'next'.
+ source: <a33f4e5118938300bcd5b2991feeee855a1c8f86.1766100330.git.ben.knoble+github@gmail.com>
+
+
+* gf/clear-path-cache-cleanup (2025-12-18) 1 commit
+ - repository: remove duplicate free of cache->squash_msg
+
+ Code clean-up.
+
+ Will merge to 'next'.
+ source: <pull.2132.v2.git.git.1766072952115.gitgitgadget@gmail.com>
+
+
+* gf/maintenance-is-needed-fix (2025-12-18) 1 commit
+ - refs: dereference the value of the required pointer
+
+ Brown-paper-bag fix to a recently graduated
+ 'kn/maintenance-is-needed' topic.
+
+ Will merge to 'next'.
+ source: <pull.2130.git.git.1766074249443.gitgitgadget@gmail.com>
+
+
+* js/test-func-comment-fix (2025-12-18) 1 commit
+ - test_detect_ref_format: fix comment
+
+ Comment fix.
+
+ Will merge to 'next'.
+ source: <pull.2019.git.1766071259531.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[Cooking]
+
 * ja/doc-misc-fixes (2025-12-15) 1 commit
- - doc: flock of small fixes to various documentation files
+  (merged to 'next' on 2025-12-18 at d30d8cac71)
+ + doc: flock of small fixes to various documentation files
 
  Various documentation fixes.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.2016.git.1765830229824.gitgitgadget@gmail.com>
 
 
@@ -150,7 +202,7 @@ Release tarballs are available at:
 
  Document "rev-list --filter-provided-objects" better.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <20251215200512.2694155-1-jltobler@gmail.com>
 
 
@@ -178,11 +230,11 @@ Release tarballs are available at:
  - init: do parse _all_ core.* settings early
  - mingw: do resolve symlinks in `getcwd()`
  - Merge branch 'js/test-symlink-windows' into js/prep-symlink-windows
- (this branch uses js/test-symlink-windows.)
+ (this branch is used by js/symlink-windows; uses js/test-symlink-windows.)
 
  Further preparation to upstream symbolic link support on Windows.
 
- Comments?
+ Will merge to 'next'?
  source: <pull.2017.git.1765899229.gitgitgadget@gmail.com>
 
 
@@ -191,8 +243,6 @@ Release tarballs are available at:
 
  source: <20251112223722.376330-1-aplattner@nvidia.com>
 
---------------------------------------------------
-[Cooking]
 
 * kj/pull-options-decl-cleanup (2025-12-11) 1 commit
   (merged to 'next' on 2025-12-14 at f59cad1d37)
@@ -228,16 +278,19 @@ Release tarballs are available at:
  source: <b79cba1d-f32b-4034-979e-fb9528d05f18@web.de>
 
 
-* jc/doc-commit-signoff-config (2025-12-16) 1 commit
- - commit: document that $command.signoff will not be added
+* jc/doc-commit-signoff-config (2025-12-19) 2 commits
+  (merged to 'next' on 2025-12-19 at 0814c687bb)
+ + signoff-option: linkify the reference to gitfaq
+  (merged to 'next' on 2025-12-18 at 27c9ad156c)
+ + commit: document that $command.signoff will not be added
 
  Documentation update.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <xmqqv7i62r6w.fsf@gitster.g>
 
 
-* ps/packfile-store-in-odb-source (2025-12-14) 12 commits
+* ps/packfile-store-in-odb-source (2025-12-17) 12 commits
  - packfile: move MIDX into packfile store
  - packfile: refactor `find_pack_entry()` to work on the packfile store
  - packfile: inline `find_kept_pack_entry()`
@@ -256,7 +309,7 @@ Release tarballs are available at:
  source.
 
  Comments?
- source: <20251215-b4-pks-pack-store-via-source-v1-0-433aac465295@pks.im>
+ source: <20251218-b4-pks-pack-store-via-source-v2-0-62849007ce21@pks.im>
 
 
 * rs/diff-files-r-find-copies-fix (2025-12-14) 2 commits
@@ -271,7 +324,7 @@ Release tarballs are available at:
  source: <4b06a448-0935-4f2a-9061-238c7cc800c3@web.de>
 
 
-* jt/repo-struct-more-objinfo (2025-12-16) 7 commits
+* jt/repo-struct-more-objinfo (2025-12-17) 7 commits
  - builtin/repo: add object disk size info to structure table
  - builtin/repo: add disk size info to keyvalue stucture output
  - builtin/repo: add inflated object info to structure table
@@ -283,17 +336,17 @@ Release tarballs are available at:
  More object database related information are shown in "git repo
  structure" output.
 
- Will merge to 'next'?
- cf. <xmqqqzsu2qxy.fsf@gitster.g>
- source: <20251216173842.3357832-1-jltobler@gmail.com>
+ Will merge to 'next'.
+ source: <20251217175404.37963-1-jltobler@gmail.com>
 
 
 * jc/c99-fam (2025-12-12) 1 commit
- - FLEX_ARRAY: require platforms to support the C99 syntax
+  (merged to 'next' on 2025-12-18 at c11ebcf075)
+ + FLEX_ARRAY: require platforms to support the C99 syntax
 
  Require C99 style flexible array member support from all platforms.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <xmqqqzszc13d.fsf@gitster.g>
 
 
@@ -395,7 +448,8 @@ Release tarballs are available at:
  recompute bitmaps, "git repack" recomputed and updated the MIDX
  file, which has been corrected.
 
- Comments?
+ Will merge to 'next'.
+ cf.
  source: <20251210-pks-skip-noop-rewrite-v2-0-f813a9e44f28@pks.im>
 
 
@@ -409,13 +463,14 @@ Release tarballs are available at:
 
 
 * ap/packfile-promisor-object-optim (2025-12-08) 2 commits
- - packfile: skip hash checks in add_promisor_object()
- - object: apply skip_hash and discard_tree optimizations to unknown blobs too
+  (merged to 'next' on 2025-12-18 at ee94076814)
+ + packfile: skip hash checks in add_promisor_object()
+ + object: apply skip_hash and discard_tree optimizations to unknown blobs too
 
  The code path that enumerates promisor objects have been optimized
  to skip pointlessly parsing blob objects.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  cf. <xmqqecot3dm1.fsf@gitster.g>
  source: <20251209014900.402637-1-aplattner@nvidia.com>
 
@@ -508,7 +563,7 @@ Release tarballs are available at:
  source: <20251130131351.GA198697@coredump.intra.peff.net>
 
 
-* js/test-symlink-windows (2025-12-16) 10 commits
+* js/test-symlink-windows (2025-12-17) 10 commits
  - t7800: work around the MSYS path conversion on Windows
  - t6423: introduce Windows-specific handling for symlinking to /dev/null
  - t1305: skip symlink tests that do not apply to Windows
@@ -519,14 +574,13 @@ Release tarballs are available at:
  - mingw: special-case `open(symlink, O_CREAT | O_EXCL)`
  - apply: symbolic links lack a "trustable executable bit"
  - t9700: accommodate for Windows paths
- (this branch is used by js/prep-symlink-windows.)
+ (this branch is used by js/prep-symlink-windows and js/symlink-windows.)
 
  Prepare test suite for Git for Windows that supports symbolic
  links.
 
- Will merge to 'next'?
- cf. <xmqq345a46b1.fsf@gitster.g>
- source: <pull.2009.v3.git.1765885577.gitgitgadget@gmail.com>
+ Will merge to 'next'.
+ source: <pull.2009.v4.git.1765981126.gitgitgadget@gmail.com>
 
 
 * tc/last-modified-options-cleanup (2025-11-26) 4 commits
@@ -556,7 +610,7 @@ Release tarballs are available at:
  source: <pull.2010.v3.git.1765552528.gitgitgadget@gmail.com>
 
 
-* pw/replay-drop-empty (2025-12-16) 2 commits
+* pw/replay-drop-empty (2025-12-18) 2 commits
  - replay: drop commits that become empty
  - Merge branch 'ps/history' into pw/replay-drop-empty
  (this branch uses ps/history.)
@@ -565,7 +619,7 @@ Release tarballs are available at:
  ones that are empty in the original).
 
  On hold, until the base topic gains consensus and stabilizes.
- source: <73ba74b8a2e7aaa625e6f0689a9f900ceebaaa03.1765894781.git.phillip.wood@dunelm.org.uk>
+ source: <375adc4e941f3bb22a2b12ee26a083951ed724dd.1766076625.git.phillip.wood@dunelm.org.uk>
 
 
 * sp/shallow-time-boundary (2025-11-23) 1 commit
@@ -681,7 +735,7 @@ Release tarballs are available at:
  source: <20251117221621.2863243-1-sandals@crustytoothpaste.net>
 
 
-* ar/run-command-hook (2025-12-04) 11 commits
+* ar/run-command-hook (2025-12-18) 11 commits
  - receive-pack: convert receive hooks to hook API
  - receive-pack: convert update hooks to new API
  - hooks: allow callers to capture output
@@ -698,10 +752,11 @@ Release tarballs are available at:
  run_command() API.
 
  Will merge to 'next'?
- source: <20251204141535.1986263-1-adrian.ratiu@collabora.com>
+ cf. <aUVHVMNTFWWn2xjZ@pks.im>
+ source: <20251218171126.588066-1-adrian.ratiu@collabora.com>
 
 
-* je/doc-reset (2025-10-17) 4 commits
+* je/doc-reset (2025-12-18) 4 commits
  - doc: git-reset: clarify `git reset <pathspec>`
  - doc: git-reset: clarify `git reset [mode]`
  - doc: git-reset: clarify intro
@@ -709,9 +764,8 @@ Release tarballs are available at:
 
  Documentation updates.
 
- Expecting a reroll.
- cf. <8099e7ef-2673-407e-8cca-e6b566b99549@app.fastmail.com>
- source: <pull.1991.git.1760731558.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ source: <cover.1766103827.git.ben.knoble+github@gmail.com>
 
 
 * ps/history (2025-12-03) 13 commits
