@@ -10,6 +10,8 @@ begin_group "Install dependencies"
 P4WHENCE=https://cdist2.perforce.com/perforce/r23.2
 LFSWHENCE=https://github.com/github/git-lfs/releases/download/v$LINUX_GIT_LFS_VERSION
 JGITWHENCE=https://repo1.maven.org/maven2/org/eclipse/jgit/org.eclipse.jgit.pgm/6.8.0.202311291450-r/org.eclipse.jgit.pgm-6.8.0.202311291450-r.sh
+CARGO_MSRV_VERSION=0.18.4
+CARGO_MSRV_WHENCE=https://github.com/foresterre/cargo-msrv/releases/download/v$CARGO_MSRV_VERSION/cargo-msrv-x86_64-unknown-linux-musl-v$CARGO_MSRV_VERSION.tgz
 
 # Make sudo a no-op and execute the command directly when running as root.
 # While using sudo would be fine on most platforms when we are root already,
@@ -30,8 +32,12 @@ alpine-*)
 		bash cvs gnupg perl-cgi perl-dbd-sqlite perl-io-tty >/dev/null
 	;;
 fedora-*|almalinux-*)
+	case "$jobname" in
+	*-meson)
+		MESON_DEPS="meson ninja";;
+	esac
 	dnf -yq update >/dev/null &&
-	dnf -yq install shadow-utils sudo make gcc findutils diffutils perl python3 gawk gettext zlib-devel expat-devel openssl-devel curl-devel pcre2-devel >/dev/null
+	dnf -yq install shadow-utils sudo make pkg-config gcc findutils diffutils perl python3 gawk gettext zlib-devel expat-devel openssl-devel curl-devel pcre2-devel $MESON_DEPS cargo >/dev/null
 	;;
 ubuntu-*|i386/ubuntu-*|debian-*)
 	# Required so that apt doesn't wait for user input on certain packages.
@@ -58,7 +64,7 @@ ubuntu-*|i386/ubuntu-*|debian-*)
 		make libssl-dev libcurl4-openssl-dev libexpat-dev wget sudo default-jre \
 		tcl tk gettext zlib1g-dev perl-modules liberror-perl libauthen-sasl-perl \
 		libemail-valid-perl libio-pty-perl libio-socket-ssl-perl libnet-smtp-ssl-perl libdbd-sqlite3-perl libcgi-pm-perl \
-		libsecret-1-dev libpcre2-dev meson ninja-build pkg-config \
+		libsecret-1-dev libpcre2-dev meson ninja-build pkg-config cargo \
 		${CC_PACKAGE:-${CC:-gcc}} $PYTHON_PACKAGE
 
 	case "$distro" in
@@ -116,21 +122,28 @@ esac
 
 case "$jobname" in
 ClangFormat)
-	sudo apt-get -q update
 	sudo apt-get -q -y install clang-format
 	;;
 StaticAnalysis)
-	sudo apt-get -q update
 	sudo apt-get -q -y install coccinelle libcurl4-openssl-dev libssl-dev \
 		libexpat-dev gettext make
 	;;
+RustAnalysis)
+	sudo apt-get -q -y install rustup
+	rustup default stable
+	rustup component add clippy rustfmt
+
+	wget -q "$CARGO_MSRV_WHENCE" -O "cargo-msvc.tgz"
+	sudo mkdir -p "$CUSTOM_PATH"
+	sudo tar -xf "cargo-msvc.tgz" --strip-components=1 \
+		--directory "$CUSTOM_PATH" --wildcards "*/cargo-msrv"
+	sudo chmod a+x "$CUSTOM_PATH/cargo-msrv"
+	;;
 sparse)
-	sudo apt-get -q update -q
 	sudo apt-get -q -y install libssl-dev libcurl4-openssl-dev \
 		libexpat-dev gettext zlib1g-dev sparse
 	;;
 Documentation)
-	sudo apt-get -q update
 	sudo apt-get -q -y install asciidoc xmlto docbook-xsl-ns make
 
 	test -n "$ALREADY_HAVE_ASCIIDOCTOR" ||

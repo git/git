@@ -33,7 +33,6 @@ check_last_modified() {
 	done &&
 
 	cat >expect &&
-	test_when_finished "rm -f tmp.*" &&
 	git ${indir:+-C "$indir"} last-modified "$@" >tmp.1 &&
 	git name-rev --annotate-stdin --name-only --tags \
 		<tmp.1 >tmp.2 &&
@@ -128,20 +127,25 @@ test_expect_success 'only last-modified files in the current tree' '
 	EOF
 '
 
-test_expect_success 'last-modified with subdir and criss-cross merge' '
-	git checkout -b branch-k1 1 &&
-	mkdir -p a k &&
-	test_commit k1 a/file2 &&
-	git checkout -b branch-k2 &&
-	test_commit k2 k/file2 &&
-	git checkout branch-k1 &&
-	test_merge km2 branch-k2 &&
-	test_merge km3 3 &&
-	check_last_modified <<-\EOF
-	km3 a
-	k2 k
-	1 file
-	EOF
+test_expect_success 'subdirectory modified via merge' '
+	test_when_finished rm -rf repo &&
+	git init repo &&
+	(
+		cd repo &&
+		test_commit base &&
+		git switch --create left &&
+		mkdir subdir &&
+		test_commit left subdir/left &&
+		git switch --create right base &&
+		mkdir subdir &&
+		test_commit right subdir/right &&
+		git switch - &&
+		test_merge merge right &&
+		check_last_modified <<-\EOF
+		merge subdir
+		base base.t
+		EOF
+	)
 '
 
 test_expect_success 'cross merge boundaries in blaming' '
