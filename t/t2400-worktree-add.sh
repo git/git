@@ -730,6 +730,70 @@ test_expect_success 'git worktree --no-guess-remote option overrides config' '
 	)
 '
 
+test_expect_success 'git worktree add --guess-remote with remoteBranchTemplate' '
+	test_when_finished rm -rf repo_a repo_b bar &&
+	git init repo_a &&
+	(
+		cd repo_a &&
+		test_commit repo_a_main &&
+		git checkout -b feature/bar &&
+		test_commit feature_bar
+	) &&
+	git init repo_b &&
+	(
+		cd repo_b &&
+		test_commit repo_b_main &&
+		git remote add repo_a ../repo_a &&
+		git config remote.repo_a.fetch "refs/heads/*:refs/remotes/repo_a/*" &&
+		git fetch --all &&
+		git config checkout.remoteBranchTemplate "feature/%s" &&
+		git worktree add --guess-remote ../bar
+	) &&
+	(
+		cd bar &&
+		test_branch_upstream bar repo_a feature/bar &&
+		test_cmp_rev refs/remotes/repo_a/feature/bar refs/heads/bar
+	)
+'
+
+test_expect_success 'git worktree add --guess-remote with remoteBranchTemplate handles %%' '
+	test_when_finished rm -rf repo_a repo_b special &&
+	git init repo_a &&
+	(
+		cd repo_a &&
+		test_commit repo_a_main &&
+		git checkout -b "100%special" &&
+		test_commit percent_special
+	) &&
+	git init repo_b &&
+	(
+		cd repo_b &&
+		test_commit repo_b_main &&
+		git remote add repo_a ../repo_a &&
+		git config remote.repo_a.fetch "refs/heads/*:refs/remotes/repo_a/*" &&
+		git fetch --all &&
+		git config checkout.remoteBranchTemplate "100%%%s" &&
+		git worktree add --guess-remote ../special
+	) &&
+	(
+		cd special &&
+		test_branch_upstream special repo_a 100%special &&
+		test_cmp_rev refs/remotes/repo_a/100%special refs/heads/special
+	)
+'
+
+test_expect_success 'git worktree add --guess-remote with remoteBranchTemplate and no match fails' '
+	test_when_finished rm -rf repo_a repo_b nomatch &&
+	setup_remote_repo repo_a repo_b &&
+	(
+		cd repo_b &&
+		git config checkout.remoteBranchTemplate "feature/%s" &&
+		test_must_fail git worktree add --guess-remote ../nomatch 2>err &&
+		test_grep "No remote branch found for" err &&
+		test_grep "feature/nomatch" err
+	)
+'
+
 test_dwim_orphan () {
 	local info_text="No possible source branch, inferring '--orphan'" &&
 	local fetch_error_text="fatal: No local or remote refs exist despite at least one remote" &&

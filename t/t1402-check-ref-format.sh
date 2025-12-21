@@ -58,6 +58,9 @@ invalid_ref 'foo.lock/bar'
 invalid_ref 'foo.lock///bar'
 valid_ref 'heads/foo@bar'
 invalid_ref 'heads/v@{ation'
+valid_ref 'heads/foo%bar'
+valid_ref 'heads/foo%s'
+valid_ref 'heads/100%special'
 invalid_ref 'heads/foo\bar'
 invalid_ref "$(printf 'heads/foo\t')"
 invalid_ref "$(printf 'heads/foo\177')"

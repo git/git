@@ -294,4 +294,57 @@ test_expect_success 'default triangular behavior acts like "current"' '
 	test_push_success "" main repo2
 '
 
+test_expect_success 'push.autoSetupRemote + remoteBranchTemplate with push.default=simple' '
+	git checkout -b template-simple &&
+	test_config push.autoSetupRemote true &&
+	test_config push.default simple &&
+	test_config checkout.remoteBranchTemplate "feature/%s" &&
+	test_config branch.template-simple.remote parent1 &&
+	test_commit simple-commit &&
+	git push &&
+	git --git-dir=repo1 show-ref refs/heads/feature/template-simple &&
+	test_cmp_rev HEAD parent1/feature/template-simple &&
+	echo "refs/heads/feature/template-simple" >expect &&
+	git config branch.template-simple.merge >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'push.autoSetupRemote + remoteBranchTemplate with push.default=upstream' '
+	git checkout -b template-upstream &&
+	test_config push.autoSetupRemote true &&
+	test_config push.default upstream &&
+	test_config checkout.remoteBranchTemplate "feature/%s" &&
+	test_config branch.template-upstream.remote parent1 &&
+	test_commit upstream-commit &&
+	git push &&
+	git --git-dir=repo1 show-ref refs/heads/feature/template-upstream &&
+	test_cmp_rev HEAD parent1/feature/template-upstream &&
+	echo "refs/heads/feature/template-upstream" >expect &&
+	git config branch.template-upstream.merge >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'push.autoSetupRemote + remoteBranchTemplate with push.default=current' '
+	git checkout -b template-current &&
+	test_config push.autoSetupRemote true &&
+	test_config push.default current &&
+	test_config checkout.remoteBranchTemplate "feature/%s" &&
+	test_commit current-commit &&
+	git push parent1 &&
+	git --git-dir=repo1 show-ref refs/heads/feature/template-current &&
+	test_cmp_rev HEAD parent1/feature/template-current &&
+	echo "refs/heads/feature/template-current" >expect &&
+	git config branch.template-current.merge >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'remoteBranchTemplate ignored with push.default=nothing' '
+	git checkout -b template-nothing &&
+	test_config push.default nothing &&
+	test_config checkout.remoteBranchTemplate "feature/%s" &&
+	test_commit nothing-commit &&
+	test_must_fail git push 2>err &&
+	test_grep "No configured push destination" err
+'
+
 test_done
