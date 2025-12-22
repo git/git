@@ -50,6 +50,8 @@ supported:
 +
 * Reference counts categorized by type
 * Reachable object counts categorized by type
+* Total inflated size of reachable objects by type
+* Total disk size of reachable objects by type
 +
 The output format can be chosen through the flag `--format`. Three formats are
 supported:

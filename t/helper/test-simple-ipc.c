@@ -603,7 +603,12 @@ int cmd__simple_ipc(int argc, const char **argv)
 		OPT_INTEGER(0, "bytecount", &cl_args.bytecount, N_("number of bytes")),
 		OPT_INTEGER(0, "batchsize", &cl_args.batchsize, N_("number of requests per thread")),
 
-		OPT_STRING(0, "byte", &bytevalue, N_("byte"), N_("ballast character")),
+		/*
+		 * The "byte" string here is not marked for translation and
+		 * instead relies on translation in strbuf.c:humanise_bytes() to
+		 * avoid conflict with the plural form.
+		 */
+		OPT_STRING(0, "byte", &bytevalue, "byte", N_("ballast character")),
 		OPT_STRING(0, "token", &cl_args.token, N_("token"), N_("command token to send to the server")),
 
 		OPT_END()
