@@ -127,37 +127,18 @@ static int set_recommended_config(int reconfigure)
 		{ "core.FSCache", "true", 1 },
 		{ "core.multiPackIndex", "true", 1 },
 		{ "core.preloadIndex", "true", 1 },
-#ifndef WIN32
-		{ "core.untrackedCache", "true", 1 },
-#else
-		/*
-		 * Unfortunately, Scalar's Functional Tests demonstrated
-		 * that the untracked cache feature is unreliable on Windows
-		 * (which is a bummer because that platform would benefit the
-		 * most from it). For some reason, freshly created files seem
-		 * not to update the directory's `lastModified` time
-		 * immediately, but the untracked cache would need to rely on
-		 * that.
-		 *
-		 * Therefore, with a sad heart, we disable this very useful
-		 * feature on Windows.
-		 */
-		{ "core.untrackedCache", "false", 1 },
-#endif
 		{ "core.logAllRefUpdates", "true", 1 },
 		{ "credential.https://dev.azure.com.useHttpPath", "true", 1 },
 		{ "credential.validate", "false", 1 }, /* GCM4W-only */
 		{ "gc.auto", "0", 1 },
 		{ "gui.GCWarning", "false", 1 },
-		{ "index.skipHash", "false", 1 },
 		{ "index.threads", "true", 1 },
-		{ "index.version", "4", 1 },
 		{ "merge.stat", "false", 1 },
 		{ "merge.renames", "true", 1 },
 		{ "pack.useBitmaps", "false", 1 },
 		{ "pack.useSparse", "true", 1 },
 		{ "receive.autoGC", "false", 1 },
-		{ "feature.manyFiles", "false", 1 },
+		{ "feature.manyFiles", "true", 1 },
 		{ "feature.experimental", "false", 1 },
 		{ "fetch.unpackLimit", "1", 1 },
 		{ "fetch.writeCommitGraph", "false", 1 },
