@@ -188,3 +188,6 @@ Fixes since v2.52
    (merge 8cbbdc92f7 kh/doc-pre-commit-fix later to maint).
    (merge d4bc39a4d9 mh/doc-config-gui-gcwarning later to maint).
    (merge 41d425008a kh/doc-send-email-paragraph-fix later to maint).
+   (merge d4b732899e jc/macports-darwinports later to maint).
+   (merge bab391761d kj/pull-options-decl-cleanup later to maint).
+   (merge 007b8994d4 rs/t4014-git-version-string-fix later to maint).
