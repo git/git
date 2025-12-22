@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Dec 2025, #06)
-X-master-at: c4a0c8845e2426375ad257b6c221a3a7d92ecfda
-X-next-at: 0814c687bbf7a1a1cb97b2be79c742b582fa80ea
+Subject: What's cooking in git.git (Dec 2025, #07)
+X-master-at: c8d76f7325e75c6f0549fce29ea4f3d97eb079cb
+X-next-at: a3e5c5e72d1c821d3e346fca55e6462e6d65d0fc
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Dec 2025, #06)
+What's cooking in git.git (Dec 2025, #07)
 -----------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,7 +46,104 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* jc/macports-darwinports (2025-12-10) 1 commit
+  (merged to 'next' on 2025-12-14 at 5c608e07fe)
+ + Makefile: help macOS novices by mentioning MacPorts
+
+ Makefile in-comment doc update.
+ source: <xmqq7buthgq4.fsf@gitster.g>
+
+
+* kh/doc-replay-updates (2025-12-13) 3 commits
+  (merged to 'next' on 2025-12-14 at 71a8f83876)
+ + doc: replay: link section using markup
+ + replay: improve --contained and add to doc
+ + doc: replay: mention no output on conflicts
+
+ "git replay" documentation updates.
+ source: <V2_CV_replay_conflict.12f@msgid.xyz>
+
+
+* kj/pull-options-decl-cleanup (2025-12-11) 1 commit
+  (merged to 'next' on 2025-12-14 at f59cad1d37)
+ + pull: move options[] array into function scope
+
+ Code clean-up.
+ source: <20251212074433.38027-1-jayatheerthkulkarni2005@gmail.com>
+
+
+* ps/odb-alternates-object-sources (2025-12-11) 8 commits
+  (merged to 'next' on 2025-12-12 at 1dd061c0dc)
+ + odb: write alternates via sources
+ + odb: read alternates via sources
+ + odb: drop forward declaration of `read_info_alternates()`
+ + odb: remove mutual recursion when parsing alternates
+ + odb: stop splitting alternate in `odb_add_to_alternates_file()`
+ + odb: move computation of normalized objdir into `alt_odb_usable()`
+ + odb: resolve relative alternative paths when parsing
+ + odb: refactor parsing of alternates to be self-contained
+
+ Code refactoring around alternate object store.
+ source: <20251211-b4-pks-odb-alternates-via-source-v3-0-00e3f54d07ba@pks.im>
+
+
+* rs/replay-wrong-onto-fix (2025-12-11) 2 commits
+  (merged to 'next' on 2025-12-14 at d34966465f)
+ + replay: move onto NULL check before first use
+ + Merge branch 'sa/replay-atomic-ref-updates' into rs/replay-wrong-onto-fix
+
+ "git replay --onto=<commit> ...", when <commit> is mistyped,
+ started to segfault with recent change, which has been corrected.
+ source: <9db2b913-b5d6-4617-b079-b4612eaa2b97@web.de>
+
+
+* rs/t4014-git-version-string-fix (2025-12-13) 1 commit
+  (merged to 'next' on 2025-12-14 at eef802176c)
+ + t4014: support Git version strings with spaces
+
+ Test fix.
+ source: <b79cba1d-f32b-4034-979e-fb9528d05f18@web.de>
+
+--------------------------------------------------
 [New Topics]
+
+* sb/bundle-uri-without-uri (2025-12-19) 1 commit
+ - bundle-uri: validate that bundle entries have a uri
+
+ Diagnose invalid bundle-URI that lack the URI entry, instead of
+ crashing.
+
+ Will merge to 'next'?
+ source: <pull.2134.v2.git.git.1766160106521.gitgitgadget@gmail.com>
+
+
+* sb/doc-worktree-prune-expire-improvement (2025-12-19) 2 commits
+ - worktree: use 'prune' instead of 'expire' in help text
+ - worktree: clarify --expire applies to missing worktrees
+
+ The help text and the documentation for the "--expire" option of
+ "git worktree [list|prune]" have been improved.
+
+ Expecting a reroll.
+ source: <pull.2135.v2.git.git.1766168169.gitgitgadget@gmail.com>
+
+
+* ja/doc-synopsis-style-more (2025-12-20) 5 commits
+ - doc: convert git-remote to synopsis style
+ - doc: convert git stage to use synopsis block
+ - doc: convert git-status tables to AsciiDoc format
+ - doc: convert git-status to synopsis style
+ - doc: fix t0450-txt-doc-vs-help to select only first synopsis block
+
+ More doc style updates.
+
+ Will merge to 'next'?
+ source: <pull.2020.git.1766258187.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[Cooking]
 
 * js/symlink-windows (2025-12-17) 19 commits
  - mingw: special-case index entries for symlinks with buggy size
@@ -77,11 +174,12 @@ Release tarballs are available at:
 
 
 * mh/doc-core-attributesfile (2025-12-17) 1 commit
- - docs: note the type of core.attributesfile
+  (merged to 'next' on 2025-12-22 at 5d68c3ef97)
+ + docs: note the type of core.attributesfile
 
  Doc update.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20251217195917.25710-1-matthewhughes934@gmail.com>
 
 
@@ -135,74 +233,76 @@ Release tarballs are available at:
  source: <20251218-b4-pks-odb-read-object-info-improvements-v2-0-62e3e49072bc@pks.im>
 
 
-* jk/test-curl-updates (2025-12-18) 3 commits
- - t5563: relax whitespace assumptions for unfolded headers
+* jk/test-curl-updates (2025-12-18) 2 commits
  - t5563: add missing end-of-line in HTTP header
  - t5551: handle trailing slashes in expected cookies output
 
  Update HTTP tests to adjust for changes in curl 8.18.0
 
- Will merge to 'next'?
- cf. <613s97no-7021-pp15-79s4-302o39p7n5r8@unkk.fr>
+ Will merge to 'next'.
  source: <20251218121120.GA3252258@coredump.intra.peff.net>
 
 
 * dk/ci-rust-fix (2025-12-18) 2 commits
- - rust: build correctly without GNU sed
- - Merge branch 'ps/ci-rust' into dk/ci-rust-fix
+  (merged to 'next' on 2025-12-22 at 5f7e5b040b)
+ + rust: build correctly without GNU sed
+ + Merge branch 'ps/ci-rust' into dk/ci-rust-fix
 
  Build fix.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <a33f4e5118938300bcd5b2991feeee855a1c8f86.1766100330.git.ben.knoble+github@gmail.com>
 
 
 * gf/clear-path-cache-cleanup (2025-12-18) 1 commit
- - repository: remove duplicate free of cache->squash_msg
+  (merged to 'next' on 2025-12-22 at 748d7c2c93)
+ + repository: remove duplicate free of cache->squash_msg
 
  Code clean-up.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.2132.v2.git.git.1766072952115.gitgitgadget@gmail.com>
 
 
 * gf/maintenance-is-needed-fix (2025-12-18) 1 commit
- - refs: dereference the value of the required pointer
+  (merged to 'next' on 2025-12-22 at a84d7e8a32)
+ + refs: dereference the value of the required pointer
 
  Brown-paper-bag fix to a recently graduated
  'kn/maintenance-is-needed' topic.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.2130.git.git.1766074249443.gitgitgadget@gmail.com>
 
 
 * js/test-func-comment-fix (2025-12-18) 1 commit
- - test_detect_ref_format: fix comment
+  (merged to 'next' on 2025-12-22 at 5eadd4ae77)
+ + test_detect_ref_format: fix comment
 
  Comment fix.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.2019.git.1766071259531.gitgitgadget@gmail.com>
 
---------------------------------------------------
-[Cooking]
 
-* ja/doc-misc-fixes (2025-12-15) 1 commit
-  (merged to 'next' on 2025-12-18 at d30d8cac71)
- + doc: flock of small fixes to various documentation files
+* ja/doc-misc-fixes (2025-12-19) 2 commits
+  (merged to 'next' on 2025-12-20 at 2dafdb9732)
+ + doc: correct minor wording issues
+ + doc: fix asciidoc markup issues in several files
 
  Various documentation fixes.
 
  Will merge to 'master'.
- source: <pull.2016.git.1765830229824.gitgitgadget@gmail.com>
+ source: <pull.2016.v2.git.1766170456.gitgitgadget@gmail.com>
 
 
 * jt/doc-rev-list-filter-provided-objects (2025-12-15) 1 commit
- - docs: clarify git-rev-list(1) --filter behavior
+  (merged to 'next' on 2025-12-22 at 31970a567d)
+ + docs: clarify git-rev-list(1) --filter behavior
 
  Document "rev-list --filter-provided-objects" better.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20251215200512.2694155-1-jltobler@gmail.com>
 
 
@@ -244,16 +344,6 @@ Release tarballs are available at:
  source: <20251112223722.376330-1-aplattner@nvidia.com>
 
 
-* kj/pull-options-decl-cleanup (2025-12-11) 1 commit
-  (merged to 'next' on 2025-12-14 at f59cad1d37)
- + pull: move options[] array into function scope
-
- Code clean-up.
-
- Will merge to 'master'.
- source: <20251212074433.38027-1-jayatheerthkulkarni2005@gmail.com>
-
-
 * jc/memzero-array (2025-12-12) 3 commits
   (merged to 'next' on 2025-12-17 at 0dd398f0b4)
  + cocci: use MEMZERO_ARRAY() a bit more
@@ -264,18 +354,8 @@ Release tarballs are available at:
  Further application of MEMZERO_ARRAY() macro to the rest of the
  code base.
 
- Will merge to 'next' together with the base topic.
+ Will merge to 'master' together with the base topic.
  source: <20251213014628.3380826-1-gitster@pobox.com>
-
-
-* rs/t4014-git-version-string-fix (2025-12-13) 1 commit
-  (merged to 'next' on 2025-12-14 at eef802176c)
- + t4014: support Git version strings with spaces
-
- Test fix.
-
- Will merge to 'master'.
- source: <b79cba1d-f32b-4034-979e-fb9528d05f18@web.de>
 
 
 * jc/doc-commit-signoff-config (2025-12-19) 2 commits
@@ -325,18 +405,19 @@ Release tarballs are available at:
 
 
 * jt/repo-struct-more-objinfo (2025-12-17) 7 commits
- - builtin/repo: add object disk size info to structure table
- - builtin/repo: add disk size info to keyvalue stucture output
- - builtin/repo: add inflated object info to structure table
- - builtin/repo: add inflated object info to keyvalue structure output
- - builtin/repo: humanise count values in structure output
- - strbuf: split out logic to humanise byte values
- - builtin/repo: group per-type object values into struct
+  (merged to 'next' on 2025-12-22 at d04904c31c)
+ + builtin/repo: add object disk size info to structure table
+ + builtin/repo: add disk size info to keyvalue stucture output
+ + builtin/repo: add inflated object info to structure table
+ + builtin/repo: add inflated object info to keyvalue structure output
+ + builtin/repo: humanise count values in structure output
+ + strbuf: split out logic to humanise byte values
+ + builtin/repo: group per-type object values into struct
 
  More object database related information are shown in "git repo
  structure" output.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20251217175404.37963-1-jltobler@gmail.com>
 
 
@@ -350,16 +431,6 @@ Release tarballs are available at:
  source: <xmqqqzszc13d.fsf@gitster.g>
 
 
-* jc/macports-darwinports (2025-12-10) 1 commit
-  (merged to 'next' on 2025-12-14 at 5c608e07fe)
- + Makefile: help macOS novices by mentioning MacPorts
-
- Makefile in-comment doc update.
-
- Will merge to 'master'.
- source: <xmqq7buthgq4.fsf@gitster.g>
-
-
 * rs/macos-iconv-workaround (2025-12-16) 2 commits
  - macOS: use iconv from Homebrew if present
  - macOS: make Homebrew use configurable
@@ -369,18 +440,6 @@ Release tarballs are available at:
 
  Comments?
  source: <53690064-1c98-40e9-8b9a-7ba6bee63703@web.de>
-
-
-* rs/replay-wrong-onto-fix (2025-12-11) 2 commits
-  (merged to 'next' on 2025-12-14 at d34966465f)
- + replay: move onto NULL check before first use
- + Merge branch 'sa/replay-atomic-ref-updates' into rs/replay-wrong-onto-fix
-
- "git replay --onto=<commit> ...", when <commit> is mistyped,
- started to segfault with recent change, which has been corrected.
-
- Will merge to 'master'.
- source: <9db2b913-b5d6-4617-b079-b4612eaa2b97@web.de>
 
 
 * tc/memzero-array (2025-12-10) 3 commits
@@ -399,18 +458,6 @@ Release tarballs are available at:
  source: <20251210-toon-cocci-memzero-v1-0-ae916a79065b@iotcl.com>
 
 
-* kh/doc-replay-updates (2025-12-13) 3 commits
-  (merged to 'next' on 2025-12-14 at 71a8f83876)
- + doc: replay: link section using markup
- + replay: improve --contained and add to doc
- + doc: replay: mention no output on conflicts
-
- "git replay" documentation updates.
-
- Will merge to 'master'.
- source: <V2_CV_replay_conflict.12f@msgid.xyz>
-
-
 * lo/repo-info-keys (2025-12-09) 3 commits
  - repo: add new flag --keys to git-repo-info
  - repo: add a default output format to enum output_format
@@ -422,33 +469,17 @@ Release tarballs are available at:
  source: <20251209194616.61620-1-lucasseikioshiro@gmail.com>
 
 
-* ps/odb-alternates-object-sources (2025-12-11) 8 commits
-  (merged to 'next' on 2025-12-12 at 1dd061c0dc)
- + odb: write alternates via sources
- + odb: read alternates via sources
- + odb: drop forward declaration of `read_info_alternates()`
- + odb: remove mutual recursion when parsing alternates
- + odb: stop splitting alternate in `odb_add_to_alternates_file()`
- + odb: move computation of normalized objdir into `alt_odb_usable()`
- + odb: resolve relative alternative paths when parsing
- + odb: refactor parsing of alternates to be self-contained
-
- Code refactoring around alternate object store.
-
- Will merge to 'master'.
- source: <20251211-b4-pks-odb-alternates-via-source-v3-0-00e3f54d07ba@pks.im>
-
-
 * ps/repack-avoid-noop-midx-rewrite (2025-12-10) 3 commits
- - midx-write: skip rewriting MIDX with `--stdin-packs` unless needed
- - midx-write: extract function to test whether MIDX needs updating
- - midx: fix `BUG()` when getting preferred pack without a reverse index
+  (merged to 'next' on 2025-12-22 at 0d3b9de55c)
+ + midx-write: skip rewriting MIDX with `--stdin-packs` unless needed
+ + midx-write: extract function to test whether MIDX needs updating
+ + midx: fix `BUG()` when getting preferred pack without a reverse index
 
  Even when there is no changes in the packfile and no need to
  recompute bitmaps, "git repack" recomputed and updated the MIDX
  file, which has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  cf.
  source: <20251210-pks-skip-noop-rewrite-v2-0-f813a9e44f28@pks.im>
 
@@ -564,22 +595,23 @@ Release tarballs are available at:
 
 
 * js/test-symlink-windows (2025-12-17) 10 commits
- - t7800: work around the MSYS path conversion on Windows
- - t6423: introduce Windows-specific handling for symlinking to /dev/null
- - t1305: skip symlink tests that do not apply to Windows
- - t1006: accommodate for symlink support in MSYS2
- - t0600: fix incomplete prerequisite for a test case
- - t0301: another fix for Windows compatibility
- - t0001: handle `diff --no-index` gracefully
- - mingw: special-case `open(symlink, O_CREAT | O_EXCL)`
- - apply: symbolic links lack a "trustable executable bit"
- - t9700: accommodate for Windows paths
+  (merged to 'next' on 2025-12-22 at 3eaa789d0d)
+ + t7800: work around the MSYS path conversion on Windows
+ + t6423: introduce Windows-specific handling for symlinking to /dev/null
+ + t1305: skip symlink tests that do not apply to Windows
+ + t1006: accommodate for symlink support in MSYS2
+ + t0600: fix incomplete prerequisite for a test case
+ + t0301: another fix for Windows compatibility
+ + t0001: handle `diff --no-index` gracefully
+ + mingw: special-case `open(symlink, O_CREAT | O_EXCL)`
+ + apply: symbolic links lack a "trustable executable bit"
+ + t9700: accommodate for Windows paths
  (this branch is used by js/prep-symlink-windows and js/symlink-windows.)
 
  Prepare test suite for Git for Windows that supports symbolic
  links.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.2009.v4.git.1765981126.gitgitgadget@gmail.com>
 
 
@@ -802,7 +834,8 @@ Release tarballs are available at:
  source: <a203b35538847f3c9358a5ae26fb4ebea5734cfc.1759420102.git.msuchanek@suse.de>
 
 
-* ar/submodule-gitdir-tweak (2025-12-13) 10 commits
+* ar/submodule-gitdir-tweak (2025-12-20) 11 commits
+ - submodule: detect conflicts with existing gitdir configs
  - submodule: hash the submodule name for the gitdir path
  - submodule: fix case-folding gitdir filesystem collisions
  - submodule--helper: fix filesystem collisions by encoding gitdir paths
@@ -819,7 +852,7 @@ Release tarballs are available at:
  components.
 
  Comments?
- source: <20251213080817.347922-1-adrian.ratiu@collabora.com>
+ source: <20251220101528.1227487-1-adrian.ratiu@collabora.com>
 
 --------------------------------------------------
 [Discarded]
