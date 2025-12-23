@@ -95,6 +95,38 @@ test_expect_success 'git diff-files --patch --no-patch does not show the patch' 
 	test_must_be_empty err
 '
 
+cat >expected_no_indicators <<\EOF
+diff --git a/path0 b/path0
+old mode 100644
+new mode 100755
+--- a/path0
++++ b/path0
+@@ -1,3 +1,3 @@
+ Line 1
+ Line 2
+ line 3
+ Line 3
+diff --git a/path1 b/path1
+deleted file mode 100755
+--- a/path1
++++ /dev/null
+@@ -1,3 +0,0 @@
+ Line 1
+ Line 2
+ line 3
+EOF
+
+test_expect_success 'git diff-files --no-indicators replaces +/- with spaces' '
+	git diff-files -p --no-indicators >actual &&
+	compare_diff_patch expected_no_indicators actual
+'
+
+test_expect_success 'git diff-files --no-indicators --color preserves colors' '
+	git diff-files -p --no-indicators --color --ws-error-highlight=none >actual.raw &&
+	test_decode_color <actual.raw >actual &&
+	grep -F "<RED> line 3<RESET>" actual &&
+	grep -F "<GREEN> Line 3<RESET>" actual
+'
 
 # Smudge path2/path3 so that dirstat has something to show
 date >path2/path3

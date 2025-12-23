@@ -5290,6 +5290,19 @@ static int diff_opt_char(const struct option *opt,
 	return 0;
 }
 
+static int diff_opt_no_indicators(const struct option *opt,
+				  const char *arg, int unset)
+{
+	struct diff_options *options = opt->value;
+
+	BUG_ON_OPT_NEG(unset);
+	BUG_ON_OPT_ARG(arg);
+
+	options->output_indicators[OUTPUT_INDICATOR_NEW] = ' ';
+	options->output_indicators[OUTPUT_INDICATOR_OLD] = ' ';
+	return 0;
+}
+
 static int diff_opt_color_moved(const struct option *opt,
 				const char *arg, int unset)
 {
@@ -5828,6 +5841,9 @@ struct option *add_diff_options(const struct option *opts,
 		OPT_INTEGER_F(0, "inter-hunk-context", &options->interhunkcontext,
 			      N_("show context between diff hunks up to the specified number of lines"),
 			      PARSE_OPT_NONEG),
+		OPT_CALLBACK_F(0, "no-indicators", options, NULL,
+			       N_("do not show '+', '-' and ' ' indicators in the left margin"),
+			       PARSE_OPT_NONEG | PARSE_OPT_NOARG, diff_opt_no_indicators),
 		OPT_CALLBACK_F(0, "output-indicator-new",
 			       &options->output_indicators[OUTPUT_INDICATOR_NEW],
 			       N_("<char>"),
