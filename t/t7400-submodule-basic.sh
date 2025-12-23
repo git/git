@@ -48,6 +48,25 @@ test_expect_success 'submodule deinit works on empty repository' '
 	git submodule deinit --all
 '
 
+test_expect_success 'submodule add with incomplete .gitmodules' '
+	test_when_finished "rm -f expect actual" &&
+	test_when_finished "git config remove-section submodule.one" &&
+	test_when_finished "git rm -f one .gitmodules" &&
+	git init one &&
+	git -C one commit --allow-empty -m one-initial &&
+	git config -f .gitmodules submodule.one.ignore all &&
+
+	git submodule add ./one &&
+
+	for var in ignore path url
+	do
+		git config -f .gitmodules --get "submodule.one.$var" ||
+		return 1
+	done >actual &&
+	test_write_lines all one ./one >expect &&
+	test_cmp expect actual
+'
+
 test_expect_success 'setup - initial commit' '
 	>t &&
 	git add t &&

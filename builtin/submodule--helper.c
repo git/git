@@ -1903,6 +1903,13 @@ static int determine_submodule_update_strategy(struct repository *r,
 	const char *val;
 	int ret;
 
+	/*
+	 * NEEDSWORK: audit and ensure that update_submodule() has right
+	 * to assume that submodule_from_path() above will always succeed.
+	 */
+	if (!sub)
+		BUG("update_submodule assumes a submodule exists at path (%s)",
+		    path);
 	key = xstrfmt("submodule.%s.update", sub->name);
 
 	if (update) {
@@ -3527,14 +3534,15 @@ static int module_add(int argc, const char **argv, const char *prefix,
 		}
 	}
 
-	if(!add_data.sm_name)
+	if (!add_data.sm_name)
 		add_data.sm_name = add_data.sm_path;
 
 	existing = submodule_from_name(the_repository,
 					null_oid(the_hash_algo),
 					add_data.sm_name);
 
-	if (existing && strcmp(existing->path, add_data.sm_path)) {
+	if (existing && existing->path &&
+	    strcmp(existing->path, add_data.sm_path)) {
 		if (!force) {
 			die(_("submodule name '%s' already used for path '%s'"),
 			    add_data.sm_name, existing->path);
