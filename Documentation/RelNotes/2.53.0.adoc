@@ -67,6 +67,17 @@ Performance, Internal Implementation, Development Support etc.
    and Stop using the insecure "mktemp()" function.
    (merge 10bba537c4 rs/ban-mktemp later to maint).
 
+ * In-code comment update to clarify that single-letter options are
+   outside of the scope of command line completion script.
+   (merge dc8a00fafe jc/completion-no-single-letter-options later to maint).
+
+ * MEMZERO_ARRAY() helper is introduced to avoid clearing only the
+   first N bytes of an N-element array whose elements are larger than
+   a byte.
+
+ * "git diff-files -R --find-copies-harder" has been taught to use
+   the potential copy sources from the index correctly.
+
 
 Fixes since v2.52
 -----------------
@@ -177,6 +188,17 @@ Fixes since v2.52
  * Emulation code clean-up.
    (merge 42aa7603aa gf/win32-pthread-cond-init later to maint).
 
+ * "git submodule add" to add a submodule under <name> segfaulted,
+   when a submodule.<name>.something is already in .gitmodules file
+   without defining where its submodule.<name>.path is, which has been
+   corrected.
+   (merge dd8e8c786e jc/submodule-add later to maint).
+
+ * "git fetch" that involves fetching tags, when a tag being fetched
+   needs to overwrite existing one, failed to fetch other tags, which
+   has been corrected.
+   (merge b7b17ec8a6 kn/fix-fetch-backfill-tag-with-batched-ref-updates later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 46207a54cc qj/doc-http-bad-want-response later to maint).
    (merge df90eccd93 kh/doc-commit-extra-references later to maint).
@@ -191,3 +213,4 @@ Fixes since v2.52
    (merge d4b732899e jc/macports-darwinports later to maint).
    (merge bab391761d kj/pull-options-decl-cleanup later to maint).
    (merge 007b8994d4 rs/t4014-git-version-string-fix later to maint).
+   (merge 4ce170c522 ds/doc-scalar-config later to maint).
