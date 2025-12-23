@@ -2138,7 +2138,6 @@ int packfile_store_read_object_info(struct packfile_store *store,
 				    struct object_info *oi,
 				    unsigned flags UNUSED)
 {
-	static struct object_info blank_oi = OBJECT_INFO_INIT;
 	struct pack_entry e;
 	int rtype;
 
@@ -2149,7 +2148,7 @@ int packfile_store_read_object_info(struct packfile_store *store,
 	 * We know that the caller doesn't actually need the
 	 * information below, so return early.
 	 */
-	if (oi == &blank_oi)
+	if (!oi)
 		return 0;
 
 	rtype = packed_object_info(store->odb->repo, e.p, e.offset, oi);

@@ -426,7 +426,7 @@ int odb_source_loose_read_object_info(struct odb_source *source,
 	unsigned long size_scratch;
 	enum object_type type_scratch;
 
-	if (oi->delta_base_oid)
+	if (oi && oi->delta_base_oid)
 		oidclr(oi->delta_base_oid, source->odb->repo->hash_algo);
 
 	/*
@@ -437,13 +437,13 @@ int odb_source_loose_read_object_info(struct odb_source *source,
 	 * return value implicitly indicates whether the
 	 * object even exists.
 	 */
-	if (!oi->typep && !oi->sizep && !oi->contentp) {
+	if (!oi || (!oi->typep && !oi->sizep && !oi->contentp)) {
 		struct stat st;
-		if (!oi->disk_sizep && (flags & OBJECT_INFO_QUICK))
+		if ((!oi || !oi->disk_sizep) && (flags & OBJECT_INFO_QUICK))
 			return quick_has_loose(source->loose, oid) ? 0 : -1;
 		if (stat_loose_object(source->loose, oid, &st, &path) < 0)
 			return -1;
-		if (oi->disk_sizep)
+		if (oi && oi->disk_sizep)
 			*oi->disk_sizep = st.st_size;
 		return 0;
 	}
