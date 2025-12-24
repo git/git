@@ -350,7 +350,6 @@ out:
 static void repo_clear_path_cache(struct repo_path_cache *cache)
 {
 	FREE_AND_NULL(cache->squash_msg);
-	FREE_AND_NULL(cache->squash_msg);
 	FREE_AND_NULL(cache->merge_msg);
 	FREE_AND_NULL(cache->merge_rr);
 	FREE_AND_NULL(cache->merge_mode);
