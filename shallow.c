@@ -471,6 +471,7 @@ void prepare_shallow_info(struct shallow_info *info, struct oid_array *sa)
 {
 	trace_printf_key(&trace_shallow, "shallow: prepare_shallow_info\n");
 	memset(info, 0, sizeof(*info));
+	commit_stack_init(&info->commits);
 	info->shallow = sa;
 	if (!sa)
 		return;
@@ -503,6 +504,7 @@ void clear_shallow_info(struct shallow_info *info)
 	free(info->shallow_ref);
 	free(info->ours);
 	free(info->theirs);
+	commit_stack_clear(&info->commits);
 }
 
 /* Step 4, remove non-existent ones in "theirs" after getting the pack */
@@ -733,19 +735,13 @@ void assign_shallow_commits_to_refs(struct shallow_info *info,
 	free(shallow);
 }
 
-struct commit_array {
-	struct commit **commits;
-	size_t nr, alloc;
-};
-
 static int add_ref(const struct reference *ref, void *cb_data)
 {
-	struct commit_array *ca = cb_data;
-	ALLOC_GROW(ca->commits, ca->nr + 1, ca->alloc);
-	ca->commits[ca->nr] = lookup_commit_reference_gently(the_repository,
-							     ref->oid, 1);
-	if (ca->commits[ca->nr])
-		ca->nr++;
+	struct commit_stack *cs = cb_data;
+	struct commit *commit = lookup_commit_reference_gently(the_repository,
+							       ref->oid, 1);
+	if (commit)
+		commit_stack_push(cs, commit);
 	return 0;
 }
 
@@ -770,7 +766,7 @@ static void post_assign_shallow(struct shallow_info *info,
 	uint32_t **bitmap;
 	size_t dst, i, j;
 	size_t bitmap_nr = DIV_ROUND_UP(info->ref->nr, 32);
-	struct commit_array ca;
+	struct commit_stack cs = COMMIT_STACK_INIT;
 
 	trace_printf_key(&trace_shallow, "shallow: post_assign_shallow\n");
 	if (ref_status)
@@ -793,9 +789,8 @@ static void post_assign_shallow(struct shallow_info *info,
 	}
 	info->nr_theirs = dst;
 
-	memset(&ca, 0, sizeof(ca));
-	refs_head_ref(get_main_ref_store(the_repository), add_ref, &ca);
-	refs_for_each_ref(get_main_ref_store(the_repository), add_ref, &ca);
+	refs_head_ref(get_main_ref_store(the_repository), add_ref, &cs);
+	refs_for_each_ref(get_main_ref_store(the_repository), add_ref, &cs);
 
 	/* Remove unreachable shallow commits from "ours" */
 	for (i = dst = 0; i < info->nr_ours; i++) {
@@ -808,7 +803,7 @@ static void post_assign_shallow(struct shallow_info *info,
 		for (j = 0; j < bitmap_nr; j++)
 			if (bitmap[0][j]) {
 				/* Step 7, reachability test at commit level */
-				int ret = repo_in_merge_bases_many(the_repository, c, ca.nr, ca.commits, 1);
+				int ret = repo_in_merge_bases_many(the_repository, c, cs.nr, cs.items, 1);
 				if (ret < 0)
 					exit(128);
 				if (!ret) {
@@ -820,7 +815,7 @@ static void post_assign_shallow(struct shallow_info *info,
 	}
 	info->nr_ours = dst;
 
-	free(ca.commits);
+	commit_stack_clear(&cs);
 }
 
 /* (Delayed) step 7, reachability test at commit level */
@@ -830,22 +825,17 @@ int delayed_reachability_test(struct shallow_info *si, int c)
 		struct commit *commit = lookup_commit(the_repository,
 						      &si->shallow->oid[c]);
 
-		if (!si->commits) {
-			struct commit_array ca;
-
-			memset(&ca, 0, sizeof(ca));
+		if (!si->commits.nr) {
 			refs_head_ref(get_main_ref_store(the_repository),
-				      add_ref, &ca);
+				      add_ref, &si->commits);
 			refs_for_each_ref(get_main_ref_store(the_repository),
-					  add_ref, &ca);
-			si->commits = ca.commits;
-			si->nr_commits = ca.nr;
+					  add_ref, &si->commits);
 		}
 
 		si->reachable[c] = repo_in_merge_bases_many(the_repository,
 							    commit,
-							    si->nr_commits,
-							    si->commits,
+							    si->commits.nr,
+							    si->commits.items,
 							    1);
 		if (si->reachable[c] < 0)
 			exit(128);
