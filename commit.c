@@ -1988,9 +1988,14 @@ void commit_stack_init(struct commit_stack *stack)
 	stack->nr = stack->alloc = 0;
 }
 
+void commit_stack_grow(struct commit_stack *stack, size_t extra)
+{
+	ALLOC_GROW(stack->items, st_add(stack->nr, extra), stack->alloc);
+}
+
 void commit_stack_push(struct commit_stack *stack, struct commit *commit)
 {
-	ALLOC_GROW(stack->items, stack->nr + 1, stack->alloc);
+	commit_stack_grow(stack, 1);
 	stack->items[stack->nr++] = commit;
 }
 
