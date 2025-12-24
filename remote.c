@@ -1381,12 +1381,7 @@ static struct ref **tail_ref(struct ref **head)
 	return tail;
 }
 
-struct tips {
-	struct commit **tip;
-	size_t nr, alloc;
-};
-
-static void add_to_tips(struct tips *tips, const struct object_id *oid)
+static void add_to_tips(struct commit_stack *tips, const struct object_id *oid)
 {
 	struct commit *commit;
 
@@ -1396,8 +1391,7 @@ static void add_to_tips(struct tips *tips, const struct object_id *oid)
 	if (!commit || (commit->object.flags & TMP_MARK))
 		return;
 	commit->object.flags |= TMP_MARK;
-	ALLOC_GROW(tips->tip, tips->nr + 1, tips->alloc);
-	tips->tip[tips->nr++] = commit;
+	commit_stack_push(tips, commit);
 }
 
 static void add_missing_tags(struct ref *src, struct ref **dst, struct ref ***dst_tail)
@@ -1406,13 +1400,12 @@ static void add_missing_tags(struct ref *src, struct ref **dst, struct ref ***ds
 	struct string_list src_tag = STRING_LIST_INIT_NODUP;
 	struct string_list_item *item;
 	struct ref *ref;
-	struct tips sent_tips;
+	struct commit_stack sent_tips = COMMIT_STACK_INIT;
 
 	/*
 	 * Collect everything we know they would have at the end of
 	 * this push, and collect all tags they have.
 	 */
-	memset(&sent_tips, 0, sizeof(sent_tips));
 	for (ref = *dst; ref; ref = ref->next) {
 		if (ref->peer_ref &&
 		    !is_null_oid(&ref->peer_ref->new_oid))
@@ -1422,7 +1415,7 @@ static void add_missing_tags(struct ref *src, struct ref **dst, struct ref ***ds
 		if (starts_with(ref->name, "refs/tags/"))
 			string_list_append(&dst_tag, ref->name);
 	}
-	clear_commit_marks_many(sent_tips.nr, sent_tips.tip, TMP_MARK);
+	clear_commit_marks_many(sent_tips.nr, sent_tips.items, TMP_MARK);
 
 	string_list_sort(&dst_tag);
 
@@ -1471,7 +1464,8 @@ static void add_missing_tags(struct ref *src, struct ref **dst, struct ref ***ds
 			src_commits[nr_src_commits++] = commit;
 		}
 
-		found_commits = get_reachable_subset(sent_tips.tip, sent_tips.nr,
+		found_commits = get_reachable_subset(sent_tips.items,
+						     sent_tips.nr,
 						     src_commits, nr_src_commits,
 						     reachable_flag);
 
@@ -1508,7 +1502,7 @@ static void add_missing_tags(struct ref *src, struct ref **dst, struct ref ***ds
 	}
 
 	string_list_clear(&src_tag, 0);
-	free(sent_tips.tip);
+	commit_stack_clear(&sent_tips);
 }
 
 struct ref *find_ref_by_name(const struct ref *list, const char *name)
