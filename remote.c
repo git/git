@@ -1443,9 +1443,7 @@ static void add_missing_tags(struct ref *src, struct ref **dst, struct ref ***ds
 	if (sent_tips.nr) {
 		const int reachable_flag = 1;
 		struct commit_list *found_commits;
-		struct commit **src_commits;
-		size_t nr_src_commits = 0, alloc_src_commits = 16;
-		ALLOC_ARRAY(src_commits, alloc_src_commits);
+		struct commit_stack src_commits = COMMIT_STACK_INIT;
 
 		for_each_string_list_item(item, &src_tag) {
 			struct ref *ref = item->util;
@@ -1460,13 +1458,13 @@ static void add_missing_tags(struct ref *src, struct ref **dst, struct ref ***ds
 				/* not pushing a commit, which is not an error */
 				continue;
 
-			ALLOC_GROW(src_commits, nr_src_commits + 1, alloc_src_commits);
-			src_commits[nr_src_commits++] = commit;
+			commit_stack_push(&src_commits, commit);
 		}
 
 		found_commits = get_reachable_subset(sent_tips.items,
 						     sent_tips.nr,
-						     src_commits, nr_src_commits,
+						     src_commits.items,
+						     src_commits.nr,
 						     reachable_flag);
 
 		for_each_string_list_item(item, &src_tag) {
@@ -1496,8 +1494,9 @@ static void add_missing_tags(struct ref *src, struct ref **dst, struct ref ***ds
 			dst_ref->peer_ref = copy_ref(ref);
 		}
 
-		clear_commit_marks_many(nr_src_commits, src_commits, reachable_flag);
-		free(src_commits);
+		clear_commit_marks_many(src_commits.nr, src_commits.items,
+					reachable_flag);
+		commit_stack_clear(&src_commits);
 		free_commit_list(found_commits);
 	}
 
