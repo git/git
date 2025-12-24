@@ -387,6 +387,7 @@ struct commit_stack {
 };
 #define COMMIT_STACK_INIT { 0 }
 
+void commit_stack_init(struct commit_stack *);
 void commit_stack_push(struct commit_stack *, struct commit *);
 struct commit *commit_stack_pop(struct commit_stack *);
 void commit_stack_clear(struct commit_stack *);

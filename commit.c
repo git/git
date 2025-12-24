@@ -1982,6 +1982,12 @@ int run_commit_hook(int editor_is_used, const char *index_file,
 	return run_hooks_opt(the_repository, name, &opt);
 }
 
+void commit_stack_init(struct commit_stack *stack)
+{
+	stack->items = NULL;
+	stack->nr = stack->alloc = 0;
+}
+
 void commit_stack_push(struct commit_stack *stack, struct commit *commit)
 {
 	ALLOC_GROW(stack->items, stack->nr + 1, stack->alloc);
@@ -1995,6 +2001,6 @@ struct commit *commit_stack_pop(struct commit_stack *stack)
 
 void commit_stack_clear(struct commit_stack *stack)
 {
-	FREE_AND_NULL(stack->items);
-	stack->nr = stack->alloc = 0;
+	free(stack->items);
+	commit_stack_init(stack);
 }
