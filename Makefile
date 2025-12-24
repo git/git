@@ -100,11 +100,14 @@ include shared.mak
 # specify your own (or DarwinPort's) include directories and
 # library directories by defining CFLAGS and LDFLAGS appropriately.
 #
-# Define NO_HOMEBREW if you don't want to use gettext and msgfmt
-# installed by Homebrew.
+# Define NO_HOMEBREW if you don't want to use gettext, libiconv and
+# msgfmt installed by Homebrew.
 #
 # Define HOMEBREW_PREFIX if you have Homebrew installed in a non-default
 # location on macOS or on Linux and want to use it.
+#
+# Define USE_HOMEBREW_LIBICONV to link against libiconv installed by
+# Homebrew, if present.
 #
 # Define NO_APPLE_COMMON_CRYPTO if you are building on Darwin/Mac OS X
 # and do not want to use Apple's CommonCrypto library.  This allows you
@@ -1704,6 +1707,11 @@ ifeq ($(shell test -d $(HOMEBREW_PREFIX)/opt/gettext && echo y),y)
 endif
 ifeq ($(shell test -x $(HOMEBREW_PREFIX)/opt/gettext/msgfmt && echo y),y)
 	MSGFMT = $(HOMEBREW_PREFIX)/opt/gettext/msgfmt
+endif
+ifdef USE_HOMEBREW_LIBICONV
+ifeq ($(shell test -d $(HOMEBREW_PREFIX)/opt/libiconv && echo y),y)
+	ICONVDIR ?= $(HOMEBREW_PREFIX)/opt/libiconv
+endif
 endif
 endif
 endif

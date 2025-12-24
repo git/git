@@ -124,6 +124,7 @@ ifeq ($(uname_S),Darwin)
 	# - MacOS 10.0.* and MacOS 10.1.0 = Darwin 1.*
 	# - MacOS 10.x.* = Darwin (x+4).* for (1 <= x)
 	# i.e. "begins with [15678] and a dot" means "10.4.* or older".
+	DARWIN_MAJOR_VERSION = $(shell expr "$(uname_R)" : '\([0-9]*\)\.')
         ifeq ($(shell expr "$(uname_R)" : '[15678]\.'),2)
 		OLD_ICONV = UnfortunatelyYes
 		NO_APPLE_COMMON_CRYPTO = YesPlease
@@ -153,6 +154,9 @@ ifeq ($(uname_S),Darwin)
 		HOMEBREW_PREFIX = /opt/homebrew
         else
 		HOMEBREW_PREFIX = /usr/local
+        endif
+        ifeq ($(shell test "$(DARWIN_MAJOR_VERSION)" -ge 24 && echo 1),1)
+		USE_HOMEBREW_LIBICONV = UnfortunatelyYes
         endif
 
 	# The builtin FSMonitor on MacOS builds upon Simple-IPC.  Both require
