@@ -2544,36 +2544,9 @@ static int remote_tracking(struct remote *remote, const char *refname,
 	return 0;
 }
 
-/*
- * The struct "reflog_commit_array" and related helper functions
- * are used for collecting commits into an array during reflog
- * traversals in "check_and_collect_until()".
- */
-struct reflog_commit_array {
-	struct commit **item;
-	size_t nr, alloc;
-};
-
-#define REFLOG_COMMIT_ARRAY_INIT { 0 }
-
-/* Append a commit to the array. */
-static void append_commit(struct reflog_commit_array *arr,
-			  struct commit *commit)
-{
-	ALLOC_GROW(arr->item, arr->nr + 1, arr->alloc);
-	arr->item[arr->nr++] = commit;
-}
-
-/* Free and reset the array. */
-static void free_commit_array(struct reflog_commit_array *arr)
-{
-	FREE_AND_NULL(arr->item);
-	arr->nr = arr->alloc = 0;
-}
-
 struct check_and_collect_until_cb_data {
 	struct commit *remote_commit;
-	struct reflog_commit_array *local_commits;
+	struct commit_stack *local_commits;
 	timestamp_t remote_reflog_timestamp;
 };
 
@@ -2605,7 +2578,7 @@ static int check_and_collect_until(const char *refname UNUSED,
 		return 1;
 
 	if ((commit = lookup_commit_reference(the_repository, n_oid)))
-		append_commit(cb->local_commits, commit);
+		commit_stack_push(cb->local_commits, commit);
 
 	/*
 	 * If the reflog entry timestamp is older than the remote ref's
@@ -2633,7 +2606,7 @@ static int is_reachable_in_reflog(const char *local, const struct ref *remote)
 	struct commit *commit;
 	struct commit **chunk;
 	struct check_and_collect_until_cb_data cb;
-	struct reflog_commit_array arr = REFLOG_COMMIT_ARRAY_INIT;
+	struct commit_stack arr = COMMIT_STACK_INIT;
 	size_t size = 0;
 	int ret = 0;
 
@@ -2664,8 +2637,8 @@ static int is_reachable_in_reflog(const char *local, const struct ref *remote)
 	 * Check if the remote commit is reachable from any
 	 * of the commits in the collected array, in batches.
 	 */
-	for (chunk = arr.item; chunk < arr.item + arr.nr; chunk += size) {
-		size = arr.item + arr.nr - chunk;
+	for (chunk = arr.items; chunk < arr.items + arr.nr; chunk += size) {
+		size = arr.items + arr.nr - chunk;
 		if (MERGE_BASES_BATCH_SIZE < size)
 			size = MERGE_BASES_BATCH_SIZE;
 
@@ -2674,7 +2647,7 @@ static int is_reachable_in_reflog(const char *local, const struct ref *remote)
 	}
 
 cleanup_return:
-	free_commit_array(&arr);
+	commit_stack_clear(&arr);
 	return ret;
 }
 
