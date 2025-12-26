@@ -31,7 +31,7 @@
 
 static const char * const builtin_branch_usage[] = {
 	N_("git branch [<options>] [-r | -a] [--merged] [--no-merged]"),
-	N_("git branch [<options>] [-f] [--recurse-submodules] <branch-name> [<start-point>]"),
+	N_("git branch [<options>] [-f] [--recurse-submodules] <branch-name>... [<start-point>]"),
 	N_("git branch [<options>] [-l] [<pattern>...]"),
 	N_("git branch [<options>] [-r] (-d | -D) <branch-name>..."),
 	N_("git branch [<options>] (-m | -M) [<old-branch>] <new-branch>"),
@@ -992,9 +992,9 @@ int cmd_branch(int argc,
 		strbuf_addf(&buf, "branch.%s.merge", branch->name);
 		repo_config_set_multivar(the_repository, buf.buf, NULL, NULL, CONFIG_FLAGS_MULTI_REPLACE);
 		strbuf_release(&buf);
-	} else if (!noncreate_actions && argc > 0 && argc <= 2) {
-		const char *branch_name = argv[0];
-		const char *start_name = argc == 2 ? argv[1] : head;
+	} else if (!noncreate_actions && argc > 0) {
+		const char *start_name = argc == 1 ? head : argv[argc - 1];
+		int iters = argc == 1 ? 1 : argc - 1;
 
 		if (filter.kind != FILTER_REFS_BRANCHES)
 			die(_("the -a, and -r, options to 'git branch' do not take a branch name.\n"
@@ -1003,15 +1003,17 @@ int cmd_branch(int argc,
 		if (track == BRANCH_TRACK_OVERRIDE)
 			die(_("the '--set-upstream' option is no longer supported. Please use '--track' or '--set-upstream-to' instead"));
 
-		if (recurse_submodules) {
-			create_branches_recursively(the_repository, branch_name,
-						    start_name, NULL, force,
-						    reflog, quiet, track, 0);
-			ret = 0;
-			goto out;
+		for (int i = 0; i < iters; i++) {
+			const char *branch_name = argv[i];
+
+			if (recurse_submodules)
+				create_branches_recursively(the_repository, branch_name,
+								start_name, NULL, force,
+								reflog, quiet, track, 0);
+			else
+				create_branch(the_repository, branch_name, start_name, force, 0,
+						reflog, quiet, track, 0);
 		}
-		create_branch(the_repository, branch_name, start_name, force, 0,
-			      reflog, quiet, track, 0);
 	} else
 		usage_with_options(builtin_branch_usage, options);
 
