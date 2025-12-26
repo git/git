@@ -436,6 +436,17 @@ typedef int (*feed_pipe_fn)(int child_in,
 				void *pp_task_cb);
 
 /**
+ * If this callback is provided, output is collated into a new pipe instead
+ * of the process stderr. Then `consume_output_fn` will be called repeatedly
+ * with output contained in the `output` arg. It will also be called with an
+ * empty `output` to allow for keepalives or similar operations if necessary.
+ *
+ * pp_cb is the callback cookie as passed into run_processes_parallel.
+ * No task cookie is provided because the callback receives collated output.
+ */
+typedef void (*consume_output_fn)(struct strbuf *output, void *pp_cb);
+
+/**
  * This callback is called on every child process that finished processing.
  *
  * See run_processes_parallel() below for a discussion of the "struct
@@ -493,6 +504,12 @@ struct run_process_parallel_opts
 	 * special handling.
 	 */
 	feed_pipe_fn feed_pipe;
+
+	/*
+	 * consume_output: see consume_output_fn() above. This can be NULL
+	 * to omit any special handling.
+	 */
+	consume_output_fn consume_output;
 
 	/**
 	 * task_finished: See task_finished_fn() above. This can be

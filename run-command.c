@@ -1595,7 +1595,10 @@ static void pp_cleanup(struct parallel_processes *pp,
 	 * When get_next_task added messages to the buffer in its last
 	 * iteration, the buffered output is non empty.
 	 */
-	strbuf_write(&pp->buffered_output, stderr);
+	if (opts->consume_output)
+		opts->consume_output(&pp->buffered_output, opts->data);
+	else
+		strbuf_write(&pp->buffered_output, stderr);
 	strbuf_release(&pp->buffered_output);
 
 	sigchain_pop_common();
@@ -1734,13 +1737,17 @@ static void pp_buffer_stderr(struct parallel_processes *pp,
 	}
 }
 
-static void pp_output(const struct parallel_processes *pp)
+static void pp_output(const struct parallel_processes *pp,
+		      const struct run_process_parallel_opts *opts)
 {
 	size_t i = pp->output_owner;
 
 	if (child_is_working(&pp->children[i]) &&
 	    pp->children[i].err.len) {
-		strbuf_write(&pp->children[i].err, stderr);
+		if (opts->consume_output)
+			opts->consume_output(&pp->children[i].err, opts->data);
+		else
+			strbuf_write(&pp->children[i].err, stderr);
 		strbuf_reset(&pp->children[i].err);
 	}
 }
@@ -1788,11 +1795,15 @@ static int pp_collect_finished(struct parallel_processes *pp,
 		} else {
 			const size_t n = opts->processes;
 
-			strbuf_write(&pp->children[i].err, stderr);
+			/* Output errors, then all other finished child processes */
+			if (opts->consume_output) {
+				opts->consume_output(&pp->children[i].err, opts->data);
+				opts->consume_output(&pp->buffered_output, opts->data);
+			} else {
+				strbuf_write(&pp->children[i].err, stderr);
+				strbuf_write(&pp->buffered_output, stderr);
+			}
 			strbuf_reset(&pp->children[i].err);
-
-			/* Output all other finished child processes */
-			strbuf_write(&pp->buffered_output, stderr);
 			strbuf_reset(&pp->buffered_output);
 
 			/*
@@ -1829,7 +1840,7 @@ static void pp_handle_child_IO(struct parallel_processes *pp,
 				pp->children[i].state = GIT_CP_WAIT_CLEANUP;
 	} else {
 		pp_buffer_stderr(pp, opts, output_timeout);
-		pp_output(pp);
+		pp_output(pp, opts);
 	}
 }
 
@@ -1851,6 +1862,9 @@ void run_processes_parallel(const struct run_process_parallel_opts *opts)
 		trace2_region_enter_printf(tr2_category, tr2_label, NULL,
 					   "max:%"PRIuMAX,
 					   (uintmax_t)opts->processes);
+
+	if (opts->ungroup && opts->consume_output)
+		BUG("ungroup and reading output are mutualy exclusive");
 
 	/*
 	 * Child tasks might receive input via stdin, terminating early (or not), so
