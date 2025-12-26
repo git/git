@@ -153,7 +153,7 @@ int run_hooks_opt(struct repository *r, const char *hook_name,
 		.tr2_label = hook_name,
 
 		.processes = 1,
-		.ungroup = 1,
+		.ungroup = options->ungroup,
 
 		.get_next_task = pick_next_hook,
 		.start_failure = notify_start_failure,
@@ -197,6 +197,9 @@ cleanup:
 int run_hooks(struct repository *r, const char *hook_name)
 {
 	struct run_hooks_opt opt = RUN_HOOKS_OPT_INIT;
+
+	/* All use-cases of this API require ungrouping. */
+	opt.ungroup = 1;
 
 	return run_hooks_opt(r, hook_name, &opt);
 }

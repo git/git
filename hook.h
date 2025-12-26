@@ -35,6 +35,11 @@ struct run_hooks_opt
 	int *invoked_hook;
 
 	/**
+	 * Allow hooks to set run_processes_parallel() 'ungroup' behavior.
+	 */
+	unsigned int ungroup:1;
+
+	/**
 	 * Path to file which should be piped to stdin for each hook.
 	 */
 	const char *path_to_stdin;
