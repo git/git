@@ -976,6 +976,8 @@ enum parse_opt_result parse_options_step(struct parse_opt_ctx_t *ctx,
 					 const char * const usagestr[])
 {
 	int internal_help = !(ctx->flags & PARSE_OPT_NO_INTERNAL_HELP);
+	char *magic_ptr = NULL;
+	size_t opt_sz = 0;
 
 	/* we must reset ->opt, unknown short option leave it dangling */
 	ctx->opt = NULL;
@@ -1071,7 +1073,15 @@ enum parse_opt_result parse_options_step(struct parse_opt_ctx_t *ctx,
 					 *
 					 * This is leaky, too bad.
 					 */
-					ctx->argv[0] = xstrdup(ctx->opt - 1);
+					magic_ptr = (char *)ctx->argv[0] - 1;
+					if (*magic_ptr == OPT_MAGIC)
+						free(magic_ptr);
+					opt_sz = strlen(ctx->opt - 1) + 1;
+					magic_ptr = xmalloc(opt_sz + 1);
+					*magic_ptr = OPT_MAGIC;
+					ctx->argv[0] = magic_ptr + 1;
+					memcpy((char *)ctx->argv[0],
+					       ctx->opt - 1, opt_sz);
 					*(char *)ctx->argv[0] = '-';
 					goto unknown;
 				case PARSE_OPT_NON_OPTION:
