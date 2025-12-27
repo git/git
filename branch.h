@@ -1,21 +1,10 @@
 #ifndef BRANCH_H
 #define BRANCH_H
 
+#include "repo-settings.h"
+
 struct repository;
 struct strbuf;
-
-enum branch_track {
-	BRANCH_TRACK_UNSPECIFIED = -1,
-	BRANCH_TRACK_NEVER = 0,
-	BRANCH_TRACK_REMOTE,
-	BRANCH_TRACK_ALWAYS,
-	BRANCH_TRACK_EXPLICIT,
-	BRANCH_TRACK_OVERRIDE,
-	BRANCH_TRACK_INHERIT,
-	BRANCH_TRACK_SIMPLE,
-};
-
-extern enum branch_track git_branch_track;
 
 /* Functions for acting on the information about branches. */
 
