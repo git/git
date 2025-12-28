@@ -44,28 +44,28 @@ static int run_gpg_verify(const char *buf, unsigned long size, unsigned flags)
 	return ret;
 }
 
-int gpg_verify_tag(const struct object_id *oid, const char *name_to_report,
-		unsigned flags)
+int gpg_verify_tag(struct repository *r, const struct object_id *oid,
+		   const char *name_to_report, unsigned flags)
 {
 	enum object_type type;
 	char *buf;
 	unsigned long size;
 	int ret;
 
-	type = odb_read_object_info(the_repository->objects, oid, NULL);
+	type = odb_read_object_info(r->objects, oid, NULL);
 	if (type != OBJ_TAG)
 		return error("%s: cannot verify a non-tag object of type %s.",
 				name_to_report ?
 				name_to_report :
-				repo_find_unique_abbrev(the_repository, oid, DEFAULT_ABBREV),
+				repo_find_unique_abbrev(r, oid, DEFAULT_ABBREV),
 				type_name(type));
 
-	buf = odb_read_object(the_repository->objects, oid, &type, &size);
+	buf = odb_read_object(r->objects, oid, &type, &size);
 	if (!buf)
 		return error("%s: unable to read file.",
 				name_to_report ?
 				name_to_report :
-				repo_find_unique_abbrev(the_repository, oid, DEFAULT_ABBREV));
+				repo_find_unique_abbrev(r, oid, DEFAULT_ABBREV));
 
 	ret = run_gpg_verify(buf, size, flags);
 
