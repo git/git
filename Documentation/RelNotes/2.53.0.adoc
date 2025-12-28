@@ -78,6 +78,11 @@ Performance, Internal Implementation, Development Support etc.
  * "git diff-files -R --find-copies-harder" has been taught to use
    the potential copy sources from the index correctly.
 
+ * Require C99 style flexible array member support from all platforms.
+
+ * The code path that enumerates promisor objects have been optimized
+   to skip pointlessly parsing blob objects.
+
 
 Fixes since v2.52
 -----------------
@@ -214,3 +219,5 @@ Fixes since v2.52
    (merge bab391761d kj/pull-options-decl-cleanup later to maint).
    (merge 007b8994d4 rs/t4014-git-version-string-fix later to maint).
    (merge 4ce170c522 ds/doc-scalar-config later to maint).
+   (merge a0c813951a jc/doc-commit-signoff-config later to maint).
+   (merge 8ee262985a ja/doc-misc-fixes later to maint).
