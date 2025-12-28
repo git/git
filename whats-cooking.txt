@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Dec 2025, #07)
-X-master-at: c8d76f7325e75c6f0549fce29ea4f3d97eb079cb
-X-next-at: a3e5c5e72d1c821d3e346fca55e6462e6d65d0fc
+Subject: What's cooking in git.git (Dec 2025, #08)
+X-master-at: 7c7698a654a7a0031f65b0ab0c1c4e438e95df60
+X-next-at: 33f00ee1fdef3746fc261e8e25787a197c83334f
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Dec 2025, #07)
+What's cooking in git.git (Dec 2025, #08)
 -----------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -48,66 +48,216 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* jc/macports-darwinports (2025-12-10) 1 commit
-  (merged to 'next' on 2025-12-14 at 5c608e07fe)
- + Makefile: help macOS novices by mentioning MacPorts
+* ap/packfile-promisor-object-optim (2025-12-08) 2 commits
+  (merged to 'next' on 2025-12-18 at ee94076814)
+ + packfile: skip hash checks in add_promisor_object()
+ + object: apply skip_hash and discard_tree optimizations to unknown blobs too
 
- Makefile in-comment doc update.
- source: <xmqq7buthgq4.fsf@gitster.g>
-
-
-* kh/doc-replay-updates (2025-12-13) 3 commits
-  (merged to 'next' on 2025-12-14 at 71a8f83876)
- + doc: replay: link section using markup
- + replay: improve --contained and add to doc
- + doc: replay: mention no output on conflicts
-
- "git replay" documentation updates.
- source: <V2_CV_replay_conflict.12f@msgid.xyz>
+ The code path that enumerates promisor objects have been optimized
+ to skip pointlessly parsing blob objects.
+ cf. <xmqqecot3dm1.fsf@gitster.g>
+ source: <20251209014900.402637-1-aplattner@nvidia.com>
 
 
-* kj/pull-options-decl-cleanup (2025-12-11) 1 commit
-  (merged to 'next' on 2025-12-14 at f59cad1d37)
- + pull: move options[] array into function scope
+* ds/doc-scalar-config (2025-12-12) 5 commits
+  (merged to 'next' on 2025-12-16 at 221721824f)
+ + scalar: document config settings
+ + scalar: alphabetize and simplify config
+ + scalar: remove stale config values
+ + scalar: use index.skipHash=true for performance
+ + scalar: annotate config file with "set by scalar"
 
- Code clean-up.
- source: <20251212074433.38027-1-jayatheerthkulkarni2005@gmail.com>
-
-
-* ps/odb-alternates-object-sources (2025-12-11) 8 commits
-  (merged to 'next' on 2025-12-12 at 1dd061c0dc)
- + odb: write alternates via sources
- + odb: read alternates via sources
- + odb: drop forward declaration of `read_info_alternates()`
- + odb: remove mutual recursion when parsing alternates
- + odb: stop splitting alternate in `odb_add_to_alternates_file()`
- + odb: move computation of normalized objdir into `alt_odb_usable()`
- + odb: resolve relative alternative paths when parsing
- + odb: refactor parsing of alternates to be self-contained
-
- Code refactoring around alternate object store.
- source: <20251211-b4-pks-odb-alternates-via-source-v3-0-00e3f54d07ba@pks.im>
+ Documentation updates.
+ source: <pull.2010.v3.git.1765552528.gitgitgadget@gmail.com>
 
 
-* rs/replay-wrong-onto-fix (2025-12-11) 2 commits
-  (merged to 'next' on 2025-12-14 at d34966465f)
- + replay: move onto NULL check before first use
- + Merge branch 'sa/replay-atomic-ref-updates' into rs/replay-wrong-onto-fix
+* ja/doc-misc-fixes (2025-12-19) 2 commits
+  (merged to 'next' on 2025-12-20 at 2dafdb9732)
+ + doc: correct minor wording issues
+ + doc: fix asciidoc markup issues in several files
 
- "git replay --onto=<commit> ...", when <commit> is mistyped,
- started to segfault with recent change, which has been corrected.
- source: <9db2b913-b5d6-4617-b079-b4612eaa2b97@web.de>
+ Various documentation fixes.
+ source: <pull.2016.v2.git.1766170456.gitgitgadget@gmail.com>
 
 
-* rs/t4014-git-version-string-fix (2025-12-13) 1 commit
-  (merged to 'next' on 2025-12-14 at eef802176c)
- + t4014: support Git version strings with spaces
+* jc/c99-fam (2025-12-12) 1 commit
+  (merged to 'next' on 2025-12-18 at c11ebcf075)
+ + FLEX_ARRAY: require platforms to support the C99 syntax
 
- Test fix.
- source: <b79cba1d-f32b-4034-979e-fb9528d05f18@web.de>
+ Require C99 style flexible array member support from all platforms.
+ source: <xmqqqzszc13d.fsf@gitster.g>
+
+
+* jc/completion-no-single-letter-options (2025-12-06) 1 commit
+  (merged to 'next' on 2025-12-17 at d8ae4b5ac4)
+ + completion: clarify support for short options and arguments
+
+ In-code comment update to clarify that single-letter options are
+ outside of the scope of command line completion script.
+ source: <xmqqzf7vm7b7.fsf@gitster.g>
+
+
+* jc/doc-commit-signoff-config (2025-12-19) 2 commits
+  (merged to 'next' on 2025-12-19 at 0814c687bb)
+ + signoff-option: linkify the reference to gitfaq
+  (merged to 'next' on 2025-12-18 at 27c9ad156c)
+ + commit: document that $command.signoff will not be added
+
+ Documentation update.
+ source: <xmqqv7i62r6w.fsf@gitster.g>
+
+
+* jc/memzero-array (2025-12-12) 3 commits
+  (merged to 'next' on 2025-12-17 at 0dd398f0b4)
+ + cocci: use MEMZERO_ARRAY() a bit more
+ + coccicheck: emit the contents of cocci patch
+ + Merge branch 'tc/memzero-array' into jc/memzero-array
+ (this branch uses tc/memzero-array.)
+
+ Further application of MEMZERO_ARRAY() macro to the rest of the
+ code base.
+ source: <20251213014628.3380826-1-gitster@pobox.com>
+
+
+* jc/submodule-add (2025-11-15) 1 commit
+  (merged to 'next' on 2025-12-17 at 03e0b0b5d9)
+ + submodule add: sanity check existing .gitmodules
+
+ "git submodule add" to add a submodule under <name> segfaulted,
+ when a submodule.<name>.something is already in .gitmodules file
+ without defining where its submodule.<name>.path is, which has been
+ corrected.
+ source: <xmqqv7jacvdq.fsf@gitster.g>
+
+
+* kn/fix-fetch-backfill-tag-with-batched-ref-updates (2025-11-21) 3 commits
+  (merged to 'next' on 2025-12-17 at 3955b0be68)
+ + fetch: fix failed batched updates skipping operations
+ + fetch: fix non-conflicting tags not being committed
+ + fetch: extract out reference committing logic
+
+ "git fetch" that involves fetching tags, when a tag being fetched
+ needs to overwrite existing one, failed to fetch other tags, which
+ has been corrected.
+ source: <20251121-fix-tags-not-fetching-v8-0-23b53a8a8334@gmail.com>
+
+
+* rs/diff-files-r-find-copies-fix (2025-12-14) 2 commits
+  (merged to 'next' on 2025-12-17 at 2c9d72ec4b)
+ + diff-files: fix copy detection
+ + Merge branch 'rs/diff-index-find-copies-harder-optim' into rs/diff-files-r-find-copies-fix
+
+ "git diff-files -R --find-copies-harder" has been taught to use
+ the potential copy sources from the index correctly.
+ source: <4b06a448-0935-4f2a-9061-238c7cc800c3@web.de>
+
+
+* tc/memzero-array (2025-12-10) 3 commits
+  (merged to 'next' on 2025-12-17 at 4d2f7755b5)
+ + contrib/coccinelle: pass include paths to spatch(1)
+ + git-compat-util: introduce MEMZERO_ARRAY() macro
+ + Merge branch 'tc/last-modified-active-paths-optimization' into tc/memzero-array
+ (this branch is used by jc/memzero-array.)
+
+ MEMZERO_ARRAY() helper is introduced to avoid clearing only the
+ first N bytes of an N-element array whose elements are larger than
+ a byte.
+ cf. <aTpieqFoMmZiSzWS@pks.im>
+ source: <20251210-toon-cocci-memzero-v1-0-ae916a79065b@iotcl.com>
 
 --------------------------------------------------
 [New Topics]
+
+* kh/replay-invalid-onto-advance (2025-12-22) 2 commits
+ - t3650: add more regression tests for failure conditions
+ - replay: die descriptively when invalid commit-ish
+
+ Test coverage of "git replay" has been improved.
+
+ Expecting a rework on the bottom patch.
+ source: <CV_replay_die_descr.13f@msgid.xyz>
+
+
+* bc/checkout-error-message-fix (2025-12-24) 1 commit
+  (merged to 'next' on 2025-12-28 at d807c22e01)
+ + checkout: quote invalid treeish in error message
+
+ Message fix.
+
+ Will merge to 'master'.
+ source: <20251224203253.881129-1-sandals@crustytoothpaste.net>
+
+
+* cc/lop-filter-auto (2025-12-23) 9 commits
+ - fetch-pack: wire up and enable auto filter logic
+ - promisor-remote: keep advertised filter in memory
+ - list-objects-filter-options: implement auto filter resolution
+ - list-objects-filter-options: support 'auto' mode for --filter
+ - doc: fetch: document `--filter=<filter-spec>` option
+ - fetch: make filter_options local to cmd_fetch()
+ - clone: make filter_options local to cmd_clone()
+ - promisor-remote: allow a client to store fields
+ - promisor-remote: refactor initialising field lists
+
+ "auto filter" logic for large-object promisor remote.
+
+ Comments?
+ source: <20251223111113.47473-1-christian.couder@gmail.com>
+
+
+* rs/commit-stack (2025-12-24) 14 commits
+ - commit-reach: use commit_stack
+ - commit-graph: use commit_stack
+ - commit: add commit_stack_grow()
+ - shallow: use commit_stack
+ - pack-bitmap-write: use commit_stack
+ - commit: add commit_stack_init()
+ - test-reach: use commit_stack
+ - remote: use commit_stack for src_commits
+ - remote: use commit_stack for sent_tips
+ - remote: use commit_stack for local_commits
+ - name-rev: use commit_stack
+ - midx: use commit_stack
+ - log: use commit_stack
+ - revision: export commit_stack
+
+ Code clean-up, unifying various hand-rolled "list of commit
+ objects" and use the commit_stack API.
+
+ Will merge to 'next'?
+ source: <20251224170327.68049-1-l.s.r@web.de>
+
+
+* rs/parse-config-expiry-simplify (2025-12-27) 1 commit
+ - config: use git_parse_int() in git_config_get_expiry_in_days()
+
+ Code clean-up.
+
+ Will merge to 'next'.
+ source: <1bd3c7f3-fcf6-4d8e-aa38-c15e3d51ce4c@web.de>
+
+
+* rs/show-branch-prio-queue (2025-12-25) 1 commit
+  (merged to 'next' on 2025-12-28 at 99d21acd7b)
+ + show-branch: use prio_queue
+
+ Code clean-up.
+
+ Will merge to 'master'.
+ source: <70ed751e-fc3c-4cb4-a4fd-26094a9f622e@web.de>
+
+
+* tt/receive-pack-oo-namespace-symref-fix (2025-12-27) 1 commit
+ - receive-pack: fix crash on out-of-namespace symref
+
+ "git receive-pack", when namespace is involved, segfaulted when a
+ symbolic ref cross the namespace boundary.
+
+ Comments?
+ source: <pull.2144.git.git.1766850014289.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[Cooking]
 
 * sb/bundle-uri-without-uri (2025-12-19) 1 commit
  - bundle-uri: validate that bundle entries have a uri
@@ -142,8 +292,6 @@ Release tarballs are available at:
  Will merge to 'next'?
  source: <pull.2020.git.1766258187.gitgitgadget@gmail.com>
 
---------------------------------------------------
-[Cooking]
 
 * js/symlink-windows (2025-12-17) 19 commits
  - mingw: special-case index entries for symlinks with buggy size
@@ -192,13 +340,14 @@ Release tarballs are available at:
 
 
 * jc/object-read-stream-fix (2025-12-17) 2 commits
- - odb: do not use "blank" substitute for NULL
- - Merge branch 'ps/object-read-stream' into jc/object-read-stream-fix
+  (merged to 'next' on 2025-12-23 at b26856ce64)
+ + odb: do not use "blank" substitute for NULL
+ + Merge branch 'ps/object-read-stream' into jc/object-read-stream-fix
  (this branch is used by ps/read-object-info-improvements.)
 
  Fix a performance regression in recently graduated topic.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <xmqqpl8cxy0j.fsf@gitster.g>
 
 
@@ -234,12 +383,13 @@ Release tarballs are available at:
 
 
 * jk/test-curl-updates (2025-12-18) 2 commits
- - t5563: add missing end-of-line in HTTP header
- - t5551: handle trailing slashes in expected cookies output
+  (merged to 'next' on 2025-12-23 at ef92594ee8)
+ + t5563: add missing end-of-line in HTTP header
+ + t5551: handle trailing slashes in expected cookies output
 
  Update HTTP tests to adjust for changes in curl 8.18.0
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20251218121120.GA3252258@coredump.intra.peff.net>
 
 
@@ -283,17 +433,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <pull.2019.git.1766071259531.gitgitgadget@gmail.com>
-
-
-* ja/doc-misc-fixes (2025-12-19) 2 commits
-  (merged to 'next' on 2025-12-20 at 2dafdb9732)
- + doc: correct minor wording issues
- + doc: fix asciidoc markup issues in several files
-
- Various documentation fixes.
-
- Will merge to 'master'.
- source: <pull.2016.v2.git.1766170456.gitgitgadget@gmail.com>
 
 
 * jt/doc-rev-list-filter-provided-objects (2025-12-15) 1 commit
@@ -344,32 +483,6 @@ Release tarballs are available at:
  source: <20251112223722.376330-1-aplattner@nvidia.com>
 
 
-* jc/memzero-array (2025-12-12) 3 commits
-  (merged to 'next' on 2025-12-17 at 0dd398f0b4)
- + cocci: use MEMZERO_ARRAY() a bit more
- + coccicheck: emit the contents of cocci patch
- + Merge branch 'tc/memzero-array' into jc/memzero-array
- (this branch uses tc/memzero-array.)
-
- Further application of MEMZERO_ARRAY() macro to the rest of the
- code base.
-
- Will merge to 'master' together with the base topic.
- source: <20251213014628.3380826-1-gitster@pobox.com>
-
-
-* jc/doc-commit-signoff-config (2025-12-19) 2 commits
-  (merged to 'next' on 2025-12-19 at 0814c687bb)
- + signoff-option: linkify the reference to gitfaq
-  (merged to 'next' on 2025-12-18 at 27c9ad156c)
- + commit: document that $command.signoff will not be added
-
- Documentation update.
-
- Will merge to 'master'.
- source: <xmqqv7i62r6w.fsf@gitster.g>
-
-
 * ps/packfile-store-in-odb-source (2025-12-17) 12 commits
  - packfile: move MIDX into packfile store
  - packfile: refactor `find_pack_entry()` to work on the packfile store
@@ -392,18 +505,6 @@ Release tarballs are available at:
  source: <20251218-b4-pks-pack-store-via-source-v2-0-62849007ce21@pks.im>
 
 
-* rs/diff-files-r-find-copies-fix (2025-12-14) 2 commits
-  (merged to 'next' on 2025-12-17 at 2c9d72ec4b)
- + diff-files: fix copy detection
- + Merge branch 'rs/diff-index-find-copies-harder-optim' into rs/diff-files-r-find-copies-fix
-
- "git diff-files -R --find-copies-harder" has been taught to use
- the potential copy sources from the index correctly.
-
- Will merge to 'master'.
- source: <4b06a448-0935-4f2a-9061-238c7cc800c3@web.de>
-
-
 * jt/repo-struct-more-objinfo (2025-12-17) 7 commits
   (merged to 'next' on 2025-12-22 at d04904c31c)
  + builtin/repo: add object disk size info to structure table
@@ -421,41 +522,16 @@ Release tarballs are available at:
  source: <20251217175404.37963-1-jltobler@gmail.com>
 
 
-* jc/c99-fam (2025-12-12) 1 commit
-  (merged to 'next' on 2025-12-18 at c11ebcf075)
- + FLEX_ARRAY: require platforms to support the C99 syntax
-
- Require C99 style flexible array member support from all platforms.
-
- Will merge to 'master'.
- source: <xmqqqzszc13d.fsf@gitster.g>
-
-
-* rs/macos-iconv-workaround (2025-12-16) 2 commits
- - macOS: use iconv from Homebrew if present
- - macOS: make Homebrew use configurable
+* rs/macos-iconv-workaround (2025-12-24) 2 commits
+  (merged to 'next' on 2025-12-28 at 94ed776719)
+ + macOS: use iconv from Homebrew if needed and present
+ + macOS: make Homebrew use configurable
 
  Workaround the "iconv" shipped as part of macOS, which is broken
  handling stateful ISO/IEC 2022 encoded strings.
 
- Comments?
- source: <53690064-1c98-40e9-8b9a-7ba6bee63703@web.de>
-
-
-* tc/memzero-array (2025-12-10) 3 commits
-  (merged to 'next' on 2025-12-17 at 4d2f7755b5)
- + contrib/coccinelle: pass include paths to spatch(1)
- + git-compat-util: introduce MEMZERO_ARRAY() macro
- + Merge branch 'tc/last-modified-active-paths-optimization' into tc/memzero-array
- (this branch is used by jc/memzero-array.)
-
- MEMZERO_ARRAY() helper is introduced to avoid clearing only the
- first N bytes of an N-element array whose elements are larger than
- a byte.
-
  Will merge to 'master'.
- cf. <aTpieqFoMmZiSzWS@pks.im>
- source: <20251210-toon-cocci-memzero-v1-0-ae916a79065b@iotcl.com>
+ source: <ce030c90-f635-42b5-82e1-814cd4c29505@web.de>
 
 
 * lo/repo-info-keys (2025-12-09) 3 commits
@@ -491,19 +567,6 @@ Release tarballs are available at:
 
  Will merget to 'next'.
  source: <pull.2123.git.git.1765261419802.gitgitgadget@gmail.com>
-
-
-* ap/packfile-promisor-object-optim (2025-12-08) 2 commits
-  (merged to 'next' on 2025-12-18 at ee94076814)
- + packfile: skip hash checks in add_promisor_object()
- + object: apply skip_hash and discard_tree optimizations to unknown blobs too
-
- The code path that enumerates promisor objects have been optimized
- to skip pointlessly parsing blob objects.
-
- Will merge to 'master'.
- cf. <xmqqecot3dm1.fsf@gitster.g>
- source: <20251209014900.402637-1-aplattner@nvidia.com>
 
 
 * ps/odb-misc-fixes (2025-12-10) 3 commits
@@ -565,17 +628,6 @@ Release tarballs are available at:
  source: <pull.2120.git.git.1765054287938.gitgitgadget@gmail.com>
 
 
-* jc/completion-no-single-letter-options (2025-12-06) 1 commit
-  (merged to 'next' on 2025-12-17 at d8ae4b5ac4)
- + completion: clarify support for short options and arguments
-
- In-code comment update to clarify that single-letter options are
- outside of the scope of command line completion script.
-
- Will merge to 'master'.
- source: <xmqqzf7vm7b7.fsf@gitster.g>
-
-
 * jk/parse-int (2025-11-30) 5 commits
  - fsck: use parse_unsigned_from_buf() for parsing timestamp
  - cache-tree: use parse_int_from_buf()
@@ -626,20 +678,6 @@ Release tarballs are available at:
 
  Expecting a reroll.
  source: <20251126-toon-last-modified-zzzz-v1-0-608350df0caa@iotcl.com>
-
-
-* ds/doc-scalar-config (2025-12-12) 5 commits
-  (merged to 'next' on 2025-12-16 at 221721824f)
- + scalar: document config settings
- + scalar: alphabetize and simplify config
- + scalar: remove stale config values
- + scalar: use index.skipHash=true for performance
- + scalar: annotate config file with "set by scalar"
-
- Documentation updates.
-
- Will merge to 'master'.
- source: <pull.2010.v3.git.1765552528.gitgitgadget@gmail.com>
 
 
 * pw/replay-drop-empty (2025-12-18) 2 commits
@@ -693,33 +731,6 @@ Release tarballs are available at:
  source: <pull.1938.git.1760058849.gitgitgadget@gmail.com>
 
 
-* jc/submodule-add (2025-11-15) 1 commit
-  (merged to 'next' on 2025-12-17 at 03e0b0b5d9)
- + submodule add: sanity check existing .gitmodules
-
- "git submodule add" to add a submodule under <name> segfaulted,
- when a submodule.<name>.something is already in .gitmodules file
- without defining where its submodule.<name>.path is, which has been
- corrected.
-
- Will merge to 'master'.
- source: <xmqqv7jacvdq.fsf@gitster.g>
-
-
-* kn/fix-fetch-backfill-tag-with-batched-ref-updates (2025-11-21) 3 commits
-  (merged to 'next' on 2025-12-17 at 3955b0be68)
- + fetch: fix failed batched updates skipping operations
- + fetch: fix non-conflicting tags not being committed
- + fetch: extract out reference committing logic
-
- "git fetch" that involves fetching tags, when a tag being fetched
- needs to overwrite existing one, failed to fetch other tags, which
- has been corrected.
-
- Will merge to 'master'.
- source: <20251121-fix-tags-not-fetching-v8-0-23b53a8a8334@gmail.com>
-
-
 * lc/rebase-trailer (2025-11-05) 4 commits
  - rebase: support --trailer
  - trailer: append trailers in-process and drop the fork to `interpret-trailers`
@@ -767,25 +778,25 @@ Release tarballs are available at:
  source: <20251117221621.2863243-1-sandals@crustytoothpaste.net>
 
 
-* ar/run-command-hook (2025-12-18) 11 commits
- - receive-pack: convert receive hooks to hook API
- - receive-pack: convert update hooks to new API
- - hooks: allow callers to capture output
- - run-command: allow capturing of collated output
- - hook: allow overriding the ungroup option
- - reference-transaction: use hook API instead of run-command
- - transport: convert pre-push to hook API
- - hook: convert 'post-rewrite' hook in sequencer.c to hook API
- - hook: provide stdin via callback
- - run-command: add stdin callback for parallelization
- - run-command: add first helper for pp child states
+* ar/run-command-hook (2025-12-26) 11 commits
+  (merged to 'next' on 2025-12-28 at 048cdffe21)
+ + receive-pack: convert receive hooks to hook API
+ + receive-pack: convert update hooks to new API
+ + hooks: allow callers to capture output
+ + run-command: allow capturing of collated output
+ + hook: allow overriding the ungroup option
+ + reference-transaction: use hook API instead of run-command
+ + transport: convert pre-push to hook API
+ + hook: convert 'post-rewrite' hook in sequencer.c to hook API
+ + hook: provide stdin via callback
+ + run-command: add stdin callback for parallelization
+ + run-command: add first helper for pp child states
 
  Use hook API to replace ad-hoc invocation of hook scripts with the
  run_command() API.
 
- Will merge to 'next'?
- cf. <aUVHVMNTFWWn2xjZ@pks.im>
- source: <20251218171126.588066-1-adrian.ratiu@collabora.com>
+ Will merge to 'master'.
+ source: <20251226122334.16687-1-adrian.ratiu@collabora.com>
 
 
 * je/doc-reset (2025-12-18) 4 commits
