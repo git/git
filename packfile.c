@@ -2333,7 +2333,8 @@ static int add_promisor_object(const struct object_id *oid,
 		we_parsed_object = 0;
 	} else {
 		we_parsed_object = 1;
-		obj = parse_object(pack->repo, oid);
+		obj = parse_object_with_flags(pack->repo, oid,
+					      PARSE_OBJECT_SKIP_HASH_CHECK);
 	}
 
 	if (!obj)
