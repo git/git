@@ -1,4 +1,3 @@
-#define USE_THE_REPOSITORY_VARIABLE
 #define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
@@ -58,7 +57,7 @@ int gpg_verify_tag(struct repository *r, const struct object_id *oid,
 		return error("%s: cannot verify a non-tag object of type %s.",
 				name_to_report ?
 				name_to_report :
-				repo_find_unique_abbrev(r, oid, DEFAULT_ABBREV),
+				oid_to_hex(oid),
 				type_name(type));
 
 	buf = odb_read_object(r->objects, oid, &type, &size);
@@ -66,7 +65,7 @@ int gpg_verify_tag(struct repository *r, const struct object_id *oid,
 		return error("%s: unable to read file.",
 				name_to_report ?
 				name_to_report :
-				repo_find_unique_abbrev(r, oid, DEFAULT_ABBREV));
+				oid_to_hex(oid));
 
 	ret = run_gpg_verify(buf, size, flags);
 
