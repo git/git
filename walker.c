@@ -115,7 +115,7 @@ static int process_commit(struct walker *walker, struct commit *commit)
 
 static int process_tag(struct walker *walker, struct tag *tag)
 {
-	if (parse_tag(tag))
+	if (parse_tag(the_repository, tag))
 		return -1;
 	return process(walker, tag->tagged);
 }

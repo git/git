@@ -13,7 +13,7 @@ struct tag {
 };
 struct tag *lookup_tag(struct repository *r, const struct object_id *oid);
 int parse_tag_buffer(struct repository *r, struct tag *item, const void *data, unsigned long size);
-int parse_tag(struct tag *item);
+int parse_tag(struct repository *r, struct tag *item);
 void release_tag_memory(struct tag *t);
 struct object *deref_tag(struct repository *r, struct object *, const char *, int);
 int gpg_verify_tag(struct repository *r, const struct object_id *oid,

@@ -13,6 +13,7 @@
 #include "gpg-interface.h"
 #include "hex.h"
 #include "packfile.h"
+#include "repository.h"
 
 const char *tag_type = "tag";
 
@@ -203,7 +204,7 @@ int parse_tag_buffer(struct repository *r, struct tag *item, const void *data, u
 	return 0;
 }
 
-int parse_tag(struct tag *item)
+int parse_tag(struct repository *r, struct tag *item)
 {
 	enum object_type type;
 	void *data;
@@ -212,8 +213,7 @@ int parse_tag(struct tag *item)
 
 	if (item->object.parsed)
 		return 0;
-	data = odb_read_object(the_repository->objects, &item->object.oid,
-			       &type, &size);
+	data = odb_read_object(r->objects, &item->object.oid, &type, &size);
 	if (!data)
 		return error("Could not read %s",
 			     oid_to_hex(&item->object.oid));
@@ -222,7 +222,7 @@ int parse_tag(struct tag *item)
 		return error("Object %s not a tag",
 			     oid_to_hex(&item->object.oid));
 	}
-	ret = parse_tag_buffer(the_repository, item, data, size);
+	ret = parse_tag_buffer(r, item, data, size);
 	free(data);
 	return ret;
 }
