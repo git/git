@@ -148,9 +148,11 @@ int parse_tag_buffer(struct repository *r, struct tag *item, const void *data, u
 		FREE_AND_NULL(item->tag);
 	}
 
-	if (size < the_hash_algo->hexsz + 24)
+	if (size < r->hash_algo->hexsz + 24)
 		return -1;
-	if (memcmp("object ", bufptr, 7) || parse_oid_hex(bufptr + 7, &oid, &bufptr) || *bufptr++ != '\n')
+	if (memcmp("object ", bufptr, 7) ||
+	    parse_oid_hex_algop(bufptr + 7, &oid, &bufptr, r->hash_algo) ||
+	    *bufptr++ != '\n')
 		return -1;
 
 	if (!starts_with(bufptr, "type "))
