@@ -7098,6 +7098,7 @@ static void diffcore_skip_stat_unmatch(struct diff_options *diffopt)
 			if (!diffopt->flags.no_index)
 				diffopt->skip_stat_unmatch++;
 			diff_free_filepair(p);
+			q->queue[i] = NULL;
 		}
 	}
 	free(q->queue);
@@ -7141,6 +7142,10 @@ void diff_queued_diff_prefetch(void *repository)
 
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];
+
+		if (!p)
+			continue;
+
 		diff_add_if_missing(repo, &to_fetch, p->one);
 		diff_add_if_missing(repo, &to_fetch, p->two);
 	}

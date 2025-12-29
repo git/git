@@ -132,6 +132,41 @@ test_expect_success 'diff with rename detection batches blobs' '
 	test_line_count = 1 done_lines
 '
 
+test_expect_success 'diff succeeds even if entries are removed from queue' '
+	test_when_finished "rm -rf server client trace" &&
+
+	test_create_repo server &&
+	for l in a c e g i p
+	do
+		echo $l >server/$l &&
+		git -C server add $l || return 1
+	done &&
+	git -C server commit -m x &&
+
+	for l in a e i
+	do
+		git -C server rm $l || return 1
+	done &&
+
+	for l in b d f i
+		do
+		echo $l$l >server/$l &&
+		git -C server add $l || return 1
+	done &&
+	git -C server commit -a -m x &&
+
+	test_config -C server uploadpack.allowfilter 1 &&
+	test_config -C server uploadpack.allowanysha1inwant 1 &&
+	git clone --filter=blob:limit=0 "file://$(pwd)/server" client &&
+
+	for file in $(ls client)
+	do
+		cat client/$file >$file &&
+		mv $file client/$file || return 1
+	done &&
+	git -C client diff --name-only --relative HEAD^
+'
+
 test_expect_success 'diff does not fetch anything if inexact rename detection is not needed' '
 	test_when_finished "rm -rf server client trace" &&
 
