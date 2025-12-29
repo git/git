@@ -1502,11 +1502,44 @@ static void resolve_trivial_directory_merge(struct conflict_info *ci, int side)
 	VERIFY_CI(ci);
 	assert((side == 1 && ci->match_mask == 5) ||
 	       (side == 2 && ci->match_mask == 3));
+
+	/*
+	 * Since ci->stages[0] matches ci->stages[3-side], resolve merge in
+	 * favor of ci->stages[side].
+	 */
 	oidcpy(&ci->merged.result.oid, &ci->stages[side].oid);
 	ci->merged.result.mode = ci->stages[side].mode;
 	ci->merged.is_null = is_null_oid(&ci->stages[side].oid);
+
+	/*
+	 * Because we resolved in favor of "side", we are no longer
+	 * considering the paths which matched (i.e. had the same hash) any
+	 * more.  Strip the matching paths from both dirmask & filemask.
+	 * Another consequence of merging in favor of side is that we can no
+	 * longer have a directory/file conflict either..but there's a slight
+	 * nuance we consider before clearing it.
+	 *
+	 * In most cases, resolving in favor of the other side means there's
+	 * no conflict at all, but if we had a directory/file conflict to
+	 * start, and the directory is resolved away, the remaining file could
+	 * still be part of a rename.  If the remaining file is part of a
+	 * rename, then it may also be part of a rename conflict (e.g.
+	 * rename/delete or rename/rename(1to2)), so we can't
+	 * mark it as a clean merge if we started with a directory/file
+	 * conflict and still have a file left.
+	 *
+	 * In contrast, if we started with a directory/file conflict and
+	 * still have a directory left, no file under that directory can be
+	 * part of a rename, otherwise we would have had to recurse into the
+	 * directory and would have never ended up within
+	 * resolve_trivial_directory_merge() for that directory.
+	 */
+	ci->dirmask &= (~ci->match_mask);
+	ci->filemask &= (~ci->match_mask);
+	assert(!ci->filemask || !ci->dirmask);
 	ci->match_mask = 0;
-	ci->merged.clean = 1; /* (ci->filemask == 0); */
+	ci->merged.clean = !ci->df_conflict || ci->dirmask;
+	ci->df_conflict = 0;
 }
 
 static int handle_deferred_entries(struct merge_options *opt,
