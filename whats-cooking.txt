@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Dec 2025, #08)
-X-master-at: 7c7698a654a7a0031f65b0ab0c1c4e438e95df60
-X-next-at: 33f00ee1fdef3746fc261e8e25787a197c83334f
+Subject: What's cooking in git.git (Dec 2025, #09)
+X-master-at: 68cb7f9e92a5d8e9824f5b52ac3d0a9d8f653dbe
+X-next-at: f8a7f5d287e066c1aa17ad0b3043598cd432f923
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Dec 2025, #08)
+What's cooking in git.git (Dec 2025, #09)
 -----------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -48,125 +48,178 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ap/packfile-promisor-object-optim (2025-12-08) 2 commits
-  (merged to 'next' on 2025-12-18 at ee94076814)
- + packfile: skip hash checks in add_promisor_object()
- + object: apply skip_hash and discard_tree optimizations to unknown blobs too
+* dk/ci-rust-fix (2025-12-18) 2 commits
+  (merged to 'next' on 2025-12-22 at 5f7e5b040b)
+ + rust: build correctly without GNU sed
+ + Merge branch 'ps/ci-rust' into dk/ci-rust-fix
 
- The code path that enumerates promisor objects have been optimized
- to skip pointlessly parsing blob objects.
- cf. <xmqqecot3dm1.fsf@gitster.g>
- source: <20251209014900.402637-1-aplattner@nvidia.com>
+ Build fix.
+ source: <a33f4e5118938300bcd5b2991feeee855a1c8f86.1766100330.git.ben.knoble+github@gmail.com>
 
 
-* ds/doc-scalar-config (2025-12-12) 5 commits
-  (merged to 'next' on 2025-12-16 at 221721824f)
- + scalar: document config settings
- + scalar: alphabetize and simplify config
- + scalar: remove stale config values
- + scalar: use index.skipHash=true for performance
- + scalar: annotate config file with "set by scalar"
+* gf/clear-path-cache-cleanup (2025-12-18) 1 commit
+  (merged to 'next' on 2025-12-22 at 748d7c2c93)
+ + repository: remove duplicate free of cache->squash_msg
 
- Documentation updates.
- source: <pull.2010.v3.git.1765552528.gitgitgadget@gmail.com>
+ Code clean-up.
+ source: <pull.2132.v2.git.git.1766072952115.gitgitgadget@gmail.com>
 
 
-* ja/doc-misc-fixes (2025-12-19) 2 commits
-  (merged to 'next' on 2025-12-20 at 2dafdb9732)
- + doc: correct minor wording issues
- + doc: fix asciidoc markup issues in several files
+* gf/maintenance-is-needed-fix (2025-12-18) 1 commit
+  (merged to 'next' on 2025-12-22 at a84d7e8a32)
+ + refs: dereference the value of the required pointer
 
- Various documentation fixes.
- source: <pull.2016.v2.git.1766170456.gitgitgadget@gmail.com>
-
-
-* jc/c99-fam (2025-12-12) 1 commit
-  (merged to 'next' on 2025-12-18 at c11ebcf075)
- + FLEX_ARRAY: require platforms to support the C99 syntax
-
- Require C99 style flexible array member support from all platforms.
- source: <xmqqqzszc13d.fsf@gitster.g>
+ Brown-paper-bag fix to a recently graduated
+ 'kn/maintenance-is-needed' topic.
+ source: <pull.2130.git.git.1766074249443.gitgitgadget@gmail.com>
 
 
-* jc/completion-no-single-letter-options (2025-12-06) 1 commit
-  (merged to 'next' on 2025-12-17 at d8ae4b5ac4)
- + completion: clarify support for short options and arguments
+* jc/object-read-stream-fix (2025-12-17) 2 commits
+  (merged to 'next' on 2025-12-23 at b26856ce64)
+ + odb: do not use "blank" substitute for NULL
+ + Merge branch 'ps/object-read-stream' into jc/object-read-stream-fix
+ (this branch is used by ps/read-object-info-improvements.)
 
- In-code comment update to clarify that single-letter options are
- outside of the scope of command line completion script.
- source: <xmqqzf7vm7b7.fsf@gitster.g>
-
-
-* jc/doc-commit-signoff-config (2025-12-19) 2 commits
-  (merged to 'next' on 2025-12-19 at 0814c687bb)
- + signoff-option: linkify the reference to gitfaq
-  (merged to 'next' on 2025-12-18 at 27c9ad156c)
- + commit: document that $command.signoff will not be added
-
- Documentation update.
- source: <xmqqv7i62r6w.fsf@gitster.g>
+ Fix a performance regression in recently graduated topic.
+ source: <xmqqpl8cxy0j.fsf@gitster.g>
 
 
-* jc/memzero-array (2025-12-12) 3 commits
-  (merged to 'next' on 2025-12-17 at 0dd398f0b4)
- + cocci: use MEMZERO_ARRAY() a bit more
- + coccicheck: emit the contents of cocci patch
- + Merge branch 'tc/memzero-array' into jc/memzero-array
- (this branch uses tc/memzero-array.)
+* jk/test-curl-updates (2025-12-18) 2 commits
+  (merged to 'next' on 2025-12-23 at ef92594ee8)
+ + t5563: add missing end-of-line in HTTP header
+ + t5551: handle trailing slashes in expected cookies output
 
- Further application of MEMZERO_ARRAY() macro to the rest of the
- code base.
- source: <20251213014628.3380826-1-gitster@pobox.com>
+ Update HTTP tests to adjust for changes in curl 8.18.0
+ source: <20251218121120.GA3252258@coredump.intra.peff.net>
 
 
-* jc/submodule-add (2025-11-15) 1 commit
-  (merged to 'next' on 2025-12-17 at 03e0b0b5d9)
- + submodule add: sanity check existing .gitmodules
+* js/test-func-comment-fix (2025-12-18) 1 commit
+  (merged to 'next' on 2025-12-22 at 5eadd4ae77)
+ + test_detect_ref_format: fix comment
 
- "git submodule add" to add a submodule under <name> segfaulted,
- when a submodule.<name>.something is already in .gitmodules file
- without defining where its submodule.<name>.path is, which has been
- corrected.
- source: <xmqqv7jacvdq.fsf@gitster.g>
+ Comment fix.
+ source: <pull.2019.git.1766071259531.gitgitgadget@gmail.com>
 
 
-* kn/fix-fetch-backfill-tag-with-batched-ref-updates (2025-11-21) 3 commits
-  (merged to 'next' on 2025-12-17 at 3955b0be68)
- + fetch: fix failed batched updates skipping operations
- + fetch: fix non-conflicting tags not being committed
- + fetch: extract out reference committing logic
+* js/test-symlink-windows (2025-12-17) 10 commits
+  (merged to 'next' on 2025-12-22 at 3eaa789d0d)
+ + t7800: work around the MSYS path conversion on Windows
+ + t6423: introduce Windows-specific handling for symlinking to /dev/null
+ + t1305: skip symlink tests that do not apply to Windows
+ + t1006: accommodate for symlink support in MSYS2
+ + t0600: fix incomplete prerequisite for a test case
+ + t0301: another fix for Windows compatibility
+ + t0001: handle `diff --no-index` gracefully
+ + mingw: special-case `open(symlink, O_CREAT | O_EXCL)`
+ + apply: symbolic links lack a "trustable executable bit"
+ + t9700: accommodate for Windows paths
+ (this branch is used by js/prep-symlink-windows and js/symlink-windows.)
 
- "git fetch" that involves fetching tags, when a tag being fetched
- needs to overwrite existing one, failed to fetch other tags, which
- has been corrected.
- source: <20251121-fix-tags-not-fetching-v8-0-23b53a8a8334@gmail.com>
-
-
-* rs/diff-files-r-find-copies-fix (2025-12-14) 2 commits
-  (merged to 'next' on 2025-12-17 at 2c9d72ec4b)
- + diff-files: fix copy detection
- + Merge branch 'rs/diff-index-find-copies-harder-optim' into rs/diff-files-r-find-copies-fix
-
- "git diff-files -R --find-copies-harder" has been taught to use
- the potential copy sources from the index correctly.
- source: <4b06a448-0935-4f2a-9061-238c7cc800c3@web.de>
+ Prepare test suite for Git for Windows that supports symbolic
+ links.
+ source: <pull.2009.v4.git.1765981126.gitgitgadget@gmail.com>
 
 
-* tc/memzero-array (2025-12-10) 3 commits
-  (merged to 'next' on 2025-12-17 at 4d2f7755b5)
- + contrib/coccinelle: pass include paths to spatch(1)
- + git-compat-util: introduce MEMZERO_ARRAY() macro
- + Merge branch 'tc/last-modified-active-paths-optimization' into tc/memzero-array
- (this branch is used by jc/memzero-array.)
+* jt/doc-rev-list-filter-provided-objects (2025-12-15) 1 commit
+  (merged to 'next' on 2025-12-22 at 31970a567d)
+ + docs: clarify git-rev-list(1) --filter behavior
 
- MEMZERO_ARRAY() helper is introduced to avoid clearing only the
- first N bytes of an N-element array whose elements are larger than
- a byte.
- cf. <aTpieqFoMmZiSzWS@pks.im>
- source: <20251210-toon-cocci-memzero-v1-0-ae916a79065b@iotcl.com>
+ Document "rev-list --filter-provided-objects" better.
+ source: <20251215200512.2694155-1-jltobler@gmail.com>
+
+
+* jt/repo-struct-more-objinfo (2025-12-17) 7 commits
+  (merged to 'next' on 2025-12-22 at d04904c31c)
+ + builtin/repo: add object disk size info to structure table
+ + builtin/repo: add disk size info to keyvalue stucture output
+ + builtin/repo: add inflated object info to structure table
+ + builtin/repo: add inflated object info to keyvalue structure output
+ + builtin/repo: humanise count values in structure output
+ + strbuf: split out logic to humanise byte values
+ + builtin/repo: group per-type object values into struct
+
+ More object database related information are shown in "git repo
+ structure" output.
+ source: <20251217175404.37963-1-jltobler@gmail.com>
+
+
+* mh/doc-core-attributesfile (2025-12-17) 1 commit
+  (merged to 'next' on 2025-12-22 at 5d68c3ef97)
+ + docs: note the type of core.attributesfile
+
+ Doc update.
+ source: <20251217195917.25710-1-matthewhughes934@gmail.com>
+
+
+* ps/repack-avoid-noop-midx-rewrite (2025-12-10) 3 commits
+  (merged to 'next' on 2025-12-22 at 0d3b9de55c)
+ + midx-write: skip rewriting MIDX with `--stdin-packs` unless needed
+ + midx-write: extract function to test whether MIDX needs updating
+ + midx: fix `BUG()` when getting preferred pack without a reverse index
+
+ Even when there is no changes in the packfile and no need to
+ recompute bitmaps, "git repack" recomputed and updated the MIDX
+ file, which has been corrected.
+ source: <20251210-pks-skip-noop-rewrite-v2-0-f813a9e44f28@pks.im>
 
 --------------------------------------------------
 [New Topics]
+
+* dd/t5403-modernise (2025-12-29) 1 commit
+ - t5403: use test_path_is_file instead of test -f
+
+ Test micro-clean-up.
+
+ Will merge to 'next'.
+ source: <20251229185737.2328-1-deveshigurgaon@gmail.com>
+
+
+* ds/diff-lazy-fetch-with-name-only-fix (2025-12-29) 1 commit
+ - diff: avoid segfault with freed entries
+
+ Running "git diff" with "--name-only" and other options that allows
+ us not to look at the blob contents, while objects that are lazily
+ fetched from a promisor remote, caused use-after-free, which has
+ been corrected.
+
+ Will merge to 'next'.
+ source: <pull.2027.git.1767044697712.gitgitgadget@gmail.com>
+
+
+* en/fsck-snapshot-ref-state (2025-12-29) 1 commit
+ - fsck: snapshot default refs before object walk
+
+ "git fsck" used inconsistent set of refs to show a confused
+ warning, which has been corrected.
+
+ Will merge to 'next'?
+ source: <pull.2026.git.1767035549378.gitgitgadget@gmail.com>
+
+
+* en/ort-recursive-d-f-conflict-fix (2025-12-29) 1 commit
+ - merge-ort: fix corner case recursive submodule/directory conflict handling
+
+ The ort merge machinery was hit an assertion failure in a history
+ with criss-cross merges renamed a directory and a non-directory,
+ which has been corrected.
+
+ Will merge to 'next'.
+ source: <pull.2023.git.1767033783800.gitgitgadget@gmail.com>
+
+
+* rs/tag-wo-the-repository (2025-12-28) 4 commits
+ - tag: stop using the_repository
+ - tag: support arbitrary repositories in parse_tag()
+ - tag: support arbitrary repositories in gpg_verify_tag()
+ - tag: use algo of repo parameter in parse_tag_buffer()
+
+ Code clean-up.
+
+ Will merge to 'next'.
+ source: <20251228181051.68724-1-l.s.r@web.de>
+
+--------------------------------------------------
+[Cooking]
 
 * kh/replay-invalid-onto-advance (2025-12-22) 2 commits
  - t3650: add more regression tests for failure conditions
@@ -229,11 +282,12 @@ Release tarballs are available at:
 
 
 * rs/parse-config-expiry-simplify (2025-12-27) 1 commit
- - config: use git_parse_int() in git_config_get_expiry_in_days()
+  (merged to 'next' on 2025-12-30 at 138de1df67)
+ + config: use git_parse_int() in git_config_get_expiry_in_days()
 
  Code clean-up.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <1bd3c7f3-fcf6-4d8e-aa38-c15e3d51ce4c@web.de>
 
 
@@ -256,8 +310,6 @@ Release tarballs are available at:
  Comments?
  source: <pull.2144.git.git.1766850014289.gitgitgadget@gmail.com>
 
---------------------------------------------------
-[Cooking]
 
 * sb/bundle-uri-without-uri (2025-12-19) 1 commit
  - bundle-uri: validate that bundle entries have a uri
@@ -313,22 +365,13 @@ Release tarballs are available at:
  - mingw: implement `stat()` with symlink support
  - mingw: don't call `GetFileAttributes()` twice in `mingw_lstat()`
  - Merge branch 'js/prep-symlink-windows' into js/symlink-windows
- (this branch uses js/prep-symlink-windows and js/test-symlink-windows.)
+ (this branch uses js/prep-symlink-windows.)
 
  Upstream symbolic link support on Windows from Git-for-Windows.
 
- Will merge to 'next'?
+ Expecting review responses.
+ cf. <19030791-dafa-4a63-985b-9cdf423bfd1b@kdbg.org>
  source: <pull.2018.git.1765980535.gitgitgadget@gmail.com>
-
-
-* mh/doc-core-attributesfile (2025-12-17) 1 commit
-  (merged to 'next' on 2025-12-22 at 5d68c3ef97)
- + docs: note the type of core.attributesfile
-
- Doc update.
-
- Will merge to 'master'.
- source: <20251217195917.25710-1-matthewhughes934@gmail.com>
 
 
 * pc/lockfile-pid (2025-12-17) 1 commit
@@ -337,18 +380,6 @@ Release tarballs are available at:
  Allow recording process ID of the process that holds the lock next
  to a lockfile for diagnosis.
  source: <pull.2011.v2.git.1765997966593.gitgitgadget@gmail.com>
-
-
-* jc/object-read-stream-fix (2025-12-17) 2 commits
-  (merged to 'next' on 2025-12-23 at b26856ce64)
- + odb: do not use "blank" substitute for NULL
- + Merge branch 'ps/object-read-stream' into jc/object-read-stream-fix
- (this branch is used by ps/read-object-info-improvements.)
-
- Fix a performance regression in recently graduated topic.
-
- Will merge to 'master'.
- source: <xmqqpl8cxy0j.fsf@gitster.g>
 
 
 * js/neuter-sideband (2025-12-17) 4 commits
@@ -374,75 +405,11 @@ Release tarballs are available at:
  - packfile: always declare object info to be OI_PACKED
  - object-file: always set OI_LOOSE when reading object info
  - Merge branch 'jc/object-read-stream-fix' into ps/read-object-info-improvements
- (this branch uses jc/object-read-stream-fix.)
 
  The object-info API has been cleaned up.
 
  Comments?
  source: <20251218-b4-pks-odb-read-object-info-improvements-v2-0-62e3e49072bc@pks.im>
-
-
-* jk/test-curl-updates (2025-12-18) 2 commits
-  (merged to 'next' on 2025-12-23 at ef92594ee8)
- + t5563: add missing end-of-line in HTTP header
- + t5551: handle trailing slashes in expected cookies output
-
- Update HTTP tests to adjust for changes in curl 8.18.0
-
- Will merge to 'master'.
- source: <20251218121120.GA3252258@coredump.intra.peff.net>
-
-
-* dk/ci-rust-fix (2025-12-18) 2 commits
-  (merged to 'next' on 2025-12-22 at 5f7e5b040b)
- + rust: build correctly without GNU sed
- + Merge branch 'ps/ci-rust' into dk/ci-rust-fix
-
- Build fix.
-
- Will merge to 'master'.
- source: <a33f4e5118938300bcd5b2991feeee855a1c8f86.1766100330.git.ben.knoble+github@gmail.com>
-
-
-* gf/clear-path-cache-cleanup (2025-12-18) 1 commit
-  (merged to 'next' on 2025-12-22 at 748d7c2c93)
- + repository: remove duplicate free of cache->squash_msg
-
- Code clean-up.
-
- Will merge to 'master'.
- source: <pull.2132.v2.git.git.1766072952115.gitgitgadget@gmail.com>
-
-
-* gf/maintenance-is-needed-fix (2025-12-18) 1 commit
-  (merged to 'next' on 2025-12-22 at a84d7e8a32)
- + refs: dereference the value of the required pointer
-
- Brown-paper-bag fix to a recently graduated
- 'kn/maintenance-is-needed' topic.
-
- Will merge to 'master'.
- source: <pull.2130.git.git.1766074249443.gitgitgadget@gmail.com>
-
-
-* js/test-func-comment-fix (2025-12-18) 1 commit
-  (merged to 'next' on 2025-12-22 at 5eadd4ae77)
- + test_detect_ref_format: fix comment
-
- Comment fix.
-
- Will merge to 'master'.
- source: <pull.2019.git.1766071259531.gitgitgadget@gmail.com>
-
-
-* jt/doc-rev-list-filter-provided-objects (2025-12-15) 1 commit
-  (merged to 'next' on 2025-12-22 at 31970a567d)
- + docs: clarify git-rev-list(1) --filter behavior
-
- Document "rev-list --filter-provided-objects" better.
-
- Will merge to 'master'.
- source: <20251215200512.2694155-1-jltobler@gmail.com>
 
 
 * tb/macos-iconv-workarounds (2025-12-15) 6 commits
@@ -469,11 +436,12 @@ Release tarballs are available at:
  - init: do parse _all_ core.* settings early
  - mingw: do resolve symlinks in `getcwd()`
  - Merge branch 'js/test-symlink-windows' into js/prep-symlink-windows
- (this branch is used by js/symlink-windows; uses js/test-symlink-windows.)
+ (this branch is used by js/symlink-windows.)
 
  Further preparation to upstream symbolic link support on Windows.
 
- Will merge to 'next'?
+ Expecting review responses.
+ cf. <xmqqcy3wh8d1.fsf@gitster.g>
  source: <pull.2017.git.1765899229.gitgitgadget@gmail.com>
 
 
@@ -505,23 +473,6 @@ Release tarballs are available at:
  source: <20251218-b4-pks-pack-store-via-source-v2-0-62849007ce21@pks.im>
 
 
-* jt/repo-struct-more-objinfo (2025-12-17) 7 commits
-  (merged to 'next' on 2025-12-22 at d04904c31c)
- + builtin/repo: add object disk size info to structure table
- + builtin/repo: add disk size info to keyvalue stucture output
- + builtin/repo: add inflated object info to structure table
- + builtin/repo: add inflated object info to keyvalue structure output
- + builtin/repo: humanise count values in structure output
- + strbuf: split out logic to humanise byte values
- + builtin/repo: group per-type object values into struct
-
- More object database related information are shown in "git repo
- structure" output.
-
- Will merge to 'master'.
- source: <20251217175404.37963-1-jltobler@gmail.com>
-
-
 * rs/macos-iconv-workaround (2025-12-24) 2 commits
   (merged to 'next' on 2025-12-28 at 94ed776719)
  + macOS: use iconv from Homebrew if needed and present
@@ -543,21 +494,6 @@ Release tarballs are available at:
 
  Comments?
  source: <20251209194616.61620-1-lucasseikioshiro@gmail.com>
-
-
-* ps/repack-avoid-noop-midx-rewrite (2025-12-10) 3 commits
-  (merged to 'next' on 2025-12-22 at 0d3b9de55c)
- + midx-write: skip rewriting MIDX with `--stdin-packs` unless needed
- + midx-write: extract function to test whether MIDX needs updating
- + midx: fix `BUG()` when getting preferred pack without a reverse index
-
- Even when there is no changes in the packfile and no need to
- recompute bitmaps, "git repack" recomputed and updated the MIDX
- file, which has been corrected.
-
- Will merge to 'master'.
- cf.
- source: <20251210-pks-skip-noop-rewrite-v2-0-f813a9e44f28@pks.im>
 
 
 * sb/doc-update-ref-markup-fix (2025-12-08) 1 commit
@@ -644,27 +580,6 @@ Release tarballs are available at:
  cf. <aTFvKOHlm4zfT9dU@pks.im>
  cf. <4d83375b-76e2-4420-80dd-6a04d3201532@gmail.com>
  source: <20251130131351.GA198697@coredump.intra.peff.net>
-
-
-* js/test-symlink-windows (2025-12-17) 10 commits
-  (merged to 'next' on 2025-12-22 at 3eaa789d0d)
- + t7800: work around the MSYS path conversion on Windows
- + t6423: introduce Windows-specific handling for symlinking to /dev/null
- + t1305: skip symlink tests that do not apply to Windows
- + t1006: accommodate for symlink support in MSYS2
- + t0600: fix incomplete prerequisite for a test case
- + t0301: another fix for Windows compatibility
- + t0001: handle `diff --no-index` gracefully
- + mingw: special-case `open(symlink, O_CREAT | O_EXCL)`
- + apply: symbolic links lack a "trustable executable bit"
- + t9700: accommodate for Windows paths
- (this branch is used by js/prep-symlink-windows and js/symlink-windows.)
-
- Prepare test suite for Git for Windows that supports symbolic
- links.
-
- Will merge to 'master'.
- source: <pull.2009.v4.git.1765981126.gitgitgadget@gmail.com>
 
 
 * tc/last-modified-options-cleanup (2025-11-26) 4 commits
