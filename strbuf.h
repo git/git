@@ -367,6 +367,31 @@ void strbuf_addbuf_percentquote(struct strbuf *dst, const struct strbuf *src);
  */
 void strbuf_add_percentencode(struct strbuf *dst, const char *src, int flags);
 
+enum humanise_flags {
+	/*
+	 * Use rate based units for humanised values.
+	 */
+	HUMANISE_RATE = (1 << 0),
+	/*
+	 * Use compact "B" unit symbol instead of "byte/bytes" for humanised
+	 * values.
+	 */
+	HUMANISE_COMPACT = (1 << 1),
+};
+
+/**
+ * Converts the given byte size into a downscaled human-readable value and
+ * corresponding unit as two separate strings.
+ */
+void humanise_bytes(off_t bytes, char **value, const char **unit,
+		    unsigned flags);
+
+/**
+ * Converts the given count into a downscaled human-readable value and
+ * corresponding unit as two separate strings.
+ */
+void humanise_count(size_t count, char **value, const char **unit);
+
 /**
  * Append the given byte size as a human-readable string (i.e. 12.23 KiB,
  * 3.50 MiB).
