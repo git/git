@@ -10,6 +10,12 @@ int utf8_width(const char **start, size_t *remainder_p);
 int utf8_strnwidth(const char *string, size_t len, int skip_ansi);
 int utf8_strwidth(const char *string);
 int is_utf8(const char *text);
+
+/*
+ * Checks that the string is valid UTF-8 that does not contain the null byte
+ * except at the end of the string
+ */
+int is_valid_utf8(const char *text, size_t len);
 int is_encoding_utf8(const char *name);
 int same_encoding(const char *, const char *);
 __attribute__((format (printf, 2, 3)))
@@ -47,6 +53,12 @@ static inline char *reencode_string(const char *in,
 				   out_encoding, in_encoding,
 				   NULL);
 }
+
+/*
+ * Returns true if an unicode BOM is detected and the string can be reencoded to UTF-8.
+ * In that case the string is reencoded to UTF-8 in *out_text.
+ */
+int try_reencode_to_utf8(const char *text, size_t len, char **out_text, size_t *out_len);
 
 int mbs_chrlen(const char **text, size_t *remainder_p, const char *encoding);
 
