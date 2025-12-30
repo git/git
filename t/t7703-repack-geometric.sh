@@ -287,6 +287,41 @@ test_expect_success '--geometric with pack.packSizeLimit' '
 	)
 '
 
+test_expect_success '--geometric --write-midx retains up-to-date MIDX without bitmap index' '
+	test_when_finished "rm -fr repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		test_commit initial &&
+
+		test_path_is_missing .git/objects/pack/multi-pack-index &&
+		git repack --geometric=2 --write-midx --no-write-bitmap-index &&
+		test_path_is_file .git/objects/pack/multi-pack-index &&
+		test-tool chmtime =0 .git/objects/pack/multi-pack-index &&
+
+		ls -l .git/objects/pack/ >expect &&
+		git repack --geometric=2 --write-midx --no-write-bitmap-index &&
+		ls -l .git/objects/pack/ >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success '--geometric --write-midx retains up-to-date MIDX with bitmap index' '
+	test_when_finished "rm -fr repo" &&
+	git init repo &&
+	test_commit -C repo initial &&
+
+	test_path_is_missing repo/.git/objects/pack/multi-pack-index &&
+	git -C repo repack --geometric=2 --write-midx --write-bitmap-index &&
+	test_path_is_file repo/.git/objects/pack/multi-pack-index &&
+	test-tool chmtime =0 repo/.git/objects/pack/multi-pack-index &&
+
+	ls -l repo/.git/objects/pack/ >expect &&
+	git -C repo repack --geometric=2 --write-midx --write-bitmap-index &&
+	ls -l repo/.git/objects/pack/ >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success '--geometric --write-midx with packfiles in main and alternate ODB' '
 	test_when_finished "rm -fr shared member" &&
 

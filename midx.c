@@ -686,7 +686,7 @@ int midx_preferred_pack(struct multi_pack_index *m, uint32_t *pack_int_id)
 {
 	if (m->preferred_pack_idx == -1) {
 		uint32_t midx_pos;
-		if (load_midx_revindex(m) < 0) {
+		if (load_midx_revindex(m)) {
 			m->preferred_pack_idx = -2;
 			return -1;
 		}
