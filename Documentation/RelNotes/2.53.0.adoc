@@ -31,6 +31,9 @@ UI, Workflows & Features
 
  * "git repo struct" learned to take "-z" as a synonym to "--format=nul".
 
+ * More object database related information are shown in "git repo
+   structure" output.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -82,6 +85,9 @@ Performance, Internal Implementation, Development Support etc.
 
  * The code path that enumerates promisor objects have been optimized
    to skip pointlessly parsing blob objects.
+
+ * Prepare test suite for Git for Windows that supports symbolic
+   links.
 
 
 Fixes since v2.52
@@ -204,6 +210,17 @@ Fixes since v2.52
    has been corrected.
    (merge b7b17ec8a6 kn/fix-fetch-backfill-tag-with-batched-ref-updates later to maint).
 
+ * Document "rev-list --filter-provided-objects" better.
+   (merge 6d8dc99478 jt/doc-rev-list-filter-provided-objects later to maint).
+
+ * Even when there is no changes in the packfile and no need to
+   recompute bitmaps, "git repack" recomputed and updated the MIDX
+   file, which has been corrected.
+   (merge 6ce9d558ce ps/repack-avoid-noop-midx-rewrite later to maint).
+
+ * Update HTTP tests to adjust for changes in curl 8.18.0
+   (merge 17f4b01da7 jk/test-curl-updates later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 46207a54cc qj/doc-http-bad-want-response later to maint).
    (merge df90eccd93 kh/doc-commit-extra-references later to maint).
@@ -221,3 +238,7 @@ Fixes since v2.52
    (merge 4ce170c522 ds/doc-scalar-config later to maint).
    (merge a0c813951a jc/doc-commit-signoff-config later to maint).
    (merge 8ee262985a ja/doc-misc-fixes later to maint).
+   (merge 1722c2244b mh/doc-core-attributesfile later to maint).
+   (merge c469ca26c5 dk/ci-rust-fix later to maint).
+   (merge 12f0be0857 gf/clear-path-cache-cleanup later to maint).
+   (merge 949df6ed6b js/test-func-comment-fix later to maint).
