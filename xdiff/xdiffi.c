@@ -311,25 +311,12 @@ int xdl_recs_cmp(xdfile_t *xdf1, long off1, long lim1,
 }
 
 
-int xdl_do_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
-		xdfenv_t *xe) {
+int xdl_do_classic_diff(xdfenv_t *xe, uint64_t flags)
+{
 	long ndiags;
 	long *kvd, *kvdf, *kvdb;
 	xdalgoenv_t xenv;
 	int res;
-
-	if (xdl_prepare_env(mf1, mf2, xpp, xe) < 0)
-		return -1;
-
-	if (XDF_DIFF_ALG(xpp->flags) == XDF_PATIENCE_DIFF) {
-		res = xdl_do_patience_diff(xpp, xe);
-		goto out;
-	}
-
-	if (XDF_DIFF_ALG(xpp->flags) == XDF_HISTOGRAM_DIFF) {
-		res = xdl_do_histogram_diff(xpp, xe);
-		goto out;
-	}
 
 	/*
 	 * Allocate and setup K vectors to be used by the differential
@@ -355,9 +342,33 @@ int xdl_do_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
 	xenv.heur_min = XDL_HEUR_MIN_COST;
 
 	res = xdl_recs_cmp(&xe->xdf1, 0, xe->xdf1.nreff, &xe->xdf2, 0, xe->xdf2.nreff,
-			   kvdf, kvdb, (xpp->flags & XDF_NEED_MINIMAL) != 0,
+			   kvdf, kvdb, (flags & XDF_NEED_MINIMAL) != 0,
 			   &xenv);
+
 	xdl_free(kvd);
+
+	return res;
+}
+
+
+int xdl_do_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
+		xdfenv_t *xe) {
+	int res;
+
+	if (xdl_prepare_env(mf1, mf2, xpp, xe) < 0)
+		return -1;
+
+	if (XDF_DIFF_ALG(xpp->flags) == XDF_PATIENCE_DIFF) {
+		res = xdl_do_patience_diff(xpp, xe);
+		goto out;
+	}
+
+	if (XDF_DIFF_ALG(xpp->flags) == XDF_HISTOGRAM_DIFF) {
+		res = xdl_do_histogram_diff(xpp, xe);
+		goto out;
+	}
+
+	res = xdl_do_classic_diff(xe, xpp->flags);
  out:
 	if (res < 0)
 		xdl_free_env(xe);
