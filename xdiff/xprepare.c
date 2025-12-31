@@ -173,7 +173,6 @@ static int xdl_prepare_ctx(mmfile_t *mf, xdfile_t *xdf, uint64_t flags) {
 
 	xdf->changed += 1;
 	xdf->nreff = 0;
-	xdf->dend = xdf->nrec - 1;
 
 	return 0;
 
@@ -267,6 +266,8 @@ static int xdl_cleanup_records(xdlclassifier_t *cf, xdfenv_t *xe) {
 	uint8_t *action1 = NULL, *action2 = NULL;
 	bool need_min = !!(cf->flags & XDF_NEED_MINIMAL);
 	int ret = 0;
+	ptrdiff_t dend1 = xe->xdf1.nrec - 1 - xe->delta_end;
+	ptrdiff_t dend2 = xe->xdf2.nrec - 1 - xe->delta_end;
 
 	/*
 	 * Create temporary arrays that will help us decide if
@@ -286,7 +287,7 @@ static int xdl_cleanup_records(xdlclassifier_t *cf, xdfenv_t *xe) {
 	 */
 	if ((mlim = xdl_bogosqrt((long)xe->xdf1.nrec)) > XDL_MAX_EQLIMIT)
 		mlim = XDL_MAX_EQLIMIT;
-	for (i = xe->delta_start, recs = &xe->xdf1.recs[xe->delta_start]; i <= xe->xdf1.dend; i++, recs++) {
+	for (i = xe->delta_start, recs = &xe->xdf1.recs[xe->delta_start]; i <= dend1; i++, recs++) {
 		rcrec = cf->rcrecs[recs->minimal_perfect_hash];
 		nm = rcrec ? rcrec->len2 : 0;
 		action1[i] = (nm == 0) ? DISCARD: (nm >= mlim && !need_min) ? INVESTIGATE: KEEP;
@@ -294,7 +295,7 @@ static int xdl_cleanup_records(xdlclassifier_t *cf, xdfenv_t *xe) {
 
 	if ((mlim = xdl_bogosqrt((long)xe->xdf2.nrec)) > XDL_MAX_EQLIMIT)
 		mlim = XDL_MAX_EQLIMIT;
-	for (i = xe->delta_start, recs = &xe->xdf2.recs[xe->delta_start]; i <= xe->xdf2.dend; i++, recs++) {
+	for (i = xe->delta_start, recs = &xe->xdf2.recs[xe->delta_start]; i <= dend2; i++, recs++) {
 		rcrec = cf->rcrecs[recs->minimal_perfect_hash];
 		nm = rcrec ? rcrec->len1 : 0;
 		action2[i] = (nm == 0) ? DISCARD: (nm >= mlim && !need_min) ? INVESTIGATE: KEEP;
@@ -306,9 +307,9 @@ static int xdl_cleanup_records(xdlclassifier_t *cf, xdfenv_t *xe) {
 	 */
 	xe->xdf1.nreff = 0;
 	for (i = xe->delta_start, recs = &xe->xdf1.recs[xe->delta_start];
-	     i <= xe->xdf1.dend; i++, recs++) {
+	     i <= dend1; i++, recs++) {
 		if (action1[i] == KEEP ||
-		    (action1[i] == INVESTIGATE && !xdl_clean_mmatch(action1, i, xe->delta_start, xe->xdf1.dend))) {
+		    (action1[i] == INVESTIGATE && !xdl_clean_mmatch(action1, i, xe->delta_start, dend1))) {
 			xe->xdf1.reference_index[xe->xdf1.nreff++] = i;
 			/* changed[i] remains false, i.e. keep */
 		} else
@@ -318,9 +319,9 @@ static int xdl_cleanup_records(xdlclassifier_t *cf, xdfenv_t *xe) {
 
 	xe->xdf2.nreff = 0;
 	for (i = xe->delta_start, recs = &xe->xdf2.recs[xe->delta_start];
-	     i <= xe->xdf2.dend; i++, recs++) {
+	     i <= dend2; i++, recs++) {
 		if (action2[i] == KEEP ||
-		    (action2[i] == INVESTIGATE && !xdl_clean_mmatch(action2, i, xe->delta_start, xe->xdf2.dend))) {
+		    (action2[i] == INVESTIGATE && !xdl_clean_mmatch(action2, i, xe->delta_start, dend2))) {
 			xe->xdf2.reference_index[xe->xdf2.nreff++] = i;
 			/* changed[i] remains false, i.e. keep */
 		} else
@@ -357,8 +358,7 @@ static void xdl_trim_ends(xdfenv_t *xe)
 		size_t mph1 = xe->xdf1.recs[xe->xdf1.nrec - 1 - i].minimal_perfect_hash;
 		size_t mph2 = xe->xdf2.recs[xe->xdf2.nrec - 1 - i].minimal_perfect_hash;
 		if (mph1 != mph2) {
-			xe->xdf1.dend = xe->xdf1.nrec - 1 - i;
-			xe->xdf2.dend = xe->xdf2.nrec - 1 - i;
+			xe->delta_end = i;
 			break;
 		}
 	}
@@ -370,6 +370,7 @@ int xdl_prepare_env(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
 	xdlclassifier_t cf;
 
 	xe->delta_start = 0;
+	xe->delta_end = 0;
 
 	if (xdl_prepare_ctx(mf1, &xe->xdf1, xpp->flags) < 0) {
 
