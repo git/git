@@ -24,14 +24,6 @@
 #include "compat/ivec.h"
 
 
-#define XDL_KPDIS_RUN 4
-#define XDL_MAX_EQLIMIT 1024
-#define XDL_SIMSCAN_WINDOW 100
-
-#define DISCARD 0
-#define KEEP 1
-#define INVESTIGATE 2
-
 typedef struct s_xdlclass {
 	struct s_xdlclass *next;
 	xrecord_t rec;
@@ -48,8 +40,6 @@ typedef struct s_xdlclassifier {
 	long count;
 	long flags;
 } xdlclassifier_t;
-
-
 
 
 static int xdl_init_classifier(xdlclassifier_t *cf, long size, long flags) {
@@ -186,175 +176,6 @@ void xdl_free_env(xdfenv_t *xe) {
 }
 
 
-static bool xdl_clean_mmatch(uint8_t const *action, long i, long s, long e) {
-	long r, rdis0, rpdis0, rdis1, rpdis1;
-
-	/*
-	 * Limits the window that is examined during the similar-lines
-	 * scan. The loops below stops when action[i - r] == KEEP
-	 * (line that has no match), but there are corner cases where
-	 * the loop proceed all the way to the extremities by causing
-	 * huge performance penalties in case of big files.
-	 */
-	if (i - s > XDL_SIMSCAN_WINDOW)
-		s = i - XDL_SIMSCAN_WINDOW;
-	if (e - i > XDL_SIMSCAN_WINDOW)
-		e = i + XDL_SIMSCAN_WINDOW;
-
-	/*
-	 * Scans the lines before 'i' to find a run of lines that either
-	 * have no match (action[j] == DISCARD) or have multiple matches
-	 * (action[j] == INVESTIGATE). Note that we always call this
-	 * function with action[i] == INVESTIGATE, so the current line
-	 * (i) is already a multimatch line.
-	 */
-	for (r = 1, rdis0 = 0, rpdis0 = 1; (i - r) >= s; r++) {
-		if (action[i - r] == DISCARD)
-			rdis0++;
-		else if (action[i - r] == INVESTIGATE)
-			rpdis0++;
-		else if (action[i - r] == KEEP)
-			break;
-		else
-			BUG("Illegal value for action[i - r]");
-	}
-	/*
-	 * If the run before the line 'i' found only multimatch lines,
-	 * we return false and hence we don't make the current line (i)
-	 * discarded. We want to discard multimatch lines only when
-	 * they appear in the middle of runs with nomatch lines
-	 * (action[j] == DISCARD).
-	 */
-	if (rdis0 == 0)
-		return 0;
-	for (r = 1, rdis1 = 0, rpdis1 = 1; (i + r) <= e; r++) {
-		if (action[i + r] == DISCARD)
-			rdis1++;
-		else if (action[i + r] == INVESTIGATE)
-			rpdis1++;
-		else if (action[i + r] == KEEP)
-			break;
-		else
-			BUG("Illegal value for action[i + r]");
-	}
-	/*
-	 * If the run after the line 'i' found only multimatch lines,
-	 * we return false and hence we don't make the current line (i)
-	 * discarded.
-	 */
-	if (rdis1 == 0)
-		return false;
-	rdis1 += rdis0;
-	rpdis1 += rpdis0;
-
-	return rpdis1 * XDL_KPDIS_RUN < (rpdis1 + rdis1);
-}
-
-struct xoccurrence
-{
-	size_t file1, file2;
-};
-
-
-DEFINE_IVEC_TYPE(struct xoccurrence, xoccurrence);
-
-
-/*
- * Try to reduce the problem complexity, discard records that have no
- * matches on the other file. Also, lines that have multiple matches
- * might be potentially discarded if they appear in a run of discardable.
- */
-static int xdl_cleanup_records(xdfenv_t *xe, uint64_t flags) {
-	long i;
-	size_t nm, mlim;
-	xrecord_t *recs;
-	uint8_t *action1 = NULL, *action2 = NULL;
-	struct IVec_xoccurrence occ;
-	bool need_min = !!(flags & XDF_NEED_MINIMAL);
-	int ret = 0;
-	ptrdiff_t dend1 = xe->xdf1.nrec - 1 - xe->delta_end;
-	ptrdiff_t dend2 = xe->xdf2.nrec - 1 - xe->delta_end;
-
-	IVEC_INIT(occ);
-	ivec_zero(&occ, xe->mph_size);
-
-	for (size_t j = 0; j < xe->xdf1.nrec; j++) {
-		size_t mph1 = xe->xdf1.recs[j].minimal_perfect_hash;
-		occ.ptr[mph1].file1 += 1;
-	}
-
-	for (size_t j = 0; j < xe->xdf2.nrec; j++) {
-		size_t mph2 = xe->xdf2.recs[j].minimal_perfect_hash;
-		occ.ptr[mph2].file2 += 1;
-	}
-
-	/*
-	 * Create temporary arrays that will help us decide if
-	 * changed[i] should remain false, or become true.
-	 */
-	if (!XDL_CALLOC_ARRAY(action1, xe->xdf1.nrec + 1)) {
-		ret = -1;
-		goto cleanup;
-	}
-	if (!XDL_CALLOC_ARRAY(action2, xe->xdf2.nrec + 1)) {
-		ret = -1;
-		goto cleanup;
-	}
-
-	/*
-	 * Initialize temporary arrays with DISCARD, KEEP, or INVESTIGATE.
-	 */
-	if ((mlim = xdl_bogosqrt((long)xe->xdf1.nrec)) > XDL_MAX_EQLIMIT)
-		mlim = XDL_MAX_EQLIMIT;
-	for (i = xe->delta_start, recs = &xe->xdf1.recs[xe->delta_start]; i <= dend1; i++, recs++) {
-		nm = occ.ptr[recs->minimal_perfect_hash].file2;
-		action1[i] = (nm == 0) ? DISCARD: (nm >= mlim && !need_min) ? INVESTIGATE: KEEP;
-	}
-
-	if ((mlim = xdl_bogosqrt((long)xe->xdf2.nrec)) > XDL_MAX_EQLIMIT)
-		mlim = XDL_MAX_EQLIMIT;
-	for (i = xe->delta_start, recs = &xe->xdf2.recs[xe->delta_start]; i <= dend2; i++, recs++) {
-		nm = occ.ptr[recs->minimal_perfect_hash].file1;
-		action2[i] = (nm == 0) ? DISCARD: (nm >= mlim && !need_min) ? INVESTIGATE: KEEP;
-	}
-
-	/*
-	 * Use temporary arrays to decide if changed[i] should remain
-	 * false, or become true.
-	 */
-	xe->xdf1.nreff = 0;
-	for (i = xe->delta_start, recs = &xe->xdf1.recs[xe->delta_start];
-	     i <= dend1; i++, recs++) {
-		if (action1[i] == KEEP ||
-		    (action1[i] == INVESTIGATE && !xdl_clean_mmatch(action1, i, xe->delta_start, dend1))) {
-			xe->xdf1.reference_index[xe->xdf1.nreff++] = i;
-			/* changed[i] remains false, i.e. keep */
-		} else
-			xe->xdf1.changed[i] = true;
-			/* i.e. discard */
-	}
-
-	xe->xdf2.nreff = 0;
-	for (i = xe->delta_start, recs = &xe->xdf2.recs[xe->delta_start];
-	     i <= dend2; i++, recs++) {
-		if (action2[i] == KEEP ||
-		    (action2[i] == INVESTIGATE && !xdl_clean_mmatch(action2, i, xe->delta_start, dend2))) {
-			xe->xdf2.reference_index[xe->xdf2.nreff++] = i;
-			/* changed[i] remains false, i.e. keep */
-		} else
-			xe->xdf2.changed[i] = true;
-			/* i.e. discard */
-	}
-
-cleanup:
-	xdl_free(action1);
-	xdl_free(action2);
-	ivec_free(&occ);
-
-	return ret;
-}
-
-
 /*
  * Early trim initial and terminal matching records.
  */
@@ -414,19 +235,9 @@ int xdl_prepare_env(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
 	}
 
 	xe->mph_size = cf.count;
+	xdl_free_classifier(&cf);
 
 	xdl_trim_ends(xe);
-	if ((XDF_DIFF_ALG(xpp->flags) != XDF_PATIENCE_DIFF) &&
-	    (XDF_DIFF_ALG(xpp->flags) != XDF_HISTOGRAM_DIFF) &&
-	    xdl_cleanup_records(xe, xpp->flags) < 0) {
-
-		xdl_free_ctx(&xe->xdf2);
-		xdl_free_ctx(&xe->xdf1);
-		xdl_free_classifier(&cf);
-		return -1;
-	}
-
-	xdl_free_classifier(&cf);
 
 	return 0;
 }
