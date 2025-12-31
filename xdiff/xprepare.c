@@ -340,29 +340,29 @@ cleanup:
 /*
  * Early trim initial and terminal matching records.
  */
-static int xdl_trim_ends(xdfenv_t *xe) {
-	long i, lim;
-	xrecord_t *recs1, *recs2;
+static void xdl_trim_ends(xdfenv_t *xe)
+{
+	size_t lim = XDL_MIN(xe->xdf1.nrec, xe->xdf2.nrec);
 
-	recs1 = xe->xdf1.recs;
-	recs2 = xe->xdf2.recs;
-	for (i = 0, lim = (long)XDL_MIN(xe->xdf1.nrec, xe->xdf2.nrec); i < lim;
-	     i++, recs1++, recs2++)
-		if (recs1->minimal_perfect_hash != recs2->minimal_perfect_hash)
+	for (size_t i = 0; i < lim; i++) {
+		size_t mph1 = xe->xdf1.recs[i].minimal_perfect_hash;
+		size_t mph2 = xe->xdf2.recs[i].minimal_perfect_hash;
+		if (mph1 != mph2) {
+			xe->xdf1.dstart = xe->xdf2.dstart = (ssize_t)i;
+			lim -= i;
 			break;
+		}
+	}
 
-	xe->xdf1.dstart = xe->xdf2.dstart = i;
-
-	recs1 = xe->xdf1.recs + xe->xdf1.nrec - 1;
-	recs2 = xe->xdf2.recs + xe->xdf2.nrec - 1;
-	for (lim -= i, i = 0; i < lim; i++, recs1--, recs2--)
-		if (recs1->minimal_perfect_hash != recs2->minimal_perfect_hash)
+	for (size_t i = 0; i < lim; i++) {
+		size_t mph1 = xe->xdf1.recs[xe->xdf1.nrec - 1 - i].minimal_perfect_hash;
+		size_t mph2 = xe->xdf2.recs[xe->xdf2.nrec - 1 - i].minimal_perfect_hash;
+		if (mph1 != mph2) {
+			xe->xdf1.dend = xe->xdf1.nrec - 1 - i;
+			xe->xdf2.dend = xe->xdf2.nrec - 1 - i;
 			break;
-
-	xe->xdf1.dend = (long)xe->xdf1.nrec - i - 1;
-	xe->xdf2.dend = (long)xe->xdf2.nrec - i - 1;
-
-	return 0;
+		}
+	}
 }
 
 
