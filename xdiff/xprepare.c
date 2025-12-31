@@ -261,7 +261,7 @@ static bool xdl_clean_mmatch(uint8_t const *action, long i, long s, long e) {
  * matches on the other file. Also, lines that have multiple matches
  * might be potentially discarded if they appear in a run of discardable.
  */
-static int xdl_cleanup_records(xdlclassifier_t *cf, xdfile_t *xdf1, xdfile_t *xdf2) {
+static int xdl_cleanup_records(xdlclassifier_t *cf, xdfenv_t *xe) {
 	long i, nm, mlim;
 	xrecord_t *recs;
 	xdlclass_t *rcrec;
@@ -273,11 +273,11 @@ static int xdl_cleanup_records(xdlclassifier_t *cf, xdfile_t *xdf1, xdfile_t *xd
 	 * Create temporary arrays that will help us decide if
 	 * changed[i] should remain false, or become true.
 	 */
-	if (!XDL_CALLOC_ARRAY(action1, xdf1->nrec + 1)) {
+	if (!XDL_CALLOC_ARRAY(action1, xe->xdf1.nrec + 1)) {
 		ret = -1;
 		goto cleanup;
 	}
-	if (!XDL_CALLOC_ARRAY(action2, xdf2->nrec + 1)) {
+	if (!XDL_CALLOC_ARRAY(action2, xe->xdf2.nrec + 1)) {
 		ret = -1;
 		goto cleanup;
 	}
@@ -285,17 +285,17 @@ static int xdl_cleanup_records(xdlclassifier_t *cf, xdfile_t *xdf1, xdfile_t *xd
 	/*
 	 * Initialize temporary arrays with DISCARD, KEEP, or INVESTIGATE.
 	 */
-	if ((mlim = xdl_bogosqrt((long)xdf1->nrec)) > XDL_MAX_EQLIMIT)
+	if ((mlim = xdl_bogosqrt((long)xe->xdf1.nrec)) > XDL_MAX_EQLIMIT)
 		mlim = XDL_MAX_EQLIMIT;
-	for (i = xdf1->dstart, recs = &xdf1->recs[xdf1->dstart]; i <= xdf1->dend; i++, recs++) {
+	for (i = xe->xdf1.dstart, recs = &xe->xdf1.recs[xe->xdf1.dstart]; i <= xe->xdf1.dend; i++, recs++) {
 		rcrec = cf->rcrecs[recs->minimal_perfect_hash];
 		nm = rcrec ? rcrec->len2 : 0;
 		action1[i] = (nm == 0) ? DISCARD: (nm >= mlim && !need_min) ? INVESTIGATE: KEEP;
 	}
 
-	if ((mlim = xdl_bogosqrt((long)xdf2->nrec)) > XDL_MAX_EQLIMIT)
+	if ((mlim = xdl_bogosqrt((long)xe->xdf2.nrec)) > XDL_MAX_EQLIMIT)
 		mlim = XDL_MAX_EQLIMIT;
-	for (i = xdf2->dstart, recs = &xdf2->recs[xdf2->dstart]; i <= xdf2->dend; i++, recs++) {
+	for (i = xe->xdf2.dstart, recs = &xe->xdf2.recs[xe->xdf2.dstart]; i <= xe->xdf2.dend; i++, recs++) {
 		rcrec = cf->rcrecs[recs->minimal_perfect_hash];
 		nm = rcrec ? rcrec->len1 : 0;
 		action2[i] = (nm == 0) ? DISCARD: (nm >= mlim && !need_min) ? INVESTIGATE: KEEP;
@@ -305,27 +305,27 @@ static int xdl_cleanup_records(xdlclassifier_t *cf, xdfile_t *xdf1, xdfile_t *xd
 	 * Use temporary arrays to decide if changed[i] should remain
 	 * false, or become true.
 	 */
-	xdf1->nreff = 0;
-	for (i = xdf1->dstart, recs = &xdf1->recs[xdf1->dstart];
-	     i <= xdf1->dend; i++, recs++) {
+	xe->xdf1.nreff = 0;
+	for (i = xe->xdf1.dstart, recs = &xe->xdf1.recs[xe->xdf1.dstart];
+	     i <= xe->xdf1.dend; i++, recs++) {
 		if (action1[i] == KEEP ||
-		    (action1[i] == INVESTIGATE && !xdl_clean_mmatch(action1, i, xdf1->dstart, xdf1->dend))) {
-			xdf1->reference_index[xdf1->nreff++] = i;
+		    (action1[i] == INVESTIGATE && !xdl_clean_mmatch(action1, i, xe->xdf1.dstart, xe->xdf1.dend))) {
+			xe->xdf1.reference_index[xe->xdf1.nreff++] = i;
 			/* changed[i] remains false, i.e. keep */
 		} else
-			xdf1->changed[i] = true;
+			xe->xdf1.changed[i] = true;
 			/* i.e. discard */
 	}
 
-	xdf2->nreff = 0;
-	for (i = xdf2->dstart, recs = &xdf2->recs[xdf2->dstart];
-	     i <= xdf2->dend; i++, recs++) {
+	xe->xdf2.nreff = 0;
+	for (i = xe->xdf2.dstart, recs = &xe->xdf2.recs[xe->xdf2.dstart];
+	     i <= xe->xdf2.dend; i++, recs++) {
 		if (action2[i] == KEEP ||
-		    (action2[i] == INVESTIGATE && !xdl_clean_mmatch(action2, i, xdf2->dstart, xdf2->dend))) {
-			xdf2->reference_index[xdf2->nreff++] = i;
+		    (action2[i] == INVESTIGATE && !xdl_clean_mmatch(action2, i, xe->xdf2.dstart, xe->xdf2.dend))) {
+			xe->xdf2.reference_index[xe->xdf2.nreff++] = i;
 			/* changed[i] remains false, i.e. keep */
 		} else
-			xdf2->changed[i] = true;
+			xe->xdf2.changed[i] = true;
 			/* i.e. discard */
 	}
 
@@ -340,27 +340,27 @@ cleanup:
 /*
  * Early trim initial and terminal matching records.
  */
-static int xdl_trim_ends(xdfile_t *xdf1, xdfile_t *xdf2) {
+static int xdl_trim_ends(xdfenv_t *xe) {
 	long i, lim;
 	xrecord_t *recs1, *recs2;
 
-	recs1 = xdf1->recs;
-	recs2 = xdf2->recs;
-	for (i = 0, lim = (long)XDL_MIN(xdf1->nrec, xdf2->nrec); i < lim;
+	recs1 = xe->xdf1.recs;
+	recs2 = xe->xdf2.recs;
+	for (i = 0, lim = (long)XDL_MIN(xe->xdf1.nrec, xe->xdf2.nrec); i < lim;
 	     i++, recs1++, recs2++)
 		if (recs1->minimal_perfect_hash != recs2->minimal_perfect_hash)
 			break;
 
-	xdf1->dstart = xdf2->dstart = i;
+	xe->xdf1.dstart = xe->xdf2.dstart = i;
 
-	recs1 = xdf1->recs + xdf1->nrec - 1;
-	recs2 = xdf2->recs + xdf2->nrec - 1;
+	recs1 = xe->xdf1.recs + xe->xdf1.nrec - 1;
+	recs2 = xe->xdf2.recs + xe->xdf2.nrec - 1;
 	for (lim -= i, i = 0; i < lim; i++, recs1--, recs2--)
 		if (recs1->minimal_perfect_hash != recs2->minimal_perfect_hash)
 			break;
 
-	xdf1->dend = (long)xdf1->nrec - i - 1;
-	xdf2->dend = (long)xdf2->nrec - i - 1;
+	xe->xdf1.dend = (long)xe->xdf1.nrec - i - 1;
+	xe->xdf2.dend = (long)xe->xdf2.nrec - i - 1;
 
 	return 0;
 }
@@ -393,10 +393,10 @@ int xdl_prepare_env(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
 		xdl_classify_record(2, &cf, rec);
 	}
 
-	xdl_trim_ends(&xe->xdf1, &xe->xdf2);
+	xdl_trim_ends(xe);
 	if ((XDF_DIFF_ALG(xpp->flags) != XDF_PATIENCE_DIFF) &&
 	    (XDF_DIFF_ALG(xpp->flags) != XDF_HISTOGRAM_DIFF) &&
-	    xdl_cleanup_records(&cf, &xe->xdf1, &xe->xdf2) < 0) {
+	    xdl_cleanup_records(&cf, xe) < 0) {
 
 		xdl_free_ctx(&xe->xdf2);
 		xdl_free_ctx(&xe->xdf1);
