@@ -26,8 +26,6 @@
 #define XDL_KPDIS_RUN 4
 #define XDL_MAX_EQLIMIT 1024
 #define XDL_SIMSCAN_WINDOW 100
-#define XDL_GUESS_NLINES1 256
-#define XDL_GUESS_NLINES2 20
 
 #define DISCARD 0
 #define KEEP 1
@@ -55,6 +53,8 @@ typedef struct s_xdlclassifier {
 
 
 static int xdl_init_classifier(xdlclassifier_t *cf, long size, long flags) {
+	memset(cf, 0, sizeof(xdlclassifier_t));
+
 	cf->flags = flags;
 
 	cf->hbits = xdl_hashbits((unsigned int) size);
@@ -134,12 +134,12 @@ static void xdl_free_ctx(xdfile_t *xdf)
 }
 
 
-static int xdl_prepare_ctx(unsigned int pass, mmfile_t *mf, long narec, xpparam_t const *xpp,
-			   xdlclassifier_t *cf, xdfile_t *xdf) {
+static int xdl_prepare_ctx(mmfile_t *mf, xdfile_t *xdf, uint64_t flags) {
 	long bsize;
 	uint64_t hav;
 	uint8_t const *blk, *cur, *top, *prev;
 	xrecord_t *crec;
+	long narec = 8;
 
 	xdf->reference_index = NULL;
 	xdf->changed = NULL;
@@ -152,23 +152,21 @@ static int xdl_prepare_ctx(unsigned int pass, mmfile_t *mf, long narec, xpparam_
 	if ((cur = blk = xdl_mmfile_first(mf, &bsize))) {
 		for (top = blk + bsize; cur < top; ) {
 			prev = cur;
-			hav = xdl_hash_record(&cur, top, xpp->flags);
+			hav = xdl_hash_record(&cur, top, flags);
 			if (XDL_ALLOC_GROW(xdf->recs, (long)xdf->nrec + 1, narec))
 				goto abort;
 			crec = &xdf->recs[xdf->nrec++];
 			crec->ptr = prev;
 			crec->size = cur - prev;
 			crec->line_hash = hav;
-			if (xdl_classify_record(pass, cf, crec) < 0)
-				goto abort;
 		}
 	}
 
 	if (!XDL_CALLOC_ARRAY(xdf->changed, xdf->nrec + 2))
 		goto abort;
 
-	if ((XDF_DIFF_ALG(xpp->flags) != XDF_PATIENCE_DIFF) &&
-	    (XDF_DIFF_ALG(xpp->flags) != XDF_HISTOGRAM_DIFF)) {
+	if ((XDF_DIFF_ALG(flags) != XDF_PATIENCE_DIFF) &&
+	    (XDF_DIFF_ALG(flags) != XDF_HISTOGRAM_DIFF)) {
 		if (!XDL_ALLOC_ARRAY(xdf->reference_index, xdf->nrec + 1))
 			goto abort;
 	}
@@ -381,37 +379,29 @@ static int xdl_optimize_ctxs(xdlclassifier_t *cf, xdfile_t *xdf1, xdfile_t *xdf2
 
 int xdl_prepare_env(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
 		    xdfenv_t *xe) {
-	long enl1, enl2, sample;
 	xdlclassifier_t cf;
 
-	memset(&cf, 0, sizeof(cf));
+	if (xdl_prepare_ctx(mf1, &xe->xdf1, xpp->flags) < 0) {
 
-	/*
-	 * For histogram diff, we can afford a smaller sample size and
-	 * thus a poorer estimate of the number of lines, as the hash
-	 * table (rhash) won't be filled up/grown. The number of lines
-	 * (nrecs) will be updated correctly anyway by
-	 * xdl_prepare_ctx().
-	 */
-	sample = (XDF_DIFF_ALG(xpp->flags) == XDF_HISTOGRAM_DIFF
-		  ? XDL_GUESS_NLINES2 : XDL_GUESS_NLINES1);
-
-	enl1 = xdl_guess_lines(mf1, sample) + 1;
-	enl2 = xdl_guess_lines(mf2, sample) + 1;
-
-	if (xdl_init_classifier(&cf, enl1 + enl2 + 1, xpp->flags) < 0)
-		return -1;
-
-	if (xdl_prepare_ctx(1, mf1, enl1, xpp, &cf, &xe->xdf1) < 0) {
-
-		xdl_free_classifier(&cf);
 		return -1;
 	}
-	if (xdl_prepare_ctx(2, mf2, enl2, xpp, &cf, &xe->xdf2) < 0) {
+	if (xdl_prepare_ctx(mf2, &xe->xdf2, xpp->flags) < 0) {
 
 		xdl_free_ctx(&xe->xdf1);
-		xdl_free_classifier(&cf);
 		return -1;
+	}
+
+	if (xdl_init_classifier(&cf, xe->xdf1.nrec + xe->xdf2.nrec + 1, xpp->flags) < 0)
+		return -1;
+
+	for (size_t i = 0; i < xe->xdf1.nrec; i++) {
+		xrecord_t *rec = &xe->xdf1.recs[i];
+		xdl_classify_record(1, &cf, rec);
+	}
+
+	for (size_t i = 0; i < xe->xdf2.nrec; i++) {
+		xrecord_t *rec = &xe->xdf2.recs[i];
+		xdl_classify_record(2, &cf, rec);
 	}
 
 	if ((XDF_DIFF_ALG(xpp->flags) != XDF_PATIENCE_DIFF) &&
