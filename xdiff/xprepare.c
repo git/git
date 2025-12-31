@@ -21,6 +21,7 @@
  */
 
 #include "xinclude.h"
+#include "compat/ivec.h"
 
 
 #define XDL_KPDIS_RUN 4
@@ -35,7 +36,6 @@ typedef struct s_xdlclass {
 	struct s_xdlclass *next;
 	xrecord_t rec;
 	long idx;
-	long len1, len2;
 } xdlclass_t;
 
 typedef struct s_xdlclassifier {
@@ -92,7 +92,7 @@ static void xdl_free_classifier(xdlclassifier_t *cf) {
 }
 
 
-static int xdl_classify_record(unsigned int pass, xdlclassifier_t *cf, xrecord_t *rec) {
+static int xdl_classify_record(xdlclassifier_t *cf, xrecord_t *rec) {
 	size_t hi;
 	xdlclass_t *rcrec;
 
@@ -113,12 +113,9 @@ static int xdl_classify_record(unsigned int pass, xdlclassifier_t *cf, xrecord_t
 				return -1;
 		cf->rcrecs[rcrec->idx] = rcrec;
 		rcrec->rec = *rec;
-		rcrec->len1 = rcrec->len2 = 0;
 		rcrec->next = cf->rchash[hi];
 		cf->rchash[hi] = rcrec;
 	}
-
-	(pass == 1) ? rcrec->len1++ : rcrec->len2++;
 
 	rec->minimal_perfect_hash = (size_t)rcrec->idx;
 
@@ -253,21 +250,43 @@ static bool xdl_clean_mmatch(uint8_t const *action, long i, long s, long e) {
 	return rpdis1 * XDL_KPDIS_RUN < (rpdis1 + rdis1);
 }
 
+struct xoccurrence
+{
+	size_t file1, file2;
+};
+
+
+DEFINE_IVEC_TYPE(struct xoccurrence, xoccurrence);
+
 
 /*
  * Try to reduce the problem complexity, discard records that have no
  * matches on the other file. Also, lines that have multiple matches
  * might be potentially discarded if they appear in a run of discardable.
  */
-static int xdl_cleanup_records(xdlclassifier_t *cf, xdfenv_t *xe) {
-	long i, nm, mlim;
+static int xdl_cleanup_records(xdfenv_t *xe, uint64_t flags) {
+	long i;
+	size_t nm, mlim;
 	xrecord_t *recs;
-	xdlclass_t *rcrec;
 	uint8_t *action1 = NULL, *action2 = NULL;
-	bool need_min = !!(cf->flags & XDF_NEED_MINIMAL);
+	struct IVec_xoccurrence occ;
+	bool need_min = !!(flags & XDF_NEED_MINIMAL);
 	int ret = 0;
 	ptrdiff_t dend1 = xe->xdf1.nrec - 1 - xe->delta_end;
 	ptrdiff_t dend2 = xe->xdf2.nrec - 1 - xe->delta_end;
+
+	IVEC_INIT(occ);
+	ivec_zero(&occ, xe->mph_size);
+
+	for (size_t j = 0; j < xe->xdf1.nrec; j++) {
+		size_t mph1 = xe->xdf1.recs[j].minimal_perfect_hash;
+		occ.ptr[mph1].file1 += 1;
+	}
+
+	for (size_t j = 0; j < xe->xdf2.nrec; j++) {
+		size_t mph2 = xe->xdf2.recs[j].minimal_perfect_hash;
+		occ.ptr[mph2].file2 += 1;
+	}
 
 	/*
 	 * Create temporary arrays that will help us decide if
@@ -288,16 +307,14 @@ static int xdl_cleanup_records(xdlclassifier_t *cf, xdfenv_t *xe) {
 	if ((mlim = xdl_bogosqrt((long)xe->xdf1.nrec)) > XDL_MAX_EQLIMIT)
 		mlim = XDL_MAX_EQLIMIT;
 	for (i = xe->delta_start, recs = &xe->xdf1.recs[xe->delta_start]; i <= dend1; i++, recs++) {
-		rcrec = cf->rcrecs[recs->minimal_perfect_hash];
-		nm = rcrec ? rcrec->len2 : 0;
+		nm = occ.ptr[recs->minimal_perfect_hash].file2;
 		action1[i] = (nm == 0) ? DISCARD: (nm >= mlim && !need_min) ? INVESTIGATE: KEEP;
 	}
 
 	if ((mlim = xdl_bogosqrt((long)xe->xdf2.nrec)) > XDL_MAX_EQLIMIT)
 		mlim = XDL_MAX_EQLIMIT;
 	for (i = xe->delta_start, recs = &xe->xdf2.recs[xe->delta_start]; i <= dend2; i++, recs++) {
-		rcrec = cf->rcrecs[recs->minimal_perfect_hash];
-		nm = rcrec ? rcrec->len1 : 0;
+		nm = occ.ptr[recs->minimal_perfect_hash].file1;
 		action2[i] = (nm == 0) ? DISCARD: (nm >= mlim && !need_min) ? INVESTIGATE: KEEP;
 	}
 
@@ -332,6 +349,7 @@ static int xdl_cleanup_records(xdlclassifier_t *cf, xdfenv_t *xe) {
 cleanup:
 	xdl_free(action1);
 	xdl_free(action2);
+	ivec_free(&occ);
 
 	return ret;
 }
@@ -387,18 +405,20 @@ int xdl_prepare_env(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
 
 	for (size_t i = 0; i < xe->xdf1.nrec; i++) {
 		xrecord_t *rec = &xe->xdf1.recs[i];
-		xdl_classify_record(1, &cf, rec);
+		xdl_classify_record(&cf, rec);
 	}
 
 	for (size_t i = 0; i < xe->xdf2.nrec; i++) {
 		xrecord_t *rec = &xe->xdf2.recs[i];
-		xdl_classify_record(2, &cf, rec);
+		xdl_classify_record(&cf, rec);
 	}
+
+	xe->mph_size = cf.count;
 
 	xdl_trim_ends(xe);
 	if ((XDF_DIFF_ALG(xpp->flags) != XDF_PATIENCE_DIFF) &&
 	    (XDF_DIFF_ALG(xpp->flags) != XDF_HISTOGRAM_DIFF) &&
-	    xdl_cleanup_records(&cf, xe) < 0) {
+	    xdl_cleanup_records(xe, xpp->flags) < 0) {
 
 		xdl_free_ctx(&xe->xdf2);
 		xdl_free_ctx(&xe->xdf1);

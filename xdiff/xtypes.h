@@ -56,6 +56,7 @@ typedef struct s_xdfile {
 typedef struct s_xdfenv {
 	xdfile_t xdf1, xdf2;
 	size_t delta_start, delta_end;
+	size_t mph_size;
 } xdfenv_t;
 
 
