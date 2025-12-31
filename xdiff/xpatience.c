@@ -374,6 +374,6 @@ static int patience_diff(xpparam_t const *xpp, xdfenv_t *env,
 int xdl_do_patience_diff(xpparam_t const *xpp, xdfenv_t *env)
 {
 	return patience_diff(xpp, env,
-		env->xdf1.dstart + 1, env->xdf1.dend - env->xdf1.dstart + 1,
-		env->xdf2.dstart + 1, env->xdf2.dend - env->xdf2.dstart + 1);
+		env->delta_start + 1, env->xdf1.dend - env->delta_start + 1,
+		env->delta_start + 1, env->xdf2.dend - env->delta_start + 1);
 }
