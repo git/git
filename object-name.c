@@ -449,7 +449,7 @@ static int show_ambiguous_object(const struct object_id *oid, void *data)
 	} else if (type == OBJ_TAG) {
 		struct tag *tag = lookup_tag(ds->repo, oid);
 
-		if (!parse_tag(tag) && tag->tag) {
+		if (!parse_tag(ds->repo, tag) && tag->tag) {
 			/*
 			 * TRANSLATORS: This is a line of ambiguous
 			 * tag object output. E.g.:
