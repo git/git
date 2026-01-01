@@ -16,7 +16,7 @@ git switch [<options>] --orphan <new-branch>
 DESCRIPTION
 -----------
 Switch to a specified branch. The working tree and the index are
-updated to match the branch. All new commits will be added to the tip
+updated to match the branch. All new commits will be added to the top
 of this branch.
 
 Optionally a new branch could be created with either `-c`, `-C`,
