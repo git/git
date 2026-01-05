@@ -81,29 +81,25 @@ linkgit:git-add[1]).
 
 `git reset [-q] [<tree-ish>] [--] <pathspec>...`::
 `git reset [-q] [--pathspec-from-file=<file> [--pathspec-file-nul]] [<tree-ish>]`::
-	These forms reset the index entries for all paths that match the
-	_<pathspec>_ to their state at _<tree-ish>_.  (It does not affect
-	the working tree or the current branch.)
+	For all specified files or directories, set the staged version to
+	the version from the given commit or tree (which defaults to `HEAD`).
 +
 This means that `git reset <pathspec>` is the opposite of `git add
-<pathspec>`. This command is equivalent to
-`git restore [--source=<tree-ish>] --staged <pathspec>...`.
+<pathspec>`: it unstages all changes to the specified file(s) or
+directories. This is equivalent to `git restore --staged <pathspec>...`.
 +
-After running `git reset <pathspec>` to update the index entry, you can
-use linkgit:git-restore[1] to check the contents out of the index to
-the working tree. Alternatively, using linkgit:git-restore[1]
-and specifying a commit with `--source`, you
-can copy the contents of a path out of a commit to the index and to the
-working tree in one go.
+In this mode, `git reset` updates only the index (without updating the `HEAD` or
+working tree files). If you want to update the files as well as the index
+entries, use linkgit:git-restore[1].
 
 `git reset (--patch | -p) [<tree-ish>] [--] [<pathspec>...]`::
-	Interactively select hunks in the difference between the index
-	and _<tree-ish>_ (defaults to `HEAD`).  The chosen hunks are applied
-	in reverse to the index.
+	Interactively select changes from the difference between the index
+	and the specified commit or tree (which defaults to `HEAD`).
+	The index is modified using the chosen changes.
 +
 This means that `git reset -p` is the opposite of `git add -p`, i.e.
-you can use it to selectively reset hunks. See the "Interactive Mode"
-section of linkgit:git-add[1] to learn how to operate the `--patch` mode.
+you can use it to selectively unstage changes. See the "Interactive Mode"
+section of linkgit:git-add[1] to learn how to use the `--patch` option.
 
 See "Reset, restore and revert" in linkgit:git[1] for the differences
 between the three commands.
