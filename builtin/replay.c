@@ -418,7 +418,7 @@ int cmd_replay(int argc,
 			   onto_name, &advance_name,
 			   &onto, &update_refs);
 
-	/* FIXME: Should handle replaying down to root commit */
+	/* FIXME: Should allow replaying commits with the first as a root commit */
 
 	/* Build reflog message */
 	if (advance_name_opt)
@@ -454,7 +454,7 @@ int cmd_replay(int argc,
 		int hr;
 
 		if (!commit->parents)
-			die(_("replaying down to root commit is not supported yet!"));
+			die(_("replaying down from root commit is not supported yet!"));
 		if (commit->parents->next)
 			die(_("replaying merge commits is not supported yet!"));
 
