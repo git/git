@@ -4,9 +4,10 @@
 #include "read-cache-ll.h"
 #include "object.h"
 #include "pathspec.h"
+#include "repository.h"
 
 static inline unsigned int ce_mode_from_stat(const struct cache_entry *ce,
-					     unsigned int mode)
+					     unsigned int mode, struct repository *repo UNUSED)
 {
 	extern int trust_executable_bit, has_symlinks;
 	if (!has_symlinks && S_ISREG(mode) &&

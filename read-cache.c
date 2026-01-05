@@ -737,7 +737,7 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 		int pos = index_name_pos_also_unmerged(istate, path, namelen);
 
 		ent = (0 <= pos) ? istate->cache[pos] : NULL;
-		ce->ce_mode = ce_mode_from_stat(ent, st_mode);
+		ce->ce_mode = ce_mode_from_stat(ent, st_mode, istate->repo);
 	}
 
 	/* When core.ignorecase=true, determine if a directory of the same name but differing

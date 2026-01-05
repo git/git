@@ -3819,7 +3819,7 @@ static int check_preimage(struct apply_state *state,
 			BUG("ce_mode == 0 for path '%s'", old_name);
 
 		if (trust_executable_bit || !S_ISREG(st->st_mode))
-			st_mode = ce_mode_from_stat(*ce, st->st_mode);
+			st_mode = ce_mode_from_stat(*ce, st->st_mode, state->repo);
 		else if (*ce)
 			st_mode = (*ce)->ce_mode;
 		else

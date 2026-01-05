@@ -160,7 +160,7 @@ void run_diff_files(struct rev_info *revs, unsigned int option)
 
 			changed = check_removed(ce, &st);
 			if (!changed)
-				wt_mode = ce_mode_from_stat(ce, st.st_mode);
+				wt_mode = ce_mode_from_stat(ce, st.st_mode, istate->repo);
 			else {
 				if (changed < 0) {
 					perror(ce->name);
@@ -193,7 +193,7 @@ void run_diff_files(struct rev_info *revs, unsigned int option)
 					num_compare_stages++;
 					oidcpy(&dpath->parent[stage - 2].oid,
 					       &nce->oid);
-					dpath->parent[stage-2].mode = ce_mode_from_stat(nce, mode);
+					dpath->parent[stage-2].mode = ce_mode_from_stat(nce, mode, istate->repo);
 					dpath->parent[stage-2].status =
 						DIFF_STATUS_MODIFIED;
 				}
@@ -262,7 +262,7 @@ void run_diff_files(struct rev_info *revs, unsigned int option)
 				continue;
 			} else if (revs->diffopt.ita_invisible_in_index &&
 				   ce_intent_to_add(ce)) {
-				newmode = ce_mode_from_stat(ce, st.st_mode);
+				newmode = ce_mode_from_stat(ce, st.st_mode, istate->repo);
 				diff_addremove(&revs->diffopt, '+', newmode,
 					       null_oid(the_hash_algo), 0, ce->name, 0);
 				continue;
@@ -270,7 +270,7 @@ void run_diff_files(struct rev_info *revs, unsigned int option)
 
 			changed = match_stat_with_submodule(&revs->diffopt, ce, &st,
 							    ce_option, &dirty_submodule);
-			newmode = ce_mode_from_stat(ce, st.st_mode);
+			newmode = ce_mode_from_stat(ce, st.st_mode, istate->repo);
 		}
 
 		if (!changed && !dirty_submodule) {
@@ -338,7 +338,7 @@ static int get_stat_data(const struct cache_entry *ce,
 		changed = match_stat_with_submodule(diffopt, ce, &st,
 						    0, dirty_submodule);
 		if (changed) {
-			mode = ce_mode_from_stat(ce, st.st_mode);
+			mode = ce_mode_from_stat(ce, st.st_mode, diffopt->repo);
 			oid = null_oid(the_hash_algo);
 		}
 	}
