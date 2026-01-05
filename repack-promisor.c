@@ -34,39 +34,17 @@ static int write_oid(const struct object_id *oid,
 	return 0;
 }
 
-void repack_promisor_objects(struct repository *repo,
-			     const struct pack_objects_args *args,
-			     struct string_list *names, const char *packtmp)
+static void finish_repacking_promisor_objects(struct repository *repo,
+					      struct child_process *cmd,
+					      struct string_list *names,
+					      const char *packtmp)
 {
-	struct write_oid_context ctx;
-	struct child_process cmd = CHILD_PROCESS_INIT;
-	FILE *out;
 	struct strbuf line = STRBUF_INIT;
+	FILE *out;
 
-	prepare_pack_objects(&cmd, args, packtmp);
-	cmd.in = -1;
+	close(cmd->in);
 
-	/*
-	 * NEEDSWORK: Giving pack-objects only the OIDs without any ordering
-	 * hints may result in suboptimal deltas in the resulting pack. See if
-	 * the OIDs can be sent with fake paths such that pack-objects can use a
-	 * {type -> existing pack order} ordering when computing deltas instead
-	 * of a {type -> size} ordering, which may produce better deltas.
-	 */
-	ctx.cmd = &cmd;
-	ctx.algop = repo->hash_algo;
-	for_each_packed_object(repo, write_oid, &ctx,
-			       FOR_EACH_OBJECT_PROMISOR_ONLY);
-
-	if (cmd.in == -1) {
-		/* No packed objects; cmd was never started */
-		child_process_clear(&cmd);
-		return;
-	}
-
-	close(cmd.in);
-
-	out = xfdopen(cmd.out, "r");
+	out = xfdopen(cmd->out, "r");
 	while (strbuf_getline_lf(&line, out) != EOF) {
 		struct string_list_item *item;
 		char *promisor_name;
@@ -96,7 +74,38 @@ void repack_promisor_objects(struct repository *repo,
 	}
 
 	fclose(out);
-	if (finish_command(&cmd))
+	if (finish_command(cmd))
 		die(_("could not finish pack-objects to repack promisor objects"));
 	strbuf_release(&line);
+}
+
+void repack_promisor_objects(struct repository *repo,
+			     const struct pack_objects_args *args,
+			     struct string_list *names, const char *packtmp)
+{
+	struct write_oid_context ctx;
+	struct child_process cmd = CHILD_PROCESS_INIT;
+
+	prepare_pack_objects(&cmd, args, packtmp);
+	cmd.in = -1;
+
+	/*
+	 * NEEDSWORK: Giving pack-objects only the OIDs without any ordering
+	 * hints may result in suboptimal deltas in the resulting pack. See if
+	 * the OIDs can be sent with fake paths such that pack-objects can use a
+	 * {type -> existing pack order} ordering when computing deltas instead
+	 * of a {type -> size} ordering, which may produce better deltas.
+	 */
+	ctx.cmd = &cmd;
+	ctx.algop = repo->hash_algo;
+	for_each_packed_object(repo, write_oid, &ctx,
+			       FOR_EACH_OBJECT_PROMISOR_ONLY);
+
+	if (cmd.in == -1) {
+		/* No packed objects; cmd was never started */
+		child_process_clear(&cmd);
+		return;
+	}
+
+	finish_repacking_promisor_objects(repo, &cmd, names, packtmp);
 }
