@@ -315,8 +315,7 @@ define_commit_slab(bb_data, struct bb_commit);
 
 struct bitmap_builder {
 	struct bb_data data;
-	struct commit **commits;
-	size_t commits_nr, commits_alloc;
+	struct commit_stack commits;
 };
 
 static void bitmap_builder_init(struct bitmap_builder *bb,
@@ -329,8 +328,8 @@ static void bitmap_builder_init(struct bitmap_builder *bb,
 	struct commit_list *r;
 	unsigned int i, num_maximal = 0;
 
-	memset(bb, 0, sizeof(*bb));
 	init_bb_data(&bb->data);
+	commit_stack_init(&bb->commits);
 
 	reset_revision_walk();
 	repo_init_revisions(writer->to_pack->repo, &revs, NULL);
@@ -390,8 +389,7 @@ static void bitmap_builder_init(struct bitmap_builder *bb,
 
 		if (c_ent->maximal) {
 			num_maximal++;
-			ALLOC_GROW(bb->commits, bb->commits_nr + 1, bb->commits_alloc);
-			bb->commits[bb->commits_nr++] = commit;
+			commit_stack_push(&bb->commits, commit);
 		}
 
 		if (p) {
@@ -438,8 +436,7 @@ next:
 	}
 
 	for (r = reusable; r; r = r->next) {
-		ALLOC_GROW(bb->commits, bb->commits_nr + 1, bb->commits_alloc);
-		bb->commits[bb->commits_nr++] = r->item;
+		commit_stack_push(&bb->commits, r->item);
 	}
 
 	trace2_data_intmax("pack-bitmap-write", writer->repo,
@@ -454,8 +451,7 @@ next:
 static void bitmap_builder_clear(struct bitmap_builder *bb)
 {
 	deep_clear_bb_data(&bb->data, clear_bb_commit);
-	free(bb->commits);
-	bb->commits_nr = bb->commits_alloc = 0;
+	commit_stack_clear(&bb->commits);
 }
 
 static int fill_bitmap_tree(struct bitmap_writer *writer,
@@ -630,8 +626,8 @@ int bitmap_writer_build(struct bitmap_writer *writer)
 		mapping = NULL;
 
 	bitmap_builder_init(&bb, writer, old_bitmap);
-	for (i = bb.commits_nr; i > 0; i--) {
-		struct commit *commit = bb.commits[i-1];
+	for (i = bb.commits.nr; i > 0; i--) {
+		struct commit *commit = bb.commits.items[i-1];
 		struct bb_commit *ent = bb_data_at(&bb.data, commit);
 		struct commit *child;
 		int reused = 0;

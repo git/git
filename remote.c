@@ -1381,12 +1381,7 @@ static struct ref **tail_ref(struct ref **head)
 	return tail;
 }
 
-struct tips {
-	struct commit **tip;
-	size_t nr, alloc;
-};
-
-static void add_to_tips(struct tips *tips, const struct object_id *oid)
+static void add_to_tips(struct commit_stack *tips, const struct object_id *oid)
 {
 	struct commit *commit;
 
@@ -1396,8 +1391,7 @@ static void add_to_tips(struct tips *tips, const struct object_id *oid)
 	if (!commit || (commit->object.flags & TMP_MARK))
 		return;
 	commit->object.flags |= TMP_MARK;
-	ALLOC_GROW(tips->tip, tips->nr + 1, tips->alloc);
-	tips->tip[tips->nr++] = commit;
+	commit_stack_push(tips, commit);
 }
 
 static void add_missing_tags(struct ref *src, struct ref **dst, struct ref ***dst_tail)
@@ -1406,13 +1400,12 @@ static void add_missing_tags(struct ref *src, struct ref **dst, struct ref ***ds
 	struct string_list src_tag = STRING_LIST_INIT_NODUP;
 	struct string_list_item *item;
 	struct ref *ref;
-	struct tips sent_tips;
+	struct commit_stack sent_tips = COMMIT_STACK_INIT;
 
 	/*
 	 * Collect everything we know they would have at the end of
 	 * this push, and collect all tags they have.
 	 */
-	memset(&sent_tips, 0, sizeof(sent_tips));
 	for (ref = *dst; ref; ref = ref->next) {
 		if (ref->peer_ref &&
 		    !is_null_oid(&ref->peer_ref->new_oid))
@@ -1422,7 +1415,7 @@ static void add_missing_tags(struct ref *src, struct ref **dst, struct ref ***ds
 		if (starts_with(ref->name, "refs/tags/"))
 			string_list_append(&dst_tag, ref->name);
 	}
-	clear_commit_marks_many(sent_tips.nr, sent_tips.tip, TMP_MARK);
+	clear_commit_marks_many(sent_tips.nr, sent_tips.items, TMP_MARK);
 
 	string_list_sort(&dst_tag);
 
@@ -1450,9 +1443,7 @@ static void add_missing_tags(struct ref *src, struct ref **dst, struct ref ***ds
 	if (sent_tips.nr) {
 		const int reachable_flag = 1;
 		struct commit_list *found_commits;
-		struct commit **src_commits;
-		size_t nr_src_commits = 0, alloc_src_commits = 16;
-		ALLOC_ARRAY(src_commits, alloc_src_commits);
+		struct commit_stack src_commits = COMMIT_STACK_INIT;
 
 		for_each_string_list_item(item, &src_tag) {
 			struct ref *ref = item->util;
@@ -1467,12 +1458,13 @@ static void add_missing_tags(struct ref *src, struct ref **dst, struct ref ***ds
 				/* not pushing a commit, which is not an error */
 				continue;
 
-			ALLOC_GROW(src_commits, nr_src_commits + 1, alloc_src_commits);
-			src_commits[nr_src_commits++] = commit;
+			commit_stack_push(&src_commits, commit);
 		}
 
-		found_commits = get_reachable_subset(sent_tips.tip, sent_tips.nr,
-						     src_commits, nr_src_commits,
+		found_commits = get_reachable_subset(sent_tips.items,
+						     sent_tips.nr,
+						     src_commits.items,
+						     src_commits.nr,
 						     reachable_flag);
 
 		for_each_string_list_item(item, &src_tag) {
@@ -1502,13 +1494,14 @@ static void add_missing_tags(struct ref *src, struct ref **dst, struct ref ***ds
 			dst_ref->peer_ref = copy_ref(ref);
 		}
 
-		clear_commit_marks_many(nr_src_commits, src_commits, reachable_flag);
-		free(src_commits);
+		clear_commit_marks_many(src_commits.nr, src_commits.items,
+					reachable_flag);
+		commit_stack_clear(&src_commits);
 		free_commit_list(found_commits);
 	}
 
 	string_list_clear(&src_tag, 0);
-	free(sent_tips.tip);
+	commit_stack_clear(&sent_tips);
 }
 
 struct ref *find_ref_by_name(const struct ref *list, const char *name)
@@ -2544,36 +2537,9 @@ static int remote_tracking(struct remote *remote, const char *refname,
 	return 0;
 }
 
-/*
- * The struct "reflog_commit_array" and related helper functions
- * are used for collecting commits into an array during reflog
- * traversals in "check_and_collect_until()".
- */
-struct reflog_commit_array {
-	struct commit **item;
-	size_t nr, alloc;
-};
-
-#define REFLOG_COMMIT_ARRAY_INIT { 0 }
-
-/* Append a commit to the array. */
-static void append_commit(struct reflog_commit_array *arr,
-			  struct commit *commit)
-{
-	ALLOC_GROW(arr->item, arr->nr + 1, arr->alloc);
-	arr->item[arr->nr++] = commit;
-}
-
-/* Free and reset the array. */
-static void free_commit_array(struct reflog_commit_array *arr)
-{
-	FREE_AND_NULL(arr->item);
-	arr->nr = arr->alloc = 0;
-}
-
 struct check_and_collect_until_cb_data {
 	struct commit *remote_commit;
-	struct reflog_commit_array *local_commits;
+	struct commit_stack *local_commits;
 	timestamp_t remote_reflog_timestamp;
 };
 
@@ -2605,7 +2571,7 @@ static int check_and_collect_until(const char *refname UNUSED,
 		return 1;
 
 	if ((commit = lookup_commit_reference(the_repository, n_oid)))
-		append_commit(cb->local_commits, commit);
+		commit_stack_push(cb->local_commits, commit);
 
 	/*
 	 * If the reflog entry timestamp is older than the remote ref's
@@ -2633,7 +2599,7 @@ static int is_reachable_in_reflog(const char *local, const struct ref *remote)
 	struct commit *commit;
 	struct commit **chunk;
 	struct check_and_collect_until_cb_data cb;
-	struct reflog_commit_array arr = REFLOG_COMMIT_ARRAY_INIT;
+	struct commit_stack arr = COMMIT_STACK_INIT;
 	size_t size = 0;
 	int ret = 0;
 
@@ -2664,8 +2630,8 @@ static int is_reachable_in_reflog(const char *local, const struct ref *remote)
 	 * Check if the remote commit is reachable from any
 	 * of the commits in the collected array, in batches.
 	 */
-	for (chunk = arr.item; chunk < arr.item + arr.nr; chunk += size) {
-		size = arr.item + arr.nr - chunk;
+	for (chunk = arr.items; chunk < arr.items + arr.nr; chunk += size) {
+		size = arr.items + arr.nr - chunk;
 		if (MERGE_BASES_BATCH_SIZE < size)
 			size = MERGE_BASES_BATCH_SIZE;
 
@@ -2674,7 +2640,7 @@ static int is_reachable_in_reflog(const char *local, const struct ref *remote)
 	}
 
 cleanup_return:
-	free_commit_array(&arr);
+	commit_stack_clear(&arr);
 	return ret;
 }
 
