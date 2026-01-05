@@ -42,7 +42,7 @@ static struct commit *peel_committish(struct repository *repo,
 
 	if (repo_get_oid(repo, name, &oid))
 		die(_("'%s' is not a valid commit-ish for %s"), name, mode);
-	obj = parse_object(repo, &oid);
+	obj = parse_object_or_die(repo, &oid, name);
 	return (struct commit *)repo_peel_to_type(repo, name, 0, obj,
 						  OBJ_COMMIT);
 }
