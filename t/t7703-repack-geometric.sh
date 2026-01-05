@@ -480,4 +480,65 @@ test_expect_success '--geometric -l disables writing bitmaps with non-local pack
 	test_path_is_file member/.git/objects/pack/multi-pack-index-*.bitmap
 '
 
+write_packfile () {
+	NR="$1"
+	PREFIX="$2"
+
+	printf "blob\ndata <<EOB\n$PREFIX %s\nEOB\n" $(test_seq $NR) |
+		git fast-import &&
+	git pack-objects --pack-loose-unreachable .git/objects/pack/pack &&
+	git prune-packed
+}
+
+write_promisor_packfile () {
+	PACKFILE=$(write_packfile "$@") &&
+	touch .git/objects/pack/pack-$PACKFILE.promisor &&
+	echo "$PACKFILE"
+}
+
+test_expect_success 'geometric repack works with promisor packs' '
+	test_when_finished "rm -fr repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		git config set maintenance.auto false &&
+		git remote add promisor garbage &&
+		git config set remote.promisor.promisor true &&
+
+		# Packs A and B need to be merged.
+		NORMAL_A=$(write_packfile 2 normal-a) &&
+		NORMAL_B=$(write_packfile 2 normal-b) &&
+		NORMAL_C=$(write_packfile 14 normal-c) &&
+
+		# Packs A, B and C need to be merged.
+		PROMISOR_A=$(write_promisor_packfile 1 promisor-a) &&
+		PROMISOR_B=$(write_promisor_packfile 3 promisor-b) &&
+		PROMISOR_C=$(write_promisor_packfile 3 promisor-c) &&
+		PROMISOR_D=$(write_promisor_packfile 20 promisor-d) &&
+		PROMISOR_E=$(write_promisor_packfile 40 promisor-e) &&
+
+		git cat-file --batch-all-objects --batch-check="%(objectname)" >objects-expect &&
+
+		ls .git/objects/pack/*.pack >packs-before &&
+		test_line_count = 8 packs-before &&
+		git repack --geometric=2 -d &&
+		ls .git/objects/pack/*.pack >packs-after &&
+		test_line_count = 5 packs-after &&
+		test_grep ! "$NORMAL_A" packs-after &&
+		test_grep ! "$NORMAL_B" packs-after &&
+		test_grep "$NORMAL_C" packs-after &&
+		test_grep ! "$PROMISOR_A" packs-after &&
+		test_grep ! "$PROMISOR_B" packs-after &&
+		test_grep ! "$PROMISOR_C" packs-after &&
+		test_grep "$PROMISOR_D" packs-after &&
+		test_grep "$PROMISOR_E" packs-after &&
+
+		ls .git/objects/pack/*.promisor >promisors &&
+		test_line_count = 3 promisors &&
+
+		git cat-file --batch-all-objects --batch-check="%(objectname)" >objects-actual &&
+		test_cmp objects-expect objects-actual
+	)
+'
+
 test_done

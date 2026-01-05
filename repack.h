@@ -103,8 +103,18 @@ struct pack_geometry {
 	uint32_t pack_nr, pack_alloc;
 	uint32_t split;
 
+	struct packed_git **promisor_pack;
+	uint32_t promisor_pack_nr, promisor_pack_alloc;
+	uint32_t promisor_split;
+
 	int split_factor;
 };
+
+void pack_geometry_repack_promisors(struct repository *repo,
+				    const struct pack_objects_args *args,
+				    const struct pack_geometry *geometry,
+				    struct string_list *names,
+				    const char *packtmp);
 
 void pack_geometry_init(struct pack_geometry *geometry,
 			struct existing_packs *existing,

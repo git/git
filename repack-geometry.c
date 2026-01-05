@@ -66,15 +66,25 @@ void pack_geometry_init(struct pack_geometry *geometry,
 		if (p->is_cruft)
 			continue;
 
-		ALLOC_GROW(geometry->pack,
-			   geometry->pack_nr + 1,
-			   geometry->pack_alloc);
+		if (p->pack_promisor) {
+			ALLOC_GROW(geometry->promisor_pack,
+				   geometry->promisor_pack_nr + 1,
+				   geometry->promisor_pack_alloc);
 
-		geometry->pack[geometry->pack_nr] = p;
-		geometry->pack_nr++;
+			geometry->promisor_pack[geometry->promisor_pack_nr] = p;
+			geometry->promisor_pack_nr++;
+		} else {
+			ALLOC_GROW(geometry->pack,
+				   geometry->pack_nr + 1,
+				   geometry->pack_alloc);
+
+			geometry->pack[geometry->pack_nr] = p;
+			geometry->pack_nr++;
+		}
 	}
 
 	QSORT(geometry->pack, geometry->pack_nr, pack_geometry_cmp);
+	QSORT(geometry->promisor_pack, geometry->promisor_pack_nr, pack_geometry_cmp);
 	strbuf_release(&buf);
 }
 
@@ -160,6 +170,9 @@ void pack_geometry_split(struct pack_geometry *geometry)
 {
 	geometry->split = compute_pack_geometry_split(geometry->pack, geometry->pack_nr,
 						      geometry->split_factor);
+	geometry->promisor_split = compute_pack_geometry_split(geometry->promisor_pack,
+							       geometry->promisor_pack_nr,
+							       geometry->split_factor);
 }
 
 struct packed_git *pack_geometry_preferred_pack(struct pack_geometry *geometry)
@@ -234,6 +247,8 @@ void pack_geometry_remove_redundant(struct pack_geometry *geometry,
 {
 	remove_redundant_packs(geometry->pack, geometry->split,
 			       names, existing, packdir);
+	remove_redundant_packs(geometry->promisor_pack, geometry->promisor_split,
+			       names, existing, packdir);
 }
 
 void pack_geometry_release(struct pack_geometry *geometry)
@@ -242,4 +257,5 @@ void pack_geometry_release(struct pack_geometry *geometry)
 		return;
 
 	free(geometry->pack);
+	free(geometry->promisor_pack);
 }

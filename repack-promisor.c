@@ -109,3 +109,31 @@ void repack_promisor_objects(struct repository *repo,
 
 	finish_repacking_promisor_objects(repo, &cmd, names, packtmp);
 }
+
+void pack_geometry_repack_promisors(struct repository *repo,
+				    const struct pack_objects_args *args,
+				    const struct pack_geometry *geometry,
+				    struct string_list *names,
+				    const char *packtmp)
+{
+	struct child_process cmd = CHILD_PROCESS_INIT;
+	FILE *in;
+
+	if (!geometry->promisor_split)
+		return;
+
+	prepare_pack_objects(&cmd, args, packtmp);
+	strvec_push(&cmd.args, "--stdin-packs");
+	cmd.in = -1;
+	if (start_command(&cmd))
+		die(_("could not start pack-objects to repack promisor packs"));
+
+	in = xfdopen(cmd.in, "w");
+	for (size_t i = 0; i < geometry->promisor_split; i++)
+		fprintf(in, "%s\n", pack_basename(geometry->promisor_pack[i]));
+	for (size_t i = geometry->promisor_split; i < geometry->promisor_pack_nr; i++)
+		fprintf(in, "^%s\n", pack_basename(geometry->promisor_pack[i]));
+	fclose(in);
+
+	finish_repacking_promisor_objects(repo, &cmd, names, packtmp);
+}
