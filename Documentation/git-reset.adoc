@@ -3,7 +3,7 @@ git-reset(1)
 
 NAME
 ----
-git-reset - Reset current HEAD to the specified state
+git-reset - Set `HEAD` or the index to a known state
 
 SYNOPSIS
 --------
@@ -15,10 +15,13 @@ git reset (--patch | -p) [<tree-ish>] [--] [<pathspec>...]
 
 DESCRIPTION
 -----------
-In the first form, set the current branch head (`HEAD`) to _<commit>_,
-optionally modifying index and working tree to match.
-The _<tree-ish>_/_<commit>_ defaults to `HEAD` in all forms.
-In the last three forms, copy entries from _<tree-ish>_ to the index.
+`git reset` does either of the following:
+
+1. `git reset [<mode>] <commit>` changes which commit `HEAD` points to. This
+   makes it possible to undo various Git operations, for example commit, merge,
+   rebase, and pull.
+2. When you specify files or directories or pass `--patch`, `git reset` updates
+   the staged version of the specified files.
 
 `git reset [<mode>] [<commit>]`::
 	This form resets the current branch head to _<commit>_ and
