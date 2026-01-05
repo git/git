@@ -33,13 +33,15 @@ static const char *short_commit_name(struct repository *repo,
 				       DEFAULT_ABBREV);
 }
 
-static struct commit *peel_committish(struct repository *repo, const char *name)
+static struct commit *peel_committish(struct repository *repo,
+				      const char *name,
+				      const char *mode)
 {
 	struct object *obj;
 	struct object_id oid;
 
 	if (repo_get_oid(repo, name, &oid))
-		return NULL;
+		die(_("'%s' is not a valid commit-ish for %s"), name, mode);
 	obj = parse_object(repo, &oid);
 	return (struct commit *)repo_peel_to_type(repo, name, 0, obj,
 						  OBJ_COMMIT);
@@ -178,7 +180,7 @@ static void set_up_replay_mode(struct repository *repo,
 	die_for_incompatible_opt2(!!onto_name, "--onto",
 				  !!*advance_name, "--advance");
 	if (onto_name) {
-		*onto = peel_committish(repo, onto_name);
+		*onto = peel_committish(repo, onto_name, "--onto");
 		if (rinfo.positive_refexprs <
 		    strset_get_size(&rinfo.positive_refs))
 			die(_("all positive revisions given must be references"));
@@ -199,7 +201,7 @@ static void set_up_replay_mode(struct repository *repo,
 		} else {
 			die(_("argument to --advance must be a reference"));
 		}
-		*onto = peel_committish(repo, *advance_name);
+		*onto = peel_committish(repo, *advance_name, "--advance");
 		if (rinfo.positive_refexprs > 1)
 			die(_("cannot advance target with multiple sources because ordering would be ill-defined"));
 	}
@@ -416,8 +418,7 @@ int cmd_replay(int argc,
 			   onto_name, &advance_name,
 			   &onto, &update_refs);
 
-	if (!onto) /* FIXME: Should handle replaying down to root commit */
-		die("Replaying down to root commit is not supported yet!");
+	/* FIXME: Should handle replaying down to root commit */
 
 	/* Build reflog message */
 	if (advance_name_opt)

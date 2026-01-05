@@ -58,6 +58,13 @@ test_expect_success 'argument to --advance must be a reference' '
 	test_cmp expect actual
 '
 
+test_expect_success '--onto with invalid commit-ish' '
+	printf "fatal: ${SQ}refs/not-valid${SQ} is not " >expect &&
+	printf "a valid commit-ish for --onto\n" >>expect &&
+	test_must_fail git replay --onto=refs/not-valid topic1..topic2 2>actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'using replay to rebase two branches, one on top of other' '
 	git replay --ref-action=print --onto main topic1..topic2 >result &&
 
