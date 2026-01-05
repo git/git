@@ -51,6 +51,13 @@ test_expect_success 'setup bare' '
 	git clone --bare . bare
 '
 
+test_expect_success 'argument to --advance must be a reference' '
+	echo "fatal: argument to --advance must be a reference" >expect &&
+	oid=$(git rev-parse main) &&
+	test_must_fail git replay --advance=$oid topic1..topic2 2>actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'using replay to rebase two branches, one on top of other' '
 	git replay --ref-action=print --onto main topic1..topic2 >result &&
 

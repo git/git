@@ -192,7 +192,6 @@ static void set_up_replay_mode(struct repository *repo,
 		if (!*advance_name)
 			BUG("expected either onto_name or *advance_name in this function");
 
-		*onto = peel_committish(repo, *advance_name);
 		if (repo_dwim_ref(repo, *advance_name, strlen(*advance_name),
 			     &oid, &fullname, 0) == 1) {
 			free(*advance_name);
@@ -200,6 +199,7 @@ static void set_up_replay_mode(struct repository *repo,
 		} else {
 			die(_("argument to --advance must be a reference"));
 		}
+		*onto = peel_committish(repo, *advance_name);
 		if (rinfo.positive_refexprs > 1)
 			die(_("cannot advance target with multiple sources because ordering would be ill-defined"));
 	}
