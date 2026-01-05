@@ -8,43 +8,17 @@ git-reset - Reset current HEAD to the specified state
 SYNOPSIS
 --------
 [synopsis]
+git reset [--soft | --mixed [-N] | --hard | --merge | --keep] [-q] [<commit>]
 git reset [-q] [<tree-ish>] [--] <pathspec>...
 git reset [-q] [--pathspec-from-file=<file> [--pathspec-file-nul]] [<tree-ish>]
 git reset (--patch | -p) [<tree-ish>] [--] [<pathspec>...]
-git reset [--soft | --mixed [-N] | --hard | --merge | --keep] [-q] [<commit>]
 
 DESCRIPTION
 -----------
-In the first three forms, copy entries from _<tree-ish>_ to the index.
-In the last form, set the current branch head (`HEAD`) to _<commit>_,
+In the first form, set the current branch head (`HEAD`) to _<commit>_,
 optionally modifying index and working tree to match.
 The _<tree-ish>_/_<commit>_ defaults to `HEAD` in all forms.
-
-`git reset [-q] [<tree-ish>] [--] <pathspec>...`::
-`git reset [-q] [--pathspec-from-file=<file> [--pathspec-file-nul]] [<tree-ish>]`::
-	These forms reset the index entries for all paths that match the
-	_<pathspec>_ to their state at _<tree-ish>_.  (It does not affect
-	the working tree or the current branch.)
-+
-This means that `git reset <pathspec>` is the opposite of `git add
-<pathspec>`. This command is equivalent to
-`git restore [--source=<tree-ish>] --staged <pathspec>...`.
-+
-After running `git reset <pathspec>` to update the index entry, you can
-use linkgit:git-restore[1] to check the contents out of the index to
-the working tree. Alternatively, using linkgit:git-restore[1]
-and specifying a commit with `--source`, you
-can copy the contents of a path out of a commit to the index and to the
-working tree in one go.
-
-`git reset (--patch | -p) [<tree-ish>] [--] [<pathspec>...]`::
-	Interactively select hunks in the difference between the index
-	and _<tree-ish>_ (defaults to `HEAD`).  The chosen hunks are applied
-	in reverse to the index.
-+
-This means that `git reset -p` is the opposite of `git add -p`, i.e.
-you can use it to selectively reset hunks. See the "Interactive Mode"
-section of linkgit:git-add[1] to learn how to operate the `--patch` mode.
+In the last three forms, copy entries from _<tree-ish>_ to the index.
 
 `git reset [<mode>] [<commit>]`::
 	This form resets the current branch head to _<commit>_ and
@@ -97,6 +71,32 @@ but carries forward unmerged index entries.
 	according to the commit recorded in the superproject, also setting
 	the submodules' `HEAD` to be detached at that commit.
 --
+
+`git reset [-q] [<tree-ish>] [--] <pathspec>...`::
+`git reset [-q] [--pathspec-from-file=<file> [--pathspec-file-nul]] [<tree-ish>]`::
+	These forms reset the index entries for all paths that match the
+	_<pathspec>_ to their state at _<tree-ish>_.  (It does not affect
+	the working tree or the current branch.)
++
+This means that `git reset <pathspec>` is the opposite of `git add
+<pathspec>`. This command is equivalent to
+`git restore [--source=<tree-ish>] --staged <pathspec>...`.
++
+After running `git reset <pathspec>` to update the index entry, you can
+use linkgit:git-restore[1] to check the contents out of the index to
+the working tree. Alternatively, using linkgit:git-restore[1]
+and specifying a commit with `--source`, you
+can copy the contents of a path out of a commit to the index and to the
+working tree in one go.
+
+`git reset (--patch | -p) [<tree-ish>] [--] [<pathspec>...]`::
+	Interactively select hunks in the difference between the index
+	and _<tree-ish>_ (defaults to `HEAD`).  The chosen hunks are applied
+	in reverse to the index.
++
+This means that `git reset -p` is the opposite of `git add -p`, i.e.
+you can use it to selectively reset hunks. See the "Interactive Mode"
+section of linkgit:git-add[1] to learn how to operate the `--patch` mode.
 
 See "Reset, restore and revert" in linkgit:git[1] for the differences
 between the three commands.
