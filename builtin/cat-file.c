@@ -839,12 +839,14 @@ static void batch_each_object(struct batch_options *opt,
 		.callback = callback,
 		.payload = _payload,
 	};
-	struct bitmap_index *bitmap = prepare_bitmap_git(the_repository);
+	struct bitmap_index *bitmap = NULL;
 
 	for_each_loose_object(batch_one_object_loose, &payload, 0);
 
-	if (bitmap && !for_each_bitmapped_object(bitmap, &opt->objects_filter,
-						 batch_one_object_bitmapped, &payload)) {
+	if (opt->objects_filter.choice != LOFC_DISABLED &&
+	    (bitmap = prepare_bitmap_git(the_repository)) &&
+	    !for_each_bitmapped_object(bitmap, &opt->objects_filter,
+				       batch_one_object_bitmapped, &payload)) {
 		struct packed_git *pack;
 
 		for (pack = get_all_packs(the_repository); pack; pack = pack->next) {
