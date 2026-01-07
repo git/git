@@ -95,6 +95,10 @@ Git will error out if a module does not have a corresponding
 Existing (pre-extension) submodules need to be migrated by adding the missing
 config entries. This is done manually for now, e.g. for each submodule:
 `git config submodule.<name>.gitdir .git/modules/<name>`.
++
+The extension can be enabled automatically for new repositories by setting
+`init.defaultSubmodulePathConfig` to `true`, for example by running
+`git config --global init.defaultSubmodulePathConfig true`.
 
 worktreeConfig:::
 	If enabled, then worktrees will load config settings from the
