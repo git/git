@@ -416,18 +416,15 @@ int odb_source_loose_read_object_info(struct odb_source *source,
 				      const struct object_id *oid,
 				      struct object_info *oi, int flags)
 {
-	int status = 0;
+	int ret;
 	int fd;
 	unsigned long mapsize;
 	const char *path;
-	void *map;
-	git_zstream stream;
+	void *map = NULL;
+	git_zstream stream, *stream_to_end = NULL;
 	char hdr[MAX_HEADER_LEN];
 	unsigned long size_scratch;
 	enum object_type type_scratch;
-
-	if (oi && oi->delta_base_oid)
-		oidclr(oi->delta_base_oid, source->odb->repo->hash_algo);
 
 	/*
 	 * If we don't care about type or size, then we don't
@@ -439,71 +436,101 @@ int odb_source_loose_read_object_info(struct odb_source *source,
 	 */
 	if (!oi || (!oi->typep && !oi->sizep && !oi->contentp)) {
 		struct stat st;
-		if ((!oi || !oi->disk_sizep) && (flags & OBJECT_INFO_QUICK))
-			return quick_has_loose(source->loose, oid) ? 0 : -1;
-		if (stat_loose_object(source->loose, oid, &st, &path) < 0)
-			return -1;
+
+		if ((!oi || !oi->disk_sizep) && (flags & OBJECT_INFO_QUICK)) {
+			ret = quick_has_loose(source->loose, oid) ? 0 : -1;
+			goto out;
+		}
+
+		if (stat_loose_object(source->loose, oid, &st, &path) < 0) {
+			ret = -1;
+			goto out;
+		}
+
 		if (oi && oi->disk_sizep)
 			*oi->disk_sizep = st.st_size;
-		return 0;
+
+		ret = 0;
+		goto out;
 	}
 
 	fd = open_loose_object(source->loose, oid, &path);
 	if (fd < 0) {
 		if (errno != ENOENT)
 			error_errno(_("unable to open loose object %s"), oid_to_hex(oid));
-		return -1;
+		ret = -1;
+		goto out;
 	}
-	map = map_fd(fd, path, &mapsize);
-	if (!map)
-		return -1;
 
-	if (!oi->sizep)
-		oi->sizep = &size_scratch;
-	if (!oi->typep)
-		oi->typep = &type_scratch;
+	map = map_fd(fd, path, &mapsize);
+	if (!map) {
+		ret = -1;
+		goto out;
+	}
 
 	if (oi->disk_sizep)
 		*oi->disk_sizep = mapsize;
 
+	stream_to_end = &stream;
+
 	switch (unpack_loose_header(&stream, map, mapsize, hdr, sizeof(hdr))) {
 	case ULHR_OK:
-		if (parse_loose_header(hdr, oi) < 0)
-			status = error(_("unable to parse %s header"), oid_to_hex(oid));
-		else if (*oi->typep < 0)
+		if (!oi->sizep)
+			oi->sizep = &size_scratch;
+		if (!oi->typep)
+			oi->typep = &type_scratch;
+
+		if (parse_loose_header(hdr, oi) < 0) {
+			ret = error(_("unable to parse %s header"), oid_to_hex(oid));
+			goto corrupt;
+		}
+
+		if (*oi->typep < 0)
 			die(_("invalid object type"));
 
-		if (!oi->contentp)
-			break;
-		*oi->contentp = unpack_loose_rest(&stream, hdr, *oi->sizep, oid);
-		if (*oi->contentp)
-			goto cleanup;
+		if (oi->contentp) {
+			*oi->contentp = unpack_loose_rest(&stream, hdr, *oi->sizep, oid);
+			if (!*oi->contentp) {
+				ret = -1;
+				goto corrupt;
+			}
+		}
 
-		status = -1;
 		break;
 	case ULHR_BAD:
-		status = error(_("unable to unpack %s header"),
-			       oid_to_hex(oid));
-		break;
+		ret = error(_("unable to unpack %s header"),
+			    oid_to_hex(oid));
+		goto corrupt;
 	case ULHR_TOO_LONG:
-		status = error(_("header for %s too long, exceeds %d bytes"),
-			       oid_to_hex(oid), MAX_HEADER_LEN);
-		break;
+		ret = error(_("header for %s too long, exceeds %d bytes"),
+			    oid_to_hex(oid), MAX_HEADER_LEN);
+		goto corrupt;
 	}
 
-	if (status && (flags & OBJECT_INFO_DIE_IF_CORRUPT))
+	ret = 0;
+
+corrupt:
+	if (ret && (flags & OBJECT_INFO_DIE_IF_CORRUPT))
 		die(_("loose object %s (stored in %s) is corrupt"),
 		    oid_to_hex(oid), path);
 
-cleanup:
-	git_inflate_end(&stream);
-	munmap(map, mapsize);
-	if (oi->sizep == &size_scratch)
-		oi->sizep = NULL;
-	if (oi->typep == &type_scratch)
-		oi->typep = NULL;
-	oi->whence = OI_LOOSE;
-	return status;
+out:
+	if (stream_to_end)
+		git_inflate_end(stream_to_end);
+	if (map)
+		munmap(map, mapsize);
+	if (oi) {
+		if (oi->sizep == &size_scratch)
+			oi->sizep = NULL;
+		if (oi->typep == &type_scratch)
+			oi->typep = NULL;
+		if (oi->delta_base_oid)
+			oidclr(oi->delta_base_oid, source->odb->repo->hash_algo);
+		if (!ret)
+			oi->whence = OI_LOOSE;
+	}
+
+	return ret;
 }
 
 static void hash_object_body(const struct git_hash_algo *algo, struct git_hash_ctx *c,
