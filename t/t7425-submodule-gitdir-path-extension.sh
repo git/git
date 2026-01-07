@@ -160,8 +160,8 @@ test_expect_success 'fetch mixed submodule changes and verify updates' '
 test_expect_success '`git init` respects init.defaultSubmodulePathConfig' '
 	git config --global init.defaultSubmodulePathConfig true &&
 	git init repo-init &&
-	git -C repo-init config extensions.submodulePathConfig > actual &&
-	echo true > expect &&
+	git -C repo-init config extensions.submodulePathConfig >actual &&
+	echo true >expect &&
 	test_cmp expect actual &&
 	# create a submodule and check gitdir
 	(
@@ -169,8 +169,8 @@ test_expect_success '`git init` respects init.defaultSubmodulePathConfig' '
 		git init -b main sub &&
 		test_commit -C sub sub-initial &&
 		git submodule add ./sub sub &&
-		git config submodule.sub.gitdir > actual &&
-		echo ".git/modules/sub" > expect &&
+		git config submodule.sub.gitdir >actual &&
+		echo ".git/modules/sub" >expect &&
 		test_cmp expect actual
 	) &&
 	git config --global --unset init.defaultSubmodulePathConfig
@@ -240,15 +240,15 @@ test_expect_success '`git clone` respects init.defaultSubmodulePathConfig' '
 		cd repo-clone &&
 
 		# verify new repo extension is inherited from global config
-		git config extensions.submodulePathConfig > actual &&
-		echo true > expect &&
+		git config extensions.submodulePathConfig >actual &&
+		echo true >expect &&
 		test_cmp expect actual &&
 
 		# new submodule has a gitdir config
 		git submodule add ../sub sub &&
 		test_path_is_dir .git/modules/sub &&
-		git config submodule.sub.gitdir > actual &&
-		echo ".git/modules/sub" > expect &&
+		git config submodule.sub.gitdir >actual &&
+		echo ".git/modules/sub" >expect &&
 		test_cmp expect actual
 	) &&
 	git config --global --unset init.defaultSubmodulePathConfig
@@ -262,8 +262,8 @@ test_expect_success '`git clone --recurse-submodules` respects init.defaultSubmo
 		cd repo-clone-recursive &&
 
 		# verify new repo extension is inherited from global config
-		git config extensions.submodulePathConfig > actual &&
-		echo true > expect &&
+		git config extensions.submodulePathConfig >actual &&
+		echo true >expect &&
 		test_cmp expect actual &&
 
 		# previous submodules should exist
@@ -275,9 +275,77 @@ test_expect_success '`git clone --recurse-submodules` respects init.defaultSubmo
 		# create another submodule and check that gitdir is created
 		git submodule add ../sub new-sub &&
 		test_path_is_dir .git/modules/new-sub &&
-		git config submodule.new-sub.gitdir > actual &&
-		echo ".git/modules/new-sub" > expect &&
+		git config submodule.new-sub.gitdir >actual &&
+		echo ".git/modules/new-sub" >expect &&
 		test_cmp expect actual
+	) &&
+	git config --global --unset init.defaultSubmodulePathConfig
+'
+
+test_expect_success 'submodule--helper migrates legacy modules' '
+	(
+		cd upstream &&
+
+		# previous submodules exist and were not migrated yet
+		test_must_fail git config submodule.sub1.gitdir &&
+		test_must_fail git config submodule.sub2.gitdir &&
+		test_path_is_dir .git/modules/sub1 &&
+		test_path_is_dir .git/modules/sub2 &&
+
+		# run migration
+		git submodule--helper migrate-gitdir-configs &&
+
+		# test that migration worked
+		git config submodule.sub1.gitdir >actual &&
+		echo ".git/modules/sub1" >expect &&
+		test_cmp expect actual &&
+		git config submodule.sub2.gitdir >actual &&
+		echo ".git/modules/sub2" >expect &&
+		test_cmp expect actual &&
+
+		# repository extension is enabled after migration
+		git config extensions.submodulePathConfig >actual &&
+		echo "true" >expect &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success '`git clone --recurse-submodules` works after migration' '
+	test_when_finished "rm -rf repo-clone-recursive" &&
+
+	# test with extension disabled after the upstream repo was migrated
+	git clone --recurse-submodules upstream repo-clone-recursive &&
+	(
+		cd repo-clone-recursive &&
+
+		# init.defaultSubmodulePathConfig was disabled before clone, so
+		# the repo extension config should also be off, the migration ignored
+		test_must_fail git config extensions.submodulePathConfig &&
+
+		# modules should look like there was no migration done
+		test_must_fail git config submodule.sub1.gitdir &&
+		test_must_fail git config submodule.sub2.gitdir &&
+		test_path_is_dir .git/modules/sub1 &&
+		test_path_is_dir .git/modules/sub2
+	) &&
+	rm -rf repo-clone-recursive &&
+
+	# enable the extension, then retry the clone
+	git config --global init.defaultSubmodulePathConfig true &&
+	git clone --recurse-submodules upstream repo-clone-recursive &&
+	(
+		cd repo-clone-recursive &&
+
+		# repository extension is enabled
+		git config extensions.submodulePathConfig >actual &&
+		echo "true" >expect &&
+		test_cmp expect actual &&
+
+		# gitdir configs exist for submodules
+		git config submodule.sub1.gitdir &&
+		git config submodule.sub2.gitdir &&
+		test_path_is_dir .git/modules/sub1 &&
+		test_path_is_dir .git/modules/sub2
 	) &&
 	git config --global --unset init.defaultSubmodulePathConfig
 '
