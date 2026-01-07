@@ -2296,6 +2296,62 @@ cleanup:
 	return ret;
 }
 
+struct submodule_from_gitdir_cb {
+	const char *gitdir;
+	const char *submodule_name;
+	bool conflict_found;
+};
+
+static int find_conflict_by_gitdir_cb(const char *var, const char *value,
+				      const struct config_context *ctx UNUSED, void *data)
+{
+	struct submodule_from_gitdir_cb *cb = data;
+	const char *submodule_name_start;
+	size_t submodule_name_len;
+	const char *suffix = ".gitdir";
+	size_t suffix_len = strlen(suffix);
+
+	if (!skip_prefix(var, "submodule.", &submodule_name_start))
+		return 0;
+
+	/* Check if submodule_name_start ends with ".gitdir" */
+	submodule_name_len = strlen(submodule_name_start);
+	if (submodule_name_len < suffix_len ||
+	    strcmp(submodule_name_start + submodule_name_len - suffix_len, suffix) != 0)
+		return 0; /* Does not end with ".gitdir" */
+
+	submodule_name_len -= suffix_len;
+
+	/*
+	 * A conflict happens if:
+	 * 1. The submodule names are different and
+	 * 2. The gitdir paths resolve to the same absolute path
+	 */
+	if (value && strncmp(cb->submodule_name, submodule_name_start, submodule_name_len)) {
+		char *abs_path_cb = absolute_pathdup(cb->gitdir);
+		char *abs_path_value = absolute_pathdup(value);
+
+		cb->conflict_found = !strcmp(abs_path_cb, abs_path_value);
+
+		free(abs_path_cb);
+		free(abs_path_value);
+	}
+
+	return cb->conflict_found;
+}
+
+static bool submodule_conflicts_with_existing(const char *gitdir, const char *submodule_name)
+{
+	struct submodule_from_gitdir_cb cb = { 0 };
+	cb.submodule_name = submodule_name;
+	cb.gitdir = gitdir;
+
+	/* Find conflicts with existing repo gitdir configs */
+	repo_config(the_repository, find_conflict_by_gitdir_cb, &cb);
+
+	return cb.conflict_found;
+}
+
 /*
  * Encoded gitdir validation, only used when extensions.submodulePathConfig is enabled.
  * This does not print errors like the non-encoded version, because encoding is supposed
@@ -2320,6 +2376,11 @@ static int validate_submodule_encoded_git_dir(char *git_dir, const char *submodu
 	/* Prevent the use of '/' in encoded names */
 	if (!last_submodule_name || strchr(last_submodule_name, '/'))
 		return -1;
+
+	/* Prevent conflicts with existing submodule gitdirs */
+	if (is_git_directory(git_dir) &&
+	    submodule_conflicts_with_existing(git_dir, submodule_name))
+			return -1;
 
 	/* Prevent conflicts on case-folding filesystems */
 	repo_config_get_bool(the_repository, "core.ignorecase", &config_ignorecase);
