@@ -31,6 +31,7 @@
 #include "commit-reach.h"
 #include "read-cache-ll.h"
 #include "setup.h"
+#include "advice.h"
 
 static int config_update_recurse_submodules = RECURSE_SUBMODULES_OFF;
 static int initialized_fetch_ref_tips;
@@ -2164,8 +2165,9 @@ int submodule_move_head(const char *path, const char *super_prefix,
 				if (validate_submodule_git_dir(git_dir,
 							       sub->name) < 0)
 					die(_("refusing to create/use '%s' in "
-					      "another submodule's git dir"),
-					    git_dir);
+					      "another submodule's git dir. "
+					      "Enabling extensions.submodulePathConfig "
+					      "should fix this."), git_dir);
 				free(git_dir);
 			}
 		} else {
@@ -2576,30 +2578,37 @@ cleanup:
 void submodule_name_to_gitdir(struct strbuf *buf, struct repository *r,
 			      const char *submodule_name)
 {
-	/*
-	 * NEEDSWORK: The current way of mapping a submodule's name to
-	 * its location in .git/modules/ has problems with some naming
-	 * schemes. For example, if a submodule is named "foo" and
-	 * another is named "foo/bar" (whether present in the same
-	 * superproject commit or not - the problem will arise if both
-	 * superproject commits have been checked out at any point in
-	 * time), or if two submodule names only have different cases in
-	 * a case-insensitive filesystem.
-	 *
-	 * There are several solutions, including encoding the path in
-	 * some way, introducing a submodule.<name>.gitdir config in
-	 * .git/config (not .gitmodules) that allows overriding what the
-	 * gitdir of a submodule would be (and teach Git, upon noticing
-	 * a clash, to automatically determine a non-clashing name and
-	 * to write such a config), or introducing a
-	 * submodule.<name>.gitdir config in .gitmodules that repo
-	 * administrators can explicitly set. Nothing has been decided,
-	 * so for now, just append the name at the end of the path.
-	 */
-	repo_git_path_append(r, buf, "modules/");
-	strbuf_addstr(buf, submodule_name);
+	if (!r->repository_format_submodule_path_cfg) {
+		/*
+		 * If extensions.submodulePathConfig is disabled,
+		 * continue to use the plain path.
+		 */
+		repo_git_path_append(r, buf, "modules/%s", submodule_name);
+	} else {
+		const char *gitdir;
+		char *key;
+		int ret;
 
-	if (validate_submodule_git_dir(buf->buf, submodule_name) < 0)
+		/* Otherwise the extension is enabled, so use the gitdir config. */
+		key = xstrfmt("submodule.%s.gitdir", submodule_name);
+		ret = repo_config_get_string_tmp(r, key, &gitdir);
+		FREE_AND_NULL(key);
+
+		if (ret)
+			die(_("the 'submodule.%s.gitdir' config does not exist for module '%s'. "
+			      "Please ensure it is set, for example by running something like: "
+			      "'git config submodule.%s.gitdir .git/modules/%s'. For details "
+			      "see the extensions.submodulePathConfig documentation."),
+			    submodule_name, submodule_name, submodule_name, submodule_name);
+
+		strbuf_addstr(buf, gitdir);
+	}
+
+	/* validate because users might have modified the config */
+	if (validate_submodule_git_dir(buf->buf, submodule_name)) {
+		advise(_("enabling extensions.submodulePathConfig might fix the "
+			 "following error, if it's not already enabled."));
 		die(_("refusing to create/use '%s' in another submodule's "
-		      "git dir"), buf->buf);
+		      " git dir."), buf->buf);
+	}
 }
