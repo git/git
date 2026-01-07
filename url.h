@@ -28,4 +28,11 @@ void str_end_url_with_slash(const char *url, char **dest);
  */
 int is_rfc3986_unreserved(char ch);
 
+/*
+ * This is a variant of is_rfc3986_unreserved() that treats uppercase
+ * letters as "reserved". This forces them to be percent-encoded, allowing
+ * 'Foo' (%46oo) and 'foo' (foo) to be distinct on case-folding filesystems.
+ */
+int is_casefolding_rfc3986_unreserved(char c);
+
 #endif /* URL_H */

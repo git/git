@@ -473,13 +473,37 @@ static void create_default_gitdir_config(const char *submodule_name)
 		return;
 	}
 
-	/* Case 2: Try URI-safe (RFC3986) encoding first, this fixes nested gitdirs */
+	/* Case 2.1: Try URI-safe (RFC3986) encoding first, this fixes nested gitdirs */
 	strbuf_reset(&gitdir_path);
 	repo_git_path_append(the_repository, &gitdir_path, "modules/");
 	strbuf_addstr_urlencode(&gitdir_path, submodule_name, is_rfc3986_unreserved);
 	if (!validate_and_set_submodule_gitdir(&gitdir_path, submodule_name)) {
 		strbuf_release(&gitdir_path);
 		return;
+	}
+
+	/* Case 2.2: Try extended uppercase URI (RFC3986) encoding, to fix case-folding */
+	strbuf_reset(&gitdir_path);
+	repo_git_path_append(the_repository, &gitdir_path, "modules/");
+	strbuf_addstr_urlencode(&gitdir_path, submodule_name, is_casefolding_rfc3986_unreserved);
+	if (!validate_and_set_submodule_gitdir(&gitdir_path, submodule_name))
+		return;
+
+	/* Case 2.3: Try some derived gitdir names, see if one sticks */
+	for (char c = '0'; c <= '9'; c++) {
+		strbuf_reset(&gitdir_path);
+		repo_git_path_append(the_repository, &gitdir_path, "modules/");
+		strbuf_addstr_urlencode(&gitdir_path, submodule_name, is_rfc3986_unreserved);
+		strbuf_addch(&gitdir_path, c);
+		if (!validate_and_set_submodule_gitdir(&gitdir_path, submodule_name))
+			return;
+
+		strbuf_reset(&gitdir_path);
+		repo_git_path_append(the_repository, &gitdir_path, "modules/");
+		strbuf_addstr_urlencode(&gitdir_path, submodule_name, is_casefolding_rfc3986_unreserved);
+		strbuf_addch(&gitdir_path, c);
+		if (!validate_and_set_submodule_gitdir(&gitdir_path, submodule_name))
+			return;
 	}
 
 	/* Case 3: nothing worked, error out */
