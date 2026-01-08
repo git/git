@@ -1645,7 +1645,6 @@ static void check_aliased_update_internal(struct command *cmd,
 		cmd->error_string = "broken symref";
 		return;
 	}
-	dst_name = strip_namespace(dst_name);
 
 	if (!(item = string_list_lookup(list, dst_name)))
 		return;
@@ -1690,10 +1689,13 @@ static void check_aliased_updates(struct command *commands)
 {
 	struct command *cmd;
 	struct string_list ref_list = STRING_LIST_INIT_NODUP;
+	struct strbuf ref_name = STRBUF_INIT;
 
 	for (cmd = commands; cmd; cmd = cmd->next) {
-		struct string_list_item *item =
-			string_list_append(&ref_list, cmd->ref_name);
+		struct string_list_item *item;
+		strbuf_reset(&ref_name);
+		strbuf_addf(&ref_name, "%s%s", get_git_namespace(), cmd->ref_name);
+		item = string_list_append(&ref_list, ref_name.buf);
 		item->util = (void *)cmd;
 	}
 	string_list_sort(&ref_list);
@@ -1703,6 +1705,7 @@ static void check_aliased_updates(struct command *commands)
 			check_aliased_update(cmd, &ref_list);
 	}
 
+	strbuf_release(&ref_name);
 	string_list_clear(&ref_list, 0);
 }
 
