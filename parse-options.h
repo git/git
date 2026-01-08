@@ -484,6 +484,8 @@ static inline void die_for_incompatible_opt2(int opt1, const char *opt1_name,
 		BUG("option callback expects an argument"); \
 } while(0)
 
+#define OPT_MAGIC ((char)(0xee))
+
 /*----- incremental advanced APIs -----*/
 
 struct parse_opt_cmdmode_list;
