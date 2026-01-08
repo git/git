@@ -60,6 +60,13 @@ test_expect_success 'git branch --force abc should succeed when abc exists' '
 	test_cmp expect actual
 '
 
+test_expect_success 'git branch --force br1 br2 abc should create 2 new branches' '
+	git branch --force br1 br2 abc &&
+	test_ref_exists refs/heads/br1 &&
+	test_ref_exists refs/heads/br2 &&
+	git branch -d br1 br2
+'
+
 test_expect_success 'git branch a/b/c should create a branch' '
 	git branch a/b/c &&
 	test_ref_exists refs/heads/a/b/c
