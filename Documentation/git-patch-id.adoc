@@ -47,7 +47,7 @@ This is the default if `patchid.verbatim` is `true`.
   as a key to index some meta-information about the change between
   the two trees.
 
-- Result is different from the value produced by Git 1.9 and older
+- The result is different from the value produced by Git 1.9 and older
   or produced when an "unstable" hash (see `--unstable` below) is
   configured - even when used on a diff output taken without any use
   of `-O<orderfile>`, thereby making existing databases storing such
