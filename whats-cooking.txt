@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jan 2026, #02)
-X-master-at: 68cb7f9e92a5d8e9824f5b52ac3d0a9d8f653dbe
-X-next-at: c9366fe5a04afd4bfc01bb74b2471bc26509b37a
+Subject: What's cooking in git.git (Jan 2026, #03)
+X-master-at: d529f3a197364881746f558e5652f0236131eb86
+X-next-at: a520c3929364f336279b44986f6d617b46a734d4
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jan 2026, #02)
+What's cooking in git.git (Jan 2026, #03)
 -----------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,7 +46,152 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* ar/run-command-hook (2025-12-26) 11 commits
+  (merged to 'next' on 2025-12-28 at 048cdffe21)
+ + receive-pack: convert receive hooks to hook API
+ + receive-pack: convert update hooks to new API
+ + hooks: allow callers to capture output
+ + run-command: allow capturing of collated output
+ + hook: allow overriding the ungroup option
+ + reference-transaction: use hook API instead of run-command
+ + transport: convert pre-push to hook API
+ + hook: convert 'post-rewrite' hook in sequencer.c to hook API
+ + hook: provide stdin via callback
+ + run-command: add stdin callback for parallelization
+ + run-command: add first helper for pp child states
+
+ Use hook API to replace ad-hoc invocation of hook scripts with the
+ run_command() API.
+ source: <20251226122334.16687-1-adrian.ratiu@collabora.com>
+
+
+* bc/checkout-error-message-fix (2025-12-24) 1 commit
+  (merged to 'next' on 2025-12-28 at d807c22e01)
+ + checkout: quote invalid treeish in error message
+
+ Message fix.
+ source: <20251224203253.881129-1-sandals@crustytoothpaste.net>
+
+
+* dd/t5403-modernise (2025-12-29) 1 commit
+  (merged to 'next' on 2026-01-01 at d1d712e288)
+ + t5403: use test_path_is_file instead of test -f
+
+ Test micro-clean-up.
+ source: <20251229185737.2328-1-deveshigurgaon@gmail.com>
+
+
+* ds/diff-lazy-fetch-with-name-only-fix (2025-12-29) 1 commit
+  (merged to 'next' on 2026-01-01 at ccbd34d6c9)
+ + diff: avoid segfault with freed entries
+
+ Running "git diff" with "--name-only" and other options that allows
+ us not to look at the blob contents, while objects that are lazily
+ fetched from a promisor remote, caused use-after-free, which has
+ been corrected.
+ source: <pull.2027.git.1767044697712.gitgitgadget@gmail.com>
+
+
+* en/ort-recursive-d-f-conflict-fix (2025-12-29) 1 commit
+  (merged to 'next' on 2026-01-01 at 883dcfc63e)
+ + merge-ort: fix corner case recursive submodule/directory conflict handling
+
+ The ort merge machinery hit an assertion failure in a history with
+ criss-cross merges renamed a directory and a non-directory, which
+ has been corrected.
+ source: <pull.2023.git.1767033783800.gitgitgadget@gmail.com>
+
+
+* rs/macos-iconv-workaround (2025-12-24) 2 commits
+  (merged to 'next' on 2025-12-28 at 94ed776719)
+ + macOS: use iconv from Homebrew if needed and present
+ + macOS: make Homebrew use configurable
+
+ Workaround the "iconv" shipped as part of macOS, which is broken
+ handling stateful ISO/IEC 2022 encoded strings.
+ source: <ce030c90-f635-42b5-82e1-814cd4c29505@web.de>
+
+
+* rs/parse-config-expiry-simplify (2025-12-27) 1 commit
+  (merged to 'next' on 2025-12-30 at 138de1df67)
+ + config: use git_parse_int() in git_config_get_expiry_in_days()
+
+ Code clean-up.
+ source: <1bd3c7f3-fcf6-4d8e-aa38-c15e3d51ce4c@web.de>
+
+
+* rs/show-branch-prio-queue (2025-12-25) 1 commit
+  (merged to 'next' on 2025-12-28 at 99d21acd7b)
+ + show-branch: use prio_queue
+
+ Code clean-up.
+ source: <70ed751e-fc3c-4cb4-a4fd-26094a9f622e@web.de>
+
+
+* rs/tag-wo-the-repository (2025-12-28) 4 commits
+  (merged to 'next' on 2026-01-01 at 3b7c52229a)
+ + tag: stop using the_repository
+ + tag: support arbitrary repositories in parse_tag()
+ + tag: support arbitrary repositories in gpg_verify_tag()
+ + tag: use algo of repo parameter in parse_tag_buffer()
+
+ Code clean-up.
+ source: <20251228181051.68724-1-l.s.r@web.de>
+
+--------------------------------------------------
 [New Topics]
+
+* ml/doc-blame-markup (2026-01-05) 1 commit
+ - doc: git-blame: convert blame to new doc format
+
+ Doc mark-up update.
+
+ Expecting a reroll.
+ cf. <9123496.T7Z3S40VBb@debian-mbp>
+ source: <20260105230220.519303-1-git@michael.lyo.nz>
+
+
+* ac/t1420-use-more-direct-check (2026-01-06) 1 commit
+ - t1420: modernize the lost-found test
+
+ Test update.
+
+ Will merge to 'next'?
+ source: <20260106132658.798706-1-andchi@fastmail.com>
+
+
+* ag/http-netrc-tests (2026-01-06) 1 commit
+ - t5550: add netrc tests for http 401/403
+
+ Additional tests were introduced to see the interaction with netrc
+ auth with auth failure on the http transport.
+
+ Comments?
+ source: <20260106114029.763351-1-git@ashlesh.me>
+
+
+* jk/cat-file-avoid-bitmap-when-unneeded (2026-01-06) 1 commit
+ - cat-file: only use bitmaps when filtering
+
+ Fix for a performance regression in "git cat-file".
+
+ Will merge to 'next'?
+ source: <20260106102558.GA68914@coredump.intra.peff.net>
+
+
+* jk/t-perf-fixes (2026-01-06) 2 commits
+ - t/perf/run: preserve GIT_PERF_* from environment
+ - t/perf/perf-lib: fix assignment of TEST_OUTPUT_DIRECTORY
+
+ Perf-test fixes.
+
+ Will merge to 'next'?
+ source: <20260106101043.GA3723319@coredump.intra.peff.net>
+
+--------------------------------------------------
+[Cooking]
 
 * en/xdiff-cleanup-3 (2026-01-03) 11 commits
  - SQUASH??? cocci
@@ -90,14 +235,14 @@ Release tarballs are available at:
  source: <aVfzMsN2ouY3UBFG@ubuntu>
 
 
-* aa/add-p-previous-decisions (2026-01-04) 1 commit
+* aa/add-p-previous-decisions (2026-01-06) 1 commit
  - add -p: show user's hunk decision when selecting hunks
 
  "git add -p" and friends notes what the current status of the hunk
  being shown is.
 
  Comments?
- source: <aVpI36nPuZAEchuM@Adekunles-MacBook-Air.local>
+ source: <aVz5kf6eLsMZ6WQQ@Adekunles-MacBook-Air.local>
 
 
 * ps/t1300-2021-use-test-path-is-helpers (2026-01-04) 1 commit
@@ -109,8 +254,6 @@ Release tarballs are available at:
  Will merge to 'master'.
  source: <20260104194812.15134-1-pushkarkumarsingh1970@gmail.com>
 
---------------------------------------------------
-[Cooking]
 
 * pt/fsmonitor-linux (2025-12-31) 1 commit
  - fsmonitor: implement filesystem change listener for Linux
@@ -131,91 +274,40 @@ Release tarballs are available at:
 
 
 * pt/t7800-difftool-test-racefix (2026-01-03) 1 commit
- - t7800: fix racy "difftool --dir-diff syncs worktree" test
+  (merged to 'next' on 2026-01-06 at 572d775bca)
+ + t7800: fix racy "difftool --dir-diff syncs worktree" test
 
  Test fixup.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.2149.v3.git.git.1767472809897.gitgitgadget@gmail.com>
 
 
-* dd/t5403-modernise (2025-12-29) 1 commit
-  (merged to 'next' on 2026-01-01 at d1d712e288)
- + t5403: use test_path_is_file instead of test -f
-
- Test micro-clean-up.
-
- Will merge to 'master'.
- source: <20251229185737.2328-1-deveshigurgaon@gmail.com>
-
-
-* ds/diff-lazy-fetch-with-name-only-fix (2025-12-29) 1 commit
-  (merged to 'next' on 2026-01-01 at ccbd34d6c9)
- + diff: avoid segfault with freed entries
-
- Running "git diff" with "--name-only" and other options that allows
- us not to look at the blob contents, while objects that are lazily
- fetched from a promisor remote, caused use-after-free, which has
- been corrected.
-
- Will merge to 'master'.
- source: <pull.2027.git.1767044697712.gitgitgadget@gmail.com>
-
-
-* en/fsck-snapshot-ref-state (2025-12-29) 1 commit
+* en/fsck-snapshot-ref-state (2026-01-06) 1 commit
  - fsck: snapshot default refs before object walk
 
  "git fsck" used inconsistent set of refs to show a confused
  warning, which has been corrected.
 
- Waiting for review responses.
- cf. <20260102054922.GA2580212@coredump.intra.peff.net>
- source: <pull.2026.git.1767035549378.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ source: <pull.2026.v2.git.1767749366719.gitgitgadget@gmail.com>
 
 
-* en/ort-recursive-d-f-conflict-fix (2025-12-29) 1 commit
-  (merged to 'next' on 2026-01-01 at 883dcfc63e)
- + merge-ort: fix corner case recursive submodule/directory conflict handling
-
- The ort merge machinery was hit an assertion failure in a history
- with criss-cross merges renamed a directory and a non-directory,
- which has been corrected.
-
- Will merge to 'master'.
- source: <pull.2023.git.1767033783800.gitgitgadget@gmail.com>
-
-
-* rs/tag-wo-the-repository (2025-12-28) 4 commits
-  (merged to 'next' on 2026-01-01 at 3b7c52229a)
- + tag: stop using the_repository
- + tag: support arbitrary repositories in parse_tag()
- + tag: support arbitrary repositories in gpg_verify_tag()
- + tag: use algo of repo parameter in parse_tag_buffer()
-
- Code clean-up.
-
- Will merge to 'master'.
- source: <20251228181051.68724-1-l.s.r@web.de>
-
-
-* kh/replay-invalid-onto-advance (2025-12-22) 2 commits
- - t3650: add more regression tests for failure conditions
- - replay: die descriptively when invalid commit-ish
+* kh/replay-invalid-onto-advance (2026-01-05) 6 commits
+  (merged to 'next' on 2026-01-08 at 1024748f91)
+ + t3650: add more regression tests for failure conditions
+ + replay: die if we cannot parse object
+ + replay: improve code comment and die message
+ + replay: die descriptively when invalid commit-ish is given
+ + replay: find *onto only after testing for ref name
+ + replay: remove dead code and rearrange
+ (this branch is used by ps/history and pw/replay-drop-empty.)
 
  Test coverage of "git replay" has been improved.
 
- Expecting a rework on the bottom patch.
- source: <CV_replay_die_descr.13f@msgid.xyz>
-
-
-* bc/checkout-error-message-fix (2025-12-24) 1 commit
-  (merged to 'next' on 2025-12-28 at d807c22e01)
- + checkout: quote invalid treeish in error message
-
- Message fix.
-
  Will merge to 'master'.
- source: <20251224203253.881129-1-sandals@crustytoothpaste.net>
+ cf. <CABPp-BGFNyKkpcWWksqvNqyXspMqfywbYyyhuSUaL41YHNHoNg@mail.gmail.com>
+ source: <V3_CV_replay_die_descr.1a4@msgid.xyz>
 
 
 * cc/lop-filter-auto (2025-12-23) 9 commits
@@ -257,26 +349,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <20251224170327.68049-1-l.s.r@web.de>
-
-
-* rs/parse-config-expiry-simplify (2025-12-27) 1 commit
-  (merged to 'next' on 2025-12-30 at 138de1df67)
- + config: use git_parse_int() in git_config_get_expiry_in_days()
-
- Code clean-up.
-
- Will merge to 'master'.
- source: <1bd3c7f3-fcf6-4d8e-aa38-c15e3d51ce4c@web.de>
-
-
-* rs/show-branch-prio-queue (2025-12-25) 1 commit
-  (merged to 'next' on 2025-12-28 at 99d21acd7b)
- + show-branch: use prio_queue
-
- Code clean-up.
-
- Will merge to 'master'.
- source: <70ed751e-fc3c-4cb4-a4fd-26094a9f622e@web.de>
 
 
 * tt/receive-pack-oo-namespace-symref-fix (2025-12-27) 1 commit
@@ -354,12 +426,14 @@ Release tarballs are available at:
  source: <pull.2018.git.1765980535.gitgitgadget@gmail.com>
 
 
-* pc/lockfile-pid (2025-12-17) 1 commit
+* pc/lockfile-pid (2026-01-07) 1 commit
  - lockfile: add PID file for debugging stale locks
 
  Allow recording process ID of the process that holds the lock next
  to a lockfile for diagnosis.
- source: <pull.2011.v2.git.1765997966593.gitgitgadget@gmail.com>
+
+ Comments?
+ source: <pull.2011.v4.git.1767804355831.gitgitgadget@gmail.com>
 
 
 * js/neuter-sideband (2025-12-17) 4 commits
@@ -376,7 +450,7 @@ Release tarballs are available at:
  source: <pull.1853.v2.git.1765981422.gitgitgadget@gmail.com>
 
 
-* ps/read-object-info-improvements (2025-12-18) 8 commits
+* ps/read-object-info-improvements (2026-01-07) 8 commits
  - packfile: drop repository parameter from `packed_object_info()`
  - packfile: skip unpacking object header for disk size requests
  - packfile: disentangle return value of `packed_object_info()`
@@ -389,7 +463,7 @@ Release tarballs are available at:
  The object-info API has been cleaned up.
 
  Comments?
- source: <20251218-b4-pks-odb-read-object-info-improvements-v2-0-62e3e49072bc@pks.im>
+ source: <20260107-b4-pks-odb-read-object-info-improvements-v4-0-b5d55c47082a@pks.im>
 
 
 * tb/macos-iconv-workarounds (2025-12-15) 6 commits
@@ -449,20 +523,9 @@ Release tarballs are available at:
  The packfile_store data structure is moved from object store to odb
  source.
 
- Comments?
+ Will merge to 'next'.
+ cf. <87zf6po3r4.fsf@iotcl.com>
  source: <20251218-b4-pks-pack-store-via-source-v2-0-62849007ce21@pks.im>
-
-
-* rs/macos-iconv-workaround (2025-12-24) 2 commits
-  (merged to 'next' on 2025-12-28 at 94ed776719)
- + macOS: use iconv from Homebrew if needed and present
- + macOS: make Homebrew use configurable
-
- Workaround the "iconv" shipped as part of macOS, which is broken
- handling stateful ISO/IEC 2022 encoded strings.
-
- Will merge to 'master'.
- source: <ce030c90-f635-42b5-82e1-814cd4c29505@web.de>
 
 
 * lo/repo-info-keys (2025-12-09) 3 commits
@@ -485,26 +548,28 @@ Release tarballs are available at:
  source: <pull.2123.git.git.1765261419802.gitgitgadget@gmail.com>
 
 
-* ps/odb-misc-fixes (2025-12-10) 3 commits
- - odb: properly close sources before freeing them
- - builtin/gc: fix condition for whether to write commit graphs
- - Merge branch 'ps/object-source-management' into ps/odb-misc-fixes
+* ps/odb-misc-fixes (2026-01-06) 3 commits
+  (merged to 'next' on 2026-01-08 at 850d35a76d)
+ + odb: properly close sources before freeing them
+ + builtin/gc: fix condition for whether to write commit graphs
+ + Merge branch 'ps/object-source-management' into ps/odb-misc-fixes
  (this branch is used by ps/packfile-store-in-odb-source.)
 
  Miscellaneous fixes on object database layer.
 
- Comments?
- source: <20251211-odb-related-fixes-v2-0-bdf875ce51fc@pks.im>
+ Will merge to 'master'.
+ source: <20260106-odb-related-fixes-v3-0-7ac157207b20@pks.im>
 
 
 * ps/clar-integers (2025-12-06) 3 commits
- - gitattributes: disable blank-at-eof errors for clar test expectations
- - t/unit-tests: demonstrate use of integer comparison assertions
- - t/unit-tests: update clar to 39f11fe
+  (merged to 'next' on 2026-01-08 at 9f9674ac20)
+ + gitattributes: disable blank-at-eof errors for clar test expectations
+ + t/unit-tests: demonstrate use of integer comparison assertions
+ + t/unit-tests: update clar to 39f11fe
 
  Import newer version of "clar", unit testing framework.
 
- Comments?
+ Will merge to 'master'.
  source: <20251206-b4-pks-clar-update-v2-0-9a14b10c1a36@pks.im>
 
 
@@ -575,10 +640,9 @@ Release tarballs are available at:
  source: <20251126-toon-last-modified-zzzz-v1-0-608350df0caa@iotcl.com>
 
 
-* pw/replay-drop-empty (2025-12-18) 2 commits
+* pw/replay-drop-empty (2025-12-18) 1 commit
  - replay: drop commits that become empty
- - Merge branch 'ps/history' into pw/replay-drop-empty
- (this branch uses ps/history.)
+ (this branch uses kh/replay-invalid-onto-advance and ps/history.)
 
  "git replay" is taught to drop commits that become empty (not the
  ones that are empty in the original).
@@ -673,28 +737,7 @@ Release tarballs are available at:
  source: <20251117221621.2863243-1-sandals@crustytoothpaste.net>
 
 
-* ar/run-command-hook (2025-12-26) 11 commits
-  (merged to 'next' on 2025-12-28 at 048cdffe21)
- + receive-pack: convert receive hooks to hook API
- + receive-pack: convert update hooks to new API
- + hooks: allow callers to capture output
- + run-command: allow capturing of collated output
- + hook: allow overriding the ungroup option
- + reference-transaction: use hook API instead of run-command
- + transport: convert pre-push to hook API
- + hook: convert 'post-rewrite' hook in sequencer.c to hook API
- + hook: provide stdin via callback
- + run-command: add stdin callback for parallelization
- + run-command: add first helper for pp child states
-
- Use hook API to replace ad-hoc invocation of hook scripts with the
- run_command() API.
-
- Will merge to 'master'.
- source: <20251226122334.16687-1-adrian.ratiu@collabora.com>
-
-
-* je/doc-reset (2026-01-01) 4 commits
+* je/doc-reset (2026-01-05) 4 commits
  - doc: git-reset: clarify `git reset <pathspec>`
  - doc: git-reset: clarify `git reset [mode]`
  - doc: git-reset: clarify intro
@@ -702,32 +745,25 @@ Release tarballs are available at:
 
  Documentation updates.
 
- Expecting a (hopefully small and final) reroll.
- cf. <5953760.DvuYhMxLoT@piment-oiseau>
- cf. <1943073.tdWV9SEqCh@piment-oiseau>
- source: <cover.1767307382.git.ben.knoble+github@gmail.com>
+ Will merge to 'next'?
+ source: <cover.1767649692.git.ben.knoble+github@gmail.com>
 
 
-* ps/history (2025-12-03) 13 commits
- - builtin/history: implement "split" subcommand
- - cache-tree: allow writing in-memory index as tree
- - add-patch: allow disabling editing of hunks
- - add-patch: add support for in-memory index patching
- - add-patch: remove dependency on "add-interactive" subsystem
- - add-patch: split out `struct interactive_options`
- - add-patch: split out header from "add-interactive.h"
+* ps/history (2026-01-07) 8 commits
  - builtin/history: implement "reword" subcommand
  - builtin: add new "history" command
- - replay: stop using `the_repository`
- - replay: extract logic to pick commits
  - wt-status: provide function to expose status for trees
- - Merge branch 'pw/replay-exclude-gpgsig-fix' into ps/history
- (this branch is used by pw/replay-drop-empty.)
+ - replay: yield the object ID of the final rewritten commit
+ - replay: small set of cleanups
+ - builtin/replay: move core logic into "libgit.a"
+ - builtin/replay: extract core logic to replay revisions
+ - Merge branch 'kh/replay-invalid-onto-advance' into ps/history
+ (this branch is used by pw/replay-drop-empty; uses kh/replay-invalid-onto-advance.)
 
  "git history" history rewriting UI.
 
- What's the status of this topic?
- source: <20251203-b4-pks-history-builtin-v7-0-9e9f849bfd0e@pks.im>
+ Comments?
+ source: <20260107-b4-pks-history-builtin-v8-0-18e9779e3a26@pks.im>
 
 
 * ms/doc-worktree-side-by-side (2025-10-10) 2 commits
@@ -742,7 +778,7 @@ Release tarballs are available at:
  source: <a203b35538847f3c9358a5ae26fb4ebea5734cfc.1759420102.git.msuchanek@suse.de>
 
 
-* ar/submodule-gitdir-tweak (2025-12-20) 11 commits
+* ar/submodule-gitdir-tweak (2026-01-07) 11 commits
  - submodule: detect conflicts with existing gitdir configs
  - submodule: hash the submodule name for the gitdir path
  - submodule: fix case-folding gitdir filesystem collisions
@@ -760,7 +796,7 @@ Release tarballs are available at:
  components.
 
  Comments?
- source: <20251220101528.1227487-1-adrian.ratiu@collabora.com>
+ source: <20260107230145.517562-1-adrian.ratiu@collabora.com>
 
 --------------------------------------------------
 [Discarded]
