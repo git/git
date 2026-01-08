@@ -109,7 +109,7 @@ test_expect_success 'post-checkout hook is triggered by clone' '
 	echo "$@" >"$GIT_DIR/post-checkout.args"
 	EOF
 	git clone --template=templates . clone3 &&
-	test -f clone3/.git/post-checkout.args
+	test_path_is_file clone3/.git/post-checkout.args
 '
 
 test_done
