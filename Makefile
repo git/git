@@ -1692,6 +1692,7 @@ ifeq ($(uname_S),Darwin)
                 ifeq ($(shell test -d /opt/local/lib && echo y),y)
 			BASIC_CFLAGS += -I/opt/local/include
 			BASIC_LDFLAGS += -L/opt/local/lib
+			HAS_GOOD_LIBICONV = Yes
                 endif
         endif
         ifndef NO_APPLE_COMMON_CRYPTO
@@ -1714,6 +1715,7 @@ endif
 ifdef USE_HOMEBREW_LIBICONV
 ifeq ($(shell test -d $(HOMEBREW_PREFIX)/opt/libiconv && echo y),y)
 	ICONVDIR ?= $(HOMEBREW_PREFIX)/opt/libiconv
+	HAS_GOOD_LIBICONV = Yes
 endif
 endif
 endif
@@ -1858,6 +1860,11 @@ ifndef NO_ICONV
 			ICONV_LINK += -lintl
                 endif
 		EXTLIBS += $(ICONV_LINK) -liconv
+        endif
+        ifdef NEEDS_GOOD_LIBICONV
+        ifndef HAS_GOOD_LIBICONV
+                BASIC_CFLAGS += -DICONV_RESTART_RESET
+        endif
         endif
 endif
 ifdef ICONV_OMITS_BOM
