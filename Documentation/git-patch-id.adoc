@@ -47,7 +47,7 @@ This is the default if `patchid.verbatim` is `true`.
   as a key to index some meta-information about the change between
   the two trees.
 
-- Result is different from the value produced by git 1.9 and older
+- Result is different from the value produced by Git 1.9 and older
   or produced when an "unstable" hash (see `--unstable` below) is
   configured - even when used on a diff output taken without any use
   of `-O<orderfile>`, thereby making existing databases storing such
@@ -61,8 +61,8 @@ This is the default if `patchid.stable` is set to `true`.
 `--unstable`::
 	Use an "unstable" hash as the patch ID. With this option,
 	the result produced is compatible with the patch-id value produced
-	by git 1.9 and older and whitespace is ignored.  Users with pre-existing
-	databases storing patch-ids produced by git 1.9 and older (who do not deal
+	by Git 1.9 and older and whitespace is ignored.  Users with pre-existing
+	databases storing patch-ids produced by Git 1.9 and older (who do not deal
 	with reordered patches) may want to use this option.
 +
 This is the default.
