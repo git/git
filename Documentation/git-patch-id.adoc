@@ -31,7 +31,7 @@ OPTIONS
 -------
 
 `--verbatim`::
-	Calculate the patch-id of the input as it is given, do not strip
+	Calculate the patch ID of the input as it is given, do not strip
 	any whitespace.
 +
 This is the default if `patchid.verbatim` is `true`.
@@ -51,18 +51,18 @@ This is the default if `patchid.verbatim` is `true`.
   or produced when an "unstable" hash (see `--unstable` below) is
   configured - even when used on a diff output taken without any use
   of `-O<orderfile>`, thereby making existing databases storing such
-  "unstable" or historical patch-ids unusable.
+  "unstable" or historical patch IDs unusable.
 
-- All whitespace within the patch is ignored and does not affect the id.
+- All whitespace within the patch is ignored and does not affect the ID.
 --
 +
 This is the default if `patchid.stable` is set to `true`.
 
 `--unstable`::
 	Use an "unstable" hash as the patch ID. With this option,
-	the result produced is compatible with the patch-id value produced
+	the result produced is compatible with the patch ID value produced
 	by Git 1.9 and older and whitespace is ignored.  Users with pre-existing
-	databases storing patch-ids produced by Git 1.9 and older (who do not deal
+	databases storing patch IDs produced by Git 1.9 and older (who do not deal
 	with reordered patches) may want to use this option.
 +
 This is the default.
