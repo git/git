@@ -1526,7 +1526,7 @@ int transport_push(struct repository *r,
 		puts("Done");
 	else if (!quiet && !ret && !transport_refs_pushed(remote_refs))
 		/* stable plumbing output; do not modify or localize */
-		fprintf(stderr, "Everything up-to-date\n");
+		fprintf(stderr, "Already up to date.\n");
 
 done:
 	free_refs(local_refs);
