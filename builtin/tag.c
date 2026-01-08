@@ -149,7 +149,7 @@ static int verify_tag(const char *name, const char *ref UNUSED,
 	if (format->format)
 		flags = GPG_VERIFY_OMIT_STATUS;
 
-	if (gpg_verify_tag(oid, name, flags))
+	if (gpg_verify_tag(the_repository, oid, name, flags))
 		return -1;
 
 	if (format->format)

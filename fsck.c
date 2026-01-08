@@ -474,7 +474,7 @@ static int fsck_walk_tag(struct tag *tag, void *data, struct fsck_options *optio
 {
 	const char *name = fsck_get_object_name(options, &tag->object.oid);
 
-	if (parse_tag(tag))
+	if (parse_tag(the_repository, tag))
 		return -1;
 	if (name)
 		fsck_put_object_name(options, &tag->tagged->oid, "%s", name);

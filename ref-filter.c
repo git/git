@@ -2866,7 +2866,7 @@ static int match_points_at(struct oid_array *points_at,
 	while (obj && obj->type == OBJ_TAG) {
 		struct tag *tag = (struct tag *)obj;
 
-		if (parse_tag(tag) < 0) {
+		if (parse_tag(the_repository, tag) < 0) {
 			obj = NULL;
 			break;
 		}
