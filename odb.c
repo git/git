@@ -1117,13 +1117,13 @@ void odb_free(struct object_database *o)
 	oidmap_clear(&o->replace_map, 1);
 	pthread_mutex_destroy(&o->replace_mutex);
 
+	odb_close(o);
 	odb_free_sources(o);
 
 	for (size_t i = 0; i < o->cached_object_nr; i++)
 		free((char *) o->cached_objects[i].value.buf);
 	free(o->cached_objects);
 
-	odb_close(o);
 	packfile_store_free(o->packfiles);
 	string_list_clear(&o->submodule_source_paths, 0);
 

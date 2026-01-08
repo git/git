@@ -1130,8 +1130,10 @@ static int dfs_on_ref(const struct reference *ref, void *cb_data)
 		return 0;
 
 	commit = lookup_commit(the_repository, maybe_peeled);
-	if (!commit)
+	if (!commit || commit->object.flags & SEEN)
 		return 0;
+	commit->object.flags |= SEEN;
+
 	if (repo_parse_commit(the_repository, commit) ||
 	    commit_graph_position(commit) != COMMIT_NOT_FROM_GRAPH)
 		return 0;
@@ -1141,7 +1143,7 @@ static int dfs_on_ref(const struct reference *ref, void *cb_data)
 	if (data->num_not_in_graph >= data->limit)
 		return 1;
 
-	commit_list_append(commit, &stack);
+	commit_list_insert(commit, &stack);
 
 	while (!result && stack) {
 		struct commit_list *parent;
@@ -1162,7 +1164,7 @@ static int dfs_on_ref(const struct reference *ref, void *cb_data)
 				break;
 			}
 
-			commit_list_append(parent->item, &stack);
+			commit_list_insert(parent->item, &stack);
 		}
 	}
 
