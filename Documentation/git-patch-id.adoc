@@ -32,7 +32,7 @@ OPTIONS
 
 `--verbatim`::
 	Calculate the patch ID of the input as it is given, do not strip
-	any whitespace.
+	any whitespace. Implies `--stable` and forbids `--unstable`.
 +
 This is the default if `patchid.verbatim` is `true`.
 
