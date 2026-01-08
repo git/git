@@ -33,14 +33,16 @@ static const char *short_commit_name(struct repository *repo,
 				       DEFAULT_ABBREV);
 }
 
-static struct commit *peel_committish(struct repository *repo, const char *name)
+static struct commit *peel_committish(struct repository *repo,
+				      const char *name,
+				      const char *mode)
 {
 	struct object *obj;
 	struct object_id oid;
 
 	if (repo_get_oid(repo, name, &oid))
-		return NULL;
-	obj = parse_object(repo, &oid);
+		die(_("'%s' is not a valid commit-ish for %s"), name, mode);
+	obj = parse_object_or_die(repo, &oid, name);
 	return (struct commit *)repo_peel_to_type(repo, name, 0, obj,
 						  OBJ_COMMIT);
 }
@@ -162,12 +164,12 @@ static void get_ref_information(struct repository *repo,
 	}
 }
 
-static void determine_replay_mode(struct repository *repo,
-				  struct rev_cmdline_info *cmd_info,
-				  const char *onto_name,
-				  char **advance_name,
-				  struct commit **onto,
-				  struct strset **update_refs)
+static void set_up_replay_mode(struct repository *repo,
+			       struct rev_cmdline_info *cmd_info,
+			       const char *onto_name,
+			       char **advance_name,
+			       struct commit **onto,
+			       struct strset **update_refs)
 {
 	struct ref_info rinfo;
 
@@ -178,15 +180,20 @@ static void determine_replay_mode(struct repository *repo,
 	die_for_incompatible_opt2(!!onto_name, "--onto",
 				  !!*advance_name, "--advance");
 	if (onto_name) {
-		*onto = peel_committish(repo, onto_name);
+		*onto = peel_committish(repo, onto_name, "--onto");
 		if (rinfo.positive_refexprs <
 		    strset_get_size(&rinfo.positive_refs))
 			die(_("all positive revisions given must be references"));
-	} else if (*advance_name) {
+		*update_refs = xcalloc(1, sizeof(**update_refs));
+		**update_refs = rinfo.positive_refs;
+		memset(&rinfo.positive_refs, 0, sizeof(**update_refs));
+	} else {
 		struct object_id oid;
 		char *fullname = NULL;
 
-		*onto = peel_committish(repo, *advance_name);
+		if (!*advance_name)
+			BUG("expected either onto_name or *advance_name in this function");
+
 		if (repo_dwim_ref(repo, *advance_name, strlen(*advance_name),
 			     &oid, &fullname, 0) == 1) {
 			free(*advance_name);
@@ -194,53 +201,9 @@ static void determine_replay_mode(struct repository *repo,
 		} else {
 			die(_("argument to --advance must be a reference"));
 		}
+		*onto = peel_committish(repo, *advance_name, "--advance");
 		if (rinfo.positive_refexprs > 1)
 			die(_("cannot advance target with multiple sources because ordering would be ill-defined"));
-	} else {
-		int positive_refs_complete = (
-			rinfo.positive_refexprs ==
-			strset_get_size(&rinfo.positive_refs));
-		int negative_refs_complete = (
-			rinfo.negative_refexprs ==
-			strset_get_size(&rinfo.negative_refs));
-		/*
-		 * We need either positive_refs_complete or
-		 * negative_refs_complete, but not both.
-		 */
-		if (rinfo.negative_refexprs > 0 &&
-		    positive_refs_complete == negative_refs_complete)
-			die(_("cannot implicitly determine whether this is an --advance or --onto operation"));
-		if (negative_refs_complete) {
-			struct hashmap_iter iter;
-			struct strmap_entry *entry;
-			const char *last_key = NULL;
-
-			if (rinfo.negative_refexprs == 0)
-				die(_("all positive revisions given must be references"));
-			else if (rinfo.negative_refexprs > 1)
-				die(_("cannot implicitly determine whether this is an --advance or --onto operation"));
-			else if (rinfo.positive_refexprs > 1)
-				die(_("cannot advance target with multiple source branches because ordering would be ill-defined"));
-
-			/* Only one entry, but we have to loop to get it */
-			strset_for_each_entry(&rinfo.negative_refs,
-					      &iter, entry) {
-				last_key = entry->key;
-			}
-
-			free(*advance_name);
-			*advance_name = xstrdup_or_null(last_key);
-		} else { /* positive_refs_complete */
-			if (rinfo.negative_refexprs > 1)
-				die(_("cannot implicitly determine correct base for --onto"));
-			if (rinfo.negative_refexprs == 1)
-				*onto = rinfo.onto;
-		}
-	}
-	if (!*advance_name) {
-		*update_refs = xcalloc(1, sizeof(**update_refs));
-		**update_refs = rinfo.positive_refs;
-		memset(&rinfo.positive_refs, 0, sizeof(**update_refs));
 	}
 	strset_clear(&rinfo.negative_refs);
 	strset_clear(&rinfo.positive_refs);
@@ -451,11 +414,11 @@ int cmd_replay(int argc,
 		revs.simplify_history = 0;
 	}
 
-	determine_replay_mode(repo, &revs.cmdline, onto_name, &advance_name,
-			      &onto, &update_refs);
+	set_up_replay_mode(repo, &revs.cmdline,
+			   onto_name, &advance_name,
+			   &onto, &update_refs);
 
-	if (!onto) /* FIXME: Should handle replaying down to root commit */
-		die("Replaying down to root commit is not supported yet!");
+	/* FIXME: Should allow replaying commits with the first as a root commit */
 
 	/* Build reflog message */
 	if (advance_name_opt)
@@ -491,7 +454,7 @@ int cmd_replay(int argc,
 		int hr;
 
 		if (!commit->parents)
-			die(_("replaying down to root commit is not supported yet!"));
+			die(_("replaying down from root commit is not supported yet!"));
 		if (commit->parents->next)
 			die(_("replaying merge commits is not supported yet!"));
 
