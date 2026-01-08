@@ -293,7 +293,7 @@ static int add_one_path(const struct cache_entry *old, const char *path, int len
 	ce->ce_flags = create_ce_flags(0);
 	ce->ce_namelen = len;
 	fill_stat_cache_info(the_repository->index, ce, st);
-	ce->ce_mode = ce_mode_from_stat(old, st->st_mode);
+	ce->ce_mode = ce_mode_from_stat(old, st->st_mode, the_repository);
 
 	if (index_path(the_repository->index, &ce->oid, path, st,
 		       info_only ? 0 : INDEX_WRITE_OBJECT)) {
