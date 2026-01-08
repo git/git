@@ -206,4 +206,26 @@ EOF
 	test_cmp expected actual
 '
 
+test_expect_success 'length of indent cannot exceed width' '
+	cat >input <<\EOF &&
+1 2 3 4 5 6
+EOF
+	cat >expected <<\EOF &&
+fatal: length of indent cannot exceed width
+EOF
+	test_must_fail git column --mode=column --width=1 --indent="--" <input >actual 2>&1 &&
+	test_cmp expected actual
+'
+
+test_expect_success 'padding must be non-negative checked before indent length' '
+	cat >input <<\EOF &&
+1 2 3 4 5 6
+EOF
+	cat >expected <<\EOF &&
+fatal: --padding must be non-negative
+EOF
+	test_must_fail git column --mode=column --padding=-1 --width=1 --indent="--" <input >actual 2>&1 &&
+	test_cmp expected actual
+'
+
 test_done
