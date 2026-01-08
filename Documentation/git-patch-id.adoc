@@ -45,7 +45,7 @@ This is the default if `patchid.verbatim` is `true`.
   with two different settings for `-O<orderfile>` result in the same
   patch ID signature, thereby allowing the computed result to be used
   as a key to index some meta-information about the change between
-  the two trees;
+  the two trees.
 
 - Result is different from the value produced by git 1.9 and older
   or produced when an "unstable" hash (see `--unstable` below) is
