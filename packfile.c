@@ -2164,25 +2164,26 @@ int packfile_store_read_object_info(struct packfile_store *store,
 	return 0;
 }
 
-static void maybe_invalidate_kept_pack_cache(struct repository *r,
+static void maybe_invalidate_kept_pack_cache(struct packfile_store *store,
 					     unsigned flags)
 {
-	if (!r->objects->packfiles->kept_cache.packs)
+	if (!store->kept_cache.packs)
 		return;
-	if (r->objects->packfiles->kept_cache.flags == flags)
+	if (store->kept_cache.flags == flags)
 		return;
-	FREE_AND_NULL(r->objects->packfiles->kept_cache.packs);
-	r->objects->packfiles->kept_cache.flags = 0;
+	FREE_AND_NULL(store->kept_cache.packs);
+	store->kept_cache.flags = 0;
 }
 
-struct packed_git **kept_pack_cache(struct repository *r, unsigned flags)
+struct packed_git **packfile_store_get_kept_pack_cache(struct packfile_store *store,
+						       unsigned flags)
 {
-	maybe_invalidate_kept_pack_cache(r, flags);
+	maybe_invalidate_kept_pack_cache(store, flags);
 
-	if (!r->objects->packfiles->kept_cache.packs) {
+	if (!store->kept_cache.packs) {
 		struct packed_git **packs = NULL;
+		struct packfile_list_entry *e;
 		size_t nr = 0, alloc = 0;
-		struct packed_git *p;
 
 		/*
 		 * We want "all" packs here, because we need to cover ones that
@@ -2192,9 +2193,11 @@ struct packed_git **kept_pack_cache(struct repository *r, unsigned flags)
 		 * covers, one kept and one not kept, but the midx returns only
 		 * the non-kept version.
 		 */
-		repo_for_each_pack(r, p) {
-			if ((p->pack_keep && (flags & ON_DISK_KEEP_PACKS)) ||
-			    (p->pack_keep_in_core && (flags & IN_CORE_KEEP_PACKS))) {
+		for (e = packfile_store_get_packs(store); e; e = e->next) {
+			struct packed_git *p = e->pack;
+
+			if ((p->pack_keep && (flags & KEPT_PACK_ON_DISK)) ||
+			    (p->pack_keep_in_core && (flags & KEPT_PACK_IN_CORE))) {
 				ALLOC_GROW(packs, nr + 1, alloc);
 				packs[nr++] = p;
 			}
@@ -2202,11 +2205,11 @@ struct packed_git **kept_pack_cache(struct repository *r, unsigned flags)
 		ALLOC_GROW(packs, nr + 1, alloc);
 		packs[nr] = NULL;
 
-		r->objects->packfiles->kept_cache.packs = packs;
-		r->objects->packfiles->kept_cache.flags = flags;
+		store->kept_cache.packs = packs;
+		store->kept_cache.flags = flags;
 	}
 
-	return r->objects->packfiles->kept_cache.packs;
+	return store->kept_cache.packs;
 }
 
 int find_kept_pack_entry(struct repository *r,
@@ -2214,9 +2217,9 @@ int find_kept_pack_entry(struct repository *r,
 			 unsigned flags,
 			 struct pack_entry *e)
 {
-	struct packed_git **cache;
+	struct packed_git **cache = packfile_store_get_kept_pack_cache(r->objects->packfiles, flags);
 
-	for (cache = kept_pack_cache(r, flags); *cache; cache++) {
+	for (; *cache; cache++) {
 		struct packed_git *p = *cache;
 		if (fill_pack_entry(oid, e, p))
 			return 1;
