@@ -3954,22 +3954,20 @@ out:
 	return ret;
 }
 
-static int files_fsck_refs(struct ref_store *ref_store,
-			   struct fsck_options *o,
-			   struct worktree *wt)
-{
-	return files_fsck_refs_dir(ref_store, o, wt);
-}
-
 static int files_fsck(struct ref_store *ref_store,
 		      struct fsck_options *o,
 		      struct worktree *wt)
 {
 	struct files_ref_store *refs =
 		files_downcast(ref_store, REF_STORE_READ, "fsck");
+	int ret = 0;
 
-	return files_fsck_refs(ref_store, o, wt) |
-	       refs->packed_ref_store->be->fsck(refs->packed_ref_store, o, wt);
+	if (files_fsck_refs_dir(ref_store, o, wt) < 0)
+		ret = -1;
+	if (refs->packed_ref_store->be->fsck(refs->packed_ref_store, o, wt) < 0)
+		ret = -1;
+
+	return ret;
 }
 
 struct ref_storage_be refs_be_files = {
