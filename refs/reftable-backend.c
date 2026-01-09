@@ -172,6 +172,37 @@ static struct reftable_ref_store *reftable_be_downcast(struct ref_store *ref_sto
 	return refs;
 }
 
+static int backend_for_worktree(struct reftable_backend **out,
+				struct reftable_ref_store *store,
+				const char *worktree_name)
+{
+	struct strbuf worktree_dir = STRBUF_INIT;
+	int ret;
+
+	*out = strmap_get(&store->worktree_backends, worktree_name);
+	if (*out) {
+		ret = 0;
+		goto out;
+	}
+
+	strbuf_addf(&worktree_dir, "%s/worktrees/%s/reftable",
+		    store->base.repo->commondir, worktree_name);
+
+	CALLOC_ARRAY(*out, 1);
+	store->err = ret = reftable_backend_init(*out, worktree_dir.buf,
+						 &store->write_options);
+	if (ret < 0) {
+		free(*out);
+		goto out;
+	}
+
+	strmap_put(&store->worktree_backends, worktree_name, *out);
+
+out:
+	strbuf_release(&worktree_dir);
+	return ret;
+}
+
 /*
  * Some refs are global to the repository (refs/heads/{*}), while others are
  * local to the worktree (eg. HEAD, refs/bisect/{*}). We solve this by having
@@ -191,19 +222,19 @@ static int backend_for(struct reftable_backend **out,
 		       const char **rewritten_ref,
 		       int reload)
 {
-	struct reftable_backend *be;
 	const char *wtname;
 	int wtname_len;
+	int ret;
 
 	if (!refname) {
-		be = &store->main_backend;
+		*out = &store->main_backend;
+		ret = 0;
 		goto out;
 	}
 
 	switch (parse_worktree_ref(refname, &wtname, &wtname_len, rewritten_ref)) {
 	case REF_WORKTREE_OTHER: {
 		static struct strbuf wtname_buf = STRBUF_INIT;
-		struct strbuf wt_dir = STRBUF_INIT;
 
 		/*
 		 * We're using a static buffer here so that we don't need to
@@ -223,20 +254,8 @@ static int backend_for(struct reftable_backend **out,
 		 * already and error out when trying to write a reference via
 		 * both stacks.
 		 */
-		be = strmap_get(&store->worktree_backends, wtname_buf.buf);
-		if (!be) {
-			strbuf_addf(&wt_dir, "%s/worktrees/%s/reftable",
-				    store->base.repo->commondir, wtname_buf.buf);
+		ret = backend_for_worktree(out, store, wtname_buf.buf);
 
-			CALLOC_ARRAY(be, 1);
-			store->err = reftable_backend_init(be, wt_dir.buf,
-							   &store->write_options);
-			assert(store->err != REFTABLE_API_ERROR);
-
-			strmap_put(&store->worktree_backends, wtname_buf.buf, be);
-		}
-
-		strbuf_release(&wt_dir);
 		goto out;
 	}
 	case REF_WORKTREE_CURRENT:
@@ -245,27 +264,24 @@ static int backend_for(struct reftable_backend **out,
 		 * main worktree. We thus return the main stack in that case.
 		 */
 		if (!store->worktree_backend.stack)
-			be = &store->main_backend;
+			*out = &store->main_backend;
 		else
-			be = &store->worktree_backend;
+			*out = &store->worktree_backend;
+		ret = 0;
 		goto out;
 	case REF_WORKTREE_MAIN:
 	case REF_WORKTREE_SHARED:
-		be = &store->main_backend;
+		*out = &store->main_backend;
+		ret = 0;
 		goto out;
 	default:
 		BUG("unhandled worktree reference type");
 	}
 
 out:
-	if (reload) {
-		int ret = reftable_stack_reload(be->stack);
-		if (ret)
-			return ret;
-	}
-	*out = be;
-
-	return 0;
+	if (reload && !ret)
+		ret = reftable_stack_reload((*out)->stack);
+	return ret;
 }
 
 static int should_write_log(struct reftable_ref_store *refs, const char *refname)
