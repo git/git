@@ -840,7 +840,7 @@ static int run_revert(struct add_i_state *s, const struct pathspec *ps,
 	if (is_initial)
 		oidcpy(&oid, s->r->hash_algo->empty_tree);
 	else {
-		tree = parse_tree_indirect(&oid);
+		tree = repo_parse_tree_indirect(s->r, &oid);
 		if (!tree) {
 			res = error(_("Could not parse HEAD^{tree}"));
 			goto finish_revert;
