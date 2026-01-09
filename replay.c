@@ -338,6 +338,8 @@ int replay_revisions(struct repository *repo, struct rev_info *revs,
 					   &onto->object.oid,
 					   &last_commit->object.oid);
 
+	out->final_oid = last_commit->object.oid;
+
 	ret = 0;
 
 out:
