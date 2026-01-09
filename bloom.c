@@ -354,7 +354,7 @@ static void init_truncated_large_filter(struct bloom_filter *filter,
 
 static int has_entries_with_high_bit(struct repository *r, struct tree *t)
 {
-	if (parse_tree(t))
+	if (repo_parse_tree(r, t))
 		return 1;
 
 	if (!(t->object.flags & VISITED)) {
