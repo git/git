@@ -113,7 +113,7 @@ test_expect_success 'HEAD link pointing at a funny place' '
 	test-tool ref-store main create-symref HEAD refs/funny/place &&
 	# avoid corrupt/broken HEAD from interfering with repo discovery
 	test_must_fail env GIT_DIR=.git git fsck 2>out &&
-	test_grep "HEAD points to something strange" out
+	test_grep "HEAD: badHeadTarget: HEAD points to non-branch ${SQ}refs/funny/place${SQ}" out
 '
 
 test_expect_success REFFILES 'HEAD link pointing at a funny object (from different wt)' '
@@ -148,7 +148,7 @@ test_expect_success 'other worktree HEAD link pointing at a funny place' '
 	git worktree add other &&
 	git -C other symbolic-ref HEAD refs/funny/place &&
 	test_must_fail git fsck 2>out &&
-	test_grep "worktrees/other/HEAD points to something strange" out
+	test_grep "worktrees/other/HEAD: badHeadTarget: HEAD points to non-branch ${SQ}refs/funny/place${SQ}" out
 '
 
 test_expect_success 'commit with multiple signatures is okay' '
