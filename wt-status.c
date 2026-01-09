@@ -35,6 +35,7 @@
 #include "lockfile.h"
 #include "sequencer.h"
 #include "fsmonitor-settings.h"
+#include "config.h"
 
 #define AB_DELAY_WARNING_IN_MS (2 * 1000)
 #define UF_DELAY_WARNING_IN_MS (2 * 1000)
@@ -1764,7 +1765,7 @@ static void wt_status_check_sparse_checkout(struct repository *r,
 	int skip_worktree = 0;
 	int i;
 
-	if (!core_apply_sparse_checkout || r->index->cache_nr == 0) {
+	if (!r->cfg_values->sparse_checkout || r->index->cache_nr == 0) {
 		/*
 		 * Don't compute percentage of checked out files if we
 		 * aren't in a sparse checkout or would get division by 0.

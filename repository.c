@@ -55,6 +55,7 @@ void initialize_repository(struct repository *repo)
 	repo->remote_state = remote_state_new();
 	repo->parsed_objects = parsed_object_pool_new(repo);
 	ALLOC_ARRAY(repo->index, 1);
+	CALLOC_ARRAY(repo->cfg_values, 1);
 	index_state_init(repo->index, repo);
 	repo->check_deprecated_config = true;
 
@@ -401,6 +402,11 @@ void repo_clear(struct repository *repo)
 	if (repo->remote_state) {
 		remote_state_clear(repo->remote_state);
 		FREE_AND_NULL(repo->remote_state);
+	}
+
+	if (repo->cfg_values) {
+		config_values_clear(repo->cfg_values);
+		FREE_AND_NULL(repo->cfg_values);
 	}
 
 	strmap_for_each_entry(&repo->submodule_ref_stores, &iter, e)

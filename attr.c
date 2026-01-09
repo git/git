@@ -881,10 +881,12 @@ const char *git_attr_system_file(void)
 
 const char *git_attr_global_file(void)
 {
-	if (!git_attributes_file)
-		git_attributes_file = xdg_config_home("attributes");
+	struct config_values *cfg = the_repository->cfg_values;
 
-	return git_attributes_file;
+	if (!cfg->attributes_file_path)
+		cfg->attributes_file_path = xdg_config_home("attributes");
+
+	return cfg->attributes_file_path;
 }
 
 int git_attr_system_is_enabled(void)
