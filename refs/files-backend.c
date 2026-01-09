@@ -3890,11 +3890,16 @@ cleanup:
 	return ret;
 }
 
+static const files_fsck_refs_fn fsck_refs_fn[]= {
+	files_fsck_refs_name,
+	files_fsck_refs_content,
+	NULL,
+};
+
 static int files_fsck_refs_dir(struct ref_store *ref_store,
 			       struct fsck_options *o,
 			       const char *refs_check_dir,
-			       struct worktree *wt,
-			       files_fsck_refs_fn *fsck_refs_fn)
+			       struct worktree *wt)
 {
 	struct strbuf refname = STRBUF_INIT;
 	struct strbuf sb = STRBUF_INIT;
@@ -3955,13 +3960,7 @@ static int files_fsck_refs(struct ref_store *ref_store,
 			   struct fsck_options *o,
 			   struct worktree *wt)
 {
-	files_fsck_refs_fn fsck_refs_fn[]= {
-		files_fsck_refs_name,
-		files_fsck_refs_content,
-		NULL,
-	};
-
-	return files_fsck_refs_dir(ref_store, o, "refs", wt, fsck_refs_fn);
+	return files_fsck_refs_dir(ref_store, o, "refs", wt);
 }
 
 static int files_fsck(struct ref_store *ref_store,
