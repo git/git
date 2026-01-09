@@ -320,6 +320,13 @@ int check_refname_format(const char *refname, int flags)
 	return check_or_sanitize_refname(refname, flags, NULL);
 }
 
+int refs_fsck_ref(struct ref_store *refs UNUSED, struct fsck_options *o UNUSED,
+		  struct fsck_ref_report *report UNUSED,
+		  const char *refname UNUSED, const struct object_id *oid UNUSED)
+{
+	return 0;
+}
+
 int refs_fsck_symref(struct ref_store *refs UNUSED, struct fsck_options *o,
 		     struct fsck_ref_report *report,
 		     const char *refname UNUSED, const char *target)
