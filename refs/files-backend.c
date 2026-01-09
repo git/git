@@ -3715,7 +3715,8 @@ static int files_ref_store_remove_on_disk(struct ref_store *ref_store,
 typedef int (*files_fsck_refs_fn)(struct ref_store *ref_store,
 				  struct fsck_options *o,
 				  const char *refname,
-				  struct dir_iterator *iter);
+				  const char *path,
+				  int mode);
 
 static int files_fsck_symref_target(struct fsck_options *o,
 				    struct fsck_ref_report *report,
@@ -3772,7 +3773,8 @@ out:
 static int files_fsck_refs_content(struct ref_store *ref_store,
 				   struct fsck_options *o,
 				   const char *target_name,
-				   struct dir_iterator *iter)
+				   const char *path,
+				   int mode)
 {
 	struct strbuf ref_content = STRBUF_INIT;
 	struct strbuf abs_gitdir = STRBUF_INIT;
@@ -3786,7 +3788,7 @@ static int files_fsck_refs_content(struct ref_store *ref_store,
 
 	report.path = target_name;
 
-	if (S_ISLNK(iter->st.st_mode)) {
+	if (S_ISLNK(mode)) {
 		const char *relative_referent_path = NULL;
 
 		ret = fsck_report_ref(o, &report,
@@ -3798,7 +3800,7 @@ static int files_fsck_refs_content(struct ref_store *ref_store,
 		if (!is_dir_sep(abs_gitdir.buf[abs_gitdir.len - 1]))
 			strbuf_addch(&abs_gitdir, '/');
 
-		strbuf_add_real_path(&ref_content, iter->path.buf);
+		strbuf_add_real_path(&ref_content, path);
 		skip_prefix(ref_content.buf, abs_gitdir.buf,
 			    &relative_referent_path);
 
@@ -3811,7 +3813,7 @@ static int files_fsck_refs_content(struct ref_store *ref_store,
 		goto cleanup;
 	}
 
-	if (strbuf_read_file(&ref_content, iter->path.buf, 0) < 0) {
+	if (strbuf_read_file(&ref_content, path, 0) < 0) {
 		/*
 		 * Ref file could be removed by another concurrent process. We should
 		 * ignore this error and continue to the next ref.
@@ -3819,7 +3821,7 @@ static int files_fsck_refs_content(struct ref_store *ref_store,
 		if (errno == ENOENT)
 			goto cleanup;
 
-		ret = error_errno(_("cannot read ref file '%s'"), iter->path.buf);
+		ret = error_errno(_("cannot read ref file '%s'"), path);
 		goto cleanup;
 	}
 
@@ -3861,16 +3863,20 @@ cleanup:
 static int files_fsck_refs_name(struct ref_store *ref_store UNUSED,
 				struct fsck_options *o,
 				const char *refname,
-				struct dir_iterator *iter)
+				const char *path,
+				int mode UNUSED)
 {
 	struct strbuf sb = STRBUF_INIT;
+	const char *filename;
 	int ret = 0;
+
+	filename = basename((char *) path);
 
 	/*
 	 * Ignore the files ending with ".lock" as they may be lock files
 	 * However, do not allow bare ".lock" files.
 	 */
-	if (iter->basename[0] != '.' && ends_with(iter->basename, ".lock"))
+	if (filename[0] != '.' && ends_with(filename, ".lock"))
 		goto cleanup;
 
 	/*
@@ -3896,6 +3902,35 @@ static const files_fsck_refs_fn fsck_refs_fn[]= {
 	NULL,
 };
 
+static int files_fsck_ref(struct ref_store *ref_store,
+			  struct fsck_options *o,
+			  const char *refname,
+			  const char *path,
+			  int mode)
+{
+	int ret = 0;
+
+	if (o->verbose)
+		fprintf_ln(stderr, "Checking %s", refname);
+
+	if (!S_ISREG(mode) && !S_ISLNK(mode)) {
+		struct fsck_ref_report report = { .path = refname };
+
+		if (fsck_report_ref(o, &report,
+				    FSCK_MSG_BAD_REF_FILETYPE,
+				    "unexpected file type"))
+			ret = -1;
+		goto out;
+	}
+
+	for (size_t i = 0; fsck_refs_fn[i]; i++)
+		if (fsck_refs_fn[i](ref_store, o, refname, path, mode))
+			ret = -1;
+
+out:
+	return ret;
+}
+
 static int files_fsck_refs_dir(struct ref_store *ref_store,
 			       struct fsck_options *o,
 			       struct worktree *wt)
@@ -3918,30 +3953,17 @@ static int files_fsck_refs_dir(struct ref_store *ref_store,
 	}
 
 	while ((iter_status = dir_iterator_advance(iter)) == ITER_OK) {
-		if (S_ISDIR(iter->st.st_mode)) {
+		if (S_ISDIR(iter->st.st_mode))
 			continue;
-		} else if (S_ISREG(iter->st.st_mode) ||
-			   S_ISLNK(iter->st.st_mode)) {
-			strbuf_reset(&refname);
 
-			if (!is_main_worktree(wt))
-				strbuf_addf(&refname, "worktrees/%s/", wt->id);
-			strbuf_addf(&refname, "refs/%s", iter->relative_path);
+		strbuf_reset(&refname);
+		if (!is_main_worktree(wt))
+			strbuf_addf(&refname, "worktrees/%s/", wt->id);
+		strbuf_addf(&refname, "refs/%s", iter->relative_path);
 
-			if (o->verbose)
-				fprintf_ln(stderr, "Checking %s", refname.buf);
-
-			for (size_t i = 0; fsck_refs_fn[i]; i++) {
-				if (fsck_refs_fn[i](ref_store, o, refname.buf, iter))
-					ret = -1;
-			}
-		} else {
-			struct fsck_ref_report report = { .path = iter->basename };
-			if (fsck_report_ref(o, &report,
-					    FSCK_MSG_BAD_REF_FILETYPE,
-					    "unexpected file type"))
-				ret = -1;
-		}
+		if (files_fsck_ref(ref_store, o, refname.buf,
+				   iter->path.buf, iter->st.st_mode) < 0)
+			ret = -1;
 	}
 
 	if (iter_status != ITER_DONE)
