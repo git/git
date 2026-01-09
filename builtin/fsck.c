@@ -564,9 +564,9 @@ static int fsck_handle_ref(const struct reference *ref, void *cb_data UNUSED)
 	return 0;
 }
 
-static int fsck_head_link(const char *head_ref_name,
-			  const char **head_points_at,
-			  struct object_id *head_oid);
+static void fsck_head_link(const char *head_ref_name,
+			   const char **head_points_at,
+			   struct object_id *head_oid);
 
 static void get_default_heads(void)
 {
@@ -713,12 +713,10 @@ static void fsck_source(struct odb_source *source)
 	stop_progress(&progress);
 }
 
-static int fsck_head_link(const char *head_ref_name,
-			  const char **head_points_at,
-			  struct object_id *head_oid)
+static void fsck_head_link(const char *head_ref_name,
+			   const char **head_points_at,
+			   struct object_id *head_oid)
 {
-	int null_is_error = 0;
-
 	if (verbose)
 		fprintf_ln(stderr, _("Checking %s link"), head_ref_name);
 
@@ -727,27 +725,18 @@ static int fsck_head_link(const char *head_ref_name,
 						  NULL);
 	if (!*head_points_at) {
 		errors_found |= ERROR_REFS;
-		return error(_("invalid %s"), head_ref_name);
+		error(_("invalid %s"), head_ref_name);
+		return;
 	}
-	if (!strcmp(*head_points_at, head_ref_name))
-		/* detached HEAD */
-		null_is_error = 1;
-	else if (!starts_with(*head_points_at, "refs/heads/")) {
+	if (strcmp(*head_points_at, head_ref_name) &&
+	    !starts_with(*head_points_at, "refs/heads/")) {
 		errors_found |= ERROR_REFS;
-		return error(_("%s points to something strange (%s)"),
-			     head_ref_name, *head_points_at);
+		error(_("%s points to something strange (%s)"),
+		      head_ref_name, *head_points_at);
+		return;
 	}
-	if (is_null_oid(head_oid)) {
-		if (null_is_error) {
-			errors_found |= ERROR_REFS;
-			return error(_("%s: detached HEAD points at nothing"),
-				     head_ref_name);
-		}
-		fprintf_ln(stderr,
-			   _("notice: %s points to an unborn branch (%s)"),
-			   head_ref_name, *head_points_at + 11);
-	}
-	return 0;
+
+	return;
 }
 
 static int fsck_cache_tree(struct cache_tree *it, const char *index_path)

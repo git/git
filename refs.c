@@ -320,10 +320,15 @@ int check_refname_format(const char *refname, int flags)
 	return check_or_sanitize_refname(refname, flags, NULL);
 }
 
-int refs_fsck_ref(struct ref_store *refs UNUSED, struct fsck_options *o UNUSED,
-		  struct fsck_ref_report *report UNUSED,
-		  const char *refname UNUSED, const struct object_id *oid UNUSED)
+int refs_fsck_ref(struct ref_store *refs UNUSED, struct fsck_options *o,
+		  struct fsck_ref_report *report,
+		  const char *refname UNUSED, const struct object_id *oid)
 {
+	if (is_null_oid(oid))
+		return fsck_report_ref(o, report, FSCK_MSG_BAD_REF_OID,
+				       "points to invalid object ID '%s'",
+				       oid_to_hex(oid));
+
 	return 0;
 }
 
