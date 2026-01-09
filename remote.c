@@ -2237,6 +2237,61 @@ int stat_tracking_info(struct branch *branch, int *num_ours, int *num_theirs,
 	return stat_branch_pair(branch->refname, base, num_ours, num_theirs, abf);
 }
 
+static void format_branch_comparison(struct strbuf *sb,
+				     bool up_to_date,
+				     int ours, int theirs,
+				     const char *branch_name,
+				     enum ahead_behind_flags abf,
+				     bool show_divergence_advice)
+{
+	if (up_to_date) {
+		strbuf_addf(sb,
+			_("Your branch is up to date with '%s'.\n"),
+			branch_name);
+	} else if (abf == AHEAD_BEHIND_QUICK) {
+		strbuf_addf(sb,
+			    _("Your branch and '%s' refer to different commits.\n"),
+			    branch_name);
+		if (advice_enabled(ADVICE_STATUS_HINTS))
+			strbuf_addf(sb, _("  (use \"%s\" for details)\n"),
+				    "git status --ahead-behind");
+	} else if (!theirs) {
+		strbuf_addf(sb,
+			Q_("Your branch is ahead of '%s' by %d commit.\n",
+			   "Your branch is ahead of '%s' by %d commits.\n",
+			   ours),
+			branch_name, ours);
+		if (advice_enabled(ADVICE_STATUS_HINTS))
+			strbuf_addstr(sb,
+				_("  (use \"git push\" to publish your local commits)\n"));
+	} else if (!ours) {
+		strbuf_addf(sb,
+			Q_("Your branch is behind '%s' by %d commit, "
+			       "and can be fast-forwarded.\n",
+			   "Your branch is behind '%s' by %d commits, "
+			       "and can be fast-forwarded.\n",
+			   theirs),
+			branch_name, theirs);
+		if (advice_enabled(ADVICE_STATUS_HINTS))
+			strbuf_addstr(sb,
+				_("  (use \"git pull\" to update your local branch)\n"));
+	} else {
+		strbuf_addf(sb,
+			Q_("Your branch and '%s' have diverged,\n"
+			       "and have %d and %d different commit each, "
+			       "respectively.\n",
+			   "Your branch and '%s' have diverged,\n"
+			       "and have %d and %d different commits each, "
+			       "respectively.\n",
+			   ours + theirs),
+			branch_name, ours, theirs);
+		if (show_divergence_advice &&
+		    advice_enabled(ADVICE_STATUS_HINTS))
+			strbuf_addstr(sb,
+				_("  (use \"git pull\" if you want to integrate the remote branch with yours)\n"));
+	}
+}
+
 /*
  * Return true when there is anything to report, otherwise false.
  */
@@ -2258,6 +2313,7 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb,
 
 	base = refs_shorten_unambiguous_ref(get_main_ref_store(the_repository),
 					    full_base, 0);
+
 	if (upstream_is_gone) {
 		strbuf_addf(sb,
 			_("Your branch is based on '%s', but the upstream is gone.\n"),
@@ -2265,52 +2321,10 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb,
 		if (advice_enabled(ADVICE_STATUS_HINTS))
 			strbuf_addstr(sb,
 				_("  (use \"git branch --unset-upstream\" to fixup)\n"));
-	} else if (!sti) {
-		strbuf_addf(sb,
-			_("Your branch is up to date with '%s'.\n"),
-			base);
-	} else if (abf == AHEAD_BEHIND_QUICK) {
-		strbuf_addf(sb,
-			    _("Your branch and '%s' refer to different commits.\n"),
-			    base);
-		if (advice_enabled(ADVICE_STATUS_HINTS))
-			strbuf_addf(sb, _("  (use \"%s\" for details)\n"),
-				    "git status --ahead-behind");
-	} else if (!theirs) {
-		strbuf_addf(sb,
-			Q_("Your branch is ahead of '%s' by %d commit.\n",
-			   "Your branch is ahead of '%s' by %d commits.\n",
-			   ours),
-			base, ours);
-		if (advice_enabled(ADVICE_STATUS_HINTS))
-			strbuf_addstr(sb,
-				_("  (use \"git push\" to publish your local commits)\n"));
-	} else if (!ours) {
-		strbuf_addf(sb,
-			Q_("Your branch is behind '%s' by %d commit, "
-			       "and can be fast-forwarded.\n",
-			   "Your branch is behind '%s' by %d commits, "
-			       "and can be fast-forwarded.\n",
-			   theirs),
-			base, theirs);
-		if (advice_enabled(ADVICE_STATUS_HINTS))
-			strbuf_addstr(sb,
-				_("  (use \"git pull\" to update your local branch)\n"));
 	} else {
-		strbuf_addf(sb,
-			Q_("Your branch and '%s' have diverged,\n"
-			       "and have %d and %d different commit each, "
-			       "respectively.\n",
-			   "Your branch and '%s' have diverged,\n"
-			       "and have %d and %d different commits each, "
-			       "respectively.\n",
-			   ours + theirs),
-			base, ours, theirs);
-		if (show_divergence_advice &&
-		    advice_enabled(ADVICE_STATUS_HINTS))
-			strbuf_addstr(sb,
-				_("  (use \"git pull\" if you want to integrate the remote branch with yours)\n"));
+		format_branch_comparison(sb, !sti, ours, theirs, base, abf, show_divergence_advice);
 	}
+
 	free(base);
 	return 1;
 }
