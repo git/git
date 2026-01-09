@@ -28,7 +28,7 @@ int read_tree_at(struct repository *r,
 	if (depth > r->settings.max_allowed_tree_depth)
 		return error("exceeded maximum allowed tree depth");
 
-	if (parse_tree(tree))
+	if (repo_parse_tree(r, tree))
 		return -1;
 
 	init_tree_desc(&desc, &tree->object.oid, tree->buffer, tree->size);
