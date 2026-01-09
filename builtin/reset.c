@@ -118,7 +118,7 @@ static int reset_index(const char *ref, const struct object_id *oid, int reset_t
 		goto out;
 
 	if (reset_type == MIXED || reset_type == HARD) {
-		tree = parse_tree_indirect(oid);
+		tree = repo_parse_tree_indirect(the_repository, oid);
 		if (!tree) {
 			error(_("unable to read tree (%s)"), oid_to_hex(oid));
 			goto out;
@@ -417,7 +417,7 @@ int cmd_reset(int argc,
 		struct tree *tree;
 		if (repo_get_oid_treeish(the_repository, rev, &oid))
 			die(_("Failed to resolve '%s' as a valid tree."), rev);
-		tree = parse_tree_indirect(&oid);
+		tree = repo_parse_tree_indirect(the_repository, &oid);
 		if (!tree)
 			die(_("Could not parse object '%s'."), rev);
 		oidcpy(&oid, &tree->object.oid);

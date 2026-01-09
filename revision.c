@@ -72,7 +72,7 @@ static void mark_tree_contents_uninteresting(struct repository *r,
 	struct tree_desc desc;
 	struct name_entry entry;
 
-	if (parse_tree_gently(tree, 1) < 0)
+	if (repo_parse_tree_gently(the_repository, tree, 1) < 0)
 		return;
 
 	init_tree_desc(&desc, &tree->object.oid, tree->buffer, tree->size);
@@ -179,7 +179,7 @@ static void add_children_by_path(struct repository *r,
 	if (!tree)
 		return;
 
-	if (parse_tree_gently(tree, 1) < 0)
+	if (repo_parse_tree_gently(the_repository, tree, 1) < 0)
 		return;
 
 	init_tree_desc(&desc, &tree->object.oid, tree->buffer, tree->size);
