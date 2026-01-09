@@ -1,5 +1,3 @@
-#define USE_THE_REPOSITORY_VARIABLE
-
 #include "git-compat-util.h"
 #include "hex.h"
 #include "tree.h"
@@ -185,11 +183,6 @@ int parse_tree_buffer(struct tree *item, void *buffer, unsigned long size)
 	return 0;
 }
 
-int parse_tree_gently(struct tree *item, int quiet_on_missing)
-{
-	return repo_parse_tree_gently(the_repository, item, quiet_on_missing);
-}
-
 int repo_parse_tree_gently(struct repository *r, struct tree *item,
 			   int quiet_on_missing)
 {
@@ -217,11 +210,6 @@ void free_tree_buffer(struct tree *tree)
 	FREE_AND_NULL(tree->buffer);
 	tree->size = 0;
 	tree->object.parsed = 0;
-}
-
-struct tree *parse_tree_indirect(const struct object_id *oid)
-{
-	return repo_parse_tree_indirect(the_repository, oid);
 }
 
 struct tree *repo_parse_tree_indirect(struct repository *r,
