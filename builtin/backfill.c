@@ -1,4 +1,3 @@
-/* We need this macro to access core_apply_sparse_checkout */
 #define USE_THE_REPOSITORY_VARIABLE
 
 #include "builtin.h"
@@ -139,7 +138,7 @@ int cmd_backfill(int argc, const char **argv, const char *prefix, struct reposit
 	repo_config(repo, git_default_config, NULL);
 
 	if (ctx.sparse < 0)
-		ctx.sparse = core_apply_sparse_checkout;
+		ctx.sparse = repo->cfg_values->sparse_checkout;
 
 	result = do_backfill(&ctx);
 	backfill_context_clear(&ctx);

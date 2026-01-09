@@ -135,6 +135,14 @@ struct config_context {
 	/* Config source metadata for key and value. */
 	const struct key_value_info *kvi;
 };
+
+/* Holds default config values */
+struct config_values {
+	/* core config values */
+	char *attributes_file_path;
+	int sparse_checkout;
+
+};
 #define CONFIG_CONTEXT_INIT { 0 }
 
 /**
@@ -187,6 +195,7 @@ int git_config_from_blob_oid(config_fn_t fn, const char *name,
 void git_config_push_parameter(const char *text);
 void git_config_push_env(const char *spec);
 int git_config_from_parameters(config_fn_t fn, void *data);
+void config_values_clear(struct config_values *cfg);
 
 /*
  * Read config when the Git directory has not yet been set up. In case

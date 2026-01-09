@@ -13,6 +13,7 @@ struct object_database;
 struct submodule_cache;
 struct promisor_remote_config;
 struct remote_state;
+struct config_values;
 
 enum ref_storage_format {
 	REF_STORAGE_FORMAT_UNKNOWN,
@@ -171,6 +172,9 @@ struct repository {
 
 	/* Should repo_config() check for deprecated settings */
 	bool check_deprecated_config;
+
+	/* Repository's default configuration values */
+	struct config_values *cfg_values;
 };
 
 #ifdef USE_THE_REPOSITORY_VARIABLE

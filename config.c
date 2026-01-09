@@ -1761,6 +1761,11 @@ static int config_set_element_cmp(const void *cmp_data UNUSED,
 	return strcmp(e1->key, e2->key);
 }
 
+void config_values_clear(struct config_values *cfg)
+{
+	free(cfg->attributes_file_path);
+}
+
 void git_configset_init(struct config_set *set)
 {
 	hashmap_init(&set->config_hash, config_set_element_cmp, NULL, 0);
