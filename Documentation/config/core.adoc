@@ -492,10 +492,9 @@ core.askPass::
 	command-line argument and write the password on its STDOUT.
 
 core.attributesFile::
-	In addition to `.gitattributes` (per-directory) and
-	`.git/info/attributes`, Git looks into this file for attributes
-	(see linkgit:gitattributes[5]). Path expansions are made the same
-	way as for `core.excludesFile`. Its default value is
+	Specifies the pathname to the file that contains attributes (see
+	linkgit:gitattributes[5]), in addition to `.gitattributes` (per-directory)
+	and `.git/info/attributes`. Its default value is
 	`$XDG_CONFIG_HOME/git/attributes`. If `$XDG_CONFIG_HOME` is either not
 	set or empty, `$HOME/.config/git/attributes` is used instead.
 

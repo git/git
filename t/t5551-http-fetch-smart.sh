@@ -333,12 +333,12 @@ test_expect_success 'dumb clone via http-backend respects namespace' '
 
 test_expect_success 'cookies stored in http.cookiefile when http.savecookies set' '
 	cat >cookies.txt <<-\EOF &&
-	127.0.0.1	FALSE	/smart_cookies/	FALSE	0	othername	othervalue
+	127.0.0.1	FALSE	/smart_cookies	FALSE	0	othername	othervalue
 	EOF
 	sort >expect_cookies.txt <<-\EOF &&
-	127.0.0.1	FALSE	/smart_cookies/	FALSE	0	othername	othervalue
-	127.0.0.1	FALSE	/smart_cookies/repo.git/	FALSE	0	name	value
-	127.0.0.1	FALSE	/smart_cookies/repo.git/info/	FALSE	0	name	value
+	127.0.0.1	FALSE	/smart_cookies	FALSE	0	othername	othervalue
+	127.0.0.1	FALSE	/smart_cookies/repo.git	FALSE	0	name	value
+	127.0.0.1	FALSE	/smart_cookies/repo.git/info	FALSE	0	name	value
 	EOF
 	git config http.cookiefile cookies.txt &&
 	git config http.savecookies true &&
@@ -351,8 +351,11 @@ test_expect_success 'cookies stored in http.cookiefile when http.savecookies set
 		tag -m "foo" cookie-tag &&
 	git fetch $HTTPD_URL/smart_cookies/repo.git cookie-tag &&
 
-	grep "^[^#]" cookies.txt | sort >cookies_stripped.txt &&
-	test_cmp expect_cookies.txt cookies_stripped.txt
+	# Strip trailing slashes from cookie paths to handle output from both
+	# old curl ("/smart_cookies/") and new ("/smart_cookies").
+	HT="	" &&
+	grep "^[^#]" cookies.txt | sed "s,/$HT,$HT," | sort >cookies_clean.txt &&
+	test_cmp expect_cookies.txt cookies_clean.txt
 '
 
 test_expect_success 'transfer.hiderefs works over smart-http' '

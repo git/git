@@ -162,6 +162,13 @@ Valid <action> for the `--whitespace` option are:
 	commit creation as the committer date. This allows the
 	user to lie about the committer date by using the same
 	value as the author date.
++
+WARNING: The history walking machinery assumes that commits have
+non-decreasing commit timestamps. You should consider if you really need
+to use this option. Then you should only use this option to override the
+committer date when applying commits on top of a base which commit is
+older (in terms of the commit date) than the oldest patch you are
+applying.
 
 --ignore-date::
 	By default the command records the date from the e-mail

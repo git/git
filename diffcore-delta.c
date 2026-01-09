@@ -56,7 +56,7 @@ static struct spanhash_top *spanhash_rehash(struct spanhash_top *orig)
 			     st_mult(sizeof(struct spanhash), sz)));
 	new_spanhash->alloc_log2 = orig->alloc_log2 + 1;
 	new_spanhash->free = INITIAL_FREE(new_spanhash->alloc_log2);
-	memset(new_spanhash->data, 0, sizeof(struct spanhash) * sz);
+	MEMZERO_ARRAY(new_spanhash->data, sz);
 	for (i = 0; i < osz; i++) {
 		struct spanhash *o = &(orig->data[i]);
 		int bucket;
@@ -135,7 +135,7 @@ static struct spanhash_top *hash_chars(struct repository *r,
 			      st_mult(sizeof(struct spanhash), (size_t)1 << i)));
 	hash->alloc_log2 = i;
 	hash->free = INITIAL_FREE(i);
-	memset(hash->data, 0, sizeof(struct spanhash) * ((size_t)1 << i));
+	MEMZERO_ARRAY(hash->data, ((size_t)1 << i));
 
 	n = 0;
 	accum1 = accum2 = 0;

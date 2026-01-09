@@ -1724,7 +1724,7 @@ test_detect_hash () {
 	esac
 }
 
-# Detect the hash algorithm in use.
+# Detect the ref format in use.
 test_detect_ref_format () {
 	echo "${GIT_TEST_DEFAULT_REF_FORMAT:-files}"
 }

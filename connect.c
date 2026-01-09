@@ -240,6 +240,8 @@ static void process_capabilities(struct packet_reader *reader, size_t *linelen)
 	size_t nul_location = strlen(line);
 	if (nul_location == *linelen)
 		return;
+
+	free(server_capabilities_v1);
 	server_capabilities_v1 = xstrdup(line + nul_location + 1);
 	*linelen = nul_location;
 

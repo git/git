@@ -794,8 +794,16 @@ static int git_gpg_config(const char *var, const char *value,
 		fmtname = "ssh";
 
 	if (fmtname) {
+		char *program;
+		int status;
+
 		fmt = get_format_by_name(fmtname);
-		return git_config_pathname((char **) &fmt->program, var, value);
+		status = git_config_pathname(&program, var, value);
+		if (status)
+			return status;
+		if (program)
+			fmt->program = program;
+		return status;
 	}
 
 	return 0;
@@ -1146,6 +1154,8 @@ int parse_sign_mode(const char *arg, enum sign_mode *mode)
 		*mode = SIGN_WARN_STRIP;
 	else if (!strcmp(arg, "strip"))
 		*mode = SIGN_STRIP;
+	else if (!strcmp(arg, "strip-if-invalid"))
+		*mode = SIGN_STRIP_IF_INVALID;
 	else
 		return -1;
 	return 0;

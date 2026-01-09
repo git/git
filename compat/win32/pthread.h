@@ -34,7 +34,7 @@ typedef int pthread_mutexattr_t;
 
 #define pthread_cond_t CONDITION_VARIABLE
 
-#define pthread_cond_init(a,b) InitializeConditionVariable((a))
+#define pthread_cond_init(a,b) return_0((InitializeConditionVariable((a)), 0))
 #define pthread_cond_destroy(a) do {} while (0)
 #define pthread_cond_signal WakeConditionVariable
 #define pthread_cond_broadcast WakeAllConditionVariable

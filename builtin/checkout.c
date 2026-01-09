@@ -1899,7 +1899,7 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 		struct object_id rev;
 
 		if (repo_get_oid_mb(the_repository, opts->from_treeish, &rev))
-			die(_("could not resolve %s"), opts->from_treeish);
+			die(_("could not resolve '%s'"), opts->from_treeish);
 
 		setup_new_branch_info_and_source_tree(&new_branch_info,
 						      opts, &rev,

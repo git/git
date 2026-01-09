@@ -241,9 +241,6 @@ int mingw_chdir(const char *dirname);
 int mingw_chmod(const char *filename, int mode);
 #define chmod mingw_chmod
 
-char *mingw_mktemp(char *template);
-#define mktemp mingw_mktemp
-
 char *mingw_getcwd(char *pointer, int len);
 #define getcwd mingw_getcwd
 

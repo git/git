@@ -104,7 +104,7 @@ associated with a new unborn branch named _<branch>_ (after
 passed to the command. In the event the repository has a remote and
 `--guess-remote` is used, but no remote or local branches exist, then the
 command fails with a warning reminding the user to fetch from their remote
-first (or override by using `-f/--force`).
+first (or override by using `-f`/`--force`).
 
 `list`::
 

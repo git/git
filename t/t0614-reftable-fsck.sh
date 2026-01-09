@@ -20,7 +20,7 @@ test_expect_success "no errors reported on a well formed repository" '
 		done &&
 
 		# The repository should end up with multiple tables.
-		test_line_count ">" 1 .git/reftable/tables.list &&
+		test_line_count -gt 1 .git/reftable/tables.list &&
 
 		git refs verify 2>err &&
 		test_must_be_empty err

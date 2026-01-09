@@ -67,13 +67,6 @@ struct odb_source {
 	bool local;
 
 	/*
-	 * This is a temporary object store created by the tmp_objdir
-	 * facility. Disable ref updates since the objects in the store
-	 * might be discarded on rollback.
-	 */
-	int disable_ref_updates;
-
-	/*
 	 * This object store is ephemeral, so there is no need to fsync.
 	 */
 	int will_destroy;
@@ -84,10 +77,6 @@ struct odb_source {
 	 */
 	char *path;
 };
-
-struct odb_source *odb_source_new(struct object_database *odb,
-				  const char *path,
-				  bool local);
 
 struct packed_git;
 struct packfile_store;
@@ -166,8 +155,30 @@ struct object_database {
 	struct string_list submodule_source_paths;
 };
 
-struct object_database *odb_new(struct repository *repo);
-void odb_clear(struct object_database *o);
+/*
+ * Create a new object database for the given repository.
+ *
+ * If the primary source parameter is set it will override the usual primary
+ * object directory derived from the repository's common directory. The
+ * alternate sources are expected to be a PATH_SEP-separated list of secondary
+ * sources. Note that these alternate sources will be added in addition to, not
+ * instead of, the alternates identified by the primary source.
+ *
+ * Returns the newly created object database.
+ */
+struct object_database *odb_new(struct repository *repo,
+				const char *primary_source,
+				const char *alternate_sources);
+
+/* Free the object database and release all resources. */
+void odb_free(struct object_database *o);
+
+/*
+ * Close the object database and all of its sources so that any held resources
+ * will be released. The database can still be used after closing it, in which
+ * case these resources may be reallocated.
+ */
+void odb_close(struct object_database *o);
 
 /*
  * Clear caches, reload alternates and then reload object sources so that new

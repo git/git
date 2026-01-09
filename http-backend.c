@@ -16,6 +16,7 @@
 #include "run-command.h"
 #include "string-list.h"
 #include "url.h"
+#include "setup.h"
 #include "strvec.h"
 #include "packfile.h"
 #include "odb.h"

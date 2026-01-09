@@ -509,7 +509,7 @@ ARGUMENT DISAMBIGUATION
 -----------------------
 
 When you run `git checkout <something>`, Git tries to guess whether
-`<something>` is intended to be a branch, a commit, or a set of file(s),
+_<something>_ is intended to be a branch, a commit, or a set of file(s),
 and then either switches to that branch or commit, or restores the
 specified files.
 

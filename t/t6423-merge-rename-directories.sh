@@ -5158,13 +5158,18 @@ test_setup_12m () {
 		git switch B &&
 		git rm dir/subdir/file &&
 		mkdir dir &&
-		ln -s /dev/null dir/subdir &&
+		if test_have_prereq MINGW
+		then
+			cmd //c 'mklink dir\subdir NUL'
+		else
+			ln -s /dev/null dir/subdir
+		fi &&
 		git add . &&
 		git commit -m "B"
 	)
 }
 
-test_expect_success '12m: Change parent of renamed-dir to symlink on other side' '
+test_expect_success SYMLINKS '12m: Change parent of renamed-dir to symlink on other side' '
 	test_setup_12m &&
 	(
 		cd 12m &&

@@ -117,7 +117,12 @@ close TEMPFILE;
 unlink $tmpfile;
 
 # paths
-is($r->repo_path, $abs_repo_dir . "/.git", "repo_path");
+my $abs_git_dir = $abs_repo_dir . "/.git";
+if ($^O eq 'msys' or $^O eq 'cygwin') {
+  $abs_git_dir = `cygpath -am "$abs_repo_dir/.git"`;
+  $abs_git_dir =~ s/\r?\n?$//;
+}
+is($r->repo_path, $abs_git_dir, "repo_path");
 is($r->wc_path, $abs_repo_dir . "/", "wc_path");
 is($r->wc_subdir, "", "wc_subdir initial");
 $r->wc_chdir("directory1");
@@ -127,7 +132,7 @@ is($r->config("test.string"), "value", "config after wc_chdir");
 # Object generation in sub directory
 chdir("directory2");
 my $r2 = Git->repository();
-is($r2->repo_path, $abs_repo_dir . "/.git", "repo_path (2)");
+is($r2->repo_path, $abs_git_dir, "repo_path (2)");
 is($r2->wc_path, $abs_repo_dir . "/", "wc_path (2)");
 is($r2->wc_subdir, "directory2/", "wc_subdir initial (2)");
 

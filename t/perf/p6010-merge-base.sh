@@ -83,9 +83,9 @@ build_history2 () {
 test_expect_success 'setup' '
 	max_level=15 &&
 	build_history $max_level | git fast-import --export-marks=marks &&
-	git tag one &&
+	git branch one &&
 	build_history2 $max_level | git fast-import --import-marks=marks --force &&
-	git tag two &&
+	git branch two &&
 	git gc &&
 	git log --format=%H --no-merges >expect
 '
@@ -96,6 +96,10 @@ test_perf 'git merge-base' '
 
 test_expect_success 'verify result' '
 	test_cmp expect actual
+'
+
+test_perf 'git show-branch' '
+	git show-branch one two
 '
 
 test_done

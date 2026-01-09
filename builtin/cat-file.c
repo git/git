@@ -18,13 +18,13 @@
 #include "list-objects-filter-options.h"
 #include "parse-options.h"
 #include "userdiff.h"
-#include "streaming.h"
 #include "oid-array.h"
 #include "packfile.h"
 #include "pack-bitmap.h"
 #include "object-file.h"
 #include "object-name.h"
 #include "odb.h"
+#include "odb/streaming.h"
 #include "replace-object.h"
 #include "promisor-remote.h"
 #include "mailmap.h"
@@ -95,7 +95,7 @@ static int filter_object(const char *path, unsigned mode,
 
 static int stream_blob(const struct object_id *oid)
 {
-	if (stream_blob_to_fd(1, oid, NULL, 0))
+	if (odb_stream_blob_to_fd(the_repository->objects, 1, oid, NULL, 0))
 		die("unable to stream %s to stdout", oid_to_hex(oid));
 	return 0;
 }

@@ -1291,6 +1291,7 @@ int git_config_pathname(char **dest, const char *var, const char *value)
 
 	if (is_optional && is_missing_file(path)) {
 		free(path);
+		*dest = NULL;
 		return 0;
 	}
 
@@ -1953,7 +1954,7 @@ int git_configset_get_maybe_bool(struct config_set *set, const char *key, int *d
 		return 1;
 }
 
-int git_configset_get_pathname(struct config_set *set, const char *key, char **dest)
+static int git_configset_get_pathname(struct config_set *set, const char *key, char **dest)
 {
 	const char *value;
 	if (!git_configset_get_value(set, key, &value, NULL))
@@ -2434,14 +2435,14 @@ int repo_config_get_expiry_in_days(struct repository *r, const char *key,
 				   timestamp_t *expiry, timestamp_t now)
 {
 	const char *expiry_string;
-	intmax_t days;
+	int days;
 	timestamp_t when;
 
 	if (repo_config_get_string_tmp(r, key, &expiry_string))
 		return 1; /* no such thing */
 
-	if (git_parse_signed(expiry_string, &days, maximum_signed_value_of_type(int))) {
-		const int scale = 86400;
+	if (git_parse_int(expiry_string, &days)) {
+		const intmax_t scale = 86400;
 		*expiry = now - days * scale;
 		return 0;
 	}

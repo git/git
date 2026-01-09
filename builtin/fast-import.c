@@ -2772,7 +2772,7 @@ static void add_gpgsig_to_commit(struct strbuf *commit_data,
 {
 	struct string_list siglines = STRING_LIST_INIT_NODUP;
 
-	if (!sig->hash_algo)
+	if (!sig || !sig->hash_algo)
 		return;
 
 	strbuf_addstr(commit_data, header);
@@ -2813,6 +2813,57 @@ static void import_one_signature(struct signature_data *sig_sha1,
 		store_signature(sig_sha256, &sig, "SHA-256");
 	else
 		die(_("parse_one_signature() returned unknown hash algo"));
+}
+
+static void finalize_commit_buffer(struct strbuf *new_data,
+				   struct signature_data *sig_sha1,
+				   struct signature_data *sig_sha256,
+				   struct strbuf *msg)
+{
+	add_gpgsig_to_commit(new_data, "gpgsig ", sig_sha1);
+	add_gpgsig_to_commit(new_data, "gpgsig-sha256 ", sig_sha256);
+
+	strbuf_addch(new_data, '\n');
+	strbuf_addbuf(new_data, msg);
+}
+
+static void handle_strip_if_invalid(struct strbuf *new_data,
+				    struct signature_data *sig_sha1,
+				    struct signature_data *sig_sha256,
+				    struct strbuf *msg)
+{
+	struct strbuf tmp_buf = STRBUF_INIT;
+	struct signature_check signature_check = { 0 };
+	int ret;
+
+	/* Check signature in a temporary commit buffer */
+	strbuf_addbuf(&tmp_buf, new_data);
+	finalize_commit_buffer(&tmp_buf, sig_sha1, sig_sha256, msg);
+	ret = verify_commit_buffer(tmp_buf.buf, tmp_buf.len, &signature_check);
+
+	if (ret) {
+		const char *signer = signature_check.signer ?
+			signature_check.signer : _("unknown");
+		const char *subject;
+		int subject_len = find_commit_subject(msg->buf, &subject);
+
+		if (subject_len > 100)
+			warning(_("stripping invalid signature for commit '%.100s...'\n"
+				  "  allegedly by %s"), subject, signer);
+		else if (subject_len > 0)
+			warning(_("stripping invalid signature for commit '%.*s'\n"
+				  "  allegedly by %s"), subject_len, subject, signer);
+		else
+			warning(_("stripping invalid signature for commit\n"
+				  "  allegedly by %s"), signer);
+
+		finalize_commit_buffer(new_data, NULL, NULL, msg);
+	} else {
+		strbuf_swap(new_data, &tmp_buf);
+	}
+
+	signature_check_clear(&signature_check);
+	strbuf_release(&tmp_buf);
 }
 
 static void parse_new_commit(const char *arg)
@@ -2866,6 +2917,7 @@ static void parse_new_commit(const char *arg)
 			warning(_("importing a commit signature verbatim"));
 			/* fallthru */
 		case SIGN_VERBATIM:
+		case SIGN_STRIP_IF_INVALID:
 			import_one_signature(&sig_sha1, &sig_sha256, v);
 			break;
 
@@ -2950,11 +3002,12 @@ static void parse_new_commit(const char *arg)
 			"encoding %s\n",
 			encoding);
 
-	add_gpgsig_to_commit(&new_data, "gpgsig ", &sig_sha1);
-	add_gpgsig_to_commit(&new_data, "gpgsig-sha256 ", &sig_sha256);
+	if (signed_commit_mode == SIGN_STRIP_IF_INVALID &&
+	    (sig_sha1.hash_algo || sig_sha256.hash_algo))
+		handle_strip_if_invalid(&new_data, &sig_sha1, &sig_sha256, &msg);
+	else
+		finalize_commit_buffer(&new_data, &sig_sha1, &sig_sha256, &msg);
 
-	strbuf_addch(&new_data, '\n');
-	strbuf_addbuf(&new_data, &msg);
 	free(author);
 	free(committer);
 	free(encoding);
@@ -2975,9 +3028,6 @@ static void handle_tag_signature(struct strbuf *msg, const char *name)
 	switch (signed_tag_mode) {
 
 	/* First, modes that don't change anything */
-	case SIGN_ABORT:
-		die(_("encountered signed tag; use "
-		      "--signed-tags=<mode> to handle it"));
 	case SIGN_WARN_VERBATIM:
 		warning(_("importing a tag signature verbatim for tag '%s'"), name);
 		/* fallthru */
@@ -2994,7 +3044,13 @@ static void handle_tag_signature(struct strbuf *msg, const char *name)
 		strbuf_setlen(msg, sig_offset);
 		break;
 
-	/* Third, BUG */
+	/* Third, aborting modes */
+	case SIGN_ABORT:
+		die(_("encountered signed tag; use "
+		      "--signed-tags=<mode> to handle it"));
+	case SIGN_STRIP_IF_INVALID:
+		die(_("'strip-if-invalid' is not a valid mode for "
+		      "git fast-import with --signed-tags=<mode>"));
 	default:
 		BUG("invalid signed_tag_mode value %d from tag '%s'",
 		    signed_tag_mode, name);

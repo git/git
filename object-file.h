@@ -16,6 +16,8 @@ enum {
 int index_fd(struct index_state *istate, struct object_id *oid, int fd, struct stat *st, enum object_type type, const char *path, unsigned flags);
 int index_path(struct index_state *istate, struct object_id *oid, const char *path, struct stat *st, unsigned flags);
 
+struct object_info;
+struct odb_read_stream;
 struct odb_source;
 
 struct odb_source_loose {
@@ -47,9 +49,9 @@ int odb_source_loose_read_object_info(struct odb_source *source,
 				      const struct object_id *oid,
 				      struct object_info *oi, int flags);
 
-void *odb_source_loose_map_object(struct odb_source *source,
-				  const struct object_id *oid,
-				  unsigned long *size);
+int odb_source_loose_read_object_stream(struct odb_read_stream **out,
+					struct odb_source *source,
+					const struct object_id *oid);
 
 /*
  * Return true iff an object database source has a loose object
@@ -142,40 +144,6 @@ int for_each_loose_object(struct object_database *odb,
  */
 int format_object_header(char *str, size_t size, enum object_type type,
 			 size_t objsize);
-
-/**
- * unpack_loose_header() initializes the data stream needed to unpack
- * a loose object header.
- *
- * Returns:
- *
- * - ULHR_OK on success
- * - ULHR_BAD on error
- * - ULHR_TOO_LONG if the header was too long
- *
- * It will only parse up to MAX_HEADER_LEN bytes.
- */
-enum unpack_loose_header_result {
-	ULHR_OK,
-	ULHR_BAD,
-	ULHR_TOO_LONG,
-};
-enum unpack_loose_header_result unpack_loose_header(git_zstream *stream,
-						    unsigned char *map,
-						    unsigned long mapsize,
-						    void *buffer,
-						    unsigned long bufsiz);
-
-/**
- * parse_loose_header() parses the starting "<type> <len>\0" of an
- * object. If it doesn't follow that format -1 is returned. To check
- * the validity of the <type> populate the "typep" in the "struct
- * object_info". It will be OBJ_BAD if the object type is unknown. The
- * parsed <len> can be retrieved via "oi->sizep", and from there
- * passed to unpack_loose_rest().
- */
-struct object_info;
-int parse_loose_header(const char *hdr, struct object_info *oi);
 
 int force_object_loose(struct odb_source *source,
 		       const struct object_id *oid, time_t mtime);
