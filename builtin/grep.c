@@ -1213,8 +1213,12 @@ int cmd_grep(int argc,
 		 */
 		if (recurse_submodules)
 			repo_read_gitmodules(the_repository, 1);
+		/*
+		 * Note: `packfile_store_prepare()` prepares stores from all
+		 * sources. This will be fixed in a subsequent commit.
+		 */
 		if (startup_info->have_repository)
-			packfile_store_prepare(the_repository->objects->packfiles);
+			packfile_store_prepare(the_repository->objects->sources->packfiles);
 
 		start_threads(&opt);
 	} else {

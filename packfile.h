@@ -5,6 +5,7 @@
 #include "object.h"
 #include "odb.h"
 #include "oidset.h"
+#include "repository.h"
 #include "strmap.h"
 
 /* in odb.h */
@@ -171,13 +172,64 @@ void packfile_store_add_pack(struct packfile_store *store,
 			     struct packed_git *pack);
 
 /*
+ * Get all packs managed by the given store, including packfiles that are
+ * referenced by multi-pack indices.
+ */
+struct packfile_list_entry *packfile_store_get_packs(struct packfile_store *store);
+
+struct repo_for_each_pack_data {
+	struct odb_source *source;
+	struct packfile_list_entry *entry;
+};
+
+static inline struct repo_for_each_pack_data repo_for_eack_pack_data_init(struct repository *repo)
+{
+	struct repo_for_each_pack_data data = { 0 };
+
+	odb_prepare_alternates(repo->objects);
+
+	for (struct odb_source *source = repo->objects->sources; source; source = source->next) {
+		struct packfile_list_entry *entry = packfile_store_get_packs(source->packfiles);
+		if (!entry)
+			continue;
+		data.source = source;
+		data.entry = entry;
+		break;
+	}
+
+	return data;
+}
+
+static inline void repo_for_each_pack_data_next(struct repo_for_each_pack_data *data)
+{
+	struct odb_source *source;
+
+	data->entry = data->entry->next;
+	if (data->entry)
+		return;
+
+	for (source = data->source->next; source; source = source->next) {
+		struct packfile_list_entry *entry = packfile_store_get_packs(source->packfiles);
+		if (!entry)
+			continue;
+		data->source = source;
+		data->entry = entry;
+		return;
+	}
+
+	data->source = NULL;
+	data->entry = NULL;
+}
+
+/*
  * Load and iterate through all packs of the given repository. This helper
  * function will yield packfiles from all object sources connected to the
  * repository.
  */
 #define repo_for_each_pack(repo, p) \
-	for (struct packfile_list_entry *e = packfile_store_get_packs(repo->objects->packfiles); \
-	     ((p) = (e ? e->pack : NULL)); e = e->next)
+	for (struct repo_for_each_pack_data eack_pack_data = repo_for_eack_pack_data_init(repo); \
+	     ((p) = (eack_pack_data.entry ? eack_pack_data.entry->pack : NULL)); \
+	     repo_for_each_pack_data_next(&eack_pack_data))
 
 int packfile_store_read_object_stream(struct odb_read_stream **out,
 				      struct packfile_store *store,
@@ -193,12 +245,6 @@ int packfile_store_read_object_info(struct packfile_store *store,
 				    const struct object_id *oid,
 				    struct object_info *oi,
 				    unsigned flags);
-
-/*
- * Get all packs managed by the given store, including packfiles that are
- * referenced by multi-pack indices.
- */
-struct packfile_list_entry *packfile_store_get_packs(struct packfile_store *store);
 
 /*
  * Open the packfile and add it to the store if it isn't yet known. Returns

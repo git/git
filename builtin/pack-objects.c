@@ -1529,49 +1529,53 @@ static int want_cruft_object_mtime(struct repository *r,
 				   const struct object_id *oid,
 				   unsigned flags, uint32_t mtime)
 {
-	struct packed_git **cache = packfile_store_get_kept_pack_cache(r->objects->packfiles, flags);
+	struct odb_source *source;
 
-	for (; *cache; cache++) {
-		struct packed_git *p = *cache;
-		off_t ofs;
-		uint32_t candidate_mtime;
+	for (source = r->objects->sources; source; source = source->next) {
+		struct packed_git **cache = packfile_store_get_kept_pack_cache(source->packfiles, flags);
 
-		ofs = find_pack_entry_one(oid, p);
-		if (!ofs)
-			continue;
+		for (; *cache; cache++) {
+			struct packed_git *p = *cache;
+			off_t ofs;
+			uint32_t candidate_mtime;
 
-		/*
-		 * We have a copy of the object 'oid' in a non-cruft
-		 * pack. We can avoid packing an additional copy
-		 * regardless of what the existing copy's mtime is since
-		 * it is outside of a cruft pack.
-		 */
-		if (!p->is_cruft)
-			return 0;
-
-		/*
-		 * If we have a copy of the object 'oid' in a cruft
-		 * pack, then either read the cruft pack's mtime for
-		 * that object, or, if that can't be loaded, assume the
-		 * pack's mtime itself.
-		 */
-		if (!load_pack_mtimes(p)) {
-			uint32_t pos;
-			if (offset_to_pack_pos(p, ofs, &pos) < 0)
+			ofs = find_pack_entry_one(oid, p);
+			if (!ofs)
 				continue;
-			candidate_mtime = nth_packed_mtime(p, pos);
-		} else {
-			candidate_mtime = p->mtime;
-		}
 
-		/*
-		 * We have a surviving copy of the object in a cruft
-		 * pack whose mtime is greater than or equal to the one
-		 * we are considering. We can thus avoid packing an
-		 * additional copy of that object.
-		 */
-		if (mtime <= candidate_mtime)
-			return 0;
+			/*
+			 * We have a copy of the object 'oid' in a non-cruft
+			 * pack. We can avoid packing an additional copy
+			 * regardless of what the existing copy's mtime is since
+			 * it is outside of a cruft pack.
+			 */
+			if (!p->is_cruft)
+				return 0;
+
+			/*
+			 * If we have a copy of the object 'oid' in a cruft
+			 * pack, then either read the cruft pack's mtime for
+			 * that object, or, if that can't be loaded, assume the
+			 * pack's mtime itself.
+			 */
+			if (!load_pack_mtimes(p)) {
+				uint32_t pos;
+				if (offset_to_pack_pos(p, ofs, &pos) < 0)
+					continue;
+				candidate_mtime = nth_packed_mtime(p, pos);
+			} else {
+				candidate_mtime = p->mtime;
+			}
+
+			/*
+			 * We have a surviving copy of the object in a cruft
+			 * pack whose mtime is greater than or equal to the one
+			 * we are considering. We can thus avoid packing an
+			 * additional copy of that object.
+			 */
+			if (mtime <= candidate_mtime)
+				return 0;
+		}
 	}
 
 	return -1;
@@ -1749,13 +1753,15 @@ static int want_object_in_pack_mtime(const struct object_id *oid,
 		}
 	}
 
-	for (e = the_repository->objects->packfiles->packs.head; e; e = e->next) {
-		struct packed_git *p = e->pack;
-		want = want_object_in_pack_one(p, oid, exclude, found_pack, found_offset, found_mtime);
-		if (!exclude && want > 0)
-			packfile_list_prepend(&the_repository->objects->packfiles->packs, p);
-		if (want != -1)
-			return want;
+	for (source = the_repository->objects->sources; source; source = source->next) {
+		for (e = source->packfiles->packs.head; e; e = e->next) {
+			struct packed_git *p = e->pack;
+			want = want_object_in_pack_one(p, oid, exclude, found_pack, found_offset, found_mtime);
+			if (!exclude && want > 0)
+				packfile_list_prepend(&source->packfiles->packs, p);
+			if (want != -1)
+				return want;
+		}
 	}
 
 	if (uri_protocols.nr) {
