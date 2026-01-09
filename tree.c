@@ -25,7 +25,7 @@ int read_tree_at(struct repository *r,
 	int len, oldlen = base->len;
 	enum interesting retval = entry_not_interesting;
 
-	if (depth > max_allowed_tree_depth)
+	if (depth > r->settings.max_allowed_tree_depth)
 		return error("exceeded maximum allowed tree depth");
 
 	if (parse_tree(tree))
