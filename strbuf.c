@@ -566,7 +566,7 @@ ssize_t strbuf_write(struct strbuf *sb, FILE *f)
 	return sb->len ? fwrite(sb->buf, 1, sb->len, f) : 0;
 }
 
-#define STRBUF_MAXLINK (2*PATH_MAX)
+#define STRBUF_MAXLINK (32767)
 
 int strbuf_readlink(struct strbuf *sb, const char *path, size_t hint)
 {
