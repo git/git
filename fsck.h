@@ -162,8 +162,6 @@ struct fsck_object_report {
 
 struct fsck_ref_report {
 	const char *path;
-	const struct object_id *oid;
-	const char *referent;
 };
 
 struct fsck_options {

@@ -1310,11 +1310,6 @@ int fsck_refs_error_function(struct fsck_options *options UNUSED,
 
 	strbuf_addstr(&sb, report->path);
 
-	if (report->oid)
-		strbuf_addf(&sb, " -> (%s)", oid_to_hex(report->oid));
-	else if (report->referent)
-		strbuf_addf(&sb, " -> (%s)", report->referent);
-
 	if (msg_type == FSCK_WARN)
 		warning("%s: %s", sb.buf, message);
 	else
