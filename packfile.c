@@ -876,7 +876,7 @@ struct packed_git *packfile_store_load_pack(struct packfile_store *store,
 
 	p = strmap_get(&store->packs_by_path, key.buf);
 	if (!p) {
-		p = add_packed_git(store->odb->repo, idx_path,
+		p = add_packed_git(store->source->odb->repo, idx_path,
 				   strlen(idx_path), local);
 		if (p)
 			packfile_store_add_pack(store, p);
@@ -1068,8 +1068,8 @@ void packfile_store_prepare(struct packfile_store *store)
 	if (store->initialized)
 		return;
 
-	odb_prepare_alternates(store->odb);
-	for (source = store->odb->sources; source; source = source->next) {
+	odb_prepare_alternates(store->source->odb);
+	for (source = store->source->odb->sources; source; source = source->next) {
 		prepare_multi_pack_index_one(source);
 		prepare_packed_git_one(source);
 	}
@@ -1092,7 +1092,7 @@ struct packfile_list_entry *packfile_store_get_packs(struct packfile_store *stor
 {
 	packfile_store_prepare(store);
 
-	for (struct odb_source *source = store->odb->sources; source; source = source->next) {
+	for (struct odb_source *source = store->source->odb->sources; source; source = source->next) {
 		struct multi_pack_index *m = source->midx;
 		if (!m)
 			continue;
@@ -2121,7 +2121,7 @@ int packfile_store_freshen_object(struct packfile_store *store,
 				  const struct object_id *oid)
 {
 	struct pack_entry e;
-	if (!find_pack_entry(store->odb->repo, oid, &e))
+	if (!find_pack_entry(store->source->odb->repo, oid, &e))
 		return 0;
 	if (e.p->is_cruft)
 		return 0;
@@ -2142,7 +2142,7 @@ int packfile_store_read_object_info(struct packfile_store *store,
 	struct pack_entry e;
 	int rtype;
 
-	if (!find_pack_entry(store->odb->repo, oid, &e))
+	if (!find_pack_entry(store->source->odb->repo, oid, &e))
 		return 1;
 
 	/*
@@ -2152,7 +2152,7 @@ int packfile_store_read_object_info(struct packfile_store *store,
 	if (oi == &blank_oi)
 		return 0;
 
-	rtype = packed_object_info(store->odb->repo, e.p, e.offset, oi);
+	rtype = packed_object_info(store->source->odb->repo, e.p, e.offset, oi);
 	if (rtype < 0) {
 		mark_bad_packed_object(e.p, oid);
 		return -1;
@@ -2411,11 +2411,11 @@ int parse_pack_header_option(const char *in, unsigned char *out, unsigned int *l
 	return 0;
 }
 
-struct packfile_store *packfile_store_new(struct object_database *odb)
+struct packfile_store *packfile_store_new(struct odb_source *source)
 {
 	struct packfile_store *store;
 	CALLOC_ARRAY(store, 1);
-	store->odb = odb;
+	store->source = source;
 	strmap_init(&store->packs_by_path);
 	return store;
 }
@@ -2534,7 +2534,7 @@ int packfile_store_read_object_stream(struct odb_read_stream **out,
 
 	if (packfile_store_read_object_info(store, oid, &oi, 0) ||
 	    oi.u.packed.is_delta ||
-	    repo_settings_get_big_file_threshold(store->odb->repo) >= size)
+	    repo_settings_get_big_file_threshold(store->source->odb->repo) >= size)
 		return -1;
 
 	in_pack_type = unpack_object_header(oi.u.packed.pack,

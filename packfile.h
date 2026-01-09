@@ -77,7 +77,7 @@ struct packed_git *packfile_list_find_oid(struct packfile_list_entry *packs,
  * A store that manages packfiles for a given object database.
  */
 struct packfile_store {
-	struct object_database *odb;
+	struct odb_source *source;
 
 	/*
 	 * The list of packfiles in the order in which they have been most
@@ -129,9 +129,9 @@ struct packfile_store {
 
 /*
  * Allocate and initialize a new empty packfile store for the given object
- * database.
+ * database source.
  */
-struct packfile_store *packfile_store_new(struct object_database *odb);
+struct packfile_store *packfile_store_new(struct odb_source *source);
 
 /*
  * Free the packfile store and all its associated state. All packfiles
