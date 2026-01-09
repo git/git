@@ -2698,6 +2698,30 @@ int link(const char *oldpath, const char *newpath)
 	return 0;
 }
 
+int readlink(const char *path, char *buf, size_t bufsiz)
+{
+	WCHAR wpath[MAX_PATH];
+	char tmpbuf[MAX_PATH];
+	int len;
+	DWORD tag;
+
+	if (xutftowcs_path(wpath, path) < 0)
+		return -1;
+
+	if (read_reparse_point(wpath, TRUE, tmpbuf, &len, &tag) < 0)
+		return -1;
+
+	/*
+	 * Adapt to strange readlink() API: Copy up to bufsiz *bytes*, potentially
+	 * cutting off a UTF-8 sequence. Insufficient bufsize is *not* a failure
+	 * condition. There is no conversion function that produces invalid UTF-8,
+	 * so convert to a (hopefully large enough) temporary buffer, then memcpy
+	 * the requested number of bytes (including '\0' for robustness).
+	 */
+	memcpy(buf, tmpbuf, min(bufsiz, len + 1));
+	return min(bufsiz, len);
+}
+
 pid_t waitpid(pid_t pid, int *status, int options)
 {
 	HANDLE h = OpenProcess(SYNCHRONIZE | PROCESS_QUERY_INFORMATION,
