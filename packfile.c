@@ -990,7 +990,8 @@ static void prepare_pack(const char *full_name, size_t full_name_len,
 	size_t base_len = full_name_len;
 
 	if (strip_suffix_mem(full_name, &base_len, ".idx") &&
-	    !(data->source->midx && midx_contains_pack(data->source->midx, file_name))) {
+	    !(data->source->packfiles->midx &&
+	      midx_contains_pack(data->source->packfiles->midx, file_name))) {
 		char *trimmed_path = xstrndup(full_name, full_name_len);
 		packfile_store_load_pack(data->source->packfiles,
 					 trimmed_path, data->source->local);
@@ -1087,8 +1088,8 @@ struct packfile_list_entry *packfile_store_get_packs(struct packfile_store *stor
 {
 	packfile_store_prepare(store);
 
-	if (store->source->midx) {
-		struct multi_pack_index *m = store->source->midx;
+	if (store->midx) {
+		struct multi_pack_index *m = store->midx;
 		for (uint32_t i = 0; i < m->num_packs + m->num_packs_in_base; i++)
 			prepare_midx_pack(m, i);
 	}
@@ -2094,7 +2095,7 @@ static int find_pack_entry(struct packfile_store *store,
 	struct packfile_list_entry *l;
 
 	packfile_store_prepare(store);
-	if (store->source->midx && fill_midx_entry(store->source->midx, oid, e))
+	if (store->midx && fill_midx_entry(store->midx, oid, e))
 		return 1;
 
 	for (l = store->packs.head; l; l = l->next) {
@@ -2454,6 +2455,9 @@ void packfile_store_close(struct packfile_store *store)
 			BUG("want to close pack marked 'do-not-close'");
 		close_pack(e->pack);
 	}
+	if (store->midx)
+		close_midx(store->midx);
+	store->midx = NULL;
 }
 
 struct odb_packed_read_stream {

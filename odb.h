@@ -55,13 +55,6 @@ struct odb_source {
 	struct packfile_store *packfiles;
 
 	/*
-	 * private data
-	 *
-	 * should only be accessed directly by packfile.c and midx.c
-	 */
-	struct multi_pack_index *midx;
-
-	/*
 	 * Figure out whether this is the local source of the owning
 	 * repository, which would typically be its ".git/objects" directory.
 	 * This local object directory is usually where objects would be

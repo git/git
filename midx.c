@@ -96,7 +96,7 @@ static int midx_read_object_offsets(const unsigned char *chunk_start,
 struct multi_pack_index *get_multi_pack_index(struct odb_source *source)
 {
 	packfile_store_prepare(source->packfiles);
-	return source->midx;
+	return source->packfiles->midx;
 }
 
 static struct multi_pack_index *load_multi_pack_index_one(struct odb_source *source,
@@ -709,12 +709,12 @@ int prepare_multi_pack_index_one(struct odb_source *source)
 	if (!r->settings.core_multi_pack_index)
 		return 0;
 
-	if (source->midx)
+	if (source->packfiles->midx)
 		return 1;
 
-	source->midx = load_multi_pack_index(source);
+	source->packfiles->midx = load_multi_pack_index(source);
 
-	return !!source->midx;
+	return !!source->packfiles->midx;
 }
 
 int midx_checksum_valid(struct multi_pack_index *m)
@@ -803,9 +803,9 @@ void clear_midx_file(struct repository *r)
 		struct odb_source *source;
 
 		for (source = r->objects->sources; source; source = source->next) {
-			if (source->midx)
-				close_midx(source->midx);
-			source->midx = NULL;
+			if (source->packfiles->midx)
+				close_midx(source->packfiles->midx);
+			source->packfiles->midx = NULL;
 		}
 	}
 

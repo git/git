@@ -101,6 +101,9 @@ struct packfile_store {
 		unsigned flags;
 	} kept_cache;
 
+	/* The multi-pack index that belongs to this specific packfile store. */
+	struct multi_pack_index *midx;
+
 	/*
 	 * A map of packfile names to packed_git structs for tracking which
 	 * packs have been loaded already.
