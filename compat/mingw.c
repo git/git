@@ -21,6 +21,7 @@
 #define SECURITY_WIN32
 #include <sspi.h>
 #include <wchar.h>
+#include <winioctl.h>
 #include <winternl.h>
 
 #define STATUS_DELETE_PENDING ((NTSTATUS) 0xC0000056)
@@ -917,10 +918,102 @@ static int has_valid_directory_prefix(wchar_t *wfilename)
 	return 1;
 }
 
+#ifndef _WINNT_H
+/*
+ * The REPARSE_DATA_BUFFER structure is defined in the Windows DDK (in
+ * ntifs.h) and in MSYS1's winnt.h (which defines _WINNT_H). So define
+ * it ourselves if we are on MSYS2 (whose winnt.h defines _WINNT_).
+ */
+typedef struct _REPARSE_DATA_BUFFER {
+	DWORD  ReparseTag;
+	WORD   ReparseDataLength;
+	WORD   Reserved;
+#ifndef _MSC_VER
+	_ANONYMOUS_UNION
+#endif
+	union {
+		struct {
+			WORD   SubstituteNameOffset;
+			WORD   SubstituteNameLength;
+			WORD   PrintNameOffset;
+			WORD   PrintNameLength;
+			ULONG  Flags;
+			WCHAR PathBuffer[1];
+		} SymbolicLinkReparseBuffer;
+		struct {
+			WORD   SubstituteNameOffset;
+			WORD   SubstituteNameLength;
+			WORD   PrintNameOffset;
+			WORD   PrintNameLength;
+			WCHAR PathBuffer[1];
+		} MountPointReparseBuffer;
+		struct {
+			BYTE   DataBuffer[1];
+		} GenericReparseBuffer;
+	} DUMMYUNIONNAME;
+} REPARSE_DATA_BUFFER, *PREPARSE_DATA_BUFFER;
+#endif
+
+static int read_reparse_point(const WCHAR *wpath, BOOL fail_on_unknown_tag,
+			      char *tmpbuf, int *plen, DWORD *ptag)
+{
+	HANDLE handle;
+	WCHAR *wbuf;
+	REPARSE_DATA_BUFFER *b = alloca(MAXIMUM_REPARSE_DATA_BUFFER_SIZE);
+	DWORD dummy;
+
+	/* read reparse point data */
+	handle = CreateFileW(wpath, 0,
+			FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL,
+			OPEN_EXISTING,
+			FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT, NULL);
+	if (handle == INVALID_HANDLE_VALUE) {
+		errno = err_win_to_posix(GetLastError());
+		return -1;
+	}
+	if (!DeviceIoControl(handle, FSCTL_GET_REPARSE_POINT, NULL, 0, b,
+			MAXIMUM_REPARSE_DATA_BUFFER_SIZE, &dummy, NULL)) {
+		errno = err_win_to_posix(GetLastError());
+		CloseHandle(handle);
+		return -1;
+	}
+	CloseHandle(handle);
+
+	/* get target path for symlinks or mount points (aka 'junctions') */
+	switch ((*ptag = b->ReparseTag)) {
+	case IO_REPARSE_TAG_SYMLINK:
+		wbuf = (WCHAR*) (((char*) b->SymbolicLinkReparseBuffer.PathBuffer)
+				+ b->SymbolicLinkReparseBuffer.SubstituteNameOffset);
+		*(WCHAR*) (((char*) wbuf)
+				+ b->SymbolicLinkReparseBuffer.SubstituteNameLength) = 0;
+		break;
+	case IO_REPARSE_TAG_MOUNT_POINT:
+		wbuf = (WCHAR*) (((char*) b->MountPointReparseBuffer.PathBuffer)
+				+ b->MountPointReparseBuffer.SubstituteNameOffset);
+		*(WCHAR*) (((char*) wbuf)
+				+ b->MountPointReparseBuffer.SubstituteNameLength) = 0;
+		break;
+	default:
+		if (fail_on_unknown_tag) {
+			errno = EINVAL;
+			return -1;
+		} else {
+			*plen = MAX_PATH;
+			return 0;
+		}
+	}
+
+	if ((*plen =
+	     xwcstoutf(tmpbuf, normalize_ntpath(wbuf), MAX_PATH)) <  0)
+		return -1;
+	return 0;
+}
+
 int mingw_lstat(const char *file_name, struct stat *buf)
 {
 	WIN32_FILE_ATTRIBUTE_DATA fdata;
-	WIN32_FIND_DATAW findbuf = { 0 };
+	DWORD reparse_tag = 0;
+	int link_len = 0;
 	wchar_t wfilename[MAX_PATH];
 	int wlen = xutftowcs_path(wfilename, file_name);
 	if (wlen < 0)
@@ -935,28 +1028,29 @@ int mingw_lstat(const char *file_name, struct stat *buf)
 	}
 
 	if (GetFileAttributesExW(wfilename, GetFileExInfoStandard, &fdata)) {
-		/* for reparse points, use FindFirstFile to get the reparse tag */
+		/* for reparse points, get the link tag and length */
 		if (fdata.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) {
-			HANDLE handle = FindFirstFileW(wfilename, &findbuf);
-			if (handle == INVALID_HANDLE_VALUE)
-				goto error;
-			FindClose(handle);
+			char tmpbuf[MAX_PATH];
+
+			if (read_reparse_point(wfilename, FALSE, tmpbuf,
+					       &link_len, &reparse_tag) < 0)
+				return -1;
 		}
 		buf->st_ino = 0;
 		buf->st_gid = 0;
 		buf->st_uid = 0;
 		buf->st_nlink = 1;
 		buf->st_mode = file_attr_to_st_mode(fdata.dwFileAttributes,
-				findbuf.dwReserved0);
-		buf->st_size = fdata.nFileSizeLow |
-			(((off_t)fdata.nFileSizeHigh)<<32);
+				reparse_tag);
+		buf->st_size = S_ISLNK(buf->st_mode) ? link_len :
+			fdata.nFileSizeLow | (((off_t) fdata.nFileSizeHigh) << 32);
 		buf->st_dev = buf->st_rdev = 0; /* not used by Git */
 		filetime_to_timespec(&(fdata.ftLastAccessTime), &(buf->st_atim));
 		filetime_to_timespec(&(fdata.ftLastWriteTime), &(buf->st_mtim));
 		filetime_to_timespec(&(fdata.ftCreationTime), &(buf->st_ctim));
 		return 0;
 	}
-error:
+
 	switch (GetLastError()) {
 	case ERROR_ACCESS_DENIED:
 	case ERROR_SHARING_VIOLATION:
