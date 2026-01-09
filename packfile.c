@@ -1063,16 +1063,11 @@ static int sort_pack(const struct packfile_list_entry *a,
 
 void packfile_store_prepare(struct packfile_store *store)
 {
-	struct odb_source *source;
-
 	if (store->initialized)
 		return;
 
-	odb_prepare_alternates(store->source->odb);
-	for (source = store->source->odb->sources; source; source = source->next) {
-		prepare_multi_pack_index_one(source);
-		prepare_packed_git_one(source);
-	}
+	prepare_multi_pack_index_one(store->source);
+	prepare_packed_git_one(store->source);
 
 	sort_packs(&store->packs.head, sort_pack);
 	for (struct packfile_list_entry *e = store->packs.head; e; e = e->next)
@@ -2098,15 +2093,11 @@ static int find_pack_entry(struct repository *r,
 {
 	struct odb_source *source;
 
-	/*
-	 * Note: `packfile_store_prepare()` prepares stores from all sources.
-	 * This will be fixed in a subsequent commit.
-	 */
-	packfile_store_prepare(r->objects->sources->packfiles);
-
-	for (source = r->objects->sources; source; source = source->next)
+	for (source = r->objects->sources; source; source = source->next) {
+		packfile_store_prepare(r->objects->sources->packfiles);
 		if (source->midx && fill_midx_entry(source->midx, oid, e))
 			return 1;
+	}
 
 	for (source = r->objects->sources; source; source = source->next) {
 		struct packfile_list_entry *l;
