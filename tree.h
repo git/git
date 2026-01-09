@@ -20,14 +20,22 @@ struct tree *lookup_tree(struct repository *r, const struct object_id *oid);
 int parse_tree_buffer(struct tree *item, void *buffer, unsigned long size);
 
 int parse_tree_gently(struct tree *tree, int quiet_on_missing);
+int repo_parse_tree_gently(struct repository *r, struct tree *item,
+			   int quiet_on_missing);
 static inline int parse_tree(struct tree *tree)
 {
 	return parse_tree_gently(tree, 0);
+}
+static inline int repo_parse_tree(struct repository *r, struct tree *item)
+{
+	return repo_parse_tree_gently(r, item, 0);
 }
 void free_tree_buffer(struct tree *tree);
 
 /* Parses and returns the tree in the given ent, chasing tags and commits. */
 struct tree *parse_tree_indirect(const struct object_id *oid);
+struct tree *repo_parse_tree_indirect(struct repository *r,
+				      const struct object_id *oid);
 
 /*
  * Functions for comparing pathnames
