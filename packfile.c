@@ -2087,29 +2087,23 @@ static int fill_pack_entry(const struct object_id *oid,
 	return 1;
 }
 
-static int find_pack_entry(struct repository *r,
+static int find_pack_entry(struct packfile_store *store,
 			   const struct object_id *oid,
 			   struct pack_entry *e)
 {
-	struct odb_source *source;
+	struct packfile_list_entry *l;
 
-	for (source = r->objects->sources; source; source = source->next) {
-		packfile_store_prepare(r->objects->sources->packfiles);
-		if (source->midx && fill_midx_entry(source->midx, oid, e))
+	packfile_store_prepare(store);
+	if (store->source->midx && fill_midx_entry(store->source->midx, oid, e))
+		return 1;
+
+	for (l = store->packs.head; l; l = l->next) {
+		struct packed_git *p = l->pack;
+
+		if (!p->multi_pack_index && fill_pack_entry(oid, e, p)) {
+			if (!store->skip_mru_updates)
+				packfile_list_prepend(&store->packs, p);
 			return 1;
-	}
-
-	for (source = r->objects->sources; source; source = source->next) {
-		struct packfile_list_entry *l;
-
-		for (l = source->packfiles->packs.head; l; l = l->next) {
-			struct packed_git *p = l->pack;
-
-			if (!p->multi_pack_index && fill_pack_entry(oid, e, p)) {
-				if (!source->packfiles->skip_mru_updates)
-					packfile_list_prepend(&source->packfiles->packs, p);
-				return 1;
-			}
 		}
 	}
 
@@ -2120,7 +2114,7 @@ int packfile_store_freshen_object(struct packfile_store *store,
 				  const struct object_id *oid)
 {
 	struct pack_entry e;
-	if (!find_pack_entry(store->source->odb->repo, oid, &e))
+	if (!find_pack_entry(store, oid, &e))
 		return 0;
 	if (e.p->is_cruft)
 		return 0;
@@ -2141,7 +2135,7 @@ int packfile_store_read_object_info(struct packfile_store *store,
 	struct pack_entry e;
 	int rtype;
 
-	if (!find_pack_entry(store->source->odb->repo, oid, &e))
+	if (!find_pack_entry(store, oid, &e))
 		return 1;
 
 	/*
@@ -2217,8 +2211,17 @@ struct packed_git **packfile_store_get_kept_pack_cache(struct packfile_store *st
 
 int has_object_pack(struct repository *r, const struct object_id *oid)
 {
+	struct odb_source *source;
 	struct pack_entry e;
-	return find_pack_entry(r, oid, &e);
+
+	odb_prepare_alternates(r->objects);
+	for (source = r->objects->sources; source; source = source->next) {
+		int ret = find_pack_entry(source->packfiles, oid, &e);
+		if (ret)
+			return ret;
+	}
+
+	return 0;
 }
 
 int has_object_kept_pack(struct repository *r, const struct object_id *oid,
