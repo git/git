@@ -3737,17 +3737,15 @@ static int files_fsck_symref_target(struct fsck_options *o,
 	if (!is_referent_root &&
 	    !starts_with(referent->buf, "refs/") &&
 	    !starts_with(referent->buf, "worktrees/")) {
-		ret = fsck_report_ref(o, report,
-				      FSCK_MSG_SYMREF_TARGET_IS_NOT_A_REF,
-				      "points to non-ref target '%s'", referent->buf);
-
+		ret |= fsck_report_ref(o, report,
+				       FSCK_MSG_SYMREF_TARGET_IS_NOT_A_REF,
+				       "points to non-ref target '%s'", referent->buf);
 	}
 
 	if (!is_referent_root && check_refname_format(referent->buf, 0)) {
-		ret = fsck_report_ref(o, report,
-				      FSCK_MSG_BAD_REFERENT_NAME,
-				      "points to invalid refname '%s'", referent->buf);
-		goto out;
+		ret |= fsck_report_ref(o, report,
+				       FSCK_MSG_BAD_REFERENT_NAME,
+				       "points to invalid refname '%s'", referent->buf);
 	}
 
 	if (symbolic_link)
@@ -3755,19 +3753,19 @@ static int files_fsck_symref_target(struct fsck_options *o,
 
 	if (referent->len == orig_len ||
 	    (referent->len < orig_len && orig_last_byte != '\n')) {
-		ret = fsck_report_ref(o, report,
-				      FSCK_MSG_REF_MISSING_NEWLINE,
-				      "misses LF at the end");
+		ret |= fsck_report_ref(o, report,
+				       FSCK_MSG_REF_MISSING_NEWLINE,
+				       "misses LF at the end");
 	}
 
 	if (referent->len != orig_len && referent->len != orig_len - 1) {
-		ret = fsck_report_ref(o, report,
-				      FSCK_MSG_TRAILING_REF_CONTENT,
-				      "has trailing whitespaces or newlines");
+		ret |= fsck_report_ref(o, report,
+				       FSCK_MSG_TRAILING_REF_CONTENT,
+				       "has trailing whitespaces or newlines");
 	}
 
 out:
-	return ret;
+	return ret ? -1 : 0;
 }
 
 static int files_fsck_refs_content(struct ref_store *ref_store,
