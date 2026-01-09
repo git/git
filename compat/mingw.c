@@ -2698,6 +2698,34 @@ int link(const char *oldpath, const char *newpath)
 	return 0;
 }
 
+int symlink(const char *target, const char *link)
+{
+	wchar_t wtarget[MAX_PATH], wlink[MAX_PATH];
+	int len;
+
+	/* fail if symlinks are disabled or API is not supported (WinXP) */
+	if (!has_symlinks) {
+		errno = ENOSYS;
+		return -1;
+	}
+
+	if ((len = xutftowcs_path(wtarget, target)) < 0
+			|| xutftowcs_path(wlink, link) < 0)
+		return -1;
+
+	/* convert target dir separators to backslashes */
+	while (len--)
+		if (wtarget[len] == '/')
+			wtarget[len] = '\\';
+
+	/* create file symlink */
+	if (!CreateSymbolicLinkW(wlink, wtarget, 0)) {
+		errno = err_win_to_posix(GetLastError());
+		return -1;
+	}
+	return 0;
+}
+
 int readlink(const char *path, char *buf, size_t bufsiz)
 {
 	WCHAR wpath[MAX_PATH];
