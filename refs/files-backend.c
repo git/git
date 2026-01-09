@@ -354,22 +354,17 @@ static int for_each_root_ref(struct files_ref_store *refs,
 			     void *cb_data)
 {
 	struct strbuf path = STRBUF_INIT, refname = STRBUF_INIT;
-	const char *dirname = refs->loose->root->name;
 	struct dirent *de;
-	size_t dirnamelen;
 	int ret;
 	DIR *d;
 
-	files_ref_path(refs, &path, dirname);
+	files_ref_path(refs, &path, "");
 
 	d = opendir(path.buf);
 	if (!d) {
 		strbuf_release(&path);
 		return -1;
 	}
-
-	strbuf_addstr(&refname, dirname);
-	dirnamelen = refname.len;
 
 	while ((de = readdir(d)) != NULL) {
 		unsigned char dtype;
@@ -378,6 +373,8 @@ static int for_each_root_ref(struct files_ref_store *refs,
 			continue;
 		if (ends_with(de->d_name, ".lock"))
 			continue;
+
+		strbuf_reset(&refname);
 		strbuf_addstr(&refname, de->d_name);
 
 		dtype = get_dtype(de, &path, 1);
@@ -386,8 +383,6 @@ static int for_each_root_ref(struct files_ref_store *refs,
 			if (ret)
 				goto done;
 		}
-
-		strbuf_setlen(&refname, dirnamelen);
 	}
 
 	ret = 0;
