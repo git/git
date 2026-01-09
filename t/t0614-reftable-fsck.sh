@@ -87,4 +87,16 @@ test_expect_success 'worktree stacks can be verified' '
 	done
 '
 
+test_expect_success 'invalid symref gets reported' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	test_commit -C repo initial &&
+	git -C repo symbolic-ref refs/heads/symref garbage &&
+	test_must_fail git -C repo refs verify 2>err &&
+	cat >expect <<-EOF &&
+	error: refs/heads/symref: badReferentName: points to invalid refname ${SQ}garbage${SQ}
+	EOF
+	test_cmp expect err
+'
+
 test_done
