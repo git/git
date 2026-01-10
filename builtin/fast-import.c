@@ -900,7 +900,7 @@ static void end_packfile(void)
 		idx_name = keep_pack(create_index());
 
 		/* Register the packfile with core git's machinery. */
-		new_p = packfile_store_load_pack(pack_data->repo->objects->packfiles,
+		new_p = packfile_store_load_pack(pack_data->repo->objects->sources->packfiles,
 						 idx_name, 1);
 		if (!new_p)
 			die(_("core Git rejected index %s"), idx_name);
@@ -955,7 +955,7 @@ static int store_object(
 	struct object_id *oidout,
 	uintmax_t mark)
 {
-	struct packfile_store *packs = the_repository->objects->packfiles;
+	struct odb_source *source;
 	void *out, *delta;
 	struct object_entry *e;
 	unsigned char hdr[96];
@@ -979,7 +979,11 @@ static int store_object(
 	if (e->idx.offset) {
 		duplicate_count_by_type[type]++;
 		return 1;
-	} else if (packfile_list_find_oid(packfile_store_get_packs(packs), &oid)) {
+	}
+
+	for (source = the_repository->objects->sources; source; source = source->next) {
+		if (!packfile_list_find_oid(packfile_store_get_packs(source->packfiles), &oid))
+			continue;
 		e->type = type;
 		e->pack_id = MAX_PACK_ID;
 		e->idx.offset = 1; /* just not zero! */
@@ -1096,10 +1100,10 @@ static void truncate_pack(struct hashfile_checkpoint *checkpoint)
 
 static void stream_blob(uintmax_t len, struct object_id *oidout, uintmax_t mark)
 {
-	struct packfile_store *packs = the_repository->objects->packfiles;
 	size_t in_sz = 64 * 1024, out_sz = 64 * 1024;
 	unsigned char *in_buf = xmalloc(in_sz);
 	unsigned char *out_buf = xmalloc(out_sz);
+	struct odb_source *source;
 	struct object_entry *e;
 	struct object_id oid;
 	unsigned long hdrlen;
@@ -1179,24 +1183,29 @@ static void stream_blob(uintmax_t len, struct object_id *oidout, uintmax_t mark)
 	if (e->idx.offset) {
 		duplicate_count_by_type[OBJ_BLOB]++;
 		truncate_pack(&checkpoint);
+		goto out;
+	}
 
-	} else if (packfile_list_find_oid(packfile_store_get_packs(packs), &oid)) {
+	for (source = the_repository->objects->sources; source; source = source->next) {
+		if (!packfile_list_find_oid(packfile_store_get_packs(source->packfiles), &oid))
+			continue;
 		e->type = OBJ_BLOB;
 		e->pack_id = MAX_PACK_ID;
 		e->idx.offset = 1; /* just not zero! */
 		duplicate_count_by_type[OBJ_BLOB]++;
 		truncate_pack(&checkpoint);
-
-	} else {
-		e->depth = 0;
-		e->type = OBJ_BLOB;
-		e->pack_id = pack_id;
-		e->idx.offset = offset;
-		e->idx.crc32 = crc32_end(pack_file);
-		object_count++;
-		object_count_by_type[OBJ_BLOB]++;
+		goto out;
 	}
 
+	e->depth = 0;
+	e->type = OBJ_BLOB;
+	e->pack_id = pack_id;
+	e->idx.offset = offset;
+	e->idx.crc32 = crc32_end(pack_file);
+	object_count++;
+	object_count_by_type[OBJ_BLOB]++;
+
+out:
 	free(in_buf);
 	free(out_buf);
 }

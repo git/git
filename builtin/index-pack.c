@@ -1638,7 +1638,7 @@ static void final(const char *final_pack_name, const char *curr_pack_name,
 			    hash, "idx", 1);
 
 	if (do_fsck_object && startup_info->have_repository)
-		packfile_store_load_pack(the_repository->objects->packfiles,
+		packfile_store_load_pack(the_repository->objects->sources->packfiles,
 					 final_index_name, 0);
 
 	if (!from_stdin) {

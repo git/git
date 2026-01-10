@@ -51,12 +51,8 @@ struct odb_source {
 	/* Private state for loose objects. */
 	struct odb_source_loose *loose;
 
-	/*
-	 * private data
-	 *
-	 * should only be accessed directly by packfile.c and midx.c
-	 */
-	struct multi_pack_index *midx;
+	/* Should only be accessed directly by packfile.c and midx.c. */
+	struct packfile_store *packfiles;
 
 	/*
 	 * Figure out whether this is the local source of the owning
@@ -127,9 +123,6 @@ struct object_database {
 
 	struct commit_graph *commit_graph;
 	unsigned commit_graph_attempted : 1; /* if loading has been attempted */
-
-	/* Should only be accessed directly by packfile.c and midx.c. */
-	struct packfile_store *packfiles;
 
 	/*
 	 * This is meant to hold a *small* number of objects that you would
