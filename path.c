@@ -40,13 +40,17 @@ static struct strbuf *get_pathname(void)
 	return sb;
 }
 
-static const char *cleanup_path(const char *path)
+static char *cleanup_path(char *path)
 {
 	/* Clean it up */
-	if (skip_prefix(path, "./", &path)) {
+	if (skip_prefix(path, "./", (const char **)&path))
 		while (*path == '/')
 			path++;
-	}
+
+#ifdef GIT_WINDOWS_NATIVE
+	convert_slashes(path);
+#endif
+
 	return path;
 }
 
