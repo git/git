@@ -302,6 +302,7 @@ libgit_sources = [
   'commit.c',
   'common-exit.c',
   'common-init.c',
+  'compat/ivec.c',
   'compat/nonblock.c',
   'compat/obstack.c',
   'compat/open.c',

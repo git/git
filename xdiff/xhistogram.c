@@ -364,7 +364,10 @@ out:
 
 int xdl_do_histogram_diff(xpparam_t const *xpp, xdfenv_t *env)
 {
+	ptrdiff_t dend1 = env->xdf1.nrec - 1 - env->delta_end;
+	ptrdiff_t dend2 = env->xdf2.nrec - 1 - env->delta_end;
+
 	return histogram_diff(xpp, env,
-		env->xdf1.dstart + 1, env->xdf1.dend - env->xdf1.dstart + 1,
-		env->xdf2.dstart + 1, env->xdf2.dend - env->xdf2.dstart + 1);
+		env->delta_start + 1, dend1 - env->delta_start + 1,
+		env->delta_start + 1, dend2 - env->delta_start + 1);
 }
