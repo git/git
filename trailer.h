@@ -68,6 +68,8 @@ void parse_trailers_from_config(struct list_head *config_head);
 void parse_trailers_from_command_line_args(struct list_head *arg_head,
 					   struct list_head *new_trailer_head);
 
+void validate_trailer_args_after_config(const struct strvec *cli_args);
+
 void process_trailers_lists(struct list_head *head,
 			    struct list_head *arg_head);
 
@@ -195,11 +197,16 @@ int trailer_iterator_advance(struct trailer_iterator *iter);
  */
 void trailer_iterator_release(struct trailer_iterator *iter);
 
+int amend_strbuf_with_trailers(struct strbuf *buf,
+			       const struct strvec *trailer_args);
+
 /*
- * Augment a file to add trailers to it by running git-interpret-trailers.
- * This calls run_command() and its return value is the same (i.e. 0 for
- * success, various non-zero for other errors). See run-command.h.
+ * Augment a file to add trailers to it (similar to 'git interpret-trailers').
+ * Returns 0 on success or a non-zero error code on failure.
  */
 int amend_file_with_trailers(const char *path, const struct strvec *trailer_args);
 
+void process_trailers(const struct process_trailer_options *opts,
+		      struct list_head *new_trailer_head,
+		      struct strbuf *sb, struct strbuf *out);
 #endif /* TRAILER_H */
