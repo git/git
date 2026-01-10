@@ -180,8 +180,7 @@ static void name_rev(struct commit *start_commit,
 {
 	struct prio_queue queue;
 	struct commit *commit;
-	struct commit **parents_to_queue = NULL;
-	size_t parents_to_queue_nr, parents_to_queue_alloc = 0;
+	struct commit_stack parents_to_queue = COMMIT_STACK_INIT;
 	struct rev_name *start_name;
 
 	repo_parse_commit(the_repository, start_commit);
@@ -206,7 +205,7 @@ static void name_rev(struct commit *start_commit,
 		struct commit_list *parents;
 		int parent_number = 1;
 
-		parents_to_queue_nr = 0;
+		parents_to_queue.nr = 0;
 
 		for (parents = commit->parents;
 				parents;
@@ -238,22 +237,18 @@ static void name_rev(struct commit *start_commit,
 								string_pool);
 				else
 					parent_name->tip_name = name->tip_name;
-				ALLOC_GROW(parents_to_queue,
-					   parents_to_queue_nr + 1,
-					   parents_to_queue_alloc);
-				parents_to_queue[parents_to_queue_nr] = parent;
-				parents_to_queue_nr++;
+				commit_stack_push(&parents_to_queue, parent);
 			}
 		}
 
 		/* The first parent must come out first from the prio_queue */
-		while (parents_to_queue_nr)
+		while (parents_to_queue.nr)
 			prio_queue_put(&queue,
-				       parents_to_queue[--parents_to_queue_nr]);
+				       commit_stack_pop(&parents_to_queue));
 	}
 
 	clear_prio_queue(&queue);
-	free(parents_to_queue);
+	commit_stack_clear(&parents_to_queue);
 }
 
 static int subpath_matches(const char *path, const char *filter)

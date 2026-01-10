@@ -250,29 +250,6 @@ void mark_trees_uninteresting_sparse(struct repository *r,
 	paths_and_oids_clear(&map);
 }
 
-struct commit_stack {
-	struct commit **items;
-	size_t nr, alloc;
-};
-#define COMMIT_STACK_INIT { 0 }
-
-static void commit_stack_push(struct commit_stack *stack, struct commit *commit)
-{
-	ALLOC_GROW(stack->items, stack->nr + 1, stack->alloc);
-	stack->items[stack->nr++] = commit;
-}
-
-static struct commit *commit_stack_pop(struct commit_stack *stack)
-{
-	return stack->nr ? stack->items[--stack->nr] : NULL;
-}
-
-static void commit_stack_clear(struct commit_stack *stack)
-{
-	FREE_AND_NULL(stack->items);
-	stack->nr = stack->alloc = 0;
-}
-
 static void mark_one_parent_uninteresting(struct rev_info *revs, struct commit *commit,
 					  struct commit_stack *pending)
 {

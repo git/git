@@ -1,6 +1,7 @@
 #ifndef SHALLOW_H
 #define SHALLOW_H
 
+#include "commit.h"
 #include "lockfile.h"
 #include "object.h"
 #include "repository.h"
@@ -69,8 +70,7 @@ struct shallow_info {
 	int *need_reachability_test;
 	int *reachable;
 	int *shallow_ref;
-	struct commit **commits;
-	size_t nr_commits;
+	struct commit_stack commits;
 };
 
 void prepare_shallow_info(struct shallow_info *, struct oid_array *);

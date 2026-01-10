@@ -723,9 +723,7 @@ static int add_ref_to_pending(const struct reference *ref, void *cb_data)
 }
 
 struct bitmap_commit_cb {
-	struct commit **commits;
-	size_t commits_nr, commits_alloc;
-
+	struct commit_stack *commits;
 	struct write_midx_context *ctx;
 };
 
@@ -745,8 +743,7 @@ static void bitmap_show_commit(struct commit *commit, void *_data)
 	if (pos < 0)
 		return;
 
-	ALLOC_GROW(data->commits, data->commits_nr + 1, data->commits_alloc);
-	data->commits[data->commits_nr++] = commit;
+	commit_stack_push(data->commits, commit);
 }
 
 static int read_refs_snapshot(const char *refs_snapshot,
@@ -784,16 +781,14 @@ static int read_refs_snapshot(const char *refs_snapshot,
 	return 0;
 }
 
-static struct commit **find_commits_for_midx_bitmap(uint32_t *indexed_commits_nr_p,
-						    const char *refs_snapshot,
-						    struct write_midx_context *ctx)
+static void find_commits_for_midx_bitmap(struct commit_stack *commits,
+					 const char *refs_snapshot,
+					 struct write_midx_context *ctx)
 {
 	struct rev_info revs;
-	struct bitmap_commit_cb cb = {0};
+	struct bitmap_commit_cb cb = { .commits = commits, .ctx = ctx };
 
 	trace2_region_enter("midx", "find_commits_for_midx_bitmap", ctx->repo);
-
-	cb.ctx = ctx;
 
 	repo_init_revisions(ctx->repo, &revs, NULL);
 	if (refs_snapshot) {
@@ -823,14 +818,10 @@ static struct commit **find_commits_for_midx_bitmap(uint32_t *indexed_commits_nr
 		die(_("revision walk setup failed"));
 
 	traverse_commit_list(&revs, bitmap_show_commit, NULL, &cb);
-	if (indexed_commits_nr_p)
-		*indexed_commits_nr_p = cb.commits_nr;
 
 	release_revisions(&revs);
 
 	trace2_region_leave("midx", "find_commits_for_midx_bitmap", ctx->repo);
-
-	return cb.commits;
 }
 
 static int write_midx_bitmap(struct write_midx_context *ctx,
@@ -1447,15 +1438,14 @@ static int write_midx_internal(struct odb_source *source,
 
 	if (flags & MIDX_WRITE_BITMAP) {
 		struct packing_data pdata;
-		struct commit **commits;
-		uint32_t commits_nr;
+		struct commit_stack commits = COMMIT_STACK_INIT;
 
 		if (!ctx.entries_nr)
 			BUG("cannot write a bitmap without any objects");
 
 		prepare_midx_packing_data(&pdata, &ctx);
 
-		commits = find_commits_for_midx_bitmap(&commits_nr, refs_snapshot, &ctx);
+		find_commits_for_midx_bitmap(&commits, refs_snapshot, &ctx);
 
 		/*
 		 * The previous steps translated the information from
@@ -1466,17 +1456,16 @@ static int write_midx_internal(struct odb_source *source,
 		FREE_AND_NULL(ctx.entries);
 		ctx.entries_nr = 0;
 
-		if (write_midx_bitmap(&ctx,
-				      midx_hash, &pdata, commits, commits_nr,
-				      flags) < 0) {
+		if (write_midx_bitmap(&ctx, midx_hash, &pdata,
+				      commits.items, commits.nr, flags) < 0) {
 			error(_("could not write multi-pack bitmap"));
 			clear_packing_data(&pdata);
-			free(commits);
+			commit_stack_clear(&commits);
 			goto cleanup;
 		}
 
 		clear_packing_data(&pdata);
-		free(commits);
+		commit_stack_clear(&commits);
 	}
 	/*
 	 * NOTE: Do not use ctx.entries beyond this point, since it might

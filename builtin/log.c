@@ -1896,11 +1896,11 @@ int cmd_format_patch(int argc,
 {
 	struct format_config cfg;
 	struct commit *commit;
-	struct commit **list = NULL;
+	struct commit_stack list = COMMIT_STACK_INIT;
 	struct rev_info rev;
 	char *to_free = NULL;
 	struct setup_revision_opt s_r_opt;
-	size_t nr = 0, total, i;
+	size_t total, i;
 	int use_stdout = 0;
 	int start_number = -1;
 	int just_numbers = 0;
@@ -2283,14 +2283,12 @@ int cmd_format_patch(int argc,
 		if (ignore_if_in_upstream && has_commit_patch_id(commit, &ids))
 			continue;
 
-		nr++;
-		REALLOC_ARRAY(list, nr);
-		list[nr - 1] = commit;
+		commit_stack_push(&list, commit);
 	}
-	if (nr == 0)
+	if (!list.nr)
 		/* nothing to do */
 		goto done;
-	total = nr;
+	total = list.nr;
 	if (cover_letter == -1) {
 		if (cfg.config_cover_letter == COVER_AUTO)
 			cover_letter = (total > 1);
@@ -2308,7 +2306,7 @@ int cmd_format_patch(int argc,
 		if (!cover_letter && total != 1)
 			die(_("--interdiff requires --cover-letter or single patch"));
 		rev.idiff_oid1 = &idiff_prev.oid[idiff_prev.nr - 1];
-		rev.idiff_oid2 = get_commit_tree_oid(list[0]);
+		rev.idiff_oid2 = get_commit_tree_oid(list.items[0]);
 		rev.idiff_title = diff_title(&idiff_title, reroll_count,
 					     _("Interdiff:"),
 					     _("Interdiff against v%d:"));
@@ -2324,7 +2322,7 @@ int cmd_format_patch(int argc,
 			die(_("--range-diff requires --cover-letter or single patch"));
 
 		infer_range_diff_ranges(&rdiff1, &rdiff2, rdiff_prev,
-					origin, list[0]);
+					origin, list.items[0]);
 		rev.rdiff1 = rdiff1.buf;
 		rev.rdiff2 = rdiff2.buf;
 		rev.creation_factor = creation_factor;
@@ -2360,11 +2358,11 @@ int cmd_format_patch(int argc,
 	}
 
 	memset(&bases, 0, sizeof(bases));
-	base = get_base_commit(&cfg, list, nr);
+	base = get_base_commit(&cfg, list.items, list.nr);
 	if (base) {
 		reset_revision_walk();
 		clear_object_flags(the_repository, UNINTERESTING);
-		prepare_bases(&bases, base, list, nr);
+		prepare_bases(&bases, base, list.items, list.nr);
 	}
 
 	if (in_reply_to || cfg.thread || cover_letter) {
@@ -2381,7 +2379,8 @@ int cmd_format_patch(int argc,
 		if (cfg.thread)
 			gen_message_id(&rev, "cover");
 		make_cover_letter(&rev, !!output_directory,
-				  origin, nr, list, description_file, branch_name, quiet, &cfg);
+				  origin, list.nr, list.items,
+				  description_file, branch_name, quiet, &cfg);
 		print_bases(&bases, rev.diffopt.file);
 		print_signature(signature, rev.diffopt.file);
 		total++;
@@ -2395,12 +2394,12 @@ int cmd_format_patch(int argc,
 	if (show_progress)
 		progress = start_delayed_progress(the_repository,
 						  _("Generating patches"), total);
-	for (i = 0; i < nr; i++) {
-		size_t idx = nr - i - 1;
+	while (list.nr) {
+		size_t idx = list.nr - 1;
 		int shown;
 
 		display_progress(progress, total - idx);
-		commit = list[idx];
+		commit = commit_stack_pop(&list);
 		rev.nr = total - idx + (start_number - 1);
 
 		/* Make the second and subsequent mails replies to the first */
@@ -2469,7 +2468,7 @@ int cmd_format_patch(int argc,
 		}
 	}
 	stop_progress(&progress);
-	free(list);
+	commit_stack_clear(&list);
 	if (ignore_if_in_upstream)
 		free_patch_ids(&ids);
 
