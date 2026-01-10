@@ -13,6 +13,9 @@
 `badGpgsig`::
 	(ERROR) A tag contains a bad (truncated) signature (e.g., `gpgsig`) header.
 
+`badHeadTarget`::
+	(ERROR) The `HEAD` ref is a symref that does not refer to a branch.
+
 `badHeaderContinuation`::
 	(ERROR) A continuation header (such as for `gpgsig`) is unexpectedly truncated.
 
@@ -40,6 +43,9 @@
 
 `badRefName`::
 	(ERROR) A ref has an invalid format.
+
+`badRefOid`::
+	(ERROR) A ref points to an invalid object ID.
 
 `badReferentName`::
 	(ERROR) The referent name of a symref is invalid.
