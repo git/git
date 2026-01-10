@@ -1,3 +1,6 @@
+#ifndef PATH_WALK_H
+#define PATH_WALK_H
+
 /*
  * path-walk.h : Methods and structures for walking the object graph in batches
  * by the paths that can reach those objects.
@@ -84,4 +87,7 @@ void path_walk_info_clear(struct path_walk_info *info);
  *
  * Returns nonzero on an error.
  */
+
 int walk_objects_by_path(struct path_walk_info *info);
+
+#endif /* PATH_WALK_H */
