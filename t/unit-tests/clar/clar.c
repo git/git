@@ -24,6 +24,14 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#ifndef va_copy
+#	ifdef __va_copy
+#		define va_copy(dst, src) __va_copy(dst, src)
+#	else
+#		define va_copy(dst, src) ((dst) = (src))
+#	endif
+#endif
+
 #if defined(__UCLIBC__) && ! defined(__UCLIBC_HAS_WCHAR__)
 	/*
 	 * uClibc can optionally be built without wchar support, in which case
@@ -76,8 +84,10 @@
 #			define S_ISDIR(x) ((x & _S_IFDIR) != 0)
 #		endif
 #		define p_snprintf(buf,sz,fmt,...) _snprintf_s(buf,sz,_TRUNCATE,fmt,__VA_ARGS__)
+#		define p_vsnprintf _vsnprintf
 #	else
 #		define p_snprintf snprintf
+#		define p_vsnprintf vsnprintf
 #	endif
 
 #	define localtime_r(timer, buf) (localtime_s(buf, timer) == 0 ? buf : NULL)
@@ -86,6 +96,7 @@
 #	include <unistd.h>
 #	define _MAIN_CC
 #	define p_snprintf snprintf
+#	define p_vsnprintf vsnprintf
 	typedef struct stat STAT_T;
 #endif
 
@@ -699,13 +710,14 @@ void clar__skip(void)
 	abort_test();
 }
 
-void clar__fail(
+static void clar__failv(
 	const char *file,
 	const char *function,
 	size_t line,
+	int should_abort,
 	const char *error_msg,
 	const char *description,
-	int should_abort)
+	va_list args)
 {
 	struct clar_error *error;
 
@@ -725,15 +737,53 @@ void clar__fail(
 	error->line_number = _clar.invoke_line ? _clar.invoke_line : line;
 	error->error_msg = error_msg;
 
-	if (description != NULL &&
-	    (error->description = strdup(description)) == NULL)
-		clar_abort("Failed to allocate description.\n");
+	if (description != NULL) {
+		va_list args_copy;
+		int len;
+
+		va_copy(args_copy, args);
+		if ((len = p_vsnprintf(NULL, 0, description, args_copy)) < 0)
+			clar_abort("Failed to compute description.");
+		va_end(args_copy);
+
+		if ((error->description = calloc(1, len + 1)) == NULL)
+			clar_abort("Failed to allocate buffer.");
+		p_vsnprintf(error->description, len + 1, description, args);
+	}
 
 	_clar.total_errors++;
 	_clar.last_report->status = CL_TEST_FAILURE;
 
 	if (should_abort)
 		abort_test();
+}
+
+void clar__failf(
+	const char *file,
+	const char *function,
+	size_t line,
+	int should_abort,
+	const char *error_msg,
+	const char *description,
+	...)
+{
+	va_list args;
+	va_start(args, description);
+	clar__failv(file, function, line, should_abort, error_msg,
+		    description, args);
+	va_end(args);
+}
+
+void clar__fail(
+	const char *file,
+	const char *function,
+	size_t line,
+	const char *error_msg,
+	const char *description,
+	int should_abort)
+{
+	clar__failf(file, function, line, should_abort, error_msg,
+		    description ? "%s" : NULL, description);
 }
 
 void clar__assert(
@@ -887,6 +937,92 @@ void clar__assert_equal(
 
 	if (!is_equal)
 		clar__fail(file, function, line, err, buf, should_abort);
+}
+
+void clar__assert_compare_i(
+	const char *file,
+	const char *func,
+	size_t line,
+	int should_abort,
+	enum clar_comparison cmp,
+	intmax_t value1,
+	intmax_t value2,
+	const char *error,
+	const char *description,
+	...)
+{
+	int fulfilled;
+	switch (cmp) {
+	case CLAR_COMPARISON_EQ:
+		fulfilled = value1 == value2;
+		break;
+	case CLAR_COMPARISON_LT:
+		fulfilled = value1 < value2;
+		break;
+	case CLAR_COMPARISON_LE:
+		fulfilled = value1 <= value2;
+		break;
+	case CLAR_COMPARISON_GT:
+		fulfilled = value1 > value2;
+		break;
+	case CLAR_COMPARISON_GE:
+		fulfilled = value1 >= value2;
+		break;
+	default:
+		cl_assert(0);
+		return;
+	}
+
+	if (!fulfilled) {
+		va_list args;
+		va_start(args, description);
+		clar__failv(file, func, line, should_abort, error,
+			    description, args);
+		va_end(args);
+	}
+}
+
+void clar__assert_compare_u(
+	const char *file,
+	const char *func,
+	size_t line,
+	int should_abort,
+	enum clar_comparison cmp,
+	uintmax_t value1,
+	uintmax_t value2,
+	const char *error,
+	const char *description,
+	...)
+{
+	int fulfilled;
+	switch (cmp) {
+	case CLAR_COMPARISON_EQ:
+		fulfilled = value1 == value2;
+		break;
+	case CLAR_COMPARISON_LT:
+		fulfilled = value1 < value2;
+		break;
+	case CLAR_COMPARISON_LE:
+		fulfilled = value1 <= value2;
+		break;
+	case CLAR_COMPARISON_GT:
+		fulfilled = value1 > value2;
+		break;
+	case CLAR_COMPARISON_GE:
+		fulfilled = value1 >= value2;
+		break;
+	default:
+		cl_assert(0);
+		return;
+	}
+
+	if (!fulfilled) {
+		va_list args;
+		va_start(args, description);
+		clar__failv(file, func, line, should_abort, error,
+			    description, args);
+		va_end(args);
+	}
 }
 
 void cl_set_cleanup(void (*cleanup)(void *), void *opaque)

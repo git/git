@@ -53,7 +53,7 @@ jobs:
       if: matrix.platform.image == 'i386/debian:latest'
       run: apt -q update && apt -q -y install cmake gcc libc6-amd64 lib64stdc++6 make python3
     - name: Check out
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
     - name: Build
       shell: bash
       run: |

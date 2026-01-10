@@ -298,7 +298,7 @@ void test_selftest__help(void)
 
 void test_selftest__without_arguments(void)
 {
-	cl_invoke(assert_output("combined", "without_arguments", 9, NULL));
+	cl_invoke(assert_output("combined", "without_arguments", 15, NULL));
 }
 
 void test_selftest__specific_test(void)
@@ -313,12 +313,12 @@ void test_selftest__stop_on_failure(void)
 
 void test_selftest__quiet(void)
 {
-	cl_invoke(assert_output("combined", "quiet", 9, "-q", NULL));
+	cl_invoke(assert_output("combined", "quiet", 15, "-q", NULL));
 }
 
 void test_selftest__tap(void)
 {
-	cl_invoke(assert_output("combined", "tap", 9, "-t", NULL));
+	cl_invoke(assert_output("combined", "tap", 15, "-t", NULL));
 }
 
 void test_selftest__suite_names(void)
@@ -329,7 +329,7 @@ void test_selftest__suite_names(void)
 void test_selftest__summary_without_filename(void)
 {
 	struct stat st;
-	cl_invoke(assert_output("combined", "summary_without_filename", 9, "-r", NULL));
+	cl_invoke(assert_output("combined", "summary_without_filename", 15, "-r", NULL));
 	/* The summary contains timestamps, so we cannot verify its contents. */
 	cl_must_pass(stat("summary.xml", &st));
 }
@@ -337,7 +337,7 @@ void test_selftest__summary_without_filename(void)
 void test_selftest__summary_with_filename(void)
 {
 	struct stat st;
-	cl_invoke(assert_output("combined", "summary_with_filename", 9, "-rdifferent.xml", NULL));
+	cl_invoke(assert_output("combined", "summary_with_filename", 15, "-rdifferent.xml", NULL));
 	/* The summary contains timestamps, so we cannot verify its contents. */
 	cl_must_pass(stat("different.xml", &st));
 }
