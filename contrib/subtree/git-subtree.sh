@@ -325,6 +325,12 @@ check_parents () {
 	done
 }
 
+# Usage: get_notree REV
+get_notree () {
+	assert test $# = 1
+	test -r "$cachedir/notree/$1"
+}
+
 # Usage: set_notree REV
 set_notree () {
 	assert test $# = 1
@@ -509,6 +515,71 @@ find_existing_splits () {
 			;;
 		esac
 	done || exit $?
+}
+
+# Usage: find_other_splits DIR REV UNREVS...
+#
+# Scan history in REV UNREVS for other `git subtree split --rejoin`
+# merge commits belonging to prefixes outside of DIR. These
+# "other splits" don't contribute to DIR and can be ignored.
+#
+# If any such rejoins are found,
+#
+#   * emit their second-parent as an UNREV, avoiding a
+#     potentially costly history traversal
+#
+#   * mark the merge commit as "notree" to ignore it
+find_other_splits () {
+	assert test $# -ge 2
+	dir="${1%/}"
+	rev="$2"
+	shift 2
+	debug "Looking for other splits with dir != $dir..."
+
+	git log \
+		--grep '^git-subtree-mainline:' \
+		--no-patch \
+		--no-show-signature \
+		--format='hash: %H%nparents: %P%n%(trailers:key=git-subtree-dir,key=git-subtree-mainline,key=git-subtree-split)%nEND' \
+		"$rev" ${@:+"$@"} |
+	while read -r key val
+	do
+		case "$key" in
+		hash:)
+			commit_hash="${val}"
+			commit_parents=
+			subtree_dir=
+			subtree_mainline=
+			subtree_split=
+			;;
+		parents:)
+			commit_parents="${val}" ;;
+		git-subtree-dir:)
+			subtree_dir="${val%/}/" ;;
+		git-subtree-mainline:)
+			subtree_mainline="${val}" ;;
+		git-subtree-split:)
+			subtree_split="${val}" ;;
+		END)
+			# verify:
+			# * all git-subtree-* trailers are present
+			# * this subtree is outside of $dir
+			# * the first parent is the git-subtree-mainline:
+			# * the commit has at least two parents
+			if test -n "${subtree_dir}" &&
+				test -n "${subtree_split}" &&
+				test -n "${subtree_mainline}" &&
+				test "${subtree_dir}" = "${subtree_dir#"${dir}/"}" &&
+				test "${commit_parents}" != "${commit_parents#"$subtree_mainline "}" &&
+				rev_exists "${commit_hash}^2"
+			then
+				debug "find_other_splits excluding dir=$subtree_dir merged in ${commit_hash}"
+				echo "^${commit_hash}^2"
+				set_notree "${commit_hash}"
+			fi
+			;;
+		esac
+	done
 }
 
 # Usage: copy_commit REV TREE FLAGS_STR
@@ -785,42 +856,6 @@ ensure_valid_ref_format () {
 		die "fatal: '$1' does not look like a ref"
 }
 
-# Usage: should_ignore_subtree_split_commit REV
-#
-# Check if REV is a commit from another subtree and should be
-# ignored from processing for splits
-should_ignore_subtree_split_commit () {
-	assert test $# = 1
-
-	git show \
-		--no-patch \
-		--no-show-signature \
-		--format='%(trailers:key=git-subtree-dir,key=git-subtree-mainline)' \
-		"$1" |
-	(
-	have_mainline=
-	subtree_dir=
-
-	while read -r trailer val
-	do
-		case "$trailer" in
-		git-subtree-dir:)
-			subtree_dir="${val%/}" ;;
-		git-subtree-mainline:)
-			have_mainline=y ;;
-		esac
-	done
-
-	if test -n "${subtree_dir}" &&
-		test -z "${have_mainline}" &&
-		test "${subtree_dir}" != "$arg_prefix"
-	then
-		return 0
-	fi
-	return 1
-	)
-}
-
 # Usage: process_split_commit REV PARENTS
 process_split_commit () {
 	assert test $# = 2
@@ -994,31 +1029,39 @@ cmd_split () {
 	fi
 
 	unrevs="$(find_existing_splits "$dir" "$rev" "$repository")" || exit $?
+	(find_other_splits >"$cachedir/prune" "$dir" "$rev" $unrevs) || exit $?
 
 	# We can't restrict rev-list to only $dir here, because some of our
 	# parents have the $dir contents the root, and those won't match.
 	# (and rev-list --follow doesn't seem to solve this)
-	grl='git rev-list --topo-order --reverse --parents $rev $unrevs'
-	revmax=$(eval "$grl" | wc -l)
+	revmax="$(git rev-list \
+		<"$cachedir/prune" \
+		--topo-order \
+		--reverse \
+		--parents \
+		--stdin \
+		--count \
+		"$rev" \
+		$unrevs
+	)"
 	revcount=0
 	createcount=0
 	extracount=0
-	eval "$grl" |
+	git rev-list \
+		<"$cachedir/prune" \
+		--topo-order \
+		--reverse \
+		--parents \
+		--stdin \
+		"$rev" \
+		$unrevs |
 	while read rev parents
 	do
-		if should_ignore_subtree_split_commit "$rev"
+		if get_notree "$rev"
 		then
 			continue
 		fi
-		parsedparents=''
-		for parent in $parents
-		do
-			if ! should_ignore_subtree_split_commit "$parent"
-			then
-				parsedparents="$parsedparents$parent "
-			fi
-		done
-		process_split_commit "$rev" "$parsedparents"
+		process_split_commit "$rev" "$parents"
 	done || exit $?
 
 	latest_new=$(cache_get latest_new) || exit $?
