@@ -17,14 +17,16 @@
 #include "utf8.h"
 
 static const char *const repo_usage[] = {
-	"git repo info [--format=(keyvalue|nul) | -z] [--all | <key>...]",
-	"git repo structure [--format=(table|keyvalue|nul) | -z]",
+	"git repo info [--format=(default|keyvalue|nul) | -z] [--all | <key>...]",
+	"git repo info --keys [--format=(default|nul) | -z]",
+	"git repo structure [--format=(default|table|keyvalue|nul) | -z]",
 	NULL
 };
 
 typedef int get_value_fn(struct repository *repo, struct strbuf *buf);
 
 enum output_format {
+	FORMAT_DEFAULT,
 	FORMAT_TABLE,
 	FORMAT_KEYVALUE,
 	FORMAT_NUL_TERMINATED,
@@ -148,6 +150,29 @@ static int print_all_fields(struct repository *repo,
 	return 0;
 }
 
+static int print_keys(enum output_format format)
+{
+	char sep;
+
+	switch (format) {
+	case FORMAT_DEFAULT:
+		sep = '\n';
+		break;
+	case FORMAT_NUL_TERMINATED:
+		sep = '\0';
+		break;
+	default:
+		die(_("--keys can only be used with --format=default or --format=nul"));
+	}
+
+	for (size_t i = 0; i < ARRAY_SIZE(repo_info_fields); i++) {
+		const struct field *field = &repo_info_fields[i];
+		printf("%s%c", field->key, sep);
+	}
+
+	return 0;
+}
+
 static int parse_format_cb(const struct option *opt,
 			   const char *arg, int unset UNUSED)
 {
@@ -161,6 +186,8 @@ static int parse_format_cb(const struct option *opt,
 		*format = FORMAT_KEYVALUE;
 	else if (!strcmp(arg, "table"))
 		*format = FORMAT_TABLE;
+	else if (!strcmp(arg, "default"))
+		*format = FORMAT_DEFAULT;
 	else
 		die(_("invalid format '%s'"), arg);
 
@@ -170,8 +197,9 @@ static int parse_format_cb(const struct option *opt,
 static int cmd_repo_info(int argc, const char **argv, const char *prefix,
 			 struct repository *repo)
 {
-	enum output_format format = FORMAT_KEYVALUE;
+	enum output_format format = FORMAT_DEFAULT;
 	int all_keys = 0;
+	int show_keys = 0;
 	struct option options[] = {
 		OPT_CALLBACK_F(0, "format", &format, N_("format"),
 			       N_("output format"),
@@ -181,10 +209,21 @@ static int cmd_repo_info(int argc, const char **argv, const char *prefix,
 			       PARSE_OPT_NONEG | PARSE_OPT_NOARG,
 			       parse_format_cb),
 		OPT_BOOL(0, "all", &all_keys, N_("print all keys/values")),
+		OPT_BOOL(0, "keys", &show_keys, N_("show keys")),
 		OPT_END()
 	};
 
 	argc = parse_options(argc, argv, prefix, options, repo_usage, 0);
+
+	if (show_keys && (all_keys || argc))
+		die(_("--keys cannot be used with a <key> or --all"));
+
+	if (show_keys)
+		return print_keys(format);
+
+	if (format == FORMAT_DEFAULT)
+		format = FORMAT_KEYVALUE;
+
 	if (format != FORMAT_KEYVALUE && format != FORMAT_NUL_TERMINATED)
 		die(_("unsupported output format"));
 
@@ -638,7 +677,7 @@ static int cmd_repo_structure(int argc, const char **argv, const char *prefix,
 	struct stats_table table = {
 		.rows = STRING_LIST_INIT_DUP,
 	};
-	enum output_format format = FORMAT_TABLE;
+	enum output_format format = FORMAT_DEFAULT;
 	struct repo_structure stats = { 0 };
 	struct rev_info revs;
 	int show_progress = -1;
@@ -657,6 +696,9 @@ static int cmd_repo_structure(int argc, const char **argv, const char *prefix,
 	argc = parse_options(argc, argv, prefix, options, repo_usage, 0);
 	if (argc)
 		usage(_("too many arguments"));
+
+	if (format == FORMAT_DEFAULT)
+		format = FORMAT_TABLE;
 
 	repo_init_revisions(repo, &revs, prefix);
 

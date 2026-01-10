@@ -181,4 +181,26 @@ test_expect_success 'progress meter option' '
 	)
 '
 
+test_expect_success '--format=default is a synonym for --format=table' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		git repo structure --format=table >expect &&
+		git repo structure --format=default >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success '--format=default resets the format' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		git repo structure >expect &&
+		git repo structure --format=nul --format=default >actual &&
+		test_cmp expect actual
+	)
+'
+
 test_done
