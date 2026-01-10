@@ -100,6 +100,9 @@ void prepare_repo_settings(struct repository *r)
 	 */
 	if (!repo_config_get_int(r, "index.version", &value))
 		r->settings.index_version = value;
+	repo_cfg_int(r, "core.maxtreedepth",
+		     &r->settings.max_allowed_tree_depth,
+		     DEFAULT_MAX_ALLOWED_TREE_DEPTH);
 
 	if (!repo_config_get_string_tmp(r, "core.untrackedcache", &strval)) {
 		int v = git_parse_maybe_bool(strval);

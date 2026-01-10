@@ -519,7 +519,7 @@ static void parse_treeish_arg(const char **argv,
 	if (ar_args->mtime_option)
 		archive_time = approxidate(ar_args->mtime_option);
 
-	tree = parse_tree_indirect(&oid);
+	tree = repo_parse_tree_indirect(the_repository, &oid);
 	if (!tree)
 		die(_("not a tree object: %s"), oid_to_hex(&oid));
 

@@ -117,6 +117,16 @@
 |
 - init_revisions
 + repo_init_revisions
+// tree.h
+|
+- parse_tree
++ repo_parse_tree
+|
+- parse_tree_gently
++ repo_parse_tree_gently
+|
+- parse_tree_indirect
++ repo_parse_tree_indirect
 )
   (
 + the_repository,

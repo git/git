@@ -137,7 +137,7 @@ static int add_tree_entries(struct path_walk_context *ctx,
 		error(_("failed to walk children of tree %s: not found"),
 		      oid_to_hex(oid));
 		return -1;
-	} else if (parse_tree_gently(tree, 1)) {
+	} else if (repo_parse_tree_gently(ctx->repo, tree, 1)) {
 		error("bad tree object %s", oid_to_hex(oid));
 		return -1;
 	}

@@ -360,7 +360,7 @@ static int fsck_walk_tree(struct tree *tree, void *data, struct fsck_options *op
 	int res = 0;
 	const char *name;
 
-	if (parse_tree(tree))
+	if (repo_parse_tree(the_repository, tree))
 		return -1;
 
 	name = fsck_get_object_name(options, &tree->object.oid);

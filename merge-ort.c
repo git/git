@@ -1732,9 +1732,9 @@ static int collect_merge_info(struct merge_options *opt,
 	info.data = opt;
 	info.show_all_errors = 1;
 
-	if (parse_tree(merge_base) < 0 ||
-	    parse_tree(side1) < 0 ||
-	    parse_tree(side2) < 0)
+	if (repo_parse_tree(the_repository, merge_base) < 0 ||
+	    repo_parse_tree(the_repository, side1) < 0 ||
+	    repo_parse_tree(the_repository, side2) < 0)
 		return -1;
 	init_tree_desc(t + 0, &merge_base->object.oid,
 		       merge_base->buffer, merge_base->size);
@@ -4619,10 +4619,10 @@ static int checkout(struct merge_options *opt,
 	unpack_opts.verbose_update = (opt->verbosity > 2);
 	unpack_opts.fn = twoway_merge;
 	unpack_opts.preserve_ignored = 0; /* FIXME: !opts->overwrite_ignore */
-	if (parse_tree(prev) < 0)
+	if (repo_parse_tree(the_repository, prev) < 0)
 		return -1;
 	init_tree_desc(&trees[0], &prev->object.oid, prev->buffer, prev->size);
-	if (parse_tree(next) < 0)
+	if (repo_parse_tree(the_repository, next) < 0)
 		return -1;
 	init_tree_desc(&trees[1], &next->object.oid, next->buffer, next->size);
 
@@ -5280,7 +5280,8 @@ redo:
 
 	if (result->clean >= 0) {
 		if (!opt->mergeability_only) {
-			result->tree = parse_tree_indirect(&working_tree_oid);
+			result->tree = repo_parse_tree_indirect(the_repository,
+								&working_tree_oid);
 			if (!result->tree)
 				die(_("unable to read tree (%s)"),
 				    oid_to_hex(&working_tree_oid));

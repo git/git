@@ -421,7 +421,7 @@ int cmd_ls_tree(int argc,
 	for (i = 0; i < options.pathspec.nr; i++)
 		options.pathspec.items[i].nowildcard_len = options.pathspec.items[i].len;
 	options.pathspec.has_wildcard = 0;
-	tree = parse_tree_indirect(&oid);
+	tree = repo_parse_tree_indirect(the_repository, &oid);
 	if (!tree)
 		die("not a tree object");
 	/*

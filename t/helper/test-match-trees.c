@@ -19,10 +19,10 @@ int cmd__match_trees(int ac UNUSED, const char **av)
 		die("cannot parse %s as an object name", av[1]);
 	if (repo_get_oid(the_repository, av[2], &hash2))
 		die("cannot parse %s as an object name", av[2]);
-	one = parse_tree_indirect(&hash1);
+	one = repo_parse_tree_indirect(the_repository, &hash1);
 	if (!one)
 		die("not a tree-ish %s", av[1]);
-	two = parse_tree_indirect(&hash2);
+	two = repo_parse_tree_indirect(the_repository, &hash2);
 	if (!two)
 		die("not a tree-ish %s", av[2]);
 

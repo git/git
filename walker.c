@@ -45,7 +45,7 @@ static int process_tree(struct walker *walker, struct tree *tree)
 	struct tree_desc desc;
 	struct name_entry entry;
 
-	if (parse_tree(tree))
+	if (repo_parse_tree(the_repository, tree))
 		return -1;
 
 	init_tree_desc(&desc, &tree->object.oid, tree->buffer, tree->size);
