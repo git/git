@@ -148,27 +148,28 @@ int run_hooks_opt(struct repository *r, const char *hook_name,
 	};
 	const char *const hook_path = find_hook(r, hook_name);
 	int ret = 0;
-	const struct run_process_parallel_opts opts = {
+	struct run_process_parallel_opts opts = {
 		.tr2_category = "hook",
 		.tr2_label = hook_name,
 
 		.processes = 1,
-		.ungroup = options->ungroup,
 
 		.get_next_task = pick_next_hook,
 		.start_failure = notify_start_failure,
-		.feed_pipe = options->feed_pipe,
-		.consume_output = options->consume_output,
 		.task_finished = notify_hook_finished,
 
 		.data = &cb_data,
 	};
 
 	if (!options)
-		BUG("a struct run_hooks_opt must be provided to run_hooks");
+		BUG("a struct run_hooks_opt must be provided to run_hooks_opt");
 
 	if (options->path_to_stdin && options->feed_pipe)
 		BUG("options path_to_stdin and feed_pipe are mutually exclusive");
+
+	opts.ungroup = options->ungroup;
+	opts.feed_pipe = options->feed_pipe;
+	opts.consume_output = options->consume_output;
 
 	if (options->invoked_hook)
 		*options->invoked_hook = 0;
