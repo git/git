@@ -748,8 +748,7 @@ static const char *lock_repo_for_gc(int force, pid_t* ret_pid)
 		xsnprintf(my_host, sizeof(my_host), "unknown");
 
 	pidfile_path = repo_git_path(the_repository, "gc.pid");
-	fd = hold_lock_file_for_update(&lock, pidfile_path,
-				       LOCK_DIE_ON_ERROR);
+	fd = hold_lock_file_for_update(&lock, pidfile_path, LOCK_DIE_ON_ERROR);
 	if (!force) {
 		static char locking_host[HOST_NAME_MAX + 1];
 		static char *scan_fmt;
@@ -1016,8 +1015,7 @@ int cmd_gc(int argc,
 
 	if (daemonized) {
 		char *path = repo_git_path(the_repository, "gc.log");
-		hold_lock_file_for_update(&log_lock, path,
-					  LOCK_DIE_ON_ERROR);
+		hold_lock_file_for_update(&log_lock, path, LOCK_DIE_ON_ERROR);
 		dup2(get_lock_file_fd(&log_lock), 2);
 		atexit(process_log_file_at_exit);
 		free(path);

@@ -348,6 +348,17 @@ confusion unless you know what you are doing (e.g. you are creating a
 read-only snapshot of the same index to a location different from the
 repository's usual working tree).
 
+core.lockfilePid::
+	If true, Git will create a PID file alongside lock files. When a
+	lock acquisition fails and a PID file exists, Git can provide
+	additional diagnostic information about the process holding the
+	lock, including whether it is still running. Defaults to `false`.
++
+The PID file is named by inserting `~pid` before the `.lock` suffix.
+For example, if the lock file is `index.lock`, the PID file will be
+`index~pid.lock`. The file contains a single line in the format
+`pid <value>` followed by a newline.
+
 core.logAllRefUpdates::
 	Enable the reflog. Updates to a ref <ref> is logged to the file
 	"`$GIT_DIR/logs/<ref>`", by appending the new and old

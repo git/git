@@ -540,8 +540,7 @@ static const char *prepare_index(const char **argv, const char *prefix,
 
 	path = repo_git_path(the_repository, "next-index-%"PRIuMAX,
 			     (uintmax_t) getpid());
-	hold_lock_file_for_update(&false_lock, path,
-				  LOCK_DIE_ON_ERROR);
+	hold_lock_file_for_update(&false_lock, path, LOCK_DIE_ON_ERROR);
 
 	create_base_index(current_head);
 	add_remove_files(&partial);
