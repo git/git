@@ -360,6 +360,115 @@ test_expect_success "clone with promisor.checkFields" '
 	check_missing_objects server 1 "$oid"
 '
 
+test_expect_success "clone with promisor.storeFields=partialCloneFilter" '
+	git -C server config promisor.advertise true &&
+	test_when_finished "rm -rf client" &&
+
+	git -C server remote add otherLop "https://invalid.invalid"  &&
+	git -C server config remote.otherLop.token "fooBar" &&
+	git -C server config remote.otherLop.stuff "baz" &&
+	git -C server config remote.otherLop.partialCloneFilter "blob:limit=10k" &&
+	test_when_finished "git -C server remote remove otherLop" &&
+
+	git -C server config remote.lop.token "fooXXX" &&
+	git -C server config remote.lop.partialCloneFilter "blob:limit=8k" &&
+
+	test_config -C server promisor.sendFields "partialCloneFilter, token" &&
+	test_when_finished "rm trace" &&
+
+	# Clone from server to create a client
+	GIT_TRACE_PACKET="$(pwd)/trace" GIT_NO_LAZY_FETCH=0 git clone \
+		-c remote.lop.promisor=true \
+		-c remote.lop.fetch="+refs/heads/*:refs/remotes/lop/*" \
+		-c remote.lop.url="file://$(pwd)/lop" \
+		-c remote.lop.token="fooYYY" \
+		-c remote.lop.partialCloneFilter="blob:none" \
+		-c promisor.acceptfromserver=All \
+		-c promisor.storeFields=partialcloneFilter \
+		--no-local --filter="blob:limit=5k" server client 2>err &&
+
+	# Check that the filter from the server is stored
+	echo "blob:limit=8k" >expected &&
+	git -C client config remote.lop.partialCloneFilter >actual &&
+	test_cmp expected actual &&
+
+	# Check that user is notified when the filter is stored
+	test_grep "Storing new filter from server for remote '\''lop'\''" err &&
+	test_grep "'\''blob:none'\'' -> '\''blob:limit=8k'\''" err &&
+
+	# Check that the token from the server is NOT stored
+	echo "fooYYY" >expected &&
+	git -C client config remote.lop.token >actual &&
+	test_cmp expected actual &&
+	test_grep ! "Storing new token from server" err &&
+
+	# Check that the filter for an unknown remote is NOT stored
+	test_must_fail git -C client config remote.otherLop.partialCloneFilter >actual &&
+
+	# Check that the largest object is still missing on the server
+	check_missing_objects server 1 "$oid"
+'
+
+test_expect_success "clone and fetch with --filter=auto" '
+	git -C server config promisor.advertise true &&
+	test_when_finished "rm -rf client trace" &&
+
+	git -C server config remote.lop.partialCloneFilter "blob:limit=9500" &&
+	test_config -C server promisor.sendFields "partialCloneFilter" &&
+
+	GIT_TRACE_PACKET="$(pwd)/trace" GIT_NO_LAZY_FETCH=0 git clone \
+		-c remote.lop.promisor=true \
+		-c remote.lop.url="file://$(pwd)/lop" \
+		-c promisor.acceptfromserver=All \
+		--no-local --filter=auto server client 2>err &&
+
+	test_grep "filter blob:limit=9500" trace &&
+	test_grep ! "filter auto" trace &&
+
+	# Verify "auto" is persisted in config
+	echo auto >expected &&
+	git -C client config remote.origin.partialCloneFilter >actual &&
+	test_cmp expected actual &&
+
+	# Check that the largest object is still missing on the server
+	check_missing_objects server 1 "$oid" &&
+
+	# Now change the filter on the server
+	git -C server config remote.lop.partialCloneFilter "blob:limit=5678" &&
+
+	# Get a new commit on the server to ensure "git fetch" actually runs fetch-pack
+	test_commit -C template new-commit &&
+	git -C template push --all "$(pwd)/server" &&
+
+	# Perform a fetch WITH --filter=auto
+	rm -rf trace &&
+	GIT_TRACE_PACKET="$(pwd)/trace" git -C client fetch --filter=auto &&
+
+	# Verify that the new filter was used
+	test_grep "filter blob:limit=5678" trace &&
+
+	# Check that the largest object is still missing on the server
+	check_missing_objects server 1 "$oid" &&
+
+	# Change the filter on the server again
+	git -C server config remote.lop.partialCloneFilter "blob:limit=5432" &&
+
+	# Get yet a new commit on the server to ensure fetch-pack runs
+	test_commit -C template yet-a-new-commit &&
+	git -C template push --all "$(pwd)/server" &&
+
+	# Perform a fetch WITHOUT --filter=auto
+	# Relies on "auto" being persisted in the client config
+	rm -rf trace &&
+	GIT_TRACE_PACKET="$(pwd)/trace" git -C client fetch &&
+
+	# Verify that the new filter was used
+	test_grep "filter blob:limit=5432" trace &&
+
+	# Check that the largest object is still missing on the server
+	check_missing_objects server 1 "$oid"
+'
+
 test_expect_success "clone with promisor.advertise set to 'true' but don't delete the client" '
 	git -C server config promisor.advertise true &&
 
