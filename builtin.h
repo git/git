@@ -17,7 +17,8 @@
  * . Define the implementation of the built-in command `foo` with
  *   signature:
  *
- *	int cmd_foo(int argc, const char **argv, const char *prefix);
+ *	int cmd_foo(int argc, const char **argv,
+ *		    const char *prefix, struct repository *repo);
  *
  * . Add the external declaration for the function to `builtin.h`.
  *
@@ -29,12 +30,14 @@
  * where options is the bitwise-or of:
  *
  * `RUN_SETUP`:
+ *
  *	If there is not a Git directory to work on, abort.  If there
  *	is a work tree, chdir to the top of it if the command was
  *	invoked in a subdirectory.  If there is no work tree, no
  *	chdir() is done.
  *
  * `RUN_SETUP_GENTLY`:
+ *
  *	If there is a Git directory, chdir as per RUN_SETUP, otherwise,
  *	don't chdir anywhere.
  *
@@ -57,6 +60,12 @@
  *	more informed decision, e.g., by ignoring `pager.<cmd>` for
  *	certain subcommands.
  *
+ * `NO_PARSEOPT`:
+ *
+ *	Most Git builtins use the parseopt library for parsing options.
+ *	This flag indicates that a custom parser is used and thus the
+ *	builtin would not appear in 'git --list-cmds=parseopt'.
+ *
  * . Add `builtin/foo.o` to `BUILTIN_OBJS` in `Makefile`.
  *
  * Additionally, if `foo` is a new command, there are 4 more things to do:
@@ -68,6 +77,21 @@
  * . Add an entry for `git-foo` to `command-list.txt`.
  *
  * . Add an entry for `/git-foo` to `.gitignore`.
+ *
+ * As you work on implementing your builtin, be mindful that the
+ * following tests will check different aspects of the builtin's
+ * readiness and adherence to matching the documentation:
+ *
+ * * t0012-help.sh checks that the builtin can handle -h, which comes
+ *   automatically with the parseopt API.
+ *
+ * * t0450-txt-doc-vs-help.sh checks that the -h help output matches the
+ *   SYNOPSIS in the documentation for the builtin.
+ *
+ * * t1517-outside-repo.sh checks that the builtin can handle -h when
+ *   run outside of the context of a repository. Note that this test
+ *   requires that the usage has a space after the builtin name, so some
+ *   minimum description of options is required.
  *
  *
  * How a built-in is called
