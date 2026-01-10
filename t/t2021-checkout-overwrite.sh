@@ -27,7 +27,7 @@ test_expect_success 'checkout commit with dir must not remove untracked a/b' '
 	git rm --cached a/b &&
 	git commit -m "un-track the file" &&
 	test_must_fail git checkout start &&
-	test -f a/b
+	test_path_is_file a/b
 '
 
 test_expect_success 'create a commit where dir a/b changed to symlink' '
@@ -49,7 +49,7 @@ test_expect_success 'checkout commit with dir must not remove untracked a/b' '
 
 test_expect_success SYMLINKS 'the symlink remained' '
 
-	test -h a/b
+	test_path_is_symlink a/b
 '
 
 test_expect_success 'cleanup after previous symlink tests' '
