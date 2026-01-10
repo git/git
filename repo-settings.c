@@ -5,6 +5,7 @@
 #include "midx.h"
 #include "pack-objects.h"
 #include "setup.h"
+#include "path.h"
 
 static void repo_cfg_bool(struct repository *r, const char *key, int *dest,
 			  int def)
@@ -161,6 +162,7 @@ void repo_settings_clear(struct repository *r)
 	struct repo_settings empty = REPO_SETTINGS_INIT;
 	FREE_AND_NULL(r->settings.fsmonitor);
 	FREE_AND_NULL(r->settings.hooks_path);
+	FREE_AND_NULL(r->settings.attributes_file_path);
 	r->settings = empty;
 }
 
@@ -232,4 +234,12 @@ void repo_settings_set_shared_repository(struct repository *repo, int value)
 void repo_settings_reset_shared_repository(struct repository *repo)
 {
 	repo->settings.shared_repository_initialized = 0;
+}
+const char *repo_settings_get_attributesfile_path(struct repository *repo)
+{
+	if (!repo->settings.attributes_file_path) {
+		if (repo_config_get_pathname(repo, "core.attributesfile", &repo->settings.attributes_file_path))
+			repo->settings.attributes_file_path = xdg_config_home("attributes");
+	}
+	return repo->settings.attributes_file_path;
 }

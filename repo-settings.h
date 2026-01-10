@@ -70,6 +70,7 @@ struct repo_settings {
 	int max_allowed_tree_depth;
 
 	char *hooks_path;
+	char *attributes_file_path;
 };
 #define REPO_SETTINGS_INIT { \
 	.shared_repository = -1, \
@@ -101,5 +102,12 @@ void repo_settings_set_big_file_threshold(struct repository *repo, unsigned long
 int repo_settings_get_shared_repository(struct repository *repo);
 void repo_settings_set_shared_repository(struct repository *repo, int value);
 void repo_settings_reset_shared_repository(struct repository *repo);
+
+/*
+ * Read the value for "core.attributesfile".
+ * Defaults to xdg_config_home("attributes") if the core.attributesfile
+ * which is set via repo config isn't available.
+ */
+const char *repo_settings_get_attributesfile_path(struct repository *repo);
 
 #endif /* REPO_SETTINGS_H */
