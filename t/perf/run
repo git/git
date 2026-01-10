@@ -204,8 +204,18 @@ run_subsection () {
 get_var_from_env_or_config "GIT_PERF_CODESPEED_OUTPUT" "perf" "codespeedOutput" "--bool"
 get_var_from_env_or_config "GIT_PERF_SEND_TO_CODESPEED" "perf" "sendToCodespeed"
 
+# Preserve GIT_PERF settings from the environment when loading
+# GIT-BUILD-OPTIONS; see the similar hack in perf-lib.sh.
+git_perf_settings="$(env |
+        sed -n "/^GIT_PERF_/{
+                # escape all single-quotes in the value
+                s/'/'\\\\''/g
+                # turn this into an eval-able assignment
+                s/^\\([^=]*=\\)\\(.*\\)/\\1'\\2'/p
+        }")"
 cd "$(dirname $0)"
 . ../../GIT-BUILD-OPTIONS
+eval "$git_perf_settings"
 
 if test -n "$TEST_OUTPUT_DIRECTORY"
 then

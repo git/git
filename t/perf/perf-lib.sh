@@ -20,7 +20,7 @@
 # These variables must be set before the inclusion of test-lib.sh below,
 # because it will change our working directory.
 TEST_DIRECTORY=$(pwd)/..
-TEST_OUTPUT_DIRECTORY=$(pwd)
+perf_dir=$(pwd)
 
 TEST_NO_CREATE_REPO=t
 TEST_NO_MALLOC_CHECK=t
@@ -58,6 +58,7 @@ then
 fi
 
 . "$GIT_BUILD_DIR"/GIT-BUILD-OPTIONS
+: ${TEST_OUTPUT_DIRECTORY:=$perf_dir}
 . "$GIT_SOURCE_DIR"/t/test-lib.sh
 
 # Then restore GIT_PERF_* settings.
