@@ -107,6 +107,8 @@ const char *strip_namespace(const char *namespaced_ref);
 
 int git_default_config(const char *, const char *,
 		       const struct config_context *, void *);
+int git_default_core_config(const char *var, const char *value,
+			    const struct config_context *ctx, void *cb);
 
 /*
  * TODO: All the below state either explicitly or implicitly relies on
