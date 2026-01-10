@@ -271,7 +271,7 @@ mismatch, even if the links are correct.
 With `list`, output additional information about worktrees (see below).
 
 `--expire <time>`::
-	With `prune`, only expire unused worktrees older than _<time>_.
+	With `prune`, only prune missing worktrees if older than _<time>_.
 +
 With `list`, annotate missing worktrees as prunable if they are older than
 _<time>_.
