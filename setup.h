@@ -167,6 +167,7 @@ struct repository_format {
 	char *partial_clone; /* value of extensions.partialclone */
 	int worktree_config;
 	int relative_worktrees;
+	int submodule_path_cfg;
 	int is_bare;
 	int hash_algo;
 	int compat_hash_algo;
