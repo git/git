@@ -228,9 +228,9 @@ int cmd_patch_id(int argc,
 	int opts = 0;
 	struct option builtin_patch_id_options[] = {
 		OPT_CMDMODE(0, "unstable", &opts,
-		    N_("use the unstable patch-id algorithm"), 1),
+		    N_("use the unstable patch ID algorithm"), 1),
 		OPT_CMDMODE(0, "stable", &opts,
-		    N_("use the stable patch-id algorithm"), 2),
+		    N_("use the stable patch ID algorithm"), 2),
 		OPT_CMDMODE(0, "verbatim", &opts,
 			N_("don't strip whitespace from the patch"), 3),
 		OPT_END()
