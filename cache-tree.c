@@ -16,6 +16,7 @@
 #include "promisor-remote.h"
 #include "trace.h"
 #include "trace2.h"
+#include "parse.h"
 
 #ifndef DEBUG_CACHE_TREE
 #define DEBUG_CACHE_TREE 0
@@ -550,32 +551,13 @@ void cache_tree_write(struct strbuf *sb, struct cache_tree *root)
 
 static int parse_int(const char **ptr, unsigned long *len_p, int *out)
 {
-	const char *s = *ptr;
-	unsigned long len = *len_p;
-	int ret = 0;
-	int sign = 1;
+	const char *ep;
 
-	while (len && *s == '-') {
-		sign *= -1;
-		s++;
-		len--;
-	}
-
-	while (len) {
-		if (!isdigit(*s))
-			break;
-		ret *= 10;
-		ret += *s - '0';
-		s++;
-		len--;
-	}
-
-	if (s == *ptr)
+	if (!parse_int_from_buf(*ptr, *len_p, &ep, out))
 		return -1;
 
-	*ptr = s;
-	*len_p = len;
-	*out = sign * ret;
+	*len_p -= ep - *ptr;
+	*ptr = ep;
 	return 0;
 }
 

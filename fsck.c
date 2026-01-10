@@ -860,28 +860,13 @@ static int verify_headers(const void *data, unsigned long size,
 		FSCK_MSG_UNTERMINATED_HEADER, "unterminated header");
 }
 
-static timestamp_t parse_timestamp_from_buf(const char **start, const char *end)
-{
-	const char *p = *start;
-	char buf[24]; /* big enough for 2^64 */
-	size_t i = 0;
-
-	while (p < end && isdigit(*p)) {
-		if (i >= ARRAY_SIZE(buf) - 1)
-			return TIME_MAX;
-		buf[i++] = *p++;
-	}
-	buf[i] = '\0';
-	*start = p;
-	return parse_timestamp(buf, NULL, 10);
-}
-
 static int fsck_ident(const char **ident, const char *ident_end,
 		      const struct object_id *oid, enum object_type type,
 		      struct fsck_options *options)
 {
 	const char *p = *ident;
 	const char *nl;
+	timestamp_t timestamp;
 
 	nl = memchr(p, '\n', ident_end - p);
 	if (!nl)
@@ -933,7 +918,8 @@ static int fsck_ident(const char **ident, const char *ident_end,
 			      "invalid author/committer line - bad date");
 	if (*p == '0' && p[1] != ' ')
 		return report(options, oid, type, FSCK_MSG_ZERO_PADDED_DATE, "invalid author/committer line - zero-padded date");
-	if (date_overflows(parse_timestamp_from_buf(&p, ident_end)))
+	if (!parse_timestamp_from_buf(p, ident_end - p, &p, &timestamp) ||
+	    date_overflows(timestamp))
 		return report(options, oid, type, FSCK_MSG_BAD_DATE_OVERFLOW, "invalid author/committer line - date causes integer overflow");
 	if (*p != ' ')
 		return report(options, oid, type, FSCK_MSG_BAD_DATE, "invalid author/committer line - bad date");
