@@ -26,11 +26,52 @@ static struct keyword_entry keywords[] = {
 	{ "error",	GIT_COLOR_BOLD_RED },
 };
 
+static enum {
+	ALLOW_NO_CONTROL_CHARACTERS = 0,
+	ALLOW_ANSI_COLOR_SEQUENCES = 1<<0,
+	ALLOW_ANSI_CURSOR_MOVEMENTS = 1<<1,
+	ALLOW_ANSI_ERASE = 1<<2,
+	ALLOW_DEFAULT_ANSI_SEQUENCES = ALLOW_ANSI_COLOR_SEQUENCES,
+	ALLOW_ALL_CONTROL_CHARACTERS = 1<<3,
+} allow_control_characters = ALLOW_DEFAULT_ANSI_SEQUENCES;
+
+static inline int skip_prefix_in_csv(const char *value, const char *prefix,
+				     const char **out)
+{
+	if (!skip_prefix(value, prefix, &value) ||
+	    (*value && *value != ','))
+		return 0;
+	*out = value + !!*value;
+	return 1;
+}
+
+static void parse_allow_control_characters(const char *value)
+{
+	allow_control_characters = ALLOW_NO_CONTROL_CHARACTERS;
+	while (*value) {
+		if (skip_prefix_in_csv(value, "default", &value))
+			allow_control_characters |= ALLOW_DEFAULT_ANSI_SEQUENCES;
+		else if (skip_prefix_in_csv(value, "color", &value))
+			allow_control_characters |= ALLOW_ANSI_COLOR_SEQUENCES;
+		else if (skip_prefix_in_csv(value, "cursor", &value))
+			allow_control_characters |= ALLOW_ANSI_CURSOR_MOVEMENTS;
+		else if (skip_prefix_in_csv(value, "erase", &value))
+			allow_control_characters |= ALLOW_ANSI_ERASE;
+		else if (skip_prefix_in_csv(value, "true", &value))
+			allow_control_characters = ALLOW_ALL_CONTROL_CHARACTERS;
+		else if (skip_prefix_in_csv(value, "false", &value))
+			allow_control_characters = ALLOW_NO_CONTROL_CHARACTERS;
+		else
+			warning(_("unrecognized value for `sideband."
+				  "allowControlCharacters`: '%s'"), value);
+	}
+}
+
 /* Returns a color setting (GIT_COLOR_NEVER, etc). */
 static enum git_colorbool use_sideband_colors(void)
 {
 	static enum git_colorbool use_sideband_colors_cached = GIT_COLOR_UNKNOWN;
-
+	struct repository *r = the_repository;
 	const char *key = "color.remote";
 	struct strbuf sb = STRBUF_INIT;
 	const char *value;
@@ -39,9 +80,25 @@ static enum git_colorbool use_sideband_colors(void)
 	if (use_sideband_colors_cached != GIT_COLOR_UNKNOWN)
 		return use_sideband_colors_cached;
 
-	if (!repo_config_get_string_tmp(the_repository, key, &value))
+	switch (repo_config_get_maybe_bool(r, "sideband.allowcontrolcharacters", &i)) {
+	case 0: /* Boolean value */
+		allow_control_characters = i ? ALLOW_ALL_CONTROL_CHARACTERS :
+			ALLOW_NO_CONTROL_CHARACTERS;
+		break;
+	case -1: /* non-Boolean value */
+		if (repo_config_get_string_tmp(r, "sideband.allowcontrolcharacters",
+					       &value))
+			; /* huh? `get_maybe_bool()` returned -1 */
+		else
+			parse_allow_control_characters(value);
+		break;
+	default:
+		break; /* not configured */
+	}
+
+	if (!repo_config_get_string_tmp(r, key, &value))
 		use_sideband_colors_cached = git_config_colorbool(key, value);
-	else if (!repo_config_get_string_tmp(the_repository, "color.ui", &value))
+	else if (!repo_config_get_string_tmp(r, "color.ui", &value))
 		use_sideband_colors_cached = git_config_colorbool("color.ui", value);
 	else
 		use_sideband_colors_cached = GIT_COLOR_AUTO;
@@ -49,7 +106,7 @@ static enum git_colorbool use_sideband_colors(void)
 	for (i = 0; i < ARRAY_SIZE(keywords); i++) {
 		strbuf_reset(&sb);
 		strbuf_addf(&sb, "%s.%s", key, keywords[i].keyword);
-		if (repo_config_get_string_tmp(the_repository, sb.buf, &value))
+		if (repo_config_get_string_tmp(r, sb.buf, &value))
 			continue;
 		color_parse(value, keywords[i].color);
 	}
@@ -64,6 +121,93 @@ void list_config_color_sideband_slots(struct string_list *list, const char *pref
 
 	for (i = 0; i < ARRAY_SIZE(keywords); i++)
 		list_config_item(list, prefix, keywords[i].keyword);
+}
+
+static int handle_ansi_sequence(struct strbuf *dest, const char *src, int n)
+{
+	int i;
+
+	/*
+	 * Valid ANSI color sequences are of the form
+	 *
+	 * ESC [ [<n> [; <n>]*] m
+	 *
+	 * These are part of the Select Graphic Rendition sequences which
+	 * contain more than just color sequences, for more details see
+	 * https://en.wikipedia.org/wiki/ANSI_escape_code#SGR.
+	 *
+	 * The cursor movement sequences are:
+	 *
+	 * ESC [ n A - Cursor up n lines (CUU)
+	 * ESC [ n B - Cursor down n lines (CUD)
+	 * ESC [ n C - Cursor forward n columns (CUF)
+	 * ESC [ n D - Cursor back n columns (CUB)
+	 * ESC [ n E - Cursor next line, beginning (CNL)
+	 * ESC [ n F - Cursor previous line, beginning (CPL)
+	 * ESC [ n G - Cursor to column n (CHA)
+	 * ESC [ n ; m H - Cursor position (row n, col m) (CUP)
+	 * ESC [ n ; m f - Same as H (HVP)
+	 *
+	 * The sequences to erase characters are:
+	 *
+	 *
+	 * ESC [ 0 J - Clear from cursor to end of screen (ED)
+	 * ESC [ 1 J - Clear from cursor to beginning of screen (ED)
+	 * ESC [ 2 J - Clear entire screen (ED)
+	 * ESC [ 3 J - Clear entire screen + scrollback (ED) - xterm extension
+	 * ESC [ 0 K - Clear from cursor to end of line (EL)
+	 * ESC [ 1 K - Clear from cursor to beginning of line (EL)
+	 * ESC [ 2 K - Clear entire line (EL)
+	 * ESC [ n M - Delete n lines (DL)
+	 * ESC [ n P - Delete n characters (DCH)
+	 * ESC [ n X - Erase n characters (ECH)
+	 *
+	 * For a comprehensive list of common ANSI Escape sequences, see
+	 * https://www.xfree86.org/current/ctlseqs.html
+	 */
+
+	if (n < 3 || src[0] != '\x1b' || src[1] != '[')
+		return 0;
+
+	for (i = 2; i < n; i++) {
+		if (((allow_control_characters & ALLOW_ANSI_COLOR_SEQUENCES) &&
+		     src[i] == 'm') ||
+		    ((allow_control_characters & ALLOW_ANSI_CURSOR_MOVEMENTS) &&
+		     strchr("ABCDEFGHf", src[i])) ||
+		    ((allow_control_characters & ALLOW_ANSI_ERASE) &&
+		     strchr("JKMPX", src[i]))) {
+			strbuf_add(dest, src, i + 1);
+			return i;
+		}
+		if (!isdigit(src[i]) && src[i] != ';')
+			break;
+	}
+
+	return 0;
+}
+
+static void strbuf_add_sanitized(struct strbuf *dest, const char *src, int n)
+{
+	int i;
+
+	if ((allow_control_characters & ALLOW_ALL_CONTROL_CHARACTERS)) {
+		strbuf_add(dest, src, n);
+		return;
+	}
+
+	strbuf_grow(dest, n);
+	for (; n && *src; src++, n--) {
+		if (!iscntrl(*src) || *src == '\t' || *src == '\n')
+			strbuf_addch(dest, *src);
+		else if (allow_control_characters != ALLOW_NO_CONTROL_CHARACTERS &&
+			 (i = handle_ansi_sequence(dest, src, n))) {
+			src += i;
+			n -= i;
+		} else {
+			strbuf_addch(dest, '^');
+			strbuf_addch(dest, *src == 0x7f ? '?' : 0x40 + *src);
+		}
+	}
 }
 
 /*
@@ -81,7 +225,7 @@ static void maybe_colorize_sideband(struct strbuf *dest, const char *src, int n)
 	int i;
 
 	if (!want_color_stderr(use_sideband_colors())) {
-		strbuf_add(dest, src, n);
+		strbuf_add_sanitized(dest, src, n);
 		return;
 	}
 
@@ -114,7 +258,7 @@ static void maybe_colorize_sideband(struct strbuf *dest, const char *src, int n)
 		}
 	}
 
-	strbuf_add(dest, src, n);
+	strbuf_add_sanitized(dest, src, n);
 }
 
 
