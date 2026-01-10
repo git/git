@@ -9,7 +9,8 @@ git-last-modified - EXPERIMENTAL: Show when files were last modified
 SYNOPSIS
 --------
 [synopsis]
-git last-modified [--recursive] [--show-trees] [<revision-range>] [[--] <path>...]
+git last-modified [--recursive] [--show-trees] [--max-depth=<depth>] [-z]
+	[<revision-range>] [[--] <path>...]
 
 DESCRIPTION
 -----------
@@ -26,11 +27,22 @@ OPTIONS
 `--recursive`::
 	Instead of showing tree entries, step into subtrees and show all entries
 	inside them recursively.
+	See the section "NOTES ABOUT DEPTH" below for more details.
 
 `-t`::
 `--show-trees`::
 	Show tree entries even when recursing into them. It has no effect
 	without `--recursive`.
+
+`--max-depth=<depth>`::
+	For each pathspec given on the command line, descend at most `<depth>`
+	levels of directories. A negative value means no limit.
+	Setting a positive value implies `--recursive`.
+	Cannot be combined with wildcards in the pathspec.
+	See the section "NOTES ABOUT DEPTH" below for more details.
+
+`-z`::
+	Terminate each line with a _NUL_ rather than a newline.
 
 `<revision-range>`::
 	Only traverse commits in the specified revision range. When no
@@ -43,6 +55,63 @@ OPTIONS
 	For each _<path>_ given, the commit which last modified it is returned.
 	Without an optional path parameter, all files and subdirectories
 	in path traversal the are included in the output.
+
+OUTPUT
+------
+
+The output is in the format:
+
+------------
+ <oid> TAB <path> LF
+------------
+
+If a path contains any special characters, the path is C-style quoted. To
+avoid quoting, pass option `-z` to terminate each line with a NUL.
+
+------------
+ <oid> TAB <path> NUL
+------------
+
+NOTES ABOUT DEPTH
+-----------------
+
+By default this command only shows information about paths at the root level.
+When a path that lives in a subtree is provided, information about the top-level
+subtree is printed. For example:
+
+------------
+$ git last-modified -- sub/file
+
+abcd1234abcd1234abcd1234abcd1234abcd1234 sub
+------------
+
+To get details about the exact path in a subtree, add option `--recursive`:
+
+------------
+$ git last-modified --recursive -- sub/file
+
+5678abca5678abca5678abca5678abca5678abca sub/file
+------------
+
+This comes with a downside. When the path provided is a tree itself, with
+option `--recursive` all paths in that subtree are printed too:
+
+------------
+$ git last-modified --recursive -- sub/subsub
+
+1234cdef1234cdef1234cdef1234cdef1234cdef sub/subsub/a
+3456cdef3456cdef3456cdef3456cdef3456cdef sub/subsub/b
+5678abcd5678abcd5678abcd5678abcd5678abcd sub/subsub/c
+------------
+
+To stop this command from traversing deeper into trees, add option
+`--max-depth=0`:
+
+------------
+$ git last-modified --recursive --max-depth=0 -- sub/subsub
+
+3456def3456def3456def3456def3456def3456b sub/subsub
+------------
 
 SEE ALSO
 --------
