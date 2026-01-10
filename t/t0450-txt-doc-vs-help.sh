@@ -56,7 +56,7 @@ adoc_to_synopsis () {
 	b2t="$(builtin_to_adoc "$builtin")" &&
 	sed -n \
 		-E '/^\[(verse|synopsis)\]$/,/^$/ {
-			/^$/d;
+			/^$/q;
 			/^\[(verse|synopsis)\]$/d;
 			s/\{litdd\}/--/g;
 			s/'\''(git[ a-z-]*)'\''/\1/g;
