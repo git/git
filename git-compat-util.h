@@ -665,6 +665,14 @@ static inline int cast_size_t_to_int(size_t a)
 	return (int)a;
 }
 
+static inline uint32_t u32_add(uint32_t a, uint32_t b)
+{
+	if (unsigned_add_overflows(a, b))
+		die("uint32_t overflow: %"PRIuMAX" + %"PRIuMAX,
+		    (uintmax_t)a, (uintmax_t)b);
+	return a + b;
+}
+
 static inline uint64_t u64_mult(uint64_t a, uint64_t b)
 {
 	if (unsigned_mult_overflows(a, b))
