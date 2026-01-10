@@ -13,7 +13,7 @@
 #include "gpg-interface.h"
 #include "object-file-convert.h"
 
-int repo_oid_to_algop(struct repository *repo, const struct object_id *src,
+int repo_oid_to_algop(struct repository *repo, const struct object_id *srcoid,
 		      const struct git_hash_algo *to, struct object_id *dest)
 {
 	/*
@@ -21,9 +21,17 @@ int repo_oid_to_algop(struct repository *repo, const struct object_id *src,
 	 * default hash algorithm for that object.
 	 */
 	const struct git_hash_algo *from =
-		src->algo ? &hash_algos[src->algo] : repo->hash_algo;
+		srcoid->algo ? &hash_algos[srcoid->algo] : repo->hash_algo;
+	struct object_id temp;
+	const struct object_id *src = srcoid;
 
-	if (from == to) {
+	if (!srcoid->algo) {
+		oidcpy(&temp, srcoid);
+		temp.algo = hash_algo_by_ptr(repo->hash_algo);
+		src = &temp;
+	}
+
+	if (from == to || !to) {
 		if (src != dest)
 			oidcpy(dest, src);
 		return 0;
