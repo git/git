@@ -564,10 +564,6 @@ static int fsck_handle_ref(const struct reference *ref, void *cb_data UNUSED)
 	return 0;
 }
 
-static void fsck_head_link(const char *head_ref_name,
-			   const char **head_points_at,
-			   struct object_id *head_oid);
-
 static void get_default_heads(void)
 {
 	struct worktree **worktrees, **p;
@@ -583,7 +579,10 @@ static void get_default_heads(void)
 		struct strbuf refname = STRBUF_INIT;
 
 		strbuf_worktree_ref(wt, &refname, "HEAD");
-		fsck_head_link(refname.buf, &head_points_at, &head_oid);
+
+		head_points_at = refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
+							 refname.buf, 0, &head_oid, NULL);
+
 		if (head_points_at && !is_null_oid(&head_oid)) {
 			struct reference ref = {
 				.name = refname.buf,
@@ -711,25 +710,6 @@ static void fsck_source(struct odb_source *source)
 				      fsck_cruft, fsck_subdir, &cb_data);
 	display_progress(progress, 256);
 	stop_progress(&progress);
-}
-
-static void fsck_head_link(const char *head_ref_name,
-			   const char **head_points_at,
-			   struct object_id *head_oid)
-{
-	if (verbose)
-		fprintf_ln(stderr, _("Checking %s link"), head_ref_name);
-
-	*head_points_at = refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
-						  head_ref_name, 0, head_oid,
-						  NULL);
-	if (!*head_points_at) {
-		errors_found |= ERROR_REFS;
-		error(_("invalid %s"), head_ref_name);
-		return;
-	}
-
-	return;
 }
 
 static int fsck_cache_tree(struct cache_tree *it, const char *index_path)
