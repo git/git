@@ -3898,7 +3898,6 @@ static const files_fsck_refs_fn fsck_refs_fn[]= {
 
 static int files_fsck_refs_dir(struct ref_store *ref_store,
 			       struct fsck_options *o,
-			       const char *refs_check_dir,
 			       struct worktree *wt)
 {
 	struct strbuf refname = STRBUF_INIT;
@@ -3907,7 +3906,7 @@ static int files_fsck_refs_dir(struct ref_store *ref_store,
 	int iter_status;
 	int ret = 0;
 
-	strbuf_addf(&sb, "%s/%s", ref_store->gitdir, refs_check_dir);
+	strbuf_addf(&sb, "%s/refs", ref_store->gitdir);
 
 	iter = dir_iterator_begin(sb.buf, 0);
 	if (!iter) {
@@ -3927,8 +3926,7 @@ static int files_fsck_refs_dir(struct ref_store *ref_store,
 
 			if (!is_main_worktree(wt))
 				strbuf_addf(&refname, "worktrees/%s/", wt->id);
-			strbuf_addf(&refname, "%s/%s", refs_check_dir,
-				    iter->relative_path);
+			strbuf_addf(&refname, "refs/%s", iter->relative_path);
 
 			if (o->verbose)
 				fprintf_ln(stderr, "Checking %s", refname.buf);
@@ -3960,7 +3958,7 @@ static int files_fsck_refs(struct ref_store *ref_store,
 			   struct fsck_options *o,
 			   struct worktree *wt)
 {
-	return files_fsck_refs_dir(ref_store, o, "refs", wt);
+	return files_fsck_refs_dir(ref_store, o, wt);
 }
 
 static int files_fsck(struct ref_store *ref_store,
