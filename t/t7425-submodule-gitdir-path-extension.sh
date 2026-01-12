@@ -497,4 +497,32 @@ test_expect_success CASE_INSENSITIVE_FS 'verify hashing conflict resolution as a
 	verify_submodule_gitdir_path cloned-hash "Foo" "modules/${hash}"
 '
 
+test_expect_success 'submodule gitdir conflicts with previously encoded name (local config)' '
+	git init -b main super_with_encoded &&
+	(
+		cd super_with_encoded &&
+
+		git config core.repositoryformatversion 1 &&
+		git config extensions.submodulePathConfig true &&
+
+		# Add a submodule with a nested path
+		git submodule add --name "nested/sub" ../sub nested/sub &&
+		test_commit add-encoded-gitdir &&
+
+		verify_submodule_gitdir_path . "nested/sub" "modules/nested%2fsub" &&
+		test_path_is_dir ".git/modules/nested%2fsub"
+	) &&
+
+	# create a submodule that will conflict with the encoded gitdir name:
+	# the existing gitdir is ".git/modules/nested%2fsub", which is used
+	# by "nested/sub", so the new submod will get another (non-conflicting)
+	# name: "nested%252fsub".
+	(
+		cd super_with_encoded &&
+		git submodule add ../sub "nested%2fsub" &&
+		verify_submodule_gitdir_path . "nested%2fsub" "modules/nested%252fsub" &&
+		test_path_is_dir ".git/modules/nested%252fsub"
+	)
+'
+
 test_done
