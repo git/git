@@ -41,6 +41,9 @@
 `badRefName`::
 	(ERROR) A ref has an invalid format.
 
+`badRefOid`::
+	(ERROR) A ref points to an invalid object ID.
+
 `badReferentName`::
 	(ERROR) The referent name of a symref is invalid.
 

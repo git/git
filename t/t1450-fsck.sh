@@ -105,7 +105,7 @@ test_expect_success REFFILES 'HEAD link pointing at a funny object' '
 	echo $ZERO_OID >.git/HEAD &&
 	# avoid corrupt/broken HEAD from interfering with repo discovery
 	test_must_fail env GIT_DIR=.git git fsck 2>out &&
-	test_grep "detached HEAD points" out
+	test_grep "HEAD: badRefOid: points to invalid object ID ${SQ}$ZERO_OID${SQ}" out
 '
 
 test_expect_success 'HEAD link pointing at a funny place' '
@@ -123,7 +123,7 @@ test_expect_success REFFILES 'HEAD link pointing at a funny object (from differe
 	echo $ZERO_OID >.git/HEAD &&
 	# avoid corrupt/broken HEAD from interfering with repo discovery
 	test_must_fail git -C wt fsck 2>out &&
-	test_grep "main-worktree/HEAD: detached HEAD points" out
+	test_grep "HEAD: badRefOid: points to invalid object ID ${SQ}$ZERO_OID${SQ}" out
 '
 
 test_expect_success REFFILES 'other worktree HEAD link pointing at a funny object' '
@@ -131,7 +131,7 @@ test_expect_success REFFILES 'other worktree HEAD link pointing at a funny objec
 	git worktree add other &&
 	echo $ZERO_OID >.git/worktrees/other/HEAD &&
 	test_must_fail git fsck 2>out &&
-	test_grep "worktrees/other/HEAD: detached HEAD points" out
+	test_grep "worktrees/other/HEAD: badRefOid: points to invalid object ID ${SQ}$ZERO_OID${SQ}" out
 '
 
 test_expect_success 'other worktree HEAD link pointing at missing object' '
