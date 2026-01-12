@@ -10,6 +10,17 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
+# Usage: check_post_checkout <file> <old-ref> <new-ref> <flag>
+#
+# Verify that the post-checkout hook arguments in <file> match the expected
+# values: <old-ref> for the previous HEAD, <new-ref> for the new HEAD, and
+# <flag> indicating whether this was a branch checkout (1) or file checkout (0).
+check_post_checkout () {
+	test "$#" = 4 || BUG "check_post_checkout takes 4 args"
+	read old new flag <"$1" &&
+	test "$old" = "$2" && test "$new" = "$3" && test "$flag" = "$4"
+}
+
 test_expect_success setup '
 	test_hook --setup post-checkout <<-\EOF &&
 	echo "$@" >.git/post-checkout.args
@@ -24,29 +35,30 @@ test_expect_success setup '
 test_expect_success 'post-checkout receives the right arguments with HEAD unchanged ' '
 	test_when_finished "rm -f .git/post-checkout.args" &&
 	git checkout main &&
-	read old new flag <.git/post-checkout.args &&
-	test $old = $new && test $flag = 1
+	check_post_checkout .git/post-checkout.args \
+		"$(git rev-parse HEAD)" "$(git rev-parse HEAD)" 1
 '
 
 test_expect_success 'post-checkout args are correct with git checkout -b ' '
 	test_when_finished "rm -f .git/post-checkout.args" &&
 	git checkout -b new1 &&
-	read old new flag <.git/post-checkout.args &&
-	test $old = $new && test $flag = 1
+	check_post_checkout .git/post-checkout.args \
+		"$(git rev-parse HEAD)" "$(git rev-parse HEAD)" 1
 '
 
 test_expect_success 'post-checkout receives the right args with HEAD changed ' '
 	test_when_finished "rm -f .git/post-checkout.args" &&
+	old=$(git rev-parse HEAD) &&
 	git checkout two &&
-	read old new flag <.git/post-checkout.args &&
-	test $old != $new && test $flag = 1
+	check_post_checkout .git/post-checkout.args \
+		"$old" "$(git rev-parse HEAD)" 1
 '
 
 test_expect_success 'post-checkout receives the right args when not switching branches ' '
 	test_when_finished "rm -f .git/post-checkout.args" &&
 	git checkout main -- three.t &&
-	read old new flag <.git/post-checkout.args &&
-	test $old = $new && test $flag = 0
+	check_post_checkout .git/post-checkout.args \
+		"$(git rev-parse HEAD)" "$(git rev-parse HEAD)" 0
 '
 
 test_rebase () {
@@ -56,10 +68,8 @@ test_rebase () {
 		git checkout -B rebase-test main &&
 		rm -f .git/post-checkout.args &&
 		git rebase $args rebase-on-me &&
-		read old new flag <.git/post-checkout.args &&
-		test_cmp_rev main $old &&
-		test_cmp_rev rebase-on-me $new &&
-		test $flag = 1
+		check_post_checkout .git/post-checkout.args \
+			"$(git rev-parse main)" "$(git rev-parse rebase-on-me)" 1
 	'
 
 	test_expect_success "post-checkout is triggered on rebase $args with fast-forward" '
@@ -67,10 +77,8 @@ test_rebase () {
 		git checkout -B ff-rebase-test rebase-on-me^ &&
 		rm -f .git/post-checkout.args &&
 		git rebase $args rebase-on-me &&
-		read old new flag <.git/post-checkout.args &&
-		test_cmp_rev rebase-on-me^ $old &&
-		test_cmp_rev rebase-on-me $new &&
-		test $flag = 1
+		check_post_checkout .git/post-checkout.args \
+			"$(git rev-parse rebase-on-me^)" "$(git rev-parse rebase-on-me)" 1
 	'
 
 	test_expect_success "rebase $args fast-forward branch checkout runs post-checkout hook" '
@@ -80,10 +88,8 @@ test_rebase () {
 		git checkout two  &&
 		rm -f .git/post-checkout.args &&
 		git rebase $args HEAD rebase-fast-forward  &&
-		read old new flag <.git/post-checkout.args &&
-		test_cmp_rev two $old &&
-		test_cmp_rev three $new &&
-		test $flag = 1
+		check_post_checkout .git/post-checkout.args \
+			"$(git rev-parse two)" "$(git rev-parse three)" 1
 	'
 
 	test_expect_success "rebase $args checkout does not remove untracked files" '
@@ -110,7 +116,8 @@ test_expect_success 'post-checkout hook is triggered by clone' '
 	echo "$@" >"$GIT_DIR/post-checkout.args"
 	EOF
 	git clone --template=templates . clone3 &&
-	test_path_is_file clone3/.git/post-checkout.args
+	check_post_checkout clone3/.git/post-checkout.args \
+		"$(test_oid zero)" "$(git -C clone3 rev-parse HEAD)" 1
 '
 
 test_done
