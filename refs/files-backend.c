@@ -3877,9 +3877,9 @@ static int files_fsck_refs_name(struct ref_store *ref_store UNUSED,
 	if (filename[0] != '.' && ends_with(filename, ".lock"))
 		goto cleanup;
 
-	/*
-	 * This works right now because we never check the root refs.
-	 */
+	if (is_root_ref(refname))
+		goto cleanup;
+
 	if (check_refname_format(refname, 0)) {
 		struct fsck_ref_report report = { 0 };
 
@@ -3974,19 +3974,63 @@ out:
 	return ret;
 }
 
+struct files_fsck_root_ref_data {
+	struct files_ref_store *refs;
+	struct fsck_options *o;
+	struct worktree *wt;
+	struct strbuf refname;
+	struct strbuf path;
+};
+
+static int files_fsck_root_ref(const char *refname, void *cb_data)
+{
+	struct files_fsck_root_ref_data *data = cb_data;
+	struct stat st;
+
+	strbuf_reset(&data->refname);
+	if (!is_main_worktree(data->wt))
+		strbuf_addf(&data->refname, "worktrees/%s/", data->wt->id);
+	strbuf_addstr(&data->refname, refname);
+
+	strbuf_reset(&data->path);
+	strbuf_addf(&data->path, "%s/%s", data->refs->gitcommondir, data->refname.buf);
+
+	if (stat(data->path.buf, &st)) {
+		if (errno == ENOENT)
+			return 0;
+		return error_errno("failed to read ref: '%s'", data->path.buf);
+	}
+
+	return files_fsck_ref(&data->refs->base, data->o, data->refname.buf,
+			      data->path.buf, st.st_mode);
+}
+
 static int files_fsck(struct ref_store *ref_store,
 		      struct fsck_options *o,
 		      struct worktree *wt)
 {
 	struct files_ref_store *refs =
 		files_downcast(ref_store, REF_STORE_READ, "fsck");
+	struct files_fsck_root_ref_data data = {
+		.refs = refs,
+		.o = o,
+		.wt = wt,
+		.refname = STRBUF_INIT,
+		.path = STRBUF_INIT,
+	};
 	int ret = 0;
 
 	if (files_fsck_refs_dir(ref_store, o, wt) < 0)
 		ret = -1;
+
+	if (for_each_root_ref(refs, files_fsck_root_ref, &data) < 0)
+		ret = -1;
+
 	if (refs->packed_ref_store->be->fsck(refs->packed_ref_store, o, wt) < 0)
 		ret = -1;
 
+	strbuf_release(&data.refname);
+	strbuf_release(&data.path);
 	return ret;
 }
 
