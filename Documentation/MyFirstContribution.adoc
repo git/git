@@ -331,7 +331,8 @@ on the command line, including the name of our command. (If `prefix` is empty
 for you, try `cd Documentation/ && ../bin-wrappers/git psuh`). That's not so
 helpful. So what other context can we get?
 
-Add a line to `#include "config.h"` and `#include "repository.h"`.
+Add a line to `#include "config.h"`, `#include "repository.h"` and
+`#include "environment.h"`.
 Then, add the following bits to the function body:
 function body:
 
@@ -429,6 +430,7 @@ Add the following includes:
 ----
 #include "commit.h"
 #include "pretty.h"
+#include "strbuf.h"
 ----
 
 Then, add the following lines within your implementation of `cmd_psuh()` near
@@ -503,8 +505,8 @@ git-psuh - Delight users' typo with a shy horse
 
 SYNOPSIS
 --------
-[verse]
-'git-psuh [<arg>...]'
+[synopsis]
+git psuh [<arg>...]
 
 DESCRIPTION
 -----------
@@ -726,9 +728,10 @@ $ prove -j$(nproc) --shuffle t[0-9]*.sh
 ----
 
 NOTE: You can also do this with `make test` or use any testing harness which can
-speak TAP. `prove` can run concurrently. `shuffle` randomizes the order the
-tests are run in, which makes them resilient against unwanted inter-test
-dependencies. `prove` also makes the output nicer.
+speak TAP. `prove` can run concurrently. `-j$(nproc)` runs tests using all
+available CPUs in parallel, but the job count can be adjusted as needed.
+`shuffle` randomizes the order the tests are run in, which makes them resilient
+against unwanted inter-test dependencies. `prove` also makes the output nicer.
 
 Go ahead and commit this change, as well.
 
