@@ -143,8 +143,10 @@ static NORETURN void not_found(struct strbuf *hdr, const char *err, ...)
 	end_headers(hdr);
 
 	va_start(params, err);
-	if (err && *err)
+	if (err && *err) {
 		vfprintf(stderr, err, params);
+		putc('\n', stderr);
+	}
 	va_end(params);
 	exit(0);
 }
@@ -159,8 +161,10 @@ static NORETURN void forbidden(struct strbuf *hdr, const char *err, ...)
 	end_headers(hdr);
 
 	va_start(params, err);
-	if (err && *err)
+	if (err && *err) {
 		vfprintf(stderr, err, params);
+		putc('\n', stderr);
+	}
 	va_end(params);
 	exit(0);
 }
