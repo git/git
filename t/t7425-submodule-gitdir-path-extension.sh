@@ -346,4 +346,61 @@ test_expect_success '`git clone --recurse-submodules` works after migration' '
 	)
 '
 
+test_expect_success 'setup submodules with nested git dirs' '
+	git init nested &&
+	test_commit -C nested nested &&
+	(
+		cd nested &&
+		cat >.gitmodules <<-EOF &&
+		[submodule "hippo"]
+			url = .
+			path = thing1
+		[submodule "hippo/hooks"]
+			url = .
+			path = thing2
+		EOF
+		git clone . thing1 &&
+		git clone . thing2 &&
+		git add .gitmodules thing1 thing2 &&
+		test_tick &&
+		git commit -m nested
+	)
+'
+
+test_expect_success 'git dirs of encoded sibling submodules must not be nested' '
+	git clone -c extensions.submodulePathConfig=true --recurse-submodules nested clone_nested &&
+
+	verify_submodule_gitdir_path clone_nested hippo modules/hippo &&
+	git -C clone_nested config submodule.hippo.gitdir >actual &&
+	test_grep "\.git/modules/hippo$" actual &&
+
+	verify_submodule_gitdir_path clone_nested hippo/hooks modules/hippo%2fhooks &&
+	git -C clone_nested config submodule.hippo/hooks.gitdir >actual &&
+	test_grep "\.git/modules/hippo%2fhooks$" actual
+'
+
+test_expect_success 'submodule git dir nesting detection must work with parallel cloning' '
+	git clone -c extensions.submodulePathConfig=true --recurse-submodules --jobs=2 nested clone_parallel &&
+
+	verify_submodule_gitdir_path clone_parallel hippo modules/hippo &&
+	git -C clone_nested config submodule.hippo.gitdir >actual &&
+	test_grep "\.git/modules/hippo$" actual &&
+
+	verify_submodule_gitdir_path clone_parallel hippo/hooks modules/hippo%2fhooks &&
+	git -C clone_nested config submodule.hippo/hooks.gitdir >actual &&
+	test_grep "\.git/modules/hippo%2fhooks$" actual
+'
+
+test_expect_success 'disabling extensions.submodulePathConfig prevents nested submodules' '
+	(
+		cd clone_nested &&
+		# disable extension and verify failure
+		git config --replace-all extensions.submodulePathConfig false &&
+		test_must_fail git submodule add ./thing2 hippo/foobar &&
+		# re-enable extension and verify it works
+		git config --replace-all extensions.submodulePathConfig true &&
+		git submodule add ./thing2 hippo/foobar
+	)
+'
+
 test_done
