@@ -93,8 +93,10 @@ Git will error out if a module does not have a corresponding
 `submodule.<name>.gitdir` set.
 +
 Existing (pre-extension) submodules need to be migrated by adding the missing
-config entries. This is done manually for now, e.g. for each submodule:
-`git config submodule.<name>.gitdir .git/modules/<name>`.
+config entries. This can be done manually, e.g. for each submodule:
+`git config submodule.<name>.gitdir .git/modules/<name>`, or via the
+`git submodule--helper migrate-gitdir-configs` command which iterates over all
+submodules and attempts to migrate them.
 +
 The extension can be enabled automatically for new repositories by setting
 `init.defaultSubmodulePathConfig` to `true`, for example by running

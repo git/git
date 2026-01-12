@@ -279,4 +279,71 @@ test_expect_success '`git clone --recurse-submodules` respects init.defaultSubmo
 	)
 '
 
+test_expect_success 'submodule--helper migrates legacy modules' '
+	(
+		cd upstream &&
+
+		# previous submodules exist and were not migrated yet
+		test_must_fail git config submodule.sub1.gitdir &&
+		test_must_fail git config submodule.sub2.gitdir &&
+		test_path_is_dir .git/modules/sub1 &&
+		test_path_is_dir .git/modules/sub2 &&
+
+		# run migration
+		git submodule--helper migrate-gitdir-configs &&
+
+		# test that migration worked
+		git config submodule.sub1.gitdir >actual &&
+		echo ".git/modules/sub1" >expect &&
+		test_cmp expect actual &&
+		git config submodule.sub2.gitdir >actual &&
+		echo ".git/modules/sub2" >expect &&
+		test_cmp expect actual &&
+
+		# repository extension is enabled after migration
+		git config extensions.submodulePathConfig >actual &&
+		echo "true" >expect &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success '`git clone --recurse-submodules` works after migration' '
+	test_when_finished "rm -rf repo-clone-recursive" &&
+
+	# test with extension disabled after the upstream repo was migrated
+	git clone --recurse-submodules upstream repo-clone-recursive &&
+	(
+		cd repo-clone-recursive &&
+
+		# init.defaultSubmodulePathConfig was disabled before clone, so
+		# the repo extension config should also be off, the migration ignored
+		test_must_fail git config extensions.submodulePathConfig &&
+
+		# modules should look like there was no migration done
+		test_must_fail git config submodule.sub1.gitdir &&
+		test_must_fail git config submodule.sub2.gitdir &&
+		test_path_is_dir .git/modules/sub1 &&
+		test_path_is_dir .git/modules/sub2
+	) &&
+	rm -rf repo-clone-recursive &&
+
+	# enable the extension, then retry the clone
+	test_config_global init.defaultSubmodulePathConfig true &&
+	git clone --recurse-submodules upstream repo-clone-recursive &&
+	(
+		cd repo-clone-recursive &&
+
+		# repository extension is enabled
+		git config extensions.submodulePathConfig >actual &&
+		echo "true" >expect &&
+		test_cmp expect actual &&
+
+		# gitdir configs exist for submodules
+		git config submodule.sub1.gitdir &&
+		git config submodule.sub2.gitdir &&
+		test_path_is_dir .git/modules/sub1 &&
+		test_path_is_dir .git/modules/sub2
+	)
+'
+
 test_done
