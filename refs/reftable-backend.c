@@ -10,9 +10,10 @@
 #include "../gettext.h"
 #include "../hash.h"
 #include "../hex.h"
-#include "../iterator.h"
 #include "../ident.h"
+#include "../iterator.h"
 #include "../object.h"
+#include "../parse.h"
 #include "../path.h"
 #include "../refs.h"
 #include "../reftable/reftable-basics.h"
@@ -26,7 +27,6 @@
 #include "../strmap.h"
 #include "../trace2.h"
 #include "../write-or-die.h"
-#include "parse.h"
 #include "refs-internal.h"
 
 /*
