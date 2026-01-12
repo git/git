@@ -435,6 +435,48 @@ struct init_cb {
 };
 #define INIT_CB_INIT { 0 }
 
+static int validate_and_set_submodule_gitdir(struct strbuf *gitdir_path,
+					     const char *submodule_name)
+{
+	const char *value;
+	char *key;
+
+	if (validate_submodule_git_dir(gitdir_path->buf, submodule_name))
+		return -1;
+
+	key = xstrfmt("submodule.%s.gitdir", submodule_name);
+
+	/* Nothing to do if the config already exists. */
+	if (!repo_config_get_string_tmp(the_repository, key, &value)) {
+		free(key);
+		return 0;
+	}
+
+	if (repo_config_set_gently(the_repository, key, gitdir_path->buf)) {
+		free(key);
+		return -1;
+	}
+
+	free(key);
+	return 0;
+}
+
+static void create_default_gitdir_config(const char *submodule_name)
+{
+	struct strbuf gitdir_path = STRBUF_INIT;
+
+	repo_git_path_append(the_repository, &gitdir_path, "modules/%s", submodule_name);
+	if (!validate_and_set_submodule_gitdir(&gitdir_path, submodule_name)) {
+		strbuf_release(&gitdir_path);
+		return;
+	}
+
+	die(_("failed to set a valid default config for 'submodule.%s.gitdir'. "
+	      "Please ensure it is set, for example by running something like: "
+	      "'git config submodule.%s.gitdir .git/modules/%s'"),
+	    submodule_name, submodule_name, submodule_name);
+}
+
 static void init_submodule(const char *path, const char *prefix,
 			   const char *super_prefix,
 			   unsigned int flags)
@@ -511,6 +553,10 @@ static void init_submodule(const char *path, const char *prefix,
 		if (repo_config_set_gently(the_repository, sb.buf, upd))
 			die(_("Failed to register update mode for submodule path '%s'"), displaypath);
 	}
+
+	if (the_repository->repository_format_submodule_path_cfg)
+		create_default_gitdir_config(sub->name);
+
 	strbuf_release(&sb);
 	free(displaypath);
 	free(url);
@@ -1805,8 +1851,9 @@ static int clone_submodule(const struct module_clone_data *clone_data,
 		char *head = xstrfmt("%s/HEAD", sm_gitdir);
 		unlink(head);
 		free(head);
-		die(_("refusing to create/use '%s' in another submodule's "
-		      "git dir"), sm_gitdir);
+		die(_("refusing to create/use '%s' in another submodule's git dir. "
+		      "Enabling extensions.submodulePathConfig should fix this."),
+		    sm_gitdir);
 	}
 
 	connect_work_tree_and_git_dir(clone_data_path, sm_gitdir, 0);
@@ -3577,6 +3624,9 @@ static int module_add(int argc, const char **argv, const char *prefix,
 	add_data.quiet = !!quiet;
 	add_data.progress = !!progress;
 	add_data.dissociate = !!dissociate;
+
+	if (the_repository->repository_format_submodule_path_cfg)
+		create_default_gitdir_config(add_data.sm_name);
 
 	if (add_submodule(&add_data))
 		goto cleanup;
