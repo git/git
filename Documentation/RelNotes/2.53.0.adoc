@@ -238,6 +238,13 @@ Fixes since v2.52
    has been corrected.
    (merge 979ee83e8a en/ort-recursive-d-f-conflict-fix later to maint).
 
+ * Diagnose invalid bundle-URI that lack the URI entry, instead of
+   crashing.
+   (merge 7796c14a1a sb/bundle-uri-without-uri later to maint).
+
+ * Mailmap update for Karsten
+   (merge e97678c4ef js/mailmap-karsten-blees later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 46207a54cc qj/doc-http-bad-want-response later to maint).
    (merge df90eccd93 kh/doc-commit-extra-references later to maint).
@@ -263,3 +270,4 @@ Fixes since v2.52
    (merge abf05d856f rs/show-branch-prio-queue later to maint).
    (merge 06188ea5f3 rs/parse-config-expiry-simplify later to maint).
    (merge 861dbb1586 dd/t5403-modernise later to maint).
+   (merge acffc5e9e5 ja/doc-synopsis-style-more later to maint).
