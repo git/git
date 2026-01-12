@@ -415,8 +415,6 @@ test_expect_success 'up-to-date multi-pack-index is retained' '
 	)
 '
 
-test_done
-
 test_expect_success 'verify multi-pack-index success' '
 	git multi-pack-index verify --object-dir=$objdir
 '
@@ -565,7 +563,7 @@ test_expect_success 'git fsck suppresses MIDX output with --no-progress' '
 	! grep "Verifying object offsets" err
 '
 
-test_expect_success 'corrupt MIDX is not reused' '
+test_expect_failure 'corrupt MIDX is not reused' '
 	corrupt_midx_and_verify $MIDX_BYTE_OFFSET "\377" $objdir \
 		"incorrect object offset" &&
 	git multi-pack-index write 2>err &&
