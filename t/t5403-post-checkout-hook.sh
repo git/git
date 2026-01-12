@@ -17,13 +17,13 @@ TEST_PASSES_SANITIZE_LEAK=true
 # <flag> indicating whether this was a branch checkout (1) or file checkout (0).
 check_post_checkout () {
 	test "$#" = 4 || BUG "check_post_checkout takes 4 args"
-	read old new flag <"$1" &&
-	test "$old" = "$2" && test "$new" = "$3" && test "$flag" = "$4"
+	echo "old=$2 new=$3 flag=$4" >expect &&
+	test_cmp expect "$1"
 }
 
 test_expect_success setup '
 	test_hook --setup post-checkout <<-\EOF &&
-	echo "$@" >.git/post-checkout.args
+	echo "old=$1 new=$2 flag=$3" >.git/post-checkout.args
 	EOF
 	test_commit one &&
 	test_commit two &&
@@ -113,7 +113,7 @@ test_rebase --merge
 test_expect_success 'post-checkout hook is triggered by clone' '
 	mkdir -p templates/hooks &&
 	write_script templates/hooks/post-checkout <<-\EOF &&
-	echo "$@" >"$GIT_DIR/post-checkout.args"
+	echo "old=$1 new=$2 flag=$3" >"$GIT_DIR/post-checkout.args"
 	EOF
 	git clone --template=templates . clone3 &&
 	check_post_checkout clone3/.git/post-checkout.args \
