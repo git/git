@@ -89,6 +89,9 @@ Performance, Internal Implementation, Development Support etc.
  * Prepare test suite for Git for Windows that supports symbolic
    links.
 
+ * Use hook API to replace ad-hoc invocation of hook scripts with the
+   run_command() API.
+
 
 Fixes since v2.52
 -----------------
@@ -221,6 +224,20 @@ Fixes since v2.52
  * Update HTTP tests to adjust for changes in curl 8.18.0
    (merge 17f4b01da7 jk/test-curl-updates later to maint).
 
+ * Workaround the "iconv" shipped as part of macOS, which is broken
+   handling stateful ISO/IEC 2022 encoded strings.
+   (merge cee341e9dd rs/macos-iconv-workaround later to maint).
+
+ * Running "git diff" with "--name-only" and other options that allows
+   us not to look at the blob contents, while objects that are lazily
+   fetched from a promisor remote, caused use-after-free, which has
+   been corrected.
+
+ * The ort merge machinery hit an assertion failure in a history with
+   criss-cross merges renamed a directory and a non-directory, which
+   has been corrected.
+   (merge 979ee83e8a en/ort-recursive-d-f-conflict-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 46207a54cc qj/doc-http-bad-want-response later to maint).
    (merge df90eccd93 kh/doc-commit-extra-references later to maint).
@@ -242,3 +259,7 @@ Fixes since v2.52
    (merge c469ca26c5 dk/ci-rust-fix later to maint).
    (merge 12f0be0857 gf/clear-path-cache-cleanup later to maint).
    (merge 949df6ed6b js/test-func-comment-fix later to maint).
+   (merge 93f894c001 bc/checkout-error-message-fix later to maint).
+   (merge abf05d856f rs/show-branch-prio-queue later to maint).
+   (merge 06188ea5f3 rs/parse-config-expiry-simplify later to maint).
+   (merge 861dbb1586 dd/t5403-modernise later to maint).

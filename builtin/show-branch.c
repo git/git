@@ -18,6 +18,7 @@
 #include "commit-slab.h"
 #include "date.h"
 #include "wildmatch.h"
+#include "prio-queue.h"
 
 static const char*const show_branch_usage[] = {
     N_("git show-branch [-a | --all] [-r | --remotes] [--topo-order | --date-order]\n"
@@ -59,11 +60,10 @@ static const char *get_color_reset_code(void)
 	return "";
 }
 
-static struct commit *interesting(struct commit_list *list)
+static struct commit *interesting(struct prio_queue *queue)
 {
-	while (list) {
-		struct commit *commit = list->item;
-		list = list->next;
+	for (size_t i = 0; i < queue->nr; i++) {
+		struct commit *commit = queue->array[i].data;
 		if (commit->object.flags & UNINTERESTING)
 			continue;
 		return commit;
@@ -222,17 +222,18 @@ static int mark_seen(struct commit *commit, struct commit_list **seen_p)
 	return 0;
 }
 
-static void join_revs(struct commit_list **list_p,
+static void join_revs(struct prio_queue *queue,
 		      struct commit_list **seen_p,
 		      int num_rev, int extra)
 {
 	int all_mask = ((1u << (REV_SHIFT + num_rev)) - 1);
 	int all_revs = all_mask & ~((1u << REV_SHIFT) - 1);
 
-	while (*list_p) {
+	while (queue->nr) {
 		struct commit_list *parents;
-		int still_interesting = !!interesting(*list_p);
-		struct commit *commit = pop_commit(list_p);
+		int still_interesting = !!interesting(queue);
+		struct commit *commit = prio_queue_peek(queue);
+		bool get_pending = true;
 		int flags = commit->object.flags & all_mask;
 
 		if (!still_interesting && extra <= 0)
@@ -253,8 +254,14 @@ static void join_revs(struct commit_list **list_p,
 			if (mark_seen(p, seen_p) && !still_interesting)
 				extra--;
 			p->object.flags |= flags;
-			commit_list_insert_by_date(p, list_p);
+			if (get_pending)
+				prio_queue_replace(queue, p);
+			else
+				prio_queue_put(queue, p);
+			get_pending = false;
 		}
+		if (get_pending)
+			prio_queue_get(queue);
 	}
 
 	/*
@@ -639,7 +646,8 @@ int cmd_show_branch(int ac,
 {
 	struct commit *rev[MAX_REVS], *commit;
 	char *reflog_msg[MAX_REVS] = {0};
-	struct commit_list *list = NULL, *seen = NULL;
+	struct commit_list *seen = NULL;
+	struct prio_queue queue = { compare_commits_by_commit_date };
 	unsigned int rev_mask[MAX_REVS];
 	int num_rev, i, extra = 0;
 	int all_heads = 0, all_remotes = 0;
@@ -883,14 +891,14 @@ int cmd_show_branch(int ac,
 		 */
 		commit->object.flags |= flag;
 		if (commit->object.flags == flag)
-			commit_list_insert_by_date(commit, &list);
+			prio_queue_put(&queue, commit);
 		rev[num_rev] = commit;
 	}
 	for (i = 0; i < num_rev; i++)
 		rev_mask[i] = rev[i]->object.flags;
 
 	if (0 <= extra)
-		join_revs(&list, &seen, num_rev, extra);
+		join_revs(&queue, &seen, num_rev, extra);
 
 	commit_list_sort_by_date(&seen);
 
@@ -1001,7 +1009,7 @@ out:
 	for (size_t i = 0; i < ARRAY_SIZE(reflog_msg); i++)
 		free(reflog_msg[i]);
 	free_commit_list(seen);
-	free_commit_list(list);
+	clear_prio_queue(&queue);
 	free(args_copy);
 	free(head);
 	return ret;

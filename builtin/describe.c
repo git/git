@@ -112,13 +112,13 @@ static int replace_name(struct commit_name *e,
 
 		if (!e->tag) {
 			t = lookup_tag(the_repository, &e->oid);
-			if (!t || parse_tag(t))
+			if (!t || parse_tag(the_repository, t))
 				return 1;
 			e->tag = t;
 		}
 
 		t = lookup_tag(the_repository, oid);
-		if (!t || parse_tag(t))
+		if (!t || parse_tag(the_repository, t))
 			return 0;
 		*tag = t;
 
@@ -335,7 +335,7 @@ static void append_name(struct commit_name *n, struct strbuf *dst)
 {
 	if (n->prio == 2 && !n->tag) {
 		n->tag = lookup_tag(the_repository, &n->oid);
-		if (!n->tag || parse_tag(n->tag))
+		if (!n->tag || parse_tag(the_repository, n->tag))
 			die(_("annotated tag %s not available"), n->path);
 	}
 	if (n->tag && !n->name_checked) {
