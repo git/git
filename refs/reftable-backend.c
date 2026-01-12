@@ -26,6 +26,7 @@
 #include "../setup.h"
 #include "../strmap.h"
 #include "../trace2.h"
+#include "../worktree.h"
 #include "../write-or-die.h"
 #include "refs-internal.h"
 
@@ -2762,25 +2763,23 @@ static int reftable_fsck_error_handler(struct reftable_fsck_info *info,
 }
 
 static int reftable_be_fsck(struct ref_store *ref_store, struct fsck_options *o,
-			    struct worktree *wt UNUSED)
+			    struct worktree *wt)
 {
-	struct reftable_ref_store *refs;
-	struct strmap_entry *entry;
-	struct hashmap_iter iter;
-	int ret = 0;
+	struct reftable_ref_store *refs =
+		reftable_be_downcast(ref_store, REF_STORE_READ, "fsck");
+	struct reftable_backend *backend;
 
-	refs = reftable_be_downcast(ref_store, REF_STORE_READ, "fsck");
-
-	ret |= reftable_fsck_check(refs->main_backend.stack, reftable_fsck_error_handler,
-				   reftable_fsck_verbose_handler, o);
-
-	strmap_for_each_entry(&refs->worktree_backends, &iter, entry) {
-		struct reftable_backend *b = (struct reftable_backend *)entry->value;
-		ret |= reftable_fsck_check(b->stack, reftable_fsck_error_handler,
-					   reftable_fsck_verbose_handler, o);
+	if (is_main_worktree(wt)) {
+		backend = &refs->main_backend;
+	} else {
+		int ret = backend_for_worktree(&backend, refs, wt->id);
+		if (ret < 0)
+			return error(_("reftable stack for worktree '%s' is broken"),
+				     wt->id);
 	}
 
-	return ret;
+	return reftable_fsck_check(backend->stack, reftable_fsck_error_handler,
+				   reftable_fsck_verbose_handler, o);
 }
 
 struct ref_storage_be refs_be_reftable = {
