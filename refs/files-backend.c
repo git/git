@@ -3833,6 +3833,8 @@ static int files_fsck_refs_content(struct ref_store *ref_store,
 					      "has trailing garbage: '%s'", trailing);
 			goto cleanup;
 		}
+
+		ret = refs_fsck_ref(ref_store, o, &report, target_name, &oid);
 	} else {
 		ret = files_fsck_symref_target(ref_store, o, &report,
 					       target_name, &referent, 0);

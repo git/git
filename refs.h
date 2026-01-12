@@ -656,6 +656,14 @@ int check_refname_format(const char *refname, int flags);
 struct fsck_ref_report;
 
 /*
+ * Perform generic checks for a specific direct ref. This function is
+ * expected to be called by the ref backends for every symbolic ref.
+ */
+int refs_fsck_ref(struct ref_store *refs, struct fsck_options *o,
+		  struct fsck_ref_report *report,
+		  const char *refname, const struct object_id *oid);
+
+/*
  * Perform generic checks for a specific symref target. This function is
  * expected to be called by the ref backends for every symbolic ref.
  */
