@@ -334,8 +334,18 @@ int refs_fsck_ref(struct ref_store *refs UNUSED, struct fsck_options *o,
 
 int refs_fsck_symref(struct ref_store *refs UNUSED, struct fsck_options *o,
 		     struct fsck_ref_report *report,
-		     const char *refname UNUSED, const char *target)
+		     const char *refname, const char *target)
 {
+	const char *stripped_refname;
+
+	parse_worktree_ref(refname, NULL, NULL, &stripped_refname);
+
+	if (!strcmp(stripped_refname, "HEAD") &&
+	    !starts_with(target, "refs/heads/") &&
+	    fsck_report_ref(o, report, FSCK_MSG_BAD_HEAD_TARGET,
+			    "HEAD points to non-branch '%s'", target))
+		return -1;
+
 	if (is_root_ref(target))
 		return 0;
 

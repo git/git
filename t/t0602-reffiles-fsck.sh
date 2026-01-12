@@ -910,10 +910,10 @@ test_expect_success 'complains about broken root ref' '
 	git init repo &&
 	(
 		cd repo &&
-		echo "ref: refs/../HEAD" >.git/HEAD &&
+		echo "ref: refs/heads/../HEAD" >.git/HEAD &&
 		test_must_fail git refs verify 2>err &&
 		cat >expect <<-EOF &&
-		error: HEAD: badReferentName: points to invalid refname ${SQ}refs/../HEAD${SQ}
+		error: HEAD: badReferentName: points to invalid refname ${SQ}refs/heads/../HEAD${SQ}
 		EOF
 		test_cmp expect err
 	)
@@ -926,10 +926,10 @@ test_expect_success 'complains about broken root ref in worktree' '
 		cd repo &&
 		test_commit initial &&
 		git worktree add ../worktree &&
-		echo "ref: refs/../HEAD" >.git/worktrees/worktree/HEAD &&
+		echo "ref: refs/heads/../HEAD" >.git/worktrees/worktree/HEAD &&
 		test_must_fail git refs verify 2>err &&
 		cat >expect <<-EOF &&
-		error: worktrees/worktree/HEAD: badReferentName: points to invalid refname ${SQ}refs/../HEAD${SQ}
+		error: worktrees/worktree/HEAD: badReferentName: points to invalid refname ${SQ}refs/heads/../HEAD${SQ}
 		EOF
 		test_cmp expect err
 	)

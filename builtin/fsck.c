@@ -728,13 +728,6 @@ static void fsck_head_link(const char *head_ref_name,
 		error(_("invalid %s"), head_ref_name);
 		return;
 	}
-	if (strcmp(*head_points_at, head_ref_name) &&
-	    !starts_with(*head_points_at, "refs/heads/")) {
-		errors_found |= ERROR_REFS;
-		error(_("%s points to something strange (%s)"),
-		      head_ref_name, *head_points_at);
-		return;
-	}
 
 	return;
 }
