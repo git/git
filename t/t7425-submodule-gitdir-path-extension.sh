@@ -157,4 +157,126 @@ test_expect_success 'fetch mixed submodule changes and verify updates' '
 	)
 '
 
+test_expect_success '`git init` respects init.defaultSubmodulePathConfig' '
+	test_config_global init.defaultSubmodulePathConfig true &&
+	git init repo-init &&
+	git -C repo-init config extensions.submodulePathConfig >actual &&
+	echo true >expect &&
+	test_cmp expect actual &&
+	# create a submodule and check gitdir
+	(
+		cd repo-init &&
+		git init -b main sub &&
+		test_commit -C sub sub-initial &&
+		git submodule add ./sub sub &&
+		git config submodule.sub.gitdir >actual &&
+		echo ".git/modules/sub" >expect &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success '`git init` does not set extension by default' '
+	git init upstream &&
+	test_commit -C upstream initial &&
+	test_must_fail git -C upstream config extensions.submodulePathConfig &&
+	# create a pair of submodules and check gitdir is not created
+	git init -b main sub &&
+	test_commit -C sub sub-initial &&
+	(
+		cd upstream &&
+		git submodule add ../sub sub1 &&
+		test_path_is_dir .git/modules/sub1 &&
+		test_must_fail git config submodule.sub1.gitdir &&
+		git submodule add ../sub sub2 &&
+		test_path_is_dir .git/modules/sub2 &&
+		test_must_fail git config submodule.sub2.gitdir &&
+		git commit -m "Add submodules"
+	)
+'
+
+test_expect_success '`git clone` does not set extension by default' '
+	test_when_finished "rm -rf repo-clone-no-ext" &&
+	git clone upstream repo-clone-no-ext &&
+	(
+		cd repo-clone-no-ext &&
+
+		test_must_fail git config extensions.submodulePathConfig &&
+		test_path_is_missing .git/modules/sub1 &&
+		test_path_is_missing .git/modules/sub2 &&
+
+		# create a submodule and check gitdir is not created
+		git submodule add ../sub sub3 &&
+		test_must_fail git config submodule.sub3.gitdir
+	)
+'
+
+test_expect_success '`git clone --recurse-submodules` does not set extension by default' '
+	test_when_finished "rm -rf repo-clone-no-ext" &&
+	git clone --recurse-submodules upstream repo-clone-no-ext &&
+	(
+		cd repo-clone-no-ext &&
+
+		# verify that that submodules do not have gitdir set
+		test_must_fail git config extensions.submodulePathConfig &&
+		test_path_is_dir .git/modules/sub1 &&
+		test_must_fail git config submodule.sub1.gitdir &&
+		test_path_is_dir .git/modules/sub2 &&
+		test_must_fail git config submodule.sub2.gitdir &&
+
+		# create another submodule and check that gitdir is not created
+		git submodule add ../sub sub3 &&
+		test_path_is_dir .git/modules/sub3 &&
+		test_must_fail git config submodule.sub3.gitdir
+	)
+
+'
+
+test_expect_success '`git clone` respects init.defaultSubmodulePathConfig' '
+	test_when_finished "rm -rf repo-clone" &&
+	test_config_global init.defaultSubmodulePathConfig true &&
+	git clone upstream repo-clone &&
+	(
+		cd repo-clone &&
+
+		# verify new repo extension is inherited from global config
+		git config extensions.submodulePathConfig >actual &&
+		echo true >expect &&
+		test_cmp expect actual &&
+
+		# new submodule has a gitdir config
+		git submodule add ../sub sub &&
+		test_path_is_dir .git/modules/sub &&
+		git config submodule.sub.gitdir >actual &&
+		echo ".git/modules/sub" >expect &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success '`git clone --recurse-submodules` respects init.defaultSubmodulePathConfig' '
+	test_when_finished "rm -rf repo-clone-recursive" &&
+	test_config_global init.defaultSubmodulePathConfig true &&
+	git clone  --recurse-submodules upstream repo-clone-recursive &&
+	(
+		cd repo-clone-recursive &&
+
+		# verify new repo extension is inherited from global config
+		git config extensions.submodulePathConfig >actual &&
+		echo true >expect &&
+		test_cmp expect actual &&
+
+		# previous submodules should exist
+		git config submodule.sub1.gitdir &&
+		git config submodule.sub2.gitdir &&
+		test_path_is_dir .git/modules/sub1 &&
+		test_path_is_dir .git/modules/sub2 &&
+
+		# create another submodule and check that gitdir is created
+		git submodule add ../sub new-sub &&
+		test_path_is_dir .git/modules/new-sub &&
+		git config submodule.new-sub.gitdir >actual &&
+		echo ".git/modules/new-sub" >expect &&
+		test_cmp expect actual
+	)
+'
+
 test_done
