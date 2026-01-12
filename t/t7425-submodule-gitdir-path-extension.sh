@@ -403,4 +403,39 @@ test_expect_success 'disabling extensions.submodulePathConfig prevents nested su
 	)
 '
 
+test_expect_success CASE_INSENSITIVE_FS 'verify case-folding conflicts are correctly encoded' '
+	git clone -c extensions.submodulePathConfig=true main cloned-folding &&
+	(
+		cd cloned-folding &&
+
+		# conflict: the "folding" gitdir will already be taken
+		git submodule add ../new-sub "folding" &&
+		test_commit lowercase &&
+		git submodule add ../new-sub "FoldinG" &&
+		test_commit uppercase &&
+
+		# conflict: the "foo" gitdir will already be taken
+		git submodule add ../new-sub "FOO" &&
+		test_commit uppercase-foo &&
+		git submodule add ../new-sub "foo" &&
+		test_commit lowercase-foo &&
+
+		# create a multi conflict between foobar, fooBar and foo%42ar
+		# the "foo" gitdir will already be taken
+		git submodule add ../new-sub "foobar" &&
+		test_commit lowercase-foobar &&
+		git submodule add ../new-sub "foo%42ar" &&
+		test_commit encoded-foo%42ar &&
+		git submodule add ../new-sub "fooBar" &&
+		test_commit mixed-fooBar
+	) &&
+	verify_submodule_gitdir_path cloned-folding "folding" "modules/folding" &&
+	verify_submodule_gitdir_path cloned-folding "FoldinG" "modules/%46oldin%47" &&
+	verify_submodule_gitdir_path cloned-folding "FOO" "modules/FOO" &&
+	verify_submodule_gitdir_path cloned-folding "foo" "modules/foo0" &&
+	verify_submodule_gitdir_path cloned-folding "foobar" "modules/foobar" &&
+	verify_submodule_gitdir_path cloned-folding "foo%42ar" "modules/foo%42ar" &&
+	verify_submodule_gitdir_path cloned-folding "fooBar" "modules/fooBar0"
+'
+
 test_done
