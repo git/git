@@ -320,6 +320,27 @@ int check_refname_format(const char *refname, int flags)
 	return check_or_sanitize_refname(refname, flags, NULL);
 }
 
+int refs_fsck_symref(struct ref_store *refs UNUSED, struct fsck_options *o,
+		     struct fsck_ref_report *report,
+		     const char *refname UNUSED, const char *target)
+{
+	if (is_root_ref(target))
+		return 0;
+
+	if (check_refname_format(target, 0) &&
+	    fsck_report_ref(o, report, FSCK_MSG_BAD_REFERENT_NAME,
+			    "points to invalid refname '%s'", target))
+		return -1;
+
+	if (!starts_with(target, "refs/") &&
+	    !starts_with(target, "worktrees/") &&
+	    fsck_report_ref(o, report, FSCK_MSG_SYMREF_TARGET_IS_NOT_A_REF,
+			    "points to non-ref target '%s'", target))
+		return -1;
+
+	return 0;
+}
+
 int refs_fsck(struct ref_store *refs, struct fsck_options *o,
 	      struct worktree *wt)
 {
