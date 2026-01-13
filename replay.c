@@ -266,7 +266,9 @@ int replay_revisions(struct rev_info *revs,
 	struct commit *commit;
 	struct commit *onto = NULL;
 	struct merge_options merge_opt;
-	struct merge_result result;
+	struct merge_result result = {
+		.clean = 1,
+	};
 	char *advance;
 	int ret;
 
@@ -282,7 +284,6 @@ int replay_revisions(struct rev_info *revs,
 	}
 
 	init_basic_merge_options(&merge_opt, revs->repo);
-	memset(&result, 0, sizeof(result));
 	merge_opt.show_rename_progress = 0;
 	last_commit = onto;
 	replayed_commits = kh_init_oid_map();
