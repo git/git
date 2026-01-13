@@ -177,8 +177,9 @@ static void set_up_replay_mode(struct repository *repo,
 	if (!rinfo.positive_refexprs)
 		die(_("need some commits to replay"));
 
-	die_for_incompatible_opt2(!!onto_name, "--onto",
-				  !!*advance_name, "--advance");
+	if (!onto_name == !*advance_name)
+		BUG("one and only one of onto_name and *advance_name must be given");
+
 	if (onto_name) {
 		*onto = peel_committish(repo, onto_name, "--onto");
 		if (rinfo.positive_refexprs <
@@ -253,6 +254,134 @@ static struct commit *pick_regular_commit(struct repository *repo,
 	return create_commit(repo, result->tree, pickme, replayed_base);
 }
 
+struct replay_revisions_options {
+	const char *advance;
+	const char *onto;
+	int contained;
+};
+
+struct replay_result {
+	struct replay_ref_update {
+		char *refname;
+		struct object_id old_oid;
+		struct object_id new_oid;
+	} *updates;
+	size_t updates_nr, updates_alloc;
+};
+
+static void replay_result_release(struct replay_result *result)
+{
+	for (size_t i = 0; i < result->updates_nr; i++)
+		free(result->updates[i].refname);
+	free(result->updates);
+}
+
+static void replay_result_queue_update(struct replay_result *result,
+				       const char *refname,
+				       const struct object_id *old_oid,
+				       const struct object_id *new_oid)
+{
+	ALLOC_GROW(result->updates, result->updates_nr + 1, result->updates_alloc);
+	result->updates[result->updates_nr].refname = xstrdup(refname);
+	result->updates[result->updates_nr].old_oid = *old_oid;
+	result->updates[result->updates_nr].new_oid = *new_oid;
+	result->updates_nr++;
+}
+
+static int replay_revisions(struct rev_info *revs,
+			    struct replay_revisions_options *opts,
+			    struct replay_result *out)
+{
+	kh_oid_map_t *replayed_commits = NULL;
+	struct strset *update_refs = NULL;
+	struct commit *last_commit = NULL;
+	struct commit *commit;
+	struct commit *onto = NULL;
+	struct merge_options merge_opt;
+	struct merge_result result;
+	char *advance;
+	int ret;
+
+	advance = xstrdup_or_null(opts->advance);
+	set_up_replay_mode(revs->repo, &revs->cmdline, opts->onto, &advance,
+			   &onto, &update_refs);
+
+	/* FIXME: Should allow replaying commits with the first as a root commit */
+
+	if (prepare_revision_walk(revs) < 0) {
+		ret = error(_("error preparing revisions"));
+		goto out;
+	}
+
+	init_basic_merge_options(&merge_opt, revs->repo);
+	memset(&result, 0, sizeof(result));
+	merge_opt.show_rename_progress = 0;
+	last_commit = onto;
+	replayed_commits = kh_init_oid_map();
+	while ((commit = get_revision(revs))) {
+		const struct name_decoration *decoration;
+		khint_t pos;
+		int hr;
+
+		if (!commit->parents)
+			die(_("replaying down from root commit is not supported yet!"));
+		if (commit->parents->next)
+			die(_("replaying merge commits is not supported yet!"));
+
+		last_commit = pick_regular_commit(revs->repo, commit, replayed_commits,
+						  onto, &merge_opt, &result);
+		if (!last_commit)
+			break;
+
+		/* Record commit -> last_commit mapping */
+		pos = kh_put_oid_map(replayed_commits, commit->object.oid, &hr);
+		if (hr == 0)
+			BUG("Duplicate rewritten commit: %s\n",
+			    oid_to_hex(&commit->object.oid));
+		kh_value(replayed_commits, pos) = last_commit;
+
+		/* Update any necessary branches */
+		if (advance)
+			continue;
+		decoration = get_name_decoration(&commit->object);
+		if (!decoration)
+			continue;
+		while (decoration) {
+			if (decoration->type == DECORATION_REF_LOCAL &&
+			    (opts->contained || strset_contains(update_refs,
+								decoration->name))) {
+				replay_result_queue_update(out, decoration->name,
+							   &commit->object.oid,
+							   &last_commit->object.oid);
+			}
+			decoration = decoration->next;
+		}
+	}
+
+	if (!result.clean) {
+		ret = 1;
+		goto out;
+	}
+
+	/* In --advance mode, advance the target ref */
+	if (advance)
+		replay_result_queue_update(out, advance,
+					   &onto->object.oid,
+					   &last_commit->object.oid);
+
+	ret = 0;
+
+out:
+	if (update_refs) {
+		strset_clear(update_refs);
+		free(update_refs);
+	}
+	kh_destroy_oid_map(replayed_commits);
+	merge_finalize(&merge_opt, &result);
+	free(advance);
+	return ret;
+}
+
 static enum ref_action_mode parse_ref_action_mode(const char *ref_action, const char *source)
 {
 	if (!ref_action || !strcmp(ref_action, "update"))
@@ -306,21 +435,11 @@ int cmd_replay(int argc,
 	       const char *prefix,
 	       struct repository *repo)
 {
-	const char *advance_name_opt = NULL;
-	char *advance_name = NULL;
-	struct commit *onto = NULL;
-	const char *onto_name = NULL;
-	int contained = 0;
+	struct replay_revisions_options opts = { 0 };
+	struct replay_result result = { 0 };
 	const char *ref_action = NULL;
 	enum ref_action_mode ref_mode;
-
 	struct rev_info revs;
-	struct commit *last_commit = NULL;
-	struct commit *commit;
-	struct merge_options merge_opt;
-	struct merge_result result;
-	struct strset *update_refs = NULL;
-	kh_oid_map_t *replayed_commits;
 	struct ref_transaction *transaction = NULL;
 	struct strbuf transaction_err = STRBUF_INIT;
 	struct strbuf reflog_msg = STRBUF_INIT;
@@ -333,13 +452,13 @@ int cmd_replay(int argc,
 		NULL
 	};
 	struct option replay_options[] = {
-		OPT_STRING(0, "advance", &advance_name_opt,
+		OPT_STRING(0, "advance", &opts.advance,
 			   N_("branch"),
 			   N_("make replay advance given branch")),
-		OPT_STRING(0, "onto", &onto_name,
+		OPT_STRING(0, "onto", &opts.onto,
 			   N_("revision"),
 			   N_("replay onto given commit")),
-		OPT_BOOL(0, "contained", &contained,
+		OPT_BOOL(0, "contained", &opts.contained,
 			 N_("update all branches that point at commits in <revision-range>")),
 		OPT_STRING(0, "ref-action", &ref_action,
 			   N_("mode"),
@@ -350,18 +469,18 @@ int cmd_replay(int argc,
 	argc = parse_options(argc, argv, prefix, replay_options, replay_usage,
 			     PARSE_OPT_KEEP_ARGV0 | PARSE_OPT_KEEP_UNKNOWN_OPT);
 
-	if (!onto_name && !advance_name_opt) {
+	if (!opts.onto && !opts.advance) {
 		error(_("option --onto or --advance is mandatory"));
 		usage_with_options(replay_usage, replay_options);
 	}
 
-	die_for_incompatible_opt2(!!advance_name_opt, "--advance",
-				  contained, "--contained");
+	die_for_incompatible_opt2(!!opts.advance, "--advance",
+				  opts.contained, "--contained");
+	die_for_incompatible_opt2(!!opts.advance, "--advance",
+				  !!opts.onto, "--onto");
 
 	/* Parse ref action mode from command line or config */
 	ref_mode = get_ref_action_mode(repo, ref_action);
-
-	advance_name = xstrdup_or_null(advance_name_opt);
 
 	repo_init_revisions(repo, &revs, prefix);
 
@@ -414,18 +533,19 @@ int cmd_replay(int argc,
 		revs.simplify_history = 0;
 	}
 
-	set_up_replay_mode(repo, &revs.cmdline,
-			   onto_name, &advance_name,
-			   &onto, &update_refs);
-
-	/* FIXME: Should allow replaying commits with the first as a root commit */
+	ret = replay_revisions(&revs, &opts, &result);
+	if (ret)
+		goto cleanup;
 
 	/* Build reflog message */
-	if (advance_name_opt)
-		strbuf_addf(&reflog_msg, "replay --advance %s", advance_name_opt);
-	else
-		strbuf_addf(&reflog_msg, "replay --onto %s",
-			    oid_to_hex(&onto->object.oid));
+	if (opts.advance) {
+		strbuf_addf(&reflog_msg, "replay --advance %s", opts.advance);
+	} else {
+		struct object_id oid;
+		if (repo_get_oid_committish(repo, opts.onto, &oid))
+			BUG("--onto commit should have been resolved beforehand already");
+		strbuf_addf(&reflog_msg, "replay --onto %s", oid_to_hex(&oid));
+	}
 
 	/* Initialize ref transaction if using update mode */
 	if (ref_mode == REF_ACTION_UPDATE) {
@@ -438,78 +558,19 @@ int cmd_replay(int argc,
 		}
 	}
 
-	if (prepare_revision_walk(&revs) < 0) {
-		ret = error(_("error preparing revisions"));
-		goto cleanup;
-	}
-
-	init_basic_merge_options(&merge_opt, repo);
-	memset(&result, 0, sizeof(result));
-	merge_opt.show_rename_progress = 0;
-	last_commit = onto;
-	replayed_commits = kh_init_oid_map();
-	while ((commit = get_revision(&revs))) {
-		const struct name_decoration *decoration;
-		khint_t pos;
-		int hr;
-
-		if (!commit->parents)
-			die(_("replaying down from root commit is not supported yet!"));
-		if (commit->parents->next)
-			die(_("replaying merge commits is not supported yet!"));
-
-		last_commit = pick_regular_commit(repo, commit, replayed_commits,
-						  onto, &merge_opt, &result);
-		if (!last_commit)
-			break;
-
-		/* Record commit -> last_commit mapping */
-		pos = kh_put_oid_map(replayed_commits, commit->object.oid, &hr);
-		if (hr == 0)
-			BUG("Duplicate rewritten commit: %s\n",
-			    oid_to_hex(&commit->object.oid));
-		kh_value(replayed_commits, pos) = last_commit;
-
-		/* Update any necessary branches */
-		if (advance_name)
-			continue;
-		decoration = get_name_decoration(&commit->object);
-		if (!decoration)
-			continue;
-		while (decoration) {
-			if (decoration->type == DECORATION_REF_LOCAL &&
-			    (contained || strset_contains(update_refs,
-							  decoration->name))) {
-				if (handle_ref_update(ref_mode, transaction,
-						      decoration->name,
-						      &last_commit->object.oid,
-						      &commit->object.oid,
-						      reflog_msg.buf,
-						      &transaction_err) < 0) {
-					ret = error(_("failed to update ref '%s': %s"),
-						    decoration->name, transaction_err.buf);
-					goto cleanup;
-				}
-			}
-			decoration = decoration->next;
-		}
-	}
-
-	/* In --advance mode, advance the target ref */
-	if (result.clean == 1 && advance_name) {
-		if (handle_ref_update(ref_mode, transaction, advance_name,
-				      &last_commit->object.oid,
-				      &onto->object.oid,
-				      reflog_msg.buf,
-				      &transaction_err) < 0) {
+	for (size_t i = 0; i < result.updates_nr; i++) {
+		ret = handle_ref_update(ref_mode, transaction, result.updates[i].refname,
+					&result.updates[i].new_oid, &result.updates[i].old_oid,
+					reflog_msg.buf, &transaction_err);
+		if (ret) {
 			ret = error(_("failed to update ref '%s': %s"),
-				    advance_name, transaction_err.buf);
+				    result.updates[i].refname, transaction_err.buf);
 			goto cleanup;
 		}
 	}
 
 	/* Commit the ref transaction if we have one */
-	if (transaction && result.clean == 1) {
+	if (transaction) {
 		if (ref_transaction_commit(transaction, &transaction_err)) {
 			ret = error(_("failed to commit ref transaction: %s"),
 				    transaction_err.buf);
@@ -517,24 +578,18 @@ int cmd_replay(int argc,
 		}
 	}
 
-	merge_finalize(&merge_opt, &result);
-	kh_destroy_oid_map(replayed_commits);
-	if (update_refs) {
-		strset_clear(update_refs);
-		free(update_refs);
-	}
-	ret = result.clean;
+	ret = 0;
 
 cleanup:
 	if (transaction)
 		ref_transaction_free(transaction);
+	replay_result_release(&result);
 	strbuf_release(&transaction_err);
 	strbuf_release(&reflog_msg);
 	release_revisions(&revs);
-	free(advance_name);
 
 	/* Return */
 	if (ret < 0)
 		exit(128);
-	return ret ? 0 : 1;
+	return ret;
 }
