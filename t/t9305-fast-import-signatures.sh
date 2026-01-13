@@ -79,7 +79,7 @@ test_expect_success GPG 'setup a commit with dual OpenPGP signatures on its SHA-
 	echo B >explicit-sha256/B &&
 	git -C explicit-sha256 add B &&
 	test_tick &&
-	git -C explicit-sha256 commit -S -m "signed" B &&
+	git -C explicit-sha256 commit -S -m "signed commit" B &&
 	SHA256_B=$(git -C explicit-sha256 rev-parse dual-signed) &&
 
 	# Create the corresponding SHA-1 commit
@@ -101,6 +101,73 @@ test_expect_success GPG 'strip both OpenPGP signatures with --signed-commits=war
 	test_grep ! -E "^gpgsig-sha256 " actual &&
 	test_grep "stripping a commit signature" log >out &&
 	test_line_count = 2 out
+'
+
+test_expect_success GPG 'import commit with no signature with --signed-commits=strip-if-invalid' '
+	git fast-export main >output &&
+	git -C new fast-import --quiet --signed-commits=strip-if-invalid <output >log 2>&1 &&
+	test_must_be_empty log
+'
+
+test_expect_success GPG 'keep valid OpenPGP signature with --signed-commits=strip-if-invalid' '
+	rm -rf new &&
+	git init new &&
+
+	git fast-export --signed-commits=verbatim openpgp-signing >output &&
+	git -C new fast-import --quiet --signed-commits=strip-if-invalid <output >log 2>&1 &&
+	IMPORTED=$(git -C new rev-parse --verify refs/heads/openpgp-signing) &&
+	test $OPENPGP_SIGNING = $IMPORTED &&
+	git -C new cat-file commit "$IMPORTED" >actual &&
+	test_grep -E "^gpgsig(-sha256)? " actual &&
+	test_must_be_empty log
+'
+
+test_expect_success GPG 'strip signature invalidated by message change with --signed-commits=strip-if-invalid' '
+	rm -rf new &&
+	git init new &&
+
+	git fast-export --signed-commits=verbatim openpgp-signing >output &&
+
+	# Change the commit message, which invalidates the signature.
+	# The commit message length should not change though, otherwise the
+	# corresponding `data <length>` command would have to be changed too.
+	sed "s/OpenPGP signed commit/OpenPGP forged commit/" output >modified &&
+
+	git -C new fast-import --quiet --signed-commits=strip-if-invalid <modified >log 2>&1 &&
+
+	IMPORTED=$(git -C new rev-parse --verify refs/heads/openpgp-signing) &&
+	test $OPENPGP_SIGNING != $IMPORTED &&
+	git -C new cat-file commit "$IMPORTED" >actual &&
+	test_grep ! -E "^gpgsig" actual &&
+	test_grep "stripping invalid signature" log
+'
+
+test_expect_success GPGSM 'keep valid X.509 signature with --signed-commits=strip-if-invalid' '
+	rm -rf new &&
+	git init new &&
+
+	git fast-export --signed-commits=verbatim x509-signing >output &&
+	git -C new fast-import --quiet --signed-commits=strip-if-invalid <output >log 2>&1 &&
+	IMPORTED=$(git -C new rev-parse --verify refs/heads/x509-signing) &&
+	test $X509_SIGNING = $IMPORTED &&
+	git -C new cat-file commit "$IMPORTED" >actual &&
+	test_grep -E "^gpgsig(-sha256)? " actual &&
+	test_must_be_empty log
+'
+
+test_expect_success GPGSSH 'keep valid SSH signature with --signed-commits=strip-if-invalid' '
+	rm -rf new &&
+	git init new &&
+
+	test_config -C new gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
+
+	git fast-export --signed-commits=verbatim ssh-signing >output &&
+	git -C new fast-import --quiet --signed-commits=strip-if-invalid <output >log 2>&1 &&
+	IMPORTED=$(git -C new rev-parse --verify refs/heads/ssh-signing) &&
+	test $SSH_SIGNING = $IMPORTED &&
+	git -C new cat-file commit "$IMPORTED" >actual &&
+	test_grep -E "^gpgsig(-sha256)? " actual &&
+	test_must_be_empty log
 '
 
 test_done

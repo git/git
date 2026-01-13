@@ -16,12 +16,12 @@
 #include "progress.h"
 #include "fsck.h"
 #include "strbuf.h"
-#include "streaming.h"
 #include "thread-utils.h"
 #include "packfile.h"
 #include "pack-revindex.h"
 #include "object-file.h"
 #include "odb.h"
+#include "odb/streaming.h"
 #include "oid-array.h"
 #include "oidset.h"
 #include "path.h"
@@ -762,7 +762,7 @@ static void find_ref_delta_children(const struct object_id *oid,
 
 struct compare_data {
 	struct object_entry *entry;
-	struct git_istream *st;
+	struct odb_read_stream *st;
 	unsigned char *buf;
 	unsigned long buf_size;
 };
@@ -779,7 +779,7 @@ static int compare_objects(const unsigned char *buf, unsigned long size,
 	}
 
 	while (size) {
-		ssize_t len = read_istream(data->st, data->buf, size);
+		ssize_t len = odb_read_stream_read(data->st, data->buf, size);
 		if (len == 0)
 			die(_("SHA1 COLLISION FOUND WITH %s !"),
 			    oid_to_hex(&data->entry->idx.oid));
@@ -798,8 +798,6 @@ static int compare_objects(const unsigned char *buf, unsigned long size,
 static int check_collison(struct object_entry *entry)
 {
 	struct compare_data data;
-	enum object_type type;
-	unsigned long size;
 
 	if (entry->size <= repo_settings_get_big_file_threshold(the_repository) ||
 	    entry->type != OBJ_BLOB)
@@ -807,15 +805,14 @@ static int check_collison(struct object_entry *entry)
 
 	memset(&data, 0, sizeof(data));
 	data.entry = entry;
-	data.st = open_istream(the_repository, &entry->idx.oid, &type, &size,
-			       NULL);
+	data.st = odb_read_stream_open(the_repository->objects, &entry->idx.oid, NULL);
 	if (!data.st)
 		return -1;
-	if (size != entry->size || type != entry->type)
+	if (data.st->size != entry->size || data.st->type != entry->type)
 		die(_("SHA1 COLLISION FOUND WITH %s !"),
 		    oid_to_hex(&entry->idx.oid));
 	unpack_data(entry, compare_objects, &data);
-	close_istream(data.st);
+	odb_read_stream_close(data.st);
 	free(data.buf);
 	return 0;
 }
@@ -1640,7 +1637,7 @@ static void final(const char *final_pack_name, const char *curr_pack_name,
 	rename_tmp_packfile(&final_index_name, curr_index_name, &index_name,
 			    hash, "idx", 1);
 
-	if (do_fsck_object)
+	if (do_fsck_object && startup_info->have_repository)
 		packfile_store_load_pack(the_repository->objects->packfiles,
 					 final_index_name, 0);
 
@@ -2110,8 +2107,23 @@ int cmd_index_pack(int argc,
 	else
 		close(input_fd);
 
-	if (do_fsck_object && fsck_finish(&fsck_options))
-		die(_("fsck error in pack objects"));
+	if (do_fsck_object) {
+		/*
+		 * We cannot perform queued consistency checks when running
+		 * outside of a repository because those require us to read
+		 * from the object database, which is uninitialized.
+		 *
+		 * TODO: we may eventually set up an in-memory object database,
+		 * which would allow us to perform these queued checks.
+		 */
+		if (!startup_info->have_repository &&
+		    fsck_has_queued_checks(&fsck_options))
+			die(_("cannot perform queued object checks outside "
+			      "of a repository"));
+
+		if (fsck_finish(&fsck_options))
+			die(_("fsck error in pack objects"));
+	}
 
 	free(opts.anomaly);
 	free(objects);

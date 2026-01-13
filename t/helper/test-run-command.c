@@ -23,19 +23,26 @@ static int number_callbacks;
 static int parallel_next(struct child_process *cp,
 			 struct strbuf *err,
 			 void *cb,
-			 void **task_cb UNUSED)
+			 void **task_cb)
 {
 	struct child_process *d = cb;
 	if (number_callbacks >= 4)
 		return 0;
 
 	strvec_pushv(&cp->args, d->args.v);
+	cp->in = d->in;
+	cp->no_stdin = d->no_stdin;
 	if (err)
 		strbuf_addstr(err, "preloaded output of a child\n");
 	else
 		fprintf(stderr, "preloaded output of a child\n");
 
 	number_callbacks++;
+
+	/* test_stdin callback will use this to count remaining lines */
+	*task_cb = xmalloc(sizeof(int));
+	*(int*)(*task_cb) = 2;
+
 	return 1;
 }
 
@@ -51,16 +58,59 @@ static int no_job(struct child_process *cp UNUSED,
 	return 0;
 }
 
+static void test_divert_output(struct strbuf *output, void *cb UNUSED)
+{
+	FILE *output_file;
+
+	output_file = fopen("./output_file", "a");
+
+	strbuf_write(output, output_file);
+	fclose(output_file);
+}
+
 static int task_finished(int result UNUSED,
 			 struct strbuf *err,
 			 void *pp_cb UNUSED,
-			 void *pp_task_cb UNUSED)
+			 void *pp_task_cb)
 {
 	if (err)
 		strbuf_addstr(err, "asking for a quick stop\n");
 	else
 		fprintf(stderr, "asking for a quick stop\n");
+
+	FREE_AND_NULL(pp_task_cb);
+
 	return 1;
+}
+
+static int task_finished_quiet(int result UNUSED,
+			       struct strbuf *err UNUSED,
+			       void *pp_cb UNUSED,
+			       void *pp_task_cb)
+{
+	FREE_AND_NULL(pp_task_cb);
+	return 0;
+}
+
+static int test_stdin_pipe_feed(int hook_stdin_fd, void *cb UNUSED, void *task_cb)
+{
+	int *lines_remaining = task_cb;
+
+	if (*lines_remaining) {
+		struct strbuf buf = STRBUF_INIT;
+		strbuf_addf(&buf, "sample stdin %d\n", --(*lines_remaining));
+		if (write_in_full(hook_stdin_fd, buf.buf, buf.len) < 0) {
+			if (errno == EPIPE) {
+				/* child closed stdin, nothing more to do */
+				strbuf_release(&buf);
+				return 1;
+			}
+			die_errno("write");
+		}
+		strbuf_release(&buf);
+	}
+
+	return !(*lines_remaining);
 }
 
 struct testsuite {
@@ -157,6 +207,8 @@ static int testsuite(int argc, const char **argv)
 	struct run_process_parallel_opts opts = {
 		.get_next_task = next_test,
 		.start_failure = test_failed,
+		.feed_pipe = test_stdin_pipe_feed,
+		.consume_output = test_divert_output,
 		.task_finished = test_finished,
 		.data = &suite,
 	};
@@ -460,12 +512,23 @@ int cmd__run_command(int argc, const char **argv)
 
 	if (!strcmp(argv[1], "run-command-parallel")) {
 		opts.get_next_task = parallel_next;
+		opts.task_finished = task_finished_quiet;
 	} else if (!strcmp(argv[1], "run-command-abort")) {
 		opts.get_next_task = parallel_next;
 		opts.task_finished = task_finished;
 	} else if (!strcmp(argv[1], "run-command-no-jobs")) {
 		opts.get_next_task = no_job;
 		opts.task_finished = task_finished;
+	} else if (!strcmp(argv[1], "run-command-stdin")) {
+		proc.in = -1;
+		proc.no_stdin = 0;
+		opts.get_next_task = parallel_next;
+		opts.task_finished = task_finished_quiet;
+		opts.feed_pipe = test_stdin_pipe_feed;
+	} else if (!strcmp(argv[1], "run-command-divert-output")) {
+		opts.get_next_task = parallel_next;
+		opts.consume_output = test_divert_output;
+		opts.task_finished = task_finished_quiet;
 	} else {
 		ret = 1;
 		fprintf(stderr, "check usage\n");

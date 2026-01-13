@@ -983,7 +983,9 @@ to name units in KiB, MiB, or GiB.  For example, `blob:limit=1k`
 is the same as 'blob:limit=1024'.
 +
 The form `--filter=object:type=(tag|commit|tree|blob)` omits all objects
-which are not of the requested type.
+which are not of the requested type. Note that explicitly provided objects
+ignore filters and are always printed unless `--filter-provided-objects` is
+also specified.
 +
 The form `--filter=sparse:oid=<blob-ish>` uses a sparse-checkout
 specification contained in the blob (or blob-expression) _<blob-ish>_

@@ -1707,9 +1707,9 @@ test_expect_success '--track overrides branch.autoSetupMerge' '
 '
 
 test_expect_success 'errors if given a bad branch name' '
-	cat <<-\EOF >expect &&
-	fatal: '\''foo..bar'\'' is not a valid branch name
-	hint: See `man git check-ref-format`
+	cat <<-EOF >expect &&
+	fatal: ${SQ}foo..bar${SQ} is not a valid branch name
+	hint: See ${SQ}git help check-ref-format${SQ}
 	hint: Disable this message with "git config set advice.refSyntax false"
 	EOF
 	test_must_fail git branch foo..bar >actual 2>&1 &&

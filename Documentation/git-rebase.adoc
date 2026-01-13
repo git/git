@@ -87,7 +87,7 @@ of the to-be-rebased branch. However, `ORIG_HEAD` is not guaranteed to still
 point to that commit at the end of the rebase if other commands that change
 `ORIG_HEAD` (like `git reset`) are used during the rebase. The previous branch
 tip, however, is accessible using the reflog of the current branch (i.e. `@{1}`,
-see linkgit:gitrevisions[7].
+see linkgit:gitrevisions[7]).
 
 TRANSPLANTING A TOPIC BRANCH WITH --ONTO
 ----------------------------------------
@@ -474,6 +474,13 @@ See also INCOMPATIBLE OPTIONS below.
 	Instead of using the current time as the committer date, use
 	the author date of the commit being rebased as the committer
 	date. This option implies `--force-rebase`.
++
+WARNING: The history walking machinery assumes that commits have
+non-decreasing commit timestamps. You should consider if you really need
+to use this option. Then you should only use this option to override the
+committer date when rebasing commits on top of a base which commit is
+older (in terms of the commit date) than the oldest commit you are
+applying (in terms of the author date).
 
 --ignore-date::
 --reset-author-date::

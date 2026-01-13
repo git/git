@@ -194,7 +194,7 @@ void hashmap_partial_clear_(struct hashmap *map, ssize_t entry_offset)
 		return;
 	if (entry_offset >= 0)  /* called by hashmap_clear_entries */
 		free_individual_entries(map, entry_offset);
-	memset(map->table, 0, map->tablesize * sizeof(struct hashmap_entry *));
+	MEMZERO_ARRAY(map->table, map->tablesize);
 	map->shrink_at = 0;
 	map->private_size = 0;
 }

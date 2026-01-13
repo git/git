@@ -37,6 +37,8 @@ int xsnprintf(char *dst, size_t max, const char *fmt, ...);
 
 int xgethostname(char *buf, size_t len);
 
+char *git_mkdtemp(char *pattern);
+
 /* set default permissions by passing mode arguments to open(2) */
 int git_mkstemps_mode(char *pattern, int suffix_len, int mode);
 int git_mkstemp_mode(char *pattern, int mode);

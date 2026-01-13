@@ -1552,6 +1552,7 @@ test_expect_success CASE_INSENSITIVE_FS,REFFILES 'D/F conflict on case insensiti
 '
 
 test_expect_success REFFILES 'D/F conflict on case sensitive filesystem with lock' '
+	test_when_finished rm -rf base repo &&
 	(
 		git init --ref-format=reftable base &&
 		cd base &&
@@ -1574,6 +1575,155 @@ test_expect_success REFFILES 'D/F conflict on case sensitive filesystem with loc
 		git rev-parse refs/heads/main >expect &&
 		git rev-parse refs/heads/branch >actual &&
 		test_cmp expect actual
+	)
+'
+
+test_expect_success 'fetch --tags fetches existing tags' '
+	test_when_finished rm -rf base repo &&
+
+	git init base &&
+	git -C base commit --allow-empty -m "empty-commit" &&
+
+	git clone --bare base repo &&
+
+	git -C base tag tag-1 &&
+	git -C repo for-each-ref >out &&
+	test_grep ! "tag-1" out &&
+	git -C repo fetch --tags &&
+	git -C repo for-each-ref >out &&
+	test_grep "tag-1" out
+'
+
+test_expect_success 'fetch --tags fetches non-conflicting tags' '
+	test_when_finished rm -rf base repo &&
+
+	git init base &&
+	git -C base commit --allow-empty -m "empty-commit" &&
+	git -C base tag tag-1 &&
+
+	git clone --bare base repo &&
+
+	git -C base tag tag-2 &&
+	git -C repo for-each-ref >out &&
+	test_grep ! "tag-2" out &&
+
+	git -C base commit --allow-empty -m "second empty-commit" &&
+	git -C base tag -f tag-1 &&
+
+	test_must_fail git -C repo fetch --tags 2>out &&
+	test_grep "tag-1  (would clobber existing tag)" out &&
+	git -C repo for-each-ref >out &&
+	test_grep "tag-2" out
+'
+
+test_expect_success "backfill tags when providing a refspec" '
+	test_when_finished rm -rf source target &&
+
+	git init source &&
+	git -C source commit --allow-empty --message common &&
+	git clone file://"$(pwd)"/source target &&
+	(
+	    cd source &&
+	    test_commit history &&
+	    test_commit fetch-me
+	) &&
+
+	# The "history" tag is backfilled even though we requested
+	# to only fetch HEAD
+	git -C target fetch origin HEAD:branch &&
+	git -C target tag -l >actual &&
+	cat >expect <<-\EOF &&
+	fetch-me
+	history
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success REFFILES "FETCH_HEAD is updated even if ref updates fail" '
+	test_when_finished rm -rf base repo &&
+
+	git init base &&
+	(
+		cd base &&
+		test_commit "updated" &&
+
+		git update-ref refs/heads/foo @ &&
+		git update-ref refs/heads/branch @
+	) &&
+
+	git init --bare repo &&
+	(
+		cd repo &&
+		rm -f FETCH_HEAD &&
+		git remote add origin ../base &&
+		>refs/heads/foo.lock &&
+		test_must_fail git fetch -f origin "refs/heads/*:refs/heads/*" 2>err &&
+		test_grep "error: fetching ref refs/heads/foo failed: reference already exists" err &&
+		test_grep "branch ${SQ}branch${SQ} of ../base" FETCH_HEAD &&
+		test_grep "branch ${SQ}foo${SQ} of ../base" FETCH_HEAD
+	)
+'
+
+test_expect_success "upstream tracking info is added with --set-upstream" '
+	test_when_finished rm -rf base repo &&
+
+	git init --initial-branch=main base &&
+	test_commit -C base "updated" &&
+
+	git init --bare --initial-branch=main repo &&
+	(
+		cd repo &&
+		git remote add origin ../base &&
+		git fetch origin --set-upstream main &&
+		git config get branch.main.remote >actual &&
+		echo "origin" >expect &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success REFFILES "upstream tracking info is added even with conflicts" '
+	test_when_finished rm -rf base repo &&
+
+	git init --initial-branch=main base &&
+	test_commit -C base "updated" &&
+
+	git init --bare --initial-branch=main repo &&
+	(
+		cd repo &&
+		git remote add origin ../base &&
+		test_must_fail git config get branch.main.remote &&
+
+		mkdir -p refs/remotes/origin &&
+		>refs/remotes/origin/main.lock &&
+		test_must_fail git fetch origin --set-upstream main &&
+		git config get branch.main.remote >actual &&
+		echo "origin" >expect &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success REFFILES "HEAD is updated even with conflicts" '
+	test_when_finished rm -rf base repo &&
+
+	git init base &&
+	(
+		cd base &&
+		test_commit "updated" &&
+
+		git update-ref refs/heads/foo @ &&
+		git update-ref refs/heads/branch @
+	) &&
+
+	git init --bare repo &&
+	(
+		cd repo &&
+		git remote add origin ../base &&
+
+		test_path_is_missing refs/remotes/origin/HEAD &&
+		mkdir -p refs/remotes/origin &&
+		>refs/remotes/origin/branch.lock &&
+		test_must_fail git fetch origin &&
+		test -f refs/remotes/origin/HEAD
 	)
 '
 
