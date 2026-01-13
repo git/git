@@ -150,11 +150,17 @@ static void get_ref_information(struct repository *repo,
 static void set_up_replay_mode(struct repository *repo,
 			       struct rev_cmdline_info *cmd_info,
 			       const char *onto_name,
+			       bool *detached_head,
 			       char **advance_name,
 			       struct commit **onto,
 			       struct strset **update_refs)
 {
 	struct ref_info rinfo;
+	int head_flags = 0;
+
+	refs_read_ref_full(get_main_ref_store(repo), "HEAD",
+			   RESOLVE_REF_NO_RECURSE, NULL, &head_flags);
+	*detached_head = !(head_flags & REF_ISSYMREF);
 
 	get_ref_information(repo, cmd_info, &rinfo);
 	if (!rinfo.positive_refexprs)
@@ -269,12 +275,13 @@ int replay_revisions(struct rev_info *revs,
 	struct merge_result result = {
 		.clean = 1,
 	};
+	bool detached_head;
 	char *advance;
 	int ret;
 
 	advance = xstrdup_or_null(opts->advance);
-	set_up_replay_mode(revs->repo, &revs->cmdline, opts->onto, &advance,
-			   &onto, &update_refs);
+	set_up_replay_mode(revs->repo, &revs->cmdline, opts->onto,
+			   &detached_head, &advance, &onto, &update_refs);
 
 	/* FIXME: Should allow replaying commits with the first as a root commit */
 
@@ -312,18 +319,30 @@ int replay_revisions(struct rev_info *revs,
 		/* Update any necessary branches */
 		if (advance)
 			continue;
-		decoration = get_name_decoration(&commit->object);
-		if (!decoration)
-			continue;
-		while (decoration) {
-			if (decoration->type == DECORATION_REF_LOCAL &&
-			    (opts->contained || strset_contains(update_refs,
-								decoration->name))) {
-				replay_result_queue_update(out, decoration->name,
-							   &commit->object.oid,
-							   &last_commit->object.oid);
-			}
-			decoration = decoration->next;
+
+		for (decoration = get_name_decoration(&commit->object);
+		     decoration;
+		     decoration = decoration->next)
+		{
+			if (decoration->type != DECORATION_REF_LOCAL &&
+			    decoration->type != DECORATION_REF_HEAD)
+				continue;
+
+			/*
+			 * We only need to update HEAD separately in case it's
+			 * detached. If it's not we'd already update the branch
+			 * it is pointing to.
+			 */
+			if (decoration->type == DECORATION_REF_HEAD && !detached_head)
+				continue;
+
+			if (!opts->contained &&
+			    !strset_contains(update_refs, decoration->name))
+				continue;
+
+			replay_result_queue_update(out, decoration->name,
+						   &commit->object.oid,
+						   &last_commit->object.oid);
 		}
 	}
 
