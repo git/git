@@ -14,6 +14,13 @@ struct test_entry {
 	char name[FLEX_ARRAY];
 };
 
+static int freed;
+
+static void test_free_fn(void *p) {
+	freed++;
+	free(p);
+}
+
 static const char *const key_val[][2] = { { "11", "one" },
 					  { "22", "two" },
 					  { "33", "three" } };
@@ -133,4 +140,38 @@ void test_oidmap__iterate(void)
 	}
 	cl_assert_equal_i(count, ARRAY_SIZE(key_val));
 	cl_assert_equal_i(hashmap_get_size(&map.map), ARRAY_SIZE(key_val));
+}
+
+void test_oidmap__clear_without_free_callback(void)
+{
+	struct oidmap local_map = OIDMAP_INIT;
+	struct test_entry *entry;
+
+	freed = 0;
+
+	FLEX_ALLOC_STR(entry, name, "one");
+	cl_parse_any_oid("11", &entry->entry.oid);
+	cl_assert(oidmap_put(&local_map, entry) == NULL);
+
+	oidmap_clear_with_free(&local_map, NULL);
+
+	cl_assert_equal_i(freed, 0);
+
+	free(entry);
+}
+
+void test_oidmap__clear_with_free_callback(void)
+{
+	struct oidmap local_map = OIDMAP_INIT;
+	struct test_entry *entry;
+
+	freed = 0;
+
+	FLEX_ALLOC_STR(entry, name, "one");
+	cl_parse_any_oid("11", &entry->entry.oid);
+	cl_assert(oidmap_put(&local_map, entry) == NULL);
+
+	oidmap_clear_with_free(&local_map, test_free_fn);
+
+	cl_assert_equal_i(freed, 1);
 }
