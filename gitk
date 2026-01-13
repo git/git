@@ -6831,16 +6831,18 @@ proc drawtags {id x xt y1} {
         } else {
             # draw a head or other ref
             if {[incr nheads -1] >= 0} {
-                set col $headbgcolor
+                set refoutlinecol $headoutlinecolor
+                set reffillcol $headbgcolor
                 if {$tag eq $mainhead} {
                     set font mainfontbold
                 }
             } else {
-                set col "#ddddff"
+                set refoutlinecol black
+                set reffillcol "#ddddff"
             }
             set xl [expr {$xl - $delta/2}]
             $canv create polygon $x $yt $xr $yt $xr $yb $x $yb \
-                -width 1 -outline black -fill $col -tags tag.$id
+                -width 1 -outline $refoutlinecol -fill $reffillcol -tags tag.$id
             if {[regexp {^(remotes/.*/|remotes/)} $tag match remoteprefix]} {
                 set rwid [font measure mainfont $remoteprefix]
                 set xi [expr {$x + 1}]
@@ -6850,7 +6852,8 @@ proc drawtags {id x xt y1} {
                         -width 0 -fill $remotebgcolor -tags tag.$id
             }
         }
-        set t [$canv create text $xl $y1 -anchor w -text $tag -fill $headfgcolor \
+        set textfgcolor [expr {$ntags >= 0 ? $tagfgcolor : $headfgcolor}]
+        set t [$canv create text $xl $y1 -anchor w -text $tag -fill $textfgcolor \
                    -font $font -tags [list tag.$id text]]
         if {$ntags >= 0} {
             $canv bind $t <1> $tagclick
