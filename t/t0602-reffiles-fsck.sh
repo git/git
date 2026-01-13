@@ -905,4 +905,34 @@ test_expect_success '--[no-]references option should apply to fsck' '
 	)
 '
 
+test_expect_success 'complains about broken root ref' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		echo "ref: refs/heads/../HEAD" >.git/HEAD &&
+		test_must_fail git refs verify 2>err &&
+		cat >expect <<-EOF &&
+		error: HEAD: badReferentName: points to invalid refname ${SQ}refs/heads/../HEAD${SQ}
+		EOF
+		test_cmp expect err
+	)
+'
+
+test_expect_success 'complains about broken root ref in worktree' '
+	test_when_finished "rm -rf repo worktree" &&
+	git init repo &&
+	(
+		cd repo &&
+		test_commit initial &&
+		git worktree add ../worktree &&
+		echo "ref: refs/heads/../HEAD" >.git/worktrees/worktree/HEAD &&
+		test_must_fail git refs verify 2>err &&
+		cat >expect <<-EOF &&
+		error: worktrees/worktree/HEAD: badReferentName: points to invalid refname ${SQ}refs/heads/../HEAD${SQ}
+		EOF
+		test_cmp expect err
+	)
+'
+
 test_done
