@@ -229,6 +229,7 @@ static struct odb_source *odb_source_new(struct object_database *odb,
 	source->local = local;
 	source->path = xstrdup(path);
 	source->loose = odb_source_loose_new(source);
+	source->packfiles = packfile_store_new(source);
 
 	return source;
 }
@@ -376,6 +377,7 @@ static void odb_source_free(struct odb_source *source)
 {
 	free(source->path);
 	odb_source_loose_free(source->loose);
+	packfile_store_free(source->packfiles);
 	free(source);
 }
 
@@ -710,19 +712,19 @@ static int do_oid_object_info_extended(struct object_database *odb,
 	while (1) {
 		struct odb_source *source;
 
-		if (!packfile_store_read_object_info(odb->packfiles, real, oi, flags))
-			return 0;
-
 		/* Most likely it's a loose object. */
-		for (source = odb->sources; source; source = source->next)
-			if (!odb_source_loose_read_object_info(source, real, oi, flags))
+		for (source = odb->sources; source; source = source->next) {
+			if (!packfile_store_read_object_info(source->packfiles, real, oi, flags) ||
+			    !odb_source_loose_read_object_info(source, real, oi, flags))
 				return 0;
+		}
 
 		/* Not a loose object; someone else may have just packed it. */
 		if (!(flags & OBJECT_INFO_QUICK)) {
 			odb_reprepare(odb->repo->objects);
-			if (!packfile_store_read_object_info(odb->packfiles, real, oi, flags))
-				return 0;
+			for (source = odb->sources; source; source = source->next)
+				if (!packfile_store_read_object_info(source->packfiles, real, oi, flags))
+					return 0;
 		}
 
 		/*
@@ -981,13 +983,14 @@ int odb_freshen_object(struct object_database *odb,
 {
 	struct odb_source *source;
 
-	if (packfile_store_freshen_object(odb->packfiles, oid))
-		return 1;
-
 	odb_prepare_alternates(odb);
-	for (source = odb->sources; source; source = source->next)
+	for (source = odb->sources; source; source = source->next) {
+		if (packfile_store_freshen_object(source->packfiles, oid))
+			return 1;
+
 		if (odb_source_loose_freshen_object(source, oid))
 			return 1;
+	}
 
 	return 0;
 }
@@ -1062,7 +1065,6 @@ struct object_database *odb_new(struct repository *repo,
 
 	memset(o, 0, sizeof(*o));
 	o->repo = repo;
-	o->packfiles = packfile_store_new(o);
 	pthread_mutex_init(&o->replace_mutex, NULL);
 	string_list_init_dup(&o->submodule_source_paths);
 
@@ -1082,15 +1084,8 @@ struct object_database *odb_new(struct repository *repo,
 void odb_close(struct object_database *o)
 {
 	struct odb_source *source;
-
-	packfile_store_close(o->packfiles);
-
-	for (source = o->sources; source; source = source->next) {
-		if (source->midx)
-			close_midx(source->midx);
-		source->midx = NULL;
-	}
-
+	for (source = o->sources; source; source = source->next)
+		packfile_store_close(source->packfiles);
 	close_commit_graph(o);
 }
 
@@ -1124,7 +1119,6 @@ void odb_free(struct object_database *o)
 		free((char *) o->cached_objects[i].value.buf);
 	free(o->cached_objects);
 
-	packfile_store_free(o->packfiles);
 	string_list_clear(&o->submodule_source_paths, 0);
 
 	chdir_notify_unregister(NULL, odb_update_commondir, o);
@@ -1147,12 +1141,12 @@ void odb_reprepare(struct object_database *o)
 	o->loaded_alternates = 0;
 	odb_prepare_alternates(o);
 
-	for (source = o->sources; source; source = source->next)
+	for (source = o->sources; source; source = source->next) {
 		odb_source_loose_reprepare(source);
+		packfile_store_reprepare(source->packfiles);
+	}
 
 	o->approximate_object_count_valid = 0;
-
-	packfile_store_reprepare(o->packfiles);
 
 	obj_read_unlock();
 }

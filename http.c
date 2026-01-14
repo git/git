@@ -2544,7 +2544,7 @@ void http_install_packfile(struct packed_git *p,
 			   struct packfile_list *list_to_remove_from)
 {
 	packfile_list_remove(list_to_remove_from, p);
-	packfile_store_add_pack(the_repository->objects->packfiles, p);
+	packfile_store_add_pack(the_repository->objects->sources->packfiles, p);
 }
 
 struct http_pack_request *new_http_pack_request(
