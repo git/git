@@ -51,10 +51,10 @@ void test_reftable_record__varint_roundtrip(void)
 		int n = put_var_int(&out, in);
 		uint64_t got = 0;
 
-		cl_assert(n > 0);
+		cl_assert_gt_i(n, 0);
 		out.len = n;
 		n = get_var_int(&got, &out);
-		cl_assert(n > 0);
+		cl_assert_gt_i(n, 0);
 
 		cl_assert_equal_i(got, in);
 	}
@@ -110,7 +110,7 @@ void test_reftable_record__ref_record_comparison(void)
 	cl_assert(reftable_record_equal(&in[1], &in[2],
 					REFTABLE_HASH_SIZE_SHA1) == 0);
 	cl_assert_equal_i(reftable_record_cmp(&in[1], &in[2], &cmp), 0);
-	cl_assert(cmp > 0);
+	cl_assert_gt_i(cmp, 0);
 
 	in[1].u.ref.value_type = in[0].u.ref.value_type;
 	cl_assert(reftable_record_equal(&in[0], &in[1],
@@ -184,7 +184,7 @@ void test_reftable_record__ref_record_roundtrip(void)
 
 		reftable_record_key(&in, &key);
 		n = reftable_record_encode(&in, dest, REFTABLE_HASH_SIZE_SHA1);
-		cl_assert(n > 0);
+		cl_assert_gt_i(n, 0);
 
 		/* decode into a non-zero reftable_record to test for leaks. */
 		m = reftable_record_decode(&out, key, i, dest, REFTABLE_HASH_SIZE_SHA1, &scratch);
@@ -228,11 +228,11 @@ void test_reftable_record__log_record_comparison(void)
 	cl_assert_equal_i(reftable_record_equal(&in[1], &in[2],
 						REFTABLE_HASH_SIZE_SHA1), 0);
 	cl_assert_equal_i(reftable_record_cmp(&in[1], &in[2], &cmp), 0);
-	cl_assert(cmp > 0);
+	cl_assert_gt_i(cmp, 0);
 	/* comparison should be reversed for equal keys, because
 	 * comparison is now performed on the basis of update indices */
 	cl_assert_equal_i(reftable_record_cmp(&in[0], &in[1], &cmp), 0);
-	cl_assert(cmp < 0);
+	cl_assert_lt_i(cmp, 0);
 
 	in[1].u.log.update_index = in[0].u.log.update_index;
 	cl_assert(reftable_record_equal(&in[0], &in[1],
@@ -344,7 +344,7 @@ void test_reftable_record__log_record_roundtrip(void)
 		reftable_record_key(&rec, &key);
 
 		n = reftable_record_encode(&rec, dest, REFTABLE_HASH_SIZE_SHA1);
-		cl_assert(n >= 0);
+		cl_assert_ge_i(n, 0);
 		valtype = reftable_record_val_type(&rec);
 		m = reftable_record_decode(&out, key, valtype, dest,
 					   REFTABLE_HASH_SIZE_SHA1, &scratch);
@@ -382,7 +382,7 @@ void test_reftable_record__key_roundtrip(void)
 	extra = 6;
 	n = reftable_encode_key(&restart, dest, last_key, key, extra);
 	cl_assert(!restart);
-	cl_assert(n > 0);
+	cl_assert_gt_i(n, 0);
 
 	cl_assert_equal_i(reftable_buf_addstr(&roundtrip,
 					      "refs/heads/master"), 0);
@@ -432,7 +432,7 @@ void test_reftable_record__obj_record_comparison(void)
 	cl_assert_equal_i(reftable_record_equal(&in[1], &in[2],
 						REFTABLE_HASH_SIZE_SHA1), 0);
 	cl_assert_equal_i(reftable_record_cmp(&in[1], &in[2], &cmp), 0);
-	cl_assert(cmp > 0);
+	cl_assert_gt_i(cmp, 0);
 
 	in[1].u.obj.offset_len = in[0].u.obj.offset_len;
 	cl_assert(reftable_record_equal(&in[0], &in[1], REFTABLE_HASH_SIZE_SHA1) != 0);
@@ -485,7 +485,7 @@ void test_reftable_record__obj_record_roundtrip(void)
 		t_copy(&in);
 		reftable_record_key(&in, &key);
 		n = reftable_record_encode(&in, dest, REFTABLE_HASH_SIZE_SHA1);
-		cl_assert(n > 0);
+		cl_assert_gt_i(n, 0);
 		extra = reftable_record_val_type(&in);
 		m = reftable_record_decode(&out, key, extra, dest,
 					   REFTABLE_HASH_SIZE_SHA1, &scratch);
@@ -535,7 +535,7 @@ void test_reftable_record__index_record_comparison(void)
 	cl_assert_equal_i(reftable_record_equal(&in[1], &in[2],
 						REFTABLE_HASH_SIZE_SHA1), 0);
 	cl_assert_equal_i(reftable_record_cmp(&in[1], &in[2], &cmp), 0);
-	cl_assert(cmp > 0);
+	cl_assert_gt_i(cmp, 0);
 
 	in[1].u.idx.offset = in[0].u.idx.offset;
 	cl_assert(reftable_record_equal(&in[0], &in[1],

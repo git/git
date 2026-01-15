@@ -164,7 +164,7 @@ static void clar_print_tap_ontest(const char *suite_name, const char *test_name,
 			printf("      file: '"); print_escaped(error->file); printf("'\n");
 			printf("      line: %" PRIuMAX "\n", error->line_number);
 			printf("      function: '%s'\n", error->function);
-			printf("    ---\n");
+			printf("    ...\n");
 		}
 
 		break;
