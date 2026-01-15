@@ -34,6 +34,10 @@ UI, Workflows & Features
  * More object database related information are shown in "git repo
    structure" output.
 
+ * Improve the error message when a bad argument is given to the
+   `--onto` option of "git replay".  Test coverage of "git replay" has
+   been improved.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -91,6 +95,9 @@ Performance, Internal Implementation, Development Support etc.
 
  * Use hook API to replace ad-hoc invocation of hook scripts with the
    run_command() API.
+
+ * Import newer version of "clar", unit testing framework.
+   (merge 84071a6dea ps/clar-integers later to maint).
 
 
 Fixes since v2.52
