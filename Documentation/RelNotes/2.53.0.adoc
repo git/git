@@ -93,9 +93,6 @@ Performance, Internal Implementation, Development Support etc.
  * Prepare test suite for Git for Windows that supports symbolic
    links.
 
- * Use hook API to replace ad-hoc invocation of hook scripts with the
-   run_command() API.
-
  * Import newer version of "clar", unit testing framework.
    (merge 84071a6dea ps/clar-integers later to maint).
 
