@@ -86,11 +86,15 @@ void _mi_stat_adjust_decrease(mi_stat_count_t* stat, size_t amount) {
 static void mi_stat_count_add_mt(mi_stat_count_t* stat, const mi_stat_count_t* src) {
   if (stat==src) return;
   mi_atomic_void_addi64_relaxed(&stat->total, &src->total); 
-  mi_atomic_void_addi64_relaxed(&stat->current, &src->current); 
-  // peak scores do really not work across threads .. we just add them
-  mi_atomic_void_addi64_relaxed( &stat->peak, &src->peak);
-  // or, take the max?
-  // mi_atomic_maxi64_relaxed(&stat->peak, src->peak);
+  const int64_t prev_current = mi_atomic_addi64_relaxed(&stat->current, src->current);
+
+  // Global current plus thread peak approximates new global peak
+  // note: peak scores do really not work across threads.
+  // we used to just add them together but that often overestimates in practice.
+  // similarly, max does not seem to work well. The current approach
+  // by Artem Kharytoniuk (@artem-lunarg) seems to work better, see PR#1112 
+  // for a longer description.
+  mi_atomic_maxi64_relaxed(&stat->peak, prev_current + src->peak);
 }
 
 static void mi_stat_counter_add_mt(mi_stat_counter_t* stat, const mi_stat_counter_t* src) {
@@ -212,12 +216,6 @@ static void mi_stat_print(const mi_stat_count_t* stat, const char* msg, int64_t 
   mi_stat_print_ex(stat, msg, unit, out, arg, NULL);
 }
 
-static void mi_stat_peak_print(const mi_stat_count_t* stat, const char* msg, int64_t unit, mi_output_fun* out, void* arg) {
-  _mi_fprintf(out, arg, "%10s:", msg);
-  mi_print_amount(stat->peak, unit, out, arg);
-  _mi_fprintf(out, arg, "\n");
-}
-
 #if MI_STAT>1
 static void mi_stat_total_print(const mi_stat_count_t* stat, const char* msg, int64_t unit, mi_output_fun* out, void* arg) {
   _mi_fprintf(out, arg, "%10s:", msg);
@@ -234,8 +232,8 @@ static void mi_stat_counter_print(const mi_stat_counter_t* stat, const char* msg
 }
 
 
-static void mi_stat_counter_print_avg(const mi_stat_counter_t* stat, const char* msg, mi_output_fun* out, void* arg) {
-  const int64_t avg_tens = (stat->total == 0 ? 0 : (stat->total*10 / stat->total));
+static void mi_stat_average_print(size_t count, size_t total, const char* msg, mi_output_fun* out, void* arg) {
+  const int64_t avg_tens = (count == 0 ? 0 : (total*10 / count));
   const long avg_whole = (long)(avg_tens/10);
   const long avg_frac1 = (long)(avg_tens%10);
   _mi_fprintf(out, arg, "%10s: %5ld.%ld avg\n", msg, avg_whole, avg_frac1);
@@ -330,8 +328,8 @@ static void _mi_stats_print(mi_stats_t* stats, mi_output_fun* out0, void* arg0) 
   #endif
   mi_stat_print_ex(&stats->reserved, "reserved", 1, out, arg, "");
   mi_stat_print_ex(&stats->committed, "committed", 1, out, arg, "");
-  mi_stat_peak_print(&stats->reset, "reset", 1, out, arg );
-  mi_stat_peak_print(&stats->purged, "purged", 1, out, arg );
+  mi_stat_counter_print(&stats->reset, "reset", out, arg );
+  mi_stat_counter_print(&stats->purged, "purged", out, arg );
   mi_stat_print_ex(&stats->page_committed, "touched", 1, out, arg, "");
   mi_stat_print(&stats->segments, "segments", -1, out, arg);
   mi_stat_print(&stats->segments_abandoned, "-abandoned", -1, out, arg);
@@ -349,7 +347,7 @@ static void _mi_stats_print(mi_stats_t* stats, mi_output_fun* out0, void* arg0) 
   mi_stat_counter_print(&stats->purge_calls, "purges", out, arg);
   mi_stat_counter_print(&stats->malloc_guarded_count, "guarded", out, arg);
   mi_stat_print(&stats->threads, "threads", -1, out, arg);
-  mi_stat_counter_print_avg(&stats->page_searches, "searches", out, arg);
+  mi_stat_average_print(stats->page_searches_count.total, stats->page_searches.total, "searches", out, arg);
   _mi_fprintf(out, arg, "%10s: %5i\n", "numa nodes", _mi_os_numa_node_count());
 
   size_t elapsed;
@@ -362,11 +360,11 @@ static void _mi_stats_print(mi_stats_t* stats, mi_output_fun* out0, void* arg0) 
   size_t page_faults;
   mi_process_info(&elapsed, &user_time, &sys_time, &current_rss, &peak_rss, &current_commit, &peak_commit, &page_faults);
   _mi_fprintf(out, arg, "%10s: %5zu.%03zu s\n", "elapsed", elapsed/1000, elapsed%1000);
-  _mi_fprintf(out, arg, "%10s: user: %zu.%03zu s, system: %zu.%03zu s, faults: %zu, rss: ", "process",
+  _mi_fprintf(out, arg, "%10s: user: %zu.%03zu s, system: %zu.%03zu s, faults: %zu, peak rss: ", "process",
               user_time/1000, user_time%1000, sys_time/1000, sys_time%1000, page_faults );
   mi_printf_amount((int64_t)peak_rss, 1, out, arg, "%s");
   if (peak_commit > 0) {
-    _mi_fprintf(out, arg, ", commit: ");
+    _mi_fprintf(out, arg, ", peak commit: ");
     mi_printf_amount((int64_t)peak_commit, 1, out, arg, "%s");
   }
   _mi_fprintf(out, arg, "\n");

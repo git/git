@@ -798,16 +798,18 @@ static bool mi_arena_add(mi_arena_t* arena, mi_arena_id_t* arena_id, mi_stats_t*
   mi_assert_internal(arena->block_count > 0);
   if (arena_id != NULL) { *arena_id = -1; }
 
-  size_t i = mi_atomic_increment_acq_rel(&mi_arena_count);
-  if (i >= MI_MAX_ARENAS) {
-    mi_atomic_decrement_acq_rel(&mi_arena_count);
-    return false;
+  size_t i = mi_atomic_load_relaxed(&mi_arena_count);
+  while (i < MI_MAX_ARENAS) {
+    if (mi_atomic_cas_strong_acq_rel(&mi_arena_count, &i, i+1)) {
+      _mi_stat_counter_increase(&stats->arena_count, 1);
+      arena->id = mi_arena_id_create(i);
+      mi_atomic_store_ptr_release(mi_arena_t, &mi_arenas[i], arena);
+      if (arena_id != NULL) { *arena_id = arena->id; }
+      return true;
+    }
   }
-  _mi_stat_counter_increase(&stats->arena_count,1);
-  arena->id = mi_arena_id_create(i);
-  mi_atomic_store_ptr_release(mi_arena_t,&mi_arenas[i], arena);
-  if (arena_id != NULL) { *arena_id = arena->id; }
-  return true;
+
+  return false;
 }
 
 static bool mi_manage_os_memory_ex2(void* start, size_t size, bool is_large, int numa_node, bool exclusive, mi_memid_t memid, mi_arena_id_t* arena_id) mi_attr_noexcept

@@ -79,7 +79,7 @@ jobs:
             feed: https://github.com/jrsoftware/issrc/tags.atom
           - label: mimalloc
             feed: https://github.com/microsoft/mimalloc/tags.atom
-            title-pattern: ^(?!v1\.)
+            title-pattern: ^(?!v1\.|v3\.[01]\.)
       fail-fast: false
     steps:
       - uses: git-for-windows/rss-to-issues@v0

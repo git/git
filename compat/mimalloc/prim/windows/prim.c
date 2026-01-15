@@ -287,8 +287,9 @@ static void* win_virtual_alloc(void* addr, size_t size, size_t try_alignment, DW
   static _Atomic(size_t) large_page_try_ok; // = 0;
   void* p = NULL;
   // Try to allocate large OS pages (2MiB) if allowed or required.
-  if ((large_only || _mi_os_use_large_page(size, try_alignment))
-      && allow_large && (flags&MEM_COMMIT)!=0 && (flags&MEM_RESERVE)!=0) {
+  if ((large_only || (_mi_os_canuse_large_page(size, try_alignment) && mi_option_is_enabled(mi_option_allow_large_os_pages)))
+      && allow_large && (flags&MEM_COMMIT)!=0 && (flags&MEM_RESERVE)!=0)
+  {
     size_t try_ok = mi_atomic_load_acquire(&large_page_try_ok);
     if (!large_only && try_ok > 0) {
       // if a large page allocation fails, it seems the calls to VirtualAlloc get very expensive.
@@ -572,7 +573,7 @@ void _mi_prim_out_stderr( const char* msg )
       #ifdef MI_HAS_CONSOLE_IO
       CONSOLE_SCREEN_BUFFER_INFO sbi;
       hconIsConsole = ((hcon != INVALID_HANDLE_VALUE) && GetConsoleScreenBufferInfo(hcon, &sbi));
-      #endif  
+      #endif
     }
     const size_t len = _mi_strlen(msg);
     if (len > 0 && len < UINT32_MAX) {
@@ -580,7 +581,7 @@ void _mi_prim_out_stderr( const char* msg )
       if (hconIsConsole) {
         #ifdef MI_HAS_CONSOLE_IO
         WriteConsoleA(hcon, msg, (DWORD)len, &written, NULL);
-        #endif      
+        #endif
       }
       else if (hcon != INVALID_HANDLE_VALUE) {
         // use direct write if stderr was redirected

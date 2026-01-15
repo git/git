@@ -11,7 +11,7 @@ terms of the MIT license. A copy of the license can be found in the file
 #include <mimalloc.h>
 #include <stdint.h>
 
-#define MI_STAT_VERSION   1   // increased on every backward incompatible change
+#define MI_STAT_VERSION   3   // increased on every backward incompatible change
 
 // count allocation over time
 typedef struct mi_stat_count_s {
@@ -29,8 +29,8 @@ typedef struct mi_stat_counter_s {
   MI_STAT_COUNT(pages)                      /* count of mimalloc pages */ \
   MI_STAT_COUNT(reserved)                   /* reserved memory bytes */ \
   MI_STAT_COUNT(committed)                  /* committed bytes */ \
-  MI_STAT_COUNT(reset)                      /* reset bytes */ \
-  MI_STAT_COUNT(purged)                     /* purged bytes */ \
+  MI_STAT_COUNTER(reset)                    /* reset bytes */ \
+  MI_STAT_COUNTER(purged)                   /* purged bytes */ \
   MI_STAT_COUNT(page_committed)             /* committed memory inside pages */ \
   MI_STAT_COUNT(pages_abandoned)            /* abandonded pages count */ \
   MI_STAT_COUNT(threads)                    /* number of threads */ \
@@ -52,7 +52,8 @@ typedef struct mi_stat_counter_s {
   MI_STAT_COUNTER(arena_purges) \
   MI_STAT_COUNTER(pages_extended)           /* number of page extensions */ \
   MI_STAT_COUNTER(pages_retire)             /* number of pages that are retired */ \
-  MI_STAT_COUNTER(page_searches)            /* searches for a fresh page */ \
+  MI_STAT_COUNTER(page_searches)            /* total pages searched for a fresh page */ \
+  MI_STAT_COUNTER(page_searches_count)      /* searched count for a fresh page */ \
   /* only on v1 and v2 */ \
   MI_STAT_COUNT(segments) \
   MI_STAT_COUNT(segments_abandoned) \

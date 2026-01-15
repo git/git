@@ -223,7 +223,11 @@ void _mi_heap_init(mi_heap_t* heap, mi_tld_t* tld, mi_arena_id_t arena_id, bool 
   heap->no_reclaim = noreclaim;
   heap->tag        = tag;
   if (heap == tld->heap_backing) {
-    _mi_random_init(&heap->random);
+    #if defined(_WIN32) && !defined(MI_SHARED_LIB)
+      _mi_random_init_weak(&heap->random);    // prevent allocation failure during bcrypt dll initialization with static linking (issue #1185)
+    #else
+      _mi_random_init(&heap->random);
+    #endif
   }
   else {
     _mi_random_split(&tld->heap_backing->random, &heap->random);

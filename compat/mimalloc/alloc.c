@@ -27,7 +27,7 @@ terms of the MIT license. A copy of the license can be found in the file
 // Fast allocation in a page: just pop from the free list.
 // Fall back to generic allocation only if the list is empty.
 // Note: in release mode the (inlined) routine is about 7 instructions with a single test.
-extern inline void* _mi_page_malloc_zero(mi_heap_t* heap, mi_page_t* page, size_t size, bool zero) mi_attr_noexcept
+extern inline void* _mi_page_malloc_zero(mi_heap_t* heap, mi_page_t* page, size_t size, bool zero, size_t* usable) mi_attr_noexcept
 {
   mi_assert_internal(size >= MI_PADDING_SIZE);
   mi_assert_internal(page->block_size == 0 /* empty heap */ || mi_page_block_size(page) >= size);
@@ -35,10 +35,10 @@ extern inline void* _mi_page_malloc_zero(mi_heap_t* heap, mi_page_t* page, size_
   // check the free list
   mi_block_t* const block = page->free;
   if mi_unlikely(block == NULL) {
-    return _mi_malloc_generic(heap, size, zero, 0);
+    return _mi_malloc_generic(heap, size, zero, 0, usable);
   }
   mi_assert_internal(block != NULL && _mi_ptr_page(block) == page);
-
+  if (usable != NULL) { *usable = mi_page_usable_block_size(page); };
   // pop from the free list
   page->free = mi_block_next(page, block);
   page->used++;
@@ -116,17 +116,17 @@ extern inline void* _mi_page_malloc_zero(mi_heap_t* heap, mi_page_t* page, size_
 
 // extra entries for improved efficiency in `alloc-aligned.c`.
 extern void* _mi_page_malloc(mi_heap_t* heap, mi_page_t* page, size_t size) mi_attr_noexcept {
-  return _mi_page_malloc_zero(heap,page,size,false);
+  return _mi_page_malloc_zero(heap,page,size,false,NULL);
 }
 extern void* _mi_page_malloc_zeroed(mi_heap_t* heap, mi_page_t* page, size_t size) mi_attr_noexcept {
-  return _mi_page_malloc_zero(heap,page,size,true);
+  return _mi_page_malloc_zero(heap,page,size,true,NULL);
 }
 
 #if MI_GUARDED
 mi_decl_restrict void* _mi_heap_malloc_guarded(mi_heap_t* heap, size_t size, bool zero) mi_attr_noexcept;
 #endif
 
-static inline mi_decl_restrict void* mi_heap_malloc_small_zero(mi_heap_t* heap, size_t size, bool zero) mi_attr_noexcept {
+static inline mi_decl_restrict void* mi_heap_malloc_small_zero(mi_heap_t* heap, size_t size, bool zero, size_t* usable) mi_attr_noexcept {
   mi_assert(heap != NULL);
   mi_assert(size <= MI_SMALL_SIZE_MAX);
   #if MI_DEBUG
@@ -144,7 +144,7 @@ static inline mi_decl_restrict void* mi_heap_malloc_small_zero(mi_heap_t* heap, 
 
   // get page in constant time, and allocate from it
   mi_page_t* page = _mi_heap_get_free_small_page(heap, size + MI_PADDING_SIZE);
-  void* const p = _mi_page_malloc_zero(heap, page, size + MI_PADDING_SIZE, zero);
+  void* const p = _mi_page_malloc_zero(heap, page, size + MI_PADDING_SIZE, zero, usable);
   mi_track_malloc(p,size,zero);
 
   #if MI_DEBUG>3
@@ -157,7 +157,7 @@ static inline mi_decl_restrict void* mi_heap_malloc_small_zero(mi_heap_t* heap, 
 
 // allocate a small block
 mi_decl_nodiscard extern inline mi_decl_restrict void* mi_heap_malloc_small(mi_heap_t* heap, size_t size) mi_attr_noexcept {
-  return mi_heap_malloc_small_zero(heap, size, false);
+  return mi_heap_malloc_small_zero(heap, size, false, NULL);
 }
 
 mi_decl_nodiscard extern inline mi_decl_restrict void* mi_malloc_small(size_t size) mi_attr_noexcept {
@@ -165,11 +165,11 @@ mi_decl_nodiscard extern inline mi_decl_restrict void* mi_malloc_small(size_t si
 }
 
 // The main allocation function
-extern inline void* _mi_heap_malloc_zero_ex(mi_heap_t* heap, size_t size, bool zero, size_t huge_alignment) mi_attr_noexcept {
+extern inline void* _mi_heap_malloc_zero_ex(mi_heap_t* heap, size_t size, bool zero, size_t huge_alignment, size_t* usable) mi_attr_noexcept {
   // fast path for small objects
   if mi_likely(size <= MI_SMALL_SIZE_MAX) {
     mi_assert_internal(huge_alignment == 0);
-    return mi_heap_malloc_small_zero(heap, size, zero);
+    return mi_heap_malloc_small_zero(heap, size, zero, usable);
   }
   #if MI_GUARDED
   else if (huge_alignment==0 && mi_heap_malloc_use_guarded(heap,size)) {
@@ -180,7 +180,7 @@ extern inline void* _mi_heap_malloc_zero_ex(mi_heap_t* heap, size_t size, bool z
     // regular allocation
     mi_assert(heap!=NULL);
     mi_assert(heap->thread_id == 0 || heap->thread_id == _mi_thread_id());   // heaps are thread local
-    void* const p = _mi_malloc_generic(heap, size + MI_PADDING_SIZE, zero, huge_alignment);  // note: size can overflow but it is detected in malloc_generic
+    void* const p = _mi_malloc_generic(heap, size + MI_PADDING_SIZE, zero, huge_alignment, usable);  // note: size can overflow but it is detected in malloc_generic
     mi_track_malloc(p,size,zero);
 
     #if MI_DEBUG>3
@@ -193,7 +193,7 @@ extern inline void* _mi_heap_malloc_zero_ex(mi_heap_t* heap, size_t size, bool z
 }
 
 extern inline void* _mi_heap_malloc_zero(mi_heap_t* heap, size_t size, bool zero) mi_attr_noexcept {
-  return _mi_heap_malloc_zero_ex(heap, size, zero, 0);
+  return _mi_heap_malloc_zero_ex(heap, size, zero, 0, NULL);
 }
 
 mi_decl_nodiscard extern inline mi_decl_restrict void* mi_heap_malloc(mi_heap_t* heap, size_t size) mi_attr_noexcept {
@@ -206,7 +206,7 @@ mi_decl_nodiscard extern inline mi_decl_restrict void* mi_malloc(size_t size) mi
 
 // zero initialized small block
 mi_decl_nodiscard mi_decl_restrict void* mi_zalloc_small(size_t size) mi_attr_noexcept {
-  return mi_heap_malloc_small_zero(mi_prim_get_default_heap(), size, true);
+  return mi_heap_malloc_small_zero(mi_prim_get_default_heap(), size, true, NULL);
 }
 
 mi_decl_nodiscard extern inline mi_decl_restrict void* mi_heap_zalloc(mi_heap_t* heap, size_t size) mi_attr_noexcept {
@@ -228,6 +228,29 @@ mi_decl_nodiscard mi_decl_restrict void* mi_calloc(size_t count, size_t size) mi
   return mi_heap_calloc(mi_prim_get_default_heap(),count,size);
 }
 
+// Return usable size
+mi_decl_nodiscard mi_decl_restrict void* mi_umalloc_small(size_t size, size_t* usable) mi_attr_noexcept {
+  return mi_heap_malloc_small_zero(mi_prim_get_default_heap(), size, false, usable);
+}
+
+mi_decl_nodiscard mi_decl_restrict void* mi_heap_umalloc(mi_heap_t* heap, size_t size, size_t* usable) mi_attr_noexcept {
+  return _mi_heap_malloc_zero_ex(heap, size, false, 0, usable);
+}
+
+mi_decl_nodiscard mi_decl_restrict void* mi_umalloc(size_t size, size_t* usable) mi_attr_noexcept {
+  return mi_heap_umalloc(mi_prim_get_default_heap(), size, usable);
+}
+
+mi_decl_nodiscard mi_decl_restrict void* mi_uzalloc(size_t size, size_t* usable) mi_attr_noexcept {
+  return _mi_heap_malloc_zero_ex(mi_prim_get_default_heap(), size, true, 0, usable);
+}
+
+mi_decl_nodiscard mi_decl_restrict void* mi_ucalloc(size_t count, size_t size, size_t* usable) mi_attr_noexcept {
+  size_t total;
+  if (mi_count_size_overflow(count,size,&total)) return NULL;
+  return mi_uzalloc(total, usable);
+}
+
 // Uninitialized `calloc`
 mi_decl_nodiscard extern mi_decl_restrict void* mi_heap_mallocn(mi_heap_t* heap, size_t count, size_t size) mi_attr_noexcept {
   size_t total;
@@ -247,25 +270,38 @@ void* mi_expand(void* p, size_t newsize) mi_attr_noexcept {
   return NULL;
   #else
   if (p == NULL) return NULL;
-  const size_t size = _mi_usable_size(p,"mi_expand");
+  const mi_page_t* const page = mi_validate_ptr_page(p,"mi_expand");  
+  const size_t size = _mi_usable_size(p,page);
   if (newsize > size) return NULL;
   return p; // it fits
   #endif
 }
 
-void* _mi_heap_realloc_zero(mi_heap_t* heap, void* p, size_t newsize, bool zero) mi_attr_noexcept {
+void* _mi_heap_realloc_zero(mi_heap_t* heap, void* p, size_t newsize, bool zero, size_t* usable_pre, size_t* usable_post) mi_attr_noexcept {
   // if p == NULL then behave as malloc.
   // else if size == 0 then reallocate to a zero-sized block (and don't return NULL, just as mi_malloc(0)).
   // (this means that returning NULL always indicates an error, and `p` will not have been freed in that case.)
-  const size_t size = _mi_usable_size(p,"mi_realloc"); // also works if p == NULL (with size 0)
+  const mi_page_t* page;
+  size_t size;
+  if (p==NULL) {
+    page = NULL;
+    size = 0;
+    if (usable_pre!=NULL) { *usable_pre = 0; }
+  }
+  else {    
+    page = mi_validate_ptr_page(p,"mi_realloc");  
+    size = _mi_usable_size(p,page);
+    if (usable_pre!=NULL) { *usable_pre = mi_page_usable_block_size(page); }    
+  }
   if mi_unlikely(newsize <= size && newsize >= (size / 2) && newsize > 0) {  // note: newsize must be > 0 or otherwise we return NULL for realloc(NULL,0)
     mi_assert_internal(p!=NULL);
     // todo: do not track as the usable size is still the same in the free; adjust potential padding?
     // mi_track_resize(p,size,newsize)
     // if (newsize < size) { mi_track_mem_noaccess((uint8_t*)p + newsize, size - newsize); }
+    if (usable_post!=NULL) { *usable_post = mi_page_usable_block_size(page); }
     return p;  // reallocation still fits and not more than 50% waste
   }
-  void* newp = mi_heap_malloc(heap,newsize);
+  void* newp = mi_heap_umalloc(heap,newsize,usable_post);
   if mi_likely(newp != NULL) {
     if (zero && newsize > size) {
       // also set last word in the previous allocation to zero to ensure any padding is zero-initialized
@@ -286,7 +322,7 @@ void* _mi_heap_realloc_zero(mi_heap_t* heap, void* p, size_t newsize, bool zero)
 }
 
 mi_decl_nodiscard void* mi_heap_realloc(mi_heap_t* heap, void* p, size_t newsize) mi_attr_noexcept {
-  return _mi_heap_realloc_zero(heap, p, newsize, false);
+  return _mi_heap_realloc_zero(heap, p, newsize, false, NULL, NULL);
 }
 
 mi_decl_nodiscard void* mi_heap_reallocn(mi_heap_t* heap, void* p, size_t count, size_t size) mi_attr_noexcept {
@@ -304,7 +340,7 @@ mi_decl_nodiscard void* mi_heap_reallocf(mi_heap_t* heap, void* p, size_t newsiz
 }
 
 mi_decl_nodiscard void* mi_heap_rezalloc(mi_heap_t* heap, void* p, size_t newsize) mi_attr_noexcept {
-  return _mi_heap_realloc_zero(heap, p, newsize, true);
+  return _mi_heap_realloc_zero(heap, p, newsize, true, NULL, NULL);
 }
 
 mi_decl_nodiscard void* mi_heap_recalloc(mi_heap_t* heap, void* p, size_t count, size_t size) mi_attr_noexcept {
@@ -320,6 +356,10 @@ mi_decl_nodiscard void* mi_realloc(void* p, size_t newsize) mi_attr_noexcept {
 
 mi_decl_nodiscard void* mi_reallocn(void* p, size_t count, size_t size) mi_attr_noexcept {
   return mi_heap_reallocn(mi_prim_get_default_heap(),p,count,size);
+}
+
+mi_decl_nodiscard void* mi_urealloc(void* p, size_t newsize, size_t* usable_pre, size_t* usable_post) mi_attr_noexcept {
+  return _mi_heap_realloc_zero(mi_prim_get_default_heap(),p,newsize, false, usable_pre, usable_post);
 }
 
 // Reallocate but free `p` on errors
@@ -615,8 +655,11 @@ static void* mi_block_ptr_set_guarded(mi_block_t* block, size_t obj_size) {
   }
   uint8_t* guard_page = (uint8_t*)block + block_size - os_page_size;
   mi_assert_internal(_mi_is_aligned(guard_page, os_page_size));
-  if (segment->allow_decommit && _mi_is_aligned(guard_page, os_page_size)) {
-    _mi_os_protect(guard_page, os_page_size);
+  if mi_likely(segment->allow_decommit && _mi_is_aligned(guard_page, os_page_size)) {
+    const bool ok = _mi_os_protect(guard_page, os_page_size);
+    if mi_unlikely(!ok) {
+      _mi_warning_message("failed to set a guard page behind an object (object %p of size %zu)\n", block, block_size);
+    }
   }
   else {
     _mi_warning_message("unable to set a guard page behind an object due to pinned memory (large OS pages?) (object %p of size %zu)\n", block, block_size);
@@ -646,7 +689,7 @@ mi_decl_restrict void* _mi_heap_malloc_guarded(mi_heap_t* heap, size_t size, boo
   const size_t obj_size = (mi_option_is_enabled(mi_option_guarded_precise) ? size : _mi_align_up(size, MI_MAX_ALIGN_SIZE));
   const size_t bsize    = _mi_align_up(_mi_align_up(obj_size, MI_MAX_ALIGN_SIZE) + sizeof(mi_block_t), MI_MAX_ALIGN_SIZE);
   const size_t req_size = _mi_align_up(bsize + os_page_size, os_page_size);
-  mi_block_t* const block = (mi_block_t*)_mi_malloc_generic(heap, req_size, zero, 0 /* huge_alignment */);
+  mi_block_t* const block = (mi_block_t*)_mi_malloc_generic(heap, req_size, zero, 0 /* huge_alignment */, NULL);
   if (block==NULL) return NULL;
   void* const p   = mi_block_ptr_set_guarded(block, obj_size);
 

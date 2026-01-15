@@ -62,9 +62,9 @@ size_t _mi_os_large_page_size(void) {
   return (mi_os_mem_config.large_page_size != 0 ? mi_os_mem_config.large_page_size : _mi_os_page_size());
 }
 
-bool _mi_os_use_large_page(size_t size, size_t alignment) {
+bool _mi_os_canuse_large_page(size_t size, size_t alignment) {
   // if we have access, check the size and alignment requirements
-  if (mi_os_mem_config.large_page_size == 0 || !mi_option_is_enabled(mi_option_allow_large_os_pages)) return false;
+  if (mi_os_mem_config.large_page_size == 0) return false;
   return ((size % mi_os_mem_config.large_page_size) == 0 && (alignment % mi_os_mem_config.large_page_size) == 0);
 }
 
@@ -329,7 +329,7 @@ void* _mi_os_alloc(size_t size, mi_memid_t* memid) {
   void* p = mi_os_prim_alloc(size, 0, true, false, &os_is_large, &os_is_zero);
   if (p == NULL) return NULL;
 
-  *memid = _mi_memid_create_os(p, size, true, os_is_zero, os_is_large);  
+  *memid = _mi_memid_create_os(p, size, true, os_is_zero, os_is_large);
   mi_assert_internal(memid->mem.os.size >= size);
   mi_assert_internal(memid->initially_committed);
   return p;
@@ -355,7 +355,7 @@ void* _mi_os_alloc_aligned(size_t size, size_t alignment, bool commit, bool allo
 
   mi_assert_internal(memid->mem.os.size >= size);
   mi_assert_internal(_mi_is_aligned(p,alignment));
-  if (commit) { mi_assert_internal(memid->initially_committed); }  
+  if (commit) { mi_assert_internal(memid->initially_committed); }
   return p;
 }
 
@@ -448,7 +448,6 @@ static void* mi_os_page_align_area_conservative(void* addr, size_t size, size_t*
 
 bool _mi_os_commit_ex(void* addr, size_t size, bool* is_zero, size_t stat_size) {
   if (is_zero != NULL) { *is_zero = false; }
-  mi_os_stat_increase(committed, stat_size);  // use size for precise commit vs. decommit
   mi_os_stat_counter_increase(commit_calls, 1);
 
   // page align range
@@ -472,6 +471,7 @@ bool _mi_os_commit_ex(void* addr, size_t size, bool* is_zero, size_t stat_size) 
   if (os_is_zero) { mi_track_mem_defined(start,csize); }
              else { mi_track_mem_undefined(start,csize); }
   #endif
+  mi_os_stat_increase(committed, stat_size);  // use size for precise commit vs. decommit
   return true;
 }
 
@@ -513,7 +513,7 @@ bool _mi_os_reset(void* addr, size_t size) {
   size_t csize;
   void* start = mi_os_page_align_area_conservative(addr, size, &csize);
   if (csize == 0) return true;  // || _mi_os_is_huge_reserved(addr)
-  mi_os_stat_increase(reset, csize);
+  mi_os_stat_counter_increase(reset, csize);
   mi_os_stat_counter_increase(reset_calls, 1);
 
   #if (MI_DEBUG>1) && !MI_SECURE && !MI_TRACK_ENABLED // && !MI_TSAN
@@ -545,7 +545,7 @@ bool _mi_os_purge_ex(void* p, size_t size, bool allow_reset, size_t stat_size)
 {
   if (mi_option_get(mi_option_purge_delay) < 0) return false;  // is purging allowed?
   mi_os_stat_counter_increase(purge_calls, 1);
-  mi_os_stat_increase(purged, size);
+  mi_os_stat_counter_increase(purged, size);
 
   if (mi_option_is_enabled(mi_option_purge_decommits) &&   // should decommit?
       !_mi_preloading())                                   // don't decommit during preloading (unsafe)

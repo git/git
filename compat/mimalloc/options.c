@@ -79,11 +79,7 @@ typedef struct mi_option_desc_s {
 #endif
 
 #ifndef MI_DEFAULT_ALLOW_LARGE_OS_PAGES
-#if defined(__linux__) && !defined(__ANDROID__)
-#define MI_DEFAULT_ALLOW_LARGE_OS_PAGES 2    // enabled, but only use transparent huge pages through madvise
-#else
 #define MI_DEFAULT_ALLOW_LARGE_OS_PAGES 0
-#endif
 #endif
 
 #ifndef MI_DEFAULT_RESERVE_HUGE_OS_PAGES
@@ -103,6 +99,15 @@ typedef struct mi_option_desc_s {
 #endif
 
 
+#ifndef MI_DEFAULT_ALLOW_THP
+#if defined(__ANDROID__)
+#define MI_DEFAULT_ALLOW_THP  0
+#else
+#define MI_DEFAULT_ALLOW_THP  1
+#endif
+#endif
+
+// Static options
 static mi_option_desc_t options[_mi_option_last] =
 {
   // stable options
@@ -163,6 +168,8 @@ static mi_option_desc_t options[_mi_option_last] =
   { 0,   UNINIT, MI_OPTION(guarded_sample_seed)},
   { 0,   UNINIT, MI_OPTION(target_segments_per_thread) }, // abandon segments beyond this point, or 0 to disable.
   { 10000, UNINIT, MI_OPTION(generic_collect) },          // collect heaps every N (=10000) generic allocation calls
+  { MI_DEFAULT_ALLOW_THP, 
+         UNINIT, MI_OPTION(allow_thp) }                 // allow transparent huge pages?
 };
 
 static void mi_option_init(mi_option_desc_t* desc);

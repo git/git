@@ -32,6 +32,7 @@ terms of the MIT license. A copy of the license can be found in the file
 #if defined(__linux__)
   #include <features.h>
   #include <sys/prctl.h>    // THP disable, PR_SET_VMA
+  #include <sys/sysinfo.h>  // sysinfo
   #if defined(__GLIBC__) && !defined(PR_SET_VMA)
   #include <linux/prctl.h>
   #endif
@@ -49,6 +50,7 @@ terms of the MIT license. A copy of the license can be found in the file
   #if !defined(MAC_OS_X_VERSION_10_7)
   #define MAC_OS_X_VERSION_10_7   1070
   #endif
+  #include <sys/sysctl.h>
 #elif defined(__FreeBSD__) || defined(__DragonFly__)
   #include <sys/param.h>
   #if __FreeBSD_version >= 1200000
@@ -119,43 +121,71 @@ static inline int mi_prim_access(const char *fpath, int mode) {
 
 static bool unix_detect_overcommit(void) {
   bool os_overcommit = true;
-#if defined(__linux__)
-  int fd = mi_prim_open("/proc/sys/vm/overcommit_memory", O_RDONLY);
-	if (fd >= 0) {
-    char buf[32];
-    ssize_t nread = mi_prim_read(fd, &buf, sizeof(buf));
-    mi_prim_close(fd);
-    // <https://www.kernel.org/doc/Documentation/vm/overcommit-accounting>
-    // 0: heuristic overcommit, 1: always overcommit, 2: never overcommit (ignore NORESERVE)
-    if (nread >= 1) {
-      os_overcommit = (buf[0] == '0' || buf[0] == '1');
+  #if defined(__linux__)
+    int fd = mi_prim_open("/proc/sys/vm/overcommit_memory", O_RDONLY);
+    if (fd >= 0) {
+      char buf[32];
+      ssize_t nread = mi_prim_read(fd, &buf, sizeof(buf));
+      mi_prim_close(fd);
+      // <https://www.kernel.org/doc/Documentation/vm/overcommit-accounting>
+      // 0: heuristic overcommit, 1: always overcommit, 2: never overcommit (ignore NORESERVE)
+      if (nread >= 1) {
+        os_overcommit = (buf[0] == '0' || buf[0] == '1');
+      }
     }
-  }
-#elif defined(__FreeBSD__)
-  int val = 0;
-  size_t olen = sizeof(val);
-  if (sysctlbyname("vm.overcommit", &val, &olen, NULL, 0) == 0) {
-    os_overcommit = (val != 0);
-  }
-#else
-  // default: overcommit is true
-#endif
+  #elif defined(__FreeBSD__)
+    int val = 0;
+    size_t olen = sizeof(val);
+    if (sysctlbyname("vm.overcommit", &val, &olen, NULL, 0) == 0) {
+      os_overcommit = (val != 0);
+    }
+  #else
+    // default: overcommit is true
+  #endif
   return os_overcommit;
+}
+
+// try to detect the physical memory dynamically (if possible)
+static void unix_detect_physical_memory( size_t page_size, size_t* physical_memory_in_kib ) {
+  #if defined(CTL_HW) && (defined(HW_PHYSMEM64) || defined(HW_MEMSIZE))  // freeBSD, macOS
+    MI_UNUSED(page_size);
+    int64_t physical_memory = 0;
+    size_t length = sizeof(int64_t);
+    #if defined(HW_PHYSMEM64)
+    int mib[2] = { CTL_HW, HW_PHYSMEM64 };
+    #else
+    int mib[2] = { CTL_HW, HW_MEMSIZE };
+    #endif
+    const int err = sysctl(mib, 2, &physical_memory, &length, NULL, 0);
+    if (err==0 && physical_memory > 0) {
+      const int64_t phys_in_kib = physical_memory / MI_KiB;
+      if (phys_in_kib > 0 && (uint64_t)phys_in_kib <= SIZE_MAX) {
+        *physical_memory_in_kib = (size_t)phys_in_kib;
+      }
+    }
+  #elif defined(__linux__)
+    MI_UNUSED(page_size);
+    struct sysinfo info; _mi_memzero_var(info);
+    const int err = sysinfo(&info);
+    if (err==0 && info.totalram > 0 && info.totalram <= SIZE_MAX) {
+      *physical_memory_in_kib = (size_t)info.totalram / MI_KiB;
+    }
+  #elif defined(_SC_PHYS_PAGES)  // do not use by default as it might cause allocation (by using `fopen` to parse /proc/meminfo) (issue #1100)
+    const long pphys = sysconf(_SC_PHYS_PAGES);
+    const size_t psize_in_kib = page_size / MI_KiB;
+    if (psize_in_kib > 0 && pphys > 0 && (unsigned long)pphys <= SIZE_MAX && (size_t)pphys <= (SIZE_MAX/psize_in_kib)) {
+      *physical_memory_in_kib = (size_t)pphys * psize_in_kib;
+    }
+  #endif
 }
 
 void _mi_prim_mem_init( mi_os_mem_config_t* config )
 {
   long psize = sysconf(_SC_PAGESIZE);
-  if (psize > 0) {
+  if (psize > 0 && (unsigned long)psize < SIZE_MAX) {
     config->page_size = (size_t)psize;
     config->alloc_granularity = (size_t)psize;
-    #if defined(_SC_PHYS_PAGES)
-    long pphys = sysconf(_SC_PHYS_PAGES);
-    const size_t psize_in_kib = (size_t)psize / MI_KiB;
-    if (psize_in_kib > 0 && pphys > 0 && (size_t)pphys <= (SIZE_MAX/psize_in_kib)) {
-      config->physical_memory_in_kib = (size_t)pphys * psize_in_kib;
-    }
-    #endif
+    unix_detect_physical_memory(config->page_size, &config->physical_memory_in_kib);
   }
   config->large_page_size = MI_UNIX_LARGE_PAGE_SIZE;
   config->has_overcommit = unix_detect_overcommit();
@@ -167,7 +197,7 @@ void _mi_prim_mem_init( mi_os_mem_config_t* config )
   #if defined(MI_NO_THP)
   if (true)
   #else
-  if (!mi_option_is_enabled(mi_option_allow_large_os_pages)) // disable THP also if large OS pages are not allowed in the options
+  if (!mi_option_is_enabled(mi_option_allow_thp)) // disable THP if requested through an option
   #endif
   {
     int val = 0;
@@ -295,7 +325,7 @@ static void* unix_mmap(void* addr, size_t size, size_t try_alignment, int protec
   protect_flags |= PROT_MAX(PROT_READ | PROT_WRITE); // BSD
   #endif
   // huge page allocation
-  if (allow_large && (large_only || (_mi_os_use_large_page(size, try_alignment) && mi_option_get(mi_option_allow_large_os_pages) == 1))) {
+  if (allow_large && (large_only || (_mi_os_canuse_large_page(size, try_alignment) && mi_option_is_enabled(mi_option_allow_large_os_pages)))) {
     static _Atomic(size_t) large_page_try_ok; // = 0;
     size_t try_ok = mi_atomic_load_acquire(&large_page_try_ok);
     if (!large_only && try_ok > 0) {
@@ -354,7 +384,8 @@ static void* unix_mmap(void* addr, size_t size, size_t try_alignment, int protec
   if (p == NULL) {
     *is_large = false;
     p = unix_mmap_prim_aligned(addr, size, try_alignment, protect_flags, flags, fd);
-    if (p != NULL) {
+    #if !defined(MI_NO_THP)
+    if (p != NULL && allow_large && mi_option_is_enabled(mi_option_allow_thp) && _mi_os_canuse_large_page(size, try_alignment)) {
       #if defined(MADV_HUGEPAGE)
       // Many Linux systems don't allow MAP_HUGETLB but they support instead
       // transparent huge pages (THP). Generally, it is not required to call `madvise` with MADV_HUGE
@@ -362,22 +393,19 @@ static void* unix_mmap(void* addr, size_t size, size_t try_alignment, int protec
       // in that case -- in particular for our large regions (in `memory.c`).
       // However, some systems only allow THP if called with explicit `madvise`, so
       // when large OS pages are enabled for mimalloc, we call `madvise` anyways.
-      if (allow_large && _mi_os_use_large_page(size, try_alignment)) {
-        if (unix_madvise(p, size, MADV_HUGEPAGE) == 0) {
-          // *is_large = true; // possibly
-        };
-      }
+      if (unix_madvise(p, size, MADV_HUGEPAGE) == 0) {
+        // *is_large = true; // possibly
+      };
       #elif defined(__sun)
-      if (allow_large && _mi_os_use_large_page(size, try_alignment)) {
-        struct memcntl_mha cmd = {0};
-        cmd.mha_pagesize = _mi_os_large_page_size();
-        cmd.mha_cmd = MHA_MAPSIZE_VA;
-        if (memcntl((caddr_t)p, size, MC_HAT_ADVISE, (caddr_t)&cmd, 0, 0) == 0) {
-          // *is_large = true; // possibly
-        }
+      struct memcntl_mha cmd = {0};
+      cmd.mha_pagesize = _mi_os_large_page_size();
+      cmd.mha_cmd = MHA_MAPSIZE_VA;
+      if (memcntl((caddr_t)p, size, MC_HAT_ADVISE, (caddr_t)&cmd, 0, 0) == 0) {
+        // *is_large = true; // possibly
       }
       #endif
     }
+    #endif
   }
   return p;
 }
@@ -446,7 +474,7 @@ int _mi_prim_decommit(void* start, size_t size, bool* needs_recommit) {
   #else
     // decommit: use MADV_DONTNEED as it decreases rss immediately (unlike MADV_FREE)
     err = unix_madvise(start, size, MADV_DONTNEED);
-  #endif  
+  #endif
   #if !MI_DEBUG && MI_SECURE<=2
     *needs_recommit = false;
   #else
@@ -467,8 +495,8 @@ int _mi_prim_reset(void* start, size_t size) {
   int err = 0;
 
   // on macOS can use MADV_FREE_REUSABLE (but we disable this for now as it seems slower)
-  #if 0 && defined(__APPLE__) && defined(MADV_FREE_REUSABLE) 
-  err = unix_madvise(start, size, MADV_FREE_REUSABLE);  
+  #if 0 && defined(__APPLE__) && defined(MADV_FREE_REUSABLE)
+  err = unix_madvise(start, size, MADV_FREE_REUSABLE);
   if (err==0) return 0;
   // fall through
   #endif
