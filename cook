@@ -100,8 +100,7 @@ sub get_message_parent {
 	my @line = ();
 	my %irt = ();
 
-	open(my $fh, "-|", qw(curl -s),
-	     "https://lore.kernel.org/git/" . "$mid" . "/raw");
+	open(my $fh, "-|", qw(b4 -q mbox --single-message -o-), "$mid");
 	while (<$fh>) {
 		last if (/^$/);
 		chomp;
