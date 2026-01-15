@@ -5301,7 +5301,7 @@ static void merge_ort_internal(struct merge_options *opt,
 			       struct commit *h2,
 			       struct merge_result *result)
 {
-	struct commit_list *merge_bases = copy_commit_list(_merge_bases);
+	struct commit_list *merge_bases = commit_list_copy(_merge_bases);
 	struct commit *next;
 	struct commit *merged_merge_bases;
 	const char *ancestor_name;

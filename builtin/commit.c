@@ -1849,7 +1849,7 @@ int cmd_commit(int argc,
 	} else if (amend) {
 		if (!reflog_msg)
 			reflog_msg = "commit (amend)";
-		parents = copy_commit_list(current_head->parents);
+		parents = commit_list_copy(current_head->parents);
 	} else if (whence == FROM_MERGE) {
 		struct strbuf m = STRBUF_INIT;
 		FILE *fp;

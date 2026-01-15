@@ -4224,7 +4224,7 @@ static void save_parents(struct rev_info *revs, struct commit *commit)
 	if (*pp)
 		return;
 	if (commit->parents)
-		*pp = copy_commit_list(commit->parents);
+		*pp = commit_list_copy(commit->parents);
 	else
 		*pp = EMPTY_PARENT_LIST;
 }
@@ -4294,7 +4294,7 @@ static void track_linear(struct rev_info *revs, struct commit *commit)
 			commit->object.flags |= TRACK_LINEAR;
 	}
 	free_commit_list(revs->previous_parents);
-	revs->previous_parents = copy_commit_list(commit->parents);
+	revs->previous_parents = commit_list_copy(commit->parents);
 }
 
 static struct commit *get_revision_1(struct rev_info *revs)
