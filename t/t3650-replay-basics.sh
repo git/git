@@ -43,12 +43,66 @@ test_expect_success 'setup' '
 	test_commit L &&
 	test_commit M &&
 
+	git switch --detach topic4 &&
+	test_commit N &&
+	test_commit O &&
+	git switch -c topic-with-merge topic4 &&
+	test_merge P O --no-ff &&
+	git switch main &&
+
 	git switch -c conflict B &&
 	test_commit C.conflict C.t conflict
 '
 
 test_expect_success 'setup bare' '
 	git clone --bare . bare
+'
+
+test_expect_success 'argument to --advance must be a reference' '
+	echo "fatal: argument to --advance must be a reference" >expect &&
+	oid=$(git rev-parse main) &&
+	test_must_fail git replay --advance=$oid topic1..topic2 2>actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--onto with invalid commit-ish' '
+	printf "fatal: ${SQ}refs/not-valid${SQ} is not " >expect &&
+	printf "a valid commit-ish for --onto\n" >>expect &&
+	test_must_fail git replay --onto=refs/not-valid topic1..topic2 2>actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'option --onto or --advance is mandatory' '
+	echo "error: option --onto or --advance is mandatory" >expect &&
+	test_might_fail git replay -h >>expect &&
+	test_must_fail git replay topic1..topic2 2>actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'no base or negative ref gives no-replaying down to root error' '
+	echo "fatal: replaying down from root commit is not supported yet!" >expect &&
+	test_must_fail git replay --onto=topic1 topic2 2>actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'options --advance and --contained cannot be used together' '
+	printf "fatal: options ${SQ}--advance${SQ} " >expect &&
+	printf "and ${SQ}--contained${SQ} cannot be used together\n" >>expect &&
+	test_must_fail git replay --advance=main --contained \
+		topic1..topic2 2>actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'cannot advance target ... ordering would be ill-defined' '
+	echo "fatal: cannot advance target with multiple sources because ordering would be ill-defined" >expect &&
+	test_must_fail git replay --advance=main main topic1 topic2 2>actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'replaying merge commits is not supported yet' '
+	echo "fatal: replaying merge commits is not supported yet!" >expect &&
+	test_must_fail git replay --advance=main main..topic-with-merge 2>actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'using replay to rebase two branches, one on top of other' '
