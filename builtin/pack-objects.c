@@ -3863,8 +3863,11 @@ static void read_packs_list_from_stdin(struct rev_info *revs)
 	repo_for_each_pack(the_repository, p) {
 		const char *pack_name = pack_basename(p);
 
-		if ((item = string_list_lookup(&include_packs, pack_name)))
+		if ((item = string_list_lookup(&include_packs, pack_name))) {
+			if (exclude_promisor_objects && p->pack_promisor)
+				die(_("packfile %s is a promisor but --exclude-promisor-objects was given"), p->pack_name);
 			item->util = p;
+		}
 		if ((item = string_list_lookup(&exclude_packs, pack_name)))
 			item->util = p;
 	}
@@ -3942,6 +3945,7 @@ static void read_stdin_packs(enum stdin_packs_mode mode, int rev_list_unpacked)
 	revs.tree_objects = 1;
 	revs.tag_objects = 1;
 	revs.ignore_missing_links = 1;
+	revs.exclude_promisor_objects = exclude_promisor_objects;
 
 	/* avoids adding objects in excluded packs */
 	ignore_packed_keep_in_core = 1;
@@ -5098,9 +5102,13 @@ int cmd_pack_objects(int argc,
 				  exclude_promisor_objects_best_effort,
 				  "--exclude-promisor-objects-best-effort");
 	if (exclude_promisor_objects) {
-		use_internal_rev_list = 1;
 		fetch_if_missing = 0;
-		strvec_push(&rp, "--exclude-promisor-objects");
+
+		/* --stdin-packs handles promisor objects separately. */
+		if (!stdin_packs) {
+			use_internal_rev_list = 1;
+			strvec_push(&rp, "--exclude-promisor-objects");
+		}
 	} else if (exclude_promisor_objects_best_effort) {
 		use_internal_rev_list = 1;
 		fetch_if_missing = 0;

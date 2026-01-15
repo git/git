@@ -319,6 +319,45 @@ test_expect_success '--stdin-packs=follow walks into unknown packs' '
 	)
 '
 
+test_expect_success '--stdin-packs with promisors' '
+	test_when_finished "rm -fr repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		git config set maintenance.auto false &&
+		git remote add promisor garbage &&
+		git config set remote.promisor.promisor true &&
+
+		for c in A B C D
+		do
+			echo "$c" >file &&
+			git add file &&
+			git commit --message "$c" &&
+			git tag "$c" || return 1
+		done &&
+
+		A="$(echo A | git pack-objects --revs $packdir/pack)" &&
+		B="$(echo A..B | git pack-objects --revs $packdir/pack --filter=blob:none)" &&
+		C="$(echo B..C | git pack-objects --revs $packdir/pack)" &&
+		D="$(echo C..D | git pack-objects --revs $packdir/pack)" &&
+		touch $packdir/pack-$B.promisor &&
+
+		test_must_fail git pack-objects --stdin-packs --exclude-promisor-objects pack- 2>err <<-EOF &&
+			pack-$B.pack
+		EOF
+		test_grep "is a promisor but --exclude-promisor-objects was given" err &&
+
+		PACK=$(git pack-objects --stdin-packs=follow --exclude-promisor-objects $packdir/pack <<-EOF
+			pack-$D.pack
+			EOF
+		) &&
+		objects_in_packs $C $D >expect &&
+		objects_in_packs $PACK >actual &&
+		test_cmp expect actual &&
+		rm -f $packdir/pack-$PACK.*
+	)
+'
+
 stdin_packs__follow_with_only () {
 	rm -fr stdin_packs__follow_with_only &&
 	git init stdin_packs__follow_with_only &&
