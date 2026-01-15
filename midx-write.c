@@ -1012,6 +1012,20 @@ static bool midx_needs_update(struct multi_pack_index *midx, struct write_midx_c
 	bool needed = true;
 
 	/*
+	 * Ensure that we have a valid checksum before consulting the
+	 * exisiting MIDX in order to determine if we can avoid an
+	 * update.
+	 *
+	 * This is necessary because the given MIDX is loaded directly
+	 * from the object store (because we still compare our proposed
+	 * update to any on-disk MIDX regardless of whether or not we
+	 * have assigned "ctx.m") and is thus not guaranteed to have a
+	 * valid checksum.
+	 */
+	if (!midx_checksum_valid(midx))
+		goto out;
+
+	/*
 	 * Ignore incremental updates for now. The assumption is that any
 	 * incremental update would be either empty (in which case we will bail
 	 * out later) or it would actually cover at least one new pack.

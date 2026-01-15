@@ -415,8 +415,6 @@ test_expect_success 'up-to-date multi-pack-index is retained' '
 	)
 '
 
-test_done
-
 test_expect_success 'verify multi-pack-index success' '
 	git multi-pack-index verify --object-dir=$objdir
 '
