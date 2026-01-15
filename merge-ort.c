@@ -5382,7 +5382,7 @@ static void merge_ort_internal(struct merge_options *opt,
 	opt->ancestor = NULL;  /* avoid accidental re-use of opt->ancestor */
 
 out:
-	free_commit_list(merge_bases);
+	commit_list_free(merge_bases);
 }
 
 void merge_incore_nonrecursive(struct merge_options *opt,

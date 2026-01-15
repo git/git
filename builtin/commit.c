@@ -1978,7 +1978,7 @@ int cmd_commit(int argc,
 
 cleanup:
 	free_commit_extra_headers(extra);
-	free_commit_list(parents);
+	commit_list_free(parents);
 	strbuf_release(&author_ident);
 	strbuf_release(&err);
 	strbuf_release(&sb);

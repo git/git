@@ -1166,7 +1166,7 @@ static int dfs_on_ref(const struct reference *ref, void *cb_data)
 		}
 	}
 
-	free_commit_list(stack);
+	commit_list_free(stack);
 	return result;
 }
 

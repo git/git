@@ -558,7 +558,7 @@ static void process_object(struct object *obj, const char *path, void *data)
 			describe_commit(pcd->current_commit, pcd->dst);
 			strbuf_addf(pcd->dst, ":%s", path);
 		}
-		free_commit_list(pcd->revs->commits);
+		commit_list_free(pcd->revs->commits);
 		pcd->revs->commits = NULL;
 	}
 }

@@ -257,7 +257,7 @@ static struct commit_list *best_bisection_sorted(struct commit_list *list, int n
 			p = p->next;
 	}
 	if (p) {
-		free_commit_list(p->next);
+		commit_list_free(p->next);
 		p->next = NULL;
 	}
 	strbuf_release(&buf);
@@ -438,7 +438,7 @@ void find_bisection(struct commit_list **commit_list, int *reaches,
 	if (best) {
 		if (!(bisect_flags & FIND_BISECTION_ALL)) {
 			list->item = best->item;
-			free_commit_list(list->next);
+			commit_list_free(list->next);
 			best = list;
 			best->next = NULL;
 		}
@@ -559,8 +559,8 @@ struct commit_list *filter_skipped(struct commit_list *list,
 		} else {
 			if (!show_all) {
 				if (!skipped_first || !*skipped_first) {
-					free_commit_list(next);
-					free_commit_list(filtered);
+					commit_list_free(next);
+					commit_list_free(filtered);
 					return list;
 				}
 			} else if (skipped_first && !*skipped_first) {
@@ -879,7 +879,7 @@ static enum bisect_error check_merge_bases(size_t rev_nr, struct commit **rev, i
 		}
 	}
 
-	free_commit_list(result);
+	commit_list_free(result);
 	return res;
 }
 
@@ -1142,7 +1142,7 @@ enum bisect_error bisect_next_all(struct repository *r, const char *prefix)
 
 	res = bisect_checkout(bisect_rev, no_checkout);
 cleanup:
-	free_commit_list(tried);
+	commit_list_free(tried);
 	release_revisions(&revs);
 	strvec_clear(&rev_argv);
 	return res;

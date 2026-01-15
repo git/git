@@ -615,7 +615,7 @@ void diff_get_merge_base(const struct rev_info *revs, struct object_id *mb)
 
 	oidcpy(mb, &merge_bases->item->object.oid);
 
-	free_commit_list(merge_bases);
+	commit_list_free(merge_bases);
 }
 
 void run_diff_index(struct rev_info *revs, unsigned int option)

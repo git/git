@@ -5,7 +5,7 @@ expression E;
 (
   free(E);
 |
-  free_commit_list(E);
+  commit_list_free(E);
 )
 
 @@
@@ -15,7 +15,7 @@ expression E;
 (
   free(E);
 |
-  free_commit_list(E);
+  commit_list_free(E);
 )
 
 @@
@@ -30,7 +30,7 @@ expression E;
 @@
 - if (E)
 - {
-  free_commit_list(E);
+  commit_list_free(E);
   E = NULL;
 - }
 
@@ -41,5 +41,5 @@ statement S;
 - if (E) {
 + if (E)
   S
-  free_commit_list(E);
+  commit_list_free(E);
 - }

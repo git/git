@@ -154,7 +154,7 @@ int cmd_commit_tree(int argc,
 	ret = 0;
 
 out:
-	free_commit_list(parents);
+	commit_list_free(parents);
 	strbuf_release(&buffer);
 	return ret;
 }

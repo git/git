@@ -485,7 +485,7 @@ static int real_merge(struct merge_tree_options *o,
 			die(_("refusing to merge unrelated histories"));
 		merge_bases = commit_list_reverse(merge_bases);
 		merge_incore_recursive(&opt, merge_bases, parent1, parent2, &result);
-		free_commit_list(merge_bases);
+		commit_list_free(merge_bases);
 	}
 
 	if (result.clean < 0)

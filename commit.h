@@ -191,7 +191,7 @@ struct commit_list *commit_list_copy(const struct commit_list *list);
 /* Modify list in-place to reverse it, returning new head; list will be tail */
 struct commit_list *commit_list_reverse(struct commit_list *list);
 
-void free_commit_list(struct commit_list *list);
+void commit_list_free(struct commit_list *list);
 
 /*
  * Deprecated compatibility functions for `struct commit_list`, to be removed
@@ -205,6 +205,11 @@ static inline struct commit_list *copy_commit_list(struct commit_list *l)
 static inline struct commit_list *reverse_commit_list(struct commit_list *l)
 {
 	return commit_list_reverse(l);
+}
+
+static inline void free_commit_list(struct commit_list *l)
+{
+	commit_list_free(l);
 }
 
 struct rev_info; /* in revision.h, it circularly uses enum cmit_fmt */

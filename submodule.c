@@ -639,7 +639,7 @@ void show_submodule_diff_summary(struct diff_options *o, const char *path,
 	print_submodule_diff_summary(sub, &rev, o);
 
 out:
-	free_commit_list(merge_bases);
+	commit_list_free(merge_bases);
 	release_revisions(&rev);
 	clear_commit_marks(left, ~0);
 	clear_commit_marks(right, ~0);
@@ -729,7 +729,7 @@ void show_submodule_inline_diff(struct diff_options *o, const char *path,
 
 done:
 	strbuf_release(&sb);
-	free_commit_list(merge_bases);
+	commit_list_free(merge_bases);
 	if (left)
 		clear_commit_marks(left, ~0);
 	if (right)

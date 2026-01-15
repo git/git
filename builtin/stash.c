@@ -1495,7 +1495,7 @@ static int do_create_stash(const struct pathspec *ps, struct strbuf *stash_msg_b
 		goto done;
 	}
 
-	free_commit_list(parents);
+	commit_list_free(parents);
 	parents = NULL;
 
 	if (include_untracked) {
@@ -1564,7 +1564,7 @@ done:
 	strbuf_release(&commit_tree_label);
 	strbuf_release(&msg);
 	strbuf_release(&untracked_files);
-	free_commit_list(parents);
+	commit_list_free(parents);
 	free(branch_name_buf);
 	return ret;
 }
@@ -2184,7 +2184,7 @@ static int do_import_stash(struct repository *r, const char *rev)
 out:
 	if (this && buffer)
 		repo_unuse_commit_buffer(r, this, buffer);
-	free_commit_list(items);
+	commit_list_free(items);
 	free(msg);
 
 	return res;
@@ -2318,7 +2318,7 @@ static int do_export_stash(struct repository *r,
 		next = commit_list_append(prev, next);
 		next = commit_list_append(stash, next);
 		res = write_commit_with_parents(r, &out, &stash->object.oid, parents);
-		free_commit_list(parents);
+		commit_list_free(parents);
 		if (res)
 			goto out;
 		prev = lookup_commit_reference(r, &out);
@@ -2330,7 +2330,7 @@ static int do_export_stash(struct repository *r,
 		puts(oid_to_hex(&prev->object.oid));
 out:
 	strbuf_release(&revision);
-	free_commit_list(items);
+	commit_list_free(items);
 
 	return res;
 }
