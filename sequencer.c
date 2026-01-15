@@ -4317,7 +4317,7 @@ static int do_merge(struct repository *r,
 		      git_path_merge_head(r), 0);
 	write_message("no-ff", 5, git_path_merge_mode(r), 0);
 
-	bases = reverse_commit_list(bases);
+	bases = commit_list_reverse(bases);
 
 	repo_read_index(r);
 	init_ui_merge_options(&o, r);

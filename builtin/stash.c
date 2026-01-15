@@ -2308,7 +2308,7 @@ static int do_export_stash(struct repository *r,
 	 * but where their first parents form a chain to our original empty
 	 * base commit.
 	 */
-	items = reverse_commit_list(items);
+	items = commit_list_reverse(items);
 	for (cur = items; cur; cur = cur->next) {
 		struct commit_list *parents = NULL;
 		struct commit_list **next = &parents;

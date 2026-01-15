@@ -5314,7 +5314,7 @@ static void merge_ort_internal(struct merge_options *opt,
 			goto out;
 		}
 		/* See merge-ort.h:merge_incore_recursive() declaration NOTE */
-		merge_bases = reverse_commit_list(merge_bases);
+		merge_bases = commit_list_reverse(merge_bases);
 	}
 
 	merged_merge_bases = pop_commit(&merge_bases);

@@ -691,7 +691,7 @@ struct commit_list *commit_list_copy(const struct commit_list *list)
 	return head;
 }
 
-struct commit_list *reverse_commit_list(struct commit_list *list)
+struct commit_list *commit_list_reverse(struct commit_list *list)
 {
 	struct commit_list *next = NULL, *current, *backup;
 	for (current = list; current; current = backup) {
