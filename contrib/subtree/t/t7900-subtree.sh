@@ -368,6 +368,28 @@ test_expect_success 'split requires path given by option --prefix must exist' '
 	)
 '
 
+test_expect_success 'split works when prefix exists in commit but not in working tree' '
+	subtree_test_create_repo "$test_count" &&
+	(
+		cd "$test_count" &&
+
+		# create subtree
+		mkdir pkg &&
+		echo ok >pkg/file &&
+		git add pkg &&
+		git commit -m "add pkg" &&
+		good=$(git rev-parse HEAD) &&
+
+		# remove it from working tree in later commit
+		git rm -r pkg &&
+		git commit -m "remove pkg" &&
+
+		# must still be able to split using the old commit
+		git subtree split --prefix=pkg "$good" >out &&
+		test -s out
+	)
+'
+
 test_expect_success 'split rejects flags for add' '
 	subtree_test_create_repo "$test_count" &&
 	subtree_test_create_repo "$test_count/sub proj" &&
