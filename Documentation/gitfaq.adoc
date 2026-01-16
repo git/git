@@ -233,14 +233,30 @@ of refs, such that both sides end up with different commits on a branch that
 the other doesn't have.  This can result in important objects becoming
 unreferenced and possibly pruned by `git gc`, causing data loss.
 +
-Therefore, it's better to push your work to either the other system or a central
-server using the normal push and pull mechanism.  However, this doesn't always
-preserve important data, like stashes, so some people prefer to share a working
-tree across systems.
+Therefore, it's better to push your work to either the other system or a
+central server using the normal push and pull mechanism.  In Git 2.51, Git
+learned to import and export stashes, so it's possible to synchronize the state
+of the working tree by stashing it with `git stash`, then exporting either all
+stashes with `git stash export --to-ref refs/heads/stashes` (assuming you want
+to export to the `stashes` branch) or selecting stashes by adding their numbers
+to the end of that command.  It's also possible to include untracked files by
+using the `--include-untracked` argument when stashing the data in the first
+place, but be careful not to do this if any of these contain sensitive
+information.
 +
-If you do this, the recommended approach is to use `rsync -a --delete-after`
-(ideally with an encrypted connection such as with `ssh`) on the root of
-repository.  You should ensure several things when you do this:
+You can then push the `stashes` branch (or whatever branch you've exported to),
+fetch them to the local system (such as with `git fetch origin
++stashes:stashes`), and import the stashes on the other system with `git stash
+import stashes` (again, changing the name as necessary).  Applying the changes
+to the working tree can be done with `git stash pop` or `git stash apply`.
+This is the approach that is most robust and most likely to avoid unintended
+problems.
++
+Having said that, there are some cases where people nevertheless prefer to
+share a working tree across systems.  If you do this, the recommended approach
+is to use `rsync -a --delete-after` (ideally with an encrypted connection such
+as with `ssh`) on the root of repository.  You should ensure several things
+when you do this:
 +
 * If you have additional worktrees or a separate Git directory, they must be
   synced at the same time as the main working tree and repository.
@@ -251,10 +267,11 @@ repository.  You should ensure several things when you do this:
   any sort are taking place on it, including background operations like `git
   gc` and operations invoked by your editor).
 +
-Be aware that even with these recommendations, syncing in this way has some risk
-since it bypasses Git's normal integrity checking for repositories, so having
-backups is advised.  You may also wish to do a `git fsck` to verify the
-integrity of your data on the destination system after syncing.
+Be aware that even with these recommendations, syncing working trees in this
+way has some risk since it bypasses Git's normal integrity checking for
+repositories, so having backups is advised.  You may also wish to do a `git
+fsck` to verify the integrity of your data on the destination system after
+syncing.
 
 Common Issues
 -------------
