@@ -249,6 +249,16 @@ Fixes since v2.52
  * Mailmap update for Karsten
    (merge e97678c4ef js/mailmap-karsten-blees later to maint).
 
+ * Perf-test fixes.
+   (merge 79d301c767 jk/t-perf-fixes later to maint).
+
+ * Fix for a performance regression in "git cat-file".
+   (merge 9e8b448dd8 jk/cat-file-avoid-bitmap-when-unneeded later to maint).
+
+ * Update a FAQ entry on synching two separate repositories using the
+   "git stash export/import" recently introduced.
+   (merge 02fc44a989 bc/doc-stash-import-export later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 46207a54cc qj/doc-http-bad-want-response later to maint).
    (merge df90eccd93 kh/doc-commit-extra-references later to maint).
@@ -275,3 +285,6 @@ Fixes since v2.52
    (merge 06188ea5f3 rs/parse-config-expiry-simplify later to maint).
    (merge 861dbb1586 dd/t5403-modernise later to maint).
    (merge acffc5e9e5 ja/doc-synopsis-style-more later to maint).
+   (merge 6c5c7e7071 ac/t1420-use-more-direct-check later to maint).
+   (merge 2ac93bfcbc ds/builtin-doc-update later to maint).
+   (merge 3f051fc9c9 kh/doc-patch-id later to maint).
