@@ -28,9 +28,12 @@ test_expect_success 'lost and found something' '
 	test_tick &&
 	git reset --hard HEAD^ &&
 	git fsck --lost-found &&
-	test 2 = $(ls .git/lost-found/*/* | wc -l) &&
-	test -f .git/lost-found/commit/$(cat lost-commit) &&
-	test -f .git/lost-found/other/$(cat lost-other)
+	ls .git/lost-found/*/* >actual &&
+	cat >expect <<-EOF &&
+	.git/lost-found/commit/$(cat lost-commit)
+	.git/lost-found/other/$(cat lost-other)
+	EOF
+	test_cmp expect actual
 '
 
 test_done
