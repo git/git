@@ -12,6 +12,7 @@
 #include "pathspec.h"
 #include "json-writer.h"
 #include "environment.h"
+#include "read-cache-ll.h"
 
 static int decode_tree_entry(struct tree_desc *desc, const char *buf, unsigned long size, struct strbuf *err)
 {
@@ -441,8 +442,9 @@ int traverse_trees(struct index_state *istate,
 	struct strbuf base = STRBUF_INIT;
 	int interesting = 1;
 	char *traverse_path;
+	struct repository *r = istate ? istate->repo : the_repository;
 
-	if (traverse_trees_cur_depth > max_allowed_tree_depth)
+	if (traverse_trees_cur_depth > r->settings.max_allowed_tree_depth)
 		return error("exceeded maximum allowed tree depth");
 
 	traverse_trees_count++;

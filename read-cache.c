@@ -3807,7 +3807,7 @@ void overlay_tree_on_index(struct index_state *istate,
 
 	if (repo_get_oid(the_repository, tree_name, &oid))
 		die("tree-ish %s not found.", tree_name);
-	tree = parse_tree_indirect(&oid);
+	tree = repo_parse_tree_indirect(the_repository, &oid);
 	if (!tree)
 		die("bad tree-ish %s", tree_name);
 

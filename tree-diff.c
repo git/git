@@ -439,7 +439,7 @@ static void ll_diff_tree_paths(
 	void *ttree, **tptree;
 	int i;
 
-	if (depth > max_allowed_tree_depth)
+	if (depth > opt->repo->settings.max_allowed_tree_depth)
 		die("exceeded maximum allowed tree depth");
 
 	FAST_ARRAY_ALLOC(tp, nparent);

@@ -474,7 +474,7 @@ static int fill_bitmap_tree(struct bitmap_writer *writer,
 		return 0;
 	bitmap_set(bitmap, pos);
 
-	if (parse_tree(tree) < 0)
+	if (repo_parse_tree(writer->repo, tree) < 0)
 		die("unable to load tree object %s",
 		    oid_to_hex(&tree->object.oid));
 	init_tree_desc(&desc, &tree->object.oid, tree->buffer, tree->size);
