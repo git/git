@@ -1,7 +1,7 @@
 # Bulgarian translation of git po-file.
-# Copyright (C) 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025 Alexander Shopov <ash@kambanaria.org>.
+# Copyright (C) 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026 Alexander Shopov <ash@kambanaria.org>.
 # This file is distributed under the same license as the git package.
-# Alexander Shopov <ash@kambanaria.org>, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025.
+# Alexander Shopov <ash@kambanaria.org>, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026.
 # ========================
 # DICTIONARY TO MERGE IN GIT GUI
 # ------------------------
@@ -244,6 +244,15 @@
 # initial branch първоначален клон
 # garbage повредени данни
 # keep file файл за запазване на директория
+# commit transaction завършвам транзакция
+# ref transaction транзакция за указатели
+# refspec указател на версия
+# stage добавям в индекса
+# unstage изваждам от индекса
+# upstream branch следен клон
+# revert отменям
+#
+#
 #
 # ------------------------
 # „$var“ - може да не сработва за shell има gettext и eval_gettext - проверка - намират се лесно по „$
@@ -270,10 +279,10 @@
 # for i in `sort -u FILES`; do cnt=`grep $i FILES | wc -l`; echo $cnt $i ;done | sort -n
 msgid ""
 msgstr ""
-"Project-Id-Version: git v2.52.0-rc1\n"
+"Project-Id-Version: git v2.53.0-rc0\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2025-11-06 23:58+0000\n"
-"PO-Revision-Date: 2025-11-09 18:23+0100\n"
+"POT-Creation-Date: 2026-01-23 18:13+0100\n"
+"PO-Revision-Date: 2026-01-24 11:18+0100\n"
 "Last-Translator: Alexander Shopov <ash@kambanaria.org>\n"
 "Language-Team: Bulgarian <dict@fsa-bg.org>\n"
 "Language: bg\\n\"\n"
@@ -1053,7 +1062,7 @@ msgid ""
 "modifications.\n"
 msgstr ""
 "Следните пътища са преместени извън дефинициите за частично\n"
-"изтегляне, но вече не са частични заради локални промени.\n"
+"изтегляне, но вече не са частични заради локални промѐни.\n"
 
 msgid ""
 "To correct the sparsity of these paths, do the following:\n"
@@ -2051,11 +2060,11 @@ msgstr ""
 msgid "'%s' is not a valid branch name"
 msgstr "„%s“ не е позволено име за клон"
 
-msgid "See `man git check-ref-format`"
+msgid "See 'git help check-ref-format'"
 msgstr ""
-"Вижте страницата в ръководството:\n"
+"Вижте:\n"
 "\n"
-"    git check-ref-format"
+"    git help check-ref-format"
 
 #, c-format
 msgid "a branch named '%s' already exists"
@@ -2988,6 +2997,18 @@ msgid "must end with a color"
 msgstr "трябва да завършва с цвят"
 
 #, c-format
+msgid "unknown value for config '%s': %s"
+msgstr "непозната стойност за настройката „%s“: „%s“"
+
+msgid ""
+"option diff-algorithm accepts \"myers\", \"minimal\", \"patience\" and "
+"\"histogram\""
+msgstr ""
+"опцията приема следните варианти за алгоритъм за разлики: „myers“ (по "
+"Майерс), „minimal“ (минимизиране на разликите), „patience“ (пасианс) и "
+"„histogram“ (хистограмен)"
+
+#, c-format
 msgid "cannot find revision %s to ignore"
 msgstr "версията за прескачане „%s“ липсва"
 
@@ -3053,6 +3074,12 @@ msgstr ""
 msgid "ignore whitespace differences"
 msgstr "без разлики в знаците за интервали"
 
+msgid "<algorithm>"
+msgstr "АЛГОРИТЪМ"
+
+msgid "choose a diff algorithm"
+msgstr "избор на АЛГОРИТЪМа за разлики"
+
 msgid "rev"
 msgstr "ВЕРС"
 
@@ -3069,7 +3096,7 @@ msgstr ""
 msgid "color lines by age"
 msgstr "оцветяване на редовете по възраст"
 
-msgid "spend extra cycles to find better match"
+msgid "spend extra cycles to find a better match"
 msgstr "допълнителни изчисления за по-добри резултати"
 
 msgid "use revisions from <file> instead of calling git-rev-list"
@@ -3301,13 +3328,13 @@ msgid "do not use"
 msgstr "да не се ползва"
 
 msgid "upstream"
-msgstr "клон-източник"
+msgstr "КЛОН_ИЗТОЧНИК"
 
 msgid "change the upstream info"
 msgstr "смяна на клона-източник"
 
 msgid "unset the upstream info"
-msgstr "изчистване на информацията за клон-източник"
+msgstr "изчистване на информацията за КЛОНа_ИЗТОЧНИК"
 
 msgid "use colored output"
 msgstr "цветен изход"
@@ -4287,8 +4314,8 @@ msgid "missing branch name; try -%c"
 msgstr "липсва име на клон, използвайте опцията „-%c“"
 
 #, c-format
-msgid "could not resolve %s"
-msgstr "„%s“ не може да се проследи"
+msgid "could not resolve '%s'"
+msgstr "„%s“ липсва"
 
 msgid "invalid path specification"
 msgstr "указан е неправилен път"
@@ -4696,7 +4723,7 @@ msgid "set config inside the new repository"
 msgstr "задаване на настройките на новото хранилище"
 
 msgid "server-specific"
-msgstr "специфични за сървъра"
+msgstr "СПЕЦИФИЧНИ_ЗА_СЪРВЪРА"
 
 msgid "option to transmit"
 msgstr "опция за пренос"
@@ -4944,7 +4971,7 @@ msgstr "максимален брой подавания в небазово н�
 
 msgid "maximum ratio between two levels of a split commit-graph"
 msgstr ""
-"максимално отношение на броя подавания в две последователни нива в раздробен "
+"максимално отношение на броя подавания в две последователни нива̀ в раздробен "
 "граф"
 
 msgid "only expire files older than a given date-time"
@@ -5578,7 +5605,8 @@ msgid ""
 "<name>"
 msgstr ""
 "git config get [ОПЦИЯ_ЗА_ФАЙЛ] [ОПЦИЯ_ЗА_ИЗВЕЖДАНЕ] [--includes] [--all] [--"
-"regexp=РЕГ_ИЗР][--value=ШАБЛОН] [--fixed-value] [--default=СТАНДАРТНО] ИМЕ"
+"regexp=РЕГУЛЯРЕН_ИЗРАЗ] [--value=ШАБЛОН] [--fixed-value] [--"
+"default=СТАНДАРТНО] ИМЕ"
 
 msgid ""
 "git config set [<file-option>] [--type=<type>] [--comment=<message>] [--all] "
@@ -5814,21 +5842,31 @@ msgstr "опциитe „--append“ и „--value=ШАБЛОН_ЗА_СТОЙН�
 #, c-format
 msgid ""
 "cannot overwrite multiple values with a single value\n"
-"       Use a regexp, --add or --replace-all to change %s."
+"       Use --value=<pattern>, --append or --all to change %s."
 msgstr ""
-"множество стойности не може да се замени с една.\n"
-"За да променѝте „%s“, ползвайте регулярен израз или опциите „--add“ и „--"
-"replace-all“."
+"множество стойности не може да се заменят с една.\n"
+"    За да променѝте „%s“, ползвайте  --value=РЕГУЛЯРЕН_ИЗРАЗ, „--append“ или "
+"„--all“."
+
+msgid "unset all multi-valued config options"
+msgstr ""
+"изчистване на всички стойности за конфигурационните опции, които поддържат "
+"много стойности"
+
+msgid "unset multi-valued config options with matching values"
+msgstr ""
+"изчистване на всички напасващи стойности за конфигурационните опции, които "
+"поддържат много стойности"
 
 #, c-format
 msgid "no such section: %s"
 msgstr "такъв раззел няма: %s"
 
 msgid "editing stdin is not supported"
-msgstr "не се поддържа редактиране на стандартния вход"
+msgstr "редактирането на стандартния вход не се поддържа"
 
 msgid "editing blobs is not supported"
-msgstr "не се поддържа редактиране на обекти-BLOB"
+msgstr "редактирането на обекти-BLOB не се поддържа"
 
 #, c-format
 msgid "cannot create configuration file %s"
@@ -5909,6 +5947,15 @@ msgid "--comment is only applicable to add/set/replace operations"
 msgstr ""
 "опцията „--comment“ е съвместима само с действията „add“ (добавяне)/„set“ "
 "(задаване)/„replace“ (замяна)"
+
+#, c-format
+msgid ""
+"cannot overwrite multiple values with a single value\n"
+"       Use a regexp, --add or --replace-all to change %s."
+msgstr ""
+"множество стойности не може да се замени с една.\n"
+"За да променѝте „%s“, ползвайте регулярен израз или опциите „--add“ и „--"
+"replace-all“."
 
 msgid "print sizes in human readable format"
 msgstr "извеждане на размерите на обектите във формат четим от хора"
@@ -6119,16 +6166,16 @@ msgid "working without -z is not supported"
 msgstr "опцията „-z“ е задължителна"
 
 msgid "pathspec arguments not supported"
-msgstr "не се поддържат аргументи с шаблони за пътища"
+msgstr "аргументи с шаблони за пътища не се поддържат"
 
 msgid "revision arguments not allowed"
-msgstr "не се поддържат опции за версии"
+msgstr "опциите за версии не се поддържат"
 
 msgid "invalid raw diff input"
 msgstr "неправилен необработен вход за разлики"
 
 msgid "tree objects not supported"
-msgstr "не се поддържат обекти-дървета"
+msgstr "обектите-дървета не се поддържат"
 
 msgid "got EOF while reading path"
 msgstr "край на файл (EOF) при изчитане на път"
@@ -6325,18 +6372,25 @@ msgstr ""
 "reencode=[yes|no]“ за обработка"
 
 #, c-format
-msgid "encountered signed commit %s; use --signed-commits=<mode> to handle it"
-msgstr ""
-"получено е подписано подаване „%s“ — ползвайте „--signed-commits=РЕЖИМ“ за "
-"обработка"
-
-#, c-format
 msgid "exporting %<PRIuMAX> signature(s) for commit %s"
 msgstr "изнасят се %<PRIuMAX> подпис(а) за подаването „%s“"
 
 #, c-format
 msgid "stripping signature(s) from commit %s"
 msgstr "пропускане на подписите към подаването „%s“"
+
+#, c-format
+msgid "encountered signed commit %s; use --signed-commits=<mode> to handle it"
+msgstr ""
+"получено е подписано подаване „%s“ — ползвайте „--signed-commits=РЕЖИМ“ за "
+"обработка"
+
+msgid ""
+"'strip-if-invalid' is not a valid mode for git fast-export with --signed-"
+"commits=<mode>"
+msgstr ""
+"„strip-if-invalid“ е грешен РЕЖИМ за „git fast-export“ с опцията „--signed-"
+"commits=РЕЖИМ“"
 
 #, c-format
 msgid ""
@@ -6352,17 +6406,24 @@ msgid "could not read tag %s"
 msgstr "етикетът „%s“ не може да се прочете"
 
 #, c-format
-msgid "encountered signed tag %s; use --signed-tags=<mode> to handle it"
-msgstr ""
-"получен е подписан етикет „%s“ — ползвайте „--signed-tags=РЕЖИМ“ за обработка"
-
-#, c-format
 msgid "exporting signed tag %s"
 msgstr "изнасяне на подписан етикет „%s“"
 
 #, c-format
 msgid "stripping signature from tag %s"
 msgstr "пропускане на подписите към етикета „%s“"
+
+#, c-format
+msgid "encountered signed tag %s; use --signed-tags=<mode> to handle it"
+msgstr ""
+"получен е подписан етикет „%s“ — ползвайте „--signed-tags=РЕЖИМ“ за обработка"
+
+msgid ""
+"'strip-if-invalid' is not a valid mode for git fast-export with --signed-"
+"tags=<mode>"
+msgstr ""
+"„strip-if-invalid“ е грешен РЕЖИМ за „git fast-export“ с опцията „--signed-"
+"tags=РЕЖИМ“"
 
 #, c-format
 msgid ""
@@ -6756,6 +6817,33 @@ msgstr "открити са много подписи „%s“.  Допълни�
 msgid "parse_one_signature() returned unknown hash algo"
 msgstr "„parse_one_signature()“ върна непознат алгоритъм за контролна сума"
 
+msgid "unknown"
+msgstr "непознат"
+
+#, c-format
+msgid ""
+"stripping invalid signature for commit '%.100s...'\n"
+"  allegedly by %s"
+msgstr ""
+"пропускане на грешния подпис към подаването „%.100s…“,\n"
+"  вероятно е на %s"
+
+#, c-format
+msgid ""
+"stripping invalid signature for commit '%.*s'\n"
+"  allegedly by %s"
+msgstr ""
+"пропускане на грешния подпис към подаването „%.*s“,\n"
+"  вероятно е на %s"
+
+#, c-format
+msgid ""
+"stripping invalid signature for commit\n"
+"  allegedly by %s"
+msgstr ""
+"пропускане на грешен подпис към подаване,\n"
+"  вероятно е на %s"
+
 msgid "expected committer but didn't get one"
 msgstr "очакваше се подаващ, но такъв липсва"
 
@@ -6770,10 +6858,6 @@ msgstr "пропускане на подпис на подаване"
 msgid "importing a commit signature verbatim"
 msgstr "дословно внасяне на подпис на подаване"
 
-msgid "encountered signed tag; use --signed-tags=<mode> to handle it"
-msgstr ""
-"получен е подписан етикет — ползвайте „--signed-tags=РЕЖИМ“ за обработка"
-
 #, c-format
 msgid "importing a tag signature verbatim for tag '%s'"
 msgstr "дословно внасяне на подпис на етикет за „%s“"
@@ -6781,6 +6865,17 @@ msgstr "дословно внасяне на подпис на етикет за
 #, c-format
 msgid "stripping a tag signature for tag '%s'"
 msgstr "пропускане на подписа на етикета „%s“"
+
+msgid "encountered signed tag; use --signed-tags=<mode> to handle it"
+msgstr ""
+"получен е подписан етикет — ползвайте „--signed-tags=РЕЖИМ“ за обработка"
+
+msgid ""
+"'strip-if-invalid' is not a valid mode for git fast-import with --signed-"
+"tags=<mode>"
+msgstr ""
+"„strip-if-invalid“ е грешен РЕЖИМ за „git fast-import“ с опцията „--signed-"
+"tags=РЕЖИМ“"
 
 #, c-format
 msgid "expected 'from' command, got '%s'"
@@ -6941,7 +7036,7 @@ msgstr "git fetch [ОПЦИЯ…] [ХРАНИЛИЩЕ [УКАЗАТЕЛ…]]"
 msgid "git fetch [<options>] <group>"
 msgstr "git fetch [ОПЦИЯ…] ГРУПА"
 
-msgid "git fetch --multiple [<options>] [(<repository> | <group>)...]"
+msgid "git fetch --multiple [<options>] [(<repository>|<group>)...]"
 msgstr "git fetch --multiple [ОПЦИЯ…] [(ХРАНИЛИЩЕ|ГРУПА)…]"
 
 msgid "git fetch --all [<options>]"
@@ -7188,7 +7283,7 @@ msgid "use atomic transaction to update references"
 msgstr "изискване на атомарни операции за обновяване на указателите"
 
 msgid "path to upload pack on remote end"
-msgstr "отдалечен път, където да се качи пакетът"
+msgstr "отдалечен ПЪТ, където да се качи пакетът"
 
 msgid "force overwrite of local reference"
 msgstr "принудително презаписване на локален указател"
@@ -7219,7 +7314,7 @@ msgstr ""
 "хранилище и презаписване на променените"
 
 msgid "on-demand"
-msgstr "ПРИ НУЖДА"
+msgstr "ПРИ_НУЖДА"
 
 msgid "control recursive fetching of submodules"
 msgstr "управление на рекурсивното доставяне на подмодулите"
@@ -7436,9 +7531,6 @@ msgstr "липсва --config=НАСТРОЙКА"
 msgid "got bad config --config=%s"
 msgstr "получена е неправилна настройка „--config=%s“"
 
-msgid "unknown"
-msgstr "непознат"
-
 #. TRANSLATORS: e.g. error in tree 01bfda: <more explanation>
 #, c-format
 msgid "error in %s %s: %s"
@@ -7533,8 +7625,12 @@ msgstr "„%s“: неправилен указател за SHA1: „%s“"
 msgid "%s: not a commit"
 msgstr "%s: не е подаване!"
 
+#, c-format
+msgid "invalid parameter: expected sha1, got '%s'"
+msgstr "неправилен параметър: очаква се SHA1, а бе получено: „%s“"
+
 msgid "notice: No default references"
-msgstr "внимание: няма указатели по подразбиране"
+msgstr "ВНИМАНИЕ: няма указатели по подразбиране"
 
 #, c-format
 msgid "%s: hash-path mismatch, found at: %s"
@@ -7557,26 +7653,6 @@ msgstr "Проверка на директория с обекти"
 
 msgid "Checking object directories"
 msgstr "Проверка на директориите с обекти"
-
-#, c-format
-msgid "Checking %s link"
-msgstr "Проверка на връзките на „%s“"
-
-#, c-format
-msgid "invalid %s"
-msgstr "неправилен указател „%s“"
-
-#, c-format
-msgid "%s points to something strange (%s)"
-msgstr "„%s“ сочи към нещо необичайно (%s)"
-
-#, c-format
-msgid "%s: detached HEAD points at nothing"
-msgstr "%s: отделеният връх „HEAD“ не сочи към нищо"
-
-#, c-format
-msgid "notice: %s points to an unborn branch (%s)"
-msgstr "предупреждение: „%s“ сочи към неродѐн клон (%s)"
 
 #, c-format
 msgid "Checking cache tree of %s"
@@ -7656,14 +7732,6 @@ msgstr "проверка на валидността на базата от да
 
 msgid "Checking objects"
 msgstr "Проверка на обектите"
-
-#, c-format
-msgid "%s: object missing"
-msgstr "„%s“: липсващ обект"
-
-#, c-format
-msgid "invalid parameter: expected sha1, got '%s'"
-msgstr "неправилен параметър: очаква се SHA1, а бе получено: „%s“"
 
 msgid "git fsmonitor--daemon start [<options>]"
 msgstr "git fsmonitor--daemon start [ОПЦИЯ…]"
@@ -8055,6 +8123,9 @@ msgstr "неуспешно насрочване на задачите по по�
 
 msgid "failed to add repo to global config"
 msgstr "неуспешно добавяне на хранилище към файла с глобални настройки"
+
+msgid "check a specific task"
+msgstr "проверка на определена задача"
 
 msgid "git maintenance <subcommand> [<options>]"
 msgstr "git maintenance ПОДКОМАНДА [ОПЦИЯ…]"
@@ -8467,7 +8538,7 @@ msgstr "несъответствие в подписа към пакетния �
 
 #, c-format
 msgid "pack version %<PRIu32> unsupported"
-msgstr "не се поддържа пакетиране вeрсия „%<PRIu32>“"
+msgstr "пакетирането на вeрсия „%<PRIu32>“ не се поддържа"
 
 #, c-format
 msgid "pack has bad object at offset %<PRIuMAX>: %s"
@@ -8518,6 +8589,10 @@ msgstr "неправилен обект-BLOB „%s“"
 
 msgid "fsck error in packed object"
 msgstr "грешка при проверката на пакетирани обекти"
+
+#, c-format
+msgid "invalid %s"
+msgstr "неправилен указател „%s“"
 
 #, c-format
 msgid "Not all child objects of %s are reachable"
@@ -8664,6 +8739,9 @@ msgstr "„--stdin“ изисква хранилище на git"
 
 msgid "--verify with no packfile name given"
 msgstr "опцията „--verify“ изисква име на пакетен файл"
+
+msgid "cannot perform queued object checks outside of a repository"
+msgstr "проверките на обекта в опашката не може да се изпълнят извън хранилище"
 
 msgid "fsck error in pack objects"
 msgstr "грешка при проверка с „fsck“ на пакетните обекти"
@@ -9442,14 +9520,6 @@ msgstr ""
 "git merge-file [ОПЦИЯ…] [-L ИМЕ_1 [-L ОРИГИНАЛ [-L ИМЕ_2]]] ФАЙЛ_1 ОРИГ_ФАЙЛ "
 "ФАЙЛ_2"
 
-msgid ""
-"option diff-algorithm accepts \"myers\", \"minimal\", \"patience\" and "
-"\"histogram\""
-msgstr ""
-"опцията приема следните варианти за алгоритъм за разлики: „myers“ (по "
-"Майерс), „minimal“ (минимизиране на разликите), „patience“ (пасианс) и "
-"„histogram“ (хистограмен)"
-
 msgid "send results to standard output"
 msgstr "извеждане на резултатите на стандартния изход"
 
@@ -9461,12 +9531,6 @@ msgstr "сливане на базата на „diff3“"
 
 msgid "use a zealous diff3 based merge"
 msgstr "засилено сливане на базата на „diff3“"
-
-msgid "<algorithm>"
-msgstr "АЛГОРИТЪМ"
-
-msgid "choose a diff algorithm"
-msgstr "избор на АЛГОРИТЪМа за разлики"
 
 msgid "for conflicts, use this marker size"
 msgstr "при конфликти да се ползва маркер с такъв БРОЙ знаци"
@@ -9860,7 +9924,7 @@ msgstr ""
 
 #, c-format
 msgid "When finished, apply stashed changes with `git stash pop`\n"
-msgstr "При завършване скатаните промени да се приложат с „git stash pop“\n"
+msgstr "При завършване скатаните промѐни да се приложат с „git stash pop“\n"
 
 #, c-format
 msgid "warning: tag input does not pass fsck: %s"
@@ -10572,6 +10636,11 @@ msgid "could not get type of object %s in pack %s"
 msgstr "видът на обекта „%s“ в пакет „%s“ не може да се определи"
 
 #, c-format
+msgid "packfile %s is a promisor but --exclude-promisor-objects was given"
+msgstr ""
+"пакетът „%s“ е гарантиращ, но е зададена опцията „--exclude-promisor-objects“"
+
+#, c-format
 msgid "could not find pack '%s'"
 msgstr "пакетът „%s“ не може да се открие"
 
@@ -10850,11 +10919,11 @@ msgstr "git pack-refs "
 msgid "git patch-id [--stable | --unstable | --verbatim]"
 msgstr "git patch-id [--stable|--unstable|--verbatim]"
 
-msgid "use the unstable patch-id algorithm"
-msgstr "използване на нестабилния алгоритъм за идентифициране на кръпка"
+msgid "use the unstable patch ID algorithm"
+msgstr "използване на нестабилния алгоритъм за идентифициране на кръпки"
 
-msgid "use the stable patch-id algorithm"
-msgstr "използване на стабилния алгоритъм за идентифициране на кръпка"
+msgid "use the stable patch ID algorithm"
+msgstr "използване на стабилния алгоритъм за идентифициране на кръпки"
 
 msgid "don't strip whitespace from the patch"
 msgstr "без махане на празните знаци в кръпката"
@@ -10876,41 +10945,6 @@ msgstr "хранилище с важни обекти не може да се о
 
 msgid "git pull [<options>] [<repository> [<refspec>...]]"
 msgstr "git push [ОПЦИЯ…] [ХРАНИЛИЩЕ [УКАЗАТЕЛ_НА_ВЕРСИЯ…]]"
-
-msgid "control for recursive fetching of submodules"
-msgstr "управление на рекурсивното доставяне на подмодулите"
-
-msgid "Options related to merging"
-msgstr "Опции при сливане"
-
-msgid "incorporate changes by rebasing rather than merging"
-msgstr "внасяне на промѐните чрез пребазиране, а не чрез сливане"
-
-msgid "allow fast-forward"
-msgstr "позволяване на превъртания"
-
-msgid "control use of pre-merge-commit and commit-msg hooks"
-msgstr ""
-"дали куките преди подаване и сливане и при промяна на съобщението за "
-"подаване (pre-merge-commit и commit-msg) да се изпълнят"
-
-msgid "automatically stash/stash pop before and after"
-msgstr "автоматично скатаване/прилагане на скатаното преди и след пребазиране"
-
-msgid "Options related to fetching"
-msgstr "Опции при доставяне"
-
-msgid "force overwrite of local branch"
-msgstr "принудително презаписване на локалния клон"
-
-msgid "number of submodules pulled in parallel"
-msgstr "брой подмодули издърпани паралелно"
-
-msgid "use IPv4 addresses only"
-msgstr "само адреси IPv4"
-
-msgid "use IPv6 addresses only"
-msgstr "само адреси IPv6"
 
 msgid ""
 "There is no candidate for rebasing against among the refs that you just "
@@ -11015,6 +11049,41 @@ msgstr ""
 "опцията „--global“.  За да укажете стратегия при конкретно издърпване,\n"
 "използвайте опциите „--rebase“, „--no-rebase“, „--ff-only“.  Те са с\n"
 "приоритет пред настройките.\n"
+
+msgid "control for recursive fetching of submodules"
+msgstr "управление на рекурсивното доставяне на подмодулите"
+
+msgid "Options related to merging"
+msgstr "Опции при сливане"
+
+msgid "incorporate changes by rebasing rather than merging"
+msgstr "внасяне на промѐните чрез пребазиране, а не чрез сливане"
+
+msgid "allow fast-forward"
+msgstr "позволяване на превъртания"
+
+msgid "control use of pre-merge-commit and commit-msg hooks"
+msgstr ""
+"дали куките преди подаване и сливане и при промяна на съобщението за "
+"подаване (pre-merge-commit и commit-msg) да се изпълнят"
+
+msgid "automatically stash/stash pop before and after"
+msgstr "автоматично скатаване/прилагане на скатаното преди и след пребазиране"
+
+msgid "Options related to fetching"
+msgstr "Опции при доставяне"
+
+msgid "force overwrite of local branch"
+msgstr "принудително презаписване на локалния клон"
+
+msgid "number of submodules pulled in parallel"
+msgstr "брой подмодули издърпани паралелно"
+
+msgid "use IPv4 addresses only"
+msgstr "само адреси IPv4"
+
+msgid "use IPv6 addresses only"
+msgstr "само адреси IPv6"
 
 msgid "Updating an unborn branch with changes added to the index."
 msgstr "Обновяване на неродѐн клон с промѐните от индекса"
@@ -11247,7 +11316,7 @@ msgid ""
 "See the 'Note about fast-forwards' in 'git push --help' for details."
 msgstr ""
 "Обновяването е отхвърлено, защото върхът на отдалечения клон съдържа "
-"промени\n"
+"промѐни\n"
 "след последното изтегляне.  Внесете отдалечените промѐни (напр. с командата\n"
 "„git pull…“), преди отново да изтласкате промѐните.\n"
 "За повече информация вижте раздела „Note about fast-forwards“ в страницата\n"
@@ -11266,7 +11335,7 @@ msgid ""
 "instead"
 msgstr ""
 "рекурсивно обхождане на подмодулите чрез „push.recurseSubmodules=only“.  "
-"Вместо това се ползва ПРИ НУЖДА"
+"Вместо това се ползва ПРИ_НУЖДА"
 
 #, c-format
 msgid "invalid value for '%s'"
@@ -12941,6 +13010,10 @@ msgstr "опцията „--convert-graft-file“ не приема аргуме
 msgid "only one pattern can be given with -l"
 msgstr "опцията „-l“ приема точно един шаблон"
 
+#, c-format
+msgid "'%s' is not a valid commit-ish for %s"
+msgstr "„%s“ не прилича на подаване за %s"
+
 msgid "need some commits to replay"
 msgstr "необходимо е да има подавания за прилагане отново"
 
@@ -12957,27 +13030,16 @@ msgstr ""
 "цели с множество източници не може да се придвижат напред, защото подредбата "
 "не е добре дефинирана"
 
-msgid ""
-"cannot implicitly determine whether this is an --advance or --onto operation"
-msgstr ""
-"не може да се определи дали това действие е за „--advance“ или „--onto“"
-
-msgid ""
-"cannot advance target with multiple source branches because ordering would "
-"be ill-defined"
-msgstr ""
-"цели с множество клони-източници не може да се придвижат напред, защото "
-"подредбата не е добре дефинирана"
-
-msgid "cannot implicitly determine correct base for --onto"
-msgstr "правилната база за „--onto“ не може да се определи"
+#, c-format
+msgid "invalid %s value: '%s'"
+msgstr "неправилна стойност за „%s“: „%s“"
 
 msgid ""
 "(EXPERIMENTAL!) git replay ([--contained] --onto <newbase> | --advance "
-"<branch>) <revision-range>..."
+"<branch>) [--ref-action[=<mode>]] <revision-range>"
 msgstr ""
 "(ЕКСПЕРИМЕНТАЛНО!) git replay ([--contained] --onto НОВА_БАЗА | --advance "
-"КЛОН) ДИАПАЗОН_ПОДАВАНИЯ…"
+"КЛОН) [--ref-action[=РЕЖИМ]] ДИАПАЗОН_ПОДАВАНИЯ…"
 
 msgid "make replay advance given branch"
 msgstr "прилагането наново придвижва дадения КЛОН напред"
@@ -12985,8 +13047,14 @@ msgstr "прилагането наново придвижва дадения К
 msgid "replay onto given commit"
 msgstr "прилагането наново върху даденото ПОДАВАНЕ"
 
-msgid "advance all branches contained in revision-range"
-msgstr "придвижване на всички КЛОНи в ДИАПАЗОНа_ПОДАВАНИЯ"
+msgid "update all branches that point at commits in <revision-range>"
+msgstr ""
+"обновяване на всички клони, които сочат към подавания в ДИАПАЗОНа_ПОДАВАНИЯ"
+
+msgid "control ref update behavior (update|print)"
+msgstr ""
+"поведение при обновяването на указател: „update“ (обновяване)/„print“ "
+"(извеждане)"
 
 msgid "option --onto or --advance is mandatory"
 msgstr "изисква се някоя от опциите „--onto“ или „--advance“"
@@ -12999,14 +13067,26 @@ msgstr ""
 "някои опции за проследяване на указатели ще бъдат променени, защото битът "
 "„%s“ в структурата „struct rev_info“ има превес"
 
+#, c-format
+msgid "failed to begin ref transaction: %s"
+msgstr "неуспешно начало на транзакция за указатели: %s"
+
 msgid "error preparing revisions"
 msgstr "грешка при подготовката на версии"
 
-msgid "replaying down to root commit is not supported yet!"
-msgstr "не се поддържа прилагане наново и на началното подаване!"
+msgid "replaying down from root commit is not supported yet!"
+msgstr "прилагането наново от началното подаване не се поддържа"
 
 msgid "replaying merge commits is not supported yet!"
-msgstr "не се поддържа прилагане наново и на подавания със сливане!"
+msgstr "прилагането наново на подавания със сливане не се поддържа!"
+
+#, c-format
+msgid "failed to update ref '%s': %s"
+msgstr "указателят „%s“ не може да се обнови: %s"
+
+#, c-format
+msgid "failed to commit ref transaction: %s"
+msgstr "транзакцията за указатели не може да се завърши: %s"
 
 #, c-format
 msgid "key '%s' not found"
@@ -13022,8 +13102,14 @@ msgstr "изходен формат"
 msgid "synonym for --format=nul"
 msgstr "псевдоним на „--format=nul“"
 
+msgid "print all keys/values"
+msgstr "извеждане на всички ключове/стойности"
+
 msgid "unsupported output format"
 msgstr "неподдържан изходен формат"
+
+msgid "--all and <key> cannot be used together"
+msgstr "опцията „--all“ и изричен КЛЮЧ са несъвместими"
 
 msgid "References"
 msgstr "Указатели"
@@ -13054,6 +13140,12 @@ msgstr "Дървета"
 
 msgid "Blobs"
 msgstr "Обекти-BLOB"
+
+msgid "Inflated size"
+msgstr "Декомпресиран размер"
+
+msgid "Disk size"
+msgstr "Размер на диска"
 
 msgid "Repository structure"
 msgstr "Структура на хранилището"
@@ -14309,7 +14401,7 @@ msgstr "неуспешно регистриране на адрес за път�
 
 #, c-format
 msgid "failed to update remote for submodule '%s'"
-msgstr "отдалеченият адрес на подмодула „%s“ не може да се промени"
+msgstr "отдалеченият адрес на подмодула „%s“ не може да се променѝ"
 
 msgid "suppress output of synchronizing submodule url"
 msgstr "без извеждане на информация при синхронизирането на подмодул"
@@ -15604,6 +15696,10 @@ msgstr ""
 msgid "bundle list at '%s' has no mode"
 msgstr "липсва режим в списъка от пратки „%s“"
 
+#, c-format
+msgid "bundle list at '%s': bundle '%s' has no uri"
+msgstr "списък от пратки при „%s“: липсва адрес за пратка „%s“"
+
 msgid "failed to create temporary file"
 msgstr "не може да се създаде временен файл"
 
@@ -15625,6 +15721,10 @@ msgstr "непознат режим на пратки от адрес „%s“"
 msgid "exceeded bundle URI recursion limit (%d)"
 msgstr ""
 "преминато е ограничениeто за рекурсивно обхождане на адреси на пратки (%d)"
+
+#, c-format
+msgid "bundle '%s' has no uri"
+msgstr "липсва адрес за пратка „%s“"
 
 #, c-format
 msgid "failed to download bundle from URI '%s'"
@@ -16041,7 +16141,7 @@ msgid "The standard helper program to use with git-merge-index"
 msgstr "Стандартната помощна програма за „git-merge-index“"
 
 msgid "Perform merge without touching index or working tree"
-msgstr "Извършване на сливането без промени по индекса или работното време"
+msgstr "Извършване на сливането без промѐни по индекса или работното време"
 
 msgid "Run merge conflict resolution tools to resolve merge conflicts"
 msgstr "Изпълнение на програмите за коригиране на конфликтите при сливане"
@@ -16135,8 +16235,8 @@ msgstr "Обобщение на предстоящите промѐни"
 msgid "Reuse recorded resolution of conflicted merges"
 msgstr "Преизползване на вече запазено коригиране на конфликт при сливане"
 
-msgid "Reset current HEAD to the specified state"
-msgstr "Привеждане на указателя „HEAD“ към зададеното състояние"
+msgid "Set `HEAD` or the index to a known state"
+msgstr "Задаване на указателя „HEAD“ или индекса към известно състояние"
 
 msgid "Restore working tree files"
 msgstr "Възстановяване на файловете в работното дърво"
@@ -16488,7 +16588,7 @@ msgid "Clearing commit marks in commit graph"
 msgstr "Изчистване на отбелязванията на подаванията в гра̀фа с подаванията"
 
 msgid "Computing commit graph topological levels"
-msgstr "Изчисляване на топологичните нива в гра̀фа с подаванията"
+msgstr "Изчисляване на топологичните нива̀ в гра̀фа с подаванията"
 
 msgid "Computing commit graph generation numbers"
 msgstr "Изчисляване на номерата на поколенията в гра̀фа с подаванията"
@@ -17717,10 +17817,6 @@ msgid "Unknown value for 'diff.submodule' config variable: '%s'"
 msgstr "Непозната стойност „%s“ за настройката „diff.submodule“"
 
 #, c-format
-msgid "unknown value for config '%s': %s"
-msgstr "непозната стойност за настройката „%s“: „%s“"
-
-#, c-format
 msgid ""
 "Found errors in 'diff.dirstat' config variable:\n"
 "%s"
@@ -17797,7 +17893,7 @@ msgstr "неправилен аргумент за „--color-moved“: „%s“
 
 #, c-format
 msgid "invalid mode '%s' in --color-moved-ws"
-msgstr "неправилен режим „%s“ за „ --color-moved-ws“"
+msgstr "грешен режим „%s“ за „ --color-moved-ws“"
 
 #, c-format
 msgid "invalid argument to %s"
@@ -18309,7 +18405,7 @@ msgstr ""
 
 #, c-format
 msgid "invalid mode for object creation: %s"
-msgstr "неправилен режим за създаването на обекти: %s"
+msgstr "грешен режим за създаването на обекти: %s"
 
 #, c-format
 msgid "malformed value for %s"
@@ -19425,7 +19521,7 @@ msgid ""
 msgstr ""
 " ⁃ преминаване към подмодула (%s), след които или де се слее подаването\n"
 "   „%s“, или да се обнови към съществуващо подаване, в които\n"
-"   тези промени са слети\n"
+"   тези промѐни са слети\n"
 
 #, c-format
 msgid ""
@@ -19922,6 +20018,9 @@ msgstr "непълно прочитане по време на индексир�
 #, c-format
 msgid "%s: failed to insert into database"
 msgstr "„%s“ не може да се вмъкне в базата от данни"
+
+msgid "cannot add a submodule of a different hash algorithm"
+msgstr "не може да добавите подмодул с различен алгоритъм за контролни суми"
 
 #, c-format
 msgid "%s: unsupported file type"
@@ -20772,7 +20871,7 @@ msgid "flush packet write failed"
 msgstr "неуспешно изчистване на буферите при запис на пакет"
 
 msgid "protocol error: impossibly long line"
-msgstr "протоколна грешка: прекалено дълъг ред"
+msgstr "ПРОТОКОЛНА ГРЕШКА: прекалено дълъг ред"
 
 msgid "packet write with format failed"
 msgstr "неуспешен запис на пакет с формат"
@@ -20794,15 +20893,15 @@ msgstr "отдалеченото хранилище неочаквано пре�
 
 #, c-format
 msgid "protocol error: bad line length character: %.4s"
-msgstr "протоколна грешка: неправилeн знак за дължина на ред: %.4s"
+msgstr "ПРОТОКОЛНА ГРЕШКА: неправилeн знак за дължина на ред: %.4s"
 
 #, c-format
 msgid "protocol error: bad line length %d"
-msgstr "протоколна грешка: неправилна дължина на ред: %d"
+msgstr "ПРОТОКОЛНА ГРЕШКА: неправилна дължина на ред: %d"
 
 #, c-format
 msgid "remote error: %s"
-msgstr "отдалечена грешка: %s"
+msgstr "ОТДАЛЕЧЕНА ГРЕШКА: %s"
 
 msgid "Refreshing index"
 msgstr "Обновяване на индекса"
@@ -21436,6 +21535,10 @@ msgid "--format=%.*s cannot be used with --python, --shell, --tcl"
 msgstr ""
 "опцията „--format=%.*s“ е несъвместима с „--python“, „--shell“, „--tcl“"
 
+#, c-format
+msgid "parse_object_buffer failed on %s for %s"
+msgstr "неуспешно анализиране чрез „parse_object_buffer“ на „%s“ за „%s“"
+
 msgid "failed to run 'describe'"
 msgstr "неуспешно изпълнение на „describe“"
 
@@ -21465,10 +21568,6 @@ msgstr "(извън клон)"
 #, c-format
 msgid "missing object %s for %s"
 msgstr "обектът „%s“ липсва за „%s“"
-
-#, c-format
-msgid "parse_object_buffer failed on %s for %s"
-msgstr "неуспешно анализиране чрез „parse_object_buffer“ на „%s“ за „%s“"
 
 #, c-format
 msgid "malformed object at '%s'"
@@ -21777,6 +21876,18 @@ msgid "refname %s is a symbolic ref, copying it is not supported"
 msgstr "името на указател „%s“ е символен указател, не може да се копира"
 
 #, c-format
+msgid "reftable stack for worktree '%s' is broken"
+msgstr "таблицата с указатели за работното дърво в „%s“ е повредена"
+
+#, c-format
+msgid "could not create iterator for worktree '%s'"
+msgstr "не може да се създаде итератор за работното дърво в „%s“"
+
+#, c-format
+msgid "could not read record for worktree '%s'"
+msgstr "не може да се създаде запис за работното дърво в „%s“"
+
+#, c-format
 msgid "pattern '%s' has no '*'"
 msgstr "шаблонът „%s“ не съдържа „*“"
 
@@ -21878,14 +21989,14 @@ msgstr "умният вариант на http не може да доставя 
 
 #, c-format
 msgid "protocol error: expected sha/ref, got '%s'"
-msgstr "протоколна грешка: очаква се SHA1 или указател, а бе получено: „%s“"
+msgstr "ПРОТОКОЛНА ГРЕШКА: очаква се SHA1 или указател, а бе получено: „%s“"
 
 #, c-format
 msgid "http transport does not support %s"
 msgstr "транспортът по http не поддържа „%s“"
 
 msgid "protocol error: expected '<url> <path>', missing space"
-msgstr "протоколна грешка: очаква се „АДРЕС ПЪТ“, липсва интервал"
+msgstr "ПРОТОКОЛНА ГРЕШКА: очаква се „АДРЕС ПЪТ“, липсва интервал"
 
 #, c-format
 msgid "failed to download file at URL '%s'"
@@ -22212,6 +22323,11 @@ msgstr ""
 "командата „pack-objects“ не може да завърши за препакетирането на "
 "гарантиращите обекти"
 
+msgid "could not start pack-objects to repack promisor packs"
+msgstr ""
+"командата „pack-objects“ не може да се стартира за препакетирането на "
+"гарантиращите обекти"
+
 #, c-format
 msgid "pack prefix %s does not begin with objdir %s"
 msgstr "името на пакетния файл „%s“ не започва с директорията за обекти с „%s“"
@@ -22502,7 +22618,7 @@ msgid "(enable|disable|keep)"
 msgstr "(enable=включване|disable=изключване|keep=запазване)"
 
 msgid "signal how to adjust background maintenance"
-msgstr "как да се промени поддръжката на заден фон"
+msgstr "как да се променѝ поддръжката на заден фон"
 
 msgid ""
 "scalar reconfigure [--maintenance=(enable|disable|keep)] [--all | "
@@ -23044,7 +23160,7 @@ msgid ""
 "'merge -c' on the commit"
 msgstr ""
 "„reword“ не приема подаване със сливане.  Ако искате да приложите\n"
-"сливането наново и да промените съобщението при подаване, изпълнете\n"
+"сливането наново и да променѝте съобщението при подаване, изпълнете\n"
 "\n"
 "    git merge -C ПОДАВАНЕ"
 
@@ -23265,10 +23381,6 @@ msgstr ""
 msgid "illegal label name: '%.*s'"
 msgstr "неправилно име на етикет: „%.*s“"
 
-#, c-format
-msgid "could not resolve '%s'"
-msgstr "„%s“ липсва"
-
 msgid "writing fake root commit"
 msgstr "запазване на фалшиво начално подаване"
 
@@ -23370,7 +23482,7 @@ msgid "autostash reference is a symref"
 msgstr "указателят за автоматично скатано e файл с указател"
 
 msgid "could not detach HEAD"
-msgstr "указателят „HEAD“ не може да се отдели"
+msgstr "указателят „HEAD“ не може да се отделѝ"
 
 #, c-format
 msgid "Stopped at HEAD\n"
@@ -23762,49 +23874,68 @@ msgstr "неправилен формат за „%s“: елементът „%
 msgid "bad %s format: %%%.*s"
 msgstr "неправилен формат за „%s“: %%%.*s"
 
-#. TRANSLATORS: IEC 80000-13:2008 gibibyte
 #, c-format
-msgid "%u.%2.2u GiB"
-msgstr "%u.%2.2u GiB"
+msgid "%u.%2.2u"
+msgstr "%u.%2.2u"
 
-#. TRANSLATORS: IEC 80000-13:2008 gibibyte/second
-#, c-format
-msgid "%u.%2.2u GiB/s"
-msgstr "%u.%2.2u GiB/s"
+#. TRANSLATORS: SI decimal prefix symbol for 10^9
+msgid "G"
+msgstr "G"
 
-#. TRANSLATORS: IEC 80000-13:2008 mebibyte
-#, c-format
-msgid "%u.%2.2u MiB"
-msgstr "%u.%2.2u MiB"
+#. TRANSLATORS: SI decimal prefix symbol for 10^6
+msgid "M"
+msgstr "M"
 
-#. TRANSLATORS: IEC 80000-13:2008 mebibyte/second
-#, c-format
-msgid "%u.%2.2u MiB/s"
-msgstr "%u.%2.2u MiB/s"
+#. TRANSLATORS: SI decimal prefix symbol for 10^3
+msgid "k"
+msgstr "k"
 
-#. TRANSLATORS: IEC 80000-13:2008 kibibyte
-#, c-format
-msgid "%u.%2.2u KiB"
-msgstr "%u.%2.2u KiB"
+#. TRANSLATORS: IEC 80000-13:2008 gibibyte/second and gibibyte
+msgid "GiB/s"
+msgstr "GiB/s"
 
-#. TRANSLATORS: IEC 80000-13:2008 kibibyte/second
-#, c-format
-msgid "%u.%2.2u KiB/s"
-msgstr "%u.%2.2u KiB/s"
+msgid "GiB"
+msgstr "GiB"
 
-#. TRANSLATORS: IEC 80000-13:2008 byte
-#, c-format
-msgid "%u byte"
-msgid_plural "%u bytes"
-msgstr[0] "%u байт"
-msgstr[1] "%u байта"
+#. TRANSLATORS: IEC 80000-13:2008 mebibyte/second and mebibyte
+msgid "MiB/s"
+msgstr "MiB/s"
+
+msgid "MiB"
+msgstr "MiB"
+
+#. TRANSLATORS: IEC 80000-13:2008 kibibyte/second and kibibyte
+msgid "KiB/s"
+msgstr "KiB/s"
+
+msgid "KiB"
+msgstr "KiB"
+
+#. TRANSLATORS: IEC 80000-13:2008 byte/second and byte
+msgid "B/s"
+msgstr "B/s"
+
+msgid "B"
+msgstr "B"
 
 #. TRANSLATORS: IEC 80000-13:2008 byte/second
+msgid "byte/s"
+msgid_plural "bytes/s"
+msgstr[0] "byte/s"
+msgstr[1] "byte/s"
+
+#. TRANSLATORS: IEC 80000-13:2008 byte
+msgid "byte"
+msgid_plural "bytes"
+msgstr[0] "байт"
+msgstr[1] "байта"
+
+#. TRANSLATORS: The first argument is the number string. The second
+#. argument is the unit string (i.e. "12.34 MiB/s").
+#.
 #, c-format
-msgid "%u byte/s"
-msgid_plural "%u bytes/s"
-msgstr[0] "%u байт/сек."
-msgstr[1] "%u байта/сек."
+msgid "%s %s"
+msgstr "%s %s"
 
 #, c-format
 msgid "ignoring suspicious submodule name: %s"
@@ -23821,7 +23952,7 @@ msgstr ""
 
 #, c-format
 msgid "Could not update .gitmodules entry %s"
-msgstr "Записът „%s“ във файла „.gitmodules“ не може да се промени"
+msgstr "Записът „%s“ във файла „.gitmodules“ не може да се променѝ"
 
 msgid "Cannot change unmerged .gitmodules, resolve merge conflicts first"
 msgstr ""
@@ -24101,9 +24232,6 @@ msgstr "брой байтове"
 
 msgid "number of requests per thread"
 msgstr "брой заявки на нишка"
-
-msgid "byte"
-msgstr "байта"
 
 msgid "ballast character"
 msgstr "знаци за пращане"
@@ -24666,16 +24794,16 @@ msgid "error: unable to format message: %s\n"
 msgstr "ГРЕШКА: съобщението не може да се форматира: %s\n"
 
 msgid "usage: "
-msgstr "употреба: "
+msgstr "УПОТРЕБА: "
 
 msgid "fatal: "
-msgstr "фатална грешка: "
+msgstr "ФАТАЛНА ГРЕШКА: "
 
 msgid "error: "
 msgstr "ГРЕШКА: "
 
 msgid "warning: "
-msgstr "предупреждение: "
+msgstr "ПРЕДУПРЕЖДЕНИЕ: "
 
 #, c-format
 msgid "'%s' is nominated for removal.\n"
@@ -25611,7 +25739,7 @@ msgstr ""
 
 #, perl-format
 msgid "Outlook reassigned Message-ID to: %s\n"
-msgstr "Outlook промени „Message-ID“ да е: %s\n"
+msgstr "Outlook променѝ „Message-ID“ да е: %s\n"
 
 msgid "Warning: Could not retrieve Message-ID from server response.\n"
 msgstr "ПРЕДУПРЕЖДЕНИЕ: в отговора на сървъра липсва „Message-ID“.\n"
