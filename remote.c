@@ -278,6 +278,7 @@ static void branch_release(struct branch *branch)
 	free((char *)branch->refname);
 	free(branch->remote_name);
 	free(branch->pushremote_name);
+	free(branch->push_tracking_ref);
 	merge_clear(branch);
 }
 
@@ -1837,7 +1838,7 @@ int branch_merge_matches(struct branch *branch,
 }
 
 __attribute__((format (printf,2,3)))
-static const char *error_buf(struct strbuf *err, const char *fmt, ...)
+static char *error_buf(struct strbuf *err, const char *fmt, ...)
 {
 	if (err) {
 		va_list ap;
@@ -1875,9 +1876,9 @@ const char *branch_get_upstream(struct branch *branch, struct strbuf *err)
 	return branch->merge[0]->dst;
 }
 
-static const char *tracking_for_push_dest(struct remote *remote,
-					  const char *refname,
-					  struct strbuf *err)
+static char *tracking_for_push_dest(struct remote *remote,
+				    const char *refname,
+				    struct strbuf *err)
 {
 	char *ret;
 
@@ -1889,8 +1890,8 @@ static const char *tracking_for_push_dest(struct remote *remote,
 	return ret;
 }
 
-static const char *branch_get_push_1(struct repository *repo,
-				     struct branch *branch, struct strbuf *err)
+static char *branch_get_push_1(struct repository *repo,
+			       struct branch *branch, struct strbuf *err)
 {
 	struct remote_state *remote_state = repo->remote_state;
 	struct remote *remote;
@@ -1905,7 +1906,7 @@ static const char *branch_get_push_1(struct repository *repo,
 
 	if (remote->push.nr) {
 		char *dst;
-		const char *ret;
+		char *ret;
 
 		dst = apply_refspecs(&remote->push, branch->refname);
 		if (!dst)
@@ -1930,12 +1931,13 @@ static const char *branch_get_push_1(struct repository *repo,
 		return tracking_for_push_dest(remote, branch->refname, err);
 
 	case PUSH_DEFAULT_UPSTREAM:
-		return branch_get_upstream(branch, err);
+		return xstrdup_or_null(branch_get_upstream(branch, err));
 
 	case PUSH_DEFAULT_UNSPECIFIED:
 	case PUSH_DEFAULT_SIMPLE:
 		{
-			const char *up, *cur;
+			const char *up;
+			char *cur;
 
 			up = branch_get_upstream(branch, err);
 			if (!up)
@@ -1943,9 +1945,11 @@ static const char *branch_get_push_1(struct repository *repo,
 			cur = tracking_for_push_dest(remote, branch->refname, err);
 			if (!cur)
 				return NULL;
-			if (strcmp(cur, up))
+			if (strcmp(cur, up)) {
+				free(cur);
 				return error_buf(err,
 						 _("cannot resolve 'simple' push to a single destination"));
+			}
 			return cur;
 		}
 	}
