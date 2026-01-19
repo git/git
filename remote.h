@@ -331,7 +331,7 @@ struct branch {
 
 	int merge_alloc;
 
-	const char *push_tracking_ref;
+	char *push_tracking_ref;
 };
 
 struct branch *branch_get(const char *name);

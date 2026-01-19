@@ -272,6 +272,7 @@ static void branch_release(struct branch *branch)
 	free((char *)branch->refname);
 	free(branch->remote_name);
 	free(branch->pushremote_name);
+	free(branch->push_tracking_ref);
 	merge_clear(branch);
 }
 
@@ -1890,8 +1891,8 @@ static char *tracking_for_push_dest(struct remote *remote,
 	return ret;
 }
 
-static const char *branch_get_push_1(struct repository *repo,
-				     struct branch *branch, struct strbuf *err)
+static char *branch_get_push_1(struct repository *repo,
+			       struct branch *branch, struct strbuf *err)
 {
 	struct remote_state *remote_state = repo->remote_state;
 	struct remote *remote;
@@ -1931,7 +1932,7 @@ static const char *branch_get_push_1(struct repository *repo,
 		return tracking_for_push_dest(remote, branch->refname, err);
 
 	case PUSH_DEFAULT_UPSTREAM:
-		return branch_get_upstream(branch, err);
+		return xstrdup_or_null(branch_get_upstream(branch, err));
 
 	case PUSH_DEFAULT_UNSPECIFIED:
 	case PUSH_DEFAULT_SIMPLE:
