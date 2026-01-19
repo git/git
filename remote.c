@@ -278,7 +278,7 @@ static void branch_release(struct branch *branch)
 	free((char *)branch->refname);
 	free(branch->remote_name);
 	free(branch->pushremote_name);
-	free((char *)branch->push_tracking_ref);
+	free(branch->push_tracking_ref);
 	merge_clear(branch);
 }
 
@@ -1963,9 +1963,9 @@ const char *branch_get_push(struct branch *branch, struct strbuf *err)
 		return error_buf(err, _("HEAD does not point to a branch"));
 
 	if (!branch->push_tracking_ref)
-		branch->push_tracking_ref = branch_get_push_1(
+		branch->push_tracking_ref = (char *)branch_get_push_1(
 			the_repository, branch, err);
-	return branch->push_tracking_ref;
+	return (const char *)branch->push_tracking_ref;
 }
 
 static int ignore_symref_update(const char *refname, struct strbuf *scratch)
