@@ -480,6 +480,7 @@ typedef struct mi_segment_s {
   struct mi_segment_s* next;            // the list of freed segments in the cache (must be first field, see `segment.c:mi_segment_init`)
   bool              was_reclaimed;      // true if it was reclaimed (used to limit on-free reclamation)
   bool              dont_free;          // can be temporarily true to ensure the segment is not freed
+  bool              free_is_zero;       // if free spans are zero
 
   size_t            abandoned;          // abandoned pages (i.e. the original owning thread stopped) (`abandoned <= used`)
   size_t            abandoned_visits;   // count how often this segment is visited during abondoned reclamation (to force reclaim if it takes too long)

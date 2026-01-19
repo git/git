@@ -59,7 +59,6 @@ extern inline void* _mi_page_malloc_zero(mi_heap_t* heap, mi_page_t* page, size_
   // zero the block? note: we need to zero the full block size (issue #63)
   if mi_unlikely(zero) {
     mi_assert_internal(page->block_size != 0); // do not call with zero'ing for huge blocks (see _mi_malloc_generic)
-    mi_assert_internal(!mi_page_is_huge(page));
     #if MI_PADDING
     mi_assert_internal(page->block_size >= MI_PADDING_SIZE);
     #endif
@@ -528,7 +527,7 @@ static std_new_handler_t mi_get_new_handler(void) {
 }
 #else
 // note: on windows we could dynamically link to `?get_new_handler@std@@YAP6AXXZXZ`.
-static std_new_handler_t mi_get_new_handler() {
+static std_new_handler_t mi_get_new_handler(void) {
   return NULL;
 }
 #endif

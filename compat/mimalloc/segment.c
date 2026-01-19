@@ -773,6 +773,7 @@ static mi_page_t* mi_segment_span_allocate(mi_segment_t* segment, size_t slice_i
 
   // and initialize the page
   page->is_committed = true;
+  page->is_zero_init = segment->free_is_zero;
   page->is_huge = (segment->kind == MI_SEGMENT_HUGE);
   segment->used++;
   return page;
@@ -882,6 +883,7 @@ static mi_segment_t* mi_segment_os_alloc( size_t required, size_t page_alignment
   segment->subproc = tld->subproc;
   segment->commit_mask = commit_mask;
   segment->purge_expire = 0;
+  segment->free_is_zero = memid.initially_zero;
   mi_commit_mask_create_empty(&segment->purge_mask);
 
   mi_segments_track_size((long)(segment_size), tld);
@@ -1024,7 +1026,7 @@ static mi_slice_t* mi_segment_page_clear(mi_page_t* page, mi_segments_tld_t* tld
   _mi_stat_decrease(&tld->stats->page_committed, inuse);
   _mi_stat_decrease(&tld->stats->pages, 1);
   _mi_stat_decrease(&tld->stats->page_bins[_mi_page_stats_bin(page)], 1);
-
+  
   // reset the page memory to reduce memory pressure?
   if (segment->allow_decommit && mi_option_is_enabled(mi_option_deprecated_page_reset)) {
     size_t psize;
@@ -1043,6 +1045,8 @@ static mi_slice_t* mi_segment_page_clear(mi_page_t* page, mi_segments_tld_t* tld
   // and free it
   mi_slice_t* slice = mi_segment_span_free_coalesce(mi_page_to_slice(page), tld);
   segment->used--;
+  segment->free_is_zero = false;
+
   // cannot assert segment valid as it is called during reclaim
   // mi_assert_expensive(mi_segment_is_valid(segment, tld));
   return slice;
