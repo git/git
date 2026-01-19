@@ -70,7 +70,9 @@
 #define _ALL_SOURCE 1
 #define _GNU_SOURCE 1
 #define _BSD_SOURCE 1
+#ifndef _DEFAULT_SOURCE
 #define _DEFAULT_SOURCE 1
+#endif
 #define _NETBSD_SOURCE 1
 #define _SGI_SOURCE 1
 
@@ -172,6 +174,16 @@ typedef unsigned long uintptr_t;
 #undef _ALL_SOURCE /* AIX 5.3L defines a struct list with _ALL_SOURCE. */
 #include <grp.h>
 #define _ALL_SOURCE 1
+#endif
+
+#ifdef USE_MIMALLOC
+#include "mimalloc.h"
+#define malloc mi_malloc
+#define calloc mi_calloc
+#define realloc mi_realloc
+#define free mi_free
+#define strdup mi_strdup
+#define strndup mi_strndup
 #endif
 
 #ifdef MKDIR_WO_TRAILING_SLASH
