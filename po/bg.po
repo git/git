@@ -1,7 +1,7 @@
 # Bulgarian translation of git-gui po-file.
-# Copyright (C) 2012, 2013, 2014, 2015, 2016, 2024, 2025 Alexander Shopov <ash@kambanaria.org>.
+# Copyright (C) 2012, 2013, 2014, 2015, 2016, 2024, 2025, 2026 Alexander Shopov <ash@kambanaria.org>.
 # This file is distributed under the same license as the git package.
-# Alexander Shopov <ash@kambanaria.org>, 2012, 2013, 2014, 2015, 2016, 2024, 2025.
+# Alexander Shopov <ash@kambanaria.org>, 2012, 2013, 2014, 2015, 2016, 2024, 2025, 2026.
 #
 #
 msgid ""
@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: git-gui master\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-07-22 17:37+0200\n"
-"PO-Revision-Date: 2025-07-28 11:56+0200\n"
+"PO-Revision-Date: 2026-01-19 10:12+0100\n"
 "Last-Translator: Alexander Shopov <ash@kambanaria.org>\n"
 "Language-Team: Bulgarian <dict@fsa-bg.org>\n"
 "Language: bg\n"
@@ -322,7 +322,7 @@ msgid "Staged Changes (Will Commit)"
 msgstr "Промени в индекса (за подаване)"
 
 msgid "Stage Changed"
-msgstr "Индексът е променен"
+msgstr "Добавяне към индекса"
 
 msgid "Push"
 msgstr "Изтласкване"
