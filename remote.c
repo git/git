@@ -1876,9 +1876,9 @@ const char *branch_get_upstream(struct branch *branch, struct strbuf *err)
 	return branch->merge[0]->dst;
 }
 
-static const char *tracking_for_push_dest(struct remote *remote,
-					  const char *refname,
-					  struct strbuf *err)
+static char *tracking_for_push_dest(struct remote *remote,
+				    const char *refname,
+				    struct strbuf *err)
 {
 	char *ret;
 
@@ -1906,7 +1906,7 @@ static const char *branch_get_push_1(struct repository *repo,
 
 	if (remote->push.nr) {
 		char *dst;
-		const char *ret;
+		char *ret;
 
 		dst = apply_refspecs(&remote->push, branch->refname);
 		if (!dst)
@@ -1936,7 +1936,8 @@ static const char *branch_get_push_1(struct repository *repo,
 	case PUSH_DEFAULT_UNSPECIFIED:
 	case PUSH_DEFAULT_SIMPLE:
 		{
-			const char *up, *cur;
+			const char *up;
+			char *cur;
 
 			up = branch_get_upstream(branch, err);
 			if (!up)
