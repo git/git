@@ -1945,9 +1945,11 @@ static const char *branch_get_push_1(struct repository *repo,
 			cur = tracking_for_push_dest(remote, branch->refname, err);
 			if (!cur)
 				return NULL;
-			if (strcmp(cur, up))
+			if (strcmp(cur, up)) {
+				free(cur);
 				return error_buf(err,
 						 _("cannot resolve 'simple' push to a single destination"));
+			}
 			return cur;
 		}
 	}
