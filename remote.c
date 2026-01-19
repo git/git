@@ -1838,7 +1838,7 @@ int branch_merge_matches(struct branch *branch,
 }
 
 __attribute__((format (printf,2,3)))
-static const char *error_buf(struct strbuf *err, const char *fmt, ...)
+static char *error_buf(struct strbuf *err, const char *fmt, ...)
 {
 	if (err) {
 		va_list ap;
