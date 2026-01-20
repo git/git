@@ -53,7 +53,6 @@ define_commit_slab(active_paths_for_commit, struct bitmap *);
 struct last_modified {
 	struct hashmap paths;
 	struct rev_info rev;
-	bool recursive;
 	bool show_trees;
 	bool nul_termination;
 	int max_depth;
@@ -481,14 +480,10 @@ static int last_modified_init(struct last_modified *lm, struct repository *r,
 	lm->rev.no_commit_id = 1;
 	lm->rev.diff = 1;
 	lm->rev.diffopt.flags.no_recursive_diff_tree_combined = 1;
-	lm->rev.diffopt.flags.recursive = lm->recursive;
+	lm->rev.diffopt.flags.recursive = 1;
 	lm->rev.diffopt.flags.tree_in_recursive = lm->show_trees;
-
-	if (lm->max_depth >= 0) {
-		lm->rev.diffopt.flags.recursive = 1;
-		lm->rev.diffopt.max_depth = lm->max_depth;
-		lm->rev.diffopt.max_depth_valid = 1;
-	}
+	lm->rev.diffopt.max_depth = lm->max_depth;
+	lm->rev.diffopt.max_depth_valid = lm->max_depth >= 0;
 
 	argc = setup_revisions(argc, argv, &lm->rev, NULL);
 	if (argc > 1) {
@@ -524,8 +519,8 @@ int cmd_last_modified(int argc, const char **argv, const char *prefix,
 	};
 
 	struct option last_modified_options[] = {
-		OPT_BOOL('r', "recursive", &lm.recursive,
-			 N_("recurse into subtrees")),
+		OPT_SET_INT('r', "recursive", &lm.max_depth,
+			    N_("recurse into subtrees"), -1),
 		OPT_BOOL('t', "show-trees", &lm.show_trees,
 			 N_("show tree entries when recursing into subtrees")),
 		OPT_INTEGER_F(0, "max-depth", &lm.max_depth,
@@ -534,12 +529,6 @@ int cmd_last_modified(int argc, const char **argv, const char *prefix,
 			 N_("lines are separated with NUL character")),
 		OPT_END()
 	};
-
-	/*
-	 * Set the default of a max-depth to "unset". This will change in a
-	 * subsequent commit.
-	 */
-	lm.max_depth = -1;
 
 	argc = parse_options(argc, argv, prefix, last_modified_options,
 			     last_modified_usage,

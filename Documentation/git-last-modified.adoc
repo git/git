@@ -25,13 +25,14 @@ OPTIONS
 
 `-r`::
 `--recursive`::
-	Instead of showing tree entries, step into subtrees and show all entries
-	inside them recursively.
+	Recursively traverse into all subtrees. By default, the command only
+	shows tree entries matching the `<pathspec>`. With this option, it
+	descends into subtrees and displays all entries within them.
+	Equivalent to `--max-depth=-1`.
 
 `-t`::
 `--show-trees`::
-	Show tree entries even when recursing into them. It has no effect
-	without `--recursive`.
+	Show tree entries even when recursing into them.
 
 `--max-depth=<depth>`::
 	For each pathspec given on the command line, traverse at most `<depth>`
