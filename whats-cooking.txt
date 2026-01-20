@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jan 2026, #05)
-X-master-at: 7264e61d87e58b9d0f5e6424c47c11e9657dfb75
-X-next-at: de669ffdefc742a24e3b6c5b7c1293aa35dc9ac2
+Subject: What's cooking in git.git (Jan 2026, #06)
+X-master-at: b5c409c40f1595e3e590760c6f14a16b6683e22c
+X-next-at: 0ac79233d615b382626469283a2cd0dfe9edd163
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jan 2026, #05)
+What's cooking in git.git (Jan 2026, #06)
 -----------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -48,50 +48,78 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* kh/replay-invalid-onto-advance (2026-01-05) 6 commits
-  (merged to 'next' on 2026-01-08 at 1024748f91)
- + t3650: add more regression tests for failure conditions
- + replay: die if we cannot parse object
- + replay: improve code comment and die message
- + replay: die descriptively when invalid commit-ish is given
- + replay: find *onto only after testing for ref name
- + replay: remove dead code and rearrange
- (this branch is used by ps/history and pw/replay-drop-empty.)
+* ac/t1420-use-more-direct-check (2026-01-06) 1 commit
+  (merged to 'next' on 2026-01-10 at 6bccdd0e04)
+ + t1420: modernize the lost-found test
 
- Improve the error message when a bad argument is given to the
- `--onto` option of "git replay".  Test coverage of "git replay" has
- been improved.
- cf. <CABPp-BGFNyKkpcWWksqvNqyXspMqfywbYyyhuSUaL41YHNHoNg@mail.gmail.com>
- source: <V3_CV_replay_die_descr.1a4@msgid.xyz>
+ Test update.
+ source: <20260106132658.798706-1-andchi@fastmail.com>
 
 
-* ps/clar-integers (2025-12-06) 3 commits
-  (merged to 'next' on 2026-01-08 at 9f9674ac20)
- + gitattributes: disable blank-at-eof errors for clar test expectations
- + t/unit-tests: demonstrate use of integer comparison assertions
- + t/unit-tests: update clar to 39f11fe
+* bc/doc-stash-import-export (2026-01-08) 1 commit
+  (merged to 'next' on 2026-01-10 at 48f26103bc)
+ + gitfaq: document using stash import/export to sync working tree
 
- Import newer version of "clar", unit testing framework.
- source: <20251206-b4-pks-clar-update-v2-0-9a14b10c1a36@pks.im>
-
-
-* ps/odb-misc-fixes (2026-01-06) 3 commits
-  (merged to 'next' on 2026-01-08 at 850d35a76d)
- + odb: properly close sources before freeing them
- + builtin/gc: fix condition for whether to write commit graphs
- + Merge branch 'ps/object-source-management' into ps/odb-misc-fixes
- (this branch is used by ps/packfile-store-in-odb-source.)
-
- Miscellaneous fixes on object database layer.
- source: <20260106-odb-related-fixes-v3-0-7ac157207b20@pks.im>
+ Update a FAQ entry on synching two separate repositories using the
+ "git stash export/import" recently introduced.
+ source: <20260109014608.42773-1-sandals@crustytoothpaste.net>
 
 
-* pt/t7800-difftool-test-racefix (2026-01-03) 1 commit
-  (merged to 'next' on 2026-01-06 at 572d775bca)
- + t7800: fix racy "difftool --dir-diff syncs worktree" test
+* ds/builtin-doc-update (2026-01-08) 1 commit
+  (merged to 'next' on 2026-01-10 at a98a468cf0)
+ + builtin.h: update documentation
 
- Test fixup.
- source: <pull.2149.v3.git.git.1767472809897.gitgitgadget@gmail.com>
+ Update in-code comment doc to match the current API.
+ source: <pull.2028.git.1767929941577.gitgitgadget@gmail.com>
+
+
+* jk/cat-file-avoid-bitmap-when-unneeded (2026-01-06) 1 commit
+  (merged to 'next' on 2026-01-10 at 5e3f0240f7)
+ + cat-file: only use bitmaps when filtering
+
+ Fix for a performance regression in "git cat-file".
+ cf. <aV4Xa9ceY4ahYj2m@pks.im>
+ source: <20260106102558.GA68914@coredump.intra.peff.net>
+
+
+* jk/t-perf-fixes (2026-01-06) 2 commits
+  (merged to 'next' on 2026-01-10 at 9a633e87df)
+ + t/perf/run: preserve GIT_PERF_* from environment
+ + t/perf/perf-lib: fix assignment of TEST_OUTPUT_DIRECTORY
+
+ Perf-test fixes.
+ source: <20260106101043.GA3723319@coredump.intra.peff.net>
+
+
+* kh/doc-patch-id (2026-01-07) 6 commits
+  (merged to 'next' on 2026-01-10 at 27a1d947d1)
+ + doc: patch-id: --verbatim locks in --stable
+ + doc: patch-id: spell out the git-diff-tree(1) form
+ + doc: patch-id: use definite article for the result
+ + patch-id: use “patch ID” throughout
+ + doc: patch-id: capitalize Git version
+ + doc: patch-id: don’t use semicolon between bullet points
+
+ "git patch-id" documentation updates.
+ source: <CV_doc_patch-id_3.1ab@msgid.xyz>
+
+
+* kj/t7101-modernize (2026-01-08) 1 commit
+  (merged to 'next' on 2026-01-10 at c33f8ae0bb)
+ + t7101: modernize test path checks
+
+ Test update.
+ source: <20260109032027.68680-1-jayatheerthkulkarni2005@gmail.com>
+
+
+* ml/doc-blame-markup (2026-01-08) 2 commits
+  (merged to 'next' on 2026-01-10 at 1f87b77810)
+ + doc: git-blame: convert to new doc format
+ + doc: blame-options: convert to new doc format
+
+ Doc mark-up update.
+ cf. <2813520.mvXUDI8C0e@piment-oiseau>
+ source: <20260108153039.658217-1-git@michael.lyo.nz>
 
 --------------------------------------------------
 [Stalled]
@@ -160,19 +188,6 @@ Release tarballs are available at:
  source: <pull.2107.v2.git.git.1763926552033.gitgitgadget@gmail.com>
 
 
-* tc/last-modified-options-cleanup (2025-11-26) 4 commits
- - fixup! last-modified: document option --max-depth
- - last-modified: document how depth is handled better
- - last-modified: document option --max-depth
- - last-modified: handle and document NUL termination
-
- The "-z" and "--max-depth" documentation (and implementation of
- "-z") in the "git last-modified" command have been updated.
-
- Will discard. Has been waiting for a reroll for too long.
- source: <20251126-toon-last-modified-zzzz-v1-0-608350df0caa@iotcl.com>
-
-
 * jk/parse-int (2025-11-30) 5 commits
  - fsck: use parse_unsigned_from_buf() for parsing timestamp
  - cache-tree: use parse_int_from_buf()
@@ -202,6 +217,102 @@ Release tarballs are available at:
  Will discard. Has been waiting for further comments for too long.
  source: <20251201-kn-alternate-ref-dir-v3-0-c11b946bc2fa@gmail.com>
 
+--------------------------------------------------
+[New Topics]
+
+* ar/run-command-hook-take-2 (2026-01-14) 14 commits
+ - hook: make ungroup opt-out instead of opt-in
+ - hook: allow hooks to disable stdout_to_stderr
+ - hook: check for NULL pointer before deref
+ - receive-pack: convert receive hooks to hook API
+ - receive-pack: convert update hooks to new API
+ - hooks: allow callers to capture output
+ - run-command: allow capturing of collated output
+ - hook: allow overriding the ungroup option
+ - reference-transaction: use hook API instead of run-command
+ - transport: convert pre-push to hook API
+ - hook: convert 'post-rewrite' hook in sequencer.c to hook API
+ - hook: provide stdin via callback
+ - run-command: add stdin callback for parallelization
+ - run-command: add first helper for pp child states
+
+ Use the hook API to replace ad-hoc invocation of hook scripts via
+ the run_command() API.
+
+ Expecting a reroll.
+ cf. <87h5smlgbu.fsf@collabora.com>
+ source: <20251226122334.16687-1-adrian.ratiu@collabora.com>
+ source: <20260114185731.2381550-1-adrian.ratiu@collabora.com>
+
+
+* lp/diff-stat-utf8-display-width-fix (2026-01-15) 2 commits
+ - t4073: add test for diffstat paths length when containing UTF-8 chars
+ - diff: improve scaling of filenames in diffstat to handle UTF-8 chars
+
+ The computation of column width made by "git diff --stat" was
+ confused when pathnames contain non-ASCII characters.
+
+ Will merge to 'next'?
+ source: <cover.1768520441.git.lorenzo.pegorari2002@gmail.com>
+
+
+* rj/cygwin-test-fixes-for-2.53 (2026-01-16) 2 commits
+ - t0610-reftable-basics: mitigate a flaky test on cygwin
+ - t9700/test.pl: fix path type expectation on cygwin
+
+ Test fixup.
+
+ Will merge to 'next' and then to 'master'.
+ source: <f46e023b-1925-41b2-9842-42e7cb727056@ramsayjones.plus.com>
+
+
+* jx/build-options-gettext (2026-01-17) 1 commit
+ - help: report on whether or not gettext is enabled
+
+ "git bugreport" and "git version --build-options" learned to
+ include use of 'gettext' feature, to make it easier to diagnose
+ problems around l10n.
+
+ Will merge to 'next'.
+ source: <251e1b533ca2e38a9bedae44360ce636cdea4bc3.1768657640.git.zhiyou.jx@alibaba-inc.com>
+
+
+* ty/t1005-test-path-is-helpers (2026-01-16) 1 commit
+ - t1005: modernize "! test -f" to "test_path_is_missing"
+
+ Test clean-up.
+
+ Will merge to 'next'.
+ source: <20260117062515.319664-1-a3205153416@gmail.com>
+
+
+* js/ci-leak-skip-svn (2026-01-17) 2 commits
+ - ci: skip CVS and P4 tests in leaks job, too
+ - ci(*-leaks): skip the git-svn tests to save time
+
+ Dscho observed that SVN tests are taking too much time in CI leak
+ checking tasks, but most time is spent not in our code but in libsvn
+ code (which happen to be written in Perl), whose leaks have little
+ value to discover for us.  Skip SVN, P4, and CVS tests in the leak
+ checking tasks.
+
+ Will merge to 'next' and down to 'master'.
+ source: <pull.2031.git.1768584676520.gitgitgadget@gmail.com>
+
+
+* jk/remote-tracking-ref-leakfix (2026-01-18) 4 commits
+ - remote: always allocate branch.push_tracking_ref
+ - remote: fix leak in branch_get_push_1() with invalid "simple" config
+ - remote: drop const return of tracking_for_push_dest()
+ - remote: return non-const pointer from error_buf()
+
+ Leakfix.
+
+ Will merge to 'next'.
+ source: <20260119051858.GA1991308@coredump.intra.peff.net>
+
+--------------------------------------------------
+[Cooking]
 
 * yc/histogram-hunk-shift-fix (2025-12-06) 1 commit
  - xdiff: re-diff shifted change groups when using histogram algorithm
@@ -209,11 +320,13 @@ Release tarballs are available at:
  The final clean-up phase of the diff output could turn the result of
  histogram diff algorithm suboptimal, which has been corrected.
 
- Will discard. Has been waiting for further comments for too long.
+ Comments?  We do want a real review around here...
+ cf. <CALnO6CC3WTBjaLR7yAr-w5eaqzyd2qF5MAyfV2wQY3+TDEbEsw@mail.gmail.com>
  source: <pull.2120.git.git.1765054287938.gitgitgadget@gmail.com>
 
 
-* js/neuter-sideband (2025-12-17) 4 commits
+* js/neuter-sideband (2026-01-16) 5 commits
+ - sideband: offer to configure sanitizing on a per-URL basis
  - sideband: add options to allow more control sequences to be passed through
  - sideband: do allow ANSI color sequences by default
  - sideband: introduce an "escape hatch" to allow control characters
@@ -222,25 +335,35 @@ Release tarballs are available at:
  Invalidate control characters in sideband messages, to avoid
  terminal state getting messed up.
 
- Will discard. Has been waiting for further comments for too long.
- cf. <aS-D5lD2Kk6BHNIl@fruit.crustytoothpaste.net>
- source: <pull.1853.v2.git.1765981422.gitgitgadget@gmail.com>
+ Expecting a reroll to make things opt-in, not opt-out.
+ source: <pull.1853.v3.git.1768602373.gitgitgadget@gmail.com>
 
---------------------------------------------------
-[New Topics]
 
-* tc/last-modified-not-a-tree (2026-01-14) 3 commits
+* tc/last-modified-options-cleanup (2026-01-16) 5 commits
+ - last-modified: change default max-depth to 0
+ - last-modified: add option '--max-depth' to help output
+ - last-modified: document option --max-depth
+ - last-modified: add option '-z' to help output
+ - last-modified: document NUL termination
+
+ The "-z" and "--max-depth" documentation (and implementation of
+ "-z") in the "git last-modified" command have been updated.
+
+ Will merge to 'next'?
+ source: <20260116-toon-last-modified-zzzz-v2-0-79e44f2806fe@iotcl.com>
+
+
+* tc/last-modified-not-a-tree (2026-01-16) 4 commits
  - last-modified: verify revision argument is a commit-ish
  - last-modified: remove double error message
+ - last-modified: fix memory leak when more than one revision is given
  - last-modified: rewrite error message when more than one revision given
 
  Giving "git last-modified" a tree (not a commit-ish) died an
  uncontrolled death, which has been corrected.
 
- Expecting a reroll?
- cf. <aWd2VcX7gERTDK2t@pks.im>
- cf. <bc0db8d5-3c5f-4dd4-9c35-ccb02a6bf5c9@app.fastmail.com>
- source: <20260114-toon-last-modified-tree-v2-0-ba3b1860898f@iotcl.com>
+ Will merge to 'next'?
+ source: <20260116-toon-last-modified-tree-v3-0-e6ade4dc35ab@iotcl.com>
 
 
 * sp/myfirstcontribution-include-update (2026-01-12) 1 commit
@@ -250,18 +373,6 @@ Release tarballs are available at:
 
  Will merge to 'next'?
  source: <20260112195625.391821-1-shreyanshpaliwalcmsmn@gmail.com>
-
-
-* ar/run-command-hook-pre-push-fix (2026-01-14) 2 commits
- - hook: make ungroup opt-out instead of opt-in
- - hook: allow hooks to disable stdout_to_stderr
- (this branch uses ar/run-command-hook.)
-
- Recent update to use run-hooks API broke pre-push hook, which has
- been corrected.
-
- Will merge to 'next' and then to 'master'.
- source: <20260114185731.2381550-3-adrian.ratiu@collabora.com>
 
 
 * cs/add-skip-submodule-ignore-all (2026-01-13) 5 commits
@@ -280,21 +391,21 @@ Release tarballs are available at:
  source: <37fe7956e089394bb1d75f4c8af4a3347b204803.1768376879.git.gitgitgadget@gmail.com>
 
 
-* kn/ref-batch-output-error-reporting-fix (2026-01-14) 6 commits
+* kn/ref-batch-output-error-reporting-fix (2026-01-16) 7 commits
+ - fetch: delay user information post committing of transaction
  - receive-pack: utilize rejected ref error details
  - fetch: utilize rejected ref error details
  - update-ref: utilize rejected error details if available
  - refs: add rejection detail to the callback function
- - refs: attach rejection details to updates
- - refs: remove unused header
+ - refs: skip to next ref when current ref is rejected
+ - refs: drop unnecessary header includes
 
  A handful of code paths that started using batched ref update API
  (after Git 2.51 or so) lost detailed error output, which have been
  corrected.
 
- Expecting a reroll?
- cf. <20260114175558.GG885771@coredump.intra.peff.net>
- source: <20260114-633-regression-lost-diagnostic-message-when-pushing-non-commit-objects-to-refs-heads-v1-6-f5f8b173c501@gmail.com>
+ Will merge to 'next'?
+ source: <20260116-633-regression-lost-diagnostic-message-when-pushing-non-commit-objects-to-refs-heads-v2-0-925a0e9c7f32@gmail.com>
 
 
 * ps/geometric-repacking-with-promisor-remotes (2026-01-05) 5 commits
@@ -326,13 +437,13 @@ Release tarballs are available at:
  source: <cover.1768261435.git.me@ttaylorr.com>
 
 
-* ac/sparse-checkout-string-list-cleanup (2026-01-15) 1 commit
+* ac/sparse-checkout-string-list-cleanup (2026-01-16) 1 commit
  - sparse-checkout: optimize string_list construction
 
  Code clean-up.
 
- Will merge to 'next'.
- source: <20260115130935.93526-1-amishhhaaaa@gmail.com>
+ Will merge to 'next'?
+ source: <20260116165003.95314-1-amishhhaaaa@gmail.com>
 
 
 * ps/commit-list-functions-renamed (2026-01-15) 3 commits
@@ -342,16 +453,17 @@ Release tarballs are available at:
 
  Rename three functions around the commit_list data structure.
 
- Comments?
+ Will merge to 'next'?
  source: <20260115-pks-commit-list-coding-guidelines-v1-0-c58868dbf412@pks.im>
 
 
 * ps/config-doc-get-urlmatch-fix (2026-01-15) 1 commit
- - Documentation/config: fix replacement for --get-urlmatch
+  (merged to 'next' on 2026-01-16 at b479b54381)
+ + Documentation/config: fix replacement for --get-urlmatch
 
  Docfix.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20260115110832.15315-1-pushkarkumarsingh1970@gmail.com>
 
 
@@ -390,65 +502,6 @@ Release tarballs are available at:
  Expecting a reroll?
  source: <20260115122652.18673-2-pushkarkumarsingh1970@gmail.com>
 
---------------------------------------------------
-[Cooking]
-
-* bc/doc-stash-import-export (2026-01-08) 1 commit
-  (merged to 'next' on 2026-01-10 at 48f26103bc)
- + gitfaq: document using stash import/export to sync working tree
-
- Update a FAQ entry on synching two separate repositories using the
- "git stash export/import" recently introduced.
-
- Will merge to 'master'.
- source: <20260109014608.42773-1-sandals@crustytoothpaste.net>
-
-
-* ds/builtin-doc-update (2026-01-08) 1 commit
-  (merged to 'next' on 2026-01-10 at a98a468cf0)
- + builtin.h: update documentation
-
- Update in-code comment doc to match the current API.
-
- Will merge to 'master'.
- source: <pull.2028.git.1767929941577.gitgitgadget@gmail.com>
-
-
-* kh/doc-patch-id (2026-01-07) 6 commits
-  (merged to 'next' on 2026-01-10 at 27a1d947d1)
- + doc: patch-id: --verbatim locks in --stable
- + doc: patch-id: spell out the git-diff-tree(1) form
- + doc: patch-id: use definite article for the result
- + patch-id: use “patch ID” throughout
- + doc: patch-id: capitalize Git version
- + doc: patch-id: don’t use semicolon between bullet points
-
- "git patch-id" documentation updates.
-
- Will merge to 'master'.
- source: <CV_doc_patch-id_3.1ab@msgid.xyz>
-
-
-* kj/t7101-modernize (2026-01-08) 1 commit
-  (merged to 'next' on 2026-01-10 at c33f8ae0bb)
- + t7101: modernize test path checks
-
- Test update.
-
- Will merge to 'master'.
- source: <20260109032027.68680-1-jayatheerthkulkarni2005@gmail.com>
-
-
-* ar/run-command-hook (2026-01-09) 1 commit
-  (merged to 'next' on 2026-01-10 at 236f60e30d)
- + hook: check for NULL pointer before deref
- (this branch is used by ar/run-command-hook-pre-push-fix.)
-
- Fix-up a topic that has recently graduated to 'master'.
-
- Will merge to 'master'.
- source: <20260109181912.689409-1-adrian.ratiu@collabora.com>
-
 
 * ps/ref-consistency-checks (2026-01-12) 17 commits
   (merged to 'next' on 2026-01-13 at ba6c9deadb)
@@ -477,24 +530,25 @@ Release tarballs are available at:
  source: <20260112-pks-refs-verify-fixes-v2-0-2e9e453bd6c3@pks.im>
 
 
-* rs/tree-wo-the-repository (2026-01-09) 10 commits
- - cocci: convert parse_tree functions to repo_ variants
- - tree: stop using the_repository
- - tree: use repo_parse_tree()
- - path-walk: use repo_parse_tree_gently()
- - pack-bitmap-write: use repo_parse_tree()
- - delta-islands: use repo_parse_tree()
- - bloom: use repo_parse_tree()
- - add-interactive: use repo_parse_tree_indirect()
- - tree: add repo_parse_tree*()
- - environment: move access to core.maxTreeDepth into repo settings
+* rs/tree-wo-the-repository (2026-01-15) 11 commits
+  (merged to 'next' on 2026-01-16 at 72f0a82905)
+ + cocci: remove obsolete the_repository rules
+ + cocci: convert parse_tree functions to repo_ variants
+ + tree: stop using the_repository
+ + tree: use repo_parse_tree()
+ + path-walk: use repo_parse_tree_gently()
+ + pack-bitmap-write: use repo_parse_tree()
+ + delta-islands: use repo_parse_tree()
+ + bloom: use repo_parse_tree()
+ + add-interactive: use repo_parse_tree_indirect()
+ + tree: add repo_parse_tree*()
+ + environment: move access to core.maxTreeDepth into repo settings
 
  Remove implicit reliance on the_repository global in the APIs
  around tree objects and make it explicit which repository to work
  in.
 
- Comments?
- cf. <aWS9JLb3UyxOwg9Z@pks.im>
+ Will merge to 'master'.
  source: <20260109213021.2546-1-l.s.r@web.de>
 
 
@@ -509,7 +563,7 @@ Release tarballs are available at:
  source: <20260110011811.788219-1-ask+git@howdoi.land>
 
 
-* sp/shallow-deepen-relative-fix (2026-01-09) 2 commits
+* sp/shallow-deepen-relative-fix (2026-01-16) 2 commits
  - shallow: handling fetch relative-deepen
  - shallow: free local object_array allocations
 
@@ -517,10 +571,8 @@ Release tarballs are available at:
  get confused where the updated shallow points are, which has been
  corrected.
 
- Expecting a reroll?
- cf. <11b951ab-b624-4ab8-b7b1-fe41a40c9d0e@app.fastmail.com>
- cf. <f021269b-c89c-41c8-aa08-2ec2443ac7e8@app.fastmail.com>
- source: <pull.2121.v2.git.git.1767997426.gitgitgadget@gmail.com>
+ Comments?
+ source: <pull.2121.v4.git.git.1768602661.gitgitgadget@gmail.com>
 
 
 * kt/http-backend-errors (2026-01-11) 1 commit
@@ -554,28 +606,6 @@ Release tarballs are available at:
  source: <20260112163643.231-3-deveshigurgaon@gmail.com>
 
 
-* ml/doc-blame-markup (2026-01-08) 2 commits
-  (merged to 'next' on 2026-01-10 at 1f87b77810)
- + doc: git-blame: convert to new doc format
- + doc: blame-options: convert to new doc format
-
- Doc mark-up update.
-
- Will merge to 'master'.
- cf. <2813520.mvXUDI8C0e@piment-oiseau>
- source: <20260108153039.658217-1-git@michael.lyo.nz>
-
-
-* ac/t1420-use-more-direct-check (2026-01-06) 1 commit
-  (merged to 'next' on 2026-01-10 at 6bccdd0e04)
- + t1420: modernize the lost-found test
-
- Test update.
-
- Will merge to 'master'.
- source: <20260106132658.798706-1-andchi@fastmail.com>
-
-
 * ag/http-netrc-tests (2026-01-06) 1 commit
  - t5550: add netrc tests for http 401/403
 
@@ -584,28 +614,6 @@ Release tarballs are available at:
 
  Comments?
  source: <20260106114029.763351-1-git@ashlesh.me>
-
-
-* jk/cat-file-avoid-bitmap-when-unneeded (2026-01-06) 1 commit
-  (merged to 'next' on 2026-01-10 at 5e3f0240f7)
- + cat-file: only use bitmaps when filtering
-
- Fix for a performance regression in "git cat-file".
-
- Will merge to 'master'.
- cf. <aV4Xa9ceY4ahYj2m@pks.im>
- source: <20260106102558.GA68914@coredump.intra.peff.net>
-
-
-* jk/t-perf-fixes (2026-01-06) 2 commits
-  (merged to 'next' on 2026-01-10 at 9a633e87df)
- + t/perf/run: preserve GIT_PERF_* from environment
- + t/perf/perf-lib: fix assignment of TEST_OUTPUT_DIRECTORY
-
- Perf-test fixes.
-
- Will merge to 'master'.
- source: <20260106101043.GA3723319@coredump.intra.peff.net>
 
 
 * en/xdiff-cleanup-3 (2026-01-03) 11 commits
@@ -867,7 +875,7 @@ Release tarballs are available at:
 
  Doc mark-up fix.
 
- Will merget to 'next'.
+ Will merge to 'next'.
  source: <pull.2123.git.git.1765261419802.gitgitgadget@gmail.com>
 
 
@@ -930,6 +938,8 @@ Release tarballs are available at:
 
  The code to maintain mapping between object names in multiple hash
  functions is being added, written in Rust.
+
+ Any progress on CI breakages???
  source: <20251117221621.2863243-1-sandals@crustytoothpaste.net>
 
 
@@ -961,6 +971,7 @@ Release tarballs are available at:
  "git history" history rewriting UI.
 
  Will merge to 'next'?
+ cf. <aWpoMcgwsfRCCrr4@szeder.dev>
  source: <20260113-b4-pks-history-builtin-v11-0-e74ebfa2652d@pks.im>
 
 
@@ -988,7 +999,7 @@ Release tarballs are available at:
 [Discarded]
 
 * wm/complete-git-short-opts (2025-11-26) 1 commit
- - completion: complete "git -<TAB>" with short options
+ . completion: complete "git -<TAB>" with short options
 
  The command line completion script (in contrib/) learned to
  complete "git -<TAB>" to give single-letter options like "-C".
