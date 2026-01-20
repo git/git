@@ -55,6 +55,7 @@ struct last_modified {
 	struct rev_info rev;
 	bool recursive;
 	bool show_trees;
+	bool nul_termination;
 
 	const char **all_paths;
 	size_t all_paths_nr;
@@ -165,10 +166,10 @@ static void last_modified_emit(struct last_modified *lm,
 		putchar('^');
 	printf("%s\t", oid_to_hex(&commit->object.oid));
 
-	if (lm->rev.diffopt.line_termination)
-		write_name_quoted(path, stdout, '\n');
-	else
+	if (lm->nul_termination)
 		printf("%s%c", path, '\0');
+	else
+		write_name_quoted(path, stdout, '\n');
 }
 
 static void mark_path(const char *path, const struct object_id *oid,
@@ -510,7 +511,7 @@ int cmd_last_modified(int argc, const char **argv, const char *prefix,
 	struct last_modified lm = { 0 };
 
 	const char * const last_modified_usage[] = {
-		N_("git last-modified [--recursive] [--show-trees]\n"
+		N_("git last-modified [--recursive] [--show-trees] [-z]\n"
 		   "                  [<revision-range>] [[--] <pathspec>...]"),
 		NULL
 	};
@@ -520,6 +521,8 @@ int cmd_last_modified(int argc, const char **argv, const char *prefix,
 			 N_("recurse into subtrees")),
 		OPT_BOOL('t', "show-trees", &lm.show_trees,
 			 N_("show tree entries when recursing into subtrees")),
+		OPT_BOOL('z', NULL, &lm.nul_termination,
+			 N_("lines are separated with NUL character")),
 		OPT_END()
 	};
 

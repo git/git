@@ -9,7 +9,7 @@ git-last-modified - EXPERIMENTAL: Show when files were last modified
 SYNOPSIS
 --------
 [synopsis]
-git last-modified [--recursive] [--show-trees]
+git last-modified [--recursive] [--show-trees] [-z]
 		  [<revision-range>] [[--] <pathspec>...]
 
 DESCRIPTION
@@ -33,6 +33,9 @@ OPTIONS
 	Show tree entries even when recursing into them. It has no effect
 	without `--recursive`.
 
+`-z`::
+	Terminate each line with a _NUL_ character rather than a newline.
+
 `<revision-range>`::
 	Only traverse commits in the specified revision range. When no
 	`<revision-range>` is specified, it defaults to `HEAD` (i.e. the whole
@@ -44,6 +47,22 @@ OPTIONS
 	Show the commit that last modified each path matching _<pathspec>_.
 	If no _<pathspec>_ is given, all files and subdirectories are included.
 	See linkgit:gitglossary[7] for details on pathspec syntax.
+
+OUTPUT
+------
+
+The output is in the format:
+
+------------
+ <oid> TAB <path> LF
+------------
+
+If a path contains any special characters, the path is C-style quoted. To
+avoid quoting, pass option `-z` to terminate each line with a NUL.
+
+------------
+ <oid> TAB <path> NUL
+------------
 
 SEE ALSO
 --------
