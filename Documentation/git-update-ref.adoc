@@ -119,7 +119,7 @@ verify::
 	Verify <ref> against <old-oid> but do not change it.  If
 	<old-oid> is zero or missing, the ref must not exist.
 
-symref-create:
+symref-create::
 	Create symbolic ref <ref> with <new-target> after verifying that
 	it does not exist.
 
