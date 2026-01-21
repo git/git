@@ -817,6 +817,54 @@ test_expect_success 'cone mode clears ignored subdirectories' '
 	test_cmp expect out
 '
 
+test_expect_success 'sparse-checkout deduplicates repeated cone patterns' '
+	rm -f repo/.git/info/sparse-checkout &&
+	git -C repo sparse-checkout init --cone &&
+	git -C repo sparse-checkout add --stdin <<-\EOF &&
+	foo/bar/baz
+	a/b/c
+	foo/bar/baz
+	a/b
+	EOF
+	cat >expect <<-\EOF &&
+	/*
+	!/*/
+	/a/
+	!/a/*/
+	/foo/
+	!/foo/*/
+	/foo/bar/
+	!/foo/bar/*/
+	/a/b/
+	/foo/bar/baz/
+	EOF
+	test_cmp expect repo/.git/info/sparse-checkout
+'
+
+test_expect_success 'sparse-checkout list deduplicates repeated cone patterns' '
+	rm -f repo/.git/info/sparse-checkout &&
+	git -C repo sparse-checkout init --cone &&
+	cat <<-\EOF >repo/.git/info/sparse-checkout &&
+	/*
+	!/*/
+	/a/
+	!/a/*/
+	/foo/
+	!/foo/*/
+	/foo/bar/
+	!/foo/bar/*/
+	/a/b/
+	/foo/bar/baz/
+	/foo/bar/baz/
+	EOF
+	git -C repo sparse-checkout list >actual &&
+	cat <<-\EOF >expect &&
+	a/b
+	foo/bar/baz
+	EOF
+	test_cmp expect actual
+'
+
 test_expect_success 'malformed cone-mode patterns' '
 	git -C repo sparse-checkout init --cone &&
 	mkdir -p repo/foo/bar &&
