@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jan 2026, #06)
-X-master-at: b5c409c40f1595e3e590760c6f14a16b6683e22c
-X-next-at: 0ac79233d615b382626469283a2cd0dfe9edd163
+Subject: What's cooking in git.git (Jan 2026, #07)
+X-master-at: 83a69f19359e6d9bc980563caca38b2b5729808c
+X-next-at: eba53bf80eb721f8e61c7b20a0dfc69f2d841278
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jan 2026, #06)
+What's cooking in git.git (Jan 2026, #07)
 -----------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -20,6 +20,12 @@ arise).
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
 repositories have only a subset of branches.
+
+Git 2.53-rc1 has been tagged.  What's slated to 'master' as of this
+edition of the "What's cooking" report will be merged and would
+appear in the upcoming release, while everything else will have to
+wait until the next cycle begins.  Until then, please hunt for
+regressions.
 
 With maint, master, next, seen, todo:
 
@@ -48,87 +54,169 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ac/t1420-use-more-direct-check (2026-01-06) 1 commit
-  (merged to 'next' on 2026-01-10 at 6bccdd0e04)
- + t1420: modernize the lost-found test
+* cs/rebased-subtree-split (2026-01-09) 1 commit
+  (merged to 'next' on 2026-01-13 at b213ccc8c1)
+ + contrib/subtree: detect rewritten subtree commits
 
- Test update.
- source: <20260106132658.798706-1-andchi@fastmail.com>
-
-
-* bc/doc-stash-import-export (2026-01-08) 1 commit
-  (merged to 'next' on 2026-01-10 at 48f26103bc)
- + gitfaq: document using stash import/export to sync working tree
-
- Update a FAQ entry on synching two separate repositories using the
- "git stash export/import" recently introduced.
- source: <20260109014608.42773-1-sandals@crustytoothpaste.net>
+ The split command in "git subtree" (in contrib/) has been taught to
+ deal better with rebased history.
+ source: <20260110011811.788219-1-ask+git@howdoi.land>
 
 
-* ds/builtin-doc-update (2026-01-08) 1 commit
-  (merged to 'next' on 2026-01-10 at a98a468cf0)
- + builtin.h: update documentation
+* en/fsck-snapshot-ref-state (2026-01-09) 1 commit
+  (merged to 'next' on 2026-01-12 at d5dff1bba4)
+ + fsck: snapshot default refs before object walk
 
- Update in-code comment doc to match the current API.
- source: <pull.2028.git.1767929941577.gitgitgadget@gmail.com>
-
-
-* jk/cat-file-avoid-bitmap-when-unneeded (2026-01-06) 1 commit
-  (merged to 'next' on 2026-01-10 at 5e3f0240f7)
- + cat-file: only use bitmaps when filtering
-
- Fix for a performance regression in "git cat-file".
- cf. <aV4Xa9ceY4ahYj2m@pks.im>
- source: <20260106102558.GA68914@coredump.intra.peff.net>
+ "git fsck" used inconsistent set of refs to show a confused
+ warning, which has been corrected.
+ source: <pull.2026.v3.git.1767980953134.gitgitgadget@gmail.com>
 
 
-* jk/t-perf-fixes (2026-01-06) 2 commits
-  (merged to 'next' on 2026-01-10 at 9a633e87df)
- + t/perf/run: preserve GIT_PERF_* from environment
- + t/perf/perf-lib: fix assignment of TEST_OUTPUT_DIRECTORY
+* je/doc-reset (2026-01-05) 4 commits
+  (merged to 'next' on 2026-01-12 at 44b4f99803)
+ + doc: git-reset: clarify `git reset <pathspec>`
+ + doc: git-reset: clarify `git reset [mode]`
+ + doc: git-reset: clarify intro
+ + doc: git-reset: reorder the forms
 
- Perf-test fixes.
- source: <20260106101043.GA3723319@coredump.intra.peff.net>
-
-
-* kh/doc-patch-id (2026-01-07) 6 commits
-  (merged to 'next' on 2026-01-10 at 27a1d947d1)
- + doc: patch-id: --verbatim locks in --stable
- + doc: patch-id: spell out the git-diff-tree(1) form
- + doc: patch-id: use definite article for the result
- + patch-id: use “patch ID” throughout
- + doc: patch-id: capitalize Git version
- + doc: patch-id: don’t use semicolon between bullet points
-
- "git patch-id" documentation updates.
- source: <CV_doc_patch-id_3.1ab@msgid.xyz>
+ Documentation updates.
+ source: <cover.1767649692.git.ben.knoble+github@gmail.com>
 
 
-* kj/t7101-modernize (2026-01-08) 1 commit
-  (merged to 'next' on 2026-01-10 at c33f8ae0bb)
- + t7101: modernize test path checks
+* js/prep-symlink-windows (2026-01-09) 6 commits
+  (merged to 'next' on 2026-01-14 at d05f3a8ea5)
+ + trim_last_path_component(): avoid hard-coding the directory separator
+ + strbuf_readlink(): support link targets that exceed 2*PATH_MAX
+ + strbuf_readlink(): avoid calling `readlink()` twice in corner-cases
+ + init: do parse _all_ core.* settings early
+ + mingw: do resolve symlinks in `getcwd()`
+ + Merge branch 'js/test-symlink-windows' into js/prep-symlink-windows
+ (this branch is used by js/symlink-windows.)
 
- Test update.
- source: <20260109032027.68680-1-jayatheerthkulkarni2005@gmail.com>
+ Further preparation to upstream symbolic link support on Windows.
+ source: <pull.2017.v2.git.1767989109.gitgitgadget@gmail.com>
 
 
-* ml/doc-blame-markup (2026-01-08) 2 commits
-  (merged to 'next' on 2026-01-10 at 1f87b77810)
- + doc: git-blame: convert to new doc format
- + doc: blame-options: convert to new doc format
+* kt/http-backend-errors (2026-01-11) 1 commit
+  (merged to 'next' on 2026-01-13 at 35d72c8eb9)
+ + http-backend: write newlines to stderr when responding with errors
 
- Doc mark-up update.
- cf. <2813520.mvXUDI8C0e@piment-oiseau>
- source: <20260108153039.658217-1-git@michael.lyo.nz>
+ Some error messages from the http transport layer lacked the
+ terminating newline, which has been corrected.
+ source: <20260112014508.17248-1-kj@kjtsanaktsidis.id.au>
+
+
+* ps/packfile-store-in-odb-source (2026-01-09) 12 commits
+  (merged to 'next' on 2026-01-14 at f375c8e347)
+ + packfile: move MIDX into packfile store
+ + packfile: refactor `find_pack_entry()` to work on the packfile store
+ + packfile: inline `find_kept_pack_entry()`
+ + packfile: only prepare owning store in `packfile_store_prepare()`
+ + packfile: only prepare owning store in `packfile_store_get_packs()`
+ + packfile: move packfile store into object source
+ + packfile: refactor misleading code when unusing pack windows
+ + packfile: refactor kept-pack cache to work with packfile stores
+ + packfile: pass source to `prepare_pack()`
+ + packfile: create store via its owning source
+ + Merge branch 'ps/odb-misc-fixes' into ps/packfile-store-in-odb-source
+ + Merge branch 'ps/object-read-stream' into ps/packfile-store-in-odb-source
+ (this branch is used by ps/odb-for-each-object.)
+
+ The packfile_store data structure is moved from object store to odb
+ source.
+ source: <20260109-b4-pks-pack-store-via-source-v3-0-877fd7b7bf81@pks.im>
+
+
+* ps/read-object-info-improvements (2026-01-12) 8 commits
+  (merged to 'next' on 2026-01-14 at e84be1a7bc)
+ + packfile: drop repository parameter from `packed_object_info()`
+ + packfile: skip unpacking object header for disk size requests
+ + packfile: disentangle return value of `packed_object_info()`
+ + packfile: always populate pack-specific info when reading object info
+ + packfile: extend `is_delta` field to allow for "unknown" state
+ + packfile: always declare object info to be OI_PACKED
+ + object-file: always set OI_LOOSE when reading object info
+ + Merge branch 'jc/object-read-stream-fix' into ps/read-object-info-improvements
+ (this branch is used by ps/odb-for-each-object.)
+
+ The object-info API has been cleaned up.
+ source: <20260112-b4-pks-odb-read-object-info-improvements-v5-0-9a6124e95bf2@pks.im>
+
+
+* ps/ref-consistency-checks (2026-01-12) 17 commits
+  (merged to 'next' on 2026-01-13 at ba6c9deadb)
+ + builtin/fsck: drop `fsck_head_link()`
+ + builtin/fsck: move generic HEAD check into `refs_fsck()`
+ + builtin/fsck: move generic object ID checks into `refs_fsck()`
+ + refs/reftable: introduce generic checks for refs
+ + refs/reftable: fix consistency checks with worktrees
+ + refs/reftable: extract function to retrieve backend for worktree
+ + refs/reftable: adapt includes to become consistent
+ + refs/files: introduce function to perform normal ref checks
+ + refs/files: extract generic symref target checks
+ + fsck: drop unused fields from `struct fsck_ref_report`
+ + refs/files: perform consistency checks for root refs
+ + refs/files: improve error handling when verifying symrefs
+ + refs/files: extract function to check single ref
+ + refs/files: remove useless indirection
+ + refs/files: remove `refs_check_dir` parameter
+ + refs/files: move fsck functions into global scope
+ + refs/files: simplify iterating through root refs
+
+ Update code paths that check data integrity around refs subsystem.
+ cf. <CAOLa=ZShPP3BPXa=YnC-vuX4zF=pUTFdUidZwOdna8bfVTNM9w@mail.gmail.com>
+ source: <20260112-pks-refs-verify-fixes-v2-0-2e9e453bd6c3@pks.im>
+
+
+* ps/t1410-cleanup (2026-01-11) 1 commit
+  (merged to 'next' on 2026-01-13 at 51b666d16e)
+ + t1410: use test helpers in reflog rewind test
+
+ Test clean-up.
+ source: <20260111191525.17087-1-pushkarkumarsingh1970@gmail.com>
+
+
+* tb/macos-iconv-workarounds (2026-01-12) 2 commits
+  (merged to 'next' on 2026-01-13 at f2e51d72b8)
+ + utf8.c: enable workaround for iconv under macOS 14/15
+ + utf8.c: prepare workaround for iconv under macOS 14/15
+
+ The iconv library on macOS fails to correctly handle stateful
+ ISO/IEC 2022 encoded strings.  Work it around instead of replacing
+ it wholesale from homebrew.
+ source: <20260112162553.774051-1-tboegi@web.de>
+
+--------------------------------------------------
+[New Topics]
+
+* dk/replay-doc-omit-irrelevant-rev-list-options (2026-01-21) 2 commits
+  (merged to 'next' on 2026-01-21 at a17b449304)
+ + lint-gitlink: preemptively ignore all /ifn?def|endif/ macros
+ + replay: drop rev-list formatting options from manual
+
+ Documentation clean-up.
+
+ Will merge to 'master'.
+ source: <01a7acfaf87494419b3766da57d4c05cf99c79bb.1768873599.git.ben.knoble+github@gmail.com>
+
+
+* pw/mailmap-self (2026-01-20) 1 commit
+  (merged to 'next' on 2026-01-21 at da7d118d77)
+ + mailmap: add an entry for Phillip Wood
+
+ Unify entries in .mailmap file for Phillip Wood.
+
+ Will merge to 'master'.
+ source: <f10c3f680d58ca0abbf795ae8b0f2ad14ab85419.1768906910.git.phillip.wood@dunelm.org.uk>
 
 --------------------------------------------------
 [Stalled]
 
 * dw/config-global-list (2025-10-09) 4 commits
- - config: keep bailing on unreadable global files
- - config: read global scope via config_sequence
- - config: test home and xdg files in `list --global`
- - cleanup_path: force forward slashes on Windows
+ . config: keep bailing on unreadable global files
+ . config: read global scope via config_sequence
+ . config: test home and xdg files in `list --global`
+ . cleanup_path: force forward slashes on Windows
 
  "git config --list --global", unlike "git config --list", did not
  consult both of the two possible per-user sources of the
@@ -137,63 +225,68 @@ Release tarballs are available at:
 
  Will discard. Has been waiting for a reroll for too long.
  cf. <20251122020047.GB3947@linuxonhyperv3.guj3yctzbm1etfxqx2vob5hsef.xx.internal.cloudapp.net>
+ cf. <xmqq1pjkyq25.fsf@gitster.g>
  source: <pull.1938.git.1760058849.gitgitgadget@gmail.com>
 
 
 * ms/doc-worktree-side-by-side (2025-10-10) 2 commits
- - doc: git-worktree: Add side by side branch checkout example
- - doc: git-worktree: Link to examples
+ . doc: git-worktree: Add side by side branch checkout example
+ . doc: git-worktree: Link to examples
 
  Document "git worktree add" and use of out-of-tree worktrees with
  examples.
 
  Will discard. Has been waiting for a reroll for too long.
  cf. <CAPig+cSNesf0UwS4=Bxe-Qn+G9y3YYPyOK+7y3q8QJk+o7jaVg@mail.gmail.com>
+ cf. <xmqq7btcyq7f.fsf@gitster.g>
  source: <a203b35538847f3c9358a5ae26fb4ebea5734cfc.1759420102.git.msuchanek@suse.de>
 
 
 * jc/exclude-with-gitignore (2025-11-04) 1 commit
- - dir.c: do not be fooled by :(exclude) pathspec elements
+ . dir.c: do not be fooled by :(exclude) pathspec elements
 
  "git add ':(exclude)foo.o'" is clearly a request not to add 'foo.o',
  but the command complained about listing an ignored path foo.o on
  the command line, which has been corrected.
 
  Will discard. Has been waiting for further comments for too long.
+ cf. <xmqqwm1cxbad.fsf@gitster.g>
  source: <xmqqtsz9o3cn.fsf@gitster.g>
 
 
 * lc/rebase-trailer (2025-11-05) 4 commits
- - rebase: support --trailer
- - trailer: append trailers in-process and drop the fork to `interpret-trailers`
- - trailer: move process_trailers to trailer.h
- - interpret-trailers: factor out buffer-based processing to process_trailers()
+ . rebase: support --trailer
+ . trailer: append trailers in-process and drop the fork to `interpret-trailers`
+ . trailer: move process_trailers to trailer.h
+ . interpret-trailers: factor out buffer-based processing to process_trailers()
 
  Refactor code paths to run "interpret-trailers" from "git
  commit/tag" and use it in "git rebase".
 
  Will discard. Has been waiting for a reroll for too long.
  cf. <19a8fe42354.3909481a3912041.7970296104893780556@linux.beauty>
+ cf. <xmqqsec0xb50.fsf@gitster.g>
  source: <20251105142944.73061-1-me@linux.beauty>
 
 
 * sp/shallow-time-boundary (2025-11-23) 1 commit
- - shallow: set borders which are all reachable after clone shallow since
+ . shallow: set borders which are all reachable after clone shallow since
 
  The set of shallow boundary "git clone --shallow-since" leaves
  contained commits that are not on the boundary, which has been
  corrected.
 
  Will discard. Has been waiting for further comments for too long.
+ cf. <xmqqfr80xanx.fsf@gitster.g>
  source: <pull.2107.v2.git.git.1763926552033.gitgitgadget@gmail.com>
 
 
 * jk/parse-int (2025-11-30) 5 commits
- - fsck: use parse_unsigned_from_buf() for parsing timestamp
- - cache-tree: use parse_int_from_buf()
- - parse: add functions for parsing from non-string buffers
- - parse: prefer bool to int for boolean returns
- - Merge branch 'jk/asan-bonanza' into jk/parse-int
+ . fsck: use parse_unsigned_from_buf() for parsing timestamp
+ . cache-tree: use parse_int_from_buf()
+ . parse: add functions for parsing from non-string buffers
+ . parse: prefer bool to int for boolean returns
+ . Merge branch 'jk/asan-bonanza' into jk/parse-int
 
  Introduce a more robust way to parse a decimal integer stored in a
  piece of memory that is not necessarily terminated with NUL (which
@@ -203,22 +296,24 @@ Release tarballs are available at:
  Will discard. Has been waiting for a reroll for too long.
  cf. <aTFvKOHlm4zfT9dU@pks.im>
  cf. <4d83375b-76e2-4420-80dd-6a04d3201532@gmail.com>
+ cf. <xmqqldhsxawm.fsf@gitster.g>
  source: <20251130131351.GA198697@coredump.intra.peff.net>
 
 
 * kn/ref-location (2025-12-01) 2 commits
- - refs: add GIT_REF_URI to specify reference backend and directory
- - refs: support obtaining ref_store for given dir
+ . refs: add GIT_REF_URI to specify reference backend and directory
+ . refs: support obtaining ref_store for given dir
 
  A mechanism to specify what reference backend to use and store
  references in which directory is introduced, which would likely to
  be useful during ref migration.
 
  Will discard. Has been waiting for further comments for too long.
+ cf. <xmqqbjioxahm.fsf@gitster.g>
  source: <20251201-kn-alternate-ref-dir-v3-0-c11b946bc2fa@gmail.com>
 
 --------------------------------------------------
-[New Topics]
+[Cooking]
 
 * ar/run-command-hook-take-2 (2026-01-14) 14 commits
  - hook: make ungroup opt-out instead of opt-in
@@ -257,38 +352,42 @@ Release tarballs are available at:
 
 
 * rj/cygwin-test-fixes-for-2.53 (2026-01-16) 2 commits
- - t0610-reftable-basics: mitigate a flaky test on cygwin
- - t9700/test.pl: fix path type expectation on cygwin
+  (merged to 'next' on 2026-01-21 at 8a1ed2cace)
+ + t0610-reftable-basics: mitigate a flaky test on cygwin
+ + t9700/test.pl: fix path type expectation on cygwin
 
  Test fixup.
 
- Will merge to 'next' and then to 'master'.
+ Will merge to 'master'.
  source: <f46e023b-1925-41b2-9842-42e7cb727056@ramsayjones.plus.com>
 
 
 * jx/build-options-gettext (2026-01-17) 1 commit
- - help: report on whether or not gettext is enabled
+  (merged to 'next' on 2026-01-21 at dd35ac2e2a)
+ + help: report on whether or not gettext is enabled
 
  "git bugreport" and "git version --build-options" learned to
  include use of 'gettext' feature, to make it easier to diagnose
  problems around l10n.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <251e1b533ca2e38a9bedae44360ce636cdea4bc3.1768657640.git.zhiyou.jx@alibaba-inc.com>
 
 
 * ty/t1005-test-path-is-helpers (2026-01-16) 1 commit
- - t1005: modernize "! test -f" to "test_path_is_missing"
+  (merged to 'next' on 2026-01-21 at 690bb3b255)
+ + t1005: modernize "! test -f" to "test_path_is_missing"
 
  Test clean-up.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20260117062515.319664-1-a3205153416@gmail.com>
 
 
 * js/ci-leak-skip-svn (2026-01-17) 2 commits
- - ci: skip CVS and P4 tests in leaks job, too
- - ci(*-leaks): skip the git-svn tests to save time
+  (merged to 'next' on 2026-01-21 at ebcf21d088)
+ + ci: skip CVS and P4 tests in leaks job, too
+ + ci(*-leaks): skip the git-svn tests to save time
 
  Dscho observed that SVN tests are taking too much time in CI leak
  checking tasks, but most time is spent not in our code but in libsvn
@@ -296,23 +395,23 @@ Release tarballs are available at:
  value to discover for us.  Skip SVN, P4, and CVS tests in the leak
  checking tasks.
 
- Will merge to 'next' and down to 'master'.
- source: <pull.2031.git.1768584676520.gitgitgadget@gmail.com>
+ Will merge to 'master'.
+ source: <b649f137-7140-4fb6-848a-b3408e54bbe5@gmail.com>
 
 
 * jk/remote-tracking-ref-leakfix (2026-01-18) 4 commits
- - remote: always allocate branch.push_tracking_ref
- - remote: fix leak in branch_get_push_1() with invalid "simple" config
- - remote: drop const return of tracking_for_push_dest()
- - remote: return non-const pointer from error_buf()
+  (merged to 'next' on 2026-01-21 at 7f0736a973)
+ + remote: always allocate branch.push_tracking_ref
+ + remote: fix leak in branch_get_push_1() with invalid "simple" config
+ + remote: drop const return of tracking_for_push_dest()
+ + remote: return non-const pointer from error_buf()
+ (this branch is used by hn/status-compare-with-push.)
 
  Leakfix.
 
- Will merge to 'next'.
+ Will cook in 'next'.
  source: <20260119051858.GA1991308@coredump.intra.peff.net>
 
---------------------------------------------------
-[Cooking]
 
 * yc/histogram-hunk-shift-fix (2025-12-06) 1 commit
  - xdiff: re-diff shifted change groups when using histogram algorithm
@@ -339,18 +438,17 @@ Release tarballs are available at:
  source: <pull.1853.v3.git.1768602373.gitgitgadget@gmail.com>
 
 
-* tc/last-modified-options-cleanup (2026-01-16) 5 commits
+* tc/last-modified-options-cleanup (2026-01-20) 4 commits
  - last-modified: change default max-depth to 0
- - last-modified: add option '--max-depth' to help output
- - last-modified: document option --max-depth
- - last-modified: add option '-z' to help output
- - last-modified: document NUL termination
+ - last-modified: document option '--max-depth'
+ - last-modified: document option '-z'
+ - last-modified: clarify in the docs the command takes a pathspec
 
  The "-z" and "--max-depth" documentation (and implementation of
  "-z") in the "git last-modified" command have been updated.
 
  Will merge to 'next'?
- source: <20260116-toon-last-modified-zzzz-v2-0-79e44f2806fe@iotcl.com>
+ source: <20260120-toon-last-modified-zzzz-v3-0-9bffd4968b0e@iotcl.com>
 
 
 * tc/last-modified-not-a-tree (2026-01-16) 4 commits
@@ -391,21 +489,20 @@ Release tarballs are available at:
  source: <37fe7956e089394bb1d75f4c8af4a3347b204803.1768376879.git.gitgitgadget@gmail.com>
 
 
-* kn/ref-batch-output-error-reporting-fix (2026-01-16) 7 commits
+* kn/ref-batch-output-error-reporting-fix (2026-01-20) 6 commits
  - fetch: delay user information post committing of transaction
  - receive-pack: utilize rejected ref error details
  - fetch: utilize rejected ref error details
  - update-ref: utilize rejected error details if available
  - refs: add rejection detail to the callback function
  - refs: skip to next ref when current ref is rejected
- - refs: drop unnecessary header includes
 
  A handful of code paths that started using batched ref update API
  (after Git 2.51 or so) lost detailed error output, which have been
  corrected.
 
  Will merge to 'next'?
- source: <20260116-633-regression-lost-diagnostic-message-when-pushing-non-commit-objects-to-refs-heads-v2-0-925a0e9c7f32@gmail.com>
+ source: <20260120-633-regression-lost-diagnostic-message-when-pushing-non-commit-objects-to-refs-heads-v3-0-e0edb29acbef@gmail.com>
 
 
 * ps/geometric-repacking-with-promisor-remotes (2026-01-05) 5 commits
@@ -467,7 +564,7 @@ Release tarballs are available at:
  source: <20260115110832.15315-1-pushkarkumarsingh1970@gmail.com>
 
 
-* ps/odb-for-each-object (2026-01-15) 16 commits
+* ps/odb-for-each-object (2026-01-20) 16 commits
  - odb: drop unused `for_each_{loose,packed}_object()` functions
  - reachable: convert to use `odb_for_each_object()`
  - builtin/pack-objects: use `packfile_store_for_each_object()`
@@ -484,12 +581,11 @@ Release tarballs are available at:
  - odb: rename `FOR_EACH_OBJECT_*` flags
  - Merge branch 'ps/packfile-store-in-odb-source' into ps/odb-for-each-object
  - Merge branch 'ps/read-object-info-improvements' into ps/odb-for-each-object
- (this branch uses ps/packfile-store-in-odb-source and ps/read-object-info-improvements.)
 
  Revamp object enumeration API around odb.
 
  Comments?
- source: <20260115-pks-odb-for-each-object-v1-0-5418a91d5d99@pks.im>
+ source: <20260120-pks-odb-for-each-object-v2-0-d05cbfd3d6f8@pks.im>
 
 
 * ps/validate-prefix-in-subtree-split (2026-01-15) 1 commit
@@ -501,33 +597,6 @@ Release tarballs are available at:
 
  Expecting a reroll?
  source: <20260115122652.18673-2-pushkarkumarsingh1970@gmail.com>
-
-
-* ps/ref-consistency-checks (2026-01-12) 17 commits
-  (merged to 'next' on 2026-01-13 at ba6c9deadb)
- + builtin/fsck: drop `fsck_head_link()`
- + builtin/fsck: move generic HEAD check into `refs_fsck()`
- + builtin/fsck: move generic object ID checks into `refs_fsck()`
- + refs/reftable: introduce generic checks for refs
- + refs/reftable: fix consistency checks with worktrees
- + refs/reftable: extract function to retrieve backend for worktree
- + refs/reftable: adapt includes to become consistent
- + refs/files: introduce function to perform normal ref checks
- + refs/files: extract generic symref target checks
- + fsck: drop unused fields from `struct fsck_ref_report`
- + refs/files: perform consistency checks for root refs
- + refs/files: improve error handling when verifying symrefs
- + refs/files: extract function to check single ref
- + refs/files: remove useless indirection
- + refs/files: remove `refs_check_dir` parameter
- + refs/files: move fsck functions into global scope
- + refs/files: simplify iterating through root refs
-
- Update code paths that check data integrity around refs subsystem.
-
- Will merge to 'master'.
- cf. <CAOLa=ZShPP3BPXa=YnC-vuX4zF=pUTFdUidZwOdna8bfVTNM9w@mail.gmail.com>
- source: <20260112-pks-refs-verify-fixes-v2-0-2e9e453bd6c3@pks.im>
 
 
 * rs/tree-wo-the-repository (2026-01-15) 11 commits
@@ -552,17 +621,6 @@ Release tarballs are available at:
  source: <20260109213021.2546-1-l.s.r@web.de>
 
 
-* cs/rebased-subtree-split (2026-01-09) 1 commit
-  (merged to 'next' on 2026-01-13 at b213ccc8c1)
- + contrib/subtree: detect rewritten subtree commits
-
- The split command in "git subtree" (in contrib/) has been taught to
- deal better with rebased history.
-
- Will merge to 'master'.
- source: <20260110011811.788219-1-ask+git@howdoi.land>
-
-
 * sp/shallow-deepen-relative-fix (2026-01-16) 2 commits
  - shallow: handling fetch relative-deepen
  - shallow: free local object_array allocations
@@ -573,27 +631,6 @@ Release tarballs are available at:
 
  Comments?
  source: <pull.2121.v4.git.git.1768602661.gitgitgadget@gmail.com>
-
-
-* kt/http-backend-errors (2026-01-11) 1 commit
-  (merged to 'next' on 2026-01-13 at 35d72c8eb9)
- + http-backend: write newlines to stderr when responding with errors
-
- Some error messages from the http transport layer lacked the
- terminating newline, which has been corrected.
-
- Will merge to 'master'.
- source: <20260112014508.17248-1-kj@kjtsanaktsidis.id.au>
-
-
-* ps/t1410-cleanup (2026-01-11) 1 commit
-  (merged to 'next' on 2026-01-13 at 51b666d16e)
- + t1410: use test helpers in reflog rewind test
-
- Test clean-up.
-
- Will merge to 'master'.
- source: <20260111191525.17087-1-pushkarkumarsingh1970@gmail.com>
 
 
 * dd/t5403-modernise (2026-01-12) 2 commits
@@ -635,16 +672,18 @@ Release tarballs are available at:
  source: <pull.2156.git.git.1767379944.gitgitgadget@gmail.com>
 
 
-* hn/status-compare-with-push (2026-01-13) 2 commits
- - status: show comparison with push remote tracking branch
+* hn/status-compare-with-push (2026-01-18) 3 commits
+ - status: add status.compareBranches config for multiple branch comparisons
  - refactor format_branch_comparison in preparation
+ - Merge branch 'jk/remote-tracking-ref-leakfix' into hn/status-compare-with-push
+ (this branch uses jk/remote-tracking-ref-leakfix.)
 
  "git status" learned to show comparison between the current branch
  and its push destination as well as its upstream, when the two are
  different (i.e., triangular workflow).
 
  Will merge to 'next'?
- source: <pull.2138.v25.git.git.1768306316.gitgitgadget@gmail.com>
+ source: <pull.2138.v26.git.git.1768766353.gitgitgadget@gmail.com>
 
 
 * ob/core-attributesfile-in-repository (2026-01-13) 3 commits
@@ -661,12 +700,13 @@ Release tarballs are available at:
 
 
 * aa/add-p-previous-decisions (2026-01-08) 1 commit
- - add -p: show user's hunk decision when selecting hunks
+  (merged to 'next' on 2026-01-21 at 4e2fe2bd9b)
+ + add -p: show user's hunk decision when selecting hunks
 
  "git add -p" and friends notes what the current status of the hunk
  being shown is.
 
- Will merge to 'next'?
+ Will cook in 'next'.
  source: <aV_IGCld5T_dBxTs@Adekunles-MacBook-Air.local>
 
 
@@ -686,17 +726,6 @@ Release tarballs are available at:
 
  Comments?
  source: <pull.2150.v2.git.git.1767226763360.gitgitgadget@gmail.com>
-
-
-* en/fsck-snapshot-ref-state (2026-01-09) 1 commit
-  (merged to 'next' on 2026-01-12 at d5dff1bba4)
- + fsck: snapshot default refs before object walk
-
- "git fsck" used inconsistent set of refs to show a confused
- warning, which has been corrected.
-
- Will merge to 'master'.
- source: <pull.2026.v3.git.1767980953134.gitgitgadget@gmail.com>
 
 
 * cc/lop-filter-auto (2025-12-23) 9 commits
@@ -738,91 +767,41 @@ Release tarballs are available at:
 
 
 * js/symlink-windows (2026-01-09) 19 commits
- - mingw: special-case index entries for symlinks with buggy size
- - mingw: emulate `stat()` a little more faithfully
- - mingw: try to create symlinks without elevated permissions
- - mingw: add support for symlinks to directories
- - mingw: implement basic `symlink()` functionality (file symlinks only)
- - mingw: implement `readlink()`
- - mingw: allow `mingw_chdir()` to change to symlink-resolved directories
- - mingw: support renaming symlinks
- - mingw: handle symlinks to directories in `mingw_unlink()`
- - mingw: add symlink-specific error codes
- - mingw: change default of `core.symlinks` to false
- - mingw: factor out the retry logic
- - mingw: compute the correct size for symlinks in `mingw_lstat()`
- - mingw: teach dirent about symlinks
- - mingw: let `mingw_lstat()` error early upon problems with reparse points
- - mingw: drop the separate `do_lstat()` function
- - mingw: implement `stat()` with symlink support
- - mingw: don't call `GetFileAttributes()` twice in `mingw_lstat()`
- - Merge branch 'js/prep-symlink-windows' into js/symlink-windows
- (this branch uses js/prep-symlink-windows.)
+  (merged to 'next' on 2026-01-21 at eaaead3f22)
+ + mingw: special-case index entries for symlinks with buggy size
+ + mingw: emulate `stat()` a little more faithfully
+ + mingw: try to create symlinks without elevated permissions
+ + mingw: add support for symlinks to directories
+ + mingw: implement basic `symlink()` functionality (file symlinks only)
+ + mingw: implement `readlink()`
+ + mingw: allow `mingw_chdir()` to change to symlink-resolved directories
+ + mingw: support renaming symlinks
+ + mingw: handle symlinks to directories in `mingw_unlink()`
+ + mingw: add symlink-specific error codes
+ + mingw: change default of `core.symlinks` to false
+ + mingw: factor out the retry logic
+ + mingw: compute the correct size for symlinks in `mingw_lstat()`
+ + mingw: teach dirent about symlinks
+ + mingw: let `mingw_lstat()` error early upon problems with reparse points
+ + mingw: drop the separate `do_lstat()` function
+ + mingw: implement `stat()` with symlink support
+ + mingw: don't call `GetFileAttributes()` twice in `mingw_lstat()`
+ + Merge branch 'js/prep-symlink-windows' into js/symlink-windows
 
  Upstream symbolic link support on Windows from Git-for-Windows.
 
- Expecting a reroll.
- cf. <5fe64b77-d10b-b66e-8622-14bec1e96f4a@gmx.de>
- cf. <14388349-d1b5-fc8f-b6c7-4a7b43e64494@gmx.de>
- cf. <704e952d-7924-00ce-b8b0-ad355e659335@gmx.de>
+ Will merge to 'master'.
  source: <pull.2018.v2.git.1767989115.gitgitgadget@gmail.com>
 
 
-* pc/lockfile-pid (2026-01-07) 1 commit
+* pc/lockfile-pid (2026-01-20) 1 commit
  - lockfile: add PID file for debugging stale locks
 
  Allow recording process ID of the process that holds the lock next
  to a lockfile for diagnosis.
 
- Comments?
- source: <pull.2011.v4.git.1767804355831.gitgitgadget@gmail.com>
-
-
-* ps/read-object-info-improvements (2026-01-12) 8 commits
-  (merged to 'next' on 2026-01-14 at e84be1a7bc)
- + packfile: drop repository parameter from `packed_object_info()`
- + packfile: skip unpacking object header for disk size requests
- + packfile: disentangle return value of `packed_object_info()`
- + packfile: always populate pack-specific info when reading object info
- + packfile: extend `is_delta` field to allow for "unknown" state
- + packfile: always declare object info to be OI_PACKED
- + object-file: always set OI_LOOSE when reading object info
- + Merge branch 'jc/object-read-stream-fix' into ps/read-object-info-improvements
- (this branch is used by ps/odb-for-each-object.)
-
- The object-info API has been cleaned up.
-
- Will merge to 'master'.
- source: <20260112-b4-pks-odb-read-object-info-improvements-v5-0-9a6124e95bf2@pks.im>
-
-
-* tb/macos-iconv-workarounds (2026-01-12) 2 commits
-  (merged to 'next' on 2026-01-13 at f2e51d72b8)
- + utf8.c: enable workaround for iconv under macOS 14/15
- + utf8.c: prepare workaround for iconv under macOS 14/15
-
- The iconv library on macOS fails to correctly handle stateful
- ISO/IEC 2022 encoded strings.  Work it around instead of replacing
- it wholesale from homebrew.
-
- Will merge to 'master'.
- source: <20260112162553.774051-1-tboegi@web.de>
-
-
-* js/prep-symlink-windows (2026-01-09) 6 commits
-  (merged to 'next' on 2026-01-14 at d05f3a8ea5)
- + trim_last_path_component(): avoid hard-coding the directory separator
- + strbuf_readlink(): support link targets that exceed 2*PATH_MAX
- + strbuf_readlink(): avoid calling `readlink()` twice in corner-cases
- + init: do parse _all_ core.* settings early
- + mingw: do resolve symlinks in `getcwd()`
- + Merge branch 'js/test-symlink-windows' into js/prep-symlink-windows
- (this branch is used by js/symlink-windows.)
-
- Further preparation to upstream symbolic link support on Windows.
-
- Will merge to 'master'.
- source: <pull.2017.v2.git.1767989109.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ source: <pull.2011.v5.git.1768933954845.gitgitgadget@gmail.com>
 
 
 * ap/http-probe-rpc-use-auth (2026-01-14) 1 commit
@@ -835,47 +814,24 @@ Release tarballs are available at:
  source: <20260114163619.614297-2-aplattner@nvidia.com>
 
 
-* ps/packfile-store-in-odb-source (2026-01-09) 12 commits
-  (merged to 'next' on 2026-01-14 at f375c8e347)
- + packfile: move MIDX into packfile store
- + packfile: refactor `find_pack_entry()` to work on the packfile store
- + packfile: inline `find_kept_pack_entry()`
- + packfile: only prepare owning store in `packfile_store_prepare()`
- + packfile: only prepare owning store in `packfile_store_get_packs()`
- + packfile: move packfile store into object source
- + packfile: refactor misleading code when unusing pack windows
- + packfile: refactor kept-pack cache to work with packfile stores
- + packfile: pass source to `prepare_pack()`
- + packfile: create store via its owning source
- + Merge branch 'ps/odb-misc-fixes' into ps/packfile-store-in-odb-source
- + Merge branch 'ps/object-read-stream' into ps/packfile-store-in-odb-source
- (this branch is used by ps/odb-for-each-object.)
-
- The packfile_store data structure is moved from object store to odb
- source.
-
- Will merge to 'master'.
- source: <20260109-b4-pks-pack-store-via-source-v3-0-877fd7b7bf81@pks.im>
-
-
-* lo/repo-info-keys (2026-01-09) 3 commits
+* lo/repo-info-keys (2026-01-19) 3 commits
  - repo: add new flag --keys to git-repo-info
  - repo: add a default output format to enum output_format
  - Merge branch 'lo/repo-struct-z' into lo/repo-info-keys
 
  "git repo info" learns "--keys" action to list known keys.
 
- Expecting a (hopefully small and final) reroll?
- cf. <12814829.O9o76ZdvQC@piment-oiseau>
- source: <20251207190532.67107-1-lucasseikioshiro@gmail.com>
+ Will merge to 'next'?
+ source: <20260119210932.68893-1-lucasseikioshiro@gmail.com>
 
 
 * sb/doc-update-ref-markup-fix (2025-12-08) 1 commit
- - doc: fix `update-ref` `symref-create` formatting
+  (merged to 'next' on 2026-01-21 at 60d4750233)
+ + doc: fix `update-ref` `symref-create` formatting
 
  Doc mark-up fix.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.2123.git.git.1765261419802.gitgitgadget@gmail.com>
 
 
@@ -943,19 +899,6 @@ Release tarballs are available at:
  source: <20251117221621.2863243-1-sandals@crustytoothpaste.net>
 
 
-* je/doc-reset (2026-01-05) 4 commits
-  (merged to 'next' on 2026-01-12 at 44b4f99803)
- + doc: git-reset: clarify `git reset <pathspec>`
- + doc: git-reset: clarify `git reset [mode]`
- + doc: git-reset: clarify intro
- + doc: git-reset: reorder the forms
-
- Documentation updates.
-
- Will merge to 'master'.
- source: <cover.1767649692.git.ben.knoble+github@gmail.com>
-
-
 * ps/history (2026-01-13) 9 commits
  - builtin/history: implement "reword" subcommand
  - builtin: add new "history" command
@@ -994,16 +937,3 @@ Release tarballs are available at:
 
  Will merge to 'next'?
  source: <20260112184632.1334495-1-adrian.ratiu@collabora.com>
-
---------------------------------------------------
-[Discarded]
-
-* wm/complete-git-short-opts (2025-11-26) 1 commit
- . completion: complete "git -<TAB>" with short options
-
- The command line completion script (in contrib/) learned to
- complete "git -<TAB>" to give single-letter options like "-C".
-
- We do not complete single-letter options themselves.
- cf. <xmqqo6onjfwl.fsf@gitster.g>
- source: <pull.2100.v2.git.git.1764174391776.gitgitgadget@gmail.com>
