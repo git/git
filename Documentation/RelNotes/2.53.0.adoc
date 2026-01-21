@@ -110,6 +110,10 @@ Performance, Internal Implementation, Development Support etc.
 
  * Further preparation to upstream symbolic link support on Windows.
 
+ * Remove implicit reliance on the_repository global in the APIs
+   around tree objects and make it explicit which repository to work
+   in.
+
 
 Fixes since v2.52
 -----------------
@@ -280,6 +284,12 @@ Fixes since v2.52
    terminating newline, which has been corrected.
    (merge a8227ae8d5 kt/http-backend-errors later to maint).
 
+ * "git repack --geometric" did not work with promisor packs, which
+   has been corrected.
+
+ * The logic that avoids reusing MIDX files with a wrong checksum was
+   broken, which has been corrected.
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 46207a54cc qj/doc-http-bad-want-response later to maint).
    (merge df90eccd93 kh/doc-commit-extra-references later to maint).
@@ -311,3 +321,4 @@ Fixes since v2.52
    (merge 3f051fc9c9 kh/doc-patch-id later to maint).
    (merge 555c8464e5 je/doc-reset later to maint).
    (merge 220f888d7e ps/t1410-cleanup later to maint).
+   (merge 5814b04c02 ps/config-doc-get-urlmatch-fix later to maint).
