@@ -55,4 +55,48 @@ for TABLE_NAME in "foo-bar-e4d12d59.ref" \
 	'
 done
 
+test_expect_success 'worktree stacks can be verified' '
+	test_when_finished "rm -rf repo worktree" &&
+	git init repo &&
+	test_commit -C repo initial &&
+	git -C repo worktree add ../worktree &&
+
+	git -C worktree refs verify 2>err &&
+	test_must_be_empty err &&
+
+	REFTABLE_DIR=$(git -C worktree rev-parse --git-dir)/reftable &&
+	EXISTING_TABLE=$(head -n1 "$REFTABLE_DIR/tables.list") &&
+	mv "$REFTABLE_DIR/$EXISTING_TABLE" "$REFTABLE_DIR/broken.ref" &&
+
+	for d in repo worktree
+	do
+		echo "broken.ref" >"$REFTABLE_DIR/tables.list" &&
+		git -C "$d" refs verify 2>err &&
+		cat >expect <<-EOF &&
+		warning: broken.ref: badReftableTableName: invalid reftable table name
+		EOF
+		test_cmp expect err &&
+
+		echo garbage >"$REFTABLE_DIR/tables.list" &&
+		test_must_fail git -C "$d" refs verify 2>err &&
+		cat >expect <<-EOF &&
+		error: reftable stack for worktree ${SQ}worktree${SQ} is broken
+		EOF
+		test_cmp expect err || return 1
+
+	done
+'
+
+test_expect_success 'invalid symref gets reported' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	test_commit -C repo initial &&
+	git -C repo symbolic-ref refs/heads/symref garbage &&
+	test_must_fail git -C repo refs verify 2>err &&
+	cat >expect <<-EOF &&
+	error: refs/heads/symref: badReferentName: points to invalid refname ${SQ}garbage${SQ}
+	EOF
+	test_cmp expect err
+'
+
 test_done
