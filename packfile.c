@@ -355,16 +355,17 @@ static void scan_windows(struct packed_git *p,
 	}
 }
 
-static int unuse_one_window(struct packed_git *current)
+static int unuse_one_window(struct object_database *odb)
 {
+	struct odb_source *source;
 	struct packfile_list_entry *e;
 	struct packed_git *lru_p = NULL;
 	struct pack_window *lru_w = NULL, *lru_l = NULL;
 
-	if (current)
-		scan_windows(current, &lru_p, &lru_w, &lru_l);
-	for (e = current->repo->objects->packfiles->packs.head; e; e = e->next)
-		scan_windows(e->pack, &lru_p, &lru_w, &lru_l);
+	for (source = odb->sources; source; source = source->next)
+		for (e = source->packfiles->packs.head; e; e = e->next)
+			scan_windows(e->pack, &lru_p, &lru_w, &lru_l);
+
 	if (lru_p) {
 		munmap(lru_w->base, lru_w->len);
 		pack_mapped -= lru_w->len;
@@ -529,15 +530,18 @@ static void find_lru_pack(struct packed_git *p, struct packed_git **lru_p, struc
 
 static int close_one_pack(struct repository *r)
 {
+	struct odb_source *source;
 	struct packfile_list_entry *e;
 	struct packed_git *lru_p = NULL;
 	struct pack_window *mru_w = NULL;
 	int accept_windows_inuse = 1;
 
-	for (e = r->objects->packfiles->packs.head; e; e = e->next) {
-		if (e->pack->pack_fd == -1)
-			continue;
-		find_lru_pack(e->pack, &lru_p, &mru_w, &accept_windows_inuse);
+	for (source = r->objects->sources; source; source = source->next) {
+		for (e = source->packfiles->packs.head; e; e = e->next) {
+			if (e->pack->pack_fd == -1)
+				continue;
+			find_lru_pack(e->pack, &lru_p, &mru_w, &accept_windows_inuse);
+		}
 	}
 
 	if (lru_p)
@@ -740,8 +744,8 @@ unsigned char *use_pack(struct packed_git *p,
 			win->len = (size_t)len;
 			pack_mapped += win->len;
 
-			while (settings->packed_git_limit < pack_mapped
-				&& unuse_one_window(p))
+			while (settings->packed_git_limit < pack_mapped &&
+			       unuse_one_window(p->repo->objects))
 				; /* nothing */
 			win->base = xmmap_gently(NULL, win->len,
 				PROT_READ, MAP_PRIVATE,
@@ -876,7 +880,7 @@ struct packed_git *packfile_store_load_pack(struct packfile_store *store,
 
 	p = strmap_get(&store->packs_by_path, key.buf);
 	if (!p) {
-		p = add_packed_git(store->odb->repo, idx_path,
+		p = add_packed_git(store->source->odb->repo, idx_path,
 				   strlen(idx_path), local);
 		if (p)
 			packfile_store_add_pack(store, p);
@@ -975,10 +979,8 @@ void for_each_file_in_pack_dir(const char *objdir,
 }
 
 struct prepare_pack_data {
-	struct repository *r;
+	struct odb_source *source;
 	struct string_list *garbage;
-	int local;
-	struct multi_pack_index *m;
 };
 
 static void prepare_pack(const char *full_name, size_t full_name_len,
@@ -988,10 +990,11 @@ static void prepare_pack(const char *full_name, size_t full_name_len,
 	size_t base_len = full_name_len;
 
 	if (strip_suffix_mem(full_name, &base_len, ".idx") &&
-	    !(data->m && midx_contains_pack(data->m, file_name))) {
+	    !(data->source->packfiles->midx &&
+	      midx_contains_pack(data->source->packfiles->midx, file_name))) {
 		char *trimmed_path = xstrndup(full_name, full_name_len);
-		packfile_store_load_pack(data->r->objects->packfiles,
-					 trimmed_path, data->local);
+		packfile_store_load_pack(data->source->packfiles,
+					 trimmed_path, data->source->local);
 		free(trimmed_path);
 	}
 
@@ -1020,10 +1023,8 @@ static void prepare_packed_git_one(struct odb_source *source)
 {
 	struct string_list garbage = STRING_LIST_INIT_DUP;
 	struct prepare_pack_data data = {
-		.m = source->midx,
-		.r = source->odb->repo,
+		.source = source,
 		.garbage = &garbage,
-		.local = source->local,
 	};
 
 	for_each_file_in_pack_dir(source->path, prepare_pack, &data);
@@ -1063,16 +1064,11 @@ static int sort_pack(const struct packfile_list_entry *a,
 
 void packfile_store_prepare(struct packfile_store *store)
 {
-	struct odb_source *source;
-
 	if (store->initialized)
 		return;
 
-	odb_prepare_alternates(store->odb);
-	for (source = store->odb->sources; source; source = source->next) {
-		prepare_multi_pack_index_one(source);
-		prepare_packed_git_one(source);
-	}
+	prepare_multi_pack_index_one(store->source);
+	prepare_packed_git_one(store->source);
 
 	sort_packs(&store->packs.head, sort_pack);
 	for (struct packfile_list_entry *e = store->packs.head; e; e = e->next)
@@ -1092,10 +1088,8 @@ struct packfile_list_entry *packfile_store_get_packs(struct packfile_store *stor
 {
 	packfile_store_prepare(store);
 
-	for (struct odb_source *source = store->odb->sources; source; source = source->next) {
-		struct multi_pack_index *m = source->midx;
-		if (!m)
-			continue;
+	if (store->midx) {
+		struct multi_pack_index *m = store->midx;
 		for (uint32_t i = 0; i < m->num_packs + m->num_packs_in_base; i++)
 			prepare_midx_pack(m, i);
 	}
@@ -1250,11 +1244,15 @@ void mark_bad_packed_object(struct packed_git *p, const struct object_id *oid)
 const struct packed_git *has_packed_and_bad(struct repository *r,
 					    const struct object_id *oid)
 {
-	struct packfile_list_entry *e;
+	struct odb_source *source;
 
-	for (e = r->objects->packfiles->packs.head; e; e = e->next)
-		if (oidset_contains(&e->pack->bad_objects, oid))
-			return e->pack;
+	for (source = r->objects->sources; source; source = source->next) {
+		struct packfile_list_entry *e;
+		for (e = source->packfiles->packs.head; e; e = e->next)
+			if (oidset_contains(&e->pack->bad_objects, oid))
+				return e->pack;
+	}
+
 	return NULL;
 }
 
@@ -2090,30 +2088,26 @@ static int fill_pack_entry(const struct object_id *oid,
 	return 1;
 }
 
-static int find_pack_entry(struct repository *r,
+static int find_pack_entry(struct packfile_store *store,
 			   const struct object_id *oid,
 			   struct pack_entry *e)
 {
 	struct packfile_list_entry *l;
 
-	packfile_store_prepare(r->objects->packfiles);
+	packfile_store_prepare(store);
+	if (store->midx && fill_midx_entry(store->midx, oid, e))
+		return 1;
 
-	for (struct odb_source *source = r->objects->sources; source; source = source->next)
-		if (source->midx && fill_midx_entry(source->midx, oid, e))
-			return 1;
-
-	if (!r->objects->packfiles->packs.head)
-		return 0;
-
-	for (l = r->objects->packfiles->packs.head; l; l = l->next) {
+	for (l = store->packs.head; l; l = l->next) {
 		struct packed_git *p = l->pack;
 
 		if (!p->multi_pack_index && fill_pack_entry(oid, e, p)) {
-			if (!r->objects->packfiles->skip_mru_updates)
-				packfile_list_prepend(&r->objects->packfiles->packs, p);
+			if (!store->skip_mru_updates)
+				packfile_list_prepend(&store->packs, p);
 			return 1;
 		}
 	}
+
 	return 0;
 }
 
@@ -2121,7 +2115,7 @@ int packfile_store_freshen_object(struct packfile_store *store,
 				  const struct object_id *oid)
 {
 	struct pack_entry e;
-	if (!find_pack_entry(store->odb->repo, oid, &e))
+	if (!find_pack_entry(store, oid, &e))
 		return 0;
 	if (e.p->is_cruft)
 		return 0;
@@ -2141,7 +2135,7 @@ int packfile_store_read_object_info(struct packfile_store *store,
 	struct pack_entry e;
 	int rtype;
 
-	if (!find_pack_entry(store->odb->repo, oid, &e))
+	if (!find_pack_entry(store, oid, &e))
 		return 1;
 
 	/*
@@ -2151,7 +2145,7 @@ int packfile_store_read_object_info(struct packfile_store *store,
 	if (!oi)
 		return 0;
 
-	rtype = packed_object_info(store->odb->repo, e.p, e.offset, oi);
+	rtype = packed_object_info(store->source->odb->repo, e.p, e.offset, oi);
 	if (rtype < 0) {
 		mark_bad_packed_object(e.p, oid);
 		return -1;
@@ -2167,25 +2161,26 @@ int packfile_store_read_object_info(struct packfile_store *store,
 	return 0;
 }
 
-static void maybe_invalidate_kept_pack_cache(struct repository *r,
+static void maybe_invalidate_kept_pack_cache(struct packfile_store *store,
 					     unsigned flags)
 {
-	if (!r->objects->packfiles->kept_cache.packs)
+	if (!store->kept_cache.packs)
 		return;
-	if (r->objects->packfiles->kept_cache.flags == flags)
+	if (store->kept_cache.flags == flags)
 		return;
-	FREE_AND_NULL(r->objects->packfiles->kept_cache.packs);
-	r->objects->packfiles->kept_cache.flags = 0;
+	FREE_AND_NULL(store->kept_cache.packs);
+	store->kept_cache.flags = 0;
 }
 
-struct packed_git **kept_pack_cache(struct repository *r, unsigned flags)
+struct packed_git **packfile_store_get_kept_pack_cache(struct packfile_store *store,
+						       unsigned flags)
 {
-	maybe_invalidate_kept_pack_cache(r, flags);
+	maybe_invalidate_kept_pack_cache(store, flags);
 
-	if (!r->objects->packfiles->kept_cache.packs) {
+	if (!store->kept_cache.packs) {
 		struct packed_git **packs = NULL;
+		struct packfile_list_entry *e;
 		size_t nr = 0, alloc = 0;
-		struct packed_git *p;
 
 		/*
 		 * We want "all" packs here, because we need to cover ones that
@@ -2195,9 +2190,11 @@ struct packed_git **kept_pack_cache(struct repository *r, unsigned flags)
 		 * covers, one kept and one not kept, but the midx returns only
 		 * the non-kept version.
 		 */
-		repo_for_each_pack(r, p) {
-			if ((p->pack_keep && (flags & ON_DISK_KEEP_PACKS)) ||
-			    (p->pack_keep_in_core && (flags & IN_CORE_KEEP_PACKS))) {
+		for (e = packfile_store_get_packs(store); e; e = e->next) {
+			struct packed_git *p = e->pack;
+
+			if ((p->pack_keep && (flags & KEPT_PACK_ON_DISK)) ||
+			    (p->pack_keep_in_core && (flags & KEPT_PACK_IN_CORE))) {
 				ALLOC_GROW(packs, nr + 1, alloc);
 				packs[nr++] = p;
 			}
@@ -2205,40 +2202,47 @@ struct packed_git **kept_pack_cache(struct repository *r, unsigned flags)
 		ALLOC_GROW(packs, nr + 1, alloc);
 		packs[nr] = NULL;
 
-		r->objects->packfiles->kept_cache.packs = packs;
-		r->objects->packfiles->kept_cache.flags = flags;
+		store->kept_cache.packs = packs;
+		store->kept_cache.flags = flags;
 	}
 
-	return r->objects->packfiles->kept_cache.packs;
+	return store->kept_cache.packs;
 }
 
-int find_kept_pack_entry(struct repository *r,
-			 const struct object_id *oid,
-			 unsigned flags,
-			 struct pack_entry *e)
+int has_object_pack(struct repository *r, const struct object_id *oid)
 {
-	struct packed_git **cache;
+	struct odb_source *source;
+	struct pack_entry e;
 
-	for (cache = kept_pack_cache(r, flags); *cache; cache++) {
-		struct packed_git *p = *cache;
-		if (fill_pack_entry(oid, e, p))
-			return 1;
+	odb_prepare_alternates(r->objects);
+	for (source = r->objects->sources; source; source = source->next) {
+		int ret = find_pack_entry(source->packfiles, oid, &e);
+		if (ret)
+			return ret;
 	}
 
 	return 0;
 }
 
-int has_object_pack(struct repository *r, const struct object_id *oid)
-{
-	struct pack_entry e;
-	return find_pack_entry(r, oid, &e);
-}
-
 int has_object_kept_pack(struct repository *r, const struct object_id *oid,
 			 unsigned flags)
 {
+	struct odb_source *source;
 	struct pack_entry e;
-	return find_kept_pack_entry(r, oid, flags, &e);
+
+	for (source = r->objects->sources; source; source = source->next) {
+		struct packed_git **cache;
+
+		cache = packfile_store_get_kept_pack_cache(source->packfiles, flags);
+
+		for (; *cache; cache++) {
+			struct packed_git *p = *cache;
+			if (fill_pack_entry(oid, &e, p))
+				return 1;
+		}
+	}
+
+	return 0;
 }
 
 int for_each_object_in_pack(struct packed_git *p,
@@ -2288,32 +2292,46 @@ int for_each_object_in_pack(struct packed_git *p,
 int for_each_packed_object(struct repository *repo, each_packed_object_fn cb,
 			   void *data, enum for_each_object_flags flags)
 {
-	struct packed_git *p;
+	struct odb_source *source;
 	int r = 0;
 	int pack_errors = 0;
 
-	repo->objects->packfiles->skip_mru_updates = true;
-	repo_for_each_pack(repo, p) {
-		if ((flags & FOR_EACH_OBJECT_LOCAL_ONLY) && !p->pack_local)
-			continue;
-		if ((flags & FOR_EACH_OBJECT_PROMISOR_ONLY) &&
-		    !p->pack_promisor)
-			continue;
-		if ((flags & FOR_EACH_OBJECT_SKIP_IN_CORE_KEPT_PACKS) &&
-		    p->pack_keep_in_core)
-			continue;
-		if ((flags & FOR_EACH_OBJECT_SKIP_ON_DISK_KEPT_PACKS) &&
-		    p->pack_keep)
-			continue;
-		if (open_pack_index(p)) {
-			pack_errors = 1;
-			continue;
+	odb_prepare_alternates(repo->objects);
+
+	for (source = repo->objects->sources; source; source = source->next) {
+		struct packfile_list_entry *e;
+
+		source->packfiles->skip_mru_updates = true;
+
+		for (e = packfile_store_get_packs(source->packfiles); e; e = e->next) {
+			struct packed_git *p = e->pack;
+
+			if ((flags & FOR_EACH_OBJECT_LOCAL_ONLY) && !p->pack_local)
+				continue;
+			if ((flags & FOR_EACH_OBJECT_PROMISOR_ONLY) &&
+			    !p->pack_promisor)
+				continue;
+			if ((flags & FOR_EACH_OBJECT_SKIP_IN_CORE_KEPT_PACKS) &&
+			    p->pack_keep_in_core)
+				continue;
+			if ((flags & FOR_EACH_OBJECT_SKIP_ON_DISK_KEPT_PACKS) &&
+			    p->pack_keep)
+				continue;
+			if (open_pack_index(p)) {
+				pack_errors = 1;
+				continue;
+			}
+
+			r = for_each_object_in_pack(p, cb, data, flags);
+			if (r)
+				break;
 		}
-		r = for_each_object_in_pack(p, cb, data, flags);
+
+		source->packfiles->skip_mru_updates = false;
+
 		if (r)
 			break;
 	}
-	repo->objects->packfiles->skip_mru_updates = false;
 
 	return r ? r : pack_errors;
 }
@@ -2411,11 +2429,11 @@ int parse_pack_header_option(const char *in, unsigned char *out, unsigned int *l
 	return 0;
 }
 
-struct packfile_store *packfile_store_new(struct object_database *odb)
+struct packfile_store *packfile_store_new(struct odb_source *source)
 {
 	struct packfile_store *store;
 	CALLOC_ARRAY(store, 1);
-	store->odb = odb;
+	store->source = source;
 	strmap_init(&store->packs_by_path);
 	return store;
 }
@@ -2437,6 +2455,9 @@ void packfile_store_close(struct packfile_store *store)
 			BUG("want to close pack marked 'do-not-close'");
 		close_pack(e->pack);
 	}
+	if (store->midx)
+		close_midx(store->midx);
+	store->midx = NULL;
 }
 
 struct odb_packed_read_stream {
@@ -2534,7 +2555,7 @@ int packfile_store_read_object_stream(struct odb_read_stream **out,
 
 	if (packfile_store_read_object_info(store, oid, &oi, 0) ||
 	    oi.u.packed.is_delta ||
-	    repo_settings_get_big_file_threshold(store->odb->repo) >= size)
+	    repo_settings_get_big_file_threshold(store->source->odb->repo) >= size)
 		return -1;
 
 	in_pack_type = unpack_object_header(oi.u.packed.pack,
