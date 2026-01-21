@@ -441,8 +441,11 @@ void release_pack_memory(size_t);
 /* global flag to enable extra checks when accessing packed objects */
 extern int do_check_packed_object_crc;
 
-int packed_object_info(struct repository *r,
-		       struct packed_git *pack,
+/*
+ * Look up the object info for a specific offset in the packfile.
+ * Returns zero on success, a negative error code otherwise.
+ */
+int packed_object_info(struct packed_git *pack,
 		       off_t offset, struct object_info *);
 
 void mark_bad_packed_object(struct packed_git *, const struct object_id *);
