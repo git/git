@@ -38,6 +38,13 @@ UI, Workflows & Features
    `--onto` option of "git replay".  Test coverage of "git replay" has
    been improved.
 
+ * The split command in "git subtree" (in contrib/) has been taught to
+   deal better with rebased history.
+
+ * The iconv library on macOS fails to correctly handle stateful
+   ISO/IEC 2022 encoded strings.  Work it around instead of replacing
+   it wholesale from homebrew.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -95,6 +102,13 @@ Performance, Internal Implementation, Development Support etc.
 
  * Import newer version of "clar", unit testing framework.
    (merge 84071a6dea ps/clar-integers later to maint).
+
+ * The packfile_store data structure is moved from object store to odb
+   source.
+
+ * The object-info API has been cleaned up.
+
+ * Further preparation to upstream symbolic link support on Windows.
 
 
 Fixes since v2.52
@@ -259,6 +273,13 @@ Fixes since v2.52
    "git stash export/import" recently introduced.
    (merge 02fc44a989 bc/doc-stash-import-export later to maint).
 
+ * "git fsck" used inconsistent set of refs to show a confused
+   warning, which has been corrected.
+
+ * Some error messages from the http transport layer lacked the
+   terminating newline, which has been corrected.
+   (merge a8227ae8d5 kt/http-backend-errors later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 46207a54cc qj/doc-http-bad-want-response later to maint).
    (merge df90eccd93 kh/doc-commit-extra-references later to maint).
@@ -288,3 +309,5 @@ Fixes since v2.52
    (merge 6c5c7e7071 ac/t1420-use-more-direct-check later to maint).
    (merge 2ac93bfcbc ds/builtin-doc-update later to maint).
    (merge 3f051fc9c9 kh/doc-patch-id later to maint).
+   (merge 555c8464e5 je/doc-reset later to maint).
+   (merge 220f888d7e ps/t1410-cleanup later to maint).
