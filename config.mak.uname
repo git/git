@@ -157,6 +157,7 @@ ifeq ($(uname_S),Darwin)
         endif
         ifeq ($(shell test "$(DARWIN_MAJOR_VERSION)" -ge 24 && echo 1),1)
 		USE_HOMEBREW_LIBICONV = UnfortunatelyYes
+		NEEDS_GOOD_LIBICONV = UnfortunatelyYes
         endif
 
 	# The builtin FSMonitor on MacOS builds upon Simple-IPC.  Both require
