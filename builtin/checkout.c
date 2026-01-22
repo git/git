@@ -724,7 +724,7 @@ static int reset_tree(struct tree *tree, const struct checkout_opts *o,
 	init_checkout_metadata(&opts.meta, info->refname,
 			       info->commit ? &info->commit->object.oid : null_oid(the_hash_algo),
 			       NULL);
-	if (parse_tree(tree) < 0)
+	if (repo_parse_tree(the_repository, tree) < 0)
 		return 128;
 	init_tree_desc(&tree_desc, &tree->object.oid, tree->buffer, tree->size);
 	switch (unpack_trees(1, &tree_desc, &opts)) {
@@ -803,7 +803,8 @@ static int merge_working_tree(const struct checkout_opts *opts,
 	if (opts->new_orphan_branch && opts->orphan_from_empty_tree) {
 		if (new_branch_info->commit)
 			BUG("'switch --orphan' should never accept a commit as starting point");
-		new_tree = parse_tree_indirect(the_hash_algo->empty_tree);
+		new_tree = repo_parse_tree_indirect(the_repository,
+						    the_hash_algo->empty_tree);
 		if (!new_tree)
 			BUG("unable to read empty tree");
 	} else {
@@ -841,14 +842,15 @@ static int merge_working_tree(const struct checkout_opts *opts,
 		old_commit_oid = old_branch_info->commit ?
 			&old_branch_info->commit->object.oid :
 			the_hash_algo->empty_tree;
-		tree = parse_tree_indirect(old_commit_oid);
+		tree = repo_parse_tree_indirect(the_repository,
+						old_commit_oid);
 		if (!tree)
 			die(_("unable to parse commit %s"),
 				oid_to_hex(old_commit_oid));
 
 		init_tree_desc(&trees[0], &tree->object.oid,
 			       tree->buffer, tree->size);
-		if (parse_tree(new_tree) < 0)
+		if (repo_parse_tree(the_repository, new_tree) < 0)
 			die(NULL);
 		tree = new_tree;
 		init_tree_desc(&trees[1], &tree->object.oid,
@@ -1278,7 +1280,7 @@ static void setup_new_branch_info_and_source_tree(
 	new_branch_info->commit = lookup_commit_reference_gently(the_repository, rev, 1);
 	if (!new_branch_info->commit) {
 		/* not a commit */
-		*source_tree = parse_tree_indirect(rev);
+		*source_tree = repo_parse_tree_indirect(the_repository, rev);
 		if (!*source_tree)
 			die(_("unable to read tree (%s)"), oid_to_hex(rev));
 	} else {

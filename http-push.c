@@ -1311,7 +1311,7 @@ static struct object_list **process_tree(struct tree *tree,
 
 	if (obj->flags & (UNINTERESTING | SEEN))
 		return p;
-	if (parse_tree(tree) < 0)
+	if (repo_parse_tree(the_repository, tree) < 0)
 		die("bad tree object %s", oid_to_hex(&obj->oid));
 
 	obj->flags |= SEEN;

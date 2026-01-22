@@ -680,10 +680,10 @@ static int checkout(int submodule_progress, int filter_submodules,
 	opts.dst_index = the_repository->index;
 	init_checkout_metadata(&opts.meta, head, &oid, NULL);
 
-	tree = parse_tree_indirect(&oid);
+	tree = repo_parse_tree_indirect(the_repository, &oid);
 	if (!tree)
 		die(_("unable to parse commit %s"), oid_to_hex(&oid));
-	if (parse_tree(tree) < 0)
+	if (repo_parse_tree(the_repository, tree) < 0)
 		exit(128);
 	init_tree_desc(&t, &tree->object.oid, tree->buffer, tree->size);
 	if (unpack_trees(1, &t, &opts) < 0)

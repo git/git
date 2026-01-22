@@ -327,10 +327,11 @@ static void create_base_index(const struct commit *current_head)
 	opts.dst_index = the_repository->index;
 
 	opts.fn = oneway_merge;
-	tree = parse_tree_indirect(&current_head->object.oid);
+	tree = repo_parse_tree_indirect(the_repository,
+					&current_head->object.oid);
 	if (!tree)
 		die(_("failed to unpack HEAD tree object"));
-	if (parse_tree(tree) < 0)
+	if (repo_parse_tree(the_repository, tree) < 0)
 		exit(128);
 	init_tree_desc(&t, &tree->object.oid, tree->buffer, tree->size);
 	if (unpack_trees(1, &t, &opts))

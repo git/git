@@ -283,7 +283,7 @@ void resolve_tree_islands(struct repository *r,
 		root_marks = kh_value(island_marks, pos);
 
 		tree = lookup_tree(r, &ent->idx.oid);
-		if (!tree || parse_tree(tree) < 0)
+		if (!tree || repo_parse_tree(r, tree) < 0)
 			die(_("bad tree object %s"), oid_to_hex(&ent->idx.oid));
 
 		init_tree_desc(&desc, &tree->object.oid, tree->buffer, tree->size);
