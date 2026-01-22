@@ -332,7 +332,7 @@ recommended to migrate to the new syntax.
 	Replaced by `git config get --all --show-names --regexp <name-regexp>`.
 
 --get-urlmatch <name> <URL>::
-	Replaced by `git config get --all --show-names --url=<URL> <name>`.
+	Replaced by `git config get --url=<URL> <name>`.
 
 --get-color <name> [<default>]::
 	Replaced by `git config get --type=color [--default=<default>] <name>`.
