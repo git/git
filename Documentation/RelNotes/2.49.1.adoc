@@ -9,4 +9,4 @@ notes for v2.43.7 for details.
 
 It also contains some updates to various CI bits to work around
 and/or to adjust to the deprecation of use of Ubuntu 20.04 GitHub
-Actions CI, updates to to Fedora base image.
+Actions CI, updates to Fedora base image.
