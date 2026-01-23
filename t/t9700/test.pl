@@ -118,7 +118,7 @@ unlink $tmpfile;
 
 # paths
 my $abs_git_dir = $abs_repo_dir . "/.git";
-if ($^O eq 'msys' or $^O eq 'cygwin') {
+if ($^O eq 'msys') {
   $abs_git_dir = `cygpath -am "$abs_repo_dir/.git"`;
   $abs_git_dir =~ s/\r?\n?$//;
 }
