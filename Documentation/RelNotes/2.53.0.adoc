@@ -42,8 +42,10 @@ UI, Workflows & Features
    deal better with rebased history.
 
  * The iconv library on macOS fails to correctly handle stateful
-   ISO/IEC 2022 encoded strings.  Work it around instead of replacing
-   it wholesale from homebrew.
+   ISO/IEC 2022:1994 encoded strings.  Work it around instead of
+   replacing it wholesale from homebrew.
+
+ * Upstream symbolic link support on Windows from Git-for-Windows.
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -113,6 +115,17 @@ Performance, Internal Implementation, Development Support etc.
  * Remove implicit reliance on the_repository global in the APIs
    around tree objects and make it explicit which repository to work
    in.
+
+ * "git bugreport" and "git version --build-options" learned to
+   include use of 'gettext' feature, to make it easier to diagnose
+   problems around l10n.
+
+ * Dscho observed that SVN tests are taking too much time in CI leak
+   checking tasks, but most time is spent not in our code but in libsvn
+   code (which happen to be written in Perl), whose leaks have little
+   value to discover for us.  Skip SVN, P4, and CVS tests in the leak
+   checking tasks.
+   (merge 047bd7dfe3 js/ci-leak-skip-svn later to maint).
 
 
 Fixes since v2.52
@@ -322,3 +335,5 @@ Fixes since v2.52
    (merge 555c8464e5 je/doc-reset later to maint).
    (merge 220f888d7e ps/t1410-cleanup later to maint).
    (merge 5814b04c02 ps/config-doc-get-urlmatch-fix later to maint).
+   (merge 5ae594f30b sb/doc-update-ref-markup-fix later to maint).
+   (merge bc8556d066 ty/t1005-test-path-is-helpers later to maint).
