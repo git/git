@@ -799,6 +799,9 @@ void get_version_info(struct strbuf *buf, int show_build_options)
 
 		if (fsmonitor_ipc__is_supported())
 			strbuf_addstr(buf, "feature: fsmonitor--daemon\n");
+#if !defined NO_GETTEXT
+		strbuf_addstr(buf, "gettext: enabled\n");
+#endif
 #if defined LIBCURL_VERSION
 		strbuf_addf(buf, "libcurl: %s\n", LIBCURL_VERSION);
 #endif
