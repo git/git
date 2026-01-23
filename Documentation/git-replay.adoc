@@ -64,6 +64,7 @@ The default mode can be configured via the `replay.refAction` configuration vari
 	range should have a single tip, so that it's clear to which tip the
 	advanced <branch> should point.
 
+:git-replay: 1
 include::rev-list-options.adoc[]
 
 [[output]]

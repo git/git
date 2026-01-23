@@ -1096,7 +1096,7 @@ endif::git-rev-list[]
 	Overrides a previous `--no-walk`.
 endif::git-shortlog[]
 
-ifndef::git-shortlog[]
+ifndef::git-shortlog,git-replay[]
 Commit Formatting
 ~~~~~~~~~~~~~~~~~
 
@@ -1265,4 +1265,4 @@ ifdef::git-rev-list[]
 	counts and print the count for equivalent commits separated
 	by a tab.
 endif::git-rev-list[]
-endif::git-shortlog[]
+endif::git-shortlog,git-replay[]

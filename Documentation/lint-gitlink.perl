@@ -41,10 +41,11 @@ die "BUG: No list of valid linkgit:* files given" unless @ARGV;
 @ARGV = $to_check;
 while (<>) {
 	my $line = $_;
+	next if $line =~ /^\s*(ifn?def|endif)::/;
 	while ($line =~ m/(.{,8})((git[-a-z]+|scalar)\[(\d)*\])/g) {
 	    my $pos = pos $line;
 	    my ($macro, $target, $page, $section) = ($1, $2, $3, $4);
-		if ( $macro ne "linkgit:" && $macro !~ "ifn?def::" && $macro ne "endif::" ) {
+		if ( $macro ne "linkgit:" ) {
 			report($pos, $line, $target, "linkgit: macro expected");
 		}
 	}
