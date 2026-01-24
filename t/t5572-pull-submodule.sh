@@ -246,7 +246,8 @@ test_expect_success 'fetch submodule remote of different name from superproject'
 	git -C child submodule update --init &&
 
 	# Needs to create unreachable commit from current master branch.
-	git -C a-submodule checkout -b newmain HEAD^ &&
+	git -C a-submodule tag anchorpoint HEAD &&
+	git -C a-submodule checkout -b newmain anchorpoint^ &&
 	test_commit -C a-submodule echo &&
 	test_commit -C a-submodule moreecho &&
 	subc=$(git -C a-submodule rev-parse --short HEAD) &&
@@ -265,7 +266,7 @@ test_expect_success 'fetch submodule remote of different non-origin name from su
 	git -C child/a-submodule remote rename origin o2 &&
 
 	# Create commit that is unreachable from current master branch
-	git -C a-submodule checkout -b newmain2 master^ &&
+	git -C a-submodule checkout -b newmain2 anchorpoint^ &&
 	test_commit -C a-submodule echo_o2 &&
 	test_commit -C a-submodule moreecho_o2 &&
 	subc=$(git -C a-submodule rev-parse --short HEAD) &&
