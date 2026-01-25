@@ -1893,6 +1893,7 @@ test_expect_success 'pushing non-commit objects should report error' '
 
 		tagsha=$(git rev-parse test^{tag}) &&
 		test_must_fail git push ../dest "$tagsha:refs/heads/branch" 2>err &&
+		test_grep "! \[remote rejected\] $tagsha -> branch (invalid new value provided)" err &&
 		test_grep "trying to write non-commit object $tagsha to branch ${SQ}refs/heads/branch${SQ}" err
 	)
 '
