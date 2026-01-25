@@ -1224,6 +1224,7 @@ void ref_transaction_free(struct ref_transaction *transaction)
 		free(transaction->updates[i]->committer_info);
 		free((char *)transaction->updates[i]->new_target);
 		free((char *)transaction->updates[i]->old_target);
+		free((char *)transaction->updates[i]->rejection_details);
 		free(transaction->updates[i]);
 	}
 
@@ -1238,7 +1239,8 @@ void ref_transaction_free(struct ref_transaction *transaction)
 
 int ref_transaction_maybe_set_rejected(struct ref_transaction *transaction,
 				       size_t update_idx,
-				       enum ref_transaction_error err)
+				       enum ref_transaction_error err,
+				       struct strbuf *details)
 {
 	if (update_idx >= transaction->nr)
 		BUG("trying to set rejection on invalid update index");
@@ -1264,6 +1266,7 @@ int ref_transaction_maybe_set_rejected(struct ref_transaction *transaction,
 			   transaction->updates[update_idx]->refname, 0);
 
 	transaction->updates[update_idx]->rejection_err = err;
+	transaction->updates[update_idx]->rejection_details = strbuf_detach(details, NULL);
 	ALLOC_GROW(transaction->rejections->update_indices,
 		   transaction->rejections->nr + 1,
 		   transaction->rejections->alloc);
@@ -2659,30 +2662,33 @@ enum ref_transaction_error refs_verify_refnames_available(struct ref_store *refs
 			if (!initial_transaction &&
 			    (strset_contains(&conflicting_dirnames, dirname.buf) ||
 			     !refs_read_raw_ref(refs, dirname.buf, &oid, &referent,
-						       &type, &ignore_errno))) {
-				if (transaction && ref_transaction_maybe_set_rejected(
-					    transaction, *update_idx,
-					    REF_TRANSACTION_ERROR_NAME_CONFLICT)) {
-					strset_remove(&dirnames, dirname.buf);
-					strset_add(&conflicting_dirnames, dirname.buf);
-					continue;
-				}
+						&type, &ignore_errno))) {
 
 				strbuf_addf(err, _("'%s' exists; cannot create '%s'"),
 					    dirname.buf, refname);
+
+				if (transaction && ref_transaction_maybe_set_rejected(
+					    transaction, *update_idx,
+					    REF_TRANSACTION_ERROR_NAME_CONFLICT, err)) {
+					strset_remove(&dirnames, dirname.buf);
+					strset_add(&conflicting_dirnames, dirname.buf);
+					goto next_ref;
+				}
+
 				goto cleanup;
 			}
 
 			if (extras && string_list_has_string(extras, dirname.buf)) {
-				if (transaction && ref_transaction_maybe_set_rejected(
-					    transaction, *update_idx,
-					    REF_TRANSACTION_ERROR_NAME_CONFLICT)) {
-					strset_remove(&dirnames, dirname.buf);
-					continue;
-				}
-
 				strbuf_addf(err, _("cannot process '%s' and '%s' at the same time"),
 					    refname, dirname.buf);
+
+				if (transaction && ref_transaction_maybe_set_rejected(
+					    transaction, *update_idx,
+					    REF_TRANSACTION_ERROR_NAME_CONFLICT, err)) {
+					strset_remove(&dirnames, dirname.buf);
+					goto next_ref;
+				}
+
 				goto cleanup;
 			}
 		}
@@ -2712,14 +2718,14 @@ enum ref_transaction_error refs_verify_refnames_available(struct ref_store *refs
 				if (skip &&
 				    string_list_has_string(skip, iter->ref.name))
 					continue;
+				strbuf_addf(err, _("'%s' exists; cannot create '%s'"),
+					    iter->ref.name, refname);
 
 				if (transaction && ref_transaction_maybe_set_rejected(
 					    transaction, *update_idx,
-					    REF_TRANSACTION_ERROR_NAME_CONFLICT))
-					continue;
+					    REF_TRANSACTION_ERROR_NAME_CONFLICT, err))
+					goto next_ref;
 
-				strbuf_addf(err, _("'%s' exists; cannot create '%s'"),
-					    iter->ref.name, refname);
 				goto cleanup;
 			}
 
@@ -2729,15 +2735,17 @@ enum ref_transaction_error refs_verify_refnames_available(struct ref_store *refs
 
 		extra_refname = find_descendant_ref(dirname.buf, extras, skip);
 		if (extra_refname) {
-			if (transaction && ref_transaction_maybe_set_rejected(
-				    transaction, *update_idx,
-				    REF_TRANSACTION_ERROR_NAME_CONFLICT))
-				continue;
-
 			strbuf_addf(err, _("cannot process '%s' and '%s' at the same time"),
 				    refname, extra_refname);
+
+			if (transaction && ref_transaction_maybe_set_rejected(
+				    transaction, *update_idx,
+				    REF_TRANSACTION_ERROR_NAME_CONFLICT, err))
+				goto next_ref;
+
 			goto cleanup;
 		}
+next_ref:;
 	}
 
 	ret = 0;
