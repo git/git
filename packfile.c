@@ -2360,6 +2360,57 @@ int for_each_packed_object(struct repository *repo, each_packed_object_fn cb,
 	return ret ? ret : pack_errors;
 }
 
+struct packfile_store_for_each_object_wrapper_data {
+	struct packfile_store *store;
+	const struct object_info *request;
+	odb_for_each_object_cb cb;
+	void *cb_data;
+};
+
+static int packfile_store_for_each_object_wrapper(const struct object_id *oid,
+						  struct packed_git *pack,
+						  uint32_t index_pos,
+						  void *cb_data)
+{
+	struct packfile_store_for_each_object_wrapper_data *data = cb_data;
+
+	if (data->request) {
+		off_t offset = nth_packed_object_offset(pack, index_pos);
+		struct object_info oi = *data->request;
+
+		if (packed_object_info(pack, offset, &oi) < 0) {
+			mark_bad_packed_object(pack, oid);
+			return -1;
+		}
+
+		return data->cb(oid, &oi, data->cb_data);
+	} else {
+		return data->cb(oid, NULL, data->cb_data);
+	}
+}
+
+int packfile_store_for_each_object(struct packfile_store *store,
+				   const struct object_info *request,
+				   odb_for_each_object_cb cb,
+				   void *cb_data,
+				   unsigned flags)
+{
+	struct packfile_store_for_each_object_wrapper_data data = {
+		.store = store,
+		.request = request,
+		.cb = cb,
+		.cb_data = cb_data,
+	};
+	int pack_errors = 0, ret;
+
+	ret = packfile_store_for_each_object_internal(store, packfile_store_for_each_object_wrapper,
+						      &data, flags, &pack_errors);
+	if (ret)
+		return ret;
+
+	return pack_errors ? -1 : 0;
+}
+
 static int add_promisor_object(const struct object_id *oid,
 			       struct packed_git *pack,
 			       uint32_t pos UNUSED,
