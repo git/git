@@ -165,29 +165,12 @@ int stream_object_signature(struct repository *r, const struct object_id *oid)
 }
 
 /*
- * Find "oid" as a loose object in given source.
- * Returns 0 on success, negative on failure.
+ * Find "oid" as a loose object in given source, open the object and return its
+ * file descriptor. Returns the file descriptor on success, negative on failure.
  *
  * The "path" out-parameter will give the path of the object we found (if any).
  * Note that it may point to static storage and is only valid until another
  * call to stat_loose_object().
- */
-static int stat_loose_object(struct odb_source_loose *loose,
-			     const struct object_id *oid,
-			     struct stat *st, const char **path)
-{
-	static struct strbuf buf = STRBUF_INIT;
-
-	*path = odb_loose_path(loose->source, &buf, oid);
-	if (!lstat(*path, st))
-		return 0;
-
-	return -1;
-}
-
-/*
- * Like stat_loose_object(), but actually open the object and return the
- * descriptor. See the caveats on the "path" parameter above.
  */
 static int open_loose_object(struct odb_source_loose *loose,
 			     const struct object_id *oid, const char **path)
@@ -412,7 +395,8 @@ static int parse_loose_header(const char *hdr, struct object_info *oi)
 	return 0;
 }
 
-int odb_source_loose_read_object_info(struct odb_source *source,
+static int read_object_info_from_path(struct odb_source *source,
+				      const char *path,
 				      const struct object_id *oid,
 				      struct object_info *oi,
 				      unsigned flags)
@@ -420,7 +404,6 @@ int odb_source_loose_read_object_info(struct odb_source *source,
 	int ret;
 	int fd;
 	unsigned long mapsize;
-	const char *path;
 	void *map = NULL;
 	git_zstream stream, *stream_to_end = NULL;
 	char hdr[MAX_HEADER_LEN];
@@ -443,7 +426,7 @@ int odb_source_loose_read_object_info(struct odb_source *source,
 			goto out;
 		}
 
-		if (stat_loose_object(source->loose, oid, &st, &path) < 0) {
+		if (lstat(path, &st) < 0) {
 			ret = -1;
 			goto out;
 		}
@@ -455,7 +438,7 @@ int odb_source_loose_read_object_info(struct odb_source *source,
 		goto out;
 	}
 
-	fd = open_loose_object(source->loose, oid, &path);
+	fd = git_open(path);
 	if (fd < 0) {
 		if (errno != ENOENT)
 			error_errno(_("unable to open loose object %s"), oid_to_hex(oid));
@@ -532,6 +515,16 @@ out:
 	}
 
 	return ret;
+}
+
+int odb_source_loose_read_object_info(struct odb_source *source,
+				      const struct object_id *oid,
+				      struct object_info *oi,
+				      unsigned flags)
+{
+	static struct strbuf buf = STRBUF_INIT;
+	odb_loose_path(source, &buf, oid);
+	return read_object_info_from_path(source, buf.buf, oid, oi, flags);
 }
 
 static void hash_object_body(const struct git_hash_algo *algo, struct git_hash_ctx *c,
