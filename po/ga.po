@@ -6034,7 +6034,7 @@ msgid ""
 "'strip-if-invalid' is not a valid mode for git fast-export with --signed-"
 "commits=<mode>"
 msgstr ""
-"'strip-if-invalid' ní mód bailí é seo le haghaidh easpórtáil thapa git le --signed-"
+"'strip-if-invalid' ní mód bailí é seo le haghaidh easpórtáil le haghaidh git fast-export le --signed-"
 "commits=<mód>"
 
 #, c-format
@@ -6067,7 +6067,7 @@ msgid ""
 "'strip-if-invalid' is not a valid mode for git fast-export with --signed-"
 "tags=<mode>"
 msgstr ""
-"'strip-if-invalid' ní mód bailí é seo le haghaidh easpórtála tapa git le --signed-"
+"'strip-if-invalid' ní mód bailí é seo le haghaidh git fast-export le --signed-"
 "tags=<mode>"
 
 #, c-format
