@@ -2301,51 +2301,63 @@ int for_each_object_in_pack(struct packed_git *p,
 	return r;
 }
 
+static int packfile_store_for_each_object_internal(struct packfile_store *store,
+						   each_packed_object_fn cb,
+						   void *data,
+						   unsigned flags,
+						   int *pack_errors)
+{
+	struct packfile_list_entry *e;
+	int ret = 0;
+
+	store->skip_mru_updates = true;
+
+	for (e = packfile_store_get_packs(store); e; e = e->next) {
+		struct packed_git *p = e->pack;
+
+		if ((flags & ODB_FOR_EACH_OBJECT_LOCAL_ONLY) && !p->pack_local)
+			continue;
+		if ((flags & ODB_FOR_EACH_OBJECT_PROMISOR_ONLY) &&
+		    !p->pack_promisor)
+			continue;
+		if ((flags & ODB_FOR_EACH_OBJECT_SKIP_IN_CORE_KEPT_PACKS) &&
+		    p->pack_keep_in_core)
+			continue;
+		if ((flags & ODB_FOR_EACH_OBJECT_SKIP_ON_DISK_KEPT_PACKS) &&
+		    p->pack_keep)
+			continue;
+		if (open_pack_index(p)) {
+			*pack_errors = 1;
+			continue;
+		}
+
+		ret = for_each_object_in_pack(p, cb, data, flags);
+		if (ret)
+			break;
+	}
+
+	store->skip_mru_updates = false;
+
+	return ret;
+}
+
 int for_each_packed_object(struct repository *repo, each_packed_object_fn cb,
 			   void *data, unsigned flags)
 {
 	struct odb_source *source;
-	int r = 0;
 	int pack_errors = 0;
+	int ret = 0;
 
 	odb_prepare_alternates(repo->objects);
 
 	for (source = repo->objects->sources; source; source = source->next) {
-		struct packfile_list_entry *e;
-
-		source->packfiles->skip_mru_updates = true;
-
-		for (e = packfile_store_get_packs(source->packfiles); e; e = e->next) {
-			struct packed_git *p = e->pack;
-
-			if ((flags & ODB_FOR_EACH_OBJECT_LOCAL_ONLY) && !p->pack_local)
-				continue;
-			if ((flags & ODB_FOR_EACH_OBJECT_PROMISOR_ONLY) &&
-			    !p->pack_promisor)
-				continue;
-			if ((flags & ODB_FOR_EACH_OBJECT_SKIP_IN_CORE_KEPT_PACKS) &&
-			    p->pack_keep_in_core)
-				continue;
-			if ((flags & ODB_FOR_EACH_OBJECT_SKIP_ON_DISK_KEPT_PACKS) &&
-			    p->pack_keep)
-				continue;
-			if (open_pack_index(p)) {
-				pack_errors = 1;
-				continue;
-			}
-
-			r = for_each_object_in_pack(p, cb, data, flags);
-			if (r)
-				break;
-		}
-
-		source->packfiles->skip_mru_updates = false;
-
-		if (r)
+		ret = packfile_store_for_each_object_internal(source->packfiles, cb, data,
+							      flags, &pack_errors);
+		if (ret)
 			break;
 	}
 
-	return r ? r : pack_errors;
+	return ret ? ret : pack_errors;
 }
 
 static int add_promisor_object(const struct object_id *oid,
