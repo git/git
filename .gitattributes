@@ -7,6 +7,7 @@
 *.py text eol=lf diff=python
 *.bat text eol=crlf
 *.png binary
+/AGENTS.md conflict-marker-size=32
 CODE_OF_CONDUCT.md -whitespace
 /Documentation/**/*.adoc text eol=lf whitespace=trail,space,incomplete
 /command-list.txt text eol=lf
