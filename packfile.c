@@ -2327,65 +2327,6 @@ int for_each_object_in_pack(struct packed_git *p,
 	return r;
 }
 
-static int packfile_store_for_each_object_internal(struct packfile_store *store,
-						   each_packed_object_fn cb,
-						   void *data,
-						   unsigned flags,
-						   int *pack_errors)
-{
-	struct packfile_list_entry *e;
-	int ret = 0;
-
-	store->skip_mru_updates = true;
-
-	for (e = packfile_store_get_packs(store); e; e = e->next) {
-		struct packed_git *p = e->pack;
-
-		if ((flags & ODB_FOR_EACH_OBJECT_LOCAL_ONLY) && !p->pack_local)
-			continue;
-		if ((flags & ODB_FOR_EACH_OBJECT_PROMISOR_ONLY) &&
-		    !p->pack_promisor)
-			continue;
-		if ((flags & ODB_FOR_EACH_OBJECT_SKIP_IN_CORE_KEPT_PACKS) &&
-		    p->pack_keep_in_core)
-			continue;
-		if ((flags & ODB_FOR_EACH_OBJECT_SKIP_ON_DISK_KEPT_PACKS) &&
-		    p->pack_keep)
-			continue;
-		if (open_pack_index(p)) {
-			*pack_errors = 1;
-			continue;
-		}
-
-		ret = for_each_object_in_pack(p, cb, data, flags);
-		if (ret)
-			break;
-	}
-
-	store->skip_mru_updates = false;
-
-	return ret;
-}
-
-int for_each_packed_object(struct repository *repo, each_packed_object_fn cb,
-			   void *data, unsigned flags)
-{
-	struct odb_source *source;
-	int pack_errors = 0;
-	int ret = 0;
-
-	odb_prepare_alternates(repo->objects);
-
-	for (source = repo->objects->sources; source; source = source->next) {
-		ret = packfile_store_for_each_object_internal(source->packfiles, cb, data,
-							      flags, &pack_errors);
-		if (ret)
-			break;
-	}
-
-	return ret ? ret : pack_errors;
-}
-
 struct packfile_store_for_each_object_wrapper_data {
 	struct packfile_store *store;
 	const struct object_info *request;
@@ -2428,14 +2369,44 @@ int packfile_store_for_each_object(struct packfile_store *store,
 		.cb = cb,
 		.cb_data = cb_data,
 	};
+	struct packfile_list_entry *e;
 	int pack_errors = 0, ret;
 
-	ret = packfile_store_for_each_object_internal(store, packfile_store_for_each_object_wrapper,
-						      &data, flags, &pack_errors);
-	if (ret)
-		return ret;
+	store->skip_mru_updates = true;
 
-	return pack_errors ? -1 : 0;
+	for (e = packfile_store_get_packs(store); e; e = e->next) {
+		struct packed_git *p = e->pack;
+
+		if ((flags & ODB_FOR_EACH_OBJECT_LOCAL_ONLY) && !p->pack_local)
+			continue;
+		if ((flags & ODB_FOR_EACH_OBJECT_PROMISOR_ONLY) &&
+		    !p->pack_promisor)
+			continue;
+		if ((flags & ODB_FOR_EACH_OBJECT_SKIP_IN_CORE_KEPT_PACKS) &&
+		    p->pack_keep_in_core)
+			continue;
+		if ((flags & ODB_FOR_EACH_OBJECT_SKIP_ON_DISK_KEPT_PACKS) &&
+		    p->pack_keep)
+			continue;
+		if (open_pack_index(p)) {
+			pack_errors = 1;
+			continue;
+		}
+
+		ret = for_each_object_in_pack(p, packfile_store_for_each_object_wrapper,
+					      &data, flags);
+		if (ret)
+			goto out;
+	}
+
+	ret = 0;
+
+out:
+	store->skip_mru_updates = false;
+
+	if (!ret && pack_errors)
+		ret = -1;
+	return ret;
 }
 
 struct add_promisor_object_data {

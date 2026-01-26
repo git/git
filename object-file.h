@@ -127,17 +127,6 @@ int for_each_loose_file_in_source(struct odb_source *source,
 				  void *data);
 
 /*
- * Iterate over all accessible loose objects without respect to
- * reachability. By default, this includes both local and alternate objects.
- * The order in which objects are visited is unspecified.
- *
- * Any flags specific to packs are ignored.
- */
-int for_each_loose_object(struct object_database *odb,
-			  each_loose_object_fn, void *,
-			  enum odb_for_each_object_flags flags);
-
-/*
  * Iterate through all loose objects in the given object database source and
  * invoke the callback function for each of them. If an object info request is
  * given, then the object info will be read for every individual object and
