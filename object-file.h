@@ -139,9 +139,10 @@ int for_each_loose_object(struct object_database *odb,
 
 /*
  * Iterate through all loose objects in the given object database source and
- * invoke the callback function for each of them. If given, the object info
- * will be populated with the object's data as if you had called
- * `odb_source_loose_read_object_info()` on the object.
+ * invoke the callback function for each of them. If an object info request is
+ * given, then the object info will be read for every individual object and
+ * passed to the callback as if `odb_source_loose_read_object_info()` was
+ * called for the object.
  */
 int odb_source_loose_for_each_object(struct odb_source *source,
 				     const struct object_info *request,

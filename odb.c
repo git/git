@@ -995,6 +995,35 @@ int odb_freshen_object(struct object_database *odb,
 	return 0;
 }
 
+int odb_for_each_object(struct object_database *odb,
+			const struct object_info *request,
+			odb_for_each_object_cb cb,
+			void *cb_data,
+			unsigned flags)
+{
+	int ret;
+
+	odb_prepare_alternates(odb);
+	for (struct odb_source *source = odb->sources; source; source = source->next) {
+		if (flags & ODB_FOR_EACH_OBJECT_LOCAL_ONLY && !source->local)
+			continue;
+
+		if (!(flags & ODB_FOR_EACH_OBJECT_PROMISOR_ONLY)) {
+			ret = odb_source_loose_for_each_object(source, request,
+							       cb, cb_data, flags);
+			if (ret)
+				return ret;
+		}
+
+		ret = packfile_store_for_each_object(source->packfiles, request,
+						     cb, cb_data, flags);
+		if (ret)
+			return ret;
+	}
+
+	return 0;
+}
+
 void odb_assert_oid_type(struct object_database *odb,
 			 const struct object_id *oid, enum object_type expect)
 {
