@@ -1,7 +1,7 @@
 # Bulgarian translation of git-gui po-file.
-# Copyright (C) 2012, 2013, 2014, 2015, 2016, 2024, 2025 Alexander Shopov <ash@kambanaria.org>.
+# Copyright (C) 2012, 2013, 2014, 2015, 2016, 2024, 2025, 2026 Alexander Shopov <ash@kambanaria.org>.
 # This file is distributed under the same license as the git package.
-# Alexander Shopov <ash@kambanaria.org>, 2012, 2013, 2014, 2015, 2016, 2024, 2025.
+# Alexander Shopov <ash@kambanaria.org>, 2012, 2013, 2014, 2015, 2016, 2024, 2025, 2026.
 #
 #
 msgid ""
@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: git-gui master\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-07-22 17:37+0200\n"
-"PO-Revision-Date: 2025-07-28 11:56+0200\n"
+"PO-Revision-Date: 2026-01-19 10:12+0100\n"
 "Last-Translator: Alexander Shopov <ash@kambanaria.org>\n"
 "Language-Team: Bulgarian <dict@fsa-bg.org>\n"
 "Language: bg\n"
@@ -230,7 +230,7 @@ msgid "Delete..."
 msgstr "Изтриване…"
 
 msgid "Reset..."
-msgstr "Отмяна на промените…"
+msgstr "Отмяна на промѐните…"
 
 msgid "Done"
 msgstr "Готово"
@@ -322,7 +322,7 @@ msgid "Staged Changes (Will Commit)"
 msgstr "Промени в индекса (за подаване)"
 
 msgid "Stage Changed"
-msgstr "Индексът е променен"
+msgstr "Добавяне към индекса"
 
 msgid "Push"
 msgstr "Изтласкване"
@@ -394,7 +394,7 @@ msgid "Revert To Base"
 msgstr "Връщане към родителската версия"
 
 msgid "Visualize These Changes In The Submodule"
-msgstr "Визуализиране на промените в подмодула"
+msgstr "Визуализиране на промѐните в подмодула"
 
 msgid "Visualize Current Branch History In The Submodule"
 msgstr "Визуализация на историята на текущия клон в историята за подмодула"
@@ -535,7 +535,7 @@ msgid "Options"
 msgstr "Опции"
 
 msgid "Fetch Tracking Branch"
-msgstr "Изтегляне на промените от следения клон"
+msgstr "Изтегляне на промѐните от следения клон"
 
 msgid "Detach From Local Branch"
 msgstr "Изтриване от локалния клон"
@@ -602,14 +602,14 @@ msgid "Local Branches"
 msgstr "Локални клони"
 
 msgid "Delete Only If Merged Into"
-msgstr "Изтриване, само ако промените са слети и другаде"
+msgstr "Изтриване, само ако промѐните са слети и другаде"
 
 msgid "Always (Do not perform merge checks)"
 msgstr "Винаги (без проверка за сливане)"
 
 #, tcl-format
 msgid "The following branches are not completely merged into %s:"
-msgstr "Не всички промени в клоните са слети в „%s“:"
+msgstr "Не всички промѐни в клоните са слети в „%s“:"
 
 msgid ""
 "Recovering deleted branches is difficult.\n"
@@ -1035,9 +1035,36 @@ msgid ""
 "\n"
 "You must stage at least 1 file before you can commit.\n"
 msgstr ""
-"Няма промени за подаване.\n"
+"Няма промѐни за подаване.\n"
 "\n"
 "Трябва да добавите поне един файл към индекса, за да подадете.\n"
+
+msgid "Calling pre-commit hook..."
+msgstr "Изпълняване на куката преди подаване…"
+
+msgid "Commit declined by pre-commit hook."
+msgstr "Подаването е отхвърлено от куката преди подаване."
+
+msgid ""
+"You are about to commit on a detached head. This is a potentially dangerous "
+"thing to do because if you switch to another branch you will lose your "
+"changes and it can be difficult to retrieve them later from the reflog. You "
+"should probably cancel this commit and create a new branch to continue.\n"
+" \n"
+" Do you really want to proceed with your Commit?"
+msgstr ""
+"Ще подадете към несвързан, отделѐн указател „HEAD“. Това е опасно, защото "
+"при преминаването към клон ще загубите промѐните си, като единственият начин "
+"да ги върнете ще е чрез журнала на указателите (reflog). Най-вероятно трябва "
+"да не правите това подаване, а да създадете нов клон, преди да продължите.\n"
+" \n"
+"Сигурни ли сте, че искате да извършите текущото подаване?"
+
+msgid "Calling commit-msg hook..."
+msgstr "Изпълняване на куката за съобщението при подаване…"
+
+msgid "Commit declined by commit-msg hook."
+msgstr "Подаването е отхвърлено от куката за съобщението при подаване."
 
 msgid ""
 "Please supply a commit message.\n"
@@ -1056,35 +1083,8 @@ msgstr ""
 "● Втори ред: празен.\n"
 "● Останалите редове: опишете защо се налага тази промяна.\n"
 
-msgid "Calling pre-commit hook..."
-msgstr "Изпълняване на куката преди подаване…"
-
-msgid "Commit declined by pre-commit hook."
-msgstr "Подаването е отхвърлено от куката преди подаване."
-
-msgid ""
-"You are about to commit on a detached head. This is a potentially dangerous "
-"thing to do because if you switch to another branch you will lose your "
-"changes and it can be difficult to retrieve them later from the reflog. You "
-"should probably cancel this commit and create a new branch to continue.\n"
-" \n"
-" Do you really want to proceed with your Commit?"
-msgstr ""
-"Ще подадете към несвързан, отделѐн указател „HEAD“. Това е опасно, защото "
-"при преминаването към клон ще загубите промените си, като единственият начин "
-"да ги върнете ще е чрез журнала на указателите (reflog). Най-вероятно трябва "
-"да не правите това подаване, а да създадете нов клон, преди да продължите.\n"
-" \n"
-"Сигурни ли сте, че искате да извършите текущото подаване?"
-
-msgid "Calling commit-msg hook..."
-msgstr "Изпълняване на куката за съобщението при подаване…"
-
-msgid "Commit declined by commit-msg hook."
-msgstr "Подаването е отхвърлено от куката за съобщението при подаване."
-
 msgid "Committing changes..."
-msgstr "Подаване на промените…"
+msgstr "Подаване на промѐните…"
 
 msgid "write-tree failed:"
 msgstr "неуспешно запазване на дървото (write-tree):"
@@ -1103,7 +1103,7 @@ msgid ""
 "\n"
 "A rescan will be automatically started now.\n"
 msgstr ""
-"Няма промени за подаване.\n"
+"Няма промѐни за подаване.\n"
 "\n"
 "В това подаване не са променяни никакви файлове, а и не е подаване със "
 "сливане.\n"
@@ -1111,7 +1111,7 @@ msgstr ""
 "Автоматично ще започне нова проверка.\n"
 
 msgid "No changes to commit."
-msgstr "Няма промени за подаване."
+msgstr "Няма промѐни за подаване."
 
 msgid "commit-tree failed:"
 msgstr "неуспешно подаване на дървото (commit-tree):"
@@ -1191,7 +1191,7 @@ msgid ""
 "* No differences detected; stage the file to de-list it from Unstaged "
 "Changes.\n"
 msgstr ""
-"● Няма разлики. Добавете файла към индекса, за да се извади от промените "
+"● Няма разлики. Добавете файла към индекса, за да се извади от промѐните "
 "извън индекса.\n"
 
 msgid "* Click to find other files that may have the same state.\n"
@@ -1350,15 +1350,15 @@ msgstr "Добавяне на всички променени файлове"
 
 #, tcl-format
 msgid "Revert changes in file %s?"
-msgstr "Да се махнат ли промените във файла „%s“?"
+msgstr "Да се махнат ли промѐните във файла „%s“?"
 
 #, tcl-format
 msgid "Revert changes in these %i files?"
-msgstr "Да се махнат ли промените в тези %i файла?"
+msgstr "Да се махнат ли промѐните в тези %i файла?"
 
 msgid "Any unstaged changes will be permanently lost by the revert."
 msgstr ""
-"Всички промени, които не са били добавени в индекса, ще се загубят "
+"Всички промѐни, които не са били добавени в индекса, ще се загубят "
 "безвъзвратно."
 
 msgid "Do Nothing"
@@ -1393,11 +1393,11 @@ msgid "%d of the %d selected files could not be deleted."
 msgstr "%d от избраните %d файла не бяха изтрити."
 
 msgid "Reverting selected files"
-msgstr "Махане на промените в избраните файлове"
+msgstr "Махане на промѐните в избраните файлове"
 
 #, tcl-format
 msgid "Reverting %s"
-msgstr "Махане на промените в „%s“"
+msgstr "Махане на промѐните в „%s“"
 
 msgid "Goto Line:"
 msgstr "Към ред:"
@@ -1507,7 +1507,7 @@ msgid ""
 msgstr ""
 "Да се преустанови ли сливането?\n"
 "\n"
-"В такъв случай ●ВСИЧКИ● неподадени промени ще се загубят безвъзвратно.\n"
+"В такъв случай ●ВСИЧКИ● неподадени промѐни ще се загубят безвъзвратно.\n"
 "\n"
 "Наистина ли да се преустанови сливането?"
 
@@ -1518,17 +1518,17 @@ msgid ""
 "\n"
 "Continue with resetting the current changes?"
 msgstr ""
-"Да се занулят ли промените?\n"
+"Да се занулят ли промѐните?\n"
 "\n"
-"В такъв случай ●ВСИЧКИ● неподадени промени ще се загубят безвъзвратно.\n"
+"В такъв случай ●ВСИЧКИ● неподадени промѐни ще се загубят безвъзвратно.\n"
 "\n"
-"Наистина ли да се занулят промените?"
+"Наистина ли да се занулят промѐните?"
 
 msgid "Aborting"
 msgstr "Преустановяване"
 
 msgid "files reset"
-msgstr "файла със занулени промени"
+msgstr "файла със занулени промѐни"
 
 msgid "Abort failed."
 msgstr "Неуспешно преустановяване."
@@ -1766,7 +1766,7 @@ msgid "Fetch Immediately"
 msgstr "Незабавно доставяне"
 
 msgid "Initialize Remote Repository and Push"
-msgstr "Инициализиране на отдалеченото хранилище и изтласкване на промените"
+msgstr "Инициализиране на отдалеченото хранилище и изтласкване на промѐните"
 
 msgid "Do Nothing Else Now"
 msgstr "Да не се прави нищо"
@@ -1895,6 +1895,10 @@ msgstr "Главни/Малки"
 #, tcl-format
 msgid "%s (%s): Create Desktop Icon"
 msgstr "%s (%s): Добавяне на икона на работния плот"
+
+#, tcl-format
+msgid "Replace existing shortcut: %s?"
+msgstr "Да се замени ли съществуващата клавишна комбинация: %s?"
 
 msgid "Cannot write shortcut:"
 msgstr "Клавишната комбинация не може да се запази:"
@@ -2081,7 +2085,7 @@ msgstr "Командата върна грешка: %s"
 
 #, tcl-format
 msgid "Fetching new changes from %s"
-msgstr "Доставяне на промените от „%s“"
+msgstr "Доставяне на промѐните от „%s“"
 
 #, tcl-format
 msgid "remote prune %s"
@@ -2095,7 +2099,7 @@ msgid "fetch all remotes"
 msgstr "доставяне от всички отдалечени"
 
 msgid "Fetching new changes from all remotes"
-msgstr "Доставяне на промените от всички отдалечени хранилища"
+msgstr "Доставяне на промѐните от всички отдалечени хранилища"
 
 msgid "remote prune all remotes"
 msgstr "окастряне на следящите изтрити"
@@ -2107,7 +2111,7 @@ msgstr ""
 
 #, tcl-format
 msgid "Pushing changes to %s"
-msgstr "Изтласкване на промените към „%s“"
+msgstr "Изтласкване на промѐните към „%s“"
 
 #, tcl-format
 msgid "Mirroring to %s"
@@ -2131,7 +2135,7 @@ msgstr "Настройки при пренасянето"
 
 msgid "Force overwrite existing branch (may discard changes)"
 msgstr ""
-"Изрично презаписване на съществуващ клон (някои промени може да се загубят)"
+"Изрично презаписване на съществуващ клон (някои промѐни може да се загубят)"
 
 msgid "Use thin pack (for slow network connections)"
 msgstr "Максимална компресия (за бавни мрежови връзки)"
