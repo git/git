@@ -409,6 +409,7 @@ static int read_object_info_from_path(struct odb_source *source,
 	char hdr[MAX_HEADER_LEN];
 	unsigned long size_scratch;
 	enum object_type type_scratch;
+	struct stat st;
 
 	/*
 	 * If we don't care about type or size, then we don't
@@ -421,7 +422,7 @@ static int read_object_info_from_path(struct odb_source *source,
 	if (!oi || (!oi->typep && !oi->sizep && !oi->contentp)) {
 		struct stat st;
 
-		if ((!oi || !oi->disk_sizep) && (flags & OBJECT_INFO_QUICK)) {
+		if ((!oi || (!oi->disk_sizep && !oi->mtimep)) && (flags & OBJECT_INFO_QUICK)) {
 			ret = quick_has_loose(source->loose, oid) ? 0 : -1;
 			goto out;
 		}
@@ -431,8 +432,12 @@ static int read_object_info_from_path(struct odb_source *source,
 			goto out;
 		}
 
-		if (oi && oi->disk_sizep)
-			*oi->disk_sizep = st.st_size;
+		if (oi) {
+			if (oi->disk_sizep)
+				*oi->disk_sizep = st.st_size;
+			if (oi->mtimep)
+				*oi->mtimep = st.st_mtime;
+		}
 
 		ret = 0;
 		goto out;
@@ -446,7 +451,21 @@ static int read_object_info_from_path(struct odb_source *source,
 		goto out;
 	}
 
-	map = map_fd(fd, path, &mapsize);
+	if (fstat(fd, &st)) {
+		close(fd);
+		ret = -1;
+		goto out;
+	}
+
+	mapsize = xsize_t(st.st_size);
+	if (!mapsize) {
+		close(fd);
+		ret = error(_("object file %s is empty"), path);
+		goto out;
+	}
+
+	map = xmmap(NULL, mapsize, PROT_READ, MAP_PRIVATE, fd, 0);
+	close(fd);
 	if (!map) {
 		ret = -1;
 		goto out;
@@ -454,6 +473,8 @@ static int read_object_info_from_path(struct odb_source *source,
 
 	if (oi->disk_sizep)
 		*oi->disk_sizep = mapsize;
+	if (oi->mtimep)
+		*oi->mtimep = st.st_mtime;
 
 	stream_to_end = &stream;
 

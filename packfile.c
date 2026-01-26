@@ -1578,13 +1578,14 @@ static void add_delta_base_cache(struct packed_git *p, off_t base_offset,
 	hashmap_add(&delta_base_cache, &ent->ent);
 }
 
-int packed_object_info(struct packed_git *p,
-		       off_t obj_offset, struct object_info *oi)
+static int packed_object_info_with_index_pos(struct packed_git *p, off_t obj_offset,
+					     uint32_t *maybe_index_pos, struct object_info *oi)
 {
 	struct pack_window *w_curs = NULL;
 	unsigned long size;
 	off_t curpos = obj_offset;
 	enum object_type type = OBJ_NONE;
+	uint32_t pack_pos;
 	int ret;
 
 	/*
@@ -1619,16 +1620,35 @@ int packed_object_info(struct packed_git *p,
 		}
 	}
 
-	if (oi->disk_sizep) {
-		uint32_t pos;
-		if (offset_to_pack_pos(p, obj_offset, &pos) < 0) {
+	if (oi->disk_sizep || (oi->mtimep && p->is_cruft)) {
+		if (offset_to_pack_pos(p, obj_offset, &pack_pos) < 0) {
 			error("could not find object at offset %"PRIuMAX" "
 			      "in pack %s", (uintmax_t)obj_offset, p->pack_name);
 			ret = -1;
 			goto out;
 		}
+	}
 
-		*oi->disk_sizep = pack_pos_to_offset(p, pos + 1) - obj_offset;
+	if (oi->disk_sizep)
+		*oi->disk_sizep = pack_pos_to_offset(p, pack_pos + 1) - obj_offset;
+
+	if (oi->mtimep) {
+		if (p->is_cruft) {
+			uint32_t index_pos;
+
+			if (load_pack_mtimes(p) < 0)
+				die(_("could not load .mtimes for cruft pack '%s'"),
+				    pack_basename(p));
+
+			if (maybe_index_pos)
+				index_pos = *maybe_index_pos;
+			else
+				index_pos = pack_pos_to_index(p, pack_pos);
+
+			*oi->mtimep = nth_packed_mtime(p, index_pos);
+		} else {
+			*oi->mtimep = p->mtime;
+		}
 	}
 
 	if (oi->typep) {
@@ -1679,6 +1699,12 @@ int packed_object_info(struct packed_git *p,
 out:
 	unuse_pack(&w_curs);
 	return ret;
+}
+
+int packed_object_info(struct packed_git *p, off_t obj_offset,
+		       struct object_info *oi)
+{
+	return packed_object_info_with_index_pos(p, obj_offset, NULL, oi);
 }
 
 static void *unpack_compressed_entry(struct packed_git *p,
@@ -2378,7 +2404,8 @@ static int packfile_store_for_each_object_wrapper(const struct object_id *oid,
 		off_t offset = nth_packed_object_offset(pack, index_pos);
 		struct object_info oi = *data->request;
 
-		if (packed_object_info(pack, offset, &oi) < 0) {
+		if (packed_object_info_with_index_pos(pack, offset,
+						      &index_pos, &oi) < 0) {
 			mark_bad_packed_object(pack, oid);
 			return -1;
 		}

@@ -702,6 +702,8 @@ static int do_oid_object_info_extended(struct object_database *odb,
 				oidclr(oi->delta_base_oid, odb->repo->hash_algo);
 			if (oi->contentp)
 				*oi->contentp = xmemdupz(co->buf, co->size);
+			if (oi->mtimep)
+				*oi->mtimep = 0;
 			oi->whence = OI_CACHED;
 		}
 		return 0;

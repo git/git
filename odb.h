@@ -318,6 +318,19 @@ struct object_info {
 	struct object_id *delta_base_oid;
 	void **contentp;
 
+	/*
+	 * The time the given looked-up object has been last modified.
+	 *
+	 * Note: the mtime may be ambiguous in case the object exists multiple
+	 * times in the object database. It is thus _not_ recommended to use
+	 * this field outside of contexts where you would read every instance
+	 * of the object, like for example with `odb_for_each_object()`. As it
+	 * is impossible to say at the ODB level what the intent of the caller
+	 * is (e.g. whether to find the oldest or newest object), it is the
+	 * responsibility of the caller to disambiguate the mtimes.
+	 */
+	time_t *mtimep;
+
 	/* Response */
 	enum {
 		OI_CACHED,
