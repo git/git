@@ -137,6 +137,17 @@ int for_each_loose_object(struct object_database *odb,
 			  each_loose_object_fn, void *,
 			  enum odb_for_each_object_flags flags);
 
+/*
+ * Iterate through all loose objects in the given object database source and
+ * invoke the callback function for each of them. If given, the object info
+ * will be populated with the object's data as if you had called
+ * `odb_source_loose_read_object_info()` on the object.
+ */
+int odb_source_loose_for_each_object(struct odb_source *source,
+				     const struct object_info *request,
+				     odb_for_each_object_cb cb,
+				     void *cb_data,
+				     unsigned flags);
 
 /**
  * format_object_header() is a thin wrapper around s xsnprintf() that
