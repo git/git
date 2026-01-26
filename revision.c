@@ -3938,7 +3938,7 @@ int prepare_revision_walk(struct rev_info *revs)
 
 	if (revs->exclude_promisor_objects) {
 		for_each_packed_object(revs->repo, mark_uninteresting, revs,
-				       FOR_EACH_OBJECT_PROMISOR_ONLY);
+				       ODB_FOR_EACH_OBJECT_PROMISOR_ONLY);
 	}
 
 	if (!revs->reflog_info)

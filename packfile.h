@@ -339,9 +339,9 @@ typedef int each_packed_object_fn(const struct object_id *oid,
 				  void *data);
 int for_each_object_in_pack(struct packed_git *p,
 			    each_packed_object_fn, void *data,
-			    enum for_each_object_flags flags);
+			    enum odb_for_each_object_flags flags);
 int for_each_packed_object(struct repository *repo, each_packed_object_fn cb,
-			   void *data, enum for_each_object_flags flags);
+			   void *data, enum odb_for_each_object_flags flags);
 
 /* A hook to report invalid files in pack directory */
 #define PACKDIR_FILE_PACK 1

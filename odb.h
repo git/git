@@ -442,24 +442,25 @@ static inline void obj_read_unlock(void)
 	if(obj_read_use_lock)
 		pthread_mutex_unlock(&obj_read_mutex);
 }
+
 /* Flags for for_each_*_object(). */
-enum for_each_object_flags {
+enum odb_for_each_object_flags {
 	/* Iterate only over local objects, not alternates. */
-	FOR_EACH_OBJECT_LOCAL_ONLY = (1<<0),
+	ODB_FOR_EACH_OBJECT_LOCAL_ONLY = (1<<0),
 
 	/* Only iterate over packs obtained from the promisor remote. */
-	FOR_EACH_OBJECT_PROMISOR_ONLY = (1<<1),
+	ODB_FOR_EACH_OBJECT_PROMISOR_ONLY = (1<<1),
 
 	/*
 	 * Visit objects within a pack in packfile order rather than .idx order
 	 */
-	FOR_EACH_OBJECT_PACK_ORDER = (1<<2),
+	ODB_FOR_EACH_OBJECT_PACK_ORDER = (1<<2),
 
 	/* Only iterate over packs that are not marked as kept in-core. */
-	FOR_EACH_OBJECT_SKIP_IN_CORE_KEPT_PACKS = (1<<3),
+	ODB_FOR_EACH_OBJECT_SKIP_IN_CORE_KEPT_PACKS = (1<<3),
 
 	/* Only iterate over packs that do not have .keep files. */
-	FOR_EACH_OBJECT_SKIP_ON_DISK_KEPT_PACKS = (1<<4),
+	ODB_FOR_EACH_OBJECT_SKIP_ON_DISK_KEPT_PACKS = (1<<4),
 };
 
 enum {

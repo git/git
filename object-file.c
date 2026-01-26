@@ -1789,7 +1789,7 @@ int for_each_loose_file_in_source(struct odb_source *source,
 
 int for_each_loose_object(struct object_database *odb,
 			  each_loose_object_fn cb, void *data,
-			  enum for_each_object_flags flags)
+			  enum odb_for_each_object_flags flags)
 {
 	struct odb_source *source;
 
@@ -1800,7 +1800,7 @@ int for_each_loose_object(struct object_database *odb,
 		if (r)
 			return r;
 
-		if (flags & FOR_EACH_OBJECT_LOCAL_ONLY)
+		if (flags & ODB_FOR_EACH_OBJECT_LOCAL_ONLY)
 			break;
 	}
 

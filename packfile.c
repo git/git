@@ -2259,12 +2259,12 @@ int has_object_kept_pack(struct repository *r, const struct object_id *oid,
 
 int for_each_object_in_pack(struct packed_git *p,
 			    each_packed_object_fn cb, void *data,
-			    enum for_each_object_flags flags)
+			    enum odb_for_each_object_flags flags)
 {
 	uint32_t i;
 	int r = 0;
 
-	if (flags & FOR_EACH_OBJECT_PACK_ORDER) {
+	if (flags & ODB_FOR_EACH_OBJECT_PACK_ORDER) {
 		if (load_pack_revindex(p->repo, p))
 			return -1;
 	}
@@ -2285,7 +2285,7 @@ int for_each_object_in_pack(struct packed_git *p,
 		 *   - in pack-order, it is pack position, which we must
 		 *     convert to an index position in order to get the oid.
 		 */
-		if (flags & FOR_EACH_OBJECT_PACK_ORDER)
+		if (flags & ODB_FOR_EACH_OBJECT_PACK_ORDER)
 			index_pos = pack_pos_to_index(p, i);
 		else
 			index_pos = i;
@@ -2302,7 +2302,7 @@ int for_each_object_in_pack(struct packed_git *p,
 }
 
 int for_each_packed_object(struct repository *repo, each_packed_object_fn cb,
-			   void *data, enum for_each_object_flags flags)
+			   void *data, enum odb_for_each_object_flags flags)
 {
 	struct odb_source *source;
 	int r = 0;
@@ -2318,15 +2318,15 @@ int for_each_packed_object(struct repository *repo, each_packed_object_fn cb,
 		for (e = packfile_store_get_packs(source->packfiles); e; e = e->next) {
 			struct packed_git *p = e->pack;
 
-			if ((flags & FOR_EACH_OBJECT_LOCAL_ONLY) && !p->pack_local)
+			if ((flags & ODB_FOR_EACH_OBJECT_LOCAL_ONLY) && !p->pack_local)
 				continue;
-			if ((flags & FOR_EACH_OBJECT_PROMISOR_ONLY) &&
+			if ((flags & ODB_FOR_EACH_OBJECT_PROMISOR_ONLY) &&
 			    !p->pack_promisor)
 				continue;
-			if ((flags & FOR_EACH_OBJECT_SKIP_IN_CORE_KEPT_PACKS) &&
+			if ((flags & ODB_FOR_EACH_OBJECT_SKIP_IN_CORE_KEPT_PACKS) &&
 			    p->pack_keep_in_core)
 				continue;
-			if ((flags & FOR_EACH_OBJECT_SKIP_ON_DISK_KEPT_PACKS) &&
+			if ((flags & ODB_FOR_EACH_OBJECT_SKIP_ON_DISK_KEPT_PACKS) &&
 			    p->pack_keep)
 				continue;
 			if (open_pack_index(p)) {
@@ -2413,8 +2413,8 @@ int is_promisor_object(struct repository *r, const struct object_id *oid)
 		if (repo_has_promisor_remote(r)) {
 			for_each_packed_object(r, add_promisor_object,
 					       &promisor_objects,
-					       FOR_EACH_OBJECT_PROMISOR_ONLY |
-					       FOR_EACH_OBJECT_PACK_ORDER);
+					       ODB_FOR_EACH_OBJECT_PROMISOR_ONLY |
+					       ODB_FOR_EACH_OBJECT_PACK_ORDER);
 		}
 		promisor_objects_prepared = 1;
 	}

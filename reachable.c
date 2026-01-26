@@ -307,7 +307,7 @@ int add_unseen_recent_objects_to_traversal(struct rev_info *revs,
 					   int ignore_in_core_kept_packs)
 {
 	struct recent_data data;
-	enum for_each_object_flags flags;
+	enum odb_for_each_object_flags flags;
 	int r;
 
 	data.revs = revs;
@@ -319,13 +319,13 @@ int add_unseen_recent_objects_to_traversal(struct rev_info *revs,
 	data.extra_recent_oids_loaded = 0;
 
 	r = for_each_loose_object(the_repository->objects, add_recent_loose, &data,
-				  FOR_EACH_OBJECT_LOCAL_ONLY);
+				  ODB_FOR_EACH_OBJECT_LOCAL_ONLY);
 	if (r)
 		goto done;
 
-	flags = FOR_EACH_OBJECT_LOCAL_ONLY | FOR_EACH_OBJECT_PACK_ORDER;
+	flags = ODB_FOR_EACH_OBJECT_LOCAL_ONLY | ODB_FOR_EACH_OBJECT_PACK_ORDER;
 	if (ignore_in_core_kept_packs)
-		flags |= FOR_EACH_OBJECT_SKIP_IN_CORE_KEPT_PACKS;
+		flags |= ODB_FOR_EACH_OBJECT_SKIP_IN_CORE_KEPT_PACKS;
 
 	r = for_each_packed_object(revs->repo, add_recent_packed, &data, flags);
 

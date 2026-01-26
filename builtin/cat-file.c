@@ -922,7 +922,7 @@ static int batch_objects(struct batch_options *opt)
 			cb.seen = &seen;
 
 			batch_each_object(opt, batch_unordered_object,
-					  FOR_EACH_OBJECT_PACK_ORDER, &cb);
+					  ODB_FOR_EACH_OBJECT_PACK_ORDER, &cb);
 
 			oidset_clear(&seen);
 		} else {

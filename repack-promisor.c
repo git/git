@@ -56,7 +56,7 @@ void repack_promisor_objects(struct repository *repo,
 	ctx.cmd = &cmd;
 	ctx.algop = repo->hash_algo;
 	for_each_packed_object(repo, write_oid, &ctx,
-			       FOR_EACH_OBJECT_PROMISOR_ONLY);
+			       ODB_FOR_EACH_OBJECT_PROMISOR_ONLY);
 
 	if (cmd.in == -1) {
 		/* No packed objects; cmd was never started */
