@@ -38,9 +38,6 @@ UI, Workflows & Features
    `--onto` option of "git replay".  Test coverage of "git replay" has
    been improved.
 
- * The split command in "git subtree" (in contrib/) has been taught to
-   deal better with rebased history.
-
  * The iconv library on macOS fails to correctly handle stateful
    ISO/IEC 2022:1994 encoded strings.  Work it around instead of
    replacing it wholesale from homebrew.
