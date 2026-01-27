@@ -861,12 +861,87 @@ static void display_ref_update(struct display_state *display_state, char code,
 	fputs(display_state->buf.buf, f);
 }
 
+struct ref_update_display_info {
+	bool failed;
+	char success_code;
+	char fail_code;
+	char *summary;
+	char *fail_detail;
+	char *success_detail;
+	char *ref;
+	char *remote;
+	struct object_id old_oid;
+	struct object_id new_oid;
+};
+
+struct ref_update_display_info_array {
+	struct ref_update_display_info *info;
+	size_t alloc, nr;
+};
+
+static struct ref_update_display_info *ref_update_display_info_append(
+					   struct ref_update_display_info_array *array,
+					   char success_code,
+					   char fail_code,
+					   const char *summary,
+					   const char *success_detail,
+					   const char *fail_detail,
+					   const char *ref,
+					   const char *remote,
+					   const struct object_id *old_oid,
+					   const struct object_id *new_oid)
+{
+	struct ref_update_display_info *info;
+
+	ALLOC_GROW(array->info, array->nr + 1, array->alloc);
+	info = &array->info[array->nr++];
+
+	info->failed = false;
+	info->success_code = success_code;
+	info->fail_code = fail_code;
+	info->summary = xstrdup(summary);
+	info->success_detail = xstrdup_or_null(success_detail);
+	info->fail_detail = xstrdup_or_null(fail_detail);
+	info->remote = xstrdup(remote);
+	info->ref = xstrdup(ref);
+
+	oidcpy(&info->old_oid, old_oid);
+	oidcpy(&info->new_oid, new_oid);
+
+	return info;
+}
+
+static void ref_update_display_info_set_failed(struct ref_update_display_info *info)
+{
+	info->failed = true;
+}
+
+static void ref_update_display_info_free(struct ref_update_display_info *info)
+{
+	free(info->summary);
+	free(info->success_detail);
+	free(info->fail_detail);
+	free(info->remote);
+	free(info->ref);
+}
+
+static void ref_update_display_info_display(struct ref_update_display_info *info,
+					    struct display_state *display_state,
+					    int summary_width)
+{
+	display_ref_update(display_state,
+			   info->failed ? info->fail_code : info->success_code,
+			   info->summary,
+			   info->failed ? info->fail_detail : info->success_detail,
+			   info->remote, info->ref, &info->old_oid,
+			   &info->new_oid, summary_width);
+}
+
 static int update_local_ref(struct ref *ref,
 			    struct ref_transaction *transaction,
-			    struct display_state *display_state,
 			    const struct ref *remote_ref,
-			    int summary_width,
-			    const struct fetch_config *config)
+			    const struct fetch_config *config,
+			    struct ref_update_display_info_array *display_array)
 {
 	struct commit *current = NULL, *updated;
 	int fast_forward = 0;
@@ -877,41 +952,56 @@ static int update_local_ref(struct ref *ref,
 
 	if (oideq(&ref->old_oid, &ref->new_oid)) {
 		if (verbosity > 0)
-			display_ref_update(display_state, '=', _("[up to date]"), NULL,
-					   remote_ref->name, ref->name,
-					   &ref->old_oid, &ref->new_oid, summary_width);
+			ref_update_display_info_append(display_array, '=', '=',
+						       _("[up to date]"), NULL,
+						       NULL, ref->name,
+						       remote_ref->name, &ref->old_oid,
+						       &ref->new_oid);
 		return 0;
 	}
 
 	if (!update_head_ok &&
 	    !is_null_oid(&ref->old_oid) &&
 	    branch_checked_out(ref->name)) {
+		struct ref_update_display_info *info;
 		/*
 		 * If this is the head, and it's not okay to update
 		 * the head, and the old value of the head isn't empty...
 		 */
-		display_ref_update(display_state, '!', _("[rejected]"),
-				   _("can't fetch into checked-out branch"),
-				   remote_ref->name, ref->name,
-				   &ref->old_oid, &ref->new_oid, summary_width);
+		info = ref_update_display_info_append(display_array, '!', '!',
+						      _("[rejected]"), NULL,
+						      _("can't fetch into checked-out branch"),
+						      ref->name, remote_ref->name,
+						      &ref->old_oid, &ref->new_oid);
+		ref_update_display_info_set_failed(info);
 		return 1;
 	}
 
 	if (!is_null_oid(&ref->old_oid) &&
 	    starts_with(ref->name, "refs/tags/")) {
+		struct ref_update_display_info *info;
+
 		if (force || ref->force) {
 			int r;
+
 			r = s_update_ref("updating tag", ref, transaction, 0);
-			display_ref_update(display_state, r ? '!' : 't', _("[tag update]"),
-					   r ? _("unable to update local ref") : NULL,
-					   remote_ref->name, ref->name,
-					   &ref->old_oid, &ref->new_oid, summary_width);
+
+			info = ref_update_display_info_append(display_array, 't', '!',
+							      _("[tag update]"), NULL,
+							      _("unable to update local ref"),
+							      ref->name, remote_ref->name,
+							      &ref->old_oid, &ref->new_oid);
+			if (r)
+				ref_update_display_info_set_failed(info);
+
 			return r;
 		} else {
-			display_ref_update(display_state, '!', _("[rejected]"),
-					   _("would clobber existing tag"),
-					   remote_ref->name, ref->name,
-					   &ref->old_oid, &ref->new_oid, summary_width);
+			info = ref_update_display_info_append(display_array, '!', '!',
+							      _("[rejected]"), NULL,
+							      _("would clobber existing tag"),
+							      ref->name, remote_ref->name,
+							      &ref->old_oid, &ref->new_oid);
+			ref_update_display_info_set_failed(info);
 			return 1;
 		}
 	}
@@ -921,6 +1011,7 @@ static int update_local_ref(struct ref *ref,
 	updated = lookup_commit_reference_gently(the_repository,
 						 &ref->new_oid, 1);
 	if (!current || !updated) {
+		struct ref_update_display_info *info;
 		const char *msg;
 		const char *what;
 		int r;
@@ -941,10 +1032,15 @@ static int update_local_ref(struct ref *ref,
 		}
 
 		r = s_update_ref(msg, ref, transaction, 0);
-		display_ref_update(display_state, r ? '!' : '*', what,
-				   r ? _("unable to update local ref") : NULL,
-				   remote_ref->name, ref->name,
-				   &ref->old_oid, &ref->new_oid, summary_width);
+
+		info = ref_update_display_info_append(display_array, '*', '!',
+						      what, NULL,
+						      _("unable to update local ref"),
+						      ref->name, remote_ref->name,
+						      &ref->old_oid, &ref->new_oid);
+		if (r)
+			ref_update_display_info_set_failed(info);
+
 		return r;
 	}
 
@@ -960,6 +1056,7 @@ static int update_local_ref(struct ref *ref,
 	}
 
 	if (fast_forward) {
+		struct ref_update_display_info *info;
 		struct strbuf quickref = STRBUF_INIT;
 		int r;
 
@@ -967,29 +1064,46 @@ static int update_local_ref(struct ref *ref,
 		strbuf_addstr(&quickref, "..");
 		strbuf_add_unique_abbrev(&quickref, &ref->new_oid, DEFAULT_ABBREV);
 		r = s_update_ref("fast-forward", ref, transaction, 1);
-		display_ref_update(display_state, r ? '!' : ' ', quickref.buf,
-				   r ? _("unable to update local ref") : NULL,
-				   remote_ref->name, ref->name,
-				   &ref->old_oid, &ref->new_oid, summary_width);
+
+		info = ref_update_display_info_append(display_array, ' ', '!',
+						      quickref.buf, NULL,
+						      _("unable to update local ref"),
+						      ref->name, remote_ref->name,
+						      &ref->old_oid, &ref->new_oid);
+		if (r)
+			ref_update_display_info_set_failed(info);
+
 		strbuf_release(&quickref);
 		return r;
 	} else if (force || ref->force) {
+		struct ref_update_display_info *info;
 		struct strbuf quickref = STRBUF_INIT;
 		int r;
+
 		strbuf_add_unique_abbrev(&quickref, &current->object.oid, DEFAULT_ABBREV);
 		strbuf_addstr(&quickref, "...");
 		strbuf_add_unique_abbrev(&quickref, &ref->new_oid, DEFAULT_ABBREV);
 		r = s_update_ref("forced-update", ref, transaction, 1);
-		display_ref_update(display_state, r ? '!' : '+', quickref.buf,
-				   r ? _("unable to update local ref") : _("forced update"),
-				   remote_ref->name, ref->name,
-				   &ref->old_oid, &ref->new_oid, summary_width);
+
+		info = ref_update_display_info_append(display_array, '+', '!',
+						      quickref.buf, _("forced update"),
+						      _("unable to update local ref"),
+						      ref->name, remote_ref->name,
+						      &ref->old_oid, &ref->new_oid);
+
+		if (r)
+			ref_update_display_info_set_failed(info);
+
 		strbuf_release(&quickref);
 		return r;
 	} else {
-		display_ref_update(display_state, '!', _("[rejected]"), _("non-fast-forward"),
-				   remote_ref->name, ref->name,
-				   &ref->old_oid, &ref->new_oid, summary_width);
+		struct ref_update_display_info *info;
+		info = ref_update_display_info_append(display_array, '!', '!',
+						      _("[rejected]"), NULL,
+						      _("non-fast-forward"),
+						      ref->name, remote_ref->name,
+						      &ref->old_oid, &ref->new_oid);
+		ref_update_display_info_set_failed(info);
 		return 1;
 	}
 }
@@ -1103,17 +1217,14 @@ static int store_updated_refs(struct display_state *display_state,
 			      int connectivity_checked,
 			      struct ref_transaction *transaction, struct ref *ref_map,
 			      struct fetch_head *fetch_head,
-			      const struct fetch_config *config)
+			      const struct fetch_config *config,
+			      struct ref_update_display_info_array *display_array)
 {
 	int rc = 0;
 	struct strbuf note = STRBUF_INIT;
 	const char *what, *kind;
 	struct ref *rm;
 	int want_status;
-	int summary_width = 0;
-
-	if (verbosity >= 0)
-		summary_width = transport_summary_width(ref_map);
 
 	if (!connectivity_checked) {
 		struct check_connected_options opt = CHECK_CONNECTED_INIT;
@@ -1218,8 +1329,8 @@ static int store_updated_refs(struct display_state *display_state,
 					  display_state->url_len);
 
 			if (ref) {
-				rc |= update_local_ref(ref, transaction, display_state,
-						       rm, summary_width, config);
+				rc |= update_local_ref(ref, transaction, rm,
+						       config, display_array);
 				free(ref);
 			} else if (write_fetch_head || dry_run) {
 				/*
@@ -1227,12 +1338,12 @@ static int store_updated_refs(struct display_state *display_state,
 				 * would be written to FETCH_HEAD, if --dry-run
 				 * is set).
 				 */
-				display_ref_update(display_state, '*',
-						   *kind ? kind : "branch", NULL,
-						   rm->name,
-						   "FETCH_HEAD",
-						   &rm->new_oid, &rm->old_oid,
-						   summary_width);
+
+				ref_update_display_info_append(display_array, '*', '*',
+							       *kind ? kind : "branch",
+							       NULL, NULL, "FETCH_HEAD",
+							       rm->name, &rm->new_oid,
+							       &rm->old_oid);
 			}
 		}
 	}
@@ -1300,7 +1411,8 @@ static int fetch_and_consume_refs(struct display_state *display_state,
 				  struct ref_transaction *transaction,
 				  struct ref *ref_map,
 				  struct fetch_head *fetch_head,
-				  const struct fetch_config *config)
+				  const struct fetch_config *config,
+				  struct ref_update_display_info_array *display_array)
 {
 	int connectivity_checked = 1;
 	int ret;
@@ -1322,7 +1434,8 @@ static int fetch_and_consume_refs(struct display_state *display_state,
 
 	trace2_region_enter("fetch", "consume_refs", the_repository);
 	ret = store_updated_refs(display_state, connectivity_checked,
-				 transaction, ref_map, fetch_head, config);
+				 transaction, ref_map, fetch_head, config,
+				 display_array);
 	trace2_region_leave("fetch", "consume_refs", the_repository);
 
 out:
@@ -1493,7 +1606,8 @@ static int backfill_tags(struct display_state *display_state,
 			 struct ref_transaction *transaction,
 			 struct ref *ref_map,
 			 struct fetch_head *fetch_head,
-			 const struct fetch_config *config)
+			 const struct fetch_config *config,
+			 struct ref_update_display_info_array *display_array)
 {
 	int retcode, cannot_reuse;
 
@@ -1515,7 +1629,7 @@ static int backfill_tags(struct display_state *display_state,
 	transport_set_option(transport, TRANS_OPT_DEPTH, "0");
 	transport_set_option(transport, TRANS_OPT_DEEPEN_RELATIVE, NULL);
 	retcode = fetch_and_consume_refs(display_state, transport, transaction, ref_map,
-					 fetch_head, config);
+					 fetch_head, config, display_array);
 
 	if (gsecondary) {
 		transport_disconnect(gsecondary);
@@ -1641,6 +1755,7 @@ struct ref_rejection_data {
 	bool conflict_msg_shown;
 	bool case_sensitive_msg_shown;
 	const char *remote_name;
+	struct strmap *rejected_refs;
 };
 
 static void ref_transaction_rejection_handler(const char *refname,
@@ -1649,6 +1764,7 @@ static void ref_transaction_rejection_handler(const char *refname,
 					      const char *old_target UNUSED,
 					      const char *new_target UNUSED,
 					      enum ref_transaction_error err,
+					      const char *details,
 					      void *cb_data)
 {
 	struct ref_rejection_data *data = cb_data;
@@ -1673,11 +1789,14 @@ static void ref_transaction_rejection_handler(const char *refname,
 			"branches"), data->remote_name);
 		data->conflict_msg_shown = true;
 	} else {
-		const char *reason = ref_transaction_error_msg(err);
-
-		error(_("fetching ref %s failed: %s"), refname, reason);
+		if (details)
+			error("%s", details);
+		else
+			error(_("fetching ref %s failed: %s"),
+			      refname, ref_transaction_error_msg(err));
 	}
 
+	strmap_put(data->rejected_refs, refname, NULL);
 	*data->retcode = 1;
 }
 
@@ -1687,6 +1806,7 @@ static void ref_transaction_rejection_handler(const char *refname,
  */
 static int commit_ref_transaction(struct ref_transaction **transaction,
 				  bool is_atomic, const char *remote_name,
+				  struct strmap *rejected_refs,
 				  struct strbuf *err)
 {
 	int retcode = ref_transaction_commit(*transaction, err);
@@ -1698,6 +1818,7 @@ static int commit_ref_transaction(struct ref_transaction **transaction,
 			.conflict_msg_shown = 0,
 			.remote_name = remote_name,
 			.retcode = &retcode,
+			.rejected_refs = rejected_refs,
 		};
 
 		ref_transaction_for_each_rejected_update(*transaction,
@@ -1726,6 +1847,9 @@ static int do_fetch(struct transport *transport,
 	struct fetch_head fetch_head = { 0 };
 	struct strbuf err = STRBUF_INIT;
 	int do_set_head = 0;
+	struct ref_update_display_info_array display_array = { 0 };
+	struct strmap rejected_refs = STRMAP_INIT;
+	int summary_width = 0;
 
 	if (tags == TAGS_DEFAULT) {
 		if (transport->remote->fetch_tags == 2)
@@ -1850,7 +1974,7 @@ static int do_fetch(struct transport *transport,
 	}
 
 	if (fetch_and_consume_refs(&display_state, transport, transaction, ref_map,
-				   &fetch_head, config)) {
+				   &fetch_head, config, &display_array)) {
 		retcode = 1;
 		goto cleanup;
 	}
@@ -1873,7 +1997,7 @@ static int do_fetch(struct transport *transport,
 			 * the transaction and don't commit anything.
 			 */
 			if (backfill_tags(&display_state, transport, transaction, tags_ref_map,
-					  &fetch_head, config))
+					  &fetch_head, config, &display_array))
 				retcode = 1;
 		}
 
@@ -1883,8 +2007,12 @@ static int do_fetch(struct transport *transport,
 	if (retcode)
 		goto cleanup;
 
+	if (verbosity >= 0)
+		summary_width = transport_summary_width(ref_map);
+
 	retcode = commit_ref_transaction(&transaction, atomic_fetch,
-					 transport->remote->name, &err);
+					 transport->remote->name,
+					 &rejected_refs, &err);
 	/*
 	 * With '--atomic', bail out if the transaction fails. Without '--atomic',
 	 * continue to fetch head and perform other post-fetch operations.
@@ -1962,7 +2090,17 @@ cleanup:
 	 */
 	if (retcode && !atomic_fetch && transaction)
 		commit_ref_transaction(&transaction, false,
-				       transport->remote->name, &err);
+				       transport->remote->name,
+				       &rejected_refs, &err);
+
+	for (size_t i = 0; i < display_array.nr; i++) {
+		struct ref_update_display_info *info = &display_array.info[i];
+
+		if (!info->failed && strmap_contains(&rejected_refs, info->ref))
+			ref_update_display_info_set_failed(info);
+		ref_update_display_info_display(info, &display_state, summary_width);
+		ref_update_display_info_free(info);
+	}
 
 	if (retcode) {
 		if (err.len) {
@@ -1977,6 +2115,9 @@ cleanup:
 
 	if (transaction)
 		ref_transaction_free(transaction);
+
+	free(display_array.info);
+	strmap_clear(&rejected_refs, 0);
 	display_state_release(&display_state);
 	close_fetch_head(&fetch_head);
 	strbuf_release(&err);

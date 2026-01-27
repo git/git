@@ -2978,10 +2978,9 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 					  head_ref, &refnames_to_check,
 					  err);
 		if (ret) {
-			if (ref_transaction_maybe_set_rejected(transaction, i, ret)) {
-				strbuf_reset(err);
+			if (ref_transaction_maybe_set_rejected(transaction, i,
+							       ret, err)) {
 				ret = 0;
-
 				continue;
 			}
 			goto cleanup;
