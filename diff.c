@@ -2859,17 +2859,12 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 			char *slash;
 			prefix = "...";
 			len -= 3;
-			/*
-			 * NEEDSWORK: (name_len - len) counts the display
-			 * width, which would be shorter than the byte
-			 * length of the corresponding substring.
-			 * Advancing "name" by that number of bytes does
-			 * *NOT* skip over that many columns, so it is
-			 * very likely that chomping the pathname at the
-			 * slash we will find starting from "name" will
-			 * leave the resulting string still too long.
-			 */
-			name += name_len - len;
+			if (len < 0)
+				len = 0;
+
+			while (name_len > len)
+				name_len -= utf8_width((const char**)&name, NULL);
+
 			slash = strchr(name, '/');
 			if (slash)
 				name = slash;
