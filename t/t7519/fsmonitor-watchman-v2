@@ -141,15 +141,12 @@ sub is_work_tree_watched {
 		# Watchman query just to get it over with now so we won't pay
 		# the cost in git to look up each individual file.
 		my $o = watchman_clock();
-		$error = $output->{error};
+		$error = $o->{error};
 
 		die "Watchman: $error.\n" .
 		"Falling back to scanning...\n" if $error;
 
 		output_result($o->{clock}, ("/"));
-		$last_update_token = $o->{clock};
-
-		eval { launch_watchman() };
 		return 0;
 	}
 

@@ -109,7 +109,6 @@ sub launch_watchman {
 		close $fh;
 
 		print "/\0";
-		eval { launch_watchman() };
 		exit 0;
 	}
 
