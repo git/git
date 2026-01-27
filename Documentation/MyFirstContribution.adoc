@@ -9,6 +9,10 @@ This is a tutorial demonstrating the end-to-end workflow of creating a change to
 the Git tree, sending it for review, and making changes based on comments.
 
 [[prerequisites]]
+This is a tutorial demonstrating the end-to-end workflow of creating a change to
+the Git tree, sending it for review, and making changes based on comments.
+
+[[prerequisites]]
 === Prerequisites
 
 This tutorial assumes you're already fairly familiar with using Git to manage
