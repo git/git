@@ -64,13 +64,13 @@ Performance, Internal Implementation, Development Support etc.
 
  * "make strip" has been taught to strip "scalar" as well as "git".
 
- * Dockerised jobs at the GitHub Actions CI have been taught to show
+ * Dockerized jobs at the GitHub Actions CI have been taught to show
    more details of failed tests.
 
  * Code refactoring around object database sources.
 
  * Halve the memory consumed by artificial filepairs created during
-   "git diff --find-copioes-harder", also making the operation run
+   "git diff --find-copies-harder", also making the operation run
    faster.
 
  * The "git_istream" abstraction has been revamped to make it easier
@@ -159,7 +159,7 @@ Fixes since v2.52
  * Test leakfix.
    (merge 14b561e768 jk/test-mktemp-leakfix later to maint).
 
- * Update a version of action used at the GitHub Actrions CI.
+ * Update a version of action used at the GitHub Actions CI.
    (merge cd99203f86 js/ci-github-setup-go-update later to maint).
 
  * The "return errno = EFOO, -1" construct, which is heavily used in
