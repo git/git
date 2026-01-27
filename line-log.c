@@ -1239,7 +1239,7 @@ static int process_ranges_merge_commit(struct rev_info *rev, struct commit *comm
 			 * don't follow any other path in history
 			 */
 			add_line_range(rev, parent, cand[i]);
-			free_commit_list(commit->parents);
+			commit_list_free(commit->parents);
 			commit_list_append(parent, &commit->parents);
 
 			ret = 0;

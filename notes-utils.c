@@ -40,7 +40,7 @@ void create_notes_commit(struct repository *r,
 			NULL))
 		die("Failed to commit notes tree to database");
 
-	free_commit_list(parents_to_free);
+	commit_list_free(parents_to_free);
 }
 
 void commit_notes(struct repository *r, struct notes_tree *t, const char *msg)

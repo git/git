@@ -1048,7 +1048,7 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 				continue;
 			}
 
-			free_commit_list(parent->next);
+			commit_list_free(parent->next);
 			parent->next = NULL;
 			while (commit->parents != parent)
 				pop_commit(&commit->parents);
@@ -1083,7 +1083,7 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 					die("cannot simplify commit %s (invalid %s)",
 					    oid_to_hex(&commit->object.oid),
 					    oid_to_hex(&p->object.oid));
-				free_commit_list(p->parents);
+				commit_list_free(p->parents);
 				p->parents = NULL;
 			}
 		/* fallthrough */
@@ -1405,7 +1405,7 @@ static void limit_to_ancestry(struct commit_list *bottoms, struct commit_list *l
 		p->item->object.flags &= ~(TMP_MARK | ANCESTRY_PATH);
 	for (p = bottoms; p; p = p->next)
 		p->item->object.flags &= ~(TMP_MARK | ANCESTRY_PATH);
-	free_commit_list(rlist);
+	commit_list_free(rlist);
 }
 
 /*
@@ -1508,7 +1508,7 @@ static int limit_list(struct rev_info *revs)
 		}
 	}
 
-	free_commit_list(original_list);
+	commit_list_free(original_list);
 	revs->commits = newlist;
 	return 0;
 }
@@ -2011,7 +2011,7 @@ static void prepare_show_merge(struct rev_info *revs)
 		exit(128);
 	add_rev_cmdline_list(revs, bases, REV_CMD_MERGE_BASE, UNINTERESTING | BOTTOM);
 	add_pending_commit_list(revs, bases, UNINTERESTING | BOTTOM);
-	free_commit_list(bases);
+	commit_list_free(bases);
 	head->object.flags |= SYMMETRIC_LEFT;
 
 	if (!istate->cache_nr)
@@ -2105,13 +2105,13 @@ static int handle_dotdot_1(const char *arg, char *dotdot,
 			return dotdot_missing(arg, dotdot, revs, symmetric);
 
 		if (repo_get_merge_bases(the_repository, a, b, &exclude) < 0) {
-			free_commit_list(exclude);
+			commit_list_free(exclude);
 			return -1;
 		}
 		add_rev_cmdline_list(revs, exclude, REV_CMD_MERGE_BASE,
 				     flags_exclude);
 		add_pending_commit_list(revs, exclude, flags_exclude);
-		free_commit_list(exclude);
+		commit_list_free(exclude);
 
 		b_flags = flags;
 		a_flags = flags | SYMMETRIC_LEFT;
@@ -3221,13 +3221,13 @@ static void release_revisions_bloom_keyvecs(struct rev_info *revs)
 
 static void free_void_commit_list(void *list)
 {
-	free_commit_list(list);
+	commit_list_free(list);
 }
 
 void release_revisions(struct rev_info *revs)
 {
-	free_commit_list(revs->commits);
-	free_commit_list(revs->ancestry_path_bottoms);
+	commit_list_free(revs->commits);
+	commit_list_free(revs->ancestry_path_bottoms);
 	release_display_notes(&revs->notes_opt);
 	object_array_clear(&revs->pending);
 	object_array_clear(&revs->boundary_commits);
@@ -3335,7 +3335,7 @@ static int mark_redundant_parents(struct commit *commit)
 	if (i != cnt || cnt+marked != orig_cnt)
 		die("mark_redundant_parents %d %d %d %d", orig_cnt, cnt, i, marked);
 
-	free_commit_list(h);
+	commit_list_free(h);
 
 	return marked;
 }
@@ -4224,7 +4224,7 @@ static void save_parents(struct rev_info *revs, struct commit *commit)
 	if (*pp)
 		return;
 	if (commit->parents)
-		*pp = copy_commit_list(commit->parents);
+		*pp = commit_list_copy(commit->parents);
 	else
 		*pp = EMPTY_PARENT_LIST;
 }
@@ -4232,7 +4232,7 @@ static void save_parents(struct rev_info *revs, struct commit *commit)
 static void free_saved_parent(struct commit_list **parents)
 {
 	if (*parents != EMPTY_PARENT_LIST)
-		free_commit_list(*parents);
+		commit_list_free(*parents);
 }
 
 static void free_saved_parents(struct rev_info *revs)
@@ -4293,8 +4293,8 @@ static void track_linear(struct rev_info *revs, struct commit *commit)
 		if (revs->linear)
 			commit->object.flags |= TRACK_LINEAR;
 	}
-	free_commit_list(revs->previous_parents);
-	revs->previous_parents = copy_commit_list(commit->parents);
+	commit_list_free(revs->previous_parents);
+	revs->previous_parents = commit_list_copy(commit->parents);
 }
 
 static struct commit *get_revision_1(struct rev_info *revs)
@@ -4382,7 +4382,7 @@ static void create_boundary_commit_list(struct rev_info *revs)
 	 * boundary commits anyway.  (This is what the code has always
 	 * done.)
 	 */
-	free_commit_list(revs->commits);
+	commit_list_free(revs->commits);
 	revs->commits = NULL;
 
 	/*
@@ -4504,7 +4504,7 @@ struct commit *get_revision(struct rev_info *revs)
 		reversed = NULL;
 		while ((c = get_revision_internal(revs)))
 			commit_list_insert(c, &reversed);
-		free_commit_list(revs->commits);
+		commit_list_free(revs->commits);
 		revs->commits = reversed;
 		revs->reverse = 0;
 		revs->reverse_output_stage = 1;
@@ -4522,7 +4522,7 @@ struct commit *get_revision(struct rev_info *revs)
 		graph_update(revs->graph, c);
 	if (!c) {
 		free_saved_parents(revs);
-		free_commit_list(revs->previous_parents);
+		commit_list_free(revs->previous_parents);
 		revs->previous_parents = NULL;
 	}
 	return c;

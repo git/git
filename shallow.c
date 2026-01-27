@@ -40,7 +40,7 @@ int register_shallow(struct repository *r, const struct object_id *oid)
 	oidcpy(&graft->oid, oid);
 	graft->nr_parent = -1;
 	if (commit && commit->object.parsed) {
-		free_commit_list(commit->parents);
+		commit_list_free(commit->parents);
 		commit->parents = NULL;
 	}
 	return register_commit_graft(r, graft, 0);
@@ -267,7 +267,7 @@ struct commit_list *get_shallow_commits_by_rev_list(struct strvec *argv,
 				break;
 			}
 	}
-	free_commit_list(not_shallow_list);
+	commit_list_free(not_shallow_list);
 
 	/*
 	 * Now we can clean up NOT_SHALLOW on border commits. Having

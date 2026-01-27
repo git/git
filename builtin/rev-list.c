@@ -216,7 +216,7 @@ static inline void finish_object__ma(struct object *obj, const char *name)
 
 static void finish_commit(struct commit *commit)
 {
-	free_commit_list(commit->parents);
+	commit_list_free(commit->parents);
 	commit->parents = NULL;
 	free_commit_buffer(the_repository->parsed_objects,
 			   commit);

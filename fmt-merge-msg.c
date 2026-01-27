@@ -421,7 +421,7 @@ static void shortlog(const char *name,
 
 	clear_commit_marks((struct commit *)branch, flags);
 	clear_commit_marks(head, flags);
-	free_commit_list(rev->commits);
+	commit_list_free(rev->commits);
 	rev->commits = NULL;
 	rev->pending.nr = 0;
 

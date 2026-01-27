@@ -1850,7 +1850,7 @@ int cmd_commit(int argc,
 	} else if (amend) {
 		if (!reflog_msg)
 			reflog_msg = "commit (amend)";
-		parents = copy_commit_list(current_head->parents);
+		parents = commit_list_copy(current_head->parents);
 	} else if (whence == FROM_MERGE) {
 		struct strbuf m = STRBUF_INIT;
 		FILE *fp;
@@ -1979,7 +1979,7 @@ int cmd_commit(int argc,
 
 cleanup:
 	free_commit_extra_headers(extra);
-	free_commit_list(parents);
+	commit_list_free(parents);
 	strbuf_release(&author_ident);
 	strbuf_release(&err);
 	strbuf_release(&sb);

@@ -1281,7 +1281,7 @@ static int peel_onion(struct repository *r, const char *name, int len,
 		commit_list_insert((struct commit *)o, &list);
 		ret = get_oid_oneline(r, prefix, oid, list);
 
-		free_commit_list(list);
+		commit_list_free(list);
 		free(prefix);
 		return ret;
 	}
@@ -1623,7 +1623,7 @@ int repo_get_oid_mb(struct repository *r,
 	if (!two)
 		return -1;
 	if (repo_get_merge_bases(r, one, two, &mbs) < 0) {
-		free_commit_list(mbs);
+		commit_list_free(mbs);
 		return -1;
 	}
 	if (!mbs || mbs->next)
@@ -1632,7 +1632,7 @@ int repo_get_oid_mb(struct repository *r,
 		st = 0;
 		oidcpy(oid, &mbs->item->object.oid);
 	}
-	free_commit_list(mbs);
+	commit_list_free(mbs);
 	return st;
 }
 
@@ -2052,7 +2052,7 @@ static enum get_oid_result get_oid_with_context_1(struct repository *repo,
 			refs_head_ref(get_main_ref_store(repo), handle_one_ref, &cb);
 			ret = get_oid_oneline(repo, name + 2, oid, list);
 
-			free_commit_list(list);
+			commit_list_free(list);
 			return ret;
 		}
 		if (namelen < 3 ||

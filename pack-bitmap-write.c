@@ -306,7 +306,7 @@ struct bb_commit {
 
 static void clear_bb_commit(struct bb_commit *commit)
 {
-	free_commit_list(commit->reverse_edges);
+	commit_list_free(commit->reverse_edges);
 	bitmap_free(commit->commit_mask);
 	bitmap_free(commit->bitmap);
 }
@@ -414,7 +414,7 @@ static void bitmap_builder_init(struct bitmap_builder *bb,
 				p_ent->maximal = 1;
 			else {
 				p_ent->maximal = 0;
-				free_commit_list(p_ent->reverse_edges);
+				commit_list_free(p_ent->reverse_edges);
 				p_ent->reverse_edges = NULL;
 			}
 
@@ -445,7 +445,7 @@ next:
 			   "num_maximal_commits", num_maximal);
 
 	release_revisions(&revs);
-	free_commit_list(reusable);
+	commit_list_free(reusable);
 }
 
 static void bitmap_builder_clear(struct bitmap_builder *bb)

@@ -1558,7 +1558,7 @@ static int try_to_commit(struct repository *r,
 			res = error(_("unable to parse commit author"));
 			goto out;
 		}
-		parents = copy_commit_list(current_head->parents);
+		parents = commit_list_copy(current_head->parents);
 		extra = read_commit_extra_headers(current_head, exclude_gpgsig);
 	} else if (current_head &&
 		   (!(flags & CREATE_ROOT_COMMIT) || (flags & AMEND_MSG))) {
@@ -1690,7 +1690,7 @@ static int try_to_commit(struct repository *r,
 
 out:
 	free_commit_extra_headers(extra);
-	free_commit_list(parents);
+	commit_list_free(parents);
 	strbuf_release(&err);
 	strbuf_release(&commit_msg);
 	free(amend_author);
@@ -2468,8 +2468,8 @@ static int do_pick_commit(struct repository *r,
 		res |= try_merge_command(r, opts->strategy,
 					 opts->xopts.nr, opts->xopts.v,
 					common, oid_to_hex(&head), remotes);
-		free_commit_list(common);
-		free_commit_list(remotes);
+		commit_list_free(common);
+		commit_list_free(remotes);
 	}
 
 	/*
@@ -4309,7 +4309,7 @@ static int do_merge(struct repository *r,
 		      git_path_merge_head(r), 0);
 	write_message("no-ff", 5, git_path_merge_mode(r), 0);
 
-	bases = reverse_commit_list(bases);
+	bases = commit_list_reverse(bases);
 
 	repo_read_index(r);
 	init_ui_merge_options(&o, r);
@@ -4373,8 +4373,8 @@ static int do_merge(struct repository *r,
 leave_merge:
 	strbuf_release(&ref_name);
 	rollback_lock_file(&lock);
-	free_commit_list(to_merge);
-	free_commit_list(bases);
+	commit_list_free(to_merge);
+	commit_list_free(bases);
 	return ret;
 }
 
@@ -6031,11 +6031,11 @@ static int make_script_with_merges(struct pretty_print_context *pp,
 			oidset_insert(&shown, oid);
 		}
 
-		free_commit_list(list);
+		commit_list_free(list);
 	}
 
-	free_commit_list(commits);
-	free_commit_list(tips);
+	commit_list_free(commits);
+	commit_list_free(tips);
 
 	strbuf_release(&label_from_message);
 	strbuf_release(&oneline);

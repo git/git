@@ -1726,7 +1726,7 @@ static void do_commit(const struct am_state *state)
 
 	run_hooks(the_repository, "post-applypatch");
 
-	free_commit_list(parents);
+	commit_list_free(parents);
 	strbuf_release(&sb);
 }
 

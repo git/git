@@ -1008,7 +1008,7 @@ int cmd_show_branch(int ac,
 out:
 	for (size_t i = 0; i < ARRAY_SIZE(reflog_msg); i++)
 		free(reflog_msg[i]);
-	free_commit_list(seen);
+	commit_list_free(seen);
 	clear_prio_queue(&queue);
 	free(args_copy);
 	free(head);

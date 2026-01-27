@@ -424,7 +424,7 @@ static int cmd_log_walk_no_free(struct rev_info *rev)
 			 */
 			free_commit_buffer(the_repository->parsed_objects,
 					   commit);
-			free_commit_list(commit->parents);
+			commit_list_free(commit->parents);
 			commit->parents = NULL;
 		}
 		if (saved_nrl < rev->diffopt.needed_rename_limit)
@@ -1697,12 +1697,12 @@ static struct commit *get_base_commit(const struct format_config *cfg,
 				if (die_on_failure) {
 					die(_("could not find exact merge base"));
 				} else {
-					free_commit_list(base_list);
+					commit_list_free(base_list);
 					return NULL;
 				}
 			}
 			base = base_list->item;
-			free_commit_list(base_list);
+			commit_list_free(base_list);
 		} else {
 			if (die_on_failure)
 				die(_("failed to get upstream, if you want to record base commit automatically,\n"
@@ -1732,14 +1732,14 @@ static struct commit *get_base_commit(const struct format_config *cfg,
 				if (die_on_failure) {
 					die(_("failed to find exact merge base"));
 				} else {
-					free_commit_list(merge_base);
+					commit_list_free(merge_base);
 					free(rev);
 					return NULL;
 				}
 			}
 
 			rev[i] = merge_base->item;
-			free_commit_list(merge_base);
+			commit_list_free(merge_base);
 		}
 
 		if (rev_nr % 2)
@@ -2610,7 +2610,7 @@ int cmd_cherry(int argc,
 		print_commit(sign, commit, verbose, abbrev, revs.diffopt.file);
 	}
 
-	free_commit_list(list);
+	commit_list_free(list);
 	free_patch_ids(&ids);
 	return 0;
 }

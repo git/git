@@ -1498,7 +1498,7 @@ static void add_missing_tags(struct ref *src, struct ref **dst, struct ref ***ds
 		clear_commit_marks_many(src_commits.nr, src_commits.items,
 					reachable_flag);
 		commit_stack_clear(&src_commits);
-		free_commit_list(found_commits);
+		commit_list_free(found_commits);
 	}
 
 	string_list_clear(&src_tag, 0);

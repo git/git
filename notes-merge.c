@@ -668,11 +668,11 @@ int notes_merge(struct notes_merge_options *o,
 		commit_list_insert(local, &parents);
 		create_notes_commit(o->repo, local_tree, parents, o->commit_msg.buf,
 				    o->commit_msg.len, result_oid);
-		free_commit_list(parents);
+		commit_list_free(parents);
 	}
 
 found_result:
-	free_commit_list(bases);
+	commit_list_free(bases);
 	strbuf_release(&(o->commit_msg));
 	trace_printf("notes_merge(): result = %i, result_oid = %.7s\n",
 	       result, oid_to_hex(result_oid));

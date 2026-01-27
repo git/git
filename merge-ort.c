@@ -5302,7 +5302,7 @@ static void merge_ort_internal(struct merge_options *opt,
 			       struct commit *h2,
 			       struct merge_result *result)
 {
-	struct commit_list *merge_bases = copy_commit_list(_merge_bases);
+	struct commit_list *merge_bases = commit_list_copy(_merge_bases);
 	struct commit *next;
 	struct commit *merged_merge_bases;
 	const char *ancestor_name;
@@ -5315,7 +5315,7 @@ static void merge_ort_internal(struct merge_options *opt,
 			goto out;
 		}
 		/* See merge-ort.h:merge_incore_recursive() declaration NOTE */
-		merge_bases = reverse_commit_list(merge_bases);
+		merge_bases = commit_list_reverse(merge_bases);
 	}
 
 	merged_merge_bases = pop_commit(&merge_bases);
@@ -5383,7 +5383,7 @@ static void merge_ort_internal(struct merge_options *opt,
 	opt->ancestor = NULL;  /* avoid accidental re-use of opt->ancestor */
 
 out:
-	free_commit_list(merge_bases);
+	commit_list_free(merge_bases);
 }
 
 void merge_incore_nonrecursive(struct merge_options *opt,
