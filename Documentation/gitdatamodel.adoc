@@ -52,16 +52,18 @@ Here's how each type of object is structured:
 
 [[commit]]
 commit::
-    A commit contains these required fields
+    A commit object contains these required fields
     (though there are other optional fields):
 +
-1. The full directory structure of all the files in that version of the
-   repository and each file's contents, stored as the *<<tree,tree>>* ID
-   of the commit's top-level directory
+1. The *tree ID* of the repo's top-level directory. The tree object referred
+   to by that id contains the full directory structure of all the files at
+   that moment in time and each file's contents.
 2. Its *parent commit ID(s)*. The first commit in a repository has 0 parents,
-  regular commits have 1 parent, merge commits have 2 or more parents
-3. An *author* and the time the commit was authored
-4. A *committer* and the time the commit was committed
+  regular commits have 1 parent, merge commits have 2 or more parents.
+3. An *author* (the person who wrote the code) and the time the commit was
+   authored.
+4. A *committer* (the person committing the code) and the time the commit
+   was committed. The author and committer are often the same person.
 5. A *commit message*
 +
 Here's how an example commit is stored:
@@ -85,7 +87,7 @@ parent on the fly.
 
 [[tree]]
 tree::
-    A tree is how Git represents a directory.
+    In Git, a tree object represents a directory.
     It can contain files or other trees (which are subdirectories).
     It lists, for each item in the tree:
 +
@@ -96,8 +98,8 @@ tree::
   - *symbolic link*
   - *directory*
   - *gitlink* (for use with submodules)
-3. The <<object-id,*object ID*>> with the contents of the file, directory,
-   or gitlink.
+3. The <<object-id,*object ID*>> created from the contents of the file,
+   directory, or gitlink.
 +
 For example, this is how a tree containing one directory (`src`) and one file
 (`README.md`) is stored:
@@ -121,8 +123,8 @@ blob::
 When you make a commit, Git stores the full contents of each file that
 you changed as a blob.
 For example, if you have a commit that changes 2 files in a repository
-with 1000 files, that commit will create 2 new blobs, and use the
-previous blob ID for the other 998 files.
+with 1000 files, that commit will create 2 new blobs in the corresponding
+tree object and leave the other 998 files blob IDs unchanged.
 This means that commits can use relatively little disk space even in a
 very large repository.
 
