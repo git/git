@@ -1286,7 +1286,8 @@ enum checkout_command {
 
 static char *parse_remote_branch(const char *arg,
 				 struct object_id *rev,
-				 int could_be_checkout_paths)
+				 int could_be_checkout_paths,
+				 enum checkout_command which_command)
 {
 	int num_matches = 0;
 	char *remote = unique_tracking_name(arg, rev, &num_matches);
@@ -1299,14 +1300,30 @@ static char *parse_remote_branch(const char *arg,
 
 	if (!remote && num_matches > 1) {
 	    if (advice_enabled(ADVICE_CHECKOUT_AMBIGUOUS_REMOTE_BRANCH_NAME)) {
+		    const char *cmdname;
+
+		    switch (which_command) {
+		    case CHECKOUT_CHECKOUT:
+			    cmdname = "checkout";
+			    break;
+		    case CHECKOUT_SWITCH:
+			    cmdname = "switch";
+			    break;
+		    default:
+			    BUG("command <%d> should not reach parse_remote_branch",
+				which_command);
+			    break;
+		    }
+
 		    advise(_("If you meant to check out a remote tracking branch on, e.g. 'origin',\n"
 			     "you can do so by fully qualifying the name with the --track option:\n"
 			     "\n"
-			     "    git checkout --track origin/<name>\n"
+			     "    git %s --track origin/<name>\n"
 			     "\n"
 			     "If you'd like to always have checkouts of an ambiguous <name> prefer\n"
 			     "one remote, e.g. the 'origin' remote, consider setting\n"
-			     "checkout.defaultRemote=origin in your config."));
+			     "checkout.defaultRemote=origin in your config."),
+			   cmdname);
 	    }
 
 	    die(_("'%s' matched multiple (%d) remote tracking branches"),
@@ -1318,6 +1335,7 @@ static char *parse_remote_branch(const char *arg,
 
 static int parse_branchname_arg(int argc, const char **argv,
 				int dwim_new_local_branch_ok,
+				enum checkout_command which_command,
 				struct branch_info *new_branch_info,
 				struct checkout_opts *opts,
 				struct object_id *rev)
@@ -1427,7 +1445,8 @@ static int parse_branchname_arg(int argc, const char **argv,
 
 		if (recover_with_dwim) {
 			remote = parse_remote_branch(arg, rev,
-						     could_be_checkout_paths);
+						     could_be_checkout_paths,
+						     which_command);
 			if (remote) {
 				*new_branch = arg;
 				arg = remote;
@@ -1916,7 +1935,7 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 			opts->dwim_new_local_branch &&
 			opts->track == BRANCH_TRACK_UNSPECIFIED &&
 			!opts->new_branch;
-		int n = parse_branchname_arg(argc, argv, dwim_ok,
+		int n = parse_branchname_arg(argc, argv, dwim_ok, which_command,
 					     &new_branch_info, opts, &rev);
 		argv += n;
 		argc -= n;
