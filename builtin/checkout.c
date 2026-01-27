@@ -43,22 +43,6 @@
 #include "parallel-checkout.h"
 #include "add-interactive.h"
 
-static const char * const checkout_usage[] = {
-	N_("git checkout [<options>] <branch>"),
-	N_("git checkout [<options>] [<branch>] -- <file>..."),
-	NULL,
-};
-
-static const char * const switch_branch_usage[] = {
-	N_("git switch [<options>] [<branch>]"),
-	NULL,
-};
-
-static const char * const restore_usage[] = {
-	N_("git restore [<options>] [--source=<branch>] <file>..."),
-	NULL,
-};
-
 struct checkout_opts {
 	int patch_mode;
 	int patch_context;
@@ -1293,6 +1277,13 @@ static void setup_new_branch_info_and_source_tree(
 	}
 }
 
+
+enum checkout_command {
+	CHECKOUT_CHECKOUT = 1,
+	CHECKOUT_SWITCH = 2,
+	CHECKOUT_RESTORE = 3,
+};
+
 static char *parse_remote_branch(const char *arg,
 				 struct object_id *rev,
 				 int could_be_checkout_paths)
@@ -1767,11 +1758,43 @@ static char cb_option = 'b';
 
 static int checkout_main(int argc, const char **argv, const char *prefix,
 			 struct checkout_opts *opts, struct option *options,
-			 const char * const usagestr[])
+			 enum checkout_command which_command)
 {
 	int parseopt_flags = 0;
 	struct branch_info new_branch_info = { 0 };
 	int ret;
+
+	static const char * const checkout_usage[] = {
+		N_("git checkout [<options>] <branch>"),
+		N_("git checkout [<options>] [<branch>] -- <file>..."),
+		NULL,
+	};
+
+	static const char * const switch_branch_usage[] = {
+		N_("git switch [<options>] [<branch>]"),
+		NULL,
+	};
+
+	static const char * const restore_usage[] = {
+		N_("git restore [<options>] [--source=<branch>] <file>..."),
+		NULL,
+	};
+
+	const char * const *usagestr;
+
+	switch (which_command) {
+	case CHECKOUT_CHECKOUT:
+		usagestr = checkout_usage;
+		break;
+	case CHECKOUT_SWITCH:
+		usagestr = switch_branch_usage;
+		break;
+	case CHECKOUT_RESTORE:
+		usagestr = restore_usage;
+		break;
+	default:
+		BUG("No such checkout variant %d", which_command);
+	}
 
 	opts->overwrite_ignore = 1;
 	opts->prefix = prefix;
@@ -2032,7 +2055,7 @@ int cmd_checkout(int argc,
 	options = add_checkout_path_options(&opts, options);
 
 	return checkout_main(argc, argv, prefix, &opts, options,
-			     checkout_usage);
+			     CHECKOUT_CHECKOUT);
 }
 
 int cmd_switch(int argc,
@@ -2071,7 +2094,7 @@ int cmd_switch(int argc,
 	cb_option = 'c';
 
 	return checkout_main(argc, argv, prefix, &opts, options,
-			     switch_branch_usage);
+			     CHECKOUT_SWITCH);
 }
 
 int cmd_restore(int argc,
@@ -2107,5 +2130,5 @@ int cmd_restore(int argc,
 	options = add_checkout_path_options(&opts, options);
 
 	return checkout_main(argc, argv, prefix, &opts, options,
-			     restore_usage);
+			     CHECKOUT_RESTORE);
 }
