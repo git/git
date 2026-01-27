@@ -249,6 +249,15 @@ test_expect_success 'using replay on bare repo to rebase multiple divergent bran
 	done
 '
 
+test_expect_success 'using replay to update detached HEAD' '
+	current_head=$(git branch --show-current) &&
+	test_when_finished git switch "$current_head" &&
+	git switch --detach &&
+	test_commit something &&
+	git replay --ref-action=print --onto HEAD~2 --ref-action=print HEAD~..HEAD >updates &&
+	test_grep "update HEAD " updates
+'
+
 test_expect_success 'merge.directoryRenames=false' '
 	# create a test case that stress-tests the rename caching
 	git switch -c rename-onto &&
