@@ -17,6 +17,26 @@ status.aheadBehind::
 	`--no-ahead-behind` by default in linkgit:git-status[1] for
 	non-porcelain status formats.  Defaults to true.
 
+status.compareBranches::
+	A space-separated list of branches to compare the current branch
+	against in linkgit:git-status[1]. Each branch specification can be
+	a remote-tracking branch name (e.g. `origin/main`), or a special
+	reference like `@{upstream}` or `@{push}`. For each branch in the
+	list, git status shows whether the current branch is ahead, behind,
+	or has diverged from that branch.
++
+If not set, the default behavior is equivalent to `@{upstream}`, which
+compares against the configured upstream tracking branch.
++
+Example:
++
+----
+[status]
+	compareBranches = origin/main origin/develop
+----
++
+This would show comparisons against both `origin/main` and `origin/develop`.
+
 status.displayCommentPrefix::
 	If set to true, linkgit:git-status[1] will insert a comment
 	prefix before each output line (starting with
