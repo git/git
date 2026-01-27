@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jan 2026, #08)
-X-master-at: 1faf5b085a171f9ba9a6d7a446e0de16acccb1dc
-X-next-at: d81095ad136ff3cfd9c475f8ce1e2d0cf5f61c44
+Subject: What's cooking in git.git (Jan 2026, #09)
+X-master-at: ab380cb80b0727f7f2d7f6b17592ae6783e9820c
+X-next-at: 2597b5adb47d07fac54316d0a3d81a2567b43e87
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jan 2026, #08)
+What's cooking in git.git (Jan 2026, #09)
 -----------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -21,11 +21,8 @@ Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
 repositories have only a subset of branches.
 
-Git 2.53-rc1 has been tagged.  What's slated to 'master' as of this
-edition of the "What's cooking" report will be merged and would
-appear in the upcoming release, while everything else will have to
-wait until the next cycle begins.  Until then, please hunt for
-regressions.
+Git 2.53-rc2 has been tagged, with one topic reverted recently due
+to a regression. Please keep hunting for regressions.
 
 With maint, master, next, seen, todo:
 
@@ -52,79 +49,114 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* ps/config-doc-get-urlmatch-fix (2026-01-15) 1 commit
-  (merged to 'next' on 2026-01-16 at b479b54381)
- + Documentation/config: fix replacement for --get-urlmatch
-
- Docfix.
- source: <20260115110832.15315-1-pushkarkumarsingh1970@gmail.com>
-
-
-* ps/geometric-repacking-with-promisor-remotes (2026-01-05) 5 commits
-  (merged to 'next' on 2026-01-15 at a5a24c2f14)
- + builtin/repack: handle promisor packs with geometric repacking
- + repack-promisor: extract function to remove redundant packs
- + repack-promisor: extract function to finalize repacking
- + repack-geometry: extract function to compute repacking split
- + builtin/pack-objects: exclude promisor objects with "--stdin-packs"
-
- "git repack --geometric" did not work with promisor packs, which
- has been corrected.
- source: <20260105-pks-geometric-repack-with-promisors-v1-0-c4660573437e@pks.im>
-
-
-* rs/tree-wo-the-repository (2026-01-15) 11 commits
-  (merged to 'next' on 2026-01-16 at 72f0a82905)
- + cocci: remove obsolete the_repository rules
- + cocci: convert parse_tree functions to repo_ variants
- + tree: stop using the_repository
- + tree: use repo_parse_tree()
- + path-walk: use repo_parse_tree_gently()
- + pack-bitmap-write: use repo_parse_tree()
- + delta-islands: use repo_parse_tree()
- + bloom: use repo_parse_tree()
- + add-interactive: use repo_parse_tree_indirect()
- + tree: add repo_parse_tree*()
- + environment: move access to core.maxTreeDepth into repo settings
-
- Remove implicit reliance on the_repository global in the APIs
- around tree objects and make it explicit which repository to work
- in.
- source: <20260109213021.2546-1-l.s.r@web.de>
-
-
-* tb/midx-write-corrupt-checksum-fix (2026-01-12) 3 commits
-  (merged to 'next' on 2026-01-15 at c387b3f023)
- + midx-write.c: assume checksum-invalid MIDXs require an update
- + t/t5319-multi-pack-index.sh: drop early 'test_done'
- + Merge branch 'ps/repack-avoid-noop-midx-rewrite' into tb/midx-write-corrupt-checksum-fix
- (this branch is used by tb/incremental-midx-part-3.2.)
-
- The logic that avoids reusing MIDX files with a wrong checksum was
- broken, which has been corrected.
- source: <cover.1768261435.git.me@ttaylorr.com>
-
---------------------------------------------------
 [New Topics]
 
-* sp/t5500-cleanup (2026-01-21) 1 commit
- - t5500: simplify test implementation and fix git exit code suppression
+* ja/doc-synopsis-style-even-more (2026-01-26) 4 commits
+ - doc: convert git-show to synopsis style
+ - doc: fix some style issues in git-clone and for-each-ref-options
+ - doc: finalize git-clone documentation conversion to synopsis style
+ - convert git-submodule doc to synopsis style
 
- Test clean-up.
+ A handful of documentation pages have been modernized to use the
+ "synopsis" style.
+
+ Will merge to 'next'?
+ source: <pull.2036.v2.git.1769462744.gitgitgadget@gmail.com>
+
+
+* ac/string-list-sort-u-and-tests (2026-01-26) 2 commits
+ - string-list: add string_list_sort_u() that mimics "sort -u"
+ - u-string-list: add unit tests for string-list methods
+
+ The string_list API gains a new helper, string_list_sort_u(), and
+ new unit tests to extend coverage.
 
  Will merge to 'next'.
- source: <20260121130012.888299-1-shreyanshpaliwalcmsmn@gmail.com>
+ source: <20260126185604.90089-1-amishhhaaaa@gmail.com>
 
 
-* ty/symlinks-use-unsigned-for-bitset (2026-01-21) 1 commit
- - symlinks: use unsigned int for flags
+* ps/object-info-bits-cleanup (2026-01-26) 3 commits
+ - odb: drop gaps in object info flag values
+ - builtin/fsck: fix flags passed to `odb_has_object()`
+ - builtin/backfill: fix flags passed to `odb_has_object()`
 
- Code clean-up.
+ A couple of bugs in use of flag bits around odb API has been
+ corrected, and the flag bits reordered.
 
- Will merge to 'next'.
- source: <20260121162640.424126-1-a3205153416@gmail.com>
+ Comments?
+ source: <20260126-b4-pks-read-object-info-flags-v1-0-e682a003b17c@pks.im>
+
+
+* pw/xdiff-cleanups (2026-01-26) 2 commits
+ - xdiff: remove unused data from xdlclass_t
+ - xdiff: remove "line_hash" field from xrecord_t
+
+ Small clean-up of xdiff library to remove unnecessary data
+ duplication.
+
+ Comments?
+ This conflicts with en/xdiff-cleanup-3 that has been dormant for some time.
+ source: <cover.1769424529.git.phillip.wood@dunelm.org.uk>
+
+--------------------------------------------------
+[Graduated to 'master']
+
+* dk/replay-doc-omit-irrelevant-rev-list-options (2026-01-21) 2 commits
+  (merged to 'next' on 2026-01-21 at a17b449304)
+ + lint-gitlink: preemptively ignore all /ifn?def|endif/ macros
+ + replay: drop rev-list formatting options from manual
+
+ Documentation clean-up.
+ source: <01a7acfaf87494419b3766da57d4c05cf99c79bb.1768873599.git.ben.knoble+github@gmail.com>
+
+
+* js/ci-leak-skip-svn (2026-01-17) 2 commits
+  (merged to 'next' on 2026-01-21 at ebcf21d088)
+ + ci: skip CVS and P4 tests in leaks job, too
+ + ci(*-leaks): skip the git-svn tests to save time
+
+ Dscho observed that SVN tests are taking too much time in CI leak
+ checking tasks, but most time is spent not in our code but in libsvn
+ code (which happen to be written in Perl), whose leaks have little
+ value to discover for us.  Skip SVN, P4, and CVS tests in the leak
+ checking tasks.
+ source: <b649f137-7140-4fb6-848a-b3408e54bbe5@gmail.com>
+
+
+* js/symlink-windows (2026-01-09) 19 commits
+  (merged to 'next' on 2026-01-21 at eaaead3f22)
+ + mingw: special-case index entries for symlinks with buggy size
+ + mingw: emulate `stat()` a little more faithfully
+ + mingw: try to create symlinks without elevated permissions
+ + mingw: add support for symlinks to directories
+ + mingw: implement basic `symlink()` functionality (file symlinks only)
+ + mingw: implement `readlink()`
+ + mingw: allow `mingw_chdir()` to change to symlink-resolved directories
+ + mingw: support renaming symlinks
+ + mingw: handle symlinks to directories in `mingw_unlink()`
+ + mingw: add symlink-specific error codes
+ + mingw: change default of `core.symlinks` to false
+ + mingw: factor out the retry logic
+ + mingw: compute the correct size for symlinks in `mingw_lstat()`
+ + mingw: teach dirent about symlinks
+ + mingw: let `mingw_lstat()` error early upon problems with reparse points
+ + mingw: drop the separate `do_lstat()` function
+ + mingw: implement `stat()` with symlink support
+ + mingw: don't call `GetFileAttributes()` twice in `mingw_lstat()`
+ + Merge branch 'js/prep-symlink-windows' into js/symlink-windows
+
+ Upstream symbolic link support on Windows from Git-for-Windows.
+ source: <pull.2018.v2.git.1767989115.gitgitgadget@gmail.com>
+
+
+* jx/build-options-gettext (2026-01-17) 1 commit
+  (merged to 'next' on 2026-01-21 at dd35ac2e2a)
+ + help: report on whether or not gettext is enabled
+
+ "git bugreport" and "git version --build-options" learned to
+ include use of 'gettext' feature, to make it easier to diagnose
+ problems around l10n.
+ source: <251e1b533ca2e38a9bedae44360ce636cdea4bc3.1768657640.git.zhiyou.jx@alibaba-inc.com>
 
 
 * kh/mailmap-avila (2026-01-21) 1 commit
@@ -133,6 +165,61 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <gggadget.24e@msgid.xyz>
+
+
+* pw/mailmap-self (2026-01-20) 1 commit
+  (merged to 'next' on 2026-01-21 at da7d118d77)
+ + mailmap: add an entry for Phillip Wood
+
+ Unify entries in .mailmap file for Phillip Wood.
+ source: <f10c3f680d58ca0abbf795ae8b0f2ad14ab85419.1768906910.git.phillip.wood@dunelm.org.uk>
+
+
+* rj/cygwin-test-fixes-for-2.53 (2026-01-16) 2 commits
+  (merged to 'next' on 2026-01-21 at 8a1ed2cace)
+ + t0610-reftable-basics: mitigate a flaky test on cygwin
+ + t9700/test.pl: fix path type expectation on cygwin
+
+ Test fixup.
+ source: <f46e023b-1925-41b2-9842-42e7cb727056@ramsayjones.plus.com>
+
+
+* sb/doc-update-ref-markup-fix (2025-12-08) 1 commit
+  (merged to 'next' on 2026-01-21 at 60d4750233)
+ + doc: fix `update-ref` `symref-create` formatting
+
+ Doc mark-up fix.
+ source: <pull.2123.git.git.1765261419802.gitgitgadget@gmail.com>
+
+
+* ty/t1005-test-path-is-helpers (2026-01-16) 1 commit
+  (merged to 'next' on 2026-01-21 at 690bb3b255)
+ + t1005: modernize "! test -f" to "test_path_is_missing"
+
+ Test clean-up.
+ source: <20260117062515.319664-1-a3205153416@gmail.com>
+
+--------------------------------------------------
+[Cooking]
+
+* sp/t5500-cleanup (2026-01-21) 1 commit
+  (merged to 'next' on 2026-01-23 at d5adc61ce8)
+ + t5500: simplify test implementation and fix git exit code suppression
+
+ Test clean-up.
+
+ Will cook in 'next'.
+ source: <20260121130012.888299-1-shreyanshpaliwalcmsmn@gmail.com>
+
+
+* ty/symlinks-use-unsigned-for-bitset (2026-01-21) 1 commit
+ - symlinks: use unsigned int for flags
+
+ Code clean-up.
+
+ Expecting a (hopefully small and final) reroll.
+ cf. <xmqqzf66u9jj.fsf@gitster.g>
+ source: <20260121162640.424126-1-a3205153416@gmail.com>
 
 
 * ds/revision-maximal-only (2026-01-22) 1 commit
@@ -145,7 +232,8 @@ Release tarballs are available at:
  source: <pull.2032.v2.git.1769097958549.gitgitgadget@gmail.com>
 
 
-* ng/submodule-default-remote (2026-01-22) 2 commits
+* ng/submodule-default-remote (2026-01-23) 3 commits
+ - SQUASH??? fixup
  - SQUASH??? fixup
  - submodule: fetch missing objects from default remote
 
@@ -154,29 +242,6 @@ Release tarballs are available at:
 
  Expecting a review response.
  source: <20260122152722.866341-1-nasser.grainawi@oss.qualcomm.com>
-
---------------------------------------------------
-[Cooking]
-
-* dk/replay-doc-omit-irrelevant-rev-list-options (2026-01-21) 2 commits
-  (merged to 'next' on 2026-01-21 at a17b449304)
- + lint-gitlink: preemptively ignore all /ifn?def|endif/ macros
- + replay: drop rev-list formatting options from manual
-
- Documentation clean-up.
-
- Will merge to 'master'.
- source: <01a7acfaf87494419b3766da57d4c05cf99c79bb.1768873599.git.ben.knoble+github@gmail.com>
-
-
-* pw/mailmap-self (2026-01-20) 1 commit
-  (merged to 'next' on 2026-01-21 at da7d118d77)
- + mailmap: add an entry for Phillip Wood
-
- Unify entries in .mailmap file for Phillip Wood.
-
- Will merge to 'master'.
- source: <f10c3f680d58ca0abbf795ae8b0f2ad14ab85419.1768906910.git.phillip.wood@dunelm.org.uk>
 
 
 * ar/run-command-hook-take-2 (2026-01-21) 12 commits
@@ -202,62 +267,15 @@ Release tarballs are available at:
 
 
 * lp/diff-stat-utf8-display-width-fix (2026-01-15) 2 commits
- - t4073: add test for diffstat paths length when containing UTF-8 chars
- - diff: improve scaling of filenames in diffstat to handle UTF-8 chars
+  (merged to 'next' on 2026-01-23 at 80e7ddce3e)
+ + t4073: add test for diffstat paths length when containing UTF-8 chars
+ + diff: improve scaling of filenames in diffstat to handle UTF-8 chars
 
  The computation of column width made by "git diff --stat" was
  confused when pathnames contain non-ASCII characters.
 
- Will merge to 'next'.
+ Will cook in 'next'.
  source: <cover.1768520441.git.lorenzo.pegorari2002@gmail.com>
-
-
-* rj/cygwin-test-fixes-for-2.53 (2026-01-16) 2 commits
-  (merged to 'next' on 2026-01-21 at 8a1ed2cace)
- + t0610-reftable-basics: mitigate a flaky test on cygwin
- + t9700/test.pl: fix path type expectation on cygwin
-
- Test fixup.
-
- Will merge to 'master'.
- source: <f46e023b-1925-41b2-9842-42e7cb727056@ramsayjones.plus.com>
-
-
-* jx/build-options-gettext (2026-01-17) 1 commit
-  (merged to 'next' on 2026-01-21 at dd35ac2e2a)
- + help: report on whether or not gettext is enabled
-
- "git bugreport" and "git version --build-options" learned to
- include use of 'gettext' feature, to make it easier to diagnose
- problems around l10n.
-
- Will merge to 'master'.
- source: <251e1b533ca2e38a9bedae44360ce636cdea4bc3.1768657640.git.zhiyou.jx@alibaba-inc.com>
-
-
-* ty/t1005-test-path-is-helpers (2026-01-16) 1 commit
-  (merged to 'next' on 2026-01-21 at 690bb3b255)
- + t1005: modernize "! test -f" to "test_path_is_missing"
-
- Test clean-up.
-
- Will merge to 'master'.
- source: <20260117062515.319664-1-a3205153416@gmail.com>
-
-
-* js/ci-leak-skip-svn (2026-01-17) 2 commits
-  (merged to 'next' on 2026-01-21 at ebcf21d088)
- + ci: skip CVS and P4 tests in leaks job, too
- + ci(*-leaks): skip the git-svn tests to save time
-
- Dscho observed that SVN tests are taking too much time in CI leak
- checking tasks, but most time is spent not in our code but in libsvn
- code (which happen to be written in Perl), whose leaks have little
- value to discover for us.  Skip SVN, P4, and CVS tests in the leak
- checking tasks.
-
- Will merge to 'master'.
- source: <b649f137-7140-4fb6-848a-b3408e54bbe5@gmail.com>
 
 
 * jk/remote-tracking-ref-leakfix (2026-01-18) 4 commits
@@ -280,8 +298,8 @@ Release tarballs are available at:
  The final clean-up phase of the diff output could turn the result of
  histogram diff algorithm suboptimal, which has been corrected.
 
- Comments?  We do want a real review around here...
- cf. <CALnO6CC3WTBjaLR7yAr-w5eaqzyd2qF5MAyfV2wQY3+TDEbEsw@mail.gmail.com>
+ Expecting a review response.
+ cf. <4fa413ae-f2a4-4de2-a2fb-0b1db379750b@gmail.com>
  source: <pull.2120.git.git.1765054287938.gitgitgadget@gmail.com>
 
 
@@ -300,19 +318,20 @@ Release tarballs are available at:
 
 
 * tc/last-modified-options-cleanup (2026-01-20) 4 commits
- - last-modified: change default max-depth to 0
- - last-modified: document option '--max-depth'
- - last-modified: document option '-z'
- - last-modified: clarify in the docs the command takes a pathspec
+  (merged to 'next' on 2026-01-23 at e514d98b11)
+ + last-modified: change default max-depth to 0
+ + last-modified: document option '--max-depth'
+ + last-modified: document option '-z'
+ + last-modified: clarify in the docs the command takes a pathspec
 
  The "-z" and "--max-depth" documentation (and implementation of
  "-z") in the "git last-modified" command have been updated.
 
- Will merge to 'next'.
+ Will cook in 'next'.
  source: <20260120-toon-last-modified-zzzz-v3-0-9bffd4968b0e@iotcl.com>
 
 
-* tc/last-modified-not-a-tree (2026-01-16) 4 commits
+* tc/last-modified-not-a-tree (2026-01-23) 4 commits
  - last-modified: verify revision argument is a commit-ish
  - last-modified: remove double error message
  - last-modified: fix memory leak when more than one revision is given
@@ -321,16 +340,18 @@ Release tarballs are available at:
  Giving "git last-modified" a tree (not a commit-ish) died an
  uncontrolled death, which has been corrected.
 
- Will merge to 'next'.
- source: <20260116-toon-last-modified-tree-v3-0-e6ade4dc35ab@iotcl.com>
+ Expecting a reroll.
+ cf. <xmqqpl70i7pj.fsf@gitster.g>
+ source: <20260123-toon-last-modified-tree-v4-0-86bf97bad4e2@iotcl.com>
 
 
 * sp/myfirstcontribution-include-update (2026-01-12) 1 commit
- - doc: MyFirstContribution: fix missing dependencies and clarify build steps
+  (merged to 'next' on 2026-01-23 at 2d039d03ff)
+ + doc: MyFirstContribution: fix missing dependencies and clarify build steps
 
  Doc update.
 
- Will merge to 'next'.
+ Will cook in 'next'.
  source: <20260112195625.391821-1-shreyanshpaliwalcmsmn@gmail.com>
 
 
@@ -345,12 +366,13 @@ Release tarballs are available at:
  submodule.<name>.ignore that is set to "all" (and requires "git add
  -f" to override it).
 
- Expecting a reroll?
- cf. <B94F0800-06B5-47BC-8C22-AAE1882E5B9C@gmail.com>
+ Expecting a reroll.
+ cf. <CA+GP4bqY02wcESuz1vPMcknigx_fUXFfi_xQ1EG_muGw6EszRg@mail.gmail.com>
+ cf. <CA+GP4bpwMui5RT9ixo8iWyZ6XZDw3GnYhvgiqVmRq8dW7yo5RQ@mail.gmail.com>
  source: <37fe7956e089394bb1d75f4c8af4a3347b204803.1768376879.git.gitgitgadget@gmail.com>
 
 
-* kn/ref-batch-output-error-reporting-fix (2026-01-22) 6 commits
+* kn/ref-batch-output-error-reporting-fix (2026-01-25) 6 commits
  - fetch: delay user information post committing of transaction
  - receive-pack: utilize rejected ref error details
  - fetch: utilize rejected ref error details
@@ -362,16 +384,17 @@ Release tarballs are available at:
  (after Git 2.51 or so) lost detailed error output, which have been
  corrected.
 
- Merge to 'next'?
- source: <20260122-633-regression-lost-diagnostic-message-when-pushing-non-commit-objects-to-refs-heads-v4-0-2ddba0832440@gmail.com>
+ Will merge to 'next'?
+ source: <20260125-633-regression-lost-diagnostic-message-when-pushing-non-commit-objects-to-refs-heads-v5-0-d58f3a9edf98@gmail.com>
 
 
 * ac/sparse-checkout-string-list-cleanup (2026-01-21) 1 commit
- - sparse-checkout: optimize string_list construction and add tests to verify deduplication.
+  (merged to 'next' on 2026-01-23 at 885244a10d)
+ + sparse-checkout: optimize string_list construction and add tests to verify deduplication.
 
  Code clean-up.
 
- Will merge to 'next'.
+ Will cook in 'next'.
  source: <20260121130005.72375-1-amishhhaaaa@gmail.com>
 
 
@@ -386,7 +409,7 @@ Release tarballs are available at:
  source: <20260115-pks-commit-list-coding-guidelines-v1-0-c58868dbf412@pks.im>
 
 
-* ps/odb-for-each-object (2026-01-21) 16 commits
+* ps/odb-for-each-object (2026-01-26) 16 commits
  - odb: drop unused `for_each_{loose,packed}_object()` functions
  - reachable: convert to use `odb_for_each_object()`
  - builtin/pack-objects: use `packfile_store_for_each_object()`
@@ -406,8 +429,8 @@ Release tarballs are available at:
 
  Revamp object enumeration API around odb.
 
- Comments?
- source: <20260121-pks-odb-for-each-object-v3-0-12c4dfd24227@pks.im>
+ Will merge to 'next'?
+ source: <20260126-pks-odb-for-each-object-v4-0-5a64a038c791@pks.im>
 
 
 * ps/validate-prefix-in-subtree-split (2026-01-15) 1 commit
@@ -434,13 +457,13 @@ Release tarballs are available at:
 
 
 * dd/t5403-modernise (2026-01-12) 2 commits
- - t5403: use test_cmp for post-checkout argument checks
- - t5403: introduce check_post_checkout helper function
+  (merged to 'next' on 2026-01-23 at ca3ceb637e)
+ + t5403: use test_cmp for post-checkout argument checks
+ + t5403: introduce check_post_checkout helper function
 
  Test clean-up.
 
- Will merge to 'next'.
- source: <20260112163643.231-3-deveshigurgaon@gmail.com>
+ Will cook in 'next'.
 
 
 * ag/http-netrc-tests (2026-01-06) 1 commit
@@ -454,21 +477,21 @@ Release tarballs are available at:
 
 
 * en/xdiff-cleanup-3 (2026-01-03) 11 commits
- - SQUASH??? cocci
- - xdiff: move xdl_cleanup_records() from xprepare.c to xdiffi.c
- - xdiff: remove dependence on xdlclassifier from xdl_cleanup_records()
- - xdiff: replace xdfile_t.dend with xdfenv_t.delta_end
- - xdiff: replace xdfile_t.dstart with xdfenv_t.delta_start
- - xdiff: cleanup xdl_trim_ends()
- - xdiff: use xdfenv_t in xdl_trim_ends() and xdl_cleanup_records()
- - xdiff: let patience and histogram benefit from xdl_trim_ends()
- - xdiff: don't waste time guessing the number of lines
- - xdiff: make classic diff explicit by creating xdl_do_classic_diff()
- - ivec: introduce the C side of ivec
+ . SQUASH??? cocci
+ . xdiff: move xdl_cleanup_records() from xprepare.c to xdiffi.c
+ . xdiff: remove dependence on xdlclassifier from xdl_cleanup_records()
+ . xdiff: replace xdfile_t.dend with xdfenv_t.delta_end
+ . xdiff: replace xdfile_t.dstart with xdfenv_t.delta_start
+ . xdiff: cleanup xdl_trim_ends()
+ . xdiff: use xdfenv_t in xdl_trim_ends() and xdl_cleanup_records()
+ . xdiff: let patience and histogram benefit from xdl_trim_ends()
+ . xdiff: don't waste time guessing the number of lines
+ . xdiff: make classic diff explicit by creating xdl_do_classic_diff()
+ . ivec: introduce the C side of ivec
 
  Preparation of xdiff/ codebase to work with Rust
 
- Comments?
+ What's the status of this one?
  source: <pull.2156.git.git.1767379944.gitgitgadget@gmail.com>
 
 
@@ -487,9 +510,9 @@ Release tarballs are available at:
  source: <pull.2138.v28.git.git.1769112471.gitgitgadget@gmail.com>
 
 
-* ob/core-attributesfile-in-repository (2026-01-13) 3 commits
+* ob/core-attributesfile-in-repository (2026-01-24) 3 commits
  - environment: move "branch.autoSetupMerge" into `struct repo_config_values`
- - environment: environment: stop using core.sparseCheckout globally
+ - environment: stop using core.sparseCheckout globally
  - environment: stop storing `core.attributesFile` globally
 
  The core.attributesfile is intended to be set per repository, but
@@ -497,7 +520,7 @@ Release tarballs are available at:
  been corrected by moving it to per-repository data structure.
 
  Comments?
- source: <cover.1768318762.git.belkid98@gmail.com>
+ source: <cover.1769256839.git.belkid98@gmail.com>
 
 
 * aa/add-p-previous-decisions (2026-01-08) 1 commit
@@ -567,34 +590,6 @@ Release tarballs are available at:
  source: <pull.2135.v2.git.git.1766168169.gitgitgadget@gmail.com>
 
 
-* js/symlink-windows (2026-01-09) 19 commits
-  (merged to 'next' on 2026-01-21 at eaaead3f22)
- + mingw: special-case index entries for symlinks with buggy size
- + mingw: emulate `stat()` a little more faithfully
- + mingw: try to create symlinks without elevated permissions
- + mingw: add support for symlinks to directories
- + mingw: implement basic `symlink()` functionality (file symlinks only)
- + mingw: implement `readlink()`
- + mingw: allow `mingw_chdir()` to change to symlink-resolved directories
- + mingw: support renaming symlinks
- + mingw: handle symlinks to directories in `mingw_unlink()`
- + mingw: add symlink-specific error codes
- + mingw: change default of `core.symlinks` to false
- + mingw: factor out the retry logic
- + mingw: compute the correct size for symlinks in `mingw_lstat()`
- + mingw: teach dirent about symlinks
- + mingw: let `mingw_lstat()` error early upon problems with reparse points
- + mingw: drop the separate `do_lstat()` function
- + mingw: implement `stat()` with symlink support
- + mingw: don't call `GetFileAttributes()` twice in `mingw_lstat()`
- + Merge branch 'js/prep-symlink-windows' into js/symlink-windows
-
- Upstream symbolic link support on Windows from Git-for-Windows.
-
- Will merge to 'master'.
- source: <pull.2018.v2.git.1767989115.gitgitgadget@gmail.com>
-
-
 * pc/lockfile-pid (2026-01-22) 1 commit
  - lockfile: add PID file for debugging stale locks
 
@@ -606,35 +601,24 @@ Release tarballs are available at:
 
 
 * ap/http-probe-rpc-use-auth (2026-01-14) 1 commit
- - remote-curl: use auth for probe_rpc() requests too
+  (merged to 'next' on 2026-01-23 at 0439366395)
+ + remote-curl: use auth for probe_rpc() requests too
 
- HTTP transport failed to authenticate in some code pahts, which has
+ HTTP transport failed to authenticate in some code paths, which has
  been corrected.
 
- Will merge to 'next'.
+ Will cook in 'next'.
  source: <20260114163619.614297-2-aplattner@nvidia.com>
 
 
-* lo/repo-info-keys (2026-01-19) 3 commits
+* lo/repo-info-keys (2026-01-23) 2 commits
  - repo: add new flag --keys to git-repo-info
- - repo: add a default output format to enum output_format
- - Merge branch 'lo/repo-struct-z' into lo/repo-info-keys
+ - repo: rename "keyvalue" to "lines"
 
  "git repo info" learns "--keys" action to list known keys.
 
- Expecting a reroll.
- cf. <E8095CC7-E913-4012-8036-DD2FC5A0E290@gmail.com>
- source: <20260119210932.68893-1-lucasseikioshiro@gmail.com>
-
-
-* sb/doc-update-ref-markup-fix (2025-12-08) 1 commit
-  (merged to 'next' on 2026-01-21 at 60d4750233)
- + doc: fix `update-ref` `symref-create` formatting
-
- Doc mark-up fix.
-
- Will merge to 'master'.
- source: <pull.2123.git.git.1765261419802.gitgitgadget@gmail.com>
+ Comments?
+ source: <20260123164900.35092-1-lucasseikioshiro@gmail.com>
 
 
 * tb/incremental-midx-part-3.2 (2026-01-14) 19 commits
@@ -714,30 +698,31 @@ Release tarballs are available at:
 
  "git history" history rewriting UI.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  cf. <aWpoMcgwsfRCCrr4@szeder.dev>
  cf. <CABPp-BHkNLdH4C7U4sFoVhrsSPH8KAaDtOdLEQGyajmXZz9hVg@mail.gmail.com>
  source: <20260113-b4-pks-history-builtin-v11-0-e74ebfa2652d@pks.im>
 
 
 * ar/submodule-gitdir-tweak (2026-01-12) 11 commits
- - submodule: detect conflicts with existing gitdir configs
- - submodule: hash the submodule name for the gitdir path
- - submodule: fix case-folding gitdir filesystem collisions
- - submodule--helper: fix filesystem collisions by encoding gitdir paths
- - builtin/credential-store: move is_rfc3986_unreserved to url.[ch]
- - submodule--helper: add gitdir migration command
- - submodule: allow runtime enabling extensions.submodulePathConfig
- - submodule: introduce extensions.submodulePathConfig
- - builtin/submodule--helper: add gitdir command
- - submodule: always validate gitdirs inside submodule_name_to_gitdir
- - submodule--helper: use submodule_name_to_gitdir in add_submodule
+  (merged to 'next' on 2026-01-23 at ef3c2cab02)
+ + submodule: detect conflicts with existing gitdir configs
+ + submodule: hash the submodule name for the gitdir path
+ + submodule: fix case-folding gitdir filesystem collisions
+ + submodule--helper: fix filesystem collisions by encoding gitdir paths
+ + builtin/credential-store: move is_rfc3986_unreserved to url.[ch]
+ + submodule--helper: add gitdir migration command
+ + submodule: allow runtime enabling extensions.submodulePathConfig
+ + submodule: introduce extensions.submodulePathConfig
+ + builtin/submodule--helper: add gitdir command
+ + submodule: always validate gitdirs inside submodule_name_to_gitdir
+ + submodule--helper: use submodule_name_to_gitdir in add_submodule
 
  Avoid local submodule repository directory paths overlapping with
  each other by encoding submodule names before using them as path
  components.
 
- Will merge to 'next'.
+ Will cook in 'next'.
  cf. <aWXh9hQYxFhWYC6a@pks.im>
  source: <20260112184632.1334495-1-adrian.ratiu@collabora.com>
 
