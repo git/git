@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2025-11-06 23:58+0000\n"
-"PO-Revision-Date: 2025-11-13 08:58+0700\n"
+"POT-Creation-Date: 2026-01-22 23:57+0000\n"
+"PO-Revision-Date: 2025-01-27 09:10+0700\n"
 "Last-Translator: Bagas Sanjaya <bagasdotme@gmail.com>\n"
 "Language-Team: Indonesian\n"
 "Language: id\n"
@@ -957,9 +957,9 @@ msgstr "opsi abai spasi putih tidak dikenal '%s'"
 #: builtin/fast-export.c builtin/fetch.c builtin/help.c builtin/index-pack.c
 #: builtin/init-db.c builtin/log.c builtin/ls-files.c builtin/merge-base.c
 #: builtin/merge-tree.c builtin/merge.c builtin/rebase.c builtin/repack.c
-#: builtin/replay.c builtin/reset.c builtin/rev-parse.c builtin/show-branch.c
-#: builtin/stash.c builtin/submodule--helper.c builtin/tag.c builtin/worktree.c
-#: parse-options.c range-diff.c revision.c
+#: builtin/reset.c builtin/rev-parse.c builtin/show-branch.c builtin/stash.c
+#: builtin/submodule--helper.c builtin/tag.c builtin/worktree.c parse-options.c
+#: range-diff.c revision.c
 #, c-format
 msgid "options '%s' and '%s' cannot be used together"
 msgstr "Opsi '%s' dan '%s' tidak dapat digunakan bersamaan"
@@ -2134,8 +2134,8 @@ msgid "'%s' is not a valid branch name"
 msgstr "'%s' bukan nama cabang valid"
 
 #: branch.c builtin/branch.c
-msgid "See `man git check-ref-format`"
-msgstr "Lihat `man git check-ref-format`"
+msgid "See 'git help check-ref-format'"
+msgstr "Lihat `git help check-ref-format`"
 
 #: branch.c
 #, c-format
@@ -3276,6 +3276,19 @@ msgstr "mengharapkan warna: %s"
 msgid "must end with a color"
 msgstr "harus berakhir dengan warna"
 
+#: builtin/blame.c diff.c merge-ort.c transport.c
+#, c-format
+msgid "unknown value for config '%s': %s"
+msgstr "nilai tidak dikenal untuk konfigurasi '%s': %s"
+
+#: builtin/blame.c builtin/merge-file.c diff.c
+msgid ""
+"option diff-algorithm accepts \"myers\", \"minimal\", \"patience\" and "
+"\"histogram\""
+msgstr ""
+"opsi diff-algorithm terima \"myers\", \"minimal\", \"patience\" dan "
+"\"histogram\""
+
 #: builtin/blame.c
 #, c-format
 msgid "cannot find revision %s to ignore"
@@ -3347,6 +3360,14 @@ msgstr "perlihatkan email pengarang daripada nama (asali: off)"
 msgid "ignore whitespace differences"
 msgstr "abaikan perbedaan spasi putih"
 
+#: builtin/blame.c builtin/merge-file.c diff.c
+msgid "<algorithm>"
+msgstr "<algoritma>"
+
+#: builtin/blame.c builtin/merge-file.c diff.c
+msgid "choose a diff algorithm"
+msgstr "pilih algoritma diff"
+
 #: builtin/blame.c builtin/clone.c builtin/log.c
 msgid "rev"
 msgstr "revisi"
@@ -3368,8 +3389,8 @@ msgid "color lines by age"
 msgstr "warnai baris oleh umur"
 
 #: builtin/blame.c
-msgid "spend extra cycles to find better match"
-msgstr "perlihatkan siklus ekstra untuk menemukan cocokan yang lebih baik"
+msgid "spend extra cycles to find a better match"
+msgstr "habiskan siklus tambahan untuk mencari pasangan yang lebih baik"
 
 #: builtin/blame.c
 msgid "use revisions from <file> instead of calling git-rev-list"
@@ -3922,7 +3943,7 @@ msgstr ""
 "Anda dapat menghapus baris-baris yang Anda tidak ingin dibagi.\n"
 
 #: builtin/bugreport.c builtin/commit.c builtin/fast-export.c
-#: builtin/pack-objects.c builtin/rebase.c parse-options.h
+#: builtin/pack-objects.c builtin/rebase.c builtin/replay.c parse-options.h
 msgid "mode"
 msgstr "mode"
 
@@ -4857,10 +4878,10 @@ msgstr "--track butuh nama cabang"
 msgid "missing branch name; try -%c"
 msgstr "kehilangan nama cabang; coba -%c"
 
-#: builtin/checkout.c
+#: builtin/checkout.c sequencer.c
 #, c-format
-msgid "could not resolve %s"
-msgstr "tidak dapat menyelesaikan %s"
+msgid "could not resolve '%s'"
+msgstr "tidak dapat menguraikan '%s'"
 
 #: builtin/checkout.c
 msgid "invalid path specification"
@@ -6715,10 +6736,18 @@ msgstr "--append tidak dapat digunakan dengan --value=<pola>"
 #, c-format
 msgid ""
 "cannot overwrite multiple values with a single value\n"
-"       Use a regexp, --add or --replace-all to change %s."
+"       Use --value=<pattern>, --append or --all to change %s."
 msgstr ""
 "tidak dapat menimpa banyak nilai dengan nilai tunggal\n"
-"       Gunakan regexp, --add atau --replace-all untuk mengubah %s."
+"       Gunakan --value=<pola>, --append atau --all untuk mengubah %s."
+
+#: builtin/config.c
+msgid "unset all multi-valued config options"
+msgstr "batal setel semua opsi konfigurasi multi-nilai"
+
+#: builtin/config.c
+msgid "unset multi-valued config options with matching values"
+msgstr "batal setel opsi konfigurasi multi-nilai dengan nilai yang sepadan"
 
 #: builtin/config.c
 #, c-format
@@ -6831,6 +6860,15 @@ msgid "--comment is only applicable to add/set/replace operations"
 msgstr ""
 "--comment hanya dapat diterapkan pada operasi penambahan/penyetelan/"
 "penggantian"
+
+#: builtin/config.c
+#, c-format
+msgid ""
+"cannot overwrite multiple values with a single value\n"
+"       Use a regexp, --add or --replace-all to change %s."
+msgstr ""
+"tidak dapat menimpa banyak nilai dengan nilai tunggal\n"
+"       Gunakan regexp, --add atau --replace-all untuk mengubah %s."
 
 #: builtin/count-objects.c
 msgid "print sizes in human readable format"
@@ -7344,13 +7382,6 @@ msgstr ""
 
 #: builtin/fast-export.c
 #, c-format
-msgid "encountered signed commit %s; use --signed-commits=<mode> to handle it"
-msgstr ""
-"menemukan komit bertandatangan %s; gunakan --signed-commits=<mode> untuk "
-"menanganinya"
-
-#: builtin/fast-export.c
-#, c-format
 msgid "exporting %<PRIuMAX> signature(s) for commit %s"
 msgstr "mengekspor %<PRIuMAX> tandatangan untuk komit %s"
 
@@ -7358,6 +7389,21 @@ msgstr "mengekspor %<PRIuMAX> tandatangan untuk komit %s"
 #, c-format
 msgid "stripping signature(s) from commit %s"
 msgstr "mengupas tandatangan dari komit %s"
+
+#: builtin/fast-export.c
+#, c-format
+msgid "encountered signed commit %s; use --signed-commits=<mode> to handle it"
+msgstr ""
+"menemukan komit bertandatangan %s; gunakan --signed-commits=<mode> untuk "
+"menanganinya"
+
+#: builtin/fast-export.c
+msgid ""
+"'strip-if-invalid' is not a valid mode for git fast-export with --signed-"
+"commits=<mode>"
+msgstr ""
+"'strip-if-invalid' bukan mode valid untuk git fast-export dengan --signed-"
+"commits=<mode>"
 
 #: builtin/fast-export.c
 #, c-format
@@ -7375,13 +7421,6 @@ msgstr "tidak dapat membaca tag %s"
 
 #: builtin/fast-export.c
 #, c-format
-msgid "encountered signed tag %s; use --signed-tags=<mode> to handle it"
-msgstr ""
-"menemukan tag bertandatangan %s; gunakan --signed-tags=<mode> untuk "
-"menanganinya"
-
-#: builtin/fast-export.c
-#, c-format
 msgid "exporting signed tag %s"
 msgstr "mengekspor tag bertandatangan %s"
 
@@ -7389,6 +7428,21 @@ msgstr "mengekspor tag bertandatangan %s"
 #, c-format
 msgid "stripping signature from tag %s"
 msgstr "mengupas tandatangan dari tag %s"
+
+#: builtin/fast-export.c
+#, c-format
+msgid "encountered signed tag %s; use --signed-tags=<mode> to handle it"
+msgstr ""
+"menemukan tag bertandatangan %s; gunakan --signed-tags=<mode> untuk "
+"menanganinya"
+
+#: builtin/fast-export.c
+msgid ""
+"'strip-if-invalid' is not a valid mode for git fast-export with --signed-"
+"tags=<mode>"
+msgstr ""
+"'strip-if-invalid' bukan mode valid untuk git fast-export dengan --signed-"
+"tags=<mode>"
 
 #: builtin/fast-export.c
 #, c-format
@@ -7883,6 +7937,37 @@ msgstr "beberapa %s tandatangan ditemukan, abaikan tandatangan tambahan"
 msgid "parse_one_signature() returned unknown hash algo"
 msgstr "parse_one_signature() mengembalikan algoritma hash tak dikenal"
 
+#: builtin/fast-import.c builtin/fsck.c
+msgid "unknown"
+msgstr "tidak dikenal"
+
+#: builtin/fast-import.c
+#, c-format
+msgid ""
+"stripping invalid signature for commit '%.100s...'\n"
+"  allegedly by %s"
+msgstr ""
+"mengupas tandatangan tidak valid untuk komit '%.100s...'\n"
+"  yang diduga dibuat oleh %s"
+
+#: builtin/fast-import.c
+#, c-format
+msgid ""
+"stripping invalid signature for commit '%.*s'\n"
+"  allegedly by %s"
+msgstr ""
+"mengupas tandatangan tidak valid untuk komit '%.*s'\n"
+"  yang diduga dibuat oleh %s"
+
+#: builtin/fast-import.c
+#, c-format
+msgid ""
+"stripping invalid signature for commit\n"
+"  allegedly by %s"
+msgstr ""
+"mengupas tandatangan tidak valid untuk komit\n"
+"  yang diduga dibuat oleh %s"
+
 #: builtin/fast-import.c
 msgid "expected committer but didn't get one"
 msgstr "pengkomit diharapkan tapi tidak mendapatkannya"
@@ -7902,11 +7987,6 @@ msgid "importing a commit signature verbatim"
 msgstr "mengimpor tandatangan komit secara verbatim"
 
 #: builtin/fast-import.c
-msgid "encountered signed tag; use --signed-tags=<mode> to handle it"
-msgstr ""
-"menemukan tag bertandatangan; gunakan --signed-tags=<mode> untuk menanganinya"
-
-#: builtin/fast-import.c
 #, c-format
 msgid "importing a tag signature verbatim for tag '%s'"
 msgstr "mengimpor tag secara verbatim untuk tag '%s'"
@@ -7915,6 +7995,19 @@ msgstr "mengimpor tag secara verbatim untuk tag '%s'"
 #, c-format
 msgid "stripping a tag signature for tag '%s'"
 msgstr "mengupas tandatangan tag untuk tag '%s'"
+
+#: builtin/fast-import.c
+msgid "encountered signed tag; use --signed-tags=<mode> to handle it"
+msgstr ""
+"menemukan tag bertandatangan; gunakan --signed-tags=<mode> untuk menanganinya"
+
+#: builtin/fast-import.c
+msgid ""
+"'strip-if-invalid' is not a valid mode for git fast-import with --signed-"
+"tags=<mode>"
+msgstr ""
+"'strip-if-invalid' bukan mode valid untuk git fast-import dengan --signed-"
+"tags=<mode>"
 
 #: builtin/fast-import.c
 #, c-format
@@ -8114,8 +8207,8 @@ msgid "git fetch [<options>] <group>"
 msgstr "git fetch [<opsi>] <grup>"
 
 #: builtin/fetch.c
-msgid "git fetch --multiple [<options>] [(<repository> | <group>)...]"
-msgstr "git fetch --multiple [<opsi>] [(<repositori> | <grup>)]"
+msgid "git fetch --multiple [<options>] [(<repository>|<group>)...]"
+msgstr "git fetch --multiple [<opsi>] [(<repositori> | <grup>)...]"
 
 #: builtin/fetch.c
 msgid "git fetch --all [<options>]"
@@ -8708,10 +8801,6 @@ msgstr "kehilangan --config=<config>"
 msgid "got bad config --config=%s"
 msgstr "dapat konfigurasi jelek --config=%s"
 
-#: builtin/fsck.c
-msgid "unknown"
-msgstr "tidak dikenal"
-
 #. TRANSLATORS: e.g. error in tree 01bfda: <more explanation>
 #: builtin/fsck.c
 #, c-format
@@ -8831,6 +8920,11 @@ msgid "%s: not a commit"
 msgstr "%s: bukan sebuah komit"
 
 #: builtin/fsck.c
+#, c-format
+msgid "invalid parameter: expected sha1, got '%s'"
+msgstr "parameter tidak valid: sha1 diharapkan, dapat '%s'"
+
+#: builtin/fsck.c
 msgid "notice: No default references"
 msgstr "catatan: Tidak ada referensi asali"
 
@@ -8861,31 +8955,6 @@ msgstr "Memeriksa direktori objek"
 #: builtin/fsck.c
 msgid "Checking object directories"
 msgstr "Memeriksa direktori objek"
-
-#: builtin/fsck.c
-#, c-format
-msgid "Checking %s link"
-msgstr "Memeriksa tautan %s"
-
-#: builtin/fsck.c builtin/index-pack.c
-#, c-format
-msgid "invalid %s"
-msgstr "%s tidak valid"
-
-#: builtin/fsck.c
-#, c-format
-msgid "%s points to something strange (%s)"
-msgstr "%s menunjuk ke sesuatu yang aneh (%s)"
-
-#: builtin/fsck.c
-#, c-format
-msgid "%s: detached HEAD points at nothing"
-msgstr "%s: HEAD terpisah tidak menunjuk ke apapun"
-
-#: builtin/fsck.c
-#, c-format
-msgid "notice: %s points to an unborn branch (%s)"
-msgstr "catatan: %s menunjuk ke cabang yang belum lahir (%s)"
 
 #: builtin/fsck.c
 #, c-format
@@ -8987,16 +9056,6 @@ msgstr "Memeriksa konsistensi basis data referensi"
 #: builtin/fsck.c builtin/index-pack.c
 msgid "Checking objects"
 msgstr "Memeriksa objek"
-
-#: builtin/fsck.c
-#, c-format
-msgid "%s: object missing"
-msgstr "%s: objek hilang"
-
-#: builtin/fsck.c
-#, c-format
-msgid "invalid parameter: expected sha1, got '%s'"
-msgstr "parameter tidak valid: sha1 diharapkan, dapat '%s'"
 
 #: builtin/fsmonitor--daemon.c
 msgid "git fsmonitor--daemon start [<options>]"
@@ -9476,6 +9535,10 @@ msgstr "gagal mempersiapkan jadwal pemeliharaan"
 #: builtin/gc.c
 msgid "failed to add repo to global config"
 msgstr "gagal menambahkan repositori ke konfigurasi global"
+
+#: builtin/gc.c
+msgid "check a specific task"
+msgstr "periksa tugas yang spesifik"
 
 #: builtin/gc.c
 msgid "git maintenance <subcommand> [<options>]"
@@ -10060,6 +10123,11 @@ msgstr "kesalahan fsck dalam objek terpaket"
 
 #: builtin/index-pack.c
 #, c-format
+msgid "invalid %s"
+msgstr "%s tidak valid"
+
+#: builtin/index-pack.c
+#, c-format
 msgid "Not all child objects of %s are reachable"
 msgstr "Tidak semua objek anak dari %s bisa dicapai"
 
@@ -10233,6 +10301,11 @@ msgstr "--stdin memerlukan repositori git"
 #: builtin/index-pack.c
 msgid "--verify with no packfile name given"
 msgstr "--verify tanpa nama berkas paket diberikan"
+
+#: builtin/index-pack.c
+msgid "cannot perform queued object checks outside of a repository"
+msgstr ""
+"tidak dapat melakukan pemeriksaan objek yang mengantre di luar repositori"
 
 #: builtin/index-pack.c builtin/unpack-objects.c
 msgid "fsck error in pack objects"
@@ -11208,14 +11281,6 @@ msgstr ""
 "git merge-file [<opsi>] [-L <nama 1> [-L <asli> [-L <nama 2>]]] <berkas 1> "
 "<berkas asli> <berkas 2>"
 
-#: builtin/merge-file.c diff.c
-msgid ""
-"option diff-algorithm accepts \"myers\", \"minimal\", \"patience\" and "
-"\"histogram\""
-msgstr ""
-"opsi diff-algorithm terima \"myers\", \"minimal\", \"patience\" dan "
-"\"histogram\""
-
 #: builtin/merge-file.c
 msgid "send results to standard output"
 msgstr "kirim hasil ke keluaran standar"
@@ -11231,14 +11296,6 @@ msgstr "gunakan penggabungan berdasarkan diff3"
 #: builtin/merge-file.c
 msgid "use a zealous diff3 based merge"
 msgstr "gunakan penggabungan berdasarkan diff3 yang bersemangat"
-
-#: builtin/merge-file.c diff.c
-msgid "<algorithm>"
-msgstr "<algoritma>"
-
-#: builtin/merge-file.c diff.c
-msgid "choose a diff algorithm"
-msgstr "pilih algoritma diff"
 
 #: builtin/merge-file.c
 msgid "for conflicts, use this marker size"
@@ -12594,6 +12651,11 @@ msgstr "tidak dapat mendapatkan tipe objek %s di dalam pak %s"
 
 #: builtin/pack-objects.c
 #, c-format
+msgid "packfile %s is a promisor but --exclude-promisor-objects was given"
+msgstr "berkas pak %s adalah pejanji tapi --exclude-promisor-objects diberikan"
+
+#: builtin/pack-objects.c
+#, c-format
 msgid "could not find pack '%s'"
 msgstr "tidak dapat menemukan pak '%s'"
 
@@ -12930,12 +12992,12 @@ msgid "git patch-id [--stable | --unstable | --verbatim]"
 msgstr "git patch-id [--stable | --unstable | --verbatim]"
 
 #: builtin/patch-id.c
-msgid "use the unstable patch-id algorithm"
-msgstr "gunakan algoritma id tambalan tidak stabil"
+msgid "use the unstable patch ID algorithm"
+msgstr "gunakan algoritma ID tambalan yang tidak stabil"
 
 #: builtin/patch-id.c
-msgid "use the stable patch-id algorithm"
-msgstr "gunakan algoritma id tambalan stabil"
+msgid "use the stable patch ID algorithm"
+msgstr "gunakan algoritma ID tambalan yang stabil"
 
 #: builtin/patch-id.c
 msgid "don't strip whitespace from the patch"
@@ -12964,50 +13026,6 @@ msgstr "tidak dapat memangkas di dalam repositori objek berharga"
 #: builtin/pull.c
 msgid "git pull [<options>] [<repository> [<refspec>...]]"
 msgstr "git pull [<opsi>] [<repositori> [<spek referensi>]]"
-
-#: builtin/pull.c
-msgid "control for recursive fetching of submodules"
-msgstr "kontrol pengambilan rekursif submodul"
-
-#: builtin/pull.c
-msgid "Options related to merging"
-msgstr "Opsi yang berkaitan dengan penggabungan"
-
-#: builtin/pull.c
-msgid "incorporate changes by rebasing rather than merging"
-msgstr "masukkan perubahan dengan pendasaran ulang daripada penggabungan"
-
-#: builtin/pull.c builtin/revert.c
-msgid "allow fast-forward"
-msgstr "perbolehkan maju cepat"
-
-#: builtin/pull.c
-msgid "control use of pre-merge-commit and commit-msg hooks"
-msgstr "kontrol penggunaan kail pre-merge-commit dan commit-msg"
-
-#: builtin/pull.c parse-options.h
-msgid "automatically stash/stash pop before and after"
-msgstr "stash/stash pop otomatis sebelum dan sesudah"
-
-#: builtin/pull.c
-msgid "Options related to fetching"
-msgstr "Opsi yang berkaitan dengan pengambilan"
-
-#: builtin/pull.c
-msgid "force overwrite of local branch"
-msgstr "paksa timpa cabang lokal"
-
-#: builtin/pull.c
-msgid "number of submodules pulled in parallel"
-msgstr "nomor submodul ditarik dalam paralel"
-
-#: builtin/pull.c parse-options.h
-msgid "use IPv4 addresses only"
-msgstr "gunakan hanya alamat IPv4"
-
-#: builtin/pull.c parse-options.h
-msgid "use IPv6 addresses only"
-msgstr "gunakan hanya alamat IPv6"
 
 #: builtin/pull.c
 msgid ""
@@ -13131,6 +13149,50 @@ msgstr ""
 "melewatkan\n"
 "--rebase, --no-rebase, atau --ff-only pada baris perintah untuk menimpa\n"
 "asali terkonfigurasi untuk setiap invokasi.\n"
+
+#: builtin/pull.c
+msgid "control for recursive fetching of submodules"
+msgstr "kontrol pengambilan rekursif submodul"
+
+#: builtin/pull.c
+msgid "Options related to merging"
+msgstr "Opsi yang berkaitan dengan penggabungan"
+
+#: builtin/pull.c
+msgid "incorporate changes by rebasing rather than merging"
+msgstr "masukkan perubahan dengan pendasaran ulang daripada penggabungan"
+
+#: builtin/pull.c builtin/revert.c
+msgid "allow fast-forward"
+msgstr "perbolehkan maju cepat"
+
+#: builtin/pull.c
+msgid "control use of pre-merge-commit and commit-msg hooks"
+msgstr "kontrol penggunaan kail pre-merge-commit dan commit-msg"
+
+#: builtin/pull.c parse-options.h
+msgid "automatically stash/stash pop before and after"
+msgstr "stash/stash pop otomatis sebelum dan sesudah"
+
+#: builtin/pull.c
+msgid "Options related to fetching"
+msgstr "Opsi yang berkaitan dengan pengambilan"
+
+#: builtin/pull.c
+msgid "force overwrite of local branch"
+msgstr "paksa timpa cabang lokal"
+
+#: builtin/pull.c
+msgid "number of submodules pulled in parallel"
+msgstr "nomor submodul ditarik dalam paralel"
+
+#: builtin/pull.c parse-options.h
+msgid "use IPv4 addresses only"
+msgstr "gunakan hanya alamat IPv4"
+
+#: builtin/pull.c parse-options.h
+msgid "use IPv6 addresses only"
+msgstr "gunakan hanya alamat IPv6"
 
 #: builtin/pull.c
 msgid "Updating an unborn branch with changes added to the index."
@@ -15421,6 +15483,11 @@ msgid "only one pattern can be given with -l"
 msgstr "hanya satu pola yang dapat diberikan dengan -l"
 
 #: builtin/replay.c
+#, c-format
+msgid "'%s' is not a valid commit-ish for %s"
+msgstr "'%s' bukan mirip komit yang valid untuk %s"
+
+#: builtin/replay.c
 msgid "need some commits to replay"
 msgstr "butuh beberapa komit untuk dimainkan ulang"
 
@@ -15441,31 +15508,17 @@ msgstr ""
 "menjadi tidak jelas"
 
 #: builtin/replay.c
-msgid ""
-"cannot implicitly determine whether this is an --advance or --onto operation"
-msgstr ""
-"tidak dapat menentukan secara tidak langsung apakah ini operasi --advance "
-"atau --onto"
-
-#: builtin/replay.c
-msgid ""
-"cannot advance target with multiple source branches because ordering would "
-"be ill-defined"
-msgstr ""
-"tidak dapat memajukan target dengan banyak cabang sumber karena "
-"pengurutannya akan menjadi tidak jelas"
-
-#: builtin/replay.c
-msgid "cannot implicitly determine correct base for --onto"
-msgstr "tidak dapat menentukan secara tidak langsung dasar untuk --onto"
+#, c-format
+msgid "invalid %s value: '%s'"
+msgstr "nilai %s tidak valid: '%s'"
 
 #: builtin/replay.c
 msgid ""
 "(EXPERIMENTAL!) git replay ([--contained] --onto <newbase> | --advance "
-"<branch>) <revision-range>..."
+"<branch>) [--ref-action[=<mode>]] <revision-range>"
 msgstr ""
 "(EKSPERIMENTAL!) git replay ([--contained] --onto <dasar baru> | --advance "
-"<cabang>) <rentang revisi>..."
+"<cabang>) [--ref-action[=<mode>]] <rentang revisi>"
 
 #: builtin/replay.c
 msgid "make replay advance given branch"
@@ -15476,8 +15529,13 @@ msgid "replay onto given commit"
 msgstr "mainkan ulang pada komit yang diberikan"
 
 #: builtin/replay.c
-msgid "advance all branches contained in revision-range"
-msgstr "majukan semua cabang yang berada pada rentang komit"
+msgid "update all branches that point at commits in <revision-range>"
+msgstr ""
+"perbarui semua cabang yang menunjuk pada komit di dalam <rentang revisi>"
+
+#: builtin/replay.c
+msgid "control ref update behavior (update|print)"
+msgstr "atur perilaku pembaruan referensi (update|print)"
 
 #: builtin/replay.c
 msgid "option --onto or --advance is mandatory"
@@ -15493,16 +15551,31 @@ msgstr ""
 "rev_info' akan dipaksakan"
 
 #: builtin/replay.c
+#, c-format
+msgid "failed to begin ref transaction: %s"
+msgstr "gagal memulai transaksi referensi: %s"
+
+#: builtin/replay.c
 msgid "error preparing revisions"
 msgstr "kesalahan menyiapkan revisi"
 
 #: builtin/replay.c
-msgid "replaying down to root commit is not supported yet!"
-msgstr "memainkan ulang ke komit akar belum didukung!"
+msgid "replaying down from root commit is not supported yet!"
+msgstr "memainkan ulang dari komit akar belum didukung!"
 
 #: builtin/replay.c
 msgid "replaying merge commits is not supported yet!"
 msgstr "memainkan ulang komit penggabungan belum didukung!"
+
+#: builtin/replay.c
+#, c-format
+msgid "failed to update ref '%s': %s"
+msgstr "gagal memperbarui referensi '%s': %s"
+
+#: builtin/replay.c
+#, c-format
+msgid "failed to commit ref transaction: %s"
+msgstr "gagal mengkomit transaksi referensi: %s"
 
 #: builtin/repo.c
 #, c-format
@@ -15523,8 +15596,16 @@ msgid "synonym for --format=nul"
 msgstr "sinonim untuk --format=nul"
 
 #: builtin/repo.c
+msgid "print all keys/values"
+msgstr "cetak semua kunci/nilai"
+
+#: builtin/repo.c
 msgid "unsupported output format"
 msgstr "format keluaran tidak didukung"
+
+#: builtin/repo.c
+msgid "--all and <key> cannot be used together"
+msgstr "--all dan <kunci> tidak dapat digunakan bersamaan"
 
 #: builtin/repo.c
 msgid "References"
@@ -15565,6 +15646,14 @@ msgstr "Pohon"
 #: builtin/repo.c
 msgid "Blobs"
 msgstr "Blob"
+
+#: builtin/repo.c
+msgid "Inflated size"
+msgstr "Ukuran yang berkembang"
+
+#: builtin/repo.c
+msgid "Disk size"
+msgstr "Ukuran disk"
 
 #: builtin/repo.c
 msgid "Repository structure"
@@ -17604,7 +17693,7 @@ msgstr "'%s' sudah ada di dalam indeks"
 msgid "'%s' already exists in the index and is not a submodule"
 msgstr "'%s' sudah ada di dalam indeks dan bukan submodul"
 
-#: builtin/submodule--helper.c read-cache.c
+#: builtin/submodule--helper.c object-file.c
 #, c-format
 msgid "'%s' does not have a commit checked out"
 msgstr "'%s' tidak punya sebuah komit tercheckout"
@@ -18675,6 +18764,11 @@ msgid "bundle list at '%s' has no mode"
 msgstr "daftar bundel pada '%s' tidak punya mode"
 
 #: bundle-uri.c
+#, c-format
+msgid "bundle list at '%s': bundle '%s' has no uri"
+msgstr "daftar bundel pada '%s': bundel '%s' tidak punya uri"
+
+#: bundle-uri.c
 msgid "failed to create temporary file"
 msgstr "tidak dapat membuat berkas sementara"
 
@@ -18700,6 +18794,11 @@ msgstr "mode bundel tidak dikenal dari URI '%s'"
 #, c-format
 msgid "exceeded bundle URI recursion limit (%d)"
 msgstr "batas rekursi URI bundel (%d) terlewati"
+
+#: bundle-uri.c
+#, c-format
+msgid "bundle '%s' has no uri"
+msgstr "bundel '%s' tidak punya uri"
 
 #: bundle-uri.c
 #, c-format
@@ -19357,8 +19456,8 @@ msgid "Reuse recorded resolution of conflicted merges"
 msgstr "Gunakan ulang resolusi konflik penggabungan terekam"
 
 #: command-list.h
-msgid "Reset current HEAD to the specified state"
-msgstr "Setel ulang HEAD saat ini ke keadaan yang disebutkan"
+msgid "Set `HEAD` or the index to a known state"
+msgstr "Setel `HEAD` atau indeks ke keadaan yang diketahui"
 
 #: command-list.h
 msgid "Restore working tree files"
@@ -21242,11 +21341,6 @@ msgstr ""
 #, c-format
 msgid "Unknown value for 'diff.submodule' config variable: '%s'"
 msgstr "Nilai tidak dikenal untuk variabel konfigurasi 'diff.submodule': '%s'"
-
-#: diff.c merge-ort.c transport.c
-#, c-format
-msgid "unknown value for config '%s': %s"
-msgstr "nilai tidak dikenal untuk konfigurasi '%s': %s"
 
 #: diff.c
 #, c-format
@@ -23872,6 +23966,10 @@ msgid "%s: failed to insert into database"
 msgstr "%s: gagal memasukkan ke dalam basis data"
 
 #: object-file.c
+msgid "cannot add a submodule of a different hash algorithm"
+msgstr "tidak dapat menambahkan submodul dari algoritma hash yang berbeda"
+
+#: object-file.c
 #, c-format
 msgid "%s: unsupported file type"
 msgstr "%s: tipe berkas tidak didukung"
@@ -25642,6 +25740,11 @@ msgid "--format=%.*s cannot be used with --python, --shell, --tcl"
 msgstr "--format=%.*s tidak dapat digunakan dengan --python, --shell, --tcl"
 
 #: ref-filter.c
+#, c-format
+msgid "parse_object_buffer failed on %s for %s"
+msgstr "parse_object_buffer gagal pada %s untuk %s"
+
+#: ref-filter.c
 msgid "failed to run 'describe'"
 msgstr "gagal menjalankan 'describe'"
 
@@ -25678,11 +25781,6 @@ msgstr "(tanpa cabang)"
 #, c-format
 msgid "missing object %s for %s"
 msgstr "objek %s hilang untuk %s"
-
-#: ref-filter.c
-#, c-format
-msgid "parse_object_buffer failed on %s for %s"
-msgstr "parse_object_buffer gagal pada %s untuk %s"
 
 #: ref-filter.c
 #, c-format
@@ -26045,6 +26143,21 @@ msgstr "nama referensi %s tidak ditemukan"
 #, c-format
 msgid "refname %s is a symbolic ref, copying it is not supported"
 msgstr "nama referensi %s simbolik, menyalinnya tidak didukung"
+
+#: refs/reftable-backend.c
+#, c-format
+msgid "reftable stack for worktree '%s' is broken"
+msgstr "tumpukan tabel referensi untuk pohon kerja '%s' rusak"
+
+#: refs/reftable-backend.c
+#, c-format
+msgid "could not create iterator for worktree '%s'"
+msgstr "tidak dapat membuat iterator untuk pohon kerja '%s'"
+
+#: refs/reftable-backend.c
+#, c-format
+msgid "could not read record for worktree '%s'"
+msgstr "tidak dapat membaca rekaman untuk pohon kerja '%s'"
 
 #: refspec.c
 #, c-format
@@ -26558,6 +26671,10 @@ msgstr "repack: Mengharapkan baris ID objek hex penuh hanya dari pack-objects."
 msgid "could not finish pack-objects to repack promisor objects"
 msgstr ""
 "tidak dapat menyelesaikan pack-objects untuk mengepak ulang objek pejanji"
+
+#: repack-promisor.c
+msgid "could not start pack-objects to repack promisor packs"
+msgstr "tidak dapat memulai pack-objects untuk mengepak ulang pak pejanji"
 
 #: repack.c
 #, c-format
@@ -27785,11 +27902,6 @@ msgid "illegal label name: '%.*s'"
 msgstr "nama label ilegal: '%.*s'"
 
 #: sequencer.c
-#, c-format
-msgid "could not resolve '%s'"
-msgstr "tidak dapat menguraikan '%s'"
-
-#: sequencer.c
 msgid "writing fake root commit"
 msgstr "menulis komit akar palsu"
 
@@ -28373,57 +28485,83 @@ msgstr "format %s jelek: elemen '%s' tidak diakhiri dengan ')'"
 msgid "bad %s format: %%%.*s"
 msgstr "format %s jelek: %%%.*s"
 
-#. TRANSLATORS: IEC 80000-13:2008 gibibyte
 #: strbuf.c
 #, c-format
-msgid "%u.%2.2u GiB"
-msgstr "%u.%2.2u gibibita"
+msgid "%u.%2.2u"
+msgstr "%u.%2.2u"
 
-#. TRANSLATORS: IEC 80000-13:2008 gibibyte/second
+#. TRANSLATORS: SI decimal prefix symbol for 10^9
 #: strbuf.c
-#, c-format
-msgid "%u.%2.2u GiB/s"
-msgstr "%u.%2.2u gibibita/detik"
+msgid "G"
+msgstr "G"
 
-#. TRANSLATORS: IEC 80000-13:2008 mebibyte
+#. TRANSLATORS: SI decimal prefix symbol for 10^6
 #: strbuf.c
-#, c-format
-msgid "%u.%2.2u MiB"
-msgstr "%u.%2.2u mebibita"
+msgid "M"
+msgstr "M"
 
-#. TRANSLATORS: IEC 80000-13:2008 mebibyte/second
+#. TRANSLATORS: SI decimal prefix symbol for 10^3
 #: strbuf.c
-#, c-format
-msgid "%u.%2.2u MiB/s"
-msgstr "%u.%2.2u mebibita/detik"
+msgid "k"
+msgstr "k"
 
-#. TRANSLATORS: IEC 80000-13:2008 kibibyte
+#. TRANSLATORS: IEC 80000-13:2008 gibibyte/second and gibibyte
 #: strbuf.c
-#, c-format
-msgid "%u.%2.2u KiB"
-msgstr "%u.%2.2u kibibita"
+msgid "GiB/s"
+msgstr "GiB/detik"
 
-#. TRANSLATORS: IEC 80000-13:2008 kibibyte/second
 #: strbuf.c
-#, c-format
-msgid "%u.%2.2u KiB/s"
-msgstr "%u.%2.2u kibibita/detik"
+msgid "GiB"
+msgstr "GiB"
 
-#. TRANSLATORS: IEC 80000-13:2008 byte
+#. TRANSLATORS: IEC 80000-13:2008 mebibyte/second and mebibyte
 #: strbuf.c
-#, c-format
-msgid "%u byte"
-msgid_plural "%u bytes"
-msgstr[0] "%u bita"
-msgstr[1] "%u bita"
+msgid "MiB/s"
+msgstr "MiB/detik"
+
+#: strbuf.c
+msgid "MiB"
+msgstr "MiB"
+
+#. TRANSLATORS: IEC 80000-13:2008 kibibyte/second and kibibyte
+#: strbuf.c
+msgid "KiB/s"
+msgstr "KiB/detik"
+
+#: strbuf.c
+msgid "KiB"
+msgstr "KiB"
+
+#. TRANSLATORS: IEC 80000-13:2008 byte/second and byte
+#: strbuf.c
+msgid "B/s"
+msgstr "B/detik"
+
+#: strbuf.c
+msgid "B"
+msgstr "B"
 
 #. TRANSLATORS: IEC 80000-13:2008 byte/second
 #: strbuf.c
+msgid "byte/s"
+msgid_plural "bytes/s"
+msgstr[0] "bita/detik"
+msgstr[1] "bita/detik"
+
+#. TRANSLATORS: IEC 80000-13:2008 byte
+#: strbuf.c
+msgid "byte"
+msgid_plural "bytes"
+msgstr[0] "bita"
+msgstr[1] "bita"
+
+#. TRANSLATORS: The first argument is the number string. The second
+#. argument is the unit string (i.e. "12.34 MiB/s").
+#.
+#: strbuf.c
 #, c-format
-msgid "%u byte/s"
-msgid_plural "%u bytes/s"
-msgstr[0] "%u bita/detik"
-msgstr[1] "%u bita/detik"
+msgid "%s %s"
+msgstr "%s %s"
 
 #: submodule-config.c
 #, c-format
@@ -28788,10 +28926,6 @@ msgstr "jumlah bita"
 #: t/helper/test-simple-ipc.c
 msgid "number of requests per thread"
 msgstr "jumlah permintaan tiap utas"
-
-#: t/helper/test-simple-ipc.c
-msgid "byte"
-msgstr "bita"
 
 #: t/helper/test-simple-ipc.c
 msgid "ballast character"
