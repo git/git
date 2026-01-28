@@ -764,6 +764,13 @@ static char *dwim_branch(const char *path, char **new_branch)
 	if (guess_remote) {
 		struct object_id oid;
 		char *remote = unique_tracking_name(*new_branch, &oid, NULL);
+		char *templated_name = expand_remote_branch_template(*new_branch);
+
+		if (!remote && templated_name) {
+			die(_("No remote branch found for '%s' (set to '%s' by checkout.remoteBranchTemplate)"),
+			    *new_branch, templated_name);
+		}
+		free(templated_name);
 		return remote;
 	}
 	return NULL;
