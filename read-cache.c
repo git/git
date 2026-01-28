@@ -201,13 +201,13 @@ void fill_stat_cache_info(struct index_state *istate, struct cache_entry *ce, st
 
 static unsigned int st_mode_from_ce(const struct cache_entry *ce)
 {
-	extern int trust_executable_bit, has_symlinks;
+	extern int has_symlinks;
 
 	switch (ce->ce_mode & S_IFMT) {
 	case S_IFLNK:
 		return has_symlinks ? S_IFLNK : (S_IFREG | 0644);
 	case S_IFREG:
-		return (ce->ce_mode & (trust_executable_bit ? 0755 : 0644)) | S_IFREG;
+		return (ce->ce_mode & (the_repository->settings.trust_executable_bit ? 0755 : 0644)) | S_IFREG;
 	case S_IFGITLINK:
 		return S_IFDIR | 0755;
 	case S_IFDIR:
@@ -317,7 +317,7 @@ static int ce_match_stat_basic(const struct cache_entry *ce, struct stat *st)
 		/* We consider only the owner x bit to be relevant for
 		 * "mode changes"
 		 */
-		if (trust_executable_bit &&
+		if (the_repository->settings.trust_executable_bit &&
 		    (0100 & (ce->ce_mode ^ st->st_mode)))
 			changed |= MODE_CHANGED;
 		break;
@@ -738,7 +738,7 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 		ce->ce_flags |= CE_INTENT_TO_ADD;
 
 
-	if (trust_executable_bit && has_symlinks) {
+	if (the_repository->settings.trust_executable_bit && has_symlinks) {
 		ce->ce_mode = create_ce_mode(st_mode);
 	} else {
 		/* If there is an existing entry, pick the mode bits and type
@@ -748,7 +748,7 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 		int pos = index_name_pos_also_unmerged(istate, path, namelen);
 
 		ent = (0 <= pos) ? istate->cache[pos] : NULL;
-		ce->ce_mode = ce_mode_from_stat(ent, st_mode);
+		ce->ce_mode = ce_mode_from_stat(ent, st_mode, istate->repo);
 	}
 
 	/* When core.ignorecase=true, determine if a directory of the same name but differing
