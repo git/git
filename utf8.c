@@ -252,6 +252,17 @@ int is_utf8(const char *text)
 	return 1;
 }
 
+int is_valid_utf8(const char *text, size_t len)
+{
+	while (text && len > 0) {
+		ucs_char_t ch = pick_one_utf8_char(&text, &len);
+		if (text && ch == 0 && len > 0)
+			return 0;
+	}
+
+	return text != NULL;
+}
+
 static void strbuf_add_indented_text(struct strbuf *buf, const char *text,
 				     int indent, int indent2)
 {
@@ -654,6 +665,24 @@ int is_missing_required_utf_bom(const char *enc, const char *data, size_t len)
 	   !(has_bom_prefix(data, len, utf32_be_bom, sizeof(utf32_be_bom)) ||
 	     has_bom_prefix(data, len, utf32_le_bom, sizeof(utf32_le_bom)))
 	);
+}
+
+int try_reencode_to_utf8(const char *text, size_t len, char **out_text, size_t *out_len)
+{
+	const char *in_encoding;
+	if (has_bom_prefix(text, len, utf32_be_bom, sizeof(utf32_be_bom)))
+		in_encoding = "UTF-32BE";
+	else if (has_bom_prefix(text, len, utf32_le_bom, sizeof(utf32_le_bom)))
+		in_encoding = "UTF-32LE";
+	else if (has_bom_prefix(text, len, utf16_be_bom, sizeof(utf16_be_bom)))
+		in_encoding = "UTF-16BE";
+	else if (has_bom_prefix(text, len, utf16_le_bom, sizeof(utf16_le_bom)))
+		in_encoding = "UTF-16LE";
+	else
+		return 0;
+
+	*out_text = reencode_string_len(text, len, "UTF-8", in_encoding, out_len);
+	return *out_text != NULL;
 }
 
 /*

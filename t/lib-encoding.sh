@@ -23,3 +23,11 @@ write_utf32 () {
 	fi &&
 	iconv -f UTF-8 -t UTF-32
 }
+
+write_encoded () {
+  iconv -f UTF-8 -t "$1"
+}
+
+write_bom () {
+  echo "$@" | perl -pe 's/\s+//g; $_=pack("H*", $_)'
+}
