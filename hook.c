@@ -152,8 +152,8 @@ int run_hooks_opt(struct repository *r, const char *hook_name,
 		.tr2_category = "hook",
 		.tr2_label = hook_name,
 
-		.processes = 1,
-		.ungroup = 1,
+		.processes = options->jobs,
+		.ungroup = options->jobs == 1,
 
 		.get_next_task = pick_next_hook,
 		.start_failure = notify_start_failure,
@@ -168,6 +168,9 @@ int run_hooks_opt(struct repository *r, const char *hook_name,
 
 	if (options->path_to_stdin && options->feed_pipe)
 		BUG("options path_to_stdin and feed_pipe are mutually exclusive");
+
+	if (!options->jobs)
+		BUG("run_hooks_opt must be called with options.jobs >= 1");
 
 	if (options->invoked_hook)
 		*options->invoked_hook = 0;

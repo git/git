@@ -17,6 +17,14 @@ struct run_hooks_opt
 	unsigned int error_if_missing:1;
 
 	/**
+	 *  Number of processes to parallelize across.
+	 *
+	 * If > 1, output will be buffered and de-interleaved (ungroup=0).
+	 * If == 1, output will be real-time (ungroup=1).
+	 */
+	unsigned int jobs;
+
+	/**
 	 * An optional initial working directory for the hook,
 	 * translates to "struct child_process"'s "dir" member.
 	 */
@@ -90,6 +98,7 @@ struct run_hooks_opt
 	.env = STRVEC_INIT, \
 	.args = STRVEC_INIT, \
 	.stdout_to_stderr = 1, \
+	.jobs = 1, \
 }
 
 struct hook_cb_data {
