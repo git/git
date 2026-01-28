@@ -251,21 +251,57 @@ struct commit_list *get_shallow_commits_by_rev_list(struct strvec *argv,
 	 * commit A is processed first, then commit B, whose parent is
 	 * A, later. If NOT_SHALLOW on A is cleared at step 1, B
 	 * itself is considered border at step 2, which is incorrect.
+	 *
+	 * We must also consider that B has multiple parents which may
+	 * not all be marked NOT_SHALLOW (as they weren't traversed into
+	 * the not_shallow_list from revs in the first place). Because of
+	 * that an additional step is required to reconsider B as border.
+	 * A commit from the not_shallow_list is considered border only
+	 * when ALL its parents weren't on the not_shallow_list.
+	 * When one or more parents of a commit from the not_shellow_list
+	 * also come from that list, the commit is not considered border,
+	 * but its non-listed parents are considered border commits.
+	 *
+	 * The general processing goes like this:
+	 * 1. Above we've painted the whole not_shallow_list of commits
+	 *    NOT_SHALLOW.
+	 * 2. For each commit from the not_shallow_list (the code below)
+	 *    we paint SHALLOW this commit and its parent for all its
+	 *    parents that had not yet been painted NOT_SHALLOW.
+	 * 3. Commits with all parents being painted only SHALLOW remain
+	 *    shallow and are being added to result list.
+	 * 4. Commits without all parents being painted only SHALLOW are
+	 *    being excluded as borders, however their parents painted only
+	 *    SHALLOW are being added to the result borders list.
 	 */
 	for (p = not_shallow_list; p; p = p->next) {
 		struct commit *c = p->item;
 		struct commit_list *parent;
+		int must_not_be_shallow = 0;
 
 		if (repo_parse_commit(the_repository, c))
 			die("unable to parse commit %s",
 			    oid_to_hex(&c->object.oid));
 
 		for (parent = c->parents; parent; parent = parent->next)
-			if (!(parent->item->object.flags & not_shallow_flag)) {
+			if (parent->item->object.flags & not_shallow_flag) {
+				must_not_be_shallow = 1;
+			} else {
 				c->object.flags |= shallow_flag;
-				commit_list_insert(c, &result);
-				break;
+				parent->item->object.flags |= shallow_flag;
 			}
+		if (must_not_be_shallow) {
+			c->object.flags &= ~shallow_flag;
+			for (parent = c->parents; parent; parent = parent->next)
+				if (parent->item->object.flags & shallow_flag) {
+					parent->item->object.flags |= not_shallow_flag;
+					commit_list_insert(parent->item, &result);
+				}
+		} else {
+			for (parent = c->parents; parent; parent = parent->next)
+				parent->item->object.flags &= ~shallow_flag;
+			commit_list_insert(c, &result);
+		}
 	}
 	free_commit_list(not_shallow_list);
 
