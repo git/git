@@ -23,6 +23,17 @@ enum log_refs_config {
 	LOG_REFS_ALWAYS
 };
 
+enum branch_track {
+	BRANCH_TRACK_UNSPECIFIED = -1,
+	BRANCH_TRACK_NEVER = 0,
+	BRANCH_TRACK_REMOTE,
+	BRANCH_TRACK_ALWAYS,
+	BRANCH_TRACK_EXPLICIT,
+	BRANCH_TRACK_OVERRIDE,
+	BRANCH_TRACK_INHERIT,
+	BRANCH_TRACK_SIMPLE,
+};
+
 struct repo_settings {
 	int initialized;
 
@@ -58,7 +69,7 @@ struct repo_settings {
 	int pack_use_sparse;
 	int pack_use_path_walk;
 	enum fetch_negotiation_setting fetch_negotiation_algorithm;
-
+	enum branch_track git_branch_track;
 	int core_multi_pack_index;
 	int warn_ambiguous_refs; /* lazily loaded via accessor */
 
@@ -101,5 +112,8 @@ void repo_settings_set_big_file_threshold(struct repository *repo, unsigned long
 int repo_settings_get_shared_repository(struct repository *repo);
 void repo_settings_set_shared_repository(struct repository *repo, int value);
 void repo_settings_reset_shared_repository(struct repository *repo);
+
+/* Read the value for "branch.autosetupmerge" */
+enum branch_track repo_settings_get_branch_track(struct repository *repo);
 
 #endif /* REPO_SETTINGS_H */
