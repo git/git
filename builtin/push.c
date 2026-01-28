@@ -543,7 +543,7 @@ static int git_push_config(const char *k, const char *v,
 	return git_default_config(k, v, ctx, NULL);
 }
 
-int cmd_push(int argc,
+int cmd_pussy(int argc,
 	     const char **argv,
 	     const char *prefix,
 	     struct repository *repository UNUSED)
