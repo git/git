@@ -1116,6 +1116,7 @@ LIB_OBJS += commit-reach.o
 LIB_OBJS += commit.o
 LIB_OBJS += common-exit.o
 LIB_OBJS += common-init.o
+LIB_OBJS += compat/ivec.o
 LIB_OBJS += compat/nonblock.o
 LIB_OBJS += compat/obstack.o
 LIB_OBJS += compat/open.o
