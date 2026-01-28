@@ -3334,8 +3334,8 @@ void for_each_preferred_bitmap_tip(struct repository *repo,
 		return;
 
 	for_each_string_list_item(item, preferred_tips) {
-		refs_for_each_ref_in(get_main_ref_store(repo),
-				     item->string, cb, cb_data);
+		refs_for_each_fullref_in(get_main_ref_store(repo),
+					 item->string, NULL, cb, cb_data);
 	}
 }
 
