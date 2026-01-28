@@ -5892,11 +5892,11 @@ static int make_script_with_merges(struct pretty_print_context *pp,
 
 		/* Create a label from the commit message */
 		strbuf_reset(&label_from_message);
-		if (skip_prefix(oneline.buf, "# Merge ", &p1) &&
+		if (skip_prefix(oneline.buf, "Merge ", &p1) &&
 		    (p1 = strchr(p1, '\'')) &&
 		    (p2 = strchr(++p1, '\'')))
 			strbuf_add(&label_from_message, p1, p2 - p1);
-		else if (skip_prefix(oneline.buf, "# Merge pull request ",
+		else if (skip_prefix(oneline.buf, "Merge pull request ",
 				     &p1) &&
 			 (p1 = strstr(p1, " from ")))
 			strbuf_addstr(&label_from_message, p1 + strlen(" from "));
@@ -5931,7 +5931,7 @@ static int make_script_with_merges(struct pretty_print_context *pp,
 
 			strbuf_addstr(&buf, label_oid(oid, label, &state));
 		}
-		strbuf_addf(&buf, " %s", oneline.buf);
+		strbuf_addf(&buf, " # %s", oneline.buf);
 
 		FLEX_ALLOC_STR(entry, string, buf.buf);
 		oidcpy(&entry->entry.oid, &commit->object.oid);
@@ -6013,7 +6013,7 @@ static int make_script_with_merges(struct pretty_print_context *pp,
 			else {
 				strbuf_reset(&oneline);
 				pretty_print_commit(pp, commit, &oneline);
-				strbuf_addf(out, "%s %s %s\n",
+				strbuf_addf(out, "%s %s # %s\n",
 					    cmd_reset, to, oneline.buf);
 			}
 		}
@@ -6081,14 +6081,8 @@ int sequencer_make_script(struct repository *r, struct strbuf *out,
 	repo_config_get_string(the_repository, "rebase.instructionFormat", &format);
 	if (!format || !*format) {
 		free(format);
-		format = xstrdup("# %s");
+		format = xstrdup("%s");
 	}
-	if (*format != '#') {
-		char *temp = format;
-		format = xstrfmt("# %s", temp);
-		free(temp);
-	}
-
 	get_commit_format(format, &revs);
 	free(format);
 	pp.fmt = revs.commit_format;
