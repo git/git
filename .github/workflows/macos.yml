@@ -1,0 +1,15 @@
+---
+name: Build Standalone Git for Apple Silicon
+on:
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Git Source
+        uses: actions/checkout@v4
+
+      - name: Install Build Dependencies
+        run: |
+          brew install autoconf automake libtool gettext openssl
