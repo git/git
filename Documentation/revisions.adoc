@@ -149,6 +149,23 @@ from one location and push to another. In a non-triangular workflow,
 This suffix is also accepted when spelled in uppercase, and means the same
 thing no matter the case.
 
+'@\{primary\}'::
+  The suffix '@\{primary}' refers to the primary branch of the repository,
+  typically `main` or `master`. This is determined by the `init.defaultBranch`
+  configuration option, or falls back to `main` (or `master` in older Git
+  versions) if not configured. The primary branch must exist in the repository
+  for this syntax to work.
++
+Here's an example:
++
+------------------------------
+$ git checkout @{primary}
+Switched to branch 'main'
+
+$ git rev-parse --symbolic-full-name @{primary}
+refs/heads/main
+------------------------------
+
 '<rev>{caret}[<n>]', e.g. 'HEAD{caret}, v1.5.1{caret}0'::
   A suffix '{caret}' to a revision parameter means the first parent of
   that commit object.  '{caret}<n>' means the <n>th parent (i.e.

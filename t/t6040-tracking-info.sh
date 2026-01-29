@@ -106,6 +106,33 @@ test_expect_success 'checkout (up-to-date with upstream)' '
 	test_grep "Your branch is up to date with .origin/main" actual
 '
 
+test_expect_success 'checkout @{primary} same as checkout main' '
+	(
+		cd test &&
+		git checkout b6 &&
+		git checkout @{primary} >../actual
+	) &&
+	cat >expect <<-EOF &&
+	Your branch is up to date with ${SQ}origin/main${SQ}.
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'status from @{primary} same as status from main' '
+	(
+		cd test &&
+		git checkout @{primary} &&
+		git status >../actual
+	) &&
+	cat >expect <<-EOF &&
+	On branch main
+	Your branch is up to date with ${SQ}origin/main${SQ}.
+
+	nothing to commit, working tree clean
+	EOF
+	test_cmp expect actual
+'
+
 test_expect_success 'status (diverged from upstream)' '
 	(
 		cd test &&

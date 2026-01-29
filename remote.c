@@ -1842,8 +1842,12 @@ static const char *error_buf(struct strbuf *err, const char *fmt, ...)
 	return NULL;
 }
 
-const char *branch_get_upstream(struct branch *branch, struct strbuf *err)
+const char *branch_get_upstream_options(struct branch *branch, struct strbuf *err,
+					int omit_remote)
 {
+	static struct strbuf upstream_branch_buf = STRBUF_INIT;
+	const char *dst;
+
 	if (!branch)
 		return error_buf(err, _("HEAD does not point to a branch"));
 
@@ -1866,7 +1870,21 @@ const char *branch_get_upstream(struct branch *branch, struct strbuf *err)
 				 _("upstream branch '%s' not stored as a remote-tracking branch"),
 				 branch->merge[0]->src);
 
-	return branch->merge[0]->dst;
+	dst = branch->merge[0]->dst;
+	if (!omit_remote)
+		return dst;
+
+	strbuf_reset(&upstream_branch_buf);
+	if (skip_prefix(dst, "refs/remotes/", &dst) && (dst = strchr(dst, '/')))
+		strbuf_addf(&upstream_branch_buf, "refs/heads/%s", dst + 1);
+	else
+		strbuf_addstr(&upstream_branch_buf, branch->merge[0]->dst);
+	return upstream_branch_buf.buf;
+}
+
+const char *branch_get_upstream(struct branch *branch, struct strbuf *err)
+{
+	return branch_get_upstream_options(branch, err, 0);
 }
 
 static const char *tracking_for_push_dest(struct remote *remote,
