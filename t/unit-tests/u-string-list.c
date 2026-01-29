@@ -437,6 +437,40 @@ void test_string_list__remove_duplicates(void)
 	t_string_list_clear(&list, 0);
 }
 
+static void t_string_list_sort_u(struct string_list *list, ...)
+{
+	struct string_list expected_strings = STRING_LIST_INIT_DUP;
+	va_list ap;
+
+	va_start(ap, list);
+	t_vcreate_string_list_dup(&expected_strings, 0, ap);
+	va_end(ap);
+
+	string_list_sort_u(list, 0);
+	t_string_list_equal(list, &expected_strings);
+
+	string_list_clear(&expected_strings, 0);
+}
+
+void test_string_list__sort_u(void)
+{
+	struct string_list list = STRING_LIST_INIT_DUP;
+
+	t_create_string_list_dup(&list, 0, NULL);
+	t_string_list_sort_u(&list, NULL);
+
+	t_create_string_list_dup(&list, 0, "", "", "", "", NULL);
+	t_string_list_sort_u(&list, "", NULL);
+
+	t_create_string_list_dup(&list, 0, "b", "a", "a", "", NULL);
+	t_string_list_sort_u(&list, "", "a", "b", NULL);
+
+	t_create_string_list_dup(&list, 0, "b", "a", "a", "d", "c", "c", NULL);
+	t_string_list_sort_u(&list, "a", "b", "c", "d", NULL);
+
+	t_string_list_clear(&list, 0);
+}
+
 static void t_string_list_remove_empty_items(
 	struct string_list *expected_strings,
 	struct string_list *list)
