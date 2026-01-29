@@ -1706,7 +1706,7 @@ msgstr "不能打开数据对象 %s"
 #: archive-tar.c archive-zip.c
 #, c-format
 msgid "unsupported file mode: 0%o (SHA1: %s)"
-msgstr "不支持的文件模式：0%o (SHA1: %s)"
+msgstr "不支持的文件模式：0%o (SHA1：%s)"
 
 #: archive-tar.c archive-zip.c builtin/pack-objects.c
 #, c-format
@@ -5169,7 +5169,7 @@ msgstr "clean.requireForce 设置为 true 且未提供 -f 选项：拒绝执行�
 #: builtin/clone.c
 #, c-format
 msgid "info: Could not add alternate for '%s': %s\n"
-msgstr "info: 不能为 '%s' 添加一个备用：%s\n"
+msgstr "info：不能为 '%s' 添加一个备用：%s\n"
 
 #: builtin/clone.c builtin/diff.c builtin/rm.c grep.c setup.c
 #, c-format
@@ -9010,7 +9010,7 @@ msgstr "无法创建 fsmonitor cookie '%s'"
 #: builtin/fsmonitor--daemon.c
 #, c-format
 msgid "fsmonitor: cookie_result '%d' != SEEN"
-msgstr "fsmonitor: cookie_result '%d' != SEEN"
+msgstr "fsmonitor：cookie_result '%d' != SEEN"
 
 #: builtin/fsmonitor--daemon.c
 #, c-format
@@ -10144,8 +10144,8 @@ msgstr[1] "非 delta：%d 个对象"
 #, c-format
 msgid "chain length = %d: %lu object"
 msgid_plural "chain length = %d: %lu objects"
-msgstr[0] "链长 = %d: %lu 对象"
-msgstr[1] "链长 = %d: %lu 对象"
+msgstr[0] "链长 = %d：%lu 对象"
+msgstr[1] "链长 = %d：%lu 对象"
 
 #: builtin/index-pack.c
 msgid "could not start pack-objects to repack local links"
@@ -10452,7 +10452,7 @@ msgstr ""
 #: builtin/log.c
 #, c-format
 msgid "git show %s: bad file"
-msgstr "git show %s: 损坏的文件"
+msgstr "git show %s：损坏的文件"
 
 #: builtin/log.c
 #, c-format
@@ -18110,7 +18110,7 @@ msgstr ""
 #: builtin/worktree.c
 #, c-format
 msgid "Removing %s/%s: %s"
-msgstr "删除 %s/%s: %s"
+msgstr "删除 %s/%s：%s"
 
 #: builtin/worktree.c
 msgid "report pruned working trees"
@@ -18472,23 +18472,23 @@ msgstr "位于 URI '%s' 的文件不是归档包或归档包列表"
 #: bundle-uri.c
 #, c-format
 msgid "bundle-uri: unexpected argument: '%s'"
-msgstr "bundle-uri: 意外的参数：'%s'"
+msgstr "bundle-uri：意外的参数：'%s'"
 
 #: bundle-uri.c
 msgid "bundle-uri: expected flush after arguments"
-msgstr "bundle-uri: 在参数之后应有一个 flush"
+msgstr "bundle-uri：在参数之后应有一个 flush"
 
 #: bundle-uri.c
 msgid "bundle-uri: got an empty line"
-msgstr "bundle-uri: 获得了空行"
+msgstr "bundle-uri：获得了空行"
 
 #: bundle-uri.c
 msgid "bundle-uri: line is not of the form 'key=value'"
-msgstr "bundle-uri: 行不是以 'key=value' 格式"
+msgstr "bundle-uri：行不是以 'key=value' 格式"
 
 #: bundle-uri.c
 msgid "bundle-uri: line has empty key or value"
-msgstr "bundle-uri: 行有空的键或值"
+msgstr "bundle-uri：行有空的键或值"
 
 #: bundle.c
 #, c-format
@@ -20980,7 +20980,7 @@ msgstr "--follow 明确要求只跟一个路径规格"
 #: diff.c
 #, c-format
 msgid "pathspec magic not supported by --follow: %s"
-msgstr "指定 --follow: %s 的同时，不支持在路径规格中使用神奇前缀"
+msgstr "--follow 不支持在路径规格中使用神奇前缀：%s"
 
 #: diff.c parse-options.c
 #, c-format
@@ -21955,12 +21955,12 @@ msgstr "服务器不允许请求未公开的对象 %s"
 #: fsmonitor-ipc.c
 #, c-format
 msgid "fsmonitor_ipc__send_query: invalid path '%s'"
-msgstr "fsmonitor_ipc__send_query: 无效路径 '%s'"
+msgstr "fsmonitor_ipc__send_query：无效路径 '%s'"
 
 #: fsmonitor-ipc.c
 #, c-format
 msgid "fsmonitor_ipc__send_query: unspecified error on '%s'"
-msgstr "fsmonitor_ipc__send_query: 未知错误于 '%s'"
+msgstr "fsmonitor_ipc__send_query：未知错误于 '%s'"
 
 #: fsmonitor-ipc.c
 msgid "fsmonitor--daemon is not running"
@@ -22465,7 +22465,7 @@ msgstr "不支持的 SSL 后端 '%s'。支持的 SSL 后端："
 #: http.c
 #, c-format
 msgid "Could not set SSL backend to '%s': cURL was built without SSL backends"
-msgstr "无法设置 SSL 后端为 '%s'：cURL: cURL 没有使用 SSL 后端构建"
+msgstr "无法设置 SSL 后端为 '%s'：cURL 没有使用 SSL 后端构建"
 
 #: http.c
 #, c-format
@@ -25618,12 +25618,12 @@ msgstr "无法锁定 '%s' 引用：位于 %s，但预期为 %s"
 #: refs/reftable-backend.c
 #, c-format
 msgid "reftable: transaction prepare: %s"
-msgstr "reftable: 事务准备：%s"
+msgstr "reftable：事务准备：%s"
 
 #: refs/reftable-backend.c
 #, c-format
 msgid "reftable: transaction failure: %s"
-msgstr "reftable: 事务失败：%s"
+msgstr "reftable：事务失败：%s"
 
 #: refs/reftable-backend.c
 #, c-format
@@ -27923,7 +27923,7 @@ msgstr "坏的 %s 格式：元素 '%s' 没有以 ')' 结尾"
 #: strbuf.c
 #, c-format
 msgid "bad %s format: %%%.*s"
-msgstr "坏的 %s 格式: %%%.*s"
+msgstr "坏的 %s 格式：%%%.*s"
 
 #. TRANSLATORS: IEC 80000-13:2008 gibibyte
 #: strbuf.c
@@ -29956,7 +29956,7 @@ msgstr ""
 #: git-send-email.perl
 #, perl-format
 msgid "Failed to opendir %s: %s"
-msgstr "无法打开目录 %s: %s"
+msgstr "无法打开目录 %s：%s"
 
 #: git-send-email.perl
 msgid ""
@@ -29976,7 +29976,7 @@ msgstr "在 %s 中没有标题行？"
 #: git-send-email.perl
 #, perl-format
 msgid "Failed to open for writing %s: %s"
-msgstr "为写入打开 %s 失败: %s"
+msgstr "为写入打开 %s 失败：%s"
 
 #: git-send-email.perl
 msgid ""
@@ -29994,12 +29994,12 @@ msgstr ""
 #: git-send-email.perl
 #, perl-format
 msgid "Failed to open %s.final: %s"
-msgstr "无法打开 %s.final: %s"
+msgstr "无法打开 %s.final：%s"
 
 #: git-send-email.perl
 #, perl-format
 msgid "Failed to open %s: %s"
-msgstr "无法打开 %s: %s"
+msgstr "无法打开 %s：%s"
 
 #: git-send-email.perl
 msgid "Summary email is empty, skipping it\n"
@@ -30090,7 +30090,7 @@ msgstr ""
 #. at this point.
 #: git-send-email.perl
 msgid "Send this email? ([y]es|[n]o|[e]dit|[q]uit|[a]ll): "
-msgstr "发送这封邮件？([y]es|[n]o|[e]dit|[q]uit|[a]ll): "
+msgstr "发送这封邮件？([y]es|[n]o|[e]dit|[q]uit|[a]ll)："
 
 #: git-send-email.perl
 msgid "Send this email reply required"
@@ -30181,7 +30181,7 @@ msgstr "(non-mbox) 添加 cc：%s 自行 '%s'\n"
 #: git-send-email.perl
 #, perl-format
 msgid "(body) Adding cc: %s from line '%s'\n"
-msgstr "(body) 添加 cc: %s 自行 '%s'\n"
+msgstr "(body) 添加 cc：%s 自行 '%s'\n"
 
 #: git-send-email.perl
 #, perl-format
@@ -30196,7 +30196,7 @@ msgstr "(%s) 不能执行 '%s'"
 #: git-send-email.perl
 #, perl-format
 msgid "(%s) Malformed output from '%s'"
-msgstr "(%s) 非法的输出信息，来自于: '%s'"
+msgstr "(%s) 非法的输出信息，来自于：'%s'"
 
 #: git-send-email.perl
 #, perl-format
@@ -30206,7 +30206,7 @@ msgstr "(%s) 无法关闭管道至 '%s'"
 #: git-send-email.perl
 #, perl-format
 msgid "(%s) Adding %s: %s from: '%s'\n"
-msgstr "(%s) 添加 %s: %s 自：'%s'\n"
+msgstr "(%s) 添加 %s：%s 自：'%s'\n"
 
 #: git-send-email.perl
 msgid "cannot send message as 7bit"
