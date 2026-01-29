@@ -217,12 +217,12 @@ static struct commit *pick_regular_commit(struct repository *repo,
 					  struct merge_result *result)
 {
 	struct commit *base, *replayed_base;
-	struct tree *pickme_tree, *base_tree;
+	struct tree *pickme_tree, *base_tree, *replayed_base_tree;
 
 	base = pickme->parents->item;
 	replayed_base = mapped_commit(replayed_commits, base, onto);
 
-	result->tree = repo_get_commit_tree(repo, replayed_base);
+	replayed_base_tree = repo_get_commit_tree(repo, replayed_base);
 	pickme_tree = repo_get_commit_tree(repo, pickme);
 	base_tree = repo_get_commit_tree(repo, base);
 
@@ -232,7 +232,7 @@ static struct commit *pick_regular_commit(struct repository *repo,
 
 	merge_incore_nonrecursive(merge_opt,
 				  base_tree,
-				  result->tree,
+				  replayed_base_tree,
 				  pickme_tree,
 				  result);
 
@@ -240,6 +240,10 @@ static struct commit *pick_regular_commit(struct repository *repo,
 	merge_opt->ancestor = NULL;
 	if (!result->clean)
 		return NULL;
+	/* Drop commits that become empty */
+	if (oideq(&replayed_base_tree->object.oid, &result->tree->object.oid) &&
+	    !oideq(&pickme_tree->object.oid, &base_tree->object.oid))
+		return replayed_base;
 	return create_commit(repo, result->tree, pickme, replayed_base);
 }
 
