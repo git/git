@@ -131,7 +131,13 @@ with linked worktrees if you move the main worktree manually.)
 
 `prune`::
 
-Prune worktree information in `$GIT_DIR/worktrees`.
+Remove worktree information in `$GIT_DIR/worktrees` for worktrees
+whose working trees are missing.  Useful after manually removing
+a working tree that is no longer needed (but use "git worktree
+remove" next time you want to do so).  Also, if you _moved_ a
+working tree elsewhere causing the worktree information to become
+dangling, see "git worktree repair" to reconnect the worktree to
+the new working tree location.
 
 `remove`::
 
@@ -271,7 +277,7 @@ mismatch, even if the links are correct.
 With `list`, output additional information about worktrees (see below).
 
 `--expire <time>`::
-	With `prune`, only expire unused worktrees older than _<time>_.
+	With `prune`, only prune missing worktrees if older than _<time>_.
 +
 With `list`, annotate missing worktrees as prunable if they are older than
 _<time>_.
