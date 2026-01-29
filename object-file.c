@@ -725,32 +725,36 @@ struct transaction_packfile {
 	uint32_t nr_written;
 };
 
-struct odb_transaction {
-	struct object_database *odb;
+struct odb_transaction_loose {
+	struct odb_transaction base;
 
 	struct tmp_objdir *objdir;
 	struct transaction_packfile packfile;
 };
 
-static void prepare_loose_object_transaction(struct odb_transaction *transaction)
+static void prepare_loose_object_transaction(struct odb_transaction *base)
 {
+	struct odb_transaction_loose *transaction = (struct odb_transaction_loose *)base;
+
 	/*
 	 * We lazily create the temporary object directory
 	 * the first time an object might be added, since
 	 * callers may not know whether any objects will be
-	 * added at the time they call object_file_transaction_begin.
+	 * added at the time they call odb_transaction_loose_begin.
 	 */
 	if (!transaction || transaction->objdir)
 		return;
 
-	transaction->objdir = tmp_objdir_create(transaction->odb->repo, "bulk-fsync");
+	transaction->objdir = tmp_objdir_create(base->source->odb->repo, "bulk-fsync");
 	if (transaction->objdir)
 		tmp_objdir_replace_primary_odb(transaction->objdir, 0);
 }
 
-static void fsync_loose_object_transaction(struct odb_transaction *transaction,
+static void fsync_loose_object_transaction(struct odb_transaction *base,
 					   int fd, const char *filename)
 {
+	struct odb_transaction_loose *transaction = (struct odb_transaction_loose *)base;
+
 	/*
 	 * If we have an active ODB transaction, we issue a call that
 	 * cleans the filesystem page cache but avoids a hardware flush
@@ -769,7 +773,7 @@ static void fsync_loose_object_transaction(struct odb_transaction *transaction,
 /*
  * Cleanup after batch-mode fsync_object_files.
  */
-static void flush_loose_object_transaction(struct odb_transaction *transaction)
+static void flush_loose_object_transaction(struct odb_transaction_loose *transaction)
 {
 	struct strbuf temp_path = STRBUF_INIT;
 	struct tempfile *temp;
@@ -787,7 +791,7 @@ static void flush_loose_object_transaction(struct odb_transaction *transaction)
 	 * the final name is visible.
 	 */
 	strbuf_addf(&temp_path, "%s/bulk_fsync_XXXXXX",
-		    repo_get_object_directory(transaction->odb->repo));
+		    repo_get_object_directory(transaction->base.source->odb->repo));
 	temp = xmks_tempfile(temp_path.buf);
 	fsync_or_die(get_tempfile_fd(temp), get_tempfile_path(temp));
 	delete_tempfile(&temp);
@@ -1355,11 +1359,11 @@ static int index_core(struct index_state *istate,
 	return ret;
 }
 
-static int already_written(struct odb_transaction *transaction,
+static int already_written(struct odb_transaction_loose *transaction,
 			   struct object_id *oid)
 {
 	/* The object may already exist in the repository */
-	if (odb_has_object(transaction->odb, oid,
+	if (odb_has_object(transaction->base.source->odb, oid,
 			   HAS_OBJECT_RECHECK_PACKED | HAS_OBJECT_FETCH_PROMISOR))
 		return 1;
 
@@ -1373,14 +1377,14 @@ static int already_written(struct odb_transaction *transaction,
 }
 
 /* Lazily create backing packfile for the state */
-static void prepare_packfile_transaction(struct odb_transaction *transaction,
+static void prepare_packfile_transaction(struct odb_transaction_loose *transaction,
 					 unsigned flags)
 {
 	struct transaction_packfile *state = &transaction->packfile;
 	if (!(flags & INDEX_WRITE_OBJECT) || state->f)
 		return;
 
-	state->f = create_tmp_packfile(transaction->odb->repo,
+	state->f = create_tmp_packfile(transaction->base.source->odb->repo,
 				       &state->pack_tmp_name);
 	reset_pack_idx_option(&state->pack_idx_opts);
 
@@ -1481,10 +1485,10 @@ static int stream_blob_to_pack(struct transaction_packfile *state,
 	return 0;
 }
 
-static void flush_packfile_transaction(struct odb_transaction *transaction)
+static void flush_packfile_transaction(struct odb_transaction_loose *transaction)
 {
 	struct transaction_packfile *state = &transaction->packfile;
-	struct repository *repo = transaction->odb->repo;
+	struct repository *repo = transaction->base.source->odb->repo;
 	unsigned char hash[GIT_MAX_RAWSZ];
 	struct strbuf packname = STRBUF_INIT;
 	char *idx_tmp_name = NULL;
@@ -1509,7 +1513,7 @@ static void flush_packfile_transaction(struct odb_transaction *transaction)
 	}
 
 	strbuf_addf(&packname, "%s/pack/pack-%s.",
-		    repo_get_object_directory(transaction->odb->repo),
+		    repo_get_object_directory(transaction->base.source->odb->repo),
 		    hash_to_hex_algop(hash, repo->hash_algo));
 
 	stage_tmp_packfiles(repo, &packname, state->pack_tmp_name,
@@ -1549,7 +1553,7 @@ clear_exit:
  * binary blobs, they generally do not want to get any conversion, and
  * callers should avoid this code path when filters are requested.
  */
-static int index_blob_packfile_transaction(struct odb_transaction *transaction,
+static int index_blob_packfile_transaction(struct odb_transaction_loose *transaction,
 					   struct object_id *result_oid, int fd,
 					   size_t size, const char *path,
 					   unsigned flags)
@@ -1568,7 +1572,7 @@ static int index_blob_packfile_transaction(struct odb_transaction *transaction,
 
 	header_len = format_object_header((char *)obuf, sizeof(obuf),
 					  OBJ_BLOB, size);
-	transaction->odb->repo->hash_algo->init_fn(&ctx);
+	transaction->base.source->odb->repo->hash_algo->init_fn(&ctx);
 	git_hash_update(&ctx, obuf, header_len);
 
 	/* Note: idx is non-NULL when we are writing */
@@ -1644,10 +1648,11 @@ int index_fd(struct index_state *istate, struct object_id *oid,
 		ret = index_core(istate, oid, fd, xsize_t(st->st_size),
 				 type, path, flags);
 	} else {
+		struct object_database *odb = the_repository->objects;
 		struct odb_transaction *transaction;
 
-		transaction = odb_transaction_begin(the_repository->objects);
-		ret = index_blob_packfile_transaction(the_repository->objects->transaction,
+		transaction = odb_transaction_begin(odb);
+		ret = index_blob_packfile_transaction((struct odb_transaction_loose *)odb->transaction,
 						      oid, fd,
 						      xsize_t(st->st_size),
 						      path, flags);
@@ -2028,33 +2033,27 @@ out:
 	return ret;
 }
 
-struct odb_transaction *object_file_transaction_begin(struct odb_source *source)
+static void odb_transaction_loose_commit(struct odb_transaction *base)
 {
+	struct odb_transaction_loose *transaction = (struct odb_transaction_loose *)base;
+
+	flush_loose_object_transaction(transaction);
+	flush_packfile_transaction(transaction);
+}
+
+struct odb_transaction *odb_transaction_loose_begin(struct odb_source *source)
+{
+	struct odb_transaction_loose *transaction;
 	struct object_database *odb = source->odb;
 
 	if (odb->transaction)
 		return NULL;
 
-	CALLOC_ARRAY(odb->transaction, 1);
-	odb->transaction->odb = odb;
+	transaction = xcalloc(1, sizeof(*transaction));
+	transaction->base.source = source;
+	transaction->base.commit = odb_transaction_loose_commit;
 
-	return odb->transaction;
-}
-
-void object_file_transaction_commit(struct odb_transaction *transaction)
-{
-	if (!transaction)
-		return;
-
-	/*
-	 * Ensure the transaction ending matches the pending transaction.
-	 */
-	ASSERT(transaction == transaction->odb->transaction);
-
-	flush_loose_object_transaction(transaction);
-	flush_packfile_transaction(transaction);
-	transaction->odb->transaction = NULL;
-	free(transaction);
+	return &transaction->base;
 }
 
 struct odb_source_loose *odb_source_loose_new(struct odb_source *source)

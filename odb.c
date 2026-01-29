@@ -1184,10 +1184,28 @@ void odb_reprepare(struct object_database *o)
 
 struct odb_transaction *odb_transaction_begin(struct object_database *odb)
 {
-	return object_file_transaction_begin(odb->sources);
+	struct odb_transaction *transaction;
+
+	if (odb->transaction)
+		return NULL;
+
+	transaction = odb_transaction_loose_begin(odb->sources);
+	odb->transaction = transaction;
+
+	return transaction;
 }
 
 void odb_transaction_commit(struct odb_transaction *transaction)
 {
-	object_file_transaction_commit(transaction);
+	if (!transaction)
+		return;
+
+	/*
+	 * Ensure the transaction ending matches the pending transaction.
+	 */
+	ASSERT(transaction == transaction->source->odb->transaction);
+
+	transaction->commit(transaction);
+	transaction->source->odb->transaction = NULL;
+	free(transaction);
 }
