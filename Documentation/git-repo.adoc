@@ -8,8 +8,9 @@ git-repo - Retrieve information about the repository
 SYNOPSIS
 --------
 [synopsis]
-git repo info [--format=(keyvalue|nul) | -z] [--all | <key>...]
-git repo structure [--format=(table|keyvalue|nul) | -z]
+git repo info [--format=(lines|nul) | -z] [--all | <key>...]
+git repo info --keys [--format=(lines|nul) | -z]
+git repo structure [--format=(table|lines|nul) | -z]
 
 DESCRIPTION
 -----------
@@ -19,7 +20,7 @@ THIS COMMAND IS EXPERIMENTAL. THE BEHAVIOR MAY CHANGE.
 
 COMMANDS
 --------
-`info [--format=(keyvalue|nul) | -z] [--all | <key>...]`::
+`info [--format=(lines|nul) | -z] [--all | <key>...]`::
 	Retrieve metadata-related information about the current repository. Only
 	the requested data will be returned based on their keys (see "INFO KEYS"
 	section below).
@@ -30,21 +31,32 @@ requested. The `--all` flag requests the values for all the available keys.
 The output format can be chosen through the flag `--format`. Two formats are
 supported:
 +
-`keyvalue`:::
+
+`lines`:::
 	output key-value pairs one per line using the `=` character as
 	the delimiter between the key and the value. Values containing "unusual"
 	characters are quoted as explained for the configuration variable
 	`core.quotePath` (see linkgit:git-config[1]). This is the default.
 
 `nul`:::
-	similar to `keyvalue`, but using a newline character as the delimiter
+	similar to `lines`, but using a newline character as the delimiter
 	between the key and the value and using a NUL character after each value.
 	This format is better suited for being parsed by another applications than
-	`keyvalue`. Unlike in the `keyvalue` format, the values are never quoted.
+	`lines`. Unlike in the `lines` format, the values are never quoted.
 +
 `-z` is an alias for `--format=nul`.
 
-`structure [--format=(table|keyvalue|nul) | -z]`::
+`info --keys [--format=(lines|nul) | -z]`::
+	List all the available keys, one per line. The output format can be chosen
+	through the flag `--format`. The following formats are supported:
++
+`lines`:::
+	output the keys one per line. This is the default.
+
+`nul`:::
+	similar to `lines`, but using a _NUL_ character after each value.
+
+`structure [--format=(table|lines|nul) | -z]`::
 	Retrieve statistics about the current repository structure. The
 	following kinds of information are reported:
 +
@@ -61,17 +73,17 @@ supported:
 	change and is not intended for machine parsing. This is the default
 	format.
 
-`keyvalue`:::
+`lines`:::
 	Each line of output contains a key-value pair for a repository stat.
 	The '=' character is used to delimit between the key and the value.
 	Values containing "unusual" characters are quoted as explained for the
 	configuration variable `core.quotePath` (see linkgit:git-config[1]).
 
 `nul`:::
-	Similar to `keyvalue`, but uses a NUL character to delimit between
+	Similar to `lines`, but uses a NUL character to delimit between
 	key-value pairs instead of a newline. Also uses a newline character as
 	the delimiter between the key and value instead of '='. Unlike the
-	`keyvalue` format, values containing "unusual" characters are never
+	`lines` format, values containing "unusual" characters are never
 	quoted.
 +
 `-z` is an alias for `--format=nul`.
