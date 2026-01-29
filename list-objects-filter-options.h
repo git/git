@@ -6,6 +6,7 @@
 #include "strbuf.h"
 
 struct option;
+struct string_list;
 
 /*
  * The list of defined filters for list-objects.
@@ -18,6 +19,7 @@ enum list_objects_filter_choice {
 	LOFC_SPARSE_OID,
 	LOFC_OBJECT_TYPE,
 	LOFC_COMBINE,
+	LOFC_AUTO,
 	LOFC__COUNT /* must be last */
 };
 
@@ -49,6 +51,11 @@ struct list_objects_filter_options {
 	 * Choice is LOFC_DISABLED because "--no-filter" was requested.
 	 */
 	unsigned int no_filter : 1;
+
+	/*
+	 * Is LOFC_AUTO a valid option?
+	 */
+	unsigned int allow_auto_filter : 1;
 
 	/*
 	 * BEGIN choice-specific parsed values from within the filter-spec. Only
@@ -161,5 +168,23 @@ void partial_clone_get_default_filter_spec(
 void list_objects_filter_copy(
 	struct list_objects_filter_options *dest,
 	const struct list_objects_filter_options *src);
+
+/*
+ * Combine the filter specs in 'specs' into a combined filter string
+ * like "combine:<spec1>+<spec2>", where <spec1>, <spec2>, etc are
+ * properly urlencoded. If 'specs' contains no element, NULL is
+ * returned. If 'specs' contains a single element, a copy of that
+ * element is returned.
+ */
+char *list_objects_filter_combine(const struct string_list *specs);
+
+/*
+ * Check if 'filter_options' are an 'auto' filter, and if that's the
+ * case populate it with the filter specified by 'new_filter'.
+ */
+void list_objects_filter_resolve_auto(
+	struct list_objects_filter_options *filter_options,
+	char *new_filter,
+	struct strbuf *errbuf);
 
 #endif /* LIST_OBJECTS_FILTER_OPTIONS_H */

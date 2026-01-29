@@ -15,6 +15,7 @@ struct object_id;
 struct promisor_remote {
 	struct promisor_remote *next;
 	char *partial_clone_filter;
+	char *advertised_filter;
 	unsigned int accepted : 1;
 	const char name[FLEX_ARRAY];
 };
@@ -66,5 +67,10 @@ void mark_promisor_remotes_as_accepted(struct repository *repo, const char *remo
  * Has any promisor remote been accepted by the client?
  */
 int repo_has_accepted_promisor_remote(struct repository *r);
+
+/*
+ * Use the filters from the accepted remotes to create a filter.
+ */
+char *promisor_remote_construct_filter(struct repository *repo);
 
 #endif /* PROMISOR_REMOTE_H */

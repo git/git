@@ -89,3 +89,36 @@ variable. The fields are checked only if the
 `promisor.acceptFromServer` config variable is not set to "None". If
 set to "None", this config variable has no effect. See
 linkgit:gitprotocol-v2[5].
+
+promisor.storeFields::
+	A comma or space separated list of additional remote related
+	field names. If a client accepts an advertised remote, the
+	client will store the values associated with these field names
+	taken from the remote advertisement into its configuration,
+	and then reload its remote configuration. Currently,
+	"partialCloneFilter" and "token" are the only supported field
+	names.
++
+For example if a server advertises "partialCloneFilter=blob:limit=20k"
+for remote "foo", and that remote is accepted, then "blob:limit=20k"
+will be stored for the "remote.foo.partialCloneFilter" configuration
+variable.
++
+If the new field value from an advertised remote is the same as the
+existing field value for that remote on the client side, then no
+change is made to the client configuration though.
++
+When a new value is stored, a message is printed to standard error to
+let users know about this.
++
+Note that for security reasons, if the remote is not already
+configured on the client side, nothing will be stored for that
+remote. In any case, no new remote will be created and no URL will be
+stored.
++
+Before storing a partial clone filter, it's parsed to check it's
+valid. If it's not, a warning is emitted and it's not stored.
++
+Before storing a token, a check is performed to ensure it contains no
+control character. If the check fails, a warning is emitted and it's
+not stored.
