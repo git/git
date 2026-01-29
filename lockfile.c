@@ -6,6 +6,9 @@
 #include "abspath.h"
 #include "gettext.h"
 #include "lockfile.h"
+#include "parse.h"
+#include "strbuf.h"
+#include "wrapper.h"
 
 /*
  * path = absolute or relative path name
@@ -71,19 +74,115 @@ static void resolve_symlink(struct strbuf *path)
 	strbuf_reset(&link);
 }
 
+/*
+ * Lock PID file functions - write PID to a foo~pid.lock file alongside
+ * the lock file for debugging stale locks. The PID file is registered
+ * as a tempfile so it gets cleaned up by signal/atexit handlers.
+ *
+ * Naming: For "foo.lock", the PID file is "foo~pid.lock". The tilde is
+ * forbidden in refnames and allowed in Windows filenames, guaranteeing
+ * no collision with the refs namespace.
+ */
+
+/* Global config variable, initialized from core.lockfilePid */
+int lockfile_pid_enabled;
+
+/*
+ * Path generation helpers.
+ * Given base path "foo", generate:
+ *   - lock path: "foo.lock"
+ *   - pid path:  "foo-pid.lock"
+ */
+static void get_lock_path(struct strbuf *out, const char *path)
+{
+	strbuf_addstr(out, path);
+	strbuf_addstr(out, LOCK_SUFFIX);
+}
+
+static void get_pid_path(struct strbuf *out, const char *path)
+{
+	strbuf_addstr(out, path);
+	strbuf_addstr(out, LOCK_PID_INFIX);
+	strbuf_addstr(out, LOCK_SUFFIX);
+}
+
+static struct tempfile *create_lock_pid_file(const char *pid_path, int mode)
+{
+	struct strbuf content = STRBUF_INIT;
+	struct tempfile *pid_tempfile = NULL;
+	int fd;
+
+	if (!lockfile_pid_enabled)
+		goto out;
+
+	fd = open(pid_path, O_WRONLY | O_CREAT | O_EXCL, mode);
+	if (fd < 0)
+		goto out;
+
+	strbuf_addf(&content, "pid %" PRIuMAX "\n", (uintmax_t)getpid());
+	if (write_in_full(fd, content.buf, content.len) < 0) {
+		warning_errno(_("could not write lock pid file '%s'"), pid_path);
+		close(fd);
+		unlink(pid_path);
+		goto out;
+	}
+
+	close(fd);
+	pid_tempfile = register_tempfile(pid_path);
+
+out:
+	strbuf_release(&content);
+	return pid_tempfile;
+}
+
+static int read_lock_pid(const char *pid_path, uintmax_t *pid_out)
+{
+	struct strbuf content = STRBUF_INIT;
+	const char *val;
+	int ret = -1;
+
+	if (strbuf_read_file(&content, pid_path, LOCK_PID_MAXLEN) <= 0)
+		goto out;
+
+	strbuf_rtrim(&content);
+
+	if (skip_prefix(content.buf, "pid ", &val)) {
+		char *endptr;
+		*pid_out = strtoumax(val, &endptr, 10);
+		if (*pid_out > 0 && !*endptr)
+			ret = 0;
+	}
+
+	if (ret)
+		warning(_("malformed lock pid file '%s'"), pid_path);
+
+out:
+	strbuf_release(&content);
+	return ret;
+}
+
 /* Make sure errno contains a meaningful value on error */
 static int lock_file(struct lock_file *lk, const char *path, int flags,
 		     int mode)
 {
-	struct strbuf filename = STRBUF_INIT;
+	struct strbuf base_path = STRBUF_INIT;
+	struct strbuf lock_path = STRBUF_INIT;
+	struct strbuf pid_path = STRBUF_INIT;
 
-	strbuf_addstr(&filename, path);
+	strbuf_addstr(&base_path, path);
 	if (!(flags & LOCK_NO_DEREF))
-		resolve_symlink(&filename);
+		resolve_symlink(&base_path);
 
-	strbuf_addstr(&filename, LOCK_SUFFIX);
-	lk->tempfile = create_tempfile_mode(filename.buf, mode);
-	strbuf_release(&filename);
+	get_lock_path(&lock_path, base_path.buf);
+	get_pid_path(&pid_path, base_path.buf);
+
+	lk->tempfile = create_tempfile_mode(lock_path.buf, mode);
+	if (lk->tempfile)
+		lk->pid_tempfile = create_lock_pid_file(pid_path.buf, mode);
+
+	strbuf_release(&base_path);
+	strbuf_release(&lock_path);
+	strbuf_release(&pid_path);
 	return lk->tempfile ? lk->tempfile->fd : -1;
 }
 
@@ -151,16 +250,49 @@ static int lock_file_timeout(struct lock_file *lk, const char *path,
 void unable_to_lock_message(const char *path, int err, struct strbuf *buf)
 {
 	if (err == EEXIST) {
-		strbuf_addf(buf, _("Unable to create '%s.lock': %s.\n\n"
-		    "Another git process seems to be running in this repository, e.g.\n"
-		    "an editor opened by 'git commit'. Please make sure all processes\n"
-		    "are terminated then try again. If it still fails, a git process\n"
-		    "may have crashed in this repository earlier:\n"
-		    "remove the file manually to continue."),
-			    absolute_path(path), strerror(err));
-	} else
+		const char *abs_path = absolute_path(path);
+		struct strbuf lock_path = STRBUF_INIT;
+		struct strbuf pid_path = STRBUF_INIT;
+		uintmax_t pid;
+		int pid_status = 0; /* 0 = unknown, 1 = running, -1 = stale */
+
+		get_lock_path(&lock_path, abs_path);
+		get_pid_path(&pid_path, abs_path);
+
+		strbuf_addf(buf, _("Unable to create '%s': %s.\n\n"),
+			    lock_path.buf, strerror(err));
+
+		/*
+		 * Try to read PID file unconditionally - it may exist if
+		 * core.lockfilePid was enabled.
+		 */
+		if (!read_lock_pid(pid_path.buf, &pid)) {
+			if (kill((pid_t)pid, 0) == 0 || errno == EPERM)
+				pid_status = 1;  /* running (or no permission to signal) */
+			else if (errno == ESRCH)
+				pid_status = -1; /* no such process - stale lock */
+		}
+
+		if (pid_status == 1)
+			strbuf_addf(buf, _("Lock may be held by process %" PRIuMAX "; "
+					   "if no git process is running, the lock file "
+					   "may be stale (PIDs can be reused)"),
+				    pid);
+		else if (pid_status == -1)
+			strbuf_addf(buf, _("Lock was held by process %" PRIuMAX ", "
+					   "which is no longer running; the lock file "
+					   "appears to be stale"),
+				    pid);
+		else
+			strbuf_addstr(buf, _("Another git process seems to be running in this repository, "
+					     "or the lock file may be stale"));
+
+		strbuf_release(&lock_path);
+		strbuf_release(&pid_path);
+	} else {
 		strbuf_addf(buf, _("Unable to create '%s.lock': %s"),
 			    absolute_path(path), strerror(err));
+	}
 }
 
 NORETURN void unable_to_lock_die(const char *path, int err)
@@ -207,6 +339,8 @@ int commit_lock_file(struct lock_file *lk)
 {
 	char *result_path = get_locked_file_path(lk);
 
+	delete_tempfile(&lk->pid_tempfile);
+
 	if (commit_lock_file_to(lk, result_path)) {
 		int save_errno = errno;
 		free(result_path);
@@ -215,4 +349,10 @@ int commit_lock_file(struct lock_file *lk)
 	}
 	free(result_path);
 	return 0;
+}
+
+int rollback_lock_file(struct lock_file *lk)
+{
+	delete_tempfile(&lk->pid_tempfile);
+	return delete_tempfile(&lk->tempfile);
 }
