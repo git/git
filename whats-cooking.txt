@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jan 2026, #09)
-X-master-at: ab380cb80b0727f7f2d7f6b17592ae6783e9820c
-X-next-at: 2597b5adb47d07fac54316d0a3d81a2567b43e87
+Subject: What's cooking in git.git (Jan 2026, #10)
+X-master-at: ea717645d199f6f1b66058886475db3e8c9330e9
+X-next-at: 66b2238f5c17644ddf15f75a53c76faeca6d9f1e
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jan 2026, #09)
+What's cooking in git.git (Jan 2026, #10)
 -----------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -51,6 +51,60 @@ Release tarballs are available at:
 --------------------------------------------------
 [New Topics]
 
+* jc/checkout-switch-restore (2026-01-29) 2 commits
+ - checkout: tell "parse_remote_branch" which command is calling it
+ - checkout: pass program-readable token to unified "main"
+
+ "git switch <name>", in an attempt to create a local branch <name>
+ after a remote tracking branch of the same name gave an advise
+ message to disambiguate using "git checkout", which has been
+ updated to use "git switch".
+
+ Comments?
+ source: <20260129190616.645471-1-gitster@pobox.com>
+
+
+* jt/odb-transaction-per-source (2026-01-28) 4 commits
+ - odb: transparently handle common transaction behavior
+ - odb: prepare `struct odb_transaction` to support more sources
+ - object-file: rename transaction functions
+ - odb: store ODB source in `struct odb_transaction`
+
+ Transaction to create objects (or not) is currently tied to the
+ repository, but in the future a repository can have multiple object
+ sources, which may have different transaction mechanisms.  Make the
+ odb transaction API per object source.
+
+ Expecting a reroll?
+ cf. <aXtDZyFoSQahkxBa@pks.im>
+ source: <20260128234519.2721179-1-jltobler@gmail.com>
+
+
+* ps/for-each-ref-in-fixes (2026-01-29) 4 commits
+ - bisect: simplify string_list memory handling
+ - bisect: fix misuse of `refs_for_each_ref_in()`
+ - pack-bitmap: fix bug with exact ref match in "pack.preferBitmapTips"
+ - pack-bitmap: deduplicate logic to iterate over preferred bitmap tips
+
+ A handful of places used refs_for_each_ref_in() API incorrectly,
+ which has been corrected.
+
+ Need any more work on pack-bitmap side?
+ cf. <xmqq7bt0cqec.fsf@gitster.g>
+ source: <20260128-b4-pks-fix-for-each-ref-in-misuse-v1-0-deccae3ea725@pks.im>
+
+
+* ty/perf-3400-optim (2026-01-28) 1 commit
+ - t/perf/p3400: speed up setup using fast-import
+
+ Improve set-up time of a perf test.
+
+ Comments?
+ source: <20260128160717.611391-1-a3205153416@gmail.com>
+
+--------------------------------------------------
+[Cooking]
+
 * ja/doc-synopsis-style-even-more (2026-01-26) 4 commits
  - doc: convert git-show to synopsis style
  - doc: fix some style issues in git-clone and for-each-ref-options
@@ -64,7 +118,7 @@ Release tarballs are available at:
  source: <pull.2036.v2.git.1769462744.gitgitgadget@gmail.com>
 
 
-* ac/string-list-sort-u-and-tests (2026-01-26) 2 commits
+* ac/string-list-sort-u-and-tests (2026-01-29) 2 commits
  - string-list: add string_list_sort_u() that mimics "sort -u"
  - u-string-list: add unit tests for string-list methods
 
@@ -72,7 +126,7 @@ Release tarballs are available at:
  new unit tests to extend coverage.
 
  Will merge to 'next'.
- source: <20260126185604.90089-1-amishhhaaaa@gmail.com>
+ source: <20260125201500.63904-2-amishhhaaaa@gmail.com>
 
 
 * ps/object-info-bits-cleanup (2026-01-26) 3 commits
@@ -98,109 +152,6 @@ Release tarballs are available at:
  This conflicts with en/xdiff-cleanup-3 that has been dormant for some time.
  source: <cover.1769424529.git.phillip.wood@dunelm.org.uk>
 
---------------------------------------------------
-[Graduated to 'master']
-
-* dk/replay-doc-omit-irrelevant-rev-list-options (2026-01-21) 2 commits
-  (merged to 'next' on 2026-01-21 at a17b449304)
- + lint-gitlink: preemptively ignore all /ifn?def|endif/ macros
- + replay: drop rev-list formatting options from manual
-
- Documentation clean-up.
- source: <01a7acfaf87494419b3766da57d4c05cf99c79bb.1768873599.git.ben.knoble+github@gmail.com>
-
-
-* js/ci-leak-skip-svn (2026-01-17) 2 commits
-  (merged to 'next' on 2026-01-21 at ebcf21d088)
- + ci: skip CVS and P4 tests in leaks job, too
- + ci(*-leaks): skip the git-svn tests to save time
-
- Dscho observed that SVN tests are taking too much time in CI leak
- checking tasks, but most time is spent not in our code but in libsvn
- code (which happen to be written in Perl), whose leaks have little
- value to discover for us.  Skip SVN, P4, and CVS tests in the leak
- checking tasks.
- source: <b649f137-7140-4fb6-848a-b3408e54bbe5@gmail.com>
-
-
-* js/symlink-windows (2026-01-09) 19 commits
-  (merged to 'next' on 2026-01-21 at eaaead3f22)
- + mingw: special-case index entries for symlinks with buggy size
- + mingw: emulate `stat()` a little more faithfully
- + mingw: try to create symlinks without elevated permissions
- + mingw: add support for symlinks to directories
- + mingw: implement basic `symlink()` functionality (file symlinks only)
- + mingw: implement `readlink()`
- + mingw: allow `mingw_chdir()` to change to symlink-resolved directories
- + mingw: support renaming symlinks
- + mingw: handle symlinks to directories in `mingw_unlink()`
- + mingw: add symlink-specific error codes
- + mingw: change default of `core.symlinks` to false
- + mingw: factor out the retry logic
- + mingw: compute the correct size for symlinks in `mingw_lstat()`
- + mingw: teach dirent about symlinks
- + mingw: let `mingw_lstat()` error early upon problems with reparse points
- + mingw: drop the separate `do_lstat()` function
- + mingw: implement `stat()` with symlink support
- + mingw: don't call `GetFileAttributes()` twice in `mingw_lstat()`
- + Merge branch 'js/prep-symlink-windows' into js/symlink-windows
-
- Upstream symbolic link support on Windows from Git-for-Windows.
- source: <pull.2018.v2.git.1767989115.gitgitgadget@gmail.com>
-
-
-* jx/build-options-gettext (2026-01-17) 1 commit
-  (merged to 'next' on 2026-01-21 at dd35ac2e2a)
- + help: report on whether or not gettext is enabled
-
- "git bugreport" and "git version --build-options" learned to
- include use of 'gettext' feature, to make it easier to diagnose
- problems around l10n.
- source: <251e1b533ca2e38a9bedae44360ce636cdea4bc3.1768657640.git.zhiyou.jx@alibaba-inc.com>
-
-
-* kh/mailmap-avila (2026-01-21) 1 commit
-  (merged to 'next' on 2026-01-22 at d81095ad13)
- + .mailmap: fix and expand mappings for Jean-Noël Avila
-
- Will merge to 'master'.
- source: <gggadget.24e@msgid.xyz>
-
-
-* pw/mailmap-self (2026-01-20) 1 commit
-  (merged to 'next' on 2026-01-21 at da7d118d77)
- + mailmap: add an entry for Phillip Wood
-
- Unify entries in .mailmap file for Phillip Wood.
- source: <f10c3f680d58ca0abbf795ae8b0f2ad14ab85419.1768906910.git.phillip.wood@dunelm.org.uk>
-
-
-* rj/cygwin-test-fixes-for-2.53 (2026-01-16) 2 commits
-  (merged to 'next' on 2026-01-21 at 8a1ed2cace)
- + t0610-reftable-basics: mitigate a flaky test on cygwin
- + t9700/test.pl: fix path type expectation on cygwin
-
- Test fixup.
- source: <f46e023b-1925-41b2-9842-42e7cb727056@ramsayjones.plus.com>
-
-
-* sb/doc-update-ref-markup-fix (2025-12-08) 1 commit
-  (merged to 'next' on 2026-01-21 at 60d4750233)
- + doc: fix `update-ref` `symref-create` formatting
-
- Doc mark-up fix.
- source: <pull.2123.git.git.1765261419802.gitgitgadget@gmail.com>
-
-
-* ty/t1005-test-path-is-helpers (2026-01-16) 1 commit
-  (merged to 'next' on 2026-01-21 at 690bb3b255)
- + t1005: modernize "! test -f" to "test_path_is_missing"
-
- Test clean-up.
- source: <20260117062515.319664-1-a3205153416@gmail.com>
-
---------------------------------------------------
-[Cooking]
 
 * sp/t5500-cleanup (2026-01-21) 1 commit
   (merged to 'next' on 2026-01-23 at d5adc61ce8)
@@ -244,10 +195,10 @@ Release tarballs are available at:
  source: <20260122152722.866341-1-nasser.grainawi@oss.qualcomm.com>
 
 
-* ar/run-command-hook-take-2 (2026-01-21) 12 commits
+* ar/run-command-hook-take-2 (2026-01-28) 12 commits
  - receive-pack: convert receive hooks to hook API
  - receive-pack: convert update hooks to new API
- - run-command: poll child stdin in addition to stdout
+ - run-command: poll child input in addition to output
  - hook: add jobs option
  - reference-transaction: use hook API instead of run-command
  - transport: convert pre-push to hook API
@@ -255,15 +206,14 @@ Release tarballs are available at:
  - hook: convert 'post-rewrite' hook in sequencer.c to hook API
  - hook: provide stdin via callback
  - run-command: add stdin callback for parallelization
- - run-command: add first helper for pp child states
+ - run-command: add helper for pp child states
  - t1800: add hook output stream tests
 
  Use the hook API to replace ad-hoc invocation of hook scripts via
  the run_command() API.
 
- Expecting a reroll.
- cf. <87cy32q9qh.fsf@collabora.com>
- source: <20260121215436.1473800-1-adrian.ratiu@collabora.com>
+ Comments?
+ source: <20260128213927.3026875-1-adrian.ratiu@collabora.com>
 
 
 * lp/diff-stat-utf8-display-width-fix (2026-01-15) 2 commits
@@ -331,18 +281,18 @@ Release tarballs are available at:
  source: <20260120-toon-last-modified-zzzz-v3-0-9bffd4968b0e@iotcl.com>
 
 
-* tc/last-modified-not-a-tree (2026-01-23) 4 commits
+* tc/last-modified-not-a-tree (2026-01-27) 4 commits
  - last-modified: verify revision argument is a commit-ish
  - last-modified: remove double error message
- - last-modified: fix memory leak when more than one revision is given
- - last-modified: rewrite error message when more than one revision given
+ - last-modified: fix memory leak when more than one commit is given
+ - last-modified: rewrite error message when more than one commit given
 
  Giving "git last-modified" a tree (not a commit-ish) died an
  uncontrolled death, which has been corrected.
 
  Expecting a reroll.
- cf. <xmqqpl70i7pj.fsf@gitster.g>
- source: <20260123-toon-last-modified-tree-v4-0-86bf97bad4e2@iotcl.com>
+ cf. <87v7gkqxb0.fsf@iotcl.com>
+ source: <20260127-toon-last-modified-tree-v5-0-38d18a0956d4@iotcl.com>
 
 
 * sp/myfirstcontribution-include-update (2026-01-12) 1 commit
@@ -430,6 +380,7 @@ Release tarballs are available at:
  Revamp object enumeration API around odb.
 
  Will merge to 'next'?
+ cf. <aXk2FjTUMMThs5Kp@nand.local>
  source: <20260126-pks-odb-for-each-object-v4-0-5a64a038c791@pks.im>
 
 
@@ -579,15 +530,14 @@ Release tarballs are available at:
  source: <pull.2144.git.git.1766850014289.gitgitgadget@gmail.com>
 
 
-* sb/doc-worktree-prune-expire-improvement (2025-12-19) 2 commits
- - worktree: use 'prune' instead of 'expire' in help text
- - worktree: clarify --expire applies to missing worktrees
+* sb/doc-worktree-prune-expire-improvement (2026-01-27) 1 commit
+ - worktree: clarify that --expire only affects missing worktrees
 
  The help text and the documentation for the "--expire" option of
  "git worktree [list|prune]" have been improved.
 
- Expecting a reroll.
- source: <pull.2135.v2.git.git.1766168169.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ source: <pull.2135.v3.git.git.1769578785381.gitgitgadget@gmail.com>
 
 
 * pc/lockfile-pid (2026-01-22) 1 commit
@@ -649,14 +599,15 @@ Release tarballs are available at:
 
 
 * pw/replay-drop-empty (2025-12-18) 2 commits
- - replay: drop commits that become empty
- - Merge branch 'ps/history' into pw/replay-drop-empty
+  (merged to 'next' on 2026-01-29 at 66b2238f5c)
+ + replay: drop commits that become empty
+ + Merge branch 'ps/history' into pw/replay-drop-empty
  (this branch uses ps/history.)
 
  "git replay" is taught to drop commits that become empty (not the
  ones that are empty in the original).
 
- Will merge to 'next', together with 'ps/history'?
+ Will cook in 'next'.
  source: <375adc4e941f3bb22a2b12ee26a083951ed724dd.1766076625.git.phillip.wood@dunelm.org.uk>
 
 
@@ -685,20 +636,21 @@ Release tarballs are available at:
 
 
 * ps/history (2026-01-13) 9 commits
- - builtin/history: implement "reword" subcommand
- - builtin: add new "history" command
- - wt-status: provide function to expose status for trees
- - replay: support updating detached HEAD
- - replay: support empty commit ranges
- - replay: small set of cleanups
- - builtin/replay: move core logic into "libgit.a"
- - builtin/replay: extract core logic to replay revisions
- - Merge branch 'kh/replay-invalid-onto-advance' into ps/history
+  (merged to 'next' on 2026-01-29 at ecac247f83)
+ + builtin/history: implement "reword" subcommand
+ + builtin: add new "history" command
+ + wt-status: provide function to expose status for trees
+ + replay: support updating detached HEAD
+ + replay: support empty commit ranges
+ + replay: small set of cleanups
+ + builtin/replay: move core logic into "libgit.a"
+ + builtin/replay: extract core logic to replay revisions
+ + Merge branch 'kh/replay-invalid-onto-advance' into ps/history
  (this branch is used by pw/replay-drop-empty.)
 
  "git history" history rewriting UI.
 
- Will merge to 'next'.
+ Will cook in 'next'.
  cf. <aWpoMcgwsfRCCrr4@szeder.dev>
  cf. <CABPp-BHkNLdH4C7U4sFoVhrsSPH8KAaDtOdLEQGyajmXZz9hVg@mail.gmail.com>
  source: <20260113-b4-pks-history-builtin-v11-0-e74ebfa2652d@pks.im>
