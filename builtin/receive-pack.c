@@ -561,6 +561,48 @@ static int copy_to_sideband(int in, int out UNUSED, void *arg UNUSED)
 	return 0;
 }
 
+/*
+ * Start an async thread which redirects hook stderr over the sideband.
+ * The original stderr fd is saved to `saved_stderr` and STDERR_FILENO is
+ * redirected to the async's input pipe.
+ */
+static void prepare_sideband_async(struct async *sideband_async, int *saved_stderr, int *started)
+{
+	*started = 0;
+
+	if (!use_sideband)
+		return;
+
+	memset(sideband_async, 0, sizeof(*sideband_async));
+	sideband_async->proc = copy_to_sideband;
+	sideband_async->in = -1;
+
+	if (!start_async(sideband_async)) {
+		*started = 1;
+		*saved_stderr = dup(STDERR_FILENO);
+		if (*saved_stderr >= 0)
+			dup2(sideband_async->in, STDERR_FILENO);
+		close(sideband_async->in);
+	}
+}
+
+/*
+ * Restore the original stderr and wait for the async sideband thread to finish.
+ */
+static void finish_sideband_async(struct async *sideband_async, int saved_stderr, int started)
+{
+	if (!use_sideband)
+		return;
+
+	if (saved_stderr >= 0) {
+		dup2(saved_stderr, STDERR_FILENO);
+		close(saved_stderr);
+	}
+
+	if (started)
+		finish_async(sideband_async);
+}
+
 static void hmac_hash(unsigned char *out,
 		      const char *key_in, size_t key_len,
 		      const char *text, size_t text_len)
@@ -749,7 +791,7 @@ static int check_cert_push_options(const struct string_list *push_options)
 	return retval;
 }
 
-static void prepare_push_cert_sha1(struct child_process *proc)
+static void prepare_push_cert_sha1(struct run_hooks_opt *opt)
 {
 	static int already_done;
 
@@ -775,23 +817,23 @@ static void prepare_push_cert_sha1(struct child_process *proc)
 		nonce_status = check_nonce(sigcheck.payload);
 	}
 	if (!is_null_oid(&push_cert_oid)) {
-		strvec_pushf(&proc->env, "GIT_PUSH_CERT=%s",
+		strvec_pushf(&opt->env, "GIT_PUSH_CERT=%s",
 			     oid_to_hex(&push_cert_oid));
-		strvec_pushf(&proc->env, "GIT_PUSH_CERT_SIGNER=%s",
+		strvec_pushf(&opt->env, "GIT_PUSH_CERT_SIGNER=%s",
 			     sigcheck.signer ? sigcheck.signer : "");
-		strvec_pushf(&proc->env, "GIT_PUSH_CERT_KEY=%s",
+		strvec_pushf(&opt->env, "GIT_PUSH_CERT_KEY=%s",
 			     sigcheck.key ? sigcheck.key : "");
-		strvec_pushf(&proc->env, "GIT_PUSH_CERT_STATUS=%c",
+		strvec_pushf(&opt->env, "GIT_PUSH_CERT_STATUS=%c",
 			     sigcheck.result);
 		if (push_cert_nonce) {
-			strvec_pushf(&proc->env,
+			strvec_pushf(&opt->env,
 				     "GIT_PUSH_CERT_NONCE=%s",
 				     push_cert_nonce);
-			strvec_pushf(&proc->env,
+			strvec_pushf(&opt->env,
 				     "GIT_PUSH_CERT_NONCE_STATUS=%s",
 				     nonce_status);
 			if (nonce_status == NONCE_SLOP)
-				strvec_pushf(&proc->env,
+				strvec_pushf(&opt->env,
 					     "GIT_PUSH_CERT_NONCE_SLOP=%ld",
 					     nonce_stamp_slop);
 		}
@@ -803,94 +845,25 @@ struct receive_hook_feed_state {
 	struct ref_push_report *report;
 	int skip_broken;
 	struct strbuf buf;
-	const struct string_list *push_options;
 };
 
-typedef int (*feed_fn)(void *, const char **, size_t *);
-static int run_and_feed_hook(const char *hook_name, feed_fn feed,
-			     struct receive_hook_feed_state *feed_state)
+static int feed_receive_hook_cb(int hook_stdin_fd, void *pp_cb UNUSED, void *pp_task_cb)
 {
-	struct child_process proc = CHILD_PROCESS_INIT;
-	struct async muxer;
-	int code;
-	const char *hook_path = find_hook(the_repository, hook_name);
-
-	if (!hook_path)
-		return 0;
-
-	strvec_push(&proc.args, hook_path);
-	proc.in = -1;
-	proc.stdout_to_stderr = 1;
-	proc.trace2_hook_name = hook_name;
-
-	if (feed_state->push_options) {
-		size_t i;
-		for (i = 0; i < feed_state->push_options->nr; i++)
-			strvec_pushf(&proc.env,
-				     "GIT_PUSH_OPTION_%"PRIuMAX"=%s",
-				     (uintmax_t)i,
-				     feed_state->push_options->items[i].string);
-		strvec_pushf(&proc.env, "GIT_PUSH_OPTION_COUNT=%"PRIuMAX"",
-			     (uintmax_t)feed_state->push_options->nr);
-	} else
-		strvec_pushf(&proc.env, "GIT_PUSH_OPTION_COUNT");
-
-	if (tmp_objdir)
-		strvec_pushv(&proc.env, tmp_objdir_env(tmp_objdir));
-
-	if (use_sideband) {
-		memset(&muxer, 0, sizeof(muxer));
-		muxer.proc = copy_to_sideband;
-		muxer.in = -1;
-		code = start_async(&muxer);
-		if (code)
-			return code;
-		proc.err = muxer.in;
-	}
-
-	prepare_push_cert_sha1(&proc);
-
-	code = start_command(&proc);
-	if (code) {
-		if (use_sideband)
-			finish_async(&muxer);
-		return code;
-	}
-
-	sigchain_push(SIGPIPE, SIG_IGN);
-
-	while (1) {
-		const char *buf;
-		size_t n;
-		if (feed(feed_state, &buf, &n))
-			break;
-		if (write_in_full(proc.in, buf, n) < 0)
-			break;
-	}
-	close(proc.in);
-	if (use_sideband)
-		finish_async(&muxer);
-
-	sigchain_pop(SIGPIPE);
-
-	return finish_command(&proc);
-}
-
-static int feed_receive_hook(void *state_, const char **bufp, size_t *sizep)
-{
-	struct receive_hook_feed_state *state = state_;
+	struct receive_hook_feed_state *state = pp_task_cb;
 	struct command *cmd = state->cmd;
+
+	strbuf_reset(&state->buf);
 
 	while (cmd &&
 	       state->skip_broken && (cmd->error_string || cmd->did_not_exist))
 		cmd = cmd->next;
+
 	if (!cmd)
-		return -1; /* EOF */
-	if (!bufp)
-		return 0; /* OK, can feed something. */
-	strbuf_reset(&state->buf);
+		return 1;  /* no more commands left */
+
 	if (!state->report)
 		state->report = cmd->report;
+
 	if (state->report) {
 		struct object_id *old_oid;
 		struct object_id *new_oid;
@@ -899,23 +872,33 @@ static int feed_receive_hook(void *state_, const char **bufp, size_t *sizep)
 		old_oid = state->report->old_oid ? state->report->old_oid : &cmd->old_oid;
 		new_oid = state->report->new_oid ? state->report->new_oid : &cmd->new_oid;
 		ref_name = state->report->ref_name ? state->report->ref_name : cmd->ref_name;
+
 		strbuf_addf(&state->buf, "%s %s %s\n",
 			    oid_to_hex(old_oid), oid_to_hex(new_oid),
 			    ref_name);
+
 		state->report = state->report->next;
 		if (!state->report)
-			state->cmd = cmd->next;
+			cmd = cmd->next;
 	} else {
 		strbuf_addf(&state->buf, "%s %s %s\n",
 			    oid_to_hex(&cmd->old_oid), oid_to_hex(&cmd->new_oid),
 			    cmd->ref_name);
-		state->cmd = cmd->next;
+		cmd = cmd->next;
 	}
-	if (bufp) {
-		*bufp = state->buf.buf;
-		*sizep = state->buf.len;
+
+	state->cmd = cmd;
+
+	if (state->buf.len > 0) {
+		int ret = write_in_full(hook_stdin_fd, state->buf.buf, state->buf.len);
+		if (ret < 0) {
+			if (errno == EPIPE)
+				return 1; /* child closed pipe */
+			return ret;
+		}
 	}
-	return 0;
+
+	return state->cmd ? 0 : 1;  /* 0 = more to come, 1 = EOF */
 }
 
 static int run_receive_hook(struct command *commands,
@@ -923,47 +906,74 @@ static int run_receive_hook(struct command *commands,
 			    int skip_broken,
 			    const struct string_list *push_options)
 {
-	struct receive_hook_feed_state state;
-	int status;
+	struct run_hooks_opt opt = RUN_HOOKS_OPT_INIT;
+	struct command *iter = commands;
+	struct receive_hook_feed_state feed_state;
+	struct async sideband_async;
+	int sideband_async_started = 0;
+	int saved_stderr = -1;
+	int ret;
 
-	strbuf_init(&state.buf, 0);
-	state.cmd = commands;
-	state.skip_broken = skip_broken;
-	state.report = NULL;
-	if (feed_receive_hook(&state, NULL, NULL))
+	/* if there are no valid commands, don't invoke the hook at all. */
+	while (iter && skip_broken && (iter->error_string || iter->did_not_exist))
+		iter = iter->next;
+	if (!iter)
 		return 0;
-	state.cmd = commands;
-	state.push_options = push_options;
-	status = run_and_feed_hook(hook_name, feed_receive_hook, &state);
-	strbuf_release(&state.buf);
-	return status;
+
+	if (push_options) {
+		for (int i = 0; i < push_options->nr; i++)
+			strvec_pushf(&opt.env, "GIT_PUSH_OPTION_%d=%s", i,
+				     push_options->items[i].string);
+		strvec_pushf(&opt.env, "GIT_PUSH_OPTION_COUNT=%"PRIuMAX"",
+					     (uintmax_t)push_options->nr);
+	} else {
+		strvec_push(&opt.env, "GIT_PUSH_OPTION_COUNT");
+	}
+
+	if (tmp_objdir)
+		strvec_pushv(&opt.env, tmp_objdir_env(tmp_objdir));
+
+	prepare_push_cert_sha1(&opt);
+
+	prepare_sideband_async(&sideband_async, &saved_stderr, &sideband_async_started);
+
+	/* set up stdin callback */
+	feed_state.cmd = commands;
+	feed_state.skip_broken = skip_broken;
+	feed_state.report = NULL;
+	strbuf_init(&feed_state.buf, 0);
+	opt.feed_pipe_cb_data = &feed_state;
+	opt.feed_pipe = feed_receive_hook_cb;
+
+	ret = run_hooks_opt(the_repository, hook_name, &opt);
+
+	strbuf_release(&feed_state.buf);
+	finish_sideband_async(&sideband_async, saved_stderr, sideband_async_started);
+
+	return ret;
 }
 
 static int run_update_hook(struct command *cmd)
 {
-	struct child_process proc = CHILD_PROCESS_INIT;
+	struct run_hooks_opt opt = RUN_HOOKS_OPT_INIT;
+	struct async sideband_async;
+	int sideband_async_started = 0;
+	int saved_stderr = -1;
 	int code;
-	const char *hook_path = find_hook(the_repository, "update");
 
-	if (!hook_path)
-		return 0;
+	strvec_pushl(&opt.args,
+		     cmd->ref_name,
+		     oid_to_hex(&cmd->old_oid),
+		     oid_to_hex(&cmd->new_oid),
+		     NULL);
 
-	strvec_push(&proc.args, hook_path);
-	strvec_push(&proc.args, cmd->ref_name);
-	strvec_push(&proc.args, oid_to_hex(&cmd->old_oid));
-	strvec_push(&proc.args, oid_to_hex(&cmd->new_oid));
+	prepare_sideband_async(&sideband_async, &saved_stderr, &sideband_async_started);
 
-	proc.no_stdin = 1;
-	proc.stdout_to_stderr = 1;
-	proc.err = use_sideband ? -1 : 0;
-	proc.trace2_hook_name = "update";
+	code = run_hooks_opt(the_repository, "update", &opt);
 
-	code = start_command(&proc);
-	if (code)
-		return code;
-	if (use_sideband)
-		copy_to_sideband(proc.err, -1, NULL);
-	return finish_command(&proc);
+	finish_sideband_async(&sideband_async, saved_stderr, sideband_async_started);
+
+	return code;
 }
 
 static struct command *find_command_by_refname(struct command *list,
@@ -1639,34 +1649,25 @@ out:
 
 static void run_update_post_hook(struct command *commands)
 {
+	struct run_hooks_opt opt = RUN_HOOKS_OPT_INIT;
+	struct async sideband_async;
 	struct command *cmd;
-	struct child_process proc = CHILD_PROCESS_INIT;
-	const char *hook;
-
-	hook = find_hook(the_repository, "post-update");
-	if (!hook)
-		return;
+	int sideband_async_started = 0;
+	int saved_stderr = -1;
 
 	for (cmd = commands; cmd; cmd = cmd->next) {
 		if (cmd->error_string || cmd->did_not_exist)
 			continue;
-		if (!proc.args.nr)
-			strvec_push(&proc.args, hook);
-		strvec_push(&proc.args, cmd->ref_name);
+		strvec_push(&opt.args, cmd->ref_name);
 	}
-	if (!proc.args.nr)
+	if (!opt.args.nr)
 		return;
 
-	proc.no_stdin = 1;
-	proc.stdout_to_stderr = 1;
-	proc.err = use_sideband ? -1 : 0;
-	proc.trace2_hook_name = "post-update";
+	prepare_sideband_async(&sideband_async, &saved_stderr, &sideband_async_started);
 
-	if (!start_command(&proc)) {
-		if (use_sideband)
-			copy_to_sideband(proc.err, -1, NULL);
-		finish_command(&proc);
-	}
+	run_hooks_opt(the_repository, "post-update", &opt);
+
+	finish_sideband_async(&sideband_async, saved_stderr, sideband_async_started);
 }
 
 static void check_aliased_update_internal(struct command *cmd,
