@@ -30,8 +30,8 @@ TAB %(refname)`.
 
 `--color[=<when>]`::
 	Respect any colors specified in the `--format` option. The
-	_<when__ field must be one of `always`, `never`, or `auto` (if
-	`<when>` is absent, behave as if `always` was given).
+	_<when>_ field must be one of `always`, `never`, or `auto` (if
+	_<when>_ is absent, behave as if `always` was given).
 
 `--shell`::
 `--perl`::
