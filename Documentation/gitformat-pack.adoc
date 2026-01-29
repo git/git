@@ -374,7 +374,7 @@ HEADER:
 	    The signature is: {'M', 'I', 'D', 'X'}
 
 	1-byte version number:
-	    Git only writes or recognizes version 1.
+	    Git only writes version 2, but recognizes versions 1 and 2.
 
 	1-byte Object Id Version
 	    We infer the length of object IDs (OIDs) from this value:
@@ -413,7 +413,9 @@ CHUNK DATA:
 	    strings. There is no extra padding between the filenames,
 	    and they are listed in lexicographic order. The chunk itself
 	    is padded at the end with between 0 and 3 NUL bytes to make the
-	    chunk size a multiple of 4 bytes.
+	    chunk size a multiple of 4 bytes. Version 1 MIDXs are required to
+	    list their packs in lexicographic order, but version 2 MIDXs may
+	    list their packs in any arbitrary order.
 
 	Bitmapped Packfiles (ID: {'B', 'T', 'M', 'P'})
 	    Stores a table of two 4-byte unsigned integers in network order.
