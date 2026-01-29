@@ -1150,7 +1150,8 @@ static int process_parents(struct rev_info *revs, struct commit *commit,
 			struct commit *p = parent->item;
 			parent = parent->next;
 			if (p)
-				p->object.flags |= UNINTERESTING;
+				p->object.flags |= UNINTERESTING |
+						   CHILD_VISITED;
 			if (repo_parse_commit_gently(revs->repo, p, 1) < 0)
 				continue;
 			if (p->parents)
@@ -1204,7 +1205,7 @@ static int process_parents(struct rev_info *revs, struct commit *commit,
 			if (!*slot)
 				*slot = *revision_sources_at(revs->sources, commit);
 		}
-		p->object.flags |= pass_flags;
+		p->object.flags |= pass_flags | CHILD_VISITED;
 		if (!(p->object.flags & SEEN)) {
 			p->object.flags |= (SEEN | NOT_USER_GIVEN);
 			if (list)
@@ -2377,6 +2378,8 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 	} else if ((argcount = parse_long_opt("until", argv, &optarg))) {
 		revs->min_age = approxidate(optarg);
 		return argcount;
+	} else if (!strcmp(arg, "--maximal-only")) {
+		revs->maximal_only = 1;
 	} else if (!strcmp(arg, "--first-parent")) {
 		revs->first_parent_only = 1;
 	} else if (!strcmp(arg, "--exclude-first-parent-only")) {
@@ -3146,6 +3149,9 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 	die_for_incompatible_opt3(!!revs->graph, "--graph",
 				  !!revs->reverse, "--reverse",
 				  !!revs->reflog_info, "--walk-reflogs");
+
+	die_for_incompatible_opt2(!!revs->boundary, "--boundary",
+				  !!revs->maximal_only, "--maximal-only");
 
 	if (revs->no_walk && revs->graph)
 		die(_("options '%s' and '%s' cannot be used together"), "--no-walk", "--graph");
@@ -4122,6 +4128,8 @@ static timestamp_t comparison_date(const struct rev_info *revs,
 enum commit_action get_commit_action(struct rev_info *revs, struct commit *commit)
 {
 	if (commit->object.flags & SHOWN)
+		return commit_ignore;
+	if (revs->maximal_only && (commit->object.flags & CHILD_VISITED))
 		return commit_ignore;
 	if (revs->unpacked && has_object_pack(revs->repo, &commit->object.oid))
 		return commit_ignore;
