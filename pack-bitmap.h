@@ -5,6 +5,7 @@
 #include "khash.h"
 #include "pack.h"
 #include "pack-objects.h"
+#include "refs.h"
 #include "string-list.h"
 
 struct commit;
@@ -99,6 +100,13 @@ int for_each_bitmapped_object(struct bitmap_index *bitmap_git,
 			      show_reachable_fn show_reach,
 			      void *payload);
 
+/*
+ * Iterate over all references that are configured as preferred bitmap tips via
+ * "pack.preferBitmapTips" and invoke the callback on each function.
+ */
+void for_each_preferred_bitmap_tip(struct repository *repo,
+				   each_ref_fn cb, void *cb_data);
+
 #define GIT_TEST_PACK_USE_BITMAP_BOUNDARY_TRAVERSAL \
 	"GIT_TEST_PACK_USE_BITMAP_BOUNDARY_TRAVERSAL"
 
@@ -182,7 +190,6 @@ char *pack_bitmap_filename(struct packed_git *p);
 
 int bitmap_is_midx(struct bitmap_index *bitmap_git);
 
-const struct string_list *bitmap_preferred_tips(struct repository *r);
 int bitmap_is_preferred_refname(struct repository *r, const char *refname);
 
 int verify_bitmap_files(struct repository *r);

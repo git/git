@@ -466,6 +466,41 @@ test_bitmap_cases () {
 		)
 	'
 
+	test_expect_success 'pack.preferBitmapTips can use direct refname' '
+		git init repo &&
+		test_when_finished "rm -fr repo" &&
+		(
+			cd repo &&
+
+			# Create enough commits that not all will receive bitmap
+			# coverage even if they are all at the tip of some reference.
+			test_commit_bulk --message="%s" 103 &&
+			git log --format="create refs/tags/%s %H" HEAD >refs &&
+			git update-ref --stdin <refs &&
+
+			# Create the bitmap.
+			git repack -adb &&
+			test-tool bitmap list-commits | sort >commits-with-bitmap &&
+
+			# Verify that we have at least one commit that did not
+			# receive a bitmap.
+			git rev-list HEAD >commits.raw &&
+			sort <commits.raw >commits &&
+			comm -13 commits-with-bitmap commits >commits-wo-bitmap &&
+			test_file_not_empty commits-wo-bitmap &&
+			commit_id=$(head commits-wo-bitmap) &&
+
+			# We now create a reference for this commit and repack
+			# with "preferBitmapTips" pointing to that exact
+			# reference. The expectation is that it will now be
+			# covered by a bitmap.
+			git update-ref refs/heads/cover-me "$commit_id" &&
+			git -c pack.preferBitmapTips=refs/heads/cover-me repack -adb &&
+			test-tool bitmap list-commits >after &&
+			test_grep "$commit_id" after
+		)
+	'
+
 	test_expect_success 'complains about multiple pack bitmaps' '
 		rm -fr repo &&
 		git init repo &&
