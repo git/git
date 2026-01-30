@@ -43,11 +43,14 @@ int cmd_show_index(int argc,
 	/*
 	 * Fallback to SHA1 if we are running outside of a repository.
 	 *
-	 * TODO: Figure out and implement a way to detect the hash algorithm in use by the
-	 *       the index file passed in and use that instead.
+	 * TODO: If a future implementation of index file version encodes the hash
+	 *       algorithm in its header, enable show-index to infer it from the
+	 *       header rather than relying on repository context or a default fallback.
 	 */
-	if (!the_hash_algo)
+	if (!the_hash_algo) {
+		warning(_("assuming SHA-1; use --object-format to override"));
 		repo_set_hash_algo(the_repository, GIT_HASH_DEFAULT);
+	}
 
 	hashsz = the_hash_algo->rawsz;
 
