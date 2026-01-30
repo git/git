@@ -20,8 +20,8 @@ UI, Workflows & Features
 
  * Add a new manual that describes the data model.
 
- * "git fast-import" learns "--strip-if-invalid" option to drop
-   invalid cryptographic signature from objects.
+ * "git fast-import" learns "--signed-commits=strip-if-invalid" option
+   to drop invalid cryptographic signature from objects.
 
  * The use of "revision" (a connected set of commits) has been
    clarified in the "git replay" documentation.
