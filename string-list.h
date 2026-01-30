@@ -240,6 +240,12 @@ struct string_list_item *string_list_append_nodup(struct string_list *list, char
 void string_list_sort(struct string_list *list);
 
 /**
+ * Sort the list and then remove duplicate entries.  If free_util is true,
+ * call free() on the util members of any items that have to be deleted.
+ */
+void string_list_sort_u(struct string_list *list, int free_util);
+
+/**
  * Like `string_list_has_string()` but for unsorted lists. Linear in
  * size of the list.
  */

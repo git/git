@@ -243,6 +243,138 @@ void test_string_list__filter(void)
 	t_string_list_clear(&list, 0);
 }
 
+static void t_string_list_has_string(
+	struct string_list *list,
+	const char *string,
+	int expected)
+{
+	int has_string = string_list_has_string(list, string);
+	cl_assert_equal_i(has_string, expected);
+}
+
+void test_string_list__has_string(void)
+{
+	struct string_list list = STRING_LIST_INIT_DUP;
+
+	t_create_string_list_dup(&list, 0, NULL);
+	t_string_list_has_string(&list, "", 0);
+
+	t_create_string_list_dup(&list, 0, "a", "b", "c", NULL);
+	t_string_list_has_string(&list, "a", 1);
+	t_string_list_has_string(&list, "b", 1);
+	t_string_list_has_string(&list, "c", 1);
+	t_string_list_has_string(&list, "d", 0);
+
+	t_string_list_clear(&list, 0);
+}
+
+static void t_string_list_insert(struct string_list *expected_strings, ...)
+{
+	struct string_list strings_to_insert = STRING_LIST_INIT_DUP;
+	struct string_list list = STRING_LIST_INIT_DUP;
+	va_list ap;
+
+	va_start(ap, expected_strings);
+	t_vcreate_string_list_dup(&strings_to_insert, 0, ap);
+	va_end(ap);
+
+	for (size_t i = 0; i < strings_to_insert.nr; i++)
+		string_list_insert(&list, strings_to_insert.items[i].string);
+
+	t_string_list_equal(&list, expected_strings);
+
+	string_list_clear(&strings_to_insert, 0);
+	string_list_clear(&list, 0);
+}
+
+void test_string_list__insert(void)
+{
+	struct string_list expected_strings = STRING_LIST_INIT_DUP;
+
+	t_create_string_list_dup(&expected_strings, 0, NULL);
+	t_string_list_insert(&expected_strings, NULL);
+
+	t_create_string_list_dup(&expected_strings, 0, "a", "b", NULL);
+	t_string_list_insert(&expected_strings, "b", "a", "a", "b", NULL);
+
+	t_create_string_list_dup(&expected_strings, 0, "a", "b", "c", NULL);
+	t_string_list_insert(&expected_strings, "c", "b", "a", "c", "b", NULL);
+
+	t_create_string_list_dup(&expected_strings, 0, "", "a", NULL);
+	t_string_list_insert(&expected_strings, "a", "a", "a", "", NULL);
+
+	t_string_list_clear(&expected_strings, 0);
+}
+
+static void t_string_list_sort(struct string_list *list, ...)
+{
+	struct string_list expected_strings = STRING_LIST_INIT_DUP;
+	va_list ap;
+
+	va_start(ap, list);
+	t_vcreate_string_list_dup(&expected_strings, 0, ap);
+	va_end(ap);
+
+	string_list_sort(list);
+	t_string_list_equal(list, &expected_strings);
+
+	string_list_clear(&expected_strings, 0);
+}
+
+void test_string_list__sort(void)
+{
+	struct string_list list = STRING_LIST_INIT_DUP;
+
+	t_create_string_list_dup(&list, 0, NULL);
+	t_string_list_sort(&list, NULL);
+
+	t_create_string_list_dup(&list, 0, "b", "", "a", NULL);
+	t_string_list_sort(&list, "", "a", "b", NULL);
+
+	t_create_string_list_dup(&list, 0, "c", "a", "b", "a", NULL);
+	t_string_list_sort(&list, "a", "a", "b", "c", NULL);
+
+	t_string_list_clear(&list, 0);
+}
+
+static void t_string_list_remove(
+	struct string_list *expected_strings,
+	struct string_list *list,
+	char const *str)
+{
+	string_list_remove(list, str, 0);
+	t_string_list_equal(list, expected_strings);
+}
+
+void test_string_list__remove(void)
+{
+	struct string_list expected_strings = STRING_LIST_INIT_DUP;
+	struct string_list list = STRING_LIST_INIT_DUP;
+
+	t_create_string_list_dup(&expected_strings, 0, NULL);
+	t_create_string_list_dup(&list, 0, NULL);
+	t_string_list_remove(&expected_strings, &list, "");
+
+	t_create_string_list_dup(&expected_strings, 0, "a", NULL);
+	t_create_string_list_dup(&list, 0, "a", "a", NULL);
+	t_string_list_remove(&expected_strings, &list, "a");
+
+	t_create_string_list_dup(&expected_strings, 0, "a", "b", "b", NULL);
+	t_create_string_list_dup(&list, 0, "a", "b", "b", "c", NULL);
+	t_string_list_remove(&expected_strings, &list, "c");
+
+	t_create_string_list_dup(&expected_strings, 0, "a", "b", "d", NULL);
+	t_create_string_list_dup(&list, 0, "a", "b", "c", "d", NULL);
+	t_string_list_remove(&expected_strings, &list, "c");
+
+	t_create_string_list_dup(&expected_strings, 0, "a", "b", "c", "d", NULL);
+	t_create_string_list_dup(&list, 0, "a", "b", "c", "d", NULL);
+	t_string_list_remove(&expected_strings, &list, "e");
+
+	t_string_list_clear(&expected_strings, 0);
+	t_string_list_clear(&list, 0);
+}
+
 static void t_string_list_remove_duplicates(struct string_list *list, ...)
 {
 	struct string_list expected_strings = STRING_LIST_INIT_DUP;
@@ -302,5 +434,116 @@ void test_string_list__remove_duplicates(void)
 				 "c", "c", "c", NULL);
 	t_string_list_remove_duplicates(&list, "a", "b", "c", NULL);
 
+	t_string_list_clear(&list, 0);
+}
+
+static void t_string_list_sort_u(struct string_list *list, ...)
+{
+	struct string_list expected_strings = STRING_LIST_INIT_DUP;
+	va_list ap;
+
+	va_start(ap, list);
+	t_vcreate_string_list_dup(&expected_strings, 0, ap);
+	va_end(ap);
+
+	string_list_sort_u(list, 0);
+	t_string_list_equal(list, &expected_strings);
+
+	string_list_clear(&expected_strings, 0);
+}
+
+void test_string_list__sort_u(void)
+{
+	struct string_list list = STRING_LIST_INIT_DUP;
+
+	t_create_string_list_dup(&list, 0, NULL);
+	t_string_list_sort_u(&list, NULL);
+
+	t_create_string_list_dup(&list, 0, "", "", "", "", NULL);
+	t_string_list_sort_u(&list, "", NULL);
+
+	t_create_string_list_dup(&list, 0, "b", "a", "a", "", NULL);
+	t_string_list_sort_u(&list, "", "a", "b", NULL);
+
+	t_create_string_list_dup(&list, 0, "b", "a", "a", "d", "c", "c", NULL);
+	t_string_list_sort_u(&list, "a", "b", "c", "d", NULL);
+
+	t_string_list_clear(&list, 0);
+}
+
+static void t_string_list_remove_empty_items(
+	struct string_list *expected_strings,
+	struct string_list *list)
+{
+	string_list_remove_empty_items(list, 0);
+	t_string_list_equal(list, expected_strings);
+}
+
+void test_string_list__remove_empty_items(void)
+{
+	struct string_list expected_strings = STRING_LIST_INIT_DUP;
+	struct string_list list = STRING_LIST_INIT_DUP;
+
+	t_create_string_list_dup(&expected_strings, 0, NULL);
+	t_create_string_list_dup(&list, 0, "", "", "", NULL);
+	t_string_list_remove_empty_items(&expected_strings, &list);
+
+	t_create_string_list_dup(&expected_strings, 0, "a", "b", NULL);
+	t_create_string_list_dup(&list, 0, "a", "", "b", "", NULL);
+	t_string_list_remove_empty_items(&expected_strings, &list);
+
+	t_string_list_clear(&expected_strings, 0);
+	t_string_list_clear(&list, 0);
+}
+
+static void t_string_list_unsorted_string_list_has_string(
+	struct string_list *list,
+	const char *str, int expected)
+{
+	int has_string = unsorted_string_list_has_string(list, str);
+	cl_assert_equal_i(has_string, expected);
+}
+
+void test_string_list__unsorted_string_list_has_string(void)
+{
+	struct string_list list = STRING_LIST_INIT_DUP;
+
+	t_create_string_list_dup(&list, 0, "b", "d", "a", NULL);
+	t_string_list_unsorted_string_list_has_string(&list, "a", 1);
+	t_string_list_unsorted_string_list_has_string(&list, "b", 1);
+	t_string_list_unsorted_string_list_has_string(&list, "c", 0);
+	t_string_list_unsorted_string_list_has_string(&list, "d", 1);
+
+	t_string_list_clear(&list, 0);
+}
+
+static void t_string_list_unsorted_string_list_delete_item(
+	struct string_list *expected_list,
+	struct string_list *list,
+	int i)
+{
+	unsorted_string_list_delete_item(list, i, 0);
+
+	t_string_list_equal(list, expected_list);
+}
+
+void test_string_list__unsorted_string_list_delete_item(void)
+{
+	struct string_list expected_strings = STRING_LIST_INIT_DUP;
+	struct string_list list = STRING_LIST_INIT_DUP;
+
+	t_create_string_list_dup(&expected_strings, 0, "a", "c", "b", NULL);
+	t_create_string_list_dup(&list, 0, "a", "d", "b", "c", NULL);
+	t_string_list_unsorted_string_list_delete_item(&expected_strings, &list, 1);
+
+	t_create_string_list_dup(&expected_strings, 0, NULL);
+	t_create_string_list_dup(&list, 0, "", NULL);
+	t_string_list_unsorted_string_list_delete_item(&expected_strings, &list, 0);
+
+	t_create_string_list_dup(&expected_strings, 0, "a", "d", "c", "b", NULL);
+	t_create_string_list_dup(&list, 0,  "a", "d", "c", "b", "d", NULL);
+	t_string_list_unsorted_string_list_delete_item(&expected_strings, &list, 4);
+
+	t_string_list_clear(&expected_strings, 0);
 	t_string_list_clear(&list, 0);
 }
