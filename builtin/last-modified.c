@@ -146,7 +146,7 @@ static int populate_paths_from_revs(struct last_modified *lm)
 			continue;
 
 		if (num_interesting++)
-			return error(_("last-modified can only operate on one tree at a time"));
+			return error(_("last-modified can only operate on one commit at a time"));
 
 		diff_tree_oid(lm->rev.repo->hash_algo->empty_tree,
 			      &obj->item->oid, "", &diffopt);

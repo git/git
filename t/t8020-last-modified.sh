@@ -12,10 +12,6 @@ test_expect_success 'setup' '
 	test_commit 3 a/b/file
 '
 
-test_expect_success 'cannot run last-modified on two trees' '
-	test_must_fail git last-modified HEAD HEAD~1
-'
-
 check_last_modified() {
 	local indir= &&
 	while test $# != 0
@@ -230,9 +226,14 @@ test_expect_success 'last-modified merge undoes changes' '
 	EOF
 '
 
+test_expect_success 'cannot run last-modified on two commits' '
+	test_must_fail git last-modified HEAD HEAD~1 2>err &&
+	test_grep "last-modified can only operate on one commit at a time" err
+'
+
 test_expect_success 'last-modified complains about unknown arguments' '
 	test_must_fail git last-modified --foo 2>err &&
-	grep "unknown last-modified argument: --foo" err
+	test_grep "unknown last-modified argument: --foo" err
 '
 
 test_done
