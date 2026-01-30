@@ -9,21 +9,44 @@ test_expect_success 'setup rebasing on top of a lot of changes' '
 	git checkout -f -B base &&
 	git checkout -B to-rebase &&
 	git checkout -B upstream &&
-	for i in $(test_seq 100)
-	do
-		# simulate huge diffs
-		echo change$i >unrelated-file$i &&
-		test_seq 1000 >>unrelated-file$i &&
-		git add unrelated-file$i &&
-		test_tick &&
-		git commit -m commit$i unrelated-file$i &&
-		echo change$i >unrelated-file$i &&
-		test_seq 1000 | sort -nr >>unrelated-file$i &&
-		git add unrelated-file$i &&
-		test_tick &&
-		git commit -m commit$i-reverse unrelated-file$i ||
-		return 1
-	done &&
+	test_seq 1000 >content_fwd &&
+	sort -nr content_fwd >content_rev &&
+	(
+		for i in $(test_seq 100)
+		do
+			test_tick &&
+			echo "commit refs/heads/upstream" &&
+			echo "committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE" &&
+			echo "data <<EOF" &&
+			echo "commit$i" &&
+			echo "EOF" &&
+
+			if test "$i" = 1; then
+				echo "from refs/heads/upstream^0"
+			fi &&
+
+			echo "M 100644 inline unrelated-file$i" &&
+			echo "data <<EOF" &&
+			echo "change$i" &&
+			cat content_fwd &&
+			echo "EOF" &&
+
+			echo "commit refs/heads/upstream" &&
+			echo "committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE" &&
+			echo "data <<EOF" &&
+			echo "commit$i-reverse" &&
+			echo "EOF" &&
+			echo "M 100644 inline unrelated-file$i" &&
+			echo "data <<EOF" &&
+			echo "change$i" &&
+			cat content_rev &&
+			echo "EOF" || exit 1
+		done
+	) >fast_import_stream &&
+
+	git fast-import <fast_import_stream &&
+	git repack -a -d &&
+	git checkout -f upstream &&
 	git checkout to-rebase &&
 	test_commit our-patch interesting-file
 '
