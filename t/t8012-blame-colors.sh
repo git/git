@@ -28,6 +28,20 @@ test_expect_success 'colored blame colors contiguous lines' '
 	test_line_count = 3 H.expect
 '
 
+test_expect_success 'color lines becoming contiguous due to --ignore-rev' '
+	mv hello.c hello.orig &&
+	sed "s/	/    /g" <hello.orig >hello.c &&
+	git add hello.c &&
+	git commit -m"tabs to spaces" &&
+	git -c color.blame.repeatedLines=yellow blame --color-lines --ignore-rev=HEAD hello.c >actual.raw &&
+	test_decode_color <actual.raw >actual &&
+	grep "<YELLOW>" <actual >darkened &&
+	grep "(F" darkened > F.expect &&
+	grep "(H" darkened > H.expect &&
+	test_line_count = 2 F.expect &&
+	test_line_count = 3 H.expect
+'
+
 test_expect_success 'color by age consistently colors old code' '
 	git blame --color-by-age hello.c >actual.raw &&
 	git -c blame.coloring=highlightRecent blame hello.c >actual.raw.2 &&
