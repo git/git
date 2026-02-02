@@ -42,12 +42,12 @@ project convention.
 
 If you sent a patch and you did not hear any response from anybody for
 several days, it does not necessarily mean that your patch was totally
-uninteresting; it may merely mean that it was lost in the noise.  Please
-do not hesitate to send a reminder message in such a case.  Messages
-getting lost in the noise may be a sign that those who can evaluate
-your patch don't have enough mental/time bandwidth to process them
-right at the moment, and it often helps to wait until the list traffic
-becomes calmer before sending such a reminder.
+uninteresting; it may merely mean that it was lost in the noise.
+Please do not hesitate to send a reminder message in such a case.
+Messages getting lost in the noise may be a sign that those who can
+evaluate your patch don't have enough mental/time bandwidth to process
+them right at the moment, and it often helps to wait until the list
+traffic becomes calmer before sending such a reminder.
 
 The list archive is available at a few public sites:
 
@@ -70,7 +70,7 @@ so, like this:
 
 Often these web interfaces accept the message ID with enclosing <>
 stripped (like the above example to point at one of the most important
-message in the Git list).
+message in the Git mailing list).
 
 Some members of the development community can sometimes be found on
 the #git and #git-devel IRC channels on Libera Chat.  Their logs are
@@ -162,7 +162,7 @@ found in:
   https://repo.or.cz/git-{htmldocs,manpages}.git/
   https://github.com/gitster/git-{htmldocs,manpages}.git/
 
-The manual pages formatted in HTML for the tip of 'master' can be
+The manual pages formatted in HTML for the tip of "master" can be
 viewed online at:
 
   https://git.github.io/htmldocs/git.html
@@ -183,11 +183,12 @@ ready to be used in a production setting.  Every now and then, a
 "feature release" is cut from the tip of this branch.  They used to be
 named with three dotted decimal digits (e.g., "1.8.5"), but we have
 switched the versioning scheme and "feature releases" are named with
-three-dotted decimal digits that ends with ".0" (e.g., "1.9.0").
+ttwo-dotted decimal digits (e.g. "2.53"), whose tag ends with ".0"
+(e.g., "v2.53.0").
 
-The last such release was 2.52 done on Nov 17th, 2025.  We aim to keep
-that the tip of the "master" branch is always more stable than any of
-the released versions.
+The last such release was Git 2.53, made on Feb 2nd, 2026.  We aim to
+make sure that the tip of the "master" branch is always more stable
+than any of the released versions.
 
 Whenever a feature release is made, "maint" branch is forked off from
 "master" at that point.  Obvious and safe fixes for bugs in the latest
@@ -225,7 +226,10 @@ without major breakage.  A topic that is in "next" is expected to be
 polished to perfection before it is merged to "master".  Please help
 this process by building & using the "next" branch for your daily
 work, and reporting any new bugs you find to the mailing list, before
-the breakage is merged down to the "master".
+the breakage is merged down to the "master".  This process depends on
+your participation, as the way you use Git may be unique from others,
+and a new bug may only manifest itself when used in the way you use
+Git, not noticed by others.
 
 The "seen" branch bundles the remaining topic branches that the
 maintainer happens to have seen to remind the maintainer that the
@@ -241,12 +245,13 @@ by others may cause conflicts with their own work, and find people who
 are working on these topics to talk to before the potential conflicts
 get out of control.  It would be a good idea to fork your work from
 maint or master and to (1) test it by itself, (2) test a temporary
-merge of it to 'next' and (3) test a temporary merge to it to 'seen',
-before publishing it.
+merge of it to "next" and (3) test a temporary merge to it to "seen",
+before sending it to the list (or asking GitGitGadget to send it to
+the list).
 
-You can run "git log --first-parent master..seen" to see what topics
-are currently in flight.  The output of the above "git log" talks
-about a "jch" branch, which is an early part of the "seen" branch;
+You can run "git log --oneline --first-parent master..seen" to see
+what topics are currently in flight.  The output of the above command
+talks about a "jch" branch, which is an early part of the "seen" branch;
 that branch contains all topics that are in "next" and a bit more (but
 not all of "seen") and is used by the maintainer for his daily work.
 
@@ -273,7 +278,14 @@ Note that being in "next" is not a guarantee to appear in the next
 release, nor even in any future release.  There were cases that topics
 needed reverting a few commits in them before graduating to "master",
 or a topic that already was in "next" was reverted from "next" because
-fatal flaws were found in it after it was merged to "next".
+fatal flaws were found in it after it was merged to "next".  The same
+can be said to "master"---there were cases that we needed to revert a
+topic from it because a regression was found after it was merged to
+"master", instead of while it was still in "next".  To prevent it from
+happening, those who care about the quality of the next release, those
+who want to ensure that the next release will not break their
+workflow, are strongly encouraged to build and try out "next" in their
+daily work and report problems.
 
 
 * Other people's trees.
