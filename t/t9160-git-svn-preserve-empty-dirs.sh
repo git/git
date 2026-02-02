@@ -61,15 +61,15 @@ test_expect_success 'clone svn repo with --preserve-empty-dirs' '
 
 # "$GIT_REPO"/1 should only contain the placeholder file.
 test_expect_success 'directory empty from inception' '
-	test -f "$GIT_REPO"/1/.gitignore &&
+	test_path_is_file "$GIT_REPO"/1/.gitignore &&
 	test $(find "$GIT_REPO"/1 -type f | wc -l) = "1"
 '
 
 # "$GIT_REPO"/2 and "$GIT_REPO"/3 should only contain the placeholder file.
 test_expect_success 'directory empty from subsequent svn commit' '
-	test -f "$GIT_REPO"/2/.gitignore &&
+	test_path_is_file "$GIT_REPO"/2/.gitignore &&
 	test $(find "$GIT_REPO"/2 -type f | wc -l) = "1" &&
-	test -f "$GIT_REPO"/3/.gitignore &&
+	test_path_is_file "$GIT_REPO"/3/.gitignore &&
 	test $(find "$GIT_REPO"/3 -type f | wc -l) = "1"
 '
 
@@ -77,7 +77,7 @@ test_expect_success 'directory empty from subsequent svn commit' '
 # generated for every sub-directory at some point in the repo's history.
 test_expect_success 'add entry to previously empty directory' '
 	test $(find "$GIT_REPO"/4 -type f | wc -l) = "1" &&
-	test -f "$GIT_REPO"/4/a/b/c/foo
+	test_path_is_file "$GIT_REPO"/4/a/b/c/foo
 '
 
 # The HEAD~2 commit should not have introduced .gitignore placeholder files.
@@ -102,14 +102,14 @@ test_expect_success 'clone svn repo with --placeholder-file specified' '
 
 # "$GIT_REPO"/5/.placeholder should be a file, and non-empty.
 test_expect_success 'placeholder namespace conflict with file' '
-	test -s "$GIT_REPO"/5/.placeholder
+	test_file_not_empty "$GIT_REPO"/5/.placeholder
 '
 
 # "$GIT_REPO"/6/.placeholder should be a directory, and the "$GIT_REPO"/6 tree
 # should only contain one file: the placeholder.
 test_expect_success 'placeholder namespace conflict with directory' '
-	test -d "$GIT_REPO"/6/.placeholder &&
-	test -f "$GIT_REPO"/6/.placeholder/.placeholder &&
+	test_path_is_dir "$GIT_REPO"/6/.placeholder &&
+	test_path_is_file "$GIT_REPO"/6/.placeholder/.placeholder &&
 	test $(find "$GIT_REPO"/6 -type f | wc -l) = "1"
 '
 
@@ -133,19 +133,19 @@ test_expect_success 'second set of svn commits and rebase' '
 
 # Check that --preserve-empty-dirs and --placeholder-file flag state
 # stays persistent over multiple invocations.
-test_expect_success 'flag persistence during subsqeuent rebase' '
-	test -f "$GIT_REPO"/7/.placeholder &&
+test_expect_success 'flag persistence during subsequent rebase' '
+	test_path_is_file "$GIT_REPO"/7/.placeholder &&
 	test $(find "$GIT_REPO"/7 -type f | wc -l) = "1"
 '
 
 # Check that placeholder files are properly removed when unnecessary,
 # even across multiple invocations.
-test_expect_success 'placeholder list persistence during subsqeuent rebase' '
-	test -f "$GIT_REPO"/1/file1.txt &&
+test_expect_success 'placeholder list persistence during subsequent rebase' '
+	test_path_is_file "$GIT_REPO"/1/file1.txt &&
 	test $(find "$GIT_REPO"/1 -type f | wc -l) = "1" &&
 
-	test -f "$GIT_REPO"/5/file1.txt &&
-	test -f "$GIT_REPO"/5/.placeholder &&
+	test_path_is_file "$GIT_REPO"/5/file1.txt &&
+	test_path_is_file "$GIT_REPO"/5/.placeholder &&
 	test $(find "$GIT_REPO"/5 -type f | wc -l) = "2"
 '
 
