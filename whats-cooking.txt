@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jan 2026, #10)
-X-master-at: ea717645d199f6f1b66058886475db3e8c9330e9
-X-next-at: 66b2238f5c17644ddf15f75a53c76faeca6d9f1e
+Subject: What's cooking in git.git (Feb 2026, #01)
+X-master-at: 67ad42147a7acc2af6074753ebd03d904476118f
+X-next-at: 85a36ad7943cb5a815d80ffafbe53e236af879ba
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jan 2026, #10)
+What's cooking in git.git (Feb 2026, #01)
 -----------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -21,8 +21,8 @@ Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
 repositories have only a subset of branches.
 
-Git 2.53-rc2 has been tagged, with one topic reverted recently due
-to a regression. Please keep hunting for regressions.
+Git 2.53 has been tagged.  Let's wait to see if there are regression
+reports from the real world and then start the new cycle.
 
 With maint, master, next, seen, todo:
 
@@ -50,6 +50,15 @@ Release tarballs are available at:
 
 --------------------------------------------------
 [New Topics]
+
+* sp/show-index-warn-fallback (2026-01-30) 2 commits
+ - show-index: use gettext wrapping in user facing error messages
+ - show-index: warn when falling back to SHA-1 outside a repository
+
+ source: <20260130153603.290196-1-shreyanshpaliwalcmsmn@gmail.com>
+
+--------------------------------------------------
+[Cooking]
 
 * jc/checkout-switch-restore (2026-01-29) 2 commits
  - checkout: tell "parse_remote_branch" which command is calling it
@@ -80,7 +89,7 @@ Release tarballs are available at:
  source: <20260128234519.2721179-1-jltobler@gmail.com>
 
 
-* ps/for-each-ref-in-fixes (2026-01-29) 4 commits
+* ps/for-each-ref-in-fixes (2026-01-30) 4 commits
  - bisect: simplify string_list memory handling
  - bisect: fix misuse of `refs_for_each_ref_in()`
  - pack-bitmap: fix bug with exact ref match in "pack.preferBitmapTips"
@@ -88,22 +97,18 @@ Release tarballs are available at:
 
  A handful of places used refs_for_each_ref_in() API incorrectly,
  which has been corrected.
-
- Need any more work on pack-bitmap side?
- cf. <xmqq7bt0cqec.fsf@gitster.g>
- source: <20260128-b4-pks-fix-for-each-ref-in-misuse-v1-0-deccae3ea725@pks.im>
+ source: <20260130-b4-pks-fix-for-each-ref-in-misuse-v2-0-0449b198a681@pks.im>
 
 
-* ty/perf-3400-optim (2026-01-28) 1 commit
- - t/perf/p3400: speed up setup using fast-import
+* ty/perf-3400-optim (2026-01-30) 1 commit
+  (merged to 'next' on 2026-02-01 at 6c019af192)
+ + t/perf/p3400: speed up setup using fast-import
 
  Improve set-up time of a perf test.
 
- Comments?
- source: <20260128160717.611391-1-a3205153416@gmail.com>
+ Will cook in 'next'.
+ source: <20260130170123.642344-1-a3205153416@gmail.com>
 
---------------------------------------------------
-[Cooking]
 
 * ja/doc-synopsis-style-even-more (2026-01-26) 4 commits
  - doc: convert git-show to synopsis style
@@ -114,18 +119,20 @@ Release tarballs are available at:
  A handful of documentation pages have been modernized to use the
  "synopsis" style.
 
- Will merge to 'next'?
+ Expecting a reroll.
+ cf. <13939780.uLZWGnKmhe@piment-oiseau>
  source: <pull.2036.v2.git.1769462744.gitgitgadget@gmail.com>
 
 
 * ac/string-list-sort-u-and-tests (2026-01-29) 2 commits
- - string-list: add string_list_sort_u() that mimics "sort -u"
- - u-string-list: add unit tests for string-list methods
+  (merged to 'next' on 2026-01-30 at 742890e56f)
+ + string-list: add string_list_sort_u() that mimics "sort -u"
+ + u-string-list: add unit tests for string-list methods
 
  The string_list API gains a new helper, string_list_sort_u(), and
  new unit tests to extend coverage.
 
- Will merge to 'next'.
+ Will cook in 'next'.
  source: <20260125201500.63904-2-amishhhaaaa@gmail.com>
 
 
@@ -191,7 +198,8 @@ Release tarballs are available at:
  Instead of hardcoded 'origin', use the configured default remote
  when fetching from submodules.
 
- Expecting a review response.
+ Expecting a reroll.
+ cf. <xmqqms23lpn2.fsf@gitster.g>
  source: <20260122152722.866341-1-nasser.grainawi@oss.qualcomm.com>
 
 
@@ -248,8 +256,8 @@ Release tarballs are available at:
  The final clean-up phase of the diff output could turn the result of
  histogram diff algorithm suboptimal, which has been corrected.
 
- Expecting a review response.
- cf. <4fa413ae-f2a4-4de2-a2fb-0b1db379750b@gmail.com>
+ Expecting a reroll.
+ cf. <CAHTeOx-TLwqbcdGcb2drD4vE6D3M93EPMjcAeTNR+XNTbmTVZg@mail.gmail.com>
  source: <pull.2120.git.git.1765054287938.gitgitgadget@gmail.com>
 
 
@@ -281,7 +289,7 @@ Release tarballs are available at:
  source: <20260120-toon-last-modified-zzzz-v3-0-9bffd4968b0e@iotcl.com>
 
 
-* tc/last-modified-not-a-tree (2026-01-27) 4 commits
+* tc/last-modified-not-a-tree (2026-01-30) 4 commits
  - last-modified: verify revision argument is a commit-ish
  - last-modified: remove double error message
  - last-modified: fix memory leak when more than one commit is given
@@ -290,9 +298,8 @@ Release tarballs are available at:
  Giving "git last-modified" a tree (not a commit-ish) died an
  uncontrolled death, which has been corrected.
 
- Expecting a reroll.
- cf. <87v7gkqxb0.fsf@iotcl.com>
- source: <20260127-toon-last-modified-tree-v5-0-38d18a0956d4@iotcl.com>
+ Will merge to 'next'?
+ source: <20260130-toon-last-modified-tree-v6-0-db827e5df985@iotcl.com>
 
 
 * sp/myfirstcontribution-include-update (2026-01-12) 1 commit
@@ -323,18 +330,19 @@ Release tarballs are available at:
 
 
 * kn/ref-batch-output-error-reporting-fix (2026-01-25) 6 commits
- - fetch: delay user information post committing of transaction
- - receive-pack: utilize rejected ref error details
- - fetch: utilize rejected ref error details
- - update-ref: utilize rejected error details if available
- - refs: add rejection detail to the callback function
- - refs: skip to next ref when current ref is rejected
+  (merged to 'next' on 2026-01-30 at fe8044c396)
+ + fetch: delay user information post committing of transaction
+ + receive-pack: utilize rejected ref error details
+ + fetch: utilize rejected ref error details
+ + update-ref: utilize rejected error details if available
+ + refs: add rejection detail to the callback function
+ + refs: skip to next ref when current ref is rejected
 
  A handful of code paths that started using batched ref update API
  (after Git 2.51 or so) lost detailed error output, which have been
  corrected.
 
- Will merge to 'next'?
+ Will cook in 'next'.
  source: <20260125-633-regression-lost-diagnostic-message-when-pushing-non-commit-objects-to-refs-heads-v5-0-d58f3a9edf98@gmail.com>
 
 
@@ -385,14 +393,15 @@ Release tarballs are available at:
 
 
 * ps/validate-prefix-in-subtree-split (2026-01-15) 1 commit
- - subtree: validate --prefix against commit in split
+  (merged to 'next' on 2026-01-30 at 70c03b7148)
+ + subtree: validate --prefix against commit in split
 
  "git subtree split --prefix=P <commit>" now checks the prefix P
  against the tree of the (potentially quite different from the
  current working tree) given commit.
 
- Expecting a reroll?
- source: <20260115122652.18673-2-pushkarkumarsingh1970@gmail.com>
+ Will cook in 'next'.
+ source: <20260115175403.3971-3-pushkarkumarsingh1970@gmail.com>
 
 
 * sp/shallow-deepen-relative-fix (2026-01-16) 2 commits
@@ -531,12 +540,13 @@ Release tarballs are available at:
 
 
 * sb/doc-worktree-prune-expire-improvement (2026-01-27) 1 commit
- - worktree: clarify that --expire only affects missing worktrees
+  (merged to 'next' on 2026-01-30 at faf2e087b8)
+ + worktree: clarify that --expire only affects missing worktrees
 
  The help text and the documentation for the "--expire" option of
  "git worktree [list|prune]" have been improved.
 
- Will merge to 'next'?
+ Will cook in 'next'.
  source: <pull.2135.v3.git.git.1769578785381.gitgitgadget@gmail.com>
 
 
