@@ -98,6 +98,13 @@ test_expect_success 'fallback to color.ui' '
 	grep "<BOLD;RED>error<RESET>: error" decoded
 '
 
+if test_have_prereq WITH_BREAKING_CHANGES
+then
+	TURN_ON_SANITIZING=already.turned=on
+else
+	TURN_ON_SANITIZING=sideband.allowControlCharacters=color
+fi
+
 test_expect_success 'disallow (color) control sequences in sideband' '
 	write_script .git/color-me-surprised <<-\EOF &&
 	printf "error: Have you \\033[31mread\\033[m this?\\a\\n" >&2
@@ -106,7 +113,7 @@ test_expect_success 'disallow (color) control sequences in sideband' '
 	test_config_global uploadPack.packObjectsHook ./color-me-surprised &&
 	test_commit need-at-least-one-commit &&
 
-	git clone --no-local . throw-away 2>stderr &&
+	git -c $TURN_ON_SANITIZING clone --no-local . throw-away 2>stderr &&
 	test_decode_color <stderr >decoded &&
 	test_grep RED decoded &&
 	test_grep "\\^G" stderr &&
@@ -138,7 +145,7 @@ test_decode_csi() {
 	}'
 }
 
-test_expect_success 'control sequences in sideband allowed by default' '
+test_expect_success 'control sequences in sideband allowed by default (in Git v3.8)' '
 	write_script .git/color-me-surprised <<-\EOF &&
 	printf "error: \\033[31mcolor\\033[m\\033[Goverwrite\\033[Gerase\\033[K\\033?25l\\n" >&2
 	exec "$@"
@@ -147,7 +154,7 @@ test_expect_success 'control sequences in sideband allowed by default' '
 	test_commit need-at-least-one-commit-at-least &&
 
 	rm -rf throw-away &&
-	git clone --no-local . throw-away 2>stderr &&
+	git -c $TURN_ON_SANITIZING clone --no-local . throw-away 2>stderr &&
 	test_decode_color <stderr >color-decoded &&
 	test_decode_csi <color-decoded >decoded &&
 	test_grep ! "CSI \\[K" decoded &&
@@ -175,14 +182,15 @@ test_expect_success 'allow all control sequences for a specific URL' '
 	test_commit one-more-please &&
 
 	rm -rf throw-away &&
-	git clone --no-local . throw-away 2>stderr &&
+	git -c $TURN_ON_SANITIZING clone --no-local . throw-away 2>stderr &&
 	test_decode_color <stderr >color-decoded &&
 	test_decode_csi <color-decoded >decoded &&
 	test_grep ! "CSI \\[K" decoded &&
 	test_grep "\\^\\[\\[K" decoded &&
 
 	rm -rf throw-away &&
-	git -c "sideband.file://.allowControlCharacters=true" \
+	git -c sideband.allowControlCharacters=false \
+		-c "sideband.file://.allowControlCharacters=true" \
 		clone --no-local "file://$PWD" throw-away 2>stderr &&
 	test_decode_color <stderr >color-decoded &&
 	test_decode_csi <color-decoded >decoded &&
