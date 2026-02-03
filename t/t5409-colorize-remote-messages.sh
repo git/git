@@ -166,4 +166,28 @@ test_expect_success 'control sequences in sideband allowed by default' '
 	test_grep ! "\\^\\[\\[G" decoded
 '
 
+test_expect_success 'allow all control sequences for a specific URL' '
+	write_script .git/eraser <<-\EOF &&
+	printf "error: Ohai!\\r\\033[K" >&2
+	exec "$@"
+	EOF
+	test_config_global uploadPack.packObjectsHook ./eraser &&
+	test_commit one-more-please &&
+
+	rm -rf throw-away &&
+	git clone --no-local . throw-away 2>stderr &&
+	test_decode_color <stderr >color-decoded &&
+	test_decode_csi <color-decoded >decoded &&
+	test_grep ! "CSI \\[K" decoded &&
+	test_grep "\\^\\[\\[K" decoded &&
+
+	rm -rf throw-away &&
+	git -c "sideband.file://.allowControlCharacters=true" \
+		clone --no-local "file://$PWD" throw-away 2>stderr &&
+	test_decode_color <stderr >color-decoded &&
+	test_decode_csi <color-decoded >decoded &&
+	test_grep "CSI \\[K" decoded &&
+	test_grep ! "\\^\\[\\[K" decoded
+'
+
 test_done

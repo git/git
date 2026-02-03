@@ -22,3 +22,7 @@ sideband.allowControlCharacters::
 	`true`::
 		Allow all control characters to be sent to the terminal.
 --
+
+sideband.<url>.*::
+	Apply the `sideband.*` option selectively to specific URLs. The
+	same URL matching logic applies as for `http.<url>.*` settings.
