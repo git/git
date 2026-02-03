@@ -711,7 +711,7 @@ struct transaction_packfile {
 };
 
 struct odb_transaction {
-	struct object_database *odb;
+	struct odb_source *source;
 
 	struct tmp_objdir *objdir;
 	struct transaction_packfile packfile;
@@ -728,7 +728,7 @@ static void prepare_loose_object_transaction(struct odb_transaction *transaction
 	if (!transaction || transaction->objdir)
 		return;
 
-	transaction->objdir = tmp_objdir_create(transaction->odb->repo, "bulk-fsync");
+	transaction->objdir = tmp_objdir_create(transaction->source->odb->repo, "bulk-fsync");
 	if (transaction->objdir)
 		tmp_objdir_replace_primary_odb(transaction->objdir, 0);
 }
@@ -772,7 +772,7 @@ static void flush_loose_object_transaction(struct odb_transaction *transaction)
 	 * the final name is visible.
 	 */
 	strbuf_addf(&temp_path, "%s/bulk_fsync_XXXXXX",
-		    repo_get_object_directory(transaction->odb->repo));
+		    repo_get_object_directory(transaction->source->odb->repo));
 	temp = xmks_tempfile(temp_path.buf);
 	fsync_or_die(get_tempfile_fd(temp), get_tempfile_path(temp));
 	delete_tempfile(&temp);
@@ -1344,7 +1344,7 @@ static int already_written(struct odb_transaction *transaction,
 			   struct object_id *oid)
 {
 	/* The object may already exist in the repository */
-	if (odb_has_object(transaction->odb, oid,
+	if (odb_has_object(transaction->source->odb, oid,
 			   HAS_OBJECT_RECHECK_PACKED | HAS_OBJECT_FETCH_PROMISOR))
 		return 1;
 
@@ -1365,7 +1365,7 @@ static void prepare_packfile_transaction(struct odb_transaction *transaction,
 	if (!(flags & INDEX_WRITE_OBJECT) || state->f)
 		return;
 
-	state->f = create_tmp_packfile(transaction->odb->repo,
+	state->f = create_tmp_packfile(transaction->source->odb->repo,
 				       &state->pack_tmp_name);
 	reset_pack_idx_option(&state->pack_idx_opts);
 
@@ -1469,7 +1469,7 @@ static int stream_blob_to_pack(struct transaction_packfile *state,
 static void flush_packfile_transaction(struct odb_transaction *transaction)
 {
 	struct transaction_packfile *state = &transaction->packfile;
-	struct repository *repo = transaction->odb->repo;
+	struct repository *repo = transaction->source->odb->repo;
 	unsigned char hash[GIT_MAX_RAWSZ];
 	struct strbuf packname = STRBUF_INIT;
 	char *idx_tmp_name = NULL;
@@ -1494,7 +1494,7 @@ static void flush_packfile_transaction(struct odb_transaction *transaction)
 	}
 
 	strbuf_addf(&packname, "%s/pack/pack-%s.",
-		    repo_get_object_directory(transaction->odb->repo),
+		    repo_get_object_directory(transaction->source->odb->repo),
 		    hash_to_hex_algop(hash, repo->hash_algo));
 
 	stage_tmp_packfiles(repo, &packname, state->pack_tmp_name,
@@ -1553,7 +1553,7 @@ static int index_blob_packfile_transaction(struct odb_transaction *transaction,
 
 	header_len = format_object_header((char *)obuf, sizeof(obuf),
 					  OBJ_BLOB, size);
-	transaction->odb->repo->hash_algo->init_fn(&ctx);
+	transaction->source->odb->repo->hash_algo->init_fn(&ctx);
 	git_hash_update(&ctx, obuf, header_len);
 
 	/* Note: idx is non-NULL when we are writing */
@@ -1993,7 +1993,7 @@ struct odb_transaction *object_file_transaction_begin(struct odb_source *source)
 		return NULL;
 
 	CALLOC_ARRAY(odb->transaction, 1);
-	odb->transaction->odb = odb;
+	odb->transaction->source = source;
 
 	return odb->transaction;
 }
@@ -2006,11 +2006,11 @@ void object_file_transaction_commit(struct odb_transaction *transaction)
 	/*
 	 * Ensure the transaction ending matches the pending transaction.
 	 */
-	ASSERT(transaction == transaction->odb->transaction);
+	ASSERT(transaction == transaction->source->odb->transaction);
 
 	flush_loose_object_transaction(transaction);
 	flush_packfile_transaction(transaction);
-	transaction->odb->transaction = NULL;
+	transaction->source->odb->transaction = NULL;
 	free(transaction);
 }
 
