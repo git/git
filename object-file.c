@@ -1994,15 +1994,8 @@ static void odb_transaction_files_commit(struct odb_transaction *base)
 {
 	struct odb_transaction_files *transaction = (struct odb_transaction_files *)base;
 
-	/*
-	 * Ensure the transaction ending matches the pending transaction.
-	 */
-	ASSERT(base == base->source->odb->transaction);
-
 	flush_loose_object_transaction(transaction);
 	flush_packfile_transaction(transaction);
-	base->source->odb->transaction = NULL;
-	free(transaction);
 }
 
 struct odb_transaction *odb_transaction_files_begin(struct odb_source *source)
@@ -2016,8 +2009,6 @@ struct odb_transaction *odb_transaction_files_begin(struct odb_source *source)
 	transaction = xcalloc(1, sizeof(*transaction));
 	transaction->base.source = source;
 	transaction->base.commit = odb_transaction_files_commit;
-
-	odb->transaction = &transaction->base;
 
 	return &transaction->base;
 }
