@@ -723,7 +723,7 @@ static void prepare_loose_object_transaction(struct odb_transaction *transaction
 	 * We lazily create the temporary object directory
 	 * the first time an object might be added, since
 	 * callers may not know whether any objects will be
-	 * added at the time they call object_file_transaction_begin.
+	 * added at the time they call odb_transaction_files_begin.
 	 */
 	if (!transaction || transaction->objdir)
 		return;
@@ -1985,7 +1985,7 @@ out:
 	return ret;
 }
 
-struct odb_transaction *object_file_transaction_begin(struct odb_source *source)
+struct odb_transaction *odb_transaction_files_begin(struct odb_source *source)
 {
 	struct object_database *odb = source->odb;
 
@@ -1998,7 +1998,7 @@ struct odb_transaction *object_file_transaction_begin(struct odb_source *source)
 	return odb->transaction;
 }
 
-void object_file_transaction_commit(struct odb_transaction *transaction)
+void odb_transaction_files_commit(struct odb_transaction *transaction)
 {
 	if (!transaction)
 		return;
