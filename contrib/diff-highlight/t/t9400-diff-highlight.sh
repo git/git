@@ -10,6 +10,8 @@ DIFF_HIGHLIGHT="$CURR_DIR"/../diff-highlight
 CW="$(printf "\033[7m")"	# white
 CR="$(printf "\033[27m")"	# reset
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . "$TEST_DIRECTORY"/test-lib.sh
 
 if ! test_have_prereq PERL
