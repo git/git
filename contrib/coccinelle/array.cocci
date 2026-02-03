@@ -107,9 +107,21 @@ type T;
 T *ptr;
 expression n;
 @@
-- memset(ptr, \( 0x0 \| 0 \), n * \( sizeof(T)
--                                 \| sizeof(*ptr)
--                                 \) )
+- memset(ptr, \( 0 \| '\0' \), \( (n) \| n \) * \( sizeof(T)
+-                                               \| sizeof(ptr[...])
+-                                               \| sizeof(*ptr)
+-                                               \) )
++ MEMZERO_ARRAY(ptr, n)
+
+@@
+type T;
+T *ptr;
+expression n;
+@@
+- memset(ptr, \( 0 \| '\0' \), \( sizeof(T)
+-                              \| sizeof(ptr[...])
+-                              \| sizeof(*ptr)
+-                              \) * \( (n) \| n \) )
 + MEMZERO_ARRAY(ptr, n)
 
 @@
@@ -117,7 +129,19 @@ type T;
 T[] ptr;
 expression n;
 @@
-- memset(ptr, \( 0x0 \| 0 \), n * \( sizeof(T)
--                                 \| sizeof(*ptr)
--                                 \) )
+- memset(ptr, \( 0 \| '\0' \), \( (n) \| n \) * \( sizeof(T)
+-                                               \| sizeof(ptr[...])
+-                                               \| sizeof(*ptr)
+-                                               \) )
++ MEMZERO_ARRAY(ptr, n)
+
+@@
+type T;
+T[] ptr;
+expression n;
+@@
+- memset(ptr, \( 0 \| '\0' \), \( sizeof(T)
+-                              \| sizeof(ptr[...])
+-                              \| sizeof(*ptr)
+-                              \) * \( (n) \| n \) )
 + MEMZERO_ARRAY(ptr, n)
