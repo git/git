@@ -55,7 +55,7 @@ int hook_exists(struct repository *r, const char *name)
 static int pick_next_hook(struct child_process *cp,
 			  struct strbuf *out UNUSED,
 			  void *pp_cb,
-			  void **pp_task_cb UNUSED)
+			  void **pp_task_cb)
 {
 	struct hook_cb_data *hook_cb = pp_cb;
 	const char *hook_path = hook_cb->hook_path;
@@ -65,17 +65,34 @@ static int pick_next_hook(struct child_process *cp,
 
 	cp->no_stdin = 1;
 	strvec_pushv(&cp->env, hook_cb->options->env.v);
+
+	if (hook_cb->options->path_to_stdin && hook_cb->options->feed_pipe)
+		BUG("options path_to_stdin and feed_pipe are mutually exclusive");
+
 	/* reopen the file for stdin; run_command closes it. */
 	if (hook_cb->options->path_to_stdin) {
 		cp->no_stdin = 0;
 		cp->in = xopen(hook_cb->options->path_to_stdin, O_RDONLY);
 	}
-	cp->stdout_to_stderr = 1;
+
+	if (hook_cb->options->feed_pipe) {
+		cp->no_stdin = 0;
+		/* start_command() will allocate a pipe / stdin fd for us */
+		cp->in = -1;
+	}
+
+	cp->stdout_to_stderr = hook_cb->options->stdout_to_stderr;
 	cp->trace2_hook_name = hook_cb->hook_name;
 	cp->dir = hook_cb->options->dir;
 
 	strvec_push(&cp->args, hook_path);
 	strvec_pushv(&cp->args, hook_cb->options->args.v);
+
+	/*
+	 * Provide per-hook internal state via task_cb for easy access, so
+	 * hook callbacks don't have to go through hook_cb->options.
+	 */
+	*pp_task_cb = hook_cb->options->feed_pipe_cb_data;
 
 	/*
 	 * This pick_next_hook() will be called again, we're only
@@ -135,11 +152,12 @@ int run_hooks_opt(struct repository *r, const char *hook_name,
 		.tr2_category = "hook",
 		.tr2_label = hook_name,
 
-		.processes = 1,
-		.ungroup = 1,
+		.processes = options->jobs,
+		.ungroup = options->jobs == 1,
 
 		.get_next_task = pick_next_hook,
 		.start_failure = notify_start_failure,
+		.feed_pipe = options->feed_pipe,
 		.task_finished = notify_hook_finished,
 
 		.data = &cb_data,
@@ -147,6 +165,12 @@ int run_hooks_opt(struct repository *r, const char *hook_name,
 
 	if (!options)
 		BUG("a struct run_hooks_opt must be provided to run_hooks");
+
+	if (options->path_to_stdin && options->feed_pipe)
+		BUG("options path_to_stdin and feed_pipe are mutually exclusive");
+
+	if (!options->jobs)
+		BUG("run_hooks_opt must be called with options.jobs >= 1");
 
 	if (options->invoked_hook)
 		*options->invoked_hook = 0;
