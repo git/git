@@ -43,32 +43,35 @@ int cmd_show_index(int argc,
 	/*
 	 * Fallback to SHA1 if we are running outside of a repository.
 	 *
-	 * TODO: Figure out and implement a way to detect the hash algorithm in use by the
-	 *       the index file passed in and use that instead.
+	 * TODO: If a future implementation of index file version encodes the hash
+	 *       algorithm in its header, enable show-index to infer it from the
+	 *       header rather than relying on repository context or a default fallback.
 	 */
-	if (!the_hash_algo)
+	if (!the_hash_algo) {
+		warning(_("assuming SHA-1; use --object-format to override"));
 		repo_set_hash_algo(the_repository, GIT_HASH_DEFAULT);
+	}
 
 	hashsz = the_hash_algo->rawsz;
 
 	if (fread(top_index, 2 * 4, 1, stdin) != 1)
-		die("unable to read header");
+		die(_("unable to read header"));
 	if (top_index[0] == htonl(PACK_IDX_SIGNATURE)) {
 		version = ntohl(top_index[1]);
 		if (version < 2 || version > 2)
-			die("unknown index version");
+			die(_("unknown index version"));
 		if (fread(top_index, 256 * 4, 1, stdin) != 1)
-			die("unable to read index");
+			die(_("unable to read index"));
 	} else {
 		version = 1;
 		if (fread(&top_index[2], 254 * 4, 1, stdin) != 1)
-			die("unable to read index");
+			die(_("unable to read index"));
 	}
 	nr = 0;
 	for (i = 0; i < 256; i++) {
 		unsigned n = ntohl(top_index[i]);
 		if (n < nr)
-			die("corrupt index file");
+			die(_("corrupt index file"));
 		nr = n;
 	}
 	if (version == 1) {
@@ -76,7 +79,7 @@ int cmd_show_index(int argc,
 			unsigned int offset, entry[(GIT_MAX_RAWSZ + 4) / sizeof(unsigned int)];
 
 			if (fread(entry, 4 + hashsz, 1, stdin) != 1)
-				die("unable to read entry %u/%u", i, nr);
+				die(_("unable to read entry %u/%u"), i, nr);
 			offset = ntohl(entry[0]);
 			printf("%u %s\n", offset, hash_to_hex((void *)(entry+1)));
 		}
@@ -90,15 +93,15 @@ int cmd_show_index(int argc,
 		ALLOC_ARRAY(entries, nr);
 		for (i = 0; i < nr; i++) {
 			if (fread(entries[i].oid.hash, hashsz, 1, stdin) != 1)
-				die("unable to read sha1 %u/%u", i, nr);
+				die(_("unable to read sha1 %u/%u"), i, nr);
 			entries[i].oid.algo = hash_algo_by_ptr(the_hash_algo);
 		}
 		for (i = 0; i < nr; i++)
 			if (fread(&entries[i].crc, 4, 1, stdin) != 1)
-				die("unable to read crc %u/%u", i, nr);
+				die(_("unable to read crc %u/%u"), i, nr);
 		for (i = 0; i < nr; i++)
 			if (fread(&entries[i].off, 4, 1, stdin) != 1)
-				die("unable to read 32b offset %u/%u", i, nr);
+				die(_("unable to read 32b offset %u/%u"), i, nr);
 		for (i = 0; i < nr; i++) {
 			uint64_t offset;
 			uint32_t off = ntohl(entries[i].off);
@@ -107,9 +110,9 @@ int cmd_show_index(int argc,
 			} else {
 				uint32_t off64[2];
 				if ((off & 0x7fffffff) != off64_nr)
-					die("inconsistent 64b offset index");
+					die(_("inconsistent 64b offset index"));
 				if (fread(off64, 8, 1, stdin) != 1)
-					die("unable to read 64b offset %u", off64_nr);
+					die(_("unable to read 64b offset %u"), off64_nr);
 				offset = (((uint64_t)ntohl(off64[0])) << 32) |
 						     ntohl(off64[1]);
 				off64_nr++;
