@@ -1725,6 +1725,26 @@ static int parse_fragment(struct apply_state *state,
 	unsigned long oldlines, newlines;
 	unsigned long leading, trailing;
 
+	/* do not complain a symbolic link being an incomplete line */
+	if (patch->ws_rule & WS_INCOMPLETE_LINE) {
+		/*
+		 * We want to figure out if the postimage is a
+		 * symbolic link when applying the patch normally, or
+		 * if the preimage is a symbolic link when applying
+		 * the patch in reverse.  A normal patch only has
+		 * old_mode without new_mode.  If it changes the
+		 * filemode, new_mode has value, which is different
+		 * from old_mode.
+		 */
+		unsigned mode = (state->apply_in_reverse
+				 ? patch->old_mode
+				 : patch->new_mode
+				 ? patch->new_mode
+				 : patch->old_mode);
+		if (mode && S_ISLNK(mode))
+			patch->ws_rule &= ~WS_INCOMPLETE_LINE;
+	}
+
 	offset = parse_fragment_header(line, len, fragment);
 	if (offset < 0)
 		return -1;

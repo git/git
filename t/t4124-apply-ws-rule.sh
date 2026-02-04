@@ -743,4 +743,90 @@ test_expect_success 'incomplete line modified at the end (error)' '
 	test_cmp sample target
 '
 
+test_expect_success "incomplete-line error is disabled for symlinks" '
+	test_when_finished "git reset" &&
+	test_when_finished "rm -f patch.txt" &&
+	oneblob=$(printf "one" | git hash-object --stdin -w -t blob) &&
+	twoblob=$(printf "two" | git hash-object --stdin -w -t blob) &&
+
+	oneshort=$(git rev-parse --short $oneblob) &&
+	twoshort=$(git rev-parse --short $twoblob) &&
+
+	cat >patch0.txt <<-EOF &&
+	diff --git a/mylink b/mylink
+	index $oneshort..$twoshort 120000
+	--- a/mylink
+	+++ b/mylink
+	@@ -1 +1 @@
+	-one
+	\ No newline at end of file
+	+two
+	\ No newline at end of file
+	EOF
+
+	# the index has the preimage symlink
+	git update-index --add --cacheinfo "120000,$oneblob,mylink" &&
+
+	# check the patch going forward and reverse
+	git -c core.whitespace=incomplete apply --cached --check \
+		--whitespace=error patch0.txt &&
+
+	git update-index --add --cacheinfo "120000,$twoblob,mylink" &&
+	git -c core.whitespace=incomplete apply --cached --check \
+		--whitespace=error -R patch0.txt &&
+
+	# the patch turns it into the postimage symlink
+	git update-index --add --cacheinfo "120000,$oneblob,mylink" &&
+	git -c core.whitespace=incomplete apply --cached --whitespace=error \
+		patch0.txt &&
+
+	# and then back.
+	git -c core.whitespace=incomplete apply --cached -R --whitespace=error \
+		patch0.txt &&
+
+	# a text file turns into a symlink
+	cat >patch1.txt <<-EOF &&
+	diff --git a/mylink b/mylink
+	deleted file mode 100644
+	index $oneshort..0000000
+	--- a/mylink
+	+++ /dev/null
+	@@ -1 +0,0 @@
+	-one
+	\ No newline at end of file
+	diff --git a/mylink b/mylink
+	new file mode 120000
+	index 0000000..$twoshort
+	--- /dev/null
+	+++ b/mylink
+	@@ -0,0 +1 @@
+	+two
+	\ No newline at end of file
+	EOF
+
+	# the index has the preimage text
+	git update-index --cacheinfo "100644,$oneblob,mylink" &&
+
+	# check
+	git -c core.whitespace=incomplete apply --cached \
+		--check --whitespace=error patch1.txt &&
+
+	# reverse, leaving an incomplete text file, should error
+	git update-index --cacheinfo "120000,$twoblob,mylink" &&
+	test_must_fail git -c core.whitespace=incomplete \
+		apply --cached --check --whitespace=error -R patch1.txt &&
+
+	# apply to create a symbolic link
+	git update-index --cacheinfo "100644,$oneblob,mylink" &&
+	git -c core.whitespace=incomplete apply --cached --whitespace=error \
+		patch1.txt &&
+
+	# turning it back into an incomplete text file is an error
+	test_must_fail git -c core.whitespace=incomplete \
+		apply --cached --whitespace=error -R patch1.txt
+
+
+
+'
+
 test_done
