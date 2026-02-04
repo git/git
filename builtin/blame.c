@@ -454,7 +454,8 @@ static void determine_line_heat(struct commit_info *ci, const char **dest_color)
 	*dest_color = colorfield[i].col;
 }
 
-static void emit_other(struct blame_scoreboard *sb, struct blame_entry *ent, int opt)
+static void emit_other(struct blame_scoreboard *sb, struct blame_entry *ent,
+		       int opt, struct blame_entry *prev_ent)
 {
 	int cnt;
 	const char *cp;
@@ -485,7 +486,10 @@ static void emit_other(struct blame_scoreboard *sb, struct blame_entry *ent, int
 			the_hash_algo->hexsz : (size_t) abbrev;
 
 		if (opt & OUTPUT_COLOR_LINE) {
-			if (cnt > 0) {
+			if (cnt > 0 ||
+			    (prev_ent &&
+			     oideq(&suspect->commit->object.oid,
+				   &prev_ent->suspect->commit->object.oid))) {
 				color = repeated_meta_color;
 				reset = GIT_COLOR_RESET;
 			} else  {
@@ -571,7 +575,7 @@ static void emit_other(struct blame_scoreboard *sb, struct blame_entry *ent, int
 
 static void output(struct blame_scoreboard *sb, int option)
 {
-	struct blame_entry *ent;
+	struct blame_entry *ent, *prev_ent = NULL;
 
 	if (option & OUTPUT_PORCELAIN) {
 		for (ent = sb->ent; ent; ent = ent->next) {
@@ -593,7 +597,8 @@ static void output(struct blame_scoreboard *sb, int option)
 		if (option & OUTPUT_PORCELAIN)
 			emit_porcelain(sb, ent, option);
 		else {
-			emit_other(sb, ent, option);
+			emit_other(sb, ent, option, prev_ent);
+			prev_ent = ent;
 		}
 	}
 }
