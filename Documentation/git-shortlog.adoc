@@ -64,9 +64,6 @@ Each pretty-printed commit will be rewrapped before it is shown.
    example, if your project uses `Reviewed-by` trailers, you might want
    to see who has been reviewing with
    `git shortlog -ns --group=trailer:reviewed-by`.
- - `format:<format>`, any string accepted by the `--format` option of
-   'git log'. (See the "PRETTY FORMATS" section of
-   linkgit:git-log[1].)
 +
 Note that commits that do not include the trailer will not be counted.
 Likewise, commits with multiple trailers (e.g., multiple signoffs) may
@@ -77,6 +74,10 @@ Shortlog will attempt to parse each trailer value as a `name <email>`
 identity. If successful, the mailmap is applied and the email is omitted
 unless the `--email` option is specified. If the value cannot be parsed
 as an identity, it will be taken literally and completely.
+
+ - `format:<format>`, any string accepted by the `--format` option of
+   'git log'. (See the "PRETTY FORMATS" section of
+   linkgit:git-log[1].)
 --
 +
 If `--group` is specified multiple times, commits are counted under each
