@@ -435,7 +435,7 @@ Automating
 +
 Default is the value of `sendemail.suppressCc` configuration value; if
 that is unspecified, default to `self` if `--suppress-from` is
-specified, as well as `body` if `--no-signed-off-cc` is specified.
+specified, as well as `body` if `--no-signed-off-by-cc` is specified.
 
 --suppress-from::
 --no-suppress-from::
