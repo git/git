@@ -351,7 +351,7 @@ function body:
 apply standard precedence rules. `repo_config_get_string_tmp()` will look up
 a specific key ("user.name") and give you the value. There are a number of
 single-key lookup functions like this one; you can see them all (and more info
-about how to use `repo_config()`) in `Documentation/technical/api-config.adoc`.
+about how to use `repo_config()`) in `config.h`.
 
 You should see that the name printed matches the one you see when you run:
 
