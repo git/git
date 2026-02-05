@@ -93,6 +93,41 @@ test_expect_success 'last-modified subdir recursive' '
 	EOF
 '
 
+test_expect_success 'last-modified subdir non-recursive' '
+	check_last_modified a <<-\EOF
+	3 a
+	EOF
+'
+
+test_expect_success 'last-modified path in subdir non-recursive' '
+	check_last_modified a/file <<-\EOF
+	2 a/file
+	EOF
+'
+
+test_expect_success 'last-modified subdir with wildcard non-recursive' '
+	check_last_modified a/* <<-\EOF
+	3 a/b
+	2 a/file
+	EOF
+'
+
+test_expect_success 'last-modified with negative max-depth' '
+	check_last_modified --max-depth=-1 <<-\EOF
+	3 a/b/file
+	2 a/file
+	1 file
+	EOF
+'
+
+test_expect_success 'last-modified with max-depth of 1' '
+	check_last_modified --max-depth=1 <<-\EOF
+	3 a/b
+	2 a/file
+	1 file
+	EOF
+'
+
 test_expect_success 'last-modified from non-HEAD commit' '
 	check_last_modified HEAD^ <<-\EOF
 	2 a

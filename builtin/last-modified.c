@@ -53,8 +53,9 @@ define_commit_slab(active_paths_for_commit, struct bitmap *);
 struct last_modified {
 	struct hashmap paths;
 	struct rev_info rev;
-	bool recursive;
 	bool show_trees;
+	bool nul_termination;
+	int max_depth;
 
 	const char **all_paths;
 	size_t all_paths_nr;
@@ -165,10 +166,10 @@ static void last_modified_emit(struct last_modified *lm,
 		putchar('^');
 	printf("%s\t", oid_to_hex(&commit->object.oid));
 
-	if (lm->rev.diffopt.line_termination)
-		write_name_quoted(path, stdout, '\n');
-	else
+	if (lm->nul_termination)
 		printf("%s%c", path, '\0');
+	else
+		write_name_quoted(path, stdout, '\n');
 }
 
 static void mark_path(const char *path, const struct object_id *oid,
@@ -479,8 +480,10 @@ static int last_modified_init(struct last_modified *lm, struct repository *r,
 	lm->rev.no_commit_id = 1;
 	lm->rev.diff = 1;
 	lm->rev.diffopt.flags.no_recursive_diff_tree_combined = 1;
-	lm->rev.diffopt.flags.recursive = lm->recursive;
+	lm->rev.diffopt.flags.recursive = 1;
 	lm->rev.diffopt.flags.tree_in_recursive = lm->show_trees;
+	lm->rev.diffopt.max_depth = lm->max_depth;
+	lm->rev.diffopt.max_depth_valid = lm->max_depth >= 0;
 
 	argc = setup_revisions(argc, argv, &lm->rev, NULL);
 	if (argc > 1) {
@@ -510,16 +513,20 @@ int cmd_last_modified(int argc, const char **argv, const char *prefix,
 	struct last_modified lm = { 0 };
 
 	const char * const last_modified_usage[] = {
-		N_("git last-modified [--recursive] [--show-trees] "
-		   "[<revision-range>] [[--] <path>...]"),
+		N_("git last-modified [--recursive] [--show-trees] [--max-depth=<depth>] [-z]\n"
+		   "                  [<revision-range>] [[--] <pathspec>...]"),
 		NULL
 	};
 
 	struct option last_modified_options[] = {
-		OPT_BOOL('r', "recursive", &lm.recursive,
-			 N_("recurse into subtrees")),
+		OPT_SET_INT('r', "recursive", &lm.max_depth,
+			    N_("recurse into subtrees"), -1),
 		OPT_BOOL('t', "show-trees", &lm.show_trees,
 			 N_("show tree entries when recursing into subtrees")),
+		OPT_INTEGER_F(0, "max-depth", &lm.max_depth,
+			      N_("maximum tree depth to recurse"), PARSE_OPT_NONEG),
+		OPT_BOOL('z', NULL, &lm.nul_termination,
+			 N_("lines are separated with NUL character")),
 		OPT_END()
 	};
 
