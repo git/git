@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Feb 2026, #01)
-X-master-at: 67ad42147a7acc2af6074753ebd03d904476118f
-X-next-at: 85a36ad7943cb5a815d80ffafbe53e236af879ba
+Subject: What's cooking in git.git (Feb 2026, #02)
+X-master-at: b2826b52eb7caff9f4ed6e85ec45e338bf02ad09
+X-next-at: 305ecc6b61d0a123836784173332d185b4630f72
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Feb 2026, #01)
+What's cooking in git.git (Feb 2026, #02)
 -----------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -51,14 +51,206 @@ Release tarballs are available at:
 --------------------------------------------------
 [New Topics]
 
-* sp/show-index-warn-fallback (2026-01-30) 2 commits
- - show-index: use gettext wrapping in user facing error messages
- - show-index: warn when falling back to SHA-1 outside a repository
+* am/doc-github-contributiong-link-to-submittingpatches (2026-01-31) 1 commit
+  (merged to 'next' on 2026-02-04 at 1f4534468b)
+ + .github/CONTRIBUTING.md: link to SubmittingPatches on git-scm.com
 
- source: <20260130153603.290196-1-shreyanshpaliwalcmsmn@gmail.com>
+ GitHub repository banner update.
+
+ Will merge to 'master'.
+ source: <20260201002658.133153-1-Eng.Abdalrhman.Abdalmonem@gmail.com>
+
+
+* hs/t9160-test-paths (2026-02-02) 1 commit
+  (merged to 'next' on 2026-02-04 at 0d4010771a)
+ + t9160:modernize test path checking
+
+ Test update.
+
+ Will merge to 'master'.
+ source: <20260202161759.84355-2-hoda.s.salim@gmail.com>
+
+
+* jc/ci-test-contrib-too (2026-02-05) 2 commits
+ - ci: avoid ubuntu:rolling in most jobs for now
+ - test: optionally test contrib in CI
+
+ Test contrib/ things in CI to catch breakages before they enter the
+ "next" branch.
+
+ Will merge to 'next'?
+ source: <xmqqjywuyhu9.fsf@gitster.g>
+
+
+* kh/doc-shortlog-fix (2026-02-03) 1 commit
+  (merged to 'next' on 2026-02-04 at 0b24d64c43)
+ + doc: shortlog: put back trailer paragraphs
+
+ Doc fix.
+
+ Will merge to 'master'.
+ source: <V2_shortlog_trailers.254@msgid.xyz>
+
+
+* kn/ref-location (2026-02-02) 4 commits
+ - refs: add GIT_REFERENCE_BACKEND to specify reference backend
+ - refs: parse and use the reference storage payload
+ - refs: extract out `refs_create_refdir_stubs()`
+ - refs: allow reference location in refstorage config
+
+ Allow the directory in which reference backends store their data to
+ be specified.
+
+ Needs review.
+ source: <20260202-kn-alternate-ref-dir-v4-0-3b30430411e3@gmail.com>
+
+
+* rs/blame-ignore-colors-fix (2026-02-01) 1 commit
+  (merged to 'next' on 2026-02-04 at 305ecc6b61)
+ + blame: fix coloring for repeated suspects
+
+ "git blame --ignore-revs=... --color-lines" did not account for
+ ignored revisions passing blame to the same commit an adjacent line
+ gets blamed for.
+
+ Will merge to 'master'.
+ source: <28ac1ee6-f3e9-4789-92b7-903788430697@web.de>
+
+
+* jc/diff-highlight-main-master-testfix (2026-02-03) 1 commit
+ - diff-highlight: allow testing with Git 3.0 breaking changes
+
+ Test fix (in contrib/)
+
+ Will merge to 'next'.
+ source: <xmqq7bstsemv.fsf@gitster.g>
+
+
+* cs/subtree-reftable-testfix (2026-02-03) 1 commit
+ - contrib/subtree: fix tests with reftable backend
+
+ Test fix (in contrib/)
+
+ Will merge to 'next'.
+ source: <20260204043812.814884-3-ask+git@howdoi.land>
+
+
+* tc/memzero-array (2026-02-03) 1 commit
+ - cocci: extend MEMZERO_ARRAY() rules
+
+ Coccinelle rules update.
+
+ Will merge to 'next'.
+ source: <20260203102908.749954-1-toon@iotcl.com>
+
+
+* ar/config-hooks (2026-02-04) 5 commits
+ - hook: allow out-of-repo 'git hook' invocations
+ - hook: include hooks from the config
+ - hook: introduce "git hook list"
+ - hook: run a list of hooks
+ - Merge branch 'ar/run-command-hook-take-2' into ar/config-hooks
+ (this branch is used by ar/parallel-hooks; uses ar/run-command-hook-take-2.)
+
+ Needs review.
+ source: <20260204165126.1548805-1-adrian.ratiu@collabora.com>
+
+
+* jc/whitespace-incomplete-line (2026-02-04) 1 commit
+ - whitespace: symbolic links usually lack LF at the end
+
+ It does not make much sense to apply the "incomplete-line"
+ whitespace rule to symbolic links, whose contents almost always
+ lack the final newline.  "git apply" and "git diff" are now taught
+ to exclude them for a change to symbolic links.
+
+ Will merge to 'next'?
+ source: <xmqqecn0nqyt.fsf@gitster.g>
+
+
+* ps/meson-gitk-git-gui (2026-02-04) 1 commit
+ - meson: wire up gitk and git-gui
+
+ Plumb gitk/git-gui build and install procedure in meson based
+ builds.
+
+ Expecting a reroll.
+ source: <20260204-b4-pks-meson-tcl-tk-v2-1-5bc3ccf3a8ce@pks.im>
+
+
+* uk/signature-is-good-after-key-expires (2026-02-04) 1 commit
+ - gpg-interface: signatures by expired keys are fine
+
+ A signature on a commit that was GPG signed long time ago ought to
+ be still valid after the key that was used to sign it has expired,
+ but we showed them in alarming red.
+
+ Will merge to 'next'?
+ source: <20260204152306.1767112-2-ukleinek@kernel.org>
+
+
+* ar/parallel-hooks (2026-02-04) 5 commits
+ - hook: allow runtime enabling extensions.hookStdoutToStderr
+ - hook: introduce extensions.hookStdoutToStderr
+ - hook: allow parallel hook execution
+ - config: add a repo_config_get_uint() helper
+ - Merge branch 'ar/config-hooks' into ar/parallel-hooks
+ (this branch uses ar/config-hooks and ar/run-command-hook-take-2.)
+
+ Needs review.
+ source: <20260204173328.1601807-1-adrian.ratiu@collabora.com>
+
+
+* cf/c23-const-preserving-strchr-updates-0 (2026-02-04) 1 commit
+ - global: constify some pointers that are not written to
+
+ ISO C23 redefines strchr and friends that tradiotionally took
+ a const pointer and returned a non-const pointer derived from it to
+ preserve constness (i.e., if you ask for a substring in a const
+ string, you get a const pointer to the substring).  Update code
+ paths that used non-const pointer to receive their results that did
+ not have to be non-const to adjust.
+
+ Will merge to 'next'.
+ source: <342b01acd42f1fcaa3abefa38dc589e12ccb1134.1770261829.git.collin.funk1@gmail.com>
+
+
+* mc/doc-send-email-signed-off-by-cc (2026-02-05) 1 commit
+ - doc: send-email: correct --no-signed-off-by-cc misspelling
+
+ Docfix.
+
+ Will merge to 'next'.
+ source: <V3_--no-signed-off-by-cc.260@msgid.xyz>
+
+
+* mc/tr2-process-ancestry-cleanup (2026-02-05) 4 commits
+ - trace2: emit cmd_ancestry data for Windows
+ - trace2: refactor Windows process ancestry trace2 event
+ - build: include procinfo.c impl for macOS
+ - trace2: add macOS process ancestry tracing
+
+ Add process ancestry data to trace2 on macOS to match what we
+ already do on Linux and Windows.  Also adjust the way Windows
+ implementation reports this information to match the other two.
+
+ Needs review.
+ source: <pull.2040.git.1770307510.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [Cooking]
+
+* sp/show-index-warn-fallback (2026-01-30) 2 commits
+  (merged to 'next' on 2026-02-04 at 58399695e4)
+ + show-index: use gettext wrapping in user facing error messages
+ + show-index: warn when falling back to SHA-1 outside a repository
+
+ When "git show-index" is run outside a repository, it silently
+ defaults to SHA-1; the tool now warns when this happens.
+
+ Will merge to 'master'.
+ source: <20260130153603.290196-1-shreyanshpaliwalcmsmn@gmail.com>
+
 
 * jc/checkout-switch-restore (2026-01-29) 2 commits
  - checkout: tell "parse_remote_branch" which command is calling it
@@ -73,9 +265,9 @@ Release tarballs are available at:
  source: <20260129190616.645471-1-gitster@pobox.com>
 
 
-* jt/odb-transaction-per-source (2026-01-28) 4 commits
+* jt/odb-transaction-per-source (2026-02-02) 4 commits
  - odb: transparently handle common transaction behavior
- - odb: prepare `struct odb_transaction` to support more sources
+ - odb: prepare `struct odb_transaction` to become generic
  - object-file: rename transaction functions
  - odb: store ODB source in `struct odb_transaction`
 
@@ -84,9 +276,8 @@ Release tarballs are available at:
  sources, which may have different transaction mechanisms.  Make the
  odb transaction API per object source.
 
- Expecting a reroll?
- cf. <aXtDZyFoSQahkxBa@pks.im>
- source: <20260128234519.2721179-1-jltobler@gmail.com>
+ Comments?
+ source: <20260203001002.2500198-1-jltobler@gmail.com>
 
 
 * ps/for-each-ref-in-fixes (2026-01-30) 4 commits
@@ -106,22 +297,21 @@ Release tarballs are available at:
 
  Improve set-up time of a perf test.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20260130170123.642344-1-a3205153416@gmail.com>
 
 
-* ja/doc-synopsis-style-even-more (2026-01-26) 4 commits
+* ja/doc-synopsis-style-even-more (2026-02-03) 4 commits
  - doc: convert git-show to synopsis style
  - doc: fix some style issues in git-clone and for-each-ref-options
  - doc: finalize git-clone documentation conversion to synopsis style
- - convert git-submodule doc to synopsis style
+ - doc: convert git-submodule to synopsis style
 
  A handful of documentation pages have been modernized to use the
  "synopsis" style.
 
- Expecting a reroll.
- cf. <13939780.uLZWGnKmhe@piment-oiseau>
- source: <pull.2036.v2.git.1769462744.gitgitgadget@gmail.com>
+ Comments?
+ source: <pull.2036.v3.git.1770138215.gitgitgadget@gmail.com>
 
 
 * ac/string-list-sort-u-and-tests (2026-01-29) 2 commits
@@ -132,7 +322,7 @@ Release tarballs are available at:
  The string_list API gains a new helper, string_list_sort_u(), and
  new unit tests to extend coverage.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20260125201500.63904-2-amishhhaaaa@gmail.com>
 
 
@@ -166,7 +356,7 @@ Release tarballs are available at:
 
  Test clean-up.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20260121130012.888299-1-shreyanshpaliwalcmsmn@gmail.com>
 
 
@@ -216,6 +406,7 @@ Release tarballs are available at:
  - run-command: add stdin callback for parallelization
  - run-command: add helper for pp child states
  - t1800: add hook output stream tests
+ (this branch is used by ar/config-hooks and ar/parallel-hooks.)
 
  Use the hook API to replace ad-hoc invocation of hook scripts via
  the run_command() API.
@@ -232,7 +423,7 @@ Release tarballs are available at:
  The computation of column width made by "git diff --stat" was
  confused when pathnames contain non-ASCII characters.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <cover.1768520441.git.lorenzo.pegorari2002@gmail.com>
 
 
@@ -246,7 +437,7 @@ Release tarballs are available at:
 
  Leakfix.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20260119051858.GA1991308@coredump.intra.peff.net>
 
 
@@ -261,7 +452,8 @@ Release tarballs are available at:
  source: <pull.2120.git.git.1765054287938.gitgitgadget@gmail.com>
 
 
-* js/neuter-sideband (2026-01-16) 5 commits
+* js/neuter-sideband (2026-02-03) 6 commits
+ - sideband: delay sanitizing by default to Git v3.0
  - sideband: offer to configure sanitizing on a per-URL basis
  - sideband: add options to allow more control sequences to be passed through
  - sideband: do allow ANSI color sequences by default
@@ -271,8 +463,8 @@ Release tarballs are available at:
  Invalidate control characters in sideband messages, to avoid
  terminal state getting messed up.
 
- Expecting a reroll to make things opt-in, not opt-out.
- source: <pull.1853.v3.git.1768602373.gitgitgadget@gmail.com>
+ Comments?
+ source: <pull.1853.v4.git.1770113882.gitgitgadget@gmail.com>
 
 
 * tc/last-modified-options-cleanup (2026-01-20) 4 commits
@@ -285,7 +477,7 @@ Release tarballs are available at:
  The "-z" and "--max-depth" documentation (and implementation of
  "-z") in the "git last-modified" command have been updated.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20260120-toon-last-modified-zzzz-v3-0-9bffd4968b0e@iotcl.com>
 
 
@@ -308,7 +500,7 @@ Release tarballs are available at:
 
  Doc update.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20260112195625.391821-1-shreyanshpaliwalcmsmn@gmail.com>
 
 
@@ -342,7 +534,7 @@ Release tarballs are available at:
  (after Git 2.51 or so) lost detailed error output, which have been
  corrected.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20260125-633-regression-lost-diagnostic-message-when-pushing-non-commit-objects-to-refs-heads-v5-0-d58f3a9edf98@gmail.com>
 
 
@@ -352,7 +544,7 @@ Release tarballs are available at:
 
  Code clean-up.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20260121130005.72375-1-amishhhaaaa@gmail.com>
 
 
@@ -392,16 +584,15 @@ Release tarballs are available at:
  source: <20260126-pks-odb-for-each-object-v4-0-5a64a038c791@pks.im>
 
 
-* ps/validate-prefix-in-subtree-split (2026-01-15) 1 commit
-  (merged to 'next' on 2026-01-30 at 70c03b7148)
- + subtree: validate --prefix against commit in split
+* ps/validate-prefix-in-subtree-split (2026-02-03) 1 commit
+ - subtree: validate --prefix against commit in split
 
  "git subtree split --prefix=P <commit>" now checks the prefix P
  against the tree of the (potentially quite different from the
  current working tree) given commit.
 
- Will cook in 'next'.
- source: <20260115175403.3971-3-pushkarkumarsingh1970@gmail.com>
+ Will merge to 'next'?
+ source: <20260203164815.68258-2-pushkarkumarsingh1970@gmail.com>
 
 
 * sp/shallow-deepen-relative-fix (2026-01-16) 2 commits
@@ -423,7 +614,7 @@ Release tarballs are available at:
 
  Test clean-up.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * ag/http-netrc-tests (2026-01-06) 1 commit
@@ -470,7 +661,7 @@ Release tarballs are available at:
  source: <pull.2138.v28.git.git.1769112471.gitgitgadget@gmail.com>
 
 
-* ob/core-attributesfile-in-repository (2026-01-24) 3 commits
+* ob/core-attributesfile-in-repository (2026-02-03) 3 commits
  - environment: move "branch.autoSetupMerge" into `struct repo_config_values`
  - environment: stop using core.sparseCheckout globally
  - environment: stop storing `core.attributesFile` globally
@@ -480,7 +671,7 @@ Release tarballs are available at:
  been corrected by moving it to per-repository data structure.
 
  Comments?
- source: <cover.1769256839.git.belkid98@gmail.com>
+ source: <cover.1770127568.git.belkid98@gmail.com>
 
 
 * aa/add-p-previous-decisions (2026-01-08) 1 commit
@@ -490,7 +681,7 @@ Release tarballs are available at:
  "git add -p" and friends notes what the current status of the hunk
  being shown is.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <aV_IGCld5T_dBxTs@Adekunles-MacBook-Air.local>
 
 
@@ -512,10 +703,9 @@ Release tarballs are available at:
  source: <pull.2150.v2.git.git.1767226763360.gitgitgadget@gmail.com>
 
 
-* cc/lop-filter-auto (2025-12-23) 9 commits
+* cc/lop-filter-auto (2026-02-04) 8 commits
  - fetch-pack: wire up and enable auto filter logic
- - promisor-remote: keep advertised filter in memory
- - list-objects-filter-options: implement auto filter resolution
+ - promisor-remote: keep advertised filters in memory
  - list-objects-filter-options: support 'auto' mode for --filter
  - doc: fetch: document `--filter=<filter-spec>` option
  - fetch: make filter_options local to cmd_fetch()
@@ -526,7 +716,7 @@ Release tarballs are available at:
  "auto filter" logic for large-object promisor remote.
 
  Comments?
- source: <20251223111113.47473-1-christian.couder@gmail.com>
+ source: <20260204110818.2919273-1-christian.couder@gmail.com>
 
 
 * tt/receive-pack-oo-namespace-symref-fix (2025-12-27) 1 commit
@@ -546,7 +736,7 @@ Release tarballs are available at:
  The help text and the documentation for the "--expire" option of
  "git worktree [list|prune]" have been improved.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <pull.2135.v3.git.git.1769578785381.gitgitgadget@gmail.com>
 
 
@@ -567,7 +757,7 @@ Release tarballs are available at:
  HTTP transport failed to authenticate in some code paths, which has
  been corrected.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20260114163619.614297-2-aplattner@nvidia.com>
 
 
@@ -617,7 +807,7 @@ Release tarballs are available at:
  "git replay" is taught to drop commits that become empty (not the
  ones that are empty in the original).
 
- Will cook in 'next'.
+ On hold.  We need to figure out what to do with ps/history.
  source: <375adc4e941f3bb22a2b12ee26a083951ed724dd.1766076625.git.phillip.wood@dunelm.org.uk>
 
 
@@ -660,7 +850,7 @@ Release tarballs are available at:
 
  "git history" history rewriting UI.
 
- Will cook in 'next'.
+ What's next for this topic?CABPp-BHkNLdH4C7U4sFoVhrsSPH8KAaDtOdLEQGyajmXZz9hVg@mail.gmail.com
  cf. <aWpoMcgwsfRCCrr4@szeder.dev>
  cf. <CABPp-BHkNLdH4C7U4sFoVhrsSPH8KAaDtOdLEQGyajmXZz9hVg@mail.gmail.com>
  source: <20260113-b4-pks-history-builtin-v11-0-e74ebfa2652d@pks.im>
@@ -684,109 +874,6 @@ Release tarballs are available at:
  each other by encoding submodule names before using them as path
  components.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  cf. <aWXh9hQYxFhWYC6a@pks.im>
  source: <20260112184632.1334495-1-adrian.ratiu@collabora.com>
-
---------------------------------------------------
-[Discarded]
-
-* dw/config-global-list (2025-10-09) 4 commits
- . config: keep bailing on unreadable global files
- . config: read global scope via config_sequence
- . config: test home and xdg files in `list --global`
- . cleanup_path: force forward slashes on Windows
-
- "git config --list --global", unlike "git config --list", did not
- consult both of the two possible per-user sources of the
- configuration files, i.e. $HOME/.gitconfig and the XDG one, which
- has been corrected.
-
- Will discard. Has been waiting for a reroll for too long.
- cf. <20251122020047.GB3947@linuxonhyperv3.guj3yctzbm1etfxqx2vob5hsef.xx.internal.cloudapp.net>
- cf. <xmqq1pjkyq25.fsf@gitster.g>
- source: <pull.1938.git.1760058849.gitgitgadget@gmail.com>
-
-
-* ms/doc-worktree-side-by-side (2025-10-10) 2 commits
- . doc: git-worktree: Add side by side branch checkout example
- . doc: git-worktree: Link to examples
-
- Document "git worktree add" and use of out-of-tree worktrees with
- examples.
-
- Will discard. Has been waiting for a reroll for too long.
- cf. <CAPig+cSNesf0UwS4=Bxe-Qn+G9y3YYPyOK+7y3q8QJk+o7jaVg@mail.gmail.com>
- cf. <xmqq7btcyq7f.fsf@gitster.g>
- source: <a203b35538847f3c9358a5ae26fb4ebea5734cfc.1759420102.git.msuchanek@suse.de>
-
-
-* jc/exclude-with-gitignore (2025-11-04) 1 commit
- . dir.c: do not be fooled by :(exclude) pathspec elements
-
- "git add ':(exclude)foo.o'" is clearly a request not to add 'foo.o',
- but the command complained about listing an ignored path foo.o on
- the command line, which has been corrected.
-
- Will discard. Has been waiting for further comments for too long.
- cf. <xmqqwm1cxbad.fsf@gitster.g>
- source: <xmqqtsz9o3cn.fsf@gitster.g>
-
-
-* lc/rebase-trailer (2025-11-05) 4 commits
- . rebase: support --trailer
- . trailer: append trailers in-process and drop the fork to `interpret-trailers`
- . trailer: move process_trailers to trailer.h
- . interpret-trailers: factor out buffer-based processing to process_trailers()
-
- Refactor code paths to run "interpret-trailers" from "git
- commit/tag" and use it in "git rebase".
-
- Will discard. Has been waiting for a reroll for too long.
- cf. <19a8fe42354.3909481a3912041.7970296104893780556@linux.beauty>
- cf. <xmqqsec0xb50.fsf@gitster.g>
- source: <20251105142944.73061-1-me@linux.beauty>
-
-
-* sp/shallow-time-boundary (2025-11-23) 1 commit
- . shallow: set borders which are all reachable after clone shallow since
-
- The set of shallow boundary "git clone --shallow-since" leaves
- contained commits that are not on the boundary, which has been
- corrected.
-
- Will discard. Has been waiting for further comments for too long.
- cf. <xmqqfr80xanx.fsf@gitster.g>
- source: <pull.2107.v2.git.git.1763926552033.gitgitgadget@gmail.com>
-
-
-* jk/parse-int (2025-11-30) 5 commits
- . fsck: use parse_unsigned_from_buf() for parsing timestamp
- . cache-tree: use parse_int_from_buf()
- . parse: add functions for parsing from non-string buffers
- . parse: prefer bool to int for boolean returns
- . Merge branch 'jk/asan-bonanza' into jk/parse-int
-
- Introduce a more robust way to parse a decimal integer stored in a
- piece of memory that is not necessarily terminated with NUL (which
- Asan strict-string-check complains even when use of strtol() is
- safe due to varified existence of whitespace after the digits).
-
- Will discard. Has been waiting for a reroll for too long.
- cf. <aTFvKOHlm4zfT9dU@pks.im>
- cf. <4d83375b-76e2-4420-80dd-6a04d3201532@gmail.com>
- cf. <xmqqldhsxawm.fsf@gitster.g>
- source: <20251130131351.GA198697@coredump.intra.peff.net>
-
-
-* kn/ref-location (2025-12-01) 2 commits
- . refs: add GIT_REF_URI to specify reference backend and directory
- . refs: support obtaining ref_store for given dir
-
- A mechanism to specify what reference backend to use and store
- references in which directory is introduced, which would likely to
- be useful during ref migration.
-
- Will discard. Has been waiting for further comments for too long.
- cf. <xmqqbjioxahm.fsf@gitster.g>
- source: <20251201-kn-alternate-ref-dir-v3-0-c11b946bc2fa@gmail.com>
