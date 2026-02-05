@@ -37,6 +37,24 @@ ifndef LIBC_CONTAINS_LIBINTL
 	EXTLIBS += -lintl
 endif
 
+# Fallback for out-of-tree builds without config.mak{,.autogen} on macOS.
+ifeq ($(uname_S),Darwin)
+ifneq ($(shell pkg-config --exists libpcre2-8 && echo yes),)
+	EXTLIBS += $(shell pkg-config --libs libpcre2-8)
+endif
+ifneq ($(shell pkg-config --exists zlib && echo yes),)
+	EXTLIBS += $(shell pkg-config --libs zlib)
+else
+	EXTLIBS += -lz
+endif
+ifneq ($(shell pkg-config --exists libintl && echo yes),)
+	EXTLIBS += $(shell pkg-config --libs libintl)
+endif
+ifneq ($(shell pkg-config --exists libiconv && echo yes),)
+	EXTLIBS += $(shell pkg-config --libs libiconv)
+endif
+endif
+
 prefix ?= /usr/local
 gitexecdir ?= $(prefix)/libexec/git-core
 
