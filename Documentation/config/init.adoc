@@ -18,3 +18,9 @@ endif::[]
 	See `--ref-format=` in linkgit:git-init[1]. Both the command line
 	option and the `GIT_DEFAULT_REF_FORMAT` environment variable take
 	precedence over this config.
+
+init.defaultSubmodulePathConfig::
+	A boolean that specifies if `git init` and `git clone` should
+	automatically set `extensions.submodulePathConfig` to `true`. This
+	allows all new repositories to automatically use the submodule path
+	extension. Defaults to `false` when unset.

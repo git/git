@@ -281,6 +281,7 @@ int repo_init(struct repository *repo,
 	repo->repository_format_worktree_config = format.worktree_config;
 	repo->repository_format_relative_worktrees = format.relative_worktrees;
 	repo->repository_format_precious_objects = format.precious_objects;
+	repo->repository_format_submodule_path_cfg = format.submodule_path_cfg;
 
 	/* take ownership of format.partial_clone */
 	repo->repository_format_partial_clone = format.partial_clone;

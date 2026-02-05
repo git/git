@@ -31,6 +31,8 @@
 #include "commit-reach.h"
 #include "read-cache-ll.h"
 #include "setup.h"
+#include "advice.h"
+#include "url.h"
 
 static int config_update_recurse_submodules = RECURSE_SUBMODULES_OFF;
 static int initialized_fetch_ref_tips;
@@ -2158,19 +2160,15 @@ int submodule_move_head(const char *path, const char *super_prefix,
 				if (validate_submodule_git_dir(git_dir,
 							       sub->name) < 0)
 					die(_("refusing to create/use '%s' in "
-					      "another submodule's git dir"),
-					    git_dir);
+					      "another submodule's git dir. "
+					      "Enabling extensions.submodulePathConfig "
+					      "should fix this."), git_dir);
 				free(git_dir);
 			}
 		} else {
 			struct strbuf gitdir = STRBUF_INIT;
 			submodule_name_to_gitdir(&gitdir, the_repository,
 						 sub->name);
-			if (validate_submodule_git_dir(gitdir.buf,
-						       sub->name) < 0)
-				die(_("refusing to create/use '%s' in another "
-				      "submodule's git dir"),
-				    gitdir.buf);
 			connect_work_tree_and_git_dir(path, gitdir.buf, 0);
 			strbuf_release(&gitdir);
 
@@ -2250,11 +2248,154 @@ out:
 	return ret;
 }
 
-int validate_submodule_git_dir(char *git_dir, const char *submodule_name)
+static int check_casefolding_conflict(const char *git_dir,
+				      const char *submodule_name,
+				      const bool suffixes_match)
+{
+	char *p, *modules_dir = xstrdup(git_dir);
+	struct dirent *de;
+	DIR *dir = NULL;
+	int ret = 0;
+
+	if ((p = find_last_dir_sep(modules_dir)))
+		*p = '\0';
+
+	/* No conflict is possible if modules_dir doesn't exist (first clone) */
+	if (!is_directory(modules_dir))
+		goto cleanup;
+
+	dir = opendir(modules_dir);
+	if (!dir) {
+		ret = -1;
+		goto cleanup;
+	}
+
+	/* Check for another directory under .git/modules that differs only in case. */
+	while ((de = readdir(dir))) {
+		if (!strcmp(de->d_name, ".") || !strcmp(de->d_name, ".."))
+			continue;
+
+		if ((suffixes_match || is_git_directory(git_dir)) &&
+		    !strcasecmp(de->d_name, submodule_name) &&
+		    strcmp(de->d_name, submodule_name)) {
+			ret = -1; /* collision found */
+			break;
+		}
+	}
+
+cleanup:
+	if (dir)
+		closedir(dir);
+	free(modules_dir);
+	return ret;
+}
+
+struct submodule_from_gitdir_cb {
+	const char *gitdir;
+	const char *submodule_name;
+	bool conflict_found;
+};
+
+static int find_conflict_by_gitdir_cb(const char *var, const char *value,
+				      const struct config_context *ctx UNUSED, void *data)
+{
+	struct submodule_from_gitdir_cb *cb = data;
+	const char *submodule_name_start;
+	size_t submodule_name_len;
+	const char *suffix = ".gitdir";
+	size_t suffix_len = strlen(suffix);
+
+	if (!skip_prefix(var, "submodule.", &submodule_name_start))
+		return 0;
+
+	/* Check if submodule_name_start ends with ".gitdir" */
+	submodule_name_len = strlen(submodule_name_start);
+	if (submodule_name_len < suffix_len ||
+	    strcmp(submodule_name_start + submodule_name_len - suffix_len, suffix) != 0)
+		return 0; /* Does not end with ".gitdir" */
+
+	submodule_name_len -= suffix_len;
+
+	/*
+	 * A conflict happens if:
+	 * 1. The submodule names are different and
+	 * 2. The gitdir paths resolve to the same absolute path
+	 */
+	if (value && strncmp(cb->submodule_name, submodule_name_start, submodule_name_len)) {
+		char *abs_path_cb = absolute_pathdup(cb->gitdir);
+		char *abs_path_value = absolute_pathdup(value);
+
+		cb->conflict_found = !strcmp(abs_path_cb, abs_path_value);
+
+		free(abs_path_cb);
+		free(abs_path_value);
+	}
+
+	return cb->conflict_found;
+}
+
+static bool submodule_conflicts_with_existing(const char *gitdir, const char *submodule_name)
+{
+	struct submodule_from_gitdir_cb cb = { 0 };
+	cb.submodule_name = submodule_name;
+	cb.gitdir = gitdir;
+
+	/* Find conflicts with existing repo gitdir configs */
+	repo_config(the_repository, find_conflict_by_gitdir_cb, &cb);
+
+	return cb.conflict_found;
+}
+
+/*
+ * Encoded gitdir validation, only used when extensions.submodulePathConfig is enabled.
+ * This does not print errors like the non-encoded version, because encoding is supposed
+ * to mitigate / fix all these.
+ */
+static int validate_submodule_encoded_git_dir(char *git_dir, const char *submodule_name)
+{
+	const char *modules_marker = "/modules/";
+	char *p = git_dir, *last_submodule_name = NULL;
+	int config_ignorecase = 0;
+
+	if (!the_repository->repository_format_submodule_path_cfg)
+		BUG("validate_submodule_encoded_git_dir() must be called with "
+		    "extensions.submodulePathConfig enabled.");
+
+	/* Find the last submodule name in the gitdir path (modules can be nested). */
+	while ((p = strstr(p, modules_marker))) {
+		last_submodule_name = p + strlen(modules_marker);
+		p++;
+	}
+
+	/* Prevent the use of '/' in encoded names */
+	if (!last_submodule_name || strchr(last_submodule_name, '/'))
+		return -1;
+
+	/* Prevent conflicts with existing submodule gitdirs */
+	if (is_git_directory(git_dir) &&
+	    submodule_conflicts_with_existing(git_dir, submodule_name))
+			return -1;
+
+	/* Prevent conflicts on case-folding filesystems */
+	repo_config_get_bool(the_repository, "core.ignorecase", &config_ignorecase);
+	if (ignore_case || config_ignorecase) {
+		bool suffixes_match = !strcmp(last_submodule_name, submodule_name);
+		return check_casefolding_conflict(git_dir, submodule_name,
+						  suffixes_match);
+	}
+
+	return 0;
+}
+
+static int validate_submodule_legacy_git_dir(char *git_dir, const char *submodule_name)
 {
 	size_t len = strlen(git_dir), suffix_len = strlen(submodule_name);
 	char *p;
 	int ret = 0;
+
+	if (the_repository->repository_format_submodule_path_cfg)
+		BUG("validate_submodule_git_dir() must be called with "
+		    "extensions.submodulePathConfig disabled.");
 
 	if (len <= suffix_len || (p = git_dir + len - suffix_len)[-1] != '/' ||
 	    strcmp(p, submodule_name))
@@ -2289,6 +2430,14 @@ int validate_submodule_git_dir(char *git_dir, const char *submodule_name)
 	}
 
 	return 0;
+}
+
+int validate_submodule_git_dir(char *git_dir, const char *submodule_name)
+{
+	if (!the_repository->repository_format_submodule_path_cfg)
+		return validate_submodule_legacy_git_dir(git_dir, submodule_name);
+
+	return validate_submodule_encoded_git_dir(git_dir, submodule_name);
 }
 
 int validate_submodule_path(const char *path)
@@ -2349,9 +2498,6 @@ static void relocate_single_git_dir_into_superproject(const char *path,
 		die(_("could not lookup name for submodule '%s'"), path);
 
 	submodule_name_to_gitdir(&new_gitdir, the_repository, sub->name);
-	if (validate_submodule_git_dir(new_gitdir.buf, sub->name) < 0)
-		die(_("refusing to move '%s' into an existing git dir"),
-		    real_old_git_dir);
 	if (safe_create_leading_directories_const(the_repository, new_gitdir.buf) < 0)
 		die(_("could not create directory '%s'"), new_gitdir.buf);
 	real_new_git_dir = real_pathdup(new_gitdir.buf, 1);
@@ -2578,26 +2724,37 @@ cleanup:
 void submodule_name_to_gitdir(struct strbuf *buf, struct repository *r,
 			      const char *submodule_name)
 {
-	/*
-	 * NEEDSWORK: The current way of mapping a submodule's name to
-	 * its location in .git/modules/ has problems with some naming
-	 * schemes. For example, if a submodule is named "foo" and
-	 * another is named "foo/bar" (whether present in the same
-	 * superproject commit or not - the problem will arise if both
-	 * superproject commits have been checked out at any point in
-	 * time), or if two submodule names only have different cases in
-	 * a case-insensitive filesystem.
-	 *
-	 * There are several solutions, including encoding the path in
-	 * some way, introducing a submodule.<name>.gitdir config in
-	 * .git/config (not .gitmodules) that allows overriding what the
-	 * gitdir of a submodule would be (and teach Git, upon noticing
-	 * a clash, to automatically determine a non-clashing name and
-	 * to write such a config), or introducing a
-	 * submodule.<name>.gitdir config in .gitmodules that repo
-	 * administrators can explicitly set. Nothing has been decided,
-	 * so for now, just append the name at the end of the path.
-	 */
-	repo_git_path_append(r, buf, "modules/");
-	strbuf_addstr(buf, submodule_name);
+	if (!r->repository_format_submodule_path_cfg) {
+		/*
+		 * If extensions.submodulePathConfig is disabled,
+		 * continue to use the plain path.
+		 */
+		repo_git_path_append(r, buf, "modules/%s", submodule_name);
+	} else {
+		const char *gitdir;
+		char *key;
+		int ret;
+
+		/* Otherwise the extension is enabled, so use the gitdir config. */
+		key = xstrfmt("submodule.%s.gitdir", submodule_name);
+		ret = repo_config_get_string_tmp(r, key, &gitdir);
+		FREE_AND_NULL(key);
+
+		if (ret)
+			die(_("the 'submodule.%s.gitdir' config does not exist for module '%s'. "
+			      "Please ensure it is set, for example by running something like: "
+			      "'git config submodule.%s.gitdir .git/modules/%s'. For details "
+			      "see the extensions.submodulePathConfig documentation."),
+			    submodule_name, submodule_name, submodule_name, submodule_name);
+
+		strbuf_addstr(buf, gitdir);
+	}
+
+	/* validate because users might have modified the config */
+	if (validate_submodule_git_dir(buf->buf, submodule_name)) {
+		advise(_("enabling extensions.submodulePathConfig might fix the "
+			 "following error, if it's not already enabled."));
+		die(_("refusing to create/use '%s' in another submodule's "
+		      " git dir."), buf->buf);
+	}
 }
