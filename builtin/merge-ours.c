@@ -10,6 +10,8 @@
 
 #include "git-compat-util.h"
 #include "builtin.h"
+#include "config.h"
+#include "environment.h"
 #include "diff.h"
 
 static const char builtin_merge_ours_usage[] =
@@ -21,6 +23,10 @@ int cmd_merge_ours(int argc,
 		   struct repository *repo)
 {
 	show_usage_if_asked(argc, argv, builtin_merge_ours_usage);
+
+	repo_config(repo, git_default_config, NULL);
+	prepare_repo_settings(repo);
+	repo->settings.command_requires_full_index = 0;
 
 	/*
 	 * The contents of the current index becomes the tree we

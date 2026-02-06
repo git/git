@@ -2559,4 +2559,18 @@ test_expect_success 'cat-file --batch' '
 	ensure_expanded cat-file --batch <in
 '
 
+test_expect_success 'merge -s ours' '
+	init_repos &&
+
+	test_all_match git rev-parse HEAD^{tree} &&
+	test_all_match git merge -s ours merge-right &&
+	test_all_match git rev-parse HEAD^{tree} &&
+	test_all_match git rev-parse HEAD^2
+'
+
+test_expect_success 'sparse-index is not expanded: merge-ours' '
+	init_repos &&
+	ensure_not_expanded merge -s ours merge-right
+'
+
 test_done
