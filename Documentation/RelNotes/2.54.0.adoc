@@ -1,0 +1,39 @@
+Git v2.54 Release Notes
+=======================
+
+UI, Workflows & Features
+------------------------
+
+ * "git add -p" and friends note what the current status of the hunk
+   being shown is.
+
+
+Performance, Internal Implementation, Development Support etc.
+--------------------------------------------------------------
+
+ * Avoid local submodule repository directory paths overlapping with
+   each other by encoding submodule names before using them as path
+   components.
+
+
+Fixes since v2.53
+-----------------
+
+ * HTTP transport failed to authenticate in some code paths, which has
+   been corrected.
+   (merge ed0f7a62f7 ap/http-probe-rpc-use-auth later to maint).
+
+ * The computation of column width made by "git diff --stat" was
+   confused when pathnames contain non-ASCII characters.
+   (merge 04f5d95ef7 lp/diff-stat-utf8-display-width-fix later to maint).
+
+ * The "-z" and "--max-depth" documentation (and implementation of
+   "-z") in the "git last-modified" command have been updated.
+   (merge 9dcc09bed1 tc/last-modified-options-cleanup later to maint).
+
+ * Other code cleanup, docfix, build fix, etc.
+   (merge d79fff4a11 jk/remote-tracking-ref-leakfix later to maint).
+   (merge 7a747f972d dd/t5403-modernise later to maint).
+   (merge 81021871ea sp/myfirstcontribution-include-update later to maint).
+   (merge 49223593fd ac/sparse-checkout-string-list-cleanup later to maint).
+   (merge a824421d36 sp/t5500-cleanup later to maint).
