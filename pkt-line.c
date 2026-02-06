@@ -384,10 +384,10 @@ int packet_length(const char lenbuf_hex[4], size_t size)
 		hexval(lenbuf_hex[3]);
 }
 
-static char *find_packfile_uri_path(const char *buffer)
+static const char *find_packfile_uri_path(const char *buffer)
 {
 	const char *URI_MARK = "://";
-	char *path;
+	const char *path;
 	int len;
 
 	/* First char is sideband mark */
@@ -417,7 +417,7 @@ enum packet_read_status packet_read_with_status(int fd, char **src_buffer,
 {
 	int len;
 	char linelen[4];
-	char *uri_path_start;
+	const char *uri_path_start;
 
 	if (get_packet_data(fd, src_buffer, src_len, linelen, 4, options) < 0) {
 		*pktlen = -1;
