@@ -393,7 +393,7 @@ static int delete_enlistment(struct strbuf *enlistment)
 {
 	struct strbuf parent = STRBUF_INIT;
 	size_t offset;
-	char *path_sep;
+	const char *path_sep;
 
 	if (unregister_dir())
 		return error(_("failed to unregister repository"));

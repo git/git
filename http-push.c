@@ -1768,7 +1768,7 @@ int cmd_main(int argc, const char **argv)
 				usage(http_push_usage);
 		}
 		if (!repo->url) {
-			char *path = strstr(arg, "//");
+			const char *path = strstr(arg, "//");
 			str_end_url_with_slash(arg, &repo->url);
 			repo->path_len = strlen(repo->url);
 			if (path) {

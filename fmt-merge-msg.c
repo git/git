@@ -246,7 +246,8 @@ static void add_branch_desc(struct strbuf *out, const char *name)
 static void record_person_from_buf(int which, struct string_list *people,
 				   const char *buffer)
 {
-	char *name_buf, *name, *name_end;
+	char *name_buf;
+	const char *name, *name_end;
 	struct string_list_item *elem;
 	const char *field;
 

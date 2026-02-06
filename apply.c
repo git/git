@@ -4144,7 +4144,7 @@ static int preimage_oid_in_gitlink_patch(struct patch *p, struct object_id *oid)
 	 */
 	struct fragment *hunk = p->fragments;
 	static const char heading[] = "-Subproject commit ";
-	char *preimage;
+	const char *preimage;
 
 	if (/* does the patch have only one hunk? */
 	    hunk && !hunk->next &&

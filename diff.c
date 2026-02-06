@@ -1961,7 +1961,7 @@ static int fn_out_diff_words_write_helper(struct diff_options *o,
 	struct strbuf sb = STRBUF_INIT;
 
 	while (count) {
-		char *p = memchr(buf, '\n', count);
+		const char *p = memchr(buf, '\n', count);
 		if (print)
 			strbuf_addstr(&sb, diff_line_prefix(o));
 
@@ -3044,7 +3044,7 @@ static long gather_dirstat(struct diff_options *opt, struct dirstat_dir *dir,
 		struct dirstat_file *f = dir->files;
 		int namelen = strlen(f->name);
 		unsigned long changes;
-		char *slash;
+		const char *slash;
 
 		if (namelen < baselen)
 			break;
