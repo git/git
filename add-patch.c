@@ -342,7 +342,7 @@ static int parse_hunk_header(struct add_p_state *s, struct hunk *hunk)
 {
 	struct hunk_header *header = &hunk->header;
 	const char *line = s->plain.buf + hunk->start, *p = line;
-	char *eol = memchr(p, '\n', s->plain.len - hunk->start);
+	const char *eol = memchr(p, '\n', s->plain.len - hunk->start);
 
 	if (!eol)
 		eol = s->plain.buf + s->plain.len;

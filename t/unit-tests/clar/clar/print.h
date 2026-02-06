@@ -127,7 +127,7 @@ static void clar_print_tap_error(int num, const struct clar_report *report, cons
 
 static void print_escaped(const char *str)
 {
-	char *c;
+	const char *c;
 
 	while ((c = strchr(str, '\'')) != NULL) {
 		printf("%.*s", (int)(c - str), str);

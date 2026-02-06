@@ -1756,7 +1756,7 @@ int repo_interpret_branch_name(struct repository *r,
 			       struct strbuf *buf,
 			       const struct interpret_branch_name_options *options)
 {
-	char *at;
+	const char *at;
 	const char *start;
 	int len;
 

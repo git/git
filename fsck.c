@@ -1026,7 +1026,7 @@ int fsck_tag_standalone(const struct object_id *oid, const char *buffer,
 			int *tagged_type)
 {
 	int ret = 0;
-	char *eol;
+	const char *eol;
 	struct strbuf sb = STRBUF_INIT;
 	const char *buffer_end = buffer + size;
 	const char *p;

@@ -76,7 +76,7 @@ static void insert_one_record(struct shortlog *log,
 		if (!eol)
 			eol = oneline + strlen(oneline);
 		if (starts_with(oneline, "[PATCH")) {
-			char *eob = strchr(oneline, ']');
+			const char *eob = strchr(oneline, ']');
 			if (eob && (!eol || eob < eol))
 				oneline = eob + 1;
 		}
