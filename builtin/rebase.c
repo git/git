@@ -912,7 +912,7 @@ static int can_fast_forward(struct commit *onto, struct commit *upstream,
 	res = 1;
 
 done:
-	free_commit_list(merge_bases);
+	commit_list_free(merge_bases);
 	return res && is_linear_history(onto, head);
 }
 
@@ -929,7 +929,7 @@ static void fill_branch_base(struct rebase_options *options,
 	else
 		oidcpy(branch_base, &merge_bases->item->object.oid);
 
-	free_commit_list(merge_bases);
+	commit_list_free(merge_bases);
 }
 
 static int parse_opt_am(const struct option *opt, const char *arg, int unset)

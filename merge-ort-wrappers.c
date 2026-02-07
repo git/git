@@ -120,7 +120,7 @@ int merge_ort_generic(struct merge_options *opt,
 	repo_hold_locked_index(opt->repo, &lock, LOCK_DIE_ON_ERROR);
 	clean = merge_ort_recursive(opt, head_commit, next_commit, ca,
 				    result);
-	free_commit_list(ca);
+	commit_list_free(ca);
 	if (clean < 0) {
 		rollback_lock_file(&lock);
 		return clean;

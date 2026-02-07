@@ -33,7 +33,7 @@ static int stdin_diff_commit(struct commit *commit, const char *p)
 		struct commit *parent = lookup_commit(the_repository, &oid);
 		if (!pptr) {
 			/* Free the real parent list */
-			free_commit_list(commit->parents);
+			commit_list_free(commit->parents);
 			commit->parents = NULL;
 			pptr = &(commit->parents);
 		}

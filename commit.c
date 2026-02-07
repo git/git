@@ -191,7 +191,7 @@ void unparse_commit(struct repository *r, const struct object_id *oid)
 
 	if (!c->object.parsed)
 		return;
-	free_commit_list(c->parents);
+	commit_list_free(c->parents);
 	c->parents = NULL;
 	c->object.parsed = 0;
 }
@@ -436,7 +436,7 @@ void release_commit_memory(struct parsed_object_pool *pool, struct commit *c)
 	set_commit_tree(c, NULL);
 	free_commit_buffer(pool, c);
 	c->index = 0;
-	free_commit_list(c->parents);
+	commit_list_free(c->parents);
 
 	c->object.parsed = 0;
 }
@@ -480,7 +480,7 @@ int parse_commit_buffer(struct repository *r, struct commit *item, const void *b
 	 * same error, but that's good, since it lets our caller know
 	 * the result cannot be trusted.
 	 */
-	free_commit_list(item->parents);
+	commit_list_free(item->parents);
 	item->parents = NULL;
 
 	tail += size;
@@ -680,7 +680,7 @@ unsigned commit_list_count(const struct commit_list *l)
 	return c;
 }
 
-struct commit_list *copy_commit_list(const struct commit_list *list)
+struct commit_list *commit_list_copy(const struct commit_list *list)
 {
 	struct commit_list *head = NULL;
 	struct commit_list **pp = &head;
@@ -691,7 +691,7 @@ struct commit_list *copy_commit_list(const struct commit_list *list)
 	return head;
 }
 
-struct commit_list *reverse_commit_list(struct commit_list *list)
+struct commit_list *commit_list_reverse(struct commit_list *list)
 {
 	struct commit_list *next = NULL, *current, *backup;
 	for (current = list; current; current = backup) {
@@ -702,7 +702,7 @@ struct commit_list *reverse_commit_list(struct commit_list *list)
 	return next;
 }
 
-void free_commit_list(struct commit_list *list)
+void commit_list_free(struct commit_list *list)
 {
 	while (list)
 		pop_commit(&list);
@@ -977,7 +977,7 @@ void sort_in_topological_order(struct commit_list **list, enum rev_sort_order so
 		prio_queue_reverse(&queue);
 
 	/* We no longer need the commit list */
-	free_commit_list(orig);
+	commit_list_free(orig);
 
 	pptr = list;
 	*list = NULL;
@@ -1107,7 +1107,7 @@ struct commit *get_fork_point(const char *refname, struct commit *commit)
 
 cleanup_return:
 	free(revs.commit);
-	free_commit_list(bases);
+	commit_list_free(bases);
 	free(full_refname);
 	return ret;
 }
