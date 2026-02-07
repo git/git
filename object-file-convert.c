@@ -23,7 +23,7 @@ int repo_oid_to_algop(struct repository *repo, const struct object_id *src,
 	const struct git_hash_algo *from =
 		src->algo ? &hash_algos[src->algo] : repo->hash_algo;
 
-	if (from == to) {
+	if (from == to || !to) {
 		if (src != dest)
 			oidcpy(dest, src);
 		return 0;
