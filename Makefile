@@ -342,6 +342,9 @@ include shared.mak
 # If it isn't set, fallback to $LC_ALL, $LANG or use the first utf-8
 # locale returned by "locale -a".
 #
+# Define TEST_CONTRIB_TOO to make "make test" run tests in contrib/
+# directories.
+#
 # Define HAVE_CLOCK_GETTIME if your platform has clock_gettime.
 #
 # Define HAVE_CLOCK_MONOTONIC if your platform has CLOCK_MONOTONIC.
@@ -3371,6 +3374,9 @@ export TEST_NO_MALLOC_CHECK
 
 test: all
 	$(MAKE) -C t/ all
+ifdef TEST_CONTRIB_TOO
+	$(MAKE) -C contrib/ test
+endif
 
 perf: all
 	$(MAKE) -C t/perf/ all

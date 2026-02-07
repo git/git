@@ -5,6 +5,8 @@
 
 . ${0%/*}/lib.sh
 
+export TEST_CONTRIB_TOO=yes
+
 case "$jobname" in
 fedora-breaking-changes-musl|linux-breaking-changes)
 	export WITH_BREAKING_CHANGES=YesPlease
@@ -36,6 +38,7 @@ linux-sha256)
 linux-reftable|linux-reftable-leaks|osx-reftable)
 	export GIT_TEST_DEFAULT_REF_FORMAT=reftable
 	;;
+
 esac
 
 case "$jobname" in
