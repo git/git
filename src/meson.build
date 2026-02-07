@@ -1,4 +1,5 @@
 libgit_rs_sources = [
+  'hash.rs',
   'lib.rs',
   'varint.rs',
 ]
