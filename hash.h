@@ -340,6 +340,7 @@ static inline void git_hash_final_oid(struct object_id *oid, struct git_hash_ctx
 	ctx->algop->final_oid_fn(oid, ctx);
 }
 
+const struct git_hash_algo *hash_algo_ptr_by_number(uint32_t algo);
 /*
  * Return a GIT_HASH_* constant based on the name.  Returns GIT_HASH_UNKNOWN if
  * the name doesn't match a known algorithm.
