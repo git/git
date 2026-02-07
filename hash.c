@@ -241,7 +241,7 @@ const char *empty_tree_oid_hex(const struct git_hash_algo *algop)
 	return oid_to_hex_r(buf, algop->empty_tree);
 }
 
-int hash_algo_by_name(const char *name)
+uint32_t hash_algo_by_name(const char *name)
 {
 	if (!name)
 		return GIT_HASH_UNKNOWN;
@@ -251,7 +251,7 @@ int hash_algo_by_name(const char *name)
 	return GIT_HASH_UNKNOWN;
 }
 
-int hash_algo_by_id(uint32_t format_id)
+uint32_t hash_algo_by_id(uint32_t format_id)
 {
 	for (size_t i = 1; i < GIT_HASH_NALGOS; i++)
 		if (format_id == hash_algos[i].format_id)
@@ -259,7 +259,7 @@ int hash_algo_by_id(uint32_t format_id)
 	return GIT_HASH_UNKNOWN;
 }
 
-int hash_algo_by_length(size_t len)
+uint32_t hash_algo_by_length(size_t len)
 {
 	for (size_t i = 1; i < GIT_HASH_NALGOS; i++)
 		if (len == hash_algos[i].rawsz)

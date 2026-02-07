@@ -10,7 +10,7 @@ struct oidtree_iter_data {
 	oidtree_iter fn;
 	void *arg;
 	size_t *last_nibble_at;
-	int algo;
+	uint32_t algo;
 	uint8_t last_byte;
 };
 
