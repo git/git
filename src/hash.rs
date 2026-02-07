@@ -12,6 +12,7 @@
 
 use std::error::Error;
 use std::fmt::{self, Debug, Display};
+use std::io::{self, Write};
 use std::os::raw::c_void;
 
 pub const GIT_MAX_RAWSZ: usize = 32;
@@ -108,6 +109,100 @@ impl Debug for ObjectID {
             Ok(algo) => write!(f, ":{}", algo.name()),
             Err(e) => write!(f, ":invalid-hash-algo-{}", e.0),
         }
+    }
+}
+
+/// A trait to implement hashing with a cryptographic algorithm.
+pub trait CryptoDigest {
+    /// Return true if this digest is safe for use with untrusted data, false otherwise.
+    fn is_safe(&self) -> bool;
+
+    /// Update the digest with the specified data.
+    fn update(&mut self, data: &[u8]);
+
+    /// Return an object ID, consuming the hasher.
+    fn into_oid(self) -> ObjectID;
+
+    /// Return a hash as a `Vec`, consuming the hasher.
+    fn into_vec(self) -> Vec<u8>;
+}
+
+/// A structure to hash data with a cryptographic hash algorithm.
+///
+/// Instances of this class are safe for use with untrusted data, provided Git has been compiled
+/// with a collision-detecting implementation of SHA-1.
+pub struct CryptoHasher {
+    algo: HashAlgorithm,
+    ctx: *mut c_void,
+}
+
+impl CryptoHasher {
+    /// Create a new hasher with the algorithm specified with `algo`.
+    ///
+    /// This hasher is safe to use on untrusted data.  If SHA-1 is selected and Git was compiled
+    /// with a collision-detecting implementation of SHA-1, then this function will use that
+    /// implementation and detect any attempts at a collision.
+    pub fn new(algo: HashAlgorithm) -> Self {
+        let ctx = unsafe { c::git_hash_alloc() };
+        unsafe { c::git_hash_init(ctx, algo.hash_algo_ptr()) };
+        Self { algo, ctx }
+    }
+}
+
+impl CryptoDigest for CryptoHasher {
+    /// Return true if this digest is safe for use with untrusted data, false otherwise.
+    fn is_safe(&self) -> bool {
+        true
+    }
+
+    /// Update the hasher with the specified data.
+    fn update(&mut self, data: &[u8]) {
+        unsafe { c::git_hash_update(self.ctx, data.as_ptr() as *const c_void, data.len()) };
+    }
+
+    /// Return an object ID, consuming the hasher.
+    fn into_oid(self) -> ObjectID {
+        let mut oid = ObjectID {
+            hash: [0u8; 32],
+            algo: self.algo as u32,
+        };
+        unsafe { c::git_hash_final_oid(&mut oid as *mut ObjectID as *mut c_void, self.ctx) };
+        oid
+    }
+
+    /// Return a hash as a `Vec`, consuming the hasher.
+    fn into_vec(self) -> Vec<u8> {
+        let mut v = vec![0u8; self.algo.raw_len()];
+        unsafe { c::git_hash_final(v.as_mut_ptr(), self.ctx) };
+        v
+    }
+}
+
+impl Clone for CryptoHasher {
+    fn clone(&self) -> Self {
+        let ctx = unsafe { c::git_hash_alloc() };
+        unsafe { c::git_hash_clone(ctx, self.ctx) };
+        Self {
+            algo: self.algo,
+            ctx,
+        }
+    }
+}
+
+impl Drop for CryptoHasher {
+    fn drop(&mut self) {
+        unsafe { c::git_hash_free(self.ctx) };
+    }
+}
+
+impl Write for CryptoHasher {
+    fn write(&mut self, data: &[u8]) -> io::Result<usize> {
+        self.update(data);
+        Ok(data.len())
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        Ok(())
     }
 }
 
@@ -239,6 +334,11 @@ impl HashAlgorithm {
     pub fn hash_algo_ptr(self) -> *const c_void {
         unsafe { c::hash_algo_ptr_by_number(self as u32) }
     }
+
+    /// Create a hasher for this algorithm.
+    pub fn hasher(self) -> CryptoHasher {
+        CryptoHasher::new(self)
+    }
 }
 
 pub mod c {
@@ -246,12 +346,21 @@ pub mod c {
 
     extern "C" {
         pub fn hash_algo_ptr_by_number(n: u32) -> *const c_void;
+        pub fn unsafe_hash_algo(algop: *const c_void) -> *const c_void;
+        pub fn git_hash_alloc() -> *mut c_void;
+        pub fn git_hash_free(ctx: *mut c_void);
+        pub fn git_hash_init(dst: *mut c_void, algop: *const c_void);
+        pub fn git_hash_clone(dst: *mut c_void, src: *const c_void);
+        pub fn git_hash_update(ctx: *mut c_void, inp: *const c_void, len: usize);
+        pub fn git_hash_final(hash: *mut u8, ctx: *mut c_void);
+        pub fn git_hash_final_oid(hash: *mut c_void, ctx: *mut c_void);
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::HashAlgorithm;
+    use super::{CryptoDigest, HashAlgorithm, ObjectID};
+    use std::io::Write;
 
     fn all_algos() -> &'static [HashAlgorithm] {
         &[HashAlgorithm::SHA1, HashAlgorithm::SHA256]
@@ -320,6 +429,38 @@ mod tests {
         for (oid, display, debug) in entries {
             assert_eq!(format!("{}", oid), *display);
             assert_eq!(format!("{:?}", oid), *debug);
+        }
+    }
+
+    #[test]
+    fn hasher_works_correctly() {
+        for algo in all_algos() {
+            let tests: &[(&[u8], &ObjectID)] = &[
+                (b"blob 0\0", algo.empty_blob()),
+                (b"tree 0\0", algo.empty_tree()),
+            ];
+            for (data, oid) in tests {
+                let mut h = algo.hasher();
+                assert!(h.is_safe());
+                // Test that this works incrementally.
+                h.update(&data[0..2]);
+                h.update(&data[2..]);
+
+                let h2 = h.clone();
+
+                let actual_oid = h.into_oid();
+                assert_eq!(**oid, actual_oid);
+
+                let v = h2.into_vec();
+                assert_eq!((*oid).as_slice().unwrap(), &v);
+
+                let mut h = algo.hasher();
+                h.write_all(&data[0..2]).unwrap();
+                h.write_all(&data[2..]).unwrap();
+
+                let actual_oid = h.into_oid();
+                assert_eq!(**oid, actual_oid);
+            }
         }
     }
 }
