@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Feb 2026, #02)
-X-master-at: b2826b52eb7caff9f4ed6e85ec45e338bf02ad09
-X-next-at: 305ecc6b61d0a123836784173332d185b4630f72
+Subject: What's cooking in git.git (Feb 2026, #03)
+X-master-at: 3e0db84c88c57e70ac8be8c196dfa92c5d656fbc
+X-next-at: 64333814d3ac6e46b6b9c308a6398a66743a4022
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Feb 2026, #02)
+What's cooking in git.git (Feb 2026, #03)
 -----------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -21,8 +21,7 @@ Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
 repositories have only a subset of branches.
 
-Git 2.53 has been tagged.  Let's wait to see if there are regression
-reports from the real world and then start the new cycle.
+We will be rewinding the tip of 'next' soonish.
 
 With maint, master, next, seen, todo:
 
@@ -49,7 +48,160 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* aa/add-p-previous-decisions (2026-01-08) 1 commit
+  (merged to 'next' on 2026-01-21 at 4e2fe2bd9b)
+ + add -p: show user's hunk decision when selecting hunks
+
+ "git add -p" and friends note what the current status of the hunk
+ being shown is.
+ source: <aV_IGCld5T_dBxTs@Adekunles-MacBook-Air.local>
+
+
+* ac/sparse-checkout-string-list-cleanup (2026-01-21) 1 commit
+  (merged to 'next' on 2026-01-23 at 885244a10d)
+ + sparse-checkout: optimize string_list construction and add tests to verify deduplication.
+
+ Code clean-up.
+ source: <20260121130005.72375-1-amishhhaaaa@gmail.com>
+
+
+* ap/http-probe-rpc-use-auth (2026-01-14) 1 commit
+  (merged to 'next' on 2026-01-23 at 0439366395)
+ + remote-curl: use auth for probe_rpc() requests too
+
+ HTTP transport failed to authenticate in some code paths, which has
+ been corrected.
+ source: <20260114163619.614297-2-aplattner@nvidia.com>
+
+
+* ar/submodule-gitdir-tweak (2026-01-12) 11 commits
+  (merged to 'next' on 2026-01-23 at ef3c2cab02)
+ + submodule: detect conflicts with existing gitdir configs
+ + submodule: hash the submodule name for the gitdir path
+ + submodule: fix case-folding gitdir filesystem collisions
+ + submodule--helper: fix filesystem collisions by encoding gitdir paths
+ + builtin/credential-store: move is_rfc3986_unreserved to url.[ch]
+ + submodule--helper: add gitdir migration command
+ + submodule: allow runtime enabling extensions.submodulePathConfig
+ + submodule: introduce extensions.submodulePathConfig
+ + builtin/submodule--helper: add gitdir command
+ + submodule: always validate gitdirs inside submodule_name_to_gitdir
+ + submodule--helper: use submodule_name_to_gitdir in add_submodule
+
+ Avoid local submodule repository directory paths overlapping with
+ each other by encoding submodule names before using them as path
+ components.
+ cf. <aWXh9hQYxFhWYC6a@pks.im>
+ source: <20260112184632.1334495-1-adrian.ratiu@collabora.com>
+
+
+* dd/t5403-modernise (2026-01-12) 2 commits
+  (merged to 'next' on 2026-01-23 at ca3ceb637e)
+ + t5403: use test_cmp for post-checkout argument checks
+ + t5403: introduce check_post_checkout helper function
+
+ Test clean-up.
+
+
+* jk/remote-tracking-ref-leakfix (2026-01-18) 4 commits
+  (merged to 'next' on 2026-01-21 at 7f0736a973)
+ + remote: always allocate branch.push_tracking_ref
+ + remote: fix leak in branch_get_push_1() with invalid "simple" config
+ + remote: drop const return of tracking_for_push_dest()
+ + remote: return non-const pointer from error_buf()
+ (this branch is used by hn/status-compare-with-push.)
+
+ Leakfix.
+ source: <20260119051858.GA1991308@coredump.intra.peff.net>
+
+
+* lp/diff-stat-utf8-display-width-fix (2026-01-15) 2 commits
+  (merged to 'next' on 2026-01-23 at 80e7ddce3e)
+ + t4073: add test for diffstat paths length when containing UTF-8 chars
+ + diff: improve scaling of filenames in diffstat to handle UTF-8 chars
+
+ The computation of column width made by "git diff --stat" was
+ confused when pathnames contain non-ASCII characters.
+ source: <cover.1768520441.git.lorenzo.pegorari2002@gmail.com>
+
+
+* sp/myfirstcontribution-include-update (2026-01-12) 1 commit
+  (merged to 'next' on 2026-01-23 at 2d039d03ff)
+ + doc: MyFirstContribution: fix missing dependencies and clarify build steps
+
+ Doc update.
+ source: <20260112195625.391821-1-shreyanshpaliwalcmsmn@gmail.com>
+
+
+* sp/t5500-cleanup (2026-01-21) 1 commit
+  (merged to 'next' on 2026-01-23 at d5adc61ce8)
+ + t5500: simplify test implementation and fix git exit code suppression
+
+ Test clean-up.
+ source: <20260121130012.888299-1-shreyanshpaliwalcmsmn@gmail.com>
+
+
+* tc/last-modified-options-cleanup (2026-01-20) 4 commits
+  (merged to 'next' on 2026-01-23 at e514d98b11)
+ + last-modified: change default max-depth to 0
+ + last-modified: document option '--max-depth'
+ + last-modified: document option '-z'
+ + last-modified: clarify in the docs the command takes a pathspec
+
+ The "-z" and "--max-depth" documentation (and implementation of
+ "-z") in the "git last-modified" command have been updated.
+ source: <20260120-toon-last-modified-zzzz-v3-0-9bffd4968b0e@iotcl.com>
+
+--------------------------------------------------
 [New Topics]
+
+* yt/merge-file-outside-a-repository (2026-02-05) 1 commit
+ - merge-file: honor merge.conflictStyle outside of a repository
+
+ "git merge-file" can be run outside a repository, but it ignored
+ all configuration, even the per-user ones.  The command now uses
+ available configuration files to find its customization.
+
+ Will merge to 'next'?
+ source: <D514F3BA-36DD-4DAD-BF73-609730390A27@ytausch.de>
+
+
+* sb/merge-ours-sparse (2026-02-06) 2 commits
+  (merged to 'next' on 2026-02-06 at 64333814d3)
+ + merge-ours: integrate with sparse-index
+ + merge-ours: drop USE_THE_REPOSITORY_VARIABLE
+
+ "git merge-ours" is taught to work better in a sparse checkout.
+
+ Will merge to 'master'.
+ source: <pull.2189.v2.git.git.1770405383.gitgitgadget@gmail.com>
+
+
+* aa/add-p-no-auto-advance (2026-02-06) 3 commits
+ - add-patch: Allow proper 'git apply' when using the --rework-with-file flag
+ - add-patch: Allow interfile navigation when selecting hunks
+ - interactive -p: add new `--rework-with-file` flag to interactive machinery
+
+ "git add -p" learned a new mode that allows the user to revisit a
+ file that was already dealt with.
+
+ Expecting a reroll.
+ source: <cover.1770390576.git.abrahamadekunle50@gmail.com>
+
+
+* sd/doc-my1c-api-config-reference-fix (2026-02-05) 1 commit
+  (merged to 'next' on 2026-02-06 at 222e701dd5)
+ + doc: fix repo_config documentation reference
+
+ Docfix.
+
+ Will merge to 'master'.
+ source: <20260206062108.74072-1-valusoutrik@gmail.com>
+
+--------------------------------------------------
+[Cooking]
 
 * am/doc-github-contributiong-link-to-submittingpatches (2026-01-31) 1 commit
   (merged to 'next' on 2026-02-04 at 1f4534468b)
@@ -71,14 +223,16 @@ Release tarballs are available at:
  source: <20260202161759.84355-2-hoda.s.salim@gmail.com>
 
 
-* jc/ci-test-contrib-too (2026-02-05) 2 commits
- - ci: avoid ubuntu:rolling in most jobs for now
- - test: optionally test contrib in CI
+* jc/ci-test-contrib-too (2026-02-06) 2 commits
+  (merged to 'next' on 2026-02-06 at 2890869b63)
+ + ci: ubuntu: use GNU coreutils for dirname
+ + test: optionally test contrib in CI
 
  Test contrib/ things in CI to catch breakages before they enter the
  "next" branch.
 
- Will merge to 'next'?
+ Will merge to 'master'.
+ source: <20260207042703.1180704-1-ask+git@howdoi.land>
  source: <xmqqjywuyhu9.fsf@gitster.g>
 
 
@@ -101,7 +255,8 @@ Release tarballs are available at:
  Allow the directory in which reference backends store their data to
  be specified.
 
- Needs review.
+ Expecting a (hopefully small and final) reroll?
+ cf. <aYX7z_nUc4xJC8Qs@pks.im>
  source: <20260202-kn-alternate-ref-dir-v4-0-3b30430411e3@gmail.com>
 
 
@@ -118,29 +273,32 @@ Release tarballs are available at:
 
 
 * jc/diff-highlight-main-master-testfix (2026-02-03) 1 commit
- - diff-highlight: allow testing with Git 3.0 breaking changes
+  (merged to 'next' on 2026-02-05 at 128a77dfe5)
+ + diff-highlight: allow testing with Git 3.0 breaking changes
 
  Test fix (in contrib/)
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <xmqq7bstsemv.fsf@gitster.g>
 
 
 * cs/subtree-reftable-testfix (2026-02-03) 1 commit
- - contrib/subtree: fix tests with reftable backend
+  (merged to 'next' on 2026-02-05 at d953fc69cc)
+ + contrib/subtree: fix tests with reftable backend
 
  Test fix (in contrib/)
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20260204043812.814884-3-ask+git@howdoi.land>
 
 
 * tc/memzero-array (2026-02-03) 1 commit
- - cocci: extend MEMZERO_ARRAY() rules
+  (merged to 'next' on 2026-02-05 at 0755d57f09)
+ + cocci: extend MEMZERO_ARRAY() rules
 
  Coccinelle rules update.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20260203102908.749954-1-toon@iotcl.com>
 
 
@@ -201,8 +359,10 @@ Release tarballs are available at:
  source: <20260204173328.1601807-1-adrian.ratiu@collabora.com>
 
 
-* cf/c23-const-preserving-strchr-updates-0 (2026-02-04) 1 commit
- - global: constify some pointers that are not written to
+* cf/c23-const-preserving-strchr-updates-0 (2026-02-05) 2 commits
+  (merged to 'next' on 2026-02-06 at ac9d269e5c)
+ + gpg-interface: remove an unnecessary NULL initialization
+ + global: constify some pointers that are not written to
 
  ISO C23 redefines strchr and friends that tradiotionally took
  a const pointer and returned a non-const pointer derived from it to
@@ -211,16 +371,17 @@ Release tarballs are available at:
  paths that used non-const pointer to receive their results that did
  not have to be non-const to adjust.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <342b01acd42f1fcaa3abefa38dc589e12ccb1134.1770261829.git.collin.funk1@gmail.com>
 
 
 * mc/doc-send-email-signed-off-by-cc (2026-02-05) 1 commit
- - doc: send-email: correct --no-signed-off-by-cc misspelling
+  (merged to 'next' on 2026-02-06 at 2a3d683680)
+ + doc: send-email: correct --no-signed-off-by-cc misspelling
 
  Docfix.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <V3_--no-signed-off-by-cc.260@msgid.xyz>
 
 
@@ -237,8 +398,6 @@ Release tarballs are available at:
  Needs review.
  source: <pull.2040.git.1770307510.gitgitgadget@gmail.com>
 
---------------------------------------------------
-[Cooking]
 
 * sp/show-index-warn-fallback (2026-01-30) 2 commits
   (merged to 'next' on 2026-02-04 at 58399695e4)
@@ -266,21 +425,22 @@ Release tarballs are available at:
 
 
 * jt/odb-transaction-per-source (2026-02-02) 4 commits
- - odb: transparently handle common transaction behavior
- - odb: prepare `struct odb_transaction` to become generic
- - object-file: rename transaction functions
- - odb: store ODB source in `struct odb_transaction`
+  (merged to 'next' on 2026-02-06 at 9f85ed3c47)
+ + odb: transparently handle common transaction behavior
+ + odb: prepare `struct odb_transaction` to become generic
+ + object-file: rename transaction functions
+ + odb: store ODB source in `struct odb_transaction`
 
  Transaction to create objects (or not) is currently tied to the
  repository, but in the future a repository can have multiple object
  sources, which may have different transaction mechanisms.  Make the
  odb transaction API per object source.
 
- Comments?
+ Will merge to 'master'.
  source: <20260203001002.2500198-1-jltobler@gmail.com>
 
 
-* ps/for-each-ref-in-fixes (2026-01-30) 4 commits
+* ps/for-each-ref-in-fixes (2026-02-05) 4 commits
  - bisect: simplify string_list memory handling
  - bisect: fix misuse of `refs_for_each_ref_in()`
  - pack-bitmap: fix bug with exact ref match in "pack.preferBitmapTips"
@@ -288,7 +448,9 @@ Release tarballs are available at:
 
  A handful of places used refs_for_each_ref_in() API incorrectly,
  which has been corrected.
- source: <20260130-b4-pks-fix-for-each-ref-in-misuse-v2-0-0449b198a681@pks.im>
+
+ Will merge to 'next'?
+ source: <20260206-b4-pks-fix-for-each-ref-in-misuse-v3-0-1e050c3d6a50@pks.im>
 
 
 * ty/perf-3400-optim (2026-01-30) 1 commit
@@ -301,7 +463,7 @@ Release tarballs are available at:
  source: <20260130170123.642344-1-a3205153416@gmail.com>
 
 
-* ja/doc-synopsis-style-even-more (2026-02-03) 4 commits
+* ja/doc-synopsis-style-even-more (2026-02-05) 4 commits
  - doc: convert git-show to synopsis style
  - doc: fix some style issues in git-clone and for-each-ref-options
  - doc: finalize git-clone documentation conversion to synopsis style
@@ -310,8 +472,8 @@ Release tarballs are available at:
  A handful of documentation pages have been modernized to use the
  "synopsis" style.
 
- Comments?
- source: <pull.2036.v3.git.1770138215.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ source: <pull.2036.v4.git.1770351146.gitgitgadget@gmail.com>
 
 
 * ac/string-list-sort-u-and-tests (2026-01-29) 2 commits
@@ -348,16 +510,6 @@ Release tarballs are available at:
  Comments?
  This conflicts with en/xdiff-cleanup-3 that has been dormant for some time.
  source: <cover.1769424529.git.phillip.wood@dunelm.org.uk>
-
-
-* sp/t5500-cleanup (2026-01-21) 1 commit
-  (merged to 'next' on 2026-01-23 at d5adc61ce8)
- + t5500: simplify test implementation and fix git exit code suppression
-
- Test clean-up.
-
- Will merge to 'master'.
- source: <20260121130012.888299-1-shreyanshpaliwalcmsmn@gmail.com>
 
 
 * ty/symlinks-use-unsigned-for-bitset (2026-01-21) 1 commit
@@ -415,32 +567,6 @@ Release tarballs are available at:
  source: <20260128213927.3026875-1-adrian.ratiu@collabora.com>
 
 
-* lp/diff-stat-utf8-display-width-fix (2026-01-15) 2 commits
-  (merged to 'next' on 2026-01-23 at 80e7ddce3e)
- + t4073: add test for diffstat paths length when containing UTF-8 chars
- + diff: improve scaling of filenames in diffstat to handle UTF-8 chars
-
- The computation of column width made by "git diff --stat" was
- confused when pathnames contain non-ASCII characters.
-
- Will merge to 'master'.
- source: <cover.1768520441.git.lorenzo.pegorari2002@gmail.com>
-
-
-* jk/remote-tracking-ref-leakfix (2026-01-18) 4 commits
-  (merged to 'next' on 2026-01-21 at 7f0736a973)
- + remote: always allocate branch.push_tracking_ref
- + remote: fix leak in branch_get_push_1() with invalid "simple" config
- + remote: drop const return of tracking_for_push_dest()
- + remote: return non-const pointer from error_buf()
- (this branch is used by hn/status-compare-with-push.)
-
- Leakfix.
-
- Will merge to 'master'.
- source: <20260119051858.GA1991308@coredump.intra.peff.net>
-
-
 * yc/histogram-hunk-shift-fix (2025-12-06) 1 commit
  - xdiff: re-diff shifted change groups when using histogram algorithm
 
@@ -467,44 +593,22 @@ Release tarballs are available at:
  source: <pull.1853.v4.git.1770113882.gitgitgadget@gmail.com>
 
 
-* tc/last-modified-options-cleanup (2026-01-20) 4 commits
-  (merged to 'next' on 2026-01-23 at e514d98b11)
- + last-modified: change default max-depth to 0
- + last-modified: document option '--max-depth'
- + last-modified: document option '-z'
- + last-modified: clarify in the docs the command takes a pathspec
-
- The "-z" and "--max-depth" documentation (and implementation of
- "-z") in the "git last-modified" command have been updated.
-
- Will merge to 'master'.
- source: <20260120-toon-last-modified-zzzz-v3-0-9bffd4968b0e@iotcl.com>
-
-
 * tc/last-modified-not-a-tree (2026-01-30) 4 commits
- - last-modified: verify revision argument is a commit-ish
- - last-modified: remove double error message
- - last-modified: fix memory leak when more than one commit is given
- - last-modified: rewrite error message when more than one commit given
+  (merged to 'next' on 2026-02-06 at b3dcd27ef8)
+ + last-modified: verify revision argument is a commit-ish
+ + last-modified: remove double error message
+ + last-modified: fix memory leak when more than one commit is given
+ + last-modified: rewrite error message when more than one commit given
 
  Giving "git last-modified" a tree (not a commit-ish) died an
  uncontrolled death, which has been corrected.
 
- Will merge to 'next'?
+ Will merge to 'master'.
+ cf. <aYYO9SxiC5zFbB71@pks.im>
  source: <20260130-toon-last-modified-tree-v6-0-db827e5df985@iotcl.com>
 
 
-* sp/myfirstcontribution-include-update (2026-01-12) 1 commit
-  (merged to 'next' on 2026-01-23 at 2d039d03ff)
- + doc: MyFirstContribution: fix missing dependencies and clarify build steps
-
- Doc update.
-
- Will merge to 'master'.
- source: <20260112195625.391821-1-shreyanshpaliwalcmsmn@gmail.com>
-
-
-* cs/add-skip-submodule-ignore-all (2026-01-13) 5 commits
+* cs/add-skip-submodule-ignore-all (2026-02-06) 5 commits
  - Documentation: update add --force option + ignore=all config
  - tests: fix existing tests when add an ignore=all submodule
  - tests: t2206-add-submodule-ignored: ignore=all and add --force tests
@@ -515,10 +619,8 @@ Release tarballs are available at:
  submodule.<name>.ignore that is set to "all" (and requires "git add
  -f" to override it).
 
- Expecting a reroll.
- cf. <CA+GP4bqY02wcESuz1vPMcknigx_fUXFfi_xQ1EG_muGw6EszRg@mail.gmail.com>
- cf. <CA+GP4bpwMui5RT9ixo8iWyZ6XZDw3GnYhvgiqVmRq8dW7yo5RQ@mail.gmail.com>
- source: <37fe7956e089394bb1d75f4c8af4a3347b204803.1768376879.git.gitgitgadget@gmail.com>
+ Comments?
+ source: <pull.1987.v4.git.1770384180.gitgitgadget@gmail.com>
 
 
 * kn/ref-batch-output-error-reporting-fix (2026-01-25) 6 commits
@@ -538,24 +640,15 @@ Release tarballs are available at:
  source: <20260125-633-regression-lost-diagnostic-message-when-pushing-non-commit-objects-to-refs-heads-v5-0-d58f3a9edf98@gmail.com>
 
 
-* ac/sparse-checkout-string-list-cleanup (2026-01-21) 1 commit
-  (merged to 'next' on 2026-01-23 at 885244a10d)
- + sparse-checkout: optimize string_list construction and add tests to verify deduplication.
-
- Code clean-up.
-
- Will merge to 'master'.
- source: <20260121130005.72375-1-amishhhaaaa@gmail.com>
-
-
 * ps/commit-list-functions-renamed (2026-01-15) 3 commits
- - commit: rename `free_commit_list()` to conform to coding guidelines
- - commit: rename `reverse_commit_list()` to conform to coding guidelines
- - commit: rename `copy_commit_list()` to conform to coding guidelines
+  (merged to 'next' on 2026-02-06 at f7ef001af4)
+ + commit: rename `free_commit_list()` to conform to coding guidelines
+ + commit: rename `reverse_commit_list()` to conform to coding guidelines
+ + commit: rename `copy_commit_list()` to conform to coding guidelines
 
  Rename three functions around the commit_list data structure.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <20260115-pks-commit-list-coding-guidelines-v1-0-c58868dbf412@pks.im>
 
 
@@ -607,16 +700,6 @@ Release tarballs are available at:
  source: <pull.2121.v4.git.git.1768602661.gitgitgadget@gmail.com>
 
 
-* dd/t5403-modernise (2026-01-12) 2 commits
-  (merged to 'next' on 2026-01-23 at ca3ceb637e)
- + t5403: use test_cmp for post-checkout argument checks
- + t5403: introduce check_post_checkout helper function
-
- Test clean-up.
-
- Will merge to 'master'.
-
-
 * ag/http-netrc-tests (2026-01-06) 1 commit
  - t5550: add netrc tests for http 401/403
 
@@ -650,13 +733,12 @@ Release tarballs are available at:
  - status: add status.compareBranches config for multiple branch comparisons
  - refactor format_branch_comparison in preparation
  - Merge branch 'jk/remote-tracking-ref-leakfix' into hn/status-compare-with-push
- (this branch uses jk/remote-tracking-ref-leakfix.)
 
  "git status" learned to show comparison between the current branch
  and its push destination as well as its upstream, when the two are
  different (i.e., triangular workflow).
 
- Under further discussion?
+ What's the status of this topic?
  cf. <20260122220154.GA2107958@coredump.intra.peff.net>
  source: <pull.2138.v28.git.git.1769112471.gitgitgadget@gmail.com>
 
@@ -670,19 +752,9 @@ Release tarballs are available at:
  were kept track of by a single global variable in-core, which has
  been corrected by moving it to per-repository data structure.
 
- Comments?
+ Breaks fuzz somke test.
+ cf. <xmqq7bspcq3c.fsf@gitster.g>
  source: <cover.1770127568.git.belkid98@gmail.com>
-
-
-* aa/add-p-previous-decisions (2026-01-08) 1 commit
-  (merged to 'next' on 2026-01-21 at 4e2fe2bd9b)
- + add -p: show user's hunk decision when selecting hunks
-
- "git add -p" and friends notes what the current status of the hunk
- being shown is.
-
- Will merge to 'master'.
- source: <aV_IGCld5T_dBxTs@Adekunles-MacBook-Air.local>
 
 
 * pt/fsmonitor-linux (2025-12-31) 1 commit
@@ -746,19 +818,8 @@ Release tarballs are available at:
  Allow recording process ID of the process that holds the lock next
  to a lockfile for diagnosis.
 
- Will mrge to 'next'?
+ Will merge to 'next'.
  source: <pull.2011.v6.git.1769109815197.gitgitgadget@gmail.com>
-
-
-* ap/http-probe-rpc-use-auth (2026-01-14) 1 commit
-  (merged to 'next' on 2026-01-23 at 0439366395)
- + remote-curl: use auth for probe_rpc() requests too
-
- HTTP transport failed to authenticate in some code paths, which has
- been corrected.
-
- Will merge to 'master'.
- source: <20260114163619.614297-2-aplattner@nvidia.com>
 
 
 * lo/repo-info-keys (2026-01-23) 2 commits
@@ -767,7 +828,8 @@ Release tarballs are available at:
 
  "git repo info" learns "--keys" action to list known keys.
 
- Comments?
+ Expecting a reroll.
+ cf. <F857412A-6B47-4DE0-85BC-D8AC2E54669F@gmail.com>
  source: <20260123164900.35092-1-lucasseikioshiro@gmail.com>
 
 
@@ -854,26 +916,3 @@ Release tarballs are available at:
  cf. <aWpoMcgwsfRCCrr4@szeder.dev>
  cf. <CABPp-BHkNLdH4C7U4sFoVhrsSPH8KAaDtOdLEQGyajmXZz9hVg@mail.gmail.com>
  source: <20260113-b4-pks-history-builtin-v11-0-e74ebfa2652d@pks.im>
-
-
-* ar/submodule-gitdir-tweak (2026-01-12) 11 commits
-  (merged to 'next' on 2026-01-23 at ef3c2cab02)
- + submodule: detect conflicts with existing gitdir configs
- + submodule: hash the submodule name for the gitdir path
- + submodule: fix case-folding gitdir filesystem collisions
- + submodule--helper: fix filesystem collisions by encoding gitdir paths
- + builtin/credential-store: move is_rfc3986_unreserved to url.[ch]
- + submodule--helper: add gitdir migration command
- + submodule: allow runtime enabling extensions.submodulePathConfig
- + submodule: introduce extensions.submodulePathConfig
- + builtin/submodule--helper: add gitdir command
- + submodule: always validate gitdirs inside submodule_name_to_gitdir
- + submodule--helper: use submodule_name_to_gitdir in add_submodule
-
- Avoid local submodule repository directory paths overlapping with
- each other by encoding submodule names before using them as path
- components.
-
- Will merge to 'master'.
- cf. <aWXh9hQYxFhWYC6a@pks.im>
- source: <20260112184632.1334495-1-adrian.ratiu@collabora.com>
