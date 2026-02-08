@@ -1015,9 +1015,7 @@ void sort_in_topological_order(struct commit_list **list, enum rev_sort_order so
 }
 
 struct rev_collect {
-	struct commit **commit;
-	int nr;
-	int alloc;
+	struct commit_stack stack;
 	unsigned int initial : 1;
 };
 
@@ -1034,8 +1032,7 @@ static void add_one_commit(struct object_id *oid, struct rev_collect *revs)
 	    repo_parse_commit(the_repository, commit))
 		return;
 
-	ALLOC_GROW(revs->commit, revs->nr + 1, revs->alloc);
-	revs->commit[revs->nr++] = commit;
+	commit_stack_push(&revs->stack, commit);
 	commit->object.flags |= TMP_MARK;
 }
 
@@ -1060,7 +1057,7 @@ struct commit *get_fork_point(const char *refname, struct commit *commit)
 	struct object_id oid;
 	struct rev_collect revs;
 	struct commit_list *bases = NULL;
-	int i;
+	size_t i;
 	struct commit *ret = NULL;
 	char *full_refname;
 
@@ -1074,19 +1071,19 @@ struct commit *get_fork_point(const char *refname, struct commit *commit)
 		die("Ambiguous refname: '%s'", refname);
 	}
 
-	memset(&revs, 0, sizeof(revs));
+	commit_stack_init(&revs.stack);
 	revs.initial = 1;
 	refs_for_each_reflog_ent(get_main_ref_store(the_repository),
 				 full_refname, collect_one_reflog_ent, &revs);
 
-	if (!revs.nr)
+	if (!revs.stack.nr)
 		add_one_commit(&oid, &revs);
 
-	for (i = 0; i < revs.nr; i++)
-		revs.commit[i]->object.flags &= ~TMP_MARK;
+	for (i = 0; i < revs.stack.nr; i++)
+		revs.stack.items[i]->object.flags &= ~TMP_MARK;
 
-	if (repo_get_merge_bases_many(the_repository, commit, revs.nr,
-				      revs.commit, &bases) < 0)
+	if (repo_get_merge_bases_many(the_repository, commit, revs.stack.nr,
+				      revs.stack.items, &bases) < 0)
 		exit(128);
 
 	/*
@@ -1097,16 +1094,16 @@ struct commit *get_fork_point(const char *refname, struct commit *commit)
 		goto cleanup_return;
 
 	/* And the found one must be one of the reflog entries */
-	for (i = 0; i < revs.nr; i++)
-		if (&bases->item->object == &revs.commit[i]->object)
+	for (i = 0; i < revs.stack.nr; i++)
+		if (&bases->item->object == &revs.stack.items[i]->object)
 			break; /* found */
-	if (revs.nr <= i)
+	if (revs.stack.nr <= i)
 		goto cleanup_return;
 
 	ret = bases->item;
 
 cleanup_return:
-	free(revs.commit);
+	commit_stack_clear(&revs.stack);
 	free_commit_list(bases);
 	free(full_refname);
 	return ret;
