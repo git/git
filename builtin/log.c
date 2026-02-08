@@ -24,7 +24,6 @@
 #include "diff-merges.h"
 #include "revision.h"
 #include "log-tree.h"
-#include "builtin.h"
 #include "oid-array.h"
 #include "tag.h"
 #include "reflog-walk.h"

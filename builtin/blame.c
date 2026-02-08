@@ -10,7 +10,6 @@
 #include "builtin.h"
 #include "config.h"
 #include "color.h"
-#include "builtin.h"
 #include "environment.h"
 #include "gettext.h"
 #include "hex.h"
