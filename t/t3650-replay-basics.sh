@@ -25,6 +25,8 @@ test_expect_success 'setup' '
 	git switch -c topic3 &&
 	test_commit G &&
 	test_commit H &&
+	git switch -c empty &&
+	git commit --allow-empty -m empty &&
 	git switch -c topic4 main &&
 	test_commit I &&
 	test_commit J &&
@@ -158,6 +160,25 @@ test_expect_success 'using replay to perform basic cherry-pick' '
 test_expect_success 'using replay on bare repo to perform basic cherry-pick' '
 	git -C bare replay --ref-action=print --advance main topic1..topic2 >result-bare &&
 	test_cmp expect result-bare
+'
+
+test_expect_success 'commits that become empty are dropped' '
+	# Save original branches
+	git for-each-ref --format="update %(refname) %(objectname)" \
+		refs/heads/ >original-branches &&
+	test_when_finished "git update-ref --stdin <original-branches &&
+		rm original-branches" &&
+	# Cherry-pick tip of topic1 ("F"), from the middle of A..empty, to main
+	git replay --advance main topic1^! &&
+
+	# Replay all of A..empty onto main (which includes topic1 & thus F
+	# in the middle)
+	git replay --onto main --branches --ancestry-path=empty ^A \
+		>result &&
+	git log --format="%s%d" L..empty >actual &&
+	test_write_lines >expect \
+		"empty (empty)" "H (topic3)" G "C (topic1)" "F (main)" "M (tag: M)" &&
+	test_cmp expect actual
 '
 
 test_expect_success 'replay on bare repo fails with both --advance and --onto' '
