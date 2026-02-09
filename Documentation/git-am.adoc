@@ -37,9 +37,10 @@ OPTIONS
 
 -s::
 --signoff::
-	Add a `Signed-off-by` trailer to the commit message, using
-	the committer identity of yourself.
-	See the signoff option in linkgit:git-commit[1] for more information.
+	Add a `Signed-off-by` trailer to the commit message (see
+	linkgit:git-interpret-trailers[1]), using the committer identity
+	of yourself.  See the signoff option in linkgit:git-commit[1]
+	for more information.
 
 -k::
 --keep::
@@ -83,10 +84,11 @@ OPTIONS
 
 -m::
 --message-id::
-	Pass the `-m` flag to linkgit:git-mailinfo[1],
-	so that the Message-ID header is added to the commit message.
-	The `am.messageid` configuration variable can be used to specify
-	the default behaviour.
+	Pass the `-m` flag to linkgit:git-mailinfo[1], so that the
+	`Message-ID` header is added as a trailer (see
+	linkgit:git-interpret-trailers[1]).  The `am.messageid`
+	configuration variable can be used to specify the default
+	behaviour.
 
 --no-message-id::
 	Do not add the Message-ID header to the commit message.
