@@ -9,7 +9,7 @@ git-am - Apply a series of patches from a mailbox
 SYNOPSIS
 --------
 [verse]
-'git am' [--signoff] [--keep] [--[no-]keep-cr] [--[no-]utf8] [--no-verify]
+'git am' [--signoff] [--keep] [--[no-]keep-cr] [--[no-]utf8] [--[no-]verify]
 	 [--[no-]3way] [--interactive] [--committer-date-is-author-date]
 	 [--ignore-date] [--ignore-space-change | --ignore-whitespace]
 	 [--whitespace=<action>] [-C<n>] [-p<n>] [--directory=<dir>]
@@ -150,11 +150,14 @@ Valid <action> for the `--whitespace` option are:
 --interactive::
 	Run interactively.
 
+--verify::
 -n::
 --no-verify::
-	By default, the pre-applypatch and applypatch-msg hooks are run.
-	When any of `--no-verify` or `-n` is given, these are bypassed.
-	See also linkgit:githooks[5].
+	Run the `pre-applypatch` and `applypatch-msg` hooks. This is the
+	default. Skip these hooks with `-n` or `--no-verify`. See also
+	linkgit:githooks[5].
++
+Note that `post-applypatch` cannot be skipped.
 
 --committer-date-is-author-date::
 	By default the command records the date from the e-mail
@@ -282,6 +285,8 @@ HOOKS
 This command can run `applypatch-msg`, `pre-applypatch`,
 and `post-applypatch` hooks.  See linkgit:githooks[5] for more
 information.
+
+See the `--verify`/`-n`/`--no-verify` options.
 
 CONFIGURATION
 -------------
