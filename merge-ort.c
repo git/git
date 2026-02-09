@@ -53,6 +53,8 @@
 #include "unpack-trees.h"
 #include "xdiff-interface.h"
 
+#define the_repository DO_NOT_USE_THE_REPOSITORY
+
 /*
  * We have many arrays of size 3.  Whenever we have such an array, the
  * indices refer to one of the sides of the three-way merge.  This is so
@@ -4433,6 +4435,8 @@ static int process_entry(struct merge_options *opt,
 	return 0;
 }
 
+#undef the_repository
+
 static void prefetch_for_content_merges(struct merge_options *opt,
 					struct string_list *plist)
 {
@@ -4480,6 +4484,8 @@ static void prefetch_for_content_merges(struct merge_options *opt,
 	promisor_remote_get_direct(opt->repo, to_fetch.oid, to_fetch.nr);
 	oid_array_clear(&to_fetch);
 }
+
+#define the_repository DO_NOT_USE_the_repository
 
 static int process_entries(struct merge_options *opt,
 			   struct object_id *result_oid)
