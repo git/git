@@ -21,6 +21,7 @@
 #include "gettext.h"
 #include "git-zlib.h"
 #include "ident.h"
+#include "lockfile.h"
 #include "mailmap.h"
 #include "object-name.h"
 #include "repository.h"
@@ -505,6 +506,11 @@ int git_default_core_config(const char *var, const char *value,
 		if (fsync_object_files < 0)
 			warning(_("core.fsyncObjectFiles is deprecated; use core.fsync instead"));
 		fsync_object_files = git_config_bool(var, value);
+		return 0;
+	}
+
+	if (!strcmp(var, "core.lockfilepid")) {
+		lockfile_pid_enabled = git_config_bool(var, value);
 		return 0;
 	}
 

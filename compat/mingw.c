@@ -2220,6 +2220,16 @@ int mingw_kill(pid_t pid, int sig)
 			CloseHandle(h);
 			return 0;
 		}
+		/*
+		 * OpenProcess returns ERROR_INVALID_PARAMETER for
+		 * non-existent PIDs. Map this to ESRCH for POSIX
+		 * compatibility with kill(pid, 0).
+		 */
+		if (GetLastError() == ERROR_INVALID_PARAMETER)
+			errno = ESRCH;
+		else
+			errno = err_win_to_posix(GetLastError());
+		return -1;
 	}
 
 	errno = EINVAL;
