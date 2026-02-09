@@ -157,6 +157,8 @@ test:mingw64:
   parallel: 10
 
 .msvc-meson:
+  variables:
+    TEST_OUTPUT_DIRECTORY: "C:/Git-Test"
   tags:
     - saas-windows-medium-amd64
   before_script:
@@ -164,12 +166,13 @@ test:mingw64:
     - choco install -y git meson ninja rust-ms
     - Import-Module $env:ChocolateyInstall\helpers\chocolateyProfile.psm1
     - refreshenv
+    - New-Item -Path $env:TEST_OUTPUT_DIRECTORY -ItemType Directory
 
 build:msvc-meson:
   extends: .msvc-meson
   stage: build
   script:
-    - meson setup build --vsenv -Dperl=disabled -Dbackend_max_links=1 -Dcredential_helpers=wincred
+    - meson setup build --vsenv -Dperl=disabled -Dbackend_max_links=1 -Dcredential_helpers=wincred -Dtest_output_directory="$TEST_OUTPUT_DIRECTORY"
     - meson compile -C build
   artifacts:
     paths:
@@ -185,10 +188,19 @@ test:msvc-meson:
   script:
     - |
       & "C:/Program Files/Git/usr/bin/bash.exe" -l -c 'ci/run-test-slice-meson.sh build $CI_NODE_INDEX $CI_NODE_TOTAL'
+  after_script:
+    - |
+      if ($env:CI_JOB_STATUS -ne "success") {
+        & "C:/Program Files/Git/usr/bin/bash.exe" -l -c 'ci/print-test-failures.sh'
+        Move-Item -Path "$env:TEST_OUTPUT_DIRECTORY/failed-test-artifacts" -Destination t/
+      }
   parallel: 10
   artifacts:
+    paths:
+      - t/failed-test-artifacts
     reports:
       junit: build/meson-logs/testlog.junit.xml
+    when: on_failure
 
 test:fuzz-smoke-tests:
   image: ubuntu:latest
