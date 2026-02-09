@@ -12,3 +12,9 @@ am.threeWay::
 	records the identity of blobs it is supposed to apply to and we
 	have those blobs available locally (equivalent to giving the
 	`--3way` option from the command line). Defaults to `false`.
+
+am.messageId::
+	Add a `Message-ID` trailer based on the email header to the
+	commit when using linkgit:git-am[1] (see
+	linkgit:git-interpret-trailers[1]). See also the `--message-id`
+	and `--no-message-id` options.
