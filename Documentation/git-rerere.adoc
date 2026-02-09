@@ -32,7 +32,7 @@ COMMANDS
 --------
 
 Normally, 'git rerere' is run without arguments or user-intervention.
-However, it has several commands that allow it to interact with
+However, it has several commands that allow users to interact with
 its working state.
 
 'clear'::
@@ -44,7 +44,7 @@ will automatically invoke this command.
 'forget' <pathspec>::
 
 Reset the conflict resolutions which rerere has recorded for the current
-conflict in <pathspec>.
+conflict in paths that match <pathspec>.
 
 'diff'::
 
