@@ -92,8 +92,8 @@ test_expect_success 'rewrite, renaming a specific file' '
 
 test_expect_success 'test that the file was renamed' '
 	test D = "$(git show HEAD:doh --)" &&
-	! test -f D.t &&
-	test -f doh &&
+	test_path_is_missing D.t &&
+	test_path_is_file doh &&
 	test D = "$(cat doh)"
 '
 
@@ -103,10 +103,10 @@ test_expect_success 'rewrite, renaming a specific directory' '
 
 test_expect_success 'test that the directory was renamed' '
 	test dir/D = "$(git show HEAD:diroh/D.t --)" &&
-	! test -d dir &&
-	test -d diroh &&
-	! test -d diroh/dir &&
-	test -f diroh/D.t &&
+	test_path_is_missing dir &&
+	test_path_is_dir diroh &&
+	test_path_is_missing diroh/dir &&
+	test_path_is_file diroh/D.t &&
 	test dir/D = "$(cat diroh/D.t)"
 '
 
