@@ -660,6 +660,11 @@ static void init_curl_http_auth(CURL *result)
 
 	credential_fill(the_repository, &http_auth, 1);
 
+	if (http_auth.ntlm_allow && !(http_auth_methods & CURLAUTH_NTLM)) {
+		http_auth_methods |= CURLAUTH_NTLM;
+		curl_easy_setopt(result, CURLOPT_HTTPAUTH, http_auth_methods);
+	}
+
 	if (http_auth.password) {
 		if (always_auth_proactively()) {
 			/*
@@ -1891,6 +1896,8 @@ static int handle_curl_result(struct slot_results *results)
 	} else if (missing_target(results))
 		return HTTP_MISSING_TARGET;
 	else if (results->http_code == 401) {
+		http_auth.ntlm_suppressed = (results->auth_avail & CURLAUTH_NTLM) &&
+					    !(http_auth_any & CURLAUTH_NTLM);
 		if ((http_auth.username && http_auth.password) ||\
 		    (http_auth.authtype && http_auth.credential)) {
 			if (http_auth.multistage) {
@@ -1900,8 +1907,7 @@ static int handle_curl_result(struct slot_results *results)
 			credential_reject(the_repository, &http_auth);
 			if (always_auth_proactively())
 				http_proactive_auth = PROACTIVE_AUTH_NONE;
-			if ((results->auth_avail & CURLAUTH_NTLM) &&
-			    !(http_auth_any & CURLAUTH_NTLM)) {
+			if (http_auth.ntlm_suppressed) {
 				warning(_("Due to its cryptographic weaknesses, "
 					  "NTLM authentication has been\n"
 					  "disabled in Git by default. You can "
@@ -2423,6 +2429,13 @@ static int http_request_recoverable(const char *url,
 		} else if (ret == HTTP_REAUTH) {
 			credential_fill(the_repository, &http_auth, 1);
 		}
+
+		/*
+		 * Re-enable NTLM auth if the helper allows it and we would
+		 * otherwise suppress authentication via NTLM.
+		 */
+		if (http_auth.ntlm_suppressed && http_auth.ntlm_allow)
+			http_auth_methods |= CURLAUTH_NTLM;
 
 		ret = http_request(url, result, target, options);
 	}
