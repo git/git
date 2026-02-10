@@ -150,7 +150,7 @@ jobs:
     - uses: git-for-windows/setup-git-for-windows-sdk@v1
     - name: test
       shell: bash
-      run: . /etc/profile && ci/run-test-slice.sh ${{ matrix.nr + 1 }} 10
+      run: . /etc/profile && ci/run-test-slice.sh ${{matrix.nr}} 10
     - name: print test failures
       if: failure() && env.FAILED_TEST_ARTIFACTS != ''
       shell: bash
@@ -298,7 +298,7 @@ jobs:
         path: build
     - name: Test
       shell: pwsh
-      run: ci/run-test-slice-meson.sh build ${{matrix.nr + 1}} 10
+      run: ci/run-test-slice-meson.sh build ${{matrix.nr}} 10
     - name: print test failures
       if: failure() && env.FAILED_TEST_ARTIFACTS != ''
       shell: bash
