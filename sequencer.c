@@ -2401,7 +2401,8 @@ static int do_pick_commit(struct repository *r,
 		if (find_commit_subject(msg.message, &p))
 			strbuf_addstr(&ctx->message, p);
 
-		if (opts->record_origin || (item->flags & TODO_RECORD_ORIGIN)) {
+		if (opts->record_origin || (false)) {
+		// if (opts->record_origin || (item->flags & TODO_RECORD_ORIGIN)) {
 			strbuf_complete_line(&ctx->message);
 			if (!has_conforming_footer(&ctx->message, NULL, 0))
 				strbuf_addch(&ctx->message, '\n');
