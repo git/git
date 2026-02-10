@@ -68,9 +68,6 @@ void append_todo_help(int command_count,
 "                      to this position in the new commits. The <ref> is\n"
 "                      updated at the end of the rebase\n"
 "\n"
-"With pick, reword, or edit, -x will append a line that says \"(cherry\n"
-"picked from commit …)\", similar to git-cherry-pick."
-"\n"
 "These lines can be re-ordered; they are executed from top to bottom.\n");
 	unsigned edit_todo = !(shortrevisions && shortonto);
 

@@ -1874,7 +1874,7 @@ enum todo_item_flags {
 	TODO_EDIT_MERGE_MSG    = (1 << 0),
 	TODO_REPLACE_FIXUP_MSG = (1 << 1),
 	TODO_EDIT_FIXUP_MSG    = (1 << 2),
-	TODO_RECORD_ORIGIN = (1 << 3),
+	TODO_RECORD_ORIGIN     = (1 << 3),
 };
 
 static const char first_commit_msg_str[] = N_("This is the 1st commit message:");
