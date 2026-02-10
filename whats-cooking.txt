@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Feb 2026, #03)
-X-master-at: 3e0db84c88c57e70ac8be8c196dfa92c5d656fbc
-X-next-at: 64333814d3ac6e46b6b9c308a6398a66743a4022
+Subject: What's cooking in git.git (Feb 2026, #04)
+X-master-at: 864f55e1906897b630333675a52874c0fec2a45c
+X-next-at: 88a6c151d7aca3a430499d8139678cc6d9ea6a98
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Feb 2026, #03)
+What's cooking in git.git (Feb 2026, #04)
 -----------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -50,122 +50,297 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* aa/add-p-previous-decisions (2026-01-08) 1 commit
-  (merged to 'next' on 2026-01-21 at 4e2fe2bd9b)
- + add -p: show user's hunk decision when selecting hunks
+* ac/string-list-sort-u-and-tests (2026-01-29) 2 commits
+  (merged to 'next' on 2026-01-30 at 742890e56f)
+ + string-list: add string_list_sort_u() that mimics "sort -u"
+ + u-string-list: add unit tests for string-list methods
 
- "git add -p" and friends note what the current status of the hunk
- being shown is.
- source: <aV_IGCld5T_dBxTs@Adekunles-MacBook-Air.local>
-
-
-* ac/sparse-checkout-string-list-cleanup (2026-01-21) 1 commit
-  (merged to 'next' on 2026-01-23 at 885244a10d)
- + sparse-checkout: optimize string_list construction and add tests to verify deduplication.
-
- Code clean-up.
- source: <20260121130005.72375-1-amishhhaaaa@gmail.com>
+ The string_list API gains a new helper, string_list_sort_u(), and
+ new unit tests to extend coverage.
+ source: <20260125201500.63904-2-amishhhaaaa@gmail.com>
 
 
-* ap/http-probe-rpc-use-auth (2026-01-14) 1 commit
-  (merged to 'next' on 2026-01-23 at 0439366395)
- + remote-curl: use auth for probe_rpc() requests too
+* kn/ref-batch-output-error-reporting-fix (2026-01-25) 6 commits
+  (merged to 'next' on 2026-01-30 at fe8044c396)
+ + fetch: delay user information post committing of transaction
+ + receive-pack: utilize rejected ref error details
+ + fetch: utilize rejected ref error details
+ + update-ref: utilize rejected error details if available
+ + refs: add rejection detail to the callback function
+ + refs: skip to next ref when current ref is rejected
 
- HTTP transport failed to authenticate in some code paths, which has
- been corrected.
- source: <20260114163619.614297-2-aplattner@nvidia.com>
-
-
-* ar/submodule-gitdir-tweak (2026-01-12) 11 commits
-  (merged to 'next' on 2026-01-23 at ef3c2cab02)
- + submodule: detect conflicts with existing gitdir configs
- + submodule: hash the submodule name for the gitdir path
- + submodule: fix case-folding gitdir filesystem collisions
- + submodule--helper: fix filesystem collisions by encoding gitdir paths
- + builtin/credential-store: move is_rfc3986_unreserved to url.[ch]
- + submodule--helper: add gitdir migration command
- + submodule: allow runtime enabling extensions.submodulePathConfig
- + submodule: introduce extensions.submodulePathConfig
- + builtin/submodule--helper: add gitdir command
- + submodule: always validate gitdirs inside submodule_name_to_gitdir
- + submodule--helper: use submodule_name_to_gitdir in add_submodule
-
- Avoid local submodule repository directory paths overlapping with
- each other by encoding submodule names before using them as path
- components.
- cf. <aWXh9hQYxFhWYC6a@pks.im>
- source: <20260112184632.1334495-1-adrian.ratiu@collabora.com>
+ A handful of code paths that started using batched ref update API
+ (after Git 2.51 or so) lost detailed error output, which have been
+ corrected.
+ source: <20260125-633-regression-lost-diagnostic-message-when-pushing-non-commit-objects-to-refs-heads-v5-0-d58f3a9edf98@gmail.com>
 
 
-* dd/t5403-modernise (2026-01-12) 2 commits
-  (merged to 'next' on 2026-01-23 at ca3ceb637e)
- + t5403: use test_cmp for post-checkout argument checks
- + t5403: introduce check_post_checkout helper function
+* ps/history (2026-01-13) 9 commits
+  (merged to 'next' on 2026-01-29 at ecac247f83)
+ + builtin/history: implement "reword" subcommand
+ + builtin: add new "history" command
+ + wt-status: provide function to expose status for trees
+ + replay: support updating detached HEAD
+ + replay: support empty commit ranges
+ + replay: small set of cleanups
+ + builtin/replay: move core logic into "libgit.a"
+ + builtin/replay: extract core logic to replay revisions
+ + Merge branch 'kh/replay-invalid-onto-advance' into ps/history
+ (this branch is used by pw/replay-drop-empty.)
 
- Test clean-up.
-
-
-* jk/remote-tracking-ref-leakfix (2026-01-18) 4 commits
-  (merged to 'next' on 2026-01-21 at 7f0736a973)
- + remote: always allocate branch.push_tracking_ref
- + remote: fix leak in branch_get_push_1() with invalid "simple" config
- + remote: drop const return of tracking_for_push_dest()
- + remote: return non-const pointer from error_buf()
- (this branch is used by hn/status-compare-with-push.)
-
- Leakfix.
- source: <20260119051858.GA1991308@coredump.intra.peff.net>
+ "git history" history rewriting UI.
+ source: <20260113-b4-pks-history-builtin-v11-0-e74ebfa2652d@pks.im>
 
 
-* lp/diff-stat-utf8-display-width-fix (2026-01-15) 2 commits
-  (merged to 'next' on 2026-01-23 at 80e7ddce3e)
- + t4073: add test for diffstat paths length when containing UTF-8 chars
- + diff: improve scaling of filenames in diffstat to handle UTF-8 chars
+* pw/replay-drop-empty (2025-12-18) 2 commits
+  (merged to 'next' on 2026-01-29 at 66b2238f5c)
+ + replay: drop commits that become empty
+ + Merge branch 'ps/history' into pw/replay-drop-empty
+ (this branch uses ps/history.)
 
- The computation of column width made by "git diff --stat" was
- confused when pathnames contain non-ASCII characters.
- source: <cover.1768520441.git.lorenzo.pegorari2002@gmail.com>
-
-
-* sp/myfirstcontribution-include-update (2026-01-12) 1 commit
-  (merged to 'next' on 2026-01-23 at 2d039d03ff)
- + doc: MyFirstContribution: fix missing dependencies and clarify build steps
-
- Doc update.
- source: <20260112195625.391821-1-shreyanshpaliwalcmsmn@gmail.com>
+ "git replay" is taught to drop commits that become empty (not the
+ ones that are empty in the original).
+ source: <375adc4e941f3bb22a2b12ee26a083951ed724dd.1766076625.git.phillip.wood@dunelm.org.uk>
 
 
-* sp/t5500-cleanup (2026-01-21) 1 commit
-  (merged to 'next' on 2026-01-23 at d5adc61ce8)
- + t5500: simplify test implementation and fix git exit code suppression
+* sb/doc-worktree-prune-expire-improvement (2026-01-27) 1 commit
+  (merged to 'next' on 2026-01-30 at faf2e087b8)
+ + worktree: clarify that --expire only affects missing worktrees
 
- Test clean-up.
- source: <20260121130012.888299-1-shreyanshpaliwalcmsmn@gmail.com>
+ The help text and the documentation for the "--expire" option of
+ "git worktree [list|prune]" have been improved.
+ source: <pull.2135.v3.git.git.1769578785381.gitgitgadget@gmail.com>
 
 
-* tc/last-modified-options-cleanup (2026-01-20) 4 commits
-  (merged to 'next' on 2026-01-23 at e514d98b11)
- + last-modified: change default max-depth to 0
- + last-modified: document option '--max-depth'
- + last-modified: document option '-z'
- + last-modified: clarify in the docs the command takes a pathspec
+* ty/perf-3400-optim (2026-01-30) 1 commit
+  (merged to 'next' on 2026-02-01 at 6c019af192)
+ + t/perf/p3400: speed up setup using fast-import
 
- The "-z" and "--max-depth" documentation (and implementation of
- "-z") in the "git last-modified" command have been updated.
- source: <20260120-toon-last-modified-zzzz-v3-0-9bffd4968b0e@iotcl.com>
+ Improve set-up time of a perf test.
+ source: <20260130170123.642344-1-a3205153416@gmail.com>
 
 --------------------------------------------------
 [New Topics]
 
-* yt/merge-file-outside-a-repository (2026-02-05) 1 commit
- - merge-file: honor merge.conflictStyle outside of a repository
+* dk/complete-stash-import-export (2026-02-07) 1 commit
+ - completion: add stash import, export
+
+ Command line completion (in contrib/) update.
+
+ Comments?
+ source: <20260207215924.28863-1-ben.knoble+github@gmail.com>
+
+
+* kh/doc-am-format-sendmail (2026-02-09) 1 commit
+ - doc: add caveat about roundtripping format-patch
+
+ Doc update.
+
+ Comments?
+ source: <V2_format-patch_caveats.34b@msgid.xyz>
+
+
+* kh/doc-patch-id-4 (2026-02-07) 3 commits
+ - doc: patch-id: see also git-cherry(1)
+ - doc: patch-id: add script example
+ - doc: patch-id: emphasize multi-patch processing
+
+ Doc update.
+
+ Comments?
+ source: <CV_doc_patch-id_4.275@msgid.xyz>
+
+
+* pw/commit-msg-sample-hook (2026-02-07) 3 commits
+ - templates: detect messages that contain a separator line
+ - templates: detect commit messages containing diffs
+ - templates: add .gitattributes entry for sample hooks
+
+ Update sample commit-msg hook to complain when a log message has
+ material mailinfo considers the end of log message in the middle.
+
+ Will merge to 'next'?
+ source: <cover.1770476279.git.phillip.wood@dunelm.org.uk>
+
+
+* bk/t2003-modernise (2026-02-09) 1 commit
+  (merged to 'next' on 2026-02-10 at 561a73205e)
+ + t2003: modernize path existence checks using test helpers
+
+ Test update.
+
+ Will merge to 'master'.
+ source: <20260209112444.1268765-1-bkkaracay@gmail.com>
+
+
+* kh/doc-am-xref (2026-02-09) 4 commits
+ - doc: am: fill out hook discussion
+ - doc: am: add missing config am.messageId
+ - doc: am: say that --message-id adds a trailer
+ - doc: am: normalize git(1) command links
+
+ Doc update.
+
+ Comments?
+ source: <doc_am_gitlinks_and_am.messageId.321@msgid.xyz>
+
+
+* kh/doc-rerere-options-xref (2026-02-10) 1 commit
+  (merged to 'next' on 2026-02-10 at 1ade94535a)
+ + doc: rerere-options.adoc: link to git-rerere(1)
+
+ Doc update.
+
+ Will merge to 'master'.
+ source: <V2_doc_link_rerere.34f@msgid.xyz>
+
+
+
+* ps/ci-gitlab-msvc-updates (2026-02-09) 5 commits
+ - gitlab-ci: handle failed tests on MSVC+Meson job
+ - gitlab-ci: use "run-test-slice-meson.sh"
+ - ci: make test slicing consistent across Meson/Make
+ - ci: don't skip smallest test slice in GitLab
+ - ci: handle failures of test-slice helper
+
+ CI update.
+
+ Breaks GitHub Actions CI.
+ cf. <xmqqa4xgxn2m.fsf@gitster.g>
+ source: <20260209-b4-pks-ci-meson-improvements-v1-0-38444dec4874@pks.im>
+
+
+* ps/tests-wo-iconv-fixes (2026-02-09) 4 commits
+ - t6006: don't use iconv(1) without ICONV prereq
+ - t5550: add ICONV prereq to tests that use "$HTTPD_URL/error"
+ - t4205: improve handling of ICONV prerequisite
+ - t4xxx: don't use iconv(1) without ICONV prereq
+
+ Some tests assumed "iconv" is available without honoring ICONV
+ prerequisite, which has been corrected.
+
+ Comments?
+ source: <20260209-b4-pks-ci-msvc-iconv-fixes-v1-0-1e3167cd8828@pks.im>
+
+
+* pw/meson-doc-mergetool (2026-02-09) 1 commit
+ - meson: fix building mergetool docs
+
+ Update build precedure for mergetool documentation in meson-based builds.
+
+ WIll merge to 'next'.
+ source: <604c79018992dee019205741934508091cdd1e47.1770631599.git.phillip.wood@dunelm.org.uk>
+
+
+* rs/clean-includes (2026-02-08) 1 commit
+  (merged to 'next' on 2026-02-10 at 883d07f2eb)
+ + remove duplicate includes
+
+ Clean up redundant includes of header files.
+
+ Will merge to 'master'.
+ source: <280325e3-401c-47c7-98cf-c5cc7f719ee4@web.de>
+
+
+* rs/commit-commit-stack (2026-02-08) 1 commit
+  (merged to 'next' on 2026-02-10 at c1a50b2859)
+ + commit: use commit_stack
+
+ Code clean-up to use the commit_stack API.
+
+ Will merge to 'master'.
+ source: <db40d132-14ca-4749-937a-9410ecc17dde@web.de>
+
+
+* rs/version-wo-the-repository (2026-02-08) 1 commit
+  (merged to 'next' on 2026-02-10 at 80809d2b3d)
+ + version: stop using the_repository
+
+ Code clean-up.
+
+ Will merge to 'master'.
+ source: <afccdc3a-8672-49a7-b260-e77e617d8976@web.de>
+
+
+* rs/xdiff-wo-the-repository (2026-02-09) 1 commit
+  (merged to 'next' on 2026-02-10 at dbb8a23008)
+ + xdiff-interface: stop using the_repository
+
+ Reduce dependency on the_repository of xdiff-interface layer.
+
+ Will merge to 'master'.
+ source: <59fe4ac7-605d-4eae-b13c-46996dd8814e@web.de>
+
+
+* sd/t7003-test-path-is-helpers (2026-02-09) 1 commit
+  (merged to 'next' on 2026-02-10 at 5e3bc9f2b9)
+ + t7003: modernize path existence checks using test helpers
+
+ Test updates.
+
+ Will merge to 'master'.
+ source: <20260209172445.39536-1-valusoutrik@gmail.com>
+
+
+* ds/config-list-with-type (2026-02-09) 5 commits
+ - config: make 'git config list --type=<X>' work
+ - config: create special init for list mode
+ - config: allow format_config() to filter
+ - parse: add git_parse_maybe_pathname()
+ - config: move show_all_config()
+
+ "git config list" is taught to show the values interpreted for
+ specific type with "--type=<X>" option.
+
+ Comments?
+ source: <pull.2044.git.1770698579.gitgitgadget@gmail.com>
+
+
+* jc/doc-rerere-update (2026-02-09) 1 commit
+  (merged to 'next' on 2026-02-10 at 88a6c151d7)
+ + rerere: minor documantation update
+
+ Doc update.
+
+ Will merge to 'master'.
+ source: <xmqqikc54vse.fsf@gitster.g>
+
+
+* rr/gitweb-mobile (2026-02-09) 5 commits
+ - gitweb: let page header grow on mobile for long wrapped project names
+ - gitweb: fix mobile footer overflow by wrapping text and clearing floats
+ - gitweb: fix mobile page overflow across log/commit/blob/diff views
+ - gitweb: prevent project search bar from overflowing on mobile
+ - gitweb: add viewport meta tag for mobile devices
+
+ "gitweb" has been taught to be mobile friendly.
+
+ Comments?
+ source: <pull.2043.git.1770679038.gitgitgadget@gmail.com>
+
+
+* kn/osxkeychain-buildfix (2026-02-10) 1 commit
+ - osxkeychain: define build targets in the top-level Makefile.
+
+ Simplify build procedure for oxskeychain (in contrib/).
+
+ Expecting a (hopefully small and final) reroll?
+ cf. <xmqqpl6cxtr7.fsf@gitster.g>
+ source: <pull.2046.git.1770746461307.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[Cooking]
+
+* yt/merge-file-outside-a-repository (2026-02-07) 1 commit
+  (merged to 'next' on 2026-02-10 at ee1ced4120)
+ + merge-file: honor merge.conflictStyle outside of a repository
 
  "git merge-file" can be run outside a repository, but it ignored
  all configuration, even the per-user ones.  The command now uses
  available configuration files to find its customization.
 
- Will merge to 'next'?
- source: <D514F3BA-36DD-4DAD-BF73-609730390A27@ytausch.de>
+ Will merge to 'master'.
+ source: <3488DCC3-D127-465B-BB95-3D87BB2E48F6@ytausch.de>
 
 
 * sb/merge-ours-sparse (2026-02-06) 2 commits
@@ -187,7 +362,7 @@ Release tarballs are available at:
  "git add -p" learned a new mode that allows the user to revisit a
  file that was already dealt with.
 
- Expecting a reroll.
+ Expecting a gitk update.
  source: <cover.1770390576.git.abrahamadekunle50@gmail.com>
 
 
@@ -200,8 +375,6 @@ Release tarballs are available at:
  Will merge to 'master'.
  source: <20260206062108.74072-1-valusoutrik@gmail.com>
 
---------------------------------------------------
-[Cooking]
 
 * am/doc-github-contributiong-link-to-submittingpatches (2026-01-31) 1 commit
   (merged to 'next' on 2026-02-04 at 1f4534468b)
@@ -246,18 +419,18 @@ Release tarballs are available at:
  source: <V2_shortlog_trailers.254@msgid.xyz>
 
 
-* kn/ref-location (2026-02-02) 4 commits
+* kn/ref-location (2026-02-09) 4 commits
  - refs: add GIT_REFERENCE_BACKEND to specify reference backend
- - refs: parse and use the reference storage payload
- - refs: extract out `refs_create_refdir_stubs()`
  - refs: allow reference location in refstorage config
+ - refs: forward and use the reference storage payload
+ - refs: extract out `refs_create_refdir_stubs()`
 
  Allow the directory in which reference backends store their data to
  be specified.
 
- Expecting a (hopefully small and final) reroll?
- cf. <aYX7z_nUc4xJC8Qs@pks.im>
- source: <20260202-kn-alternate-ref-dir-v4-0-3b30430411e3@gmail.com>
+ Expecting a reroll or two?
+ cf. <aYoMmhClPzdmLjII@pks.im>
+ source: <20260209-kn-alternate-ref-dir-v5-0-740899834ceb@gmail.com>
 
 
 * rs/blame-ignore-colors-fix (2026-02-01) 1 commit
@@ -395,7 +568,8 @@ Release tarballs are available at:
  already do on Linux and Windows.  Also adjust the way Windows
  implementation reports this information to match the other two.
 
- Needs review.
+ Expecting a (hopefully small and final) reroll?
+ cf. <56c1a7eb-a645-4453-8024-b320c1ebd55e@gmail.com>
  source: <pull.2040.git.1770307510.gitgitgadget@gmail.com>
 
 
@@ -420,7 +594,7 @@ Release tarballs are available at:
  message to disambiguate using "git checkout", which has been
  updated to use "git switch".
 
- Comments?
+ Will merge to 'next'?
  source: <20260129190616.645471-1-gitster@pobox.com>
 
 
@@ -450,42 +624,22 @@ Release tarballs are available at:
  which has been corrected.
 
  Will merge to 'next'?
+ cf. <aYmleK3kGqzLXyJe@pks.im>
  source: <20260206-b4-pks-fix-for-each-ref-in-misuse-v3-0-1e050c3d6a50@pks.im>
 
 
-* ty/perf-3400-optim (2026-01-30) 1 commit
-  (merged to 'next' on 2026-02-01 at 6c019af192)
- + t/perf/p3400: speed up setup using fast-import
-
- Improve set-up time of a perf test.
-
- Will merge to 'master'.
- source: <20260130170123.642344-1-a3205153416@gmail.com>
-
-
 * ja/doc-synopsis-style-even-more (2026-02-05) 4 commits
- - doc: convert git-show to synopsis style
- - doc: fix some style issues in git-clone and for-each-ref-options
- - doc: finalize git-clone documentation conversion to synopsis style
- - doc: convert git-submodule to synopsis style
+  (merged to 'next' on 2026-02-09 at d732b9d6a0)
+ + doc: convert git-show to synopsis style
+ + doc: fix some style issues in git-clone and for-each-ref-options
+ + doc: finalize git-clone documentation conversion to synopsis style
+ + doc: convert git-submodule to synopsis style
 
  A handful of documentation pages have been modernized to use the
  "synopsis" style.
 
- Will merge to 'next'?
- source: <pull.2036.v4.git.1770351146.gitgitgadget@gmail.com>
-
-
-* ac/string-list-sort-u-and-tests (2026-01-29) 2 commits
-  (merged to 'next' on 2026-01-30 at 742890e56f)
- + string-list: add string_list_sort_u() that mimics "sort -u"
- + u-string-list: add unit tests for string-list methods
-
- The string_list API gains a new helper, string_list_sort_u(), and
- new unit tests to extend coverage.
-
  Will merge to 'master'.
- source: <20260125201500.63904-2-amishhhaaaa@gmail.com>
+ source: <pull.2036.v4.git.1770351146.gitgitgadget@gmail.com>
 
 
 * ps/object-info-bits-cleanup (2026-01-26) 3 commits
@@ -507,8 +661,7 @@ Release tarballs are available at:
  Small clean-up of xdiff library to remove unnecessary data
  duplication.
 
- Comments?
- This conflicts with en/xdiff-cleanup-3 that has been dormant for some time.
+ Will merge to 'next'.
  source: <cover.1769424529.git.phillip.wood@dunelm.org.uk>
 
 
@@ -623,23 +776,6 @@ Release tarballs are available at:
  source: <pull.1987.v4.git.1770384180.gitgitgadget@gmail.com>
 
 
-* kn/ref-batch-output-error-reporting-fix (2026-01-25) 6 commits
-  (merged to 'next' on 2026-01-30 at fe8044c396)
- + fetch: delay user information post committing of transaction
- + receive-pack: utilize rejected ref error details
- + fetch: utilize rejected ref error details
- + update-ref: utilize rejected error details if available
- + refs: add rejection detail to the callback function
- + refs: skip to next ref when current ref is rejected
-
- A handful of code paths that started using batched ref update API
- (after Git 2.51 or so) lost detailed error output, which have been
- corrected.
-
- Will merge to 'master'.
- source: <20260125-633-regression-lost-diagnostic-message-when-pushing-non-commit-objects-to-refs-heads-v5-0-d58f3a9edf98@gmail.com>
-
-
 * ps/commit-list-functions-renamed (2026-01-15) 3 commits
   (merged to 'next' on 2026-02-06 at f7ef001af4)
  + commit: rename `free_commit_list()` to conform to coding guidelines
@@ -725,7 +861,7 @@ Release tarballs are available at:
 
  Preparation of xdiff/ codebase to work with Rust
 
- What's the status of this one?
+ Maybe rebase on top of a merge of 'master' with pw/xdiff-cleanups?
  source: <pull.2156.git.git.1767379944.gitgitgadget@gmail.com>
 
 
@@ -801,24 +937,14 @@ Release tarballs are available at:
  source: <pull.2144.git.git.1766850014289.gitgitgadget@gmail.com>
 
 
-* sb/doc-worktree-prune-expire-improvement (2026-01-27) 1 commit
-  (merged to 'next' on 2026-01-30 at faf2e087b8)
- + worktree: clarify that --expire only affects missing worktrees
-
- The help text and the documentation for the "--expire" option of
- "git worktree [list|prune]" have been improved.
-
- Will merge to 'master'.
- source: <pull.2135.v3.git.git.1769578785381.gitgitgadget@gmail.com>
-
-
 * pc/lockfile-pid (2026-01-22) 1 commit
- - lockfile: add PID file for debugging stale locks
+  (merged to 'next' on 2026-02-09 at 87bfa08d16)
+ + lockfile: add PID file for debugging stale locks
 
  Allow recording process ID of the process that holds the lock next
  to a lockfile for diagnosis.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.2011.v6.git.1769109815197.gitgitgadget@gmail.com>
 
 
@@ -860,25 +986,13 @@ Release tarballs are available at:
  source: <cover.1768420450.git.me@ttaylorr.com>
 
 
-* pw/replay-drop-empty (2025-12-18) 2 commits
-  (merged to 'next' on 2026-01-29 at 66b2238f5c)
- + replay: drop commits that become empty
- + Merge branch 'ps/history' into pw/replay-drop-empty
- (this branch uses ps/history.)
-
- "git replay" is taught to drop commits that become empty (not the
- ones that are empty in the original).
-
- On hold.  We need to figure out what to do with ps/history.
- source: <375adc4e941f3bb22a2b12ee26a083951ed724dd.1766076625.git.phillip.wood@dunelm.org.uk>
-
-
-* bc/sha1-256-interop-02 (2025-11-17) 15 commits
+* bc/sha1-256-interop-02 (2026-02-07) 16 commits
  - object-file-convert: always make sure object ID algo is valid
  - rust: add a small wrapper around the hashfile code
  - rust: add a new binary object map format
  - rust: add functionality to hash an object
  - rust: add a build.rs script for tests
+ - rust: fix linking binaries with cargo
  - hash: expose hash context functions to Rust
  - write-or-die: add an fsync component for the object map
  - csum-file: define hashwrite's count as a uint32_t
@@ -893,26 +1007,6 @@ Release tarballs are available at:
  The code to maintain mapping between object names in multiple hash
  functions is being added, written in Rust.
 
- Any progress on CI breakages???
- source: <20251117221621.2863243-1-sandals@crustytoothpaste.net>
-
-
-* ps/history (2026-01-13) 9 commits
-  (merged to 'next' on 2026-01-29 at ecac247f83)
- + builtin/history: implement "reword" subcommand
- + builtin: add new "history" command
- + wt-status: provide function to expose status for trees
- + replay: support updating detached HEAD
- + replay: support empty commit ranges
- + replay: small set of cleanups
- + builtin/replay: move core logic into "libgit.a"
- + builtin/replay: extract core logic to replay revisions
- + Merge branch 'kh/replay-invalid-onto-advance' into ps/history
- (this branch is used by pw/replay-drop-empty.)
-
- "git history" history rewriting UI.
-
- What's next for this topic?CABPp-BHkNLdH4C7U4sFoVhrsSPH8KAaDtOdLEQGyajmXZz9hVg@mail.gmail.com
- cf. <aWpoMcgwsfRCCrr4@szeder.dev>
- cf. <CABPp-BHkNLdH4C7U4sFoVhrsSPH8KAaDtOdLEQGyajmXZz9hVg@mail.gmail.com>
- source: <20260113-b4-pks-history-builtin-v11-0-e74ebfa2652d@pks.im>
+ Comments?  v1 saw a lot of discussions, v2 didn't, and this is v3,
+ which is essentially identical to v2 with CI fixes (which work!).
+ source: <20260207200446.2837699-1-sandals@crustytoothpaste.net>
