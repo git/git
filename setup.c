@@ -25,7 +25,6 @@
 #include "trace.h"
 #include "trace2.h"
 #include "worktree.h"
-#include "exec-cmd.h"
 
 static int inside_git_dir = -1;
 static int inside_work_tree = -1;
