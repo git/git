@@ -10,7 +10,8 @@ conveniently send your Pull Requests commits to our mailing list.
 
 Please read ["A note from the maintainer"](https://git.kernel.org/pub/scm/git/git.git/plain/MaintNotes?h=todo)
 to learn how the Git project is managed, and how you can work with it.
-In addition, we highly recommend you to read [our submission guidelines](../Documentation/SubmittingPatches).
+In addition, we highly recommend you to read
+[our submission guidelines](https://git-scm.com/docs/SubmittingPatches).
 
 If you prefer video, then [this talk](https://www.youtube.com/watch?v=Q7i_qQW__q4&feature=youtu.be&t=6m4s)
 might be useful to you as the presenter walks you through the contribution
