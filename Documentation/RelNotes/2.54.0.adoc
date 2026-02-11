@@ -17,6 +17,8 @@ UI, Workflows & Features
  * The help text and the documentation for the "--expire" option of
    "git worktree [list|prune]" have been improved.
 
+ * When "git show-index" is run outside a repository, it silently
+   defaults to SHA-1; the tool now warns when this happens.
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -52,9 +54,17 @@ Fixes since v2.53
    corrected.
    (merge eff9299eac kn/ref-batch-output-error-reporting-fix later to maint).
 
+ * "git blame --ignore-revs=... --color-lines" did not account for
+   ignored revisions passing blame to the same commit an adjacent line
+   gets blamed for.
+   (merge d519082d4e rs/blame-ignore-colors-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge d79fff4a11 jk/remote-tracking-ref-leakfix later to maint).
    (merge 7a747f972d dd/t5403-modernise later to maint).
    (merge 81021871ea sp/myfirstcontribution-include-update later to maint).
    (merge 49223593fd ac/sparse-checkout-string-list-cleanup later to maint).
    (merge a824421d36 sp/t5500-cleanup later to maint).
+   (merge df1c5d7ed7 kh/doc-shortlog-fix later to maint).
+   (merge 2d45507f15 am/doc-github-contributiong-link-to-submittingpatches later to maint).
+   (merge 68060b9262 hs/t9160-test-paths later to maint).
