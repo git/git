@@ -35,7 +35,6 @@ typedef enum {
 } xdl_algo_t;
 
 /* xpparm_t.flags */
-#define XDF_NEED_MINIMAL (1 << 0)
 
 #define XDF_IGNORE_WHITESPACE (1 << 1)
 #define XDF_IGNORE_WHITESPACE_CHANGE (1 << 2)
@@ -47,11 +46,6 @@ typedef enum {
 			      XDF_IGNORE_CR_AT_EOL)
 
 #define XDF_IGNORE_BLANK_LINES (1 << 7)
-
-#define XDF_PATIENCE_DIFF (1 << 14)
-#define XDF_HISTOGRAM_DIFF (1 << 15)
-#define XDF_DIFF_ALGORITHM_MASK (XDF_PATIENCE_DIFF | XDF_HISTOGRAM_DIFF | XDF_NEED_MINIMAL)
-#define XDF_DIFF_ALG(x) ((x) & XDF_DIFF_ALGORITHM_MASK)
 
 #define XDF_INDENT_HEURISTIC (1 << 23)
 
