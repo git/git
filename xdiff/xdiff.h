@@ -27,6 +27,13 @@
 extern "C" {
 #endif /* #ifdef __cplusplus */
 
+typedef enum {
+	XDF_ALGO_MYERS = 0,
+	XDF_ALGO_MINIMAL,
+	XDF_ALGO_PATIENCE,
+	XDF_ALGO_HISTOGRAM
+} xdl_algo_t;
+
 /* xpparm_t.flags */
 #define XDF_NEED_MINIMAL (1 << 0)
 
@@ -80,6 +87,7 @@ typedef struct s_mmbuffer {
 
 typedef struct s_xpparam {
 	unsigned long flags;
+	xdl_algo_t algo;
 
 	/* -I<regex> */
 	regex_t **ignore_regex;

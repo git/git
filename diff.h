@@ -8,6 +8,7 @@
 #include "pathspec.h"
 #include "strbuf.h"
 #include "color.h"
+#include "xdiff/xdiff.h"
 
 struct oidset;
 
@@ -420,6 +421,8 @@ struct diff_options {
 	 */
 	int max_depth;
 	int max_depth_valid;
+
+	xdl_algo_t xdl_algo;
 };
 
 unsigned diff_filter_bit(char status);
