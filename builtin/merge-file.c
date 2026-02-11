@@ -39,7 +39,7 @@ static int set_diff_algorithm(xpparam_t *xpp,
 	long diff_algorithm = parse_algorithm_value(alg);
 	if (diff_algorithm < 0)
 		return -1;
-	xpp->flags = (xpp->flags & ~XDF_DIFF_ALGORITHM_MASK) | diff_algorithm;
+	xpp->algo = diff_algorithm;
 	return 0;
 }
 
