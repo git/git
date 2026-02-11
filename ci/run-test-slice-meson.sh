@@ -9,5 +9,5 @@
 
 group "Run tests" \
 	meson test -C "$1" --no-rebuild --print-errorlogs \
-		--test-args="$GIT_TEST_OPTS" --slice "$((1+$2))/$3" ||
+		--test-args="$GIT_TEST_OPTS" --slice "$(($2))/$3" ||
 handle_failed_tests
