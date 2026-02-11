@@ -297,7 +297,7 @@ jobs:
         name: windows-meson-artifacts
         path: build
     - name: Test
-      shell: pwsh
+      shell: bash
       run: ci/run-test-slice-meson.sh build ${{matrix.nr}} 10
     - name: print test failures
       if: failure() && env.FAILED_TEST_ARTIFACTS != ''
