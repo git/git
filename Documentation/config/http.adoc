@@ -242,6 +242,11 @@ http.sslKeyType::
 	See also libcurl `CURLOPT_SSLKEYTYPE`. Can be overridden by the
 	`GIT_SSL_KEY_TYPE` environment variable.
 
+http.allowNTLMAuth::
+	Whether or not to allow NTLM authentication. While very convenient to set
+	up, and therefore still used in many on-prem scenarios, NTLM is a weak
+	authentication method and therefore deprecated. Defaults to "false".
+
 http.schannelCheckRevoke::
 	Used to enforce or disable certificate revocation checks in cURL
 	when http.sslBackend is set to "schannel" via "true" and "false",

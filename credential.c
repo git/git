@@ -360,6 +360,9 @@ int credential_read(struct credential *c, FILE *fp,
 				credential_set_capability(&c->capa_authtype, op_type);
 			else if (!strcmp(value, "state"))
 				credential_set_capability(&c->capa_state, op_type);
+		} else if (!strcmp(key, "ntlm")) {
+			if (!strcmp(value, "allow"))
+				c->ntlm_allow = 1;
 		} else if (!strcmp(key, "continue")) {
 			c->multistage = !!git_config_bool("continue", value);
 		} else if (!strcmp(key, "password_expiry_utc")) {
@@ -420,6 +423,8 @@ void credential_write(const struct credential *c, FILE *fp,
 		if (c->ephemeral)
 			credential_write_item(c, fp, "ephemeral", "1", 0);
 	}
+	if (c->ntlm_suppressed)
+		credential_write_item(c, fp, "ntlm", "suppressed", 0);
 	credential_write_item(c, fp, "protocol", c->protocol, 1);
 	credential_write_item(c, fp, "host", c->host, 1);
 	credential_write_item(c, fp, "path", c->path, 0);
