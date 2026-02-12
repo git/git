@@ -353,14 +353,14 @@ struct object_info {
 #define OBJECT_INFO_INIT { 0 }
 
 /* Invoke lookup_replace_object() on the given hash */
-#define OBJECT_INFO_LOOKUP_REPLACE 1
+#define OBJECT_INFO_LOOKUP_REPLACE (1 << 0)
 /* Do not retry packed storage after checking packed and loose storage */
-#define OBJECT_INFO_QUICK 8
+#define OBJECT_INFO_QUICK (1 << 1)
 /*
  * Do not attempt to fetch the object if missing (even if fetch_is_missing is
  * nonzero).
  */
-#define OBJECT_INFO_SKIP_FETCH_OBJECT 16
+#define OBJECT_INFO_SKIP_FETCH_OBJECT (1 << 2)
 /*
  * This is meant for bulk prefetching of missing blobs in a partial
  * clone. Implies OBJECT_INFO_SKIP_FETCH_OBJECT and OBJECT_INFO_QUICK
@@ -368,7 +368,7 @@ struct object_info {
 #define OBJECT_INFO_FOR_PREFETCH (OBJECT_INFO_SKIP_FETCH_OBJECT | OBJECT_INFO_QUICK)
 
 /* Die if object corruption (not just an object being missing) was detected. */
-#define OBJECT_INFO_DIE_IF_CORRUPT 32
+#define OBJECT_INFO_DIE_IF_CORRUPT (1 << 3)
 
 /*
  * Read object info from the object database and populate the `object_info`
