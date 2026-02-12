@@ -674,4 +674,33 @@ test_expect_success 'access using three-legged auth' '
 	EOF
 '
 
+test_lazy_prereq NTLM 'curl --version | grep -q NTLM'
+
+test_expect_success NTLM 'access using NTLM auth' '
+	test_when_finished "per_test_cleanup" &&
+
+	set_credential_reply get <<-EOF &&
+	username=user
+	password=pwd
+	EOF
+
+	test_config_global credential.helper test-helper &&
+	test_must_fail env GIT_TRACE_CURL=1 git \
+		ls-remote "$HTTPD_URL/ntlm_auth/repo.git" 2>err &&
+	test_grep "allowNTLMAuth" err &&
+
+	# Can be enabled via config
+	GIT_TRACE_CURL=1 git -c http.$HTTPD_URL.allowNTLMAuth=true \
+		ls-remote "$HTTPD_URL/ntlm_auth/repo.git" &&
+
+	# Or via credential helper responding with ntlm=allow
+	set_credential_reply get <<-EOF &&
+	username=user
+	password=pwd
+	ntlm=allow
+	EOF
+
+	git ls-remote "$HTTPD_URL/ntlm_auth/repo.git"
+'
+
 test_done
