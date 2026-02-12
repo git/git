@@ -842,7 +842,7 @@ static int oid_object_info_convert(struct repository *r,
 int odb_read_object_info_extended(struct object_database *odb,
 				  const struct object_id *oid,
 				  struct object_info *oi,
-				  unsigned flags)
+				  enum object_info_flags flags)
 {
 	int ret;
 
