@@ -692,6 +692,11 @@ Links of a few such community maintained helpers are:
 	- https://github.com/AdityaGarg8/git-credential-email[git-msgraph]
 	  (cross platform client that can send emails using the Microsoft Graph API)
 
+CAVEATS
+-------
+
+include::format-patch-caveats.adoc[]
+
 SEE ALSO
 --------
 linkgit:git-format-patch[1], linkgit:git-imap-send[1], mbox(5)

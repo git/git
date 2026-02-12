@@ -1,0 +1,33 @@
+The output from linkgit:git-format-patch[1] can lead to a different
+commit message when applied with linkgit:git-am[1]. The patch that is
+applied may also be different from the one that was generated, or patch
+application may fail outright.
+ifdef::git-am[]
+See the <<discussion,DISCUSSION>> section above for the syntactic rules.
+endif::git-am[]
+
+ifndef::git-am[]
+include::format-patch-end-of-commit-message.adoc[]
+endif::git-am[]
+
+Note that this is especially problematic for unindented diffs that occur
+in the commit message; the diff in the commit message might get applied
+along with the patch section, or the patch application machinery might
+trip up because the patch target doesn't apply. This could for example
+be caused by a diff in a Markdown code block.
+
+The solution for this is to indent the diff or other text that could
+cause problems.
+
+This loss of fidelity might be simple to notice if you are applying
+patches directly from a mailbox. However, changes originating from Git
+could be applied in bulk, in which case this would be much harder to
+notice. This could for example be a Linux distribution which uses patch
+files to apply changes on top of the commits from the upstream
+repositories. This goes to show that this behavior does not only impact
+email workflows.
+
+Given these limitations, one might be tempted to use a general-purpose
+utility like patch(1) instead. However, patch(1) will not only look for
+unindented diffs (like linkgit:git-am[1]) but will try to apply indented
+diffs as well.
