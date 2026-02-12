@@ -430,6 +430,8 @@ For C programs:
 	 */
 	_("Here is a translatable string explained by the above.");
 
+   We do not use // comments.
+
  - Double negation is often harder to understand than no negation
    at all.
 
