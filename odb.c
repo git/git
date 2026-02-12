@@ -964,7 +964,7 @@ void *odb_read_object_peeled(struct object_database *odb,
 }
 
 int odb_has_object(struct object_database *odb, const struct object_id *oid,
-	       unsigned flags)
+		   enum has_object_flags flags)
 {
 	unsigned object_info_flags = 0;
 

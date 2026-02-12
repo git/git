@@ -395,7 +395,7 @@ int odb_read_object_info(struct object_database *odb,
 			 const struct object_id *oid,
 			 unsigned long *sizep);
 
-enum {
+enum has_object_flags {
 	/* Retry packed storage after checking packed and loose storage */
 	HAS_OBJECT_RECHECK_PACKED = (1 << 0),
 	/* Allow fetching the object in case the repository has a promisor remote. */
@@ -408,7 +408,7 @@ enum {
  */
 int odb_has_object(struct object_database *odb,
 		   const struct object_id *oid,
-		   unsigned flags);
+		   enum has_object_flags flags);
 
 int odb_freshen_object(struct object_database *odb,
 		       const struct object_id *oid);
