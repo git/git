@@ -61,12 +61,6 @@ struct hashmap {
 		 * initially, "next" reflects only the order in file1.
 		 */
 		struct entry *next, *previous;
-
-		/*
-		 * If 1, this entry can serve as an anchor. See
-		 * Documentation/diff-options.adoc for more information.
-		 */
-		unsigned anchor : 1;
 	} *entries, *first, *last;
 	/* were common records found? */
 	unsigned long has_matches;
@@ -85,8 +79,7 @@ static int is_anchor(xpparam_t const *xpp, const char *line)
 }
 
 /* The argument "pass" is 1 for the first file, 2 for the second. */
-static void insert_record(xpparam_t const *xpp, int line, struct hashmap *map,
-			  int pass)
+static void insert_record(int line, struct hashmap *map, int pass)
 {
 	xrecord_t *records = pass == 1 ?
 		map->env->xdf1.recs : map->env->xdf2.recs;
@@ -121,7 +114,6 @@ static void insert_record(xpparam_t const *xpp, int line, struct hashmap *map,
 		return;
 	map->entries[index].line1 = line;
 	map->entries[index].minimal_perfect_hash = record->minimal_perfect_hash;
-	map->entries[index].anchor = is_anchor(xpp, (const char *)map->env->xdf1.recs[line - 1].ptr);
 	if (!map->first)
 		map->first = map->entries + index;
 	if (map->last) {
@@ -153,11 +145,11 @@ static int fill_hashmap(xpparam_t const *xpp, xdfenv_t *env,
 
 	/* First, fill with entries from the first file */
 	while (count1--)
-		insert_record(xpp, line1++, result, 1);
+		insert_record(line1++, result, 1);
 
 	/* Then search for matches in the second file */
 	while (count2--)
-		insert_record(xpp, line2++, result, 2);
+		insert_record(line2++, result, 2);
 
 	return 0;
 }
@@ -194,6 +186,8 @@ static int binary_search(struct entry **sequence, int longest,
  */
 static int find_longest_common_sequence(struct hashmap *map, struct entry **res)
 {
+	xpparam_t const *xpp = map->xpp;
+	xrecord_t const *recs = map->env->xdf2.recs;
 	struct entry **sequence;
 	int longest = 0, i;
 	struct entry *entry;
@@ -220,7 +214,7 @@ static int find_longest_common_sequence(struct hashmap *map, struct entry **res)
 		if (i <= anchor_i)
 			continue;
 		sequence[i] = entry;
-		if (entry->anchor) {
+		if (is_anchor(xpp, (const char*)recs[entry->line2 - 1].ptr)) {
 			anchor_i = i;
 			longest = anchor_i + 1;
 		} else if (i == longest) {
