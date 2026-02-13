@@ -171,7 +171,7 @@ static int handle_path_include(const struct key_value_info *kvi,
 	 * based on the including config file.
 	 */
 	if (!is_absolute_path(path)) {
-		char *slash;
+		const char *slash;
 
 		if (!kvi || !kvi->path) {
 			ret = error(_("relative config includes must come from files"));
