@@ -1597,7 +1597,6 @@ test_expect_success 'push split to subproj' '
 
 test_expect_success 'subtree descendant check' '
 	subtree_test_create_repo "$test_count" &&
-	defaultBranch=$(sed "s,ref: refs/heads/,," "$test_count/.git/HEAD") &&
 	test_create_commit "$test_count" folder_subtree/a &&
 	(
 		cd "$test_count" &&
@@ -1614,7 +1613,7 @@ test_expect_success 'subtree descendant check' '
 	(
 		cd "$test_count" &&
 		git cherry-pick $cherry &&
-		git checkout $defaultBranch &&
+		git checkout main &&
 		git merge -m "merge should be kept on subtree" branch &&
 		git branch no_subtree_work_branch
 	) &&
@@ -1626,10 +1625,10 @@ test_expect_success 'subtree descendant check' '
 	test_create_commit "$test_count" not_a_subtree_change &&
 	(
 		cd "$test_count" &&
-		git checkout $defaultBranch &&
+		git checkout main &&
 		git merge -m "merge should be skipped on subtree" no_subtree_work_branch &&
 
-		git subtree split --prefix folder_subtree/ --branch subtree_tip $defaultBranch &&
+		git subtree split --prefix folder_subtree/ --branch subtree_tip main &&
 		git subtree split --prefix folder_subtree/ --branch subtree_branch branch &&
 		test $(git rev-list --count subtree_tip..subtree_branch) = 0
 	)
