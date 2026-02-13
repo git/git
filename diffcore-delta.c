@@ -135,7 +135,7 @@ static struct spanhash_top *hash_chars(struct repository *r,
 			      st_mult(sizeof(struct spanhash), (size_t)1 << i)));
 	hash->alloc_log2 = i;
 	hash->free = INITIAL_FREE(i);
-	MEMZERO_ARRAY(hash->data, ((size_t)1 << i));
+	MEMZERO_ARRAY(hash->data, (size_t)1 << i);
 
 	n = 0;
 	accum1 = accum2 = 0;

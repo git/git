@@ -46,7 +46,7 @@ static void bitmap_grow(struct bitmap *self, size_t word_alloc)
 {
 	size_t old_size = self->word_alloc;
 	ALLOC_GROW(self->words, word_alloc, self->word_alloc);
-	MEMZERO_ARRAY(self->words + old_size, (self->word_alloc - old_size));
+	MEMZERO_ARRAY(self->words + old_size, self->word_alloc - old_size);
 }
 
 void bitmap_set(struct bitmap *self, size_t pos)
@@ -192,7 +192,7 @@ void bitmap_or_ewah(struct bitmap *self, struct ewah_bitmap *other)
 		self->word_alloc = other_final;
 		REALLOC_ARRAY(self->words, self->word_alloc);
 		MEMZERO_ARRAY(self->words + original_size,
-		              (self->word_alloc - original_size));
+			      self->word_alloc - original_size);
 	}
 
 	ewah_iterator_init(&it, other);
