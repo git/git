@@ -965,7 +965,7 @@ static int fill_commit_in_graph(struct commit *item,
 	do {
 		if (g->chunk_extra_edges_size / sizeof(uint32_t) <= parent_data_pos) {
 			error(_("commit-graph extra-edges pointer out of bounds"));
-			free_commit_list(item->parents);
+			commit_list_free(item->parents);
 			item->parents = NULL;
 			item->object.parsed = 0;
 			return 0;

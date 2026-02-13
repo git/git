@@ -120,12 +120,12 @@ int cmd__reach(int ac, const char **av)
 			exit(128);
 		printf("%s(A,X):\n", av[1]);
 		print_sorted_commit_ids(list);
-		free_commit_list(list);
+		commit_list_free(list);
 	} else if (!strcmp(av[1], "reduce_heads")) {
 		struct commit_list *list = reduce_heads(X);
 		printf("%s(X):\n", av[1]);
 		print_sorted_commit_ids(list);
-		free_commit_list(list);
+		commit_list_free(list);
 	} else if (!strcmp(av[1], "can_all_from_reach")) {
 		printf("%s(X,Y):%d\n", av[1], can_all_from_reach(X, Y, 1));
 	} else if (!strcmp(av[1], "can_all_from_reach_with_flag")) {
@@ -172,13 +172,13 @@ int cmd__reach(int ac, const char **av)
 			die(_("too many commits marked reachable"));
 
 		print_sorted_commit_ids(list);
-		free_commit_list(list);
+		commit_list_free(list);
 	}
 
 	object_array_clear(&X_obj);
 	strbuf_release(&buf);
-	free_commit_list(X);
-	free_commit_list(Y);
+	commit_list_free(X);
+	commit_list_free(Y);
 	commit_stack_clear(&X_stack);
 	commit_stack_clear(&Y_stack);
 	return 0;

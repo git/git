@@ -3782,9 +3782,9 @@ void ref_filter_clear(struct ref_filter *filter)
 {
 	strvec_clear(&filter->exclude);
 	oid_array_clear(&filter->points_at);
-	free_commit_list(filter->with_commit);
-	free_commit_list(filter->no_commit);
-	free_commit_list(filter->reachable_from);
-	free_commit_list(filter->unreachable_from);
+	commit_list_free(filter->with_commit);
+	commit_list_free(filter->no_commit);
+	commit_list_free(filter->reachable_from);
+	commit_list_free(filter->unreachable_from);
 	ref_filter_init(filter);
 }

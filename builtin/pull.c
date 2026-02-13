@@ -704,14 +704,14 @@ static int get_octopus_merge_base(struct object_id *merge_base,
 
 	if (get_octopus_merge_bases(revs, &result) < 0)
 		exit(128);
-	free_commit_list(revs);
+	commit_list_free(revs);
 	reduce_heads_replace(&result);
 
 	if (!result)
 		return 1;
 
 	oidcpy(merge_base, &result->item->object.oid);
-	free_commit_list(result);
+	commit_list_free(result);
 	return 0;
 }
 
@@ -803,7 +803,7 @@ static int get_can_ff(struct object_id *orig_head,
 	commit_list_insert(head, &list);
 	merge_head = lookup_commit_reference(the_repository, orig_merge_head);
 	ret = repo_is_descendant_of(the_repository, merge_head, list);
-	free_commit_list(list);
+	commit_list_free(list);
 	if (ret < 0)
 		exit(128);
 	return ret;
@@ -828,7 +828,7 @@ static int already_up_to_date(struct object_id *orig_head,
 		theirs = lookup_commit_reference(the_repository, &merge_heads->oid[i]);
 		commit_list_insert(theirs, &list);
 		ok = repo_is_descendant_of(the_repository, ours, list);
-		free_commit_list(list);
+		commit_list_free(list);
 		if (ok < 0)
 			exit(128);
 		if (!ok)
