@@ -33,6 +33,26 @@ Performance, Internal Implementation, Development Support etc.
 
  * Improve set-up time of a perf test.
 
+ * ISO C23 redefines strchr and friends that tradiotionally took
+   a const pointer and returned a non-const pointer derived from it to
+   preserve constness (i.e., if you ask for a substring in a const
+   string, you get a const pointer to the substring).  Update code
+   paths that used non-const pointer to receive their results that did
+   not have to be non-const to adjust.
+   (merge fc9fd8065c cf/c23-const-preserving-strchr-updates-0 later to maint).
+
+ * Rename three functions around the commit_list data structure.
+   (merge 9f18d089c5 ps/commit-list-functions-renamed later to maint).
+
+ * Transaction to create objects (or not) is currently tied to the
+   repository, but in the future a repository can have multiple object
+   sources, which may have different transaction mechanisms.  Make the
+   odb transaction API per object source.
+   (merge 3f67e3d021 jt/odb-transaction-per-source later to maint).
+
+ * "git merge-ours" is taught to work better in a sparse checkout.
+   (merge fb1b786ebf sb/merge-ours-sparse later to maint).
+
 
 Fixes since v2.53
 -----------------
@@ -59,6 +79,17 @@ Fixes since v2.53
    gets blamed for.
    (merge d519082d4e rs/blame-ignore-colors-fix later to maint).
 
+ * Coccinelle rules update.
+   (merge 60614838a4 tc/memzero-array later to maint).
+
+ * Giving "git last-modified" a tree (not a commit-ish) died an
+   uncontrolled death, which has been corrected.
+   (merge 525ef52301 tc/last-modified-not-a-tree later to maint).
+
+ * Test contrib/ things in CI to catch breakages before they enter the
+   "next" branch.
+   (merge c591c3ceff jc/ci-test-contrib-too later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge d79fff4a11 jk/remote-tracking-ref-leakfix later to maint).
    (merge 7a747f972d dd/t5403-modernise later to maint).
@@ -68,3 +99,7 @@ Fixes since v2.53
    (merge df1c5d7ed7 kh/doc-shortlog-fix later to maint).
    (merge 2d45507f15 am/doc-github-contributiong-link-to-submittingpatches later to maint).
    (merge 68060b9262 hs/t9160-test-paths later to maint).
+   (merge 486386c687 cs/subtree-reftable-testfix later to maint).
+   (merge 0728012c53 jc/diff-highlight-main-master-testfix later to maint).
+   (merge 831989ef38 mc/doc-send-email-signed-off-by-cc later to maint).
+   (merge c44b3f3203 sd/doc-my1c-api-config-reference-fix later to maint).
