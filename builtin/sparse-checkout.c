@@ -94,8 +94,7 @@ static int sparse_checkout_list(int argc, const char **argv, const char *prefix,
 			string_list_append(&sl, pe->pattern + 1);
 		}
 
-		string_list_sort(&sl);
-		string_list_remove_duplicates(&sl, 0);
+		string_list_sort_u(&sl, 0);
 
 		for (i = 0; i < sl.nr; i++) {
 			quote_c_style(sl.items[i].string, NULL, stdout, 0);
