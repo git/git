@@ -172,6 +172,11 @@ void trace2_collect_process_info(enum trace2_process_info_reason reason)
 		get_is_being_debugged();
 		get_ancestry(&names);
 		if (names.nr) {
+			/*
+			  Emit the ancestry data as a data_json event to
+			  maintain compatibility for consumers of the older
+			  "windows/ancestry" event.
+			 */
 			struct json_writer jw = JSON_WRITER_INIT;
 			jw_array_begin(&jw, 0);
 			for (size_t i = 0; i < names.nr; i++)
@@ -180,6 +185,9 @@ void trace2_collect_process_info(enum trace2_process_info_reason reason)
 			trace2_data_json("process", the_repository,
 					 "windows/ancestry", &jw);
 			jw_release(&jw);
+
+			/* Emit the ancestry data with the new event. */
+			trace2_cmd_ancestry(names.v);
 		}
 
 		strvec_clear(&names);
