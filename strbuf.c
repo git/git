@@ -1119,6 +1119,6 @@ void strbuf_stripspace(struct strbuf *sb, const char *comment_prefix)
 
 void strbuf_strip_file_from_path(struct strbuf *sb)
 {
-	char *path_sep = find_last_dir_sep(sb->buf);
+	const char *path_sep = find_last_dir_sep(sb->buf);
 	strbuf_setlen(sb, path_sep ? path_sep - sb->buf + 1 : 0);
 }

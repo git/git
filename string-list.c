@@ -333,7 +333,7 @@ static int split_string(struct string_list *list, const char *string, const char
 		BUG("string_list_split() called without strdup_strings");
 
 	for (;;) {
-		char *end;
+		const char *end;
 
 		if (flags & STRING_LIST_SPLIT_TRIM) {
 			/* ltrim */

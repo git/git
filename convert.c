@@ -1122,7 +1122,8 @@ static int count_ident(const char *cp, unsigned long size)
 static int ident_to_git(const char *src, size_t len,
 			struct strbuf *buf, int ident)
 {
-	char *dst, *dollar;
+	char *dst;
+	const char *dollar;
 
 	if (!ident || (src && !count_ident(src, len)))
 		return 0;

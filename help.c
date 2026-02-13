@@ -856,7 +856,7 @@ struct similar_ref_cb {
 static int append_similar_ref(const struct reference *ref, void *cb_data)
 {
 	struct similar_ref_cb *cb = (struct similar_ref_cb *)(cb_data);
-	char *branch = strrchr(ref->name, '/') + 1;
+	const char *branch = strrchr(ref->name, '/') + 1;
 
 	/* A remote branch of the same name is deemed similar */
 	if (starts_with(ref->name, "refs/remotes/") &&
