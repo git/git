@@ -233,6 +233,7 @@ applying.
 	create an empty commit with the contents of the e-mail message
 	as its log message.
 
+[[discussion]]
 DISCUSSION
 ----------
 
@@ -252,14 +253,11 @@ where the patch begins.  Excess whitespace at the end of each
 line is automatically stripped.
 
 The patch is expected to be inline, directly following the
-message.  Any line that is of the form:
+message.
+include::format-patch-end-of-commit-message.adoc[]
 
-* three-dashes and end-of-line, or
-* a line that begins with "diff -", or
-* a line that begins with "Index: "
-
-is taken as the beginning of a patch, and the commit log message
-is terminated before the first occurrence of such a line.
+This means that the contents of the commit message can inadvertently
+interrupt the processing (see the <<caveats,CAVEATS>> section below).
 
 When initially invoking `git am`, you give it the names of the mailboxes
 to process.  Upon seeing the first patch that does not apply, it
@@ -282,6 +280,13 @@ current branch.  This is useful if you have problems with multiple
 commits, like running 'git am' on the wrong branch or an error in the
 commits that is more easily fixed by changing the mailbox (e.g.
 errors in the "From:" lines).
+
+[[caveats]]
+CAVEATS
+-------
+
+:git-am: 1
+include::format-patch-caveats.adoc[]
 
 HOOKS
 -----

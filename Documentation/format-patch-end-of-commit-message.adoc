@@ -1,0 +1,8 @@
+Any line that is of the form:
+
+* three-dashes and end-of-line, or
+* a line that begins with "diff -", or
+* a line that begins with "Index: "
+
+is taken as the beginning of a patch, and the commit log message
+is terminated before the first occurrence of such a line.
