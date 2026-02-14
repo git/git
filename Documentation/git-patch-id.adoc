@@ -3,7 +3,7 @@ git-patch-id(1)
 
 NAME
 ----
-git-patch-id - Compute unique ID for a patch
+git-patch-id - Compute unique IDs for patches
 
 SYNOPSIS
 --------
@@ -12,7 +12,7 @@ git patch-id [--stable | --unstable | --verbatim]
 
 DESCRIPTION
 -----------
-Read a patch from the standard input and compute the patch ID for it.
+Read patches from standard input and compute the patch IDs.
 
 A "patch ID" is nothing but a sum of SHA-1 of the file diffs associated with a
 patch, with line numbers ignored.  As such, it's "reasonably stable", but at
@@ -25,7 +25,8 @@ When dealing with `git diff-tree --patch` output, it takes advantage of
 the fact that the patch is prefixed with the object name of the
 commit, and outputs two 40-byte hexadecimal strings.  The first
 string is the patch ID, and the second string is the commit ID.
-This can be used to make a mapping from patch ID to commit ID.
+This can be used to make a mapping from patch ID to commit ID for a
+set or range of commits.
 
 OPTIONS
 -------
