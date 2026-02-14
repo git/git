@@ -232,7 +232,8 @@ static int fall_back_to_classic_diff(xpparam_t const *xpp, xdfenv_t *env,
 	xpparam_t xpparam;
 
 	memset(&xpparam, 0, sizeof(xpparam));
-	xpparam.flags = xpp->flags & ~XDF_DIFF_ALGORITHM_MASK;
+	xpp.flags = map->xpp->flags;
+    	xpp.algo = XDL_ALGO_MYERS;
 
 	return xdl_fall_back_diff(env, &xpparam,
 				  line1, count1, line2, count2);

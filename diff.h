@@ -8,6 +8,7 @@
 #include "pathspec.h"
 #include "strbuf.h"
 #include "color.h"
+#include "xdiff/xdiff.h"
 
 struct oidset;
 
@@ -222,8 +223,6 @@ static inline void diff_flags_or(struct diff_flags *a,
 #define DIFF_XDL_SET(opts, flag)    ((opts)->xdl_opts |= XDF_##flag)
 #define DIFF_XDL_CLR(opts, flag)    ((opts)->xdl_opts &= ~XDF_##flag)
 
-#define DIFF_WITH_ALG(opts, flag)   (((opts)->xdl_opts & ~XDF_DIFF_ALGORITHM_MASK) | XDF_##flag)
-
 enum diff_words_type {
 	DIFF_WORDS_NONE = 0,
 	DIFF_WORDS_PORCELAIN,
@@ -420,6 +419,8 @@ struct diff_options {
 	 */
 	int max_depth;
 	int max_depth_valid;
+
+	xdl_algo_t xdl_algo;
 };
 
 unsigned diff_filter_bit(char status);
