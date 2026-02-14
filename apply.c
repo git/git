@@ -5001,6 +5001,10 @@ static int apply_option_parse_directory(const struct option *opt,
 	BUG_ON_OPT_NEG(unset);
 
 	strbuf_reset(&state->root);
+
+	if (starts_with(arg, "./"))
+		arg += 2;
+
 	strbuf_addstr(&state->root, arg);
 	strbuf_complete(&state->root, '/');
 	return 0;

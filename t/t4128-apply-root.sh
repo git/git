@@ -43,6 +43,15 @@ test_expect_success 'apply --directory -p (2) ' '
 
 '
 
+test_expect_success 'apply --directory (./ prefix)' '
+	git reset --hard initial &&
+	git apply --directory=./some/sub -p3 --index patch &&
+	echo Bello >expect &&
+	git show :some/sub/dir/file >actual &&
+	test_cmp expect actual &&
+	test_cmp expect some/sub/dir/file
+'
+
 cat > patch << EOF
 diff --git a/newfile b/newfile
 new file mode 100644
