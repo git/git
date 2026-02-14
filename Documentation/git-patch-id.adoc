@@ -108,6 +108,10 @@ rm "$for_upstream"
 Now the first column shows the commit from your branch and the second
 column shows the patch ID equivalent commit, if it exists.
 
+SEE ALSO
+--------
+linkgit:git-cherry[1]
+
 GIT
 ---
 Part of the linkgit:git[1] suite
