@@ -1154,7 +1154,9 @@ static int add_patterns(const char *fname, const char *base, int baselen,
 	int r;
 	int fd;
 	size_t size = 0;
+	size_t reencoded_size = 0;
 	char *buf;
+	char *reencoded = NULL;
 
 	if (flags & PATTERN_NOFOLLOW)
 		fd = open_nofollow(fname, O_RDONLY);
@@ -1190,7 +1192,34 @@ static int add_patterns(const char *fname, const char *base, int baselen,
 			close(fd);
 			return -1;
 		}
+
+		if (!try_reencode_to_utf8(buf, size, &reencoded, &reencoded_size) && !is_valid_utf8(buf, size)) {
+			struct conv_attrs ca;
+			convert_attrs(istate, &ca, fname);
+
+			if (ca.working_tree_encoding) {
+				reencoded = reencode_string_len(buf, size, "UTF-8", ca.working_tree_encoding, &reencoded_size);
+				if (!reencoded) {
+					warning(_("Failed to decode exclude file %s from encoding %s"), pl->src, ca.working_tree_encoding);
+					free(buf);
+					return -1;
+				}
+			} else {
+				warning(_("Ignoring exclude file with unknown encoding: %s"), pl->src);
+				free(buf);
+				return -1;
+			}
+		}
+
+		if (reencoded) {
+			size = reencoded_size;
+			free(buf);
+			buf = xmallocz(size);
+			memcpy(buf, reencoded, size);
+			free(reencoded);
+		}
 		buf[size++] = '\n';
+
 		close(fd);
 		if (oid_stat) {
 			int pos;
