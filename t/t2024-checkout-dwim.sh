@@ -347,4 +347,166 @@ test_expect_success 'disambiguate dwim branch and checkout path (2)' '
 	grep bar dwim-arg2
 '
 
+test_expect_success 'setup for remoteBranchTemplate tests' '
+	(
+		cd repo_a &&
+		git checkout -b feature/newbar &&
+		test_commit a_feature_newbar &&
+		git checkout -b "100%special" &&
+		test_commit a_special &&
+		git checkout -b template_test &&
+		test_commit a_template_test
+	) &&
+	git fetch repo_a
+'
+
+test_expect_success 'checkout.remoteBranchTemplate with prefix' '
+	git checkout -B main &&
+	git reset --hard &&
+	test_might_fail git branch -D newbar &&
+	test_config checkout.remoteBranchTemplate "feature/%s" &&
+
+	git checkout newbar &&
+	status_uno_is_clean &&
+	test_branch newbar &&
+	test_cmp_rev remotes/repo_a/feature/newbar HEAD &&
+	test_branch_upstream newbar repo_a feature/newbar
+'
+
+test_expect_success 'checkout.remoteBranchTemplate handles literal %%' '
+	git checkout -B main &&
+	git reset --hard &&
+	test_might_fail git branch -D special &&
+	test_config checkout.remoteBranchTemplate "100%%%s" &&
+
+	git checkout special &&
+	status_uno_is_clean &&
+	test_branch special &&
+	test_cmp_rev remotes/repo_a/100%special HEAD &&
+	test_branch_upstream special repo_a 100%special
+'
+
+test_expect_success 'checkout.remoteBranchTemplate without %s is ignored with warning' '
+	git checkout -B main &&
+	git reset --hard &&
+	test_might_fail git branch -D template_test &&
+	test_config checkout.remoteBranchTemplate "fixed-name" &&
+
+	git checkout template_test 2>stderr &&
+	status_uno_is_clean &&
+	test_branch template_test &&
+	test_cmp_rev remotes/repo_a/template_test HEAD &&
+	test_grep "missing.*%s.*placeholder" stderr
+'
+
+test_expect_success 'checkout.remoteBranchTemplate with multiple %s placeholders' '
+	(
+		cd repo_a &&
+		git checkout -b user/multi/multi &&
+		test_commit a_multi_placeholder
+	) &&
+	git fetch repo_a &&
+
+	git checkout -B main &&
+	git reset --hard &&
+	test_might_fail git branch -D multi &&
+	test_config checkout.remoteBranchTemplate "user/%s/%s" &&
+
+	git checkout multi &&
+	status_uno_is_clean &&
+	test_branch multi &&
+	test_cmp_rev remotes/repo_a/user/multi/multi HEAD &&
+	test_branch_upstream multi repo_a user/multi/multi
+'
+
+test_expect_success 'checkout.remoteBranchTemplate + defaultRemote resolves ambiguity' '
+	(
+		cd repo_a &&
+		git checkout -b team/shared &&
+		test_commit a_team_shared
+	) &&
+	(
+		cd repo_b &&
+		git checkout -b team/shared &&
+		test_commit b_team_shared
+	) &&
+	git fetch --multiple repo_a repo_b &&
+
+	git checkout -B main &&
+	git reset --hard &&
+	test_might_fail git branch -D shared &&
+	test_config checkout.remoteBranchTemplate "team/%s" &&
+	test_config checkout.defaultRemote repo_b &&
+
+	git checkout shared &&
+	status_uno_is_clean &&
+	test_branch shared &&
+	test_cmp_rev remotes/other_b/team/shared HEAD &&
+	test_branch_upstream shared repo_b team/shared
+'
+
+test_expect_success 'checkout.remoteBranchTemplate with no matches fails' '
+	git checkout -B main &&
+	test_might_fail git branch -D nonexistent &&
+	test_config checkout.remoteBranchTemplate "feature/%s" &&
+
+	test_must_fail git checkout nonexistent &&
+	test_must_fail git rev-parse --verify refs/heads/nonexistent &&
+	test_branch main
+'
+
+test_expect_success 'checkout.remoteBranchTemplate still fails on ambiguity' '
+	git checkout -B main &&
+	test_might_fail git branch -D shared &&
+	test_config checkout.remoteBranchTemplate "team/%s" &&
+
+	test_must_fail git checkout shared 2>stderr &&
+	test_grep "matched multiple.*remote tracking branches" stderr &&
+	test_must_fail git rev-parse --verify refs/heads/shared &&
+	test_branch main
+'
+
+test_expect_success 'checkout.remoteBranchTemplate respects --no-guess' '
+	git checkout -B main &&
+	git reset --hard &&
+	test_might_fail git branch -D newbar &&
+	test_config checkout.remoteBranchTemplate "feature/%s" &&
+
+	test_must_fail git checkout --no-guess newbar &&
+	test_must_fail git rev-parse --verify refs/heads/newbar &&
+	test_branch main
+'
+
+test_expect_success 'checkout.remoteBranchTemplate respects checkout.guess = false' '
+	git checkout -B main &&
+	git reset --hard &&
+	test_might_fail git branch -D newbar &&
+	test_config checkout.remoteBranchTemplate "feature/%s" &&
+	test_config checkout.guess false &&
+
+	test_must_fail git checkout newbar &&
+	test_must_fail git rev-parse --verify refs/heads/newbar &&
+	test_branch main
+'
+
+test_expect_success 'checkout.remoteBranchTemplate with unknown placeholder kept literal' '
+	(
+		cd repo_a &&
+		git checkout -b "%d/literal" &&
+		test_commit a_literal_placeholder
+	) &&
+	git fetch repo_a &&
+
+	git checkout -B main &&
+	git reset --hard &&
+	test_might_fail git branch -D literal &&
+	test_config checkout.remoteBranchTemplate "%d/%s" &&
+
+	git checkout literal &&
+	status_uno_is_clean &&
+	test_branch literal &&
+	test_cmp_rev remotes/repo_a/%d/literal HEAD &&
+	test_branch_upstream literal repo_a %d/literal
+'
+
 test_done
