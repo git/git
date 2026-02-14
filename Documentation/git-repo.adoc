@@ -9,6 +9,7 @@ SYNOPSIS
 --------
 [synopsis]
 git repo info [--format=(lines|nul) | -z] [--all | <key>...]
+git repo info --keys [--format=(lines|nul) | -z]
 git repo structure [--format=(table|lines|nul) | -z]
 
 DESCRIPTION
@@ -44,6 +45,16 @@ supported:
 	`lines`. Unlike in the `lines` format, the values are never quoted.
 +
 `-z` is an alias for `--format=nul`.
+
+`info --keys [--format=(lines|nul) | -z]`::
+	List all the available keys, one per line. The output format can be chosen
+	through the flag `--format`. The following formats are supported:
++
+`lines`:::
+	Output the keys one per line. This is the default.
+
+`nul`:::
+	Similar to `lines`, but using a _NUL_ character after each value.
 
 `structure [--format=(table|lines|nul) | -z]`::
 	Retrieve statistics about the current repository structure. The
