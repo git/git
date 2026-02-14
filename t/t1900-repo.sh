@@ -34,7 +34,7 @@ test_repo_info () {
 		eval "$init_command $repo_name"
 	'
 
-	test_expect_success "keyvalue: $label" '
+	test_expect_success "lines: $label" '
 		echo "$key=$expected_value" > expect &&
 		git -C "$repo_name" repo info "$key" >actual &&
 		test_cmp expect actual
@@ -115,7 +115,7 @@ test_expect_success '-z uses nul-terminated format' '
 
 test_expect_success 'git repo info uses the last requested format' '
 	echo "layout.bare=false" >expected &&
-	git repo info --format=nul -z --format=keyvalue layout.bare >actual &&
+	git repo info --format=nul -z --format=lines layout.bare >actual &&
 	test_cmp expected actual
 '
 
