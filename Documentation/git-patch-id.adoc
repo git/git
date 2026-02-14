@@ -68,6 +68,46 @@ This is the default if `patchid.stable` is set to `true`.
 +
 This is the default.
 
+EXAMPLES
+--------
+
+linkgit:git-cherry[1] shows what commits from a branch have patch ID
+equivalent commits in some upstream branch. But it only tells you
+whether such a commit exists or not. What if you wanted to know the
+relevant commits in the upstream? We can use this command to make a
+mapping between your branch and the upstream branch:
+
+----
+#!/bin/sh
+
+upstream="$1"
+branch="$2"
+test -z "$branch" && branch=HEAD
+limit="$3"
+if test -n "$limit"
+then
+    tail_opts="$limit".."$upstream"
+else
+    since=$(git log --format=%aI "$upstream".."$branch" | tail -1)
+    tail_opts=--since="$since"' '"$upstream"
+fi
+for_branch=$(mktemp)
+for_upstream=$(mktemp)
+
+git rev-list --no-merges "$upstream".."$branch" |
+    git diff-tree --patch --stdin |
+    git patch-id  --stable | sort >"$for_branch"
+git rev-list --no-merges $tail_opts |
+    git diff-tree --patch --stdin |
+    git patch-id  --stable | sort >"$for_upstream"
+join -a1 "$for_branch" "$for_upstream" | cut -d' ' -f2,3
+rm "$for_branch"
+rm "$for_upstream"
+----
+
+Now the first column shows the commit from your branch and the second
+column shows the patch ID equivalent commit, if it exists.
+
 GIT
 ---
 Part of the linkgit:git[1] suite
