@@ -36,6 +36,21 @@ struct oidmap {
 void oidmap_init(struct oidmap *map, size_t initial_size);
 
 /*
+ * Function type for functions that free oidmap entries.
+ */
+typedef void (*oidmap_free_fn)(void *);
+
+/*
+ * Clear an oidmap, freeing any allocated memory. The map is empty and
+ * can be reused without another explicit init.
+ *
+ * The `free_fn`, if not NULL, is called for each oidmap entry in the map
+ * to free any user data associated with the entry.
+ */
+void oidmap_clear_with_free(struct oidmap *map,
+			    oidmap_free_fn free_fn);
+
+/*
  * Clear an oidmap, freeing any allocated memory. The map is empty and
  * can be reused without another explicit init.
  *
