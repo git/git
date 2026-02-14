@@ -1346,6 +1346,8 @@ static void make_cover_letter(struct rev_info *rev, int use_separate_file,
 		die(_("cover letter needs email format"));
 
 	committer = git_committer_info(0);
+	if (cfg->from)
+		committer = cfg->from;
 
 	if (use_separate_file &&
 	    open_next_file(NULL, rev->numbered_files ? NULL : "cover-letter", rev, quiet))
