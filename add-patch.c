@@ -1441,20 +1441,21 @@ static bool get_first_undecided(const struct file_diff *file_diff, size_t *idx)
 	return false;
 }
 
-static int patch_update_file(struct add_p_state *s,
-			     struct file_diff *file_diff)
+static size_t patch_update_file(struct add_p_state *s, size_t idx)
 {
 	size_t hunk_index = 0;
 	ssize_t i, undecided_previous, undecided_next, rendered_hunk_index = -1;
 	struct hunk *hunk;
 	char ch;
 	struct child_process cp = CHILD_PROCESS_INIT;
-	int colored = !!s->colored.len, quit = 0, use_pager = 0;
+	int colored = !!s->colored.len, use_pager = 0;
 	enum prompt_mode_type prompt_mode_type;
+	struct file_diff *file_diff = s->file_diff + idx;
+	size_t patch_update_resp = idx;
 
 	/* Empty added files have no hunks */
 	if (!file_diff->hunk_nr && !file_diff->added)
-		return 0;
+		return patch_update_resp + 1;
 
 	strbuf_reset(&s->buf);
 	render_diff_header(s, file_diff, colored, &s->buf);
@@ -1498,9 +1499,10 @@ static int patch_update_file(struct add_p_state *s,
 
 		/* Everything decided? */
 		if (undecided_previous < 0 && undecided_next < 0 &&
-		    hunk->use != UNDECIDED_HUNK)
-			break;
-
+		    hunk->use != UNDECIDED_HUNK) {
+				patch_update_resp++;
+				break;
+		}
 		strbuf_reset(&s->buf);
 		if (file_diff->hunk_nr) {
 			if (rendered_hunk_index != hunk_index) {
@@ -1570,7 +1572,7 @@ static int patch_update_file(struct add_p_state *s,
 			fputs(s->s.reset_color_interactive, stdout);
 		fflush(stdout);
 		if (read_single_character(s) == EOF) {
-			quit = 1;
+			patch_update_resp = s->file_diff_nr;
 			break;
 		}
 
@@ -1616,7 +1618,7 @@ soft_increment:
 				hunk->use = SKIP_HUNK;
 			}
 		} else if (ch == 'q') {
-			quit = 1;
+			patch_update_resp = s->file_diff_nr;
 			break;
 		} else if (s->answer.buf[0] == 'K') {
 			if (permitted & ALLOW_GOTO_PREVIOUS_HUNK)
@@ -1803,7 +1805,7 @@ soft_increment:
 	}
 
 	putchar('\n');
-	return quit;
+	return patch_update_resp;
 }
 
 int run_add_p(struct repository *r, enum add_p_mode mode,
@@ -1852,11 +1854,15 @@ int run_add_p(struct repository *r, enum add_p_mode mode,
 		return -1;
 	}
 
-	for (i = 0; i < s.file_diff_nr; i++)
-		if (s.file_diff[i].binary && !s.file_diff[i].hunk_nr)
+	for (i = 0; i < s.file_diff_nr;) {
+		if (s.file_diff[i].binary && !s.file_diff[i].hunk_nr) {
 			binary_count++;
-		else if (patch_update_file(&s, s.file_diff + i))
+			i++;
+			continue;
+		}
+		 if ((i = patch_update_file(&s, i)) == s.file_diff_nr)
 			break;
+    }
 
 	if (s.file_diff_nr == 0)
 		err(&s, _("No changes."));
