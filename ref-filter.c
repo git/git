@@ -2213,13 +2213,12 @@ static const char *lstrip_ref_components(const char *refname, int len)
 static const char *rstrip_ref_components(const char *refname, int len)
 {
 	int remaining = normalize_component_count(refname, len);
-	const char *start = xstrdup(refname);
-	const char *to_free = start;
+	char *start = xstrdup(refname);
 
 	while (remaining-- > 0) {
 		char *p = strrchr(start, '/');
 		if (!p) {
-			free((char *)to_free);
+			free(start);
 			return xstrdup("");
 		} else
 			p[0] = '\0';
