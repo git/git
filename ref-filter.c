@@ -2173,12 +2173,8 @@ static inline char *copy_advance(char *dst, const char *src)
 	return dst;
 }
 
-static const char *lstrip_ref_components(const char *refname, int len)
+static int normalize_component_count(const char *refname, int len)
 {
-	long remaining = len;
-	const char *start = xstrdup(refname);
-	const char *to_free = start;
-
 	if (len < 0) {
 		int i;
 		const char *p = refname;
@@ -2192,8 +2188,16 @@ static const char *lstrip_ref_components(const char *refname, int len)
 		 * because we count the number of '/', but the number
 		 * of components is one more than the no of '/').
 		 */
-		remaining = i + len + 1;
+		len = i + len + 1;
 	}
+	return len;
+}
+
+static const char *lstrip_ref_components(const char *refname, int len)
+{
+	int remaining = normalize_component_count(refname, len);
+	const char *start = xstrdup(refname);
+	const char *to_free = start;
 
 	while (remaining > 0) {
 		switch (*start++) {
@@ -2213,25 +2217,9 @@ static const char *lstrip_ref_components(const char *refname, int len)
 
 static const char *rstrip_ref_components(const char *refname, int len)
 {
-	long remaining = len;
+	int remaining = normalize_component_count(refname, len);
 	const char *start = xstrdup(refname);
 	const char *to_free = start;
-
-	if (len < 0) {
-		int i;
-		const char *p = refname;
-
-		/* Find total no of '/' separated path-components */
-		for (i = 0; p[i]; p[i] == '/' ? i++ : *p++)
-			;
-		/*
-		 * The number of components we need to strip is now
-		 * the total minus the components to be left (Plus one
-		 * because we count the number of '/', but the number
-		 * of components is one more than the no of '/').
-		 */
-		remaining = i + len + 1;
-	}
 
 	while (remaining-- > 0) {
 		char *p = strrchr(start, '/');
