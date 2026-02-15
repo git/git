@@ -1105,7 +1105,10 @@ test_force_fetch_tag () {
 			git commit -m 'file1' &&
 			git tag $tag_args testTag &&
 			test_must_fail git -C ../child1 fetch origin tag testTag &&
-			git -C ../child1 fetch origin '+refs/tags/*:refs/tags/*'
+			git -C ../child1 fetch origin '+refs/tags/*:refs/tags/*' &&
+			git tag $tag_args testTag HEAD^ &&
+			test_must_fail git -C ../child1 fetch origin tag testTag &&
+			git -C ../child1 fetch --force origin tag testTag
 		)
 	"
 }
