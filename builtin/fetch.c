@@ -981,7 +981,7 @@ static int update_local_ref(struct ref *ref,
 	    starts_with(ref->name, "refs/tags/")) {
 		struct ref_update_display_info *info;
 
-		if (force || ref->force) {
+		if (force || ref->force || prune_tags) {
 			int r;
 
 			r = s_update_ref("updating tag", ref, transaction, 0);

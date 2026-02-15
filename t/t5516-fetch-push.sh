@@ -1092,7 +1092,7 @@ test_force_fetch_tag () {
 	tag_type_description=$1
 	tag_args=$2
 
-	test_expect_success "fetch will not clobber an existing $tag_type_description without --force" "
+	test_expect_success "fetch will not clobber an existing $tag_type_description without --force or --prune-tags" "
 		mk_test testrepo heads/main &&
 		mk_child testrepo child1 &&
 		mk_child testrepo child2 &&
@@ -1108,7 +1108,13 @@ test_force_fetch_tag () {
 			git -C ../child1 fetch origin '+refs/tags/*:refs/tags/*' &&
 			git tag $tag_args testTag HEAD^ &&
 			test_must_fail git -C ../child1 fetch origin tag testTag &&
-			git -C ../child1 fetch --force origin tag testTag
+			git -C ../child1 fetch --force origin tag testTag &&
+			git tag $tag_args testTag HEAD &&
+			test_must_fail git -C ../child1 fetch origin tag testTag &&
+			git -C ../child1 fetch --prune-tags origin tag testTag &&
+			git tag $tag_args testTag HEAD^ &&
+			test_must_fail git -C ../child1 fetch origin tag testTag &&
+			git -C ../child1 -c fetch.prunetags=true fetch origin tag testTag
 		)
 	"
 }
