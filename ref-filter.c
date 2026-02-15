@@ -2196,13 +2196,10 @@ static int normalize_component_count(const char *refname, int len)
 static const char *lstrip_ref_components(const char *refname, int len)
 {
 	int remaining = normalize_component_count(refname, len);
-	const char *start = xstrdup(refname);
-	const char *to_free = start;
 
 	while (remaining > 0) {
-		switch (*start++) {
+		switch (*refname++) {
 		case '\0':
-			free((char *)to_free);
 			return xstrdup("");
 		case '/':
 			remaining--;
@@ -2210,9 +2207,7 @@ static const char *lstrip_ref_components(const char *refname, int len)
 		}
 	}
 
-	start = xstrdup(start);
-	free((char *)to_free);
-	return start;
+	return xstrdup(refname);
 }
 
 static const char *rstrip_ref_components(const char *refname, int len)
