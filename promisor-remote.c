@@ -375,18 +375,24 @@ static char *fields_from_config(struct string_list *fields_list, const char *con
 	return fields;
 }
 
+static struct string_list *initialize_fields_list(struct string_list *fields_list, int *initialized,
+						  const char *config_key)
+{
+	if (!*initialized) {
+		fields_list->cmp = strcasecmp;
+		fields_from_config(fields_list, config_key);
+		*initialized = 1;
+	}
+
+	return fields_list;
+}
+
 static struct string_list *fields_sent(void)
 {
 	static struct string_list fields_list = STRING_LIST_INIT_NODUP;
 	static int initialized;
 
-	if (!initialized) {
-		fields_list.cmp = strcasecmp;
-		fields_from_config(&fields_list, "promisor.sendFields");
-		initialized = 1;
-	}
-
-	return &fields_list;
+	return initialize_fields_list(&fields_list, &initialized, "promisor.sendFields");
 }
 
 static struct string_list *fields_checked(void)
@@ -394,13 +400,7 @@ static struct string_list *fields_checked(void)
 	static struct string_list fields_list = STRING_LIST_INIT_NODUP;
 	static int initialized;
 
-	if (!initialized) {
-		fields_list.cmp = strcasecmp;
-		fields_from_config(&fields_list, "promisor.checkFields");
-		initialized = 1;
-	}
-
-	return &fields_list;
+	return initialize_fields_list(&fields_list, &initialized, "promisor.checkFields");
 }
 
 /*
