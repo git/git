@@ -70,7 +70,7 @@ OPTIONS
 	Control which references will be updated by the command, if any. With
 	`branches`, all local branches that point to commits which are
 	descendants of the original commit will be rewritten. With `head`, only
-	the current `HEAD` reference will be rewritten.
+	the current `HEAD` reference will be rewritten. Defaults to `branches`.
 
 GIT
 ---
