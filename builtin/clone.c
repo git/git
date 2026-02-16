@@ -1001,6 +1001,8 @@ int cmd_clone(int argc,
 		NULL
 	};
 
+	filter_options.allow_auto_filter = 1;
+
 	packet_trace_identity("clone");
 
 	repo_config(the_repository, git_clone_config, NULL);

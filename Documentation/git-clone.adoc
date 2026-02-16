@@ -187,11 +187,26 @@ objects from the source repository into a pack in the cloned repository.
 	Use the partial clone feature and request that the server sends
 	a subset of reachable objects according to a given object filter.
 	When using `--filter`, the supplied _<filter-spec>_ is used for
-	the partial clone filter. For example, `--filter=blob:none` will
-	filter out all blobs (file contents) until needed by Git. Also,
-	`--filter=blob:limit=<size>` will filter out all blobs of size
-	at least _<size>_. For more details on filter specifications, see
-	the `--filter` option in linkgit:git-rev-list[1].
+	the partial clone filter.
++
+If `--filter=auto` is used the filter specification is determined
+automatically through the 'promisor-remote' protocol (see
+linkgit:gitprotocol-v2[5]) by combining the filter specifications
+advertised by the server for the promisor remotes that the client
+accepts (see the `promisor.acceptFromServer` configuration option in
+linkgit:git-config[1]). This allows the server to suggest the optimal
+filter for the available promisor remotes.
++
+As with other filter specifications, the "auto" value is persisted in
+the configuration. This ensures that future fetches will continue to
+adapt to the server's current recommendation.
++
+For details on all other available filter specifications, see the
+`--filter=<filter-spec>` option in linkgit:git-rev-list[1].
++
+For example, `--filter=blob:none` will filter out all blobs (file
+contents) until needed by Git. Also, `--filter=blob:limit=<size>` will
+filter out all blobs of size at least _<size>_.
 
 `--also-filter-submodules`::
 	Also apply the partial clone filter to any submodules in the repository.
