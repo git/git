@@ -360,6 +360,69 @@ test_expect_success "clone with promisor.checkFields" '
 	check_missing_objects server 1 "$oid"
 '
 
+test_expect_success "clone with promisor.storeFields=partialCloneFilter" '
+	git -C server config promisor.advertise true &&
+	test_when_finished "rm -rf client" &&
+
+	git -C server remote add otherLop "https://invalid.invalid"  &&
+	git -C server config remote.otherLop.token "fooBar" &&
+	git -C server config remote.otherLop.stuff "baz" &&
+	git -C server config remote.otherLop.partialCloneFilter "blob:limit=10k" &&
+	test_when_finished "git -C server remote remove otherLop" &&
+
+	git -C server config remote.lop.token "fooXXX" &&
+	git -C server config remote.lop.partialCloneFilter "blob:limit=8k" &&
+
+	test_config -C server promisor.sendFields "partialCloneFilter, token" &&
+	test_when_finished "rm trace" &&
+
+	# Clone from server to create a client
+	GIT_TRACE_PACKET="$(pwd)/trace" GIT_NO_LAZY_FETCH=0 git clone \
+		-c remote.lop.promisor=true \
+		-c remote.lop.fetch="+refs/heads/*:refs/remotes/lop/*" \
+		-c remote.lop.url="file://$(pwd)/lop" \
+		-c remote.lop.token="fooYYY" \
+		-c remote.lop.partialCloneFilter="blob:none" \
+		-c promisor.acceptfromserver=All \
+		-c promisor.storeFields=partialcloneFilter \
+		--no-local --filter="blob:limit=5k" server client 2>err &&
+
+	# Check that the filter from the server is stored
+	echo "blob:limit=8k" >expected &&
+	git -C client config remote.lop.partialCloneFilter >actual &&
+	test_cmp expected actual &&
+
+	# Check that user is notified when the filter is stored
+	test_grep "Storing new filter from server for remote '\''lop'\''" err &&
+	test_grep "'\''blob:none'\'' -> '\''blob:limit=8k'\''" err &&
+
+	# Check that the token from the server is NOT stored
+	echo "fooYYY" >expected &&
+	git -C client config remote.lop.token >actual &&
+	test_cmp expected actual &&
+	test_grep ! "Storing new token from server" err &&
+
+	# Check that the filter for an unknown remote is NOT stored
+	test_must_fail git -C client config remote.otherLop.partialCloneFilter >actual &&
+
+	# Check that the largest object is still missing on the server
+	check_missing_objects server 1 "$oid" &&
+
+	# Change the configuration on the server and fetch from the client
+	git -C server config remote.lop.partialCloneFilter "blob:limit=7k" &&
+	GIT_NO_LAZY_FETCH=0 git -C client fetch \
+		--filter="blob:limit=5k" ../server 2>err &&
+
+	# Check that the fetch updated the configuration on the client
+	echo "blob:limit=7k" >expected &&
+	git -C client config remote.lop.partialCloneFilter >actual &&
+	test_cmp expected actual &&
+
+	# Check that user is notified when the new filter is stored
+	test_grep "Storing new filter from server for remote '\''lop'\''" err &&
+	test_grep "'\''blob:limit=8k'\'' -> '\''blob:limit=7k'\''" err
+'
+
 test_expect_success "clone with promisor.advertise set to 'true' but don't delete the client" '
 	git -C server config promisor.advertise true &&
 

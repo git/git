@@ -403,6 +403,14 @@ static struct string_list *fields_checked(void)
 	return initialize_fields_list(&fields_list, &initialized, "promisor.checkFields");
 }
 
+static struct string_list *fields_stored(void)
+{
+	static struct string_list fields_list = STRING_LIST_INIT_NODUP;
+	static int initialized;
+
+	return initialize_fields_list(&fields_list, &initialized, "promisor.storeFields");
+}
+
 /*
  * Struct for promisor remotes involved in the "promisor-remote"
  * protocol capability.
@@ -692,6 +700,132 @@ static struct promisor_info *parse_one_advertised_remote(const char *remote_info
 	return info;
 }
 
+static bool store_one_field(struct repository *repo, const char *remote_name,
+			    const char *field_name, const char *field_key,
+			    const char *advertised, const char *current)
+{
+	if (advertised && (!current || strcmp(current, advertised))) {
+		char *key = xstrfmt("remote.%s.%s", remote_name, field_key);
+
+		fprintf(stderr, _("Storing new %s from server for remote '%s'.\n"
+				  "    '%s' -> '%s'\n"),
+			field_name, remote_name,
+			current ? current : "",
+			advertised);
+
+		repo_config_set_gently(repo, key, advertised);
+		free(key);
+
+		return true;
+	}
+
+	return false;
+}
+
+/* Check that a filter is valid by parsing it */
+static bool valid_filter(const char *filter, const char *remote_name)
+{
+	struct list_objects_filter_options filter_opts = LIST_OBJECTS_FILTER_INIT;
+	struct strbuf err = STRBUF_INIT;
+	int res = gently_parse_list_objects_filter(&filter_opts, filter, &err);
+
+	if (res)
+		warning(_("invalid filter '%s' for remote '%s' "
+			  "will not be stored: %s"),
+			filter, remote_name, err.buf);
+
+	list_objects_filter_release(&filter_opts);
+	strbuf_release(&err);
+
+	return !res;
+}
+
+/* Check that a token doesn't contain any control character */
+static bool valid_token(const char *token, const char *remote_name)
+{
+	const char *c = token;
+
+	for (; *c; c++)
+		if (iscntrl(*c)) {
+			warning(_("invalid token '%s' for remote '%s' "
+				  "will not be stored"),
+				token, remote_name);
+			return false;
+		}
+
+	return true;
+}
+
+struct store_info {
+	struct repository *repo;
+	struct string_list config_info;
+	bool store_filter;
+	bool store_token;
+};
+
+static struct store_info *store_info_new(struct repository *repo)
+{
+	struct string_list *fields_to_store = fields_stored();
+	struct store_info *s = xmalloc(sizeof(*s));
+
+	s->repo = repo;
+
+	string_list_init_nodup(&s->config_info);
+	promisor_config_info_list(repo, &s->config_info, fields_to_store);
+	string_list_sort(&s->config_info);
+
+	s->store_filter = !!string_list_lookup(fields_to_store, promisor_field_filter);
+	s->store_token = !!string_list_lookup(fields_to_store, promisor_field_token);
+
+	return s;
+}
+
+static void store_info_free(struct store_info *s)
+{
+	if (s) {
+		promisor_info_list_clear(&s->config_info);
+		free(s);
+	}
+}
+
+static bool promisor_store_advertised_fields(struct promisor_info *advertised,
+					     struct store_info *store_info)
+{
+	struct promisor_info *p;
+	struct string_list_item *item;
+	const char *remote_name = advertised->name;
+	bool reload_config = false;
+
+	if (!(store_info->store_filter || store_info->store_token))
+		return false;
+
+	/*
+	 * Get existing config info for the advertised promisor
+	 * remote. This ensures the remote is already configured on
+	 * the client side.
+	 */
+	item = string_list_lookup(&store_info->config_info, remote_name);
+
+	if (!item)
+		return false;
+
+	p = item->util;
+
+	if (store_info->store_filter && advertised->filter &&
+	    valid_filter(advertised->filter, remote_name))
+		reload_config |= store_one_field(store_info->repo, remote_name,
+						 "filter", promisor_field_filter,
+						 advertised->filter, p->filter);
+
+	if (store_info->store_token && advertised->token &&
+	    valid_token(advertised->token, remote_name))
+		reload_config |= store_one_field(store_info->repo, remote_name,
+						 "token", promisor_field_token,
+						 advertised->token, p->token);
+
+	return reload_config;
+}
+
 static void filter_promisor_remote(struct repository *repo,
 				   struct strvec *accepted,
 				   const char *info)
@@ -700,7 +834,9 @@ static void filter_promisor_remote(struct repository *repo,
 	enum accept_promisor accept = ACCEPT_NONE;
 	struct string_list config_info = STRING_LIST_INIT_NODUP;
 	struct string_list remote_info = STRING_LIST_INIT_DUP;
+	struct store_info *store_info = NULL;
 	struct string_list_item *item;
+	bool reload_config = false;
 
 	if (!repo_config_get_string_tmp(the_repository, "promisor.acceptfromserver", &accept_str)) {
 		if (!*accept_str || !strcasecmp("None", accept_str))
@@ -736,14 +872,24 @@ static void filter_promisor_remote(struct repository *repo,
 			string_list_sort(&config_info);
 		}
 
-		if (should_accept_remote(accept, advertised, &config_info))
+		if (should_accept_remote(accept, advertised, &config_info)) {
+			if (!store_info)
+				store_info = store_info_new(repo);
+			if (promisor_store_advertised_fields(advertised, store_info))
+				reload_config = true;
+
 			strvec_push(accepted, advertised->name);
+		}
 
 		promisor_info_free(advertised);
 	}
 
 	promisor_info_list_clear(&config_info);
 	string_list_clear(&remote_info, 0);
+	store_info_free(store_info);
+
+	if (reload_config)
+		repo_promisor_remote_reinit(repo);
 }
 
 char *promisor_remote_reply(const char *info)
