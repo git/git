@@ -8,7 +8,7 @@ git-history - EXPERIMENTAL: Rewrite history
 SYNOPSIS
 --------
 [synopsis]
-git history reword <commit> [--dry-run] [--ref-action=(branches|head)]
+git history reword <commit> [--dry-run] [--update-refs=(branches|head)]
 
 DESCRIPTION
 -----------
@@ -66,7 +66,7 @@ OPTIONS
 	objects will be written into the repository, so applying these printed
 	ref updates is generally safe.
 
-`--ref-action=(branches|head)`::
+`--update-refs=(branches|head)`::
 	Control which references will be updated by the command, if any. With
 	`branches`, all local branches that point to commits which are
 	descendants of the original commit will be rewritten. With `head`, only

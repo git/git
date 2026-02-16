@@ -18,7 +18,7 @@
 #include "wt-status.h"
 
 #define GIT_HISTORY_REWORD_USAGE \
-	N_("git history reword <commit> [--dry-run] [--ref-action=(branches|head)]")
+	N_("git history reword <commit> [--dry-run] [--update-refs=(branches|head)]")
 
 static void change_data_free(void *util, const char *str UNUSED)
 {
@@ -258,7 +258,7 @@ static int setup_revwalk(struct repository *repo,
 			goto out;
 		} else if (!ret) {
 			ret = error(_("rewritten commit must be an ancestor "
-				      "of HEAD when using --ref-action=head"));
+				      "of HEAD when using --update-refs=head"));
 			goto out;
 		}
 
@@ -416,8 +416,8 @@ static int cmd_history_reword(int argc,
 	enum ref_action action = REF_ACTION_DEFAULT;
 	int dry_run = 0;
 	struct option options[] = {
-		OPT_CALLBACK_F(0, "ref-action", &action, N_("<action>"),
-			       N_("control ref update behavior (branches|head)"),
+		OPT_CALLBACK_F(0, "update-refs", &action, N_("<action>"),
+			       N_("control which refs should be updated (branches|head)"),
 			       PARSE_OPT_NONEG, parse_ref_action),
 		OPT_BOOL('n', "dry-run", &dry_run,
 			 N_("perform a dry-run without updating any refs")),
