@@ -45,7 +45,7 @@ struct commit *lookup_commit_reference_gently(struct repository *r,
 {
 	const struct object_id *maybe_peeled;
 	struct object_id peeled_oid;
-	struct object *object;
+	struct commit *commit;
 	enum object_type type;
 
 	switch (peel_object_ext(r, oid, &peeled_oid, 0, &type)) {
@@ -67,11 +67,11 @@ struct commit *lookup_commit_reference_gently(struct repository *r,
 		return NULL;
 	}
 
-	object = parse_object(r, maybe_peeled);
-	if (!object)
+	commit = lookup_commit(r, maybe_peeled);
+	if (!commit || repo_parse_commit_gently(r, commit, quiet) < 0)
 		return NULL;
 
-	return object_as_type(object, OBJ_COMMIT, quiet);
+	return commit;
 }
 
 struct commit *lookup_commit_reference(struct repository *r, const struct object_id *oid)
