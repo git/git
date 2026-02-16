@@ -43,13 +43,35 @@ const char *commit_type = "commit";
 struct commit *lookup_commit_reference_gently(struct repository *r,
 		const struct object_id *oid, int quiet)
 {
-	struct object *obj = deref_tag(r,
-				       parse_object(r, oid),
-				       NULL, 0);
+	const struct object_id *maybe_peeled;
+	struct object_id peeled_oid;
+	struct object *object;
+	enum object_type type;
 
-	if (!obj)
+	switch (peel_object_ext(r, oid, &peeled_oid, 0, &type)) {
+	case PEEL_NON_TAG:
+		maybe_peeled = oid;
+		break;
+	case PEEL_PEELED:
+		maybe_peeled = &peeled_oid;
+		break;
+	default:
 		return NULL;
-	return object_as_type(obj, OBJ_COMMIT, quiet);
+	}
+
+	if (type != OBJ_COMMIT) {
+		if (!quiet)
+			error(_("object %s is a %s, not a %s"),
+			      oid_to_hex(oid), type_name(type),
+			      type_name(OBJ_COMMIT));
+		return NULL;
+	}
+
+	object = parse_object(r, maybe_peeled);
+	if (!object)
+		return NULL;
+
+	return object_as_type(object, OBJ_COMMIT, quiet);
 }
 
 struct commit *lookup_commit_reference(struct repository *r, const struct object_id *oid)
