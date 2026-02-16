@@ -203,7 +203,7 @@ test_expect_success 'can reword a merge commit' '
 
 		# It is not possible to replay merge commits embedded in the
 		# history (yet).
-		test_must_fail git history reword HEAD~ 2>err &&
+		test_must_fail git -c core.editor=false history reword HEAD~ 2>err &&
 		test_grep "replaying merge commits is not supported yet" err &&
 
 		# But it is possible to reword a merge commit directly.
