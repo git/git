@@ -73,9 +73,15 @@ div.page_path {
 }
 
 div.page_footer {
-	height: 22px;
+	min-height: 22px;
 	padding: 4px 8px;
 	background-color: #d9d8d1;
+}
+
+div.page_footer::after {
+	content: "";
+	display: table;
+	clear: both;
 }
 
 div.page_footer_text {
