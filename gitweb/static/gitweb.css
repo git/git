@@ -42,7 +42,7 @@ a.list img.avatar {
 }
 
 div.page_header {
-	height: 25px;
+	min-height: 25px;
 	padding: 8px;
 	font-size: 150%;
 	font-weight: bold;
