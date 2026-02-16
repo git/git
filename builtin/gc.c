@@ -2239,6 +2239,64 @@ static int maintenance_unregister(int argc, const char **argv, const char *prefi
 	return 0;
 }
 
+static const char * const builtin_maintenance_list_usage[] = {
+	"git maintenance list [--config-file <path>]",
+	NULL
+};
+
+static int maintenance_list(int argc, const char **argv, const char *prefix,
+		    struct repository *repo UNUSED)
+{
+	char *config_file = NULL;
+	struct option options[] = {
+		OPT_STRING(0, "config-file", &config_file, N_("file"), N_("use given config file")),
+		OPT_END(),
+	};
+	const char *key = "maintenance.repo";
+	const struct string_list *list;
+	struct config_set cs = { { 0 } };
+	char *global_config_file = NULL;
+
+	argc = parse_options(argc, argv, prefix, options,
+			     builtin_maintenance_list_usage, 0);
+	if (argc)
+		usage_with_options(builtin_maintenance_list_usage,
+				   options);
+
+	if (config_file) {
+		git_configset_init(&cs);
+		git_configset_add_file(&cs, config_file);
+		if (git_configset_get_string_multi(&cs, key, &list)) {
+			/* No repositories registered in custom config */
+			git_configset_clear(&cs);
+			return 0;
+		}
+	} else {
+		global_config_file = git_global_config();
+		if (!global_config_file)
+			die(_("$HOME not set"));
+		git_configset_init(&cs);
+		git_configset_add_file(&cs, global_config_file);
+		if (git_configset_get_string_multi(&cs, key, &list)) {
+			/* No repositories registered in global config */
+			free(global_config_file);
+			git_configset_clear(&cs);
+			return 0;
+		}
+	}
+
+	{
+		struct string_list_item *item;
+		for_each_string_list_item(item, list) {
+			printf("%s\n", item->string);
+		}
+	}
+
+	free(global_config_file);
+	git_configset_clear(&cs);
+	return 0;
+}
+
 static const char *get_frequency(enum schedule_priority schedule)
 {
 	switch (schedule) {
@@ -3535,6 +3593,7 @@ int cmd_maintenance(int argc,
 		OPT_SUBCOMMAND("stop", &fn, maintenance_stop),
 		OPT_SUBCOMMAND("register", &fn, maintenance_register),
 		OPT_SUBCOMMAND("unregister", &fn, maintenance_unregister),
+		OPT_SUBCOMMAND("list", &fn, maintenance_list),
 		OPT_SUBCOMMAND("is-needed", &fn, maintenance_is_needed),
 		OPT_END(),
 	};
