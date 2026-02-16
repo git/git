@@ -103,15 +103,25 @@ static inline int repo_parse_commit(struct repository *r, struct commit *item)
 	return repo_parse_commit_gently(r, item, 0);
 }
 
+void unparse_commit(struct repository *r, const struct object_id *oid);
+
 static inline int repo_parse_commit_no_graph(struct repository *r,
 					     struct commit *commit)
 {
+	/*
+	 * When the commit has been parsed but its tree wasn't populated then
+	 * this is an indicator that it has been parsed via the commit-graph.
+	 * We cannot read the tree via the commit-graph, as we're explicitly
+	 * told not to use it. We thus have to first un-parse the object so
+	 * that we can re-parse it without the graph.
+	 */
+	if (commit->object.parsed && !commit->maybe_tree)
+		unparse_commit(r, &commit->object.oid);
+
 	return repo_parse_commit_internal(r, commit, 0, 0);
 }
 
 void parse_commit_or_die(struct commit *item);
-
-void unparse_commit(struct repository *r, const struct object_id *oid);
 
 struct buffer_slab;
 struct buffer_slab *allocate_commit_buffer_slab(void);
