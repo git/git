@@ -920,25 +920,27 @@ static void filter_promisor_remote(struct repository *repo,
 	}
 }
 
-char *promisor_remote_reply(const char *info)
+void promisor_remote_reply(const char *info, char **accepted_out)
 {
 	struct strvec accepted = STRVEC_INIT;
-	struct strbuf reply = STRBUF_INIT;
 
 	filter_promisor_remote(the_repository, &accepted, info);
 
-	if (!accepted.nr)
-		return NULL;
-
-	for (size_t i = 0; i < accepted.nr; i++) {
-		if (i)
-			strbuf_addch(&reply, ';');
-		strbuf_addstr_urlencode(&reply, accepted.v[i], allow_unsanitized);
+	if (accepted_out) {
+		if (accepted.nr) {
+			struct strbuf reply = STRBUF_INIT;
+			for (size_t i = 0; i < accepted.nr; i++) {
+				if (i)
+					strbuf_addch(&reply, ';');
+				strbuf_addstr_urlencode(&reply, accepted.v[i], allow_unsanitized);
+			}
+			*accepted_out = strbuf_detach(&reply, NULL);
+		} else {
+			*accepted_out = NULL;
+		}
 	}
 
 	strvec_clear(&accepted);
-
-	return strbuf_detach(&reply, NULL);
 }
 
 void mark_promisor_remotes_as_accepted(struct repository *r, const char *remotes)
