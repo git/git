@@ -221,7 +221,7 @@ test_expect_success 'can reword a merge commit' '
 	)
 '
 
-test_expect_success '--ref-action=print prints ref updates without modifying repo' '
+test_expect_success '--dry-run prints ref updates without modifying repo' '
 	test_when_finished "rm -rf repo" &&
 	git init repo --initial-branch=main &&
 	(
@@ -233,7 +233,15 @@ test_expect_success '--ref-action=print prints ref updates without modifying rep
 		test_commit theirs &&
 
 		git refs list >refs-expect &&
-		reword_with_message --ref-action=print base >updates <<-\EOF &&
+		reword_with_message --dry-run --ref-action=head base >updates <<-\EOF &&
+		reworded commit
+		EOF
+		git refs list >refs-actual &&
+		test_cmp refs-expect refs-actual &&
+		test_grep "update refs/heads/branch" updates &&
+		test_grep ! "update refs/heads/main" updates &&
+
+		reword_with_message --dry-run base >updates <<-\EOF &&
 		reworded commit
 		EOF
 		git refs list >refs-actual &&

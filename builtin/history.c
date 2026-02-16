@@ -18,7 +18,7 @@
 #include "wt-status.h"
 
 #define GIT_HISTORY_REWORD_USAGE \
-	N_("git history reword <commit> [--ref-action=(branches|head|print)]")
+	N_("git history reword <commit> [--dry-run] [--ref-action=(branches|head)]")
 
 static void change_data_free(void *util, const char *str UNUSED)
 {
@@ -155,7 +155,6 @@ enum ref_action {
 	REF_ACTION_DEFAULT,
 	REF_ACTION_BRANCHES,
 	REF_ACTION_HEAD,
-	REF_ACTION_PRINT,
 };
 
 static int parse_ref_action(const struct option *opt, const char *value, int unset)
@@ -167,10 +166,8 @@ static int parse_ref_action(const struct option *opt, const char *value, int uns
 		*action = REF_ACTION_BRANCHES;
 	} else if (!strcmp(value, "head")) {
 		*action = REF_ACTION_HEAD;
-	} else if (!strcmp(value, "print")) {
-		*action = REF_ACTION_PRINT;
 	} else {
-		return error(_("%s expects one of 'branches', 'head' or 'print'"),
+		return error(_("%s expects one of 'branches' or 'head'"),
 			     opt->long_name);
 	}
 
@@ -286,11 +283,29 @@ out:
 	return ret;
 }
 
+static int handle_ref_update(struct ref_transaction *transaction,
+			     const char *refname,
+			     const struct object_id *new_oid,
+			     const struct object_id *old_oid,
+			     const char *reflog_msg,
+			     struct strbuf *err)
+{
+	if (!transaction) {
+		printf("update %s %s %s\n",
+		       refname, oid_to_hex(new_oid), oid_to_hex(old_oid));
+		return 0;
+	}
+
+	return ref_transaction_update(transaction, refname, new_oid, old_oid,
+				      NULL, NULL, 0, reflog_msg, err);
+}
+
 static int handle_reference_updates(struct rev_info *revs,
 				    enum ref_action action,
 				    struct commit *original,
 				    struct commit *rewritten,
-				    const char *reflog_msg)
+				    const char *reflog_msg,
+				    int dry_run)
 {
 	const struct name_decoration *decoration;
 	struct replay_revisions_options opts = { 0 };
@@ -312,82 +327,72 @@ static int handle_reference_updates(struct rev_info *revs,
 	if (ret)
 		goto out;
 
-	switch (action) {
-	case REF_ACTION_BRANCHES:
-	case REF_ACTION_HEAD:
+	if (action != REF_ACTION_BRANCHES && action != REF_ACTION_HEAD)
+		BUG("unsupported ref action %d", action);
+
+	if (!dry_run) {
 		transaction = ref_store_transaction_begin(get_main_ref_store(revs->repo), 0, &err);
 		if (!transaction) {
 			ret = error(_("failed to begin ref transaction: %s"), err.buf);
 			goto out;
 		}
+	}
 
-		for (size_t i = 0; i < result.updates_nr; i++) {
-			ret = ref_transaction_update(transaction,
-						     result.updates[i].refname,
-						     &result.updates[i].new_oid,
-						     &result.updates[i].old_oid,
-						     NULL, NULL, 0, reflog_msg, &err);
-			if (ret) {
-				ret = error(_("failed to update ref '%s': %s"),
-					    result.updates[i].refname, err.buf);
-				goto out;
-			}
-		}
-
-		/*
-		 * `replay_revisions()` only updates references that are
-		 * ancestors of `rewritten`, so we need to manually
-		 * handle updating references that point to `original`.
-		 */
-		for (decoration = get_name_decoration(&original->object);
-		     decoration;
-		     decoration = decoration->next)
-		{
-			if (decoration->type != DECORATION_REF_LOCAL &&
-			    decoration->type != DECORATION_REF_HEAD)
-				continue;
-
-			if (action == REF_ACTION_HEAD &&
-			    decoration->type != DECORATION_REF_HEAD)
-				continue;
-
-			/*
-			 * We only need to update HEAD separately in case it's
-			 * detached. If it's not we'd already update the branch
-			 * it is pointing to.
-			 */
-			if (action == REF_ACTION_BRANCHES &&
-			    decoration->type == DECORATION_REF_HEAD &&
-			    !detached_head)
-				continue;
-
-			ret = ref_transaction_update(transaction,
-						     decoration->name,
-						     &rewritten->object.oid,
-						     &original->object.oid,
-						     NULL, NULL, 0, reflog_msg, &err);
-			if (ret) {
-				ret = error(_("failed to update ref '%s': %s"),
-					    decoration->name, err.buf);
-				goto out;
-			}
-		}
-
-		if (ref_transaction_commit(transaction, &err)) {
-			ret = error(_("failed to commit ref transaction: %s"), err.buf);
+	for (size_t i = 0; i < result.updates_nr; i++) {
+		ret = handle_ref_update(transaction,
+					result.updates[i].refname,
+					&result.updates[i].new_oid,
+					&result.updates[i].old_oid,
+					reflog_msg, &err);
+		if (ret) {
+			ret = error(_("failed to update ref '%s': %s"),
+				    result.updates[i].refname, err.buf);
 			goto out;
 		}
+	}
 
-		break;
-	case REF_ACTION_PRINT:
-		for (size_t i = 0; i < result.updates_nr; i++)
-			printf("update %s %s %s\n",
-			       result.updates[i].refname,
-			       oid_to_hex(&result.updates[i].new_oid),
-			       oid_to_hex(&result.updates[i].old_oid));
-		break;
-	default:
-		BUG("unsupported ref action %d", action);
+	/*
+	 * `replay_revisions()` only updates references that are
+	 * ancestors of `rewritten`, so we need to manually
+	 * handle updating references that point to `original`.
+	 */
+	for (decoration = get_name_decoration(&original->object);
+	     decoration;
+	     decoration = decoration->next)
+	{
+		if (decoration->type != DECORATION_REF_LOCAL &&
+		    decoration->type != DECORATION_REF_HEAD)
+			continue;
+
+		if (action == REF_ACTION_HEAD &&
+		    decoration->type != DECORATION_REF_HEAD)
+			continue;
+
+		/*
+		 * We only need to update HEAD separately in case it's
+		 * detached. If it's not we'd already update the branch
+		 * it is pointing to.
+		 */
+		if (action == REF_ACTION_BRANCHES &&
+		    decoration->type == DECORATION_REF_HEAD &&
+		    !detached_head)
+			continue;
+
+		ret = handle_ref_update(transaction,
+					decoration->name,
+					&rewritten->object.oid,
+					&original->object.oid,
+					reflog_msg, &err);
+		if (ret) {
+			ret = error(_("failed to update ref '%s': %s"),
+				    decoration->name, err.buf);
+			goto out;
+		}
+	}
+
+	if (transaction && ref_transaction_commit(transaction, &err)) {
+		ret = error(_("failed to commit ref transaction: %s"), err.buf);
+		goto out;
 	}
 
 	ret = 0;
@@ -409,10 +414,13 @@ static int cmd_history_reword(int argc,
 		NULL,
 	};
 	enum ref_action action = REF_ACTION_DEFAULT;
+	int dry_run = 0;
 	struct option options[] = {
 		OPT_CALLBACK_F(0, "ref-action", &action, N_("<action>"),
-			       N_("control ref update behavior (branches|head|print)"),
+			       N_("control ref update behavior (branches|head)"),
 			       PARSE_OPT_NONEG, parse_ref_action),
+		OPT_BOOL('n', "dry-run", &dry_run,
+			 N_("perform a dry-run without updating any refs")),
 		OPT_END(),
 	};
 	struct strbuf reflog_msg = STRBUF_INIT;
@@ -449,7 +457,7 @@ static int cmd_history_reword(int argc,
 	strbuf_addf(&reflog_msg, "reword: updating %s", argv[0]);
 
 	ret = handle_reference_updates(&revs, action, original, rewritten,
-				       reflog_msg.buf);
+				       reflog_msg.buf, dry_run);
 	if (ret < 0) {
 		ret = error(_("failed replaying descendants"));
 		goto out;
