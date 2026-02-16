@@ -123,6 +123,7 @@ div.title_text {
 
 div.log_body {
 	padding: 8px 8px 8px 150px;
+	overflow-wrap: anywhere;
 }
 
 span.age {
@@ -686,6 +687,15 @@ div.remote {
 .kwd    { color:#010181; }
 
 @media (max-width: 768px) {
+	div.page_body {
+		overflow-x: auto;
+		-webkit-overflow-scrolling: touch;
+	}
+
+	div.page_body div.pre {
+		min-width: max-content;
+	}
+
 	div.projsearch {
 		padding: 0 8px;
 		box-sizing: border-box;
@@ -694,5 +704,47 @@ div.remote {
 	div.projsearch input[type="text"] {
 		max-width: 100%;
 		box-sizing: border-box;
+	}
+
+	div.title_text {
+		overflow-x: auto;
+		-webkit-overflow-scrolling: touch;
+		padding-left: 4px;
+		padding-right: 4px;
+		box-sizing: border-box;
+	}
+
+	div.title_text table.object_header {
+		width: max-content;
+	}
+
+	div.log_body {
+		padding: 8px;
+		clear: left;
+	}
+
+	div.patchset div.patch {
+		width: max-content;
+		min-width: 100%;
+	}
+
+	div.diff.header {
+		padding: 4px 8px 2px 8px;
+		white-space: nowrap;
+		overflow-wrap: normal;
+	}
+
+	div.diff.extended_header {
+		padding: 2px 8px;
+		white-space: nowrap;
+		overflow-wrap: normal;
+	}
+
+	div.diff.ctx,
+	div.diff.add,
+	div.diff.rem,
+	div.diff.chunk_header {
+		padding: 0 8px;
+		white-space: pre;
 	}
 }
