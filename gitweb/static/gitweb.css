@@ -684,3 +684,15 @@ div.remote {
 .kwb    { color:#830000; }
 .kwc    { color:#000000; font-weight:bold; }
 .kwd    { color:#010181; }
+
+@media (max-width: 768px) {
+	div.projsearch {
+		padding: 0 8px;
+		box-sizing: border-box;
+	}
+
+	div.projsearch input[type="text"] {
+		max-width: 100%;
+		box-sizing: border-box;
+	}
+}
