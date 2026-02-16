@@ -263,7 +263,7 @@ test_expect_success '--ref-action=head updates only HEAD' '
 
 		# When told to update HEAD, only, the command will refuse to
 		# rewrite commits that are not an ancestor of HEAD.
-		test_must_fail git history reword --ref-action=head theirs 2>err &&
+		test_must_fail git -c core.editor=false history reword --ref-action=head theirs 2>err &&
 		test_grep "rewritten commit must be an ancestor of HEAD" err &&
 
 		reword_with_message --ref-action=head base >updates <<-\EOF &&

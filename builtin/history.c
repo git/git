@@ -177,30 +177,15 @@ static int parse_ref_action(const struct option *opt, const char *value, int uns
 	return 0;
 }
 
-static int handle_reference_updates(enum ref_action action,
-				    struct repository *repo,
-				    struct commit *original,
-				    struct commit *rewritten,
-				    const char *reflog_msg)
+static int setup_revwalk(struct repository *repo,
+			 enum ref_action action,
+			 struct commit *original,
+			 struct rev_info *revs)
 {
-	const struct name_decoration *decoration;
-	struct replay_revisions_options opts = { 0 };
-	struct replay_result result = { 0 };
-	struct ref_transaction *transaction = NULL;
 	struct strvec args = STRVEC_INIT;
-	struct strbuf err = STRBUF_INIT;
-	struct commit *head = NULL;
-	struct rev_info revs;
-	char hex[GIT_MAX_HEXSZ + 1];
-	bool detached_head;
-	int head_flags = 0;
 	int ret;
 
-	refs_read_ref_full(get_main_ref_store(repo), "HEAD",
-			   RESOLVE_REF_NO_RECURSE, NULL, &head_flags);
-	detached_head = !(head_flags & REF_ISSYMREF);
-
-	repo_init_revisions(repo, &revs, NULL);
+	repo_init_revisions(repo, revs, NULL);
 	strvec_push(&args, "ignored");
 	strvec_push(&args, "--reverse");
 	strvec_push(&args, "--topo-order");
@@ -224,6 +209,7 @@ static int handle_reference_updates(enum ref_action action,
 	 */
 	if (action == REF_ACTION_HEAD) {
 		struct commit_list *from_list = NULL;
+		struct commit *head;
 
 		head = lookup_commit_reference_by_name("HEAD");
 		if (!head) {
@@ -250,20 +236,47 @@ static int handle_reference_updates(enum ref_action action,
 		strvec_push(&args, "HEAD");
 	}
 
-	setup_revisions_from_strvec(&args, &revs, NULL);
+	setup_revisions_from_strvec(&args, revs, NULL);
 	if (args.nr != 1)
 		BUG("revisions were set up with invalid argument");
 
+	ret = 0;
+
+out:
+	strvec_clear(&args);
+	return ret;
+}
+
+static int handle_reference_updates(struct rev_info *revs,
+				    enum ref_action action,
+				    struct commit *original,
+				    struct commit *rewritten,
+				    const char *reflog_msg)
+{
+	const struct name_decoration *decoration;
+	struct replay_revisions_options opts = { 0 };
+	struct replay_result result = { 0 };
+	struct ref_transaction *transaction = NULL;
+	struct strbuf err = STRBUF_INIT;
+	char hex[GIT_MAX_HEXSZ + 1];
+	bool detached_head;
+	int head_flags = 0;
+	int ret;
+
+	refs_read_ref_full(get_main_ref_store(revs->repo), "HEAD",
+			   RESOLVE_REF_NO_RECURSE, NULL, &head_flags);
+	detached_head = !(head_flags & REF_ISSYMREF);
+
 	opts.onto = oid_to_hex_r(hex, &rewritten->object.oid);
 
-	ret = replay_revisions(&revs, &opts, &result);
+	ret = replay_revisions(revs, &opts, &result);
 	if (ret)
 		goto out;
 
 	switch (action) {
 	case REF_ACTION_BRANCHES:
 	case REF_ACTION_HEAD:
-		transaction = ref_store_transaction_begin(get_main_ref_store(repo), 0, &err);
+		transaction = ref_store_transaction_begin(get_main_ref_store(revs->repo), 0, &err);
 		if (!transaction) {
 			ret = error(_("failed to begin ref transaction: %s"), err.buf);
 			goto out;
@@ -343,9 +356,7 @@ static int handle_reference_updates(enum ref_action action,
 out:
 	ref_transaction_free(transaction);
 	replay_result_release(&result);
-	release_revisions(&revs);
 	strbuf_release(&err);
-	strvec_clear(&args);
 	return ret;
 }
 
@@ -367,6 +378,7 @@ static int cmd_history_reword(int argc,
 	};
 	struct strbuf reflog_msg = STRBUF_INIT;
 	struct commit *original, *rewritten;
+	struct rev_info revs;
 	int ret;
 
 	argc = parse_options(argc, argv, prefix, options, usage, 0);
@@ -385,6 +397,10 @@ static int cmd_history_reword(int argc,
 		goto out;
 	}
 
+	ret = setup_revwalk(repo, action, original, &revs);
+	if (ret)
+		goto out;
+
 	ret = commit_tree_with_edited_message(repo, "reworded", original, &rewritten);
 	if (ret < 0) {
 		ret = error(_("failed writing reworded commit"));
@@ -393,7 +409,7 @@ static int cmd_history_reword(int argc,
 
 	strbuf_addf(&reflog_msg, "reword: updating %s", argv[0]);
 
-	ret = handle_reference_updates(action, repo, original, rewritten,
+	ret = handle_reference_updates(&revs, action, original, rewritten,
 				       reflog_msg.buf);
 	if (ret < 0) {
 		ret = error(_("failed replaying descendants"));
@@ -404,6 +420,7 @@ static int cmd_history_reword(int argc,
 
 out:
 	strbuf_release(&reflog_msg);
+	release_revisions(&revs);
 	return ret;
 }
 
