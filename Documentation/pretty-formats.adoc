@@ -18,54 +18,72 @@ config option to either another format name, or a
 linkgit:git-config[1]). Here are the details of the
 built-in formats:
 
-* `oneline`
-
-	  <hash> <title-line>
+`oneline`::
++
+[synopsis]
+--
+<hash> <title-line>
+--
 +
 This is designed to be as compact as possible.
 
-* `short`
+`short`::
++
+[synopsis]
+--
+commit <hash>
+Author: <author>
 
-	  commit <hash>
-	  Author: <author>
+    <title-line>
+--
 
-	      <title-line>
+`medium`::
++
+[synopsis]
+--
+commit <hash>
+Author: <author>
+Date:   <author-date>
 
-* `medium`
+    <title-line>
 
-	  commit <hash>
-	  Author: <author>
-	  Date:   <author-date>
+    <full-commit-message>
+--
 
-	      <title-line>
+`full`::
++
+[synopsis]
+--
+commit <hash>
+Author: <author>
+Commit: <committer>
 
-	      <full-commit-message>
+    <title-line>
 
-* `full`
+    <full-commit-message>
+--
 
-	  commit <hash>
-	  Author: <author>
-	  Commit: <committer>
+`fuller`::
++
+[synopsis]
+--
+commit <hash>
+Author:     <author>
+AuthorDate: <author-date>
+Commit:     <committer>
+CommitDate: <committer-date>
 
-	      <title-line>
+     <title-line>
 
-	      <full-commit-message>
+     <full-commit-message>
+--
 
-* `fuller`
-
-	  commit <hash>
-	  Author:     <author>
-	  AuthorDate: <author-date>
-	  Commit:     <committer>
-	  CommitDate: <committer-date>
-
-	       <title-line>
-
-	       <full-commit-message>
-
-* `reference`
-
-	  <abbrev-hash> (<title-line>, <short-author-date>)
+`reference`::
++
+[synopsis]
+--
+<abbrev-hash> (<title-line>, <short-author-date>)
+--
 +
 This format is used to refer to another commit in a commit message and
 is the same as ++--pretty=\'format:%C(auto)%h (%s, %ad)'++.  By default,
@@ -74,23 +92,24 @@ is explicitly specified.  As with any `format:` with format
 placeholders, its output is not affected by other options like
 `--decorate` and `--walk-reflogs`.
 
-* `email`
-
-	  From <hash> <date>
-	  From: <author>
-	  Date: <author-date>
-	  Subject: [PATCH] <title-line>
-
-	  <full-commit-message>
-
-* `mboxrd`
+`email`::
 +
+[synopsis]
+--
+From <hash> <date>
+From: <author>
+Date: <author-date>
+Subject: [PATCH] <title-line>
+
+<full-commit-message>
+--
+
+`mboxrd`::
 Like `email`, but lines in the commit message starting with "From "
 (preceded by zero or more ">") are quoted with ">" so they aren't
 confused as starting a new commit.
 
-* `raw`
-+
+`raw`::
 The `raw` format shows the entire commit exactly as
 stored in the commit object.  Notably, the hashes are
 displayed in full, regardless of whether `--abbrev` or
@@ -101,8 +120,7 @@ commits are displayed, but not the way the diff is shown e.g. with
 `git log --raw`. To get full object names in a raw diff format,
 use `--no-abbrev`.
 
-* `format:<format-string>`
-+
+`format:<format-string>`::
 The `format:<format-string>` format allows you to specify which information
 you want to show. It works a little bit like printf format,
 with the notable exception that you get a newline with `%n`
@@ -120,13 +138,18 @@ The title was >>t4119: test autocomputing -p<n> for traditional diff input.<<
 The placeholders are:
 
 - Placeholders that expand to a single literal character:
++
+--
 ++%n++:: newline
 ++%%++:: a raw ++%++
 ++%x00++:: ++%x++ followed by two hexadecimal digits is replaced with a
 	 byte with the hexadecimal digits' value (we will call this
 	 "literal formatting code" in the rest of this document).
+--
 
 - Placeholders that affect formatting of later placeholders:
++
+--
 ++%Cred++:: switch color to red
 ++%Cgreen++:: switch color to green
 ++%Cblue++:: switch color to blue
@@ -181,8 +204,11 @@ The placeholders are:
 ++%><|(++_<m>_++)++:: similar to ++%<(++_<n>_++)++, ++%<|(++_<m>_++)++
 			  respectively, but padding both sides
 			  (i.e. the text is centered)
+--
 
 - Placeholders that expand to information extracted from the commit:
++
+--
 +%H+:: commit hash
 +%h+:: abbreviated commit hash
 +%T+:: tree hash
@@ -233,20 +259,19 @@ colon and zero or more comma-separated options. Option values may contain
 literal formatting codes. These must be used for commas (`%x2C`) and closing
 parentheses (`%x29`), due to their role in the option syntax.
 
-** `prefix=<value>`: Shown before the list of ref names.  Defaults to "{nbsp}++(++".
-** `suffix=<value>`: Shown after the list of ref names.  Defaults to "+)+".
-** `separator=<value>`: Shown between ref names.  Defaults to "+,+{nbsp}".
-** `pointer=<value>`: Shown between HEAD and the branch it points to, if any.
-		      Defaults to "{nbsp}++->++{nbsp}".
-** `tag=<value>`: Shown before tag names. Defaults to "`tag:`{nbsp}".
+`prefix=<value>`;; Shown before the list of ref names.  Defaults to "{nbsp}++(++".
+`suffix=<value>`;; Shown after the list of ref names.  Defaults to "+)+".
+`separator=<value>`;; Shown between ref names.  Defaults to "+,+{nbsp}".
+`pointer=<value>`;; Shown between HEAD and the branch it points to, if any.
+	      Defaults to "{nbsp}->{nbsp}".
+`tag=<value>`;; Shown before tag names. Defaults to "`tag:`{nbsp}".
 
 +
---
 For example, to produce decorations with no wrapping
 or tag annotations, and spaces as separators:
-
-++%(decorate:prefix=,suffix=,tag=,separator= )++
---
+---------------------
+    %(decorate:prefix=,suffix=,tag=,separator= )
+---------------------
 
 ++%(describe++`[:<option>,...]`++)++::
 human-readable name, like linkgit:git-describe[1]; empty string for
@@ -254,15 +279,15 @@ undescribable commits.  The `describe` string may be followed by a colon and
 zero or more comma-separated options.  Descriptions can be inconsistent when
 tags are added or removed at the same time.
 +
-** `tags[=<bool-value>]`: Instead of only considering annotated tags,
+`tags[=<bool-value>]`;; Instead of only considering annotated tags,
    consider lightweight tags as well.
-** `abbrev=<number>`: Instead of using the default number of hexadecimal digits
+`abbrev=<number>`;; Instead of using the default number of hexadecimal digits
    (which will vary according to the number of objects in the repository with a
-   default of 7) of the abbreviated object name, use <number> digits, or as many
+   default of 7) of the abbreviated object name, use _<number>_ digits, or as many
    digits as needed to form a unique object name.
-** `match=<pattern>`: Only consider tags matching the given
+`match=<pattern>`;; Only consider tags matching the given
    `glob(7)` _<pattern>_, excluding the `refs/tags/` prefix.
-** `exclude=<pattern>`: Do not consider tags matching the given
+`exclude=<pattern>`;; Do not consider tags matching the given
    `glob(7)` _<pattern>_, excluding the `refs/tags/` prefix.
 
 +%S+:: ref name given on the command line by which the commit was reached
@@ -311,7 +336,7 @@ linkgit:git-interpret-trailers[1]. The `trailers` string may be followed by
 a colon and zero or more comma-separated options. If any option is provided
 multiple times, the last occurrence wins.
 +
-** `key=<key>`: only show trailers with specified <key>. Matching is done
+`key=<key>`;; only show trailers with specified <key>. Matching is done
    case-insensitively and trailing colon is optional. If option is
    given multiple times trailer lines matching any of the keys are
    shown. This option automatically enables the `only` option so that
@@ -319,21 +344,21 @@ multiple times, the last occurrence wins.
    desired it can be disabled with `only=false`.  E.g.,
    +%(trailers:key=Reviewed-by)+ shows trailer lines with key
    `Reviewed-by`.
-** `only[=<bool>]`: select whether non-trailer lines from the trailer
+`only[=<bool>]`;; select whether non-trailer lines from the trailer
    block should be included.
-** `separator=<sep>`: specify the separator inserted between trailer
+ `separator=<sep>`;; specify the separator inserted between trailer
    lines. Defaults to a line feed character. The string <sep> may contain
    the literal formatting codes described above. To use comma as
    separator one must use `%x2C` as it would otherwise be parsed as
    next option. E.g., +%(trailers:key=Ticket,separator=%x2C )+
-   shows all trailer lines whose key is "Ticket" separated by a comma
+   shows all trailer lines whose key is `Ticket` separated by a comma
    and a space.
-** `unfold[=<bool>]`: make it behave as if interpret-trailer's `--unfold`
+`unfold[=<bool>]`;; make it behave as if interpret-trailer's `--unfold`
    option was given. E.g.,
    +%(trailers:only,unfold=true)+ unfolds and shows all trailer lines.
-** `keyonly[=<bool>]`: only show the key part of the trailer.
-** `valueonly[=<bool>]`: only show the value part of the trailer.
-** `key_value_separator=<sep>`: specify the separator inserted between
+`keyonly[=<bool>]`;; only show the key part of the trailer.
+`valueonly[=<bool>]`;; only show the value part of the trailer.
+`key_value_separator=<sep>`;; specify the separator inserted between
    the key and value of each trailer. Defaults to ": ". Otherwise it
    shares the same semantics as `separator=<sep>` above.
 
@@ -360,9 +385,9 @@ placeholder expands to an empty string.
 If you add a `' '` (space) after +%+ of a placeholder, a space
 is inserted immediately before the expansion if and only if the
 placeholder expands to a non-empty string.
+--
 
-* `tformat:`
-+
+`tformat:`::
 The `tformat:` format works exactly like `format:`, except that it
 provides "terminator" semantics instead of "separator" semantics. In
 other words, each commit has the message terminator character (usually a

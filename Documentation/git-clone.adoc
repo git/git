@@ -84,7 +84,7 @@ _<src>_.
 	with the source repository.  The resulting repository
 	starts out without any object of its own.
 +
-*NOTE*: this is a possibly dangerous operation; do *not* use
+NOTE: this is a possibly dangerous operation; do *not* use
 it unless you understand what it does. If you clone your
 repository using this option and then delete branches (or use any
 other Git command that makes any existing commit unreferenced) in the
@@ -104,7 +104,8 @@ If you want to break the dependency of a repository cloned with `--shared` on
 its source repository, you can simply run `git repack -a` to copy all
 objects from the source repository into a pack in the cloned repository.
 
-`--reference[-if-able] <repository>`::
+`--reference=<repository>`::
+`--reference-if-able=<repository>`::
 	If the reference _<repository>_ is on the local machine,
 	automatically setup `.git/objects/info/alternates` to
 	obtain objects from the reference _<repository>_.  Using
@@ -115,7 +116,7 @@ objects from the source repository into a pack in the cloned repository.
 	directory is skipped with a warning instead of aborting
 	the clone.
 +
-*NOTE*: see the NOTE for the `--shared` option, and also the
+NOTE: see the NOTE for the `--shared` option, and also the
 `--dissociate` option.
 
 `--dissociate`::
@@ -140,27 +141,28 @@ objects from the source repository into a pack in the cloned repository.
 	to the standard error stream.
 
 `--progress`::
-	Progress status is reported on the standard error stream
-	by default when it is attached to a terminal, unless `--quiet`
+	Report progress status on the standard error stream
+	by default when attached to a terminal, unless `--quiet`
 	is specified. This flag forces progress status even if the
 	standard error stream is not directed to a terminal.
 
 `--server-option=<option>`::
 	Transmit the given string to the server when communicating using
-	protocol version 2.  The given string must not contain a NUL or LF
+	protocol version 2.  The given string must not contain a _NUL_ or _LF_
 	character.  The server's handling of server options, including
 	unknown ones, is server-specific.
 	When multiple `--server-option=<option>` are given, they are all
 	sent to the other side in the order listed on the command line.
-	When no ++--server-option=++__<option>__ is given from the command
+	When no `--server-option=<option>` is given from the command
 	line, the values of configuration variable `remote.<name>.serverOption`
 	are used instead.
 
 `-n`::
 `--no-checkout`::
-	No checkout of `HEAD` is performed after the clone is complete.
+	Do not checkout `HEAD` after the clone is complete.
 
-`--`[`no-`]`reject-shallow`::
+`--no-reject-shallow`::
+`--reject-shallow`::
 	Fail if the source repository is a shallow repository.
 	The `clone.rejectShallow` configuration variable can be used to
 	specify the default.
@@ -206,18 +208,17 @@ objects from the source repository into a pack in the cloned repository.
 	that all these refs are overwritten by a `git remote update` in the
 	target repository.
 
-`-o` _<name>_::
-`--origin` _<name>_::
+`-o<name>`::
+`--origin=<name>`::
 	Instead of using the remote name `origin` to keep track of the upstream
 	repository, use _<name>_.  Overrides `clone.defaultRemoteName` from the
 	config.
 
-`-b` _<name>_::
-`--branch` _<name>_::
-	Instead of pointing the newly created `HEAD` to the branch pointed
-	to by the cloned repository's `HEAD`, point to _<name>_ branch
-	instead. In a non-bare repository, this is the branch that will
-	be checked out.
+`-b<name>`::
+`--branch=<name>`::
+	Point the newly created `HEAD` to _<name>_ branch instead of the branch
+	pointed to by the cloned repository's `HEAD`. In a non-bare repository,
+	this is the branch that will be checked out.
 	`--branch` can also take tags and detaches the `HEAD` at that commit
 	in the resulting repository.
 
@@ -230,18 +231,17 @@ objects from the source repository into a pack in the cloned repository.
 	name.
 	This option is incompatible with `--branch` and `--mirror`.
 
-`-u` _<upload-pack>_::
-`--upload-pack` _<upload-pack>_::
-	When given, and the repository to clone from is accessed
-	via ssh, this specifies a non-default path for the command
-	run on the other end.
+`-u<upload-pack>`::
+`--upload-pack=<upload-pack>`::
+	Specify a non-default path for the command run on the other end when the
+	repository to clone from is accessed via ssh.
 
 `--template=<template-directory>`::
 	Specify the directory from which templates will be used;
 	(See the "TEMPLATE DIRECTORY" section of linkgit:git-init[1].)
 
-`-c` `<key>=<value>`::
-`--config` `<key>=<value>`::
+`-c<key>=<value>`::
+`--config=<key>=<value>`::
 	Set a configuration variable in the newly-created repository;
 	this takes effect immediately after the repository is
 	initialized, but before the remote history is fetched or any
@@ -257,7 +257,7 @@ Configuration variables known to not take effect are:
 `remote.<name>.mirror` and `remote.<name>.tagOpt`.  Use the
 corresponding `--mirror` and `--no-tags` options instead.
 
-`--depth <depth>`::
+`--depth=<depth>`::
 	Create a 'shallow' clone with a history truncated to the
 	specified number of commits. Implies `--single-branch` unless
 	`--no-single-branch` is given to fetch the histories near the
@@ -339,8 +339,8 @@ Specify the given ref storage format for the repository. The valid values are:
 +
 include::ref-storage-format.adoc[]
 
-`-j` _<n>_::
-`--jobs` _<n>_::
+`-j<n>`::
+`--jobs=<n>`::
 	The number of submodules fetched at the same time.
 	Defaults to the `submodule.fetchJobs` option.
 
