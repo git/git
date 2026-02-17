@@ -35,6 +35,7 @@
 #include "sigchain.h"
 #include "mergesort.h"
 #include "prio-queue.h"
+#include "promisor-remote.h"
 
 static int transfer_unpack_limit = -1;
 static int fetch_unpack_limit = -1;
@@ -1661,6 +1662,29 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 	struct string_list packfile_uris = STRING_LIST_INIT_DUP;
 	int i;
 	struct strvec index_pack_args = STRVEC_INIT;
+	const char *promisor_remote_config;
+
+	if (server_feature_v2("promisor-remote", &promisor_remote_config))
+		promisor_remote_reply(promisor_remote_config, NULL);
+
+	if (args->filter_options.choice == LOFC_AUTO) {
+		struct strbuf errbuf = STRBUF_INIT;
+		char *constructed_filter = promisor_remote_construct_filter(r);
+
+		list_objects_filter_release(&args->filter_options);
+		/* Disallow 'auto' as a result of the resolution of this 'auto' filter below */
+		args->filter_options.allow_auto_filter = 0;
+
+		if (constructed_filter &&
+		    gently_parse_list_objects_filter(&args->filter_options,
+						     constructed_filter,
+						     &errbuf))
+			die(_("couldn't resolve 'auto' filter '%s': %s"),
+			    constructed_filter, errbuf.buf);
+
+		free(constructed_filter);
+		strbuf_release(&errbuf);
+	}
 
 	negotiator = &negotiator_alloc;
 	if (args->refetch)

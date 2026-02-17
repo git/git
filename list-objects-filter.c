@@ -745,6 +745,13 @@ static void filter_combine__init(
 	filter->finalize_omits_fn = filter_combine__finalize_omits;
 }
 
+static void filter_auto__init(
+	struct list_objects_filter_options *filter_options UNUSED,
+	struct filter *filter UNUSED)
+{
+	BUG("LOFC_AUTO should have been resolved before initializing the filter");
+}
+
 typedef void (*filter_init_fn)(
 	struct list_objects_filter_options *filter_options,
 	struct filter *filter);
@@ -760,6 +767,7 @@ static filter_init_fn s_filters[] = {
 	filter_sparse_oid__init,
 	filter_object_type__init,
 	filter_combine__init,
+	filter_auto__init,
 };
 
 struct filter *list_objects_filter__init(
