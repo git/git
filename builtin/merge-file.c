@@ -60,7 +60,7 @@ static int diff_algorithm_cb(const struct option *opt,
 int cmd_merge_file(int argc,
 		   const char **argv,
 		   const char *prefix,
-		   struct repository *repo UNUSED)
+		   struct repository *repo)
 {
 	const char *names[3] = { 0 };
 	mmfile_t mmfs[3] = { 0 };
@@ -95,12 +95,10 @@ int cmd_merge_file(int argc,
 	xmp.style = 0;
 	xmp.favor = 0;
 
-	if (startup_info->have_repository) {
-		/* Read the configuration file */
-		repo_config(the_repository, git_xmerge_config, NULL);
-		if (0 <= git_xmerge_style)
-			xmp.style = git_xmerge_style;
-	}
+	/* Read the configuration file */
+	repo_config(repo, git_xmerge_config, NULL);
+	if (0 <= git_xmerge_style)
+		xmp.style = git_xmerge_style;
 
 	argc = parse_options(argc, argv, prefix, options, merge_file_usage, 0);
 	if (argc != 3)

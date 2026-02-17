@@ -428,6 +428,42 @@ test_expect_success '"diff3 -m" style output (2)' '
 	test_cmp expect actual
 '
 
+test_expect_success 'merge.conflictStyle honored outside repo' '
+	test_config_global merge.conflictStyle diff3 &&
+	cat >nongit-base <<-\EOF &&
+	line1
+	original
+	line3
+	EOF
+	cat >nongit-ours <<-\EOF &&
+	line1
+	ours
+	line3
+	EOF
+	cat >nongit-theirs <<-\EOF &&
+	line1
+	theirs
+	line3
+	EOF
+	cat >expect <<-\EOF &&
+	line1
+	<<<<<<< ours
+	ours
+	||||||| base
+	original
+	=======
+	theirs
+	>>>>>>> theirs
+	line3
+	EOF
+	test_must_fail nongit git merge-file -p \
+		-L ours -L base -L theirs \
+		"$PWD/nongit-ours" \
+		"$PWD/nongit-base" \
+		"$PWD/nongit-theirs" >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'marker size' '
 	cat >expect <<-\EOF &&
 	Dominus regit me,
