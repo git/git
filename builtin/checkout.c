@@ -294,9 +294,9 @@ static int checkout_merged(int pos, const struct checkout *state,
 	if (is_null_oid(&threeway[1]) || is_null_oid(&threeway[2]))
 		return error(_("path '%s' does not have necessary versions"), path);
 
-	read_mmblob(&ancestor, &threeway[0]);
-	read_mmblob(&ours, &threeway[1]);
-	read_mmblob(&theirs, &threeway[2]);
+	read_mmblob(&ancestor, the_repository->objects, &threeway[0]);
+	read_mmblob(&ours, the_repository->objects, &threeway[1]);
+	read_mmblob(&theirs, the_repository->objects, &threeway[2]);
 
 	repo_config_get_bool(the_repository, "merge.renormalize", &renormalize);
 	ll_opts.renormalize = renormalize;

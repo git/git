@@ -126,7 +126,7 @@ int cmd_merge_file(int argc,
 				ret = error(_("object '%s' does not exist"),
 					      argv[i]);
 			else if (!oideq(&oid, the_hash_algo->empty_blob))
-				read_mmblob(mmf, &oid);
+				read_mmblob(mmf, the_repository->objects, &oid);
 			else
 				read_mmfile(mmf, "/dev/null");
 		} else if (read_mmfile(mmf, fname)) {
