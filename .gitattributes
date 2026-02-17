@@ -18,3 +18,4 @@ CODE_OF_CONDUCT.md -whitespace
 /Documentation/user-manual.adoc conflict-marker-size=32
 /t/t????-*.sh conflict-marker-size=32
 /t/unit-tests/clar/test/expected/* whitespace=-blank-at-eof
+/templates/hooks/*.sample whitespace=indent,trail,space,incomplete text eol=lf
