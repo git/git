@@ -20,6 +20,10 @@ UI, Workflows & Features
  * When "git show-index" is run outside a repository, it silently
    defaults to SHA-1; the tool now warns when this happens.
 
+ * "git merge-file" can be run outside a repository, but it ignored
+   all configuration, even the per-user ones.  The command now uses
+   available configuration files to find its customization.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -39,19 +43,22 @@ Performance, Internal Implementation, Development Support etc.
    string, you get a const pointer to the substring).  Update code
    paths that used non-const pointer to receive their results that did
    not have to be non-const to adjust.
-   (merge fc9fd8065c cf/c23-const-preserving-strchr-updates-0 later to maint).
 
  * Rename three functions around the commit_list data structure.
-   (merge 9f18d089c5 ps/commit-list-functions-renamed later to maint).
 
  * Transaction to create objects (or not) is currently tied to the
    repository, but in the future a repository can have multiple object
    sources, which may have different transaction mechanisms.  Make the
    odb transaction API per object source.
-   (merge 3f67e3d021 jt/odb-transaction-per-source later to maint).
 
  * "git merge-ours" is taught to work better in a sparse checkout.
-   (merge fb1b786ebf sb/merge-ours-sparse later to maint).
+
+ * Allow recording process ID of the process that holds the lock next
+   to a lockfile for diagnosis.
+
+ * Reduce dependency on the_repository of xdiff-interface layer.
+
+ * Code clean-up to use the commit_stack API.
 
 
 Fixes since v2.53
@@ -90,6 +97,10 @@ Fixes since v2.53
    "next" branch.
    (merge c591c3ceff jc/ci-test-contrib-too later to maint).
 
+ * A handful of documentation pages have been modernized to use the
+   "synopsis" style.
+   (merge a34d1d53a6 ja/doc-synopsis-style-even-more later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge d79fff4a11 jk/remote-tracking-ref-leakfix later to maint).
    (merge 7a747f972d dd/t5403-modernise later to maint).
@@ -103,3 +114,9 @@ Fixes since v2.53
    (merge 0728012c53 jc/diff-highlight-main-master-testfix later to maint).
    (merge 831989ef38 mc/doc-send-email-signed-off-by-cc later to maint).
    (merge c44b3f3203 sd/doc-my1c-api-config-reference-fix later to maint).
+   (merge 6c21e53bad rs/version-wo-the-repository later to maint).
+   (merge 10c68d2577 rs/clean-includes later to maint).
+   (merge 168d575719 bk/t2003-modernise later to maint).
+   (merge 6bfef81c9a kh/doc-rerere-options-xref later to maint).
+   (merge aaf3cc3d8d sd/t7003-test-path-is-helpers later to maint).
+   (merge 2668b6bdc4 jc/doc-rerere-update later to maint).
