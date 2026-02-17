@@ -1734,4 +1734,16 @@ test_expect_success 'create branch with --name-prefix' '
 	git branch -D blob-with-prefix-with-prefix
 '
 
+test_expect_success 'create branch with config prefix' '
+	test_config branch.namePrefix blob &&
+	git branch -- -with-prefix &&
+	test_must_fail git branch -- -with-prefix &&
+	test_config branch.namePrefix "@{current}" &&
+	git checkout main &&
+	git branch -- -with-prefix &&
+	test_ref_exists refs/heads/blob-with-prefix &&
+	test_ref_exists refs/heads/main-with-prefix &&
+	git branch -D blob-with-prefix main-with-prefix
+'
+
 test_done

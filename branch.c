@@ -368,18 +368,22 @@ int read_branch_desc(struct strbuf *buf, const char *branch_name)
 void add_branch_prefix(const char *name_prefix,
 					   const char *current_branch, struct strbuf *buf)
 {
-	int value = 0;
+	char *config_prefix = NULL;
 
-	if (!name_prefix)
-		return;
+	if (!name_prefix) {
+		if (repo_config_get_string(the_repository, "branch.namePrefix",
+								   &config_prefix))
+			return;
 
-	if (name_prefix[0] != '@') {
-		strbuf_addstr(buf, name_prefix);
-		return;
+		name_prefix = config_prefix;
 	}
 
-	if (strcmp(name_prefix, "@{current}") == 0)
+	if (name_prefix[0] != '@')
+		strbuf_addstr(buf, name_prefix);
+	else if (strcmp(name_prefix, "@{current}") == 0)
 		strbuf_addstr(buf, current_branch);
+
+    free(config_prefix);
 }
 
 /*
