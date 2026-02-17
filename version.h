@@ -1,8 +1,6 @@
 #ifndef VERSION_H
 #define VERSION_H
 
-struct repository;
-
 extern const char git_version_string[];
 extern const char git_built_from_commit_string[];
 
