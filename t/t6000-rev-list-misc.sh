@@ -248,4 +248,19 @@ test_expect_success 'rev-list -z --boundary' '
 	test_cmp expect actual
 '
 
+test_expect_success 'rev-list --boundary incompatible with --maximal-only' '
+	test_when_finished rm -rf repo &&
+
+	git init repo &&
+	test_commit -C repo 1 &&
+	test_commit -C repo 2 &&
+
+	oid1=$(git -C repo rev-parse HEAD~) &&
+	oid2=$(git -C repo rev-parse HEAD) &&
+
+	test_must_fail git -C repo rev-list --boundary --maximal-only \
+		HEAD~1..HEAD 2>err &&
+	test_grep "cannot be used together" err
+'
+
 test_done
