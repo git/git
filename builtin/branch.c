@@ -726,6 +726,7 @@ int cmd_branch(int argc,
 	struct ref_format format = REF_FORMAT_INIT;
 	struct repo_config_values *cfg = repo_config_values(the_repository);
 	char *name_prefix = NULL;
+	char *safekeep_name_prefix;
 	int ret;
 
 	struct option options[] = {
@@ -808,6 +809,9 @@ int cmd_branch(int argc,
 		filter.detached = 1;
 	else if (!skip_prefix(head, "refs/heads/", &head))
 		die(_("HEAD not found below refs/heads!"));
+
+	repo_config_get_string(the_repository, "branch.namePrefix", &name_prefix);
+	safekeep_name_prefix = name_prefix;
 
 	argc = parse_options(argc, argv, prefix, options, builtin_branch_usage,
 			     0);
@@ -1029,6 +1033,7 @@ int cmd_branch(int argc,
 	ret = 0;
 
 out:
+	free(safekeep_name_prefix);
 	string_list_clear(&sorting_options, 0);
 	return ret;
 }
