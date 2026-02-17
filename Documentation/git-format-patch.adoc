@@ -282,11 +282,12 @@ e.g., `--rfc='-(WIP)'` results in "PATCH (WIP)".
 
 --from::
 --from=<ident>::
-	Use `ident` in the `From:` header of each commit email. If the
-	author ident of the commit is not textually identical to the
-	provided `ident`, place a `From:` header in the body of the
-	message with the original author. If no `ident` is given, use
-	the committer ident.
+	Use `ident` in the `From:` header of each email. In case of a
+	commit email, if the author ident of the commit is not textually
+	identical to the provided `ident`, place a `From:` header in the
+	body of the message with the original author. If no `ident` is
+	given, or if the option is not passed at all, use the ident of
+	the current committer.
 +
 Note that this option is only useful if you are actually sending the
 emails and want to identify yourself as the sender, but retain the
