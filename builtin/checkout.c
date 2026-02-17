@@ -1170,31 +1170,42 @@ static void orphaned_commit_warning(struct commit *old_commit, struct commit *ne
 	release_revisions(&revs);
 }
 
+static void get_current_branch_info(struct branch_info *branch_info)
+{
+	struct object_id rev;
+	int flag;
+
+	branch_info->path = refs_resolve_refdup(get_main_ref_store(the_repository),
+											"HEAD", 0, &rev, &flag);
+
+	if (branch_info->path)
+		branch_info->commit = lookup_commit_reference_gently(the_repository,
+															 &rev, 1);
+
+	if (!(flag & REF_ISSYMREF))
+		FREE_AND_NULL(branch_info->path);
+
+	if (branch_info->path) {
+		const char *const prefix = "refs/heads/";
+		const char *p;
+
+		if (skip_prefix(branch_info->path, prefix, &p))
+			branch_info->name = xstrdup(p);
+	}
+}
+
 static int switch_branches(const struct checkout_opts *opts,
 			   struct branch_info *new_branch_info)
 {
 	int ret = 0;
 	struct branch_info old_branch_info = { 0 };
-	struct object_id rev;
-	int flag, writeout_error = 0;
+	int writeout_error = 0;
 	int do_merge = 1;
 
 	trace2_cmd_mode("branch");
 
 	memset(&old_branch_info, 0, sizeof(old_branch_info));
-	old_branch_info.path = refs_resolve_refdup(get_main_ref_store(the_repository),
-						   "HEAD", 0, &rev, &flag);
-	if (old_branch_info.path)
-		old_branch_info.commit = lookup_commit_reference_gently(the_repository, &rev, 1);
-	if (!(flag & REF_ISSYMREF))
-		FREE_AND_NULL(old_branch_info.path);
-
-	if (old_branch_info.path) {
-		const char *const prefix = "refs/heads/";
-		const char *p;
-		if (skip_prefix(old_branch_info.path, prefix, &p))
-			old_branch_info.name = xstrdup(p);
-	}
+	get_current_branch_info(&old_branch_info);
 
 	if (opts->new_orphan_branch && opts->orphan_from_empty_tree) {
 		if (new_branch_info->name)
@@ -1772,6 +1783,7 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 	int parseopt_flags = 0;
 	struct branch_info new_branch_info = { 0 };
 	int ret;
+	struct strbuf full_branch_name = { 0 };
 
 	opts->overwrite_ignore = 1;
 	opts->prefix = prefix;
@@ -1962,7 +1974,15 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 	}
 
 	if (opts->new_branch) {
+		struct branch_info current_branch = { 0 };
 		struct strbuf buf = STRBUF_INIT;
+		strbuf_init(&full_branch_name, 0);
+
+		get_current_branch_info(&current_branch);
+		add_branch_prefix(current_branch.name, opts->new_branch,
+						  &full_branch_name);
+		branch_info_release(&current_branch);
+		opts->new_branch = full_branch_name.buf;
 
 		if (opts->new_branch_force)
 			opts->branch_exists = validate_branchname(opts->new_branch, &buf);
@@ -1981,6 +2001,8 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 	clear_pathspec(&opts->pathspec);
 	free(opts->pathspec_from_file);
 	free(options);
+	if (full_branch_name.buf)
+		strbuf_release(&full_branch_name);
 
 	return ret;
 }

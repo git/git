@@ -1716,4 +1716,18 @@ test_expect_success 'errors if given a bad branch name' '
 	test_cmp expect actual
 '
 
+test_expect_success 'create branch with prefix' '
+	git config branch.autosetupmerge false &&
+	git branch branch-with-prefix &&
+	test_config branch.addCurrentBranchAsPrefix false &&
+	test_must_fail git branch branch-with-prefix &&
+	test_config branch.addCurrentBranchAsPrefix true &&
+	git branch branch-with-prefix &&
+	git checkout branch-with-prefix &&
+	git branch branch-with-prefix &&
+	test_ref_exists refs/heads/branch-with-prefix &&
+	test_ref_exists refs/heads/main-branch-with-prefix &&
+	test_ref_exists refs/heads/branch-with-prefix-branch-with-prefix
+'
+
 test_done

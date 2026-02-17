@@ -365,6 +365,20 @@ int read_branch_desc(struct strbuf *buf, const char *branch_name)
 	return 0;
 }
 
+void add_branch_prefix(const char *current_branch,
+					   const char *target_branch, struct strbuf *buf)
+{
+	int value = 0;
+
+	repo_config_get_bool(the_repository,
+						 "branch.addCurrentBranchAsPrefix", &value);
+
+	if (value)
+		strbuf_addf(buf, "%s-%s", current_branch, target_branch);
+	else
+		strbuf_addstr(buf, target_branch);
+}
+
 /*
  * Check if 'name' can be a valid name for a branch; die otherwise.
  * Return 1 if the named branch already exists; return 0 otherwise.

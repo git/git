@@ -285,4 +285,30 @@ test_expect_success 'checkout -b rejects an extra path argument' '
 	test_grep "Cannot update paths and switch to branch" err
 '
 
+test_expect_success 'checkout -b with prefix is valid' '
+	git checkout -b main &&
+	git checkout -b checkoutb-with-prefix &&
+	git checkout main &&
+	test_config branch.addCurrentBranchAsPrefix false &&
+	test_must_fail git checkout -b checkoutb-with-prefix &&
+	test_config branch.addCurrentBranchAsPrefix true &&
+	git checkout -b checkoutb-with-prefix &&
+	git checkout -b checkoutb-with-prefix &&
+	test_ref_exists refs/heads/checkoutb-with-prefix &&
+	test_ref_exists refs/heads/main-checkoutb-with-prefix &&
+	test_ref_exists refs/heads/main-checkoutb-with-prefix-checkoutb-with-prefix
+'
+
+test_expect_success 'checkout -B with prefix is valid' '
+	git checkout main &&
+	git checkout -B checkoutB-with-prefix &&
+	git checkout main &&
+	test_config branch.addCurrentBranchAsPrefix false &&
+	git checkout -B checkoutB-with-prefix &&
+	test_config branch.addCurrentBranchAsPrefix true &&
+	git checkout -B checkoutB-with-prefix &&
+	test_ref_exists refs/heads/checkoutB-with-prefix &&
+	test_ref_exists refs/heads/checkoutB-with-prefix-checkoutB-with-prefix
+'
+
 test_done
