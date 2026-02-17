@@ -44,7 +44,6 @@
 #include "blob.h"
 #include "tree.h"
 #include "path-walk.h"
-#include "trace2.h"
 
 /*
  * Objects we are going to pack are collected in the `to_pack` structure.

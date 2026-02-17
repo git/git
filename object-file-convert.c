@@ -6,7 +6,6 @@
 #include "hex.h"
 #include "repository.h"
 #include "hash.h"
-#include "hash.h"
 #include "object.h"
 #include "loose.h"
 #include "commit.h"
