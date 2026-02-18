@@ -4,9 +4,11 @@
 #include "gettext.h"
 #include "hook.h"
 #include "path.h"
+#include "parse.h"
 #include "run-command.h"
 #include "config.h"
 #include "strbuf.h"
+#include "strmap.h"
 #include "environment.h"
 #include "setup.h"
 
@@ -54,6 +56,10 @@ static void hook_clear(struct hook *h, cb_data_free_fn cb_data_free)
 
 	if (h->kind == HOOK_TRADITIONAL)
 		free((void *)h->u.traditional.path);
+	else if (h->kind == HOOK_CONFIGURED) {
+		free((void *)h->u.configured.friendly_name);
+		free((void *)h->u.configured.command);
+	}
 
 	if (cb_data_free)
 		cb_data_free(h->feed_pipe_cb_data);
@@ -101,6 +107,187 @@ static void list_hooks_add_default(struct repository *r, const char *hookname,
 	string_list_append(hook_list, hook_path)->util = h;
 }
 
+static void unsorted_string_list_remove(struct string_list *list,
+					const char *str)
+{
+	struct string_list_item *item = unsorted_string_list_lookup(list, str);
+	if (item)
+		unsorted_string_list_delete_item(list, item - list->items, 0);
+}
+
+/*
+ * Callback struct to collect all hook.* keys in a single config pass.
+ * commands: friendly-name to command map.
+ * event_hooks: event-name to list of friendly-names map.
+ * disabled_hooks: set of friendly-names with hook.name.enabled = false.
+ */
+struct hook_all_config_cb {
+	struct strmap commands;
+	struct strmap event_hooks;
+	struct string_list disabled_hooks;
+};
+
+/* repo_config() callback that collects all hook.* configuration in one pass. */
+static int hook_config_lookup_all(const char *key, const char *value,
+				  const struct config_context *ctx UNUSED,
+				  void *cb_data)
+{
+	struct hook_all_config_cb *data = cb_data;
+	const char *name, *subkey;
+	char *hook_name;
+	size_t name_len = 0;
+
+	if (parse_config_key(key, "hook", &name, &name_len, &subkey))
+		return 0;
+
+	if (!value)
+		return config_error_nonbool(key);
+
+	/* Extract name, ensuring it is null-terminated. */
+	hook_name = xmemdupz(name, name_len);
+
+	if (!strcmp(subkey, "event")) {
+		struct string_list *hooks =
+			strmap_get(&data->event_hooks, value);
+
+		if (!hooks) {
+			hooks = xcalloc(1, sizeof(*hooks));
+			string_list_init_dup(hooks);
+			strmap_put(&data->event_hooks, value, hooks);
+		}
+
+		/* Re-insert if necessary to preserve last-seen order. */
+		unsorted_string_list_remove(hooks, hook_name);
+		string_list_append(hooks, hook_name);
+	} else if (!strcmp(subkey, "command")) {
+		/* Store command overwriting the old value */
+		char *old = strmap_put(&data->commands, hook_name,
+				       xstrdup(value));
+		free(old);
+	}
+
+	free(hook_name);
+	return 0;
+}
+
+/*
+ * The hook config cache maps each hook event name to a string_list where
+ * every item's string is the hook's friendly-name and its util pointer is
+ * the corresponding command string. Both strings are owned by the map.
+ *
+ * Disabled hooks and hooks missing a command are already filtered out at
+ * parse time, so callers can iterate the list directly.
+ */
+void hook_cache_clear(struct strmap *cache)
+{
+	struct hashmap_iter iter;
+	struct strmap_entry *e;
+
+	strmap_for_each_entry(cache, &iter, e) {
+		struct string_list *hooks = e->value;
+		string_list_clear(hooks, 1); /* free util (command) pointers */
+		free(hooks);
+	}
+	strmap_clear(cache, 0);
+}
+
+/* Populate `cache` with the complete hook configuration */
+static void build_hook_config_map(struct repository *r, struct strmap *cache)
+{
+	struct hook_all_config_cb cb_data;
+	struct hashmap_iter iter;
+	struct strmap_entry *e;
+
+	strmap_init(&cb_data.commands);
+	strmap_init(&cb_data.event_hooks);
+	string_list_init_dup(&cb_data.disabled_hooks);
+
+	/* Parse all configs in one run. */
+	repo_config(r, hook_config_lookup_all, &cb_data);
+
+	/* Construct the cache from parsed configs. */
+	strmap_for_each_entry(&cb_data.event_hooks, &iter, e) {
+		struct string_list *hook_names = e->value;
+		struct string_list *hooks = xcalloc(1, sizeof(*hooks));
+
+		string_list_init_dup(hooks);
+
+		for (size_t i = 0; i < hook_names->nr; i++) {
+			const char *hname = hook_names->items[i].string;
+			char *command;
+
+			command = strmap_get(&cb_data.commands, hname);
+			if (!command)
+				die(_("'hook.%s.command' must be configured or "
+				      "'hook.%s.event' must be removed;"
+				      " aborting."), hname, hname);
+
+			/* util stores the command; owned by the cache. */
+			string_list_append(hooks, hname)->util =
+				xstrdup(command);
+		}
+
+		strmap_put(cache, e->key, hooks);
+	}
+
+	strmap_clear(&cb_data.commands, 1);
+	string_list_clear(&cb_data.disabled_hooks, 0);
+	strmap_for_each_entry(&cb_data.event_hooks, &iter, e) {
+		string_list_clear(e->value, 0);
+		free(e->value);
+	}
+	strmap_clear(&cb_data.event_hooks, 0);
+}
+
+/* Return the hook config map for `r`, populating it first if needed. */
+static struct strmap *get_hook_config_cache(struct repository *r)
+{
+	struct strmap *cache = NULL;
+
+	if (r) {
+		/*
+		 * For in-repo calls, the map is stored in r->hook_config_cache,
+		 * so repeated invocations don't parse the configs, so allocate
+		 * it just once on the first call.
+		 */
+		if (!r->hook_config_cache) {
+			r->hook_config_cache = xcalloc(1, sizeof(*cache));
+			strmap_init(r->hook_config_cache);
+			build_hook_config_map(r, r->hook_config_cache);
+		}
+		cache = r->hook_config_cache;
+	}
+
+	return cache;
+}
+
+static void list_hooks_add_configured(struct repository *r,
+				      const char *hookname,
+				      struct string_list *list,
+				      struct run_hooks_opt *options)
+{
+	struct strmap *cache = get_hook_config_cache(r);
+	struct string_list *configured_hooks = strmap_get(cache, hookname);
+
+	/* Iterate through configured hooks and initialize internal states */
+	for (size_t i = 0; configured_hooks && i < configured_hooks->nr; i++) {
+		const char *friendly_name = configured_hooks->items[i].string;
+		const char *command = configured_hooks->items[i].util;
+		struct hook *hook = xcalloc(1, sizeof(struct hook));
+
+		if (options && options->feed_pipe_cb_data_alloc)
+			hook->feed_pipe_cb_data =
+				options->feed_pipe_cb_data_alloc(
+					options->feed_pipe_ctx);
+
+		hook->kind = HOOK_CONFIGURED;
+		hook->u.configured.friendly_name = xstrdup(friendly_name);
+		hook->u.configured.command = xstrdup(command);
+
+		string_list_append(list, friendly_name)->util = hook;
+	}
+}
+
 struct string_list *list_hooks(struct repository *r, const char *hookname,
 			       struct run_hooks_opt *options)
 {
@@ -111,6 +298,9 @@ struct string_list *list_hooks(struct repository *r, const char *hookname,
 
 	hook_head = xmalloc(sizeof(struct string_list));
 	string_list_init_dup(hook_head);
+
+	/* Add hooks from the config, e.g. hook.myhook.event = pre-commit */
+	list_hooks_add_configured(r, hookname, hook_head, options);
 
 	/* Add the default "traditional" hooks from hookdir. */
 	list_hooks_add_default(r, hookname, hook_head, options);
@@ -164,8 +354,13 @@ static int pick_next_hook(struct child_process *cp,
 	cp->dir = hook_cb->options->dir;
 
 	/* Add hook exec paths or commands */
-	if (h->kind == HOOK_TRADITIONAL)
+	if (h->kind == HOOK_TRADITIONAL) {
 		strvec_push(&cp->args, h->u.traditional.path);
+	} else if (h->kind == HOOK_CONFIGURED) {
+		/* to enable oneliners, let config-specified hooks run in shell. */
+		cp->use_shell = true;
+		strvec_push(&cp->args, h->u.configured.command);
+	}
 
 	if (!cp->args.nr)
 		BUG("hook must have at least one command or exec path");

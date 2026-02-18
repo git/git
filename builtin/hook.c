@@ -68,6 +68,9 @@ static int list(int argc, const char **argv, const char *prefix,
 		case HOOK_TRADITIONAL:
 			printf("%s\n", _("hook from hookdir"));
 			break;
+		case HOOK_CONFIGURED:
+			printf("%s\n", h->u.configured.friendly_name);
+			break;
 		default:
 			BUG("unknown hook kind");
 		}

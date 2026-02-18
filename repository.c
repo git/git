@@ -1,6 +1,7 @@
 #include "git-compat-util.h"
 #include "abspath.h"
 #include "repository.h"
+#include "hook.h"
 #include "odb.h"
 #include "config.h"
 #include "object.h"
@@ -391,6 +392,11 @@ void repo_clear(struct repository *repo)
 	if (repo->index) {
 		discard_index(repo->index);
 		FREE_AND_NULL(repo->index);
+	}
+
+	if (repo->hook_config_cache) {
+		hook_cache_clear(repo->hook_config_cache);
+		FREE_AND_NULL(repo->hook_config_cache);
 	}
 
 	if (repo->promisor_remote_config) {

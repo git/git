@@ -3,6 +3,7 @@
 #include "strvec.h"
 #include "run-command.h"
 #include "string-list.h"
+#include "strmap.h"
 
 struct repository;
 
@@ -10,17 +11,22 @@ struct repository;
  * Represents a hook command to be run.
  * Hooks can be:
  * 1. "traditional" (found in the hooks directory)
- * 2. "configured" (defined in Git's configuration, not yet implemented).
+ * 2. "configured" (defined in Git's configuration via hook.<name>.event).
  * The 'kind' field determines which part of the union 'u' is valid.
  */
 struct hook {
 	enum {
 		HOOK_TRADITIONAL,
+		HOOK_CONFIGURED,
 	} kind;
 	union {
 		struct {
 			const char *path;
 		} traditional;
+		struct {
+			const char *friendly_name;
+			const char *command;
+		} configured;
 	} u;
 
 	/**
@@ -184,6 +190,12 @@ struct string_list *list_hooks(struct repository *r, const char *hookname,
  * items and their internal state.
  */
 void hook_list_clear(struct string_list *hooks, cb_data_free_fn cb_data_free);
+
+/**
+ * Frees the hook configuration cache stored in `struct repository`.
+ * Called by repo_clear().
+ */
+void hook_cache_clear(struct strmap *cache);
 
 /**
  * Returns the path to the hook file, or NULL if the hook is missing
