@@ -11,7 +11,7 @@
 #define BUILTIN_HOOK_RUN_USAGE \
 	N_("git hook run [--ignore-missing] [--to-stdin=<path>] <hook-name> [-- <hook-args>]")
 #define BUILTIN_HOOK_LIST_USAGE \
-	N_("git hook list <hook-name>")
+	N_("git hook list [-z] <hook-name>")
 
 static const char * const builtin_hook_usage[] = {
 	BUILTIN_HOOK_RUN_USAGE,
@@ -34,9 +34,12 @@ static int list(int argc, const char **argv, const char *prefix,
 	struct string_list *head;
 	struct string_list_item *item;
 	const char *hookname = NULL;
+	int line_terminator = '\n';
 	int ret = 0;
 
 	struct option list_options[] = {
+		OPT_SET_INT('z', NULL, &line_terminator,
+			    N_("use NUL as line terminator"), '\0'),
 		OPT_END(),
 	};
 
@@ -66,10 +69,10 @@ static int list(int argc, const char **argv, const char *prefix,
 
 		switch (h->kind) {
 		case HOOK_TRADITIONAL:
-			printf("%s\n", _("hook from hookdir"));
+			printf("%s%c", _("hook from hookdir"), line_terminator);
 			break;
 		case HOOK_CONFIGURED:
-			printf("%s\n", h->u.configured.friendly_name);
+			printf("%s%c", h->u.configured.friendly_name, line_terminator);
 			break;
 		default:
 			BUG("unknown hook kind");

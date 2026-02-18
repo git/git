@@ -61,6 +61,19 @@ test_expect_success 'git hook list: configured hook' '
 	test_cmp expect actual
 '
 
+test_expect_success 'git hook list: -z shows NUL-terminated output' '
+	test_hook test-hook <<-EOF &&
+	echo Test hook
+	EOF
+	test_config hook.myhook.command "echo Hello" &&
+	test_config hook.myhook.event test-hook --add &&
+
+	printf "myhookQhook from hookdirQ" >expect &&
+	git hook list -z test-hook >actual.raw &&
+	nul_to_q <actual.raw >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'git hook run: nonexistent hook' '
 	cat >stderr.expect <<-\EOF &&
 	error: cannot find a hook named test-hook
