@@ -29,7 +29,13 @@ static int config_alias_cb(const char *key, const char *value,
 						 key, value);
 		}
 	} else if (data->list) {
-		string_list_append(data->list, p);
+		struct string_list_item *item;
+
+		if (!value)
+			return config_error_nonbool(key);
+
+		item = string_list_append(data->list, p);
+		item->util = xstrdup(value);
 	}
 
 	return 0;

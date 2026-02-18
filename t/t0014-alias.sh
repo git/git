@@ -112,4 +112,14 @@ test_expect_success 'cannot alias-shadow a sample of regular builtins' '
 	done
 '
 
+test_expect_success 'alias without value reports error' '
+	test_when_finished "git config --unset alias.noval" &&
+	cat >>.git/config <<-\EOF &&
+	[alias]
+		noval
+	EOF
+	test_must_fail git noval 2>error &&
+	test_grep "alias.noval" error
+'
+
 test_done
