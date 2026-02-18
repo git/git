@@ -68,8 +68,8 @@ test_expect_success 'many refs results in multiple blocks' '
 	(
 		cd repo &&
 		test_commit initial &&
-		test_seq -f "update refs/heads/branch-%d HEAD" 200 >input &&
-		git update-ref --stdin <input &&
+		test_seq -f "update refs/heads/branch-%d HEAD" 200 |
+		git update-ref --stdin &&
 		git pack-refs &&
 
 		cat >expect <<-EOF &&
@@ -178,8 +178,8 @@ test_expect_success 'restart interval at every single record' '
 	(
 		cd repo &&
 		test_commit initial &&
-		test_seq -f "update refs/heads/branch-%d HEAD" 10 >input &&
-		git update-ref --stdin <input &&
+		test_seq -f "update refs/heads/branch-%d HEAD" 10 |
+		git update-ref --stdin &&
 		git -c reftable.restartInterval=1 pack-refs &&
 
 		cat >expect <<-EOF &&
@@ -218,8 +218,8 @@ test_expect_success 'object index gets written by default with ref index' '
 	(
 		cd repo &&
 		test_commit initial &&
-		test_seq -f "update refs/heads/branch-%d HEAD" 5 >input &&
-		git update-ref --stdin <input &&
+		test_seq -f "update refs/heads/branch-%d HEAD" 5 |
+		git update-ref --stdin &&
 		git -c reftable.blockSize=100 pack-refs &&
 
 		cat >expect <<-EOF &&
@@ -253,8 +253,8 @@ test_expect_success 'object index can be disabled' '
 	(
 		cd repo &&
 		test_commit initial &&
-		test_seq -f "update refs/heads/branch-%d HEAD" 5 >input &&
-		git update-ref --stdin <input &&
+		test_seq -f "update refs/heads/branch-%d HEAD" 5 |
+		git update-ref --stdin &&
 		git -c reftable.blockSize=100 -c reftable.indexObjects=false pack-refs &&
 
 		cat >expect <<-EOF &&
