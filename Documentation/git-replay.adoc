@@ -9,7 +9,7 @@ git-replay - EXPERIMENTAL: Replay commits on a new base, works with bare repos t
 SYNOPSIS
 --------
 [verse]
-(EXPERIMENTAL!) 'git replay' ([--contained] --onto <newbase> | --advance <branch>) [--ref-action[=<mode>]] <revision-range>
+(EXPERIMENTAL!) 'git replay' ([--contained] --onto <newbase> | --advance <branch> | --revert <branch>) [--ref-action[=<mode>]] <revision-range>...
 
 DESCRIPTION
 -----------
@@ -41,6 +41,25 @@ updates multiple branches in the affected range.
 The history is replayed on top of the <branch> and <branch> is updated to
 point at the tip of the resulting history. This is different from `--onto`,
 which uses the target only as a starting point without updating it.
+
+--revert <branch>::
+	Starting point at which to create the reverted commits; must be a
+	branch name.
++
+When `--revert` is specified, the commits in the revision range are reverted
+(their changes are undone) and the reverted commits are created on top of
+<branch>. The <branch> is then updated to point at the new commits. This is
+the same as running `git revert <revision-range>` but does not update the
+working tree.
++
+The commit messages follow `git revert` conventions: they are prefixed with
+"Revert" and include "This reverts commit <hash>." When reverting a commit
+whose message starts with "Revert", the new message uses "Reapply" instead.
+Unlike cherry-pick which preserves the original author, revert commits use
+the current user as the author, matching the behavior of `git revert`.
++
+This option is mutually exclusive with `--onto` and `--advance`. It is also
+incompatible with `--contained` (which is a modifier for `--onto` only).
 
 --contained::
 	Update all branches that point at commits in
@@ -84,9 +103,10 @@ When using `--ref-action=print`, the output is usable as input to
 	update refs/heads/branch3 ${NEW_branch3_HASH} ${OLD_branch3_HASH}
 
 where the number of refs updated depends on the arguments passed and
-the shape of the history being replayed.  When using `--advance`, the
-number of refs updated is always one, but for `--onto`, it can be one
-or more (rebasing multiple branches simultaneously is supported).
+the shape of the history being replayed.  When using `--advance` or
+`--revert`, the number of refs updated is always one, but for `--onto`,
+it can be one or more (rebasing multiple branches simultaneously is
+supported).
 
 There is no stderr output on conflicts; see the <<exit-status,EXIT
 STATUS>> section below.
@@ -151,6 +171,15 @@ This will simultaneously rebase `branch1`, `branch2`, and `branch3`,
 all commits they have since `base`, playing them on top of
 `origin/main`. These three branches may have commits on top of `base`
 that they have in common, but that does not need to be the case.
+
+To revert commits on a branch:
+
+------------
+$ git replay --revert main main~2..main
+------------
+
+This reverts the last two commits on `main`, creating two revert commits
+on top of `main`, and updates `main` to point at the result.
 
 GIT
 ---

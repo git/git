@@ -8,8 +8,14 @@
 #include "refs.h"
 #include "replay.h"
 #include "revision.h"
+#include "sequencer.h"
 #include "strmap.h"
 #include "tree.h"
+
+enum replay_mode {
+	REPLAY_MODE_PICK,
+	REPLAY_MODE_REVERT,
+};
 
 static const char *short_commit_name(struct repository *repo,
 				     struct commit *commit)
@@ -44,15 +50,35 @@ static char *get_author(const char *message)
 	return NULL;
 }
 
+static void generate_revert_message(struct strbuf *msg,
+				    struct commit *commit,
+				    struct repository *repo)
+{
+	const char *out_enc = get_commit_output_encoding();
+	const char *message = repo_logmsg_reencode(repo, commit, NULL, out_enc);
+	const char *subject_start;
+	int subject_len;
+	char *subject;
+
+	subject_len = find_commit_subject(message, &subject_start);
+	subject = xmemdupz(subject_start, subject_len);
+
+	sequencer_format_revert_header(msg, subject, &commit->object.oid);
+
+	free(subject);
+	repo_unuse_commit_buffer(repo, commit, message);
+}
+
 static struct commit *create_commit(struct repository *repo,
 				    struct tree *tree,
 				    struct commit *based_on,
-				    struct commit *parent)
+				    struct commit *parent,
+				    enum replay_mode mode)
 {
 	struct object_id ret;
 	struct object *obj = NULL;
 	struct commit_list *parents = NULL;
-	char *author;
+	char *author = NULL;
 	char *sign_commit = NULL; /* FIXME: cli users might want to sign again */
 	struct commit_extra_header *extra = NULL;
 	struct strbuf msg = STRBUF_INIT;
@@ -64,9 +90,16 @@ static struct commit *create_commit(struct repository *repo,
 
 	commit_list_insert(parent, &parents);
 	extra = read_commit_extra_headers(based_on, exclude_gpgsig);
-	find_commit_subject(message, &orig_message);
-	strbuf_addstr(&msg, orig_message);
-	author = get_author(message);
+	if (mode == REPLAY_MODE_REVERT) {
+		generate_revert_message(&msg, based_on, repo);
+		/* For revert, use current user as author (NULL = use default) */
+	} else if (mode == REPLAY_MODE_PICK) {
+		find_commit_subject(message, &orig_message);
+		strbuf_addstr(&msg, orig_message);
+		author = get_author(message);
+	} else {
+		BUG("unexpected replay mode %d", mode);
+	}
 	reset_ident_date();
 	if (commit_tree_extended(msg.buf, msg.len, &tree->object.oid, parents,
 				 &ret, author, NULL, sign_commit, extra)) {
@@ -147,11 +180,34 @@ static void get_ref_information(struct repository *repo,
 	}
 }
 
+static void set_up_branch_mode(struct repository *repo,
+			       char **branch_name,
+			       const char *option_name,
+			       struct ref_info *rinfo,
+			       struct commit **onto)
+{
+	struct object_id oid;
+	char *fullname = NULL;
+
+	if (repo_dwim_ref(repo, *branch_name, strlen(*branch_name),
+			  &oid, &fullname, 0) == 1) {
+		free(*branch_name);
+		*branch_name = fullname;
+	} else {
+		die(_("argument to %s must be a reference"), option_name);
+	}
+	*onto = peel_committish(repo, *branch_name, option_name);
+	if (rinfo->positive_refexprs > 1)
+		die(_("cannot %s target with multiple sources because ordering would be ill-defined"),
+		    option_name + 2); /* skip "--" prefix */
+}
+
 static void set_up_replay_mode(struct repository *repo,
 			       struct rev_cmdline_info *cmd_info,
 			       const char *onto_name,
 			       bool *detached_head,
 			       char **advance_name,
+			       char **revert_name,
 			       struct commit **onto,
 			       struct strset **update_refs)
 {
@@ -166,9 +222,6 @@ static void set_up_replay_mode(struct repository *repo,
 	if (!rinfo.positive_refexprs)
 		die(_("need some commits to replay"));
 
-	if (!onto_name == !*advance_name)
-		BUG("one and only one of onto_name and *advance_name must be given");
-
 	if (onto_name) {
 		*onto = peel_committish(repo, onto_name, "--onto");
 		if (rinfo.positive_refexprs <
@@ -177,23 +230,12 @@ static void set_up_replay_mode(struct repository *repo,
 		*update_refs = xcalloc(1, sizeof(**update_refs));
 		**update_refs = rinfo.positive_refs;
 		memset(&rinfo.positive_refs, 0, sizeof(**update_refs));
+	} else if (*advance_name) {
+		set_up_branch_mode(repo, advance_name, "--advance", &rinfo, onto);
+	} else if (*revert_name) {
+		set_up_branch_mode(repo, revert_name, "--revert", &rinfo, onto);
 	} else {
-		struct object_id oid;
-		char *fullname = NULL;
-
-		if (!*advance_name)
-			BUG("expected either onto_name or *advance_name in this function");
-
-		if (repo_dwim_ref(repo, *advance_name, strlen(*advance_name),
-			     &oid, &fullname, 0) == 1) {
-			free(*advance_name);
-			*advance_name = fullname;
-		} else {
-			die(_("argument to --advance must be a reference"));
-		}
-		*onto = peel_committish(repo, *advance_name, "--advance");
-		if (rinfo.positive_refexprs > 1)
-			die(_("cannot advance target with multiple sources because ordering would be ill-defined"));
+		BUG("expected one of onto_name, *advance_name, or *revert_name");
 	}
 	strset_clear(&rinfo.negative_refs);
 	strset_clear(&rinfo.positive_refs);
@@ -214,7 +256,8 @@ static struct commit *pick_regular_commit(struct repository *repo,
 					  kh_oid_map_t *replayed_commits,
 					  struct commit *onto,
 					  struct merge_options *merge_opt,
-					  struct merge_result *result)
+					  struct merge_result *result,
+					  enum replay_mode mode)
 {
 	struct commit *base, *replayed_base;
 	struct tree *pickme_tree, *base_tree, *replayed_base_tree;
@@ -226,25 +269,46 @@ static struct commit *pick_regular_commit(struct repository *repo,
 	pickme_tree = repo_get_commit_tree(repo, pickme);
 	base_tree = repo_get_commit_tree(repo, base);
 
-	merge_opt->branch1 = short_commit_name(repo, replayed_base);
-	merge_opt->branch2 = short_commit_name(repo, pickme);
-	merge_opt->ancestor = xstrfmt("parent of %s", merge_opt->branch2);
+	if (mode == REPLAY_MODE_PICK) {
+		/* Cherry-pick: normal order */
+		merge_opt->branch1 = short_commit_name(repo, replayed_base);
+		merge_opt->branch2 = short_commit_name(repo, pickme);
+		merge_opt->ancestor = xstrfmt("parent of %s", merge_opt->branch2);
 
-	merge_incore_nonrecursive(merge_opt,
-				  base_tree,
-				  replayed_base_tree,
-				  pickme_tree,
-				  result);
+		merge_incore_nonrecursive(merge_opt,
+					  base_tree,
+					  replayed_base_tree,
+					  pickme_tree,
+					  result);
 
-	free((char*)merge_opt->ancestor);
+		free((char *)merge_opt->ancestor);
+	} else if (mode == REPLAY_MODE_REVERT) {
+		/* Revert: swap base and pickme to reverse the diff */
+		const char *pickme_name = short_commit_name(repo, pickme);
+		merge_opt->branch1 = short_commit_name(repo, replayed_base);
+		merge_opt->branch2 = xstrfmt("parent of %s", pickme_name);
+		merge_opt->ancestor = pickme_name;
+
+		merge_incore_nonrecursive(merge_opt,
+					  pickme_tree,
+					  replayed_base_tree,
+					  base_tree,
+					  result);
+
+		free((char *)merge_opt->branch2);
+	} else {
+		BUG("unexpected replay mode %d", mode);
+	}
 	merge_opt->ancestor = NULL;
+	merge_opt->branch2 = NULL;
 	if (!result->clean)
 		return NULL;
-	/* Drop commits that become empty */
-	if (oideq(&replayed_base_tree->object.oid, &result->tree->object.oid) &&
+	/* Drop commits that become empty (only for picks) */
+	if (mode == REPLAY_MODE_PICK &&
+	    oideq(&replayed_base_tree->object.oid, &result->tree->object.oid) &&
 	    !oideq(&pickme_tree->object.oid, &base_tree->object.oid))
 		return replayed_base;
-	return create_commit(repo, result->tree, pickme, replayed_base);
+	return create_commit(repo, result->tree, pickme, replayed_base, mode);
 }
 
 void replay_result_release(struct replay_result *result)
@@ -281,11 +345,16 @@ int replay_revisions(struct rev_info *revs,
 	};
 	bool detached_head;
 	char *advance;
+	char *revert;
+	enum replay_mode mode = REPLAY_MODE_PICK;
 	int ret;
 
 	advance = xstrdup_or_null(opts->advance);
+	revert = xstrdup_or_null(opts->revert);
+	if (revert)
+		mode = REPLAY_MODE_REVERT;
 	set_up_replay_mode(revs->repo, &revs->cmdline, opts->onto,
-			   &detached_head, &advance, &onto, &update_refs);
+			   &detached_head, &advance, &revert, &onto, &update_refs);
 
 	/* FIXME: Should allow replaying commits with the first as a root commit */
 
@@ -309,7 +378,7 @@ int replay_revisions(struct rev_info *revs,
 			die(_("replaying merge commits is not supported yet!"));
 
 		last_commit = pick_regular_commit(revs->repo, commit, replayed_commits,
-						  onto, &merge_opt, &result);
+						  onto, &merge_opt, &result, mode);
 		if (!last_commit)
 			break;
 
@@ -321,7 +390,7 @@ int replay_revisions(struct rev_info *revs,
 		kh_value(replayed_commits, pos) = last_commit;
 
 		/* Update any necessary branches */
-		if (advance)
+		if (advance || revert)
 			continue;
 
 		for (decoration = get_name_decoration(&commit->object);
@@ -355,11 +424,13 @@ int replay_revisions(struct rev_info *revs,
 		goto out;
 	}
 
-	/* In --advance mode, advance the target ref */
-	if (advance)
-		replay_result_queue_update(out, advance,
+	/* In --advance or --revert mode, update the target ref */
+	if (advance || revert) {
+		const char *ref = advance ? advance : revert;
+		replay_result_queue_update(out, ref,
 					   &onto->object.oid,
 					   &last_commit->object.oid);
+	}
 
 	ret = 0;
 
@@ -371,5 +442,6 @@ out:
 	kh_destroy_oid_map(replayed_commits);
 	merge_finalize(&merge_opt, &result);
 	free(advance);
+	free(revert);
 	return ret;
 }
