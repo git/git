@@ -4963,6 +4963,10 @@ static int apply_option_parse_directory(const struct option *opt,
 
 	strbuf_reset(&state->root);
 	strbuf_addstr(&state->root, arg);
+
+	if (strbuf_normalize_path(&state->root) < 0)
+		return error(_("unable to normalize directory: '%s'"), arg);
+
 	strbuf_complete(&state->root, '/');
 	return 0;
 }
