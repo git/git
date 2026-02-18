@@ -411,8 +411,9 @@ test_expect_success 'split sub dir/ with --rejoin' '
 		git fetch ./"sub proj" HEAD &&
 		git subtree merge --prefix="sub dir" FETCH_HEAD &&
 		split_hash=$(git subtree split --prefix="sub dir" --annotate="*") &&
-		git subtree split --prefix="sub dir" --annotate="*" --rejoin &&
-		test "$(last_commit_subject)" = "Split '\''sub dir/'\'' into commit '\''$split_hash'\''"
+		git subtree split --prefix="sub dir" --annotate="*" -b spl --rejoin &&
+		test "$(last_commit_subject)" = "Split '\''sub dir/'\'' into commit '\''$split_hash'\''" &&
+		test "$(git rev-list --count spl)" -eq 5
 	)
 '
 
@@ -442,18 +443,25 @@ test_expect_success 'split with multiple subtrees' '
 	git -C "$test_count" subtree add --prefix=subADir FETCH_HEAD &&
 	git -C "$test_count" fetch ./subB HEAD &&
 	git -C "$test_count" subtree add --prefix=subBDir FETCH_HEAD &&
+	test "$(git -C "$test_count" rev-list --count main)" -eq 7 &&
 	test_create_commit "$test_count" subADir/main-subA1 &&
 	test_create_commit "$test_count" subBDir/main-subB1 &&
 	git -C "$test_count" subtree split --prefix=subADir \
-		--squash --rejoin -m "Sub A Split 1" &&
+		--squash --rejoin -m "Sub A Split 1" -b a1 &&
+	test "$(git -C "$test_count" rev-list --count main..a1)" -eq 1 &&
 	git -C "$test_count" subtree split --prefix=subBDir \
-		--squash --rejoin -m "Sub B Split 1" &&
+		--squash --rejoin -m "Sub B Split 1" -b b1 &&
+	test "$(git -C "$test_count" rev-list --count main..b1)" -eq 1 &&
 	test_create_commit "$test_count" subADir/main-subA2 &&
 	test_create_commit "$test_count" subBDir/main-subB2 &&
 	git -C "$test_count" subtree split --prefix=subADir \
-		--squash --rejoin -m "Sub A Split 2" &&
+		--squash --rejoin -m "Sub A Split 2" -b a2 &&
+	test "$(git -C "$test_count" rev-list --count main..a2)" -eq 2 &&
+	test "$(git -C "$test_count" rev-list --count a1..a2)" -eq 1 &&
 	test "$(git -C "$test_count" subtree split --prefix=subBDir \
-		--squash --rejoin -d -m "Sub B Split 1" 2>&1 | grep -w "\[1\]")" = ""
+		--squash --rejoin -d -m "Sub B Split 1" -b b2 2>&1 | grep -w "\[1\]")" = "" &&
+	test "$(git -C "$test_count" rev-list --count main..b2)" -eq 2 &&
+	test "$(git -C "$test_count" rev-list --count b1..b2)" -eq 1
 '
 
 # When subtree split-ing a directory that has other subtree
@@ -477,6 +485,7 @@ do
 			test_path_is_file subA/file1.t &&
 			test_path_is_file subA/subB/file2.t &&
 			git subtree split --prefix=subA --branch=bsplit &&
+			test "$(git rev-list --count bsplit)" -eq 2 &&
 			git checkout bsplit &&
 			test_path_is_file file1.t &&
 			test_path_is_file subB/file2.t &&
@@ -489,6 +498,7 @@ do
 				--prefix=subA/subB mksubtree &&
 			test_path_is_file subA/subB/file3.t &&
 			git subtree split --prefix=subA --branch=bsplit &&
+			test "$(git rev-list --count bsplit)" -eq 3 &&
 			git checkout bsplit &&
 			test_path_is_file file1.t &&
 			test_path_is_file subB/file2.t &&
