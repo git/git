@@ -719,7 +719,8 @@ struct odb_transaction_files {
 
 static void prepare_loose_object_transaction(struct odb_transaction *base)
 {
-	struct odb_transaction_files *transaction = (struct odb_transaction_files *)base;
+	struct odb_transaction_files *transaction =
+		container_of(base, struct odb_transaction_files, base);
 
 	/*
 	 * We lazily create the temporary object directory
@@ -738,7 +739,8 @@ static void prepare_loose_object_transaction(struct odb_transaction *base)
 static void fsync_loose_object_transaction(struct odb_transaction *base,
 					   int fd, const char *filename)
 {
-	struct odb_transaction_files *transaction = (struct odb_transaction_files *)base;
+	struct odb_transaction_files *transaction =
+		container_of(base, struct odb_transaction_files, base);
 
 	/*
 	 * If we have an active ODB transaction, we issue a call that
@@ -1634,11 +1636,14 @@ int index_fd(struct index_state *istate, struct object_id *oid,
 				 type, path, flags);
 	} else {
 		struct object_database *odb = the_repository->objects;
+		struct odb_transaction_files *files_transaction;
 		struct odb_transaction *transaction;
 
 		transaction = odb_transaction_begin(odb);
-		ret = index_blob_packfile_transaction((struct odb_transaction_files *)odb->transaction,
-						      oid, fd,
+		files_transaction = container_of(odb->transaction,
+						 struct odb_transaction_files,
+						 base);
+		ret = index_blob_packfile_transaction(files_transaction, oid, fd,
 						      xsize_t(st->st_size),
 						      path, flags);
 		odb_transaction_commit(transaction);
@@ -1992,7 +1997,8 @@ out:
 
 static void odb_transaction_files_commit(struct odb_transaction *base)
 {
-	struct odb_transaction_files *transaction = (struct odb_transaction_files *)base;
+	struct odb_transaction_files *transaction =
+		container_of(base, struct odb_transaction_files, base);
 
 	flush_loose_object_transaction(transaction);
 	flush_packfile_transaction(transaction);
@@ -2047,7 +2053,8 @@ struct odb_loose_read_stream {
 
 static ssize_t read_istream_loose(struct odb_read_stream *_st, char *buf, size_t sz)
 {
-	struct odb_loose_read_stream *st = (struct odb_loose_read_stream *)_st;
+	struct odb_loose_read_stream *st =
+		container_of(_st, struct odb_loose_read_stream, base);
 	size_t total_read = 0;
 
 	switch (st->z_state) {
@@ -2093,7 +2100,9 @@ static ssize_t read_istream_loose(struct odb_read_stream *_st, char *buf, size_t
 
 static int close_istream_loose(struct odb_read_stream *_st)
 {
-	struct odb_loose_read_stream *st = (struct odb_loose_read_stream *)_st;
+	struct odb_loose_read_stream *st =
+		container_of(_st, struct odb_loose_read_stream, base);
+
 	if (st->z_state == ODB_LOOSE_READ_STREAM_INUSE)
 		git_inflate_end(&st->z);
 	munmap(st->mapped, st->mapsize);
