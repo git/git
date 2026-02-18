@@ -61,7 +61,7 @@ static void hook_clear(struct hook *h, cb_data_free_fn cb_data_free)
 	free(h);
 }
 
-static void hook_list_clear(struct string_list *hooks, cb_data_free_fn cb_data_free)
+void hook_list_clear(struct string_list *hooks, cb_data_free_fn cb_data_free)
 {
 	struct string_list_item *item;
 
@@ -101,20 +101,7 @@ static void list_hooks_add_default(struct repository *r, const char *hookname,
 	string_list_append(hook_list, hook_path)->util = h;
 }
 
-/*
- * Provides a list of hook commands to run for the 'hookname' event.
- *
- * This function consolidates hooks from two sources:
- * 1. The config-based hooks (not yet implemented).
- * 2. The "traditional" hook found in the repository hooks directory
- *    (e.g., .git/hooks/pre-commit).
- *
- * The list is ordered by execution priority.
- *
- * The caller is responsible for freeing the memory of the returned list
- * using string_list_clear() and free().
- */
-static struct string_list *list_hooks(struct repository *r, const char *hookname,
+struct string_list *list_hooks(struct repository *r, const char *hookname,
 			       struct run_hooks_opt *options)
 {
 	struct string_list *hook_head;

@@ -163,7 +163,29 @@ struct hook_cb_data {
 	struct run_hooks_opt *options;
 };
 
-/*
+/**
+ * Provides a list of hook commands to run for the 'hookname' event.
+ *
+ * This function consolidates hooks from two sources:
+ * 1. The config-based hooks (not yet implemented).
+ * 2. The "traditional" hook found in the repository hooks directory
+ *    (e.g., .git/hooks/pre-commit).
+ *
+ * The list is ordered by execution priority.
+ *
+ * The caller is responsible for freeing the memory of the returned list
+ * using string_list_clear() and free().
+ */
+struct string_list *list_hooks(struct repository *r, const char *hookname,
+			       struct run_hooks_opt *options);
+
+/**
+ * Frees the memory allocated for the hook list, including the `struct hook`
+ * items and their internal state.
+ */
+void hook_list_clear(struct string_list *hooks, cb_data_free_fn cb_data_free);
+
+/**
  * Returns the path to the hook file, or NULL if the hook is missing
  * or disabled. Note that this points to static storage that will be
  * overwritten by further calls to find_hook and run_hook_*.

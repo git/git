@@ -10,7 +10,29 @@ test_expect_success 'git hook usage' '
 	test_expect_code 129 git hook run &&
 	test_expect_code 129 git hook run -h &&
 	test_expect_code 129 git hook run --unknown 2>err &&
+	test_expect_code 129 git hook list &&
+	test_expect_code 129 git hook list -h &&
 	grep "unknown option" err
+'
+
+test_expect_success 'git hook list: nonexistent hook' '
+	cat >stderr.expect <<-\EOF &&
+	warning: No hooks found for event '\''test-hook'\''
+	EOF
+	test_expect_code 1 git hook list test-hook 2>stderr.actual &&
+	test_cmp stderr.expect stderr.actual
+'
+
+test_expect_success 'git hook list: traditional hook from hookdir' '
+	test_hook test-hook <<-EOF &&
+	echo Test hook
+	EOF
+
+	cat >expect <<-\EOF &&
+	hook from hookdir
+	EOF
+	git hook list test-hook >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'git hook run: nonexistent hook' '

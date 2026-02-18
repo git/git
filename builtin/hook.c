@@ -6,12 +6,16 @@
 #include "hook.h"
 #include "parse-options.h"
 #include "strvec.h"
+#include "abspath.h"
 
 #define BUILTIN_HOOK_RUN_USAGE \
 	N_("git hook run [--ignore-missing] [--to-stdin=<path>] <hook-name> [-- <hook-args>]")
+#define BUILTIN_HOOK_LIST_USAGE \
+	N_("git hook list <hook-name>")
 
 static const char * const builtin_hook_usage[] = {
 	BUILTIN_HOOK_RUN_USAGE,
+	BUILTIN_HOOK_LIST_USAGE,
 	NULL
 };
 
@@ -19,6 +23,61 @@ static const char * const builtin_hook_run_usage[] = {
 	BUILTIN_HOOK_RUN_USAGE,
 	NULL
 };
+
+static int list(int argc, const char **argv, const char *prefix,
+		 struct repository *repo)
+{
+	static const char *const builtin_hook_list_usage[] = {
+		BUILTIN_HOOK_LIST_USAGE,
+		NULL
+	};
+	struct string_list *head;
+	struct string_list_item *item;
+	const char *hookname = NULL;
+	int ret = 0;
+
+	struct option list_options[] = {
+		OPT_END(),
+	};
+
+	argc = parse_options(argc, argv, prefix, list_options,
+			     builtin_hook_list_usage, 0);
+
+	/*
+	 * The only unnamed argument provided should be the hook-name; if we add
+	 * arguments later they probably should be caught by parse_options.
+	 */
+	if (argc != 1)
+		usage_msg_opt(_("You must specify a hook event name to list."),
+			      builtin_hook_list_usage, list_options);
+
+	hookname = argv[0];
+
+	head = list_hooks(repo, hookname, NULL);
+
+	if (!head->nr) {
+		warning(_("No hooks found for event '%s'"), hookname);
+		ret = 1; /* no hooks found */
+		goto cleanup;
+	}
+
+	for_each_string_list_item(item, head) {
+		struct hook *h = item->util;
+
+		switch (h->kind) {
+		case HOOK_TRADITIONAL:
+			printf("%s\n", _("hook from hookdir"));
+			break;
+		default:
+			BUG("unknown hook kind");
+		}
+	}
+
+cleanup:
+	hook_list_clear(head, NULL);
+	free(head);
+	return ret;
+}
 
 static int run(int argc, const char **argv, const char *prefix,
 	       struct repository *repo UNUSED)
@@ -77,6 +136,7 @@ int cmd_hook(int argc,
 	parse_opt_subcommand_fn *fn = NULL;
 	struct option builtin_hook_options[] = {
 		OPT_SUBCOMMAND("run", &fn, run),
+		OPT_SUBCOMMAND("list", &fn, list),
 		OPT_END(),
 	};
 
