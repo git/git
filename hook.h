@@ -5,6 +5,9 @@
 
 struct repository;
 
+typedef void (*cb_data_free_fn)(void *data);
+typedef void *(*cb_data_alloc_fn)(void *init_ctx);
+
 struct run_hooks_opt
 {
 	/* Environment vars to be set for each hook */
@@ -88,10 +91,30 @@ struct run_hooks_opt
 	 * It can be accessed directly via the third callback arg 'pp_task_cb':
 	 * struct ... *state = pp_task_cb;
 	 *
-	 * The caller is responsible for managing the memory for this data.
+	 * The caller is responsible for managing the memory for this data by
+	 * providing alloc/free callbacks to `run_hooks_opt`.
+	 *
 	 * Only useful when using `run_hooks_opt.feed_pipe`, otherwise ignore it.
 	 */
 	void *feed_pipe_cb_data;
+
+	/**
+	 * Some hooks need to create a fresh `feed_pipe_cb_data` internal state,
+	 * so they can keep track of progress without affecting one another.
+	 *
+	 * If provided, this function will be called to alloc & initialize the
+	 * `feed_pipe_cb_data` for each hook.
+	 *
+	 * The `feed_pipe_ctx` pointer can be used to pass initialization data.
+	 */
+	cb_data_alloc_fn feed_pipe_cb_data_alloc;
+
+	/**
+	 * Called to free the memory initialized by `feed_pipe_cb_data_alloc`.
+	 *
+	 * Must always be provided when `feed_pipe_cb_data_alloc` is provided.
+	 */
+	cb_data_free_fn feed_pipe_cb_data_free;
 };
 
 #define RUN_HOOKS_OPT_INIT { \

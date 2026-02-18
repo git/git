@@ -133,6 +133,8 @@ static int notify_hook_finished(int result,
 
 static void run_hooks_opt_clear(struct run_hooks_opt *options)
 {
+	if (options->feed_pipe_cb_data_free)
+		options->feed_pipe_cb_data_free(options->feed_pipe_cb_data);
 	strvec_clear(&options->env);
 	strvec_clear(&options->args);
 }
@@ -171,6 +173,17 @@ int run_hooks_opt(struct repository *r, const char *hook_name,
 
 	if (!options->jobs)
 		BUG("run_hooks_opt must be called with options.jobs >= 1");
+
+	/*
+	 * Ensure cb_data copy and free functions are either provided together,
+	 * or neither one is provided.
+	 */
+	if ((options->feed_pipe_cb_data_alloc && !options->feed_pipe_cb_data_free) ||
+	    (!options->feed_pipe_cb_data_alloc && options->feed_pipe_cb_data_free))
+		BUG("feed_pipe_cb_data_alloc and feed_pipe_cb_data_free must be set together");
+
+	if (options->feed_pipe_cb_data_alloc)
+		options->feed_pipe_cb_data = options->feed_pipe_cb_data_alloc(options->feed_pipe_ctx);
 
 	if (options->invoked_hook)
 		*options->invoked_hook = 0;

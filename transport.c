@@ -1357,21 +1357,36 @@ static int pre_push_hook_feed_stdin(int hook_stdin_fd, void *pp_cb UNUSED, void 
 	return 0;
 }
 
+static void *pre_push_hook_data_alloc(void *feed_pipe_ctx)
+{
+	struct feed_pre_push_hook_data *data = xmalloc(sizeof(*data));
+	strbuf_init(&data->buf, 0);
+	data->refs = (struct ref *)feed_pipe_ctx;
+	return data;
+}
+
+static void pre_push_hook_data_free(void *data)
+{
+	struct feed_pre_push_hook_data *d = data;
+	if (!d)
+		return;
+	strbuf_release(&d->buf);
+	free(d);
+}
+
 static int run_pre_push_hook(struct transport *transport,
 			     struct ref *remote_refs)
 {
 	struct run_hooks_opt opt = RUN_HOOKS_OPT_INIT;
-	struct feed_pre_push_hook_data data;
 	int ret = 0;
 
 	strvec_push(&opt.args, transport->remote->name);
 	strvec_push(&opt.args, transport->url);
 
-	strbuf_init(&data.buf, 0);
-	data.refs = remote_refs;
-
 	opt.feed_pipe = pre_push_hook_feed_stdin;
-	opt.feed_pipe_cb_data = &data;
+	opt.feed_pipe_ctx = remote_refs;
+	opt.feed_pipe_cb_data_alloc = pre_push_hook_data_alloc;
+	opt.feed_pipe_cb_data_free = pre_push_hook_data_free;
 
 	/*
 	 * pre-push hooks expect stdout & stderr to be separate, so don't merge
@@ -1380,8 +1395,6 @@ static int run_pre_push_hook(struct transport *transport,
 	opt.stdout_to_stderr = 0;
 
 	ret = run_hooks_opt(the_repository, "pre-push", &opt);
-
-	strbuf_release(&data.buf);
 
 	return ret;
 }
