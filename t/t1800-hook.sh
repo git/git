@@ -226,6 +226,18 @@ test_expect_success 'git hook list reorders on duplicate event declarations' '
 	test_cmp expected actual
 '
 
+test_expect_success 'git hook list: empty event value resets events' '
+	setup_hooks &&
+
+	# ghi is configured for pre-commit; reset it with an empty value
+	test_config hook.ghi.event "" --add &&
+
+	# only def should remain for pre-commit
+	echo "def" >expected &&
+	git hook list pre-commit >actual &&
+	test_cmp expected actual
+'
+
 test_expect_success 'hook can be configured for multiple events' '
 	setup_hooks &&
 
