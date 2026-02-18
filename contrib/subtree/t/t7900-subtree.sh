@@ -1575,6 +1575,116 @@ test_expect_success 'push split to subproj' '
 	)
 '
 
+# --ignore-joins must ignore mainline content outside of the
+# subtree. This test verifies that the logic in
+# `find_existing_splits()` correctly handles a `git subtree add`
+# In this test, the split history must not contain a commit titled
+#
+#     Add 'sub/' from commit ...
+#
+# see: dd21d43b58 (subtree: make --ignore-joins pay
+#      attention to adds, 2018-09-28)
+test_expect_success 'split --ignore-joins respects subtree add' '
+	subtree_test_create_repo "$test_count" &&
+	(
+		cd "$test_count" &&
+		test_commit main_must_not_be_in_subtree &&
+		test_create_subtree_add . mksubtree sub sub1 &&
+		test_commit sub/sub2 &&
+		test_commit main_must_not_be_in_subtree2 &&
+		git subtree split --prefix sub -b first_split --rejoin &&
+		test_commit sub/sub3 &&
+		no_ignore_joins="$(git subtree split --prefix sub -b no_ignore_joins)" &&
+		ignore_joins="$(git subtree split --prefix sub --ignore-joins -b ignore_joins)" &&
+		git checkout ignore_joins &&
+		test_path_is_file sub1.t &&
+		test_path_is_file sub2.t &&
+		test_path_is_file sub3.t &&
+		! test_path_is_file main_must_not_be_in_subtree.t &&
+		! test_path_is_file main_must_not_be_in_subtree2.t &&
+		test -z "$(git log -1 --grep "Add '''sub/''' from commit" ignore_joins)" &&
+		test "$no_ignore_joins" = "$ignore_joins" &&
+		test "$(git rev-list --count ignore_joins)" -eq 3;
+	)
+'
+
+# split excludes commits reachable from any previous --rejoin.
+# These ignored commits can still be the basis for new work
+# after the --rejoin. These commits must be processed, even
+# if they are excluded. Otherwise, the split history will be
+# incorrect.
+#
+# here, the merge
+#
+#     git merge --no-ff new_work_based_on_prejoin
+#
+# doesn't contain any subtree changes and so should not end
+# up in the split history. this subtree should be flat,
+# with no merges.
+#
+# see: 315a84f9aa (subtree: use commits before rejoins for
+#      splits, 2018-09-28)
+test_expect_success 'split links out-of-tree pre --rejoin commits with post --rejoin commits' '
+	subtree_test_create_repo "$test_count" &&
+	(
+		cd "$test_count" &&
+		test_commit main_must_not_be_in_subtree &&
+		mkdir sub &&
+		test_commit sub/sub1 &&
+		test_commit sub/sub2 &&
+		git subtree split --prefix sub --rejoin &&
+		test "$(git rev-list --count HEAD)" -eq 6 &&
+		git checkout sub/sub1 &&
+		git checkout -b new_work_based_on_prejoin &&
+		test_commit main_must_not_be_in_subtree2 &&
+		git checkout main &&
+		git merge --no-ff new_work_based_on_prejoin &&
+		test_commit sub/sub3 &&
+		git subtree split -d --prefix sub -b second_split &&
+		git checkout second_split &&
+		test_path_is_file sub1.t &&
+		test_path_is_file sub2.t &&
+		test_path_is_file sub3.t &&
+		! test_path_is_file main_must_not_be_in_subtree.t &&
+		! test_path_is_file main_must_not_be_in_subtree2.t &&
+		test "$(git rev-list --count --merges second_split)" -eq 0 &&
+		test "$(git rev-list --count second_split)" -eq 3;
+	)
+'
+
+# split must keep merge commits with unrelated histories, even
+# if both parents are treesame. When deciding whether or not
+# to eliminate a parent, copy_or_skip compares the merge-base
+# of each parent.
+#
+# in the split_of_merges branch:
+#
+#   * expect 4 commits
+#   * HEAD~ must be a merge
+#
+# see: 68f8ff8151 (subtree: improve decision on merges kept
+#      in split, 2018-09-28)
+test_expect_success 'split preserves merges with unrelated history' '
+	subtree_test_create_repo "$test_count" &&
+	(
+		cd "$test_count" &&
+		test_commit main_must_not_be_in_subtree &&
+		mkdir sub &&
+		test_commit sub/sub1 &&
+		git checkout --orphan new_history &&
+		git checkout sub/sub1 -- . &&
+		git add . &&
+		git commit -m "treesame history but not a merge-base" &&
+		git checkout main &&
+		git merge --allow-unrelated-histories --no-ff new_history &&
+		test "$(git rev-parse "HEAD^1^{tree}")" = "$(git rev-parse "HEAD^2^{tree}")" &&
+		test_commit sub/sub2 &&
+		git subtree split -d --prefix sub -b split_of_merges &&
+		test "$(git rev-list --count split_of_merges)" -eq 4 &&
+		test -n "$(git rev-list --merges HEAD~)";
+	)
+'
+
 #
 # This test covers 2 cases in subtree split copy_or_skip code
 # 1) Merges where one parent is a superset of the changes of the other
