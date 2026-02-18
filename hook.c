@@ -164,6 +164,21 @@ static int hook_config_lookup_all(const char *key, const char *value,
 		char *old = strmap_put(&data->commands, hook_name,
 				       xstrdup(value));
 		free(old);
+	} else if (!strcmp(subkey, "enabled")) {
+		switch (git_parse_maybe_bool(value)) {
+		case 0: /* disabled */
+			if (!unsorted_string_list_lookup(&data->disabled_hooks,
+							 hook_name))
+				string_list_append(&data->disabled_hooks,
+						   hook_name);
+			break;
+		case 1: /* enabled: undo a prior disabled entry */
+			unsorted_string_list_remove(&data->disabled_hooks,
+						    hook_name);
+			break;
+		default:
+			break; /* ignore unrecognised values */
+		}
 	}
 
 	free(hook_name);
@@ -215,6 +230,11 @@ static void build_hook_config_map(struct repository *r, struct strmap *cache)
 		for (size_t i = 0; i < hook_names->nr; i++) {
 			const char *hname = hook_names->items[i].string;
 			char *command;
+
+			/* filter out disabled hooks */
+			if (unsorted_string_list_lookup(&cb_data.disabled_hooks,
+							hname))
+				continue;
 
 			command = strmap_get(&cb_data.commands, hname);
 			if (!command)

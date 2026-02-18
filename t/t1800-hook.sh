@@ -318,6 +318,38 @@ test_expect_success 'rejects hooks with no commands configured' '
 	test_grep "hook.broken.command" actual
 '
 
+test_expect_success 'disabled hook is not run' '
+	test_config hook.skipped.event "test-hook" &&
+	test_config hook.skipped.command "echo \"Should not run\"" &&
+	test_config hook.skipped.enabled false &&
+
+	git hook run --ignore-missing test-hook 2>actual &&
+	test_must_be_empty actual
+'
+
+test_expect_success 'disabled hook does not appear in git hook list' '
+	test_config hook.active.event "pre-commit" &&
+	test_config hook.active.command "echo active" &&
+	test_config hook.inactive.event "pre-commit" &&
+	test_config hook.inactive.command "echo inactive" &&
+	test_config hook.inactive.enabled false &&
+
+	git hook list pre-commit >actual &&
+	test_grep "active" actual &&
+	test_grep ! "inactive" actual
+'
+
+test_expect_success 'globally disabled hook can be re-enabled locally' '
+	test_config_global hook.global-hook.event "test-hook" &&
+	test_config_global hook.global-hook.command "echo \"global-hook ran\"" &&
+	test_config_global hook.global-hook.enabled false &&
+	test_config hook.global-hook.enabled true &&
+
+	echo "global-hook ran" >expected &&
+	git hook run test-hook 2>actual &&
+	test_cmp expected actual
+'
+
 test_expect_success 'git hook run a hook with a bad shebang' '
 	test_when_finished "rm -rf bad-hooks" &&
 	mkdir bad-hooks &&
