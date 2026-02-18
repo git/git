@@ -48,7 +48,6 @@ typedef struct s_xrecord {
 typedef struct s_xdfile {
 	xrecord_t *recs;
 	size_t nrec;
-	ptrdiff_t dstart, dend;
 	bool *changed;
 	size_t *reference_index;
 	size_t nreff;
@@ -56,6 +55,8 @@ typedef struct s_xdfile {
 
 typedef struct s_xdfenv {
 	xdfile_t xdf1, xdf2;
+	size_t delta_start, delta_end;
+	size_t mph_size;
 } xdfenv_t;
 
 
