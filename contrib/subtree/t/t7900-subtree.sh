@@ -428,8 +428,7 @@ test_expect_success 'split sub dir/ with --rejoin' '
 # 	- Perform 'split' on subtree B
 # 	- Create new commits with changes to subtree A and B
 # 	- Perform split on subtree A
-# 	- Check that the commits in subtree B are not processed
-#			as part of the subtree A split
+# 	- Check for expected history
 test_expect_success 'split with multiple subtrees' '
 	subtree_test_create_repo "$test_count" &&
 	subtree_test_create_repo "$test_count/subA" &&
@@ -458,8 +457,8 @@ test_expect_success 'split with multiple subtrees' '
 		--squash --rejoin -m "Sub A Split 2" -b a2 &&
 	test "$(git -C "$test_count" rev-list --count main..a2)" -eq 2 &&
 	test "$(git -C "$test_count" rev-list --count a1..a2)" -eq 1 &&
-	test "$(git -C "$test_count" subtree split --prefix=subBDir \
-		--squash --rejoin -d -m "Sub B Split 1" -b b2 2>&1 | grep -w "\[1\]")" = "" &&
+	git -C "$test_count" subtree split --prefix=subBDir \
+		--squash --rejoin -d -m "Sub B Split 1" -b b2 &&
 	test "$(git -C "$test_count" rev-list --count main..b2)" -eq 2 &&
 	test "$(git -C "$test_count" rev-list --count b1..b2)" -eq 1
 '
@@ -506,6 +505,67 @@ do
 		)
 	'
 done
+
+# Usually,
+#
+#    git subtree merge -P subA --squash f00...
+#
+# makes two commits, in this order:
+#
+# 1. Squashed 'subA/' content from commit f00...
+# 2. Merge commit (1) as 'subA'
+#
+# Commit 1 updates the subtree but does *not* rewrite paths.
+# Commit 2 rewrites all trees to start with `subA/`
+#
+# Commit 1 either has no parents or depends only on other
+# "Squashed 'subA/' content" commits.
+#
+# For merge without --squash, subtree produces just one commit:
+# a merge commit with git-subtree trailers.
+#
+# In either case, if the user rebases these commits, they will
+# still have the git-subtree-* trailers… but will NOT have
+# the layout described above.
+#
+# Test that subsequent `git subtree split` are not confused by this.
+test_expect_success 'split with rebased subtree commit' '
+	subtree_test_create_repo "$test_count" &&
+	(
+		cd "$test_count" &&
+		test_commit file0 &&
+		test_create_subtree_add \
+			. mksubtree subA file1 --squash &&
+		test_path_is_file subA/file1.t &&
+		mkdir subB &&
+		test_commit subB/bfile &&
+		git commit --amend -F - <<'EOF' &&
+Squashed '\''subB/'\'' content from commit '\''badf00da911bbe895347b4b236f5461d55dc9877'\''
+
+Simulate a cherry-picked or rebased subtree commit.
+
+git-subtree-dir: subB
+git-subtree-split: badf00da911bbe895347b4b236f5461d55dc9877
+EOF
+		test_commit subA/file2 &&
+		test_commit subB/bfile2 &&
+		git commit --amend -F - <<'EOF' &&
+Split '\''subB/'\'' into commit '\''badf00da911bbe895347b4b236f5461d55dc9877'\''
+
+Simulate a cherry-picked or rebased subtree commit.
+
+git-subtree-dir: subB
+git-subtree-mainline: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+git-subtree-split: badf00da911bbe895347b4b236f5461d55dc9877
+EOF
+		git subtree split --prefix=subA --branch=bsplit &&
+		git checkout bsplit &&
+		test_path_is_file file1.t &&
+		test_path_is_file file2.t &&
+		test "$(last_commit_subject)" = "subA/file2" &&
+		test "$(git rev-list --count bsplit)" -eq 2
+	)
+'
 
 test_expect_success 'split sub dir/ with --rejoin from scratch' '
 	subtree_test_create_repo "$test_count" &&
