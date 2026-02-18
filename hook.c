@@ -18,6 +18,9 @@ const char *find_hook(struct repository *r, const char *name)
 
 	int found_hook;
 
+	if (!r || !r->gitdir)
+		return NULL;
+
 	repo_git_path_replace(r, &path, "hooks/%s", name);
 	found_hook = access(path.buf, X_OK) >= 0;
 #ifdef STRIP_EXTENSION
@@ -268,12 +271,18 @@ static void build_hook_config_map(struct repository *r, struct strmap *cache)
 	strmap_clear(&cb_data.event_hooks, 0);
 }
 
-/* Return the hook config map for `r`, populating it first if needed. */
+/*
+ * Return the hook config map for `r`, populating it first if needed.
+ *
+ * Out-of-repo calls (r->gitdir == NULL) allocate and return a temporary
+ * cache map; the caller is responsible for freeing it with
+ * hook_cache_clear() + free().
+ */
 static struct strmap *get_hook_config_cache(struct repository *r)
 {
 	struct strmap *cache = NULL;
 
-	if (r) {
+	if (r && r->gitdir) {
 		/*
 		 * For in-repo calls, the map is stored in r->hook_config_cache,
 		 * so repeated invocations don't parse the configs, so allocate
@@ -285,6 +294,14 @@ static struct strmap *get_hook_config_cache(struct repository *r)
 			build_hook_config_map(r, r->hook_config_cache);
 		}
 		cache = r->hook_config_cache;
+	} else {
+		/*
+		 * Out-of-repo calls (no gitdir) allocate and return a temporary
+		 * map cache which gets free'd immediately by the caller.
+		 */
+		cache = xcalloc(1, sizeof(*cache));
+		strmap_init(cache);
+		build_hook_config_map(r, cache);
 	}
 
 	return cache;
@@ -314,6 +331,15 @@ static void list_hooks_add_configured(struct repository *r,
 		hook->u.configured.command = xstrdup(command);
 
 		string_list_append(list, friendly_name)->util = hook;
+	}
+
+	/*
+	 * Cleanup temporary cache for out-of-repo calls since they can't be
+	 * stored persistently. Next out-of-repo calls will have to re-parse.
+	 */
+	if (!r || !r->gitdir) {
+		hook_cache_clear(cache);
+		free(cache);
 	}
 }
 
