@@ -2173,12 +2173,8 @@ static inline char *copy_advance(char *dst, const char *src)
 	return dst;
 }
 
-static const char *lstrip_ref_components(const char *refname, int len)
+static int normalize_component_count(const char *refname, int len)
 {
-	long remaining = len;
-	const char *start = xstrdup(refname);
-	const char *to_free = start;
-
 	if (len < 0) {
 		int i;
 		const char *p = refname;
@@ -2192,13 +2188,18 @@ static const char *lstrip_ref_components(const char *refname, int len)
 		 * because we count the number of '/', but the number
 		 * of components is one more than the no of '/').
 		 */
-		remaining = i + len + 1;
+		len = i + len + 1;
 	}
+	return len;
+}
+
+static const char *lstrip_ref_components(const char *refname, int len)
+{
+	int remaining = normalize_component_count(refname, len);
 
 	while (remaining > 0) {
-		switch (*start++) {
+		switch (*refname++) {
 		case '\0':
-			free((char *)to_free);
 			return xstrdup("");
 		case '/':
 			remaining--;
@@ -2206,42 +2207,21 @@ static const char *lstrip_ref_components(const char *refname, int len)
 		}
 	}
 
-	start = xstrdup(start);
-	free((char *)to_free);
-	return start;
+	return xstrdup(refname);
 }
 
 static const char *rstrip_ref_components(const char *refname, int len)
 {
-	long remaining = len;
-	const char *start = xstrdup(refname);
-	const char *to_free = start;
+	int remaining = normalize_component_count(refname, len);
+	const char *end = refname + strlen(refname);
 
-	if (len < 0) {
-		int i;
-		const char *p = refname;
-
-		/* Find total no of '/' separated path-components */
-		for (i = 0; p[i]; p[i] == '/' ? i++ : *p++)
-			;
-		/*
-		 * The number of components we need to strip is now
-		 * the total minus the components to be left (Plus one
-		 * because we count the number of '/', but the number
-		 * of components is one more than the no of '/').
-		 */
-		remaining = i + len + 1;
-	}
-
-	while (remaining-- > 0) {
-		char *p = strrchr(start, '/');
-		if (!p) {
-			free((char *)to_free);
+	while (remaining > 0) {
+		if (end == refname)
 			return xstrdup("");
-		} else
-			p[0] = '\0';
+		if (*--end == '/')
+			remaining--;
 	}
-	return start;
+	return xmemdupz(refname, end - refname);
 }
 
 static const char *show_ref(struct refname_atom *atom, const char *refname)
