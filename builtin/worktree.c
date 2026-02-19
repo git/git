@@ -1191,14 +1191,14 @@ static void validate_no_submodules(const struct worktree *wt)
 
 	wt_gitdir = get_worktree_git_dir(wt);
 
-	if (is_directory(worktree_git_path(the_repository, wt, "modules"))) {
+	if (is_directory(worktree_git_path(wt, "modules"))) {
 		/*
 		 * There could be false positives, e.g. the "modules"
 		 * directory exists but is empty. But it's a rare case and
 		 * this simpler check is probably good enough for now.
 		 */
 		found_submodules = 1;
-	} else if (read_index_from(&istate, worktree_git_path(the_repository, wt, "index"),
+	} else if (read_index_from(&istate, worktree_git_path(wt, "index"),
 				   wt_gitdir) > 0) {
 		for (i = 0; i < istate.cache_nr; i++) {
 			struct cache_entry *ce = istate.cache[i];
