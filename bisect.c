@@ -1180,8 +1180,7 @@ int estimate_bisect_steps(int all)
 static int mark_for_removal(const struct reference *ref, void *cb_data)
 {
 	struct string_list *refs = cb_data;
-	char *bisect_ref = xstrdup(ref->name);
-	string_list_append(refs, bisect_ref);
+	string_list_append(refs, ref->name);
 	return 0;
 }
 
@@ -1190,16 +1189,15 @@ int bisect_clean_state(void)
 	int result = 0;
 
 	/* There may be some refs packed during bisection */
-	struct string_list refs_for_removal = STRING_LIST_INIT_NODUP;
+	struct string_list refs_for_removal = STRING_LIST_INIT_DUP;
 	refs_for_each_fullref_in(get_main_ref_store(the_repository),
 				 "refs/bisect/", NULL, mark_for_removal,
 				 &refs_for_removal);
-	string_list_append(&refs_for_removal, xstrdup("BISECT_HEAD"));
-	string_list_append(&refs_for_removal, xstrdup("BISECT_EXPECTED_REV"));
+	string_list_append(&refs_for_removal, "BISECT_HEAD");
+	string_list_append(&refs_for_removal, "BISECT_EXPECTED_REV");
 	result = refs_delete_refs(get_main_ref_store(the_repository),
 				  "bisect: remove", &refs_for_removal,
 				  REF_NO_DEREF);
-	refs_for_removal.strdup_strings = 1;
 	string_list_clear(&refs_for_removal, 0);
 	unlink_or_warn(git_path_bisect_ancestors_ok());
 	unlink_or_warn(git_path_bisect_log());
