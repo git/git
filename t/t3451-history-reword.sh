@@ -203,7 +203,7 @@ test_expect_success 'can reword a merge commit' '
 
 		# It is not possible to replay merge commits embedded in the
 		# history (yet).
-		test_must_fail git history reword HEAD~ 2>err &&
+		test_must_fail git -c core.editor=false history reword HEAD~ 2>err &&
 		test_grep "replaying merge commits is not supported yet" err &&
 
 		# But it is possible to reword a merge commit directly.
@@ -221,7 +221,7 @@ test_expect_success 'can reword a merge commit' '
 	)
 '
 
-test_expect_success '--ref-action=print prints ref updates without modifying repo' '
+test_expect_success '--dry-run prints ref updates without modifying repo' '
 	test_when_finished "rm -rf repo" &&
 	git init repo --initial-branch=main &&
 	(
@@ -233,7 +233,15 @@ test_expect_success '--ref-action=print prints ref updates without modifying rep
 		test_commit theirs &&
 
 		git refs list >refs-expect &&
-		reword_with_message --ref-action=print base >updates <<-\EOF &&
+		reword_with_message --dry-run --update-refs=head base >updates <<-\EOF &&
+		reworded commit
+		EOF
+		git refs list >refs-actual &&
+		test_cmp refs-expect refs-actual &&
+		test_grep "update refs/heads/branch" updates &&
+		test_grep ! "update refs/heads/main" updates &&
+
+		reword_with_message --dry-run base >updates <<-\EOF &&
 		reworded commit
 		EOF
 		git refs list >refs-actual &&
@@ -250,7 +258,7 @@ test_expect_success '--ref-action=print prints ref updates without modifying rep
 	)
 '
 
-test_expect_success '--ref-action=head updates only HEAD' '
+test_expect_success '--update-refs=head updates only HEAD' '
 	test_when_finished "rm -rf repo" &&
 	git init repo --initial-branch=main &&
 	(
@@ -263,10 +271,10 @@ test_expect_success '--ref-action=head updates only HEAD' '
 
 		# When told to update HEAD, only, the command will refuse to
 		# rewrite commits that are not an ancestor of HEAD.
-		test_must_fail git history reword --ref-action=head theirs 2>err &&
+		test_must_fail git -c core.editor=false history reword --update-refs=head theirs 2>err &&
 		test_grep "rewritten commit must be an ancestor of HEAD" err &&
 
-		reword_with_message --ref-action=head base >updates <<-\EOF &&
+		reword_with_message --update-refs=head base >updates <<-\EOF &&
 		reworded base
 		EOF
 		expect_log HEAD <<-\EOF &&
