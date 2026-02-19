@@ -7096,7 +7096,7 @@ msgstr "对于损坏的工作区，追加 <标记>（默认：\"-broken\"）"
 
 #: builtin/describe.c
 msgid "No names found, cannot describe anything."
-msgstr "没有发现名称，无法描述任何东西。"
+msgstr "没有发现名称，无法描述任何玩意。"
 
 #: builtin/describe.c
 #, c-format
@@ -11305,7 +11305,7 @@ msgstr "无法解析为树对象 '%s'"
 
 #: builtin/merge-tree.c builtin/merge.c
 msgid "not something we can merge"
-msgstr "不是可以合并的东西"
+msgstr "不是可以合并的玩意"
 
 #: builtin/merge-tree.c builtin/merge.c
 msgid "refusing to merge unrelated histories"
@@ -22722,7 +22722,7 @@ msgstr "必须对 sub-filter-spec 中的字符进行转义：'%c'"
 
 #: list-objects-filter-options.c
 msgid "expected something after combine:"
-msgstr "期望在组合后有一些东西："
+msgstr "期望在组合后有一些玩意："
 
 #: list-objects-filter-options.c
 msgid "multiple filter-specs cannot be combined"
