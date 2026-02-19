@@ -1206,6 +1206,7 @@ endif
 
 test_environment = script_environment
 test_environment.set('GIT_BUILD_DIR', git_build_dir)
+test_environment.set('MERGE_TOOLS_DIR', meson.project_source_root() / 'mergetools')
 
 foreach integration_test : integration_tests
   test(fs.stem(integration_test), shell,
