@@ -594,6 +594,15 @@ EOF
 	test_cmp expected actual
 '
 
+test_expect_success 'rebase in a linked worktree' '
+	test_might_fail git rebase --abort &&
+	git worktree add wt &&
+	test_when_finished "test_might_fail git -C wt rebase --abort;
+				git worktree remove wt" &&
+	GIT_SEQUENCE_EDITOR="echo break >" git -C wt rebase -i HEAD &&
+	git -C wt status >actual &&
+	test_grep "interactive rebase in progress" actual
+'
 
 test_expect_success 'prepare am_session' '
 	git reset --hard main &&
