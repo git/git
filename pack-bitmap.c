@@ -3328,15 +3328,26 @@ void for_each_preferred_bitmap_tip(struct repository *repo,
 {
 	struct string_list_item *item;
 	const struct string_list *preferred_tips;
+	struct strbuf buf = STRBUF_INIT;
 
 	preferred_tips = bitmap_preferred_tips(repo);
 	if (!preferred_tips)
 		return;
 
 	for_each_string_list_item(item, preferred_tips) {
+		const char *pattern = item->string;
+
+		if (!ends_with(pattern, "/")) {
+			strbuf_reset(&buf);
+			strbuf_addf(&buf, "%s/", pattern);
+			pattern = buf.buf;
+		}
+
 		refs_for_each_ref_in(get_main_ref_store(repo),
-				     item->string, cb, cb_data);
+				     pattern, cb, cb_data);
 	}
+
+	strbuf_release(&buf);
 }
 
 int bitmap_is_preferred_refname(struct repository *r, const char *refname)
