@@ -298,7 +298,7 @@ jobs:
         path: build
     - name: Test
       shell: bash
-      run: ci/run-test-slice-meson.sh build ${{matrix.nr}} 10
+      run: ci/run-test-slice-meson.sh build $((${{matrix.nr}} + 1)) 10
     - name: print test failures
       if: failure() && env.FAILED_TEST_ARTIFACTS != ''
       shell: bash
