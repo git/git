@@ -54,6 +54,7 @@ static enum help_action {
 	HELP_ACTION_DEVELOPER_INTERFACES,
 	HELP_ACTION_CONFIG_FOR_COMPLETION,
 	HELP_ACTION_CONFIG_SECTIONS_FOR_COMPLETION,
+	HELP_ACTION_ALIASES_FOR_COMPLETION,
 } cmd_mode;
 
 static char *html_path;
@@ -90,6 +91,8 @@ static struct option builtin_help_options[] = {
 		    HELP_ACTION_CONFIG_FOR_COMPLETION, PARSE_OPT_HIDDEN),
 	OPT_CMDMODE_F(0, "config-sections-for-completion", &cmd_mode, "",
 		    HELP_ACTION_CONFIG_SECTIONS_FOR_COMPLETION, PARSE_OPT_HIDDEN),
+	OPT_CMDMODE_F(0, "aliases-for-completion", &cmd_mode, "",
+		    HELP_ACTION_ALIASES_FOR_COMPLETION, PARSE_OPT_HIDDEN),
 
 	OPT_END(),
 };
@@ -691,6 +694,16 @@ int cmd_help(int argc,
 			       help_format);
 		list_config_help(SHOW_CONFIG_SECTIONS);
 		return 0;
+	case HELP_ACTION_ALIASES_FOR_COMPLETION: {
+		struct string_list alias_list = STRING_LIST_INIT_DUP;
+		opt_mode_usage(argc, "--aliases-for-completion", help_format);
+		list_aliases(&alias_list);
+		for (size_t i = 0; i < alias_list.nr; i++)
+			printf("%s%c%s%c", alias_list.items[i].string, '\n',
+			       (char *)alias_list.items[i].util, '\0');
+		string_list_clear(&alias_list, 1);
+		return 0;
+	}
 	case HELP_ACTION_CONFIG:
 		opt_mode_usage(argc, "--config", help_format);
 		setup_pager(the_repository);
