@@ -4,15 +4,6 @@ test_description='test git repo-info'
 
 . ./test-lib.sh
 
-# git-repo-info keys. It must contain the same keys listed in the const
-# repo_info_fields, in lexicographical order.
-REPO_INFO_KEYS='
-	layout.bare
-	layout.shallow
-	object.format
-	references.format
-'
-
 # Test whether a key-value pair is correctly returned
 #
 # Usage: test_repo_info <label> <init command> <repo_name> <key> <expected value>
@@ -34,7 +25,7 @@ test_repo_info () {
 		eval "$init_command $repo_name"
 	'
 
-	test_expect_success "keyvalue: $label" '
+	test_expect_success "lines: $label" '
 		echo "$key=$expected_value" > expect &&
 		git -C "$repo_name" repo info "$key" >actual &&
 		test_cmp expect actual
@@ -115,12 +106,12 @@ test_expect_success '-z uses nul-terminated format' '
 
 test_expect_success 'git repo info uses the last requested format' '
 	echo "layout.bare=false" >expected &&
-	git repo info --format=nul -z --format=keyvalue layout.bare >actual &&
+	git repo info --format=nul -z --format=lines layout.bare >actual &&
 	test_cmp expected actual
 '
 
-test_expect_success 'git repo info --all returns all key-value pairs' '
-	git repo info $REPO_INFO_KEYS >expect &&
+test_expect_success 'git repo info --all and git repo info $(git repo info --keys) output the same data' '
+	git repo info $(git repo info --keys) >expect &&
 	git repo info --all >actual &&
 	test_cmp expect actual
 '
@@ -128,6 +119,33 @@ test_expect_success 'git repo info --all returns all key-value pairs' '
 test_expect_success 'git repo info --all <key> aborts' '
 	echo "fatal: --all and <key> cannot be used together" >expect &&
 	test_must_fail git repo info --all object.format 2>actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'git repo info --keys --format=nul uses nul-terminated output' '
+	git repo info --keys --format=lines >lines &&
+	lf_to_nul <lines >expect &&
+	git repo info --keys --format=nul >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'git repo info --keys aborts when using --format other than lines or nul' '
+	echo "fatal: --keys can only be used with --format=lines or --format=nul" >expect &&
+	test_must_fail git repo info --keys --format=table 2>actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'git repo info --keys aborts when requesting keys' '
+	echo "fatal: --keys cannot be used with a <key> or --all" >expect &&
+	test_must_fail git repo info --keys --all 2>actual_all &&
+	test_must_fail git repo info --keys some.key 2>actual_key &&
+	test_cmp expect actual_all &&
+	test_cmp expect actual_key
+'
+
+test_expect_success 'git repo info --keys uses lines as its default output format' '
+	git repo info --keys --format=lines >expect &&
+	git repo info --keys >actual &&
 	test_cmp expect actual
 '
 
