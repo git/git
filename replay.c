@@ -11,6 +11,12 @@
 #include "strmap.h"
 #include "tree.h"
 
+/*
+ * We technically need USE_THE_REPOSITORY_VARIABLE for DEFAULT_ABBREV, but
+ * do not want to use the_repository.
+ */
+#define the_repository DO_NOT_USE_THE_REPOSITORY
+
 static const char *short_commit_name(struct repository *repo,
 				     struct commit *commit)
 {
