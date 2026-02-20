@@ -1837,6 +1837,7 @@ static void emit_rewrite_diff(const char *name_a,
 	const char *a_prefix, *b_prefix;
 	char *data_one, *data_two;
 	size_t size_one, size_two;
+	unsigned ws_rule;
 	struct emit_callback ecbdata;
 	struct strbuf out = STRBUF_INIT;
 
@@ -1859,9 +1860,15 @@ static void emit_rewrite_diff(const char *name_a,
 	size_one = fill_textconv(o->repo, textconv_one, one, &data_one);
 	size_two = fill_textconv(o->repo, textconv_two, two, &data_two);
 
+	ws_rule = whitespace_rule(o->repo->index, name_b);
+
+	/* symlink being an incomplete line is not a news */
+	if (DIFF_FILE_VALID(two) && S_ISLNK(two->mode))
+		ws_rule &= ~WS_INCOMPLETE_LINE;
+
 	memset(&ecbdata, 0, sizeof(ecbdata));
 	ecbdata.color_diff = o->use_color;
-	ecbdata.ws_rule = whitespace_rule(o->repo->index, name_b);
+	ecbdata.ws_rule = ws_rule;
 	ecbdata.opt = o;
 	if (ecbdata.ws_rule & WS_BLANK_AT_EOF) {
 		mmfile_t mf1, mf2;
@@ -3759,6 +3766,7 @@ static void builtin_diff(const char *name_a,
 		xpparam_t xpp;
 		xdemitconf_t xecfg;
 		struct emit_callback ecbdata;
+		unsigned ws_rule;
 		const struct userdiff_funcname *pe;
 
 		if (must_show_header) {
@@ -3769,6 +3777,12 @@ static void builtin_diff(const char *name_a,
 
 		mf1.size = fill_textconv(o->repo, textconv_one, one, &mf1.ptr);
 		mf2.size = fill_textconv(o->repo, textconv_two, two, &mf2.ptr);
+
+		ws_rule = whitespace_rule(o->repo->index, name_b);
+
+		/* symlink being an incomplete line is not a news */
+		if (DIFF_FILE_VALID(two) && S_ISLNK(two->mode))
+			ws_rule &= ~WS_INCOMPLETE_LINE;
 
 		pe = diff_funcname_pattern(o, one);
 		if (!pe)
@@ -3781,7 +3795,7 @@ static void builtin_diff(const char *name_a,
 			lbl[0] = NULL;
 		ecbdata.label_path = lbl;
 		ecbdata.color_diff = o->use_color;
-		ecbdata.ws_rule = whitespace_rule(o->repo->index, name_b);
+		ecbdata.ws_rule = ws_rule;
 		if (ecbdata.ws_rule & WS_BLANK_AT_EOF)
 			check_blank_at_eof(&mf1, &mf2, &ecbdata);
 		ecbdata.opt = o;
@@ -3987,6 +4001,10 @@ static void builtin_checkdiff(const char *name_a, const char *name_b,
 	data.o = o;
 	data.ws_rule = whitespace_rule(o->repo->index, attr_path);
 	data.conflict_marker_size = ll_merge_marker_size(o->repo->index, attr_path);
+
+	/* symlink being an incomplete line is not a news */
+	if (DIFF_FILE_VALID(two) && S_ISLNK(two->mode))
+		data.ws_rule &= ~WS_INCOMPLETE_LINE;
 
 	if (fill_mmfile(o->repo, &mf1, one) < 0 ||
 	    fill_mmfile(o->repo, &mf2, two) < 0)
