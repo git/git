@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Feb 2026, #06)
-X-master-at: 73fd77805fc6406f31c36212846d9e2541d19321
-X-next-at: f7e9f6c205466443107228e036b20acb7baa8c50
+Subject: What's cooking in git.git (Feb 2026, #07)
+X-master-at: 7c02d39fc2ed2702223c7674f73150d9a7e61ba4
+X-next-at: 4a7958ca1415077ce9b1d0a38223ede55da779d9
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Feb 2026, #06)
+What's cooking in git.git (Feb 2026, #07)
 -----------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -50,122 +50,325 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* bk/t2003-modernise (2026-02-09) 1 commit
-  (merged to 'next' on 2026-02-10 at 561a73205e)
- + t2003: modernize path existence checks using test helpers
+* ak/t9812-test-path-is-helpers (2026-02-11) 1 commit
+  (merged to 'next' on 2026-02-13 at a9746d98e4)
+ + t9812: modernize test path helpers
 
  Test update.
- source: <20260209112444.1268765-1-bkkaracay@gmail.com>
+ source: <20260212054530.4763-1-ashwanikamal.im421@gmail.com>
 
 
-* ja/doc-synopsis-style-even-more (2026-02-05) 4 commits
-  (merged to 'next' on 2026-02-09 at d732b9d6a0)
- + doc: convert git-show to synopsis style
- + doc: fix some style issues in git-clone and for-each-ref-options
- + doc: finalize git-clone documentation conversion to synopsis style
- + doc: convert git-submodule to synopsis style
+* jc/doc-cg-c-comment (2026-02-11) 1 commit
+  (merged to 'next' on 2026-02-12 at d1286b26eb)
+ + CodingGuidelines: document // comments
 
- A handful of documentation pages have been modernized to use the
- "synopsis" style.
- source: <pull.2036.v4.git.1770351146.gitgitgadget@gmail.com>
+ A CodingGuidelines update.
+ source: <xmqqikc3t7hf.fsf@gitster.g>
 
 
-* jc/doc-rerere-update (2026-02-09) 1 commit
-  (merged to 'next' on 2026-02-10 at 88a6c151d7)
- + rerere: minor documantation update
+* pw/diff-anchored-optim (2026-02-12) 1 commit
+  (merged to 'next' on 2026-02-13 at a8e8191f03)
+ + diff --anchored: avoid checking unmatched lines
 
- Doc update.
- source: <xmqqikc54vse.fsf@gitster.g>
-
-
-* kh/doc-rerere-options-xref (2026-02-10) 1 commit
-  (merged to 'next' on 2026-02-10 at 1ade94535a)
- + doc: rerere-options.adoc: link to git-rerere(1)
-
- Doc update.
- source: <V2_doc_link_rerere.34f@msgid.xyz>
+ "git diff --anchored=<text>" has been optimized.
+ source: <2a8cc2d6c37f25a58823b501500165d597321749.1770911599.git.phillip.wood@dunelm.org.uk>
 
 
-* pc/lockfile-pid (2026-01-22) 1 commit
-  (merged to 'next' on 2026-02-09 at 87bfa08d16)
- + lockfile: add PID file for debugging stale locks
+* pw/xdiff-cleanups (2026-01-26) 2 commits
+  (merged to 'next' on 2026-02-11 at e6df42d605)
+ + xdiff: remove unused data from xdlclass_t
+ + xdiff: remove "line_hash" field from xrecord_t
 
- Allow recording process ID of the process that holds the lock next
- to a lockfile for diagnosis.
- source: <pull.2011.v6.git.1769109815197.gitgitgadget@gmail.com>
+ Small clean-up of xdiff library to remove unnecessary data
+ duplication.
+ source: <cover.1769424529.git.phillip.wood@dunelm.org.uk>
 
+--------------------------------------------------
+[Stalled]
 
-* rs/clean-includes (2026-02-08) 1 commit
-  (merged to 'next' on 2026-02-10 at 883d07f2eb)
- + remove duplicate includes
-
- Clean up redundant includes of header files.
- source: <280325e3-401c-47c7-98cf-c5cc7f719ee4@web.de>
-
-
-* rs/commit-commit-stack (2026-02-08) 1 commit
-  (merged to 'next' on 2026-02-10 at c1a50b2859)
- + commit: use commit_stack
-
- Code clean-up to use the commit_stack API.
- source: <db40d132-14ca-4749-937a-9410ecc17dde@web.de>
+These topics have been sitting without activity for too long.  They
+may have to be discarded unless something new happens to them soon.
 
 
-* rs/version-wo-the-repository (2026-02-08) 1 commit
-  (merged to 'next' on 2026-02-10 at 80809d2b3d)
- + version: stop using the_repository
+* tt/receive-pack-oo-namespace-symref-fix (2025-12-27) 1 commit
+ - receive-pack: fix crash on out-of-namespace symref
 
- Code clean-up.
- source: <afccdc3a-8672-49a7-b260-e77e617d8976@web.de>
+ "git receive-pack", when namespace is involved, segfaulted when a
+ symbolic ref cross the namespace boundary.
 
-
-* rs/xdiff-wo-the-repository (2026-02-09) 1 commit
-  (merged to 'next' on 2026-02-10 at dbb8a23008)
- + xdiff-interface: stop using the_repository
-
- Reduce dependency on the_repository of xdiff-interface layer.
- source: <59fe4ac7-605d-4eae-b13c-46996dd8814e@web.de>
+ May not be a good idea after all.  A controlled death would be OK, though.
+ cf. <xmqqbjjgiz3a.fsf@gitster.g>
+ source: <pull.2144.git.git.1766850014289.gitgitgadget@gmail.com>
 
 
-* sd/t7003-test-path-is-helpers (2026-02-09) 1 commit
-  (merged to 'next' on 2026-02-10 at 5e3bc9f2b9)
- + t7003: modernize path existence checks using test helpers
+* pt/fsmonitor-linux (2025-12-31) 1 commit
+ - fsmonitor: implement filesystem change listener for Linux
 
- Test updates.
- source: <20260209172445.39536-1-valusoutrik@gmail.com>
+ The fsmonitor daemon has been implemented for Linux.
+
+ Comments?
+ cf. <aVuplzNaoCHlZG3S@pks.im>
+ source: <pull.2147.v4.git.git.1767202894884.gitgitgadget@gmail.com>
 
 
-* yt/merge-file-outside-a-repository (2026-02-07) 1 commit
-  (merged to 'next' on 2026-02-10 at ee1ced4120)
- + merge-file: honor merge.conflictStyle outside of a repository
+* pt/t7527-flake-workaround (2025-12-31) 1 commit
+ - t7527: fix flaky fsmonitor event tests with retry logic
 
- "git merge-file" can be run outside a repository, but it ignored
- all configuration, even the per-user ones.  The command now uses
- available configuration files to find its customization.
- source: <3488DCC3-D127-465B-BB95-3D87BB2E48F6@ytausch.de>
+ Test fixup.
+
+ Comments?
+ source: <pull.2150.v2.git.git.1767226763360.gitgitgadget@gmail.com>
+
+
+* hn/status-compare-with-push (2026-01-22) 3 commits
+ - status: add status.compareBranches config for multiple branch comparisons
+ - refactor format_branch_comparison in preparation
+ - Merge branch 'jk/remote-tracking-ref-leakfix' into hn/status-compare-with-push
+
+ "git status" learned to show comparison between the current branch
+ and its push destination as well as its upstream, when the two are
+ different (i.e., triangular workflow).
+
+ What's the status of this topic?
+ cf. <20260122220154.GA2107958@coredump.intra.peff.net>
+ source: <pull.2138.v28.git.git.1769112471.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [New Topics]
 
-* dk/meson-regen-config-list (2026-02-16) 1 commit
- - meson: regenerate config-list.h when Documentation changes
+* ap/use-test-seq-f-more (2026-02-18) 1 commit
+  (merged to 'next' on 2026-02-20 at d847fcad1e)
+ + t: use test_seq -f and pipes in a few more places
+
+ Test clean-up.
+
+ Will merge to 'master'.
+ source: <20260218181019.1705160-1-aplattner@nvidia.com>
+
+
+* bk/mailmap-wo-the-repository (2026-02-19) 2 commits
+ - mailmap: drop global config variables
+ - mailmap: stop using the_repository
+
+ Wean the mailmap code off of the_repository dependency.
+
+ Will merge to 'next'?
+ source: <20260220060442.29469-1-bkkaracay@gmail.com>
+
+
+* db/doc-fetch-jobs-auto (2026-02-18) 1 commit
+  (merged to 'next' on 2026-02-20 at 4e20a85963)
+ + doc: fetch: document `--jobs=0` behavior
+
+ Doc update.
+
+ Will merge to 'master'.
+ source: <pull.2047.git.1771443159369.gitgitgadget@gmail.com>
+
+
+* jt/object-file-use-container-of (2026-02-18) 1 commit
+  (merged to 'next' on 2026-02-20 at 7a30cb262f)
+ + object-file: use `container_of()` to convert from base types
+
+ Code clean-up.
+
+ Will merge to 'master'.
+ source: <20260218210120.1146078-1-jltobler@gmail.com>
+
+
+* kh/format-patch-noprefix-is-boolean (2026-02-18) 2 commits
+ - doc: diff-options.adoc: show format.noprefix for format-patch
+ - format-patch: make format.noprefix a boolean
+
+ The configuration variable format.noprefix did not behave as a
+ proper boolean variable, which has now been fixed and documented.
+
+ Will merge to 'next'?
+ cf. <xmqqy0ko626g.fsf@gitster.g>
+ source: <CV_format.noprefix_boolean.39c@msgid.xyz>
+
+
+* mf/format-patch-honor-from-for-cover-letter (2026-02-17) 1 commit
+  (merged to 'next' on 2026-02-20 at d3efdd79b2)
+ + format-patch: fix From header in cover letter
+
+ "git format-patch --from=<me>" did not honor the command line
+ option when writing out the cover letter, which has been corrected.
+
+ Will merge to 'master'.
+ source: <20260217232519.24898-1-mroik@delayed.space>
+
+
+* pw/no-more-NULL-means-current-worktree (2026-02-19) 2 commits
+ - path: remove repository argument from worktree_git_path()
+ - wt-status: avoid passing NULL worktree
+
+ API clean-up for the worktree subsystem.
+
+ Will merge to 'next'?
+ cf. <xmqqv7fs4jlp.fsf@gitster.g>
+ source: <cover.1771511192.git.phillip.wood@dunelm.org.uk>
+
+
+* cs/subtree-split-fixes (2026-02-17) 3 commits
+ - contrib/subtree: process out-of-prefix subtrees
+ - contrib/subtree: test history depth
+ - contrib/subtree: capture additional test-cases
+
+ An earlier attempt to optimize "git subtree" discarded too much
+ relevant histories, which has been corrected.
+
+ Will merge to next?
+ source: <20260217-cs-subtree-remove-optimization-v2-0-4299e71a30c6@howdoi.land>
+
+
+* dt/send-email-client-cert (2026-02-20) 1 commit
+ - send-mail: add client certificate options
+
+ "git send-email" learns to support use of client-side certificates.
+
+ Expecting a (hopefully small and final) reroll?
+ cf. <xmqqh5rbz83b.fsf@gitster.g>
+ source: <20260220081717.555185-2-dxdt@dev.snart.me>
+
+
+* en/merge-ort-almost-wo-the-repository (2026-02-19) 6 commits
+ - replay: prevent the_repository from coming back
+ - merge-ort: prevent the_repository from coming back
+ - merge-ort: replace the_hash_algo with opt->repo->hash_algo
+ - merge-ort: replace the_repository with opt->repo
+ - merge-ort: pass repository to write_tree()
+ - merge,diff: remove the_repository check before prefetching blobs
+
+ Mark the marge-ort codebase to prevent more uses of the_repository
+ from getting added.
+
+ Expecting a reroll.
+ cf. <CABPp-BGR5Mrm30sSb9Y96VkFC5-XFTYkoAp60LMAf6gCgW3QEg@mail.gmail.com>
+ source: <pull.2048.v2.git.1771552788.gitgitgadget@gmail.com>
+
+
+* jr/apply-directory-normalize (2026-02-17) 1 commit
+ - apply: normalize path in --directory argument
+
+ "git apply --directory=./un/../normalized/path" now normalizes the
+ given path before using it.
+
+ Will merge to 'next'?
+ source: <pull.2198.v2.git.git.1771373732749.gitgitgadget@gmail.com>
+
+
+* lo/repo-leftover-bits (2026-02-18) 9 commits
+ - Documentation/git-repo: capitalize format descriptions
+ - Documentation/git-repo: replace 'NUL' with '_NUL_'
+ - t1901: use tr in git repo structure output instead of expected value
+ - t1900: rename t1900-repo to t1900-repo-info
+ - repo: rename struct field to repo_info_field
+ - repo: replace get_value_fn_for_key by get_repo_info_field
+ - repo: rename repo_info_fields to repo_info_field
+ - CodingGuidelines: instruct to name arrays in singular
+ - Merge branch 'lo/repo-info-keys' into lo/repo-leftover-bits
+ (this branch uses lo/repo-info-keys.)
+
+ Clean-up the code around "git repo info" command.
+
+ Expecting a (hopefully small and final) reroll?
+ cf. <aZgzmlVfuXgI2UJ9@pks.im>
+ cf. <CAPig+cRHm1vDABoHNKiuBRRsvk90Z1qGeeu3DT3VHdzEfJeP=g@mail.gmail.com>
+ source: <20260218211845.96009-1-lucasseikioshiro@gmail.com>
+
+
+* ps/maintenance-geometric-default (2026-02-20) 8 commits
+ - builtin/maintenance: use "geometric" strategy by default
+ - t7900: prepare for switch of the default strategy
+ - t6500: explicitly use "gc" strategy
+ - t5510: explicitly use "gc" strategy
+ - t5400: explicitly use "gc" strategy
+ - t34xx: don't expire reflogs where it matters
+ - t: disable maintenance where we verify object database structure
+ - t: fix races caused by background maintenance
+
+ "git maintenance" starts using the "geometric" strategy by default.
+
+ Comments?
+ source: <20260220-b4-pks-maintenance-default-geometric-strategy-v1-0-faeb321ad13b@pks.im>
+
+
+* ps/refs-for-each (2026-02-20) 18 commits
+ - refs: replace `refs_for_each_fullref_in()`
+ - refs: replace `refs_for_each_namespaced_ref()`
+ - refs: replace `refs_for_each_glob_ref()`
+ - refs: replace `refs_for_each_glob_ref_in()`
+ - refs: replace `refs_for_each_rawref_in()`
+ - refs: replace `refs_for_each_rawref()`
+ - refs: replace `refs_for_each_ref_in()`
+ - refs: improve verification for-each-ref options
+ - refs: generalize `refs_for_each_fullref_in_prefixes()`
+ - refs: generalize `refs_for_each_namespaced_ref()`
+ - refs: speed up `refs_for_each_glob_ref_in()`
+ - refs: introduce `refs_for_each_ref_ext`
+ - refs: remove unused `refs_for_each_include_root_ref()`
+ - refs: rename `each_ref_fn`
+ - refs: rename `do_for_each_ref_flags`
+ - refs: move `do_for_each_ref_flags` further up
+ - refs: move `refs_head_ref_namespaced()`
+ - Merge branch 'ps/for-each-ref-in-fixes' into ps/refs-for-each
+ (this branch uses ps/for-each-ref-in-fixes.)
+
+ Code refactoring around refs-for-each-* API functions.
+
+ Comments?
+ source: <20260220-pks-refs-for-each-unification-v1-0-17170bd99de1@pks.im>
+
+
+* sa/replay-revert (2026-02-18) 2 commits
+ - replay: add --revert mode to reverse commit changes
+ - sequencer: extract revert message formatting into shared function
+
+ "git replay" (experimental) learns, in addition to "pick" and
+ "replay", a new operating mode "revert".
+
+ Expecting a reroll?
+ cf. <87wm07e4ck.fsf@iotcl.com>
+ cf. <87tsvbe2sm.fsf@iotcl.com>
+ source: <20260218234215.89326-1-siddharthasthana31@gmail.com>
+
+
+* sp/tree-diff-wo-the-repository (2026-02-20) 1 commit
+ - tree-diff: remove the usage of the_hash_algo global
+
+ The last uses of the_repository in "tree-diff.c" have been
+ eradicated.
+
+ Will merge to 'next'?
+ source: <20260220175331.1250726-1-shreyanshpaliwalcmsmn@gmail.com>
+
+--------------------------------------------------
+[Cooking]
+
+* dk/meson-regen-config-list (2026-02-18) 1 commit
+ - build: regenerate config-list.h when Documentation changes
 
  Fix dependency screw-up in meson-based builds
 
  Will merge to 'next'?
- source: <9cdcc9de04f0f8fff657f0474b31c063466ed808.1771280837.git.ben.knoble+github@gmail.com>
+ source: <611a94cd988e3795bc63dba2f1b270aa0d058bd2.1771425395.git.ben.knoble+github@gmail.com>
 
 
-* jk/ref-filter-lrstrip-optim (2026-02-15) 4 commits
- - ref-filter: avoid strrchr() in rstrip_ref_components()
- - ref-filter: simplify rstrip_ref_components() memory handling
- - ref-filter: simplify lstrip_ref_components() memory handling
- - ref-filter: factor out refname component counting
+* jk/ref-filter-lrstrip-optim (2026-02-19) 5 commits
+  (merged to 'next' on 2026-02-20 at 88c2fb76b8)
+ + ref-filter: clarify lstrip/rstrip component counting
+  (merged to 'next' on 2026-02-19 at 6efc8a2023)
+ + ref-filter: avoid strrchr() in rstrip_ref_components()
+ + ref-filter: simplify rstrip_ref_components() memory handling
+ + ref-filter: simplify lstrip_ref_components() memory handling
+ + ref-filter: factor out refname component counting
 
  Code clean-up.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20260215085755.GA86262@coredump.intra.peff.net>
+ source: <20260220060003.GA26256@coredump.intra.peff.net>
 
 
 * ps/receive-pack-shallow-optim (2026-02-16) 3 commits
@@ -179,7 +382,7 @@ Release tarballs are available at:
  source: <20260216-b4-pks-receive-pack-optimize-shallow-v1-0-e98886daff2b@pks.im>
 
 
-* sp/wt-status-wo-the-repository (2026-02-17) 3 commits
+* sp/wt-status-wo-the-repository (2026-02-18) 3 commits
  - wt-status: use hash_algo from local repository instead of global the_hash_algo
  - wt-status: replace uses of the_repository with local repository instances
  - wt-status: pass struct repository through function parameters
@@ -188,21 +391,21 @@ Release tarballs are available at:
  variables of wt-status code path.
 
  Will merge to 'next'?
- source: <20260217173037.63438-1-shreyanshpaliwalcmsmn@gmail.com>
+ source: <20260218175654.66004-1-shreyanshpaliwalcmsmn@gmail.com>
 
 
-* vp/http-rate-limit-retries (2026-02-17) 3 commits
+* vp/http-rate-limit-retries (2026-02-18) 5 commits
  - http: add support for HTTP 429 rate limit retries
  - remote-curl: introduce show_http_message_fatal() helper
- - strbuf: fix incorrect alloc size in strbuf_reencode()
+ - strbuf: replace strbuf_grow() in strbuf_attach() with BUG() check
+ - strbuf_attach: fix all call sites to pass correct alloc
+ - strbuf: pass correct alloc to strbuf_attach() in strbuf_reencode()
 
  The HTTP transport learned to react to "429 Too Many Requests".
 
  Comments?
- source: <pull.2008.v3.git.1771326521.gitgitgadget@gmail.com>
+ source: <pull.2008.v4.git.1771423748.gitgitgadget@gmail.com>
 
---------------------------------------------------
-[Cooking]
 
 * ps/pack-concat-wo-backfill (2026-02-11) 1 commit
   (merged to 'next' on 2026-02-17 at 221d0623a2)
@@ -216,16 +419,6 @@ Release tarballs are available at:
  source: <20260211-pks-pack-objects-stdin-skip-backfill-fetch-v1-1-870cad56d8ae@pks.im>
 
 
-* jc/doc-cg-c-comment (2026-02-11) 1 commit
-  (merged to 'next' on 2026-02-12 at d1286b26eb)
- + CodingGuidelines: document // comments
-
- A CodingGuidelines update.
-
- Will merge to 'master'.
- source: <xmqqikc3t7hf.fsf@gitster.g>
-
-
 * jc/doc-cg-needswork (2026-02-12) 1 commit
   (merged to 'next' on 2026-02-17 at 5e35bc87bd)
  + CodingGuidelines: document NEEDSWORK comments
@@ -236,27 +429,18 @@ Release tarballs are available at:
  source: <xmqqldgxmzbj.fsf@gitster.g>
 
 
-* jh/alias-i18n (2026-02-16) 4 commits
- - completion: fix zsh alias listing for subsection aliases
- - alias: support non-alphanumeric names via subsection syntax
- - alias: prepare for subsection aliases
- - help: use list_aliases() for alias listing
+* jh/alias-i18n (2026-02-18) 4 commits
+  (merged to 'next' on 2026-02-20 at b9a5c15c4f)
+ + completion: fix zsh alias listing for subsection aliases
+ + alias: support non-alphanumeric names via subsection syntax
+ + alias: prepare for subsection aliases
+ + help: use list_aliases() for alias listing
 
  Extend the alias configuration syntax to allow aliases using
  characters outside ASCII alphanumeric (plus '-').
 
- Will merge to 'next'?
- source: <20260216161513.2533141-1-jonatan@jontes.page>
-
-
-* ak/t9812-test-path-is-helpers (2026-02-11) 1 commit
-  (merged to 'next' on 2026-02-13 at a9746d98e4)
- + t9812: modernize test path helpers
-
- Test update.
-
  Will merge to 'master'.
- source: <20260212054530.4763-1-ashwanikamal.im421@gmail.com>
+ source: <20260218215737.1181147-1-jonatan@jontes.page>
 
 
 * hy/diff-lazy-fetch-with-break-fix (2026-02-12) 2 commits
@@ -268,31 +452,22 @@ Release tarballs are available at:
  original entry that is no longer used, leading to a segfault, which
  has been corrected.
 
- Expecting a reroll?
+ Will squash in the fixup and merge to 'next'.
  source: <20260212072002.2347-2-hanyang.tony@bytedance.com>
 
 
 * ps/history-ergonomics-updates (2026-02-15) 5 commits
- - Documentation/git-history: document default for "--update-refs="
- - builtin/history: rename "--ref-action=" to "--update-refs="
- - builtin/history: replace "--ref-action=print" with "--dry-run"
- - builtin/history: check for merges before asking for user input
- - builtin/history: perform revwalk checks before asking for user input
+  (merged to 'next' on 2026-02-19 at 9d5bc4efc5)
+ + Documentation/git-history: document default for "--update-refs="
+ + builtin/history: rename "--ref-action=" to "--update-refs="
+ + builtin/history: replace "--ref-action=print" with "--dry-run"
+ + builtin/history: check for merges before asking for user input
+ + builtin/history: perform revwalk checks before asking for user input
 
  UI improvements for "git history reword".
 
- Will merge to 'next'.
- source: <20260216-b4-pks-history-dry-run-v3-0-c4db58a651fc@pks.im>
-
-
-* pw/diff-anchored-optim (2026-02-12) 1 commit
-  (merged to 'next' on 2026-02-13 at a8e8191f03)
- + diff --anchored: avoid checking unmatched lines
-
- "git diff --anchored=<text>" has been optimized.
-
  Will merge to 'master'.
- source: <2a8cc2d6c37f25a58823b501500165d597321749.1770911599.git.phillip.wood@dunelm.org.uk>
+ source: <20260216-b4-pks-history-dry-run-v3-0-c4db58a651fc@pks.im>
 
 
 * ac/string-list-sort-u-and-tests (2026-02-12) 1 commit
@@ -332,7 +507,7 @@ Release tarballs are available at:
 
  Doc update.
 
- Comments?
+ Will merge to 'next'.
  source: <V2_CV_doc_patch-id_4.371@msgid.xyz>
 
 
@@ -356,36 +531,39 @@ Release tarballs are available at:
 
  Doc update.
 
- Comments?
+ Will merge to 'next'.
  source: <doc_am_gitlinks_and_am.messageId.321@msgid.xyz>
 
 
-* ps/ci-gitlab-msvc-updates (2026-02-11) 7 commits
- - gitlab-ci: handle failed tests on MSVC+Meson job
- - gitlab-ci: use "run-test-slice-meson.sh"
- - ci: make test slicing consistent across Meson/Make
- - github: fix Meson tests not executing at all
- - meson: fix MERGE_TOOL_DIR with "--no-bin-wrappers"
- - ci: don't skip smallest test slice in GitLab
- - ci: handle failures of test-slice helper
+* ps/ci-gitlab-msvc-updates (2026-02-18) 7 commits
+  (merged to 'next' on 2026-02-20 at b2a8b7bf93)
+ + gitlab-ci: handle failed tests on MSVC+Meson job
+ + gitlab-ci: use "run-test-slice-meson.sh"
+ + ci: make test slicing consistent across Meson/Make
+ + github: fix Meson tests not executing at all
+ + meson: fix MERGE_TOOL_DIR with "--no-bin-wrappers"
+ + ci: don't skip smallest test slice in GitLab
+ + ci: handle failures of test-slice helper
 
  CI update.
 
- Will merge to 'next'?
- source: <20260211-b4-pks-ci-meson-improvements-v1-0-cb167cc80b86@pks.im>
+ Will merge to 'master'.
+ source: <20260219-b4-pks-ci-meson-improvements-v2-0-6047b8307ab2@pks.im>
 
 
-* ps/tests-wo-iconv-fixes (2026-02-17) 4 commits
- - t6006: don't use iconv(1) without ICONV prereq
- - t5550: add ICONV prereq to tests that use "$HTTPD_URL/error"
- - t4205: improve handling of ICONV prerequisite
- - t4xxx: don't use iconv(1) without ICONV prereq
+* ps/tests-wo-iconv-fixes (2026-02-20) 5 commits
+  (merged to 'next' on 2026-02-20 at 277b2c99aa)
+ + t6006: don't use iconv(1) without ICONV prereq
+ + t5550: add ICONV prereq to tests that use "$HTTPD_URL/error"
+ + t4205: improve handling of ICONV prerequisite
+ + t40xx: don't use iconv(1) without ICONV prereq
+ + t: don't set ICONV prereq when iconv(1) is missing
 
  Some tests assumed "iconv" is available without honoring ICONV
  prerequisite, which has been corrected.
 
- Will merge to 'next'?
- source: <20260217-b4-pks-ci-msvc-iconv-fixes-v2-0-25491bc8dbf8@pks.im>
+ Will merge to 'master'.
+ source: <20260220-b4-pks-ci-msvc-iconv-fixes-v4-0-e0e6bbcaeb5b@pks.im>
 
 
 * pw/meson-doc-mergetool (2026-02-09) 1 commit
@@ -393,7 +571,7 @@ Release tarballs are available at:
 
  Update build precedure for mergetool documentation in meson-based builds.
 
- WIll merge to 'next'.
+ Will merge to 'next'.
  source: <604c79018992dee019205741934508091cdd1e47.1770631599.git.phillip.wood@dunelm.org.uk>
 
 
@@ -429,17 +607,17 @@ Release tarballs are available at:
 
  "gitweb" has been taught to be mobile friendly.
 
- Comments?
+ Will merge to 'next'?
  source: <pull.2043.v2.git.1771257211.gitgitgadget@gmail.com>
 
 
-* kn/osxkeychain-buildfix (2026-02-10) 1 commit
+* kn/osxkeychain-buildfix (2026-02-19) 1 commit
  - osxkeychain: define build targets in the top-level Makefile.
 
  Simplify build procedure for oxskeychain (in contrib/).
 
  Will merge to 'next'?
- source: <pull.2046.v2.git.1770775169908.gitgitgadget@gmail.com>
+ source: <pull.2046.v4.git.1771551540816.gitgitgadget@gmail.com>
 
 
 * aa/add-p-no-auto-advance (2026-02-14) 4 commits
@@ -451,49 +629,55 @@ Release tarballs are available at:
  "git add -p" learned a new mode that allows the user to revisit a
  file that was already dealt with.
 
- Comments?
+ Will merge to 'next'?
  source: <cover.1771066252.git.abrahamadekunle50@gmail.com>
 
 
-* kn/ref-location (2026-02-14) 6 commits
- - refs: add GIT_REFERENCE_BACKEND to specify reference backend
+* kn/ref-location (2026-02-19) 5 commits
  - refs: allow reference location in refstorage config
- - refs: move out stub modification to generic layer
  - refs: receive and use the reference storage payload
+ - refs: move out stub modification to generic layer
  - refs: extract out `refs_create_refdir_stubs()`
  - setup: don't modify repo in `create_reference_database()`
 
  Allow the directory in which reference backends store their data to
  be specified.
 
- Expecting a reroll.
- cf. <CAOLa=ZQwrOGpZfVtfTfPFhnkJ_qnEhv8mxO3Ot7nQXusbkJkYw@mail.gmail.com>
- cf. <CAOLa=ZQFOLh6ixB4=ukPS44uE9k3-1Zw1U2bCYf+TsKyHEqLiA@mail.gmail.com>
- source: <20260214-kn-alternate-ref-dir-v6-0-86a82c77cf59@gmail.com>
+ Will merge to 'next'?
+ source: <20260219-kn-alternate-ref-dir-v7-0-16f27860dbdf@gmail.com>
 
 
-* ar/config-hooks (2026-02-04) 5 commits
+* ar/config-hooks (2026-02-18) 9 commits
+ - hook: add -z option to "git hook list"
  - hook: allow out-of-repo 'git hook' invocations
+ - hook: allow event = "" to overwrite previous values
+ - hook: allow disabling config hooks
  - hook: include hooks from the config
- - hook: introduce "git hook list"
- - hook: run a list of hooks
+ - hook: add "git hook list" command
+ - hook: run a list of hooks to prepare for multihook support
+ - hook: add internal state alloc/free callbacks
  - Merge branch 'ar/run-command-hook-take-2' into ar/config-hooks
  (this branch is used by ar/parallel-hooks; uses ar/run-command-hook-take-2.)
 
- Needs review.
- source: <20260204165126.1548805-1-adrian.ratiu@collabora.com>
+ Allow hook commands to be defined (possibly centrally) in the
+ configuration files, and run multiple of them for the same hook
+ event.
+
+ Will merge to 'next'?
+ source: <20260218222352.55393-1-adrian.ratiu@collabora.com>
 
 
 * jc/whitespace-incomplete-line (2026-02-04) 1 commit
- - whitespace: symbolic links usually lack LF at the end
+  (merged to 'next' on 2026-02-20 at 1d5f62e778)
+ + whitespace: symbolic links usually lack LF at the end
 
  It does not make much sense to apply the "incomplete-line"
  whitespace rule to symbolic links, whose contents almost always
  lack the final newline.  "git apply" and "git diff" are now taught
  to exclude them for a change to symbolic links.
 
- Will merge to 'next'?
- source: <xmqqecn0nqyt.fsf@gitster.g>
+ Will merge to 'master'.
+ source: <xmqqpl6hhm96.fsf@gitster.g>
 
 
 * ps/meson-gitk-git-gui (2026-02-04) 1 commit
@@ -502,7 +686,7 @@ Release tarballs are available at:
  Plumb gitk/git-gui build and install procedure in meson based
  builds.
 
- Expecting a pull request for gitk.
+ Will merge to 'next'.
  source: <20260204-b4-pks-meson-tcl-tk-v2-1-5bc3ccf3a8ce@pks.im>
 
 
@@ -513,7 +697,7 @@ Release tarballs are available at:
  be still valid after the key that was used to sign it has expired,
  but we showed them in alarming red.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <20260204152306.1767112-2-ukleinek@kernel.org>
 
 
@@ -547,30 +731,32 @@ Release tarballs are available at:
 
 
 * jc/checkout-switch-restore (2026-01-29) 2 commits
- - checkout: tell "parse_remote_branch" which command is calling it
- - checkout: pass program-readable token to unified "main"
+  (merged to 'next' on 2026-02-20 at a386d47625)
+ + checkout: tell "parse_remote_branch" which command is calling it
+ + checkout: pass program-readable token to unified "main"
 
  "git switch <name>", in an attempt to create a local branch <name>
  after a remote tracking branch of the same name gave an advise
  message to disambiguate using "git checkout", which has been
  updated to use "git switch".
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <20260129190616.645471-1-gitster@pobox.com>
 
 
-* ps/for-each-ref-in-fixes (2026-02-05) 4 commits
- - bisect: simplify string_list memory handling
- - bisect: fix misuse of `refs_for_each_ref_in()`
- - pack-bitmap: fix bug with exact ref match in "pack.preferBitmapTips"
- - pack-bitmap: deduplicate logic to iterate over preferred bitmap tips
+* ps/for-each-ref-in-fixes (2026-02-18) 4 commits
+  (merged to 'next' on 2026-02-19 at 5397753d41)
+ + bisect: simplify string_list memory handling
+ + bisect: fix misuse of `refs_for_each_ref_in()`
+ + pack-bitmap: fix bug with exact ref match in "pack.preferBitmapTips"
+ + pack-bitmap: deduplicate logic to iterate over preferred bitmap tips
+ (this branch is used by ps/refs-for-each.)
 
  A handful of places used refs_for_each_ref_in() API incorrectly,
  which has been corrected.
 
- Will merge to 'next'?
- cf. <aYmleK3kGqzLXyJe@pks.im>
- source: <20260206-b4-pks-fix-for-each-ref-in-misuse-v3-0-1e050c3d6a50@pks.im>
+ Will merge to 'master'.
+ source: <20260219-b4-pks-fix-for-each-ref-in-misuse-v4-0-57ac30172fae@pks.im>
 
 
 * ps/object-info-bits-cleanup (2026-02-11) 5 commits
@@ -583,20 +769,8 @@ Release tarballs are available at:
  A couple of bugs in use of flag bits around odb API has been
  corrected, and the flag bits reordered.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <20260212-b4-pks-read-object-info-flags-v2-0-3bfa9bb149ef@pks.im>
-
-
-* pw/xdiff-cleanups (2026-01-26) 2 commits
-  (merged to 'next' on 2026-02-11 at e6df42d605)
- + xdiff: remove unused data from xdlclass_t
- + xdiff: remove "line_hash" field from xrecord_t
-
- Small clean-up of xdiff library to remove unnecessary data
- duplication.
-
- Will merge to 'master'.
- source: <cover.1769424529.git.phillip.wood@dunelm.org.uk>
 
 
 * ty/symlinks-use-unsigned-for-bitset (2026-01-21) 1 commit
@@ -604,8 +778,7 @@ Release tarballs are available at:
 
  Code clean-up.
 
- Expecting a (hopefully small and final) reroll.
- cf. <xmqqzf66u9jj.fsf@gitster.g>
+ Will merge to 'next'.
  source: <20260121162640.424126-1-a3205153416@gmail.com>
 
 
@@ -651,7 +824,7 @@ Release tarballs are available at:
  Use the hook API to replace ad-hoc invocation of hook scripts via
  the run_command() API.
 
- Comments?
+ Will merge to 'next'.
  source: <20260128213927.3026875-1-adrian.ratiu@collabora.com>
 
 
@@ -693,6 +866,7 @@ Release tarballs are available at:
  -f" to override it).
 
  Comments?
+ cf. <xmqq5x7rvyn4.fsf@gitster.g>
  source: <pull.1987.v4.git.1770384180.gitgitgadget@gmail.com>
 
 
@@ -716,8 +890,7 @@ Release tarballs are available at:
 
  Revamp object enumeration API around odb.
 
- Will merge to 'next'?
- cf. <aXk2FjTUMMThs5Kp@nand.local>
+ Will merge to 'next'.
  source: <20260126-pks-odb-for-each-object-v4-0-5a64a038c791@pks.im>
 
 
@@ -728,7 +901,7 @@ Release tarballs are available at:
  against the tree of the (potentially quite different from the
  current working tree) given commit.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <20260203164815.68258-2-pushkarkumarsingh1970@gmail.com>
 
 
@@ -740,7 +913,7 @@ Release tarballs are available at:
  get confused where the updated shallow points are, which has been
  corrected.
 
- Comments?
+ Will merge to 'next'?
  source: <pull.2121.v5.git.git.1771186316.gitgitgadget@gmail.com>
 
 
@@ -750,8 +923,8 @@ Release tarballs are available at:
  Additional tests were introduced to see the interaction with netrc
  auth with auth failure on the http transport.
 
- Comments?
- source: <20260106114029.763351-1-git@ashlesh.me>
+ Will merge to 'next'.
+ source: <20260107074724.13165-1-git@ashlesh.me>
 
 
 * en/xdiff-cleanup-3 (2026-01-03) 11 commits
@@ -773,20 +946,6 @@ Release tarballs are available at:
  source: <pull.2156.git.git.1767379944.gitgitgadget@gmail.com>
 
 
-* hn/status-compare-with-push (2026-01-22) 3 commits
- - status: add status.compareBranches config for multiple branch comparisons
- - refactor format_branch_comparison in preparation
- - Merge branch 'jk/remote-tracking-ref-leakfix' into hn/status-compare-with-push
-
- "git status" learned to show comparison between the current branch
- and its push destination as well as its upstream, when the two are
- different (i.e., triangular workflow).
-
- What's the status of this topic?
- cf. <20260122220154.GA2107958@coredump.intra.peff.net>
- source: <pull.2138.v28.git.git.1769112471.gitgitgadget@gmail.com>
-
-
 * ob/core-attributesfile-in-repository (2026-02-16) 3 commits
  - environment: move "branch.autoSetupMerge" into `struct repo_config_values`
  - environment: stop using core.sparseCheckout globally
@@ -798,24 +957,6 @@ Release tarballs are available at:
 
  Comments?
  source: <cover.1771258573.git.belkid98@gmail.com>
-
-
-* pt/fsmonitor-linux (2025-12-31) 1 commit
- - fsmonitor: implement filesystem change listener for Linux
-
- The fsmonitor daemon has been implemented for Linux.
-
- Comments?
- source: <pull.2147.v4.git.git.1767202894884.gitgitgadget@gmail.com>
-
-
-* pt/t7527-flake-workaround (2025-12-31) 1 commit
- - t7527: fix flaky fsmonitor event tests with retry logic
-
- Test fixup.
-
- Comments?
- source: <pull.2150.v2.git.git.1767226763360.gitgitgadget@gmail.com>
 
 
 * cc/lop-filter-auto (2026-02-16) 9 commits
@@ -836,23 +977,15 @@ Release tarballs are available at:
  source: <20260216132317.15894-1-christian.couder@gmail.com>
 
 
-* tt/receive-pack-oo-namespace-symref-fix (2025-12-27) 1 commit
- - receive-pack: fix crash on out-of-namespace symref
-
- "git receive-pack", when namespace is involved, segfaulted when a
- symbolic ref cross the namespace boundary.
-
- Comments?
- source: <pull.2144.git.git.1766850014289.gitgitgadget@gmail.com>
-
-
 * lo/repo-info-keys (2026-02-13) 2 commits
- - repo: add new flag --keys to git-repo-info
- - repo: rename the output format "keyvalue" to "lines"
+  (merged to 'next' on 2026-02-19 at 3a9b510b86)
+ + repo: add new flag --keys to git-repo-info
+ + repo: rename the output format "keyvalue" to "lines"
+ (this branch is used by lo/repo-leftover-bits.)
 
  "git repo info" learns "--keys" action to list known keys.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20260214005818.37349-1-lucasseikioshiro@gmail.com>
 
 
