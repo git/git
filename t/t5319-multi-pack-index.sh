@@ -1345,4 +1345,47 @@ test_expect_success 'bitmapped packs are stored via the BTMP chunk' '
 	)
 '
 
+test_expect_success 'pack.preferBitmapTips interprets patterns as hierarchy' '
+	git init repo &&
+	test_when_finished "rm -fr repo" &&
+	(
+		cd repo &&
+
+		# Create enough commits that not all will receive bitmap
+		# coverage even if they are all at the tip of some reference.
+		test_commit_bulk --message="%s" 103 &&
+		git log --format="create refs/tags/%s %H" HEAD >refs &&
+		git update-ref --stdin <refs &&
+
+		# Create the bitmap via the MIDX.
+		git repack -adb --write-midx &&
+		test-tool bitmap list-commits | sort >commits-with-bitmap &&
+
+		# Verify that we have at least one commit that did not
+		# receive a bitmap.
+		git rev-list HEAD >commits.raw &&
+		sort <commits.raw >commits &&
+		comm -13 commits-with-bitmap commits >commits-wo-bitmap &&
+		test_file_not_empty commits-wo-bitmap &&
+		commit_id=$(head commits-wo-bitmap) &&
+		ref_without_bitmap=$(git for-each-ref --points-at="$commit_id" --format="%(refname)") &&
+
+		# When passing the full refname we do not expect a bitmap to be
+		# generated, as it should be interpreted as if a slash was
+		# appended to the pattern.
+		rm .git/objects/pack/multi-pack-index* &&
+		git -c pack.preferBitmapTips="$ref_without_bitmap" repack -adb --write-midx &&
+		test-tool bitmap list-commits >after &&
+		test_grep ! "$commit_id" after &&
+
+		# But if we pass the parent directory of the ref we should see
+		# a bitmap.
+		ref_namespace=$(dirname "$ref_without_bitmap") &&
+		rm .git/objects/pack/multi-pack-index* &&
+		git -c pack.preferBitmapTips="$ref_namespace" repack -adb --write-midx &&
+		test-tool bitmap list-commits >after &&
+		test_grep "$commit_id" after
+	)
+'
+
 test_done
