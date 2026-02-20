@@ -60,6 +60,8 @@ Performance, Internal Implementation, Development Support etc.
 
  * Code clean-up to use the commit_stack API.
 
+ * "git diff --anchored=<text>" has been optimized.
+
 
 Fixes since v2.53
 -----------------
@@ -101,6 +103,10 @@ Fixes since v2.53
    "synopsis" style.
    (merge a34d1d53a6 ja/doc-synopsis-style-even-more later to maint).
 
+ * Small clean-up of xdiff library to remove unnecessary data
+   duplication.
+   (merge 5086213bd2 pw/xdiff-cleanups later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge d79fff4a11 jk/remote-tracking-ref-leakfix later to maint).
    (merge 7a747f972d dd/t5403-modernise later to maint).
@@ -120,3 +126,4 @@ Fixes since v2.53
    (merge 6bfef81c9a kh/doc-rerere-options-xref later to maint).
    (merge aaf3cc3d8d sd/t7003-test-path-is-helpers later to maint).
    (merge 2668b6bdc4 jc/doc-rerere-update later to maint).
+   (merge 2f99f50f2d jc/doc-cg-c-comment later to maint).
