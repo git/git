@@ -66,6 +66,9 @@ git send-email --translate-aliases
     --smtp-ssl-cert-path    <str>  * Path to ca-certificates (either directory or file).
                                      Pass an empty string to disable certificate
                                      verification.
+    --smtp-ssl-client-cert  <str>  * Path to client certificate file to present to SMTP server
+    --smtp-ssl-client-key   <str>  * Path to the private key file for the client certificate
+                                     (optional if a PKCS12 client certificate is used)
     --smtp-domain           <str>  * The domain name sent to HELO/EHLO handshake
     --smtp-auth             <str>  * Space-separated list of allowed AUTH mechanisms, or
                                      "none" to disable authentication.
@@ -279,6 +282,7 @@ my ($cover_cc, $cover_to);
 my ($to_cmd, $cc_cmd, $header_cmd);
 my ($smtp_server, $smtp_server_port, @smtp_server_options);
 my ($smtp_authuser, $smtp_encryption, $smtp_ssl_cert_path);
+my ($smtp_ssl_client_cert, $smtp_ssl_client_key);
 my ($batch_size, $relogin_delay);
 my ($identity, $aliasfiletype, @alias_files, $smtp_domain, $smtp_auth);
 my ($imap_sent_folder);
@@ -350,6 +354,8 @@ my %config_settings = (
 my %config_path_settings = (
     "aliasesfile" => \@alias_files,
     "smtpsslcertpath" => \$smtp_ssl_cert_path,
+    "smtpsslclientcert" => \$smtp_ssl_client_cert,
+    "smtpsslclientkey" => \$smtp_ssl_client_key,
     "mailmap.file" => \$mailmap_file,
     "mailmap.blob" => \$mailmap_blob,
 );
@@ -531,6 +537,8 @@ my %options = (
 		    "smtp-ssl" => sub { $smtp_encryption = 'ssl' },
 		    "smtp-encryption=s" => \$smtp_encryption,
 		    "smtp-ssl-cert-path=s" => \$smtp_ssl_cert_path,
+		    "smtp-ssl-client-cert=s" => \$smtp_ssl_client_cert,
+		    "smtp-ssl-client-key=s" => \$smtp_ssl_client_key,
 		    "smtp-debug:i" => \$debug_net_smtp,
 		    "smtp-domain:s" => \$smtp_domain,
 		    "smtp-auth=s" => \$smtp_auth,
@@ -1520,6 +1528,8 @@ sub handle_smtp_error {
 }
 
 sub ssl_verify_params {
+	my %ret = ();
+
 	eval {
 		require IO::Socket::SSL;
 		IO::Socket::SSL->import(qw/SSL_VERIFY_PEER SSL_VERIFY_NONE/);
@@ -1531,20 +1541,36 @@ sub ssl_verify_params {
 
 	if (!defined $smtp_ssl_cert_path) {
 		# use the OpenSSL defaults
-		return (SSL_verify_mode => SSL_VERIFY_PEER());
+		$ret{SSL_verify_mode} = SSL_VERIFY_PEER();
+	}
+	else {
+		if ($smtp_ssl_cert_path eq "") {
+			$ret{SSL_verify_mode} = SSL_VERIFY_NONE();
+		} elsif (-d $smtp_ssl_cert_path) {
+			$ret{SSL_verify_mode} = SSL_VERIFY_PEER();
+			$ret{SSL_ca_path} = $smtp_ssl_cert_path;
+		} elsif (-f $smtp_ssl_cert_path) {
+			$ret{SSL_verify_mode} = SSL_VERIFY_PEER();
+			$ret{SSL_ca_file} = $smtp_ssl_cert_path;
+		} else {
+			die sprintf(__("CA path \"%s\" does not exist"), $smtp_ssl_cert_path);
+		}
 	}
 
-	if ($smtp_ssl_cert_path eq "") {
-		return (SSL_verify_mode => SSL_VERIFY_NONE());
-	} elsif (-d $smtp_ssl_cert_path) {
-		return (SSL_verify_mode => SSL_VERIFY_PEER(),
-			SSL_ca_path => $smtp_ssl_cert_path);
-	} elsif (-f $smtp_ssl_cert_path) {
-		return (SSL_verify_mode => SSL_VERIFY_PEER(),
-			SSL_ca_file => $smtp_ssl_cert_path);
-	} else {
-		die sprintf(__("CA path \"%s\" does not exist"), $smtp_ssl_cert_path);
+	if (defined $smtp_ssl_client_cert) {
+		# The cert could be in PKCS12 format, which can store both cert and key
+		$ret{SSL_cert_file} = $smtp_ssl_client_cert;
+		$ret{SSL_use_cert} = 1;
 	}
+	if (defined $smtp_ssl_client_key) {
+		if (!defined $smtp_ssl_client_cert) {
+			# doesn't make sense to use a client key only
+			die sprintf(__("Only client key \"%s\" specified"), $smtp_ssl_client_key);
+		}
+		$ret{SSL_key_file} = $smtp_ssl_client_key;
+	}
+
+	return %ret;
 }
 
 sub file_name_is_absolute {

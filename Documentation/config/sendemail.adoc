@@ -12,6 +12,12 @@ sendemail.smtpSSLCertPath::
 	Path to ca-certificates (either a directory or a single file).
 	Set it to an empty string to disable certificate verification.
 
+sendemail.smtpSSLClientCert::
+	Path to a client certificate file to present to the SMTP server.
+
+sendemail.smtpSSLClientKey::
+	Path to the client private key file.
+
 sendemail.<identity>.*::
 	Identity-specific versions of the `sendemail.*` parameters
 	found below, taking precedence over those when this
