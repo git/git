@@ -183,7 +183,8 @@ static void read_mailmap_string(struct string_list *map, char *buf)
 	}
 }
 
-int read_mailmap_blob(struct string_list *map, const char *name)
+int read_mailmap_blob(struct repository *repo, struct string_list *map,
+		      const char *name)
 {
 	struct object_id oid;
 	char *buf;
@@ -192,10 +193,10 @@ int read_mailmap_blob(struct string_list *map, const char *name)
 
 	if (!name)
 		return 0;
-	if (repo_get_oid(the_repository, name, &oid) < 0)
+	if (repo_get_oid(repo, name, &oid) < 0)
 		return 0;
 
-	buf = odb_read_object(the_repository->objects, &oid, &type, &size);
+	buf = odb_read_object(repo->objects, &oid, &type, &size);
 	if (!buf)
 		return error("unable to read mailmap object at %s", name);
 	if (type != OBJ_BLOB) {
@@ -209,7 +210,7 @@ int read_mailmap_blob(struct string_list *map, const char *name)
 	return 0;
 }
 
-int read_mailmap(struct string_list *map)
+int read_mailmap(struct repository *repo, struct string_list *map)
 {
 	int err = 0;
 
@@ -224,7 +225,7 @@ int read_mailmap(struct string_list *map)
 					 startup_info->have_repository ?
 					 MAILMAP_NOFOLLOW : 0);
 	if (startup_info->have_repository)
-		err |= read_mailmap_blob(map, git_mailmap_blob);
+		err |= read_mailmap_blob(repo, map, git_mailmap_blob);
 	err |= read_mailmap_file(map, git_mailmap_file, 0);
 	return err;
 }
