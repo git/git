@@ -2176,19 +2176,20 @@ static inline char *copy_advance(char *dst, const char *src)
 static int normalize_component_count(const char *refname, int len)
 {
 	if (len < 0) {
-		int i;
-		const char *p = refname;
+		int slashes = 0;
 
-		/* Find total no of '/' separated path-components */
-		for (i = 0; p[i]; p[i] == '/' ? i++ : *p++)
-			;
+		for (const char *p = refname; *p; p++) {
+			if (*p == '/')
+				slashes++;
+		}
+
 		/*
 		 * The number of components we need to strip is now
 		 * the total minus the components to be left (Plus one
 		 * because we count the number of '/', but the number
 		 * of components is one more than the no of '/').
 		 */
-		len = i + len + 1;
+		len = slashes + len + 1;
 	}
 	return len;
 }
