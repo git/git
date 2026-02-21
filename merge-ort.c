@@ -4438,7 +4438,7 @@ static void prefetch_for_content_merges(struct merge_options *opt,
 	struct string_list_item *e;
 	struct oid_array to_fetch = OID_ARRAY_INIT;
 
-	if (opt->repo != the_repository || !repo_has_promisor_remote(the_repository))
+	if (!repo_has_promisor_remote(opt->repo))
 		return;
 
 	for (e = &plist->items[plist->nr-1]; e >= plist->items; --e) {
