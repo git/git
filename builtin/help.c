@@ -111,6 +111,84 @@ struct slot_expansion {
 	int found;
 };
 
+static void show_config_human(struct string_list *keys)
+{
+	string_list_sort(keys);
+	for (size_t i = 0; i < keys->nr; i++) {
+		const char *var = keys->items[i].string;
+		puts(var);
+	}
+}
+
+static void show_config_sections(struct string_list *keys)
+{
+	struct string_list keys_uniq = STRING_LIST_INIT_DUP;
+	struct strbuf sb = STRBUF_INIT;
+	struct string_list_item *item;
+
+	for (size_t i = 0; i < keys->nr; i++) {
+		const char *var = keys->items[i].string;
+		const char *dot = strchr(var, '.');
+		const char *wildcard = strchr(var, '*');
+		const char *tag = strchr(var, '<');
+		const char *cut;
+
+		if (dot)
+			cut = dot;
+		else if (wildcard && tag)
+			cut = wildcard < tag ? wildcard : tag;
+		else if (wildcard)
+			cut = wildcard;
+		else if (tag)
+			cut = tag;
+		else {
+			string_list_append(&keys_uniq, var);
+			continue;
+		}
+
+		strbuf_add(&sb, var, cut - var);
+		string_list_append(&keys_uniq, sb.buf);
+		strbuf_release(&sb);
+	}
+	string_list_sort_u(&keys_uniq, 0);
+	for_each_string_list_item(item, &keys_uniq)
+		puts(item->string);
+	string_list_clear(&keys_uniq, 0);
+}
+
+static void show_config_vars(struct string_list *keys)
+{
+	struct string_list keys_uniq = STRING_LIST_INIT_DUP;
+	struct strbuf sb = STRBUF_INIT;
+	struct string_list_item *item;
+
+	for (size_t i = 0; i < keys->nr; i++) {
+		const char *var = keys->items[i].string;
+		const char *wildcard = strchr(var, '*');
+		const char *tag = strchr(var, '<');
+		const char *cut;
+
+		if (wildcard && tag)
+			cut = wildcard < tag ? wildcard : tag;
+		else if (wildcard)
+			cut = wildcard;
+		else if (tag)
+			cut = tag;
+		else {
+			string_list_append(&keys_uniq, var);
+			continue;
+		}
+
+		strbuf_add(&sb, var, cut - var);
+		string_list_append(&keys_uniq, sb.buf);
+		strbuf_release(&sb);
+	}
+	string_list_sort_u(&keys_uniq, 0);
+	for_each_string_list_item(item, &keys_uniq)
+		puts(item->string);
+	string_list_clear(&keys_uniq, 0);
+}
+
 static void list_config_help(enum show_config_type type)
 {
 	struct slot_expansion slot_expansions[] = {
@@ -129,8 +207,6 @@ static void list_config_help(enum show_config_type type)
 	const char **p;
 	struct slot_expansion *e;
 	struct string_list keys = STRING_LIST_INIT_DUP;
-	struct string_list keys_uniq = STRING_LIST_INIT_DUP;
-	struct string_list_item *item;
 
 	for (p = config_name_list; *p; p++) {
 		const char *var = *p;
@@ -156,50 +232,20 @@ static void list_config_help(enum show_config_type type)
 			BUG("slot_expansion %s.%s is not used",
 			    e->prefix, e->placeholder);
 
-	string_list_sort(&keys);
-	for (size_t i = 0; i < keys.nr; i++) {
-		const char *var = keys.items[i].string;
-		const char *wildcard, *tag, *cut;
-		const char *dot = NULL;
-		struct strbuf sb = STRBUF_INIT;
-
-		switch (type) {
-		case SHOW_CONFIG_HUMAN:
-			puts(var);
-			continue;
-		case SHOW_CONFIG_SECTIONS:
-			dot = strchr(var, '.');
-			break;
-		case SHOW_CONFIG_VARS:
-			break;
-		}
-		wildcard = strchr(var, '*');
-		tag = strchr(var, '<');
-
-		if (!dot && !wildcard && !tag) {
-			string_list_append(&keys_uniq, var);
-			continue;
-		}
-
-		if (dot)
-			cut = dot;
-		else if (wildcard && !tag)
-			cut = wildcard;
-		else if (!wildcard && tag)
-			cut = tag;
-		else
-			cut = wildcard < tag ? wildcard : tag;
-
-		strbuf_add(&sb, var, cut - var);
-		string_list_append(&keys_uniq, sb.buf);
-		strbuf_release(&sb);
-
+	switch (type) {
+	case SHOW_CONFIG_HUMAN:
+		show_config_human(&keys);
+		break;
+	case SHOW_CONFIG_SECTIONS:
+		show_config_sections(&keys);
+		break;
+	case SHOW_CONFIG_VARS:
+		show_config_vars(&keys);
+		break;
+	default:
+		BUG("%d: unexpected type", type);
 	}
 	string_list_clear(&keys, 0);
-	string_list_remove_duplicates(&keys_uniq, 0);
-	for_each_string_list_item(item, &keys_uniq)
-		puts(item->string);
-	string_list_clear(&keys_uniq, 0);
 }
 
 static enum help_format parse_help_format(const char *format)
