@@ -54,6 +54,14 @@
 #include "xdiff-interface.h"
 
 /*
+ * We technically need USE_THE_REPOSITORY_VARIABLE above for DEFAULT_ABBREV,
+ * but do not want more uses of the_repository.  Prevent them.
+ *
+ * opt->repo is available; use it instead.
+ */
+#define the_repository DO_NOT_USE_THE_REPOSITORY
+
+/*
  * We have many arrays of size 3.  Whenever we have such an array, the
  * indices refer to one of the sides of the three-way merge.  This is so
  * pervasive that the constants 0, 1, and 2 are used in many places in the
