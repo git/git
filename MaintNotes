@@ -183,7 +183,7 @@ ready to be used in a production setting.  Every now and then, a
 "feature release" is cut from the tip of this branch.  They used to be
 named with three dotted decimal digits (e.g., "1.8.5"), but we have
 switched the versioning scheme and "feature releases" are named with
-ttwo-dotted decimal digits (e.g. "2.53"), whose tag ends with ".0"
+two-dotted decimal digits (e.g. "2.53"), whose tag ends with ".0"
 (e.g., "v2.53.0").
 
 The last such release was Git 2.53, made on Feb 2nd, 2026.  We aim to
