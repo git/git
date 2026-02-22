@@ -120,36 +120,37 @@ static void show_config_human(struct string_list *keys)
 	}
 }
 
+static void grab_leading_part(struct string_list *keys, const char *var, int use_dot)
+{
+	const char *cut = NULL;
+
+	if (use_dot)
+		cut = strchr(var, use_dot);
+
+	if (!cut) {
+		size_t prefix_len = strcspn(var, "*<");
+		if (var[prefix_len])
+			cut = var + prefix_len;
+	}
+
+	if (!cut)
+		string_list_append(keys, var);
+	else {
+		struct strbuf sb = STRBUF_INIT;
+		strbuf_add(&sb, var, cut - var);
+		string_list_append(keys, sb.buf);
+		strbuf_release(&sb);
+	}
+}
+
 static void show_config_sections(struct string_list *keys)
 {
 	struct string_list keys_uniq = STRING_LIST_INIT_DUP;
-	struct strbuf sb = STRBUF_INIT;
 	struct string_list_item *item;
 
-	for (size_t i = 0; i < keys->nr; i++) {
-		const char *var = keys->items[i].string;
-		const char *dot = strchr(var, '.');
-		const char *wildcard = strchr(var, '*');
-		const char *tag = strchr(var, '<');
-		const char *cut;
+	for (size_t i = 0; i < keys->nr; i++)
+		grab_leading_part(&keys_uniq, keys->items[i].string, '.');
 
-		if (dot)
-			cut = dot;
-		else if (wildcard && tag)
-			cut = wildcard < tag ? wildcard : tag;
-		else if (wildcard)
-			cut = wildcard;
-		else if (tag)
-			cut = tag;
-		else {
-			string_list_append(&keys_uniq, var);
-			continue;
-		}
-
-		strbuf_add(&sb, var, cut - var);
-		string_list_append(&keys_uniq, sb.buf);
-		strbuf_release(&sb);
-	}
 	string_list_sort_u(&keys_uniq, 0);
 	for_each_string_list_item(item, &keys_uniq)
 		puts(item->string);
@@ -159,30 +160,11 @@ static void show_config_sections(struct string_list *keys)
 static void show_config_vars(struct string_list *keys)
 {
 	struct string_list keys_uniq = STRING_LIST_INIT_DUP;
-	struct strbuf sb = STRBUF_INIT;
 	struct string_list_item *item;
 
-	for (size_t i = 0; i < keys->nr; i++) {
-		const char *var = keys->items[i].string;
-		const char *wildcard = strchr(var, '*');
-		const char *tag = strchr(var, '<');
-		const char *cut;
+	for (size_t i = 0; i < keys->nr; i++)
+		grab_leading_part(&keys_uniq, keys->items[i].string, '\0');
 
-		if (wildcard && tag)
-			cut = wildcard < tag ? wildcard : tag;
-		else if (wildcard)
-			cut = wildcard;
-		else if (tag)
-			cut = tag;
-		else {
-			string_list_append(&keys_uniq, var);
-			continue;
-		}
-
-		strbuf_add(&sb, var, cut - var);
-		string_list_append(&keys_uniq, sb.buf);
-		strbuf_release(&sb);
-	}
 	string_list_sort_u(&keys_uniq, 0);
 	for_each_string_list_item(item, &keys_uniq)
 		puts(item->string);
