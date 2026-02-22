@@ -524,15 +524,17 @@ static unsigned int get_hook_jobs(struct repository *r,
 	if (!options->stdout_to_stderr)
 		return 1;
 
-	/* An explicit job count (FORCE_SERIAL jobs=1, or -j from CLI). */
-	if (options->jobs)
-		return options->jobs;
+	/* Pinned serial: FORCE_SERIAL (internal) or explicit -j1 from CLI. */
+	if (options->jobs == 1)
+		return 1;
 
 	/*
-	 * Use hook.jobs from the already-parsed config cache (in-repo), or
-	 * fall back to a direct config lookup (out-of-repo).  Default to 1.
+	 * Resolve effective job count: -jN (when given) overrides config.
+	 * Default to 1 when both config an -jN are missing.
 	 */
-	if (r && r->gitdir && r->hook_config_cache)
+	if (options->jobs > 1)
+		jobs = options->jobs;
+	else if (r && r->gitdir && r->hook_config_cache)
 		/* Use the already-parsed cache (in-repo) */
 		jobs = r->hook_config_cache->jobs ? r->hook_config_cache->jobs : 1;
 	else
