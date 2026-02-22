@@ -192,10 +192,18 @@ struct string_list *list_hooks(struct repository *r, const char *hookname,
 void hook_list_clear(struct string_list *hooks, cb_data_free_fn cb_data_free);
 
 /**
+ * Persistent cache for hook configuration, stored on `struct repository`.
+ * Populated lazily on first hook use and freed by repo_clear().
+ */
+struct hook_config_cache {
+	struct strmap hooks; /* maps event name -> string_list of hooks */
+};
+
+/**
  * Frees the hook configuration cache stored in `struct repository`.
  * Called by repo_clear().
  */
-void hook_cache_clear(struct strmap *cache);
+void hook_cache_clear(struct hook_config_cache *cache);
 
 /**
  * Returns the path to the hook file, or NULL if the hook is missing
