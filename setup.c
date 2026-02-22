@@ -2317,6 +2317,7 @@ void initialize_repository_version(int hash_algo,
 	struct strbuf repo_version = STRBUF_INIT;
 	int target_version = GIT_REPO_VERSION;
 	int default_submodule_path_config = 0;
+	int default_hook_stdout_to_stderr = 0;
 
 	/*
 	 * Note that we initialize the repository version to 1 when the ref
@@ -2362,6 +2363,15 @@ void initialize_repository_version(int hash_algo,
 		if (target_version == 0)
 			target_version = 1;
 		repo_config_set(the_repository, "extensions.submodulepathconfig", "true");
+	}
+
+	repo_config_get_bool(the_repository, "hook.forceStdoutToStderr",
+			     &default_hook_stdout_to_stderr);
+	if (default_hook_stdout_to_stderr) {
+		/* extensions.hookstdouttostderr requires at least version 1 */
+		if (target_version == 0)
+			target_version = 1;
+		repo_config_set(the_repository, "extensions.hookstdouttostderr", "true");
 	}
 
 	strbuf_addf(&repo_version, "%d", target_version);
