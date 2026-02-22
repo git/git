@@ -532,6 +532,43 @@ test_expect_success 'client hooks: pre-push expects separate stdout and stderr' 
 	check_stdout_separate_from_stderr pre-push
 '
 
+test_expect_success 'client hooks: extension makes pre-push merge stdout to stderr' '
+	test_when_finished "rm -rf remote2 stdout.actual stderr.actual" &&
+	git init --bare remote2 &&
+	git remote add origin2 remote2 &&
+	test_commit B &&
+	git config set core.repositoryformatversion 1 &&
+	test_config extensions.hookStdoutToStderr true &&
+	setup_hooks pre-push &&
+	git push origin2 HEAD:main >stdout.actual 2>stderr.actual &&
+	check_stdout_merged_to_stderr pre-push
+'
+
+test_expect_success 'client hooks: pre-push defaults to serial execution' '
+	test_when_finished "rm -rf remote-serial repo-serial" &&
+	git init --bare remote-serial &&
+	git init repo-serial &&
+	git -C repo-serial remote add origin ../remote-serial &&
+	test_commit -C repo-serial A &&
+
+	# Setup 2 pre-push hooks; no parallel=true so they must run serially.
+	# Use sentinel/detector pattern: hook-1 (sentinel, configured) runs first
+	# because configured hooks precede traditional hooks in list order; hook-2
+	# (detector) runs second and checks whether hook-1 has finished.
+	git -C repo-serial config hook.hook-1.event pre-push &&
+	git -C repo-serial config hook.hook-1.command \
+	    "touch sentinel.started; sleep 2; touch sentinel.done" &&
+	git -C repo-serial config hook.hook-2.event pre-push &&
+	git -C repo-serial config hook.hook-2.command \
+	    "$(sentinel_detector sentinel hook.order)" &&
+
+	git -C repo-serial config hook.jobs 2 &&
+
+	git -C repo-serial push origin HEAD >out 2>err &&
+	echo serial >expect &&
+	test_cmp expect repo-serial/hook.order
+'
+
 test_expect_success 'client hooks: commit hooks expect stdout redirected to stderr' '
 	hooks="pre-commit prepare-commit-msg \
 		commit-msg post-commit \
