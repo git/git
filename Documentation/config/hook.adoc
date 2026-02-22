@@ -65,3 +65,9 @@ This setting has no effect unless all configured hooks for the event have
 +
 This has no effect for hooks requiring separate output streams (like `pre-push`)
 unless `extensions.hookStdoutToStderr` is enabled.
+
+hook.forceStdoutToStderr::
+	A boolean that enables the `extensions.hookStdoutToStderr` behavior
+	(merging stdout to stderr for all hooks) globally. This effectively
+	forces all hooks to behave as if the extension was enabled, allowing
+	parallel execution for hooks like `pre-push`.

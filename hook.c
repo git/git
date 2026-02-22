@@ -136,6 +136,7 @@ struct hook_config_cache_entry {
  * event_jobs: event-name to per-event jobs count (heap-allocated unsigned int *,
  *             where NULL == unset).
  * jobs: value of the global hook.jobs key. Defaults to 0 if unset.
+ * force_stdout_to_stderr: value of hook.forceStdoutToStderr. Defaults to 0.
  */
 struct hook_all_config_cb {
 	struct strmap commands;
@@ -144,6 +145,7 @@ struct hook_all_config_cb {
 	struct strmap parallel_hooks;
 	struct strmap event_jobs;
 	unsigned int jobs;
+	int force_stdout_to_stderr;
 };
 
 /* repo_config() callback that collects all hook.* configuration in one pass. */
@@ -169,6 +171,10 @@ static int hook_config_lookup_all(const char *key, const char *value,
 				warning(_("hook.jobs must be positive, ignoring: 0"));
 			else
 				data->jobs = v;
+		} else if (!strcmp(subkey, "forcestdouttostderr") && value) {
+			int v = git_parse_maybe_bool(value);
+			if (v >= 0)
+				data->force_stdout_to_stderr = v;
 		}
 		return 0;
 	}
@@ -325,6 +331,7 @@ static void build_hook_config_map(struct repository *r,
 
 	cache->jobs = cb_data.jobs;
 	cache->event_jobs = cb_data.event_jobs;
+	cache->force_stdout_to_stderr = cb_data.force_stdout_to_stderr;
 
 	strmap_clear(&cb_data.commands, 1);
 	strmap_clear(&cb_data.parallel_hooks, 0); /* values are uintptr_t, not heap ptrs */
@@ -530,6 +537,20 @@ static void run_hooks_opt_clear(struct run_hooks_opt *options)
 	strvec_clear(&options->args);
 }
 
+static void hook_force_apply_stdout_to_stderr(struct repository *r,
+					      struct run_hooks_opt *options)
+{
+	int force = 0;
+
+	if (r && r->gitdir && r->hook_config_cache)
+		force = r->hook_config_cache->force_stdout_to_stderr;
+	else
+		repo_config_get_bool(r, "hook.forceStdoutToStderr", &force);
+
+	if (force)
+		options->stdout_to_stderr = 1;
+}
+
 /* Determine how many jobs to use for hook execution. */
 static unsigned int get_hook_jobs(struct repository *r,
 				  struct run_hooks_opt *options,
@@ -539,9 +560,12 @@ static unsigned int get_hook_jobs(struct repository *r,
 	unsigned int jobs;
 
 	/*
-	 * Hooks needing separate output streams must run sequentially. Next
-	 * commits will add an extension to allow parallelizing these as well.
+	 * Apply hook.forceStdoutToStderr before anything else: it affects
+	 * whether we can run in parallel or not.
 	 */
+	hook_force_apply_stdout_to_stderr(r, options);
+
+	/* Hooks needing separate output streams must run sequentially. */
 	if (!options->stdout_to_stderr)
 		return 1;
 
