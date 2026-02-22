@@ -21,6 +21,57 @@ setup_hookdir () {
 	test_when_finished rm -rf .git/hooks
 }
 
+# write_sentinel_hook <path> [sentinel]
+#
+# Writes a hook that marks itself as started, sleeps for a few seconds, then
+# marks itself done. The sleep must be long enough that sentinel_detector can
+# observe <sentinel>.started before <sentinel>.done appears when both hooks
+# run concurrently in parallel mode.
+write_sentinel_hook () {
+	sentinel="${2:-sentinel}"
+	write_script "$1" <<-EOF
+	touch ${sentinel}.started &&
+	sleep 2 &&
+	touch ${sentinel}.done
+	EOF
+}
+
+# sentinel_detector <sentinel> <output>
+#
+# Returns a shell command string suitable for use as hook.<name>.command.
+# The detector must be registered after the sentinel:
+# 1. In serial mode, the sentinel has completed (and <sentinel>.done exists)
+#    before the detector starts.
+# 2. In parallel mode, both run concurrently so <sentinel>.done has not appeared
+#    yet and the detector just sees <sentinel>.started.
+#
+# At start, poll until <sentinel>.started exists to absorb startup jitter, then
+# write to <output>:
+# 1. 'serial'   if <sentinel>.done exists (sentinel finished before we started),
+# 2. 'parallel' if only <sentinel>.started exists (sentinel still running),
+# 3. 'timeout'  if <sentinel>.started never appeared.
+#
+# The command ends with ':' so when git appends "$@" for hooks that receive
+# positional arguments (e.g. pre-push), the result ': "$@"' is valid shell
+# rather than a syntax error 'fi "$@"'.
+sentinel_detector () {
+	cat <<-EOF
+	i=0
+	while ! test -f ${1}.started && test \$i -lt 10; do
+	    sleep 1
+	    i=\$((i+1))
+	done
+	if test -f ${1}.done; then
+	    echo serial >${2}
+	elif test -f ${1}.started; then
+	    echo parallel >${2}
+	else
+	    echo timeout >${2}
+	fi
+	:
+	EOF
+}
+
 test_expect_success 'git hook usage' '
 	test_expect_code 129 git hook &&
 	test_expect_code 129 git hook run &&
@@ -551,6 +602,97 @@ test_expect_success 'server push-to-checkout hook expects stdout redirected to s
 	cd .. &&
 	git push origin-server-2 HEAD:main >stdout.actual 2>stderr.actual &&
 	check_stdout_merged_to_stderr push-to-checkout
+'
+
+test_expect_success 'hook.jobs=1 config runs hooks in series' '
+	test_when_finished "rm -f sentinel.started sentinel.done hook.order" &&
+
+	# Use two configured hooks so the execution order is deterministic:
+	# hook-1 (sentinel) is listed before hook-2 (detector), so hook-1
+	# always runs first even in serial mode.
+	test_config hook.hook-1.event test-hook &&
+	test_config hook.hook-1.command \
+	    "touch sentinel.started; sleep 2; touch sentinel.done" &&
+	test_config hook.hook-2.event test-hook &&
+	test_config hook.hook-2.command \
+	    "$(sentinel_detector sentinel hook.order)" &&
+
+	test_config hook.jobs 1 &&
+
+	git hook run test-hook >out 2>err &&
+	echo serial >expect &&
+	test_cmp expect hook.order
+'
+
+test_expect_success 'hook.jobs=2 config runs hooks in parallel' '
+	test_when_finished "rm -f sentinel.started sentinel.done hook.order" &&
+	test_when_finished "rm -rf .git/hooks" &&
+
+	mkdir -p .git/hooks &&
+	write_sentinel_hook .git/hooks/test-hook &&
+
+	test_config hook.hook-2.event test-hook &&
+	test_config hook.hook-2.command \
+	    "$(sentinel_detector sentinel hook.order)" &&
+	test_config hook.hook-2.parallel true &&
+
+	test_config hook.jobs 2 &&
+
+	git hook run test-hook >out 2>err &&
+	echo parallel >expect &&
+	test_cmp expect hook.order
+'
+
+test_expect_success 'hook.<name>.parallel=true enables parallel execution' '
+	test_when_finished "rm -f sentinel.started sentinel.done hook.order" &&
+	test_config hook.hook-1.event test-hook &&
+	test_config hook.hook-1.command \
+	    "touch sentinel.started; sleep 2; touch sentinel.done" &&
+	test_config hook.hook-1.parallel true &&
+	test_config hook.hook-2.event test-hook &&
+	test_config hook.hook-2.command \
+	    "$(sentinel_detector sentinel hook.order)" &&
+	test_config hook.hook-2.parallel true &&
+
+	test_config hook.jobs 2 &&
+
+	git hook run test-hook >out 2>err &&
+	echo parallel >expect &&
+	test_cmp expect hook.order
+'
+
+test_expect_success 'hook.<name>.parallel=false (default) forces serial execution' '
+	test_when_finished "rm -f sentinel.started sentinel.done hook.order" &&
+	test_config hook.hook-1.event test-hook &&
+	test_config hook.hook-1.command \
+	    "touch sentinel.started; sleep 2; touch sentinel.done" &&
+	test_config hook.hook-2.event test-hook &&
+	test_config hook.hook-2.command \
+	    "$(sentinel_detector sentinel hook.order)" &&
+
+	test_config hook.jobs 2 &&
+
+	git hook run test-hook >out 2>err &&
+	echo serial >expect &&
+	test_cmp expect hook.order
+'
+
+test_expect_success 'one non-parallel hook forces the whole event to run serially' '
+	test_when_finished "rm -f sentinel.started sentinel.done hook.order" &&
+	test_config hook.hook-1.event test-hook &&
+	test_config hook.hook-1.command \
+	    "touch sentinel.started; sleep 2; touch sentinel.done" &&
+	test_config hook.hook-1.parallel true &&
+	test_config hook.hook-2.event test-hook &&
+	test_config hook.hook-2.command \
+	    "$(sentinel_detector sentinel hook.order)" &&
+	# hook-2 has no parallel=true: should force serial for all
+
+	test_config hook.jobs 2 &&
+
+	git hook run test-hook >out 2>err &&
+	echo serial >expect &&
+	test_cmp expect hook.order
 '
 
 test_done
