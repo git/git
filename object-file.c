@@ -735,7 +735,7 @@ struct odb_transaction_files {
 static void prepare_loose_object_transaction(struct odb_transaction *base)
 {
 	struct odb_transaction_files *transaction =
-		container_of(base, struct odb_transaction_files, base);
+		container_of_or_null(base, struct odb_transaction_files, base);
 
 	/*
 	 * We lazily create the temporary object directory
@@ -755,7 +755,7 @@ static void fsync_loose_object_transaction(struct odb_transaction *base,
 					   int fd, const char *filename)
 {
 	struct odb_transaction_files *transaction =
-		container_of(base, struct odb_transaction_files, base);
+		container_of_or_null(base, struct odb_transaction_files, base);
 
 	/*
 	 * If we have an active ODB transaction, we issue a call that
