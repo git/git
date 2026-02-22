@@ -23,6 +23,19 @@ hook.<name>.enabled::
 	in a system or global config file and needs to be disabled for a
 	specific repository. See linkgit:git-hook[1].
 
+hook.<name>.parallel::
+	Whether the hook `hook.<name>` may run in parallel with other hooks
+	for the same event. Defaults to `false`. Set to `true` only when the
+	hook script is safe to run concurrently with other hooks for the same
+	event. If any hook for an event does not have this set to `true`,
+	all hooks for that event run sequentially regardless of `hook.jobs`.
+	Only configured (named) hooks need to declare this. Traditional hooks
+	found in the hooks directory do not need to, and run in parallel when
+	the effective job count is greater than 1. See linkgit:git-hook[1].
+
 hook.jobs::
 	Specifies how many hooks can be run simultaneously during parallelized
 	hook execution. If unspecified, defaults to 1 (serial execution).
++
+This setting has no effect unless all configured hooks for the event have
+`hook.<name>.parallel` set to `true`.
