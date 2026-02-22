@@ -197,6 +197,7 @@ void hook_list_clear(struct string_list *hooks, cb_data_free_fn cb_data_free);
  */
 struct hook_config_cache {
 	struct strmap hooks; /* maps event name -> string_list of hooks */
+	unsigned int jobs; /* hook.jobs config value; 0 if unset (defaults to serial) */
 };
 
 /**
