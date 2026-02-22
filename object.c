@@ -207,10 +207,11 @@ struct object *lookup_object_by_type(struct repository *r,
 	}
 }
 
-enum peel_status peel_object(struct repository *r,
-			     const struct object_id *name,
-			     struct object_id *oid,
-			     unsigned flags)
+enum peel_status peel_object_ext(struct repository *r,
+				 const struct object_id *name,
+				 struct object_id *oid,
+				 unsigned flags,
+				 enum object_type *typep)
 {
 	struct object *o = lookup_unknown_object(r, name);
 
@@ -220,8 +221,10 @@ enum peel_status peel_object(struct repository *r,
 			return PEEL_INVALID;
 	}
 
-	if (o->type != OBJ_TAG)
+	if (o->type != OBJ_TAG) {
+		*typep = o->type;
 		return PEEL_NON_TAG;
+	}
 
 	while (o && o->type == OBJ_TAG) {
 		o = parse_object(r, &o->oid);
@@ -241,7 +244,17 @@ enum peel_status peel_object(struct repository *r,
 		return PEEL_INVALID;
 
 	oidcpy(oid, &o->oid);
+	*typep = o->type;
 	return PEEL_PEELED;
+}
+
+enum peel_status peel_object(struct repository *r,
+			     const struct object_id *name,
+			     struct object_id *oid,
+			     unsigned flags)
+{
+	enum object_type dummy;
+	return peel_object_ext(r, name, oid, flags, &dummy);
 }
 
 struct object *parse_object_buffer(struct repository *r, const struct object_id *oid, enum object_type type, unsigned long size, void *buffer, int *eaten_p)
