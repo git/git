@@ -1,6 +1,7 @@
 #ifndef HOOK_H
 #define HOOK_H
 #include "strvec.h"
+#include "run-command.h"
 
 struct repository;
 
@@ -14,6 +15,14 @@ struct run_hooks_opt
 
 	/* Emit an error if the hook is missing */
 	unsigned int error_if_missing:1;
+
+	/**
+	 *  Number of processes to parallelize across.
+	 *
+	 * If > 1, output will be buffered and de-interleaved (ungroup=0).
+	 * If == 1, output will be real-time (ungroup=1).
+	 */
+	unsigned int jobs;
 
 	/**
 	 * An optional initial working directory for the hook,
@@ -34,14 +43,62 @@ struct run_hooks_opt
 	int *invoked_hook;
 
 	/**
+	 * Send the hook's stdout to stderr.
+	 *
+	 * This is the default behavior for all hooks except pre-push,
+	 * which has separate stdout and stderr streams for backwards
+	 * compatibility reasons.
+	 */
+	unsigned int stdout_to_stderr:1;
+
+	/**
 	 * Path to file which should be piped to stdin for each hook.
 	 */
 	const char *path_to_stdin;
+
+	/**
+	 * Callback used to incrementally feed a child hook stdin pipe.
+	 *
+	 * Useful especially if a hook consumes large quantities of data
+	 * (e.g. a list of all refs in a client push), so feeding it via
+	 * in-memory strings or slurping to/from files is inefficient.
+	 * While the callback allows piecemeal writing, it can also be
+	 * used for smaller inputs, where it gets called only once.
+	 *
+	 * Add hook callback initalization context to `feed_pipe_ctx`.
+	 * Add hook callback internal state to `feed_pipe_cb_data`.
+	 *
+	 */
+	feed_pipe_fn feed_pipe;
+
+	/**
+	 * Opaque data pointer used to pass context to `feed_pipe_fn`.
+	 *
+	 * It can be accessed via the second callback arg 'pp_cb':
+	 * ((struct hook_cb_data *) pp_cb)->hook_cb->options->feed_pipe_ctx;
+	 *
+	 * The caller is responsible for managing the memory for this data.
+	 * Only useful when using `run_hooks_opt.feed_pipe`, otherwise ignore it.
+	 */
+	void *feed_pipe_ctx;
+
+	/**
+	 * Opaque data pointer used to keep internal state across callback calls.
+	 *
+	 * It can be accessed directly via the third callback arg 'pp_task_cb':
+	 * struct ... *state = pp_task_cb;
+	 *
+	 * The caller is responsible for managing the memory for this data.
+	 * Only useful when using `run_hooks_opt.feed_pipe`, otherwise ignore it.
+	 */
+	void *feed_pipe_cb_data;
 };
 
 #define RUN_HOOKS_OPT_INIT { \
 	.env = STRVEC_INIT, \
 	.args = STRVEC_INIT, \
+	.stdout_to_stderr = 1, \
+	.jobs = 1, \
 }
 
 struct hook_cb_data {
