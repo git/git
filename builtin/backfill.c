@@ -67,8 +67,7 @@ static int fill_missing_blobs(const char *path UNUSED,
 		return 0;
 
 	for (size_t i = 0; i < list->nr; i++) {
-		if (!odb_has_object(ctx->repo->objects, &list->oid[i],
-				    OBJECT_INFO_FOR_PREFETCH))
+		if (!odb_has_object(ctx->repo->objects, &list->oid[i], 0))
 			oid_array_append(&ctx->current_batch, &list->oid[i]);
 	}
 
