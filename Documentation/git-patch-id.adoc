@@ -3,7 +3,7 @@ git-patch-id(1)
 
 NAME
 ----
-git-patch-id - Compute unique ID for a patch
+git-patch-id - Compute unique IDs for patches
 
 SYNOPSIS
 --------
@@ -12,7 +12,7 @@ git patch-id [--stable | --unstable | --verbatim]
 
 DESCRIPTION
 -----------
-Read a patch from the standard input and compute the patch ID for it.
+Read patches from standard input and compute the patch IDs.
 
 A "patch ID" is nothing but a sum of SHA-1 of the file diffs associated with a
 patch, with line numbers ignored.  As such, it's "reasonably stable", but at
@@ -25,7 +25,8 @@ When dealing with `git diff-tree --patch` output, it takes advantage of
 the fact that the patch is prefixed with the object name of the
 commit, and outputs two 40-byte hexadecimal strings.  The first
 string is the patch ID, and the second string is the commit ID.
-This can be used to make a mapping from patch ID to commit ID.
+This can be used to make a mapping from patch ID to commit ID for a
+set or range of commits.
 
 OPTIONS
 -------
@@ -66,6 +67,50 @@ This is the default if `patchid.stable` is set to `true`.
 	with reordered patches) may want to use this option.
 +
 This is the default.
+
+EXAMPLES
+--------
+
+linkgit:git-cherry[1] shows what commits from a branch have patch ID
+equivalent commits in some upstream branch. But it only tells you
+whether such a commit exists or not. What if you wanted to know the
+relevant commits in the upstream? We can use this command to make a
+mapping between your branch and the upstream branch:
+
+----
+#!/bin/sh
+
+upstream="$1"
+branch="$2"
+test -z "$branch" && branch=HEAD
+limit="$3"
+if test -n "$limit"
+then
+    tail_opts="$limit".."$upstream"
+else
+    since=$(git log --format=%aI "$upstream".."$branch" | tail -1)
+    tail_opts=--since="$since"' '"$upstream"
+fi
+for_branch=$(mktemp)
+for_upstream=$(mktemp)
+
+git rev-list --no-merges "$upstream".."$branch" |
+    git diff-tree --patch --stdin |
+    git patch-id  --stable | sort >"$for_branch"
+git rev-list --no-merges $tail_opts |
+    git diff-tree --patch --stdin |
+    git patch-id  --stable | sort >"$for_upstream"
+join -a1 "$for_branch" "$for_upstream" | cut -d' ' -f2,3
+rm "$for_branch"
+rm "$for_upstream"
+----
+
+Now the first column shows the commit from your branch and the second
+column shows the patch ID equivalent commit, if it exists.
+
+SEE ALSO
+--------
+linkgit:git-cherry[1]
 
 GIT
 ---
