@@ -133,6 +133,8 @@ struct hook_config_cache_entry {
  * event_hooks: event-name to list of friendly-names map.
  * disabled_hooks: set of friendly-names with hook.name.enabled = false.
  * parallel_hooks: friendly-name to parallel flag.
+ * event_jobs: event-name to per-event jobs count (heap-allocated unsigned int *,
+ *             where NULL == unset).
  * jobs: value of the global hook.jobs key. Defaults to 0 if unset.
  */
 struct hook_all_config_cb {
@@ -140,6 +142,7 @@ struct hook_all_config_cb {
 	struct strmap event_hooks;
 	struct string_list disabled_hooks;
 	struct strmap parallel_hooks;
+	struct strmap event_jobs;
 	unsigned int jobs;
 };
 
@@ -222,6 +225,20 @@ static int hook_config_lookup_all(const char *key, const char *value,
 		int v = git_parse_maybe_bool(value);
 		if (v >= 0)
 			strmap_put(&data->parallel_hooks, hook_name, (void *)(uintptr_t)v);
+	} else if (!strcmp(subkey, "jobs")) {
+		unsigned int v;
+		if (!git_parse_uint(value, &v))
+			warning(_("hook.%s.jobs must be a positive integer, ignoring: '%s'"),
+				hook_name, value);
+		else if (!v)
+			warning(_("hook.%s.jobs must be positive, ignoring: 0"), hook_name);
+		else {
+			unsigned int *old;
+			unsigned int *p = xmalloc(sizeof(*p));
+			*p = v;
+			old = strmap_put(&data->event_jobs, hook_name, p);
+			free(old);
+		}
 	}
 
 	free(hook_name);
@@ -252,6 +269,7 @@ void hook_cache_clear(struct hook_config_cache *cache)
 		free(hooks);
 	}
 	strmap_clear(&cache->hooks, 0);
+	strmap_clear(&cache->event_jobs, 1); /* free heap-allocated unsigned int * values */
 }
 
 /* Populate `cache` with the complete hook configuration */
@@ -266,6 +284,7 @@ static void build_hook_config_map(struct repository *r,
 	strmap_init(&cb_data.event_hooks);
 	string_list_init_dup(&cb_data.disabled_hooks);
 	strmap_init(&cb_data.parallel_hooks);
+	strmap_init(&cb_data.event_jobs);
 
 	/* Parse all configs in one run, capturing hook.* including hook.jobs. */
 	repo_config(r, hook_config_lookup_all, &cb_data);
@@ -305,6 +324,7 @@ static void build_hook_config_map(struct repository *r,
 	}
 
 	cache->jobs = cb_data.jobs;
+	cache->event_jobs = cb_data.event_jobs;
 
 	strmap_clear(&cb_data.commands, 1);
 	strmap_clear(&cb_data.parallel_hooks, 0); /* values are uintptr_t, not heap ptrs */
@@ -513,6 +533,7 @@ static void run_hooks_opt_clear(struct run_hooks_opt *options)
 /* Determine how many jobs to use for hook execution. */
 static unsigned int get_hook_jobs(struct repository *r,
 				  struct run_hooks_opt *options,
+				  const char *hook_name,
 				  struct string_list *hook_list)
 {
 	unsigned int jobs;
@@ -529,22 +550,36 @@ static unsigned int get_hook_jobs(struct repository *r,
 		return 1;
 
 	/*
-	 * Resolve effective job count: -jN (when given) overrides config.
-	 * Default to 1 when both config an -jN are missing.
+	 * Resolve effective job count: -j N (when given) overrides config.
+	 * hook.<event>.jobs overrides hook.jobs.
+	 * Unset configs and -jN default to 1.
 	 */
-	if (options->jobs > 1)
+	if (options->jobs > 1) {
 		jobs = options->jobs;
-	else if (r && r->gitdir && r->hook_config_cache)
+	} else if (r && r->gitdir && r->hook_config_cache) {
 		/* Use the already-parsed cache (in-repo) */
+		unsigned int *event_jobs = strmap_get(&r->hook_config_cache->event_jobs,
+						      hook_name);
 		jobs = r->hook_config_cache->jobs ? r->hook_config_cache->jobs : 1;
-	else
+		if (event_jobs)
+			jobs = *event_jobs;
+	} else {
 		/* No cache present (out-of-repo call), use direct cfg lookup */
+		unsigned int event_jobs;
+		char *key;
 		jobs = repo_config_get_uint(r, "hook.jobs", &jobs) ? 1 : jobs;
+		key = xstrfmt("hook.%s.jobs", hook_name);
+		if (!repo_config_get_uint(r, key, &event_jobs) && event_jobs)
+			jobs = event_jobs;
+		free(key);
+	}
 
 	/*
 	 * Cap to serial any configured hook not marked as parallel = true.
 	 * This enforces the parallel = false default, even for "traditional"
 	 * hooks from the hookdir which cannot be marked parallel = true.
+	 * The same restriction applies whether jobs came from hook.jobs or
+	 * hook.<event>.jobs.
 	 */
 	for (size_t i = 0; jobs > 1 && i < hook_list->nr; i++) {
 		struct hook *h = hook_list->items[i].util;
@@ -566,7 +601,7 @@ int run_hooks_opt(struct repository *r, const char *hook_name,
 		.options = options,
 	};
 	int ret = 0;
-	unsigned int jobs = get_hook_jobs(r, options, hook_list);
+	unsigned int jobs = get_hook_jobs(r, options, hook_name, hook_list);
 	const struct run_process_parallel_opts opts = {
 		.tr2_category = "hook",
 		.tr2_label = hook_name,
