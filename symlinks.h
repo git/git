@@ -5,8 +5,8 @@
 
 struct cache_def {
 	struct strbuf path;
-	int flags;
-	int track_flags;
+	unsigned int flags;
+	unsigned int track_flags;
 	int prefix_len_stat_func;
 };
 #define CACHE_DEF_INIT { \
