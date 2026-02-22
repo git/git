@@ -62,3 +62,6 @@ hook.jobs::
 +
 This setting has no effect unless all configured hooks for the event have
 `hook.<name>.parallel` set to `true`.
++
+This has no effect for hooks requiring separate output streams (like `pre-push`)
+unless `extensions.hookStdoutToStderr` is enabled.

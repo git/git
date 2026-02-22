@@ -168,6 +168,7 @@ struct repository_format {
 	int worktree_config;
 	int relative_worktrees;
 	int submodule_path_cfg;
+	int hook_stdout_to_stderr;
 	int is_bare;
 	int hash_algo;
 	int compat_hash_algo;

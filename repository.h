@@ -173,6 +173,7 @@ struct repository {
 	int repository_format_relative_worktrees;
 	int repository_format_precious_objects;
 	int repository_format_submodule_path_cfg;
+	int repository_format_hook_stdout_to_stderr;
 
 	/* Indicate if a repository has a different 'commondir' from 'gitdir' */
 	unsigned different_commondir:1;
