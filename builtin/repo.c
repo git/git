@@ -276,7 +276,6 @@ static void stats_table_print_structure(const struct stats_table *table)
 		const char *value = "";
 
 		if (entry) {
-			struct stats_table_entry *entry = item->util;
 			value = entry->value;
 		}
 
