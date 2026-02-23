@@ -60,6 +60,14 @@ struct odb_source {
 	void (*free)(struct odb_source *source);
 
 	/*
+	 * This callback is expected to close any open resources, like for
+	 * example file descriptors or connections. The source is expected to
+	 * still be usable after it has been closed. Closed resources may need
+	 * to be reopened in that case.
+	 */
+	void (*close)(struct odb_source *source);
+
+	/*
 	 * This callback is expected to clear underlying caches of the object
 	 * database source. The function is called when the repository has for
 	 * example just been repacked so that new objects will become visible.
@@ -103,6 +111,16 @@ void odb_source_free(struct odb_source *source);
  * implementations.
  */
 void odb_source_release(struct odb_source *source);
+
+/*
+ * Close the object database source without releasing he underlying data. The
+ * source can still be used going forward, but it first needs to be reopened.
+ * This can be useful to reduce resource usage.
+ */
+static inline void odb_source_close(struct odb_source *source)
+{
+	source->close(source);
+}
 
 /*
  * Reprepare the object database source and clear any caches. Depending on the

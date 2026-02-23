@@ -28,6 +28,12 @@ static void odb_source_files_free(struct odb_source *source)
 	free(files);
 }
 
+static void odb_source_files_close(struct odb_source *source)
+{
+	struct odb_source_files *files = odb_source_files_downcast(source);
+	packfile_store_close(files->packed);
+}
+
 static void odb_source_files_reprepare(struct odb_source *source)
 {
 	struct odb_source_files *files = odb_source_files_downcast(source);
@@ -47,6 +53,7 @@ struct odb_source_files *odb_source_files_new(struct object_database *odb,
 	files->packed = packfile_store_new(&files->base);
 
 	files->base.free = odb_source_files_free;
+	files->base.close = odb_source_files_close;
 	files->base.reprepare = odb_source_files_reprepare;
 
 	/*

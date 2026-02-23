@@ -1062,10 +1062,8 @@ struct object_database *odb_new(struct repository *repo,
 void odb_close(struct object_database *o)
 {
 	struct odb_source *source;
-	for (source = o->sources; source; source = source->next) {
-		struct odb_source_files *files = odb_source_files_downcast(source);
-		packfile_store_close(files->packed);
-	}
+	for (source = o->sources; source; source = source->next)
+		odb_source_close(source);
 	close_commit_graph(o);
 }
 
