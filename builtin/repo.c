@@ -238,6 +238,7 @@ struct repo_structure {
 
 struct stats_table {
 	struct string_list rows;
+	struct string_list annotations;
 
 	int name_col_width;
 	int value_col_width;
@@ -250,6 +251,8 @@ struct stats_table {
 struct stats_table_entry {
 	char *value;
 	const char *unit;
+	size_t index;
+	struct object_id *oid;
 };
 
 static void stats_table_vaddf(struct stats_table *table,
@@ -272,6 +275,12 @@ static void stats_table_vaddf(struct stats_table *table,
 		table->name_col_width = name_width;
 	if (!entry)
 		return;
+	if (entry->oid) {
+		entry->index = table->annotations.nr + 1;
+		strbuf_addf(&buf, "[%" PRIuMAX "] %s", (uintmax_t)entry->index,
+			    oid_to_hex(entry->oid));
+		string_list_append_nodup(&table->annotations, strbuf_detach(&buf, NULL));
+	}
 	if (entry->value) {
 		int value_width = utf8_strwidth(entry->value);
 		if (value_width > table->value_col_width)
@@ -282,6 +291,8 @@ static void stats_table_vaddf(struct stats_table *table,
 		if (unit_width > table->unit_col_width)
 			table->unit_col_width = unit_width;
 	}
+
+	strbuf_release(&buf);
 }
 
 static void stats_table_addf(struct stats_table *table, const char *format, ...)
@@ -315,6 +326,27 @@ static void stats_table_size_addf(struct stats_table *table, size_t value,
 
 	CALLOC_ARRAY(entry, 1);
 	humanise_bytes(value, &entry->value, &entry->unit, HUMANISE_COMPACT);
+
+	va_start(ap, format);
+	stats_table_vaddf(table, entry, format, ap);
+	va_end(ap);
+}
+
+static void stats_table_object_size_addf(struct stats_table *table,
+					 struct object_id *oid, size_t value,
+					 const char *format, ...)
+{
+	struct stats_table_entry *entry;
+	va_list ap;
+
+	CALLOC_ARRAY(entry, 1);
+	humanise_bytes(value, &entry->value, &entry->unit, HUMANISE_COMPACT);
+
+	/*
+	 * A NULL OID should not have a table annotation.
+	 */
+	if (!is_null_oid(oid))
+		entry->oid = oid;
 
 	va_start(ap, format);
 	stats_table_vaddf(table, entry, format, ap);
@@ -389,18 +421,28 @@ static void stats_table_setup_structure(struct stats_table *table,
 	stats_table_addf(table, "");
 	stats_table_addf(table, "* %s", _("Largest objects"));
 	stats_table_addf(table, "  * %s", _("Commits"));
-	stats_table_size_addf(table, objects->largest.commit_size.value,
-			      "    * %s", _("Maximum size"));
+	stats_table_object_size_addf(table,
+				     &objects->largest.commit_size.oid,
+				     objects->largest.commit_size.value,
+				     "    * %s", _("Maximum size"));
 	stats_table_addf(table, "  * %s", _("Trees"));
-	stats_table_size_addf(table, objects->largest.tree_size.value,
-			      "    * %s", _("Maximum size"));
+	stats_table_object_size_addf(table,
+				     &objects->largest.tree_size.oid,
+				     objects->largest.tree_size.value,
+				     "    * %s", _("Maximum size"));
 	stats_table_addf(table, "  * %s", _("Blobs"));
-	stats_table_size_addf(table, objects->largest.blob_size.value,
-			      "    * %s", _("Maximum size"));
+	stats_table_object_size_addf(table,
+				     &objects->largest.blob_size.oid,
+				     objects->largest.blob_size.value,
+				     "    * %s", _("Maximum size"));
 	stats_table_addf(table, "  * %s", _("Tags"));
-	stats_table_size_addf(table, objects->largest.tag_size.value,
-			      "    * %s", _("Maximum size"));
+	stats_table_object_size_addf(table,
+				     &objects->largest.tag_size.oid,
+				     objects->largest.tag_size.value,
+				     "    * %s", _("Maximum size"));
 }
+
+#define INDEX_WIDTH 4
 
 static void stats_table_print_structure(const struct stats_table *table)
 {
@@ -420,7 +462,8 @@ static void stats_table_print_structure(const struct stats_table *table)
 		value_col_width = title_value_width - unit_col_width;
 
 	strbuf_addstr(&buf, "| ");
-	strbuf_utf8_align(&buf, ALIGN_LEFT, name_col_width, name_col_title);
+	strbuf_utf8_align(&buf, ALIGN_LEFT, name_col_width + INDEX_WIDTH,
+			  name_col_title);
 	strbuf_addstr(&buf, " | ");
 	strbuf_utf8_align(&buf, ALIGN_LEFT,
 			  value_col_width + unit_col_width + 1, value_col_title);
@@ -428,7 +471,7 @@ static void stats_table_print_structure(const struct stats_table *table)
 	printf("%s\n", buf.buf);
 
 	printf("| ");
-	for (int i = 0; i < name_col_width; i++)
+	for (int i = 0; i < name_col_width + INDEX_WIDTH; i++)
 		putchar('-');
 	printf(" | ");
 	for (int i = 0; i < value_col_width + unit_col_width + 1; i++)
@@ -450,6 +493,13 @@ static void stats_table_print_structure(const struct stats_table *table)
 		strbuf_reset(&buf);
 		strbuf_addstr(&buf, "| ");
 		strbuf_utf8_align(&buf, ALIGN_LEFT, name_col_width, item->string);
+
+		if (entry && entry->oid)
+			strbuf_addf(&buf, " [%" PRIuMAX "]",
+				    (uintmax_t)entry->index);
+		else
+			strbuf_addchars(&buf, ' ', INDEX_WIDTH);
+
 		strbuf_addstr(&buf, " | ");
 		strbuf_utf8_align(&buf, ALIGN_RIGHT, value_col_width, value);
 		strbuf_addch(&buf, ' ');
@@ -457,6 +507,11 @@ static void stats_table_print_structure(const struct stats_table *table)
 		strbuf_addstr(&buf, " |");
 		printf("%s\n", buf.buf);
 	}
+
+	if (table->annotations.nr)
+		printf("\n");
+	for_each_string_list_item(item, &table->annotations)
+		printf("%s\n", item->string);
 
 	strbuf_release(&buf);
 }
@@ -473,6 +528,7 @@ static void stats_table_clear(struct stats_table *table)
 	}
 
 	string_list_clear(&table->rows, 1);
+	string_list_clear(&table->annotations, 1);
 }
 
 static void structure_keyvalue_print(struct repo_structure *stats,
@@ -695,6 +751,7 @@ static int cmd_repo_structure(int argc, const char **argv, const char *prefix,
 {
 	struct stats_table table = {
 		.rows = STRING_LIST_INIT_DUP,
+		.annotations = STRING_LIST_INIT_DUP,
 	};
 	enum output_format format = FORMAT_TABLE;
 	struct repo_structure stats = { 0 };
