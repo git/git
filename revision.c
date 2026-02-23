@@ -2731,10 +2731,12 @@ void revision_opts_finish(struct rev_info *revs)
 static int for_each_bisect_ref(struct ref_store *refs, refs_for_each_cb fn,
 			       void *cb_data, const char *term)
 {
+	struct refs_for_each_ref_options opts = { 0 };
 	struct strbuf bisect_refs = STRBUF_INIT;
 	int status;
 	strbuf_addf(&bisect_refs, "refs/bisect/%s", term);
-	status = refs_for_each_fullref_in(refs, bisect_refs.buf, NULL, fn, cb_data);
+	opts.prefix = bisect_refs.buf;
+	status = refs_for_each_ref_ext(refs, fn, cb_data, &opts);
 	strbuf_release(&bisect_refs);
 	return status;
 }

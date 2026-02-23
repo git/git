@@ -1929,17 +1929,6 @@ int refs_for_each_ref(struct ref_store *refs, refs_for_each_cb cb, void *cb_data
 	return refs_for_each_ref_ext(refs, cb, cb_data, &opts);
 }
 
-int refs_for_each_fullref_in(struct ref_store *refs, const char *prefix,
-			     const char **exclude_patterns,
-			     refs_for_each_cb cb, void *cb_data)
-{
-	struct refs_for_each_ref_options opts = {
-		.prefix = prefix,
-		.exclude_patterns = exclude_patterns,
-	};
-	return refs_for_each_ref_ext(refs, cb, cb_data, &opts);
-}
-
 int refs_for_each_replace_ref(struct ref_store *refs, refs_for_each_cb cb, void *cb_data)
 {
 	const char *git_replace_ref_base = ref_namespace[NAMESPACE_REPLACE].ref;

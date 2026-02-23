@@ -343,9 +343,9 @@ static void show_one_alternate_ref(const struct object_id *oid,
 
 static void write_head_info(void)
 {
+	struct refs_for_each_ref_options opts = { 0 };
 	static struct oidset seen = OIDSET_INIT;
 	struct strvec excludes_vector = STRVEC_INIT;
-	const char **exclude_patterns;
 
 	/*
 	 * We need access to the reference names both with and without their
@@ -353,12 +353,12 @@ static void write_head_info(void)
 	 * thus have to adapt exclude patterns to carry the namespace prefix
 	 * ourselves.
 	 */
-	exclude_patterns = get_namespaced_exclude_patterns(
+	opts.exclude_patterns = get_namespaced_exclude_patterns(
 		hidden_refs_to_excludes(&hidden_refs),
 		get_git_namespace(), &excludes_vector);
 
-	refs_for_each_fullref_in(get_main_ref_store(the_repository), "",
-				 exclude_patterns, show_ref_cb, &seen);
+	refs_for_each_ref_ext(get_main_ref_store(the_repository),
+			      show_ref_cb, &seen, &opts);
 	odb_for_each_alternate_ref(the_repository->objects,
 				   show_one_alternate_ref, &seen);
 

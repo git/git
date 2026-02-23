@@ -940,14 +940,13 @@ int cmd_rev_parse(int argc,
 				continue;
 			}
 			if (!strcmp(arg, "--bisect")) {
-				refs_for_each_fullref_in(get_main_ref_store(the_repository),
-							 "refs/bisect/bad",
-							 NULL, show_reference,
-							 NULL);
-				refs_for_each_fullref_in(get_main_ref_store(the_repository),
-							 "refs/bisect/good",
-							 NULL, anti_reference,
-							 NULL);
+				struct refs_for_each_ref_options opts = { 0 };
+				opts.prefix = "refs/bisect/bad";
+				refs_for_each_ref_ext(get_main_ref_store(the_repository),
+						      show_reference, NULL, &opts);
+				opts.prefix = "refs/bisect/good";
+				refs_for_each_ref_ext(get_main_ref_store(the_repository),
+						      anti_reference, NULL, &opts);
 				continue;
 			}
 			if (opt_with_value(arg, "--branches", &arg)) {

@@ -173,10 +173,12 @@ static int cmd_for_each_ref(struct ref_store *refs, const char **argv)
 static int cmd_for_each_ref__exclude(struct ref_store *refs, const char **argv)
 {
 	const char *prefix = notnull(*argv++, "prefix");
-	const char **exclude_patterns = argv;
+	struct refs_for_each_ref_options opts = {
+		.prefix = prefix,
+		.exclude_patterns = argv,
+	};
 
-	return refs_for_each_fullref_in(refs, prefix, exclude_patterns, each_ref,
-					NULL);
+	return refs_for_each_ref_ext(refs, each_ref, NULL, &opts);
 }
 
 static int cmd_resolve_ref(struct ref_store *refs, const char **argv)

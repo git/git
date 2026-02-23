@@ -510,14 +510,6 @@ int refs_for_each_remote_ref(struct ref_store *refs,
 int refs_for_each_replace_ref(struct ref_store *refs,
 			      refs_for_each_cb fn, void *cb_data);
 
-/*
- * references matching any pattern in "exclude_patterns" are omitted from the
- * result set on a best-effort basis.
- */
-int refs_for_each_fullref_in(struct ref_store *refs, const char *prefix,
-			     const char **exclude_patterns,
-			     refs_for_each_cb fn, void *cb_data);
-
 /**
  * Iterate all refs in "prefixes" by partitioning prefixes into disjoint sets
  * and iterating the longest-common prefix of each set.
