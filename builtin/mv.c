@@ -574,7 +574,7 @@ remove_entry:
 
 		if (ignore_sparse &&
 		    cfg->apply_sparse_checkout &&
-		    core_sparse_checkout_cone) {
+		    cfg->core_sparse_checkout_cone) {
 			/*
 			 * NEEDSWORK: we are *not* paying attention to
 			 * "out-to-out" move (<source> is out-of-cone and
