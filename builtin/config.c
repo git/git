@@ -351,6 +351,24 @@ static int format_config_expiry_date(struct strbuf *buf,
 	return 0;
 }
 
+static int format_config_color(struct strbuf *buf,
+			       const char *key_,
+			       const char *value_,
+			       int gently)
+{
+	char v[COLOR_MAXLEN];
+
+	if (gently) {
+		if (color_parse_quietly(value_, v) < 0)
+			return -1;
+	} else if (git_config_color(v, key_, value_) < 0) {
+		return -1;
+	}
+
+	strbuf_addstr(buf, v);
+	return 0;
+}
+
 /*
  * Format the configuration key-value pair (`key_`, `value_`) and
  * append it into strbuf `buf`.  Returns a negative value on failure,
@@ -388,12 +406,9 @@ static int format_config(const struct config_display_options *opts,
 			res = format_config_path(buf, key_, value_, gently);
 		else if (opts->type == TYPE_EXPIRY_DATE)
 			res = format_config_expiry_date(buf, key_, value_, gently);
-		else if (opts->type == TYPE_COLOR) {
-			char v[COLOR_MAXLEN];
-			if (git_config_color(v, key_, value_) < 0)
-				return -1;
-			strbuf_addstr(buf, v);
-		} else if (value_) {
+		else if (opts->type == TYPE_COLOR)
+			res = format_config_color(buf, key_, value_, gently);
+		else if (value_) {
 			strbuf_addstr(buf, value_);
 		} else {
 			/* Just show the key name; back out delimiter */
