@@ -2562,15 +2562,6 @@ test_expect_success 'list --type=path shows only canonicalizable path values' '
 '
 
 test_expect_success 'list --type=expiry-date shows only canonicalizable dates' '
-	cat >expecterr <<-EOF &&
-	error: '\''True'\'' for '\''section.foo'\'' is not a valid timestamp
-	error: '\''~/dir'\'' for '\''section.path'\'' is not a valid timestamp
-	error: '\''red'\'' for '\''section.red'\'' is not a valid timestamp
-	error: '\''Blue'\'' for '\''section.blue'\'' is not a valid timestamp
-	error: '\'':(optional)no-such-path'\'' for '\''section.missing'\'' is not a valid timestamp
-	error: '\'':(optional)expect'\'' for '\''section.exists'\'' is not a valid timestamp
-	EOF
-
 	git config ${mode_prefix}list --type=expiry-date >actual 2>err &&
 
 	# section.number and section.big parse as relative dates that could
@@ -2578,7 +2569,7 @@ test_expect_success 'list --type=expiry-date shows only canonicalizable dates' '
 	test_grep section.big actual &&
 	test_grep section.number actual &&
 	test_grep "section.date=$(git config --type=expiry-date section.$key)" actual &&
-	test_cmp expecterr err
+	test_must_be_empty err
 '
 
 test_expect_success 'list --type=color shows only canonicalizable color values' '

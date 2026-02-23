@@ -3,6 +3,7 @@
 #include "abspath.h"
 #include "config.h"
 #include "color.h"
+#include "date.h"
 #include "editor.h"
 #include "environment.h"
 #include "gettext.h"
@@ -333,6 +334,23 @@ static int format_config_path(struct strbuf *buf,
 	return 0;
 }
 
+static int format_config_expiry_date(struct strbuf *buf,
+				     const char *key_,
+				     const char *value_,
+				     int quietly)
+{
+	timestamp_t t;
+	if (quietly) {
+		if (parse_expiry_date(value_, &t))
+			return -1;
+	} else if (git_config_expiry_date(&t, key_, value_) < 0) {
+		return -1;
+	}
+
+	strbuf_addf(buf, "%"PRItime, t);
+	return 0;
+}
+
 /*
  * Format the configuration key-value pair (`key_`, `value_`) and
  * append it into strbuf `buf`.  Returns a negative value on failure,
@@ -368,12 +386,9 @@ static int format_config(const struct config_display_options *opts,
 			res = format_config_bool_or_str(buf, value_);
 		else if (opts->type == TYPE_PATH)
 			res = format_config_path(buf, key_, value_, gently);
-		else if (opts->type == TYPE_EXPIRY_DATE) {
-			timestamp_t t;
-			if (git_config_expiry_date(&t, key_, value_) < 0)
-				return -1;
-			strbuf_addf(buf, "%"PRItime, t);
-		} else if (opts->type == TYPE_COLOR) {
+		else if (opts->type == TYPE_EXPIRY_DATE)
+			res = format_config_expiry_date(buf, key_, value_, gently);
+		else if (opts->type == TYPE_COLOR) {
 			char v[COLOR_MAXLEN];
 			if (git_config_color(v, key_, value_) < 0)
 				return -1;
