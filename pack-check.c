@@ -155,7 +155,7 @@ static int verify_packfile(struct repository *r,
 			err = error("packed %s from %s is corrupt",
 				    oid_to_hex(&oid), p->pack_name);
 		else if (!data &&
-			 (!(stream = odb_read_stream_open(r->objects, &oid, NULL)) ||
+			 (packfile_read_object_stream(&stream, &oid, p, entries[i].offset) < 0 ||
 			  stream_object_signature(r, stream, &oid) < 0))
 			err = error("packed %s from %s is corrupt",
 				    oid_to_hex(&oid), p->pack_name);

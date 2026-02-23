@@ -852,6 +852,44 @@ test_expect_success 'fsck errors in packed objects' '
 	! grep corrupt out
 '
 
+test_expect_success 'fsck handles multiple packfiles with big blobs' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		# We construct two packfiles with two objects in common and one
+		# object not in common. The objects in common can then be
+		# corrupted in one of the packfiles, respectively. The other
+		# objects that are unique to the packs are merely used to not
+		# have both packs contain the same data.
+		blob_one=$(test-tool genrandom one 200k | git hash-object -t blob -w --stdin) &&
+		blob_two=$(test-tool genrandom two 200k | git hash-object -t blob -w --stdin) &&
+		blob_three=$(test-tool genrandom three 200k | git hash-object -t blob -w --stdin) &&
+		blob_four=$(test-tool genrandom four 200k | git hash-object -t blob -w --stdin) &&
+		pack_one=$(printf "%s\n" "$blob_one" "$blob_two" "$blob_three" | git pack-objects .git/objects/pack/pack) &&
+		pack_two=$(printf "%s\n" "$blob_two" "$blob_three" "$blob_four" | git pack-objects .git/objects/pack/pack) &&
+		chmod a+w .git/objects/pack/pack-*.pack &&
+
+		# Corrupt blob two in the first pack.
+		git verify-pack -v .git/objects/pack/pack-$pack_one >objects &&
+		offset_one=$(sed <objects -n "s/^$blob_two .* \(.*\)$/\1/p") &&
+		printf "\0" | dd of=.git/objects/pack/pack-$pack_one.pack bs=1 conv=notrunc seek=$offset_one &&
+
+		# Corrupt blob three in the second pack.
+		git verify-pack -v .git/objects/pack/pack-$pack_two >objects &&
+		offset_two=$(sed <objects -n "s/^$blob_three .* \(.*\)$/\1/p") &&
+		printf "\0" | dd of=.git/objects/pack/pack-$pack_two.pack bs=1 conv=notrunc seek=$offset_two &&
+
+		# We now expect to see two failures for the corrupted objects,
+		# even though they exist in a non-corrupted form in the
+		# respective other pack.
+		test_must_fail git -c core.bigFileThreshold=100k fsck 2>err &&
+		test_grep "unknown object type 0 at offset $offset_one in .git/objects/pack/pack-$pack_one.pack" err &&
+		test_grep "unknown object type 0 at offset $offset_two in .git/objects/pack/pack-$pack_two.pack" err
+	)
+'
+
 test_expect_success 'fsck fails on corrupt packfile' '
 	hsh=$(git commit-tree -m mycommit HEAD^{tree}) &&
 	pack=$(echo $hsh | git pack-objects .git/objects/pack/pack) &&
