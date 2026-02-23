@@ -58,6 +58,13 @@ struct odb_source {
 	 * all associated resources. The function will never be called with a NULL pointer.
 	 */
 	void (*free)(struct odb_source *source);
+
+	/*
+	 * This callback is expected to clear underlying caches of the object
+	 * database source. The function is called when the repository has for
+	 * example just been repacked so that new objects will become visible.
+	 */
+	void (*reprepare)(struct odb_source *source);
 };
 
 /*
@@ -96,5 +103,15 @@ void odb_source_free(struct odb_source *source);
  * implementations.
  */
 void odb_source_release(struct odb_source *source);
+
+/*
+ * Reprepare the object database source and clear any caches. Depending on the
+ * backend used this may have the effect that concurrently-written objects
+ * become visible.
+ */
+static inline void odb_source_reprepare(struct odb_source *source)
+{
+	source->reprepare(source);
+}
 
 #endif
