@@ -2515,7 +2515,9 @@ test_expect_success 'list --type=int shows only canonicalizable int values' '
 	section.big=1048576
 	EOF
 
-	test_must_fail git config ${mode_prefix}list --type=int
+	git config ${mode_prefix}list --type=int >actual 2>err &&
+	test_cmp expect actual &&
+	test_must_be_empty err
 '
 
 test_expect_success 'list --type=bool shows only canonicalizable bool values' '

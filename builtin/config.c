@@ -237,6 +237,25 @@ struct strbuf_list {
 	int alloc;
 };
 
+static int format_config_int64(struct strbuf *buf,
+			       const char *key_,
+			       const char *value_,
+			       const struct key_value_info *kvi,
+			       int gently)
+{
+	int64_t v = 0;
+	if (gently) {
+		if (!git_parse_int64(value_, &v))
+			return -1;
+	} else {
+		/* may die() */
+		v = git_config_int64(key_, value_ ? value_ : "", kvi);
+	}
+
+	strbuf_addf(buf, "%"PRId64, v);
+	return 0;
+}
+
 /*
  * Format the configuration key-value pair (`key_`, `value_`) and
  * append it into strbuf `buf`.  Returns a negative value on failure,
@@ -249,8 +268,9 @@ struct strbuf_list {
 static int format_config(const struct config_display_options *opts,
 			 struct strbuf *buf, const char *key_,
 			 const char *value_, const struct key_value_info *kvi,
-			 int gently UNUSED)
+			 int gently)
 {
+	int res = 0;
 	if (opts->show_scope)
 		show_config_scope(opts, kvi, buf);
 	if (opts->show_origin)
@@ -262,8 +282,7 @@ static int format_config(const struct config_display_options *opts,
 			strbuf_addch(buf, opts->key_delim);
 
 		if (opts->type == TYPE_INT)
-			strbuf_addf(buf, "%"PRId64,
-				    git_config_int64(key_, value_ ? value_ : "", kvi));
+			res = format_config_int64(buf, key_, value_, kvi, gently);
 		else if (opts->type == TYPE_BOOL)
 			strbuf_addstr(buf, git_config_bool(key_, value_) ?
 				      "true" : "false");
@@ -309,7 +328,7 @@ static int format_config(const struct config_display_options *opts,
 		}
 	}
 	strbuf_addch(buf, opts->term);
-	return 0;
+	return res;
 }
 
 static int show_all_config(const char *key_, const char *value_,
