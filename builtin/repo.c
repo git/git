@@ -824,8 +824,15 @@ static void stats_table_clear(struct stats_table *table)
 static void structure_keyvalue_print(struct repo_structure *stats,
 				     char key_delim, char value_delim)
 {
+	size_t references_count_total = get_total_reference_count(&stats->refs);
+	size_t object_count_total = get_total_object_values(&stats->objects.type_counts);
+	size_t inflated_size_total = get_total_object_values(&stats->objects.inflated_sizes);
+	size_t disk_size_total = get_total_object_values(&stats->objects.disk_sizes);
 	size_t max_inflated_size = get_max_object_value(&stats->objects.max_inflated_sizes);
 	size_t max_disk_size = get_max_object_value(&stats->objects.max_disk_sizes);
+
+	printf("references.count%c%" PRIuMAX "%c", key_delim,
+	       (uintmax_t)references_count_total, value_delim);
 
 	printf("references.branches.count%c%" PRIuMAX "%c", key_delim,
 	       (uintmax_t)stats->refs.branches, value_delim);
@@ -836,6 +843,9 @@ static void structure_keyvalue_print(struct repo_structure *stats,
 	printf("references.others.count%c%" PRIuMAX "%c", key_delim,
 	       (uintmax_t)stats->refs.others, value_delim);
 
+	printf("objects.count%c%" PRIuMAX "%c", key_delim,
+	       (uintmax_t)object_count_total, value_delim);
+
 	printf("objects.commits.count%c%" PRIuMAX "%c", key_delim,
 	       (uintmax_t)stats->objects.type_counts.commits, value_delim);
 	printf("objects.trees.count%c%" PRIuMAX "%c", key_delim,
@@ -844,6 +854,9 @@ static void structure_keyvalue_print(struct repo_structure *stats,
 	       (uintmax_t)stats->objects.type_counts.blobs, value_delim);
 	printf("objects.tags.count%c%" PRIuMAX "%c", key_delim,
 	       (uintmax_t)stats->objects.type_counts.tags, value_delim);
+
+	printf("objects.inflated_size%c%" PRIuMAX "%c", key_delim,
+	       (uintmax_t)inflated_size_total, value_delim);
 
 	printf("objects.commits.inflated_size%c%" PRIuMAX "%c", key_delim,
 	       (uintmax_t)stats->objects.inflated_sizes.commits, value_delim);
@@ -864,6 +877,9 @@ static void structure_keyvalue_print(struct repo_structure *stats,
 	       (uintmax_t)stats->objects.max_inflated_sizes.blobs, value_delim);
 	printf("objects.tags.max_inflated_size%c%" PRIuMAX "%c", key_delim,
 	       (uintmax_t)stats->objects.max_inflated_sizes.tags, value_delim);
+
+	printf("objects.disk_size%c%" PRIuMAX "%c", key_delim,
+	       (uintmax_t)disk_size_total, value_delim);
 
 	printf("objects.max_disk_size%c%" PRIuMAX "%c", key_delim,
 	       (uintmax_t)max_disk_size, value_delim);
