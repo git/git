@@ -1858,62 +1858,76 @@ struct ref_iterator *refs_ref_iterator_begin(
 	return iter;
 }
 
-static int do_for_each_ref(struct ref_store *refs, const char *prefix,
-			   const char **exclude_patterns,
-			   refs_for_each_cb fn, int trim,
-			   enum refs_for_each_flag flags, void *cb_data)
+int refs_for_each_ref_ext(struct ref_store *refs,
+			  refs_for_each_cb cb, void *cb_data,
+			  const struct refs_for_each_ref_options *opts)
 {
 	struct ref_iterator *iter;
 
 	if (!refs)
 		return 0;
 
-	iter = refs_ref_iterator_begin(refs, prefix, exclude_patterns, trim,
-				       flags);
+	iter = refs_ref_iterator_begin(refs, opts->prefix ? opts->prefix : "",
+				       opts->exclude_patterns,
+				       opts->trim_prefix, opts->flags);
 
-	return do_for_each_ref_iterator(iter, fn, cb_data);
+	return do_for_each_ref_iterator(iter, cb, cb_data);
 }
 
-int refs_for_each_ref(struct ref_store *refs, refs_for_each_cb fn, void *cb_data)
+int refs_for_each_ref(struct ref_store *refs, refs_for_each_cb cb, void *cb_data)
 {
-	return do_for_each_ref(refs, "", NULL, fn, 0, 0, cb_data);
+	struct refs_for_each_ref_options opts = { 0 };
+	return refs_for_each_ref_ext(refs, cb, cb_data, &opts);
 }
 
 int refs_for_each_ref_in(struct ref_store *refs, const char *prefix,
-			 refs_for_each_cb fn, void *cb_data)
+			 refs_for_each_cb cb, void *cb_data)
 {
-	return do_for_each_ref(refs, prefix, NULL, fn, strlen(prefix), 0, cb_data);
+	struct refs_for_each_ref_options opts = {
+		.prefix = prefix,
+		.trim_prefix = strlen(prefix),
+	};
+	return refs_for_each_ref_ext(refs, cb, cb_data, &opts);
 }
 
 int refs_for_each_fullref_in(struct ref_store *refs, const char *prefix,
 			     const char **exclude_patterns,
-			     refs_for_each_cb fn, void *cb_data)
+			     refs_for_each_cb cb, void *cb_data)
 {
-	return do_for_each_ref(refs, prefix, exclude_patterns, fn, 0, 0, cb_data);
+	struct refs_for_each_ref_options opts = {
+		.prefix = prefix,
+		.exclude_patterns = exclude_patterns,
+	};
+	return refs_for_each_ref_ext(refs, cb, cb_data, &opts);
 }
 
-int refs_for_each_replace_ref(struct ref_store *refs, refs_for_each_cb fn, void *cb_data)
+int refs_for_each_replace_ref(struct ref_store *refs, refs_for_each_cb cb, void *cb_data)
 {
 	const char *git_replace_ref_base = ref_namespace[NAMESPACE_REPLACE].ref;
-	return do_for_each_ref(refs, git_replace_ref_base, NULL, fn,
-			       strlen(git_replace_ref_base),
-			       REFS_FOR_EACH_INCLUDE_BROKEN, cb_data);
+	struct refs_for_each_ref_options opts = {
+		.prefix = git_replace_ref_base,
+		.trim_prefix = strlen(git_replace_ref_base),
+		.flags = REFS_FOR_EACH_INCLUDE_BROKEN,
+	};
+	return refs_for_each_ref_ext(refs, cb, cb_data, &opts);
 }
 
 int refs_for_each_namespaced_ref(struct ref_store *refs,
 				 const char **exclude_patterns,
-				 refs_for_each_cb fn, void *cb_data)
+				 refs_for_each_cb cb, void *cb_data)
 {
+	struct refs_for_each_ref_options opts = { 0 };
 	struct strvec namespaced_exclude_patterns = STRVEC_INIT;
 	struct strbuf prefix = STRBUF_INIT;
 	int ret;
 
-	exclude_patterns = get_namespaced_exclude_patterns(exclude_patterns,
-							   get_git_namespace(),
-							   &namespaced_exclude_patterns);
-
+	opts.exclude_patterns = get_namespaced_exclude_patterns(exclude_patterns,
+								get_git_namespace(),
+								&namespaced_exclude_patterns);
 	strbuf_addf(&prefix, "%srefs/", get_git_namespace());
-	ret = do_for_each_ref(refs, prefix.buf, exclude_patterns, fn, 0, 0, cb_data);
+	opts.prefix = prefix.buf;
+
+	ret = refs_for_each_ref_ext(refs, cb, cb_data, &opts);
 
 	strvec_clear(&namespaced_exclude_patterns);
 	strbuf_release(&prefix);
@@ -1926,10 +1940,13 @@ int refs_for_each_rawref(struct ref_store *refs, refs_for_each_cb fn, void *cb_d
 }
 
 int refs_for_each_rawref_in(struct ref_store *refs, const char *prefix,
-			    refs_for_each_cb fn, void *cb_data)
+			    refs_for_each_cb cb, void *cb_data)
 {
-	return do_for_each_ref(refs, prefix, NULL, fn, 0,
-			       REFS_FOR_EACH_INCLUDE_BROKEN, cb_data);
+	struct refs_for_each_ref_options opts = {
+		.prefix = prefix,
+		.flags = REFS_FOR_EACH_INCLUDE_BROKEN,
+	};
+	return refs_for_each_ref_ext(refs, cb, cb_data, &opts);
 }
 
 static int qsort_strcmp(const void *va, const void *vb)
@@ -3187,6 +3204,9 @@ int repo_migrate_ref_storage_format(struct repository *repo,
 				    struct strbuf *errbuf)
 {
 	struct ref_store *old_refs = NULL, *new_refs = NULL;
+	struct refs_for_each_ref_options for_each_ref_opts = {
+		.flags = REFS_FOR_EACH_INCLUDE_ROOT_REFS | REFS_FOR_EACH_INCLUDE_BROKEN,
+	};
 	struct ref_transaction *transaction = NULL;
 	struct strbuf new_gitdir = STRBUF_INIT;
 	struct migration_data data = {
@@ -3270,7 +3290,7 @@ int repo_migrate_ref_storage_format(struct repository *repo,
 	data.errbuf = errbuf;
 
 	/*
-	 * We need to use the internal `do_for_each_ref()` here so that we can
+	 * We need to use `refs_for_each_ref_ext()` here so that we can
 	 * also include broken refs and symrefs. These would otherwise be
 	 * skipped silently.
 	 *
@@ -3280,9 +3300,7 @@ int repo_migrate_ref_storage_format(struct repository *repo,
 	 * allow for a central lock due to its design. It's thus on the user to
 	 * ensure that there are no concurrent writes.
 	 */
-	ret = do_for_each_ref(old_refs, "", NULL, migrate_one_ref, 0,
-			      REFS_FOR_EACH_INCLUDE_ROOT_REFS | REFS_FOR_EACH_INCLUDE_BROKEN,
-			      &data);
+	ret = refs_for_each_ref_ext(old_refs, migrate_one_ref, &data, &for_each_ref_opts);
 	if (ret < 0)
 		goto done;
 
