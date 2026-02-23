@@ -662,7 +662,7 @@ static int reftable_ref_iterator_advance(struct ref_iterator *ref_iterator)
 		 * the root refs are to be included. We emulate the same behaviour here.
 		 */
 		if (!starts_with(iter->ref.refname, "refs/") &&
-		    !(iter->flags & DO_FOR_EACH_INCLUDE_ROOT_REFS &&
+		    !(iter->flags & REFS_FOR_EACH_INCLUDE_ROOT_REFS &&
 		      is_root_ref(iter->ref.refname))) {
 			continue;
 		}
@@ -676,7 +676,7 @@ static int reftable_ref_iterator_advance(struct ref_iterator *ref_iterator)
 		if (iter->exclude_patterns && should_exclude_current_ref(iter))
 			continue;
 
-		if (iter->flags & DO_FOR_EACH_PER_WORKTREE_ONLY &&
+		if (iter->flags & REFS_FOR_EACH_PER_WORKTREE_ONLY &&
 		    parse_worktree_ref(iter->ref.refname, NULL, NULL, NULL) !=
 			    REF_WORKTREE_CURRENT)
 			continue;
@@ -714,12 +714,12 @@ static int reftable_ref_iterator_advance(struct ref_iterator *ref_iterator)
 			flags |= REF_BAD_NAME | REF_ISBROKEN;
 		}
 
-		if (iter->flags & DO_FOR_EACH_OMIT_DANGLING_SYMREFS &&
+		if (iter->flags & REFS_FOR_EACH_OMIT_DANGLING_SYMREFS &&
 		    flags & REF_ISSYMREF &&
 		    flags & REF_ISBROKEN)
 			continue;
 
-		if (!(iter->flags & DO_FOR_EACH_INCLUDE_BROKEN) &&
+		if (!(iter->flags & REFS_FOR_EACH_INCLUDE_BROKEN) &&
 		    !ref_resolves_to_object(iter->ref.refname, refs->base.repo,
 					    &iter->oid, flags))
 				continue;
@@ -871,7 +871,7 @@ static struct ref_iterator *reftable_be_iterator_begin(struct ref_store *ref_sto
 	struct reftable_ref_store *refs;
 	unsigned int required_flags = REF_STORE_READ;
 
-	if (!(flags & DO_FOR_EACH_INCLUDE_BROKEN))
+	if (!(flags & REFS_FOR_EACH_INCLUDE_BROKEN))
 		required_flags |= REF_STORE_ODB;
 	refs = reftable_be_downcast(ref_store, required_flags, "ref_iterator_begin");
 

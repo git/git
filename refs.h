@@ -406,7 +406,7 @@ typedef int each_ref_fn(const struct reference *ref, void *cb_data);
  * These flags are passed to refs_ref_iterator_begin() (and do_for_each_ref(),
  * which feeds it).
  */
-enum do_for_each_ref_flags {
+enum refs_for_each_flag {
 	/*
 	 * Include broken references in a do_for_each_ref*() iteration, which
 	 * would normally be omitted. This includes both refs that point to
@@ -416,7 +416,7 @@ enum do_for_each_ref_flags {
 	 * ref; this is not a corruption, but as they have no valid oid, we
 	 * omit them from normal iteration results).
 	 */
-	DO_FOR_EACH_INCLUDE_BROKEN = (1 << 0),
+	REFS_FOR_EACH_INCLUDE_BROKEN = (1 << 0),
 
 	/*
 	 * Only include per-worktree refs in a do_for_each_ref*() iteration.
@@ -424,19 +424,19 @@ enum do_for_each_ref_flags {
 	 * where all reference backends will presumably store their
 	 * per-worktree refs.
 	 */
-	DO_FOR_EACH_PER_WORKTREE_ONLY = (1 << 1),
+	REFS_FOR_EACH_PER_WORKTREE_ONLY = (1 << 1),
 
 	/*
 	 * Omit dangling symrefs from output; this only has an effect with
 	 * INCLUDE_BROKEN, since they are otherwise not included at all.
 	 */
-	DO_FOR_EACH_OMIT_DANGLING_SYMREFS = (1 << 2),
+	REFS_FOR_EACH_OMIT_DANGLING_SYMREFS = (1 << 2),
 
 	/*
 	 * Include root refs i.e. HEAD and pseudorefs along with the regular
 	 * refs.
 	 */
-	DO_FOR_EACH_INCLUDE_ROOT_REFS = (1 << 3),
+	REFS_FOR_EACH_INCLUDE_ROOT_REFS = (1 << 3),
 };
 
 /*
@@ -1372,7 +1372,7 @@ struct ref_iterator;
 struct ref_iterator *refs_ref_iterator_begin(
 	struct ref_store *refs,
 	const char *prefix, const char **exclude_patterns,
-	int trim, enum do_for_each_ref_flags flags);
+	int trim, enum refs_for_each_flag flags);
 
 /*
  * Advance the iterator to the first or next item and return ITER_OK.

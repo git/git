@@ -2810,7 +2810,7 @@ static int for_each_fullref_in_pattern(struct ref_filter *filter,
 	if (filter->kind & FILTER_REFS_ROOT_REFS) {
 		/* In this case, we want to print all refs including root refs. */
 		return for_each_fullref_with_seek(filter, cb, cb_data,
-						  DO_FOR_EACH_INCLUDE_ROOT_REFS);
+						  REFS_FOR_EACH_INCLUDE_ROOT_REFS);
 	}
 
 	if (!filter->match_as_path) {

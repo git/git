@@ -1812,7 +1812,7 @@ struct ref_iterator *refs_ref_iterator_begin(
 		const char *prefix,
 		const char **exclude_patterns,
 		int trim,
-		enum do_for_each_ref_flags flags)
+		enum refs_for_each_flag flags)
 {
 	struct ref_iterator *iter;
 	struct strvec normalized_exclude_patterns = STRVEC_INIT;
@@ -1834,14 +1834,14 @@ struct ref_iterator *refs_ref_iterator_begin(
 		exclude_patterns = normalized_exclude_patterns.v;
 	}
 
-	if (!(flags & DO_FOR_EACH_INCLUDE_BROKEN)) {
+	if (!(flags & REFS_FOR_EACH_INCLUDE_BROKEN)) {
 		static int ref_paranoia = -1;
 
 		if (ref_paranoia < 0)
 			ref_paranoia = git_env_bool("GIT_REF_PARANOIA", 1);
 		if (ref_paranoia) {
-			flags |= DO_FOR_EACH_INCLUDE_BROKEN;
-			flags |= DO_FOR_EACH_OMIT_DANGLING_SYMREFS;
+			flags |= REFS_FOR_EACH_INCLUDE_BROKEN;
+			flags |= REFS_FOR_EACH_OMIT_DANGLING_SYMREFS;
 		}
 	}
 
@@ -1861,7 +1861,7 @@ struct ref_iterator *refs_ref_iterator_begin(
 static int do_for_each_ref(struct ref_store *refs, const char *prefix,
 			   const char **exclude_patterns,
 			   each_ref_fn fn, int trim,
-			   enum do_for_each_ref_flags flags, void *cb_data)
+			   enum refs_for_each_flag flags, void *cb_data)
 {
 	struct ref_iterator *iter;
 
@@ -1897,7 +1897,7 @@ int refs_for_each_replace_ref(struct ref_store *refs, each_ref_fn fn, void *cb_d
 	const char *git_replace_ref_base = ref_namespace[NAMESPACE_REPLACE].ref;
 	return do_for_each_ref(refs, git_replace_ref_base, NULL, fn,
 			       strlen(git_replace_ref_base),
-			       DO_FOR_EACH_INCLUDE_BROKEN, cb_data);
+			       REFS_FOR_EACH_INCLUDE_BROKEN, cb_data);
 }
 
 int refs_for_each_namespaced_ref(struct ref_store *refs,
@@ -1929,7 +1929,7 @@ int refs_for_each_rawref_in(struct ref_store *refs, const char *prefix,
 			    each_ref_fn fn, void *cb_data)
 {
 	return do_for_each_ref(refs, prefix, NULL, fn, 0,
-			       DO_FOR_EACH_INCLUDE_BROKEN, cb_data);
+			       REFS_FOR_EACH_INCLUDE_BROKEN, cb_data);
 }
 
 static int qsort_strcmp(const void *va, const void *vb)
@@ -2741,7 +2741,7 @@ enum ref_transaction_error refs_verify_refnames_available(struct ref_store *refs
 
 			if (!iter)
 				iter = refs_ref_iterator_begin(refs, dirname.buf, NULL, 0,
-							       DO_FOR_EACH_INCLUDE_BROKEN);
+							       REFS_FOR_EACH_INCLUDE_BROKEN);
 			else if (ref_iterator_seek(iter, dirname.buf,
 						   REF_ITERATOR_SEEK_SET_PREFIX) < 0)
 				goto cleanup;
@@ -3281,7 +3281,7 @@ int repo_migrate_ref_storage_format(struct repository *repo,
 	 * ensure that there are no concurrent writes.
 	 */
 	ret = do_for_each_ref(old_refs, "", NULL, migrate_one_ref, 0,
-			      DO_FOR_EACH_INCLUDE_ROOT_REFS | DO_FOR_EACH_INCLUDE_BROKEN,
+			      REFS_FOR_EACH_INCLUDE_ROOT_REFS | REFS_FOR_EACH_INCLUDE_BROKEN,
 			      &data);
 	if (ret < 0)
 		goto done;
