@@ -217,23 +217,6 @@ static void odb_source_read_alternates(struct odb_source *source,
 	free(path);
 }
 
-
-static struct odb_source *odb_source_new(struct object_database *odb,
-					 const char *path,
-					 bool local)
-{
-	struct odb_source *source;
-
-	CALLOC_ARRAY(source, 1);
-	source->odb = odb;
-	source->local = local;
-	source->path = xstrdup(path);
-	source->loose = odb_source_loose_new(source);
-	source->packfiles = packfile_store_new(source);
-
-	return source;
-}
-
 static struct odb_source *odb_add_alternate_recursively(struct object_database *odb,
 							const char *source,
 							int depth)
@@ -371,14 +354,6 @@ struct odb_source *odb_set_temporary_primary_source(struct object_database *odb,
 	source->next = odb->sources;
 	odb->sources = source;
 	return source->next;
-}
-
-static void odb_source_free(struct odb_source *source)
-{
-	free(source->path);
-	odb_source_loose_free(source->loose);
-	packfile_store_free(source->packfiles);
-	free(source);
 }
 
 void odb_restore_primary_source(struct object_database *odb,
