@@ -607,15 +607,6 @@ void normalize_glob_ref(struct string_list_item *item, const char *prefix,
 	strbuf_release(&normalized_pattern);
 }
 
-int refs_for_each_glob_ref(struct ref_store *refs, refs_for_each_cb cb,
-			   const char *pattern, void *cb_data)
-{
-	struct refs_for_each_ref_options opts = {
-		.pattern = pattern,
-	};
-	return refs_for_each_ref_ext(refs, cb, cb_data, &opts);
-}
-
 const char *prettify_refname(const char *name)
 {
 	if (skip_prefix(name, "refs/heads/", &name) ||

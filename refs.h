@@ -527,10 +527,6 @@ int refs_for_each_ref_in_prefixes(struct ref_store *refs,
 				  const struct refs_for_each_ref_options *opts,
 				  refs_for_each_cb cb, void *cb_data);
 
-/* iterates all refs that match the specified glob pattern. */
-int refs_for_each_glob_ref(struct ref_store *refs, refs_for_each_cb fn,
-			   const char *pattern, void *cb_data);
-
 /*
  * references matching any pattern in "exclude_patterns" are omitted from the
  * result set on a best-effort basis.

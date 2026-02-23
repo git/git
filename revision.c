@@ -2814,10 +2814,13 @@ static int handle_revision_pseudo_opt(struct rev_info *revs,
 		handle_refs(refs, revs, *flags, refs_for_each_remote_ref);
 		clear_ref_exclusions(&revs->ref_excludes);
 	} else if ((argcount = parse_long_opt("glob", argv, &optarg))) {
+		struct refs_for_each_ref_options opts = {
+			.pattern = optarg,
+		};
 		struct all_refs_cb cb;
 		init_all_refs_cb(&cb, revs, *flags);
-		refs_for_each_glob_ref(get_main_ref_store(the_repository),
-				       handle_one_ref, optarg, &cb);
+		refs_for_each_ref_ext(get_main_ref_store(the_repository),
+				      handle_one_ref, &cb, &opts);
 		clear_ref_exclusions(&revs->ref_excludes);
 		return argcount;
 	} else if ((argcount = parse_long_opt("exclude", argv, &optarg))) {
