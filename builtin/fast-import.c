@@ -3246,7 +3246,7 @@ static void cat_blob(struct object_entry *oe, struct object_id *oid)
 	cat_blob_write("\n", 1);
 	if (oe && oe->pack_id == pack_id) {
 		last_blob.offset = oe->idx.offset;
-		strbuf_attach(&last_blob.data, buf, size, size);
+		strbuf_attach(&last_blob.data, buf, size, size + 1);
 		last_blob.depth = oe->depth;
 	} else
 		free(buf);
