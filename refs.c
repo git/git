@@ -2039,40 +2039,31 @@ static void find_longest_prefixes(struct string_list *out,
 	strbuf_release(&prefix);
 }
 
-int refs_for_each_fullref_in_prefixes(struct ref_store *ref_store,
-				      const char *namespace,
-				      const char **patterns,
-				      const char **exclude_patterns,
-				      refs_for_each_cb fn, void *cb_data)
+int refs_for_each_ref_in_prefixes(struct ref_store *ref_store,
+				  const char **prefixes,
+				  const struct refs_for_each_ref_options *opts,
+				  refs_for_each_cb cb, void *cb_data)
 {
-	struct strvec namespaced_exclude_patterns = STRVEC_INIT;
-	struct string_list prefixes = STRING_LIST_INIT_DUP;
+	struct string_list longest_prefixes = STRING_LIST_INIT_DUP;
 	struct string_list_item *prefix;
-	struct strbuf buf = STRBUF_INIT;
-	int ret = 0, namespace_len;
+	int ret = 0;
 
-	find_longest_prefixes(&prefixes, patterns);
+	if (opts->prefix)
+		BUG("refs_for_each_ref_in_prefixes called with specific prefix");
 
-	if (namespace)
-		strbuf_addstr(&buf, namespace);
-	namespace_len = buf.len;
+	find_longest_prefixes(&longest_prefixes, prefixes);
 
-	exclude_patterns = get_namespaced_exclude_patterns(exclude_patterns,
-							   namespace,
-							   &namespaced_exclude_patterns);
+	for_each_string_list_item(prefix, &longest_prefixes) {
+		struct refs_for_each_ref_options prefix_opts = *opts;
+		prefix_opts.prefix = prefix->string;
 
-	for_each_string_list_item(prefix, &prefixes) {
-		strbuf_addstr(&buf, prefix->string);
-		ret = refs_for_each_fullref_in(ref_store, buf.buf,
-					       exclude_patterns, fn, cb_data);
+		ret = refs_for_each_ref_ext(ref_store, cb, cb_data,
+					    &prefix_opts);
 		if (ret)
 			break;
-		strbuf_setlen(&buf, namespace_len);
 	}
 
-	strvec_clear(&namespaced_exclude_patterns);
-	string_list_clear(&prefixes, 0);
-	strbuf_release(&buf);
+	string_list_clear(&longest_prefixes, 0);
 	return ret;
 }
 
