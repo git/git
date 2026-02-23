@@ -25,11 +25,9 @@ void odb_source_init(struct odb_source *source,
 
 void odb_source_free(struct odb_source *source)
 {
-	struct odb_source_files *files;
 	if (!source)
 		return;
-	files = odb_source_files_downcast(source);
-	odb_source_files_free(files);
+	source->free(source);
 }
 
 void odb_source_release(struct odb_source *source)

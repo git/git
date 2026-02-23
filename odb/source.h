@@ -52,6 +52,12 @@ struct odb_source {
 	 * the current working directory.
 	 */
 	char *path;
+
+	/*
+	 * This callback is expected to free the underlying object database source and
+	 * all associated resources. The function will never be called with a NULL pointer.
+	 */
+	void (*free)(struct odb_source *source);
 };
 
 /*

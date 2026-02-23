@@ -18,10 +18,9 @@ static void odb_source_files_reparent(const char *name UNUSED,
 	files->base.path = path;
 }
 
-void odb_source_files_free(struct odb_source_files *files)
+static void odb_source_files_free(struct odb_source *source)
 {
-	if (!files)
-		return;
+	struct odb_source_files *files = odb_source_files_downcast(source);
 	chdir_notify_unregister(NULL, odb_source_files_reparent, files);
 	odb_source_loose_free(files->loose);
 	packfile_store_free(files->packed);
@@ -39,6 +38,8 @@ struct odb_source_files *odb_source_files_new(struct object_database *odb,
 	odb_source_init(&files->base, odb, ODB_SOURCE_FILES, path, local);
 	files->loose = odb_source_loose_new(&files->base);
 	files->packed = packfile_store_new(&files->base);
+
+	files->base.free = odb_source_files_free;
 
 	/*
 	 * Ideally, we would only ever store absolute paths in the source. This
