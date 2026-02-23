@@ -165,29 +165,12 @@ int stream_object_signature(struct repository *r, const struct object_id *oid)
 }
 
 /*
- * Find "oid" as a loose object in given source.
- * Returns 0 on success, negative on failure.
+ * Find "oid" as a loose object in given source, open the object and return its
+ * file descriptor. Returns the file descriptor on success, negative on failure.
  *
  * The "path" out-parameter will give the path of the object we found (if any).
  * Note that it may point to static storage and is only valid until another
  * call to stat_loose_object().
- */
-static int stat_loose_object(struct odb_source_loose *loose,
-			     const struct object_id *oid,
-			     struct stat *st, const char **path)
-{
-	static struct strbuf buf = STRBUF_INIT;
-
-	*path = odb_loose_path(loose->source, &buf, oid);
-	if (!lstat(*path, st))
-		return 0;
-
-	return -1;
-}
-
-/*
- * Like stat_loose_object(), but actually open the object and return the
- * descriptor. See the caveats on the "path" parameter above.
  */
 static int open_loose_object(struct odb_source_loose *loose,
 			     const struct object_id *oid, const char **path)
@@ -412,19 +395,21 @@ static int parse_loose_header(const char *hdr, struct object_info *oi)
 	return 0;
 }
 
-int odb_source_loose_read_object_info(struct odb_source *source,
+static int read_object_info_from_path(struct odb_source *source,
+				      const char *path,
 				      const struct object_id *oid,
-				      struct object_info *oi, int flags)
+				      struct object_info *oi,
+				      unsigned flags)
 {
 	int ret;
 	int fd;
 	unsigned long mapsize;
-	const char *path;
 	void *map = NULL;
 	git_zstream stream, *stream_to_end = NULL;
 	char hdr[MAX_HEADER_LEN];
 	unsigned long size_scratch;
 	enum object_type type_scratch;
+	struct stat st;
 
 	/*
 	 * If we don't care about type or size, then we don't
@@ -437,24 +422,28 @@ int odb_source_loose_read_object_info(struct odb_source *source,
 	if (!oi || (!oi->typep && !oi->sizep && !oi->contentp)) {
 		struct stat st;
 
-		if ((!oi || !oi->disk_sizep) && (flags & OBJECT_INFO_QUICK)) {
+		if ((!oi || (!oi->disk_sizep && !oi->mtimep)) && (flags & OBJECT_INFO_QUICK)) {
 			ret = quick_has_loose(source->loose, oid) ? 0 : -1;
 			goto out;
 		}
 
-		if (stat_loose_object(source->loose, oid, &st, &path) < 0) {
+		if (lstat(path, &st) < 0) {
 			ret = -1;
 			goto out;
 		}
 
-		if (oi && oi->disk_sizep)
-			*oi->disk_sizep = st.st_size;
+		if (oi) {
+			if (oi->disk_sizep)
+				*oi->disk_sizep = st.st_size;
+			if (oi->mtimep)
+				*oi->mtimep = st.st_mtime;
+		}
 
 		ret = 0;
 		goto out;
 	}
 
-	fd = open_loose_object(source->loose, oid, &path);
+	fd = git_open(path);
 	if (fd < 0) {
 		if (errno != ENOENT)
 			error_errno(_("unable to open loose object %s"), oid_to_hex(oid));
@@ -462,7 +451,21 @@ int odb_source_loose_read_object_info(struct odb_source *source,
 		goto out;
 	}
 
-	map = map_fd(fd, path, &mapsize);
+	if (fstat(fd, &st)) {
+		close(fd);
+		ret = -1;
+		goto out;
+	}
+
+	mapsize = xsize_t(st.st_size);
+	if (!mapsize) {
+		close(fd);
+		ret = error(_("object file %s is empty"), path);
+		goto out;
+	}
+
+	map = xmmap(NULL, mapsize, PROT_READ, MAP_PRIVATE, fd, 0);
+	close(fd);
 	if (!map) {
 		ret = -1;
 		goto out;
@@ -470,6 +473,8 @@ int odb_source_loose_read_object_info(struct odb_source *source,
 
 	if (oi->disk_sizep)
 		*oi->disk_sizep = mapsize;
+	if (oi->mtimep)
+		*oi->mtimep = st.st_mtime;
 
 	stream_to_end = &stream;
 
@@ -531,6 +536,16 @@ out:
 	}
 
 	return ret;
+}
+
+int odb_source_loose_read_object_info(struct odb_source *source,
+				      const struct object_id *oid,
+				      struct object_info *oi,
+				      unsigned flags)
+{
+	static struct strbuf buf = STRBUF_INIT;
+	odb_loose_path(source, &buf, oid);
+	return read_object_info_from_path(source, buf.buf, oid, oi, flags);
 }
 
 static void hash_object_body(const struct git_hash_algo *algo, struct git_hash_ctx *c,
@@ -1792,24 +1807,52 @@ int for_each_loose_file_in_source(struct odb_source *source,
 	return r;
 }
 
-int for_each_loose_object(struct object_database *odb,
-			  each_loose_object_fn cb, void *data,
-			  enum for_each_object_flags flags)
-{
+struct for_each_object_wrapper_data {
 	struct odb_source *source;
+	const struct object_info *request;
+	odb_for_each_object_cb cb;
+	void *cb_data;
+};
 
-	odb_prepare_alternates(odb);
-	for (source = odb->sources; source; source = source->next) {
-		int r = for_each_loose_file_in_source(source, cb, NULL,
-						      NULL, data);
-		if (r)
-			return r;
+static int for_each_object_wrapper_cb(const struct object_id *oid,
+				      const char *path,
+				      void *cb_data)
+{
+	struct for_each_object_wrapper_data *data = cb_data;
 
-		if (flags & FOR_EACH_OBJECT_LOCAL_ONLY)
-			break;
+	if (data->request) {
+		struct object_info oi = *data->request;
+
+		if (read_object_info_from_path(data->source, path, oid, &oi, 0) < 0)
+			return -1;
+
+		return data->cb(oid, &oi, data->cb_data);
+	} else {
+		return data->cb(oid, NULL, data->cb_data);
 	}
+}
 
-	return 0;
+int odb_source_loose_for_each_object(struct odb_source *source,
+				     const struct object_info *request,
+				     odb_for_each_object_cb cb,
+				     void *cb_data,
+				     unsigned flags)
+{
+	struct for_each_object_wrapper_data data = {
+		.source = source,
+		.request = request,
+		.cb = cb,
+		.cb_data = cb_data,
+	};
+
+	/* There are no loose promisor objects, so we can return immediately. */
+	if ((flags & ODB_FOR_EACH_OBJECT_PROMISOR_ONLY))
+		return 0;
+	if ((flags & ODB_FOR_EACH_OBJECT_LOCAL_ONLY) && !source->local)
+		return 0;
+
+	return for_each_loose_file_in_source(source, for_each_object_wrapper_cb,
+					     NULL, NULL, &data);
 }
 
 static int append_loose_object(const struct object_id *oid,
