@@ -16,6 +16,8 @@
 #include "strbuf.h"
 #include "string-list.h"
 #include "shallow.h"
+#include "tree.h"
+#include "tree-walk.h"
 #include "utf8.h"
 
 static const char *const repo_usage[] = {
@@ -211,6 +213,7 @@ struct largest_objects {
 	struct object_data blob_size;
 
 	struct object_data parent_count;
+	struct object_data tree_entries;
 };
 
 struct ref_stats {
@@ -458,6 +461,10 @@ static void stats_table_setup_structure(struct stats_table *table,
 				     &objects->largest.tree_size.oid,
 				     objects->largest.tree_size.value,
 				     "    * %s", _("Maximum size"));
+	stats_table_object_count_addf(table,
+				      &objects->largest.tree_entries.oid,
+				      objects->largest.tree_entries.value,
+				      "    * %s", _("Maximum entries"));
 	stats_table_addf(table, "  * %s", _("Blobs"));
 	stats_table_object_size_addf(table,
 				     &objects->largest.blob_size.oid,
@@ -619,6 +626,10 @@ static void structure_keyvalue_print(struct repo_structure *stats,
 	       (uintmax_t)stats->objects.largest.parent_count.value, value_delim);
 	printf("objects.commits.max_parents_oid%c%s%c", key_delim,
 	       oid_to_hex(&stats->objects.largest.parent_count.oid), value_delim);
+	printf("objects.trees.max_entries%c%" PRIuMAX "%c", key_delim,
+	       (uintmax_t)stats->objects.largest.tree_entries.value, value_delim);
+	printf("objects.trees.max_entries_oid%c%s%c", key_delim,
+	       oid_to_hex(&stats->objects.largest.tree_entries.oid), value_delim);
 
 	fflush(stdout);
 }
@@ -697,6 +708,20 @@ static void check_largest(struct object_data *data, struct object_id *oid,
 	}
 }
 
+static size_t count_tree_entries(struct object *obj)
+{
+	struct tree *t = object_as_type(obj, OBJ_TREE, 0);
+	struct name_entry entry;
+	struct tree_desc desc;
+	size_t count = 0;
+
+	init_tree_desc(&desc, &t->object.oid, t->buffer, t->size);
+	while (tree_entry(&desc, &entry))
+		count++;
+
+	return count;
+}
+
 static int count_objects(const char *path UNUSED, struct oid_array *oids,
 			 enum object_type type, void *cb_data)
 {
@@ -749,6 +774,8 @@ static int count_objects(const char *path UNUSED, struct oid_array *oids,
 			stats->disk_sizes.trees += disk;
 			check_largest(&stats->largest.tree_size, &oids->oid[i],
 				      inflated);
+			check_largest(&stats->largest.tree_entries, &oids->oid[i],
+				      count_tree_entries(obj));
 			break;
 		case OBJ_BLOB:
 			stats->type_counts.blobs++;
