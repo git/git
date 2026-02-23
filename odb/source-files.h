@@ -30,6 +30,8 @@ void odb_source_files_free(struct odb_source_files *files);
  */
 static inline struct odb_source_files *odb_source_files_downcast(struct odb_source *source)
 {
+	if (source->type != ODB_SOURCE_FILES)
+		BUG("trying to downcast source of type '%d' to files", source->type);
 	return container_of(source, struct odb_source_files, base);
 }
 

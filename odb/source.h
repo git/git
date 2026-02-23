@@ -1,6 +1,18 @@
 #ifndef ODB_SOURCE_H
 #define ODB_SOURCE_H
 
+enum odb_source_type {
+	/*
+	 * The "unknown" type, which should never be in use. This is type
+	 * mostly exists to catch cases where the type field remains zeroed
+	 * out.
+	 */
+	ODB_SOURCE_UNKNOWN,
+
+	/* The "files" backend that uses loose objects and packfiles. */
+	ODB_SOURCE_FILES,
+};
+
 /*
  * The source is the part of the object database that stores the actual
  * objects. It thus encapsulates the logic to read and write the specific
@@ -18,6 +30,9 @@ struct odb_source {
 
 	/* Object database that owns this object source. */
 	struct object_database *odb;
+
+	/* The type used by this source. */
+	enum odb_source_type type;
 
 	/*
 	 * Figure out whether this is the local source of the owning
@@ -58,6 +73,7 @@ struct odb_source *odb_source_new(struct object_database *odb,
  */
 void odb_source_init(struct odb_source *source,
 		     struct object_database *odb,
+		     enum odb_source_type type,
 		     const char *path,
 		     bool local);
 
