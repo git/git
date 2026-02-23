@@ -543,7 +543,6 @@ int refs_for_each_namespaced_ref(struct ref_store *refs,
 				 refs_for_each_cb fn, void *cb_data);
 
 /* can be used to learn about broken ref and symref */
-int refs_for_each_rawref(struct ref_store *refs, refs_for_each_cb fn, void *cb_data);
 int refs_for_each_rawref_in(struct ref_store *refs, const char *prefix,
 			    refs_for_each_cb fn, void *cb_data);
 

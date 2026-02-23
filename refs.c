@@ -526,7 +526,10 @@ void refs_warn_dangling_symrefs(struct ref_store *refs, FILE *fp,
 		.indent = indent,
 		.dry_run = dry_run,
 	};
-	refs_for_each_rawref(refs, warn_if_dangling_symref, &data);
+	struct refs_for_each_ref_options opts = {
+		.flags = REFS_FOR_EACH_INCLUDE_BROKEN,
+	};
+	refs_for_each_ref_ext(refs, warn_if_dangling_symref, &data, &opts);
 }
 
 int refs_for_each_tag_ref(struct ref_store *refs, refs_for_each_cb cb, void *cb_data)
@@ -1977,11 +1980,6 @@ int refs_for_each_namespaced_ref(struct ref_store *refs,
 		.namespace = get_git_namespace(),
 	};
 	return refs_for_each_ref_ext(refs, cb, cb_data, &opts);
-}
-
-int refs_for_each_rawref(struct ref_store *refs, refs_for_each_cb fn, void *cb_data)
-{
-	return refs_for_each_rawref_in(refs, "", fn, cb_data);
 }
 
 int refs_for_each_rawref_in(struct ref_store *refs, const char *prefix,
