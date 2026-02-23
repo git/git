@@ -295,7 +295,6 @@ elif docs_backend == 'asciidoctor'
     asciidoctor,
     '--attribute', 'compat-mode',
     '--attribute', 'tabsize=8',
-    '--attribute', 'litdd=&#x2d;&#x2d;',
     '--attribute', 'docinfo=shared',
     '--attribute', 'build_dir=' + meson.current_build_dir(),
     '--load-path', meson.current_build_dir(),
