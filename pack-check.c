@@ -9,6 +9,7 @@
 #include "packfile.h"
 #include "object-file.h"
 #include "odb.h"
+#include "odb/streaming.h"
 
 struct idx_entry {
 	off_t                offset;
@@ -104,6 +105,7 @@ static int verify_packfile(struct repository *r,
 	QSORT(entries, nr_objects, compare_entries);
 
 	for (i = 0; i < nr_objects; i++) {
+		struct odb_read_stream *stream = NULL;
 		void *data;
 		struct object_id oid;
 		enum object_type type;
@@ -152,7 +154,9 @@ static int verify_packfile(struct repository *r,
 							type) < 0)
 			err = error("packed %s from %s is corrupt",
 				    oid_to_hex(&oid), p->pack_name);
-		else if (!data && stream_object_signature(r, &oid) < 0)
+		else if (!data &&
+			 (!(stream = odb_read_stream_open(r->objects, &oid, NULL)) ||
+			  stream_object_signature(r, stream, &oid) < 0))
 			err = error("packed %s from %s is corrupt",
 				    oid_to_hex(&oid), p->pack_name);
 		else if (fn) {
@@ -163,12 +167,14 @@ static int verify_packfile(struct repository *r,
 		}
 		if (((base_count + i) & 1023) == 0)
 			display_progress(progress, base_count + i);
-		free(data);
 
+		if (stream)
+			odb_read_stream_close(stream);
+		free(data);
 	}
+
 	display_progress(progress, base_count + i);
 	free(entries);
-
 	return err;
 }
 

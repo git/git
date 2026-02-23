@@ -6,6 +6,7 @@
 #include "object.h"
 #include "replace-object.h"
 #include "object-file.h"
+#include "odb/streaming.h"
 #include "blob.h"
 #include "statinfo.h"
 #include "tree.h"
@@ -330,9 +331,21 @@ struct object *parse_object_with_flags(struct repository *r,
 
 	if ((!obj || obj->type == OBJ_NONE || obj->type == OBJ_BLOB) &&
 	    odb_read_object_info(r->objects, oid, NULL) == OBJ_BLOB) {
-		if (!skip_hash && stream_object_signature(r, repl) < 0) {
-			error(_("hash mismatch %s"), oid_to_hex(oid));
-			return NULL;
+		if (!skip_hash) {
+			struct odb_read_stream *stream = odb_read_stream_open(r->objects, oid, NULL);
+
+			if (!stream) {
+				error(_("unable to open object stream for %s"), oid_to_hex(oid));
+				return NULL;
+			}
+
+			if (stream_object_signature(r, stream, repl) < 0) {
+				error(_("hash mismatch %s"), oid_to_hex(oid));
+				odb_read_stream_close(stream);
+				return NULL;
+			}
+
+			odb_read_stream_close(stream);
 		}
 		parse_blob_buffer(lookup_blob(r, oid));
 		return lookup_object(r, oid);
