@@ -244,6 +244,19 @@ struct odb_source {
 	 */
 	int (*read_alternates)(struct odb_source *source,
 			       struct strvec *out);
+
+	/*
+	 * This callback is expected to persist the singular alternate passed
+	 * to it into its list of alternates. Any pre-existing alternates are
+	 * expected to remain active. Subsequent calls to `read_alternates` are
+	 * thus expected to yield the pre-existing list of alternates plus the
+	 * newly added alternate appended to its end.
+	 *
+	 * The callback is expected to return 0 on success, a negative error
+	 * code otherwise.
+	 */
+	int (*write_alternate)(struct odb_source *source,
+			       const char *alternate);
 };
 
 /*
@@ -406,6 +419,19 @@ static inline int odb_source_read_alternates(struct odb_source *source,
 					     struct strvec *out)
 {
 	return source->read_alternates(source, out);
+}
+
+/*
+ * Write and persist a new alternate object database source for the given
+ * source. Any preexisting alternates are expected to stay valid, and the new
+ * alternate shall be appended to the end of the list.
+ *
+ * Returns 0 on success, a negative error code otherwise.
+ */
+static inline int odb_source_write_alternate(struct odb_source *source,
+					      const char *alternate)
+{
+	return source->write_alternate(source, alternate);
 }
 
 #endif
