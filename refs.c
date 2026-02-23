@@ -444,7 +444,7 @@ char *refs_resolve_refdup(struct ref_store *refs,
 /* The argument to for_each_filter_refs */
 struct for_each_ref_filter {
 	const char *pattern;
-	const char *prefix;
+	size_t trim_prefix;
 	refs_for_each_cb *fn;
 	void *cb_data;
 };
@@ -475,9 +475,11 @@ static int for_each_filter_refs(const struct reference *ref, void *data)
 
 	if (wildmatch(filter->pattern, ref->name, 0))
 		return 0;
-	if (filter->prefix) {
+	if (filter->trim_prefix) {
 		struct reference skipped = *ref;
-		skip_prefix(skipped.name, filter->prefix, &skipped.name);
+		if (strlen(skipped.name) <= filter->trim_prefix)
+			BUG("attempt to trim too many characters");
+		skipped.name += filter->trim_prefix;
 		return filter->fn(&skipped, filter->cb_data);
 	} else {
 		return filter->fn(ref, filter->cb_data);
@@ -590,40 +592,24 @@ void normalize_glob_ref(struct string_list_item *item, const char *prefix,
 	strbuf_release(&normalized_pattern);
 }
 
-int refs_for_each_glob_ref_in(struct ref_store *refs, refs_for_each_cb fn,
+int refs_for_each_glob_ref_in(struct ref_store *refs, refs_for_each_cb cb,
 			      const char *pattern, const char *prefix, void *cb_data)
 {
-	struct strbuf real_pattern = STRBUF_INIT;
-	struct for_each_ref_filter filter;
-	int ret;
-
-	if (!prefix && !starts_with(pattern, "refs/"))
-		strbuf_addstr(&real_pattern, "refs/");
-	else if (prefix)
-		strbuf_addstr(&real_pattern, prefix);
-	strbuf_addstr(&real_pattern, pattern);
-
-	if (!has_glob_specials(pattern)) {
-		/* Append implied '/' '*' if not present. */
-		strbuf_complete(&real_pattern, '/');
-		/* No need to check for '*', there is none. */
-		strbuf_addch(&real_pattern, '*');
-	}
-
-	filter.pattern = real_pattern.buf;
-	filter.prefix = prefix;
-	filter.fn = fn;
-	filter.cb_data = cb_data;
-	ret = refs_for_each_ref(refs, for_each_filter_refs, &filter);
-
-	strbuf_release(&real_pattern);
-	return ret;
+	struct refs_for_each_ref_options opts = {
+		.pattern = pattern,
+		.prefix = prefix,
+		.trim_prefix = prefix ? strlen(prefix) : 0,
+	};
+	return refs_for_each_ref_ext(refs, cb, cb_data, &opts);
 }
 
-int refs_for_each_glob_ref(struct ref_store *refs, refs_for_each_cb fn,
+int refs_for_each_glob_ref(struct ref_store *refs, refs_for_each_cb cb,
 			   const char *pattern, void *cb_data)
 {
-	return refs_for_each_glob_ref_in(refs, fn, pattern, NULL, cb_data);
+	struct refs_for_each_ref_options opts = {
+		.pattern = pattern,
+	};
+	return refs_for_each_ref_ext(refs, cb, cb_data, &opts);
 }
 
 const char *prettify_refname(const char *name)
@@ -1862,16 +1848,51 @@ int refs_for_each_ref_ext(struct ref_store *refs,
 			  refs_for_each_cb cb, void *cb_data,
 			  const struct refs_for_each_ref_options *opts)
 {
+	struct strbuf real_pattern = STRBUF_INIT;
+	struct for_each_ref_filter filter;
 	struct ref_iterator *iter;
+	size_t trim_prefix = opts->trim_prefix;
+	int ret;
 
 	if (!refs)
 		return 0;
 
+	if (opts->pattern) {
+		if (!opts->prefix && !starts_with(opts->pattern, "refs/"))
+			strbuf_addstr(&real_pattern, "refs/");
+		else if (opts->prefix)
+			strbuf_addstr(&real_pattern, opts->prefix);
+		strbuf_addstr(&real_pattern, opts->pattern);
+
+		if (!has_glob_specials(opts->pattern)) {
+			/* Append implied '/' '*' if not present. */
+			strbuf_complete(&real_pattern, '/');
+			/* No need to check for '*', there is none. */
+			strbuf_addch(&real_pattern, '*');
+		}
+
+		filter.pattern = real_pattern.buf;
+		filter.trim_prefix = opts->trim_prefix;
+		filter.fn = cb;
+		filter.cb_data = cb_data;
+
+		/*
+		 * We need to trim the prefix in the callback function as the
+		 * pattern is expected to match on the full refname.
+		 */
+		trim_prefix = 0;
+
+		cb = for_each_filter_refs;
+		cb_data = &filter;
+	}
+
 	iter = refs_ref_iterator_begin(refs, opts->prefix ? opts->prefix : "",
 				       opts->exclude_patterns,
-				       opts->trim_prefix, opts->flags);
+				       trim_prefix, opts->flags);
 
-	return do_for_each_ref_iterator(iter, cb, cb_data);
+	ret = do_for_each_ref_iterator(iter, cb, cb_data);
+	strbuf_release(&real_pattern);
+	return ret;
 }
 
 int refs_for_each_ref(struct ref_store *refs, refs_for_each_cb cb, void *cb_data)
