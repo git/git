@@ -54,6 +54,7 @@ enum object_info_flags {
 struct object_id;
 struct object_info;
 struct odb_read_stream;
+struct odb_write_stream;
 
 /*
  * A callback function that can be used to iterate through objects. If given,
@@ -216,6 +217,18 @@ struct odb_source {
 			    struct object_id *oid,
 			    struct object_id *compat_oid,
 			    unsigned flags);
+
+	/*
+	 * This callback is expected to persist the given object stream into
+	 * the object source.
+	 *
+	 * The resulting object ID shall be written into the out pointer. The
+	 * callback is expected to return 0 on success, a negative error code
+	 * otherwise.
+	 */
+	int (*write_object_stream)(struct odb_source *source,
+				   struct odb_write_stream *stream, size_t len,
+				   struct object_id *oid);
 };
 
 /*
@@ -349,6 +362,21 @@ static inline int odb_source_write_object(struct odb_source *source,
 {
 	return source->write_object(source, buf, len, type, oid,
 				    compat_oid, flags);
+}
+
+/*
+ * Write an object into the object database source via a stream. The overall
+ * length of the object must be known in advance.
+ *
+ * Return 0 on success, a negative error code otherwise. Populates the given
+ * out pointer for the object ID.
+ */
+static inline int odb_source_write_object_stream(struct odb_source *source,
+						 struct odb_write_stream *stream,
+						 size_t len,
+						 struct object_id *oid)
+{
+	return source->write_object_stream(source, stream, len, oid);
 }
 
 #endif
