@@ -242,10 +242,14 @@ struct strbuf_list {
  * append it into strbuf `buf`.  Returns a negative value on failure,
  * 0 on success, 1 on a missing optional value (i.e., telling the
  * caller to pretend that <key_,value_> did not exist).
+ *
+ * Note: 'gently' is currently ignored, but will be implemented in
+ * a future change.
  */
 static int format_config(const struct config_display_options *opts,
 			 struct strbuf *buf, const char *key_,
-			 const char *value_, const struct key_value_info *kvi)
+			 const char *value_, const struct key_value_info *kvi,
+			 int gently UNUSED)
 {
 	if (opts->show_scope)
 		show_config_scope(opts, kvi, buf);
@@ -372,7 +376,7 @@ static int collect_config(const char *key_, const char *value_,
 	strbuf_init(&values->items[values->nr], 0);
 
 	status = format_config(data->display_opts, &values->items[values->nr++],
-			       key_, value_, kvi);
+			       key_, value_, kvi, 0);
 	if (status < 0)
 		return status;
 	if (status) {
@@ -463,7 +467,7 @@ static int get_value(const struct config_location_options *opts,
 		strbuf_init(item, 0);
 
 		status = format_config(display_opts, item, key_,
-				       display_opts->default_value, &kvi);
+				       display_opts->default_value, &kvi, 0);
 		if (status < 0)
 			die(_("failed to format default config value: %s"),
 			    display_opts->default_value);
@@ -743,7 +747,7 @@ static int get_urlmatch(const struct config_location_options *opts,
 
 		status = format_config(&display_opts, &buf, item->string,
 				       matched->value_is_null ? NULL : matched->value.buf,
-				       &matched->kvi);
+				       &matched->kvi, 0);
 		if (!status)
 			fwrite(buf.buf, 1, buf.len, stdout);
 		strbuf_release(&buf);
