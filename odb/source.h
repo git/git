@@ -184,6 +184,18 @@ struct odb_source {
 			       odb_for_each_object_cb cb,
 			       void *cb_data,
 			       unsigned flags);
+
+	/*
+	 * This callback is expected to freshen the given object so that its
+	 * last access time is set to the current time. This is used to ensure
+	 * that objects that are recent will not get garbage collected even if
+	 * they were unreachable.
+	 *
+	 * Returns 0 in case the object does not exist, 1 in case the object
+	 * has been freshened.
+	 */
+	int (*freshen_object)(struct odb_source *source,
+			      const struct object_id *oid);
 };
 
 /*
@@ -290,6 +302,17 @@ static inline int odb_source_for_each_object(struct odb_source *source,
 					     unsigned flags)
 {
 	return source->for_each_object(source, request, cb, cb_data, flags);
+}
+
+/*
+ * Freshen an object in the object database by updating its timestamp.
+ * Returns 1 in case the object has been freshened, 0 in case the object does
+ * not exist.
+ */
+static inline int odb_source_freshen_object(struct odb_source *source,
+					    const struct object_id *oid)
+{
+	return source->freshen_object(source, oid);
 }
 
 #endif

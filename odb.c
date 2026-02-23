@@ -959,18 +959,10 @@ int odb_freshen_object(struct object_database *odb,
 		       const struct object_id *oid)
 {
 	struct odb_source *source;
-
 	odb_prepare_alternates(odb);
-	for (source = odb->sources; source; source = source->next) {
-		struct odb_source_files *files = odb_source_files_downcast(source);
-
-		if (packfile_store_freshen_object(files->packed, oid))
+	for (source = odb->sources; source; source = source->next)
+		if (odb_source_freshen_object(source, oid))
 			return 1;
-
-		if (odb_source_loose_freshen_object(source, oid))
-			return 1;
-	}
-
 	return 0;
 }
 
