@@ -302,6 +302,18 @@ static int format_config_bool_or_int(struct strbuf *buf,
 	return 0;
 }
 
+/* This mode is always gentle. */
+static int format_config_bool_or_str(struct strbuf *buf,
+				     const char *value_)
+{
+	int v = git_parse_maybe_bool(value_);
+	if (v < 0)
+		strbuf_addstr(buf, value_);
+	else
+		strbuf_addstr(buf, v ? "true" : "false");
+	return 0;
+}
+
 /*
  * Format the configuration key-value pair (`key_`, `value_`) and
  * append it into strbuf `buf`.  Returns a negative value on failure,
@@ -333,13 +345,9 @@ static int format_config(const struct config_display_options *opts,
 			res = format_config_bool(buf, key_, value_, gently);
 		else if (opts->type == TYPE_BOOL_OR_INT)
 			res = format_config_bool_or_int(buf, key_, value_, kvi, gently);
-		else if (opts->type == TYPE_BOOL_OR_STR) {
-			int v = git_parse_maybe_bool(value_);
-			if (v < 0)
-				strbuf_addstr(buf, value_);
-			else
-				strbuf_addstr(buf, v ? "true" : "false");
-		} else if (opts->type == TYPE_PATH) {
+		else if (opts->type == TYPE_BOOL_OR_STR)
+			res = format_config_bool_or_str(buf, value_);
+		else if (opts->type == TYPE_PATH) {
 			char *v;
 			if (git_config_pathname(&v, key_, value_) < 0)
 				return -1;
