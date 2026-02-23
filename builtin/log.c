@@ -40,6 +40,7 @@
 #include "mailmap.h"
 #include "progress.h"
 #include "commit-slab.h"
+#include "advice.h"
 
 #include "commit-reach.h"
 #include "range-diff.h"
@@ -1096,7 +1097,18 @@ static int git_format_config(const char *var, const char *value,
 		return 0;
 	}
 	if (!strcmp(var, "format.noprefix")) {
-		format_no_prefix = 1;
+		format_no_prefix = git_parse_maybe_bool(value);
+		if (format_no_prefix < 0) {
+			int status = die_message(
+				_("bad boolean config value '%s' for '%s'"),
+				value, var);
+			advise(_("'%s' used to accept any value and "
+				 "treat that as 'true'.\n"
+				 "Now it only accepts boolean values, "
+				 "like what '%s' does.\n"),
+			       var, "diff.noprefix");
+			exit(status);
+		}
 		return 0;
 	}
 
