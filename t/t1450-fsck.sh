@@ -918,7 +918,7 @@ test_expect_success 'fsck detects trailing loose garbage (large blob)' '
 test_expect_success 'fsck detects truncated loose object' '
 	# make it big enough that we know we will truncate in the data
 	# portion, not the header
-	test-tool genrandom truncate 4096 >file &&
+	test-tool genrandom truncate 4k >file &&
 	blob=$(git hash-object -w file) &&
 	file=$(sha1_file $blob) &&
 	test_when_finished "remove_object $blob" &&
