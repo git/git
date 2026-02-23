@@ -688,22 +688,20 @@ static int do_oid_object_info_extended(struct object_database *odb,
 	while (1) {
 		struct odb_source *source;
 
-		/* Most likely it's a loose object. */
-		for (source = odb->sources; source; source = source->next) {
-			struct odb_source_files *files = odb_source_files_downcast(source);
-			if (!packfile_store_read_object_info(files->packed, real, oi, flags) ||
-			    !odb_source_loose_read_object_info(source, real, oi, flags))
+		for (source = odb->sources; source; source = source->next)
+			if (!odb_source_read_object_info(source, real, oi, flags))
 				return 0;
-		}
 
-		/* Not a loose object; someone else may have just packed it. */
+		/*
+		 * When the object hasn't been found we try a second read and
+		 * tell the sources so. This may cause them to invalidate
+		 * caches or reload on-disk state.
+		 */
 		if (!(flags & OBJECT_INFO_QUICK)) {
-			odb_reprepare(odb->repo->objects);
-			for (source = odb->sources; source; source = source->next) {
-				struct odb_source_files *files = odb_source_files_downcast(source);
-				if (!packfile_store_read_object_info(files->packed, real, oi, flags))
+			for (source = odb->sources; source; source = source->next)
+				if (!odb_source_read_object_info(source, real, oi,
+								 flags | OBJECT_INFO_SECOND_READ))
 					return 0;
-			}
 		}
 
 		/*

@@ -13,6 +13,45 @@ enum odb_source_type {
 	ODB_SOURCE_FILES,
 };
 
+/* Flags that can be passed to `odb_read_object_info_extended()`. */
+enum object_info_flags {
+	/* Invoke lookup_replace_object() on the given hash. */
+	OBJECT_INFO_LOOKUP_REPLACE = (1 << 0),
+
+	/* Do not reprepare object sources when the first lookup has failed. */
+	OBJECT_INFO_QUICK = (1 << 1),
+
+	/*
+	 * Do not attempt to fetch the object if missing (even if fetch_is_missing is
+	 * nonzero).
+	 */
+	OBJECT_INFO_SKIP_FETCH_OBJECT = (1 << 2),
+
+	/* Die if object corruption (not just an object being missing) was detected. */
+	OBJECT_INFO_DIE_IF_CORRUPT = (1 << 3),
+
+	/*
+	 * We have already tried reading the object, but it couldn't be found
+	 * via any of the attached sources, and are now doing a second read.
+	 * This second read asks the individual sources to also evaluate
+	 * whether any on-disk state may have changed that may have caused the
+	 * object to appear.
+	 *
+	 * This flag is for internal use, only. The second read only occurs
+	 * when `OBJECT_INFO_QUICK` was not passed.
+	 */
+	OBJECT_INFO_SECOND_READ = (1 << 4),
+
+	/*
+	 * This is meant for bulk prefetching of missing blobs in a partial
+	 * clone. Implies OBJECT_INFO_SKIP_FETCH_OBJECT and OBJECT_INFO_QUICK.
+	 */
+	OBJECT_INFO_FOR_PREFETCH = (OBJECT_INFO_SKIP_FETCH_OBJECT | OBJECT_INFO_QUICK),
+};
+
+struct object_id;
+struct object_info;
+
 /*
  * The source is the part of the object database that stores the actual
  * objects. It thus encapsulates the logic to read and write the specific
@@ -73,6 +112,33 @@ struct odb_source {
 	 * example just been repacked so that new objects will become visible.
 	 */
 	void (*reprepare)(struct odb_source *source);
+
+	/*
+	 * This callback is expected to read object information from the object
+	 * database source. The object info will be partially populated with
+	 * pointers for each bit of information that was requested by the
+	 * caller.
+	 *
+	 * The flags field is a combination of `OBJECT_INFO` flags. Only the
+	 * following fields need to be handled by the backend:
+	 *
+	 *   - `OBJECT_INFO_QUICK` indicates it is fine to use caches without
+	 *     re-verifying the data.
+	 *
+	 *   - `OBJECT_INFO_SECOND_READ` indicates that the initial object
+	 *     lookup has failed and that the object sources should check
+	 *     whether any of its on-disk state has changed that may have
+	 *     caused the object to appear. Sources are free to ignore the
+	 *     second read in case they know that the first read would have
+	 *     already surfaced the object without reloading any on-disk state.
+	 *
+	 * The callback is expected to return a negative error code in case
+	 * reading the object has failed, 0 otherwise.
+	 */
+	int (*read_object_info)(struct odb_source *source,
+				const struct object_id *oid,
+				struct object_info *oi,
+				enum object_info_flags flags);
 };
 
 /*
@@ -130,6 +196,18 @@ static inline void odb_source_close(struct odb_source *source)
 static inline void odb_source_reprepare(struct odb_source *source)
 {
 	source->reprepare(source);
+}
+
+/*
+ * Read an object from the object database source identified by its object ID.
+ * Returns 0 on success, a negative error code otherwise.
+ */
+static inline int odb_source_read_object_info(struct odb_source *source,
+					      const struct object_id *oid,
+					      struct object_info *oi,
+					      enum object_info_flags flags)
+{
+	return source->read_object_info(source, oid, oi, flags);
 }
 
 #endif

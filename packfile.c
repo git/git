@@ -2181,10 +2181,18 @@ int packfile_store_freshen_object(struct packfile_store *store,
 int packfile_store_read_object_info(struct packfile_store *store,
 				    const struct object_id *oid,
 				    struct object_info *oi,
-				    enum object_info_flags flags UNUSED)
+				    enum object_info_flags flags)
 {
 	struct pack_entry e;
 	int ret;
+
+	/*
+	 * In case the first read didn't surface the object, we have to reload
+	 * packfiles. This may cause us to discover new packfiles that have
+	 * been added since the last time we have prepared the packfile store.
+	 */
+	if (flags & OBJECT_INFO_SECOND_READ)
+		packfile_store_reprepare(store);
 
 	if (!find_pack_entry(store, oid, &e))
 		return 1;
