@@ -20,15 +20,21 @@
 #include "utf8.h"
 
 static const char *const repo_usage[] = {
-	"git repo info [--format=(lines|nul) | -z] [--all | <key>...]",
+	"git repo info [--format=(lines|nul) | -z] [--path-format=(absolute|relative)] [--all | <key>...]",
 	"git repo info --keys [--format=(lines|nul) | -z]",
 	"git repo structure [--format=(table|lines|nul) | -z]",
 	NULL
 };
 
+enum path_format {
+	PATH_FORMAT_ABSOLUTE,
+	PATH_FORMAT_RELATIVE,
+};
+
 struct repo_info {
 	struct repository *repo;
 	const char *prefix;
+	enum path_format path_format;
 };
 
 typedef int get_value_fn(struct repo_info *info, struct strbuf *buf);
@@ -48,6 +54,16 @@ static void repo_info_add_path(struct repo_info *info,
 			      struct strbuf *buf,
 			      const char *path)
 {
+	if (info->path_format == PATH_FORMAT_RELATIVE) {
+		char *cwd = xgetcwd();
+		struct strbuf rel_path = STRBUF_INIT;
+
+		strbuf_addstr(buf, relative_path(path, cwd, &rel_path));
+		strbuf_release(&rel_path);
+		free(cwd);
+		return;
+	}
+
 	strbuf_add_absolute_path(buf, path);
 }
 
@@ -329,6 +345,21 @@ static int parse_format_cb(const struct option *opt,
 	return 0;
 }
 
+static int parse_path_format_cb(const struct option *opt,
+				const char *arg, int unset UNUSED)
+{
+	enum path_format *path_format = opt->value;
+
+	if (!strcmp(arg, "absolute"))
+		*path_format = PATH_FORMAT_ABSOLUTE;
+	else if (!strcmp(arg, "relative"))
+		*path_format = PATH_FORMAT_RELATIVE;
+	else
+		die(_("invalid path format '%s'"), arg);
+
+	return 0;
+}
+
 static int cmd_repo_info(int argc, const char **argv, const char *prefix,
 			 struct repository *repo)
 {
@@ -336,6 +367,7 @@ static int cmd_repo_info(int argc, const char **argv, const char *prefix,
 	struct repo_info info = {
 		.repo = repo,
 		.prefix = prefix ? prefix : "",
+		.path_format = PATH_FORMAT_ABSOLUTE,
 	};
 	int all_keys = 0;
 	int show_keys = 0;
@@ -347,6 +379,9 @@ static int cmd_repo_info(int argc, const char **argv, const char *prefix,
 			       N_("synonym for --format=nul"),
 			       PARSE_OPT_NONEG | PARSE_OPT_NOARG,
 			       parse_format_cb),
+		OPT_CALLBACK_F(0, "path-format", &info.path_format,
+			       N_("format"), N_("path output format"),
+			       PARSE_OPT_NONEG, parse_path_format_cb),
 		OPT_BOOL(0, "all", &all_keys, N_("print all keys/values")),
 		OPT_BOOL(0, "keys", &show_keys, N_("show keys")),
 		OPT_END()
