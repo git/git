@@ -122,6 +122,16 @@ static int odb_source_files_write_object_stream(struct odb_source *source,
 	return odb_source_loose_write_stream(source, stream, len, oid);
 }
 
+static int odb_source_files_begin_transaction(struct odb_source *source,
+					      struct odb_transaction **out)
+{
+	struct odb_transaction *tx = odb_transaction_files_begin(source);
+	if (!tx)
+		return -1;
+	*out = tx;
+	return 0;
+}
+
 static int odb_source_files_read_alternates(struct odb_source *source,
 					    struct strvec *out)
 {
@@ -213,6 +223,7 @@ struct odb_source_files *odb_source_files_new(struct object_database *odb,
 	files->base.freshen_object = odb_source_files_freshen_object;
 	files->base.write_object = odb_source_files_write_object;
 	files->base.write_object_stream = odb_source_files_write_object_stream;
+	files->base.begin_transaction = odb_source_files_begin_transaction;
 	files->base.read_alternates = odb_source_files_read_alternates;
 	files->base.write_alternate = odb_source_files_write_alternate;
 

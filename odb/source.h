@@ -54,6 +54,7 @@ enum object_info_flags {
 struct object_id;
 struct object_info;
 struct odb_read_stream;
+struct odb_transaction;
 struct odb_write_stream;
 struct strvec;
 
@@ -230,6 +231,19 @@ struct odb_source {
 	int (*write_object_stream)(struct odb_source *source,
 				   struct odb_write_stream *stream, size_t len,
 				   struct object_id *oid);
+
+	/*
+	 * This callback is expected to create a new transaction that can be
+	 * used to write objects to. The objects shall only be persisted into
+	 * the object database when the transcation's commit function is
+	 * called. Otherwise, the objects shall be discarded.
+	 *
+	 * Returns 0 on success, in which case the `*out` pointer will have
+	 * been populated with the object database transaction. Returns a
+	 * negative error code otherwise.
+	 */
+	int (*begin_transaction)(struct odb_source *source,
+				 struct odb_transaction **out);
 
 	/*
 	 * This callback is expected to read the list of alternate object
@@ -432,6 +446,19 @@ static inline int odb_source_write_alternate(struct odb_source *source,
 					      const char *alternate)
 {
 	return source->write_alternate(source, alternate);
+}
+
+/*
+ * Create a new transaction that can be used to write objects into a temporary
+ * staging area. The objects will only be persisted when the transaction is
+ * committed.
+ *
+ * Returns 0 on success, a negative error code otherwise.
+ */
+static inline int odb_source_begin_transaction(struct odb_source *source,
+					       struct odb_transaction **out)
+{
+	return source->begin_transaction(source, out);
 }
 
 #endif
