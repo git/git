@@ -2459,9 +2459,15 @@ done
 
 cat >.git/config <<-\EOF &&
 [section]
-foo = true
+foo = True
 number = 10
 big = 1M
+path = ~/dir
+red = red
+blue = Blue
+date = Fri Jun 4 15:46:55 2010
+missing=:(optional)no-such-path
+exists=:(optional)expect
 EOF
 
 test_expect_success 'identical modern --type specifiers are allowed' '
@@ -2501,6 +2507,95 @@ test_expect_success '--no-type unsets type specifiers' '
 
 test_expect_success 'unset type specifiers may be reset to conflicting ones' '
 	test_cmp_config 1048576 --type=bool --no-type --type=int section.big
+'
+
+test_expect_success 'list --type=int shows only canonicalizable int values' '
+	cat >expect <<-EOF &&
+	section.number=10
+	section.big=1048576
+	EOF
+
+	test_must_fail git config ${mode_prefix}list --type=int
+'
+
+test_expect_success 'list --type=bool shows only canonicalizable bool values' '
+	cat >expect <<-EOF &&
+	section.foo=true
+	section.number=true
+	section.big=true
+	EOF
+
+	test_must_fail git config ${mode_prefix}list --type=bool
+'
+
+test_expect_success 'list --type=bool-or-int shows only canonicalizable values' '
+	cat >expect <<-EOF &&
+	section.foo=true
+	section.number=10
+	section.big=1048576
+	EOF
+
+	test_must_fail git config ${mode_prefix}list --type=bool-or-int
+'
+
+test_expect_success 'list --type=path shows only canonicalizable path values' '
+	# TODO: handling of missing path is incorrect here.
+	cat >expect <<-EOF &&
+	section.foo=True
+	section.number=10
+	section.big=1M
+	section.path=$HOME/dir
+	section.red=red
+	section.blue=Blue
+	section.date=Fri Jun 4 15:46:55 2010
+	section.missing=section.exists=expect
+	EOF
+
+	git config ${mode_prefix}list --type=path >actual 2>err &&
+	test_cmp expect actual &&
+	test_must_be_empty err
+'
+
+test_expect_success 'list --type=expiry-date shows only canonicalizable dates' '
+	cat >expecterr <<-EOF &&
+	error: '\''True'\'' for '\''section.foo'\'' is not a valid timestamp
+	error: '\''~/dir'\'' for '\''section.path'\'' is not a valid timestamp
+	error: '\''red'\'' for '\''section.red'\'' is not a valid timestamp
+	error: '\''Blue'\'' for '\''section.blue'\'' is not a valid timestamp
+	error: '\'':(optional)no-such-path'\'' for '\''section.missing'\'' is not a valid timestamp
+	error: '\'':(optional)expect'\'' for '\''section.exists'\'' is not a valid timestamp
+	EOF
+
+	git config ${mode_prefix}list --type=expiry-date >actual 2>err &&
+
+	# section.number and section.big parse as relative dates that could
+	# have clock skew in their results.
+	test_grep section.big actual &&
+	test_grep section.number actual &&
+	test_grep "section.date=$(git config --type=expiry-date section.$key)" actual &&
+	test_cmp expecterr err
+'
+
+test_expect_success 'list --type=color shows only canonicalizable color values' '
+	cat >expect <<-EOF &&
+	section.number=<>
+	section.red=<RED>
+	section.blue=<BLUE>
+	EOF
+
+	cat >expecterr <<-EOF &&
+	error: invalid color value: True
+	error: invalid color value: 1M
+	error: invalid color value: ~/dir
+	error: invalid color value: Fri Jun 4 15:46:55 2010
+	error: invalid color value: :(optional)no-such-path
+	error: invalid color value: :(optional)expect
+	EOF
+
+	git config ${mode_prefix}list --type=color >actual.raw 2>err &&
+	test_decode_color <actual.raw >actual &&
+	test_cmp expect actual &&
+	test_cmp expecterr err
 '
 
 test_expect_success '--type rejects unknown specifiers' '

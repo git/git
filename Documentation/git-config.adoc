@@ -240,6 +240,9 @@ Valid `<type>`'s include:
   that the given value is canonicalize-able as an ANSI color, but it is written
   as-is.
 +
+If the command is in `list` mode, then the `--type <type>` argument will apply
+to each listed config value. If the value does not successfully parse in that
+format, then it will be omitted from the list.
 
 --bool::
 --int::
