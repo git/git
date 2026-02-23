@@ -2545,7 +2545,6 @@ test_expect_success 'list --type=bool-or-int shows only canonicalizable values' 
 '
 
 test_expect_success 'list --type=path shows only canonicalizable path values' '
-	# TODO: handling of missing path is incorrect here.
 	cat >expect <<-EOF &&
 	section.foo=True
 	section.number=10
@@ -2554,7 +2553,7 @@ test_expect_success 'list --type=path shows only canonicalizable path values' '
 	section.red=red
 	section.blue=Blue
 	section.date=Fri Jun 4 15:46:55 2010
-	section.missing=section.exists=expect
+	section.exists=expect
 	EOF
 
 	git config ${mode_prefix}list --type=path >actual 2>err &&

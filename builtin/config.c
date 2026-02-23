@@ -314,6 +314,25 @@ static int format_config_bool_or_str(struct strbuf *buf,
 	return 0;
 }
 
+static int format_config_path(struct strbuf *buf,
+			      const char *key_,
+			      const char *value_,
+			      int gently)
+{
+	char *v;
+
+	if (git_config_pathname(&v, key_, value_) < 0)
+		return -1;
+
+	if (v)
+		strbuf_addstr(buf, v);
+	else
+		return gently ? -1 : 1; /* :(optional)no-such-file */
+
+	free(v);
+	return 0;
+}
+
 /*
  * Format the configuration key-value pair (`key_`, `value_`) and
  * append it into strbuf `buf`.  Returns a negative value on failure,
@@ -347,16 +366,9 @@ static int format_config(const struct config_display_options *opts,
 			res = format_config_bool_or_int(buf, key_, value_, kvi, gently);
 		else if (opts->type == TYPE_BOOL_OR_STR)
 			res = format_config_bool_or_str(buf, value_);
-		else if (opts->type == TYPE_PATH) {
-			char *v;
-			if (git_config_pathname(&v, key_, value_) < 0)
-				return -1;
-			if (v)
-				strbuf_addstr(buf, v);
-			else
-				return 1; /* :(optional)no-such-file */
-			free((char *)v);
-		} else if (opts->type == TYPE_EXPIRY_DATE) {
+		else if (opts->type == TYPE_PATH)
+			res = format_config_path(buf, key_, value_, gently);
+		else if (opts->type == TYPE_EXPIRY_DATE) {
 			timestamp_t t;
 			if (git_config_expiry_date(&t, key_, value_) < 0)
 				return -1;
