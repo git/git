@@ -1848,10 +1848,14 @@ int refs_for_each_ref_ext(struct ref_store *refs,
 			  refs_for_each_cb cb, void *cb_data,
 			  const struct refs_for_each_ref_options *opts)
 {
+	struct strvec namespaced_exclude_patterns = STRVEC_INIT;
+	struct strbuf namespaced_prefix = STRBUF_INIT;
 	struct strbuf real_pattern = STRBUF_INIT;
 	struct for_each_ref_filter filter;
 	struct ref_iterator *iter;
 	size_t trim_prefix = opts->trim_prefix;
+	const char **exclude_patterns;
+	const char *prefix;
 	int ret;
 
 	if (!refs)
@@ -1886,11 +1890,29 @@ int refs_for_each_ref_ext(struct ref_store *refs,
 		cb_data = &filter;
 	}
 
-	iter = refs_ref_iterator_begin(refs, opts->prefix ? opts->prefix : "",
-				       opts->exclude_patterns,
+	if (opts->namespace) {
+		strbuf_addstr(&namespaced_prefix, opts->namespace);
+		if (opts->prefix)
+			strbuf_addstr(&namespaced_prefix, opts->prefix);
+		else
+			strbuf_addstr(&namespaced_prefix, "refs/");
+
+		prefix = namespaced_prefix.buf;
+		exclude_patterns = get_namespaced_exclude_patterns(opts->exclude_patterns,
+								   opts->namespace,
+								   &namespaced_exclude_patterns);
+	} else {
+		prefix = opts->prefix ? opts->prefix : "";
+		exclude_patterns = opts->exclude_patterns;
+	}
+
+	iter = refs_ref_iterator_begin(refs, prefix, exclude_patterns,
 				       trim_prefix, opts->flags);
 
 	ret = do_for_each_ref_iterator(iter, cb, cb_data);
+
+	strvec_clear(&namespaced_exclude_patterns);
+	strbuf_release(&namespaced_prefix);
 	strbuf_release(&real_pattern);
 	return ret;
 }
@@ -1937,22 +1959,11 @@ int refs_for_each_namespaced_ref(struct ref_store *refs,
 				 const char **exclude_patterns,
 				 refs_for_each_cb cb, void *cb_data)
 {
-	struct refs_for_each_ref_options opts = { 0 };
-	struct strvec namespaced_exclude_patterns = STRVEC_INIT;
-	struct strbuf prefix = STRBUF_INIT;
-	int ret;
-
-	opts.exclude_patterns = get_namespaced_exclude_patterns(exclude_patterns,
-								get_git_namespace(),
-								&namespaced_exclude_patterns);
-	strbuf_addf(&prefix, "%srefs/", get_git_namespace());
-	opts.prefix = prefix.buf;
-
-	ret = refs_for_each_ref_ext(refs, cb, cb_data, &opts);
-
-	strvec_clear(&namespaced_exclude_patterns);
-	strbuf_release(&prefix);
-	return ret;
+	struct refs_for_each_ref_options opts = {
+		.exclude_patterns = exclude_patterns,
+		.namespace = get_git_namespace(),
+	};
+	return refs_for_each_ref_ext(refs, cb, cb_data, &opts);
 }
 
 int refs_for_each_rawref(struct ref_store *refs, refs_for_each_cb fn, void *cb_data)

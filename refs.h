@@ -469,6 +469,13 @@ struct refs_for_each_ref_options {
 	const char *pattern;
 
 	/*
+	 * If set, only yield refs part of the configured namespace. Exclude
+	 * patterns will be rewritten to apply to the namespace, and the prefix
+	 * will be considered relative to the namespace.
+	 */
+	const char *namespace;
+
+	/*
 	 * Exclude any references that match any of these patterns on a
 	 * best-effort basis. The caller needs to be prepared for the exclude
 	 * patterns to be ignored.
