@@ -6,11 +6,9 @@
 #include "convert.h"
 #include "environment.h"
 #include "repository.h"
-#include "object-file.h"
 #include "odb.h"
 #include "odb/streaming.h"
 #include "replace-object.h"
-#include "packfile.h"
 
 #define FILTER_BUFFER (1024*16)
 
@@ -186,12 +184,9 @@ static int istream_source(struct odb_read_stream **out,
 	struct odb_source *source;
 
 	odb_prepare_alternates(odb);
-	for (source = odb->sources; source; source = source->next) {
-		struct odb_source_files *files = odb_source_files_downcast(source);
-		if (!packfile_store_read_object_stream(out, files->packed, oid) ||
-		    !odb_source_loose_read_object_stream(out, source, oid))
+	for (source = odb->sources; source; source = source->next)
+		if (!odb_source_read_object_stream(out, source, oid))
 			return 0;
-	}
 
 	return open_istream_incore(out, odb, oid);
 }

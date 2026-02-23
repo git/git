@@ -51,6 +51,7 @@ enum object_info_flags {
 
 struct object_id;
 struct object_info;
+struct odb_read_stream;
 
 /*
  * The source is the part of the object database that stores the actual
@@ -139,6 +140,17 @@ struct odb_source {
 				const struct object_id *oid,
 				struct object_info *oi,
 				enum object_info_flags flags);
+
+	/*
+	 * This callback is expected to create a new read stream that can be
+	 * used to stream the object identified by the given ID.
+	 *
+	 * The callback is expected to return a negative error code in case
+	 * creating the object stream has failed, 0 otherwise.
+	 */
+	int (*read_object_stream)(struct odb_read_stream **out,
+				  struct odb_source *source,
+				  const struct object_id *oid);
 };
 
 /*
@@ -208,6 +220,17 @@ static inline int odb_source_read_object_info(struct odb_source *source,
 					      enum object_info_flags flags)
 {
 	return source->read_object_info(source, oid, oi, flags);
+}
+
+/*
+ * Create a new read stream for the given object ID. Returns 0 on success, a
+ * negative error code otherwise.
+ */
+static inline int odb_source_read_object_stream(struct odb_read_stream **out,
+						struct odb_source *source,
+						const struct object_id *oid)
+{
+	return source->read_object_stream(out, source, oid);
 }
 
 #endif
