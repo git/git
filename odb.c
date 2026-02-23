@@ -1005,8 +1005,8 @@ int odb_write_object_ext(struct object_database *odb,
 			 struct object_id *compat_oid,
 			 unsigned flags)
 {
-	return odb_source_loose_write_object(odb->sources, buf, len, type,
-					     oid, compat_oid, flags);
+	return odb_source_write_object(odb->sources, buf, len, type,
+				       oid, compat_oid, flags);
 }
 
 int odb_write_object_stream(struct object_database *odb,

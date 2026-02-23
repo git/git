@@ -1,6 +1,8 @@
 #ifndef ODB_SOURCE_H
 #define ODB_SOURCE_H
 
+#include "object.h"
+
 enum odb_source_type {
 	/*
 	 * The "unknown" type, which should never be in use. This is type
@@ -196,6 +198,24 @@ struct odb_source {
 	 */
 	int (*freshen_object)(struct odb_source *source,
 			      const struct object_id *oid);
+
+	/*
+	 * This callback is expected to persist the given object into the
+	 * object source. In case the object already exists it shall be
+	 * freshened.
+	 *
+	 * The flags field is a combination of `WRITE_OBJECT` flags.
+	 *
+	 * The resulting object ID (and optionally the compatibility object ID)
+	 * shall be written into the out pointers. The callback is expected to
+	 * return 0 on success, a negative error code otherwise.
+	 */
+	int (*write_object)(struct odb_source *source,
+			    const void *buf, unsigned long len,
+			    enum object_type type,
+			    struct object_id *oid,
+			    struct object_id *compat_oid,
+			    unsigned flags);
 };
 
 /*
@@ -313,6 +333,22 @@ static inline int odb_source_freshen_object(struct odb_source *source,
 					    const struct object_id *oid)
 {
 	return source->freshen_object(source, oid);
+}
+
+/*
+ * Write an object into the object database source. Returns 0 on success, a
+ * negative error code otherwise. Populates the given out pointers for the
+ * object ID and the compatibility object ID, if non-NULL.
+ */
+static inline int odb_source_write_object(struct odb_source *source,
+					  const void *buf, unsigned long len,
+					  enum object_type type,
+					  struct object_id *oid,
+					  struct object_id *compat_oid,
+					  unsigned flags)
+{
+	return source->write_object(source, buf, len, type, oid,
+				    compat_oid, flags);
 }
 
 #endif
