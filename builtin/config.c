@@ -86,6 +86,17 @@ struct config_location_options {
 	.respect_includes_opt = -1, \
 }
 
+enum config_type {
+	TYPE_NONE = 0,
+	TYPE_BOOL,
+	TYPE_INT,
+	TYPE_BOOL_OR_INT,
+	TYPE_PATH,
+	TYPE_EXPIRY_DATE,
+	TYPE_COLOR,
+	TYPE_BOOL_OR_STR,
+};
+
 #define CONFIG_TYPE_OPTIONS(type) \
 	OPT_GROUP(N_("Type")), \
 	OPT_CALLBACK('t', "type", &type, N_("type"), N_("value is given this type"), option_parse_type), \
@@ -111,7 +122,7 @@ struct config_display_options {
 	int show_origin;
 	int show_scope;
 	int show_keys;
-	int type;
+	enum config_type type;
 	char *default_value;
 	/* Populated via `display_options_init()`. */
 	int term;
@@ -122,16 +133,8 @@ struct config_display_options {
 	.term = '\n', \
 	.delim = '=', \
 	.key_delim = ' ', \
+	.type = TYPE_NONE, \
 }
-
-#define TYPE_NONE		0
-#define TYPE_BOOL		1
-#define TYPE_INT		2
-#define TYPE_BOOL_OR_INT	3
-#define TYPE_PATH		4
-#define TYPE_EXPIRY_DATE	5
-#define TYPE_COLOR		6
-#define TYPE_BOOL_OR_STR	7
 
 #define OPT_CALLBACK_VALUE(s, l, v, h, i) { \
 	.type = OPTION_CALLBACK, \
