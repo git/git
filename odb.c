@@ -691,7 +691,8 @@ static int do_oid_object_info_extended(struct object_database *odb,
 
 		/* Most likely it's a loose object. */
 		for (source = odb->sources; source; source = source->next) {
-			if (!packfile_store_read_object_info(source->files->packed, real, oi, flags) ||
+			struct odb_source_files *files = odb_source_files_downcast(source);
+			if (!packfile_store_read_object_info(files->packed, real, oi, flags) ||
 			    !odb_source_loose_read_object_info(source, real, oi, flags))
 				return 0;
 		}
@@ -699,9 +700,11 @@ static int do_oid_object_info_extended(struct object_database *odb,
 		/* Not a loose object; someone else may have just packed it. */
 		if (!(flags & OBJECT_INFO_QUICK)) {
 			odb_reprepare(odb->repo->objects);
-			for (source = odb->sources; source; source = source->next)
-				if (!packfile_store_read_object_info(source->files->packed, real, oi, flags))
+			for (source = odb->sources; source; source = source->next) {
+				struct odb_source_files *files = odb_source_files_downcast(source);
+				if (!packfile_store_read_object_info(files->packed, real, oi, flags))
 					return 0;
+			}
 		}
 
 		/*
@@ -962,7 +965,9 @@ int odb_freshen_object(struct object_database *odb,
 
 	odb_prepare_alternates(odb);
 	for (source = odb->sources; source; source = source->next) {
-		if (packfile_store_freshen_object(source->files->packed, oid))
+		struct odb_source_files *files = odb_source_files_downcast(source);
+
+		if (packfile_store_freshen_object(files->packed, oid))
 			return 1;
 
 		if (odb_source_loose_freshen_object(source, oid))
@@ -982,6 +987,8 @@ int odb_for_each_object(struct object_database *odb,
 
 	odb_prepare_alternates(odb);
 	for (struct odb_source *source = odb->sources; source; source = source->next) {
+		struct odb_source_files *files = odb_source_files_downcast(source);
+
 		if (flags & ODB_FOR_EACH_OBJECT_LOCAL_ONLY && !source->local)
 			continue;
 
@@ -992,7 +999,7 @@ int odb_for_each_object(struct object_database *odb,
 				return ret;
 		}
 
-		ret = packfile_store_for_each_object(source->files->packed, request,
+		ret = packfile_store_for_each_object(files->packed, request,
 						     cb, cb_data, flags);
 		if (ret)
 			return ret;
@@ -1090,8 +1097,10 @@ struct object_database *odb_new(struct repository *repo,
 void odb_close(struct object_database *o)
 {
 	struct odb_source *source;
-	for (source = o->sources; source; source = source->next)
-		packfile_store_close(source->files->packed);
+	for (source = o->sources; source; source = source->next) {
+		struct odb_source_files *files = odb_source_files_downcast(source);
+		packfile_store_close(files->packed);
+	}
 	close_commit_graph(o);
 }
 
@@ -1148,8 +1157,9 @@ void odb_reprepare(struct object_database *o)
 	odb_prepare_alternates(o);
 
 	for (source = o->sources; source; source = source->next) {
+		struct odb_source_files *files = odb_source_files_downcast(source);
 		odb_source_loose_reprepare(source);
-		packfile_store_reprepare(source->files->packed);
+		packfile_store_reprepare(files->packed);
 	}
 
 	o->approximate_object_count_valid = 0;

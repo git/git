@@ -1,8 +1,6 @@
 #ifndef ODB_SOURCE_H
 #define ODB_SOURCE_H
 
-#include "odb/source-files.h"
-
 /*
  * The source is the part of the object database that stores the actual
  * objects. It thus encapsulates the logic to read and write the specific
@@ -20,9 +18,6 @@ struct odb_source {
 
 	/* Object database that owns this object source. */
 	struct object_database *odb;
-
-	/* The backend used to store objects. */
-	struct odb_source_files *files;
 
 	/*
 	 * Figure out whether this is the local source of the owning
@@ -53,7 +48,31 @@ struct odb_source *odb_source_new(struct object_database *odb,
 				  const char *path,
 				  bool local);
 
-/* Free the object database source, releasing all associated resources. */
+/*
+ * Initialize the source for the given object database located at `path`.
+ * `local` indicates whether or not the source is the local and thus primary
+ * object source of the object database.
+ *
+ * This function is only supposed to be called by specific object source
+ * implementations.
+ */
+void odb_source_init(struct odb_source *source,
+		     struct object_database *odb,
+		     const char *path,
+		     bool local);
+
+/*
+ * Free the object database source, releasing all associated resources and
+ * freeing the structure itself.
+ */
 void odb_source_free(struct odb_source *source);
+
+/*
+ * Release the object database source, releasing all associated resources.
+ *
+ * This function is only supposed to be called by specific object source
+ * implementations.
+ */
+void odb_source_release(struct odb_source *source);
 
 #endif

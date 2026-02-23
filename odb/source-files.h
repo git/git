@@ -1,8 +1,9 @@
 #ifndef ODB_SOURCE_FILES_H
 #define ODB_SOURCE_FILES_H
 
+#include "odb/source.h"
+
 struct odb_source_loose;
-struct odb_source;
 struct packfile_store;
 
 /*
@@ -10,15 +11,26 @@ struct packfile_store;
  * packfiles. It is the default backend used by Git to store objects.
  */
 struct odb_source_files {
-	struct odb_source *source;
+	struct odb_source base;
 	struct odb_source_loose *loose;
 	struct packfile_store *packed;
 };
 
 /* Allocate and initialize a new object source. */
-struct odb_source_files *odb_source_files_new(struct odb_source *source);
+struct odb_source_files *odb_source_files_new(struct object_database *odb,
+					      const char *path,
+					      bool local);
 
 /* Free the object source and release all associated resources. */
 void odb_source_files_free(struct odb_source_files *files);
+
+/*
+ * Cast the given object database source to the files backend. This will cause
+ * a BUG in case the source doesn't use this backend.
+ */
+static inline struct odb_source_files *odb_source_files_downcast(struct odb_source *source)
+{
+	return container_of(source, struct odb_source_files, base);
+}
 
 #endif
