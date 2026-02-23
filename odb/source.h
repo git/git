@@ -55,6 +55,7 @@ struct object_id;
 struct object_info;
 struct odb_read_stream;
 struct odb_write_stream;
+struct strvec;
 
 /*
  * A callback function that can be used to iterate through objects. If given,
@@ -229,6 +230,20 @@ struct odb_source {
 	int (*write_object_stream)(struct odb_source *source,
 				   struct odb_write_stream *stream, size_t len,
 				   struct object_id *oid);
+
+	/*
+	 * This callback is expected to read the list of alternate object
+	 * database sources connected to it and write them into the `strvec`.
+	 *
+	 * The format is expected to follow the "objectStorage" extension
+	 * format with `(backend://)?payload` syntax. If the payload contains
+	 * paths, these paths must be resolved to absolute paths.
+	 *
+	 * The callback is expected to return 0 on success, a negative error
+	 * code otherwise.
+	 */
+	int (*read_alternates)(struct odb_source *source,
+			       struct strvec *out);
 };
 
 /*
@@ -377,6 +392,20 @@ static inline int odb_source_write_object_stream(struct odb_source *source,
 						 struct object_id *oid)
 {
 	return source->write_object_stream(source, stream, len, oid);
+}
+
+/*
+ * Read the list of alternative object database sources from the given backend
+ * and populate the `strvec` with them. The listing is not recursive -- that
+ * is, if any of the yielded alternate sources has alternates itself, those
+ * will not be yielded as part of this function call.
+ *
+ * Return 0 on success, a negative error code otherwise.
+ */
+static inline int odb_source_read_alternates(struct odb_source *source,
+					     struct strvec *out)
+{
+	return source->read_alternates(source, out);
 }
 
 #endif

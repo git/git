@@ -131,10 +131,10 @@ out:
 	return usable;
 }
 
-static void parse_alternates(const char *string,
-			     int sep,
-			     const char *relative_base,
-			     struct strvec *out)
+void parse_alternates(const char *string,
+		      int sep,
+		      const char *relative_base,
+		      struct strvec *out)
 {
 	struct strbuf pathbuf = STRBUF_INIT;
 	struct strbuf buf = STRBUF_INIT;
@@ -196,24 +196,6 @@ static void parse_alternates(const char *string,
 
 	strbuf_release(&pathbuf);
 	strbuf_release(&buf);
-}
-
-static void odb_source_read_alternates(struct odb_source *source,
-				       struct strvec *out)
-{
-	struct strbuf buf = STRBUF_INIT;
-	char *path;
-
-	path = xstrfmt("%s/info/alternates", source->path);
-	if (strbuf_read_file(&buf, path, 1024) < 0) {
-		warn_on_fopen_errors(path);
-		free(path);
-		return;
-	}
-	parse_alternates(buf.buf, '\n', source->path, out);
-
-	strbuf_release(&buf);
-	free(path);
 }
 
 static struct odb_source *odb_add_alternate_recursively(struct object_database *odb,
