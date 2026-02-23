@@ -607,17 +607,6 @@ void normalize_glob_ref(struct string_list_item *item, const char *prefix,
 	strbuf_release(&normalized_pattern);
 }
 
-int refs_for_each_glob_ref_in(struct ref_store *refs, refs_for_each_cb cb,
-			      const char *pattern, const char *prefix, void *cb_data)
-{
-	struct refs_for_each_ref_options opts = {
-		.pattern = pattern,
-		.prefix = prefix,
-		.trim_prefix = prefix ? strlen(prefix) : 0,
-	};
-	return refs_for_each_ref_ext(refs, cb, cb_data, &opts);
-}
-
 int refs_for_each_glob_ref(struct ref_store *refs, refs_for_each_cb cb,
 			   const char *pattern, void *cb_data)
 {

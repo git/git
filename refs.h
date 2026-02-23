@@ -531,9 +531,6 @@ int refs_for_each_ref_in_prefixes(struct ref_store *refs,
 int refs_for_each_glob_ref(struct ref_store *refs, refs_for_each_cb fn,
 			   const char *pattern, void *cb_data);
 
-int refs_for_each_glob_ref_in(struct ref_store *refs, refs_for_each_cb fn,
-			      const char *pattern, const char *prefix, void *cb_data);
-
 /*
  * references matching any pattern in "exclude_patterns" are omitted from the
  * result set on a best-effort basis.

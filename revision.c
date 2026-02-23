@@ -2827,34 +2827,46 @@ static int handle_revision_pseudo_opt(struct rev_info *revs,
 		exclude_hidden_refs(&revs->ref_excludes, optarg);
 		return argcount;
 	} else if (skip_prefix(arg, "--branches=", &optarg)) {
+		struct refs_for_each_ref_options opts = {
+			.prefix = "refs/heads/",
+			.trim_prefix = strlen("refs/heads/"),
+			.pattern = optarg,
+		};
 		struct all_refs_cb cb;
 		if (revs->ref_excludes.hidden_refs_configured)
 			return error(_("options '%s' and '%s' cannot be used together"),
 				     "--exclude-hidden", "--branches");
 		init_all_refs_cb(&cb, revs, *flags);
-		refs_for_each_glob_ref_in(get_main_ref_store(the_repository),
-					  handle_one_ref, optarg,
-					  "refs/heads/", &cb);
+		refs_for_each_ref_ext(get_main_ref_store(the_repository),
+				      handle_one_ref, &cb, &opts);
 		clear_ref_exclusions(&revs->ref_excludes);
 	} else if (skip_prefix(arg, "--tags=", &optarg)) {
+		struct refs_for_each_ref_options opts = {
+			.prefix = "refs/tags/",
+			.trim_prefix = strlen("refs/tags/"),
+			.pattern = optarg,
+		};
 		struct all_refs_cb cb;
 		if (revs->ref_excludes.hidden_refs_configured)
 			return error(_("options '%s' and '%s' cannot be used together"),
 				     "--exclude-hidden", "--tags");
 		init_all_refs_cb(&cb, revs, *flags);
-		refs_for_each_glob_ref_in(get_main_ref_store(the_repository),
-					  handle_one_ref, optarg,
-					  "refs/tags/", &cb);
+		refs_for_each_ref_ext(get_main_ref_store(the_repository),
+				      handle_one_ref, &cb, &opts);
 		clear_ref_exclusions(&revs->ref_excludes);
 	} else if (skip_prefix(arg, "--remotes=", &optarg)) {
+		struct refs_for_each_ref_options opts = {
+			.prefix = "refs/remotes/",
+			.trim_prefix = strlen("refs/remotes/"),
+			.pattern = optarg,
+		};
 		struct all_refs_cb cb;
 		if (revs->ref_excludes.hidden_refs_configured)
 			return error(_("options '%s' and '%s' cannot be used together"),
 				     "--exclude-hidden", "--remotes");
 		init_all_refs_cb(&cb, revs, *flags);
-		refs_for_each_glob_ref_in(get_main_ref_store(the_repository),
-					  handle_one_ref, optarg,
-					  "refs/remotes/", &cb);
+		refs_for_each_ref_ext(get_main_ref_store(the_repository),
+				      handle_one_ref, &cb, &opts);
 		clear_ref_exclusions(&revs->ref_excludes);
 	} else if (!strcmp(arg, "--reflog")) {
 		add_reflogs_to_pending(revs, *flags);
