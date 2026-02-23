@@ -472,12 +472,6 @@ int refs_for_each_rawref_in(struct ref_store *refs, const char *prefix,
 			    each_ref_fn fn, void *cb_data);
 
 /*
- * Iterates over all refs including root refs, i.e. pseudorefs and HEAD.
- */
-int refs_for_each_include_root_refs(struct ref_store *refs, each_ref_fn fn,
-				    void *cb_data);
-
-/*
  * Normalizes partial refs to their fully qualified form.
  * Will prepend <prefix> to the <pattern> if it doesn't start with 'refs/'.
  * <prefix> will default to 'refs/' if NULL.
