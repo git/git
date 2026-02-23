@@ -413,6 +413,9 @@ typedef int each_ref_fn(const struct reference *ref, void *cb_data);
  */
 int refs_head_ref(struct ref_store *refs,
 		  each_ref_fn fn, void *cb_data);
+int refs_head_ref_namespaced(struct ref_store *refs,
+			     each_ref_fn fn, void *cb_data);
+
 int refs_for_each_ref(struct ref_store *refs,
 		      each_ref_fn fn, void *cb_data);
 int refs_for_each_ref_in(struct ref_store *refs, const char *prefix,
@@ -455,8 +458,6 @@ int refs_for_each_glob_ref(struct ref_store *refs, each_ref_fn fn,
 
 int refs_for_each_glob_ref_in(struct ref_store *refs, each_ref_fn fn,
 			      const char *pattern, const char *prefix, void *cb_data);
-
-int refs_head_ref_namespaced(struct ref_store *refs, each_ref_fn fn, void *cb_data);
 
 /*
  * references matching any pattern in "exclude_patterns" are omitted from the
