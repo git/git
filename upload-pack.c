@@ -607,7 +607,7 @@ static int allow_hidden_refs(enum allow_uor allow_uor)
 	return !(allow_uor & (ALLOW_TIP_SHA1 | ALLOW_REACHABLE_SHA1));
 }
 
-static void for_each_namespaced_ref_1(each_ref_fn fn,
+static void for_each_namespaced_ref_1(refs_for_each_cb fn,
 				      struct upload_pack_data *data)
 {
 	const char **excludes = NULL;

@@ -445,7 +445,7 @@ char *refs_resolve_refdup(struct ref_store *refs,
 struct for_each_ref_filter {
 	const char *pattern;
 	const char *prefix;
-	each_ref_fn *fn;
+	refs_for_each_cb *fn;
 	void *cb_data;
 };
 
@@ -527,22 +527,22 @@ void refs_warn_dangling_symrefs(struct ref_store *refs, FILE *fp,
 	refs_for_each_rawref(refs, warn_if_dangling_symref, &data);
 }
 
-int refs_for_each_tag_ref(struct ref_store *refs, each_ref_fn fn, void *cb_data)
+int refs_for_each_tag_ref(struct ref_store *refs, refs_for_each_cb fn, void *cb_data)
 {
 	return refs_for_each_ref_in(refs, "refs/tags/", fn, cb_data);
 }
 
-int refs_for_each_branch_ref(struct ref_store *refs, each_ref_fn fn, void *cb_data)
+int refs_for_each_branch_ref(struct ref_store *refs, refs_for_each_cb fn, void *cb_data)
 {
 	return refs_for_each_ref_in(refs, "refs/heads/", fn, cb_data);
 }
 
-int refs_for_each_remote_ref(struct ref_store *refs, each_ref_fn fn, void *cb_data)
+int refs_for_each_remote_ref(struct ref_store *refs, refs_for_each_cb fn, void *cb_data)
 {
 	return refs_for_each_ref_in(refs, "refs/remotes/", fn, cb_data);
 }
 
-int refs_head_ref_namespaced(struct ref_store *refs, each_ref_fn fn, void *cb_data)
+int refs_head_ref_namespaced(struct ref_store *refs, refs_for_each_cb fn, void *cb_data)
 {
 	struct strbuf buf = STRBUF_INIT;
 	int ret = 0;
@@ -590,7 +590,7 @@ void normalize_glob_ref(struct string_list_item *item, const char *prefix,
 	strbuf_release(&normalized_pattern);
 }
 
-int refs_for_each_glob_ref_in(struct ref_store *refs, each_ref_fn fn,
+int refs_for_each_glob_ref_in(struct ref_store *refs, refs_for_each_cb fn,
 			      const char *pattern, const char *prefix, void *cb_data)
 {
 	struct strbuf real_pattern = STRBUF_INIT;
@@ -620,7 +620,7 @@ int refs_for_each_glob_ref_in(struct ref_store *refs, each_ref_fn fn,
 	return ret;
 }
 
-int refs_for_each_glob_ref(struct ref_store *refs, each_ref_fn fn,
+int refs_for_each_glob_ref(struct ref_store *refs, refs_for_each_cb fn,
 			   const char *pattern, void *cb_data)
 {
 	return refs_for_each_glob_ref_in(refs, fn, pattern, NULL, cb_data);
@@ -1788,7 +1788,7 @@ const char *find_descendant_ref(const char *dirname,
 	return NULL;
 }
 
-int refs_head_ref(struct ref_store *refs, each_ref_fn fn, void *cb_data)
+int refs_head_ref(struct ref_store *refs, refs_for_each_cb fn, void *cb_data)
 {
 	struct object_id oid;
 	int flag;
@@ -1860,7 +1860,7 @@ struct ref_iterator *refs_ref_iterator_begin(
 
 static int do_for_each_ref(struct ref_store *refs, const char *prefix,
 			   const char **exclude_patterns,
-			   each_ref_fn fn, int trim,
+			   refs_for_each_cb fn, int trim,
 			   enum refs_for_each_flag flags, void *cb_data)
 {
 	struct ref_iterator *iter;
@@ -1874,25 +1874,25 @@ static int do_for_each_ref(struct ref_store *refs, const char *prefix,
 	return do_for_each_ref_iterator(iter, fn, cb_data);
 }
 
-int refs_for_each_ref(struct ref_store *refs, each_ref_fn fn, void *cb_data)
+int refs_for_each_ref(struct ref_store *refs, refs_for_each_cb fn, void *cb_data)
 {
 	return do_for_each_ref(refs, "", NULL, fn, 0, 0, cb_data);
 }
 
 int refs_for_each_ref_in(struct ref_store *refs, const char *prefix,
-			 each_ref_fn fn, void *cb_data)
+			 refs_for_each_cb fn, void *cb_data)
 {
 	return do_for_each_ref(refs, prefix, NULL, fn, strlen(prefix), 0, cb_data);
 }
 
 int refs_for_each_fullref_in(struct ref_store *refs, const char *prefix,
 			     const char **exclude_patterns,
-			     each_ref_fn fn, void *cb_data)
+			     refs_for_each_cb fn, void *cb_data)
 {
 	return do_for_each_ref(refs, prefix, exclude_patterns, fn, 0, 0, cb_data);
 }
 
-int refs_for_each_replace_ref(struct ref_store *refs, each_ref_fn fn, void *cb_data)
+int refs_for_each_replace_ref(struct ref_store *refs, refs_for_each_cb fn, void *cb_data)
 {
 	const char *git_replace_ref_base = ref_namespace[NAMESPACE_REPLACE].ref;
 	return do_for_each_ref(refs, git_replace_ref_base, NULL, fn,
@@ -1902,7 +1902,7 @@ int refs_for_each_replace_ref(struct ref_store *refs, each_ref_fn fn, void *cb_d
 
 int refs_for_each_namespaced_ref(struct ref_store *refs,
 				 const char **exclude_patterns,
-				 each_ref_fn fn, void *cb_data)
+				 refs_for_each_cb fn, void *cb_data)
 {
 	struct strvec namespaced_exclude_patterns = STRVEC_INIT;
 	struct strbuf prefix = STRBUF_INIT;
@@ -1920,13 +1920,13 @@ int refs_for_each_namespaced_ref(struct ref_store *refs,
 	return ret;
 }
 
-int refs_for_each_rawref(struct ref_store *refs, each_ref_fn fn, void *cb_data)
+int refs_for_each_rawref(struct ref_store *refs, refs_for_each_cb fn, void *cb_data)
 {
 	return refs_for_each_rawref_in(refs, "", fn, cb_data);
 }
 
 int refs_for_each_rawref_in(struct ref_store *refs, const char *prefix,
-			    each_ref_fn fn, void *cb_data)
+			    refs_for_each_cb fn, void *cb_data)
 {
 	return do_for_each_ref(refs, prefix, NULL, fn, 0,
 			       REFS_FOR_EACH_INCLUDE_BROKEN, cb_data);
@@ -1994,7 +1994,7 @@ int refs_for_each_fullref_in_prefixes(struct ref_store *ref_store,
 				      const char *namespace,
 				      const char **patterns,
 				      const char **exclude_patterns,
-				      each_ref_fn fn, void *cb_data)
+				      refs_for_each_cb fn, void *cb_data)
 {
 	struct strvec namespaced_exclude_patterns = STRVEC_INIT;
 	struct string_list prefixes = STRING_LIST_INIT_DUP;

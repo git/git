@@ -3324,7 +3324,7 @@ static const struct string_list *bitmap_preferred_tips(struct repository *r)
 }
 
 void for_each_preferred_bitmap_tip(struct repository *repo,
-				   each_ref_fn cb, void *cb_data)
+				   refs_for_each_cb cb, void *cb_data)
 {
 	struct string_list_item *item;
 	const struct string_list *preferred_tips;

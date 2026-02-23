@@ -170,7 +170,7 @@ int ref_store_remove_on_disk(struct ref_store *refs, struct strbuf *err);
  *
  *   peel_object(r, oid, &peeled);
  *
- * with the "oid" value given to the each_ref_fn callback, except
+ * with the "oid" value given to the refs_for_each_cb callback, except
  * that some ref storage may be able to answer the query without
  * actually loading the object in memory.
  */
@@ -329,7 +329,7 @@ int check_tag_ref(struct strbuf *sb, const char *name);
 struct ref_transaction;
 
 /*
- * Bit values set in the flags argument passed to each_ref_fn() and
+ * Bit values set in the flags argument passed to refs_for_each_cb() and
  * stored in ref_iterator::flags. Other bits are for internal use
  * only:
  */
@@ -400,7 +400,7 @@ int reference_get_peeled_oid(struct repository *repo,
  * argument is only guaranteed to be valid for the duration of a
  * single callback invocation.
  */
-typedef int each_ref_fn(const struct reference *ref, void *cb_data);
+typedef int refs_for_each_cb(const struct reference *ref, void *cb_data);
 
 /*
  * These flags are passed to refs_ref_iterator_begin() (and do_for_each_ref(),
@@ -449,22 +449,22 @@ enum refs_for_each_flag {
  * stop the iteration. Returned references are sorted.
  */
 int refs_head_ref(struct ref_store *refs,
-		  each_ref_fn fn, void *cb_data);
+		  refs_for_each_cb fn, void *cb_data);
 int refs_head_ref_namespaced(struct ref_store *refs,
-			     each_ref_fn fn, void *cb_data);
+			     refs_for_each_cb fn, void *cb_data);
 
 int refs_for_each_ref(struct ref_store *refs,
-		      each_ref_fn fn, void *cb_data);
+		      refs_for_each_cb fn, void *cb_data);
 int refs_for_each_ref_in(struct ref_store *refs, const char *prefix,
-			 each_ref_fn fn, void *cb_data);
+			 refs_for_each_cb fn, void *cb_data);
 int refs_for_each_tag_ref(struct ref_store *refs,
-			  each_ref_fn fn, void *cb_data);
+			  refs_for_each_cb fn, void *cb_data);
 int refs_for_each_branch_ref(struct ref_store *refs,
-			     each_ref_fn fn, void *cb_data);
+			     refs_for_each_cb fn, void *cb_data);
 int refs_for_each_remote_ref(struct ref_store *refs,
-			     each_ref_fn fn, void *cb_data);
+			     refs_for_each_cb fn, void *cb_data);
 int refs_for_each_replace_ref(struct ref_store *refs,
-			      each_ref_fn fn, void *cb_data);
+			      refs_for_each_cb fn, void *cb_data);
 
 /*
  * references matching any pattern in "exclude_patterns" are omitted from the
@@ -472,7 +472,7 @@ int refs_for_each_replace_ref(struct ref_store *refs,
  */
 int refs_for_each_fullref_in(struct ref_store *refs, const char *prefix,
 			     const char **exclude_patterns,
-			     each_ref_fn fn, void *cb_data);
+			     refs_for_each_cb fn, void *cb_data);
 
 /**
  * iterate all refs in "patterns" by partitioning patterns into disjoint sets
@@ -487,13 +487,13 @@ int refs_for_each_fullref_in_prefixes(struct ref_store *refs,
 				      const char *namespace,
 				      const char **patterns,
 				      const char **exclude_patterns,
-				      each_ref_fn fn, void *cb_data);
+				      refs_for_each_cb fn, void *cb_data);
 
 /* iterates all refs that match the specified glob pattern. */
-int refs_for_each_glob_ref(struct ref_store *refs, each_ref_fn fn,
+int refs_for_each_glob_ref(struct ref_store *refs, refs_for_each_cb fn,
 			   const char *pattern, void *cb_data);
 
-int refs_for_each_glob_ref_in(struct ref_store *refs, each_ref_fn fn,
+int refs_for_each_glob_ref_in(struct ref_store *refs, refs_for_each_cb fn,
 			      const char *pattern, const char *prefix, void *cb_data);
 
 /*
@@ -502,12 +502,12 @@ int refs_for_each_glob_ref_in(struct ref_store *refs, each_ref_fn fn,
  */
 int refs_for_each_namespaced_ref(struct ref_store *refs,
 				 const char **exclude_patterns,
-				 each_ref_fn fn, void *cb_data);
+				 refs_for_each_cb fn, void *cb_data);
 
 /* can be used to learn about broken ref and symref */
-int refs_for_each_rawref(struct ref_store *refs, each_ref_fn fn, void *cb_data);
+int refs_for_each_rawref(struct ref_store *refs, refs_for_each_cb fn, void *cb_data);
 int refs_for_each_rawref_in(struct ref_store *refs, const char *prefix,
-			    each_ref_fn fn, void *cb_data);
+			    refs_for_each_cb fn, void *cb_data);
 
 /*
  * Normalizes partial refs to their fully qualified form.
@@ -1421,6 +1421,6 @@ void ref_iterator_free(struct ref_iterator *ref_iterator);
  * iterator style.
  */
 int do_for_each_ref_iterator(struct ref_iterator *iter,
-			     each_ref_fn fn, void *cb_data);
+			     refs_for_each_cb fn, void *cb_data);
 
 #endif /* REFS_H */

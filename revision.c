@@ -1646,7 +1646,7 @@ static void init_all_refs_cb(struct all_refs_cb *cb, struct rev_info *revs,
 
 static void handle_refs(struct ref_store *refs,
 			struct rev_info *revs, unsigned flags,
-			int (*for_each)(struct ref_store *, each_ref_fn, void *))
+			int (*for_each)(struct ref_store *, refs_for_each_cb, void *))
 {
 	struct all_refs_cb cb;
 
@@ -2728,7 +2728,7 @@ void revision_opts_finish(struct rev_info *revs)
 	}
 }
 
-static int for_each_bisect_ref(struct ref_store *refs, each_ref_fn fn,
+static int for_each_bisect_ref(struct ref_store *refs, refs_for_each_cb fn,
 			       void *cb_data, const char *term)
 {
 	struct strbuf bisect_refs = STRBUF_INIT;
@@ -2739,12 +2739,12 @@ static int for_each_bisect_ref(struct ref_store *refs, each_ref_fn fn,
 	return status;
 }
 
-static int for_each_bad_bisect_ref(struct ref_store *refs, each_ref_fn fn, void *cb_data)
+static int for_each_bad_bisect_ref(struct ref_store *refs, refs_for_each_cb fn, void *cb_data)
 {
 	return for_each_bisect_ref(refs, fn, cb_data, term_bad);
 }
 
-static int for_each_good_bisect_ref(struct ref_store *refs, each_ref_fn fn, void *cb_data)
+static int for_each_good_bisect_ref(struct ref_store *refs, refs_for_each_cb fn, void *cb_data)
 {
 	return for_each_bisect_ref(refs, fn, cb_data, term_good);
 }
