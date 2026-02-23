@@ -1859,7 +1859,18 @@ int refs_for_each_ref_ext(struct ref_store *refs,
 	int ret;
 
 	if (!refs)
-		return 0;
+		BUG("no ref store passed");
+
+	if (opts->trim_prefix) {
+		size_t prefix_len;
+
+		if (!opts->prefix)
+			BUG("trimming only allowed with a prefix");
+
+		prefix_len = strlen(opts->prefix);
+		if (prefix_len == opts->trim_prefix && opts->prefix[prefix_len - 1] != '/')
+			BUG("ref pattern must end in a trailing slash when trimming");
+	}
 
 	if (opts->pattern) {
 		if (!opts->prefix && !starts_with(opts->pattern, "refs/"))
