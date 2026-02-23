@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Feb 2026, #07)
+Subject: What's cooking in git.git (Feb 2026, #08)
 X-master-at: 7c02d39fc2ed2702223c7674f73150d9a7e61ba4
-X-next-at: 4a7958ca1415077ce9b1d0a38223ede55da779d9
+X-next-at: 309c995771be952610fdcff99f7fea96934ce045
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Feb 2026, #07)
+What's cooking in git.git (Feb 2026, #08)
 -----------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -48,47 +48,10 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* ak/t9812-test-path-is-helpers (2026-02-11) 1 commit
-  (merged to 'next' on 2026-02-13 at a9746d98e4)
- + t9812: modernize test path helpers
-
- Test update.
- source: <20260212054530.4763-1-ashwanikamal.im421@gmail.com>
-
-
-* jc/doc-cg-c-comment (2026-02-11) 1 commit
-  (merged to 'next' on 2026-02-12 at d1286b26eb)
- + CodingGuidelines: document // comments
-
- A CodingGuidelines update.
- source: <xmqqikc3t7hf.fsf@gitster.g>
-
-
-* pw/diff-anchored-optim (2026-02-12) 1 commit
-  (merged to 'next' on 2026-02-13 at a8e8191f03)
- + diff --anchored: avoid checking unmatched lines
-
- "git diff --anchored=<text>" has been optimized.
- source: <2a8cc2d6c37f25a58823b501500165d597321749.1770911599.git.phillip.wood@dunelm.org.uk>
-
-
-* pw/xdiff-cleanups (2026-01-26) 2 commits
-  (merged to 'next' on 2026-02-11 at e6df42d605)
- + xdiff: remove unused data from xdlclass_t
- + xdiff: remove "line_hash" field from xrecord_t
-
- Small clean-up of xdiff library to remove unnecessary data
- duplication.
- source: <cover.1769424529.git.phillip.wood@dunelm.org.uk>
-
---------------------------------------------------
 [Stalled]
 
 These topics have been sitting without activity for too long.  They
 may have to be discarded unless something new happens to them soon.
-
 
 * tt/receive-pack-oo-namespace-symref-fix (2025-12-27) 1 commit
  - receive-pack: fix crash on out-of-namespace symref
@@ -119,22 +82,72 @@ may have to be discarded unless something new happens to them soon.
  Comments?
  source: <pull.2150.v2.git.git.1767226763360.gitgitgadget@gmail.com>
 
-
-* hn/status-compare-with-push (2026-01-22) 3 commits
- - status: add status.compareBranches config for multiple branch comparisons
- - refactor format_branch_comparison in preparation
- - Merge branch 'jk/remote-tracking-ref-leakfix' into hn/status-compare-with-push
-
- "git status" learned to show comparison between the current branch
- and its push destination as well as its upstream, when the two are
- different (i.e., triangular workflow).
-
- What's the status of this topic?
- cf. <20260122220154.GA2107958@coredump.intra.peff.net>
- source: <pull.2138.v28.git.git.1769112471.gitgitgadget@gmail.com>
-
 --------------------------------------------------
 [New Topics]
+
+* ac/help-sort-correctly (2026-02-21) 2 commits
+ - SQUASH??? simplify
+ - help: cleanup the contruction of keys_uniq
+
+ The code in "git help" that shows configuration items in sorted
+ order was awkwardly organized and prone to bugs.
+
+ Expecting a (hopefully small and final) reroll, with tests?
+ source: <20260221162359.43336-2-amishhhaaaa@gmail.com>
+
+
+* lg/t2004-test-path-is-helpers (2026-02-21) 1 commit
+ - t2004: use test_path_is_file instead of test -f
+
+ Test code clean-up.
+
+ Will merge to 'next'.
+ source: <pull.2049.git.1771694893208.gitgitgadget@gmail.com>
+
+
+* ps/simplify-normalize-path-copy-len (2026-02-21) 1 commit
+ - path: factor out skip_slashes() in normalize_path_copy_len()
+
+ Code clean-up.
+
+ Will merge to 'next'.
+ source: <20260221110511.1592-2-pushkarkumarsingh1970@gmail.com>
+
+
+* sc/pack-redundant-leakfix (2026-02-21) 1 commit
+ - pack-redundant: fix memory leak when open_pack_index() fails
+
+ Leakfix.
+
+ Will merge to 'next'.
+ source: <20260221103900.41740-1-sahityajb@gmail.com>
+
+
+* ty/setup-error-tightening (2026-02-22) 2 commits
+ - SQUASH??? read_gitfile(): group ENOENT and ENOTDIR into a single MISSING error
+ - setup: improve error diagnosis for invalid .git files
+
+ While discovering a ".git" directory, the code treats any stat()
+ failure as a sign that a filesystem entity .git does not exist
+ there, and ignores ".git" that is not a "gitdir" file or a
+ directory.  The code has been tightened to notice and report
+ filesystem corruption better.
+
+ Needs review.
+ source: <20260222102928.377519-1-a3205153416@gmail.com>
+
+
+* bc/do-not-reorder-packs-during-fsck (2026-02-22) 1 commit
+ - fsck: do not loop infinitely when processing packs
+
+ Access to packfiles during fsck would reorder the mru list of
+ packs, which causes the fsck to loop forever going over the list.
+
+ Will merge to 'next'?
+ source: <20260222183710.2963424-1-sandals@crustytoothpaste.net>
+
+--------------------------------------------------
+[Cooking]
 
 * ap/use-test-seq-f-more (2026-02-18) 1 commit
   (merged to 'next' on 2026-02-20 at d847fcad1e)
@@ -166,7 +179,9 @@ may have to be discarded unless something new happens to them soon.
  source: <pull.2047.git.1771443159369.gitgitgadget@gmail.com>
 
 
-* jt/object-file-use-container-of (2026-02-18) 1 commit
+* jt/object-file-use-container-of (2026-02-22) 2 commits
+  (merged to 'next' on 2026-02-22 at 309c995771)
+ + object-file.c: avoid container_of() of a NULL container
   (merged to 'next' on 2026-02-20 at 7a30cb262f)
  + object-file: use `container_of()` to convert from base types
 
@@ -174,6 +189,7 @@ may have to be discarded unless something new happens to them soon.
 
  Will merge to 'master'.
  source: <20260218210120.1146078-1-jltobler@gmail.com>
+ source: <xmqqh5r8r0to.fsf_-_@gitster.g>
 
 
 * kh/format-patch-noprefix-is-boolean (2026-02-18) 2 commits
@@ -218,7 +234,7 @@ may have to be discarded unless something new happens to them soon.
  An earlier attempt to optimize "git subtree" discarded too much
  relevant histories, which has been corrected.
 
- Will merge to next?
+ Will merge to 'next'.
  source: <20260217-cs-subtree-remove-optimization-v2-0-4299e71a30c6@howdoi.land>
 
 
@@ -343,16 +359,14 @@ may have to be discarded unless something new happens to them soon.
  Will merge to 'next'?
  source: <20260220175331.1250726-1-shreyanshpaliwalcmsmn@gmail.com>
 
---------------------------------------------------
-[Cooking]
 
-* dk/meson-regen-config-list (2026-02-18) 1 commit
+* dk/meson-regen-config-list (2026-02-21) 1 commit
  - build: regenerate config-list.h when Documentation changes
 
  Fix dependency screw-up in meson-based builds
 
  Will merge to 'next'?
- source: <611a94cd988e3795bc63dba2f1b270aa0d058bd2.1771425395.git.ben.knoble+github@gmail.com>
+ source: <5dcd4e9308100a25603c50fecb36447c0ee4df62.1771682788.git.ben.knoble+github@gmail.com>
 
 
 * jk/ref-filter-lrstrip-optim (2026-02-19) 5 commits
@@ -372,13 +386,14 @@ may have to be discarded unless something new happens to them soon.
 
 
 * ps/receive-pack-shallow-optim (2026-02-16) 3 commits
- - commit: use commit graph in `lookup_commit_reference_gently()`
- - commit: make `repo_parse_commit_no_graph()` more robust
- - commit: avoid parsing non-commits in `lookup_commit_reference_gently()`
+  (merged to 'next' on 2026-02-22 at ad6abc1ef8)
+ + commit: use commit graph in `lookup_commit_reference_gently()`
+ + commit: make `repo_parse_commit_no_graph()` more robust
+ + commit: avoid parsing non-commits in `lookup_commit_reference_gently()`
 
  The code to accept shallow "git push" has been optimized.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20260216-b4-pks-receive-pack-optimize-shallow-v1-0-e98886daff2b@pks.im>
 
 
@@ -501,13 +516,14 @@ may have to be discarded unless something new happens to them soon.
 
 
 * kh/doc-patch-id-4 (2026-02-14) 3 commits
- - doc: patch-id: see also git-cherry(1)
- - doc: patch-id: add script example
- - doc: patch-id: emphasize multi-patch processing
+  (merged to 'next' on 2026-02-22 at bfae23ac5e)
+ + doc: patch-id: see also git-cherry(1)
+ + doc: patch-id: add script example
+ + doc: patch-id: emphasize multi-patch processing
 
  Doc update.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <V2_CV_doc_patch-id_4.371@msgid.xyz>
 
 
@@ -524,14 +540,15 @@ may have to be discarded unless something new happens to them soon.
 
 
 * kh/doc-am-xref (2026-02-09) 4 commits
- - doc: am: fill out hook discussion
- - doc: am: add missing config am.messageId
- - doc: am: say that --message-id adds a trailer
- - doc: am: normalize git(1) command links
+  (merged to 'next' on 2026-02-22 at 920d0c2836)
+ + doc: am: fill out hook discussion
+ + doc: am: add missing config am.messageId
+ + doc: am: say that --message-id adds a trailer
+ + doc: am: normalize git(1) command links
 
  Doc update.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <doc_am_gitlinks_and_am.messageId.321@msgid.xyz>
 
 
@@ -567,11 +584,12 @@ may have to be discarded unless something new happens to them soon.
 
 
 * pw/meson-doc-mergetool (2026-02-09) 1 commit
- - meson: fix building mergetool docs
+  (merged to 'next' on 2026-02-22 at dfdfff02f8)
+ + meson: fix building mergetool docs
 
  Update build precedure for mergetool documentation in meson-based builds.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <604c79018992dee019205741934508091cdd1e47.1770631599.git.phillip.wood@dunelm.org.uk>
 
 
@@ -681,36 +699,44 @@ may have to be discarded unless something new happens to them soon.
 
 
 * ps/meson-gitk-git-gui (2026-02-04) 1 commit
- - meson: wire up gitk and git-gui
+  (merged to 'next' on 2026-02-22 at a6cd49271f)
+ + meson: wire up gitk and git-gui
 
  Plumb gitk/git-gui build and install procedure in meson based
  builds.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20260204-b4-pks-meson-tcl-tk-v2-1-5bc3ccf3a8ce@pks.im>
 
 
 * uk/signature-is-good-after-key-expires (2026-02-04) 1 commit
- - gpg-interface: signatures by expired keys are fine
+  (merged to 'next' on 2026-02-22 at 094113b392)
+ + gpg-interface: signatures by expired keys are fine
 
  A signature on a commit that was GPG signed long time ago ought to
  be still valid after the key that was used to sign it has expired,
  but we showed them in alarming red.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20260204152306.1767112-2-ukleinek@kernel.org>
 
 
-* ar/parallel-hooks (2026-02-04) 5 commits
+* ar/parallel-hooks (2026-02-21) 11 commits
  - hook: allow runtime enabling extensions.hookStdoutToStderr
  - hook: introduce extensions.hookStdoutToStderr
+ - hook: add per-event jobs config
+ - hook: add -j/--jobs option to git hook run
+ - hook: mark non-parallelizable hooks
  - hook: allow parallel hook execution
+ - hook: parse the hook.jobs config
+ - hook: refactor hook_config_cache from strmap to named struct
  - config: add a repo_config_get_uint() helper
+ - repository: fix repo_init() memleak due to missing _clear()
  - Merge branch 'ar/config-hooks' into ar/parallel-hooks
  (this branch uses ar/config-hooks and ar/run-command-hook-take-2.)
 
  Needs review.
- source: <20260204173328.1601807-1-adrian.ratiu@collabora.com>
+ source: <20260222002904.1879356-1-adrian.ratiu@collabora.com>
 
 
 * mc/tr2-process-ancestry-cleanup (2026-02-13) 6 commits
@@ -760,26 +786,28 @@ may have to be discarded unless something new happens to them soon.
 
 
 * ps/object-info-bits-cleanup (2026-02-11) 5 commits
- - odb: convert `odb_has_object()` flags into an enum
- - odb: convert object info flags into an enum
- - odb: drop gaps in object info flag values
- - builtin/fsck: fix flags passed to `odb_has_object()`
- - builtin/backfill: fix flags passed to `odb_has_object()`
+  (merged to 'next' on 2026-02-22 at 4d702cbecc)
+ + odb: convert `odb_has_object()` flags into an enum
+ + odb: convert object info flags into an enum
+ + odb: drop gaps in object info flag values
+ + builtin/fsck: fix flags passed to `odb_has_object()`
+ + builtin/backfill: fix flags passed to `odb_has_object()`
 
  A couple of bugs in use of flag bits around odb API has been
  corrected, and the flag bits reordered.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20260212-b4-pks-read-object-info-flags-v2-0-3bfa9bb149ef@pks.im>
 
 
-* ty/symlinks-use-unsigned-for-bitset (2026-01-21) 1 commit
- - symlinks: use unsigned int for flags
+* ty/symlinks-use-unsigned-for-bitset (2026-02-16) 1 commit
+  (merged to 'next' on 2026-02-22 at 6546dc5cf2)
+ + symlinks: use unsigned int for flags
 
  Code clean-up.
 
- Will merge to 'next'.
- source: <20260121162640.424126-1-a3205153416@gmail.com>
+ Will merge to 'master'.
+ source: <20260216172028.140525-1-a3205153416@gmail.com>
 
 
 * ds/revision-maximal-only (2026-01-22) 1 commit
@@ -807,24 +835,25 @@ may have to be discarded unless something new happens to them soon.
 
 
 * ar/run-command-hook-take-2 (2026-01-28) 12 commits
- - receive-pack: convert receive hooks to hook API
- - receive-pack: convert update hooks to new API
- - run-command: poll child input in addition to output
- - hook: add jobs option
- - reference-transaction: use hook API instead of run-command
- - transport: convert pre-push to hook API
- - hook: allow separate std[out|err] streams
- - hook: convert 'post-rewrite' hook in sequencer.c to hook API
- - hook: provide stdin via callback
- - run-command: add stdin callback for parallelization
- - run-command: add helper for pp child states
- - t1800: add hook output stream tests
+  (merged to 'next' on 2026-02-22 at 4aa543f115)
+ + receive-pack: convert receive hooks to hook API
+ + receive-pack: convert update hooks to new API
+ + run-command: poll child input in addition to output
+ + hook: add jobs option
+ + reference-transaction: use hook API instead of run-command
+ + transport: convert pre-push to hook API
+ + hook: allow separate std[out|err] streams
+ + hook: convert 'post-rewrite' hook in sequencer.c to hook API
+ + hook: provide stdin via callback
+ + run-command: add stdin callback for parallelization
+ + run-command: add helper for pp child states
+ + t1800: add hook output stream tests
  (this branch is used by ar/config-hooks and ar/parallel-hooks.)
 
  Use the hook API to replace ad-hoc invocation of hook scripts via
  the run_command() API.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20260128213927.3026875-1-adrian.ratiu@collabora.com>
 
 
@@ -871,37 +900,39 @@ may have to be discarded unless something new happens to them soon.
 
 
 * ps/odb-for-each-object (2026-01-26) 16 commits
- - odb: drop unused `for_each_{loose,packed}_object()` functions
- - reachable: convert to use `odb_for_each_object()`
- - builtin/pack-objects: use `packfile_store_for_each_object()`
- - odb: introduce mtime fields for object info requests
- - treewide: drop uses of `for_each_{loose,packed}_object()`
- - treewide: enumerate promisor objects via `odb_for_each_object()`
- - builtin/fsck: refactor to use `odb_for_each_object()`
- - odb: introduce `odb_for_each_object()`
- - packfile: introduce function to iterate through objects
- - packfile: extract function to iterate through objects of a store
- - object-file: introduce function to iterate through objects
- - object-file: extract function to read object info from path
- - odb: fix flags parameter to be unsigned
- - odb: rename `FOR_EACH_OBJECT_*` flags
- - Merge branch 'ps/packfile-store-in-odb-source' into ps/odb-for-each-object
- - Merge branch 'ps/read-object-info-improvements' into ps/odb-for-each-object
+  (merged to 'next' on 2026-02-22 at 80178ecd0d)
+ + odb: drop unused `for_each_{loose,packed}_object()` functions
+ + reachable: convert to use `odb_for_each_object()`
+ + builtin/pack-objects: use `packfile_store_for_each_object()`
+ + odb: introduce mtime fields for object info requests
+ + treewide: drop uses of `for_each_{loose,packed}_object()`
+ + treewide: enumerate promisor objects via `odb_for_each_object()`
+ + builtin/fsck: refactor to use `odb_for_each_object()`
+ + odb: introduce `odb_for_each_object()`
+ + packfile: introduce function to iterate through objects
+ + packfile: extract function to iterate through objects of a store
+ + object-file: introduce function to iterate through objects
+ + object-file: extract function to read object info from path
+ + odb: fix flags parameter to be unsigned
+ + odb: rename `FOR_EACH_OBJECT_*` flags
+ + Merge branch 'ps/packfile-store-in-odb-source' into ps/odb-for-each-object
+ + Merge branch 'ps/read-object-info-improvements' into ps/odb-for-each-object
 
  Revamp object enumeration API around odb.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20260126-pks-odb-for-each-object-v4-0-5a64a038c791@pks.im>
 
 
 * ps/validate-prefix-in-subtree-split (2026-02-03) 1 commit
- - subtree: validate --prefix against commit in split
+  (merged to 'next' on 2026-02-22 at f44d607586)
+ + subtree: validate --prefix against commit in split
 
  "git subtree split --prefix=P <commit>" now checks the prefix P
  against the tree of the (potentially quite different from the
  current working tree) given commit.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20260203164815.68258-2-pushkarkumarsingh1970@gmail.com>
 
 
@@ -918,12 +949,13 @@ may have to be discarded unless something new happens to them soon.
 
 
 * ag/http-netrc-tests (2026-01-06) 1 commit
- - t5550: add netrc tests for http 401/403
+  (merged to 'next' on 2026-02-22 at acae2989d4)
+ + t5550: add netrc tests for http 401/403
 
  Additional tests were introduced to see the interaction with netrc
  auth with auth failure on the http transport.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20260107074724.13165-1-git@ashlesh.me>
 
 
@@ -1039,4 +1071,19 @@ may have to be discarded unless something new happens to them soon.
 
  Comments?  v1 saw a lot of discussions, v2 didn't, and this is v3,
  which is essentially identical to v2 with CI fixes (which work!).
+
+
+* hn/status-compare-with-push (2026-01-22) 3 commits
+ - status: add status.compareBranches config for multiple branch comparisons
+ - refactor format_branch_comparison in preparation
+ - Merge branch 'jk/remote-tracking-ref-leakfix' into hn/status-compare-with-push
+
+ "git status" learned to show comparison between the current branch
+ and various other branches listed on status.compareBranches
+ configuration.
+
+ Will merge to 'next'?
+ cf. <20260122220154.GA2107958@coredump.intra.peff.net>
+ cf. <aZs6OvvBB4WPNx8j@denethor>
  source: <20260207200446.2837699-1-sandals@crustytoothpaste.net>
+ source: <pull.2138.v28.git.git.1769112471.gitgitgadget@gmail.com>
