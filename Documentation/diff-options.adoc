@@ -860,7 +860,9 @@ endif::git-format-patch[]
 
 `--default-prefix`::
 	Use the default source and destination prefixes ("a/" and "b/").
-	This overrides configuration variables such as `diff.noprefix`,
+	This overrides configuration variables such as
+ifndef::git-format-patch[`diff.noprefix`,]
+ifdef::git-format-patch[`format.noprefix`,]
 	`diff.srcPrefix`, `diff.dstPrefix`, and `diff.mnemonicPrefix`
 	(see linkgit:git-config[1]).
 
