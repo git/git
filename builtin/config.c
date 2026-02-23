@@ -124,6 +124,7 @@ struct config_display_options {
 	.key_delim = ' ', \
 }
 
+#define TYPE_NONE		0
 #define TYPE_BOOL		1
 #define TYPE_INT		2
 #define TYPE_BOOL_OR_INT	3
@@ -390,32 +391,57 @@ static int format_config(const struct config_display_options *opts,
 		show_config_origin(opts, kvi, buf);
 	if (opts->show_keys)
 		strbuf_addstr(buf, key_);
-	if (!opts->omit_values) {
-		if (opts->show_keys)
-			strbuf_addch(buf, opts->key_delim);
 
-		if (opts->type == TYPE_INT)
-			res = format_config_int64(buf, key_, value_, kvi, gently);
-		else if (opts->type == TYPE_BOOL)
-			res = format_config_bool(buf, key_, value_, gently);
-		else if (opts->type == TYPE_BOOL_OR_INT)
-			res = format_config_bool_or_int(buf, key_, value_, kvi, gently);
-		else if (opts->type == TYPE_BOOL_OR_STR)
-			res = format_config_bool_or_str(buf, value_);
-		else if (opts->type == TYPE_PATH)
-			res = format_config_path(buf, key_, value_, gently);
-		else if (opts->type == TYPE_EXPIRY_DATE)
-			res = format_config_expiry_date(buf, key_, value_, gently);
-		else if (opts->type == TYPE_COLOR)
-			res = format_config_color(buf, key_, value_, gently);
-		else if (value_) {
+	if (opts->omit_values)
+		goto terminator;
+
+	if (opts->show_keys)
+		strbuf_addch(buf, opts->key_delim);
+
+	switch (opts->type) {
+	case TYPE_INT:
+		res = format_config_int64(buf, key_, value_, kvi, gently);
+		break;
+
+	case TYPE_BOOL:
+		res = format_config_bool(buf, key_, value_, gently);
+		break;
+
+	case TYPE_BOOL_OR_INT:
+		res = format_config_bool_or_int(buf, key_, value_, kvi, gently);
+		break;
+
+	case TYPE_BOOL_OR_STR:
+		res = format_config_bool_or_str(buf, value_);
+		break;
+
+	case TYPE_PATH:
+		res = format_config_path(buf, key_, value_, gently);
+		break;
+
+	case TYPE_EXPIRY_DATE:
+		res = format_config_expiry_date(buf, key_, value_, gently);
+		break;
+
+	case TYPE_COLOR:
+		res = format_config_color(buf, key_, value_, gently);
+		break;
+
+	case TYPE_NONE:
+		if (value_) {
 			strbuf_addstr(buf, value_);
 		} else {
 			/* Just show the key name; back out delimiter */
 			if (opts->show_keys)
 				strbuf_setlen(buf, buf->len - 1);
 		}
+		break;
+
+	default:
+		BUG("undefined type %d", opts->type);
 	}
+
+terminator:
 	strbuf_addch(buf, opts->term);
 	return res;
 }
