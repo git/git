@@ -1982,16 +1982,6 @@ int refs_for_each_namespaced_ref(struct ref_store *refs,
 	return refs_for_each_ref_ext(refs, cb, cb_data, &opts);
 }
 
-int refs_for_each_rawref_in(struct ref_store *refs, const char *prefix,
-			    refs_for_each_cb cb, void *cb_data)
-{
-	struct refs_for_each_ref_options opts = {
-		.prefix = prefix,
-		.flags = REFS_FOR_EACH_INCLUDE_BROKEN,
-	};
-	return refs_for_each_ref_ext(refs, cb, cb_data, &opts);
-}
-
 static int qsort_strcmp(const void *va, const void *vb)
 {
 	const char *a = *(const char **)va;

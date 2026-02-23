@@ -542,10 +542,6 @@ int refs_for_each_namespaced_ref(struct ref_store *refs,
 				 const char **exclude_patterns,
 				 refs_for_each_cb fn, void *cb_data);
 
-/* can be used to learn about broken ref and symref */
-int refs_for_each_rawref_in(struct ref_store *refs, const char *prefix,
-			    refs_for_each_cb fn, void *cb_data);
-
 /*
  * Normalizes partial refs to their fully qualified form.
  * Will prepend <prefix> to the <pattern> if it doesn't start with 'refs/'.
