@@ -528,14 +528,6 @@ int refs_for_each_ref_in_prefixes(struct ref_store *refs,
 				  refs_for_each_cb cb, void *cb_data);
 
 /*
- * references matching any pattern in "exclude_patterns" are omitted from the
- * result set on a best-effort basis.
- */
-int refs_for_each_namespaced_ref(struct ref_store *refs,
-				 const char **exclude_patterns,
-				 refs_for_each_cb fn, void *cb_data);
-
-/*
  * Normalizes partial refs to their fully qualified form.
  * Will prepend <prefix> to the <pattern> if it doesn't start with 'refs/'.
  * <prefix> will default to 'refs/' if NULL.
