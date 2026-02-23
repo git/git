@@ -231,30 +231,6 @@ static void show_config_scope(const struct config_display_options *opts,
 	strbuf_addch(buf, term);
 }
 
-static int show_all_config(const char *key_, const char *value_,
-			   const struct config_context *ctx,
-			   void *cb)
-{
-	const struct config_display_options *opts = cb;
-	const struct key_value_info *kvi = ctx->kvi;
-
-	if (opts->show_origin || opts->show_scope) {
-		struct strbuf buf = STRBUF_INIT;
-		if (opts->show_scope)
-			show_config_scope(opts, kvi, &buf);
-		if (opts->show_origin)
-			show_config_origin(opts, kvi, &buf);
-		/* Use fwrite as "buf" can contain \0's if "end_null" is set. */
-		fwrite(buf.buf, 1, buf.len, stdout);
-		strbuf_release(&buf);
-	}
-	if (!opts->omit_values && value_)
-		printf("%s%c%s%c", key_, opts->delim, value_, opts->term);
-	else
-		printf("%s%c", key_, opts->term);
-	return 0;
-}
-
 struct strbuf_list {
 	struct strbuf *items;
 	int nr;
@@ -329,6 +305,30 @@ static int format_config(const struct config_display_options *opts,
 		}
 	}
 	strbuf_addch(buf, opts->term);
+	return 0;
+}
+
+static int show_all_config(const char *key_, const char *value_,
+			   const struct config_context *ctx,
+			   void *cb)
+{
+	const struct config_display_options *opts = cb;
+	const struct key_value_info *kvi = ctx->kvi;
+
+	if (opts->show_origin || opts->show_scope) {
+		struct strbuf buf = STRBUF_INIT;
+		if (opts->show_scope)
+			show_config_scope(opts, kvi, &buf);
+		if (opts->show_origin)
+			show_config_origin(opts, kvi, &buf);
+		/* Use fwrite as "buf" can contain \0's if "end_null" is set. */
+		fwrite(buf.buf, 1, buf.len, stdout);
+		strbuf_release(&buf);
+	}
+	if (!opts->omit_values && value_)
+		printf("%s%c%s%c", key_, opts->delim, value_, opts->term);
+	else
+		printf("%s%c", key_, opts->term);
 	return 0;
 }
 
