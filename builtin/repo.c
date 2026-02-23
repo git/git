@@ -1,6 +1,7 @@
 #define USE_THE_REPOSITORY_VARIABLE
 
 #include "builtin.h"
+#include "commit.h"
 #include "environment.h"
 #include "hash.h"
 #include "hex.h"
@@ -208,6 +209,8 @@ struct largest_objects {
 	struct object_data commit_size;
 	struct object_data tree_size;
 	struct object_data blob_size;
+
+	struct object_data parent_count;
 };
 
 struct ref_stats {
@@ -312,6 +315,27 @@ static void stats_table_count_addf(struct stats_table *table, size_t value,
 
 	CALLOC_ARRAY(entry, 1);
 	humanise_count(value, &entry->value, &entry->unit);
+
+	va_start(ap, format);
+	stats_table_vaddf(table, entry, format, ap);
+	va_end(ap);
+}
+
+static void stats_table_object_count_addf(struct stats_table *table,
+					  struct object_id *oid, size_t value,
+					  const char *format, ...)
+{
+	struct stats_table_entry *entry;
+	va_list ap;
+
+	CALLOC_ARRAY(entry, 1);
+	humanise_count(value, &entry->value, &entry->unit);
+
+	/*
+	 * A NULL OID should not have a table annotation.
+	 */
+	if (!is_null_oid(oid))
+		entry->oid = oid;
 
 	va_start(ap, format);
 	stats_table_vaddf(table, entry, format, ap);
@@ -425,6 +449,10 @@ static void stats_table_setup_structure(struct stats_table *table,
 				     &objects->largest.commit_size.oid,
 				     objects->largest.commit_size.value,
 				     "    * %s", _("Maximum size"));
+	stats_table_object_count_addf(table,
+				      &objects->largest.parent_count.oid,
+				      objects->largest.parent_count.value,
+				      "    * %s", _("Maximum parents"));
 	stats_table_addf(table, "  * %s", _("Trees"));
 	stats_table_object_size_addf(table,
 				     &objects->largest.tree_size.oid,
@@ -587,6 +615,11 @@ static void structure_keyvalue_print(struct repo_structure *stats,
 	printf("objects.tags.max_size_oid%c%s%c", key_delim,
 	       oid_to_hex(&stats->objects.largest.tag_size.oid), value_delim);
 
+	printf("objects.commits.max_parents%c%" PRIuMAX "%c", key_delim,
+	       (uintmax_t)stats->objects.largest.parent_count.value, value_delim);
+	printf("objects.commits.max_parents_oid%c%s%c", key_delim,
+	       oid_to_hex(&stats->objects.largest.parent_count.oid), value_delim);
+
 	fflush(stdout);
 }
 
@@ -674,15 +707,23 @@ static int count_objects(const char *path UNUSED, struct oid_array *oids,
 	for (size_t i = 0; i < oids->nr; i++) {
 		struct object_info oi = OBJECT_INFO_INIT;
 		unsigned long inflated;
+		struct commit *commit;
+		struct object *obj;
+		void *content;
 		off_t disk;
+		int eaten;
 
 		oi.sizep = &inflated;
 		oi.disk_sizep = &disk;
+		oi.contentp = &content;
 
 		if (odb_read_object_info_extended(data->odb, &oids->oid[i], &oi,
 						  OBJECT_INFO_SKIP_FETCH_OBJECT |
 						  OBJECT_INFO_QUICK) < 0)
 			continue;
+
+		obj = parse_object_buffer(the_repository, &oids->oid[i], type,
+					  inflated, content, &eaten);
 
 		switch (type) {
 		case OBJ_TAG:
@@ -693,11 +734,14 @@ static int count_objects(const char *path UNUSED, struct oid_array *oids,
 				      inflated);
 			break;
 		case OBJ_COMMIT:
+			commit = object_as_type(obj, OBJ_COMMIT, 0);
 			stats->type_counts.commits++;
 			stats->inflated_sizes.commits += inflated;
 			stats->disk_sizes.commits += disk;
 			check_largest(&stats->largest.commit_size, &oids->oid[i],
 				      inflated);
+			check_largest(&stats->largest.parent_count, &oids->oid[i],
+				      commit_list_count(commit->parents));
 			break;
 		case OBJ_TREE:
 			stats->type_counts.trees++;
@@ -716,6 +760,9 @@ static int count_objects(const char *path UNUSED, struct oid_array *oids,
 		default:
 			BUG("invalid object type");
 		}
+
+		if (!eaten)
+			free(content);
 	}
 
 	object_count = get_total_object_values(&stats->type_counts);
