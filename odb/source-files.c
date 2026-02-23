@@ -66,6 +66,28 @@ static int odb_source_files_read_object_stream(struct odb_read_stream **out,
 	return -1;
 }
 
+static int odb_source_files_for_each_object(struct odb_source *source,
+					    const struct object_info *request,
+					    odb_for_each_object_cb cb,
+					    void *cb_data,
+					    unsigned flags)
+{
+	struct odb_source_files *files = odb_source_files_downcast(source);
+	int ret;
+
+	if (!(flags & ODB_FOR_EACH_OBJECT_PROMISOR_ONLY)) {
+		ret = odb_source_loose_for_each_object(source, request, cb, cb_data, flags);
+		if (ret)
+			return ret;
+	}
+
+	ret = packfile_store_for_each_object(files->packed, request, cb, cb_data, flags);
+	if (ret)
+		return ret;
+
+	return 0;
+}
+
 struct odb_source_files *odb_source_files_new(struct object_database *odb,
 					      const char *path,
 					      bool local)
@@ -82,6 +104,7 @@ struct odb_source_files *odb_source_files_new(struct object_database *odb,
 	files->base.reprepare = odb_source_files_reprepare;
 	files->base.read_object_info = odb_source_files_read_object_info;
 	files->base.read_object_stream = odb_source_files_read_object_stream;
+	files->base.for_each_object = odb_source_files_for_each_object;
 
 	/*
 	 * Ideally, we would only ever store absolute paths in the source. This
