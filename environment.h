@@ -97,6 +97,9 @@ struct repo_config_values {
 	int precomposed_unicode;
 	int core_sparse_checkout_cone;
 
+	/* section "sparse" config values */
+	int sparse_expect_files_outside_of_patterns;
+
 	/* section "branch" config values */
 	enum branch_track branch_track;
 };
@@ -177,8 +180,6 @@ extern unsigned long pack_size_limit_cfg;
 
 extern int protect_hfs;
 extern int protect_ntfs;
-
-extern int sparse_expect_files_outside_of_patterns;
 
 enum rebase_setup_type {
 	AUTOREBASE_NEVER = 0,
