@@ -540,6 +540,10 @@ static struct discovery *discover_refs(const char *service, int for_push)
 		show_http_message_fatal(&type, &charset, &buffer,
 					_("unable to access '%s' with http.pinnedPubkey configuration: %s"),
 					transport_anonymize_url(url.buf), curl_errorstr);
+	case HTTP_RATE_LIMITED:
+		show_http_message_fatal(&type, &charset, &buffer,
+					_("rate limited by '%s', please try again later"),
+					transport_anonymize_url(url.buf));
 	default:
 		show_http_message_fatal(&type, &charset, &buffer,
 					_("unable to access '%s': %s"),
