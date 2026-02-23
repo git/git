@@ -3326,6 +3326,7 @@ static const struct string_list *bitmap_preferred_tips(struct repository *r)
 void for_each_preferred_bitmap_tip(struct repository *repo,
 				   refs_for_each_cb cb, void *cb_data)
 {
+	struct refs_for_each_ref_options opts = { 0 };
 	struct string_list_item *item;
 	const struct string_list *preferred_tips;
 	struct strbuf buf = STRBUF_INIT;
@@ -3335,16 +3336,16 @@ void for_each_preferred_bitmap_tip(struct repository *repo,
 		return;
 
 	for_each_string_list_item(item, preferred_tips) {
-		const char *pattern = item->string;
+		opts.prefix = item->string;
 
-		if (!ends_with(pattern, "/")) {
+		if (!ends_with(opts.prefix, "/")) {
 			strbuf_reset(&buf);
-			strbuf_addf(&buf, "%s/", pattern);
-			pattern = buf.buf;
+			strbuf_addf(&buf, "%s/", opts.prefix);
+			opts.prefix = buf.buf;
 		}
 
-		refs_for_each_ref_in(get_main_ref_store(repo),
-				     pattern, cb, cb_data);
+		refs_for_each_ref_ext(get_main_ref_store(repo),
+				      cb, cb_data, &opts);
 	}
 
 	strbuf_release(&buf);

@@ -473,8 +473,12 @@ static int register_ref(const struct reference *ref, void *cb_data UNUSED)
 
 static int read_bisect_refs(void)
 {
-	return refs_for_each_ref_in(get_main_ref_store(the_repository),
-				    "refs/bisect/", register_ref, NULL);
+	struct refs_for_each_ref_options opts = {
+		.prefix = "refs/bisect/",
+		.trim_prefix = strlen("refs/bisect/"),
+	};
+	return refs_for_each_ref_ext(get_main_ref_store(the_repository),
+				     register_ref, NULL, &opts);
 }
 
 static GIT_PATH_FUNC(git_path_bisect_names, "BISECT_NAMES")

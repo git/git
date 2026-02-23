@@ -529,19 +529,31 @@ void refs_warn_dangling_symrefs(struct ref_store *refs, FILE *fp,
 	refs_for_each_rawref(refs, warn_if_dangling_symref, &data);
 }
 
-int refs_for_each_tag_ref(struct ref_store *refs, refs_for_each_cb fn, void *cb_data)
+int refs_for_each_tag_ref(struct ref_store *refs, refs_for_each_cb cb, void *cb_data)
 {
-	return refs_for_each_ref_in(refs, "refs/tags/", fn, cb_data);
+	struct refs_for_each_ref_options opts = {
+		.prefix = "refs/tags/",
+		.trim_prefix = strlen("refs/tags/"),
+	};
+	return refs_for_each_ref_ext(refs, cb, cb_data, &opts);
 }
 
-int refs_for_each_branch_ref(struct ref_store *refs, refs_for_each_cb fn, void *cb_data)
+int refs_for_each_branch_ref(struct ref_store *refs, refs_for_each_cb cb, void *cb_data)
 {
-	return refs_for_each_ref_in(refs, "refs/heads/", fn, cb_data);
+	struct refs_for_each_ref_options opts = {
+		.prefix = "refs/heads/",
+		.trim_prefix = strlen("refs/heads/"),
+	};
+	return refs_for_each_ref_ext(refs, cb, cb_data, &opts);
 }
 
-int refs_for_each_remote_ref(struct ref_store *refs, refs_for_each_cb fn, void *cb_data)
+int refs_for_each_remote_ref(struct ref_store *refs, refs_for_each_cb cb, void *cb_data)
 {
-	return refs_for_each_ref_in(refs, "refs/remotes/", fn, cb_data);
+	struct refs_for_each_ref_options opts = {
+		.prefix = "refs/remotes/",
+		.trim_prefix = strlen("refs/remotes/"),
+	};
+	return refs_for_each_ref_ext(refs, cb, cb_data, &opts);
 }
 
 int refs_head_ref_namespaced(struct ref_store *refs, refs_for_each_cb fn, void *cb_data)
@@ -1931,16 +1943,6 @@ int refs_for_each_ref_ext(struct ref_store *refs,
 int refs_for_each_ref(struct ref_store *refs, refs_for_each_cb cb, void *cb_data)
 {
 	struct refs_for_each_ref_options opts = { 0 };
-	return refs_for_each_ref_ext(refs, cb, cb_data, &opts);
-}
-
-int refs_for_each_ref_in(struct ref_store *refs, const char *prefix,
-			 refs_for_each_cb cb, void *cb_data)
-{
-	struct refs_for_each_ref_options opts = {
-		.prefix = prefix,
-		.trim_prefix = strlen(prefix),
-	};
 	return refs_for_each_ref_ext(refs, cb, cb_data, &opts);
 }
 

@@ -501,8 +501,6 @@ int refs_for_each_ref(struct ref_store *refs,
 int refs_for_each_ref_ext(struct ref_store *refs,
 			  refs_for_each_cb cb, void *cb_data,
 			  const struct refs_for_each_ref_options *opts);
-int refs_for_each_ref_in(struct ref_store *refs, const char *prefix,
-			 refs_for_each_cb fn, void *cb_data);
 int refs_for_each_tag_ref(struct ref_store *refs,
 			  refs_for_each_cb fn, void *cb_data);
 int refs_for_each_branch_ref(struct ref_store *refs,
