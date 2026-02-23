@@ -274,6 +274,34 @@ static int format_config_bool(struct strbuf *buf,
 	return 0;
 }
 
+static int format_config_bool_or_int(struct strbuf *buf,
+				     const char *key_,
+				     const char *value_,
+				     const struct key_value_info *kvi,
+				     int gently)
+{
+	int v, is_bool = 0;
+
+	if (gently) {
+		v = git_parse_maybe_bool_text(value_);
+
+		if (v >= 0)
+			is_bool = 1;
+		else if (!git_parse_int(value_, &v))
+			return -1;
+	} else {
+		v = git_config_bool_or_int(key_, value_, kvi,
+					   &is_bool);
+	}
+
+	if (is_bool)
+		strbuf_addstr(buf, v ? "true" : "false");
+	else
+		strbuf_addf(buf, "%d", v);
+
+	return 0;
+}
+
 /*
  * Format the configuration key-value pair (`key_`, `value_`) and
  * append it into strbuf `buf`.  Returns a negative value on failure,
@@ -303,15 +331,9 @@ static int format_config(const struct config_display_options *opts,
 			res = format_config_int64(buf, key_, value_, kvi, gently);
 		else if (opts->type == TYPE_BOOL)
 			res = format_config_bool(buf, key_, value_, gently);
-		else if (opts->type == TYPE_BOOL_OR_INT) {
-			int is_bool, v;
-			v = git_config_bool_or_int(key_, value_, kvi,
-						   &is_bool);
-			if (is_bool)
-				strbuf_addstr(buf, v ? "true" : "false");
-			else
-				strbuf_addf(buf, "%d", v);
-		} else if (opts->type == TYPE_BOOL_OR_STR) {
+		else if (opts->type == TYPE_BOOL_OR_INT)
+			res = format_config_bool_or_int(buf, key_, value_, kvi, gently);
+		else if (opts->type == TYPE_BOOL_OR_STR) {
 			int v = git_parse_maybe_bool(value_);
 			if (v < 0)
 				strbuf_addstr(buf, value_);
