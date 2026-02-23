@@ -367,23 +367,25 @@ static void free_discovery(struct discovery *d)
 	}
 }
 
-static int show_http_message(struct strbuf *type, struct strbuf *charset,
-			     struct strbuf *msg)
+static NORETURN void show_http_message_fatal(struct strbuf *type, struct strbuf *charset,
+				    struct strbuf *msg, const char *fmt, ...)
 {
 	const char *p, *eol;
+	va_list ap;
+	report_fn die_message_routine = get_die_message_routine();
 
 	/*
 	 * We only show text/plain parts, as other types are likely
 	 * to be ugly to look at on the user's terminal.
 	 */
 	if (strcmp(type->buf, "text/plain"))
-		return -1;
+		goto out;
 	if (charset->len)
 		strbuf_reencode(msg, charset->buf, get_log_output_encoding());
 
 	strbuf_trim(msg);
 	if (!msg->len)
-		return -1;
+		goto out;
 
 	p = msg->buf;
 	do {
@@ -391,7 +393,16 @@ static int show_http_message(struct strbuf *type, struct strbuf *charset,
 		fprintf(stderr, "remote: %.*s\n", (int)(eol - p), p);
 		p = eol + 1;
 	} while(*eol);
-	return 0;
+
+out:
+	strbuf_release(type);
+	strbuf_release(charset);
+	strbuf_release(msg);
+
+	va_start(ap, fmt);
+	die_message_routine(fmt, ap);
+	va_end(ap);
+	exit(128);
 }
 
 static int get_protocol_http_header(enum protocol_version version,
@@ -518,21 +529,21 @@ static struct discovery *discover_refs(const char *service, int for_push)
 	case HTTP_OK:
 		break;
 	case HTTP_MISSING_TARGET:
-		show_http_message(&type, &charset, &buffer);
-		die(_("repository '%s' not found"),
-		    transport_anonymize_url(url.buf));
+		show_http_message_fatal(&type, &charset, &buffer,
+					_("repository '%s' not found"),
+					transport_anonymize_url(url.buf));
 	case HTTP_NOAUTH:
-		show_http_message(&type, &charset, &buffer);
-		die(_("Authentication failed for '%s'"),
-		    transport_anonymize_url(url.buf));
+		show_http_message_fatal(&type, &charset, &buffer,
+					_("Authentication failed for '%s'"),
+					transport_anonymize_url(url.buf));
 	case HTTP_NOMATCHPUBLICKEY:
-		show_http_message(&type, &charset, &buffer);
-		die(_("unable to access '%s' with http.pinnedPubkey configuration: %s"),
-		    transport_anonymize_url(url.buf), curl_errorstr);
+		show_http_message_fatal(&type, &charset, &buffer,
+					_("unable to access '%s' with http.pinnedPubkey configuration: %s"),
+					transport_anonymize_url(url.buf), curl_errorstr);
 	default:
-		show_http_message(&type, &charset, &buffer);
-		die(_("unable to access '%s': %s"),
-		    transport_anonymize_url(url.buf), curl_errorstr);
+		show_http_message_fatal(&type, &charset, &buffer,
+					_("unable to access '%s': %s"),
+					transport_anonymize_url(url.buf), curl_errorstr);
 	}
 
 	if (options.verbosity && !starts_with(refs_url.buf, url.buf)) {
