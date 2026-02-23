@@ -2175,7 +2175,7 @@ int packfile_store_freshen_object(struct packfile_store *store,
 int packfile_store_read_object_info(struct packfile_store *store,
 				    const struct object_id *oid,
 				    struct object_info *oi,
-				    unsigned flags UNUSED)
+				    enum object_info_flags flags UNUSED)
 {
 	struct pack_entry e;
 	int ret;

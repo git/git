@@ -399,7 +399,7 @@ static int read_object_info_from_path(struct odb_source *source,
 				      const char *path,
 				      const struct object_id *oid,
 				      struct object_info *oi,
-				      unsigned flags)
+				      enum object_info_flags flags)
 {
 	int ret;
 	int fd;
@@ -541,7 +541,7 @@ out:
 int odb_source_loose_read_object_info(struct odb_source *source,
 				      const struct object_id *oid,
 				      struct object_info *oi,
-				      unsigned flags)
+				      enum object_info_flags flags)
 {
 	static struct strbuf buf = STRBUF_INIT;
 	odb_loose_path(source, &buf, oid);
