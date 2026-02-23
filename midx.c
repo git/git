@@ -95,8 +95,8 @@ static int midx_read_object_offsets(const unsigned char *chunk_start,
 
 struct multi_pack_index *get_multi_pack_index(struct odb_source *source)
 {
-	packfile_store_prepare(source->packfiles);
-	return source->packfiles->midx;
+	packfile_store_prepare(source->files->packed);
+	return source->files->packed->midx;
 }
 
 static struct multi_pack_index *load_multi_pack_index_one(struct odb_source *source,
@@ -459,7 +459,7 @@ int prepare_midx_pack(struct multi_pack_index *m,
 
 	strbuf_addf(&pack_name, "%s/pack/%s", m->source->path,
 		    m->pack_names[pack_int_id]);
-	p = packfile_store_load_pack(m->source->packfiles,
+	p = packfile_store_load_pack(m->source->files->packed,
 				     pack_name.buf, m->source->local);
 	strbuf_release(&pack_name);
 
@@ -709,12 +709,12 @@ int prepare_multi_pack_index_one(struct odb_source *source)
 	if (!r->settings.core_multi_pack_index)
 		return 0;
 
-	if (source->packfiles->midx)
+	if (source->files->packed->midx)
 		return 1;
 
-	source->packfiles->midx = load_multi_pack_index(source);
+	source->files->packed->midx = load_multi_pack_index(source);
 
-	return !!source->packfiles->midx;
+	return !!source->files->packed->midx;
 }
 
 int midx_checksum_valid(struct multi_pack_index *m)
@@ -803,9 +803,9 @@ void clear_midx_file(struct repository *r)
 		struct odb_source *source;
 
 		for (source = r->objects->sources; source; source = source->next) {
-			if (source->packfiles->midx)
-				close_midx(source->packfiles->midx);
-			source->packfiles->midx = NULL;
+			if (source->files->packed->midx)
+				close_midx(source->files->packed->midx);
+			source->files->packed->midx = NULL;
 		}
 	}
 

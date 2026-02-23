@@ -1219,7 +1219,7 @@ int cmd_grep(int argc,
 
 			odb_prepare_alternates(the_repository->objects);
 			for (source = the_repository->objects->sources; source; source = source->next)
-				packfile_store_prepare(source->packfiles);
+				packfile_store_prepare(source->files->packed);
 		}
 
 		start_threads(&opt);

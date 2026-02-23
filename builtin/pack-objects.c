@@ -1531,7 +1531,7 @@ static int want_cruft_object_mtime(struct repository *r,
 	struct odb_source *source;
 
 	for (source = r->objects->sources; source; source = source->next) {
-		struct packed_git **cache = packfile_store_get_kept_pack_cache(source->packfiles, flags);
+		struct packed_git **cache = packfile_store_get_kept_pack_cache(source->files->packed, flags);
 
 		for (; *cache; cache++) {
 			struct packed_git *p = *cache;
@@ -1753,11 +1753,11 @@ static int want_object_in_pack_mtime(const struct object_id *oid,
 	}
 
 	for (source = the_repository->objects->sources; source; source = source->next) {
-		for (e = source->packfiles->packs.head; e; e = e->next) {
+		for (e = source->files->packed->packs.head; e; e = e->next) {
 			struct packed_git *p = e->pack;
 			want = want_object_in_pack_one(p, oid, exclude, found_pack, found_offset, found_mtime);
 			if (!exclude && want > 0)
-				packfile_list_prepend(&source->packfiles->packs, p);
+				packfile_list_prepend(&source->files->packed->packs, p);
 			if (want != -1)
 				return want;
 		}
@@ -4340,7 +4340,7 @@ static void add_objects_in_unpacked_packs(void)
 		if (!source->local)
 			continue;
 
-		if (packfile_store_for_each_object(source->packfiles, &oi,
+		if (packfile_store_for_each_object(source->files->packed, &oi,
 						   add_object_in_unpacked_pack, NULL,
 						   ODB_FOR_EACH_OBJECT_PACK_ORDER |
 						   ODB_FOR_EACH_OBJECT_LOCAL_ONLY |

@@ -882,7 +882,7 @@ static void batch_each_object(struct batch_options *opt,
 		struct object_info oi = { 0 };
 
 		for (source = the_repository->objects->sources; source; source = source->next) {
-			int ret = packfile_store_for_each_object(source->packfiles, &oi,
+			int ret = packfile_store_for_each_object(source->files->packed, &oi,
 								 batch_one_object_oi, &payload, flags);
 			if (ret)
 				break;

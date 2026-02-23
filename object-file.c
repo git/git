@@ -220,7 +220,7 @@ static void *odb_source_loose_map_object(struct odb_source *source,
 					 unsigned long *size)
 {
 	const char *p;
-	int fd = open_loose_object(source->loose, oid, &p);
+	int fd = open_loose_object(source->files->loose, oid, &p);
 
 	if (fd < 0)
 		return NULL;
@@ -423,7 +423,7 @@ static int read_object_info_from_path(struct odb_source *source,
 		struct stat st;
 
 		if ((!oi || (!oi->disk_sizep && !oi->mtimep)) && (flags & OBJECT_INFO_QUICK)) {
-			ret = quick_has_loose(source->loose, oid) ? 0 : -1;
+			ret = quick_has_loose(source->files->loose, oid) ? 0 : -1;
 			goto out;
 		}
 
@@ -1868,31 +1868,31 @@ struct oidtree *odb_source_loose_cache(struct odb_source *source,
 {
 	int subdir_nr = oid->hash[0];
 	struct strbuf buf = STRBUF_INIT;
-	size_t word_bits = bitsizeof(source->loose->subdir_seen[0]);
+	size_t word_bits = bitsizeof(source->files->loose->subdir_seen[0]);
 	size_t word_index = subdir_nr / word_bits;
 	size_t mask = (size_t)1u << (subdir_nr % word_bits);
 	uint32_t *bitmap;
 
 	if (subdir_nr < 0 ||
-	    (size_t) subdir_nr >= bitsizeof(source->loose->subdir_seen))
+	    (size_t) subdir_nr >= bitsizeof(source->files->loose->subdir_seen))
 		BUG("subdir_nr out of range");
 
-	bitmap = &source->loose->subdir_seen[word_index];
+	bitmap = &source->files->loose->subdir_seen[word_index];
 	if (*bitmap & mask)
-		return source->loose->cache;
-	if (!source->loose->cache) {
-		ALLOC_ARRAY(source->loose->cache, 1);
-		oidtree_init(source->loose->cache);
+		return source->files->loose->cache;
+	if (!source->files->loose->cache) {
+		ALLOC_ARRAY(source->files->loose->cache, 1);
+		oidtree_init(source->files->loose->cache);
 	}
 	strbuf_addstr(&buf, source->path);
 	for_each_file_in_obj_subdir(subdir_nr, &buf,
 				    source->odb->repo->hash_algo,
 				    append_loose_object,
 				    NULL, NULL,
-				    source->loose->cache);
+				    source->files->loose->cache);
 	*bitmap |= mask;
 	strbuf_release(&buf);
-	return source->loose->cache;
+	return source->files->loose->cache;
 }
 
 static void odb_source_loose_clear_cache(struct odb_source_loose *loose)
@@ -1905,7 +1905,7 @@ static void odb_source_loose_clear_cache(struct odb_source_loose *loose)
 
 void odb_source_loose_reprepare(struct odb_source *source)
 {
-	odb_source_loose_clear_cache(source->loose);
+	odb_source_loose_clear_cache(source->files->loose);
 }
 
 static int check_stream_oid(git_zstream *stream,
