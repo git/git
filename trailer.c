@@ -1235,3 +1235,39 @@ int amend_file_with_trailers(const char *path, const struct strvec *trailer_args
 	strvec_pushv(&run_trailer.args, trailer_args->v);
 	return run_command(&run_trailer);
 }
+
+void process_trailers(const struct process_trailer_options *opts,
+		      struct list_head *new_trailer_head,
+		      struct strbuf *input, struct strbuf *out)
+{
+	LIST_HEAD(head);
+	struct trailer_block *trailer_block;
+
+	trailer_block = parse_trailers(opts, input->buf, &head);
+
+	/* Print the lines before the trailer block */
+	if (!opts->only_trailers)
+		strbuf_add(out, input->buf, trailer_block_start(trailer_block));
+
+	if (!opts->only_trailers && !blank_line_before_trailer_block(trailer_block))
+		strbuf_addch(out, '\n');
+
+	if (!opts->only_input) {
+		LIST_HEAD(config_head);
+		LIST_HEAD(arg_head);
+		parse_trailers_from_config(&config_head);
+		parse_trailers_from_command_line_args(&arg_head, new_trailer_head);
+		list_splice(&config_head, &arg_head);
+		process_trailers_lists(&head, &arg_head);
+	}
+
+	/* Print trailer block. */
+	format_trailers(opts, &head, out);
+	free_trailers(&head);
+
+	/* Print the lines after the trailer block as is. */
+	if (!opts->only_trailers)
+		strbuf_add(out, input->buf + trailer_block_end(trailer_block),
+			   input->len - trailer_block_end(trailer_block));
+	trailer_block_release(trailer_block);
+}
