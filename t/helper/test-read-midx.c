@@ -34,7 +34,7 @@ static int read_midx_file(const char *object_dir, const char *checksum,
 		return 1;
 
 	if (checksum) {
-		while (m && strcmp(hash_to_hex(get_midx_checksum(m)), checksum))
+		while (m && strcmp(hash_to_hex(midx_get_checksum_hash(m)), checksum))
 			m = m->base_midx;
 		if (!m)
 			return 1;
@@ -94,7 +94,7 @@ static int read_midx_checksum(const char *object_dir)
 	m = setup_midx(object_dir);
 	if (!m)
 		return 1;
-	printf("%s\n", hash_to_hex(get_midx_checksum(m)));
+	printf("%s\n", hash_to_hex(midx_get_checksum_hash(m)));
 
 	close_midx(m);
 	return 0;
