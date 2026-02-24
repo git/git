@@ -497,6 +497,13 @@ See also INCOMPATIBLE OPTIONS below.
 +
 See also INCOMPATIBLE OPTIONS below.
 
+--trailer=<trailer>::
+	Append the given trailer to every rebased commit message, processed
+	via linkgit:git-interpret-trailers[1]. This option implies
+	`--force-rebase` so that fast-forwarded commits are also rewritten.
++
+See also INCOMPATIBLE OPTIONS below.
+
 -i::
 --interactive::
 	Make a list of the commits which are about to be rebased.  Let the

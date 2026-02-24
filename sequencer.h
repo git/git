@@ -57,6 +57,8 @@ struct replay_opts {
 	int ignore_date;
 	int commit_use_reference;
 
+	struct strvec trailer_args;
+
 	int mainline;
 
 	char *gpg_sign;
@@ -84,6 +86,7 @@ struct replay_opts {
 #define REPLAY_OPTS_INIT {			\
 	.edit = -1,				\
 	.action = -1,				\
+	.trailer_args = STRVEC_INIT,		\
 	.xopts = STRVEC_INIT,			\
 	.ctx = replay_ctx_new(),		\
 }
