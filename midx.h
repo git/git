@@ -11,7 +11,8 @@ struct git_hash_algo;
 struct odb_source;
 
 #define MIDX_SIGNATURE 0x4d494458 /* "MIDX" */
-#define MIDX_VERSION 1
+#define MIDX_VERSION_V1 1
+#define MIDX_VERSION_V2 2
 #define MIDX_BYTE_FILE_VERSION 4
 #define MIDX_BYTE_HASH_VERSION 5
 #define MIDX_BYTE_NUM_CHUNKS 6
@@ -71,6 +72,7 @@ struct multi_pack_index {
 	uint32_t num_packs_in_base;
 
 	const char **pack_names;
+	size_t *pack_names_sorted;
 	struct packed_git **packs;
 };
 

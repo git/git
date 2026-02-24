@@ -36,10 +36,13 @@ extern int cmp_idx_or_pack_name(const char *idx_or_pack_name,
 
 static size_t write_midx_header(const struct git_hash_algo *hash_algo,
 				struct hashfile *f, unsigned char num_chunks,
-				uint32_t num_packs)
+				uint32_t num_packs, int version)
 {
+	if (version != MIDX_VERSION_V1 && version != MIDX_VERSION_V2)
+		BUG("unexpected MIDX version: %d", version);
+
 	hashwrite_be32(f, MIDX_SIGNATURE);
-	hashwrite_u8(f, MIDX_VERSION);
+	hashwrite_u8(f, version);
 	hashwrite_u8(f, oid_version(hash_algo));
 	hashwrite_u8(f, num_chunks);
 	hashwrite_u8(f, 0); /* unused */
@@ -104,6 +107,8 @@ struct write_midx_context {
 	uint32_t num_large_offsets;
 
 	uint32_t preferred_pack_idx;
+
+	int version; /* must be MIDX_VERSION_V1 or _V2 */
 
 	int incremental;
 	uint32_t num_multi_pack_indexes_before;
@@ -410,7 +415,9 @@ static int write_midx_pack_names(struct hashfile *f, void *data)
 		if (ctx->info[i].expired)
 			continue;
 
-		if (i && strcmp(ctx->info[i].pack_name, ctx->info[i - 1].pack_name) <= 0)
+		if (ctx->version == MIDX_VERSION_V1 &&
+		    i && strcmp(ctx->info[i].pack_name,
+				ctx->info[i - 1].pack_name) <= 0)
 			BUG("incorrect pack-file order: %s before %s",
 			    ctx->info[i - 1].pack_name,
 			    ctx->info[i].pack_name);
@@ -1026,6 +1033,12 @@ static bool midx_needs_update(struct multi_pack_index *midx, struct write_midx_c
 		goto out;
 
 	/*
+	 * If the version differs, we need to update.
+	 */
+	if (midx->version != ctx->version)
+		goto out;
+
+	/*
 	 * Ignore incremental updates for now. The assumption is that any
 	 * incremental update would be either empty (in which case we will bail
 	 * out later) or it would actually cover at least one new pack.
@@ -1100,6 +1113,7 @@ static int write_midx_internal(struct write_midx_opts *opts)
 	struct tempfile *incr;
 	struct write_midx_context ctx = {
 		.preferred_pack_idx = NO_PREFERRED_PACK,
+		.version = MIDX_VERSION_V2,
 	 };
 	struct multi_pack_index *midx_to_free = NULL;
 	int bitmapped_packs_concat_len = 0;
@@ -1113,6 +1127,10 @@ static int write_midx_internal(struct write_midx_opts *opts)
 
 	ctx.repo = r;
 	ctx.source = opts->source;
+
+	repo_config_get_int(ctx.repo, "midx.version", &ctx.version);
+	if (ctx.version != MIDX_VERSION_V1 && ctx.version != MIDX_VERSION_V2)
+		die(_("unknown MIDX version: %d"), ctx.version);
 
 	ctx.incremental = !!(opts->flags & MIDX_WRITE_INCREMENTAL);
 
@@ -1445,7 +1463,7 @@ static int write_midx_internal(struct write_midx_opts *opts)
 	}
 
 	write_midx_header(r->hash_algo, f, get_num_chunks(cf),
-			  ctx.nr - dropped_packs);
+			  ctx.nr - dropped_packs, ctx.version);
 	write_chunkfile(cf, &ctx);
 
 	finalize_hashfile(f, midx_hash, FSYNC_COMPONENT_PACK_METADATA,
