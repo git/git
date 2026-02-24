@@ -913,6 +913,21 @@ cleanup:
 	return ret;
 }
 
+static int fill_pack_from_midx(struct pack_info *info,
+			       struct multi_pack_index *m,
+			       uint32_t pack_int_id)
+{
+	if (prepare_midx_pack(m, pack_int_id))
+		return error(_("could not load pack %d"), pack_int_id);
+
+	fill_pack_info(info,
+		       m->packs[pack_int_id - m->num_packs_in_base],
+		       m->pack_names[pack_int_id - m->num_packs_in_base],
+		       pack_int_id);
+
+	return 0;
+}
+
 static int fill_packs_from_midx(struct write_midx_context *ctx)
 {
 	struct multi_pack_index *m;
@@ -921,13 +936,13 @@ static int fill_packs_from_midx(struct write_midx_context *ctx)
 		uint32_t i;
 
 		for (i = 0; i < m->num_packs; i++) {
-			if (prepare_midx_pack(m, m->num_packs_in_base + i))
-				return error(_("could not load pack"));
-
 			ALLOC_GROW(ctx->info, ctx->nr + 1, ctx->alloc);
-			fill_pack_info(&ctx->info[ctx->nr++], m->packs[i],
-				       m->pack_names[i],
-				       m->num_packs_in_base + i);
+
+			if (fill_pack_from_midx(&ctx->info[ctx->nr], m,
+						m->num_packs_in_base + i) < 0)
+				return -1;
+
+			ctx->nr++;
 		}
 	}
 	return 0;
