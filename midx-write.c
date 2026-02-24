@@ -1151,8 +1151,7 @@ static int write_midx_internal(struct odb_source *source,
 		while (m) {
 			if (flags & MIDX_WRITE_BITMAP && load_midx_revindex(m)) {
 				error(_("could not load reverse index for MIDX %s"),
-				      hash_to_hex_algop(midx_get_checksum_hash(m),
-							m->source->odb->repo->hash_algo));
+				      midx_get_checksum_hex(m));
 				goto cleanup;
 			}
 			ctx.num_multi_pack_indexes_before++;
@@ -1520,8 +1519,7 @@ static int write_midx_internal(struct odb_source *source,
 		for (uint32_t i = 0; i < ctx.num_multi_pack_indexes_before; i++) {
 			uint32_t j = ctx.num_multi_pack_indexes_before - i - 1;
 
-			keep_hashes[j] = xstrdup(hash_to_hex_algop(midx_get_checksum_hash(m),
-								   r->hash_algo));
+			keep_hashes[j] = xstrdup(midx_get_checksum_hex(m));
 			m = m->base_midx;
 		}
 

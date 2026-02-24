@@ -2819,8 +2819,7 @@ void test_bitmap_walk(struct rev_info *revs)
 
 		if (bitmap_is_midx(found))
 			fprintf_ln(stderr, "Located via MIDX '%s'.",
-				   hash_to_hex_algop(midx_get_checksum_hash(found->midx),
-						     revs->repo->hash_algo));
+				   midx_get_checksum_hex(found->midx));
 		else
 			fprintf_ln(stderr, "Located via pack '%s'.",
 				   hash_to_hex_algop(found->pack->hash,

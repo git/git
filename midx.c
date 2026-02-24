@@ -24,6 +24,12 @@ void clear_incremental_midx_files_ext(struct odb_source *source, const char *ext
 int cmp_idx_or_pack_name(const char *idx_or_pack_name,
 			 const char *idx_name);
 
+const char *midx_get_checksum_hex(const struct multi_pack_index *m)
+{
+	return hash_to_hex_algop(midx_get_checksum_hash(m),
+				 m->source->odb->repo->hash_algo);
+}
+
 const unsigned char *midx_get_checksum_hash(const struct multi_pack_index *m)
 {
 	return m->data + m->data_len - m->source->odb->repo->hash_algo->rawsz;
