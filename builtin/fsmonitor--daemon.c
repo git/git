@@ -1404,6 +1404,7 @@ static int fsmonitor_run_daemon(void)
 done:
 	pthread_cond_destroy(&state.cookies_cond);
 	pthread_mutex_destroy(&state.main_lock);
+	hashmap_clear(&state.cookies);
 	fsm_listen__dtor(&state);
 	fsm_health__dtor(&state);
 
