@@ -10,7 +10,7 @@ TEST_NO_CREATE_REPO=1
 test_expect_success 'run based on configured value' '
 	git init one &&
 	git init two &&
-	git init three &&
+	git -C two worktree add --orphan ../three &&
 	git init ~/four &&
 	git -C two commit --allow-empty -m "DID NOT RUN" &&
 	git config --global run.key "$TRASH_DIRECTORY/one" &&
@@ -35,7 +35,17 @@ test_expect_success 'run based on configured value' '
 	git -C three log -1 --pretty=format:%s >message &&
 	grep again message &&
 	git -C ~/four log -1 --pretty=format:%s >message &&
-	grep again message
+	grep again message &&
+
+	git -C three for-each-repo --config=run.key -- commit --allow-empty -m "ran from worktree" &&
+	git -C one log -1 --pretty=format:%s >message &&
+	grep worktree message &&
+	git -C two log -1 --pretty=format:%s >message &&
+	! grep worktree message &&
+	git -C three log -1 --pretty=format:%s >message &&
+	grep worktree message &&
+	git -C ~/four log -1 --pretty=format:%s >message &&
+	grep worktree message
 '
 
 test_expect_success 'do nothing on empty config' '

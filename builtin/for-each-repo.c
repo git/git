@@ -2,6 +2,7 @@
 
 #include "builtin.h"
 #include "config.h"
+#include "environment.h"
 #include "gettext.h"
 #include "parse-options.h"
 #include "path.h"
@@ -15,19 +16,45 @@ static const char * const for_each_repo_usage[] = {
 
 static int run_command_on_repo(const char *path, int argc, const char ** argv)
 {
-	int i;
+	int res;
 	struct child_process child = CHILD_PROCESS_INIT;
+	char **envvars;
+	size_t envvar_nr = 0;
 	char *abspath = interpolate_path(path, 0);
+
+	while (local_repo_env[envvar_nr])
+		envvar_nr++;
+
+	CALLOC_ARRAY(envvars, envvar_nr);
+
+	for (size_t i = 0; i < envvar_nr; i++) {
+		envvars[i] = getenv(local_repo_env[i]);
+
+		if (envvars[i]) {
+			unsetenv(local_repo_env[i]);
+			envvars[i] = xstrdup(envvars[i]);
+		}
+	}
 
 	child.git_cmd = 1;
 	strvec_pushl(&child.args, "-C", abspath, NULL);
 
-	for (i = 0; i < argc; i++)
+	for (int i = 0; i < argc; i++)
 		strvec_push(&child.args, argv[i]);
 
 	free(abspath);
 
-	return run_command(&child);
+	res = run_command(&child);
+
+	for (size_t i = 0; i < envvar_nr; i++) {
+		if (envvars[i]) {
+			setenv(local_repo_env[i], envvars[i], 1);
+			free(envvars[i]);
+		}
+	}
+
+	free(envvars);
+	return res;
 }
 
 int cmd_for_each_repo(int argc,
