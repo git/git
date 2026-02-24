@@ -75,7 +75,7 @@ marker).
 		Write an incremental MIDX file containing only objects
 		and packs not present in an existing MIDX layer.
 		Migrates non-incremental MIDXs to incremental ones when
-		necessary. Incompatible with `--bitmap`.
+		necessary.
 --
 
 verify::
