@@ -1828,7 +1828,7 @@ int prepare_auto_maintenance(int quiet, struct child_process *maint)
 	 */
 	if (repo_config_get_bool(the_repository, "maintenance.autodetach", &auto_detach) &&
 	    repo_config_get_bool(the_repository, "gc.autodetach", &auto_detach))
-		auto_detach = 1;
+		auto_detach = git_env_bool("GIT_TEST_MAINT_AUTO_DETACH", true);
 
 	maint->git_cmd = 1;
 	maint->close_object_store = 1;

@@ -1947,6 +1947,10 @@ test_lazy_prereq COMPAT_HASH '
 GIT_TEST_MAINT_SCHEDULER="none:exit 1"
 export GIT_TEST_MAINT_SCHEDULER
 
+# Ensure that tests cannot race with background maintenance by default.
+GIT_TEST_MAINT_AUTO_DETACH="false"
+export GIT_TEST_MAINT_AUTO_DETACH
+
 # Does this platform support `git fsmonitor--daemon`
 #
 test_lazy_prereq FSMONITOR_DAEMON '

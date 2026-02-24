@@ -7,6 +7,9 @@ test_description='git maintenance builtin'
 GIT_TEST_COMMIT_GRAPH=0
 GIT_TEST_MULTI_PACK_INDEX=0
 
+# Ensure that auto-maintenance detaches as usual.
+sane_unset GIT_TEST_MAINT_AUTO_DETACH
+
 test_lazy_prereq XMLLINT '
 	xmllint --version
 '
