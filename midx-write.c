@@ -935,11 +935,11 @@ static int fill_packs_from_midx(struct write_midx_context *ctx)
 	for (m = ctx->m; m; m = m->base_midx) {
 		uint32_t i;
 
-		for (i = 0; i < m->num_packs; i++) {
+		for (i = m->num_packs_in_base;
+		     i < m->num_packs_in_base + m->num_packs; i++) {
 			ALLOC_GROW(ctx->info, ctx->nr + 1, ctx->alloc);
 
-			if (fill_pack_from_midx(&ctx->info[ctx->nr], m,
-						m->num_packs_in_base + i) < 0)
+			if (fill_pack_from_midx(&ctx->info[ctx->nr], m, i) < 0)
 				return -1;
 
 			ctx->nr++;
