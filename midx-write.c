@@ -328,6 +328,30 @@ static void midx_fanout_add_pack_fanout(struct midx_fanout *fanout,
 	}
 }
 
+static void midx_fanout_add(struct midx_fanout *fanout,
+			    struct write_midx_context *ctx,
+			    uint32_t start_pack,
+			    uint32_t cur_fanout)
+{
+	uint32_t cur_pack;
+
+	if (ctx->m && !ctx->incremental)
+		midx_fanout_add_midx_fanout(fanout, ctx->m, cur_fanout,
+					    ctx->preferred_pack_idx);
+
+	for (cur_pack = start_pack; cur_pack < ctx->nr; cur_pack++) {
+		int preferred = cur_pack == ctx->preferred_pack_idx;
+		midx_fanout_add_pack_fanout(fanout, ctx->info, cur_pack,
+					    preferred, cur_fanout);
+	}
+
+	if (ctx->preferred_pack_idx != NO_PREFERRED_PACK &&
+	    ctx->preferred_pack_idx < start_pack)
+		midx_fanout_add_pack_fanout(fanout, ctx->info,
+					    ctx->preferred_pack_idx, 1,
+					    cur_fanout);
+}
+
 /*
  * It is possible to artificially get into a state where there are many
  * duplicate copies of objects. That can create high memory pressure if
@@ -364,23 +388,7 @@ static void compute_sorted_entries(struct write_midx_context *ctx,
 	for (cur_fanout = 0; cur_fanout < 256; cur_fanout++) {
 		fanout.nr = 0;
 
-		if (ctx->m && !ctx->incremental)
-			midx_fanout_add_midx_fanout(&fanout, ctx->m, cur_fanout,
-						    ctx->preferred_pack_idx);
-
-		for (cur_pack = start_pack; cur_pack < ctx->nr; cur_pack++) {
-			int preferred = cur_pack == ctx->preferred_pack_idx;
-			midx_fanout_add_pack_fanout(&fanout,
-						    ctx->info, cur_pack,
-						    preferred, cur_fanout);
-		}
-
-		if (ctx->preferred_pack_idx != NO_PREFERRED_PACK &&
-		    ctx->preferred_pack_idx < start_pack)
-			midx_fanout_add_pack_fanout(&fanout, ctx->info,
-						    ctx->preferred_pack_idx, 1,
-						    cur_fanout);
-
+		midx_fanout_add(&fanout, ctx, start_pack, cur_fanout);
 		midx_fanout_sort(&fanout);
 
 		/*
