@@ -676,7 +676,7 @@ static uint32_t *midx_pack_order(struct write_midx_context *ctx)
 		struct pack_midx_entry *e = &ctx->entries[i];
 		data[i].nr = i;
 		data[i].pack = midx_pack_perm(ctx, e->pack_int_id);
-		if (!e->preferred)
+		if (!e->preferred || ctx->compact)
 			data[i].pack |= (1U << 31);
 		data[i].offset = e->offset;
 	}

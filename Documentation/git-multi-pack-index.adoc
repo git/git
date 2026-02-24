@@ -13,7 +13,7 @@ SYNOPSIS
 		         [--[no-]bitmap] [--[no-]incremental] [--[no-]stdin-packs]
 		         [--refs-snapshot=<path>]
 'git multi-pack-index' [<options>] compact [--[no-]incremental]
-		         <from> <to>
+		         [--[no-]bitmap] <from> <to>
 'git multi-pack-index' [<options>] verify
 'git multi-pack-index' [<options>] expire
 'git multi-pack-index' [<options>] repack [--batch-size=<size>]
@@ -94,6 +94,9 @@ compact::
 	--incremental::
 		Write the result to a MIDX chain instead of writing a
 		stand-alone MIDX.
+
+	--[no-]bitmap::
+		Control whether or not a multi-pack bitmap is written.
 --
 
 verify::
