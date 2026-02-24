@@ -2687,9 +2687,10 @@ $(BUILT_INS): git$X
 	cp $< $@
 
 config-list.h: generate-configlist.sh
+	@mkdir -p .depend
+	$(QUIET_GEN)$(SHELL_PATH) ./generate-configlist.sh . $@ .depend/config-list.h.d
 
-config-list.h: Documentation/*config.adoc Documentation/config/*.adoc
-	$(QUIET_GEN)$(SHELL_PATH) ./generate-configlist.sh . $@
+-include .depend/config-list.h.d
 
 command-list.h: generate-cmdlist.sh command-list.txt
 
