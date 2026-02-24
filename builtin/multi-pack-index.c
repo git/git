@@ -17,6 +17,10 @@
 	   "  [--[no-]bitmap] [--[no-]incremental] [--[no-]stdin-packs]\n" \
 	   "  [--refs-snapshot=<path>]")
 
+#define BUILTIN_MIDX_COMPACT_USAGE \
+	N_("git multi-pack-index [<options>] compact [--[no-]incremental]\n" \
+	   "  <from> <to>")
+
 #define BUILTIN_MIDX_VERIFY_USAGE \
 	N_("git multi-pack-index [<options>] verify")
 
@@ -28,6 +32,10 @@
 
 static char const * const builtin_multi_pack_index_write_usage[] = {
 	BUILTIN_MIDX_WRITE_USAGE,
+	NULL
+};
+static char const * const builtin_multi_pack_index_compact_usage[] = {
+	BUILTIN_MIDX_COMPACT_USAGE,
 	NULL
 };
 static char const * const builtin_multi_pack_index_verify_usage[] = {
@@ -44,6 +52,7 @@ static char const * const builtin_multi_pack_index_repack_usage[] = {
 };
 static char const * const builtin_multi_pack_index_usage[] = {
 	BUILTIN_MIDX_WRITE_USAGE,
+	BUILTIN_MIDX_COMPACT_USAGE,
 	BUILTIN_MIDX_VERIFY_USAGE,
 	BUILTIN_MIDX_EXPIRE_USAGE,
 	BUILTIN_MIDX_REPACK_USAGE,
@@ -195,6 +204,70 @@ static int cmd_multi_pack_index_write(int argc, const char **argv,
 	return ret;
 }
 
+static int cmd_multi_pack_index_compact(int argc, const char **argv,
+					const char *prefix,
+					struct repository *repo)
+{
+	struct multi_pack_index *m, *cur;
+	struct multi_pack_index *from_midx = NULL;
+	struct multi_pack_index *to_midx = NULL;
+	struct odb_source *source;
+	int ret;
+
+	struct option *options;
+	static struct option builtin_multi_pack_index_compact_options[] = {
+		OPT_BIT(0, "incremental", &opts.flags,
+			N_("write a new incremental MIDX"), MIDX_WRITE_INCREMENTAL),
+		OPT_END(),
+	};
+
+	repo_config(repo, git_multi_pack_index_write_config, NULL);
+
+	options = add_common_options(builtin_multi_pack_index_compact_options);
+
+	trace2_cmd_mode(argv[0]);
+
+	if (isatty(2))
+		opts.flags |= MIDX_PROGRESS;
+	argc = parse_options(argc, argv, prefix,
+			     options, builtin_multi_pack_index_compact_usage,
+			     0);
+
+	if (argc != 2)
+		usage_with_options(builtin_multi_pack_index_compact_usage,
+				   options);
+	source = handle_object_dir_option(the_repository);
+
+	FREE_AND_NULL(options);
+
+	m = get_multi_pack_index(source);
+
+	for (cur = m; cur && !(from_midx && to_midx); cur = cur->base_midx) {
+		const char *midx_csum = midx_get_checksum_hex(cur);
+
+		if (!from_midx && !strcmp(midx_csum, argv[0]))
+			from_midx = cur;
+		if (!to_midx && !strcmp(midx_csum, argv[1]))
+			to_midx = cur;
+	}
+
+	if (!from_midx)
+		die(_("could not find MIDX: %s"), argv[0]);
+	if (!to_midx)
+		die(_("could not find MIDX: %s"), argv[1]);
+	if (from_midx == to_midx)
+		die(_("MIDX compaction endpoints must be unique"));
+
+	for (m = from_midx; m; m = m->base_midx) {
+		if (m == to_midx)
+			die(_("MIDX %s must be an ancestor of %s"), argv[0], argv[1]);
+	}
+
+	ret = write_midx_file_compact(source, from_midx, to_midx, opts.flags);
+
+	return ret;
+}
+
 static int cmd_multi_pack_index_verify(int argc, const char **argv,
 				       const char *prefix,
 				       struct repository *repo UNUSED)
@@ -295,6 +368,7 @@ int cmd_multi_pack_index(int argc,
 	struct option builtin_multi_pack_index_options[] = {
 		OPT_SUBCOMMAND("repack", &fn, cmd_multi_pack_index_repack),
 		OPT_SUBCOMMAND("write", &fn, cmd_multi_pack_index_write),
+		OPT_SUBCOMMAND("compact", &fn, cmd_multi_pack_index_compact),
 		OPT_SUBCOMMAND("verify", &fn, cmd_multi_pack_index_verify),
 		OPT_SUBCOMMAND("expire", &fn, cmd_multi_pack_index_expire),
 		OPT_END(),

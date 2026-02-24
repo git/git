@@ -82,6 +82,7 @@ struct multi_pack_index {
 #define MIDX_WRITE_BITMAP_HASH_CACHE (1 << 3)
 #define MIDX_WRITE_BITMAP_LOOKUP_TABLE (1 << 4)
 #define MIDX_WRITE_INCREMENTAL (1 << 5)
+#define MIDX_WRITE_COMPACT (1 << 6)
 
 #define MIDX_EXT_REV "rev"
 #define MIDX_EXT_BITMAP "bitmap"
@@ -131,6 +132,10 @@ int write_midx_file_only(struct odb_source *source,
 			 struct string_list *packs_to_include,
 			 const char *preferred_pack_name,
 			 const char *refs_snapshot, unsigned flags);
+int write_midx_file_compact(struct odb_source *source,
+			    struct multi_pack_index *from,
+			    struct multi_pack_index *to,
+			    unsigned flags);
 void clear_midx_file(struct repository *r);
 int verify_midx_file(struct odb_source *source, unsigned flags);
 int expire_midx_packs(struct odb_source *source, unsigned flags);
