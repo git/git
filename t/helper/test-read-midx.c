@@ -26,9 +26,10 @@ static int read_midx_file(const char *object_dir, const char *checksum,
 			  int show_objects)
 {
 	uint32_t i;
-	struct multi_pack_index *m;
+	struct multi_pack_index *m, *tip;
+	int ret = 0;
 
-	m = setup_midx(object_dir);
+	m = tip = setup_midx(object_dir);
 
 	if (!m)
 		return 1;
@@ -36,8 +37,11 @@ static int read_midx_file(const char *object_dir, const char *checksum,
 	if (checksum) {
 		while (m && strcmp(midx_get_checksum_hex(m), checksum))
 			m = m->base_midx;
-		if (!m)
-			return 1;
+		if (!m) {
+			ret = error(_("could not find MIDX with checksum %s"),
+				    checksum);
+			goto out;
+		}
 	}
 
 	printf("header: %08x %d %d %d %d\n",
@@ -82,9 +86,10 @@ static int read_midx_file(const char *object_dir, const char *checksum,
 		}
 	}
 
-	close_midx(m);
+out:
+	close_midx(tip);
 
-	return 0;
+	return ret;
 }
 
 static int read_midx_checksum(const char *object_dir)
