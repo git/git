@@ -144,8 +144,6 @@ static void interpret_trailers(const struct process_trailer_options *opts,
 	struct strbuf out = STRBUF_INIT;
 	FILE *outfile = stdout;
 
-	trailer_config_init();
-
 	read_input_file(&input, file);
 
 	if (opts->in_place)
@@ -202,6 +200,8 @@ int cmd_interpret_trailers(int argc,
 			_("--trailer with --only-input does not make sense"),
 			git_interpret_trailers_usage,
 			options);
+
+	trailer_config_init();
 
 	if (argc) {
 		int i;
