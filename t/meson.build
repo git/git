@@ -1210,12 +1210,18 @@ test_environment = script_environment
 test_environment.set('GIT_BUILD_DIR', git_build_dir)
 
 foreach integration_test : integration_tests
+  per_test_kwargs = test_kwargs
+  # The fsmonitor tests start daemon processes that in some environments
+  # can hang.  Set a generous timeout to prevent CI from blocking.
+  if fs.stem(integration_test) == 't7527-builtin-fsmonitor'
+    per_test_kwargs += {'timeout': 1800}
+  endif
   test(fs.stem(integration_test), shell,
     args: [ integration_test ],
     workdir: meson.current_source_dir(),
     env: test_environment,
     depends: test_dependencies + bin_wrappers,
-    kwargs: test_kwargs,
+    kwargs: per_test_kwargs,
   )
 endforeach
 
