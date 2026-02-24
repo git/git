@@ -136,32 +136,21 @@ static void read_input_file(struct strbuf *sb, const char *file)
 	strbuf_complete_line(sb);
 }
 
-static void interpret_trailers(const struct process_trailer_options *opts,
-			       struct list_head *new_trailer_head,
-			       const char *file)
+static void process_trailers(const struct process_trailer_options *opts,
+			     struct list_head *new_trailer_head,
+			     struct strbuf *input, struct strbuf *out)
 {
 	LIST_HEAD(head);
-	struct strbuf sb = STRBUF_INIT;
-	struct strbuf trailer_block_sb = STRBUF_INIT;
 	struct trailer_block *trailer_block;
-	FILE *outfile = stdout;
 
-	trailer_config_init();
-
-	read_input_file(&sb, file);
-
-	if (opts->in_place)
-		outfile = create_in_place_tempfile(file);
-
-	trailer_block = parse_trailers(opts, sb.buf, &head);
+	trailer_block = parse_trailers(opts, input->buf, &head);
 
 	/* Print the lines before the trailer block */
 	if (!opts->only_trailers)
-		fwrite(sb.buf, 1, trailer_block_start(trailer_block), outfile);
+		strbuf_add(out, input->buf, trailer_block_start(trailer_block));
 
 	if (!opts->only_trailers && !blank_line_before_trailer_block(trailer_block))
-		fprintf(outfile, "\n");
-
+		strbuf_addch(out, '\n');
 
 	if (!opts->only_input) {
 		LIST_HEAD(config_head);
@@ -173,22 +162,40 @@ static void interpret_trailers(const struct process_trailer_options *opts,
 	}
 
 	/* Print trailer block. */
-	format_trailers(opts, &head, &trailer_block_sb);
+	format_trailers(opts, &head, out);
 	free_trailers(&head);
-	fwrite(trailer_block_sb.buf, 1, trailer_block_sb.len, outfile);
-	strbuf_release(&trailer_block_sb);
 
 	/* Print the lines after the trailer block as is. */
 	if (!opts->only_trailers)
-		fwrite(sb.buf + trailer_block_end(trailer_block), 1,
-		       sb.len - trailer_block_end(trailer_block), outfile);
+		strbuf_add(out, input->buf + trailer_block_end(trailer_block),
+			   input->len - trailer_block_end(trailer_block));
 	trailer_block_release(trailer_block);
+}
 
+static void interpret_trailers(const struct process_trailer_options *opts,
+			       struct list_head *new_trailer_head,
+			       const char *file)
+{
+	struct strbuf input = STRBUF_INIT;
+	struct strbuf out = STRBUF_INIT;
+	FILE *outfile = stdout;
+
+	trailer_config_init();
+
+	read_input_file(&input, file);
+
+	if (opts->in_place)
+		outfile = create_in_place_tempfile(file);
+
+	process_trailers(opts, new_trailer_head, &input, &out);
+
+	strbuf_write(&out, outfile);
 	if (opts->in_place)
 		if (rename_tempfile(&trailers_tempfile, file))
 			die_errno(_("could not rename temporary file to %s"), file);
 
-	strbuf_release(&sb);
+	strbuf_release(&input);
+	strbuf_release(&out);
 }
 
 int cmd_interpret_trailers(int argc,
