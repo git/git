@@ -30,7 +30,8 @@ test_midx_bitmap_rev () {
 	test_expect_success 'setup bitmap config' '
 		rm -rf * .git &&
 		git init &&
-		git config pack.writeBitmapLookupTable '"$writeLookupTable"'
+		git config pack.writeBitmapLookupTable '"$writeLookupTable"' &&
+		git config maintenance.auto false
 	'
 
 	midx_bitmap_core rev
