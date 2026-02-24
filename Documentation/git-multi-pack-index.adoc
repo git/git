@@ -18,6 +18,8 @@ Write or verify a multi-pack-index (MIDX) file.
 OPTIONS
 -------
 
+The following command-line options are applicable to all sub-commands:
+
 --object-dir=<dir>::
 	Use given directory for the location of Git objects. We check
 	`<dir>/packs/multi-pack-index` for the current MIDX file, and

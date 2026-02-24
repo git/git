@@ -84,6 +84,8 @@ static struct option common_opts[] = {
 	  N_("directory"),
 	  N_("object directory containing set of packfile and pack-index pairs"),
 	  parse_object_dir),
+	OPT_BIT(0, "progress", &opts.flags, N_("force progress reporting"),
+		MIDX_PROGRESS),
 	OPT_END(),
 };
 
@@ -138,8 +140,6 @@ static int cmd_multi_pack_index_write(int argc, const char **argv,
 			   N_("pack for reuse when computing a multi-pack bitmap")),
 		OPT_BIT(0, "bitmap", &opts.flags, N_("write multi-pack bitmap"),
 			MIDX_WRITE_BITMAP | MIDX_WRITE_REV_INDEX),
-		OPT_BIT(0, "progress", &opts.flags,
-			N_("force progress reporting"), MIDX_PROGRESS),
 		OPT_BIT(0, "incremental", &opts.flags,
 			N_("write a new incremental MIDX"), MIDX_WRITE_INCREMENTAL),
 		OPT_BOOL(0, "stdin-packs", &opts.stdin_packs,
@@ -200,8 +200,6 @@ static int cmd_multi_pack_index_verify(int argc, const char **argv,
 {
 	struct option *options;
 	static struct option builtin_multi_pack_index_verify_options[] = {
-		OPT_BIT(0, "progress", &opts.flags,
-			N_("force progress reporting"), MIDX_PROGRESS),
 		OPT_END(),
 	};
 	struct odb_source *source;
@@ -231,8 +229,6 @@ static int cmd_multi_pack_index_expire(int argc, const char **argv,
 {
 	struct option *options;
 	static struct option builtin_multi_pack_index_expire_options[] = {
-		OPT_BIT(0, "progress", &opts.flags,
-			N_("force progress reporting"), MIDX_PROGRESS),
 		OPT_END(),
 	};
 	struct odb_source *source;
@@ -264,8 +260,6 @@ static int cmd_multi_pack_index_repack(int argc, const char **argv,
 	static struct option builtin_multi_pack_index_repack_options[] = {
 		OPT_UNSIGNED(0, "batch-size", &opts.batch_size,
 		  N_("during repack, collect pack-files of smaller size into a batch that is larger than this size")),
-		OPT_BIT(0, "progress", &opts.flags,
-		  N_("force progress reporting"), MIDX_PROGRESS),
 		OPT_END(),
 	};
 	struct odb_source *source;
