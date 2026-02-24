@@ -209,8 +209,8 @@ void amend_strbuf_with_trailers(struct strbuf *buf,
 /*
  * Augment a file by appending trailers specified in trailer_args.
  *
- * Each element of trailer_args should be an argv-style --trailer=<trailer>
- * option (i.e., including the --trailer= prefix).
+ * Each element of trailer_args should be in the same format as the value
+ * accepted by --trailer=<trailer> (i.e., without the --trailer= prefix).
  *
  * Returns 0 on success or a non-zero error code on failure.
  */
