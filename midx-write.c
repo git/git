@@ -637,7 +637,7 @@ static uint32_t *midx_pack_order(struct write_midx_context *ctx)
 		pack_order[i] = data[i].nr;
 	}
 	for (i = 0; i < ctx->nr; i++) {
-		struct pack_info *pack = &ctx->info[ctx->pack_perm[i]];
+		struct pack_info *pack = &ctx->info[i];
 		if (pack->bitmap_pos == BITMAP_POS_UNKNOWN)
 			pack->bitmap_pos = 0;
 	}
