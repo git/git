@@ -9,7 +9,12 @@ git-multi-pack-index - Write and verify multi-pack-indexes
 SYNOPSIS
 --------
 [verse]
-'git multi-pack-index' [--object-dir=<dir>] [--[no-]bitmap] <sub-command>
+'git multi-pack-index' [<options>] write [--preferred-pack=<pack>]
+		         [--[no-]bitmap] [--[no-]incremental] [--[no-]stdin-packs]
+		         [--refs-snapshot=<path>]
+'git multi-pack-index' [<options>] verify
+'git multi-pack-index' [<options>] expire
+'git multi-pack-index' [<options>] repack [--batch-size=<size>]
 
 DESCRIPTION
 -----------
