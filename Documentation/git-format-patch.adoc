@@ -798,6 +798,10 @@ if they are part of the requested range. A simple "patch" does not
 include enough information for the receiving end to reproduce the same
 merge commit.
 
+=== PATCH APPLICATION
+
+include::format-patch-caveats.adoc[]
+
 SEE ALSO
 --------
 linkgit:git-am[1], linkgit:git-send-email[1]
