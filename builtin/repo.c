@@ -78,14 +78,15 @@ static int repo_info_field_cmp(const void *va, const void *vb)
 	return strcmp(a->key, b->key);
 }
 
-static get_value_fn *get_value_fn_for_key(const char *key)
+static const struct field *get_repo_info_field(const char *key)
 {
 	const struct field search_key = { key, NULL };
 	const struct field *found = bsearch(&search_key, repo_info_field,
 					    ARRAY_SIZE(repo_info_field),
 					    sizeof(*found),
 					    repo_info_field_cmp);
-	return found ? found->get_value : NULL;
+
+	return found;
 }
 
 static void print_field(enum output_format format, const char *key,
@@ -113,18 +114,16 @@ static int print_fields(int argc, const char **argv,
 	struct strbuf valbuf = STRBUF_INIT;
 
 	for (int i = 0; i < argc; i++) {
-		get_value_fn *get_value;
 		const char *key = argv[i];
+		const struct field *field = get_repo_info_field(key);
 
-		get_value = get_value_fn_for_key(key);
-
-		if (!get_value) {
+		if (!field) {
 			ret = error(_("key '%s' not found"), key);
 			continue;
 		}
 
 		strbuf_reset(&valbuf);
-		get_value(repo, &valbuf);
+		field->get_value(repo, &valbuf);
 		print_field(format, key, valbuf.buf);
 	}
 
