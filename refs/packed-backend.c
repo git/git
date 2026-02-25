@@ -211,7 +211,12 @@ static size_t snapshot_hexsz(const struct snapshot *snapshot)
 	return snapshot->refs->base.repo->hash_algo->hexsz;
 }
 
+/*
+ * Since packed-refs is only stored in the common dir, don't parse the
+ * payload and rely on the files-backend to set 'gitdir' correctly.
+ */
 struct ref_store *packed_ref_store_init(struct repository *repo,
+					const char *payload UNUSED,
 					const char *gitdir,
 					unsigned int store_flags)
 {

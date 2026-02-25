@@ -5,6 +5,7 @@
 #define USE_THE_REPOSITORY_VARIABLE
 
 #include "git-compat-util.h"
+#include "abspath.h"
 #include "advice.h"
 #include "config.h"
 #include "environment.h"
@@ -2290,7 +2291,7 @@ static struct ref_store *ref_store_init(struct repository *repo,
 	if (!be)
 		BUG("reference backend is unknown");
 
-	refs = be->init(repo, gitdir, flags);
+	refs = be->init(repo, NULL, gitdir, flags);
 	return refs;
 }
 
@@ -3467,4 +3468,41 @@ const char *ref_transaction_error_msg(enum ref_transaction_error err)
 	default:
 		return "unknown failure";
 	}
+}
+
+void refs_compute_filesystem_location(const char *gitdir, const char *payload,
+				      bool *is_worktree, struct strbuf *refdir,
+				      struct strbuf *ref_common_dir)
+{
+	struct strbuf sb = STRBUF_INIT;
+
+	*is_worktree = get_common_dir_noenv(ref_common_dir, gitdir);
+
+	if (!payload) {
+		/*
+		 * We can use the 'gitdir' as the 'refdir' without appending the
+		 * worktree path, as the 'gitdir' here is already the worktree
+		 * path and is different from 'commondir' denoted by 'ref_common_dir'.
+		 */
+		strbuf_addstr(refdir, gitdir);
+		return;
+	}
+
+	if (!is_absolute_path(payload)) {
+		strbuf_addf(&sb, "%s/%s", ref_common_dir->buf, payload);
+		strbuf_realpath(ref_common_dir, sb.buf, 1);
+	} else {
+		strbuf_realpath(ref_common_dir, payload, 1);
+	}
+
+	strbuf_addbuf(refdir, ref_common_dir);
+
+	if (*is_worktree) {
+		const char *wt_id = strrchr(gitdir, '/');
+		if (!wt_id)
+			BUG("worktree path does not contain slash");
+		strbuf_addf(refdir, "/worktrees/%s", wt_id + 1);
+	}
+
+	strbuf_release(&sb);
 }
