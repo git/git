@@ -762,4 +762,79 @@ test_expect_success 'for-each-ref is-base: --sort' '
 		--sort=refname --sort=-is-base:commit-2-3
 '
 
+test_expect_success 'rev-list --maximal-only (all positive)' '
+	# Only one maximal.
+	cat >input <<-\EOF &&
+	refs/heads/commit-1-1
+	refs/heads/commit-4-2
+	refs/heads/commit-4-4
+	refs/heads/commit-8-4
+	EOF
+
+	cat >expect <<-EOF &&
+	$(git rev-parse refs/heads/commit-8-4)
+	EOF
+	run_all_modes git rev-list --maximal-only --stdin &&
+
+	# All maximal.
+	cat >input <<-\EOF &&
+	refs/heads/commit-5-2
+	refs/heads/commit-4-3
+	refs/heads/commit-3-4
+	refs/heads/commit-2-5
+	EOF
+
+	cat >expect <<-EOF &&
+	$(git rev-parse refs/heads/commit-5-2)
+	$(git rev-parse refs/heads/commit-4-3)
+	$(git rev-parse refs/heads/commit-3-4)
+	$(git rev-parse refs/heads/commit-2-5)
+	EOF
+	run_all_modes git rev-list --maximal-only --stdin &&
+
+	# Mix of both.
+	cat >input <<-\EOF &&
+	refs/heads/commit-5-2
+	refs/heads/commit-3-2
+	refs/heads/commit-2-5
+	EOF
+
+	cat >expect <<-EOF &&
+	$(git rev-parse refs/heads/commit-5-2)
+	$(git rev-parse refs/heads/commit-2-5)
+	EOF
+	run_all_modes git rev-list --maximal-only --stdin
+'
+
+test_expect_success 'rev-list --maximal-only (range)' '
+	cat >input <<-\EOF &&
+	refs/heads/commit-1-1
+	refs/heads/commit-2-5
+	refs/heads/commit-6-4
+	^refs/heads/commit-4-5
+	EOF
+
+	cat >expect <<-EOF &&
+	$(git rev-parse refs/heads/commit-6-4)
+	EOF
+	run_all_modes git rev-list --maximal-only --stdin &&
+
+	# first-parent changes reachability: the first parent
+	# reduces the second coordinate to 1 before reducing the
+	# first coordinate.
+	cat >input <<-\EOF &&
+	refs/heads/commit-1-1
+	refs/heads/commit-2-5
+	refs/heads/commit-6-4
+	^refs/heads/commit-4-5
+	EOF
+
+	cat >expect <<-EOF &&
+	$(git rev-parse refs/heads/commit-6-4)
+	$(git rev-parse refs/heads/commit-2-5)
+	EOF
+	run_all_modes git rev-list --maximal-only --stdin \
+		--first-parent --exclude-first-parent-only
+'
+
 test_done

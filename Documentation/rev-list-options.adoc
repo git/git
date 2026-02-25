@@ -148,6 +148,10 @@ endif::git-log[]
 	from the point where it diverged from the remote branch, given
 	that arbitrary merges can be valid topic branch changes.
 
+`--maximal-only`::
+	Restrict the output commits to be those that are not reachable
+	from any other commits in the revision range.
+
 `--not`::
 	Reverses the meaning of the '{caret}' prefix (or lack thereof)
 	for all following revision specifiers, up to the next `--not`.

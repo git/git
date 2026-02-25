@@ -64,7 +64,7 @@ void object_array_init(struct object_array *array);
 
 /*
  * object flag allocation:
- * revision.h:               0---------10         15               23------27
+ * revision.h:               0---------10         15               23--------28
  * fetch-pack.c:             01    67
  * negotiator/default.c:       2--5
  * walker.c:                 0-2
@@ -86,7 +86,7 @@ void object_array_init(struct object_array *array);
  * builtin/unpack-objects.c:                                 2021
  * pack-bitmap.h:                                              2122
  */
-#define FLAG_BITS  28
+#define FLAG_BITS  29
 
 #define TYPE_BITS 3
 
