@@ -40,7 +40,7 @@ supported:
 
 `nul`:::
 	similar to `lines`, but using a newline character as the delimiter
-	between the key and the value and using a NUL character after each value.
+	between the key and the value and using a _NUL_ character after each value.
 	This format is better suited for being parsed by another applications than
 	`lines`. Unlike in the `lines` format, the values are never quoted.
 +
@@ -80,7 +80,7 @@ supported:
 	configuration variable `core.quotePath` (see linkgit:git-config[1]).
 
 `nul`:::
-	Similar to `lines`, but uses a NUL character to delimit between
+	Similar to `lines`, but uses a _NUL_ character to delimit between
 	key-value pairs instead of a newline. Also uses a newline character as
 	the delimiter between the key and value instead of '='. Unlike the
 	`lines` format, values containing "unusual" characters are never
