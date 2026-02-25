@@ -546,8 +546,10 @@ static struct pack_list * add_pack(struct packed_git *p)
 	l.pack = p;
 	llist_init(&l.remaining_objects);
 
-	if (open_pack_index(p))
+	if (open_pack_index(p)) {
+		llist_free(l.remaining_objects);
 		return NULL;
+	}
 
 	base = p->index_data;
 	base += 256 * 4 + ((p->index_version < 2) ? 4 : 8);
