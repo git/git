@@ -1294,6 +1294,8 @@ if host_machine.system() == 'linux'
   libgit_sources += 'compat/linux/procinfo.c'
 elif host_machine.system() == 'windows'
   libgit_sources += 'compat/win32/trace2_win32_process_info.c'
+elif host_machine.system() == 'darwin'
+  libgit_sources += 'compat/darwin/procinfo.c'
 else
   libgit_sources += 'compat/stub/procinfo.c'
 endif

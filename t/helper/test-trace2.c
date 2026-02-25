@@ -467,6 +467,63 @@ static int ut_303redact_def_param(int argc, const char **argv)
 }
 
 /*
+ * Run a child process with specific trace2 environment settings so that
+ * we can capture its trace2 output (including cmd_ancestry) in isolation.
+ *
+ * test-tool trace2 400ancestry <target> <output_file> [<child_command_line>]
+ *
+ * <target> is one of: normal, perf, event
+ *
+ * For example:
+ *     test-tool trace2 400ancestry normal out.normal test-tool trace2 001return 0
+ *
+ * The child process inherits a controlled trace2 environment where only
+ * the specified target is directed to <output_file>. The parent's trace2
+ * environment variables are cleared in the child so that only the child's
+ * events are captured.
+ *
+ * This is used by t0213-trace2-ancestry.sh to test cmd_ancestry events.
+ * The child process will see "test-tool" as its immediate parent in the
+ * process ancestry, giving us a predictable value to verify.
+ */
+static int ut_400ancestry(int argc, const char **argv)
+{
+	struct child_process cmd = CHILD_PROCESS_INIT;
+	const char *target;
+	const char *outfile;
+	int result;
+
+	if (argc < 3)
+		die("expect <target> <output_file> <child_command_line>");
+
+	target = argv[0];
+	outfile = argv[1];
+	argv += 2;
+	argc -= 2;
+
+	/* Clear all trace2 environment variables in the child. */
+	strvec_push(&cmd.env, "GIT_TRACE2=");
+	strvec_push(&cmd.env, "GIT_TRACE2_PERF=");
+	strvec_push(&cmd.env, "GIT_TRACE2_EVENT=");
+	strvec_push(&cmd.env, "GIT_TRACE2_BRIEF=1");
+
+	/* Set only the requested target. */
+	if (!strcmp(target, "normal"))
+		strvec_pushf(&cmd.env, "GIT_TRACE2=%s", outfile);
+	else if (!strcmp(target, "perf"))
+		strvec_pushf(&cmd.env, "GIT_TRACE2_PERF=%s", outfile);
+	else if (!strcmp(target, "event"))
+		strvec_pushf(&cmd.env, "GIT_TRACE2_EVENT=%s", outfile);
+	else
+		die("invalid target '%s', expected: normal, perf, event",
+		    target);
+
+	strvec_pushv(&cmd.args, argv);
+	result = run_command(&cmd);
+	exit(result);
+}
+
+/*
  * Usage:
  *     test-tool trace2 <ut_name_1> <ut_usage_1>
  *     test-tool trace2 <ut_name_2> <ut_usage_2>
@@ -497,6 +554,8 @@ static struct unit_test ut_table[] = {
 	{ ut_301redact_child_start, "301redact_child_start", "<argv...>" },
 	{ ut_302redact_exec,        "302redact_exec",        "<exe> <argv...>" },
 	{ ut_303redact_def_param,   "303redact_def_param",   "<key> <value>" },
+
+	{ ut_400ancestry,           "400ancestry",           "<target> <output_file> [<child_command_line>]" },
 };
 /* clang-format on */
 

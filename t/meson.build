@@ -134,6 +134,7 @@ integration_tests = [
   't0210-trace2-normal.sh',
   't0211-trace2-perf.sh',
   't0212-trace2-event.sh',
+  't0213-trace2-ancestry.sh',
   't0300-credentials.sh',
   't0301-credential-cache.sh',
   't0302-credential-store.sh',
