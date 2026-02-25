@@ -788,42 +788,6 @@ ensure_valid_ref_format () {
 		die "fatal: '$1' does not look like a ref"
 }
 
-# Usage: should_ignore_subtree_split_commit REV
-#
-# Check if REV is a commit from another subtree and should be
-# ignored from processing for splits
-should_ignore_subtree_split_commit () {
-	assert test $# = 1
-
-	git show \
-		--no-patch \
-		--no-show-signature \
-		--format='%(trailers:key=git-subtree-dir,key=git-subtree-mainline)' \
-		"$1" |
-	(
-	have_mainline=
-	subtree_dir=
-
-	while read -r trailer val
-	do
-		case "$trailer" in
-		git-subtree-dir:)
-			subtree_dir="${val%/}" ;;
-		git-subtree-mainline:)
-			have_mainline=y ;;
-		esac
-	done
-
-	if test -n "${subtree_dir}" &&
-		test -z "${have_mainline}" &&
-		test "${subtree_dir}" != "$arg_prefix"
-	then
-		return 0
-	fi
-	return 1
-	)
-}
-
 # Usage: process_split_commit REV PARENTS
 process_split_commit () {
 	assert test $# = 2
@@ -1015,19 +979,7 @@ cmd_split () {
 	eval "$grl" |
 	while read rev parents
 	do
-		if should_ignore_subtree_split_commit "$rev"
-		then
-			continue
-		fi
-		parsedparents=''
-		for parent in $parents
-		do
-			if ! should_ignore_subtree_split_commit "$parent"
-			then
-				parsedparents="$parsedparents$parent "
-			fi
-		done
-		process_split_commit "$rev" "$parsedparents"
+		process_split_commit "$rev" "$parents"
 	done || exit $?
 
 	latest_new=$(cache_get latest_new) || exit $?
