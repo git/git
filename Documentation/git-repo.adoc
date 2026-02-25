@@ -33,13 +33,13 @@ supported:
 +
 
 `lines`:::
-	output key-value pairs one per line using the `=` character as
+	Output key-value pairs one per line using the `=` character as
 	the delimiter between the key and the value. Values containing "unusual"
 	characters are quoted as explained for the configuration variable
 	`core.quotePath` (see linkgit:git-config[1]). This is the default.
 
 `nul`:::
-	similar to `lines`, but using a newline character as the delimiter
+	Similar to `lines`, but using a newline character as the delimiter
 	between the key and the value and using a _NUL_ character after each value.
 	This format is better suited for being parsed by another applications than
 	`lines`. Unlike in the `lines` format, the values are never quoted.
