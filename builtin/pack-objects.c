@@ -3924,7 +3924,15 @@ static void add_unreachable_loose_objects(struct rev_info *revs);
 
 static void read_stdin_packs(enum stdin_packs_mode mode, int rev_list_unpacked)
 {
+	int prev_fetch_if_missing = fetch_if_missing;
 	struct rev_info revs;
+
+	/*
+	 * The revision walk may hit objects that are promised, only. As the
+	 * walk is best-effort though we don't want to perform backfill fetches
+	 * for them.
+	 */
+	fetch_if_missing = 0;
 
 	repo_init_revisions(the_repository, &revs, NULL);
 	/*
@@ -3961,6 +3969,8 @@ static void read_stdin_packs(enum stdin_packs_mode mode, int rev_list_unpacked)
 			   stdin_packs_found_nr);
 	trace2_data_intmax("pack-objects", the_repository, "stdin_packs_hints",
 			   stdin_packs_hints_nr);
+
+	fetch_if_missing = prev_fetch_if_missing;
 }
 
 static void add_cruft_object_entry(const struct object_id *oid, enum object_type type,

@@ -358,6 +358,24 @@ test_expect_success '--stdin-packs with promisors' '
 	)
 '
 
+test_expect_success '--stdin-packs does not perform backfill fetch' '
+	test_when_finished "rm -rf remote client" &&
+
+	git init remote &&
+	test_commit_bulk -C remote 10 &&
+	git -C remote config set --local uploadpack.allowfilter 1 &&
+	git -C remote config set --local uploadpack.allowanysha1inwant 1 &&
+
+	git clone --filter=tree:0 "file://$(pwd)/remote" client &&
+	(
+		cd client &&
+		ls .git/objects/pack/*.promisor | sed "s|.*/||; s/\.promisor$/.pack/" >packs &&
+		test_line_count -gt 1 packs &&
+		GIT_TRACE2_EVENT="$(pwd)/event.log" git pack-objects --stdin-packs pack <packs &&
+		test_grep ! "\"event\":\"child_start\"" event.log
+	)
+'
+
 stdin_packs__follow_with_only () {
 	rm -fr stdin_packs__follow_with_only &&
 	git init stdin_packs__follow_with_only &&
