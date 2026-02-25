@@ -491,9 +491,6 @@ static int reftable_be_create_on_disk(struct ref_store *ref_store,
 	safe_create_dir(the_repository, sb.buf, 1);
 	strbuf_reset(&sb);
 
-	refs_create_refdir_stubs(the_repository, refs->base.gitdir,
-				 "this repository uses the reftable format");
-
 	strbuf_release(&sb);
 	return 0;
 }
@@ -516,30 +513,6 @@ static int reftable_be_remove_on_disk(struct ref_store *ref_store,
 	strbuf_addf(&sb, "%s/reftable", refs->base.gitdir);
 	if (remove_dir_recursively(&sb, 0) < 0) {
 		strbuf_addf(err, "could not delete reftables: %s",
-			    strerror(errno));
-		ret = -1;
-	}
-	strbuf_reset(&sb);
-
-	strbuf_addf(&sb, "%s/HEAD", refs->base.gitdir);
-	if (unlink(sb.buf) < 0) {
-		strbuf_addf(err, "could not delete stub HEAD: %s",
-			    strerror(errno));
-		ret = -1;
-	}
-	strbuf_reset(&sb);
-
-	strbuf_addf(&sb, "%s/refs/heads", refs->base.gitdir);
-	if (unlink(sb.buf) < 0) {
-		strbuf_addf(err, "could not delete stub heads: %s",
-			    strerror(errno));
-		ret = -1;
-	}
-	strbuf_reset(&sb);
-
-	strbuf_addf(&sb, "%s/refs", refs->base.gitdir);
-	if (rmdir(sb.buf) < 0) {
-		strbuf_addf(err, "could not delete refs directory: %s",
 			    strerror(errno));
 		ret = -1;
 	}
