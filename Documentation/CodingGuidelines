@@ -33,6 +33,16 @@ Git in general, a few rough rules are:
    achieve and why the changes were necessary (more on this in the
    accompanying SubmittingPatches document).
 
+ - A label "NEEDSWORK:" followed by a description of the things to
+   be done is a way to leave in-code comments to document design
+   decisions yet to be made. 80% of the work to resolve a NEEDSWORK
+   comment is to decide if it still makes sense to do so, since the
+   situation around the codebase may have changed since the comment
+   was written.  It can be a very valid change to remove an existing
+   NEEDSWORK comment without doing anything else, with the commit log
+   message describing a good argument why it does not make sense to do
+   the thing the NEEDSWORK comment mentioned.
+
 Make your code readable and sensible, and don't try to be clever.
 
 As for more concrete guidelines, just imitate the existing code
