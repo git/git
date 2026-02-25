@@ -256,6 +256,8 @@ static struct option builtin_add_options[] = {
 	OPT_GROUP(""),
 	OPT_BOOL('i', "interactive", &add_interactive, N_("interactive picking")),
 	OPT_BOOL('p', "patch", &patch_interactive, N_("select hunks interactively")),
+	OPT_BOOL(0, "auto-advance", &add_p_opt.auto_advance,
+		 N_("auto advance to the next file when selecting hunks interactively")),
 	OPT_DIFF_UNIFIED(&add_p_opt.context),
 	OPT_DIFF_INTERHUNK_CONTEXT(&add_p_opt.interhunkcontext),
 	OPT_BOOL('e', "edit", &edit_interactive, N_("edit current diff and apply")),
@@ -418,6 +420,8 @@ int cmd_add(int argc,
 			die(_("the option '%s' requires '%s'"), "--unified", "--interactive/--patch");
 		if (add_p_opt.interhunkcontext != -1)
 			die(_("the option '%s' requires '%s'"), "--inter-hunk-context", "--interactive/--patch");
+		if (!add_p_opt.auto_advance)
+			die(_("the option '%s' requires '%s'"), "--no-auto-advance", "--interactive/--patch");
 	}
 
 	if (edit_interactive) {
