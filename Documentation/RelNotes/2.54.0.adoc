@@ -24,6 +24,14 @@ UI, Workflows & Features
    all configuration, even the per-user ones.  The command now uses
    available configuration files to find its customization.
 
+ * "auto filter" logic for large-object promisor remote.
+
+ * "git rev-list" and friends learn "--maximal-only" to show only the
+   commits that are not reachable by other commits.
+
+ * Command line completion (in contrib/) update for
+   "stash import/export".
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -61,6 +69,12 @@ Performance, Internal Implementation, Development Support etc.
  * Code clean-up to use the commit_stack API.
 
  * "git diff --anchored=<text>" has been optimized.
+
+ * A CodingGuidelines update.
+
+ * Add process ancestry data to trace2 on macOS to match what we
+   already do on Linux and Windows.  Also adjust the way Windows
+   implementation reports this information to match the other two.
 
 
 Fixes since v2.53
@@ -107,6 +121,15 @@ Fixes since v2.53
    duplication.
    (merge 5086213bd2 pw/xdiff-cleanups later to maint).
 
+ * Update sample commit-msg hook to complain when a log message has
+   material mailinfo considers the end of log message in the middle.
+   (merge 83804c361b pw/commit-msg-sample-hook later to maint).
+
+ * "git pack-objects --stdin-packs" with "--exclude-promisor-objects"
+   fetched objects that are promised, which was not wanted.  This has
+   been fixed.
+   (merge f4eff7116d ps/pack-concat-wo-backfill later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge d79fff4a11 jk/remote-tracking-ref-leakfix later to maint).
    (merge 7a747f972d dd/t5403-modernise later to maint).
@@ -127,3 +150,4 @@ Fixes since v2.53
    (merge aaf3cc3d8d sd/t7003-test-path-is-helpers later to maint).
    (merge 2668b6bdc4 jc/doc-rerere-update later to maint).
    (merge 2f99f50f2d jc/doc-cg-c-comment later to maint).
+   (merge a454cdca42 kh/doc-am-format-sendmail later to maint).
