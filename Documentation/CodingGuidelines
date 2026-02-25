@@ -656,6 +656,19 @@ For C programs:
    unsigned other_field:1;
    unsigned field_with_longer_name:1;
 
+ - Array names should be named in the singular form if the individual items are
+   subject of use. E.g.:
+
+         char *dog[] = ...;
+         walk_dog(dog[0]);
+         walk_dog(dog[1]);
+
+   Cases where the array is employed as a whole rather than as its unit parts,
+   the plural forms is preferable. E.g:
+
+         char *dogs[] = ...;
+         walk_all_dogs(dogs);
+
 For Perl programs:
 
  - Most of the C guidelines above apply.
