@@ -62,15 +62,15 @@ static int get_references_format(struct repository *repo, struct strbuf *buf)
 	return 0;
 }
 
-/* repo_info_fields keys must be in lexicographical order */
-static const struct field repo_info_fields[] = {
+/* repo_info_field keys must be in lexicographical order */
+static const struct field repo_info_field[] = {
 	{ "layout.bare", get_layout_bare },
 	{ "layout.shallow", get_layout_shallow },
 	{ "object.format", get_object_format },
 	{ "references.format", get_references_format },
 };
 
-static int repo_info_fields_cmp(const void *va, const void *vb)
+static int repo_info_field_cmp(const void *va, const void *vb)
 {
 	const struct field *a = va;
 	const struct field *b = vb;
@@ -81,10 +81,10 @@ static int repo_info_fields_cmp(const void *va, const void *vb)
 static get_value_fn *get_value_fn_for_key(const char *key)
 {
 	const struct field search_key = { key, NULL };
-	const struct field *found = bsearch(&search_key, repo_info_fields,
-					    ARRAY_SIZE(repo_info_fields),
+	const struct field *found = bsearch(&search_key, repo_info_field,
+					    ARRAY_SIZE(repo_info_field),
 					    sizeof(*found),
-					    repo_info_fields_cmp);
+					    repo_info_field_cmp);
 	return found ? found->get_value : NULL;
 }
 
@@ -137,8 +137,8 @@ static int print_all_fields(struct repository *repo,
 {
 	struct strbuf valbuf = STRBUF_INIT;
 
-	for (size_t i = 0; i < ARRAY_SIZE(repo_info_fields); i++) {
-		const struct field *field = &repo_info_fields[i];
+	for (size_t i = 0; i < ARRAY_SIZE(repo_info_field); i++) {
+		const struct field *field = &repo_info_field[i];
 
 		strbuf_reset(&valbuf);
 		field->get_value(repo, &valbuf);
@@ -164,8 +164,8 @@ static int print_keys(enum output_format format)
 		die(_("--keys can only be used with --format=lines or --format=nul"));
 	}
 
-	for (size_t i = 0; i < ARRAY_SIZE(repo_info_fields); i++) {
-		const struct field *field = &repo_info_fields[i];
+	for (size_t i = 0; i < ARRAY_SIZE(repo_info_field); i++) {
+		const struct field *field = &repo_info_field[i];
 		printf("%s%c", field->key, sep);
 	}
 
