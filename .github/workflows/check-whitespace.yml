@@ -1,4 +1,4 @@
-name: check-whitespace
+check-whitespace
 
 # Get the repository with all commits to ensure that we can analyze
 # all of the commits contributed via the Pull Request.
