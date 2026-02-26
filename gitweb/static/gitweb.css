@@ -42,7 +42,7 @@ a.list img.avatar {
 }
 
 div.page_header {
-	height: 25px;
+	min-height: 25px;
 	padding: 8px;
 	font-size: 150%;
 	font-weight: bold;
@@ -73,9 +73,15 @@ div.page_path {
 }
 
 div.page_footer {
-	height: 22px;
+	min-height: 22px;
 	padding: 4px 8px;
 	background-color: #d9d8d1;
+}
+
+div.page_footer::after {
+	content: "";
+	display: table;
+	clear: both;
 }
 
 div.page_footer_text {
@@ -123,6 +129,7 @@ div.title_text {
 
 div.log_body {
 	padding: 8px 8px 8px 150px;
+	overflow-wrap: anywhere;
 }
 
 span.age {
@@ -684,3 +691,66 @@ div.remote {
 .kwb    { color:#830000; }
 .kwc    { color:#000000; font-weight:bold; }
 .kwd    { color:#010181; }
+
+@media (max-width: 768px) {
+	div.page_body {
+		overflow-x: auto;
+		-webkit-overflow-scrolling: touch;
+	}
+
+	div.page_body div.pre {
+		min-width: max-content;
+	}
+
+	div.projsearch {
+		padding: 0 8px;
+		box-sizing: border-box;
+	}
+
+	div.projsearch input[type="text"] {
+		max-width: 100%;
+		box-sizing: border-box;
+	}
+
+	div.title_text {
+		overflow-x: auto;
+		-webkit-overflow-scrolling: touch;
+		padding-left: 4px;
+		padding-right: 4px;
+		box-sizing: border-box;
+	}
+
+	div.title_text table.object_header {
+		width: max-content;
+	}
+
+	div.log_body {
+		padding: 8px;
+		clear: left;
+	}
+
+	div.patchset div.patch {
+		width: max-content;
+		min-width: 100%;
+	}
+
+	div.diff.header {
+		padding: 4px 8px 2px 8px;
+		white-space: nowrap;
+		overflow-wrap: normal;
+	}
+
+	div.diff.extended_header {
+		padding: 2px 8px;
+		white-space: nowrap;
+		overflow-wrap: normal;
+	}
+
+	div.diff.ctx,
+	div.diff.add,
+	div.diff.rem,
+	div.diff.chunk_header {
+		padding: 0 8px;
+		white-space: pre;
+	}
+}
