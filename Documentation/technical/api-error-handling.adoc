@@ -94,6 +94,8 @@ function calls can be chained:
 	    ref_transaction_update(t, "HEAD", ..., &err) ||
 	    ret_transaction_commit(t, &err))
 		die("%s", err.buf);
+m
+
 
 The 'err' parameter must be a pointer to a valid strbuf.  To silence
 a message, pass a strbuf that is explicitly ignored:
@@ -101,3 +103,4 @@ a message, pass a strbuf that is explicitly ignored:
 	if (thing_that_can_fail_in_an_ignorable_way(..., &err))
 		/* This failure is okay. */
 		strbuf_reset(&err);
+m
