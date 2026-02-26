@@ -2,7 +2,6 @@
  * Helper functions for tree diff generation
  */
 
-#define USE_THE_REPOSITORY_VARIABLE
 #define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
@@ -11,7 +10,6 @@
 #include "hash.h"
 #include "tree.h"
 #include "tree-walk.h"
-#include "environment.h"
 #include "repository.h"
 #include "dir.h"
 
@@ -253,7 +251,7 @@ static void emit_path(struct combine_diff_path ***tail,
 
 		strbuf_add(base, path, pathlen);
 		p = combine_diff_path_new(base->buf, base->len, mode,
-					  oid ? oid : null_oid(the_hash_algo),
+					  oid ? oid : null_oid(opt->repo->hash_algo),
 					  nparent);
 		strbuf_setlen(base, old_baselen);
 
@@ -278,7 +276,7 @@ static void emit_path(struct combine_diff_path ***tail,
 				mode_i = tp[i].entry.mode;
 			}
 			else {
-				oid_i = null_oid(the_hash_algo);
+				oid_i = null_oid(opt->repo->hash_algo);
 				mode_i = 0;
 			}
 
