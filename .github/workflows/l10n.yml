@@ -1,4 +1,4 @@
-name: git-l10n
+name:help
 
 on: [push, pull_request_target]
 
