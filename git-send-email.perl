@@ -23,6 +23,7 @@ use Getopt::Long;
 use Git::LoadCPAN::Error qw(:try);
 use Git;
 use Git::I18N;
+use Encode qw(find_encoding);
 
 Getopt::Long::Configure qw/ pass_through /;
 
@@ -984,6 +985,18 @@ EOT3
 	}
 }
 
+sub confirm_ask {
+	my ($resp) = @_;
+	my $term = term();
+	return 0
+		unless defined $term->IN and defined fileno($term->IN) and
+		       defined $term->OUT and defined fileno($term->OUT);
+	my $yesno = $term->readline(
+		# TRANSLATORS: please keep [y/N] as is.
+		sprintf(__("Are you sure you want to use <%s> [y/N]? "), $resp));
+	return defined $yesno && $yesno =~ /y/i;
+}
+
 sub ask {
 	my ($prompt, %arg) = @_;
 	my $valid_re = $arg{valid_re};
@@ -1008,10 +1021,7 @@ sub ask {
 			return $resp;
 		}
 		if ($confirm_only) {
-			my $yesno = $term->readline(
-				# TRANSLATORS: please keep [y/N] as is.
-				sprintf(__("Are you sure you want to use <%s> [y/N]? "), $resp));
-			if (defined $yesno && $yesno =~ /y/i) {
+			if (confirm_ask($resp)) {
 				return $resp;
 			}
 		}
@@ -1044,9 +1054,21 @@ if (!defined $auto_8bit_encoding && scalar %broken_encoding) {
 	foreach my $f (sort keys %broken_encoding) {
 		print "    $f\n";
 	}
-	$auto_8bit_encoding = ask(__("Which 8bit encoding should I declare [UTF-8]? "),
-				  valid_re => qr/.{4}/, confirm_only => 1,
-				  default => "UTF-8");
+	while(1) {
+		my $encoding = ask(__("Declare which 8bit encoding to use [default: UTF-8]? "),
+		valid_re => qr/^\S+$/,
+		default  => "UTF-8");
+		next unless defined $encoding;
+		if (find_encoding($encoding)) {
+			$auto_8bit_encoding = $encoding;
+			last;
+		}
+		printf STDERR __("warning: '%s' does not appear to be a valid charset name.\n"), $encoding;
+		if (confirm_ask($encoding)) {
+			$auto_8bit_encoding = $encoding;
+			last;
+		}
+	}
 }
 
 if (!$force) {
