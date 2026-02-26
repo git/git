@@ -3,6 +3,7 @@
 #include "abspath.h"
 #include "config.h"
 #include "color.h"
+#include "date.h"
 #include "editor.h"
 #include "environment.h"
 #include "gettext.h"
@@ -85,6 +86,17 @@ struct config_location_options {
 	.respect_includes_opt = -1, \
 }
 
+enum config_type {
+	TYPE_NONE = 0,
+	TYPE_BOOL,
+	TYPE_INT,
+	TYPE_BOOL_OR_INT,
+	TYPE_PATH,
+	TYPE_EXPIRY_DATE,
+	TYPE_COLOR,
+	TYPE_BOOL_OR_STR,
+};
+
 #define CONFIG_TYPE_OPTIONS(type) \
 	OPT_GROUP(N_("Type")), \
 	OPT_CALLBACK('t', "type", &type, N_("type"), N_("value is given this type"), option_parse_type), \
@@ -110,7 +122,7 @@ struct config_display_options {
 	int show_origin;
 	int show_scope;
 	int show_keys;
-	int type;
+	enum config_type type;
 	char *default_value;
 	/* Populated via `display_options_init()`. */
 	int term;
@@ -121,15 +133,8 @@ struct config_display_options {
 	.term = '\n', \
 	.delim = '=', \
 	.key_delim = ' ', \
+	.type = TYPE_NONE, \
 }
-
-#define TYPE_BOOL		1
-#define TYPE_INT		2
-#define TYPE_BOOL_OR_INT	3
-#define TYPE_PATH		4
-#define TYPE_EXPIRY_DATE	5
-#define TYPE_COLOR		6
-#define TYPE_BOOL_OR_STR	7
 
 #define OPT_CALLBACK_VALUE(s, l, v, h, i) { \
 	.type = OPTION_CALLBACK, \
@@ -231,104 +236,231 @@ static void show_config_scope(const struct config_display_options *opts,
 	strbuf_addch(buf, term);
 }
 
-static int show_all_config(const char *key_, const char *value_,
-			   const struct config_context *ctx,
-			   void *cb)
-{
-	const struct config_display_options *opts = cb;
-	const struct key_value_info *kvi = ctx->kvi;
-
-	if (opts->show_origin || opts->show_scope) {
-		struct strbuf buf = STRBUF_INIT;
-		if (opts->show_scope)
-			show_config_scope(opts, kvi, &buf);
-		if (opts->show_origin)
-			show_config_origin(opts, kvi, &buf);
-		/* Use fwrite as "buf" can contain \0's if "end_null" is set. */
-		fwrite(buf.buf, 1, buf.len, stdout);
-		strbuf_release(&buf);
-	}
-	if (!opts->omit_values && value_)
-		printf("%s%c%s%c", key_, opts->delim, value_, opts->term);
-	else
-		printf("%s%c", key_, opts->term);
-	return 0;
-}
-
 struct strbuf_list {
 	struct strbuf *items;
 	int nr;
 	int alloc;
 };
 
+static int format_config_int64(struct strbuf *buf,
+			       const char *key_,
+			       const char *value_,
+			       const struct key_value_info *kvi,
+			       int gently)
+{
+	int64_t v = 0;
+	if (gently) {
+		if (!git_parse_int64(value_, &v))
+			return -1;
+	} else {
+		/* may die() */
+		v = git_config_int64(key_, value_ ? value_ : "", kvi);
+	}
+
+	strbuf_addf(buf, "%"PRId64, v);
+	return 0;
+}
+
+static int format_config_bool(struct strbuf *buf,
+			      const char *key_,
+			      const char *value_,
+			      int gently)
+{
+	int v = 0;
+	if (gently) {
+		if ((v = git_parse_maybe_bool(value_)) < 0)
+			return -1;
+	} else {
+		/* may die() */
+		v = git_config_bool(key_, value_);
+	}
+
+	strbuf_addstr(buf, v ? "true" : "false");
+	return 0;
+}
+
+static int format_config_bool_or_int(struct strbuf *buf,
+				     const char *key_,
+				     const char *value_,
+				     const struct key_value_info *kvi,
+				     int gently)
+{
+	int v, is_bool = 0;
+
+	if (gently) {
+		v = git_parse_maybe_bool_text(value_);
+
+		if (v >= 0)
+			is_bool = 1;
+		else if (!git_parse_int(value_, &v))
+			return -1;
+	} else {
+		v = git_config_bool_or_int(key_, value_, kvi,
+					   &is_bool);
+	}
+
+	if (is_bool)
+		strbuf_addstr(buf, v ? "true" : "false");
+	else
+		strbuf_addf(buf, "%d", v);
+
+	return 0;
+}
+
+/* This mode is always gentle. */
+static int format_config_bool_or_str(struct strbuf *buf,
+				     const char *value_)
+{
+	int v = git_parse_maybe_bool(value_);
+	if (v < 0)
+		strbuf_addstr(buf, value_);
+	else
+		strbuf_addstr(buf, v ? "true" : "false");
+	return 0;
+}
+
+static int format_config_path(struct strbuf *buf,
+			      const char *key_,
+			      const char *value_,
+			      int gently)
+{
+	char *v;
+
+	if (git_config_pathname(&v, key_, value_) < 0)
+		return -1;
+
+	if (v)
+		strbuf_addstr(buf, v);
+	else
+		return gently ? -1 : 1; /* :(optional)no-such-file */
+
+	free(v);
+	return 0;
+}
+
+static int format_config_expiry_date(struct strbuf *buf,
+				     const char *key_,
+				     const char *value_,
+				     int quietly)
+{
+	timestamp_t t;
+	if (quietly) {
+		if (parse_expiry_date(value_, &t))
+			return -1;
+	} else if (git_config_expiry_date(&t, key_, value_) < 0) {
+		return -1;
+	}
+
+	strbuf_addf(buf, "%"PRItime, t);
+	return 0;
+}
+
+static int format_config_color(struct strbuf *buf,
+			       const char *key_,
+			       const char *value_,
+			       int gently)
+{
+	char v[COLOR_MAXLEN];
+
+	if (gently) {
+		if (color_parse_quietly(value_, v) < 0)
+			return -1;
+	} else if (git_config_color(v, key_, value_) < 0) {
+		return -1;
+	}
+
+	strbuf_addstr(buf, v);
+	return 0;
+}
+
 /*
  * Format the configuration key-value pair (`key_`, `value_`) and
  * append it into strbuf `buf`.  Returns a negative value on failure,
  * 0 on success, 1 on a missing optional value (i.e., telling the
  * caller to pretend that <key_,value_> did not exist).
+ *
+ * Note: 'gently' is currently ignored, but will be implemented in
+ * a future change.
  */
 static int format_config(const struct config_display_options *opts,
 			 struct strbuf *buf, const char *key_,
-			 const char *value_, const struct key_value_info *kvi)
+			 const char *value_, const struct key_value_info *kvi,
+			 int gently)
 {
+	int res = 0;
 	if (opts->show_scope)
 		show_config_scope(opts, kvi, buf);
 	if (opts->show_origin)
 		show_config_origin(opts, kvi, buf);
 	if (opts->show_keys)
 		strbuf_addstr(buf, key_);
-	if (!opts->omit_values) {
-		if (opts->show_keys)
-			strbuf_addch(buf, opts->key_delim);
 
-		if (opts->type == TYPE_INT)
-			strbuf_addf(buf, "%"PRId64,
-				    git_config_int64(key_, value_ ? value_ : "", kvi));
-		else if (opts->type == TYPE_BOOL)
-			strbuf_addstr(buf, git_config_bool(key_, value_) ?
-				      "true" : "false");
-		else if (opts->type == TYPE_BOOL_OR_INT) {
-			int is_bool, v;
-			v = git_config_bool_or_int(key_, value_, kvi,
-						   &is_bool);
-			if (is_bool)
-				strbuf_addstr(buf, v ? "true" : "false");
-			else
-				strbuf_addf(buf, "%d", v);
-		} else if (opts->type == TYPE_BOOL_OR_STR) {
-			int v = git_parse_maybe_bool(value_);
-			if (v < 0)
-				strbuf_addstr(buf, value_);
-			else
-				strbuf_addstr(buf, v ? "true" : "false");
-		} else if (opts->type == TYPE_PATH) {
-			char *v;
-			if (git_config_pathname(&v, key_, value_) < 0)
-				return -1;
-			if (v)
-				strbuf_addstr(buf, v);
-			else
-				return 1; /* :(optional)no-such-file */
-			free((char *)v);
-		} else if (opts->type == TYPE_EXPIRY_DATE) {
-			timestamp_t t;
-			if (git_config_expiry_date(&t, key_, value_) < 0)
-				return -1;
-			strbuf_addf(buf, "%"PRItime, t);
-		} else if (opts->type == TYPE_COLOR) {
-			char v[COLOR_MAXLEN];
-			if (git_config_color(v, key_, value_) < 0)
-				return -1;
-			strbuf_addstr(buf, v);
-		} else if (value_) {
+	if (opts->omit_values)
+		goto terminator;
+
+	if (opts->show_keys)
+		strbuf_addch(buf, opts->key_delim);
+
+	switch (opts->type) {
+	case TYPE_INT:
+		res = format_config_int64(buf, key_, value_, kvi, gently);
+		break;
+
+	case TYPE_BOOL:
+		res = format_config_bool(buf, key_, value_, gently);
+		break;
+
+	case TYPE_BOOL_OR_INT:
+		res = format_config_bool_or_int(buf, key_, value_, kvi, gently);
+		break;
+
+	case TYPE_BOOL_OR_STR:
+		res = format_config_bool_or_str(buf, value_);
+		break;
+
+	case TYPE_PATH:
+		res = format_config_path(buf, key_, value_, gently);
+		break;
+
+	case TYPE_EXPIRY_DATE:
+		res = format_config_expiry_date(buf, key_, value_, gently);
+		break;
+
+	case TYPE_COLOR:
+		res = format_config_color(buf, key_, value_, gently);
+		break;
+
+	case TYPE_NONE:
+		if (value_) {
 			strbuf_addstr(buf, value_);
 		} else {
 			/* Just show the key name; back out delimiter */
 			if (opts->show_keys)
 				strbuf_setlen(buf, buf->len - 1);
 		}
+		break;
+
+	default:
+		BUG("undefined type %d", opts->type);
 	}
+
+terminator:
 	strbuf_addch(buf, opts->term);
+	return res;
+}
+
+static int show_all_config(const char *key_, const char *value_,
+			   const struct config_context *ctx,
+			   void *cb)
+{
+	const struct config_display_options *opts = cb;
+	const struct key_value_info *kvi = ctx->kvi;
+	struct strbuf formatted = STRBUF_INIT;
+
+	if (format_config(opts, &formatted, key_, value_, kvi, 1) >= 0)
+		fwrite(formatted.buf, 1, formatted.len, stdout);
+
+	strbuf_release(&formatted);
 	return 0;
 }
 
@@ -372,7 +504,7 @@ static int collect_config(const char *key_, const char *value_,
 	strbuf_init(&values->items[values->nr], 0);
 
 	status = format_config(data->display_opts, &values->items[values->nr++],
-			       key_, value_, kvi);
+			       key_, value_, kvi, 0);
 	if (status < 0)
 		return status;
 	if (status) {
@@ -463,7 +595,7 @@ static int get_value(const struct config_location_options *opts,
 		strbuf_init(item, 0);
 
 		status = format_config(display_opts, item, key_,
-				       display_opts->default_value, &kvi);
+				       display_opts->default_value, &kvi, 0);
 		if (status < 0)
 			die(_("failed to format default config value: %s"),
 			    display_opts->default_value);
@@ -743,7 +875,7 @@ static int get_urlmatch(const struct config_location_options *opts,
 
 		status = format_config(&display_opts, &buf, item->string,
 				       matched->value_is_null ? NULL : matched->value.buf,
-				       &matched->kvi);
+				       &matched->kvi, 0);
 		if (!status)
 			fwrite(buf.buf, 1, buf.len, stdout);
 		strbuf_release(&buf);
@@ -868,6 +1000,19 @@ static void display_options_init(struct config_display_options *opts)
 	}
 }
 
+static void display_options_init_list(struct config_display_options *opts)
+{
+	opts->show_keys = 1;
+
+	if (opts->end_nul) {
+		display_options_init(opts);
+	} else {
+		opts->term = '\n';
+		opts->delim = ' ';
+		opts->key_delim = '=';
+	}
+}
+
 static int cmd_config_list(int argc, const char **argv, const char *prefix,
 			   struct repository *repo UNUSED)
 {
@@ -886,7 +1031,7 @@ static int cmd_config_list(int argc, const char **argv, const char *prefix,
 	check_argc(argc, 0, 0);
 
 	location_options_init(&location_opts, prefix);
-	display_options_init(&display_opts);
+	display_options_init_list(&display_opts);
 
 	setup_auto_pager("config", 1);
 
@@ -1317,6 +1462,7 @@ static int cmd_config_actions(int argc, const char **argv, const char *prefix)
 
 	if (actions == ACTION_LIST) {
 		check_argc(argc, 0, 0);
+		display_options_init_list(&display_opts);
 		if (config_with_options(show_all_config, &display_opts,
 					&location_opts.source, the_repository,
 					&location_opts.options) < 0) {
