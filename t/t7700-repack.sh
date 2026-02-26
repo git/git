@@ -217,6 +217,7 @@ test_expect_success 'repack --keep-pack' '
 		cd keep-pack &&
 		# avoid producing different packs due to delta/base choices
 		git config pack.window 0 &&
+		git config maintenance.auto false &&
 		P1=$(commit_and_pack 1) &&
 		P2=$(commit_and_pack 2) &&
 		P3=$(commit_and_pack 3) &&
@@ -260,6 +261,7 @@ test_expect_success 'repacking fails when missing .pack actually means missing o
 
 		# Avoid producing different packs due to delta/base choices
 		git config pack.window 0 &&
+		git config maintenance.auto false &&
 		P1=$(commit_and_pack 1) &&
 		P2=$(commit_and_pack 2) &&
 		P3=$(commit_and_pack 3) &&
@@ -534,6 +536,7 @@ test_expect_success 'setup for --write-midx tests' '
 	(
 		cd midx &&
 		git config core.multiPackIndex true &&
+		git config maintenance.auto false &&
 
 		test_commit base
 	)

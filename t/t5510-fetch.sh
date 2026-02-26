@@ -1321,6 +1321,7 @@ test_expect_success 'fetching with auto-gc does not lock up' '
 		git config fetch.unpackLimit 1 &&
 		git config gc.autoPackLimit 1 &&
 		git config gc.autoDetach false &&
+		git config maintenance.strategy gc &&
 		GIT_ASK_YESNO="$TRASH_DIRECTORY/askyesno" git fetch --verbose >fetch.out 2>&1 &&
 		test_grep "Auto packing the repository" fetch.out &&
 		! grep "Should I try again" fetch.out

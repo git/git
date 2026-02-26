@@ -14,6 +14,7 @@ packed_objects () {
 
 test_expect_success 'setup for --stdin-packs tests' '
 	git init stdin-packs &&
+	git -C stdin-packs config set maintenance.auto false &&
 	(
 		cd stdin-packs &&
 
@@ -255,6 +256,7 @@ test_expect_success '--stdin-packs=follow walks into unknown packs' '
 	git init repo &&
 	(
 		cd repo &&
+		git config set maintenance.auto false &&
 
 		for c in A B C D
 		do

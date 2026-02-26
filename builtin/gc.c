@@ -1980,7 +1980,7 @@ static void initialize_task_config(struct maintenance_run_opts *opts,
 		strategy = none_strategy;
 		type = MAINTENANCE_TYPE_SCHEDULED;
 	} else {
-		strategy = gc_strategy;
+		strategy = geometric_strategy;
 		type = MAINTENANCE_TYPE_MANUAL;
 	}
 
