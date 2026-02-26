@@ -5,7 +5,7 @@
 #include "fsmonitor-settings.h"
 #include "fsmonitor-path-utils.h"
 
- /*
+/*
  * For the builtin FSMonitor, we create the Unix domain socket for the
  * IPC in the .git directory.  If the working directory is remote,
  * then the socket will be created on the remote file system.  This
@@ -22,25 +22,31 @@
  * The builtin FSMonitor uses a Unix domain socket in the .git
  * directory for IPC.  These Windows drive formats do not support
  * Unix domain sockets, so mark them as incompatible for the daemon.
- *
  */
 static enum fsmonitor_reason check_uds_volume(struct repository *r)
 {
 	struct fs_info fs;
 	const char *ipc_path = fsmonitor_ipc__get_path(r);
-	struct strbuf path = STRBUF_INIT;
-	strbuf_add(&path, ipc_path, strlen(ipc_path));
+	char *path;
+	char *dir;
 
-	if (fsmonitor__get_fs_info(dirname(path.buf), &fs) == -1) {
-		strbuf_release(&path);
+	/*
+	 * Create a copy for dirname() since it may modify its argument.
+	 */
+	path = xstrdup(ipc_path);
+	dir = dirname(path);
+
+	if (fsmonitor__get_fs_info(dir, &fs) == -1) {
+		free(path);
 		return FSMONITOR_REASON_ERROR;
 	}
 
-	strbuf_release(&path);
+	free(path);
 
 	if (fs.is_remote ||
-		!strcmp(fs.typename, "msdos") ||
-		!strcmp(fs.typename, "ntfs")) {
+	    !strcmp(fs.typename, "msdos") ||
+	    !strcmp(fs.typename, "ntfs") ||
+	    !strcmp(fs.typename, "vfat")) {
 		free(fs.typename);
 		return FSMONITOR_REASON_NOSOCKETS;
 	}
