@@ -766,7 +766,7 @@ do
 		else
 			test_expect_success "Matrix[uc:$uc_val][fsm:$fsm_val] enable fsmonitor" '
 				git config core.fsmonitor true &&
-				git fsmonitor--daemon start &&
+				git fsmonitor--daemon start --start-timeout=10 &&
 				git update-index --fsmonitor
 			'
 		fi
@@ -997,7 +997,17 @@ start_git_in_background () {
 		nr_tries_left=$(($nr_tries_left - 1))
 	done >/dev/null 2>&1 3>&- 4>&- 5>&- 6>&- 7>&- &
 	watchdog_pid=$!
+
+	# Disable job control before wait.  With "set -m", bash treats
+	# "wait $pid" as waiting for the entire job (process group),
+	# which blocks indefinitely if the fsmonitor daemon was spawned
+	# into the same process group and is still running.  Turning off
+	# job control makes "wait" only wait for the specific PID.
+	set +m &&
 	wait $git_pid
+	wait_status=$?
+	set -m
+	return $wait_status
 }
 
 stop_git () {
