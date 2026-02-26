@@ -1,0 +1,38 @@
+diff_cmd () {
+	"$merge_tool_path" \
+		-R 'Accel.Search: "Ctrl+F"' \
+		-R 'Accel.SearchForward: "Ctrl+G"' \
+		"$LOCAL" "$REMOTE"
+
+	# xxdiff can segfault on binary files which are often uninteresting.
+	# Do not allow segfaults to stop us from continuing on to the next file.
+	if test $? = 128
+	then
+		return 1
+	fi
+}
+
+diff_cmd_help () {
+	echo "Use xxdiff (requires a graphical session)"
+}
+
+merge_cmd () {
+	if $base_present
+	then
+		"$merge_tool_path" -X --show-merged-pane \
+			-R 'Accel.SaveAsMerged: "Ctrl+S"' \
+			-R 'Accel.Search: "Ctrl+F"' \
+			-R 'Accel.SearchForward: "Ctrl+G"' \
+			--merged-file "$MERGED" "$LOCAL" "$BASE" "$REMOTE"
+	else
+		"$merge_tool_path" -X $extra \
+			-R 'Accel.SaveAsMerged: "Ctrl+S"' \
+			-R 'Accel.Search: "Ctrl+F"' \
+			-R 'Accel.SearchForward: "Ctrl+G"' \
+			--merged-file "$MERGED" "$LOCAL" "$REMOTE"
+	fi
+}
+
+merge_cmd_help () {
+	echo "Use xxdiff (requires a graphical session)"
+}

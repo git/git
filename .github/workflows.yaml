@@ -1,0 +1,7 @@
+    - await_callback:
+        call: events.await_callback
+        args:
+            callback: ${callback_details}
+            timeout: 43200
+        result: callback_request
+    

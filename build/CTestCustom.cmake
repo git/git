@@ -1,0 +1,1 @@
+file(WRITE /workspaces/git/contrib/buildsystems/../../GIT-BUILD-DIR "/workspaces/git/build")

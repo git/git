@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Site BuildName="Linux-g++"
+	BuildStamp="20250621-2251-Continuous"
+	Name="codespaces-b534ef"
+	Generator="ctest-3.16.3"
+	CompilerName="/usr/bin/g++"
+	CompilerVersion=""
+	OSName="Linux"
+	Hostname="codespaces-b534ef"
+	OSRelease="6.8.0-1027-azure"
+	OSVersion="#32~22.04.1-Ubuntu SMP Thu Apr  3 20:26:27 UTC 2025"
+	OSPlatform="x86_64"
+	Is64Bits="1"
+	VendorString="AuthenticAMD"
+	VendorID="Advanced Micro Devices"
+	FamilyID="25"
+	ModelID="1"
+	ProcessorCacheSize="512"
+	NumberOfLogicalCPU="2"
+	NumberOfPhysicalCPU="1"
+	TotalVirtualMemory="0"
+	TotalPhysicalMemory="7938"
+	LogicalProcessorsPerPhysical="2"
+	ProcessorClockFrequency="3261.1"
+	>
+	<Build>
+		<StartDateTime>Jun 21 22:51 UTC</StartDateTime>
+		<StartBuildTime>1750546272</StartBuildTime>
+		<BuildCommand>/usr/bin/cmake --build . --config "Release"</BuildCommand>
+		<Warning>
+			<BuildLogLine>1</BuildLogLine>
+			<Text>make[4]: warning: jobserver unavailable: using -j1.  Add '+' to parent make rule.</Text>
+			<PreContext></PreContext>
+			<PostContext>[  2%] Built target reftable
+[ 45%] Built target libgit
+[ 47%] Built target xdiff
+[ 47%] Built target common-main
+Scanning dependencies of target test-lib
+[ 47%] Building C object CMakeFiles/test-lib.dir/.../t/unit-tests/test-lib.c.o
+[ 47%] Built target test-lib
+Scanning dependencies of target test-tool
+[ 47%] Building C object CMakeFiles/test-tool.dir/.../t/helper/test-tool.c.o
+[ 47%] Building C object CMakeFiles/test-tool.dir/.../t/helper/test-advise.c.o</PostContext>
+			<RepeatCount>0</RepeatCount>
+		</Warning>
+		<Error>
+			<BuildLogLine>92</BuildLogLine>
+			<Text>/.../t/unit-tests/clar/clar.c:210:10: fatal error: clar.suite: No such file or directory</Text>
+			<SourceFile>unit-tests/clar/clar.c</SourceFile>
+			<SourceLineNumber>210</SourceLineNumber>
+			<PreContext>[ 59%] Building C object CMakeFiles/test-tool.dir/.../t/helper/test-userdiff.c.o
+[ 59%] Building C object CMakeFiles/test-tool.dir/.../t/helper/test-wildmatch.c.o
+[ 59%] Building C object CMakeFiles/test-tool.dir/.../t/helper/test-windows-named-pipe.c.o
+[ 59%] Building C object CMakeFiles/test-tool.dir/.../t/helper/test-write-cache.c.o
+[ 59%] Building C object CMakeFiles/test-tool.dir/.../t/helper/test-xml-encode.c.o
+[ 60%] Building C object CMakeFiles/test-tool.dir/.../t/helper/test-zlib.c.o
+[ 60%] Linking C executable t/helper/test-tool
+[ 60%] Built target test-tool
+Scanning dependencies of target clar-test-lib
+[ 60%] Building C object CMakeFiles/clar-test-lib.dir/.../t/unit-tests/clar/clar.c.o
+</PreContext>
+			<PostContext>  210 | #include "clar.suite"
+      |          ^~~~~~~~~~~~
+compilation terminated.
+</PostContext>
+			<RepeatCount>0</RepeatCount>
+		</Error>
+		<Error>
+			<BuildLogLine>96</BuildLogLine>
+			<Text>make[6]: *** [CMakeFiles/clar-test-lib.dir/build.make:63: CMakeFiles/clar-test-lib.dir/.../t/unit-tests/clar/clar.c.o] Error 1</Text>
+			<PreContext></PreContext>
+			<PostContext></PostContext>
+			<RepeatCount>0</RepeatCount>
+		</Error>
+		<Error>
+			<BuildLogLine>97</BuildLogLine>
+			<Text>make[5]: *** [CMakeFiles/Makefile2:1258: CMakeFiles/clar-test-lib.dir/all] Error 2</Text>
+			<PreContext></PreContext>
+			<PostContext>make[4]: *** [Makefile:141: all] Error 2
+</PostContext>
+			<RepeatCount>0</RepeatCount>
+		</Error>
+		<Warning>
+			<BuildLogLine>1</BuildLogLine>
+			<Text>*** WARNING non-zero return value in ctest from: /usr/bin/cmake</Text>
+			<PreContext></PreContext>
+			<PostContext></PostContext>
+			<RepeatCount>0</RepeatCount>
+		</Warning>
+		<Log Encoding="base64" Compression="bin/gzip"/>
+		<EndDateTime>Jun 21 22:51 UTC</EndDateTime>
+		<EndBuildTime>1750546280</EndBuildTime>
+		<ElapsedMinutes>0</ElapsedMinutes>
+	</Build>
+</Site>
