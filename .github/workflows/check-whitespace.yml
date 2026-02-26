@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   check-whitespace:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest 
     steps:
     - uses: actions/checkout@v5
       with:
