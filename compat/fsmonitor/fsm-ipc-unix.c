@@ -27,12 +27,14 @@ const char *fsmonitor_ipc__get_path(struct repository *r)
 	if (ipc_path)
 		return ipc_path;
 
-
 	/* By default the socket file is created in the .git directory */
 	if (fsmonitor__is_fs_remote(r->gitdir) < 1) {
 		ipc_path = fsmonitor_ipc__get_default_path();
 		return ipc_path;
 	}
+
+	if (!r->worktree)
+		BUG("repository has no worktree");
 
 	git_SHA1_Init(&sha1ctx);
 	git_SHA1_Update(&sha1ctx, r->worktree, strlen(r->worktree));
