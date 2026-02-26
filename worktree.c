@@ -66,6 +66,26 @@ static int is_current_worktree(struct worktree *wt)
 	return is_current;
 }
 
+struct worktree *get_worktree_from_repository(struct repository *repo)
+{
+	struct worktree *wt = xcalloc(1, sizeof(*wt));
+	char *gitdir = absolute_pathdup(repo->gitdir);
+	char *commondir = absolute_pathdup(repo->commondir);
+
+	wt->repo = repo;
+	wt->path = absolute_pathdup(repo->worktree ? repo->worktree
+						   : repo->gitdir);
+	wt->is_bare = !repo->worktree;
+	if (fspathcmp(gitdir, commondir))
+		wt->id = xstrdup(find_last_dir_sep(gitdir) + 1);
+	wt->is_current = is_current_worktree(wt);
+	add_head_info(wt);
+
+	free(gitdir);
+	free(commondir);
+	return wt;
+}
+
 /*
 * When in a secondary worktree, and when extensions.worktreeConfig
 * is true, only $commondir/config and $commondir/worktrees/<id>/
@@ -288,7 +308,7 @@ const char *worktree_lock_reason(struct worktree *wt)
 	if (!wt->lock_reason_valid) {
 		struct strbuf path = STRBUF_INIT;
 
-		strbuf_addstr(&path, worktree_git_path(the_repository, wt, "locked"));
+		strbuf_addstr(&path, worktree_git_path(wt, "locked"));
 		if (file_exists(path.buf)) {
 			struct strbuf lock_reason = STRBUF_INIT;
 			if (strbuf_read_file(&lock_reason, path.buf, 0) < 0)
