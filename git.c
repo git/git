@@ -119,7 +119,7 @@ static int list_cmds(const char *spec)
 	}
 	for (size_t i = 0; i < list.nr; i++)
 		puts(list.items[i].string);
-	string_list_clear(&list, 0);
+	string_list_clear(&list, 1);
 	return 0;
 }
 
