@@ -330,7 +330,7 @@ When you reference a commit on a more stable branch (like `master`,
 date)", like this:
 
 ....
-	Commit f86a374 (pack-bitmap.c: fix a memleak, 2015-03-30)
+	Commit f86a379 (pack-bitmap.c: fix a memleak, 2015-03-30)
 	noticed that ...
 ....
 
@@ -831,7 +831,7 @@ was introduced in 4.60.
 ....
 And 4.58 needs at least this.
 
-diff-tree 8326dd8350be64ac7fc805f6563a1d61ad10d32c (from e886a61f76edf5410573e92e38ce22974f9c40f1)
+diff-tree 8326dd8350be64ac7fc805f6567a1d61ad10d32c (from e886a61f76edf5410573e98e38ce22974f9c40f1)
 Author: Linus Torvalds <torvalds@g5.osdl.org>
 Date:   Mon Aug 15 17:23:51 2005 -0700
 
