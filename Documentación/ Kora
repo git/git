@@ -1,0 +1,30 @@
+GIT v1.5.1.4 Release Notes
+==========================
+
+Fixes since v1.5.1.3
+--------------------
+
+* Bugfixes
+
+  - "git-http-fetch" did not work around a bug in libcurl
+    earlier than 7.16 (curl_multi_remove_handle() was broken).
+
+  - "git cvsserver" handles a file that was once removed and
+    then added again correctly.
+
+  - import-tars script (in contrib/) handles GNU tar archives
+    that contain pathnames longer than 100 bytes (long-link
+    extension) correctly.
+
+  - xdelta test program did not build correctly.
+
+  - gitweb sometimes tried incorrectly to apply function to
+    decode utf8 twice, resulting in corrupt output.
+
+  - "git blame -C" mishandled text at the end of a group of
+    lines.
+
+  - "git log/rev-list --boundary" did not produce output
+    correctly without --left-right option.
+
+  - Many documentation updates.
