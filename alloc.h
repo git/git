@@ -17,4 +17,6 @@ void *alloc_object_node(struct repository *r);
 struct alloc_state *alloc_state_alloc(void);
 void alloc_state_free_and_null(struct alloc_state **s_);
 
+int is_absolute_path(const char *path);
+
 #endif

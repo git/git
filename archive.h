@@ -60,4 +60,6 @@ typedef int (*write_archive_entry_fn_t)(struct archiver_args *args,
 
 int write_archive_entries(struct archiver_args *args, write_archive_entry_fn_t write_entry);
 
+int is_absolute_path(const char *path);
+
 #endif	/* ARCHIVE_H */
