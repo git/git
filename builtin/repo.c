@@ -821,6 +821,27 @@ static void stats_table_clear(struct stats_table *table)
 	string_list_clear(&table->rows, 1);
 }
 
+static void print_keyvalue_size(const char *key, size_t value,
+				      char key_delim, char value_delim)
+{
+	printf("%s%c%" PRIuMAX "%c", key, key_delim, (uintmax_t)value,
+	       value_delim);
+}
+
+static void print_object_values(const struct object_values *values,
+				const char *metric,
+				char key_delim, char value_delim)
+{
+	printf("objects.commits.%s%c%" PRIuMAX "%c", metric, key_delim,
+	       (uintmax_t)values->commits, value_delim);
+	printf("objects.trees.%s%c%" PRIuMAX "%c", metric, key_delim,
+	       (uintmax_t)values->trees, value_delim);
+	printf("objects.blobs.%s%c%" PRIuMAX "%c", metric, key_delim,
+	       (uintmax_t)values->blobs, value_delim);
+	printf("objects.tags.%s%c%" PRIuMAX "%c", metric, key_delim,
+	       (uintmax_t)values->tags, value_delim);
+}
+
 static void structure_keyvalue_print(struct repo_structure *stats,
 				     char key_delim, char value_delim)
 {
@@ -831,86 +852,61 @@ static void structure_keyvalue_print(struct repo_structure *stats,
 	size_t max_inflated_size = get_max_object_value(&stats->objects.max_inflated_sizes);
 	size_t max_disk_size = get_max_object_value(&stats->objects.max_disk_sizes);
 
-	printf("references.count%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)references_count_total, value_delim);
+	print_keyvalue_size("references.count", references_count_total,
+			   key_delim, value_delim);
 
-	printf("references.branches.count%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)stats->refs.branches, value_delim);
-	printf("references.tags.count%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)stats->refs.tags, value_delim);
-	printf("references.remotes.count%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)stats->refs.remotes, value_delim);
-	printf("references.others.count%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)stats->refs.others, value_delim);
+	print_keyvalue_size("references.branches.count", stats->refs.branches,
+			   key_delim, value_delim);
+	print_keyvalue_size("references.tags.count", stats->refs.tags,
+			   key_delim, value_delim);
+	print_keyvalue_size("references.remotes.count", stats->refs.remotes,
+			   key_delim, value_delim);
+	print_keyvalue_size("references.others.count", stats->refs.others,
+			   key_delim, value_delim);
 
-	printf("objects.count%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)object_count_total, value_delim);
+	print_keyvalue_size("objects.count", object_count_total,
+			   key_delim, value_delim);
 
-	printf("objects.commits.count%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)stats->objects.type_counts.commits, value_delim);
-	printf("objects.trees.count%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)stats->objects.type_counts.trees, value_delim);
-	printf("objects.blobs.count%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)stats->objects.type_counts.blobs, value_delim);
-	printf("objects.tags.count%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)stats->objects.type_counts.tags, value_delim);
+	print_object_values(&stats->objects.type_counts, "count",
+			    key_delim, value_delim);
 
-	printf("objects.inflated_size%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)inflated_size_total, value_delim);
+	print_keyvalue_size("objects.inflated_size", inflated_size_total,
+			   key_delim, value_delim);
 
-	printf("objects.commits.inflated_size%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)stats->objects.inflated_sizes.commits, value_delim);
-	printf("objects.trees.inflated_size%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)stats->objects.inflated_sizes.trees, value_delim);
-	printf("objects.blobs.inflated_size%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)stats->objects.inflated_sizes.blobs, value_delim);
-	printf("objects.tags.inflated_size%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)stats->objects.inflated_sizes.tags, value_delim);
+	print_object_values(&stats->objects.inflated_sizes, "inflated_size",
+			    key_delim, value_delim);
 
-	printf("objects.max_inflated_size%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)max_inflated_size, value_delim);
-	printf("objects.commits.max_inflated_size%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)stats->objects.max_inflated_sizes.commits, value_delim);
-	printf("objects.trees.max_inflated_size%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)stats->objects.max_inflated_sizes.trees, value_delim);
-	printf("objects.blobs.max_inflated_size%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)stats->objects.max_inflated_sizes.blobs, value_delim);
-	printf("objects.tags.max_inflated_size%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)stats->objects.max_inflated_sizes.tags, value_delim);
+	print_keyvalue_size("objects.max_inflated_size", max_inflated_size,
+			   key_delim, value_delim);
+	print_object_values(&stats->objects.max_inflated_sizes,
+			    "max_inflated_size", key_delim, value_delim);
 
-	printf("objects.disk_size%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)disk_size_total, value_delim);
+	print_keyvalue_size("objects.disk_size", disk_size_total,
+			   key_delim, value_delim);
 
-	printf("objects.max_disk_size%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)max_disk_size, value_delim);
-	printf("objects.commits.max_disk_size%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)stats->objects.max_disk_sizes.commits, value_delim);
-	printf("objects.trees.max_disk_size%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)stats->objects.max_disk_sizes.trees, value_delim);
-	printf("objects.blobs.max_disk_size%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)stats->objects.max_disk_sizes.blobs, value_delim);
-	printf("objects.tags.max_disk_size%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)stats->objects.max_disk_sizes.tags, value_delim);
+	print_keyvalue_size("objects.max_disk_size", max_disk_size,
+			   key_delim, value_delim);
+	print_object_values(&stats->objects.max_disk_sizes, "max_disk_size",
+			    key_delim, value_delim);
 
-	printf("objects.commits.max_parent_count%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)stats->objects.max_commit_parent_count, value_delim);
-	printf("objects.trees.max_entry_count%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)stats->objects.max_tree_entry_count, value_delim);
-	printf("objects.blobs.max_path_length%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)stats->objects.max_blob_path_length, value_delim);
-	printf("objects.blobs.max_path_depth%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)stats->objects.max_blob_path_depth, value_delim);
-	printf("objects.tags.max_chain_depth%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)stats->objects.max_tag_chain_depth, value_delim);
+	print_keyvalue_size("objects.commits.max_parent_count",
+			   stats->objects.max_commit_parent_count,
+			   key_delim, value_delim);
+	print_keyvalue_size("objects.trees.max_entry_count",
+			   stats->objects.max_tree_entry_count,
+			   key_delim, value_delim);
+	print_keyvalue_size("objects.blobs.max_path_length",
+			   stats->objects.max_blob_path_length,
+			   key_delim, value_delim);
+	print_keyvalue_size("objects.blobs.max_path_depth",
+			   stats->objects.max_blob_path_depth,
+			   key_delim, value_delim);
+	print_keyvalue_size("objects.tags.max_chain_depth",
+			   stats->objects.max_tag_chain_depth,
+			   key_delim, value_delim);
 
-	printf("objects.commits.disk_size%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)stats->objects.disk_sizes.commits, value_delim);
-	printf("objects.trees.disk_size%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)stats->objects.disk_sizes.trees, value_delim);
-	printf("objects.blobs.disk_size%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)stats->objects.disk_sizes.blobs, value_delim);
-	printf("objects.tags.disk_size%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)stats->objects.disk_sizes.tags, value_delim);
+	print_object_values(&stats->objects.disk_sizes, "disk_size",
+			    key_delim, value_delim);
 
 	fflush(stdout);
 }
