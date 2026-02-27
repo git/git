@@ -18,7 +18,7 @@
 #include "wt-status.h"
 
 #define GIT_HISTORY_REWORD_USAGE \
-	N_("git history reword <commit> [--ref-action=(branches|head|print)]")
+	N_("git history reword <commit> [--dry-run] [--update-refs=(branches|head)]")
 
 static void change_data_free(void *util, const char *str UNUSED)
 {
@@ -155,7 +155,6 @@ enum ref_action {
 	REF_ACTION_DEFAULT,
 	REF_ACTION_BRANCHES,
 	REF_ACTION_HEAD,
-	REF_ACTION_PRINT,
 };
 
 static int parse_ref_action(const struct option *opt, const char *value, int unset)
@@ -167,40 +166,58 @@ static int parse_ref_action(const struct option *opt, const char *value, int uns
 		*action = REF_ACTION_BRANCHES;
 	} else if (!strcmp(value, "head")) {
 		*action = REF_ACTION_HEAD;
-	} else if (!strcmp(value, "print")) {
-		*action = REF_ACTION_PRINT;
 	} else {
-		return error(_("%s expects one of 'branches', 'head' or 'print'"),
+		return error(_("%s expects one of 'branches' or 'head'"),
 			     opt->long_name);
 	}
 
 	return 0;
 }
 
-static int handle_reference_updates(enum ref_action action,
-				    struct repository *repo,
-				    struct commit *original,
-				    struct commit *rewritten,
-				    const char *reflog_msg)
+static int revwalk_contains_merges(struct repository *repo,
+				   const struct strvec *revwalk_args)
 {
-	const struct name_decoration *decoration;
-	struct replay_revisions_options opts = { 0 };
-	struct replay_result result = { 0 };
-	struct ref_transaction *transaction = NULL;
 	struct strvec args = STRVEC_INIT;
-	struct strbuf err = STRBUF_INIT;
-	struct commit *head = NULL;
 	struct rev_info revs;
-	char hex[GIT_MAX_HEXSZ + 1];
-	bool detached_head;
-	int head_flags = 0;
 	int ret;
 
-	refs_read_ref_full(get_main_ref_store(repo), "HEAD",
-			   RESOLVE_REF_NO_RECURSE, NULL, &head_flags);
-	detached_head = !(head_flags & REF_ISSYMREF);
+	strvec_pushv(&args, revwalk_args->v);
+	strvec_push(&args, "--min-parents=2");
 
 	repo_init_revisions(repo, &revs, NULL);
+
+	setup_revisions_from_strvec(&args, &revs, NULL);
+	if (args.nr != 1)
+		BUG("revisions were set up with invalid argument");
+
+	if (prepare_revision_walk(&revs) < 0) {
+		ret = error(_("error preparing revisions"));
+		goto out;
+	}
+
+	if (get_revision(&revs)) {
+		ret = error(_("replaying merge commits is not supported yet!"));
+		goto out;
+	}
+
+	reset_revision_walk();
+	ret = 0;
+
+out:
+	release_revisions(&revs);
+	strvec_clear(&args);
+	return ret;
+}
+
+static int setup_revwalk(struct repository *repo,
+			 enum ref_action action,
+			 struct commit *original,
+			 struct rev_info *revs)
+{
+	struct strvec args = STRVEC_INIT;
+	int ret;
+
+	repo_init_revisions(repo, revs, NULL);
 	strvec_push(&args, "ignored");
 	strvec_push(&args, "--reverse");
 	strvec_push(&args, "--topo-order");
@@ -224,6 +241,7 @@ static int handle_reference_updates(enum ref_action action,
 	 */
 	if (action == REF_ACTION_HEAD) {
 		struct commit_list *from_list = NULL;
+		struct commit *head;
 
 		head = lookup_commit_reference_by_name("HEAD");
 		if (!head) {
@@ -240,7 +258,7 @@ static int handle_reference_updates(enum ref_action action,
 			goto out;
 		} else if (!ret) {
 			ret = error(_("rewritten commit must be an ancestor "
-				      "of HEAD when using --ref-action=head"));
+				      "of HEAD when using --update-refs=head"));
 			goto out;
 		}
 
@@ -250,92 +268,131 @@ static int handle_reference_updates(enum ref_action action,
 		strvec_push(&args, "HEAD");
 	}
 
-	setup_revisions_from_strvec(&args, &revs, NULL);
+	ret = revwalk_contains_merges(repo, &args);
+	if (ret < 0)
+		goto out;
+
+	setup_revisions_from_strvec(&args, revs, NULL);
 	if (args.nr != 1)
 		BUG("revisions were set up with invalid argument");
 
+	ret = 0;
+
+out:
+	strvec_clear(&args);
+	return ret;
+}
+
+static int handle_ref_update(struct ref_transaction *transaction,
+			     const char *refname,
+			     const struct object_id *new_oid,
+			     const struct object_id *old_oid,
+			     const char *reflog_msg,
+			     struct strbuf *err)
+{
+	if (!transaction) {
+		printf("update %s %s %s\n",
+		       refname, oid_to_hex(new_oid), oid_to_hex(old_oid));
+		return 0;
+	}
+
+	return ref_transaction_update(transaction, refname, new_oid, old_oid,
+				      NULL, NULL, 0, reflog_msg, err);
+}
+
+static int handle_reference_updates(struct rev_info *revs,
+				    enum ref_action action,
+				    struct commit *original,
+				    struct commit *rewritten,
+				    const char *reflog_msg,
+				    int dry_run)
+{
+	const struct name_decoration *decoration;
+	struct replay_revisions_options opts = { 0 };
+	struct replay_result result = { 0 };
+	struct ref_transaction *transaction = NULL;
+	struct strbuf err = STRBUF_INIT;
+	char hex[GIT_MAX_HEXSZ + 1];
+	bool detached_head;
+	int head_flags = 0;
+	int ret;
+
+	refs_read_ref_full(get_main_ref_store(revs->repo), "HEAD",
+			   RESOLVE_REF_NO_RECURSE, NULL, &head_flags);
+	detached_head = !(head_flags & REF_ISSYMREF);
+
 	opts.onto = oid_to_hex_r(hex, &rewritten->object.oid);
 
-	ret = replay_revisions(&revs, &opts, &result);
+	ret = replay_revisions(revs, &opts, &result);
 	if (ret)
 		goto out;
 
-	switch (action) {
-	case REF_ACTION_BRANCHES:
-	case REF_ACTION_HEAD:
-		transaction = ref_store_transaction_begin(get_main_ref_store(repo), 0, &err);
+	if (action != REF_ACTION_BRANCHES && action != REF_ACTION_HEAD)
+		BUG("unsupported ref action %d", action);
+
+	if (!dry_run) {
+		transaction = ref_store_transaction_begin(get_main_ref_store(revs->repo), 0, &err);
 		if (!transaction) {
 			ret = error(_("failed to begin ref transaction: %s"), err.buf);
 			goto out;
 		}
+	}
 
-		for (size_t i = 0; i < result.updates_nr; i++) {
-			ret = ref_transaction_update(transaction,
-						     result.updates[i].refname,
-						     &result.updates[i].new_oid,
-						     &result.updates[i].old_oid,
-						     NULL, NULL, 0, reflog_msg, &err);
-			if (ret) {
-				ret = error(_("failed to update ref '%s': %s"),
-					    result.updates[i].refname, err.buf);
-				goto out;
-			}
-		}
-
-		/*
-		 * `replay_revisions()` only updates references that are
-		 * ancestors of `rewritten`, so we need to manually
-		 * handle updating references that point to `original`.
-		 */
-		for (decoration = get_name_decoration(&original->object);
-		     decoration;
-		     decoration = decoration->next)
-		{
-			if (decoration->type != DECORATION_REF_LOCAL &&
-			    decoration->type != DECORATION_REF_HEAD)
-				continue;
-
-			if (action == REF_ACTION_HEAD &&
-			    decoration->type != DECORATION_REF_HEAD)
-				continue;
-
-			/*
-			 * We only need to update HEAD separately in case it's
-			 * detached. If it's not we'd already update the branch
-			 * it is pointing to.
-			 */
-			if (action == REF_ACTION_BRANCHES &&
-			    decoration->type == DECORATION_REF_HEAD &&
-			    !detached_head)
-				continue;
-
-			ret = ref_transaction_update(transaction,
-						     decoration->name,
-						     &rewritten->object.oid,
-						     &original->object.oid,
-						     NULL, NULL, 0, reflog_msg, &err);
-			if (ret) {
-				ret = error(_("failed to update ref '%s': %s"),
-					    decoration->name, err.buf);
-				goto out;
-			}
-		}
-
-		if (ref_transaction_commit(transaction, &err)) {
-			ret = error(_("failed to commit ref transaction: %s"), err.buf);
+	for (size_t i = 0; i < result.updates_nr; i++) {
+		ret = handle_ref_update(transaction,
+					result.updates[i].refname,
+					&result.updates[i].new_oid,
+					&result.updates[i].old_oid,
+					reflog_msg, &err);
+		if (ret) {
+			ret = error(_("failed to update ref '%s': %s"),
+				    result.updates[i].refname, err.buf);
 			goto out;
 		}
+	}
 
-		break;
-	case REF_ACTION_PRINT:
-		for (size_t i = 0; i < result.updates_nr; i++)
-			printf("update %s %s %s\n",
-			       result.updates[i].refname,
-			       oid_to_hex(&result.updates[i].new_oid),
-			       oid_to_hex(&result.updates[i].old_oid));
-		break;
-	default:
-		BUG("unsupported ref action %d", action);
+	/*
+	 * `replay_revisions()` only updates references that are
+	 * ancestors of `rewritten`, so we need to manually
+	 * handle updating references that point to `original`.
+	 */
+	for (decoration = get_name_decoration(&original->object);
+	     decoration;
+	     decoration = decoration->next)
+	{
+		if (decoration->type != DECORATION_REF_LOCAL &&
+		    decoration->type != DECORATION_REF_HEAD)
+			continue;
+
+		if (action == REF_ACTION_HEAD &&
+		    decoration->type != DECORATION_REF_HEAD)
+			continue;
+
+		/*
+		 * We only need to update HEAD separately in case it's
+		 * detached. If it's not we'd already update the branch
+		 * it is pointing to.
+		 */
+		if (action == REF_ACTION_BRANCHES &&
+		    decoration->type == DECORATION_REF_HEAD &&
+		    !detached_head)
+			continue;
+
+		ret = handle_ref_update(transaction,
+					decoration->name,
+					&rewritten->object.oid,
+					&original->object.oid,
+					reflog_msg, &err);
+		if (ret) {
+			ret = error(_("failed to update ref '%s': %s"),
+				    decoration->name, err.buf);
+			goto out;
+		}
+	}
+
+	if (transaction && ref_transaction_commit(transaction, &err)) {
+		ret = error(_("failed to commit ref transaction: %s"), err.buf);
+		goto out;
 	}
 
 	ret = 0;
@@ -343,9 +400,7 @@ static int handle_reference_updates(enum ref_action action,
 out:
 	ref_transaction_free(transaction);
 	replay_result_release(&result);
-	release_revisions(&revs);
 	strbuf_release(&err);
-	strvec_clear(&args);
 	return ret;
 }
 
@@ -359,14 +414,18 @@ static int cmd_history_reword(int argc,
 		NULL,
 	};
 	enum ref_action action = REF_ACTION_DEFAULT;
+	int dry_run = 0;
 	struct option options[] = {
-		OPT_CALLBACK_F(0, "ref-action", &action, N_("<action>"),
-			       N_("control ref update behavior (branches|head|print)"),
+		OPT_CALLBACK_F(0, "update-refs", &action, N_("<action>"),
+			       N_("control which refs should be updated (branches|head)"),
 			       PARSE_OPT_NONEG, parse_ref_action),
+		OPT_BOOL('n', "dry-run", &dry_run,
+			 N_("perform a dry-run without updating any refs")),
 		OPT_END(),
 	};
 	struct strbuf reflog_msg = STRBUF_INIT;
 	struct commit *original, *rewritten;
+	struct rev_info revs;
 	int ret;
 
 	argc = parse_options(argc, argv, prefix, options, usage, 0);
@@ -385,6 +444,10 @@ static int cmd_history_reword(int argc,
 		goto out;
 	}
 
+	ret = setup_revwalk(repo, action, original, &revs);
+	if (ret)
+		goto out;
+
 	ret = commit_tree_with_edited_message(repo, "reworded", original, &rewritten);
 	if (ret < 0) {
 		ret = error(_("failed writing reworded commit"));
@@ -393,8 +456,8 @@ static int cmd_history_reword(int argc,
 
 	strbuf_addf(&reflog_msg, "reword: updating %s", argv[0]);
 
-	ret = handle_reference_updates(action, repo, original, rewritten,
-				       reflog_msg.buf);
+	ret = handle_reference_updates(&revs, action, original, rewritten,
+				       reflog_msg.buf, dry_run);
 	if (ret < 0) {
 		ret = error(_("failed replaying descendants"));
 		goto out;
@@ -404,6 +467,7 @@ static int cmd_history_reword(int argc,
 
 out:
 	strbuf_release(&reflog_msg);
+	release_revisions(&revs);
 	return ret;
 }
 
