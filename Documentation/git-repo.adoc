@@ -114,7 +114,7 @@ Here's a list of the available keys and the values that they return:
 `path.git-dir`::
 	The path to the git directory.
 
-`path.git-prefix`::
+`path.prefix`::
 	The path of the current working directory relative to the top-level
 	directory.
 
@@ -127,17 +127,8 @@ Here's a list of the available keys and the values that they return:
 `path.index-file`::
 	The path to the index file.
 
-`path.logs-directory`::
-	The path to the `logs` directory.
-
 `path.objects-directory`::
 	The path to the objects directory.
-
-`path.packed-refs-file`::
-	The path to the `packed-refs` file.
-
-`path.refs-directory`::
-	The path to the `refs` directory.
 
 `path.shallow-file`::
 	The path to the `shallow` file.
@@ -149,6 +140,9 @@ Here's a list of the available keys and the values that they return:
 `path.toplevel`::
 	The path to the top-level working tree directory, or an empty string
 	for bare repositories.
+
+`path.work-tree`::
+	Alias for `path.toplevel`.
 
 `references.format`::
 	The reference storage format. The valid values are:

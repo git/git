@@ -109,10 +109,9 @@ static int get_path_git_dir(struct repo_info *info, struct strbuf *buf)
 	return 0;
 }
 
-static int get_path_git_prefix(struct repo_info *info, struct strbuf *buf)
+static int get_path_prefix(struct repo_info *info, struct strbuf *buf)
 {
-	if (info->prefix)
-		strbuf_addstr(buf, info->prefix);
+	strbuf_addstr(buf, info->prefix);
 	return 0;
 }
 
@@ -137,36 +136,9 @@ static int get_path_index_file(struct repo_info *info, struct strbuf *buf)
 	return 0;
 }
 
-static int get_path_logs_directory(struct repo_info *info, struct strbuf *buf)
-{
-	struct strbuf path = STRBUF_INIT;
-
-	repo_info_add_path(info, buf, repo_git_path_replace(info->repo, &path, "logs"));
-	strbuf_release(&path);
-	return 0;
-}
-
 static int get_path_objects_directory(struct repo_info *info, struct strbuf *buf)
 {
 	repo_info_add_path(info, buf, repo_get_object_directory(info->repo));
-	return 0;
-}
-
-static int get_path_packed_refs_file(struct repo_info *info, struct strbuf *buf)
-{
-	struct strbuf path = STRBUF_INIT;
-
-	repo_info_add_path(info, buf, repo_git_path_replace(info->repo, &path, "packed-refs"));
-	strbuf_release(&path);
-	return 0;
-}
-
-static int get_path_refs_directory(struct repo_info *info, struct strbuf *buf)
-{
-	struct strbuf path = STRBUF_INIT;
-
-	repo_info_add_path(info, buf, repo_git_path_replace(info->repo, &path, "refs"));
-	strbuf_release(&path);
 	return 0;
 }
 
@@ -201,6 +173,11 @@ static int get_path_toplevel(struct repo_info *info, struct strbuf *buf)
 	return 0;
 }
 
+static int get_path_work_tree(struct repo_info *info, struct strbuf *buf)
+{
+	return get_path_toplevel(info, buf);
+}
+
 static int get_references_format(struct repo_info *info, struct strbuf *buf)
 {
 	struct repository *repo = info->repo;
@@ -217,17 +194,15 @@ static const struct field repo_info_fields[] = {
 	{ "path.common-dir", get_path_common_dir },
 	{ "path.config-file", get_path_config_file },
 	{ "path.git-dir", get_path_git_dir },
-	{ "path.git-prefix", get_path_git_prefix },
 	{ "path.grafts-file", get_path_grafts_file },
 	{ "path.hooks-directory", get_path_hooks_directory },
 	{ "path.index-file", get_path_index_file },
-	{ "path.logs-directory", get_path_logs_directory },
 	{ "path.objects-directory", get_path_objects_directory },
-	{ "path.packed-refs-file", get_path_packed_refs_file },
-	{ "path.refs-directory", get_path_refs_directory },
+	{ "path.prefix", get_path_prefix },
 	{ "path.shallow-file", get_path_shallow_file },
 	{ "path.superproject-working-tree", get_path_superproject_working_tree },
 	{ "path.toplevel", get_path_toplevel },
+	{ "path.work-tree", get_path_work_tree },
 	{ "references.format", get_references_format },
 };
 
@@ -378,7 +353,7 @@ static int cmd_repo_info(int argc, const char **argv, const char *prefix,
 	enum output_format format = FORMAT_KEYVALUE;
 	struct repo_info info = {
 		.repo = repo,
-		.prefix = prefix,
+		.prefix = prefix ? prefix : "",
 		.path_format = PATH_FORMAT_ABSOLUTE,
 	};
 	int all_keys = 0;

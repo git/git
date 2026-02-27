@@ -13,17 +13,15 @@ REPO_INFO_KEYS='
 	path.common-dir
 	path.config-file
 	path.git-dir
-	path.git-prefix
 	path.grafts-file
 	path.hooks-directory
 	path.index-file
-	path.logs-directory
 	path.objects-directory
-	path.packed-refs-file
-	path.refs-directory
+	path.prefix
 	path.shallow-file
 	path.superproject-working-tree
 	path.toplevel
+	path.work-tree
 	references.format
 '
 
@@ -31,17 +29,15 @@ REPO_INFO_PATH_KEYS='
 	path.common-dir
 	path.config-file
 	path.git-dir
-	path.git-prefix
 	path.grafts-file
 	path.hooks-directory
 	path.index-file
-	path.logs-directory
 	path.objects-directory
-	path.packed-refs-file
-	path.refs-directory
+	path.prefix
 	path.shallow-file
 	path.superproject-working-tree
 	path.toplevel
+	path.work-tree
 '
 
 # Test whether a key-value pair is correctly returned
@@ -172,12 +168,12 @@ test_expect_success 'path.toplevel is empty in bare repository' '
 	test_cmp expect actual
 '
 
-test_expect_success 'path.git-prefix matches rev-parse --show-prefix' '
+test_expect_success 'path.prefix matches rev-parse --show-prefix' '
 	git init path-prefix &&
 	mkdir -p path-prefix/a/b &&
 	expected_value=$(git -C path-prefix/a/b rev-parse --show-prefix) &&
-	echo "path.git-prefix=$expected_value" >expect &&
-	git -C path-prefix/a/b repo info path.git-prefix >actual &&
+	echo "path.prefix=$expected_value" >expect &&
+	git -C path-prefix/a/b repo info path.prefix >actual &&
 	test_cmp expect actual
 '
 
@@ -209,24 +205,24 @@ test_expect_success 'git-path style keys match rev-parse --git-path' '
 	git -C path-git-path repo info path.config-file >actual &&
 	test_cmp expect actual &&
 
-	expected_value=$(git -C path-git-path rev-parse --path-format=absolute --git-path logs) &&
-	echo "path.logs-directory=$expected_value" >expect &&
-	git -C path-git-path repo info path.logs-directory >actual &&
-	test_cmp expect actual &&
-
-	expected_value=$(git -C path-git-path rev-parse --path-format=absolute --git-path packed-refs) &&
-	echo "path.packed-refs-file=$expected_value" >expect &&
-	git -C path-git-path repo info path.packed-refs-file >actual &&
-	test_cmp expect actual &&
-
-	expected_value=$(git -C path-git-path rev-parse --path-format=absolute --git-path refs) &&
-	echo "path.refs-directory=$expected_value" >expect &&
-	git -C path-git-path repo info path.refs-directory >actual &&
-	test_cmp expect actual &&
-
 	expected_value=$(git -C path-git-path rev-parse --path-format=absolute --git-path shallow) &&
 	echo "path.shallow-file=$expected_value" >expect &&
 	git -C path-git-path repo info path.shallow-file >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'path.work-tree matches path.toplevel' '
+	git init path-work-tree &&
+	expected_value=$(git -C path-work-tree rev-parse --show-toplevel) &&
+	echo "path.work-tree=$expected_value" >expect &&
+	git -C path-work-tree repo info path.work-tree >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'path.work-tree is empty in bare repository' '
+	git init --bare bare-path-work-tree &&
+	echo "path.work-tree=" >expect &&
+	git -C bare-path-work-tree repo info path.work-tree >actual &&
 	test_cmp expect actual
 '
 
