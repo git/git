@@ -2621,32 +2621,28 @@ static int close_istream_pack_non_delta(struct odb_read_stream *_st)
 	return 0;
 }
 
-int packfile_store_read_object_stream(struct odb_read_stream **out,
-				      struct packfile_store *store,
-				      const struct object_id *oid)
+int packfile_read_object_stream(struct odb_read_stream **out,
+				const struct object_id *oid,
+				struct packed_git *pack,
+				off_t offset)
 {
 	struct odb_packed_read_stream *stream;
 	struct pack_window *window = NULL;
-	struct object_info oi = OBJECT_INFO_INIT;
 	enum object_type in_pack_type;
 	unsigned long size;
 
-	oi.sizep = &size;
+	in_pack_type = unpack_object_header(pack, &window, &offset, &size);
+	unuse_pack(&window);
 
-	if (packfile_store_read_object_info(store, oid, &oi, 0) ||
-	    oi.u.packed.type == PACKED_OBJECT_TYPE_REF_DELTA ||
-	    oi.u.packed.type == PACKED_OBJECT_TYPE_OFS_DELTA ||
-	    repo_settings_get_big_file_threshold(store->source->odb->repo) >= size)
+	if (repo_settings_get_big_file_threshold(pack->repo) >= size)
 		return -1;
 
-	in_pack_type = unpack_object_header(oi.u.packed.pack,
-					    &window,
-					    &oi.u.packed.offset,
-					    &size);
-	unuse_pack(&window);
 	switch (in_pack_type) {
 	default:
 		return -1; /* we do not do deltas for now */
+	case OBJ_BAD:
+		mark_bad_packed_object(pack, oid);
+		return -1;
 	case OBJ_COMMIT:
 	case OBJ_TREE:
 	case OBJ_BLOB:
@@ -2660,10 +2656,22 @@ int packfile_store_read_object_stream(struct odb_read_stream **out,
 	stream->base.type = in_pack_type;
 	stream->base.size = size;
 	stream->z_state = ODB_PACKED_READ_STREAM_UNINITIALIZED;
-	stream->pack = oi.u.packed.pack;
-	stream->pos = oi.u.packed.offset;
+	stream->pack = pack;
+	stream->pos = offset;
 
 	*out = &stream->base;
 
 	return 0;
+}
+
+int packfile_store_read_object_stream(struct odb_read_stream **out,
+				      struct packfile_store *store,
+				      const struct object_id *oid)
+{
+	struct pack_entry e;
+
+	if (!find_pack_entry(store, oid, &e))
+		return -1;
+
+	return packfile_read_object_stream(out, oid, e.p, e.offset);
 }
