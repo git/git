@@ -10,7 +10,6 @@ UI, Workflows & Features
  * "git history" history rewriting (experimental) command has been
    added.
 
-
  * "git replay" is taught to drop commits that become empty (not the
    ones that are empty in the original).
 
@@ -31,6 +30,11 @@ UI, Workflows & Features
 
  * Command line completion (in contrib/) update for
    "stash import/export".
+
+ * "git repo info" learns "--keys" action to list known keys.
+
+ * Extend the alias configuration syntax to allow aliases using
+   characters outside ASCII alphanumeric (plus '-').
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -75,6 +79,12 @@ Performance, Internal Implementation, Development Support etc.
  * Add process ancestry data to trace2 on macOS to match what we
    already do on Linux and Windows.  Also adjust the way Windows
    implementation reports this information to match the other two.
+
+ * A handful of places used refs_for_each_ref_in() API incorrectly,
+   which has been corrected.
+
+ * Some tests assumed "iconv" is available without honoring ICONV
+   prerequisite, which has been corrected.
 
 
 Fixes since v2.53
@@ -130,6 +140,21 @@ Fixes since v2.53
    been fixed.
    (merge f4eff7116d ps/pack-concat-wo-backfill later to maint).
 
+ * "git switch <name>", in an attempt to create a local branch <name>
+   after a remote tracking branch of the same name gave an advise
+   message to disambiguate using "git checkout", which has been
+   updated to use "git switch".
+   (merge 12fee11f21 jc/checkout-switch-restore later to maint).
+
+ * It does not make much sense to apply the "incomplete-line"
+   whitespace rule to symbolic links, whose contents almost always
+   lack the final newline.  "git apply" and "git diff" are now taught
+   to exclude them for a change to symbolic links.
+   (merge 6a41481c6d jc/whitespace-incomplete-line later to maint).
+
+ * "git format-patch --from=<me>" did not honor the command line
+   option when writing out the cover letter, which has been corrected.
+
  * Other code cleanup, docfix, build fix, etc.
    (merge d79fff4a11 jk/remote-tracking-ref-leakfix later to maint).
    (merge 7a747f972d dd/t5403-modernise later to maint).
@@ -151,3 +176,7 @@ Fixes since v2.53
    (merge 2668b6bdc4 jc/doc-rerere-update later to maint).
    (merge 2f99f50f2d jc/doc-cg-c-comment later to maint).
    (merge a454cdca42 kh/doc-am-format-sendmail later to maint).
+   (merge 8b0061b5c5 jk/ref-filter-lrstrip-optim later to maint).
+   (merge 5133837392 ps/ci-gitlab-msvc-updates later to maint).
+   (merge 143e84958c db/doc-fetch-jobs-auto later to maint).
+   (merge 0678e01f02 ap/use-test-seq-f-more later to maint).
