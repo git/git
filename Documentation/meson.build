@@ -354,12 +354,9 @@ foreach mode : [ 'diff', 'merge' ]
     command: [
       shell,
       '@INPUT@',
-      '..',
+      meson.project_source_root(),
       mode,
       '@OUTPUT@'
-    ],
-    env: [
-      'MERGE_TOOLS_DIR=' + meson.project_source_root() / 'mergetools',
     ],
     input: 'generate-mergetool-list.sh',
     output: 'mergetools-' + mode + '.adoc',
