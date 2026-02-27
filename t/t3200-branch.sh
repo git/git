@@ -1725,9 +1725,11 @@ test_expect_success 'create branch with prefix' '
 	git branch branch-with-prefix &&
 	git checkout branch-with-prefix &&
 	git branch branch-with-prefix &&
+	git branch branch-with-no-prefix --no-prefix &&
 	test_ref_exists refs/heads/branch-with-prefix &&
 	test_ref_exists refs/heads/main-branch-with-prefix &&
-	test_ref_exists refs/heads/branch-with-prefix-branch-with-prefix
+	test_ref_exists refs/heads/branch-with-prefix-branch-with-prefix &&
+	test_ref_exists refs/heads/branch-with-no-prefix
 '
 
 test_done
