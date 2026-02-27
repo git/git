@@ -1343,13 +1343,36 @@ static void generate_shortlog_cover_letter(struct shortlog *log,
 	shortlog_output(log);
 }
 
+static void generate_commit_list_cover(FILE *cover_file,const char *format,
+				       struct commit **list, int n)
+{
+	struct strbuf commit_line = STRBUF_INIT;
+	struct pretty_print_context ctx = {0};
+	struct rev_info rev = REV_INFO_INIT;
+
+	strbuf_init(&commit_line, 0);
+	rev.total = n;
+	ctx.rev = &rev;
+	for (int i = n - 1; i >= 0; i--) {
+		rev.nr = n - i;
+		repo_format_commit_message(the_repository, list[i], format,
+				&commit_line, &ctx);
+		fprintf(cover_file, "%s\n", commit_line.buf);
+		strbuf_reset(&commit_line);
+	}
+	fprintf(cover_file, "\n");
+
+	strbuf_release(&commit_line);
+}
+
 static void make_cover_letter(struct rev_info *rev, int use_separate_file,
 			      struct commit *origin,
 			      int nr, struct commit **list,
 			      const char *description_file,
 			      const char *branch_name,
 			      int quiet,
-			      const struct format_config *cfg)
+			      const struct format_config *cfg,
+			      const char *format)
 {
 	const char *committer;
 	struct shortlog log;
@@ -1396,7 +1419,12 @@ static void make_cover_letter(struct rev_info *rev, int use_separate_file,
 	free(pp.after_subject);
 	strbuf_release(&sb);
 
-	generate_shortlog_cover_letter(&log, rev, list, nr);
+	if (skip_prefix(format, "log:", &format))
+		generate_commit_list_cover(rev->diffopt.file, format, list, nr);
+	else if (!strcmp(format, "shortlog"))
+		generate_shortlog_cover_letter(&log, rev, list, nr);
+	else
+		die(_("'%s' is not a valid format string"), format);
 
 	/* We can only do diffstat with a unique reference point */
 	if (origin)
@@ -1914,6 +1942,7 @@ int cmd_format_patch(int argc,
 	int just_numbers = 0;
 	int ignore_if_in_upstream = 0;
 	int cover_letter = -1;
+	const char *cover_letter_fmt = NULL;
 	int boundary_count = 0;
 	int no_binary_diff = 0;
 	int zero_commit = 0;
@@ -1960,6 +1989,8 @@ int cmd_format_patch(int argc,
 			    N_("print patches to standard out")),
 		OPT_BOOL(0, "cover-letter", &cover_letter,
 			    N_("generate a cover letter")),
+		OPT_STRING(0, "cover-letter-format", &cover_letter_fmt, N_("format-spec"),
+			    N_("format spec used for the commit list in the cover letter")),
 		OPT_BOOL(0, "numbered-files", &just_numbers,
 			    N_("use simple number sequence for output file names")),
 		OPT_STRING(0, "suffix", &fmt_patch_suffix, N_("sfx"),
@@ -2297,6 +2328,7 @@ int cmd_format_patch(int argc,
 		/* nothing to do */
 		goto done;
 	total = list.nr;
+
 	if (cover_letter == -1) {
 		if (cfg.config_cover_letter == COVER_AUTO)
 			cover_letter = (total > 1);
@@ -2383,12 +2415,14 @@ int cmd_format_patch(int argc,
 	}
 	rev.numbered_files = just_numbers;
 	rev.patch_suffix = fmt_patch_suffix;
+
 	if (cover_letter) {
 		if (cfg.thread)
 			gen_message_id(&rev, "cover");
 		make_cover_letter(&rev, !!output_directory,
 				  origin, list.nr, list.items,
-				  description_file, branch_name, quiet, &cfg);
+				  description_file, branch_name, quiet, &cfg,
+				  cover_letter_fmt);
 		print_bases(&bases, rev.diffopt.file);
 		print_signature(signature, rev.diffopt.file);
 		total++;
