@@ -792,6 +792,7 @@ static int group_slide_up(xdfile_t *xdf, struct xdlgroup *g)
  */
 int xdl_change_compact(xdfile_t *xdf, xdfile_t *xdfo, long flags) {
 	struct xdlgroup g, go;
+	struct xdlgroup g_orig, go_orig;
 	long earliest_end, end_matching_other;
 	long groupsize;
 
@@ -804,6 +805,9 @@ int xdl_change_compact(xdfile_t *xdf, xdfile_t *xdfo, long flags) {
 		 */
 		if (g.end == g.start)
 			goto next;
+
+		g_orig = g;
+		go_orig = go;
 
 		/*
 		 * Now shift the change up and then down as far as possible in
@@ -911,6 +915,45 @@ int xdl_change_compact(xdfile_t *xdf, xdfile_t *xdfo, long flags) {
 					BUG("best shift unreached");
 				if (group_previous(xdfo, &go))
 					BUG("group sync broken sliding to blank line");
+			}
+		}
+
+		/*
+		 * If this has a matching group from the other file, it could
+		 * either be the original match from the diff algorithm, or
+		 * arrived at by shifting and joining groups. When it's the
+		 * latter, it's possible for the two newly joined sides to have
+		 * matching lines. Re-diff the group to mark these matching
+		 * lines as unchanged and remove from the diff output.
+		 *
+		 * Only do this for histogram diff as its LCS algorithm makes
+		 * this scenario possible. In contrast, patience diff finds LCS
+		 * of unique lines that groups cannot be shifted across.
+		 * Myer's diff (standalone or used as fall-back in patience
+		 * diff) already finds minimal edits so it is not possible for
+		 * shifted groups to result in a smaller diff. (Without
+		 * XDF_NEED_MINIMAL, Myer's isn't technically guaranteed to be
+		 * minimal, but it should be so most of the time)
+		 */
+		if (end_matching_other != -1 &&
+				XDF_DIFF_ALG(flags) == XDF_HISTOGRAM_DIFF &&
+				(g.start != g_orig.start ||
+				 g.end != g_orig.end ||
+				 go.start != go_orig.start ||
+				 go.end != go_orig.end)) {
+			xpparam_t xpp;
+			xdfenv_t xe;
+
+			memset(&xpp, 0, sizeof(xpp));
+			xpp.flags = flags & ~XDF_DIFF_ALGORITHM_MASK;
+
+			memcpy(&xe.xdf1, xdf, sizeof(xdfile_t));
+			memcpy(&xe.xdf2, xdfo, sizeof(xdfile_t));
+
+			if (xdl_fall_back_diff(&xe, &xpp,
+					       g.start + 1, g.end - g.start,
+					       go.start + 1, go.end - go.start)) {
+				return -1;
 			}
 		}
 
