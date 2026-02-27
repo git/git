@@ -315,6 +315,29 @@ http.keepAliveCount::
 	unset, curl's default value is used. Can be overridden by the
 	`GIT_HTTP_KEEPALIVE_COUNT` environment variable.
 
+http.retryAfter::
+	Default wait time in seconds before retrying when a server returns
+	HTTP 429 (Too Many Requests) without a Retry-After header.
+	Defaults to 0 (retry immediately). When a Retry-After header is
+	present, its value takes precedence over this setting. Can be
+	overridden by the `GIT_HTTP_RETRY_AFTER` environment variable.
+	See also `http.maxRetries` and `http.maxRetryTime`.
+
+http.maxRetries::
+	Maximum number of times to retry after receiving HTTP 429 (Too Many
+	Requests) responses. Set to 0 (the default) to disable retries.
+	Can be overridden by the `GIT_HTTP_MAX_RETRIES` environment variable.
+	See also `http.retryAfter` and `http.maxRetryTime`.
+
+http.maxRetryTime::
+	Maximum time in seconds to wait for a single retry attempt when
+	handling HTTP 429 (Too Many Requests) responses. If the server
+	requests a delay (via Retry-After header) or if `http.retryAfter`
+	is configured with a value that exceeds this maximum, Git will fail
+	immediately rather than waiting. Default is 300 seconds (5 minutes).
+	Can be overridden by the `GIT_HTTP_MAX_RETRY_TIME` environment
+	variable. See also `http.retryAfter` and `http.maxRetries`.
+
 http.noEPSV::
 	A boolean which disables using of EPSV ftp command by curl.
 	This can be helpful with some "poor" ftp servers which don't
