@@ -423,7 +423,7 @@ struct ref_iterator *prefix_ref_iterator_begin(struct ref_iterator *iter0,
 }
 
 int do_for_each_ref_iterator(struct ref_iterator *iter,
-			     each_ref_fn fn, void *cb_data)
+			     refs_for_each_cb fn, void *cb_data)
 {
 	int retval = 0, ok;
 

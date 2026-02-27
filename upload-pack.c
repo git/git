@@ -607,10 +607,13 @@ static int allow_hidden_refs(enum allow_uor allow_uor)
 	return !(allow_uor & (ALLOW_TIP_SHA1 | ALLOW_REACHABLE_SHA1));
 }
 
-static void for_each_namespaced_ref_1(each_ref_fn fn,
+static void for_each_namespaced_ref_1(refs_for_each_cb fn,
 				      struct upload_pack_data *data)
 {
-	const char **excludes = NULL;
+	struct refs_for_each_ref_options opts = {
+		.namespace = get_git_namespace(),
+	};
+
 	/*
 	 * If `data->allow_uor` allows fetching hidden refs, we need to
 	 * mark all references (including hidden ones), to check in
@@ -621,10 +624,10 @@ static void for_each_namespaced_ref_1(each_ref_fn fn,
 	 * hidden references.
 	 */
 	if (allow_hidden_refs(data->allow_uor))
-		excludes = hidden_refs_to_excludes(&data->hidden_refs);
+		opts.exclude_patterns = hidden_refs_to_excludes(&data->hidden_refs);
 
-	refs_for_each_namespaced_ref(get_main_ref_store(the_repository),
-				     excludes, fn, data);
+	refs_for_each_ref_ext(get_main_ref_store(the_repository),
+			      fn, data, &opts);
 }
 
 
