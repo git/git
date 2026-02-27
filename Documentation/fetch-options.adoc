@@ -253,6 +253,8 @@ endif::git-pull[]
 `--jobs=<n>`::
 	Parallelize all forms of fetching up to _<n>_ jobs at a time.
 +
+A value of 0 will use some reasonable default.
++
 If the `--multiple` option was specified, the different remotes will be fetched
 in parallel. If multiple submodules are fetched, they will be fetched in
 parallel. To control them independently, use the config settings
