@@ -12,6 +12,7 @@ struct lock_file;
 struct pathspec;
 struct object_database;
 struct submodule_cache;
+struct hook_config_cache;
 struct promisor_remote_config;
 struct remote_state;
 
@@ -170,7 +171,7 @@ struct repository {
 	 * Lazily-populated cache mapping hook event names to configured hooks.
 	 * NULL until first hook use.
 	 */
-	struct strmap *hook_config_cache;
+	struct hook_config_cache *hook_config_cache;
 
 	/* Configurations related to promisor remotes. */
 	char *repository_format_partial_clone;
@@ -181,6 +182,7 @@ struct repository {
 	int repository_format_relative_worktrees;
 	int repository_format_precious_objects;
 	int repository_format_submodule_path_cfg;
+	int repository_format_hook_stdout_to_stderr;
 
 	/* Indicate if a repository has a different 'commondir' from 'gitdir' */
 	unsigned different_commondir:1;

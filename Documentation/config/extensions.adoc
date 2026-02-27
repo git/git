@@ -116,6 +116,21 @@ The extension can be enabled automatically for new repositories by setting
 `init.defaultSubmodulePathConfig` to `true`, for example by running
 `git config --global init.defaultSubmodulePathConfig true`.
 
+hookStdoutToStderr:::
+	If enabled, the stdout of all hooks is redirected to stderr. This
+	enforces consistency, since by default most hooks already behave
+	this way, with pre-push being the only known exception.
++
+This is useful for parallel hook execution (see the `hook.jobs` config in
+linkgit:git-config[1]), as it allows the output of multiple hooks running
+in parallel to be grouped (de-interleaved) correctly.
++
+Defaults to disabled. When disabled, `hook.jobs` has no effect for pre-push
+hooks, which will always be run sequentially.
++
+The extension can also be enabled by setting `hook.forceStdoutToStderr`
+to `true` in the global configuration.
+
 worktreeConfig:::
 	If enabled, then worktrees will load config settings from the
 	`$GIT_DIR/config.worktree` file in addition to the

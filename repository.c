@@ -307,6 +307,7 @@ int repo_init(struct repository *repo,
 	repo->repository_format_relative_worktrees = format.relative_worktrees;
 	repo->repository_format_precious_objects = format.precious_objects;
 	repo->repository_format_submodule_path_cfg = format.submodule_path_cfg;
+	repo->repository_format_hook_stdout_to_stderr = format.hook_stdout_to_stderr;
 
 	/* take ownership of format.partial_clone */
 	repo->repository_format_partial_clone = format.partial_clone;
@@ -322,6 +323,7 @@ int repo_init(struct repository *repo,
 	return 0;
 
 error:
+	clear_repository_format(&format);
 	repo_clear(repo);
 	return -1;
 }

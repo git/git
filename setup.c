@@ -710,6 +710,9 @@ static enum extension_result handle_extension(const char *var,
 	} else if (!strcmp(ext, "submodulepathconfig")) {
 		data->submodule_path_cfg = git_config_bool(var, value);
 		return EXTENSION_OK;
+	} else if (!strcmp(ext, "hookstdouttostderr")) {
+		data->hook_stdout_to_stderr = git_config_bool(var, value);
+		return EXTENSION_OK;
 	}
 	return EXTENSION_UNKNOWN;
 }
@@ -1976,6 +1979,8 @@ const char *setup_git_directory_gently(int *nongit_ok)
 				repo_fmt.relative_worktrees;
 			the_repository->repository_format_submodule_path_cfg =
 				repo_fmt.submodule_path_cfg;
+			the_repository->repository_format_hook_stdout_to_stderr =
+				repo_fmt.hook_stdout_to_stderr;
 			/* take ownership of repo_fmt.partial_clone */
 			the_repository->repository_format_partial_clone =
 				repo_fmt.partial_clone;
@@ -2098,6 +2103,8 @@ void check_repository_format(struct repository_format *fmt)
 		fmt->submodule_path_cfg;
 	the_repository->repository_format_relative_worktrees =
 		fmt->relative_worktrees;
+	the_repository->repository_format_hook_stdout_to_stderr =
+		fmt->hook_stdout_to_stderr;
 	the_repository->repository_format_partial_clone =
 		xstrdup_or_null(fmt->partial_clone);
 	clear_repository_format(&repo_fmt);
@@ -2355,6 +2362,7 @@ void initialize_repository_version(int hash_algo,
 	struct strbuf repo_version = STRBUF_INIT;
 	int target_version = GIT_REPO_VERSION;
 	int default_submodule_path_config = 0;
+	int default_hook_stdout_to_stderr = 0;
 
 	/*
 	 * Note that we initialize the repository version to 1 when the ref
@@ -2410,6 +2418,15 @@ void initialize_repository_version(int hash_algo,
 		if (target_version == 0)
 			target_version = 1;
 		repo_config_set(the_repository, "extensions.submodulepathconfig", "true");
+	}
+
+	repo_config_get_bool(the_repository, "hook.forceStdoutToStderr",
+			     &default_hook_stdout_to_stderr);
+	if (default_hook_stdout_to_stderr) {
+		/* extensions.hookstdouttostderr requires at least version 1 */
+		if (target_version == 0)
+			target_version = 1;
+		repo_config_set(the_repository, "extensions.hookstdouttostderr", "true");
 	}
 
 	strbuf_addf(&repo_version, "%d", target_version);
