@@ -2597,24 +2597,38 @@ static int transaction_hook_feed_stdin(int hook_stdin_fd, void *pp_cb, void *pp_
 	return 0; /* no more input to feed */
 }
 
+static void *transaction_feed_cb_data_alloc(void *feed_pipe_ctx UNUSED)
+{
+	struct transaction_feed_cb_data *data = xmalloc(sizeof(*data));
+	strbuf_init(&data->buf, 0);
+	data->index = 0;
+	return data;
+}
+
+static void transaction_feed_cb_data_free(void *data)
+{
+	struct transaction_feed_cb_data *d = data;
+	if (!d)
+		return;
+	strbuf_release(&d->buf);
+	free(d);
+}
+
 static int run_transaction_hook(struct ref_transaction *transaction,
 				const char *state)
 {
 	struct run_hooks_opt opt = RUN_HOOKS_OPT_INIT;
-	struct transaction_feed_cb_data feed_ctx = { 0 };
 	int ret = 0;
 
 	strvec_push(&opt.args, state);
 
 	opt.feed_pipe = transaction_hook_feed_stdin;
 	opt.feed_pipe_ctx = transaction;
-	opt.feed_pipe_cb_data = &feed_ctx;
-
-	strbuf_init(&feed_ctx.buf, 0);
+	opt.feed_pipe_cb_data_alloc = transaction_feed_cb_data_alloc;
+	opt.feed_pipe_cb_data_free = transaction_feed_cb_data_free;
 
 	ret = run_hooks_opt(transaction->ref_store->repo, "reference-transaction", &opt);
 
-	strbuf_release(&feed_ctx.buf);
 	return ret;
 }
 
