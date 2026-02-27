@@ -552,7 +552,6 @@ static void stats_table_print_structure(const struct stats_table *table)
 		const char *unit = "";
 
 		if (entry) {
-			struct stats_table_entry *entry = item->util;
 			value = entry->value;
 			if (entry->unit)
 				unit = entry->unit;
