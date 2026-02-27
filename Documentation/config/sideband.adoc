@@ -1,0 +1,39 @@
+sideband.allowControlCharacters::
+ifdef::with-breaking-changes[]
+	By default, control characters that are delivered via the sideband
+	are masked, except ANSI color sequences. This prevents potentially
+endif::with-breaking-changes[]
+ifndef::with-breaking-changes[]
+	By default, no control characters delivered via the sideband
+	are masked. This is unsafe and will change in Git v3.* to only
+	allow ANSI color sequences by default, preventing potentially
+endif::with-breaking-changes[]
+	unwanted ANSI escape sequences from being sent to the terminal. Use
+	this config setting to override this behavior (the value can be
+	a comma-separated list of the following keywords):
++
+--
+	`default`::
+ifndef::with-breaking-changes[]
+		Allow any control sequence. This default is unsafe and will
+		change to `color` in Git v3.*.
+endif::with-breaking-changes[]
+	`color`::
+		Allow ANSI color sequences, line feeds and horizontal tabs,
+		but mask all other control characters. This is the default.
+	`cursor:`:
+		Allow control sequences that move the cursor. This is
+		disabled by default.
+	`erase`::
+		Allow control sequences that erase charactrs. This is
+		disabled by default.
+	`false`::
+		Mask all control characters other than line feeds and
+		horizontal tabs.
+	`true`::
+		Allow all control characters to be sent to the terminal.
+--
+
+sideband.<url>.*::
+	Apply the `sideband.*` option selectively to specific URLs. The
+	same URL matching logic applies as for `http.<url>.*` settings.
