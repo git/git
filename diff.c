@@ -2713,7 +2713,9 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 	count = i; /* where we can stop scanning in data->files[] */
 
 	/*
-	 * We have width = stat_width or term_columns() columns total.
+	 * We have width = stat_width or term_columns() columns total minus the
+	 * length of line_prefix skipping ANSI escape codes to get the display
+	 * width (e.g., skip ANSI-colored strings in "log --graph --stat").
 	 * We want a maximum of min(max_len, stat_name_width) for the name part.
 	 * We want a maximum of min(max_change, stat_graph_width) for the +- part.
 	 * We also need 1 for " " and 4 + decimal_width(max_change)
@@ -2740,14 +2742,8 @@ static void show_stats(struct diffstat_t *data, struct diff_options *options)
 	 * separators and this message, this message will "overflow"
 	 * making the line longer than the maximum width.
 	 */
-
-	/*
-	 * NEEDSWORK: line_prefix is often used for "log --graph" output
-	 * and contains ANSI-colored string.  utf8_strnwidth() should be
-	 * used to correctly count the display width instead of strlen().
-	 */
 	if (options->stat_width == -1)
-		width = term_columns() - strlen(line_prefix);
+		width = term_columns() - utf8_strnwidth(line_prefix, strlen(line_prefix), 1);
 	else
 		width = options->stat_width ? options->stat_width : 80;
 	number_width = decimal_width(max_change) > number_width ?
