@@ -14,6 +14,7 @@
 #include "object-file-convert.h"
 #include "object-file.h"
 #include "odb.h"
+#include "oidmap.h"
 #include "packfile.h"
 #include "path.h"
 #include "promisor-remote.h"
@@ -1089,6 +1090,13 @@ void odb_close(struct object_database *o)
 	close_commit_graph(o);
 }
 
+static void free_replace_map_entry(void *e)
+{
+	struct replace_object *entry =
+		container_of(e, struct replace_object, original);
+	free(entry);
+}
+
 static void odb_free_sources(struct object_database *o)
 {
 	while (o->sources) {
@@ -1109,7 +1117,8 @@ void odb_free(struct object_database *o)
 
 	free(o->alternate_db);
 
-	oidmap_clear(&o->replace_map, 1);
+	if (o->replace_map_initialized)
+		oidmap_clear_with_free(&o->replace_map, free_replace_map_entry);
 	pthread_mutex_destroy(&o->replace_mutex);
 
 	odb_close(o);
