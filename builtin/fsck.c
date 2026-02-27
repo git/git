@@ -1105,7 +1105,7 @@ int cmd_fsck(int argc,
 			 * and may get overwritten by other calls
 			 * while we're examining the index.
 			 */
-			path = xstrdup(worktree_git_path(the_repository, wt, "index"));
+			path = xstrdup(worktree_git_path(wt, "index"));
 			wt_gitdir = get_worktree_git_dir(wt);
 
 			read_index_from(&istate, path, wt_gitdir);

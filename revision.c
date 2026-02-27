@@ -1848,7 +1848,7 @@ void add_index_objects_to_pending(struct rev_info *revs, unsigned int flags)
 		wt_gitdir = get_worktree_git_dir(wt);
 
 		if (read_index_from(&istate,
-				    worktree_git_path(the_repository, wt, "index"),
+				    worktree_git_path(wt, "index"),
 				    wt_gitdir) > 0)
 			do_add_index_objects_to_pending(revs, &istate, flags);
 
