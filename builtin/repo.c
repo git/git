@@ -31,7 +31,7 @@ enum output_format {
 	FORMAT_NUL_TERMINATED,
 };
 
-struct field {
+struct repo_info_field {
 	const char *key;
 	get_value_fn *get_value;
 };
@@ -62,30 +62,32 @@ static int get_references_format(struct repository *repo, struct strbuf *buf)
 	return 0;
 }
 
-/* repo_info_fields keys must be in lexicographical order */
-static const struct field repo_info_fields[] = {
+/* repo_info_field keys must be in lexicographical order */
+static const struct repo_info_field repo_info_field[] = {
 	{ "layout.bare", get_layout_bare },
 	{ "layout.shallow", get_layout_shallow },
 	{ "object.format", get_object_format },
 	{ "references.format", get_references_format },
 };
 
-static int repo_info_fields_cmp(const void *va, const void *vb)
+static int repo_info_field_cmp(const void *va, const void *vb)
 {
-	const struct field *a = va;
-	const struct field *b = vb;
+	const struct repo_info_field *a = va;
+	const struct repo_info_field *b = vb;
 
 	return strcmp(a->key, b->key);
 }
 
-static get_value_fn *get_value_fn_for_key(const char *key)
+static const struct repo_info_field *get_repo_info_field(const char *key)
 {
-	const struct field search_key = { key, NULL };
-	const struct field *found = bsearch(&search_key, repo_info_fields,
-					    ARRAY_SIZE(repo_info_fields),
-					    sizeof(*found),
-					    repo_info_fields_cmp);
-	return found ? found->get_value : NULL;
+	const struct repo_info_field search_key = { key, NULL };
+	const struct repo_info_field *found = bsearch(&search_key,
+						      repo_info_field,
+						      ARRAY_SIZE(repo_info_field),
+						      sizeof(*found),
+						      repo_info_field_cmp);
+
+	return found;
 }
 
 static void print_field(enum output_format format, const char *key,
@@ -113,18 +115,16 @@ static int print_fields(int argc, const char **argv,
 	struct strbuf valbuf = STRBUF_INIT;
 
 	for (int i = 0; i < argc; i++) {
-		get_value_fn *get_value;
 		const char *key = argv[i];
+		const struct repo_info_field *field = get_repo_info_field(key);
 
-		get_value = get_value_fn_for_key(key);
-
-		if (!get_value) {
+		if (!field) {
 			ret = error(_("key '%s' not found"), key);
 			continue;
 		}
 
 		strbuf_reset(&valbuf);
-		get_value(repo, &valbuf);
+		field->get_value(repo, &valbuf);
 		print_field(format, key, valbuf.buf);
 	}
 
@@ -137,8 +137,8 @@ static int print_all_fields(struct repository *repo,
 {
 	struct strbuf valbuf = STRBUF_INIT;
 
-	for (size_t i = 0; i < ARRAY_SIZE(repo_info_fields); i++) {
-		const struct field *field = &repo_info_fields[i];
+	for (size_t i = 0; i < ARRAY_SIZE(repo_info_field); i++) {
+		const struct repo_info_field *field = &repo_info_field[i];
 
 		strbuf_reset(&valbuf);
 		field->get_value(repo, &valbuf);
@@ -164,8 +164,8 @@ static int print_keys(enum output_format format)
 		die(_("--keys can only be used with --format=lines or --format=nul"));
 	}
 
-	for (size_t i = 0; i < ARRAY_SIZE(repo_info_fields); i++) {
-		const struct field *field = &repo_info_fields[i];
+	for (size_t i = 0; i < ARRAY_SIZE(repo_info_field); i++) {
+		const struct repo_info_field *field = &repo_info_field[i];
 		printf("%s%c", field->key, sep);
 	}
 

@@ -145,18 +145,18 @@ test_expect_success SHA1 'lines and nul format' '
 		test_cmp expect out &&
 		test_line_count = 0 err &&
 
-		# Replace key and value delimiters for nul format.
-		tr "\n=" "\0\n" <expect >expect_nul &&
 		git repo structure --format=nul >out 2>err &&
+		tr "\012\000" "=\012" <out >actual &&
 
-		test_cmp expect_nul out &&
+		test_cmp expect actual &&
 		test_line_count = 0 err &&
 
 		# "-z", as a synonym to "--format=nul", participates in the
 		# usual "last one wins" rule.
 		git repo structure --format=table -z >out 2>err &&
+		tr "\012\000" "=\012" <out >actual &&
 
-		test_cmp expect_nul out &&
+		test_cmp expect actual &&
 		test_line_count = 0 err
 	)
 '
