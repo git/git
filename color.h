@@ -118,6 +118,7 @@ bool want_color_fd(int fd, enum git_colorbool var);
  * terminal.
  */
 int color_parse(const char *value, char *dst);
+int color_parse_quietly(const char *value, char *dst);
 int color_parse_mem(const char *value, int len, char *dst);
 
 /*

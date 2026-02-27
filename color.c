@@ -223,11 +223,6 @@ static int parse_attr(const char *name, size_t len)
 	return -1;
 }
 
-int color_parse(const char *value, char *dst)
-{
-	return color_parse_mem(value, strlen(value), dst);
-}
-
 /*
  * Write the ANSI color codes for "c" to "out"; the string should
  * already have the ANSI escape code in it. "out" should have enough
@@ -264,7 +259,8 @@ static int color_empty(const struct color *c)
 	return c->type <= COLOR_NORMAL;
 }
 
-int color_parse_mem(const char *value, int value_len, char *dst)
+static int color_parse_mem_1(const char *value, int value_len,
+			     char *dst, int quiet)
 {
 	const char *ptr = value;
 	int len = value_len;
@@ -365,8 +361,23 @@ int color_parse_mem(const char *value, int value_len, char *dst)
 	OUT(0);
 	return 0;
 bad:
-	return error(_("invalid color value: %.*s"), value_len, value);
+	return quiet ? -1 : error(_("invalid color value: %.*s"), value_len, value);
 #undef OUT
+}
+
+int color_parse_mem(const char *value, int value_len, char *dst)
+{
+	return color_parse_mem_1(value, value_len, dst, 0);
+}
+
+int color_parse(const char *value, char *dst)
+{
+	return color_parse_mem(value, strlen(value), dst);
+}
+
+int color_parse_quietly(const char *value, char *dst)
+{
+	return color_parse_mem_1(value, strlen(value), dst, 1);
 }
 
 enum git_colorbool git_config_colorbool(const char *var, const char *value)
