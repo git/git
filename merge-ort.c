@@ -54,6 +54,14 @@
 #include "xdiff-interface.h"
 
 /*
+ * We technically need USE_THE_REPOSITORY_VARIABLE above for DEFAULT_ABBREV,
+ * but do not want more uses of the_repository.  Prevent them.
+ *
+ * opt->repo is available; use it instead.
+ */
+#define the_repository DO_NOT_USE_THE_REPOSITORY
+
+/*
  * We have many arrays of size 3.  Whenever we have such an array, the
  * indices refer to one of the sides of the three-way merge.  This is so
  * pervasive that the constants 0, 1, and 2 are used in many places in the
@@ -1732,9 +1740,9 @@ static int collect_merge_info(struct merge_options *opt,
 	info.data = opt;
 	info.show_all_errors = 1;
 
-	if (repo_parse_tree(the_repository, merge_base) < 0 ||
-	    repo_parse_tree(the_repository, side1) < 0 ||
-	    repo_parse_tree(the_repository, side2) < 0)
+	if (repo_parse_tree(opt->repo, merge_base) < 0 ||
+	    repo_parse_tree(opt->repo, side1) < 0 ||
+	    repo_parse_tree(opt->repo, side2) < 0)
 		return -1;
 	init_tree_desc(t + 0, &merge_base->object.oid,
 		       merge_base->buffer, merge_base->size);
@@ -1857,7 +1865,7 @@ static int merge_submodule(struct merge_options *opt,
 		BUG("submodule deleted on one side; this should be handled outside of merge_submodule()");
 
 	if ((sub_not_initialized = repo_submodule_init(&subrepo,
-		opt->repo, path, null_oid(the_hash_algo)))) {
+		opt->repo, path, null_oid(opt->repo->hash_algo)))) {
 		path_msg(opt, CONFLICT_SUBMODULE_NOT_INITIALIZED, 0,
 			 path, NULL, NULL, NULL,
 			 _("Failed to merge submodule %s (not checked out)"),
@@ -2136,9 +2144,9 @@ static int merge_3way(struct merge_options *opt,
 		name2 = mkpathdup("%s:%s", opt->branch2,  pathnames[2]);
 	}
 
-	read_mmblob(&orig, the_repository->objects, o);
-	read_mmblob(&src1, the_repository->objects, a);
-	read_mmblob(&src2, the_repository->objects, b);
+	read_mmblob(&orig, opt->repo->objects, o);
+	read_mmblob(&src1, opt->repo->objects, a);
+	read_mmblob(&src2, opt->repo->objects, b);
 
 	merge_status = ll_merge(result_buf, path, &orig, base,
 				&src1, name1, &src2, name2,
@@ -2240,7 +2248,7 @@ static int handle_content_merge(struct merge_options *opt,
 		two_way = ((S_IFMT & o->mode) != (S_IFMT & a->mode));
 
 		merge_status = merge_3way(opt, path,
-					  two_way ? null_oid(the_hash_algo) : &o->oid,
+					  two_way ? null_oid(opt->repo->hash_algo) : &o->oid,
 					  &a->oid, &b->oid,
 					  pathnames, extra_marker_size,
 					  &result_buf);
@@ -2254,7 +2262,7 @@ static int handle_content_merge(struct merge_options *opt,
 		}
 
 		if (!ret && record_object &&
-		    odb_write_object(the_repository->objects, result_buf.ptr, result_buf.size,
+		    odb_write_object(opt->repo->objects, result_buf.ptr, result_buf.size,
 				     OBJ_BLOB, &result->oid)) {
 			path_msg(opt, ERROR_OBJECT_WRITE_FAILED, 0,
 				 pathnames[0], pathnames[1], pathnames[2], NULL,
@@ -2272,7 +2280,7 @@ static int handle_content_merge(struct merge_options *opt,
 	} else if (S_ISGITLINK(a->mode)) {
 		int two_way = ((S_IFMT & o->mode) != (S_IFMT & a->mode));
 		clean = merge_submodule(opt, pathnames[0],
-					two_way ? null_oid(the_hash_algo) : &o->oid,
+					two_way ? null_oid(opt->repo->hash_algo) : &o->oid,
 					&a->oid, &b->oid, &result->oid);
 		if (clean < 0)
 			return -1;
@@ -2786,7 +2794,7 @@ static void apply_directory_rename_modifications(struct merge_options *opt,
 		assert(!new_ci->match_mask);
 		new_ci->dirmask = 0;
 		new_ci->stages[1].mode = 0;
-		oidcpy(&new_ci->stages[1].oid, null_oid(the_hash_algo));
+		oidcpy(&new_ci->stages[1].oid, null_oid(opt->repo->hash_algo));
 
 		/*
 		 * Now that we have the file information in new_ci, make sure
@@ -2799,7 +2807,7 @@ static void apply_directory_rename_modifications(struct merge_options *opt,
 				continue;
 			/* zero out any entries related to files */
 			ci->stages[i].mode = 0;
-			oidcpy(&ci->stages[i].oid, null_oid(the_hash_algo));
+			oidcpy(&ci->stages[i].oid, null_oid(opt->repo->hash_algo));
 		}
 
 		/* Now we want to focus on new_ci, so reassign ci to it. */
@@ -3214,7 +3222,7 @@ static int process_renames(struct merge_options *opt,
 			if (type_changed) {
 				/* rename vs. typechange */
 				/* Mark the original as resolved by removal */
-				memcpy(&oldinfo->stages[0].oid, null_oid(the_hash_algo),
+				memcpy(&oldinfo->stages[0].oid, null_oid(opt->repo->hash_algo),
 				       sizeof(oldinfo->stages[0].oid));
 				oldinfo->stages[0].mode = 0;
 				oldinfo->filemask &= 0x06;
@@ -3713,7 +3721,7 @@ static int read_oid_strbuf(struct merge_options *opt,
 	void *buf;
 	enum object_type type;
 	unsigned long size;
-	buf = odb_read_object(the_repository->objects, oid, &type, &size);
+	buf = odb_read_object(opt->repo->objects, oid, &type, &size);
 	if (!buf) {
 		path_msg(opt, ERROR_OBJECT_READ_FAILED, 0,
 			 path, NULL, NULL, NULL,
@@ -3822,15 +3830,16 @@ static int tree_entry_order(const void *a_, const void *b_)
 				 b->string, strlen(b->string), bmi->result.mode);
 }
 
-static int write_tree(struct object_id *result_oid,
+static int write_tree(struct repository *repo,
+		      struct object_id *result_oid,
 		      struct string_list *versions,
-		      unsigned int offset,
-		      size_t hash_size)
+		      unsigned int offset)
 {
 	size_t maxlen = 0, extra;
 	unsigned int nr;
 	struct strbuf buf = STRBUF_INIT;
 	int i, ret = 0;
+	size_t hash_size = repo->hash_algo->rawsz;
 
 	assert(offset <= versions->nr);
 	nr = versions->nr - offset;
@@ -3856,7 +3865,7 @@ static int write_tree(struct object_id *result_oid,
 	}
 
 	/* Write this object file out, and record in result_oid */
-	if (odb_write_object(the_repository->objects, buf.buf,
+	if (odb_write_object(repo->objects, buf.buf,
 			     buf.len, OBJ_TREE, result_oid))
 		ret = -1;
 	strbuf_release(&buf);
@@ -4026,8 +4035,8 @@ static int write_completed_directory(struct merge_options *opt,
 		dir_info->is_null = 0;
 		dir_info->result.mode = S_IFDIR;
 		if (record_tree &&
-		    write_tree(&dir_info->result.oid, &info->versions, offset,
-			       opt->repo->hash_algo->rawsz) < 0)
+		    write_tree(opt->repo, &dir_info->result.oid, &info->versions,
+			       offset) < 0)
 			ret = -1;
 	}
 
@@ -4101,7 +4110,7 @@ static int process_entry(struct merge_options *opt,
 			if (ci->filemask & (1 << i))
 				continue;
 			ci->stages[i].mode = 0;
-			oidcpy(&ci->stages[i].oid, null_oid(the_hash_algo));
+			oidcpy(&ci->stages[i].oid, null_oid(opt->repo->hash_algo));
 		}
 	} else if (ci->df_conflict && ci->merged.result.mode != 0) {
 		/*
@@ -4148,7 +4157,7 @@ static int process_entry(struct merge_options *opt,
 				continue;
 			/* zero out any entries related to directories */
 			new_ci->stages[i].mode = 0;
-			oidcpy(&new_ci->stages[i].oid, null_oid(the_hash_algo));
+			oidcpy(&new_ci->stages[i].oid, null_oid(opt->repo->hash_algo));
 		}
 
 		/*
@@ -4270,11 +4279,11 @@ static int process_entry(struct merge_options *opt,
 			new_ci->merged.result.mode = ci->stages[2].mode;
 			oidcpy(&new_ci->merged.result.oid, &ci->stages[2].oid);
 			new_ci->stages[1].mode = 0;
-			oidcpy(&new_ci->stages[1].oid, null_oid(the_hash_algo));
+			oidcpy(&new_ci->stages[1].oid, null_oid(opt->repo->hash_algo));
 			new_ci->filemask = 5;
 			if ((S_IFMT & b_mode) != (S_IFMT & o_mode)) {
 				new_ci->stages[0].mode = 0;
-				oidcpy(&new_ci->stages[0].oid, null_oid(the_hash_algo));
+				oidcpy(&new_ci->stages[0].oid, null_oid(opt->repo->hash_algo));
 				new_ci->filemask = 4;
 			}
 
@@ -4282,11 +4291,11 @@ static int process_entry(struct merge_options *opt,
 			ci->merged.result.mode = ci->stages[1].mode;
 			oidcpy(&ci->merged.result.oid, &ci->stages[1].oid);
 			ci->stages[2].mode = 0;
-			oidcpy(&ci->stages[2].oid, null_oid(the_hash_algo));
+			oidcpy(&ci->stages[2].oid, null_oid(opt->repo->hash_algo));
 			ci->filemask = 3;
 			if ((S_IFMT & a_mode) != (S_IFMT & o_mode)) {
 				ci->stages[0].mode = 0;
-				oidcpy(&ci->stages[0].oid, null_oid(the_hash_algo));
+				oidcpy(&ci->stages[0].oid, null_oid(opt->repo->hash_algo));
 				ci->filemask = 2;
 			}
 
@@ -4414,7 +4423,7 @@ static int process_entry(struct merge_options *opt,
 		/* Deleted on both sides */
 		ci->merged.is_null = 1;
 		ci->merged.result.mode = 0;
-		oidcpy(&ci->merged.result.oid, null_oid(the_hash_algo));
+		oidcpy(&ci->merged.result.oid, null_oid(opt->repo->hash_algo));
 		assert(!ci->df_conflict);
 		ci->merged.clean = !ci->path_conflict;
 	}
@@ -4438,7 +4447,7 @@ static void prefetch_for_content_merges(struct merge_options *opt,
 	struct string_list_item *e;
 	struct oid_array to_fetch = OID_ARRAY_INIT;
 
-	if (opt->repo != the_repository || !repo_has_promisor_remote(the_repository))
+	if (!repo_has_promisor_remote(opt->repo))
 		return;
 
 	for (e = &plist->items[plist->nr-1]; e >= plist->items; --e) {
@@ -4573,8 +4582,7 @@ static int process_entries(struct merge_options *opt,
 		BUG("dir_metadata accounting completely off; shouldn't happen");
 	}
 	if (record_tree &&
-	    write_tree(result_oid, &dir_metadata.versions, 0,
-		       opt->repo->hash_algo->rawsz) < 0)
+	    write_tree(opt->repo, result_oid, &dir_metadata.versions, 0) < 0)
 		ret = -1;
 cleanup:
 	string_list_clear(&plist, 0);
@@ -4619,10 +4627,10 @@ static int checkout(struct merge_options *opt,
 	unpack_opts.verbose_update = (opt->verbosity > 2);
 	unpack_opts.fn = twoway_merge;
 	unpack_opts.preserve_ignored = 0; /* FIXME: !opts->overwrite_ignore */
-	if (repo_parse_tree(the_repository, prev) < 0)
+	if (repo_parse_tree(opt->repo, prev) < 0)
 		return -1;
 	init_tree_desc(&trees[0], &prev->object.oid, prev->buffer, prev->size);
-	if (repo_parse_tree(the_repository, next) < 0)
+	if (repo_parse_tree(opt->repo, next) < 0)
 		return -1;
 	init_tree_desc(&trees[1], &next->object.oid, next->buffer, next->size);
 
@@ -5280,7 +5288,7 @@ redo:
 
 	if (result->clean >= 0) {
 		if (!opt->mergeability_only) {
-			result->tree = repo_parse_tree_indirect(the_repository,
+			result->tree = repo_parse_tree_indirect(opt->repo,
 								&working_tree_oid);
 			if (!result->tree)
 				die(_("unable to read tree (%s)"),
@@ -5309,7 +5317,7 @@ static void merge_ort_internal(struct merge_options *opt,
 	struct strbuf merge_base_abbrev = STRBUF_INIT;
 
 	if (!merge_bases) {
-		if (repo_get_merge_bases(the_repository, h1, h2,
+		if (repo_get_merge_bases(opt->repo, h1, h2,
 					 &merge_bases) < 0) {
 			result->clean = -1;
 			goto out;
@@ -5440,20 +5448,20 @@ static void merge_recursive_config(struct merge_options *opt, int ui)
 {
 	char *value = NULL;
 	int renormalize = 0;
-	repo_config_get_int(the_repository, "merge.verbosity", &opt->verbosity);
-	repo_config_get_int(the_repository, "diff.renamelimit", &opt->rename_limit);
-	repo_config_get_int(the_repository, "merge.renamelimit", &opt->rename_limit);
-	repo_config_get_bool(the_repository, "merge.renormalize", &renormalize);
+	repo_config_get_int(opt->repo, "merge.verbosity", &opt->verbosity);
+	repo_config_get_int(opt->repo, "diff.renamelimit", &opt->rename_limit);
+	repo_config_get_int(opt->repo, "merge.renamelimit", &opt->rename_limit);
+	repo_config_get_bool(opt->repo, "merge.renormalize", &renormalize);
 	opt->renormalize = renormalize;
-	if (!repo_config_get_string(the_repository, "diff.renames", &value)) {
+	if (!repo_config_get_string(opt->repo, "diff.renames", &value)) {
 		opt->detect_renames = git_config_rename("diff.renames", value);
 		free(value);
 	}
-	if (!repo_config_get_string(the_repository, "merge.renames", &value)) {
+	if (!repo_config_get_string(opt->repo, "merge.renames", &value)) {
 		opt->detect_renames = git_config_rename("merge.renames", value);
 		free(value);
 	}
-	if (!repo_config_get_string(the_repository, "merge.directoryrenames", &value)) {
+	if (!repo_config_get_string(opt->repo, "merge.directoryrenames", &value)) {
 		int boolval = git_parse_maybe_bool(value);
 		if (0 <= boolval) {
 			opt->detect_directory_renames = boolval ?
@@ -5466,7 +5474,7 @@ static void merge_recursive_config(struct merge_options *opt, int ui)
 		free(value);
 	}
 	if (ui) {
-		if (!repo_config_get_string(the_repository, "diff.algorithm", &value)) {
+		if (!repo_config_get_string(opt->repo, "diff.algorithm", &value)) {
 			long diff_algorithm = parse_algorithm_value(value);
 			if (diff_algorithm < 0)
 				die(_("unknown value for config '%s': %s"), "diff.algorithm", value);
@@ -5474,7 +5482,7 @@ static void merge_recursive_config(struct merge_options *opt, int ui)
 			free(value);
 		}
 	}
-	repo_config(the_repository, git_xmerge_config, NULL);
+	repo_config(opt->repo, git_xmerge_config, NULL);
 }
 
 static void init_merge_options(struct merge_options *opt,
