@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Feb 2026, #10)
-X-master-at: 7b2bccb0d58d4f24705bf985de1f4612e4cf06e5
-X-next-at: ebd1da8b75f3d8cd1e180ccfadac32d7cbcb64b5
+Subject: What's cooking in git.git (Feb 2026, #11)
+X-master-at: 2cc71917514657b93014134350864f4849edfc83
+X-next-at: 625c4fb2daac9879b299dd1cae2e793d2821dec0
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Feb 2026, #10)
+What's cooking in git.git (Feb 2026, #11)
 -----------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -48,6 +48,192 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* ap/use-test-seq-f-more (2026-02-18) 1 commit
+  (merged to 'next' on 2026-02-20 at d847fcad1e)
+ + t: use test_seq -f and pipes in a few more places
+
+ Test clean-up.
+ source: <20260218181019.1705160-1-aplattner@nvidia.com>
+
+
+* db/doc-fetch-jobs-auto (2026-02-18) 1 commit
+  (merged to 'next' on 2026-02-20 at 4e20a85963)
+ + doc: fetch: document `--jobs=0` behavior
+
+ Doc update.
+ source: <pull.2047.git.1771443159369.gitgitgadget@gmail.com>
+
+
+* jc/checkout-switch-restore (2026-01-29) 2 commits
+  (merged to 'next' on 2026-02-20 at a386d47625)
+ + checkout: tell "parse_remote_branch" which command is calling it
+ + checkout: pass program-readable token to unified "main"
+
+ "git switch <name>", in an attempt to create a local branch <name>
+ after a remote tracking branch of the same name gave an advise
+ message to disambiguate using "git checkout", which has been
+ updated to use "git switch".
+ source: <20260129190616.645471-1-gitster@pobox.com>
+
+
+* jc/whitespace-incomplete-line (2026-02-04) 1 commit
+  (merged to 'next' on 2026-02-20 at 1d5f62e778)
+ + whitespace: symbolic links usually lack LF at the end
+
+ It does not make much sense to apply the "incomplete-line"
+ whitespace rule to symbolic links, whose contents almost always
+ lack the final newline.  "git apply" and "git diff" are now taught
+ to exclude them for a change to symbolic links.
+ source: <xmqqpl6hhm96.fsf@gitster.g>
+
+
+* jh/alias-i18n (2026-02-18) 4 commits
+  (merged to 'next' on 2026-02-20 at b9a5c15c4f)
+ + completion: fix zsh alias listing for subsection aliases
+ + alias: support non-alphanumeric names via subsection syntax
+ + alias: prepare for subsection aliases
+ + help: use list_aliases() for alias listing
+ (this branch is used by jh/alias-i18n-fixes and kh/alias-i18n-docfix.)
+
+ Extend the alias configuration syntax to allow aliases using
+ characters outside ASCII alphanumeric (plus '-').
+ source: <20260218215737.1181147-1-jonatan@jontes.page>
+
+
+* jk/ref-filter-lrstrip-optim (2026-02-19) 5 commits
+  (merged to 'next' on 2026-02-20 at 88c2fb76b8)
+ + ref-filter: clarify lstrip/rstrip component counting
+  (merged to 'next' on 2026-02-19 at 6efc8a2023)
+ + ref-filter: avoid strrchr() in rstrip_ref_components()
+ + ref-filter: simplify rstrip_ref_components() memory handling
+ + ref-filter: simplify lstrip_ref_components() memory handling
+ + ref-filter: factor out refname component counting
+
+ Code clean-up.
+ source: <20260215085755.GA86262@coredump.intra.peff.net>
+ source: <20260220060003.GA26256@coredump.intra.peff.net>
+
+
+* lo/repo-info-keys (2026-02-13) 2 commits
+  (merged to 'next' on 2026-02-19 at 3a9b510b86)
+ + repo: add new flag --keys to git-repo-info
+ + repo: rename the output format "keyvalue" to "lines"
+ (this branch is used by lo/repo-leftover-bits.)
+
+ "git repo info" learns "--keys" action to list known keys.
+ source: <20260214005818.37349-1-lucasseikioshiro@gmail.com>
+
+
+* mf/format-patch-honor-from-for-cover-letter (2026-02-17) 1 commit
+  (merged to 'next' on 2026-02-20 at d3efdd79b2)
+ + format-patch: fix From header in cover letter
+
+ "git format-patch --from=<me>" did not honor the command line
+ option when writing out the cover letter, which has been corrected.
+ source: <20260217232519.24898-1-mroik@delayed.space>
+
+
+* ps/ci-gitlab-msvc-updates (2026-02-18) 7 commits
+  (merged to 'next' on 2026-02-20 at b2a8b7bf93)
+ + gitlab-ci: handle failed tests on MSVC+Meson job
+ + gitlab-ci: use "run-test-slice-meson.sh"
+ + ci: make test slicing consistent across Meson/Make
+ + github: fix Meson tests not executing at all
+ + meson: fix MERGE_TOOL_DIR with "--no-bin-wrappers"
+ + ci: don't skip smallest test slice in GitLab
+ + ci: handle failures of test-slice helper
+
+ CI update.
+ source: <20260219-b4-pks-ci-meson-improvements-v2-0-6047b8307ab2@pks.im>
+
+
+* ps/for-each-ref-in-fixes (2026-02-18) 4 commits
+  (merged to 'next' on 2026-02-19 at 5397753d41)
+ + bisect: simplify string_list memory handling
+ + bisect: fix misuse of `refs_for_each_ref_in()`
+ + pack-bitmap: fix bug with exact ref match in "pack.preferBitmapTips"
+ + pack-bitmap: deduplicate logic to iterate over preferred bitmap tips
+ (this branch is used by ps/refs-for-each.)
+
+ A handful of places used refs_for_each_ref_in() API incorrectly,
+ which has been corrected.
+ source: <20260219-b4-pks-fix-for-each-ref-in-misuse-v4-0-57ac30172fae@pks.im>
+
+
+* ps/history-ergonomics-updates (2026-02-15) 5 commits
+  (merged to 'next' on 2026-02-19 at 9d5bc4efc5)
+ + Documentation/git-history: document default for "--update-refs="
+ + builtin/history: rename "--ref-action=" to "--update-refs="
+ + builtin/history: replace "--ref-action=print" with "--dry-run"
+ + builtin/history: check for merges before asking for user input
+ + builtin/history: perform revwalk checks before asking for user input
+
+ UI improvements for "git history reword".
+ source: <20260216-b4-pks-history-dry-run-v3-0-c4db58a651fc@pks.im>
+
+
+* ps/tests-wo-iconv-fixes (2026-02-20) 5 commits
+  (merged to 'next' on 2026-02-20 at 277b2c99aa)
+ + t6006: don't use iconv(1) without ICONV prereq
+ + t5550: add ICONV prereq to tests that use "$HTTPD_URL/error"
+ + t4205: improve handling of ICONV prerequisite
+ + t40xx: don't use iconv(1) without ICONV prereq
+ + t: don't set ICONV prereq when iconv(1) is missing
+
+ Some tests assumed "iconv" is available without honoring ICONV
+ prerequisite, which has been corrected.
+ source: <20260220-b4-pks-ci-msvc-iconv-fixes-v4-0-e0e6bbcaeb5b@pks.im>
+
+--------------------------------------------------
+[New Topics]
+
+* jk/repo-structure-cleanup (2026-02-23) 1 commit
+ - repo: remove unnecessary variable shadow
+
+ Code clean-up.
+
+ Will merge to 'next'.
+ source: <20260223135248.127935-1-jayatheerthkulkarni2005@gmail.com>
+
+
+* lp/diff-stat-utf8-display-width-fix (2026-02-27) 2 commits
+ - t4052: test for diffstat width when prefix contains ANSI escape codes
+ - diff: handle ANSI escape codes in prefix when calculating diffstat width
+
+ "git log --graph --stat" did not count the display width of colored
+ graph part of its own output correctly, which has been corrected.
+
+ Will merge to 'next'.
+ source: <cover.1772226209.git.lorenzo.pegorari2002@gmail.com>
+
+
+* ps/upload-pack-buffer-more-writes (2026-02-27) 2 commits
+ - upload-pack: reduce lock contention when writing packfile data
+ - upload-pack: fix debug statement when flushing packfile data
+
+ Reduce system overhead "git upload-pack" spends relaying "git
+ pack-objects" output to the "git fetch" running on the other end of
+ the connection.
+
+ Under discussion.
+ cf. <20260227193758.GA2931515@coredump.intra.peff.net>
+ source: <20260227-pks-upload-pack-write-contention-v1-0-7166fe255704@pks.im>
+
+
+* rs/parse-options-duplicated-long-options (2026-02-27) 2 commits
+ - parseopt: check for duplicate long names and numerical options
+ - pack-objects: remove duplicate --stdin-packs definition
+
+ The parse-options API learned to notice an options[] array with
+ duplicated long options.
+
+ Expecting a review response.
+ cf. <20260227230822.GA2965111@coredump.intra.peff.net>
+ source: <xmqq5x7jujqb.fsf@gitster.g>
+
+--------------------------------------------------
 [Cooking]
 
 * jt/repo-structure-extrema (2026-02-23) 5 commits
@@ -65,16 +251,17 @@ Release tarballs are available at:
 
 
 * ps/fsck-stream-from-the-right-object-instance (2026-02-23) 4 commits
- - pack-check: fix verification of large objects
- - packfile: expose function to read object stream for an offset
- - object-file: adapt `stream_object_signature()` to take a stream
- - t/helper: improve "genrandom" test helper
+  (merged to 'next' on 2026-02-27 at b378558c1a)
+ + pack-check: fix verification of large objects
+ + packfile: expose function to read object stream for an offset
+ + object-file: adapt `stream_object_signature()` to take a stream
+ + t/helper: improve "genrandom" test helper
 
  "fsck" iterates over packfiles and its access to pack data caused
  the list to be permuted, which caused it to loop forever; the code
  to access pack data by "fsck" has been updated to avoid this.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20260223-pks-fsck-fix-v2-0-99a0714ea3bd@pks.im>
 
 
@@ -119,18 +306,16 @@ Release tarballs are available at:
  source: <pull.2056.v2.git.1771968924.gitgitgadget@gmail.com>
 
 
-* jh/alias-i18n-fixes (2026-02-24) 4 commits
- - SQUASH??? leakfix
+* jh/alias-i18n-fixes (2026-02-26) 4 commits
+ - git, help: fix memory leaks in alias listing
  - alias: treat empty subsection [alias ""] as plain [alias]
  - doc: fix list continuation in alias subsection example
  - Merge branch 'jh/alias-i18n' into jh/alias-i18n-fixes
- (this branch uses jh/alias-i18n.)
 
  Further update to the i18n alias support to avoid regressions.
 
- Expecting a (hopefully small and final) reroll?
- cf. <xmqq8qcga6ya.fsf@gitster.g>
- source: <20260224171245.458377-1-jonatan@jontes.page>
+ Will merge to 'next'.
+ source: <20260226205339.1535482-1-jonatan@jontes.page>
 
 
 * lc/rebase-trailer (2026-02-23) 5 commits
@@ -149,19 +334,20 @@ Release tarballs are available at:
  source: <20260224070552.148591-1-me@linux.beauty>
 
 
-* mf/format-patch-cover-letter-format (2026-02-24) 3 commits
- - SQUASH???
+* mf/format-patch-cover-letter-format (2026-02-27) 5 commits
+ - docs: add usage for the cover-letter fmt feature
  - format-patch: add commitListFormat config
  - format-patch: add ability to use alt cover format
+ - format-patch: move cover letter summary generation
+ - pretty.c: add %(count) and %(total) placeholders
 
  "git format-patch --cover-letter" learns to use a simpler format
  instead of the traditional shortlog format to list its commits with
  a new --cover-letter-format option and format.commitListFormat
  configuration variable.
 
- Expecting a (hopefully small and final) reroll?
- cf. <aZ4-_jmFS8yS4g49@exploit>
- source: <cover.1771925291.git.mroik@delayed.space>
+ Will merge to 'next'?
+ source: <cover.1772232373.git.mroik@delayed.space>
 
 
 * sp/send-email-validate-charset (2026-02-26) 1 commit
@@ -205,11 +391,12 @@ Release tarballs are available at:
 
 
 * pt/t7527-flake-workaround (2025-12-31) 1 commit
- - t7527: fix flaky fsmonitor event tests with retry logic
+  (merged to 'next' on 2026-02-27 at d6ebc97cb1)
+ + t7527: fix flaky fsmonitor event tests with retry logic
 
  Test fixup.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.2150.v2.git.git.1767226763360.gitgitgadget@gmail.com>
 
 
@@ -256,7 +443,7 @@ Release tarballs are available at:
 
 
 * ty/setup-error-tightening (2026-02-22) 1 commit
- - setup: improve error diagnosis for invalid .git files
+ . setup: improve error diagnosis for invalid .git files
 
  While discovering a ".git" directory, the code treats any stat()
  failure as a sign that a filesystem entity .git does not exist
@@ -264,28 +451,9 @@ Release tarballs are available at:
  directory.  The code has been tightened to notice and report
  filesystem corruption better.
 
- Will merge to 'next'.
+ Kicked out of the tree for now, due to CI breakage.
+ cf. <xmqqpl5rumy0.fsf@gitster.g>
  source: <20260223074410.917523-1-a3205153416@gmail.com>
-
-
-* bc/do-not-reorder-packs-during-fsck (2026-02-22) 1 commit
- . fsck: do not loop infinitely when processing packs
-
- Access to packfiles during fsck would reorder the mru list of
- packs, which causes the fsck to loop forever going over the list.
-
- Supersided by ps/fsck-stream-from-the-right-object-instance?
- source: <20260222183710.2963424-1-sandals@crustytoothpaste.net>
-
-
-* ap/use-test-seq-f-more (2026-02-18) 1 commit
-  (merged to 'next' on 2026-02-20 at d847fcad1e)
- + t: use test_seq -f and pipes in a few more places
-
- Test clean-up.
-
- Will merge to 'master'.
- source: <20260218181019.1705160-1-aplattner@nvidia.com>
 
 
 * bk/mailmap-wo-the-repository (2026-02-19) 2 commits
@@ -297,16 +465,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <20260220060442.29469-1-bkkaracay@gmail.com>
-
-
-* db/doc-fetch-jobs-auto (2026-02-18) 1 commit
-  (merged to 'next' on 2026-02-20 at 4e20a85963)
- + doc: fetch: document `--jobs=0` behavior
-
- Doc update.
-
- Will merge to 'master'.
- source: <pull.2047.git.1771443159369.gitgitgadget@gmail.com>
 
 
 * jt/object-file-use-container-of (2026-02-22) 2 commits
@@ -332,17 +490,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <V2_CV_format.noprefix_boolean.421@msgid.xyz>
-
-
-* mf/format-patch-honor-from-for-cover-letter (2026-02-17) 1 commit
-  (merged to 'next' on 2026-02-20 at d3efdd79b2)
- + format-patch: fix From header in cover letter
-
- "git format-patch --from=<me>" did not honor the command line
- option when writing out the cover letter, which has been corrected.
-
- Will merge to 'master'.
- source: <20260217232519.24898-1-mroik@delayed.space>
 
 
 * pw/no-more-NULL-means-current-worktree (2026-02-19) 2 commits
@@ -420,7 +567,6 @@ Release tarballs are available at:
  + repo: rename repo_info_fields to repo_info_field
  + CodingGuidelines: instruct to name arrays in singular
  + Merge branch 'lo/repo-info-keys' into lo/repo-leftover-bits
- (this branch uses lo/repo-info-keys.)
 
  Clean-up the code around "git repo info" command.
 
@@ -446,29 +592,29 @@ Release tarballs are available at:
 
 
 * ps/refs-for-each (2026-02-23) 18 commits
- - refs: replace `refs_for_each_fullref_in()`
- - refs: replace `refs_for_each_namespaced_ref()`
- - refs: replace `refs_for_each_glob_ref()`
- - refs: replace `refs_for_each_glob_ref_in()`
- - refs: replace `refs_for_each_rawref_in()`
- - refs: replace `refs_for_each_rawref()`
- - refs: replace `refs_for_each_ref_in()`
- - refs: improve verification for-each-ref options
- - refs: generalize `refs_for_each_fullref_in_prefixes()`
- - refs: generalize `refs_for_each_namespaced_ref()`
- - refs: speed up `refs_for_each_glob_ref_in()`
- - refs: introduce `refs_for_each_ref_ext`
- - refs: rename `each_ref_fn`
- - refs: rename `do_for_each_ref_flags`
- - refs: move `do_for_each_ref_flags` further up
- - refs: move `refs_head_ref_namespaced()`
- - refs: remove unused `refs_for_each_include_root_ref()`
- - Merge branch 'ps/for-each-ref-in-fixes' into ps/refs-for-each
- (this branch uses ps/for-each-ref-in-fixes.)
+  (merged to 'next' on 2026-02-27 at ec9e0a36ff)
+ + refs: replace `refs_for_each_fullref_in()`
+ + refs: replace `refs_for_each_namespaced_ref()`
+ + refs: replace `refs_for_each_glob_ref()`
+ + refs: replace `refs_for_each_glob_ref_in()`
+ + refs: replace `refs_for_each_rawref_in()`
+ + refs: replace `refs_for_each_rawref()`
+ + refs: replace `refs_for_each_ref_in()`
+ + refs: improve verification for-each-ref options
+ + refs: generalize `refs_for_each_fullref_in_prefixes()`
+ + refs: generalize `refs_for_each_namespaced_ref()`
+ + refs: speed up `refs_for_each_glob_ref_in()`
+ + refs: introduce `refs_for_each_ref_ext`
+ + refs: rename `each_ref_fn`
+ + refs: rename `do_for_each_ref_flags`
+ + refs: move `do_for_each_ref_flags` further up
+ + refs: move `refs_head_ref_namespaced()`
+ + refs: remove unused `refs_for_each_include_root_ref()`
+ + Merge branch 'ps/for-each-ref-in-fixes' into ps/refs-for-each
 
  Code refactoring around refs-for-each-* API functions.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  cf. <CAOLa=ZTz-9JKHC3H8tSwP=bDvX2mNA-erjr5Ni6Tiq4cm4WmLg@mail.gmail.com>
  source: <20260223-pks-refs-for-each-unification-v2-0-515d48c8087b@pks.im>
 
@@ -509,22 +655,6 @@ Release tarballs are available at:
  source: <4ef96c6bbf698a08df1df87b7cb053b6d0d00822.1771943954.git.ben.knoble+github@gmail.com>
 
 
-* jk/ref-filter-lrstrip-optim (2026-02-19) 5 commits
-  (merged to 'next' on 2026-02-20 at 88c2fb76b8)
- + ref-filter: clarify lstrip/rstrip component counting
-  (merged to 'next' on 2026-02-19 at 6efc8a2023)
- + ref-filter: avoid strrchr() in rstrip_ref_components()
- + ref-filter: simplify rstrip_ref_components() memory handling
- + ref-filter: simplify lstrip_ref_components() memory handling
- + ref-filter: factor out refname component counting
-
- Code clean-up.
-
- Will merge to 'master'.
- source: <20260215085755.GA86262@coredump.intra.peff.net>
- source: <20260220060003.GA26256@coredump.intra.peff.net>
-
-
 * ps/receive-pack-shallow-optim (2026-02-16) 3 commits
   (merged to 'next' on 2026-02-22 at ad6abc1ef8)
  + commit: use commit graph in `lookup_commit_reference_gently()`
@@ -562,21 +692,6 @@ Release tarballs are available at:
  source: <pull.2008.v5.git.1771856405.gitgitgadget@gmail.com>
 
 
-* jh/alias-i18n (2026-02-18) 4 commits
-  (merged to 'next' on 2026-02-20 at b9a5c15c4f)
- + completion: fix zsh alias listing for subsection aliases
- + alias: support non-alphanumeric names via subsection syntax
- + alias: prepare for subsection aliases
- + help: use list_aliases() for alias listing
- (this branch is used by jh/alias-i18n-fixes and kh/alias-i18n-docfix.)
-
- Extend the alias configuration syntax to allow aliases using
- characters outside ASCII alphanumeric (plus '-').
-
- Will merge to 'master'.
- source: <20260218215737.1181147-1-jonatan@jontes.page>
-
-
 * hy/diff-lazy-fetch-with-break-fix (2026-02-23) 1 commit
   (merged to 'next' on 2026-02-25 at afe07ad86c)
  + diffcore-break: avoid segfault with freed entries
@@ -588,20 +703,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <20260224061329.60364-2-hanyang.tony@bytedance.com>
-
-
-* ps/history-ergonomics-updates (2026-02-15) 5 commits
-  (merged to 'next' on 2026-02-19 at 9d5bc4efc5)
- + Documentation/git-history: document default for "--update-refs="
- + builtin/history: rename "--ref-action=" to "--update-refs="
- + builtin/history: replace "--ref-action=print" with "--dry-run"
- + builtin/history: check for merges before asking for user input
- + builtin/history: perform revwalk checks before asking for user input
-
- UI improvements for "git history reword".
-
- Will merge to 'master'.
- source: <20260216-b4-pks-history-dry-run-v3-0-c4db58a651fc@pks.im>
 
 
 * kh/doc-patch-id-4 (2026-02-14) 3 commits
@@ -627,37 +728,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <doc_am_gitlinks_and_am.messageId.321@msgid.xyz>
-
-
-* ps/ci-gitlab-msvc-updates (2026-02-18) 7 commits
-  (merged to 'next' on 2026-02-20 at b2a8b7bf93)
- + gitlab-ci: handle failed tests on MSVC+Meson job
- + gitlab-ci: use "run-test-slice-meson.sh"
- + ci: make test slicing consistent across Meson/Make
- + github: fix Meson tests not executing at all
- + meson: fix MERGE_TOOL_DIR with "--no-bin-wrappers"
- + ci: don't skip smallest test slice in GitLab
- + ci: handle failures of test-slice helper
-
- CI update.
-
- Will merge to 'master'.
- source: <20260219-b4-pks-ci-meson-improvements-v2-0-6047b8307ab2@pks.im>
-
-
-* ps/tests-wo-iconv-fixes (2026-02-20) 5 commits
-  (merged to 'next' on 2026-02-20 at 277b2c99aa)
- + t6006: don't use iconv(1) without ICONV prereq
- + t5550: add ICONV prereq to tests that use "$HTTPD_URL/error"
- + t4205: improve handling of ICONV prerequisite
- + t40xx: don't use iconv(1) without ICONV prereq
- + t: don't set ICONV prereq when iconv(1) is missing
-
- Some tests assumed "iconv" is available without honoring ICONV
- prerequisite, which has been corrected.
-
- Will merge to 'master'.
- source: <20260220-b4-pks-ci-msvc-iconv-fixes-v4-0-e0e6bbcaeb5b@pks.im>
 
 
 * pw/meson-doc-mergetool (2026-02-09) 1 commit
@@ -748,36 +818,24 @@ Release tarballs are available at:
 
 
 * ar/config-hooks (2026-02-18) 9 commits
- - hook: add -z option to "git hook list"
- - hook: allow out-of-repo 'git hook' invocations
- - hook: allow event = "" to overwrite previous values
- - hook: allow disabling config hooks
- - hook: include hooks from the config
- - hook: add "git hook list" command
- - hook: run a list of hooks to prepare for multihook support
- - hook: add internal state alloc/free callbacks
- - Merge branch 'ar/run-command-hook-take-2' into ar/config-hooks
+  (merged to 'next' on 2026-02-27 at 6a04cca28e)
+ + hook: add -z option to "git hook list"
+ + hook: allow out-of-repo 'git hook' invocations
+ + hook: allow event = "" to overwrite previous values
+ + hook: allow disabling config hooks
+ + hook: include hooks from the config
+ + hook: add "git hook list" command
+ + hook: run a list of hooks to prepare for multihook support
+ + hook: add internal state alloc/free callbacks
+ + Merge branch 'ar/run-command-hook-take-2' into ar/config-hooks
  (this branch is used by ar/parallel-hooks; uses ar/run-command-hook-take-2.)
 
  Allow hook commands to be defined (possibly centrally) in the
  configuration files, and run multiple of them for the same hook
  event.
 
- Will merge to 'next'.
- source: <20260218222352.55393-1-adrian.ratiu@collabora.com>
-
-
-* jc/whitespace-incomplete-line (2026-02-04) 1 commit
-  (merged to 'next' on 2026-02-20 at 1d5f62e778)
- + whitespace: symbolic links usually lack LF at the end
-
- It does not make much sense to apply the "incomplete-line"
- whitespace rule to symbolic links, whose contents almost always
- lack the final newline.  "git apply" and "git diff" are now taught
- to exclude them for a change to symbolic links.
-
  Will merge to 'master'.
- source: <xmqqpl6hhm96.fsf@gitster.g>
+ source: <20260218222352.55393-1-adrian.ratiu@collabora.com>
 
 
 * ps/meson-gitk-git-gui (2026-02-04) 1 commit
@@ -819,35 +877,6 @@ Release tarballs are available at:
 
  Needs review.
  source: <20260222002904.1879356-1-adrian.ratiu@collabora.com>
-
-
-* jc/checkout-switch-restore (2026-01-29) 2 commits
-  (merged to 'next' on 2026-02-20 at a386d47625)
- + checkout: tell "parse_remote_branch" which command is calling it
- + checkout: pass program-readable token to unified "main"
-
- "git switch <name>", in an attempt to create a local branch <name>
- after a remote tracking branch of the same name gave an advise
- message to disambiguate using "git checkout", which has been
- updated to use "git switch".
-
- Will merge to 'master'.
- source: <20260129190616.645471-1-gitster@pobox.com>
-
-
-* ps/for-each-ref-in-fixes (2026-02-18) 4 commits
-  (merged to 'next' on 2026-02-19 at 5397753d41)
- + bisect: simplify string_list memory handling
- + bisect: fix misuse of `refs_for_each_ref_in()`
- + pack-bitmap: fix bug with exact ref match in "pack.preferBitmapTips"
- + pack-bitmap: deduplicate logic to iterate over preferred bitmap tips
- (this branch is used by ps/refs-for-each.)
-
- A handful of places used refs_for_each_ref_in() API incorrectly,
- which has been corrected.
-
- Will merge to 'master'.
- source: <20260219-b4-pks-fix-for-each-ref-in-misuse-v4-0-57ac30172fae@pks.im>
 
 
 * ps/object-info-bits-cleanup (2026-02-11) 5 commits
@@ -1037,29 +1066,18 @@ Release tarballs are available at:
 
 
 * ob/core-attributesfile-in-repository (2026-02-16) 3 commits
- - environment: move "branch.autoSetupMerge" into `struct repo_config_values`
- - environment: stop using core.sparseCheckout globally
- - environment: stop storing `core.attributesFile` globally
+  (merged to 'next' on 2026-02-27 at 2b2e3a1fa9)
+ + environment: move "branch.autoSetupMerge" into `struct repo_config_values`
+ + environment: stop using core.sparseCheckout globally
+ + environment: stop storing `core.attributesFile` globally
 
  The core.attributesfile is intended to be set per repository, but
  were kept track of by a single global variable in-core, which has
  been corrected by moving it to per-repository data structure.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  cf. <CAP8UFD2Rz3NMrTayi9yjRk4-51tStaLWKeBVB9RaJMWmiBLqrQ@mail.gmail.com>
  source: <cover.1771258573.git.belkid98@gmail.com>
-
-
-* lo/repo-info-keys (2026-02-13) 2 commits
-  (merged to 'next' on 2026-02-19 at 3a9b510b86)
- + repo: add new flag --keys to git-repo-info
- + repo: rename the output format "keyvalue" to "lines"
- (this branch is used by lo/repo-leftover-bits.)
-
- "git repo info" learns "--keys" action to list known keys.
-
- Will merge to 'master'.
- source: <20260214005818.37349-1-lucasseikioshiro@gmail.com>
 
 
 * tb/incremental-midx-part-3.2 (2026-02-24) 17 commits
@@ -1142,9 +1160,18 @@ Release tarballs are available at:
 
 * kh/alias-i18n-docfix (2026-02-23) 1 commit
  . doc: config: fix list continuation in alias section
- (this branch uses jh/alias-i18n.)
 
  Doc mark-up fix.
 
- Superseded by jh/alias-i18n-fixes?
- source: <20260218215737.1181147-1-jonatan@jontes.page>
+ Superseded by jh/alias-i18n-fixes.
+ source: <followup-alias-i18n.3e0@msgid.xyz>
+
+
+* bc/do-not-reorder-packs-during-fsck (2026-02-22) 1 commit
+ . fsck: do not loop infinitely when processing packs
+
+ Access to packfiles during fsck would reorder the mru list of
+ packs, which causes the fsck to loop forever going over the list.
+
+ Supersided by ps/fsck-stream-from-the-right-object-instance.
+ source: <20260222183710.2963424-1-sandals@crustytoothpaste.net>
