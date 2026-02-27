@@ -901,6 +901,26 @@ static int feed_receive_hook_cb(int hook_stdin_fd, void *pp_cb UNUSED, void *pp_
 	return state->cmd ? 0 : 1;  /* 0 = more to come, 1 = EOF */
 }
 
+static void *receive_hook_feed_state_alloc(void *feed_pipe_ctx)
+{
+	struct receive_hook_feed_state *init_state = feed_pipe_ctx;
+	struct receive_hook_feed_state *data = xcalloc(1, sizeof(*data));
+	data->report = init_state->report;
+	data->cmd = init_state->cmd;
+	data->skip_broken = init_state->skip_broken;
+	strbuf_init(&data->buf, 0);
+	return data;
+}
+
+static void receive_hook_feed_state_free(void *data)
+{
+	struct receive_hook_feed_state *d = data;
+	if (!d)
+		return;
+	strbuf_release(&d->buf);
+	free(d);
+}
+
 static int run_receive_hook(struct command *commands,
 			    const char *hook_name,
 			    int skip_broken,
@@ -908,7 +928,7 @@ static int run_receive_hook(struct command *commands,
 {
 	struct run_hooks_opt opt = RUN_HOOKS_OPT_INIT;
 	struct command *iter = commands;
-	struct receive_hook_feed_state feed_state;
+	struct receive_hook_feed_state feed_init_state = { 0 };
 	struct async sideband_async;
 	int sideband_async_started = 0;
 	int saved_stderr = -1;
@@ -938,16 +958,15 @@ static int run_receive_hook(struct command *commands,
 	prepare_sideband_async(&sideband_async, &saved_stderr, &sideband_async_started);
 
 	/* set up stdin callback */
-	feed_state.cmd = commands;
-	feed_state.skip_broken = skip_broken;
-	feed_state.report = NULL;
-	strbuf_init(&feed_state.buf, 0);
-	opt.feed_pipe_cb_data = &feed_state;
+	feed_init_state.cmd = commands;
+	feed_init_state.skip_broken = skip_broken;
+	opt.feed_pipe_ctx = &feed_init_state;
 	opt.feed_pipe = feed_receive_hook_cb;
+	opt.feed_pipe_cb_data_alloc = receive_hook_feed_state_alloc;
+	opt.feed_pipe_cb_data_free = receive_hook_feed_state_free;
 
 	ret = run_hooks_opt(the_repository, hook_name, &opt);
 
-	strbuf_release(&feed_state.buf);
 	finish_sideband_async(&sideband_async, saved_stderr, sideband_async_started);
 
 	return ret;
