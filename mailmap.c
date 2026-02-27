@@ -7,9 +7,7 @@
 #include "object-name.h"
 #include "odb.h"
 #include "setup.h"
-
-char *git_mailmap_file;
-char *git_mailmap_blob;
+#include "config.h"
 
 struct mailmap_info {
 	char *name;
@@ -183,7 +181,8 @@ static void read_mailmap_string(struct string_list *map, char *buf)
 	}
 }
 
-int read_mailmap_blob(struct string_list *map, const char *name)
+int read_mailmap_blob(struct repository *repo, struct string_list *map,
+		      const char *name)
 {
 	struct object_id oid;
 	char *buf;
@@ -192,10 +191,10 @@ int read_mailmap_blob(struct string_list *map, const char *name)
 
 	if (!name)
 		return 0;
-	if (repo_get_oid(the_repository, name, &oid) < 0)
+	if (repo_get_oid(repo, name, &oid) < 0)
 		return 0;
 
-	buf = odb_read_object(the_repository->objects, &oid, &type, &size);
+	buf = odb_read_object(repo->objects, &oid, &type, &size);
 	if (!buf)
 		return error("unable to read mailmap object at %s", name);
 	if (type != OBJ_BLOB) {
@@ -209,23 +208,32 @@ int read_mailmap_blob(struct string_list *map, const char *name)
 	return 0;
 }
 
-int read_mailmap(struct string_list *map)
+int read_mailmap(struct repository *repo, struct string_list *map)
 {
 	int err = 0;
+	char *mailmap_file = NULL, *mailmap_blob = NULL;
+
+	repo_config_get_pathname(repo, "mailmap.file", &mailmap_file);
+	repo_config_get_string(repo, "mailmap.blob", &mailmap_blob);
 
 	map->strdup_strings = 1;
 	map->cmp = namemap_cmp;
 
-	if (!git_mailmap_blob && is_bare_repository())
-		git_mailmap_blob = xstrdup("HEAD:.mailmap");
+	if (!mailmap_blob && is_bare_repository())
+		mailmap_blob = xstrdup("HEAD:.mailmap");
 
 	if (!startup_info->have_repository || !is_bare_repository())
 		err |= read_mailmap_file(map, ".mailmap",
 					 startup_info->have_repository ?
 					 MAILMAP_NOFOLLOW : 0);
 	if (startup_info->have_repository)
-		err |= read_mailmap_blob(map, git_mailmap_blob);
-	err |= read_mailmap_file(map, git_mailmap_file, 0);
+		err |= read_mailmap_blob(repo, map, mailmap_blob);
+
+	err |= read_mailmap_file(map, mailmap_file, 0);
+
+	free(mailmap_file);
+	free(mailmap_blob);
+
 	return err;
 }
 

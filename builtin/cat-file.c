@@ -1127,7 +1127,7 @@ int cmd_cat_file(int argc,
 	opt_epts = (opt == 'e' || opt == 'p' || opt == 't' || opt == 's');
 
 	if (use_mailmap)
-		read_mailmap(&mailmap);
+		read_mailmap(the_repository, &mailmap);
 
 	switch (batch.objects_filter.choice) {
 	case LOFC_DISABLED:
