@@ -1472,6 +1472,14 @@ test_expect_success '--from uses committer ident' '
 	test_cmp expect patch.head
 '
 
+test_expect_success '--from applies to cover letter' '
+	test_when_finished "rm -rf patches" &&
+	git format-patch -1 --cover-letter --from="Foo Bar <author@example.com>" -o patches &&
+	echo "From: Foo Bar <author@example.com>" >expect &&
+	grep "^From:" patches/0000-cover-letter.patch >patch.head &&
+	test_cmp expect patch.head
+'
+
 test_expect_success '--from omits redundant in-body header' '
 	git format-patch -1 --stdout --from="A U Thor <author@example.com>" >patch &&
 	cat >expect <<-\EOF &&
