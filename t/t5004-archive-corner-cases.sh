@@ -176,8 +176,7 @@ test_expect_success EXPENSIVE,UNZIP,UNZIP_ZIP64_SUPPORT \
 	blob=$(echo $s | git hash-object -w --stdin) &&
 
 	# create tree containing 65500 entries of that blob
-	test_seq -f "100644 blob $blob\t%d" 1 65500 >tree &&
-	tree=$(git mktree <tree) &&
+	tree=$(test_seq -f "100644 blob $blob\t%d" 1 65500 | git mktree) &&
 
 	# zip it, creating an archive a bit bigger than 4GB
 	git archive -0 -o many-big.zip $tree &&
