@@ -242,7 +242,7 @@ test_bitmap_cases () {
 	'
 
 	test_expect_success 'splitting packs does not generate bogus bitmaps' '
-		test-tool genrandom foo $((1024 * 1024)) >rand &&
+		test-tool genrandom foo 1m >rand &&
 		git add rand &&
 		git commit -m "commit with big file" &&
 		git -c pack.packSizeLimit=500k repack -adb &&

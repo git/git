@@ -643,7 +643,7 @@ test_expect_success 'object reference via commit text search' '
 '
 
 test_expect_success 'setup blobs which are likely to delta' '
-	test-tool genrandom foo 10240 >foo &&
+	test-tool genrandom foo 10k >foo &&
 	{ cat foo && echo plus; } >foo-plus &&
 	git add foo foo-plus &&
 	git commit -m foo &&
