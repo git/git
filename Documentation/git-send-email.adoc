@@ -290,6 +290,23 @@ must be used for each option.
 	variable, if set, or the backing SSL library's compiled-in default
 	otherwise (which should be the best choice on most platforms).
 
+--smtp-ssl-client-cert <path>::
+	Path to a client certificate file to present to the SMTP server. This option
+	can be used when the server verifies the certificate from the client. The
+	format could be in either PKCS12 or PEM. In the latter case, the private key
+	can be specified using `--smtp-ssl-client-key` option. More more
+	detail, see
+	https://metacpan.org/pod/IO::Socket::SSL#SSL_cert_file-|-SSL_cert-|-SSL_key_file-|-SSL_key
+	Defaults to the value of the `sendemail.smtpSSLClientCert` configuration
+	variable, if set.
+
+--smtp-ssl-client-key <path>::
+	Optional path to the client private key file. If this is not given and a
+	PKCS12 certificate file is used, the private key from the PKCS12 certificate
+	will be used(see `--smtp-ssl-client-cert`). Defaults to the value of the
+	`sendemail.smtpSSLClientKey` configuration variable, if set.
+
+
 --smtp-user=<user>::
 	Username for SMTP-AUTH. Default is the value of `sendemail.smtpUser`;
 	if a username is not specified (with `--smtp-user` or `sendemail.smtpUser`),
