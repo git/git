@@ -140,55 +140,24 @@ static void interpret_trailers(const struct process_trailer_options *opts,
 			       struct list_head *new_trailer_head,
 			       const char *file)
 {
-	LIST_HEAD(head);
-	struct strbuf sb = STRBUF_INIT;
-	struct strbuf trailer_block_sb = STRBUF_INIT;
-	struct trailer_block *trailer_block;
+	struct strbuf input = STRBUF_INIT;
+	struct strbuf out = STRBUF_INIT;
 	FILE *outfile = stdout;
 
-	trailer_config_init();
-
-	read_input_file(&sb, file);
+	read_input_file(&input, file);
 
 	if (opts->in_place)
 		outfile = create_in_place_tempfile(file);
 
-	trailer_block = parse_trailers(opts, sb.buf, &head);
+	process_trailers(opts, new_trailer_head, &input, &out);
 
-	/* Print the lines before the trailer block */
-	if (!opts->only_trailers)
-		fwrite(sb.buf, 1, trailer_block_start(trailer_block), outfile);
-
-	if (!opts->only_trailers && !blank_line_before_trailer_block(trailer_block))
-		fprintf(outfile, "\n");
-
-
-	if (!opts->only_input) {
-		LIST_HEAD(config_head);
-		LIST_HEAD(arg_head);
-		parse_trailers_from_config(&config_head);
-		parse_trailers_from_command_line_args(&arg_head, new_trailer_head);
-		list_splice(&config_head, &arg_head);
-		process_trailers_lists(&head, &arg_head);
-	}
-
-	/* Print trailer block. */
-	format_trailers(opts, &head, &trailer_block_sb);
-	free_trailers(&head);
-	fwrite(trailer_block_sb.buf, 1, trailer_block_sb.len, outfile);
-	strbuf_release(&trailer_block_sb);
-
-	/* Print the lines after the trailer block as is. */
-	if (!opts->only_trailers)
-		fwrite(sb.buf + trailer_block_end(trailer_block), 1,
-		       sb.len - trailer_block_end(trailer_block), outfile);
-	trailer_block_release(trailer_block);
-
+	strbuf_write(&out, outfile);
 	if (opts->in_place)
 		if (rename_tempfile(&trailers_tempfile, file))
 			die_errno(_("could not rename temporary file to %s"), file);
 
-	strbuf_release(&sb);
+	strbuf_release(&input);
+	strbuf_release(&out);
 }
 
 int cmd_interpret_trailers(int argc,
@@ -231,6 +200,8 @@ int cmd_interpret_trailers(int argc,
 			_("--trailer with --only-input does not make sense"),
 			git_interpret_trailers_usage,
 			options);
+
+	trailer_config_init();
 
 	if (argc) {
 		int i;
