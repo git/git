@@ -8,6 +8,12 @@ test_description='Test how well compatObjectFormat works'
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-gpg.sh
 
+if ! test_have_prereq RUST
+then
+	skip_all='interoperability requires a Git built with Rust'
+	test_done
+fi
+
 # All of the follow variables must be defined in the environment:
 # GIT_AUTHOR_NAME
 # GIT_AUTHOR_EMAIL

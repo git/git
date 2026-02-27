@@ -19,19 +19,24 @@ do
 	esac
 done
 
+case "$(cargo -vV | sed -n 's/^host: \(.*\)$/\1/p')" in
+	*-windows-msvc)
+		LIBNAME=gitcore.lib
+		PATH="$(echo "$PATH" | tr ':' '\n' | grep -Ev "^(/mingw64/bin|/usr/bin)$" | paste -sd: -):/mingw64/bin:/usr/bin"
+		export PATH
+		;;
+	*-windows-*)
+		LIBNAME=gitcore.lib;;
+	*)
+		LIBNAME=libgitcore.a;;
+esac
+
 cargo build --lib --quiet --manifest-path="$SOURCE_DIR/Cargo.toml" --target-dir="$BUILD_DIR" "$@"
 RET=$?
 if test $RET -ne 0
 then
 	exit $RET
 fi
-
-case "$(cargo -vV | sed -n 's/^host: \(.*\)$/\1/p')" in
-	*-windows-*)
-		LIBNAME=gitcore.lib;;
-	*)
-		LIBNAME=libgitcore.a;;
-esac
 
 if ! cmp "$BUILD_DIR/$BUILD_TYPE/$LIBNAME" "$BUILD_DIR/libgitcore.a" >/dev/null 2>&1
 then

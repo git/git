@@ -70,7 +70,7 @@ test_expect_success GPGSSH 'strip SSH signature with --signed-commits=strip' '
 	test_must_be_empty log
 '
 
-test_expect_success GPG 'setup a commit with dual OpenPGP signatures on its SHA-1 and SHA-256 formats' '
+test_expect_success RUST,GPG 'setup a commit with dual OpenPGP signatures on its SHA-1 and SHA-256 formats' '
 	# Create a signed SHA-256 commit
 	git init --object-format=sha256 explicit-sha256 &&
 	git -C explicit-sha256 config extensions.compatObjectFormat sha1 &&
@@ -91,7 +91,7 @@ test_expect_success GPG 'setup a commit with dual OpenPGP signatures on its SHA-
 	test_grep -E "^gpgsig-sha256 " out
 '
 
-test_expect_success GPG 'strip both OpenPGP signatures with --signed-commits=warn-strip' '
+test_expect_success RUST,GPG 'strip both OpenPGP signatures with --signed-commits=warn-strip' '
 	git -C explicit-sha256 fast-export --signed-commits=verbatim dual-signed >output &&
 	test_grep -E "^gpgsig sha1 openpgp" output &&
 	test_grep -E "^gpgsig sha256 openpgp" output &&
