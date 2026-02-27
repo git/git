@@ -101,6 +101,13 @@ format.coverLetter::
 	generate a cover-letter only when there's more than one patch.
 	Default is false.
 
+format.commitListFormat::
+	A format string that specifies how to generate the commit list
+	of a cover-letter when format-patch is invoked. This is the
+	config coupled with `--cover-letter-format` in the format-patch
+	command and they both accept the same values.
+	Default is shortlog.
+
 format.outputDirectory::
 	Set a custom directory to store the resulting files instead of the
 	current working directory. All directory components will be created.
