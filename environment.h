@@ -2,6 +2,7 @@
 #define ENVIRONMENT_H
 
 #include "repo-settings.h"
+#include "branch.h"
 
 /* Double-check local_repo_env below if you add to this list. */
 #define GIT_DIR_ENVIRONMENT "GIT_DIR"
@@ -85,6 +86,18 @@ extern const char * const local_repo_env[];
 
 struct strvec;
 
+struct repository;
+struct repo_config_values {
+	/* section "core" config values */
+	char *attributes_file;
+	int apply_sparse_checkout;
+
+	/* section "branch" config values */
+	enum branch_track branch_track;
+};
+
+struct repo_config_values *repo_config_values(struct repository *repo);
+
 /*
  * Wrapper of getenv() that returns a strdup value. This value is kept
  * in argv to be freed later.
@@ -109,6 +122,8 @@ int git_default_config(const char *, const char *,
 		       const struct config_context *, void *);
 int git_default_core_config(const char *var, const char *value,
 			    const struct config_context *ctx, void *cb);
+
+void repo_config_values_init(struct repo_config_values *cfg);
 
 /*
  * TODO: All the below state either explicitly or implicitly relies on
@@ -155,7 +170,6 @@ extern int assume_unchanged;
 extern int warn_on_object_refname_ambiguity;
 extern char *apply_default_whitespace;
 extern char *apply_default_ignorewhitespace;
-extern char *git_attributes_file;
 extern int zlib_compression_level;
 extern int pack_compression_level;
 extern unsigned long pack_size_limit_cfg;
@@ -164,7 +178,6 @@ extern int precomposed_unicode;
 extern int protect_hfs;
 extern int protect_ntfs;
 
-extern int core_apply_sparse_checkout;
 extern int core_sparse_checkout_cone;
 extern int sparse_expect_files_outside_of_patterns;
 

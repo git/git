@@ -10,6 +10,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 {
 	struct commit_graph *g;
 
+	memset(the_repository, 0, sizeof(*the_repository));
 	initialize_repository(the_repository);
 
 	/*

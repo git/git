@@ -238,6 +238,7 @@ int cmd_mv(int argc,
 	struct hashmap moved_dirs = HASHMAP_INIT(pathmap_cmp, NULL);
 	struct strbuf pathbuf = STRBUF_INIT;
 	int ret;
+	struct repo_config_values *cfg = repo_config_values(the_repository);
 
 	repo_config(the_repository, git_default_config, NULL);
 
@@ -572,7 +573,7 @@ remove_entry:
 		rename_index_entry_at(the_repository->index, pos, dst);
 
 		if (ignore_sparse &&
-		    core_apply_sparse_checkout &&
+		    cfg->apply_sparse_checkout &&
 		    core_sparse_checkout_cone) {
 			/*
 			 * NEEDSWORK: we are *not* paying attention to
