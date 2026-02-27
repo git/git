@@ -1,7 +1,9 @@
 #define USE_THE_REPOSITORY_VARIABLE
 
 #include "builtin.h"
+#include "commit.h"
 #include "environment.h"
+#include "hash.h"
 #include "hex.h"
 #include "odb.h"
 #include "parse-options.h"
@@ -14,6 +16,8 @@
 #include "strbuf.h"
 #include "string-list.h"
 #include "shallow.h"
+#include "tree.h"
+#include "tree-walk.h"
 #include "utf8.h"
 
 static const char *const repo_usage[] = {
@@ -230,6 +234,21 @@ static int cmd_repo_info(int argc, const char **argv, const char *prefix,
 		return print_fields(argc, argv, repo, format);
 }
 
+struct object_data {
+	struct object_id oid;
+	size_t value;
+};
+
+struct largest_objects {
+	struct object_data tag_size;
+	struct object_data commit_size;
+	struct object_data tree_size;
+	struct object_data blob_size;
+
+	struct object_data parent_count;
+	struct object_data tree_entries;
+};
+
 struct ref_stats {
 	size_t branches;
 	size_t remotes;
@@ -248,6 +267,7 @@ struct object_stats {
 	struct object_values type_counts;
 	struct object_values inflated_sizes;
 	struct object_values disk_sizes;
+	struct largest_objects largest;
 };
 
 struct repo_structure {
@@ -257,6 +277,7 @@ struct repo_structure {
 
 struct stats_table {
 	struct string_list rows;
+	struct string_list annotations;
 
 	int name_col_width;
 	int value_col_width;
@@ -269,6 +290,8 @@ struct stats_table {
 struct stats_table_entry {
 	char *value;
 	const char *unit;
+	size_t index;
+	struct object_id *oid;
 };
 
 static void stats_table_vaddf(struct stats_table *table,
@@ -291,6 +314,12 @@ static void stats_table_vaddf(struct stats_table *table,
 		table->name_col_width = name_width;
 	if (!entry)
 		return;
+	if (entry->oid) {
+		entry->index = table->annotations.nr + 1;
+		strbuf_addf(&buf, "[%" PRIuMAX "] %s", (uintmax_t)entry->index,
+			    oid_to_hex(entry->oid));
+		string_list_append_nodup(&table->annotations, strbuf_detach(&buf, NULL));
+	}
 	if (entry->value) {
 		int value_width = utf8_strwidth(entry->value);
 		if (value_width > table->value_col_width)
@@ -301,6 +330,8 @@ static void stats_table_vaddf(struct stats_table *table,
 		if (unit_width > table->unit_col_width)
 			table->unit_col_width = unit_width;
 	}
+
+	strbuf_release(&buf);
 }
 
 static void stats_table_addf(struct stats_table *table, const char *format, ...)
@@ -326,6 +357,27 @@ static void stats_table_count_addf(struct stats_table *table, size_t value,
 	va_end(ap);
 }
 
+static void stats_table_object_count_addf(struct stats_table *table,
+					  struct object_id *oid, size_t value,
+					  const char *format, ...)
+{
+	struct stats_table_entry *entry;
+	va_list ap;
+
+	CALLOC_ARRAY(entry, 1);
+	humanise_count(value, &entry->value, &entry->unit);
+
+	/*
+	 * A NULL OID should not have a table annotation.
+	 */
+	if (!is_null_oid(oid))
+		entry->oid = oid;
+
+	va_start(ap, format);
+	stats_table_vaddf(table, entry, format, ap);
+	va_end(ap);
+}
+
 static void stats_table_size_addf(struct stats_table *table, size_t value,
 				  const char *format, ...)
 {
@@ -334,6 +386,27 @@ static void stats_table_size_addf(struct stats_table *table, size_t value,
 
 	CALLOC_ARRAY(entry, 1);
 	humanise_bytes(value, &entry->value, &entry->unit, HUMANISE_COMPACT);
+
+	va_start(ap, format);
+	stats_table_vaddf(table, entry, format, ap);
+	va_end(ap);
+}
+
+static void stats_table_object_size_addf(struct stats_table *table,
+					 struct object_id *oid, size_t value,
+					 const char *format, ...)
+{
+	struct stats_table_entry *entry;
+	va_list ap;
+
+	CALLOC_ARRAY(entry, 1);
+	humanise_bytes(value, &entry->value, &entry->unit, HUMANISE_COMPACT);
+
+	/*
+	 * A NULL OID should not have a table annotation.
+	 */
+	if (!is_null_oid(oid))
+		entry->oid = oid;
 
 	va_start(ap, format);
 	stats_table_vaddf(table, entry, format, ap);
@@ -404,7 +477,40 @@ static void stats_table_setup_structure(struct stats_table *table,
 			      "    * %s", _("Blobs"));
 	stats_table_size_addf(table, objects->disk_sizes.tags,
 			      "    * %s", _("Tags"));
+
+	stats_table_addf(table, "");
+	stats_table_addf(table, "* %s", _("Largest objects"));
+	stats_table_addf(table, "  * %s", _("Commits"));
+	stats_table_object_size_addf(table,
+				     &objects->largest.commit_size.oid,
+				     objects->largest.commit_size.value,
+				     "    * %s", _("Maximum size"));
+	stats_table_object_count_addf(table,
+				      &objects->largest.parent_count.oid,
+				      objects->largest.parent_count.value,
+				      "    * %s", _("Maximum parents"));
+	stats_table_addf(table, "  * %s", _("Trees"));
+	stats_table_object_size_addf(table,
+				     &objects->largest.tree_size.oid,
+				     objects->largest.tree_size.value,
+				     "    * %s", _("Maximum size"));
+	stats_table_object_count_addf(table,
+				      &objects->largest.tree_entries.oid,
+				      objects->largest.tree_entries.value,
+				      "    * %s", _("Maximum entries"));
+	stats_table_addf(table, "  * %s", _("Blobs"));
+	stats_table_object_size_addf(table,
+				     &objects->largest.blob_size.oid,
+				     objects->largest.blob_size.value,
+				     "    * %s", _("Maximum size"));
+	stats_table_addf(table, "  * %s", _("Tags"));
+	stats_table_object_size_addf(table,
+				     &objects->largest.tag_size.oid,
+				     objects->largest.tag_size.value,
+				     "    * %s", _("Maximum size"));
 }
+
+#define INDEX_WIDTH 4
 
 static void stats_table_print_structure(const struct stats_table *table)
 {
@@ -424,7 +530,8 @@ static void stats_table_print_structure(const struct stats_table *table)
 		value_col_width = title_value_width - unit_col_width;
 
 	strbuf_addstr(&buf, "| ");
-	strbuf_utf8_align(&buf, ALIGN_LEFT, name_col_width, name_col_title);
+	strbuf_utf8_align(&buf, ALIGN_LEFT, name_col_width + INDEX_WIDTH,
+			  name_col_title);
 	strbuf_addstr(&buf, " | ");
 	strbuf_utf8_align(&buf, ALIGN_LEFT,
 			  value_col_width + unit_col_width + 1, value_col_title);
@@ -432,7 +539,7 @@ static void stats_table_print_structure(const struct stats_table *table)
 	printf("%s\n", buf.buf);
 
 	printf("| ");
-	for (int i = 0; i < name_col_width; i++)
+	for (int i = 0; i < name_col_width + INDEX_WIDTH; i++)
 		putchar('-');
 	printf(" | ");
 	for (int i = 0; i < value_col_width + unit_col_width + 1; i++)
@@ -454,6 +561,13 @@ static void stats_table_print_structure(const struct stats_table *table)
 		strbuf_reset(&buf);
 		strbuf_addstr(&buf, "| ");
 		strbuf_utf8_align(&buf, ALIGN_LEFT, name_col_width, item->string);
+
+		if (entry && entry->oid)
+			strbuf_addf(&buf, " [%" PRIuMAX "]",
+				    (uintmax_t)entry->index);
+		else
+			strbuf_addchars(&buf, ' ', INDEX_WIDTH);
+
 		strbuf_addstr(&buf, " | ");
 		strbuf_utf8_align(&buf, ALIGN_RIGHT, value_col_width, value);
 		strbuf_addch(&buf, ' ');
@@ -461,6 +575,11 @@ static void stats_table_print_structure(const struct stats_table *table)
 		strbuf_addstr(&buf, " |");
 		printf("%s\n", buf.buf);
 	}
+
+	if (table->annotations.nr)
+		printf("\n");
+	for_each_string_list_item(item, &table->annotations)
+		printf("%s\n", item->string);
 
 	strbuf_release(&buf);
 }
@@ -477,6 +596,7 @@ static void stats_table_clear(struct stats_table *table)
 	}
 
 	string_list_clear(&table->rows, 1);
+	string_list_clear(&table->annotations, 1);
 }
 
 static void structure_keyvalue_print(struct repo_structure *stats,
@@ -517,6 +637,32 @@ static void structure_keyvalue_print(struct repo_structure *stats,
 	       (uintmax_t)stats->objects.disk_sizes.blobs, value_delim);
 	printf("objects.tags.disk_size%c%" PRIuMAX "%c", key_delim,
 	       (uintmax_t)stats->objects.disk_sizes.tags, value_delim);
+
+	printf("objects.commits.max_size%c%" PRIuMAX "%c", key_delim,
+	       (uintmax_t)stats->objects.largest.commit_size.value, value_delim);
+	printf("objects.commits.max_size_oid%c%s%c", key_delim,
+	       oid_to_hex(&stats->objects.largest.commit_size.oid), value_delim);
+	printf("objects.trees.max_size%c%" PRIuMAX "%c", key_delim,
+	       (uintmax_t)stats->objects.largest.tree_size.value, value_delim);
+	printf("objects.trees.max_size_oid%c%s%c", key_delim,
+	       oid_to_hex(&stats->objects.largest.tree_size.oid), value_delim);
+	printf("objects.blobs.max_size%c%" PRIuMAX "%c", key_delim,
+	       (uintmax_t)stats->objects.largest.blob_size.value, value_delim);
+	printf("objects.blobs.max_size_oid%c%s%c", key_delim,
+	       oid_to_hex(&stats->objects.largest.blob_size.oid), value_delim);
+	printf("objects.tags.max_size%c%" PRIuMAX "%c", key_delim,
+	       (uintmax_t)stats->objects.largest.tag_size.value, value_delim);
+	printf("objects.tags.max_size_oid%c%s%c", key_delim,
+	       oid_to_hex(&stats->objects.largest.tag_size.oid), value_delim);
+
+	printf("objects.commits.max_parents%c%" PRIuMAX "%c", key_delim,
+	       (uintmax_t)stats->objects.largest.parent_count.value, value_delim);
+	printf("objects.commits.max_parents_oid%c%s%c", key_delim,
+	       oid_to_hex(&stats->objects.largest.parent_count.oid), value_delim);
+	printf("objects.trees.max_entries%c%" PRIuMAX "%c", key_delim,
+	       (uintmax_t)stats->objects.largest.tree_entries.value, value_delim);
+	printf("objects.trees.max_entries_oid%c%s%c", key_delim,
+	       oid_to_hex(&stats->objects.largest.tree_entries.oid), value_delim);
 
 	fflush(stdout);
 }
@@ -586,55 +732,97 @@ struct count_objects_data {
 	struct progress *progress;
 };
 
+static void check_largest(struct object_data *data, struct object_id *oid,
+			  size_t value)
+{
+	if (value > data->value) {
+		oidcpy(&data->oid, oid);
+		data->value = value;
+	}
+}
+
+static size_t count_tree_entries(struct object *obj)
+{
+	struct tree *t = object_as_type(obj, OBJ_TREE, 0);
+	struct name_entry entry;
+	struct tree_desc desc;
+	size_t count = 0;
+
+	init_tree_desc(&desc, &t->object.oid, t->buffer, t->size);
+	while (tree_entry(&desc, &entry))
+		count++;
+
+	return count;
+}
+
 static int count_objects(const char *path UNUSED, struct oid_array *oids,
 			 enum object_type type, void *cb_data)
 {
 	struct count_objects_data *data = cb_data;
 	struct object_stats *stats = data->stats;
-	size_t inflated_total = 0;
-	size_t disk_total = 0;
 	size_t object_count;
 
 	for (size_t i = 0; i < oids->nr; i++) {
 		struct object_info oi = OBJECT_INFO_INIT;
 		unsigned long inflated;
+		struct commit *commit;
+		struct object *obj;
+		void *content;
 		off_t disk;
+		int eaten;
 
 		oi.sizep = &inflated;
 		oi.disk_sizep = &disk;
+		oi.contentp = &content;
 
 		if (odb_read_object_info_extended(data->odb, &oids->oid[i], &oi,
 						  OBJECT_INFO_SKIP_FETCH_OBJECT |
 						  OBJECT_INFO_QUICK) < 0)
 			continue;
 
-		inflated_total += inflated;
-		disk_total += disk;
-	}
+		obj = parse_object_buffer(the_repository, &oids->oid[i], type,
+					  inflated, content, &eaten);
 
-	switch (type) {
-	case OBJ_TAG:
-		stats->type_counts.tags += oids->nr;
-		stats->inflated_sizes.tags += inflated_total;
-		stats->disk_sizes.tags += disk_total;
-		break;
-	case OBJ_COMMIT:
-		stats->type_counts.commits += oids->nr;
-		stats->inflated_sizes.commits += inflated_total;
-		stats->disk_sizes.commits += disk_total;
-		break;
-	case OBJ_TREE:
-		stats->type_counts.trees += oids->nr;
-		stats->inflated_sizes.trees += inflated_total;
-		stats->disk_sizes.trees += disk_total;
-		break;
-	case OBJ_BLOB:
-		stats->type_counts.blobs += oids->nr;
-		stats->inflated_sizes.blobs += inflated_total;
-		stats->disk_sizes.blobs += disk_total;
-		break;
-	default:
-		BUG("invalid object type");
+		switch (type) {
+		case OBJ_TAG:
+			stats->type_counts.tags++;
+			stats->inflated_sizes.tags += inflated;
+			stats->disk_sizes.tags += disk;
+			check_largest(&stats->largest.tag_size, &oids->oid[i],
+				      inflated);
+			break;
+		case OBJ_COMMIT:
+			commit = object_as_type(obj, OBJ_COMMIT, 0);
+			stats->type_counts.commits++;
+			stats->inflated_sizes.commits += inflated;
+			stats->disk_sizes.commits += disk;
+			check_largest(&stats->largest.commit_size, &oids->oid[i],
+				      inflated);
+			check_largest(&stats->largest.parent_count, &oids->oid[i],
+				      commit_list_count(commit->parents));
+			break;
+		case OBJ_TREE:
+			stats->type_counts.trees++;
+			stats->inflated_sizes.trees += inflated;
+			stats->disk_sizes.trees += disk;
+			check_largest(&stats->largest.tree_size, &oids->oid[i],
+				      inflated);
+			check_largest(&stats->largest.tree_entries, &oids->oid[i],
+				      count_tree_entries(obj));
+			break;
+		case OBJ_BLOB:
+			stats->type_counts.blobs++;
+			stats->inflated_sizes.blobs += inflated;
+			stats->disk_sizes.blobs += disk;
+			check_largest(&stats->largest.blob_size, &oids->oid[i],
+				      inflated);
+			break;
+		default:
+			BUG("invalid object type");
+		}
+
+		if (!eaten)
+			free(content);
 	}
 
 	object_count = get_total_object_values(&stats->type_counts);
@@ -670,6 +858,7 @@ static int cmd_repo_structure(int argc, const char **argv, const char *prefix,
 {
 	struct stats_table table = {
 		.rows = STRING_LIST_INIT_DUP,
+		.annotations = STRING_LIST_INIT_DUP,
 	};
 	enum output_format format = FORMAT_TABLE;
 	struct repo_structure stats = { 0 };
