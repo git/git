@@ -473,8 +473,12 @@ static int register_ref(const struct reference *ref, void *cb_data UNUSED)
 
 static int read_bisect_refs(void)
 {
-	return refs_for_each_ref_in(get_main_ref_store(the_repository),
-				    "refs/bisect/", register_ref, NULL);
+	struct refs_for_each_ref_options opts = {
+		.prefix = "refs/bisect/",
+		.trim_prefix = strlen("refs/bisect/"),
+	};
+	return refs_for_each_ref_ext(get_main_ref_store(the_repository),
+				     register_ref, NULL, &opts);
 }
 
 static GIT_PATH_FUNC(git_path_bisect_names, "BISECT_NAMES")
@@ -1186,13 +1190,15 @@ static int mark_for_removal(const struct reference *ref, void *cb_data)
 
 int bisect_clean_state(void)
 {
+	struct refs_for_each_ref_options opts = {
+		.prefix = "refs/bisect/",
+	};
 	int result = 0;
 
 	/* There may be some refs packed during bisection */
 	struct string_list refs_for_removal = STRING_LIST_INIT_DUP;
-	refs_for_each_fullref_in(get_main_ref_store(the_repository),
-				 "refs/bisect/", NULL, mark_for_removal,
-				 &refs_for_removal);
+	refs_for_each_ref_ext(get_main_ref_store(the_repository),
+			      mark_for_removal, &refs_for_removal, &opts);
 	string_list_append(&refs_for_removal, "BISECT_HEAD");
 	string_list_append(&refs_for_removal, "BISECT_EXPECTED_REV");
 	result = refs_delete_refs(get_main_ref_store(the_repository),

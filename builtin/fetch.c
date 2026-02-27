@@ -1541,6 +1541,9 @@ static void add_negotiation_tips(struct git_transport_options *smart_options)
 
 	for (i = 0; i < negotiation_tip.nr; i++) {
 		const char *s = negotiation_tip.items[i].string;
+		struct refs_for_each_ref_options opts = {
+			.pattern = s,
+		};
 		int old_nr;
 		if (!has_glob_specials(s)) {
 			struct object_id oid;
@@ -1552,8 +1555,8 @@ static void add_negotiation_tips(struct git_transport_options *smart_options)
 			continue;
 		}
 		old_nr = oids->nr;
-		refs_for_each_glob_ref(get_main_ref_store(the_repository),
-				       add_oid, s, oids);
+		refs_for_each_ref_ext(get_main_ref_store(the_repository),
+				      add_oid, oids, &opts);
 		if (old_nr == oids->nr)
 			warning("ignoring --negotiation-tip=%s because it does not match any refs",
 				s);

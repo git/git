@@ -163,17 +163,22 @@ static int each_ref(const struct reference *ref, void *cb_data UNUSED)
 static int cmd_for_each_ref(struct ref_store *refs, const char **argv)
 {
 	const char *prefix = notnull(*argv++, "prefix");
-
-	return refs_for_each_ref_in(refs, prefix, each_ref, NULL);
+	struct refs_for_each_ref_options opts = {
+		.prefix = prefix,
+		.trim_prefix = strlen(prefix),
+	};
+	return refs_for_each_ref_ext(refs, each_ref, NULL, &opts);
 }
 
 static int cmd_for_each_ref__exclude(struct ref_store *refs, const char **argv)
 {
 	const char *prefix = notnull(*argv++, "prefix");
-	const char **exclude_patterns = argv;
+	struct refs_for_each_ref_options opts = {
+		.prefix = prefix,
+		.exclude_patterns = argv,
+	};
 
-	return refs_for_each_fullref_in(refs, prefix, exclude_patterns, each_ref,
-					NULL);
+	return refs_for_each_ref_ext(refs, each_ref, NULL, &opts);
 }
 
 static int cmd_resolve_ref(struct ref_store *refs, const char **argv)

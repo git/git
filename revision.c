@@ -1647,7 +1647,7 @@ static void init_all_refs_cb(struct all_refs_cb *cb, struct rev_info *revs,
 
 static void handle_refs(struct ref_store *refs,
 			struct rev_info *revs, unsigned flags,
-			int (*for_each)(struct ref_store *, each_ref_fn, void *))
+			int (*for_each)(struct ref_store *, refs_for_each_cb, void *))
 {
 	struct all_refs_cb cb;
 
@@ -2731,23 +2731,25 @@ void revision_opts_finish(struct rev_info *revs)
 	}
 }
 
-static int for_each_bisect_ref(struct ref_store *refs, each_ref_fn fn,
+static int for_each_bisect_ref(struct ref_store *refs, refs_for_each_cb fn,
 			       void *cb_data, const char *term)
 {
+	struct refs_for_each_ref_options opts = { 0 };
 	struct strbuf bisect_refs = STRBUF_INIT;
 	int status;
 	strbuf_addf(&bisect_refs, "refs/bisect/%s", term);
-	status = refs_for_each_fullref_in(refs, bisect_refs.buf, NULL, fn, cb_data);
+	opts.prefix = bisect_refs.buf;
+	status = refs_for_each_ref_ext(refs, fn, cb_data, &opts);
 	strbuf_release(&bisect_refs);
 	return status;
 }
 
-static int for_each_bad_bisect_ref(struct ref_store *refs, each_ref_fn fn, void *cb_data)
+static int for_each_bad_bisect_ref(struct ref_store *refs, refs_for_each_cb fn, void *cb_data)
 {
 	return for_each_bisect_ref(refs, fn, cb_data, term_bad);
 }
 
-static int for_each_good_bisect_ref(struct ref_store *refs, each_ref_fn fn, void *cb_data)
+static int for_each_good_bisect_ref(struct ref_store *refs, refs_for_each_cb fn, void *cb_data)
 {
 	return for_each_bisect_ref(refs, fn, cb_data, term_good);
 }
@@ -2817,10 +2819,13 @@ static int handle_revision_pseudo_opt(struct rev_info *revs,
 		handle_refs(refs, revs, *flags, refs_for_each_remote_ref);
 		clear_ref_exclusions(&revs->ref_excludes);
 	} else if ((argcount = parse_long_opt("glob", argv, &optarg))) {
+		struct refs_for_each_ref_options opts = {
+			.pattern = optarg,
+		};
 		struct all_refs_cb cb;
 		init_all_refs_cb(&cb, revs, *flags);
-		refs_for_each_glob_ref(get_main_ref_store(the_repository),
-				       handle_one_ref, optarg, &cb);
+		refs_for_each_ref_ext(get_main_ref_store(the_repository),
+				      handle_one_ref, &cb, &opts);
 		clear_ref_exclusions(&revs->ref_excludes);
 		return argcount;
 	} else if ((argcount = parse_long_opt("exclude", argv, &optarg))) {
@@ -2830,34 +2835,46 @@ static int handle_revision_pseudo_opt(struct rev_info *revs,
 		exclude_hidden_refs(&revs->ref_excludes, optarg);
 		return argcount;
 	} else if (skip_prefix(arg, "--branches=", &optarg)) {
+		struct refs_for_each_ref_options opts = {
+			.prefix = "refs/heads/",
+			.trim_prefix = strlen("refs/heads/"),
+			.pattern = optarg,
+		};
 		struct all_refs_cb cb;
 		if (revs->ref_excludes.hidden_refs_configured)
 			return error(_("options '%s' and '%s' cannot be used together"),
 				     "--exclude-hidden", "--branches");
 		init_all_refs_cb(&cb, revs, *flags);
-		refs_for_each_glob_ref_in(get_main_ref_store(the_repository),
-					  handle_one_ref, optarg,
-					  "refs/heads/", &cb);
+		refs_for_each_ref_ext(get_main_ref_store(the_repository),
+				      handle_one_ref, &cb, &opts);
 		clear_ref_exclusions(&revs->ref_excludes);
 	} else if (skip_prefix(arg, "--tags=", &optarg)) {
+		struct refs_for_each_ref_options opts = {
+			.prefix = "refs/tags/",
+			.trim_prefix = strlen("refs/tags/"),
+			.pattern = optarg,
+		};
 		struct all_refs_cb cb;
 		if (revs->ref_excludes.hidden_refs_configured)
 			return error(_("options '%s' and '%s' cannot be used together"),
 				     "--exclude-hidden", "--tags");
 		init_all_refs_cb(&cb, revs, *flags);
-		refs_for_each_glob_ref_in(get_main_ref_store(the_repository),
-					  handle_one_ref, optarg,
-					  "refs/tags/", &cb);
+		refs_for_each_ref_ext(get_main_ref_store(the_repository),
+				      handle_one_ref, &cb, &opts);
 		clear_ref_exclusions(&revs->ref_excludes);
 	} else if (skip_prefix(arg, "--remotes=", &optarg)) {
+		struct refs_for_each_ref_options opts = {
+			.prefix = "refs/remotes/",
+			.trim_prefix = strlen("refs/remotes/"),
+			.pattern = optarg,
+		};
 		struct all_refs_cb cb;
 		if (revs->ref_excludes.hidden_refs_configured)
 			return error(_("options '%s' and '%s' cannot be used together"),
 				     "--exclude-hidden", "--remotes");
 		init_all_refs_cb(&cb, revs, *flags);
-		refs_for_each_glob_ref_in(get_main_ref_store(the_repository),
-					  handle_one_ref, optarg,
-					  "refs/remotes/", &cb);
+		refs_for_each_ref_ext(get_main_ref_store(the_repository),
+				      handle_one_ref, &cb, &opts);
 		clear_ref_exclusions(&revs->ref_excludes);
 	} else if (!strcmp(arg, "--reflog")) {
 		add_reflogs_to_pending(revs, *flags);
