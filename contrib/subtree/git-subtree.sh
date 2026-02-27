@@ -257,6 +257,9 @@ main () {
 		test -e "$arg_prefix" &&
 			die "fatal: prefix '$arg_prefix' already exists."
 		;;
+	split)
+		# checked later against the commit, not the working tree
+		;;
 	*)
 		test -e "$arg_prefix" ||
 			die "fatal: '$arg_prefix' does not exist; use 'git subtree add'"
@@ -965,6 +968,12 @@ cmd_split () {
 			die "fatal: '$1' does not refer to a commit"
 	else
 		die "fatal: you must provide exactly one revision, and optionally a repository.  Got: '$*'"
+	fi
+
+	# Now validate prefix against the commit, not the working tree
+	if ! git cat-file -e "$rev:$dir" 2>/dev/null
+	then
+		die "fatal: '$dir' does not exist; use 'git subtree add'"
 	fi
 	repository=""
 	if test "$#" = 2
