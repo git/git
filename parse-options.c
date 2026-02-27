@@ -5,6 +5,7 @@
 #include "gettext.h"
 #include "strbuf.h"
 #include "string-list.h"
+#include "strmap.h"
 #include "utf8.h"
 
 static int disallow_abbreviated_options;
@@ -634,6 +635,8 @@ static void check_typos(const char *arg, const struct option *options)
 static void parse_options_check(const struct option *opts)
 {
 	char short_opts[128];
+	struct strset long_names = STRSET_INIT;
+	bool saw_number_option = false;
 	void *subcommand_value = NULL;
 
 	memset(short_opts, '\0', sizeof(short_opts));
@@ -647,6 +650,16 @@ static void parse_options_check(const struct option *opts)
 				optbug(opts, "invalid short name");
 			else if (short_opts[opts->short_name]++)
 				optbug(opts, "short name already used");
+		}
+		if (opts->long_name) {
+			if (strset_contains(&long_names, opts->long_name))
+				optbug(opts, "long name already used");
+			strset_add(&long_names, opts->long_name);
+		}
+		if (opts->type == OPTION_NUMBER) {
+			if (saw_number_option)
+				optbug(opts, "duplicate numerical option");
+			saw_number_option = true;
 		}
 		if (opts->flags & PARSE_OPT_NODASH &&
 		    ((opts->flags & PARSE_OPT_OPTARG) ||
@@ -705,6 +718,7 @@ static void parse_options_check(const struct option *opts)
 			optbug(opts, "multi-word argh should use dash to separate words");
 	}
 	BUG_if_bug("invalid 'struct option'");
+	strset_clear(&long_names);
 }
 
 static int has_subcommands(const struct option *options)
