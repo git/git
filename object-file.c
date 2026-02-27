@@ -215,8 +215,9 @@ static void *odb_source_loose_map_object(struct odb_source *source,
 					 const struct object_id *oid,
 					 unsigned long *size)
 {
+	struct odb_source_files *files = odb_source_files_downcast(source);
 	const char *p;
-	int fd = open_loose_object(source->loose, oid, &p);
+	int fd = open_loose_object(files->loose, oid, &p);
 
 	if (fd < 0)
 		return NULL;
@@ -397,6 +398,7 @@ static int read_object_info_from_path(struct odb_source *source,
 				      struct object_info *oi,
 				      enum object_info_flags flags)
 {
+	struct odb_source_files *files = odb_source_files_downcast(source);
 	int ret;
 	int fd;
 	unsigned long mapsize;
@@ -419,7 +421,7 @@ static int read_object_info_from_path(struct odb_source *source,
 		struct stat st;
 
 		if ((!oi || (!oi->disk_sizep && !oi->mtimep)) && (flags & OBJECT_INFO_QUICK)) {
-			ret = quick_has_loose(source->loose, oid) ? 0 : -1;
+			ret = quick_has_loose(files->loose, oid) ? 0 : -1;
 			goto out;
 		}
 
@@ -540,6 +542,16 @@ int odb_source_loose_read_object_info(struct odb_source *source,
 				      enum object_info_flags flags)
 {
 	static struct strbuf buf = STRBUF_INIT;
+
+	/*
+	 * The second read shouldn't cause new loose objects to show up, unless
+	 * there was a race condition with a secondary process. We don't care
+	 * about this case though, so we simply skip reading loose objects a
+	 * second time.
+	 */
+	if (flags & OBJECT_INFO_SECOND_READ)
+		return -1;
+
 	odb_loose_path(source, &buf, oid);
 	return read_object_info_from_path(source, buf.buf, oid, oi, flags);
 }
@@ -1867,33 +1879,34 @@ static int append_loose_object(const struct object_id *oid,
 struct oidtree *odb_source_loose_cache(struct odb_source *source,
 				       const struct object_id *oid)
 {
+	struct odb_source_files *files = odb_source_files_downcast(source);
 	int subdir_nr = oid->hash[0];
 	struct strbuf buf = STRBUF_INIT;
-	size_t word_bits = bitsizeof(source->loose->subdir_seen[0]);
+	size_t word_bits = bitsizeof(files->loose->subdir_seen[0]);
 	size_t word_index = subdir_nr / word_bits;
 	size_t mask = (size_t)1u << (subdir_nr % word_bits);
 	uint32_t *bitmap;
 
 	if (subdir_nr < 0 ||
-	    (size_t) subdir_nr >= bitsizeof(source->loose->subdir_seen))
+	    (size_t) subdir_nr >= bitsizeof(files->loose->subdir_seen))
 		BUG("subdir_nr out of range");
 
-	bitmap = &source->loose->subdir_seen[word_index];
+	bitmap = &files->loose->subdir_seen[word_index];
 	if (*bitmap & mask)
-		return source->loose->cache;
-	if (!source->loose->cache) {
-		ALLOC_ARRAY(source->loose->cache, 1);
-		oidtree_init(source->loose->cache);
+		return files->loose->cache;
+	if (!files->loose->cache) {
+		ALLOC_ARRAY(files->loose->cache, 1);
+		oidtree_init(files->loose->cache);
 	}
 	strbuf_addstr(&buf, source->path);
 	for_each_file_in_obj_subdir(subdir_nr, &buf,
 				    source->odb->repo->hash_algo,
 				    append_loose_object,
 				    NULL, NULL,
-				    source->loose->cache);
+				    files->loose->cache);
 	*bitmap |= mask;
 	strbuf_release(&buf);
-	return source->loose->cache;
+	return files->loose->cache;
 }
 
 static void odb_source_loose_clear_cache(struct odb_source_loose *loose)
@@ -1906,7 +1919,8 @@ static void odb_source_loose_clear_cache(struct odb_source_loose *loose)
 
 void odb_source_loose_reprepare(struct odb_source *source)
 {
-	odb_source_loose_clear_cache(source->loose);
+	struct odb_source_files *files = odb_source_files_downcast(source);
+	odb_source_loose_clear_cache(files->loose);
 }
 
 static int check_stream_oid(git_zstream *stream,

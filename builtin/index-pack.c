@@ -1637,9 +1637,11 @@ static void final(const char *final_pack_name, const char *curr_pack_name,
 	rename_tmp_packfile(&final_index_name, curr_index_name, &index_name,
 			    hash, "idx", 1);
 
-	if (do_fsck_object && startup_info->have_repository)
-		packfile_store_load_pack(the_repository->objects->sources->packfiles,
-					 final_index_name, 0);
+	if (do_fsck_object && startup_info->have_repository) {
+		struct odb_source_files *files =
+			odb_source_files_downcast(the_repository->objects->sources);
+		packfile_store_load_pack(files->packed, final_index_name, 0);
+	}
 
 	if (!from_stdin) {
 		printf("%s\n", hash_to_hex(hash));

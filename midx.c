@@ -95,8 +95,9 @@ static int midx_read_object_offsets(const unsigned char *chunk_start,
 
 struct multi_pack_index *get_multi_pack_index(struct odb_source *source)
 {
-	packfile_store_prepare(source->packfiles);
-	return source->packfiles->midx;
+	struct odb_source_files *files = odb_source_files_downcast(source);
+	packfile_store_prepare(files->packed);
+	return files->packed->midx;
 }
 
 static struct multi_pack_index *load_multi_pack_index_one(struct odb_source *source,
@@ -447,6 +448,7 @@ static uint32_t midx_for_pack(struct multi_pack_index **_m,
 int prepare_midx_pack(struct multi_pack_index *m,
 		      uint32_t pack_int_id)
 {
+	struct odb_source_files *files = odb_source_files_downcast(m->source);
 	struct strbuf pack_name = STRBUF_INIT;
 	struct packed_git *p;
 
@@ -457,10 +459,10 @@ int prepare_midx_pack(struct multi_pack_index *m,
 	if (m->packs[pack_int_id])
 		return 0;
 
-	strbuf_addf(&pack_name, "%s/pack/%s", m->source->path,
+	strbuf_addf(&pack_name, "%s/pack/%s", files->base.path,
 		    m->pack_names[pack_int_id]);
-	p = packfile_store_load_pack(m->source->packfiles,
-				     pack_name.buf, m->source->local);
+	p = packfile_store_load_pack(files->packed,
+				     pack_name.buf, files->base.local);
 	strbuf_release(&pack_name);
 
 	if (!p) {
@@ -703,18 +705,19 @@ int midx_preferred_pack(struct multi_pack_index *m, uint32_t *pack_int_id)
 
 int prepare_multi_pack_index_one(struct odb_source *source)
 {
+	struct odb_source_files *files = odb_source_files_downcast(source);
 	struct repository *r = source->odb->repo;
 
 	prepare_repo_settings(r);
 	if (!r->settings.core_multi_pack_index)
 		return 0;
 
-	if (source->packfiles->midx)
+	if (files->packed->midx)
 		return 1;
 
-	source->packfiles->midx = load_multi_pack_index(source);
+	files->packed->midx = load_multi_pack_index(source);
 
-	return !!source->packfiles->midx;
+	return !!files->packed->midx;
 }
 
 int midx_checksum_valid(struct multi_pack_index *m)
@@ -803,9 +806,10 @@ void clear_midx_file(struct repository *r)
 		struct odb_source *source;
 
 		for (source = r->objects->sources; source; source = source->next) {
-			if (source->packfiles->midx)
-				close_midx(source->packfiles->midx);
-			source->packfiles->midx = NULL;
+			struct odb_source_files *files = odb_source_files_downcast(source);
+			if (files->packed->midx)
+				close_midx(files->packed->midx);
+			files->packed->midx = NULL;
 		}
 	}
 
