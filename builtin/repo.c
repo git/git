@@ -1,10 +1,12 @@
 #define USE_THE_REPOSITORY_VARIABLE
 
 #include "builtin.h"
+#include "abspath.h"
 #include "environment.h"
 #include "hex.h"
 #include "odb.h"
 #include "parse-options.h"
+#include "path.h"
 #include "path-walk.h"
 #include "progress.h"
 #include "quote.h"
@@ -14,15 +16,28 @@
 #include "strbuf.h"
 #include "string-list.h"
 #include "shallow.h"
+#include "submodule.h"
+#include "tree-walk.h"
 #include "utf8.h"
 
 static const char *const repo_usage[] = {
-	"git repo info [--format=(keyvalue|nul) | -z] [--all | <key>...]",
+	"git repo info [--format=(keyvalue|nul) | -z] [--path-format=(absolute|relative)] [--all | <key>...]",
 	"git repo structure [--format=(table|keyvalue|nul) | -z]",
 	NULL
 };
 
-typedef int get_value_fn(struct repository *repo, struct strbuf *buf);
+enum path_format {
+	PATH_FORMAT_ABSOLUTE,
+	PATH_FORMAT_RELATIVE,
+};
+
+struct repo_info {
+	struct repository *repo;
+	const char *prefix;
+	enum path_format path_format;
+};
+
+typedef int get_value_fn(struct repo_info *info, struct strbuf *buf);
 
 enum output_format {
 	FORMAT_TABLE,
@@ -35,27 +50,137 @@ struct field {
 	get_value_fn *get_value;
 };
 
-static int get_layout_bare(struct repository *repo UNUSED, struct strbuf *buf)
+static void repo_info_add_path(struct repo_info *info,
+			      struct strbuf *buf,
+			      const char *path)
+{
+	if (info->path_format == PATH_FORMAT_RELATIVE) {
+		char *cwd = xgetcwd();
+		struct strbuf rel_path = STRBUF_INIT;
+
+		strbuf_addstr(buf, relative_path(path, cwd, &rel_path));
+		strbuf_release(&rel_path);
+		free(cwd);
+		return;
+	}
+
+	strbuf_add_absolute_path(buf, path);
+}
+
+static int get_layout_bare(struct repo_info *info UNUSED, struct strbuf *buf)
 {
 	strbuf_addstr(buf, is_bare_repository() ? "true" : "false");
 	return 0;
 }
 
-static int get_layout_shallow(struct repository *repo, struct strbuf *buf)
+static int get_layout_shallow(struct repo_info *info, struct strbuf *buf)
 {
+	struct repository *repo = info->repo;
 	strbuf_addstr(buf,
 		      is_repository_shallow(repo) ? "true" : "false");
 	return 0;
 }
 
-static int get_object_format(struct repository *repo, struct strbuf *buf)
+static int get_object_format(struct repo_info *info, struct strbuf *buf)
 {
+	struct repository *repo = info->repo;
 	strbuf_addstr(buf, repo->hash_algo->name);
 	return 0;
 }
 
-static int get_references_format(struct repository *repo, struct strbuf *buf)
+static int get_path_common_dir(struct repo_info *info, struct strbuf *buf)
 {
+	repo_info_add_path(info, buf, repo_get_common_dir(info->repo));
+	return 0;
+}
+
+static int get_path_config_file(struct repo_info *info, struct strbuf *buf)
+{
+	struct strbuf path = STRBUF_INIT;
+
+	repo_info_add_path(info, buf, repo_git_path_replace(info->repo, &path, "config"));
+	strbuf_release(&path);
+	return 0;
+}
+
+static int get_path_git_dir(struct repo_info *info, struct strbuf *buf)
+{
+	repo_info_add_path(info, buf, repo_get_git_dir(info->repo));
+	return 0;
+}
+
+static int get_path_prefix(struct repo_info *info, struct strbuf *buf)
+{
+	strbuf_addstr(buf, info->prefix);
+	return 0;
+}
+
+static int get_path_grafts_file(struct repo_info *info, struct strbuf *buf)
+{
+	repo_info_add_path(info, buf, repo_get_graft_file(info->repo));
+	return 0;
+}
+
+static int get_path_hooks_directory(struct repo_info *info, struct strbuf *buf)
+{
+	struct strbuf path = STRBUF_INIT;
+
+	repo_info_add_path(info, buf, repo_git_path_replace(info->repo, &path, "hooks"));
+	strbuf_release(&path);
+	return 0;
+}
+
+static int get_path_index_file(struct repo_info *info, struct strbuf *buf)
+{
+	repo_info_add_path(info, buf, repo_get_index_file(info->repo));
+	return 0;
+}
+
+static int get_path_objects_directory(struct repo_info *info, struct strbuf *buf)
+{
+	repo_info_add_path(info, buf, repo_get_object_directory(info->repo));
+	return 0;
+}
+
+static int get_path_shallow_file(struct repo_info *info, struct strbuf *buf)
+{
+	struct strbuf path = STRBUF_INIT;
+
+	repo_info_add_path(info, buf, repo_git_path_replace(info->repo, &path, "shallow"));
+	strbuf_release(&path);
+	return 0;
+}
+
+static int get_path_superproject_working_tree(struct repo_info *info,
+					     struct strbuf *buf)
+{
+	struct strbuf superproject = STRBUF_INIT;
+
+	if (get_superproject_working_tree(&superproject))
+		repo_info_add_path(info, buf, superproject.buf);
+
+	strbuf_release(&superproject);
+	return 0;
+}
+
+static int get_path_toplevel(struct repo_info *info, struct strbuf *buf)
+{
+	const char *work_tree = repo_get_work_tree(info->repo);
+
+	if (work_tree)
+		repo_info_add_path(info, buf, work_tree);
+
+	return 0;
+}
+
+static int get_path_work_tree(struct repo_info *info, struct strbuf *buf)
+{
+	return get_path_toplevel(info, buf);
+}
+
+static int get_references_format(struct repo_info *info, struct strbuf *buf)
+{
+	struct repository *repo = info->repo;
 	strbuf_addstr(buf,
 		      ref_storage_format_to_name(repo->ref_storage_format));
 	return 0;
@@ -66,6 +191,18 @@ static const struct field repo_info_fields[] = {
 	{ "layout.bare", get_layout_bare },
 	{ "layout.shallow", get_layout_shallow },
 	{ "object.format", get_object_format },
+	{ "path.common-dir", get_path_common_dir },
+	{ "path.config-file", get_path_config_file },
+	{ "path.git-dir", get_path_git_dir },
+	{ "path.grafts-file", get_path_grafts_file },
+	{ "path.hooks-directory", get_path_hooks_directory },
+	{ "path.index-file", get_path_index_file },
+	{ "path.objects-directory", get_path_objects_directory },
+	{ "path.prefix", get_path_prefix },
+	{ "path.shallow-file", get_path_shallow_file },
+	{ "path.superproject-working-tree", get_path_superproject_working_tree },
+	{ "path.toplevel", get_path_toplevel },
+	{ "path.work-tree", get_path_work_tree },
 	{ "references.format", get_references_format },
 };
 
@@ -88,6 +225,33 @@ static get_value_fn *get_value_fn_for_key(const char *key)
 }
 
 static void print_field(enum output_format format, const char *key,
+			const char *value);
+
+static int print_category_fields(const char *category,
+				 struct repo_info *info,
+				 enum output_format format,
+				 struct strbuf *valbuf)
+{
+	int found = 0;
+	size_t category_len = strlen(category);
+
+	for (size_t i = 0; i < ARRAY_SIZE(repo_info_fields); i++) {
+		const struct field *field = &repo_info_fields[i];
+
+		if (!starts_with(field->key, category) ||
+		    field->key[category_len] != '.')
+			continue;
+
+		strbuf_reset(valbuf);
+		field->get_value(info, valbuf);
+		print_field(format, field->key, valbuf->buf);
+		found = 1;
+	}
+
+	return found;
+}
+
+static void print_field(enum output_format format, const char *key,
 			const char *value)
 {
 	switch (format) {
@@ -105,7 +269,7 @@ static void print_field(enum output_format format, const char *key,
 }
 
 static int print_fields(int argc, const char **argv,
-			struct repository *repo,
+			struct repo_info *info,
 			enum output_format format)
 {
 	int ret = 0;
@@ -117,21 +281,22 @@ static int print_fields(int argc, const char **argv,
 
 		get_value = get_value_fn_for_key(key);
 
-		if (!get_value) {
-			ret = error(_("key '%s' not found"), key);
+		if (get_value) {
+			strbuf_reset(&valbuf);
+			get_value(info, &valbuf);
+			print_field(format, key, valbuf.buf);
 			continue;
 		}
 
-		strbuf_reset(&valbuf);
-		get_value(repo, &valbuf);
-		print_field(format, key, valbuf.buf);
+		if (!print_category_fields(key, info, format, &valbuf))
+			ret = error(_("key '%s' not found"), key);
 	}
 
 	strbuf_release(&valbuf);
 	return ret;
 }
 
-static int print_all_fields(struct repository *repo,
+static int print_all_fields(struct repo_info *info,
 			    enum output_format format)
 {
 	struct strbuf valbuf = STRBUF_INIT;
@@ -140,7 +305,7 @@ static int print_all_fields(struct repository *repo,
 		const struct field *field = &repo_info_fields[i];
 
 		strbuf_reset(&valbuf);
-		field->get_value(repo, &valbuf);
+		field->get_value(info, &valbuf);
 		print_field(format, field->key, valbuf.buf);
 	}
 
@@ -167,10 +332,30 @@ static int parse_format_cb(const struct option *opt,
 	return 0;
 }
 
+static int parse_path_format_cb(const struct option *opt,
+				const char *arg, int unset UNUSED)
+{
+	enum path_format *path_format = opt->value;
+
+	if (!strcmp(arg, "absolute"))
+		*path_format = PATH_FORMAT_ABSOLUTE;
+	else if (!strcmp(arg, "relative"))
+		*path_format = PATH_FORMAT_RELATIVE;
+	else
+		die(_("invalid path format '%s'"), arg);
+
+	return 0;
+}
+
 static int cmd_repo_info(int argc, const char **argv, const char *prefix,
 			 struct repository *repo)
 {
 	enum output_format format = FORMAT_KEYVALUE;
+	struct repo_info info = {
+		.repo = repo,
+		.prefix = prefix ? prefix : "",
+		.path_format = PATH_FORMAT_ABSOLUTE,
+	};
 	int all_keys = 0;
 	struct option options[] = {
 		OPT_CALLBACK_F(0, "format", &format, N_("format"),
@@ -180,6 +365,9 @@ static int cmd_repo_info(int argc, const char **argv, const char *prefix,
 			       N_("synonym for --format=nul"),
 			       PARSE_OPT_NONEG | PARSE_OPT_NOARG,
 			       parse_format_cb),
+		OPT_CALLBACK_F(0, "path-format", &info.path_format,
+			       N_("format"), N_("path output format"),
+			       PARSE_OPT_NONEG, parse_path_format_cb),
 		OPT_BOOL(0, "all", &all_keys, N_("print all keys/values")),
 		OPT_END()
 	};
@@ -192,9 +380,9 @@ static int cmd_repo_info(int argc, const char **argv, const char *prefix,
 		die(_("--all and <key> cannot be used together"));
 
 	if (all_keys)
-		return print_all_fields(repo, format);
+		return print_all_fields(&info, format);
 	else
-		return print_fields(argc, argv, repo, format);
+		return print_fields(argc, argv, &info, format);
 }
 
 struct ref_stats {
@@ -214,7 +402,14 @@ struct object_values {
 struct object_stats {
 	struct object_values type_counts;
 	struct object_values inflated_sizes;
+	struct object_values max_inflated_sizes;
 	struct object_values disk_sizes;
+	struct object_values max_disk_sizes;
+	size_t max_commit_parent_count;
+	size_t max_tree_entry_count;
+	size_t max_blob_path_length;
+	size_t max_blob_path_depth;
+	size_t max_tag_chain_depth;
 };
 
 struct repo_structure {
@@ -317,6 +512,130 @@ static inline size_t get_total_object_values(struct object_values *values)
 	return values->tags + values->commits + values->trees + values->blobs;
 }
 
+static inline size_t get_max_object_value(struct object_values *values)
+{
+	size_t max = values->commits;
+
+	if (values->trees > max)
+		max = values->trees;
+	if (values->blobs > max)
+		max = values->blobs;
+	if (values->tags > max)
+		max = values->tags;
+
+	return max;
+}
+
+static size_t get_commit_parent_count(struct repository *repo,
+				      const struct object_id *oid)
+{
+	unsigned long size = 0;
+	const char *cur;
+	const char *end;
+	void *buf;
+	size_t count = 0;
+
+	buf = odb_read_object_peeled(repo->objects, oid, OBJ_COMMIT, &size, NULL);
+	if (!buf)
+		return 0;
+
+	cur = buf;
+	end = cur + size;
+	while (cur < end) {
+		const char *newline = memchr(cur, '\n', end - cur);
+		size_t line_len;
+
+		if (!newline)
+			break;
+		line_len = newline - cur;
+		if (!line_len)
+			break;
+
+		if (line_len > 7 && !memcmp(cur, "parent ", 7))
+			count++;
+
+		cur = newline + 1;
+	}
+
+	free(buf);
+	return count;
+}
+
+static size_t get_tree_entry_count(struct repository *repo,
+				   const struct object_id *oid)
+{
+	struct tree_desc desc;
+	struct name_entry entry;
+	unsigned long size = 0;
+	void *buf;
+	size_t count = 0;
+
+	buf = odb_read_object_peeled(repo->objects, oid, OBJ_TREE, &size, NULL);
+	if (!buf)
+		return 0;
+
+	init_tree_desc(&desc, oid, buf, size);
+	while (tree_entry(&desc, &entry))
+		count++;
+
+	free(buf);
+	return count;
+}
+
+static size_t get_path_depth(const char *path)
+{
+	size_t depth = 0;
+
+	if (!path || !*path)
+		return 0;
+
+	depth = 1;
+	for (const char *cur = path; *cur; cur++)
+		if (*cur == '/')
+			depth++;
+
+	return depth;
+}
+
+static size_t get_tag_chain_depth(struct repository *repo,
+				  const struct object_id *oid)
+{
+	struct object_id current = *oid;
+	size_t depth = 0;
+
+	while (1) {
+		enum object_type type;
+		unsigned long size = 0;
+		struct object_id next;
+		const char *p, *end;
+		void *buf = odb_read_object(repo->objects, &current, &type, &size);
+
+		if (!buf)
+			break;
+		if (type != OBJ_TAG) {
+			free(buf);
+			break;
+		}
+
+		p = buf;
+		if (!skip_prefix(p, "object ", &p) ||
+		    parse_oid_hex_algop(p, &next, &end, repo->hash_algo) ||
+		    *end != '\n') {
+			free(buf);
+			break;
+		}
+
+		depth++;
+		free(buf);
+
+		if (oideq(&next, &current))
+			break;
+		oidcpy(&current, &next);
+	}
+
+	return depth;
+}
+
 static void stats_table_setup_structure(struct stats_table *table,
 					struct repo_structure *stats)
 {
@@ -371,6 +690,37 @@ static void stats_table_setup_structure(struct stats_table *table,
 			      "    * %s", _("Blobs"));
 	stats_table_size_addf(table, objects->disk_sizes.tags,
 			      "    * %s", _("Tags"));
+
+	stats_table_size_addf(table, objects->max_inflated_sizes.commits,
+			      "  * %s", _("Largest commit"));
+	stats_table_size_addf(table, objects->max_inflated_sizes.trees,
+			      "  * %s", _("Largest tree"));
+	stats_table_size_addf(table, objects->max_inflated_sizes.blobs,
+			      "  * %s", _("Largest blob"));
+	stats_table_size_addf(table, objects->max_inflated_sizes.tags,
+			      "  * %s", _("Largest tag"));
+
+	stats_table_size_addf(table, get_max_object_value(&objects->max_disk_sizes),
+			      "  * %s", _("Largest disk size"));
+	stats_table_size_addf(table, objects->max_disk_sizes.commits,
+			      "    * %s", _("Commits"));
+	stats_table_size_addf(table, objects->max_disk_sizes.trees,
+			      "    * %s", _("Trees"));
+	stats_table_size_addf(table, objects->max_disk_sizes.blobs,
+			      "    * %s", _("Blobs"));
+	stats_table_size_addf(table, objects->max_disk_sizes.tags,
+			      "    * %s", _("Tags"));
+
+	stats_table_count_addf(table, objects->max_commit_parent_count,
+			       "  * %s", _("Largest parent count"));
+	stats_table_count_addf(table, objects->max_tree_entry_count,
+			       "  * %s", _("Largest tree entries"));
+	stats_table_count_addf(table, objects->max_blob_path_length,
+			       "  * %s", _("Longest blob path"));
+	stats_table_count_addf(table, objects->max_blob_path_depth,
+			       "  * %s", _("Deepest blob path"));
+	stats_table_count_addf(table, objects->max_tag_chain_depth,
+			       "  * %s", _("Deepest tag chain"));
 }
 
 static void stats_table_print_structure(const struct stats_table *table)
@@ -446,44 +796,92 @@ static void stats_table_clear(struct stats_table *table)
 	string_list_clear(&table->rows, 1);
 }
 
+static void print_keyvalue_size(const char *key, size_t value,
+				      char key_delim, char value_delim)
+{
+	printf("%s%c%" PRIuMAX "%c", key, key_delim, (uintmax_t)value,
+	       value_delim);
+}
+
+static void print_object_values(const struct object_values *values,
+				const char *metric,
+				char key_delim, char value_delim)
+{
+	printf("objects.commits.%s%c%" PRIuMAX "%c", metric, key_delim,
+	       (uintmax_t)values->commits, value_delim);
+	printf("objects.trees.%s%c%" PRIuMAX "%c", metric, key_delim,
+	       (uintmax_t)values->trees, value_delim);
+	printf("objects.blobs.%s%c%" PRIuMAX "%c", metric, key_delim,
+	       (uintmax_t)values->blobs, value_delim);
+	printf("objects.tags.%s%c%" PRIuMAX "%c", metric, key_delim,
+	       (uintmax_t)values->tags, value_delim);
+}
+
 static void structure_keyvalue_print(struct repo_structure *stats,
 				     char key_delim, char value_delim)
 {
-	printf("references.branches.count%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)stats->refs.branches, value_delim);
-	printf("references.tags.count%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)stats->refs.tags, value_delim);
-	printf("references.remotes.count%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)stats->refs.remotes, value_delim);
-	printf("references.others.count%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)stats->refs.others, value_delim);
+	size_t references_count_total = get_total_reference_count(&stats->refs);
+	size_t object_count_total = get_total_object_values(&stats->objects.type_counts);
+	size_t inflated_size_total = get_total_object_values(&stats->objects.inflated_sizes);
+	size_t disk_size_total = get_total_object_values(&stats->objects.disk_sizes);
+	size_t max_inflated_size = get_max_object_value(&stats->objects.max_inflated_sizes);
+	size_t max_disk_size = get_max_object_value(&stats->objects.max_disk_sizes);
 
-	printf("objects.commits.count%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)stats->objects.type_counts.commits, value_delim);
-	printf("objects.trees.count%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)stats->objects.type_counts.trees, value_delim);
-	printf("objects.blobs.count%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)stats->objects.type_counts.blobs, value_delim);
-	printf("objects.tags.count%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)stats->objects.type_counts.tags, value_delim);
+	print_keyvalue_size("references.count", references_count_total,
+			   key_delim, value_delim);
 
-	printf("objects.commits.inflated_size%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)stats->objects.inflated_sizes.commits, value_delim);
-	printf("objects.trees.inflated_size%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)stats->objects.inflated_sizes.trees, value_delim);
-	printf("objects.blobs.inflated_size%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)stats->objects.inflated_sizes.blobs, value_delim);
-	printf("objects.tags.inflated_size%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)stats->objects.inflated_sizes.tags, value_delim);
+	print_keyvalue_size("references.branches.count", stats->refs.branches,
+			   key_delim, value_delim);
+	print_keyvalue_size("references.tags.count", stats->refs.tags,
+			   key_delim, value_delim);
+	print_keyvalue_size("references.remotes.count", stats->refs.remotes,
+			   key_delim, value_delim);
+	print_keyvalue_size("references.others.count", stats->refs.others,
+			   key_delim, value_delim);
 
-	printf("objects.commits.disk_size%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)stats->objects.disk_sizes.commits, value_delim);
-	printf("objects.trees.disk_size%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)stats->objects.disk_sizes.trees, value_delim);
-	printf("objects.blobs.disk_size%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)stats->objects.disk_sizes.blobs, value_delim);
-	printf("objects.tags.disk_size%c%" PRIuMAX "%c", key_delim,
-	       (uintmax_t)stats->objects.disk_sizes.tags, value_delim);
+	print_keyvalue_size("objects.count", object_count_total,
+			   key_delim, value_delim);
+
+	print_object_values(&stats->objects.type_counts, "count",
+			    key_delim, value_delim);
+
+	print_keyvalue_size("objects.inflated_size", inflated_size_total,
+			   key_delim, value_delim);
+
+	print_object_values(&stats->objects.inflated_sizes, "inflated_size",
+			    key_delim, value_delim);
+
+	print_keyvalue_size("objects.max_inflated_size", max_inflated_size,
+			   key_delim, value_delim);
+	print_object_values(&stats->objects.max_inflated_sizes,
+			    "max_inflated_size", key_delim, value_delim);
+
+	print_keyvalue_size("objects.disk_size", disk_size_total,
+			   key_delim, value_delim);
+
+	print_keyvalue_size("objects.max_disk_size", max_disk_size,
+			   key_delim, value_delim);
+	print_object_values(&stats->objects.max_disk_sizes, "max_disk_size",
+			    key_delim, value_delim);
+
+	print_keyvalue_size("objects.commits.max_parent_count",
+			   stats->objects.max_commit_parent_count,
+			   key_delim, value_delim);
+	print_keyvalue_size("objects.trees.max_entry_count",
+			   stats->objects.max_tree_entry_count,
+			   key_delim, value_delim);
+	print_keyvalue_size("objects.blobs.max_path_length",
+			   stats->objects.max_blob_path_length,
+			   key_delim, value_delim);
+	print_keyvalue_size("objects.blobs.max_path_depth",
+			   stats->objects.max_blob_path_depth,
+			   key_delim, value_delim);
+	print_keyvalue_size("objects.tags.max_chain_depth",
+			   stats->objects.max_tag_chain_depth,
+			   key_delim, value_delim);
+
+	print_object_values(&stats->objects.disk_sizes, "disk_size",
+			    key_delim, value_delim);
 
 	fflush(stdout);
 }
@@ -553,13 +951,15 @@ struct count_objects_data {
 	struct progress *progress;
 };
 
-static int count_objects(const char *path UNUSED, struct oid_array *oids,
+static int count_objects(const char *path, struct oid_array *oids,
 			 enum object_type type, void *cb_data)
 {
 	struct count_objects_data *data = cb_data;
 	struct object_stats *stats = data->stats;
 	size_t inflated_total = 0;
 	size_t disk_total = 0;
+	size_t max_inflated = 0;
+	size_t max_disk = 0;
 	size_t object_count;
 
 	for (size_t i = 0; i < oids->nr; i++) {
@@ -574,31 +974,84 @@ static int count_objects(const char *path UNUSED, struct oid_array *oids,
 						  OBJECT_INFO_SKIP_FETCH_OBJECT |
 						  OBJECT_INFO_QUICK) < 0)
 			continue;
+		if (disk < 0)
+			continue;
 
 		inflated_total += inflated;
-		disk_total += disk;
+		disk_total += (size_t)disk;
+		if (inflated > max_inflated)
+			max_inflated = inflated;
+		if ((size_t)disk > max_disk)
+			max_disk = (size_t)disk;
 	}
 
 	switch (type) {
 	case OBJ_TAG:
+		for (size_t i = 0; i < oids->nr; i++) {
+			size_t tag_chain_depth = get_tag_chain_depth(data->odb->repo,
+							     &oids->oid[i]);
+			if (tag_chain_depth > stats->max_tag_chain_depth)
+				stats->max_tag_chain_depth = tag_chain_depth;
+		}
+
 		stats->type_counts.tags += oids->nr;
 		stats->inflated_sizes.tags += inflated_total;
+		if (max_inflated > stats->max_inflated_sizes.tags)
+			stats->max_inflated_sizes.tags = max_inflated;
 		stats->disk_sizes.tags += disk_total;
+		if (max_disk > stats->max_disk_sizes.tags)
+			stats->max_disk_sizes.tags = max_disk;
 		break;
 	case OBJ_COMMIT:
+		for (size_t i = 0; i < oids->nr; i++) {
+			size_t parent_count = get_commit_parent_count(data->odb->repo,
+							     &oids->oid[i]);
+			if (parent_count > stats->max_commit_parent_count)
+				stats->max_commit_parent_count = parent_count;
+		}
+
 		stats->type_counts.commits += oids->nr;
 		stats->inflated_sizes.commits += inflated_total;
+		if (max_inflated > stats->max_inflated_sizes.commits)
+			stats->max_inflated_sizes.commits = max_inflated;
 		stats->disk_sizes.commits += disk_total;
+		if (max_disk > stats->max_disk_sizes.commits)
+			stats->max_disk_sizes.commits = max_disk;
 		break;
 	case OBJ_TREE:
+		for (size_t i = 0; i < oids->nr; i++) {
+			size_t entry_count = get_tree_entry_count(data->odb->repo,
+							    &oids->oid[i]);
+			if (entry_count > stats->max_tree_entry_count)
+				stats->max_tree_entry_count = entry_count;
+		}
+
 		stats->type_counts.trees += oids->nr;
 		stats->inflated_sizes.trees += inflated_total;
+		if (max_inflated > stats->max_inflated_sizes.trees)
+			stats->max_inflated_sizes.trees = max_inflated;
 		stats->disk_sizes.trees += disk_total;
+		if (max_disk > stats->max_disk_sizes.trees)
+			stats->max_disk_sizes.trees = max_disk;
 		break;
 	case OBJ_BLOB:
+		if (path && *path) {
+			size_t path_len = strlen(path);
+			size_t path_depth = get_path_depth(path);
+
+			if (path_len > stats->max_blob_path_length)
+				stats->max_blob_path_length = path_len;
+			if (path_depth > stats->max_blob_path_depth)
+				stats->max_blob_path_depth = path_depth;
+		}
+
 		stats->type_counts.blobs += oids->nr;
 		stats->inflated_sizes.blobs += inflated_total;
+		if (max_inflated > stats->max_inflated_sizes.blobs)
+			stats->max_inflated_sizes.blobs = max_inflated;
 		stats->disk_sizes.blobs += disk_total;
+		if (max_disk > stats->max_disk_sizes.blobs)
+			stats->max_disk_sizes.blobs = max_disk;
 		break;
 	default:
 		BUG("invalid object type");
