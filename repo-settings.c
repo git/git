@@ -233,3 +233,20 @@ void repo_settings_reset_shared_repository(struct repository *repo)
 {
 	repo->settings.shared_repository_initialized = 0;
 }
+enum branch_track repo_settings_get_branch_track(struct repository *repo)
+{
+	const char *value;
+	if (!repo_config_get_string_tmp(repo, "branch.autosetupmerge", &value)) {
+		if (value && !strcmp(value, "always"))
+			return BRANCH_TRACK_ALWAYS;
+		else if (value && !strcmp(value, "inherit"))
+			return BRANCH_TRACK_INHERIT;
+		else if (value && !strcmp(value, "simple"))
+			return BRANCH_TRACK_SIMPLE;
+		else
+			return git_config_bool("branch.autosetupmerge", value) ?
+				BRANCH_TRACK_REMOTE :
+				BRANCH_TRACK_NEVER;
+	}
+	return BRANCH_TRACK_UNSPECIFIED;
+}

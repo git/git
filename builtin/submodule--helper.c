@@ -3302,7 +3302,7 @@ static int module_create_branch(int argc, const char **argv, const char *prefix,
 	};
 
 	repo_config(the_repository, git_default_config, NULL);
-	track = git_branch_track;
+	track = repo_settings_get_branch_track(the_repository);
 	argc = parse_options(argc, argv, prefix, options, usage, 0);
 
 	if (argc != 3)
