@@ -2313,6 +2313,48 @@ test_expect_success 'non-merge commands reject merge commits' '
 	test_cmp expect actual
 '
 
+
+test_expect_success 'rebase -i with pick -x' '
+	git checkout A &&
+	orig_j="$(git rev-parse J)" &&
+	orig_k="$(git rev-parse K)" &&
+	orig_l="$(git rev-parse L)" &&
+	cat >fake-todo <<-EOF &&
+	# No message since this is a fastforward
+	pick -x F
+	# The rest should get the "cherry picked from " message
+	pick -x J
+	reword -x K
+	edit -x L
+	EOF
+	(
+		set_replace_editor fake-todo &&
+		git rebase -i HEAD
+	) &&
+	git log --format="---%n%s%n%b" >actual &&
+	cat >expect <<-EOF &&
+	---
+	L
+	(cherry picked from commit $orig_l)
+
+	---
+	K
+	(cherry picked from commit $orig_k)
+
+	---
+	J
+	(cherry picked from commit $orig_j)
+
+	---
+	F
+
+	---
+	A
+
+	EOF
+	test_cmp expect actual
+'
+
 # This must be the last test in this file
 test_expect_success '$EDITOR and friends are unchanged' '
 	test_editor_unchanged
