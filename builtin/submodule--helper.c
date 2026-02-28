@@ -2690,7 +2690,12 @@ static int ensure_core_worktree(const char *path)
 		const char *rel_path;
 		struct strbuf sb = STRBUF_INIT;
 
-		cfg_file = repo_git_path(&subrepo, "config");
+		/* Use config.worktree if it exists, otherwise use config */
+		cfg_file = repo_git_path(&subrepo, "config.worktree");
+		if (access(cfg_file, F_OK) != 0) {
+			free(cfg_file);
+			cfg_file = repo_git_path(&subrepo, "config");
+		}
 
 		abs_path = absolute_pathdup(path);
 		rel_path = relative_path(abs_path, subrepo.gitdir, &sb);
