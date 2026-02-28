@@ -141,20 +141,20 @@ test_expect_success 'git help -c' '
 
 	'\''git help config'\'' for more information
 	EOF
-	grep -v -E \
-		-e "^[^.]+\.[^.]+$" \
-		-e "^[^.]+\.[^.]+\.[^.]+$" \
+	sed \
+		-e "/^[^.]*\.[^.]*$/d" \
+		-e "/^[^.]*\.[^.]*\.[^.]*$/d" \
 		help.output >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'git help --config-for-completion' '
 	git help -c >human &&
-	grep -E \
-	     -e "^[^.]+\.[^.]+$" \
-	     -e "^[^.]+\.[^.]+\.[^.]+$" human |
-	     sed -e "s/\*.*//" -e "s/<.*//" |
-	     sort -u >human.munged &&
+	sed -n \
+	     -e "/^[^.]*\.[^.]*$/p" \
+	     -e "/^[^.]*\.[^.]*\.[^.]*$/p" human |
+	sed -e "s/\*.*//" -e "s/<.*//" |
+	sort -u >human.munged &&
 
 	git help --config-for-completion >vars &&
 	test_cmp human.munged vars
@@ -162,11 +162,11 @@ test_expect_success 'git help --config-for-completion' '
 
 test_expect_success 'git help --config-sections-for-completion' '
 	git help -c >human &&
-	grep -E \
-	     -e "^[^.]+\.[^.]+$" \
-	     -e "^[^.]+\.[^.]+\.[^.]+$" human |
-	     sed -e "s/\..*//" |
-	     sort -u >human.munged &&
+	sed -n \
+	     -e "/^[^.]*\.[^.]*$/p" \
+	     -e "/^[^.]*\.[^.]*\.[^.]*$/p" human |
+	sed -e "s/\..*//" |
+	sort -u >human.munged &&
 
 	git help --config-sections-for-completion >sections &&
 	test_cmp human.munged sections
