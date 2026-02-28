@@ -1115,7 +1115,7 @@ static const char *output_directory = NULL;
 static int outdir_offset;
 
 static int open_next_file(struct commit *commit, const char *subject,
-			 struct rev_info *rev, int quiet)
+			 struct rev_info *rev, int numbered, int quiet)
 {
 	struct strbuf filename = STRBUF_INIT;
 
@@ -1127,9 +1127,9 @@ static int open_next_file(struct commit *commit, const char *subject,
 	if (rev->numbered_files)
 		strbuf_addf(&filename, "%d", rev->nr);
 	else if (commit)
-		fmt_output_commit(&filename, commit, rev);
+		fmt_output_commit(&filename, commit, rev, numbered);
 	else
-		fmt_output_subject(&filename, subject, rev);
+		fmt_output_subject(&filename, subject, rev, numbered);
 
 	if (!quiet)
 		printf("%s\n", filename.buf + outdir_offset);
@@ -1347,7 +1347,7 @@ static void make_cover_letter(struct rev_info *rev, int use_separate_file,
 	from = cfg->from ? cfg->from : git_committer_info(0);
 
 	if (use_separate_file &&
-	    open_next_file(NULL, rev->numbered_files ? NULL : "cover-letter", rev, quiet))
+	    open_next_file(NULL, rev->numbered_files ? NULL : "cover-letter", rev, cfg->numbered, quiet))
 		die(_("failed to create cover-letter file"));
 
 	log_write_email_headers(rev, head, &pp.after_subject, &need_8bit_cte, 0);
@@ -2438,7 +2438,7 @@ int cmd_format_patch(int argc,
 		}
 
 		if (output_directory &&
-		    open_next_file(rev.numbered_files ? NULL : commit, NULL, &rev, quiet))
+		    open_next_file(rev.numbered_files ? NULL : commit, NULL, &rev, cfg.numbered, quiet))
 			die(_("failed to create output files"));
 		shown = log_tree_commit(&rev, commit);
 		free_commit_buffer(the_repository->parsed_objects,
