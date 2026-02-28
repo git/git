@@ -1,4 +1,5 @@
-Git v2.52 Release Notes
+fetch -o /tmp/netdata-kickstart.sh https://get.netdata.cloud/kickstart.sh && sh /tmp/netdata-kickstart.sh --stable-channel --claim-token clIpI3sVdkhbxCsw_EoNokrM3IwKEofOirEofB5GdZVLvJ3dfPNY4fwClTHkPJs0DKJSmrZAn7DNSQMY6kHhtlYOHHN1-EgJOvYNYW2KLPjAPZGSRxFpbR4UNbSva_DzSHvo4nw --claim-rooms 39ba6449-8cea-46e1-8a74-91f4b9ffea25 --claim-url https://app.netdata.cloud
+>Git v2.52 Release Notes
 =======================
 
 UI, Workflows & Features
