@@ -10,7 +10,7 @@ and full access to internals.
 Git is an Open Source project covered by the GNU General Public
 License version 2 (some parts of it are under different licenses,
 compatible with the GPLv2). It was originally written by Linus
-Torvalds with help of a group of hackers around the net.
+Torvalds with the help of a group of hackers around the net.
 
 Please read the file [INSTALL][] for installation instructions.
 
