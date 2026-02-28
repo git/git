@@ -260,7 +260,7 @@ test_expect_success 'change notes in z' '
 '
 
 test_expect_success 'cannot do merge w/conflicts when previous merge is unfinished' '
-	test -d .git/NOTES_MERGE_WORKTREE &&
+	test_path_is_dir .git/NOTES_MERGE_WORKTREE &&
 	test_must_fail git notes merge z >output 2>&1 &&
 	# Output should indicate what is wrong
 	test_grep -q "\\.git/NOTES_MERGE_\\* exists" output
@@ -320,7 +320,7 @@ w notes on 1st commit
 EOF
 
 test_expect_success 'can do merge without conflicts even if previous merge is unfinished (x => w)' '
-	test -d .git/NOTES_MERGE_WORKTREE &&
+	test_path_is_dir .git/NOTES_MERGE_WORKTREE &&
 	git notes merge x &&
 	verify_notes w &&
 	# Verify that other notes refs has not changed (x and y)
@@ -564,10 +564,10 @@ EOF
 	# NOTES_MERGE_* refs and .git/NOTES_MERGE_* state files must remain
 	git rev-parse --verify NOTES_MERGE_PARTIAL &&
 	git rev-parse --verify NOTES_MERGE_REF &&
-	test -f .git/NOTES_MERGE_WORKTREE/$commit_sha1 &&
-	test -f .git/NOTES_MERGE_WORKTREE/$commit_sha2 &&
-	test -f .git/NOTES_MERGE_WORKTREE/$commit_sha3 &&
-	test -f .git/NOTES_MERGE_WORKTREE/$commit_sha4 &&
+	test_path_is_file .git/NOTES_MERGE_WORKTREE/$commit_sha1 &&
+	test_path_is_file .git/NOTES_MERGE_WORKTREE/$commit_sha2 &&
+	test_path_is_file .git/NOTES_MERGE_WORKTREE/$commit_sha3 &&
+	test_path_is_file .git/NOTES_MERGE_WORKTREE/$commit_sha4 &&
 	# Refs are unchanged
 	test "$(git rev-parse refs/notes/m)" = "$(git rev-parse refs/notes/w)" &&
 	test "$(git rev-parse refs/notes/y)" = "$(git rev-parse NOTES_MERGE_PARTIAL^1)" &&
