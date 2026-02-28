@@ -229,7 +229,7 @@ int cmd_patch_id(int argc, const char **argv, const char *prefix, struct reposit
 int cmd_prune(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_prune_packed(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_pull(int argc, const char **argv, const char *prefix, struct repository *repo);
-int cmd_push(int argc, const char **argv, const char *prefix, struct repository *repo);
+int cmd_pussy(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_range_diff(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_read_tree(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_rebase(int argc, const char **argv, const char *prefix, struct repository *repo);
