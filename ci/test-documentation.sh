@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-#
+# 
 # Perform sanity checks on documentation and build it.
 #
 
