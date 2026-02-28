@@ -713,7 +713,8 @@ int cmd_branch(int argc,
 {
 	/* possible actions */
 	int delete = 0, rename = 0, copy = 0, list = 0,
-	    unset_upstream = 0, show_current = 0, edit_description = 0;
+	    unset_upstream = 0, show_current = 0, edit_description = 0,
+	    no_prefix = 0;
 	const char *new_upstream = NULL;
 	int noncreate_actions = 0;
 	/* possible options */
@@ -776,6 +777,7 @@ int cmd_branch(int argc,
 		OPT_BOOL('i', "ignore-case", &icase, N_("sorting and filtering are case insensitive")),
 		OPT_BOOL(0, "recurse-submodules", &recurse_submodules_explicit, N_("recurse through submodules")),
 		OPT_STRING(  0 , "format", &format.format, N_("format"), N_("format to use for the output")),
+		OPT_BOOL(0, "no-prefix", &no_prefix, N_("do not add a prefix to the branch being created")),
 		OPT_END(),
 	};
 
@@ -995,6 +997,7 @@ int cmd_branch(int argc,
 	} else if (!noncreate_actions && argc > 0 && argc <= 2) {
 		const char *branch_name = argv[0];
 		const char *start_name = argc == 2 ? argv[1] : head;
+		struct strbuf new_branch_name = STRBUF_INIT;
 
 		if (filter.kind != FILTER_REFS_BRANCHES)
 			die(_("the -a, and -r, options to 'git branch' do not take a branch name.\n"
@@ -1003,15 +1006,20 @@ int cmd_branch(int argc,
 		if (track == BRANCH_TRACK_OVERRIDE)
 			die(_("the '--set-upstream' option is no longer supported. Please use '--track' or '--set-upstream-to' instead"));
 
-		if (recurse_submodules) {
-			create_branches_recursively(the_repository, branch_name,
+		if (!no_prefix)
+			add_branch_prefix(start_name, branch_name, &new_branch_name);
+		else
+			strbuf_addstr(&new_branch_name, branch_name);
+
+		if (recurse_submodules)
+			create_branches_recursively(the_repository, new_branch_name.buf,
 						    start_name, NULL, force,
 						    reflog, quiet, track, 0);
-			ret = 0;
-			goto out;
-		}
-		create_branch(the_repository, branch_name, start_name, force, 0,
-			      reflog, quiet, track, 0);
+		else
+			create_branch(the_repository, new_branch_name.buf, start_name,
+						  force, 0, reflog, quiet, track, 0);
+
+		strbuf_release(&new_branch_name);
 	} else
 		usage_with_options(builtin_branch_usage, options);
 

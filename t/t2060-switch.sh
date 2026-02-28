@@ -177,4 +177,30 @@ test_expect_success 'switch back when temporarily detached and checked out elsew
 	git -C wt2 switch --ignore-other-worktrees shared
 '
 
+test_expect_success 'switch -c with prefix is valid' '
+	git switch main &&
+	git switch -c switchc-with-prefix &&
+	git checkout main &&
+	test_config branch.addCurrentBranchAsPrefix false &&
+	test_must_fail git switch -c switchc-with-prefix &&
+	test_config branch.addCurrentBranchAsPrefix true &&
+	git switch -c switchc-with-prefix &&
+	git switch -c switchc-with-prefix &&
+	test_ref_exists refs/heads/switchc-with-prefix &&
+	test_ref_exists refs/heads/main-switchc-with-prefix &&
+	test_ref_exists refs/heads/main-switchc-with-prefix-switchc-with-prefix
+'
+
+test_expect_success 'switch -C with prefix is valid' '
+	git switch main &&
+	git switch -C switchC-with-prefix &&
+	git checkout main &&
+	test_config branch.addCurrentBranchAsPrefix false &&
+	git switch -C switchC-with-prefix &&
+	test_config branch.addCurrentBranchAsPrefix true &&
+	git switch -C switchC-with-prefix &&
+	test_ref_exists refs/heads/switchC-with-prefix &&
+	test_ref_exists refs/heads/switchC-with-prefix-switchC-with-prefix
+'
+
 test_done

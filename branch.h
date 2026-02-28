@@ -149,6 +149,14 @@ int install_branch_config(int flag, const char *local, const char *origin, const
 int read_branch_desc(struct strbuf *, const char *branch_name);
 
 /*
+ * Fetch the configuration parameter 'branch.addCurrentBranchAsPrefix' and
+ * fill the buffer 'buf' with '<current_branch>-<target_branch>' if true,
+ * otherwise just '<current_branch>'.
+ */
+void add_branch_prefix(const char *current_branch,
+					   const char *target_branch, struct strbuf *buf);
+
+/*
  * Check if a branch is checked out in the main worktree or any linked
  * worktree and die (with a message describing its checkout location) if
  * it is.

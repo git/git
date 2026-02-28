@@ -35,6 +35,13 @@ This option defaults to `never`.
 	value of this variable will be used as the default.
 	See linkgit:git-for-each-ref[1] field names for valid values.
 
+`branch.addCurrentBranchAsPrefix`::
+	When a new branch is created with `git branch`, `git switch` or `git
+	checkout` use the name of the current branch as a prefix for the new
+	branch's name, alongside the one provided by the user, with a hyphen in the
+	middle. For instance, using this configuration variable, creating the branch
+	`test` while on `main` will create the branch `main-test`. False by default.
+
 `branch.<name>.remote`::
 	When on branch _<name>_, it tells `git fetch` and `git push`
 	which remote to fetch from or push to.  The remote to push to
