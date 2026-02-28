@@ -29,8 +29,6 @@ if ($version ne 2) {
 
 my $git_work_tree = get_working_dir();
 
-my $retry = 1;
-
 my $json_pkg;
 eval {
 	require JSON::XS;
@@ -122,8 +120,7 @@ sub watchman_query {
 sub is_work_tree_watched {
 	my ($output) = @_;
 	my $error = $output->{error};
-	if ($retry > 0 and $error and $error =~ m/unable to resolve root .* directory (.*) is not watched/) {
-		$retry--;
+	if ($error and $error =~ m/unable to resolve root .* directory (.*) is not watched/) {
 		my $response = qx/watchman watch "$git_work_tree"/;
 		die "Failed to make watchman watch '$git_work_tree'.\n" .
 		    "Falling back to scanning...\n" if $? != 0;
@@ -141,15 +138,12 @@ sub is_work_tree_watched {
 		# Watchman query just to get it over with now so we won't pay
 		# the cost in git to look up each individual file.
 		my $o = watchman_clock();
-		$error = $output->{error};
+		$error = $o->{error};
 
 		die "Watchman: $error.\n" .
 		"Falling back to scanning...\n" if $error;
 
 		output_result($o->{clock}, ("/"));
-		$last_update_token = $o->{clock};
-
-		eval { launch_watchman() };
 		return 0;
 	}
 

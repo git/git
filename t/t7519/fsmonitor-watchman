@@ -38,8 +38,6 @@ if ($^O =~ 'msys' || $^O =~ 'cygwin') {
 	$git_work_tree = Cwd::cwd();
 }
 
-my $retry = 1;
-
 launch_watchman();
 
 sub launch_watchman {
@@ -92,9 +90,8 @@ sub launch_watchman {
 
 	my $o = $json_pkg->new->utf8->decode($response);
 
-	if ($retry > 0 and $o->{error} and $o->{error} =~ m/unable to resolve root .* directory (.*) is not watched/) {
+	if ($o->{error} and $o->{error} =~ m/unable to resolve root .* directory (.*) is not watched/) {
 		print STDERR "Adding '$git_work_tree' to watchman's watch list.\n";
-		$retry--;
 		qx/watchman watch "$git_work_tree"/;
 		die "Failed to make watchman watch '$git_work_tree'.\n" .
 		    "Falling back to scanning...\n" if $? != 0;
@@ -109,7 +106,6 @@ sub launch_watchman {
 		close $fh;
 
 		print "/\0";
-		eval { launch_watchman() };
 		exit 0;
 	}
 
