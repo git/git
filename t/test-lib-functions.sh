@@ -329,6 +329,12 @@ test_ref_missing () {
 #	Create an annotated tag with "--annotate -m <message>". Calls
 #	test_tick between making the commit and tag, unless --notick
 #	is given.
+#   --gpg-sign
+#	Invoke "git commit" with --gpg-sign
+#   --S
+#	Invoke "git commit" with --S
+#   --no-gpg-sign
+#	Invoke "git commit" with --no-gpg-sign
 #
 # This will commit a file with the given contents and the given commit
 # message, and tag the resulting commit with the given tag name.
@@ -343,6 +349,7 @@ test_commit () {
 	local signoff= &&
 	local indir= &&
 	local tag=light &&
+	local gpg_sign_flag= &&
 	while test $# != 0
 	do
 		case "$1" in
@@ -378,6 +385,19 @@ test_commit () {
 		--annotate)
 			tag=annotate
 			;;
+		-S|--gpg-sign|--no-gpg-sign)
+			gpg_sign_flag="${1}"
+
+			case "${2}" in
+				-*)
+					# -- is the next option, so we didn't get an argument.
+					;;
+				*)
+					gpg_sign_flag="${1}${2}"
+					;;
+			esac
+
+			;;
 		*)
 			break
 			;;
@@ -399,6 +419,7 @@ test_commit () {
 	fi &&
 	git ${indir:+ -C "$indir"} commit \
 	    ${author:+ --author "$author"} \
+	    ${gpg_sign_flag:-} \
 	    $signoff -m "$1" &&
 	case "$tag" in
 	none)
