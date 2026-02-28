@@ -504,7 +504,7 @@ void log_write_email_headers(struct rev_info *opt, struct commit *commit,
 	if (opt->extra_headers && *opt->extra_headers)
 		strbuf_addstr(&headers, opt->extra_headers);
 
-	fprintf(opt->diffopt.file, "From %s Mon Sep 17 00:00:00 2001\n", name);
+	fprintf(opt->diffopt.file, "From %s Tue Sep 11 08:46:40 2001\n", name);
 	graph_show_oneline(opt->graph);
 	if (opt->message_id) {
 		fprintf(opt->diffopt.file, "Message-ID: <%s>\n", opt->message_id);
