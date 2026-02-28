@@ -4270,14 +4270,17 @@ class P4Rebase(Command):
     def __init__(self):
         Command.__init__(self)
         self.options = [
+                optparse.make_option("--branch", dest="branch"),
                 optparse.make_option("--import-labels", dest="importLabels", action="store_true"),
         ]
+        self.branch = ""
         self.importLabels = False
         self.description = ("Fetches the latest revision from perforce and "
                             + "rebases the current work (branch) against it")
 
     def run(self, args):
         sync = P4Sync()
+        sync.branch = self.branch
         sync.importLabels = self.importLabels
         sync.run([])
 
