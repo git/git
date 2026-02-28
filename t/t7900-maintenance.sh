@@ -1482,4 +1482,37 @@ test_expect_success 'maintenance aborts with existing lock file' '
 	test_grep "Another scheduled git-maintenance(1) process seems to be running" err
 '
 
+test_expect_success 'maintenance list shows registered repositories' '
+	test_when_finished "rm -rf repo1 repo2" &&
+	test_when_finished git config --global --unset-all maintenance.repo &&
+	git init repo1 &&
+	git init repo2 &&
+	(
+		cd repo1 &&
+		git maintenance register &&
+		cd ../repo2 &&
+		git maintenance register
+	) &&
+	git config --global --get-all maintenance.repo >expect &&
+	git maintenance list >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'maintenance list with --config-file' '
+	CUSTOM_CONFIG="./custom-maintenance-config" &&
+	test_when_finished "rm -rf repo3 repo4" &&
+	test_when_finished rm -f "$CUSTOM_CONFIG" &&
+	git init repo3 &&
+	git init repo4 &&
+	(
+		cd repo3 &&
+		git maintenance register --config-file "../$CUSTOM_CONFIG" &&
+		cd ../repo4 &&
+		git maintenance register --config-file "../$CUSTOM_CONFIG"
+	) &&
+	git config --file="$CUSTOM_CONFIG" --get-all maintenance.repo >expect &&
+	git maintenance list --config-file "$CUSTOM_CONFIG" >actual &&
+	test_cmp expect actual
+'
+
 test_done
