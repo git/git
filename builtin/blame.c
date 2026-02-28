@@ -792,8 +792,7 @@ static int git_blame_config(const char *var, const char *value,
 		if (diff_algorithm < 0)
 			return error(_("unknown value for config '%s': %s"),
 				     var, value);
-		xdl_opts &= ~XDF_DIFF_ALGORITHM_MASK;
-		xdl_opts |= diff_algorithm;
+		xdl_algo = diff_algorithm;
 		return 0;
 	}
 
@@ -845,13 +844,14 @@ static int blame_move_callback(const struct option *option, const char *arg, int
 static int blame_diff_algorithm_minimal(const struct option *option,
 					const char *arg, int unset)
 {
-	int *opt = option->value;
+	xdl_algo_t *algo = option->value;
 
 	BUG_ON_OPT_ARG(arg);
 
-	*opt &= ~XDF_DIFF_ALGORITHM_MASK;
 	if (!unset)
-		*opt |= XDF_NEED_MINIMAL;
+        	*algo = XDL_ALGO_MINIMAL;
+    	else
+        	*algo = XDL_ALGO_MYERS;
 
 	return 0;
 }
@@ -859,7 +859,7 @@ static int blame_diff_algorithm_minimal(const struct option *option,
 static int blame_diff_algorithm_callback(const struct option *option,
 					 const char *arg, int unset)
 {
-	int *opt = option->value;
+	xdl_algo_t *algo = option->value;
 	long value = parse_algorithm_value(arg);
 
 	BUG_ON_OPT_NEG(unset);
@@ -868,8 +868,7 @@ static int blame_diff_algorithm_callback(const struct option *option,
 		return error(_("option diff-algorithm accepts \"myers\", "
 			       "\"minimal\", \"patience\" and \"histogram\""));
 
-	*opt &= ~XDF_DIFF_ALGORITHM_MASK;
-	*opt |= value;
+	*algo = value;
 
 	return 0;
 }
