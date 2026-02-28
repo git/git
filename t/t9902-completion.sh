@@ -2446,7 +2446,7 @@ test_expect_success FUNNYNAMES \
 	>repeated-quoted/2-file &&
 	>repeated-quoted/3\"file &&   # ... and here, too.
 
-	# Still, we shold only list the directory name only once.
+	# Still, we should only list the directory name only once.
 	test_path_completion repeated repeated-quoted
 '
 
