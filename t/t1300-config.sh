@@ -2851,8 +2851,8 @@ test_expect_success 'writing value with trailing CR not stripped on read' '
 
 	printf "bar\r\n" >expect &&
 	git init cr-test &&
-	git -C cr-test config set core.foo $(printf "bar\r") &&
-	git -C cr-test config get core.foo >actual &&
+	git -C cr-test config core.foo $(printf "bar\r") &&
+	git -C cr-test config --get core.foo >actual &&
 
 	test_cmp expect actual
 '
