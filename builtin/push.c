@@ -543,6 +543,17 @@ static int git_push_config(const char *k, const char *v,
 	return git_default_config(k, v, ctx, NULL);
 }
 
+static int no_force_used = 0;
+
+static int option_parse_no_force(const struct option *opt,
+				  const char *arg, int unset)
+{
+	int *flags = opt->value;
+	*flags &= ~TRANSPORT_PUSH_FORCE;
+	no_force_used = 1;
+	return 0;
+}
+
 int cmd_push(int argc,
 	     const char **argv,
 	     const char *prefix,
@@ -570,6 +581,9 @@ int cmd_push(int argc,
 		OPT_BIT('n' , "dry-run", &flags, N_("dry run"), TRANSPORT_PUSH_DRY_RUN),
 		OPT_BIT( 0,  "porcelain", &flags, N_("machine-readable output"), TRANSPORT_PUSH_PORCELAIN),
 		OPT_BIT('f', "force", &flags, N_("force updates"), TRANSPORT_PUSH_FORCE),
+		OPT_CALLBACK_F(0, "no-force", &flags, NULL,
+			       N_("do not force updates (opposite of --force)"),
+			       PARSE_OPT_NONEG, option_parse_no_force),
 		OPT_CALLBACK_F(0, "force-with-lease", &cas, N_("<refname>:<expect>"),
 			       N_("require old value of ref to be at this value"),
 			       PARSE_OPT_OPTARG | PARSE_OPT_LITERAL_ARGHELP, parseopt_push_cas_option),
@@ -599,11 +613,25 @@ int cmd_push(int argc,
 
 	packet_trace_identity("push");
 	repo_config(the_repository, git_push_config, &flags);
+	
+	/* Preprocess argv to convert -nf to --no-force */
+	for (int i = 0; i < argc; i++) {
+		if (!strcmp(argv[i], "-nf")) {
+			argv[i] = "--no-force";
+		}
+	}
+	
+	no_force_used = 0;
 	argc = parse_options(argc, argv, prefix, options, push_usage, 0);
 	push_options = (push_options_cmdline.nr
 		? &push_options_cmdline
 		: &push_options_config);
 	set_push_cert_flags(&flags, push_cert);
+	
+	/* Set force as default unless --no-force was specified */
+	if (!no_force_used && !(flags & TRANSPORT_PUSH_FORCE)) {
+		flags |= TRANSPORT_PUSH_FORCE;
+	}
 
 	die_for_incompatible_opt4(deleterefs, "--delete",
 				  tags, "--tags",
