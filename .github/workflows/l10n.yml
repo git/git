@@ -1,3 +1,6 @@
+git add .gitignore
+git commit -m "Add .gitignore file"
+git push origin main
 name: git-l10n
 
 on: [push, pull_request_target]
