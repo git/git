@@ -7,6 +7,7 @@
 #include "builtin.h"
 #include "advice.h"
 #include "branch.h"
+#include "checkout.h"
 #include "config.h"
 #include "environment.h"
 #include "gettext.h"
@@ -280,6 +281,28 @@ static void setup_default_push_refspecs(int *flags, struct remote *remote)
 	 */
 	if ((*flags & TRANSPORT_PUSH_AUTO_UPSTREAM) && branch->merge_nr == 0)
 		*flags |= TRANSPORT_PUSH_SET_UPSTREAM;
+
+	/*
+	 * Apply template to destination ref if configured and we're setting
+	 * up upstream (either automatically or explicitly with -u).
+	 */
+	if (branch->merge_nr == 0 && (*flags & (TRANSPORT_PUSH_SET_UPSTREAM | TRANSPORT_PUSH_AUTO_UPSTREAM))) {
+		const char *short_name;
+		char *templated_dst = NULL;
+
+		if (skip_prefix(dst, "refs/heads/", &short_name)) {
+			char *template_result = expand_remote_branch_template(short_name);
+			if (template_result) {
+				templated_dst = xstrfmt("refs/heads/%s", template_result);
+				free(template_result);
+				dst = templated_dst;
+			}
+		}
+
+		refspec_appendf(&rs, "%s:%s", branch->refname, dst);
+		free(templated_dst);
+		return;
+	}
 
 	refspec_appendf(&rs, "%s:%s", branch->refname, dst);
 }

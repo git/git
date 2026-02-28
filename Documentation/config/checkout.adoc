@@ -22,6 +22,16 @@ commands or functionality in the future.
 	option in `git checkout` and `git switch`. See
 	linkgit:git-switch[1] and linkgit:git-checkout[1].
 
+`checkout.remoteBranchTemplate`::
+	Template pattern applied to remote ref names during checkout DWIM
+	and when pushing with `push.autoSetupRemote`. Uses `%s` for the
+	branch name and `%%` for a literal `%`.
++
+With `feature/%s`, `git checkout <branch>` searches for `origin/feature/<branch>`.
++
+Useful when remote branches expects specific prefixes (e.g., `feature/`, `user/`).
+Invalid templates (missing `%s`) trigger a warning and are ignored.
+
 `checkout.workers`::
 	The number of parallel workers to use when updating the working tree.
 	The default is one, i.e. sequential execution. If set to a value less
