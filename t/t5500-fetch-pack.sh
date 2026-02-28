@@ -909,6 +909,26 @@ test_expect_success 'shallow since with commit graph and already-seen commit' '
 	)
 '
 
+test_expect_success 'clone shallow-since all shallows reachable' '
+	test_create_repo shallow-since-all-shallows-reachable &&
+	(
+		rm -rf shallow123 &&
+		cd shallow-since-all-shallows-reachable &&
+		GIT_COMMITTER_DATE="2005-04-01 13:14:15" git commit --allow-empty -m Apr_1st &&
+		GIT_COMMITTER_DATE="2005-04-02 13:14:15" git commit --allow-empty -m Apr_2nd &&
+		GIT_COMMITTER_DATE="2005-04-03 13:14:15" git switch -c branch &&
+		GIT_COMMITTER_DATE="2005-04-03 13:14:15" git commit --allow-empty -m Apr_3rd &&
+		GIT_COMMITTER_DATE="2005-04-04 13:14:15" git switch main &&
+		GIT_COMMITTER_DATE="2005-04-04 13:14:15" git merge branch --no-ff -m Apr_4th &&
+		git clone --shallow-since "2005-04-03 13:14:15" "file://$(pwd)/." ../shallow123 &&
+		cd ../shallow123 &&
+		for commit in $(cat .git/shallow 2> /dev/null)
+		do
+			git rev-list $commit 1>/dev/null || exit 1
+		done
+	)
+'
+
 test_expect_success 'shallow clone exclude tag two' '
 	test_create_repo shallow-exclude &&
 	(

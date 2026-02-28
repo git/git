@@ -208,10 +208,9 @@ static void show_commit(struct commit *commit, void *data)
 }
 
 /*
- * Given rev-list arguments, run rev-list. All reachable commits
- * except border ones are marked with not_shallow_flag. Border commits
- * are marked with shallow_flag. The list of border/shallow commits
- * are also returned.
+ * Given rev-list arguments, run rev-list. All reachable commits except
+ * shallow boundary commits are marked with not_shallow_flag.
+ * Returned is a list of boundary commits marked with shallow_flag only.
  */
 struct commit_list *get_shallow_commits_by_rev_list(struct strvec *argv,
 						    int shallow_flag,
@@ -241,36 +240,76 @@ struct commit_list *get_shallow_commits_by_rev_list(struct strvec *argv,
 	if (!not_shallow_list)
 		die("no commits selected for shallow requests");
 
-	/* Mark all reachable commits as NOT_SHALLOW */
+	/* Mark all reachable (listed) commits as NOT_SHALLOW */
 	for (p = not_shallow_list; p; p = p->next)
 		p->item->object.flags |= not_shallow_flag;
 
 	/*
-	 * mark border commits SHALLOW + NOT_SHALLOW.
-	 * We cannot clear NOT_SHALLOW right now. Imagine border
-	 * commit A is processed first, then commit B, whose parent is
-	 * A, later. If NOT_SHALLOW on A is cleared at step 1, B
-	 * itself is considered border at step 2, which is incorrect.
+	 * Mark shallow commits from the list as SHALLOW + NOT_SHALLOW.
+	 * Do not clear NOT_SHALLOW flags immediately. Consider two listed
+	 * commits, B and its parent A, where A is shallow. If A is processed
+	 * first and its NOT_SHALLOW flag is cleared immediately, B would later
+	 * be incorrectly marked SHALLOW when processed.
+	 *
+	 * Also, listed commits may have multiple parents, and not all parents
+	 * are necessarily listed (as they were not all traversed into the
+	 * not_shallow_list from the revs in the first place — not marked
+	 * NOT_SHALLOW). Therefore:
+	 *
+	 * - A listed commit is marked SHALLOW only if none of its parents are
+	 *   listed.
+	 * - If at least one parent of a listed commit is also listed, the
+	 *   commit itself is not marked SHALLOW; however, any of its non-listed
+	 *   parents are marked SHALLOW.
+	 *
+	 * Processing overview:
+	 * 1. All listed commits have already been marked NOT_SHALLOW are not
+	 *    cleared until all shallow commits have been identified.
+	 *
+	 * 2. For each listed commit:
+	 *    - Mark the commit SHALLOW if it has any parent that is not listed.
+	 *    - Mark all non-listed parents as SHALLOW.
+	 *    - If the commit has at least one listed parent, it is excluded
+	 *      from the shallow result; however its parents marked only SHALLOW
+	 *      are added instead.
+	 *    - If all parents are marked only SHALLOW, the commit remains SHALLOW
+	 *      and is added to the shallow result.
 	 */
 	for (p = not_shallow_list; p; p = p->next) {
 		struct commit *c = p->item;
 		struct commit_list *parent;
+		int must_not_be_shallow = 0;
 
 		if (repo_parse_commit(the_repository, c))
 			die("unable to parse commit %s",
 			    oid_to_hex(&c->object.oid));
+		if (!c->parents)
+			continue;
 
 		for (parent = c->parents; parent; parent = parent->next)
-			if (!(parent->item->object.flags & not_shallow_flag)) {
+			if (parent->item->object.flags & not_shallow_flag) {
+				must_not_be_shallow = 1;
+			} else {
 				c->object.flags |= shallow_flag;
-				commit_list_insert(c, &result);
-				break;
+				parent->item->object.flags |= shallow_flag;
 			}
+
+		if (must_not_be_shallow) {
+			c->object.flags &= ~shallow_flag;
+			for (parent = c->parents; parent; parent = parent->next)
+				if ((parent->item->object.flags & shallow_flag) &&
+				    !(parent->item->object.flags & not_shallow_flag))
+					commit_list_insert(parent->item, &result);
+		} else {
+			for (parent = c->parents; parent; parent = parent->next)
+				parent->item->object.flags &= ~shallow_flag;
+			commit_list_insert(c, &result);
+		}
 	}
 	commit_list_free(not_shallow_list);
 
 	/*
-	 * Now we can clean up NOT_SHALLOW on border commits. Having
+	 * Now we can clean up NOT_SHALLOW on shallow commits. Having
 	 * both flags set can confuse the caller.
 	 */
 	for (p = result; p; p = p->next) {
