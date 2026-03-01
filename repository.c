@@ -370,6 +370,8 @@ void repo_clear(struct repository *repo)
 	FREE_AND_NULL(repo->index_file);
 	FREE_AND_NULL(repo->worktree);
 	FREE_AND_NULL(repo->submodule_prefix);
+	FREE_AND_NULL(repo->commit_encoding);
+	FREE_AND_NULL(repo->log_output_encoding);
 
 	odb_free(repo->objects);
 	repo->objects = NULL;

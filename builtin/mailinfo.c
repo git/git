@@ -52,7 +52,7 @@ static int parse_opt_quoted_cr(const struct option *opt, const char *arg, int un
 int cmd_mailinfo(int argc,
 		 const char **argv,
 		 const char *prefix,
-		 struct repository *repo UNUSED)
+		 struct repository *repo)
 {
 	struct metainfo_charset meta_charset;
 	struct mailinfo mi;
@@ -83,7 +83,7 @@ int cmd_mailinfo(int argc,
 		OPT_END()
 	};
 
-	setup_mailinfo(the_repository, &mi);
+	setup_mailinfo(repo, &mi);
 	meta_charset.policy = CHARSET_DEFAULT;
 
 	argc = parse_options(argc, argv, prefix, options, mailinfo_usage, 0);
@@ -93,7 +93,7 @@ int cmd_mailinfo(int argc,
 
 	switch (meta_charset.policy) {
 	case CHARSET_DEFAULT:
-		mi.metainfo_charset = get_commit_output_encoding();
+		mi.metainfo_charset = get_commit_output_encoding(repo);
 		break;
 	case CHARSET_NO_REENCODE:
 		mi.metainfo_charset = NULL;
