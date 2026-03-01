@@ -1258,7 +1258,7 @@ static int save_untracked_files(struct stash_info *info, struct strbuf *msg,
 		goto done;
 	}
 
-	if (commit_tree(untracked_msg.buf, untracked_msg.len,
+	if (commit_tree(the_repository, untracked_msg.buf, untracked_msg.len,
 			&info->u_tree, NULL, &info->u_commit, NULL, NULL)) {
 		ret = -1;
 		goto done;
@@ -1486,7 +1486,7 @@ static int do_create_stash(const struct pathspec *ps, struct strbuf *stash_msg_b
 	commit_list_insert(head_commit, &parents);
 	if (write_index_as_tree(&info->i_tree, the_repository->index,
 				repo_get_index_file(the_repository), 0, NULL) ||
-	    commit_tree(commit_tree_label.buf, commit_tree_label.len,
+	    commit_tree(the_repository, commit_tree_label.buf, commit_tree_label.len,
 			&info->i_tree, parents, &info->i_commit, NULL, NULL)) {
 		if (!quiet)
 			fprintf_ln(stderr, _("Cannot save the current "
@@ -1551,7 +1551,7 @@ static int do_create_stash(const struct pathspec *ps, struct strbuf *stash_msg_b
 			   &parents);
 	commit_list_insert(head_commit, &parents);
 
-	if (commit_tree(stash_msg_buf->buf, stash_msg_buf->len, &info->w_tree,
+	if (commit_tree(the_repository, stash_msg_buf->buf, stash_msg_buf->len, &info->w_tree,
 			parents, &info->w_commit, NULL, NULL)) {
 		if (!quiet)
 			fprintf_ln(stderr, _("Cannot record "
@@ -2035,7 +2035,7 @@ static int write_commit_with_parents(struct repository *r,
 	author = xmemdupz(orig_author, author_len);
 	committer = xmemdupz(orig_committer, committer_len);
 
-	if (commit_tree_extended(msg.buf, msg.len,
+	if (commit_tree_extended(r, msg.buf, msg.len,
 				 r->hash_algo->empty_tree, parents,
 				 out, author, committer,
 				 NULL, NULL)) {
@@ -2258,7 +2258,7 @@ static int do_export_stash(struct repository *r,
 			      "2001-09-17T00:00:00Z", 0);
 
 	/* First, we create a single empty commit. */
-	if (commit_tree_extended("", 0, r->hash_algo->empty_tree, NULL,
+	if (commit_tree_extended(the_repository, "", 0, r->hash_algo->empty_tree, NULL,
 				 &base, author, committer, NULL, NULL))
 		return error(_("unable to write base commit"));
 

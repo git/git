@@ -144,7 +144,7 @@ int cmd_commit_tree(int argc,
 			die_errno(_("git commit-tree: failed to read"));
 	}
 
-	if (commit_tree(buffer.buf, buffer.len, &tree_oid, parents, &commit_oid,
+	if (commit_tree(the_repository, buffer.buf, buffer.len, &tree_oid, parents, &commit_oid,
 			NULL, sign_commit)) {
 		ret = 1;
 		goto out;

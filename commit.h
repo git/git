@@ -289,12 +289,12 @@ struct commit_extra_header {
 void append_merge_tag_headers(const struct commit_list *parents,
 			      struct commit_extra_header ***tail);
 
-int commit_tree(const char *msg, size_t msg_len,
+int commit_tree(struct repository *r, const char *msg, size_t msg_len,
 		const struct object_id *tree,
 		const struct commit_list *parents, struct object_id *ret,
 		const char *author, const char *sign_commit);
 
-int commit_tree_extended(const char *msg, size_t msg_len,
+int commit_tree_extended(struct repository *r, const char *msg, size_t msg_len,
 			 const struct object_id *tree,
 			 const struct commit_list *parents, struct object_id *ret,
 			 const char *author, const char *committer,
