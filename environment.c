@@ -50,8 +50,6 @@ int ignore_case;
 int assume_unchanged;
 int is_bare_repository_cfg = -1; /* unspecified */
 int warn_on_object_refname_ambiguity = 1;
-char *git_commit_encoding;
-char *git_log_output_encoding;
 char *apply_default_whitespace;
 char *apply_default_ignorewhitespace;
 int zlib_compression_level = Z_BEST_SPEED;
@@ -194,15 +192,22 @@ const char *strip_namespace(const char *namespaced_ref)
 	return NULL;
 }
 
-const char *get_log_output_encoding(void)
+const char *get_log_output_encoding(struct repository *r)
 {
-	return git_log_output_encoding ? git_log_output_encoding
-		: get_commit_output_encoding();
+	struct repo_config_values *cfg;
+	if (r != the_repository)
+		return get_commit_output_encoding(r);
+	cfg = repo_config_values(r);
+	return cfg->log_output_encoding ? cfg->log_output_encoding : get_commit_output_encoding(r);
 }
 
-const char *get_commit_output_encoding(void)
+const char *get_commit_output_encoding(struct repository *r)
 {
-	return git_commit_encoding ? git_commit_encoding : "UTF-8";
+	struct repo_config_values *cfg;
+	if (r != the_repository)	
+		return "UTF-8";
+	cfg= repo_config_values(r);
+	return cfg->commit_encoding ? cfg->commit_encoding : "UTF-8";
 }
 
 int use_optional_locks(void)
@@ -567,17 +572,17 @@ static int git_default_sparse_config(const char *var, const char *value)
 
 static int git_default_i18n_config(const char *var, const char *value)
 {
+	struct repo_config_values *cfg = repo_config_values(the_repository);
+
 	if (!strcmp(var, "i18n.commitencoding")) {
-		FREE_AND_NULL(git_commit_encoding);
-		return git_config_string(&git_commit_encoding, var, value);
+		FREE_AND_NULL(cfg->commit_encoding);
+		return git_config_string(&cfg->commit_encoding, var, value);
 	}
-
 	if (!strcmp(var, "i18n.logoutputencoding")) {
-		FREE_AND_NULL(git_log_output_encoding);
-		return git_config_string(&git_log_output_encoding, var, value);
+		FREE_AND_NULL(cfg->log_output_encoding);
+		return git_config_string(&cfg->log_output_encoding, var, value);
 	}
 
-	/* Add other config variables here and to Documentation/config.adoc. */
 	return 0;
 }
 
@@ -738,6 +743,8 @@ int git_default_config(const char *var, const char *value,
 void repo_config_values_init(struct repo_config_values *cfg)
 {
 	cfg->attributes_file = NULL;
+	cfg->commit_encoding = NULL;
+	cfg->log_output_encoding = NULL;
 	cfg->apply_sparse_checkout = 0;
 	cfg->branch_track = BRANCH_TRACK_REMOTE;
 }

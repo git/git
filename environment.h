@@ -93,6 +93,9 @@ struct repo_config_values {
 
 	/* section "branch" config values */
 	enum branch_track branch_track;
+
+	char *commit_encoding;
+	char *log_output_encoding;
 };
 
 struct repo_config_values *repo_config_values(struct repository *repo);
@@ -206,11 +209,8 @@ extern enum object_creation_mode object_creation_mode;
 
 extern int grafts_keep_true_parents;
 
-const char *get_log_output_encoding(void);
-const char *get_commit_output_encoding(void);
-
-extern char *git_commit_encoding;
-extern char *git_log_output_encoding;
+const char *get_log_output_encoding(struct repository *r);
+const char *get_commit_output_encoding(struct repository *r);
 
 extern char *editor_program;
 extern char *askpass_program;
