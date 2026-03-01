@@ -310,7 +310,7 @@ static void show_one_commit(struct commit *commit, int no_name)
 	struct commit_name *name = commit_to_name(commit);
 
 	if (commit->object.parsed) {
-		pp_commit_easy(CMIT_FMT_ONELINE, commit, &pretty);
+		pp_commit_easy(the_repository, CMIT_FMT_ONELINE, commit, &pretty);
 		pretty_str = pretty.buf;
 	}
 	skip_prefix(pretty_str, "[PATCH] ", &pretty_str);

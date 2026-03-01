@@ -2521,7 +2521,7 @@ static void print_commit(char sign, struct commit *commit, int verbose,
 		       repo_find_unique_abbrev(the_repository, &commit->object.oid, abbrev));
 	} else {
 		struct strbuf buf = STRBUF_INIT;
-		pp_commit_easy(CMIT_FMT_ONELINE, commit, &buf);
+		pp_commit_easy(the_repository, CMIT_FMT_ONELINE, commit, &buf);
 		fprintf(file, "%c %s %s\n", sign,
 		       repo_find_unique_abbrev(the_repository, &commit->object.oid, abbrev),
 		       buf.buf);

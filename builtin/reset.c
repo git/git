@@ -141,7 +141,7 @@ static void print_new_head_line(struct commit *commit)
 	printf(_("HEAD is now at %s"),
 		repo_find_unique_abbrev(the_repository, &commit->object.oid, DEFAULT_ABBREV));
 
-	pp_commit_easy(CMIT_FMT_ONELINE, commit, &buf);
+	pp_commit_easy(the_repository, CMIT_FMT_ONELINE, commit, &buf);
 	if (buf.len > 0)
 		printf(" %s", buf.buf);
 	putchar('\n');

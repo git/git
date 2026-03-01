@@ -307,7 +307,7 @@ static void show_commit(struct commit *commit, void *data)
 		ctx.output_encoding = get_log_output_encoding();
 		ctx.color = revs->diffopt.use_color;
 		ctx.rev = revs;
-		pretty_print_commit(&ctx, commit, &buf);
+		pretty_print_commit(the_repository, &ctx, commit, &buf);
 		if (buf.len) {
 			if (revs->commit_format != CMIT_FMT_ONELINE)
 				graph_show_oneline(revs->graph);

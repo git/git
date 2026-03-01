@@ -252,7 +252,7 @@ void shortlog_add_commit(struct shortlog *log, struct commit *commit)
 
 	if (!log->summary) {
 		if (log->user_format)
-			pretty_print_commit(&ctx, commit, &oneline);
+			pretty_print_commit(the_repository, &ctx, commit, &oneline);
 		else
 			repo_format_commit_message(the_repository, commit,
 						   "%s", &oneline, &ctx);

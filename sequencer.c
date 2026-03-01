@@ -5870,7 +5870,7 @@ static int make_script_with_merges(struct pretty_print_context *pp,
 			continue;
 
 		strbuf_reset(&oneline);
-		pretty_print_commit(pp, commit, &oneline);
+		pretty_print_commit(revs->repo, pp, commit, &oneline);
 
 		to_merge = commit->parents ? commit->parents->next : NULL;
 		if (!to_merge) {
@@ -6012,7 +6012,7 @@ static int make_script_with_merges(struct pretty_print_context *pp,
 				strbuf_addf(out, "%s onto\n", cmd_reset);
 			else {
 				strbuf_reset(&oneline);
-				pretty_print_commit(pp, commit, &oneline);
+				pretty_print_commit(revs->repo, pp, commit, &oneline);
 				strbuf_addf(out, "%s %s %s\n",
 					    cmd_reset, to, oneline.buf);
 			}
@@ -6124,7 +6124,7 @@ int sequencer_make_script(struct repository *r, struct strbuf *out,
 			continue;
 		strbuf_addf(out, "%s %s ", insn,
 			    oid_to_hex(&commit->object.oid));
-		pretty_print_commit(&pp, commit, out);
+		pretty_print_commit(r, &pp, commit, out);
 		if (is_empty)
 			strbuf_addf(out, " %s empty", comment_line_str);
 		strbuf_addch(out, '\n');

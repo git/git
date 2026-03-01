@@ -1480,7 +1480,7 @@ static int do_create_stash(const struct pathspec *ps, struct strbuf *stash_msg_b
 						  &head_commit->object.oid,
 						  DEFAULT_ABBREV);
 	strbuf_addf(&msg, "%s: %s ", branch_name, head_short_sha1);
-	pp_commit_easy(CMIT_FMT_ONELINE, head_commit, &msg);
+	pp_commit_easy(the_repository, CMIT_FMT_ONELINE, head_commit, &msg);
 
 	strbuf_addf(&commit_tree_label, "index on %s\n", msg.buf);
 	commit_list_insert(head_commit, &parents);
