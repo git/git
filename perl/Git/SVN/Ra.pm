@@ -475,6 +475,8 @@ sub gs_fetch_loop_common {
 				my $log_entry = $gs->do_fetch($paths, $r);
 				if ($log_entry) {
 					$gs->do_git_commit($log_entry);
+				}else{
+					next;
 				}
 				$Git::SVN::INDEX_FILES{$gs->{index}} = 1;
 			}
