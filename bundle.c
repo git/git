@@ -463,7 +463,7 @@ static void write_bundle_prerequisites(struct commit *commit, void *data)
 	ctx.fmt = CMIT_FMT_ONELINE;
 	ctx.output_encoding = get_log_output_encoding();
 	strbuf_reset(&buf);
-	pretty_print_commit(&ctx, commit, &buf);
+	pretty_print_commit(the_repository, &ctx, commit, &buf);
 	strbuf_trim(&buf);
 
 	object = (struct object *)commit;
