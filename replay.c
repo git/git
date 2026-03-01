@@ -68,7 +68,7 @@ static struct commit *create_commit(struct repository *repo,
 	strbuf_addstr(&msg, orig_message);
 	author = get_author(message);
 	reset_ident_date();
-	if (commit_tree_extended(msg.buf, msg.len, &tree->object.oid, parents,
+	if (commit_tree_extended(repo, msg.buf, msg.len, &tree->object.oid, parents,
 				 &ret, author, NULL, sign_commit, extra)) {
 		error(_("failed to write commit object"));
 		goto out;

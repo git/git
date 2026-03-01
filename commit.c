@@ -1534,7 +1534,7 @@ void free_commit_extra_headers(struct commit_extra_header *extra)
 	}
 }
 
-int commit_tree(const char *msg, size_t msg_len, const struct object_id *tree,
+int commit_tree(struct repository *r, const char *msg, size_t msg_len, const struct object_id *tree,
 		const struct commit_list *parents, struct object_id *ret,
 		const char *author, const char *sign_commit)
 {
@@ -1542,7 +1542,7 @@ int commit_tree(const char *msg, size_t msg_len, const struct object_id *tree,
 	int result;
 
 	append_merge_tag_headers(parents, &tail);
-	result = commit_tree_extended(msg, msg_len, tree, parents, ret, author,
+	result = commit_tree_extended(r, msg, msg_len, tree, parents, ret, author,
 				      NULL, sign_commit, extra);
 	free_commit_extra_headers(extra);
 	return result;
@@ -1706,14 +1706,13 @@ static void write_commit_tree(struct strbuf *buffer, const char *msg, size_t msg
 	strbuf_add(buffer, msg, msg_len);
 }
 
-int commit_tree_extended(const char *msg, size_t msg_len,
+int commit_tree_extended(struct repository *r, const char *msg, size_t msg_len,
 			 const struct object_id *tree,
 			 const struct commit_list *parents, struct object_id *ret,
 			 const char *author, const char *committer,
 			 const char *sign_commit,
 			 const struct commit_extra_header *extra)
 {
-	struct repository *r = the_repository;
 	int result = 0;
 	int encoding_is_utf8;
 	struct strbuf buffer = STRBUF_INIT, compat_buffer = STRBUF_INIT;

@@ -1672,7 +1672,7 @@ static int try_to_commit(struct repository *r,
 		free(email);
 	}
 
-	if (commit_tree_extended(msg->buf, msg->len, &tree, parents, oid,
+	if (commit_tree_extended(r, msg->buf, msg->len, &tree, parents, oid,
 				 author, committer, opts->gpg_sign, extra)) {
 		res = error(_("failed to write commit object"));
 		goto out;
@@ -3989,7 +3989,7 @@ static int do_reset(struct repository *r,
 	if (len == 10 && !strncmp("[new root]", name, len)) {
 		if (!opts->have_squash_onto) {
 			const char *hex;
-			if (commit_tree("", 0, the_hash_algo->empty_tree,
+			if (commit_tree(r, "", 0, the_hash_algo->empty_tree,
 					NULL, &opts->squash_onto,
 					NULL, NULL))
 				return error(_("writing fake root commit"));
