@@ -2,6 +2,7 @@
 
 #include "builtin.h"
 #include "environment.h"
+#include "hash.h"
 #include "hex.h"
 #include "odb.h"
 #include "parse-options.h"
@@ -197,6 +198,18 @@ static int cmd_repo_info(int argc, const char **argv, const char *prefix,
 		return print_fields(argc, argv, repo, format);
 }
 
+struct object_data {
+	struct object_id oid;
+	size_t value;
+};
+
+struct largest_objects {
+	struct object_data tag_size;
+	struct object_data commit_size;
+	struct object_data tree_size;
+	struct object_data blob_size;
+};
+
 struct ref_stats {
 	size_t branches;
 	size_t remotes;
@@ -215,6 +228,7 @@ struct object_stats {
 	struct object_values type_counts;
 	struct object_values inflated_sizes;
 	struct object_values disk_sizes;
+	struct largest_objects largest;
 };
 
 struct repo_structure {
@@ -371,6 +385,21 @@ static void stats_table_setup_structure(struct stats_table *table,
 			      "    * %s", _("Blobs"));
 	stats_table_size_addf(table, objects->disk_sizes.tags,
 			      "    * %s", _("Tags"));
+
+	stats_table_addf(table, "");
+	stats_table_addf(table, "* %s", _("Largest objects"));
+	stats_table_addf(table, "  * %s", _("Commits"));
+	stats_table_size_addf(table, objects->largest.commit_size.value,
+			      "    * %s", _("Maximum size"));
+	stats_table_addf(table, "  * %s", _("Trees"));
+	stats_table_size_addf(table, objects->largest.tree_size.value,
+			      "    * %s", _("Maximum size"));
+	stats_table_addf(table, "  * %s", _("Blobs"));
+	stats_table_size_addf(table, objects->largest.blob_size.value,
+			      "    * %s", _("Maximum size"));
+	stats_table_addf(table, "  * %s", _("Tags"));
+	stats_table_size_addf(table, objects->largest.tag_size.value,
+			      "    * %s", _("Maximum size"));
 }
 
 static void stats_table_print_structure(const struct stats_table *table)
@@ -453,6 +482,14 @@ static inline void print_keyvalue(const char *key, char key_delim, size_t value,
 	       value_delim);
 }
 
+static void print_object_data(const char *key, char key_delim,
+			      struct object_data *data, char value_delim)
+{
+	print_keyvalue(key, key_delim, data->value, value_delim);
+	printf("%s_oid%c%s%c", key, key_delim, oid_to_hex(&data->oid),
+	       value_delim);
+}
+
 static void structure_keyvalue_print(struct repo_structure *stats,
 				     char key_delim, char value_delim)
 {
@@ -491,6 +528,15 @@ static void structure_keyvalue_print(struct repo_structure *stats,
 		       stats->objects.disk_sizes.blobs, value_delim);
 	print_keyvalue("objects.tags.disk_size", key_delim,
 		       stats->objects.disk_sizes.tags, value_delim);
+
+	print_object_data("objects.commits.max_size", key_delim,
+			  &stats->objects.largest.commit_size, value_delim);
+	print_object_data("objects.trees.max_size", key_delim,
+			  &stats->objects.largest.tree_size, value_delim);
+	print_object_data("objects.blobs.max_size", key_delim,
+			  &stats->objects.largest.blob_size, value_delim);
+	print_object_data("objects.tags.max_size", key_delim,
+			  &stats->objects.largest.tag_size, value_delim);
 
 	fflush(stdout);
 }
@@ -560,6 +606,15 @@ struct count_objects_data {
 	struct progress *progress;
 };
 
+static void check_largest(struct object_data *data, struct object_id *oid,
+			  size_t value)
+{
+	if (value > data->value || is_null_oid(&data->oid)) {
+		oidcpy(&data->oid, oid);
+		data->value = value;
+	}
+}
+
 static int count_objects(const char *path UNUSED, struct oid_array *oids,
 			 enum object_type type, void *cb_data)
 {
@@ -585,21 +640,29 @@ static int count_objects(const char *path UNUSED, struct oid_array *oids,
 			stats->type_counts.tags++;
 			stats->inflated_sizes.tags += inflated;
 			stats->disk_sizes.tags += disk;
+			check_largest(&stats->largest.tag_size, &oids->oid[i],
+				      inflated);
 			break;
 		case OBJ_COMMIT:
 			stats->type_counts.commits++;
 			stats->inflated_sizes.commits += inflated;
 			stats->disk_sizes.commits += disk;
+			check_largest(&stats->largest.commit_size, &oids->oid[i],
+				      inflated);
 			break;
 		case OBJ_TREE:
 			stats->type_counts.trees++;
 			stats->inflated_sizes.trees += inflated;
 			stats->disk_sizes.trees += disk;
+			check_largest(&stats->largest.tree_size, &oids->oid[i],
+				      inflated);
 			break;
 		case OBJ_BLOB:
 			stats->type_counts.blobs++;
 			stats->inflated_sizes.blobs += inflated;
 			stats->disk_sizes.blobs += disk;
+			check_largest(&stats->largest.blob_size, &oids->oid[i],
+				      inflated);
 			break;
 		default:
 			BUG("invalid object type");

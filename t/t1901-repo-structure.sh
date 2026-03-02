@@ -52,6 +52,16 @@ test_expect_success 'empty repository' '
 		|     * Trees          |    0 B |
 		|     * Blobs          |    0 B |
 		|     * Tags           |    0 B |
+		|                      |        |
+		| * Largest objects    |        |
+		|   * Commits          |        |
+		|     * Maximum size   |    0 B |
+		|   * Trees            |        |
+		|     * Maximum size   |    0 B |
+		|   * Blobs            |        |
+		|     * Maximum size   |    0 B |
+		|   * Tags             |        |
+		|     * Maximum size   |    0 B |
 		EOF
 
 		git repo structure >out 2>err &&
@@ -104,6 +114,16 @@ test_expect_success SHA1 'repository with references and objects' '
 		|     * Trees          | $(object_type_disk_usage tree true) |
 		|     * Blobs          |  $(object_type_disk_usage blob true) |
 		|     * Tags           |    $(object_type_disk_usage tag) B   |
+		|                      |            |
+		| * Largest objects    |            |
+		|   * Commits          |            |
+		|     * Maximum size   |    223 B   |
+		|   * Trees            |            |
+		|     * Maximum size   |  32.29 KiB |
+		|   * Blobs            |            |
+		|     * Maximum size   |     13 B   |
+		|   * Tags             |            |
+		|     * Maximum size   |    132 B   |
 		EOF
 
 		git repo structure >out 2>err &&
@@ -138,6 +158,14 @@ test_expect_success SHA1 'keyvalue and nul format' '
 		objects.trees.disk_size=$(object_type_disk_usage tree)
 		objects.blobs.disk_size=$(object_type_disk_usage blob)
 		objects.tags.disk_size=$(object_type_disk_usage tag)
+		objects.commits.max_size=221
+		objects.commits.max_size_oid=de3508174b5c2ace6993da67cae9be9069e2df39
+		objects.trees.max_size=1335
+		objects.trees.max_size_oid=09931deea9d81ec21300d3e13c74412f32eacec5
+		objects.blobs.max_size=11
+		objects.blobs.max_size_oid=eaeeedced46482bd4281fda5a5f05ce24854151f
+		objects.tags.max_size=132
+		objects.tags.max_size_oid=1ee0f2b16ea37d895dbe9dbd76cd2ac70446176c
 		EOF
 
 		git repo structure --format=keyvalue >out 2>err &&
