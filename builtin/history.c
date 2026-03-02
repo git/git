@@ -83,10 +83,13 @@ static int fill_commit_message(struct repository *repo,
 	return 0;
 }
 
-static int commit_tree_with_edited_message(struct repository *repo,
-					   const char *action,
-					   struct commit *original,
-					   struct commit **out)
+static int commit_tree_with_edited_message_ext(struct repository *repo,
+					       const char *action,
+					       struct commit *commit_with_message,
+					       const struct commit_list *parents,
+					       const struct object_id *old_tree,
+					       const struct object_id *new_tree,
+					       struct commit **out)
 {
 	const char *exclude_gpgsig[] = {
 		/* We reencode the message, so the encoding needs to be stripped. */
@@ -100,44 +103,27 @@ static int commit_tree_with_edited_message(struct repository *repo,
 	struct commit_extra_header *original_extra_headers = NULL;
 	struct strbuf commit_message = STRBUF_INIT;
 	struct object_id rewritten_commit_oid;
-	struct object_id original_tree_oid;
-	struct object_id parent_tree_oid;
 	char *original_author = NULL;
-	struct commit *parent;
 	size_t len;
 	int ret;
 
-	original_tree_oid = repo_get_commit_tree(repo, original)->object.oid;
-
-	parent = original->parents ? original->parents->item : NULL;
-	if (parent) {
-		if (repo_parse_commit(repo, parent)) {
-			ret = error(_("unable to parse parent commit %s"),
-				    oid_to_hex(&parent->object.oid));
-			goto out;
-		}
-
-		parent_tree_oid = repo_get_commit_tree(repo, parent)->object.oid;
-	} else {
-		oidcpy(&parent_tree_oid, repo->hash_algo->empty_tree);
-	}
-
 	/* We retain authorship of the original commit. */
-	original_message = repo_logmsg_reencode(repo, original, NULL, NULL);
+	original_message = repo_logmsg_reencode(repo, commit_with_message, NULL, NULL);
 	ptr = find_commit_header(original_message, "author", &len);
 	if (ptr)
 		original_author = xmemdupz(ptr, len);
 	find_commit_subject(original_message, &original_body);
 
-	ret = fill_commit_message(repo, &parent_tree_oid, &original_tree_oid,
+	ret = fill_commit_message(repo, old_tree, new_tree,
 				  original_body, action, &commit_message);
 	if (ret < 0)
 		goto out;
 
-	original_extra_headers = read_commit_extra_headers(original, exclude_gpgsig);
+	original_extra_headers = read_commit_extra_headers(commit_with_message,
+							   exclude_gpgsig);
 
-	ret = commit_tree_extended(commit_message.buf, commit_message.len, &original_tree_oid,
-				   original->parents, &rewritten_commit_oid, original_author,
+	ret = commit_tree_extended(commit_message.buf, commit_message.len, new_tree,
+				   parents, &rewritten_commit_oid, original_author,
 				   NULL, NULL, original_extra_headers);
 	if (ret < 0)
 		goto out;
@@ -149,6 +135,33 @@ out:
 	strbuf_release(&commit_message);
 	free(original_author);
 	return ret;
+}
+
+static int commit_tree_with_edited_message(struct repository *repo,
+					   const char *action,
+					   struct commit *original,
+					   struct commit **out)
+{
+	struct object_id parent_tree_oid;
+	const struct object_id *tree_oid;
+	struct commit *parent;
+
+	tree_oid = &repo_get_commit_tree(repo, original)->object.oid;
+
+	parent = original->parents ? original->parents->item : NULL;
+	if (parent) {
+		if (repo_parse_commit(repo, parent)) {
+			return error(_("unable to parse parent commit %s"),
+				     oid_to_hex(&parent->object.oid));
+		}
+
+		parent_tree_oid = repo_get_commit_tree(repo, parent)->object.oid;
+	} else {
+		oidcpy(&parent_tree_oid, repo->hash_algo->empty_tree);
+	}
+
+	return commit_tree_with_edited_message_ext(repo, action, original, original->parents,
+						   &parent_tree_oid, tree_oid, out);
 }
 
 enum ref_action {
