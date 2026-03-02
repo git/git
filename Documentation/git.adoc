@@ -487,6 +487,14 @@ System
 	`$HOMEDRIVE$HOMEPATH` if both `$HOMEDRIVE` and `$HOMEPATH` exist;
 	otherwise `$USERPROFILE` if `$USERPROFILE` exists.
 
+`PATH`::
+	When a user runs 'git <command>' that is not part of the core Git programs
+	(installed in GIT_EXEC_PATH), 'git-<command>' that is runnable by the user
+	in a directory on `$PATH` is invoked. Argument passed after the command
+	name are passed as-is to the program. To execute `git <foo>`, `git` finds
+	command `<foo>` (either a core Git program found in 'GIT_EXEC_PATH', or a
+	custom one in a directory on 'PATH'), before trying `foo` as an alias.
+
 The Git Repository
 ~~~~~~~~~~~~~~~~~~
 These environment variables apply to 'all' core Git commands. Nb: it
