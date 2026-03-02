@@ -59,6 +59,7 @@ test_expect_success 'empty repository' '
 		|     * Maximum parents     |    0   |
 		|   * Trees                 |        |
 		|     * Maximum size        |    0 B |
+		|     * Maximum entries     |    0   |
 		|   * Blobs                 |        |
 		|     * Maximum size        |    0 B |
 		|   * Tags                  |        |
@@ -122,16 +123,18 @@ test_expect_success SHA1 'repository with references and objects' '
 		|     * Maximum parents [2] |      1     |
 		|   * Trees                 |            |
 		|     * Maximum size    [3] |  32.29 KiB |
+		|     * Maximum entries [4] |   1.01 k   |
 		|   * Blobs                 |            |
-		|     * Maximum size    [4] |     13 B   |
+		|     * Maximum size    [5] |     13 B   |
 		|   * Tags                  |            |
-		|     * Maximum size    [5] |    132 B   |
+		|     * Maximum size    [6] |    132 B   |
 
 		[1] 0dc91eb18580102a3a216c8bfecedeba2b9f9b9a
 		[2] 0dc91eb18580102a3a216c8bfecedeba2b9f9b9a
 		[3] 60665251ab71dbd8c18d9bf2174f4ee0d58aa06c
-		[4] 97d808e45116bf02103490294d3d46dad7a2ac62
-		[5] 4dae4f5954f5e6feb3577cfb1b181daa3fd3afd2
+		[4] 60665251ab71dbd8c18d9bf2174f4ee0d58aa06c
+		[5] 97d808e45116bf02103490294d3d46dad7a2ac62
+		[6] 4dae4f5954f5e6feb3577cfb1b181daa3fd3afd2
 		EOF
 
 		git repo structure >out 2>err &&
@@ -176,6 +179,8 @@ test_expect_success SHA1 'keyvalue and nul format' '
 		objects.tags.max_size_oid=1ee0f2b16ea37d895dbe9dbd76cd2ac70446176c
 		objects.commits.max_parents=1
 		objects.commits.max_parents_oid=de3508174b5c2ace6993da67cae9be9069e2df39
+		objects.trees.max_entries=42
+		objects.trees.max_entries_oid=09931deea9d81ec21300d3e13c74412f32eacec5
 		EOF
 
 		git repo structure --format=keyvalue >out 2>err &&
