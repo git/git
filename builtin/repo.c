@@ -558,8 +558,6 @@ static int count_objects(const char *path UNUSED, struct oid_array *oids,
 {
 	struct count_objects_data *data = cb_data;
 	struct object_stats *stats = data->stats;
-	size_t inflated_total = 0;
-	size_t disk_total = 0;
 	size_t object_count;
 
 	for (size_t i = 0; i < oids->nr; i++) {
@@ -575,33 +573,30 @@ static int count_objects(const char *path UNUSED, struct oid_array *oids,
 						  OBJECT_INFO_QUICK) < 0)
 			continue;
 
-		inflated_total += inflated;
-		disk_total += disk;
-	}
-
-	switch (type) {
-	case OBJ_TAG:
-		stats->type_counts.tags += oids->nr;
-		stats->inflated_sizes.tags += inflated_total;
-		stats->disk_sizes.tags += disk_total;
-		break;
-	case OBJ_COMMIT:
-		stats->type_counts.commits += oids->nr;
-		stats->inflated_sizes.commits += inflated_total;
-		stats->disk_sizes.commits += disk_total;
-		break;
-	case OBJ_TREE:
-		stats->type_counts.trees += oids->nr;
-		stats->inflated_sizes.trees += inflated_total;
-		stats->disk_sizes.trees += disk_total;
-		break;
-	case OBJ_BLOB:
-		stats->type_counts.blobs += oids->nr;
-		stats->inflated_sizes.blobs += inflated_total;
-		stats->disk_sizes.blobs += disk_total;
-		break;
-	default:
-		BUG("invalid object type");
+		switch (type) {
+		case OBJ_TAG:
+			stats->type_counts.tags++;
+			stats->inflated_sizes.tags += inflated;
+			stats->disk_sizes.tags += disk;
+			break;
+		case OBJ_COMMIT:
+			stats->type_counts.commits++;
+			stats->inflated_sizes.commits += inflated;
+			stats->disk_sizes.commits += disk;
+			break;
+		case OBJ_TREE:
+			stats->type_counts.trees++;
+			stats->inflated_sizes.trees += inflated;
+			stats->disk_sizes.trees += disk;
+			break;
+		case OBJ_BLOB:
+			stats->type_counts.blobs++;
+			stats->inflated_sizes.blobs += inflated;
+			stats->disk_sizes.blobs += disk;
+			break;
+		default:
+			BUG("invalid object type");
+		}
 	}
 
 	object_count = get_total_object_values(&stats->type_counts);
