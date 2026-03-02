@@ -53,15 +53,22 @@ enum add_p_mode {
 	ADD_P_WORKTREE,
 };
 
+enum add_p_flags {
+	/* Disallow "editing" hunks. */
+	ADD_P_DISALLOW_EDIT = (1 << 0),
+};
+
 int run_add_p(struct repository *r, enum add_p_mode mode,
 	      struct interactive_options *opts, const char *revision,
-	      const struct pathspec *ps);
+	      const struct pathspec *ps,
+	      unsigned flags);
 
 int run_add_p_index(struct repository *r,
 		    struct index_state *index,
 		    const char *index_file,
 		    struct interactive_options *opts,
 		    const char *revision,
-		    const struct pathspec *ps);
+		    const struct pathspec *ps,
+		    unsigned flags);
 
 #endif

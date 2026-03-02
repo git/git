@@ -438,7 +438,7 @@ int cmd_reset(int argc,
 			die(_("options '%s' and '%s' cannot be used together"), "--patch", "--{hard,mixed,soft}");
 		trace2_cmd_mode("patch-interactive");
 		update_ref_status = !!run_add_p(the_repository, ADD_P_RESET,
-						&interactive_opts, rev, &pathspec);
+						&interactive_opts, rev, &pathspec, 0);
 		goto cleanup;
 	} else {
 		if (interactive_opts.context != -1)

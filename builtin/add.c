@@ -172,7 +172,7 @@ int interactive_add(struct repository *repo,
 		       prefix, argv);
 
 	if (patch)
-		ret = !!run_add_p(repo, ADD_P_ADD, interactive_opts, NULL, &pathspec);
+		ret = !!run_add_p(repo, ADD_P_ADD, interactive_opts, NULL, &pathspec, 0);
 	else
 		ret = !!run_add_i(repo, &pathspec, interactive_opts);
 

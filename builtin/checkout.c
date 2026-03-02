@@ -563,7 +563,7 @@ static int checkout_paths(const struct checkout_opts *opts,
 			BUG("either flag must have been set, worktree=%d, index=%d",
 			    opts->checkout_worktree, opts->checkout_index);
 		return !!run_add_p(the_repository, patch_mode, &interactive_opts,
-				   rev, &opts->pathspec);
+				   rev, &opts->pathspec, 0);
 	}
 
 	repo_hold_locked_index(the_repository, &lock_file, LOCK_DIE_ON_ERROR);

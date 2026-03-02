@@ -1604,7 +1604,9 @@ static bool get_first_undecided(const struct file_diff *file_diff, size_t *idx)
 	return false;
 }
 
-static size_t patch_update_file(struct add_p_state *s, size_t idx)
+static size_t patch_update_file(struct add_p_state *s,
+				size_t idx,
+				unsigned flags)
 {
 	size_t hunk_index = 0;
 	ssize_t i, undecided_previous, undecided_next, rendered_hunk_index = -1;
@@ -1715,7 +1717,8 @@ static size_t patch_update_file(struct add_p_state *s, size_t idx)
 				permitted |= ALLOW_SPLIT;
 				strbuf_addstr(&s->buf, ",s");
 			}
-			if (hunk_index + 1 > file_diff->mode_change &&
+			if (!(flags & ADD_P_DISALLOW_EDIT) &&
+			    hunk_index + 1 > file_diff->mode_change &&
 			    !file_diff->deleted) {
 				permitted |= ALLOW_EDIT;
 				strbuf_addstr(&s->buf, ",e");
@@ -2003,7 +2006,8 @@ soft_increment:
 }
 
 static int run_add_p_common(struct add_p_state *state,
-			    const struct pathspec *ps)
+			    const struct pathspec *ps,
+			    unsigned flags)
 {
 	size_t binary_count = 0;
 	size_t i;
@@ -2017,7 +2021,7 @@ static int run_add_p_common(struct add_p_state *state,
 			i++;
 			continue;
 		}
-		if ((i = patch_update_file(state, i)) == state->file_diff_nr)
+		if ((i = patch_update_file(state, i, flags)) == state->file_diff_nr)
 			break;
 	}
 
@@ -2035,7 +2039,8 @@ static int run_add_p_common(struct add_p_state *state,
 
 int run_add_p(struct repository *r, enum add_p_mode mode,
 	      struct interactive_options *opts, const char *revision,
-	      const struct pathspec *ps)
+	      const struct pathspec *ps,
+	      unsigned flags)
 {
 	struct add_p_state s = {
 		.r = r,
@@ -2084,7 +2089,7 @@ int run_add_p(struct repository *r, enum add_p_mode mode,
 		goto out;
 	}
 
-	ret = run_add_p_common(&s, ps);
+	ret = run_add_p_common(&s, ps, flags);
 	if (ret < 0)
 		goto out;
 
@@ -2100,7 +2105,8 @@ int run_add_p_index(struct repository *r,
 		    const char *index_file,
 		    struct interactive_options *opts,
 		    const char *revision,
-		    const struct pathspec *ps)
+		    const struct pathspec *ps,
+		    unsigned flags)
 {
 	struct patch_mode mode = {
 		.apply_args = { "--cached", NULL },
@@ -2156,7 +2162,7 @@ int run_add_p_index(struct repository *r,
 	mode.diff_cmd[1] = "-r";
 	mode.diff_cmd[2] = parent_tree_oid;
 
-	ret = run_add_p_common(&s, ps);
+	ret = run_add_p_common(&s, ps, flags);
 	if (ret < 0)
 		goto out;
 
