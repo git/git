@@ -1,0 +1,20 @@
+name: Build
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    name: build (ubuntu-latest)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install dependencies
+      run: |
+        sudo apt-get -q update
+        sudo apt-get -q -y install \
+          make gcc libssl-dev libcurl4-openssl-dev libexpat-dev \
+          zlib1g-dev gettext libpcre2-dev
+    - name: Build
+      run: make
