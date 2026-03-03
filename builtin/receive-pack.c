@@ -934,6 +934,9 @@ static int run_receive_hook(struct command *commands,
 	int saved_stderr = -1;
 	int ret;
 
+	if (!hook_exists(the_repository, hook_name))
+		return 0;
+
 	/* if there are no valid commands, don't invoke the hook at all. */
 	while (iter && skip_broken && (iter->error_string || iter->did_not_exist))
 		iter = iter->next;
@@ -974,11 +977,15 @@ static int run_receive_hook(struct command *commands,
 
 static int run_update_hook(struct command *cmd)
 {
+	static const char hook_name[] = "update";
 	struct run_hooks_opt opt = RUN_HOOKS_OPT_INIT;
 	struct async sideband_async;
 	int sideband_async_started = 0;
 	int saved_stderr = -1;
 	int code;
+
+	if (!hook_exists(the_repository, hook_name))
+		return 0;
 
 	strvec_pushl(&opt.args,
 		     cmd->ref_name,
@@ -988,7 +995,7 @@ static int run_update_hook(struct command *cmd)
 
 	prepare_sideband_async(&sideband_async, &saved_stderr, &sideband_async_started);
 
-	code = run_hooks_opt(the_repository, "update", &opt);
+	code = run_hooks_opt(the_repository, hook_name, &opt);
 
 	finish_sideband_async(&sideband_async, saved_stderr, sideband_async_started);
 
@@ -1668,11 +1675,15 @@ out:
 
 static void run_update_post_hook(struct command *commands)
 {
+	static const char hook_name[] = "post-update";
 	struct run_hooks_opt opt = RUN_HOOKS_OPT_INIT;
 	struct async sideband_async;
 	struct command *cmd;
 	int sideband_async_started = 0;
 	int saved_stderr = -1;
+
+	if (!hook_exists(the_repository, hook_name))
+		return;
 
 	for (cmd = commands; cmd; cmd = cmd->next) {
 		if (cmd->error_string || cmd->did_not_exist)
@@ -1684,7 +1695,7 @@ static void run_update_post_hook(struct command *commands)
 
 	prepare_sideband_async(&sideband_async, &saved_stderr, &sideband_async_started);
 
-	run_hooks_opt(the_repository, "post-update", &opt);
+	run_hooks_opt(the_repository, hook_name, &opt);
 
 	finish_sideband_async(&sideband_async, saved_stderr, sideband_async_started);
 }
