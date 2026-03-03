@@ -36,6 +36,14 @@ UI, Workflows & Features
  * Extend the alias configuration syntax to allow aliases using
    characters outside ASCII alphanumeric (plus '-').
 
+ * A signature on a commit that was GPG signed long time ago ought to
+   be still valid after the key that was used to sign it has expired,
+   but we showed them in alarming red.
+
+ * "git subtree split --prefix=P <commit>" now checks the prefix P
+   against the tree of the (potentially quite different from the
+   current working tree) given commit.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -85,6 +93,19 @@ Performance, Internal Implementation, Development Support etc.
 
  * Some tests assumed "iconv" is available without honoring ICONV
    prerequisite, which has been corrected.
+
+ * Revamp object enumeration API around odb.
+
+ * Additional tests were introduced to see the interaction with netrc
+   auth with auth failure on the http transport.
+
+ * A couple of bugs in use of flag bits around odb API has been
+   corrected, and the flag bits reordered.
+
+ * Plumb gitk/git-gui build and install procedure in meson based
+   builds.
+
+ * The code to accept shallow "git push" has been optimized.
 
 
 Fixes since v2.53
@@ -155,6 +176,9 @@ Fixes since v2.53
  * "git format-patch --from=<me>" did not honor the command line
    option when writing out the cover letter, which has been corrected.
 
+ * Update build precedure for mergetool documentation in meson-based builds.
+   (merge 58e4eeeeb5 pw/meson-doc-mergetool later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge d79fff4a11 jk/remote-tracking-ref-leakfix later to maint).
    (merge 7a747f972d dd/t5403-modernise later to maint).
@@ -180,3 +204,6 @@ Fixes since v2.53
    (merge 5133837392 ps/ci-gitlab-msvc-updates later to maint).
    (merge 143e84958c db/doc-fetch-jobs-auto later to maint).
    (merge 0678e01f02 ap/use-test-seq-f-more later to maint).
+   (merge 96286f14b0 ty/symlinks-use-unsigned-for-bitset later to maint).
+   (merge b10e0cb1f3 kh/doc-am-xref later to maint).
+   (merge ed84bc1c0d kh/doc-patch-id-4 later to maint).
