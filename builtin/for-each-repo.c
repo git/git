@@ -14,9 +14,8 @@ static const char * const for_each_repo_usage[] = {
 	NULL
 };
 
-static int run_command_on_repo(const char *path, int argc, const char ** argv)
+static int run_command_on_repo(const char *path, const char **argv)
 {
-	int i;
 	struct child_process child = CHILD_PROCESS_INIT;
 	char *abspath = interpolate_path(path, 0);
 
@@ -24,9 +23,7 @@ static int run_command_on_repo(const char *path, int argc, const char ** argv)
 
 	child.git_cmd = 1;
 	strvec_pushl(&child.args, "-C", abspath, NULL);
-
-	for (i = 0; i < argc; i++)
-		strvec_push(&child.args, argv[i]);
+	strvec_pushv(&child.args, argv);
 
 	free(abspath);
 
@@ -66,7 +63,7 @@ int cmd_for_each_repo(int argc,
 		return 0;
 
 	for (size_t i = 0; i < values->nr; i++) {
-		int ret = run_command_on_repo(values->items[i].string, argc, argv);
+		int ret = run_command_on_repo(values->items[i].string, argv);
 		if (ret) {
 			if (!keep_going)
 					return ret;
