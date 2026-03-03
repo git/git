@@ -457,11 +457,9 @@ static void create_pack_file(struct upload_pack_data *pack_data,
 	}
 
 	/* flush the data */
-	if (output_state->used > 0) {
+	if (output_state->used > 0)
 		send_client_data(1, output_state->buffer, output_state->used,
 				 pack_data->use_sideband);
-		fprintf(stderr, "flushed.\n");
-	}
 	free(output_state);
 	if (pack_data->use_sideband)
 		packet_flush(1);
