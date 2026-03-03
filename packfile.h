@@ -247,7 +247,7 @@ int packfile_store_read_object_stream(struct odb_read_stream **out,
 int packfile_store_read_object_info(struct packfile_store *store,
 				    const struct object_id *oid,
 				    struct object_info *oi,
-				    unsigned flags);
+				    enum object_info_flags flags);
 
 /*
  * Open the packfile and add it to the store if it isn't yet known. Returns
