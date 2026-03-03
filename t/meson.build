@@ -296,6 +296,7 @@ integration_tests = [
   't2203-add-intent.sh',
   't2204-add-ignored.sh',
   't2205-add-worktree-config.sh',
+  't2206-add-submodule-ignored.sh',
   't2300-cd-to-toplevel.sh',
   't2400-worktree-add.sh',
   't2401-worktree-prune.sh',
