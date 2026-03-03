@@ -5224,6 +5224,8 @@ static int diff_opt_find_object(const struct option *option,
 	struct object_id oid;
 
 	BUG_ON_OPT_NEG(unset);
+	if (!startup_info->have_repository)
+		return error(_("--find-object requires a git repository"));
 	if (repo_get_oid(the_repository, arg, &oid))
 		return error(_("unable to resolve '%s'"), arg);
 
