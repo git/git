@@ -2,6 +2,9 @@
 
 test_description='git for-each-repo builtin'
 
+# We need to test running 'git for-each-repo' outside of a repo context.
+TEST_NO_CREATE_REPO=1
+
 . ./test-lib.sh
 
 test_expect_success 'run based on configured value' '
@@ -10,9 +13,10 @@ test_expect_success 'run based on configured value' '
 	git init three &&
 	git init ~/four &&
 	git -C two commit --allow-empty -m "DID NOT RUN" &&
-	git config run.key "$TRASH_DIRECTORY/one" &&
-	git config --add run.key "$TRASH_DIRECTORY/three" &&
-	git config --add run.key "~/four" &&
+	git config --global run.key "$TRASH_DIRECTORY/one" &&
+	git config --global --add run.key "$TRASH_DIRECTORY/three" &&
+	git config --global --add run.key "~/four" &&
+
 	git for-each-repo --config=run.key commit --allow-empty -m "ran" &&
 	git -C one log -1 --pretty=format:%s >message &&
 	grep ran message &&
@@ -22,6 +26,7 @@ test_expect_success 'run based on configured value' '
 	grep ran message &&
 	git -C ~/four log -1 --pretty=format:%s >message &&
 	grep ran message &&
+
 	git for-each-repo --config=run.key -- commit --allow-empty -m "ran again" &&
 	git -C one log -1 --pretty=format:%s >message &&
 	grep again message &&
@@ -46,7 +51,7 @@ test_expect_success 'error on bad config keys' '
 '
 
 test_expect_success 'error on NULL value for config keys' '
-	cat >>.git/config <<-\EOF &&
+	cat >>.gitconfig <<-\EOF &&
 	[empty]
 		key
 	EOF
@@ -59,8 +64,8 @@ test_expect_success 'error on NULL value for config keys' '
 '
 
 test_expect_success '--keep-going' '
-	git config keep.going non-existing &&
-	git config --add keep.going . &&
+	git config --global keep.going non-existing &&
+	git config --global --add keep.going one &&
 
 	test_must_fail git for-each-repo --config=keep.going \
 		-- branch >out 2>err &&
@@ -70,7 +75,7 @@ test_expect_success '--keep-going' '
 	test_must_fail git for-each-repo --config=keep.going --keep-going \
 		-- branch >out 2>err &&
 	test_grep "cannot change to .*non-existing" err &&
-	git branch >expect &&
+	git -C one branch >expect &&
 	test_cmp expect out
 '
 
