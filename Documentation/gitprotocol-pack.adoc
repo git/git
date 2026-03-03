@@ -47,7 +47,9 @@ process defined in this protocol is terminated.
 Transports
 ----------
 There are three transports over which the packfile protocol is
-initiated.  The Git transport is a simple, unauthenticated server that
+initiated.
+
+The Git transport is a simple, unauthenticated server that
 takes the command (almost always 'upload-pack', though Git
 servers can be configured to be globally writable, in which 'receive-
 pack' initiation is also allowed) with which the client wishes to
