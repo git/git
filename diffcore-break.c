@@ -222,6 +222,7 @@ void diffcore_break(struct repository *r, int break_score)
 				free(p); /* not diff_free_filepair(), we are
 					  * reusing one and two here.
 					  */
+				q->queue[i] = NULL;
 				continue;
 			}
 		}
