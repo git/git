@@ -38,7 +38,8 @@ test_expect_success 'Test with no pathspecs' '
 '
 
 test_expect_success 'Post-check that foo is in the index' '
-	git ls-files foo | grep foo
+	git ls-files foo >actual &&
+	grep foo actual
 '
 
 test_expect_success 'Test that "git add -- -q" works' '
@@ -195,8 +196,9 @@ test_expect_success 'git add with filemode=0, symlinks=0, and unmerged entries' 
 	echo new > file &&
 	echo new > symlink &&
 	git add file symlink &&
-	git ls-files --stage | grep "^100755 .* 0	file$" &&
-	git ls-files --stage | grep "^120000 .* 0	symlink$"
+	git ls-files --stage >actual &&
+	grep "^100755 .* 0	file$" actual &&
+	grep "^120000 .* 0	symlink$" actual
 '
 
 test_expect_success 'git add with filemode=0, symlinks=0 prefers stage 2 over stage 1' '
@@ -212,8 +214,9 @@ test_expect_success 'git add with filemode=0, symlinks=0 prefers stage 2 over st
 	echo new > file &&
 	echo new > symlink &&
 	git add file symlink &&
-	git ls-files --stage | grep "^100755 .* 0	file$" &&
-	git ls-files --stage | grep "^120000 .* 0	symlink$"
+	git ls-files --stage >actual &&
+	grep "^100755 .* 0	file$" actual &&
+	grep "^120000 .* 0	symlink$" actual
 '
 
 test_expect_success 'git add --refresh' '
@@ -254,7 +257,8 @@ test_expect_success POSIXPERM,SANITY 'git add should fail atomically upon an unr
 	date >foo2 &&
 	chmod 0 foo2 &&
 	test_must_fail git add --verbose . &&
-	! ( git ls-files foo1 | grep foo1 )
+	git ls-files foo1 >actual &&
+	! grep foo1 actual
 '
 
 rm -f foo2
@@ -265,7 +269,8 @@ test_expect_success POSIXPERM,SANITY 'git add --ignore-errors' '
 	date >foo2 &&
 	chmod 0 foo2 &&
 	test_must_fail git add --verbose --ignore-errors . &&
-	git ls-files foo1 | grep foo1
+	git ls-files foo1 >actual &&
+	grep foo1 actual
 '
 
 rm -f foo2
@@ -277,7 +282,8 @@ test_expect_success POSIXPERM,SANITY 'git add (add.ignore-errors)' '
 	date >foo2 &&
 	chmod 0 foo2 &&
 	test_must_fail git add --verbose . &&
-	git ls-files foo1 | grep foo1
+	git ls-files foo1 >actual &&
+	grep foo1 actual
 '
 rm -f foo2
 
@@ -288,7 +294,8 @@ test_expect_success POSIXPERM,SANITY 'git add (add.ignore-errors = false)' '
 	date >foo2 &&
 	chmod 0 foo2 &&
 	test_must_fail git add --verbose . &&
-	! ( git ls-files foo1 | grep foo1 )
+	git ls-files foo1 >actual &&
+	! grep foo1 actual
 '
 rm -f foo2
 
@@ -299,7 +306,8 @@ test_expect_success POSIXPERM,SANITY '--no-ignore-errors overrides config' '
 	date >foo2 &&
 	chmod 0 foo2 &&
 	test_must_fail git add --verbose --no-ignore-errors . &&
-	! ( git ls-files foo1 | grep foo1 ) &&
+	git ls-files foo1 >actual &&
+	! grep foo1 actual &&
 	git config add.ignore-errors 0
 '
 rm -f foo2
@@ -308,8 +316,10 @@ test_expect_success BSLASHPSPEC "git add 'fo\\[ou\\]bar' ignores foobar" '
 	git reset --hard &&
 	touch fo\[ou\]bar foobar &&
 	git add '\''fo\[ou\]bar'\'' &&
-	git ls-files fo\[ou\]bar | grep -F fo\[ou\]bar &&
-	! ( git ls-files foobar | grep foobar )
+	git ls-files fo\[ou\]bar >actual &&
+	grep -F fo\[ou\]bar actual &&
+	git ls-files foobar >actual &&
+	! grep foobar actual
 '
 
 test_expect_success 'git add to resolve conflicts on otherwise ignored path' '
@@ -326,7 +336,8 @@ test_expect_success 'git add to resolve conflicts on otherwise ignored path' '
 
 test_expect_success '"add non-existent" should fail' '
 	test_must_fail git add non-existent &&
-	! (git ls-files | grep "non-existent")
+	git ls-files >actual &&
+	! grep "non-existent" actual
 '
 
 test_expect_success 'git add -A on empty repo does not error out' '
@@ -536,9 +547,11 @@ test_expect_success 'all statuses changed in folder if . is given' '
 		touch x y z sub/a sub/dir/b &&
 		git add -A &&
 		git add --chmod=+x . &&
-		test $(git ls-files --stage | grep ^100644 | wc -l) -eq 0 &&
+		git ls-files --stage >actual &&
+		! grep ^100644 actual &&
 		git add --chmod=-x . &&
-		test $(git ls-files --stage | grep ^100755 | wc -l) -eq 0
+		git ls-files --stage >actual &&
+		! grep ^100755 actual
 	)
 '
 
