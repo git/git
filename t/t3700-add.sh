@@ -39,7 +39,7 @@ test_expect_success 'Test with no pathspecs' '
 
 test_expect_success 'Post-check that foo is in the index' '
 	git ls-files foo >actual &&
-	grep foo actual
+	test_grep foo actual
 '
 
 test_expect_success 'Test that "git add -- -q" works' '
@@ -141,7 +141,7 @@ test_expect_success 'error out when attempting to add ignored ones but add other
 	git ls-files >files &&
 	sed -n "/\\.ig/p" <files >actual &&
 	test_must_be_empty actual &&
-	grep a.if files
+	test_grep a.if files
 '
 
 test_expect_success 'add ignored ones with -f' '
@@ -197,8 +197,8 @@ test_expect_success 'git add with filemode=0, symlinks=0, and unmerged entries' 
 	echo new > symlink &&
 	git add file symlink &&
 	git ls-files --stage >actual &&
-	grep "^100755 .* 0	file$" actual &&
-	grep "^120000 .* 0	symlink$" actual
+	test_grep "^100755 .* 0	file$" actual &&
+	test_grep "^120000 .* 0	symlink$" actual
 '
 
 test_expect_success 'git add with filemode=0, symlinks=0 prefers stage 2 over stage 1' '
@@ -215,8 +215,8 @@ test_expect_success 'git add with filemode=0, symlinks=0 prefers stage 2 over st
 	echo new > symlink &&
 	git add file symlink &&
 	git ls-files --stage >actual &&
-	grep "^100755 .* 0	file$" actual &&
-	grep "^120000 .* 0	symlink$" actual
+	test_grep "^100755 .* 0	file$" actual &&
+	test_grep "^120000 .* 0	symlink$" actual
 '
 
 test_expect_success 'git add --refresh' '
@@ -241,8 +241,8 @@ test_expect_success 'git add --refresh with pathspec' '
 	test_must_be_empty actual &&
 
 	git diff-files --name-only >actual &&
-	! grep bar actual &&
-	grep baz actual
+	test_grep ! bar actual &&
+	test_grep baz actual
 '
 
 test_expect_success 'git add --refresh correctly reports no match error' "
@@ -258,7 +258,7 @@ test_expect_success POSIXPERM,SANITY 'git add should fail atomically upon an unr
 	chmod 0 foo2 &&
 	test_must_fail git add --verbose . &&
 	git ls-files foo1 >actual &&
-	! grep foo1 actual
+	test_grep ! foo1 actual
 '
 
 rm -f foo2
@@ -270,7 +270,7 @@ test_expect_success POSIXPERM,SANITY 'git add --ignore-errors' '
 	chmod 0 foo2 &&
 	test_must_fail git add --verbose --ignore-errors . &&
 	git ls-files foo1 >actual &&
-	grep foo1 actual
+	test_grep foo1 actual
 '
 
 rm -f foo2
@@ -283,7 +283,7 @@ test_expect_success POSIXPERM,SANITY 'git add (add.ignore-errors)' '
 	chmod 0 foo2 &&
 	test_must_fail git add --verbose . &&
 	git ls-files foo1 >actual &&
-	grep foo1 actual
+	test_grep foo1 actual
 '
 rm -f foo2
 
@@ -295,7 +295,7 @@ test_expect_success POSIXPERM,SANITY 'git add (add.ignore-errors = false)' '
 	chmod 0 foo2 &&
 	test_must_fail git add --verbose . &&
 	git ls-files foo1 >actual &&
-	! grep foo1 actual
+	test_grep ! foo1 actual
 '
 rm -f foo2
 
@@ -307,7 +307,7 @@ test_expect_success POSIXPERM,SANITY '--no-ignore-errors overrides config' '
 	chmod 0 foo2 &&
 	test_must_fail git add --verbose --no-ignore-errors . &&
 	git ls-files foo1 >actual &&
-	! grep foo1 actual &&
+	test_grep ! foo1 actual &&
 	git config add.ignore-errors 0
 '
 rm -f foo2
@@ -317,9 +317,9 @@ test_expect_success BSLASHPSPEC "git add 'fo\\[ou\\]bar' ignores foobar" '
 	touch fo\[ou\]bar foobar &&
 	git add '\''fo\[ou\]bar'\'' &&
 	git ls-files fo\[ou\]bar >actual &&
-	grep -F fo\[ou\]bar actual &&
+	test_grep -F fo\[ou\]bar actual &&
 	git ls-files foobar >actual &&
-	! grep foobar actual
+	test_grep ! foobar actual
 '
 
 test_expect_success 'git add to resolve conflicts on otherwise ignored path' '
@@ -337,7 +337,7 @@ test_expect_success 'git add to resolve conflicts on otherwise ignored path' '
 test_expect_success '"add non-existent" should fail' '
 	test_must_fail git add non-existent &&
 	git ls-files >actual &&
-	! grep "non-existent" actual
+	test_grep ! "non-existent" actual
 '
 
 test_expect_success 'git add -A on empty repo does not error out' '
@@ -548,10 +548,10 @@ test_expect_success 'all statuses changed in folder if . is given' '
 		git add -A &&
 		git add --chmod=+x . &&
 		git ls-files --stage >actual &&
-		! grep ^100644 actual &&
+		test_grep ! ^100644 actual &&
 		git add --chmod=-x . &&
 		git ls-files --stage >actual &&
-		! grep ^100755 actual
+		test_grep ! ^100755 actual
 	)
 '
 
