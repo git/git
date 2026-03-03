@@ -60,6 +60,7 @@ static struct {
 	[ADVICE_GRAFT_FILE_DEPRECATED]			= { "graftFileDeprecated" },
 	[ADVICE_IGNORED_HOOK]				= { "ignoredHook" },
 	[ADVICE_IMPLICIT_IDENTITY]			= { "implicitIdentity" },
+	[ADVICE_LARGE_FILE_ADDED] = { "largeFileAdded" },
 	[ADVICE_MERGE_CONFLICT]				= { "mergeConflict" },
 	[ADVICE_NESTED_TAG]				= { "nestedTag" },
 	[ADVICE_OBJECT_NAME_WARNING]			= { "objectNameWarning" },
@@ -311,4 +312,14 @@ void advise_on_moving_dirty_path(struct string_list *pathspec_list)
 			  _("To correct the sparsity of these paths, do the following:\n"
 			    "* Use \"git add --sparse <paths>\" to update the index\n"
 			    "* Use \"git sparse-checkout reapply\" to apply the sparsity rules"));
+}
+
+void advise_on_large_file(const char *path, off_t size)
+{
+    advise_if_enabled(ADVICE_LARGE_FILE_ADDED,
+	_("The file '%s' is %.2f MB.\n"
+	  "Consider using Git LFS for large files:\n"
+	  "  git lfs track '%s'\n"
+	  "Or add to .gitignore if it shouldn't be tracked."),
+	path, size / (1024.0 * 1024.0), path);
 }
