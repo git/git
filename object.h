@@ -309,6 +309,11 @@ enum peel_status peel_object(struct repository *r,
 			     const struct object_id *name,
 			     struct object_id *oid,
 			     unsigned flags);
+enum peel_status peel_object_ext(struct repository *r,
+				 const struct object_id *name,
+				 struct object_id *oid,
+				 unsigned flags,
+				 enum object_type *typep);
 
 struct object_list *object_list_insert(struct object *item,
 				       struct object_list **list_p);

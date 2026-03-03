@@ -26,7 +26,7 @@ expression s;
 // repo_get_commit_tree() on the LHS.
 @@
 identifier f != { repo_get_commit_tree, get_commit_tree_in_graph_one,
-		  load_tree_for_commit, set_commit_tree };
+		  load_tree_for_commit, set_commit_tree, repo_parse_commit_no_graph };
 expression c;
 @@
   f(...) {<...
