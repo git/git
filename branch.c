@@ -365,6 +365,63 @@ int read_branch_desc(struct strbuf *buf, const char *branch_name)
 	return 0;
 }
 
+static char *get_current_branch_name(void)
+{
+	const char *const prefix = "refs/heads/";
+	struct object_id rev;
+	const char *p;
+	char *output;
+	char *path;
+	int flag;
+
+	path = refs_resolve_refdup(get_main_ref_store(the_repository),
+							   "HEAD", 0, &rev, &flag);
+	if (!path) {
+		warning(_("Failed to get the current branch's path"));
+		return NULL;
+	} else if (!(flag & REF_ISSYMREF)) {
+		FREE_AND_NULL(path);
+		warning(_("Failed to get the current branch's name"));
+		return NULL;
+	}
+
+	if (skip_prefix(path, prefix, &p)) {
+		output = xstrdup(p);
+		free(path);
+		return output;
+	}
+
+	warning(_("Failed to get the current branch's name"));
+	return NULL;
+}
+
+int add_branch_prefix(const char *name_prefix, struct strbuf *buf)
+{
+	if (!name_prefix)
+		return 0;
+
+	if (name_prefix[0] != '@') {
+		strbuf_addstr(buf, name_prefix);
+		return 0;
+	}
+
+	if (strcmp(name_prefix, "@{current}") == 0) {
+		char *current_branch_name = get_current_branch_name();
+
+		if (!current_branch_name)
+			return 1;
+
+		strbuf_addstr(buf, current_branch_name);
+		free(current_branch_name);
+	} else {
+		advise(_("Token '%s' unrecognized, only '@{current}' is managed currently"),
+			   name_prefix);
+		return 1;
+	}
+
+	return 0;
+}
+
 /*
  * Check if 'name' can be a valid name for a branch; die otherwise.
  * Return 1 if the named branch already exists; return 0 otherwise.
