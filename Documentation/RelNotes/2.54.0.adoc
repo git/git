@@ -44,6 +44,9 @@ UI, Workflows & Features
    against the tree of the (potentially quite different from the
    current working tree) given commit.
 
+ * "git add -p" learned a new mode that allows the user to revisit a
+   file that was already dealt with.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -179,6 +182,9 @@ Fixes since v2.53
  * Update build precedure for mergetool documentation in meson-based builds.
    (merge 58e4eeeeb5 pw/meson-doc-mergetool later to maint).
 
+ * An earlier attempt to optimize "git subtree" discarded too much
+   relevant histories, which has been corrected.
+
  * Other code cleanup, docfix, build fix, etc.
    (merge d79fff4a11 jk/remote-tracking-ref-leakfix later to maint).
    (merge 7a747f972d dd/t5403-modernise later to maint).
@@ -207,3 +213,10 @@ Fixes since v2.53
    (merge 96286f14b0 ty/symlinks-use-unsigned-for-bitset later to maint).
    (merge b10e0cb1f3 kh/doc-am-xref later to maint).
    (merge ed84bc1c0d kh/doc-patch-id-4 later to maint).
+   (merge 7451864bfa sc/pack-redundant-leakfix later to maint).
+
+ * A prefetch call can be triggered to access a stale diff_queue entry
+   after diffcore-break breaks a filepair into two and freed the
+   original entry that is no longer used, leading to a segfault, which
+   has been corrected.
+   (merge 2d88ab078d hy/diff-lazy-fetch-with-break-fix later to maint).
