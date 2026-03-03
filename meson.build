@@ -239,7 +239,9 @@ git = find_program('git', dirs: program_path, native: true, required: false)
 sed = find_program('sed', dirs: program_path, native: true)
 shell = find_program('sh', dirs: program_path, native: true)
 tar = find_program('tar', dirs: program_path, native: true)
+tclsh = find_program('tclsh', required: get_option('git_gui'), native: false)
 time = find_program('time', dirs: program_path, required: get_option('benchmarks'))
+wish = find_program('wish', required: get_option('git_gui').enabled() or get_option('gitk').enabled(), native: false)
 
 # Detect the target shell that is used by Git at runtime. Note that we prefer
 # "/bin/sh" over a PATH-based lookup, which provides a working shell on most
@@ -2254,6 +2256,16 @@ configure_file(
   configuration: build_options_config,
 )
 
+gitk_option = get_option('gitk').disable_auto_if(not wish.found())
+if gitk_option.allowed()
+  subproject('gitk')
+endif
+
+git_gui_option = get_option('git_gui').disable_auto_if(not tclsh.found() or not wish.found())
+if git_gui_option.allowed()
+  subproject('git-gui')
+endif
+
 # Development environments can be used via `meson devenv -C <builddir>`. This
 # allows you to execute test scripts directly with the built Git version and
 # puts the built version of Git in your PATH.
@@ -2280,6 +2292,8 @@ summary({
   'curl': curl,
   'expat': expat,
   'gettext': intl,
+  'gitk': gitk_option.allowed(),
+  'git-gui': git_gui_option.allowed(),
   'gitweb': gitweb_option.allowed(),
   'iconv': iconv,
   'pcre2': pcre2,
