@@ -8,10 +8,12 @@ TEST_NO_CREATE_REPO=1
 . ./test-lib.sh
 
 test_expect_success 'run based on configured value' '
-	git init one &&
-	git init two &&
-	git init three &&
-	git init ~/four &&
+	git init --initial-branch=one one &&
+	git init --initial-branch=two two &&
+	git -C two worktree add --orphan ../three &&
+	git -C three checkout -b three &&
+	git init --initial-branch=four ~/four &&
+
 	git -C two commit --allow-empty -m "DID NOT RUN" &&
 	git config --global run.key "$TRASH_DIRECTORY/one" &&
 	git config --global --add run.key "$TRASH_DIRECTORY/three" &&
@@ -35,7 +37,43 @@ test_expect_success 'run based on configured value' '
 	git -C three log -1 --pretty=format:%s >message &&
 	grep again message &&
 	git -C ~/four log -1 --pretty=format:%s >message &&
-	grep again message
+	grep again message &&
+
+	git -C three for-each-repo --config=run.key -- \
+		commit --allow-empty -m "ran from worktree" &&
+	git -C one log -1 --pretty=format:%s >message &&
+	test_grep "ran from worktree" message &&
+	git -C two log -1 --pretty=format:%s >message &&
+	test_grep ! "ran from worktree" message &&
+	git -C three log -1 --pretty=format:%s >message &&
+	test_grep "ran from worktree" message &&
+	git -C ~/four log -1 --pretty=format:%s >message &&
+	test_grep "ran from worktree" message &&
+
+	# Test running with config values set by environment
+	cat >expect <<-EOF &&
+	ran from worktree (HEAD -> refs/heads/one)
+	ran from worktree (HEAD -> refs/heads/three)
+	ran from worktree (HEAD -> refs/heads/four)
+	EOF
+
+	GIT_CONFIG_PARAMETERS="${SQ}log.decorate=full${SQ}" \
+		git -C three for-each-repo --config=run.key -- log --format="%s%d" -1 >out &&
+	test_cmp expect out &&
+
+	cat >test-config <<-EOF &&
+	[run]
+		key = $(pwd)/one
+		key = $(pwd)/three
+		key = $(pwd)/four
+
+	[log]
+		decorate = full
+	EOF
+
+	GIT_CONFIG_GLOBAL="$(pwd)/test-config" \
+		git -C three for-each-repo --config=run.key -- log --format="%s%d" -1 >out &&
+	test_cmp expect out
 '
 
 test_expect_success 'do nothing on empty config' '
