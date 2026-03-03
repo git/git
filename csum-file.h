@@ -45,6 +45,20 @@ int hashfile_truncate(struct hashfile *, struct hashfile_checkpoint *);
 #define CSUM_FSYNC		2
 #define CSUM_HASH_IN_STREAM	4
 
+struct hashfd_options {
+	/*
+	 * Throughput progress that counts the number of bytes that have been
+	 * hashed.
+	 */
+	struct progress *progress;
+
+	/* The length of the buffer that shall be used read read data. */
+	size_t buffer_len;
+};
+
+struct hashfile *hashfd_ext(const struct git_hash_algo *algop,
+			    int fd, const char *name,
+			    const struct hashfd_options *opts);
 struct hashfile *hashfd(const struct git_hash_algo *algop,
 			int fd, const char *name);
 struct hashfile *hashfd_check(const struct git_hash_algo *algop,
