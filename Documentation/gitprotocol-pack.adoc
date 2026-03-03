@@ -117,7 +117,7 @@ process on the server side over the Git protocol is this:
 SSH Transport
 -------------
 
-Initiating the upload-pack or receive-pack processes over SSH is
+Initiating the 'upload-pack' or 'receive-pack' processes over SSH is
 executing the binary on the server via SSH remote execution.
 It is basically equivalent to running this:
 
@@ -131,7 +131,7 @@ two commands, or even just one of them.
 
 In an ssh:// format URI, it's absolute in the URI, so the '/' after
 the host name (or port number) is sent as an argument, which is then
-read by the remote git-upload-pack exactly as is, so it's effectively
+read by the remote 'git-upload-pack' exactly as is, so it's effectively
 an absolute path in the remote filesystem.
 
        git clone ssh://user@example.com/project.git
@@ -163,7 +163,7 @@ supports passing environment variables as an argument.
 
 A few things to remember here:
 
-- The "command name" is spelled with dash (e.g. git-upload-pack), but
+- The "command name" is spelled with dash (e.g. 'git-upload-pack'), but
   this can be overridden by the client;
 
 - The repository path is always quoted with single quotes.
@@ -377,10 +377,10 @@ In multi_ack_detailed mode:
 
 Without either multi_ack or multi_ack_detailed:
 
- * upload-pack sends "ACK obj-id" on the first common object it finds.
+ * 'upload-pack' sends "ACK obj-id" on the first common object it finds.
    After that it says nothing until the client gives it a "done".
 
- * upload-pack sends "NAK" on a flush-pkt if no common object
+ * 'upload-pack' sends "NAK" on a flush-pkt if no common object
    has been found yet.  If one has been found, and thus an ACK
    was already sent, it's silent on the flush-pkt.
 
