@@ -197,22 +197,6 @@ struct hashfile *hashfd(const struct git_hash_algo *algop,
 	return hashfd_ext(algop, fd, name, &opts);
 }
 
-struct hashfile *hashfd_throughput(const struct git_hash_algo *algop,
-				   int fd, const char *name, struct progress *tp)
-{
-	/*
-	 * Since we are expecting to report progress of the
-	 * write into this hashfile, use a smaller buffer
-	 * size so the progress indicators arrive at a more
-	 * frequent rate.
-	 */
-	struct hashfd_options opts = {
-		.progress = tp,
-		.buffer_len = 8 * 1024,
-	};
-	return hashfd_ext(algop, fd, name, &opts);
-}
-
 void hashfile_checkpoint_init(struct hashfile *f,
 			      struct hashfile_checkpoint *checkpoint)
 {
