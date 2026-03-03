@@ -47,6 +47,7 @@ struct checkout_opts {
 	int patch_mode;
 	int patch_context;
 	int patch_interhunk_context;
+	int auto_advance;
 	int quiet;
 	int merge;
 	int force;
@@ -95,6 +96,7 @@ struct checkout_opts {
 	.merge = -1, \
 	.patch_context = -1, \
 	.patch_interhunk_context = -1, \
+	.auto_advance = 1, \
 }
 
 struct branch_info {
@@ -533,6 +535,7 @@ static int checkout_paths(const struct checkout_opts *opts,
 		struct add_p_opt add_p_opt = {
 			.context = opts->patch_context,
 			.interhunkcontext = opts->patch_interhunk_context,
+			.auto_advance = opts->auto_advance
 		};
 		const char *rev = new_branch_info->name;
 		char rev_oid[GIT_MAX_HEXSZ + 1];
@@ -1845,6 +1848,8 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 			die(_("the option '%s' requires '%s'"), "--unified", "--patch");
 		if (opts->patch_interhunk_context != -1)
 			die(_("the option '%s' requires '%s'"), "--inter-hunk-context", "--patch");
+		if (!opts->auto_advance)
+			die(_("the option '%s' requires '%s'"), "--no-auto-advance", "--patch");
 	}
 
 	if (opts->show_progress < 0) {
@@ -2043,6 +2048,8 @@ int cmd_checkout(int argc,
 		OPT_BOOL(0, "guess", &opts.dwim_new_local_branch,
 			 N_("second guess 'git checkout <no-such-branch>' (default)")),
 		OPT_BOOL(0, "overlay", &opts.overlay_mode, N_("use overlay mode (default)")),
+		OPT_BOOL(0, "auto-advance", &opts.auto_advance,
+			 N_("auto advance to the next file when selecting hunks interactively")),
 		OPT_END()
 	};
 
