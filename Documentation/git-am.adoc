@@ -9,7 +9,7 @@ git-am - Apply a series of patches from a mailbox
 SYNOPSIS
 --------
 [verse]
-'git am' [--signoff] [--keep] [--[no-]keep-cr] [--[no-]utf8] [--no-verify]
+'git am' [--signoff] [--keep] [--[no-]keep-cr] [--[no-]utf8] [--[no-]verify]
 	 [--[no-]3way] [--interactive] [--committer-date-is-author-date]
 	 [--ignore-date] [--ignore-space-change | --ignore-whitespace]
 	 [--whitespace=<action>] [-C<n>] [-p<n>] [--directory=<dir>]
@@ -37,20 +37,21 @@ OPTIONS
 
 -s::
 --signoff::
-	Add a `Signed-off-by` trailer to the commit message, using
-	the committer identity of yourself.
-	See the signoff option in linkgit:git-commit[1] for more information.
+	Add a `Signed-off-by` trailer to the commit message (see
+	linkgit:git-interpret-trailers[1]), using the committer identity
+	of yourself.  See the signoff option in linkgit:git-commit[1]
+	for more information.
 
 -k::
 --keep::
-	Pass `-k` flag to 'git mailinfo' (see linkgit:git-mailinfo[1]).
+	Pass `-k` flag to linkgit:git-mailinfo[1].
 
 --keep-non-patch::
-	Pass `-b` flag to 'git mailinfo' (see linkgit:git-mailinfo[1]).
+	Pass `-b` flag to linkgit:git-mailinfo[1].
 
 --keep-cr::
 --no-keep-cr::
-	With `--keep-cr`, call 'git mailsplit' (see linkgit:git-mailsplit[1])
+	With `--keep-cr`, call linkgit:git-mailsplit[1]
 	with the same option, to prevent it from stripping CR at the end of
 	lines. `am.keepcr` configuration variable can be used to specify the
 	default behaviour.  `--no-keep-cr` is useful to override `am.keepcr`.
@@ -65,7 +66,7 @@ OPTIONS
 	Ignore scissors lines (see linkgit:git-mailinfo[1]).
 
 --quoted-cr=<action>::
-	This flag will be passed down to 'git mailinfo' (see linkgit:git-mailinfo[1]).
+	This flag will be passed down to linkgit:git-mailinfo[1].
 
 --empty=(drop|keep|stop)::
 	How to handle an e-mail message lacking a patch:
@@ -83,10 +84,11 @@ OPTIONS
 
 -m::
 --message-id::
-	Pass the `-m` flag to 'git mailinfo' (see linkgit:git-mailinfo[1]),
-	so that the Message-ID header is added to the commit message.
-	The `am.messageid` configuration variable can be used to specify
-	the default behaviour.
+	Pass the `-m` flag to linkgit:git-mailinfo[1], so that the
+	`Message-ID` header is added as a trailer (see
+	linkgit:git-interpret-trailers[1]).  The `am.messageid`
+	configuration variable can be used to specify the default
+	behaviour.
 
 --no-message-id::
 	Do not add the Message-ID header to the commit message.
@@ -98,7 +100,7 @@ OPTIONS
 
 -u::
 --utf8::
-	Pass `-u` flag to 'git mailinfo' (see linkgit:git-mailinfo[1]).
+	Pass `-u` flag to linkgit:git-mailinfo[1].
 	The proposed commit log message taken from the e-mail
 	is re-coded into UTF-8 encoding (configuration variable
 	`i18n.commitEncoding` can be used to specify the project's
@@ -108,8 +110,7 @@ This was optional in prior versions of git, but now it is the
 default.   You can use `--no-utf8` to override this.
 
 --no-utf8::
-	Pass `-n` flag to 'git mailinfo' (see
-	linkgit:git-mailinfo[1]).
+	Pass `-n` flag to linkgit:git-mailinfo[1].
 
 -3::
 --3way::
@@ -132,9 +133,8 @@ include::rerere-options.adoc[]
 --exclude=<path>::
 --include=<path>::
 --reject::
-	These flags are passed to the 'git apply' (see linkgit:git-apply[1])
-	program that applies
-	the patch.
+	These flags are passed to the linkgit:git-apply[1] program that
+	applies the patch.
 +
 Valid <action> for the `--whitespace` option are:
 `nowarn`, `warn`, `fix`, `error`, and `error-all`.
@@ -150,11 +150,14 @@ Valid <action> for the `--whitespace` option are:
 --interactive::
 	Run interactively.
 
+--verify::
 -n::
 --no-verify::
-	By default, the pre-applypatch and applypatch-msg hooks are run.
-	When any of `--no-verify` or `-n` is given, these are bypassed.
-	See also linkgit:githooks[5].
+	Run the `pre-applypatch` and `applypatch-msg` hooks. This is the
+	default. Skip these hooks with `-n` or `--no-verify`. See also
+	linkgit:githooks[5].
++
+Note that `post-applypatch` cannot be skipped.
 
 --committer-date-is-author-date::
 	By default the command records the date from the e-mail
@@ -205,7 +208,8 @@ applying.
 	to the screen before exiting.  This overrides the
 	standard message informing you to use `--continue`
 	or `--skip` to handle the failure.  This is solely
-	for internal use between 'git rebase' and 'git am'.
+	for internal use between linkgit:git-rebase[1] and
+	linkgit:git-am[1].
 
 --abort::
 	Restore the original branch and abort the patching operation.
@@ -223,7 +227,7 @@ applying.
 	failure again.
 
 --show-current-patch[=(diff|raw)]::
-	Show the message at which `git am` has stopped due to
+	Show the message at which linkgit:git-am[1] has stopped due to
 	conflicts.  If `raw` is specified, show the raw contents of
 	the e-mail message; if `diff`, show the diff portion only.
 	Defaults to `raw`.
@@ -259,7 +263,7 @@ include::format-patch-end-of-commit-message.adoc[]
 This means that the contents of the commit message can inadvertently
 interrupt the processing (see the <<caveats,CAVEATS>> section below).
 
-When initially invoking `git am`, you give it the names of the mailboxes
+When initially invoking linkgit:git-am[1], you give it the names of the mailboxes
 to process.  Upon seeing the first patch that does not apply, it
 aborts in the middle.  You can recover from this in one of two ways:
 
@@ -277,8 +281,8 @@ names.
 
 Before any patches are applied, ORIG_HEAD is set to the tip of the
 current branch.  This is useful if you have problems with multiple
-commits, like running 'git am' on the wrong branch or an error in the
-commits that is more easily fixed by changing the mailbox (e.g.
+commits, like running linkgit:git-am[1] on the wrong branch or an error
+in the commits that is more easily fixed by changing the mailbox (e.g.
 errors in the "From:" lines).
 
 [[caveats]]
@@ -293,6 +297,8 @@ HOOKS
 This command can run `applypatch-msg`, `pre-applypatch`,
 and `post-applypatch` hooks.  See linkgit:githooks[5] for more
 information.
+
+See the `--verify`/`-n`/`--no-verify` options.
 
 CONFIGURATION
 -------------
