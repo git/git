@@ -43,6 +43,47 @@ test_expect_success 'apply --directory -p (2) ' '
 
 '
 
+test_expect_success 'apply --directory (./ prefix)' '
+	git reset --hard initial &&
+	git apply --directory=./some/sub -p3 --index patch &&
+	echo Bello >expect &&
+	git show :some/sub/dir/file >actual &&
+	test_cmp expect actual &&
+	test_cmp expect some/sub/dir/file
+'
+
+test_expect_success 'apply --directory (double slash)' '
+	git reset --hard initial &&
+	git apply --directory=some//sub -p3 --index patch &&
+	echo Bello >expect &&
+	git show :some/sub/dir/file >actual &&
+	test_cmp expect actual &&
+	test_cmp expect some/sub/dir/file
+'
+
+test_expect_success 'apply --directory (./ in the middle)' '
+	git reset --hard initial &&
+	git apply --directory=some/./sub -p3 --index patch &&
+	echo Bello >expect &&
+	git show :some/sub/dir/file >actual &&
+	test_cmp expect actual &&
+	test_cmp expect some/sub/dir/file
+'
+
+test_expect_success 'apply --directory (../ in the middle)' '
+	git reset --hard initial &&
+	git apply --directory=some/../some/sub -p3 --index patch &&
+	echo Bello >expect &&
+	git show :some/sub/dir/file >actual &&
+	test_cmp expect actual &&
+	test_cmp expect some/sub/dir/file
+'
+
+test_expect_success 'apply --directory rejects leading ../' '
+	test_must_fail git apply --directory=../foo -p3 patch 2>err &&
+	test_grep "unable to normalize directory" err
+'
+
 cat > patch << EOF
 diff --git a/newfile b/newfile
 new file mode 100644
