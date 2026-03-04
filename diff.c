@@ -222,13 +222,13 @@ long parse_algorithm_value(const char *value)
 	if (!value)
 		return -1;
 	else if (!strcasecmp(value, "myers") || !strcasecmp(value, "default"))
-		return 0;
+		return XDF_ALGO_MYERS;
 	else if (!strcasecmp(value, "minimal"))
-		return XDF_NEED_MINIMAL;
+		return XDF_ALGO_MINIMAL;
 	else if (!strcasecmp(value, "patience"))
-		return XDF_PATIENCE_DIFF;
+		return XDF_ALGO_PATIENCE;
 	else if (!strcasecmp(value, "histogram"))
-		return XDF_HISTOGRAM_DIFF;
+		return XDF_ALGO_HISTOGRAM;
 	/*
 	 * Please update $__git_diff_algorithms in git-completion.bash
 	 * when you add new algorithms.
@@ -3582,9 +3582,7 @@ static int set_diff_algorithm(struct diff_options *opts,
 	if (value < 0)
 		return -1;
 
-	/* clear out previous settings */
-	opts->xdl_opts &= ~XDF_DIFF_ALGORITHM_MASK;
-	opts->xdl_opts |= value;
+	opts->xdl_algo = value;
 
 	return 0;
 }
@@ -5247,7 +5245,7 @@ static int diff_opt_anchored(const struct option *opt,
 	struct diff_options *options = opt->value;
 
 	BUG_ON_OPT_NEG(unset);
-	options->xdl_opts = DIFF_WITH_ALG(options, PATIENCE_DIFF);
+	options->xdl_algo = XDF_ALGO_PATIENCE;
 	ALLOC_GROW(options->anchors, options->anchors_nr + 1,
 		   options->anchors_alloc);
 	options->anchors[options->anchors_nr++] = xstrdup(arg);

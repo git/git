@@ -20,6 +20,7 @@
  *
  */
 
+#include "xdiff.h"
 #include "xinclude.h"
 
 
@@ -142,7 +143,7 @@ static void xdl_free_ctx(xdfile_t *xdf)
 static int xdl_prepare_ctx(unsigned int pass, mmfile_t *mf, long narec, xpparam_t const *xpp,
 			   xdlclassifier_t *cf, xdfile_t *xdf) {
 	long bsize;
-	uint64_t hav;
+	uint64_t >hav;
 	uint8_t const *blk, *cur, *top, *prev;
 	xrecord_t *crec;
 
@@ -171,8 +172,8 @@ static int xdl_prepare_ctx(unsigned int pass, mmfile_t *mf, long narec, xpparam_
 	if (!XDL_CALLOC_ARRAY(xdf->changed, xdf->nrec + 2))
 		goto abort;
 
-	if ((XDF_DIFF_ALG(xpp->flags) != XDF_PATIENCE_DIFF) &&
-	    (XDF_DIFF_ALG(xpp->flags) != XDF_HISTOGRAM_DIFF)) {
+	if (xpp->algo != XDF_ALGO_PATIENCE) &&
+	    (xpp->algo != XDF_ALGO_HISTOGRAM)) {
 		if (!XDL_ALLOC_ARRAY(xdf->reference_index, xdf->nrec + 1))
 			goto abort;
 	}
@@ -272,7 +273,7 @@ static int xdl_cleanup_records(xdlclassifier_t *cf, xdfile_t *xdf1, xdfile_t *xd
 	xrecord_t *recs;
 	xdlclass_t *rcrec;
 	uint8_t *action1 = NULL, *action2 = NULL;
-	bool need_min = !!(cf->flags & XDF_NEED_MINIMAL);
+	bool need_min = !!(cf->algo & XDF_ALGO_MINIMAL);
 	int ret = 0;
 
 	/*
@@ -397,7 +398,7 @@ int xdl_prepare_env(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
 	 * (nrecs) will be updated correctly anyway by
 	 * xdl_prepare_ctx().
 	 */
-	sample = (XDF_DIFF_ALG(xpp->flags) == XDF_HISTOGRAM_DIFF
+	sample = (xpp->algo == XDF_ALGO_HISTOGRAM
 		  ? XDL_GUESS_NLINES2 : XDL_GUESS_NLINES1);
 
 	enl1 = xdl_guess_lines(mf1, sample) + 1;
@@ -418,8 +419,8 @@ int xdl_prepare_env(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
 		return -1;
 	}
 
-	if ((XDF_DIFF_ALG(xpp->flags) != XDF_PATIENCE_DIFF) &&
-	    (XDF_DIFF_ALG(xpp->flags) != XDF_HISTOGRAM_DIFF) &&
+	if ((xpp->algo != XDF_ALGO_PATIENCE) &&
+	    (xpp->algo != XDF_ALGO_HISTOGRAM) &&
 	    xdl_optimize_ctxs(&cf, &xe->xdf1, &xe->xdf2) < 0) {
 
 		xdl_free_ctx(&xe->xdf2);

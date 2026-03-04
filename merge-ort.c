@@ -5467,10 +5467,10 @@ static void merge_recursive_config(struct merge_options *opt, int ui)
 	}
 	if (ui) {
 		if (!repo_config_get_string(the_repository, "diff.algorithm", &value)) {
-			long diff_algorithm = parse_algorithm_value(value);
-			if (diff_algorithm < 0)
+			long algo = parse_algorithm_value(value);
+			if (algo < 0)
 				die(_("unknown value for config '%s': %s"), "diff.algorithm", value);
-			opt->xdl_opts = (opt->xdl_opts & ~XDF_DIFF_ALGORITHM_MASK) | diff_algorithm;
+			opt->xdl_algo = algo;
 			free(value);
 		}
 	}
@@ -5496,7 +5496,7 @@ static void init_merge_options(struct merge_options *opt,
 	opt->renormalize = 0;
 
 	opt->conflict_style = -1;
-	opt->xdl_opts = DIFF_WITH_ALG(opt, HISTOGRAM_DIFF);
+	opt->xdl_algo = XDF_ALGO_HISTOGRAM;
 
 	merge_recursive_config(opt, ui);
 	merge_verbosity = getenv("GIT_MERGE_VERBOSITY");
@@ -5549,16 +5549,15 @@ int parse_merge_opt(struct merge_options *opt, const char *s)
 	else if (skip_prefix(s, "subtree=", &arg))
 		opt->subtree_shift = arg;
 	else if (!strcmp(s, "patience"))
-		opt->xdl_opts = DIFF_WITH_ALG(opt, PATIENCE_DIFF);
+		opt->xdl_algo = XDF_ALGO_PATIENCE;
 	else if (!strcmp(s, "histogram"))
-		opt->xdl_opts = DIFF_WITH_ALG(opt, HISTOGRAM_DIFF);
+		opt->xdl_algo = XDF_ALGO_HISTOGRAM;
 	else if (skip_prefix(s, "diff-algorithm=", &arg)) {
 		long value = parse_algorithm_value(arg);
 		if (value < 0)
 			return -1;
 		/* clear out previous settings */
-		opt->xdl_opts &= ~XDF_DIFF_ALGORITHM_MASK;
-		opt->xdl_opts |= value;
+		opt->xdl_algo = value;
 	}
 	else if (!strcmp(s, "ignore-space-change"))
 		DIFF_XDL_SET(opt, IGNORE_WHITESPACE_CHANGE);
