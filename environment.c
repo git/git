@@ -41,7 +41,6 @@
 static int pack_compression_seen;
 static int zlib_compression_seen;
 
-int trust_executable_bit = 1;
 int trust_ctime = 1;
 int check_stat = 1;
 int has_symlinks = 1;
@@ -304,11 +303,7 @@ next_name:
 int git_default_core_config(const char *var, const char *value,
 			    const struct config_context *ctx, void *cb)
 {
-	/* This needs a better name */
-	if (!strcmp(var, "core.filemode")) {
-		trust_executable_bit = git_config_bool(var, value);
-		return 0;
-	}
+
 	if (!strcmp(var, "core.trustctime")) {
 		trust_ctime = git_config_bool(var, value);
 		return 0;

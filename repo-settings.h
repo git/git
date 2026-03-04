@@ -36,6 +36,7 @@ struct repo_settings {
 	int pack_read_reverse_index;
 	int pack_use_bitmap_boundary_traversal;
 	int pack_use_multi_pack_reuse;
+	int trust_executable_bit;
 
 	int shared_repository;
 	int shared_repository_initialized;
