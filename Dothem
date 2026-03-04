@@ -90,6 +90,9 @@ export GIT_TEST_CHAIN_LINT
 GIT_PROVE_OPTS="${GIT_PROVE_OPTS:+$GIT_PROVE_OPTS }--state=slow,save"
 export GIT_PROVE_OPTS
 
+TEST_CONTRIB_TOO=YesPlease
+export TEST_CONTRIB_TOO
+
 test -f /bin/dash || with_dash=
 if test -z "$BUILDBASE"
 then
@@ -279,30 +282,36 @@ do
 		if test -n "$san"
 		then
 			section SANITIZE=address,undefined
-			SANITIZE=address,undefined Meta/Make $M $jobs test &&
+			SANITIZE=address,undefined Meta/Make $M $jobs $T test &&
+			rm -f compat/mmap.o &&
 			Meta/Make >/dev/null distclean
-		elif test "$breaking$with_leaks$with_sha256$dotest" = test
-		then
-			section test
-			Meta/Make $M $noprove ${test+"$test"} $jobs $test_long \
-				  $memtrash \
-			    -- ${with_dash:+SHELL_PATH=/bin/dash} "$@" $dotest
-		elif test -n "$with_leaks"
+		fi &&
+		if test -n "$with_leaks"
 		then
 			section leaks
 			SANITIZE=leak \
 			GIT_TEST_PASSING_SANITIZE_LEAK=true \
-			Meta/Make -j16 $T CC=clang test &&
+			Meta/Make $jobs $T CC=clang test &&
 			Meta/Make >/dev/null distclean
-		elif test -n "$with_sha256"
+		fi &&
+		if test -n "$with_sha256"
 		then
 			section sha256
-			GIT_TEST_DEFAULT_HASH=sha256 Meta/Make -j16 $T test
-		elif test -n "$breaking"
+			GIT_TEST_DEFAULT_HASH=sha256 Meta/Make $jobs $T test
+		fi &&
+		if test -n "$breaking"
 		then
 			section breaking
-			Meta/Make -j16 WITH_BREAKING_CHANGES=YesPlease test &&
+			Meta/Make $jobs WITH_BREAKING_CHANGES=YesPlease $T test &&
 			Meta/Make >/dev/null distclean
+		fi &&
+
+		if test "$san$breaking$with_leaks$breaking$with_sha256$dotest" = test
+		then
+			section test
+			Meta/Make $M $noprove ${test+"$test"} $jobs $test_long \
+				  $memtrash \
+			    -- ${with_dash:+SHELL_PATH=/bin/dash} "$@" $T $dotest
 		fi &&
 
 		# docs
