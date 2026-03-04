@@ -4,7 +4,6 @@
 
 #include "git-compat-util.h"
 #include "abspath.h"
-#include "environment.h"
 #include "gettext.h"
 #include "repository.h"
 #include "strbuf.h"
@@ -59,7 +58,7 @@ static void strbuf_cleanup_path(struct strbuf *sb)
 
 static int dir_prefix(const char *buf, const char *dir)
 {
-	int len = strlen(dir);
+	size_t len = strlen(dir);
 	return !strncmp(buf, dir, len) &&
 		(is_dir_sep(buf[len]) || buf[len] == '\0');
 }
@@ -741,18 +740,18 @@ int calc_shared_perm(struct repository *repo,
 		     int mode)
 {
 	int tweak;
-
-	if (repo_settings_get_shared_repository(repo) < 0)
-		tweak = -repo_settings_get_shared_repository(repo);
+	int shared_repo = repo_settings_get_shared_repository(repo);
+	if (shared_repo < 0)
+		tweak = -shared_repo;
 	else
-		tweak = repo_settings_get_shared_repository(repo);
+		tweak = shared_repo;
 
 	if (!(mode & S_IWUSR))
 		tweak &= ~0222;
 	if (mode & S_IXUSR)
 		/* Copy read bits to execute bits */
 		tweak |= (tweak & 0444) >> 2;
-	if (repo_settings_get_shared_repository(repo) < 0)
+	if (shared_repo < 0)
 		mode = (mode & ~0777) | tweak;
 	else
 		mode |= tweak;
