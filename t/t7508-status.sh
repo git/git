@@ -1785,4 +1785,51 @@ test_expect_success EXPENSIVE 'status does not re-read unchanged 4 or 8 GiB file
 	)
 '
 
+test_expect_success 'status shows diffstat for modified files' '
+	(
+		mkdir diffstat-test &&
+		cd diffstat-test &&
+		git init &&
+		echo "line1" >file.txt &&
+		echo "line2" >>file.txt &&
+		git add file.txt &&
+		git commit -m "initial" &&
+		echo "line3" >>file.txt &&
+		git status >output &&
+		grep "+1" output
+	)
+'
+
+test_expect_success 'status shows only additions for new staged files' '
+	(
+		cd diffstat-test &&
+		echo "new content" >newfile.txt &&
+		echo "more content" >>newfile.txt &&
+		git add newfile.txt &&
+		git status >output &&
+		grep "+2" output &&
+		! grep "| -" output
+	)
+'
+
+test_expect_success 'status shows only deletions for deleted staged files' '
+	(
+		cd diffstat-test &&
+		git checkout file.txt &&
+		git rm -f file.txt &&
+		git status >output &&
+		grep "\-2" output
+	)
+'
+
+test_expect_success 'status.showDiffstat=false hides line counts' '
+	(
+		cd diffstat-test &&
+		git reset HEAD &&
+		echo "modified" >>file.txt &&
+		git -c status.showDiffstat=false status >output &&
+		! grep "+1" output
+	)
+'
+
 test_done
