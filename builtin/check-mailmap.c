@@ -63,9 +63,9 @@ int cmd_check_mailmap(int argc,
 	if (argc == 0 && !use_stdin)
 		die(_("no contacts specified"));
 
-	read_mailmap(&mailmap);
+	read_mailmap(the_repository, &mailmap);
 	if (mailmap_blob)
-		read_mailmap_blob(&mailmap, mailmap_blob);
+		read_mailmap_blob(the_repository, &mailmap, mailmap_blob);
 	if (mailmap_file)
 		read_mailmap_file(&mailmap, mailmap_file, 0);
 
