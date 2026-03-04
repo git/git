@@ -2,19 +2,46 @@ name: Build
 
 on: [push, pull_request]
 
+# Cancel in-progress runs for the same branch/PR to avoid wasting resources.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     name: build (ubuntu-latest)
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
     steps:
     - uses: actions/checkout@v4
+
     - name: Install dependencies
       run: |
         sudo apt-get -q update
         sudo apt-get -q -y install \
-          make gcc libssl-dev libcurl4-openssl-dev libexpat-dev \
+          make gcc ccache libssl-dev libcurl4-openssl-dev libexpat-dev \
           zlib1g-dev gettext libpcre2-dev
+
+    - name: Restore build cache
+      uses: actions/cache@v4
+      with:
+        path: ${{ env.CCACHE_DIR }}
+        key: ccache-build-${{ github.ref_name }}-${{ github.run_id }}
+        restore-keys: |
+          ccache-build-${{ github.ref_name }}-
+          ccache-build-
+
     - name: Build
-      run: make
+      run: |
+        export PATH="/usr/lib/ccache:$PATH"
+        ccache --zero-stats
+        make
+        ccache --show-stats
+
+    - name: Smoke test
+      run: |
+        ./git --version
+        ./git init --bare /tmp/smoke-test-repo
