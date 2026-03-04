@@ -150,6 +150,11 @@ struct repository {
 
 	/* Repository's reference storage format, as serialized on disk. */
 	enum ref_storage_format ref_storage_format;
+	/*
+	 * Reference storage information as needed for the backend. This contains
+	 * only the payload from the reference URI without the schema.
+	 */
+	char *ref_storage_payload;
 
 	/* A unique-id for tracing purposes. */
 	int trace2_repo_id;
@@ -205,7 +210,8 @@ void repo_set_worktree(struct repository *repo, const char *path);
 void repo_set_hash_algo(struct repository *repo, int algo);
 void repo_set_compat_hash_algo(struct repository *repo, int compat_algo);
 void repo_set_ref_storage_format(struct repository *repo,
-				 enum ref_storage_format format);
+				 enum ref_storage_format format,
+				 const char *payload);
 void initialize_repository(struct repository *repo);
 RESULT_MUST_BE_USED
 int repo_init(struct repository *r, const char *gitdir, const char *worktree);
