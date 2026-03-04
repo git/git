@@ -970,6 +970,22 @@ pick f4593f9 four
 exec make test
 --------------------
 
+Similar to `git cherry-pick`, `-x` can be specified to append a "(cherry
+picked from commit …​)" line to the commit body if the the commit base
+changes. That is, the following todo list:
+
+--------------
+pick 123456 -x
+edit 654321 -x
+--------------
+
+acts the same as:
+
+---------------------------
+$ git cherry-pick -x 123456
+$ git cherry-pick -xe 654321
+---------------------------
+
 SPLITTING COMMITS
 -----------------
 
