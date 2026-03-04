@@ -273,6 +273,7 @@ out of what the server said it could do with the first 'want' line.
   additional-want   =  PKT-LINE("want" SP obj-id)
 
   depth             =  1*DIGIT
+  timestamp         =  1*DIGIT
 
   filter-request    =  PKT-LINE("filter" SP filter-spec)
 ----
