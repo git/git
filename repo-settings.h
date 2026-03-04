@@ -39,6 +39,7 @@ struct repo_settings {
 
 	int shared_repository;
 	int shared_repository_initialized;
+	int sparse_checkout;
 
 	/*
 	 * Does this repository have core.useReplaceRefs=true (on by
