@@ -1,7 +1,5 @@
 #!/bin/sh
 
-Meta/Dothem -j32 "$@" --noinstall -- CC=clang SANITIZE=leak
-# Meta/Dothem -j32 "$@" --noinstall -- CC=clang SANITIZE=address
-Meta/Dothem -j32 "$@" -- CC=clang
+Meta/Dothem --cocci --breaking --san --leaks --sha256 "$@"
 
 Meta/V
