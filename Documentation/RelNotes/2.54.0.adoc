@@ -47,6 +47,19 @@ UI, Workflows & Features
  * "git add -p" learned a new mode that allows the user to revisit a
    file that was already dealt with.
 
+ * Allow the directory in which reference backends store their data to
+   be specified.
+
+ * "gitweb" has been taught to be mobile friendly.
+
+ * "git apply --directory=./un/../normalized/path" now normalizes the
+   given path before using it.
+
+ * "git maintenance" starts using the "geometric" strategy by default.
+
+ * "git config list" is taught to show the values interpreted for
+   specific type with "--type=<X>" option.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -109,6 +122,22 @@ Performance, Internal Implementation, Development Support etc.
    builds.
 
  * The code to accept shallow "git push" has been optimized.
+
+ * Simplify build procedure for oxskeychain (in contrib/).
+
+ * Fix dependency screw-up in meson-based builds.
+
+ * Wean the mailmap code off of the_repository dependency.
+
+ * API clean-up for the worktree subsystem.
+
+ * The last uses of the_repository in "tree-diff.c" have been
+   eradicated.
+
+ * Clean-up the code around "git repo info" command.
+
+ * Mark the marge-ort codebase to prevent more uses of the_repository
+   from getting added.
 
 
 Fixes since v2.53
@@ -185,6 +214,17 @@ Fixes since v2.53
  * An earlier attempt to optimize "git subtree" discarded too much
    relevant histories, which has been corrected.
 
+ * A prefetch call can be triggered to access a stale diff_queue entry
+   after diffcore-break breaks a filepair into two and freed the
+   original entry that is no longer used, leading to a segfault, which
+   has been corrected.
+   (merge 2d88ab078d hy/diff-lazy-fetch-with-break-fix later to maint).
+
+ * "git fetch --deepen" that tries to go beyond merged branch used to
+   get confused where the updated shallow points are, which has been
+   corrected.
+   (merge 3ef68ff40e sp/shallow-deepen-relative-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge d79fff4a11 jk/remote-tracking-ref-leakfix later to maint).
    (merge 7a747f972d dd/t5403-modernise later to maint).
@@ -214,9 +254,4 @@ Fixes since v2.53
    (merge b10e0cb1f3 kh/doc-am-xref later to maint).
    (merge ed84bc1c0d kh/doc-patch-id-4 later to maint).
    (merge 7451864bfa sc/pack-redundant-leakfix later to maint).
-
- * A prefetch call can be triggered to access a stale diff_queue entry
-   after diffcore-break breaks a filepair into two and freed the
-   original entry that is no longer used, leading to a segfault, which
-   has been corrected.
-   (merge 2d88ab078d hy/diff-lazy-fetch-with-break-fix later to maint).
+   (merge f87593ab1a cx/fetch-display-ubfix later to maint).
