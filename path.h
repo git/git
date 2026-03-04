@@ -66,13 +66,11 @@ const char *repo_git_path_replace(struct repository *repo,
 
 /*
  * Similar to repo_git_path() but can produce paths for a specified
- * worktree instead of current one. When no worktree is given, then the path is
- * computed relative to main worktree of the given repository.
+ * worktree instead of current one.
  */
-const char *worktree_git_path(struct repository *r,
-			      const struct worktree *wt,
+const char *worktree_git_path(const struct worktree *wt,
 			      const char *fmt, ...)
-	__attribute__((format (printf, 3, 4)));
+	__attribute__((format (printf, 2, 3)));
 
 /*
  * The `repo_worktree_path` family of functions will construct a path into a
