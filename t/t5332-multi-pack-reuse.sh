@@ -59,6 +59,7 @@ test_pack_objects_reused () {
 
 test_expect_success 'preferred pack is reused for single-pack reuse' '
 	test_config pack.allowPackReuse single &&
+	git config set maintenance.auto false &&
 
 	for i in A B
 	do

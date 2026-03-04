@@ -68,6 +68,7 @@ test_expect_success 'add more packfiles' '
 '
 
 test_expect_success 'add more commits (as loose objects)' '
+	test_config maintenance.auto false &&
 	test_commit six &&
 	test_commit seven &&
 

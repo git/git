@@ -30,8 +30,7 @@ The possible strategies are:
 +
 * `none`: This strategy implies no tasks are run at all. This is the default
   strategy for scheduled maintenance.
-* `gc`: This strategy runs the `gc` task. This is the default strategy for
-  manual maintenance.
+* `gc`: This strategy runs the `gc` task.
 * `geometric`: This strategy performs geometric repacking of packfiles and
   keeps auxiliary data structures up-to-date. The strategy expires data in the
   reflog and removes worktrees that cannot be located anymore. When the
@@ -40,7 +39,8 @@ The possible strategies are:
   are already part of a cruft pack will be expired.
 +
 This repacking strategy is a full replacement for the `gc` strategy and is
-recommended for large repositories.
+recommended for large repositories. This is the default strategy for manual
+maintenance.
 * `incremental`: This setting optimizes for performing small maintenance
   activities that do not delete any data. This does not schedule the `gc`
   task, but runs the `prefetch` and `commit-graph` tasks hourly, the

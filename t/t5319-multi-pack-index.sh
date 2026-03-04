@@ -1315,6 +1315,7 @@ test_expect_success 'bitmapped packs are stored via the BTMP chunk' '
 	git init repo &&
 	(
 		cd repo &&
+		git config set maintenance.auto false &&
 
 		for i in 1 2 3 4 5
 		do

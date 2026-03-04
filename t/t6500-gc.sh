@@ -11,6 +11,7 @@ test_expect_success 'setup' '
 	# behavior, make sure we always pack everything to one pack by
 	# default
 	git config gc.bigPackThreshold 2g &&
+	git config set --global maintenance.strategy gc &&
 	test_oid_init
 '
 
