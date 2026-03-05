@@ -13,8 +13,7 @@ struct odb_source *odb_source_new(struct object_database *odb,
 	source->odb = odb;
 	source->local = local;
 	source->path = xstrdup(path);
-	source->loose = odb_source_loose_new(source);
-	source->packfiles = packfile_store_new(source);
+	source->files = odb_source_files_new(source);
 
 	return source;
 }
@@ -22,7 +21,6 @@ struct odb_source *odb_source_new(struct object_database *odb,
 void odb_source_free(struct odb_source *source)
 {
 	free(source->path);
-	odb_source_loose_free(source->loose);
-	packfile_store_free(source->packfiles);
+	odb_source_files_free(source->files);
 	free(source);
 }

@@ -49,13 +49,13 @@ static int insert_loose_map(struct odb_source *source,
 			    const struct object_id *oid,
 			    const struct object_id *compat_oid)
 {
-	struct loose_object_map *map = source->loose->map;
+	struct loose_object_map *map = source->files->loose->map;
 	int inserted = 0;
 
 	inserted |= insert_oid_pair(map->to_compat, oid, compat_oid);
 	inserted |= insert_oid_pair(map->to_storage, compat_oid, oid);
 	if (inserted)
-		oidtree_insert(source->loose->cache, compat_oid);
+		oidtree_insert(source->files->loose->cache, compat_oid);
 
 	return inserted;
 }
@@ -65,11 +65,11 @@ static int load_one_loose_object_map(struct repository *repo, struct odb_source 
 	struct strbuf buf = STRBUF_INIT, path = STRBUF_INIT;
 	FILE *fp;
 
-	if (!source->loose->map)
-		loose_object_map_init(&source->loose->map);
-	if (!source->loose->cache) {
-		ALLOC_ARRAY(source->loose->cache, 1);
-		oidtree_init(source->loose->cache);
+	if (!source->files->loose->map)
+		loose_object_map_init(&source->files->loose->map);
+	if (!source->files->loose->cache) {
+		ALLOC_ARRAY(source->files->loose->cache, 1);
+		oidtree_init(source->files->loose->cache);
 	}
 
 	insert_loose_map(source, repo->hash_algo->empty_tree, repo->compat_hash_algo->empty_tree);
@@ -125,7 +125,7 @@ int repo_read_loose_object_map(struct repository *repo)
 
 int repo_write_loose_object_map(struct repository *repo)
 {
-	kh_oid_map_t *map = repo->objects->sources->loose->map->to_compat;
+	kh_oid_map_t *map = repo->objects->sources->files->loose->map->to_compat;
 	struct lock_file lock;
 	int fd;
 	khiter_t iter;
@@ -231,7 +231,7 @@ int repo_loose_object_map_oid(struct repository *repo,
 	khiter_t pos;
 
 	for (source = repo->objects->sources; source; source = source->next) {
-		struct loose_object_map *loose_map = source->loose->map;
+		struct loose_object_map *loose_map = source->files->loose->map;
 		if (!loose_map)
 			continue;
 		map = (to == repo->compat_hash_algo) ?

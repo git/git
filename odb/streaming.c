@@ -187,7 +187,7 @@ static int istream_source(struct odb_read_stream **out,
 
 	odb_prepare_alternates(odb);
 	for (source = odb->sources; source; source = source->next) {
-		if (!packfile_store_read_object_stream(out, source->packfiles, oid) ||
+		if (!packfile_store_read_object_stream(out, source->files->packed, oid) ||
 		    !odb_source_loose_read_object_stream(out, source, oid))
 			return 0;
 	}

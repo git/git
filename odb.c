@@ -691,7 +691,7 @@ static int do_oid_object_info_extended(struct object_database *odb,
 
 		/* Most likely it's a loose object. */
 		for (source = odb->sources; source; source = source->next) {
-			if (!packfile_store_read_object_info(source->packfiles, real, oi, flags) ||
+			if (!packfile_store_read_object_info(source->files->packed, real, oi, flags) ||
 			    !odb_source_loose_read_object_info(source, real, oi, flags))
 				return 0;
 		}
@@ -700,7 +700,7 @@ static int do_oid_object_info_extended(struct object_database *odb,
 		if (!(flags & OBJECT_INFO_QUICK)) {
 			odb_reprepare(odb->repo->objects);
 			for (source = odb->sources; source; source = source->next)
-				if (!packfile_store_read_object_info(source->packfiles, real, oi, flags))
+				if (!packfile_store_read_object_info(source->files->packed, real, oi, flags))
 					return 0;
 		}
 
@@ -962,7 +962,7 @@ int odb_freshen_object(struct object_database *odb,
 
 	odb_prepare_alternates(odb);
 	for (source = odb->sources; source; source = source->next) {
-		if (packfile_store_freshen_object(source->packfiles, oid))
+		if (packfile_store_freshen_object(source->files->packed, oid))
 			return 1;
 
 		if (odb_source_loose_freshen_object(source, oid))
@@ -992,7 +992,7 @@ int odb_for_each_object(struct object_database *odb,
 				return ret;
 		}
 
-		ret = packfile_store_for_each_object(source->packfiles, request,
+		ret = packfile_store_for_each_object(source->files->packed, request,
 						     cb, cb_data, flags);
 		if (ret)
 			return ret;
@@ -1091,7 +1091,7 @@ void odb_close(struct object_database *o)
 {
 	struct odb_source *source;
 	for (source = o->sources; source; source = source->next)
-		packfile_store_close(source->packfiles);
+		packfile_store_close(source->files->packed);
 	close_commit_graph(o);
 }
 
@@ -1149,7 +1149,7 @@ void odb_reprepare(struct object_database *o)
 
 	for (source = o->sources; source; source = source->next) {
 		odb_source_loose_reprepare(source);
-		packfile_store_reprepare(source->packfiles);
+		packfile_store_reprepare(source->files->packed);
 	}
 
 	o->approximate_object_count_valid = 0;
