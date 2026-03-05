@@ -11,7 +11,7 @@ SYNOPSIS
 [verse]
 'git maintenance' run [<options>]
 'git maintenance' start [--scheduler=<scheduler>]
-'git maintenance' (stop|register|unregister) [<options>]
+'git maintenance' (stop|register|unregister|list) [<options>]
 'git maintenance' is-needed [<options>]
 
 
@@ -84,6 +84,13 @@ unregister::
 The `unregister` subcommand will report an error if the current repository
 is not already registered. Use the `--force` option to return success even
 when the current repository is not registered.
+
+list::
+	List all repositories registered for background maintenance. This
+	displays the paths of all repositories that are configured in the
+	`maintenance.repo` config variable. By default, it reads from the
+	global config, but you can specify a different config file with
+	the `--config-file` option.
 
 is-needed::
     Check whether maintenance needs to be run without actually running it.
