@@ -1013,7 +1013,7 @@ int odb_write_object_stream(struct object_database *odb,
 			    struct odb_write_stream *stream, size_t len,
 			    struct object_id *oid)
 {
-	return odb_source_loose_write_stream(odb->sources, stream, len, oid);
+	return odb_source_write_object_stream(odb->sources, stream, len, oid);
 }
 
 struct object_database *odb_new(struct repository *repo,
