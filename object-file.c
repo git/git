@@ -546,6 +546,16 @@ int odb_source_loose_read_object_info(struct odb_source *source,
 				      enum object_info_flags flags)
 {
 	static struct strbuf buf = STRBUF_INIT;
+
+	/*
+	 * The second read shouldn't cause new loose objects to show up, unless
+	 * there was a race condition with a secondary process. We don't care
+	 * about this case though, so we simply skip reading loose objects a
+	 * second time.
+	 */
+	if (flags & OBJECT_INFO_SECOND_READ)
+		return -1;
+
 	odb_loose_path(source, &buf, oid);
 	return read_object_info_from_path(source, buf.buf, oid, oi, flags);
 }
