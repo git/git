@@ -1,5 +1,6 @@
 #include "git-compat-util.h"
 #include "object-file.h"
+#include "odb/source-files.h"
 #include "odb/source.h"
 #include "packfile.h"
 
@@ -7,20 +8,31 @@ struct odb_source *odb_source_new(struct object_database *odb,
 				  const char *path,
 				  bool local)
 {
-	struct odb_source *source;
+	return &odb_source_files_new(odb, path, local)->base;
+}
 
-	CALLOC_ARRAY(source, 1);
+void odb_source_init(struct odb_source *source,
+		     struct object_database *odb,
+		     const char *path,
+		     bool local)
+{
 	source->odb = odb;
 	source->local = local;
 	source->path = xstrdup(path);
-	source->files = odb_source_files_new(source);
-
-	return source;
 }
 
 void odb_source_free(struct odb_source *source)
 {
+	struct odb_source_files *files;
+	if (!source)
+		return;
+	files = odb_source_files_downcast(source);
+	odb_source_files_free(files);
+}
+
+void odb_source_release(struct odb_source *source)
+{
+	if (!source)
+		return;
 	free(source->path);
-	odb_source_files_free(source->files);
-	free(source);
 }
