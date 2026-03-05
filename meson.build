@@ -1033,42 +1033,26 @@ if iconv.found()
     have_old_iconv = true
   endif
 
-  iconv_omits_bom_source = '''#
-    #include <iconv.h>
+  if meson.can_run_host_binaries()
+    if compiler.run('''
+      #include <iconv.h>
 
-    int main(int argc, const char **argv)
-    {
-  '''
-  if have_old_iconv
-    iconv_omits_bom_source += '''
-      typedef const char *iconv_ibp;
-    '''
-  else
-    iconv_omits_bom_source += '''
-      typedef char *iconv_ibp;
-    '''
-  endif
-  iconv_omits_bom_source += '''
-      int v;
-      iconv_t conv;
-      char in[] = "a"; iconv_ibp pin = in;
-      char out[20] = ""; char *pout = out;
-      size_t isz = sizeof in;
-      size_t osz = sizeof out;
-
-      conv = iconv_open("UTF-16", "UTF-8");
-      iconv(conv, &pin, &isz, &pout, &osz);
-      iconv_close(conv);
-      v = (unsigned char)(out[0]) + (unsigned char)(out[1]);
-      return v != 0xfe + 0xff;
-    }
-  '''
-
-  if meson.can_run_host_binaries() and compiler.run(iconv_omits_bom_source,
-    dependencies: iconv,
-    name: 'iconv omits BOM',
-  ).returncode() != 0
-    libgit_c_args += '-DICONV_OMITS_BOM'
+      int main(int argc, const char **argv)
+      {
+        char in[] = "a", *inpos = in;
+        char out[20] = "", *outpos = out;
+        size_t insz = sizeof(in), outsz = sizeof(out);
+        iconv_t conv = iconv_open("UTF-16", "UTF-8");
+        iconv(conv, (void *) &inpos, &insz, &outpos, &outsz);
+        iconv_close(conv);
+        return (unsigned char)(out[0]) + (unsigned char)(out[1]) != 0xfe + 0xff;
+      }
+    ''',
+      dependencies: iconv,
+      name: 'iconv omits BOM',
+    ).returncode() != 0
+      libgit_c_args += '-DICONV_OMITS_BOM'
+    endif
   endif
 else
   libgit_c_args += '-DNO_ICONV'
