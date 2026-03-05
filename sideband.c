@@ -10,6 +10,7 @@
 #include "help.h"
 #include "pkt-line.h"
 #include "write-or-die.h"
+#include "urlmatch.h"
 
 struct keyword_entry {
 	/*
@@ -27,13 +28,14 @@ static struct keyword_entry keywords[] = {
 };
 
 static enum {
-	ALLOW_NO_CONTROL_CHARACTERS  = 0,
-	ALLOW_ANSI_COLOR_SEQUENCES   = 1<<0,
-	ALLOW_ANSI_CURSOR_MOVEMENTS  = 1<<1,
-	ALLOW_ANSI_ERASE             = 1<<2,
-	ALLOW_DEFAULT_ANSI_SEQUENCES = ALLOW_ANSI_COLOR_SEQUENCES,
-	ALLOW_ALL_CONTROL_CHARACTERS = 1<<3,
-} allow_control_characters = ALLOW_DEFAULT_ANSI_SEQUENCES;
+	ALLOW_CONTROL_SEQUENCES_UNSET = -1,
+	ALLOW_NO_CONTROL_CHARACTERS   = 0,
+	ALLOW_ANSI_COLOR_SEQUENCES    = 1<<0,
+	ALLOW_ANSI_CURSOR_MOVEMENTS   = 1<<1,
+	ALLOW_ANSI_ERASE              = 1<<2,
+	ALLOW_DEFAULT_ANSI_SEQUENCES  = ALLOW_ANSI_COLOR_SEQUENCES,
+	ALLOW_ALL_CONTROL_CHARACTERS  = 1<<3,
+} allow_control_characters = ALLOW_CONTROL_SEQUENCES_UNSET;
 
 static inline int skip_prefix_in_csv(const char *value, const char *prefix,
 				     const char **out)
@@ -45,8 +47,19 @@ static inline int skip_prefix_in_csv(const char *value, const char *prefix,
 	return 1;
 }
 
-static void parse_allow_control_characters(const char *value)
+int sideband_allow_control_characters_config(const char *var, const char *value)
 {
+	switch (git_parse_maybe_bool(value)) {
+	case 0:
+		allow_control_characters = ALLOW_NO_CONTROL_CHARACTERS;
+		return 0;
+	case 1:
+		allow_control_characters = ALLOW_ALL_CONTROL_CHARACTERS;
+		return 0;
+	default:
+		break;
+	}
+
 	allow_control_characters = ALLOW_NO_CONTROL_CHARACTERS;
 	while (*value) {
 		if (skip_prefix_in_csv(value, "default", &value))
@@ -62,9 +75,37 @@ static void parse_allow_control_characters(const char *value)
 		else if (skip_prefix_in_csv(value, "false", &value))
 			allow_control_characters = ALLOW_NO_CONTROL_CHARACTERS;
 		else
-			warning(_("unrecognized value for `sideband."
-				  "allowControlCharacters`: '%s'"), value);
+			warning(_("unrecognized value for '%s': '%s'"), var, value);
 	}
+	return 0;
+}
+
+static int sideband_config_callback(const char *var, const char *value,
+				    const struct config_context *ctx UNUSED,
+				    void *data UNUSED)
+{
+	if (!strcmp(var, "sideband.allowcontrolcharacters"))
+		return sideband_allow_control_characters_config(var, value);
+
+	return 0;
+}
+
+void sideband_apply_url_config(const char *url)
+{
+	struct urlmatch_config config = URLMATCH_CONFIG_INIT;
+	char *normalized_url;
+
+	if (!url)
+		BUG("must not call sideband_apply_url_config(NULL)");
+
+	config.section = "sideband";
+	config.collect_fn = sideband_config_callback;
+
+	normalized_url = url_normalize(url, &config.url);
+	repo_config(the_repository, urlmatch_config_entry, &config);
+	free(normalized_url);
+	string_list_clear(&config.vars, 1);
+	urlmatch_config_release(&config);
 }
 
 /* Returns a color setting (GIT_COLOR_NEVER, etc). */
@@ -80,20 +121,12 @@ static enum git_colorbool use_sideband_colors(void)
 	if (use_sideband_colors_cached != GIT_COLOR_UNKNOWN)
 		return use_sideband_colors_cached;
 
-	switch (repo_config_get_maybe_bool(the_repository, "sideband.allowcontrolcharacters", &i)) {
-	case 0: /* Boolean value */
-		allow_control_characters = i ? ALLOW_ALL_CONTROL_CHARACTERS :
-			ALLOW_NO_CONTROL_CHARACTERS;
-		break;
-	case -1: /* non-Boolean value */
-		if (repo_config_get_string_tmp(the_repository, "sideband.allowcontrolcharacters",
-					      &value))
-			; /* huh? `get_maybe_bool()` returned -1 */
-		else
-			parse_allow_control_characters(value);
-		break;
-	default:
-		break; /* not configured */
+	if (allow_control_characters == ALLOW_CONTROL_SEQUENCES_UNSET) {
+		if (!repo_config_get_value(the_repository, "sideband.allowcontrolcharacters", &value))
+			sideband_allow_control_characters_config("sideband.allowcontrolcharacters", value);
+
+		if (allow_control_characters == ALLOW_CONTROL_SEQUENCES_UNSET)
+			allow_control_characters = ALLOW_DEFAULT_ANSI_SEQUENCES;
 	}
 
 	if (!repo_config_get_string_tmp(the_repository, key, &value))
