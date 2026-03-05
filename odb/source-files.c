@@ -2,9 +2,11 @@
 #include "abspath.h"
 #include "chdir-notify.h"
 #include "object-file.h"
+#include "odb.h"
 #include "odb/source.h"
 #include "odb/source-files.h"
 #include "packfile.h"
+#include "strbuf.h"
 
 static void odb_source_files_reparent(const char *name UNUSED,
 				      const char *old_cwd,
@@ -117,6 +119,25 @@ static int odb_source_files_write_object_stream(struct odb_source *source,
 	return odb_source_loose_write_stream(source, stream, len, oid);
 }
 
+static int odb_source_files_read_alternates(struct odb_source *source,
+					    struct strvec *out)
+{
+	struct strbuf buf = STRBUF_INIT;
+	char *path;
+
+	path = xstrfmt("%s/info/alternates", source->path);
+	if (strbuf_read_file(&buf, path, 1024) < 0) {
+		warn_on_fopen_errors(path);
+		free(path);
+		return 0;
+	}
+	parse_alternates(buf.buf, '\n', source->path, out);
+
+	strbuf_release(&buf);
+	free(path);
+	return 0;
+}
+
 struct odb_source_files *odb_source_files_new(struct object_database *odb,
 					      const char *path,
 					      bool local)
@@ -137,6 +158,7 @@ struct odb_source_files *odb_source_files_new(struct object_database *odb,
 	files->base.freshen_object = odb_source_files_freshen_object;
 	files->base.write_object = odb_source_files_write_object;
 	files->base.write_object_stream = odb_source_files_write_object_stream;
+	files->base.read_alternates = odb_source_files_read_alternates;
 
 	/*
 	 * Ideally, we would only ever store absolute paths in the source. This
