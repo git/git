@@ -166,7 +166,9 @@ int check_object_signature(struct repository *r, const struct object_id *oid,
  * Try reading the object named with "oid" using
  * the streaming interface and rehash it to do the same.
  */
-int stream_object_signature(struct repository *r, const struct object_id *oid);
+int stream_object_signature(struct repository *r,
+			    struct odb_read_stream *stream,
+			    const struct object_id *oid);
 
 enum finalize_object_file_flags {
 	FOF_SKIP_COLLISION_CHECK = 1,

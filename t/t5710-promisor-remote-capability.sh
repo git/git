@@ -20,7 +20,7 @@ test_expect_success 'setup: create "template" repository' '
 	test_commit -C template 1 &&
 	test_commit -C template 2 &&
 	test_commit -C template 3 &&
-	test-tool genrandom foo 10240 >template/foo &&
+	test-tool genrandom foo 10k >template/foo &&
 	git -C template add foo &&
 	git -C template commit -m foo
 '
@@ -499,7 +499,7 @@ test_expect_success "clone with promisor.advertise set to 'true' but don't delet
 
 test_expect_success "setup for subsequent fetches" '
 	# Generate new commit with large blob
-	test-tool genrandom bar 10240 >template/bar &&
+	test-tool genrandom bar 10k >template/bar &&
 	git -C template add bar &&
 	git -C template commit -m bar &&
 

@@ -321,7 +321,7 @@ test_expect_success 'no bitmaps created if .keep files present' '
 
 test_expect_success 'auto-bitmaps do not complain if unavailable' '
 	test_config -C bare.git pack.packSizeLimit 1M &&
-	blob=$(test-tool genrandom big $((1024*1024)) |
+	blob=$(test-tool genrandom big 1m |
 	       git -C bare.git hash-object -w --stdin) &&
 	git -C bare.git update-ref refs/tags/big $blob &&
 
@@ -497,9 +497,9 @@ test_expect_success '--filter works with --max-pack-size' '
 		cd max-pack-size &&
 		test_commit base &&
 		# two blobs which exceed the maximum pack size
-		test-tool genrandom foo 1048576 >foo &&
+		test-tool genrandom foo 1m >foo &&
 		git hash-object -w foo &&
-		test-tool genrandom bar 1048576 >bar &&
+		test-tool genrandom bar 1m >bar &&
 		git hash-object -w bar &&
 		git add foo bar &&
 		git commit -m "adding foo and bar"
