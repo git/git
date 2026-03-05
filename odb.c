@@ -1,6 +1,5 @@
 #include "git-compat-util.h"
 #include "abspath.h"
-#include "chdir-notify.h"
 #include "commit-graph.h"
 #include "config.h"
 #include "dir.h"
@@ -1037,38 +1036,6 @@ int odb_write_object_stream(struct object_database *odb,
 	return odb_source_loose_write_stream(odb->sources, stream, len, oid);
 }
 
-static void odb_update_commondir(const char *name UNUSED,
-				 const char *old_cwd,
-				 const char *new_cwd,
-				 void *cb_data)
-{
-	struct object_database *odb = cb_data;
-	struct tmp_objdir *tmp_objdir;
-	struct odb_source *source;
-
-	tmp_objdir = tmp_objdir_unapply_primary_odb();
-
-	/*
-	 * In theory, we only have to do this for the primary object source, as
-	 * alternates' paths are always resolved to an absolute path.
-	 */
-	for (source = odb->sources; source; source = source->next) {
-		char *path;
-
-		if (is_absolute_path(source->path))
-			continue;
-
-		path = reparent_relative_path(old_cwd, new_cwd,
-					      source->path);
-
-		free(source->path);
-		source->path = path;
-	}
-
-	if (tmp_objdir)
-		tmp_objdir_reapply_primary_odb(tmp_objdir, old_cwd, new_cwd);
-}
-
 struct object_database *odb_new(struct repository *repo,
 				const char *primary_source,
 				const char *secondary_sources)
@@ -1088,8 +1055,6 @@ struct object_database *odb_new(struct repository *repo,
 	o->alternate_db = xstrdup_or_null(secondary_sources);
 
 	free(to_free);
-
-	chdir_notify_register(NULL, odb_update_commondir, o);
 
 	return o;
 }
@@ -1135,8 +1100,6 @@ void odb_free(struct object_database *o)
 	free(o->cached_objects);
 
 	string_list_clear(&o->submodule_source_paths, 0);
-
-	chdir_notify_unregister(NULL, odb_update_commondir, o);
 
 	free(o);
 }
