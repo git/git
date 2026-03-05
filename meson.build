@@ -1053,6 +1053,32 @@ if iconv.found()
     ).returncode() != 0
       libgit_c_args += '-DICONV_OMITS_BOM'
     endif
+
+    if compiler.run('''
+      #include <iconv.h>
+      #include <string.h>
+
+      int main(int argc, const char *argv[])
+      {
+          char in[] = "\x1b\x24\x42\x24\x22\x24\x22\x1b\x28\x42", *inpos = in;
+          char out[7] = { 0 }, *outpos = out;
+          size_t insz = sizeof(in) - 1, outsz = 4;
+          iconv_t conv = iconv_open("UTF-8", "ISO-2022-JP");
+          if (!conv)
+              return 1;
+          if (iconv(conv, (void *) &inpos, &insz, &outpos, &outsz) != (size_t) -1)
+              return 2;
+          outsz = sizeof(out) - (outpos - out);
+          if (iconv(conv, (void *) &inpos, &insz, &outpos, &outsz) == (size_t) -1)
+              return 3;
+          return strcmp("\343\201\202\343\201\202", out) ? 4 : 0;
+      }
+    ''',
+      dependencies: iconv,
+      name: 'iconv handles restarts properly',
+    ).returncode() != 0
+      libgit_c_args += '-DICONV_RESTART_RESET'
+    endif
   endif
 else
   libgit_c_args += '-DNO_ICONV'
