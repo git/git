@@ -13,10 +13,12 @@ struct odb_source *odb_source_new(struct object_database *odb,
 
 void odb_source_init(struct odb_source *source,
 		     struct object_database *odb,
+		     enum odb_source_type type,
 		     const char *path,
 		     bool local)
 {
 	source->odb = odb;
+	source->type = type;
 	source->local = local;
 	source->path = xstrdup(path);
 }

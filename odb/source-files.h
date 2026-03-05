@@ -25,10 +25,13 @@ struct odb_source_files *odb_source_files_new(struct object_database *odb,
 void odb_source_files_free(struct odb_source_files *files);
 
 /*
- * Cast the given object database source to the files backend.
+ * Cast the given object database source to the files backend. This will cause
+ * a BUG in case the source doesn't use this backend.
  */
 static inline struct odb_source_files *odb_source_files_downcast(struct odb_source *source)
 {
+	if (source->type != ODB_SOURCE_FILES)
+		BUG("trying to downcast source of type '%d' to files", source->type);
 	return container_of(source, struct odb_source_files, base);
 }
 

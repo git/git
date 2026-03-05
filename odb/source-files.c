@@ -36,7 +36,7 @@ struct odb_source_files *odb_source_files_new(struct object_database *odb,
 	struct odb_source_files *files;
 
 	CALLOC_ARRAY(files, 1);
-	odb_source_init(&files->base, odb, path, local);
+	odb_source_init(&files->base, odb, ODB_SOURCE_FILES, path, local);
 	files->loose = odb_source_loose_new(&files->base);
 	files->packed = packfile_store_new(&files->base);
 
