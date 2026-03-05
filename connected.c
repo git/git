@@ -159,6 +159,9 @@ no_promisor_pack_found:
 		err = error_errno(_("failed to close rev-list's stdin"));
 
 	sigchain_pop(SIGPIPE);
-	free(new_pack);
+	if (new_pack) {
+		close_pack(new_pack);
+		free(new_pack);
+	}
 	return finish_command(&rev_list) || err;
 }
