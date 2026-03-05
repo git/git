@@ -21,9 +21,6 @@ struct odb_source_files *odb_source_files_new(struct object_database *odb,
 					      const char *path,
 					      bool local);
 
-/* Free the object source and release all associated resources. */
-void odb_source_files_free(struct odb_source_files *files);
-
 /*
  * Cast the given object database source to the files backend. This will cause
  * a BUG in case the source doesn't use this backend.
