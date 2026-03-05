@@ -1119,11 +1119,8 @@ void odb_reprepare(struct object_database *o)
 	o->loaded_alternates = 0;
 	odb_prepare_alternates(o);
 
-	for (source = o->sources; source; source = source->next) {
-		struct odb_source_files *files = odb_source_files_downcast(source);
-		odb_source_loose_reprepare(source);
-		packfile_store_reprepare(files->packed);
-	}
+	for (source = o->sources; source; source = source->next)
+		odb_source_reprepare(source);
 
 	o->approximate_object_count_valid = 0;
 
