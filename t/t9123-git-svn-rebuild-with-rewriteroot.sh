@@ -7,12 +7,15 @@ test_description='git svn respects rewriteRoot during rebuild'
 
 . ./lib-git-svn.sh
 
-mkdir import
-(cd import
-	touch foo
-	svn_cmd import -m 'import for git svn' . "$svnrepo" >/dev/null
-)
-rm -rf import
+test_expect_success 'setup svn repository' '
+	test_when_finished "rm -rf import" &&
+	mkdir import &&
+	(
+		cd import &&
+		touch foo &&
+		svn_cmd import -m "import for git svn" . "$svnrepo" >/dev/null
+	)
+	'
 
 test_expect_success 'init, fetch and checkout repository' '
 	git svn init --rewrite-root=http://invalid.invalid/ "$svnrepo" &&
