@@ -373,6 +373,10 @@ try_remove_previous () {
 }
 
 # Usage: process_subtree_split_trailer SPLIT_HASH MAIN_HASH [REPOSITORY]
+#
+# Parse SPLIT_HASH as a commit. If the commit is not found, fetches
+# REPOSITORY and tries again. If found, prints full commit hash.
+# Otherwise, dies.
 process_subtree_split_trailer () {
 	assert test $# -ge 2
 	assert test $# -le 3
@@ -400,6 +404,7 @@ process_subtree_split_trailer () {
 			die "$fail_msg"
 		fi
 	fi
+	echo "${sub}"
 }
 
 # Usage: find_latest_squash DIR [REPOSITORY]
@@ -432,7 +437,7 @@ find_latest_squash () {
 			main="$b"
 			;;
 		git-subtree-split:)
-			process_subtree_split_trailer "$b" "$sq" "$repository"
+			sub="$(process_subtree_split_trailer "$b" "$sq" "$repository")" || exit 1
 			;;
 		END)
 			if test -n "$sub"
@@ -489,7 +494,7 @@ find_existing_splits () {
 			main="$b"
 			;;
 		git-subtree-split:)
-			process_subtree_split_trailer "$b" "$sq" "$repository"
+			sub="$(process_subtree_split_trailer "$b" "$sq" "$repository")" || exit 1
 			;;
 		END)
 			debug "Main is: '$main'"
