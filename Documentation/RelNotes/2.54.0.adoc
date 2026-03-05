@@ -136,8 +136,12 @@ Performance, Internal Implementation, Development Support etc.
 
  * Clean-up the code around "git repo info" command.
 
- * Mark the marge-ort codebase to prevent more uses of the_repository
+ * Mark the merge-ort codebase to prevent more uses of the_repository
    from getting added.
+
+ * The core.attributesfile is intended to be set per repository, but
+   were kept track of by a single global variable in-core, which has
+   been corrected by moving it to per-repository data structure.
 
 
 Fixes since v2.53
@@ -224,6 +228,11 @@ Fixes since v2.53
    get confused where the updated shallow points are, which has been
    corrected.
    (merge 3ef68ff40e sp/shallow-deepen-relative-fix later to maint).
+
+ * "fsck" iterates over packfiles and its access to pack data caused
+   the list to be permuted, which caused it to loop forever; the code
+   to access pack data by "fsck" has been updated to avoid this.
+   (merge 13eb65d366 ps/fsck-stream-from-the-right-object-instance later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge d79fff4a11 jk/remote-tracking-ref-leakfix later to maint).
