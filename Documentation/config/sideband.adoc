@@ -6,7 +6,6 @@ sideband.allowControlCharacters::
 	a comma-separated list of the following keywords):
 +
 --
-	`default`::
 	`color`::
 		Allow ANSI color sequences, line feeds and horizontal tabs,
 		but mask all other control characters. This is the default.

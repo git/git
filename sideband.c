@@ -33,8 +33,8 @@ static enum {
 	ALLOW_ANSI_COLOR_SEQUENCES    = 1<<0,
 	ALLOW_ANSI_CURSOR_MOVEMENTS   = 1<<1,
 	ALLOW_ANSI_ERASE              = 1<<2,
-	ALLOW_DEFAULT_ANSI_SEQUENCES  = ALLOW_ANSI_COLOR_SEQUENCES,
 	ALLOW_ALL_CONTROL_CHARACTERS  = 1<<3,
+	ALLOW_DEFAULT_ANSI_SEQUENCES  = ALLOW_ANSI_COLOR_SEQUENCES
 } allow_control_characters = ALLOW_CONTROL_SEQUENCES_UNSET;
 
 static inline int skip_prefix_in_csv(const char *value, const char *prefix,
@@ -62,9 +62,7 @@ int sideband_allow_control_characters_config(const char *var, const char *value)
 
 	allow_control_characters = ALLOW_NO_CONTROL_CHARACTERS;
 	while (*value) {
-		if (skip_prefix_in_csv(value, "default", &value))
-			allow_control_characters |= ALLOW_DEFAULT_ANSI_SEQUENCES;
-		else if (skip_prefix_in_csv(value, "color", &value))
+		if (skip_prefix_in_csv(value, "color", &value))
 			allow_control_characters |= ALLOW_ANSI_COLOR_SEQUENCES;
 		else if (skip_prefix_in_csv(value, "cursor", &value))
 			allow_control_characters |= ALLOW_ANSI_CURSOR_MOVEMENTS;
