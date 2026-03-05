@@ -98,6 +98,17 @@ static int odb_source_files_freshen_object(struct odb_source *source,
 	return 0;
 }
 
+static int odb_source_files_write_object(struct odb_source *source,
+					 const void *buf, unsigned long len,
+					 enum object_type type,
+					 struct object_id *oid,
+					 struct object_id *compat_oid,
+					 unsigned flags)
+{
+	return odb_source_loose_write_object(source, buf, len, type,
+					     oid, compat_oid, flags);
+}
+
 struct odb_source_files *odb_source_files_new(struct object_database *odb,
 					      const char *path,
 					      bool local)
@@ -116,6 +127,7 @@ struct odb_source_files *odb_source_files_new(struct object_database *odb,
 	files->base.read_object_stream = odb_source_files_read_object_stream;
 	files->base.for_each_object = odb_source_files_for_each_object;
 	files->base.freshen_object = odb_source_files_freshen_object;
+	files->base.write_object = odb_source_files_write_object;
 
 	/*
 	 * Ideally, we would only ever store absolute paths in the source. This
