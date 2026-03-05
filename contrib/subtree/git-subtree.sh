@@ -315,6 +315,46 @@ cache_miss () {
 }
 
 # Usage: check_parents [REVS...]
+#
+# During a split, check that every commit in REVS has already been
+# processed via `process_split_commit`. If not, deepen the history
+# until it is.
+#
+# Commits authored by `subtree split` have to be created in the
+# same order as every other git commit: ancestor-first, with new
+# commits building on old commits. The traversal order normally
+# ensures this is the case, but it also excludes --rejoins commits
+# by default.
+#
+# The --rejoin tells us, "this mainline commit is equivalent to
+# this split commit." The relationship is only known for that
+# exact commit---and not before or after it. Frequently, commits
+# prior to a rejoin are not needed... but, just as often, they
+# are! Consider this history graph:
+#
+#              --D---
+#             /      \
+#         A--B--C--R--X--Y    main
+#                 /     /
+#          a--b--c     /      split
+#              \      /
+#               --e--/
+#
+# The main branch has commits A, B, and C. main is split into
+# commits a, b, and c. The split history is rejoined at R.
+#
+# There are at least two cases where we might need the A-B-C
+# history that is prior to R:
+#
+# 1. Commit D is based on history prior to R, but
+#    it isn't merged into mainline until after R.
+#
+# 2. Commit e is based on old split history. It is merged
+#    back into mainline with a subtree merge. Again, this
+#    happens after R.
+#
+# check_parents detects these cases and deepens the history
+# to the next available rejoin.
 check_parents () {
 	missed=$(cache_miss "$@") || exit $?
 	local indent=$(($indent + 1))
@@ -322,8 +362,20 @@ check_parents () {
 	do
 		if ! test -r "$cachedir/notree/$miss"
 		then
-			debug "incorrect order: $miss"
-			process_split_commit "$miss" ""
+			debug "found commit excluded by --rejoin: $miss. skipping to the next --rejoin..."
+			unrevs="$(find_existing_splits "$dir" "$miss" "$repository")" || exit 1
+
+			find_commits_to_split "$miss" "$unrevs" |
+			while read -r rev parents
+			do
+				process_split_commit "$rev" "$parents"
+			done
+
+			if ! test -r "$cachedir/$miss" &&
+				! test -r "$cachedir/notree/$miss"
+			then
+				die "failed to deepen history at $miss"
+			fi
 		fi
 	done
 }
