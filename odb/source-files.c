@@ -1,12 +1,15 @@
 #include "git-compat-util.h"
 #include "abspath.h"
 #include "chdir-notify.h"
+#include "gettext.h"
+#include "lockfile.h"
 #include "object-file.h"
 #include "odb.h"
 #include "odb/source.h"
 #include "odb/source-files.h"
 #include "packfile.h"
 #include "strbuf.h"
+#include "write-or-die.h"
 
 static void odb_source_files_reparent(const char *name UNUSED,
 				      const char *old_cwd,
@@ -138,6 +141,58 @@ static int odb_source_files_read_alternates(struct odb_source *source,
 	return 0;
 }
 
+static int odb_source_files_write_alternate(struct odb_source *source,
+					    const char *alternate)
+{
+	struct lock_file lock = LOCK_INIT;
+	char *path = xstrfmt("%s/%s", source->path, "info/alternates");
+	FILE *in, *out;
+	int found = 0;
+	int ret;
+
+	hold_lock_file_for_update(&lock, path, LOCK_DIE_ON_ERROR);
+	out = fdopen_lock_file(&lock, "w");
+	if (!out) {
+		ret = error_errno(_("unable to fdopen alternates lockfile"));
+		goto out;
+	}
+
+	in = fopen(path, "r");
+	if (in) {
+		struct strbuf line = STRBUF_INIT;
+
+		while (strbuf_getline(&line, in) != EOF) {
+			if (!strcmp(alternate, line.buf)) {
+				found = 1;
+				break;
+			}
+			fprintf_or_die(out, "%s\n", line.buf);
+		}
+
+		strbuf_release(&line);
+		fclose(in);
+	} else if (errno != ENOENT) {
+		ret = error_errno(_("unable to read alternates file"));
+		goto out;
+	}
+
+	if (found) {
+		rollback_lock_file(&lock);
+	} else {
+		fprintf_or_die(out, "%s\n", alternate);
+		if (commit_lock_file(&lock)) {
+			ret = error_errno(_("unable to move new alternates file into place"));
+			goto out;
+		}
+	}
+
+	ret = 0;
+
+out:
+	free(path);
+	return ret;
+}
+
 struct odb_source_files *odb_source_files_new(struct object_database *odb,
 					      const char *path,
 					      bool local)
@@ -159,6 +214,7 @@ struct odb_source_files *odb_source_files_new(struct object_database *odb,
 	files->base.write_object = odb_source_files_write_object;
 	files->base.write_object_stream = odb_source_files_write_object_stream;
 	files->base.read_alternates = odb_source_files_read_alternates;
+	files->base.write_alternate = odb_source_files_write_alternate;
 
 	/*
 	 * Ideally, we would only ever store absolute paths in the source. This
