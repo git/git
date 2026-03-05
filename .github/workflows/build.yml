@@ -45,3 +45,19 @@ jobs:
       run: |
         ./git --version
         ./git init --bare /tmp/smoke-test-repo
+
+    - name: Run tests
+      run: |
+        export PATH="/usr/lib/ccache:$PATH"
+        make test
+
+    - name: Print test failures
+      if: failure()
+      run: ci/print-test-failures.sh
+
+    - name: Upload failed tests' directories
+      if: failure() && env.FAILED_TEST_ARTIFACTS != ''
+      uses: actions/upload-artifact@v5
+      with:
+        name: failed-tests
+        path: ${{ env.FAILED_TEST_ARTIFACTS }}
