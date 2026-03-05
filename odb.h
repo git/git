@@ -433,18 +433,6 @@ enum odb_for_each_object_flags {
 };
 
 /*
- * A callback function that can be used to iterate through objects. If given,
- * the optional `oi` parameter will be populated the same as if you would call
- * `odb_read_object_info()`.
- *
- * Returning a non-zero error code will cause iteration to abort. The error
- * code will be propagated.
- */
-typedef int (*odb_for_each_object_cb)(const struct object_id *oid,
-				      struct object_info *oi,
-				      void *cb_data);
-
-/*
  * Iterate through all objects contained in the object database. Note that
  * objects may be iterated over multiple times in case they are either stored
  * in different backends or in case they are stored in multiple sources.

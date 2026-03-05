@@ -53,6 +53,18 @@ struct object_info;
 struct odb_read_stream;
 
 /*
+ * A callback function that can be used to iterate through objects. If given,
+ * the optional `oi` parameter will be populated the same as if you would call
+ * `odb_read_object_info()`.
+ *
+ * Returning a non-zero error code will cause iteration to abort. The error
+ * code will be propagated.
+ */
+typedef int (*odb_for_each_object_cb)(const struct object_id *oid,
+				      struct object_info *oi,
+				      void *cb_data);
+
+/*
  * The source is the part of the object database that stores the actual
  * objects. It thus encapsulates the logic to read and write the specific
  * on-disk format. An object database can have multiple sources:
@@ -150,6 +162,30 @@ struct odb_source {
 	int (*read_object_stream)(struct odb_read_stream **out,
 				  struct odb_source *source,
 				  const struct object_id *oid);
+
+	/*
+	 * This callback is expected to iterate over all objects stored in this
+	 * source and invoke the callback function for each of them. It is
+	 * valid to yield the same object multiple time. A non-zero exit code
+	 * from the object callback shall abort iteration.
+	 *
+	 * The optional `request` structure should serve as a template for
+	 * looking up object info for every individual iterated object. It
+	 * should not be modified directly and should instead be copied into a
+	 * separate `struct object_info` that gets passed to the callback. If
+	 * the caller passes a `NULL` pointer then the object itself shall not
+	 * be read.
+	 *
+	 * The callback is expected to return a negative error code in case the
+	 * iteration has failed to read all objects, 0 otherwise. When the
+	 * callback function returns a non-zero error code then that error code
+	 * should be returned.
+	 */
+	int (*for_each_object)(struct odb_source *source,
+			       const struct object_info *request,
+			       odb_for_each_object_cb cb,
+			       void *cb_data,
+			       unsigned flags);
 };
 
 /*
@@ -230,6 +266,35 @@ static inline int odb_source_read_object_stream(struct odb_read_stream **out,
 						const struct object_id *oid)
 {
 	return source->read_object_stream(out, source, oid);
+}
+
+/*
+ * Iterate through all objects contained in the given source and invoke the
+ * callback function for each of them. Returning a non-zero code from the
+ * callback function aborts iteration. There is no guarantee that objects
+ * are only iterated over once.
+ *
+ * The optional `request` structure serves as a template for retrieving the
+ * object info for each indvidual iterated object and will be populated as if
+ * `odb_source_read_object_info()` was called on the object. It will not be
+ * modified, the callback will instead be invoked with a separate `struct
+ * object_info` for every object. Object info will not be read when passing a
+ * `NULL` pointer.
+ *
+ * The flags is a bitfield of `ODB_FOR_EACH_OBJECT_*` flags. Not all flags may
+ * apply to a specific backend, so whether or not they are honored is defined
+ * by the implementation.
+ *
+ * Returns 0 when all objects have been iterated over, a negative error code in
+ * case iteration has failed, or a non-zero value returned from the callback.
+ */
+static inline int odb_source_for_each_object(struct odb_source *source,
+					     const struct object_info *request,
+					     odb_for_each_object_cb cb,
+					     void *cb_data,
+					     unsigned flags)
+{
+	return source->for_each_object(source, request, cb, cb_data, flags);
 }
 
 #endif

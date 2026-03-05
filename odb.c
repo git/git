@@ -984,20 +984,10 @@ int odb_for_each_object(struct object_database *odb,
 
 	odb_prepare_alternates(odb);
 	for (struct odb_source *source = odb->sources; source; source = source->next) {
-		struct odb_source_files *files = odb_source_files_downcast(source);
-
 		if (flags & ODB_FOR_EACH_OBJECT_LOCAL_ONLY && !source->local)
 			continue;
 
-		if (!(flags & ODB_FOR_EACH_OBJECT_PROMISOR_ONLY)) {
-			ret = odb_source_loose_for_each_object(source, request,
-							       cb, cb_data, flags);
-			if (ret)
-				return ret;
-		}
-
-		ret = packfile_store_for_each_object(files->packed, request,
-						     cb, cb_data, flags);
+		ret = odb_source_for_each_object(source, request, cb, cb_data, flags);
 		if (ret)
 			return ret;
 	}
