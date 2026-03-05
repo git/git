@@ -101,13 +101,13 @@ test:osx:
   parallel:
     matrix:
       - jobname: osx-clang
-        image: macos-14-xcode-15
+        image: macos-15-xcode-16
         CC: clang
       - jobname: osx-reftable
-        image: macos-14-xcode-15
+        image: macos-15-xcode-16
         CC: clang
       - jobname: osx-meson
-        image: macos-14-xcode-15
+        image: macos-15-xcode-16
         CC: clang
   artifacts:
     paths:
