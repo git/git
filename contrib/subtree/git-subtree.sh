@@ -519,6 +519,31 @@ find_existing_splits () {
 	done || exit $?
 }
 
+# Usage: find_commits_to_split REV UNREVS [ARGS...]
+#
+# List each commit to split, with its parents.
+#
+# Specify the starting REV for the split, which is usually
+# a branch tip. Populate UNREVS with the last --rejoin for
+# this prefix, if any. Typically, `subtree split` ignores
+# history prior to the last --rejoin... unless and if it
+# becomes necessary to consider it. `find_existing_splits` is
+# a convenient source of UNREVS.
+#
+# Remaining arguments are passed to rev-list.
+#
+# Outputs commits in ancestor-first order, one per line, with
+# parent information. Outputs all parents before any child.
+find_commits_to_split() {
+	assert test $# -ge 2
+	rev="$1"
+	unrevs="$2"
+	shift 2
+
+	echo "$unrevs" |
+	git rev-list --topo-order --reverse --parents --stdin "$rev" "$@"
+}
+
 # Usage: copy_commit REV TREE FLAGS_STR
 copy_commit () {
 	assert test $# = 3
@@ -976,12 +1001,11 @@ cmd_split () {
 	# We can't restrict rev-list to only $dir here, because some of our
 	# parents have the $dir contents the root, and those won't match.
 	# (and rev-list --follow doesn't seem to solve this)
-	grl='git rev-list --topo-order --reverse --parents $rev $unrevs'
-	revmax=$(eval "$grl" | wc -l)
+	revmax="$(find_commits_to_split "$rev" "$unrevs" --count)"
 	revcount=0
 	createcount=0
 	extracount=0
-	eval "$grl" |
+	find_commits_to_split "$rev" "$unrevs" |
 	while read rev parents
 	do
 		process_split_commit "$rev" "$parents"
