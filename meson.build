@@ -397,6 +397,7 @@ libgit_sources = [
   'object-name.c',
   'object.c',
   'odb.c',
+  'odb/source.c',
   'odb/streaming.c',
   'oid-array.c',
   'oidmap.c',
