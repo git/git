@@ -3,6 +3,7 @@
 
 #include "hashmap.h"
 #include "object.h"
+#include "odb/source.h"
 #include "oidset.h"
 #include "oidmap.h"
 #include "string-list.h"
@@ -29,50 +30,6 @@ extern int fetch_if_missing;
  * `err` must not be null.
  */
 char *compute_alternate_path(const char *path, struct strbuf *err);
-
-/*
- * The source is the part of the object database that stores the actual
- * objects. It thus encapsulates the logic to read and write the specific
- * on-disk format. An object database can have multiple sources:
- *
- *   - The primary source, which is typically located in "$GIT_DIR/objects".
- *     This is where new objects are usually written to.
- *
- *   - Alternate sources, which are configured via "objects/info/alternates" or
- *     via the GIT_ALTERNATE_OBJECT_DIRECTORIES environment variable. These
- *     alternate sources are only used to read objects.
- */
-struct odb_source {
-	struct odb_source *next;
-
-	/* Object database that owns this object source. */
-	struct object_database *odb;
-
-	/* Private state for loose objects. */
-	struct odb_source_loose *loose;
-
-	/* Should only be accessed directly by packfile.c and midx.c. */
-	struct packfile_store *packfiles;
-
-	/*
-	 * Figure out whether this is the local source of the owning
-	 * repository, which would typically be its ".git/objects" directory.
-	 * This local object directory is usually where objects would be
-	 * written to.
-	 */
-	bool local;
-
-	/*
-	 * This object store is ephemeral, so there is no need to fsync.
-	 */
-	int will_destroy;
-
-	/*
-	 * Path to the source. If this is a relative path, it is relative to
-	 * the current working directory.
-	 */
-	char *path;
-};
 
 struct packed_git;
 struct packfile_store;
@@ -382,30 +339,6 @@ struct object_info {
  */
 #define OBJECT_INFO_INIT { 0 }
 
-/* Flags that can be passed to `odb_read_object_info_extended()`. */
-enum object_info_flags {
-	/* Invoke lookup_replace_object() on the given hash. */
-	OBJECT_INFO_LOOKUP_REPLACE = (1 << 0),
-
-	/* Do not reprepare object sources when the first lookup has failed. */
-	OBJECT_INFO_QUICK = (1 << 1),
-
-	/*
-	 * Do not attempt to fetch the object if missing (even if fetch_is_missing is
-	 * nonzero).
-	 */
-	OBJECT_INFO_SKIP_FETCH_OBJECT = (1 << 2),
-
-	/* Die if object corruption (not just an object being missing) was detected. */
-	OBJECT_INFO_DIE_IF_CORRUPT = (1 << 3),
-
-	/*
-	 * This is meant for bulk prefetching of missing blobs in a partial
-	 * clone. Implies OBJECT_INFO_SKIP_FETCH_OBJECT and OBJECT_INFO_QUICK.
-	 */
-	OBJECT_INFO_FOR_PREFETCH = (OBJECT_INFO_SKIP_FETCH_OBJECT | OBJECT_INFO_QUICK),
-};
-
 /*
  * Read object info from the object database and populate the `object_info`
  * structure. Returns 0 on success, a negative error code otherwise.
@@ -500,18 +433,6 @@ enum odb_for_each_object_flags {
 };
 
 /*
- * A callback function that can be used to iterate through objects. If given,
- * the optional `oi` parameter will be populated the same as if you would call
- * `odb_read_object_info()`.
- *
- * Returning a non-zero error code will cause iteration to abort. The error
- * code will be propagated.
- */
-typedef int (*odb_for_each_object_cb)(const struct object_id *oid,
-				      struct object_info *oi,
-				      void *cb_data);
-
-/*
  * Iterate through all objects contained in the object database. Note that
  * objects may be iterated over multiple times in case they are either stored
  * in different backends or in case they are stored in multiple sources.
@@ -578,5 +499,10 @@ struct odb_write_stream {
 int odb_write_object_stream(struct object_database *odb,
 			    struct odb_write_stream *stream, size_t len,
 			    struct object_id *oid);
+
+void parse_alternates(const char *string,
+		      int sep,
+		      const char *relative_base,
+		      struct strvec *out);
 
 #endif /* ODB_H */
