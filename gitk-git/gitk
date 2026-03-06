@@ -11796,7 +11796,7 @@ proc prefspage_general {notebook} {
 
 proc prefspage_colors {notebook} {
     global bgcolor fgcolor ctext diffcolors selectbgcolor markbgcolor
-    global diffbgcolors
+    global diffbgcolors linkfgcolor
     global themeloader
 
     set page [create_prefs_page $notebook.colors]
@@ -11873,6 +11873,11 @@ proc prefspage_colors {notebook} {
         -command [list choosecolor selectbgcolor {} $page [mc "background"]]
     grid x $page.selbgbut $page.selbgsep -sticky w
 
+    label $page.linkfg -padx 40 -relief sunk -background $linkfgcolor
+    ttk::button $page.linkfgbut -text [mc "Link"] \
+        -command [list choosecolor linkfgcolor {} $page [mc "link"]]
+    grid x $page.linkfgbut $page.linkfg -sticky w
+
     grid columnconfigure $page 2 -weight 1
 
     return $page
@@ -11880,7 +11885,7 @@ proc prefspage_colors {notebook} {
 
 proc prefspage_set_colorswatches {page} {
     global bgcolor fgcolor ctext diffcolors selectbgcolor markbgcolor
-    global diffbgcolors
+    global diffbgcolors linkfgcolor
 
     $page.bg configure -background $bgcolor
     $page.fg configure -background $fgcolor
@@ -11891,6 +11896,7 @@ proc prefspage_set_colorswatches {page} {
     $page.hunksep configure -background [lindex $diffcolors 2]
     $page.markbgsep configure -background $markbgcolor
     $page.selbgsep configure -background $selectbgcolor
+    $page.linkfg configure -background $linkfgcolor
 }
 
 proc prefspage_fonts {notebook} {
