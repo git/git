@@ -1341,46 +1341,25 @@ int amend_file_with_trailers(const char *path,
 			     const struct strvec *trailer_args)
 {
 	struct strbuf buf = STRBUF_INIT;
-	struct strvec stripped_trailer_args = STRVEC_INIT;
 	int ret = 0;
-	size_t i;
 
 	if (!trailer_args)
 		BUG("amend_file_with_trailers called with NULL trailer_args");
 	if (!trailer_args->nr)
 		return 0;
 
-	for (i = 0; i < trailer_args->nr; i++) {
-		const char *txt = trailer_args->v[i];
-
-		/*
-		 * Historically amend_file_with_trailers() passed its arguments
-		 * to "git interpret-trailers", which expected argv entries in
-		 * "--trailer=<trailer>" form. Continue to accept those for
-		 * existing callers, but pass only the value portion to the
-		 * in-process implementation.
-		 */
-		skip_prefix(txt, "--trailer=", &txt);
-		if (!*txt) {
-			ret = error(_("empty --trailer argument"));
-			goto out;
-		}
-		strvec_push(&stripped_trailer_args, txt);
-	}
-
-	if (validate_trailer_args(&stripped_trailer_args)) {
+	if (validate_trailer_args(trailer_args)) {
 		ret = -1;
 		goto out;
 	}
 	if (strbuf_read_file(&buf, path, 0) < 0)
 		ret = error_errno(_("could not read '%s'"), path);
 	else
-		amend_strbuf_with_trailers(&buf, &stripped_trailer_args);
+		amend_strbuf_with_trailers(&buf, trailer_args);
 
 	if (!ret)
 		ret = write_file_in_place(path, &buf);
 out:
-	strvec_clear(&stripped_trailer_args);
 	strbuf_release(&buf);
 	return ret;
 }
