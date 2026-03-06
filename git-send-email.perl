@@ -1474,6 +1474,8 @@ sub smtp_auth_maybe {
 						user     => $cred->{'username'},
 						pass     => $cred->{'password'},
 						authname => $cred->{'username'},
+						host     => $smtp_server,
+						(defined $smtp_server_port ? (port => $smtp_server_port) : ()),
 					}
 				);
 				$result = $smtp->auth($sasl);
