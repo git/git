@@ -792,6 +792,7 @@ static int group_slide_up(xdfile_t *xdf, struct xdlgroup *g)
  */
 int xdl_change_compact(xdfile_t *xdf, xdfile_t *xdfo, long flags) {
 	struct xdlgroup g, go;
+	struct xdlgroup g_orig;
 	long earliest_end, end_matching_other;
 	long groupsize;
 
@@ -805,10 +806,12 @@ int xdl_change_compact(xdfile_t *xdf, xdfile_t *xdfo, long flags) {
 		if (g.end == g.start)
 			goto next;
 
+		g_orig = g;
+
 		/*
 		 * Now shift the change up and then down as far as possible in
 		 * each direction. If it bumps into any other changes, merge
-		 * them.
+		 * them and restart the process.
 		 */
 		do {
 			groupsize = g.end - g.start;
@@ -861,7 +864,8 @@ int xdl_change_compact(xdfile_t *xdf, xdfile_t *xdfo, long flags) {
 			/*
 			 * Move the possibly merged group of changes back to
 			 * line up with the last group of changes from the
-			 * other file that it can align with.
+			 * other file that it can align with. This avoids breaking
+			 * a single change into a separate addition/deletion.
 			 */
 			while (go.end == go.start) {
 				if (group_slide_up(xdf, &g))
@@ -911,6 +915,45 @@ int xdl_change_compact(xdfile_t *xdf, xdfile_t *xdfo, long flags) {
 					BUG("best shift unreached");
 				if (group_previous(xdfo, &go))
 					BUG("group sync broken sliding to blank line");
+			}
+		}
+
+		/*
+		 * If we merged change groups during shifting, the new
+		 * combined group could now have matching lines in both files,
+		 * even if the original separate groups did not. Re-diff the
+		 * new group to find these matching lines to mark them as
+		 * unchanged.
+		 *
+		 * Only do this if the corresponding group in the other file is
+		 * non-empty, as it's trivial otherwise.
+		 *
+		 * Only do this for histogram diff as its LCS algorithm allows
+		 * for this scenario. In contrast, patience diff finds LCS
+		 * of unique lines that groups cannot be shifted across.
+		 * Myer's diff (standalone or used as fall-back in patience
+		 * diff) already finds minimal edits so it is not possible for
+		 * shifted groups to result in a smaller diff. (Without
+		 * XDF_NEED_MINIMAL, Myer's isn't technically guaranteed to be
+		 * minimal, but it should be so most of the time)
+		 */
+		if (go.end != go.start &&
+				XDF_DIFF_ALG(flags) == XDF_HISTOGRAM_DIFF &&
+				(g.start != g_orig.start ||
+				 g.end != g_orig.end)) {
+			xpparam_t xpp;
+			xdfenv_t xe;
+
+			memset(&xpp, 0, sizeof(xpp));
+			xpp.flags = flags & ~XDF_DIFF_ALGORITHM_MASK;
+
+			xe.xdf1 = *xdf;
+			xe.xdf2 = *xdfo;
+
+			if (xdl_fall_back_diff(&xe, &xpp,
+					       g.start + 1, g.end - g.start,
+					       go.start + 1, go.end - go.start)) {
+				return -1;
 			}
 		}
 
