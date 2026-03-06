@@ -1820,6 +1820,9 @@ int cmd_commit(int argc,
 	argc = parse_and_validate_options(argc, argv, builtin_commit_options,
 					  builtin_commit_usage,
 					  prefix, current_head, &s);
+	if (trailer_args.nr)
+		trailer_config_init();
+
 	if (verbose == -1)
 		verbose = (config_commit_verbose < 0) ? 0 : config_commit_verbose;
 

@@ -7,6 +7,7 @@
 #include "string-list.h"
 #include "run-command.h"
 #include "commit.h"
+#include "strvec.h"
 #include "trailer.h"
 #include "list.h"
 #include "tempfile.h"
@@ -774,6 +775,35 @@ void parse_trailers_from_command_line_args(struct list_head *arg_head,
 	free(cl_separators);
 }
 
+int validate_trailer_args(const struct strvec *cli_args)
+{
+	char *cl_separators;
+	int ret = 0;
+
+	trailer_config_init();
+
+	cl_separators = xstrfmt("=%s", separators);
+
+	for (size_t i = 0; i < cli_args->nr; i++) {
+		const char *txt = cli_args->v[i];
+		ssize_t separator_pos;
+
+		if (!*txt) {
+			ret = error(_("empty --trailer argument"));
+			goto out;
+		}
+		separator_pos = find_separator(txt, cl_separators);
+		if (separator_pos == 0) {
+			ret = error(_("invalid trailer '%s': missing key before separator"),
+				    txt);
+			goto out;
+		}
+	}
+out:
+	free(cl_separators);
+	return ret;
+}
+
 static const char *next_line(const char *str)
 {
 	const char *nl = strchrnul(str, '\n');
@@ -1258,16 +1288,101 @@ struct tempfile *trailer_create_in_place_tempfile(const char *file)
 	return tempfile;
 }
 
-int amend_file_with_trailers(const char *path, const struct strvec *trailer_args)
+int amend_strbuf_with_trailers(struct strbuf *buf,
+				const struct strvec *trailer_args)
 {
-	struct child_process run_trailer = CHILD_PROCESS_INIT;
+	struct process_trailer_options opts = PROCESS_TRAILER_OPTIONS_INIT;
+	LIST_HEAD(new_trailer_head);
+	struct strbuf out = STRBUF_INIT;
+	size_t i;
+	int ret = 0;
 
-	run_trailer.git_cmd = 1;
-	strvec_pushl(&run_trailer.args, "interpret-trailers",
-		     "--in-place", "--no-divider",
-		     path, NULL);
-	strvec_pushv(&run_trailer.args, trailer_args->v);
-	return run_command(&run_trailer);
+	opts.no_divider = 1;
+
+	for (i = 0; i < trailer_args->nr; i++) {
+		const char *text = trailer_args->v[i];
+		struct new_trailer_item *item;
+
+		if (!*text) {
+			ret = error(_("empty --trailer argument"));
+			goto out;
+		}
+		item = xcalloc(1, sizeof(*item));
+		item->text = xstrdup(text);
+		list_add_tail(&item->list, &new_trailer_head);
+	}
+
+	process_trailers(&opts, &new_trailer_head, buf, &out);
+
+	strbuf_swap(buf, &out);
+out:
+	strbuf_release(&out);
+	free_trailers(&new_trailer_head);
+
+	return ret;
+}
+
+static int write_file_in_place(const char *path, const struct strbuf *buf)
+{
+	struct tempfile *tempfile = trailer_create_in_place_tempfile(path);
+	if (!tempfile)
+		return -1;
+
+	if (write_in_full(tempfile->fd, buf->buf, buf->len) < 0)
+		return error_errno(_("could not write to temporary file"));
+
+	if (rename_tempfile(&tempfile, path))
+		return error_errno(_("could not rename temporary file to %s"), path);
+
+	return 0;
+}
+
+int amend_file_with_trailers(const char *path,
+			     const struct strvec *trailer_args)
+{
+	struct strbuf buf = STRBUF_INIT;
+	struct strvec stripped_trailer_args = STRVEC_INIT;
+	int ret = 0;
+	size_t i;
+
+	if (!trailer_args)
+		BUG("amend_file_with_trailers called with NULL trailer_args");
+	if (!trailer_args->nr)
+		return 0;
+
+	for (i = 0; i < trailer_args->nr; i++) {
+		const char *txt = trailer_args->v[i];
+
+		/*
+		 * Historically amend_file_with_trailers() passed its arguments
+		 * to "git interpret-trailers", which expected argv entries in
+		 * "--trailer=<trailer>" form. Continue to accept those for
+		 * existing callers, but pass only the value portion to the
+		 * in-process implementation.
+		 */
+		skip_prefix(txt, "--trailer=", &txt);
+		if (!*txt) {
+			ret = error(_("empty --trailer argument"));
+			goto out;
+		}
+		strvec_push(&stripped_trailer_args, txt);
+	}
+
+	if (validate_trailer_args(&stripped_trailer_args)) {
+		ret = -1;
+		goto out;
+	}
+	if (strbuf_read_file(&buf, path, 0) < 0)
+		ret = error_errno(_("could not read '%s'"), path);
+	else
+		amend_strbuf_with_trailers(&buf, &stripped_trailer_args);
+
+	if (!ret)
+		ret = write_file_in_place(path, &buf);
+out:
+	strvec_clear(&stripped_trailer_args);
+	strbuf_release(&buf);
+	return ret;
 }
 
 void process_trailers(const struct process_trailer_options *opts,

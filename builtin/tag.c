@@ -568,6 +568,9 @@ int cmd_tag(int argc,
 	if (cmdmode == 'l')
 		setup_auto_pager("tag", 1);
 
+	if (trailer_args.nr)
+		trailer_config_init();
+
 	if (opt.sign == -1)
 		opt.sign = cmdmode ? 0 : config_sign_tag > 0;
 
