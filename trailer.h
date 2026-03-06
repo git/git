@@ -202,4 +202,20 @@ void trailer_iterator_release(struct trailer_iterator *iter);
  */
 int amend_file_with_trailers(const char *path, const struct strvec *trailer_args);
 
+/*
+ * Create a tempfile ""git-interpret-trailers-XXXXXX" in the same
+ * directory as file.
+ */
+struct tempfile *trailer_create_in_place_tempfile(const char *file);
+
+/*
+ * Rewrite the contents of input by processing its trailer block according to
+ * opts and (optionally) appending trailers from new_trailer_head.
+ *
+ * The rewritten message is appended to out (callers should strbuf_reset()
+ * first if needed).
+ */
+void process_trailers(const struct process_trailer_options *opts,
+		      struct list_head *new_trailer_head,
+		      struct strbuf *input, struct strbuf *out);
 #endif /* TRAILER_H */
