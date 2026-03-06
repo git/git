@@ -183,4 +183,18 @@ test_expect_success 'subsection aliases listed in help -a' '
 	test_grep "förgrena" output
 '
 
+test_expect_success 'empty subsection treated as no subsection' '
+	test_config "alias..something" "!echo foobar" &&
+	git something >actual &&
+	echo foobar >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'alias with leading dot via subsection syntax' '
+	test_config alias.".something".command "!echo foobar" &&
+	git .something >actual &&
+	echo foobar >expect &&
+	test_cmp expect actual
+'
+
 test_done

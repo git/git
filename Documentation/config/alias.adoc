@@ -30,13 +30,14 @@ Examples:
 ----
 +
 With a Git alias defined, e.g.,
-
++
     $ git config --global alias.last "cat-file commit HEAD"
     # Which is equivalent to
     $ git config --global alias.last.command "cat-file commit HEAD"
++
+`git last` is equivalent to `git cat-file commit HEAD`.
 
-`git last` is equivalent to `git cat-file commit HEAD`. To avoid
-confusion and troubles with script usage, aliases that
+To avoid confusion and troubles with script usage, aliases that
 hide existing Git commands are ignored except for deprecated
 commands.  Arguments are split by
 spaces, the usual shell quoting and escaping are supported.

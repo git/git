@@ -30,6 +30,10 @@ static int config_alias_cb(const char *var, const char *value,
 	 * - [alias "name"]
 	 *       command = value  (with subsection, case-sensitive)
 	 */
+	/* Treat [alias ""] (empty subsection) the same as plain [alias]. */
+	if (subsection && !subsection_len)
+		subsection = NULL;
+
 	if (subsection && strcmp(key, "command"))
 		return 0;
 
