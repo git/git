@@ -2549,10 +2549,26 @@ test_expect_success 'format-patch respects format.noprefix' '
 	grep "^--- blorp" actual
 '
 
+test_expect_success 'format.noprefix=false' '
+	git -c format.noprefix=false format-patch -1 --stdout >actual &&
+	grep "^--- a/blorp" actual
+'
+
 test_expect_success 'format-patch --default-prefix overrides format.noprefix' '
 	git -c format.noprefix \
 		format-patch -1 --default-prefix --stdout >actual &&
 	grep "^--- a/blorp" actual
+'
+
+test_expect_success 'errors on format.noprefix which is not boolean' '
+	cat >expect <<-EOF &&
+	fatal: bad boolean config value ${SQ}not-a-bool${SQ} for ${SQ}format.noprefix${SQ}
+	hint: ${SQ}format.noprefix${SQ} used to accept any value and treat that as ${SQ}true${SQ}.
+	hint: Now it only accepts boolean values, like what ${SQ}diff.noprefix${SQ} does.
+	EOF
+	test_must_fail git -c format.noprefix=not-a-bool \
+		format-patch -1 --stdout 2>actual &&
+	test_cmp expect actual
 '
 
 test_done
