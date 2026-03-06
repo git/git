@@ -35,7 +35,7 @@ The people who may need to know are the ones who worked on the code
 you are touching.  These people happen to be the ones who are
 most likely to be knowledgeable enough to help you, but
 they have no obligation to help you (i.e. you ask them for help,
-you don't demand).  +git log -p {litdd} _$area_you_are_modifying_+ would
+you don't demand).  +git log -p \-- _$area_you_are_modifying_+ would
 help you find out who they are.
 
 . You get comments and suggestions for improvements.  You may even get
