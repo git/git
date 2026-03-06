@@ -5654,6 +5654,12 @@ struct string_entry {
 	char string[FLEX_ARRAY];
 };
 
+static void free_string_entry(void *e)
+{
+	struct string_entry *entry = container_of(e, struct string_entry, entry);
+	free(entry);
+}
+
 struct label_state {
 	struct oidmap commit2label;
 	struct hashmap labels;
@@ -6044,8 +6050,8 @@ static int make_script_with_merges(struct pretty_print_context *pp,
 	oidset_clear(&interesting);
 	oidset_clear(&child_seen);
 	oidset_clear(&shown);
-	oidmap_clear(&commit2todo, 1);
-	oidmap_clear(&state.commit2label, 1);
+	oidmap_clear_with_free(&commit2todo, free_string_entry);
+	oidmap_clear_with_free(&state.commit2label, free_string_entry);
 	hashmap_clear_and_free(&state.labels, struct labels_entry, entry);
 	strbuf_release(&state.buf);
 
