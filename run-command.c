@@ -1971,7 +1971,7 @@ int run_auto_maintenance(int quiet)
 	return run_command(&maint);
 }
 
-void prepare_other_repo_env(struct strvec *env, const char *new_git_dir)
+void sanitize_repo_env(struct strvec *env)
 {
 	const char * const *var;
 
@@ -1980,6 +1980,11 @@ void prepare_other_repo_env(struct strvec *env, const char *new_git_dir)
 		    strcmp(*var, CONFIG_COUNT_ENVIRONMENT))
 			strvec_push(env, *var);
 	}
+}
+
+void prepare_other_repo_env(struct strvec *env, const char *new_git_dir)
+{
+	sanitize_repo_env(env);
 	strvec_pushf(env, "%s=%s", GIT_DIR_ENVIRONMENT, new_git_dir);
 }
 
