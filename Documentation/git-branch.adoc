@@ -17,7 +17,8 @@ git branch [--color[=<when>] | --no-color] [--show-current]
 	   [(-r|--remotes) | (-a|--all)]
 	   [--list] [<pattern>...]
 git branch [--track[=(direct|inherit)] | --no-track] [-f]
-	   [--recurse-submodules] <branch-name> [<start-point>]
+	   [--recurse-submodules] [--name-prefix=<token>]
+           <branch-name> [<start-point>]
 git branch (--set-upstream-to=<upstream>|-u <upstream>) [<branch-name>]
 git branch --unset-upstream [<branch-name>]
 git branch (-m|-M) [<old-branch>] <new-branch>
@@ -63,6 +64,10 @@ in which case it defaults to `HEAD`.
 Note that this will create the new branch, but it will not switch the
 working tree to it; use `git switch <new-branch>` to switch to the
 new branch.
+
+With a `--name-prefix` option, you can add a prefix to the branch to create.
+This can either a simple name, or a token. Currently, only '@{current}' is
+managed as token, and will use the current branch name as prefix.
 
 When a local branch is started off a remote-tracking branch, Git sets up the
 branch (specifically the `branch.<name>.remote` and `branch.<name>.merge`
@@ -318,6 +323,10 @@ superproject's "origin/main", but tracks the submodule's "origin/main".
 	A string that interpolates `%(fieldname)` from a branch ref being shown
 	and the object it points at.  _<format>_ is the same as
 	that of linkgit:git-for-each-ref[1].
+
+`--name-prefix <token>`::
+	A string that will be used as prefix to the name of the new branch to
+        create. Can be '@{current}' to use the current branch's name.
 
 _<branch-name>_::
 	The name of the branch to create or delete.
