@@ -93,35 +93,37 @@ static int parse_opt_parse(const struct option *opt, const char *arg,
 	return 0;
 }
 
-static struct tempfile *trailers_tempfile;
 
-static FILE *create_in_place_tempfile(const char *file)
+static struct tempfile *create_in_place_tempfile(const char *file)
 {
+	struct tempfile *tempfile = NULL;
 	struct stat st;
 	struct strbuf filename_template = STRBUF_INIT;
 	const char *tail;
-	FILE *outfile;
 
-	if (stat(file, &st))
-		die_errno(_("could not stat %s"), file);
-	if (!S_ISREG(st.st_mode))
-		die(_("file %s is not a regular file"), file);
-	if (!(st.st_mode & S_IWUSR))
-		die(_("file %s is not writable by user"), file);
-
+	if (stat(file, &st)) {
+		error_errno(_("could not stat %s"), file);
+		return NULL;
+	}
+	if (!S_ISREG(st.st_mode)) {
+		error(_("file %s is not a regular file"), file);
+		return NULL;
+	}
+	if (!(st.st_mode & S_IWUSR)) {
+		error(_("file %s is not writable by user"), file);
+		return NULL;
+	}
 	/* Create temporary file in the same directory as the original */
-	tail = strrchr(file, '/');
+	tail = find_last_dir_sep(file);
 	if (tail)
 		strbuf_add(&filename_template, file, tail - file + 1);
 	strbuf_addstr(&filename_template, "git-interpret-trailers-XXXXXX");
 
-	trailers_tempfile = xmks_tempfile_m(filename_template.buf, st.st_mode);
-	strbuf_release(&filename_template);
-	outfile = fdopen_tempfile(trailers_tempfile, "w");
-	if (!outfile)
-		die_errno(_("could not open temporary file"));
+	tempfile = mks_tempfile_m(filename_template.buf, st.st_mode);
 
-	return outfile;
+	strbuf_release(&filename_template);
+
+	return tempfile;
 }
 
 static void read_input_file(struct strbuf *sb, const char *file)
@@ -178,20 +180,25 @@ static void interpret_trailers(const struct process_trailer_options *opts,
 {
 	struct strbuf input = STRBUF_INIT;
 	struct strbuf out = STRBUF_INIT;
-	FILE *outfile = stdout;
+	struct tempfile *tempfile = NULL;
+	int fd = 1;
 
 	trailer_config_init();
 
 	read_input_file(&input, file);
 
-	if (opts->in_place)
-		outfile = create_in_place_tempfile(file);
-
+	if (opts->in_place) {
+		tempfile = create_in_place_tempfile(file);
+		if (!tempfile)
+			die(NULL);
+		fd = tempfile->fd;
+	}
 	process_trailers(opts, new_trailer_head, &input, &out);
 
-	strbuf_write(&out, outfile);
+	if (write_in_full(fd, out.buf, out.len) < 0)
+		die_errno(_("could not write to temporary file '%s'"), file);
 	if (opts->in_place)
-		if (rename_tempfile(&trailers_tempfile, file))
+		if (rename_tempfile(&tempfile, file))
 			die_errno(_("could not rename temporary file to %s"), file);
 
 	strbuf_release(&input);
