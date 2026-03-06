@@ -105,7 +105,7 @@ int for_each_bitmapped_object(struct bitmap_index *bitmap_git,
  * "pack.preferBitmapTips" and invoke the callback on each function.
  */
 void for_each_preferred_bitmap_tip(struct repository *repo,
-				   each_ref_fn cb, void *cb_data);
+				   refs_for_each_cb cb, void *cb_data);
 
 #define GIT_TEST_PACK_USE_BITMAP_BOUNDARY_TRAVERSAL \
 	"GIT_TEST_PACK_USE_BITMAP_BOUNDARY_TRAVERSAL"

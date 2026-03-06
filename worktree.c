@@ -595,7 +595,7 @@ void strbuf_worktree_ref(const struct worktree *wt,
 	strbuf_addstr(sb, refname);
 }
 
-int other_head_refs(each_ref_fn fn, void *cb_data)
+int other_head_refs(refs_for_each_cb fn, void *cb_data)
 {
 	struct worktree **worktrees, **p;
 	struct strbuf refname = STRBUF_INIT;

@@ -613,13 +613,22 @@ static int opt_with_value(const char *arg, const char *opt, const char **value)
 
 static void handle_ref_opt(const char *pattern, const char *prefix)
 {
-	if (pattern)
-		refs_for_each_glob_ref_in(get_main_ref_store(the_repository),
-					  show_reference, pattern, prefix,
-					  NULL);
-	else
-		refs_for_each_ref_in(get_main_ref_store(the_repository),
-				     prefix, show_reference, NULL);
+	if (pattern) {
+		struct refs_for_each_ref_options opts = {
+			.pattern = pattern,
+			.prefix = prefix,
+			.trim_prefix = prefix ? strlen(prefix) : 0,
+		};
+		refs_for_each_ref_ext(get_main_ref_store(the_repository),
+				      show_reference, NULL, &opts);
+	} else {
+		struct refs_for_each_ref_options opts = {
+			.prefix = prefix,
+			.trim_prefix = strlen(prefix),
+		};
+		refs_for_each_ref_ext(get_main_ref_store(the_repository),
+				      show_reference, NULL, &opts);
+	}
 	clear_ref_exclusions(&ref_excludes);
 }
 
@@ -931,14 +940,13 @@ int cmd_rev_parse(int argc,
 				continue;
 			}
 			if (!strcmp(arg, "--bisect")) {
-				refs_for_each_fullref_in(get_main_ref_store(the_repository),
-							 "refs/bisect/bad",
-							 NULL, show_reference,
-							 NULL);
-				refs_for_each_fullref_in(get_main_ref_store(the_repository),
-							 "refs/bisect/good",
-							 NULL, anti_reference,
-							 NULL);
+				struct refs_for_each_ref_options opts = { 0 };
+				opts.prefix = "refs/bisect/bad";
+				refs_for_each_ref_ext(get_main_ref_store(the_repository),
+						      show_reference, NULL, &opts);
+				opts.prefix = "refs/bisect/good";
+				refs_for_each_ref_ext(get_main_ref_store(the_repository),
+						      anti_reference, NULL, &opts);
 				continue;
 			}
 			if (opt_with_value(arg, "--branches", &arg)) {
