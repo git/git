@@ -1417,7 +1417,7 @@ else
     'getpagesize' : [],
   }
 
-  if get_option('b_sanitize').contains('address')
+  if get_option('b_sanitize').contains('address') or get_option('b_sanitize').contains('leak')
     libgit_c_args += '-DNO_MMAP'
     libgit_sources += 'compat/mmap.c'
   else
