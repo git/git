@@ -723,6 +723,124 @@ test_expect_success 'after fetching descendants of non-promisor commits, gc work
 	git -C partial gc --prune=now
 '
 
+# Test clone.<url>.defaultObjectFilter config
+
+test_expect_success 'setup for clone.defaultObjectFilter tests' '
+	git init default-filter-src &&
+	echo "small" >default-filter-src/small.txt &&
+	dd if=/dev/zero of=default-filter-src/large.bin bs=1024 count=100 2>/dev/null &&
+	git -C default-filter-src add . &&
+	git -C default-filter-src commit -m "initial" &&
+
+	git clone --bare "file://$(pwd)/default-filter-src" default-filter-srv.bare &&
+	git -C default-filter-srv.bare config --local uploadpack.allowfilter 1 &&
+	git -C default-filter-srv.bare config --local uploadpack.allowanysha1inwant 1
+'
+
+test_expect_success 'clone with clone.<url>.defaultObjectFilter applies filter' '
+	SERVER_URL="file://$(pwd)/default-filter-srv.bare" &&
+	git -c "clone.$SERVER_URL.defaultObjectFilter=blob:limit=1k" clone \
+		"$SERVER_URL" default-filter-clone &&
+
+	echo true >expect &&
+	git -C default-filter-clone config --local remote.origin.promisor >actual &&
+	test_cmp expect actual &&
+
+	echo "blob:limit=1024" >expect &&
+	git -C default-filter-clone config --local remote.origin.partialclonefilter >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'clone with --filter overrides clone.<url>.defaultObjectFilter' '
+	SERVER_URL="file://$(pwd)/default-filter-srv.bare" &&
+	git -c "clone.$SERVER_URL.defaultObjectFilter=blob:limit=1k" \
+		clone --filter=blob:none "$SERVER_URL" default-filter-override &&
+
+	echo "blob:none" >expect &&
+	git -C default-filter-override config --local remote.origin.partialclonefilter >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'clone with clone.<url>.defaultObjectFilter=blob:none works' '
+	SERVER_URL="file://$(pwd)/default-filter-srv.bare" &&
+	git -c "clone.$SERVER_URL.defaultObjectFilter=blob:none" clone \
+		"$SERVER_URL" default-filter-blobnone &&
+
+	echo true >expect &&
+	git -C default-filter-blobnone config --local remote.origin.promisor >actual &&
+	test_cmp expect actual &&
+
+	echo "blob:none" >expect &&
+	git -C default-filter-blobnone config --local remote.origin.partialclonefilter >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'clone.<url>.defaultObjectFilter with tree:0 works' '
+	SERVER_URL="file://$(pwd)/default-filter-srv.bare" &&
+	git -c "clone.$SERVER_URL.defaultObjectFilter=tree:0" clone \
+		"$SERVER_URL" default-filter-tree0 &&
+
+	echo true >expect &&
+	git -C default-filter-tree0 config --local remote.origin.promisor >actual &&
+	test_cmp expect actual &&
+
+	echo "tree:0" >expect &&
+	git -C default-filter-tree0 config --local remote.origin.partialclonefilter >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'most specific URL match wins for clone.defaultObjectFilter' '
+	SERVER_URL="file://$(pwd)/default-filter-srv.bare" &&
+	git \
+		-c "clone.file://.defaultObjectFilter=blob:limit=1k" \
+		-c "clone.$SERVER_URL.defaultObjectFilter=blob:none" \
+		clone "$SERVER_URL" default-filter-url-specific &&
+
+	echo "blob:none" >expect &&
+	git -C default-filter-url-specific config --local remote.origin.partialclonefilter >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'non-matching URL does not apply clone.defaultObjectFilter' '
+	git \
+		-c "clone.https://other.example.com/.defaultObjectFilter=blob:none" \
+		clone "file://$(pwd)/default-filter-srv.bare" default-filter-url-nomatch &&
+
+	test_must_fail git -C default-filter-url-nomatch config --local remote.origin.promisor
+'
+
+test_expect_success 'bare clone.defaultObjectFilter applies to all clones' '
+	git -c clone.defaultObjectFilter=blob:none \
+		clone "file://$(pwd)/default-filter-srv.bare" default-filter-bare-key &&
+
+	echo true >expect &&
+	git -C default-filter-bare-key config --local remote.origin.promisor >actual &&
+	test_cmp expect actual &&
+
+	echo "blob:none" >expect &&
+	git -C default-filter-bare-key config --local remote.origin.partialclonefilter >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'URL-specific clone.defaultObjectFilter overrides bare form' '
+	SERVER_URL="file://$(pwd)/default-filter-srv.bare" &&
+	git \
+		-c clone.defaultObjectFilter=blob:limit=1k \
+		-c "clone.$SERVER_URL.defaultObjectFilter=blob:none" \
+		clone "$SERVER_URL" default-filter-url-over-bare &&
+
+	echo "blob:none" >expect &&
+	git -C default-filter-url-over-bare config --local remote.origin.partialclonefilter >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--no-filter defeats clone.defaultObjectFilter' '
+	SERVER_URL="file://$(pwd)/default-filter-srv.bare" &&
+	git -c "clone.$SERVER_URL.defaultObjectFilter=blob:none" \
+		clone --no-filter "$SERVER_URL" default-filter-no-filter &&
+
+	test_must_fail git -C default-filter-no-filter config --local remote.origin.promisor
+'
 
 . "$TEST_DIRECTORY"/lib-httpd.sh
 start_httpd
