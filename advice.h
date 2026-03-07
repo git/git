@@ -84,5 +84,7 @@ void NORETURN die_ff_impossible(void);
 void advise_on_updating_sparse_paths(struct string_list *pathspec_list);
 void detach_advice(const char *new_name);
 void advise_on_moving_dirty_path(struct string_list *pathspec_list);
+void advise_on_large_file(const char *path, off_t size);
+
 
 #endif /* ADVICE_H */
