@@ -808,6 +808,14 @@ int add_file_to_index(struct index_state *istate, const char *path, int flags)
 	struct stat st;
 	if (lstat(path, &st))
 		die_errno(_("unable to stat '%s'"), path);
+
+	if(S_ISREG(st.st_mode)){
+		off_t size = st.st_size;
+		off_t threshold = 50 * 1024 * 1024; 
+		if (size > threshold) {
+			advise_on_large_file(path, size);
+		}
+	}
 	return add_to_index(istate, path, &st, flags);
 }
 
