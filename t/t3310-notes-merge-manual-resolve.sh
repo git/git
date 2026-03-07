@@ -227,7 +227,8 @@ test_expect_success 'merge z into m (== y) with default ("manual") resolver => C
 	# Verify that current notes tree (pre-merge) has not changed (m == y)
 	verify_notes y &&
 	verify_notes m &&
-	test "$(git rev-parse refs/notes/m)" = "$(cat pre_merge_y)"
+	git rev-parse refs/notes/m >actual &&
+	test_cmp pre_merge_y actual
 '
 
 cat <<EOF | sort >expect_notes_z
@@ -375,8 +376,10 @@ EOF
 	git notes merge --commit &&
 	notes_merge_files_gone &&
 	# Merge commit has pre-merge y and pre-merge z as parents
-	test "$(git rev-parse refs/notes/m^1)" = "$(cat pre_merge_y)" &&
-	test "$(git rev-parse refs/notes/m^2)" = "$(cat pre_merge_z)" &&
+	git rev-parse refs/notes/m^1 >actual &&
+	test_cmp pre_merge_y actual &&
+	git rev-parse refs/notes/m^2 >actual &&
+	test_cmp pre_merge_z actual &&
 	# Merge commit mentions the notes refs merged
 	git log -1 --format=%B refs/notes/m > merge_commit_msg &&
 	grep -q refs/notes/m merge_commit_msg &&
@@ -428,14 +431,16 @@ test_expect_success 'redo merge of z into m (== y) with default ("manual") resol
 	# Verify that current notes tree (pre-merge) has not changed (m == y)
 	verify_notes y &&
 	verify_notes m &&
-	test "$(git rev-parse refs/notes/m)" = "$(cat pre_merge_y)"
+	git rev-parse refs/notes/m >actual &&
+	test_cmp pre_merge_y actual
 '
 
 test_expect_success 'abort notes merge' '
 	git notes merge --abort &&
 	notes_merge_files_gone &&
 	# m has not moved (still == y)
-	test "$(git rev-parse refs/notes/m)" = "$(cat pre_merge_y)" &&
+	git rev-parse refs/notes/m >actual &&
+	test_cmp pre_merge_y actual &&
 	# Verify that other notes refs has not changed (w, x, y and z)
 	verify_notes w &&
 	verify_notes x &&
@@ -460,7 +465,8 @@ test_expect_success 'redo merge of z into m (== y) with default ("manual") resol
 	# Verify that current notes tree (pre-merge) has not changed (m == y)
 	verify_notes y &&
 	verify_notes m &&
-	test "$(git rev-parse refs/notes/m)" = "$(cat pre_merge_y)"
+	git rev-parse refs/notes/m >actual &&
+	test_cmp pre_merge_y actual
 '
 
 cat <<EOF | sort >expect_notes_m
@@ -500,8 +506,10 @@ EOF
 	git notes merge --commit &&
 	notes_merge_files_gone &&
 	# Merge commit has pre-merge y and pre-merge z as parents
-	test "$(git rev-parse refs/notes/m^1)" = "$(cat pre_merge_y)" &&
-	test "$(git rev-parse refs/notes/m^2)" = "$(cat pre_merge_z)" &&
+	git rev-parse refs/notes/m^1 >actual &&
+	test_cmp pre_merge_y actual &&
+	git rev-parse refs/notes/m^2 >actual &&
+	test_cmp pre_merge_z actual &&
 	# Merge commit mentions the notes refs merged
 	git log -1 --format=%B refs/notes/m > merge_commit_msg &&
 	grep -q refs/notes/m merge_commit_msg &&
@@ -539,7 +547,8 @@ test_expect_success 'redo merge of z into m (== y) with default ("manual") resol
 	# Verify that current notes tree (pre-merge) has not changed (m == y)
 	verify_notes y &&
 	verify_notes m &&
-	test "$(git rev-parse refs/notes/m)" = "$(cat pre_merge_y)"
+	git rev-parse refs/notes/m >actual &&
+	test_cmp pre_merge_y actual
 '
 
 cp expect_notes_w expect_notes_m
@@ -548,7 +557,7 @@ cp expect_log_w expect_log_m
 test_expect_success 'reset notes ref m to somewhere else (w)' '
 	git update-ref refs/notes/m refs/notes/w &&
 	verify_notes m &&
-	test "$(git rev-parse refs/notes/m)" = "$(git rev-parse refs/notes/w)"
+	test_cmp_rev refs/notes/m refs/notes/w
 '
 
 test_expect_success 'fail to finalize conflicting merge if underlying ref has moved in the meantime (m != NOTES_MERGE_PARTIAL^1)' '
@@ -569,13 +578,15 @@ EOF
 	test -f .git/NOTES_MERGE_WORKTREE/$commit_sha3 &&
 	test -f .git/NOTES_MERGE_WORKTREE/$commit_sha4 &&
 	# Refs are unchanged
-	test "$(git rev-parse refs/notes/m)" = "$(git rev-parse refs/notes/w)" &&
-	test "$(git rev-parse refs/notes/y)" = "$(git rev-parse NOTES_MERGE_PARTIAL^1)" &&
-	test "$(git rev-parse refs/notes/m)" != "$(git rev-parse NOTES_MERGE_PARTIAL^1)" &&
+	test_cmp_rev refs/notes/m refs/notes/w &&
+	test_cmp_rev refs/notes/y NOTES_MERGE_PARTIAL^1 &&
+	test_cmp_rev ! refs/notes/m NOTES_MERGE_PARTIAL^1 &&
 	# Mention refs/notes/m, and its current and expected value in output
 	test_grep -q "refs/notes/m" output &&
-	test_grep -q "$(git rev-parse refs/notes/m)" output &&
-	test_grep -q "$(git rev-parse NOTES_MERGE_PARTIAL^1)" output &&
+	oid=$(git rev-parse refs/notes/m) &&
+	test_grep -q "$oid" output &&
+	oid=$(git rev-parse NOTES_MERGE_PARTIAL^1) &&
+	test_grep -q "$oid" output &&
 	# Verify that other notes refs has not changed (w, x, y and z)
 	verify_notes w &&
 	verify_notes x &&
@@ -587,7 +598,7 @@ test_expect_success 'resolve situation by aborting the notes merge' '
 	git notes merge --abort &&
 	notes_merge_files_gone &&
 	# m has not moved (still == w)
-	test "$(git rev-parse refs/notes/m)" = "$(git rev-parse refs/notes/w)" &&
+	test_cmp_rev refs/notes/m refs/notes/w &&
 	# Verify that other notes refs has not changed (w, x, y and z)
 	verify_notes w &&
 	verify_notes x &&
@@ -606,8 +617,8 @@ test_expect_success 'switch cwd before committing notes merge' '
 	test_must_fail git notes merge refs/notes/other &&
 	(
 		cd .git/NOTES_MERGE_WORKTREE &&
-		echo "foo" > $(git rev-parse HEAD) &&
-		echo "bar" >> $(git rev-parse HEAD) &&
+		oid=$(git rev-parse HEAD) &&
+		test_write_lines foo bar >"$oid" &&
 		git notes merge --commit
 	) &&
 	git notes show HEAD > actual_notes &&
