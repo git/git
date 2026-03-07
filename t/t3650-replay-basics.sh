@@ -74,8 +74,8 @@ test_expect_success '--onto with invalid commit-ish' '
 	test_cmp expect actual
 '
 
-test_expect_success 'option --onto or --advance is mandatory' '
-	echo "error: option --onto or --advance is mandatory" >expect &&
+test_expect_success 'exactly one of --onto, --advance, or --revert is required' '
+	echo "error: exactly one of --onto, --advance, or --revert is required" >expect &&
 	test_might_fail git replay -h >>expect &&
 	test_must_fail git replay topic1..topic2 2>actual &&
 	test_cmp expect actual
@@ -87,9 +87,8 @@ test_expect_success 'no base or negative ref gives no-replaying down to root err
 	test_cmp expect actual
 '
 
-test_expect_success 'options --advance and --contained cannot be used together' '
-	printf "fatal: options ${SQ}--advance${SQ} " >expect &&
-	printf "and ${SQ}--contained${SQ} cannot be used together\n" >>expect &&
+test_expect_success '--contained requires --onto' '
+	echo "fatal: --contained requires --onto" >expect &&
 	test_must_fail git replay --advance=main --contained \
 		topic1..topic2 2>actual &&
 	test_cmp expect actual
@@ -396,6 +395,104 @@ test_expect_success 'invalid replay.refAction value' '
 	test_config replay.refAction invalid &&
 	test_must_fail git replay --onto main topic1..topic2 2>error &&
 	test_grep "invalid.*replay.refAction.*value" error
+'
+
+test_expect_success 'argument to --revert must be a reference' '
+	echo "fatal: argument to --revert must be a reference" >expect &&
+	oid=$(git rev-parse main) &&
+	test_must_fail git replay --revert=$oid topic1..topic2 2>actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'cannot revert with multiple sources' '
+	echo "fatal: cannot revert target with multiple sources because ordering would be ill-defined" >expect &&
+	test_must_fail git replay --revert main main topic1 topic2 2>actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'using replay --revert to revert commits' '
+	# Reuse existing topic4 branch (has commits I and J on top of main)
+	START=$(git rev-parse topic4) &&
+	test_when_finished "git branch -f topic4 $START" &&
+
+	# Revert commits I and J
+	git replay --revert topic4 topic4~2..topic4 &&
+
+	# Verify the revert commits were created
+	git log --format=%s -4 topic4 >actual &&
+	cat >expect <<-\EOF &&
+	Revert "J"
+	Revert "I"
+	J
+	I
+	EOF
+	test_cmp expect actual &&
+
+	# Verify commit message format includes hash
+	test_commit_message topic4 <<-EOF &&
+	Revert "J"
+
+	This reverts commit $(git rev-parse J).
+	EOF
+
+	# Verify reflog message
+	git reflog topic4 -1 --format=%gs >reflog-msg &&
+	echo "replay --revert topic4" >expect-reflog &&
+	test_cmp expect-reflog reflog-msg
+'
+
+test_expect_success 'using replay --revert in bare repo' '
+	# Reuse existing topic4 in bare repo
+	START=$(git -C bare rev-parse topic4) &&
+	test_when_finished "git -C bare update-ref refs/heads/topic4 $START" &&
+
+	# Revert commit J in bare repo
+	git -C bare replay --revert topic4 topic4~1..topic4 &&
+
+	# Verify revert was created
+	git -C bare log -1 --format=%s topic4 >actual &&
+	echo "Revert \"J\"" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'revert of revert uses Reapply' '
+	# Use topic4 and first revert J, then revert the revert
+	START=$(git rev-parse topic4) &&
+	test_when_finished "git branch -f topic4 $START" &&
+
+	# First revert J
+	git replay --revert topic4 topic4~1..topic4 &&
+	REVERT_J=$(git rev-parse topic4) &&
+
+	# Now revert the revert - should become Reapply
+	git replay --revert topic4 topic4~1..topic4 &&
+
+	# Verify Reapply prefix and message format
+	test_commit_message topic4 <<-EOF
+	Reapply "J"
+
+	This reverts commit $REVERT_J.
+	EOF
+'
+
+test_expect_success 'git replay --revert with conflict' '
+	# conflict branch has C.conflict which conflicts with topic1s C
+	test_expect_code 1 git replay --revert conflict B..topic1
+'
+
+test_expect_success 'git replay --revert incompatible with --contained' '
+	test_must_fail git replay --revert topic4 --contained topic4~1..topic4 2>error &&
+	test_grep "requires --onto" error
+'
+
+test_expect_success 'git replay --revert incompatible with --onto' '
+	test_must_fail git replay --revert topic4 --onto main topic4~1..topic4 2>error &&
+	test_grep "cannot be used together" error
+'
+
+test_expect_success 'git replay --revert incompatible with --advance' '
+	test_must_fail git replay --revert topic4 --advance main topic4~1..topic4 2>error &&
+	test_grep "cannot be used together" error
 '
 
 test_done
