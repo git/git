@@ -30,6 +30,13 @@ struct hook {
 	} u;
 
 	/**
+	 * Whether this hook may run in parallel with other hooks for the same
+	 * event. Only useful for configured (named) hooks. Traditional hooks
+	 * always default to 0 (serial). Set via `hook.<name>.parallel = true`.
+	 */
+	unsigned int parallel:1;
+
+	/**
 	 * Opaque data pointer used to keep internal state across callback calls.
 	 *
 	 * It can be accessed directly via the third hook callback arg:
@@ -62,6 +69,8 @@ struct run_hooks_opt
 	 *
 	 * If > 1, output will be buffered and de-interleaved (ungroup=0).
 	 * If == 1, output will be real-time (ungroup=1).
+	 * If == 0, the 'hook.jobs' config is used or, if the config is unset,
+	 * defaults to 1 (serial execution).
 	 */
 	unsigned int jobs;
 
@@ -142,7 +151,23 @@ struct run_hooks_opt
 	cb_data_free_fn feed_pipe_cb_data_free;
 };
 
+/**
+ * Default initializer for hooks. Parallelism is opt-in: .jobs = 0 defers to
+ * the 'hook.jobs' config, falling back to serial (1) if unset.
+ */
 #define RUN_HOOKS_OPT_INIT { \
+	.env = STRVEC_INIT, \
+	.args = STRVEC_INIT, \
+	.stdout_to_stderr = 1, \
+	.jobs = 0, \
+}
+
+/**
+ * Initializer for hooks that must always run sequentially regardless of
+ * 'hook.jobs'. Use this when git knows the hook cannot safely be parallelized
+ * .jobs = 1 is non-overridable.
+ */
+#define RUN_HOOKS_OPT_INIT_FORCE_SERIAL { \
 	.env = STRVEC_INIT, \
 	.args = STRVEC_INIT, \
 	.stdout_to_stderr = 1, \
@@ -192,10 +217,21 @@ struct string_list *list_hooks(struct repository *r, const char *hookname,
 void hook_list_clear(struct string_list *hooks, cb_data_free_fn cb_data_free);
 
 /**
+ * Persistent cache for hook configuration, stored on `struct repository`.
+ * Populated lazily on first hook use and freed by repo_clear().
+ */
+struct hook_config_cache {
+	struct strmap hooks; /* maps event name -> string_list of hooks */
+	struct strmap event_jobs; /* maps event name -> heap-allocated unsigned int * */
+	unsigned int jobs; /* hook.jobs config value; 0 if unset (defaults to serial) */
+	int force_stdout_to_stderr; /* hook.forceStdoutToStderr config value */
+};
+
+/**
  * Frees the hook configuration cache stored in `struct repository`.
  * Called by repo_clear().
  */
-void hook_cache_clear(struct strmap *cache);
+void hook_cache_clear(struct hook_config_cache *cache);
 
 /**
  * Returns the path to the hook file, or NULL if the hook is missing

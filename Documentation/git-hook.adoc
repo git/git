@@ -8,7 +8,8 @@ git-hook - Run git hooks
 SYNOPSIS
 --------
 [verse]
-'git hook' run [--ignore-missing] [--to-stdin=<path>] <hook-name> [-- <hook-args>]
+'git hook' run [--ignore-missing] [--to-stdin=<path>] [(-j|--jobs) <n>]
+	<hook-name> [-- <hook-args>]
 'git hook' list [-z] <hook-name>
 
 DESCRIPTION
@@ -134,6 +135,18 @@ OPTIONS
 -z::
 	Terminate "list" output lines with NUL instead of newlines.
 
+-j::
+--jobs::
+	Only valid for `run`.
++
+Specify how many hooks to run simultaneously. If this flag is not specified,
+the value of the `hook.jobs` config is used, see linkgit:git-config[1]. If
+neither is specified, defaults to 1 (serial execution). Some hooks always run
+sequentially regardless of this flag or the `hook.jobs` config, because git
+knows they cannot safely run in parallel: `applypatch-msg`, `pre-commit`,
+`prepare-commit-msg`, `commit-msg`, `post-commit`, `post-checkout`, and
+`push-to-checkout`.
+
 WRAPPERS
 --------
 
@@ -156,7 +169,8 @@ running:
 git hook run mywrapper-start-tests \
   # providing something to stdin
   --stdin some-tempfile-123 \
-  # execute hooks in serial
+  # execute multiple hooks in parallel
+  --jobs 3 \
   # plus some arguments of your own...
   -- \
   --testname bar \
