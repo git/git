@@ -13,6 +13,7 @@ Date:   Thu Feb 28 10:49:50 2013 +0100
     another simple change
 
 diff --git a/b.c b/b.c
+index 62c1fc2..69cb69c 100644
 --- a/b.c
 +++ b/b.c
 @@ -4,14 +4,14 @@
@@ -39,6 +40,7 @@ Date:   Fri Apr 12 16:15:57 2013 +0200
     change on another line of history while rename happens
 
 diff --git a/a.c b/a.c
+index 62c1fc2..e1e8475 100644
 --- a/a.c
 +++ b/a.c
 @@ -4,14 +4,14 @@
@@ -65,6 +67,7 @@ Date:   Thu Feb 28 10:45:41 2013 +0100
     touch comment
 
 diff --git a/a.c b/a.c
+index 75c0119..3a78aaf 100644
 --- a/a.c
 +++ b/a.c
 @@ -3,14 +3,14 @@
@@ -91,6 +94,7 @@ Date:   Thu Feb 28 10:45:16 2013 +0100
     touch both functions
 
 diff --git a/a.c b/a.c
+index 7a296b9..75c0119 100644
 --- a/a.c
 +++ b/a.c
 @@ -3,14 +3,14 @@
@@ -117,6 +121,7 @@ Date:   Thu Feb 28 10:44:55 2013 +0100
     change f()
 
 diff --git a/a.c b/a.c
+index 9f550c3..7a296b9 100644
 --- a/a.c
 +++ b/a.c
 @@ -3,13 +3,14 @@
@@ -142,6 +147,8 @@ Date:   Thu Feb 28 10:44:48 2013 +0100
     initial
 
 diff --git a/a.c b/a.c
+new file mode 100644
+index 0000000..9f550c3
 --- /dev/null
 +++ b/a.c
 @@ -0,0 +3,13 @@
