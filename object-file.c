@@ -2150,7 +2150,7 @@ int odb_source_loose_read_object_stream(struct odb_read_stream **out,
 	return 0;
 error:
 	git_inflate_end(&st->z);
-	munmap(st->mapped, st->mapsize);
+	munmap(mapped, mapsize);
 	free(st);
 	return -1;
 }
