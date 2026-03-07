@@ -12,4 +12,8 @@
 	(namely `--raw`, `--numstat`, `--shortstat`, `--dirstat`, `--summary`,
 	`--name-only`, `--name-status`, `--check`) are not currently implemented.
 +
+	Patch formatting options such as `--word-diff`, `--color-moved`,
+	`--no-prefix`, and whitespace options (`-w`, `-b`) are supported,
+	as are pickaxe options (`-S`, `-G`).
++
 include::line-range-format.adoc[]
