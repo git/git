@@ -10,7 +10,7 @@
 #include "git-compat-util.h"
 #include "config.h"
 #include "date.h"
-#include "advice.h"
+#include "advice.c"
 #include "diff.h"
 #include "diffcore.h"
 #include "hex.h"
