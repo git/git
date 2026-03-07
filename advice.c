@@ -314,7 +314,7 @@ void advise_on_moving_dirty_path(struct string_list *pathspec_list)
 			    "* Use \"git sparse-checkout reapply\" to apply the sparsity rules"));
 }
 
-static void advise_on_large_file(const char *path, off_t size)
+void advise_on_large_file(const char *path, off_t size)
 {
     advise_if_enabled(ADVICE_LARGE_FILE_ADDED,
 	_("The file '%s' is %.2f MB.\n"
