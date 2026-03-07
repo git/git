@@ -5,6 +5,7 @@ Date:   Thu Feb 28 10:49:50 2013 +0100
     another simple change
 
 diff --git a/b.c b/b.c
+index 62c1fc2..69cb69c 100644
 --- a/b.c
 +++ b/b.c
 @@ -4,9 +4,9 @@
@@ -26,6 +27,7 @@ Date:   Thu Feb 28 10:45:16 2013 +0100
     touch both functions
 
 diff --git a/a.c b/a.c
+index 7a296b9..75c0119 100644
 --- a/a.c
 +++ b/a.c
 @@ -3,9 +3,9 @@
@@ -47,6 +49,7 @@ Date:   Thu Feb 28 10:44:55 2013 +0100
     change f()
 
 diff --git a/a.c b/a.c
+index 9f550c3..7a296b9 100644
 --- a/a.c
 +++ b/a.c
 @@ -3,8 +3,9 @@
@@ -67,6 +70,8 @@ Date:   Thu Feb 28 10:44:48 2013 +0100
     initial
 
 diff --git a/a.c b/a.c
+new file mode 100644
+index 0000000..9f550c3
 --- /dev/null
 +++ b/a.c
 @@ -0,0 +3,8 @@
