@@ -47,13 +47,17 @@ while	case "$1" in
 	--test=*) test="$1" ;;
 	--scratch) scratch=y ;;
 	--breaking) breaking=breaking ;;
+	--no-breaking) breaking= ;;
 	--bootstrap) bootstrap=y ;;
 	--base=*) BUILDBASE=${1#*=} ;;
 	--branches=*) branches=${1#*=} ;;
 	--noprove) noprove=$1 ;;
 	--san) san=t ;;
+	--no-san) san= ;;
 	--leaks) with_leaks=t ;;
+	--no-leaks) with_leaks= ;;
 	--sha256) with_sha256=t ;;
+	--no-sha256) with_sha256= ;;
 	--meson) with_meson=t ;;
 	-j*) jobs=$1 ;;
 	--) shift; break ;;
@@ -279,9 +283,11 @@ do
 		section test-lint
 		Meta/Make -- -C t test-lint &&
 
+		did_test=
 		if test -n "$san"
 		then
 			section SANITIZE=address,undefined
+			did_test=did_test
 			SANITIZE=address,undefined Meta/Make $M $jobs $T test &&
 			rm -f compat/mmap.o &&
 			Meta/Make >/dev/null distclean
@@ -289,6 +295,7 @@ do
 		if test -n "$with_leaks"
 		then
 			section leaks
+			did_test=did_test
 			SANITIZE=leak \
 			GIT_TEST_PASSING_SANITIZE_LEAK=true \
 			Meta/Make $jobs $T CC=clang test &&
@@ -297,16 +304,19 @@ do
 		if test -n "$with_sha256"
 		then
 			section sha256
+			did_test=did_test
 			GIT_TEST_DEFAULT_HASH=sha256 Meta/Make $jobs $T test
 		fi &&
 		if test -n "$breaking"
 		then
 			section breaking
+			did_test=did_test
+			Meta/Make >/dev/null distclean &&
 			Meta/Make $jobs WITH_BREAKING_CHANGES=YesPlease $T test &&
 			Meta/Make >/dev/null distclean
 		fi &&
 
-		if test "$san$breaking$with_leaks$breaking$with_sha256$dotest" = test
+		if test "$did_test$dotest" = test
 		then
 			section test
 			Meta/Make $M $noprove ${test+"$test"} $jobs $test_long \
@@ -333,7 +343,9 @@ do
 			if test "$save" = "$(git rev-parse HEAD)"
 			then
 				section install
-				Meta/Make $jobs $M -- ${with_dash:+SHELL_PATH=/bin/dash} "$@" install
+				Meta/Make >/dev/null distclean &&
+				Meta/Make $jobs $M \
+				-- ${with_dash:+SHELL_PATH=/bin/dash} "$@" install
 			else
 				echo >&2 "Head moved--not installing"
 			fi
