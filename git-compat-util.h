@@ -665,6 +665,14 @@ static inline int cast_size_t_to_int(size_t a)
 	return (int)a;
 }
 
+static inline ssize_t cast_size_t_to_ssize_t(size_t a)
+{
+	if (a > maximum_signed_value_of_type(ssize_t))
+		die("number too large to represent as ssize_t on this platform: %"PRIuMAX,
+		    (uintmax_t)a);
+	return (ssize_t)a;
+}
+
 static inline uint64_t u64_mult(uint64_t a, uint64_t b)
 {
 	if (unsigned_mult_overflows(a, b))

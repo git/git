@@ -137,6 +137,9 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/statvfs.h>
+#ifndef NO_WRITEV
+#include <sys/uio.h>
+#endif
 #include <termios.h>
 #ifndef NO_SYS_SELECT_H
 #include <sys/select.h>
@@ -321,6 +324,17 @@ int git_lstat(const char *, struct stat *);
 #ifdef NO_PREAD
 #define pread git_pread
 ssize_t git_pread(int fd, void *buf, size_t count, off_t offset);
+#endif
+
+#ifdef NO_WRITEV
+#define writev git_writev
+#define iovec git_iovec
+struct git_iovec {
+	void *iov_base;
+	size_t iov_len;
+};
+
+ssize_t git_writev(int fd, const struct iovec *iov, int iovcnt);
 #endif
 
 #ifdef NO_SETENV
