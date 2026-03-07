@@ -277,6 +277,10 @@ int load_pack_revindex_from_disk(struct packed_git *p)
 {
 	char *revindex_name;
 	int ret;
+
+	if (p->revindex_data)
+		return 0;
+
 	if (open_pack_index(p))
 		return -1;
 
