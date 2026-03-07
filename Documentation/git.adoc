@@ -235,7 +235,10 @@ GIT COMMANDS
 ------------
 
 We divide Git into high level ("porcelain") commands and low level
-("plumbing") commands.
+("plumbing") commands.  For defining command aliases, see
+linkgit:git-config[1] and look for descriptions of `alias.*`.
+For installing custom "git" subcommands, see the description for
+the 'PATH' environment variable in this manual.
 
 High-level commands (porcelain)
 -------------------------------
