@@ -41,7 +41,15 @@ static int patch_id_neq(const void *cmpfn_data,
 			const struct hashmap_entry *entry_or_key,
 			const void *keydata UNUSED)
 {
-	/* NEEDSWORK: const correctness? */
+	/*
+	 * We drop the 'const' modifier here intentionally.
+	 *
+	 * The hashmap API requires us to treat the entries as const.
+	 * However, to avoid performance regression, we lazily compute
+	 * the patch IDs inside this comparison function. This fundamentally
+	 * requires us to mutate the 'struct patch_id'. Therefore, we use
+	 * container_of() to cast away the constness from the hashmap_entry.
+	 */
 	struct diff_options *opt = (void *)cmpfn_data;
 	struct patch_id *a, *b;
 
