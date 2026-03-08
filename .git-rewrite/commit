@@ -1,0 +1,14 @@
+tree 044546e12691bcc3b4e9e8284b6fa41dc9b60d25
+parent 04e7ca1a1bd05e733236734bd7078b4cde1f7ce5
+author Junio C Hamano <junkio@cox.net> 1131678986 -0800
+committer Junio C Hamano <junkio@cox.net> 1131774741 -0800
+
+Rename .git/lost+found to .git/lost-found.
+
+Just to avoid confusion that scripts poorly written by somebody
+else ;-) might mistake this as a mount point, or backup tools
+ignoring the directory.  The latter is probably not a big loss,
+however, considering that this directory's contents are to be
+used while fresh anyway.
+
+Signed-off-by: Junio C Hamano <junkio@cox.net>

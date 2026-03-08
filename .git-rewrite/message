@@ -1,0 +1,9 @@
+Rename .git/lost+found to .git/lost-found.
+
+Just to avoid confusion that scripts poorly written by somebody
+else ;-) might mistake this as a mount point, or backup tools
+ignoring the directory.  The latter is probably not a big loss,
+however, considering that this directory's contents are to be
+used while fresh anyway.
+
+Signed-off-by: Junio C Hamano <junkio@cox.net>
