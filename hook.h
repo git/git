@@ -208,6 +208,7 @@ void hook_free(void *p, const char *str UNUSED);
  */
 struct hook_config_cache {
 	struct strmap hooks; /* maps event name -> string_list of hooks */
+	unsigned int jobs; /* hook.jobs config value; 0 if unset (defaults to serial) */
 };
 
 /**
