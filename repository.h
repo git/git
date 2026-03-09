@@ -12,6 +12,7 @@ struct lock_file;
 struct pathspec;
 struct object_database;
 struct submodule_cache;
+struct hook_config_cache;
 struct promisor_remote_config;
 struct remote_state;
 
@@ -165,6 +166,12 @@ struct repository {
 
 	/* True if commit-graph has been disabled within this process. */
 	int commit_graph_disabled;
+
+	/*
+	 * Lazily-populated cache mapping hook event names to configured hooks.
+	 * NULL until first hook use.
+	 */
+	struct hook_config_cache *hook_config_cache;
 
 	/* Configurations related to promisor remotes. */
 	char *repository_format_partial_clone;
