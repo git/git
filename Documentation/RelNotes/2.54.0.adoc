@@ -60,6 +60,10 @@ UI, Workflows & Features
  * "git config list" is taught to show the values interpreted for
    specific type with "--type=<X>" option.
 
+ * "git add <submodule>" has been taught to honor
+   submodule.<name>.ignore that is set to "all" (and requires "git add
+   -f" to override it).
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -142,6 +146,11 @@ Performance, Internal Implementation, Development Support etc.
  * The core.attributesfile is intended to be set per repository, but
    were kept track of by a single global variable in-core, which has
    been corrected by moving it to per-repository data structure.
+
+ * Use the hook API to replace ad-hoc invocation of hook scripts via
+   the run_command() API.
+
+ * Code refactoring around refs-for-each-* API functions.
 
 
 Fixes since v2.53
@@ -234,6 +243,10 @@ Fixes since v2.53
    to access pack data by "fsck" has been updated to avoid this.
    (merge 13eb65d366 ps/fsck-stream-from-the-right-object-instance later to maint).
 
+ * "git log --graph --stat" did not count the display width of colored
+   graph part of its own output correctly, which has been corrected.
+   (merge 064b869efc lp/diff-stat-utf8-display-width-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge d79fff4a11 jk/remote-tracking-ref-leakfix later to maint).
    (merge 7a747f972d dd/t5403-modernise later to maint).
@@ -264,3 +277,4 @@ Fixes since v2.53
    (merge ed84bc1c0d kh/doc-patch-id-4 later to maint).
    (merge 7451864bfa sc/pack-redundant-leakfix later to maint).
    (merge f87593ab1a cx/fetch-display-ubfix later to maint).
+   (merge a66c8c7f91 jk/repo-structure-cleanup later to maint).
