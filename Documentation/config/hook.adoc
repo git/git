@@ -36,6 +36,10 @@ hook.<name>.parallel::
 hook.jobs::
 	Specifies how many hooks can be run simultaneously during parallelized
 	hook execution. If unspecified, defaults to 1 (serial execution).
+	Some hooks always run sequentially regardless of this setting because
+	git knows they cannot safely be parallelized: `applypatch-msg`,
+	`pre-commit`, `prepare-commit-msg`, `commit-msg`, `post-commit`,
+	`post-checkout`, and `push-to-checkout`.
 +
 This setting has no effect unless all configured hooks for the event have
 `hook.<name>.parallel` set to `true`.
