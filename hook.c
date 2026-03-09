@@ -110,14 +110,6 @@ static void list_hooks_add_default(struct repository *r, const char *hookname,
 	string_list_append(hook_list, hook_path)->util = h;
 }
 
-static void unsorted_string_list_remove(struct string_list *list,
-					const char *str)
-{
-	struct string_list_item *item = unsorted_string_list_lookup(list, str);
-	if (item)
-		unsorted_string_list_delete_item(list, item - list->items, 0);
-}
-
 /*
  * Callback struct to collect all hook.* keys in a single config pass.
  * commands: friendly-name to command map.
