@@ -14,7 +14,7 @@ typedef void *(*hook_data_alloc_fn)(void *init_ctx);
  * Represents a hook command to be run.
  * Hooks can be:
  * 1. "traditional" (found in the hooks directory)
- * 2. "configured" (defined in Git's configuration via hook.<name>.event).
+ * 2. "configured" (defined in Git's configuration via hook.<friendly-name>.event).
  * The 'kind' field determines which part of the union 'u' is valid.
  */
 struct hook {

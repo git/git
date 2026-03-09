@@ -1,23 +1,23 @@
-hook.<name>.command::
-	The command to execute for `hook.<name>`. `<name>` is a unique
-	"friendly" name that identifies this hook. (The hook events that
-	trigger the command are configured with `hook.<name>.event`.) The
-	value can be an executable path or a shell oneliner. If more than
-	one value is specified for the same `<name>`, only the last value
-	parsed is used. See linkgit:git-hook[1].
+hook.<friendly-name>.command::
+	The command to execute for `hook.<friendly-name>`. `<friendly-name>`
+	is a unique name that identifies this hook. The hook events that
+	trigger the command are configured with `hook.<friendly-name>.event`.
+	The value can be an executable path or a shell oneliner. If more than
+	one value is specified for the same `<friendly-name>`, only the last
+	value parsed is used. See linkgit:git-hook[1].
 
-hook.<name>.event::
-	The hook events that trigger `hook.<name>`. The value is the name
-	of a hook event, like "pre-commit" or "update". (See
+hook.<friendly-name>.event::
+	The hook events that trigger `hook.<friendly-name>`. The value is the
+	name of a hook event, like "pre-commit" or "update". (See
 	linkgit:githooks[5] for a complete list of hook events.) On the
-	specified event, the associated `hook.<name>.command` is executed.
-	This is a multi-valued key. To run `hook.<name>` on multiple
+	specified event, the associated `hook.<friendly-name>.command` is executed.
+	This is a multi-valued key. To run `hook.<friendly-name>` on multiple
 	events, specify the key more than once. An empty value resets
 	the list of events, clearing any previously defined events for
-	`hook.<name>`. See linkgit:git-hook[1].
+	`hook.<friendly-name>`. See linkgit:git-hook[1].
 
-hook.<name>.enabled::
-	Whether the hook `hook.<name>` is enabled. Defaults to `true`.
+hook.<friendly-name>.enabled::
+	Whether the hook `hook.<friendly-name>` is enabled. Defaults to `true`.
 	Set to `false` to disable the hook without removing its
 	configuration. This is particularly useful when a hook is defined
 	in a system or global config file and needs to be disabled for a
