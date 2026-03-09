@@ -101,7 +101,7 @@ int is_staging_gitmodules_ok(struct index_state *istate)
 }
 
 static int for_each_remote_ref_submodule(const char *submodule,
-					 each_ref_fn fn, void *cb_data)
+					 refs_for_each_cb fn, void *cb_data)
 {
 	return refs_for_each_remote_ref(repo_get_submodule_ref_store(the_repository,
 								     submodule),

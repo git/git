@@ -422,13 +422,17 @@ static void bisect_status(struct bisect_state *state,
 {
 	char *bad_ref = xstrfmt("refs/bisect/%s", terms->term_bad);
 	char *good_glob = xstrfmt("%s-*", terms->term_good);
+	struct refs_for_each_ref_options opts = {
+		.pattern = good_glob,
+		.prefix = "refs/bisect/",
+		.trim_prefix = strlen("refs/bisect/"),
+	};
 
 	if (refs_ref_exists(get_main_ref_store(the_repository), bad_ref))
 		state->nr_bad = 1;
 
-	refs_for_each_glob_ref_in(get_main_ref_store(the_repository), inc_nr,
-				  good_glob, "refs/bisect/",
-				  (void *) &state->nr_good);
+	refs_for_each_ref_ext(get_main_ref_store(the_repository),
+			      inc_nr, &state->nr_good, &opts);
 
 	free(good_glob);
 	free(bad_ref);
@@ -562,6 +566,10 @@ static int add_bisect_ref(const struct reference *ref, void *cb)
 
 static int prepare_revs(struct bisect_terms *terms, struct rev_info *revs)
 {
+	struct refs_for_each_ref_options opts = {
+		.prefix = "refs/bisect/",
+		.trim_prefix = strlen("refs/bisect/"),
+	};
 	int res = 0;
 	struct add_bisect_ref_data cb = { revs };
 	char *good = xstrfmt("%s-*", terms->term_good);
@@ -581,11 +589,16 @@ static int prepare_revs(struct bisect_terms *terms, struct rev_info *revs)
 	reset_revision_walk();
 	repo_init_revisions(the_repository, revs, NULL);
 	setup_revisions(0, NULL, revs, NULL);
-	refs_for_each_glob_ref_in(get_main_ref_store(the_repository),
-				  add_bisect_ref, bad, "refs/bisect/", &cb);
+
+	opts.pattern = bad;
+	refs_for_each_ref_ext(get_main_ref_store(the_repository),
+			      add_bisect_ref, &cb, &opts);
+
 	cb.object_flags = UNINTERESTING;
-	refs_for_each_glob_ref_in(get_main_ref_store(the_repository),
-				  add_bisect_ref, good, "refs/bisect/", &cb);
+	opts.pattern = good;
+	refs_for_each_ref_ext(get_main_ref_store(the_repository),
+			      add_bisect_ref, &cb, &opts);
+
 	if (prepare_revision_walk(revs))
 		res = error(_("revision walk setup failed"));
 
@@ -1191,10 +1204,14 @@ static int verify_good(const struct bisect_terms *terms, const char *command)
 	char *good_glob = xstrfmt("%s-*", terms->term_good);
 	int no_checkout = refs_ref_exists(get_main_ref_store(the_repository),
 					  "BISECT_HEAD");
+	struct refs_for_each_ref_options opts = {
+		.pattern = good_glob,
+		.prefix = "refs/bisect/",
+		.trim_prefix = strlen("refs/bisect/"),
+	};
 
-	refs_for_each_glob_ref_in(get_main_ref_store(the_repository),
-				  get_first_good, good_glob, "refs/bisect/",
-				  &good_rev);
+	refs_for_each_ref_ext(get_main_ref_store(the_repository),
+			      get_first_good, &good_rev, &opts);
 	free(good_glob);
 
 	if (refs_read_ref(get_main_ref_store(the_repository), no_checkout ? "BISECT_HEAD" : "HEAD", &current_rev))

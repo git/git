@@ -170,7 +170,7 @@ int ref_store_remove_on_disk(struct ref_store *refs, struct strbuf *err);
  *
  *   peel_object(r, oid, &peeled);
  *
- * with the "oid" value given to the each_ref_fn callback, except
+ * with the "oid" value given to the refs_for_each_cb callback, except
  * that some ref storage may be able to answer the query without
  * actually loading the object in memory.
  */
@@ -329,7 +329,7 @@ int check_tag_ref(struct strbuf *sb, const char *name);
 struct ref_transaction;
 
 /*
- * Bit values set in the flags argument passed to each_ref_fn() and
+ * Bit values set in the flags argument passed to refs_for_each_cb() and
  * stored in ref_iterator::flags. Other bits are for internal use
  * only:
  */
@@ -400,7 +400,44 @@ int reference_get_peeled_oid(struct repository *repo,
  * argument is only guaranteed to be valid for the duration of a
  * single callback invocation.
  */
-typedef int each_ref_fn(const struct reference *ref, void *cb_data);
+typedef int refs_for_each_cb(const struct reference *ref, void *cb_data);
+
+/*
+ * These flags are passed to refs_ref_iterator_begin() (and do_for_each_ref(),
+ * which feeds it).
+ */
+enum refs_for_each_flag {
+	/*
+	 * Include broken references in a do_for_each_ref*() iteration, which
+	 * would normally be omitted. This includes both refs that point to
+	 * missing objects (a true repository corruption), ones with illegal
+	 * names (which we prefer not to expose to callers), as well as
+	 * dangling symbolic refs (i.e., those that point to a non-existent
+	 * ref; this is not a corruption, but as they have no valid oid, we
+	 * omit them from normal iteration results).
+	 */
+	REFS_FOR_EACH_INCLUDE_BROKEN = (1 << 0),
+
+	/*
+	 * Only include per-worktree refs in a do_for_each_ref*() iteration.
+	 * Normally this will be used with a files ref_store, since that's
+	 * where all reference backends will presumably store their
+	 * per-worktree refs.
+	 */
+	REFS_FOR_EACH_PER_WORKTREE_ONLY = (1 << 1),
+
+	/*
+	 * Omit dangling symrefs from output; this only has an effect with
+	 * INCLUDE_BROKEN, since they are otherwise not included at all.
+	 */
+	REFS_FOR_EACH_OMIT_DANGLING_SYMREFS = (1 << 2),
+
+	/*
+	 * Include root refs i.e. HEAD and pseudorefs along with the regular
+	 * refs.
+	 */
+	REFS_FOR_EACH_INCLUDE_ROOT_REFS = (1 << 3),
+};
 
 /*
  * The following functions invoke the specified callback function for
@@ -412,70 +449,75 @@ typedef int each_ref_fn(const struct reference *ref, void *cb_data);
  * stop the iteration. Returned references are sorted.
  */
 int refs_head_ref(struct ref_store *refs,
-		  each_ref_fn fn, void *cb_data);
-int refs_for_each_ref(struct ref_store *refs,
-		      each_ref_fn fn, void *cb_data);
-int refs_for_each_ref_in(struct ref_store *refs, const char *prefix,
-			 each_ref_fn fn, void *cb_data);
-int refs_for_each_tag_ref(struct ref_store *refs,
-			  each_ref_fn fn, void *cb_data);
-int refs_for_each_branch_ref(struct ref_store *refs,
-			     each_ref_fn fn, void *cb_data);
-int refs_for_each_remote_ref(struct ref_store *refs,
-			     each_ref_fn fn, void *cb_data);
-int refs_for_each_replace_ref(struct ref_store *refs,
-			      each_ref_fn fn, void *cb_data);
+		  refs_for_each_cb fn, void *cb_data);
+int refs_head_ref_namespaced(struct ref_store *refs,
+			     refs_for_each_cb fn, void *cb_data);
 
-/*
- * references matching any pattern in "exclude_patterns" are omitted from the
- * result set on a best-effort basis.
- */
-int refs_for_each_fullref_in(struct ref_store *refs, const char *prefix,
-			     const char **exclude_patterns,
-			     each_ref_fn fn, void *cb_data);
+
+struct refs_for_each_ref_options {
+	/* Only iterate over references that have this given prefix. */
+	const char *prefix;
+
+	/*
+	 * A globbing pattern that can be used to only yield refs that match.
+	 * If given, refs will be matched against the pattern with
+	 * `wildmatch()`.
+	 *
+	 * If the pattern doesn't contain any globbing characters then it is
+	 * treated as if it was ending with "/" and "*".
+	 */
+	const char *pattern;
+
+	/*
+	 * If set, only yield refs part of the configured namespace. Exclude
+	 * patterns will be rewritten to apply to the namespace, and the prefix
+	 * will be considered relative to the namespace.
+	 */
+	const char *namespace;
+
+	/*
+	 * Exclude any references that match any of these patterns on a
+	 * best-effort basis. The caller needs to be prepared for the exclude
+	 * patterns to be ignored.
+	 *
+	 * The array must be terminated with a NULL sentinel value.
+	 */
+	const char **exclude_patterns;
+
+	/*
+	 * The number of bytes to trim from the refname. Note that the trimmed
+	 * bytes must not cause the reference to become empty. As such, this
+	 * field should typically only be set when one uses a `prefix` ending
+	 * in a slash.
+	 */
+	size_t trim_prefix;
+
+	/* Flags that change which refs will be included. */
+	enum refs_for_each_flag flags;
+};
+
+int refs_for_each_ref(struct ref_store *refs,
+		      refs_for_each_cb fn, void *cb_data);
+int refs_for_each_ref_ext(struct ref_store *refs,
+			  refs_for_each_cb cb, void *cb_data,
+			  const struct refs_for_each_ref_options *opts);
+int refs_for_each_tag_ref(struct ref_store *refs,
+			  refs_for_each_cb fn, void *cb_data);
+int refs_for_each_branch_ref(struct ref_store *refs,
+			     refs_for_each_cb fn, void *cb_data);
+int refs_for_each_remote_ref(struct ref_store *refs,
+			     refs_for_each_cb fn, void *cb_data);
+int refs_for_each_replace_ref(struct ref_store *refs,
+			      refs_for_each_cb fn, void *cb_data);
 
 /**
- * iterate all refs in "patterns" by partitioning patterns into disjoint sets
+ * Iterate all refs in "prefixes" by partitioning prefixes into disjoint sets
  * and iterating the longest-common prefix of each set.
- *
- * references matching any pattern in "exclude_patterns" are omitted from the
- * result set on a best-effort basis.
- *
- * callers should be prepared to ignore references that they did not ask for.
  */
-int refs_for_each_fullref_in_prefixes(struct ref_store *refs,
-				      const char *namespace,
-				      const char **patterns,
-				      const char **exclude_patterns,
-				      each_ref_fn fn, void *cb_data);
-
-/* iterates all refs that match the specified glob pattern. */
-int refs_for_each_glob_ref(struct ref_store *refs, each_ref_fn fn,
-			   const char *pattern, void *cb_data);
-
-int refs_for_each_glob_ref_in(struct ref_store *refs, each_ref_fn fn,
-			      const char *pattern, const char *prefix, void *cb_data);
-
-int refs_head_ref_namespaced(struct ref_store *refs, each_ref_fn fn, void *cb_data);
-
-/*
- * references matching any pattern in "exclude_patterns" are omitted from the
- * result set on a best-effort basis.
- */
-int refs_for_each_namespaced_ref(struct ref_store *refs,
-				 const char **exclude_patterns,
-				 each_ref_fn fn, void *cb_data);
-
-/* can be used to learn about broken ref and symref */
-int refs_for_each_rawref(struct ref_store *refs, each_ref_fn fn, void *cb_data);
-int refs_for_each_rawref_in(struct ref_store *refs, const char *prefix,
-			    each_ref_fn fn, void *cb_data);
-
-/*
- * Iterates over all refs including root refs, i.e. pseudorefs and HEAD.
- */
-int refs_for_each_include_root_refs(struct ref_store *refs, each_ref_fn fn,
-				    void *cb_data);
+int refs_for_each_ref_in_prefixes(struct ref_store *refs,
+				  const char **prefixes,
+				  const struct refs_for_each_ref_options *opts,
+				  refs_for_each_cb cb, void *cb_data);
 
 /*
  * Normalizes partial refs to their fully qualified form.
@@ -1332,43 +1374,6 @@ int repo_migrate_ref_storage_format(struct repository *repo,
 struct ref_iterator;
 
 /*
- * These flags are passed to refs_ref_iterator_begin() (and do_for_each_ref(),
- * which feeds it).
- */
-enum do_for_each_ref_flags {
-	/*
-	 * Include broken references in a do_for_each_ref*() iteration, which
-	 * would normally be omitted. This includes both refs that point to
-	 * missing objects (a true repository corruption), ones with illegal
-	 * names (which we prefer not to expose to callers), as well as
-	 * dangling symbolic refs (i.e., those that point to a non-existent
-	 * ref; this is not a corruption, but as they have no valid oid, we
-	 * omit them from normal iteration results).
-	 */
-	DO_FOR_EACH_INCLUDE_BROKEN = (1 << 0),
-
-	/*
-	 * Only include per-worktree refs in a do_for_each_ref*() iteration.
-	 * Normally this will be used with a files ref_store, since that's
-	 * where all reference backends will presumably store their
-	 * per-worktree refs.
-	 */
-	DO_FOR_EACH_PER_WORKTREE_ONLY = (1 << 1),
-
-	/*
-	 * Omit dangling symrefs from output; this only has an effect with
-	 * INCLUDE_BROKEN, since they are otherwise not included at all.
-	 */
-	DO_FOR_EACH_OMIT_DANGLING_SYMREFS = (1 << 2),
-
-	/*
-	 * Include root refs i.e. HEAD and pseudorefs along with the regular
-	 * refs.
-	 */
-	DO_FOR_EACH_INCLUDE_ROOT_REFS = (1 << 3),
-};
-
-/*
  * Return an iterator that goes over each reference in `refs` for
  * which the refname begins with prefix. If trim is non-zero, then
  * trim that many characters off the beginning of each refname.
@@ -1377,7 +1382,7 @@ enum do_for_each_ref_flags {
 struct ref_iterator *refs_ref_iterator_begin(
 	struct ref_store *refs,
 	const char *prefix, const char **exclude_patterns,
-	int trim, enum do_for_each_ref_flags flags);
+	int trim, enum refs_for_each_flag flags);
 
 /*
  * Advance the iterator to the first or next item and return ITER_OK.
@@ -1426,7 +1431,7 @@ void ref_iterator_free(struct ref_iterator *ref_iterator);
  * iterator style.
  */
 int do_for_each_ref_iterator(struct ref_iterator *iter,
-			     each_ref_fn fn, void *cb_data);
+			     refs_for_each_cb fn, void *cb_data);
 
 /*
  * Git only recognizes a directory as a repository if it contains:

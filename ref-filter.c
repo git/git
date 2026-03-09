@@ -2762,7 +2762,7 @@ static int start_ref_iterator_after(struct ref_iterator *iter, const char *marke
 	return ret;
 }
 
-static int for_each_fullref_with_seek(struct ref_filter *filter, each_ref_fn cb,
+static int for_each_fullref_with_seek(struct ref_filter *filter, refs_for_each_cb cb,
 				       void *cb_data, unsigned int flags)
 {
 	struct ref_iterator *iter;
@@ -2785,13 +2785,17 @@ static int for_each_fullref_with_seek(struct ref_filter *filter, each_ref_fn cb,
  * pattern match, so the callback still has to match each ref individually.
  */
 static int for_each_fullref_in_pattern(struct ref_filter *filter,
-				       each_ref_fn cb,
+				       refs_for_each_cb cb,
 				       void *cb_data)
 {
+	struct refs_for_each_ref_options opts = {
+		.exclude_patterns = filter->exclude.v,
+	};
+
 	if (filter->kind & FILTER_REFS_ROOT_REFS) {
 		/* In this case, we want to print all refs including root refs. */
 		return for_each_fullref_with_seek(filter, cb, cb_data,
-						  DO_FOR_EACH_INCLUDE_ROOT_REFS);
+						  REFS_FOR_EACH_INCLUDE_ROOT_REFS);
 	}
 
 	if (!filter->match_as_path) {
@@ -2817,10 +2821,9 @@ static int for_each_fullref_in_pattern(struct ref_filter *filter,
 		return for_each_fullref_with_seek(filter, cb, cb_data, 0);
 	}
 
-	return refs_for_each_fullref_in_prefixes(get_main_ref_store(the_repository),
-						 NULL, filter->name_patterns,
-						 filter->exclude.v,
-						 cb, cb_data);
+	return refs_for_each_ref_in_prefixes(get_main_ref_store(the_repository),
+					     filter->name_patterns, &opts,
+					     cb, cb_data);
 }
 
 /*
@@ -3284,7 +3287,7 @@ void filter_is_base(struct repository *r,
 	free(bases);
 }
 
-static int do_filter_refs(struct ref_filter *filter, unsigned int type, each_ref_fn fn, void *cb_data)
+static int do_filter_refs(struct ref_filter *filter, unsigned int type, refs_for_each_cb fn, void *cb_data)
 {
 	const char *prefix = NULL;
 	int ret = 0;
