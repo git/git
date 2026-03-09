@@ -14,6 +14,7 @@ packed_objects () {
 
 test_expect_success 'setup for --stdin-packs tests' '
 	git init stdin-packs &&
+	git -C stdin-packs config set maintenance.auto false &&
 	(
 		cd stdin-packs &&
 
@@ -255,6 +256,7 @@ test_expect_success '--stdin-packs=follow walks into unknown packs' '
 	git init repo &&
 	(
 		cd repo &&
+		git config set maintenance.auto false &&
 
 		for c in A B C D
 		do
@@ -355,6 +357,24 @@ test_expect_success '--stdin-packs with promisors' '
 		objects_in_packs $PACK >actual &&
 		test_cmp expect actual &&
 		rm -f $packdir/pack-$PACK.*
+	)
+'
+
+test_expect_success '--stdin-packs does not perform backfill fetch' '
+	test_when_finished "rm -rf remote client" &&
+
+	git init remote &&
+	test_commit_bulk -C remote 10 &&
+	git -C remote config set --local uploadpack.allowfilter 1 &&
+	git -C remote config set --local uploadpack.allowanysha1inwant 1 &&
+
+	git clone --filter=tree:0 "file://$(pwd)/remote" client &&
+	(
+		cd client &&
+		ls .git/objects/pack/*.promisor | sed "s|.*/||; s/\.promisor$/.pack/" >packs &&
+		test_line_count -gt 1 packs &&
+		GIT_TRACE2_EVENT="$(pwd)/event.log" git pack-objects --stdin-packs pack <packs &&
+		test_grep ! "\"event\":\"child_start\"" event.log
 	)
 '
 

@@ -41,7 +41,6 @@ typedef struct s_chastore {
 typedef struct s_xrecord {
 	uint8_t const *ptr;
 	size_t size;
-	uint64_t line_hash;
 	size_t minimal_perfect_hash;
 } xrecord_t;
 

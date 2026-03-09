@@ -43,6 +43,10 @@ option('expat', type: 'feature', value: 'enabled',
   description: 'Build helpers used to push to remotes with the HTTP transport.')
 option('gettext', type: 'feature', value: 'auto',
   description: 'Build translation files.')
+option('gitk', type: 'feature', value: 'auto',
+  description: 'Build the Gitk graphical repository browser. Requires Tcl/Tk.')
+option('git_gui', type: 'feature', value: 'auto',
+  description: 'Build the git-gui graphical user interface for Git. Requires Tcl/Tk.')
 option('gitweb', type: 'feature', value: 'auto',
   description: 'Build Git web interface. Requires Perl.')
 option('iconv', type: 'feature', value: 'auto',

@@ -354,8 +354,8 @@ do
 
 			# Create 14 additional references, which brings us to
 			# 15 together with the default branch.
-			printf "create refs/heads/loose-%d HEAD\n" $(test_seq 14) >stdin &&
-			git update-ref --stdin <stdin &&
+			test_seq -f "create refs/heads/loose-%d HEAD" 14 |
+			git update-ref --stdin &&
 			test_path_is_missing .git/packed-refs &&
 			git ${pack_refs} --auto --all &&
 			test_path_is_missing .git/packed-refs &&
@@ -379,8 +379,8 @@ do
 			test_line_count = 2 .git/packed-refs &&
 
 			# Create 15 loose references.
-			printf "create refs/heads/loose-%d HEAD\n" $(test_seq 15) >stdin &&
-			git update-ref --stdin <stdin &&
+			test_seq -f "create refs/heads/loose-%d HEAD" 15 |
+			git update-ref --stdin &&
 			git ${pack_refs} --auto --all &&
 			test_line_count = 2 .git/packed-refs &&
 
@@ -401,18 +401,14 @@ do
 
 			# Create 99 packed refs. This should cause the heuristic
 			# to require more than the minimum amount of loose refs.
-			test_seq 99 |
-			while read i
-			do
-				printf "create refs/heads/packed-%d HEAD\n" $i || return 1
-			done >stdin &&
-			git update-ref --stdin <stdin &&
+			test_seq -f "create refs/heads/packed-%d HEAD" 99 |
+			git update-ref --stdin &&
 			git ${pack_refs} --all &&
 			test_line_count = 101 .git/packed-refs &&
 
 			# Create 24 loose refs, which should not yet cause us to repack.
-			printf "create refs/heads/loose-%d HEAD\n" $(test_seq 24) >stdin &&
-			git update-ref --stdin <stdin &&
+			test_seq -f "create refs/heads/loose-%d HEAD" 24 |
+			git update-ref --stdin &&
 			git ${pack_refs} --auto --all &&
 			test_line_count = 101 .git/packed-refs &&
 
@@ -420,8 +416,8 @@ do
 			# Note that we explicitly do not check for strict
 			# boundaries here, as this also depends on the size of
 			# the object hash.
-			printf "create refs/heads/addn-%d HEAD\n" $(test_seq 10) >stdin &&
-			git update-ref --stdin <stdin &&
+			test_seq -f "create refs/heads/addn-%d HEAD" 10 |
+			git update-ref --stdin &&
 			git ${pack_refs} --auto --all &&
 			test_line_count = 135 .git/packed-refs
 		)

@@ -20,6 +20,8 @@ const char *list_object_filter_config_name(enum list_objects_filter_choice c)
 	case LOFC_DISABLED:
 		/* we have no name for "no filter at all" */
 		break;
+	case LOFC_AUTO:
+		return "auto";
 	case LOFC_BLOB_NONE:
 		return "blob:none";
 	case LOFC_BLOB_LIMIT:
@@ -52,7 +54,16 @@ int gently_parse_list_objects_filter(
 	if (filter_options->choice)
 		BUG("filter_options already populated");
 
-	if (!strcmp(arg, "blob:none")) {
+	if (!strcmp(arg, "auto")) {
+		if (!filter_options->allow_auto_filter) {
+			strbuf_addstr(errbuf,
+				      _("'auto' filter not supported by this command"));
+			return 1;
+		}
+		filter_options->choice = LOFC_AUTO;
+		return 0;
+
+	} else if (!strcmp(arg, "blob:none")) {
 		filter_options->choice = LOFC_BLOB_NONE;
 		return 0;
 
@@ -146,10 +157,22 @@ static int parse_combine_subfilter(
 
 	decoded = url_percent_decode(subspec->buf);
 
-	result = has_reserved_character(subspec, errbuf) ||
-		gently_parse_list_objects_filter(
-			&filter_options->sub[new_index], decoded, errbuf);
+	result = has_reserved_character(subspec, errbuf);
+	if (result)
+		goto cleanup;
 
+	result = gently_parse_list_objects_filter(
+			&filter_options->sub[new_index], decoded, errbuf);
+	if (result)
+		goto cleanup;
+
+	result = (filter_options->sub[new_index].choice == LOFC_AUTO);
+	if (result) {
+		strbuf_addstr(errbuf, _("an 'auto' filter cannot be combined"));
+		goto cleanup;
+	}
+
+cleanup:
 	free(decoded);
 	return result;
 }
@@ -263,6 +286,9 @@ void parse_list_objects_filter(
 	} else {
 		struct list_objects_filter_options *sub;
 
+		if (filter_options->choice == LOFC_AUTO)
+			die(_("an 'auto' filter is incompatible with any other filter"));
+
 		/*
 		 * Make filter_options an LOFC_COMBINE spec so we can trivially
 		 * add subspecs to it.
@@ -276,6 +302,9 @@ void parse_list_objects_filter(
 		list_objects_filter_init(sub);
 		if (gently_parse_list_objects_filter(sub, arg, &errbuf))
 			die("%s", errbuf.buf);
+
+		if (sub->choice == LOFC_AUTO)
+			die(_("an 'auto' filter is incompatible with any other filter"));
 
 		strbuf_addch(&filter_options->filter_spec, '+');
 		filter_spec_append_urlencode(filter_options, arg);
@@ -317,15 +346,19 @@ void list_objects_filter_release(
 	struct list_objects_filter_options *filter_options)
 {
 	size_t sub;
+	unsigned int allow_auto_filter;
 
 	if (!filter_options)
 		return;
+
+	allow_auto_filter = filter_options->allow_auto_filter;
 	strbuf_release(&filter_options->filter_spec);
 	free(filter_options->sparse_oid_name);
 	for (sub = 0; sub < filter_options->sub_nr; sub++)
 		list_objects_filter_release(&filter_options->sub[sub]);
 	free(filter_options->sub);
 	list_objects_filter_init(filter_options);
+	filter_options->allow_auto_filter = allow_auto_filter;
 }
 
 void partial_clone_register(

@@ -149,6 +149,8 @@ ifeq ($(uname_S),Darwin)
 	HAVE_NS_GET_EXECUTABLE_PATH = YesPlease
 	CSPRNG_METHOD = arc4random
 	USE_ENHANCED_BASIC_REGULAR_EXPRESSIONS = YesPlease
+	HAVE_PLATFORM_PROCINFO = YesPlease
+	COMPAT_OBJS += compat/darwin/procinfo.o
 
         ifeq ($(uname_M),arm64)
 		HOMEBREW_PREFIX = /opt/homebrew

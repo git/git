@@ -17,8 +17,9 @@
 #include "utf8.h"
 
 static const char *const repo_usage[] = {
-	"git repo info [--format=(keyvalue|nul) | -z] [--all | <key>...]",
-	"git repo structure [--format=(table|keyvalue|nul) | -z]",
+	"git repo info [--format=(lines|nul) | -z] [--all | <key>...]",
+	"git repo info --keys [--format=(lines|nul) | -z]",
+	"git repo structure [--format=(table|lines|nul) | -z]",
 	NULL
 };
 
@@ -26,11 +27,11 @@ typedef int get_value_fn(struct repository *repo, struct strbuf *buf);
 
 enum output_format {
 	FORMAT_TABLE,
-	FORMAT_KEYVALUE,
+	FORMAT_NEWLINE_TERMINATED,
 	FORMAT_NUL_TERMINATED,
 };
 
-struct field {
+struct repo_info_field {
 	const char *key;
 	get_value_fn *get_value;
 };
@@ -61,37 +62,39 @@ static int get_references_format(struct repository *repo, struct strbuf *buf)
 	return 0;
 }
 
-/* repo_info_fields keys must be in lexicographical order */
-static const struct field repo_info_fields[] = {
+/* repo_info_field keys must be in lexicographical order */
+static const struct repo_info_field repo_info_field[] = {
 	{ "layout.bare", get_layout_bare },
 	{ "layout.shallow", get_layout_shallow },
 	{ "object.format", get_object_format },
 	{ "references.format", get_references_format },
 };
 
-static int repo_info_fields_cmp(const void *va, const void *vb)
+static int repo_info_field_cmp(const void *va, const void *vb)
 {
-	const struct field *a = va;
-	const struct field *b = vb;
+	const struct repo_info_field *a = va;
+	const struct repo_info_field *b = vb;
 
 	return strcmp(a->key, b->key);
 }
 
-static get_value_fn *get_value_fn_for_key(const char *key)
+static const struct repo_info_field *get_repo_info_field(const char *key)
 {
-	const struct field search_key = { key, NULL };
-	const struct field *found = bsearch(&search_key, repo_info_fields,
-					    ARRAY_SIZE(repo_info_fields),
-					    sizeof(*found),
-					    repo_info_fields_cmp);
-	return found ? found->get_value : NULL;
+	const struct repo_info_field search_key = { key, NULL };
+	const struct repo_info_field *found = bsearch(&search_key,
+						      repo_info_field,
+						      ARRAY_SIZE(repo_info_field),
+						      sizeof(*found),
+						      repo_info_field_cmp);
+
+	return found;
 }
 
 static void print_field(enum output_format format, const char *key,
 			const char *value)
 {
 	switch (format) {
-	case FORMAT_KEYVALUE:
+	case FORMAT_NEWLINE_TERMINATED:
 		printf("%s=", key);
 		quote_c_style(value, NULL, stdout, 0);
 		putchar('\n');
@@ -112,18 +115,16 @@ static int print_fields(int argc, const char **argv,
 	struct strbuf valbuf = STRBUF_INIT;
 
 	for (int i = 0; i < argc; i++) {
-		get_value_fn *get_value;
 		const char *key = argv[i];
+		const struct repo_info_field *field = get_repo_info_field(key);
 
-		get_value = get_value_fn_for_key(key);
-
-		if (!get_value) {
+		if (!field) {
 			ret = error(_("key '%s' not found"), key);
 			continue;
 		}
 
 		strbuf_reset(&valbuf);
-		get_value(repo, &valbuf);
+		field->get_value(repo, &valbuf);
 		print_field(format, key, valbuf.buf);
 	}
 
@@ -136,8 +137,8 @@ static int print_all_fields(struct repository *repo,
 {
 	struct strbuf valbuf = STRBUF_INIT;
 
-	for (size_t i = 0; i < ARRAY_SIZE(repo_info_fields); i++) {
-		const struct field *field = &repo_info_fields[i];
+	for (size_t i = 0; i < ARRAY_SIZE(repo_info_field); i++) {
+		const struct repo_info_field *field = &repo_info_field[i];
 
 		strbuf_reset(&valbuf);
 		field->get_value(repo, &valbuf);
@@ -145,6 +146,29 @@ static int print_all_fields(struct repository *repo,
 	}
 
 	strbuf_release(&valbuf);
+	return 0;
+}
+
+static int print_keys(enum output_format format)
+{
+	char sep;
+
+	switch (format) {
+	case FORMAT_NEWLINE_TERMINATED:
+		sep = '\n';
+		break;
+	case FORMAT_NUL_TERMINATED:
+		sep = '\0';
+		break;
+	default:
+		die(_("--keys can only be used with --format=lines or --format=nul"));
+	}
+
+	for (size_t i = 0; i < ARRAY_SIZE(repo_info_field); i++) {
+		const struct repo_info_field *field = &repo_info_field[i];
+		printf("%s%c", field->key, sep);
+	}
+
 	return 0;
 }
 
@@ -157,8 +181,8 @@ static int parse_format_cb(const struct option *opt,
 		*format = FORMAT_NUL_TERMINATED;
 	else if (!strcmp(arg, "nul"))
 		*format = FORMAT_NUL_TERMINATED;
-	else if (!strcmp(arg, "keyvalue"))
-		*format = FORMAT_KEYVALUE;
+	else if (!strcmp(arg, "lines"))
+		*format = FORMAT_NEWLINE_TERMINATED;
 	else if (!strcmp(arg, "table"))
 		*format = FORMAT_TABLE;
 	else
@@ -170,8 +194,9 @@ static int parse_format_cb(const struct option *opt,
 static int cmd_repo_info(int argc, const char **argv, const char *prefix,
 			 struct repository *repo)
 {
-	enum output_format format = FORMAT_KEYVALUE;
+	enum output_format format = FORMAT_NEWLINE_TERMINATED;
 	int all_keys = 0;
+	int show_keys = 0;
 	struct option options[] = {
 		OPT_CALLBACK_F(0, "format", &format, N_("format"),
 			       N_("output format"),
@@ -181,11 +206,19 @@ static int cmd_repo_info(int argc, const char **argv, const char *prefix,
 			       PARSE_OPT_NONEG | PARSE_OPT_NOARG,
 			       parse_format_cb),
 		OPT_BOOL(0, "all", &all_keys, N_("print all keys/values")),
+		OPT_BOOL(0, "keys", &show_keys, N_("show keys")),
 		OPT_END()
 	};
 
 	argc = parse_options(argc, argv, prefix, options, repo_usage, 0);
-	if (format != FORMAT_KEYVALUE && format != FORMAT_NUL_TERMINATED)
+
+	if (show_keys && (all_keys || argc))
+		die(_("--keys cannot be used with a <key> or --all"));
+
+	if (show_keys)
+		return print_keys(format);
+
+	if (format != FORMAT_NEWLINE_TERMINATED && format != FORMAT_NUL_TERMINATED)
 		die(_("unsupported output format"));
 
 	if (all_keys && argc)
@@ -671,7 +704,7 @@ static int cmd_repo_structure(int argc, const char **argv, const char *prefix,
 		stats_table_setup_structure(&table, &stats);
 		stats_table_print_structure(&table);
 		break;
-	case FORMAT_KEYVALUE:
+	case FORMAT_NEWLINE_TERMINATED:
 		structure_keyvalue_print(&stats, '=', '\n');
 		break;
 	case FORMAT_NUL_TERMINATED:

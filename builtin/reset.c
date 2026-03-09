@@ -371,6 +371,8 @@ int cmd_reset(int argc,
 			       PARSE_OPT_OPTARG,
 			       option_parse_recurse_submodules_worktree_updater),
 		OPT_BOOL('p', "patch", &patch_mode, N_("select hunks interactively")),
+		OPT_BOOL(0, "auto-advance", &add_p_opt.auto_advance,
+			 N_("auto advance to the next file when selecting hunks interactively")),
 		OPT_DIFF_UNIFIED(&add_p_opt.context),
 		OPT_DIFF_INTERHUNK_CONTEXT(&add_p_opt.interhunkcontext),
 		OPT_BOOL('N', "intent-to-add", &intent_to_add,
@@ -443,6 +445,8 @@ int cmd_reset(int argc,
 			die(_("the option '%s' requires '%s'"), "--unified", "--patch");
 		if (add_p_opt.interhunkcontext != -1)
 			die(_("the option '%s' requires '%s'"), "--inter-hunk-context", "--patch");
+		if (!add_p_opt.auto_advance)
+			die(_("the option '%s' requires '%s'"), "--no-auto-advance", "--patch");
 	}
 
 	/* git reset tree [--] paths... can be used to

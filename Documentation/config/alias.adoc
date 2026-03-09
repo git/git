@@ -1,12 +1,46 @@
 alias.*::
-	Command aliases for the linkgit:git[1] command wrapper - e.g.
-	after defining `alias.last = cat-file commit HEAD`, the invocation
-	`git last` is equivalent to `git cat-file commit HEAD`. To avoid
-	confusion and troubles with script usage, aliases that
-	hide existing Git commands are ignored except for deprecated
-	commands.  Arguments are split by
-	spaces, the usual shell quoting and escaping are supported.
-	A quote pair or a backslash can be used to quote them.
+alias.*.command::
+	Command aliases for the linkgit:git[1] command wrapper. Aliases
+	can be defined using two syntaxes:
++
+--
+1. Without a subsection, e.g., `[alias] co = checkout`. The alias
+   name ("co" in this example) is
+   limited to ASCII alphanumeric characters and `-`,
+   and is matched case-insensitively.
+2. With a subsection, e.g., `[alias "co"] command = checkout`. The
+   alias name can contain any characters (except for newlines and NUL bytes),
+   including UTF-8, and is matched case-sensitively as raw bytes.
+   You define the action of the alias in the `command`.
+--
++
+Examples:
++
+----
+# Without subsection (ASCII alphanumeric and dash only)
+[alias]
+    co = checkout
+    st = status
+
+# With subsection (allows any characters, including UTF-8)
+[alias "hämta"]
+    command = fetch
+[alias "rätta till"]
+    command = commit --amend
+----
++
+With a Git alias defined, e.g.,
+
+    $ git config --global alias.last "cat-file commit HEAD"
+    # Which is equivalent to
+    $ git config --global alias.last.command "cat-file commit HEAD"
+
+`git last` is equivalent to `git cat-file commit HEAD`. To avoid
+confusion and troubles with script usage, aliases that
+hide existing Git commands are ignored except for deprecated
+commands.  Arguments are split by
+spaces, the usual shell quoting and escaping are supported.
+A quote pair or a backslash can be used to quote them.
 +
 Note that the first word of an alias does not necessarily have to be a
 command. It can be a command-line option that will be passed into the

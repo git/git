@@ -132,6 +132,37 @@ test_expect_success 'diff with rename detection batches blobs' '
 	test_line_count = 1 done_lines
 '
 
+test_expect_success 'diff succeeds even if prefetch triggered by break-rewrites' '
+	test_when_finished "rm -rf server client trace" &&
+
+	test_create_repo server &&
+	echo xyz >server/foo &&
+	mkdir server/bar &&
+	test_seq -f "line %d" 1 100 >server/bar/baz &&
+	git -C server add -A &&
+	git -C server commit -m x &&
+
+	echo xyzz >server/foo &&
+	test_seq -f "line %d" 90 190 >server/bar/baz &&
+	git -C server add -A &&
+	git -C server commit -m x &&
+
+	test_config -C server uploadpack.allowfilter 1 &&
+	test_config -C server uploadpack.allowanysha1inwant 1 &&
+	git clone --filter=blob:limit=0 "file://$(pwd)/server" client &&
+
+	# Fetch bar/baz without fetching foo.
+	# Foo will be lazily fetched during break rewrites detection.
+	git -C client checkout HEAD~1 bar &&
+
+	# Ensure baz in the working tree is different from baz in HEAD~1.
+	# We need baz to trigger break-rewrites detection.
+	git -C client reset --hard HEAD &&
+
+	# break-rewrites detction in reset.
+	git -C client reset HEAD~1
+'
+
 test_expect_success 'diff succeeds even if entries are removed from queue' '
 	test_when_finished "rm -rf server client trace" &&
 

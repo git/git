@@ -1,14 +1,20 @@
 am.keepcr::
-	If true, git-am will call git-mailsplit for patches in mbox format
-	with parameter `--keep-cr`. In this case git-mailsplit will
+	If true, linkgit:git-am[1] will call linkgit:git-mailsplit[1]
+	for patches in mbox format with parameter `--keep-cr`. In this
+	case linkgit:git-mailsplit[1] will
 	not remove `\r` from lines ending with `\r\n`. Can be overridden
 	by giving `--no-keep-cr` from the command line.
-	See linkgit:git-am[1], linkgit:git-mailsplit[1].
 
 am.threeWay::
-	By default, `git am` will fail if the patch does not apply cleanly. When
-	set to true, this setting tells `git am` to fall back on 3-way merge if
-	the patch records the identity of blobs it is supposed to apply to and
-	we have those blobs available locally (equivalent to giving the `--3way`
-	option from the command line). Defaults to `false`.
-	See linkgit:git-am[1].
+	By default, linkgit:git-am[1] will fail if the patch does not
+	apply cleanly. When set to true, this setting tells
+	linkgit:git-am[1] to fall back on 3-way merge if the patch
+	records the identity of blobs it is supposed to apply to and we
+	have those blobs available locally (equivalent to giving the
+	`--3way` option from the command line). Defaults to `false`.
+
+am.messageId::
+	Add a `Message-ID` trailer based on the email header to the
+	commit when using linkgit:git-am[1] (see
+	linkgit:git-interpret-trailers[1]). See also the `--message-id`
+	and `--no-message-id` options.

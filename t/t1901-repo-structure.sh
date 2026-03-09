@@ -113,7 +113,7 @@ test_expect_success SHA1 'repository with references and objects' '
 	)
 '
 
-test_expect_success SHA1 'keyvalue and nul format' '
+test_expect_success SHA1 'lines and nul format' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
@@ -140,23 +140,23 @@ test_expect_success SHA1 'keyvalue and nul format' '
 		objects.tags.disk_size=$(object_type_disk_usage tag)
 		EOF
 
-		git repo structure --format=keyvalue >out 2>err &&
+		git repo structure --format=lines >out 2>err &&
 
 		test_cmp expect out &&
 		test_line_count = 0 err &&
 
-		# Replace key and value delimiters for nul format.
-		tr "\n=" "\0\n" <expect >expect_nul &&
 		git repo structure --format=nul >out 2>err &&
+		tr "\012\000" "=\012" <out >actual &&
 
-		test_cmp expect_nul out &&
+		test_cmp expect actual &&
 		test_line_count = 0 err &&
 
 		# "-z", as a synonym to "--format=nul", participates in the
 		# usual "last one wins" rule.
 		git repo structure --format=table -z >out 2>err &&
+		tr "\012\000" "=\012" <out >actual &&
 
-		test_cmp expect_nul out &&
+		test_cmp expect actual &&
 		test_line_count = 0 err
 	)
 '

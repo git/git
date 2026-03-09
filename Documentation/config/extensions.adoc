@@ -57,10 +57,24 @@ For historical reasons, this extension is respected regardless of the
 `core.repositoryFormatVersion` setting.
 
 refStorage:::
-	Specify the ref storage format to use. The acceptable values are:
+	Specify the ref storage format and a corresponding payload. The value
+	can be either a format name or a URI:
 +
 --
+* A format name alone (e.g., `reftable` or `files`).
+
+* A URI format `<format>://<payload>` explicitly specifies both the
+  format and payload (e.g., `reftable:///foo/bar`).
+
+Supported format names are:
+
 include::../ref-storage-format.adoc[]
+
+The payload is passed directly to the reference backend. For the files and
+reftable backends, this must be a filesystem path where the references will
+be stored. Defaulting to the commondir when no payload is provided. Relative
+paths are resolved relative to the `$GIT_DIR`. Future backends may support
+other payload schemes, e.g., postgres://127.0.0.1:5432?database=myrepo.
 --
 +
 Note that this setting should only be set by linkgit:git-init[1] or

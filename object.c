@@ -6,6 +6,7 @@
 #include "object.h"
 #include "replace-object.h"
 #include "object-file.h"
+#include "odb/streaming.h"
 #include "blob.h"
 #include "statinfo.h"
 #include "tree.h"
@@ -207,10 +208,11 @@ struct object *lookup_object_by_type(struct repository *r,
 	}
 }
 
-enum peel_status peel_object(struct repository *r,
-			     const struct object_id *name,
-			     struct object_id *oid,
-			     unsigned flags)
+enum peel_status peel_object_ext(struct repository *r,
+				 const struct object_id *name,
+				 struct object_id *oid,
+				 unsigned flags,
+				 enum object_type *typep)
 {
 	struct object *o = lookup_unknown_object(r, name);
 
@@ -220,8 +222,10 @@ enum peel_status peel_object(struct repository *r,
 			return PEEL_INVALID;
 	}
 
-	if (o->type != OBJ_TAG)
+	if (o->type != OBJ_TAG) {
+		*typep = o->type;
 		return PEEL_NON_TAG;
+	}
 
 	while (o && o->type == OBJ_TAG) {
 		o = parse_object(r, &o->oid);
@@ -241,7 +245,17 @@ enum peel_status peel_object(struct repository *r,
 		return PEEL_INVALID;
 
 	oidcpy(oid, &o->oid);
+	*typep = o->type;
 	return PEEL_PEELED;
+}
+
+enum peel_status peel_object(struct repository *r,
+			     const struct object_id *name,
+			     struct object_id *oid,
+			     unsigned flags)
+{
+	enum object_type dummy;
+	return peel_object_ext(r, name, oid, flags, &dummy);
 }
 
 struct object *parse_object_buffer(struct repository *r, const struct object_id *oid, enum object_type type, unsigned long size, void *buffer, int *eaten_p)
@@ -330,9 +344,21 @@ struct object *parse_object_with_flags(struct repository *r,
 
 	if ((!obj || obj->type == OBJ_NONE || obj->type == OBJ_BLOB) &&
 	    odb_read_object_info(r->objects, oid, NULL) == OBJ_BLOB) {
-		if (!skip_hash && stream_object_signature(r, repl) < 0) {
-			error(_("hash mismatch %s"), oid_to_hex(oid));
-			return NULL;
+		if (!skip_hash) {
+			struct odb_read_stream *stream = odb_read_stream_open(r->objects, oid, NULL);
+
+			if (!stream) {
+				error(_("unable to open object stream for %s"), oid_to_hex(oid));
+				return NULL;
+			}
+
+			if (stream_object_signature(r, stream, repl) < 0) {
+				error(_("hash mismatch %s"), oid_to_hex(oid));
+				odb_read_stream_close(stream);
+				return NULL;
+			}
+
+			odb_read_stream_close(stream);
 		}
 		parse_blob_buffer(lookup_blob(r, oid));
 		return lookup_object(r, oid);

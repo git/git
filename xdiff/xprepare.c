@@ -34,8 +34,10 @@
 #define INVESTIGATE 2
 
 typedef struct s_xdlclass {
+	uint64_t line_hash;
 	struct s_xdlclass *next;
-	xrecord_t rec;
+	const uint8_t *ptr;
+	size_t size;
 	long idx;
 	long len1, len2;
 } xdlclass_t;
@@ -92,14 +94,15 @@ static void xdl_free_classifier(xdlclassifier_t *cf) {
 }
 
 
-static int xdl_classify_record(unsigned int pass, xdlclassifier_t *cf, xrecord_t *rec) {
+static int xdl_classify_record(unsigned int pass, xdlclassifier_t *cf, xrecord_t *rec,
+			       uint64_t line_hash) {
 	size_t hi;
 	xdlclass_t *rcrec;
 
-	hi = XDL_HASHLONG(rec->line_hash, cf->hbits);
+	hi = XDL_HASHLONG(line_hash, cf->hbits);
 	for (rcrec = cf->rchash[hi]; rcrec; rcrec = rcrec->next)
-		if (rcrec->rec.line_hash == rec->line_hash &&
-				xdl_recmatch((const char *)rcrec->rec.ptr, (long)rcrec->rec.size,
+		if (rcrec->line_hash == line_hash &&
+				xdl_recmatch((const char *)rcrec->ptr, (long)rcrec->size,
 					(const char *)rec->ptr, (long)rec->size, cf->flags))
 			break;
 
@@ -112,7 +115,9 @@ static int xdl_classify_record(unsigned int pass, xdlclassifier_t *cf, xrecord_t
 		if (XDL_ALLOC_GROW(cf->rcrecs, cf->count, cf->alloc))
 				return -1;
 		cf->rcrecs[rcrec->idx] = rcrec;
-		rcrec->rec = *rec;
+		rcrec->line_hash = line_hash;
+		rcrec->ptr = rec->ptr;
+		rcrec->size = rec->size;
 		rcrec->len1 = rcrec->len2 = 0;
 		rcrec->next = cf->rchash[hi];
 		cf->rchash[hi] = rcrec;
@@ -158,8 +163,7 @@ static int xdl_prepare_ctx(unsigned int pass, mmfile_t *mf, long narec, xpparam_
 			crec = &xdf->recs[xdf->nrec++];
 			crec->ptr = prev;
 			crec->size = cur - prev;
-			crec->line_hash = hav;
-			if (xdl_classify_record(pass, cf, crec) < 0)
+			if (xdl_classify_record(pass, cf, crec, hav) < 0)
 				goto abort;
 		}
 	}

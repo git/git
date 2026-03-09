@@ -12,7 +12,7 @@ test_expect_success 'setup' '
 	for i in a b c
 	do
 	echo $i >$i &&
-	test-tool genrandom "$i" 32768 >>$i &&
+	test-tool genrandom "$i" 32k >>$i &&
 	git update-index --add $i || return 1
 	done &&
 	echo d >d && cat c >>d && git update-index --add d &&

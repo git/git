@@ -90,6 +90,32 @@ test_expect_success "new incomplete line in post-image" '
 	git -c core.whitespace=incomplete diff -R --check x
 '
 
+test_expect_success SYMLINKS "incomplete-line error is disabled for symlinks" '
+	test_when_finished "git reset --hard" &&
+	test_when_finished "rm -f mylink" &&
+
+	# a regular file with an incomplete line
+	printf "%s" one >mylink &&
+	git add mylink &&
+
+	# a symbolic link
+	rm mylink &&
+	ln -s two mylink &&
+
+	git -c diff.color=always -c core.whitespace=incomplete \
+		diff mylink >forward.raw &&
+	test_decode_color >forward <forward.raw &&
+	test_grep ! "<BRED>\\\\ No newline at end of file<RESET>" forward &&
+
+	git -c diff.color=always -c core.whitespace=incomplete \
+		diff -R mylink >reverse.raw &&
+	test_decode_color >reverse <reverse.raw &&
+	test_grep "<BRED>\\\\ No newline at end of file<RESET>" reverse &&
+
+	git -c core.whitespace=incomplete diff --check mylink &&
+	test_must_fail git -c core.whitespace=incomplete diff --check -R mylink
+'
+
 test_expect_success "Ray Lehtiniemi's example" '
 	cat <<-\EOF >x &&
 	do {
