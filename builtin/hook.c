@@ -9,7 +9,7 @@
 #define BUILTIN_HOOK_RUN_USAGE \
 	N_("git hook run [--ignore-missing] [--to-stdin=<path>] <hook-name> [-- <hook-args>]")
 #define BUILTIN_HOOK_LIST_USAGE \
-	N_("git hook list [-z] <hook-name>")
+	N_("git hook list [-z] [--show-scope] <hook-name>")
 
 static const char * const builtin_hook_usage[] = {
 	BUILTIN_HOOK_RUN_USAGE,
@@ -33,11 +33,14 @@ static int list(int argc, const char **argv, const char *prefix,
 	struct string_list_item *item;
 	const char *hookname = NULL;
 	int line_terminator = '\n';
+	int show_scope = 0;
 	int ret = 0;
 
 	struct option list_options[] = {
 		OPT_SET_INT('z', NULL, &line_terminator,
 			    N_("use NUL as line terminator"), '\0'),
+		OPT_BOOL(0, "show-scope", &show_scope,
+			 N_("show the config scope that defined each hook")),
 		OPT_END(),
 	};
 
@@ -70,7 +73,14 @@ static int list(int argc, const char **argv, const char *prefix,
 			printf("%s%c", _("hook from hookdir"), line_terminator);
 			break;
 		case HOOK_CONFIGURED:
-			printf("%s%c", h->u.configured.friendly_name, line_terminator);
+			if (show_scope)
+				printf("%s (%s)%c",
+				       h->u.configured.friendly_name,
+				       config_scope_name(h->u.configured.scope),
+				       line_terminator);
+			else
+				printf("%s%c", h->u.configured.friendly_name,
+				       line_terminator);
 			break;
 		default:
 			BUG("unknown hook kind");
