@@ -34,7 +34,7 @@ test_expect_success 'git hook usage' '
 
 test_expect_success 'git hook list: nonexistent hook' '
 	cat >stderr.expect <<-\EOF &&
-	warning: No hooks found for event '\''test-hook'\''
+	warning: no hooks found for event '\''test-hook'\''
 	EOF
 	test_expect_code 1 git hook list test-hook 2>stderr.actual &&
 	test_cmp stderr.expect stderr.actual

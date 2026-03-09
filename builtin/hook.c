@@ -5,8 +5,6 @@
 #include "gettext.h"
 #include "hook.h"
 #include "parse-options.h"
-#include "strvec.h"
-#include "abspath.h"
 
 #define BUILTIN_HOOK_RUN_USAGE \
 	N_("git hook run [--ignore-missing] [--to-stdin=<path>] <hook-name> [-- <hook-args>]")
@@ -51,7 +49,7 @@ static int list(int argc, const char **argv, const char *prefix,
 	 * arguments later they probably should be caught by parse_options.
 	 */
 	if (argc != 1)
-		usage_msg_opt(_("You must specify a hook event name to list."),
+		usage_msg_opt(_("you must specify a hook event name to list."),
 			      builtin_hook_list_usage, list_options);
 
 	hookname = argv[0];
@@ -59,7 +57,7 @@ static int list(int argc, const char **argv, const char *prefix,
 	head = list_hooks(repo, hookname, NULL);
 
 	if (!head->nr) {
-		warning(_("No hooks found for event '%s'"), hookname);
+		warning(_("no hooks found for event '%s'"), hookname);
 		ret = 1; /* no hooks found */
 		goto cleanup;
 	}

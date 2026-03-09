@@ -904,7 +904,8 @@ static int feed_receive_hook_cb(int hook_stdin_fd, void *pp_cb UNUSED, void *pp_
 static void *receive_hook_feed_state_alloc(void *feed_pipe_ctx)
 {
 	struct receive_hook_feed_state *init_state = feed_pipe_ctx;
-	struct receive_hook_feed_state *data = xcalloc(1, sizeof(*data));
+	struct receive_hook_feed_state *data;
+	CALLOC_ARRAY(data, 1);
 	data->report = init_state->report;
 	data->cmd = init_state->cmd;
 	data->skip_broken = init_state->skip_broken;
@@ -928,7 +929,11 @@ static int run_receive_hook(struct command *commands,
 {
 	struct run_hooks_opt opt = RUN_HOOKS_OPT_INIT;
 	struct command *iter = commands;
-	struct receive_hook_feed_state feed_init_state = { 0 };
+	struct receive_hook_feed_state feed_init_state = {
+		.cmd = commands,
+		.skip_broken = skip_broken,
+		.buf = STRBUF_INIT,
+	};
 	struct async sideband_async;
 	int sideband_async_started = 0;
 	int saved_stderr = -1;
@@ -961,8 +966,6 @@ static int run_receive_hook(struct command *commands,
 	prepare_sideband_async(&sideband_async, &saved_stderr, &sideband_async_started);
 
 	/* set up stdin callback */
-	feed_init_state.cmd = commands;
-	feed_init_state.skip_broken = skip_broken;
 	opt.feed_pipe_ctx = &feed_init_state;
 	opt.feed_pipe = feed_receive_hook_cb;
 	opt.feed_pipe_cb_data_alloc = receive_hook_feed_state_alloc;

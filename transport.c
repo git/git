@@ -1360,7 +1360,8 @@ static int pre_push_hook_feed_stdin(int hook_stdin_fd, void *pp_cb UNUSED, void 
 
 static void *pre_push_hook_data_alloc(void *feed_pipe_ctx)
 {
-	struct feed_pre_push_hook_data *data = xmalloc(sizeof(*data));
+	struct feed_pre_push_hook_data *data;
+	CALLOC_ARRAY(data, 1);
 	strbuf_init(&data->buf, 0);
 	data->refs = (struct ref *)feed_pipe_ctx;
 	return data;
