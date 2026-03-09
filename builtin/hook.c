@@ -72,16 +72,20 @@ static int list(int argc, const char **argv, const char *prefix,
 		case HOOK_TRADITIONAL:
 			printf("%s%c", _("hook from hookdir"), line_terminator);
 			break;
-		case HOOK_CONFIGURED:
-			if (show_scope)
-				printf("%s (%s)%c",
-				       h->u.configured.friendly_name,
-				       config_scope_name(h->u.configured.scope),
+		case HOOK_CONFIGURED: {
+			const char *name = h->u.configured.friendly_name;
+			const char *scope = show_scope ?
+				config_scope_name(h->u.configured.scope) : NULL;
+			if (scope)
+				printf("%s (%s%s)%c", name, scope,
+				       h->u.configured.disabled ? ", disabled" : "",
 				       line_terminator);
+			else if (h->u.configured.disabled)
+				printf("%s (disabled)%c", name, line_terminator);
 			else
-				printf("%s%c", h->u.configured.friendly_name,
-				       line_terminator);
+				printf("%s%c", name, line_terminator);
 			break;
+		}
 		default:
 			BUG("unknown hook kind");
 		}
