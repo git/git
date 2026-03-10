@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "autocorrect.h"
 #include "config.h"
@@ -29,13 +31,13 @@ static enum autocorr_mode parse_autocorrect(const char *value)
 		return AUTOCORRECT_DELAY;
 }
 
-void autocorr_resolve_config(const char *var, const char *value,
-			     const struct config_context *ctx, void *data)
+static int resolve_autocorr(const char *var, const char *value,
+			    const struct config_context *ctx, void *data)
 {
 	struct autocorr *conf = data;
 
 	if (strcmp(var, "help.autocorrect"))
-		return;
+		return 0;
 
 	conf->mode = parse_autocorrect(value);
 
@@ -53,6 +55,13 @@ void autocorr_resolve_config(const char *var, const char *value,
 		else if (conf->delay <= 1)
 			conf->mode = AUTOCORRECT_IMMEDIATELY;
 	}
+
+	return 0;
+}
+
+void autocorr_resolve(struct autocorr *conf)
+{
+	read_early_config(the_repository, resolve_autocorr, conf);
 }
 
 void autocorr_confirm(struct autocorr *conf, const char *assumed)
