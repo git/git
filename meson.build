@@ -271,6 +271,13 @@ version_gen_environment.set('GIT_VERSION', get_option('version'))
 
 compiler = meson.get_compiler('c')
 
+compat_sources = [
+  'compat/nonblock.c',
+  'compat/obstack.c',
+  'compat/open.c',
+  'compat/terminal.c',
+]
+
 libgit_sources = [
   'abspath.c',
   'add-interactive.c',
@@ -304,10 +311,6 @@ libgit_sources = [
   'commit.c',
   'common-exit.c',
   'common-init.c',
-  'compat/nonblock.c',
-  'compat/obstack.c',
-  'compat/open.c',
-  'compat/terminal.c',
   'compiler-tricks/not-constant.c',
   'config.c',
   'connect.c',
@@ -1163,7 +1166,7 @@ endif
 
 if not has_poll_h and not has_sys_poll_h
   libgit_c_args += '-DNO_POLL'
-  libgit_sources += 'compat/poll/poll.c'
+  compat_sources += 'compat/poll/poll.c'
   libgit_include_directories += 'compat/poll'
 endif
 
@@ -1179,7 +1182,7 @@ endif
 # implementation to threat things like drive prefixes specially.
 if host_machine.system() == 'windows' or not compiler.has_header('libgen.h')
   libgit_c_args += '-DNO_LIBGEN_H'
-  libgit_sources += 'compat/basename.c'
+  compat_sources += 'compat/basename.c'
 endif
 
 if compiler.has_header('paths.h')
@@ -1209,7 +1212,7 @@ if host_machine.system() != 'windows'
   foreach symbol : ['inet_ntop', 'inet_pton', 'hstrerror']
     if not compiler.has_function(symbol, dependencies: networking_dependencies)
       libgit_c_args += '-DNO_' + symbol.to_upper()
-      libgit_sources += 'compat/' + symbol + '.c'
+      compat_sources += 'compat/' + symbol + '.c'
     endif
   endforeach
 endif
@@ -1251,18 +1254,18 @@ else
 endif
 
 if host_machine.system() == 'darwin'
-  libgit_sources += 'compat/precompose_utf8.c'
+  compat_sources += 'compat/precompose_utf8.c'
   libgit_c_args += '-DPRECOMPOSE_UNICODE'
   libgit_c_args += '-DPROTECT_HFS_DEFAULT'
 endif
 
 # Configure general compatibility wrappers.
 if host_machine.system() == 'cygwin'
-  libgit_sources += [
+  compat_sources += [
     'compat/win32/path-utils.c',
   ]
 elif host_machine.system() == 'windows'
-  libgit_sources += [
+  compat_sources += [
     'compat/winansi.c',
     'compat/win32/dirent.c',
     'compat/win32/flush.c',
@@ -1289,20 +1292,20 @@ elif host_machine.system() == 'windows'
   libgit_include_directories += 'compat/win32'
   if compiler.get_id() == 'msvc'
     libgit_include_directories += 'compat/vcbuild/include'
-    libgit_sources += 'compat/msvc.c'
+    compat_sources += 'compat/msvc.c'
   else
-    libgit_sources += 'compat/mingw.c'
+    compat_sources += 'compat/mingw.c'
   endif
 endif
 
 if host_machine.system() == 'linux'
-  libgit_sources += 'compat/linux/procinfo.c'
+  compat_sources += 'compat/linux/procinfo.c'
 elif host_machine.system() == 'windows'
-  libgit_sources += 'compat/win32/trace2_win32_process_info.c'
+  compat_sources += 'compat/win32/trace2_win32_process_info.c'
 elif host_machine.system() == 'darwin'
-  libgit_sources += 'compat/darwin/procinfo.c'
+  compat_sources += 'compat/darwin/procinfo.c'
 else
-  libgit_sources += 'compat/stub/procinfo.c'
+  compat_sources += 'compat/stub/procinfo.c'
 endif
 
 if host_machine.system() == 'cygwin' or host_machine.system() == 'windows'
@@ -1315,13 +1318,13 @@ endif
 
 # Configure the simple-ipc subsystem required fro the fsmonitor.
 if host_machine.system() == 'windows'
-  libgit_sources += [
+  compat_sources += [
     'compat/simple-ipc/ipc-shared.c',
     'compat/simple-ipc/ipc-win32.c',
   ]
   libgit_c_args += '-DSUPPORTS_SIMPLE_IPC'
 else
-  libgit_sources += [
+  compat_sources += [
     'compat/simple-ipc/ipc-shared.c',
     'compat/simple-ipc/ipc-unix-socket.c',
   ]
@@ -1339,7 +1342,7 @@ if fsmonitor_backend != ''
   libgit_c_args += '-DHAVE_FSMONITOR_DAEMON_BACKEND'
   libgit_c_args += '-DHAVE_FSMONITOR_OS_SETTINGS'
 
-  libgit_sources += [
+  compat_sources += [
     'compat/fsmonitor/fsm-health-' + fsmonitor_backend + '.c',
     'compat/fsmonitor/fsm-ipc-' + fsmonitor_backend + '.c',
     'compat/fsmonitor/fsm-listen-' + fsmonitor_backend + '.c',
@@ -1355,7 +1358,7 @@ if not get_option('b_sanitize').contains('address') and get_option('regex').allo
 
   if compiler.get_define('REG_ENHANCED', prefix: '#include <regex.h>') != ''
     libgit_c_args += '-DUSE_ENHANCED_BASIC_REGULAR_EXPRESSIONS'
-    libgit_sources += 'compat/regcomp_enhanced.c'
+    compat_sources += 'compat/regcomp_enhanced.c'
   endif
 elif not get_option('regex').enabled()
   libgit_c_args += [
@@ -1364,7 +1367,7 @@ elif not get_option('regex').enabled()
     '-DNO_MBSUPPORT',
   ]
   build_options_config.set('NO_REGEX', '1')
-  libgit_sources += 'compat/regex/regex.c'
+  compat_sources += 'compat/regex/regex.c'
   libgit_include_directories += 'compat/regex'
 else
     error('Native regex support requested but not found')
@@ -1428,7 +1431,7 @@ else
 
   if get_option('b_sanitize').contains('address')
     libgit_c_args += '-DNO_MMAP'
-    libgit_sources += 'compat/mmap.c'
+    compat_sources += 'compat/mmap.c'
   else
     checkfuncs += { 'mmap': ['mmap.c'] }
   endif
@@ -1438,7 +1441,7 @@ foreach func, impls : checkfuncs
   if not compiler.has_function(func)
     libgit_c_args += '-DNO_' + func.to_upper()
     foreach impl : impls
-      libgit_sources += 'compat/' + impl
+      compat_sources += 'compat/' + impl
     endforeach
   endif
 endforeach
@@ -1449,13 +1452,13 @@ endif
 
 if not compiler.has_function('strdup')
   libgit_c_args += '-DOVERRIDE_STRDUP'
-  libgit_sources += 'compat/strdup.c'
+  compat_sources += 'compat/strdup.c'
 endif
 
 if not compiler.has_function('qsort')
   libgit_c_args += '-DINTERNAL_QSORT'
 endif
-libgit_sources += 'compat/qsort_s.c'
+compat_sources += 'compat/qsort_s.c'
 
 if compiler.has_function('getdelim')
   libgit_c_args += '-DHAVE_GETDELIM'
@@ -1511,7 +1514,7 @@ if meson.can_run_host_binaries() and compiler.run('''
   }
 ''', name: 'fread reads directories').returncode() == 0
   libgit_c_args += '-DFREAD_READS_DIRECTORIES'
-  libgit_sources += 'compat/fopen.c'
+  compat_sources += 'compat/fopen.c'
 endif
 
 if not meson.is_cross_build() and fs.exists('/dev/tty')
@@ -1745,14 +1748,22 @@ else
 endif
 
 libgit = declare_dependency(
-  link_with: static_library('git',
-    sources: libgit_sources,
-    c_args: libgit_c_args + [
-      '-DGIT_VERSION_H="' + version_def_h.full_path() + '"',
-    ],
-    dependencies: libgit_dependencies,
-    include_directories: libgit_include_directories,
-  ),
+  link_with: [
+    static_library('compat',
+      sources: compat_sources,
+      c_args: libgit_c_args,
+      dependencies: libgit_dependencies,
+      include_directories: libgit_include_directories,
+    ),
+    static_library('git',
+      sources: libgit_sources,
+      c_args: libgit_c_args + [
+        '-DGIT_VERSION_H="' + version_def_h.full_path() + '"',
+      ],
+      dependencies: libgit_dependencies,
+      include_directories: libgit_include_directories,
+    ),
+  ],
   compile_args: libgit_c_args,
   dependencies: libgit_dependencies,
   include_directories: libgit_include_directories,
