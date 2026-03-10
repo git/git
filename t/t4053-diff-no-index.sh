@@ -76,6 +76,16 @@ test_expect_success 'git diff --no-index executed outside repo gives correct err
 	)
 '
 
+test_expect_success 'git diff --find-object outside repo fails gracefully' '
+	(
+		GIT_CEILING_DIRECTORIES=$TRASH_DIRECTORY/non &&
+		export GIT_CEILING_DIRECTORIES &&
+		cd non/git &&
+		test_must_fail git diff --find-object=abc123 2>err &&
+		test_grep "find-object requires a git repository" err
+	)
+'
+
 test_expect_success 'diff D F and diff F D' '
 	(
 		cd repo &&
