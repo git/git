@@ -425,7 +425,7 @@ static int cmd_history_reword(int argc,
 	};
 	struct strbuf reflog_msg = STRBUF_INIT;
 	struct commit *original, *rewritten;
-	struct rev_info revs;
+	struct rev_info revs = { 0 };
 	int ret;
 
 	argc = parse_options(argc, argv, prefix, options, usage, 0);
