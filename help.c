@@ -538,7 +538,7 @@ int is_in_cmdlist(struct cmdnames *c, const char *s)
 }
 
 struct help_unknown_cmd_config {
-	int autocorrect;
+	struct autocorr autocorr;
 	struct cmdnames aliases;
 };
 
@@ -550,7 +550,7 @@ static int git_unknown_cmd_config(const char *var, const char *value,
 	const char *subsection, *key;
 	size_t subsection_len;
 
-	autocorr_resolve_config(var, value, ctx, &cfg->autocorrect);
+	autocorr_resolve_config(var, value, ctx, &cfg->autocorr);
 
 	/* Also use aliases for command lookup */
 	if (!parse_config_key(var, "alias", &subsection, &subsection_len,
@@ -607,13 +607,7 @@ char *help_unknown_cmd(const char *cmd)
 
 	read_early_config(the_repository, git_unknown_cmd_config, &cfg);
 
-	/*
-	 * Disable autocorrection prompt in a non-interactive session
-	 */
-	if ((cfg.autocorrect == AUTOCORRECT_PROMPT) && (!isatty(0) || !isatty(2)))
-		cfg.autocorrect = AUTOCORRECT_NEVER;
-
-	if (cfg.autocorrect == AUTOCORRECT_NEVER) {
+	if (cfg.autocorr.mode == AUTOCORRECT_NEVER) {
 		fprintf_ln(stderr, _("git: '%s' is not a git command. See 'git --help'."), cmd);
 		exit(1);
 	}
@@ -679,7 +673,8 @@ char *help_unknown_cmd(const char *cmd)
 		     n++)
 			; /* still counting */
 	}
-	if (cfg.autocorrect && cfg.autocorrect != AUTOCORRECT_SHOW && n == 1 &&
+
+	if (cfg.autocorr.mode != AUTOCORRECT_SHOW && n == 1 &&
 	    SIMILAR_ENOUGH(best_similarity)) {
 		char *assumed = xstrdup(main_cmds.names[0]->name);
 
@@ -688,7 +683,7 @@ char *help_unknown_cmd(const char *cmd)
 			     "which does not exist."),
 			   cmd);
 
-		autocorr_confirm(cfg.autocorrect, assumed);
+		autocorr_confirm(&cfg.autocorr, assumed);
 
 		cmdnames_release(&cfg.aliases);
 		cmdnames_release(&main_cmds);

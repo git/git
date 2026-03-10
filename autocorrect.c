@@ -6,7 +6,7 @@
 #include "prompt.h"
 #include "gettext.h"
 
-static int parse_autocorrect(const char *value)
+static enum autocorr_mode parse_autocorrect(const char *value)
 {
 	switch (git_parse_maybe_bool_text(value)) {
 		case 1:
@@ -19,41 +19,49 @@ static int parse_autocorrect(const char *value)
 
 	if (!strcmp(value, "prompt"))
 		return AUTOCORRECT_PROMPT;
-	if (!strcmp(value, "never"))
+	else if (!strcmp(value, "never"))
 		return AUTOCORRECT_NEVER;
-	if (!strcmp(value, "immediate"))
+	else if (!strcmp(value, "immediate"))
 		return AUTOCORRECT_IMMEDIATELY;
-	if (!strcmp(value, "show"))
+	else if (!strcmp(value, "show"))
 		return AUTOCORRECT_SHOW;
-
-	return 0;
+	else
+		return AUTOCORRECT_DELAY;
 }
 
 void autocorr_resolve_config(const char *var, const char *value,
 			     const struct config_context *ctx, void *data)
 {
-	int *out = data;
+	struct autocorr *conf = data;
 
-	if (!strcmp(var, "help.autocorrect")) {
-		int v = parse_autocorrect(value);
+	if (strcmp(var, "help.autocorrect"))
+		return;
 
-		if (!v) {
-			v = git_config_int(var, value, ctx->kvi);
-			if (v < 0 || v == 1)
-				v = AUTOCORRECT_IMMEDIATELY;
-		}
+	conf->mode = parse_autocorrect(value);
 
-		*out = v;
+	/*
+	 * Disable autocorrection prompt in a non-interactive session.
+	 */
+	if (conf->mode == AUTOCORRECT_PROMPT && (!isatty(0) || !isatty(2)))
+		conf->mode = AUTOCORRECT_NEVER;
+
+	if (conf->mode == AUTOCORRECT_DELAY) {
+		conf->delay = git_config_int(var, value, ctx->kvi);
+
+		if (!conf->delay)
+			conf->mode = AUTOCORRECT_SHOW;
+		else if (conf->delay <= 1)
+			conf->mode = AUTOCORRECT_IMMEDIATELY;
 	}
 }
 
-void autocorr_confirm(int autocorrect, const char *assumed)
+void autocorr_confirm(struct autocorr *conf, const char *assumed)
 {
-	if (autocorrect == AUTOCORRECT_IMMEDIATELY) {
+	if (conf->mode == AUTOCORRECT_IMMEDIATELY) {
 		fprintf_ln(stderr,
 			   _("Continuing under the assumption that you meant '%s'."),
 			   assumed);
-	} else if (autocorrect == AUTOCORRECT_PROMPT) {
+	} else if (conf->mode == AUTOCORRECT_PROMPT) {
 		char *answer;
 		struct strbuf msg = STRBUF_INIT;
 
@@ -63,10 +71,10 @@ void autocorr_confirm(int autocorrect, const char *assumed)
 
 		if (!(starts_with(answer, "y") || starts_with(answer, "Y")))
 			exit(1);
-	} else {
+	} else if (conf->mode == AUTOCORRECT_DELAY) {
 		fprintf_ln(stderr,
 			   _("Continuing in %0.1f seconds, assuming that you meant '%s'."),
-			   (float)autocorrect / 10.0, assumed);
-		sleep_millisec(autocorrect * 100);
+			   conf->delay / 10.0, assumed);
+		sleep_millisec(conf->delay * 100);
 	}
 }
