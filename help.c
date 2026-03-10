@@ -674,7 +674,7 @@ char *help_unknown_cmd(const char *cmd)
 			; /* still counting */
 	}
 
-	if (cfg.autocorr.mode != AUTOCORRECT_SHOW && n == 1 &&
+	if (cfg.autocorr.mode != AUTOCORRECT_HINTONLY && n == 1 &&
 	    SIMILAR_ENOUGH(best_similarity)) {
 		char *assumed = xstrdup(main_cmds.names[0]->name);
 
