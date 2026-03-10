@@ -127,8 +127,10 @@ endif::git-log[]
 
 `-U<n>`::
 `--unified=<n>`::
-	Generate diffs with _<n>_ lines of context instead of
-	the usual three.
+	Generate diffs with _<n>_ lines of context. The number of context
+	lines defaults to `diff.context` or 3 if the configuration variable
+	is unset. (`-U` without `<n>` is silently accepted as a synonym for
+	`-p` due to a historical accident).
 ifndef::git-format-patch[]
 	Implies `--patch`.
 endif::git-format-patch[]
