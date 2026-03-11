@@ -63,6 +63,8 @@ static void t_messages(void)
 	check_str("NULL", NULL);
 	check_char('a', ==, '\n');
 	check_char('\\', ==, '\'');
+	check_char('\a', ==, '\v');
+	check_char('\x00', ==, '\x01');
 }
 
 static void t_empty(void)
@@ -123,6 +125,8 @@ int cmd__example_tap(int argc UNUSED, const char **argv UNUSED)
 		check_str("NULL", NULL);
 		check_char('a', ==, '\n');
 		check_char('\\', ==, '\'');
+		check_char('\a', ==, '\v');
+		check_char('\x00', ==, '\x01');
 	}
 	if_test ("if_test test with no checks")
 		; /* nothing */
