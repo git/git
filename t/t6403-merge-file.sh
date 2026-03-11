@@ -506,6 +506,15 @@ test_expect_success '--object-id fails without repository' '
 	grep "not a git repository" err
 '
 
+test_expect_success 'run in a linked worktree with --object-id' '
+	empty="$(test_oid empty_blob)" &&
+	git worktree add work &&
+	git -C work merge-file --object-id $empty $empty $empty >actual &&
+	git worktree remove work &&
+	git merge-file --object-id $empty $empty $empty >expected &&
+	test_cmp actual expected
+'
+
 test_expect_success 'merging C files with "myers" diff algorithm creates some spurious conflicts' '
 	cat >expect.c <<-\EOF &&
 	int g(size_t u)
