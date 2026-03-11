@@ -233,9 +233,13 @@ static int host_matches(const char *host, const char *pattern)
 
 static int verify_hostname(X509 *cert, const char *hostname)
 {
-	int len;
+#if (OPENSSL_VERSION_NUMBER >= 0x40000000L)
+	const X509_NAME *subj;
+#else
 	X509_NAME *subj;
-	char cname[1000];
+#endif
+	const X509_NAME_ENTRY *cname_entry;
+	const ASN1_STRING *cname;
 	int i, found;
 	STACK_OF(GENERAL_NAME) *subj_alt_names;
 
@@ -262,12 +266,15 @@ static int verify_hostname(X509 *cert, const char *hostname)
 	/* try the common name */
 	if (!(subj = X509_get_subject_name(cert)))
 		return error("cannot get certificate subject");
-	if ((len = X509_NAME_get_text_by_NID(subj, NID_commonName, cname, sizeof(cname))) < 0)
+	if ((i = X509_NAME_get_index_by_NID(subj, NID_commonName, -1)) < 0 ||
+	    (cname_entry = X509_NAME_get_entry(subj, i)) == NULL ||
+	    (cname = X509_NAME_ENTRY_get_data(cname_entry)) == NULL)
 		return error("cannot get certificate common name");
-	if (strlen(cname) == (size_t)len && host_matches(hostname, cname))
+	if (strlen((const char *)ASN1_STRING_get0_data(cname)) == ASN1_STRING_length(cname) &&
+	    host_matches(hostname, (const char *)ASN1_STRING_get0_data(cname)))
 		return 0;
 	return error("certificate owner '%s' does not match hostname '%s'",
-		     cname, hostname);
+		     ASN1_STRING_get0_data(cname), hostname);
 }
 
 static int ssl_socket_connect(struct imap_socket *sock,
