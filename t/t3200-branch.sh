@@ -1494,7 +1494,8 @@ test_expect_success 'refuse --edit-description on unborn branch for now' '
 '
 
 test_expect_success '--merged catches invalid object names' '
-	test_must_fail git branch --merged 0000000000000000000000000000000000000000
+	test_must_fail git branch --merged $ZERO_OID 2>err &&
+	test_grep "must point to a commit" err
 '
 
 test_expect_success '--list during rebase' '
