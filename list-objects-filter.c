@@ -143,6 +143,13 @@ struct seen_map_entry {
 	size_t depth;
 };
 
+static void free_seen_map_entry(void *e)
+{
+	struct seen_map_entry *entry =
+		container_of(e, struct seen_map_entry, base);
+	free(entry);
+}
+
 /* Returns 1 if the oid was in the omits set before it was invoked. */
 static int filter_trees_update_omits(
 	struct object *obj,
@@ -244,7 +251,7 @@ static void filter_trees_free(void *filter_data) {
 	struct filter_trees_depth_data *d = filter_data;
 	if (!d)
 		return;
-	oidmap_clear(&d->seen_at_depth, 1);
+	oidmap_clear_with_free(&d->seen_at_depth, free_seen_map_entry);
 	free(d);
 }
 
