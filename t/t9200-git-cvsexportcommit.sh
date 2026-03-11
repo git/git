@@ -30,13 +30,17 @@ export CVSROOT CVSWORK GIT_DIR
 
 rm -rf "$CVSROOT" "$CVSWORK"
 
-cvs init &&
-test -d "$CVSROOT" &&
-cvs -Q co -d "$CVSWORK" . &&
-echo >empty &&
-git add empty &&
-git commit -q -a -m "Initial" 2>/dev/null ||
-exit 1
+if ! cvs init || ! test -d "$CVSROOT" || ! cvs -Q co -d "$CVSWORK" .
+then
+	skip_all="cvs repository set-up fails"
+	test_done
+fi
+
+test_expect_success 'git setup' '
+	echo >empty &&
+	git add empty &&
+	git commit -q -a -m Initial
+'
 
 check_entries () {
 	# $1 == directory, $2 == expected
