@@ -3,7 +3,6 @@
  *
  * Copyright (c) Junio C Hamano, 2006, 2009
  */
-#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "gettext.h"
 #include "hex.h"
@@ -46,7 +45,7 @@ static int ent_compare(const void *a_, const void *b_)
 				 b->name, b->len, b->mode);
 }
 
-static void write_tree(struct object_id *oid)
+static void write_tree(struct repository *repo, struct object_id *oid)
 {
 	struct strbuf buf;
 	size_t size;
@@ -60,10 +59,10 @@ static void write_tree(struct object_id *oid)
 	for (i = 0; i < used; i++) {
 		struct treeent *ent = entries[i];
 		strbuf_addf(&buf, "%o %s%c", ent->mode, ent->name, '\0');
-		strbuf_add(&buf, ent->oid.hash, the_hash_algo->rawsz);
+		strbuf_add(&buf, ent->oid.hash, repo->hash_algo->rawsz);
 	}
 
-	odb_write_object(the_repository->objects, buf.buf, buf.len, OBJ_TREE, oid);
+	odb_write_object(repo->objects, buf.buf, buf.len, OBJ_TREE, oid);
 	strbuf_release(&buf);
 }
 
@@ -72,7 +71,7 @@ static const char *const mktree_usage[] = {
 	NULL
 };
 
-static void mktree_line(char *buf, int nul_term_line, int allow_missing)
+static void mktree_line(struct repository *repo, char *buf, int nul_term_line, int allow_missing)
 {
 	char *ptr, *ntr;
 	const char *p;
@@ -93,7 +92,7 @@ static void mktree_line(char *buf, int nul_term_line, int allow_missing)
 		die("input format error: %s", buf);
 	ptr = ntr + 1; /* type */
 	ntr = strchr(ptr, ' ');
-	if (!ntr || parse_oid_hex(ntr + 1, &oid, &p) ||
+	if (!ntr || parse_oid_hex_algop(ntr + 1, &oid, &p, repo->hash_algo) ||
 	    *p != '\t')
 		die("input format error: %s", buf);
 
@@ -124,7 +123,7 @@ static void mktree_line(char *buf, int nul_term_line, int allow_missing)
 
 	/* Check the type of object identified by oid without fetching objects */
 	oi.typep = &obj_type;
-	if (odb_read_object_info_extended(the_repository->objects, &oid, &oi,
+	if (odb_read_object_info_extended(repo->objects, &oid, &oi,
 					  OBJECT_INFO_LOOKUP_REPLACE |
 					  OBJECT_INFO_QUICK |
 					  OBJECT_INFO_SKIP_FETCH_OBJECT) < 0)
@@ -155,7 +154,7 @@ static void mktree_line(char *buf, int nul_term_line, int allow_missing)
 int cmd_mktree(int ac,
 	       const char **av,
 	       const char *prefix,
-	       struct repository *repo UNUSED)
+	       struct repository *repo)
 {
 	struct strbuf sb = STRBUF_INIT;
 	struct object_id oid;
@@ -187,7 +186,7 @@ int cmd_mktree(int ac,
 					break;
 				die("input format error: (blank line only valid in batch mode)");
 			}
-			mktree_line(sb.buf, nul_term_line, allow_missing);
+			mktree_line(repo, sb.buf, nul_term_line, allow_missing);
 		}
 		if (is_batch_mode && got_eof && used < 1) {
 			/*
@@ -197,7 +196,7 @@ int cmd_mktree(int ac,
 			 */
 			; /* skip creating an empty tree */
 		} else {
-			write_tree(&oid);
+			write_tree(repo, &oid);
 			puts(oid_to_hex(&oid));
 			fflush(stdout);
 		}
