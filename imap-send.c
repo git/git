@@ -219,8 +219,14 @@ static int ssl_socket_connect(struct imap_socket *sock UNUSED,
 
 #else
 
-static int host_matches(const char *host, const char *pattern)
+static int host_matches(const char *host, const ASN1_STRING *asn1_str)
 {
+	const char *pattern = (const char *)ASN1_STRING_get0_data(asn1_str);
+
+	/* embedded NUL characters may open a security hole */
+	if (memchr(pattern, '\0', ASN1_STRING_length(asn1_str)))
+	    return 0;
+
 	if (pattern[0] == '*' && pattern[1] == '.') {
 		pattern += 2;
 		if (!(host = strchr(host, '.')))
@@ -252,10 +258,7 @@ static int verify_hostname(X509 *cert, const char *hostname)
 			GENERAL_NAME *subj_alt_name = sk_GENERAL_NAME_value(subj_alt_names, i);
 			ASN1_STRING *subj_alt_str = GENERAL_NAME_get0_value(subj_alt_name, &ntype);
 
-			if (ntype == GEN_DNS &&
-			    strlen((const char *)ASN1_STRING_get0_data(subj_alt_str)) ==
-				    ASN1_STRING_length(subj_alt_str) &&
-			    host_matches(hostname, (const char *)ASN1_STRING_get0_data(subj_alt_str)))
+			if (ntype == GEN_DNS && host_matches(hostname, subj_alt_str))
 				found = 1;
 		}
 		sk_GENERAL_NAME_pop_free(subj_alt_names, GENERAL_NAME_free);
@@ -270,8 +273,7 @@ static int verify_hostname(X509 *cert, const char *hostname)
 	    (cname_entry = X509_NAME_get_entry(subj, i)) == NULL ||
 	    (cname = X509_NAME_ENTRY_get_data(cname_entry)) == NULL)
 		return error("cannot get certificate common name");
-	if (strlen((const char *)ASN1_STRING_get0_data(cname)) == ASN1_STRING_length(cname) &&
-	    host_matches(hostname, (const char *)ASN1_STRING_get0_data(cname)))
+	if (host_matches(hostname, cname))
 		return 0;
 	return error("certificate owner '%s' does not match hostname '%s'",
 		     ASN1_STRING_get0_data(cname), hostname);
