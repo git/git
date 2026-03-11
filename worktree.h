@@ -240,7 +240,7 @@ int init_worktree_config(struct repository *r);
  *  dotgit: "/path/to/foo/.git"
  *  gitdir: "/path/to/repo/worktrees/foo/gitdir"
  */
-void write_worktree_linking_files(struct strbuf dotgit, struct strbuf gitdir,
+void write_worktree_linking_files(const char *dotgit, const char *gitdir,
 				  int use_relative_paths);
 
 #endif
