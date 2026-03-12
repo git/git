@@ -5,6 +5,8 @@
 
 #include "strvec.h"
 
+struct repository;
+
 /**
  * The run-command API offers a versatile tool to run sub-processes with
  * redirected input and output as well as with a modified environment
@@ -227,12 +229,13 @@ int run_command(struct child_process *);
  * process has been prepared and is ready to run, or 0 in case auto-maintenance
  * should be skipped.
  */
-int prepare_auto_maintenance(int quiet, struct child_process *maint);
+int prepare_auto_maintenance(struct repository *r, int quiet,
+			     struct child_process *maint);
 
 /*
  * Trigger an auto-gc
  */
-int run_auto_maintenance(int quiet);
+int run_auto_maintenance(struct repository *r, int quiet);
 
 /**
  * Execute the given command, sending "in" to its stdin, and capturing its
