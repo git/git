@@ -2,6 +2,7 @@
 #include "abspath.h"
 #include "repository.h"
 #include "odb.h"
+#include "odb/source.h"
 #include "config.h"
 #include "object.h"
 #include "lockfile.h"

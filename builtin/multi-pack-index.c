@@ -9,6 +9,7 @@
 #include "strbuf.h"
 #include "trace2.h"
 #include "odb.h"
+#include "odb/source.h"
 #include "replace-object.h"
 #include "repository.h"
 
