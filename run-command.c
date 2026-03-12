@@ -1,4 +1,3 @@
-#define USE_THE_REPOSITORY_VARIABLE
 #define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
@@ -742,8 +741,8 @@ fail_pipe:
 
 	fflush(NULL);
 
-	if (cmd->close_object_store)
-		odb_close(the_repository->objects);
+	if (cmd->odb_to_close)
+		odb_close(cmd->odb_to_close);
 
 #ifndef GIT_WINDOWS_NATIVE
 {
@@ -1937,11 +1936,12 @@ void run_processes_parallel(const struct run_process_parallel_opts *opts)
 		trace2_region_leave(tr2_category, tr2_label, NULL);
 }
 
-int prepare_auto_maintenance(int quiet, struct child_process *maint)
+int prepare_auto_maintenance(struct repository *r, int quiet,
+			     struct child_process *maint)
 {
 	int enabled, auto_detach;
 
-	if (!repo_config_get_bool(the_repository, "maintenance.auto", &enabled) &&
+	if (!repo_config_get_bool(r, "maintenance.auto", &enabled) &&
 	    !enabled)
 		return 0;
 
@@ -1950,12 +1950,12 @@ int prepare_auto_maintenance(int quiet, struct child_process *maint)
 	 * honoring `gc.autoDetach`. This is somewhat weird, but required to
 	 * retain behaviour from when we used to run git-gc(1) here.
 	 */
-	if (repo_config_get_bool(the_repository, "maintenance.autodetach", &auto_detach) &&
-	    repo_config_get_bool(the_repository, "gc.autodetach", &auto_detach))
+	if (repo_config_get_bool(r, "maintenance.autodetach", &auto_detach) &&
+	    repo_config_get_bool(r, "gc.autodetach", &auto_detach))
 		auto_detach = git_env_bool("GIT_TEST_MAINT_AUTO_DETACH", true);
 
 	maint->git_cmd = 1;
-	maint->close_object_store = 1;
+	maint->odb_to_close = r->objects;
 	strvec_pushl(&maint->args, "maintenance", "run", "--auto", NULL);
 	strvec_push(&maint->args, quiet ? "--quiet" : "--no-quiet");
 	strvec_push(&maint->args, auto_detach ? "--detach" : "--no-detach");
@@ -1963,10 +1963,10 @@ int prepare_auto_maintenance(int quiet, struct child_process *maint)
 	return 1;
 }
 
-int run_auto_maintenance(int quiet)
+int run_auto_maintenance(struct repository *r, int quiet)
 {
 	struct child_process maint = CHILD_PROCESS_INIT;
-	if (!prepare_auto_maintenance(quiet, &maint))
+	if (!prepare_auto_maintenance(r, quiet, &maint))
 		return 0;
 	return run_command(&maint);
 }

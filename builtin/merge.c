@@ -506,7 +506,7 @@ static void finish(struct commit *head_commit,
 			 * We ignore errors in 'gc --auto', since the
 			 * user should see them.
 			 */
-			run_auto_maintenance(verbosity < 0);
+			run_auto_maintenance(the_repository, verbosity < 0);
 		}
 	}
 	if (new_head && show_diffstat) {

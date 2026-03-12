@@ -1937,7 +1937,7 @@ next:
 	 */
 	if (!state->rebasing) {
 		am_destroy(state);
-		run_auto_maintenance(state->quiet);
+		run_auto_maintenance(the_repository, state->quiet);
 	}
 }
 
