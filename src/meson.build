@@ -1,5 +1,8 @@
 libgit_rs_sources = [
+  'csum_file.rs',
+  'hash.rs',
   'lib.rs',
+  'loose.rs',
   'varint.rs',
 ]
 

@@ -208,7 +208,7 @@ test_expect_success 'rev-parse --show-object-format in repo' '
 '
 
 
-test_expect_success 'rev-parse --show-object-format in repo with compat mode' '
+test_expect_success RUST 'rev-parse --show-object-format in repo with compat mode' '
 	mkdir repo &&
 	(
 		sane_unset GIT_DEFAULT_HASH &&

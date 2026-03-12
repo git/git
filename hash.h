@@ -211,7 +211,7 @@ static inline void git_SHA256_Clone(git_SHA256_CTX *dst, const git_SHA256_CTX *s
 
 struct object_id {
 	unsigned char hash[GIT_MAX_RAWSZ];
-	int algo;	/* XXX requires 4-byte alignment */
+	uint32_t algo;	/* XXX requires 4-byte alignment */
 };
 
 #define GET_OID_QUIETLY                  01
@@ -320,37 +320,25 @@ struct git_hash_algo {
 };
 extern const struct git_hash_algo hash_algos[GIT_HASH_NALGOS];
 
-static inline void git_hash_clone(struct git_hash_ctx *dst, const struct git_hash_ctx *src)
-{
-	src->algop->clone_fn(dst, src);
-}
-
-static inline void git_hash_update(struct git_hash_ctx *ctx, const void *in, size_t len)
-{
-	ctx->algop->update_fn(ctx, in, len);
-}
-
-static inline void git_hash_final(unsigned char *hash, struct git_hash_ctx *ctx)
-{
-	ctx->algop->final_fn(hash, ctx);
-}
-
-static inline void git_hash_final_oid(struct object_id *oid, struct git_hash_ctx *ctx)
-{
-	ctx->algop->final_oid_fn(oid, ctx);
-}
-
+void git_hash_init(struct git_hash_ctx *ctx, const struct git_hash_algo *algop);
+void git_hash_clone(struct git_hash_ctx *dst, const struct git_hash_ctx *src);
+void git_hash_update(struct git_hash_ctx *ctx, const void *in, size_t len);
+void git_hash_final(unsigned char *hash, struct git_hash_ctx *ctx);
+void git_hash_final_oid(struct object_id *oid, struct git_hash_ctx *ctx);
+const struct git_hash_algo *hash_algo_ptr_by_number(uint32_t algo);
+struct git_hash_ctx *git_hash_alloc(void);
+void git_hash_free(struct git_hash_ctx *ctx);
 /*
  * Return a GIT_HASH_* constant based on the name.  Returns GIT_HASH_UNKNOWN if
  * the name doesn't match a known algorithm.
  */
-int hash_algo_by_name(const char *name);
+uint32_t hash_algo_by_name(const char *name);
 /* Identical, except based on the format ID. */
-int hash_algo_by_id(uint32_t format_id);
+uint32_t hash_algo_by_id(uint32_t format_id);
 /* Identical, except based on the length. */
-int hash_algo_by_length(size_t len);
+uint32_t hash_algo_by_length(size_t len);
 /* Identical, except for a pointer to struct git_hash_algo. */
-static inline int hash_algo_by_ptr(const struct git_hash_algo *p)
+static inline uint32_t hash_algo_by_ptr(const struct git_hash_algo *p)
 {
 	size_t i;
 	for (i = 0; i < GIT_HASH_NALGOS; i++) {

@@ -972,7 +972,7 @@ test_expect_success 'fast-export handles --end-of-options' '
 	test_cmp expect actual
 '
 
-test_expect_success GPG 'setup a commit with dual signatures on its SHA-1 and SHA-256 formats' '
+test_expect_success GPG,RUST 'setup a commit with dual signatures on its SHA-1 and SHA-256 formats' '
 	# Create a signed SHA-256 commit
 	git init --object-format=sha256 explicit-sha256 &&
 	git -C explicit-sha256 config extensions.compatObjectFormat sha1 &&
@@ -993,7 +993,7 @@ test_expect_success GPG 'setup a commit with dual signatures on its SHA-1 and SH
 	test_grep -E "^gpgsig-sha256 " out
 '
 
-test_expect_success GPG 'export and import of doubly signed commit' '
+test_expect_success GPG,RUST 'export and import of doubly signed commit' '
 	git -C explicit-sha256 fast-export --signed-commits=verbatim dual-signed >output &&
 	test_grep -E "^gpgsig sha1 openpgp" output &&
 	test_grep -E "^gpgsig sha256 openpgp" output &&
