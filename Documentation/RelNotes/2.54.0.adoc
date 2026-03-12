@@ -68,6 +68,19 @@ UI, Workflows & Features
    in the configuration files, and run multiple of them for the same
    hook event.
 
+ * The way end-users can add their own "git <cmd>" subcommand by
+   storing "git-<cmd>" in a directory on their $PATH has not been
+   documented clearly, which has been corrected.
+
+ * "git send-email" learns to pass hostname/port to Authen::SASL
+   module.
+
+ * "git send-email" learns to support use of client-side certificates.
+
+ * "git send-email" has learned to be a bit more careful when it
+   accepts charset to use from the end-user, to avoid 'y' (mistaken
+   'yes' when expecting a charset like 'UTF-8') and other nonsense.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -159,6 +172,13 @@ Performance, Internal Implementation, Development Support etc.
  * The parse-options API learned to notice an options[] array with
    duplicated long options.
    (merge 237e520d81 rs/parse-options-duplicated-long-options later to maint).
+
+ * The code to maintain mapping between object names in multiple hash
+   functions is being added, written in Rust.
+
+ * A bit of OIDmap API enhancement and cleanup.
+
+ * Move gitlab CI from macOS 14 images that are being deprecated.
 
 
 Fixes since v2.53
@@ -304,3 +324,7 @@ Fixes since v2.53
    (merge a66c8c7f91 jk/repo-structure-cleanup later to maint).
    (merge 5ee8782f87 ss/test-that-that-typofix later to maint).
    (merge f31b322008 fp/t3310-test-path-is-helpers later to maint).
+   (merge b22ed4c4f9 kj/path-micro-code-cleanup later to maint).
+   (merge a56fa1ca05 lp/doc-gitprotocol-pack-fixes later to maint).
+   (merge 0d6bb8b541 ss/t3700-modernize later to maint).
+   (merge 63c00a677b ss/t9123-setup-inside-test-expect-success later to maint).
