@@ -1881,16 +1881,14 @@ const char *setup_git_directory_gently(int *nongit_ok)
 		break;
 	case GIT_DIR_HIT_CEILING:
 		if (!nongit_ok)
-			die(_("not a git repository (or any of the parent directories): %s\n"
-			      "See also the 'git init' command for initializing a new repository."),
+			die(_("not a git repository (or any of the parent directories): %s"),
 			    DEFAULT_GIT_DIR_ENVIRONMENT);
 		*nongit_ok = 1;
 		break;
 	case GIT_DIR_HIT_MOUNT_POINT:
 		if (!nongit_ok)
 			die(_("not a git repository (or any parent up to mount point %s)\n"
-			      "Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set).\n"
-			      "See also the 'git init' command for initializing a new repository."),
+			      "Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set)."),
 			    dir.buf);
 		*nongit_ok = 1;
 		break;
