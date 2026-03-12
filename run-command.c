@@ -742,8 +742,8 @@ fail_pipe:
 
 	fflush(NULL);
 
-	if (cmd->close_object_store)
-		odb_close(the_repository->objects);
+	if (cmd->odb_to_close)
+		odb_close(cmd->odb_to_close);
 
 #ifndef GIT_WINDOWS_NATIVE
 {
@@ -1955,7 +1955,7 @@ int prepare_auto_maintenance(int quiet, struct child_process *maint)
 		auto_detach = git_env_bool("GIT_TEST_MAINT_AUTO_DETACH", true);
 
 	maint->git_cmd = 1;
-	maint->close_object_store = 1;
+	maint->odb_to_close = the_repository->objects;
 	strvec_pushl(&maint->args, "maintenance", "run", "--auto", NULL);
 	strvec_push(&maint->args, quiet ? "--quiet" : "--no-quiet");
 	strvec_push(&maint->args, auto_detach ? "--detach" : "--no-detach");
