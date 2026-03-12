@@ -28,6 +28,7 @@
 #include "ewah/ewok.h"
 #include "fsmonitor-ll.h"
 #include "read-cache-ll.h"
+#include "trace.h"
 #include "setup.h"
 #include "sparse-index.h"
 #include "strbuf.h"
@@ -1098,6 +1099,12 @@ static void do_invalidate_gitignore(struct untracked_cache_dir *dir)
 {
 	int i;
 	dir->valid = 0;
+	/*
+	 * Clear the cached .gitignore content since the file may have
+	 * changed. It will be re-read from disk on the next access.
+	 */
+	FREE_AND_NULL(dir->exclude_content);
+	dir->exclude_content_len = 0;
 	for (size_t i = 0; i < dir->untracked_nr; i++)
 		free(dir->untracked[i]);
 	dir->untracked_nr = 0;
@@ -1127,6 +1134,8 @@ static void invalidate_directory(struct untracked_cache *uc,
 		uc->dir_invalidated++;
 
 	dir->valid = 0;
+	FREE_AND_NULL(dir->exclude_content);
+	dir->exclude_content_len = 0;
 	for (size_t i = 0; i < dir->untracked_nr; i++)
 		free(dir->untracked[i]);
 	dir->untracked_nr = 0;
@@ -1145,10 +1154,15 @@ static void invalidate_directory(struct untracked_cache *uc,
  * If "oid_stat" is not NULL, compute oid of the exclude file and fill
  * stat data from disk (only valid if add_patterns returns zero). If
  * oid_stat.valid is non-zero, "oid_stat" must contain good value as input.
+ *
+ * If "content_out" and "content_len_out" are not NULL, store a copy of
+ * the raw file content for later caching (e.g. in untracked_cache_dir).
+ * The caller is responsible for freeing *content_out.
  */
 static int add_patterns(const char *fname, const char *base, int baselen,
 			struct pattern_list *pl, struct index_state *istate,
-			unsigned flags, struct oid_stat *oid_stat)
+			unsigned flags, struct oid_stat *oid_stat,
+			char **content_out, size_t *content_len_out)
 {
 	struct stat st;
 	int r;
@@ -1218,6 +1232,16 @@ static int add_patterns(const char *fname, const char *base, int baselen,
 		return -1;
 	}
 
+	/*
+	 * If the caller wants to cache the raw content (for
+	 * fsmonitor-backed reuse), store a copy before parsing
+	 * modifies the buffer in-place.
+	 */
+	if (content_out && content_len_out) {
+		*content_out = xmemdupz(buf, size);
+		*content_len_out = size;
+	}
+
 	add_patterns_from_buffer(buf, size, base, baselen, pl);
 	free(buf);
 	return 0;
@@ -1258,7 +1282,8 @@ int add_patterns_from_file_to_list(const char *fname, const char *base,
 				   struct index_state *istate,
 				   unsigned flags)
 {
-	return add_patterns(fname, base, baselen, pl, istate, flags, NULL);
+	return add_patterns(fname, base, baselen, pl, istate, flags, NULL,
+			    NULL, NULL);
 }
 
 int add_patterns_from_blob_to_list(
@@ -1315,7 +1340,7 @@ static void add_patterns_from_file_1(struct dir_struct *dir, const char *fname,
 	if (!dir->untracked)
 		dir->internal.unmanaged_exclude_files++;
 	pl = add_pattern_list(dir, EXC_FILE, fname);
-	if (add_patterns(fname, "", 0, pl, NULL, 0, oid_stat) < 0)
+	if (add_patterns(fname, "", 0, pl, NULL, 0, oid_stat, NULL, NULL) < 0)
 		die(_("cannot use %s as an exclude file"), fname);
 }
 
@@ -1770,11 +1795,68 @@ static void prep_exclude(struct dir_struct *dir,
 			strbuf_addbuf(&sb, &dir->internal.basebuf);
 			strbuf_addstr(&sb, dir->exclude_per_dir);
 			pl->src = strbuf_detach(&sb, NULL);
-			add_patterns(pl->src, pl->src, stk->baselen, pl, istate,
-				     PATTERN_NOFOLLOW,
-				     untracked ? &oid_stat : NULL);
+
+			/*
+			 * When fsmonitor is active and this directory is
+			 * unchanged, check for cached .gitignore content
+			 * from a previous load. This avoids re-reading the
+			 * file from disk when we're building the exclude
+			 * stack for an invalidated child directory.
+			 */
+			if (dir->untracked &&
+			    dir->untracked->use_fsmonitor &&
+			    untracked && untracked->valid &&
+			    untracked->exclude_content) {
+				char *buf_copy;
+				/*
+				 * add_patterns_from_buffer() modifies the
+				 * buffer in-place, so we must duplicate it.
+				 */
+				buf_copy = xmemdupz(untracked->exclude_content,
+						    untracked->exclude_content_len);
+				add_patterns_from_buffer(buf_copy,
+							 untracked->exclude_content_len,
+							 pl->src, stk->baselen, pl);
+				free(buf_copy);
+				/*
+				 * Trust the cached OID since fsmonitor
+				 * guarantees the file hasn't changed.
+				 */
+				oidcpy(&oid_stat.oid, &untracked->exclude_oid);
+				dir->untracked->gitignore_cached++;
+				trace_printf_key(&trace_fsmonitor,
+						 "prep_exclude: used cached "
+						 ".gitignore for '%s'",
+						 pl->src);
+			} else {
+				/*
+				 * Read the .gitignore from disk. If the
+				 * untracked cache is active, also cache the
+				 * content for potential reuse when fsmonitor
+				 * confirms the file hasn't changed.
+				 */
+				char *cached_content = NULL;
+				size_t cached_len = 0;
+				add_patterns(pl->src, pl->src, stk->baselen,
+					     pl, istate, PATTERN_NOFOLLOW,
+					     untracked ? &oid_stat : NULL,
+					     untracked ? &cached_content : NULL,
+					     untracked ? &cached_len : NULL);
+				if (untracked && cached_content) {
+					free(untracked->exclude_content);
+					untracked->exclude_content = cached_content;
+					untracked->exclude_content_len = cached_len;
+				}
+			}
 		}
 		/*
+		 * With the fsmonitor optimization in valid_cached_dir(), the
+		 * NEEDSWORK below is partially addressed: when the cache is
+		 * fully valid (confirmed by fsmonitor), prep_exclude() is not
+		 * called at all from valid_cached_dir(). It is only called
+		 * here when building the exclude stack for an invalidated
+		 * child directory, where the patterns ARE needed.
+		 *
 		 * NEEDSWORK: when untracked cache is enabled, prep_exclude()
 		 * will first be called in valid_cached_dir() then maybe many
 		 * times more in last_matching_pattern(). When the cache is
@@ -2551,6 +2633,34 @@ static int valid_cached_dir(struct dir_struct *dir,
 		return 0;
 
 	/*
+	 * When fsmonitor is active and confirms this directory is
+	 * unchanged, we can trust the cached exclude_oid without
+	 * re-reading and re-hashing the .gitignore file from disk.
+	 * The fsmonitor guarantees that if anything in this directory
+	 * changed (including the .gitignore file), the directory would
+	 * have been invalidated via untracked_cache_invalidate_trimmed_path().
+	 *
+	 * This avoids the expensive prep_exclude() call which would
+	 * open, read, and hash every .gitignore file along the path,
+	 * only to confirm the OID hasn't changed. For repositories
+	 * with many .gitignore files, this is a significant performance
+	 * improvement.
+	 *
+	 * The exclude patterns will still be loaded lazily by
+	 * prep_exclude() if they are actually needed later (e.g. when
+	 * last_matching_pattern() is called for files in invalidated
+	 * child directories).
+	 */
+	if (dir->untracked->use_fsmonitor && untracked->valid) {
+		dir->untracked->gitignore_skipped++;
+		trace_printf_key(&trace_fsmonitor,
+				 "valid_cached_dir: skip prep_exclude for "
+				 "fsmonitor-valid dir '%s'",
+				 path->buf);
+		return 1;
+	}
+
+	/*
 	 * prep_exclude will be called eventually on this directory,
 	 * but it's called much later in last_matching_pattern(). We
 	 * need it now to determine the validity of the cache for this
@@ -3130,6 +3240,12 @@ static void emit_traversal_statistics(struct dir_struct *dir,
 			   dir->untracked->dir_invalidated);
 	trace2_data_intmax("read_directory", repo,
 			   "opendir", dir->untracked->dir_opened);
+	trace2_data_intmax("read_directory", repo,
+			   "gitignore-skipped",
+			   dir->untracked->gitignore_skipped);
+	trace2_data_intmax("read_directory", repo,
+			   "gitignore-cached",
+			   dir->untracked->gitignore_cached);
 }
 
 int read_directory(struct dir_struct *dir, struct index_state *istate,
@@ -3732,6 +3848,7 @@ static void free_untracked(struct untracked_cache_dir *ucd)
 		free(ucd->untracked[i]);
 	free(ucd->untracked);
 	free(ucd->dirs);
+	free(ucd->exclude_content);
 	free(ucd);
 }
 

@@ -442,6 +442,25 @@ static void fsmonitor_refresh_callback(struct index_state *istate, char *name)
 			 "fsmonitor_refresh_callback '%s' (pos %d)",
 			 name, pos);
 
+	/*
+	 * Detect changes to .gitignore files so we can set the
+	 * gitignore_changed flag on the untracked cache. This allows
+	 * valid_cached_dir() to know whether any ignore rules may
+	 * have changed, enabling more aggressive caching when no
+	 * .gitignore files were modified.
+	 */
+	if (istate->untracked && istate->untracked->exclude_per_dir) {
+		const char *base = strrchr(name, '/');
+		const char *filename = base ? base + 1 : name;
+		if (!strcmp(filename, istate->untracked->exclude_per_dir)) {
+			istate->untracked->gitignore_changed = 1;
+			trace_printf_key(&trace_fsmonitor,
+					 "fsmonitor_refresh_callback: "
+					 ".gitignore changed '%s'",
+					 name);
+		}
+	}
+
 	if (name[len - 1] == '/')
 		nr_in_cone = handle_path_with_trailing_slash(istate, name, pos);
 	else
@@ -657,6 +676,14 @@ apply_results:
 	 */
 	trace2_region_enter("fsmonitor", "apply_results", istate->repo);
 
+	/*
+	 * Reset the gitignore_changed flag before processing results.
+	 * It will be set by fsmonitor_refresh_callback() if any
+	 * .gitignore file appears in the changed path list.
+	 */
+	if (istate->untracked)
+		istate->untracked->gitignore_changed = 0;
+
 	if (query_success && !is_trivial) {
 		/*
 		 * Mark all pathnames returned by the monitor as dirty.
@@ -713,8 +740,10 @@ apply_results:
 		if (is_cache_changed)
 			istate->cache_changed |= FSMONITOR_CHANGED;
 
-		if (istate->untracked)
+		if (istate->untracked) {
 			istate->untracked->use_fsmonitor = 0;
+			istate->untracked->gitignore_changed = 1;
+		}
 	}
 	trace2_region_leave("fsmonitor", "apply_results", istate->repo);
 

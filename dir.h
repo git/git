@@ -184,6 +184,14 @@ struct untracked_cache_dir {
 	unsigned int recurse : 1;
 	/* null object ID means this directory does not have .gitignore */
 	struct object_id exclude_oid;
+	/*
+	 * In-memory cache of .gitignore file content for fsmonitor
+	 * optimization. When fsmonitor confirms a directory is unchanged,
+	 * we can reuse this cached content instead of re-reading from disk.
+	 * This field is NOT serialized to the index extension.
+	 */
+	char *exclude_content;
+	size_t exclude_content_len;
 	char name[FLEX_ARRAY];
 };
 
@@ -204,8 +212,17 @@ struct untracked_cache {
 	int gitignore_invalidated;
 	int dir_invalidated;
 	int dir_opened;
+	int gitignore_skipped;   /* prep_exclude() skipped via fsmonitor */
+	int gitignore_cached;    /* prep_exclude() used cached content */
 	/* fsmonitor invalidation data */
 	unsigned int use_fsmonitor : 1;
+	/*
+	 * Set during refresh_fsmonitor() if any .gitignore file was
+	 * reported as changed. This enables targeted invalidation:
+	 * when no .gitignore files changed, all cached exclude results
+	 * can be fully trusted without re-reading any .gitignore files.
+	 */
+	unsigned int gitignore_changed : 1;
 };
 
 /**
