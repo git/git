@@ -1102,6 +1102,7 @@ struct packfile_list_entry *packfile_store_get_packs(struct packfile_store *stor
 }
 
 int packfile_store_count_objects(struct packfile_store *store,
+				 enum odb_count_objects_flags flags UNUSED,
 				 unsigned long *out)
 {
 	struct packfile_list_entry *e;
@@ -1146,10 +1147,9 @@ unsigned long repo_approximate_object_count(struct repository *r)
 
 		odb_prepare_alternates(r->objects);
 		for (source = r->objects->sources; source; source = source->next) {
-			struct odb_source_files *files = odb_source_files_downcast(source);
 			unsigned long c;
 
-			if (!packfile_store_count_objects(files->packed, &c))
+			if (!odb_source_count_objects(source, ODB_COUNT_OBJECTS_APPROXIMATE, &c))
 				count += c;
 		}
 

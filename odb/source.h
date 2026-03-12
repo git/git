@@ -143,6 +143,21 @@ struct odb_source {
 			       unsigned flags);
 
 	/*
+	 * This callback is expected to count objects in the given object
+	 * database source. The callback function does not have to guarantee
+	 * that only unique objects are counted. The result shall be assigned
+	 * to the `out` pointer.
+	 *
+	 * Accepts `enum odb_count_objects_flag` flags to alter the behaviour.
+	 *
+	 * The callback is expected to return 0 on success, or a negative error
+	 * code otherwise.
+	 */
+	int (*count_objects)(struct odb_source *source,
+			     enum odb_count_objects_flags flags,
+			     unsigned long *out);
+
+	/*
 	 * This callback is expected to freshen the given object so that its
 	 * last access time is set to the current time. This is used to ensure
 	 * that objects that are recent will not get garbage collected even if
@@ -331,6 +346,18 @@ static inline int odb_source_for_each_object(struct odb_source *source,
 					     unsigned flags)
 {
 	return source->for_each_object(source, request, cb, cb_data, flags);
+}
+
+/*
+ * Count the number of objects in the given object database source.
+ *
+ * Returns 0 on success, a negative error code otherwise.
+ */
+static inline int odb_source_count_objects(struct odb_source *source,
+					   enum odb_count_objects_flags flags,
+					   unsigned long *out)
+{
+	return source->count_objects(source, flags, out);
 }
 
 /*

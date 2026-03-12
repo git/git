@@ -275,6 +275,7 @@ enum kept_pack_type {
  * Return 0 on success, a negative error code otherwise.
  */
 int packfile_store_count_objects(struct packfile_store *store,
+				 enum odb_count_objects_flags flags,
 				 unsigned long *out);
 
 /*
