@@ -10,7 +10,7 @@
 #include <stdlib.h>
 #include <limits.h>
 
-#if defined(_WIN32) && defined(CLAR_WIN32_LONGPATHS)
+#if defined(__GNU__) || defined(_WIN32) && defined(CLAR_WIN32_LONGPATHS)
 # define CLAR_MAX_PATH 4096
 #elif defined(_WIN32)
 # define CLAR_MAX_PATH MAX_PATH
