@@ -12,6 +12,22 @@ sendemail.smtpSSLCertPath::
 	Path to ca-certificates (either a directory or a single file).
 	Set it to an empty string to disable certificate verification.
 
+sendemail.smtpSSLClientCert::
+	Path to the client certificate file to present if requested by the
+	server. This is required when the server is set up to verify client
+	certificates. If the corresponding private key is not included in the
+	file, it must be supplied using `sendemail.smtpSSLClientKey` or the
+	`--smtp-ssl-client-key` option.
+
+sendemail.smtpSSLClientKey::
+	Path to the client private key file that corresponds to the client
+	certificate. To avoid misconfiguration, this configuration must be used
+	in conjunction with `sendemail.smtpSSLClientKey` or the
+	`--smtp-ssl-client-cert` option. If the client key is included in the
+	client certificate, the choice of private key depends on the format of
+	the certificate. Visit https://metacpan.org/pod/IO::Socket::SSL for more
+	details.
+
 sendemail.<identity>.*::
 	Identity-specific versions of the `sendemail.*` parameters
 	found below, taking precedence over those when this
