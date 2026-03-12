@@ -500,6 +500,15 @@ int odb_for_each_object(struct object_database *odb,
 			void *cb_data,
 			unsigned flags);
 
+enum odb_count_objects_flags {
+	/*
+	 * Instead of providing an accurate count, allow the number of objects
+	 * to be approximated. Details of how this approximation works are
+	 * subject to the specific source's implementation.
+	 */
+	ODB_COUNT_OBJECTS_APPROXIMATE = (1 << 0),
+};
+
 enum {
 	/*
 	 * By default, `odb_write_object()` does not actually write anything

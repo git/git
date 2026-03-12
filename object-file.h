@@ -149,8 +149,9 @@ int odb_source_loose_for_each_object(struct odb_source *source,
  *
  * Returns 0 on success, a negative error code otherwise.
  */
-int odb_source_loose_approximate_object_count(struct odb_source *source,
-					      unsigned long *out);
+int odb_source_loose_count_objects(struct odb_source *source,
+				   enum odb_count_objects_flags flags,
+				   unsigned long *out);
 
 /**
  * format_object_header() is a thin wrapper around s xsnprintf() that
