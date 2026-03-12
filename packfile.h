@@ -375,12 +375,6 @@ int packfile_store_for_each_object(struct packfile_store *store,
 #define PACKDIR_FILE_GARBAGE 4
 extern void (*report_garbage)(unsigned seen_bits, const char *path);
 
-/*
- * Give a rough count of objects in the repository. This sacrifices accuracy
- * for speed.
- */
-unsigned long repo_approximate_object_count(struct repository *r);
-
 void pack_report(struct repository *repo);
 
 /*

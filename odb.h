@@ -110,10 +110,11 @@ struct object_database {
 	/*
 	 * A fast, rough count of the number of objects in the repository.
 	 * These two fields are not meant for direct access. Use
-	 * repo_approximate_object_count() instead.
+	 * odb_count_objects() instead.
 	 */
-	unsigned long approximate_object_count;
-	unsigned approximate_object_count_valid : 1;
+	unsigned long object_count;
+	unsigned object_count_flags;
+	unsigned object_count_valid : 1;
 
 	/*
 	 * Submodule source paths that will be added as additional sources to
@@ -508,6 +509,18 @@ enum odb_count_objects_flags {
 	 */
 	ODB_COUNT_OBJECTS_APPROXIMATE = (1 << 0),
 };
+
+/*
+ * Count the number of objects in the given object database. This object count
+ * may double-count objects that are stored in multiple backends, or which are
+ * stored multiple times in a single backend.
+ *
+ * Returns 0 on success, a negative error code otherwise. The number of objects
+ * will be assigned to the `out` pointer on success.
+ */
+int odb_count_objects(struct object_database *odb,
+		      enum odb_count_objects_flags flags,
+		      unsigned long *out);
 
 enum {
 	/*
