@@ -1868,6 +1868,47 @@ int odb_source_loose_for_each_object(struct odb_source *source,
 					     NULL, NULL, &data);
 }
 
+int odb_source_loose_approximate_object_count(struct odb_source *source,
+					      unsigned long *out)
+{
+	const unsigned hexsz = source->odb->repo->hash_algo->hexsz - 2;
+	unsigned long count = 0;
+	struct dirent *ent;
+	char *path = NULL;
+	DIR *dir = NULL;
+	int ret;
+
+	path = xstrfmt("%s/17", source->path);
+
+	dir = opendir(path);
+	if (!dir) {
+		if (errno == ENOENT) {
+			*out = 0;
+			ret = 0;
+			goto out;
+		}
+
+		ret = error_errno("cannot open object shard '%s'", path);
+		goto out;
+	}
+
+	while ((ent = readdir(dir)) != NULL) {
+		if (strspn(ent->d_name, "0123456789abcdef") != hexsz ||
+		    ent->d_name[hexsz] != '\0')
+			continue;
+		count++;
+	}
+
+	*out = count * 256;
+	ret = 0;
+
+out:
+	if (dir)
+		closedir(dir);
+	free(path);
+	return ret;
+}
+
 static int append_loose_object(const struct object_id *oid,
 			       const char *path UNUSED,
 			       void *data)

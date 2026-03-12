@@ -139,6 +139,19 @@ int odb_source_loose_for_each_object(struct odb_source *source,
 				     void *cb_data,
 				     unsigned flags);
 
+/*
+ * Count the number of loose objects in this source.
+ *
+ * The object count is approximated by opening a single sharding directory for
+ * loose objects and scanning its contents. The result is then extrapolated by
+ * 256. This should generally work as a reasonable estimate given that the
+ * object hash is supposed to be indistinguishable from random.
+ *
+ * Returns 0 on success, a negative error code otherwise.
+ */
+int odb_source_loose_approximate_object_count(struct odb_source *source,
+					      unsigned long *out);
+
 /**
  * format_object_header() is a thin wrapper around s xsnprintf() that
  * writes the initial "<type> <obj-len>" part of the loose object
