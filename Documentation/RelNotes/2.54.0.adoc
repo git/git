@@ -81,6 +81,10 @@ UI, Workflows & Features
    accepts charset to use from the end-user, to avoid 'y' (mistaken
    'yes' when expecting a charset like 'UTF-8') and other nonsense.
 
+ * "git status" learned to show comparison between the current branch
+   and various other branches listed on status.compareBranches
+   configuration.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -179,6 +183,9 @@ Performance, Internal Implementation, Development Support etc.
  * A bit of OIDmap API enhancement and cleanup.
 
  * Move gitlab CI from macOS 14 images that are being deprecated.
+
+ * The object source API is getting restructured to allow plugging new
+   backends.
 
 
 Fixes since v2.53
@@ -291,6 +298,9 @@ Fixes since v2.53
  * Fix typo-induced breakages in fsmonitor-watchman sample hook.
    (merge 41366e4677 pt/fsmonitor-watchman-sample-fix later to maint).
 
+ * "git for-each-repo" started from a secondary worktree did not work
+   as expected, which has been corrected.
+   (merge e87493b9b4 ds/for-each-repo-w-worktree later to maint).
  * Other code cleanup, docfix, build fix, etc.
    (merge d79fff4a11 jk/remote-tracking-ref-leakfix later to maint).
    (merge 7a747f972d dd/t5403-modernise later to maint).
