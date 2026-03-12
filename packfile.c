@@ -1101,6 +1101,36 @@ struct packfile_list_entry *packfile_store_get_packs(struct packfile_store *stor
 	return store->packs.head;
 }
 
+int packfile_store_count_objects(struct packfile_store *store,
+				 unsigned long *out)
+{
+	struct packfile_list_entry *e;
+	struct multi_pack_index *m;
+	unsigned long count = 0;
+	int ret;
+
+	m = get_multi_pack_index(store->source);
+	if (m)
+		count += m->num_objects + m->num_objects_in_base;
+
+	for (e = packfile_store_get_packs(store); e; e = e->next) {
+		if (e->pack->multi_pack_index)
+			continue;
+		if (open_pack_index(e->pack)) {
+			ret = -1;
+			goto out;
+		}
+
+		count += e->pack->num_objects;
+	}
+
+	*out = count;
+	ret = 0;
+
+out:
+	return ret;
+}
+
 /*
  * Give a fast, rough count of the number of objects in the repository. This
  * ignores loose objects completely. If you have a lot of them, then either
@@ -1113,21 +1143,16 @@ unsigned long repo_approximate_object_count(struct repository *r)
 	if (!r->objects->approximate_object_count_valid) {
 		struct odb_source *source;
 		unsigned long count = 0;
-		struct packed_git *p;
 
 		odb_prepare_alternates(r->objects);
-
 		for (source = r->objects->sources; source; source = source->next) {
-			struct multi_pack_index *m = get_multi_pack_index(source);
-			if (m)
-				count += m->num_objects + m->num_objects_in_base;
+			struct odb_source_files *files = odb_source_files_downcast(source);
+			unsigned long c;
+
+			if (!packfile_store_count_objects(files->packed, &c))
+				count += c;
 		}
 
-		repo_for_each_pack(r, p) {
-			if (p->multi_pack_index || open_pack_index(p))
-				continue;
-			count += p->num_objects;
-		}
 		r->objects->approximate_object_count = count;
 		r->objects->approximate_object_count_valid = 1;
 	}

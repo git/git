@@ -269,6 +269,15 @@ enum kept_pack_type {
 };
 
 /*
+ * Count the number objects contained in the given packfile store. If
+ * successful, the number of objects will be written to the `out` pointer.
+ *
+ * Return 0 on success, a negative error code otherwise.
+ */
+int packfile_store_count_objects(struct packfile_store *store,
+				 unsigned long *out);
+
+/*
  * Retrieve the cache of kept packs from the given packfile store. Accepts a
  * combination of `kept_pack_type` flags. The cache is computed on demand and
  * will be recomputed whenever the flags change.
