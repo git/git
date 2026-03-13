@@ -2263,26 +2263,19 @@ static int maintenance_list(int argc, const char **argv, const char *prefix,
 		usage_with_options(builtin_maintenance_list_usage,
 				   options);
 
-	if (config_file) {
-		git_configset_init(&cs);
-		git_configset_add_file(&cs, config_file);
-		if (git_configset_get_string_multi(&cs, key, &list)) {
-			/* No repositories registered in custom config */
-			git_configset_clear(&cs);
-			return 0;
-		}
-	} else {
-		global_config_file = git_global_config();
-		if (!global_config_file)
+	if (!config_file) {
+		config_file = git_global_config();
+		if (!config_file)
 			die(_("$HOME not set"));
-		git_configset_init(&cs);
-		git_configset_add_file(&cs, global_config_file);
-		if (git_configset_get_string_multi(&cs, key, &list)) {
-			/* No repositories registered in global config */
-			free(global_config_file);
-			git_configset_clear(&cs);
-			return 0;
-		}
+		global_config_file = config_file;
+	}
+
+	git_configset_init(&cs);
+	git_configset_add_file(&cs, config_file);
+	if (git_configset_get_string_multi(&cs, key, &list)) {
+		free(global_config_file);
+		git_configset_clear(&cs);
+		return 0;
 	}
 
 	{
