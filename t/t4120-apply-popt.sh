@@ -25,22 +25,21 @@ test_expect_success setup '
 
 test_expect_success 'git apply -p 1 patch' '
 	cat >patch <<-\EOF &&
-		From 90ad11d5b2d437e82d4d992f72fb44c2227798b5 Mon Sep 17 00:00:00 2001
-		From: Mroik <mroik@delayed.space>
-		Date: Mon, 9 Mar 2026 23:25:00 +0100
-		Subject: [PATCH] Test
+	From 90ad11d5b2d437e82d4d992f72fb44c2227798b5 Mon Sep 17 00:00:00 2001
+	From: Mroik <mroik@delayed.space>
+	Date: Mon, 9 Mar 2026 23:25:00 +0100
+	Subject: [PATCH] Test
 
-		---
-		 t/test/test | 0
-		 1 file changed, 0 insertions(+), 0 deletions(-)
-		 create mode 100644 t/test/test
+	---
+	 t/test/test | 0
+	 1 file changed, 0 insertions(+), 0 deletions(-)
+	 create mode 100644 t/test/test
 
-		diff --git a/t/test/test b/t/test/test
-		new file mode 100644
-		index 0000000000..e69de29bb2
-		--
-		2.53.0.851.ga537e3e6e9
-
+	diff --git a/t/test/test b/t/test/test
+	new file mode 100644
+	index 0000000000..e69de29bb2
+	--
+	2.53.0.851.ga537e3e6e9
 	EOF
 	test_when_finished "rm -rf t" &&
 	git apply -p 1 patch &&
