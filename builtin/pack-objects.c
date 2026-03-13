@@ -41,6 +41,7 @@
 #include "promisor-remote.h"
 #include "pack-mtimes.h"
 #include "parse-options.h"
+#include "pkt-line.h"
 #include "blob.h"
 #include "tree.h"
 #include "path-walk.h"
@@ -1333,14 +1334,17 @@ static void write_pack_file(void)
 
 		if (pack_to_stdout) {
 			/*
-			 * Since we are expecting to report progress of the
-			 * write into this hashfile, use a smaller buffer
-			 * size so the progress indicators arrive at a more
-			 * frequent rate.
+			 * This command is most often invoked via
+			 * git-upload-pack(1), which will typically chunk data
+			 * into pktlines. As such, we use the maximum data
+			 * length of them as buffer length.
+			 *
+			 * Note that we need to subtract one though to
+			 * accomodate for the sideband byte.
 			 */
 			struct hashfd_options opts = {
 				.progress = progress_state,
-				.buffer_len = 8 * 1024,
+				.buffer_len = LARGE_PACKET_DATA_MAX - 1,
 			};
 			f = hashfd_ext(the_repository->hash_algo, 1,
 				       "<stdout>", &opts);
