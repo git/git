@@ -52,32 +52,28 @@ const char *find_hook(struct repository *r, const char *name)
 	return path.buf;
 }
 
-static void hook_clear(struct hook *h, cb_data_free_fn cb_data_free)
+/*
+ * Frees a struct hook stored as the util pointer of a string_list_item.
+ * Suitable for use as a string_list_clear_func_t callback.
+ */
+void hook_free(void *p, const char *str UNUSED)
 {
+	struct hook *h = p;
+
 	if (!h)
 		return;
 
-	if (h->kind == HOOK_TRADITIONAL)
+	if (h->kind == HOOK_TRADITIONAL) {
 		free((void *)h->u.traditional.path);
-	else if (h->kind == HOOK_CONFIGURED) {
+	} else if (h->kind == HOOK_CONFIGURED) {
 		free((void *)h->u.configured.friendly_name);
 		free((void *)h->u.configured.command);
 	}
 
-	if (cb_data_free)
-		cb_data_free(h->feed_pipe_cb_data);
+	if (h->data_free && h->feed_pipe_cb_data)
+		h->data_free(h->feed_pipe_cb_data);
 
 	free(h);
-}
-
-void hook_list_clear(struct string_list *hooks, cb_data_free_fn cb_data_free)
-{
-	struct string_list_item *item;
-
-	for_each_string_list_item(item, hooks)
-		hook_clear(item->util, cb_data_free);
-
-	string_list_clear(hooks, 0);
 }
 
 /* Helper to detect and add default "traditional" hooks from the hookdir. */
@@ -91,7 +87,7 @@ static void list_hooks_add_default(struct repository *r, const char *hookname,
 	if (!hook_path)
 		return;
 
-	h = xcalloc(1, sizeof(struct hook));
+	CALLOC_ARRAY(h, 1);
 
 	/*
 	 * If the hook is to run in a specific dir, a relative path can
@@ -100,9 +96,15 @@ static void list_hooks_add_default(struct repository *r, const char *hookname,
 	if (options && options->dir)
 		hook_path = absolute_path(hook_path);
 
-	/* Setup per-hook internal state cb data */
-	if (options && options->feed_pipe_cb_data_alloc)
+	/*
+	 * Setup per-hook internal state callback data.
+	 * When provided, the alloc/free callbacks are always provided
+	 * together, so use them to alloc/free the internal hook state.
+	 */
+	if (options && options->feed_pipe_cb_data_alloc) {
 		h->feed_pipe_cb_data = options->feed_pipe_cb_data_alloc(options->feed_pipe_ctx);
+		h->data_free = options->feed_pipe_cb_data_free;
+	}
 
 	h->kind = HOOK_TRADITIONAL;
 	h->u.traditional.path = xstrdup(hook_path);
@@ -110,19 +112,21 @@ static void list_hooks_add_default(struct repository *r, const char *hookname,
 	string_list_append(hook_list, hook_path)->util = h;
 }
 
-static void unsorted_string_list_remove(struct string_list *list,
-					const char *str)
-{
-	struct string_list_item *item = unsorted_string_list_lookup(list, str);
-	if (item)
-		unsorted_string_list_delete_item(list, item - list->items, 0);
-}
+/*
+ * Cache entry stored as the .util pointer of string_list items inside the
+ * hook config cache.
+ */
+struct hook_config_cache_entry {
+	char *command;
+	enum config_scope scope;
+	int disabled;
+};
 
 /*
  * Callback struct to collect all hook.* keys in a single config pass.
  * commands: friendly-name to command map.
  * event_hooks: event-name to list of friendly-names map.
- * disabled_hooks: set of friendly-names with hook.name.enabled = false.
+ * disabled_hooks: set of friendly-names with hook.<friendly-name>.enabled = false.
  */
 struct hook_all_config_cb {
 	struct strmap commands;
@@ -132,7 +136,7 @@ struct hook_all_config_cb {
 
 /* repo_config() callback that collects all hook.* configuration in one pass. */
 static int hook_config_lookup_all(const char *key, const char *value,
-				  const struct config_context *ctx UNUSED,
+				  const struct config_context *ctx,
 				  void *cb_data)
 {
 	struct hook_all_config_cb *data = cb_data;
@@ -156,20 +160,32 @@ static int hook_config_lookup_all(const char *key, const char *value,
 			struct strmap_entry *e;
 
 			strmap_for_each_entry(&data->event_hooks, &iter, e)
-				unsorted_string_list_remove(e->value, hook_name);
+				unsorted_string_list_remove(e->value, hook_name, 0);
 		} else {
 			struct string_list *hooks =
 				strmap_get(&data->event_hooks, value);
 
 			if (!hooks) {
-				hooks = xcalloc(1, sizeof(*hooks));
+				CALLOC_ARRAY(hooks, 1);
 				string_list_init_dup(hooks);
 				strmap_put(&data->event_hooks, value, hooks);
 			}
 
 			/* Re-insert if necessary to preserve last-seen order. */
-			unsorted_string_list_remove(hooks, hook_name);
-			string_list_append(hooks, hook_name);
+			unsorted_string_list_remove(hooks, hook_name, 0);
+
+			if (!ctx->kvi)
+				BUG("hook config callback called without key-value info");
+
+			/*
+			 * Stash the config scope in the util pointer for
+			 * later retrieval in build_hook_config_map(). This
+			 * intermediate struct is transient and never leaves
+			 * that function, so we pack the enum value into the
+			 * pointer rather than heap-allocating a wrapper.
+			 */
+			string_list_append(hooks, hook_name)->util =
+				(void *)(uintptr_t)ctx->kvi->scope;
 		}
 	} else if (!strcmp(subkey, "command")) {
 		/* Store command overwriting the old value */
@@ -186,7 +202,7 @@ static int hook_config_lookup_all(const char *key, const char *value,
 			break;
 		case 1: /* enabled: undo a prior disabled entry */
 			unsorted_string_list_remove(&data->disabled_hooks,
-						    hook_name);
+						    hook_name, 0);
 			break;
 		default:
 			break; /* ignore unrecognised values */
@@ -200,26 +216,34 @@ static int hook_config_lookup_all(const char *key, const char *value,
 /*
  * The hook config cache maps each hook event name to a string_list where
  * every item's string is the hook's friendly-name and its util pointer is
- * the corresponding command string. Both strings are owned by the map.
+ * a hook_config_cache_entry. All strings are owned by the map.
  *
- * Disabled hooks and hooks missing a command are already filtered out at
- * parse time, so callers can iterate the list directly.
+ * Disabled hooks are kept in the cache with entry->disabled set, so that
+ * "git hook list" can display them. Hooks missing a command are filtered
+ * out at build time; if a disabled hook has no command it is silently
+ * skipped rather than triggering a fatal error.
  */
-void hook_cache_clear(struct strmap *cache)
+void hook_cache_clear(struct hook_config_cache *cache)
 {
 	struct hashmap_iter iter;
 	struct strmap_entry *e;
 
-	strmap_for_each_entry(cache, &iter, e) {
+	strmap_for_each_entry(&cache->hooks, &iter, e) {
 		struct string_list *hooks = e->value;
-		string_list_clear(hooks, 1); /* free util (command) pointers */
+		for (size_t i = 0; i < hooks->nr; i++) {
+			struct hook_config_cache_entry *entry = hooks->items[i].util;
+			free(entry->command);
+			free(entry);
+		}
+		string_list_clear(hooks, 0);
 		free(hooks);
 	}
-	strmap_clear(cache, 0);
+	strmap_clear(&cache->hooks, 0);
 }
 
 /* Populate `cache` with the complete hook configuration */
-static void build_hook_config_map(struct repository *r, struct strmap *cache)
+static void build_hook_config_map(struct repository *r,
+				  struct hook_config_cache *cache)
 {
 	struct hook_all_config_cb cb_data;
 	struct hashmap_iter iter;
@@ -235,31 +259,42 @@ static void build_hook_config_map(struct repository *r, struct strmap *cache)
 	/* Construct the cache from parsed configs. */
 	strmap_for_each_entry(&cb_data.event_hooks, &iter, e) {
 		struct string_list *hook_names = e->value;
-		struct string_list *hooks = xcalloc(1, sizeof(*hooks));
+		struct string_list *hooks;
+		CALLOC_ARRAY(hooks, 1);
 
 		string_list_init_dup(hooks);
 
 		for (size_t i = 0; i < hook_names->nr; i++) {
 			const char *hname = hook_names->items[i].string;
+			enum config_scope scope =
+				(enum config_scope)(uintptr_t)hook_names->items[i].util;
+			struct hook_config_cache_entry *entry;
 			char *command;
 
-			/* filter out disabled hooks */
-			if (unsorted_string_list_lookup(&cb_data.disabled_hooks,
-							hname))
-				continue;
+			int is_disabled =
+				!!unsorted_string_list_lookup(
+					&cb_data.disabled_hooks, hname);
 
 			command = strmap_get(&cb_data.commands, hname);
-			if (!command)
-				die(_("'hook.%s.command' must be configured or "
-				      "'hook.%s.event' must be removed;"
-				      " aborting."), hname, hname);
+			if (!command) {
+				if (is_disabled)
+					warning(_("disabled hook '%s' has no "
+						  "command configured"), hname);
+				else
+					die(_("'hook.%s.command' must be configured or "
+					      "'hook.%s.event' must be removed;"
+					      " aborting."), hname, hname);
+			}
 
-			/* util stores the command; owned by the cache. */
-			string_list_append(hooks, hname)->util =
-				xstrdup(command);
+			/* util stores a cache entry; owned by the cache. */
+			CALLOC_ARRAY(entry, 1);
+			entry->command = command ? xstrdup(command) : NULL;
+			entry->scope = scope;
+			entry->disabled = is_disabled;
+			string_list_append(hooks, hname)->util = entry;
 		}
 
-		strmap_put(cache, e->key, hooks);
+		strmap_put(&cache->hooks, e->key, hooks);
 	}
 
 	strmap_clear(&cb_data.commands, 1);
@@ -272,35 +307,35 @@ static void build_hook_config_map(struct repository *r, struct strmap *cache)
 }
 
 /*
- * Return the hook config map for `r`, populating it first if needed.
+ * Return the hook config cache for `r`, populating it first if needed.
  *
  * Out-of-repo calls (r->gitdir == NULL) allocate and return a temporary
- * cache map; the caller is responsible for freeing it with
+ * cache; the caller is responsible for freeing it with
  * hook_cache_clear() + free().
  */
-static struct strmap *get_hook_config_cache(struct repository *r)
+static struct hook_config_cache *get_hook_config_cache(struct repository *r)
 {
-	struct strmap *cache = NULL;
+	struct hook_config_cache *cache = NULL;
 
 	if (r && r->gitdir) {
 		/*
-		 * For in-repo calls, the map is stored in r->hook_config_cache,
-		 * so repeated invocations don't parse the configs, so allocate
+		 * For in-repo calls, the cache is stored in r->hook_config_cache,
+		 * so repeated invocations don't parse the configs; allocate
 		 * it just once on the first call.
 		 */
 		if (!r->hook_config_cache) {
-			r->hook_config_cache = xcalloc(1, sizeof(*cache));
-			strmap_init(r->hook_config_cache);
+			CALLOC_ARRAY(r->hook_config_cache, 1);
+			strmap_init(&r->hook_config_cache->hooks);
 			build_hook_config_map(r, r->hook_config_cache);
 		}
 		cache = r->hook_config_cache;
 	} else {
 		/*
 		 * Out-of-repo calls (no gitdir) allocate and return a temporary
-		 * map cache which gets free'd immediately by the caller.
+		 * cache which gets freed immediately by the caller.
 		 */
-		cache = xcalloc(1, sizeof(*cache));
-		strmap_init(cache);
+		CALLOC_ARRAY(cache, 1);
+		strmap_init(&cache->hooks);
 		build_hook_config_map(r, cache);
 	}
 
@@ -312,23 +347,33 @@ static void list_hooks_add_configured(struct repository *r,
 				      struct string_list *list,
 				      struct run_hooks_opt *options)
 {
-	struct strmap *cache = get_hook_config_cache(r);
-	struct string_list *configured_hooks = strmap_get(cache, hookname);
+	struct hook_config_cache *cache = get_hook_config_cache(r);
+	struct string_list *configured_hooks = strmap_get(&cache->hooks, hookname);
 
 	/* Iterate through configured hooks and initialize internal states */
 	for (size_t i = 0; configured_hooks && i < configured_hooks->nr; i++) {
 		const char *friendly_name = configured_hooks->items[i].string;
-		const char *command = configured_hooks->items[i].util;
-		struct hook *hook = xcalloc(1, sizeof(struct hook));
+		struct hook_config_cache_entry *entry = configured_hooks->items[i].util;
+		struct hook *hook;
+		CALLOC_ARRAY(hook, 1);
 
-		if (options && options->feed_pipe_cb_data_alloc)
+		/*
+		 * When provided, the alloc/free callbacks are always provided
+		 * together, so use them to alloc/free the internal hook state.
+		 */
+		if (options && options->feed_pipe_cb_data_alloc) {
 			hook->feed_pipe_cb_data =
 				options->feed_pipe_cb_data_alloc(
 					options->feed_pipe_ctx);
+			hook->data_free = options->feed_pipe_cb_data_free;
+		}
 
 		hook->kind = HOOK_CONFIGURED;
 		hook->u.configured.friendly_name = xstrdup(friendly_name);
-		hook->u.configured.command = xstrdup(command);
+		hook->u.configured.command =
+			entry->command ? xstrdup(entry->command) : NULL;
+		hook->u.configured.scope = entry->scope;
+		hook->u.configured.disabled = entry->disabled;
 
 		string_list_append(list, friendly_name)->util = hook;
 	}
@@ -351,7 +396,7 @@ struct string_list *list_hooks(struct repository *r, const char *hookname,
 	if (!hookname)
 		BUG("null hookname was provided to hook_list()!");
 
-	hook_head = xmalloc(sizeof(struct string_list));
+	CALLOC_ARRAY(hook_head, 1);
 	string_list_init_dup(hook_head);
 
 	/* Add hooks from the config, e.g. hook.myhook.event = pre-commit */
@@ -366,8 +411,17 @@ struct string_list *list_hooks(struct repository *r, const char *hookname,
 int hook_exists(struct repository *r, const char *name)
 {
 	struct string_list *hooks = list_hooks(r, name, NULL);
-	int exists = hooks->nr > 0;
-	hook_list_clear(hooks, NULL);
+	int exists = 0;
+
+	for (size_t i = 0; i < hooks->nr; i++) {
+		struct hook *h = hooks->items[i].util;
+		if (h->kind == HOOK_TRADITIONAL ||
+		    !h->u.configured.disabled) {
+			exists = 1;
+			break;
+		}
+	}
+	string_list_clear_func(hooks, hook_free);
 	free(hooks);
 	return exists;
 }
@@ -381,10 +435,11 @@ static int pick_next_hook(struct child_process *cp,
 	struct string_list *hook_list = hook_cb->hook_command_list;
 	struct hook *h;
 
-	if (hook_cb->hook_to_run_index >= hook_list->nr)
-		return 0;
-
-	h = hook_list->items[hook_cb->hook_to_run_index++].util;
+	do {
+		if (hook_cb->hook_to_run_index >= hook_list->nr)
+			return 0;
+		h = hook_list->items[hook_cb->hook_to_run_index++].util;
+	} while (h->kind == HOOK_CONFIGURED && h->u.configured.disabled);
 
 	cp->no_stdin = 1;
 	strvec_pushv(&cp->env, hook_cb->options->env.v);
@@ -414,7 +469,11 @@ static int pick_next_hook(struct child_process *cp,
 	} else if (h->kind == HOOK_CONFIGURED) {
 		/* to enable oneliners, let config-specified hooks run in shell. */
 		cp->use_shell = true;
+		if (!h->u.configured.command)
+			BUG("non-disabled HOOK_CONFIGURED hook has no command");
 		strvec_push(&cp->args, h->u.configured.command);
+	} else {
+		BUG("unknown hook kind");
 	}
 
 	if (!cp->args.nr)
@@ -501,8 +560,7 @@ int run_hooks_opt(struct repository *r, const char *hook_name,
 	 * Ensure cb_data copy and free functions are either provided together,
 	 * or neither one is provided.
 	 */
-	if ((options->feed_pipe_cb_data_alloc && !options->feed_pipe_cb_data_free) ||
-	    (!options->feed_pipe_cb_data_alloc && options->feed_pipe_cb_data_free))
+	if (!options->feed_pipe_cb_data_alloc != !options->feed_pipe_cb_data_free)
 		BUG("feed_pipe_cb_data_alloc and feed_pipe_cb_data_free must be set together");
 
 	if (options->invoked_hook)
@@ -518,7 +576,7 @@ int run_hooks_opt(struct repository *r, const char *hook_name,
 	run_processes_parallel(&opts);
 	ret = cb_data.rc;
 cleanup:
-	hook_list_clear(cb_data.hook_command_list, options->feed_pipe_cb_data_free);
+	string_list_clear_func(cb_data.hook_command_list, hook_free);
 	free(cb_data.hook_command_list);
 	run_hooks_opt_clear(options);
 	return ret;

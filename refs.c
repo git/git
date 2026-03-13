@@ -2591,7 +2591,8 @@ static int transaction_hook_feed_stdin(int hook_stdin_fd, void *pp_cb, void *pp_
 
 static void *transaction_feed_cb_data_alloc(void *feed_pipe_ctx UNUSED)
 {
-	struct transaction_feed_cb_data *data = xmalloc(sizeof(*data));
+	struct transaction_feed_cb_data *data;
+	CALLOC_ARRAY(data, 1);
 	strbuf_init(&data->buf, 0);
 	data->index = 0;
 	return data;

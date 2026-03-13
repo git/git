@@ -9,7 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'git hook' run [--ignore-missing] [--to-stdin=<path>] <hook-name> [-- <hook-args>]
-'git hook' list [-z] <hook-name>
+'git hook' list [-z] [--show-scope] <hook-name>
 
 DESCRIPTION
 -----------
@@ -44,7 +44,7 @@ event`), and then `~/bin/spellchecker` will have a chance to check your commit
 message (during the `commit-msg` hook event).
 
 Commands are run in the order Git encounters their associated
-`hook.<name>.event` configs during the configuration parse (see
+`hook.<friendly-name>.event` configs during the configuration parse (see
 linkgit:git-config[1]). Although multiple `hook.linter.event` configs can be
 added, only one `hook.linter.command` event is valid - Git uses "last-one-wins"
 to determine which command to run.
@@ -76,10 +76,10 @@ first start `~/bin/linter --cpp20` and second start `~/bin/leak-detector`. It
 would evaluate the output of each when deciding whether to proceed with the
 commit.
 
-For a full list of hook events which you can set your `hook.<name>.event` to,
+For a full list of hook events which you can set your `hook.<friendly-name>.event` to,
 and how hooks are invoked during those events, see linkgit:githooks[5].
 
-Git will ignore any `hook.<name>.event` that specifies an event it doesn't
+Git will ignore any `hook.<friendly-name>.event` that specifies an event it doesn't
 recognize. This is intended so that tools which wrap Git can use the hook
 infrastructure to run their own hooks; see "WRAPPERS" for more guidance.
 
@@ -113,7 +113,7 @@ Any positional arguments to the hook should be passed after a
 mandatory `--` (or `--end-of-options`, see linkgit:gitcli[7]). See
 linkgit:githooks[5] for arguments hooks might expect (if any).
 
-list [-z]::
+list [-z] [--show-scope]::
 	Print a list of hooks which will be run on `<hook-name>` event. If no
 	hooks are configured for that event, print a warning and return 1.
 	Use `-z` to terminate output lines with NUL instead of newlines.
@@ -133,6 +133,11 @@ OPTIONS
 
 -z::
 	Terminate "list" output lines with NUL instead of newlines.
+
+--show-scope::
+	For "list"; print the config scope (e.g. `local`, `global`, `system`)
+	in parentheses after the friendly name of each configured hook, to show
+	where it was defined. Traditional hooks from the hookdir are unaffected.
 
 WRAPPERS
 --------
