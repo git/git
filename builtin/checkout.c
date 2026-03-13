@@ -17,7 +17,6 @@
 #include "merge-ll.h"
 #include "lockfile.h"
 #include "mem-pool.h"
-#include "merge-ort-wrappers.h"
 #include "object-file.h"
 #include "object-name.h"
 #include "odb.h"
@@ -30,6 +29,7 @@
 #include "repo-settings.h"
 #include "resolve-undo.h"
 #include "revision.h"
+#include "sequencer.h"
 #include "setup.h"
 #include "submodule.h"
 #include "symlinks.h"
@@ -845,83 +845,8 @@ static int merge_working_tree(const struct checkout_opts *opts,
 
 		ret = unpack_trees(2, trees, &topts);
 		clear_unpack_trees_porcelain(&topts);
-		if (ret == -1) {
-			/*
-			 * Unpack couldn't do a trivial merge; either
-			 * give up or do a real merge, depending on
-			 * whether the merge flag was used.
-			 */
-			struct tree *work;
-			struct tree *old_tree;
-			struct merge_options o;
-			struct strbuf sb = STRBUF_INIT;
-			struct strbuf old_commit_shortname = STRBUF_INIT;
-
-			if (!opts->merge)
-				return 1;
-
-			/*
-			 * Without old_branch_info->commit, the below is the same as
-			 * the two-tree unpack we already tried and failed.
-			 */
-			if (!old_branch_info->commit)
-				return 1;
-			old_tree = repo_get_commit_tree(the_repository,
-							old_branch_info->commit);
-
-			if (repo_index_has_changes(the_repository, old_tree, &sb))
-				die(_("cannot continue with staged changes in "
-				      "the following files:\n%s"), sb.buf);
-			strbuf_release(&sb);
-
-			/* Do more real merge */
-
-			/*
-			 * We update the index fully, then write the
-			 * tree from the index, then merge the new
-			 * branch with the current tree, with the old
-			 * branch as the base. Then we reset the index
-			 * (but not the working tree) to the new
-			 * branch, leaving the working tree as the
-			 * merged version, but skipping unmerged
-			 * entries in the index.
-			 */
-
-			add_files_to_cache(the_repository, NULL, NULL, NULL, 0,
-					0, 0);
-			init_ui_merge_options(&o, the_repository);
-			o.verbosity = 0;
-			work = write_in_core_index_as_tree(the_repository);
-
-			ret = reset_tree(new_tree,
-					 opts, 1,
-					 writeout_error, new_branch_info);
-			if (ret)
-				return ret;
-			o.ancestor = old_branch_info->name;
-			if (!old_branch_info->name) {
-				strbuf_add_unique_abbrev(&old_commit_shortname,
-							 &old_branch_info->commit->object.oid,
-							 DEFAULT_ABBREV);
-				o.ancestor = old_commit_shortname.buf;
-			}
-			o.branch1 = new_branch_info->name;
-			o.branch2 = "local";
-			o.conflict_style = opts->conflict_style;
-			ret = merge_ort_nonrecursive(&o,
-						     new_tree,
-						     work,
-						     old_tree);
-			if (ret < 0)
-				die(NULL);
-			ret = reset_tree(new_tree,
-					 opts, 0,
-					 writeout_error, new_branch_info);
-			strbuf_release(&o.obuf);
-			strbuf_release(&old_commit_shortname);
-			if (ret)
-				return ret;
-		}
+		if (ret == -1)
+			return 1;
 	}
 
 	if (!cache_tree_fully_valid(the_repository->index->cache_tree))
@@ -929,9 +854,6 @@ static int merge_working_tree(const struct checkout_opts *opts,
 
 	if (write_locked_index(the_repository->index, &lock_file, COMMIT_LOCK))
 		die(_("unable to write new index file"));
-
-	if (!opts->discard_changes && !opts->quiet && new_branch_info->commit)
-		show_local_changes(&new_branch_info->commit->object, &opts->diff_options);
 
 	return 0;
 }
@@ -1157,6 +1079,55 @@ static void orphaned_commit_warning(struct commit *old_commit, struct commit *ne
 	release_revisions(&revs);
 }
 
+static int checkout_would_clobber_changes(struct branch_info *old_branch_info,
+					  struct branch_info *new_branch_info)
+{
+	struct tree_desc trees[2];
+	struct tree *old_tree, *new_tree;
+	struct unpack_trees_options topts;
+	struct index_state tmp_index = INDEX_STATE_INIT(the_repository);
+	const struct object_id *old_commit_oid;
+	int ret;
+
+	if (!new_branch_info->commit)
+		return 0;
+
+	old_commit_oid = old_branch_info->commit ?
+		&old_branch_info->commit->object.oid :
+		the_hash_algo->empty_tree;
+	old_tree = repo_parse_tree_indirect(the_repository, old_commit_oid);
+	if (!old_tree)
+		return 0;
+
+	new_tree = repo_get_commit_tree(the_repository,
+					new_branch_info->commit);
+	if (!new_tree)
+		return 0;
+	if (repo_parse_tree(the_repository, new_tree) < 0)
+		return 0;
+
+	memset(&topts, 0, sizeof(topts));
+	topts.head_idx = -1;
+	topts.src_index = the_repository->index;
+	topts.dst_index = &tmp_index;
+	topts.initial_checkout = is_index_unborn(the_repository->index);
+	topts.merge = 1;
+	topts.update = 1;
+	topts.dry_run = 1;
+	topts.quiet = 1;
+	topts.fn = twoway_merge;
+
+	init_tree_desc(&trees[0], &old_tree->object.oid,
+		       old_tree->buffer, old_tree->size);
+	init_tree_desc(&trees[1], &new_tree->object.oid,
+		       new_tree->buffer, new_tree->size);
+
+	ret = unpack_trees(2, trees, &topts);
+	discard_index(&tmp_index);
+
+	return ret != 0;
+}
+
 static int switch_branches(const struct checkout_opts *opts,
 			   struct branch_info *new_branch_info)
 {
@@ -1202,9 +1173,19 @@ static int switch_branches(const struct checkout_opts *opts,
 			do_merge = 0;
 	}
 
+	if (opts->merge) {
+		if (repo_read_index(the_repository) < 0)
+			die(_("index file corrupt"));
+		if (checkout_would_clobber_changes(&old_branch_info,
+						   new_branch_info))
+			create_autostash_ref(the_repository,
+					     "CHECKOUT_AUTOSTASH");
+	}
+
 	if (do_merge) {
 		ret = merge_working_tree(opts, &old_branch_info, new_branch_info, &writeout_error);
 		if (ret) {
+			apply_autostash_ref(the_repository, "CHECKOUT_AUTOSTASH");
 			branch_info_release(&old_branch_info);
 			return ret;
 		}
@@ -1214,6 +1195,23 @@ static int switch_branches(const struct checkout_opts *opts,
 		orphaned_commit_warning(old_branch_info.commit, new_branch_info->commit);
 
 	update_refs_for_switch(opts, &old_branch_info, new_branch_info);
+
+	if (opts->conflict_style >= 0) {
+		struct strbuf cfg = STRBUF_INIT;
+		strbuf_addf(&cfg, "merge.conflictStyle=%s",
+			    conflict_style_name(opts->conflict_style));
+		git_config_push_parameter(cfg.buf);
+		strbuf_release(&cfg);
+	}
+	apply_autostash_ref(the_repository, "CHECKOUT_AUTOSTASH");
+
+	discard_index(the_repository->index);
+	if (repo_read_index(the_repository) < 0)
+		die(_("index file corrupt"));
+
+	if (!opts->discard_changes && !opts->quiet && new_branch_info->commit)
+		show_local_changes(&new_branch_info->commit->object,
+				   &opts->diff_options);
 
 	ret = post_checkout_hook(old_branch_info.commit, new_branch_info->commit, 1);
 	branch_info_release(&old_branch_info);
