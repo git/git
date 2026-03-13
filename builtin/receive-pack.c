@@ -2727,7 +2727,7 @@ int cmd_receive_pack(int argc,
 		if (auto_gc) {
 			struct child_process proc = CHILD_PROCESS_INIT;
 
-			if (prepare_auto_maintenance(1, &proc)) {
+			if (prepare_auto_maintenance(the_repository, 1, &proc)) {
 				proc.no_stdin = 1;
 				proc.stdout_to_stderr = 1;
 				proc.err = use_sideband ? -1 : 0;

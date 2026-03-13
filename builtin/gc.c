@@ -1030,7 +1030,7 @@ int cmd_gc(int argc,
 		struct child_process repack_cmd = CHILD_PROCESS_INIT;
 
 		repack_cmd.git_cmd = 1;
-		repack_cmd.close_object_store = 1;
+		repack_cmd.odb_to_close = the_repository->objects;
 		strvec_pushv(&repack_cmd.args, repack_args.v);
 		if (run_command(&repack_cmd))
 			die(FAILED_RUN, repack_args.v[0]);
@@ -1199,7 +1199,8 @@ static int run_write_commit_graph(struct maintenance_run_opts *opts)
 {
 	struct child_process child = CHILD_PROCESS_INIT;
 
-	child.git_cmd = child.close_object_store = 1;
+	child.git_cmd = 1;
+	child.odb_to_close = the_repository->objects;
 	strvec_pushl(&child.args, "commit-graph", "write",
 		     "--split", "--reachable", NULL);
 
@@ -1268,7 +1269,8 @@ static int maintenance_task_gc_background(struct maintenance_run_opts *opts,
 {
 	struct child_process child = CHILD_PROCESS_INIT;
 
-	child.git_cmd = child.close_object_store = 1;
+	child.git_cmd = 1;
+	child.odb_to_close = the_repository->objects;
 	strvec_push(&child.args, "gc");
 
 	if (opts->auto_flag)
@@ -1484,7 +1486,8 @@ static int multi_pack_index_expire(struct maintenance_run_opts *opts)
 {
 	struct child_process child = CHILD_PROCESS_INIT;
 
-	child.git_cmd = child.close_object_store = 1;
+	child.git_cmd = 1;
+	child.odb_to_close = the_repository->objects;
 	strvec_pushl(&child.args, "multi-pack-index", "expire", NULL);
 
 	if (opts->quiet)
@@ -1542,7 +1545,8 @@ static int multi_pack_index_repack(struct maintenance_run_opts *opts)
 {
 	struct child_process child = CHILD_PROCESS_INIT;
 
-	child.git_cmd = child.close_object_store = 1;
+	child.git_cmd = 1;
+	child.odb_to_close = the_repository->objects;
 	strvec_pushl(&child.args, "multi-pack-index", "repack", NULL);
 
 	if (opts->quiet)

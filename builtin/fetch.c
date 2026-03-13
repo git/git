@@ -2873,7 +2873,7 @@ int cmd_fetch(int argc,
 			if (opt_val != 0)
 				git_config_push_parameter("maintenance.incremental-repack.auto=-1");
 		}
-		run_auto_maintenance(verbosity < 0);
+		run_auto_maintenance(the_repository, verbosity < 0);
 	}
 
  cleanup:
