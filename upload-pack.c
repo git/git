@@ -466,18 +466,27 @@ static void create_pack_file(struct upload_pack_data *pack_data,
 		}
 
 		/*
-		 * We hit the keepalive timeout without saying anything; send
-		 * an empty message on the data sideband just to let the other
-		 * side know we're still working on it, but don't have any data
-		 * yet.
+		 * We hit the keepalive timeout without saying anything. If we
+		 * have pending data we flush it out to the caller now.
+		 * Otherwise, we send an empty message on the data sideband
+		 * just to let the other side know we're still working on it,
+		 * but don't have any data yet.
 		 *
 		 * If we don't have a sideband channel, there's no room in the
 		 * protocol to say anything, so those clients are just out of
 		 * luck.
 		 */
 		if (!ret && pack_data->use_sideband) {
-			static const char buf[] = "0005\1";
-			write_or_die(1, buf, 5);
+			if (output_state->packfile_started && output_state->used > 1) {
+				send_client_data(1, output_state->buffer, output_state->used - 1,
+						 pack_data->use_sideband);
+				output_state->buffer[0] = output_state->buffer[output_state->used - 1];
+				output_state->used = 1;
+			} else {
+				static const char buf[] = "0005\1";
+				write_or_die(1, buf, 5);
+			}
+
 			last_sent_ms = now_ms;
 		}
 	}
