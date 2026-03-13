@@ -227,7 +227,7 @@ struct worktree **get_worktrees_without_reading_head(void)
 char *get_worktree_git_dir(const struct worktree *wt)
 {
 	if (!wt)
-		return xstrdup(repo_get_git_dir(the_repository));
+		BUG("%s() called with NULL worktree", __func__);
 	else if (!wt->id)
 		return xstrdup(repo_get_common_dir(wt->repo));
 	else
