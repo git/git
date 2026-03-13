@@ -274,4 +274,18 @@ int sequencer_determine_whence(struct repository *r, enum commit_whence *whence)
  */
 int sequencer_get_update_refs_state(const char *wt_dir, struct string_list *refs);
 
+/*
+ * Formats a complete revert commit message following standard Git conventions.
+ * Handles regular reverts ("Revert \"<subject>\""), revert of revert cases
+ * ("Reapply \"<subject>\""), and the --reference style. Appends "This reverts
+ * commit <ref>." using either the abbreviated or full commit reference
+ * depending on use_commit_reference. Also handles merge-parent references.
+ */
+void sequencer_format_revert_message(struct repository *r,
+				     const char *subject,
+				     const struct commit *commit,
+				     const struct commit *parent,
+				     bool use_commit_reference,
+				     struct strbuf *message);
+
 #endif /* SEQUENCER_H */
