@@ -4961,7 +4961,8 @@ static int apply_option_parse_p(const struct option *opt,
 
 	BUG_ON_OPT_NEG(unset);
 
-	state->p_value = atoi(arg);
+	if (strtol_i(arg, 10, &state->p_value) < 0 || state->p_value < 0)
+		die("<num> has to be a non-negative integer");
 	state->p_value_known = 1;
 	return 0;
 }
