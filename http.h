@@ -20,6 +20,7 @@ struct slot_results {
 	long http_code;
 	long auth_avail;
 	long http_connectcode;
+	long retry_after;
 };
 
 struct active_request_slot {
@@ -167,6 +168,7 @@ struct http_get_options {
 #define HTTP_REAUTH	4
 #define HTTP_NOAUTH	5
 #define HTTP_NOMATCHPUBLICKEY	6
+#define HTTP_RATE_LIMITED	7
 
 /*
  * Requests a URL and stores the result in a strbuf.
