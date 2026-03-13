@@ -122,6 +122,7 @@ include::rerere-options.adoc[]
 	configuration variable can be used to enable this option by
 	default.
 
+include::rev-list-options.adoc[]
 
 SEQUENCER SUBCOMMANDS
 ---------------------
