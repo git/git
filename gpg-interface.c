@@ -974,11 +974,20 @@ const char *gpg_trust_level_to_str(enum signature_trust_level level)
 	return sigcheck_gpg_trust_level[level].display_key;
 }
 
-int sign_buffer(struct strbuf *buffer, struct strbuf *signature, const char *signing_key)
+int sign_buffer(struct strbuf *buffer, struct strbuf *signature,
+		const char *signing_key, enum sign_buffer_flags flags)
 {
+	char *keyid_to_free = NULL;
+	int ret = 0;
+
 	gpg_interface_lazy_init();
 
-	return use_format->sign_buffer(buffer, signature, signing_key);
+	if ((flags & SIGN_BUFFER_USE_DEFAULT_KEY) && (!signing_key || !*signing_key))
+		signing_key = keyid_to_free = get_signing_key();
+
+	ret = use_format->sign_buffer(buffer, signature, signing_key);
+	free(keyid_to_free);
+	return ret;
 }
 
 /*

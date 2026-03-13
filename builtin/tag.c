@@ -167,7 +167,7 @@ static int do_sign(struct strbuf *buffer, struct object_id **compat_oid,
 	char *keyid = get_signing_key();
 	int ret = -1;
 
-	if (sign_buffer(buffer, &sig, keyid))
+	if (sign_buffer(buffer, &sig, keyid, 0))
 		goto out;
 
 	if (compat) {
@@ -176,7 +176,7 @@ static int do_sign(struct strbuf *buffer, struct object_id **compat_oid,
 		if (convert_object_file(the_repository ,&compat_buf, algo, compat,
 					buffer->buf, buffer->len, OBJ_TAG, 1))
 			goto out;
-		if (sign_buffer(&compat_buf, &compat_sig, keyid))
+		if (sign_buffer(&compat_buf, &compat_sig, keyid, 0))
 			goto out;
 		add_header_signature(&compat_buf, &sig, algo);
 		strbuf_addbuf(&compat_buf, &compat_sig);
