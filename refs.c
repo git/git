@@ -2655,6 +2655,13 @@ int ref_transaction_prepare(struct ref_transaction *transaction,
 	if (ref_update_reject_duplicates(&transaction->refnames, err))
 		return REF_TRANSACTION_ERROR_GENERIC;
 
+	/* Preparing checks before locking references */
+	ret = run_transaction_hook(transaction, "preparing");
+	if (ret) {
+		ref_transaction_abort(transaction, err);
+		die(_("ref updates aborted by %s hook"), "preparing");
+	}
+
 	ret = refs->be->transaction_prepare(refs, transaction, err);
 	if (ret)
 		return ret;
@@ -2662,7 +2669,7 @@ int ref_transaction_prepare(struct ref_transaction *transaction,
 	ret = run_transaction_hook(transaction, "prepared");
 	if (ret) {
 		ref_transaction_abort(transaction, err);
-		die(_("ref updates aborted by hook"));
+		die(_("ref updates aborted by %s hook"), "prepared");
 	}
 
 	return 0;

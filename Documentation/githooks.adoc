@@ -484,12 +484,15 @@ reference-transaction
 ~~~~~~~~~~~~~~~~~~~~~
 
 This hook is invoked by any Git command that performs reference
-updates. It executes whenever a reference transaction is prepared,
-committed or aborted and may thus get called multiple times. The hook
-also supports symbolic reference updates.
+updates. It executes whenever a reference transaction is preparing,
+prepared, committed or aborted and may thus get called multiple times.
+The hook also supports symbolic reference updates.
 
 The hook takes exactly one argument, which is the current state the
 given reference transaction is in:
+
+    - "preparing": All reference updates have been queued to the
+      transaction but references are not yet locked on disk.
 
     - "prepared": All reference updates have been queued to the
       transaction and references were locked on disk.
@@ -511,16 +514,18 @@ ref and `<ref-name>` is the full name of the ref. When force updating
 the reference regardless of its current value or when the reference is
 to be created anew, `<old-value>` is the all-zeroes object name. To
 distinguish these cases, you can inspect the current value of
-`<ref-name>` via `git rev-parse`.
+`<ref-name>` via `git rev-parse`. During the "preparing" state, symbolic
+references are not resolved: `<ref-name>` will reflect the symbolic reference
+itself rather than the object it points to.
 
 For symbolic reference updates the `<old_value>` and `<new-value>`
 fields could denote references instead of objects. A reference will be
 denoted with a 'ref:' prefix, like `ref:<ref-target>`.
 
 The exit status of the hook is ignored for any state except for the
-"prepared" state. In the "prepared" state, a non-zero exit status will
-cause the transaction to be aborted. The hook will not be called with
-"aborted" state in that case.
+"preparing" and "prepared" states. In these states, a non-zero exit
+status will cause the transaction to be aborted. The hook will not be
+called with "aborted" state in that case.
 
 push-to-checkout
 ~~~~~~~~~~~~~~~~
