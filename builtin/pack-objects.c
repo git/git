@@ -1331,11 +1331,22 @@ static void write_pack_file(void)
 		unsigned char hash[GIT_MAX_RAWSZ];
 		char *pack_tmp_name = NULL;
 
-		if (pack_to_stdout)
-			f = hashfd_throughput(the_repository->hash_algo, 1,
-					      "<stdout>", progress_state);
-		else
+		if (pack_to_stdout) {
+			/*
+			 * Since we are expecting to report progress of the
+			 * write into this hashfile, use a smaller buffer
+			 * size so the progress indicators arrive at a more
+			 * frequent rate.
+			 */
+			struct hashfd_options opts = {
+				.progress = progress_state,
+				.buffer_len = 8 * 1024,
+			};
+			f = hashfd_ext(the_repository->hash_algo, 1,
+				       "<stdout>", &opts);
+		} else {
 			f = create_tmp_packfile(the_repository, &pack_tmp_name);
+		}
 
 		offset = write_pack_header(f, nr_remaining);
 
