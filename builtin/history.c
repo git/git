@@ -1,6 +1,7 @@
 #define USE_THE_REPOSITORY_VARIABLE
 
 #include "builtin.h"
+#include "cache-tree.h"
 #include "commit.h"
 #include "commit-reach.h"
 #include "config.h"
@@ -8,17 +9,24 @@
 #include "environment.h"
 #include "gettext.h"
 #include "hex.h"
+#include "lockfile.h"
+#include "oidmap.h"
 #include "parse-options.h"
+#include "path.h"
+#include "read-cache.h"
 #include "refs.h"
 #include "replay.h"
 #include "revision.h"
 #include "sequencer.h"
 #include "strvec.h"
 #include "tree.h"
+#include "unpack-trees.h"
 #include "wt-status.h"
 
 #define GIT_HISTORY_REWORD_USAGE \
 	N_("git history reword <commit> [--dry-run] [--update-refs=(branches|head)]")
+#define GIT_HISTORY_SPLIT_USAGE \
+	N_("git history split <commit> [--dry-run] [--update-refs=(branches|head)] [--] [<pathspec>...]")
 
 static void change_data_free(void *util, const char *str UNUSED)
 {
@@ -83,10 +91,13 @@ static int fill_commit_message(struct repository *repo,
 	return 0;
 }
 
-static int commit_tree_with_edited_message(struct repository *repo,
-					   const char *action,
-					   struct commit *original,
-					   struct commit **out)
+static int commit_tree_with_edited_message_ext(struct repository *repo,
+					       const char *action,
+					       struct commit *commit_with_message,
+					       const struct commit_list *parents,
+					       const struct object_id *old_tree,
+					       const struct object_id *new_tree,
+					       struct commit **out)
 {
 	const char *exclude_gpgsig[] = {
 		/* We reencode the message, so the encoding needs to be stripped. */
@@ -100,44 +111,27 @@ static int commit_tree_with_edited_message(struct repository *repo,
 	struct commit_extra_header *original_extra_headers = NULL;
 	struct strbuf commit_message = STRBUF_INIT;
 	struct object_id rewritten_commit_oid;
-	struct object_id original_tree_oid;
-	struct object_id parent_tree_oid;
 	char *original_author = NULL;
-	struct commit *parent;
 	size_t len;
 	int ret;
 
-	original_tree_oid = repo_get_commit_tree(repo, original)->object.oid;
-
-	parent = original->parents ? original->parents->item : NULL;
-	if (parent) {
-		if (repo_parse_commit(repo, parent)) {
-			ret = error(_("unable to parse parent commit %s"),
-				    oid_to_hex(&parent->object.oid));
-			goto out;
-		}
-
-		parent_tree_oid = repo_get_commit_tree(repo, parent)->object.oid;
-	} else {
-		oidcpy(&parent_tree_oid, repo->hash_algo->empty_tree);
-	}
-
 	/* We retain authorship of the original commit. */
-	original_message = repo_logmsg_reencode(repo, original, NULL, NULL);
+	original_message = repo_logmsg_reencode(repo, commit_with_message, NULL, NULL);
 	ptr = find_commit_header(original_message, "author", &len);
 	if (ptr)
 		original_author = xmemdupz(ptr, len);
 	find_commit_subject(original_message, &original_body);
 
-	ret = fill_commit_message(repo, &parent_tree_oid, &original_tree_oid,
+	ret = fill_commit_message(repo, old_tree, new_tree,
 				  original_body, action, &commit_message);
 	if (ret < 0)
 		goto out;
 
-	original_extra_headers = read_commit_extra_headers(original, exclude_gpgsig);
+	original_extra_headers = read_commit_extra_headers(commit_with_message,
+							   exclude_gpgsig);
 
-	ret = commit_tree_extended(commit_message.buf, commit_message.len, &original_tree_oid,
-				   original->parents, &rewritten_commit_oid, original_author,
+	ret = commit_tree_extended(commit_message.buf, commit_message.len, new_tree,
+				   parents, &rewritten_commit_oid, original_author,
 				   NULL, NULL, original_extra_headers);
 	if (ret < 0)
 		goto out;
@@ -149,6 +143,33 @@ out:
 	strbuf_release(&commit_message);
 	free(original_author);
 	return ret;
+}
+
+static int commit_tree_with_edited_message(struct repository *repo,
+					   const char *action,
+					   struct commit *original,
+					   struct commit **out)
+{
+	struct object_id parent_tree_oid;
+	const struct object_id *tree_oid;
+	struct commit *parent;
+
+	tree_oid = &repo_get_commit_tree(repo, original)->object.oid;
+
+	parent = original->parents ? original->parents->item : NULL;
+	if (parent) {
+		if (repo_parse_commit(repo, parent)) {
+			return error(_("unable to parse parent commit %s"),
+				     oid_to_hex(&parent->object.oid));
+		}
+
+		parent_tree_oid = repo_get_commit_tree(repo, parent)->object.oid;
+	} else {
+		oidcpy(&parent_tree_oid, repo->hash_algo->empty_tree);
+	}
+
+	return commit_tree_with_edited_message_ext(repo, action, original, original->parents,
+						   &parent_tree_oid, tree_oid, out);
 }
 
 enum ref_action {
@@ -471,6 +492,246 @@ out:
 	return ret;
 }
 
+static int write_ondisk_index(struct repository *repo,
+			      struct object_id *oid,
+			      const char *path)
+{
+	struct unpack_trees_options opts = { 0 };
+	struct lock_file lock = LOCK_INIT;
+	struct tree_desc tree_desc;
+	struct index_state index;
+	struct tree *tree;
+	int ret;
+
+	index_state_init(&index, repo);
+
+	opts.head_idx = -1;
+	opts.src_index = &index;
+	opts.dst_index = &index;
+
+	tree = repo_parse_tree_indirect(repo, oid);
+	init_tree_desc(&tree_desc, &tree->object.oid, tree->buffer, tree->size);
+
+	if (unpack_trees(1, &tree_desc, &opts)) {
+		ret = error(_("unable to populate index with tree"));
+		goto out;
+	}
+
+	prime_cache_tree(repo, &index, tree);
+
+	if (hold_lock_file_for_update(&lock, path, 0) < 0) {
+		ret = error_errno(_("unable to acquire index lock"));
+		goto out;
+	}
+
+	if (write_locked_index(&index, &lock, COMMIT_LOCK)) {
+		ret = error(_("unable to write new index file"));
+		goto out;
+	}
+
+	ret = 0;
+
+out:
+	rollback_lock_file(&lock);
+	release_index(&index);
+	return ret;
+}
+
+static int split_commit(struct repository *repo,
+			struct commit *original,
+			struct pathspec *pathspec,
+			struct commit **out)
+{
+	struct interactive_options interactive_opts = INTERACTIVE_OPTIONS_INIT;
+	struct strbuf index_file = STRBUF_INIT;
+	struct index_state index = INDEX_STATE_INIT(repo);
+	const struct object_id *original_commit_tree_oid;
+	const struct object_id *old_tree_oid, *new_tree_oid;
+	struct object_id parent_tree_oid;
+	char original_commit_oid[GIT_MAX_HEXSZ + 1];
+	struct commit *first_commit, *second_commit;
+	struct commit_list *parents = NULL;
+	struct tree *split_tree;
+	int ret;
+
+	if (original->parents) {
+		if (repo_parse_commit(repo, original->parents->item)) {
+			ret = error(_("unable to parse parent commit %s"),
+				    oid_to_hex(&original->parents->item->object.oid));
+			goto out;
+		}
+
+		parent_tree_oid = *get_commit_tree_oid(original->parents->item);
+	} else {
+		oidcpy(&parent_tree_oid, repo->hash_algo->empty_tree);
+	}
+	original_commit_tree_oid = get_commit_tree_oid(original);
+
+	/*
+	 * Construct the first commit. This is done by taking the original
+	 * commit parent's tree and selectively patching changes from the diff
+	 * between that parent and its child.
+	 */
+	repo_git_path_replace(repo, &index_file, "%s", "history-split.index");
+
+	ret = write_ondisk_index(repo, &parent_tree_oid, index_file.buf);
+	if (ret < 0)
+		goto out;
+
+	ret = read_index_from(&index, index_file.buf, repo->gitdir);
+	if (ret < 0) {
+		ret = error(_("failed reading temporary index"));
+		goto out;
+	}
+
+	oid_to_hex_r(original_commit_oid, &original->object.oid);
+	ret = run_add_p_index(repo, &index, index_file.buf, &interactive_opts,
+			      original_commit_oid, pathspec, ADD_P_DISALLOW_EDIT);
+	if (ret < 0)
+		goto out;
+
+	split_tree = write_in_core_index_as_tree(repo, &index);
+	if (!split_tree) {
+		ret = error(_("failed split tree"));
+		goto out;
+	}
+
+	unlink(index_file.buf);
+	strbuf_release(&index_file);
+
+	/*
+	 * We disallow the cases where either the split-out commit or the
+	 * original commit would become empty. Consequently, if we see that the
+	 * new tree ID matches either of those trees we abort.
+	 */
+	if (oideq(&split_tree->object.oid, &parent_tree_oid)) {
+		ret = error(_("split commit is empty"));
+		goto out;
+	} else if (oideq(&split_tree->object.oid, original_commit_tree_oid)) {
+		ret = error(_("split commit tree matches original commit"));
+		goto out;
+	}
+
+	/*
+	 * The first commit is constructed from the split-out tree. The base
+	 * that shall be diffed against is the parent of the original commit.
+	 */
+	ret = commit_tree_with_edited_message_ext(repo, "split-out", original,
+						  original->parents, &parent_tree_oid,
+						  &split_tree->object.oid, &first_commit);
+	if (ret < 0) {
+		ret = error(_("failed writing first commit"));
+		goto out;
+	}
+
+	/*
+	 * The second commit is constructed from the original tree. The base to
+	 * diff against and the parent in this case is the first split-out
+	 * commit.
+	 */
+	commit_list_append(first_commit, &parents);
+
+	old_tree_oid = &repo_get_commit_tree(repo, first_commit)->object.oid;
+	new_tree_oid = &repo_get_commit_tree(repo, original)->object.oid;
+
+	ret = commit_tree_with_edited_message_ext(repo, "split-out", original,
+						  parents, old_tree_oid,
+						  new_tree_oid, &second_commit);
+	if (ret < 0) {
+		ret = error(_("failed writing second commit"));
+		goto out;
+	}
+
+	*out = second_commit;
+	ret = 0;
+
+out:
+	if (index_file.len)
+		unlink(index_file.buf);
+	strbuf_release(&index_file);
+	free_commit_list(parents);
+	release_index(&index);
+	return ret;
+}
+
+static int cmd_history_split(int argc,
+			     const char **argv,
+			     const char *prefix,
+			     struct repository *repo)
+{
+	const char * const usage[] = {
+		GIT_HISTORY_SPLIT_USAGE,
+		NULL,
+	};
+	enum ref_action action = REF_ACTION_DEFAULT;
+	int dry_run = 0;
+	struct option options[] = {
+		OPT_CALLBACK_F(0, "update-refs", &action, N_("<refs>"),
+			       N_("control ref update behavior (branches|head|print)"),
+			       PARSE_OPT_NONEG, parse_ref_action),
+		OPT_BOOL('n', "dry-run", &dry_run,
+			 N_("perform a dry-run without updating any refs")),
+		OPT_END(),
+	};
+	struct commit *original, *rewritten = NULL;
+	struct strbuf reflog_msg = STRBUF_INIT;
+	struct pathspec pathspec = { 0 };
+	struct rev_info revs = { 0 };
+	int ret;
+
+	argc = parse_options(argc, argv, prefix, options, usage, 0);
+	if (argc < 1) {
+		ret = error(_("command expects a committish"));
+		goto out;
+	}
+	repo_config(repo, git_default_config, NULL);
+
+	if (action == REF_ACTION_DEFAULT)
+		action = REF_ACTION_BRANCHES;
+
+	parse_pathspec(&pathspec, 0,
+		       PATHSPEC_PREFER_FULL |
+		       PATHSPEC_SYMLINK_LEADING_PATH |
+		       PATHSPEC_PREFIX_ORIGIN,
+		       prefix, argv + 1);
+
+	original = lookup_commit_reference_by_name(argv[0]);
+	if (!original) {
+		ret = error(_("commit cannot be found: %s"), argv[0]);
+		goto out;
+	}
+
+	ret = setup_revwalk(repo, action, original, &revs);
+	if (ret < 0)
+		goto out;
+
+	if (original->parents && original->parents->next) {
+		ret = error(_("cannot split up merge commit"));
+		goto out;
+	}
+
+	ret = split_commit(repo, original, &pathspec, &rewritten);
+	if (ret < 0)
+		goto out;
+
+	strbuf_addf(&reflog_msg, "split: updating %s", argv[0]);
+
+	ret = handle_reference_updates(&revs, action, original, rewritten,
+				       reflog_msg.buf, dry_run);
+	if (ret < 0) {
+		ret = error(_("failed replaying descendants"));
+		goto out;
+	}
+
+	ret = 0;
+
+out:
+	strbuf_release(&reflog_msg);
+	clear_pathspec(&pathspec);
+	release_revisions(&revs);
+	return ret;
+}
+
 int cmd_history(int argc,
 		const char **argv,
 		const char *prefix,
@@ -478,11 +739,13 @@ int cmd_history(int argc,
 {
 	const char * const usage[] = {
 		GIT_HISTORY_REWORD_USAGE,
+		GIT_HISTORY_SPLIT_USAGE,
 		NULL,
 	};
 	parse_opt_subcommand_fn *fn = NULL;
 	struct option options[] = {
 		OPT_SUBCOMMAND("reword", &fn, cmd_history_reword),
+		OPT_SUBCOMMAND("split", &fn, cmd_history_split),
 		OPT_END(),
 	};
 
