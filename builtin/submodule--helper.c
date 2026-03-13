@@ -29,6 +29,7 @@
 #include "object-file.h"
 #include "object-name.h"
 #include "odb.h"
+#include "odb/source.h"
 #include "advice.h"
 #include "branch.h"
 #include "list-objects-filter-options.h"

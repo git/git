@@ -2607,7 +2607,8 @@ int write_commit_graph(struct odb_source *source,
 			replace = ctx.opts->split_flags & COMMIT_GRAPH_SPLIT_REPLACE;
 	}
 
-	ctx.approx_nr_objects = repo_approximate_object_count(r);
+	if (odb_count_objects(r->objects, ODB_COUNT_OBJECTS_APPROXIMATE, &ctx.approx_nr_objects) < 0)
+		ctx.approx_nr_objects = 0;
 
 	if (ctx.append && g) {
 		for (i = 0; i < g->num_commits; i++) {

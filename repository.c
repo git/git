@@ -3,6 +3,7 @@
 #include "repository.h"
 #include "hook.h"
 #include "odb.h"
+#include "odb/source.h"
 #include "config.h"
 #include "gettext.h"
 #include "object.h"
