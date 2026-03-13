@@ -38,7 +38,7 @@ that might be useful to developers.
    So to aid these large scale refactorings, semantic patches can be used.
    However we do not want to store them in the same place as the checks for
    bad patterns, as then automated builds would fail.
-   That is why semantic patches 'contrib/coccinelle/*.pending.cocci'
+   That is why semantic patches 'tools/coccinelle/*.pending.cocci'
    are ignored for checks, and can be applied using 'make coccicheck-pending'.
 
    This allows to expose plans of pending large scale refactorings without
