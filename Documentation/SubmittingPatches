@@ -56,6 +56,18 @@ feedback before sending a new version, rather than sending an updated
 series immediately after receiving a review. This helps collect broader
 input and avoids unnecessary churn from many rapid iterations.
 
+. These early update iterations are expected to be full replacements,
+  not incremental updates on top of what you posted already.  If you
+  are correcting mistakes you made in the previous iteration that a
+  reviewer noticed and pointed out in their review, you _fix_ that
+  mistake by rewriting your history (e.g., by using "git rebase -i")
+  to pretend that you never made the mistake in the first place.  In
+  other words, this is a chance to pretend to be a perfect developer,
+  and you are expected to take advantage of that.  In the larger
+  picture, nobody is interested in your earlier mistakes.  Just
+  present a logical progression made by a perfect developer who makes
+  no mistakes while working on the topic.
+
 . Polish, refine, and re-send your patches to the list and to the people
   who spent their time to improve your patch.  Go back to step (2).
 
