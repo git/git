@@ -209,6 +209,7 @@ static GIT_PATH_FUNC(rebase_path_reschedule_failed_exec, "rebase-merge/reschedul
 static GIT_PATH_FUNC(rebase_path_no_reschedule_failed_exec, "rebase-merge/no-reschedule-failed-exec")
 static GIT_PATH_FUNC(rebase_path_drop_redundant_commits, "rebase-merge/drop_redundant_commits")
 static GIT_PATH_FUNC(rebase_path_keep_redundant_commits, "rebase-merge/keep_redundant_commits")
+static GIT_PATH_FUNC(rebase_path_trailer, "rebase-merge/trailer")
 
 /*
  * A 'struct replay_ctx' represents the private state of the sequencer.
@@ -420,6 +421,7 @@ void replay_opts_release(struct replay_opts *opts)
 	if (opts->revs)
 		release_revisions(opts->revs);
 	free(opts->revs);
+	strvec_clear(&opts->trailer_args);
 	replay_ctx_release(ctx);
 	free(opts->ctx);
 }
@@ -2027,11 +2029,14 @@ static int append_squash_message(struct strbuf *buf, const char *body,
 	if (is_fixup_flag(command, flag) && !seen_squash(ctx)) {
 		/*
 		 * We're replacing the commit message so we need to
-		 * append the Signed-off-by: trailer if the user
-		 * requested '--signoff'.
+		 * append any trailers if the user requested
+		 * '--signoff' or '--trailer'.
 		 */
 		if (opts->signoff)
 			append_signoff(buf, 0, 0);
+
+		if (opts->trailer_args.nr)
+			amend_strbuf_with_trailers(buf, &opts->trailer_args);
 
 		if ((command == TODO_FIXUP) &&
 		    (flag & TODO_REPLACE_FIXUP_MSG) &&
@@ -2450,6 +2455,9 @@ static int do_pick_commit(struct repository *r,
 
 	if (opts->signoff && !is_fixup(command))
 		append_signoff(&ctx->message, 0, 0);
+
+	if (opts->trailer_args.nr && !is_fixup(command))
+		amend_strbuf_with_trailers(&ctx->message, &opts->trailer_args);
 
 	if (is_rebase_i(opts) && write_author_script(msg.message) < 0)
 		res = -1;
@@ -3180,6 +3188,33 @@ static void read_strategy_opts(struct replay_opts *opts, struct strbuf *buf)
 	parse_strategy_opts(opts, buf->buf);
 }
 
+static int read_trailers(struct replay_opts *opts, struct strbuf *buf)
+{
+	ssize_t len;
+
+	strbuf_reset(buf);
+	len = strbuf_read_file(buf, rebase_path_trailer(), 0);
+	if (len > 0) {
+		char *p = buf->buf, *nl;
+
+		trailer_config_init();
+
+		while ((nl = strchr(p, '\n'))) {
+			*nl = '\0';
+			if (!*p)
+				return error(_("trailers file contains empty line"));
+			strvec_push(&opts->trailer_args, p);
+			p = nl + 1;
+		}
+	} else if (!len) {
+		return error(_("trailers file is empty"));
+	} else if (errno != ENOENT) {
+		return error(_("cannot read trailers files"));
+	}
+
+	return 0;
+}
+
 static int read_populate_opts(struct replay_opts *opts)
 {
 	struct replay_ctx *ctx = opts->ctx;
@@ -3241,6 +3276,11 @@ static int read_populate_opts(struct replay_opts *opts)
 			opts->keep_redundant_commits = 1;
 
 		read_strategy_opts(opts, &buf);
+
+		if (read_trailers(opts, &buf)) {
+			ret = -1;
+			goto done_rebase_i;
+		}
 		strbuf_reset(&buf);
 
 		if (read_oneliner(&ctx->current_fixups,
@@ -3336,6 +3376,14 @@ int write_basic_state(struct replay_opts *opts, const char *head_name,
 		write_file(rebase_path_reschedule_failed_exec(), "%s", "");
 	else
 		write_file(rebase_path_no_reschedule_failed_exec(), "%s", "");
+	if (opts->trailer_args.nr) {
+		struct strbuf buf = STRBUF_INIT;
+
+		for (size_t i = 0; i < opts->trailer_args.nr; i++)
+			strbuf_addf(&buf, "%s\n", opts->trailer_args.v[i]);
+		write_file(rebase_path_trailer(), "%s", buf.buf);
+		strbuf_release(&buf);
+	}
 
 	return 0;
 }

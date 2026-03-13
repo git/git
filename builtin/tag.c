@@ -499,8 +499,8 @@ int cmd_tag(int argc,
 		OPT_CALLBACK_F('m', "message", &msg, N_("message"),
 			       N_("tag message"), PARSE_OPT_NONEG, parse_msg_arg),
 		OPT_FILENAME('F', "file", &msgfile, N_("read message from file")),
-		OPT_PASSTHRU_ARGV(0, "trailer", &trailer_args, N_("trailer"),
-				  N_("add custom trailer(s)"), PARSE_OPT_NONEG),
+		OPT_STRVEC(0, "trailer", &trailer_args, N_("trailer"),
+			   N_("add custom trailer(s)")),
 		OPT_BOOL('e', "edit", &edit_flag, N_("force edit of tag message")),
 		OPT_BOOL('s', "sign", &opt.sign, N_("annotated and GPG-signed tag")),
 		OPT_CLEANUP(&cleanup_arg),
@@ -567,6 +567,9 @@ int cmd_tag(int argc,
 
 	if (cmdmode == 'l')
 		setup_auto_pager("tag", 1);
+
+	if (trailer_args.nr)
+		trailer_config_init();
 
 	if (opt.sign == -1)
 		opt.sign = cmdmode ? 0 : config_sign_tag > 0;
