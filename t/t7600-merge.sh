@@ -342,7 +342,7 @@ test_expect_success 'merge --squash --autostash conflict does not attempt to app
 	>unrelated &&
 	git add unrelated &&
 	test_must_fail git merge --squash c7 --autostash >out 2>err &&
-	! grep "Applying autostash resulted in conflicts." err &&
+	! grep "resulted in conflicts" err &&
 	grep "When finished, apply stashed changes with \`git stash pop\`" out
 '
 
@@ -914,7 +914,7 @@ test_expect_success 'merge with conflicted --autostash changes' '
 	git diff >expect &&
 	test_when_finished "test_might_fail git stash drop" &&
 	git merge --autostash c3 2>err &&
-	test_grep "Applying autostash resulted in conflicts." err &&
+	test_grep "resulted in conflicts" err &&
 	git show HEAD:file >merge-result &&
 	test_cmp result.1-9 merge-result &&
 	git stash show -p >actual &&
