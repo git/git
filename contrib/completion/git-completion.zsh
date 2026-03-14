@@ -117,7 +117,7 @@ __gitcomp_file ()
 	emulate -L zsh
 
 	compset -P '*[=:]'
-	compadd -f -p "${2-}" -- ${(f)1} && _ret=0
+	compadd -f -p "${2-}" -F __git_file_exclude -- ${(f)1} && _ret=0
 }
 
 __gitcomp_direct_append ()
@@ -261,6 +261,8 @@ __git_zsh_main ()
 
 		(( $+opt_args[--help] )) && command='help'
 
+		__git_file_exclude=(${words[2,-1]:#${words[CURRENT]}})
+
 		words=( ${orig_words[@]} )
 
 		__git_zsh_bash_func $command
@@ -273,6 +275,7 @@ _git ()
 	local _ret=1
 	local cur cword prev
 	local __git_repo_path
+	local -a __git_file_exclude
 
 	cur=${words[CURRENT]}
 	prev=${words[CURRENT-1]}
