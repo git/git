@@ -1647,7 +1647,7 @@ int cmd_rebase(int argc,
 		options.upstream_arg = options.upstream_name;
 	} else {
 		if (!options.onto_name) {
-			if (commit_tree("", 0, the_hash_algo->empty_tree, NULL,
+			if (commit_tree(the_repository, "", 0, the_hash_algo->empty_tree, NULL,
 					&squash_onto, NULL, NULL) < 0)
 				die(_("Could not create new root commit"));
 			options.squash_onto = &squash_onto;

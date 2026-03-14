@@ -188,8 +188,12 @@ struct repository {
 	/* Should repo_config() check for deprecated settings */
 	bool check_deprecated_config;
 
-	/* Has this repository instance been initialized? */
-	bool initialized;
+
+	/* User's preferred encoding for commit messages and log output. */
+
+	char *commit_encoding;
+	char *log_output_encoding;
+
 };
 
 #ifdef USE_THE_REPOSITORY_VARIABLE

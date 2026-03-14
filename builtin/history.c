@@ -136,7 +136,7 @@ static int commit_tree_with_edited_message(struct repository *repo,
 
 	original_extra_headers = read_commit_extra_headers(original, exclude_gpgsig);
 
-	ret = commit_tree_extended(commit_message.buf, commit_message.len, &original_tree_oid,
+	ret = commit_tree_extended(repo, commit_message.buf, commit_message.len, &original_tree_oid,
 				   original->parents, &rewritten_commit_oid, original_author,
 				   NULL, NULL, original_extra_headers);
 	if (ret < 0)

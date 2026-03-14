@@ -1216,7 +1216,7 @@ static int parse_mail(struct am_state *state, const char *mail)
 	setup_mailinfo(the_repository, &mi);
 
 	if (state->utf8)
-		mi.metainfo_charset = get_commit_output_encoding();
+		mi.metainfo_charset = get_commit_output_encoding(the_repository);
 	else
 		mi.metainfo_charset = NULL;
 
@@ -1355,7 +1355,7 @@ static void get_commit_info(struct am_state *state, struct commit *commit)
 	struct ident_split id;
 
 	buffer = repo_logmsg_reencode(the_repository, commit, NULL,
-				      get_commit_output_encoding());
+				      get_commit_output_encoding(the_repository));
 
 	ident_line = find_commit_header(buffer, "author", &ident_len);
 	if (!ident_line)
@@ -1699,7 +1699,7 @@ static void do_commit(const struct am_state *state)
 							 : state->author_date,
 				      IDENT_STRICT);
 
-	if (commit_tree_extended(state->msg, state->msg_len, &tree, parents,
+	if (commit_tree_extended(the_repository, state->msg, state->msg_len, &tree, parents,
 				 &commit, author, committer, state->sign_commit,
 				 NULL))
 		die(_("failed to write commit object"));
