@@ -2307,13 +2307,8 @@ static void format_branch_comparison(struct strbuf *sb,
 				_("  (use \"git pull\" to update your local branch)\n"));
 	} else {
 		strbuf_addf(sb,
-			Q_("Your branch and '%s' have diverged,\n"
-			       "and have %d and %d different commit each, "
-			       "respectively.\n",
-			   "Your branch and '%s' have diverged,\n"
-			       "and have %d and %d different commits each, "
-			       "respectively.\n",
-			   ours + theirs),
+			_("Your branch and '%s' have diverged,\n"
+			       "and have %d and %d different commits each, respectively.\n"),
 			branch_name, ours, theirs);
 		if (use_divergence_advice && advice_enabled(ADVICE_STATUS_HINTS))
 			strbuf_addstr(sb,
