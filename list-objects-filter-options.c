@@ -125,9 +125,9 @@ int gently_parse_list_objects_filter(
 static const char *RESERVED_NON_WS = "~`!@#$^&*()[]{}\\;'\",<>?";
 
 static int has_reserved_character(
-	struct strbuf *sub_spec, struct strbuf *errbuf)
+	const char *sub_spec, struct strbuf *errbuf)
 {
-	const char *c = sub_spec->buf;
+	const char *c = sub_spec;
 	while (*c) {
 		if (*c <= ' ' || strchr(RESERVED_NON_WS, *c)) {
 			strbuf_addf(
@@ -144,7 +144,7 @@ static int has_reserved_character(
 
 static int parse_combine_subfilter(
 	struct list_objects_filter_options *filter_options,
-	struct strbuf *subspec,
+	const char *subspec,
 	struct strbuf *errbuf)
 {
 	size_t new_index = filter_options->sub_nr;
@@ -155,7 +155,7 @@ static int parse_combine_subfilter(
 		      filter_options->sub_alloc);
 	list_objects_filter_init(&filter_options->sub[new_index]);
 
-	decoded = url_percent_decode(subspec->buf);
+	decoded = url_percent_decode(subspec);
 
 	result = has_reserved_character(subspec, errbuf);
 	if (result)
@@ -182,34 +182,34 @@ static int parse_combine_filter(
 	const char *arg,
 	struct strbuf *errbuf)
 {
-	struct strbuf **subspecs = strbuf_split_str(arg, '+', 0);
-	size_t sub;
+	const char *p = arg;
+	struct strbuf sub = STRBUF_INIT;
 	int result = 0;
 
-	if (!subspecs[0]) {
+	if (!*p) {
 		strbuf_addstr(errbuf, _("expected something after combine:"));
 		result = 1;
 		goto cleanup;
 	}
 
-	for (sub = 0; subspecs[sub] && !result; sub++) {
-		if (subspecs[sub + 1]) {
-			/*
-			 * This is not the last subspec. Remove trailing "+" so
-			 * we can parse it.
-			 */
-			size_t last = subspecs[sub]->len - 1;
-			assert(subspecs[sub]->buf[last] == '+');
-			strbuf_remove(subspecs[sub], last, 1);
-		}
-		result = parse_combine_subfilter(
-			filter_options, subspecs[sub], errbuf);
+	while (*p && !result) {
+		const char *end = strchrnul(p, '+');
+
+		strbuf_reset(&sub);
+		strbuf_add(&sub, p, end - p);
+
+		if (sub.len)
+			result = parse_combine_subfilter(filter_options, sub.buf, errbuf);
+
+		if (!*end)
+			break;
+		p = end + 1;
 	}
+	strbuf_release(&sub);
 
 	filter_options->choice = LOFC_COMBINE;
 
 cleanup:
-	strbuf_list_free(subspecs);
 	if (result)
 		list_objects_filter_release(filter_options);
 	return result;
