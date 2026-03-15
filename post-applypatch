@@ -1,6 +1,6 @@
 #!/bin/sh
 
-GIT_DIR=.git
+GIT_DIR=$(git rev-parse --git-dir)
 dotest="$GIT_DIR/rebase-apply"
 
 prec=4 &&
