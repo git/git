@@ -113,64 +113,80 @@ rules for RFC 822 headers. For example they do not follow the encoding rule.
 OPTIONS
 -------
 `--in-place`::
-	Edit the files in place.
+`--no-in-place`::
+	Edit the files in place. The default is `--no-in-place`.
 
 `--trim-empty`::
+`--no-trim-empty`::
 	If the _<value>_ part of any trailer contains only whitespace,
 	the whole trailer will be removed from the output.
 	This applies to existing trailers as well as new trailers.
++
+The default is `--no-trim-empty`.
 
-`--trailer <key>[(=|:)<value>]`::
+`--trailer=<key>[(=|:)<value>]`::
+`--no-trailer`::
 	Specify a (_<key>_, _<value>_) pair that should be applied as a
-	trailer to the inputs. See the description of this
-	command.
+	trailer to the inputs. See the description of this command. Can
+	be given multiple times.
++
+Use `--no-trailer` to reset the list.
 
-`--where <placement>`::
+`--where=<placement>`::
 `--no-where`::
 	Specify where all new trailers will be added.  A setting
 	provided with `--where` overrides the `trailer.where` and any
 	applicable `trailer.<key-alias>.where` configuration variables
 	and applies to all `--trailer` options until the next occurrence of
-	`--where` or `--no-where`. Upon encountering `--no-where`, clear the
-	effect of any previous use of `--where`, such that the relevant configuration
-	variables are no longer overridden. Possible placements are `after`,
+	`--where` or `--no-where`. Possible placements are `after`,
 	`before`, `end` or `start`.
++
+Use `--no-where` to clear the effect of any previous use of `--where`,
+such that the relevant configuration variables are no longer overridden.
 
-`--if-exists <action>`::
+`--if-exists=<action>`::
 `--no-if-exists`::
 	Specify what action will be performed when there is already at
 	least one trailer with the same _<key>_ in the input.  A setting
 	provided with `--if-exists` overrides the `trailer.ifExists` and any
 	applicable `trailer.<key-alias>.ifExists` configuration variables
 	and applies to all `--trailer` options until the next occurrence of
-	`--if-exists` or `--no-if-exists`. Upon encountering `--no-if-exists`, clear the
-	effect of any previous use of `--if-exists`, such that the relevant configuration
-	variables are no longer overridden. Possible actions are `addIfDifferent`,
+	`--if-exists` or `--no-if-exists`. Possible actions are `addIfDifferent`,
 	`addIfDifferentNeighbor`, `add`, `replace` and `doNothing`.
++
+Use `--no-if-exists` to clear the effect of any previous use of
+`--if-exists`, such that the relevant configuration variables are no
+longer overridden.
 
-`--if-missing <action>`::
+`--if-missing=<action>`::
 `--no-if-missing`::
 	Specify what action will be performed when there is no other
 	trailer with the same _<key>_ in the input.  A setting
 	provided with `--if-missing` overrides the `trailer.ifMissing` and any
 	applicable `trailer.<key-alias>.ifMissing` configuration variables
 	and applies to all `--trailer` options until the next occurrence of
-	`--if-missing` or `--no-if-missing`. Upon encountering `--no-if-missing`,
-	clear the effect of any previous use of `--if-missing`, such that the relevant
-	configuration variables are no longer overridden. Possible actions are `doNothing`
-	or `add`.
+	`--if-missing` or `--no-if-missing`. Possible actions are
+	`doNothing` or `add`.
++
+Use `--no-if-missing` to clear the effect of any previous use of
+`--if-missing`, such that the relevant configuration variables are no
+longer overridden.
 
 `--only-trailers`::
-	Output only the trailers, not any other parts of the input.
+`--no-only-trailers`::
+	Output only the trailers, not any other parts of the
+	input. The default is `--no-only-trailers`.
 
 `--only-input`::
+`--no-only-input`::
 	Output only trailers that exist in the input; do not add any
 	from the command-line or by applying `trailer.<key-alias>` configuration
-	variables.
+	variables. The default is `--no-only-input`.
 
 `--unfold`::
+`--no-unfold`::
 	If a trailer has a value that runs over multiple lines (aka "folded"),
-	reformat the value into a single line.
+	reformat the value into a single line. The default is `--no-unfold`.
 
 `--parse`::
 	A convenience alias for `--only-trailers --only-input
@@ -178,11 +194,15 @@ OPTIONS
 	input without influencing them with any command line options or
 	configuration variables, while also making the output machine-friendly with
 	`--unfold`.
++
+There is no convenience alias to negate this alias.
 
+`--divider`::
 `--no-divider`::
-	Do not treat `---` as the end of the commit message. Use this
-	when you know your input contains just the commit message itself
-	(and not an email or the output of linkgit:git-format-patch[1]).
+	Treat `---` as the end of the commit message. This is the default.
+	Use `--no-divider` when you know your input contains just the
+	commit message itself (and not an email or the output of
+	linkgit:git-format-patch[1]).
 
 CONFIGURATION VARIABLES
 -----------------------
