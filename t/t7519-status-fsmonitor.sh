@@ -477,4 +477,43 @@ test_expect_success 'status succeeds with sparse index' '
 	)
 '
 
+test_expect_success UNTRACKED_CACHE 'fsmonitor valid dirs skip re-validation' '
+	test_create_repo fsmonitor-valid-skip &&
+	(
+		cd fsmonitor-valid-skip &&
+		mkdir dir1 &&
+		: >tracked &&
+		: >dir1/tracked &&
+		echo "*.log" >.gitignore &&
+		git add -A &&
+		git commit -m "initial" &&
+
+		test_hook --setup --clobber fsmonitor-test <<-\EOF &&
+		printf "last_update_token\0"
+		EOF
+		git config core.fsmonitor .git/hooks/fsmonitor-test &&
+		git config core.untrackedCacheTrustFsmonitor true &&
+		git update-index --untracked-cache &&
+		git update-index --fsmonitor &&
+
+		# Warm the untracked cache
+		git status &&
+		git status &&
+
+		: >dir1/test.log &&
+		: >dir1/test.txt &&
+
+		test_hook --clobber fsmonitor-test <<-\EOF &&
+		printf "last_update_token\0"
+		printf "dir1/test.log\0"
+		printf "dir1/test.txt\0"
+		printf "dir1\0"
+		EOF
+
+		git status --porcelain >actual &&
+		echo "?? dir1/test.txt" >expect &&
+		test_cmp expect actual
+	)
+'
+
 test_done

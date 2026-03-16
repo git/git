@@ -2551,6 +2551,19 @@ static int valid_cached_dir(struct dir_struct *dir,
 		return 0;
 
 	/*
+	 * When fsmonitor is active and confirms this directory is
+	 * unchanged, and core.untrackedCacheTrustFsmonitor is set,
+	 * skip the expensive prep_exclude() call that would otherwise
+	 * open, read, and hash exclude files along the path only to
+	 * confirm the cached OID hasn't changed.
+	 */
+	if (dir->untracked->use_fsmonitor && untracked->valid) {
+		prepare_repo_settings(istate->repo);
+		if (istate->repo->settings.untracked_cache_trust_fsmonitor)
+			return 1;
+	}
+
+	/*
 	 * prep_exclude will be called eventually on this directory,
 	 * but it's called much later in last_matching_pattern(). We
 	 * need it now to determine the validity of the cache for this

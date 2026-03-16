@@ -54,6 +54,7 @@ struct repo_settings {
 	int index_version;
 	int index_skip_hash;
 	enum untracked_cache_setting core_untracked_cache;
+	int untracked_cache_trust_fsmonitor;
 
 	int pack_use_sparse;
 	int pack_use_path_walk;
