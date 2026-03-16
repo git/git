@@ -1,8 +1,6 @@
 #ifndef AUTOCORRECT_H
 #define AUTOCORRECT_H
 
-struct config_context;
-
 enum autocorrect_mode {
 	AUTOCORRECT_HINT,
 	AUTOCORRECT_NEVER,
@@ -16,8 +14,7 @@ struct autocorrect {
 	int delay;
 };
 
-void autocorrect_resolve_config(const char *var, const char *value,
-				const struct config_context *ctx, void *data);
+void autocorrect_resolve(struct autocorrect *conf);
 
 void autocorrect_confirm(struct autocorrect *conf, const char *assumed);
 
