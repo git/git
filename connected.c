@@ -45,20 +45,6 @@ int check_connected(oid_iterate_fn fn, void *cb_data,
 		return err;
 	}
 
-	if (transport && transport->smart_options &&
-	    transport->smart_options->self_contained_and_connected &&
-	    transport->pack_lockfiles.nr == 1 &&
-	    strip_suffix(transport->pack_lockfiles.items[0].string,
-			 ".keep", &base_len)) {
-		struct strbuf idx_file = STRBUF_INIT;
-		strbuf_add(&idx_file, transport->pack_lockfiles.items[0].string,
-			   base_len);
-		strbuf_addstr(&idx_file, ".idx");
-		new_pack = add_packed_git(the_repository, idx_file.buf,
-					  idx_file.len, 1);
-		strbuf_release(&idx_file);
-	}
-
 	if (repo_has_promisor_remote(the_repository)) {
 		/*
 		 * For partial clones, we don't want to have to do a regular
@@ -90,7 +76,6 @@ int check_connected(oid_iterate_fn fn, void *cb_data,
 promisor_pack_found:
 			;
 		} while ((oid = fn(cb_data)) != NULL);
-		free(new_pack);
 		return 0;
 	}
 
@@ -127,14 +112,26 @@ no_promisor_pack_found:
 	else
 		rev_list.no_stderr = opt->quiet;
 
-	if (start_command(&rev_list)) {
-		free(new_pack);
+	if (start_command(&rev_list))
 		return error(_("Could not run 'git rev-list'"));
-	}
 
 	sigchain_push(SIGPIPE, SIG_IGN);
 
 	rev_list_in = xfdopen(rev_list.in, "w");
+
+	if (transport && transport->smart_options &&
+	    transport->smart_options->self_contained_and_connected &&
+	    transport->pack_lockfiles.nr == 1 &&
+	    strip_suffix(transport->pack_lockfiles.items[0].string,
+			 ".keep", &base_len)) {
+		struct strbuf idx_file = STRBUF_INIT;
+		strbuf_add(&idx_file, transport->pack_lockfiles.items[0].string,
+			   base_len);
+		strbuf_addstr(&idx_file, ".idx");
+		new_pack = add_packed_git(the_repository, idx_file.buf,
+					  idx_file.len, 1);
+		strbuf_release(&idx_file);
+	}
 
 	do {
 		/*
@@ -162,6 +159,9 @@ no_promisor_pack_found:
 		err = error_errno(_("failed to close rev-list's stdin"));
 
 	sigchain_pop(SIGPIPE);
-	free(new_pack);
+	if (new_pack) {
+		close_pack(new_pack);
+		free(new_pack);
+	}
 	return finish_command(&rev_list) || err;
 }
