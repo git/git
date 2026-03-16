@@ -28,6 +28,7 @@
 #include "ewah/ewok.h"
 #include "fsmonitor-ll.h"
 #include "read-cache-ll.h"
+#include "trace.h"
 #include "setup.h"
 #include "sparse-index.h"
 #include "strbuf.h"
@@ -36,6 +37,13 @@
 #include "trace2.h"
 #include "tree.h"
 #include "hex.h"
+
+/*
+ * Counters for fsmonitor .gitignore optimization, emitted via trace2
+ * in emit_traversal_statistics().
+ */
+static int gitignore_skipped;	/* prep_exclude() skipped via fsmonitor */
+static int gitignore_cached;	/* prep_exclude() used cached content */
 
  /*
   * The maximum size of a pattern/exclude file. If the file exceeds this size
@@ -2551,6 +2559,34 @@ static int valid_cached_dir(struct dir_struct *dir,
 		return 0;
 
 	/*
+	 * When fsmonitor is active and confirms this directory is
+	 * unchanged, we can trust the cached exclude_oid without
+	 * re-reading and re-hashing the .gitignore file from disk.
+	 * The fsmonitor guarantees that if anything in this directory
+	 * changed (including the .gitignore file), the directory would
+	 * have been invalidated via untracked_cache_invalidate_trimmed_path().
+	 *
+	 * This avoids the expensive prep_exclude() call which would
+	 * open, read, and hash every .gitignore file along the path,
+	 * only to confirm the OID hasn't changed. For repositories
+	 * with many .gitignore files, this is a significant performance
+	 * improvement.
+	 *
+	 * The exclude patterns will still be loaded lazily by
+	 * prep_exclude() if they are actually needed later (e.g. when
+	 * last_matching_pattern() is called for files in invalidated
+	 * child directories).
+	 */
+	if (dir->untracked->use_fsmonitor && untracked->valid) {
+		gitignore_skipped++;
+		trace_printf_key(&trace_fsmonitor,
+				 "valid_cached_dir: skip prep_exclude for "
+				 "fsmonitor-valid dir '%s'",
+				 path->buf);
+		return 1;
+	}
+
+	/*
 	 * prep_exclude will be called eventually on this directory,
 	 * but it's called much later in last_matching_pattern(). We
 	 * need it now to determine the validity of the cache for this
@@ -3130,6 +3166,12 @@ static void emit_traversal_statistics(struct dir_struct *dir,
 			   dir->untracked->dir_invalidated);
 	trace2_data_intmax("read_directory", repo,
 			   "opendir", dir->untracked->dir_opened);
+	trace2_data_intmax("read_directory", repo,
+			   "gitignore-skipped",
+			   gitignore_skipped);
+	trace2_data_intmax("read_directory", repo,
+			   "gitignore-cached",
+			   gitignore_cached);
 }
 
 int read_directory(struct dir_struct *dir, struct index_state *istate,

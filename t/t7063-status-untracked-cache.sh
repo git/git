@@ -66,7 +66,9 @@ get_relevant_traces () {
 	OUTPUT_FILE=$2
 	grep data.*read_directo $INPUT_FILE |
 	    cut -d "|" -f 9 |
-	    grep -v visited \
+	    grep -v visited |
+	    grep -v gitignore-skipped |
+	    grep -v gitignore-cached \
 	    >"$OUTPUT_FILE"
 }
 

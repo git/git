@@ -477,4 +477,156 @@ test_expect_success 'status succeeds with sparse index' '
 	)
 '
 
+test_expect_success UNTRACKED_CACHE 'fsmonitor skips .gitignore reading for valid dirs' '
+	test_create_repo skip-gitignore &&
+	(
+		cd skip-gitignore &&
+
+		# Create a directory structure with multiple .gitignore files
+		mkdir -p dir1 dir2 dir3 &&
+		: >tracked &&
+		: >dir1/tracked &&
+		: >dir2/tracked &&
+		: >dir3/tracked &&
+		echo "*.log" >.gitignore &&
+		echo "*.tmp" >dir1/.gitignore &&
+		echo "*.bak" >dir2/.gitignore &&
+		echo "*.old" >dir3/.gitignore &&
+		test-tool chmtime =-60 tracked dir1/tracked dir2/tracked dir3/tracked &&
+		test-tool chmtime =-60 .gitignore dir1/.gitignore dir2/.gitignore dir3/.gitignore &&
+		test-tool chmtime =-60 dir1 dir2 dir3 . &&
+		git add tracked dir1/tracked dir2/tracked dir3/tracked &&
+		git add .gitignore dir1/.gitignore dir2/.gitignore dir3/.gitignore &&
+		git commit -m "initial" &&
+
+		# Install a no-change fsmonitor hook
+		test_hook --setup --clobber fsmonitor-test <<-\EOF &&
+		printf "last_update_token\0"
+		EOF
+		git config core.fsmonitor .git/hooks/fsmonitor-test &&
+		git update-index --untracked-cache &&
+		git update-index --fsmonitor &&
+
+		# First status populates the cache
+		git status &&
+
+		# Second status should use the cache
+		GIT_TRACE2_PERF="$TRASH_DIRECTORY/trace-skip" \
+		git status &&
+
+		# Verify the optimization is working: gitignore-skipped should be
+		# non-zero (directories whose prep_exclude was skipped thanks to
+		# fsmonitor confirming they are unchanged)
+		grep "gitignore-skipped" "$TRASH_DIRECTORY/trace-skip" >../trace-skip-lines &&
+		# Check that the value after the colon is > 0
+		grep "gitignore-skipped:[1-9]" ../trace-skip-lines
+	)
+'
+
+test_expect_success UNTRACKED_CACHE 'fsmonitor correctly invalidates on .gitignore change' '
+	test_create_repo gitignore-invalidate &&
+	(
+		cd gitignore-invalidate &&
+
+		# Set up repo with .gitignore
+		mkdir -p dir1 &&
+		: >tracked &&
+		: >dir1/tracked &&
+		echo "*.log" >.gitignore &&
+		test-tool chmtime =-60 tracked dir1/tracked .gitignore &&
+		test-tool chmtime =-60 dir1 . &&
+		git add tracked dir1/tracked .gitignore &&
+		git commit -m "initial" &&
+
+		# Install fsmonitor hook that reports no changes initially
+		test_hook --setup --clobber fsmonitor-test <<-\EOF &&
+		printf "last_update_token\0"
+		EOF
+		git config core.fsmonitor .git/hooks/fsmonitor-test &&
+		git update-index --untracked-cache &&
+		git update-index --fsmonitor &&
+
+		# Populate the cache
+		git status &&
+		git status &&
+
+		# Create test files - one should be ignored, one should not
+		: >dir1/test.log &&
+		: >dir1/test.txt &&
+
+		# Now install a hook that reports the .gitignore changed
+		# plus the new files
+		test_hook --clobber fsmonitor-test <<-\EOF &&
+		printf "last_update_token\0"
+		printf ".gitignore\0"
+		printf "dir1/test.log\0"
+		printf "dir1/test.txt\0"
+		printf "dir1\0"
+		EOF
+
+		# Status should correctly apply ignore rules even though
+		# the cache was invalidated
+		git status --porcelain >../actual-invalidate &&
+		echo "?? dir1/test.txt" >../expect-invalidate &&
+		test_cmp ../expect-invalidate ../actual-invalidate
+	)
+'
+
+test_expect_success UNTRACKED_CACHE 'fsmonitor status correct with many .gitignore files' '
+	test_create_repo many-gitignores &&
+	(
+		cd many-gitignores &&
+
+		# Create a deeper directory tree with .gitignore at each level
+		mkdir -p a/b/c/d &&
+		: >tracked &&
+		: >a/tracked &&
+		: >a/b/tracked &&
+		: >a/b/c/tracked &&
+		: >a/b/c/d/tracked &&
+		echo "*.root-ignored" >.gitignore &&
+		echo "*.a-ignored" >a/.gitignore &&
+		echo "*.b-ignored" >a/b/.gitignore &&
+		echo "*.c-ignored" >a/b/c/.gitignore &&
+		echo "*.d-ignored" >a/b/c/d/.gitignore &&
+		git add -A &&
+		git commit -m "initial" &&
+
+		# Install no-change fsmonitor hook
+		test_hook --setup --clobber fsmonitor-test <<-\EOF &&
+		printf "last_update_token\0"
+		EOF
+		git config core.fsmonitor .git/hooks/fsmonitor-test &&
+		git update-index --untracked-cache &&
+		git update-index --fsmonitor &&
+
+		# Populate and warm the cache
+		git status &&
+		git status &&
+
+		# Add files at the deepest level - some ignored, some not
+		: >a/b/c/d/file.root-ignored &&
+		: >a/b/c/d/file.d-ignored &&
+		: >a/b/c/d/file.txt &&
+		: >a/b/c/d/file.a-ignored &&
+
+		# Report only the deepest dir as changed
+		test_hook --clobber fsmonitor-test <<-\EOF &&
+		printf "last_update_token\0"
+		printf "a/b/c/d/file.root-ignored\0"
+		printf "a/b/c/d/file.d-ignored\0"
+		printf "a/b/c/d/file.txt\0"
+		printf "a/b/c/d/file.a-ignored\0"
+		printf "a/b/c/d\0"
+		EOF
+
+		# Status should correctly evaluate all parent .gitignore
+		# rules and only show the non-ignored file.
+		# Ignore rules cascade: root, a/, a/b/, a/b/c/, a/b/c/d/
+		git status --porcelain >../actual-many &&
+		echo "?? a/b/c/d/file.txt" >../expect-many &&
+		test_cmp ../expect-many ../actual-many
+	)
+'
+
 test_done
