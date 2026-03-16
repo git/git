@@ -385,6 +385,29 @@ process_phantom_symlink(const wchar_t *wtarget, const wchar_t *wlink)
 	wchar_t relative[MAX_LONG_PATH];
 	const wchar_t *rel;
 
+	/*
+	 * Do not follow symlinks to network shares, to avoid NTLM credential
+	 * leak from crafted repositories (e.g. \\attacker-server\share).
+	 * Since paths come in all kind of enterprising shapes and forms (in
+	 * addition to the canonical `\\host\share` form, there's also
+	 * `\??\UNC\host\share`, `\GLOBAL??\UNC\host\share` and also
+	 * `\Device\Mup\host\share`, just to name a few), we simply avoid
+	 * following every symlink target that starts with a slash.
+	 *
+	 * This also catches drive-less absolute paths, of course. These are
+	 * uncommon in practice (and also fragile because they are relative to
+	 * the current working directory's drive). The only "harm" this does
+	 * is that it now requires users to specify via the Git attributes if
+	 * they have such an uncommon symbolic link and need it to be a
+	 * directory type link.
+	 */
+	if (is_wdir_sep(wtarget[0])) {
+		warning("created file symlink '%ls' pointing to '%ls';\n"
+			"set the `symlink` gitattribute to `dir` if a "
+			"directory symlink is required", wlink, wtarget);
+		return PHANTOM_SYMLINK_DONE;
+	}
+
 	/* check that wlink is still a file symlink */
 	if ((GetFileAttributesW(wlink)
 			& (FILE_ATTRIBUTE_REPARSE_POINT | FILE_ATTRIBUTE_DIRECTORY))
