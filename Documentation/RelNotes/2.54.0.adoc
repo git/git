@@ -85,6 +85,9 @@ UI, Workflows & Features
    and various other branches listed on status.compareBranches
    configuration.
 
+ * "git repo structure" command learns to report maximum values on
+   various aspects of objects it inspects.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -186,6 +189,9 @@ Performance, Internal Implementation, Development Support etc.
 
  * The object source API is getting restructured to allow plugging new
    backends.
+
+ * Reduce dependence on the global the_hash_algo and the_repository
+   variables of wt-status code path.
 
 
 Fixes since v2.53
@@ -301,6 +307,22 @@ Fixes since v2.53
  * "git for-each-repo" started from a secondary worktree did not work
    as expected, which has been corrected.
    (merge e87493b9b4 ds/for-each-repo-w-worktree later to maint).
+
+ * The construct 'test "$(command)" = expectation' loses the exit
+   status from the command, which has been fixed by breaking up the
+   statement into pieces.
+   (merge d3edca979a fp/t3310-unhide-git-failures later to maint).
+
+ * While discovering a ".git" directory, the code treats any stat()
+   failure as a sign that a filesystem entity .git does not exist
+   there, and ignores ".git" that is not a "gitdir" file or a
+   directory.  The code has been tightened to notice and report
+   filesystem corruption better.
+   (merge 1dd27bfbfd ty/setup-error-tightening later to maint).
+
+ * Plug a few leaks where mmap'ed memory regions are not unmapped.
+   (merge a8a69bbb64 jk/unleak-mmap later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge d79fff4a11 jk/remote-tracking-ref-leakfix later to maint).
    (merge 7a747f972d dd/t5403-modernise later to maint).
@@ -338,3 +360,5 @@ Fixes since v2.53
    (merge a56fa1ca05 lp/doc-gitprotocol-pack-fixes later to maint).
    (merge 0d6bb8b541 ss/t3700-modernize later to maint).
    (merge 63c00a677b ss/t9123-setup-inside-test-expect-success later to maint).
+   (merge beca0ca4be os/doc-git-custom-commands later to maint).
+   (merge 4c223571be ty/patch-ids-document-lazy-eval later to maint).
