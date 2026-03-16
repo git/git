@@ -33,18 +33,26 @@ void autocorrect_resolve_config(const char *var, const char *value,
 				const struct config_context *ctx, void *data)
 {
 	int *out = data;
+	int parsed;
 
-	if (!strcmp(var, "help.autocorrect")) {
-		int v = parse_autocorrect(value);
+	if (strcmp(var, "help.autocorrect"))
+		return;
 
-		if (!v) {
-			v = git_config_int(var, value, ctx->kvi);
-			if (v < 0 || v == 1)
-				v = AUTOCORRECT_IMMEDIATELY;
-		}
+	parsed = parse_autocorrect(value);
 
-		*out = v;
+	/*
+	 * Disable autocorrection prompt in a non-interactive session
+	 */
+	if (parsed == AUTOCORRECT_PROMPT && (!isatty(0) || !isatty(2)))
+		parsed = AUTOCORRECT_NEVER;
+
+	if (!parsed) {
+		parsed = git_config_int(var, value, ctx->kvi);
+		if (parsed < 0 || parsed == 1)
+			parsed = AUTOCORRECT_IMMEDIATELY;
 	}
+
+	*out = parsed;
 }
 
 void autocorrect_confirm(int autocorrect, const char *assumed)
