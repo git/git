@@ -1214,51 +1214,42 @@ int parse_buffer_signed_by_header(const char *buffer,
 
 int remove_signature(struct strbuf *buf)
 {
-	const char *line = buf->buf;
 	const char *tail = buf->buf + buf->len;
+	const char *line = buf->buf;
+	int signature_found = 0;
 	int in_signature = 0;
-	struct sigbuf {
-		const char *start;
-		const char *end;
-	} sigs[2], *sigp = &sigs[0];
-	int i;
-	const char *orig_buf = buf->buf;
+	struct strbuf final;
 
-	memset(sigs, 0, sizeof(sigs));
+	strbuf_init(&final, buf->len);
 
 	while (line < tail) {
 		const char *next = memchr(line, '\n', tail - line);
 		next = next ? next + 1 : tail;
 
-		if (in_signature && line[0] == ' ')
-			sigp->end = next;
-		else if (starts_with(line, "gpgsig")) {
+		if (in_signature && line[0] == ' ') {
+			/* Still inside a signature, ignore the content. */
+		} else if (starts_with(line, "gpgsig")) {
 			int i;
 			for (i = 1; i < GIT_HASH_NALGOS; i++) {
 				const char *p;
 				if (skip_prefix(line, gpg_sig_headers[i], &p) &&
-				    *p == ' ') {
-					sigp->start = line;
-					sigp->end = next;
-					in_signature = 1;
-				}
+				    *p == ' ')
+					signature_found = in_signature = 1;
 			}
 		} else {
 			if (*line == '\n')
 				/* dump the whole remainder of the buffer */
 				next = tail;
-			if (in_signature && sigp - sigs != ARRAY_SIZE(sigs))
-				sigp++;
 			in_signature = 0;
+			strbuf_add(&final, line, next - line);
 		}
 		line = next;
 	}
 
-	for (i = ARRAY_SIZE(sigs) - 1; i >= 0; i--)
-		if (sigs[i].start)
-			strbuf_remove(buf, sigs[i].start - orig_buf, sigs[i].end - sigs[i].start);
+	strbuf_swap(buf, &final);
+	strbuf_release(&final);
 
-	return sigs[0].start != NULL;
+	return signature_found;
 }
 
 static void handle_signed_tag(const struct commit *parent, struct commit_extra_header ***tail)
