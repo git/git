@@ -12,7 +12,7 @@ static enum autocorrect_mode parse_autocorrect(const char *value)
 	case 1:
 		return AUTOCORRECT_IMMEDIATELY;
 	case 0:
-		return AUTOCORRECT_SHOW;
+		return AUTOCORRECT_HINT;
 	default: /* other random text */
 		break;
 	}
@@ -24,7 +24,7 @@ static enum autocorrect_mode parse_autocorrect(const char *value)
 	else if (!strcmp(value, "immediate"))
 		return AUTOCORRECT_IMMEDIATELY;
 	else if (!strcmp(value, "show"))
-		return AUTOCORRECT_SHOW;
+		return AUTOCORRECT_HINT;
 	else
 		return AUTOCORRECT_DELAY;
 }
@@ -49,7 +49,7 @@ void autocorrect_resolve_config(const char *var, const char *value,
 		conf->delay = git_config_int(var, value, ctx->kvi);
 
 		if (!conf->delay)
-			conf->mode = AUTOCORRECT_SHOW;
+			conf->mode = AUTOCORRECT_HINT;
 		else if (conf->delay < 0 || conf->delay == 1)
 			conf->mode = AUTOCORRECT_IMMEDIATELY;
 	}
