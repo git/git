@@ -8,7 +8,7 @@
 
 from __future__ import with_statement
 from string import Template
-import re, fnmatch, os, sys, codecs, pickle
+import re, fnmatch, os, sys, codecs, pickle, io
 
 class Module(object):
     class Template(object):
@@ -147,7 +147,7 @@ class TestSuite(object):
         self.path = path
         self.output = output
 
-    def should_generate(self, path):
+    def maybe_generate(self, path):
         if not os.path.isfile(path):
             return True
 
@@ -223,34 +223,85 @@ class TestSuite(object):
         return sum(len(module.callbacks) for module in self.modules.values())
 
     def write(self):
-        output = os.path.join(self.output, 'clar.suite')
-        os.makedirs(self.output, exist_ok=True)
+        if not os.path.exists(self.output):
+            os.makedirs(self.output)
 
-        if not self.should_generate(output):
+        wrote_suite = self.write_suite()
+        wrote_header = self.write_header()
+
+        if wrote_suite or wrote_header:
+            self.save_cache()
+            return True
+
+        return False
+
+    def write_output(self, fn, data):
+        if not self.maybe_generate(fn):
             return False
 
-        with open(output, 'w') as data:
+        current = None
+
+        try:
+            with open(fn, 'r') as input:
+                current = input.read()
+        except OSError:
+            pass
+        except IOError:
+            pass
+
+        if current == data:
+            return False
+
+        with open(fn, 'w') as output:
+            output.write(data)
+
+        return True
+
+    def write_suite(self):
+        suite_fn = os.path.join(self.output, 'clar.suite')
+
+        with io.StringIO() as suite_file:
             modules = sorted(self.modules.values(), key=lambda module: module.name)
 
             for module in modules:
                 t = Module.DeclarationTemplate(module)
-                data.write(t.render())
+                suite_file.write(t.render())
 
             for module in modules:
                 t = Module.CallbacksTemplate(module)
-                data.write(t.render())
+                suite_file.write(t.render())
 
             suites = "static struct clar_suite _clar_suites[] = {" + ','.join(
                 Module.InfoTemplate(module).render() for module in modules
             ) + "\n};\n"
 
-            data.write(suites)
+            suite_file.write(suites)
 
-            data.write("static const size_t _clar_suite_count = %d;\n" % self.suite_count())
-            data.write("static const size_t _clar_callback_count = %d;\n" % self.callback_count())
+            suite_file.write(u"static const size_t _clar_suite_count = %d;\n" % self.suite_count())
+            suite_file.write(u"static const size_t _clar_callback_count = %d;\n" % self.callback_count())
 
-        self.save_cache()
-        return True
+            return self.write_output(suite_fn, suite_file.getvalue())
+
+        return False
+
+    def write_header(self):
+        header_fn = os.path.join(self.output, 'clar_suite.h')
+
+        with io.StringIO() as header_file:
+            header_file.write(u"#ifndef _____clar_suite_h_____\n")
+            header_file.write(u"#define _____clar_suite_h_____\n")
+
+            modules = sorted(self.modules.values(), key=lambda module: module.name)
+
+            for module in modules:
+                t = Module.DeclarationTemplate(module)
+                header_file.write(t.render())
+
+            header_file.write(u"#endif\n")
+
+            return self.write_output(header_fn, header_file.getvalue())
+
+        return False
 
 if __name__ == '__main__':
     from optparse import OptionParser
@@ -275,4 +326,4 @@ if __name__ == '__main__':
     suite.load(options.force)
     suite.disable(options.excluded)
     if suite.write():
-        print("Written `clar.suite` (%d tests in %d suites)" % (suite.callback_count(), suite.suite_count()))
+        print("Written `clar.suite`, `clar_suite.h` (%d tests in %d suites)" % (suite.callback_count(), suite.suite_count()))
