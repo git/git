@@ -3923,7 +3923,20 @@ test_expect_success 'Y: setup' '
 	EOF
 '
 
+test_expect_success 'Y: rewrite-submodules-to feature forbidden by default' '
+	echo "feature rewrite-submodules-to=sub:sub2-marks" >input &&
+	test_must_fail git fast-import <input 2>err &&
+	test_grep "feature ${SQ}rewrite-submodules-to${SQ} forbidden in input without --allow-unsafe-features" err
+'
+
+test_expect_success 'Y: rewrite-submodules-from feature forbidden by default' '
+	echo "feature rewrite-submodules-from=sub:../Y-marks" >input &&
+	test_must_fail git fast-import <input 2>err &&
+	test_grep "feature ${SQ}rewrite-submodules-from${SQ} forbidden in input without --allow-unsafe-features" err
+'
+
 test_expect_success 'Y: rewrite submodules' '
+	test_when_finished "rm -rf main1" &&
 	git init main1 &&
 	(
 		cd main1 &&
@@ -3931,6 +3944,22 @@ test_expect_success 'Y: rewrite submodules' '
 		git -C sub2 fast-import --export-marks=../sub2-marks <../Y-sub-input &&
 		git fast-import --rewrite-submodules-from=sub:../Y-marks \
 			--rewrite-submodules-to=sub:sub2-marks <../Y-main-input &&
+		test "$(git rev-parse main)" = "$(test_oid Ymain)"
+	)
+'
+
+test_expect_success 'Y: rewrite submodules via stdin' '
+	test_when_finished "rm -rf main1" &&
+	git init main1 &&
+	(
+		cd main1 &&
+		git init sub2 &&
+		git -C sub2 fast-import --export-marks=../sub2-marks <../Y-sub-input &&
+		{
+			echo "feature rewrite-submodules-to=sub:sub2-marks" &&
+			echo "feature rewrite-submodules-from=sub:../Y-marks" &&
+			cat ../Y-main-input
+		} | git fast-import --allow-unsafe-features &&
 		test "$(git rev-parse main)" = "$(test_oid Ymain)"
 	)
 '

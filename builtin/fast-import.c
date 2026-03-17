@@ -3472,8 +3472,10 @@ static int parse_one_feature(const char *feature, int from_stream)
 	} else if (!strcmp(feature, "alias")) {
 		; /* Don't die - this feature is supported */
 	} else if (skip_prefix(feature, "rewrite-submodules-to=", &arg)) {
+		check_unsafe_feature("rewrite-submodules-to", from_stream);
 		option_rewrite_submodules(arg, &sub_marks_to);
 	} else if (skip_prefix(feature, "rewrite-submodules-from=", &arg)) {
+		check_unsafe_feature("rewrite-submodules-from", from_stream);
 		option_rewrite_submodules(arg, &sub_marks_from);
 	} else if (!strcmp(feature, "get-mark")) {
 		; /* Don't die - this feature is supported */
