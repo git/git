@@ -837,7 +837,11 @@ int repo_find_unique_abbrev_r(struct repository *r, char *hex,
 	const unsigned hexsz = algo->hexsz;
 
 	if (len < 0) {
-		unsigned long count = repo_approximate_object_count(r);
+		unsigned long count;
+
+		if (odb_count_objects(r->objects, ODB_COUNT_OBJECTS_APPROXIMATE, &count) < 0)
+			count = 0;
+
 		/*
 		 * Add one because the MSB only tells us the highest bit set,
 		 * not including the value of all the _other_ bits (so "15"
