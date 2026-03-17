@@ -91,15 +91,15 @@ static int clear_marks(const struct reference *ref, void *cb_data UNUSED)
  */
 static void mark_common(struct data *data, struct commit *seen_commit)
 {
-	struct prio_queue queue = { NULL };
+	struct commit_stack stack = COMMIT_STACK_INIT;
 	struct commit *c;
 
 	if (seen_commit->object.flags & COMMON)
 		return;
 
-	prio_queue_put(&queue, seen_commit);
+	commit_stack_push(&stack, seen_commit);
 	seen_commit->object.flags |= COMMON;
-	while ((c = prio_queue_get(&queue))) {
+	while ((c = commit_stack_pop(&stack))) {
 		struct commit_list *p;
 
 		if (!(c->object.flags & POPPED))
@@ -113,11 +113,11 @@ static void mark_common(struct data *data, struct commit *seen_commit)
 				continue;
 
 			p->item->object.flags |= COMMON;
-			prio_queue_put(&queue, p->item);
+			commit_stack_push(&stack, p->item);
 		}
 	}
 
-	clear_prio_queue(&queue);
+	commit_stack_clear(&stack);
 }
 
 /*
