@@ -529,6 +529,17 @@ static struct discovery *discover_refs(const char *service, int for_push)
 		show_http_message(&type, &charset, &buffer);
 		die(_("unable to access '%s' with http.pinnedPubkey configuration: %s"),
 		    transport_anonymize_url(url.buf), curl_errorstr);
+	case HTTP_RATE_LIMITED:
+		if (http_options.retry_after > 0) {
+			show_http_message(&type, &charset, &buffer);
+			die(_("rate limited by '%s', please try again in %ld seconds"),
+				transport_anonymize_url(url.buf),
+				http_options.retry_after);
+		} else {
+			show_http_message(&type, &charset, &buffer);
+			die(_("rate limited by '%s', please try again later"),
+				transport_anonymize_url(url.buf));
+		}
 	default:
 		show_http_message(&type, &charset, &buffer);
 		die(_("unable to access '%s': %s"),

@@ -38,6 +38,14 @@
 #endif
 
 /**
+ * CURLINFO_RETRY_AFTER was added in 7.66.0, released in September 2019.
+ * It allows curl to automatically parse Retry-After headers.
+ */
+#if LIBCURL_VERSION_NUM >= 0x074200
+#define GIT_CURL_HAVE_CURLINFO_RETRY_AFTER 1
+#endif
+
+/**
  * CURLOPT_PROTOCOLS_STR and CURLOPT_REDIR_PROTOCOLS_STR were added in 7.85.0,
  * released in August 2022.
  */
