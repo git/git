@@ -129,7 +129,7 @@ test_expect_success '-L with --output' '
 	git checkout parallel-change &&
 	git log --output=log -L :main:b.c >output &&
 	test_must_be_empty output &&
-	test_line_count = 70 log
+	test_line_count = 75 log
 '
 
 test_expect_success 'range_set_union' '
@@ -340,13 +340,19 @@ test_expect_success 'zero-width regex .* matches any function name' '
 '
 
 test_expect_success 'show line-log with graph' '
+	git checkout parent-oids &&
+	head_blob_old=$(git rev-parse --short HEAD^:file.c) &&
+	head_blob_new=$(git rev-parse --short HEAD:file.c) &&
+	root_blob=$(git rev-parse --short HEAD~4:file.c) &&
+	null_blob=$(test_oid zero | cut -c1-7) &&
 	qz_to_tab_space >expect <<-EOF &&
 	* $head_oid Modify func2() in file.c
 	|Z
 	| diff --git a/file.c b/file.c
+	| index $head_blob_old..$head_blob_new 100644
 	| --- a/file.c
 	| +++ b/file.c
-	| @@ -6,4 +6,4 @@
+	| @@ -6,4 +6,4 @@ int func1()
 	|  int func2()
 	|  {
 	| -    return F2;
@@ -355,6 +361,8 @@ test_expect_success 'show line-log with graph' '
 	* $root_oid Add func1() and func2() in file.c
 	ZZ
 	  diff --git a/file.c b/file.c
+	  new file mode 100644
+	  index $null_blob..$root_blob
 	  --- /dev/null
 	  +++ b/file.c
 	  @@ -0,0 +6,4 @@
