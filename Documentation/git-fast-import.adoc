@@ -67,6 +67,11 @@ OPTIONS
 * `rewrite-submodules-from`
 * `rewrite-submodules-to`
 --
+And the following options:
++
+--
+* `export-pack-edges`
+--
 +
 	Only enable this option if you trust the program generating the
 	fast-import stream! This option is enabled automatically for
