@@ -48,7 +48,43 @@ test_expect_success 'applying a hunk header which overflows fails' '
 	+b
 	EOF
 	test_must_fail git apply patch 2>err &&
-	echo "error: corrupt patch at line 4" >expect &&
+	echo "error: corrupt patch at patch:4" >expect &&
+	test_cmp expect err
+'
+
+test_expect_success 'applying a hunk header which overflows from stdin fails' '
+	cat >patch <<-\EOF &&
+	diff -u a/file b/file
+	--- a/file
+	+++ b/file
+	@@ -98765432109876543210 +98765432109876543210 @@
+	-a
+	+b
+	EOF
+	test_must_fail git apply <patch 2>err &&
+	echo "error: corrupt patch at <stdin>:4" >expect &&
+	test_cmp expect err
+'
+
+test_expect_success 'applying multiple patches reports the corrupted input' '
+	cat >good.patch <<-\EOF &&
+	diff -u a/file b/file
+	--- a/file
+	+++ b/file
+	@@ -1 +1 @@
+	-a
+	+b
+	EOF
+	cat >bad.patch <<-\EOF &&
+	diff -u a/file b/file
+	--- a/file
+	+++ b/file
+	@@ -98765432109876543210 +98765432109876543210 @@
+	-a
+	+b
+	EOF
+	test_must_fail git apply --stat --summary good.patch bad.patch 2>err &&
+	echo "error: corrupt patch at bad.patch:4" >expect &&
 	test_cmp expect err
 '
 test_done
