@@ -15,7 +15,7 @@ test_expect_success 'setup repo for object creation' '
 	git init src &&
 
 	mkdir -p src/a/b/c &&
-	mkdir -p src/d/e &&
+	mkdir -p src/d/f &&
 
 	for i in 1 2
 	do
@@ -26,8 +26,9 @@ test_expect_success 'setup repo for object creation' '
 			echo "Version $i of file a/b/$n" > src/a/b/file.$n.txt &&
 			echo "Version $i of file a/b/c/$n" > src/a/b/c/file.$n.txt &&
 			echo "Version $i of file d/$n" > src/d/file.$n.txt &&
-			echo "Version $i of file d/e/$n" > src/d/e/file.$n.txt &&
+			echo "Version $i of file d/f/$n" > src/d/f/file.$n.txt &&
 			git -C src add . &&
+			test_tick &&
 			git -C src commit -m "Iteration $n" || return 1
 		done
 	done
@@ -39,6 +40,53 @@ test_expect_success 'setup bare clone for server' '
 	git clone --bare "file://$(pwd)/src" srv.bare &&
 	git -C srv.bare config --local uploadpack.allowfilter 1 &&
 	git -C srv.bare config --local uploadpack.allowanysha1inwant 1
+'
+
+# Create a version of the repo with branches for testing revision
+# arguments like --all, --first-parent, and --since.
+#
+# main: 8 commits (linear) + merge of side branch
+#   48 original blobs + 4 side blobs = 52 blobs from main HEAD
+# side: 2 commits adding s/file.{1,2}.txt (v1, v2), merged into main
+# other: 1 commit adding o/file.{1,2}.txt (not merged)
+#   54 total blobs reachable from --all
+test_expect_success 'setup branched repo for revision tests' '
+	git clone src src-revs &&
+
+	# Side branch from tip of main with unique files
+	git -C src-revs checkout -b side HEAD &&
+	mkdir -p src-revs/s &&
+	echo "Side version 1 of file 1" >src-revs/s/file.1.txt &&
+	echo "Side version 1 of file 2" >src-revs/s/file.2.txt &&
+	test_tick &&
+	git -C src-revs add . &&
+	git -C src-revs commit -m "Side commit 1" &&
+
+	echo "Side version 2 of file 1" >src-revs/s/file.1.txt &&
+	echo "Side version 2 of file 2" >src-revs/s/file.2.txt &&
+	test_tick &&
+	git -C src-revs add . &&
+	git -C src-revs commit -m "Side commit 2" &&
+
+	# Merge side into main
+	git -C src-revs checkout main &&
+	test_tick &&
+	git -C src-revs merge side --no-ff -m "Merge side branch" &&
+
+	# Other branch (not merged) for --all testing
+	git -C src-revs checkout -b other main~1 &&
+	mkdir -p src-revs/o &&
+	echo "Other content 1" >src-revs/o/file.1.txt &&
+	echo "Other content 2" >src-revs/o/file.2.txt &&
+	test_tick &&
+	git -C src-revs add . &&
+	git -C src-revs commit -m "Other commit" &&
+
+	git -C src-revs checkout main &&
+
+	git clone --bare "file://$(pwd)/src-revs" srv-revs.bare &&
+	git -C srv-revs.bare config --local uploadpack.allowfilter 1 &&
+	git -C srv-revs.bare config --local uploadpack.allowanysha1inwant 1
 '
 
 # do basic partial clone from "srv.bare"
