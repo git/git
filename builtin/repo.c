@@ -66,11 +66,18 @@ static int get_references_format(struct repository *repo, struct strbuf *buf)
 	return 0;
 }
 
+static int get_paths_git_dir(struct repository *repo, struct strbuf *buf)
+{
+	strbuf_addstr(buf, repo_get_git_dir(repo));
+	return 0;
+}
+
 /* repo_info_field keys must be in lexicographical order */
 static const struct repo_info_field repo_info_field[] = {
 	{ "layout.bare", get_layout_bare },
 	{ "layout.shallow", get_layout_shallow },
 	{ "object.format", get_object_format },
+	{ "paths.git_dir", get_paths_git_dir },
 	{ "references.format", get_references_format },
 };
 
