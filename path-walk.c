@@ -206,6 +206,49 @@ static int add_tree_entries(struct path_walk_context *ctx,
 				 match != MATCHED)
 				continue;
 		}
+		if (ctx->revs->prune_data.nr) {
+			struct pathspec *pd = &ctx->revs->prune_data;
+			bool found = false;
+
+			for (int i = 0; i < pd->nr; i++) {
+				struct pathspec_item *item = &pd->items[i];
+
+				/*
+				 * Is this path a parent directory of
+				 * the pathspec item?
+				 */
+				if (path.len < (size_t)item->len &&
+				    !strncmp(path.buf, item->match, path.len) &&
+				    item->match[path.len - 1] == '/') {
+					found = true;
+					break;
+				}
+
+				/*
+				 * Or, is the pathspec an exact match?
+				 */
+				if (path.len == (size_t)item->len &&
+				    !strcmp(path.buf, item->match)) {
+					found = true;
+					break;
+				}
+
+				/*
+				 * Or, is the pathspec a directory prefix
+				 * match?
+				 */
+				if (path.len > (size_t)item->len &&
+				    !strncmp(path.buf, item->match, item->len) &&
+				    path.buf[item->len] == '/') {
+					found = true;
+					break;
+				}
+			}
+
+			/* Skip paths that do not match the prefix. */
+			if (!found)
+				continue;
+		}
 
 		add_path_to_list(ctx, path.buf, type, &entry.oid,
 				 !(o->flags & UNINTERESTING));
@@ -480,6 +523,18 @@ int walk_objects_by_path(struct path_walk_info *info)
 
 	if (info->tags)
 		info->revs->tag_objects = 1;
+
+	if (ctx.revs->prune_data.nr) {
+		/*
+		 * Only exact prefix pathspecs are currently supported.
+		 * Clear any wildcard or magic pathspecs to avoid
+		 * incorrect prefix matching.
+		 */
+		struct pathspec *pd = &ctx.revs->prune_data;
+
+		if (pd->has_wildcard || pd->magic)
+			pd->nr = 0;
+	}
 
 	/* Insert a single list for the root tree into the paths. */
 	CALLOC_ARRAY(root_tree_list, 1);
