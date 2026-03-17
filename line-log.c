@@ -858,15 +858,29 @@ static void queue_diffs(struct line_log_data *range,
 	diff_queue_clear(&diff_queued_diff);
 	diff_tree_oid(parent_tree_oid, tree_oid, "", opt);
 	if (opt->detect_rename && diff_might_be_rename()) {
-		/* must look at the full tree diff to detect renames */
-		clear_pathspec(&opt->pathspec);
-		diff_queue_clear(&diff_queued_diff);
+		struct diff_options rename_opts;
 
-		diff_tree_oid(parent_tree_oid, tree_oid, "", opt);
+		/*
+		 * Build a private diff_options for rename detection so
+		 * that any user-specified options on the original opts
+		 * (e.g. pickaxe) cannot discard diff pairs needed for
+		 * rename tracking.  Similar to blame's find_rename().
+		 */
+		repo_diff_setup(opt->repo, &rename_opts);
+		rename_opts.flags.recursive = 1;
+		rename_opts.detect_rename = opt->detect_rename;
+		rename_opts.rename_score = opt->rename_score;
+		rename_opts.output_format = DIFF_FORMAT_NO_OUTPUT;
+		diff_setup_done(&rename_opts);
+
+		/* must look at the full tree diff to detect renames */
+		diff_queue_clear(&diff_queued_diff);
+		diff_tree_oid(parent_tree_oid, tree_oid, "", &rename_opts);
 
 		filter_diffs_for_paths(range, 1);
-		diffcore_std(opt);
+		diffcore_std(&rename_opts);
 		filter_diffs_for_paths(range, 0);
+		diff_free(&rename_opts);
 	}
 	move_diff_queue(queue, &diff_queued_diff);
 }

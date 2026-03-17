@@ -367,4 +367,59 @@ test_expect_success 'show line-log with graph' '
 	test_cmp expect actual
 '
 
+test_expect_success 'setup for -L with -G/-S/--find-object and a merge with rename' '
+	git checkout --orphan pickaxe-rename &&
+	git reset --hard &&
+
+	echo content >file &&
+	git add file &&
+	git commit -m "add file" &&
+
+	git checkout -b pickaxe-rename-side &&
+	git mv file renamed-file &&
+	git commit -m "rename file" &&
+
+	git checkout pickaxe-rename &&
+	git commit --allow-empty -m "diverge" &&
+	git merge --no-edit pickaxe-rename-side &&
+
+	git mv renamed-file file &&
+	git commit -m "rename back"
+'
+
+test_expect_success '-L -G does not crash with merge and rename' '
+	git log --format="%s" --no-patch -L 1,1:file -G "." >actual
+'
+
+test_expect_success '-L -S does not crash with merge and rename' '
+	git log --format="%s" --no-patch -L 1,1:file -S content >actual
+'
+
+test_expect_success '-L --find-object does not crash with merge and rename' '
+	git log --format="%s" --no-patch -L 1,1:file \
+		--find-object=$(git rev-parse HEAD:file) >actual
+'
+
+# Commit-level filtering with pickaxe does not yet work for -L.
+# show_log() prints the commit header before diffcore_std() runs
+# pickaxe, so commits cannot be suppressed even when no diff pairs
+# survive filtering.  Fixing this would require deferring show_log()
+# until after diffcore_std(), which is a larger restructuring of the
+# log-tree output pipeline.
+test_expect_failure '-L -G should filter commits by pattern' '
+	git log --format="%s" --no-patch -L 1,1:file -G "nomatch" >actual &&
+	test_must_be_empty actual
+'
+
+test_expect_failure '-L -S should filter commits by pattern' '
+	git log --format="%s" --no-patch -L 1,1:file -S "nomatch" >actual &&
+	test_must_be_empty actual
+'
+
+test_expect_failure '-L --find-object should filter commits by object' '
+	git log --format="%s" --no-patch -L 1,1:file \
+		--find-object=$ZERO_OID >actual &&
+	test_must_be_empty actual
+'
+
 test_done
