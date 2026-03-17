@@ -11,7 +11,10 @@ test_description='partial clone'
 GIT_TEST_COMMIT_GRAPH=0
 
 delete_object () {
-	rm $1/.git/objects/$(echo $2 | sed -e 's|^..|&/|')
+	local repo="$1"
+	local obj="$2"
+	local path="$repo/.git/objects/$(test_oid_to_path "$obj")" &&
+	rm "$path"
 }
 
 pack_as_from_promisor () {
