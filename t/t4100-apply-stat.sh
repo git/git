@@ -125,4 +125,16 @@ test_expect_success 'applying a patch with an invalid mode reports the input' '
 	EOF
 	test_cmp expect err
 '
+
+test_expect_success 'applying a patch with only garbage reports the input' '
+	cat >garbage.patch <<-\EOF &&
+	diff --git a/f b/f
+	--- a/f
+	+++ b/f
+	this is garbage
+	EOF
+	test_must_fail git apply garbage.patch 2>err &&
+	echo "error: patch with only garbage at garbage.patch:4" >expect &&
+	test_cmp expect err
+'
 test_done

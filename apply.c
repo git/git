@@ -2110,8 +2110,8 @@ static struct fragment *parse_binary_hunk(struct apply_state *state,
  corrupt:
 	free(data);
 	*status_p = -1;
-	error(_("corrupt binary patch at line %d: %.*s"),
-	      state->linenr-1, llen-1, buffer);
+	error(_("corrupt binary patch at %s:%d: %.*s"),
+	      state->patch_input_file, state->linenr-1, llen-1, buffer);
 	return NULL;
 }
 
@@ -2147,7 +2147,8 @@ static int parse_binary(struct apply_state *state,
 	forward = parse_binary_hunk(state, &buffer, &size, &status, &used);
 	if (!forward && !status)
 		/* there has to be one hunk (forward hunk) */
-		return error(_("unrecognized binary patch at line %d"), state->linenr-1);
+		return error(_("unrecognized binary patch at %s:%d"),
+			     state->patch_input_file, state->linenr-1);
 	if (status)
 		/* otherwise we already gave an error message */
 		return status;
@@ -2309,7 +2310,8 @@ static int parse_chunk(struct apply_state *state, char *buffer, unsigned long si
 		 */
 		if ((state->apply || state->check) &&
 		    (!patch->is_binary && !metadata_changes(patch))) {
-			error(_("patch with only garbage at line %d"), state->linenr);
+			error(_("patch with only garbage at %s:%d"),
+			      state->patch_input_file, state->linenr);
 			return -128;
 		}
 	}

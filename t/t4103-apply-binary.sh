@@ -179,6 +179,24 @@ test_expect_success PERL_TEST_HELPERS 'reject truncated binary diff' '
 	" <patch >patch.trunc &&
 
 	do_reset &&
-	test_must_fail git apply patch.trunc
+	test_must_fail git apply patch.trunc 2>err &&
+	line=$(awk "END { print NR + 1 }" patch.trunc) &&
+	grep "error: corrupt binary patch at patch.trunc:$line: " err
+'
+
+test_expect_success 'reject unrecognized binary diff' '
+	cat >patch.bad <<-\EOF &&
+	diff --git a/f b/f
+	new file mode 100644
+	index 0000000..7898192
+	GIT binary patch
+	bogus
+	EOF
+	test_must_fail git apply patch.bad 2>err &&
+	cat >expect <<-\EOF &&
+	error: unrecognized binary patch at patch.bad:4
+	error: No valid patches in input (allow with "--allow-empty")
+	EOF
+	test_cmp expect err
 '
 test_done
