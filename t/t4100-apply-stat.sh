@@ -87,4 +87,42 @@ test_expect_success 'applying multiple patches reports the corrupted input' '
 	echo "error: corrupt patch at bad.patch:4" >expect &&
 	test_cmp expect err
 '
+
+test_expect_success 'applying a patch without a header reports the input' '
+	cat >fragment.patch <<-\EOF &&
+	@@ -1 +1 @@
+	-a
+	+b
+	EOF
+	test_must_fail git apply fragment.patch 2>err &&
+	echo "error: patch fragment without header at fragment.patch:1: @@ -1 +1 @@" >expect &&
+	test_cmp expect err
+'
+
+test_expect_success 'applying a patch with a missing filename reports the input' '
+	cat >missing.patch <<-\EOF &&
+	diff --git a/f b/f
+	index 7898192..6178079 100644
+	--- a/f
+	@@ -1 +1 @@
+	-a
+	+b
+	EOF
+	test_must_fail git apply missing.patch 2>err &&
+	echo "error: git diff header lacks filename information at missing.patch:4" >expect &&
+	test_cmp expect err
+'
+
+test_expect_success 'applying a patch with an invalid mode reports the input' '
+	cat >mode.patch <<-\EOF &&
+	diff --git a/f b/f
+	old mode 10x644
+	EOF
+	test_must_fail git apply mode.patch 2>err &&
+	cat >expect <<-\EOF &&
+	error: invalid mode at mode.patch:2: 10x644
+
+	EOF
+	test_cmp expect err
+'
 test_done
