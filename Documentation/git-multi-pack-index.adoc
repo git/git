@@ -9,7 +9,14 @@ git-multi-pack-index - Write and verify multi-pack-indexes
 SYNOPSIS
 --------
 [verse]
-'git multi-pack-index' [--object-dir=<dir>] [--[no-]bitmap] <sub-command>
+'git multi-pack-index' [<options>] write [--preferred-pack=<pack>]
+		         [--[no-]bitmap] [--[no-]incremental] [--[no-]stdin-packs]
+		         [--refs-snapshot=<path>]
+'git multi-pack-index' [<options>] compact [--[no-]incremental]
+		         [--[no-]bitmap] <from> <to>
+'git multi-pack-index' [<options>] verify
+'git multi-pack-index' [<options>] expire
+'git multi-pack-index' [<options>] repack [--batch-size=<size>]
 
 DESCRIPTION
 -----------
@@ -17,6 +24,8 @@ Write or verify a multi-pack-index (MIDX) file.
 
 OPTIONS
 -------
+
+The following command-line options are applicable to all sub-commands:
 
 --object-dir=<dir>::
 	Use given directory for the location of Git objects. We check
@@ -73,7 +82,21 @@ marker).
 		Write an incremental MIDX file containing only objects
 		and packs not present in an existing MIDX layer.
 		Migrates non-incremental MIDXs to incremental ones when
-		necessary. Incompatible with `--bitmap`.
+		necessary.
+--
+
+compact::
+	Write a new MIDX layer containing only objects and packs present
+	in the range `<from>` to `<to>`, where both arguments are
+	checksums of existing layers in the MIDX chain.
++
+--
+	--incremental::
+		Write the result to a MIDX chain instead of writing a
+		stand-alone MIDX.
+
+	--[no-]bitmap::
+		Control whether or not a multi-pack bitmap is written.
 --
 
 verify::
