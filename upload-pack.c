@@ -29,6 +29,7 @@
 #include "commit-graph.h"
 #include "commit-reach.h"
 #include "shallow.h"
+#include "trace.h"
 #include "write-or-die.h"
 #include "json-writer.h"
 #include "strmap.h"
@@ -218,7 +219,8 @@ struct output_state {
 };
 
 static int relay_pack_data(int pack_objects_out, struct output_state *os,
-			   int use_sideband, int write_packfile_line)
+			   int use_sideband, int write_packfile_line,
+			   bool *did_send_data)
 {
 	/*
 	 * We keep the last byte to ourselves
@@ -231,6 +233,8 @@ static int relay_pack_data(int pack_objects_out, struct output_state *os,
 	 * breakage to downstream.
 	 */
 	ssize_t readsz;
+
+	*did_send_data = false;
 
 	readsz = xread(pack_objects_out, os->buffer + os->used,
 		       sizeof(os->buffer) - os->used);
@@ -247,6 +251,7 @@ static int relay_pack_data(int pack_objects_out, struct output_state *os,
 				if (os->packfile_uris_started)
 					packet_delim(1);
 				packet_write_fmt(1, "\1packfile\n");
+				*did_send_data = true;
 			}
 			break;
 		}
@@ -259,6 +264,7 @@ static int relay_pack_data(int pack_objects_out, struct output_state *os,
 			}
 			*p = '\0';
 			packet_write_fmt(1, "\1%s\n", os->buffer);
+			*did_send_data = true;
 
 			os->used -= p - os->buffer + 1;
 			memmove(os->buffer, p + 1, os->used);
@@ -270,6 +276,13 @@ static int relay_pack_data(int pack_objects_out, struct output_state *os,
 		}
 	}
 
+	/*
+	 * Make sure that we buffer some data before sending it to the client.
+	 * This significantly reduces the number of write(3p) syscalls.
+	 */
+	if (readsz && os->used < (sizeof(os->buffer) * 2 / 3))
+		return readsz;
+
 	if (os->used > 1) {
 		send_client_data(1, os->buffer, os->used - 1, use_sideband);
 		os->buffer[0] = os->buffer[os->used - 1];
@@ -279,6 +292,7 @@ static int relay_pack_data(int pack_objects_out, struct output_state *os,
 		os->used = 0;
 	}
 
+	*did_send_data = true;
 	return readsz;
 }
 
@@ -290,6 +304,7 @@ static void create_pack_file(struct upload_pack_data *pack_data,
 	char progress[128];
 	char abort_msg[] = "aborting due to possible repository "
 		"corruption on the remote side.";
+	uint64_t last_sent_ms = 0;
 	ssize_t sz;
 	int i;
 	FILE *pipe_fd;
@@ -365,9 +380,13 @@ static void create_pack_file(struct upload_pack_data *pack_data,
 	 */
 
 	while (1) {
+		uint64_t now_ms = getnanotime() / 1000000;
 		struct pollfd pfd[2];
-		int pe, pu, pollsize, polltimeout;
+		int pe, pu, pollsize, polltimeout_ms;
 		int ret;
+
+		if (!last_sent_ms)
+			last_sent_ms = now_ms;
 
 		reset_timeout(pack_data->timeout);
 
@@ -390,11 +409,21 @@ static void create_pack_file(struct upload_pack_data *pack_data,
 		if (!pollsize)
 			break;
 
-		polltimeout = pack_data->keepalive < 0
-			? -1
-			: 1000 * pack_data->keepalive;
+		if (pack_data->keepalive < 0) {
+			polltimeout_ms = -1;
+		} else {
+			/*
+			 * The polling timeout needs to be adjusted based on
+			 * the time we have sent our last package. The longer
+			 * it's been in the past, the shorter the timeout
+			 * becomes until we eventually don't block at all.
+			 */
+			polltimeout_ms = 1000 * pack_data->keepalive - (now_ms - last_sent_ms);
+			if (polltimeout_ms < 0)
+				polltimeout_ms = 0;
+		}
 
-		ret = poll(pfd, pollsize, polltimeout);
+		ret = poll(pfd, pollsize, polltimeout_ms);
 
 		if (ret < 0) {
 			if (errno != EINTR) {
@@ -403,16 +432,18 @@ static void create_pack_file(struct upload_pack_data *pack_data,
 			}
 			continue;
 		}
+
 		if (0 <= pe && (pfd[pe].revents & (POLLIN|POLLHUP))) {
 			/* Status ready; we ship that in the side-band
 			 * or dump to the standard error.
 			 */
 			sz = xread(pack_objects.err, progress,
 				  sizeof(progress));
-			if (0 < sz)
+			if (0 < sz) {
 				send_client_data(2, progress, sz,
 						 pack_data->use_sideband);
-			else if (sz == 0) {
+				last_sent_ms = now_ms;
+			} else if (sz == 0) {
 				close(pack_objects.err);
 				pack_objects.err = -1;
 			}
@@ -421,11 +452,14 @@ static void create_pack_file(struct upload_pack_data *pack_data,
 			/* give priority to status messages */
 			continue;
 		}
+
 		if (0 <= pu && (pfd[pu].revents & (POLLIN|POLLHUP))) {
+			bool did_send_data;
 			int result = relay_pack_data(pack_objects.out,
 						     output_state,
 						     pack_data->use_sideband,
-						     !!uri_protocols);
+						     !!uri_protocols,
+						     &did_send_data);
 
 			if (result == 0) {
 				close(pack_objects.out);
@@ -433,21 +467,34 @@ static void create_pack_file(struct upload_pack_data *pack_data,
 			} else if (result < 0) {
 				goto fail;
 			}
+
+			if (did_send_data)
+				last_sent_ms = now_ms;
 		}
 
 		/*
-		 * We hit the keepalive timeout without saying anything; send
-		 * an empty message on the data sideband just to let the other
-		 * side know we're still working on it, but don't have any data
-		 * yet.
+		 * We hit the keepalive timeout without saying anything. If we
+		 * have pending data we flush it out to the caller now.
+		 * Otherwise, we send an empty message on the data sideband
+		 * just to let the other side know we're still working on it,
+		 * but don't have any data yet.
 		 *
 		 * If we don't have a sideband channel, there's no room in the
 		 * protocol to say anything, so those clients are just out of
 		 * luck.
 		 */
 		if (!ret && pack_data->use_sideband) {
-			static const char buf[] = "0005\1";
-			write_or_die(1, buf, 5);
+			if (output_state->packfile_started && output_state->used > 1) {
+				send_client_data(1, output_state->buffer, output_state->used - 1,
+						 pack_data->use_sideband);
+				output_state->buffer[0] = output_state->buffer[output_state->used - 1];
+				output_state->used = 1;
+			} else {
+				static const char buf[] = "0005\1";
+				write_or_die(1, buf, 5);
+			}
+
+			last_sent_ms = now_ms;
 		}
 	}
 
@@ -457,11 +504,9 @@ static void create_pack_file(struct upload_pack_data *pack_data,
 	}
 
 	/* flush the data */
-	if (output_state->used > 0) {
+	if (output_state->used > 0)
 		send_client_data(1, output_state->buffer, output_state->used,
 				 pack_data->use_sideband);
-		fprintf(stderr, "flushed.\n");
-	}
 	free(output_state);
 	if (pack_data->use_sideband)
 		packet_flush(1);
