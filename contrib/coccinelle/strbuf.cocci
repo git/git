@@ -60,3 +60,14 @@ expression E1, E2;
 @@
 - strbuf_addstr(E1, real_path(E2));
 + strbuf_add_real_path(E1, E2);
+
+@@
+identifier fn, param;
+@@
+  fn(...,
+- struct strbuf param
++ struct strbuf *param
+  ,...)
+  {
+  ...
+  }
