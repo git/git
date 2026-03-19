@@ -94,13 +94,24 @@ base-name::
 	included packs (those not beginning with `^`), excluding any
 	objects listed in the excluded packs (beginning with `^`).
 +
-When `mode` is "follow", objects from packs not listed on stdin receive
-special treatment. Objects within unlisted packs will be included if
-those objects are (1) reachable from the included packs, and (2) not
-found in any excluded packs. This mode is useful, for example, to
-resurrect once-unreachable objects found in cruft packs to generate
-packs which are closed under reachability up to the boundary set by the
-excluded packs.
+When `mode` is "follow" packs may additionally be prefixed with `!`,
+indicating that they are excluded but not necessarily closed under
+reachability.  In addition to objects in included packs, the resulting
+pack may include additional objects based on the following:
++
+--
+* If any packs are marked with `!`, then objects reachable from such
+  packs or included ones via objects outside of excluded-closed packs
+  will be included. In this case, all `^` packs are treated as closed
+  under reachability.
+* Otherwise (if there are no `!` packs), objects within unlisted packs
+  will be included if those objects are (1) reachable from the
+  included packs, and (2) not found in any excluded packs.
+--
++
+This mode is useful, for example, to resurrect once-unreachable
+objects found in cruft packs to generate packs which are closed under
+reachability up to the boundary set by the excluded packs.
 +
 Incompatible with `--revs`, or options that imply `--revs` (such as
 `--all`), with the exception of `--unpacked`, which is compatible.
