@@ -1376,12 +1376,11 @@ static void generate_commit_list_cover(FILE *cover_file, const char *format,
 	struct pretty_print_context ctx = {0};
 	struct rev_info rev = REV_INFO_INIT;
 
-	strbuf_init(&commit_line, 0);
 	rev.total = n;
 	ctx.rev = &rev;
-	for (int i = n - 1; i >= 0; i--) {
-		rev.nr = n - i;
-		repo_format_commit_message(the_repository, list[i], format,
+	for (int i = 1; i <= n; i++) {
+		rev.nr = i;
+		repo_format_commit_message(the_repository, list[n - i], format,
 				&commit_line, &ctx);
 		fprintf(cover_file, "%s\n", commit_line.buf);
 		strbuf_reset(&commit_line);
