@@ -1005,8 +1005,8 @@ SPATCH_TEST_FLAGS =
 # COMPUTE_HEADER_DEPENDENCIES=no this will be unset too.
 SPATCH_USE_O_DEPENDENCIES = YesPlease
 
-# Set SPATCH_CONCAT_COCCI to concatenate the contrib/cocci/*.cocci
-# files into a single contrib/cocci/ALL.cocci before running
+# Set SPATCH_CONCAT_COCCI to concatenate the tools/coccinelle/*.cocci
+# files into a single tools/coccinelle/ALL.cocci before running
 # "coccicheck".
 #
 # Pros:
@@ -1025,7 +1025,7 @@ SPATCH_USE_O_DEPENDENCIES = YesPlease
 #   generate a specific patch, e.g. this will always use strbuf.cocci,
 #   not ALL.cocci:
 #
-#	make contrib/coccinelle/strbuf.cocci.patch
+#	make tools/coccinelle/strbuf.cocci.patch
 SPATCH_CONCAT_COCCI = YesPlease
 
 # Rebuild 'coccicheck' if $(SPATCH), its flags etc. change
@@ -3457,15 +3457,15 @@ check:
 		exit 1; \
 	fi
 
-COCCI_GEN_ALL = .build/contrib/coccinelle/ALL.cocci
-COCCI_GLOB = $(wildcard contrib/coccinelle/*.cocci)
+COCCI_GEN_ALL = .build/tools/coccinelle/ALL.cocci
+COCCI_GLOB = $(wildcard tools/coccinelle/*.cocci)
 COCCI_RULES_TRACKED = $(COCCI_GLOB:%=.build/%)
 COCCI_RULES_TRACKED_NO_PENDING = $(filter-out %.pending.cocci,$(COCCI_RULES_TRACKED))
 COCCI_RULES =
 COCCI_RULES += $(COCCI_GEN_ALL)
 COCCI_RULES += $(COCCI_RULES_TRACKED)
 COCCI_NAMES =
-COCCI_NAMES += $(COCCI_RULES:.build/contrib/coccinelle/%.cocci=%)
+COCCI_NAMES += $(COCCI_RULES:.build/tools/coccinelle/%.cocci=%)
 
 COCCICHECK_PENDING = $(filter %.pending.cocci,$(COCCI_RULES))
 COCCICHECK = $(filter-out $(COCCICHECK_PENDING),$(COCCI_RULES))
@@ -3480,20 +3480,20 @@ COCCICHECK_PATCHES_PENDING_INTREE = $(COCCICHECK_PATCHES_PENDING:.build/%=%)
 # on $(MAKECMDGOALS) that match these $(COCCI_RULES)
 COCCI_RULES_GLOB =
 COCCI_RULES_GLOB += cocci%
-COCCI_RULES_GLOB += .build/contrib/coccinelle/%
+COCCI_RULES_GLOB += .build/tools/coccinelle/%
 COCCI_RULES_GLOB += $(COCCICHECK_PATCHES)
 COCCI_RULES_GLOB += $(COCCICHEC_PATCHES_PENDING)
 COCCI_RULES_GLOB += $(COCCICHECK_PATCHES_INTREE)
 COCCI_RULES_GLOB += $(COCCICHECK_PATCHES_PENDING_INTREE)
 COCCI_GOALS = $(filter $(COCCI_RULES_GLOB),$(MAKECMDGOALS))
 
-COCCI_TEST_RES = $(wildcard contrib/coccinelle/tests/*.res)
+COCCI_TEST_RES = $(wildcard tools/coccinelle/tests/*.res)
 
 $(COCCI_RULES_TRACKED): .build/% : %
 	$(call mkdir_p_parent_template)
 	$(QUIET_CP)cp $< $@
 
-.build/contrib/coccinelle/FOUND_H_SOURCES: $(FOUND_H_SOURCES)
+.build/tools/coccinelle/FOUND_H_SOURCES: $(FOUND_H_SOURCES)
 	$(call mkdir_p_parent_template)
 	$(QUIET_GEN) >$@
 
@@ -3507,12 +3507,12 @@ endif
 define cocci-rule
 
 ## Rule for .build/$(1).patch/$(2); Params:
-# $(1) = e.g. ".build/contrib/coccinelle/free.cocci"
+# $(1) = e.g. ".build/tools/coccinelle/free.cocci"
 # $(2) = e.g. "grep.c"
 # $(3) = e.g. "grep.o"
-COCCI_$(1:.build/contrib/coccinelle/%.cocci=%) += $(1).d/$(2).patch
+COCCI_$(1:.build/tools/coccinelle/%.cocci=%) += $(1).d/$(2).patch
 $(1).d/$(2).patch: GIT-SPATCH-DEFINES
-$(1).d/$(2).patch: $(if $(and $(SPATCH_USE_O_DEPENDENCIES),$(wildcard $(3))),$(3),.build/contrib/coccinelle/FOUND_H_SOURCES)
+$(1).d/$(2).patch: $(if $(and $(SPATCH_USE_O_DEPENDENCIES),$(wildcard $(3))),$(3),.build/tools/coccinelle/FOUND_H_SOURCES)
 $(1).d/$(2).patch: $(1)
 $(1).d/$(2).patch: $(1).d/%.patch : %
 	$$(call mkdir_p_parent_template)
@@ -3538,13 +3538,13 @@ endif
 
 define spatch-rule
 
-.build/contrib/coccinelle/$(1).cocci.patch: $$(COCCI_$(1))
+.build/tools/coccinelle/$(1).cocci.patch: $$(COCCI_$(1))
 	$$(QUIET_SPATCH_CAT)cat $$^ >$$@ && \
 	if test -s $$@; \
 	then \
 		echo '    ' SPATCH result: $$@; \
 	fi
-contrib/coccinelle/$(1).cocci.patch: .build/contrib/coccinelle/$(1).cocci.patch
+tools/coccinelle/$(1).cocci.patch: .build/tools/coccinelle/$(1).cocci.patch
 	$$(QUIET_CP)cp $$< $$@
 
 endef
@@ -3558,9 +3558,9 @@ $(COCCI_TEST_RES_GEN): GIT-SPATCH-DEFINES
 $(COCCI_TEST_RES_GEN): .build/%.res : %.c
 $(COCCI_TEST_RES_GEN): .build/%.res : %.res
 ifdef SPATCH_CONCAT_COCCI
-$(COCCI_TEST_RES_GEN): .build/contrib/coccinelle/tests/%.res : $(COCCI_GEN_ALL)
+$(COCCI_TEST_RES_GEN): .build/tools/coccinelle/tests/%.res : $(COCCI_GEN_ALL)
 else
-$(COCCI_TEST_RES_GEN): .build/contrib/coccinelle/tests/%.res : contrib/coccinelle/%.cocci
+$(COCCI_TEST_RES_GEN): .build/tools/coccinelle/tests/%.res : tools/coccinelle/%.cocci
 endif
 	$(call mkdir_p_parent_template)
 	$(QUIET_SPATCH_TEST)$(SPATCH) $(SPATCH_TEST_FLAGS) \
@@ -3576,14 +3576,14 @@ coccicheck-test: $(COCCI_TEST_RES_GEN)
 coccicheck: coccicheck-test
 
 ifdef SPATCH_CONCAT_COCCI
-COCCICHECK_PATCH_MUST_BE_EMPTY_FILES = contrib/coccinelle/ALL.cocci.patch
+COCCICHECK_PATCH_MUST_BE_EMPTY_FILES = tools/coccinelle/ALL.cocci.patch
 else
 COCCICHECK_PATCH_MUST_BE_EMPTY_FILES = $(COCCICHECK_PATCHES_INTREE)
 endif
 coccicheck: $(COCCICHECK_PATCH_MUST_BE_EMPTY_FILES)
 	! grep ^ $(COCCICHECK_PATCH_MUST_BE_EMPTY_FILES) /dev/null
 
-# See contrib/coccinelle/README
+# See tools/coccinelle/README
 coccicheck-pending: coccicheck-test
 coccicheck-pending: $(COCCICHECK_PATCHES_PENDING_INTREE)
 
@@ -3857,8 +3857,8 @@ profile-clean:
 
 cocciclean:
 	$(RM) GIT-SPATCH-DEFINES
-	$(RM) -r .build/contrib/coccinelle
-	$(RM) contrib/coccinelle/*.cocci.patch
+	$(RM) -r .build/tools/coccinelle
+	$(RM) tools/coccinelle/*.cocci.patch
 
 clean: profile-clean coverage-clean cocciclean
 	$(RM) -r .build $(UNIT_TEST_BIN)
