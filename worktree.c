@@ -445,7 +445,7 @@ void update_worktree_location(struct worktree *wt, const char *path_,
 	strbuf_realpath(&path, path_, 1);
 	strbuf_addf(&dotgit, "%s/.git", path.buf);
 	if (fspathcmp(wt->path, path.buf)) {
-		write_worktree_linking_files(dotgit, gitdir, use_relative_paths);
+		write_worktree_linking_files(dotgit.buf, gitdir.buf, use_relative_paths);
 
 		free(wt->path);
 		wt->path = strbuf_detach(&path, NULL);
@@ -685,7 +685,7 @@ static void repair_gitfile(struct worktree *wt,
 
 	if (repair) {
 		fn(0, wt->path, repair, cb_data);
-		write_worktree_linking_files(dotgit, gitdir, use_relative_paths);
+		write_worktree_linking_files(dotgit.buf, gitdir.buf, use_relative_paths);
 	}
 
 done:
@@ -743,7 +743,7 @@ void repair_worktree_after_gitdir_move(struct worktree *wt, const char *old_path
 	if (!file_exists(dotgit.buf))
 		goto done;
 
-	write_worktree_linking_files(dotgit, gitdir, is_relative_path);
+	write_worktree_linking_files(dotgit.buf, gitdir.buf, is_relative_path);
 done:
 	strbuf_release(&gitdir);
 	strbuf_release(&dotgit);
@@ -915,7 +915,7 @@ void repair_worktree_at_path(const char *path,
 
 	if (repair) {
 		fn(0, gitdir.buf, repair, cb_data);
-		write_worktree_linking_files(dotgit, gitdir, use_relative_paths);
+		write_worktree_linking_files(dotgit.buf, gitdir.buf, use_relative_paths);
 	}
 done:
 	free(dotgit_contents);
@@ -1089,17 +1089,17 @@ cleanup:
 	return res;
 }
 
-void write_worktree_linking_files(struct strbuf dotgit, struct strbuf gitdir,
+void write_worktree_linking_files(const char *dotgit, const char *gitdir,
 				  int use_relative_paths)
 {
 	struct strbuf path = STRBUF_INIT;
 	struct strbuf repo = STRBUF_INIT;
 	struct strbuf tmp = STRBUF_INIT;
 
-	strbuf_addbuf(&path, &dotgit);
+	strbuf_addstr(&path, dotgit);
 	strbuf_strip_suffix(&path, "/.git");
 	strbuf_realpath(&path, path.buf, 1);
-	strbuf_addbuf(&repo, &gitdir);
+	strbuf_addstr(&repo, gitdir);
 	strbuf_strip_suffix(&repo, "/gitdir");
 	strbuf_realpath(&repo, repo.buf, 1);
 
@@ -1112,11 +1112,11 @@ void write_worktree_linking_files(struct strbuf dotgit, struct strbuf gitdir,
 	}
 
 	if (use_relative_paths) {
-		write_file(gitdir.buf, "%s/.git", relative_path(path.buf, repo.buf, &tmp));
-		write_file(dotgit.buf, "gitdir: %s", relative_path(repo.buf, path.buf, &tmp));
+		write_file(gitdir, "%s/.git", relative_path(path.buf, repo.buf, &tmp));
+		write_file(dotgit, "gitdir: %s", relative_path(repo.buf, path.buf, &tmp));
 	} else {
-		write_file(gitdir.buf, "%s/.git", path.buf);
-		write_file(dotgit.buf, "gitdir: %s", repo.buf);
+		write_file(gitdir, "%s/.git", path.buf);
+		write_file(dotgit, "gitdir: %s", repo.buf);
 	}
 
 	strbuf_release(&path);
