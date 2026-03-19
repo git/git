@@ -554,7 +554,7 @@ libgit_sources = [
 libgit_sources += custom_target(
   input: 'command-list.txt',
   output: 'command-list.h',
-  command: [shell, meson.current_source_dir() + '/generate-cmdlist.sh', meson.current_source_dir(), '@OUTPUT@'],
+  command: [shell, meson.current_source_dir() + '/tools/generate-cmdlist.sh', meson.current_source_dir(), '@OUTPUT@'],
   env: script_environment,
 )
 
@@ -723,10 +723,10 @@ endif
 builtin_sources += custom_target(
   output: 'config-list.h',
   depfile: 'config-list.h.d',
-  depend_files: [ 'generate-configlist.sh' ],
+  depend_files: [ 'tools/generate-configlist.sh' ],
   command: [
     shell,
-    meson.current_source_dir() / 'generate-configlist.sh',
+    meson.current_source_dir() / 'tools/generate-configlist.sh',
     meson.current_source_dir(),
     '@OUTPUT@',
     '@DEPFILE@',
@@ -739,7 +739,7 @@ builtin_sources += custom_target(
   output: 'hook-list.h',
   command: [
     shell,
-    meson.current_source_dir() + '/generate-hooklist.sh',
+    meson.current_source_dir() + '/tools/generate-hooklist.sh',
     meson.current_source_dir(),
     '@OUTPUT@',
   ],
@@ -1959,7 +1959,7 @@ foreach script : scripts_sh
     output: fs.stem(script),
     command: [
       shell,
-      meson.project_source_root() / 'generate-script.sh',
+      meson.project_source_root() / 'tools/generate-script.sh',
       '@INPUT@',
       '@OUTPUT@',
       meson.project_build_root() / 'GIT-BUILD-OPTIONS',
@@ -2008,7 +2008,7 @@ if perl_features_enabled
 
   generate_perl_command = [
     shell,
-    meson.project_source_root() / 'generate-perl.sh',
+    meson.project_source_root() / 'tools/generate-perl.sh',
     meson.project_build_root() / 'GIT-BUILD-OPTIONS',
     git_version_file.full_path(),
     perl_header,
@@ -2057,7 +2057,7 @@ if target_python.found()
       output: fs.stem(script),
       command: [
         shell,
-        meson.project_source_root() / 'generate-python.sh',
+        meson.project_source_root() / 'tools/generate-python.sh',
         meson.project_build_root() / 'GIT-BUILD-OPTIONS',
         '@INPUT@',
         '@OUTPUT@',
