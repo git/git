@@ -2014,7 +2014,7 @@ int cmd_format_patch(int argc,
 			    N_("print patches to standard out")),
 		OPT_BOOL(0, "cover-letter", &cover_letter,
 			    N_("generate a cover letter")),
-		OPT_STRING(0, "cover-letter-format", &cover_letter_fmt, N_("format-spec"),
+		OPT_STRING(0, "commit-list-format", &cover_letter_fmt, N_("format-spec"),
 			    N_("format spec used for the commit list in the cover letter")),
 		OPT_BOOL(0, "numbered-files", &just_numbers,
 			    N_("use simple number sequence for output file names")),
@@ -2358,6 +2358,8 @@ int cmd_format_patch(int argc,
 		cover_letter_fmt = cfg.fmt_cover_letter_commit_list;
 		if (!cover_letter_fmt)
 			cover_letter_fmt = "shortlog";
+	} else if (cover_letter == -1) {
+		cover_letter = 1;
 	}
 
 	if (cover_letter == -1) {
