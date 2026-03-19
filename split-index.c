@@ -1,4 +1,3 @@
-#define USE_THE_REPOSITORY_VARIABLE
 #define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
@@ -6,6 +5,7 @@
 #include "hash.h"
 #include "mem-pool.h"
 #include "read-cache-ll.h"
+#include "repository.h"
 #include "split-index.h"
 #include "strbuf.h"
 #include "ewah/ewok.h"
@@ -25,16 +25,17 @@ struct split_index *init_split_index(struct index_state *istate)
 int read_link_extension(struct index_state *istate,
 			 const void *data_, unsigned long sz)
 {
+	const struct git_hash_algo *algo = istate->repo->hash_algo;
 	const unsigned char *data = data_;
 	struct split_index *si;
 	int ret;
 
-	if (sz < the_hash_algo->rawsz)
+	if (sz < algo->rawsz)
 		return error("corrupt link extension (too short)");
 	si = init_split_index(istate);
-	oidread(&si->base_oid, data, the_repository->hash_algo);
-	data += the_hash_algo->rawsz;
-	sz -= the_hash_algo->rawsz;
+	oidread(&si->base_oid, data, algo);
+	data += algo->rawsz;
+	sz -= algo->rawsz;
 	if (!sz)
 		return 0;
 	si->delete_bitmap = ewah_new();
@@ -56,7 +57,7 @@ int write_link_extension(struct strbuf *sb,
 			 struct index_state *istate)
 {
 	struct split_index *si = istate->split_index;
-	strbuf_add(sb, si->base_oid.hash, the_hash_algo->rawsz);
+	strbuf_add(sb, si->base_oid.hash, istate->repo->hash_algo->rawsz);
 	if (!si->delete_bitmap && !si->replace_bitmap)
 		return 0;
 	ewah_serialize_strbuf(si->delete_bitmap, sb);
