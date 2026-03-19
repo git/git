@@ -60,3 +60,10 @@ expression E1, E2;
 @@
 - strbuf_addstr(E1, real_path(E2));
 + strbuf_add_real_path(E1, E2);
+
+// In modern codebase, .buf member of an empty strbuf is not NULL.
+@@
+struct strbuf SB;
+@@
+- SB.buf ? SB.buf : ""
++ SB.buf
