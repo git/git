@@ -28,6 +28,7 @@
 #include "reachable.h"
 #include "oid-array.h"
 #include "strvec.h"
+#include "strmap.h"
 #include "list.h"
 #include "packfile.h"
 #include "object-file.h"
@@ -3837,70 +3838,28 @@ static int pack_mtime_cmp(const void *_a, const void *_b)
 		return 0;
 }
 
-static void read_packs_list_from_stdin(struct rev_info *revs)
-{
-	struct strbuf buf = STRBUF_INIT;
-	struct string_list include_packs = STRING_LIST_INIT_DUP;
-	struct string_list exclude_packs = STRING_LIST_INIT_DUP;
-	struct string_list_item *item = NULL;
+struct stdin_pack_info {
 	struct packed_git *p;
+	enum {
+		STDIN_PACK_INCLUDE = (1<<0),
+		STDIN_PACK_EXCLUDE_CLOSED = (1<<1),
+	} kind;
+};
 
-	while (strbuf_getline(&buf, stdin) != EOF) {
-		if (!buf.len)
-			continue;
+static void stdin_packs_add_pack_entries(struct strmap *packs,
+					 struct rev_info *revs)
+{
+	struct string_list keys = STRING_LIST_INIT_NODUP;
+	struct string_list_item *item;
+	struct hashmap_iter iter;
+	struct strmap_entry *entry;
 
-		if (*buf.buf == '^')
-			string_list_append(&exclude_packs, buf.buf + 1);
-		else
-			string_list_append(&include_packs, buf.buf);
+	strmap_for_each_entry(packs, &iter, entry) {
+		struct stdin_pack_info *info = entry->value;
+		if (!info->p)
+			die(_("could not find pack '%s'"), entry->key);
 
-		strbuf_reset(&buf);
-	}
-
-	string_list_sort_u(&include_packs, 0);
-	string_list_sort_u(&exclude_packs, 0);
-
-	repo_for_each_pack(the_repository, p) {
-		const char *pack_name = pack_basename(p);
-
-		if ((item = string_list_lookup(&include_packs, pack_name))) {
-			if (exclude_promisor_objects && p->pack_promisor)
-				die(_("packfile %s is a promisor but --exclude-promisor-objects was given"), p->pack_name);
-			item->util = p;
-		}
-		if ((item = string_list_lookup(&exclude_packs, pack_name)))
-			item->util = p;
-	}
-
-	/*
-	 * Arguments we got on stdin may not even be packs. First
-	 * check that to avoid segfaulting later on in
-	 * e.g. pack_mtime_cmp(), excluded packs are handled below.
-	 *
-	 * Since we first parsed our STDIN and then sorted the input
-	 * lines the pack we error on will be whatever line happens to
-	 * sort first. This is lazy, it's enough that we report one
-	 * bad case here, we don't need to report the first/last one,
-	 * or all of them.
-	 */
-	for_each_string_list_item(item, &include_packs) {
-		struct packed_git *p = item->util;
-		if (!p)
-			die(_("could not find pack '%s'"), item->string);
-		if (!is_pack_valid(p))
-			die(_("packfile %s cannot be accessed"), p->pack_name);
-	}
-
-	/*
-	 * Then, handle all of the excluded packs, marking them as
-	 * kept in-core so that later calls to add_object_entry()
-	 * discards any objects that are also found in excluded packs.
-	 */
-	for_each_string_list_item(item, &exclude_packs) {
-		struct packed_git *p = item->util;
-		if (!p)
-			die(_("could not find pack '%s'"), item->string);
-		p->pack_keep_in_core = 1;
+		string_list_append(&keys, entry->key)->util = info->p;
 	}
 
 	/*
@@ -3908,19 +3867,91 @@ static void read_packs_list_from_stdin(struct rev_info *revs)
 	 * string_list_item's ->util pointer, which string_list_sort() does not
 	 * provide.
 	 */
-	QSORT(include_packs.items, include_packs.nr, pack_mtime_cmp);
+	QSORT(keys.items, keys.nr, pack_mtime_cmp);
 
-	for_each_string_list_item(item, &include_packs) {
-		struct packed_git *p = item->util;
-		for_each_object_in_pack(p,
-					add_object_entry_from_pack,
-					revs,
-					ODB_FOR_EACH_OBJECT_PACK_ORDER);
+	for_each_string_list_item(item, &keys) {
+		struct stdin_pack_info *info = strmap_get(packs, item->string);
+		if (!info->p)
+			die(_("could not find pack '%s'"), item->string);
+
+		if (info->kind & STDIN_PACK_INCLUDE)
+			for_each_object_in_pack(info->p,
+						add_object_entry_from_pack,
+						revs,
+						ODB_FOR_EACH_OBJECT_PACK_ORDER);
 	}
 
+	string_list_clear(&keys, 0);
+}
+
+static void stdin_packs_read_input(struct rev_info *revs)
+{
+	struct strbuf buf = STRBUF_INIT;
+	struct strmap packs = STRMAP_INIT;
+	struct packed_git *p;
+
+	while (strbuf_getline(&buf, stdin) != EOF) {
+		struct stdin_pack_info *info;
+		const char *key = buf.buf;
+
+		if (!key || !*key)
+			continue;
+
+		if (*key == '^')
+			key++;
+
+		info = strmap_get(&packs, key);
+		if (!info) {
+			CALLOC_ARRAY(info, 1);
+			strmap_put(&packs, key, info);
+		}
+
+		if (*buf.buf == '^')
+			info->kind |= STDIN_PACK_EXCLUDE_CLOSED;
+		else
+			info->kind |= STDIN_PACK_INCLUDE;
+
+		strbuf_reset(&buf);
+	}
+
+	repo_for_each_pack(the_repository, p) {
+		struct stdin_pack_info *info;
+
+		info = strmap_get(&packs, pack_basename(p));
+		if (!info)
+			continue;
+
+		if (info->kind & STDIN_PACK_INCLUDE) {
+			if (exclude_promisor_objects && p->pack_promisor)
+				die(_("packfile %s is a promisor but --exclude-promisor-objects was given"), p->pack_name);
+
+			/*
+			 * Arguments we got on stdin may not even be
+			 * packs. First check that to avoid segfaulting
+			 * later on in e.g.  pack_mtime_cmp(), excluded
+			 * packs are handled below.
+			 */
+			if (!is_pack_valid(p))
+				die(_("packfile %s cannot be accessed"), p->pack_name);
+		}
+
+		if (info->kind & STDIN_PACK_EXCLUDE_CLOSED) {
+			/*
+			 * Marking excluded packs as kept in-core so
+			 * that later calls to add_object_entry()
+			 * discards any objects that are also found in
+			 * excluded packs.
+			 */
+			p->pack_keep_in_core = 1;
+		}
+
+		info->p = p;
+	}
+
+	stdin_packs_add_pack_entries(&packs, revs);
+
 	strbuf_release(&buf);
-	string_list_clear(&include_packs, 0);
-	string_list_clear(&exclude_packs, 0);
+	strmap_clear(&packs, 1);
 }
 
 static void add_unreachable_loose_objects(struct rev_info *revs);
@@ -3957,7 +3988,7 @@ static void read_stdin_packs(enum stdin_packs_mode mode, int rev_list_unpacked)
 
 	/* avoids adding objects in excluded packs */
 	ignore_packed_keep_in_core = 1;
-	read_packs_list_from_stdin(&revs);
+	stdin_packs_read_input(&revs);
 	if (rev_list_unpacked)
 		add_unreachable_loose_objects(&revs);
 
