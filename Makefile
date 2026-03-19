@@ -68,7 +68,7 @@ gitk-wish: gitk GIT-TCLTK-VARS
 	$(SHELL_PATH) ./generate-tcl.sh "$(TCLTK_PATH_SQ)" "$<" "$@"
 
 $(PO_TEMPLATE): gitk
-	$(XGETTEXT) -kmc -LTcl -o $@ gitk
+	$(XGETTEXT) -kmc -LTcl --package-name=Gitk -o $@ gitk
 update-po:: $(PO_TEMPLATE)
 	$(foreach p, $(ALL_POFILES), echo Updating $p ; msgmerge -U $p $(PO_TEMPLATE) ; )
 $(ALL_MSGFILES): %.msg : %.po
