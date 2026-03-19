@@ -6,7 +6,7 @@
 # Frederik Schwarzer <schwarzerf@gmail.com>, 2008.
 msgid ""
 msgstr ""
-"Project-Id-Version: git-gui\n"
+"Project-Id-Version: Gitk\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-05-17 14:32+1000\n"
 "PO-Revision-Date: 2015-10-20 14:20+0200\n"

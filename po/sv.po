@@ -7,7 +7,7 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: sv\n"
+"Project-Id-Version: Gitk\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2023-10-26 21:39+0100\n"
 "PO-Revision-Date: 2023-10-26 21:42+0100\n"
