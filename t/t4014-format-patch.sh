@@ -451,17 +451,6 @@ test_expect_success 'cover letter config with count and author' '
 	test_line_count = 2 result
 '
 
-test_expect_success 'cover letter config commitlistformat set but no format' '
-	test_when_finished "rm -rf patches result" &&
-	test_when_finished "git config unset format.coverletter" &&
-	test_when_finished "git config unset format.commitlistformat" &&
-	git config set format.coverletter true &&
-	printf "\tcommitlistformat" >> .git/config &&
-	git format-patch -o patches HEAD~2 &&
-	grep -E "^[[[:digit:]]+/[[:digit:]]+] .*" patches/0000-cover-letter.patch >result &&
-	test_line_count = 2 result
-'
-
 test_expect_success 'cover letter config commitlistformat set to shortlog' '
 	test_when_finished "rm -rf patches result" &&
 	test_when_finished "git config unset format.coverletter" &&

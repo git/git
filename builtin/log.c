@@ -1055,17 +1055,8 @@ static int git_format_config(const char *var, const char *value,
 		return 0;
 	}
 	if (!strcmp(var, "format.commitlistformat")) {
-		struct strbuf tmp = STRBUF_INIT;
-		strbuf_init(&tmp, 0);
-		if (value)
-			strbuf_addstr(&tmp, value);
-		else
-			strbuf_addstr(&tmp, "log:[%(count)/%(total)] %s");
-
 		FREE_AND_NULL(cfg->fmt_cover_letter_commit_list);
-		git_config_string(&cfg->fmt_cover_letter_commit_list, var, tmp.buf);
-		strbuf_release(&tmp);
-		return 0;
+		return git_config_string(&cfg->fmt_cover_letter_commit_list, var, value);
 	}
 	if (!strcmp(var, "format.outputdirectory")) {
 		FREE_AND_NULL(cfg->config_output_directory);
