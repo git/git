@@ -88,6 +88,9 @@ UI, Workflows & Features
  * "git repo structure" command learns to report maximum values on
    various aspects of objects it inspects.
 
+ * "git rebase" learns "--trailer" command to drive the
+   interpret-trailers machinery.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -192,6 +195,20 @@ Performance, Internal Implementation, Development Support etc.
 
  * Reduce dependence on the global the_hash_algo and the_repository
    variables of wt-status code path.
+
+  * The way combined list-object filter options are parsed has been
+    revamped.
+
+ * Editorconfig filename patterns were specified incorrectly, making
+   many source files inside subdirectories unaffected, which has been
+   corrected.
+
+ * The run_command() API lost its implicit dependencyon the singleton
+   `the_repository` instance.
+
+ * The unit test helper function was taught to use backslash +
+   mnemonic notation for certain control characters like "\t", instead
+   of octal notation like "\011".
 
 
 Fixes since v2.53
@@ -323,6 +340,10 @@ Fixes since v2.53
  * Plug a few leaks where mmap'ed memory regions are not unmapped.
    (merge a8a69bbb64 jk/unleak-mmap later to maint).
 
+ * A test now uses the symbolic constant $ZERO_OID instead of 40 "0" to
+   work better with SHA-256 as well as SHA-1.
+   (merge 30310f3cc4 ss/t3200-test-zero-oid later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge d79fff4a11 jk/remote-tracking-ref-leakfix later to maint).
    (merge 7a747f972d dd/t5403-modernise later to maint).
@@ -362,3 +383,5 @@ Fixes since v2.53
    (merge 63c00a677b ss/t9123-setup-inside-test-expect-success later to maint).
    (merge beca0ca4be os/doc-git-custom-commands later to maint).
    (merge 4c223571be ty/patch-ids-document-lazy-eval later to maint).
+   (merge 476365ac85 jc/doc-wholesale-replace-before-next later to maint).
+   (merge 35f220b639 ss/submodule--helper-use-xmalloc later to maint).
