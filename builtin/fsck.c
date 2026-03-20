@@ -1023,7 +1023,7 @@ int cmd_fsck(int argc,
 	if (name_objects)
 		fsck_enable_object_names(&fsck_walk_options);
 
-	repo_config(the_repository, git_fsck_config, &fsck_obj_options);
+	fsck_options_parse_config(&fsck_obj_options, the_repository);
 	prepare_repo_settings(the_repository);
 
 	if (check_references)

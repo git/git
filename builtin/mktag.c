@@ -98,7 +98,8 @@ int cmd_mktag(int argc,
 	fsck_set_msg_type_from_ids(&fsck_options, FSCK_MSG_EXTRA_HEADER_ENTRY,
 				   FSCK_WARN);
 	/* config might set fsck.extraHeaderEntry=* again */
-	repo_config(the_repository, git_fsck_config, &fsck_options);
+	fsck_options_parse_config(&fsck_options, the_repository);
+
 	if (fsck_tag_standalone(NULL, buf.buf, buf.len, &fsck_options,
 				&tagged_oid, &tagged_type))
 		die(_("tag on stdin did not pass our strict fsck check"));

@@ -304,12 +304,11 @@ void fsck_put_object_name(struct fsck_options *options,
 const char *fsck_describe_object(struct fsck_options *options,
 				 const struct object_id *oid);
 
-struct key_value_info;
 /*
- * repo_config() callback for use by fsck-y tools that want to support
- * fsck.<msg> fsck.skipList etc.
+ * Parse fsck options from the gitconfig. This covers settings like for example
+ * fsck.<msg> fsck.skipList.
  */
-int git_fsck_config(const char *var, const char *value,
-		    const struct config_context *ctx, void *cb);
+void fsck_options_parse_config(struct fsck_options *options,
+			       struct repository *repo);
 
 #endif

@@ -1404,8 +1404,9 @@ void fsck_options_clear(struct fsck_options *options)
 	kh_clear_oid_map(options->object_names);
 }
 
-int git_fsck_config(const char *var, const char *value,
-		    const struct config_context *ctx, void *cb)
+static int fsck_options_parse_config_key(const char *var, const char *value,
+					 const struct config_context *ctx,
+					 void *cb)
 {
 	struct fsck_options *options = cb;
 	const char *msg_id;
@@ -1433,6 +1434,12 @@ int git_fsck_config(const char *var, const char *value,
 	}
 
 	return git_default_config(var, value, ctx, cb);
+}
+
+void fsck_options_parse_config(struct fsck_options *options,
+			       struct repository *repo)
+{
+	repo_config(repo, fsck_options_parse_config_key, options);
 }
 
 /*
