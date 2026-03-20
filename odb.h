@@ -482,6 +482,15 @@ typedef int (*odb_for_each_object_cb)(const struct object_id *oid,
 				      void *cb_data);
 
 /*
+ * Options that can be passed to `odb_for_each_object()` and its
+ * backend-specific implementations.
+ */
+struct odb_for_each_object_options {
+	/* A bitfield of `odb_for_each_object_flags`. */
+	enum odb_for_each_object_flags flags;
+};
+
+/*
  * Iterate through all objects contained in the object database. Note that
  * objects may be iterated over multiple times in case they are either stored
  * in different backends or in case they are stored in multiple sources.
@@ -495,6 +504,13 @@ typedef int (*odb_for_each_object_cb)(const struct object_id *oid,
  * Returns 0 on success, a negative error code in case a failure occurred, or
  * an arbitrary non-zero error code returned by the callback itself.
  */
+int odb_for_each_object_ext(struct object_database *odb,
+			    const struct object_info *request,
+			    odb_for_each_object_cb cb,
+			    void *cb_data,
+			    const struct odb_for_each_object_options *opts);
+
+/* Same as `odb_for_each_object_ext()` with `opts.flags` set to the given flags. */
 int odb_for_each_object(struct object_database *odb,
 			const struct object_info *request,
 			odb_for_each_object_cb cb,

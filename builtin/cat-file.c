@@ -848,6 +848,9 @@ static void batch_each_object(struct batch_options *opt,
 		.callback = callback,
 		.payload = _payload,
 	};
+	struct odb_for_each_object_options opts = {
+		.flags = flags,
+	};
 	struct bitmap_index *bitmap = NULL;
 	struct odb_source *source;
 
@@ -860,7 +863,7 @@ static void batch_each_object(struct batch_options *opt,
 	odb_prepare_alternates(the_repository->objects);
 	for (source = the_repository->objects->sources; source; source = source->next) {
 		int ret = odb_source_loose_for_each_object(source, NULL, batch_one_object_oi,
-							   &payload, flags);
+							   &payload, &opts);
 		if (ret)
 			break;
 	}
@@ -884,7 +887,7 @@ static void batch_each_object(struct batch_options *opt,
 		for (source = the_repository->objects->sources; source; source = source->next) {
 			struct odb_source_files *files = odb_source_files_downcast(source);
 			int ret = packfile_store_for_each_object(files->packed, &oi,
-								 batch_one_object_oi, &payload, flags);
+								 batch_one_object_oi, &payload, &opts);
 			if (ret)
 				break;
 		}

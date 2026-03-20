@@ -896,25 +896,37 @@ int odb_freshen_object(struct object_database *odb,
 	return 0;
 }
 
+int odb_for_each_object_ext(struct object_database *odb,
+			    const struct object_info *request,
+			    odb_for_each_object_cb cb,
+			    void *cb_data,
+			    const struct odb_for_each_object_options *opts)
+{
+	int ret;
+
+	odb_prepare_alternates(odb);
+	for (struct odb_source *source = odb->sources; source; source = source->next) {
+		if (opts->flags & ODB_FOR_EACH_OBJECT_LOCAL_ONLY && !source->local)
+			continue;
+
+		ret = odb_source_for_each_object(source, request, cb, cb_data, opts);
+		if (ret)
+			return ret;
+	}
+
+	return 0;
+}
+
 int odb_for_each_object(struct object_database *odb,
 			const struct object_info *request,
 			odb_for_each_object_cb cb,
 			void *cb_data,
 			unsigned flags)
 {
-	int ret;
-
-	odb_prepare_alternates(odb);
-	for (struct odb_source *source = odb->sources; source; source = source->next) {
-		if (flags & ODB_FOR_EACH_OBJECT_LOCAL_ONLY && !source->local)
-			continue;
-
-		ret = odb_source_for_each_object(source, request, cb, cb_data, flags);
-		if (ret)
-			return ret;
-	}
-
-	return 0;
+	struct odb_for_each_object_options opts = {
+		.flags = flags,
+	};
+	return odb_for_each_object_ext(odb, request, cb, cb_data, &opts);
 }
 
 int odb_count_objects(struct object_database *odb,

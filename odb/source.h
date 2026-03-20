@@ -140,7 +140,7 @@ struct odb_source {
 			       const struct object_info *request,
 			       odb_for_each_object_cb cb,
 			       void *cb_data,
-			       unsigned flags);
+			       const struct odb_for_each_object_options *opts);
 
 	/*
 	 * This callback is expected to count objects in the given object
@@ -343,9 +343,9 @@ static inline int odb_source_for_each_object(struct odb_source *source,
 					     const struct object_info *request,
 					     odb_for_each_object_cb cb,
 					     void *cb_data,
-					     unsigned flags)
+					     const struct odb_for_each_object_options *opts)
 {
-	return source->for_each_object(source, request, cb, cb_data, flags);
+	return source->for_each_object(source, request, cb, cb_data, opts);
 }
 
 /*

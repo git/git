@@ -1849,7 +1849,7 @@ int odb_source_loose_for_each_object(struct odb_source *source,
 				     const struct object_info *request,
 				     odb_for_each_object_cb cb,
 				     void *cb_data,
-				     unsigned flags)
+				     const struct odb_for_each_object_options *opts)
 {
 	struct for_each_object_wrapper_data data = {
 		.source = source,
@@ -1859,9 +1859,9 @@ int odb_source_loose_for_each_object(struct odb_source *source,
 	};
 
 	/* There are no loose promisor objects, so we can return immediately. */
-	if ((flags & ODB_FOR_EACH_OBJECT_PROMISOR_ONLY))
+	if ((opts->flags & ODB_FOR_EACH_OBJECT_PROMISOR_ONLY))
 		return 0;
-	if ((flags & ODB_FOR_EACH_OBJECT_LOCAL_ONLY) && !source->local)
+	if ((opts->flags & ODB_FOR_EACH_OBJECT_LOCAL_ONLY) && !source->local)
 		return 0;
 
 	return for_each_loose_file_in_source(source, for_each_object_wrapper_cb,
@@ -1914,9 +1914,10 @@ int odb_source_loose_count_objects(struct odb_source *source,
 		*out = count * 256;
 		ret = 0;
 	} else {
+		struct odb_for_each_object_options opts = { 0 };
 		*out = 0;
 		ret = odb_source_loose_for_each_object(source, NULL, count_loose_object,
-						       out, NULL);
+						       out, &opts);
 	}
 
 out:

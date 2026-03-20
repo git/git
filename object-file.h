@@ -137,7 +137,7 @@ int odb_source_loose_for_each_object(struct odb_source *source,
 				     const struct object_info *request,
 				     odb_for_each_object_cb cb,
 				     void *cb_data,
-				     unsigned flags);
+				     const struct odb_for_each_object_options *opts);
 
 /*
  * Count the number of loose objects in this source.

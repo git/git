@@ -2375,7 +2375,7 @@ int packfile_store_for_each_object(struct packfile_store *store,
 				   const struct object_info *request,
 				   odb_for_each_object_cb cb,
 				   void *cb_data,
-				   unsigned flags)
+				   const struct odb_for_each_object_options *opts)
 {
 	struct packfile_store_for_each_object_wrapper_data data = {
 		.store = store,
@@ -2391,15 +2391,15 @@ int packfile_store_for_each_object(struct packfile_store *store,
 	for (e = packfile_store_get_packs(store); e; e = e->next) {
 		struct packed_git *p = e->pack;
 
-		if ((flags & ODB_FOR_EACH_OBJECT_LOCAL_ONLY) && !p->pack_local)
+		if ((opts->flags & ODB_FOR_EACH_OBJECT_LOCAL_ONLY) && !p->pack_local)
 			continue;
-		if ((flags & ODB_FOR_EACH_OBJECT_PROMISOR_ONLY) &&
+		if ((opts->flags & ODB_FOR_EACH_OBJECT_PROMISOR_ONLY) &&
 		    !p->pack_promisor)
 			continue;
-		if ((flags & ODB_FOR_EACH_OBJECT_SKIP_IN_CORE_KEPT_PACKS) &&
+		if ((opts->flags & ODB_FOR_EACH_OBJECT_SKIP_IN_CORE_KEPT_PACKS) &&
 		    p->pack_keep_in_core)
 			continue;
-		if ((flags & ODB_FOR_EACH_OBJECT_SKIP_ON_DISK_KEPT_PACKS) &&
+		if ((opts->flags & ODB_FOR_EACH_OBJECT_SKIP_ON_DISK_KEPT_PACKS) &&
 		    p->pack_keep)
 			continue;
 		if (open_pack_index(p)) {
@@ -2408,7 +2408,7 @@ int packfile_store_for_each_object(struct packfile_store *store,
 		}
 
 		ret = for_each_object_in_pack(p, packfile_store_for_each_object_wrapper,
-					      &data, flags);
+					      &data, opts->flags);
 		if (ret)
 			goto out;
 	}

@@ -75,18 +75,18 @@ static int odb_source_files_for_each_object(struct odb_source *source,
 					    const struct object_info *request,
 					    odb_for_each_object_cb cb,
 					    void *cb_data,
-					    unsigned flags)
+					    const struct odb_for_each_object_options *opts)
 {
 	struct odb_source_files *files = odb_source_files_downcast(source);
 	int ret;
 
-	if (!(flags & ODB_FOR_EACH_OBJECT_PROMISOR_ONLY)) {
-		ret = odb_source_loose_for_each_object(source, request, cb, cb_data, flags);
+	if (!(opts->flags & ODB_FOR_EACH_OBJECT_PROMISOR_ONLY)) {
+		ret = odb_source_loose_for_each_object(source, request, cb, cb_data, opts);
 		if (ret)
 			return ret;
 	}
 
-	ret = packfile_store_for_each_object(files->packed, request, cb, cb_data, flags);
+	ret = packfile_store_for_each_object(files->packed, request, cb, cb_data, opts);
 	if (ret)
 		return ret;
 
