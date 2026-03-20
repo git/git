@@ -1,5 +1,3 @@
-#define USE_THE_REPOSITORY_VARIABLE
-
 #include "git-compat-util.h"
 #include "date.h"
 #include "dir.h"
@@ -962,7 +960,8 @@ static int fsck_ident(const char **ident, const char *ident_end,
 	return 0;
 }
 
-static int fsck_commit(const struct object_id *oid,
+static int fsck_commit(struct repository *repo,
+		       const struct object_id *oid,
 		       const char *buffer, unsigned long size,
 		       struct fsck_options *options)
 {
@@ -983,14 +982,14 @@ static int fsck_commit(const struct object_id *oid,
 
 	if (buffer >= buffer_end || !skip_prefix(buffer, "tree ", &buffer))
 		return report(options, oid, OBJ_COMMIT, FSCK_MSG_MISSING_TREE, "invalid format - expected 'tree' line");
-	if (parse_oid_hex(buffer, &tree_oid, &p) || *p != '\n') {
+	if (parse_oid_hex_algop(buffer, &tree_oid, &p, repo->hash_algo) || *p != '\n') {
 		err = report(options, oid, OBJ_COMMIT, FSCK_MSG_BAD_TREE_SHA1, "invalid 'tree' line format - bad sha1");
 		if (err)
 			return err;
 	}
 	buffer = p + 1;
 	while (buffer < buffer_end && skip_prefix(buffer, "parent ", &buffer)) {
-		if (parse_oid_hex(buffer, &parent_oid, &p) || *p != '\n') {
+		if (parse_oid_hex_algop(buffer, &parent_oid, &p, repo->hash_algo) || *p != '\n') {
 			err = report(options, oid, OBJ_COMMIT, FSCK_MSG_BAD_PARENT_SHA1, "invalid 'parent' line format - bad sha1");
 			if (err)
 				return err;
@@ -1024,16 +1023,18 @@ static int fsck_commit(const struct object_id *oid,
 	return 0;
 }
 
-static int fsck_tag(const struct object_id *oid, const char *buffer,
+static int fsck_tag(struct repository *repo,
+		    const struct object_id *oid, const char *buffer,
 		    unsigned long size, struct fsck_options *options)
 {
 	struct object_id tagged_oid;
 	int tagged_type;
-	return fsck_tag_standalone(oid, buffer, size, options, &tagged_oid,
-				   &tagged_type);
+	return fsck_tag_standalone(repo, oid, buffer, size, options,
+				   &tagged_oid, &tagged_type);
 }
 
-int fsck_tag_standalone(const struct object_id *oid, const char *buffer,
+int fsck_tag_standalone(struct repository *repo,
+			const struct object_id *oid, const char *buffer,
 			unsigned long size, struct fsck_options *options,
 			struct object_id *tagged_oid,
 			int *tagged_type)
@@ -1057,7 +1058,7 @@ int fsck_tag_standalone(const struct object_id *oid, const char *buffer,
 		ret = report(options, oid, OBJ_TAG, FSCK_MSG_MISSING_OBJECT, "invalid format - expected 'object' line");
 		goto done;
 	}
-	if (parse_oid_hex(buffer, tagged_oid, &p) || *p != '\n') {
+	if (parse_oid_hex_algop(buffer, tagged_oid, &p, repo->hash_algo) || *p != '\n') {
 		ret = report(options, oid, OBJ_TAG, FSCK_MSG_BAD_OBJECT_SHA1, "invalid 'object' line format - bad sha1");
 		if (ret)
 			goto done;
@@ -1266,16 +1267,18 @@ static int fsck_blob(const struct object_id *oid, const char *buf,
 	return ret;
 }
 
-int fsck_object(struct object *obj, void *data, unsigned long size,
+int fsck_object(struct repository *repo,
+		struct object *obj, void *data, unsigned long size,
 	struct fsck_options *options)
 {
 	if (!obj)
 		return report(options, NULL, OBJ_NONE, FSCK_MSG_BAD_OBJECT_SHA1, "no valid object to fsck");
 
-	return fsck_buffer(&obj->oid, obj->type, data, size, options);
+	return fsck_buffer(repo, &obj->oid, obj->type, data, size, options);
 }
 
-int fsck_buffer(const struct object_id *oid, enum object_type type,
+int fsck_buffer(struct repository *repo,
+		const struct object_id *oid, enum object_type type,
 		const void *data, unsigned long size,
 		struct fsck_options *options)
 {
@@ -1284,9 +1287,9 @@ int fsck_buffer(const struct object_id *oid, enum object_type type,
 	if (type == OBJ_TREE)
 		return fsck_tree(oid, data, size, options);
 	if (type == OBJ_COMMIT)
-		return fsck_commit(oid, data, size, options);
+		return fsck_commit(repo, oid, data, size, options);
 	if (type == OBJ_TAG)
-		return fsck_tag(oid, data, size, options);
+		return fsck_tag(repo, oid, data, size, options);
 
 	return report(options, oid, type,
 		      FSCK_MSG_UNKNOWN_TYPE,

@@ -415,7 +415,7 @@ static int fsck_obj(struct object *obj, void *buffer, unsigned long size)
 
 	if (fsck_walk(the_repository, obj, NULL, &fsck_obj_options))
 		objerror(obj, _("broken links"));
-	err = fsck_object(obj, buffer, size, &fsck_obj_options);
+	err = fsck_object(the_repository, obj, buffer, size, &fsck_obj_options);
 	if (err)
 		goto out;
 

@@ -933,7 +933,8 @@ static void sha1_object(const void *data, struct object_entry *obj_entry,
 			else
 				die(_("invalid blob object %s"), oid_to_hex(oid));
 			if (do_fsck_object &&
-			    fsck_object(&blob->object, (void *)data, size, &fsck_options))
+			    fsck_object(the_repository, &blob->object, (void *)data,
+					size, &fsck_options))
 				die(_("fsck error in packed object"));
 		} else {
 			struct object *obj;
@@ -952,7 +953,7 @@ static void sha1_object(const void *data, struct object_entry *obj_entry,
 			if (!obj)
 				die(_("invalid %s"), type_name(type));
 			if (do_fsck_object &&
-			    fsck_object(obj, buf, size, &fsck_options))
+			    fsck_object(the_repository, obj, buf, size, &fsck_options))
 				die(_("fsck error in packed object"));
 			if (strict && fsck_walk(the_repository, obj, NULL, &fsck_options))
 				die(_("Not all child objects of %s are reachable"), oid_to_hex(&obj->oid));

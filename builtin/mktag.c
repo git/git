@@ -100,8 +100,8 @@ int cmd_mktag(int argc,
 	/* config might set fsck.extraHeaderEntry=* again */
 	fsck_options_parse_config(&fsck_options, the_repository);
 
-	if (fsck_tag_standalone(NULL, buf.buf, buf.len, &fsck_options,
-				&tagged_oid, &tagged_type))
+	if (fsck_tag_standalone(the_repository, NULL, buf.buf, buf.len,
+				&fsck_options, &tagged_oid, &tagged_type))
 		die(_("tag on stdin did not pass our strict fsck check"));
 
 	if (verify_object_in_tag(&tagged_oid, &tagged_type) < 0)

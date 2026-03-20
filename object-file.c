@@ -1283,7 +1283,8 @@ static int index_mem(struct index_state *istate,
 
 		opts.strict = 1;
 		opts.error_func = hash_format_check_report;
-		if (fsck_buffer(null_oid(istate->repo->hash_algo), type, buf, size, &opts))
+		if (fsck_buffer(the_repository, null_oid(istate->repo->hash_algo),
+				type, buf, size, &opts))
 			die(_("refusing to create malformed object"));
 		fsck_finish(the_repository, &opts);
 	}
