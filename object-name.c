@@ -582,115 +582,6 @@ static unsigned msb(unsigned long val)
 	return r;
 }
 
-struct min_abbrev_data {
-	unsigned int init_len;
-	unsigned int cur_len;
-	struct repository *repo;
-	const struct object_id *oid;
-};
-
-static int extend_abbrev_len(const struct object_id *oid,
-			     struct min_abbrev_data *mad)
-{
-	unsigned len = oid_common_prefix_hexlen(oid, mad->oid);
-	if (len != hash_algos[oid->algo].hexsz && len >= mad->cur_len)
-		mad->cur_len = len + 1;
-	return 0;
-}
-
-static void find_abbrev_len_for_midx(struct multi_pack_index *m,
-				     struct min_abbrev_data *mad)
-{
-	for (; m; m = m->base_midx) {
-		int match = 0;
-		uint32_t num, first = 0;
-		struct object_id oid;
-		const struct object_id *mad_oid;
-
-		if (!m->num_objects)
-			continue;
-
-		num = m->num_objects + m->num_objects_in_base;
-		mad_oid = mad->oid;
-		match = bsearch_one_midx(mad_oid, m, &first);
-
-		/*
-		 * first is now the position in the packfile where we
-		 * would insert mad->hash if it does not exist (or the
-		 * position of mad->hash if it does exist). Hence, we
-		 * consider a maximum of two objects nearby for the
-		 * abbreviation length.
-		 */
-		mad->init_len = 0;
-		if (!match) {
-			if (nth_midxed_object_oid(&oid, m, first))
-				extend_abbrev_len(&oid, mad);
-		} else if (first < num - 1) {
-			if (nth_midxed_object_oid(&oid, m, first + 1))
-				extend_abbrev_len(&oid, mad);
-		}
-		if (first > 0) {
-			if (nth_midxed_object_oid(&oid, m, first - 1))
-				extend_abbrev_len(&oid, mad);
-		}
-		mad->init_len = mad->cur_len;
-	}
-}
-
-static void find_abbrev_len_for_pack(struct packed_git *p,
-				     struct min_abbrev_data *mad)
-{
-	int match = 0;
-	uint32_t num, first = 0;
-	struct object_id oid;
-	const struct object_id *mad_oid;
-
-	if (p->multi_pack_index)
-		return;
-
-	if (open_pack_index(p) || !p->num_objects)
-		return;
-
-	num = p->num_objects;
-	mad_oid = mad->oid;
-	match = bsearch_pack(mad_oid, p, &first);
-
-	/*
-	 * first is now the position in the packfile where we would insert
-	 * mad->hash if it does not exist (or the position of mad->hash if
-	 * it does exist). Hence, we consider a maximum of two objects
-	 * nearby for the abbreviation length.
-	 */
-	mad->init_len = 0;
-	if (!match) {
-		if (!nth_packed_object_id(&oid, p, first))
-			extend_abbrev_len(&oid, mad);
-	} else if (first < num - 1) {
-		if (!nth_packed_object_id(&oid, p, first + 1))
-			extend_abbrev_len(&oid, mad);
-	}
-	if (first > 0) {
-		if (!nth_packed_object_id(&oid, p, first - 1))
-			extend_abbrev_len(&oid, mad);
-	}
-	mad->init_len = mad->cur_len;
-}
-
-static void find_abbrev_len_packed(struct min_abbrev_data *mad)
-{
-	struct packed_git *p;
-
-	odb_prepare_alternates(mad->repo->objects);
-	for (struct odb_source *source = mad->repo->objects->sources; source; source = source->next) {
-		struct multi_pack_index *m = get_multi_pack_index(source);
-		if (m)
-			find_abbrev_len_for_midx(m, mad);
-	}
-
-	repo_for_each_pack(mad->repo, p)
-		find_abbrev_len_for_pack(p, mad);
-}
-
 void strbuf_repo_add_unique_abbrev(struct strbuf *sb, struct repository *repo,
 				   const struct object_id *oid, int abbrev_len)
 {
@@ -707,14 +598,14 @@ void strbuf_add_unique_abbrev(struct strbuf *sb, const struct object_id *oid,
 }
 
 int repo_find_unique_abbrev_r(struct repository *r, char *hex,
-			      const struct object_id *oid, int len)
+			      const struct object_id *oid, int min_len)
 {
 	const struct git_hash_algo *algo =
 		oid->algo ? &hash_algos[oid->algo] : r->hash_algo;
-	struct min_abbrev_data mad;
 	const unsigned hexsz = algo->hexsz;
+	unsigned len;
 
-	if (len < 0) {
+	if (min_len < 0) {
 		unsigned long count;
 
 		if (odb_count_objects(r->objects, ODB_COUNT_OBJECTS_APPROXIMATE, &count) < 0)
@@ -738,25 +629,23 @@ int repo_find_unique_abbrev_r(struct repository *r, char *hex,
 		 */
 		if (len < FALLBACK_DEFAULT_ABBREV)
 			len = FALLBACK_DEFAULT_ABBREV;
+	} else {
+		len = min_len;
 	}
 
 	oid_to_hex_r(hex, oid);
 	if (len >= hexsz || !len)
 		return hexsz;
 
-	mad.repo = r;
-	mad.init_len = len;
-	mad.cur_len = len;
-	mad.oid = oid;
-
-	find_abbrev_len_packed(&mad);
-
 	odb_prepare_alternates(r->objects);
-	for (struct odb_source *s = r->objects->sources; s; s = s->next)
-		odb_source_loose_find_abbrev_len(s, mad.oid, mad.cur_len, &mad.cur_len);
+	for (struct odb_source *s = r->objects->sources; s; s = s->next) {
+		struct odb_source_files *files = odb_source_files_downcast(s);
+		packfile_store_find_abbrev_len(files->packed, oid, len, &len);
+		odb_source_loose_find_abbrev_len(s, oid, len, &len);
+	}
 
-	hex[mad.cur_len] = 0;
-	return mad.cur_len;
+	hex[len] = 0;
+	return len;
 }
 
 const char *repo_find_unique_abbrev(struct repository *r,

@@ -369,6 +369,11 @@ int packfile_store_for_each_object(struct packfile_store *store,
 				   void *cb_data,
 				   const struct odb_for_each_object_options *opts);
 
+int packfile_store_find_abbrev_len(struct packfile_store *store,
+				   const struct object_id *oid,
+				   unsigned min_len,
+				   unsigned *out);
+
 /* A hook to report invalid files in pack directory */
 #define PACKDIR_FILE_PACK 1
 #define PACKDIR_FILE_IDX 2
