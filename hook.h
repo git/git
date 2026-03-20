@@ -31,6 +31,7 @@ struct hook {
 			const char *friendly_name;
 			const char *command;
 			enum config_scope scope;
+			unsigned int disabled:1;
 		} configured;
 	} u;
 
