@@ -350,4 +350,32 @@ test_expect_success 'highlight diff that removes final newline' '
 	EOF
 '
 
+test_expect_success 'configure set/reset colors' '
+	test_config color.diff-highlight.oldhighlight bold &&
+	test_config color.diff-highlight.oldreset nobold &&
+	test_config color.diff-highlight.newhighlight italic &&
+	test_config color.diff-highlight.newreset noitalic &&
+	echo "prefix a suffix" >a &&
+	echo "prefix b suffix" >b &&
+	dh_test a b <<-\EOF
+	@@ -1 +1 @@
+	-prefix <BOLD>a<NORMAL_INTENSITY> suffix
+	+prefix <ITALIC>b<NOITALIC> suffix
+	EOF
+'
+
+test_expect_success 'configure normal/highlight colors' '
+	test_config color.diff-highlight.oldnormal red &&
+	test_config color.diff-highlight.oldhighlight magenta &&
+	test_config color.diff-highlight.newnormal green &&
+	test_config color.diff-highlight.newhighlight yellow &&
+	echo "prefix a suffix" >a &&
+	echo "prefix b suffix" >b &&
+	dh_test a b <<-\EOF
+	@@ -1 +1 @@
+	<RED>-prefix <RESET><MAGENTA>a<RESET><RED> suffix<RESET>
+	<GREEN>+prefix <RESET><YELLOW>b<RESET><GREEN> suffix<RESET>
+	EOF
+'
+
 test_done
