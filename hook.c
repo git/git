@@ -566,6 +566,22 @@ static void merge_output_if_parallel(struct run_hooks_opt *options)
 		options->stdout_to_stderr = 1;
 }
 
+static void warn_non_parallel_hooks_override(unsigned int jobs,
+					     struct string_list *hook_list)
+{
+	/* Don't warn for hooks running sequentially. */
+	if (jobs == 1)
+		return;
+
+	for (size_t i = 0; i < hook_list->nr; i++) {
+		struct hook *h = hook_list->items[i].util;
+		if (h->kind == HOOK_CONFIGURED && !h->parallel)
+			warning(_("hook '%s' is not marked as parallel=true, "
+				  "running in parallel anyway due to -j%u"),
+				h->u.configured.friendly_name, jobs);
+	}
+}
+
 /* Determine how many jobs to use for hook execution. */
 static unsigned int get_hook_jobs(struct repository *r,
 				  struct run_hooks_opt *options,
@@ -609,6 +625,7 @@ static unsigned int get_hook_jobs(struct repository *r,
 
 cleanup:
 	merge_output_if_parallel(options);
+	warn_non_parallel_hooks_override(options->jobs, hook_list);
 	return options->jobs;
 }
 
