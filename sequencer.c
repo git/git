@@ -1884,6 +1884,7 @@ enum todo_item_flags {
 	TODO_EDIT_MERGE_MSG    = (1 << 0),
 	TODO_REPLACE_FIXUP_MSG = (1 << 1),
 	TODO_EDIT_FIXUP_MSG    = (1 << 2),
+	TODO_RECORD_ORIGIN     = (1 << 3),
 };
 
 static const char first_commit_msg_str[] = N_("This is the 1st commit message:");
@@ -2413,7 +2414,8 @@ static int do_pick_commit(struct repository *r,
 		if (find_commit_subject(msg.message, &p))
 			strbuf_addstr(&ctx->message, p);
 
-		if (opts->record_origin) {
+		if (opts->record_origin || (false)) {
+		// if (opts->record_origin || (item->flags & TODO_RECORD_ORIGIN)) {
 			strbuf_complete_line(&ctx->message);
 			if (!has_conforming_footer(&ctx->message, NULL, 0))
 				strbuf_addch(&ctx->message, '\n');
@@ -2780,6 +2782,14 @@ static int parse_insn_line(struct repository *r, struct replay_opts *opts,
 	if (!padding)
 		return error(_("missing arguments for %s"),
 			     command_to_string(item->command));
+
+	if (item->command == TODO_PICK || item->command == TODO_REWORD ||
+	    item->command == TODO_EDIT) {
+		if (skip_prefix(bol, "-x", &bol)) {
+			bol += strspn(bol, " \t");
+			item->flags |= TODO_RECORD_ORIGIN;
+		}
+	}
 
 	if (item->command == TODO_EXEC || item->command == TODO_LABEL ||
 	    item->command == TODO_RESET || item->command == TODO_UPDATE_REF) {
@@ -6296,6 +6306,12 @@ static void todo_list_to_strbuf(struct repository *r,
 			const char *oid = flags & TODO_LIST_SHORTEN_IDS ?
 					  short_commit_name(r, item->commit) :
 					  oid_to_hex(&item->commit->object.oid);
+
+			if (item->command == TODO_PICK || item->command == TODO_EDIT ||
+			    item->command == TODO_REWORD) {
+				if (item->flags & TODO_RECORD_ORIGIN)
+					strbuf_addstr(buf, " -x");
+			}
 
 			if (item->command == TODO_FIXUP) {
 				if (item->flags & TODO_EDIT_FIXUP_MSG)
