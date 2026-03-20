@@ -41,8 +41,10 @@ dh_test () {
 		git show >commit.raw
 	} >/dev/null &&
 
-	"$DIFF_HIGHLIGHT" <diff.raw | test_strip_patch_header >diff.act &&
-	"$DIFF_HIGHLIGHT" <commit.raw | test_strip_patch_header >commit.act &&
+	"$DIFF_HIGHLIGHT" <diff.raw >diff.hi &&
+	test_strip_patch_header <diff.hi >diff.act
+	"$DIFF_HIGHLIGHT" <commit.raw >commit.hi &&
+	test_strip_patch_header <commit.hi >commit.act &&
 	test_cmp patch.exp diff.act &&
 	test_cmp patch.exp commit.act
 }
