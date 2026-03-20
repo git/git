@@ -96,26 +96,28 @@ struct cb_node *cb_lookup(struct cb_tree *t, const uint8_t *k, size_t klen)
 	return p && !memcmp(p->k, k, klen) ? p : NULL;
 }
 
-static enum cb_next cb_descend(struct cb_node *p, cb_iter fn, void *arg)
+static int cb_descend(struct cb_node *p, cb_iter fn, void *arg)
 {
 	if (1 & (uintptr_t)p) {
 		struct cb_node *q = cb_node_of(p);
-		enum cb_next n = cb_descend(q->child[0], fn, arg);
-
-		return n == CB_BREAK ? n : cb_descend(q->child[1], fn, arg);
+		int ret = cb_descend(q->child[0], fn, arg);
+		if (ret)
+			return ret;
+		return cb_descend(q->child[1], fn, arg);
 	} else {
 		return fn(p, arg);
 	}
 }
 
-void cb_each(struct cb_tree *t, const uint8_t *kpfx, size_t klen,
-			cb_iter fn, void *arg)
+int cb_each(struct cb_tree *t, const uint8_t *kpfx, size_t klen,
+	    cb_iter fn, void *arg)
 {
 	struct cb_node *p = t->root;
 	struct cb_node *top = p;
 	size_t i = 0;
 
-	if (!p) return; /* empty tree */
+	if (!p)
+		return 0; /* empty tree */
 
 	/* Walk tree, maintaining top pointer */
 	while (1 & (uintptr_t)p) {
@@ -130,7 +132,8 @@ void cb_each(struct cb_tree *t, const uint8_t *kpfx, size_t klen,
 
 	for (i = 0; i < klen; i++) {
 		if (p->k[i] != kpfx[i])
-			return; /* "best" match failed */
+			return 0; /* "best" match failed */
 	}
-	cb_descend(top, fn, arg);
+
+	return cb_descend(top, fn, arg);
 }

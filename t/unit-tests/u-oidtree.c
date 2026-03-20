@@ -38,7 +38,7 @@ struct expected_hex_iter {
 	const char *query;
 };
 
-static enum cb_next check_each_cb(const struct object_id *oid, void *data)
+static int check_each_cb(const struct object_id *oid, void *data)
 {
 	struct expected_hex_iter *hex_iter = data;
 	struct object_id expected;
@@ -49,7 +49,7 @@ static enum cb_next check_each_cb(const struct object_id *oid, void *data)
 			 &expected);
 	cl_assert_equal_s(oid_to_hex(oid), oid_to_hex(&expected));
 	hex_iter->i += 1;
-	return CB_CONTINUE;
+	return 0;
 }
 
 LAST_ARG_MUST_BE_NULL

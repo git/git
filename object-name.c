@@ -103,12 +103,12 @@ static void update_candidates(struct disambiguate_state *ds, const struct object
 
 static int match_hash(unsigned, const unsigned char *, const unsigned char *);
 
-static enum cb_next match_prefix(const struct object_id *oid, void *arg)
+static int match_prefix(const struct object_id *oid, void *arg)
 {
 	struct disambiguate_state *ds = arg;
 	/* no need to call match_hash, oidtree_each did prefix match */
 	update_candidates(ds, oid);
-	return ds->ambiguous ? CB_BREAK : CB_CONTINUE;
+	return ds->ambiguous;
 }
 
 static void find_short_object_filename(struct disambiguate_state *ds)

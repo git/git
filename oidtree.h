@@ -35,16 +35,22 @@ void oidtree_insert(struct oidtree *ot, const struct object_id *oid);
 /* Check whether the tree contains the given object ID. */
 bool oidtree_contains(struct oidtree *ot, const struct object_id *oid);
 
-/* Callback function used for `oidtree_each()`. */
-typedef enum cb_next (*oidtree_each_cb)(const struct object_id *oid,
-					void *cb_data);
+/*
+ * Callback function used for `oidtree_each()`. Returning a non-zero exit code
+ * will cause iteration to stop. The exit code will be propagated to the caller
+ * of `oidtree_each()`.
+ */
+typedef int (*oidtree_each_cb)(const struct object_id *oid,
+			       void *cb_data);
 
 /*
  * Iterate through all object IDs in the tree whose prefix matches the given
  * object ID prefix and invoke the callback function on each of them.
+ *
+ * Returns any non-zero exit code from the provided callback function.
  */
-void oidtree_each(struct oidtree *ot,
-		  const struct object_id *prefix, size_t prefix_hex_len,
-		  oidtree_each_cb cb, void *cb_data);
+int oidtree_each(struct oidtree *ot,
+		 const struct object_id *prefix, size_t prefix_hex_len,
+		 oidtree_each_cb cb, void *cb_data);
 
 #endif /* OIDTREE_H */

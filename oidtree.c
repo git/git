@@ -71,7 +71,7 @@ struct oidtree_each_data {
 	uint8_t last_byte;
 };
 
-static enum cb_next iter(struct cb_node *n, void *cb_data)
+static int iter(struct cb_node *n, void *cb_data)
 {
 	struct oidtree_each_data *data = cb_data;
 	struct object_id k;
@@ -80,18 +80,18 @@ static enum cb_next iter(struct cb_node *n, void *cb_data)
 	memcpy(&k, n->k, sizeof(k));
 
 	if (data->algo != GIT_HASH_UNKNOWN && data->algo != k.algo)
-		return CB_CONTINUE;
+		return 0;
 
 	if (data->last_nibble_at) {
 		if ((k.hash[*data->last_nibble_at] ^ data->last_byte) & 0xf0)
-			return CB_CONTINUE;
+			return 0;
 	}
 
 	return data->cb(&k, data->cb_data);
 }
 
-void oidtree_each(struct oidtree *ot, const struct object_id *prefix,
-		  size_t prefix_hex_len, oidtree_each_cb cb, void *cb_data)
+int oidtree_each(struct oidtree *ot, const struct object_id *prefix,
+		 size_t prefix_hex_len, oidtree_each_cb cb, void *cb_data)
 {
 	struct oidtree_each_data data = {
 		.cb = cb,
@@ -106,5 +106,5 @@ void oidtree_each(struct oidtree *ot, const struct object_id *prefix,
 		data.last_nibble_at = &klen;
 	}
 
-	cb_each(&ot->tree, prefix->hash, klen, iter, &data);
+	return cb_each(&ot->tree, prefix->hash, klen, iter, &data);
 }
