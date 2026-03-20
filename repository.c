@@ -419,6 +419,7 @@ void repo_clear(struct repository *repo)
 		hook_cache_clear(repo->hook_config_cache);
 		FREE_AND_NULL(repo->hook_config_cache);
 	}
+	strmap_clear(&repo->event_jobs, 0); /* values are uintptr_t, not heap ptrs */
 
 	if (repo->promisor_remote_config) {
 		promisor_remote_clear(repo->promisor_remote_config);
