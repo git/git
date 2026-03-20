@@ -1717,4 +1717,38 @@ test_expect_success 'errors if given a bad branch name' '
 	test_cmp expect actual
 '
 
+test_expect_success 'create branch with --name-prefix' '
+	git config branch.autosetupmerge false &&
+	git branch branch-with-prefix &&
+	git branch --name-prefix "blob" -- -with-prefix &&
+	test_must_fail git branch --name-prefix "blob" -- -with-prefix &&
+	git branch --name-prefix "@{current}" -- -with-prefix &&
+	git switch blob-with-prefix &&
+	git branch --name-prefix "@{current}" -- -with-prefix &&
+	test_must_fail git branch --name-prefix "@{current}" -- -with-prefix &&
+	git branch --name-prefix "blob" --no-name-prefix branch-with-no-prefix &&
+	test_ref_exists refs/heads/branch-with-prefix &&
+	test_ref_exists refs/heads/main-with-prefix &&
+	test_ref_exists refs/heads/blob-with-prefix &&
+	test_ref_exists refs/heads/blob-with-prefix-with-prefix &&
+	test_ref_exists refs/heads/branch-with-no-prefix &&
+	git checkout main &&
+	git branch -D branch-with-prefix main-with-prefix blob-with-prefix &&
+	git branch -D blob-with-prefix-with-prefix branch-with-no-prefix
+'
+
+test_expect_success 'create branch with config prefix' '
+	test_config branch.namePrefix blob &&
+	git branch -- -with-prefix &&
+	test_must_fail git branch -- -with-prefix &&
+	test_config branch.namePrefix "@{current}" &&
+	git checkout main &&
+	git branch -- -with-prefix &&
+	git branch --no-name-prefix branch-with-no-prefix &&
+	test_ref_exists refs/heads/blob-with-prefix &&
+	test_ref_exists refs/heads/main-with-prefix &&
+	test_ref_exists refs/heads/branch-with-no-prefix &&
+	git branch -D blob-with-prefix main-with-prefix branch-with-no-prefix
+'
+
 test_done
