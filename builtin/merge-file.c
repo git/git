@@ -108,7 +108,8 @@ int cmd_merge_file(int argc,
 			return error_errno("failed to redirect stderr to /dev/null");
 	}
 
-	if (object_id)
+	if (!repo && object_id)
+		/* emit the correct "not a git repo" error in this case */
 		setup_git_directory();
 
 	for (i = 0; i < 3; i++) {
