@@ -122,6 +122,30 @@ out:
 	return ret;
 }
 
+static int odb_source_files_find_abbrev_len(struct odb_source *source,
+					    const struct object_id *oid,
+					    unsigned min_len,
+					    unsigned *out)
+{
+	struct odb_source_files *files = odb_source_files_downcast(source);
+	unsigned len = min_len;
+	int ret;
+
+	ret = packfile_store_find_abbrev_len(files->packed, oid, len, &len);
+	if (ret < 0)
+		goto out;
+
+	ret = odb_source_loose_find_abbrev_len(source, oid, len, &len);
+	if (ret < 0)
+		goto out;
+
+	*out = len;
+	ret = 0;
+
+out:
+	return ret;
+}
+
 static int odb_source_files_freshen_object(struct odb_source *source,
 					   const struct object_id *oid)
 {
@@ -250,6 +274,7 @@ struct odb_source_files *odb_source_files_new(struct object_database *odb,
 	files->base.read_object_stream = odb_source_files_read_object_stream;
 	files->base.for_each_object = odb_source_files_for_each_object;
 	files->base.count_objects = odb_source_files_count_objects;
+	files->base.find_abbrev_len = odb_source_files_find_abbrev_len;
 	files->base.freshen_object = odb_source_files_freshen_object;
 	files->base.write_object = odb_source_files_write_object;
 	files->base.write_object_stream = odb_source_files_write_object_stream;

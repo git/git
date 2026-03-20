@@ -545,6 +545,22 @@ int odb_count_objects(struct object_database *odb,
 		      enum odb_count_objects_flags flags,
 		      unsigned long *out);
 
+/*
+ * Given an object ID, find the minimum required length required to make the
+ * object ID unique across the whole object database.
+ *
+ * The `min_len` determines the minimum abbreviated length that'll be returned
+ * by this function. If `min_len < 0`, then the function will set a sensible
+ * default minimum abbreviation length.
+ *
+ * Returns 0 on success, a negative error code otherwise. The computed length
+ * will be assigned to `*out`.
+ */
+int odb_find_abbrev_len(struct object_database *odb,
+			const struct object_id *oid,
+			int min_len,
+			unsigned *out);
+
 enum {
 	/*
 	 * By default, `odb_write_object()` does not actually write anything

@@ -15,10 +15,9 @@
 #include "refs.h"
 #include "remote.h"
 #include "dir.h"
+#include "odb.h"
 #include "oid-array.h"
-#include "packfile.h"
 #include "pretty.h"
-#include "object-file.h"
 #include "read-cache-ll.h"
 #include "repo-settings.h"
 #include "repository.h"
@@ -569,19 +568,6 @@ int repo_for_each_abbrev(struct repository *r, const char *prefix,
 	return ret;
 }
 
-/*
- * Return the slot of the most-significant bit set in "val". There are various
- * ways to do this quickly with fls() or __builtin_clzl(), but speed is
- * probably not a big deal here.
- */
-static unsigned msb(unsigned long val)
-{
-	unsigned r = 0;
-	while (val >>= 1)
-		r++;
-	return r;
-}
-
 void strbuf_repo_add_unique_abbrev(struct strbuf *sb, struct repository *repo,
 				   const struct object_id *oid, int abbrev_len)
 {
@@ -602,49 +588,14 @@ int repo_find_unique_abbrev_r(struct repository *r, char *hex,
 {
 	const struct git_hash_algo *algo =
 		oid->algo ? &hash_algos[oid->algo] : r->hash_algo;
-	const unsigned hexsz = algo->hexsz;
 	unsigned len;
 
-	if (min_len < 0) {
-		unsigned long count;
-
-		if (odb_count_objects(r->objects, ODB_COUNT_OBJECTS_APPROXIMATE, &count) < 0)
-			count = 0;
-
-		/*
-		 * Add one because the MSB only tells us the highest bit set,
-		 * not including the value of all the _other_ bits (so "15"
-		 * is only one off of 2^4, but the MSB is the 3rd bit.
-		 */
-		len = msb(count) + 1;
-		/*
-		 * We now know we have on the order of 2^len objects, which
-		 * expects a collision at 2^(len/2). But we also care about hex
-		 * chars, not bits, and there are 4 bits per hex. So all
-		 * together we need to divide by 2 and round up.
-		 */
-		len = DIV_ROUND_UP(len, 2);
-		/*
-		 * For very small repos, we stick with our regular fallback.
-		 */
-		if (len < FALLBACK_DEFAULT_ABBREV)
-			len = FALLBACK_DEFAULT_ABBREV;
-	} else {
-		len = min_len;
-	}
+	if (odb_find_abbrev_len(r->objects, oid, min_len, &len) < 0)
+		len = algo->hexsz;
 
 	oid_to_hex_r(hex, oid);
-	if (len >= hexsz || !len)
-		return hexsz;
-
-	odb_prepare_alternates(r->objects);
-	for (struct odb_source *s = r->objects->sources; s; s = s->next) {
-		struct odb_source_files *files = odb_source_files_downcast(s);
-		packfile_store_find_abbrev_len(files->packed, oid, len, &len);
-		odb_source_loose_find_abbrev_len(s, oid, len, &len);
-	}
-
 	hex[len] = 0;
+
 	return len;
 }
 

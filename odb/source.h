@@ -158,6 +158,18 @@ struct odb_source {
 			     unsigned long *out);
 
 	/*
+	 * This callback is expected to find the minimum required length to
+	 * make the given object ID unique.
+	 *
+	 * The callback is expected to return a negative error code in case it
+	 * failed, 0 otherwise.
+	 */
+	int (*find_abbrev_len)(struct odb_source *source,
+			       const struct object_id *oid,
+			       unsigned min_length,
+			       unsigned *out);
+
+	/*
 	 * This callback is expected to freshen the given object so that its
 	 * last access time is set to the current time. This is used to ensure
 	 * that objects that are recent will not get garbage collected even if
@@ -358,6 +370,18 @@ static inline int odb_source_count_objects(struct odb_source *source,
 					   unsigned long *out)
 {
 	return source->count_objects(source, flags, out);
+}
+
+/*
+ * Determine the minimum required length to make the given object ID unique in
+ * the given source. Returns 0 on success, a negative error code otherwise.
+ */
+static inline int odb_source_find_abbrev_len(struct odb_source *source,
+					     const struct object_id *oid,
+					     unsigned min_len,
+					     unsigned *out)
+{
+	return source->find_abbrev_len(source, oid, min_len, out);
 }
 
 /*
