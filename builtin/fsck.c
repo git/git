@@ -467,13 +467,14 @@ static int fsck_obj_buffer(const struct object_id *oid, enum object_type type,
 
 static int default_refs;
 
-static void fsck_handle_reflog_oid(const char *refname, struct object_id *oid,
-	timestamp_t timestamp)
+static void fsck_handle_reflog_oid(struct repository *repo,
+				   const char *refname, struct object_id *oid,
+				   timestamp_t timestamp)
 {
 	struct object *obj;
 
 	if (!is_null_oid(oid)) {
-		obj = lookup_object(the_repository, oid);
+		obj = lookup_object(repo, oid);
 		if (obj && (obj->flags & HAS_OBJ)) {
 			if (timestamp)
 				fsck_put_object_name(&fsck_walk_options, oid,
@@ -481,7 +482,7 @@ static void fsck_handle_reflog_oid(const char *refname, struct object_id *oid,
 						     refname, timestamp);
 			obj->flags |= USED;
 			mark_object_reachable(obj);
-		} else if (!is_promisor_object(the_repository, oid)) {
+		} else if (!is_promisor_object(repo, oid)) {
 			error(_("%s: invalid reflog entry %s"),
 			      refname, oid_to_hex(oid));
 			errors_found |= ERROR_REACHABLE;
@@ -493,8 +494,10 @@ static int fsck_handle_reflog_ent(const char *refname,
 				  struct object_id *ooid, struct object_id *noid,
 				  const char *email UNUSED,
 				  timestamp_t timestamp, int tz UNUSED,
-				  const char *message UNUSED, void *cb_data UNUSED)
+				  const char *message UNUSED, void *cb_data)
 {
+	struct repository *repo = cb_data;
+
 	if (now && timestamp > now)
 		return 0;
 
@@ -502,19 +505,20 @@ static int fsck_handle_reflog_ent(const char *refname,
 		fprintf_ln(stderr, _("Checking reflog %s->%s"),
 			   oid_to_hex(ooid), oid_to_hex(noid));
 
-	fsck_handle_reflog_oid(refname, ooid, 0);
-	fsck_handle_reflog_oid(refname, noid, timestamp);
+	fsck_handle_reflog_oid(repo, refname, ooid, 0);
+	fsck_handle_reflog_oid(repo, refname, noid, timestamp);
 	return 0;
 }
 
 static int fsck_handle_reflog(const char *logname, void *cb_data)
 {
 	struct strbuf refname = STRBUF_INIT;
+	struct worktree *wt = cb_data;
 
-	strbuf_worktree_ref(cb_data, &refname, logname);
-	refs_for_each_reflog_ent(get_main_ref_store(the_repository),
+	strbuf_worktree_ref(wt, &refname, logname);
+	refs_for_each_reflog_ent(get_main_ref_store(wt->repo),
 				 refname.buf, fsck_handle_reflog_ent,
-				 NULL);
+				 wt->repo);
 	strbuf_release(&refname);
 	return 0;
 }
