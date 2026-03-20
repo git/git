@@ -598,28 +598,6 @@ static int extend_abbrev_len(const struct object_id *oid,
 	return 0;
 }
 
-static int extend_abbrev_len_loose(const struct object_id *oid,
-				   struct object_info *oi UNUSED,
-				   void *cb_data)
-{
-	struct min_abbrev_data *data = cb_data;
-	extend_abbrev_len(oid, data);
-	return 0;
-}
-
-static void find_abbrev_len_loose(struct min_abbrev_data *mad)
-{
-	struct odb_for_each_object_options opts = {
-		.prefix = mad->oid,
-		.prefix_hex_len = mad->cur_len,
-	};
-	struct odb_source *source;
-
-	for (source = mad->repo->objects->sources; source; source = source->next)
-		odb_source_loose_for_each_object(source, NULL, extend_abbrev_len_loose,
-						 mad, &opts);
-}
-
 static void find_abbrev_len_for_midx(struct multi_pack_index *m,
 				     struct min_abbrev_data *mad)
 {
@@ -772,7 +750,10 @@ int repo_find_unique_abbrev_r(struct repository *r, char *hex,
 	mad.oid = oid;
 
 	find_abbrev_len_packed(&mad);
-	find_abbrev_len_loose(&mad);
+
+	odb_prepare_alternates(r->objects);
+	for (struct odb_source *s = r->objects->sources; s; s = s->next)
+		odb_source_loose_find_abbrev_len(s, mad.oid, mad.cur_len, &mad.cur_len);
 
 	hex[mad.cur_len] = 0;
 	return mad.cur_len;
