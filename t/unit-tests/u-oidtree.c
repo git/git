@@ -24,7 +24,7 @@ static int fill_tree_loc(struct oidtree *ot, const char *hexes[], size_t n)
 	return 0;
 }
 
-static void check_contains(struct oidtree *ot, const char *hex, int expected)
+static void check_contains(struct oidtree *ot, const char *hex, bool expected)
 {
 	struct object_id oid;
 
@@ -88,12 +88,12 @@ void test_oidtree__cleanup(void)
 void test_oidtree__contains(void)
 {
 	FILL_TREE(&ot, "444", "1", "2", "3", "4", "5", "a", "b", "c", "d", "e");
-	check_contains(&ot, "44", 0);
-	check_contains(&ot, "441", 0);
-	check_contains(&ot, "440", 0);
-	check_contains(&ot, "444", 1);
-	check_contains(&ot, "4440", 1);
-	check_contains(&ot, "4444", 0);
+	check_contains(&ot, "44", false);
+	check_contains(&ot, "441", false);
+	check_contains(&ot, "440", false);
+	check_contains(&ot, "444", true);
+	check_contains(&ot, "4440", true);
+	check_contains(&ot, "4444", false);
 }
 
 void test_oidtree__each(void)
