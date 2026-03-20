@@ -106,8 +106,10 @@ struct run_hooks_opt {
 	 * Send the hook's stdout to stderr.
 	 *
 	 * This is the default behavior for all hooks except pre-push,
-	 * which has separate stdout and stderr streams for backwards
-	 * compatibility reasons.
+	 * which keeps stdout and stderr separate for backwards compatibility.
+	 * When parallel execution is requested (jobs > 1), get_hook_jobs()
+	 * overrides this to 1 for all hooks so run-command can de-interleave
+	 * their outputs correctly.
 	 */
 	unsigned int stdout_to_stderr:1;
 

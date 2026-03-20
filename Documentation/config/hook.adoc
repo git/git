@@ -39,3 +39,7 @@ hook.jobs::
 +
 This setting has no effect unless all configured hooks for the event have
 `hook.<friendly-name>.parallel` set to `true`.
++
+For `pre-push` hooks, which normally keep stdout and stderr separate,
+setting this to a value greater than 1 (or passing `-j`) will merge stdout
+into stderr to allow correct de-interleaving of parallel output.

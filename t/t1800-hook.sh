@@ -768,4 +768,36 @@ test_expect_success 'one non-parallel hook forces the whole event to run seriall
 	test_cmp expect hook.order
 '
 
+test_expect_success 'client hooks: pre-push parallel execution merges stdout to stderr' '
+	test_when_finished "rm -rf remote-par stdout.actual stderr.actual" &&
+	git init --bare remote-par &&
+	git remote add origin-par remote-par &&
+	test_commit par-commit &&
+	mkdir -p .git/hooks &&
+	setup_hooks pre-push &&
+	test_config hook.jobs 2 &&
+	git push origin-par HEAD:main >stdout.actual 2>stderr.actual &&
+	check_stdout_merged_to_stderr pre-push
+'
+
+test_expect_success 'client hooks: pre-push runs in parallel when hook.jobs > 1' '
+	test_when_finished "rm -rf repo-parallel remote-parallel" &&
+	git init --bare remote-parallel &&
+	git init repo-parallel &&
+	git -C repo-parallel remote add origin ../remote-parallel &&
+	test_commit -C repo-parallel A &&
+
+	write_sentinel_hook repo-parallel/.git/hooks/pre-push &&
+	git -C repo-parallel config hook.hook-2.event pre-push &&
+	git -C repo-parallel config hook.hook-2.command \
+	    "$(sentinel_detector sentinel hook.order)" &&
+	git -C repo-parallel config hook.hook-2.parallel true &&
+
+	git -C repo-parallel config hook.jobs 2 &&
+
+	git -C repo-parallel push origin HEAD >out 2>err &&
+	echo parallel >expect &&
+	test_cmp expect repo-parallel/hook.order
+'
+
 test_done
