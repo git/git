@@ -270,41 +270,57 @@ int set_disambiguate_hint_config(const char *var, const char *value)
 	return error("unknown hint type for '%s': %s", var, value);
 }
 
+static int parse_oid_prefix(const char *name, int len,
+			    const struct git_hash_algo *algo,
+			    char *hex_out,
+			    struct object_id *oid_out)
+{
+	for (int i = 0; i < len; i++) {
+		unsigned char c = name[i];
+		unsigned char val;
+		if (c >= '0' && c <= '9') {
+			val = c - '0';
+		} else if (c >= 'a' && c <= 'f') {
+			val = c - 'a' + 10;
+		} else if (c >= 'A' && c <='F') {
+			val = c - 'A' + 10;
+			c -= 'A' - 'a';
+		} else {
+			return -1;
+		}
+
+		if (hex_out)
+			hex_out[i] = c;
+		if (oid_out) {
+			if (!(i & 1))
+				val <<= 4;
+			oid_out->hash[i >> 1] |= val;
+		}
+	}
+
+	if (hex_out)
+		hex_out[len] = '\0';
+	if (oid_out)
+		oid_out->algo = algo ? hash_algo_by_ptr(algo) : GIT_HASH_UNKNOWN;
+
+	return 0;
+}
+
 static int init_object_disambiguation(struct repository *r,
 				      const char *name, int len,
 				      const struct git_hash_algo *algo,
 				      struct disambiguate_state *ds)
 {
-	int i;
-
 	if (len < MINIMUM_ABBREV || len > GIT_MAX_HEXSZ)
 		return -1;
 
 	memset(ds, 0, sizeof(*ds));
 
-	for (i = 0; i < len ;i++) {
-		unsigned char c = name[i];
-		unsigned char val;
-		if (c >= '0' && c <= '9')
-			val = c - '0';
-		else if (c >= 'a' && c <= 'f')
-			val = c - 'a' + 10;
-		else if (c >= 'A' && c <='F') {
-			val = c - 'A' + 10;
-			c -= 'A' - 'a';
-		}
-		else
-			return -1;
-		ds->hex_pfx[i] = c;
-		if (!(i & 1))
-			val <<= 4;
-		ds->bin_pfx.hash[i >> 1] |= val;
-	}
+	if (parse_oid_prefix(name, len, algo, ds->hex_pfx, &ds->bin_pfx) < 0)
+		return -1;
 
 	ds->len = len;
-	ds->hex_pfx[len] = '\0';
 	ds->repo = r;
-	ds->bin_pfx.algo = algo ? hash_algo_by_ptr(algo) : GIT_HASH_UNKNOWN;
 	odb_prepare_alternates(r->objects);
 	return 0;
 }
