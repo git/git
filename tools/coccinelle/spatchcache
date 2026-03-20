@@ -30,7 +30,7 @@
 #	   out of control.
 #
 # This along with the general incremental "make" support for
-# "contrib/coccinelle" makes it viable to (re-)run coccicheck
+# "tools/coccinelle" makes it viable to (re-)run coccicheck
 # e.g. when merging integration branches.
 #
 # Note that the "--very-quiet" flag is currently critical. The cache
@@ -42,7 +42,7 @@
 # to change, so just supply "--very-quiet" for now.
 #
 # To use this, simply set SPATCH to
-# contrib/coccinelle/spatchcache. Then optionally set:
+# tools/coccinelle/spatchcache. Then optionally set:
 #
 #	[spatchCache]
 #		# Optional: path to a custom spatch
@@ -65,7 +65,7 @@
 #
 #	redis-cli FLUSHALL
 #	<make && make coccicheck, as above>
-#	grep -hore HIT -e MISS -e SET -e NOCACHE -e CANTCACHE .build/contrib/coccinelle | sort | uniq -c
+#	grep -hore HIT -e MISS -e SET -e NOCACHE -e CANTCACHE .build/tools/coccinelle | sort | uniq -c
 #	    600 CANTCACHE
 #	   7365 MISS
 #	   7365 SET

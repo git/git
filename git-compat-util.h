@@ -34,10 +34,6 @@ struct strbuf;
 #  define DISABLE_WARNING(warning)
 #endif
 
-#ifdef DISABLE_SIGN_COMPARE_WARNINGS
-DISABLE_WARNING(-Wsign-compare)
-#endif
-
 #undef FLEX_ARRAY
 #define FLEX_ARRAY /* empty - weather balloon to require C99 FAM */
 
@@ -1098,4 +1094,8 @@ extern int not_supposed_to_survive;
 #define assert(expr) ((void)(not_supposed_to_survive || (expr)))
 #endif /* CHECK_ASSERTION_SIDE_EFFECTS */
 
+#endif
+
+#ifdef DISABLE_SIGN_COMPARE_WARNINGS
+DISABLE_WARNING(-Wsign-compare)
 #endif
