@@ -532,14 +532,20 @@ struct snapshot {
 	/* TODO: Consider also snapshotting the index of each worktree. */
 };
 
+struct snapshot_ref_data {
+	struct repository *repo;
+	struct snapshot *snap;
+};
+
 static int snapshot_ref(const struct reference *ref, void *cb_data)
 {
-	struct snapshot *snap = cb_data;
+	struct snapshot_ref_data *data = cb_data;
+	struct snapshot *snap = data->snap;
 	struct object *obj;
 
-	obj = parse_object(the_repository, ref->oid);
+	obj = parse_object(data->repo, ref->oid);
 	if (!obj) {
-		if (is_promisor_object(the_repository, ref->oid)) {
+		if (is_promisor_object(data->repo, ref->oid)) {
 			/*
 			 * Increment default_refs anyway, because this is a
 			 * valid ref.
@@ -586,6 +592,10 @@ static void snapshot_refs(struct repository *repo, struct snapshot *snap,
 	struct refs_for_each_ref_options opts = {
 		.flags = REFS_FOR_EACH_INCLUDE_BROKEN,
 	};
+	struct snapshot_ref_data data = {
+		.repo = repo,
+		.snap = snap,
+	};
 	struct worktree **worktrees, **p;
 	const char *head_points_at;
 	struct object_id head_oid;
@@ -599,7 +609,7 @@ static void snapshot_refs(struct repository *repo, struct snapshot *snap,
 				.oid = &oid,
 			};
 
-			snapshot_ref(&ref, snap);
+			snapshot_ref(&ref, &data);
 			continue;
 		}
 		error(_("invalid parameter: expected sha1, got '%s'"), arg);
@@ -612,7 +622,7 @@ static void snapshot_refs(struct repository *repo, struct snapshot *snap,
 	}
 
 	refs_for_each_ref_ext(get_main_ref_store(repo),
-			      snapshot_ref, snap, &opts);
+			      snapshot_ref, &data, &opts);
 
 	worktrees = get_worktrees();
 	for (p = worktrees; *p; p++) {
@@ -630,7 +640,7 @@ static void snapshot_refs(struct repository *repo, struct snapshot *snap,
 				.oid = &head_oid,
 			};
 
-			snapshot_ref(&ref, snap);
+			snapshot_ref(&ref, &data);
 		}
 		strbuf_release(&refname);
 
