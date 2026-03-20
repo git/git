@@ -123,10 +123,16 @@ static int fsck_objects_error_func(struct fsck_options *o UNUSED,
 
 static struct object_array pending;
 
+struct mark_object_data {
+	struct repository *repo;
+	struct object *parent;
+};
+
 static int mark_object(struct object *obj, enum object_type type,
-		       void *data, struct fsck_options *options UNUSED)
+		       void *cb_data, struct fsck_options *options UNUSED)
 {
-	struct object *parent = data;
+	struct mark_object_data *data = cb_data;
+	struct object *parent = data->parent;
 
 	/*
 	 * The only case data is NULL or type is OBJ_ANY is when
@@ -153,7 +159,7 @@ static int mark_object(struct object *obj, enum object_type type,
 		return 0;
 	obj->flags |= REACHABLE;
 
-	if (is_promisor_object(the_repository, &obj->oid))
+	if (is_promisor_object(data->repo, &obj->oid))
 		/*
 		 * Further recursion does not need to be performed on this
 		 * object since it is a promisor object (so it does not need to
@@ -162,7 +168,7 @@ static int mark_object(struct object *obj, enum object_type type,
 		return 0;
 
 	if (!(obj->flags & HAS_OBJ)) {
-		if (parent && !odb_has_object(the_repository->objects, &obj->oid,
+		if (parent && !odb_has_object(data->repo->objects, &obj->oid,
 					      HAS_OBJECT_RECHECK_PACKED)) {
 			printf_ln(_("broken link from %7s %s\n"
 				    "              to %7s %s"),
@@ -179,14 +185,21 @@ static int mark_object(struct object *obj, enum object_type type,
 	return 0;
 }
 
-static void mark_object_reachable(struct object *obj)
+static void mark_object_reachable(struct repository *repo, struct object *obj)
 {
-	mark_object(obj, OBJ_ANY, NULL, NULL);
+	struct mark_object_data data = {
+		.repo = repo,
+	};
+	mark_object(obj, OBJ_ANY, &data, NULL);
 }
 
 static int traverse_one_object(struct repository *repo, struct object *obj)
 {
-	int result = fsck_walk(repo, obj, obj, &fsck_walk_options);
+	struct mark_object_data data = {
+		.repo = repo,
+		.parent = obj,
+	};
+	int result = fsck_walk(repo, obj, &data, &fsck_walk_options);
 
 	if (obj->type == OBJ_TREE) {
 		struct tree *tree = (struct tree *)obj;
@@ -222,10 +235,11 @@ static int mark_used(struct object *obj, enum object_type type UNUSED,
 
 static int mark_unreachable_referents(const struct object_id *oid,
 				      struct object_info *oi UNUSED,
-				      void *data UNUSED)
+				      void *data)
 {
+	struct repository *repo = data;
 	struct fsck_options options = FSCK_OPTIONS_DEFAULT;
-	struct object *obj = lookup_object(the_repository, oid);
+	struct object *obj = lookup_object(repo, oid);
 
 	if (!obj || !(obj->flags & HAS_OBJ))
 		return 0; /* not part of our original set */
@@ -237,14 +251,14 @@ static int mark_unreachable_referents(const struct object_id *oid,
 	 * (and we want to avoid parsing blobs).
 	 */
 	if (obj->type == OBJ_NONE) {
-		enum object_type type = odb_read_object_info(the_repository->objects,
+		enum object_type type = odb_read_object_info(repo->objects,
 							     &obj->oid, NULL);
 		if (type > 0)
 			object_as_type(obj, type, 0);
 	}
 
 	options.walk = mark_used;
-	fsck_walk(the_repository, obj, NULL, &options);
+	fsck_walk(repo, obj, NULL, &options);
 	if (obj->type == OBJ_TREE)
 		free_tree_buffer((struct tree *)obj);
 
@@ -384,7 +398,7 @@ static void check_connectivity(struct repository *repo)
 		 * traversal.
 		 */
 		odb_for_each_object(repo->objects, NULL,
-				    mark_unreachable_referents, NULL, 0);
+				    mark_unreachable_referents, repo, 0);
 	}
 
 	/* Look up all the requirements, warn about missing objects.. */
@@ -484,7 +498,7 @@ static void fsck_handle_reflog_oid(struct repository *repo,
 						     "%s@{%"PRItime"}",
 						     refname, timestamp);
 			obj->flags |= USED;
-			mark_object_reachable(obj);
+			mark_object_reachable(repo, obj);
 		} else if (!is_promisor_object(repo, oid)) {
 			error(_("%s: invalid reflog entry %s"),
 			      refname, oid_to_hex(oid));
@@ -589,7 +603,7 @@ static int fsck_handle_ref(const struct reference *ref, void *cb_data)
 	obj->flags |= USED;
 	fsck_put_object_name(&fsck_walk_options,
 			     ref->oid, "%s", ref->name);
-	mark_object_reachable(obj);
+	mark_object_reachable(repo, obj);
 
 	return 0;
 }
@@ -829,7 +843,7 @@ static int fsck_cache_tree(struct repository *repo, struct cache_tree *it,
 		}
 		obj->flags |= USED;
 		fsck_put_object_name(&fsck_walk_options, &it->oid, ":");
-		mark_object_reachable(obj);
+		mark_object_reachable(repo, obj);
 		if (obj->type != OBJ_TREE)
 			err |= objerror(obj, _("non-tree in cache-tree"));
 	}
@@ -871,7 +885,7 @@ static int fsck_resolve_undo(struct index_state *istate,
 			obj->flags |= USED;
 			fsck_put_object_name(&fsck_walk_options, &ru->oid[i],
 					     ":(%d):%s", i, path);
-			mark_object_reachable(obj);
+			mark_object_reachable(istate->repo, obj);
 		}
 	}
 	return 0;
@@ -902,7 +916,7 @@ static void fsck_index(struct index_state *istate, const char *index_path,
 				     "%s:%s",
 				     is_current_worktree ? "" : index_path,
 				     istate->cache[i]->name);
-		mark_object_reachable(obj);
+		mark_object_reachable(istate->repo, obj);
 	}
 	if (istate->cache_tree)
 		fsck_cache_tree(istate->repo, istate->cache_tree, index_path);
@@ -911,9 +925,10 @@ static void fsck_index(struct index_state *istate, const char *index_path,
 
 static int mark_object_for_connectivity(const struct object_id *oid,
 					struct object_info *oi UNUSED,
-					void *cb_data UNUSED)
+					void *cb_data)
 {
-	struct object *obj = lookup_unknown_object(the_repository, oid);
+	struct repository *repo = cb_data;
+	struct object *obj = lookup_unknown_object(repo, oid);
 	obj->flags |= HAS_OBJ;
 	return 0;
 }
@@ -1064,7 +1079,7 @@ int cmd_fsck(int argc,
 
 	if (connectivity_only) {
 		odb_for_each_object(repo->objects, NULL,
-				    mark_object_for_connectivity, NULL, 0);
+				    mark_object_for_connectivity, repo, 0);
 	} else {
 		odb_prepare_alternates(repo->objects);
 		for (source = repo->objects->sources; source; source = source->next)
