@@ -2123,7 +2123,7 @@ int cmd_index_pack(int argc,
 			die(_("cannot perform queued object checks outside "
 			      "of a repository"));
 
-		if (fsck_finish(&fsck_options))
+		if (fsck_finish(the_repository, &fsck_options))
 			die(_("fsck error in pack objects"));
 	}
 

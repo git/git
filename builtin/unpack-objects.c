@@ -676,7 +676,7 @@ int cmd_unpack_objects(int argc,
 	git_hash_final_oid(&oid, &tmp_ctx);
 	if (strict) {
 		write_rest();
-		if (fsck_finish(&fsck_options))
+		if (fsck_finish(the_repository, &fsck_options))
 			die(_("fsck error in pack objects"));
 	}
 	if (!hasheq(fill(the_hash_algo->rawsz), oid.hash,

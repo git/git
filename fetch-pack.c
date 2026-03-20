@@ -1231,7 +1231,7 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 	if (get_pack(args, fd, pack_lockfiles, NULL, sought, nr_sought,
 		     &fsck_options.gitmodules_found))
 		die(_("git fetch-pack: fetch failed."));
-	if (fsck_finish(&fsck_options))
+	if (fsck_finish(the_repository, &fsck_options))
 		die("fsck failed");
 
  all_done:
@@ -1876,7 +1876,7 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 	string_list_clear(&packfile_uris, 0);
 	strvec_clear(&index_pack_args);
 
-	if (fsck_finish(&fsck_options))
+	if (fsck_finish(the_repository, &fsck_options))
 		die("fsck failed");
 
 	if (negotiator)

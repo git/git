@@ -1075,7 +1075,7 @@ int cmd_fsck(int argc,
 			stop_progress(&progress);
 		}
 
-		if (fsck_finish(&fsck_obj_options))
+		if (fsck_finish(the_repository, &fsck_obj_options))
 			errors_found |= ERROR_OBJECT;
 	}
 

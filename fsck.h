@@ -255,7 +255,7 @@ int fsck_tag_standalone(const struct object_id *oid, const char *buffer,
  * after completing all fsck_object() calls in order to resolve any remaining
  * checks.
  */
-int fsck_finish(struct fsck_options *options);
+int fsck_finish(struct repository *repo, struct fsck_options *options);
 
 /*
  * Check whether there are any checks that have been queued up and that still
