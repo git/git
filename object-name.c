@@ -48,7 +48,6 @@ struct disambiguate_state {
 	unsigned candidate_ok:1;
 	unsigned disambiguate_fn_used:1;
 	unsigned ambiguous:1;
-	unsigned always_call_fn:1;
 };
 
 static int update_disambiguate_state(const struct object_id *current,
@@ -58,10 +57,6 @@ static int update_disambiguate_state(const struct object_id *current,
 	struct disambiguate_state *ds = cb_data;
 
 	/* The hash algorithm of current has already been filtered */
-	if (ds->always_call_fn) {
-		ds->ambiguous = ds->fn(ds->repo, current, ds->cb_data) ? 1 : 0;
-		return ds->ambiguous;
-	}
 	if (!ds->candidate_exists) {
 		/* this is the first candidate */
 		oidcpy(&ds->candidate, current);
@@ -105,19 +100,6 @@ static int update_disambiguate_state(const struct object_id *current,
 	/* otherwise, current can be discarded and candidate is still good */
 
 	return 0;
-}
-
-static void find_short_object_filename(struct disambiguate_state *ds)
-{
-	struct odb_for_each_object_options opts = {
-		.prefix = &ds->bin_pfx,
-		.prefix_hex_len = ds->len,
-	};
-	struct odb_source *source;
-
-	for (source = ds->repo->objects->sources; source && !ds->ambiguous; source = source->next)
-		odb_source_loose_for_each_object(source, NULL, update_disambiguate_state,
-						 ds, &opts);
 }
 
 static int finish_object_disambiguation(struct disambiguate_state *ds,
@@ -632,11 +614,26 @@ static int extend_abbrev_len(const struct object_id *oid,
 	return 0;
 }
 
-static int repo_extend_abbrev_len(struct repository *r UNUSED,
-				  const struct object_id *oid,
-				  void *cb_data)
+static int extend_abbrev_len_loose(const struct object_id *oid,
+				   struct object_info *oi UNUSED,
+				   void *cb_data)
 {
-	return extend_abbrev_len(oid, cb_data);
+	struct min_abbrev_data *data = cb_data;
+	extend_abbrev_len(oid, data);
+	return 0;
+}
+
+static void find_abbrev_len_loose(struct min_abbrev_data *mad)
+{
+	struct odb_for_each_object_options opts = {
+		.prefix = mad->oid,
+		.prefix_hex_len = mad->cur_len,
+	};
+	struct odb_source *source;
+
+	for (source = mad->repo->objects->sources; source; source = source->next)
+		odb_source_loose_for_each_object(source, NULL, extend_abbrev_len_loose,
+						 mad, &opts);
 }
 
 static void find_abbrev_len_for_midx(struct multi_pack_index *m,
@@ -752,9 +749,7 @@ int repo_find_unique_abbrev_r(struct repository *r, char *hex,
 {
 	const struct git_hash_algo *algo =
 		oid->algo ? &hash_algos[oid->algo] : r->hash_algo;
-	struct disambiguate_state ds;
 	struct min_abbrev_data mad;
-	struct object_id oid_ret;
 	const unsigned hexsz = algo->hexsz;
 
 	if (len < 0) {
@@ -794,16 +789,7 @@ int repo_find_unique_abbrev_r(struct repository *r, char *hex,
 	mad.oid = oid;
 
 	find_abbrev_len_packed(&mad);
-
-	if (init_object_disambiguation(r, hex, mad.cur_len, algo, &ds) < 0)
-		return -1;
-
-	ds.fn = repo_extend_abbrev_len;
-	ds.always_call_fn = 1;
-	ds.cb_data = (void *)&mad;
-
-	find_short_object_filename(&ds);
-	(void)finish_object_disambiguation(&ds, &oid_ret);
+	find_abbrev_len_loose(&mad);
 
 	hex[mad.cur_len] = 0;
 	return mad.cur_len;
