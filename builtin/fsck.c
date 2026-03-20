@@ -186,7 +186,7 @@ static void mark_object_reachable(struct object *obj)
 
 static int traverse_one_object(struct object *obj)
 {
-	int result = fsck_walk(obj, obj, &fsck_walk_options);
+	int result = fsck_walk(the_repository, obj, obj, &fsck_walk_options);
 
 	if (obj->type == OBJ_TREE) {
 		struct tree *tree = (struct tree *)obj;
@@ -244,7 +244,7 @@ static int mark_unreachable_referents(const struct object_id *oid,
 	}
 
 	options.walk = mark_used;
-	fsck_walk(obj, NULL, &options);
+	fsck_walk(the_repository, obj, NULL, &options);
 	if (obj->type == OBJ_TREE)
 		free_tree_buffer((struct tree *)obj);
 
@@ -413,7 +413,7 @@ static int fsck_obj(struct object *obj, void *buffer, unsigned long size)
 			   printable_type(&obj->oid, obj->type),
 			   describe_object(&obj->oid));
 
-	if (fsck_walk(obj, NULL, &fsck_obj_options))
+	if (fsck_walk(the_repository, obj, NULL, &fsck_obj_options))
 		objerror(obj, _("broken links"));
 	err = fsck_object(obj, buffer, size, &fsck_obj_options);
 	if (err)

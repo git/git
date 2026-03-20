@@ -208,14 +208,23 @@ struct fsck_options {
 	.error_func = fsck_refs_error_function, \
 }
 
-/* descend in all linked child objects
- * the return value is:
+/*
+ * Perform consistency checks for the given object and all of its decendents.
+ *
+ * If set, the `walk` callback function in the options structure will be called
+ * for every commit. The data parameter will be passed as callback data.
+ *
+ * Returns:
+ *
  *    -1	error in processing the object
  *    <0	return value of the callback, which lead to an abort
  *    >0	return value of the first signaled error >0 (in the case of no other errors)
  *    0		everything OK
  */
-int fsck_walk(struct object *obj, void *data, struct fsck_options *options);
+int fsck_walk(struct repository *repo,
+	      struct object *obj,
+	      void *data,
+	      struct fsck_options *options);
 
 /*
  * Blob objects my pass a NULL data pointer, which indicates they are too large

@@ -954,7 +954,7 @@ static void sha1_object(const void *data, struct object_entry *obj_entry,
 			if (do_fsck_object &&
 			    fsck_object(obj, buf, size, &fsck_options))
 				die(_("fsck error in packed object"));
-			if (strict && fsck_walk(obj, NULL, &fsck_options))
+			if (strict && fsck_walk(the_repository, obj, NULL, &fsck_options))
 				die(_("Not all child objects of %s are reachable"), oid_to_hex(&obj->oid));
 			if (record_outgoing_links)
 				do_record_outgoing_links(obj);

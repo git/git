@@ -353,14 +353,17 @@ const char *fsck_describe_object(struct fsck_options *options,
 	return buf->buf;
 }
 
-static int fsck_walk_tree(struct tree *tree, void *data, struct fsck_options *options)
+static int fsck_walk_tree(struct repository *repo,
+			  struct tree *tree,
+			  void *data,
+			  struct fsck_options *options)
 {
 	struct tree_desc desc;
 	struct name_entry entry;
 	int res = 0;
 	const char *name;
 
-	if (repo_parse_tree(the_repository, tree))
+	if (repo_parse_tree(repo, tree))
 		return -1;
 
 	name = fsck_get_object_name(options, &tree->object.oid);
@@ -375,14 +378,14 @@ static int fsck_walk_tree(struct tree *tree, void *data, struct fsck_options *op
 			continue;
 
 		if (S_ISDIR(entry.mode)) {
-			obj = (struct object *)lookup_tree(the_repository, &entry.oid);
+			obj = (struct object *)lookup_tree(repo, &entry.oid);
 			if (name && obj)
 				fsck_put_object_name(options, &entry.oid, "%s%s/",
 						     name, entry.path);
 			result = options->walk(obj, OBJ_TREE, data, options);
 		}
 		else if (S_ISREG(entry.mode) || S_ISLNK(entry.mode)) {
-			obj = (struct object *)lookup_blob(the_repository, &entry.oid);
+			obj = (struct object *)lookup_blob(repo, &entry.oid);
 			if (name && obj)
 				fsck_put_object_name(options, &entry.oid, "%s%s",
 						     name, entry.path);
@@ -401,7 +404,10 @@ static int fsck_walk_tree(struct tree *tree, void *data, struct fsck_options *op
 	return res;
 }
 
-static int fsck_walk_commit(struct commit *commit, void *data, struct fsck_options *options)
+static int fsck_walk_commit(struct repository *repo,
+			    struct commit *commit,
+			    void *data,
+			    struct fsck_options *options)
 {
 	int counter = 0, generation = 0, name_prefix_len = 0;
 	struct commit_list *parents;
@@ -409,7 +415,7 @@ static int fsck_walk_commit(struct commit *commit, void *data, struct fsck_optio
 	int result;
 	const char *name;
 
-	if (repo_parse_commit(the_repository, commit))
+	if (repo_parse_commit(repo, commit))
 		return -1;
 
 	name = fsck_get_object_name(options, &commit->object.oid);
@@ -417,7 +423,7 @@ static int fsck_walk_commit(struct commit *commit, void *data, struct fsck_optio
 		fsck_put_object_name(options, get_commit_tree_oid(commit),
 				     "%s:", name);
 
-	result = options->walk((struct object *) repo_get_commit_tree(the_repository, commit),
+	result = options->walk((struct object *) repo_get_commit_tree(repo, commit),
 			       OBJ_TREE, data, options);
 	if (result < 0)
 		return result;
@@ -470,34 +476,40 @@ static int fsck_walk_commit(struct commit *commit, void *data, struct fsck_optio
 	return res;
 }
 
-static int fsck_walk_tag(struct tag *tag, void *data, struct fsck_options *options)
+static int fsck_walk_tag(struct repository *repo,
+			 struct tag *tag,
+			 void *data,
+			 struct fsck_options *options)
 {
 	const char *name = fsck_get_object_name(options, &tag->object.oid);
 
-	if (parse_tag(the_repository, tag))
+	if (parse_tag(repo, tag))
 		return -1;
 	if (name)
 		fsck_put_object_name(options, &tag->tagged->oid, "%s", name);
 	return options->walk(tag->tagged, OBJ_ANY, data, options);
 }
 
-int fsck_walk(struct object *obj, void *data, struct fsck_options *options)
+int fsck_walk(struct repository *repo,
+	      struct object *obj,
+	      void *data,
+	      struct fsck_options *options)
 {
 	if (!obj)
 		return -1;
 
 	if (obj->type == OBJ_NONE)
-		parse_object(the_repository, &obj->oid);
+		parse_object(repo, &obj->oid);
 
 	switch (obj->type) {
 	case OBJ_BLOB:
 		return 0;
 	case OBJ_TREE:
-		return fsck_walk_tree((struct tree *)obj, data, options);
+		return fsck_walk_tree(repo, (struct tree *)obj, data, options);
 	case OBJ_COMMIT:
-		return fsck_walk_commit((struct commit *)obj, data, options);
+		return fsck_walk_commit(repo, (struct commit *)obj, data, options);
 	case OBJ_TAG:
-		return fsck_walk_tag((struct tag *)obj, data, options);
+		return fsck_walk_tag(repo, (struct tag *)obj, data, options);
 	default:
 		error("Unknown object type for %s",
 		      fsck_describe_object(options, &obj->oid));
