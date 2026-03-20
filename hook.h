@@ -32,6 +32,7 @@ struct hook {
 			const char *command;
 			enum config_scope scope;
 			unsigned int disabled:1;
+			unsigned int event_disabled:1;
 		} configured;
 	} u;
 

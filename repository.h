@@ -2,6 +2,7 @@
 #define REPOSITORY_H
 
 #include "strmap.h"
+#include "string-list.h"
 #include "repo-settings.h"
 #include "environment.h"
 
@@ -177,6 +178,9 @@ struct repository {
 
 	/* Cached map of event-name -> jobs count (as uintptr_t) from hook.<event>.jobs. */
 	struct strmap event_jobs;
+
+	/* Cached list of event names with hook.<event>.enabled = false. */
+	struct string_list event_disabled;
 
 	/* Configurations related to promisor remotes. */
 	char *repository_format_partial_clone;

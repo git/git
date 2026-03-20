@@ -33,6 +33,18 @@ hook.<friendly-name>.parallel::
 	found in the hooks directory do not need to, and run in parallel when
 	the effective job count is greater than 1. See linkgit:git-hook[1].
 
+hook.<event>.enabled::
+	Switch to enable or disable all hooks for the `<event>` hook event.
+	When set to `false`, no hooks fire for that event, regardless of any
+	per-hook `hook.<friendly-name>.enabled` settings. Defaults to `true`.
+	See linkgit:git-hook[1].
++
+Note on naming: `<event>` must be the event name (e.g. `pre-commit`),
+not a hook friendly-name. A name that also carries `.command`, `.event`,
+or `.parallel` is treated as a friendly-name and its `.enabled` value
+applies only to that individual hook. See `hook.<friendly-name>.enabled`
+above.
+
 hook.<event>.jobs::
 	Specifies how many hooks can be run simultaneously for the `<event>`
 	hook event (e.g. `hook.post-receive.jobs = 4`). Overrides `hook.jobs`
