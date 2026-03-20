@@ -400,7 +400,9 @@ static void check_connectivity(struct repository *repo)
 	}
 }
 
-static int fsck_obj(struct object *obj, void *buffer, unsigned long size)
+static int fsck_obj(struct repository *repo,
+		    struct object *obj,
+		    void *buffer, unsigned long size)
 {
 	int err;
 
@@ -413,9 +415,9 @@ static int fsck_obj(struct object *obj, void *buffer, unsigned long size)
 			   printable_type(&obj->oid, obj->type),
 			   describe_object(&obj->oid));
 
-	if (fsck_walk(the_repository, obj, NULL, &fsck_obj_options))
+	if (fsck_walk(repo, obj, NULL, &fsck_obj_options))
 		objerror(obj, _("broken links"));
-	err = fsck_object(the_repository, obj, buffer, size, &fsck_obj_options);
+	err = fsck_object(repo, obj, buffer, size, &fsck_obj_options);
 	if (err)
 		goto out;
 
@@ -462,7 +464,7 @@ static int fsck_obj_buffer(const struct object_id *oid, enum object_type type,
 	}
 	obj->flags &= ~(REACHABLE | SEEN);
 	obj->flags |= HAS_OBJ;
-	return fsck_obj(obj, buffer, size);
+	return fsck_obj(the_repository, obj, buffer, size);
 }
 
 static int default_refs;
@@ -710,27 +712,28 @@ static void process_refs(struct repository *repo, struct snapshot *snap)
 	}
 }
 
-struct for_each_loose_cb
-{
+struct for_each_loose_cb {
+	struct repository *repo;
 	struct progress *progress;
 };
 
 static int fsck_loose(const struct object_id *oid, const char *path,
-		      void *data UNUSED)
+		      void *cb_data)
 {
+	struct for_each_loose_cb *data = cb_data;
 	struct object *obj;
 	enum object_type type = OBJ_NONE;
 	unsigned long size;
 	void *contents = NULL;
 	int eaten;
 	struct object_info oi = OBJECT_INFO_INIT;
-	struct object_id real_oid = *null_oid(the_hash_algo);
+	struct object_id real_oid = *null_oid(data->repo->hash_algo);
 	int err = 0;
 
 	oi.sizep = &size;
 	oi.typep = &type;
 
-	if (read_loose_object(the_repository, path, oid, &real_oid, &contents, &oi) < 0) {
+	if (read_loose_object(data->repo, path, oid, &real_oid, &contents, &oi) < 0) {
 		if (contents && !oideq(&real_oid, oid))
 			err = error(_("%s: hash-path mismatch, found at: %s"),
 				    oid_to_hex(&real_oid), path);
@@ -747,7 +750,7 @@ static int fsck_loose(const struct object_id *oid, const char *path,
 	if (!contents && type != OBJ_BLOB)
 		BUG("read_loose_object streamed a non-blob");
 
-	obj = parse_object_buffer(the_repository, oid, type, size,
+	obj = parse_object_buffer(data->repo, oid, type, size,
 				  contents, &eaten);
 
 	if (!obj) {
@@ -761,7 +764,7 @@ static int fsck_loose(const struct object_id *oid, const char *path,
 
 	obj->flags &= ~(REACHABLE | SEEN);
 	obj->flags |= HAS_OBJ;
-	if (fsck_obj(obj, contents, size))
+	if (fsck_obj(data->repo, obj, contents, size))
 		errors_found |= ERROR_OBJECT;
 
 	if (!eaten)
@@ -789,6 +792,7 @@ static void fsck_source(struct odb_source *source)
 {
 	struct progress *progress = NULL;
 	struct for_each_loose_cb cb_data = {
+		.repo = source->odb->repo,
 		.progress = progress,
 	};
 
