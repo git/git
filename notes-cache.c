@@ -66,7 +66,7 @@ int notes_cache_write(struct notes_cache *c)
 
 	if (write_notes_tree(&c->tree, &tree_oid))
 		return -1;
-	if (commit_tree(c->validity, strlen(c->validity), &tree_oid, NULL,
+	if (commit_tree(the_repository, c->validity, strlen(c->validity), &tree_oid, NULL,
 			&commit_oid, NULL, NULL) < 0)
 		return -1;
 	if (refs_update_ref(get_main_ref_store(the_repository), "update notes cache", c->tree.update_ref, &commit_oid,
