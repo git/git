@@ -159,6 +159,7 @@ int fsck_refs_error_function(struct fsck_options *options,
 			     const char *message);
 
 struct fsck_object_report {
+	struct repository *repo;
 	const struct object_id *oid;
 	enum object_type object_type;
 };
