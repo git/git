@@ -7,9 +7,6 @@ TEST_OUTPUT_DIRECTORY=$(pwd)
 TEST_DIRECTORY="$CURR_DIR"/../../../t
 DIFF_HIGHLIGHT="$CURR_DIR"/../diff-highlight
 
-CW="$(printf "\033[7m")"	# white
-CR="$(printf "\033[27m")"	# reset
-
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . "$TEST_DIRECTORY"/test-lib.sh
@@ -42,9 +39,9 @@ dh_test () {
 	} >/dev/null &&
 
 	"$DIFF_HIGHLIGHT" <diff.raw >diff.hi &&
-	test_strip_patch_header <diff.hi >diff.act
+	test_strip_patch_header <diff.hi | test_decode_color >diff.act
 	"$DIFF_HIGHLIGHT" <commit.raw >commit.hi &&
-	test_strip_patch_header <commit.hi >commit.act &&
+	test_strip_patch_header <commit.hi | test_decode_color >commit.act &&
 	test_cmp patch.exp diff.act &&
 	test_cmp patch.exp commit.act
 }
@@ -126,8 +123,8 @@ test_expect_success 'diff-highlight highlights the beginning of a line' '
 	dh_test a b <<-EOF
 		@@ -1,3 +1,3 @@
 		 aaa
-		-${CW}b${CR}bb
-		+${CW}0${CR}bb
+		-<REVERSE>b<NOREVERSE>bb
+		+<REVERSE>0<NOREVERSE>bb
 		 ccc
 	EOF
 '
@@ -148,8 +145,8 @@ test_expect_success 'diff-highlight highlights the end of a line' '
 	dh_test a b <<-EOF
 		@@ -1,3 +1,3 @@
 		 aaa
-		-bb${CW}b${CR}
-		+bb${CW}0${CR}
+		-bb<REVERSE>b<NOREVERSE>
+		+bb<REVERSE>0<NOREVERSE>
 		 ccc
 	EOF
 '
@@ -170,8 +167,8 @@ test_expect_success 'diff-highlight highlights the middle of a line' '
 	dh_test a b <<-EOF
 		@@ -1,3 +1,3 @@
 		 aaa
-		-b${CW}b${CR}b
-		+b${CW}0${CR}b
+		-b<REVERSE>b<NOREVERSE>b
+		+b<REVERSE>0<NOREVERSE>b
 		 ccc
 	EOF
 '
@@ -213,8 +210,8 @@ test_expect_failure 'diff-highlight highlights mismatched hunk size' '
 	dh_test a b <<-EOF
 		@@ -1,3 +1,3 @@
 		 aaa
-		-b${CW}b${CR}b
-		+b${CW}0${CR}b
+		-b<REVERSE>b<NOREVERSE>b
+		+b<REVERSE>0<NOREVERSE>b
 		+ccc
 	EOF
 '
@@ -232,8 +229,8 @@ test_expect_success 'diff-highlight treats multibyte utf-8 as a unit' '
 	echo "unic${o_stroke}de" >b &&
 	dh_test a b <<-EOF
 		@@ -1 +1 @@
-		-unic${CW}${o_accent}${CR}de
-		+unic${CW}${o_stroke}${CR}de
+		-unic<REVERSE>${o_accent}<NOREVERSE>de
+		+unic<REVERSE>${o_stroke}<NOREVERSE>de
 	EOF
 '
 
@@ -250,8 +247,8 @@ test_expect_failure 'diff-highlight treats combining code points as a unit' '
 	echo "unico${combine_circum}de" >b &&
 	dh_test a b <<-EOF
 		@@ -1 +1 @@
-		-unic${CW}o${combine_accent}${CR}de
-		+unic${CW}o${combine_circum}${CR}de
+		-unic<REVERSE>o${combine_accent}<NOREVERSE>de
+		+unic<REVERSE>o${combine_circum}<NOREVERSE>de
 	EOF
 '
 
@@ -333,12 +330,12 @@ test_expect_success 'diff-highlight handles --graph with leading dash' '
 	+++ b/file
 	@@ -1,3 +1,3 @@
 	 before
-	-the ${CW}old${CR} line
-	+the ${CW}new${CR} line
+	-the <REVERSE>old<NOREVERSE> line
+	+the <REVERSE>new<NOREVERSE> line
 	 -leading dash
 	EOF
 	git log --graph -p -1 | "$DIFF_HIGHLIGHT" >actual.raw &&
-	trim_graph <actual.raw | sed -n "/^---/,\$p" >actual &&
+	trim_graph <actual.raw | sed -n "/^---/,\$p" | test_decode_color >actual &&
 	test_cmp expect actual
 '
 
