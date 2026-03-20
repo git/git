@@ -36,6 +36,20 @@ hook.<friendly-name>.parallel::
 hook.jobs::
 	Specifies how many hooks can be run simultaneously during parallelized
 	hook execution. If unspecified, defaults to 1 (serial execution).
+	Some hooks always run sequentially regardless of this setting because
+	they operate on shared data and cannot safely be parallelized:
++
+--
+`applypatch-msg`;;
+`prepare-commit-msg`;;
+`commit-msg`;;
+	Receive a commit message file and may rewrite it in place.
+`pre-commit`;;
+`post-checkout`;;
+`push-to-checkout`;;
+`post-commit`;;
+	Access the working tree, index, or repository state.
+--
 +
 This setting has no effect unless all configured hooks for the event have
 `hook.<friendly-name>.parallel` set to `true`.
