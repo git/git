@@ -54,6 +54,35 @@ sub describe_relation {
 	return "(this branch " . join("; ", @desc) . ".)";
 }
 
+sub desc_from_merge {
+	my ($topic) = @_;
+	my ($fh, $accum);
+	open($fh, '-|',
+	     qw(git cat-file commit), "seen^{/^Merge branch '$topic' into }")
+	    or return undef;
+	$accum = undef;
+
+	while (<$fh>) {
+		if (!defined $accum) {
+			$accum = "" if (/^Merge branch '$topic' into /);
+			next;
+		}
+		last if (/^\* /);
+		next if ($accum eq "" && /^\s*$/);
+		$accum .= " $_";
+	}
+	for ($accum) {
+		s/^\s+//s;
+		s/\s*$//s;
+		if ($accum eq "") {
+			$_ = undef;
+		} else {
+			$_ = "\n $_";
+		}
+	}
+	return $accum;
+}
+
 sub forks_from {
 	my ($topic, $fork, $forkee, @overlap) = @_;
 	my %ovl = map { $_ => 1 } (@overlap, @{$topic->{$forkee}{'log'}});
@@ -779,6 +808,10 @@ sub merge_cooking {
 				push @new_topic, $topic;
 				# lazily find the source for a new topic.
 				$current->{$topic}{'src'} = join("\n", get_source($topic));
+				my $summary = desc_from_merge($topic);
+				if (defined $summary) {
+					$current->{$topic}{'desc'} .= "\n$summary";
+				}
 			}
 			next;
 		}
