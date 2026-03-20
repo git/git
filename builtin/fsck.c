@@ -448,15 +448,16 @@ out:
 }
 
 static int fsck_obj_buffer(const struct object_id *oid, enum object_type type,
-			   unsigned long size, void *buffer, int *eaten)
+			   unsigned long size, void *buffer, int *eaten, void *cb_data)
 {
+	struct repository *repo = cb_data;
+	struct object *obj;
+
 	/*
 	 * Note, buffer may be NULL if type is OBJ_BLOB. See
 	 * verify_packfile(), data_valid variable for details.
 	 */
-	struct object *obj;
-	obj = parse_object_buffer(the_repository, oid, type, size, buffer,
-				  eaten);
+	obj = parse_object_buffer(repo, oid, type, size, buffer, eaten);
 	if (!obj) {
 		errors_found |= ERROR_OBJECT;
 		return error(_("%s: object corrupt or missing"),
@@ -464,7 +465,7 @@ static int fsck_obj_buffer(const struct object_id *oid, enum object_type type,
 	}
 	obj->flags &= ~(REACHABLE | SEEN);
 	obj->flags |= HAS_OBJ;
-	return fsck_obj(the_repository, obj, buffer, size);
+	return fsck_obj(repo, obj, buffer, size);
 }
 
 static int default_refs;
@@ -1088,7 +1089,7 @@ int cmd_fsck(int argc,
 			repo_for_each_pack(repo, p) {
 				/* verify gives error messages itself */
 				if (verify_pack(repo,
-						p, fsck_obj_buffer,
+						p, fsck_obj_buffer, repo,
 						progress, count))
 					errors_found |= ERROR_PACK;
 				count += p->num_objects;
