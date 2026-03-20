@@ -182,7 +182,8 @@ void fsck_set_msg_type(struct fsck_options *options,
 	free(to_free);
 }
 
-void fsck_set_msg_types(struct fsck_options *options, const char *values)
+void fsck_set_msg_types(struct fsck_options *options, const char *values,
+			const struct git_hash_algo *algo)
 {
 	char *buf = xstrdup(values), *to_free = buf;
 	int done = 0;
@@ -207,7 +208,7 @@ void fsck_set_msg_types(struct fsck_options *options, const char *values)
 			if (equal == len)
 				die("skiplist requires a path");
 			oidset_parse_file(&options->skip_oids, buf + equal + 1,
-					  the_repository->hash_algo);
+					  algo);
 			buf += len + 1;
 			continue;
 		}
@@ -1404,11 +1405,16 @@ void fsck_options_clear(struct fsck_options *options)
 	kh_clear_oid_map(options->object_names);
 }
 
+struct fsck_options_parse_config_key_data {
+	struct repository *repo;
+	struct fsck_options *options;
+};
+
 static int fsck_options_parse_config_key(const char *var, const char *value,
 					 const struct config_context *ctx,
-					 void *cb)
+					 void *cb_data)
 {
-	struct fsck_options *options = cb;
+	struct fsck_options_parse_config_key_data *data = cb_data;
 	const char *msg_id;
 
 	if (strcmp(var, "fsck.skiplist") == 0) {
@@ -1420,7 +1426,8 @@ static int fsck_options_parse_config_key(const char *var, const char *value,
 			struct strbuf sb = STRBUF_INIT;
 			strbuf_addf(&sb, "skiplist=%s", path);
 			free(path);
-			fsck_set_msg_types(options, sb.buf);
+			fsck_set_msg_types(data->options, sb.buf,
+					   data->repo->hash_algo);
 			strbuf_release(&sb);
 		}
 		return 0;
@@ -1429,17 +1436,21 @@ static int fsck_options_parse_config_key(const char *var, const char *value,
 	if (skip_prefix(var, "fsck.", &msg_id)) {
 		if (!value)
 			return config_error_nonbool(var);
-		fsck_set_msg_type(options, msg_id, value);
+		fsck_set_msg_type(data->options, msg_id, value);
 		return 0;
 	}
 
-	return git_default_config(var, value, ctx, cb);
+	return git_default_config(var, value, ctx, cb_data);
 }
 
 void fsck_options_parse_config(struct fsck_options *options,
 			       struct repository *repo)
 {
-	repo_config(repo, fsck_options_parse_config_key, options);
+	struct fsck_options_parse_config_key_data data = {
+		.repo = repo,
+		.options = options,
+	};
+	repo_config(repo, fsck_options_parse_config_key, &data);
 }
 
 /*

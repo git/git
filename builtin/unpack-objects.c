@@ -649,7 +649,8 @@ int cmd_unpack_objects(int argc,
 			}
 			if (skip_prefix(arg, "--strict=", &arg)) {
 				strict = 1;
-				fsck_set_msg_types(&fsck_options, arg);
+				fsck_set_msg_types(&fsck_options, arg,
+						   the_hash_algo);
 				continue;
 			}
 			if (skip_prefix(arg, "--pack_header=", &arg)) {

@@ -118,7 +118,8 @@ void fsck_set_msg_type_from_ids(struct fsck_options *options,
 				enum fsck_msg_type msg_type);
 void fsck_set_msg_type(struct fsck_options *options,
 		       const char *msg_id, const char *msg_type);
-void fsck_set_msg_types(struct fsck_options *options, const char *values);
+void fsck_set_msg_types(struct fsck_options *options, const char *values,
+			const struct git_hash_algo *algo);
 int is_valid_msg_type(const char *msg_id, const char *msg_type);
 
 /*
