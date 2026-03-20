@@ -100,8 +100,6 @@ static void update_candidates(struct disambiguate_state *ds, const struct object
 	/* otherwise, current can be discarded and candidate is still good */
 }
 
-static int match_hash(unsigned, const unsigned char *, const unsigned char *);
-
 static int match_prefix(const struct object_id *oid, struct object_info *oi UNUSED, void *arg)
 {
 	struct disambiguate_state *ds = arg;
@@ -122,103 +120,25 @@ static void find_short_object_filename(struct disambiguate_state *ds)
 		odb_source_loose_for_each_object(source, NULL, match_prefix, ds, &opts);
 }
 
-static int match_hash(unsigned len, const unsigned char *a, const unsigned char *b)
-{
-	do {
-		if (*a != *b)
-			return 0;
-		a++;
-		b++;
-		len -= 2;
-	} while (len > 1);
-	if (len)
-		if ((*a ^ *b) & 0xf0)
-			return 0;
-	return 1;
-}
-
-static void unique_in_midx(struct multi_pack_index *m,
-			   struct disambiguate_state *ds)
-{
-	for (; m; m = m->base_midx) {
-		uint32_t num, i, first = 0;
-		const struct object_id *current = NULL;
-		int len = ds->len > ds->repo->hash_algo->hexsz ?
-			ds->repo->hash_algo->hexsz : ds->len;
-
-		if (!m->num_objects)
-			continue;
-
-		num = m->num_objects + m->num_objects_in_base;
-
-		bsearch_one_midx(&ds->bin_pfx, m, &first);
-
-		/*
-		 * At this point, "first" is the location of the lowest
-		 * object with an object name that could match
-		 * "bin_pfx".  See if we have 0, 1 or more objects that
-		 * actually match(es).
-		 */
-		for (i = first; i < num && !ds->ambiguous; i++) {
-			struct object_id oid;
-			current = nth_midxed_object_oid(&oid, m, i);
-			if (!match_hash(len, ds->bin_pfx.hash, current->hash))
-				break;
-			update_candidates(ds, current);
-		}
-	}
-}
-
-static void unique_in_pack(struct packed_git *p,
-			   struct disambiguate_state *ds)
-{
-	uint32_t num, i, first = 0;
-	int len = ds->len > ds->repo->hash_algo->hexsz ?
-		ds->repo->hash_algo->hexsz : ds->len;
-
-	if (p->multi_pack_index)
-		return;
-
-	if (open_pack_index(p) || !p->num_objects)
-		return;
-
-	num = p->num_objects;
-	bsearch_pack(&ds->bin_pfx, p, &first);
-
-	/*
-	 * At this point, "first" is the location of the lowest object
-	 * with an object name that could match "bin_pfx".  See if we have
-	 * 0, 1 or more objects that actually match(es).
-	 */
-	for (i = first; i < num && !ds->ambiguous; i++) {
-		struct object_id oid;
-		nth_packed_object_id(&oid, p, i);
-		if (!match_hash(len, ds->bin_pfx.hash, oid.hash))
-			break;
-		update_candidates(ds, &oid);
-	}
-}
-
 static void find_short_packed_object(struct disambiguate_state *ds)
 {
+	struct odb_for_each_object_options opts = {
+		.prefix = &ds->bin_pfx,
+		.prefix_hex_len = ds->len,
+	};
 	struct odb_source *source;
-	struct packed_git *p;
 
 	/* Skip, unless oids from the storage hash algorithm are wanted */
 	if (ds->bin_pfx.algo && (&hash_algos[ds->bin_pfx.algo] != ds->repo->hash_algo))
 		return;
 
 	odb_prepare_alternates(ds->repo->objects);
-	for (source = ds->repo->objects->sources; source && !ds->ambiguous; source = source->next) {
-		struct multi_pack_index *m = get_multi_pack_index(source);
-		if (m)
-			unique_in_midx(m, ds);
-	}
+	for (source = ds->repo->objects->sources; source; source = source->next) {
+		struct odb_source_files *files = odb_source_files_downcast(source);
 
-	repo_for_each_pack(ds->repo, p) {
+		packfile_store_for_each_object(files->packed, NULL, match_prefix, ds, &opts);
 		if (ds->ambiguous)
 			break;
-		unique_in_pack(p, ds);
 	}
 }
 
