@@ -1,5 +1,6 @@
 #ifndef HOOK_H
 #define HOOK_H
+#include "config.h"
 #include "strvec.h"
 #include "run-command.h"
 #include "string-list.h"
@@ -29,6 +30,7 @@ struct hook {
 		struct {
 			const char *friendly_name;
 			const char *command;
+			enum config_scope scope;
 		} configured;
 	} u;
 

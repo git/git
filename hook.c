@@ -114,11 +114,11 @@ static void list_hooks_add_default(struct repository *r, const char *hookname,
 
 /*
  * Cache entry stored as the .util pointer of string_list items inside the
- * hook config cache. For now carries only the command for the hook. Next
- * commits will add more data.
+ * hook config cache.
  */
 struct hook_config_cache_entry {
 	char *command;
+	enum config_scope scope;
 };
 
 /*
@@ -135,7 +135,7 @@ struct hook_all_config_cb {
 
 /* repo_config() callback that collects all hook.* configuration in one pass. */
 static int hook_config_lookup_all(const char *key, const char *value,
-				  const struct config_context *ctx UNUSED,
+				  const struct config_context *ctx,
 				  void *cb_data)
 {
 	struct hook_all_config_cb *data = cb_data;
@@ -172,7 +172,19 @@ static int hook_config_lookup_all(const char *key, const char *value,
 
 			/* Re-insert if necessary to preserve last-seen order. */
 			unsorted_string_list_remove(hooks, hook_name, 0);
-			string_list_append(hooks, hook_name);
+
+			if (!ctx->kvi)
+				BUG("hook config callback called without key-value info");
+
+			/*
+			 * Stash the config scope in the util pointer for
+			 * later retrieval in build_hook_config_map(). This
+			 * intermediate struct is transient and never leaves
+			 * that function, so we pack the enum value into the
+			 * pointer rather than heap-allocating a wrapper.
+			 */
+			string_list_append(hooks, hook_name)->util =
+				(void *)(uintptr_t)ctx->kvi->scope;
 		}
 	} else if (!strcmp(subkey, "command")) {
 		/* Store command overwriting the old value */
@@ -250,6 +262,8 @@ static void build_hook_config_map(struct repository *r, struct strmap *cache)
 
 		for (size_t i = 0; i < hook_names->nr; i++) {
 			const char *hname = hook_names->items[i].string;
+			enum config_scope scope =
+				(enum config_scope)(uintptr_t)hook_names->items[i].util;
 			struct hook_config_cache_entry *entry;
 			char *command;
 
@@ -267,6 +281,7 @@ static void build_hook_config_map(struct repository *r, struct strmap *cache)
 			/* util stores a cache entry; owned by the cache. */
 			CALLOC_ARRAY(entry, 1);
 			entry->command = xstrdup(command);
+			entry->scope = scope;
 			string_list_append(hooks, hname)->util = entry;
 		}
 
@@ -347,6 +362,7 @@ static void list_hooks_add_configured(struct repository *r,
 		hook->kind = HOOK_CONFIGURED;
 		hook->u.configured.friendly_name = xstrdup(friendly_name);
 		hook->u.configured.command = xstrdup(entry->command);
+		hook->u.configured.scope = entry->scope;
 
 		string_list_append(list, friendly_name)->util = hook;
 	}
