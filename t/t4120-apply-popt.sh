@@ -23,6 +23,47 @@ test_expect_success setup '
 	rmdir süb
 '
 
+test_expect_success 'git apply -p 1 patch' '
+	cat >patch <<-\EOF &&
+	From 90ad11d5b2d437e82d4d992f72fb44c2227798b5 Mon Sep 17 00:00:00 2001
+	From: Mroik <mroik@delayed.space>
+	Date: Mon, 9 Mar 2026 23:25:00 +0100
+	Subject: [PATCH] Test
+
+	---
+	 t/test/test | 0
+	 1 file changed, 0 insertions(+), 0 deletions(-)
+	 create mode 100644 t/test/test
+
+	diff --git a/t/test/test b/t/test/test
+	new file mode 100644
+	index 0000000000..e69de29bb2
+	--
+	2.53.0.851.ga537e3e6e9
+	EOF
+	test_when_finished "rm -rf t" &&
+	git apply -p 1 patch &&
+	test_path_is_dir t
+'
+
+test_expect_success 'apply fails due to non-num -p' '
+	test_when_finished "rm -rf t test err" &&
+	test_must_fail git apply -p malformed patch 2>err &&
+	test_grep "option -p expects a non-negative integer" err
+'
+
+test_expect_success 'apply fails due to trailing non-digit in -p' '
+	test_when_finished "rm -rf t test err" &&
+	test_must_fail git apply -p 2q patch 2>err &&
+	test_grep "option -p expects a non-negative integer" err
+'
+
+test_expect_success 'apply fails due to negative number in -p' '
+	test_when_finished "rm -rf t test err patch" &&
+	test_must_fail git apply -p -1 patch 2> err &&
+	test_grep "option -p expects a non-negative integer" err
+'
+
 test_expect_success 'apply git diff with -p2' '
 	cp file1.saved file1 &&
 	git apply -p2 patch.file
