@@ -52,7 +52,7 @@ const char *find_hook(struct repository *r, const char *name)
 	return path.buf;
 }
 
-static void hook_clear(struct hook *h, cb_data_free_fn cb_data_free)
+static void hook_clear(struct hook *h, hook_data_free_fn cb_data_free)
 {
 	if (!h)
 		return;
@@ -70,7 +70,7 @@ static void hook_clear(struct hook *h, cb_data_free_fn cb_data_free)
 	free(h);
 }
 
-void hook_list_clear(struct string_list *hooks, cb_data_free_fn cb_data_free)
+void hook_list_clear(struct string_list *hooks, hook_data_free_fn cb_data_free)
 {
 	struct string_list_item *item;
 
