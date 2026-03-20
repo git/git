@@ -488,6 +488,13 @@ typedef int (*odb_for_each_object_cb)(const struct object_id *oid,
 struct odb_for_each_object_options {
 	/* A bitfield of `odb_for_each_object_flags`. */
 	enum odb_for_each_object_flags flags;
+
+	/*
+	 * If set, only iterate through objects whose first `prefix_hex_len`
+	 * hex characters matches the given prefix.
+	 */
+	const struct object_id *prefix;
+	size_t prefix_hex_len;
 };
 
 /*

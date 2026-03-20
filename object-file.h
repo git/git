@@ -75,13 +75,6 @@ int odb_source_loose_write_stream(struct odb_source *source,
 				  struct object_id *oid);
 
 /*
- * Populate and return the loose object cache array corresponding to the
- * given object ID.
- */
-struct oidtree *odb_source_loose_cache(struct odb_source *source,
-				       const struct object_id *oid);
-
-/*
  * Put in `buf` the name of the file in the local object database that
  * would be used to store a loose object with the specified oid.
  */

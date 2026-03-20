@@ -33,6 +33,9 @@
 /* The maximum size for an object header. */
 #define MAX_HEADER_LEN 32
 
+static struct oidtree *odb_source_loose_cache(struct odb_source *source,
+					      const struct object_id *oid);
+
 static int get_conv_flags(unsigned flags)
 {
 	if (flags & INDEX_RENORMALIZE)
@@ -1845,6 +1848,23 @@ static int for_each_object_wrapper_cb(const struct object_id *oid,
 	}
 }
 
+static int for_each_prefixed_object_wrapper_cb(const struct object_id *oid,
+					       void *cb_data)
+{
+	struct for_each_object_wrapper_data *data = cb_data;
+	if (data->request) {
+		struct object_info oi = *data->request;
+
+		if (odb_source_loose_read_object_info(data->source,
+						      oid, &oi, 0) < 0)
+			return -1;
+
+		return data->cb(oid, &oi, data->cb_data);
+	} else {
+		return data->cb(oid, NULL, data->cb_data);
+	}
+}
+
 int odb_source_loose_for_each_object(struct odb_source *source,
 				     const struct object_info *request,
 				     odb_for_each_object_cb cb,
@@ -1863,6 +1883,11 @@ int odb_source_loose_for_each_object(struct odb_source *source,
 		return 0;
 	if ((opts->flags & ODB_FOR_EACH_OBJECT_LOCAL_ONLY) && !source->local)
 		return 0;
+
+	if (opts->prefix)
+		return oidtree_each(odb_source_loose_cache(source, opts->prefix),
+				    opts->prefix, opts->prefix_hex_len,
+				    for_each_prefixed_object_wrapper_cb, &data);
 
 	return for_each_loose_file_in_source(source, for_each_object_wrapper_cb,
 					     NULL, NULL, &data);
@@ -1935,8 +1960,8 @@ static int append_loose_object(const struct object_id *oid,
 	return 0;
 }
 
-struct oidtree *odb_source_loose_cache(struct odb_source *source,
-				       const struct object_id *oid)
+static struct oidtree *odb_source_loose_cache(struct odb_source *source,
+					      const struct object_id *oid)
 {
 	struct odb_source_files *files = odb_source_files_downcast(source);
 	int subdir_nr = oid->hash[0];

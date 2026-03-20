@@ -16,7 +16,6 @@
 #include "remote.h"
 #include "dir.h"
 #include "oid-array.h"
-#include "oidtree.h"
 #include "packfile.h"
 #include "pretty.h"
 #include "object-file.h"
@@ -103,7 +102,7 @@ static void update_candidates(struct disambiguate_state *ds, const struct object
 
 static int match_hash(unsigned, const unsigned char *, const unsigned char *);
 
-static int match_prefix(const struct object_id *oid, void *arg)
+static int match_prefix(const struct object_id *oid, struct object_info *oi UNUSED, void *arg)
 {
 	struct disambiguate_state *ds = arg;
 	/* no need to call match_hash, oidtree_each did prefix match */
@@ -113,11 +112,14 @@ static int match_prefix(const struct object_id *oid, void *arg)
 
 static void find_short_object_filename(struct disambiguate_state *ds)
 {
+	struct odb_for_each_object_options opts = {
+		.prefix = &ds->bin_pfx,
+		.prefix_hex_len = ds->len,
+	};
 	struct odb_source *source;
 
 	for (source = ds->repo->objects->sources; source && !ds->ambiguous; source = source->next)
-		oidtree_each(odb_source_loose_cache(source, &ds->bin_pfx),
-				&ds->bin_pfx, ds->len, match_prefix, ds);
+		odb_source_loose_for_each_object(source, NULL, match_prefix, ds, &opts);
 }
 
 static int match_hash(unsigned len, const unsigned char *a, const unsigned char *b)
