@@ -917,6 +917,41 @@ int odb_for_each_object(struct object_database *odb,
 	return 0;
 }
 
+int odb_count_objects(struct object_database *odb,
+		      enum odb_count_objects_flags flags,
+		      unsigned long *out)
+{
+	struct odb_source *source;
+	unsigned long count = 0;
+	int ret;
+
+	if (odb->object_count_valid && odb->object_count_flags == flags) {
+		*out = odb->object_count;
+		return 0;
+	}
+
+	odb_prepare_alternates(odb);
+	for (source = odb->sources; source; source = source->next) {
+		unsigned long c;
+
+		ret = odb_source_count_objects(source, flags, &c);
+		if (ret < 0)
+			goto out;
+
+		count += c;
+	}
+
+	odb->object_count = count;
+	odb->object_count_valid = 1;
+	odb->object_count_flags = flags;
+
+	*out = count;
+	ret = 0;
+
+out:
+	return ret;
+}
+
 void odb_assert_oid_type(struct object_database *odb,
 			 const struct object_id *oid, enum object_type expect)
 {
@@ -1030,7 +1065,7 @@ void odb_reprepare(struct object_database *o)
 	for (source = o->sources; source; source = source->next)
 		odb_source_reprepare(source);
 
-	o->approximate_object_count_valid = 0;
+	o->object_count_valid = 0;
 
 	obj_read_unlock();
 }
