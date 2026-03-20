@@ -12,7 +12,6 @@
 #include "object-name.h"
 #include "pager.h"
 #include "parse-options.h"
-#include "prio-queue.h"
 #include "hash-lookup.h"
 #include "commit-slab.h"
 #include "commit-graph.h"
@@ -178,7 +177,7 @@ static void name_rev(struct commit *start_commit,
 		const char *tip_name, timestamp_t taggerdate,
 		int from_tag, int deref, struct mem_pool *string_pool)
 {
-	struct prio_queue queue;
+	struct commit_stack stack = COMMIT_STACK_INIT;
 	struct commit *commit;
 	struct commit_stack parents_to_queue = COMMIT_STACK_INIT;
 	struct rev_name *start_name;
@@ -197,10 +196,9 @@ static void name_rev(struct commit *start_commit,
 	else
 		start_name->tip_name = mem_pool_strdup(string_pool, tip_name);
 
-	memset(&queue, 0, sizeof(queue)); /* Use the prio_queue as LIFO */
-	prio_queue_put(&queue, start_commit);
+	commit_stack_push(&stack, start_commit);
 
-	while ((commit = prio_queue_get(&queue))) {
+	while ((commit = commit_stack_pop(&stack))) {
 		struct rev_name *name = get_commit_rev_name(commit);
 		struct commit_list *parents;
 		int parent_number = 1;
@@ -241,13 +239,13 @@ static void name_rev(struct commit *start_commit,
 			}
 		}
 
-		/* The first parent must come out first from the prio_queue */
+		/* The first parent must come out first from the stack */
 		while (parents_to_queue.nr)
-			prio_queue_put(&queue,
-				       commit_stack_pop(&parents_to_queue));
+			commit_stack_push(&stack,
+					  commit_stack_pop(&parents_to_queue));
 	}
 
-	clear_prio_queue(&queue);
+	commit_stack_clear(&stack);
 	commit_stack_clear(&parents_to_queue);
 }
 
