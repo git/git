@@ -448,8 +448,8 @@ static int collect_ambiguous(const struct object_id *oid, void *data)
 	return 0;
 }
 
-static int repo_collect_ambiguous(struct repository *r UNUSED,
-				  const struct object_id *oid,
+static int repo_collect_ambiguous(const struct object_id *oid,
+				  struct object_info *oi UNUSED,
 				  void *data)
 {
 	return collect_ambiguous(oid, data);
@@ -586,18 +586,19 @@ int repo_for_each_abbrev(struct repository *r, const char *prefix,
 			 const struct git_hash_algo *algo,
 			 each_abbrev_fn fn, void *cb_data)
 {
+	struct object_id prefix_oid = { 0 };
+	struct odb_for_each_object_options opts = {
+		.prefix = &prefix_oid,
+		.prefix_hex_len = strlen(prefix),
+	};
 	struct oid_array collect = OID_ARRAY_INIT;
-	struct disambiguate_state ds;
 	int ret;
 
-	if (init_object_disambiguation(r, prefix, strlen(prefix), algo, &ds) < 0)
+	if (parse_oid_prefix(prefix, opts.prefix_hex_len, algo, NULL, &prefix_oid) < 0)
 		return -1;
 
-	ds.always_call_fn = 1;
-	ds.fn = repo_collect_ambiguous;
-	ds.cb_data = &collect;
-	find_short_object_filename(&ds);
-	find_short_packed_object(&ds);
+	if (odb_for_each_object_ext(r->objects, NULL, repo_collect_ambiguous, &collect, &opts) < 0)
+		return -1;
 
 	ret = oid_array_for_each_unique(&collect, fn, cb_data);
 	oid_array_clear(&collect);
