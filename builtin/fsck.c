@@ -573,11 +573,12 @@ static int snapshot_ref(const struct reference *ref, void *cb_data)
 	return 0;
 }
 
-static int fsck_handle_ref(const struct reference *ref, void *cb_data UNUSED)
+static int fsck_handle_ref(const struct reference *ref, void *cb_data)
 {
+	struct repository *repo = cb_data;
 	struct object *obj;
 
-	obj = parse_object(the_repository, ref->oid);
+	obj = parse_object(repo, ref->oid);
 	obj->flags |= USED;
 	fsck_put_object_name(&fsck_walk_options,
 			     ref->oid, "%s", ref->name);
@@ -664,7 +665,7 @@ static void free_snapshot_refs(struct snapshot *snap)
 	free(snap->ref);
 }
 
-static void process_refs(struct snapshot *snap)
+static void process_refs(struct repository *repo, struct snapshot *snap)
 {
 	struct worktree **worktrees, **p;
 
@@ -673,7 +674,7 @@ static void process_refs(struct snapshot *snap)
 			.name = snap->ref[i].refname,
 			.oid = &snap->ref[i].oid,
 		};
-		fsck_handle_ref(&ref, NULL);
+		fsck_handle_ref(&ref, repo);
 	}
 
 	if (include_reflogs) {
@@ -1092,7 +1093,7 @@ int cmd_fsck(int argc,
 	}
 
 	/* Process the snapshotted refs and the reflogs. */
-	process_refs(&snap);
+	process_refs(repo, &snap);
 
 	/* If not given any explicit objects, process index files too. */
 	if (!argc)
