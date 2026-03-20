@@ -120,28 +120,6 @@ static void find_short_object_filename(struct disambiguate_state *ds)
 		odb_source_loose_for_each_object(source, NULL, match_prefix, ds, &opts);
 }
 
-static void find_short_packed_object(struct disambiguate_state *ds)
-{
-	struct odb_for_each_object_options opts = {
-		.prefix = &ds->bin_pfx,
-		.prefix_hex_len = ds->len,
-	};
-	struct odb_source *source;
-
-	/* Skip, unless oids from the storage hash algorithm are wanted */
-	if (ds->bin_pfx.algo && (&hash_algos[ds->bin_pfx.algo] != ds->repo->hash_algo))
-		return;
-
-	odb_prepare_alternates(ds->repo->objects);
-	for (source = ds->repo->objects->sources; source; source = source->next) {
-		struct odb_source_files *files = odb_source_files_downcast(source);
-
-		packfile_store_for_each_object(files->packed, NULL, match_prefix, ds, &opts);
-		if (ds->ambiguous)
-			break;
-	}
-}
-
 static int finish_object_disambiguation(struct disambiguate_state *ds,
 					struct object_id *oid)
 {
@@ -499,6 +477,7 @@ static enum get_oid_result get_short_oid(struct repository *r,
 					 struct object_id *oid,
 					 unsigned flags)
 {
+	struct odb_for_each_object_options opts = { 0 };
 	int status;
 	struct disambiguate_state ds;
 	int quietly = !!(flags & GET_OID_QUIETLY);
@@ -526,8 +505,10 @@ static enum get_oid_result get_short_oid(struct repository *r,
 	else
 		ds.fn = default_disambiguate_hint;
 
-	find_short_object_filename(&ds);
-	find_short_packed_object(&ds);
+	opts.prefix = &ds.bin_pfx;
+	opts.prefix_hex_len = ds.len;
+
+	odb_for_each_object_ext(r->objects, NULL, match_prefix, &ds, &opts);
 	status = finish_object_disambiguation(&ds, oid);
 
 	/*
@@ -537,8 +518,7 @@ static enum get_oid_result get_short_oid(struct repository *r,
 	 */
 	if (status == MISSING_OBJECT) {
 		odb_reprepare(r->objects);
-		find_short_object_filename(&ds);
-		find_short_packed_object(&ds);
+		odb_for_each_object_ext(r->objects, NULL, match_prefix, &ds, &opts);
 		status = finish_object_disambiguation(&ds, oid);
 	}
 
