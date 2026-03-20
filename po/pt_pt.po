@@ -4,7 +4,7 @@
 # Vasco Almeida <vascomalmeida@sapo.pt>, 2016.
 msgid ""
 msgstr ""
-"Project-Id-Version: gitk\n"
+"Project-Id-Version: Gitk\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-04-15 16:52+0000\n"
 "PO-Revision-Date: 2016-05-06 15:35+0000\n"

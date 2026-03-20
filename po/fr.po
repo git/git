@@ -6,7 +6,7 @@
 # Jean-Noël Avila <jn.avila@free.fr>
 msgid ""
 msgstr ""
-"Project-Id-Version: gitk\n"
+"Project-Id-Version: Gitk\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-01-22 22:04+0100\n"
 "PO-Revision-Date: 2016-01-22 23:28+0100\n"

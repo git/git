@@ -4,7 +4,7 @@
 # YanKe <imyanke@163.com>, 2017
 msgid ""
 msgstr ""
-"Project-Id-Version: Git Chinese Localization Project\n"
+"Project-Id-Version: Gitk Chinese Localization Project\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2017-02-28 23:11+0800\n"
 "PO-Revision-Date: 2017-03-11 02:27+0800\n"
