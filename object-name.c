@@ -51,27 +51,31 @@ struct disambiguate_state {
 	unsigned always_call_fn:1;
 };
 
-static void update_candidates(struct disambiguate_state *ds, const struct object_id *current)
+static int update_disambiguate_state(const struct object_id *current,
+				     struct object_info *oi UNUSED,
+				     void *cb_data)
 {
+	struct disambiguate_state *ds = cb_data;
+
 	/* The hash algorithm of current has already been filtered */
 	if (ds->always_call_fn) {
 		ds->ambiguous = ds->fn(ds->repo, current, ds->cb_data) ? 1 : 0;
-		return;
+		return ds->ambiguous;
 	}
 	if (!ds->candidate_exists) {
 		/* this is the first candidate */
 		oidcpy(&ds->candidate, current);
 		ds->candidate_exists = 1;
-		return;
+		return 0;
 	} else if (oideq(&ds->candidate, current)) {
 		/* the same as what we already have seen */
-		return;
+		return 0;
 	}
 
 	if (!ds->fn) {
 		/* cannot disambiguate between ds->candidate and current */
 		ds->ambiguous = 1;
-		return;
+		return ds->ambiguous;
 	}
 
 	if (!ds->candidate_checked) {
@@ -84,7 +88,7 @@ static void update_candidates(struct disambiguate_state *ds, const struct object
 		/* discard the candidate; we know it does not satisfy fn */
 		oidcpy(&ds->candidate, current);
 		ds->candidate_checked = 0;
-		return;
+		return 0;
 	}
 
 	/* if we reach this point, we know ds->candidate satisfies fn */
@@ -95,17 +99,12 @@ static void update_candidates(struct disambiguate_state *ds, const struct object
 		 */
 		ds->candidate_ok = 0;
 		ds->ambiguous = 1;
+		return ds->ambiguous;
 	}
 
 	/* otherwise, current can be discarded and candidate is still good */
-}
 
-static int match_prefix(const struct object_id *oid, struct object_info *oi UNUSED, void *arg)
-{
-	struct disambiguate_state *ds = arg;
-	/* no need to call match_hash, oidtree_each did prefix match */
-	update_candidates(ds, oid);
-	return ds->ambiguous;
+	return 0;
 }
 
 static void find_short_object_filename(struct disambiguate_state *ds)
@@ -117,7 +116,8 @@ static void find_short_object_filename(struct disambiguate_state *ds)
 	struct odb_source *source;
 
 	for (source = ds->repo->objects->sources; source && !ds->ambiguous; source = source->next)
-		odb_source_loose_for_each_object(source, NULL, match_prefix, ds, &opts);
+		odb_source_loose_for_each_object(source, NULL, update_disambiguate_state,
+						 ds, &opts);
 }
 
 static int finish_object_disambiguation(struct disambiguate_state *ds,
@@ -508,7 +508,8 @@ static enum get_oid_result get_short_oid(struct repository *r,
 	opts.prefix = &ds.bin_pfx;
 	opts.prefix_hex_len = ds.len;
 
-	odb_for_each_object_ext(r->objects, NULL, match_prefix, &ds, &opts);
+	odb_for_each_object_ext(r->objects, NULL, update_disambiguate_state,
+				&ds, &opts);
 	status = finish_object_disambiguation(&ds, oid);
 
 	/*
@@ -518,7 +519,8 @@ static enum get_oid_result get_short_oid(struct repository *r,
 	 */
 	if (status == MISSING_OBJECT) {
 		odb_reprepare(r->objects);
-		odb_for_each_object_ext(r->objects, NULL, match_prefix, &ds, &opts);
+		odb_for_each_object_ext(r->objects, NULL, update_disambiguate_state,
+					&ds, &opts);
 		status = finish_object_disambiguation(&ds, oid);
 	}
 
