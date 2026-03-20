@@ -585,32 +585,16 @@ static unsigned msb(unsigned long val)
 struct min_abbrev_data {
 	unsigned int init_len;
 	unsigned int cur_len;
-	char *hex;
 	struct repository *repo;
 	const struct object_id *oid;
 };
 
-static inline char get_hex_char_from_oid(const struct object_id *oid,
-					 unsigned int pos)
-{
-	static const char hex[] = "0123456789abcdef";
-
-	if ((pos & 1) == 0)
-		return hex[oid->hash[pos >> 1] >> 4];
-	else
-		return hex[oid->hash[pos >> 1] & 0xf];
-}
-
 static int extend_abbrev_len(const struct object_id *oid,
 			     struct min_abbrev_data *mad)
 {
-	unsigned int i = mad->init_len;
-	while (mad->hex[i] && mad->hex[i] == get_hex_char_from_oid(oid, i))
-		i++;
-
-	if (mad->hex[i] && i >= mad->cur_len)
-		mad->cur_len = i + 1;
-
+	unsigned len = oid_common_prefix_hexlen(oid, mad->oid);
+	if (len != hash_algos[oid->algo].hexsz && len >= mad->cur_len)
+		mad->cur_len = len + 1;
 	return 0;
 }
 
@@ -785,7 +769,6 @@ int repo_find_unique_abbrev_r(struct repository *r, char *hex,
 	mad.repo = r;
 	mad.init_len = len;
 	mad.cur_len = len;
-	mad.hex = hex;
 	mad.oid = oid;
 
 	find_abbrev_len_packed(&mad);
