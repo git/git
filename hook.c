@@ -116,7 +116,7 @@ static void list_hooks_add_default(struct repository *r, const char *hookname,
  * Callback struct to collect all hook.* keys in a single config pass.
  * commands: friendly-name to command map.
  * event_hooks: event-name to list of friendly-names map.
- * disabled_hooks: set of friendly-names with hook.name.enabled = false.
+ * disabled_hooks: set of friendly-names with hook.<friendly-name>.enabled = false.
  */
 struct hook_all_config_cb {
 	struct strmap commands;
