@@ -1,4 +1,3 @@
-#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "gettext.h"
 #include "hex.h"
@@ -66,13 +65,14 @@ static const char *describe_object(const struct object_id *oid)
 	return fsck_describe_object(&fsck_walk_options, oid);
 }
 
-static const char *printable_type(const struct object_id *oid,
+static const char *printable_type(struct repository *repo,
+				  const struct object_id *oid,
 				  enum object_type type)
 {
 	const char *ret;
 
 	if (type == OBJ_NONE)
-		type = odb_read_object_info(the_repository->objects,
+		type = odb_read_object_info(repo->objects,
 					    oid, NULL);
 
 	ret = type_name(type);
@@ -82,12 +82,12 @@ static const char *printable_type(const struct object_id *oid,
 	return ret;
 }
 
-static int objerror(struct object *obj, const char *err)
+static int objerror(struct repository *repo, struct object *obj, const char *err)
 {
 	errors_found |= ERROR_OBJECT;
 	/* TRANSLATORS: e.g. error in tree 01bfda: <more explanation> */
 	fprintf_ln(stderr, _("error in %s %s: %s"),
-		   printable_type(&obj->oid, obj->type),
+		   printable_type(repo, &obj->oid, obj->type),
 		   describe_object(&obj->oid), err);
 	return -1;
 }
@@ -106,13 +106,13 @@ static int fsck_objects_error_func(struct fsck_options *o UNUSED,
 	case FSCK_WARN:
 		/* TRANSLATORS: e.g. warning in tree 01bfda: <more explanation> */
 		fprintf_ln(stderr, _("warning in %s %s: %s"),
-			   printable_type(oid, object_type),
+			   printable_type(report->repo, oid, object_type),
 			   describe_object(oid), message);
 		return 0;
 	case FSCK_ERROR:
 		/* TRANSLATORS: e.g. error in tree 01bfda: <more explanation> */
 		fprintf_ln(stderr, _("error in %s %s: %s"),
-			   printable_type(oid, object_type),
+			   printable_type(report->repo, oid, object_type),
 			   describe_object(oid), message);
 		return 1;
 	default:
@@ -123,10 +123,16 @@ static int fsck_objects_error_func(struct fsck_options *o UNUSED,
 
 static struct object_array pending;
 
+struct mark_object_data {
+	struct repository *repo;
+	struct object *parent;
+};
+
 static int mark_object(struct object *obj, enum object_type type,
-		       void *data, struct fsck_options *options UNUSED)
+		       void *cb_data, struct fsck_options *options UNUSED)
 {
-	struct object *parent = data;
+	struct mark_object_data *data = cb_data;
+	struct object *parent = data->parent;
 
 	/*
 	 * The only case data is NULL or type is OBJ_ANY is when
@@ -136,7 +142,7 @@ static int mark_object(struct object *obj, enum object_type type,
 	if (!obj) {
 		/* ... these references to parent->fld are safe here */
 		printf_ln(_("broken link from %7s %s"),
-			  printable_type(&parent->oid, parent->type),
+			  printable_type(data->repo, &parent->oid, parent->type),
 			  describe_object(&parent->oid));
 		printf_ln(_("broken link from %7s %s"),
 			  (type == OBJ_ANY ? _("unknown") : type_name(type)),
@@ -147,13 +153,13 @@ static int mark_object(struct object *obj, enum object_type type,
 
 	if (type != OBJ_ANY && obj->type != type)
 		/* ... and the reference to parent is safe here */
-		objerror(parent, _("wrong object type in link"));
+		objerror(data->repo, parent, _("wrong object type in link"));
 
 	if (obj->flags & REACHABLE)
 		return 0;
 	obj->flags |= REACHABLE;
 
-	if (is_promisor_object(the_repository, &obj->oid))
+	if (is_promisor_object(data->repo, &obj->oid))
 		/*
 		 * Further recursion does not need to be performed on this
 		 * object since it is a promisor object (so it does not need to
@@ -162,13 +168,13 @@ static int mark_object(struct object *obj, enum object_type type,
 		return 0;
 
 	if (!(obj->flags & HAS_OBJ)) {
-		if (parent && !odb_has_object(the_repository->objects, &obj->oid,
+		if (parent && !odb_has_object(data->repo->objects, &obj->oid,
 					      HAS_OBJECT_RECHECK_PACKED)) {
 			printf_ln(_("broken link from %7s %s\n"
 				    "              to %7s %s"),
-				  printable_type(&parent->oid, parent->type),
+				  printable_type(data->repo, &parent->oid, parent->type),
 				  describe_object(&parent->oid),
-				  printable_type(&obj->oid, obj->type),
+				  printable_type(data->repo, &obj->oid, obj->type),
 				  describe_object(&obj->oid));
 			errors_found |= ERROR_REACHABLE;
 		}
@@ -179,14 +185,21 @@ static int mark_object(struct object *obj, enum object_type type,
 	return 0;
 }
 
-static void mark_object_reachable(struct object *obj)
+static void mark_object_reachable(struct repository *repo, struct object *obj)
 {
-	mark_object(obj, OBJ_ANY, NULL, NULL);
+	struct mark_object_data data = {
+		.repo = repo,
+	};
+	mark_object(obj, OBJ_ANY, &data, NULL);
 }
 
-static int traverse_one_object(struct object *obj)
+static int traverse_one_object(struct repository *repo, struct object *obj)
 {
-	int result = fsck_walk(obj, obj, &fsck_walk_options);
+	struct mark_object_data data = {
+		.repo = repo,
+		.parent = obj,
+	};
+	int result = fsck_walk(repo, obj, &data, &fsck_walk_options);
 
 	if (obj->type == OBJ_TREE) {
 		struct tree *tree = (struct tree *)obj;
@@ -195,16 +208,16 @@ static int traverse_one_object(struct object *obj)
 	return result;
 }
 
-static int traverse_reachable(void)
+static int traverse_reachable(struct repository *repo)
 {
 	struct progress *progress = NULL;
 	unsigned int nr = 0;
 	int result = 0;
 	if (show_progress)
-		progress = start_delayed_progress(the_repository,
+		progress = start_delayed_progress(repo,
 						  _("Checking connectivity"), 0);
 	while (pending.nr) {
-		result |= traverse_one_object(object_array_pop(&pending));
+		result |= traverse_one_object(repo, object_array_pop(&pending));
 		display_progress(progress, ++nr);
 	}
 	stop_progress(&progress);
@@ -222,10 +235,11 @@ static int mark_used(struct object *obj, enum object_type type UNUSED,
 
 static int mark_unreachable_referents(const struct object_id *oid,
 				      struct object_info *oi UNUSED,
-				      void *data UNUSED)
+				      void *data)
 {
+	struct repository *repo = data;
 	struct fsck_options options = FSCK_OPTIONS_DEFAULT;
-	struct object *obj = lookup_object(the_repository, oid);
+	struct object *obj = lookup_object(repo, oid);
 
 	if (!obj || !(obj->flags & HAS_OBJ))
 		return 0; /* not part of our original set */
@@ -237,14 +251,14 @@ static int mark_unreachable_referents(const struct object_id *oid,
 	 * (and we want to avoid parsing blobs).
 	 */
 	if (obj->type == OBJ_NONE) {
-		enum object_type type = odb_read_object_info(the_repository->objects,
+		enum object_type type = odb_read_object_info(repo->objects,
 							     &obj->oid, NULL);
 		if (type > 0)
 			object_as_type(obj, type, 0);
 	}
 
 	options.walk = mark_used;
-	fsck_walk(obj, NULL, &options);
+	fsck_walk(repo, obj, NULL, &options);
 	if (obj->type == OBJ_TREE)
 		free_tree_buffer((struct tree *)obj);
 
@@ -254,7 +268,7 @@ static int mark_unreachable_referents(const struct object_id *oid,
 /*
  * Check a single reachable object
  */
-static void check_reachable_object(struct object *obj)
+static void check_reachable_object(struct repository *repo, struct object *obj)
 {
 	/*
 	 * We obviously want the object to be parsed,
@@ -262,12 +276,12 @@ static void check_reachable_object(struct object *obj)
 	 * do a full fsck
 	 */
 	if (!(obj->flags & HAS_OBJ)) {
-		if (is_promisor_object(the_repository, &obj->oid))
+		if (is_promisor_object(repo, &obj->oid))
 			return;
-		if (has_object_pack(the_repository, &obj->oid))
+		if (has_object_pack(repo, &obj->oid))
 			return; /* it is in pack - forget about it */
 		printf_ln(_("missing %s %s"),
-			  printable_type(&obj->oid, obj->type),
+			  printable_type(repo, &obj->oid, obj->type),
 			  describe_object(&obj->oid));
 		errors_found |= ERROR_REACHABLE;
 		return;
@@ -277,7 +291,7 @@ static void check_reachable_object(struct object *obj)
 /*
  * Check a single unreachable object
  */
-static void check_unreachable_object(struct object *obj)
+static void check_unreachable_object(struct repository *repo, struct object *obj)
 {
 	/*
 	 * Missing unreachable object? Ignore it. It's not like
@@ -294,7 +308,7 @@ static void check_unreachable_object(struct object *obj)
 	 */
 	if (show_unreachable) {
 		printf_ln(_("unreachable %s %s"),
-			  printable_type(&obj->oid, obj->type),
+			  printable_type(repo, &obj->oid, obj->type),
 			  describe_object(&obj->oid));
 		return;
 	}
@@ -314,22 +328,22 @@ static void check_unreachable_object(struct object *obj)
 	if (!(obj->flags & USED)) {
 		if (show_dangling)
 			printf_ln(_("dangling %s %s"),
-				  printable_type(&obj->oid, obj->type),
+				  printable_type(repo, &obj->oid, obj->type),
 				  describe_object(&obj->oid));
 		if (write_lost_and_found) {
-			char *filename = repo_git_path(the_repository, "lost-found/%s/%s",
+			char *filename = repo_git_path(repo, "lost-found/%s/%s",
 				obj->type == OBJ_COMMIT ? "commit" : "other",
 				describe_object(&obj->oid));
 			FILE *f;
 
-			if (safe_create_leading_directories_const(the_repository, filename)) {
+			if (safe_create_leading_directories_const(repo, filename)) {
 				error(_("could not create lost-found"));
 				free(filename);
 				return;
 			}
 			f = xfopen(filename, "w");
 			if (obj->type == OBJ_BLOB) {
-				if (odb_stream_blob_to_fd(the_repository->objects, fileno(f),
+				if (odb_stream_blob_to_fd(repo->objects, fileno(f),
 							  &obj->oid, NULL, 1))
 					die_errno(_("could not write '%s'"), filename);
 			} else
@@ -349,23 +363,23 @@ static void check_unreachable_object(struct object *obj)
 	 */
 }
 
-static void check_object(struct object *obj)
+static void check_object(struct repository *repo, struct object *obj)
 {
 	if (verbose)
 		fprintf_ln(stderr, _("Checking %s"), describe_object(&obj->oid));
 
 	if (obj->flags & REACHABLE)
-		check_reachable_object(obj);
+		check_reachable_object(repo, obj);
 	else
-		check_unreachable_object(obj);
+		check_unreachable_object(repo, obj);
 }
 
-static void check_connectivity(void)
+static void check_connectivity(struct repository *repo)
 {
 	int i, max;
 
 	/* Traverse the pending reachable objects */
-	traverse_reachable();
+	traverse_reachable(repo);
 
 	/*
 	 * With --connectivity-only, we won't have actually opened and marked
@@ -383,24 +397,26 @@ static void check_connectivity(void)
 		 * and ignore any that weren't present in our earlier
 		 * traversal.
 		 */
-		odb_for_each_object(the_repository->objects, NULL,
-				    mark_unreachable_referents, NULL, 0);
+		odb_for_each_object(repo->objects, NULL,
+				    mark_unreachable_referents, repo, 0);
 	}
 
 	/* Look up all the requirements, warn about missing objects.. */
-	max = get_max_object_index(the_repository);
+	max = get_max_object_index(repo);
 	if (verbose)
 		fprintf_ln(stderr, _("Checking connectivity (%d objects)"), max);
 
 	for (i = 0; i < max; i++) {
-		struct object *obj = get_indexed_object(the_repository, i);
+		struct object *obj = get_indexed_object(repo, i);
 
 		if (obj)
-			check_object(obj);
+			check_object(repo, obj);
 	}
 }
 
-static int fsck_obj(struct object *obj, void *buffer, unsigned long size)
+static int fsck_obj(struct repository *repo,
+		    struct object *obj,
+		    void *buffer, unsigned long size)
 {
 	int err;
 
@@ -410,12 +426,12 @@ static int fsck_obj(struct object *obj, void *buffer, unsigned long size)
 
 	if (verbose)
 		fprintf_ln(stderr, _("Checking %s %s"),
-			   printable_type(&obj->oid, obj->type),
+			   printable_type(repo, &obj->oid, obj->type),
 			   describe_object(&obj->oid));
 
-	if (fsck_walk(obj, NULL, &fsck_obj_options))
-		objerror(obj, _("broken links"));
-	err = fsck_object(obj, buffer, size, &fsck_obj_options);
+	if (fsck_walk(repo, obj, NULL, &fsck_obj_options))
+		objerror(repo, obj, _("broken links"));
+	err = fsck_object(repo, obj, buffer, size, &fsck_obj_options);
 	if (err)
 		goto out;
 
@@ -432,7 +448,7 @@ static int fsck_obj(struct object *obj, void *buffer, unsigned long size)
 
 		if (show_tags && tag->tagged) {
 			printf_ln(_("tagged %s %s (%s) in %s"),
-				  printable_type(&tag->tagged->oid, tag->tagged->type),
+				  printable_type(repo, &tag->tagged->oid, tag->tagged->type),
 				  describe_object(&tag->tagged->oid),
 				  tag->tag,
 				  describe_object(&tag->object.oid));
@@ -446,15 +462,16 @@ out:
 }
 
 static int fsck_obj_buffer(const struct object_id *oid, enum object_type type,
-			   unsigned long size, void *buffer, int *eaten)
+			   unsigned long size, void *buffer, int *eaten, void *cb_data)
 {
+	struct repository *repo = cb_data;
+	struct object *obj;
+
 	/*
 	 * Note, buffer may be NULL if type is OBJ_BLOB. See
 	 * verify_packfile(), data_valid variable for details.
 	 */
-	struct object *obj;
-	obj = parse_object_buffer(the_repository, oid, type, size, buffer,
-				  eaten);
+	obj = parse_object_buffer(repo, oid, type, size, buffer, eaten);
 	if (!obj) {
 		errors_found |= ERROR_OBJECT;
 		return error(_("%s: object corrupt or missing"),
@@ -462,26 +479,27 @@ static int fsck_obj_buffer(const struct object_id *oid, enum object_type type,
 	}
 	obj->flags &= ~(REACHABLE | SEEN);
 	obj->flags |= HAS_OBJ;
-	return fsck_obj(obj, buffer, size);
+	return fsck_obj(repo, obj, buffer, size);
 }
 
 static int default_refs;
 
-static void fsck_handle_reflog_oid(const char *refname, struct object_id *oid,
-	timestamp_t timestamp)
+static void fsck_handle_reflog_oid(struct repository *repo,
+				   const char *refname, struct object_id *oid,
+				   timestamp_t timestamp)
 {
 	struct object *obj;
 
 	if (!is_null_oid(oid)) {
-		obj = lookup_object(the_repository, oid);
+		obj = lookup_object(repo, oid);
 		if (obj && (obj->flags & HAS_OBJ)) {
 			if (timestamp)
 				fsck_put_object_name(&fsck_walk_options, oid,
 						     "%s@{%"PRItime"}",
 						     refname, timestamp);
 			obj->flags |= USED;
-			mark_object_reachable(obj);
-		} else if (!is_promisor_object(the_repository, oid)) {
+			mark_object_reachable(repo, obj);
+		} else if (!is_promisor_object(repo, oid)) {
 			error(_("%s: invalid reflog entry %s"),
 			      refname, oid_to_hex(oid));
 			errors_found |= ERROR_REACHABLE;
@@ -493,8 +511,10 @@ static int fsck_handle_reflog_ent(const char *refname,
 				  struct object_id *ooid, struct object_id *noid,
 				  const char *email UNUSED,
 				  timestamp_t timestamp, int tz UNUSED,
-				  const char *message UNUSED, void *cb_data UNUSED)
+				  const char *message UNUSED, void *cb_data)
 {
+	struct repository *repo = cb_data;
+
 	if (now && timestamp > now)
 		return 0;
 
@@ -502,19 +522,20 @@ static int fsck_handle_reflog_ent(const char *refname,
 		fprintf_ln(stderr, _("Checking reflog %s->%s"),
 			   oid_to_hex(ooid), oid_to_hex(noid));
 
-	fsck_handle_reflog_oid(refname, ooid, 0);
-	fsck_handle_reflog_oid(refname, noid, timestamp);
+	fsck_handle_reflog_oid(repo, refname, ooid, 0);
+	fsck_handle_reflog_oid(repo, refname, noid, timestamp);
 	return 0;
 }
 
 static int fsck_handle_reflog(const char *logname, void *cb_data)
 {
 	struct strbuf refname = STRBUF_INIT;
+	struct worktree *wt = cb_data;
 
-	strbuf_worktree_ref(cb_data, &refname, logname);
-	refs_for_each_reflog_ent(get_main_ref_store(the_repository),
+	strbuf_worktree_ref(wt, &refname, logname);
+	refs_for_each_reflog_ent(get_main_ref_store(wt->repo),
 				 refname.buf, fsck_handle_reflog_ent,
-				 NULL);
+				 wt->repo);
 	strbuf_release(&refname);
 	return 0;
 }
@@ -532,14 +553,20 @@ struct snapshot {
 	/* TODO: Consider also snapshotting the index of each worktree. */
 };
 
+struct snapshot_ref_data {
+	struct repository *repo;
+	struct snapshot *snap;
+};
+
 static int snapshot_ref(const struct reference *ref, void *cb_data)
 {
-	struct snapshot *snap = cb_data;
+	struct snapshot_ref_data *data = cb_data;
+	struct snapshot *snap = data->snap;
 	struct object *obj;
 
-	obj = parse_object(the_repository, ref->oid);
+	obj = parse_object(data->repo, ref->oid);
 	if (!obj) {
-		if (is_promisor_object(the_repository, ref->oid)) {
+		if (is_promisor_object(data->repo, ref->oid)) {
 			/*
 			 * Increment default_refs anyway, because this is a
 			 * valid ref.
@@ -567,23 +594,29 @@ static int snapshot_ref(const struct reference *ref, void *cb_data)
 	return 0;
 }
 
-static int fsck_handle_ref(const struct reference *ref, void *cb_data UNUSED)
+static int fsck_handle_ref(const struct reference *ref, void *cb_data)
 {
+	struct repository *repo = cb_data;
 	struct object *obj;
 
-	obj = parse_object(the_repository, ref->oid);
+	obj = parse_object(repo, ref->oid);
 	obj->flags |= USED;
 	fsck_put_object_name(&fsck_walk_options,
 			     ref->oid, "%s", ref->name);
-	mark_object_reachable(obj);
+	mark_object_reachable(repo, obj);
 
 	return 0;
 }
 
-static void snapshot_refs(struct snapshot *snap, int argc, const char **argv)
+static void snapshot_refs(struct repository *repo, struct snapshot *snap,
+			  int argc, const char **argv)
 {
 	struct refs_for_each_ref_options opts = {
 		.flags = REFS_FOR_EACH_INCLUDE_BROKEN,
+	};
+	struct snapshot_ref_data data = {
+		.repo = repo,
+		.snap = snap,
 	};
 	struct worktree **worktrees, **p;
 	const char *head_points_at;
@@ -592,13 +625,13 @@ static void snapshot_refs(struct snapshot *snap, int argc, const char **argv)
 	for (int i = 0; i < argc; i++) {
 		const char *arg = argv[i];
 		struct object_id oid;
-		if (!repo_get_oid(the_repository, arg, &oid)) {
+		if (!repo_get_oid(repo, arg, &oid)) {
 			struct reference ref = {
 				.name = arg,
 				.oid = &oid,
 			};
 
-			snapshot_ref(&ref, snap);
+			snapshot_ref(&ref, &data);
 			continue;
 		}
 		error(_("invalid parameter: expected sha1, got '%s'"), arg);
@@ -610,8 +643,8 @@ static void snapshot_refs(struct snapshot *snap, int argc, const char **argv)
 		return;
 	}
 
-	refs_for_each_ref_ext(get_main_ref_store(the_repository),
-			      snapshot_ref, snap, &opts);
+	refs_for_each_ref_ext(get_main_ref_store(repo),
+			      snapshot_ref, &data, &opts);
 
 	worktrees = get_worktrees();
 	for (p = worktrees; *p; p++) {
@@ -620,7 +653,7 @@ static void snapshot_refs(struct snapshot *snap, int argc, const char **argv)
 
 		strbuf_worktree_ref(wt, &refname, "HEAD");
 
-		head_points_at = refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
+		head_points_at = refs_resolve_ref_unsafe(get_main_ref_store(repo),
 							 refname.buf, 0, &head_oid, NULL);
 
 		if (head_points_at && !is_null_oid(&head_oid)) {
@@ -629,7 +662,7 @@ static void snapshot_refs(struct snapshot *snap, int argc, const char **argv)
 				.oid = &head_oid,
 			};
 
-			snapshot_ref(&ref, snap);
+			snapshot_ref(&ref, &data);
 		}
 		strbuf_release(&refname);
 
@@ -653,7 +686,7 @@ static void free_snapshot_refs(struct snapshot *snap)
 	free(snap->ref);
 }
 
-static void process_refs(struct snapshot *snap)
+static void process_refs(struct repository *repo, struct snapshot *snap)
 {
 	struct worktree **worktrees, **p;
 
@@ -662,7 +695,7 @@ static void process_refs(struct snapshot *snap)
 			.name = snap->ref[i].refname,
 			.oid = &snap->ref[i].oid,
 		};
-		fsck_handle_ref(&ref, NULL);
+		fsck_handle_ref(&ref, repo);
 	}
 
 	if (include_reflogs) {
@@ -694,27 +727,28 @@ static void process_refs(struct snapshot *snap)
 	}
 }
 
-struct for_each_loose_cb
-{
+struct for_each_loose_cb {
+	struct repository *repo;
 	struct progress *progress;
 };
 
 static int fsck_loose(const struct object_id *oid, const char *path,
-		      void *data UNUSED)
+		      void *cb_data)
 {
+	struct for_each_loose_cb *data = cb_data;
 	struct object *obj;
 	enum object_type type = OBJ_NONE;
 	unsigned long size;
 	void *contents = NULL;
 	int eaten;
 	struct object_info oi = OBJECT_INFO_INIT;
-	struct object_id real_oid = *null_oid(the_hash_algo);
+	struct object_id real_oid = *null_oid(data->repo->hash_algo);
 	int err = 0;
 
 	oi.sizep = &size;
 	oi.typep = &type;
 
-	if (read_loose_object(the_repository, path, oid, &real_oid, &contents, &oi) < 0) {
+	if (read_loose_object(data->repo, path, oid, &real_oid, &contents, &oi) < 0) {
 		if (contents && !oideq(&real_oid, oid))
 			err = error(_("%s: hash-path mismatch, found at: %s"),
 				    oid_to_hex(&real_oid), path);
@@ -731,7 +765,7 @@ static int fsck_loose(const struct object_id *oid, const char *path,
 	if (!contents && type != OBJ_BLOB)
 		BUG("read_loose_object streamed a non-blob");
 
-	obj = parse_object_buffer(the_repository, oid, type, size,
+	obj = parse_object_buffer(data->repo, oid, type, size,
 				  contents, &eaten);
 
 	if (!obj) {
@@ -745,7 +779,7 @@ static int fsck_loose(const struct object_id *oid, const char *path,
 
 	obj->flags &= ~(REACHABLE | SEEN);
 	obj->flags |= HAS_OBJ;
-	if (fsck_obj(obj, contents, size))
+	if (fsck_obj(data->repo, obj, contents, size))
 		errors_found |= ERROR_OBJECT;
 
 	if (!eaten)
@@ -773,6 +807,7 @@ static void fsck_source(struct odb_source *source)
 {
 	struct progress *progress = NULL;
 	struct for_each_loose_cb cb_data = {
+		.repo = source->odb->repo,
 		.progress = progress,
 	};
 
@@ -780,7 +815,7 @@ static void fsck_source(struct odb_source *source)
 		fprintf_ln(stderr, _("Checking object directory"));
 
 	if (show_progress)
-		progress = start_progress(the_repository,
+		progress = start_progress(source->odb->repo,
 					  _("Checking object directories"), 256);
 
 	for_each_loose_file_in_source(source, fsck_loose,
@@ -789,7 +824,8 @@ static void fsck_source(struct odb_source *source)
 	stop_progress(&progress);
 }
 
-static int fsck_cache_tree(struct cache_tree *it, const char *index_path)
+static int fsck_cache_tree(struct repository *repo, struct cache_tree *it,
+			   const char *index_path)
 {
 	int i;
 	int err = 0;
@@ -798,7 +834,7 @@ static int fsck_cache_tree(struct cache_tree *it, const char *index_path)
 		fprintf_ln(stderr, _("Checking cache tree of %s"), index_path);
 
 	if (0 <= it->entry_count) {
-		struct object *obj = parse_object(the_repository, &it->oid);
+		struct object *obj = parse_object(repo, &it->oid);
 		if (!obj) {
 			error(_("%s: invalid sha1 pointer in cache-tree of %s"),
 			      oid_to_hex(&it->oid), index_path);
@@ -807,12 +843,12 @@ static int fsck_cache_tree(struct cache_tree *it, const char *index_path)
 		}
 		obj->flags |= USED;
 		fsck_put_object_name(&fsck_walk_options, &it->oid, ":");
-		mark_object_reachable(obj);
+		mark_object_reachable(repo, obj);
 		if (obj->type != OBJ_TREE)
-			err |= objerror(obj, _("non-tree in cache-tree"));
+			err |= objerror(repo, obj, _("non-tree in cache-tree"));
 	}
 	for (i = 0; i < it->subtree_nr; i++)
-		err |= fsck_cache_tree(it->down[i]->cache_tree, index_path);
+		err |= fsck_cache_tree(repo, it->down[i]->cache_tree, index_path);
 	return err;
 }
 
@@ -838,7 +874,7 @@ static int fsck_resolve_undo(struct index_state *istate,
 			if (!ru->mode[i] || !S_ISREG(ru->mode[i]))
 				continue;
 
-			obj = parse_object(the_repository, &ru->oid[i]);
+			obj = parse_object(istate->repo, &ru->oid[i]);
 			if (!obj) {
 				error(_("%s: invalid sha1 pointer in resolve-undo of %s"),
 				      oid_to_hex(&ru->oid[i]),
@@ -849,7 +885,7 @@ static int fsck_resolve_undo(struct index_state *istate,
 			obj->flags |= USED;
 			fsck_put_object_name(&fsck_walk_options, &ru->oid[i],
 					     ":(%d):%s", i, path);
-			mark_object_reachable(obj);
+			mark_object_reachable(istate->repo, obj);
 		}
 	}
 	return 0;
@@ -870,7 +906,7 @@ static void fsck_index(struct index_state *istate, const char *index_path,
 		mode = istate->cache[i]->ce_mode;
 		if (S_ISGITLINK(mode))
 			continue;
-		blob = lookup_blob(the_repository,
+		blob = lookup_blob(istate->repo,
 				   &istate->cache[i]->oid);
 		if (!blob)
 			continue;
@@ -880,18 +916,19 @@ static void fsck_index(struct index_state *istate, const char *index_path,
 				     "%s:%s",
 				     is_current_worktree ? "" : index_path,
 				     istate->cache[i]->name);
-		mark_object_reachable(obj);
+		mark_object_reachable(istate->repo, obj);
 	}
 	if (istate->cache_tree)
-		fsck_cache_tree(istate->cache_tree, index_path);
+		fsck_cache_tree(istate->repo, istate->cache_tree, index_path);
 	fsck_resolve_undo(istate, index_path);
 }
 
 static int mark_object_for_connectivity(const struct object_id *oid,
 					struct object_info *oi UNUSED,
-					void *cb_data UNUSED)
+					void *cb_data)
 {
-	struct object *obj = lookup_unknown_object(the_repository, oid);
+	struct repository *repo = cb_data;
+	struct object *obj = lookup_unknown_object(repo, oid);
 	obj->flags |= HAS_OBJ;
 	return 0;
 }
@@ -906,7 +943,7 @@ static int check_pack_rev_indexes(struct repository *r, int show_progress)
 	if (show_progress) {
 		repo_for_each_pack(r, p)
 			pack_count++;
-		progress = start_delayed_progress(the_repository,
+		progress = start_delayed_progress(r,
 						  "Verifying reverse pack-indexes", pack_count);
 		pack_count = 0;
 	}
@@ -986,7 +1023,7 @@ static struct option fsck_opts[] = {
 int cmd_fsck(int argc,
 	     const char **argv,
 	     const char *prefix,
-	     struct repository *repo UNUSED)
+	     struct repository *repo)
 {
 	struct odb_source *source;
 	struct snapshot snap = {
@@ -1023,11 +1060,11 @@ int cmd_fsck(int argc,
 	if (name_objects)
 		fsck_enable_object_names(&fsck_walk_options);
 
-	repo_config(the_repository, git_fsck_config, &fsck_obj_options);
-	prepare_repo_settings(the_repository);
+	fsck_options_parse_config(&fsck_obj_options, repo);
+	prepare_repo_settings(repo);
 
 	if (check_references)
-		fsck_refs(the_repository);
+		fsck_refs(repo);
 
 	/*
 	 * Take a snapshot of the refs before walking objects to avoid looking
@@ -1035,17 +1072,17 @@ int cmd_fsck(int argc,
 	 * objects. We can still walk over new objects that are added during the
 	 * execution of fsck but won't miss any objects that were reachable.
 	 */
-	snapshot_refs(&snap, argc, argv);
+	snapshot_refs(repo, &snap, argc, argv);
 
 	/* Ensure we get a "fresh" view of the odb */
-	odb_reprepare(the_repository->objects);
+	odb_reprepare(repo->objects);
 
 	if (connectivity_only) {
-		odb_for_each_object(the_repository->objects, NULL,
-				    mark_object_for_connectivity, NULL, 0);
+		odb_for_each_object(repo->objects, NULL,
+				    mark_object_for_connectivity, repo, 0);
 	} else {
-		odb_prepare_alternates(the_repository->objects);
-		for (source = the_repository->objects->sources; source; source = source->next)
+		odb_prepare_alternates(repo->objects);
+		for (source = repo->objects->sources; source; source = source->next)
 			fsck_source(source);
 
 		if (check_full) {
@@ -1054,20 +1091,20 @@ int cmd_fsck(int argc,
 			struct progress *progress = NULL;
 
 			if (show_progress) {
-				repo_for_each_pack(the_repository, p) {
+				repo_for_each_pack(repo, p) {
 					if (open_pack_index(p))
 						continue;
 					total += p->num_objects;
 				}
 
-				progress = start_progress(the_repository,
+				progress = start_progress(repo,
 							  _("Checking objects"), total);
 			}
 
-			repo_for_each_pack(the_repository, p) {
+			repo_for_each_pack(repo, p) {
 				/* verify gives error messages itself */
-				if (verify_pack(the_repository,
-						p, fsck_obj_buffer,
+				if (verify_pack(repo,
+						p, fsck_obj_buffer, repo,
 						progress, count))
 					errors_found |= ERROR_PACK;
 				count += p->num_objects;
@@ -1075,12 +1112,12 @@ int cmd_fsck(int argc,
 			stop_progress(&progress);
 		}
 
-		if (fsck_finish(&fsck_obj_options))
+		if (fsck_finish(repo, &fsck_obj_options))
 			errors_found |= ERROR_OBJECT;
 	}
 
 	/* Process the snapshotted refs and the reflogs. */
-	process_refs(&snap);
+	process_refs(repo, &snap);
 
 	/* If not given any explicit objects, process index files too. */
 	if (!argc)
@@ -1100,7 +1137,7 @@ int cmd_fsck(int argc,
 		for (p = worktrees; *p; p++) {
 			struct worktree *wt = *p;
 			struct index_state istate =
-				INDEX_STATE_INIT(the_repository);
+				INDEX_STATE_INIT(repo);
 			char *path, *wt_gitdir;
 
 			/*
@@ -1121,17 +1158,17 @@ int cmd_fsck(int argc,
 		free_worktrees(worktrees);
 	}
 
-	errors_found |= check_pack_rev_indexes(the_repository, show_progress);
-	if (verify_bitmap_files(the_repository))
+	errors_found |= check_pack_rev_indexes(repo, show_progress);
+	if (verify_bitmap_files(repo))
 		errors_found |= ERROR_BITMAP;
 
-	check_connectivity();
+	check_connectivity(repo);
 
-	if (the_repository->settings.core_commit_graph) {
+	if (repo->settings.core_commit_graph) {
 		struct child_process commit_graph_verify = CHILD_PROCESS_INIT;
 
-		odb_prepare_alternates(the_repository->objects);
-		for (source = the_repository->objects->sources; source; source = source->next) {
+		odb_prepare_alternates(repo->objects);
+		for (source = repo->objects->sources; source; source = source->next) {
 			child_process_init(&commit_graph_verify);
 			commit_graph_verify.git_cmd = 1;
 			strvec_pushl(&commit_graph_verify.args, "commit-graph",
@@ -1145,11 +1182,11 @@ int cmd_fsck(int argc,
 		}
 	}
 
-	if (the_repository->settings.core_multi_pack_index) {
+	if (repo->settings.core_multi_pack_index) {
 		struct child_process midx_verify = CHILD_PROCESS_INIT;
 
-		odb_prepare_alternates(the_repository->objects);
-		for (source = the_repository->objects->sources; source; source = source->next) {
+		odb_prepare_alternates(repo->objects);
+		for (source = repo->objects->sources; source; source = source->next) {
 			child_process_init(&midx_verify);
 			midx_verify.git_cmd = 1;
 			strvec_pushl(&midx_verify.args, "multi-pack-index",

@@ -241,10 +241,10 @@ static int check_object(struct object *obj, enum object_type type,
 	obj_buf = lookup_object_buffer(obj);
 	if (!obj_buf)
 		die("Whoops! Cannot find object '%s'", oid_to_hex(&obj->oid));
-	if (fsck_object(obj, obj_buf->buffer, obj_buf->size, &fsck_options))
+	if (fsck_object(the_repository, obj, obj_buf->buffer, obj_buf->size, &fsck_options))
 		die("fsck error in packed object");
 	fsck_options.walk = check_object;
-	if (fsck_walk(obj, NULL, &fsck_options))
+	if (fsck_walk(the_repository, obj, NULL, &fsck_options))
 		die("Error on reachable objects of %s", oid_to_hex(&obj->oid));
 	write_cached_object(obj, obj_buf);
 	return 0;
@@ -649,7 +649,8 @@ int cmd_unpack_objects(int argc,
 			}
 			if (skip_prefix(arg, "--strict=", &arg)) {
 				strict = 1;
-				fsck_set_msg_types(&fsck_options, arg);
+				fsck_set_msg_types(&fsck_options, arg,
+						   the_hash_algo);
 				continue;
 			}
 			if (skip_prefix(arg, "--pack_header=", &arg)) {
@@ -676,7 +677,7 @@ int cmd_unpack_objects(int argc,
 	git_hash_final_oid(&oid, &tmp_ctx);
 	if (strict) {
 		write_rest();
-		if (fsck_finish(&fsck_options))
+		if (fsck_finish(the_repository, &fsck_options))
 			die(_("fsck error in pack objects"));
 	}
 	if (!hasheq(fill(the_hash_algo->rawsz), oid.hash,

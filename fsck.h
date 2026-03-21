@@ -118,7 +118,8 @@ void fsck_set_msg_type_from_ids(struct fsck_options *options,
 				enum fsck_msg_type msg_type);
 void fsck_set_msg_type(struct fsck_options *options,
 		       const char *msg_id, const char *msg_type);
-void fsck_set_msg_types(struct fsck_options *options, const char *values);
+void fsck_set_msg_types(struct fsck_options *options, const char *values,
+			const struct git_hash_algo *algo);
 int is_valid_msg_type(const char *msg_id, const char *msg_type);
 
 /*
@@ -158,6 +159,7 @@ int fsck_refs_error_function(struct fsck_options *options,
 			     const char *message);
 
 struct fsck_object_report {
+	struct repository *repo;
 	const struct object_id *oid;
 	enum object_type object_type;
 };
@@ -208,27 +210,38 @@ struct fsck_options {
 	.error_func = fsck_refs_error_function, \
 }
 
-/* descend in all linked child objects
- * the return value is:
+/*
+ * Perform consistency checks for the given object and all of its decendents.
+ *
+ * If set, the `walk` callback function in the options structure will be called
+ * for every commit. The data parameter will be passed as callback data.
+ *
+ * Returns:
+ *
  *    -1	error in processing the object
  *    <0	return value of the callback, which lead to an abort
  *    >0	return value of the first signaled error >0 (in the case of no other errors)
  *    0		everything OK
  */
-int fsck_walk(struct object *obj, void *data, struct fsck_options *options);
+int fsck_walk(struct repository *repo,
+	      struct object *obj,
+	      void *data,
+	      struct fsck_options *options);
 
 /*
  * Blob objects my pass a NULL data pointer, which indicates they are too large
  * to fit in memory. All other types must pass a real buffer.
  */
-int fsck_object(struct object *obj, void *data, unsigned long size,
-	struct fsck_options *options);
+int fsck_object(struct repository *repo,
+		struct object *obj, void *data, unsigned long size,
+		struct fsck_options *options);
 
 /*
  * Same as fsck_object(), but for when the caller doesn't have an object
  * struct.
  */
-int fsck_buffer(const struct object_id *oid, enum object_type,
+int fsck_buffer(struct repository *repo,
+		const struct object_id *oid, enum object_type,
 		const void *data, unsigned long size,
 		struct fsck_options *options);
 
@@ -236,7 +249,8 @@ int fsck_buffer(const struct object_id *oid, enum object_type,
  * fsck a tag, and pass info about it back to the caller. This is
  * exposed fsck_object() internals for git-mktag(1).
  */
-int fsck_tag_standalone(const struct object_id *oid, const char *buffer,
+int fsck_tag_standalone(struct repository *repo,
+			const struct object_id *oid, const char *buffer,
 			unsigned long size, struct fsck_options *options,
 			struct object_id *tagged_oid,
 			int *tag_type);
@@ -246,7 +260,7 @@ int fsck_tag_standalone(const struct object_id *oid, const char *buffer,
  * after completing all fsck_object() calls in order to resolve any remaining
  * checks.
  */
-int fsck_finish(struct fsck_options *options);
+int fsck_finish(struct repository *repo, struct fsck_options *options);
 
 /*
  * Check whether there are any checks that have been queued up and that still
@@ -295,12 +309,11 @@ void fsck_put_object_name(struct fsck_options *options,
 const char *fsck_describe_object(struct fsck_options *options,
 				 const struct object_id *oid);
 
-struct key_value_info;
 /*
- * repo_config() callback for use by fsck-y tools that want to support
- * fsck.<msg> fsck.skipList etc.
+ * Parse fsck options from the gitconfig. This covers settings like for example
+ * fsck.<msg> fsck.skipList.
  */
-int git_fsck_config(const char *var, const char *value,
-		    const struct config_context *ctx, void *cb);
+void fsck_options_parse_config(struct fsck_options *options,
+			       struct repository *repo);
 
 #endif
