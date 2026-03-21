@@ -1664,7 +1664,8 @@ static int interpret_empty_at(const char *name, int namelen, int len, struct str
 
 static int reinterpret(struct repository *r,
 		       const char *name, int namelen, int len,
-		       struct strbuf *buf, unsigned allowed)
+		       struct strbuf *buf,
+		       enum interpret_branch_kind allowed)
 {
 	/* we have extra data, which might need further processing */
 	struct strbuf tmp = STRBUF_INIT;
@@ -1696,7 +1697,8 @@ static void set_shortened_ref(struct repository *r, struct strbuf *buf, const ch
 	free(s);
 }
 
-static int branch_interpret_allowed(const char *refname, unsigned allowed)
+static int branch_interpret_allowed(const char *refname,
+				    enum interpret_branch_kind allowed)
 {
 	if (!allowed)
 		return 1;

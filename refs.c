@@ -743,7 +743,8 @@ static char *substitute_branch_name(struct repository *r,
 	return NULL;
 }
 
-void copy_branchname(struct strbuf *sb, const char *name, unsigned allowed)
+void copy_branchname(struct strbuf *sb, const char *name,
+		     enum interpret_branch_kind allowed)
 {
 	int len = strlen(name);
 	struct interpret_branch_name_options options = {
