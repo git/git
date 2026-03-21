@@ -4359,6 +4359,12 @@ static void add_objects_in_unpacked_packs(void)
 {
 	struct odb_source *source;
 	time_t mtime;
+	struct odb_for_each_object_options opts = {
+		.flags = ODB_FOR_EACH_OBJECT_PACK_ORDER |
+			 ODB_FOR_EACH_OBJECT_LOCAL_ONLY |
+			 ODB_FOR_EACH_OBJECT_SKIP_IN_CORE_KEPT_PACKS |
+			 ODB_FOR_EACH_OBJECT_SKIP_ON_DISK_KEPT_PACKS,
+	};
 	struct object_info oi = {
 		.mtimep = &mtime,
 	};
@@ -4371,11 +4377,7 @@ static void add_objects_in_unpacked_packs(void)
 			continue;
 
 		if (packfile_store_for_each_object(files->packed, &oi,
-						   add_object_in_unpacked_pack, NULL,
-						   ODB_FOR_EACH_OBJECT_PACK_ORDER |
-						   ODB_FOR_EACH_OBJECT_LOCAL_ONLY |
-						   ODB_FOR_EACH_OBJECT_SKIP_IN_CORE_KEPT_PACKS |
-						   ODB_FOR_EACH_OBJECT_SKIP_ON_DISK_KEPT_PACKS))
+						   add_object_in_unpacked_pack, NULL, &opts))
 			die(_("cannot open pack index"));
 	}
 }

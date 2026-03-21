@@ -317,3 +317,21 @@ const struct git_hash_algo *unsafe_hash_algo(const struct git_hash_algo *algop)
 	/* Otherwise use the default one. */
 	return algop;
 }
+
+unsigned oid_common_prefix_hexlen(const struct object_id *a,
+				  const struct object_id *b)
+{
+	unsigned rawsz = hash_algos[a->algo].rawsz;
+
+	for (unsigned i = 0; i < rawsz; i++) {
+		if (a->hash[i] == b->hash[i])
+			continue;
+
+		if ((a->hash[i] ^ b->hash[i]) & 0xf0)
+			return i * 2;
+		else
+			return i * 2 + 1;
+	}
+
+	return rawsz * 2;
+}

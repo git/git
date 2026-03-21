@@ -33,6 +33,9 @@
 /* The maximum size for an object header. */
 #define MAX_HEADER_LEN 32
 
+static struct oidtree *odb_source_loose_cache(struct odb_source *source,
+					      const struct object_id *oid);
+
 static int get_conv_flags(unsigned flags)
 {
 	if (flags & INDEX_RENORMALIZE)
@@ -1845,11 +1848,28 @@ static int for_each_object_wrapper_cb(const struct object_id *oid,
 	}
 }
 
+static int for_each_prefixed_object_wrapper_cb(const struct object_id *oid,
+					       void *cb_data)
+{
+	struct for_each_object_wrapper_data *data = cb_data;
+	if (data->request) {
+		struct object_info oi = *data->request;
+
+		if (odb_source_loose_read_object_info(data->source,
+						      oid, &oi, 0) < 0)
+			return -1;
+
+		return data->cb(oid, &oi, data->cb_data);
+	} else {
+		return data->cb(oid, NULL, data->cb_data);
+	}
+}
+
 int odb_source_loose_for_each_object(struct odb_source *source,
 				     const struct object_info *request,
 				     odb_for_each_object_cb cb,
 				     void *cb_data,
-				     unsigned flags)
+				     const struct odb_for_each_object_options *opts)
 {
 	struct for_each_object_wrapper_data data = {
 		.source = source,
@@ -1859,10 +1879,15 @@ int odb_source_loose_for_each_object(struct odb_source *source,
 	};
 
 	/* There are no loose promisor objects, so we can return immediately. */
-	if ((flags & ODB_FOR_EACH_OBJECT_PROMISOR_ONLY))
+	if ((opts->flags & ODB_FOR_EACH_OBJECT_PROMISOR_ONLY))
 		return 0;
-	if ((flags & ODB_FOR_EACH_OBJECT_LOCAL_ONLY) && !source->local)
+	if ((opts->flags & ODB_FOR_EACH_OBJECT_LOCAL_ONLY) && !source->local)
 		return 0;
+
+	if (opts->prefix)
+		return oidtree_each(odb_source_loose_cache(source, opts->prefix),
+				    opts->prefix, opts->prefix_hex_len,
+				    for_each_prefixed_object_wrapper_cb, &data);
 
 	return for_each_loose_file_in_source(source, for_each_object_wrapper_cb,
 					     NULL, NULL, &data);
@@ -1914,15 +1939,54 @@ int odb_source_loose_count_objects(struct odb_source *source,
 		*out = count * 256;
 		ret = 0;
 	} else {
+		struct odb_for_each_object_options opts = { 0 };
 		*out = 0;
 		ret = odb_source_loose_for_each_object(source, NULL, count_loose_object,
-						       out, NULL);
+						       out, &opts);
 	}
 
 out:
 	if (dir)
 		closedir(dir);
 	free(path);
+	return ret;
+}
+
+struct find_abbrev_len_data {
+	const struct object_id *oid;
+	unsigned len;
+};
+
+static int find_abbrev_len_cb(const struct object_id *oid,
+			      struct object_info *oi UNUSED,
+			      void *cb_data)
+{
+	struct find_abbrev_len_data *data = cb_data;
+	unsigned len = oid_common_prefix_hexlen(oid, data->oid);
+	if (len != hash_algos[oid->algo].hexsz && len >= data->len)
+		data->len = len + 1;
+	return 0;
+}
+
+int odb_source_loose_find_abbrev_len(struct odb_source *source,
+				     const struct object_id *oid,
+				     unsigned min_len,
+				     unsigned *out)
+{
+	struct odb_for_each_object_options opts = {
+		.prefix = oid,
+		.prefix_hex_len = min_len,
+	};
+	struct find_abbrev_len_data data = {
+		.oid = oid,
+		.len = min_len,
+	};
+	int ret;
+
+	ret = odb_source_loose_for_each_object(source, NULL, find_abbrev_len_cb,
+					       &data, &opts);
+	*out = data.len;
+
 	return ret;
 }
 
@@ -1934,8 +1998,8 @@ static int append_loose_object(const struct object_id *oid,
 	return 0;
 }
 
-struct oidtree *odb_source_loose_cache(struct odb_source *source,
-				       const struct object_id *oid)
+static struct oidtree *odb_source_loose_cache(struct odb_source *source,
+					      const struct object_id *oid)
 {
 	struct odb_source_files *files = odb_source_files_downcast(source);
 	int subdir_nr = oid->hash[0];
