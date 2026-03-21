@@ -1916,7 +1916,7 @@ int odb_source_loose_count_objects(struct odb_source *source,
 	} else {
 		*out = 0;
 		ret = odb_source_loose_for_each_object(source, NULL, count_loose_object,
-						       out, 0);
+						       out, NULL);
 	}
 
 out:
