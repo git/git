@@ -4,7 +4,7 @@ project('git-gui',
 
 fs = import('fs')
 
-shell = find_program('sh')
+shell = find_program('/bin/sh', 'sh')
 tclsh = find_program('tclsh')
 wish = find_program('wish')
 
@@ -34,6 +34,7 @@ version_file = custom_target(
     '@INPUT@',
     meson.current_source_dir(),
     '@OUTPUT@',
+    get_option('parent_project_dir'),
   ],
   build_always_stale: true,
 )
@@ -53,19 +54,21 @@ if target_machine.system() == 'windows'
   )
 endif
 
-custom_target(
-  output: 'git-gui--askpass',
-  input: 'git-gui--askpass.sh',
-  command: [
-    shell,
-    meson.current_source_dir() / 'generate-script.sh',
-    '@OUTPUT@',
-    '@INPUT@',
-    meson.current_build_dir() / 'GIT-GUI-BUILD-OPTIONS',
-  ],
-  install: true,
-  install_dir: get_option('libexecdir') / 'git-core',
-)
+foreach script : [ 'git-gui--askpass', 'git-gui--askyesno' ]
+  custom_target(
+    output: script,
+    input: script + '.sh',
+    command: [
+      shell,
+      meson.current_source_dir() / 'generate-script.sh',
+      '@OUTPUT@',
+      '@INPUT@',
+      meson.current_build_dir() / 'GIT-GUI-BUILD-OPTIONS',
+    ],
+    install: true,
+    install_dir: get_option('libexecdir') / 'git-core',
+  )
+endforeach
 
 custom_target(
   input: 'git-gui.sh',

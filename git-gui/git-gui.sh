@@ -3900,6 +3900,24 @@ if {[winfo exists $ui_comm]} {
 
 	backup_commit_buffer
 
+	# Grey out comment lines (which are stripped from the final commit message by
+	# wash_commit_message).
+	$ui_comm tag configure commit_comment -foreground gray
+	proc dim_commit_comment_lines {} {
+		global ui_comm comment_string
+		$ui_comm tag remove commit_comment 1.0 end
+		set text [$ui_comm get 1.0 end]
+		# See also cmt_rx in wash_commit_message
+		set cmt_rx [strcat {^} [regsub -all {\W} $comment_string {\\&}]]
+		set ranges [regexp -all -indices -inline -line -- $cmt_rx $text]
+		foreach pair $ranges {
+			set idx "1.0 + [lindex $pair 0] chars"
+			$ui_comm tag add commit_comment $idx "$idx lineend + 1 char"
+		}
+	}
+	dim_commit_comment_lines
+	bind $ui_comm <<Modified>> { after idle dim_commit_comment_lines }
+
 	# -- If the user has aspell available we can drive it
 	#    in pipe mode to spellcheck the commit message.
 	#
