@@ -221,7 +221,7 @@ Use `--no-value` to unset _<pattern>_.
 +
 Valid `<type>`'s include:
 +
-- 'bool': canonicalize values `true`, `yes`,`on`, and positive
+- 'bool': canonicalize values `true`, `yes`, `on`, and positive
   numbers as "true", and values `false`, `no`, `off` and `0` as
   "false".
 - 'int': canonicalize values as simple decimal numbers. An optional suffix of
