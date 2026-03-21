@@ -1,8 +1,16 @@
 sideband.allowControlCharacters::
+ifdef::with-breaking-changes[]
 	By default, control characters that are delivered via the sideband
 	are masked, except ANSI color sequences. This prevents potentially
-	unwanted ANSI escape sequences from being sent to the terminal. Use
-	this config setting to override this behavior (the value can be
+	unwanted ANSI escape sequences from being sent to the terminal.
+endif::with-breaking-changes[]
+ifndef::with-breaking-changes[]
+	By default, no control characters delivered via the sideband
+	are masked. This is unsafe and will change in Git v3.* to only
+	allow ANSI color sequences by default, preventing potentially
+	unwanted ANSI escape sequences from being sent to the terminal.
+endif::with-breaking-changes[]
+	Use this config setting to override this behavior (the value can be
 	a comma-separated list of the following keywords):
 +
 --
