@@ -1840,8 +1840,16 @@ static int parse_fragment(struct apply_state *state,
 			trailing++;
 			check_old_for_crlf(patch, line, len);
 			if (!state->apply_in_reverse &&
-			    state->ws_error_action == correct_ws_error)
-				check_whitespace(state, line, len, patch->ws_rule);
+			    state->ws_error_action == correct_ws_error) {
+				const char *test_line = line;
+				int test_len = len;
+				if (*line == '\n') {
+					test_line = " \n";
+					test_len = 2;
+				}
+				check_whitespace(state, test_line, test_len,
+						 patch->ws_rule);
+			}
 			break;
 		case '-':
 			if (!state->apply_in_reverse)
