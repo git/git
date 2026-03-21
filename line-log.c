@@ -858,171 +858,31 @@ static void queue_diffs(struct line_log_data *range,
 	diff_queue_clear(&diff_queued_diff);
 	diff_tree_oid(parent_tree_oid, tree_oid, "", opt);
 	if (opt->detect_rename && diff_might_be_rename()) {
-		/* must look at the full tree diff to detect renames */
-		clear_pathspec(&opt->pathspec);
-		diff_queue_clear(&diff_queued_diff);
+		struct diff_options rename_opts;
 
-		diff_tree_oid(parent_tree_oid, tree_oid, "", opt);
+		/*
+		 * Build a private diff_options for rename detection so
+		 * that any user-specified options on the original opts
+		 * (e.g. pickaxe) cannot discard diff pairs needed for
+		 * rename tracking.  Similar to blame's find_rename().
+		 */
+		repo_diff_setup(opt->repo, &rename_opts);
+		rename_opts.flags.recursive = 1;
+		rename_opts.detect_rename = opt->detect_rename;
+		rename_opts.rename_score = opt->rename_score;
+		rename_opts.output_format = DIFF_FORMAT_NO_OUTPUT;
+		diff_setup_done(&rename_opts);
+
+		/* must look at the full tree diff to detect renames */
+		diff_queue_clear(&diff_queued_diff);
+		diff_tree_oid(parent_tree_oid, tree_oid, "", &rename_opts);
 
 		filter_diffs_for_paths(range, 1);
-		diffcore_std(opt);
+		diffcore_std(&rename_opts);
 		filter_diffs_for_paths(range, 0);
+		diff_free(&rename_opts);
 	}
 	move_diff_queue(queue, &diff_queued_diff);
-}
-
-static char *get_nth_line(long line, unsigned long *ends, void *data)
-{
-	if (line == 0)
-		return (char *)data;
-	else
-		return (char *)data + ends[line] + 1;
-}
-
-static void print_line(const char *prefix, char first,
-		       long line, unsigned long *ends, void *data,
-		       const char *color, const char *reset, FILE *file)
-{
-	char *begin = get_nth_line(line, ends, data);
-	char *end = get_nth_line(line+1, ends, data);
-	int had_nl = 0;
-
-	if (end > begin && end[-1] == '\n') {
-		end--;
-		had_nl = 1;
-	}
-
-	fputs(prefix, file);
-	fputs(color, file);
-	putc(first, file);
-	fwrite(begin, 1, end-begin, file);
-	fputs(reset, file);
-	putc('\n', file);
-	if (!had_nl)
-		fputs("\\ No newline at end of file\n", file);
-}
-
-static void dump_diff_hacky_one(struct rev_info *rev, struct line_log_data *range)
-{
-	unsigned int i, j = 0;
-	long p_lines, t_lines;
-	unsigned long *p_ends = NULL, *t_ends = NULL;
-	struct diff_filepair *pair = range->pair;
-	struct diff_ranges *diff = &range->diff;
-
-	struct diff_options *opt = &rev->diffopt;
-	const char *prefix = diff_line_prefix(opt);
-	const char *c_reset = diff_get_color(opt->use_color, DIFF_RESET);
-	const char *c_frag = diff_get_color(opt->use_color, DIFF_FRAGINFO);
-	const char *c_meta = diff_get_color(opt->use_color, DIFF_METAINFO);
-	const char *c_old = diff_get_color(opt->use_color, DIFF_FILE_OLD);
-	const char *c_new = diff_get_color(opt->use_color, DIFF_FILE_NEW);
-	const char *c_context = diff_get_color(opt->use_color, DIFF_CONTEXT);
-
-	if (!pair || !diff)
-		goto out;
-
-	if (pair->one->oid_valid)
-		fill_line_ends(rev->diffopt.repo, pair->one, &p_lines, &p_ends);
-	fill_line_ends(rev->diffopt.repo, pair->two, &t_lines, &t_ends);
-
-	fprintf(opt->file, "%s%sdiff --git a/%s b/%s%s\n", prefix, c_meta, pair->one->path, pair->two->path, c_reset);
-	fprintf(opt->file, "%s%s--- %s%s%s\n", prefix, c_meta,
-	       pair->one->oid_valid ? "a/" : "",
-	       pair->one->oid_valid ? pair->one->path : "/dev/null",
-	       c_reset);
-	fprintf(opt->file, "%s%s+++ b/%s%s\n", prefix, c_meta, pair->two->path, c_reset);
-	for (i = 0; i < range->ranges.nr; i++) {
-		long p_start, p_end;
-		long t_start = range->ranges.ranges[i].start;
-		long t_end = range->ranges.ranges[i].end;
-		long t_cur = t_start;
-		unsigned int j_last;
-
-		/*
-		 * If a diff range touches multiple line ranges, then all
-		 * those line ranges should be shown, so take a step back if
-		 * the current line range is still in the previous diff range
-		 * (even if only partially).
-		 */
-		if (j > 0 && diff->target.ranges[j-1].end > t_start)
-			j--;
-
-		while (j < diff->target.nr && diff->target.ranges[j].end < t_start)
-			j++;
-		if (j == diff->target.nr || diff->target.ranges[j].start >= t_end)
-			continue;
-
-		/* Scan ahead to determine the last diff that falls in this range */
-		j_last = j;
-		while (j_last < diff->target.nr && diff->target.ranges[j_last].start < t_end)
-			j_last++;
-		if (j_last > j)
-			j_last--;
-
-		/*
-		 * Compute parent hunk headers: we know that the diff
-		 * has the correct line numbers (but not all hunks).
-		 * So it suffices to shift the start/end according to
-		 * the line numbers of the first/last hunk(s) that
-		 * fall in this range.
-		 */
-		if (t_start < diff->target.ranges[j].start)
-			p_start = diff->parent.ranges[j].start - (diff->target.ranges[j].start-t_start);
-		else
-			p_start = diff->parent.ranges[j].start;
-		if (t_end > diff->target.ranges[j_last].end)
-			p_end = diff->parent.ranges[j_last].end + (t_end-diff->target.ranges[j_last].end);
-		else
-			p_end = diff->parent.ranges[j_last].end;
-
-		if (!p_start && !p_end) {
-			p_start = -1;
-			p_end = -1;
-		}
-
-		/* Now output a diff hunk for this range */
-		fprintf(opt->file, "%s%s@@ -%ld,%ld +%ld,%ld @@%s\n",
-		       prefix, c_frag,
-		       p_start+1, p_end-p_start, t_start+1, t_end-t_start,
-		       c_reset);
-		while (j < diff->target.nr && diff->target.ranges[j].start < t_end) {
-			int k;
-			for (; t_cur < diff->target.ranges[j].start; t_cur++)
-				print_line(prefix, ' ', t_cur, t_ends, pair->two->data,
-					   c_context, c_reset, opt->file);
-			for (k = diff->parent.ranges[j].start; k < diff->parent.ranges[j].end; k++)
-				print_line(prefix, '-', k, p_ends, pair->one->data,
-					   c_old, c_reset, opt->file);
-			for (; t_cur < diff->target.ranges[j].end && t_cur < t_end; t_cur++)
-				print_line(prefix, '+', t_cur, t_ends, pair->two->data,
-					   c_new, c_reset, opt->file);
-			j++;
-		}
-		for (; t_cur < t_end; t_cur++)
-			print_line(prefix, ' ', t_cur, t_ends, pair->two->data,
-				   c_context, c_reset, opt->file);
-	}
-
-out:
-	free(p_ends);
-	free(t_ends);
-}
-
-/*
- * NEEDSWORK: manually building a diff here is not the Right
- * Thing(tm).  log -L should be built into the diff pipeline.
- */
-static void dump_diff_hacky(struct rev_info *rev, struct line_log_data *range)
-{
-	const char *prefix = diff_line_prefix(&rev->diffopt);
-
-	fprintf(rev->diffopt.file, "%s\n", prefix);
-
-	while (range) {
-		dump_diff_hacky_one(rev, range);
-		range = range->next;
-	}
 }
 
 /*
@@ -1088,7 +948,7 @@ static int process_diff_filepair(struct rev_info *rev,
 
 static struct diff_filepair *diff_filepair_dup(struct diff_filepair *pair)
 {
-	struct diff_filepair *new_filepair = xmalloc(sizeof(struct diff_filepair));
+	struct diff_filepair *new_filepair = xcalloc(1, sizeof(struct diff_filepair));
 	new_filepair->one = pair->one;
 	new_filepair->two = pair->two;
 	new_filepair->one->count++;
@@ -1146,11 +1006,25 @@ static int process_all_files(struct line_log_data **range_out,
 
 int line_log_print(struct rev_info *rev, struct commit *commit)
 {
-
 	show_log(rev);
 	if (!(rev->diffopt.output_format & DIFF_FORMAT_NO_OUTPUT)) {
 		struct line_log_data *range = lookup_line_range(rev, commit);
-		dump_diff_hacky(rev, range);
+		struct line_log_data *r;
+		const char *prefix = diff_line_prefix(&rev->diffopt);
+
+		fprintf(rev->diffopt.file, "%s\n", prefix);
+
+		for (r = range; r; r = r->next) {
+			if (r->pair) {
+				struct diff_filepair *p =
+					diff_filepair_dup(r->pair);
+				p->line_ranges = &r->ranges;
+				diff_q(&diff_queued_diff, p);
+			}
+		}
+
+		diffcore_std(&rev->diffopt);
+		diff_flush(&rev->diffopt);
 	}
 	return 1;
 }
