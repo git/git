@@ -120,18 +120,27 @@ struct hook_config_cache_entry {
 	char *command;
 	enum config_scope scope;
 	unsigned int disabled:1;
+	unsigned int parallel:1;
 };
 
 /*
  * Callback struct to collect all hook.* keys in a single config pass.
  * commands: friendly-name to command map.
  * event_hooks: event-name to list of friendly-names map.
- * disabled_hooks: set of friendly-names with hook.<friendly-name>.enabled = false.
+ * disabled_hooks: set of all names with hook.<name>.enabled = false; after
+ *                 parsing, names that are not friendly-names become event-level
+ *                 disables stored in cache->event_disabled. This collects all.
+ * parallel_hooks: friendly-name to parallel flag.
+ * event_jobs: event-name to per-event jobs count (stored as uintptr_t, NULL == unset).
+ * jobs: value of the global hook.jobs key. Defaults to 0 if unset (stored in r->hook_jobs).
  */
 struct hook_all_config_cb {
 	struct strmap commands;
 	struct strmap event_hooks;
 	struct string_list disabled_hooks;
+	struct strmap parallel_hooks;
+	struct strmap event_jobs;
+	unsigned int jobs;
 };
 
 /* repo_config() callback that collects all hook.* configuration in one pass. */
@@ -146,6 +155,20 @@ static int hook_config_lookup_all(const char *key, const char *value,
 
 	if (parse_config_key(key, "hook", &name, &name_len, &subkey))
 		return 0;
+
+	/* Handle plain hook.<key> entries that have no hook name component. */
+	if (!name) {
+		if (!strcmp(subkey, "jobs") && value) {
+			unsigned int v;
+			if (!git_parse_uint(value, &v))
+				warning(_("hook.jobs must be a positive integer, ignoring: '%s'"), value);
+			else if (!v)
+				warning(_("hook.jobs must be positive, ignoring: 0"));
+			else
+				data->jobs = v;
+		}
+		return 0;
+	}
 
 	if (!value)
 		return config_error_nonbool(key);
@@ -207,6 +230,20 @@ static int hook_config_lookup_all(const char *key, const char *value,
 		default:
 			break; /* ignore unrecognised values */
 		}
+	} else if (!strcmp(subkey, "parallel")) {
+		int v = git_parse_maybe_bool(value);
+		if (v >= 0)
+			strmap_put(&data->parallel_hooks, hook_name, (void *)(uintptr_t)v);
+	} else if (!strcmp(subkey, "jobs")) {
+		unsigned int v;
+		if (!git_parse_uint(value, &v))
+			warning(_("hook.%s.jobs must be a positive integer, ignoring: '%s'"),
+				hook_name, value);
+		else if (!v)
+			warning(_("hook.%s.jobs must be positive, ignoring: 0"), hook_name);
+		else
+			strmap_put(&data->event_jobs, hook_name,
+				   (void *)(uintptr_t)v);
 	}
 
 	free(hook_name);
@@ -241,19 +278,77 @@ void hook_cache_clear(struct strmap *cache)
 	strmap_clear(cache, 0);
 }
 
+/*
+ * Return true if `name` is a hook friendly-name, i.e. it has at least one of
+ * .command, .event, or .parallel configured. These are the reliable clues
+ * that distinguish a friendly-name from an event name. Note: .enabled is
+ * deliberately excluded because it can appear under both namespaces.
+ */
+static int is_friendly_name(struct hook_all_config_cb *cb, const char *name)
+{
+	struct hashmap_iter iter;
+	struct strmap_entry *e;
+
+	if (strmap_get(&cb->commands, name) || strmap_get(&cb->parallel_hooks, name))
+		return 1;
+
+	strmap_for_each_entry(&cb->event_hooks, &iter, e) {
+		if (unsorted_string_list_lookup(e->value, name))
+			return 1;
+	}
+
+	return 0;
+}
+
+/* Warn if any name in event_jobs is also a hook friendly-name. */
+static void warn_jobs_on_friendly_names(struct hook_all_config_cb *cb_data)
+{
+	struct hashmap_iter iter;
+	struct strmap_entry *e;
+
+	strmap_for_each_entry(&cb_data->event_jobs, &iter, e) {
+		if (is_friendly_name(cb_data, e->key))
+			warning(_("hook.%s.jobs is set but '%s' looks like a "
+				  "hook friendly-name, not an event name; "
+				  "hook.<event>.jobs uses the event name "
+				  "(e.g. hook.post-receive.jobs), so this "
+				  "setting will be ignored"), e->key, e->key);
+	}
+}
+
 /* Populate `cache` with the complete hook configuration */
 static void build_hook_config_map(struct repository *r, struct strmap *cache)
 {
-	struct hook_all_config_cb cb_data;
+	struct hook_all_config_cb cb_data = { 0 };
 	struct hashmap_iter iter;
 	struct strmap_entry *e;
 
 	strmap_init(&cb_data.commands);
 	strmap_init(&cb_data.event_hooks);
 	string_list_init_dup(&cb_data.disabled_hooks);
+	strmap_init(&cb_data.parallel_hooks);
+	strmap_init(&cb_data.event_jobs);
 
-	/* Parse all configs in one run. */
+	/* Parse all configs in one run, capturing hook.* including hook.jobs. */
 	repo_config(r, hook_config_lookup_all, &cb_data);
+
+	warn_jobs_on_friendly_names(&cb_data);
+
+	/*
+	 * Populate event_disabled: names in disabled_hooks that are not
+	 * friendly-names are event-level switches (hook.<event>.enabled = false).
+	 * Names that are friendly-names are already handled per-hook via the
+	 * hook_config_cache_entry.disabled flag below.
+	 */
+	if (r) {
+		string_list_clear(&r->event_disabled, 0);
+		string_list_init_dup(&r->event_disabled);
+		for (size_t i = 0; i < cb_data.disabled_hooks.nr; i++) {
+			const char *n = cb_data.disabled_hooks.items[i].string;
+			if (!is_friendly_name(&cb_data, n))
+				string_list_append(&r->event_disabled, n);
+		}
+	}
 
 	/* Construct the cache from parsed configs. */
 	strmap_for_each_entry(&cb_data.event_hooks, &iter, e) {
@@ -270,6 +365,7 @@ static void build_hook_config_map(struct repository *r, struct strmap *cache)
 			struct hook_config_cache_entry *entry;
 			char *command;
 
+			int is_par = !!strmap_get(&cb_data.parallel_hooks, hname);
 			int is_disabled =
 				!!unsorted_string_list_lookup(
 					&cb_data.disabled_hooks, hname);
@@ -290,13 +386,20 @@ static void build_hook_config_map(struct repository *r, struct strmap *cache)
 			entry->command = xstrdup_or_null(command);
 			entry->scope = scope;
 			entry->disabled = is_disabled;
+			entry->parallel = is_par;
 			string_list_append(hooks, hname)->util = entry;
 		}
 
 		strmap_put(cache, e->key, hooks);
 	}
 
+	if (r) {
+		r->hook_jobs = cb_data.jobs;
+		r->event_jobs = cb_data.event_jobs;
+	}
+
 	strmap_clear(&cb_data.commands, 1);
+	strmap_clear(&cb_data.parallel_hooks, 0); /* values are uintptr_t, not heap ptrs */
 	string_list_clear(&cb_data.disabled_hooks, 0);
 	strmap_for_each_entry(&cb_data.event_hooks, &iter, e) {
 		string_list_clear(e->value, 0);
@@ -348,6 +451,8 @@ static void list_hooks_add_configured(struct repository *r,
 {
 	struct strmap *cache = get_hook_config_cache(r);
 	struct string_list *configured_hooks = strmap_get(cache, hookname);
+	int event_is_disabled = r ? !!unsorted_string_list_lookup(&r->event_disabled,
+								   hookname) : 0;
 
 	/* Iterate through configured hooks and initialize internal states */
 	for (size_t i = 0; configured_hooks && i < configured_hooks->nr; i++) {
@@ -373,6 +478,8 @@ static void list_hooks_add_configured(struct repository *r,
 			entry->command ? xstrdup(entry->command) : NULL;
 		hook->u.configured.scope = entry->scope;
 		hook->u.configured.disabled = entry->disabled;
+		hook->u.configured.event_disabled = event_is_disabled;
+		hook->parallel = entry->parallel;
 
 		string_list_append(list, friendly_name)->util = hook;
 	}
@@ -384,6 +491,8 @@ static void list_hooks_add_configured(struct repository *r,
 	if (!r || !r->gitdir) {
 		hook_cache_clear(cache);
 		free(cache);
+		if (r)
+			string_list_clear(&r->event_disabled, 0);
 	}
 }
 
@@ -415,7 +524,7 @@ int hook_exists(struct repository *r, const char *name)
 	for (size_t i = 0; i < hooks->nr; i++) {
 		struct hook *h = hooks->items[i].util;
 		if (h->kind == HOOK_TRADITIONAL ||
-		    !h->u.configured.disabled) {
+		    (!h->u.configured.disabled && !h->u.configured.event_disabled)) {
 			exists = 1;
 			break;
 		}
@@ -438,7 +547,8 @@ static int pick_next_hook(struct child_process *cp,
 		if (hook_cb->hook_to_run_index >= hook_list->nr)
 			return 0;
 		h = hook_list->items[hook_cb->hook_to_run_index++].util;
-	} while (h->kind == HOOK_CONFIGURED && h->u.configured.disabled);
+	} while (h->kind == HOOK_CONFIGURED &&
+		 (h->u.configured.disabled || h->u.configured.event_disabled));
 
 	cp->no_stdin = 1;
 	strvec_pushv(&cp->env, hook_cb->options->env.v);
@@ -522,21 +632,115 @@ static void run_hooks_opt_clear(struct run_hooks_opt *options)
 	strvec_clear(&options->args);
 }
 
+/*
+ * When running in parallel, stdout must be merged into stderr so
+ * run-command can buffer and de-interleave outputs correctly. This
+ * applies even to hooks like pre-push that normally keep stdout and
+ * stderr separate: the user has opted into parallelism, so the output
+ * stream behavior changes accordingly.
+ */
+static void merge_output_if_parallel(struct run_hooks_opt *options)
+{
+	if (options->jobs > 1)
+		options->stdout_to_stderr = 1;
+}
+
+static void warn_non_parallel_hooks_override(unsigned int jobs,
+					     struct string_list *hook_list)
+{
+	/* Don't warn for hooks running sequentially. */
+	if (jobs == 1)
+		return;
+
+	for (size_t i = 0; i < hook_list->nr; i++) {
+		struct hook *h = hook_list->items[i].util;
+		if (h->kind == HOOK_CONFIGURED && !h->parallel)
+			warning(_("hook '%s' is not marked as parallel=true, "
+				  "running in parallel anyway due to -j%u"),
+				h->u.configured.friendly_name, jobs);
+	}
+}
+
+/* Determine how many jobs to use for hook execution. */
+static unsigned int get_hook_jobs(struct repository *r,
+				  struct run_hooks_opt *options,
+				  const char *hook_name,
+				  struct string_list *hook_list)
+{
+	/*
+	 * An explicit job count overrides everything else: this covers both
+	 * FORCE_SERIAL callers (for hooks that must never run in parallel)
+	 * and the -j flag from the CLI. The CLI override is intentional: users
+	 * may want to serialize hooks declared parallel or to parallelize more
+	 * aggressively than the default.
+	 */
+	if (options->jobs)
+		goto cleanup;
+
+	/*
+	 * Use hook.jobs from the already-parsed config cache (in-repo), or
+	 * fallback to a direct config lookup (out-of-repo).
+	 * Default to 1 (serial execution) on failure.
+	 */
+	if (r && r->gitdir && r->hook_config_cache) {
+		/* Use the already-parsed cache (in-repo) */
+		void *event_jobs = strmap_get(&r->event_jobs, hook_name);
+		options->jobs = r->hook_jobs ? r->hook_jobs : 1;
+		if (event_jobs)
+			options->jobs = (unsigned int)(uintptr_t)event_jobs;
+	} else {
+		/* No cache present (out-of-repo call), use direct cfg lookup */
+		unsigned int event_jobs;
+		char *key;
+
+		if (repo_config_get_uint(r, "hook.jobs", &options->jobs))
+			options->jobs = 1;
+
+		key = xstrfmt("hook.%s.jobs", hook_name);
+		if (!repo_config_get_uint(r, key, &event_jobs) && event_jobs)
+			options->jobs = event_jobs;
+		free(key);
+	}
+
+	/*
+	 * Cap to serial any configured hook not marked as parallel = true.
+	 * This enforces the parallel = false default, even for "traditional"
+	 * hooks from the hookdir which cannot be marked parallel = true.
+	 * The same restriction applies whether jobs came from hook.jobs or
+	 * hook.<event>.jobs.
+	 */
+	for (size_t i = 0; i < hook_list->nr; i++) {
+		struct hook *h = hook_list->items[i].util;
+		if (h->kind == HOOK_CONFIGURED && !h->parallel) {
+			options->jobs = 1;
+			break;
+		}
+	}
+
+cleanup:
+	merge_output_if_parallel(options);
+	warn_non_parallel_hooks_override(options->jobs, hook_list);
+	return options->jobs;
+}
+
 int run_hooks_opt(struct repository *r, const char *hook_name,
 		  struct run_hooks_opt *options)
 {
+	struct string_list *hook_list = list_hooks(r, hook_name, options);
 	struct hook_cb_data cb_data = {
 		.rc = 0,
 		.hook_name = hook_name,
+		.hook_command_list = hook_list,
 		.options = options,
 	};
 	int ret = 0;
+	unsigned int jobs = get_hook_jobs(r, options, hook_name, hook_list);
 	const struct run_process_parallel_opts opts = {
 		.tr2_category = "hook",
 		.tr2_label = hook_name,
 
-		.processes = options->jobs,
-		.ungroup = options->jobs == 1,
+		.processes = jobs,
+		.ungroup = jobs == 1,
 
 		.get_next_task = pick_next_hook,
 		.start_failure = notify_start_failure,
@@ -552,9 +756,6 @@ int run_hooks_opt(struct repository *r, const char *hook_name,
 	if (options->path_to_stdin && options->feed_pipe)
 		BUG("options path_to_stdin and feed_pipe are mutually exclusive");
 
-	if (!options->jobs)
-		BUG("run_hooks_opt must be called with options.jobs >= 1");
-
 	/*
 	 * Ensure cb_data copy and free functions are either provided together,
 	 * or neither one is provided.
@@ -565,7 +766,6 @@ int run_hooks_opt(struct repository *r, const char *hook_name,
 	if (options->invoked_hook)
 		*options->invoked_hook = 0;
 
-	cb_data.hook_command_list = list_hooks(r, hook_name, options);
 	if (!cb_data.hook_command_list->nr) {
 		if (options->error_if_missing)
 			ret = error("cannot find a hook named %s", hook_name);
