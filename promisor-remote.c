@@ -42,6 +42,13 @@ static int fetch_objects(struct repository *repo,
 	child.in = -1;
 	if (repo != the_repository)
 		prepare_other_repo_env(&child.env, repo->gitdir);
+	/*
+	 * Prevent the child's index-pack from recursing back into
+	 * fetch_objects() when resolving REF_DELTA bases it does not
+	 * have.  With noop negotiation the server should never need
+	 * to send such deltas, so a depth-2 fetch would not help.
+	 */
+	strvec_pushf(&child.env, "%s=1", NO_LAZY_FETCH_ENVIRONMENT);
 	strvec_pushl(&child.args, "-c", "fetch.negotiationAlgorithm=noop",
 		     "fetch", remote_name, "--no-tags",
 		     "--no-write-fetch-head", "--recurse-submodules=no",
