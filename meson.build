@@ -570,6 +570,7 @@ builtin_sources = [
   'builtin/bisect.c',
   'builtin/blame.c',
   'builtin/branch.c',
+  'builtin/branch2.c',
   'builtin/bugreport.c',
   'builtin/bundle.c',
   'builtin/cat-file.c',
