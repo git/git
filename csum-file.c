@@ -161,17 +161,16 @@ struct hashfile *hashfd_check(const struct git_hash_algo *algop,
 	return f;
 }
 
-static struct hashfile *hashfd_internal(const struct git_hash_algo *algop,
-					int fd, const char *name,
-					struct progress *tp,
-					size_t buffer_len)
+struct hashfile *hashfd_ext(const struct git_hash_algo *algop,
+			    int fd, const char *name,
+			    const struct hashfd_options *opts)
 {
 	struct hashfile *f = xmalloc(sizeof(*f));
 	f->fd = fd;
 	f->check_fd = -1;
 	f->offset = 0;
 	f->total = 0;
-	f->tp = tp;
+	f->tp = opts->progress;
 	f->name = name;
 	f->do_crc = 0;
 	f->skip_hash = 0;
@@ -179,8 +178,8 @@ static struct hashfile *hashfd_internal(const struct git_hash_algo *algop,
 	f->algop = unsafe_hash_algo(algop);
 	f->algop->init_fn(&f->ctx);
 
-	f->buffer_len = buffer_len;
-	f->buffer = xmalloc(buffer_len);
+	f->buffer_len = opts->buffer_len ? opts->buffer_len : 128 * 1024;
+	f->buffer = xmalloc(f->buffer_len);
 	f->check_buffer = NULL;
 
 	return f;
@@ -194,19 +193,8 @@ struct hashfile *hashfd(const struct git_hash_algo *algop,
 	 * measure the rate of data passing through this hashfile,
 	 * use a larger buffer size to reduce fsync() calls.
 	 */
-	return hashfd_internal(algop, fd, name, NULL, 128 * 1024);
-}
-
-struct hashfile *hashfd_throughput(const struct git_hash_algo *algop,
-				   int fd, const char *name, struct progress *tp)
-{
-	/*
-	 * Since we are expecting to report progress of the
-	 * write into this hashfile, use a smaller buffer
-	 * size so the progress indicators arrive at a more
-	 * frequent rate.
-	 */
-	return hashfd_internal(algop, fd, name, tp, 8 * 1024);
+	struct hashfd_options opts = { 0 };
+	return hashfd_ext(algop, fd, name, &opts);
 }
 
 void hashfile_checkpoint_init(struct hashfile *f,
