@@ -9,7 +9,7 @@ all::
 #
 
 GIT-VERSION-FILE: FORCE
-	@$(SHELL_PATH) ./GIT-VERSION-GEN . $@
+	@$(SHELL_PATH) ./GIT-VERSION-GEN . $@ "$(PARENT_PROJECT_DIR)"
 
 uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
 uname_R := $(shell sh -c 'uname -r 2>/dev/null || echo not')
@@ -177,10 +177,13 @@ GIT-GUI-BUILD-OPTIONS: FORCE
 git-gui--askpass: git-gui--askpass.sh GIT-GUI-BUILD-OPTIONS generate-script.sh
 	$(QUIET_GEN)$(SHELL_PATH) generate-script.sh $@ $< ./GIT-GUI-BUILD-OPTIONS
 
+git-gui--askyesno: git-gui--askyesno.sh GIT-GUI-BUILD-OPTIONS generate-script.sh
+	$(QUIET_GEN)$(SHELL_PATH) generate-script.sh $@ $< ./GIT-GUI-BUILD-OPTIONS
+
 ifdef GITGUI_WINDOWS_WRAPPER
 all:: git-gui
 endif
-all:: $(GITGUI_MAIN) git-gui--askpass lib/tclIndex $(ALL_MSGFILES)
+all:: $(GITGUI_MAIN) git-gui--askpass git-gui--askyesno lib/tclIndex $(ALL_MSGFILES)
 
 install: all
 	$(QUIET)$(INSTALL_D0)'$(DESTDIR_SQ)$(gitexecdir_SQ)' $(INSTALL_D1)
@@ -221,7 +224,7 @@ dist-version: GIT-VERSION-FILE
 	@sed 's|^GITGUI_VERSION=||' <GIT-VERSION-FILE  >$(TARDIR)/version
 
 clean::
-	$(RM_RF) $(GITGUI_MAIN) git-gui--askpass lib/tclIndex po/*.msg $(PO_TEMPLATE)
+	$(RM_RF) $(GITGUI_MAIN) git-gui--askpass git-gui--askyesno lib/tclIndex po/*.msg $(PO_TEMPLATE)
 	$(RM_RF) GIT-VERSION-FILE GIT-GUI-BUILD-OPTIONS
 ifdef GITGUI_WINDOWS_WRAPPER
 	$(RM_RF) git-gui
