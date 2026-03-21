@@ -13,7 +13,7 @@ struct replay_revisions_options {
 	/*
 	 * Starting point at which to create the new commits; must be a branch
 	 * name. The branch will be updated to point to the rewritten commits.
-	 * This option is mutually exclusive with `onto`.
+	 * This option is mutually exclusive with `onto` and `revert`.
 	 */
 	const char *advance;
 
@@ -22,7 +22,14 @@ struct replay_revisions_options {
 	 * committish. References pointing at decendants of `onto` will be
 	 * updated to point to the new commits.
 	 */
-	 const char *onto;
+	const char *onto;
+
+	/*
+	 * Starting point at which to create revert commits; must be a branch
+	 * name. The branch will be updated to point to the revert commits.
+	 * This option is mutually exclusive with `onto` and `advance`.
+	 */
+	const char *revert;
 
 	/*
 	 * Update branches that point at commits in the given revision range.
