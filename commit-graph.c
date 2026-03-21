@@ -1319,6 +1319,31 @@ static int write_graph_chunk_data(struct hashfile *f,
 	return 0;
 }
 
+/*
+ * Compute the generation offset between the commit date and its generation.
+ * This is what's ultimately stored as generation number in the commit graph.
+ *
+ * Note that the computation of the commit date is more involved than you might
+ * think. Instead of using the full commit date, we're in fact masking bits so
+ * that only the 34 lowest bits are considered. This results from the fact that
+ * commit graphs themselves only ever store 34 bits of the commit date
+ * themselves.
+ *
+ * This means that if we have a commit date that exceeds 34 bits we'll end up
+ * in situations where depending on whether the commit has been parsed from the
+ * object database or the commit graph we'll have different dates, where the
+ * ones parsed from the object database would have full 64 bit precision.
+ *
+ * But ultimately, we only ever want the offset to be relative to what we
+ * actually end up storing on disk, and hence we have to mask all the other
+ * bits.
+ */
+static timestamp_t compute_generation_offset(struct commit *c)
+{
+	timestamp_t masked_date = c->date & (((timestamp_t) 1 << 34) - 1);
+	return commit_graph_data_at(c)->generation - masked_date;
+}
+
 static int write_graph_chunk_generation_data(struct hashfile *f,
 					     void *data)
 {
@@ -1329,7 +1354,7 @@ static int write_graph_chunk_generation_data(struct hashfile *f,
 		struct commit *c = ctx->commits.items[i];
 		timestamp_t offset;
 		repo_parse_commit(ctx->r, c);
-		offset = commit_graph_data_at(c)->generation - c->date;
+		offset = compute_generation_offset(c);
 		display_progress(ctx->progress, ++ctx->progress_cnt);
 
 		if (offset > GENERATION_NUMBER_V2_OFFSET_MAX) {
@@ -1350,7 +1375,7 @@ static int write_graph_chunk_generation_data_overflow(struct hashfile *f,
 	int i;
 	for (i = 0; i < ctx->commits.nr; i++) {
 		struct commit *c = ctx->commits.items[i];
-		timestamp_t offset = commit_graph_data_at(c)->generation - c->date;
+		timestamp_t offset = compute_generation_offset(c);
 		display_progress(ctx->progress, ++ctx->progress_cnt);
 
 		if (offset > GENERATION_NUMBER_V2_OFFSET_MAX) {
@@ -1741,7 +1766,7 @@ static void compute_generation_numbers(struct write_commit_graph_context *ctx)
 
 	for (i = 0; i < ctx->commits.nr; i++) {
 		struct commit *c = ctx->commits.items[i];
-		timestamp_t offset = commit_graph_data_at(c)->generation - c->date;
+		timestamp_t offset = compute_generation_offset(c);
 		if (offset > GENERATION_NUMBER_V2_OFFSET_MAX)
 			ctx->num_generation_data_overflows++;
 	}
