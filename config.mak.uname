@@ -172,6 +172,17 @@ ifeq ($(uname_S),Darwin)
 		NEEDS_GOOD_LIBICONV = UnfortunatelyYes
         endif
 
+	# Homebrew's LLVM clang ships a regex.h that lacks REG_ENHANCED,
+	# which is needed for USE_ENHANCED_BASIC_REGULAR_EXPRESSIONS above.
+	# Use our bundled regex instead.  This became a practical problem
+	# when Homebrew 5.1.0 started auto-linking versioned keg-only
+	# formulae (like llvm@15) into $(HOMEBREW_PREFIX)/bin/, causing
+	# CC=clang in CI to silently pick up Homebrew's clang instead of
+	# Apple's /usr/bin/clang.
+	ifeq ($(CC),clang)
+		NO_REGEX = HomebrewsClangUsesARegexThatLacksREG_ENHANCED
+	endif
+
 	# The builtin FSMonitor on MacOS builds upon Simple-IPC.  Both require
 	# Unix domain sockets and PThreads.
         ifndef NO_PTHREADS
