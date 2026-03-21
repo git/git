@@ -7,6 +7,7 @@
 #include "environment.h"
 #include "repository.h"
 #include "odb.h"
+#include "odb/source.h"
 #include "odb/streaming.h"
 #include "replace-object.h"
 
