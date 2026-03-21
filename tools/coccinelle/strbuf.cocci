@@ -71,3 +71,10 @@ identifier fn, param;
   {
   ...
   }
+
+// In modern codebase, .buf member of an empty strbuf is not NULL.
+@@
+struct strbuf SB;
+@@
+- SB.buf ? SB.buf : ""
++ SB.buf
