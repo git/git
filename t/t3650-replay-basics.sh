@@ -81,9 +81,13 @@ test_expect_success 'exactly one of --onto, --advance, or --revert is required' 
 	test_cmp expect actual
 '
 
-test_expect_success 'no base or negative ref gives no-replaying down to root error' '
-	echo "fatal: replaying down from root commit is not supported yet!" >expect &&
-	test_must_fail git replay --onto=topic1 topic2 2>actual &&
+test_expect_success 'replay down to root onto another branch' '
+	git replay --ref-action=print --onto main topic2 >result &&
+
+	test_line_count = 1 result &&
+
+	git log --format=%s $(cut -f 3 -d " " result) >actual &&
+	test_write_lines E D C M L B A >expect &&
 	test_cmp expect actual
 '
 
