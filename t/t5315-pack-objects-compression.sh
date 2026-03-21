@@ -10,7 +10,7 @@ test_expect_success setup '
 	# make sure it resulted in a loose object
 	ob=$(sed -e "s/\(..\).*/\1/" object-name) &&
 	ject=$(sed -e "s/..\(.*\)/\1/" object-name) &&
-	test -f .git/objects/$ob/$ject
+	test_path_is_file .git/objects/$ob/$ject
 '
 
 while read expect config
