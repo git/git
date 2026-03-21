@@ -7,9 +7,6 @@ TEST_OUTPUT_DIRECTORY=$(pwd)
 TEST_DIRECTORY="$CURR_DIR"/../../../t
 DIFF_HIGHLIGHT="$CURR_DIR"/../diff-highlight
 
-CW="$(printf "\033[7m")"	# white
-CR="$(printf "\033[27m")"	# reset
-
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . "$TEST_DIRECTORY"/test-lib.sh
@@ -41,8 +38,10 @@ dh_test () {
 		git show >commit.raw
 	} >/dev/null &&
 
-	"$DIFF_HIGHLIGHT" <diff.raw | test_strip_patch_header >diff.act &&
-	"$DIFF_HIGHLIGHT" <commit.raw | test_strip_patch_header >commit.act &&
+	"$DIFF_HIGHLIGHT" <diff.raw >diff.hi &&
+	test_strip_patch_header <diff.hi | test_decode_color >diff.act
+	"$DIFF_HIGHLIGHT" <commit.raw >commit.hi &&
+	test_strip_patch_header <commit.hi | test_decode_color >commit.act &&
 	test_cmp patch.exp diff.act &&
 	test_cmp patch.exp commit.act
 }
@@ -124,8 +123,8 @@ test_expect_success 'diff-highlight highlights the beginning of a line' '
 	dh_test a b <<-EOF
 		@@ -1,3 +1,3 @@
 		 aaa
-		-${CW}b${CR}bb
-		+${CW}0${CR}bb
+		-<REVERSE>b<NOREVERSE>bb
+		+<REVERSE>0<NOREVERSE>bb
 		 ccc
 	EOF
 '
@@ -146,8 +145,8 @@ test_expect_success 'diff-highlight highlights the end of a line' '
 	dh_test a b <<-EOF
 		@@ -1,3 +1,3 @@
 		 aaa
-		-bb${CW}b${CR}
-		+bb${CW}0${CR}
+		-bb<REVERSE>b<NOREVERSE>
+		+bb<REVERSE>0<NOREVERSE>
 		 ccc
 	EOF
 '
@@ -168,8 +167,8 @@ test_expect_success 'diff-highlight highlights the middle of a line' '
 	dh_test a b <<-EOF
 		@@ -1,3 +1,3 @@
 		 aaa
-		-b${CW}b${CR}b
-		+b${CW}0${CR}b
+		-b<REVERSE>b<NOREVERSE>b
+		+b<REVERSE>0<NOREVERSE>b
 		 ccc
 	EOF
 '
@@ -211,8 +210,8 @@ test_expect_failure 'diff-highlight highlights mismatched hunk size' '
 	dh_test a b <<-EOF
 		@@ -1,3 +1,3 @@
 		 aaa
-		-b${CW}b${CR}b
-		+b${CW}0${CR}b
+		-b<REVERSE>b<NOREVERSE>b
+		+b<REVERSE>0<NOREVERSE>b
 		+ccc
 	EOF
 '
@@ -230,8 +229,8 @@ test_expect_success 'diff-highlight treats multibyte utf-8 as a unit' '
 	echo "unic${o_stroke}de" >b &&
 	dh_test a b <<-EOF
 		@@ -1 +1 @@
-		-unic${CW}${o_accent}${CR}de
-		+unic${CW}${o_stroke}${CR}de
+		-unic<REVERSE>${o_accent}<NOREVERSE>de
+		+unic<REVERSE>${o_stroke}<NOREVERSE>de
 	EOF
 '
 
@@ -248,8 +247,8 @@ test_expect_failure 'diff-highlight treats combining code points as a unit' '
 	echo "unico${combine_circum}de" >b &&
 	dh_test a b <<-EOF
 		@@ -1 +1 @@
-		-unic${CW}o${combine_accent}${CR}de
-		+unic${CW}o${combine_circum}${CR}de
+		-unic<REVERSE>o${combine_accent}<NOREVERSE>de
+		+unic<REVERSE>o${combine_circum}<NOREVERSE>de
 	EOF
 '
 
@@ -331,12 +330,12 @@ test_expect_success 'diff-highlight handles --graph with leading dash' '
 	+++ b/file
 	@@ -1,3 +1,3 @@
 	 before
-	-the ${CW}old${CR} line
-	+the ${CW}new${CR} line
+	-the <REVERSE>old<NOREVERSE> line
+	+the <REVERSE>new<NOREVERSE> line
 	 -leading dash
 	EOF
 	git log --graph -p -1 | "$DIFF_HIGHLIGHT" >actual.raw &&
-	trim_graph <actual.raw | sed -n "/^---/,\$p" >actual &&
+	trim_graph <actual.raw | sed -n "/^---/,\$p" | test_decode_color >actual &&
 	test_cmp expect actual
 '
 
@@ -348,6 +347,34 @@ test_expect_success 'highlight diff that removes final newline' '
 	-content
 	+content
 	\ No newline at end of file
+	EOF
+'
+
+test_expect_success 'configure set/reset colors' '
+	test_config color.diff-highlight.oldhighlight bold &&
+	test_config color.diff-highlight.oldreset nobold &&
+	test_config color.diff-highlight.newhighlight italic &&
+	test_config color.diff-highlight.newreset noitalic &&
+	echo "prefix a suffix" >a &&
+	echo "prefix b suffix" >b &&
+	dh_test a b <<-\EOF
+	@@ -1 +1 @@
+	-prefix <BOLD>a<NORMAL_INTENSITY> suffix
+	+prefix <ITALIC>b<NOITALIC> suffix
+	EOF
+'
+
+test_expect_success 'configure normal/highlight colors' '
+	test_config color.diff-highlight.oldnormal red &&
+	test_config color.diff-highlight.oldhighlight magenta &&
+	test_config color.diff-highlight.newnormal green &&
+	test_config color.diff-highlight.newhighlight yellow &&
+	echo "prefix a suffix" >a &&
+	echo "prefix b suffix" >b &&
+	dh_test a b <<-\EOF
+	@@ -1 +1 @@
+	<RED>-prefix <RESET><MAGENTA>a<RESET><RED> suffix<RESET>
+	<GREEN>+prefix <RESET><YELLOW>b<RESET><GREEN> suffix<RESET>
 	EOF
 '
 
