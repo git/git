@@ -315,6 +315,46 @@ cache_miss () {
 }
 
 # Usage: check_parents [REVS...]
+#
+# During a split, check that every commit in REVS has already been
+# processed via `process_split_commit`. If not, deepen the history
+# until it is.
+#
+# Commits authored by `subtree split` have to be created in the
+# same order as every other git commit: ancestor-first, with new
+# commits building on old commits. The traversal order normally
+# ensures this is the case, but it also excludes --rejoins commits
+# by default.
+#
+# The --rejoin tells us, "this mainline commit is equivalent to
+# this split commit." The relationship is only known for that
+# exact commit---and not before or after it. Frequently, commits
+# prior to a rejoin are not needed... but, just as often, they
+# are! Consider this history graph:
+#
+#              --D---
+#             /      \
+#         A--B--C--R--X--Y    main
+#                 /     /
+#          a--b--c     /      split
+#              \      /
+#               --e--/
+#
+# The main branch has commits A, B, and C. main is split into
+# commits a, b, and c. The split history is rejoined at R.
+#
+# There are at least two cases where we might need the A-B-C
+# history that is prior to R:
+#
+# 1. Commit D is based on history prior to R, but
+#    it isn't merged into mainline until after R.
+#
+# 2. Commit e is based on old split history. It is merged
+#    back into mainline with a subtree merge. Again, this
+#    happens after R.
+#
+# check_parents detects these cases and deepens the history
+# to the next available rejoin.
 check_parents () {
 	missed=$(cache_miss "$@") || exit $?
 	local indent=$(($indent + 1))
@@ -322,8 +362,20 @@ check_parents () {
 	do
 		if ! test -r "$cachedir/notree/$miss"
 		then
-			debug "incorrect order: $miss"
-			process_split_commit "$miss" ""
+			debug "found commit excluded by --rejoin: $miss. skipping to the next --rejoin..."
+			unrevs="$(find_existing_splits "$dir" "$miss" "$repository")" || exit 1
+
+			find_commits_to_split "$miss" "$unrevs" |
+			while read -r rev parents
+			do
+				process_split_commit "$rev" "$parents"
+			done
+
+			if ! test -r "$cachedir/$miss" &&
+				! test -r "$cachedir/notree/$miss"
+			then
+				die "failed to deepen history at $miss"
+			fi
 		fi
 	done
 }
@@ -373,6 +425,10 @@ try_remove_previous () {
 }
 
 # Usage: process_subtree_split_trailer SPLIT_HASH MAIN_HASH [REPOSITORY]
+#
+# Parse SPLIT_HASH as a commit. If the commit is not found, fetches
+# REPOSITORY and tries again. If found, prints full commit hash.
+# Otherwise, dies.
 process_subtree_split_trailer () {
 	assert test $# -ge 2
 	assert test $# -le 3
@@ -400,6 +456,7 @@ process_subtree_split_trailer () {
 			die "$fail_msg"
 		fi
 	fi
+	echo "${sub}"
 }
 
 # Usage: find_latest_squash DIR [REPOSITORY]
@@ -432,7 +489,7 @@ find_latest_squash () {
 			main="$b"
 			;;
 		git-subtree-split:)
-			process_subtree_split_trailer "$b" "$sq" "$repository"
+			sub="$(process_subtree_split_trailer "$b" "$sq" "$repository")" || exit 1
 			;;
 		END)
 			if test -n "$sub"
@@ -489,7 +546,7 @@ find_existing_splits () {
 			main="$b"
 			;;
 		git-subtree-split:)
-			process_subtree_split_trailer "$b" "$sq" "$repository"
+			sub="$(process_subtree_split_trailer "$b" "$sq" "$repository")" || exit 1
 			;;
 		END)
 			debug "Main is: '$main'"
@@ -512,6 +569,31 @@ find_existing_splits () {
 			;;
 		esac
 	done || exit $?
+}
+
+# Usage: find_commits_to_split REV UNREVS [ARGS...]
+#
+# List each commit to split, with its parents.
+#
+# Specify the starting REV for the split, which is usually
+# a branch tip. Populate UNREVS with the last --rejoin for
+# this prefix, if any. Typically, `subtree split` ignores
+# history prior to the last --rejoin... unless and if it
+# becomes necessary to consider it. `find_existing_splits` is
+# a convenient source of UNREVS.
+#
+# Remaining arguments are passed to rev-list.
+#
+# Outputs commits in ancestor-first order, one per line, with
+# parent information. Outputs all parents before any child.
+find_commits_to_split() {
+	assert test $# -ge 2
+	rev="$1"
+	unrevs="$2"
+	shift 2
+
+	echo "$unrevs" |
+	git rev-list --topo-order --reverse --parents --stdin "$rev" "$@"
 }
 
 # Usage: copy_commit REV TREE FLAGS_STR
@@ -971,12 +1053,11 @@ cmd_split () {
 	# We can't restrict rev-list to only $dir here, because some of our
 	# parents have the $dir contents the root, and those won't match.
 	# (and rev-list --follow doesn't seem to solve this)
-	grl='git rev-list --topo-order --reverse --parents $rev $unrevs'
-	revmax=$(eval "$grl" | wc -l)
+	revmax="$(find_commits_to_split "$rev" "$unrevs" --count)"
 	revcount=0
 	createcount=0
 	extracount=0
-	eval "$grl" |
+	find_commits_to_split "$rev" "$unrevs" |
 	while read rev parents
 	do
 		process_split_commit "$rev" "$parents"
