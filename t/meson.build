@@ -979,6 +979,7 @@ integration_tests = [
   't9001-send-email.sh',
   't9002-column.sh',
   't9003-help-autocorrect.sh',
+  't9004-autocorrect-subcommand.sh',
   't9100-git-svn-basic.sh',
   't9101-git-svn-props.sh',
   't9102-git-svn-deep-rmdir.sh',
