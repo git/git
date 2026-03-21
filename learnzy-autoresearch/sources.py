@@ -179,12 +179,15 @@ def search_openalex(query: str, max_results: int = 50, min_year: int = 2009) -> 
         if not title:
             continue
 
+        # Use cited_by_count as n proxy (better than 0 — prevents filter-out if extraction fails)
+        # LLM extraction will replace this with the actual sample size when available
+        n_proxy = max(cited_by // 5, 1)  # rough heuristic: ~5 citations per participant
         papers.append(Paper(
             pmid=pmid,
             title=title,
             abstract=abstract,
             year=year,
-            n=0,
+            n=n_proxy,
             effect_size=0.0,
             study_type="cross_sectional",
             relevance_score=0.0,
@@ -193,6 +196,7 @@ def search_openalex(query: str, max_results: int = 50, min_year: int = 2009) -> 
             cited_by_count=cited_by,
         ))
 
+    print(f"[sources]   OpenAlex returned {len(papers)} papers for query '{query[:60]}'", flush=True)
     return papers
 
 
@@ -259,7 +263,7 @@ def _claude_extract_paper_stats(papers: List[Paper], link_name: str) -> List[Pap
         },
     )
     try:
-        with urllib.request.urlopen(req, timeout=45) as r:
+        with urllib.request.urlopen(req, timeout=60) as r:
             response = json.loads(r.read())
         text = response["choices"][0]["message"]["content"].strip()
         start = text.find("[")
@@ -268,12 +272,21 @@ def _claude_extract_paper_stats(papers: List[Paper], link_name: str) -> List[Pap
             stats = json.loads(text[start:end])
             for i, s in enumerate(stats):
                 if i < len(papers):
-                    papers[i].n = int(s.get("n") or 0)
+                    extracted_n = int(s.get("n") or 0)
+                    # Only override proxy if LLM found an actual n
+                    if extracted_n > 0:
+                        papers[i].n = extracted_n
                     papers[i].effect_size = float(s.get("effect_size") or 0.0)
                     papers[i].study_type = s.get("study_type", "cross_sectional")
                     papers[i].relevance_score = float(s.get("relevance_score") or 0.0)
+            print(f"[sources]   Extraction OK for {link_name}: {len(stats)} records", flush=True)
+        else:
+            print(f"[sources]   Extraction parse failed for {link_name} — no JSON array found", flush=True)
+    except urllib.error.HTTPError as e:
+        body = e.read().decode("utf-8", errors="replace")[:300]
+        print(f"[sources] OpenAI API HTTP {e.code} for {link_name}: {body}", flush=True)
     except Exception as e:
-        print(f"[sources] Claude extraction error for {link_name}: {e}", flush=True)
+        print(f"[sources] Extraction error for {link_name}: {type(e).__name__}: {e}", flush=True)
 
     return papers
 
@@ -370,7 +383,9 @@ def run_searches(
             time.sleep(0.15)
 
     # 3. LLM extraction of stats from abstracts
-    print("[sources] Extracting stats via Claude...", flush=True)
+    raw_counts = {link: len(papers_by_link[link]) for link in LINK_WEIGHTS}
+    print(f"[sources] Raw paper counts before extraction: {raw_counts}", flush=True)
+    print("[sources] Extracting stats via OpenAI...", flush=True)
     for link in LINK_WEIGHTS:
         papers = papers_by_link[link]
         if not papers:

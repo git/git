@@ -53,15 +53,9 @@ def git(cmd: str, check: bool = True) -> str:
     return result.stdout.strip()
 
 
-def ensure_branch(tag: str) -> str:
-    """Create autoresearch/<tag> branch if it doesn't exist."""
-    branch = f"autoresearch/{tag}"
-    existing = git("branch --list " + branch)
-    if not existing:
-        git(f"checkout -b {branch}")
-    else:
-        git(f"checkout {branch}", check=False)
-    return branch
+def current_branch() -> str:
+    """Return the current git branch name."""
+    return git("rev-parse --abbrev-ref HEAD")
 
 
 def get_best_score() -> float:
@@ -169,8 +163,8 @@ def main() -> None:
     tag = datetime.utcnow().strftime("%Y%m%d")
     print(f"[agent] Starting experiment — tag={tag}", flush=True)
 
-    # 2. Ensure we're on the right branch
-    branch = ensure_branch(tag)
+    # 2. Log current branch (no switching — stays on whatever Actions checked out)
+    branch = current_branch()
     print(f"[agent] Branch: {branch}", flush=True)
 
     # 3. Read current state
