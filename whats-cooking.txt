@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Mar 2026, #07)
-X-master-at: 7ff1e8dc1e1680510c96e69965b3fa81372c5037
-X-next-at: 1eceb487f285f1efa78465e6208770318f9f4892
+Subject: What's cooking in git.git (Mar 2026, #08)
+X-master-at: 6e8d538aab8fe4dd07ba9fb87b5c7edcfa5706ad
+X-next-at: aef58811091ead010da1c5dc590e2731c9cbcefe
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Mar 2026, #07)
+What's cooking in git.git (Mar 2026, #08)
 -----------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,99 +46,108 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
+[New Topics]
 
-* bk/run-command-wo-the-repository (2026-03-12) 2 commits
-  (merged to 'next' on 2026-03-12 at 61ffe62b75)
- + run-command: wean auto_maintenance() functions off the_repository
- + run-command: wean start_command() off the_repository
+* jk/diff-highlight-identical-pairs (2026-03-17) 1 commit
+  (merged to 'next' on 2026-03-20 at a8aa5bd14e)
+ + contrib/diff-highlight: do not highlight identical pairs
+ (this branch is used by jk/diff-highlight-more.)
 
- The run_command() API lost its implicit dependencyon the singleton
- `the_repository` instance.
- source: <20260312144437.626392-1-bkkaracay@gmail.com>
+ The handling of the incomplete lines at the end by "git
+ diff-highlight" has been fixed.
 
-
-* dd/list-objects-filter-options-wo-strbuf-split (2026-03-11) 2 commits
-  (merged to 'next' on 2026-03-12 at 99c4dbd03e)
- + list-objects-filter-options: avoid strbuf_split_str()
- + worktree: do not pass strbuf by value
- (this branch is used by dd/cocci-do-not-pass-strbuf-by-value.)
-
- The way combined list-object filter options are parsed has been
- revamped.
- source: <20260311173336.8395-1-deveshigurgaon@gmail.com>
+ Will merge to 'master'.
+ source: <20260317230223.GA716496@coredump.intra.peff.net>
 
 
-* jc/doc-wholesale-replace-before-next (2026-03-09) 1 commit
-  (merged to 'next' on 2026-03-13 at 19ca350c9b)
- + SubmittingPatches: spell out "replace fully to pretend to be perfect"
+* jk/diff-highlight-more (2026-03-19) 9 commits
+ - diff-highlight: fetch all config with one process
+ - diff-highlight: allow module callers to pass in color config
+ - diff-highlight: test color config
+ - diff-highlight: use test_decode_color in tests
+ - t: add matching negative attributes to test_decode_color
+ - diff-highlight: check diff-highlight exit status in tests
+ - diff-highlight: drop perl version dependency back to 5.8
+ - diff-highlight: mention build instructions
+ - Merge branch 'jk/diff-highlight-identical-pairs' into jk/diff-highlight-more
+ (this branch uses jk/diff-highlight-identical-pairs.)
 
- Doc update.
- source: <xmqq34283b12.fsf@gitster.g>
+ Various updates to contrib/diff-highlight, including documentation
+ updates, test improvements, and color configuration handling.
 
-
-* lc/rebase-trailer (2026-03-06) 6 commits
-  (merged to 'next' on 2026-03-13 at 75c22b6b26)
- + rebase: support --trailer
- + commit, tag: parse --trailer with OPT_STRVEC
- + trailer: append trailers without fork/exec
- + trailer: libify a couple of functions
- + interpret-trailers: refactor create_in_place_tempfile()
- + interpret-trailers: factor trailer rewriting
-
- "git rebase" learns "--trailer" command to drive the
- interpret-trailers machinery.
- source: <cover.1772808594.git.phillip.wood@dunelm.org.uk>
+ Will merge to 'next'.
+ source: <20260320004138.GA3653623@coredump.intra.peff.net>
 
 
-* ps/editorconfig-unanchor (2026-03-11) 1 commit
-  (merged to 'next' on 2026-03-12 at 39ef732ca9)
- + editorconfig: fix style not applying to subdirs anymore
+* js/macos-homebrew-forgets-reg-enhanced (2026-03-20) 1 commit
+ - osx-clang: work around Homebrew's clang lacking REG_ENHANCED
 
- Editorconfig filename patterns were specified incorrectly, making
- many source files inside subdirectories unaffected, which has been
- corrected.
- source: <20260311-b4-pks-editorconfig-fix-subdirs-v1-1-4938193ccd31@pks.im>
+ The build on macOS with Clang is fixed to work around a Homebrew change
+ that exposed an issue with missing REG_ENHANCED.
 
-
-* ps/t9200-test-path-is-helpers (2026-03-12) 2 commits
-  (merged to 'next' on 2026-03-12 at 8500bdf172)
- + t9200: replace test -f with modern path helper
- + t9200: handle missing CVS with skip_all
-
- Test update.
- source: <20260311194002.190195-1-pabloosabaterr@gmail.com>
- source: <20260312173305.15112-1-pabloosabaterr@gmail.com>
+ Will merge to 'next'?
+ source: <d340af9e-334c-4e81-e58a-fc3dea73ebdd@gmx.de>
 
 
-* ps/unit-test-c-escape-names.txt (2026-03-10) 1 commit
-  (merged to 'next' on 2026-03-13 at f545ea5a9c)
- + test-lib: print escape sequence names
+* ps/fsck-wo-the-repository (2026-03-20) 14 commits
+ - builtin/fsck: stop using `the_repository` in error reporting
+ - fsck: provide repository in `struct fsck_report_object`
+ - builtin/fsck: stop using `the_repository` when marking objects
+ - builtin/fsck: stop using `the_repository` when checking packed objects
+ - builtin/fsck: stop using `the_repository` with loose objects
+ - builtin/fsck: stop using `the_repository` when checking reflogs
+ - builtin/fsck: stop using `the_repository` when checking refs
+ - builtin/fsck: stop using `the_repository` when snapshotting refs
+ - builtin/fsck: fix trivial dependence on `the_repository`
+ - fsck: stop relying on global state via `parse_oid_hex()`
+ - fsck: drop `the_repository` in `fsck_set_msg_types()`
+ - fsck: refactor interface to parse fsck options
+ - fsck: drop `the_repository` in `fsck_finish()`
+ - fsck: drop `the_repository` in `fsck_walk()`
 
- The unit test helper function was taught to use backslash +
- mnemonic notation for certain control characters like "\t", instead
- of octal notation like "\011".
- source: <20260311031442.11942-1-pabloosabaterr@gmail.com>
+ Internals of "git fsck" have been refactored to not depend on the
+ global `the_repository` variable.
+
+ Comments?
+ source: <20260320-b4-pks-fsck-without-the-repository-v1-0-6594f997926b@pks.im>
 
 
-* ss/submodule--helper-use-xmalloc (2026-03-10) 1 commit
-  (merged to 'next' on 2026-03-13 at f13711965e)
- + submodule--helper: replace malloc with xmalloc
+* tb/stdin-packs-excluded-but-open (2026-03-19) 5 commits
+ - repack: mark non-MIDX packs above the split as excluded-open
+ - pack-objects: support excluded-open packs with --stdin-packs
+ - t7704: demonstrate failure with once-cruft objects above the geometric split
+ - pack-objects: refactor `read_packs_list_from_stdin()` to use `strmap`
+ - pack-objects: plug leak in `read_stdin_packs()`
 
- Code clean-up.
- source: <20260310164412.47403-1-r.siddharth.shrimali@gmail.com>
+ pack-objects's --stdin-packs=follow mode learns to handle
+ excluded-but-open packs.
+
+ Comments?
+ source: <cover.1773959041.git.me@ttaylorr.com>
 
 
-* ss/t3200-test-zero-oid (2026-03-11) 1 commit
-  (merged to 'next' on 2026-03-12 at 647ee3f2dc)
- + t3200: replace hardcoded null OID with $ZERO_OID
+* yc/path-walk-fix-error-reporting (2026-03-20) 1 commit
+ - path-walk: fix NULL pointer dereference in error message
 
- A test now uses the symbolic constant $ZERO_OID instead of 40 "0" to
- work better with SHA-256 as well as SHA-1.
- source: <20260311174120.76871-1-r.siddharth.shrimali@gmail.com>
+ The value of a wrong pointer variable was referenced in an error
+ message that reported that it shouldn't be NULL.
+
+ Will merge to 'next'?
+ source: <20260320114823.3151961-1-ysinghcin@gmail.com>
+
+
+* jr/bisect-custom-terms-in-output (2026-03-20) 1 commit
+ - bisect: use selected alternate terms in status output
+
+ "git bisect" now uses the selected terms (e.g., old/new) more
+ consistently in its output.
+
+ Expecting a reroll?
+ cf. <xmqqfr5tdbpc.fsf@gitster.g>
+ source: <20260320-bisect-terms-v1-1-c30c9540542a@schlaraffenlan.de>
 
 --------------------------------------------------
-[New Topics]
+[Cooking]
 
 * jc/whitespace-incomplete-line (2026-03-17) 1 commit
  - apply: fix new-style empty context line triggering incomplete-line check
@@ -176,7 +185,7 @@ Release tarballs are available at:
 
  Test clean-up.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <20260317011544.65952-1-jerrywang183@yahoo.com>
 
 
@@ -201,22 +210,24 @@ Release tarballs are available at:
 
 
 * mr/merge-file-object-id-worktree-fix (2026-03-10) 1 commit
- - merge-file: fix BUG when --object-id is used in a worktree
+  (merged to 'next' on 2026-03-20 at 68e1ee2045)
+ + merge-file: fix BUG when --object-id is used in a worktree
 
  merge-file --object-id used to trigger a BUG when run in a linked
  worktree, which has been fixed.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <c076edd0-9057-443b-ba37-33aacde2eede@app.fastmail.com>
 
 
 * rs/prio-queue-to-commit-stack (2026-03-17) 1 commit
- - use commit_stack instead of prio_queue in LIFO mode
+  (merged to 'next' on 2026-03-20 at 265cb7b28c)
+ + use commit_stack instead of prio_queue in LIFO mode
 
  Uses of prio_queue as a LIFO stack of commits have been written
  with commit_stack.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <05fc946f-6670-46e9-a058-231ee464029d@web.de>
 
 
@@ -227,7 +238,7 @@ Release tarballs are available at:
  of branches interpret_branch_name() function has been changed to
  use a dedicated enum type.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <20260318190942.22595-1-jerrywang183@yahoo.com>
 
 
@@ -236,41 +247,44 @@ Release tarballs are available at:
 
  Test cleanup.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <pull.2071.v2.git.1773864455956.gitgitgadget@gmail.com>
 
 
 * gi/doc-boolean-config-typofix (2026-03-18) 1 commit
- - doc: add missing space on git-config page
+  (merged to 'next' on 2026-03-20 at 8810624798)
+ + doc: add missing space on git-config page
 
  Doc typofix.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20260318210020.759128-1-gabl@gabl.ink>
 
 
-* ua/push-remote-group (2026-03-19) 3 commits
- - fixup! push: support pushing to a remote group
+* ua/push-remote-group (2026-03-18) 2 commits
  - push: support pushing to a remote group
  - remote: move remote group resolution to remote.c
 
  "git push" learned to take a "remote group" name to push to, which
  causes pushes to multiple places, just like "git fetch" would do.
 
- Will merge to 'next' after squashing the fixup in?
+ Will merge to 'next'?
  source: <20260318204028.1010487-1-usmanakinyemi202@gmail.com>
 
 
-* jc/rerere-modern-strbuf-handling (2026-03-19) 1 commit
- - rerere: update to modern representation of empty strbufs
+* jc/rerere-modern-strbuf-handling (2026-03-19) 2 commits
+  (merged to 'next' on 2026-03-21 at 919b766afc)
+ + cocci: strbuf.buf is never NULL
+ + rerere: update to modern representation of empty strbufs
 
  Code clean-up overdue by 19 years.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <xmqq341wnvbk.fsf@gitster.g>
+ source: <xmqq4imbigvt.fsf@gitster.g>
 
 
-* ps/odb-generic-object-name-handling (2026-03-18) 15 commits
+* ps/odb-generic-object-name-handling (2026-03-20) 15 commits
  - odb: introduce generic `odb_find_abbrev_len()`
  - object-file: move logic to compute packed abbreviation length
  - object-name: move logic to compute loose abbreviation length
@@ -293,16 +307,17 @@ Release tarballs are available at:
  object database backends.
 
  Comments?
- source: <20260319-b4-pks-odb-source-abbrev-v1-0-5ddebad292b0@pks.im>
+ source: <20260320-b4-pks-odb-source-abbrev-v2-0-fe65dcd8c735@pks.im>
 
 
 * rs/ahead-behind-cleanup-optimization (2026-03-19) 1 commit
- - commit-reach: simplify cleanup of remaining bitmaps in ahead_behind ()
+  (merged to 'next' on 2026-03-21 at 5d8b4fa265)
+ + commit-reach: simplify cleanup of remaining bitmaps in ahead_behind ()
 
  The cleanup of remaining bitmaps in "ahead_behind()" has been
  simplified.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <21adf042-2bd1-4022-8822-9ed4985122a4@web.de>
 
 
@@ -312,20 +327,20 @@ Release tarballs are available at:
  Test clean-up.
 
  Will merge to 'next'?
+ cf. <8669d87c1b7f96dd0de37dabfb9011c8745a17c9.camel@gmail.com>
  source: <20260319180803.164335-1-elkhatabibilal@gmail.com>
 
 
 * rs/split-index-the-repo-fix (2026-03-19) 1 commit
- - split-index: stop using the_repository and the_hash_algo
+  (merged to 'next' on 2026-03-21 at d66850b2ce)
+ + split-index: stop using the_repository and the_hash_algo
 
  split-index.c has been updated to not use the global the_repository
  and the_hash_algo variables.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <944c2331-4dec-4c98-9059-f41dc204ed86@web.de>
 
---------------------------------------------------
-[Cooking]
 
 * aa/reap-transport-child-processes (2026-03-12) 1 commit
  . transport-helper, connect: use clean_on_exit to reap children on abnormal exit
@@ -350,12 +365,13 @@ Release tarballs are available at:
 
 
 * ej/ref-transaction-hook-preparing (2026-03-16) 1 commit
- - refs: add 'preparing' phase to the reference-transaction hook
+  (merged to 'next' on 2026-03-20 at f9b8fbb0dc)
+ + refs: add 'preparing' phase to the reference-transaction hook
 
  The reference-transaction hook was taught to be triggered before
  taking locks on references in the "preparing" phase.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20260317023624.43070-2-eric.peijian@gmail.com>
 
 
@@ -374,16 +390,15 @@ Release tarballs are available at:
  source: <pull.2234.v6.git.git.1773740139.gitgitgadget@gmail.com>
 
 
-* kh/name-rev-custom-format (2026-03-13) 2 commits
+* kh/name-rev-custom-format (2026-03-20) 2 commits
  - name-rev: learn --format=<pretty>
  - name-rev: wrap both blocks in braces
 
  "git name-rev" learned to use custom format instead of the object
  name in an extended SHA-1 expression form.
 
- Expecting review responses.
- cf. <xmqq8qbvz2dm.fsf@gitster.g>
- source: <CV_name-rev_--format.4ad@msgid.xyz>
+ Comments?
+ source: <V2_CV_name-rev_--format.51b@msgid.xyz>
 
 
 * pw/worktree-reduce-the-repository (2026-03-15) 3 commits
@@ -440,7 +455,7 @@ Release tarballs are available at:
  line number when it encounters a corrupt patch, and correctly
  resets the line counter when processing multiple patch files.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <20260317162321.71812-1-jerrywang183@yahoo.com>
 
 
@@ -464,11 +479,12 @@ Release tarballs are available at:
  source: <20260315081032.497-1-riteshjd75@gmail.com>
 
 
-* mf/format-patch-commit-list-format (2026-03-14) 8 commits
+* mf/format-patch-commit-list-format (2026-03-19) 9 commits
  - format-patch: --commit-list-format without prefix
  - format-patch: add preset for --commit-list-format
  - format-patch: wrap generate_commit_list_cover()
  - format.commitListFormat: strip meaning from empty
+ - docs/pretty-formats: add %(count) and %(total)
  - format-patch: rename --cover-letter-format option
  - format-patch: refactor generate_commit_list_cover
  - pretty.c: better die message %(count) and %(total)
@@ -479,9 +495,8 @@ Release tarballs are available at:
  --commit-list-format` (formerly `--cover-letter-format`) option,
  including a new "modern" preset and better CLI ergonomics.
 
- Expecting a reroll.
- cf. <abl-U6jJaMQsfxWj@exploit>
- source: <cover.1773530191.git.mroik@delayed.space>
+ Comments?
+ source: <cover.1773959395.git.mroik@delayed.space>
 
 
 * mf/t0008-cleanup (2026-03-15) 1 commit
@@ -539,31 +554,34 @@ Release tarballs are available at:
 
 
 * mf/apply-p-no-atoi (2026-03-15) 1 commit
- - apply.c: fix -p argument parsing
+  (merged to 'next' on 2026-03-20 at 70a0a4313b)
+ + apply.c: fix -p argument parsing
 
  "git apply -p<n>" parses <n> more carefully now.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20260316005120.7079-1-mroik@delayed.space>
 
 
 * ps/build-tweaks (2026-03-18) 8 commits
- - meson: precompile "git-compat-util.h"
- - meson: compile compatibility sources separately
- - git-compat-util.h: move warning infra to prepare for PCHs
- - builds: move build scripts into "tools/"
- - contrib: move "update-unicode.sh" script into "tools/"
- - contrib: move "coverage-diff.sh" script into "tools/"
- - contrib: move "coccinelle/" directory into "tools/"
- - Introduce new "tools/" directory
+  (merged to 'next' on 2026-03-20 at fb53cf619a)
+ + meson: precompile "git-compat-util.h"
+ + meson: compile compatibility sources separately
+ + git-compat-util.h: move warning infra to prepare for PCHs
+ + builds: move build scripts into "tools/"
+ + contrib: move "update-unicode.sh" script into "tools/"
+ + contrib: move "coverage-diff.sh" script into "tools/"
+ + contrib: move "coccinelle/" directory into "tools/"
+ + Introduce new "tools/" directory
 
  Tweak the build infrastructure by moving tools around.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20260319-b4-pks-build-infra-improvements-v3-0-82f5fb3edc3f@pks.im>
 
 
-* ps/object-counting (2026-03-12) 7 commits
+* ps/object-counting (2026-03-19) 8 commits
+ - object-file: fix sparse 'plain integer as NULL pointer' error
   (merged to 'next' on 2026-03-17 at 8d3d9a1374)
  + odb: introduce generic object counting
  + odb/source: introduce generic object counting
@@ -576,7 +594,7 @@ Release tarballs are available at:
 
  The logic to count objects has been cleaned up.
 
- Will merge to 'master'.
+ Will merge to 'next' and then to 'master'.
  source: <20260312-b4-pks-odb-source-count-objects-v2-0-5914f69256bf@pks.im>
 
 
@@ -626,14 +644,15 @@ Release tarballs are available at:
 
 
 * kh/doc-interpret-trailers-1 (2026-03-16) 4 commits
- - interpret-trailers: use placeholder instead of *
- - doc: config: convert trailers section to synopsis style
- - doc: interpret-trailers: normalize and fill out options
- - doc: interpret-trailers: convert to synopsis style
+  (merged to 'next' on 2026-03-20 at 6acc8b5a8a)
+ + interpret-trailers: use placeholder instead of *
+ + doc: config: convert trailers section to synopsis style
+ + doc: interpret-trailers: normalize and fill out options
+ + doc: interpret-trailers: convert to synopsis style
 
  Doc updates.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <V2_CV_doc_interpret-tr_synopsis.50a@msgid.xyz>
 
 
@@ -661,10 +680,10 @@ Release tarballs are available at:
  source: <pull.2065.v2.git.1773714095.gitgitgadget@gmail.com>
 
 
-* ar/config-hook-cleanups (2026-03-08) 11 commits
+* ar/config-hook-cleanups (2026-03-20) 11 commits
  - hook: show disabled hooks in "git hook list"
  - hook: show config scope in git hook list
- - hook: refactor hook_config_cache from strmap to named struct
+ - hook: introduce hook_config_cache_entry for per-hook data
  - t1800: add test to verify hook execution ordering
  - hook: make consistent use of friendly-name in docs
  - hook: replace hook_list_clear() -> string_list_clear_func()
@@ -677,9 +696,8 @@ Release tarballs are available at:
 
  Code clean-up around the recent "hooks defined in config" topic.
 
- Expecting a reroll.
- cf. <87jyviaagp.fsf@collabora.com>
- source: <20260309005416.2760030-1-adrian.ratiu@collabora.com>
+ Will merge to 'next'?
+ source: <20260320115211.177351-1-adrian.ratiu@collabora.com>
 
 
 * cf/constness-fixes (2026-03-08) 2 commits
@@ -868,16 +886,18 @@ Release tarballs are available at:
 
  The HTTP transport learned to react to "429 Too Many Requests".
 
- Needs review.
+ Will merge to 'next'.
+ cf. <ab4RIZr7b49VKjR9@nand.local>
  source: <pull.2008.v6.git.1773752435.gitgitgadget@gmail.com>
 
 
-* ar/parallel-hooks (2026-03-09) 10 commits
- - hook: allow runtime enabling extensions.hookStdoutToStderr
- - hook: introduce extensions.hookStdoutToStderr
+* ar/parallel-hooks (2026-03-20) 11 commits
+ - hook: add hook.<event>.enabled switch
+ - hook: warn when hook.<friendly-name>.jobs is set
  - hook: add per-event jobs config
  - hook: add -j/--jobs option to git hook run
  - hook: mark non-parallelizable hooks
+ - hook: allow pre-push parallel execution
  - hook: allow parallel hook execution
  - hook: parse the hook.jobs config
  - config: add a repo_config_get_uint() helper
@@ -886,7 +906,7 @@ Release tarballs are available at:
  (this branch uses ar/config-hook-cleanups.)
 
  Needs review.
- source: <20260309133739.294555-1-adrian.ratiu@collabora.com>
+ source: <20260320135311.331463-1-adrian.ratiu@collabora.com>
 
 
 * ng/submodule-default-remote (2026-03-03) 1 commit
