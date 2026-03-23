@@ -51,7 +51,6 @@ static int server_supports_filtering;
 static int advertise_sid;
 static struct shallow_lock shallow_lock;
 static const char *alternate_shallow_file;
-static struct fsck_options fsck_options = FSCK_OPTIONS_MISSING_GITMODULES;
 static struct strbuf fsck_msg_types = STRBUF_INIT;
 static struct string_list uri_protocols = STRING_LIST_INIT_DUP;
 
@@ -1100,6 +1099,7 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 				 struct shallow_info *si,
 				 struct string_list *pack_lockfiles)
 {
+	struct fsck_options fsck_options = FSCK_OPTIONS_MISSING_GITMODULES;
 	struct repository *r = the_repository;
 	struct ref *ref = copy_ref_list(orig_ref);
 	struct object_id oid;
@@ -1235,6 +1235,7 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 		die("fsck failed");
 
  all_done:
+	fsck_options_clear(&fsck_options);
 	if (negotiator)
 		negotiator->release(negotiator);
 	return ref;
@@ -1654,6 +1655,7 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 				    struct string_list *pack_lockfiles)
 {
 	struct repository *r = the_repository;
+	struct fsck_options fsck_options = FSCK_OPTIONS_MISSING_GITMODULES;
 	struct ref *ref = copy_ref_list(orig_ref);
 	enum fetch_state state = FETCH_CHECK_LOCAL;
 	struct oidset common = OIDSET_INIT;
@@ -1882,6 +1884,7 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 	if (negotiator)
 		negotiator->release(negotiator);
 
+	fsck_options_clear(&fsck_options);
 	oidset_clear(&common);
 	return ref;
 }
