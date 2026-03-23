@@ -402,7 +402,7 @@ test_expect_success 'git bisect run: negative exit code' "
 	git bisect good $HASH1 &&
 	git bisect bad $HASH4 &&
 	! git bisect run ./fail.sh 2>err &&
-	sed -En 's/.*(bisect.*code) (-?[0-9]+) (from.*)/\1 -1 \3/p' err >actual &&
+	sed -E -n 's/.*(bisect.*code) (-?[0-9]+) (from.*)/\1 -1 \3/p' err >actual &&
 	test_cmp expect actual
 "
 
