@@ -326,8 +326,10 @@ feeding the result to `git send-email`.
 --commit-list-format=<format-spec>::
 	Specify the format in which to generate the commit list of the patch
 	series. The accepted values for format-spec are `shortlog`, `modern` or a
-	format string prefixed with `log:`.
+	format-string prefixed with `log:`.
 	e.g. `log: %s (%an)`
+	The user is allowed to drop the prefix if the format-string contains a
+	`%<placeholder>`.
 	If not given, defaults to the `format.commitListFormat` configuration
 	variable.
 	This option implies the use of `--cover-letter` unless
