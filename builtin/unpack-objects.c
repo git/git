@@ -29,7 +29,7 @@ static unsigned int offset, len;
 static off_t consumed_bytes;
 static off_t max_input_size;
 static struct git_hash_ctx ctx;
-static struct fsck_options fsck_options = FSCK_OPTIONS_STRICT;
+static struct fsck_options fsck_options;
 static struct progress *progress;
 
 /*
@@ -626,6 +626,8 @@ int cmd_unpack_objects(int argc,
 	quiet = !isatty(2);
 
 	show_usage_if_asked(argc, argv, unpack_usage);
+
+	fsck_options_init(&fsck_options, FSCK_OPTIONS_STRICT);
 
 	for (i = 1 ; i < argc; i++) {
 		const char *arg = argv[i];

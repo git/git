@@ -1380,6 +1380,51 @@ bool fsck_has_queued_checks(struct fsck_options *options)
 	       !oidset_equal(&options->gitattributes_found, &options->gitattributes_done);
 }
 
+void fsck_options_init(struct fsck_options *options,
+		       enum fsck_options_type type)
+{
+	static const struct fsck_options defaults[] = {
+		[FSCK_OPTIONS_DEFAULT] = {
+			.skip_oids = OIDSET_INIT,
+			.gitmodules_found = OIDSET_INIT,
+			.gitmodules_done = OIDSET_INIT,
+			.gitattributes_found = OIDSET_INIT,
+			.gitattributes_done = OIDSET_INIT,
+			.error_func = fsck_objects_error_function
+		},
+		[FSCK_OPTIONS_STRICT] = {
+			.strict = 1,
+			.gitmodules_found = OIDSET_INIT,
+			.gitmodules_done = OIDSET_INIT,
+			.gitattributes_found = OIDSET_INIT,
+			.gitattributes_done = OIDSET_INIT,
+			.error_func = fsck_objects_error_function,
+		},
+		[FSCK_OPTIONS_MISSING_GITMODULES] = {
+			.strict = 1,
+			.gitmodules_found = OIDSET_INIT,
+			.gitmodules_done = OIDSET_INIT,
+			.gitattributes_found = OIDSET_INIT,
+			.gitattributes_done = OIDSET_INIT,
+			.error_func = fsck_objects_error_cb_print_missing_gitmodules,
+		},
+		[FSCK_OPTIONS_REFS] = {
+			.error_func = fsck_refs_error_function,
+		},
+	};
+
+	switch (type) {
+	case FSCK_OPTIONS_DEFAULT:
+	case FSCK_OPTIONS_STRICT:
+	case FSCK_OPTIONS_MISSING_GITMODULES:
+	case FSCK_OPTIONS_REFS:
+		memcpy(options, &defaults[type], sizeof(*options));
+		break;
+	default:
+		BUG("unknown fsck options type %d", type);
+	}
+}
+
 void fsck_options_clear(struct fsck_options *options)
 {
 	free(options->msg_type);
