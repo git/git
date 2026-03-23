@@ -131,9 +131,21 @@ sub highlight_stdin {
 # of it being used in other settings. Let's handle our own
 # fallback, which means we will work even if git can't be run.
 sub color_config {
+	our $cached_config;
 	my ($key, $default) = @_;
-	my $s = `git config --get-color $key 2>$NULL`;
-	return length($s) ? $s : $default;
+
+	if (!defined $cached_config) {
+		$cached_config = {};
+		my $data = `git config --type=color --get-regexp '^color\.diff-highlight\.' 2>$NULL`;
+		for my $line (split /\n/, $data) {
+			my ($key, $color) = split ' ', $line, 2;
+			$key =~ s/^color\.diff-highlight\.// or next;
+			$cached_config->{$key} = $color;
+		}
+	}
+
+	my $s = $cached_config->{$key};
+	return defined($s) ? $s : $default;
 }
 
 sub show_hunk {
@@ -172,16 +184,16 @@ sub load_color_config {
 	# always be set if you want highlighting to do anything.
 	if (!defined $OLD_HIGHLIGHT[1]) {
 		@OLD_HIGHLIGHT = (
-			color_config('color.diff-highlight.oldnormal'),
-			color_config('color.diff-highlight.oldhighlight', "\x1b[7m"),
-			color_config('color.diff-highlight.oldreset', "\x1b[27m")
+			color_config('oldnormal'),
+			color_config('oldhighlight', "\x1b[7m"),
+			color_config('oldreset', "\x1b[27m")
 		);
 	}
 	if (!defined $NEW_HIGHLIGHT[1]) {
 		@NEW_HIGHLIGHT = (
-			color_config('color.diff-highlight.newnormal', $OLD_HIGHLIGHT[0]),
-			color_config('color.diff-highlight.newhighlight', $OLD_HIGHLIGHT[1]),
-			color_config('color.diff-highlight.newreset', $OLD_HIGHLIGHT[2])
+			color_config('newnormal', $OLD_HIGHLIGHT[0]),
+			color_config('newhighlight', $OLD_HIGHLIGHT[1]),
+			color_config('newreset', $OLD_HIGHLIGHT[2])
 		);
 	};
 }
