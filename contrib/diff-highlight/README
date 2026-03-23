@@ -39,10 +39,21 @@ visually distracting.  Non-diff lines and existing diff coloration is
 preserved; the intent is that the output should look exactly the same as
 the input, except for the occasional highlight.
 
+Build/Install
+-------------
+
+You can build the `diff-highlight` script by running `make` from within
+the diff-highlight directory. There is no `make install` target; you can
+copy the built script to your $PATH.
+
+You can run diff-highlight's internal tests by running `make test`. Note
+that you must also build Git itself first (by running `make` from the
+top-level of the project).
+
 Use
 ---
 
-You can try out the diff-highlight program with:
+You can try out the built diff-highlight program with:
 
 ---------------------------------------------
 git log -p --color | /path/to/diff-highlight
