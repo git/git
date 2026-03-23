@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Mar 2026, #08)
-X-master-at: 6e8d538aab8fe4dd07ba9fb87b5c7edcfa5706ad
-X-next-at: aef58811091ead010da1c5dc590e2731c9cbcefe
+Subject: What's cooking in git.git (Mar 2026, #09)
+X-master-at: 1080981ddb03a072f1e6b55c6325c2af731e733c
+X-next-at: aa363f00f1017ba2d0ed58153d65d48a48e616ea
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Mar 2026, #08)
+What's cooking in git.git (Mar 2026, #09)
 -----------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,7 +46,134 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* ac/help-sort-correctly (2026-03-11) 1 commit
+  (merged to 'next' on 2026-03-16 at db220e143f)
+ + help: cleanup the contruction of keys_uniq
+
+ The code in "git help" that shows configuration items in sorted
+ order was awkwardly organized and prone to bugs.
+ source: <20260311192453.62213-1-amishhhaaaa@gmail.com>
+
+
+* bb/imap-send-openssl-4.0-prep (2026-03-11) 3 commits
+  (merged to 'next' on 2026-03-16 at 0baab97778)
+ + imap-send: move common code into function host_matches()
+ + imap-send: use the OpenSSL API to access the subject common name
+ + imap-send: use the OpenSSL API to access the subject alternative names
+
+ "imap-send" used to use functions whose use is going to be removed
+ with OpenSSL 4.0; rewrite them using public API that has been
+ available since OpenSSL 1.1 since 2016 or so.
+ source: <20260311121107.1122387-1-dev+git@drbeat.li>
+
+
+* cf/constness-fixes (2026-03-08) 2 commits
+  (merged to 'next' on 2026-03-13 at 3c80964399)
+ + dir: avoid -Wdiscarded-qualifiers in remove_path()
+ + bloom: remove a misleading const qualifier
+
+ Small code clean-up around the constness area.
+ source: <3ad40c3d0762c2e8c14792dfb68cba9f63a883a3.1773026586.git.collin.funk1@gmail.com>
+
+
+* jc/test-allow-sed-with-ere (2026-03-11) 1 commit
+  (merged to 'next' on 2026-03-16 at be057bed35)
+ + t: allow use of "sed -E"
+
+ Adjust test-lint to allow "sed -E" to use ERE in the patterns.
+ source: <xmqq3425lvtq.fsf@gitster.g>
+
+
+* ms/t7605-test-path-is-helpers (2026-03-10) 1 commit
+  (merged to 'next' on 2026-03-16 at 49facdec9f)
+ + t7605: use test_path_is_file instead of test -f
+
+ Test updates.
+ source: <pull.2067.v2.git.1773183022175.gitgitgadget@gmail.com>
+
+
+* ng/submodule-default-remote (2026-03-03) 1 commit
+  (merged to 'next' on 2026-03-16 at d41fd28450)
+ + submodule: fetch missing objects from default remote
+
+ Instead of hardcoded 'origin', use the configured default remote
+ when fetching from submodules.
+ source: <20260303234044.105157-1-nasser.grainawi@oss.qualcomm.com>
+
+
+* ty/mktree-wo-the-repository (2026-03-12) 1 commit
+  (merged to 'next' on 2026-03-16 at 8d20ceb853)
+ + builtin/mktree: remove USE_THE_REPOSITORY_VARIABLE
+
+ Code clean-up.
+ source: <20260312164203.964033-1-cat@malon.dev>
+
+--------------------------------------------------
 [New Topics]
+
+* ps/graph-lane-limit (2026-03-23) 3 commits
+ - graph: add documentation and tests about --graph-lane-limit
+ - graph: truncate graph visual output
+ - graph: add --graph-lane-limit option
+
+ The graph output from commands like "git log --graph" can now be
+ limited to a specified number of lanes, preventing overly wide output
+ in repositories with many branches.
+
+ Needs review.
+ source: <20260323215935.74486-1-pabloosabaterr@gmail.com>
+
+
+* rs/use-strvec-pushv (2026-03-19) 1 commit
+ - use strvec_pushv() to add another strvec
+
+ Code paths that loop over another array to push each element into a
+ strvec have been rewritten to use strvec_pushv() instead.
+
+ Will merge to 'next'.
+ source: <084f3b43-91ac-4553-8305-03944e97eaa6@web.de>
+
+
+* cc/promisor-auto-config-url (2026-03-23) 16 commits
+ - doc: promisor: improve acceptFromServer entry
+ - promisor-remote: auto-configure unknown remotes
+ - promisor-remote: trust known remotes matching acceptFromServerUrl
+ - promisor-remote: introduce promisor.acceptFromServerUrl
+ - t5710: use proper file:// URIs for absolute paths
+ - promisor-remote: refactor should_accept_remote() control flow
+ - promisor-remote: pass config entry to all_fields_match() directly
+ - promisor-remote: add 'local_name' to 'struct promisor_info'
+ - promisor-remote: remove the 'accepted' strvec
+ - promisor-remote: keep accepted promisor_info structs alive
+ - promisor-remote: refactor accept_from_server()
+ - promisor-remote: refactor has_control_char()
+ - promisor-remote: clarify that a remote is ignored
+ - urlmatch: add url_is_valid_pattern() helper
+ - urlmatch: change 'allow_globs' arg to bool
+ - promisor-remote: try accepted remotes before others in get_direct()
+
+ Promisor remote handling is enhanced to auto-configure remotes based
+ on a URL whitelist.
+
+ Needs review.
+ source: <20260323080520.887550-1-christian.couder@gmail.com>
+
+
+* kj/refspec-parsing-outside-repository (2026-03-21) 2 commits
+ - refspec: fix typo in comment
+ - refspec: safely parse refspecs outside a repository
+
+ "git ls-remote '+refs/tags/*:refs/tags/*' https://..." run outside a
+ repository would dereference a NULL while trying to see if the given
+ refspec is a single-object refspec, which has been corrected.
+
+ Will merge to 'next'?
+ source: <20260322023557.15907-1-jayatheerthkulkarni2005@gmail.com>
+
+--------------------------------------------------
+[Cooking]
 
 * jk/diff-highlight-identical-pairs (2026-03-17) 1 commit
   (merged to 'next' on 2026-03-20 at a8aa5bd14e)
@@ -60,7 +187,7 @@ Release tarballs are available at:
  source: <20260317230223.GA716496@coredump.intra.peff.net>
 
 
-* jk/diff-highlight-more (2026-03-19) 9 commits
+* jk/diff-highlight-more (2026-03-22) 9 commits
  - diff-highlight: fetch all config with one process
  - diff-highlight: allow module callers to pass in color config
  - diff-highlight: test color config
@@ -76,22 +203,11 @@ Release tarballs are available at:
  updates, test improvements, and color configuration handling.
 
  Will merge to 'next'.
- source: <20260320004138.GA3653623@coredump.intra.peff.net>
+ source: <20260323060139.GA10215@coredump.intra.peff.net>
 
 
-* js/macos-homebrew-forgets-reg-enhanced (2026-03-20) 1 commit
- - osx-clang: work around Homebrew's clang lacking REG_ENHANCED
-
- The build on macOS with Clang is fixed to work around a Homebrew change
- that exposed an issue with missing REG_ENHANCED.
-
- Will merge to 'next'?
- source: <d340af9e-334c-4e81-e58a-fc3dea73ebdd@gmx.de>
-
-
-* ps/fsck-wo-the-repository (2026-03-20) 14 commits
+* ps/fsck-wo-the-repository (2026-03-23) 12 commits
  - builtin/fsck: stop using `the_repository` in error reporting
- - fsck: provide repository in `struct fsck_report_object`
  - builtin/fsck: stop using `the_repository` when marking objects
  - builtin/fsck: stop using `the_repository` when checking packed objects
  - builtin/fsck: stop using `the_repository` with loose objects
@@ -99,17 +215,16 @@ Release tarballs are available at:
  - builtin/fsck: stop using `the_repository` when checking refs
  - builtin/fsck: stop using `the_repository` when snapshotting refs
  - builtin/fsck: fix trivial dependence on `the_repository`
- - fsck: stop relying on global state via `parse_oid_hex()`
- - fsck: drop `the_repository` in `fsck_set_msg_types()`
- - fsck: refactor interface to parse fsck options
- - fsck: drop `the_repository` in `fsck_finish()`
- - fsck: drop `the_repository` in `fsck_walk()`
+ - fsck: drop USE_THE_REPOSITORY
+ - fsck: store repository in fsck options
+ - fsck: initialize fsck options via a function
+ - fetch-pack: move fsck options into function scope
 
  Internals of "git fsck" have been refactored to not depend on the
  global `the_repository` variable.
 
- Comments?
- source: <20260320-b4-pks-fsck-without-the-repository-v1-0-6594f997926b@pks.im>
+ Needs review.
+ source: <20260323-b4-pks-fsck-without-the-repository-v2-0-e8dc79bca651@pks.im>
 
 
 * tb/stdin-packs-excluded-but-open (2026-03-19) 5 commits
@@ -132,7 +247,8 @@ Release tarballs are available at:
  The value of a wrong pointer variable was referenced in an error
  message that reported that it shouldn't be NULL.
 
- Will merge to 'next'?
+ Reproduction being discussed.
+ cf. <994f92e9-3576-455a-a142-0fefc559131c@gmail.com>
  source: <20260320114823.3151961-1-ysinghcin@gmail.com>
 
 
@@ -146,8 +262,6 @@ Release tarballs are available at:
  cf. <xmqqfr5tdbpc.fsf@gitster.g>
  source: <20260320-bisect-terms-v1-1-c30c9540542a@schlaraffenlan.de>
 
---------------------------------------------------
-[Cooking]
 
 * jc/whitespace-incomplete-line (2026-03-17) 1 commit
  - apply: fix new-style empty context line triggering incomplete-line check
@@ -167,7 +281,8 @@ Release tarballs are available at:
  source: <20260317155230.619378-1-shreyanshpaliwalcmsmn@gmail.com>
 
 
-* ds/backfill-revs (2026-03-16) 5 commits
+* ds/backfill-revs (2026-03-23) 6 commits
+ - t5620: test backfill's unknown argument handling
  - path-walk: support wildcard pathspecs for blob filtering
  - backfill: work with prefix pathspecs
  - backfill: accept revision arguments
@@ -176,16 +291,17 @@ Release tarballs are available at:
 
  `git backfill` learned to accept revision and pathspec arguments.
 
- Needs review.
- source: <pull.2070.git.1773707361.gitgitgadget@gmail.com>
+ Comments?
+ source: <pull.2070.v2.git.1774266019.gitgitgadget@gmail.com>
 
 
 * jw/t2203-status-pipe-fix (2026-03-16) 1 commit
- - t2203: avoid suppressing git status exit code
+  (merged to 'next' on 2026-03-23 at 521c6eb44b)
+ + t2203: avoid suppressing git status exit code
 
  Test clean-up.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20260317011544.65952-1-jerrywang183@yahoo.com>
 
 
@@ -232,22 +348,24 @@ Release tarballs are available at:
 
 
 * jw/object-name-bitset-to-enum (2026-03-18) 1 commit
- - object-name: turn INTERPRET_BRANCH_* constants into enum values
+  (merged to 'next' on 2026-03-23 at 881af371ef)
+ + object-name: turn INTERPRET_BRANCH_* constants into enum values
 
  The unsigned integer that is used as an bitset to specify the kind
  of branches interpret_branch_name() function has been changed to
  use a dedicated enum type.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20260318190942.22595-1-jerrywang183@yahoo.com>
 
 
 * ai/t2107-test-path-is-helpers (2026-03-18) 1 commit
- - t2107: modernize path existence check
+  (merged to 'next' on 2026-03-23 at 56d10e5f76)
+ + t2107: modernize path existence check
 
  Test cleanup.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.2071.v2.git.1773864455956.gitgitgadget@gmail.com>
 
 
@@ -268,7 +386,8 @@ Release tarballs are available at:
  "git push" learned to take a "remote group" name to push to, which
  causes pushes to multiple places, just like "git fetch" would do.
 
- Will merge to 'next'?
+ Expecting a (hopefully small and final) reroll?
+ cf. <20260318204028.1010487-1-usmanakinyemi202@gmail.com>
  source: <20260318204028.1010487-1-usmanakinyemi202@gmail.com>
 
 
@@ -326,8 +445,7 @@ Release tarballs are available at:
 
  Test clean-up.
 
- Will merge to 'next'?
- cf. <8669d87c1b7f96dd0de37dabfb9011c8745a17c9.camel@gmail.com>
+ Will merge to 'next'.
  source: <20260319180803.164335-1-elkhatabibilal@gmail.com>
 
 
@@ -447,15 +565,16 @@ Release tarballs are available at:
 
 
 * jw/apply-corrupt-location (2026-03-17) 3 commits
- - apply: report input location in binary and garbage patch errors
- - apply: report input location in header parsing errors
- - apply: report the location of corrupt patches
+  (merged to 'next' on 2026-03-23 at 18e9b8f91f)
+ + apply: report input location in binary and garbage patch errors
+ + apply: report input location in header parsing errors
+ + apply: report the location of corrupt patches
 
  "git apply" now reports the name of the input file along with the
  line number when it encounters a corrupt patch, and correctly
  resets the line counter when processing multiple patch files.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20260317162321.71812-1-jerrywang183@yahoo.com>
 
 
@@ -479,7 +598,7 @@ Release tarballs are available at:
  source: <20260315081032.497-1-riteshjd75@gmail.com>
 
 
-* mf/format-patch-commit-list-format (2026-03-19) 9 commits
+* mf/format-patch-commit-list-format (2026-03-23) 9 commits
  - format-patch: --commit-list-format without prefix
  - format-patch: add preset for --commit-list-format
  - format-patch: wrap generate_commit_list_cover()
@@ -495,8 +614,8 @@ Release tarballs are available at:
  --commit-list-format` (formerly `--cover-letter-format`) option,
  including a new "modern" preset and better CLI ergonomics.
 
- Comments?
- source: <cover.1773959395.git.mroik@delayed.space>
+ Will merge to 'next'.
+ source: <cover.1774284699.git.mroik@delayed.space>
 
 
 * mf/t0008-cleanup (2026-03-15) 1 commit
@@ -609,40 +728,6 @@ Release tarballs are available at:
  source: <20260310095017.131957-1-cat@malon.dev>
 
 
-* ms/t7605-test-path-is-helpers (2026-03-10) 1 commit
-  (merged to 'next' on 2026-03-16 at 49facdec9f)
- + t7605: use test_path_is_file instead of test -f
-
- Test updates.
-
- Will merge to 'master'.
- source: <pull.2067.v2.git.1773183022175.gitgitgadget@gmail.com>
-
-
-* bb/imap-send-openssl-4.0-prep (2026-03-11) 3 commits
-  (merged to 'next' on 2026-03-16 at 0baab97778)
- + imap-send: move common code into function host_matches()
- + imap-send: use the OpenSSL API to access the subject common name
- + imap-send: use the OpenSSL API to access the subject alternative names
-
- "imap-send" used to use functions whose use is going to be removed
- with OpenSSL 4.0; rewrite them using public API that has been
- available since OpenSSL 1.1 since 2016 or so.
-
- Will merge to 'master'.
- source: <20260311121107.1122387-1-dev+git@drbeat.li>
-
-
-* jc/test-allow-sed-with-ere (2026-03-11) 1 commit
-  (merged to 'next' on 2026-03-16 at be057bed35)
- + t: allow use of "sed -E"
-
- Adjust test-lint to allow "sed -E" to use ERE in the patterns.
-
- Will merge to 'master'.
- source: <xmqq3425lvtq.fsf@gitster.g>
-
-
 * kh/doc-interpret-trailers-1 (2026-03-16) 4 commits
   (merged to 'next' on 2026-03-20 at 6acc8b5a8a)
  + interpret-trailers: use placeholder instead of *
@@ -654,16 +739,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <V2_CV_doc_interpret-tr_synopsis.50a@msgid.xyz>
-
-
-* ty/mktree-wo-the-repository (2026-03-12) 1 commit
-  (merged to 'next' on 2026-03-16 at 8d20ceb853)
- + builtin/mktree: remove USE_THE_REPOSITORY_VARIABLE
-
- Code clean-up.
-
- Will merge to 'master'.
- source: <20260312164203.964033-1-cat@malon.dev>
 
 
 * mm/line-log-use-standard-diff-output (2026-03-16) 4 commits
@@ -698,17 +773,6 @@ Release tarballs are available at:
 
  Will merge to 'next'?
  source: <20260320115211.177351-1-adrian.ratiu@collabora.com>
-
-
-* cf/constness-fixes (2026-03-08) 2 commits
-  (merged to 'next' on 2026-03-13 at 3c80964399)
- + dir: avoid -Wdiscarded-qualifiers in remove_path()
- + bloom: remove a misleading const qualifier
-
- Small code clean-up around the constness area.
-
- Will merge to 'master'.
- source: <3ad40c3d0762c2e8c14792dfb68cba9f63a883a3.1773026586.git.collin.funk1@gmail.com>
 
 
 * ab/clone-default-object-filter (2026-03-14) 1 commit
@@ -856,17 +920,6 @@ Release tarballs are available at:
  source: <pull.2147.v8.git.git.1772648125.gitgitgadget@gmail.com>
 
 
-* ac/help-sort-correctly (2026-03-11) 1 commit
-  (merged to 'next' on 2026-03-16 at db220e143f)
- + help: cleanup the contruction of keys_uniq
-
- The code in "git help" that shows configuration items in sorted
- order was awkwardly organized and prone to bugs.
-
- Will merge to 'master'.
- source: <20260311192453.62213-1-amishhhaaaa@gmail.com>
-
-
 * sa/replay-revert (2026-03-12) 2 commits
  - replay: add --revert mode to reverse commit changes
  - sequencer: extract revert message formatting into shared function
@@ -907,17 +960,6 @@ Release tarballs are available at:
 
  Needs review.
  source: <20260320135311.331463-1-adrian.ratiu@collabora.com>
-
-
-* ng/submodule-default-remote (2026-03-03) 1 commit
-  (merged to 'next' on 2026-03-16 at d41fd28450)
- + submodule: fetch missing objects from default remote
-
- Instead of hardcoded 'origin', use the configured default remote
- when fetching from submodules.
-
- Will merge to 'master'.
- source: <20260303234044.105157-1-nasser.grainawi@oss.qualcomm.com>
 
 
 * yc/histogram-hunk-shift-fix (2026-03-02) 1 commit
@@ -975,6 +1017,18 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <cover.1771959555.git.me@ttaylorr.com>
+
+
+* js/macos-homebrew-forgets-reg-enhanced (2026-03-20) 1 commit
+ . osx-clang: work around Homebrew's clang lacking REG_ENHANCED
+
+ The build on macOS with Clang is fixed to work around a Homebrew change
+ that exposed an issue with missing REG_ENHANCED.
+
+ No longer needed.
+ cf. <6c108696-2d41-4fa1-9662-fbf6db97f767@web.de>
+ cf. <458ad3c1-96df-4575-ee42-e6eb754f25f6@gmx.de>
+ source: <d340af9e-334c-4e81-e58a-fc3dea73ebdd@gmx.de>
 
 --------------------------------------------------
 [Discarded]
