@@ -1,4 +1,3 @@
-#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "gettext.h"
 #include "hex.h"
@@ -66,14 +65,14 @@ static const char *describe_object(const struct object_id *oid)
 	return fsck_describe_object(&fsck_walk_options, oid);
 }
 
-static const char *printable_type(const struct object_id *oid,
+static const char *printable_type(struct repository *repo,
+				  const struct object_id *oid,
 				  enum object_type type)
 {
 	const char *ret;
 
 	if (type == OBJ_NONE)
-		type = odb_read_object_info(the_repository->objects,
-					    oid, NULL);
+		type = odb_read_object_info(repo->objects, oid, NULL);
 
 	ret = type_name(type);
 	if (!ret)
@@ -82,17 +81,17 @@ static const char *printable_type(const struct object_id *oid,
 	return ret;
 }
 
-static int objerror(struct object *obj, const char *err)
+static int objerror(struct repository *repo, struct object *obj, const char *err)
 {
 	errors_found |= ERROR_OBJECT;
 	/* TRANSLATORS: e.g. error in tree 01bfda: <more explanation> */
 	fprintf_ln(stderr, _("error in %s %s: %s"),
-		   printable_type(&obj->oid, obj->type),
+		   printable_type(repo, &obj->oid, obj->type),
 		   describe_object(&obj->oid), err);
 	return -1;
 }
 
-static int fsck_objects_error_func(struct fsck_options *o UNUSED,
+static int fsck_objects_error_func(struct fsck_options *o,
 				   void *fsck_report,
 				   enum fsck_msg_type msg_type,
 				   enum fsck_msg_id msg_id UNUSED,
@@ -106,13 +105,13 @@ static int fsck_objects_error_func(struct fsck_options *o UNUSED,
 	case FSCK_WARN:
 		/* TRANSLATORS: e.g. warning in tree 01bfda: <more explanation> */
 		fprintf_ln(stderr, _("warning in %s %s: %s"),
-			   printable_type(oid, object_type),
+			   printable_type(o->repo, oid, object_type),
 			   describe_object(oid), message);
 		return 0;
 	case FSCK_ERROR:
 		/* TRANSLATORS: e.g. error in tree 01bfda: <more explanation> */
 		fprintf_ln(stderr, _("error in %s %s: %s"),
-			   printable_type(oid, object_type),
+			   printable_type(o->repo, oid, object_type),
 			   describe_object(oid), message);
 		return 1;
 	default:
@@ -136,7 +135,7 @@ static int mark_object(struct object *obj, enum object_type type,
 	if (!obj) {
 		/* ... these references to parent->fld are safe here */
 		printf_ln(_("broken link from %7s %s"),
-			  printable_type(&parent->oid, parent->type),
+			  printable_type(options->repo, &parent->oid, parent->type),
 			  describe_object(&parent->oid));
 		printf_ln(_("broken link from %7s %s"),
 			  (type == OBJ_ANY ? _("unknown") : type_name(type)),
@@ -147,7 +146,7 @@ static int mark_object(struct object *obj, enum object_type type,
 
 	if (type != OBJ_ANY && obj->type != type)
 		/* ... and the reference to parent is safe here */
-		objerror(parent, _("wrong object type in link"));
+		objerror(options->repo, parent, _("wrong object type in link"));
 
 	if (obj->flags & REACHABLE)
 		return 0;
@@ -166,9 +165,9 @@ static int mark_object(struct object *obj, enum object_type type,
 					      HAS_OBJECT_RECHECK_PACKED)) {
 			printf_ln(_("broken link from %7s %s\n"
 				    "              to %7s %s"),
-				  printable_type(&parent->oid, parent->type),
+				  printable_type(options->repo, &parent->oid, parent->type),
 				  describe_object(&parent->oid),
-				  printable_type(&obj->oid, obj->type),
+				  printable_type(options->repo, &obj->oid, obj->type),
 				  describe_object(&obj->oid));
 			errors_found |= ERROR_REACHABLE;
 		}
@@ -269,7 +268,7 @@ static void check_reachable_object(struct repository *repo, struct object *obj)
 		if (has_object_pack(repo, &obj->oid))
 			return; /* it is in pack - forget about it */
 		printf_ln(_("missing %s %s"),
-			  printable_type(&obj->oid, obj->type),
+			  printable_type(repo, &obj->oid, obj->type),
 			  describe_object(&obj->oid));
 		errors_found |= ERROR_REACHABLE;
 		return;
@@ -296,7 +295,7 @@ static void check_unreachable_object(struct repository *repo, struct object *obj
 	 */
 	if (show_unreachable) {
 		printf_ln(_("unreachable %s %s"),
-			  printable_type(&obj->oid, obj->type),
+			  printable_type(repo, &obj->oid, obj->type),
 			  describe_object(&obj->oid));
 		return;
 	}
@@ -316,7 +315,7 @@ static void check_unreachable_object(struct repository *repo, struct object *obj
 	if (!(obj->flags & USED)) {
 		if (show_dangling)
 			printf_ln(_("dangling %s %s"),
-				  printable_type(&obj->oid, obj->type),
+				  printable_type(repo, &obj->oid, obj->type),
 				  describe_object(&obj->oid));
 		if (write_lost_and_found) {
 			char *filename = repo_git_path(repo, "lost-found/%s/%s",
@@ -402,7 +401,8 @@ static void check_connectivity(struct repository *repo)
 	}
 }
 
-static int fsck_obj(struct object *obj, void *buffer, unsigned long size)
+static int fsck_obj(struct repository *repo,
+		    struct object *obj, void *buffer, unsigned long size)
 {
 	int err;
 
@@ -412,11 +412,11 @@ static int fsck_obj(struct object *obj, void *buffer, unsigned long size)
 
 	if (verbose)
 		fprintf_ln(stderr, _("Checking %s %s"),
-			   printable_type(&obj->oid, obj->type),
+			   printable_type(repo, &obj->oid, obj->type),
 			   describe_object(&obj->oid));
 
 	if (fsck_walk(obj, NULL, &fsck_obj_options))
-		objerror(obj, _("broken links"));
+		objerror(repo, obj, _("broken links"));
 	err = fsck_object(obj, buffer, size, &fsck_obj_options);
 	if (err)
 		goto out;
@@ -434,7 +434,7 @@ static int fsck_obj(struct object *obj, void *buffer, unsigned long size)
 
 		if (show_tags && tag->tagged) {
 			printf_ln(_("tagged %s %s (%s) in %s"),
-				  printable_type(&tag->tagged->oid, tag->tagged->type),
+				  printable_type(repo, &tag->tagged->oid, tag->tagged->type),
 				  describe_object(&tag->tagged->oid),
 				  tag->tag,
 				  describe_object(&tag->object.oid));
@@ -465,7 +465,7 @@ static int fsck_obj_buffer(const struct object_id *oid, enum object_type type,
 	}
 	obj->flags &= ~(REACHABLE | SEEN);
 	obj->flags |= HAS_OBJ;
-	return fsck_obj(obj, buffer, size);
+	return fsck_obj(repo, obj, buffer, size);
 }
 
 static int default_refs;
@@ -765,7 +765,7 @@ static int fsck_loose(const struct object_id *oid, const char *path,
 
 	obj->flags &= ~(REACHABLE | SEEN);
 	obj->flags |= HAS_OBJ;
-	if (fsck_obj(obj, contents, size))
+	if (fsck_obj(data->repo, obj, contents, size))
 		errors_found |= ERROR_OBJECT;
 
 	if (!eaten)
@@ -830,7 +830,7 @@ static int fsck_cache_tree(struct repository *repo, struct cache_tree *it, const
 		fsck_put_object_name(&fsck_walk_options, &it->oid, ":");
 		mark_object_reachable(obj);
 		if (obj->type != OBJ_TREE)
-			err |= objerror(obj, _("non-tree in cache-tree"));
+			err |= objerror(repo, obj, _("non-tree in cache-tree"));
 	}
 	for (i = 0; i < it->subtree_nr; i++)
 		err |= fsck_cache_tree(repo, it->down[i]->cache_tree, index_path);
