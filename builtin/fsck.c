@@ -711,27 +711,28 @@ static void process_refs(struct repository *repo, struct snapshot *snap)
 	}
 }
 
-struct for_each_loose_cb
-{
+struct for_each_loose_cb {
+	struct repository *repo;
 	struct progress *progress;
 };
 
 static int fsck_loose(const struct object_id *oid, const char *path,
-		      void *data UNUSED)
+		      void *cb_data)
 {
+	struct for_each_loose_cb *data = cb_data;
 	struct object *obj;
 	enum object_type type = OBJ_NONE;
 	unsigned long size;
 	void *contents = NULL;
 	int eaten;
 	struct object_info oi = OBJECT_INFO_INIT;
-	struct object_id real_oid = *null_oid(the_hash_algo);
+	struct object_id real_oid = *null_oid(data->repo->hash_algo);
 	int err = 0;
 
 	oi.sizep = &size;
 	oi.typep = &type;
 
-	if (read_loose_object(the_repository, path, oid, &real_oid, &contents, &oi) < 0) {
+	if (read_loose_object(data->repo, path, oid, &real_oid, &contents, &oi) < 0) {
 		if (contents && !oideq(&real_oid, oid))
 			err = error(_("%s: hash-path mismatch, found at: %s"),
 				    oid_to_hex(&real_oid), path);
@@ -748,7 +749,7 @@ static int fsck_loose(const struct object_id *oid, const char *path,
 	if (!contents && type != OBJ_BLOB)
 		BUG("read_loose_object streamed a non-blob");
 
-	obj = parse_object_buffer(the_repository, oid, type, size,
+	obj = parse_object_buffer(data->repo, oid, type, size,
 				  contents, &eaten);
 
 	if (!obj) {
@@ -790,6 +791,7 @@ static void fsck_source(struct repository *repo, struct odb_source *source)
 {
 	struct progress *progress = NULL;
 	struct for_each_loose_cb cb_data = {
+		.repo = source->odb->repo,
 		.progress = progress,
 	};
 
