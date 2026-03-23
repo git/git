@@ -392,18 +392,17 @@ test_expect_success 'cover letter with subject, author and count' '
 	test_grep "^\[1/1\] This is a subject (A U Thor)$" patches/0000-cover-letter.patch
 '
 
-test_expect_success 'cover letter with author and count' '
+test_expect_success 'cover letter modern format' '
 	test_when_finished "git reset --hard HEAD~1" &&
 	test_when_finished "rm -rf patches test_file" &&
 	touch test_file &&
 	git add test_file &&
 	git commit -m "This is a subject" &&
-	git format-patch --commit-list-format="log:[%(count)/%(total)] %an" \
-	-o patches HEAD~1 &&
-	test_grep "^\[1/1\] A U Thor$" patches/0000-cover-letter.patch
+	git format-patch --commit-list-format="modern" -o patches HEAD~1 &&
+	test_grep "^\[1/1\] This is a subject$" patches/0000-cover-letter.patch
 '
 
-test_expect_success 'cover letter shortlog' '
+test_expect_success 'cover letter shortlog format' '
 	test_when_finished "git reset --hard HEAD~1" &&
 	test_when_finished "rm -rf expect patches result test_file" &&
 	cat >expect <<-"EOF" &&
@@ -448,6 +447,17 @@ test_expect_success 'cover letter config with count and author' '
 	git config set format.commitlistformat "log:[%(count)/%(total)] (%an)" &&
 	git format-patch -o patches HEAD~2 &&
 	grep -E "^[[[:digit:]]+/[[:digit:]]+] \(A U Thor\)" patches/0000-cover-letter.patch >result &&
+	test_line_count = 2 result
+'
+
+test_expect_success 'cover letter config commitlistformat set to modern' '
+	test_when_finished "rm -rf patches result" &&
+	test_when_finished "git config unset format.coverletter" &&
+	test_when_finished "git config unset format.commitlistformat" &&
+	git config set format.coverletter true &&
+	git config set format.commitlistformat modern &&
+	git format-patch -o patches HEAD~2 &&
+	grep -E "^[[[:digit:]]+/[[:digit:]]+] .*$" patches/0000-cover-letter.patch >result &&
 	test_line_count = 2 result
 '
 

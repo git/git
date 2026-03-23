@@ -1445,6 +1445,9 @@ static void make_cover_letter(struct rev_info *rev, int use_separate_file,
 		generate_commit_list_cover(rev->diffopt.file, format, list, nr);
 	else if (!strcmp(format, "shortlog"))
 		generate_shortlog_cover_letter(&log, rev, list, nr);
+	else if (!strcmp(format, "modern"))
+		generate_commit_list_cover(rev->diffopt.file, "[%(count)/%(total)] %s",
+					   list, nr);
 	else
 		die(_("'%s' is not a valid format string"), format);
 
