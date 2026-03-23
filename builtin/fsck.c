@@ -243,7 +243,7 @@ static int mark_unreachable_referents(const struct object_id *oid,
 			object_as_type(obj, type, 0);
 	}
 
-	fsck_options_init(&options, FSCK_OPTIONS_DEFAULT);
+	fsck_options_init(&options, the_repository, FSCK_OPTIONS_DEFAULT);
 	options.walk = mark_used;
 	fsck_walk(obj, NULL, &options);
 	if (obj->type == OBJ_TREE)
@@ -987,7 +987,7 @@ static struct option fsck_opts[] = {
 int cmd_fsck(int argc,
 	     const char **argv,
 	     const char *prefix,
-	     struct repository *repo UNUSED)
+	     struct repository *repo)
 {
 	struct odb_source *source;
 	struct snapshot snap = {
@@ -1005,10 +1005,10 @@ int cmd_fsck(int argc,
 
 	argc = parse_options(argc, argv, prefix, fsck_opts, fsck_usage, 0);
 
-	fsck_options_init(&fsck_walk_options, FSCK_OPTIONS_DEFAULT);
+	fsck_options_init(&fsck_walk_options, repo, FSCK_OPTIONS_DEFAULT);
 	fsck_walk_options.walk = mark_object;
 
-	fsck_options_init(&fsck_obj_options, FSCK_OPTIONS_DEFAULT);
+	fsck_options_init(&fsck_obj_options, repo, FSCK_OPTIONS_DEFAULT);
 	fsck_obj_options.walk = mark_used;
 	fsck_obj_options.error_func = fsck_objects_error_func;
 	if (check_strict)

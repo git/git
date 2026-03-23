@@ -78,7 +78,7 @@ out:
 }
 
 static int cmd_refs_verify(int argc, const char **argv, const char *prefix,
-			   struct repository *repo UNUSED)
+			   struct repository *repo)
 {
 	struct fsck_options fsck_refs_options;
 	struct worktree **worktrees;
@@ -93,7 +93,7 @@ static int cmd_refs_verify(int argc, const char **argv, const char *prefix,
 	};
 	int ret = 0;
 
-	fsck_options_init(&fsck_refs_options, FSCK_OPTIONS_REFS);
+	fsck_options_init(&fsck_refs_options, repo, FSCK_OPTIONS_REFS);
 
 	argc = parse_options(argc, argv, prefix, options, verify_usage, 0);
 	if (argc)

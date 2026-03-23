@@ -166,7 +166,10 @@ struct fsck_ref_report {
 	const char *path;
 };
 
+struct repository;
+
 struct fsck_options {
+	struct repository *repo;
 	fsck_walk_func walk;
 	fsck_error error_func;
 	unsigned strict;
@@ -235,6 +238,7 @@ enum fsck_options_type {
 };
 
 void fsck_options_init(struct fsck_options *options,
+		       struct repository *repo,
 		       enum fsck_options_type type);
 
 /*

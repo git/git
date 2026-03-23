@@ -613,7 +613,7 @@ static void unpack_all(void)
 int cmd_unpack_objects(int argc,
 		       const char **argv,
 		       const char *prefix UNUSED,
-		       struct repository *repo UNUSED)
+		       struct repository *repo)
 {
 	int i;
 	struct object_id oid;
@@ -627,7 +627,7 @@ int cmd_unpack_objects(int argc,
 
 	show_usage_if_asked(argc, argv, unpack_usage);
 
-	fsck_options_init(&fsck_options, FSCK_OPTIONS_STRICT);
+	fsck_options_init(&fsck_options, repo, FSCK_OPTIONS_STRICT);
 
 	for (i = 1 ; i < argc; i++) {
 		const char *arg = argv[i];

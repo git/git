@@ -1229,7 +1229,7 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 	} else
 		alternate_shallow_file = NULL;
 
-	fsck_options_init(&fsck_options, FSCK_OPTIONS_MISSING_GITMODULES);
+	fsck_options_init(&fsck_options, the_repository, FSCK_OPTIONS_MISSING_GITMODULES);
 	if (get_pack(args, fd, pack_lockfiles, NULL, sought, nr_sought,
 		     &fsck_options.gitmodules_found))
 		die(_("git fetch-pack: fetch failed."));
@@ -1675,7 +1675,7 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 	struct strvec index_pack_args = STRVEC_INIT;
 	const char *promisor_remote_config;
 
-	fsck_options_init(&fsck_options, FSCK_OPTIONS_MISSING_GITMODULES);
+	fsck_options_init(&fsck_options, the_repository, FSCK_OPTIONS_MISSING_GITMODULES);
 
 	if (server_feature_v2("promisor-remote", &promisor_remote_config))
 		promisor_remote_reply(promisor_remote_config, NULL);

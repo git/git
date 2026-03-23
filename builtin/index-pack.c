@@ -1909,7 +1909,7 @@ int cmd_index_pack(int argc,
 
 	disable_replace_refs();
 
-	fsck_options_init(&fsck_options, FSCK_OPTIONS_MISSING_GITMODULES);
+	fsck_options_init(&fsck_options, the_repository, FSCK_OPTIONS_MISSING_GITMODULES);
 	fsck_options.walk = mark_link;
 
 	reset_pack_idx_option(&opts);

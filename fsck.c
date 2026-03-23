@@ -1381,6 +1381,7 @@ bool fsck_has_queued_checks(struct fsck_options *options)
 }
 
 void fsck_options_init(struct fsck_options *options,
+		       struct repository *repo,
 		       enum fsck_options_type type)
 {
 	static const struct fsck_options defaults[] = {
@@ -1423,6 +1424,8 @@ void fsck_options_init(struct fsck_options *options,
 	default:
 		BUG("unknown fsck options type %d", type);
 	}
+
+	options->repo = repo;
 }
 
 void fsck_options_clear(struct fsck_options *options)
