@@ -533,14 +533,20 @@ struct snapshot {
 	/* TODO: Consider also snapshotting the index of each worktree. */
 };
 
+struct snapshot_ref_data {
+	struct repository *repo;
+	struct snapshot *snap;
+};
+
 static int snapshot_ref(const struct reference *ref, void *cb_data)
 {
-	struct snapshot *snap = cb_data;
+	struct snapshot_ref_data *data = cb_data;
+	struct snapshot *snap = data->snap;
 	struct object *obj;
 
-	obj = parse_object(the_repository, ref->oid);
+	obj = parse_object(data->repo, ref->oid);
 	if (!obj) {
-		if (is_promisor_object(the_repository, ref->oid)) {
+		if (is_promisor_object(data->repo, ref->oid)) {
 			/*
 			 * Increment default_refs anyway, because this is a
 			 * valid ref.
@@ -581,10 +587,15 @@ static int fsck_handle_ref(const struct reference *ref, void *cb_data UNUSED)
 	return 0;
 }
 
-static void snapshot_refs(struct snapshot *snap, int argc, const char **argv)
+static void snapshot_refs(struct repository *repo,
+			  struct snapshot *snap, int argc, const char **argv)
 {
 	struct refs_for_each_ref_options opts = {
 		.flags = REFS_FOR_EACH_INCLUDE_BROKEN,
+	};
+	struct snapshot_ref_data data = {
+		.repo = repo,
+		.snap = snap,
 	};
 	struct worktree **worktrees, **p;
 	const char *head_points_at;
@@ -593,13 +604,13 @@ static void snapshot_refs(struct snapshot *snap, int argc, const char **argv)
 	for (int i = 0; i < argc; i++) {
 		const char *arg = argv[i];
 		struct object_id oid;
-		if (!repo_get_oid(the_repository, arg, &oid)) {
+		if (!repo_get_oid(repo, arg, &oid)) {
 			struct reference ref = {
 				.name = arg,
 				.oid = &oid,
 			};
 
-			snapshot_ref(&ref, snap);
+			snapshot_ref(&ref, &data);
 			continue;
 		}
 		error(_("invalid parameter: expected sha1, got '%s'"), arg);
@@ -611,8 +622,8 @@ static void snapshot_refs(struct snapshot *snap, int argc, const char **argv)
 		return;
 	}
 
-	refs_for_each_ref_ext(get_main_ref_store(the_repository),
-			      snapshot_ref, snap, &opts);
+	refs_for_each_ref_ext(get_main_ref_store(repo),
+			      snapshot_ref, &data, &opts);
 
 	worktrees = get_worktrees();
 	for (p = worktrees; *p; p++) {
@@ -621,7 +632,7 @@ static void snapshot_refs(struct snapshot *snap, int argc, const char **argv)
 
 		strbuf_worktree_ref(wt, &refname, "HEAD");
 
-		head_points_at = refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
+		head_points_at = refs_resolve_ref_unsafe(get_main_ref_store(repo),
 							 refname.buf, 0, &head_oid, NULL);
 
 		if (head_points_at && !is_null_oid(&head_oid)) {
@@ -630,7 +641,7 @@ static void snapshot_refs(struct snapshot *snap, int argc, const char **argv)
 				.oid = &head_oid,
 			};
 
-			snapshot_ref(&ref, snap);
+			snapshot_ref(&ref, &data);
 		}
 		strbuf_release(&refname);
 
@@ -1039,7 +1050,7 @@ int cmd_fsck(int argc,
 	 * objects. We can still walk over new objects that are added during the
 	 * execution of fsck but won't miss any objects that were reachable.
 	 */
-	snapshot_refs(&snap, argc, argv);
+	snapshot_refs(repo, &snap, argc, argv);
 
 	/* Ensure we get a "fresh" view of the odb */
 	odb_reprepare(repo->objects);
