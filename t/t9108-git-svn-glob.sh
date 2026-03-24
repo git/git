@@ -110,8 +110,7 @@ test_expect_success 'test disallow multi-globs' '
 		svn_cmd commit -m "try to try"
 	) &&
 	test_must_fail git svn fetch three 2> stderr.three &&
-	sed "/^WARNING.*no.* supported/{N;d}" <stderr.three >stderr.three.clean &&
-	test_cmp expect.three stderr.three.clean
+	test_cmp expect.three stderr.three
 	'
 
 test_done

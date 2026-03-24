@@ -155,8 +155,7 @@ test_expect_success 'test disallow prefixed multi-globs' '
 		svn_cmd commit -m "try to try"
 	) &&
 	test_must_fail git svn fetch four 2>stderr.four &&
-	sed "/^WARNING.*no.* supported/{N;d}" <stderr.four >stderr.four.clean &&
-	test_cmp expect.four stderr.four.clean &&
+	test_cmp expect.four stderr.four &&
 	git config --unset svn-remote.four.branches &&
 	git config --unset svn-remote.four.tags
 	'
@@ -224,8 +223,7 @@ test_expect_success 'test disallow multiple asterisks in one word' '
 		svn_cmd commit -m "try to try"
 	) &&
 	test_must_fail git svn fetch six 2>stderr.six &&
-	sed "/^WARNING.*no.* supported/{N;d}" <stderr.six >stderr.six.clean &&
-	test_cmp expect.six stderr.six.clean
+	test_cmp expect.six stderr.six
 	'
 
 test_done
