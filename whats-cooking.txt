@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Mar 2026, #09)
-X-master-at: 1080981ddb03a072f1e6b55c6325c2af731e733c
-X-next-at: aa363f00f1017ba2d0ed58153d65d48a48e616ea
+Subject: What's cooking in git.git (Mar 2026, #10)
+X-master-at: ce74208c2fa13943fffa58f168ac27a76d0eb789
+X-next-at: 1066ffbbbe6c1c2269adf9776976e2ba993621db
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Mar 2026, #09)
+What's cooking in git.git (Mar 2026, #10)
 -----------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -48,70 +48,151 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ac/help-sort-correctly (2026-03-11) 1 commit
-  (merged to 'next' on 2026-03-16 at db220e143f)
- + help: cleanup the contruction of keys_uniq
+* dd/cocci-do-not-pass-strbuf-by-value (2026-03-15) 3 commits
+  (merged to 'next' on 2026-03-18 at a2ffed1127)
+ + stash: do not pass strbuf by value
+ + coccinelle: detect struct strbuf passed by value
+ + Merge branch 'dd/list-objects-filter-options-wo-strbuf-split' into dd/cocci-do-not-pass-strbuf-by-value
 
- The code in "git help" that shows configuration items in sorted
- order was awkwardly organized and prone to bugs.
- source: <20260311192453.62213-1-amishhhaaaa@gmail.com>
-
-
-* bb/imap-send-openssl-4.0-prep (2026-03-11) 3 commits
-  (merged to 'next' on 2026-03-16 at 0baab97778)
- + imap-send: move common code into function host_matches()
- + imap-send: use the OpenSSL API to access the subject common name
- + imap-send: use the OpenSSL API to access the subject alternative names
-
- "imap-send" used to use functions whose use is going to be removed
- with OpenSSL 4.0; rewrite them using public API that has been
- available since OpenSSL 1.1 since 2016 or so.
- source: <20260311121107.1122387-1-dev+git@drbeat.li>
+ Add a coccinelle rule to break the build when "struct strbuf" gets
+ passed by value.
+ source: <20260315094445.19849-1-deveshigurgaon@gmail.com>
 
 
-* cf/constness-fixes (2026-03-08) 2 commits
-  (merged to 'next' on 2026-03-13 at 3c80964399)
- + dir: avoid -Wdiscarded-qualifiers in remove_path()
- + bloom: remove a misleading const qualifier
+* gj/user-manual-fix-grep-example (2026-03-16) 1 commit
+  (merged to 'next' on 2026-03-17 at dbf9137a9d)
+ + doc: fix git grep args order in Quick Reference
 
- Small code clean-up around the constness area.
- source: <3ad40c3d0762c2e8c14792dfb68cba9f63a883a3.1773026586.git.collin.funk1@gmail.com>
-
-
-* jc/test-allow-sed-with-ere (2026-03-11) 1 commit
-  (merged to 'next' on 2026-03-16 at be057bed35)
- + t: allow use of "sed -E"
-
- Adjust test-lint to allow "sed -E" to use ERE in the patterns.
- source: <xmqq3425lvtq.fsf@gitster.g>
+ Fix an example in the user-manual.
+ source: <pull.2069.git.1773670536808.gitgitgadget@gmail.com>
 
 
-* ms/t7605-test-path-is-helpers (2026-03-10) 1 commit
-  (merged to 'next' on 2026-03-16 at 49facdec9f)
- + t7605: use test_path_is_file instead of test -f
+* jk/transport-color-leakfix (2026-03-14) 1 commit
+  (merged to 'next' on 2026-03-17 at c2d7c74d11)
+ + transport: plug leaks in transport_color_config()
+
+ Leakfix.
+ source: <20260314160814.GA918806@coredump.intra.peff.net>
+
+
+* jt/fast-import-sign-again (2026-03-12) 3 commits
+  (merged to 'next' on 2026-03-17 at e04808d5f2)
+ + fast-import: add mode to sign commits with invalid signatures
+ + gpg-interface: allow sign_buffer() to use default signing key
+ + commit: remove unused forward declaration
+
+ "git fast-import" learned to optionally replace signature on
+ commits whose signatures get invalidated due to replaying by
+ signing afresh.
+ source: <20260313013938.2742124-1-jltobler@gmail.com>
+
+
+* mf/t0008-cleanup (2026-03-15) 1 commit
+  (merged to 'next' on 2026-03-17 at 2bb0e51243)
+ + t0008: improve test cleanup to fix failing test
+
+ Test clean-up.
+ source: <20260316011544.13825-1-mroik@delayed.space>
+
+
+* pb/t4200-test-path-is-helpers (2026-03-16) 1 commit
+  (merged to 'next' on 2026-03-17 at a78771f93e)
+ + t4200: convert test -[df] checks to test_path_* helpers
+
+ Test clean-up.
+ source: <20260316172457.38242-1-prashantjee2025@gmail.com>
+
+
+* ps/clar-wo-path-max (2026-03-16) 1 commit
+  (merged to 'next' on 2026-03-17 at 1d2f28a677)
+ + clar: update to fix compilation on platforms without PATH_MAX
+
+ Clar (unit testing framework) update from the upstream.
+ source: <20260316-b4-pks-clar-without-path-max-v1-1-40b4bc91fdc0@pks.im>
+
+
+* ps/history-split (2026-03-02) 8 commits
+  (merged to 'next' on 2026-03-17 at 456723f018)
+ + builtin/history: implement "split" subcommand
+ + builtin/history: split out extended function to create commits
+ + cache-tree: allow writing in-memory index as tree
+ + add-patch: allow disabling editing of hunks
+ + add-patch: add support for in-memory index patching
+ + add-patch: remove dependency on "add-interactive" subsystem
+ + add-patch: split out `struct interactive_options`
+ + add-patch: split out header from "add-interactive.h"
+
+ "git history" learned the "split" subcommand.
+ source: <20260302-pks-history-split-v1-0-444fc987a324@pks.im>
+
+
+* ps/upload-pack-buffer-more-writes (2026-03-12) 10 commits
+  (merged to 'next' on 2026-03-18 at 138ad42ac5)
+ + builtin/pack-objects: reduce lock contention when writing packfile data
+ + csum-file: drop `hashfd_throughput()`
+ + csum-file: introduce `hashfd_ext()`
+ + sideband: use writev(3p) to send pktlines
+ + wrapper: introduce writev(3p) wrappers
+ + compat/posix: introduce writev(3p) wrapper
+ + upload-pack: reduce lock contention when writing packfile data
+ + upload-pack: prefer flushing data over sending keepalive
+ + upload-pack: adapt keepalives based on buffering
+ + upload-pack: fix debug statement when flushing packfile data
+
+ Reduce system overhead "git upload-pack" spends on relaying "git
+ pack-objects" output to the "git fetch" running on the other end of
+ the connection.
+ source: <20260313-pks-upload-pack-write-contention-v4-0-7a9668061f7f@pks.im>
+
+
+* rj/pack-refs-tests-path-is-helpers (2026-03-15) 1 commit
+  (merged to 'next' on 2026-03-17 at 56374095e3)
+ + t/pack-refs-tests: use test_path_is_missing
 
  Test updates.
- source: <pull.2067.v2.git.1773183022175.gitgitgadget@gmail.com>
+ source: <20260315081032.497-1-riteshjd75@gmail.com>
 
 
-* ng/submodule-default-remote (2026-03-03) 1 commit
-  (merged to 'next' on 2026-03-16 at d41fd28450)
- + submodule: fetch missing objects from default remote
+* ss/t0410-delete-object-cleanup (2026-03-12) 1 commit
+  (merged to 'next' on 2026-03-17 at a8d41f4c1f)
+ + t0410: modernize delete_object helper
 
- Instead of hardcoded 'origin', use the configured default remote
- when fetching from submodules.
- source: <20260303234044.105157-1-nasser.grainawi@oss.qualcomm.com>
+ Test clean-up.
+ source: <20260313053159.36492-1-r.siddharth.shrimali@gmail.com>
 
 
-* ty/mktree-wo-the-repository (2026-03-12) 1 commit
-  (merged to 'next' on 2026-03-16 at 8d20ceb853)
- + builtin/mktree: remove USE_THE_REPOSITORY_VARIABLE
+* ty/doc-diff-u-wo-number (2026-03-10) 1 commit
+  (merged to 'next' on 2026-03-18 at 8a410154ff)
+ + diff: document -U without <n> as using default context
 
- Code clean-up.
- source: <20260312164203.964033-1-cat@malon.dev>
+ "git diff -U<num>" was too lenient in its command line parsing and
+ took an empty string as a valid <num>.
+ source: <20260310095017.131957-1-cat@malon.dev>
+
+
+* yc/histogram-hunk-shift-fix (2026-03-02) 1 commit
+  (merged to 'next' on 2026-03-18 at 5e49edc821)
+ + xdiff: re-diff shifted change groups when using histogram algorithm
+
+ The final clean-up phase of the diff output could turn the result of
+ histogram diff algorithm suboptimal, which has been corrected.
+ source: <pull.2120.v2.git.git.1772463265865.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [New Topics]
+
+* jt/fast-import-signed-modes (2026-03-24) 4 commits
+ - fast-import: add 'abort-if-invalid' mode to '--signed-tags=<mode>'
+ - fast-import: add 'sign-if-invalid' mode to '--signed-tags=<mode>'
+ - fast-import: add 'strip-if-invalid' mode to '--signed-tags=<mode>'
+ - fast-import: add 'abort-if-invalid' mode to '--signed-commits=<mode>'
+
+ Handling of signed commits and tags in fast-import has been made more
+ configurable.
+ source: <20260324215513.764739-1-jltobler@gmail.com>
+
+--------------------------------------------------
+[Cooking]
 
 * ps/graph-lane-limit (2026-03-23) 3 commits
  - graph: add documentation and tests about --graph-lane-limit
@@ -126,13 +207,16 @@ Release tarballs are available at:
  source: <20260323215935.74486-1-pabloosabaterr@gmail.com>
 
 
-* rs/use-strvec-pushv (2026-03-19) 1 commit
- - use strvec_pushv() to add another strvec
+* rs/use-strvec-pushv (2026-03-24) 2 commits
+  (merged to 'next' on 2026-03-24 at 7c6487dcaf)
+ + use strvec_pushv() to add another strvec
+ + Merge branch 'ps/build-tweaks' into rs/use-strvec-pushv
+ (this branch uses ps/build-tweaks.)
 
  Code paths that loop over another array to push each element into a
  strvec have been rewritten to use strvec_pushv() instead.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <084f3b43-91ac-4553-8305-03944e97eaa6@web.de>
 
 
@@ -161,19 +245,17 @@ Release tarballs are available at:
  source: <20260323080520.887550-1-christian.couder@gmail.com>
 
 
-* kj/refspec-parsing-outside-repository (2026-03-21) 2 commits
+* kj/refspec-parsing-outside-repository (2026-03-23) 2 commits
  - refspec: fix typo in comment
- - refspec: safely parse refspecs outside a repository
+ - remote-curl: fall back to default hash outside repo
 
  "git ls-remote '+refs/tags/*:refs/tags/*' https://..." run outside a
  repository would dereference a NULL while trying to see if the given
  refspec is a single-object refspec, which has been corrected.
 
  Will merge to 'next'?
- source: <20260322023557.15907-1-jayatheerthkulkarni2005@gmail.com>
+ source: <20260324015734.18470-1-jayatheerthkulkarni2005@gmail.com>
 
---------------------------------------------------
-[Cooking]
 
 * jk/diff-highlight-identical-pairs (2026-03-17) 1 commit
   (merged to 'next' on 2026-03-20 at a8aa5bd14e)
@@ -188,21 +270,22 @@ Release tarballs are available at:
 
 
 * jk/diff-highlight-more (2026-03-22) 9 commits
- - diff-highlight: fetch all config with one process
- - diff-highlight: allow module callers to pass in color config
- - diff-highlight: test color config
- - diff-highlight: use test_decode_color in tests
- - t: add matching negative attributes to test_decode_color
- - diff-highlight: check diff-highlight exit status in tests
- - diff-highlight: drop perl version dependency back to 5.8
- - diff-highlight: mention build instructions
- - Merge branch 'jk/diff-highlight-identical-pairs' into jk/diff-highlight-more
+  (merged to 'next' on 2026-03-24 at e7b555cbc5)
+ + diff-highlight: fetch all config with one process
+ + diff-highlight: allow module callers to pass in color config
+ + diff-highlight: test color config
+ + diff-highlight: use test_decode_color in tests
+ + t: add matching negative attributes to test_decode_color
+ + diff-highlight: check diff-highlight exit status in tests
+ + diff-highlight: drop perl version dependency back to 5.8
+ + diff-highlight: mention build instructions
+ + Merge branch 'jk/diff-highlight-identical-pairs' into jk/diff-highlight-more
  (this branch uses jk/diff-highlight-identical-pairs.)
 
  Various updates to contrib/diff-highlight, including documentation
  updates, test improvements, and color configuration handling.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20260323060139.GA10215@coredump.intra.peff.net>
 
 
@@ -305,24 +388,25 @@ Release tarballs are available at:
  source: <20260317011544.65952-1-jerrywang183@yahoo.com>
 
 
-* ps/commit-graph-overflow-fix (2026-03-17) 1 commit
+* ps/commit-graph-overflow-fix (2026-03-23) 1 commit
  - commit-graph: fix writing generations with dates exceeding 34 bits
 
  Fix a regression in writing the commit-graph where commits with dates
  exceeding 34 bits (beyond year 2514) could cause an underflow and
  crash Git during the generation data overflow chunk writing.
 
- Needs review.
- source: <20260317-pks-commit-graph-overflow-v1-1-e6bee22cd826@pks.im>
+ Waiting for review response.
+ cf. <xmqq1ph92pzs.fsf@gitster.g>
+ source: <20260324-pks-commit-graph-overflow-v2-1-843568cf8780@pks.im>
 
 
-* tc/replay-down-to-root (2026-03-17) 1 commit
+* tc/replay-down-to-root (2026-03-24) 1 commit
  - replay: support replaying down from root commit
 
  git replay now supports replaying down to the root commit.
 
- Needs review.
- source: <20260317-toon-replay-down-to-root-v1-1-cb5c249e15fd@iotcl.com>
+ Will merge to 'next'?
+ source: <20260324-toon-replay-down-to-root-v2-1-34e723489f6e@iotcl.com>
 
 
 * mr/merge-file-object-id-worktree-fix (2026-03-10) 1 commit
@@ -403,7 +487,7 @@ Release tarballs are available at:
  source: <xmqq4imbigvt.fsf@gitster.g>
 
 
-* ps/odb-generic-object-name-handling (2026-03-20) 15 commits
+* ps/odb-generic-object-name-handling (2026-03-20) 16 commits
  - odb: introduce generic `odb_find_abbrev_len()`
  - object-file: move logic to compute packed abbreviation length
  - object-name: move logic to compute loose abbreviation length
@@ -419,6 +503,7 @@ Release tarballs are available at:
  - oidtree: extend iteration to allow for arbitrary return codes
  - oidtree: modernize the code a bit
  - Merge branch 'ps/object-counting' into ps/odb-generic-object-name-handling
+ - object-file: fix sparse 'plain integer as NULL pointer' error
  (this branch uses ps/object-counting.)
 
  Object name handling (disambiguation and abbreviation) has been
@@ -441,11 +526,12 @@ Release tarballs are available at:
 
 
 * bk/t5315-test-path-is-helpers (2026-03-19) 1 commit
- - t5315: use test_path_is_file for loose-object check
+  (merged to 'next' on 2026-03-24 at f7374e8e70)
+ + t5315: use test_path_is_file for loose-object check
 
  Test clean-up.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20260319180803.164335-1-elkhatabibilal@gmail.com>
 
 
@@ -470,16 +556,6 @@ Release tarballs are available at:
  CI failures on Windows in t0061.24?
  cf. <20260318040423.GA2858991@coredump.intra.peff.net>
  source: <20260312214945.4050010-1-cshung@gmail.com>
-
-
-* ss/t0410-delete-object-cleanup (2026-03-12) 1 commit
-  (merged to 'next' on 2026-03-17 at a8d41f4c1f)
- + t0410: modernize delete_object helper
-
- Test clean-up.
-
- Will merge to 'master'.
- source: <20260313053159.36492-1-r.siddharth.shrimali@gmail.com>
 
 
 * ej/ref-transaction-hook-preparing (2026-03-16) 1 commit
@@ -531,39 +607,6 @@ Release tarballs are available at:
  source: <cover.1773591528.git.phillip.wood@dunelm.org.uk>
 
 
-* dd/cocci-do-not-pass-strbuf-by-value (2026-03-15) 3 commits
-  (merged to 'next' on 2026-03-18 at a2ffed1127)
- + stash: do not pass strbuf by value
- + coccinelle: detect struct strbuf passed by value
- + Merge branch 'dd/list-objects-filter-options-wo-strbuf-split' into dd/cocci-do-not-pass-strbuf-by-value
-
- Add a coccinelle rule to break the build when "struct strbuf" gets
- passed by value.
-
- Will merge to 'master'.
- source: <20260315094445.19849-1-deveshigurgaon@gmail.com>
-
-
-* gj/user-manual-fix-grep-example (2026-03-16) 1 commit
-  (merged to 'next' on 2026-03-17 at dbf9137a9d)
- + doc: fix git grep args order in Quick Reference
-
- Fix an example in the user-manual.
-
- Will merge to 'master'.
- source: <pull.2069.git.1773670536808.gitgitgadget@gmail.com>
-
-
-* jk/transport-color-leakfix (2026-03-14) 1 commit
-  (merged to 'next' on 2026-03-17 at c2d7c74d11)
- + transport: plug leaks in transport_color_config()
-
- Leakfix.
-
- Will merge to 'master'.
- source: <20260314160814.GA918806@coredump.intra.peff.net>
-
-
 * jw/apply-corrupt-location (2026-03-17) 3 commits
   (merged to 'next' on 2026-03-23 at 18e9b8f91f)
  + apply: report input location in binary and garbage patch errors
@@ -578,64 +621,25 @@ Release tarballs are available at:
  source: <20260317162321.71812-1-jerrywang183@yahoo.com>
 
 
-* ps/clar-wo-path-max (2026-03-16) 1 commit
-  (merged to 'next' on 2026-03-17 at 1d2f28a677)
- + clar: update to fix compilation on platforms without PATH_MAX
-
- Clar (unit testing framework) update from the upstream.
-
- Will merge to 'master'.
- source: <20260316-b4-pks-clar-without-path-max-v1-1-40b4bc91fdc0@pks.im>
-
-
-* rj/pack-refs-tests-path-is-helpers (2026-03-15) 1 commit
-  (merged to 'next' on 2026-03-17 at 56374095e3)
- + t/pack-refs-tests: use test_path_is_missing
-
- Test updates.
-
- Will merge to 'master'.
- source: <20260315081032.497-1-riteshjd75@gmail.com>
-
-
 * mf/format-patch-commit-list-format (2026-03-23) 9 commits
- - format-patch: --commit-list-format without prefix
- - format-patch: add preset for --commit-list-format
- - format-patch: wrap generate_commit_list_cover()
- - format.commitListFormat: strip meaning from empty
- - docs/pretty-formats: add %(count) and %(total)
- - format-patch: rename --cover-letter-format option
- - format-patch: refactor generate_commit_list_cover
- - pretty.c: better die message %(count) and %(total)
- - Merge branch 'mf/format-patch-cover-letter-format' into mf/format-patch-commit-list-format
+  (merged to 'next' on 2026-03-24 at 0f5b6702eb)
+ + format-patch: --commit-list-format without prefix
+ + format-patch: add preset for --commit-list-format
+ + format-patch: wrap generate_commit_list_cover()
+ + format.commitListFormat: strip meaning from empty
+ + docs/pretty-formats: add %(count) and %(total)
+ + format-patch: rename --cover-letter-format option
+ + format-patch: refactor generate_commit_list_cover
+ + pretty.c: better die message %(count) and %(total)
+ + Merge branch 'mf/format-patch-cover-letter-format' into mf/format-patch-commit-list-format
  (this branch uses mf/format-patch-cover-letter-format.)
 
  Improve the recently introduced `git format-patch
  --commit-list-format` (formerly `--cover-letter-format`) option,
  including a new "modern" preset and better CLI ergonomics.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cover.1774284699.git.mroik@delayed.space>
-
-
-* mf/t0008-cleanup (2026-03-15) 1 commit
-  (merged to 'next' on 2026-03-17 at 2bb0e51243)
- + t0008: improve test cleanup to fix failing test
-
- Test clean-up.
-
- Will merge to 'master'.
- source: <20260316011544.13825-1-mroik@delayed.space>
-
-
-* pb/t4200-test-path-is-helpers (2026-03-16) 1 commit
-  (merged to 'next' on 2026-03-17 at a78771f93e)
- + t4200: convert test -[df] checks to test_path_* helpers
-
- Test clean-up.
-
- Will merge to 'master'.
- source: <20260316172457.38242-1-prashantjee2025@gmail.com>
 
 
 * js/parseopt-subcommand-autocorrection (2026-03-16) 10 commits
@@ -658,20 +662,6 @@ Release tarballs are available at:
  source: <SY0P300MB080186A23FB9582AD793F0D1CE40A@SY0P300MB0801.AUSP300.PROD.OUTLOOK.COM>
 
 
-* jt/fast-import-sign-again (2026-03-12) 3 commits
-  (merged to 'next' on 2026-03-17 at e04808d5f2)
- + fast-import: add mode to sign commits with invalid signatures
- + gpg-interface: allow sign_buffer() to use default signing key
- + commit: remove unused forward declaration
-
- "git fast-import" learned to optionally replace signature on
- commits whose signatures get invalidated due to replaying by
- signing afresh.
-
- Will merge to 'master'.
- source: <20260313013938.2742124-1-jltobler@gmail.com>
-
-
 * mf/apply-p-no-atoi (2026-03-15) 1 commit
   (merged to 'next' on 2026-03-20 at 70a0a4313b)
  + apply.c: fix -p argument parsing
@@ -692,6 +682,7 @@ Release tarballs are available at:
  + contrib: move "coverage-diff.sh" script into "tools/"
  + contrib: move "coccinelle/" directory into "tools/"
  + Introduce new "tools/" directory
+ (this branch is used by rs/use-strvec-pushv.)
 
  Tweak the build infrastructure by moving tools around.
 
@@ -699,8 +690,7 @@ Release tarballs are available at:
  source: <20260319-b4-pks-build-infra-improvements-v3-0-82f5fb3edc3f@pks.im>
 
 
-* ps/object-counting (2026-03-19) 8 commits
- - object-file: fix sparse 'plain integer as NULL pointer' error
+* ps/object-counting (2026-03-12) 7 commits
   (merged to 'next' on 2026-03-17 at 8d3d9a1374)
  + odb: introduce generic object counting
  + odb/source: introduce generic object counting
@@ -713,19 +703,8 @@ Release tarballs are available at:
 
  The logic to count objects has been cleaned up.
 
- Will merge to 'next' and then to 'master'.
- source: <20260312-b4-pks-odb-source-count-objects-v2-0-5914f69256bf@pks.im>
-
-
-* ty/doc-diff-u-wo-number (2026-03-10) 1 commit
-  (merged to 'next' on 2026-03-18 at 8a410154ff)
- + diff: document -U without <n> as using default context
-
- "git diff -U<num>" was too lenient in its command line parsing and
- took an empty string as a valid <num>.
-
  Will merge to 'master'.
- source: <20260310095017.131957-1-cat@malon.dev>
+ source: <20260312-b4-pks-odb-source-count-objects-v2-0-5914f69256bf@pks.im>
 
 
 * kh/doc-interpret-trailers-1 (2026-03-16) 4 commits
@@ -771,7 +750,8 @@ Release tarballs are available at:
 
  Code clean-up around the recent "hooks defined in config" topic.
 
- Will merge to 'next'?
+ Expecting a reroll?
+ cf. <acJNblQ8WRGIri0V@pks.im>
  source: <20260320115211.177351-1-adrian.ratiu@collabora.com>
 
 
@@ -832,23 +812,6 @@ Release tarballs are available at:
  source: <20260305-cs-subtree-split-recursion-v2-0-7266be870ba9@howdoi.land>
 
 
-* ps/history-split (2026-03-02) 8 commits
-  (merged to 'next' on 2026-03-17 at 456723f018)
- + builtin/history: implement "split" subcommand
- + builtin/history: split out extended function to create commits
- + cache-tree: allow writing in-memory index as tree
- + add-patch: allow disabling editing of hunks
- + add-patch: add support for in-memory index patching
- + add-patch: remove dependency on "add-interactive" subsystem
- + add-patch: split out `struct interactive_options`
- + add-patch: split out header from "add-interactive.h"
-
- "git history" learned the "split" subcommand.
-
- Will merge to 'master'.
- source: <20260302-pks-history-split-v1-0-444fc987a324@pks.im>
-
-
 * pt/promisor-lazy-fetch-no-recurse (2026-03-11) 1 commit
  - promisor-remote: prevent lazy-fetch recursion in child fetch
 
@@ -858,27 +821,6 @@ Release tarballs are available at:
 
  Comments?
  source: <pull.2224.v3.git.git.1773238778894.gitgitgadget@gmail.com>
-
-
-* ps/upload-pack-buffer-more-writes (2026-03-12) 10 commits
-  (merged to 'next' on 2026-03-18 at 138ad42ac5)
- + builtin/pack-objects: reduce lock contention when writing packfile data
- + csum-file: drop `hashfd_throughput()`
- + csum-file: introduce `hashfd_ext()`
- + sideband: use writev(3p) to send pktlines
- + wrapper: introduce writev(3p) wrappers
- + compat/posix: introduce writev(3p) wrapper
- + upload-pack: reduce lock contention when writing packfile data
- + upload-pack: prefer flushing data over sending keepalive
- + upload-pack: adapt keepalives based on buffering
- + upload-pack: fix debug statement when flushing packfile data
-
- Reduce system overhead "git upload-pack" spends on relaying "git
- pack-objects" output to the "git fetch" running on the other end of
- the connection.
-
- Will merge to 'master'.
- source: <20260313-pks-upload-pack-write-contention-v4-0-7a9668061f7f@pks.im>
 
 
 * mf/format-patch-cover-letter-format (2026-03-06) 5 commits
@@ -933,13 +875,14 @@ Release tarballs are available at:
 
 
 * vp/http-rate-limit-retries (2026-03-17) 3 commits
- - http: add support for HTTP 429 rate limit retries
- - strbuf_attach: fix call sites to pass correct alloc
- - strbuf: pass correct alloc to strbuf_attach() in strbuf_reencode()
+  (merged to 'next' on 2026-03-24 at 9cb4ec5fad)
+ + http: add support for HTTP 429 rate limit retries
+ + strbuf_attach: fix call sites to pass correct alloc
+ + strbuf: pass correct alloc to strbuf_attach() in strbuf_reencode()
 
  The HTTP transport learned to react to "429 Too Many Requests".
 
- Will merge to 'next'.
+ Will merge to 'master'.
  cf. <ab4RIZr7b49VKjR9@nand.local>
  source: <pull.2008.v6.git.1773752435.gitgitgadget@gmail.com>
 
@@ -960,17 +903,6 @@ Release tarballs are available at:
 
  Needs review.
  source: <20260320135311.331463-1-adrian.ratiu@collabora.com>
-
-
-* yc/histogram-hunk-shift-fix (2026-03-02) 1 commit
-  (merged to 'next' on 2026-03-18 at 5e49edc821)
- + xdiff: re-diff shifted change groups when using histogram algorithm
-
- The final clean-up phase of the diff output could turn the result of
- histogram diff algorithm suboptimal, which has been corrected.
-
- Will merge to 'master'.
- source: <pull.2120.v2.git.git.1772463265865.gitgitgadget@gmail.com>
 
 
 * en/xdiff-cleanup-3 (2026-01-03) 11 commits
