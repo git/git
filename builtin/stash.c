@@ -1232,7 +1232,7 @@ static int check_changes(const struct pathspec *ps, int include_untracked,
 }
 
 static int save_untracked_files(struct stash_info *info, struct strbuf *msg,
-				struct strbuf files)
+				struct strbuf *files)
 {
 	int ret = 0;
 	struct strbuf untracked_msg = STRBUF_INIT;
@@ -1246,7 +1246,7 @@ static int save_untracked_files(struct stash_info *info, struct strbuf *msg,
 			 stash_index_path.buf);
 
 	strbuf_addf(&untracked_msg, "untracked files on %s\n", msg->buf);
-	if (pipe_command(&cp_upd_index, files.buf, files.len, NULL, 0,
+	if (pipe_command(&cp_upd_index, files->buf, files->len, NULL, 0,
 			 NULL, 0)) {
 		ret = -1;
 		goto done;
@@ -1500,7 +1500,7 @@ static int do_create_stash(const struct pathspec *ps, struct strbuf *stash_msg_b
 	parents = NULL;
 
 	if (include_untracked) {
-		if (save_untracked_files(info, &msg, untracked_files)) {
+		if (save_untracked_files(info, &msg, &untracked_files)) {
 			if (!quiet)
 				fprintf_ln(stderr, _("Cannot save "
 						     "the untracked files"));
