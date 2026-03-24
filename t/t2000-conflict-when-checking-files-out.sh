@@ -58,7 +58,7 @@ test_expect_success \
 
 test_expect_success \
     'git checkout-index conflicting paths.' \
-    'test -f path0 && test -d path1 && test -f path1/file1'
+    'test_path_is_file path0 && test_path_is_dir path1 && test_path_is_file path1/file1'
 
 test_expect_success SYMLINKS 'checkout-index -f twice with --prefix' '
 	mkdir -p tar/get &&
@@ -127,9 +127,9 @@ test_debug 'show_files $tree2'
 
 test_expect_success \
     'checking out conflicting path with -f' \
-    'test ! -h path2 && test -d path2 &&
-     test ! -h path3 && test -d path3 &&
-     test ! -h path2/file0 && test -f path2/file0 &&
-     test ! -h path3/file1 && test -f path3/file1'
+    'test_path_is_dir_not_symlink path2 &&
+     test_path_is_dir_not_symlink path3 &&
+     test_path_is_file_not_symlink path2/file0 &&
+     test_path_is_file_not_symlink path3/file1'
 
 test_done
