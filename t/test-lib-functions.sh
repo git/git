@@ -48,6 +48,9 @@ test_decode_color () {
 			if (n == 2) return "FAINT";
 			if (n == 3) return "ITALIC";
 			if (n == 7) return "REVERSE";
+			if (n == 22) return "NORMAL_INTENSITY";
+			if (n == 23) return "NOITALIC";
+			if (n == 27) return "NOREVERSE";
 			if (n == 30) return "BLACK";
 			if (n == 31) return "RED";
 			if (n == 32) return "GREEN";
