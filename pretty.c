@@ -1551,7 +1551,7 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 
 	if (starts_with(placeholder, "(count)")) {
 		if (!c->pretty_ctx->rev)
-			die(_("this format specifier can't be used with this command"));
+			die(_("%s is not supported by this command"), "%(count)");
 		strbuf_addf(sb, "%0*d", decimal_width(c->pretty_ctx->rev->total),
 			    c->pretty_ctx->rev->nr);
 		return 7;
@@ -1559,7 +1559,7 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 
 	if (starts_with(placeholder, "(total)")) {
 		if (!c->pretty_ctx->rev)
-			die(_("this format specifier can't be used with this command"));
+			die(_("%s is not supported by this command"), "%(total)");
 		strbuf_addf(sb, "%d", c->pretty_ctx->rev->total);
 		return 7;
 	}

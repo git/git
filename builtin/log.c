@@ -40,6 +40,7 @@
 #include "progress.h"
 #include "commit-slab.h"
 #include "advice.h"
+#include "utf8.h"
 
 #include "commit-reach.h"
 #include "range-diff.h"
@@ -1055,17 +1056,8 @@ static int git_format_config(const char *var, const char *value,
 		return 0;
 	}
 	if (!strcmp(var, "format.commitlistformat")) {
-		struct strbuf tmp = STRBUF_INIT;
-		strbuf_init(&tmp, 0);
-		if (value)
-			strbuf_addstr(&tmp, value);
-		else
-			strbuf_addstr(&tmp, "log:[%(count)/%(total)] %s");
-
 		FREE_AND_NULL(cfg->fmt_cover_letter_commit_list);
-		git_config_string(&cfg->fmt_cover_letter_commit_list, var, tmp.buf);
-		strbuf_release(&tmp);
-		return 0;
+		return git_config_string(&cfg->fmt_cover_letter_commit_list, var, value);
 	}
 	if (!strcmp(var, "format.outputdirectory")) {
 		FREE_AND_NULL(cfg->config_output_directory);
@@ -1373,22 +1365,26 @@ static void generate_commit_list_cover(FILE *cover_file, const char *format,
 				       struct commit **list, int n)
 {
 	struct strbuf commit_line = STRBUF_INIT;
+	struct strbuf wrapped_line = STRBUF_INIT;
 	struct pretty_print_context ctx = {0};
 	struct rev_info rev = REV_INFO_INIT;
 
-	strbuf_init(&commit_line, 0);
 	rev.total = n;
 	ctx.rev = &rev;
-	for (int i = n - 1; i >= 0; i--) {
-		rev.nr = n - i;
-		repo_format_commit_message(the_repository, list[i], format,
+	for (int i = 1; i <= n; i++) {
+		rev.nr = i;
+		repo_format_commit_message(the_repository, list[n - i], format,
 				&commit_line, &ctx);
-		fprintf(cover_file, "%s\n", commit_line.buf);
+		strbuf_add_wrapped_text(&wrapped_line, commit_line.buf, 0, 0,
+					MAIL_DEFAULT_WRAP);
+		fprintf(cover_file, "%s\n", wrapped_line.buf);
 		strbuf_reset(&commit_line);
+		strbuf_reset(&wrapped_line);
 	}
 	fprintf(cover_file, "\n");
 
 	strbuf_release(&commit_line);
+	strbuf_release(&wrapped_line);
 }
 
 static void make_cover_letter(struct rev_info *rev, int use_separate_file,
@@ -1449,6 +1445,11 @@ static void make_cover_letter(struct rev_info *rev, int use_separate_file,
 		generate_commit_list_cover(rev->diffopt.file, format, list, nr);
 	else if (!strcmp(format, "shortlog"))
 		generate_shortlog_cover_letter(&log, rev, list, nr);
+	else if (!strcmp(format, "modern"))
+		generate_commit_list_cover(rev->diffopt.file, "[%(count)/%(total)] %s",
+					   list, nr);
+	else if (strchr(format, '%'))
+		generate_commit_list_cover(rev->diffopt.file, format, list, nr);
 	else
 		die(_("'%s' is not a valid format string"), format);
 
@@ -2015,7 +2016,7 @@ int cmd_format_patch(int argc,
 			    N_("print patches to standard out")),
 		OPT_BOOL(0, "cover-letter", &cover_letter,
 			    N_("generate a cover letter")),
-		OPT_STRING(0, "cover-letter-format", &cover_letter_fmt, N_("format-spec"),
+		OPT_STRING(0, "commit-list-format", &cover_letter_fmt, N_("format-spec"),
 			    N_("format spec used for the commit list in the cover letter")),
 		OPT_BOOL(0, "numbered-files", &just_numbers,
 			    N_("use simple number sequence for output file names")),
@@ -2359,6 +2360,8 @@ int cmd_format_patch(int argc,
 		cover_letter_fmt = cfg.fmt_cover_letter_commit_list;
 		if (!cover_letter_fmt)
 			cover_letter_fmt = "shortlog";
+	} else if (cover_letter == -1) {
+		cover_letter = 1;
 	}
 
 	if (cover_letter == -1) {
