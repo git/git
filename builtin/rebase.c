@@ -182,8 +182,7 @@ static struct replay_opts get_replay_opts(const struct rebase_options *opts)
 
 	replay.signoff = opts->signoff;
 
-	for (size_t i = 0; i < opts->trailer_args.nr; i++)
-		strvec_push(&replay.trailer_args, opts->trailer_args.v[i]);
+	strvec_pushv(&replay.trailer_args, opts->trailer_args.v);
 
 	replay.allow_ff = !(opts->flags & REBASE_FORCE);
 	if (opts->allow_rerere_autoupdate)
