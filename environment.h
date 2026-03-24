@@ -207,11 +207,8 @@ extern enum object_creation_mode object_creation_mode;
 
 extern int grafts_keep_true_parents;
 
-const char *get_log_output_encoding(void);
-const char *get_commit_output_encoding(void);
-
-extern char *git_commit_encoding;
-extern char *git_log_output_encoding;
+const char *get_log_output_encoding(struct repository *r);
+const char *get_commit_output_encoding(struct repository *r);
 
 extern char *editor_program;
 extern char *askpass_program;

@@ -36,7 +36,7 @@ void create_notes_commit(struct repository *r,
 		/* else: t->ref points to nothing, assume root/orphan commit */
 	}
 
-	if (commit_tree(msg, msg_len, &tree_oid, parents, result_oid, NULL,
+	if (commit_tree(r, msg, msg_len, &tree_oid, parents, result_oid, NULL,
 			NULL))
 		die("Failed to commit notes tree to database");
 

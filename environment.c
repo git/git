@@ -194,15 +194,14 @@ const char *strip_namespace(const char *namespaced_ref)
 	return NULL;
 }
 
-const char *get_log_output_encoding(void)
+const char *get_log_output_encoding(struct repository *r)
 {
-	return git_log_output_encoding ? git_log_output_encoding
-		: get_commit_output_encoding();
+	return r->log_output_encoding ? r->log_output_encoding : get_commit_output_encoding(r);
 }
 
-const char *get_commit_output_encoding(void)
+const char *get_commit_output_encoding(struct repository *r)
 {
-	return git_commit_encoding ? git_commit_encoding : "UTF-8";
+	return r->commit_encoding ? r->commit_encoding : "UTF-8";
 }
 
 int use_optional_locks(void)
@@ -568,16 +567,14 @@ static int git_default_sparse_config(const char *var, const char *value)
 static int git_default_i18n_config(const char *var, const char *value)
 {
 	if (!strcmp(var, "i18n.commitencoding")) {
-		FREE_AND_NULL(git_commit_encoding);
-		return git_config_string(&git_commit_encoding, var, value);
+		FREE_AND_NULL(the_repository->commit_encoding);
+		return git_config_string(&the_repository->commit_encoding, var, value);
 	}
-
 	if (!strcmp(var, "i18n.logoutputencoding")) {
-		FREE_AND_NULL(git_log_output_encoding);
-		return git_config_string(&git_log_output_encoding, var, value);
+		FREE_AND_NULL(the_repository->log_output_encoding);
+		return git_config_string(&the_repository->log_output_encoding, var, value);
 	}
 
-	/* Add other config variables here and to Documentation/config.adoc. */
 	return 0;
 }
 

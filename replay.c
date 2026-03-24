@@ -62,7 +62,7 @@ static struct commit *create_commit(struct repository *repo,
 	char *sign_commit = NULL; /* FIXME: cli users might want to sign again */
 	struct commit_extra_header *extra = NULL;
 	struct strbuf msg = STRBUF_INIT;
-	const char *out_enc = get_commit_output_encoding();
+	const char *out_enc = get_commit_output_encoding(repo);
 	const char *message = repo_logmsg_reencode(repo, based_on,
 						   NULL, out_enc);
 	const char *orig_message = NULL;
@@ -74,7 +74,7 @@ static struct commit *create_commit(struct repository *repo,
 	strbuf_addstr(&msg, orig_message);
 	author = get_author(message);
 	reset_ident_date();
-	if (commit_tree_extended(msg.buf, msg.len, &tree->object.oid, parents,
+	if (commit_tree_extended(repo, msg.buf, msg.len, &tree->object.oid, parents,
 				 &ret, author, NULL, sign_commit, extra)) {
 		error(_("failed to write commit object"));
 		goto out;
