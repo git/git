@@ -8,8 +8,8 @@ git-hook - Run git hooks
 SYNOPSIS
 --------
 [verse]
-'git hook' run [--ignore-missing] [--to-stdin=<path>] <hook-name> [-- <hook-args>]
-'git hook' list [-z] [--show-scope] <hook-name>
+'git hook' run [--allow-unknown-hook-name] [--ignore-missing] [--to-stdin=<path>] <hook-name> [-- <hook-args>]
+'git hook' list [--allow-unknown-hook-name] [-z] [--show-scope] <hook-name>
 
 DESCRIPTION
 -----------
@@ -121,6 +121,13 @@ list [-z] [--show-scope]::
 OPTIONS
 -------
 
+--allow-unknown-hook-name::
+	By default `git hook run` and `git hook list` will bail out when
+	`<hook-name>` is not a hook event known to Git (see linkgit:githooks[5]
+	for the list of known hooks). This is meant to help catch typos
+	such as `prereceive` when `pre-receive` was intended. Pass this
+	flag to allow unknown hook names.
+
 --to-stdin::
 	For "run"; specify a file which will be streamed into the
 	hook's stdin. The hook will receive the entire file from
@@ -159,7 +166,7 @@ Then, in your 'mywrapper' tool, you can invoke any users' configured hooks by
 running:
 
 ----
-git hook run mywrapper-start-tests \
+git hook run --allow-unknown-hook-name mywrapper-start-tests \
   # providing something to stdin
   --stdin some-tempfile-123 \
   # execute hooks in serial
