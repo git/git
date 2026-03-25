@@ -256,16 +256,8 @@ test_expect_success MINGW 'can spawn .bat with argv[0] containing spaces' '
 	rm -f out &&
 	echo "echo %* >>out" >"$bat" &&
 
-	# Ask git to invoke .bat; clone will fail due to fake SSH helper
-	test_must_fail env GIT_SSH="$bat" git clone myhost:src ssh-clone &&
-
-	# Spawning .bat can fail if there are two quoted cmd.exe arguments.
-	# .bat itself is first (due to spaces in name), so just one more is
-	# needed to verify. GIT_SSH will invoke .bat multiple times:
-	# 1) -G myhost
-	# 2) myhost "git-upload-pack src"
-	# First invocation will always succeed. Test the second one.
-	grep "git-upload-pack" out
+	test-tool run-command run-command "$bat" "arg with spaces" &&
+	test_grep "arg with spaces" out
 '
 
 test_done
