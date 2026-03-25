@@ -110,14 +110,6 @@ static void list_hooks_add_default(struct repository *r, const char *hookname,
 	string_list_append(hook_list, hook_path)->util = h;
 }
 
-static void unsorted_string_list_remove(struct string_list *list,
-					const char *str)
-{
-	struct string_list_item *item = unsorted_string_list_lookup(list, str);
-	if (item)
-		unsorted_string_list_delete_item(list, item - list->items, 0);
-}
-
 /*
  * Callback struct to collect all hook.* keys in a single config pass.
  * commands: friendly-name to command map.
@@ -156,7 +148,7 @@ static int hook_config_lookup_all(const char *key, const char *value,
 			struct strmap_entry *e;
 
 			strmap_for_each_entry(&data->event_hooks, &iter, e)
-				unsorted_string_list_remove(e->value, hook_name);
+				unsorted_string_list_remove(e->value, hook_name, 0);
 		} else {
 			struct string_list *hooks =
 				strmap_get(&data->event_hooks, value);
@@ -168,7 +160,7 @@ static int hook_config_lookup_all(const char *key, const char *value,
 			}
 
 			/* Re-insert if necessary to preserve last-seen order. */
-			unsorted_string_list_remove(hooks, hook_name);
+			unsorted_string_list_remove(hooks, hook_name, 0);
 			string_list_append(hooks, hook_name);
 		}
 	} else if (!strcmp(subkey, "command")) {
@@ -186,7 +178,7 @@ static int hook_config_lookup_all(const char *key, const char *value,
 			break;
 		case 1: /* enabled: undo a prior disabled entry */
 			unsorted_string_list_remove(&data->disabled_hooks,
-						    hook_name);
+						    hook_name, 0);
 			break;
 		default:
 			break; /* ignore unrecognised values */
