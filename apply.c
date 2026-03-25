@@ -1999,8 +1999,10 @@ static struct fragment *parse_binary_hunk(struct apply_state *state,
 	CALLOC_ARRAY(frag, 1);
 	frag->patch = inflate_it(data, hunk_size, origlen);
 	frag->free_patch = 1;
-	if (!frag->patch)
+	if (!frag->patch) {
+		free(frag);
 		goto corrupt;
+	}
 	free(data);
 	frag->size = origlen;
 	*buf_p = buffer;
@@ -4772,8 +4774,10 @@ static int apply_patch(struct apply_state *state,
 	int flush_attributes = 0;
 
 	state->patch_input_file = filename;
-	if (read_patch_file(&buf, fd) < 0)
-		return -128;
+	if (read_patch_file(&buf, fd) < 0) {
+		res = -128;
+		goto end;
+	}
 	offset = 0;
 	while (offset < buf.len) {
 		struct patch *patch;

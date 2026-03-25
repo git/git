@@ -38,4 +38,35 @@ test_expect_success EXPENSIVE 'git apply rejects binary patches that are too lar
 	grep "patch too large" err
 '
 
+test_expect_success EXPENSIVE 'git apply rejects large binary patches with incorrect size' '
+	sz=$((1024 * 1024 * 1023)) &&
+	test-tool genrandom foo $sz | test-tool zlib deflate | test-tool base85 chunk-encode >payload &&
+	{
+		cat <<-EOF &&
+		diff --git a/file b/file
+		new file mode 100644
+		index $ZERO_OID..$EMPTY_BLOB
+		GIT binary patch
+		literal 10
+		EOF
+		cat payload
+	} | test_must_fail git apply 2>err &&
+	grep "patch too large" err
+'
+
+test_expect_success 'git apply rejects binary patches with incorrect size' '
+	test-tool genrandom foo 100 | test-tool zlib deflate | test-tool base85 chunk-encode >payload &&
+	{
+		cat <<-EOF &&
+		diff --git a/file b/file
+		new file mode 100644
+		index $ZERO_OID..$EMPTY_BLOB
+		GIT binary patch
+		literal 10
+		EOF
+		cat payload
+	} | test_must_fail git apply 2>err &&
+	grep "corrupt binary patch" err
+'
+
 test_done
