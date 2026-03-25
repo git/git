@@ -115,6 +115,7 @@ static void list_hooks_add_default(struct repository *r, const char *hookname,
 struct hook_config_cache_entry {
 	char *command;
 	enum config_scope scope;
+	bool disabled;
 };
 
 /*
@@ -213,8 +214,10 @@ static int hook_config_lookup_all(const char *key, const char *value,
  * every item's string is the hook's friendly-name and its util pointer is
  * the corresponding command string. Both strings are owned by the map.
  *
- * Disabled hooks and hooks missing a command are already filtered out at
- * parse time, so callers can iterate the list directly.
+ * Disabled hooks are kept in the cache with entry->disabled set, so that
+ * "git hook list" can display them. A non-disabled hook missing a command
+ * is fatal; a disabled hook missing a command emits a warning and is kept
+ * in the cache with entry->command = NULL.
  */
 void hook_cache_clear(struct strmap *cache)
 {
@@ -263,21 +266,26 @@ static void build_hook_config_map(struct repository *r, struct strmap *cache)
 			struct hook_config_cache_entry *entry;
 			char *command;
 
-			/* filter out disabled hooks */
-			if (unsorted_string_list_lookup(&cb_data.disabled_hooks,
-							hname))
-				continue;
+			bool is_disabled =
+				!!unsorted_string_list_lookup(
+					&cb_data.disabled_hooks, hname);
 
 			command = strmap_get(&cb_data.commands, hname);
-			if (!command)
-				die(_("'hook.%s.command' must be configured or "
-				      "'hook.%s.event' must be removed;"
-				      " aborting."), hname, hname);
+			if (!command) {
+				if (is_disabled)
+					warning(_("disabled hook '%s' has no "
+						  "command configured"), hname);
+				else
+					die(_("'hook.%s.command' must be configured or "
+					      "'hook.%s.event' must be removed;"
+					      " aborting."), hname, hname);
+			}
 
 			/* util stores a cache entry; owned by the cache. */
 			CALLOC_ARRAY(entry, 1);
-			entry->command = xstrdup(command);
+			entry->command = xstrdup_or_null(command);
 			entry->scope = scope;
+			entry->disabled = is_disabled;
 			string_list_append(hooks, hname)->util = entry;
 		}
 
@@ -358,8 +366,10 @@ static void list_hooks_add_configured(struct repository *r,
 
 		hook->kind = HOOK_CONFIGURED;
 		hook->u.configured.friendly_name = xstrdup(friendly_name);
-		hook->u.configured.command = xstrdup(entry->command);
+		hook->u.configured.command =
+			entry->command ? xstrdup(entry->command) : NULL;
 		hook->u.configured.scope = entry->scope;
+		hook->u.configured.disabled = entry->disabled;
 
 		string_list_append(list, friendly_name)->util = hook;
 	}
@@ -397,7 +407,16 @@ struct string_list *list_hooks(struct repository *r, const char *hookname,
 int hook_exists(struct repository *r, const char *name)
 {
 	struct string_list *hooks = list_hooks(r, name, NULL);
-	int exists = hooks->nr > 0;
+	int exists = 0;
+
+	for (size_t i = 0; i < hooks->nr; i++) {
+		struct hook *h = hooks->items[i].util;
+		if (h->kind == HOOK_TRADITIONAL ||
+		    !h->u.configured.disabled) {
+			exists = 1;
+			break;
+		}
+	}
 	string_list_clear_func(hooks, hook_free);
 	free(hooks);
 	return exists;
@@ -412,10 +431,11 @@ static int pick_next_hook(struct child_process *cp,
 	struct string_list *hook_list = hook_cb->hook_command_list;
 	struct hook *h;
 
-	if (hook_cb->hook_to_run_index >= hook_list->nr)
-		return 0;
-
-	h = hook_list->items[hook_cb->hook_to_run_index++].util;
+	do {
+		if (hook_cb->hook_to_run_index >= hook_list->nr)
+			return 0;
+		h = hook_list->items[hook_cb->hook_to_run_index++].util;
+	} while (h->kind == HOOK_CONFIGURED && h->u.configured.disabled);
 
 	cp->no_stdin = 1;
 	strvec_pushv(&cp->env, hook_cb->options->env.v);

@@ -357,7 +357,15 @@ test_expect_success 'disabled hook is not run' '
 	test_must_be_empty actual
 '
 
-test_expect_success 'disabled hook does not appear in git hook list' '
+test_expect_success 'disabled hook with no command warns' '
+	test_config hook.nocommand.event "pre-commit" &&
+	test_config hook.nocommand.enabled false &&
+
+	git hook list pre-commit 2>actual &&
+	test_grep "disabled hook.*nocommand.*no command configured" actual
+'
+
+test_expect_success 'disabled hook appears as disabled in git hook list' '
 	test_config hook.active.event "pre-commit" &&
 	test_config hook.active.command "echo active" &&
 	test_config hook.inactive.event "pre-commit" &&
@@ -365,8 +373,27 @@ test_expect_success 'disabled hook does not appear in git hook list' '
 	test_config hook.inactive.enabled false &&
 
 	git hook list pre-commit >actual &&
-	test_grep "active" actual &&
-	test_grep ! "inactive" actual
+	test_grep "^active$" actual &&
+	test_grep "^disabled	inactive$" actual
+'
+
+test_expect_success 'disabled hook shows scope with --show-scope' '
+	test_config hook.myhook.event "pre-commit" &&
+	test_config hook.myhook.command "echo hi" &&
+	test_config hook.myhook.enabled false &&
+
+	git hook list --show-scope pre-commit >actual &&
+	test_grep "^local	disabled	myhook$" actual
+'
+
+test_expect_success 'disabled configured hook is not reported as existing by hook_exists' '
+	test_when_finished "rm -f git-bugreport-hook-exists-test.txt" &&
+	test_config hook.linter.event "pre-commit" &&
+	test_config hook.linter.command "echo lint" &&
+	test_config hook.linter.enabled false &&
+
+	git bugreport -s hook-exists-test &&
+	test_grep ! "pre-commit" git-bugreport-hook-exists-test.txt
 '
 
 test_expect_success 'globally disabled hook can be re-enabled locally' '
