@@ -19,4 +19,23 @@ test_expect_success EXPENSIVE 'git apply rejects patches that are too large' '
 	grep "patch too large" err
 '
 
+test_expect_success EXPENSIVE 'git apply rejects binary patches that are too large' '
+	sz=$((1024 * 1024 * 2048)) &&
+	test-tool genzeros $sz | test-tool zlib deflate | test-tool base85 chunk-encode >payload &&
+	{
+		# Although the patch requires the correct blob ID, blob ID validation
+		# happens after the inflated content size check, so use $EMPTY_BLOB as
+		# a filler.
+		cat <<-EOF &&
+		diff --git a/file b/file
+		new file mode 100644
+		index $ZERO_OID..$EMPTY_BLOB
+		GIT binary patch
+		literal $sz
+		EOF
+		cat payload
+	} | test_must_fail git apply 2>err &&
+	grep "patch too large" err
+'
+
 test_done
