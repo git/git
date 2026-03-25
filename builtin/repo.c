@@ -33,6 +33,16 @@ static const char *const repo_usage[] = {
 	NULL,
 };
 
+static const char *const repo_info_usage[] = {
+	REPO_INFO_USAGE,
+	NULL,
+};
+
+static const char *const repo_structure_usage[] = {
+	REPO_STRUCTURE_USAGE,
+	NULL,
+};
+
 typedef int get_value_fn(struct repository *repo, struct strbuf *buf);
 
 enum output_format {
@@ -220,7 +230,7 @@ static int cmd_repo_info(int argc, const char **argv, const char *prefix,
 		OPT_END()
 	};
 
-	argc = parse_options(argc, argv, prefix, options, repo_usage, 0);
+	argc = parse_options(argc, argv, prefix, options, repo_info_usage, 0);
 
 	if (show_keys && (all_keys || argc))
 		die(_("--keys cannot be used with a <key> or --all"));
@@ -885,7 +895,7 @@ static int cmd_repo_structure(int argc, const char **argv, const char *prefix,
 		OPT_END()
 	};
 
-	argc = parse_options(argc, argv, prefix, options, repo_usage, 0);
+	argc = parse_options(argc, argv, prefix, options, repo_structure_usage, 0);
 	if (argc)
 		usage(_("too many arguments"));
 
