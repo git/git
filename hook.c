@@ -409,7 +409,11 @@ static int pick_next_hook(struct child_process *cp,
 	} else if (h->kind == HOOK_CONFIGURED) {
 		/* to enable oneliners, let config-specified hooks run in shell. */
 		cp->use_shell = true;
+		if (!h->u.configured.command)
+			BUG("non-disabled HOOK_CONFIGURED hook has no command");
 		strvec_push(&cp->args, h->u.configured.command);
+	} else {
+		BUG("unknown hook kind");
 	}
 
 	if (!cp->args.nr)
