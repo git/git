@@ -1,12 +1,6 @@
 #include "git-compat-util.h"
 #include "base85.h"
 
-/*
- * We pick 52, a multiple of 4 so there are no partial groups and it
- * fits in the A-Za-z length prefix encoding.
- */
-#define BASE85_CHUNK_SIZE 52
-
 static const char en85[] = {
 	'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
 	'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
