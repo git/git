@@ -52,8 +52,10 @@ const char *find_hook(struct repository *r, const char *name)
 	return path.buf;
 }
 
-static void hook_clear(struct hook *h, hook_data_free_fn cb_data_free)
+void hook_free(void *p, const char *str UNUSED)
 {
+	struct hook *h = p;
+
 	if (!h)
 		return;
 
@@ -64,20 +66,10 @@ static void hook_clear(struct hook *h, hook_data_free_fn cb_data_free)
 		free((void *)h->u.configured.command);
 	}
 
-	if (cb_data_free)
-		cb_data_free(h->feed_pipe_cb_data);
+	if (h->data_free && h->feed_pipe_cb_data)
+		h->data_free(h->feed_pipe_cb_data);
 
 	free(h);
-}
-
-void hook_list_clear(struct string_list *hooks, hook_data_free_fn cb_data_free)
-{
-	struct string_list_item *item;
-
-	for_each_string_list_item(item, hooks)
-		hook_clear(item->util, cb_data_free);
-
-	string_list_clear(hooks, 0);
 }
 
 /* Helper to detect and add default "traditional" hooks from the hookdir. */
@@ -100,9 +92,15 @@ static void list_hooks_add_default(struct repository *r, const char *hookname,
 	if (options && options->dir)
 		hook_path = absolute_path(hook_path);
 
-	/* Setup per-hook internal state cb data */
-	if (options && options->feed_pipe_cb_data_alloc)
+	/*
+	 * Setup per-hook internal state callback data.
+	 * When provided, the alloc/free callbacks are always provided
+	 * together, so use them to alloc/free the internal hook state.
+	 */
+	if (options && options->feed_pipe_cb_data_alloc) {
 		h->feed_pipe_cb_data = options->feed_pipe_cb_data_alloc(options->feed_pipe_ctx);
+		h->data_free = options->feed_pipe_cb_data_free;
+	}
 
 	h->kind = HOOK_TRADITIONAL;
 	h->u.traditional.path = xstrdup(hook_path);
@@ -316,10 +314,16 @@ static void list_hooks_add_configured(struct repository *r,
 
 		CALLOC_ARRAY(hook, 1);
 
-		if (options && options->feed_pipe_cb_data_alloc)
+		/*
+		 * When provided, the alloc/free callbacks are always provided
+		 * together, so use them to alloc/free the internal hook state.
+		 */
+		if (options && options->feed_pipe_cb_data_alloc) {
 			hook->feed_pipe_cb_data =
 				options->feed_pipe_cb_data_alloc(
 					options->feed_pipe_ctx);
+			hook->data_free = options->feed_pipe_cb_data_free;
+		}
 
 		hook->kind = HOOK_CONFIGURED;
 		hook->u.configured.friendly_name = xstrdup(friendly_name);
@@ -362,7 +366,7 @@ int hook_exists(struct repository *r, const char *name)
 {
 	struct string_list *hooks = list_hooks(r, name, NULL);
 	int exists = hooks->nr > 0;
-	hook_list_clear(hooks, NULL);
+	string_list_clear_func(hooks, hook_free);
 	free(hooks);
 	return exists;
 }
@@ -516,7 +520,7 @@ int run_hooks_opt(struct repository *r, const char *hook_name,
 	run_processes_parallel(&opts);
 	ret = cb_data.rc;
 cleanup:
-	hook_list_clear(cb_data.hook_command_list, options->feed_pipe_cb_data_free);
+	string_list_clear_func(cb_data.hook_command_list, hook_free);
 	free(cb_data.hook_command_list);
 	run_hooks_opt_clear(options);
 	return ret;

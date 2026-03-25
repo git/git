@@ -78,7 +78,7 @@ static int list(int argc, const char **argv, const char *prefix,
 	}
 
 cleanup:
-	hook_list_clear(head, NULL);
+	string_list_clear_func(head, hook_free);
 	free(head);
 	return ret;
 }
