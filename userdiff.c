@@ -337,19 +337,6 @@ PATTERNS("ruby",
 	 "(@|@@|\\$)?[a-zA-Z_][a-zA-Z0-9_]*"
 	 "|[-+0-9.e]+|0[xXbB]?[0-9a-fA-F]+|\\?(\\\\C-)?(\\\\M-)?."
 	 "|//=?|[-+*/<>%&^|=!]=|<<=?|>>=?|===|\\.{1,3}|::|[!=]~"),
-PATTERNS("typescript",
-	/* Starting with optional whitespace */
-	"^[ \t]*"
-	/* Followed by an optional export and/or async keyword */
-	"((export[ \t]+)?(async[ \t]+)?"
-	/* Followed by either a function or class declaration */
-	"((function|class)[ \t]+[a-zA-Z_][a-zA-Z0-9_]*[^{]*)"
-	/* or */
-	"|"
-	/* a variable declaration with const, let, or var */
-	"([ \t]*(const|let|var)[ \t]+[a-zA-Z_][a-zA-Z0-9_]*[ \t]*=))",
-	/* -- */
-	"[a-zA-Z_][a-zA-Z0-9_]*"),
 PATTERNS("rust",
 	 "^[\t ]*((pub(\\([^\\)]+\\))?[\t ]+)?((async|const|unsafe|extern([\t ]+\"[^\"]+\"))[\t ]+)?(struct|enum|union|mod|trait|fn|impl|macro_rules!)[< \t]+[^;]*)$",
 	 /* -- */
@@ -367,6 +354,21 @@ PATTERNS("scheme",
 	 "|([^][)(}{[ \t])+"),
 PATTERNS("tex", "^(\\\\((sub)*section|chapter|part)\\*{0,1}\\{.*)$",
 	 "\\\\[a-zA-Z@]+|\\\\.|([a-zA-Z0-9]|[^\x01-\x7f])+"),
+PATTERNS("typescript",
+	/* Starting with optional whitespace */
+	"^[ \t]*"
+	"("
+	/* Followed by an optional export and/or async and/or default keyword */
+	"(export[ \t]+)?(default[ \t]+)?(async[ \t]+)?"
+	/* Followed by either a function or class declaration */
+	"((function|class)[ \t]+[a-zA-Z_][a-zA-Z0-9_]*[^{]*)"
+	/* or */
+	"|"
+	/* a variable declaration with const, let, or var */
+	"^(const|let|var)[ \\t]+[a-zA-Z_][a-zA-Z0-9_]*[ \\t]*="
+	")",
+	/* -- */
+	"[a-zA-Z_][a-zA-Z0-9_]*"),
 { .name = "default", .binary = -1 },
 };
 #undef PATTERNS
