@@ -93,6 +93,35 @@ static int odb_source_files_for_each_object(struct odb_source *source,
 	return 0;
 }
 
+static int odb_source_files_count_objects(struct odb_source *source,
+					  enum odb_count_objects_flags flags,
+					  unsigned long *out)
+{
+	struct odb_source_files *files = odb_source_files_downcast(source);
+	unsigned long count;
+	int ret;
+
+	ret = packfile_store_count_objects(files->packed, flags, &count);
+	if (ret < 0)
+		goto out;
+
+	if (!(flags & ODB_COUNT_OBJECTS_APPROXIMATE)) {
+		unsigned long loose_count;
+
+		ret = odb_source_loose_count_objects(source, flags, &loose_count);
+		if (ret < 0)
+			goto out;
+
+		count += loose_count;
+	}
+
+	*out = count;
+	ret = 0;
+
+out:
+	return ret;
+}
+
 static int odb_source_files_freshen_object(struct odb_source *source,
 					   const struct object_id *oid)
 {
@@ -220,6 +249,7 @@ struct odb_source_files *odb_source_files_new(struct object_database *odb,
 	files->base.read_object_info = odb_source_files_read_object_info;
 	files->base.read_object_stream = odb_source_files_read_object_stream;
 	files->base.for_each_object = odb_source_files_for_each_object;
+	files->base.count_objects = odb_source_files_count_objects;
 	files->base.freshen_object = odb_source_files_freshen_object;
 	files->base.write_object = odb_source_files_write_object;
 	files->base.write_object_stream = odb_source_files_write_object_stream;

@@ -1868,6 +1868,64 @@ int odb_source_loose_for_each_object(struct odb_source *source,
 					     NULL, NULL, &data);
 }
 
+static int count_loose_object(const struct object_id *oid UNUSED,
+			      struct object_info *oi UNUSED,
+			      void *payload)
+{
+	unsigned long *count = payload;
+	(*count)++;
+	return 0;
+}
+
+int odb_source_loose_count_objects(struct odb_source *source,
+				   enum odb_count_objects_flags flags,
+				   unsigned long *out)
+{
+	const unsigned hexsz = source->odb->repo->hash_algo->hexsz - 2;
+	char *path = NULL;
+	DIR *dir = NULL;
+	int ret;
+
+	if (flags & ODB_COUNT_OBJECTS_APPROXIMATE) {
+		unsigned long count = 0;
+		struct dirent *ent;
+
+		path = xstrfmt("%s/17", source->path);
+
+		dir = opendir(path);
+		if (!dir) {
+			if (errno == ENOENT) {
+				*out = 0;
+				ret = 0;
+				goto out;
+			}
+
+			ret = error_errno("cannot open object shard '%s'", path);
+			goto out;
+		}
+
+		while ((ent = readdir(dir)) != NULL) {
+			if (strspn(ent->d_name, "0123456789abcdef") != hexsz ||
+			    ent->d_name[hexsz] != '\0')
+				continue;
+			count++;
+		}
+
+		*out = count * 256;
+		ret = 0;
+	} else {
+		*out = 0;
+		ret = odb_source_loose_for_each_object(source, NULL, count_loose_object,
+						       out, 0);
+	}
+
+out:
+	if (dir)
+		closedir(dir);
+	free(path);
+	return ret;
+}
+
 static int append_loose_object(const struct object_id *oid,
 			       const char *path UNUSED,
 			       void *data)

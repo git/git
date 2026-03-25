@@ -11,6 +11,7 @@
 #include "strvec.h"
 #include "quote.h"
 #include "odb.h"
+#include "odb/source.h"
 #include "repository.h"
 
 struct tmp_objdir {
