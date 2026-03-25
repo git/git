@@ -227,6 +227,10 @@ Performance, Internal Implementation, Development Support etc.
  * Add a coccinelle rule to break the build when "struct strbuf" gets
    passed by value.
 
+ * Further work on incremental repacking using MIDX/bitmap
+
+ * The logic to count objects has been cleaned up.
+
 
 Fixes since v2.53
 -----------------
