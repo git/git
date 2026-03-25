@@ -20,11 +20,17 @@
 #include "tree-walk.h"
 #include "utf8.h"
 
+#define REPO_INFO_USAGE \
+	"git repo info [--format=(lines|nul) | -z] [--all | <key>...]", \
+	"git repo info --keys [--format=(lines|nul) | -z]"
+
+#define REPO_STRUCTURE_USAGE \
+	"git repo structure [--format=(table|lines|nul) | -z]"
+
 static const char *const repo_usage[] = {
-	"git repo info [--format=(lines|nul) | -z] [--all | <key>...]",
-	"git repo info --keys [--format=(lines|nul) | -z]",
-	"git repo structure [--format=(table|lines|nul) | -z]",
-	NULL
+	REPO_INFO_USAGE,
+	REPO_STRUCTURE_USAGE,
+	NULL,
 };
 
 typedef int get_value_fn(struct repository *repo, struct strbuf *buf);
