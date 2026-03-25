@@ -1,9 +1,9 @@
 #ifndef HOOK_H
 #define HOOK_H
-#include "strvec.h"
 #include "run-command.h"
 #include "string-list.h"
 #include "strmap.h"
+#include "strvec.h"
 
 struct repository;
 
@@ -46,8 +46,7 @@ struct hook {
 typedef void (*cb_data_free_fn)(void *data);
 typedef void *(*cb_data_alloc_fn)(void *init_ctx);
 
-struct run_hooks_opt
-{
+struct run_hooks_opt {
 	/* Environment vars to be set for each hook */
 	struct strvec env;
 
