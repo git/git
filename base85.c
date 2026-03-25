@@ -1,6 +1,12 @@
 #include "git-compat-util.h"
 #include "base85.h"
 
+/*
+ * We pick 52, a multiple of 4 so there are no partial groups and it
+ * fits in the A-Za-z length prefix encoding.
+ */
+#define BASE85_CHUNK_SIZE 52
+
 static const char en85[] = {
 	'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
 	'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
@@ -61,7 +67,7 @@ int decode_85(char *dst, const char *buffer, int len)
 	return 0;
 }
 
-void encode_85(char *buf, const unsigned char *data, int bytes)
+static void encode_85(char *buf, const unsigned char *data, int bytes)
 {
 	while (bytes) {
 		unsigned acc = 0;
@@ -81,4 +87,35 @@ void encode_85(char *buf, const unsigned char *data, int bytes)
 	}
 
 	*buf = 0;
+}
+
+/*
+ * Split the provided data into chunks of at most 52 bytes. Each chunk
+ * is base85-encoded into a line with the following format:
+ *  - Byte 0: encodes the chunk size (1-52) as a letter: 'A'-'Z' for
+ *    1-26 bytes, 'a'-'z' for 27-52 bytes.
+ *  - Bytes 1 onwards: base85-encoded data (up to 65 bytes).
+ *  - Followed by a newline and NUL terminator.
+ * The output callback is called once per line.
+ */
+void chunk_and_encode85(const unsigned char *data, unsigned long len,
+			each_encoded_line_fn output, void *output_data)
+{
+	while (len) {
+		int line_len;
+		int bytes = (BASE85_CHUNK_SIZE < len) ? BASE85_CHUNK_SIZE : len;
+		char line[71];
+		len -= bytes;
+		if (bytes <= 26)
+			line[0] = bytes + 'A' - 1;
+		else
+			line[0] = bytes - 26 + 'a' - 1;
+		encode_85(line + 1, data, bytes);
+		data = data + bytes;
+
+		line_len = strlen(line);
+		line[line_len++] = '\n';
+		line[line_len] = '\0';
+		output(line, line_len, output_data);
+	}
 }
