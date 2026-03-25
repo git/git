@@ -408,6 +408,27 @@ test_expect_success 'configured hooks run before hookdir hook' '
 	test_cmp expected actual
 '
 
+test_expect_success 'git hook list --show-scope shows config scope' '
+	setup_hookdir &&
+	test_config_global hook.global-hook.command "echo global" &&
+	test_config_global hook.global-hook.event pre-commit --add &&
+	test_config hook.local-hook.command "echo local" &&
+	test_config hook.local-hook.event pre-commit --add &&
+
+	cat >expected <<-\EOF &&
+	global	global-hook
+	local	local-hook
+	hook from hookdir
+	EOF
+	git hook list --show-scope pre-commit >actual &&
+	test_cmp expected actual &&
+
+	# without --show-scope the scope must not appear
+	git hook list pre-commit >actual &&
+	test_grep ! "^global	" actual &&
+	test_grep ! "^local	" actual
+'
+
 test_expect_success 'git hook run a hook with a bad shebang' '
 	test_when_finished "rm -rf bad-hooks" &&
 	mkdir bad-hooks &&
