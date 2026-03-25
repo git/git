@@ -963,6 +963,7 @@ static int run_receive_hook(struct command *commands,
 	/* set up stdin callback */
 	feed_init_state.cmd = commands;
 	feed_init_state.skip_broken = skip_broken;
+	strbuf_init(&feed_init_state.buf, 0);
 	opt.feed_pipe_ctx = &feed_init_state;
 	opt.feed_pipe = feed_receive_hook_cb;
 	opt.feed_pipe_cb_data_alloc = receive_hook_feed_state_alloc;
