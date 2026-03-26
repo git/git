@@ -85,7 +85,7 @@ static int parse_refspec(struct refspec_item *item, const char *refspec, int fet
 		if (!*item->src)
 			return 0; /* negative refspecs must not be empty */
 		else if (llen == the_hash_algo->hexsz && !get_oid_hex(item->src, &unused))
-			return 0; /* negative refpsecs cannot be exact sha1 */
+			return 0; /* negative refspecs cannot be exact sha1 */
 		else if (!check_refname_format(item->src, flags))
 			; /* valid looking ref is ok */
 		else
