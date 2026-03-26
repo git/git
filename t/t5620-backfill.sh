@@ -7,6 +7,14 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
+test_expect_success 'backfill rejects unexpected arguments' '
+	test_must_fail git backfill unexpected-arg 2>err &&
+	test_grep "ambiguous argument .*unexpected-arg" err &&
+
+	test_must_fail git backfill --all --unexpected-arg --first-parent 2>err &&
+	test_grep "unrecognized argument: --unexpected-arg" err
+'
+
 # We create objects in the 'src' repo.
 test_expect_success 'setup repo for object creation' '
 	echo "{print \$1}" >print_1.awk &&

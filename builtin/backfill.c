@@ -142,6 +142,9 @@ int cmd_backfill(int argc, const char **argv, const char *prefix, struct reposit
 	repo_init_revisions(repo, &ctx.revs, prefix);
 	argc = setup_revisions(argc, argv, &ctx.revs, NULL);
 
+	if (argc > 1)
+		die(_("unrecognized argument: %s"), argv[1]);
+
 	repo_config(repo, git_default_config, NULL);
 
 	if (ctx.sparse < 0)
