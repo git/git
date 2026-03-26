@@ -65,7 +65,7 @@ static int parse_opt_sign_mode(const struct option *opt,
 		return 0;
 
 	if (parse_sign_mode(arg, val, NULL) || (*val == SIGN_STRIP_IF_INVALID) ||
-	    (*val == SIGN_SIGN_IF_INVALID))
+	    (*val == SIGN_SIGN_IF_INVALID) || (*val == SIGN_ABORT_IF_INVALID))
 		return error(_("unknown %s mode: %s"), opt->long_name, arg);
 
 	return 0;

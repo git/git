@@ -2892,6 +2892,9 @@ static void handle_signature_if_invalid(struct strbuf *new_data,
 	ret = verify_commit_buffer(tmp_buf.buf, tmp_buf.len, &signature_check);
 
 	if (ret) {
+		if (mode == SIGN_ABORT_IF_INVALID)
+			die(_("aborting due to invalid signature"));
+
 		warn_invalid_signature(&signature_check, msg->buf, mode);
 
 		if (mode == SIGN_SIGN_IF_INVALID) {
@@ -2983,6 +2986,7 @@ static void parse_new_commit(const char *arg)
 		case SIGN_VERBATIM:
 		case SIGN_STRIP_IF_INVALID:
 		case SIGN_SIGN_IF_INVALID:
+		case SIGN_ABORT_IF_INVALID:
 			import_one_signature(&sig_sha1, &sig_sha256, v);
 			break;
 
@@ -3068,7 +3072,8 @@ static void parse_new_commit(const char *arg)
 			encoding);
 
 	if ((signed_commit_mode == SIGN_STRIP_IF_INVALID ||
-	     signed_commit_mode == SIGN_SIGN_IF_INVALID) &&
+	     signed_commit_mode == SIGN_SIGN_IF_INVALID ||
+	     signed_commit_mode == SIGN_ABORT_IF_INVALID) &&
 	    (sig_sha1.hash_algo || sig_sha256.hash_algo))
 		handle_signature_if_invalid(&new_data, &sig_sha1, &sig_sha256,
 					    &msg, signed_commit_mode);
@@ -3115,6 +3120,9 @@ static void handle_tag_signature(struct strbuf *msg, const char *name)
 	case SIGN_ABORT:
 		die(_("encountered signed tag; use "
 		      "--signed-tags=<mode> to handle it"));
+	case SIGN_ABORT_IF_INVALID:
+		die(_("'abort-if-invalid' is not a valid mode for "
+		      "git fast-import with --signed-tags=<mode>"));
 	case SIGN_STRIP_IF_INVALID:
 		die(_("'strip-if-invalid' is not a valid mode for "
 		      "git fast-import with --signed-tags=<mode>"));
