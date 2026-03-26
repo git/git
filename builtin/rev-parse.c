@@ -326,7 +326,7 @@ static int try_difference(const char *arg)
 
 static int try_parent_shorthands(const char *arg)
 {
-	char *dotdot;
+	const char *mark;
 	struct object_id oid;
 	struct commit *commit;
 	struct commit_list *parents;
@@ -334,38 +334,39 @@ static int try_parent_shorthands(const char *arg)
 	int include_rev = 0;
 	int include_parents = 0;
 	int exclude_parent = 0;
+	char *to_free;
 
-	if ((dotdot = strstr(arg, "^!"))) {
+	if ((mark = strstr(arg, "^!"))) {
 		include_rev = 1;
-		if (dotdot[2])
+		if (mark[2])
 			return 0;
-	} else if ((dotdot = strstr(arg, "^@"))) {
+	} else if ((mark = strstr(arg, "^@"))) {
 		include_parents = 1;
-		if (dotdot[2])
+		if (mark[2])
 			return 0;
-	} else if ((dotdot = strstr(arg, "^-"))) {
+	} else if ((mark = strstr(arg, "^-"))) {
 		include_rev = 1;
 		exclude_parent = 1;
 
-		if (dotdot[2]) {
+		if (mark[2]) {
 			char *end;
-			exclude_parent = strtoul(dotdot + 2, &end, 10);
+			exclude_parent = strtoul(mark + 2, &end, 10);
 			if (*end != '\0' || !exclude_parent)
 				return 0;
 		}
 	} else
 		return 0;
 
-	*dotdot = 0;
+	arg = to_free = xmemdupz(arg, mark - arg);
 	if (repo_get_oid_committish(the_repository, arg, &oid) ||
 	    !(commit = lookup_commit_reference(the_repository, &oid))) {
-		*dotdot = '^';
+		free(to_free);
 		return 0;
 	}
 
 	if (exclude_parent &&
 	    exclude_parent > commit_list_count(commit->parents)) {
-		*dotdot = '^';
+		free(to_free);
 		return 0;
 	}
 
@@ -386,7 +387,7 @@ static int try_parent_shorthands(const char *arg)
 		free(name);
 	}
 
-	*dotdot = '^';
+	free(to_free);
 	return 1;
 }
 
