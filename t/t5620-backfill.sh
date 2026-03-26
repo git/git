@@ -273,13 +273,11 @@ test_expect_success 'backfill with prefix pathspec' '
 	git -C backfill-path rev-list --quiet --objects --missing=print HEAD >missing &&
 	test_line_count = 48 missing &&
 
-	# TODO: The pathspec should limit the downloaded blobs to
-	# only those matching the prefix "d/f", but currently all
-	# blobs are downloaded.
-	git -C backfill-path backfill HEAD -- d/f &&
+	git -C backfill-path backfill HEAD -- d/f 2>err &&
+	test_must_be_empty err &&
 
 	git -C backfill-path rev-list --quiet --objects --missing=print HEAD >missing &&
-	test_line_count = 0 missing
+	test_line_count = 40 missing
 '
 
 test_expect_success 'backfill with multiple pathspecs' '
@@ -292,13 +290,11 @@ test_expect_success 'backfill with multiple pathspecs' '
 	git -C backfill-path rev-list --quiet --objects --missing=print HEAD >missing &&
 	test_line_count = 48 missing &&
 
-	# TODO: The pathspecs should limit the downloaded blobs to
-	# only those matching "d/f" or "a", but currently all blobs
-	# are downloaded.
-	git -C backfill-path backfill HEAD -- d/f a &&
+	git -C backfill-path backfill HEAD -- d/f a 2>err &&
+	test_must_be_empty err &&
 
 	git -C backfill-path rev-list --quiet --objects --missing=print HEAD >missing &&
-	test_line_count = 0 missing
+	test_line_count = 16 missing
 '
 
 test_expect_success 'backfill with wildcard pathspec' '
