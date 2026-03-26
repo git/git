@@ -3109,6 +3109,9 @@ static void handle_tag_signature_if_invalid(struct strbuf *buf,
 	if (!check_signature(&sigc, signature.buf, signature.len))
 		goto out;
 
+	if (signed_tag_mode == SIGN_ABORT_IF_INVALID)
+		die(_("aborting due to invalid signature"));
+
 	strbuf_setlen(msg, sig_offset);
 
 	if (signed_tag_mode == SIGN_SIGN_IF_INVALID) {
@@ -3156,6 +3159,7 @@ static void handle_tag_signature(struct strbuf *buf, struct strbuf *msg, const c
 		/* Truncate the buffer to remove the signature */
 		strbuf_setlen(msg, sig_offset);
 		break;
+	case SIGN_ABORT_IF_INVALID:
 	case SIGN_SIGN_IF_INVALID:
 	case SIGN_STRIP_IF_INVALID:
 		handle_tag_signature_if_invalid(buf, msg, sig_offset);
@@ -3165,9 +3169,6 @@ static void handle_tag_signature(struct strbuf *buf, struct strbuf *msg, const c
 	case SIGN_ABORT:
 		die(_("encountered signed tag; use "
 		      "--signed-tags=<mode> to handle it"));
-	case SIGN_ABORT_IF_INVALID:
-		die(_("'abort-if-invalid' is not a valid mode for "
-		      "git fast-import with --signed-tags=<mode>"));
 	default:
 		BUG("invalid signed_tag_mode value %d from tag '%s'",
 		    signed_tag_mode, name);

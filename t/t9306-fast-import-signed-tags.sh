@@ -77,7 +77,7 @@ test_expect_success GPGSSH 'import SSH signed tag with --signed-tags=strip' '
 	test_grep ! "SSH SIGNATURE" out
 '
 
-for mode in strip-if-invalid sign-if-invalid
+for mode in strip-if-invalid sign-if-invalid abort-if-invalid
 do
 	test_expect_success GPG "import tag with no signature with --signed-tags=$mode" '
 		test_when_finished rm -rf import &&
@@ -111,6 +111,14 @@ do
 		# message length should not change though, otherwise the corresponding
 		# `data <length>` command would have to be changed too.
 		sed "s/OpenPGP signed tag/OpenPGP forged tag/" output >modified &&
+
+		if test "$mode" = abort-if-invalid
+		then
+			test_must_fail git -C import fast-import --quiet \
+				--signed-tags=$mode <modified >log 2>&1 &&
+			test_grep "aborting due to invalid signature" log &&
+			return 0
+		fi &&
 
 		git -C import fast-import --quiet --signed-tags=$mode <modified >log 2>&1 &&
 
