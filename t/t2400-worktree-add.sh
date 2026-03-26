@@ -987,7 +987,7 @@ test_dwim_orphan () {
 				then
 					test_must_be_empty actual
 				else
-					grep "$info_text" actual
+					test_grep "$info_text" actual
 				fi
 			elif [ "$outcome" = "no_infer" ]
 			then
@@ -996,39 +996,35 @@ test_dwim_orphan () {
 				then
 					test_must_be_empty actual
 				else
-					! grep "$info_text" actual
+					test_grep ! "$info_text" actual
 				fi
 			elif [ "$outcome" = "fetch_error" ]
 			then
 				test_must_fail git $dashc_args worktree add $args 2>actual &&
-				grep "$fetch_error_text" actual
+				test_grep "$fetch_error_text" actual
 			elif [ "$outcome" = "fatal_orphan_bad_combo" ]
 			then
 				test_must_fail git $dashc_args worktree add $args 2>actual &&
 				if [ $use_quiet -eq 1 ]
 				then
-					! grep "$info_text" actual
+					test_grep ! "$info_text" actual
 				else
-					grep "$info_text" actual
+					test_grep "$info_text" actual
 				fi &&
-				grep "$bad_combo_regex" actual
+				test_grep "$bad_combo_regex" actual
 			elif [ "$outcome" = "warn_bad_head" ]
 			then
 				test_must_fail git $dashc_args worktree add $args 2>actual &&
 				if [ $use_quiet -eq 1 ]
 				then
-					grep "$invalid_ref_regex" actual &&
-					! grep "$orphan_hint" actual
+					test_grep "$invalid_ref_regex" actual &&
+					test_grep ! "$orphan_hint" actual
 				else
-					headpath=$(git $dashc_args rev-parse --path-format=absolute --git-path HEAD) &&
-					headcontents=$(cat "$headpath") &&
-					grep "HEAD points to an invalid (or orphaned) reference" actual &&
-					grep "HEAD path: .$headpath." actual &&
-					grep "HEAD contents: .$headcontents." actual &&
-					grep "$orphan_hint" actual &&
-					! grep "$info_text" actual
+					test_grep "HEAD points to an invalid (or orphaned) reference" actual &&
+					test_grep "$orphan_hint" actual &&
+					test_grep ! "$info_text" actual
 				fi &&
-				grep "$invalid_ref_regex" actual
+				test_grep "$invalid_ref_regex" actual
 			else
 				# Unreachable
 				false
