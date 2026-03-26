@@ -12,6 +12,7 @@
 #include "setup.h"
 #include "strbuf.h"
 #include "strmap.h"
+#include "thread-utils.h"
 
 bool is_known_hook(const char *name)
 {
@@ -165,13 +166,17 @@ static int hook_config_lookup_all(const char *key, const char *value,
 	/* Handle plain hook.<key> entries that have no hook name component. */
 	if (!name) {
 		if (!strcmp(subkey, "jobs") && value) {
-			unsigned int v;
-			if (!git_parse_uint(value, &v))
-				warning(_("hook.jobs must be a positive integer, ignoring: '%s'"), value);
-			else if (!v)
-				warning(_("hook.jobs must be positive, ignoring: 0"));
-			else
+			int v;
+			if (!git_parse_int(value, &v))
+				warning(_("hook.jobs must be an integer, ignoring: '%s'"), value);
+			else if (v == -1)
+				data->jobs = online_cpus();
+			else if (v > 0)
 				data->jobs = v;
+			else
+				warning(_("hook.jobs must be a positive integer"
+					  " or -1, ignoring: '%s'"),
+					value);
 		}
 		return 0;
 	}
@@ -259,17 +264,21 @@ static int hook_config_lookup_all(const char *key, const char *value,
 				  " ignoring: '%s'"),
 				hook_name, value);
 	} else if (!strcmp(subkey, "jobs")) {
-		unsigned int v;
-		if (!git_parse_uint(value, &v))
-			warning(_("hook.%s.jobs must be a positive integer,"
+		int v;
+		if (!git_parse_int(value, &v))
+			warning(_("hook.%s.jobs must be an integer,"
 				  " ignoring: '%s'"),
 				hook_name, value);
-		else if (!v)
-			warning(_("hook.%s.jobs must be positive,"
-				  " ignoring: 0"), hook_name);
-		else
+		else if (v == -1)
+			strmap_put(&data->event_jobs, hook_name,
+				   (void *)(uintptr_t)online_cpus());
+		else if (v > 0)
 			strmap_put(&data->event_jobs, hook_name,
 				   (void *)(uintptr_t)v);
+		else
+			warning(_("hook.%s.jobs must be a positive"
+				  " integer or -1, ignoring: '%s'"),
+				hook_name, value);
 	}
 
 	free(hook_name);
@@ -688,6 +697,25 @@ static void warn_non_parallel_hooks_override(unsigned int jobs,
 	}
 }
 
+/* Resolve a hook.jobs config key, handling -1 as online_cpus(). */
+static void resolve_hook_config_jobs(struct repository *r,
+				     const char *key,
+				     unsigned int *jobs)
+{
+	int v;
+
+	if (repo_config_get_int(r, key, &v))
+		return;
+
+	if (v == -1)
+		*jobs = online_cpus();
+	else if (v > 0)
+		*jobs = v;
+	else
+		warning(_("%s must be a positive integer or -1,"
+			  " ignoring: %d"), key, v);
+}
+
 /* Determine how many jobs to use for hook execution. */
 static unsigned int get_hook_jobs(struct repository *r,
 				  struct run_hooks_opt *options,
@@ -721,14 +749,12 @@ static unsigned int get_hook_jobs(struct repository *r,
 			if (event_jobs)
 				options->jobs = (unsigned int)(uintptr_t)event_jobs;
 		} else {
-			unsigned int event_jobs;
 			char *key;
 
-			repo_config_get_uint(r, "hook.jobs", &options->jobs);
+			resolve_hook_config_jobs(r, "hook.jobs", &options->jobs);
 
 			key = xstrfmt("hook.%s.jobs", hook_name);
-			if (!repo_config_get_uint(r, key, &event_jobs) && event_jobs)
-				options->jobs = event_jobs;
+			resolve_hook_config_jobs(r, key, &options->jobs);
 			free(key);
 		}
 	}

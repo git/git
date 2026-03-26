@@ -1058,6 +1058,55 @@ test_expect_success 'hook.<event>.jobs does not warn for a real event name' '
 	test_grep ! "friendly-name" err
 '
 
+test_expect_success 'hook.jobs=-1 resolves to online_cpus()' '
+	test_config hook.hook-1.event test-hook &&
+	test_config hook.hook-1.command "true" &&
+	test_config hook.hook-1.parallel true &&
+
+	test_config hook.jobs -1 &&
+
+	cpus=$(test-tool online-cpus) &&
+	GIT_TRACE2_EVENT="$(pwd)/trace.txt" \
+		git hook run --allow-unknown-hook-name test-hook >out 2>err &&
+	grep "\"region_enter\".*\"hook\".*\"test-hook\".*\"max:$cpus\"" trace.txt
+'
+
+test_expect_success 'hook.<event>.jobs=-1 resolves to online_cpus()' '
+	test_config hook.hook-1.event test-hook &&
+	test_config hook.hook-1.command "true" &&
+	test_config hook.hook-1.parallel true &&
+
+	test_config hook.test-hook.jobs -1 &&
+
+	cpus=$(test-tool online-cpus) &&
+	GIT_TRACE2_EVENT="$(pwd)/trace.txt" \
+		git hook run --allow-unknown-hook-name test-hook >out 2>err &&
+	grep "\"region_enter\".*\"hook\".*\"test-hook\".*\"max:$cpus\"" trace.txt
+'
+
+test_expect_success 'git hook run -j-1 resolves to online_cpus()' '
+	test_config hook.hook-1.event test-hook &&
+	test_config hook.hook-1.command "true" &&
+	test_config hook.hook-1.parallel true &&
+
+	cpus=$(test-tool online-cpus) &&
+	GIT_TRACE2_EVENT="$(pwd)/trace.txt" \
+		git hook run --allow-unknown-hook-name -j-1 test-hook >out 2>err &&
+	grep "\"region_enter\".*\"hook\".*\"test-hook\".*\"max:$cpus\"" trace.txt
+'
+
+test_expect_success 'hook.jobs rejects values less than -1' '
+	test_config hook.jobs -2 &&
+	git hook run --allow-unknown-hook-name --ignore-missing test-hook >out 2>err &&
+	test_grep "hook.jobs must be a positive integer or -1" err
+'
+
+test_expect_success 'hook.<event>.jobs rejects values less than -1' '
+	test_config hook.test-hook.jobs -5 &&
+	git hook run --allow-unknown-hook-name --ignore-missing test-hook >out 2>err &&
+	test_grep "hook.test-hook.jobs must be a positive integer or -1" err
+'
+
 test_expect_success 'hook.<event>.enabled=false skips all hooks for event' '
 	test_config hook.hook-1.event test-hook &&
 	test_config hook.hook-1.command "echo ran" &&
