@@ -60,6 +60,28 @@ They would hopefully lead to an improved version of the patches
 posted sometime later, so that we can conclude a topic and move
 ahead.
 ----------------------------------------------------------------
+[not just reroll, but respond to reviews]
+
+After getting review comments but before sending a new iteration of
+your patches, do respond to the review e-mails directly to develop a
+dialog between you as the author and your reviewers.
+
+A new iteration of a patch is harder to read without such a dialog
+telling reviewers what the author thought after getting suggestions in
+earlier reviews.
+
+Did they agree and took the suggestion?  Did they disagree but took
+the suggestion anyway, and if so why did they think the suggested
+changes are not good?  Did they disagree and did not take the
+suggestion and if so why?  They changed the code but not in the way
+suggested in the review, but why the new way was thought to be better
+than both the original and the reviewer input?
+
+These are natural questions reviewers want to get answered, and some
+of them can be answered by reading a new iteration of patch (e.g., did
+they or did they not update the patch?) but not others (e.g., why did
+they or did they not do so?).
+----------------------------------------------------------------
 [make us come to you, begging]
 
 I've seen from time to time people ask "I am thinking of doing this;
