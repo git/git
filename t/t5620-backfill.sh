@@ -224,6 +224,162 @@ test_expect_success 'backfill --sparse without cone mode (negative)' '
 	test_line_count = 12 missing
 '
 
+test_expect_success 'backfill with revision range' '
+	test_when_finished rm -rf backfill-revs &&
+	git clone --no-checkout --filter=blob:none		\
+		--single-branch --branch=main   		\
+		"file://$(pwd)/srv.bare" backfill-revs &&
+
+	# No blobs yet
+	git -C backfill-revs rev-list --quiet --objects --missing=print HEAD >missing &&
+	test_line_count = 48 missing &&
+
+	git -C backfill-revs backfill HEAD~2..HEAD &&
+
+	# 30 objects downloaded.
+	git -C backfill-revs rev-list --quiet --objects --missing=print HEAD >missing &&
+	test_line_count = 18 missing
+'
+
+test_expect_success 'backfill with revisions over stdin' '
+	test_when_finished rm -rf backfill-revs &&
+	git clone --no-checkout --filter=blob:none		\
+		--single-branch --branch=main   		\
+		"file://$(pwd)/srv.bare" backfill-revs &&
+
+	# No blobs yet
+	git -C backfill-revs rev-list --quiet --objects --missing=print HEAD >missing &&
+	test_line_count = 48 missing &&
+
+	cat >in <<-EOF &&
+	HEAD
+	^HEAD~2
+	EOF
+
+	git -C backfill-revs backfill --stdin <in &&
+
+	# 30 objects downloaded.
+	git -C backfill-revs rev-list --quiet --objects --missing=print HEAD >missing &&
+	test_line_count = 18 missing
+'
+
+test_expect_success 'backfill with prefix pathspec' '
+	test_when_finished rm -rf backfill-path &&
+	git clone --bare --filter=blob:none		        \
+		--single-branch --branch=main   		\
+		"file://$(pwd)/srv.bare" backfill-path &&
+
+	# No blobs yet
+	git -C backfill-path rev-list --quiet --objects --missing=print HEAD >missing &&
+	test_line_count = 48 missing &&
+
+	# TODO: The pathspec should limit the downloaded blobs to
+	# only those matching the prefix "d/f", but currently all
+	# blobs are downloaded.
+	git -C backfill-path backfill HEAD -- d/f &&
+
+	git -C backfill-path rev-list --quiet --objects --missing=print HEAD >missing &&
+	test_line_count = 0 missing
+'
+
+test_expect_success 'backfill with multiple pathspecs' '
+	test_when_finished rm -rf backfill-path &&
+	git clone --bare --filter=blob:none		        \
+		--single-branch --branch=main   		\
+		"file://$(pwd)/srv.bare" backfill-path &&
+
+	# No blobs yet
+	git -C backfill-path rev-list --quiet --objects --missing=print HEAD >missing &&
+	test_line_count = 48 missing &&
+
+	# TODO: The pathspecs should limit the downloaded blobs to
+	# only those matching "d/f" or "a", but currently all blobs
+	# are downloaded.
+	git -C backfill-path backfill HEAD -- d/f a &&
+
+	git -C backfill-path rev-list --quiet --objects --missing=print HEAD >missing &&
+	test_line_count = 0 missing
+'
+
+test_expect_success 'backfill with wildcard pathspec' '
+	test_when_finished rm -rf backfill-path &&
+	git clone --bare --filter=blob:none		        \
+		--single-branch --branch=main   		\
+		"file://$(pwd)/srv.bare" backfill-path &&
+
+	# No blobs yet
+	git -C backfill-path rev-list --quiet --objects --missing=print HEAD >missing &&
+	test_line_count = 48 missing &&
+
+	# TODO: The wildcard pathspec should limit downloaded blobs,
+	# but currently all blobs are downloaded.
+	git -C backfill-path backfill HEAD -- "d/file.*.txt" &&
+
+	git -C backfill-path rev-list --quiet --objects --missing=print HEAD >missing &&
+	test_line_count = 0 missing
+'
+
+test_expect_success 'backfill with --all' '
+	test_when_finished rm -rf backfill-all &&
+	git clone --no-checkout --filter=blob:none		\
+		"file://$(pwd)/srv-revs.bare" backfill-all &&
+
+	# All blobs from all refs are missing
+	git -C backfill-all rev-list --quiet --objects --all --missing=print >missing &&
+	test_line_count = 54 missing &&
+
+	# Backfill from HEAD gets main blobs only
+	git -C backfill-all backfill HEAD &&
+
+	# Other branch blobs still missing
+	git -C backfill-all rev-list --quiet --objects --all --missing=print >missing &&
+	test_line_count = 2 missing &&
+
+	# Backfill with --all gets everything
+	git -C backfill-all backfill --all &&
+
+	git -C backfill-all rev-list --quiet --objects --all --missing=print >missing &&
+	test_line_count = 0 missing
+'
+
+test_expect_success 'backfill with --first-parent' '
+	test_when_finished rm -rf backfill-fp &&
+	git clone --no-checkout --filter=blob:none		\
+		--single-branch --branch=main			\
+		"file://$(pwd)/srv-revs.bare" backfill-fp &&
+
+	git -C backfill-fp rev-list --quiet --objects --missing=print HEAD >missing &&
+	test_line_count = 52 missing &&
+
+	# --first-parent skips the side branch commits, so
+	# s/file.{1,2}.txt v1 blobs (only in side commit 1) are missed.
+	git -C backfill-fp backfill --first-parent HEAD &&
+
+	git -C backfill-fp rev-list --quiet --objects --missing=print HEAD >missing &&
+	test_line_count = 2 missing
+'
+
+test_expect_success 'backfill with --since' '
+	test_when_finished rm -rf backfill-since &&
+	git clone --no-checkout --filter=blob:none		\
+		--single-branch --branch=main			\
+		"file://$(pwd)/srv-revs.bare" backfill-since &&
+
+	git -C backfill-since rev-list --quiet --objects --missing=print HEAD >missing &&
+	test_line_count = 52 missing &&
+
+	# Use a cutoff between commits 4 and 5 (between v1 and v2
+	# iterations). Commits 5-8 still carry v1 of files 2-4 in
+	# their trees, but v1 of file.1.txt is only in commits 1-4.
+	SINCE=$(git -C backfill-since log --first-parent --reverse \
+		--format=%ct HEAD~1 | sed -n 5p) &&
+	git -C backfill-since backfill --since="@$((SINCE - 1))" HEAD &&
+
+	# 6 missing: v1 of file.1.txt in all 6 directories
+	git -C backfill-since rev-list --quiet --objects --missing=print HEAD >missing &&
+	test_line_count = 6 missing
+'
+
 . "$TEST_DIRECTORY"/lib-httpd.sh
 start_httpd
 
