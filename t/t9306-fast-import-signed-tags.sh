@@ -77,7 +77,7 @@ test_expect_success GPGSSH 'import SSH signed tag with --signed-tags=strip' '
 	test_grep ! "SSH SIGNATURE" out
 '
 
-for mode in strip-if-invalid
+for mode in strip-if-invalid sign-if-invalid
 do
 	test_expect_success GPG "import tag with no signature with --signed-tags=$mode" '
 		test_when_finished rm -rf import &&
@@ -117,7 +117,15 @@ do
 		IMPORTED=$(git -C import rev-parse --verify refs/tags/openpgp-signed) &&
 		test $OPENPGP_SIGNED != $IMPORTED &&
 		git -C import cat-file tag "$IMPORTED" >actual &&
-		test_grep ! -E "^-----BEGIN PGP SIGNATURE-----" actual &&
+
+		if test "$mode" = strip-if-invalid
+		then
+			test_grep ! -E "^-----BEGIN PGP SIGNATURE-----" actual
+		else
+			test_grep -E "^-----BEGIN PGP SIGNATURE-----" actual &&
+			git -C import verify-tag "$IMPORTED"
+		fi &&
+
 		test_must_be_empty log
 	'
 
@@ -149,5 +157,34 @@ do
 		test_must_be_empty log
 	'
 done
+
+test_expect_success GPGSSH 'sign invalid tag with explicit keyid' '
+	test_when_finished rm -rf import &&
+	git init import &&
+
+	git fast-export --signed-tags=verbatim ssh-signed >output &&
+
+	# Change the tag message, which invalidates the signature. The tag
+	# message length should not change though, otherwise the corresponding
+	# `data <length>` command would have to be changed too.
+	sed "s/SSH signed tag/SSH forged tag/" output >modified &&
+
+	# Configure the target repository with an invalid default signing key.
+	test_config -C import user.signingkey "not-a-real-key-id" &&
+	test_config -C import gpg.format ssh &&
+	test_config -C import gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
+	test_must_fail git -C import fast-import --quiet \
+		--signed-tags=sign-if-invalid <modified >/dev/null 2>&1 &&
+
+	# Import using explicitly provided signing key.
+	git -C import fast-import --quiet \
+		--signed-tags=sign-if-invalid="${GPGSSH_KEY_PRIMARY}" <modified &&
+
+	IMPORTED=$(git -C import rev-parse --verify refs/tags/ssh-signed) &&
+	test $SSH_SIGNED != $IMPORTED &&
+	git -C import cat-file tag "$IMPORTED" >actual &&
+	test_grep -E "^-----BEGIN SSH SIGNATURE-----" actual &&
+	git -C import verify-tag "$IMPORTED"
+'
 
 test_done

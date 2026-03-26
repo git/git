@@ -191,6 +191,7 @@ static const char *global_prefix;
 static enum sign_mode signed_tag_mode = SIGN_VERBATIM;
 static enum sign_mode signed_commit_mode = SIGN_VERBATIM;
 static const char *signed_commit_keyid;
+static const char *signed_tag_keyid;
 
 /* Memory pools */
 static struct mem_pool fi_mem_pool = {
@@ -3110,6 +3111,19 @@ static void handle_tag_signature_if_invalid(struct strbuf *buf,
 
 	strbuf_setlen(msg, sig_offset);
 
+	if (signed_tag_mode == SIGN_SIGN_IF_INVALID) {
+		strbuf_attach(&payload, sigc.payload, sigc.payload_len,
+			      sigc.payload_len + 1);
+		sigc.payload = NULL;
+		strbuf_reset(&signature);
+
+		if (sign_buffer(&payload, &signature, signed_tag_keyid,
+				SIGN_BUFFER_USE_DEFAULT_KEY))
+			die(_("failed to sign tag object"));
+
+		strbuf_addbuf(msg, &signature);
+	}
+
 out:
 	signature_check_clear(&sigc);
 	strbuf_release(&signature);
@@ -3142,6 +3156,7 @@ static void handle_tag_signature(struct strbuf *buf, struct strbuf *msg, const c
 		/* Truncate the buffer to remove the signature */
 		strbuf_setlen(msg, sig_offset);
 		break;
+	case SIGN_SIGN_IF_INVALID:
 	case SIGN_STRIP_IF_INVALID:
 		handle_tag_signature_if_invalid(buf, msg, sig_offset);
 		break;
@@ -3152,9 +3167,6 @@ static void handle_tag_signature(struct strbuf *buf, struct strbuf *msg, const c
 		      "--signed-tags=<mode> to handle it"));
 	case SIGN_ABORT_IF_INVALID:
 		die(_("'abort-if-invalid' is not a valid mode for "
-		      "git fast-import with --signed-tags=<mode>"));
-	case SIGN_SIGN_IF_INVALID:
-		die(_("'sign-if-invalid' is not a valid mode for "
 		      "git fast-import with --signed-tags=<mode>"));
 	default:
 		BUG("invalid signed_tag_mode value %d from tag '%s'",
@@ -3749,7 +3761,7 @@ static int parse_one_option(const char *option)
 		if (parse_sign_mode(option, &signed_commit_mode, &signed_commit_keyid))
 			usagef(_("unknown --signed-commits mode '%s'"), option);
 	} else if (skip_prefix(option, "signed-tags=", &option)) {
-		if (parse_sign_mode(option, &signed_tag_mode, NULL))
+		if (parse_sign_mode(option, &signed_tag_mode, &signed_tag_keyid))
 			usagef(_("unknown --signed-tags mode '%s'"), option);
 	} else if (!strcmp(option, "quiet")) {
 		show_stats = 0;
