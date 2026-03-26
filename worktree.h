@@ -16,7 +16,7 @@ struct worktree {
 	struct object_id head_oid;
 	int is_detached;
 	int is_bare;
-	int is_current;
+	int is_current;		/* does `path` match `repo->worktree` */
 	int lock_reason_valid; /* private */
 	int prune_reason_valid; /* private */
 };
