@@ -133,7 +133,9 @@ struct hook_config_cache_entry {
  * Callback struct to collect all hook.* keys in a single config pass.
  * commands: friendly-name to command map.
  * event_hooks: event-name to list of friendly-names map.
- * disabled_hooks: set of friendly-names with hook.<friendly-name>.enabled = false.
+ * disabled_hooks: set of all names with hook.<name>.enabled = false; after
+ *                 parsing, names that are not friendly-names become event-level
+ *                 disables stored in r->disabled_events. This collects all.
  * parallel_hooks: friendly-name to parallel flag.
  * event_jobs: event-name to per-event jobs count (stored as uintptr_t, NULL == unset).
  * jobs: value of the global hook.jobs key. Defaults to 0 if unset (stored in r->hook_jobs).
@@ -189,8 +191,21 @@ static int hook_config_lookup_all(const char *key, const char *value,
 			strmap_for_each_entry(&data->event_hooks, &iter, e)
 				unsorted_string_list_remove(e->value, hook_name, 0);
 		} else {
-			struct string_list *hooks =
-				strmap_get(&data->event_hooks, value);
+			struct string_list *hooks;
+
+			if (is_known_hook(hook_name))
+				die(_("hook friendly-name '%s' collides with "
+				      "a known event name; please choose a "
+				      "different friendly-name"),
+				    hook_name);
+
+			if (!strcmp(hook_name, value))
+				warning(_("hook friendly-name '%s' is the "
+					  "same as its event; this may cause "
+					  "ambiguity with hook.%s.enabled"),
+					hook_name, hook_name);
+
+			hooks = strmap_get(&data->event_hooks, value);
 
 			if (!hooks) {
 				CALLOC_ARRAY(hooks, 1);
@@ -345,6 +360,22 @@ static void build_hook_config_map(struct repository *r, struct strmap *cache)
 
 	warn_jobs_on_friendly_names(&cb_data);
 
+	/*
+	 * Populate disabled_events: names in disabled_hooks that are not
+	 * friendly-names are event-level switches (hook.<event>.enabled = false).
+	 * Names that are friendly-names are already handled per-hook via the
+	 * hook_config_cache_entry.disabled flag below.
+	 */
+	if (r) {
+		string_list_clear(&r->disabled_events, 0);
+		string_list_init_dup(&r->disabled_events);
+		for (size_t i = 0; i < cb_data.disabled_hooks.nr; i++) {
+			const char *n = cb_data.disabled_hooks.items[i].string;
+			if (!is_friendly_name(&cb_data, n))
+				string_list_append(&r->disabled_events, n);
+		}
+	}
+
 	/* Construct the cache from parsed configs. */
 	strmap_for_each_entry(&cb_data.event_hooks, &iter, e) {
 		struct string_list *hook_names = e->value;
@@ -446,6 +477,8 @@ static void list_hooks_add_configured(struct repository *r,
 {
 	struct strmap *cache = get_hook_config_cache(r);
 	struct string_list *configured_hooks = strmap_get(cache, hookname);
+	bool event_is_disabled = r ? !!unsorted_string_list_lookup(&r->disabled_events,
+								   hookname) : 0;
 
 	/* Iterate through configured hooks and initialize internal states */
 	for (size_t i = 0; configured_hooks && i < configured_hooks->nr; i++) {
@@ -472,6 +505,7 @@ static void list_hooks_add_configured(struct repository *r,
 			entry->command ? xstrdup(entry->command) : NULL;
 		hook->u.configured.scope = entry->scope;
 		hook->u.configured.disabled = entry->disabled;
+		hook->u.configured.event_disabled = event_is_disabled;
 		hook->parallel = entry->parallel;
 
 		string_list_append(list, friendly_name)->util = hook;
@@ -484,6 +518,8 @@ static void list_hooks_add_configured(struct repository *r,
 	if (!r || !r->gitdir) {
 		hook_cache_clear(cache);
 		free(cache);
+		if (r)
+			string_list_clear(&r->disabled_events, 0);
 	}
 }
 
@@ -515,7 +551,7 @@ int hook_exists(struct repository *r, const char *name)
 	for (size_t i = 0; i < hooks->nr; i++) {
 		struct hook *h = hooks->items[i].util;
 		if (h->kind == HOOK_TRADITIONAL ||
-		    !h->u.configured.disabled) {
+		    (!h->u.configured.disabled && !h->u.configured.event_disabled)) {
 			exists = 1;
 			break;
 		}
@@ -538,7 +574,8 @@ static int pick_next_hook(struct child_process *cp,
 		if (hook_cb->hook_to_run_index >= hook_list->nr)
 			return 0;
 		h = hook_list->items[hook_cb->hook_to_run_index++].util;
-	} while (h->kind == HOOK_CONFIGURED && h->u.configured.disabled);
+	} while (h->kind == HOOK_CONFIGURED &&
+		 (h->u.configured.disabled || h->u.configured.event_disabled));
 
 	cp->no_stdin = 1;
 	strvec_pushv(&cp->env, hook_cb->options->env.v);

@@ -420,6 +420,7 @@ void repo_clear(struct repository *repo)
 		FREE_AND_NULL(repo->hook_config_cache);
 	}
 	strmap_clear(&repo->event_jobs, 0); /* values are uintptr_t, not heap ptrs */
+	string_list_clear(&repo->disabled_events, 0);
 
 	if (repo->promisor_remote_config) {
 		promisor_remote_clear(repo->promisor_remote_config);

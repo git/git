@@ -1058,4 +1058,87 @@ test_expect_success 'hook.<event>.jobs does not warn for a real event name' '
 	test_grep ! "friendly-name" err
 '
 
+test_expect_success 'hook.<event>.enabled=false skips all hooks for event' '
+	test_config hook.hook-1.event test-hook &&
+	test_config hook.hook-1.command "echo ran" &&
+	test_config hook.test-hook.enabled false &&
+	git hook run --allow-unknown-hook-name test-hook >out 2>err &&
+	test_must_be_empty out
+'
+
+test_expect_success 'hook.<event>.enabled=true does not suppress hooks' '
+	test_config hook.hook-1.event test-hook &&
+	test_config hook.hook-1.command "echo ran" &&
+	test_config hook.test-hook.enabled true &&
+	git hook run --allow-unknown-hook-name test-hook >out 2>err &&
+	test_grep "ran" err
+'
+
+test_expect_success 'hook.<event>.enabled=false does not affect other events' '
+	test_config hook.hook-1.event test-hook &&
+	test_config hook.hook-1.command "echo ran" &&
+	test_config hook.other-event.enabled false &&
+	git hook run --allow-unknown-hook-name test-hook >out 2>err &&
+	test_grep "ran" err
+'
+
+test_expect_success 'hook.<friendly-name>.enabled=false still disables that hook' '
+	test_config hook.hook-1.event test-hook &&
+	test_config hook.hook-1.command "echo hook-1" &&
+	test_config hook.hook-2.event test-hook &&
+	test_config hook.hook-2.command "echo hook-2" &&
+	test_config hook.hook-1.enabled false &&
+	git hook run --allow-unknown-hook-name test-hook >out 2>err &&
+	test_grep ! "hook-1" err &&
+	test_grep "hook-2" err
+'
+
+test_expect_success 'git hook list shows event-disabled hooks as event-disabled' '
+	test_config hook.hook-1.event test-hook &&
+	test_config hook.hook-1.command "echo ran" &&
+	test_config hook.hook-2.event test-hook &&
+	test_config hook.hook-2.command "echo ran" &&
+	test_config hook.test-hook.enabled false &&
+	git hook list --allow-unknown-hook-name test-hook >actual &&
+	test_grep "^event-disabled	hook-1$" actual &&
+	test_grep "^event-disabled	hook-2$" actual
+'
+
+test_expect_success 'git hook list shows scope with event-disabled' '
+	test_config hook.hook-1.event test-hook &&
+	test_config hook.hook-1.command "echo ran" &&
+	test_config hook.test-hook.enabled false &&
+	git hook list --allow-unknown-hook-name --show-scope test-hook >actual &&
+	test_grep "^local	event-disabled	hook-1$" actual
+'
+
+test_expect_success 'git hook list still shows hooks when event is disabled' '
+	test_config hook.hook-1.event test-hook &&
+	test_config hook.hook-1.command "echo ran" &&
+	test_config hook.test-hook.enabled false &&
+	git hook list --allow-unknown-hook-name test-hook >actual &&
+	test_grep "event-disabled" actual
+'
+
+test_expect_success 'friendly-name matching known event name is rejected' '
+	test_config hook.pre-commit.event pre-commit &&
+	test_config hook.pre-commit.command "echo oops" &&
+	test_must_fail git hook run pre-commit 2>err &&
+	test_grep "collides with a known event name" err
+'
+
+test_expect_success 'friendly-name matching known event name is rejected even for different event' '
+	test_config hook.pre-commit.event post-commit &&
+	test_config hook.pre-commit.command "echo oops" &&
+	test_must_fail git hook run post-commit 2>err &&
+	test_grep "collides with a known event name" err
+'
+
+test_expect_success 'friendly-name matching unknown event warns' '
+	test_config hook.test-hook.event test-hook &&
+	test_config hook.test-hook.command "echo ran" &&
+	git hook run --allow-unknown-hook-name test-hook >out 2>err &&
+	test_grep "same as its event" err
+'
+
 test_done

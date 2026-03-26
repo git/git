@@ -15,6 +15,12 @@ hook.<friendly-name>.event::
 	events, specify the key more than once. An empty value resets
 	the list of events, clearing any previously defined events for
 	`hook.<friendly-name>`. See linkgit:git-hook[1].
++
+The `<friendly-name>` must not be the same as a known hook event name
+(e.g. do not use `hook.pre-commit.event`). Using a known event name as
+a friendly-name is a fatal error because it creates an ambiguity with
+`hook.<event>.enabled` and `hook.<event>.jobs`. For unknown event names,
+a warning is issued when `<friendly-name>` matches the event value.
 
 hook.<friendly-name>.enabled::
 	Whether the hook `hook.<friendly-name>` is enabled. Defaults to `true`.
@@ -32,6 +38,20 @@ hook.<friendly-name>.parallel::
 	Only configured (named) hooks need to declare this. Traditional hooks
 	found in the hooks directory do not need to, and run in parallel when
 	the effective job count is greater than 1. See linkgit:git-hook[1].
+
+hook.<event>.enabled::
+	Switch to enable or disable all hooks for the `<event>` hook event.
+	When set to `false`, no hooks fire for that event, regardless of any
+	per-hook `hook.<friendly-name>.enabled` settings. Defaults to `true`.
+	See linkgit:git-hook[1].
++
+Note on naming: `<event>` must be the event name (e.g. `pre-commit`),
+not a hook friendly-name. Since using a known event name as a
+friendly-name is disallowed (see `hook.<friendly-name>.event` above),
+there is no ambiguity between event-level and per-hook `.enabled`
+settings for known events. For unknown events, if a friendly-name
+matches the event name despite the warning, `.enabled` is treated
+as per-hook only.
 
 hook.<event>.jobs::
 	Specifies how many hooks can be run simultaneously for the `<event>`
