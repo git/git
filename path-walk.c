@@ -63,6 +63,8 @@ struct path_walk_context {
 	 */
 	struct prio_queue path_stack;
 	struct strset path_stack_pushed;
+
+	unsigned exact_pathspecs:1;
 };
 
 static int compare_by_type(const void *one, const void *two, void *cb_data)
@@ -207,7 +209,7 @@ static int add_tree_entries(struct path_walk_context *ctx,
 				 match != MATCHED)
 				continue;
 		}
-		if (ctx->revs->prune_data.nr) {
+		if (ctx->revs->prune_data.nr && ctx->exact_pathspecs) {
 			struct pathspec *pd = &ctx->revs->prune_data;
 			bool found = false;
 			int did_strip_suffix = strbuf_strip_suffix(&path, "/");
@@ -301,6 +303,13 @@ static int walk_path(struct path_walk_context *ctx,
 		if (!list->maybe_interesting)
 			return 0;
 	}
+
+	if (list->type == OBJ_BLOB &&
+	    ctx->revs->prune_data.nr &&
+	    !match_pathspec(ctx->repo->index, &ctx->revs->prune_data,
+			   path, strlen(path), 0,
+			   NULL, 0))
+		return 0;
 
 	/* Evaluate function pointer on this data, if requested. */
 	if ((list->type == OBJ_TREE && ctx->info->trees) ||
@@ -510,14 +519,9 @@ int walk_objects_by_path(struct path_walk_info *info)
 		info->revs->tag_objects = 1;
 
 	if (ctx.revs->prune_data.nr) {
-		/*
-		 * Only exact prefix pathspecs are currently supported.
-		 * Clear any wildcard or magic pathspecs to avoid
-		 * incorrect prefix matching.
-		 */
-		if (ctx.revs->prune_data.has_wildcard ||
-		    ctx.revs->prune_data.magic)
-			clear_pathspec(&ctx.revs->prune_data);
+		if (!ctx.revs->prune_data.has_wildcard &&
+		    !ctx.revs->prune_data.magic)
+			ctx.exact_pathspecs = 1;
 	}
 
 	/* Insert a single list for the root tree into the paths. */

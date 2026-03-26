@@ -307,12 +307,11 @@ test_expect_success 'backfill with wildcard pathspec' '
 	git -C backfill-path rev-list --quiet --objects --missing=print HEAD >missing &&
 	test_line_count = 48 missing &&
 
-	# TODO: The wildcard pathspec should limit downloaded blobs,
-	# but currently all blobs are downloaded.
-	git -C backfill-path backfill HEAD -- "d/file.*.txt" &&
+	git -C backfill-path backfill HEAD -- "d/file.*.txt" 2>err &&
+	test_must_be_empty err &&
 
 	git -C backfill-path rev-list --quiet --objects --missing=print HEAD >missing &&
-	test_line_count = 0 missing
+	test_line_count = 40 missing
 '
 
 test_expect_success 'backfill with --all' '
