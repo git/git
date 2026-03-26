@@ -91,6 +91,12 @@ UI, Workflows & Features
  * "git rebase" learns "--trailer" command to drive the
    interpret-trailers machinery.
 
+ * "git fast-import" learned to optionally replace signature on
+   commits whose signatures get invalidated due to replaying by
+   signing afresh.
+
+ * "git history" learned the "split" subcommand.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -211,6 +217,19 @@ Performance, Internal Implementation, Development Support etc.
    of octal notation like "\011".
 
  * Adjust test-lint to allow "sed -E" to use ERE in the patterns.
+
+ * Clar (unit testing framework) update from the upstream.
+
+ * Reduce system overhead "git upload-pack" spends on relaying "git
+   pack-objects" output to the "git fetch" running on the other end of
+   the connection.
+
+ * Add a coccinelle rule to break the build when "struct strbuf" gets
+   passed by value.
+
+ * Further work on incremental repacking using MIDX/bitmap
+
+ * The logic to count objects has been cleaned up.
 
 
 Fixes since v2.53
@@ -358,6 +377,17 @@ Fixes since v2.53
    available since OpenSSL 1.1 since 2016 or so.
    (merge 6392a0b75d bb/imap-send-openssl-4.0-prep later to maint).
 
+ * Fix an example in the user-manual.
+   (merge 5514f14617 gj/user-manual-fix-grep-example later to maint).
+
+ * The final clean-up phase of the diff output could turn the result of
+   histogram diff algorithm suboptimal, which has been corrected.
+   (merge e417277ae9 yc/histogram-hunk-shift-fix later to maint).
+
+ * "git diff -U<num>" was too lenient in its command line parsing and
+   took an empty string as a valid <num>.
+   (merge 4f6a803aba ty/doc-diff-u-wo-number later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge d79fff4a11 jk/remote-tracking-ref-leakfix later to maint).
    (merge 7a747f972d dd/t5403-modernise later to maint).
@@ -401,3 +431,7 @@ Fixes since v2.53
    (merge 35f220b639 ss/submodule--helper-use-xmalloc later to maint).
    (merge 02cbae61df cf/constness-fixes later to maint).
    (merge 69efd53c81 ms/t7605-test-path-is-helpers later to maint).
+   (merge d39cef3a1a ss/t0410-delete-object-cleanup later to maint).
+   (merge 2f05039717 rj/pack-refs-tests-path-is-helpers later to maint).
+   (merge 2594747ad1 jk/transport-color-leakfix later to maint).
+   (merge 48430e44ac mf/t0008-cleanup later to maint).
