@@ -555,18 +555,24 @@ static void run_hooks_opt_clear(struct run_hooks_opt *options)
 	strvec_clear(&options->args);
 }
 
+/*
+ * When running in parallel, stdout must be merged into stderr so
+ * run-command can buffer and de-interleave outputs correctly. This
+ * applies even to hooks like pre-push that normally keep stdout and
+ * stderr separate: the user has opted into parallelism, so the output
+ * stream behavior changes accordingly.
+ */
+static void merge_output_if_parallel(struct run_hooks_opt *options)
+{
+	if (options->jobs > 1)
+		options->stdout_to_stderr = 1;
+}
+
 /* Determine how many jobs to use for hook execution. */
 static unsigned int get_hook_jobs(struct repository *r,
 				  struct run_hooks_opt *options,
 				  struct string_list *hook_list)
 {
-	/*
-	 * Hooks needing separate output streams must run sequentially.
-	 * Next commit will allow parallelizing these as well.
-	 */
-	if (!options->stdout_to_stderr)
-		return 1;
-
 	/*
 	 * An explicit job count overrides everything else: this covers both
 	 * FORCE_SERIAL callers (for hooks that must never run in parallel)
@@ -575,7 +581,7 @@ static unsigned int get_hook_jobs(struct repository *r,
 	 * aggressively than the default.
 	 */
 	if (options->jobs)
-		return options->jobs;
+		goto cleanup;
 
 	/*
 	 * Use hook.jobs from the already-parsed config cache (in-repo), or
@@ -603,6 +609,8 @@ static unsigned int get_hook_jobs(struct repository *r,
 		}
 	}
 
+cleanup:
+	merge_output_if_parallel(options);
 	return options->jobs;
 }
 
