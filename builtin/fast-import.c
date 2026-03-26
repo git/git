@@ -3089,7 +3089,34 @@ static void parse_new_commit(const char *arg)
 	b->last_commit = object_count_by_type[OBJ_COMMIT];
 }
 
-static void handle_tag_signature(struct strbuf *msg, const char *name)
+static void handle_tag_signature_if_invalid(struct strbuf *buf,
+					    struct strbuf *msg,
+					    size_t sig_offset)
+{
+	struct strbuf signature = STRBUF_INIT;
+	struct strbuf payload = STRBUF_INIT;
+	struct signature_check sigc = { 0 };
+
+	strbuf_addbuf(&payload, buf);
+	strbuf_addch(&payload, '\n');
+	strbuf_add(&payload, msg->buf, sig_offset);
+	strbuf_add(&signature, msg->buf + sig_offset, msg->len - sig_offset);
+
+	sigc.payload_type = SIGNATURE_PAYLOAD_TAG;
+	sigc.payload = strbuf_detach(&payload, &sigc.payload_len);
+
+	if (!check_signature(&sigc, signature.buf, signature.len))
+		goto out;
+
+	strbuf_setlen(msg, sig_offset);
+
+out:
+	signature_check_clear(&sigc);
+	strbuf_release(&signature);
+	strbuf_release(&payload);
+}
+
+static void handle_tag_signature(struct strbuf *buf, struct strbuf *msg, const char *name)
 {
 	size_t sig_offset = parse_signed_buffer(msg->buf, msg->len);
 
@@ -3115,6 +3142,9 @@ static void handle_tag_signature(struct strbuf *msg, const char *name)
 		/* Truncate the buffer to remove the signature */
 		strbuf_setlen(msg, sig_offset);
 		break;
+	case SIGN_STRIP_IF_INVALID:
+		handle_tag_signature_if_invalid(buf, msg, sig_offset);
+		break;
 
 	/* Third, aborting modes */
 	case SIGN_ABORT:
@@ -3122,9 +3152,6 @@ static void handle_tag_signature(struct strbuf *msg, const char *name)
 		      "--signed-tags=<mode> to handle it"));
 	case SIGN_ABORT_IF_INVALID:
 		die(_("'abort-if-invalid' is not a valid mode for "
-		      "git fast-import with --signed-tags=<mode>"));
-	case SIGN_STRIP_IF_INVALID:
-		die(_("'strip-if-invalid' is not a valid mode for "
 		      "git fast-import with --signed-tags=<mode>"));
 	case SIGN_SIGN_IF_INVALID:
 		die(_("'sign-if-invalid' is not a valid mode for "
@@ -3198,8 +3225,6 @@ static void parse_new_tag(const char *arg)
 	/* tag payload/message */
 	parse_data(&msg, 0, NULL);
 
-	handle_tag_signature(&msg, t->name);
-
 	/* build the tag object */
 	strbuf_reset(&new_data);
 
@@ -3211,6 +3236,9 @@ static void parse_new_tag(const char *arg)
 	if (tagger)
 		strbuf_addf(&new_data,
 			    "tagger %s\n", tagger);
+
+	handle_tag_signature(&new_data, &msg, t->name);
+
 	strbuf_addch(&new_data, '\n');
 	strbuf_addbuf(&new_data, &msg);
 	free(tagger);

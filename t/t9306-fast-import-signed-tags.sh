@@ -77,4 +77,77 @@ test_expect_success GPGSSH 'import SSH signed tag with --signed-tags=strip' '
 	test_grep ! "SSH SIGNATURE" out
 '
 
+for mode in strip-if-invalid
+do
+	test_expect_success GPG "import tag with no signature with --signed-tags=$mode" '
+		test_when_finished rm -rf import &&
+		git init import &&
+
+		git fast-export --signed-tags=verbatim >output &&
+		git -C import fast-import --quiet --signed-tags=$mode <output >log 2>&1 &&
+		test_must_be_empty log
+	'
+
+	test_expect_success GPG "keep valid OpenPGP signature with --signed-tags=$mode" '
+		test_when_finished rm -rf import &&
+		git init import &&
+
+		git fast-export --signed-tags=verbatim openpgp-signed >output &&
+		git -C import fast-import --quiet --signed-tags=$mode <output >log 2>&1 &&
+		IMPORTED=$(git -C import rev-parse --verify refs/tags/openpgp-signed) &&
+		test $OPENPGP_SIGNED = $IMPORTED &&
+		git -C import cat-file tag "$IMPORTED" >actual &&
+		test_grep -E "^-----BEGIN PGP SIGNATURE-----" actual &&
+		test_must_be_empty log
+	'
+
+	test_expect_success GPG "handle signature invalidated by message change with --signed-tags=$mode" '
+		test_when_finished rm -rf import &&
+		git init import &&
+
+		git fast-export --signed-tags=verbatim openpgp-signed >output &&
+
+		# Change the tag message, which invalidates the signature. The tag
+		# message length should not change though, otherwise the corresponding
+		# `data <length>` command would have to be changed too.
+		sed "s/OpenPGP signed tag/OpenPGP forged tag/" output >modified &&
+
+		git -C import fast-import --quiet --signed-tags=$mode <modified >log 2>&1 &&
+
+		IMPORTED=$(git -C import rev-parse --verify refs/tags/openpgp-signed) &&
+		test $OPENPGP_SIGNED != $IMPORTED &&
+		git -C import cat-file tag "$IMPORTED" >actual &&
+		test_grep ! -E "^-----BEGIN PGP SIGNATURE-----" actual &&
+		test_must_be_empty log
+	'
+
+	test_expect_success GPGSM "keep valid X.509 signature with --signed-tags=$mode" '
+		test_when_finished rm -rf import &&
+		git init import &&
+
+		git fast-export --signed-tags=verbatim x509-signed >output &&
+		git -C import fast-import --quiet --signed-tags=$mode <output >log 2>&1 &&
+		IMPORTED=$(git -C import rev-parse --verify refs/tags/x509-signed) &&
+		test $X509_SIGNED = $IMPORTED &&
+		git -C import cat-file tag x509-signed >actual &&
+		test_grep -E "^-----BEGIN SIGNED MESSAGE-----" actual &&
+		test_must_be_empty log
+	'
+
+	test_expect_success GPGSSH "keep valid SSH signature with --signed-tags=$mode" '
+		test_when_finished rm -rf import &&
+		git init import &&
+
+		test_config -C import gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
+
+		git fast-export --signed-tags=verbatim ssh-signed >output &&
+		git -C import fast-import --quiet --signed-tags=$mode <output >log 2>&1 &&
+		IMPORTED=$(git -C import rev-parse --verify refs/tags/ssh-signed) &&
+		test $SSH_SIGNED = $IMPORTED &&
+		git -C import cat-file tag ssh-signed >actual &&
+		test_grep -E "^-----BEGIN SSH SIGNATURE-----" actual &&
+		test_must_be_empty log
+	'
+done
+
 test_done
