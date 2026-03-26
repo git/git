@@ -1028,4 +1028,34 @@ test_expect_success 'hook.<event>.jobs still requires hook.<name>.parallel=true'
 	test_cmp expect hook.order
 '
 
+test_expect_success 'hook.<friendly-name>.jobs warns when name has .command' '
+	test_config hook.my-hook.command "true" &&
+	test_config hook.my-hook.jobs 2 &&
+	git hook run --allow-unknown-hook-name --ignore-missing test-hook >out 2>err &&
+	test_grep "hook.my-hook.jobs.*friendly-name" err
+'
+
+test_expect_success 'hook.<friendly-name>.jobs warns when name has .event' '
+	test_config hook.my-hook.event test-hook &&
+	test_config hook.my-hook.command "true" &&
+	test_config hook.my-hook.jobs 2 &&
+	git hook run --allow-unknown-hook-name --ignore-missing test-hook >out 2>err &&
+	test_grep "hook.my-hook.jobs.*friendly-name" err
+'
+
+test_expect_success 'hook.<friendly-name>.jobs warns when name has .parallel' '
+	test_config hook.my-hook.event test-hook &&
+	test_config hook.my-hook.command "true" &&
+	test_config hook.my-hook.parallel true &&
+	test_config hook.my-hook.jobs 2 &&
+	git hook run --allow-unknown-hook-name --ignore-missing test-hook >out 2>err &&
+	test_grep "hook.my-hook.jobs.*friendly-name" err
+'
+
+test_expect_success 'hook.<event>.jobs does not warn for a real event name' '
+	test_config hook.test-hook.jobs 2 &&
+	git hook run --allow-unknown-hook-name --ignore-missing test-hook >out 2>err &&
+	test_grep ! "friendly-name" err
+'
+
 test_done
