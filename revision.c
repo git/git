@@ -2147,7 +2147,10 @@ static int handle_dotdot(const char *arg,
 static int handle_revision_arg_1(const char *arg_, struct rev_info *revs, int flags, unsigned revarg_opt)
 {
 	struct object_context oc = {0};
-	char *mark;
+	const char *mark;
+	char *arg_minus_at = NULL;
+	char *arg_minus_excl = NULL;
+	char *arg_minus_dash = NULL;
 	struct object *object;
 	struct object_id oid;
 	int local_flags;
@@ -2174,18 +2177,17 @@ static int handle_revision_arg_1(const char *arg_, struct rev_info *revs, int fl
 
 	mark = strstr(arg, "^@");
 	if (mark && !mark[2]) {
-		*mark = 0;
-		if (add_parents_only(revs, arg, flags, 0)) {
+		arg_minus_at = xmemdupz(arg, mark - arg);
+		if (add_parents_only(revs, arg_minus_at, flags, 0)) {
 			ret = 0;
 			goto out;
 		}
-		*mark = '^';
 	}
 	mark = strstr(arg, "^!");
 	if (mark && !mark[2]) {
-		*mark = 0;
-		if (!add_parents_only(revs, arg, flags ^ (UNINTERESTING | BOTTOM), 0))
-			*mark = '^';
+		arg_minus_excl = xmemdupz(arg, mark - arg);
+		if (add_parents_only(revs, arg_minus_excl, flags ^ (UNINTERESTING | BOTTOM), 0))
+			arg = arg_minus_excl;
 	}
 	mark = strstr(arg, "^-");
 	if (mark) {
@@ -2199,9 +2201,9 @@ static int handle_revision_arg_1(const char *arg_, struct rev_info *revs, int fl
 			}
 		}
 
-		*mark = 0;
-		if (!add_parents_only(revs, arg, flags ^ (UNINTERESTING | BOTTOM), exclude_parent))
-			*mark = '^';
+		arg_minus_dash = xmemdupz(arg, mark - arg);
+		if (add_parents_only(revs, arg_minus_dash, flags ^ (UNINTERESTING | BOTTOM), exclude_parent))
+			arg = arg_minus_dash;
 	}
 
 	local_flags = 0;
@@ -2236,6 +2238,9 @@ static int handle_revision_arg_1(const char *arg_, struct rev_info *revs, int fl
 
 out:
 	object_context_release(&oc);
+	free(arg_minus_at);
+	free(arg_minus_excl);
+	free(arg_minus_dash);
 	return ret;
 }
 
