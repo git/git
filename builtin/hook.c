@@ -4,7 +4,6 @@
 #include "environment.h"
 #include "gettext.h"
 #include "hook.h"
-#include "hook-list.h"
 #include "parse-options.h"
 
 #define BUILTIN_HOOK_RUN_USAGE \
@@ -12,15 +11,6 @@
 	   "<hook-name> [-- <hook-args>]")
 #define BUILTIN_HOOK_LIST_USAGE \
 	N_("git hook list [--allow-unknown-hook-name] [-z] [--show-scope] <hook-name>")
-
-static int is_known_hook(const char *name)
-{
-	const char **p;
-	for (p = hook_name_list; *p; p++)
-		if (!strcmp(*p, name))
-			return 1;
-	return 0;
-}
 
 static const char * const builtin_hook_usage[] = {
 	BUILTIN_HOOK_RUN_USAGE,
