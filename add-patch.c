@@ -1813,7 +1813,9 @@ soft_increment:
 			} else if (!split_hunk(s, file_diff,
 					     hunk - file_diff->hunk)) {
 				color_fprintf_ln(stdout, s->s.header_color,
-						 _("Split into %d hunks."),
+						 Q_("Split into %d hunk.",
+						    "Split into %d hunks.",
+						    (int)splittable_into),
 						 (int)splittable_into);
 				rendered_hunk_index = -1;
 			}
