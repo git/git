@@ -267,21 +267,20 @@ static int show_file(const char *arg, int output_prefix)
 
 static int try_difference(const char *arg)
 {
-	char *dotdot;
+	const char *dotdot;
 	struct object_id start_oid;
 	struct object_id end_oid;
 	const char *end;
 	const char *start;
+	char *to_free;
 	int symmetric;
 	static const char head_by_default[] = "HEAD";
 
 	if (!(dotdot = strstr(arg, "..")))
 		return 0;
+	start = to_free = xmemdupz(arg, dotdot - arg);
 	end = dotdot + 2;
-	start = arg;
 	symmetric = (*end == '.');
-
-	*dotdot = 0;
 	end += symmetric;
 
 	if (!*end)
@@ -295,7 +294,7 @@ static int try_difference(const char *arg)
 		 * Just ".."?  That is not a range but the
 		 * pathspec for the parent directory.
 		 */
-		*dotdot = '.';
+		free(to_free);
 		return 0;
 	}
 
@@ -308,7 +307,7 @@ static int try_difference(const char *arg)
 			a = lookup_commit_reference(the_repository, &start_oid);
 			b = lookup_commit_reference(the_repository, &end_oid);
 			if (!a || !b) {
-				*dotdot = '.';
+				free(to_free);
 				return 0;
 			}
 			if (repo_get_merge_bases(the_repository, a, b, &exclude) < 0)
@@ -318,10 +317,10 @@ static int try_difference(const char *arg)
 				show_rev(REVERSED, &commit->object.oid, NULL);
 			}
 		}
-		*dotdot = '.';
+		free(to_free);
 		return 1;
 	}
-	*dotdot = '.';
+	free(to_free);
 	return 0;
 }
 
