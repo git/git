@@ -57,19 +57,19 @@ static int clear_marks(const struct reference *ref, void *cb_data UNUSED)
 static void mark_common(struct negotiation_state *ns, struct commit *commit,
 		int ancestors_only, int dont_parse)
 {
-	struct prio_queue queue = { NULL };
+	struct commit_stack stack = COMMIT_STACK_INIT;
 
 	if (!commit || (commit->object.flags & COMMON))
 		return;
 
-	prio_queue_put(&queue, commit);
+	commit_stack_push(&stack, commit);
 	if (!ancestors_only) {
 		commit->object.flags |= COMMON;
 
 		if ((commit->object.flags & SEEN) && !(commit->object.flags & POPPED))
 			ns->non_common_revs--;
 	}
-	while ((commit = prio_queue_get(&queue))) {
+	while ((commit = commit_stack_pop(&stack))) {
 		struct object *o = (struct object *)commit;
 
 		if (!(o->flags & SEEN))
@@ -94,12 +94,12 @@ static void mark_common(struct negotiation_state *ns, struct commit *commit,
 				if ((p->object.flags & SEEN) && !(p->object.flags & POPPED))
 					ns->non_common_revs--;
 
-				prio_queue_put(&queue, parents->item);
+				commit_stack_push(&stack, parents->item);
 			}
 		}
 	}
 
-	clear_prio_queue(&queue);
+	commit_stack_clear(&stack);
 }
 
 /*
