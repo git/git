@@ -35,6 +35,7 @@ struct backfill_context {
 	struct oid_array current_batch;
 	size_t min_batch_size;
 	int sparse;
+	struct rev_info revs;
 };
 
 static void backfill_context_clear(struct backfill_context *ctx)
@@ -79,7 +80,6 @@ static int fill_missing_blobs(const char *path UNUSED,
 
 static int do_backfill(struct backfill_context *ctx)
 {
-	struct rev_info revs;
 	struct path_walk_info info = PATH_WALK_INFO_INIT;
 	int ret;
 
@@ -91,13 +91,14 @@ static int do_backfill(struct backfill_context *ctx)
 		}
 	}
 
-	repo_init_revisions(ctx->repo, &revs, "");
-	handle_revision_arg("HEAD", &revs, 0, 0);
+	/* Walk from HEAD if otherwise unspecified. */
+	if (!ctx->revs.pending.nr)
+		add_head_to_pending(&ctx->revs);
 
 	info.blobs = 1;
 	info.tags = info.commits = info.trees = 0;
 
-	info.revs = &revs;
+	info.revs = &ctx->revs;
 	info.path_fn = fill_missing_blobs;
 	info.path_fn_data = ctx;
 
@@ -108,7 +109,6 @@ static int do_backfill(struct backfill_context *ctx)
 		download_batch(ctx);
 
 	path_walk_info_clear(&info);
-	release_revisions(&revs);
 	return ret;
 }
 
@@ -120,6 +120,7 @@ int cmd_backfill(int argc, const char **argv, const char *prefix, struct reposit
 		.current_batch = OID_ARRAY_INIT,
 		.min_batch_size = 50000,
 		.sparse = 0,
+		.revs = REV_INFO_INIT,
 	};
 	struct option options[] = {
 		OPT_UNSIGNED(0, "min-batch-size", &ctx.min_batch_size,
@@ -134,7 +135,15 @@ int cmd_backfill(int argc, const char **argv, const char *prefix, struct reposit
 					 builtin_backfill_usage, options);
 
 	argc = parse_options(argc, argv, prefix, options, builtin_backfill_usage,
-			     0);
+			     PARSE_OPT_KEEP_UNKNOWN_OPT |
+			     PARSE_OPT_KEEP_ARGV0 |
+			     PARSE_OPT_KEEP_DASHDASH);
+
+	repo_init_revisions(repo, &ctx.revs, prefix);
+	argc = setup_revisions(argc, argv, &ctx.revs, NULL);
+
+	if (argc > 1)
+		die(_("unrecognized argument: %s"), argv[1]);
 
 	repo_config(repo, git_default_config, NULL);
 
@@ -143,5 +152,6 @@ int cmd_backfill(int argc, const char **argv, const char *prefix, struct reposit
 
 	result = do_backfill(&ctx);
 	backfill_context_clear(&ctx);
+	release_revisions(&ctx.revs);
 	return result;
 }
