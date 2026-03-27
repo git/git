@@ -97,6 +97,9 @@ UI, Workflows & Features
 
  * "git history" learned the "split" subcommand.
 
+ * The reference-transaction hook was taught to be triggered before
+   taking locks on references in the "preparing" phase.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -230,6 +233,11 @@ Performance, Internal Implementation, Development Support etc.
  * Further work on incremental repacking using MIDX/bitmap
 
  * The logic to count objects has been cleaned up.
+
+ * Tweak the build infrastructure by moving tools around.
+
+ * Uses of prio_queue as a LIFO stack of commits have been written
+   with commit_stack.
 
 
 Fixes since v2.53
@@ -388,6 +396,16 @@ Fixes since v2.53
    took an empty string as a valid <num>.
    (merge 4f6a803aba ty/doc-diff-u-wo-number later to maint).
 
+ * The handling of the incomplete lines at the end by "git
+   diff-highlight" has been fixed.
+
+ * merge-file --object-id used to trigger a BUG when run in a linked
+   worktree, which has been fixed.
+   (merge 57246b7c62 mr/merge-file-object-id-worktree-fix later to maint).
+
+ * "git apply -p<n>" parses <n> more carefully now.
+   (merge d05d84c5f5 mf/apply-p-no-atoi later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge d79fff4a11 jk/remote-tracking-ref-leakfix later to maint).
    (merge 7a747f972d dd/t5403-modernise later to maint).
@@ -435,3 +453,6 @@ Fixes since v2.53
    (merge 2f05039717 rj/pack-refs-tests-path-is-helpers later to maint).
    (merge 2594747ad1 jk/transport-color-leakfix later to maint).
    (merge 48430e44ac mf/t0008-cleanup later to maint).
+   (merge fc8a4f15e7 gi/doc-boolean-config-typofix later to maint).
+   (merge 37182267a0 kh/doc-interpret-trailers-1 later to maint).
+   (merge f64c50e768 jc/rerere-modern-strbuf-handling later to maint).
