@@ -7,14 +7,14 @@ git-interpret-trailers - Add or parse structured information in commit messages
 
 SYNOPSIS
 --------
-[verse]
-'git interpret-trailers' [--in-place] [--trim-empty]
+[synopsis]
+git interpret-trailers [--in-place] [--trim-empty]
 			[(--trailer (<key>|<key-alias>)[(=|:)<value>])...]
 			[--parse] [<file>...]
 
 DESCRIPTION
 -----------
-Add or parse 'trailer' lines that look similar to RFC 822 e-mail
+Add or parse _trailer_ lines that look similar to RFC 822 e-mail
 headers, at the end of the otherwise free-form part of a commit
 message. For example, in the following commit message
 
@@ -27,23 +27,24 @@ Signed-off-by: Alice <alice@example.com>
 Signed-off-by: Bob <bob@example.com>
 ------------------------------------------------
 
-the last two lines starting with "Signed-off-by" are trailers.
+the last two lines starting with `Signed-off-by` are trailers.
 
 This command reads commit messages from either the
-<file> arguments or the standard input if no <file> is specified.
+_<file>_ arguments or the standard input if no _<file>_ is specified.
 If `--parse` is specified, the output consists of the parsed trailers
 coming from the input, without influencing them with any command line
 options or configuration variables.
 
-Otherwise, this command applies `trailer.*` configuration variables
-(which could potentially add new trailers, as well as reposition them),
-as well as any command line arguments that can override configuration
-variables (such as `--trailer=...` which could also add new trailers),
-to each input file. The result is emitted on the standard output.
+Otherwise, this command applies `trailer.<key-alias>` configuration
+variables (which could potentially add new trailers, as well as
+reposition them), as well as any command line arguments that can
+override configuration variables (such as `--trailer=...` which could
+also add new trailers), to each input file. The result is emitted on the
+standard output.
 
 This command can also operate on the output of linkgit:git-format-patch[1],
 which is more elaborate than a plain commit message. Namely, such output
-includes a commit message (as above), a "---" divider line, and a patch part.
+includes a commit message (as above), a `---` divider line, and a patch part.
 For these inputs, the divider and patch parts are not modified by
 this command and are emitted as is on the output, unless
 `--no-divider` is specified.
@@ -53,24 +54,24 @@ are applied to each input and the way any existing trailer in
 the input is changed. They also make it possible to
 automatically add some trailers.
 
-By default, a '<key>=<value>' or '<key>:<value>' argument given
+By default, a `<key>=<value>` or `<key>:<value>` argument given
 using `--trailer` will be appended after the existing trailers only if
-the last trailer has a different (<key>, <value>) pair (or if there
-is no existing trailer). The <key> and <value> parts will be trimmed
+the last trailer has a different (_<key>_, _<value>_) pair (or if there
+is no existing trailer). The _<key>_ and _<value>_ parts will be trimmed
 to remove starting and trailing whitespace, and the resulting trimmed
-<key> and <value> will appear in the output like this:
+_<key>_ and _<value>_ will appear in the output like this:
 
 ------------------------------------------------
 key: value
 ------------------------------------------------
 
-This means that the trimmed <key> and <value> will be separated by
-`': '` (one colon followed by one space).
+This means that the trimmed _<key>_ and _<value>_ will be separated by
+"`:`{nbsp}" (one colon followed by one space).
 
-For convenience, a <key-alias> can be configured to make using `--trailer`
+For convenience, a _<key-alias>_ can be configured to make using `--trailer`
 shorter to type on the command line. This can be configured using the
-'trailer.<key-alias>.key' configuration variable. The <keyAlias> must be a prefix
-of the full <key> string, although case sensitivity does not matter. For
+`trailer.<key-alias>.key` configuration variable. The _<key-alias>_ must be a prefix
+of the full _<key>_ string, although case sensitivity does not matter. For
 example, if you have
 
 ------------------------------------------------
@@ -91,13 +92,13 @@ least one Git-generated or user-configured trailer and consists of at
 least 25% trailers.
 The group must be preceded by one or more empty (or whitespace-only) lines.
 The group must either be at the end of the input or be the last
-non-whitespace lines before a line that starts with '---' (followed by a
+non-whitespace lines before a line that starts with `---` (followed by a
 space or the end of the line).
 
 When reading trailers, there can be no whitespace before or inside the
-<key>, but any number of regular space and tab characters are allowed
-between the <key> and the separator. There can be whitespaces before,
-inside or after the <value>. The <value> may be split over multiple lines
+_<key>_, but any number of regular space and tab characters are allowed
+between the _<key>_ and the separator. There can be whitespaces before,
+inside or after the _<value>_. The _<value>_ may be split over multiple lines
 with each subsequent line starting with at least one whitespace, like
 the "folding" in RFC 822. Example:
 
@@ -111,77 +112,97 @@ rules for RFC 822 headers. For example they do not follow the encoding rule.
 
 OPTIONS
 -------
---in-place::
-	Edit the files in place.
+`--in-place`::
+`--no-in-place`::
+	Edit the files in place. The default is `--no-in-place`.
 
---trim-empty::
-	If the <value> part of any trailer contains only whitespace,
+`--trim-empty`::
+`--no-trim-empty`::
+	If the _<value>_ part of any trailer contains only whitespace,
 	the whole trailer will be removed from the output.
 	This applies to existing trailers as well as new trailers.
++
+The default is `--no-trim-empty`.
 
---trailer <key>[(=|:)<value>]::
-	Specify a (<key>, <value>) pair that should be applied as a
-	trailer to the inputs. See the description of this
-	command.
+`--trailer=<key>[(=|:)<value>]`::
+`--no-trailer`::
+	Specify a (_<key>_, _<value>_) pair that should be applied as a
+	trailer to the inputs. See the description of this command. Can
+	be given multiple times.
++
+Use `--no-trailer` to reset the list.
 
---where <placement>::
---no-where::
+`--where=<placement>`::
+`--no-where`::
 	Specify where all new trailers will be added.  A setting
-	provided with '--where' overrides the `trailer.where` and any
-	applicable `trailer.<keyAlias>.where` configuration variables
-	and applies to all '--trailer' options until the next occurrence of
-	'--where' or '--no-where'. Upon encountering '--no-where', clear the
-	effect of any previous use of '--where', such that the relevant configuration
-	variables are no longer overridden. Possible placements are `after`,
+	provided with `--where` overrides the `trailer.where` and any
+	applicable `trailer.<key-alias>.where` configuration variables
+	and applies to all `--trailer` options until the next occurrence of
+	`--where` or `--no-where`. Possible placements are `after`,
 	`before`, `end` or `start`.
++
+Use `--no-where` to clear the effect of any previous use of `--where`,
+such that the relevant configuration variables are no longer overridden.
 
---if-exists <action>::
---no-if-exists::
+`--if-exists=<action>`::
+`--no-if-exists`::
 	Specify what action will be performed when there is already at
-	least one trailer with the same <key> in the input.  A setting
-	provided with '--if-exists' overrides the `trailer.ifExists` and any
-	applicable `trailer.<keyAlias>.ifExists` configuration variables
-	and applies to all '--trailer' options until the next occurrence of
-	'--if-exists' or '--no-if-exists'. Upon encountering '--no-if-exists', clear the
-	effect of any previous use of '--if-exists', such that the relevant configuration
-	variables are no longer overridden. Possible actions are `addIfDifferent`,
+	least one trailer with the same _<key>_ in the input.  A setting
+	provided with `--if-exists` overrides the `trailer.ifExists` and any
+	applicable `trailer.<key-alias>.ifExists` configuration variables
+	and applies to all `--trailer` options until the next occurrence of
+	`--if-exists` or `--no-if-exists`. Possible actions are `addIfDifferent`,
 	`addIfDifferentNeighbor`, `add`, `replace` and `doNothing`.
++
+Use `--no-if-exists` to clear the effect of any previous use of
+`--if-exists`, such that the relevant configuration variables are no
+longer overridden.
 
---if-missing <action>::
---no-if-missing::
+`--if-missing=<action>`::
+`--no-if-missing`::
 	Specify what action will be performed when there is no other
-	trailer with the same <key> in the input.  A setting
-	provided with '--if-missing' overrides the `trailer.ifMissing` and any
-	applicable `trailer.<keyAlias>.ifMissing` configuration variables
-	and applies to all '--trailer' options until the next occurrence of
-	'--if-missing' or '--no-if-missing'. Upon encountering '--no-if-missing',
-	clear the effect of any previous use of '--if-missing', such that the relevant
-	configuration variables are no longer overridden. Possible actions are `doNothing`
-	or `add`.
+	trailer with the same _<key>_ in the input.  A setting
+	provided with `--if-missing` overrides the `trailer.ifMissing` and any
+	applicable `trailer.<key-alias>.ifMissing` configuration variables
+	and applies to all `--trailer` options until the next occurrence of
+	`--if-missing` or `--no-if-missing`. Possible actions are
+	`doNothing` or `add`.
++
+Use `--no-if-missing` to clear the effect of any previous use of
+`--if-missing`, such that the relevant configuration variables are no
+longer overridden.
 
---only-trailers::
-	Output only the trailers, not any other parts of the input.
+`--only-trailers`::
+`--no-only-trailers`::
+	Output only the trailers, not any other parts of the
+	input. The default is `--no-only-trailers`.
 
---only-input::
+`--only-input`::
+`--no-only-input`::
 	Output only trailers that exist in the input; do not add any
-	from the command-line or by applying `trailer.*` configuration
-	variables.
+	from the command-line or by applying `trailer.<key-alias>` configuration
+	variables. The default is `--no-only-input`.
 
---unfold::
+`--unfold`::
+`--no-unfold`::
 	If a trailer has a value that runs over multiple lines (aka "folded"),
-	reformat the value into a single line.
+	reformat the value into a single line. The default is `--no-unfold`.
 
---parse::
+`--parse`::
 	A convenience alias for `--only-trailers --only-input
 	--unfold`. This makes it easier to only see the trailers coming from the
 	input without influencing them with any command line options or
 	configuration variables, while also making the output machine-friendly with
-	--unfold.
+	`--unfold`.
++
+There is no convenience alias to negate this alias.
 
---no-divider::
-	Do not treat `---` as the end of the commit message. Use this
-	when you know your input contains just the commit message itself
-	(and not an email or the output of `git format-patch`).
+`--divider`::
+`--no-divider`::
+	Treat `---` as the end of the commit message. This is the default.
+	Use `--no-divider` when you know your input contains just the
+	commit message itself (and not an email or the output of
+	linkgit:git-format-patch[1]).
 
 CONFIGURATION VARIABLES
 -----------------------
@@ -193,7 +214,7 @@ include::config/trailer.adoc[]
 EXAMPLES
 --------
 
-* Configure a 'sign' trailer with a 'Signed-off-by' key, and then
+* Configure a `sign` trailer with a `Signed-off-by` key, and then
   add two of these trailers to a commit message file:
 +
 ------------
@@ -230,8 +251,8 @@ Signed-off-by: Bob <bob@example.com>
 Acked-by: Alice <alice@example.com>
 ------------
 
-* Extract the last commit as a patch, and add a 'Cc' and a
-  'Reviewed-by' trailer to it:
+* Extract the last commit as a patch, and add a `Cc` and a
+  `Reviewed-by` trailer to it:
 +
 ------------
 $ git format-patch -1
@@ -239,9 +260,9 @@ $ git format-patch -1
 $ git interpret-trailers --trailer 'Cc: Alice <alice@example.com>' --trailer 'Reviewed-by: Bob <bob@example.com>' 0001-foo.patch >0001-bar.patch
 ------------
 
-* Configure a 'sign' trailer with a command to automatically add a
-  'Signed-off-by: ' with the author information only if there is no
-  'Signed-off-by: ' already, and show how it works:
+* Configure a `sign` trailer with a command to automatically add a
+  "`Signed-off-by:`{nbsp}" with the author information only if there is no
+  "`Signed-off-by:`{nbsp}" already, and show how it works:
 +
 ------------
 $ cat msg1.txt
@@ -272,7 +293,7 @@ body text
 Signed-off-by: Alice <alice@example.com>
 ------------
 
-* Configure a 'fix' trailer with a key that contains a '#' and no
+* Configure a `fix` trailer with a key that contains a `#` and no
   space after this character, and show how it works:
 +
 ------------
@@ -284,7 +305,7 @@ subject
 Fix #42
 ------------
 
-* Configure a 'help' trailer with a cmd use a script `glog-find-author`
+* Configure a `help` trailer with a cmd use a script `glog-find-author`
   which search specified author identity from git log in git repository
   and show how it works:
 +
@@ -308,7 +329,7 @@ Helped-by: Junio C Hamano <gitster@pobox.com>
 Helped-by: Christian Couder <christian.couder@gmail.com>
 ------------
 
-* Configure a 'ref' trailer with a cmd use a script `glog-grep`
+* Configure a `ref` trailer with a cmd use a script `glog-grep`
   to grep last relevant commit from git log in the git repository
   and show how it works:
 +
@@ -331,7 +352,7 @@ body text
 Reference-to: 8bc9a0c769 (Add copyright notices., 2005-04-07)
 ------------
 
-* Configure a 'see' trailer with a command to show the subject of a
+* Configure a `see` trailer with a command to show the subject of a
   commit that is related, and show how it works:
 +
 ------------
@@ -359,8 +380,8 @@ See-also: fe3187489d69c4 (subject of related commit)
 * Configure a commit template with some trailers with empty values
   (using sed to show and keep the trailing spaces at the end of the
   trailers), then configure a commit-msg hook that uses
-  'git interpret-trailers' to remove trailers with empty values and
-  to add a 'git-version' trailer:
+  git-interpret-trailers(1) to remove trailers with empty values and to
+  add a `git-version` trailer:
 +
 ------------
 $ cat temp.txt
