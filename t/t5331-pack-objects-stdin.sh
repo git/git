@@ -415,4 +415,109 @@ test_expect_success '--stdin-packs=follow tolerates missing commits' '
 	stdin_packs__follow_with_only HEAD HEAD^{tree}
 '
 
+test_expect_success '--stdin-packs=follow with open-excluded packs' '
+	test_when_finished "rm -fr repo" &&
+
+	git init repo &&
+	(
+		cd repo &&
+		git config set maintenance.auto false &&
+
+		git branch -M main &&
+
+		# Create the following commit structure:
+		#
+		#   A <-- B <-- D     (main)
+		#         ^
+		#          \
+		#           C        (other)
+		test_commit A &&
+		test_commit B &&
+		git checkout -B other &&
+		test_commit C &&
+		git checkout main &&
+		test_commit D &&
+
+		A="$(echo A | git pack-objects --revs $packdir/pack)" &&
+		B="$(echo A..B | git pack-objects --revs $packdir/pack)" &&
+		C="$(echo B..C | git pack-objects --revs $packdir/pack)" &&
+		D="$(echo B..D | git pack-objects --revs $packdir/pack)" &&
+
+		C_ONLY="$(git rev-parse other | git pack-objects $packdir/pack)" &&
+
+		git prune-packed &&
+
+		# Create a pack using --stdin-packs=follow where:
+		#
+		#  - pack D is included,
+		#  - pack C_ONLY is excluded, but open,
+		#  - pack B is excluded, but closed, and
+		#  - packs A and C are unknown
+		#
+		# The resulting pack should therefore contain:
+		#
+		#  - objects from the included pack D,
+		#  - A.t (rescued via D^{tree}), and
+		#  - C^{tree} and C.t (rescued via pack C_ONLY)
+		#
+		# , but should omit:
+		#
+		#  - C (excluded via C_ONLY),
+		#  - objects from pack B (trivially excluded-closed)
+		#  - A and A^{tree} (ancestors of B)
+		P=$(git pack-objects --stdin-packs=follow $packdir/pack <<-EOF
+		pack-$D.pack
+		!pack-$C_ONLY.pack
+		^pack-$B.pack
+		EOF
+		) &&
+
+		{
+			objects_in_packs $D &&
+			git rev-parse A:A.t "C^{tree}" C:C.t
+		} >expect.raw &&
+		sort expect.raw >expect &&
+
+		objects_in_packs $P >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success '--stdin-packs with !-delimited pack without follow' '
+	test_when_finished "rm -fr repo" &&
+
+	git init repo &&
+	(
+		test_commit A &&
+		test_commit B &&
+		test_commit C &&
+
+		A="$(echo A | git pack-objects --revs $packdir/pack)" &&
+		B="$(echo A..B | git pack-objects --revs $packdir/pack)" &&
+		C="$(echo B..C | git pack-objects --revs $packdir/pack)" &&
+
+		cat >in <<-EOF &&
+		!pack-$A.pack
+		pack-$B.pack
+		pack-$C.pack
+		EOF
+
+		# Without --stdin-packs=follow, we treat the first
+		# line of input as a literal packfile name, and thus
+		# expect pack-objects to complain of a missing pack
+		test_must_fail git pack-objects --stdin-packs --stdout \
+			>/dev/null <in 2>err &&
+		test_grep "could not find pack .!pack-$A.pack." err &&
+
+		# With --stdin-packs=follow, we treat the second line
+		# of input as indicating pack-$A.pack is an excluded
+		# open pack, and thus expect pack-objects to succeed
+		P=$(git pack-objects --stdin-packs=follow $packdir/pack <in) &&
+
+		objects_in_packs $B $C >expect &&
+		objects_in_packs $P >actual &&
+		test_cmp expect actual
+	)
+'
+
 test_done
