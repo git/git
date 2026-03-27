@@ -1365,7 +1365,6 @@ static void generate_commit_list_cover(FILE *cover_file, const char *format,
 				       struct commit **list, int n)
 {
 	struct strbuf commit_line = STRBUF_INIT;
-	struct strbuf wrapped_line = STRBUF_INIT;
 	struct pretty_print_context ctx = {0};
 	struct rev_info rev = REV_INFO_INIT;
 
@@ -1375,16 +1374,12 @@ static void generate_commit_list_cover(FILE *cover_file, const char *format,
 		rev.nr = i;
 		repo_format_commit_message(the_repository, list[n - i], format,
 				&commit_line, &ctx);
-		strbuf_add_wrapped_text(&wrapped_line, commit_line.buf, 0, 0,
-					MAIL_DEFAULT_WRAP);
-		fprintf(cover_file, "%s\n", wrapped_line.buf);
+		fprintf(cover_file, "%s\n", commit_line.buf);
 		strbuf_reset(&commit_line);
-		strbuf_reset(&wrapped_line);
 	}
 	fprintf(cover_file, "\n");
 
 	strbuf_release(&commit_line);
-	strbuf_release(&wrapped_line);
 }
 
 static void make_cover_letter(struct rev_info *rev, int use_separate_file,
@@ -1446,7 +1441,7 @@ static void make_cover_letter(struct rev_info *rev, int use_separate_file,
 	else if (!strcmp(format, "shortlog"))
 		generate_shortlog_cover_letter(&log, rev, list, nr);
 	else if (!strcmp(format, "modern"))
-		generate_commit_list_cover(rev->diffopt.file, "[%(count)/%(total)] %s",
+		generate_commit_list_cover(rev->diffopt.file, "%w(72)[%(count)/%(total)] %s",
 					   list, nr);
 	else if (strchr(format, '%'))
 		generate_commit_list_cover(rev->diffopt.file, format, list, nr);
