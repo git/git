@@ -869,7 +869,7 @@ test_expect_success 'repack --write-midx includes cruft when already geometric' 
 	)
 '
 
-test_expect_failure 'repack rescues once-cruft objects above geometric split' '
+test_expect_success 'repack rescues once-cruft objects above geometric split' '
 	git config repack.midxMustContainCruft false &&
 
 	test_commit reachable &&
