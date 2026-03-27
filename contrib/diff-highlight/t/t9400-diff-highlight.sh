@@ -340,4 +340,15 @@ test_expect_success 'diff-highlight handles --graph with leading dash' '
 	test_cmp expect actual
 '
 
+test_expect_success 'highlight diff that removes final newline' '
+	printf "content\n" >a &&
+	printf "content" >b &&
+	dh_test a b <<-\EOF
+	@@ -1 +1 @@
+	-content
+	+content
+	\ No newline at end of file
+	EOF
+'
+
 test_done
