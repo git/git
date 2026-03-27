@@ -3968,6 +3968,8 @@ static void read_stdin_packs(enum stdin_packs_mode mode, int rev_list_unpacked)
 			     show_object_pack_hint,
 			     &mode);
 
+	release_revisions(&revs);
+
 	trace2_data_intmax("pack-objects", the_repository, "stdin_packs_found",
 			   stdin_packs_found_nr);
 	trace2_data_intmax("pack-objects", the_repository, "stdin_packs_hints",
