@@ -1,5 +1,5 @@
 ifndef COMPILER_FEATURES
-COMPILER_FEATURES := $(shell ./detect-compiler $(CC))
+COMPILER_FEATURES := $(shell ./tools/detect-compiler $(CC))
 endif
 
 ifeq ($(filter no-error,$(DEVOPTS)),)
