@@ -50,67 +50,78 @@ test_expect_success setup '
 
 test_expect_success 'straight copy without -C' '
 
-	git blame uno | grep Second
+	git blame uno >actual &&
+	test_grep Second actual
 
 '
 
 test_expect_success 'straight move without -C' '
 
-	git blame dos | grep Initial
+	git blame dos >actual &&
+	test_grep Initial actual
 
 '
 
 test_expect_success 'straight copy with -C' '
 
-	git blame -C1 uno | grep Second
+	git blame -C1 uno >actual &&
+	test_grep Second actual
 
 '
 
 test_expect_success 'straight move with -C' '
 
-	git blame -C1 dos | grep Initial
+	git blame -C1 dos >actual &&
+	test_grep Initial actual
 
 '
 
 test_expect_success 'straight copy with -C -C' '
 
-	git blame -C -C1 uno | grep Initial
+	git blame -C -C1 uno >actual &&
+	test_grep Initial actual
 
 '
 
 test_expect_success 'straight move with -C -C' '
 
-	git blame -C -C1 dos | grep Initial
+	git blame -C -C1 dos >actual &&
+	test_grep Initial actual
 
 '
 
 test_expect_success 'append without -C' '
 
-	git blame -L2 tres | grep Second
+	git blame -L2 tres >actual &&
+	test_grep Second actual
 
 '
 
 test_expect_success 'append with -C' '
 
-	git blame -L2 -C1 tres | grep Second
+	git blame -L2 -C1 tres >actual &&
+	test_grep Second actual
 
 '
 
 test_expect_success 'append with -C -C' '
 
-	git blame -L2 -C -C1 tres | grep Second
+	git blame -L2 -C -C1 tres >actual &&
+	test_grep Second actual
 
 '
 
 test_expect_success 'append with -C -C -C' '
 
-	git blame -L2 -C -C -C1 tres | grep Initial
+	git blame -L2 -C -C -C1 tres >actual &&
+	test_grep Initial actual
 
 '
 
 test_expect_success 'blame wholesale copy' '
 
-	git blame -f -C -C1 HEAD^ -- cow | sed -e "$pick_fc" >current &&
+	git blame -f -C -C1 HEAD^ -- cow >actual &&
+	sed -e "$pick_fc" actual >current &&
 	cat >expected <<-\EOF &&
 	mouse-Initial
 	mouse-Second
@@ -122,7 +133,8 @@ test_expect_success 'blame wholesale copy' '
 
 test_expect_success 'blame wholesale copy and more' '
 
-	git blame -f -C -C1 HEAD -- cow | sed -e "$pick_fc" >current &&
+	git blame -f -C -C1 HEAD -- cow >actual &&
+	sed -e "$pick_fc" actual >current &&
 	cat >expected <<-\EOF &&
 	mouse-Initial
 	mouse-Second
@@ -144,7 +156,8 @@ test_expect_success 'blame wholesale copy and more in the index' '
 	EOF
 	git add horse &&
 	test_when_finished "git rm -f horse" &&
-	git blame -f -C -C1 -- horse | sed -e "$pick_fc" >current &&
+	git blame -f -C -C1 -- horse >actual &&
+	sed -e "$pick_fc" actual >current &&
 	cat >expected <<-\EOF &&
 	mouse-Initial
 	mouse-Second
@@ -168,7 +181,8 @@ test_expect_success 'blame during cherry-pick with file rename conflict' '
 	(git cherry-pick HEAD@{1} || test $? -eq 1) &&
 	git show HEAD@{1}:rodent > rodent &&
 	git add rodent &&
-	git blame -f -C -C1 rodent | sed -e "$pick_fc" >current &&
+	git blame -f -C -C1 rodent >actual &&
+	sed -e "$pick_fc" actual >current &&
 	cat >expected <<-\EOF &&
 	mouse-Initial
 	mouse-Second
@@ -246,14 +260,14 @@ test_expect_success 'setup file with CRLF newlines' '
 test_expect_success 'blame file with CRLF core.autocrlf true' '
 	git config core.autocrlf true &&
 	git blame crlffile >actual &&
-	grep "A U Thor" actual
+	test_grep "A U Thor" actual
 '
 
 test_expect_success 'blame file with CRLF attributes text' '
 	git config core.autocrlf false &&
 	echo "crlffile text" >.gitattributes &&
 	git blame crlffile >actual &&
-	grep "A U Thor" actual
+	test_grep "A U Thor" actual
 '
 
 test_expect_success 'blame file with CRLF core.autocrlf=true' '
@@ -267,7 +281,7 @@ test_expect_success 'blame file with CRLF core.autocrlf=true' '
 	git checkout crlfinrepo &&
 	rm tmp &&
 	git blame crlfinrepo >actual &&
-	grep "A U Thor" actual
+	test_grep "A U Thor" actual
 '
 
 test_expect_success 'setup coalesce tests' '
