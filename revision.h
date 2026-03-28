@@ -304,6 +304,7 @@ struct rev_info {
 
 	/* Display history graph */
 	struct git_graph *graph;
+	int graph_max_lanes;
 
 	/* special limits */
 	int skip_count;
