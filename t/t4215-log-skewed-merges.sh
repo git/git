@@ -376,9 +376,9 @@ test_expect_success 'log --graph --graph-lane-limit=2 limited to two lanes' '
 	|\ \
 	| | * 7_G
 	| | * 7_F
-	| *   7_E
-	| *   7_D
-	* |   7_C
+	| * ~ 7_E
+	| * ~ 7_D
+	* | ~ 7_C
 	| |/
 	|/|
 	* | 7_B
@@ -389,16 +389,16 @@ test_expect_success 'log --graph --graph-lane-limit=2 limited to two lanes' '
 
 test_expect_success 'log --graph --graph-lane-limit=1 truncate mid octopus merge' '
 	check_graph --graph-lane-limit=1 M_7 <<-\EOF
-	*-  7_M4
-	|\
-	|   7_G
-	|   7_F
+	*-~  7_M4
+	|\~
+	| ~ 7_G
+	| ~ 7_F
 	| * 7_E
 	| * 7_D
-	*   7_C
-	|
-	|/
-	*   7_B
+	* ~ 7_C
+	| ~
+	|/~
+	* ~ 7_B
 	|/
 	* 7_A
 	EOF
@@ -411,24 +411,24 @@ test_expect_success 'log --graph --graph-lane-limit=3 limited to three lanes' '
 	| | *   7_M2
 	| | |\
 	| | | * 7_H
-	| | |   7_M3
-	| | |   7_J
-	| | |   7_I
-	| | |   7_M4
-	| |_|_
-	|/| |
-	| | |_
-	| |/|
-	| | |
-	| | |/
-	| | *   7_G
-	| | |
-	| | |/
-	| | *   7_F
-	| * |   7_E
-	| | |/
-	| |/|
-	| * |   7_D
+	| | | ~ 7_M3
+	| | | ~ 7_J
+	| | | ~ 7_I
+	| | | ~ 7_M4
+	| |_|_~
+	|/| | ~
+	| | |_~
+	| |/| ~
+	| | | ~
+	| | |/~
+	| | * ~ 7_G
+	| | | ~
+	| | |/~
+	| | * ~ 7_F
+	| * | ~ 7_E
+	| | |/~
+	| |/| ~
+	| * | ~ 7_D
 	| | |/
 	| |/|
 	* | | 7_C
@@ -452,9 +452,9 @@ test_expect_success 'log --graph --graph-lane-limit=6 check if it only shows fir
 	| | | | | * 7_J
 	| | | | * | 7_I
 	| | | | | | * 7_M4
-	| |_|_|_|_|/
-	|/| | | | |/
-	| | |_|_|/|
+	| |_|_|_|_|/~
+	|/| | | | |/~
+	| | |_|_|/| ~
 	| |/| | | |/
 	| | | |_|/|
 	| | |/| | |

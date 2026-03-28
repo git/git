@@ -1261,8 +1261,9 @@ This implies the `--topo-order` option by default, but the
 
 `--graph-lane-limit=<n>`::
 	When `--graph` is used, limit the number of graph lanes to be shown.
-	Lanes over the limit are not shown. By default it is set to 0
-	(no limit), zero and negative values are ignored and treated as no limit.
+	Lanes over the limit are replaced with a truncation mark '~'.
+	By default it is set to 0 (no limit), zero and negative values
+	are ignored and treated as no limit.
 
 ifdef::git-rev-list[]
 `--count`::
