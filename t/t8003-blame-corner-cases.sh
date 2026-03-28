@@ -49,77 +49,56 @@ test_expect_success setup '
 '
 
 test_expect_success 'straight copy without -C' '
-
 	git blame uno >actual &&
 	test_grep Second actual
-
 '
 
 test_expect_success 'straight move without -C' '
-
 	git blame dos >actual &&
 	test_grep Initial actual
-
 '
 
 test_expect_success 'straight copy with -C' '
-
 	git blame -C1 uno >actual &&
 	test_grep Second actual
-
 '
 
 test_expect_success 'straight move with -C' '
-
 	git blame -C1 dos >actual &&
 	test_grep Initial actual
-
 '
 
 test_expect_success 'straight copy with -C -C' '
-
 	git blame -C -C1 uno >actual &&
 	test_grep Initial actual
-
 '
 
 test_expect_success 'straight move with -C -C' '
-
 	git blame -C -C1 dos >actual &&
 	test_grep Initial actual
-
 '
 
 test_expect_success 'append without -C' '
-
 	git blame -L2 tres >actual &&
 	test_grep Second actual
-
 '
 
 test_expect_success 'append with -C' '
-
 	git blame -L2 -C1 tres >actual &&
 	test_grep Second actual
-
 '
 
 test_expect_success 'append with -C -C' '
-
 	git blame -L2 -C -C1 tres >actual &&
 	test_grep Second actual
-
 '
 
 test_expect_success 'append with -C -C -C' '
-
 	git blame -L2 -C -C -C1 tres >actual &&
 	test_grep Initial actual
-
 '
 
 test_expect_success 'blame wholesale copy' '
-
 	git blame -f -C -C1 HEAD^ -- cow >actual &&
 	sed -e "$pick_fc" actual >current &&
 	cat >expected <<-\EOF &&
@@ -128,11 +107,9 @@ test_expect_success 'blame wholesale copy' '
 	mouse-Third
 	EOF
 	test_cmp expected current
-
 '
 
 test_expect_success 'blame wholesale copy and more' '
-
 	git blame -f -C -C1 HEAD -- cow >actual &&
 	sed -e "$pick_fc" actual >current &&
 	cat >expected <<-\EOF &&
@@ -142,11 +119,9 @@ test_expect_success 'blame wholesale copy and more' '
 	mouse-Third
 	EOF
 	test_cmp expected current
-
 '
 
 test_expect_success 'blame wholesale copy and more in the index' '
-
 	cat >horse <<-\EOF &&
 	ABC
 	DEF
@@ -166,11 +141,9 @@ test_expect_success 'blame wholesale copy and more in the index' '
 	mouse-Third
 	EOF
 	test_cmp expected current
-
 '
 
 test_expect_success 'blame during cherry-pick with file rename conflict' '
-
 	test_when_finished "git reset --hard && git checkout main" &&
 	git checkout HEAD~3 &&
 	echo MOUSE >> mouse &&
