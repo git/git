@@ -132,4 +132,20 @@ test_expect_success 'relink existing MIDX layer' '
 
 '
 
+test_expect_success 'non-incremental write with existing incremental chain' '
+	git init non-incremental-write-with-existing &&
+	test_when_finished "rm -fr non-incremental-write-with-existing" &&
+
+	(
+		cd non-incremental-write-with-existing &&
+
+		git config set maintenance.auto false &&
+
+		write_midx_layer &&
+		write_midx_layer &&
+
+		git multi-pack-index write
+	)
+'
+
 test_done

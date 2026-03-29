@@ -1152,7 +1152,7 @@ static bool midx_needs_update(struct multi_pack_index *midx, struct write_midx_c
 
 	/*
 	 * Ensure that we have a valid checksum before consulting the
-	 * exisiting MIDX in order to determine if we can avoid an
+	 * existing MIDX in order to determine if we can avoid an
 	 * update.
 	 *
 	 * This is necessary because the given MIDX is loaded directly
@@ -1208,14 +1208,16 @@ static bool midx_needs_update(struct multi_pack_index *midx, struct write_midx_c
 			BUG("same pack added twice?");
 	}
 
-	for (uint32_t i = 0; i < ctx->nr; i++) {
-		strbuf_reset(&buf);
-		strbuf_addstr(&buf, midx->pack_names[i]);
-		strbuf_strip_suffix(&buf, ".idx");
+	for (struct multi_pack_index *m = midx; m; m = m->base_midx) {
+		for (uint32_t i = 0; i < m->num_packs; i++) {
+			strbuf_reset(&buf);
+			strbuf_addstr(&buf, m->pack_names[i]);
+			strbuf_strip_suffix(&buf, ".idx");
 
-		if (!strset_contains(&packs, buf.buf))
-			goto out;
-		strset_remove(&packs, buf.buf);
+			if (!strset_contains(&packs, buf.buf))
+				goto out;
+			strset_remove(&packs, buf.buf);
+		}
 	}
 
 	needed = false;
