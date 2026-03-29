@@ -29,8 +29,7 @@ extern void clear_midx_files_ext(struct odb_source *source, const char *ext,
 				 const char *keep_hash);
 extern void clear_incremental_midx_files_ext(struct odb_source *source,
 					     const char *ext,
-					     const char **keep_hashes,
-					     uint32_t hashes_nr);
+					     const struct strvec *keep_hashes);
 extern int cmp_idx_or_pack_name(const char *idx_or_pack_name,
 				const char *idx_name);
 
@@ -1109,8 +1108,7 @@ done:
 }
 
 static void clear_midx_files(struct odb_source *source,
-			     const char **hashes, uint32_t hashes_nr,
-			     unsigned incremental)
+			     const struct strvec *hashes, unsigned incremental)
 {
 	/*
 	 * if incremental:
@@ -1124,13 +1122,15 @@ static void clear_midx_files(struct odb_source *source,
 	 */
 	struct strbuf buf = STRBUF_INIT;
 	const char *exts[] = { MIDX_EXT_BITMAP, MIDX_EXT_REV, MIDX_EXT_MIDX };
-	uint32_t i, j;
+	uint32_t i;
 
 	for (i = 0; i < ARRAY_SIZE(exts); i++) {
-		clear_incremental_midx_files_ext(source, exts[i],
-						 hashes, hashes_nr);
-		for (j = 0; j < hashes_nr; j++)
-			clear_midx_files_ext(source, exts[i], hashes[j]);
+		clear_incremental_midx_files_ext(source, exts[i], hashes);
+		if (hashes) {
+			for (size_t j = 0; j < hashes->nr; j++)
+				clear_midx_files_ext(source, exts[i],
+						     hashes->v[j]);
+		}
 	}
 
 	if (incremental)
@@ -1268,7 +1268,7 @@ static int write_midx_internal(struct write_midx_opts *opts)
 	int pack_name_concat_len = 0;
 	int dropped_packs = 0;
 	int result = -1;
-	const char **keep_hashes = NULL;
+	struct strvec keep_hashes = STRVEC_INIT;
 	size_t keep_hashes_nr = 0;
 	struct chunkfile *cf;
 
@@ -1723,7 +1723,7 @@ static int write_midx_internal(struct write_midx_opts *opts)
 	} else {
 		keep_hashes_nr = ctx.num_multi_pack_indexes_before + 1;
 	}
-	CALLOC_ARRAY(keep_hashes, keep_hashes_nr);
+	strvec_init_alloc(&keep_hashes, keep_hashes_nr);
 
 	if (ctx.incremental) {
 		FILE *chainf = fdopen_lock_file(&lk, "w");
@@ -1760,39 +1760,45 @@ static int write_midx_internal(struct write_midx_opts *opts)
 			for (i = 0; i < num_layers_before_from; i++) {
 				uint32_t j = num_layers_before_from - i - 1;
 
-				keep_hashes[j] = xstrdup(midx_get_checksum_hex(m));
+				keep_hashes.v[j] = xstrdup(midx_get_checksum_hex(m));
+				keep_hashes.nr++;
 				m = m->base_midx;
 			}
 
-			keep_hashes[i] = xstrdup(hash_to_hex_algop(midx_hash,
+			keep_hashes.v[i] = xstrdup(hash_to_hex_algop(midx_hash,
 								   r->hash_algo));
+			keep_hashes.nr++;
 
 			i = 0;
 			for (m = ctx.m;
 			     m && midx_hashcmp(m, ctx.compact_to, r->hash_algo);
 			     m = m->base_midx) {
-				keep_hashes[keep_hashes_nr - i - 1] =
+				keep_hashes.v[keep_hashes_nr - i - 1] =
 					xstrdup(midx_get_checksum_hex(m));
+				keep_hashes.nr++;
 				i++;
 			}
 		} else {
-			keep_hashes[ctx.num_multi_pack_indexes_before] =
+			keep_hashes.v[ctx.num_multi_pack_indexes_before] =
 				xstrdup(hash_to_hex_algop(midx_hash,
 							  r->hash_algo));
+			keep_hashes.nr++;
 
 			for (uint32_t i = 0; i < ctx.num_multi_pack_indexes_before; i++) {
 				uint32_t j = ctx.num_multi_pack_indexes_before - i - 1;
 
-				keep_hashes[j] = xstrdup(midx_get_checksum_hex(m));
+				keep_hashes.v[j] = xstrdup(midx_get_checksum_hex(m));
+				keep_hashes.nr++;
 				m = m->base_midx;
 			}
 		}
 
 		for (uint32_t i = 0; i < keep_hashes_nr; i++)
-			fprintf(get_lock_file_fp(&lk), "%s\n", keep_hashes[i]);
+			fprintf(get_lock_file_fp(&lk), "%s\n", keep_hashes.v[i]);
 	} else {
-		keep_hashes[ctx.num_multi_pack_indexes_before] =
+		keep_hashes.v[ctx.num_multi_pack_indexes_before] =
 			xstrdup(hash_to_hex_algop(midx_hash, r->hash_algo));
+		keep_hashes.nr++;
 	}
 
 	if (ctx.m || ctx.base_midx)
@@ -1801,8 +1807,7 @@ static int write_midx_internal(struct write_midx_opts *opts)
 	if (commit_lock_file(&lk) < 0)
 		die_errno(_("could not write multi-pack-index"));
 
-	clear_midx_files(opts->source, keep_hashes, keep_hashes_nr,
-			 ctx.incremental);
+	clear_midx_files(opts->source, &keep_hashes, ctx.incremental);
 	result = 0;
 
 cleanup:
@@ -1818,11 +1823,7 @@ cleanup:
 	free(ctx.entries);
 	free(ctx.pack_perm);
 	free(ctx.pack_order);
-	if (keep_hashes) {
-		for (uint32_t i = 0; i < keep_hashes_nr; i++)
-			free((char *)keep_hashes[i]);
-		free(keep_hashes);
-	}
+	strvec_clear(&keep_hashes);
 	strbuf_release(&midx_name);
 	close_midx(midx_to_free);
 
