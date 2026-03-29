@@ -852,6 +852,37 @@ void clear_midx_file(struct repository *r)
 	strbuf_release(&midx);
 }
 
+void clear_incremental_midx_files(struct repository *r,
+				  const struct strvec *keep_hashes)
+{
+	struct strbuf chain = STRBUF_INIT;
+
+	get_midx_chain_filename(r->objects->sources, &chain);
+
+	if (r->objects) {
+		struct odb_source *source = r->objects->sources;
+		for (source = r->objects->sources; source; source = source->next) {
+			struct odb_source_files *files = odb_source_files_downcast(source);
+			if (files->packed->midx)
+				close_midx(files->packed->midx);
+			files->packed->midx = NULL;
+		}
+	}
+
+	if (!keep_hashes && remove_path(chain.buf))
+		die(_("failed to clear multi-pack-index chain at %s"),
+		    chain.buf);
+
+	clear_incremental_midx_files_ext(r->objects->sources, MIDX_EXT_BITMAP,
+					 keep_hashes);
+	clear_incremental_midx_files_ext(r->objects->sources, MIDX_EXT_REV,
+					 keep_hashes);
+	clear_incremental_midx_files_ext(r->objects->sources, MIDX_EXT_MIDX,
+					 keep_hashes);
+
+	strbuf_release(&chain);
+}
+
 static int verify_midx_error;
 
 __attribute__((format (printf, 1, 2)))

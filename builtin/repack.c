@@ -33,7 +33,7 @@ static int midx_must_contain_cruft = 1;
 static const char *const git_repack_usage[] = {
 	N_("git repack [-a] [-A] [-d] [-f] [-F] [-l] [-n] [-q] [-b] [-m]\n"
 	   "[--window=<n>] [--depth=<n>] [--threads=<n>] [--keep-pack=<pack-name>]\n"
-	   "[--write-midx] [--name-hash-version=<n>] [--path-walk]"),
+	   "[--write-midx[=<mode>]] [--name-hash-version=<n>] [--path-walk]"),
 	NULL
 };
 
@@ -42,9 +42,14 @@ static const char incremental_bitmap_conflict_error[] = N_(
 "--no-write-bitmap-index or disable the pack.writeBitmaps configuration."
 );
 
+#define DEFAULT_MIDX_SPLIT_FACTOR 2
+#define DEFAULT_MIDX_NEW_LAYER_THRESHOLD 8
+
 struct repack_config_ctx {
 	struct pack_objects_args *po_args;
 	struct pack_objects_args *cruft_po_args;
+	int midx_split_factor;
+	int midx_new_layer_threshold;
 };
 
 static int repack_config(const char *var, const char *value,
@@ -94,6 +99,16 @@ static int repack_config(const char *var, const char *value,
 		midx_must_contain_cruft = git_config_bool(var, value);
 		return 0;
 	}
+	if (!strcmp(var, "repack.midxsplitfactor")) {
+		repack_ctx->midx_split_factor = git_config_int(var, value,
+							       ctx->kvi);
+		return 0;
+	}
+	if (!strcmp(var, "repack.midxnewlayerthreshold")) {
+		repack_ctx->midx_new_layer_threshold = git_config_int(var, value,
+								      ctx->kvi);
+		return 0;
+	}
 	return git_default_config(var, value, ctx, cb);
 }
 
@@ -109,6 +124,8 @@ static int option_parse_write_midx(const struct option *opt, const char *arg,
 
 	if (!arg || !*arg)
 		*cfg = REPACK_WRITE_MIDX_DEFAULT;
+	else if (!strcmp(arg, "incremental"))
+		*cfg = REPACK_WRITE_MIDX_INCREMENTAL;
 	else
 		return error(_("unknown value for %s: %s"), opt->long_name, arg);
 
@@ -223,6 +240,8 @@ int cmd_repack(int argc,
 	memset(&config_ctx, 0, sizeof(config_ctx));
 	config_ctx.po_args = &po_args;
 	config_ctx.cruft_po_args = &cruft_po_args;
+	config_ctx.midx_split_factor = DEFAULT_MIDX_SPLIT_FACTOR;
+	config_ctx.midx_new_layer_threshold = DEFAULT_MIDX_NEW_LAYER_THRESHOLD;
 
 	repo_config(repo, repack_config, &config_ctx);
 
@@ -243,6 +262,9 @@ int cmd_repack(int argc,
 
 	if (pack_everything & PACK_CRUFT)
 		pack_everything |= ALL_INTO_ONE;
+
+	if (write_midx == REPACK_WRITE_MIDX_INCREMENTAL && !geometry.split_factor)
+		die(_("--write-midx=incremental requires --geometric"));
 
 	if (write_bitmaps < 0) {
 		if (write_midx == REPACK_WRITE_MIDX_NONE &&
@@ -293,6 +315,10 @@ int cmd_repack(int argc,
 	if (geometry.split_factor) {
 		if (pack_everything)
 			die(_("options '%s' and '%s' cannot be used together"), "--geometric", "-A/-a");
+		if (write_midx == REPACK_WRITE_MIDX_INCREMENTAL) {
+			geometry.midx_layer_threshold = config_ctx.midx_new_layer_threshold;
+			geometry.midx_layer_threshold_set = true;
+		}
 		pack_geometry_init(&geometry, &existing, &po_args);
 		pack_geometry_split(&geometry);
 	}
@@ -540,6 +566,8 @@ int cmd_repack(int argc,
 			.show_progress = show_progress,
 			.write_bitmaps = write_bitmaps > 0,
 			.midx_must_contain_cruft = midx_must_contain_cruft,
+			.midx_split_factor = config_ctx.midx_split_factor,
+			.midx_new_layer_threshold = config_ctx.midx_new_layer_threshold,
 			.mode = write_midx,
 		};
 
@@ -552,11 +580,15 @@ int cmd_repack(int argc,
 
 	if (delete_redundant) {
 		int opts = 0;
-		existing_packs_remove_redundant(&existing, packdir);
+		bool wrote_incremental_midx = write_midx == REPACK_WRITE_MIDX_INCREMENTAL;
+
+		existing_packs_remove_redundant(&existing, packdir,
+						wrote_incremental_midx);
 
 		if (geometry.split_factor)
 			pack_geometry_remove_redundant(&geometry, &names,
-						       &existing, packdir);
+						       &existing, packdir,
+						       wrote_incremental_midx);
 		if (show_progress)
 			opts |= PRUNE_PACKED_VERBOSE;
 		prune_packed_objects(opts);

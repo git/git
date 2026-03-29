@@ -894,6 +894,7 @@ static int write_midx_incremental(struct repack_write_midx_opts *opts)
 	struct midx_compaction_step *steps = NULL;
 	struct strbuf lock_name = STRBUF_INIT;
 	struct lock_file lf;
+	struct strvec keep_hashes = STRVEC_INIT;
 	size_t steps_nr = 0;
 	size_t i;
 	int ret = 0;
@@ -939,11 +940,15 @@ static int write_midx_incremental(struct repack_write_midx_opts *opts)
 			BUG("missing result for compaction step %"PRIuMAX,
 			    (uintmax_t)i);
 		fprintf(get_lock_file_fp(&lf), "%s\n", step->csum);
+		strvec_push(&keep_hashes, step->csum);
 	}
 
 	commit_lock_file(&lf);
 
+	clear_incremental_midx_files(opts->existing->repo, &keep_hashes);
+
 done:
+	strvec_clear(&keep_hashes);
 	strbuf_release(&lock_name);
 	for (i = 0; i < steps_nr; i++)
 		midx_compaction_step_release(&steps[i]);

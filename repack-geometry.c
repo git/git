@@ -251,7 +251,8 @@ static void remove_redundant_packs(struct packed_git **pack,
 				   uint32_t pack_nr,
 				   struct string_list *names,
 				   struct existing_packs *existing,
-				   const char *packdir)
+				   const char *packdir,
+				   bool wrote_incremental_midx)
 {
 	const struct git_hash_algo *algop = existing->repo->hash_algo;
 	struct strbuf buf = STRBUF_INIT;
@@ -271,7 +272,8 @@ static void remove_redundant_packs(struct packed_git **pack,
 		    (string_list_has_string(&existing->kept_packs, buf.buf)))
 			continue;
 
-		repack_remove_redundant_pack(existing->repo, packdir, buf.buf);
+		repack_remove_redundant_pack(existing->repo, packdir, buf.buf,
+					     wrote_incremental_midx);
 	}
 
 	strbuf_release(&buf);
@@ -280,12 +282,13 @@ static void remove_redundant_packs(struct packed_git **pack,
 void pack_geometry_remove_redundant(struct pack_geometry *geometry,
 				    struct string_list *names,
 				    struct existing_packs *existing,
-				    const char *packdir)
+				    const char *packdir,
+				    bool wrote_incremental_midx)
 {
 	remove_redundant_packs(geometry->pack, geometry->split,
-			       names, existing, packdir);
+			       names, existing, packdir, wrote_incremental_midx);
 	remove_redundant_packs(geometry->promisor_pack, geometry->promisor_split,
-			       names, existing, packdir);
+			       names, existing, packdir, wrote_incremental_midx);
 }
 
 void pack_geometry_release(struct pack_geometry *geometry)

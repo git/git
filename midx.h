@@ -9,6 +9,7 @@ struct repository;
 struct bitmapped_pack;
 struct git_hash_algo;
 struct odb_source;
+struct strvec;
 
 #define MIDX_SIGNATURE 0x4d494458 /* "MIDX" */
 #define MIDX_VERSION_V1 1
@@ -143,6 +144,8 @@ int write_midx_file_compact(struct odb_source *source,
 			    const char *incremental_base,
 			    unsigned flags);
 void clear_midx_file(struct repository *r);
+void clear_incremental_midx_files(struct repository *r,
+				  const struct strvec *keep_hashes);
 int verify_midx_file(struct odb_source *source, unsigned flags);
 int expire_midx_packs(struct odb_source *source, unsigned flags);
 int midx_repack(struct odb_source *source, size_t batch_size, unsigned flags);
