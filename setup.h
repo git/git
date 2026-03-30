@@ -236,7 +236,7 @@ void initialize_repository_version(struct repository *repo,
 				   int hash_algo,
 				   enum ref_storage_format ref_storage_format,
 				   int reinit);
-void create_reference_database(const char *initial_branch, int quiet);
+void create_reference_database(struct repository *repo, const char *initial_branch, int quiet);
 
 /*
  * NOTE NOTE NOTE!!

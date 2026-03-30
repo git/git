@@ -2465,13 +2465,14 @@ static int is_reinit(struct repository *repo)
 	return ret;
 }
 
-void create_reference_database(const char *initial_branch, int quiet)
+void create_reference_database(struct repository *repo,
+			       const char *initial_branch, int quiet)
 {
 	struct strbuf err = STRBUF_INIT;
 	char *to_free = NULL;
-	int reinit = is_reinit(the_repository);
+	int reinit = is_reinit(repo);
 
-	if (ref_store_create_on_disk(get_main_ref_store(the_repository), 0, &err))
+	if (ref_store_create_on_disk(get_main_ref_store(repo), 0, &err))
 		die("failed to set up refs db: %s", err.buf);
 
 	/*
@@ -2483,14 +2484,14 @@ void create_reference_database(const char *initial_branch, int quiet)
 
 		if (!initial_branch)
 			initial_branch = to_free =
-				repo_default_branch_name(the_repository, quiet);
+				repo_default_branch_name(repo, quiet);
 
 		ref = xstrfmt("refs/heads/%s", initial_branch);
 		if (check_refname_format(ref, 0) < 0)
 			die(_("invalid initial branch name: '%s'"),
 			    initial_branch);
 
-		if (refs_update_symref(get_main_ref_store(the_repository), "HEAD", ref, NULL) < 0)
+		if (refs_update_symref(get_main_ref_store(repo), "HEAD", ref, NULL) < 0)
 			exit(1);
 		free(ref);
 	}
@@ -2827,7 +2828,7 @@ int init_db(const char *git_dir, const char *real_git_dir,
 				      &repo_fmt, init_shared_repository);
 
 	if (!(flags & INIT_DB_SKIP_REFDB))
-		create_reference_database(initial_branch, flags & INIT_DB_QUIET);
+		create_reference_database(the_repository, initial_branch, flags & INIT_DB_QUIET);
 	create_object_directory(the_repository);
 
 	if (repo_settings_get_shared_repository(the_repository)) {
