@@ -3457,6 +3457,13 @@ static int remove_dir_recurse(struct strbuf *path, int flag, int *kept_up)
 		return 0;
 	}
 
+	if (is_mount_point(path)) {
+		/* Do not descend and nuke a mount point or junction. */
+		if (kept_up)
+			*kept_up = 1;
+		return 0;
+	}
+
 	flag &= ~REMOVE_DIR_KEEP_TOPLEVEL;
 	dir = opendir(path->buf);
 	if (!dir) {
