@@ -100,6 +100,10 @@ UI, Workflows & Features
  * The reference-transaction hook was taught to be triggered before
    taking locks on references in the "preparing" phase.
 
+ * "git apply" now reports the name of the input file along with the
+   line number when it encounters a corrupt patch, and correctly
+   resets the line counter when processing multiple patch files.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -238,6 +242,16 @@ Performance, Internal Implementation, Development Support etc.
 
  * Uses of prio_queue as a LIFO stack of commits have been written
    with commit_stack.
+
+ * The cleanup of remaining bitmaps in "ahead_behind()" has been
+   simplified.
+
+ * split-index.c has been updated to not use the global the_repository
+   and the_hash_algo variables.
+
+ * The unsigned integer that is used as an bitset to specify the kind
+   of branches interpret_branch_name() function has been changed to
+   use a dedicated enum type.
 
 
 Fixes since v2.53
