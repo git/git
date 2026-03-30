@@ -285,7 +285,7 @@ static void parse_args(struct pathspec *pathspec,
 			rev = *argv++;
 		} else {
 			/* Otherwise we treat this as a filename */
-			verify_filename(prefix, argv[0], 1);
+			verify_filename(the_repository, prefix, argv[0], 1);
 		}
 	}
 

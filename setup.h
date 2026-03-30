@@ -142,7 +142,8 @@ char *prefix_path(struct repository *repo, const char *prefix, int len, const ch
 char *prefix_path_gently(struct repository *repo, const char *prefix, int len, int *remaining, const char *path);
 
 int check_filename(const char *prefix, const char *name);
-void verify_filename(const char *prefix,
+void verify_filename(struct repository *repo,
+		     const char *prefix,
 		     const char *name,
 		     int diagnose_misspelt_rev);
 void verify_non_filename(const char *prefix, const char *name);

@@ -280,7 +280,8 @@ static int looks_like_pathspec(const char *arg)
  * diagnose_misspelt_rev == 0 for the next ones (because we already
  * saw a filename, there's not ambiguity anymore).
  */
-void verify_filename(const char *prefix,
+void verify_filename(struct repository *repo,
+		     const char *prefix,
 		     const char *arg,
 		     int diagnose_misspelt_rev)
 {
@@ -288,7 +289,7 @@ void verify_filename(const char *prefix,
 		die(_("option '%s' must come before non-option arguments"), arg);
 	if (looks_like_pathspec(arg) || check_filename(prefix, arg))
 		return;
-	die_verify_filename(the_repository, prefix, arg, diagnose_misspelt_rev);
+	die_verify_filename(repo, prefix, arg, diagnose_misspelt_rev);
 }
 
 /*
