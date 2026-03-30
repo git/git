@@ -101,9 +101,12 @@ int set_disambiguate_hint_config(const char *var, const char *value);
  * If the input was ok but there are not N branch switches in the
  * reflog, it returns 0.
  */
-#define INTERPRET_BRANCH_LOCAL (1<<0)
-#define INTERPRET_BRANCH_REMOTE (1<<1)
-#define INTERPRET_BRANCH_HEAD (1<<2)
+enum interpret_branch_kind {
+	INTERPRET_BRANCH_LOCAL = (1 << 0),
+	INTERPRET_BRANCH_REMOTE = (1 << 1),
+	INTERPRET_BRANCH_HEAD = (1 << 2),
+};
+
 struct interpret_branch_name_options {
 	/*
 	 * If "allowed" is non-zero, it is a treated as a bitfield of allowable
@@ -111,7 +114,7 @@ struct interpret_branch_name_options {
 	 * ("refs/remotes/"), or "HEAD". If no "allowed" bits are set, any expansion is
 	 * allowed, even ones to refs outside of those namespaces.
 	 */
-	unsigned allowed;
+	enum interpret_branch_kind allowed;
 
 	/*
 	 * If ^{upstream} or ^{push} (or equivalent) is requested, and the
