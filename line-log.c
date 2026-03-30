@@ -589,7 +589,7 @@ parse_lines(struct repository *r, struct commit *commit,
 		range_part = xstrndup(item->string, name_part - item->string);
 		name_part++;
 
-		full_name = prefix_path(prefix, prefix ? strlen(prefix) : 0,
+		full_name = prefix_path(r, prefix, prefix ? strlen(prefix) : 0,
 					name_part);
 
 		spec = alloc_filespec(full_name);

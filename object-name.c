@@ -1994,7 +1994,7 @@ static char *resolve_relative_path(struct repository *r, const char *rel)
 		die(_("relative path syntax can't be used outside working tree"));
 
 	/* die() inside prefix_path() if resolved path is outside worktree */
-	return prefix_path(startup_info->prefix,
+	return prefix_path(the_repository, startup_info->prefix,
 			   startup_info->prefix ? strlen(startup_info->prefix) : 0,
 			   rel);
 }
