@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "test-tool.h"
 #include "run-command.h"
 #include "setup.h"
@@ -11,7 +13,7 @@ int cmd__subprocess(int argc, const char **argv)
 	if (nogit)
 		die("No git repo found");
 	if (argc > 1 && !strcmp(argv[1], "--setup-work-tree")) {
-		setup_work_tree();
+		setup_work_tree(the_repository);
 		argv++;
 	}
 	cp.git_cmd = 1;

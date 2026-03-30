@@ -497,7 +497,7 @@ static int run_builtin(struct cmd_struct *p, int argc, const char **argv, struct
 	commit_pager_choice();
 
 	if (!help && p->option & NEED_WORK_TREE)
-		setup_work_tree();
+		setup_work_tree(the_repository);
 
 	trace_argv_printf(argv, "trace: built-in: git");
 	trace2_cmd_name(p->cmd);

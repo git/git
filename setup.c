@@ -26,7 +26,6 @@
 #include "trace2.h"
 #include "worktree.h"
 
-static int work_tree_config_is_bogus;
 enum allowed_bare_repo {
 	ALLOWED_BARE_REPO_EXPLICIT = 0,
 	ALLOWED_BARE_REPO_ALL,
@@ -485,7 +484,7 @@ int is_inside_work_tree(struct repository *repo)
 	return is_inside_dir(strbuf_realpath(&buf, worktree, 1));
 }
 
-void setup_work_tree(void)
+void setup_work_tree(struct repository *repo)
 {
 	const char *work_tree;
 	static int initialized = 0;
@@ -493,10 +492,10 @@ void setup_work_tree(void)
 	if (initialized)
 		return;
 
-	if (work_tree_config_is_bogus)
+	if (repo->worktree_config_is_bogus)
 		die(_("unable to set up work tree using invalid config"));
 
-	work_tree = repo_get_work_tree(the_repository);
+	work_tree = repo_get_work_tree(repo);
 	if (!work_tree || chdir_notify(work_tree))
 		die(_("this operation must be run in a work tree"));
 
@@ -1155,7 +1154,7 @@ static const char *setup_explicit_git_dir(struct repository *repo,
 		if (git_work_tree_cfg) {
 			/* #22.2, #30 */
 			warning("core.bare and core.worktree do not make sense");
-			work_tree_config_is_bogus = 1;
+			repo->worktree_config_is_bogus = true;
 		}
 
 		/* #18, #26 */

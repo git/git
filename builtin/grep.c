@@ -1272,7 +1272,7 @@ int cmd_grep(int argc,
 		die(_("--[no-]exclude-standard cannot be used for tracked contents"));
 	} else if (!list.nr) {
 		if (!cached)
-			setup_work_tree();
+			setup_work_tree(the_repository);
 
 		hit = grep_cache(&opt, &pathspec, cached);
 	} else {

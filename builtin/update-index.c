@@ -732,7 +732,7 @@ struct refresh_params {
 
 static int refresh(struct refresh_params *o, unsigned int flag)
 {
-	setup_work_tree();
+	setup_work_tree(the_repository);
 	repo_read_index(the_repository);
 	*o->has_errors |= refresh_index(the_repository->index, o->flags | flag, NULL,
 					NULL, NULL);
@@ -901,7 +901,7 @@ static enum parse_opt_result reupdate_callback(
 	BUG_ON_OPT_ARG(arg);
 
 	/* consume remaining arguments. */
-	setup_work_tree();
+	setup_work_tree(the_repository);
 	*has_errors = do_reupdate(ctx->argv + 1, prefix);
 	if (*has_errors)
 		the_repository->index->cache_changed = 0;
@@ -1157,7 +1157,7 @@ int cmd_update_index(int argc,
 				transaction = NULL;
 			}
 
-			setup_work_tree();
+			setup_work_tree(the_repository);
 			p = prefix_path(the_repository, prefix, prefix_length, path);
 			update_one(p);
 			if (set_executable_bit)
@@ -1199,7 +1199,7 @@ int cmd_update_index(int argc,
 		struct strbuf buf = STRBUF_INIT;
 		struct strbuf unquoted = STRBUF_INIT;
 
-		setup_work_tree();
+		setup_work_tree(the_repository);
 		while (getline_fn(&buf, stdin) != EOF) {
 			char *p;
 			if (!nul_term_line && buf.buf[0] == '"') {
@@ -1253,7 +1253,7 @@ int cmd_update_index(int argc,
 		report(_("Untracked cache disabled"));
 		break;
 	case UC_TEST:
-		setup_work_tree();
+		setup_work_tree(the_repository);
 		return !test_if_untracked_cache_is_supported();
 	case UC_ENABLE:
 	case UC_FORCE:

@@ -56,7 +56,7 @@ const char *resolve_gitdir_gently(const char *suspect, int *return_error_code);
 void die_upon_dubious_ownership(const char *gitfile, const char *worktree,
 				const char *gitdir);
 
-void setup_work_tree(void);
+void setup_work_tree(struct repository *repo);
 
 /*
  * discover_git_directory_reason() is similar to discover_git_directory(),
