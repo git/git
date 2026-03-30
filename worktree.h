@@ -16,7 +16,7 @@ struct worktree {
 	struct object_id head_oid;
 	int is_detached;
 	int is_bare;
-	int is_current;
+	int is_current;		/* does `path` match `repo->worktree` */
 	int lock_reason_valid; /* private */
 	int prune_reason_valid; /* private */
 };
@@ -51,7 +51,6 @@ int submodule_uses_worktrees(const char *path);
 
 /*
  * Return git dir of the worktree. Note that the path may be relative.
- * If wt is NULL, git dir of current worktree is returned.
  */
 char *get_worktree_git_dir(const struct worktree *wt);
 
