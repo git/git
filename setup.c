@@ -160,10 +160,10 @@ char *prefix_path(struct repository *repo, const char *prefix, int len, const ch
 	return r;
 }
 
-int path_inside_repo(const char *prefix, const char *path)
+int path_inside_repo(struct repository *repo, const char *prefix, const char *path)
 {
 	int len = prefix ? strlen(prefix) : 0;
-	char *r = prefix_path_gently(the_repository, prefix, len, NULL, path);
+	char *r = prefix_path_gently(repo, prefix, len, NULL, path);
 	if (r) {
 		free(r);
 		return 1;
