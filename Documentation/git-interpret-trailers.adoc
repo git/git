@@ -27,7 +27,10 @@ Signed-off-by: Alice <alice@example.com>
 Signed-off-by: Bob <bob@example.com>
 ------------------------------------------------
 
-the last two lines starting with `Signed-off-by` are trailers.
+the last two lines starting with `Signed-off-by` are trailers. These two
+trailers have the _key_ `Signed-off-by` and a _value_ (Alice and Bob).
+The key must consist of only ASCII alphanumeric characters and hyphens
+(`-`). The hyphens serve as interword separators.
 
 This command reads commit messages from either the
 _<file>_ arguments or the standard input if no _<file>_ is specified.
