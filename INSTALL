@@ -14,6 +14,7 @@ that uses $prefix, the built results have some paths encoded,
 which are derived from $prefix, so "make all; make prefix=/usr
 install" would not work.
 
+
 The beginning of the Makefile documents many variables that affect the way
 git is built.  You can override them either from the command line, or in a
 config.mak file.
