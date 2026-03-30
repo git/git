@@ -1816,6 +1816,24 @@ test_expect_success 'denyCurrentBranch and bare repository worktrees' '
 	test_must_fail git push --delete bare.git wt
 '
 
+# NEEDSWORK: updateInstead unexpectedly fails when bare HEAD points to unborn
+# branch (or probably any ref that differs from the target worktree) despite
+# the target worktree being clean. This seems to be because receive-pack.c
+# diffs the target worktree index against the bare repository HEAD.
+test_expect_failure 'updateInstead with bare repository worktree and unborn bare HEAD' '
+	test_when_finished "rm -fr bare.git cloned" &&
+	git clone --bare . bare.git &&
+	git -C bare.git worktree add wt &&
+	git -C bare.git config receive.denyCurrentBranch updateInstead &&
+	git -C bare.git symbolic-ref HEAD refs/heads/unborn &&
+	test_must_fail git -C bare.git rev-parse -q --verify HEAD^{commit} &&
+	git clone . cloned &&
+	test_commit -C cloned mozzarella &&
+	git -C cloned push ../bare.git HEAD:wt &&
+	test_path_exists bare.git/wt/mozzarella.t &&
+	test "$(git -C cloned rev-parse HEAD)" = "$(git -C bare.git/wt rev-parse HEAD)"
+'
+
 test_expect_success 'refuse fetch to current branch of worktree' '
 	test_when_finished "git worktree remove --force wt && git branch -D wt" &&
 	git worktree add wt &&
