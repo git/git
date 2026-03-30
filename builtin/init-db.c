@@ -252,7 +252,7 @@ int cmd_init_db(int argc,
 	}
 
 	flags |= INIT_DB_EXIST_OK;
-	ret = init_db(git_dir, real_git_dir, template_dir, hash_algo,
+	ret = init_db(the_repository, git_dir, real_git_dir, template_dir, hash_algo,
 		      ref_storage_format, initial_branch,
 		      init_shared_repository, flags);
 

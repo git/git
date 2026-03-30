@@ -2775,7 +2775,8 @@ static void repository_format_configure(struct repository *repo,
 				    repo_fmt->ref_storage_payload);
 }
 
-int init_db(const char *git_dir, const char *real_git_dir,
+int init_db(struct repository *repo,
+	    const char *git_dir, const char *real_git_dir,
 	    const char *template_dir, int hash,
 	    enum ref_storage_format ref_storage_format,
 	    const char *initial_branch,
@@ -2795,13 +2796,13 @@ int init_db(const char *git_dir, const char *real_git_dir,
 		if (!exist_ok && !stat(real_git_dir, &st))
 			die(_("%s already exists"), real_git_dir);
 
-		set_git_dir(the_repository, real_git_dir, 1);
-		git_dir = repo_get_git_dir(the_repository);
+		set_git_dir(repo, real_git_dir, 1);
+		git_dir = repo_get_git_dir(repo);
 		separate_git_dir(git_dir, original_git_dir);
 	}
 	else {
-		set_git_dir(the_repository, git_dir, 1);
-		git_dir = repo_get_git_dir(the_repository);
+		set_git_dir(repo, git_dir, 1);
+		git_dir = repo_get_git_dir(repo);
 	}
 	startup_info->have_repository = 1;
 
@@ -2811,27 +2812,27 @@ int init_db(const char *git_dir, const char *real_git_dir,
 	 * config file, so this will not fail.  What we are catching
 	 * is an attempt to reinitialize new repository with an old tool.
 	 */
-	check_repository_format(the_repository, &repo_fmt);
+	check_repository_format(repo, &repo_fmt);
 
-	repository_format_configure(the_repository, &repo_fmt, hash, ref_storage_format);
+	repository_format_configure(repo, &repo_fmt, hash, ref_storage_format);
 
 	/*
 	 * Ensure `core.hidedotfiles` is processed. This must happen after we
 	 * have set up the repository format such that we can evaluate
 	 * includeIf conditions correctly in the case of re-initialization.
 	 */
-	repo_config(the_repository, git_default_core_config, NULL);
+	repo_config(repo, git_default_core_config, NULL);
 
-	safe_create_dir(the_repository, git_dir, 0);
+	safe_create_dir(repo, git_dir, 0);
 
-	reinit = create_default_files(the_repository, template_dir, original_git_dir,
+	reinit = create_default_files(repo, template_dir, original_git_dir,
 				      &repo_fmt, init_shared_repository);
 
 	if (!(flags & INIT_DB_SKIP_REFDB))
-		create_reference_database(the_repository, initial_branch, flags & INIT_DB_QUIET);
-	create_object_directory(the_repository);
+		create_reference_database(repo, initial_branch, flags & INIT_DB_QUIET);
+	create_object_directory(repo);
 
-	if (repo_settings_get_shared_repository(the_repository)) {
+	if (repo_settings_get_shared_repository(repo)) {
 		char buf[10];
 		/* We do not spell "group" and such, so that
 		 * the configuration can be read by older version
@@ -2839,29 +2840,29 @@ int init_db(const char *git_dir, const char *real_git_dir,
 		 * and compatibility values for PERM_GROUP and
 		 * PERM_EVERYBODY.
 		 */
-		if (repo_settings_get_shared_repository(the_repository) < 0)
+		if (repo_settings_get_shared_repository(repo) < 0)
 			/* force to the mode value */
-			xsnprintf(buf, sizeof(buf), "0%o", -repo_settings_get_shared_repository(the_repository));
-		else if (repo_settings_get_shared_repository(the_repository) == PERM_GROUP)
+			xsnprintf(buf, sizeof(buf), "0%o", -repo_settings_get_shared_repository(repo));
+		else if (repo_settings_get_shared_repository(repo) == PERM_GROUP)
 			xsnprintf(buf, sizeof(buf), "%d", OLD_PERM_GROUP);
-		else if (repo_settings_get_shared_repository(the_repository) == PERM_EVERYBODY)
+		else if (repo_settings_get_shared_repository(repo) == PERM_EVERYBODY)
 			xsnprintf(buf, sizeof(buf), "%d", OLD_PERM_EVERYBODY);
 		else
 			BUG("invalid value for shared_repository");
-		repo_config_set(the_repository, "core.sharedrepository", buf);
-		repo_config_set(the_repository, "receive.denyNonFastforwards", "true");
+		repo_config_set(repo, "core.sharedrepository", buf);
+		repo_config_set(repo, "receive.denyNonFastforwards", "true");
 	}
 
 	if (!(flags & INIT_DB_QUIET)) {
 		int len = strlen(git_dir);
 
 		if (reinit)
-			printf(repo_settings_get_shared_repository(the_repository)
+			printf(repo_settings_get_shared_repository(repo)
 			       ? _("Reinitialized existing shared Git repository in %s%s\n")
 			       : _("Reinitialized existing Git repository in %s%s\n"),
 			       git_dir, len && git_dir[len-1] != '/' ? "/" : "");
 		else
-			printf(repo_settings_get_shared_repository(the_repository)
+			printf(repo_settings_get_shared_repository(repo)
 			       ? _("Initialized empty shared Git repository in %s%s\n")
 			       : _("Initialized empty Git repository in %s%s\n"),
 			       git_dir, len && git_dir[len-1] != '/' ? "/" : "");
