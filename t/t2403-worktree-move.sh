@@ -271,4 +271,13 @@ test_expect_success 'move worktree with relative path to absolute path' '
 	test_cmp expect .git/worktrees/absolute/gitdir
 '
 
+test_expect_success MINGW 'worktree remove does not traverse mount points' '
+	mkdir target &&
+	>target/dont-remove-me &&
+	git worktree add --detach wt-junction &&
+	cmd //c "mklink /j wt-junction\\mnt target" &&
+	git worktree remove --force wt-junction &&
+	test_path_is_file target/dont-remove-me
+'
+
 test_done
