@@ -40,7 +40,7 @@ int cmd__userdiff(int argc, const char **argv)
 		return error("unknown argument %s", argv[1]);
 
 	if (want & USERDIFF_DRIVER_TYPE_CUSTOM) {
-		setup_git_directory();
+		setup_git_directory(the_repository);
 		repo_config(the_repository, cmd__userdiff_config, NULL);
 	}
 

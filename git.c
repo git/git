@@ -477,7 +477,7 @@ static int run_builtin(struct cmd_struct *p, int argc, const char **argv, struct
 		run_setup = RUN_SETUP_GENTLY;
 
 	if (run_setup & RUN_SETUP) {
-		prefix = setup_git_directory();
+		prefix = setup_git_directory(the_repository);
 		no_repo = 0;
 	} else if (run_setup & RUN_SETUP_GENTLY) {
 		prefix = setup_git_directory_gently(the_repository, &no_repo);

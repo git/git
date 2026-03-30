@@ -110,7 +110,7 @@ int cmd_merge_file(int argc,
 
 	if (!repo && object_id)
 		/* emit the correct "not a git repo" error in this case */
-		setup_git_directory();
+		setup_git_directory(the_repository);
 
 	for (i = 0; i < 3; i++) {
 		char *fname;

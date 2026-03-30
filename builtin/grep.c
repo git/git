@@ -1064,7 +1064,7 @@ int cmd_grep(int argc,
 			use_index = 0;
 		else
 			/* die the same way as if we did it at the beginning */
-			setup_git_directory();
+			setup_git_directory(the_repository);
 	}
 	/* Ignore --recurse-submodules if --no-index is given or implied */
 	if (!use_index)

@@ -210,7 +210,7 @@ int cmd__fsmonitor_client(int argc, const char **argv)
 
 	subcmd = argv[0];
 
-	setup_git_directory();
+	setup_git_directory(the_repository);
 
 	if (!strcmp(subcmd, "query"))
 		return !!do_send_query(token);
