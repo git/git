@@ -149,4 +149,14 @@ test_expect_success 'git repo info --keys uses lines as its default output forma
 	test_cmp expect actual
 '
 
+test_expect_success 'paths.git_dir matches rev-parse --git-dir' '
+	git init repo &&
+	(
+		cd repo &&
+		git repo info paths.git_dir >actual &&
+		echo "paths.git_dir=$(git rev-parse --git-dir)" >expect &&
+		test_cmp expect actual
+	)
+'
+
 test_done

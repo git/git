@@ -95,6 +95,11 @@ In order to obtain a set of values from `git repo info`, you should provide
 the keys that identify them. Here's a list of the available keys and the
 values that they return:
 
+`paths.git_dir`::
+	The path to the Git directory for the repository (equivalent to
+	`git rev-parse --git-dir`).
+
+
 `layout.bare`::
 	`true` if this is a bare repository, otherwise `false`.
 
