@@ -703,7 +703,7 @@ int cmd_ls_files(int argc,
 	if (dir.exclude_per_dir)
 		exc_given = 1;
 
-	if (require_work_tree && !is_inside_work_tree())
+	if (require_work_tree && !is_inside_work_tree(repo))
 		setup_work_tree();
 
 	if (recurse_submodules &&

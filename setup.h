@@ -5,7 +5,7 @@
 #include "string-list.h"
 
 int is_inside_git_dir(void);
-int is_inside_work_tree(void);
+int is_inside_work_tree(struct repository *repo);
 int get_common_dir_noenv(struct strbuf *sb, const char *gitdir);
 int get_common_dir(struct strbuf *sb, const char *gitdir);
 
