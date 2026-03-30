@@ -9,7 +9,7 @@ int cmd__subprocess(int argc, const char **argv)
 	struct child_process cp = CHILD_PROCESS_INIT;
 	int nogit = 0;
 
-	setup_git_directory_gently(&nogit);
+	setup_git_directory_gently(the_repository, &nogit);
 	if (nogit)
 		die("No git repo found");
 	if (argc > 1 && !strcmp(argv[1], "--setup-work-tree")) {
