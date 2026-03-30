@@ -1792,6 +1792,7 @@ test_expect_success 'updateInstead with push-to-checkout hook' '
 '
 
 test_expect_success 'denyCurrentBranch and worktrees' '
+	test_when_finished "rm -fr cloned && git worktree remove --force new-wt" &&
 	git worktree add new-wt &&
 	git clone . cloned &&
 	test_commit -C cloned first &&
