@@ -2038,41 +2038,32 @@ static void prepare_show_merge(struct rev_info *revs)
 	free(prune);
 }
 
-static int dotdot_missing(const char *arg, char *dotdot,
+static int dotdot_missing(const char *full_name,
 			  struct rev_info *revs, int symmetric)
 {
 	if (revs->ignore_missing)
 		return 0;
-	/* de-munge so we report the full argument */
-	*dotdot = '.';
 	die(symmetric
 	    ? "Invalid symmetric difference expression %s"
-	    : "Invalid revision range %s", arg);
+	    : "Invalid revision range %s", full_name);
 }
 
-static int handle_dotdot_1(const char *arg, char *dotdot,
+static int handle_dotdot_1(const char *a_name, const char *b_name,
+			   const char *full_name, int symmetric,
 			   struct rev_info *revs, int flags,
 			   int cant_be_filename,
 			   struct object_context *a_oc,
 			   struct object_context *b_oc)
 {
-	const char *a_name, *b_name;
 	struct object_id a_oid, b_oid;
 	struct object *a_obj, *b_obj;
 	unsigned int a_flags, b_flags;
-	int symmetric = 0;
 	unsigned int flags_exclude = flags ^ (UNINTERESTING | BOTTOM);
 	unsigned int oc_flags = GET_OID_COMMITTISH | GET_OID_RECORD_PATH;
 
-	a_name = arg;
 	if (!*a_name)
 		a_name = "HEAD";
 
-	b_name = dotdot + 2;
-	if (*b_name == '.') {
-		symmetric = 1;
-		b_name++;
-	}
 	if (!*b_name)
 		b_name = "HEAD";
 
@@ -2081,15 +2072,13 @@ static int handle_dotdot_1(const char *arg, char *dotdot,
 		return -1;
 
 	if (!cant_be_filename) {
-		*dotdot = '.';
-		verify_non_filename(revs->prefix, arg);
-		*dotdot = '\0';
+		verify_non_filename(revs->prefix, full_name);
 	}
 
 	a_obj = parse_object(revs->repo, &a_oid);
 	b_obj = parse_object(revs->repo, &b_oid);
 	if (!a_obj || !b_obj)
-		return dotdot_missing(arg, dotdot, revs, symmetric);
+		return dotdot_missing(full_name, revs, symmetric);
 
 	if (!symmetric) {
 		/* just A..B */
@@ -2103,7 +2092,7 @@ static int handle_dotdot_1(const char *arg, char *dotdot,
 		a = lookup_commit_reference(revs->repo, &a_obj->oid);
 		b = lookup_commit_reference(revs->repo, &b_obj->oid);
 		if (!a || !b)
-			return dotdot_missing(arg, dotdot, revs, symmetric);
+			return dotdot_missing(full_name, revs, symmetric);
 
 		if (repo_get_merge_bases(the_repository, a, b, &exclude) < 0) {
 			commit_list_free(exclude);
@@ -2132,16 +2121,23 @@ static int handle_dotdot(const char *arg,
 			 int cant_be_filename)
 {
 	struct object_context a_oc = {0}, b_oc = {0};
-	char *dotdot = strstr(arg, "..");
+	const char *dotdot = strstr(arg, "..");
+	char *tmp;
+	int symmetric = 0;
 	int ret;
 
 	if (!dotdot)
 		return -1;
 
-	*dotdot = '\0';
-	ret = handle_dotdot_1(arg, dotdot, revs, flags, cant_be_filename,
-			      &a_oc, &b_oc);
-	*dotdot = '.';
+	tmp = xmemdupz(arg, dotdot - arg);
+	dotdot += 2;
+	if (*dotdot == '.') {
+		symmetric = 1;
+		dotdot++;
+	}
+	ret = handle_dotdot_1(tmp, dotdot, arg, symmetric, revs, flags,
+			      cant_be_filename, &a_oc, &b_oc);
+	free(tmp);
 
 	object_context_release(&a_oc);
 	object_context_release(&b_oc);
@@ -2151,7 +2147,10 @@ static int handle_dotdot(const char *arg,
 static int handle_revision_arg_1(const char *arg_, struct rev_info *revs, int flags, unsigned revarg_opt)
 {
 	struct object_context oc = {0};
-	char *mark;
+	const char *mark;
+	char *arg_minus_at = NULL;
+	char *arg_minus_excl = NULL;
+	char *arg_minus_dash = NULL;
 	struct object *object;
 	struct object_id oid;
 	int local_flags;
@@ -2178,18 +2177,17 @@ static int handle_revision_arg_1(const char *arg_, struct rev_info *revs, int fl
 
 	mark = strstr(arg, "^@");
 	if (mark && !mark[2]) {
-		*mark = 0;
-		if (add_parents_only(revs, arg, flags, 0)) {
+		arg_minus_at = xmemdupz(arg, mark - arg);
+		if (add_parents_only(revs, arg_minus_at, flags, 0)) {
 			ret = 0;
 			goto out;
 		}
-		*mark = '^';
 	}
 	mark = strstr(arg, "^!");
 	if (mark && !mark[2]) {
-		*mark = 0;
-		if (!add_parents_only(revs, arg, flags ^ (UNINTERESTING | BOTTOM), 0))
-			*mark = '^';
+		arg_minus_excl = xmemdupz(arg, mark - arg);
+		if (add_parents_only(revs, arg_minus_excl, flags ^ (UNINTERESTING | BOTTOM), 0))
+			arg = arg_minus_excl;
 	}
 	mark = strstr(arg, "^-");
 	if (mark) {
@@ -2203,9 +2201,9 @@ static int handle_revision_arg_1(const char *arg_, struct rev_info *revs, int fl
 			}
 		}
 
-		*mark = 0;
-		if (!add_parents_only(revs, arg, flags ^ (UNINTERESTING | BOTTOM), exclude_parent))
-			*mark = '^';
+		arg_minus_dash = xmemdupz(arg, mark - arg);
+		if (add_parents_only(revs, arg_minus_dash, flags ^ (UNINTERESTING | BOTTOM), exclude_parent))
+			arg = arg_minus_dash;
 	}
 
 	local_flags = 0;
@@ -2240,6 +2238,9 @@ static int handle_revision_arg_1(const char *arg_, struct rev_info *revs, int fl
 
 out:
 	object_context_release(&oc);
+	free(arg_minus_at);
+	free(arg_minus_excl);
+	free(arg_minus_dash);
 	return ret;
 }
 
