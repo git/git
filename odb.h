@@ -1,19 +1,17 @@
 #ifndef ODB_H
 #define ODB_H
 
-#include "hashmap.h"
 #include "object.h"
 #include "oidset.h"
 #include "oidmap.h"
 #include "string-list.h"
 #include "thread-utils.h"
 
-struct oidmap;
-struct oidtree;
+struct cached_object_entry;
+struct packed_git;
+struct repository;
 struct strbuf;
 struct strvec;
-struct repository;
-struct multi_pack_index;
 
 /*
  * Set this to 0 to prevent odb_read_object_info_extended() from fetching missing
@@ -30,10 +28,6 @@ extern int fetch_if_missing;
  * `err` must not be null.
  */
 char *compute_alternate_path(const char *path, struct strbuf *err);
-
-struct packed_git;
-struct packfile_store;
-struct cached_object_entry;
 
 /*
  * A transaction may be started for an object database prior to writing new
