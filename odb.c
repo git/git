@@ -922,7 +922,7 @@ int odb_for_each_object(struct object_database *odb,
 			const struct object_info *request,
 			odb_for_each_object_cb cb,
 			void *cb_data,
-			unsigned flags)
+			enum odb_for_each_object_flags flags)
 {
 	struct odb_for_each_object_options opts = {
 		.flags = flags,
