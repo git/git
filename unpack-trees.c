@@ -1882,7 +1882,7 @@ static int verify_absent(const struct cache_entry *,
  */
 int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options *o)
 {
-	struct repository *repo = the_repository;
+	struct repository *repo = o->src_index->repo;
 	int i, ret;
 	static struct cache_entry *dfc;
 	struct pattern_list pl;
