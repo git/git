@@ -369,8 +369,23 @@ int cmd_repack(int argc,
 		 */
 		for (i = 0; i < geometry.split; i++)
 			fprintf(in, "%s\n", pack_basename(geometry.pack[i]));
-		for (i = geometry.split; i < geometry.pack_nr; i++)
-			fprintf(in, "^%s\n", pack_basename(geometry.pack[i]));
+		for (i = geometry.split; i < geometry.pack_nr; i++) {
+			const char *basename = pack_basename(geometry.pack[i]);
+			char marker = '^';
+
+			if (!midx_must_contain_cruft &&
+			    !string_list_has_string(&existing.midx_packs,
+						    basename)) {
+				/*
+				 * Assume non-MIDX'd packs are not
+				 * necessarily closed under
+				 * reachability.
+				 */
+				marker = '!';
+			}
+
+			fprintf(in, "%c%s\n", marker, basename);
+		}
 		fclose(in);
 	}
 

@@ -28,6 +28,7 @@
 #include "reachable.h"
 #include "oid-array.h"
 #include "strvec.h"
+#include "strmap.h"
 #include "list.h"
 #include "packfile.h"
 #include "object-file.h"
@@ -217,6 +218,7 @@ static int have_non_local_packs;
 static int incremental;
 static int ignore_packed_keep_on_disk;
 static int ignore_packed_keep_in_core;
+static int ignore_packed_keep_in_core_open;
 static int ignore_packed_keep_in_core_has_cruft;
 static int allow_ofs_delta;
 static struct pack_idx_option pack_idx_opts;
@@ -1632,7 +1634,8 @@ static int want_found_object(const struct object_id *oid, int exclude,
 	/*
 	 * Then handle .keep first, as we have a fast(er) path there.
 	 */
-	if (ignore_packed_keep_on_disk || ignore_packed_keep_in_core) {
+	if (ignore_packed_keep_on_disk || ignore_packed_keep_in_core ||
+	    ignore_packed_keep_in_core_open) {
 		/*
 		 * Set the flags for the kept-pack cache to be the ones we want
 		 * to ignore.
@@ -1646,6 +1649,8 @@ static int want_found_object(const struct object_id *oid, int exclude,
 			flags |= KEPT_PACK_ON_DISK;
 		if (ignore_packed_keep_in_core)
 			flags |= KEPT_PACK_IN_CORE;
+		if (ignore_packed_keep_in_core_open)
+			flags |= KEPT_PACK_IN_CORE_OPEN;
 
 		/*
 		 * If the object is in a pack that we want to ignore, *and* we
@@ -1656,6 +1661,8 @@ static int want_found_object(const struct object_id *oid, int exclude,
 			if (ignore_packed_keep_on_disk && p->pack_keep)
 				return 0;
 			if (ignore_packed_keep_in_core && p->pack_keep_in_core)
+				return 0;
+			if (ignore_packed_keep_in_core_open && p->pack_keep_in_core_open)
 				return 0;
 			if (has_object_kept_pack(p->repo, oid, flags))
 				return 0;
@@ -3756,6 +3763,7 @@ static int add_object_entry_from_pack(const struct object_id *oid,
 				      void *_data)
 {
 	off_t ofs;
+	struct object_info oi = OBJECT_INFO_INIT;
 	enum object_type type = OBJ_NONE;
 
 	display_progress(progress_state, ++nr_seen);
@@ -3763,28 +3771,33 @@ static int add_object_entry_from_pack(const struct object_id *oid,
 	if (have_duplicate_entry(oid, 0))
 		return 0;
 
+	stdin_packs_found_nr++;
+
 	ofs = nth_packed_object_offset(p, pos);
+
+	oi.typep = &type;
+	if (packed_object_info(p, ofs, &oi) < 0) {
+		die(_("could not get type of object %s in pack %s"),
+		    oid_to_hex(oid), p->pack_name);
+	} else if (type == OBJ_COMMIT) {
+		struct rev_info *revs = _data;
+		/*
+		 * commits in included packs are used as starting points
+		 * for the subsequent revision walk
+		 *
+		 * Note that we do want to walk through commits that are
+		 * present in excluded-open ('!') packs to pick up any
+		 * objects reachable from them not present in the
+		 * excluded-closed ('^') packs.
+		 *
+		 * However, we'll only add those objects to the packing
+		 * list after checking `want_object_in_pack()` below.
+		 */
+		add_pending_oid(revs, NULL, oid, 0);
+	}
+
 	if (!want_object_in_pack(oid, 0, &p, &ofs))
 		return 0;
-
-	if (p) {
-		struct object_info oi = OBJECT_INFO_INIT;
-
-		oi.typep = &type;
-		if (packed_object_info(p, ofs, &oi) < 0) {
-			die(_("could not get type of object %s in pack %s"),
-			    oid_to_hex(oid), p->pack_name);
-		} else if (type == OBJ_COMMIT) {
-			struct rev_info *revs = _data;
-			/*
-			 * commits in included packs are used as starting points for the
-			 * subsequent revision walk
-			 */
-			add_pending_oid(revs, NULL, oid, 0);
-		}
-
-		stdin_packs_found_nr++;
-	}
 
 	create_object_entry(oid, type, 0, 0, 0, p, ofs);
 
@@ -3835,87 +3848,78 @@ static void show_commit_pack_hint(struct commit *commit, void *data)
 
 }
 
+/*
+ * stdin_pack_info_kind specifies how a pack specified over stdin
+ * should be treated when pack-objects is invoked with --stdin-packs.
+ *
+ *  - STDIN_PACK_INCLUDE: objects in any packs with this flag bit set
+ *    should be included in the output pack, unless they appear in an
+ *    excluded pack.
+ *
+ *  - STDIN_PACK_EXCLUDE_CLOSED: objects in any packs with this flag
+ *    bit set should be excluded from the output pack.
+ *
+ *  - STDIN_PACK_EXCLUDE_OPEN: objects in any packs with this flag
+ *    bit set should be excluded from the output pack, but are not
+ *    guaranteed to be closed under reachability.
+ *
+ * Objects in packs whose 'kind' bits include STDIN_PACK_INCLUDE or
+ * STDIN_PACK_EXCLUDE_OPEN are used as traversal tips when invoked
+ * with --stdin-packs=follow.
+ */
+enum stdin_pack_info_kind {
+	STDIN_PACK_INCLUDE = (1<<0),
+	STDIN_PACK_EXCLUDE_CLOSED = (1<<1),
+	STDIN_PACK_EXCLUDE_OPEN = (1<<2),
+};
+
+struct stdin_pack_info {
+	struct packed_git *p;
+	enum stdin_pack_info_kind kind;
+};
+
 static int pack_mtime_cmp(const void *_a, const void *_b)
 {
-	struct packed_git *a = ((const struct string_list_item*)_a)->util;
-	struct packed_git *b = ((const struct string_list_item*)_b)->util;
+	struct stdin_pack_info *a = ((const struct string_list_item*)_a)->util;
+	struct stdin_pack_info *b = ((const struct string_list_item*)_b)->util;
 
 	/*
 	 * order packs by descending mtime so that objects are laid out
 	 * roughly as newest-to-oldest
 	 */
-	if (a->mtime < b->mtime)
+	if (a->p->mtime < b->p->mtime)
 		return 1;
-	else if (b->mtime < a->mtime)
+	else if (b->p->mtime < a->p->mtime)
 		return -1;
 	else
 		return 0;
 }
 
-static void read_packs_list_from_stdin(struct rev_info *revs)
+static int stdin_packs_include_check_obj(struct object *obj, void *data UNUSED)
 {
-	struct strbuf buf = STRBUF_INIT;
-	struct string_list include_packs = STRING_LIST_INIT_DUP;
-	struct string_list exclude_packs = STRING_LIST_INIT_DUP;
-	struct string_list_item *item = NULL;
-	struct packed_git *p;
+	return !has_object_kept_pack(to_pack.repo, &obj->oid,
+				     KEPT_PACK_IN_CORE);
+}
 
-	while (strbuf_getline(&buf, stdin) != EOF) {
-		if (!buf.len)
-			continue;
+static int stdin_packs_include_check(struct commit *commit, void *data)
+{
+	return stdin_packs_include_check_obj((struct object *)commit, data);
+}
 
-		if (*buf.buf == '^')
-			string_list_append(&exclude_packs, buf.buf + 1);
-		else
-			string_list_append(&include_packs, buf.buf);
+static void stdin_packs_add_pack_entries(struct strmap *packs,
+					 struct rev_info *revs)
+{
+	struct string_list keys = STRING_LIST_INIT_NODUP;
+	struct string_list_item *item;
+	struct hashmap_iter iter;
+	struct strmap_entry *entry;
 
-		strbuf_reset(&buf);
-	}
+	strmap_for_each_entry(packs, &iter, entry) {
+		struct stdin_pack_info *info = entry->value;
+		if (!info->p)
+			die(_("could not find pack '%s'"), entry->key);
 
-	string_list_sort_u(&include_packs, 0);
-	string_list_sort_u(&exclude_packs, 0);
-
-	repo_for_each_pack(the_repository, p) {
-		const char *pack_name = pack_basename(p);
-
-		if ((item = string_list_lookup(&include_packs, pack_name))) {
-			if (exclude_promisor_objects && p->pack_promisor)
-				die(_("packfile %s is a promisor but --exclude-promisor-objects was given"), p->pack_name);
-			item->util = p;
-		}
-		if ((item = string_list_lookup(&exclude_packs, pack_name)))
-			item->util = p;
-	}
-
-	/*
-	 * Arguments we got on stdin may not even be packs. First
-	 * check that to avoid segfaulting later on in
-	 * e.g. pack_mtime_cmp(), excluded packs are handled below.
-	 *
-	 * Since we first parsed our STDIN and then sorted the input
-	 * lines the pack we error on will be whatever line happens to
-	 * sort first. This is lazy, it's enough that we report one
-	 * bad case here, we don't need to report the first/last one,
-	 * or all of them.
-	 */
-	for_each_string_list_item(item, &include_packs) {
-		struct packed_git *p = item->util;
-		if (!p)
-			die(_("could not find pack '%s'"), item->string);
-		if (!is_pack_valid(p))
-			die(_("packfile %s cannot be accessed"), p->pack_name);
-	}
-
-	/*
-	 * Then, handle all of the excluded packs, marking them as
-	 * kept in-core so that later calls to add_object_entry()
-	 * discards any objects that are also found in excluded packs.
-	 */
-	for_each_string_list_item(item, &exclude_packs) {
-		struct packed_git *p = item->util;
-		if (!p)
-			die(_("could not find pack '%s'"), item->string);
-		p->pack_keep_in_core = 1;
+		string_list_append(&keys, entry->key)->util = info;
 	}
 
 	/*
@@ -3923,19 +3927,118 @@ static void read_packs_list_from_stdin(struct rev_info *revs)
 	 * string_list_item's ->util pointer, which string_list_sort() does not
 	 * provide.
 	 */
-	QSORT(include_packs.items, include_packs.nr, pack_mtime_cmp);
+	QSORT(keys.items, keys.nr, pack_mtime_cmp);
 
-	for_each_string_list_item(item, &include_packs) {
-		struct packed_git *p = item->util;
-		for_each_object_in_pack(p,
-					add_object_entry_from_pack,
-					revs,
-					ODB_FOR_EACH_OBJECT_PACK_ORDER);
+	for_each_string_list_item(item, &keys) {
+		struct stdin_pack_info *info = item->util;
+
+		if (info->kind & STDIN_PACK_EXCLUDE_OPEN) {
+			/*
+			 * When open-excluded packs ("!") are present, stop
+			 * the parent walk at closed-excluded ("^") packs.
+			 * Objects behind a "^" boundary are guaranteed to
+			 * have closure and should not be rescued.
+			 */
+			revs->include_check = stdin_packs_include_check;
+			revs->include_check_obj = stdin_packs_include_check_obj;
+		}
+
+		if ((info->kind & STDIN_PACK_INCLUDE) ||
+		    (info->kind & STDIN_PACK_EXCLUDE_OPEN))
+			for_each_object_in_pack(info->p,
+						add_object_entry_from_pack,
+						revs,
+						ODB_FOR_EACH_OBJECT_PACK_ORDER);
 	}
 
+	string_list_clear(&keys, 0);
+}
+
+static void stdin_packs_read_input(struct rev_info *revs,
+				   enum stdin_packs_mode mode)
+{
+	struct strbuf buf = STRBUF_INIT;
+	struct strmap packs = STRMAP_INIT;
+	struct packed_git *p;
+
+	while (strbuf_getline(&buf, stdin) != EOF) {
+		struct stdin_pack_info *info;
+		enum stdin_pack_info_kind kind = STDIN_PACK_INCLUDE;
+		const char *key = buf.buf;
+
+		if (!*key)
+			continue;
+		else if (*key == '^')
+			kind = STDIN_PACK_EXCLUDE_CLOSED;
+		else if (*key == '!' && mode == STDIN_PACKS_MODE_FOLLOW)
+			kind = STDIN_PACK_EXCLUDE_OPEN;
+
+		if (kind != STDIN_PACK_INCLUDE)
+			key++;
+
+		info = strmap_get(&packs, key);
+		if (!info) {
+			CALLOC_ARRAY(info, 1);
+			strmap_put(&packs, key, info);
+		}
+
+		info->kind |= kind;
+
+		strbuf_reset(&buf);
+	}
+
+	repo_for_each_pack(the_repository, p) {
+		struct stdin_pack_info *info;
+
+		info = strmap_get(&packs, pack_basename(p));
+		if (!info)
+			continue;
+
+		if (info->kind & STDIN_PACK_INCLUDE) {
+			if (exclude_promisor_objects && p->pack_promisor)
+				die(_("packfile %s is a promisor but --exclude-promisor-objects was given"), p->pack_name);
+
+			/*
+			 * Arguments we got on stdin may not even be
+			 * packs. First check that to avoid segfaulting
+			 * later on in e.g.  pack_mtime_cmp(), excluded
+			 * packs are handled below.
+			 */
+			if (!is_pack_valid(p))
+				die(_("packfile %s cannot be accessed"), p->pack_name);
+		}
+
+		if (info->kind & STDIN_PACK_EXCLUDE_CLOSED) {
+			/*
+			 * Marking excluded packs as kept in-core so
+			 * that later calls to add_object_entry()
+			 * discards any objects that are also found in
+			 * excluded packs.
+			 */
+			p->pack_keep_in_core = 1;
+		}
+
+		if (info->kind & STDIN_PACK_EXCLUDE_OPEN) {
+			/*
+			 * Marking excluded open packs as kept in-core
+			 * (open) for the same reason as we marked
+			 * exclude closed packs as kept in-core.
+			 *
+			 * Use a separate flag here to ensure we don't
+			 * halt our traversal at these packs, since they
+			 * are not guaranteed to have closure.
+			 *
+			 */
+			p->pack_keep_in_core_open = 1;
+		}
+
+		info->p = p;
+	}
+
+	stdin_packs_add_pack_entries(&packs, revs);
+
 	strbuf_release(&buf);
-	string_list_clear(&include_packs, 0);
-	string_list_clear(&exclude_packs, 0);
+	strmap_clear(&packs, 1);
 }
 
 static void add_unreachable_loose_objects(struct rev_info *revs);
@@ -3972,7 +4075,15 @@ static void read_stdin_packs(enum stdin_packs_mode mode, int rev_list_unpacked)
 
 	/* avoids adding objects in excluded packs */
 	ignore_packed_keep_in_core = 1;
-	read_packs_list_from_stdin(&revs);
+	if (mode == STDIN_PACKS_MODE_FOLLOW) {
+		/*
+		 * In '--stdin-packs=follow' mode, additionally ignore
+		 * objects in excluded-open packs to prevent them from
+		 * appearing in the resulting pack.
+		 */
+		ignore_packed_keep_in_core_open = 1;
+	}
+	stdin_packs_read_input(&revs, mode);
 	if (rev_list_unpacked)
 		add_unreachable_loose_objects(&revs);
 
@@ -3982,6 +4093,8 @@ static void read_stdin_packs(enum stdin_packs_mode mode, int rev_list_unpacked)
 			     show_commit_pack_hint,
 			     show_object_pack_hint,
 			     &mode);
+
+	release_revisions(&revs);
 
 	trace2_data_intmax("pack-objects", the_repository, "stdin_packs_found",
 			   stdin_packs_found_nr);
