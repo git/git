@@ -561,7 +561,7 @@ int odb_find_abbrev_len(struct object_database *odb,
 			int min_len,
 			unsigned *out);
 
-enum {
+enum odb_write_object_flags {
 	/*
 	 * By default, `odb_write_object()` does not actually write anything
 	 * into the object store, but only computes the object ID. This flag
@@ -589,7 +589,7 @@ int odb_write_object_ext(struct object_database *odb,
 			 enum object_type type,
 			 struct object_id *oid,
 			 struct object_id *compat_oid,
-			 unsigned flags);
+			 enum odb_write_object_flags flags);
 
 static inline int odb_write_object(struct object_database *odb,
 				   const void *buf, unsigned long len,

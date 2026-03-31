@@ -1053,7 +1053,7 @@ int odb_write_object_ext(struct object_database *odb,
 			 enum object_type type,
 			 struct object_id *oid,
 			 struct object_id *compat_oid,
-			 unsigned flags)
+			 enum odb_write_object_flags flags)
 {
 	return odb_source_write_object(odb->sources, buf, len, type,
 				       oid, compat_oid, flags);

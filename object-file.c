@@ -1169,7 +1169,8 @@ cleanup:
 int odb_source_loose_write_object(struct odb_source *source,
 				  const void *buf, unsigned long len,
 				  enum object_type type, struct object_id *oid,
-				  struct object_id *compat_oid_in, unsigned flags)
+				  struct object_id *compat_oid_in,
+				  enum odb_write_object_flags flags)
 {
 	const struct git_hash_algo *algo = source->odb->repo->hash_algo;
 	const struct git_hash_algo *compat = source->odb->repo->compat_hash_algo;
