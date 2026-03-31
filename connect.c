@@ -1054,6 +1054,8 @@ static struct child_process *git_proxy_connect(int fd[2], char *host)
 	strvec_push(&proxy->args, port);
 	proxy->in = -1;
 	proxy->out = -1;
+	proxy->clean_on_exit = 1;
+	proxy->wait_after_clean = 1;
 	if (start_command(proxy))
 		die(_("cannot start proxy %s"), git_proxy_command);
 	fd[0] = proxy->out; /* read from proxy stdout */
@@ -1515,6 +1517,8 @@ struct child_process *git_connect(int fd[2], const char *url,
 		}
 		strvec_push(&conn->args, cmd.buf);
 
+		conn->clean_on_exit = 1;
+		conn->wait_after_clean = 1;
 		if (start_command(conn))
 			die(_("unable to fork"));
 
