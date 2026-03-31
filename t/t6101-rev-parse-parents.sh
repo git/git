@@ -39,7 +39,8 @@ test_expect_success 'setup' '
 '
 
 test_expect_success 'start is valid' '
-	git rev-parse start | grep "^$OID_REGEX$"
+	git rev-parse start >actual &&
+	test_grep "^$OID_REGEX$" actual
 '
 
 test_expect_success 'start^0' '
