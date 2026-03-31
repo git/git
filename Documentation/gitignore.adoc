@@ -96,6 +96,11 @@ PATTERN FORMAT
    particular `.gitignore` file itself. Otherwise the pattern may also
    match at any level below the `.gitignore` level.
 
+ - Patterns read from exclude sources that are outside the working tree,
+   such as $GIT_DIR/info/exclude and core.excludesFile, are treated as if
+   they are specified at the root of the working tree, i.e. a leading "/"
+   in such patterns anchors the match at the root of the repository.
+
  - If there is a separator at the end of the pattern then the pattern
    will only match directories, otherwise the pattern can match both
    files and directories.
