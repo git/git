@@ -254,7 +254,10 @@ static struct commit *mapped_commit(kh_oid_map_t *replayed_commits,
 				    struct commit *commit,
 				    struct commit *fallback)
 {
-	khint_t pos = kh_get_oid_map(replayed_commits, commit->object.oid);
+	khint_t pos;
+	if (!commit)
+		return fallback;
+	pos = kh_get_oid_map(replayed_commits, commit->object.oid);
 	if (pos == kh_end(replayed_commits))
 		return fallback;
 	return kh_value(replayed_commits, pos);
@@ -271,18 +274,26 @@ static struct commit *pick_regular_commit(struct repository *repo,
 	struct commit *base, *replayed_base;
 	struct tree *pickme_tree, *base_tree, *replayed_base_tree;
 
-	base = pickme->parents->item;
-	replayed_base = mapped_commit(replayed_commits, base, onto);
+	if (pickme->parents) {
+		base = pickme->parents->item;
+		base_tree = repo_get_commit_tree(repo, base);
+	} else {
+		base = NULL;
+		base_tree = lookup_tree(repo, repo->hash_algo->empty_tree);
+	}
 
+	replayed_base = mapped_commit(replayed_commits, base, onto);
 	replayed_base_tree = repo_get_commit_tree(repo, replayed_base);
 	pickme_tree = repo_get_commit_tree(repo, pickme);
-	base_tree = repo_get_commit_tree(repo, base);
 
 	if (mode == REPLAY_MODE_PICK) {
 		/* Cherry-pick: normal order */
 		merge_opt->branch1 = short_commit_name(repo, replayed_base);
 		merge_opt->branch2 = short_commit_name(repo, pickme);
-		merge_opt->ancestor = xstrfmt("parent of %s", merge_opt->branch2);
+		if (pickme->parents)
+			merge_opt->ancestor = xstrfmt("parent of %s", merge_opt->branch2);
+		else
+			merge_opt->ancestor = xstrdup("empty tree");
 
 		merge_incore_nonrecursive(merge_opt,
 					  base_tree,
@@ -364,8 +375,6 @@ int replay_revisions(struct rev_info *revs,
 	set_up_replay_mode(revs->repo, &revs->cmdline, opts->onto,
 			   &detached_head, &advance, &revert, &onto, &update_refs);
 
-	/* FIXME: Should allow replaying commits with the first as a root commit */
-
 	if (prepare_revision_walk(revs) < 0) {
 		ret = error(_("error preparing revisions"));
 		goto out;
@@ -380,9 +389,7 @@ int replay_revisions(struct rev_info *revs,
 		khint_t pos;
 		int hr;
 
-		if (!commit->parents)
-			die(_("replaying down from root commit is not supported yet!"));
-		if (commit->parents->next)
+		if (commit->parents && commit->parents->next)
 			die(_("replaying merge commits is not supported yet!"));
 
 		last_commit = pick_regular_commit(revs->repo, commit, replayed_commits,
