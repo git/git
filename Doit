@@ -1,5 +1,5 @@
 #!/bin/sh
 
-Meta/Dothem --cocci --breaking --san --leaks --sha256 "$@"
+Meta/Dothem --cocci --breaking --test-vars --san --leaks --sha256 "$@"
 
 Meta/V
