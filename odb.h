@@ -568,12 +568,12 @@ enum {
 	 * changes that so that the object will be written as a loose object
 	 * and persisted.
 	 */
-	WRITE_OBJECT_PERSIST = (1 << 0),
+	ODB_WRITE_OBJECT_PERSIST = (1 << 0),
 
 	/*
 	 * Do not print an error in case something goes wrong.
 	 */
-	WRITE_OBJECT_SILENT = (1 << 1),
+	ODB_WRITE_OBJECT_SILENT = (1 << 1),
 };
 
 /*

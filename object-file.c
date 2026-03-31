@@ -909,7 +909,7 @@ static int start_loose_object_common(struct odb_source *source,
 
 	fd = create_tmpfile(source->odb->repo, tmp_file, filename);
 	if (fd < 0) {
-		if (flags & WRITE_OBJECT_SILENT)
+		if (flags & ODB_WRITE_OBJECT_SILENT)
 			return -1;
 		else if (errno == EACCES)
 			return error(_("insufficient permission for adding "
@@ -1042,7 +1042,7 @@ static int write_loose_object(struct odb_source *source,
 		utb.actime = mtime;
 		utb.modtime = mtime;
 		if (utime(tmp_file.buf, &utb) < 0 &&
-		    !(flags & WRITE_OBJECT_SILENT))
+		    !(flags & ODB_WRITE_OBJECT_SILENT))
 			warning_errno(_("failed utime() on %s"), tmp_file.buf);
 	}
 
