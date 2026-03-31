@@ -145,7 +145,7 @@ static struct commit *deref_without_lazy_fetch(const struct object_id *oid,
 	if (commit) {
 		if (mark_tags_complete_and_check_obj_db) {
 			if (!odb_has_object(the_repository->objects, oid,
-					    HAS_OBJECT_RECHECK_PACKED))
+					    ODB_HAS_OBJECT_RECHECK_PACKED))
 				die_in_commit_graph_only(oid);
 		}
 		return commit;
@@ -2013,7 +2013,7 @@ static void update_shallow(struct fetch_pack_args *args,
 		struct object_id *oid = si->shallow->oid;
 		for (i = 0; i < si->shallow->nr; i++)
 			if (odb_has_object(the_repository->objects, &oid[i],
-					   HAS_OBJECT_RECHECK_PACKED | HAS_OBJECT_FETCH_PROMISOR))
+					   ODB_HAS_OBJECT_RECHECK_PACKED | ODB_HAS_OBJECT_FETCH_PROMISOR))
 				oid_array_append(&extra, &oid[i]);
 		if (extra.nr) {
 			setup_alternate_shallow(&shallow_lock,

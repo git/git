@@ -796,7 +796,7 @@ static int prune_notes_helper(const struct object_id *object_oid,
 	struct note_delete_list *n;
 
 	if (odb_has_object(the_repository->objects, object_oid,
-			   HAS_OBJECT_RECHECK_PACKED | HAS_OBJECT_FETCH_PROMISOR))
+			   ODB_HAS_OBJECT_RECHECK_PACKED | ODB_HAS_OBJECT_FETCH_PROMISOR))
 		return 0; /* nothing to do for this note */
 
 	/* failed to find object => prune this note */

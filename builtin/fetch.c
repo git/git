@@ -946,7 +946,7 @@ static int update_local_ref(struct ref *ref,
 	int fast_forward = 0;
 
 	if (!odb_has_object(the_repository->objects, &ref->new_oid,
-			    HAS_OBJECT_RECHECK_PACKED | HAS_OBJECT_FETCH_PROMISOR))
+			    ODB_HAS_OBJECT_RECHECK_PACKED | ODB_HAS_OBJECT_FETCH_PROMISOR))
 		die(_("object %s not found"), oid_to_hex(&ref->new_oid));
 
 	if (oideq(&ref->old_oid, &ref->new_oid)) {
@@ -1396,7 +1396,7 @@ static int check_exist_and_connected(struct ref *ref_map)
 	 */
 	for (r = rm; r; r = r->next) {
 		if (!odb_has_object(the_repository->objects, &r->old_oid,
-				    HAS_OBJECT_RECHECK_PACKED))
+				    ODB_HAS_OBJECT_RECHECK_PACKED))
 			return -1;
 	}
 

@@ -1378,7 +1378,7 @@ static int already_written(struct odb_transaction_files *transaction,
 {
 	/* The object may already exist in the repository */
 	if (odb_has_object(transaction->base.source->odb, oid,
-			   HAS_OBJECT_RECHECK_PACKED | HAS_OBJECT_FETCH_PROMISOR))
+			   ODB_HAS_OBJECT_RECHECK_PACKED | ODB_HAS_OBJECT_FETCH_PROMISOR))
 		return 1;
 
 	/* Might want to keep the list sorted */
