@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Mar 2026, #12)
-X-master-at: 270e10ad6dda3379ea0da7efd11e4fbf2cd7a325
-X-next-at: 0c370356e2245450de215a847afb905bda230d11
+Subject: What's cooking in git.git (Apr 2026, #01)
+X-master-at: cf2139f8e1680b076e115bc0b349e369b4b0ecc4
+X-next-at: 189a785ab595218b95d2e09937b96fbd752f5d80
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Mar 2026, #12)
+What's cooking in git.git (Apr 2026, #01)
 -----------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,24 +46,216 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* bk/t5315-test-path-is-helpers (2026-03-19) 1 commit
+  (merged to 'next' on 2026-03-24 at f7374e8e70)
+ + t5315: use test_path_is_file for loose-object check
+
+ Test clean-up.
+ source: <20260319180803.164335-1-elkhatabibilal@gmail.com>
+
+
+* jc/macos-homebrew-wo-reg-enhanced (2026-03-23) 1 commit
+  (merged to 'next' on 2026-03-26 at ce92a76711)
+ + regexp: leave a pointer to resurrect workaround for Homebrew
+
+ In case homebrew breaks REG_ENHANCED again, leave a in-code comment
+ to suggest use of our replacement regex as a workaround.
+ source: <xmqq8qbi5vvx.fsf@gitster.g>
+
+
+* jk/diff-highlight-more (2026-03-22) 9 commits
+  (merged to 'next' on 2026-03-24 at e7b555cbc5)
+ + diff-highlight: fetch all config with one process
+ + diff-highlight: allow module callers to pass in color config
+ + diff-highlight: test color config
+ + diff-highlight: use test_decode_color in tests
+ + t: add matching negative attributes to test_decode_color
+ + diff-highlight: check diff-highlight exit status in tests
+ + diff-highlight: drop perl version dependency back to 5.8
+ + diff-highlight: mention build instructions
+ + Merge branch 'jk/diff-highlight-identical-pairs' into jk/diff-highlight-more
+
+ Various updates to contrib/diff-highlight, including documentation
+ updates, test improvements, and color configuration handling.
+ source: <20260323060139.GA10215@coredump.intra.peff.net>
+
+
+* jk/t0061-bat-test-update (2026-03-24) 1 commit
+  (merged to 'next' on 2026-03-26 at ffae180124)
+ + t0061: simplify .bat test
+
+ A test to run a .bat file with whitespaces in the name with arguments
+ with whitespaces in them was flaky in that sometimes it got killed
+ before it produced expected side effects, which has been rewritten to
+ make it more robust.
+ source: <20260325061357.GA3772970@coredump.intra.peff.net>
+
+
+* kj/refspec-parsing-outside-repository (2026-03-23) 2 commits
+  (merged to 'next' on 2026-03-26 at 0a8c60e8ae)
+ + refspec: fix typo in comment
+ + remote-curl: fall back to default hash outside repo
+
+ "git ls-remote '+refs/tags/*:refs/tags/*' https://..." run outside a
+ repository would dereference a NULL while trying to see if the given
+ refspec is a single-object refspec, which has been corrected.
+ source: <20260322023557.15907-1-jayatheerthkulkarni2005@gmail.com>
+
+
+* mk/repo-help-strings (2026-03-25) 2 commits
+  (merged to 'next' on 2026-03-26 at a4c755ddde)
+ + repo: show subcommand-specific help text
+ + repo: factor repo usage strings into shared macros
+
+ "git repo info -h" and "git repo structure -h" limit their help output
+ to the part that is specific to the subcommand.
+ source: <20260323152937.257406-1-  mahlet.takassa@gmail.com>
+
+
+* rs/use-strvec-pushv (2026-03-24) 2 commits
+  (merged to 'next' on 2026-03-24 at 7c6487dcaf)
+ + use strvec_pushv() to add another strvec
+ + Merge branch 'ps/build-tweaks' into rs/use-strvec-pushv
+
+ Code paths that loop over another array to push each element into a
+ strvec have been rewritten to use strvec_pushv() instead.
+ source: <084f3b43-91ac-4553-8305-03944e97eaa6@web.de>
+
+
+* vp/http-rate-limit-retries (2026-03-17) 3 commits
+  (merged to 'next' on 2026-03-24 at 9cb4ec5fad)
+ + http: add support for HTTP 429 rate limit retries
+ + strbuf_attach: fix call sites to pass correct alloc
+ + strbuf: pass correct alloc to strbuf_attach() in strbuf_reencode()
+
+ The HTTP transport learned to react to "429 Too Many Requests".
+ cf. <ab4RIZr7b49VKjR9@nand.local>
+ source: <pull.2008.v6.git.1773752435.gitgitgadget@gmail.com>
+
+--------------------------------------------------
 [New Topics]
 
-* sa/cat-file-batch-mailmap-switch (2026-03-29) 1 commit
+* jt/odb-transaction-write (2026-03-31) 7 commits
+ - odb/transaction: make `write_object_stream()` pluggable
+ - object-file: generalize packfile writes to use odb_write_stream
+ - object-file: avoid fd seekback by checking object size upfront
+ - object-file: remove flags from transaction packfile writes
+ - odb: update `struct odb_write_stream` read() callback
+ - odb/transaction: use pluggable `begin_transaction()`
+ - odb: split `struct odb_transaction` into separate header
+
+ ODB transaction interface is being reworked to explicitly handle
+ object writes.
+
+ Expecting a reroll.
+ cf. <ac0irp8GJSrSD8GU@denethor>
+ source: <20260401030316.1847362-1-jltobler@gmail.com>
+
+
+* jd/cache-tree-trace-wo-the-repository (2026-03-31) 1 commit
+ - cache-tree: use index state repository in trace2 calls
+
+ Code cleanup.
+
+ Will merge to 'next'?
+ source: <pull.2259.git.git.1774951373588.gitgitgadget@gmail.com>
+
+
+* ps/reftable-portability (2026-03-31) 6 commits
+ - reftable: introduce "reftable-system.h" header
+ - reftable/system: add abstraction to mmap files
+ - reftable/system: add abstraction to retrieve time in milliseconds
+ - reftable/fsck: use REFTABLE_UNUSED instead of UNUSED
+ - reftable/stack: don't call fsync(3p) unless provided
+ - reftable/system: provide `REFTABLE_INLINE()` macro
+
+ Update reftable library part with what is used in libgit2 to improve
+ portability to different target codebases and platforms.
+
+ Will merge to 'next'?
+ source: <20260331-pks-reftable-portability-fixes-v1-0-46bfae55c68c@pks.im>
+
+
+* jk/c23-const-preserving-fixes-more (2026-03-31) 12 commits
+ - refs/files-backend: drop const to fix strchr() warning
+ - http: drop const to fix strstr() warning
+ - range-diff: drop const to fix strstr() warnings
+ - pkt-line: make packet_reader.line non-const
+ - skip_prefix(): check const match between in and out params
+ - pseudo-merge: fix disk reads from find_pseudo_merge()
+ - find_last_dir_sep(): convert inline function to macro
+ - run-command: explicitly cast away constness when assigning to void
+ - pager: explicitly cast away strchr() constness
+ - transport-helper: drop const to fix strchr() warnings
+ - http: add const to fix strchr() warnings
+ - convert: add const to fix strchr() warnings
+
+ Further work to adjust the codebase for C23 that changes functions
+ like strchr() that discarded constness when they return a pointer into
+ a const string to preserve constness.
+
+ Will merge to 'next'?
+ source: <20260331233856.GA2327197@coredump.intra.peff.net>
+
+
+* ps/odb-cleanup (2026-03-31) 7 commits
+ - odb: drop unneeded headers and forward decls
+ - odb: rename `odb_has_object()` flags
+ - odb: use enum for `odb_write_object` flags
+ - odb: rename `odb_write_object()` flags
+ - treewide: use enum for `odb_for_each_object()` flags
+ - CodingGuidelines: document our style for flags
+ - Merge branch 'ps/odb-generic-object-name-handling' into ps/odb-cleanup
+ (this branch uses ps/odb-generic-object-name-handling.)
+
+ Various code clean-up around odb subsystem.
+
+ Will merge to 'next'?
+ source: <20260401-pks-odb-cleanups-v1-0-89adba9ada68@pks.im>
+
+
+* ss/t7004-unhide-git-failures (2026-03-31) 1 commit
+ - t7004: replace wc -l with modern test helpers
+
+ Test clean-up.
+
+ Will merge to 'next'.
+ source: <20260401062029.54757-1-r.siddharth.shrimali@gmail.com>
+
+
+* ng/add-files-to-cache-wo-rename (2026-04-01) 1 commit
+ - read-cache: disable renames in add_files_to_cache
+
+ add_files_to_cache() used diff_files() to detect only the paths that
+ are different between the index and the working tree and add them,
+ which does not need rename detection, which interfered with unnecessary
+ conflicts.
+
+ Will merge to 'next'?
+ source: <20260401190033.11325-1-blindmansion@gmail.com>
+
+--------------------------------------------------
+[Cooking]
+
+* sa/cat-file-batch-mailmap-switch (2026-03-31) 1 commit
  - cat-file: add mailmap subcommand to --batch-command
 
  "git cat-file --batch" learns an in-line command "mailmap"
  that lets the user toggle use of mailmap.
 
- Comments?
- source: <20260329082808.12609-2-siddharthasthana31@gmail.com>
+ Will merge to 'next'?
+ source: <20260331121111.9614-2-siddharthasthana31@gmail.com>
 
 
 * sp/doc-gitignore-oowt (2026-03-28) 1 commit
- - doc: gitignore: clarify pattern base for info/exclude and core.excludesFile
+  (merged to 'next' on 2026-03-31 at ab3e6e484e)
+ + doc: gitignore: clarify pattern base for info/exclude and core.excludesFile
 
  Doc update.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20260328152233.1140327-1-shreyanshpaliwalcmsmn@gmail.com>
 
 
@@ -89,48 +281,51 @@ Release tarballs are available at:
  have been implemented, and incremental strategy that does not require
  all-into-one repacking has been introduced.
 
- Needs review.
+ Expecting a reroll.
+ cf. <acxBUkHDolY9VCnR@nand.local>
  source: <cover.1774820449.git.me@ttaylorr.com>
 
 
 * th/t6101-unhide-git-failures (2026-03-28) 1 commit
- - t6101: avoid suppressing git's exit code
+  (merged to 'next' on 2026-03-31 at 8867bcf2b4)
+ + t6101: avoid suppressing git's exit code
 
  Test cleanup.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20260328135935.180646-1-vikingtc4@gmail.com>
 
 
 * za/t2000-modernise (2026-03-27) 1 commit
- - t2000: modernise overall structure
+  (merged to 'next' on 2026-03-31 at 279c41a3e0)
+ + t2000: modernise overall structure
 
  Test cleanup.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20260327234019.95591-1-zakariyahali100@gmail.com>
 
 
 * jd/read-cache-trace-wo-the-repository (2026-03-30) 1 commit
- - read-cache: use istate->repo for trace2 logging
+  (merged to 'next' on 2026-04-01 at 7047e45a6d)
+ + read-cache: use istate->repo for trace2 logging
 
  A handful of inappropriate uses of the_repository have been
  rewritten to use the right repository structure instance in the
  read-cache.c codepath.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.2253.v4.git.git.1774895886678.gitgitgadget@gmail.com>
 
 
-* jd/unpack-trees-wo-the-repository (2026-03-30) 1 commit
- - unpack-trees: use explicit repository in trace2 calls
+* jd/unpack-trees-wo-the-repository (2026-03-31) 2 commits
+ - unpack-trees: use repository from index instead of global
+ - unpack-trees: use repository from index instead of global
 
  A handful of inappropriate uses of the_repository have been
  rewritten to use the right repository structure instance in the
  unpack-trees.c codepath.
-
- Will merge to 'next'.
- source: <pull.2258.git.git.1774901607564.gitgitgadget@gmail.com>
+ source: <pull.2258.v2.git.git.1774971267.gitgitgadget@gmail.com>
 
 
 * ps/receive-pack-updateinstead-in-worktree (2026-03-30) 3 commits
@@ -141,7 +336,7 @@ Release tarballs are available at:
  The check in "receive-pack" to prevent a checked out branch from
  getting updated via updateInstead mechanism has been corrected.
 
- Needs review.
+ Will merge to 'next'.
  source: <20260330111822.165188-1-pabloosabaterr@gmail.com>
 
 
@@ -173,11 +368,12 @@ Release tarballs are available at:
 
 
 * qb/doc-git-stash-push-optionality (2026-03-30) 1 commit
- - docs: fix "git stash [push]" documentation
+  (merged to 'next' on 2026-03-31 at 66ece1b5d6)
+ + docs: fix "git stash [push]" documentation
 
  Doc update.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.2255.v2.git.git.1774877075694.gitgitgadget@gmail.com>
 
 
@@ -190,181 +386,6 @@ Release tarballs are available at:
  Expecting a reroll.
  cf. <5ba0bbcb-25a7-4ad0-ac1d-c86508eaffdd@app.fastmail.com>
  source: <CV_doc_int-tr_key_format.533@msgid.xyz>
-
---------------------------------------------------
-[Graduated to 'master']
-
-* ai/t2107-test-path-is-helpers (2026-03-18) 1 commit
-  (merged to 'next' on 2026-03-23 at 56d10e5f76)
- + t2107: modernize path existence check
-
- Test cleanup.
- source: <pull.2071.v2.git.1773864455956.gitgitgadget@gmail.com>
-
-
-* ej/ref-transaction-hook-preparing (2026-03-16) 1 commit
-  (merged to 'next' on 2026-03-20 at f9b8fbb0dc)
- + refs: add 'preparing' phase to the reference-transaction hook
-
- The reference-transaction hook was taught to be triggered before
- taking locks on references in the "preparing" phase.
- source: <20260317023624.43070-2-eric.peijian@gmail.com>
-
-
-* gi/doc-boolean-config-typofix (2026-03-18) 1 commit
-  (merged to 'next' on 2026-03-20 at 8810624798)
- + doc: add missing space on git-config page
-
- Doc typofix.
- source: <20260318210020.759128-1-gabl@gabl.ink>
-
-
-* jc/rerere-modern-strbuf-handling (2026-03-19) 2 commits
-  (merged to 'next' on 2026-03-21 at 919b766afc)
- + cocci: strbuf.buf is never NULL
- + rerere: update to modern representation of empty strbufs
-
- Code clean-up overdue by 19 years.
- source: <xmqq341wnvbk.fsf@gitster.g>
- source: <xmqq4imbigvt.fsf@gitster.g>
-
-
-* jk/diff-highlight-identical-pairs (2026-03-17) 1 commit
-  (merged to 'next' on 2026-03-20 at a8aa5bd14e)
- + contrib/diff-highlight: do not highlight identical pairs
- (this branch is used by jk/diff-highlight-more.)
-
- The handling of the incomplete lines at the end by "git
- diff-highlight" has been fixed.
- source: <20260317230223.GA716496@coredump.intra.peff.net>
-
-
-* jw/apply-corrupt-location (2026-03-17) 3 commits
-  (merged to 'next' on 2026-03-23 at 18e9b8f91f)
- + apply: report input location in binary and garbage patch errors
- + apply: report input location in header parsing errors
- + apply: report the location of corrupt patches
-
- "git apply" now reports the name of the input file along with the
- line number when it encounters a corrupt patch, and correctly
- resets the line counter when processing multiple patch files.
- source: <20260317162321.71812-1-jerrywang183@yahoo.com>
-
-
-* jw/object-name-bitset-to-enum (2026-03-18) 1 commit
-  (merged to 'next' on 2026-03-23 at 881af371ef)
- + object-name: turn INTERPRET_BRANCH_* constants into enum values
-
- The unsigned integer that is used as an bitset to specify the kind
- of branches interpret_branch_name() function has been changed to
- use a dedicated enum type.
- source: <20260318190942.22595-1-jerrywang183@yahoo.com>
-
-
-* jw/t2203-status-pipe-fix (2026-03-16) 1 commit
-  (merged to 'next' on 2026-03-23 at 521c6eb44b)
- + t2203: avoid suppressing git status exit code
-
- Test clean-up.
- source: <20260317011544.65952-1-jerrywang183@yahoo.com>
-
-
-* kh/doc-interpret-trailers-1 (2026-03-16) 4 commits
-  (merged to 'next' on 2026-03-20 at 6acc8b5a8a)
- + interpret-trailers: use placeholder instead of *
- + doc: config: convert trailers section to synopsis style
- + doc: interpret-trailers: normalize and fill out options
- + doc: interpret-trailers: convert to synopsis style
-
- Doc updates.
- source: <V2_CV_doc_interpret-tr_synopsis.50a@msgid.xyz>
-
-
-* mf/apply-p-no-atoi (2026-03-15) 1 commit
-  (merged to 'next' on 2026-03-20 at 70a0a4313b)
- + apply.c: fix -p argument parsing
-
- "git apply -p<n>" parses <n> more carefully now.
- source: <20260316005120.7079-1-mroik@delayed.space>
-
-
-* mr/merge-file-object-id-worktree-fix (2026-03-10) 1 commit
-  (merged to 'next' on 2026-03-20 at 68e1ee2045)
- + merge-file: fix BUG when --object-id is used in a worktree
-
- merge-file --object-id used to trigger a BUG when run in a linked
- worktree, which has been fixed.
- source: <c076edd0-9057-443b-ba37-33aacde2eede@app.fastmail.com>
-
-
-* ps/build-tweaks (2026-03-18) 8 commits
-  (merged to 'next' on 2026-03-20 at fb53cf619a)
- + meson: precompile "git-compat-util.h"
- + meson: compile compatibility sources separately
- + git-compat-util.h: move warning infra to prepare for PCHs
- + builds: move build scripts into "tools/"
- + contrib: move "update-unicode.sh" script into "tools/"
- + contrib: move "coverage-diff.sh" script into "tools/"
- + contrib: move "coccinelle/" directory into "tools/"
- + Introduce new "tools/" directory
- (this branch is used by rs/use-strvec-pushv.)
-
- Tweak the build infrastructure by moving tools around.
- source: <20260319-b4-pks-build-infra-improvements-v3-0-82f5fb3edc3f@pks.im>
-
-
-* rs/ahead-behind-cleanup-optimization (2026-03-19) 1 commit
-  (merged to 'next' on 2026-03-21 at 5d8b4fa265)
- + commit-reach: simplify cleanup of remaining bitmaps in ahead_behind ()
-
- The cleanup of remaining bitmaps in "ahead_behind()" has been
- simplified.
- source: <21adf042-2bd1-4022-8822-9ed4985122a4@web.de>
-
-
-* rs/prio-queue-to-commit-stack (2026-03-17) 1 commit
-  (merged to 'next' on 2026-03-20 at 265cb7b28c)
- + use commit_stack instead of prio_queue in LIFO mode
-
- Uses of prio_queue as a LIFO stack of commits have been written
- with commit_stack.
- source: <05fc946f-6670-46e9-a058-231ee464029d@web.de>
-
-
-* rs/split-index-the-repo-fix (2026-03-19) 1 commit
-  (merged to 'next' on 2026-03-21 at d66850b2ce)
- + split-index: stop using the_repository and the_hash_algo
-
- split-index.c has been updated to not use the global the_repository
- and the_hash_algo variables.
- source: <944c2331-4dec-4c98-9059-f41dc204ed86@web.de>
-
---------------------------------------------------
-[Cooking]
-
-* jk/t0061-bat-test-update (2026-03-24) 1 commit
-  (merged to 'next' on 2026-03-26 at ffae180124)
- + t0061: simplify .bat test
-
- A test to run a .bat file with whitespaces in the name with arguments
- with whitespaces in them was flaky in that sometimes it got killed
- before it produced expected side effects, which has been rewritten to
- make it more robust.
-
- Will merge to 'master'.
- source: <20260325061357.GA3772970@coredump.intra.peff.net>
-
-
-* mk/repo-help-strings (2026-03-25) 2 commits
-  (merged to 'next' on 2026-03-26 at a4c755ddde)
- + repo: show subcommand-specific help text
- + repo: factor repo usage strings into shared macros
-
- "git repo info -h" and "git repo structure -h" limit their help output
- to the part that is specific to the subcommand.
-
- Will merge to 'master'.
- source: <20260323152937.257406-1-  mahlet.takassa@gmail.com>
 
 
 * tc/replay-ref (2026-03-25) 4 commits
@@ -382,42 +403,33 @@ Release tarballs are available at:
  source: <20260325-toon-replay-arbitrary-ref-v2-0-553038702c9c@iotcl.com>
 
 
-* jc/macos-homebrew-wo-reg-enhanced (2026-03-23) 1 commit
-  (merged to 'next' on 2026-03-26 at ce92a76711)
- + regexp: leave a pointer to resurrect workaround for Homebrew
-
- In case homebrew breaks REG_ENHANCED again, leave a in-code comment
- to suggest use of our replacement regex as a workaround.
-
- Will merge to 'master'.
- source: <xmqq8qbi5vvx.fsf@gitster.g>
-
-
 * jk/c23-const-preserving-fixes (2026-03-26) 5 commits
- - config: store allocated string in non-const pointer
- - rev-parse: avoid writing to const string for parent marks
- - revision: avoid writing to const string for parent marks
- - rev-parse: simplify dotdot parsing
- - revision: make handle_dotdot() interface less confusing
+  (merged to 'next' on 2026-03-31 at c813b9b814)
+ + config: store allocated string in non-const pointer
+ + rev-parse: avoid writing to const string for parent marks
+ + revision: avoid writing to const string for parent marks
+ + rev-parse: simplify dotdot parsing
+ + revision: make handle_dotdot() interface less confusing
 
  Adjust the codebase for C23 that changes functions like strchr()
  that discarded constness when they return a pointer into a const
  string to preserve constness.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20260326190243.GA412983@coredump.intra.peff.net>
  source: <20260326192320.GA418281@coredump.intra.peff.net>
 
 
 * mf/format-patch-commit-list-format-doc (2026-03-27) 3 commits
- - format-patch: removing unconditional wrapping
- - docs: fix --commit-list-format related entries
- - Merge branch 'mf/format-patch-commit-list-format' into mf/format-patch-commit-list-format-doc
+  (merged to 'next' on 2026-03-31 at 8f775bd513)
+ + format-patch: removing unconditional wrapping
+ + docs: fix --commit-list-format related entries
+ + Merge branch 'mf/format-patch-commit-list-format' into mf/format-patch-commit-list-format-doc
  (this branch uses mf/format-patch-commit-list-format and mf/format-patch-cover-letter-format.)
 
  Doc updates.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cover.1774640789.git.mroik@delayed.space>
 
 
@@ -442,7 +454,7 @@ Release tarballs are available at:
  Handling of signed commits and tags in fast-import has been made more
  configurable.
 
- Needs review.
+ Will merge to 'next'.
  source: <20260326191414.3783974-1-jltobler@gmail.com>
 
 
@@ -456,19 +468,8 @@ Release tarballs are available at:
  in repositories with many branches.
 
  Needs review.
+ cf. <bdff0a5d-b738-4053-9b72-08eba88156de@kdbg.org>
  source: <20260328001113.1275291-1-pabloosabaterr@gmail.com>
-
-
-* rs/use-strvec-pushv (2026-03-24) 2 commits
-  (merged to 'next' on 2026-03-24 at 7c6487dcaf)
- + use strvec_pushv() to add another strvec
- + Merge branch 'ps/build-tweaks' into rs/use-strvec-pushv
-
- Code paths that loop over another array to push each element into a
- strvec have been rewritten to use strvec_pushv() instead.
-
- Will merge to 'master'.
- source: <084f3b43-91ac-4553-8305-03944e97eaa6@web.de>
 
 
 * cc/promisor-auto-config-url (2026-03-23) 16 commits
@@ -492,85 +493,56 @@ Release tarballs are available at:
  Promisor remote handling is enhanced to auto-configure remotes based
  on a URL whitelist.
 
- Needs review.
+ Expecting a reroll.
+ cf. <CAP8UFD2vAK_khTkJMP4QBfhYA5iYVW5sfB3i-vnzhf71BvwQ=w@mail.gmail.com>
  source: <20260323080520.887550-1-christian.couder@gmail.com>
 
 
-* kj/refspec-parsing-outside-repository (2026-03-23) 2 commits
-  (merged to 'next' on 2026-03-26 at 0a8c60e8ae)
- + refspec: fix typo in comment
- + remote-curl: fall back to default hash outside repo
-
- "git ls-remote '+refs/tags/*:refs/tags/*' https://..." run outside a
- repository would dereference a NULL while trying to see if the given
- refspec is a single-object refspec, which has been corrected.
-
- Will merge to 'master'.
- source: <20260322023557.15907-1-jayatheerthkulkarni2005@gmail.com>
-
-
-* jk/diff-highlight-more (2026-03-22) 9 commits
-  (merged to 'next' on 2026-03-24 at e7b555cbc5)
- + diff-highlight: fetch all config with one process
- + diff-highlight: allow module callers to pass in color config
- + diff-highlight: test color config
- + diff-highlight: use test_decode_color in tests
- + t: add matching negative attributes to test_decode_color
- + diff-highlight: check diff-highlight exit status in tests
- + diff-highlight: drop perl version dependency back to 5.8
- + diff-highlight: mention build instructions
- + Merge branch 'jk/diff-highlight-identical-pairs' into jk/diff-highlight-more
-
- Various updates to contrib/diff-highlight, including documentation
- updates, test improvements, and color configuration handling.
-
- Will merge to 'master'.
- source: <20260323060139.GA10215@coredump.intra.peff.net>
-
-
 * ps/fsck-wo-the-repository (2026-03-23) 12 commits
- - builtin/fsck: stop using `the_repository` in error reporting
- - builtin/fsck: stop using `the_repository` when marking objects
- - builtin/fsck: stop using `the_repository` when checking packed objects
- - builtin/fsck: stop using `the_repository` with loose objects
- - builtin/fsck: stop using `the_repository` when checking reflogs
- - builtin/fsck: stop using `the_repository` when checking refs
- - builtin/fsck: stop using `the_repository` when snapshotting refs
- - builtin/fsck: fix trivial dependence on `the_repository`
- - fsck: drop USE_THE_REPOSITORY
- - fsck: store repository in fsck options
- - fsck: initialize fsck options via a function
- - fetch-pack: move fsck options into function scope
+  (merged to 'next' on 2026-04-01 at 6ab7607f2d)
+ + builtin/fsck: stop using `the_repository` in error reporting
+ + builtin/fsck: stop using `the_repository` when marking objects
+ + builtin/fsck: stop using `the_repository` when checking packed objects
+ + builtin/fsck: stop using `the_repository` with loose objects
+ + builtin/fsck: stop using `the_repository` when checking reflogs
+ + builtin/fsck: stop using `the_repository` when checking refs
+ + builtin/fsck: stop using `the_repository` when snapshotting refs
+ + builtin/fsck: fix trivial dependence on `the_repository`
+ + fsck: drop USE_THE_REPOSITORY
+ + fsck: store repository in fsck options
+ + fsck: initialize fsck options via a function
+ + fetch-pack: move fsck options into function scope
 
  Internals of "git fsck" have been refactored to not depend on the
  global `the_repository` variable.
 
- Needs review.
+ Will merge to 'master'.
  source: <20260323-b4-pks-fsck-without-the-repository-v2-0-e8dc79bca651@pks.im>
 
 
 * tb/stdin-packs-excluded-but-open (2026-03-27) 5 commits
- - repack: mark non-MIDX packs above the split as excluded-open
- - pack-objects: support excluded-open packs with --stdin-packs
- - t7704: demonstrate failure with once-cruft objects above the geometric split
- - pack-objects: refactor `read_packs_list_from_stdin()` to use `strmap`
- - pack-objects: plug leak in `read_stdin_packs()`
+  (merged to 'next' on 2026-03-31 at e8927aa861)
+ + repack: mark non-MIDX packs above the split as excluded-open
+ + pack-objects: support excluded-open packs with --stdin-packs
+ + t7704: demonstrate failure with once-cruft objects above the geometric split
+ + pack-objects: refactor `read_packs_list_from_stdin()` to use `strmap`
+ + pack-objects: plug leak in `read_stdin_packs()`
 
  pack-objects's --stdin-packs=follow mode learns to handle
  excluded-but-open packs.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cover.1774641999.git.me@ttaylorr.com>
 
 
 * yc/path-walk-fix-error-reporting (2026-03-20) 1 commit
- - path-walk: fix NULL pointer dereference in error message
+  (merged to 'next' on 2026-04-01 at ddcff8b9c6)
+ + path-walk: fix NULL pointer dereference in error message
 
  The value of a wrong pointer variable was referenced in an error
  message that reported that it shouldn't be NULL.
 
- Reproduction being discussed.
- cf. <994f92e9-3576-455a-a142-0fefc559131c@gmail.com>
+ Will merge to 'master'.
  source: <20260320114823.3151961-1-ysinghcin@gmail.com>
 
 
@@ -586,20 +558,22 @@ Release tarballs are available at:
 
 
 * jc/whitespace-incomplete-line (2026-03-17) 1 commit
- - apply: fix new-style empty context line triggering incomplete-line check
+  (merged to 'next' on 2026-04-01 at 10a4d95236)
+ + apply: fix new-style empty context line triggering incomplete-line check
 
  Fix whitespace correction for new-style empty context lines.
 
- Needs review.
+ Will merge to 'master'.
  source: <xmqqldfql4hp.fsf@gitster.g>
 
 
 * sp/add-patch-with-fewer-the-repository (2026-03-17) 1 commit
- - add-patch: use repository instance from add_i_state instead of the_repository
+  (merged to 'next' on 2026-04-01 at b9edaddcff)
+ + add-patch: use repository instance from add_i_state instead of the_repository
 
  Reduce dependency on `the_repository` in add-patch.c file.
 
- Needs review.
+ Will merge to 'master'.
  source: <20260317155230.619378-1-shreyanshpaliwalcmsmn@gmail.com>
 
 
@@ -619,23 +593,24 @@ Release tarballs are available at:
 
 
 * ps/commit-graph-overflow-fix (2026-03-23) 1 commit
- - commit-graph: fix writing generations with dates exceeding 34 bits
+  (merged to 'next' on 2026-04-01 at c502054354)
+ + commit-graph: fix writing generations with dates exceeding 34 bits
 
  Fix a regression in writing the commit-graph where commits with dates
  exceeding 34 bits (beyond year 2514) could cause an underflow and
  crash Git during the generation data overflow chunk writing.
 
- Waiting for review response.
- cf. <xmqq1ph92pzs.fsf@gitster.g>
+ Will merge to 'master'.
  source: <20260324-pks-commit-graph-overflow-v2-1-843568cf8780@pks.im>
 
 
 * tc/replay-down-to-root (2026-03-24) 1 commit
- - replay: support replaying down from root commit
+  (merged to 'next' on 2026-03-31 at 47456fcc12)
+ + replay: support replaying down from root commit
 
  git replay now supports replaying down to the root commit.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20260324-toon-replay-down-to-root-v2-1-34e723489f6e@iotcl.com>
 
 
@@ -654,50 +629,43 @@ Release tarballs are available at:
 
 
 * ps/odb-generic-object-name-handling (2026-03-20) 16 commits
- - odb: introduce generic `odb_find_abbrev_len()`
- - object-file: move logic to compute packed abbreviation length
- - object-name: move logic to compute loose abbreviation length
- - object-name: simplify computing common prefixes
- - object-name: abbreviate loose object names without `disambiguate_state`
- - object-name: merge `update_candidates()` and `match_prefix()`
- - object-name: backend-generic `get_short_oid()`
- - object-name: backend-generic `repo_collect_ambiguous()`
- - object-name: extract function to parse object ID prefixes
- - object-name: move logic to iterate through packed prefixed objects
- - object-name: move logic to iterate through loose prefixed objects
- - odb: introduce `struct odb_for_each_object_options`
- - oidtree: extend iteration to allow for arbitrary return codes
- - oidtree: modernize the code a bit
- - Merge branch 'ps/object-counting' into ps/odb-generic-object-name-handling
- - object-file: fix sparse 'plain integer as NULL pointer' error
+  (merged to 'next' on 2026-03-31 at c14d7bdd1e)
+ + odb: introduce generic `odb_find_abbrev_len()`
+ + object-file: move logic to compute packed abbreviation length
+ + object-name: move logic to compute loose abbreviation length
+ + object-name: simplify computing common prefixes
+ + object-name: abbreviate loose object names without `disambiguate_state`
+ + object-name: merge `update_candidates()` and `match_prefix()`
+ + object-name: backend-generic `get_short_oid()`
+ + object-name: backend-generic `repo_collect_ambiguous()`
+ + object-name: extract function to parse object ID prefixes
+ + object-name: move logic to iterate through packed prefixed objects
+ + object-name: move logic to iterate through loose prefixed objects
+ + odb: introduce `struct odb_for_each_object_options`
+ + oidtree: extend iteration to allow for arbitrary return codes
+ + oidtree: modernize the code a bit
+ + Merge branch 'ps/object-counting' into ps/odb-generic-object-name-handling
+ + object-file: fix sparse 'plain integer as NULL pointer' error
+ (this branch is used by ps/odb-cleanup.)
 
  Object name handling (disambiguation and abbreviation) has been
  refactored to be backend-generic, moving logic into the respective
  object database backends.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  cf. <874ilxm4wp.fsf@toon--20250203-5JQV3.mail-host-address-is-not-set>
  source: <20260320-b4-pks-odb-source-abbrev-v2-0-fe65dcd8c735@pks.im>
 
 
-* bk/t5315-test-path-is-helpers (2026-03-19) 1 commit
-  (merged to 'next' on 2026-03-24 at f7374e8e70)
- + t5315: use test_path_is_file for loose-object check
-
- Test clean-up.
-
- Will merge to 'master'.
- source: <20260319180803.164335-1-elkhatabibilal@gmail.com>
-
-
 * aa/reap-transport-child-processes (2026-03-12) 1 commit
- - transport-helper, connect: use clean_on_exit to reap children on abnormal exit
+  (merged to 'next' on 2026-03-31 at fb77f8ba9e)
+ + transport-helper, connect: use clean_on_exit to reap children on abnormal exit
 
  A few code paths that spawned child processes for network
  connection weren't wait(2)ing for their children and letting "init"
  reap them instead; they have been tightened.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  cf. <20260325061357.GA3772970@coredump.intra.peff.net>
  source: <20260312214945.4050010-1-cshung@gmail.com>
 
@@ -757,7 +725,7 @@ Release tarballs are available at:
  --commit-list-format` (formerly `--cover-letter-format`) option,
  including a new "modern" preset and better CLI ergonomics.
 
- Will merge to 'master'.
+ Waiting for the follow-on topic.
  source: <cover.1774284699.git.mroik@delayed.space>
 
 
@@ -791,7 +759,8 @@ Release tarballs are available at:
  log/diff machinery is being reworked a bit to make the feature
  compatible with more diff options, like -S/G.
 
- Needs review.
+ Will merge to 'next'.
+ cf. <xmqqbjg3y8i9.fsf@gitster.g>
  source: <pull.2065.v2.git.1773714095.gitgitgadget@gmail.com>
 
 
@@ -904,7 +873,8 @@ Release tarballs are available at:
  source: <cover.1772839973.git.mroik@delayed.space>
 
 
-* pt/fsmonitor-linux (2026-03-04) 12 commits
+* pt/fsmonitor-linux (2026-03-30) 13 commits
+ - fsmonitor: fix split-index bitmap bounds in tweak_fsmonitor()
  - fsmonitor: convert shown khash to strset in do_handle_client
  - fsmonitor: add tests for Linux
  - fsmonitor: add timeout to daemon stop command
@@ -921,7 +891,7 @@ Release tarballs are available at:
  The fsmonitor daemon has been implemented for Linux.
 
  Needs review.
- source: <pull.2147.v8.git.git.1772648125.gitgitgadget@gmail.com>
+ source: <pull.2147.v12.git.git.1774937958.gitgitgadget@gmail.com>
 
 
 * sa/replay-revert (2026-03-25) 2 commits
@@ -935,19 +905,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <20260325202354.10628-1-siddharthasthana31@gmail.com>
-
-
-* vp/http-rate-limit-retries (2026-03-17) 3 commits
-  (merged to 'next' on 2026-03-24 at 9cb4ec5fad)
- + http: add support for HTTP 429 rate limit retries
- + strbuf_attach: fix call sites to pass correct alloc
- + strbuf: pass correct alloc to strbuf_attach() in strbuf_reencode()
-
- The HTTP transport learned to react to "429 Too Many Requests".
-
- Will merge to 'master'.
- cf. <ab4RIZr7b49VKjR9@nand.local>
- source: <pull.2008.v6.git.1773752435.gitgitgadget@gmail.com>
 
 
 * ar/parallel-hooks (2026-03-26) 13 commits
@@ -980,7 +937,10 @@ Release tarballs are available at:
 
  Preparation of the xdiff/ codebase to work with Rust
 
- Needs review.
+ Expecting a (hopefully small and final) reroll?
+ cf. <40589b6f-6694-4d9c-8367-3f6352e45e7b@gmail.com>
+ cf. <32c34d0d-9358-43e3-9d58-5999b3ffd6c2@gmail.com>
+ cf. <87a54698-396d-4de8-bd9d-cd72f8d1e8df@gmail.com>
  source: <pull.2156.v4.git.git.1774890003.gitgitgadget@gmail.com>
 
 --------------------------------------------------
