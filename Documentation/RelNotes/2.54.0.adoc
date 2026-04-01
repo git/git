@@ -104,6 +104,11 @@ UI, Workflows & Features
    line number when it encounters a corrupt patch, and correctly
    resets the line counter when processing multiple patch files.
 
+ * The HTTP transport learned to react to "429 Too Many Requests".
+
+ * "git repo info -h" and "git repo structure -h" limit their help output
+   to the part that is specific to the subcommand.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -252,6 +257,15 @@ Performance, Internal Implementation, Development Support etc.
  * The unsigned integer that is used as an bitset to specify the kind
    of branches interpret_branch_name() function has been changed to
    use a dedicated enum type.
+
+ * Various updates to contrib/diff-highlight, including documentation
+   updates, test improvements, and color configuration handling.
+
+ * Code paths that loop over another array to push each element into a
+   strvec have been rewritten to use strvec_pushv() instead.
+
+ * In case homebrew breaks REG_ENHANCED again, leave a in-code comment
+   to suggest use of our replacement regex as a workaround.
 
 
 Fixes since v2.53
@@ -419,6 +433,17 @@ Fixes since v2.53
 
  * "git apply -p<n>" parses <n> more carefully now.
    (merge d05d84c5f5 mf/apply-p-no-atoi later to maint).
+
+ * A test to run a .bat file with whitespaces in the name with arguments
+   with whitespaces in them was flaky in that sometimes it got killed
+   before it produced expected side effects, which has been rewritten to
+   make it more robust.
+   (merge 3ad4921838 jk/t0061-bat-test-update later to maint).
+
+ * "git ls-remote '+refs/tags/*:refs/tags/*' https://..." run outside a
+   repository would dereference a NULL while trying to see if the given
+   refspec is a single-object refspec, which has been corrected.
+   (merge 4e5dc601dd kj/refspec-parsing-outside-repository later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge d79fff4a11 jk/remote-tracking-ref-leakfix later to maint).
