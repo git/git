@@ -1563,6 +1563,13 @@ int cmd_main(int argc, const char **argv)
 		goto cleanup;
 	}
 
+	/*
+	 * yuck, see 9e89dcb66a (builtin/ls-remote: fall back to SHA1 outside
+	 * of a repo, 2024-08-02)
+	 */
+	if (nongit)
+		repo_set_hash_algo(the_repository, GIT_HASH_DEFAULT);
+
 	options.verbosity = 1;
 	options.progress = !!isatty(2);
 	options.thin = 1;
