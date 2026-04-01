@@ -75,13 +75,6 @@ int odb_source_loose_write_stream(struct odb_source *source,
 				  struct object_id *oid);
 
 /*
- * Populate and return the loose object cache array corresponding to the
- * given object ID.
- */
-struct oidtree *odb_source_loose_cache(struct odb_source *source,
-				       const struct object_id *oid);
-
-/*
  * Put in `buf` the name of the file in the local object database that
  * would be used to store a loose object with the specified oid.
  */
@@ -137,7 +130,7 @@ int odb_source_loose_for_each_object(struct odb_source *source,
 				     const struct object_info *request,
 				     odb_for_each_object_cb cb,
 				     void *cb_data,
-				     unsigned flags);
+				     const struct odb_for_each_object_options *opts);
 
 /*
  * Count the number of loose objects in this source.
@@ -152,6 +145,18 @@ int odb_source_loose_for_each_object(struct odb_source *source,
 int odb_source_loose_count_objects(struct odb_source *source,
 				   enum odb_count_objects_flags flags,
 				   unsigned long *out);
+
+/*
+ * Find the shortest unique prefix for the given object ID, where `min_len` is
+ * the minimum length that the prefix should have.
+ *
+ * Returns 0 on success, in which case the computed length will be written to
+ * `out`. Otherwise, a negative error code is returned.
+ */
+int odb_source_loose_find_abbrev_len(struct odb_source *source,
+				     const struct object_id *oid,
+				     unsigned min_len,
+				     unsigned *out);
 
 /**
  * format_object_header() is a thin wrapper around s xsnprintf() that

@@ -396,6 +396,9 @@ static inline int oideq(const struct object_id *oid1, const struct object_id *oi
 	return !memcmp(oid1->hash, oid2->hash, GIT_MAX_RAWSZ);
 }
 
+unsigned oid_common_prefix_hexlen(const struct object_id *a,
+				  const struct object_id *b);
+
 static inline void oidcpy(struct object_id *dst, const struct object_id *src)
 {
 	memcpy(dst->hash, src->hash, GIT_MAX_RAWSZ);

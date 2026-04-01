@@ -15,11 +15,9 @@
 #include "refs.h"
 #include "remote.h"
 #include "dir.h"
+#include "odb.h"
 #include "oid-array.h"
-#include "oidtree.h"
-#include "packfile.h"
 #include "pretty.h"
-#include "object-file.h"
 #include "read-cache-ll.h"
 #include "repo-settings.h"
 #include "repository.h"
@@ -49,30 +47,29 @@ struct disambiguate_state {
 	unsigned candidate_ok:1;
 	unsigned disambiguate_fn_used:1;
 	unsigned ambiguous:1;
-	unsigned always_call_fn:1;
 };
 
-static void update_candidates(struct disambiguate_state *ds, const struct object_id *current)
+static int update_disambiguate_state(const struct object_id *current,
+				     struct object_info *oi UNUSED,
+				     void *cb_data)
 {
+	struct disambiguate_state *ds = cb_data;
+
 	/* The hash algorithm of current has already been filtered */
-	if (ds->always_call_fn) {
-		ds->ambiguous = ds->fn(ds->repo, current, ds->cb_data) ? 1 : 0;
-		return;
-	}
 	if (!ds->candidate_exists) {
 		/* this is the first candidate */
 		oidcpy(&ds->candidate, current);
 		ds->candidate_exists = 1;
-		return;
+		return 0;
 	} else if (oideq(&ds->candidate, current)) {
 		/* the same as what we already have seen */
-		return;
+		return 0;
 	}
 
 	if (!ds->fn) {
 		/* cannot disambiguate between ds->candidate and current */
 		ds->ambiguous = 1;
-		return;
+		return ds->ambiguous;
 	}
 
 	if (!ds->candidate_checked) {
@@ -85,7 +82,7 @@ static void update_candidates(struct disambiguate_state *ds, const struct object
 		/* discard the candidate; we know it does not satisfy fn */
 		oidcpy(&ds->candidate, current);
 		ds->candidate_checked = 0;
-		return;
+		return 0;
 	}
 
 	/* if we reach this point, we know ds->candidate satisfies fn */
@@ -96,128 +93,12 @@ static void update_candidates(struct disambiguate_state *ds, const struct object
 		 */
 		ds->candidate_ok = 0;
 		ds->ambiguous = 1;
+		return ds->ambiguous;
 	}
 
 	/* otherwise, current can be discarded and candidate is still good */
-}
 
-static int match_hash(unsigned, const unsigned char *, const unsigned char *);
-
-static enum cb_next match_prefix(const struct object_id *oid, void *arg)
-{
-	struct disambiguate_state *ds = arg;
-	/* no need to call match_hash, oidtree_each did prefix match */
-	update_candidates(ds, oid);
-	return ds->ambiguous ? CB_BREAK : CB_CONTINUE;
-}
-
-static void find_short_object_filename(struct disambiguate_state *ds)
-{
-	struct odb_source *source;
-
-	for (source = ds->repo->objects->sources; source && !ds->ambiguous; source = source->next)
-		oidtree_each(odb_source_loose_cache(source, &ds->bin_pfx),
-				&ds->bin_pfx, ds->len, match_prefix, ds);
-}
-
-static int match_hash(unsigned len, const unsigned char *a, const unsigned char *b)
-{
-	do {
-		if (*a != *b)
-			return 0;
-		a++;
-		b++;
-		len -= 2;
-	} while (len > 1);
-	if (len)
-		if ((*a ^ *b) & 0xf0)
-			return 0;
-	return 1;
-}
-
-static void unique_in_midx(struct multi_pack_index *m,
-			   struct disambiguate_state *ds)
-{
-	for (; m; m = m->base_midx) {
-		uint32_t num, i, first = 0;
-		const struct object_id *current = NULL;
-		int len = ds->len > ds->repo->hash_algo->hexsz ?
-			ds->repo->hash_algo->hexsz : ds->len;
-
-		if (!m->num_objects)
-			continue;
-
-		num = m->num_objects + m->num_objects_in_base;
-
-		bsearch_one_midx(&ds->bin_pfx, m, &first);
-
-		/*
-		 * At this point, "first" is the location of the lowest
-		 * object with an object name that could match
-		 * "bin_pfx".  See if we have 0, 1 or more objects that
-		 * actually match(es).
-		 */
-		for (i = first; i < num && !ds->ambiguous; i++) {
-			struct object_id oid;
-			current = nth_midxed_object_oid(&oid, m, i);
-			if (!match_hash(len, ds->bin_pfx.hash, current->hash))
-				break;
-			update_candidates(ds, current);
-		}
-	}
-}
-
-static void unique_in_pack(struct packed_git *p,
-			   struct disambiguate_state *ds)
-{
-	uint32_t num, i, first = 0;
-	int len = ds->len > ds->repo->hash_algo->hexsz ?
-		ds->repo->hash_algo->hexsz : ds->len;
-
-	if (p->multi_pack_index)
-		return;
-
-	if (open_pack_index(p) || !p->num_objects)
-		return;
-
-	num = p->num_objects;
-	bsearch_pack(&ds->bin_pfx, p, &first);
-
-	/*
-	 * At this point, "first" is the location of the lowest object
-	 * with an object name that could match "bin_pfx".  See if we have
-	 * 0, 1 or more objects that actually match(es).
-	 */
-	for (i = first; i < num && !ds->ambiguous; i++) {
-		struct object_id oid;
-		nth_packed_object_id(&oid, p, i);
-		if (!match_hash(len, ds->bin_pfx.hash, oid.hash))
-			break;
-		update_candidates(ds, &oid);
-	}
-}
-
-static void find_short_packed_object(struct disambiguate_state *ds)
-{
-	struct odb_source *source;
-	struct packed_git *p;
-
-	/* Skip, unless oids from the storage hash algorithm are wanted */
-	if (ds->bin_pfx.algo && (&hash_algos[ds->bin_pfx.algo] != ds->repo->hash_algo))
-		return;
-
-	odb_prepare_alternates(ds->repo->objects);
-	for (source = ds->repo->objects->sources; source && !ds->ambiguous; source = source->next) {
-		struct multi_pack_index *m = get_multi_pack_index(source);
-		if (m)
-			unique_in_midx(m, ds);
-	}
-
-	repo_for_each_pack(ds->repo, p) {
-		if (ds->ambiguous)
-			break;
-		unique_in_pack(p, ds);
-	}
+	return 0;
 }
 
 static int finish_object_disambiguation(struct disambiguate_state *ds,
@@ -348,41 +229,57 @@ int set_disambiguate_hint_config(const char *var, const char *value)
 	return error("unknown hint type for '%s': %s", var, value);
 }
 
+static int parse_oid_prefix(const char *name, int len,
+			    const struct git_hash_algo *algo,
+			    char *hex_out,
+			    struct object_id *oid_out)
+{
+	for (int i = 0; i < len; i++) {
+		unsigned char c = name[i];
+		unsigned char val;
+		if (c >= '0' && c <= '9') {
+			val = c - '0';
+		} else if (c >= 'a' && c <= 'f') {
+			val = c - 'a' + 10;
+		} else if (c >= 'A' && c <='F') {
+			val = c - 'A' + 10;
+			c -= 'A' - 'a';
+		} else {
+			return -1;
+		}
+
+		if (hex_out)
+			hex_out[i] = c;
+		if (oid_out) {
+			if (!(i & 1))
+				val <<= 4;
+			oid_out->hash[i >> 1] |= val;
+		}
+	}
+
+	if (hex_out)
+		hex_out[len] = '\0';
+	if (oid_out)
+		oid_out->algo = algo ? hash_algo_by_ptr(algo) : GIT_HASH_UNKNOWN;
+
+	return 0;
+}
+
 static int init_object_disambiguation(struct repository *r,
 				      const char *name, int len,
 				      const struct git_hash_algo *algo,
 				      struct disambiguate_state *ds)
 {
-	int i;
-
 	if (len < MINIMUM_ABBREV || len > GIT_MAX_HEXSZ)
 		return -1;
 
 	memset(ds, 0, sizeof(*ds));
 
-	for (i = 0; i < len ;i++) {
-		unsigned char c = name[i];
-		unsigned char val;
-		if (c >= '0' && c <= '9')
-			val = c - '0';
-		else if (c >= 'a' && c <= 'f')
-			val = c - 'a' + 10;
-		else if (c >= 'A' && c <='F') {
-			val = c - 'A' + 10;
-			c -= 'A' - 'a';
-		}
-		else
-			return -1;
-		ds->hex_pfx[i] = c;
-		if (!(i & 1))
-			val <<= 4;
-		ds->bin_pfx.hash[i >> 1] |= val;
-	}
+	if (parse_oid_prefix(name, len, algo, ds->hex_pfx, &ds->bin_pfx) < 0)
+		return -1;
 
 	ds->len = len;
-	ds->hex_pfx[len] = '\0';
 	ds->repo = r;
-	ds->bin_pfx.algo = algo ? hash_algo_by_ptr(algo) : GIT_HASH_UNKNOWN;
 	odb_prepare_alternates(r->objects);
 	return 0;
 }
@@ -510,8 +407,8 @@ static int collect_ambiguous(const struct object_id *oid, void *data)
 	return 0;
 }
 
-static int repo_collect_ambiguous(struct repository *r UNUSED,
-				  const struct object_id *oid,
+static int repo_collect_ambiguous(const struct object_id *oid,
+				  struct object_info *oi UNUSED,
 				  void *data)
 {
 	return collect_ambiguous(oid, data);
@@ -561,6 +458,7 @@ static enum get_oid_result get_short_oid(struct repository *r,
 					 struct object_id *oid,
 					 unsigned flags)
 {
+	struct odb_for_each_object_options opts = { 0 };
 	int status;
 	struct disambiguate_state ds;
 	int quietly = !!(flags & GET_OID_QUIETLY);
@@ -588,8 +486,11 @@ static enum get_oid_result get_short_oid(struct repository *r,
 	else
 		ds.fn = default_disambiguate_hint;
 
-	find_short_object_filename(&ds);
-	find_short_packed_object(&ds);
+	opts.prefix = &ds.bin_pfx;
+	opts.prefix_hex_len = ds.len;
+
+	odb_for_each_object_ext(r->objects, NULL, update_disambiguate_state,
+				&ds, &opts);
 	status = finish_object_disambiguation(&ds, oid);
 
 	/*
@@ -599,8 +500,8 @@ static enum get_oid_result get_short_oid(struct repository *r,
 	 */
 	if (status == MISSING_OBJECT) {
 		odb_reprepare(r->objects);
-		find_short_object_filename(&ds);
-		find_short_packed_object(&ds);
+		odb_for_each_object_ext(r->objects, NULL, update_disambiguate_state,
+					&ds, &opts);
 		status = finish_object_disambiguation(&ds, oid);
 	}
 
@@ -648,167 +549,23 @@ int repo_for_each_abbrev(struct repository *r, const char *prefix,
 			 const struct git_hash_algo *algo,
 			 each_abbrev_fn fn, void *cb_data)
 {
+	struct object_id prefix_oid = { 0 };
+	struct odb_for_each_object_options opts = {
+		.prefix = &prefix_oid,
+		.prefix_hex_len = strlen(prefix),
+	};
 	struct oid_array collect = OID_ARRAY_INIT;
-	struct disambiguate_state ds;
 	int ret;
 
-	if (init_object_disambiguation(r, prefix, strlen(prefix), algo, &ds) < 0)
+	if (parse_oid_prefix(prefix, opts.prefix_hex_len, algo, NULL, &prefix_oid) < 0)
 		return -1;
 
-	ds.always_call_fn = 1;
-	ds.fn = repo_collect_ambiguous;
-	ds.cb_data = &collect;
-	find_short_object_filename(&ds);
-	find_short_packed_object(&ds);
+	if (odb_for_each_object_ext(r->objects, NULL, repo_collect_ambiguous, &collect, &opts) < 0)
+		return -1;
 
 	ret = oid_array_for_each_unique(&collect, fn, cb_data);
 	oid_array_clear(&collect);
 	return ret;
-}
-
-/*
- * Return the slot of the most-significant bit set in "val". There are various
- * ways to do this quickly with fls() or __builtin_clzl(), but speed is
- * probably not a big deal here.
- */
-static unsigned msb(unsigned long val)
-{
-	unsigned r = 0;
-	while (val >>= 1)
-		r++;
-	return r;
-}
-
-struct min_abbrev_data {
-	unsigned int init_len;
-	unsigned int cur_len;
-	char *hex;
-	struct repository *repo;
-	const struct object_id *oid;
-};
-
-static inline char get_hex_char_from_oid(const struct object_id *oid,
-					 unsigned int pos)
-{
-	static const char hex[] = "0123456789abcdef";
-
-	if ((pos & 1) == 0)
-		return hex[oid->hash[pos >> 1] >> 4];
-	else
-		return hex[oid->hash[pos >> 1] & 0xf];
-}
-
-static int extend_abbrev_len(const struct object_id *oid,
-			     struct min_abbrev_data *mad)
-{
-	unsigned int i = mad->init_len;
-	while (mad->hex[i] && mad->hex[i] == get_hex_char_from_oid(oid, i))
-		i++;
-
-	if (mad->hex[i] && i >= mad->cur_len)
-		mad->cur_len = i + 1;
-
-	return 0;
-}
-
-static int repo_extend_abbrev_len(struct repository *r UNUSED,
-				  const struct object_id *oid,
-				  void *cb_data)
-{
-	return extend_abbrev_len(oid, cb_data);
-}
-
-static void find_abbrev_len_for_midx(struct multi_pack_index *m,
-				     struct min_abbrev_data *mad)
-{
-	for (; m; m = m->base_midx) {
-		int match = 0;
-		uint32_t num, first = 0;
-		struct object_id oid;
-		const struct object_id *mad_oid;
-
-		if (!m->num_objects)
-			continue;
-
-		num = m->num_objects + m->num_objects_in_base;
-		mad_oid = mad->oid;
-		match = bsearch_one_midx(mad_oid, m, &first);
-
-		/*
-		 * first is now the position in the packfile where we
-		 * would insert mad->hash if it does not exist (or the
-		 * position of mad->hash if it does exist). Hence, we
-		 * consider a maximum of two objects nearby for the
-		 * abbreviation length.
-		 */
-		mad->init_len = 0;
-		if (!match) {
-			if (nth_midxed_object_oid(&oid, m, first))
-				extend_abbrev_len(&oid, mad);
-		} else if (first < num - 1) {
-			if (nth_midxed_object_oid(&oid, m, first + 1))
-				extend_abbrev_len(&oid, mad);
-		}
-		if (first > 0) {
-			if (nth_midxed_object_oid(&oid, m, first - 1))
-				extend_abbrev_len(&oid, mad);
-		}
-		mad->init_len = mad->cur_len;
-	}
-}
-
-static void find_abbrev_len_for_pack(struct packed_git *p,
-				     struct min_abbrev_data *mad)
-{
-	int match = 0;
-	uint32_t num, first = 0;
-	struct object_id oid;
-	const struct object_id *mad_oid;
-
-	if (p->multi_pack_index)
-		return;
-
-	if (open_pack_index(p) || !p->num_objects)
-		return;
-
-	num = p->num_objects;
-	mad_oid = mad->oid;
-	match = bsearch_pack(mad_oid, p, &first);
-
-	/*
-	 * first is now the position in the packfile where we would insert
-	 * mad->hash if it does not exist (or the position of mad->hash if
-	 * it does exist). Hence, we consider a maximum of two objects
-	 * nearby for the abbreviation length.
-	 */
-	mad->init_len = 0;
-	if (!match) {
-		if (!nth_packed_object_id(&oid, p, first))
-			extend_abbrev_len(&oid, mad);
-	} else if (first < num - 1) {
-		if (!nth_packed_object_id(&oid, p, first + 1))
-			extend_abbrev_len(&oid, mad);
-	}
-	if (first > 0) {
-		if (!nth_packed_object_id(&oid, p, first - 1))
-			extend_abbrev_len(&oid, mad);
-	}
-	mad->init_len = mad->cur_len;
-}
-
-static void find_abbrev_len_packed(struct min_abbrev_data *mad)
-{
-	struct packed_git *p;
-
-	odb_prepare_alternates(mad->repo->objects);
-	for (struct odb_source *source = mad->repo->objects->sources; source; source = source->next) {
-		struct multi_pack_index *m = get_multi_pack_index(source);
-		if (m)
-			find_abbrev_len_for_midx(m, mad);
-	}
-
-	repo_for_each_pack(mad->repo, p)
-		find_abbrev_len_for_pack(p, mad);
 }
 
 void strbuf_repo_add_unique_abbrev(struct strbuf *sb, struct repository *repo,
@@ -827,65 +584,19 @@ void strbuf_add_unique_abbrev(struct strbuf *sb, const struct object_id *oid,
 }
 
 int repo_find_unique_abbrev_r(struct repository *r, char *hex,
-			      const struct object_id *oid, int len)
+			      const struct object_id *oid, int min_len)
 {
 	const struct git_hash_algo *algo =
 		oid->algo ? &hash_algos[oid->algo] : r->hash_algo;
-	struct disambiguate_state ds;
-	struct min_abbrev_data mad;
-	struct object_id oid_ret;
-	const unsigned hexsz = algo->hexsz;
+	unsigned len;
 
-	if (len < 0) {
-		unsigned long count;
-
-		if (odb_count_objects(r->objects, ODB_COUNT_OBJECTS_APPROXIMATE, &count) < 0)
-			count = 0;
-
-		/*
-		 * Add one because the MSB only tells us the highest bit set,
-		 * not including the value of all the _other_ bits (so "15"
-		 * is only one off of 2^4, but the MSB is the 3rd bit.
-		 */
-		len = msb(count) + 1;
-		/*
-		 * We now know we have on the order of 2^len objects, which
-		 * expects a collision at 2^(len/2). But we also care about hex
-		 * chars, not bits, and there are 4 bits per hex. So all
-		 * together we need to divide by 2 and round up.
-		 */
-		len = DIV_ROUND_UP(len, 2);
-		/*
-		 * For very small repos, we stick with our regular fallback.
-		 */
-		if (len < FALLBACK_DEFAULT_ABBREV)
-			len = FALLBACK_DEFAULT_ABBREV;
-	}
+	if (odb_find_abbrev_len(r->objects, oid, min_len, &len) < 0)
+		len = algo->hexsz;
 
 	oid_to_hex_r(hex, oid);
-	if (len >= hexsz || !len)
-		return hexsz;
+	hex[len] = 0;
 
-	mad.repo = r;
-	mad.init_len = len;
-	mad.cur_len = len;
-	mad.hex = hex;
-	mad.oid = oid;
-
-	find_abbrev_len_packed(&mad);
-
-	if (init_object_disambiguation(r, hex, mad.cur_len, algo, &ds) < 0)
-		return -1;
-
-	ds.fn = repo_extend_abbrev_len;
-	ds.always_call_fn = 1;
-	ds.cb_data = (void *)&mad;
-
-	find_short_object_filename(&ds);
-	(void)finish_object_disambiguation(&ds, &oid_ret);
-
-	hex[mad.cur_len] = 0;
-	return mad.cur_len;
+	return len;
 }
 
 const char *repo_find_unique_abbrev(struct repository *r,

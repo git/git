@@ -140,7 +140,7 @@ struct odb_source {
 			       const struct object_info *request,
 			       odb_for_each_object_cb cb,
 			       void *cb_data,
-			       unsigned flags);
+			       const struct odb_for_each_object_options *opts);
 
 	/*
 	 * This callback is expected to count objects in the given object
@@ -156,6 +156,18 @@ struct odb_source {
 	int (*count_objects)(struct odb_source *source,
 			     enum odb_count_objects_flags flags,
 			     unsigned long *out);
+
+	/*
+	 * This callback is expected to find the minimum required length to
+	 * make the given object ID unique.
+	 *
+	 * The callback is expected to return a negative error code in case it
+	 * failed, 0 otherwise.
+	 */
+	int (*find_abbrev_len)(struct odb_source *source,
+			       const struct object_id *oid,
+			       unsigned min_length,
+			       unsigned *out);
 
 	/*
 	 * This callback is expected to freshen the given object so that its
@@ -343,9 +355,9 @@ static inline int odb_source_for_each_object(struct odb_source *source,
 					     const struct object_info *request,
 					     odb_for_each_object_cb cb,
 					     void *cb_data,
-					     unsigned flags)
+					     const struct odb_for_each_object_options *opts)
 {
-	return source->for_each_object(source, request, cb, cb_data, flags);
+	return source->for_each_object(source, request, cb, cb_data, opts);
 }
 
 /*
@@ -358,6 +370,18 @@ static inline int odb_source_count_objects(struct odb_source *source,
 					   unsigned long *out)
 {
 	return source->count_objects(source, flags, out);
+}
+
+/*
+ * Determine the minimum required length to make the given object ID unique in
+ * the given source. Returns 0 on success, a negative error code otherwise.
+ */
+static inline int odb_source_find_abbrev_len(struct odb_source *source,
+					     const struct object_id *oid,
+					     unsigned min_len,
+					     unsigned *out)
+{
+	return source->find_abbrev_len(source, oid, min_len, out);
 }
 
 /*
