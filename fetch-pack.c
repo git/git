@@ -1024,12 +1024,8 @@ static int get_pack(struct fetch_pack_args *args,
 				     fsck_msg_types.buf);
 	}
 
-	if (index_pack_args) {
-		int i;
-
-		for (i = 0; i < cmd.args.nr; i++)
-			strvec_push(index_pack_args, cmd.args.v[i]);
-	}
+	if (index_pack_args)
+		strvec_pushv(index_pack_args, cmd.args.v);
 
 	sigchain_push(SIGPIPE, SIG_IGN);
 
