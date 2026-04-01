@@ -200,6 +200,44 @@ test_expect_success 'add -u resolves unmerged paths' '
 	test_cmp expect actual
 '
 
+test_expect_success 'add -u avoids rename pairing on unmerged paths' '
+	test_create_repo rename-crash &&
+	(
+		cd rename-crash &&
+		test_seq 1 100 |
+		sed "s/.*/line &: same text/" >conflict.txt &&
+		cp conflict.txt bystander.txt &&
+		git add conflict.txt bystander.txt &&
+		git commit -m "initial: two files with identical content" &&
+		main_branch=$(git symbolic-ref --short HEAD) &&
+		git checkout -b feature &&
+		sed "s/^line 50:.*/line 50: FEATURE/" \
+			conflict.txt >conflict.txt.tmp &&
+		mv conflict.txt.tmp conflict.txt &&
+		git add conflict.txt &&
+		git commit -m "feature: modify line 50" &&
+		git checkout "$main_branch" &&
+		sed "s/^line 50:.*/line 50: MAIN/" \
+			conflict.txt >conflict.txt.tmp &&
+		mv conflict.txt.tmp conflict.txt &&
+		git add conflict.txt &&
+		git commit -m "main: modify line 50 differently" &&
+		test_must_fail git merge feature &&
+		rm bystander.txt &&
+		git add -u >out &&
+		test_must_be_empty out &&
+		git ls-files -u >actual &&
+		test_must_be_empty actual &&
+		git ls-files bystander.txt conflict.txt >actual &&
+		cat >expect <<-\EOF &&
+		conflict.txt
+		EOF
+		test_cmp expect actual &&
+		git diff-files --name-only >actual &&
+		test_must_be_empty actual
+	)
+'
+
 test_expect_success '"add -u non-existent" should fail' '
 	test_must_fail git add -u non-existent &&
 	git ls-files >actual &&
