@@ -1,5 +1,3 @@
-#define USE_THE_REPOSITORY_VARIABLE
-
 #include "git-compat-util.h"
 #include "date.h"
 #include "dir.h"
@@ -207,7 +205,7 @@ void fsck_set_msg_types(struct fsck_options *options, const char *values)
 			if (equal == len)
 				die("skiplist requires a path");
 			oidset_parse_file(&options->skip_oids, buf + equal + 1,
-					  the_repository->hash_algo);
+					  options->repo->hash_algo);
 			buf += len + 1;
 			continue;
 		}
@@ -360,7 +358,7 @@ static int fsck_walk_tree(struct tree *tree, void *data, struct fsck_options *op
 	int res = 0;
 	const char *name;
 
-	if (repo_parse_tree(the_repository, tree))
+	if (repo_parse_tree(options->repo, tree))
 		return -1;
 
 	name = fsck_get_object_name(options, &tree->object.oid);
@@ -375,14 +373,14 @@ static int fsck_walk_tree(struct tree *tree, void *data, struct fsck_options *op
 			continue;
 
 		if (S_ISDIR(entry.mode)) {
-			obj = (struct object *)lookup_tree(the_repository, &entry.oid);
+			obj = (struct object *)lookup_tree(options->repo, &entry.oid);
 			if (name && obj)
 				fsck_put_object_name(options, &entry.oid, "%s%s/",
 						     name, entry.path);
 			result = options->walk(obj, OBJ_TREE, data, options);
 		}
 		else if (S_ISREG(entry.mode) || S_ISLNK(entry.mode)) {
-			obj = (struct object *)lookup_blob(the_repository, &entry.oid);
+			obj = (struct object *)lookup_blob(options->repo, &entry.oid);
 			if (name && obj)
 				fsck_put_object_name(options, &entry.oid, "%s%s",
 						     name, entry.path);
@@ -409,7 +407,7 @@ static int fsck_walk_commit(struct commit *commit, void *data, struct fsck_optio
 	int result;
 	const char *name;
 
-	if (repo_parse_commit(the_repository, commit))
+	if (repo_parse_commit(options->repo, commit))
 		return -1;
 
 	name = fsck_get_object_name(options, &commit->object.oid);
@@ -417,7 +415,7 @@ static int fsck_walk_commit(struct commit *commit, void *data, struct fsck_optio
 		fsck_put_object_name(options, get_commit_tree_oid(commit),
 				     "%s:", name);
 
-	result = options->walk((struct object *) repo_get_commit_tree(the_repository, commit),
+	result = options->walk((struct object *) repo_get_commit_tree(options->repo, commit),
 			       OBJ_TREE, data, options);
 	if (result < 0)
 		return result;
@@ -474,7 +472,7 @@ static int fsck_walk_tag(struct tag *tag, void *data, struct fsck_options *optio
 {
 	const char *name = fsck_get_object_name(options, &tag->object.oid);
 
-	if (parse_tag(the_repository, tag))
+	if (parse_tag(options->repo, tag))
 		return -1;
 	if (name)
 		fsck_put_object_name(options, &tag->tagged->oid, "%s", name);
@@ -487,7 +485,7 @@ int fsck_walk(struct object *obj, void *data, struct fsck_options *options)
 		return -1;
 
 	if (obj->type == OBJ_NONE)
-		parse_object(the_repository, &obj->oid);
+		parse_object(options->repo, &obj->oid);
 
 	switch (obj->type) {
 	case OBJ_BLOB:
@@ -970,14 +968,14 @@ static int fsck_commit(const struct object_id *oid,
 
 	if (buffer >= buffer_end || !skip_prefix(buffer, "tree ", &buffer))
 		return report(options, oid, OBJ_COMMIT, FSCK_MSG_MISSING_TREE, "invalid format - expected 'tree' line");
-	if (parse_oid_hex(buffer, &tree_oid, &p) || *p != '\n') {
+	if (parse_oid_hex_algop(buffer, &tree_oid, &p, options->repo->hash_algo) || *p != '\n') {
 		err = report(options, oid, OBJ_COMMIT, FSCK_MSG_BAD_TREE_SHA1, "invalid 'tree' line format - bad sha1");
 		if (err)
 			return err;
 	}
 	buffer = p + 1;
 	while (buffer < buffer_end && skip_prefix(buffer, "parent ", &buffer)) {
-		if (parse_oid_hex(buffer, &parent_oid, &p) || *p != '\n') {
+		if (parse_oid_hex_algop(buffer, &parent_oid, &p, options->repo->hash_algo) || *p != '\n') {
 			err = report(options, oid, OBJ_COMMIT, FSCK_MSG_BAD_PARENT_SHA1, "invalid 'parent' line format - bad sha1");
 			if (err)
 				return err;
@@ -1044,7 +1042,7 @@ int fsck_tag_standalone(const struct object_id *oid, const char *buffer,
 		ret = report(options, oid, OBJ_TAG, FSCK_MSG_MISSING_OBJECT, "invalid format - expected 'object' line");
 		goto done;
 	}
-	if (parse_oid_hex(buffer, tagged_oid, &p) || *p != '\n') {
+	if (parse_oid_hex_algop(buffer, tagged_oid, &p, options->repo->hash_algo) || *p != '\n') {
 		ret = report(options, oid, OBJ_TAG, FSCK_MSG_BAD_OBJECT_SHA1, "invalid 'object' line format - bad sha1");
 		if (ret)
 			goto done;
@@ -1336,9 +1334,9 @@ static int fsck_blobs(struct oidset *blobs_found, struct oidset *blobs_done,
 		if (oidset_contains(blobs_done, oid))
 			continue;
 
-		buf = odb_read_object(the_repository->objects, oid, &type, &size);
+		buf = odb_read_object(options->repo->objects, oid, &type, &size);
 		if (!buf) {
-			if (is_promisor_object(the_repository, oid))
+			if (is_promisor_object(options->repo, oid))
 				continue;
 			ret |= report(options,
 				      oid, OBJ_BLOB, msg_missing,
@@ -1378,6 +1376,54 @@ bool fsck_has_queued_checks(struct fsck_options *options)
 {
 	return !oidset_equal(&options->gitmodules_found, &options->gitmodules_done) ||
 	       !oidset_equal(&options->gitattributes_found, &options->gitattributes_done);
+}
+
+void fsck_options_init(struct fsck_options *options,
+		       struct repository *repo,
+		       enum fsck_options_type type)
+{
+	static const struct fsck_options defaults[] = {
+		[FSCK_OPTIONS_DEFAULT] = {
+			.skip_oids = OIDSET_INIT,
+			.gitmodules_found = OIDSET_INIT,
+			.gitmodules_done = OIDSET_INIT,
+			.gitattributes_found = OIDSET_INIT,
+			.gitattributes_done = OIDSET_INIT,
+			.error_func = fsck_objects_error_function
+		},
+		[FSCK_OPTIONS_STRICT] = {
+			.strict = 1,
+			.gitmodules_found = OIDSET_INIT,
+			.gitmodules_done = OIDSET_INIT,
+			.gitattributes_found = OIDSET_INIT,
+			.gitattributes_done = OIDSET_INIT,
+			.error_func = fsck_objects_error_function,
+		},
+		[FSCK_OPTIONS_MISSING_GITMODULES] = {
+			.strict = 1,
+			.gitmodules_found = OIDSET_INIT,
+			.gitmodules_done = OIDSET_INIT,
+			.gitattributes_found = OIDSET_INIT,
+			.gitattributes_done = OIDSET_INIT,
+			.error_func = fsck_objects_error_cb_print_missing_gitmodules,
+		},
+		[FSCK_OPTIONS_REFS] = {
+			.error_func = fsck_refs_error_function,
+		},
+	};
+
+	switch (type) {
+	case FSCK_OPTIONS_DEFAULT:
+	case FSCK_OPTIONS_STRICT:
+	case FSCK_OPTIONS_MISSING_GITMODULES:
+	case FSCK_OPTIONS_REFS:
+		memcpy(options, &defaults[type], sizeof(*options));
+		break;
+	default:
+		BUG("unknown fsck options type %d", type);
+	}
+
+	options->repo = repo;
 }
 
 void fsck_options_clear(struct fsck_options *options)

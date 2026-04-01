@@ -16,7 +16,7 @@ static char const * const builtin_mktag_usage[] = {
 };
 static int option_strict = 1;
 
-static struct fsck_options fsck_options = FSCK_OPTIONS_STRICT;
+static struct fsck_options fsck_options;
 
 static int mktag_fsck_error_func(struct fsck_options *o UNUSED,
 				 void *fsck_report UNUSED,
@@ -75,7 +75,7 @@ static int verify_object_in_tag(struct object_id *tagged_oid, int *tagged_type)
 int cmd_mktag(int argc,
 	      const char **argv,
 	      const char *prefix,
-	      struct repository *repo UNUSED)
+	      struct repository *repo)
 {
 	static struct option builtin_mktag_options[] = {
 		OPT_BOOL(0, "strict", &option_strict,
@@ -94,6 +94,7 @@ int cmd_mktag(int argc,
 	if (strbuf_read(&buf, 0, 0) < 0)
 		die_errno(_("could not read from stdin"));
 
+	fsck_options_init(&fsck_options, repo, FSCK_OPTIONS_STRICT);
 	fsck_options.error_func = mktag_fsck_error_func;
 	fsck_set_msg_type_from_ids(&fsck_options, FSCK_MSG_EXTRA_HEADER_ENTRY,
 				   FSCK_WARN);
