@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 (EXPERIMENTAL!) 'git replay' ([--contained] --onto=<newbase> | --advance=<branch> | --revert=<branch>)
-			     [--ref-action=<mode>] <revision-range>
+			     [--ref=<ref>] [--ref-action=<mode>] <revision-range>
 
 DESCRIPTION
 -----------
@@ -65,6 +65,16 @@ incompatible with `--contained` (which is a modifier for `--onto` only).
 --contained::
 	Update all branches that point at commits in
 	<revision-range>. Requires `--onto`.
+
+--ref=<ref>::
+	Override which reference is updated with the result of the replay.
+	The ref must be fully qualified.
+	When used with `--onto`, the `<revision-range>` should have a
+	single tip and only the specified reference is updated instead of
+	inferring refs from the revision range.
+	When used with `--advance` or `--revert`, the specified reference is
+	updated instead of the branch given to those options.
+	This option is incompatible with `--contained`.
 
 --ref-action[=<mode>]::
 	Control how references are updated. The mode can be:
@@ -188,6 +198,16 @@ need to be undone.
 NOTE: For reverting an entire merge request as a single commit (rather than
 commit-by-commit), consider using `git merge-tree --merge-base $TIP HEAD $BASE`
 which can avoid unnecessary merge conflicts.
+
+To replay onto a specific commit while updating a different reference:
+
+------------
+$ git replay --onto=112233 --ref=refs/heads/mybranch aabbcc..ddeeff
+------------
+
+This replays the range `aabbcc..ddeeff` onto commit `112233` and updates
+`refs/heads/mybranch` to point at the result. This can be useful when you want
+to use bare commit IDs instead of branch names.
 
 GIT
 ---
