@@ -99,7 +99,7 @@ static struct object_list *objects;
 
 struct repo {
 	char *url;
-	char *path;
+	const char *path;
 	int path_len;
 	int has_info_refs;
 	int can_update_info_refs;
