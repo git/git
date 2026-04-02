@@ -20,8 +20,8 @@ check_config () {
 		return 1
 	fi
 
-	bare=$(cd "$1" && git config --bool core.bare)
-	worktree=$(cd "$1" && git config core.worktree) ||
+	bare=$(git --git-dir="$1" config --bool core.bare)
+	worktree=$(git --git-dir="$1" config core.worktree) ||
 	worktree=unset
 
 	test "$bare" = "$2" && test "$worktree" = "$3" || {
