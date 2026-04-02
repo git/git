@@ -9,6 +9,7 @@
 #ifndef REFTABLE_STACK_H
 #define REFTABLE_STACK_H
 
+#include "reftable-system.h"
 #include "reftable-writer.h"
 
 /*
