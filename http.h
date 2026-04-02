@@ -215,6 +215,7 @@ struct http_pack_request {
 	 */
 	const char **index_pack_args;
 	unsigned preserve_index_pack_stdout : 1;
+	unsigned stream_to_stdout : 1;
 
 	FILE *packfile;
 	struct strbuf tmpfile;
@@ -225,6 +226,8 @@ struct http_pack_request {
 struct http_pack_request *new_http_pack_request(
 	const unsigned char *packed_git_hash, const char *base_url);
 struct http_pack_request *new_direct_http_pack_request(
+	const unsigned char *packed_git_hash, char *url);
+struct http_pack_request *new_direct_http_pack_request_to_stdout(
 	const unsigned char *packed_git_hash, char *url);
 int finish_http_pack_request(struct http_pack_request *preq);
 void release_http_pack_request(struct http_pack_request *preq);
