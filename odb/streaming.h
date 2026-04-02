@@ -5,6 +5,7 @@
 #define STREAMING_H 1
 
 #include "object.h"
+#include "odb.h"
 
 struct object_database;
 struct odb_read_stream;
@@ -66,6 +67,11 @@ ssize_t odb_write_stream_read(struct odb_write_stream *stream, void *buf,
 			      size_t len);
 
 /*
+ * Releases memory allocated for underlying stream data.
+ */
+void odb_write_stream_release(struct odb_write_stream *stream);
+
+/*
  * Look up the object by its ID and write the full contents to the file
  * descriptor. The object must be a blob, or the function will fail. When
  * provided, the filter is used to transform the blob contents.
@@ -81,5 +87,11 @@ int odb_stream_blob_to_fd(struct object_database *odb,
 			  const struct object_id *oid,
 			  struct stream_filter *filter,
 			  int can_seek);
+
+/*
+ * Sets up an ODB write stream that reads from an fd.
+ */
+void odb_write_stream_from_fd(struct odb_write_stream *stream, int fd,
+			      size_t size);
 
 #endif /* STREAMING_H */

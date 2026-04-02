@@ -1396,11 +1396,10 @@ static int already_written(struct odb_transaction_files *transaction,
 }
 
 /* Lazily create backing packfile for the state */
-static void prepare_packfile_transaction(struct odb_transaction_files *transaction,
-					 unsigned flags)
+static void prepare_packfile_transaction(struct odb_transaction_files *transaction)
 {
 	struct transaction_packfile *state = &transaction->packfile;
-	if (!(flags & INDEX_WRITE_OBJECT) || state->f)
+	if (state->f)
 		return;
 
 	state->f = create_tmp_packfile(transaction->base.source->odb->repo,
@@ -1411,6 +1410,39 @@ static void prepare_packfile_transaction(struct odb_transaction_files *transacti
 	state->offset = write_pack_header(state->f, 1);
 	if (!state->offset)
 		die_errno("unable to write pack header");
+}
+
+static int hash_blob_stream(struct odb_write_stream *stream,
+			    const struct git_hash_algo *hash_algo,
+			    struct object_id *result_oid, size_t size)
+{
+	unsigned char buf[16384];
+	struct git_hash_ctx ctx;
+	unsigned header_len;
+	size_t bytes_hashed = 0;
+
+	header_len = format_object_header((char *)buf, sizeof(buf),
+					  OBJ_BLOB, size);
+	hash_algo->init_fn(&ctx);
+	git_hash_update(&ctx, buf, header_len);
+
+	while (!stream->is_finished) {
+		ssize_t read_result = odb_write_stream_read(stream, buf,
+							    sizeof(buf));
+
+		if (read_result < 0)
+			return -1;
+
+		git_hash_update(&ctx, buf, read_result);
+		bytes_hashed += read_result;
+	}
+
+	if (bytes_hashed != size)
+		return -1;
+
+	git_hash_final_oid(result_oid, &ctx);
+
+	return 0;
 }
 
 /*
@@ -1430,15 +1462,13 @@ static void prepare_packfile_transaction(struct odb_transaction_files *transacti
  */
 static int stream_blob_to_pack(struct transaction_packfile *state,
 			       struct git_hash_ctx *ctx, off_t *already_hashed_to,
-			       int fd, size_t size, const char *path,
-			       unsigned flags)
+			       int fd, size_t size, const char *path)
 {
 	git_zstream s;
 	unsigned char ibuf[16384];
 	unsigned char obuf[16384];
 	unsigned hdrlen;
 	int status = Z_OK;
-	int write_object = (flags & INDEX_WRITE_OBJECT);
 	off_t offset = 0;
 
 	git_deflate_init(&s, pack_compression_level);
@@ -1473,20 +1503,18 @@ static int stream_blob_to_pack(struct transaction_packfile *state,
 		status = git_deflate(&s, size ? 0 : Z_FINISH);
 
 		if (!s.avail_out || status == Z_STREAM_END) {
-			if (write_object) {
-				size_t written = s.next_out - obuf;
+			size_t written = s.next_out - obuf;
 
-				/* would we bust the size limit? */
-				if (state->nr_written &&
-				    pack_size_limit_cfg &&
-				    pack_size_limit_cfg < state->offset + written) {
-					git_deflate_abort(&s);
-					return -1;
-				}
-
-				hashwrite(state->f, obuf, written);
-				state->offset += written;
+			/* would we bust the size limit? */
+			if (state->nr_written &&
+			    pack_size_limit_cfg &&
+			    pack_size_limit_cfg < state->offset + written) {
+				git_deflate_abort(&s);
+				return -1;
 			}
+
+			hashwrite(state->f, obuf, written);
+			state->offset += written;
 			s.next_out = obuf;
 			s.avail_out = sizeof(obuf);
 		}
@@ -1574,8 +1602,7 @@ clear_exit:
  */
 static int index_blob_packfile_transaction(struct odb_transaction_files *transaction,
 					   struct object_id *result_oid, int fd,
-					   size_t size, const char *path,
-					   unsigned flags)
+					   size_t size, const char *path)
 {
 	struct transaction_packfile *state = &transaction->packfile;
 	off_t seekback, already_hashed_to;
@@ -1583,7 +1610,7 @@ static int index_blob_packfile_transaction(struct odb_transaction_files *transac
 	unsigned char obuf[16384];
 	unsigned header_len;
 	struct hashfile_checkpoint checkpoint;
-	struct pack_idx_entry *idx = NULL;
+	struct pack_idx_entry *idx;
 
 	seekback = lseek(fd, 0, SEEK_CUR);
 	if (seekback == (off_t)-1)
@@ -1594,33 +1621,26 @@ static int index_blob_packfile_transaction(struct odb_transaction_files *transac
 	transaction->base.source->odb->repo->hash_algo->init_fn(&ctx);
 	git_hash_update(&ctx, obuf, header_len);
 
-	/* Note: idx is non-NULL when we are writing */
-	if ((flags & INDEX_WRITE_OBJECT) != 0) {
-		CALLOC_ARRAY(idx, 1);
-
-		prepare_packfile_transaction(transaction, flags);
-		hashfile_checkpoint_init(state->f, &checkpoint);
-	}
+	CALLOC_ARRAY(idx, 1);
+	prepare_packfile_transaction(transaction);
+	hashfile_checkpoint_init(state->f, &checkpoint);
 
 	already_hashed_to = 0;
 
 	while (1) {
-		prepare_packfile_transaction(transaction, flags);
-		if (idx) {
-			hashfile_checkpoint(state->f, &checkpoint);
-			idx->offset = state->offset;
-			crc32_begin(state->f);
-		}
+		prepare_packfile_transaction(transaction);
+		hashfile_checkpoint(state->f, &checkpoint);
+		idx->offset = state->offset;
+		crc32_begin(state->f);
+
 		if (!stream_blob_to_pack(state, &ctx, &already_hashed_to,
-					 fd, size, path, flags))
+					 fd, size, path))
 			break;
 		/*
 		 * Writing this object to the current pack will make
 		 * it too big; we need to truncate it, start a new
 		 * pack, and write into it.
 		 */
-		if (!idx)
-			BUG("should not happen");
 		hashfile_truncate(state->f, &checkpoint);
 		state->offset = checkpoint.offset;
 		flush_packfile_transaction(transaction);
@@ -1628,8 +1648,6 @@ static int index_blob_packfile_transaction(struct odb_transaction_files *transac
 			return error("cannot seek back");
 	}
 	git_hash_final_oid(result_oid, &ctx);
-	if (!idx)
-		return 0;
 
 	idx->crc32 = crc32_end(state->f);
 	if (already_written(transaction, result_oid)) {
@@ -1667,18 +1685,28 @@ int index_fd(struct index_state *istate, struct object_id *oid,
 		ret = index_core(istate, oid, fd, xsize_t(st->st_size),
 				 type, path, flags);
 	} else {
-		struct object_database *odb = the_repository->objects;
-		struct odb_transaction_files *files_transaction;
-		struct odb_transaction *transaction;
+		struct odb_write_stream stream;
+		odb_write_stream_from_fd(&stream, fd, xsize_t(st->st_size));
 
-		transaction = odb_transaction_begin(odb);
-		files_transaction = container_of(odb->transaction,
-						 struct odb_transaction_files,
-						 base);
-		ret = index_blob_packfile_transaction(files_transaction, oid, fd,
-						      xsize_t(st->st_size),
-						      path, flags);
-		odb_transaction_commit(transaction);
+		if (flags & INDEX_WRITE_OBJECT) {
+			struct object_database *odb = the_repository->objects;
+			struct odb_transaction_files *files_transaction;
+			struct odb_transaction *transaction;
+
+			transaction = odb_transaction_begin(odb);
+			files_transaction = container_of(odb->transaction,
+							 struct odb_transaction_files,
+							 base);
+			ret = index_blob_packfile_transaction(files_transaction, oid, fd,
+						      xsize_t(st->st_size), path);
+			odb_transaction_commit(transaction);
+		} else {
+			ret = hash_blob_stream(&stream,
+					       the_repository->hash_algo, oid,
+					       xsize_t(st->st_size));
+		}
+
+		odb_write_stream_release(&stream);
 	}
 
 	close(fd);
