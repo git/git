@@ -1164,6 +1164,8 @@ int parse_sign_mode(const char *arg, enum sign_mode *mode, const char **keyid)
 		*mode = SIGN_WARN_STRIP;
 	} else if (!strcmp(arg, "strip")) {
 		*mode = SIGN_STRIP;
+	} else if (!strcmp(arg, "abort-if-invalid")) {
+		*mode = SIGN_ABORT_IF_INVALID;
 	} else if (!strcmp(arg, "strip-if-invalid")) {
 		*mode = SIGN_STRIP_IF_INVALID;
 	} else if (!strcmp(arg, "sign-if-invalid")) {
