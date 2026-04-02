@@ -370,4 +370,140 @@ test_expect_success 'log --graph with multiple tips' '
 	EOF
 '
 
+test_expect_success 'log --graph with root commit' '
+	git checkout --orphan 8_a &&
+	test_commit 8_A &&
+	test_commit 8_A1 &&
+	git checkout --orphan 8_b &&
+	test_commit 8_B &&
+
+	check_graph 8_b 8_a <<-\EOF
+	* 8_B
+	  * 8_A1
+	 /
+	* 8_A
+	EOF
+'
+
+test_expect_success 'log --graph with multiple root commits' '
+	test_commit 8_B1 &&
+	git checkout --orphan 8_c &&
+	test_commit 8_C &&
+
+	check_graph 8_c 8_b 8_a <<-\EOF
+	* 8_C
+	  * 8_B1
+	 /
+	* 8_B
+	  * 8_A1
+	 /
+	* 8_A
+	EOF
+'
+
+test_expect_success 'log --graph commit from a two parent merge shifted' '
+	git checkout --orphan 9_b &&
+	test_commit 9_B &&
+	git checkout --orphan 9_c &&
+	test_commit 9_C &&
+	git checkout 9_b &&
+	git merge 9_c --allow-unrelated-histories -m 9_M &&
+	git checkout --orphan 9_a &&
+	test_commit 9_A &&
+	test_commit 9_A1 &&
+	test_commit 9_A2 &&
+
+	check_graph 9_a 9_b <<-\EOF
+	* 9_A2
+	* 9_A1
+	* 9_A
+	  * 9_M
+	 /|
+	| * 9_C
+	* 9_B
+	EOF
+'
+
+test_expect_success 'log --graph commit from a three parent merge shifted' '
+	git checkout --orphan 10_b &&
+	test_commit 10_B &&
+	git checkout --orphan 10_c &&
+	test_commit 10_C &&
+	git checkout --orphan 10_d &&
+	test_commit 10_D &&
+	git checkout 10_b &&
+	TREE=$(git write-tree) &&
+	MERGE=$(git commit-tree $TREE -p 10_b -p 10_c -p 10_d -m 10_M) &&
+	git reset --hard $MERGE &&
+	git checkout --orphan 10_a &&
+	test_commit 10_A &&
+	test_commit 10_A1 &&
+	test_commit 10_A2 &&
+
+	check_graph 10_a 10_b <<-\EOF
+	* 10_A2
+	* 10_A1
+	* 10_A
+	  *   10_M
+	 /|\
+	| | * 10_D
+	| * 10_C
+	* 10_B
+	EOF
+'
+
+test_expect_success 'log --graph commit from a four parent merge shifted' '
+	git checkout --orphan 11_b &&
+	test_commit 11_B &&
+	git checkout --orphan 11_c &&
+	test_commit 11_C &&
+	git checkout --orphan 11_d &&
+	test_commit 11_D &&
+	git checkout --orphan 11_e &&
+	test_commit 11_E &&
+	git checkout 11_b &&
+	TREE=$(git write-tree) &&
+	MERGE=$(git commit-tree $TREE -p 11_b -p 11_c -p 11_d -p 11_e -m 11_M) &&
+	git reset --hard $MERGE &&
+	git checkout --orphan 11_a &&
+	test_commit 11_A &&
+	test_commit 11_A1 &&
+	test_commit 11_A2 &&
+
+	check_graph 11_a 11_b <<-\EOF
+	* 11_A2
+	* 11_A1
+	* 11_A
+	  *-.   11_M
+	 /|\ \
+	| | | * 11_E
+	| | * 11_D
+	| * 11_C
+	* 11_B
+	EOF
+'
+
+test_expect_success 'log --graph disconnected three roots cascading' '
+	git checkout --orphan 12_d &&
+	test_commit 12_D &&
+	test_commit 12_D1 &&
+	git checkout --orphan 12_c &&
+	test_commit 12_C &&
+	git checkout --orphan 12_b &&
+	test_commit 12_B &&
+	git checkout --orphan 12_a &&
+	test_commit 12_A &&
+
+	check_graph 12_a 12_b 12_c 12_d <<-\EOF
+	* 12_A
+	  * 12_B
+	    * 12_C
+	      * 12_D1
+	   _ /
+	  /
+	 /
+	* 12_D
+	EOF
+'
+
 test_done
