@@ -114,4 +114,22 @@ int flock_commit(struct reftable_flock *l);
 /* Report the time in milliseconds. */
 uint64_t reftable_time_ms(void);
 
+struct reftable_mmap {
+       void *data;
+       size_t size;
+       void *priv;
+};
+
+/*
+ * Map the file into memory. Returns 0 on success, a reftable error code on
+ * error.
+ */
+int reftable_mmap(struct reftable_mmap *out, int fd, size_t len);
+
+/*
+ * Unmap the file from memory. Returns 0 on success, a reftable error code on
+ * error.
+ */
+int reftable_munmap(struct reftable_mmap *mmap);
+
 #endif

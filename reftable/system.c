@@ -143,3 +143,23 @@ uint64_t reftable_time_ms(void)
 {
 	return getnanotime() / 1000000;
 }
+
+int reftable_mmap(struct reftable_mmap *out, int fd, size_t len)
+{
+	void *data = xmmap_gently(NULL, len, PROT_READ, MAP_PRIVATE, fd, 0);
+	if (data == MAP_FAILED)
+		return REFTABLE_IO_ERROR;
+
+	out->data = data;
+	out->size = len;
+
+	return 0;
+}
+
+int reftable_munmap(struct reftable_mmap *mmap)
+{
+	if (munmap(mmap->data, mmap->size) < 0)
+		return REFTABLE_IO_ERROR;
+	memset(mmap, 0, sizeof(*mmap));
+	return 0;
+}
