@@ -197,8 +197,9 @@ void xdl_free_env(xdfenv_t *xe) {
 }
 
 
-static bool xdl_clean_mmatch(uint8_t const *action, ptrdiff_t i, ptrdiff_t s, ptrdiff_t e) {
+static bool xdl_clean_mmatch(uint8_t const *action, ptrdiff_t i, ptrdiff_t len) {
 	ptrdiff_t r, rdis0, rpdis0, rdis1, rpdis1;
+	ptrdiff_t s = 0, e = len - 1;
 
 	/*
 	 * Limits the window that is examined during the similar-lines
@@ -333,7 +334,7 @@ static int xdl_cleanup_records(xdlclassifier_t *cf, xdfile_t *xdf1, xdfile_t *xd
 	xdf1->nreff = 0;
 	for (i = 0; i < len1; i++) {
 		if (action1[i] == INVESTIGATE) {
-			if (!xdl_clean_mmatch(action1, i, 0, len1 - 1))
+			if (!xdl_clean_mmatch(action1, i, len1))
 				action1[i] = KEEP;
 			else
 				action1[i] = DISCARD;
@@ -351,7 +352,7 @@ static int xdl_cleanup_records(xdlclassifier_t *cf, xdfile_t *xdf1, xdfile_t *xd
 	xdf2->nreff = 0;
 	for (i = 0; i < len2; i++) {
 		if (action2[i] == INVESTIGATE) {
-			if (!xdl_clean_mmatch(action2, i, 0, len2 - 1))
+			if (!xdl_clean_mmatch(action2, i, len2))
 				action2[i] = KEEP;
 			else
 				action2[i] = DISCARD;
