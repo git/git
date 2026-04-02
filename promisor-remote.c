@@ -651,6 +651,11 @@ static int should_accept_remote(enum accept_promisor accept,
 	const char *remote_name = advertised->name;
 	const char *remote_url = advertised->url;
 
+	if (!remote_url || !*remote_url)
+		BUG("no or empty URL advertised for remote '%s'; "
+		    "this remote should have been rejected earlier",
+		    remote_name);
+
 	if (accept == ACCEPT_ALL)
 		return all_fields_match(advertised, config_info, NULL);
 
@@ -669,19 +674,14 @@ static int should_accept_remote(enum accept_promisor accept,
 	if (accept != ACCEPT_KNOWN_URL)
 		BUG("Unhandled 'enum accept_promisor' value '%d'", accept);
 
-	if (!remote_url || !*remote_url) {
-		warning(_("no or empty URL advertised for remote '%s', "
-			  "ignoring this remote"), remote_name);
+	if (strcmp(p->url, remote_url)) {
+		warning(_("known remote named '%s' but with URL '%s' instead of '%s', "
+			  "ignoring this remote"),
+			remote_name, p->url, remote_url);
 		return 0;
 	}
 
-	if (!strcmp(p->url, remote_url))
-		return all_fields_match(advertised, config_info, p);
-
-	warning(_("known remote named '%s' but with URL '%s' instead of '%s', "
-		  "ignoring this remote"), remote_name, p->url, remote_url);
-
-	return 0;
+	return all_fields_match(advertised, config_info, p);
 }
 
 static int skip_field_name_prefix(const char *elem, const char *field_name, const char **value)
