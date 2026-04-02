@@ -36,24 +36,6 @@ struct packfile_store;
 struct cached_object_entry;
 
 /*
- * A transaction may be started for an object database prior to writing new
- * objects via odb_transaction_begin(). These objects are not committed until
- * odb_transaction_commit() is invoked. Only a single transaction may be pending
- * at a time.
- *
- * Each ODB source is expected to implement its own transaction handling.
- */
-struct odb_transaction;
-typedef void (*odb_transaction_commit_fn)(struct odb_transaction *transaction);
-struct odb_transaction {
-	/* The ODB source the transaction is opened against. */
-	struct odb_source *source;
-
-	/* The ODB source specific callback invoked to commit a transaction. */
-	odb_transaction_commit_fn commit;
-};
-
-/*
  * The object database encapsulates access to objects in a repository. It
  * manages one or more sources that store the actual objects which are
  * configured via alternates.
@@ -153,19 +135,6 @@ void odb_close(struct object_database *o);
  * objects may become accessible.
  */
 void odb_reprepare(struct object_database *o);
-
-/*
- * Starts an ODB transaction. Subsequent objects are written to the transaction
- * and not committed until odb_transaction_commit() is invoked on the
- * transaction. If the ODB already has a pending transaction, NULL is returned.
- */
-struct odb_transaction *odb_transaction_begin(struct object_database *odb);
-
-/*
- * Commits an ODB transaction making the written objects visible. If the
- * specified transaction is NULL, the function is a no-op.
- */
-void odb_transaction_commit(struct odb_transaction *transaction);
 
 /*
  * Find source by its object directory path. Returns a `NULL` pointer in case

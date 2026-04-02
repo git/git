@@ -21,6 +21,7 @@
 #include "object-file.h"
 #include "odb.h"
 #include "odb/streaming.h"
+#include "odb/transaction.h"
 #include "oidtree.h"
 #include "pack.h"
 #include "packfile.h"
