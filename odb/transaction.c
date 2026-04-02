@@ -1,5 +1,5 @@
 #include "git-compat-util.h"
-#include "object-file.h"
+#include "odb/source.h"
 #include "odb/transaction.h"
 
 struct odb_transaction *odb_transaction_begin(struct object_database *odb)
@@ -7,7 +7,7 @@ struct odb_transaction *odb_transaction_begin(struct object_database *odb)
 	if (odb->transaction)
 		return NULL;
 
-	odb->transaction = odb_transaction_files_begin(odb->sources);
+	odb_source_begin_transaction(odb->sources, &odb->transaction);
 
 	return odb->transaction;
 }
