@@ -912,8 +912,10 @@ static inline size_t xsize_t(off_t len)
  * is done via tolower(), so it is strictly ASCII (no multi-byte characters or
  * locale-specific conversions).
  */
-static inline int skip_iprefix(const char *str, const char *prefix,
-			       const char **out)
+#define skip_iprefix(str, prefix, out) \
+	skip_iprefix_impl((str), (prefix), CONST_OUTPARAM((str), (out)))
+static inline int skip_iprefix_impl(const char *str, const char *prefix,
+				     const char **out)
 {
 	do {
 		if (!*prefix) {
