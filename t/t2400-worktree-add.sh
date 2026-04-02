@@ -171,11 +171,8 @@ test_expect_success 'not die on re-checking out current branch' '
 '
 
 test_expect_success '"add" from a bare repo' '
-	(
-		git clone --bare . bare &&
-		cd bare &&
-		git worktree add -b bare-main ../there2 main
-	)
+	git clone --bare . bare &&
+	git -C bare --git-dir=. worktree add -b bare-main ../there2 main
 '
 
 test_expect_success 'checkout from a bare repo without "add"' '
@@ -186,15 +183,11 @@ test_expect_success 'checkout from a bare repo without "add"' '
 '
 
 test_expect_success '"add" default branch of a bare repo' '
-	(
-		git clone --bare . bare2 &&
-		cd bare2 &&
-		git worktree add ../there3 main &&
-		cd ../there3 &&
-		# Simple check that a Git command does not
-		# immediately fail with the current setup
-		git status
-	) &&
+	git clone --bare . bare2 &&
+	git -C bare2 --git-dir=. worktree add ../there3 main &&
+	# Simple check that a Git command does not
+	# immediately fail with the current setup
+	git status &&
 	cat >expect <<-EOF &&
 	init.t
 	EOF
