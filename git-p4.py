@@ -4360,6 +4360,7 @@ class P4Clone(P4Sync):
         init_cmd = ["git", "init"]
         if self.cloneBare:
             init_cmd.append("--bare")
+            os.environ["GIT_DIR"] = os.getcwd()
         retcode = subprocess.call(init_cmd)
         if retcode:
             raise subprocess.CalledProcessError(retcode, init_cmd)
