@@ -26,3 +26,10 @@ void odb_transaction_commit(struct odb_transaction *transaction)
 	transaction->source->odb->transaction = NULL;
 	free(transaction);
 }
+
+int odb_transaction_write_object_stream(struct odb_transaction *transaction,
+					struct odb_write_stream *stream,
+					size_t len, struct object_id *oid)
+{
+	return transaction->write_object_stream(transaction, stream, len, oid);
+}

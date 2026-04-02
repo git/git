@@ -1577,9 +1577,10 @@ clear_exit:
  * binary blobs, they generally do not want to get any conversion, and
  * callers should avoid this code path when filters are requested.
  */
-static int index_blob_packfile_transaction(struct odb_transaction *base,
-					   struct odb_write_stream *stream,
-					   size_t size, struct object_id *result_oid)
+static int odb_transaction_files_write_object_stream(struct odb_transaction *base,
+						     struct odb_write_stream *stream,
+						     size_t size,
+						     struct object_id *result_oid)
 {
 	struct odb_transaction_files *transaction = container_of(base,
 								 struct odb_transaction_files,
@@ -1663,10 +1664,10 @@ int index_fd(struct index_state *istate, struct object_id *oid,
 			struct object_database *odb = the_repository->objects;
 			struct odb_transaction *transaction = odb_transaction_begin(odb);
 
-			ret = index_blob_packfile_transaction(odb->transaction,
-							      &stream,
-							      xsize_t(st->st_size),
-							      oid);
+			ret = odb_transaction_write_object_stream(odb->transaction,
+								  &stream,
+								  xsize_t(st->st_size),
+								  oid);
 			odb_transaction_commit(transaction);
 		} else {
 			ret = hash_blob_stream(&stream,
@@ -2131,6 +2132,7 @@ struct odb_transaction *odb_transaction_files_begin(struct odb_source *source)
 	transaction = xcalloc(1, sizeof(*transaction));
 	transaction->base.source = source;
 	transaction->base.commit = odb_transaction_files_commit;
+	transaction->base.write_object_stream = odb_transaction_files_write_object_stream;
 
 	return &transaction->base;
 }

@@ -12,14 +12,24 @@
  *
  * Each ODB source is expected to implement its own transaction handling.
  */
-struct odb_transaction;
-typedef void (*odb_transaction_commit_fn)(struct odb_transaction *transaction);
 struct odb_transaction {
 	/* The ODB source the transaction is opened against. */
 	struct odb_source *source;
 
 	/* The ODB source specific callback invoked to commit a transaction. */
-	odb_transaction_commit_fn commit;
+	void (*commit)(struct odb_transaction *transaction);
+
+	/*
+	 * This callback is expected to write the given object stream into
+	 * the ODB transaction. Note that for now, only blobs support streaming.
+	 *
+	 * The resulting object ID shall be written into the out pointer. The
+	 * callback is expected to return 0 on success, a negative error code
+	 * otherwise.
+	 */
+	int (*write_object_stream)(struct odb_transaction *transaction,
+				   struct odb_write_stream *stream, size_t len,
+				   struct object_id *oid);
 };
 
 /*
@@ -34,5 +44,14 @@ struct odb_transaction *odb_transaction_begin(struct object_database *odb);
  * specified transaction is NULL, the function is a no-op.
  */
 void odb_transaction_commit(struct odb_transaction *transaction);
+
+/*
+ * Writes the object in the provided stream into the transaction. The resulting
+ * object ID is written into the out pointer. Returns 0 on success, a negative
+ * error code otherwise.
+ */
+int odb_transaction_write_object_stream(struct odb_transaction *transaction,
+					struct odb_write_stream *stream,
+					size_t len, struct object_id *oid);
 
 #endif
