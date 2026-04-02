@@ -862,20 +862,12 @@ static bool promisor_store_advertised_fields(struct promisor_info *advertised,
 	return reload_config;
 }
 
-static void filter_promisor_remote(struct repository *repo,
-				   struct strvec *accepted,
-				   const char *info)
+static enum accept_promisor accept_from_server(struct repository *repo)
 {
 	const char *accept_str;
 	enum accept_promisor accept = ACCEPT_NONE;
-	struct string_list config_info = STRING_LIST_INIT_NODUP;
-	struct string_list remote_info = STRING_LIST_INIT_DUP;
-	struct store_info *store_info = NULL;
-	struct string_list_item *item;
-	bool reload_config = false;
-	struct string_list accepted_filters = STRING_LIST_INIT_DUP;
 
-	if (!repo_config_get_string_tmp(the_repository, "promisor.acceptfromserver", &accept_str)) {
+	if (!repo_config_get_string_tmp(repo, "promisor.acceptfromserver", &accept_str)) {
 		if (!*accept_str || !strcasecmp("None", accept_str))
 			accept = ACCEPT_NONE;
 		else if (!strcasecmp("KnownUrl", accept_str))
@@ -888,6 +880,21 @@ static void filter_promisor_remote(struct repository *repo,
 			warning(_("unknown '%s' value for '%s' config option"),
 				accept_str, "promisor.acceptfromserver");
 	}
+
+	return accept;
+}
+
+static void filter_promisor_remote(struct repository *repo,
+				   struct strvec *accepted,
+				   const char *info)
+{
+	struct string_list config_info = STRING_LIST_INIT_NODUP;
+	struct string_list remote_info = STRING_LIST_INIT_DUP;
+	struct store_info *store_info = NULL;
+	struct string_list_item *item;
+	bool reload_config = false;
+	struct string_list accepted_filters = STRING_LIST_INIT_DUP;
+	enum accept_promisor accept = accept_from_server(repo);
 
 	if (accept == ACCEPT_NONE)
 		return;
