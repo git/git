@@ -153,9 +153,12 @@ unlink $tmpfile3;
 chdir($abs_repo_dir);
 
 # open alternate bare repo
-my $r4 = Git->repository(Directory => "$abs_repo_dir/bare.git");
-is($r4->command_oneline(qw(log --format=%s)), "bare commit",
-	"log of bare repo works");
+{
+	local $ENV{GIT_DIR} = "$abs_repo_dir/bare.git";
+	my $r4 = Git->repository(Directory => "$abs_repo_dir/bare.git");
+	is($r4->command_oneline(qw(log --format=%s)), "bare commit",
+		"log of bare repo works");
+}
 
 # unquoting paths
 is(Git::unquote_path('abc'), 'abc', 'unquote unquoted path');
