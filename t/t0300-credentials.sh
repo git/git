@@ -675,7 +675,9 @@ test_expect_success 'match percent-encoded values' '
 test_expect_success 'match percent-encoded UTF-8 values in path' '
 	test_config credential.https://example.com.useHttpPath true &&
 	test_config credential.https://example.com/perú.git.helper "$HELPER" &&
-	check fill <<-\EOF
+	# NOTE: do not quote this heredoc, Dash 0.5.13 has a bug with heredocs
+	# that contain multibyte chars.
+	check fill <<-EOF
 	url=https://example.com/per%C3%BA.git
 	--
 	protocol=https

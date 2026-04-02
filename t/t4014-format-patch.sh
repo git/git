@@ -1285,7 +1285,9 @@ test_expect_success 'format-patch wraps extremely long from-header (rfc2047)' '
 	check_author "Foö Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar"
 '
 
-cat >expect <<'EOF'
+# NOTE: do not quote this heredoc, Dash 0.5.13 has a bug with heredocs
+# that contain multibyte chars.
+cat >expect <<EOF
 From: Foö Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar
  Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo Bar Foo
  Bar Foo Bar Foo Bar Foo Bar <author@example.com>
@@ -1300,7 +1302,9 @@ test_expect_success 'format-patch wraps extremely long from-header (non-ASCII wi
 	test_cmp expect actual
 '
 
-cat >expect <<'EOF'
+# NOTE: do not quote this heredoc, Dash 0.5.13 has a bug with heredocs
+# that contain multibyte chars.
+cat >expect <<EOF
 Subject: [PATCH] Foö
 EOF
 test_expect_success 'subject lines are unencoded with --no-encode-email-headers' '
@@ -1312,7 +1316,9 @@ test_expect_success 'subject lines are unencoded with --no-encode-email-headers'
 	test_cmp expect actual
 '
 
-cat >expect <<'EOF'
+# NOTE: do not quote this heredoc, Dash 0.5.13 has a bug with heredocs
+# that contain multibyte chars.
+cat >expect <<EOF
 Subject: [PATCH] Foö
 EOF
 test_expect_success 'subject lines are unencoded with format.encodeEmailHeaders=false' '
@@ -1523,7 +1529,9 @@ test_expect_success 'in-body headers trigger content encoding' '
 	test_env GIT_AUTHOR_NAME="éxötìc" test_commit exotic &&
 	test_when_finished "git reset --hard HEAD^" &&
 	git format-patch -1 --stdout --from >patch &&
-	cat >expect <<-\EOF &&
+	# NOTE: do not quote this heredoc, Dash 0.5.13 has a bug with heredocs
+	# that contain multibyte chars.
+	cat >expect <<-EOF &&
 	From: C O Mitter <committer@example.com>
 	Content-Type: text/plain; charset=UTF-8
 
