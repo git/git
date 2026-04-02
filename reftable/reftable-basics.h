@@ -9,7 +9,7 @@
 #ifndef REFTABLE_BASICS_H
 #define REFTABLE_BASICS_H
 
-#include <stddef.h>
+#include "reftable-system.h"
 
 /* A buffer that contains arbitrary byte slices. */
 struct reftable_buf {

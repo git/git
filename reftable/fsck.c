@@ -63,7 +63,7 @@ static int table_check_name(struct reftable_table *table,
 
 static int table_checks(struct reftable_table *table,
 			reftable_fsck_report_fn report_fn,
-			reftable_fsck_verbose_fn verbose_fn UNUSED,
+			reftable_fsck_verbose_fn verbose_fn REFTABLE_UNUSED,
 			void *cb_data)
 {
 	table_check_fn table_check_fns[] = {
