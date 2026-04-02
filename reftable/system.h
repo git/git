@@ -111,4 +111,7 @@ int flock_release(struct reftable_flock *l);
  */
 int flock_commit(struct reftable_flock *l);
 
+/* Report the time in milliseconds. */
+uint64_t reftable_time_ms(void);
+
 #endif

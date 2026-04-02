@@ -4,6 +4,7 @@
 #include "basics.h"
 #include "reftable-error.h"
 #include "../lockfile.h"
+#include "../trace.h"
 #include "../tempfile.h"
 #include "../write-or-die.h"
 
@@ -136,4 +137,9 @@ int flock_commit(struct reftable_flock *l)
 int reftable_fsync(int fd)
 {
 	return fsync_component(FSYNC_COMPONENT_REFERENCE, fd);
+}
+
+uint64_t reftable_time_ms(void)
+{
+	return getnanotime() / 1000000;
 }
