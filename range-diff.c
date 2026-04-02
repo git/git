@@ -88,7 +88,7 @@ static int read_patches(const char *range, struct string_list *list,
 	line = contents.buf;
 	size = contents.len;
 	for (; size > 0; size -= len, line += len) {
-		const char *p;
+		char *p;
 		char *eol;
 
 		eol = memchr(line, '\n', size);
