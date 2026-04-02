@@ -21,7 +21,7 @@ test_expect_success 'setup' '
 	echo "secret" >sensitive/secret &&
 
 	git init --bare "$REPO" &&
-	test_commit_bulk -C "$REPO" --ref=main 1 &&
+	(GIT_DIR="$REPO" && export GIT_DIR && test_commit_bulk --ref=main 1) &&
 
 	git -C "$REPO" update-ref HEAD main &&
 	git -C "$REPO" update-server-info &&
