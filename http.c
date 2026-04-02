@@ -726,7 +726,7 @@ static int has_proxy_cert_password(void)
 static int redact_sensitive_header(struct strbuf *header, size_t offset)
 {
 	int ret = 0;
-	const char *sensitive_header;
+	char *sensitive_header;
 
 	if (trace_curl_redact &&
 	    (skip_iprefix(header->buf + offset, "Authorization:", &sensitive_header) ||
@@ -743,7 +743,7 @@ static int redact_sensitive_header(struct strbuf *header, size_t offset)
 	} else if (trace_curl_redact &&
 		   skip_iprefix(header->buf + offset, "Cookie:", &sensitive_header)) {
 		struct strbuf redacted_header = STRBUF_INIT;
-		const char *cookie;
+		char *cookie;
 
 		while (isspace(*sensitive_header))
 			sensitive_header++;
