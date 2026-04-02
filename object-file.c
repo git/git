@@ -1446,18 +1446,19 @@ static int hash_blob_stream(struct odb_write_stream *stream,
 }
 
 /*
- * Read the contents from fd for size bytes, streaming it to the
+ * Read the contents from the stream provided, streaming it to the
  * packfile in state while updating the hash in ctx.
  */
 static void stream_blob_to_pack(struct transaction_packfile *state,
-				struct git_hash_ctx *ctx, int fd, size_t size,
-				const char *path)
+				struct git_hash_ctx *ctx, size_t size,
+				struct odb_write_stream *stream)
 {
 	git_zstream s;
 	unsigned char ibuf[16384];
 	unsigned char obuf[16384];
 	unsigned hdrlen;
 	int status = Z_OK;
+	size_t bytes_read = 0;
 
 	git_deflate_init(&s, pack_compression_level);
 
@@ -1466,23 +1467,21 @@ static void stream_blob_to_pack(struct transaction_packfile *state,
 	s.avail_out = sizeof(obuf) - hdrlen;
 
 	while (status != Z_STREAM_END) {
-		if (size && !s.avail_in) {
-			size_t rsize = size < sizeof(ibuf) ? size : sizeof(ibuf);
-			ssize_t read_result = read_in_full(fd, ibuf, rsize);
-			if (read_result < 0)
-				die_errno("failed to read from '%s'", path);
-			if ((size_t)read_result != rsize)
-				die("failed to read %u bytes from '%s'",
-				    (unsigned)rsize, path);
+		if (!stream->is_finished && !s.avail_in) {
+			ssize_t rsize = odb_write_stream_read(stream, ibuf,
+							      sizeof(ibuf));
+
+			if (rsize < 0)
+				die("failed to read blob data");
 
 			git_hash_update(ctx, ibuf, rsize);
 
 			s.next_in = ibuf;
 			s.avail_in = rsize;
-			size -= rsize;
+			bytes_read += rsize;
 		}
 
-		status = git_deflate(&s, size ? 0 : Z_FINISH);
+		status = git_deflate(&s, stream->is_finished ? Z_FINISH : 0);
 
 		if (!s.avail_out || status == Z_STREAM_END) {
 			size_t written = s.next_out - obuf;
@@ -1502,6 +1501,11 @@ static void stream_blob_to_pack(struct transaction_packfile *state,
 			die("unexpected deflate failure: %d", status);
 		}
 	}
+
+	if (bytes_read != size)
+		die("read %" PRIuMAX " bytes of blob data, but expected %" PRIuMAX " bytes",
+		    (uintmax_t)bytes_read, (uintmax_t)size);
+
 	git_deflate_end(&s);
 }
 
@@ -1573,10 +1577,13 @@ clear_exit:
  * binary blobs, they generally do not want to get any conversion, and
  * callers should avoid this code path when filters are requested.
  */
-static int index_blob_packfile_transaction(struct odb_transaction_files *transaction,
-					   struct object_id *result_oid, int fd,
-					   size_t size, const char *path)
+static int index_blob_packfile_transaction(struct odb_transaction *base,
+					   struct odb_write_stream *stream,
+					   size_t size, struct object_id *result_oid)
 {
+	struct odb_transaction_files *transaction = container_of(base,
+								 struct odb_transaction_files,
+								 base);
 	struct transaction_packfile *state = &transaction->packfile;
 	struct git_hash_ctx ctx;
 	unsigned char obuf[16384];
@@ -1610,7 +1617,7 @@ static int index_blob_packfile_transaction(struct odb_transaction_files *transac
 	hashfile_checkpoint(state->f, &checkpoint);
 	idx->offset = state->offset;
 	crc32_begin(state->f);
-	stream_blob_to_pack(state, &ctx, fd, size, path);
+	stream_blob_to_pack(state, &ctx, size, stream);
 	git_hash_final_oid(result_oid, &ctx);
 
 	idx->crc32 = crc32_end(state->f);
@@ -1654,15 +1661,12 @@ int index_fd(struct index_state *istate, struct object_id *oid,
 
 		if (flags & INDEX_WRITE_OBJECT) {
 			struct object_database *odb = the_repository->objects;
-			struct odb_transaction_files *files_transaction;
-			struct odb_transaction *transaction;
+			struct odb_transaction *transaction = odb_transaction_begin(odb);
 
-			transaction = odb_transaction_begin(odb);
-			files_transaction = container_of(odb->transaction,
-							 struct odb_transaction_files,
-							 base);
-			ret = index_blob_packfile_transaction(files_transaction, oid, fd,
-						      xsize_t(st->st_size), path);
+			ret = index_blob_packfile_transaction(odb->transaction,
+							      &stream,
+							      xsize_t(st->st_size),
+							      oid);
 			odb_transaction_commit(transaction);
 		} else {
 			ret = hash_blob_stream(&stream,
