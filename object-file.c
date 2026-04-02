@@ -909,7 +909,7 @@ static int start_loose_object_common(struct odb_source *source,
 
 	fd = create_tmpfile(source->odb->repo, tmp_file, filename);
 	if (fd < 0) {
-		if (flags & WRITE_OBJECT_SILENT)
+		if (flags & ODB_WRITE_OBJECT_SILENT)
 			return -1;
 		else if (errno == EACCES)
 			return error(_("insufficient permission for adding "
@@ -1042,7 +1042,7 @@ static int write_loose_object(struct odb_source *source,
 		utb.actime = mtime;
 		utb.modtime = mtime;
 		if (utime(tmp_file.buf, &utb) < 0 &&
-		    !(flags & WRITE_OBJECT_SILENT))
+		    !(flags & ODB_WRITE_OBJECT_SILENT))
 			warning_errno(_("failed utime() on %s"), tmp_file.buf);
 	}
 
@@ -1169,7 +1169,8 @@ cleanup:
 int odb_source_loose_write_object(struct odb_source *source,
 				  const void *buf, unsigned long len,
 				  enum object_type type, struct object_id *oid,
-				  struct object_id *compat_oid_in, unsigned flags)
+				  struct object_id *compat_oid_in,
+				  enum odb_write_object_flags flags)
 {
 	const struct git_hash_algo *algo = source->odb->repo->hash_algo;
 	const struct git_hash_algo *compat = source->odb->repo->compat_hash_algo;
@@ -1378,7 +1379,7 @@ static int already_written(struct odb_transaction_files *transaction,
 {
 	/* The object may already exist in the repository */
 	if (odb_has_object(transaction->base.source->odb, oid,
-			   HAS_OBJECT_RECHECK_PACKED | HAS_OBJECT_FETCH_PROMISOR))
+			   ODB_HAS_OBJECT_RECHECK_PACKED | ODB_HAS_OBJECT_FETCH_PROMISOR))
 		return 1;
 
 	/* Might want to keep the list sorted */

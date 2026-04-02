@@ -668,6 +668,18 @@ For C programs:
    unsigned other_field:1;
    unsigned field_with_longer_name:1;
 
+ - When a function `F` accepts flags, those flags should be defined as `enum
+   F_flags`. Individual flag definitions should start with `F` and be in
+   all-uppercase letters. Flag values should be represented via bit shifts.
+   E.g.
+
+        enum frobnicate_flags {
+                FROBNICATE_FOO = (1 << 0),
+                FROBNICATE_BAR = (1 << 1),
+        };
+
+        int frobnicate(enum frobnicate_flags flags);
+
  - Array names should be named in the singular form if the individual items are
    subject of use. E.g.:
 

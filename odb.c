@@ -872,15 +872,15 @@ void *odb_read_object_peeled(struct object_database *odb,
 }
 
 int odb_has_object(struct object_database *odb, const struct object_id *oid,
-		   enum has_object_flags flags)
+		   enum odb_has_object_flags flags)
 {
 	unsigned object_info_flags = 0;
 
 	if (!startup_info->have_repository)
 		return 0;
-	if (!(flags & HAS_OBJECT_RECHECK_PACKED))
+	if (!(flags & ODB_HAS_OBJECT_RECHECK_PACKED))
 		object_info_flags |= OBJECT_INFO_QUICK;
-	if (!(flags & HAS_OBJECT_FETCH_PROMISOR))
+	if (!(flags & ODB_HAS_OBJECT_FETCH_PROMISOR))
 		object_info_flags |= OBJECT_INFO_SKIP_FETCH_OBJECT;
 
 	return odb_read_object_info_extended(odb, oid, NULL, object_info_flags) >= 0;
@@ -922,7 +922,7 @@ int odb_for_each_object(struct object_database *odb,
 			const struct object_info *request,
 			odb_for_each_object_cb cb,
 			void *cb_data,
-			unsigned flags)
+			enum odb_for_each_object_flags flags)
 {
 	struct odb_for_each_object_options opts = {
 		.flags = flags,
@@ -1053,7 +1053,7 @@ int odb_write_object_ext(struct object_database *odb,
 			 enum object_type type,
 			 struct object_id *oid,
 			 struct object_id *compat_oid,
-			 unsigned flags)
+			 enum odb_write_object_flags flags)
 {
 	return odb_source_write_object(odb->sources, buf, len, type,
 				       oid, compat_oid, flags);

@@ -449,7 +449,7 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
 		if (!delta_data)
 			return;
 		if (odb_has_object(the_repository->objects, &base_oid,
-				   HAS_OBJECT_RECHECK_PACKED | HAS_OBJECT_FETCH_PROMISOR))
+				   ODB_HAS_OBJECT_RECHECK_PACKED | ODB_HAS_OBJECT_FETCH_PROMISOR))
 			; /* Ok we have this one */
 		else if (resolve_against_held(nr, &base_oid,
 					      delta_data, delta_size))
