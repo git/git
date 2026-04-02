@@ -488,12 +488,12 @@ int cache_tree_update(struct index_state *istate, int flags)
 		prefetch_cache_entries(istate, must_check_existence);
 
 	trace_performance_enter();
-	trace2_region_enter("cache_tree", "update", the_repository);
+	trace2_region_enter("cache_tree", "update", istate->repo);
 	transaction = odb_transaction_begin(the_repository->objects);
 	i = update_one(istate->cache_tree, istate->cache, istate->cache_nr,
 		       "", 0, &skip, flags);
 	odb_transaction_commit(transaction);
-	trace2_region_leave("cache_tree", "update", the_repository);
+	trace2_region_leave("cache_tree", "update", istate->repo);
 	trace_performance_leave("cache_tree_update");
 	if (i < 0)
 		return i;
