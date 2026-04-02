@@ -2116,7 +2116,7 @@ static int show_one_reflog_ent(struct files_ref_store *refs, struct strbuf *sb,
 	char *email_end, *message;
 	timestamp_t timestamp;
 	int tz;
-	const char *p = sb->buf;
+	char *p = sb->buf;
 
 	/* old SP new SP name <email> SP time TAB msg LF */
 	if (!sb->len || sb->buf[sb->len - 1] != '\n' ||
