@@ -155,4 +155,20 @@ test_expect_success 'git repo info -h shows only repo info usage' '
 	test_grep ! "git repo structure" actual
 '
 
+test_expect_success 'repo info paths.toplevel' '
+    git repo info paths.toplevel >actual &&
+    echo "paths.toplevel=$(git rev-parse --show-toplevel)" >expected &&
+    test_cmp expected actual
+'
+
+test_expect_success 'repo info paths.toplevel (bare repo)' '
+    git init --bare bare.git &&
+    (
+	cd bare.git &&
+	git repo info paths.toplevel >actual &&
+	echo "paths.toplevel=" >expected &&
+	test_cmp expected actual
+    )
+'
+
 test_done
