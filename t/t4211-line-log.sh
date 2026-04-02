@@ -129,7 +129,7 @@ test_expect_success '-L with --output' '
 	git checkout parallel-change &&
 	git log --output=log -L :main:b.c >output &&
 	test_must_be_empty output &&
-	test_line_count = 70 log
+	test_line_count = 75 log
 '
 
 test_expect_success 'range_set_union' '
@@ -339,14 +339,106 @@ test_expect_success 'zero-width regex .* matches any function name' '
 	test_cmp expect actual
 '
 
+test_expect_success 'setup for diff pipeline tests' '
+	git checkout parent-oids &&
+
+	head_blob_old=$(git rev-parse --short HEAD^:file.c) &&
+	head_blob_new=$(git rev-parse --short HEAD:file.c) &&
+	root_blob=$(git rev-parse --short HEAD~4:file.c) &&
+	null_blob=$(test_oid zero | cut -c1-7) &&
+	head_blob_old_full=$(git rev-parse HEAD^:file.c) &&
+	head_blob_new_full=$(git rev-parse HEAD:file.c) &&
+	root_blob_full=$(git rev-parse HEAD~4:file.c) &&
+	null_blob_full=$(test_oid zero)
+'
+
+test_expect_success '-L diff output includes index and new file mode' '
+	git log -L:func2:file.c --format= >actual &&
+
+	# Output should contain index headers (not present in old code path)
+	grep "^index $head_blob_old\.\.$head_blob_new 100644" actual &&
+
+	# Root commit should show new file mode and null index
+	grep "^new file mode 100644" actual &&
+	grep "^index $null_blob\.\.$root_blob$" actual &&
+
+	# Hunk headers should include funcname context
+	grep "^@@ .* @@ int func1()" actual
+'
+
+test_expect_success '-L with --word-diff' '
+	cat >expect <<-\EOF &&
+
+	diff --git a/file.c b/file.c
+	--- a/file.c
+	+++ b/file.c
+	@@ -6,4 +6,4 @@ int func1()
+	int func2()
+	{
+	    return [-F2;-]{+F2 + 2;+}
+	}
+
+	diff --git a/file.c b/file.c
+	new file mode 100644
+	--- /dev/null
+	+++ b/file.c
+	@@ -0,0 +6,4 @@
+	{+int func2()+}
+	{+{+}
+	{+    return F2;+}
+	{+}+}
+	EOF
+	git log -L:func2:file.c --word-diff --format= >actual &&
+	grep -v "^index " actual >actual.filtered &&
+	grep -v "^index " expect >expect.filtered &&
+	test_cmp expect.filtered actual.filtered
+'
+
+test_expect_success '-L with --no-prefix' '
+	git log -L:func2:file.c --no-prefix --format= >actual &&
+	grep "^diff --git file.c file.c" actual &&
+	grep "^--- file.c" actual &&
+	! grep "^--- a/" actual
+'
+
+test_expect_success '-L with --full-index' '
+	git log -L:func2:file.c --full-index --format= >actual &&
+	grep "^index $head_blob_old_full\.\.$head_blob_new_full 100644" actual &&
+	grep "^index $null_blob_full\.\.$root_blob_full$" actual
+'
+
+test_expect_success 'setup -L with whitespace change' '
+	git checkout -b ws-change parent-oids &&
+	sed "s/    return F2 + 2;/	return F2 + 2;/" file.c >tmp &&
+	mv tmp file.c &&
+	git commit -a -m "Whitespace change in func2()"
+'
+
+test_expect_success '-L with --ignore-all-space suppresses whitespace-only diff' '
+	git log -L:func2:file.c --format= >without_w &&
+	git log -L:func2:file.c --format= -w >with_w &&
+
+	# Without -w: three commits produce diffs (whitespace, modify, root)
+	test $(grep -c "^diff --git" without_w) = 3 &&
+
+	# With -w: whitespace-only commit produces no hunk, so only two diffs
+	test $(grep -c "^diff --git" with_w) = 2
+'
+
 test_expect_success 'show line-log with graph' '
+	git checkout parent-oids &&
+	head_blob_old=$(git rev-parse --short HEAD^:file.c) &&
+	head_blob_new=$(git rev-parse --short HEAD:file.c) &&
+	root_blob=$(git rev-parse --short HEAD~4:file.c) &&
+	null_blob=$(test_oid zero | cut -c1-7) &&
 	qz_to_tab_space >expect <<-EOF &&
 	* $head_oid Modify func2() in file.c
 	|Z
 	| diff --git a/file.c b/file.c
+	| index $head_blob_old..$head_blob_new 100644
 	| --- a/file.c
 	| +++ b/file.c
-	| @@ -6,4 +6,4 @@
+	| @@ -6,4 +6,4 @@ int func1()
 	|  int func2()
 	|  {
 	| -    return F2;
@@ -355,6 +447,8 @@ test_expect_success 'show line-log with graph' '
 	* $root_oid Add func1() and func2() in file.c
 	ZZ
 	  diff --git a/file.c b/file.c
+	  new file mode 100644
+	  index $null_blob..$root_blob
 	  --- /dev/null
 	  +++ b/file.c
 	  @@ -0,0 +6,4 @@
@@ -365,6 +459,256 @@ test_expect_success 'show line-log with graph' '
 	EOF
 	git log --graph --oneline -L:func2:file.c >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'setup for -L with -G/-S/--find-object and a merge with rename' '
+	git checkout --orphan pickaxe-rename &&
+	git reset --hard &&
+
+	echo content >file &&
+	git add file &&
+	git commit -m "add file" &&
+
+	git checkout -b pickaxe-rename-side &&
+	git mv file renamed-file &&
+	git commit -m "rename file" &&
+
+	git checkout pickaxe-rename &&
+	git commit --allow-empty -m "diverge" &&
+	git merge --no-edit pickaxe-rename-side &&
+
+	git mv renamed-file file &&
+	git commit -m "rename back"
+'
+
+test_expect_success '-L -G does not crash with merge and rename' '
+	git log --format="%s" --no-patch -L 1,1:file -G "." >actual
+'
+
+test_expect_success '-L -S does not crash with merge and rename' '
+	git log --format="%s" --no-patch -L 1,1:file -S content >actual
+'
+
+test_expect_success '-L --find-object does not crash with merge and rename' '
+	git log --format="%s" --no-patch -L 1,1:file \
+		--find-object=$(git rev-parse HEAD:file) >actual
+'
+
+# Commit-level filtering with pickaxe does not yet work for -L.
+# show_log() prints the commit header before diffcore_std() runs
+# pickaxe, so commits cannot be suppressed even when no diff pairs
+# survive filtering.  Fixing this would require deferring show_log()
+# until after diffcore_std(), which is a larger restructuring of the
+# log-tree output pipeline.
+test_expect_failure '-L -G should filter commits by pattern' '
+	git log --format="%s" --no-patch -L 1,1:file -G "nomatch" >actual &&
+	test_must_be_empty actual
+'
+
+test_expect_failure '-L -S should filter commits by pattern' '
+	git log --format="%s" --no-patch -L 1,1:file -S "nomatch" >actual &&
+	test_must_be_empty actual
+'
+
+test_expect_failure '-L --find-object should filter commits by object' '
+	git log --format="%s" --no-patch -L 1,1:file \
+		--find-object=$ZERO_OID >actual &&
+	test_must_be_empty actual
+'
+
+test_expect_success '-L with --word-diff-regex' '
+	git checkout parent-oids &&
+	git log -L:func2:file.c --word-diff \
+		--word-diff-regex="[a-zA-Z0-9_]+" --format= >actual &&
+	# Word-diff markers must be present
+	grep "{+" actual &&
+	grep "+}" actual &&
+	# No line-level +/- markers (word-diff replaces them);
+	# exclude --- header lines from the check
+	! grep "^+[^+]" actual &&
+	! grep "^-[^-]" actual
+'
+
+test_expect_success '-L with --src-prefix and --dst-prefix' '
+	git checkout parent-oids &&
+	git log -L:func2:file.c --src-prefix=old/ --dst-prefix=new/ \
+		--format= >actual &&
+	grep "^diff --git old/file.c new/file.c" actual &&
+	grep "^--- old/file.c" actual &&
+	grep "^+++ new/file.c" actual &&
+	! grep "^--- a/" actual
+'
+
+test_expect_success '-L with --abbrev' '
+	git checkout parent-oids &&
+	git log -L:func2:file.c --abbrev=4 --format= -1 >actual &&
+	# 4-char abbreviated hashes on index line
+	grep "^index [0-9a-f]\{4\}\.\.[0-9a-f]\{4\}" actual
+'
+
+test_expect_success '-L with -b suppresses whitespace-only diff' '
+	git checkout ws-change &&
+	git log -L:func2:file.c --format= >without_b &&
+	git log -L:func2:file.c --format= -b >with_b &&
+	test $(grep -c "^diff --git" without_b) = 3 &&
+	test $(grep -c "^diff --git" with_b) = 2
+'
+
+test_expect_success '-L with --output-indicator-*' '
+	git checkout parent-oids &&
+	git log -L:func2:file.c --output-indicator-new=">" \
+		--output-indicator-old="<" --output-indicator-context="|" \
+		--format= -1 >actual &&
+	grep "^>" actual &&
+	grep "^<" actual &&
+	grep "^|" actual &&
+	# No standard +/-/space content markers; exclude ---/+++ headers
+	! grep "^+[^+]" actual &&
+	! grep "^-[^-]" actual &&
+	! grep "^ " actual
+'
+
+test_expect_success '-L with -R reverses diff' '
+	git checkout parent-oids &&
+	git log -L:func2:file.c -R --format= -1 >actual &&
+	grep "^diff --git b/file.c a/file.c" actual &&
+	grep "^--- b/file.c" actual &&
+	grep "^+++ a/file.c" actual &&
+	# The modification added "F2 + 2", so reversed it is removed
+	grep "^-.*F2 + 2" actual &&
+	grep "^+.*return F2;" actual
+'
+
+test_expect_success 'setup for color-moved test' '
+	git checkout -b color-moved-test parent-oids &&
+	cat >big.c <<-\EOF &&
+	int bigfunc()
+	{
+	    int a = 1;
+	    int b = 2;
+	    int c = 3;
+	    return a + b + c;
+	}
+	EOF
+	git add big.c &&
+	git commit -m "add bigfunc" &&
+	sed "s/    /	/" big.c >tmp && mv tmp big.c &&
+	git commit -a -m "reindent bigfunc"
+'
+
+test_expect_success '-L with --color-moved' '
+	git log -L:bigfunc:big.c --color-moved=zebra \
+		--color-moved-ws=ignore-all-space \
+		--color=always --format= -1 >actual.raw &&
+	test_decode_color <actual.raw >actual &&
+	# Old moved lines: bold magenta; new moved lines: bold cyan
+	grep "BOLD;MAGENTA" actual &&
+	grep "BOLD;CYAN" actual
+'
+
+test_expect_success 'setup for no-newline-at-eof tests' '
+	git checkout --orphan no-newline &&
+	git reset --hard &&
+	printf "int top()\n{\n    return 1;\n}\n\nint bot()\n{\n    return 2;\n}" >noeol.c &&
+	git add noeol.c &&
+	test_tick &&
+	git commit -m "add noeol.c (no trailing newline)" &&
+	sed "s/return 2/return 22/" noeol.c >tmp && mv tmp noeol.c &&
+	git commit -a -m "modify bot()" &&
+	printf "int top()\n{\n    return 1;\n}\n\nint bot()\n{\n    return 33;\n}\n" >noeol.c &&
+	git commit -a -m "modify bot() and add trailing newline"
+'
+
+# When the tracked function is at the end of a file with no trailing
+# newline, the "\ No newline at end of file" marker should appear.
+test_expect_success '-L no-newline-at-eof appears in tracked range' '
+	git log -L:bot:noeol.c --format= -1 HEAD~1 >actual &&
+	grep "No newline at end of file" actual
+'
+
+# When tracking a function that ends before the no-newline content,
+# the marker should not appear in the output.
+test_expect_success '-L no-newline-at-eof suppressed outside range' '
+	git log -L:top:noeol.c --format= >actual &&
+	! grep "No newline at end of file" actual
+'
+
+# When a commit removes a no-newline last line and replaces it with
+# a newline-terminated line, the marker should still appear (on the
+# old side of the diff).
+test_expect_success '-L no-newline-at-eof marker with deleted line' '
+	git log -L:bot:noeol.c --format= -1 >actual &&
+	grep "No newline at end of file" actual
+'
+
+test_expect_success 'setup for range boundary deletion test' '
+	git checkout --orphan range-boundary &&
+	git reset --hard &&
+	cat >boundary.c <<-\EOF &&
+	void above()
+	{
+	    return;
+	}
+
+	void tracked()
+	{
+	    int x = 1;
+	    int y = 2;
+	}
+
+	void below()
+	{
+	    return;
+	}
+	EOF
+	git add boundary.c &&
+	test_tick &&
+	git commit -m "add boundary.c" &&
+	cat >boundary.c <<-\EOF &&
+	void above()
+	{
+	    return;
+	}
+
+	void tracked()
+	{
+	    int x = 1;
+	    int y = 2;
+	}
+
+	void below_renamed()
+	{
+	    return 0;
+	}
+	EOF
+	git commit -a -m "modify below() only"
+'
+
+# When only a function below the tracked range is modified, the
+# tracked function should not produce a diff.
+test_expect_success '-L suppresses deletions outside tracked range' '
+	git log -L:tracked:boundary.c --format= >actual &&
+	test $(grep -c "^diff --git" actual) = 1
+'
+
+test_expect_success '-L with -S filters to string-count changes' '
+	git checkout parent-oids &&
+	git log -L:func2:file.c -S "F2 + 2" --format= >actual &&
+	# -S searches the whole file, not just the tracked range;
+	# combined with the -L range walk, this selects commits that
+	# both touch func2 and change the count of "F2 + 2" in the file.
+	test $(grep -c "^diff --git" actual) = 1 &&
+	grep "F2 + 2" actual
+'
+
+test_expect_success '-L with -G filters to diff-text matches' '
+	git checkout parent-oids &&
+	git log -L:func2:file.c -G "F2 [+] 2" --format= >actual &&
+	# -G greps the whole-file diff text, not just the tracked range;
+	# combined with -L, this selects commits that both touch func2
+	# and have "F2 + 2" in their diff.
+	test $(grep -c "^diff --git" actual) = 1 &&
+	grep "F2 + 2" actual
 '
 
 test_done
