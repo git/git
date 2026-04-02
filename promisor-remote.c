@@ -885,12 +885,11 @@ static enum accept_promisor accept_from_server(struct repository *repo)
 }
 
 static void filter_promisor_remote(struct repository *repo,
-				   struct strvec *accepted,
+				   struct string_list *accepted_remotes,
 				   const char *info)
 {
 	struct string_list config_info = STRING_LIST_INIT_NODUP;
 	struct string_list remote_info = STRING_LIST_INIT_DUP;
-	struct string_list accepted_remotes = STRING_LIST_INIT_NODUP;
 	struct store_info *store_info = NULL;
 	struct string_list_item *item;
 	bool reload_config = false;
@@ -922,7 +921,7 @@ static void filter_promisor_remote(struct repository *repo,
 			if (promisor_store_advertised_fields(advertised, store_info))
 				reload_config = true;
 
-			string_list_append(&accepted_remotes, advertised->name)->util = advertised;
+			string_list_append(accepted_remotes, advertised->name)->util = advertised;
 		} else {
 			promisor_info_free(advertised);
 		}
@@ -936,11 +935,9 @@ static void filter_promisor_remote(struct repository *repo,
 		repo_promisor_remote_reinit(repo);
 
 	/* Apply accepted remotes to the stable repo state */
-	for_each_string_list_item(item, &accepted_remotes) {
+	for_each_string_list_item(item, accepted_remotes) {
 		struct promisor_info *info = item->util;
 		struct promisor_remote *r = repo_promisor_remote_find(repo, info->name);
-
-		strvec_push(accepted, info->name);
 
 		if (r) {
 			r->accepted = 1;
@@ -950,23 +947,23 @@ static void filter_promisor_remote(struct repository *repo,
 			}
 		}
 	}
-
-	promisor_info_list_clear(&accepted_remotes);
 }
 
 void promisor_remote_reply(const char *info, char **accepted_out)
 {
-	struct strvec accepted = STRVEC_INIT;
+	struct string_list accepted_remotes = STRING_LIST_INIT_NODUP;
 
-	filter_promisor_remote(the_repository, &accepted, info);
+	filter_promisor_remote(the_repository, &accepted_remotes, info);
 
 	if (accepted_out) {
-		if (accepted.nr) {
+		if (accepted_remotes.nr) {
 			struct strbuf reply = STRBUF_INIT;
-			for (size_t i = 0; i < accepted.nr; i++) {
-				if (i)
+			struct string_list_item *item;
+
+			for_each_string_list_item(item, &accepted_remotes) {
+				if (reply.len)
 					strbuf_addch(&reply, ';');
-				strbuf_addstr_urlencode(&reply, accepted.v[i], allow_unsanitized);
+				strbuf_addstr_urlencode(&reply, item->string, allow_unsanitized);
 			}
 			*accepted_out = strbuf_detach(&reply, NULL);
 		} else {
@@ -974,7 +971,7 @@ void promisor_remote_reply(const char *info, char **accepted_out)
 		}
 	}
 
-	strvec_clear(&accepted);
+	promisor_info_list_clear(&accepted_remotes);
 }
 
 void mark_promisor_remotes_as_accepted(struct repository *r, const char *remotes)
