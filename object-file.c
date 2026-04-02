@@ -1066,6 +1066,7 @@ int odb_source_loose_write_stream(struct odb_source *source,
 	struct git_hash_ctx c, compat_c;
 	struct strbuf tmp_file = STRBUF_INIT;
 	struct strbuf filename = STRBUF_INIT;
+	unsigned char buf[8192];
 	int dirlen;
 	char hdr[MAX_HEADER_LEN];
 	int hdrlen;
@@ -1098,9 +1099,16 @@ int odb_source_loose_write_stream(struct odb_source *source,
 		unsigned char *in0 = stream.next_in;
 
 		if (!stream.avail_in && !in_stream->is_finished) {
-			const void *in = in_stream->read(in_stream, &stream.avail_in);
-			stream.next_in = (void *)in;
-			in0 = (unsigned char *)in;
+			ssize_t read_len = odb_write_stream_read(in_stream, buf,
+								 sizeof(buf));
+			if (read_len < 0) {
+				err = -1;
+				goto cleanup;
+			}
+
+			stream.avail_in = read_len;
+			stream.next_in = buf;
+			in0 = buf;
 			/* All data has been read. */
 			if (in_stream->is_finished)
 				flush = 1;

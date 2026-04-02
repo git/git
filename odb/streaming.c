@@ -232,6 +232,11 @@ struct odb_read_stream *odb_read_stream_open(struct object_database *odb,
 	return st;
 }
 
+ssize_t odb_write_stream_read(struct odb_write_stream *st, void *buf, size_t sz)
+{
+	return st->read(st, buf, sz);
+}
+
 int odb_stream_blob_to_fd(struct object_database *odb,
 			  int fd,
 			  const struct object_id *oid,

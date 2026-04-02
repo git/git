@@ -48,6 +48,24 @@ int odb_read_stream_close(struct odb_read_stream *stream);
 ssize_t odb_read_stream_read(struct odb_read_stream *stream, void *buf, size_t len);
 
 /*
+ * A stream that provides an object to be written to the object database without
+ * loading all of it into memory.
+ */
+struct odb_write_stream {
+	ssize_t (*read)(struct odb_write_stream *, unsigned char *, size_t);
+	void *data;
+	int is_finished;
+};
+
+/*
+ * Read data from the stream into the buffer. Returns 0 when finished and the
+ * number of bytes read on success. Returns a negative error code in case
+ * reading from the stream fails.
+ */
+ssize_t odb_write_stream_read(struct odb_write_stream *stream, void *buf,
+			      size_t len);
+
+/*
  * Look up the object by its ID and write the full contents to the file
  * descriptor. The object must be a blob, or the function will fail. When
  * provided, the filter is used to transform the blob contents.
