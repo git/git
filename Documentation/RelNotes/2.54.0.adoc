@@ -122,7 +122,7 @@ Performance, Internal Implementation, Development Support etc.
 
  * Improve set-up time of a perf test.
 
- * ISO C23 redefines strchr and friends that tradiotionally took
+ * ISO C23 redefines strchr and friends that traditionally took
    a const pointer and returned a non-const pointer derived from it to
    preserve constness (i.e., if you ask for a substring in a const
    string, you get a const pointer to the substring).  Update code
@@ -221,7 +221,7 @@ Performance, Internal Implementation, Development Support etc.
    many source files inside subdirectories unaffected, which has been
    corrected.
 
- * The run_command() API lost its implicit dependencyon the singleton
+ * The run_command() API lost its implicit dependency on the singleton
    `the_repository` instance.
 
  * The unit test helper function was taught to use backslash +
