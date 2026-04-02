@@ -84,7 +84,7 @@ test_expect_success 'repair .git file from bare.git' '
 	git -C bare.git worktree add --detach ../corrupt &&
 	git -C corrupt rev-parse --absolute-git-dir >expect &&
 	rm -f corrupt/.git &&
-	git -C bare.git worktree repair &&
+	git -C bare.git --git-dir=. worktree repair &&
 	git -C corrupt rev-parse --absolute-git-dir >actual &&
 	test_cmp expect actual
 '
