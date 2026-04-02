@@ -670,15 +670,16 @@ static int should_accept_remote(enum accept_promisor accept,
 		BUG("Unhandled 'enum accept_promisor' value '%d'", accept);
 
 	if (!remote_url || !*remote_url) {
-		warning(_("no or empty URL advertised for remote '%s'"), remote_name);
+		warning(_("no or empty URL advertised for remote '%s', "
+			  "ignoring this remote"), remote_name);
 		return 0;
 	}
 
 	if (!strcmp(p->url, remote_url))
 		return all_fields_match(advertised, config_info, p);
 
-	warning(_("known remote named '%s' but with URL '%s' instead of '%s'"),
-		remote_name, p->url, remote_url);
+	warning(_("known remote named '%s' but with URL '%s' instead of '%s', "
+		  "ignoring this remote"), remote_name, p->url, remote_url);
 
 	return 0;
 }
@@ -722,8 +723,8 @@ static struct promisor_info *parse_one_advertised_remote(const char *remote_info
 	string_list_clear(&elem_list, 0);
 
 	if (!info->name || !info->url) {
-		warning(_("server advertised a promisor remote without a name or URL: %s"),
-			remote_info);
+		warning(_("server advertised a promisor remote without a name or URL: '%s', "
+			  "ignoring this remote"), remote_info);
 		promisor_info_free(info);
 		return NULL;
 	}
