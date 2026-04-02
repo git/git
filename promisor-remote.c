@@ -722,7 +722,7 @@ static struct promisor_info *parse_one_advertised_remote(const char *remote_info
 
 	string_list_clear(&elem_list, 0);
 
-	if (!info->name || !info->url) {
+	if (!info->name || !*info->name || !info->url || !*info->url) {
 		warning(_("server advertised a promisor remote without a name or URL: '%s', "
 			  "ignoring this remote"), remote_info);
 		promisor_info_free(info);
