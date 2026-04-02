@@ -77,6 +77,7 @@ test_expect_success 'plain nested through aliased command' '
 '
 
 test_expect_success 'plain nested in bare through aliased command' '
+	test_config_global safe.bareRepository all &&
 	(
 		git init --bare bare-ancestor-aliased.git &&
 		cd bare-ancestor-aliased.git &&
