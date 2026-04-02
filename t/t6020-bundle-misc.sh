@@ -594,9 +594,9 @@ do
 		reflist=$(git for-each-ref --format="%(objectname)") &&
 		git rev-list --objects --filter=$filter --missing=allow-any \
 			$reflist >expect &&
-		for repo in cloned unbundled
+		for opt in "--git-dir cloned" "-C unbundled"
 		do
-			git -C $repo rev-list --objects --missing=allow-any \
+			git $opt rev-list --objects --missing=allow-any \
 				$reflist >actual &&
 			test_cmp expect actual || return 1
 		done
