@@ -62,12 +62,6 @@ struct reftable_write_options {
 	long lock_timeout_ms;
 
 	/*
-	 * Optional callback used to fsync files to disk. Falls back to using
-	 * fsync(3P) when unset.
-	 */
-	int (*fsync)(int fd);
-
-	/*
 	 * Callback function to execute whenever the stack is being reloaded.
 	 * This can be used e.g. to discard cached information that relies on
 	 * the old stack's data. The payload data will be passed as argument to

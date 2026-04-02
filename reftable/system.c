@@ -5,6 +5,7 @@
 #include "reftable-error.h"
 #include "../lockfile.h"
 #include "../tempfile.h"
+#include "../write-or-die.h"
 
 uint32_t reftable_rand(void)
 {
@@ -130,4 +131,9 @@ int flock_commit(struct reftable_flock *l)
 		return REFTABLE_IO_ERROR;
 
 	return 0;
+}
+
+int reftable_fsync(int fd)
+{
+	return fsync_component(FSYNC_COMPONENT_REFERENCE, fd);
 }

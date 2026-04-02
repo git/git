@@ -29,13 +29,6 @@ static int stack_filename(struct reftable_buf *dest, struct reftable_stack *st,
 	return 0;
 }
 
-static int stack_fsync(const struct reftable_write_options *opts, int fd)
-{
-	if (opts->fsync)
-		return opts->fsync(fd);
-	return fsync(fd);
-}
-
 static ssize_t reftable_write_data(int fd, const void *data, size_t size)
 {
 	size_t total_written = 0;
@@ -69,7 +62,7 @@ static ssize_t fd_writer_write(void *arg, const void *data, size_t sz)
 static int fd_writer_flush(void *arg)
 {
 	struct fd_writer *writer = arg;
-	return stack_fsync(writer->opts, writer->fd);
+	return fsync(writer->fd);
 }
 
 static int fd_read_lines(int fd, char ***namesp)
@@ -812,7 +805,7 @@ int reftable_addition_commit(struct reftable_addition *add)
 		goto done;
 	}
 
-	err = stack_fsync(&add->stack->opts, add->tables_list_lock.fd);
+	err = fsync(add->tables_list_lock.fd);
 	if (err < 0) {
 		err = REFTABLE_IO_ERROR;
 		goto done;
@@ -1480,7 +1473,7 @@ static int stack_compact_range(struct reftable_stack *st,
 		goto done;
 	}
 
-	err = stack_fsync(&st->opts, tables_list_lock.fd);
+	err = fsync(tables_list_lock.fd);
 	if (err < 0) {
 		err = REFTABLE_IO_ERROR;
 		unlink(new_table_path.buf);

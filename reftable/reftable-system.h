@@ -12,4 +12,7 @@
 #include "compat/posix.h"
 #include "compat/zlib-compat.h"
 
+int reftable_fsync(int fd);
+#define fsync(fd) reftable_fsync(fd)
+
 #endif

@@ -366,11 +366,6 @@ static int reftable_be_config(const char *var, const char *value,
 	return 0;
 }
 
-static int reftable_be_fsync(int fd)
-{
-	return fsync_component(FSYNC_COMPONENT_REFERENCE, fd);
-}
-
 static struct ref_store *reftable_be_init(struct repository *repo,
 					  const char *payload,
 					  const char *gitdir,
@@ -408,7 +403,6 @@ static struct ref_store *reftable_be_init(struct repository *repo,
 	refs->write_options.disable_auto_compact =
 		!git_env_bool("GIT_TEST_REFTABLE_AUTOCOMPACTION", 1);
 	refs->write_options.lock_timeout_ms = 100;
-	refs->write_options.fsync = reftable_be_fsync;
 
 	repo_config(the_repository, reftable_be_config, &refs->write_options);
 
