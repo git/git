@@ -3635,25 +3635,21 @@ background_import_then_checkpoint () {
 		echo "progress checkpoint"
 	) >&8 &
 
-	error=1 ;# assume the worst
-	while read output <&9
-	do
-		if test "$output" = "progress checkpoint"
-		then
-			error=0
-			break
-		elif test "$output" = "UNEXPECTED"
-		then
-			break
-		fi
-		# otherwise ignore cruft
-		echo >&2 "cruft: $output"
-	done
+	last=$(
+		while read output <&9
+		do
+			if test "$output" = "progress checkpoint" || test "$output" = "UNEXPECTED"
+			then
+				echo "$output"
+				break
+			else
+				# otherwise ignore cruft
+				echo >&2 "cruft: $output"
+			fi
+		done
+	)
 
-	if test $error -eq 1
-	then
-		false
-	fi
+	test "$last" = "progress checkpoint"
 }
 
 background_import_still_running () {

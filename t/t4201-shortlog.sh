@@ -105,7 +105,9 @@ test_expect_success 'output from user-defined format is re-wrapped' '
 '
 
 test_expect_success !MINGW,ICONV 'shortlog wrapping' '
-	cat >expect <<\EOF &&
+	# NOTE: do not quote this heredoc, Dash 0.5.13 has a bug with heredocs
+	# that contain multibyte chars.
+	cat >expect <<EOF &&
 A U Thor (5):
       Test
       This is a very, very long first line for the commit message to see if

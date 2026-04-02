@@ -507,9 +507,11 @@ test_expect_success 'octopus merges' '
 	git rebase -i --force-rebase -r HEAD^^ &&
 	test "Hank" = "$(git show -s --format=%an HEAD)" &&
 	test "$before" != $(git rev-parse HEAD) &&
-	test_cmp_graph HEAD^^.. <<-\EOF
+	# NOTE: do not quote this heredoc, Dash 0.5.13 has a bug with heredocs
+	# that contain multibyte chars.
+	test_cmp_graph HEAD^^.. <<-EOF
 	*-.   Tüntenfüsch
-	|\ \
+	|\\ \\
 	| | * three
 	| * | two
 	| |/
