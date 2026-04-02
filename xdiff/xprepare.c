@@ -171,12 +171,6 @@ static int xdl_prepare_ctx(unsigned int pass, mmfile_t *mf, long narec, xpparam_
 	if (!XDL_CALLOC_ARRAY(xdf->changed, xdf->nrec + 2))
 		goto abort;
 
-	if ((XDF_DIFF_ALG(xpp->flags) != XDF_PATIENCE_DIFF) &&
-	    (XDF_DIFF_ALG(xpp->flags) != XDF_HISTOGRAM_DIFF)) {
-		if (!XDL_ALLOC_ARRAY(xdf->reference_index, xdf->nrec + 1))
-			goto abort;
-	}
-
 	xdf->changed += 1;
 	xdf->nreff = 0;
 	xdf->dstart = 0;
@@ -283,7 +277,10 @@ static int xdl_cleanup_records(xdlclassifier_t *cf, xdfile_t *xdf1, xdfile_t *xd
 	 * changed[i] should remain false, or become true.
 	 */
 	if (!XDL_CALLOC_ARRAY(action1, len1) ||
-	    !XDL_CALLOC_ARRAY(action2, len2)) {
+	    !XDL_CALLOC_ARRAY(action2, len2) ||
+	    !XDL_ALLOC_ARRAY(xdf1->reference_index, len1) ||
+	    !XDL_ALLOC_ARRAY(xdf2->reference_index, len2))
+	{
 		ret = -1;
 		goto cleanup;
 	}
