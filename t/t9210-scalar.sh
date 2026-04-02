@@ -88,7 +88,7 @@ test_expect_success 'scalar enlistments need a worktree' '
 	test_when_finished rm -rf bare test &&
 
 	git init --bare bare/src &&
-	! scalar register bare/src 2>err &&
+	! scalar -c safe.bareRepository=all register bare/src 2>err &&
 	grep "Scalar enlistments require a worktree" err &&
 
 	git init test/src &&
