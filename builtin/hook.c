@@ -4,14 +4,22 @@
 #include "environment.h"
 #include "gettext.h"
 #include "hook.h"
+#include "hook-list.h"
 #include "parse-options.h"
-#include "strvec.h"
-#include "abspath.h"
 
 #define BUILTIN_HOOK_RUN_USAGE \
-	N_("git hook run [--ignore-missing] [--to-stdin=<path>] <hook-name> [-- <hook-args>]")
+	N_("git hook run [--allow-unknown-hook-name] [--ignore-missing] [--to-stdin=<path>] <hook-name> [-- <hook-args>]")
 #define BUILTIN_HOOK_LIST_USAGE \
-	N_("git hook list [-z] <hook-name>")
+	N_("git hook list [--allow-unknown-hook-name] [-z] [--show-scope] <hook-name>")
+
+static int is_known_hook(const char *name)
+{
+	const char **p;
+	for (p = hook_name_list; *p; p++)
+		if (!strcmp(*p, name))
+			return 1;
+	return 0;
+}
 
 static const char * const builtin_hook_usage[] = {
 	BUILTIN_HOOK_RUN_USAGE,
@@ -35,11 +43,17 @@ static int list(int argc, const char **argv, const char *prefix,
 	struct string_list_item *item;
 	const char *hookname = NULL;
 	int line_terminator = '\n';
+	int show_scope = 0;
+	int allow_unknown = 0;
 	int ret = 0;
 
 	struct option list_options[] = {
 		OPT_SET_INT('z', NULL, &line_terminator,
 			    N_("use NUL as line terminator"), '\0'),
+		OPT_BOOL(0, "show-scope", &show_scope,
+			 N_("show the config scope that defined each hook")),
+		OPT_BOOL(0, "allow-unknown-hook-name", &allow_unknown,
+			 N_("allow running a hook with a non-native hook name")),
 		OPT_END(),
 	};
 
@@ -51,15 +65,22 @@ static int list(int argc, const char **argv, const char *prefix,
 	 * arguments later they probably should be caught by parse_options.
 	 */
 	if (argc != 1)
-		usage_msg_opt(_("You must specify a hook event name to list."),
+		usage_msg_opt(_("you must specify a hook event name to list"),
 			      builtin_hook_list_usage, list_options);
 
 	hookname = argv[0];
 
+	if (!allow_unknown && !is_known_hook(hookname)) {
+		error(_("unknown hook event '%s';\n"
+			"use --allow-unknown-hook-name to allow non-native hook names"),
+		      hookname);
+		return 1;
+	}
+
 	head = list_hooks(repo, hookname, NULL);
 
 	if (!head->nr) {
-		warning(_("No hooks found for event '%s'"), hookname);
+		warning(_("no hooks found for event '%s'"), hookname);
 		ret = 1; /* no hooks found */
 		goto cleanup;
 	}
@@ -71,16 +92,27 @@ static int list(int argc, const char **argv, const char *prefix,
 		case HOOK_TRADITIONAL:
 			printf("%s%c", _("hook from hookdir"), line_terminator);
 			break;
-		case HOOK_CONFIGURED:
-			printf("%s%c", h->u.configured.friendly_name, line_terminator);
+		case HOOK_CONFIGURED: {
+			const char *name = h->u.configured.friendly_name;
+			const char *scope = show_scope ?
+				config_scope_name(h->u.configured.scope) : NULL;
+			if (scope)
+				printf("%s\t%s%s%c", scope,
+				       h->u.configured.disabled ? "disabled\t" : "",
+				       name, line_terminator);
+			else
+				printf("%s%s%c",
+				       h->u.configured.disabled ? "disabled\t" : "",
+				       name, line_terminator);
 			break;
+		}
 		default:
 			BUG("unknown hook kind");
 		}
 	}
 
 cleanup:
-	hook_list_clear(head, NULL);
+	string_list_clear_func(head, hook_free);
 	free(head);
 	return ret;
 }
@@ -91,8 +123,11 @@ static int run(int argc, const char **argv, const char *prefix,
 	int i;
 	struct run_hooks_opt opt = RUN_HOOKS_OPT_INIT;
 	int ignore_missing = 0;
+	int allow_unknown = 0;
 	const char *hook_name;
 	struct option run_options[] = {
+		OPT_BOOL(0, "allow-unknown-hook-name", &allow_unknown,
+			 N_("allow running a hook with a non-native hook name")),
 		OPT_BOOL(0, "ignore-missing", &ignore_missing,
 			 N_("silently ignore missing requested <hook-name>")),
 		OPT_STRING(0, "to-stdin", &opt.path_to_stdin, N_("path"),
@@ -124,6 +159,14 @@ static int run(int argc, const char **argv, const char *prefix,
 	repo_config(the_repository, git_default_config, NULL);
 
 	hook_name = argv[0];
+
+	if (!allow_unknown && !is_known_hook(hook_name)) {
+		error(_("unknown hook event '%s';\n"
+			"use --allow-unknown-hook-name to allow non-native hook names"),
+		      hook_name);
+		return 1;
+	}
+
 	if (!ignore_missing)
 		opt.error_if_missing = 1;
 	ret = run_hooks_opt(the_repository, hook_name, &opt);
