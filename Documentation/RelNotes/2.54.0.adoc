@@ -277,6 +277,12 @@ Performance, Internal Implementation, Development Support etc.
  * In case homebrew breaks REG_ENHANCED again, leave a in-code comment
    to suggest use of our replacement regex as a workaround.
 
+ * MinGW build updates.
+
+ * The way dash 0.5.13 handles non-ASCII contents in here-doc
+   is buggy and breaks our existing tests, which unfortunately
+   have been rewritten to avoid triggering the bug.
+
 
 Fixes since v2.53
 -----------------
