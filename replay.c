@@ -358,13 +358,15 @@ int replay_revisions(struct rev_info *revs,
 	struct commit *last_commit = NULL;
 	struct commit *commit;
 	struct commit *onto = NULL;
-	struct merge_options merge_opt;
+	struct merge_options merge_opt = { 0 };
 	struct merge_result result = {
 		.clean = 1,
 	};
 	bool detached_head;
 	char *advance;
 	char *revert;
+	const char *ref;
+	struct object_id old_oid;
 	enum replay_mode mode = REPLAY_MODE_PICK;
 	int ret;
 
@@ -374,6 +376,27 @@ int replay_revisions(struct rev_info *revs,
 		mode = REPLAY_MODE_REVERT;
 	set_up_replay_mode(revs->repo, &revs->cmdline, opts->onto,
 			   &detached_head, &advance, &revert, &onto, &update_refs);
+
+	if (opts->ref) {
+		struct object_id oid;
+
+		if (update_refs && strset_get_size(update_refs) > 1) {
+			ret = error(_("'--ref' cannot be used with multiple revision ranges"));
+			goto out;
+		}
+		if (check_refname_format(opts->ref, 0) || !starts_with(opts->ref, "refs/")) {
+			ret = error(_("'%s' is not a valid refname"), opts->ref);
+			goto out;
+		}
+		ref = opts->ref;
+		if (!refs_read_ref(get_main_ref_store(revs->repo), opts->ref, &oid))
+			oidcpy(&old_oid, &oid);
+		else
+			oidclr(&old_oid, revs->repo->hash_algo);
+	} else {
+		ref = advance ? advance : revert;
+		oidcpy(&old_oid, &onto->object.oid);
+	}
 
 	if (prepare_revision_walk(revs) < 0) {
 		ret = error(_("error preparing revisions"));
@@ -406,7 +429,7 @@ int replay_revisions(struct rev_info *revs,
 		kh_value(replayed_commits, pos) = last_commit;
 
 		/* Update any necessary branches */
-		if (advance || revert)
+		if (ref)
 			continue;
 
 		for (decoration = get_name_decoration(&commit->object);
@@ -440,13 +463,9 @@ int replay_revisions(struct rev_info *revs,
 		goto out;
 	}
 
-	/* In --advance or --revert mode, update the target ref */
-	if (advance || revert) {
-		const char *ref = advance ? advance : revert;
-		replay_result_queue_update(out, ref,
-					   &onto->object.oid,
+	if (ref)
+		replay_result_queue_update(out, ref, &old_oid,
 					   &last_commit->object.oid);
-	}
 
 	ret = 0;
 
