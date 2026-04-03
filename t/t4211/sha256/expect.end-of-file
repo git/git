@@ -5,9 +5,10 @@ Date:   Thu Feb 28 10:48:43 2013 +0100
     change back to complete line
 
 diff --git a/a.c b/a.c
+index e4fa1d8..62c1fc2 100644
 --- a/a.c
 +++ b/a.c
-@@ -20,3 +20,5 @@
+@@ -20,3 +20,5 @@ long f(long x)
  	printf("%ld\n", f(15));
  	return 0;
 -}
@@ -23,9 +24,10 @@ Date:   Thu Feb 28 10:48:10 2013 +0100
     change to an incomplete line at end
 
 diff --git a/a.c b/a.c
+index d325124..e4fa1d8 100644
 --- a/a.c
 +++ b/a.c
-@@ -20,3 +20,3 @@
+@@ -20,3 +20,3 @@ int main ()
  	printf("%ld\n", f(15));
  	return 0;
 -}
@@ -39,9 +41,10 @@ Date:   Thu Feb 28 10:45:16 2013 +0100
     touch both functions
 
 diff --git a/a.c b/a.c
+index 7a296b9..75c0119 100644
 --- a/a.c
 +++ b/a.c
-@@ -19,3 +19,3 @@
+@@ -19,3 +19,3 @@ int f(int x)
 -	printf("%d\n", f(15));
 +	printf("%ld\n", f(15));
  	return 0;
@@ -54,6 +57,8 @@ Date:   Thu Feb 28 10:44:48 2013 +0100
     initial
 
 diff --git a/a.c b/a.c
+new file mode 100644
+index 0000000..9f550c3
 --- /dev/null
 +++ b/a.c
 @@ -0,0 +18,3 @@
