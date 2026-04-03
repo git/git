@@ -21,3 +21,37 @@ endif::[]
 	If a partial clone filter is provided (see `--filter` in
 	linkgit:git-rev-list[1]) and `--recurse-submodules` is used, also apply
 	the filter to submodules.
+
+`clone.defaultObjectFilter`::
+`clone.<url>.defaultObjectFilter`::
+	When set to a filter spec string (e.g., `blob:limit=1m`,
+	`blob:none`, `tree:0`), linkgit:git-clone[1] will automatically
+	use `--filter=<value>` to enable partial clone behavior.
+	Objects matching the filter are excluded from the initial
+	transfer and lazily fetched on demand (e.g., during checkout).
+	Subsequent fetches inherit the filter via the per-remote config
+	that is written during the clone.
++
+The bare `clone.defaultObjectFilter` applies to all clones.  The
+URL-qualified form `clone.<url>.defaultObjectFilter` restricts the
+setting to clones whose URL matches `<url>`, following the same
+rules as `http.<url>.*` (see linkgit:git-config[1]).  The most
+specific URL match wins.  You can match a domain, a namespace, or a
+specific project:
++
+----
+[clone]
+    defaultObjectFilter = blob:limit=1m
+
+[clone "https://github.com/"]
+    defaultObjectFilter = blob:limit=5m
+
+[clone "https://internal.corp.com/large-project/"]
+    defaultObjectFilter = blob:none
+----
++
+An explicit `--filter` option on the command line takes precedence
+over this config, and `--no-filter` defeats it entirely to force a
+full clone.  Only affects the initial clone; it has no effect on
+later fetches into an existing repository.  If the server does not
+support object filtering, the setting is silently ignored.
