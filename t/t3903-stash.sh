@@ -1666,6 +1666,24 @@ test_expect_success 'restore untracked files even when we hit conflicts' '
 	)
 '
 
+test_expect_success 'apply with custom conflict labels' '
+	git init conflict_labels &&
+	(
+		cd conflict_labels &&
+		echo base >file &&
+		git add file &&
+		git commit -m base &&
+		echo stashed >file &&
+		git stash push -m "stashed" &&
+		echo upstream >file &&
+		git add file &&
+		git commit -m upstream &&
+		test_must_fail git stash apply --ours-label=UP --theirs-label=STASH &&
+		grep "^<<<<<<< UP" file &&
+		grep "^>>>>>>> STASH" file
+	)
+'
+
 test_expect_success 'stash create reports a locked index' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
