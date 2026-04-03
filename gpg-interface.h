@@ -115,6 +115,7 @@ void print_signature_buffer(const struct signature_check *sigc,
 /* Modes for --signed-tags=<mode> and --signed-commits=<mode> options. */
 enum sign_mode {
 	SIGN_ABORT,
+	SIGN_ABORT_IF_INVALID,
 	SIGN_WARN_VERBATIM,
 	SIGN_VERBATIM,
 	SIGN_WARN_STRIP,

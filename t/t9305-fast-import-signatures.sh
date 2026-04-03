@@ -103,7 +103,7 @@ test_expect_success RUST,GPG 'strip both OpenPGP signatures with --signed-commit
 	test_line_count = 2 out
 '
 
-for mode in strip-if-invalid sign-if-invalid
+for mode in strip-if-invalid sign-if-invalid abort-if-invalid
 do
 	test_expect_success GPG "import commit with no signature with --signed-commits=$mode" '
 		git fast-export main >output &&
@@ -134,6 +134,14 @@ do
 		# The commit message length should not change though, otherwise the
 		# corresponding `data <length>` command would have to be changed too.
 		sed "s/OpenPGP signed commit/OpenPGP forged commit/" output >modified &&
+
+		if test "$mode" = abort-if-invalid
+		then
+			test_must_fail git -C new fast-import --quiet \
+				--signed-commits=$mode <modified >log 2>&1 &&
+			test_grep "aborting due to invalid signature" log &&
+			return 0
+		fi &&
 
 		git -C new fast-import --quiet --signed-commits=$mode <modified >log 2>&1 &&
 
