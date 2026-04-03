@@ -62,6 +62,17 @@ static int get_layout_bare(struct repository *repo UNUSED, struct strbuf *buf)
 	return 0;
 }
 
+static int get_paths_toplevel(struct repository *repo, struct strbuf *buf)
+{
+    const char *wt = repo_get_work_tree(repo);
+
+    if (!wt)
+	return -1; /* match existing error style */
+
+    strbuf_addstr(buf, wt);
+    return 0;
+}
+
 static int get_layout_shallow(struct repository *repo, struct strbuf *buf)
 {
 	strbuf_addstr(buf,
@@ -87,6 +98,7 @@ static const struct repo_info_field repo_info_field[] = {
 	{ "layout.bare", get_layout_bare },
 	{ "layout.shallow", get_layout_shallow },
 	{ "object.format", get_object_format },
+	{ "paths.toplevel", get_paths_toplevel },
 	{ "references.format", get_references_format },
 };
 
