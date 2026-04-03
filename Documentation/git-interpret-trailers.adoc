@@ -14,9 +14,9 @@ git interpret-trailers [--in-place] [--trim-empty]
 
 DESCRIPTION
 -----------
-Add or parse _trailer_ lines that look similar to RFC 822 e-mail
-headers, at the end of the otherwise free-form part of a commit
-message. For example, in the following commit message
+Add or parse _trailer_ key-value pairs at the end of the otherwise
+free-form part of a commit message. For example, in the following commit
+message
 
 ------------------------------------------------
 subject
@@ -27,7 +27,10 @@ Signed-off-by: Alice <alice@example.com>
 Signed-off-by: Bob <bob@example.com>
 ------------------------------------------------
 
-the last two lines starting with `Signed-off-by` are trailers.
+the last two lines starting with `Signed-off-by` are trailers. These two
+trailers have the _key_ `Signed-off-by` and a _value_ (Alice and Bob).
+The key must consist of only ASCII alphanumeric characters and hyphens
+(`-`). The hyphens serve as interword separators.
 
 This command reads commit messages from either the
 _<file>_ arguments or the standard input if no _<file>_ is specified.
@@ -106,9 +109,6 @@ the "folding" in RFC 822. Example:
 key: This is a very long value, with spaces and
   newlines in it.
 ------------------------------------------------
-
-Note that trailers do not follow (nor are they intended to follow) many of the
-rules for RFC 822 headers. For example they do not follow the encoding rule.
 
 OPTIONS
 -------
