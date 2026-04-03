@@ -869,4 +869,26 @@ test_expect_success 'repack --write-midx includes cruft when already geometric' 
 	)
 '
 
+test_expect_success 'repack rescues once-cruft objects above geometric split' '
+	git config repack.midxMustContainCruft false &&
+
+	test_commit reachable &&
+	test_commit unreachable &&
+
+	unreachable="$(git rev-parse HEAD)" &&
+
+	git reset --hard HEAD^ &&
+	git tag -d unreachable &&
+	git reflog expire --all --expire=all &&
+
+	git repack --cruft -d &&
+
+	echo $unreachable | git pack-objects .git/objects/pack/pack &&
+
+	test_commit new &&
+
+	git update-ref refs/heads/other $unreachable &&
+	git repack --geometric=2 -d --write-midx --write-bitmap-index
+'
+
 test_done
