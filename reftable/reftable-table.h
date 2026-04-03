@@ -9,6 +9,7 @@
 #ifndef REFTABLE_TABLE_H
 #define REFTABLE_TABLE_H
 
+#include "reftable-system.h"
 #include "reftable-iterator.h"
 #include "reftable-block.h"
 #include "reftable-blocksource.h"

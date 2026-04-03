@@ -29,13 +29,6 @@ static int stack_filename(struct reftable_buf *dest, struct reftable_stack *st,
 	return 0;
 }
 
-static int stack_fsync(const struct reftable_write_options *opts, int fd)
-{
-	if (opts->fsync)
-		return opts->fsync(fd);
-	return fsync(fd);
-}
-
 static ssize_t reftable_write_data(int fd, const void *data, size_t size)
 {
 	size_t total_written = 0;
@@ -69,7 +62,7 @@ static ssize_t fd_writer_write(void *arg, const void *data, size_t sz)
 static int fd_writer_flush(void *arg)
 {
 	struct fd_writer *writer = arg;
-	return stack_fsync(writer->opts, writer->fd);
+	return fsync(writer->fd);
 }
 
 static int fd_read_lines(int fd, char ***namesp)
@@ -372,45 +365,26 @@ done:
 	return err;
 }
 
-/* return negative if a before b. */
-static int tv_cmp(struct timeval *a, struct timeval *b)
-{
-	time_t diff = a->tv_sec - b->tv_sec;
-	int udiff = a->tv_usec - b->tv_usec;
-
-	if (diff != 0)
-		return diff;
-
-	return udiff;
-}
-
 static int reftable_stack_reload_maybe_reuse(struct reftable_stack *st,
 					     int reuse_open)
 {
 	char **names = NULL, **names_after = NULL;
-	struct timeval deadline;
+	uint64_t deadline;
 	int64_t delay = 0;
 	int tries = 0, err;
 	int fd = -1;
 
-	err = gettimeofday(&deadline, NULL);
-	if (err < 0)
-		goto out;
-	deadline.tv_sec += 3;
+	deadline = reftable_time_ms() + 3000;
 
 	while (1) {
-		struct timeval now;
-
-		err = gettimeofday(&now, NULL);
-		if (err < 0)
-			goto out;
+		uint64_t now = reftable_time_ms();
 
 		/*
 		 * Only look at deadlines after the first few times. This
 		 * simplifies debugging in GDB.
 		 */
 		tries++;
-		if (tries > 3 && tv_cmp(&now, &deadline) >= 0)
+		if (tries > 3 && now >= deadline)
 			goto out;
 
 		fd = open(st->list_file, O_RDONLY);
@@ -812,7 +786,7 @@ int reftable_addition_commit(struct reftable_addition *add)
 		goto done;
 	}
 
-	err = stack_fsync(&add->stack->opts, add->tables_list_lock.fd);
+	err = fsync(add->tables_list_lock.fd);
 	if (err < 0) {
 		err = REFTABLE_IO_ERROR;
 		goto done;
@@ -1480,7 +1454,7 @@ static int stack_compact_range(struct reftable_stack *st,
 		goto done;
 	}
 
-	err = stack_fsync(&st->opts, tables_list_lock.fd);
+	err = fsync(tables_list_lock.fd);
 	if (err < 0) {
 		err = REFTABLE_IO_ERROR;
 		unlink(new_table_path.buf);

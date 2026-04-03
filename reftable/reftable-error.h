@@ -9,6 +9,8 @@
 #ifndef REFTABLE_ERROR_H
 #define REFTABLE_ERROR_H
 
+#include "reftable-system.h"
+
 /*
  * Errors in reftable calls are signaled with negative integer return values. 0
  * means success.

@@ -9,10 +9,8 @@
 #ifndef REFTABLE_WRITER_H
 #define REFTABLE_WRITER_H
 
+#include "reftable-system.h"
 #include "reftable-record.h"
-
-#include <stdint.h>
-#include <unistd.h> /* ssize_t */
 
 /* Writing single reftables */
 
@@ -62,12 +60,6 @@ struct reftable_write_options {
 	 * negative value will cause us to block indefinitely.
 	 */
 	long lock_timeout_ms;
-
-	/*
-	 * Optional callback used to fsync files to disk. Falls back to using
-	 * fsync(3P) when unset.
-	 */
-	int (*fsync)(int fd);
 
 	/*
 	 * Callback function to execute whenever the stack is being reloaded.
