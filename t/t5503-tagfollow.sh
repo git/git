@@ -168,16 +168,13 @@ test_expect_success 'new clone fetch main and tags' '
 
 test_expect_success 'fetch specific OID with tag following' '
 	git init --bare clone3.git &&
-	(
-		cd clone3.git &&
-		git remote add origin .. &&
-		git fetch origin $B:refs/heads/main &&
+	git --git-dir=clone3.git remote add origin "$PWD" &&
+	git --git-dir=clone3.git fetch origin $B:refs/heads/main &&
 
-		git -C .. for-each-ref >expect &&
-		git for-each-ref >actual &&
+	git for-each-ref >expect &&
+	git --git-dir=clone3.git for-each-ref >actual &&
 
-		test_cmp expect actual
-	)
+	test_cmp expect actual
 '
 
 test_done

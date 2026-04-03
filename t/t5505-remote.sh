@@ -561,7 +561,7 @@ test_expect_success 'add --mirror && prune' '
 	mkdir mirror &&
 	(
 		cd mirror &&
-		git init --bare &&
+		git init --bare && GIT_DIR=. && export GIT_DIR &&
 		git remote add --mirror -f origin ../one
 	) &&
 	(
@@ -583,7 +583,7 @@ test_expect_success 'add --mirror setting HEAD' '
 	mkdir headmirror &&
 	(
 		cd headmirror &&
-		git init --bare -b notmain &&
+		git init --bare -b notmain && GIT_DIR=. && export GIT_DIR &&
 		git remote add --mirror -f origin ../one &&
 		test "$(git symbolic-ref HEAD)" = "refs/heads/main"
 	)

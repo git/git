@@ -57,11 +57,13 @@ test_expect_success 'Order should not matter: "--git-dir=a.git -C c" is equivale
 test_expect_success 'Effect on --work-tree option: "-C c/a.git --work-tree=../a"  is equivalent to "--work-tree=c/a --git-dir=c/a.git"' '
 	rm c/a/a.txt &&
 	git --git-dir=c/a.git --work-tree=c/a status >expected &&
+	test_config_global safe.bareRepository all &&
 	git -C c/a.git --work-tree=../a status >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success 'Order should not matter: "--work-tree=../a -C c/a.git" is equivalent to "-C c/a.git --work-tree=../a"' '
+	test_config_global safe.bareRepository all &&
 	git -C c/a.git --work-tree=../a status >expected &&
 	git --work-tree=../a -C c/a.git status >actual &&
 	test_cmp expected actual

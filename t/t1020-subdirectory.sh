@@ -177,10 +177,7 @@ test_expect_success 'no file/rev ambiguity check inside a bare repo (explicit GI
 test_expect_success 'no file/rev ambiguity check inside a bare repo' '
 	test_when_finished "rm -fr foo.git" &&
 	git clone -s --bare .git foo.git &&
-	(
-		cd foo.git &&
-		git show -s HEAD
-	)
+	git --git-dir=foo.git show -s HEAD
 '
 
 test_expect_success SYMLINKS 'detection should not be fooled by a symlink' '
