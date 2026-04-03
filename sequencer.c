@@ -2211,15 +2211,16 @@ static int should_edit(struct replay_opts *opts) {
 	return opts->edit;
 }
 
-static void refer_to_commit(struct replay_opts *opts,
-			    struct strbuf *msgbuf, struct commit *commit)
+static void refer_to_commit(struct repository *r, struct strbuf *msgbuf,
+			    const struct commit *commit,
+			    bool use_commit_reference)
 {
-	if (opts->commit_use_reference) {
+	if (use_commit_reference) {
 		struct pretty_print_context ctx = {
 			.abbrev = DEFAULT_ABBREV,
 			.date_mode.type = DATE_SHORT,
 		};
-		repo_format_commit_message(the_repository, commit,
+		repo_format_commit_message(r, commit,
 					   "%h (%s, %ad)", msgbuf, &ctx);
 	} else {
 		strbuf_addstr(msgbuf, oid_to_hex(&commit->object.oid));
@@ -2369,38 +2370,14 @@ static int do_pick_commit(struct repository *r,
 	 */
 
 	if (command == TODO_REVERT) {
-		const char *orig_subject;
-
 		base = commit;
 		base_label = msg.label;
 		next = parent;
 		next_label = msg.parent_label;
-		if (opts->commit_use_reference) {
-			strbuf_commented_addf(&ctx->message, comment_line_str,
-				"*** SAY WHY WE ARE REVERTING ON THE TITLE LINE ***");
-		} else if (skip_prefix(msg.subject, "Revert \"", &orig_subject) &&
-			   /*
-			    * We don't touch pre-existing repeated reverts, because
-			    * theoretically these can be nested arbitrarily deeply,
-			    * thus requiring excessive complexity to deal with.
-			    */
-			   !starts_with(orig_subject, "Revert \"")) {
-			strbuf_addstr(&ctx->message, "Reapply \"");
-			strbuf_addstr(&ctx->message, orig_subject);
-			strbuf_addstr(&ctx->message, "\n");
-		} else {
-			strbuf_addstr(&ctx->message, "Revert \"");
-			strbuf_addstr(&ctx->message, msg.subject);
-			strbuf_addstr(&ctx->message, "\"\n");
-		}
-		strbuf_addstr(&ctx->message, "\nThis reverts commit ");
-		refer_to_commit(opts, &ctx->message, commit);
-
-		if (commit->parents && commit->parents->next) {
-			strbuf_addstr(&ctx->message, ", reversing\nchanges made to ");
-			refer_to_commit(opts, &ctx->message, parent);
-		}
-		strbuf_addstr(&ctx->message, ".\n");
+		sequencer_format_revert_message(r, msg.subject, commit,
+						parent,
+						opts->commit_use_reference,
+						&ctx->message);
 	} else {
 		const char *p;
 
@@ -5626,6 +5603,43 @@ int sequencer_pick_revisions(struct repository *r,
 out:
 	todo_list_release(&todo_list);
 	return res;
+}
+
+void sequencer_format_revert_message(struct repository *r,
+				     const char *subject,
+				     const struct commit *commit,
+				     const struct commit *parent,
+				     bool use_commit_reference,
+				     struct strbuf *message)
+{
+	const char *orig_subject;
+
+	if (use_commit_reference) {
+		strbuf_commented_addf(message, comment_line_str,
+				      "*** SAY WHY WE ARE REVERTING ON THE TITLE LINE ***");
+	} else if (skip_prefix(subject, "Revert \"", &orig_subject) &&
+		   /*
+		    * We don't touch pre-existing repeated reverts, because
+		    * theoretically these can be nested arbitrarily deeply,
+		    * thus requiring excessive complexity to deal with.
+		    */
+		   !starts_with(orig_subject, "Revert \"")) {
+		strbuf_addstr(message, "Reapply \"");
+		strbuf_addstr(message, orig_subject);
+		strbuf_addstr(message, "\n");
+	} else {
+		strbuf_addstr(message, "Revert \"");
+		strbuf_addstr(message, subject);
+		strbuf_addstr(message, "\"\n");
+	}
+	strbuf_addstr(message, "\nThis reverts commit ");
+	refer_to_commit(r, message, commit, use_commit_reference);
+
+	if (commit->parents && commit->parents->next) {
+		strbuf_addstr(message, ", reversing\nchanges made to ");
+		refer_to_commit(r, message, parent, use_commit_reference);
+	}
+	strbuf_addstr(message, ".\n");
 }
 
 void append_signoff(struct strbuf *msgbuf, size_t ignore_footer, unsigned flag)
