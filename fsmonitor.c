@@ -33,7 +33,8 @@ static void fsmonitor_ewah_callback(size_t pos, void *is)
 	struct index_state *istate = (struct index_state *)is;
 	struct cache_entry *ce;
 
-	assert_index_minimum(istate, pos + 1);
+	if (pos >= istate->cache_nr)
+		return;
 
 	ce = istate->cache[pos];
 	ce->ce_flags &= ~CE_FSMONITOR_VALID;
@@ -805,7 +806,8 @@ void tweak_fsmonitor(struct index_state *istate)
 			}
 
 			/* Mark all previously saved entries as dirty */
-			assert_index_minimum(istate, istate->fsmonitor_dirty->bit_size);
+			if (!istate->split_index)
+				assert_index_minimum(istate, istate->fsmonitor_dirty->bit_size);
 			ewah_each_bit(istate->fsmonitor_dirty, fsmonitor_ewah_callback, istate);
 
 			refresh_fsmonitor(istate);
