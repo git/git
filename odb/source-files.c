@@ -75,18 +75,18 @@ static int odb_source_files_for_each_object(struct odb_source *source,
 					    const struct object_info *request,
 					    odb_for_each_object_cb cb,
 					    void *cb_data,
-					    unsigned flags)
+					    const struct odb_for_each_object_options *opts)
 {
 	struct odb_source_files *files = odb_source_files_downcast(source);
 	int ret;
 
-	if (!(flags & ODB_FOR_EACH_OBJECT_PROMISOR_ONLY)) {
-		ret = odb_source_loose_for_each_object(source, request, cb, cb_data, flags);
+	if (!(opts->flags & ODB_FOR_EACH_OBJECT_PROMISOR_ONLY)) {
+		ret = odb_source_loose_for_each_object(source, request, cb, cb_data, opts);
 		if (ret)
 			return ret;
 	}
 
-	ret = packfile_store_for_each_object(files->packed, request, cb, cb_data, flags);
+	ret = packfile_store_for_each_object(files->packed, request, cb, cb_data, opts);
 	if (ret)
 		return ret;
 
@@ -116,6 +116,30 @@ static int odb_source_files_count_objects(struct odb_source *source,
 	}
 
 	*out = count;
+	ret = 0;
+
+out:
+	return ret;
+}
+
+static int odb_source_files_find_abbrev_len(struct odb_source *source,
+					    const struct object_id *oid,
+					    unsigned min_len,
+					    unsigned *out)
+{
+	struct odb_source_files *files = odb_source_files_downcast(source);
+	unsigned len = min_len;
+	int ret;
+
+	ret = packfile_store_find_abbrev_len(files->packed, oid, len, &len);
+	if (ret < 0)
+		goto out;
+
+	ret = odb_source_loose_find_abbrev_len(source, oid, len, &len);
+	if (ret < 0)
+		goto out;
+
+	*out = len;
 	ret = 0;
 
 out:
@@ -250,6 +274,7 @@ struct odb_source_files *odb_source_files_new(struct object_database *odb,
 	files->base.read_object_stream = odb_source_files_read_object_stream;
 	files->base.for_each_object = odb_source_files_for_each_object;
 	files->base.count_objects = odb_source_files_count_objects;
+	files->base.find_abbrev_len = odb_source_files_find_abbrev_len;
 	files->base.freshen_object = odb_source_files_freshen_object;
 	files->base.write_object = odb_source_files_write_object;
 	files->base.write_object_stream = odb_source_files_write_object_stream;

@@ -6,14 +6,6 @@
 #include "oidtree.h"
 #include "hash.h"
 
-struct oidtree_iter_data {
-	oidtree_iter fn;
-	void *arg;
-	size_t *last_nibble_at;
-	uint32_t algo;
-	uint8_t last_byte;
-};
-
 void oidtree_init(struct oidtree *ot)
 {
 	cb_init(&ot->tree);
@@ -54,8 +46,7 @@ void oidtree_insert(struct oidtree *ot, const struct object_id *oid)
 	cb_insert(&ot->tree, on, sizeof(*oid));
 }
 
-
-int oidtree_contains(struct oidtree *ot, const struct object_id *oid)
+bool oidtree_contains(struct oidtree *ot, const struct object_id *oid)
 {
 	struct object_id k;
 	size_t klen = sizeof(k);
@@ -69,41 +60,51 @@ int oidtree_contains(struct oidtree *ot, const struct object_id *oid)
 	klen += BUILD_ASSERT_OR_ZERO(offsetof(struct object_id, hash) <
 				offsetof(struct object_id, algo));
 
-	return cb_lookup(&ot->tree, (const uint8_t *)&k, klen) ? 1 : 0;
+	return !!cb_lookup(&ot->tree, (const uint8_t *)&k, klen);
 }
 
-static enum cb_next iter(struct cb_node *n, void *arg)
+struct oidtree_each_data {
+	oidtree_each_cb cb;
+	void *cb_data;
+	size_t *last_nibble_at;
+	uint32_t algo;
+	uint8_t last_byte;
+};
+
+static int iter(struct cb_node *n, void *cb_data)
 {
-	struct oidtree_iter_data *x = arg;
+	struct oidtree_each_data *data = cb_data;
 	struct object_id k;
 
 	/* Copy to provide 4-byte alignment needed by struct object_id. */
 	memcpy(&k, n->k, sizeof(k));
 
-	if (x->algo != GIT_HASH_UNKNOWN && x->algo != k.algo)
-		return CB_CONTINUE;
+	if (data->algo != GIT_HASH_UNKNOWN && data->algo != k.algo)
+		return 0;
 
-	if (x->last_nibble_at) {
-		if ((k.hash[*x->last_nibble_at] ^ x->last_byte) & 0xf0)
-			return CB_CONTINUE;
+	if (data->last_nibble_at) {
+		if ((k.hash[*data->last_nibble_at] ^ data->last_byte) & 0xf0)
+			return 0;
 	}
 
-	return x->fn(&k, x->arg);
+	return data->cb(&k, data->cb_data);
 }
 
-void oidtree_each(struct oidtree *ot, const struct object_id *oid,
-			size_t oidhexsz, oidtree_iter fn, void *arg)
+int oidtree_each(struct oidtree *ot, const struct object_id *prefix,
+		 size_t prefix_hex_len, oidtree_each_cb cb, void *cb_data)
 {
-	size_t klen = oidhexsz / 2;
-	struct oidtree_iter_data x = { 0 };
-	assert(oidhexsz <= GIT_MAX_HEXSZ);
+	struct oidtree_each_data data = {
+		.cb = cb,
+		.cb_data = cb_data,
+		.algo = prefix->algo,
+	};
+	size_t klen = prefix_hex_len / 2;
+	assert(prefix_hex_len <= GIT_MAX_HEXSZ);
 
-	x.fn = fn;
-	x.arg = arg;
-	x.algo = oid->algo;
-	if (oidhexsz & 1) {
-		x.last_byte = oid->hash[klen];
-		x.last_nibble_at = &klen;
+	if (prefix_hex_len & 1) {
+		data.last_byte = prefix->hash[klen];
+		data.last_nibble_at = &klen;
 	}
-	cb_each(&ot->tree, (const uint8_t *)oid, klen, iter, &x);
+
+	return cb_each(&ot->tree, prefix->hash, klen, iter, &data);
 }
