@@ -33,8 +33,10 @@ test_expect_success 'listing all tags in an empty tree should succeed' '
 '
 
 test_expect_success 'listing all tags in an empty tree should output nothing' '
-	test $(git tag -l | wc -l) -eq 0 &&
-	test $(git tag | wc -l) -eq 0
+	git tag -l >actual &&
+	test_must_be_empty actual &&
+	git tag >actual &&
+	test_must_be_empty actual
 '
 
 test_expect_success 'sort tags, ignore case' '
@@ -178,7 +180,8 @@ test_expect_success 'listing tags using a non-matching pattern should succeed' '
 '
 
 test_expect_success 'listing tags using a non-matching pattern should output nothing' '
-	test $(git tag -l xxx | wc -l) -eq 0
+	git tag -l xxx >actual &&
+	test_must_be_empty actual
 '
 
 # special cases for creating tags:
@@ -188,13 +191,15 @@ test_expect_success 'trying to create a tag with the name of one existing should
 '
 
 test_expect_success 'trying to create a tag with a non-valid name should fail' '
-	test $(git tag -l | wc -l) -eq 1 &&
+	git tag -l >actual &&
+	test_line_count = 1 actual &&
 	test_must_fail git tag "" &&
 	test_must_fail git tag .othertag &&
 	test_must_fail git tag "other tag" &&
 	test_must_fail git tag "othertag^" &&
 	test_must_fail git tag "other~tag" &&
-	test $(git tag -l | wc -l) -eq 1
+	git tag -l >actual &&
+	test_line_count = 1 actual
 '
 
 test_expect_success 'creating a tag using HEAD directly should succeed' '
