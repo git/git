@@ -2906,6 +2906,14 @@ char *git_config_prepare_comment_string(const char *comment)
 	return prepared;
 }
 
+/*
+ * How long to retry acquiring config.lock when another process holds it.
+ * The lock is held only for the duration of rewriting a small file, so
+ * 100 ms covers any realistic contention while still failing fast if
+ * a stale lock has been left behind by a crashed process.
+ */
+#define CONFIG_LOCK_TIMEOUT_MS 100
+
 static void validate_comment_string(const char *comment)
 {
 	size_t leading_blanks;
@@ -2989,7 +2997,8 @@ int repo_config_set_multivar_in_file_gently(struct repository *r,
 	 * The lock serves a purpose in addition to locking: the new
 	 * contents of .git/config will be written into it.
 	 */
-	fd = hold_lock_file_for_update(&lock, config_filename, 0);
+	fd = hold_lock_file_for_update_timeout(&lock, config_filename, 0,
+					       CONFIG_LOCK_TIMEOUT_MS);
 	if (fd < 0) {
 		error_errno(_("could not lock config file %s"), config_filename);
 		ret = CONFIG_NO_LOCK;
@@ -3334,7 +3343,8 @@ static int repo_config_copy_or_rename_section_in_file(
 	if (!config_filename)
 		config_filename = filename_buf = repo_git_path(r, "config");
 
-	out_fd = hold_lock_file_for_update(&lock, config_filename, 0);
+	out_fd = hold_lock_file_for_update_timeout(&lock, config_filename, 0,
+						   CONFIG_LOCK_TIMEOUT_MS);
 	if (out_fd < 0) {
 		ret = error(_("could not lock config file %s"), config_filename);
 		goto out;
