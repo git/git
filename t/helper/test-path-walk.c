@@ -89,7 +89,7 @@ int cmd__path_walk(int argc, const char **argv)
 		OPT_END(),
 	};
 
-	setup_git_directory();
+	setup_git_directory(the_repository);
 	revs.repo = the_repository;
 
 	argc = parse_options(argc, argv, NULL,

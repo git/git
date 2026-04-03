@@ -66,7 +66,7 @@ int cmd__dump_cache_tree(int ac UNUSED, const char **av UNUSED)
 	struct cache_tree *another = cache_tree();
 	int ret;
 
-	setup_git_directory();
+	setup_git_directory(the_repository);
 	if (repo_read_index(the_repository) < 0)
 		die("unable to read index file");
 	istate = *the_repository->index;

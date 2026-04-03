@@ -109,7 +109,7 @@ int cmd_main(int argc, const char **argv)
 	struct strvec index_pack_args = STRVEC_INIT;
 	int ret;
 
-	setup_git_directory_gently(&nongit);
+	setup_git_directory_gently(the_repository, &nongit);
 
 	while (arg < argc && argv[arg][0] == '-') {
 		const char *p;
