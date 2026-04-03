@@ -109,6 +109,16 @@ UI, Workflows & Features
  * "git repo info -h" and "git repo structure -h" limit their help output
    to the part that is specific to the subcommand.
 
+ * "git format-patch --cover-letter" learns to use a simpler format
+   instead of the traditional shortlog format to list its commits with
+   a new --commit-list-format option and format.commitListFormat
+   configuration variable.
+
+ * `git backfill` learned to accept revision and pathspec arguments.
+
+ * "git replay" (experimental) learns, in addition to "pick" and
+   "replay", a new operating mode "revert".
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -495,3 +505,4 @@ Fixes since v2.53
    (merge fc8a4f15e7 gi/doc-boolean-config-typofix later to maint).
    (merge 37182267a0 kh/doc-interpret-trailers-1 later to maint).
    (merge f64c50e768 jc/rerere-modern-strbuf-handling later to maint).
+   (merge 699248d89e th/t8003-unhide-git-failures later to maint).
