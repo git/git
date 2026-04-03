@@ -161,7 +161,7 @@ static int odb_source_files_write_object(struct odb_source *source,
 					 enum object_type type,
 					 struct object_id *oid,
 					 struct object_id *compat_oid,
-					 unsigned flags)
+					 enum odb_write_object_flags flags)
 {
 	return odb_source_loose_write_object(source, buf, len, type,
 					     oid, compat_oid, flags);

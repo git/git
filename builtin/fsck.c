@@ -162,7 +162,7 @@ static int mark_object(struct object *obj, enum object_type type,
 
 	if (!(obj->flags & HAS_OBJ)) {
 		if (parent && !odb_has_object(options->repo->objects, &obj->oid,
-					      HAS_OBJECT_RECHECK_PACKED)) {
+					      ODB_HAS_OBJECT_RECHECK_PACKED)) {
 			printf_ln(_("broken link from %7s %s\n"
 				    "              to %7s %s"),
 				  printable_type(options->repo, &parent->oid, parent->type),

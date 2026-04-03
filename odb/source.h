@@ -197,7 +197,7 @@ struct odb_source {
 			    enum object_type type,
 			    struct object_id *oid,
 			    struct object_id *compat_oid,
-			    unsigned flags);
+			    enum odb_write_object_flags flags);
 
 	/*
 	 * This callback is expected to persist the given object stream into
@@ -405,7 +405,7 @@ static inline int odb_source_write_object(struct odb_source *source,
 					  enum object_type type,
 					  struct object_id *oid,
 					  struct object_id *compat_oid,
-					  unsigned flags)
+					  enum odb_write_object_flags flags)
 {
 	return source->write_object(source, buf, len, type, oid,
 				    compat_oid, flags);

@@ -161,7 +161,7 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name)
 
 	case 'e':
 		ret = !odb_has_object(the_repository->objects, &oid,
-				      HAS_OBJECT_RECHECK_PACKED | HAS_OBJECT_FETCH_PROMISOR);
+				      ODB_HAS_OBJECT_RECHECK_PACKED | ODB_HAS_OBJECT_FETCH_PROMISOR);
 		goto cleanup;
 
 	case 'w':

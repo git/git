@@ -1542,7 +1542,7 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 
 	if (!is_null_oid(new_oid) &&
 	    !odb_has_object(the_repository->objects, new_oid,
-			    HAS_OBJECT_RECHECK_PACKED | HAS_OBJECT_FETCH_PROMISOR)) {
+			    ODB_HAS_OBJECT_RECHECK_PACKED | ODB_HAS_OBJECT_FETCH_PROMISOR)) {
 		error("unpack should have generated %s, "
 		      "but I can't find it!", oid_to_hex(new_oid));
 		ret = "bad pack";
