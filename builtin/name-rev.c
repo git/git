@@ -17,6 +17,9 @@
 #include "commit-graph.h"
 #include "wildmatch.h"
 #include "mem-pool.h"
+#include "pretty.h"
+#include "revision.h"
+#include "notes.h"
 
 /*
  * One day.  See the 'name a rev shortly after epoch' test in t6120 when
@@ -30,6 +33,16 @@ struct rev_name {
 	int generation;
 	int distance;
 	int from_tag;
+};
+
+struct pretty_format {
+	struct pretty_print_context ctx;
+	struct userformat_want want;
+};
+
+struct format_cb_data {
+    const char *format;
+    int *name_only;
 };
 
 define_commit_slab(commit_rev_name, struct rev_name);
@@ -452,7 +465,9 @@ static const char *get_exact_ref_match(const struct object *o)
 }
 
 /* may return a constant string or use "buf" as scratch space */
-static const char *get_rev_name(const struct object *o, struct strbuf *buf)
+static const char *get_rev_name(const struct object *o,
+				struct pretty_format *format_ctx,
+				struct strbuf *buf)
 {
 	struct rev_name *n;
 	const struct commit *c;
@@ -460,13 +475,32 @@ static const char *get_rev_name(const struct object *o, struct strbuf *buf)
 	if (o->type != OBJ_COMMIT)
 		return get_exact_ref_match(o);
 	c = (const struct commit *) o;
+
+	if (format_ctx) {
+		strbuf_reset(buf);
+
+		if (format_ctx->want.notes) {
+			struct strbuf notebuf = STRBUF_INIT;
+
+			format_display_notes(&c->object.oid, &notebuf,
+					     get_log_output_encoding(),
+					     format_ctx->ctx.fmt == CMIT_FMT_USERFORMAT);
+			format_ctx->ctx.notes_message = strbuf_detach(&notebuf, NULL);
+		}
+
+		pretty_print_commit(&format_ctx->ctx, c, buf);
+		FREE_AND_NULL(format_ctx->ctx.notes_message);
+
+		return buf->buf;
+	}
+
 	n = get_commit_rev_name(c);
 	if (!n)
 		return NULL;
 
-	if (!n->generation)
+	if (!n->generation) {
 		return n->tip_name;
-	else {
+	} else {
 		strbuf_reset(buf);
 		strbuf_addstr(buf, n->tip_name);
 		strbuf_strip_suffix(buf, "^0");
@@ -477,6 +511,7 @@ static const char *get_rev_name(const struct object *o, struct strbuf *buf)
 
 static void show_name(const struct object *obj,
 		      const char *caller_name,
+		      struct pretty_format *format_ctx,
 		      int always, int allow_undefined, int name_only)
 {
 	const char *name;
@@ -485,7 +520,7 @@ static void show_name(const struct object *obj,
 
 	if (!name_only)
 		printf("%s ", caller_name ? caller_name : oid_to_hex(oid));
-	name = get_rev_name(obj, &buf);
+	name = get_rev_name(obj, format_ctx, &buf);
 	if (name)
 		printf("%s\n", name);
 	else if (allow_undefined)
@@ -505,7 +540,9 @@ static char const * const name_rev_usage[] = {
 	NULL
 };
 
-static void name_rev_line(char *p, struct name_ref_data *data)
+static void name_rev_line(char *p,
+			  struct name_ref_data *data,
+			  struct pretty_format *format_ctx)
 {
 	struct strbuf buf = STRBUF_INIT;
 	int counter = 0;
@@ -514,9 +551,9 @@ static void name_rev_line(char *p, struct name_ref_data *data)
 
 	for (p_start = p; *p; p++) {
 #define ishex(x) (isdigit((x)) || ((x) >= 'a' && (x) <= 'f'))
-		if (!ishex(*p))
+		if (!ishex(*p)) {
 			counter = 0;
-		else if (++counter == hexsz &&
+		} else if (++counter == hexsz &&
 			 !ishex(*(p+1))) {
 			struct object_id oid;
 			const char *name = NULL;
@@ -530,7 +567,7 @@ static void name_rev_line(char *p, struct name_ref_data *data)
 				struct object *o =
 					lookup_object(the_repository, &oid);
 				if (o)
-					name = get_rev_name(o, &buf);
+					name = get_rev_name(o, format_ctx, &buf);
 			}
 			*(p+1) = c;
 
@@ -552,6 +589,16 @@ static void name_rev_line(char *p, struct name_ref_data *data)
 	strbuf_release(&buf);
 }
 
+static int format_cb(const struct option *option,
+		     const char *arg,
+		     int unset)
+{
+	struct format_cb_data *data = option->value;
+	data->format = arg;
+	*data->name_only = !unset;
+	return 0;
+}
+
 int cmd_name_rev(int argc,
 		 const char **argv,
 		 const char *prefix,
@@ -565,6 +612,12 @@ int cmd_name_rev(int argc,
 #endif
 	int all = 0, annotate_stdin = 0, allow_undefined = 1, always = 0, peel_tag = 0;
 	struct name_ref_data data = { 0, 0, STRING_LIST_INIT_NODUP, STRING_LIST_INIT_NODUP };
+	static struct format_cb_data format_cb_data = { 0 };
+	struct display_notes_opt format_notes_opt;
+	struct rev_info format_rev = REV_INFO_INIT;
+	struct pretty_format *format_ctx = NULL;
+	struct pretty_format format_pp = { 0 };
+	struct string_list notes = STRING_LIST_INIT_NODUP;
 	struct option opts[] = {
 		OPT_BOOL(0, "name-only", &data.name_only, N_("print only ref-based names (no object names)")),
 		OPT_BOOL(0, "tags", &data.tags_only, N_("only use tags to name the commits")),
@@ -582,6 +635,10 @@ int cmd_name_rev(int argc,
 			   PARSE_OPT_HIDDEN),
 #endif /* WITH_BREAKING_CHANGES */
 		OPT_BOOL(0, "annotate-stdin", &annotate_stdin, N_("annotate text from stdin")),
+		OPT_CALLBACK(0, "format", &format_cb_data, N_("format"),
+			     N_("pretty-print output instead"), format_cb),
+		OPT_STRING_LIST(0, "notes", &notes, N_("notes"),
+				N_("display notes for --format")),
 		OPT_BOOL(0, "undefined", &allow_undefined, N_("allow to print `undefined` names (default)")),
 		OPT_BOOL(0, "always",     &always,
 			   N_("show abbreviated commit object as fallback")),
@@ -590,6 +647,8 @@ int cmd_name_rev(int argc,
 		OPT_END(),
 	};
 
+	init_display_notes(&format_notes_opt);
+	format_cb_data.name_only = &data.name_only;
 	mem_pool_init(&string_pool, 0);
 	init_commit_rev_name(&rev_names);
 	repo_config(the_repository, git_default_config, NULL);
@@ -603,6 +662,31 @@ int cmd_name_rev(int argc,
 		annotate_stdin = 1;
 	}
 #endif
+
+	if (format_cb_data.format) {
+		get_commit_format(format_cb_data.format, &format_rev);
+		format_pp.ctx.rev = &format_rev;
+		format_pp.ctx.fmt = format_rev.commit_format;
+		format_pp.ctx.abbrev = format_rev.abbrev;
+		format_pp.ctx.date_mode_explicit = format_rev.date_mode_explicit;
+		format_pp.ctx.date_mode = format_rev.date_mode;
+		format_pp.ctx.color = GIT_COLOR_AUTO;
+
+		userformat_find_requirements(format_cb_data.format,
+					     &format_pp.want);
+		if (format_pp.want.notes) {
+			int ignore_show_notes = 0;
+			struct string_list_item *n;
+
+			for_each_string_list_item(n, &notes)
+				enable_ref_display_notes(&format_notes_opt,
+							 &ignore_show_notes,
+							 n->string);
+			load_display_notes(&format_notes_opt);
+		}
+
+		format_ctx = &format_pp;
+	}
 
 	if (all + annotate_stdin + !!argc > 1) {
 		error("Specify either a list, or --all, not both!");
@@ -661,7 +745,7 @@ int cmd_name_rev(int argc,
 
 		while (strbuf_getline(&sb, stdin) != EOF) {
 			strbuf_addch(&sb, '\n');
-			name_rev_line(sb.buf, &data);
+			name_rev_line(sb.buf, &data, format_ctx);
 		}
 		strbuf_release(&sb);
 	} else if (all) {
@@ -672,18 +756,20 @@ int cmd_name_rev(int argc,
 			struct object *obj = get_indexed_object(the_repository, i);
 			if (!obj || obj->type != OBJ_COMMIT)
 				continue;
-			show_name(obj, NULL,
+			show_name(obj, NULL, format_ctx,
 				  always, allow_undefined, data.name_only);
 		}
 	} else {
 		int i;
 		for (i = 0; i < revs.nr; i++)
-			show_name(revs.objects[i].item, revs.objects[i].name,
+			show_name(revs.objects[i].item, revs.objects[i].name, format_ctx,
 				  always, allow_undefined, data.name_only);
 	}
 
 	string_list_clear(&data.ref_filters, 0);
 	string_list_clear(&data.exclude_filters, 0);
+	string_list_clear(&notes, 0);
+	release_display_notes(&format_notes_opt);
 	mem_pool_discard(&string_pool, 0);
 	object_array_clear(&revs);
 	return 0;
