@@ -2,6 +2,9 @@
 
 test_description='push to remote group'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=default
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success 'setup' '
