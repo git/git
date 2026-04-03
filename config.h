@@ -268,6 +268,12 @@ int64_t git_config_int64(const char *, const char *,
 			 const struct key_value_info *);
 
 /**
+ * Identical to `git_config_int`, but for unsigned ints.
+ */
+unsigned int git_config_uint(const char *, const char *,
+			     const struct key_value_info *);
+
+/**
  * Identical to `git_config_int`, but for unsigned longs.
  */
 unsigned long git_config_ulong(const char *, const char *,
@@ -560,6 +566,7 @@ int git_configset_get_value(struct config_set *cs, const char *key,
 
 int git_configset_get_string(struct config_set *cs, const char *key, char **dest);
 int git_configset_get_int(struct config_set *cs, const char *key, int *dest);
+int git_configset_get_uint(struct config_set *cs, const char *key, unsigned int *dest);
 int git_configset_get_ulong(struct config_set *cs, const char *key, unsigned long *dest);
 int git_configset_get_bool(struct config_set *cs, const char *key, int *dest);
 int git_configset_get_bool_or_int(struct config_set *cs, const char *key, int *is_bool, int *dest);
@@ -649,6 +656,12 @@ int repo_config_get_string_tmp(struct repository *r,
  * returns 1 without touching `dest`.
  */
 int repo_config_get_int(struct repository *r, const char *key, int *dest);
+
+/**
+ * Similar to `repo_config_get_int` but for unsigned ints.
+ */
+int repo_config_get_uint(struct repository *r,
+			 const char *key, unsigned int *dest);
 
 /**
  * Similar to `repo_config_get_int` but for unsigned longs.
