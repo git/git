@@ -638,14 +638,21 @@ static int pseudo_merge_commit_cmp(const void *va, const void *vb)
 	return 0;
 }
 
-static struct pseudo_merge_commit *find_pseudo_merge(const struct pseudo_merge_map *pm,
-						     uint32_t pos)
+static int find_pseudo_merge(const struct pseudo_merge_map *pm, uint32_t pos,
+			     struct pseudo_merge_commit *out)
 {
-	if (!pm->commits_nr)
-		return NULL;
+	const unsigned char *at;
 
-	return bsearch(&pos, pm->commits, pm->commits_nr,
-		       PSEUDO_MERGE_COMMIT_RAWSZ, pseudo_merge_commit_cmp);
+	if (!pm->commits_nr)
+		return 0;
+
+	at = bsearch(&pos, pm->commits, pm->commits_nr,
+		     PSEUDO_MERGE_COMMIT_RAWSZ, pseudo_merge_commit_cmp);
+	if (!at)
+		return 0;
+
+	read_pseudo_merge_commit_at(out, at);
+	return 1;
 }
 
 int apply_pseudo_merges_for_commit(const struct pseudo_merge_map *pm,
@@ -653,16 +660,15 @@ int apply_pseudo_merges_for_commit(const struct pseudo_merge_map *pm,
 				   struct commit *commit, uint32_t commit_pos)
 {
 	struct pseudo_merge *merge;
-	struct pseudo_merge_commit *merge_commit;
+	struct pseudo_merge_commit merge_commit;
 	int ret = 0;
 
-	merge_commit = find_pseudo_merge(pm, commit_pos);
-	if (!merge_commit)
+	if (!find_pseudo_merge(pm, commit_pos, &merge_commit))
 		return 0;
 
-	if (merge_commit->pseudo_merge_ofs & ((uint64_t)1<<63)) {
+	if (merge_commit.pseudo_merge_ofs & ((uint64_t)1<<63)) {
 		struct pseudo_merge_commit_ext ext = { 0 };
-		off_t ofs = merge_commit->pseudo_merge_ofs & ~((uint64_t)1<<63);
+		off_t ofs = merge_commit.pseudo_merge_ofs & ~((uint64_t)1<<63);
 		uint32_t i;
 
 		if (pseudo_merge_ext_at(pm, &ext, ofs) < -1) {
@@ -673,11 +679,11 @@ int apply_pseudo_merges_for_commit(const struct pseudo_merge_map *pm,
 		}
 
 		for (i = 0; i < ext.nr; i++) {
-			if (nth_pseudo_merge_ext(pm, &ext, merge_commit, i) < 0)
+			if (nth_pseudo_merge_ext(pm, &ext, &merge_commit, i) < 0)
 				return ret;
 
 			merge = pseudo_merge_at(pm, &commit->object.oid,
-						merge_commit->pseudo_merge_ofs);
+						merge_commit.pseudo_merge_ofs);
 
 			if (!merge)
 				return ret;
@@ -687,7 +693,7 @@ int apply_pseudo_merges_for_commit(const struct pseudo_merge_map *pm,
 		}
 	} else {
 		merge = pseudo_merge_at(pm, &commit->object.oid,
-					merge_commit->pseudo_merge_ofs);
+					merge_commit.pseudo_merge_ofs);
 
 		if (!merge)
 			return ret;

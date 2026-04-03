@@ -108,10 +108,11 @@ const char *git_pager(struct repository *r, int stdout_is_tty)
 
 static void setup_pager_env(struct strvec *env)
 {
-	const char **argv;
+	char **argv;
 	int i;
 	char *pager_env = xstrdup(PAGER_ENV);
-	int n = split_cmdline(pager_env, &argv);
+	/* split_cmdline splits in place, so we know the result is writable */
+	int n = split_cmdline(pager_env, (const char ***)&argv);
 
 	if (n < 0)
 		die("malformed build-time PAGER_ENV: %s",

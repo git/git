@@ -783,7 +783,8 @@ static int push_update_ref_status(struct strbuf *buf,
 
 	if (starts_with(buf->buf, "option ")) {
 		struct object_id old_oid, new_oid;
-		const char *key, *val;
+		char *key;
+		const char *val;
 		char *p;
 
 		if (!state->hint || !(state->report || state->new_report))
