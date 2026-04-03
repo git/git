@@ -371,13 +371,13 @@ test_expect_success 'log --graph with multiple tips' '
 '
 
 test_expect_success 'log --graph with root commit' '
-	git checkout --orphan 8_a &&
+	git checkout --orphan branch_8_a &&
 	test_commit 8_A &&
 	test_commit 8_A1 &&
-	git checkout --orphan 8_b &&
+	git checkout --orphan branch_8_b &&
 	test_commit 8_B &&
 
-	check_graph 8_b 8_a <<-\EOF
+	check_graph branch_8_b branch_8_a <<-\EOF
 	* 8_B
 	  * 8_A1
 	 /
@@ -387,10 +387,10 @@ test_expect_success 'log --graph with root commit' '
 
 test_expect_success 'log --graph with multiple root commits' '
 	test_commit 8_B1 &&
-	git checkout --orphan 8_c &&
+	git checkout --orphan branch_8_c &&
 	test_commit 8_C &&
 
-	check_graph 8_c 8_b 8_a <<-\EOF
+	check_graph branch_8_c branch_8_b branch_8_a <<-\EOF
 	* 8_C
 	  * 8_B1
 	 /
@@ -402,18 +402,18 @@ test_expect_success 'log --graph with multiple root commits' '
 '
 
 test_expect_success 'log --graph commit from a two parent merge shifted' '
-	git checkout --orphan 9_b &&
+	git checkout --orphan branch_9_b &&
 	test_commit 9_B &&
-	git checkout --orphan 9_c &&
+	git checkout --orphan branch_9_c &&
 	test_commit 9_C &&
-	git checkout 9_b &&
-	git merge 9_c --allow-unrelated-histories -m 9_M &&
-	git checkout --orphan 9_a &&
+	git checkout branch_9_b &&
+	git merge branch_9_c --allow-unrelated-histories -m 9_M &&
+	git checkout --orphan branch_9_a &&
 	test_commit 9_A &&
 	test_commit 9_A1 &&
 	test_commit 9_A2 &&
 
-	check_graph 9_a 9_b <<-\EOF
+	check_graph branch_9_a branch_9_b <<-\EOF
 	* 9_A2
 	* 9_A1
 	* 9_A
@@ -425,22 +425,23 @@ test_expect_success 'log --graph commit from a two parent merge shifted' '
 '
 
 test_expect_success 'log --graph commit from a three parent merge shifted' '
-	git checkout --orphan 10_b &&
+	git checkout --orphan branch_10_b &&
 	test_commit 10_B &&
-	git checkout --orphan 10_c &&
+	git checkout --orphan branch_10_c &&
 	test_commit 10_C &&
-	git checkout --orphan 10_d &&
+	git checkout --orphan branch_10_d &&
 	test_commit 10_D &&
-	git checkout 10_b &&
+	git checkout branch_10_b &&
 	TREE=$(git write-tree) &&
-	MERGE=$(git commit-tree $TREE -p 10_b -p 10_c -p 10_d -m 10_M) &&
+	MERGE=$(git commit-tree $TREE \
+		-p branch_10_b -p branch_10_c -p branch_10_d -m 10_M) &&
 	git reset --hard $MERGE &&
-	git checkout --orphan 10_a &&
+	git checkout --orphan branch_10_a &&
 	test_commit 10_A &&
 	test_commit 10_A1 &&
 	test_commit 10_A2 &&
 
-	check_graph 10_a 10_b <<-\EOF
+	check_graph branch_10_a branch_10_b <<-\EOF
 	* 10_A2
 	* 10_A1
 	* 10_A
@@ -453,24 +454,25 @@ test_expect_success 'log --graph commit from a three parent merge shifted' '
 '
 
 test_expect_success 'log --graph commit from a four parent merge shifted' '
-	git checkout --orphan 11_b &&
+	git checkout --orphan branch_11_b &&
 	test_commit 11_B &&
-	git checkout --orphan 11_c &&
+	git checkout --orphan branch_11_c &&
 	test_commit 11_C &&
-	git checkout --orphan 11_d &&
+	git checkout --orphan branch_11_d &&
 	test_commit 11_D &&
-	git checkout --orphan 11_e &&
+	git checkout --orphan branch_11_e &&
 	test_commit 11_E &&
-	git checkout 11_b &&
+	git checkout branch_11_b &&
 	TREE=$(git write-tree) &&
-	MERGE=$(git commit-tree $TREE -p 11_b -p 11_c -p 11_d -p 11_e -m 11_M) &&
+	MERGE=$(git commit-tree $TREE \
+		-p branch_11_b -p branch_11_c -p branch_11_d -p branch_11_e -m 11_M) &&
 	git reset --hard $MERGE &&
-	git checkout --orphan 11_a &&
+	git checkout --orphan branch_11_a &&
 	test_commit 11_A &&
 	test_commit 11_A1 &&
 	test_commit 11_A2 &&
 
-	check_graph 11_a 11_b <<-\EOF
+	check_graph branch_11_a branch_11_b <<-\EOF
 	* 11_A2
 	* 11_A1
 	* 11_A
@@ -484,17 +486,17 @@ test_expect_success 'log --graph commit from a four parent merge shifted' '
 '
 
 test_expect_success 'log --graph disconnected three roots cascading' '
-	git checkout --orphan 12_d &&
+	git checkout --orphan branch_12_d &&
 	test_commit 12_D &&
 	test_commit 12_D1 &&
-	git checkout --orphan 12_c &&
+	git checkout --orphan branch_12_c &&
 	test_commit 12_C &&
-	git checkout --orphan 12_b &&
+	git checkout --orphan branch_12_b &&
 	test_commit 12_B &&
-	git checkout --orphan 12_a &&
+	git checkout --orphan branch_12_a &&
 	test_commit 12_A &&
 
-	check_graph 12_a 12_b 12_c 12_d <<-\EOF
+	check_graph branch_12_a branch_12_b branch_12_c branch_12_d <<-\EOF
 	* 12_A
 	  * 12_B
 	    * 12_C
