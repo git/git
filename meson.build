@@ -1746,7 +1746,7 @@ version_def_h = custom_target(
 libgit_sources += version_def_h
 
 cargo = find_program('cargo', dirs: program_path, native: true, required: get_option('rust'))
-rust_option = get_option('rust').disable_auto_if(not cargo.found())
+rust_option = get_option('rust')
 if rust_option.allowed()
   subdir('src')
   libgit_c_args += '-DWITH_RUST'
