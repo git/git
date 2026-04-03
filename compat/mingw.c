@@ -1394,6 +1394,9 @@ revert_attrs:
 size_t mingw_strftime(char *s, size_t max,
 		      const char *format, const struct tm *tm)
 {
+#ifdef _UCRT
+	size_t ret = strftime(s, max, format, tm);
+#else
 	/* a pointer to the original strftime in case we can't find the UCRT version */
 	static size_t (*fallback)(char *, size_t, const char *, const struct tm *) = strftime;
 	size_t ret;
@@ -1404,6 +1407,7 @@ size_t mingw_strftime(char *s, size_t max,
 		ret = strftime(s, max, format, tm);
 	else
 		ret = fallback(s, max, format, tm);
+#endif
 
 	if (!ret && errno == EINVAL)
 		die("invalid strftime format: '%s'", format);
