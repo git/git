@@ -120,7 +120,7 @@ int cmd_backfill(int argc, const char **argv, const char *prefix, struct reposit
 		.repo = repo,
 		.current_batch = OID_ARRAY_INIT,
 		.min_batch_size = 50000,
-		.sparse = 0,
+		.sparse = -1,
 	};
 	struct option options[] = {
 		OPT_INTEGER(0, "min-batch-size", &ctx.min_batch_size,
