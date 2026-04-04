@@ -60,6 +60,12 @@ struct column {
 	 * index into column_colors.
 	 */
 	unsigned short color;
+	/*
+	 * A placeholder column keeps the column of a parentless commit filled
+	 * for one extra row, avoiding a next unrelated commit to be printed
+	 * in the same column.
+	 */
+	unsigned is_placeholder:1;
 };
 
 enum graph_state {
@@ -563,6 +569,7 @@ static void graph_insert_into_new_columns(struct git_graph *graph,
 		i = graph->num_new_columns++;
 		graph->new_columns[i].commit = commit;
 		graph->new_columns[i].color = graph_find_commit_color(graph, commit);
+		graph->new_columns[i].is_placeholder = 0;
 	}
 
 	if (graph->num_parents > 1 && idx > -1 && graph->merge_layout == -1) {
@@ -607,7 +614,7 @@ static void graph_update_columns(struct git_graph *graph)
 {
 	struct commit_list *parent;
 	int max_new_columns;
-	int i, seen_this, is_commit_in_columns;
+	int i, seen_this, is_commit_in_columns, seems_root;
 
 	/*
 	 * Swap graph->columns with graph->new_columns
@@ -654,6 +661,12 @@ static void graph_update_columns(struct git_graph *graph)
 	 */
 	seen_this = 0;
 	is_commit_in_columns = 1;
+	/*
+	 * num_parents == 0 means that there are no parents flagged as
+	 * interesting to being shown.
+	 */
+	seems_root = graph->num_parents == 0 &&
+		     !(graph->commit->object.flags & BOUNDARY);
 	for (i = 0; i <= graph->num_columns; i++) {
 		struct commit *col_commit;
 		if (i == graph->num_columns) {
@@ -688,11 +701,40 @@ static void graph_update_columns(struct git_graph *graph)
 			 * least 2, even if it has no interesting parents.
 			 * The current commit always takes up at least 2
 			 * spaces.
+			 *
+			 * Check for the commit to seem like a root, no parents
+			 * rendered and that it is not a boundary commit. If so,
+			 * add a placeholder to keep that column filled for
+			 * at least one row.
+			 *
+			 * Prevents the next commit from being inserted
+			 * just below and making the graph confusing.
 			 */
-			if (graph->num_parents == 0)
+			if (seems_root) {
+				graph_insert_into_new_columns(graph, graph->commit, i);
+				graph->new_columns[graph->num_new_columns - 1]
+							    .is_placeholder = 1;
+			} else if (graph->num_parents == 0) {
 				graph->width += 2;
+			}
 		} else {
-			graph_insert_into_new_columns(graph, col_commit, -1);
+			if (graph->columns[i].is_placeholder) {
+				/*
+				 * Keep the placeholders if the next commit is
+				 * parentless also, making the indentation cascade.
+				 */
+				if (!seen_this && seems_root) {
+					graph_insert_into_new_columns(graph,
+							graph->columns[i].commit, i);
+					graph->new_columns[graph->num_new_columns - 1]
+							.is_placeholder = 1;
+				} else if (!seen_this) {
+					graph->mapping[graph->width] = -1;
+					graph->width += 2;
+				}
+			} else {
+				graph_insert_into_new_columns(graph, col_commit, -1);
+			}
 		}
 	}
 
@@ -846,7 +888,10 @@ static void graph_output_padding_line(struct git_graph *graph,
 	 * Output a padding row, that leaves all branch lines unchanged
 	 */
 	for (i = 0; i < graph->num_new_columns; i++) {
-		graph_line_write_column(line, &graph->new_columns[i], '|');
+		if (graph->new_columns[i].is_placeholder)
+			graph_line_write_column(line, &graph->new_columns[i], ' ');
+		else
+			graph_line_write_column(line, &graph->new_columns[i], '|');
 		graph_line_addch(line, ' ');
 	}
 }
@@ -1058,7 +1103,13 @@ static void graph_output_commit_line(struct git_graph *graph, struct graph_line 
 			   graph->mapping[2 * i] < i) {
 			graph_line_write_column(line, col, '/');
 		} else {
-			graph_line_write_column(line, col, '|');
+			if (col->is_placeholder) {
+				if (seen_this)
+					continue;
+				graph_line_write_column(line, col, ' ');
+			} else {
+				graph_line_write_column(line, col, '|');
+			}
 		}
 		graph_line_addch(line, ' ');
 	}
@@ -1135,7 +1186,14 @@ static void graph_output_post_merge_line(struct git_graph *graph, struct graph_l
 				graph_line_write_column(line, col, '|');
 			graph_line_addch(line, ' ');
 		} else {
-			graph_line_write_column(line, col, '|');
+			if (col->is_placeholder) {
+				if (seen_this)
+					continue;
+				graph_line_write_column(line, col, ' ');
+			} else {
+				graph_line_write_column(line, col, '|');
+			}
+
 			if (graph->merge_layout != 0 || i != graph->commit_index - 1) {
 				if (parent_col)
 					graph_line_write_column(
