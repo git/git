@@ -35,6 +35,12 @@ This option defaults to `never`.
 	value of this variable will be used as the default.
 	See linkgit:git-for-each-ref[1] field names for valid values.
 
+`branch.namePrefix`::
+	When a new branch is created with `git branch`, use the provided value as
+	prefix for its name. Can be '@{current}' to use the current branch's name
+	as prefix. This value can be overriden by using the '--[no-]name-prefix'
+	option of `git branch`.
+
 `branch.<name>.remote`::
 	When on branch _<name>_, it tells `git fetch` and `git push`
 	which remote to fetch from or push to.  The remote to push to
