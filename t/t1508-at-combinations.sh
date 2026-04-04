@@ -69,6 +69,7 @@ check "@{-1}@{u}" ref refs/heads/main
 check "@{-1}@{u}@{1}" commit main-one
 check "@" commit new-two
 check "@@{u}" ref refs/heads/upstream-branch
+check "@{primary}" ref refs/heads/upstream-branch
 check "@@/at-test" ref refs/heads/@@/at-test
 test_have_prereq MINGW ||
 check "@/at-test" ref refs/heads/@/at-test
