@@ -228,6 +228,12 @@ EXAMPLES
 	so the result can be inspected and made into a single new
 	commit if suitable.
 
+`git show CHERRY_PICK_HEAD`::
+
+	Show the commit currently being applied when a cherry-pick
+	stops due to conflicts. The `CHERRY_PICK_HEAD` reference
+	identifies this commit.
+
 The following sequence attempts to backport a patch, bails out because
 the code the patch applies to has changed too much, and then tries
 again, this time exercising more care about matching up context lines.
