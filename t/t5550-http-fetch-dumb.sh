@@ -293,6 +293,26 @@ test_expect_success 'http-fetch --packfile' '
 	git -C packfileclient cat-file -e "$HASH"
 '
 
+test_expect_success 'http-fetch --packfile --stdout' '
+	ARBITRARY=$(git -C "$HTTPD_DOCUMENT_ROOT_PATH"/repo_pack.git rev-parse HEAD) &&
+
+	git init packfileclient-stdout &&
+	p=$(cd "$HTTPD_DOCUMENT_ROOT_PATH"/repo_pack.git && ls objects/pack/pack-*.pack) &&
+	git -C packfileclient-stdout http-fetch --packfile=$ARBITRARY \
+		--stdout "$HTTPD_URL"/dumb/repo_pack.git/$p |
+	git -C packfileclient-stdout index-pack --stdin --keep >out &&
+
+	grep -E "^keep.[0-9a-f]{16,}$" out &&
+	cut -c6- out >packhash &&
+
+	test -e "packfileclient-stdout/.git/objects/pack/pack-$(cat packhash).pack" &&
+	test -e "packfileclient-stdout/.git/objects/pack/pack-$(cat packhash).idx" &&
+	test -e "packfileclient-stdout/.git/objects/pack/pack-$(cat packhash).keep" &&
+
+	HASH=$(git -C "$HTTPD_DOCUMENT_ROOT_PATH"/repo_pack.git rev-parse HEAD) &&
+	git -C packfileclient-stdout cat-file -e "$HASH"
+'
+
 test_expect_success 'fetch notices corrupt pack' '
 	cp -R "$HTTPD_DOCUMENT_ROOT_PATH"/repo_pack.git "$HTTPD_DOCUMENT_ROOT_PATH"/repo_bad1.git &&
 	(cd "$HTTPD_DOCUMENT_ROOT_PATH"/repo_bad1.git &&
