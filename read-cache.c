@@ -3263,11 +3263,29 @@ static int write_shared_index(struct index_state *istate,
 	move_cache_to_base_index(istate);
 	convert_to_sparse(istate, 0);
 
-	trace2_region_enter_printf("index", "shared/do_write_index",
-				   the_repository, "%s", get_tempfile_path(*temp));
-	ret = do_write_index(si->base, *temp, WRITE_NO_EXTENSION, flags);
-	trace2_region_leave_printf("index", "shared/do_write_index",
-				   the_repository, "%s", get_tempfile_path(*temp));
+	/*
+	 * The shared index is identified by the hash of its contents
+	 * (sharedindex.<oid>).  If index.skipHash is set, do_write_index()
+	 * would produce an all-zero hash and the shared index would not
+	 * be found on re-read (is_null_oid() check in read_index_from()).
+	 * Temporarily force hashing for the shared index write.
+	 */
+	{
+		struct repository *r = the_repository;
+		int save_skip_hash;
+
+		prepare_repo_settings(r);
+		save_skip_hash = r->settings.index_skip_hash;
+		r->settings.index_skip_hash = 0;
+
+		trace2_region_enter_printf("index", "shared/do_write_index",
+					   the_repository, "%s", get_tempfile_path(*temp));
+		ret = do_write_index(si->base, *temp, WRITE_NO_EXTENSION, flags);
+		trace2_region_leave_printf("index", "shared/do_write_index",
+					   the_repository, "%s", get_tempfile_path(*temp));
+
+		r->settings.index_skip_hash = save_skip_hash;
+	}
 
 	if (was_full)
 		ensure_full_index(istate);
