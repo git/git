@@ -49,7 +49,7 @@ them first before running git pull.
 ================================
 The 'pull' command knows where to get updates from because of certain
 configuration variables that were set by the first 'git clone'
-command; see `git config -l` and the linkgit:git-config[1] man
+command; see `git config list` and the linkgit:git-config[1] man
 page for details.
 ================================
 

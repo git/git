@@ -432,7 +432,7 @@ bob$ git config --get remote.origin.url
 -------------------------------------
 
 (The complete configuration created by `git clone` is visible using
-`git config -l`, and the linkgit:git-config[1] man page
+`git config list`, and the linkgit:git-config[1] man page
 explains the meaning of each option.)
 
 Git also keeps a pristine copy of Alice's `master` branch under the

@@ -2865,7 +2865,7 @@ stored in Git configuration variables, which you can see using
 linkgit:git-config[1]:
 
 -------------------------------------------------
-$ git config -l
+$ git config list
 core.repositoryformatversion=0
 core.filemode=true
 core.logallrefupdates=true
