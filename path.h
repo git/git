@@ -112,6 +112,12 @@ const char *repo_submodule_path_replace(struct repository *repo,
 					const char *fmt, ...)
 	__attribute__((format (printf, 4, 5)));
 
+/*
+ * Given a directory name 'dir' (not ending with a trailing '/'),
+ * determine if 'buf' is equal to 'dir' or has prefix 'dir'+'/'.
+ */
+int dir_prefix(const char *buf, const char *dir);
+
 void report_linked_checkout_garbage(struct repository *r);
 
 /*

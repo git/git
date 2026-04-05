@@ -25,18 +25,47 @@ test_expect_success 'git hook usage' '
 	test_expect_code 129 git hook &&
 	test_expect_code 129 git hook run &&
 	test_expect_code 129 git hook run -h &&
-	test_expect_code 129 git hook list -h &&
 	test_expect_code 129 git hook run --unknown 2>err &&
 	test_expect_code 129 git hook list &&
 	test_expect_code 129 git hook list -h &&
 	grep "unknown option" err
 '
 
+test_expect_success 'git hook list: unknown hook name is rejected' '
+	test_must_fail git hook list prereceive 2>err &&
+	test_grep "unknown hook event" err
+'
+
+test_expect_success 'git hook run: unknown hook name is rejected' '
+	test_must_fail git hook run prereceive 2>err &&
+	test_grep "unknown hook event" err
+'
+
+test_expect_success 'git hook list: known hook name is accepted' '
+	test_must_fail git hook list pre-receive 2>err &&
+	test_grep ! "unknown hook event" err
+'
+
+test_expect_success 'git hook run: known hook name is accepted' '
+	git hook run --ignore-missing pre-receive 2>err &&
+	test_grep ! "unknown hook event" err
+'
+
+test_expect_success 'git hook run: --allow-unknown-hook-name overrides rejection' '
+	git hook run --allow-unknown-hook-name --ignore-missing custom-hook 2>err &&
+	test_grep ! "unknown hook event" err
+'
+
+test_expect_success 'git hook list: --allow-unknown-hook-name overrides rejection' '
+	test_must_fail git hook list --allow-unknown-hook-name custom-hook 2>err &&
+	test_grep ! "unknown hook event" err
+'
+
 test_expect_success 'git hook list: nonexistent hook' '
 	cat >stderr.expect <<-\EOF &&
-	warning: No hooks found for event '\''test-hook'\''
+	warning: no hooks found for event '\''test-hook'\''
 	EOF
-	test_expect_code 1 git hook list test-hook 2>stderr.actual &&
+	test_expect_code 1 git hook list --allow-unknown-hook-name test-hook 2>stderr.actual &&
 	test_cmp stderr.expect stderr.actual
 '
 
@@ -48,7 +77,7 @@ test_expect_success 'git hook list: traditional hook from hookdir' '
 	cat >expect <<-\EOF &&
 	hook from hookdir
 	EOF
-	git hook list test-hook >actual &&
+	git hook list --allow-unknown-hook-name test-hook >actual &&
 	test_cmp expect actual
 '
 
@@ -57,7 +86,7 @@ test_expect_success 'git hook list: configured hook' '
 	test_config hook.myhook.event test-hook --add &&
 
 	echo "myhook" >expect &&
-	git hook list test-hook >actual &&
+	git hook list --allow-unknown-hook-name test-hook >actual &&
 	test_cmp expect actual
 '
 
@@ -69,7 +98,7 @@ test_expect_success 'git hook list: -z shows NUL-terminated output' '
 	test_config hook.myhook.event test-hook --add &&
 
 	printf "myhookQhook from hookdirQ" >expect &&
-	git hook list -z test-hook >actual.raw &&
+	git hook list --allow-unknown-hook-name -z test-hook >actual.raw &&
 	nul_to_q <actual.raw >actual &&
 	test_cmp expect actual
 '
@@ -78,12 +107,12 @@ test_expect_success 'git hook run: nonexistent hook' '
 	cat >stderr.expect <<-\EOF &&
 	error: cannot find a hook named test-hook
 	EOF
-	test_expect_code 1 git hook run test-hook 2>stderr.actual &&
+	test_expect_code 1 git hook run --allow-unknown-hook-name test-hook 2>stderr.actual &&
 	test_cmp stderr.expect stderr.actual
 '
 
 test_expect_success 'git hook run: nonexistent hook with --ignore-missing' '
-	git hook run --ignore-missing does-not-exist 2>stderr.actual &&
+	git hook run --allow-unknown-hook-name --ignore-missing does-not-exist 2>stderr.actual &&
 	test_must_be_empty stderr.actual
 '
 
@@ -95,7 +124,7 @@ test_expect_success 'git hook run: basic' '
 	cat >expect <<-\EOF &&
 	Test hook
 	EOF
-	git hook run test-hook 2>actual &&
+	git hook run --allow-unknown-hook-name test-hook 2>actual &&
 	test_cmp expect actual
 '
 
@@ -109,7 +138,7 @@ test_expect_success 'git hook run: stdout and stderr both write to our stderr' '
 	Will end up on stderr
 	Will end up on stderr
 	EOF
-	git hook run test-hook >stdout.actual 2>stderr.actual &&
+	git hook run --allow-unknown-hook-name test-hook >stdout.actual 2>stderr.actual &&
 	test_cmp stderr.expect stderr.actual &&
 	test_must_be_empty stdout.actual
 '
@@ -121,12 +150,12 @@ do
 		exit $code
 		EOF
 
-		test_expect_code $code git hook run test-hook
+		test_expect_code $code git hook run --allow-unknown-hook-name test-hook
 	'
 done
 
 test_expect_success 'git hook run arg u ments without -- is not allowed' '
-	test_expect_code 129 git hook run test-hook arg u ments
+	test_expect_code 129 git hook run --allow-unknown-hook-name test-hook arg u ments
 '
 
 test_expect_success 'git hook run -- pass arguments' '
@@ -140,7 +169,7 @@ test_expect_success 'git hook run -- pass arguments' '
 	u ments
 	EOF
 
-	git hook run test-hook -- arg "u ments" 2>actual &&
+	git hook run --allow-unknown-hook-name test-hook -- arg "u ments" 2>actual &&
 	test_cmp expect actual
 '
 
@@ -149,12 +178,12 @@ test_expect_success 'git hook run: out-of-repo runs execute global hooks' '
 	test_config_global hook.global-hook.command "echo no repo no problems" --add &&
 
 	echo "global-hook" >expect &&
-	nongit git hook list test-hook >actual &&
+	nongit git hook list --allow-unknown-hook-name test-hook >actual &&
 	test_cmp expect actual &&
 
 	echo "no repo no problems" >expect &&
 
-	nongit git hook run test-hook 2>actual &&
+	nongit git hook run --allow-unknown-hook-name test-hook 2>actual &&
 	test_cmp expect actual
 '
 
@@ -179,11 +208,11 @@ test_expect_success 'git -c core.hooksPath=<PATH> hook run' '
 	# Test various ways of specifying the path. See also
 	# t1350-config-hooks-path.sh
 	>actual &&
-	git hook run test-hook -- ignored 2>>actual &&
-	git -c core.hooksPath=my-hooks hook run test-hook -- one 2>>actual &&
-	git -c core.hooksPath=my-hooks/ hook run test-hook -- two 2>>actual &&
-	git -c core.hooksPath="$PWD/my-hooks" hook run test-hook -- three 2>>actual &&
-	git -c core.hooksPath="$PWD/my-hooks/" hook run test-hook -- four 2>>actual &&
+	git hook run --allow-unknown-hook-name test-hook -- ignored 2>>actual &&
+	git -c core.hooksPath=my-hooks hook run --allow-unknown-hook-name test-hook -- one 2>>actual &&
+	git -c core.hooksPath=my-hooks/ hook run --allow-unknown-hook-name test-hook -- two 2>>actual &&
+	git -c core.hooksPath="$PWD/my-hooks" hook run --allow-unknown-hook-name test-hook -- three 2>>actual &&
+	git -c core.hooksPath="$PWD/my-hooks/" hook run --allow-unknown-hook-name test-hook -- four 2>>actual &&
 	test_cmp expect actual
 '
 
@@ -263,7 +292,7 @@ test_expect_success 'hook can be configured for multiple events' '
 	# 'ghi' should be included in both 'pre-commit' and 'test-hook'
 	git hook list pre-commit >actual &&
 	grep "ghi" actual &&
-	git hook list test-hook >actual &&
+	git hook list --allow-unknown-hook-name test-hook >actual &&
 	grep "ghi" actual
 '
 
@@ -337,15 +366,15 @@ test_expect_success 'stdin to multiple hooks' '
 	b3
 	EOF
 
-	git hook run --to-stdin=input test-hook 2>actual &&
+	git hook run --allow-unknown-hook-name --to-stdin=input test-hook 2>actual &&
 	test_cmp expected actual
 '
 
 test_expect_success 'rejects hooks with no commands configured' '
 	test_config hook.broken.event "test-hook" &&
-	test_must_fail git hook list test-hook 2>actual &&
+	test_must_fail git hook list --allow-unknown-hook-name test-hook 2>actual &&
 	test_grep "hook.broken.command" actual &&
-	test_must_fail git hook run test-hook 2>actual &&
+	test_must_fail git hook run --allow-unknown-hook-name test-hook 2>actual &&
 	test_grep "hook.broken.command" actual
 '
 
@@ -354,11 +383,19 @@ test_expect_success 'disabled hook is not run' '
 	test_config hook.skipped.command "echo \"Should not run\"" &&
 	test_config hook.skipped.enabled false &&
 
-	git hook run --ignore-missing test-hook 2>actual &&
+	git hook run --allow-unknown-hook-name --ignore-missing test-hook 2>actual &&
 	test_must_be_empty actual
 '
 
-test_expect_success 'disabled hook does not appear in git hook list' '
+test_expect_success 'disabled hook with no command warns' '
+	test_config hook.nocommand.event "pre-commit" &&
+	test_config hook.nocommand.enabled false &&
+
+	git hook list pre-commit 2>actual &&
+	test_grep "disabled hook.*nocommand.*no command configured" actual
+'
+
+test_expect_success 'disabled hook appears as disabled in git hook list' '
 	test_config hook.active.event "pre-commit" &&
 	test_config hook.active.command "echo active" &&
 	test_config hook.inactive.event "pre-commit" &&
@@ -366,8 +403,27 @@ test_expect_success 'disabled hook does not appear in git hook list' '
 	test_config hook.inactive.enabled false &&
 
 	git hook list pre-commit >actual &&
-	test_grep "active" actual &&
-	test_grep ! "inactive" actual
+	test_grep "^active$" actual &&
+	test_grep "^disabled	inactive$" actual
+'
+
+test_expect_success 'disabled hook shows scope with --show-scope' '
+	test_config hook.myhook.event "pre-commit" &&
+	test_config hook.myhook.command "echo hi" &&
+	test_config hook.myhook.enabled false &&
+
+	git hook list --show-scope pre-commit >actual &&
+	test_grep "^local	disabled	myhook$" actual
+'
+
+test_expect_success 'disabled configured hook is not reported as existing by hook_exists' '
+	test_when_finished "rm -f git-bugreport-hook-exists-test.txt" &&
+	test_config hook.linter.event "pre-commit" &&
+	test_config hook.linter.command "echo lint" &&
+	test_config hook.linter.enabled false &&
+
+	git bugreport -s hook-exists-test &&
+	test_grep ! "pre-commit" git-bugreport-hook-exists-test.txt
 '
 
 test_expect_success 'globally disabled hook can be re-enabled locally' '
@@ -377,8 +433,57 @@ test_expect_success 'globally disabled hook can be re-enabled locally' '
 	test_config hook.global-hook.enabled true &&
 
 	echo "global-hook ran" >expected &&
-	git hook run test-hook 2>actual &&
+	git hook run --allow-unknown-hook-name test-hook 2>actual &&
 	test_cmp expected actual
+'
+
+test_expect_success 'configured hooks run before hookdir hook' '
+	setup_hookdir &&
+	test_config hook.first.event "pre-commit" &&
+	test_config hook.first.command "echo first" &&
+	test_config hook.second.event "pre-commit" &&
+	test_config hook.second.command "echo second" &&
+
+	cat >expected <<-\EOF &&
+	first
+	second
+	hook from hookdir
+	EOF
+
+	git hook list pre-commit >actual &&
+	test_cmp expected actual &&
+
+	# "Legacy Hook" is the output of the hookdir pre-commit script
+	# written by setup_hookdir() above.
+	cat >expected <<-\EOF &&
+	first
+	second
+	"Legacy Hook"
+	EOF
+
+	git hook run pre-commit 2>actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'git hook list --show-scope shows config scope' '
+	setup_hookdir &&
+	test_config_global hook.global-hook.command "echo global" &&
+	test_config_global hook.global-hook.event pre-commit --add &&
+	test_config hook.local-hook.command "echo local" &&
+	test_config hook.local-hook.event pre-commit --add &&
+
+	cat >expected <<-\EOF &&
+	global	global-hook
+	local	local-hook
+	hook from hookdir
+	EOF
+	git hook list --show-scope pre-commit >actual &&
+	test_cmp expected actual &&
+
+	# without --show-scope the scope must not appear
+	git hook list pre-commit >actual &&
+	test_grep ! "^global	" actual &&
+	test_grep ! "^local	" actual
 '
 
 test_expect_success 'git hook run a hook with a bad shebang' '
@@ -388,7 +493,7 @@ test_expect_success 'git hook run a hook with a bad shebang' '
 
 	test_expect_code 1 git \
 		-c core.hooksPath=bad-hooks \
-		hook run test-hook >out 2>err &&
+		hook run --allow-unknown-hook-name test-hook >out 2>err &&
 	test_must_be_empty out &&
 
 	# TODO: We should emit the same (or at least a more similar)
@@ -412,7 +517,7 @@ test_expect_success 'stdin to hooks' '
 	EOF
 
 	echo hello >input &&
-	git hook run --to-stdin=input test-hook 2>actual &&
+	git hook run --allow-unknown-hook-name --to-stdin=input test-hook 2>actual &&
 	test_cmp expect actual
 '
 

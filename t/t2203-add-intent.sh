@@ -16,7 +16,8 @@ test_expect_success 'intent to add' '
 '
 
 test_expect_success 'git status' '
-	git status --porcelain | grep -v actual >actual &&
+	git status --porcelain >actual.raw &&
+	grep -v actual actual.raw >actual &&
 	cat >expect <<-\EOF &&
 	DA 1.t
 	A  elif
@@ -26,7 +27,8 @@ test_expect_success 'git status' '
 '
 
 test_expect_success 'git status with porcelain v2' '
-	git status --porcelain=v2 | grep -v "^?" >actual &&
+	git status --porcelain=v2 >actual.raw &&
+	grep -v "^?" actual.raw >actual &&
 	nam1=$(echo 1 | git hash-object --stdin) &&
 	nam2=$(git hash-object elif) &&
 	cat >expect <<-EOF &&
@@ -171,17 +173,20 @@ test_expect_success 'rename detection finds the right names' '
 		mv first third &&
 		git add -N third &&
 
-		git status | grep -v "^?" >actual.1 &&
+		git status >actual.raw.1 &&
+		grep -v "^?" actual.raw.1 >actual.1 &&
 		test_grep "renamed: *first -> third" actual.1 &&
 
-		git status --porcelain | grep -v "^?" >actual.2 &&
+		git status --porcelain >actual.raw.2 &&
+		grep -v "^?" actual.raw.2 >actual.2 &&
 		cat >expected.2 <<-\EOF &&
 		 R first -> third
 		EOF
 		test_cmp expected.2 actual.2 &&
 
 		hash=$(git hash-object third) &&
-		git status --porcelain=v2 | grep -v "^?" >actual.3 &&
+		git status --porcelain=v2 >actual.raw.3 &&
+		grep -v "^?" actual.raw.3 >actual.3 &&
 		cat >expected.3 <<-EOF &&
 		2 .R N... 100644 100644 100644 $hash $hash R100 third	first
 		EOF
@@ -211,11 +216,13 @@ test_expect_success 'double rename detection in status' '
 		mv second third &&
 		git add -N third &&
 
-		git status | grep -v "^?" >actual.1 &&
+		git status >actual.raw.1 &&
+		grep -v "^?" actual.raw.1 >actual.1 &&
 		test_grep "renamed: *first -> second" actual.1 &&
 		test_grep "renamed: *second -> third" actual.1 &&
 
-		git status --porcelain | grep -v "^?" >actual.2 &&
+		git status --porcelain >actual.raw.2 &&
+		grep -v "^?" actual.raw.2 >actual.2 &&
 		cat >expected.2 <<-\EOF &&
 		R  first -> second
 		 R second -> third
@@ -223,7 +230,8 @@ test_expect_success 'double rename detection in status' '
 		test_cmp expected.2 actual.2 &&
 
 		hash=$(git hash-object third) &&
-		git status --porcelain=v2 | grep -v "^?" >actual.3 &&
+		git status --porcelain=v2 >actual.raw.3 &&
+		grep -v "^?" actual.raw.3 >actual.3 &&
 		cat >expected.3 <<-EOF &&
 		2 R. N... 100644 100644 100644 $hash $hash R100 second	first
 		2 .R N... 100644 100644 100644 $hash $hash R100 third	second

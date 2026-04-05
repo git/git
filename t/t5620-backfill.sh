@@ -7,6 +7,14 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
+test_expect_success 'backfill rejects unexpected arguments' '
+	test_must_fail git backfill unexpected-arg 2>err &&
+	test_grep "ambiguous argument .*unexpected-arg" err &&
+
+	test_must_fail git backfill --all --unexpected-arg --first-parent 2>err &&
+	test_grep "unrecognized argument: --unexpected-arg" err
+'
+
 # We create objects in the 'src' repo.
 test_expect_success 'setup repo for object creation' '
 	echo "{print \$1}" >print_1.awk &&
@@ -15,7 +23,7 @@ test_expect_success 'setup repo for object creation' '
 	git init src &&
 
 	mkdir -p src/a/b/c &&
-	mkdir -p src/d/e &&
+	mkdir -p src/d/f &&
 
 	for i in 1 2
 	do
@@ -26,8 +34,9 @@ test_expect_success 'setup repo for object creation' '
 			echo "Version $i of file a/b/$n" > src/a/b/file.$n.txt &&
 			echo "Version $i of file a/b/c/$n" > src/a/b/c/file.$n.txt &&
 			echo "Version $i of file d/$n" > src/d/file.$n.txt &&
-			echo "Version $i of file d/e/$n" > src/d/e/file.$n.txt &&
+			echo "Version $i of file d/f/$n" > src/d/f/file.$n.txt &&
 			git -C src add . &&
+			test_tick &&
 			git -C src commit -m "Iteration $n" || return 1
 		done
 	done
@@ -39,6 +48,53 @@ test_expect_success 'setup bare clone for server' '
 	git clone --bare "file://$(pwd)/src" srv.bare &&
 	git -C srv.bare config --local uploadpack.allowfilter 1 &&
 	git -C srv.bare config --local uploadpack.allowanysha1inwant 1
+'
+
+# Create a version of the repo with branches for testing revision
+# arguments like --all, --first-parent, and --since.
+#
+# main: 8 commits (linear) + merge of side branch
+#   48 original blobs + 4 side blobs = 52 blobs from main HEAD
+# side: 2 commits adding s/file.{1,2}.txt (v1, v2), merged into main
+# other: 1 commit adding o/file.{1,2}.txt (not merged)
+#   54 total blobs reachable from --all
+test_expect_success 'setup branched repo for revision tests' '
+	git clone src src-revs &&
+
+	# Side branch from tip of main with unique files
+	git -C src-revs checkout -b side HEAD &&
+	mkdir -p src-revs/s &&
+	echo "Side version 1 of file 1" >src-revs/s/file.1.txt &&
+	echo "Side version 1 of file 2" >src-revs/s/file.2.txt &&
+	test_tick &&
+	git -C src-revs add . &&
+	git -C src-revs commit -m "Side commit 1" &&
+
+	echo "Side version 2 of file 1" >src-revs/s/file.1.txt &&
+	echo "Side version 2 of file 2" >src-revs/s/file.2.txt &&
+	test_tick &&
+	git -C src-revs add . &&
+	git -C src-revs commit -m "Side commit 2" &&
+
+	# Merge side into main
+	git -C src-revs checkout main &&
+	test_tick &&
+	git -C src-revs merge side --no-ff -m "Merge side branch" &&
+
+	# Other branch (not merged) for --all testing
+	git -C src-revs checkout -b other main~1 &&
+	mkdir -p src-revs/o &&
+	echo "Other content 1" >src-revs/o/file.1.txt &&
+	echo "Other content 2" >src-revs/o/file.2.txt &&
+	test_tick &&
+	git -C src-revs add . &&
+	git -C src-revs commit -m "Other commit" &&
+
+	git -C src-revs checkout main &&
+
+	git clone --bare "file://$(pwd)/src-revs" srv-revs.bare &&
+	git -C srv-revs.bare config --local uploadpack.allowfilter 1 &&
+	git -C srv-revs.bare config --local uploadpack.allowanysha1inwant 1
 '
 
 # do basic partial clone from "srv.bare"
@@ -174,6 +230,157 @@ test_expect_success 'backfill --sparse without cone mode (negative)' '
 	test_trace2_data path-walk paths 24 <no-cone-trace2 &&
 	git -C backfill5 rev-list --quiet --objects --missing=print HEAD >missing &&
 	test_line_count = 12 missing
+'
+
+test_expect_success 'backfill with revision range' '
+	test_when_finished rm -rf backfill-revs &&
+	git clone --no-checkout --filter=blob:none		\
+		--single-branch --branch=main   		\
+		"file://$(pwd)/srv.bare" backfill-revs &&
+
+	# No blobs yet
+	git -C backfill-revs rev-list --quiet --objects --missing=print HEAD >missing &&
+	test_line_count = 48 missing &&
+
+	git -C backfill-revs backfill HEAD~2..HEAD &&
+
+	# 30 objects downloaded.
+	git -C backfill-revs rev-list --quiet --objects --missing=print HEAD >missing &&
+	test_line_count = 18 missing
+'
+
+test_expect_success 'backfill with revisions over stdin' '
+	test_when_finished rm -rf backfill-revs &&
+	git clone --no-checkout --filter=blob:none		\
+		--single-branch --branch=main   		\
+		"file://$(pwd)/srv.bare" backfill-revs &&
+
+	# No blobs yet
+	git -C backfill-revs rev-list --quiet --objects --missing=print HEAD >missing &&
+	test_line_count = 48 missing &&
+
+	cat >in <<-EOF &&
+	HEAD
+	^HEAD~2
+	EOF
+
+	git -C backfill-revs backfill --stdin <in &&
+
+	# 30 objects downloaded.
+	git -C backfill-revs rev-list --quiet --objects --missing=print HEAD >missing &&
+	test_line_count = 18 missing
+'
+
+test_expect_success 'backfill with prefix pathspec' '
+	test_when_finished rm -rf backfill-path &&
+	git clone --bare --filter=blob:none		        \
+		--single-branch --branch=main   		\
+		"file://$(pwd)/srv.bare" backfill-path &&
+
+	# No blobs yet
+	git -C backfill-path rev-list --quiet --objects --missing=print HEAD >missing &&
+	test_line_count = 48 missing &&
+
+	git -C backfill-path backfill HEAD -- d/f 2>err &&
+	test_must_be_empty err &&
+
+	git -C backfill-path rev-list --quiet --objects --missing=print HEAD >missing &&
+	test_line_count = 40 missing
+'
+
+test_expect_success 'backfill with multiple pathspecs' '
+	test_when_finished rm -rf backfill-path &&
+	git clone --bare --filter=blob:none		        \
+		--single-branch --branch=main   		\
+		"file://$(pwd)/srv.bare" backfill-path &&
+
+	# No blobs yet
+	git -C backfill-path rev-list --quiet --objects --missing=print HEAD >missing &&
+	test_line_count = 48 missing &&
+
+	git -C backfill-path backfill HEAD -- d/f a 2>err &&
+	test_must_be_empty err &&
+
+	git -C backfill-path rev-list --quiet --objects --missing=print HEAD >missing &&
+	test_line_count = 16 missing
+'
+
+test_expect_success 'backfill with wildcard pathspec' '
+	test_when_finished rm -rf backfill-path &&
+	git clone --bare --filter=blob:none		        \
+		--single-branch --branch=main   		\
+		"file://$(pwd)/srv.bare" backfill-path &&
+
+	# No blobs yet
+	git -C backfill-path rev-list --quiet --objects --missing=print HEAD >missing &&
+	test_line_count = 48 missing &&
+
+	git -C backfill-path backfill HEAD -- "d/file.*.txt" 2>err &&
+	test_must_be_empty err &&
+
+	git -C backfill-path rev-list --quiet --objects --missing=print HEAD >missing &&
+	test_line_count = 40 missing
+'
+
+test_expect_success 'backfill with --all' '
+	test_when_finished rm -rf backfill-all &&
+	git clone --no-checkout --filter=blob:none		\
+		"file://$(pwd)/srv-revs.bare" backfill-all &&
+
+	# All blobs from all refs are missing
+	git -C backfill-all rev-list --quiet --objects --all --missing=print >missing &&
+	test_line_count = 54 missing &&
+
+	# Backfill from HEAD gets main blobs only
+	git -C backfill-all backfill HEAD &&
+
+	# Other branch blobs still missing
+	git -C backfill-all rev-list --quiet --objects --all --missing=print >missing &&
+	test_line_count = 2 missing &&
+
+	# Backfill with --all gets everything
+	git -C backfill-all backfill --all &&
+
+	git -C backfill-all rev-list --quiet --objects --all --missing=print >missing &&
+	test_line_count = 0 missing
+'
+
+test_expect_success 'backfill with --first-parent' '
+	test_when_finished rm -rf backfill-fp &&
+	git clone --no-checkout --filter=blob:none		\
+		--single-branch --branch=main			\
+		"file://$(pwd)/srv-revs.bare" backfill-fp &&
+
+	git -C backfill-fp rev-list --quiet --objects --missing=print HEAD >missing &&
+	test_line_count = 52 missing &&
+
+	# --first-parent skips the side branch commits, so
+	# s/file.{1,2}.txt v1 blobs (only in side commit 1) are missed.
+	git -C backfill-fp backfill --first-parent HEAD &&
+
+	git -C backfill-fp rev-list --quiet --objects --missing=print HEAD >missing &&
+	test_line_count = 2 missing
+'
+
+test_expect_success 'backfill with --since' '
+	test_when_finished rm -rf backfill-since &&
+	git clone --no-checkout --filter=blob:none		\
+		--single-branch --branch=main			\
+		"file://$(pwd)/srv-revs.bare" backfill-since &&
+
+	git -C backfill-since rev-list --quiet --objects --missing=print HEAD >missing &&
+	test_line_count = 52 missing &&
+
+	# Use a cutoff between commits 4 and 5 (between v1 and v2
+	# iterations). Commits 5-8 still carry v1 of files 2-4 in
+	# their trees, but v1 of file.1.txt is only in commits 1-4.
+	SINCE=$(git -C backfill-since log --first-parent --reverse \
+		--format=%ct HEAD~1 | sed -n 5p) &&
+	git -C backfill-since backfill --since="@$((SINCE - 1))" HEAD &&
+
+	# 6 missing: v1 of file.1.txt in all 6 directories
+	git -C backfill-since rev-list --quiet --objects --missing=print HEAD >missing &&
+	test_line_count = 6 missing
 '
 
 . "$TEST_DIRECTORY"/lib-httpd.sh

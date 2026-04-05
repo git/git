@@ -63,9 +63,12 @@ OPTIONS
 	current sparse-checkout. If the sparse-checkout feature is enabled,
 	then `--sparse` is assumed and can be disabled with `--no-sparse`.
 
+You may also specify the commit limiting options from linkgit:git-rev-list[1].
+
 SEE ALSO
 --------
-linkgit:git-clone[1].
+linkgit:git-clone[1],
+linkgit:git-rev-list[1]
 
 GIT
 ---

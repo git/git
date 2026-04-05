@@ -58,7 +58,7 @@ static void add_head_info(struct worktree *wt)
 
 static int is_current_worktree(struct worktree *wt)
 {
-	char *git_dir = absolute_pathdup(repo_get_git_dir(the_repository));
+	char *git_dir = absolute_pathdup(repo_get_git_dir(wt->repo));
 	char *wt_git_dir = get_worktree_git_dir(wt);
 	int is_current = !fspathcmp(git_dir, absolute_path(wt_git_dir));
 	free(wt_git_dir);
@@ -78,7 +78,7 @@ struct worktree *get_worktree_from_repository(struct repository *repo)
 	wt->is_bare = !repo->worktree;
 	if (fspathcmp(gitdir, commondir))
 		wt->id = xstrdup(find_last_dir_sep(gitdir) + 1);
-	wt->is_current = is_current_worktree(wt);
+	wt->is_current = true;
 	add_head_info(wt);
 
 	free(gitdir);
@@ -227,11 +227,11 @@ struct worktree **get_worktrees_without_reading_head(void)
 char *get_worktree_git_dir(const struct worktree *wt)
 {
 	if (!wt)
-		return xstrdup(repo_get_git_dir(the_repository));
+		BUG("%s() called with NULL worktree", __func__);
 	else if (!wt->id)
-		return xstrdup(repo_get_common_dir(the_repository));
+		return xstrdup(repo_get_common_dir(wt->repo));
 	else
-		return repo_common_path(the_repository, "worktrees/%s", wt->id);
+		return repo_common_path(wt->repo, "worktrees/%s", wt->id);
 }
 
 static struct worktree *find_worktree_by_suffix(struct worktree **list,

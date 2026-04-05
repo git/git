@@ -877,8 +877,7 @@ static int run_argv(struct strvec *args)
 			commit_pager_choice();
 
 			strvec_push(&cmd.args, "git");
-			for (size_t i = 0; i < args->nr; i++)
-				strvec_push(&cmd.args, args->v[i]);
+			strvec_pushv(&cmd.args, args->v);
 
 			trace_argv_printf(cmd.args.v, "trace: exec:");
 

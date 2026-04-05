@@ -56,7 +56,7 @@ static void strbuf_cleanup_path(struct strbuf *sb)
 		strbuf_remove(sb, 0, path - sb->buf);
 }
 
-static int dir_prefix(const char *buf, const char *dir)
+int dir_prefix(const char *buf, const char *dir)
 {
 	size_t len = strlen(dir);
 	return !strncmp(buf, dir, len) &&

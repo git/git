@@ -24,6 +24,7 @@ SYNOPSIS
 		   [(--reroll-count|-v) <n>]
 		   [--to=<email>] [--cc=<email>]
 		   [--[no-]cover-letter] [--quiet]
+		   [--commit-list-format=<format-spec>]
 		   [--[no-]encode-email-headers]
 		   [--no-notes | --notes[=<ref>]]
 		   [--interdiff=<previous>]
@@ -318,9 +319,21 @@ feeding the result to `git send-email`.
 
 --cover-letter::
 --no-cover-letter::
-	In addition to the patches, generate a cover letter file
-	containing the branch description, shortlog and the overall diffstat.  You can
-	fill in a description in the file before sending it out.
+	In addition to the patches, generate a cover letter file containing the
+	branch description, commit list and the overall diffstat.  You can fill
+	in a description in the file before sending it out.
+
+--commit-list-format=<format-spec>::
+	Specify the format in which to generate the commit list of the patch
+	series. The accepted values for format-spec are `shortlog`, `modern` or
+	a format-string prefixed with `log:`. E.g. `log: %s (%an)`.
+	`modern` is the same as `log:%w(72)[%(count)/%(total)] %s`.
+	The `log:` prefix can be omitted if the format-string has a `%` in it
+	(expecting that it is part of `%<placeholder>`).
+	Defaults to the `format.commitListFormat` configuration variable, if
+	set, or `shortlog`.
+	This option given from the command-line implies the use of
+	`--cover-letter` unless `--no-cover-letter` is given.
 
 --encode-email-headers::
 --no-encode-email-headers::
@@ -453,6 +466,7 @@ with configuration variables.
 	signOff = true
 	outputDirectory = <directory>
 	coverLetter = auto
+	commitListFormat = shortlog
 	coverFromDescription = auto
 ------------
 

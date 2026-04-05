@@ -1117,10 +1117,8 @@ void ahead_behind(struct repository *r,
 
 	/* STALE is used here, PARENT2 is used by insert_no_dup(). */
 	repo_clear_commit_marks(r, PARENT2 | STALE);
-	while (prio_queue_peek(&queue)) {
-		struct commit *c = prio_queue_get(&queue);
-		free_bit_array(c);
-	}
+	for (size_t i = 0; i < queue.nr; i++)
+		free_bit_array(queue.array[i].data);
 	clear_bit_arrays(&bit_arrays);
 	clear_prio_queue(&queue);
 }

@@ -782,4 +782,11 @@ test_expect_success 'tag following always works over v0 http' '
 	test_cmp expect actual
 '
 
+test_expect_success 'ls-remote outside repo does not segfault with fetch refspec' '
+	nongit git \
+		-c remote.origin.url="$HTTPD_URL/smart/repo.git" \
+		-c remote.origin.fetch=anything \
+		ls-remote origin
+'
+
 test_done

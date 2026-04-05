@@ -3,46 +3,45 @@
 
 #include "builtin.h"
 #include "abspath.h"
-
-#include "config.h"
-#include "environment.h"
-#include "gettext.h"
-#include "hex.h"
-#include "lockfile.h"
-#include "pack.h"
-#include "refs.h"
-#include "pkt-line.h"
-#include "sideband.h"
-#include "run-command.h"
-#include "hook.h"
-#include "exec-cmd.h"
 #include "commit.h"
-#include "object.h"
-#include "remote.h"
+#include "commit-reach.h"
+#include "config.h"
 #include "connect.h"
-#include "string-list.h"
-#include "oid-array.h"
 #include "connected.h"
-#include "strvec.h"
-#include "version.h"
-#include "gpg-interface.h"
-#include "sigchain.h"
+#include "environment.h"
+#include "exec-cmd.h"
 #include "fsck.h"
-#include "tmp-objdir.h"
-#include "oidset.h"
-#include "packfile.h"
+#include "gettext.h"
+#include "gpg-interface.h"
+#include "hex.h"
+#include "hook.h"
+#include "lockfile.h"
+#include "object.h"
 #include "object-file.h"
 #include "object-name.h"
 #include "odb.h"
+#include "oid-array.h"
+#include "oidset.h"
+#include "pack.h"
+#include "packfile.h"
+#include "parse-options.h"
+#include "pkt-line.h"
 #include "protocol.h"
-#include "commit-reach.h"
+#include "refs.h"
+#include "remote.h"
+#include "run-command.h"
 #include "server-info.h"
+#include "setup.h"
+#include "shallow.h"
+#include "sideband.h"
+#include "sigchain.h"
+#include "string-list.h"
+#include "strvec.h"
+#include "tmp-objdir.h"
 #include "trace.h"
 #include "trace2.h"
+#include "version.h"
 #include "worktree.h"
-#include "shallow.h"
-#include "setup.h"
-#include "parse-options.h"
 
 static const char * const receive_pack_usage[] = {
 	N_("git receive-pack <git-dir>"),
@@ -904,11 +903,14 @@ static int feed_receive_hook_cb(int hook_stdin_fd, void *pp_cb UNUSED, void *pp_
 static void *receive_hook_feed_state_alloc(void *feed_pipe_ctx)
 {
 	struct receive_hook_feed_state *init_state = feed_pipe_ctx;
-	struct receive_hook_feed_state *data = xcalloc(1, sizeof(*data));
+	struct receive_hook_feed_state *data;
+
+	CALLOC_ARRAY(data, 1);
 	data->report = init_state->report;
 	data->cmd = init_state->cmd;
 	data->skip_broken = init_state->skip_broken;
 	strbuf_init(&data->buf, 0);
+
 	return data;
 }
 
@@ -928,7 +930,11 @@ static int run_receive_hook(struct command *commands,
 {
 	struct run_hooks_opt opt = RUN_HOOKS_OPT_INIT;
 	struct command *iter = commands;
-	struct receive_hook_feed_state feed_init_state = { 0 };
+	struct receive_hook_feed_state feed_init_state = {
+		.cmd = commands,
+		.skip_broken = skip_broken,
+		.buf = STRBUF_INIT,
+	};
 	struct async sideband_async;
 	int sideband_async_started = 0;
 	int saved_stderr = -1;
@@ -961,8 +967,6 @@ static int run_receive_hook(struct command *commands,
 	prepare_sideband_async(&sideband_async, &saved_stderr, &sideband_async_started);
 
 	/* set up stdin callback */
-	feed_init_state.cmd = commands;
-	feed_init_state.skip_broken = skip_broken;
 	opt.feed_pipe_ctx = &feed_init_state;
 	opt.feed_pipe = feed_receive_hook_cb;
 	opt.feed_pipe_cb_data_alloc = receive_hook_feed_state_alloc;

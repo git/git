@@ -1,6 +1,7 @@
 #ifndef REFS_H
 #define REFS_H
 
+#include "object-name.h"
 #include "commit.h"
 #include "repository.h"
 #include "repo-settings.h"
@@ -225,7 +226,7 @@ char *repo_default_branch_name(struct repository *r, int quiet);
  * repo_interpret_branch_name() for details.
  */
 void copy_branchname(struct strbuf *sb, const char *name,
-		       unsigned allowed);
+		     enum interpret_branch_kind allowed);
 
 /*
  * Like copy_branchname() above, but confirm that the result is
