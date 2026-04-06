@@ -28,11 +28,28 @@ int online_cpus(void)
 #endif
 
 #ifdef GIT_WINDOWS_NATIVE
-	SYSTEM_INFO info;
-	GetSystemInfo(&info);
-
-	if ((int)info.dwNumberOfProcessors > 0)
-		return (int)info.dwNumberOfProcessors;
+	DWORD len = 0;
+	if (!GetLogicalProcessorInformationEx(RelationProcessorCore, NULL, &len) && GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
+		uint8_t *buf = malloc(len);
+		if (buf) {
+			if (GetLogicalProcessorInformationEx(RelationProcessorCore, (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX) buf, &len)) {
+				DWORD offset = 0;
+				int n_cores = 0;
+				while (offset < len) {
+					PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX info = (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX) (buf + offset);
+					offset += info->Size;
+					/* The threads within a core always share a single group. We need to count the bits in the mask to get a thread count. */
+					for (KAFFINITY mask = info->Processor.GroupMask[0].Mask; mask; mask >>= 1)
+						n_cores += mask &1;
+				}
+				if (n_cores) {
+					free(buf);
+					return n_cores;
+				}
+			}
+			free(buf);
+		}
+	}
 #elif defined(hpux) || defined(__hpux) || defined(_hpux)
 	struct pst_dynamic psd;
 
