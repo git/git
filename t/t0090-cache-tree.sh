@@ -278,4 +278,12 @@ test_expect_success 'switching trees does not invalidate shared index' '
 	)
 '
 
+test_expect_success 'cache-tree is used by write-tree when valid' '
+	test_commit use-valid &&
+
+	# write-tree with a valid cache-tree should skip cache_tree_update
+	GIT_TRACE2_PERF="$(pwd)/trace.output" git write-tree &&
+	test_grep ! region_enter.*cache_tree.*update trace.output
+'
+
 test_done
