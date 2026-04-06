@@ -20,7 +20,7 @@
 
 #define DISABLE_SIGN_COMPARE_WARNINGS
 
-/* To bump the minimum Windows version to Windows Vista */
+/* To bump the minimum Windows version to Windows 8.1 */
 #include "git-compat-util.h"
 
 /* Tell gcc not to warn about the (nfd < 0) tests, below.  */
@@ -41,7 +41,7 @@
 #if (defined _WIN32 || defined __WIN32__) && ! defined __CYGWIN__
 # define WIN32_NATIVE
 # if defined (_MSC_VER) && !defined(_WIN32_WINNT)
-#  define _WIN32_WINNT 0x0502
+#  define _WIN32_WINNT 0x0603
 # endif
 # include <winsock2.h>
 # include <windows.h>

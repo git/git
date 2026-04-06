@@ -6,7 +6,9 @@ int win32_fsync_no_flush(int fd)
 {
        IO_STATUS_BLOCK io_status;
 
+#ifndef FLUSH_FLAGS_FILE_DATA_ONLY
 #define FLUSH_FLAGS_FILE_DATA_ONLY 1
+#endif
 
        DECLARE_PROC_ADDR(ntdll.dll, NTSTATUS, NTAPI, NtFlushBuffersFileEx,
 			 HANDLE FileHandle, ULONG Flags, PVOID Parameters, ULONG ParameterSize,
