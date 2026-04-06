@@ -263,4 +263,35 @@ test_expect_success 'rev-list --boundary incompatible with --maximal-only' '
 	test_grep "cannot be used together" err
 '
 
+test_expect_success 'rev-list --maximal-only and --pretty' '
+	test_when_finished rm -rf repo &&
+
+	git init repo &&
+	test_commit -C repo 1 &&
+	oid1=$(git -C repo rev-parse HEAD) &&
+	test_commit -C repo 2 &&
+	oid2=$(git -C repo rev-parse HEAD) &&
+	git -C repo checkout --detach HEAD~1 &&
+	test_commit -C repo 3 &&
+	oid3=$(git -C repo rev-parse HEAD) &&
+
+	cat >expect <<-EOF &&
+	commit $oid3
+	$oid3
+	commit $oid2
+	$oid2
+	EOF
+
+	git -C repo rev-list --pretty="%H" --maximal-only $oid1 $oid2 $oid3 >out &&
+	test_cmp expect out &&
+
+	cat >expect <<-EOF &&
+	$oid3
+	$oid2
+	EOF
+
+	git -C repo log --pretty="%H" --maximal-only $oid1 $oid2 $oid3 >out &&
+	test_cmp expect out
+'
+
 test_done
