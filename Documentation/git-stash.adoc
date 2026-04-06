@@ -14,10 +14,10 @@ git stash drop [-q | --quiet] [<stash>]
 git stash pop [--index] [-q | --quiet] [<stash>]
 git stash apply [--index] [-q | --quiet] [<stash>]
 git stash branch <branchname> [<stash>]
-git stash [push [-p | --patch] [-S | --staged] [-k | --[no-]keep-index] [-q | --quiet]
+git stash [push] [-p | --patch] [-S | --staged] [-k | --[no-]keep-index] [-q | --quiet]
 	     [-u | --include-untracked] [-a | --all] [(-m | --message) <message>]
 	     [--pathspec-from-file=<file> [--pathspec-file-nul]]
-	     [--] [<pathspec>...]]
+	     [--] [<pathspec>...]
 git stash save [-p | --patch] [-S | --staged] [-k | --[no-]keep-index] [-q | --quiet]
            [-u | --include-untracked] [-a | --all] [<message>]
 git stash clear
@@ -60,10 +60,8 @@ COMMANDS
 	the description along with the stashed state.
 +
 For quickly making a snapshot, you can omit "push".  In this mode,
-non-option arguments are not allowed to prevent a misspelled
-subcommand from making an unwanted stash entry.  The two exceptions to this
-are `stash -p` which acts as alias for `stash push -p` and pathspec elements,
-which are allowed after a double hyphen `--` for disambiguation.
+pathspec elements are only allowed after a double hyphen `--`
+to prevent a misspelled subcommand from making an unwanted stash entry.
 
 `save [-p | --patch] [-S | --staged] [-k | --[no-]keep-index] [-u | --include-untracked] [-a | --all] [-q | --quiet] [<message>]`::
 
