@@ -464,7 +464,7 @@ report_fn get_warn_routine(void);
 void set_die_is_recursing_routine(int (*routine)(void));
 
 /*
- * Check that an out-parameter that is "at least as const as" a matching
+ * Check that an out-parameter is "at least as const as" a matching
  * in-parameter. For example, skip_prefix() will return "out" that is a subset
  * of "str". So:
  *
@@ -476,7 +476,7 @@ void set_die_is_recursing_routine(int (*routine)(void));
  *  See the skip_prefix macro below for an example of use.
  */
 #define CONST_OUTPARAM(in, out) \
-    ((const char **)(0 ? ((*(out) = (in)),(out)) : (out)))
+	((const char **)(0 ? ((*(out) = (in)),(out)) : (out)))
 
 /*
  * If the string "str" begins with the string found in "prefix", return true.
