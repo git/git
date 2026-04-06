@@ -837,4 +837,49 @@ test_expect_success 'rev-list --maximal-only (range)' '
 		--first-parent --exclude-first-parent-only
 '
 
+test_expect_success 'rev-list --maximal-only matches merge-base --independent' '
+	# Mix of independent and dependent
+	git merge-base --independent \
+		refs/heads/commit-5-2 \
+		refs/heads/commit-3-2 \
+		refs/heads/commit-2-5 >expect &&
+	sort expect >expect.sorted &&
+	git rev-list --maximal-only \
+		refs/heads/commit-5-2 \
+		refs/heads/commit-3-2 \
+		refs/heads/commit-2-5 >actual &&
+	sort actual >actual.sorted &&
+	test_cmp expect.sorted actual.sorted &&
+
+	# All independent commits.
+	git merge-base --independent \
+		refs/heads/commit-5-2 \
+		refs/heads/commit-4-3 \
+		refs/heads/commit-3-4 \
+		refs/heads/commit-2-5 >expect &&
+	sort expect >expect.sorted &&
+	git rev-list --maximal-only \
+		refs/heads/commit-5-2 \
+		refs/heads/commit-4-3 \
+		refs/heads/commit-3-4 \
+		refs/heads/commit-2-5 >actual &&
+	sort actual >actual.sorted &&
+	test_cmp expect.sorted actual.sorted &&
+
+	# Only one independent.
+	git merge-base --independent \
+		refs/heads/commit-1-1 \
+		refs/heads/commit-4-2 \
+		refs/heads/commit-4-4 \
+		refs/heads/commit-8-4 >expect &&
+	sort expect >expect.sorted &&
+	git rev-list --maximal-only \
+		refs/heads/commit-1-1 \
+		refs/heads/commit-4-2 \
+		refs/heads/commit-4-4 \
+		refs/heads/commit-8-4 >actual &&
+	sort actual >actual.sorted &&
+	test_cmp expect.sorted actual.sorted
+'
+
 test_done
