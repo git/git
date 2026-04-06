@@ -673,6 +673,7 @@ static int get_urlmatch(const struct config_location_options *opts,
 			const char *var, const char *url)
 {
 	int ret;
+	char *section;
 	char *section_tail;
 	struct config_display_options display_opts = *_display_opts;
 	struct string_list_item *item;
@@ -686,8 +687,8 @@ static int get_urlmatch(const struct config_location_options *opts,
 	if (!url_normalize(url, &config.url))
 		die("%s", config.url.err);
 
-	config.section = xstrdup_tolower(var);
-	section_tail = strchr(config.section, '.');
+	config.section = section = xstrdup_tolower(var);
+	section_tail = strchr(section, '.');
 	if (section_tail) {
 		*section_tail = '\0';
 		config.key = section_tail + 1;
@@ -719,7 +720,7 @@ static int get_urlmatch(const struct config_location_options *opts,
 	string_list_clear(&values, 1);
 	free(config.url.url);
 
-	free((void *)config.section);
+	free(section);
 	return ret;
 }
 
