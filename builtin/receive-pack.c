@@ -1384,32 +1384,16 @@ static int update_shallow_ref(struct command *cmd, struct shallow_info *si)
 	return 0;
 }
 
-/*
- * NEEDSWORK: we should consolidate various implementations of "are we
- * on an unborn branch?" test into one, and make the unified one more
- * robust. !get_sha1() based check used here and elsewhere would not
- * allow us to tell an unborn branch from corrupt ref, for example.
- * For the purpose of fixing "deploy-to-update does not work when
- * pushing into an empty repository" issue, this should suffice for
- * now.
- */
-static int head_has_history(void)
-{
-	struct object_id oid;
-
-	return !repo_get_oid(the_repository, "HEAD", &oid);
-}
-
 static const char *push_to_deploy(unsigned char *sha1,
 				  struct strvec *env,
-				  const char *work_tree)
+				  const struct worktree *worktree)
 {
 	struct child_process child = CHILD_PROCESS_INIT;
 
 	strvec_pushl(&child.args, "update-index", "-q", "--ignore-submodules",
 		     "--refresh", NULL);
 	strvec_pushv(&child.env, env->v);
-	child.dir = work_tree;
+	child.dir = worktree->path;
 	child.no_stdin = 1;
 	child.stdout_to_stderr = 1;
 	child.git_cmd = 1;
@@ -1421,7 +1405,7 @@ static const char *push_to_deploy(unsigned char *sha1,
 	strvec_pushl(&child.args, "diff-files", "--quiet",
 		     "--ignore-submodules", "--", NULL);
 	strvec_pushv(&child.env, env->v);
-	child.dir = work_tree;
+	child.dir = worktree->path;
 	child.no_stdin = 1;
 	child.stdout_to_stderr = 1;
 	child.git_cmd = 1;
@@ -1431,9 +1415,16 @@ static const char *push_to_deploy(unsigned char *sha1,
 	child_process_init(&child);
 	strvec_pushl(&child.args, "diff-index", "--quiet", "--cached",
 		     "--ignore-submodules",
-		     /* diff-index with either HEAD or an empty tree */
-		     head_has_history() ? "HEAD" : empty_tree_oid_hex(the_repository->hash_algo),
-		     "--", NULL);
+		     /*
+		      * diff-index with either HEAD or an empty tree
+		      *
+		      * NEEDSWORK: is_null_oid() cannot know whether it's an
+		      * unborn HEAD or a corrupt ref. It works for now because
+		      * it's only needed to know if we are comparing HEAD or an
+		      * empty tree.
+		      */
+		     !is_null_oid(&worktree->head_oid) ? "HEAD" :
+		     empty_tree_oid_hex(the_repository->hash_algo), "--", NULL);
 	strvec_pushv(&child.env, env->v);
 	child.no_stdin = 1;
 	child.no_stdout = 1;
@@ -1446,7 +1437,7 @@ static const char *push_to_deploy(unsigned char *sha1,
 	strvec_pushl(&child.args, "read-tree", "-u", "-m", hash_to_hex(sha1),
 		     NULL);
 	strvec_pushv(&child.env, env->v);
-	child.dir = work_tree;
+	child.dir = worktree->path;
 	child.no_stdin = 1;
 	child.no_stdout = 1;
 	child.stdout_to_stderr = 0;
@@ -1494,7 +1485,7 @@ static const char *update_worktree(unsigned char *sha1, const struct worktree *w
 
 	retval = push_to_checkout(sha1, &invoked_hook, &env, worktree->path);
 	if (!invoked_hook)
-		retval = push_to_deploy(sha1, &env, worktree->path);
+		retval = push_to_deploy(sha1, &env, worktree);
 
 	strvec_clear(&env);
 	free(git_dir);

@@ -1792,6 +1792,7 @@ test_expect_success 'updateInstead with push-to-checkout hook' '
 '
 
 test_expect_success 'denyCurrentBranch and worktrees' '
+	test_when_finished "rm -fr cloned && git worktree remove --force new-wt" &&
 	git worktree add new-wt &&
 	git clone . cloned &&
 	test_commit -C cloned first &&
@@ -1814,6 +1815,20 @@ test_expect_success 'denyCurrentBranch and bare repository worktrees' '
 	git push bare.git HEAD:wt &&
 	test_path_exists bare.git/wt/grape.t &&
 	test_must_fail git push --delete bare.git wt
+'
+
+test_expect_success 'updateInstead with bare repository worktree and unborn bare HEAD' '
+	test_when_finished "rm -fr bare.git cloned" &&
+	git clone --bare . bare.git &&
+	git -C bare.git worktree add wt &&
+	git -C bare.git config receive.denyCurrentBranch updateInstead &&
+	git -C bare.git symbolic-ref HEAD refs/heads/unborn &&
+	test_must_fail git -C bare.git rev-parse -q --verify HEAD^{commit} &&
+	git clone . cloned &&
+	test_commit -C cloned mozzarella &&
+	git -C cloned push ../bare.git HEAD:wt &&
+	test_path_exists bare.git/wt/mozzarella.t &&
+	test "$(git -C cloned rev-parse HEAD)" = "$(git -C bare.git/wt rev-parse HEAD)"
 '
 
 test_expect_success 'refuse fetch to current branch of worktree' '
