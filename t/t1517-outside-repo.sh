@@ -93,6 +93,14 @@ test_expect_success 'diff outside repository' '
 	test_cmp expect actual
 '
 
+test_expect_success 'hash object exceeding bigFileThreshold outside repository' '
+	(
+		cd non-repo &&
+		echo foo >foo &&
+		git -c core.bigFileThreshold=1 hash-object --stdin <foo
+	)
+'
+
 test_expect_success 'stripspace outside repository' '
 	nongit git stripspace -s </dev/null
 '
