@@ -659,7 +659,7 @@ use by the client, MUST indicate prerequisites (in any) with standard
 applicable.
 +
 The advertised URI may alternatively contain a plaintext file that `git
-config --list` would accept (with the `--file` option). The key-value
+config list` would accept (with the `--file` option). The key-value
 pairs in this list are in the `bundle.*` namespace (see
 linkgit:git-config[1]).
 
