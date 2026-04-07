@@ -174,7 +174,7 @@ static int add_tree_entries(struct path_walk_context *ctx,
 
 		if (!o) {
 			error(_("failed to find object %s"),
-			      oid_to_hex(&o->oid));
+			      oid_to_hex(&entry.oid));
 			return -1;
 		}
 
