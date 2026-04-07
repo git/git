@@ -175,6 +175,21 @@ test_expect_success 'backfill --sparse' '
 	test_line_count = 0 missing
 '
 
+test_expect_success 'backfill auto-detects sparse-checkout from config' '
+	git clone --sparse --filter=blob:none \
+		--single-branch --branch=main \
+		"file://$(pwd)/srv.bare" backfill-auto-sparse &&
+
+	git -C backfill-auto-sparse rev-list --quiet --objects --missing=print HEAD >missing &&
+	test_line_count = 44 missing &&
+
+	GIT_TRACE2_EVENT="$(pwd)/auto-sparse-trace" git \
+		-C backfill-auto-sparse backfill &&
+
+	test_trace2_data promisor fetch_count 4 <auto-sparse-trace &&
+	test_trace2_data path-walk paths 5 <auto-sparse-trace
+'
+
 test_expect_success 'backfill --sparse without cone mode (positive)' '
 	git clone --no-checkout --filter=blob:none		\
 		--single-branch --branch=main 		\
