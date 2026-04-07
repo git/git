@@ -437,8 +437,8 @@ static int cmd_history_reword(int argc,
 	enum ref_action action = REF_ACTION_DEFAULT;
 	int dry_run = 0;
 	struct option options[] = {
-		OPT_CALLBACK_F(0, "update-refs", &action, N_("<action>"),
-			       N_("control which refs should be updated (branches|head)"),
+		OPT_CALLBACK_F(0, "update-refs", &action, "(branches|head)",
+			       N_("control which refs should be updated"),
 			       PARSE_OPT_NONEG, parse_ref_action),
 		OPT_BOOL('n', "dry-run", &dry_run,
 			 N_("perform a dry-run without updating any refs")),
@@ -666,8 +666,8 @@ static int cmd_history_split(int argc,
 	enum ref_action action = REF_ACTION_DEFAULT;
 	int dry_run = 0;
 	struct option options[] = {
-		OPT_CALLBACK_F(0, "update-refs", &action, N_("<refs>"),
-			       N_("control ref update behavior (branches|head|print)"),
+		OPT_CALLBACK_F(0, "update-refs", &action, "(branches|head)",
+			       N_("control ref update behavior"),
 			       PARSE_OPT_NONEG, parse_ref_action),
 		OPT_BOOL('n', "dry-run", &dry_run,
 			 N_("perform a dry-run without updating any refs")),
