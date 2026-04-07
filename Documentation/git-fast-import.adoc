@@ -66,11 +66,10 @@ fast-import stream! This option is enabled automatically for
 remote-helpers that use the `import` capability, as they are
 already trusted to run their own code.
 
-`--signed-tags=(verbatim|warn-verbatim|warn-strip|strip|abort)`::
+`--signed-tags=<mode>`::
 	Specify how to handle signed tags. Behaves in the same way as
-	the `--signed-commits=<mode>` below, except that the
-	`strip-if-invalid` mode is not yet supported. Like for signed
-	commits, the default mode is `verbatim`.
+	the `--signed-commits=<mode>` below. Like for signed commits,
+	the default mode is `verbatim`.
 
 `--signed-commits=<mode>`::
 	Specify how to handle signed commits. The following <mode>s
@@ -90,6 +89,8 @@ already trusted to run their own code.
   commit signatures and replaces invalid signatures with newly created ones.
   Valid signatures are left unchanged. If `<keyid>` is provided, that key is
   used for signing; otherwise the configured default signing key is used.
+* `abort-if-invalid` will make this program die when encountering a signed
+  commit that is unable to be verified.
 
 Options for Frontends
 ~~~~~~~~~~~~~~~~~~~~~
