@@ -558,8 +558,8 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 		strvec_push(&args,
 			    /* could be on an unborn branch */
 			    !strcmp("HEAD", s->revision) &&
-			    repo_get_oid(the_repository, "HEAD", &oid) ?
-			    empty_tree_oid_hex(the_repository->hash_algo) : s->revision);
+			    repo_get_oid(s->r, "HEAD", &oid) ?
+			    empty_tree_oid_hex(s->r->hash_algo) : s->revision);
 	}
 	color_arg_index = args.nr;
 	/* Use `--no-color` explicitly, just in case `diff.color = always`. */
@@ -1271,7 +1271,7 @@ static int edit_hunk_manually(struct add_p_state *s, struct hunk *hunk)
 				"removed, then the edit is\n"
 				"aborted and the hunk is left unchanged.\n"));
 
-	if (strbuf_edit_interactively(the_repository, &s->buf,
+	if (strbuf_edit_interactively(s->r, &s->buf,
 				      "addp-hunk-edit.diff", NULL) < 0)
 		return -1;
 
@@ -1679,7 +1679,7 @@ static size_t patch_update_file(struct add_p_state *s,
 		if (file_diff->hunk_nr) {
 			if (rendered_hunk_index != hunk_index) {
 				if (use_pager) {
-					setup_pager(the_repository);
+					setup_pager(s->r);
 					sigchain_push(SIGPIPE, SIG_IGN);
 				}
 				render_hunk(s, hunk, 0, colored, &s->buf);
