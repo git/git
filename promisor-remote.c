@@ -642,6 +642,14 @@ static int all_fields_match(struct promisor_info *advertised,
 	return 1;
 }
 
+static bool has_control_char(const char *s)
+{
+	for (const char *c = s; *c; c++)
+		if (iscntrl(*c))
+			return true;
+	return false;
+}
+
 static int should_accept_remote(enum accept_promisor accept,
 				struct promisor_info *advertised,
 				struct string_list *config_info)
@@ -772,18 +780,14 @@ static bool valid_filter(const char *filter, const char *remote_name)
 	return !res;
 }
 
-/* Check that a token doesn't contain any control character */
 static bool valid_token(const char *token, const char *remote_name)
 {
-	const char *c = token;
-
-	for (; *c; c++)
-		if (iscntrl(*c)) {
-			warning(_("invalid token '%s' for remote '%s' "
-				  "will not be stored"),
-				token, remote_name);
-			return false;
-		}
+	if (has_control_char(token)) {
+		warning(_("invalid token '%s' for remote '%s' "
+			  "will not be stored"),
+			token, remote_name);
+		return false;
+	}
 
 	return true;
 }
