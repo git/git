@@ -166,6 +166,75 @@ test_expect_success "init + fetch with promisor.advertise set to 'true'" '
 	check_missing_objects server 1 "$oid"
 '
 
+test_expect_success "clone with two promisors but only one advertised" '
+	git -C server config promisor.advertise true &&
+	test_when_finished "rm -rf client unused_lop" &&
+
+	# Create a promisor that will be configured but not be used
+	git init --bare unused_lop &&
+
+	# Clone from server to create a client
+	GIT_TRACE="$(pwd)/trace" GIT_NO_LAZY_FETCH=0 git clone \
+		-c remote.unused_lop.promisor=true \
+		-c remote.unused_lop.fetch="+refs/heads/*:refs/remotes/unused_lop/*" \
+		-c remote.unused_lop.url="file://$(pwd)/unused_lop" \
+		-c remote.lop.promisor=true \
+		-c remote.lop.fetch="+refs/heads/*:refs/remotes/lop/*" \
+		-c remote.lop.url="file://$(pwd)/lop" \
+		-c promisor.acceptfromserver=All \
+		--no-local --filter="blob:limit=5k" server client &&
+
+	# Check that "unused_lop" appears before "lop" in the config
+	printf "remote.%s.promisor true\n" "unused_lop" "lop" "origin" >expect &&
+	git -C client config get --all --show-names --regexp "^remote\..*\.promisor$" >actual &&
+	test_cmp expect actual &&
+
+	# Check that "lop" was tried
+	test_grep " fetch lop " trace &&
+	# Check that "unused_lop" was not contacted
+	# This means "lop", the accepted promisor, was tried first
+	test_grep ! " fetch unused_lop " trace &&
+
+	# Check that the largest object is still missing on the server
+	check_missing_objects server 1 "$oid"
+'
+
+test_expect_success "init + fetch two promisors but only one advertised" '
+	git -C server config promisor.advertise true &&
+	test_when_finished "rm -rf client unused_lop" &&
+
+	# Create a promisor that will be configured but not be used
+	git init --bare unused_lop &&
+
+	mkdir client &&
+	git -C client init &&
+	git -C client config remote.unused_lop.promisor true &&
+	git -C client config remote.unused_lop.fetch "+refs/heads/*:refs/remotes/unused_lop/*" &&
+	git -C client config remote.unused_lop.url "file://$(pwd)/unused_lop" &&
+	git -C client config remote.lop.promisor true &&
+	git -C client config remote.lop.fetch "+refs/heads/*:refs/remotes/lop/*" &&
+	git -C client config remote.lop.url "file://$(pwd)/lop" &&
+	git -C client config remote.server.url "file://$(pwd)/server" &&
+	git -C client config remote.server.fetch "+refs/heads/*:refs/remotes/server/*" &&
+	git -C client config promisor.acceptfromserver All &&
+
+	# Check that "unused_lop" appears before "lop" in the config
+	printf "remote.%s.promisor true\n" "unused_lop" "lop" >expect &&
+	git -C client config get --all --show-names --regexp "^remote\..*\.promisor$" >actual &&
+	test_cmp expect actual &&
+
+	GIT_TRACE="$(pwd)/trace" GIT_NO_LAZY_FETCH=0 git -C client fetch --filter="blob:limit=5k" server &&
+
+	# Check that "lop" was tried
+	test_grep " fetch lop " trace &&
+	# Check that "unused_lop" was not contacted
+	# This means "lop", the accepted promisor, was tried first
+	test_grep ! " fetch unused_lop " trace &&
+
+	# Check that the largest object is still missing on the server
+	check_missing_objects server 1 "$oid"
+'
+
 test_expect_success "clone with promisor.acceptfromserver set to 'KnownName'" '
 	git -C server config promisor.advertise true &&
 	test_when_finished "rm -rf client" &&

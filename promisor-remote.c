@@ -268,11 +268,35 @@ static int remove_fetched_oids(struct repository *repo,
 	return remaining_nr;
 }
 
+static int try_promisor_remotes(struct repository *repo,
+				struct object_id **remaining_oids,
+				int *remaining_nr, int *to_free,
+				bool accepted_only)
+{
+	struct promisor_remote *r = repo->promisor_remote_config->promisors;
+
+	for (; r; r = r->next) {
+		if (accepted_only != r->accepted)
+			continue;
+		if (fetch_objects(repo, r->name, *remaining_oids, *remaining_nr) < 0) {
+			if (*remaining_nr == 1)
+				continue;
+			*remaining_nr = remove_fetched_oids(repo, remaining_oids,
+							    *remaining_nr, *to_free);
+			if (*remaining_nr) {
+				*to_free = 1;
+				continue;
+			}
+		}
+		return 1; /* all fetched */
+	}
+	return 0;
+}
+
 void promisor_remote_get_direct(struct repository *repo,
 				const struct object_id *oids,
 				int oid_nr)
 {
-	struct promisor_remote *r;
 	struct object_id *remaining_oids = (struct object_id *)oids;
 	int remaining_nr = oid_nr;
 	int to_free = 0;
@@ -283,19 +307,13 @@ void promisor_remote_get_direct(struct repository *repo,
 
 	promisor_remote_init(repo);
 
-	for (r = repo->promisor_remote_config->promisors; r; r = r->next) {
-		if (fetch_objects(repo, r->name, remaining_oids, remaining_nr) < 0) {
-			if (remaining_nr == 1)
-				continue;
-			remaining_nr = remove_fetched_oids(repo, &remaining_oids,
-							 remaining_nr, to_free);
-			if (remaining_nr) {
-				to_free = 1;
-				continue;
-			}
-		}
+	/* Try accepted remotes first (those the server told us to use) */
+	if (try_promisor_remotes(repo, &remaining_oids, &remaining_nr,
+				 &to_free, true))
 		goto all_fetched;
-	}
+	if (try_promisor_remotes(repo, &remaining_oids, &remaining_nr,
+				 &to_free, false))
+		goto all_fetched;
 
 	for (i = 0; i < remaining_nr; i++) {
 		if (is_promisor_object(repo, &remaining_oids[i]))
