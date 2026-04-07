@@ -121,6 +121,9 @@ UI, Workflows & Features
 
  * git replay now supports replaying down to the root commit.
 
+ * Handling of signed commits and tags in fast-import has been made more
+   configurable.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -300,6 +303,19 @@ Performance, Internal Implementation, Development Support etc.
    that discarded constness when they return a pointer into a const
    string to preserve constness.
 
+ * A handful of inappropriate uses of the_repository have been
+   rewritten to use the right repository structure instance in the
+   read-cache.c codepath.
+
+ * Internals of "git fsck" have been refactored to not depend on the
+   global `the_repository` variable.
+
+ * Reduce dependency on `the_repository` in add-patch.c file.
+
+ * The way the "git log -L<range>:<file>" feature is bolted onto the
+   log/diff machinery is being reworked a bit to make the feature
+   compatible with more diff options, like -S/G.
+
 
 Fixes since v2.53
 -----------------
@@ -477,6 +493,21 @@ Fixes since v2.53
    repository would dereference a NULL while trying to see if the given
    refspec is a single-object refspec, which has been corrected.
    (merge 4e5dc601dd kj/refspec-parsing-outside-repository later to maint).
+
+ * Fix a regression in writing the commit-graph where commits with dates
+   exceeding 34 bits (beyond year 2514) could cause an underflow and
+   crash Git during the generation data overflow chunk writing.
+
+ * The value of a wrong pointer variable was referenced in an error
+   message that reported that it shouldn't be NULL.
+   (merge 753ecf4205 yc/path-walk-fix-error-reporting later to maint).
+
+ * The check in "receive-pack" to prevent a checked out branch from
+   getting updated via updateInstead mechanism has been corrected.
+
+ * "git backfill" is capable of auto-detecting a sparsely checked out
+   working tree, which was broken.
+   (merge 339eba65a7 th/backfill-auto-detect-sparseness-fix later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge d79fff4a11 jk/remote-tracking-ref-leakfix later to maint).
