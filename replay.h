@@ -25,6 +25,13 @@ struct replay_revisions_options {
 	const char *onto;
 
 	/*
+	 * Reference to update with the result of the replay. This will not
+	 * update any refs from `onto`, `advance`, or `revert`. Ignores
+	 * `contained`.
+	 */
+	const char *ref;
+
+	/*
 	 * Starting point at which to create revert commits; must be a branch
 	 * name. The branch will be updated to point to the revert commits.
 	 * This option is mutually exclusive with `onto` and `advance`.

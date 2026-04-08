@@ -499,4 +499,70 @@ test_expect_success 'git replay --revert incompatible with --advance' '
 	test_grep "cannot be used together" error
 '
 
+test_expect_success 'using --onto with --ref' '
+	git branch test-ref-onto topic2 &&
+	test_when_finished "git branch -D test-ref-onto" &&
+
+	git replay --ref-action=print --onto=main --ref=refs/heads/test-ref-onto topic1..topic2 >result &&
+
+	test_line_count = 1 result &&
+	test_grep "^update refs/heads/test-ref-onto " result &&
+
+	git log --format=%s $(cut -f 3 -d " " result) >actual &&
+	test_write_lines E D M L B A >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'using --advance with --ref' '
+	git branch test-ref-advance main &&
+	git branch test-ref-target main &&
+	test_when_finished "git branch -D test-ref-advance test-ref-target" &&
+
+	git replay --ref-action=print --advance=test-ref-advance --ref=refs/heads/test-ref-target topic1..topic2 >result &&
+
+	test_line_count = 1 result &&
+	test_grep "^update refs/heads/test-ref-target " result
+'
+
+test_expect_success 'using --revert with --ref' '
+	git branch test-ref-revert topic4 &&
+	git branch test-ref-revert-target topic4 &&
+	test_when_finished "git branch -D test-ref-revert test-ref-revert-target" &&
+
+	git replay --ref-action=print --revert=test-ref-revert --ref=refs/heads/test-ref-revert-target topic4~1..topic4 >result &&
+
+	test_line_count = 1 result &&
+	test_grep "^update refs/heads/test-ref-revert-target " result
+'
+
+test_expect_success '--ref is incompatible with --contained' '
+	test_must_fail git replay --onto=main --ref=refs/heads/main --contained topic1..topic2 2>err &&
+	test_grep "cannot be used together" err
+'
+
+test_expect_success '--ref with nonexistent fully-qualified ref' '
+	test_when_finished "git update-ref -d refs/heads/new-branch" &&
+
+	git replay --onto=main --ref=refs/heads/new-branch topic1..topic2 &&
+
+	git log --format=%s -2 new-branch >actual &&
+	test_write_lines E D >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success '--ref must be a valid refname' '
+	test_must_fail git replay --onto=main --ref="refs/heads/bad..ref" topic1..topic2 2>err &&
+	test_grep "is not a valid refname" err
+'
+
+test_expect_success '--ref requires fully qualified ref' '
+	test_must_fail git replay --onto=main --ref=main topic1..topic2 2>err &&
+	test_grep "is not a valid refname" err
+'
+
+test_expect_success '--onto with --ref rejects multiple revision ranges' '
+	test_must_fail git replay --onto=main --ref=refs/heads/topic2 ^topic1 topic2 topic4 2>err &&
+	test_grep "cannot be used with multiple revision ranges" err
+'
+
 test_done

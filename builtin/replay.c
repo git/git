@@ -84,25 +84,33 @@ int cmd_replay(int argc,
 
 	const char *const replay_usage[] = {
 		N_("(EXPERIMENTAL!) git replay "
-		   "([--contained] --onto <newbase> | --advance <branch> | --revert <branch>) "
-		   "[--ref-action[=<mode>]] <revision-range>"),
+		   "([--contained] --onto=<newbase> | --advance=<branch> | --revert=<branch>)\n"
+		   "[--ref=<ref>] [--ref-action=<mode>] <revision-range>"),
 		NULL
 	};
 	struct option replay_options[] = {
-		OPT_STRING(0, "advance", &opts.advance,
-			   N_("branch"),
-			   N_("make replay advance given branch")),
-		OPT_STRING(0, "onto", &opts.onto,
-			   N_("revision"),
-			   N_("replay onto given commit")),
 		OPT_BOOL(0, "contained", &opts.contained,
 			 N_("update all branches that point at commits in <revision-range>")),
-		OPT_STRING(0, "revert", &opts.revert,
-			   N_("branch"),
-			   N_("revert commits onto given branch")),
-		OPT_STRING(0, "ref-action", &ref_action,
-			   N_("mode"),
-			   N_("control ref update behavior (update|print)")),
+		OPT_STRING_F(0, "onto", &opts.onto,
+			     N_("revision"),
+			     N_("replay onto given commit"),
+			     PARSE_OPT_NONEG),
+		OPT_STRING_F(0, "advance", &opts.advance,
+			     N_("branch"),
+			     N_("make replay advance given branch"),
+			     PARSE_OPT_NONEG),
+		OPT_STRING_F(0, "revert", &opts.revert,
+			     N_("branch"),
+			     N_("revert commits onto given branch"),
+			     PARSE_OPT_NONEG),
+		OPT_STRING_F(0, "ref", &opts.ref,
+			     N_("branch"),
+			     N_("reference to update with result"),
+			     PARSE_OPT_NONEG),
+		OPT_STRING_F(0, "ref-action", &ref_action,
+			     N_("mode"),
+			     N_("control ref update behavior (update|print)"),
+			     PARSE_OPT_NONEG),
 		OPT_END()
 	};
 
@@ -122,6 +130,8 @@ int cmd_replay(int argc,
 				  opts.contained, "--contained");
 	die_for_incompatible_opt2(!!opts.revert, "--revert",
 				  opts.contained, "--contained");
+	die_for_incompatible_opt2(!!opts.ref, "--ref",
+				  !!opts.contained, "--contained");
 
 	/* Parse ref action mode from command line or config */
 	ref_mode = get_ref_action_mode(repo, ref_action);
