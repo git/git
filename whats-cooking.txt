@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Apr 2026, #02)
-X-master-at: 1adf5bca8c3cf778103548b9355777cf2d12efdd
-X-next-at: 8a42c5b2bca6c482cc906cf4309d6dfe334e569e
+Subject: What's cooking in git.git (Apr 2026, #03)
+X-master-at: 2b39a27d40682c09ac1c031f099ee602061597cd
+X-next-at: 66d5323bbc44eb35dc937110f5cd0e9539e24623
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Apr 2026, #02)
+What's cooking in git.git (Apr 2026, #03)
 -----------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,6 +16,8 @@ to a message that raises issues but they are by no means exhaustive.
 A topic without enough support may be discarded after a long period
 of no activity (of course they can be resubmitted when new interests
 arise).
+
+Git 2.54-rc1 has been tagged.  Let's see how solid this is ;-)
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -48,251 +50,150 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* aa/reap-transport-child-processes (2026-03-12) 1 commit
-  (merged to 'next' on 2026-03-31 at fb77f8ba9e)
- + transport-helper, connect: use clean_on_exit to reap children on abnormal exit
+* jc/whitespace-incomplete-line (2026-03-17) 1 commit
+  (merged to 'next' on 2026-04-01 at 10a4d95236)
+ + apply: fix new-style empty context line triggering incomplete-line check
 
- A few code paths that spawned child processes for network
- connection weren't wait(2)ing for their children and letting "init"
- reap them instead; they have been tightened.
- cf. <20260325061357.GA3772970@coredump.intra.peff.net>
- source: <20260312214945.4050010-1-cshung@gmail.com>
+ Fix whitespace correction for new-style empty context lines.
+ source: <xmqqldfql4hp.fsf@gitster.g>
 
 
-* ar/config-hook-cleanups (2026-03-25) 13 commits
-  (merged to 'next' on 2026-03-30 at c128948b16)
- + hook: reject unknown hook names in git-hook(1)
- + hook: show disabled hooks in "git hook list"
- + hook: show config scope in git hook list
- + hook: introduce hook_config_cache_entry for per-hook data
- + t1800: add test to verify hook execution ordering
- + hook: make consistent use of friendly-name in docs
- + hook: replace hook_list_clear() -> string_list_clear_func()
- + hook: detect & emit two more bugs
- + hook: rename cb_data_free/alloc -> hook_data_free/alloc
- + hook: fix minor style issues
- + builtin/receive-pack: properly init receive_hook strbuf
- + hook: move unsorted_string_list_remove() to string-list.[ch]
- + Merge branch 'ar/config-hooks' into ar/config-hook-cleanups
- (this branch is used by ar/parallel-hooks.)
+* jd/read-cache-trace-wo-the-repository (2026-03-30) 1 commit
+  (merged to 'next' on 2026-04-01 at 7047e45a6d)
+ + read-cache: use istate->repo for trace2 logging
 
- Code clean-up around the recent "hooks defined in config" topic.
- source: <20260325195503.1139418-1-adrian.ratiu@collabora.com>
+ A handful of inappropriate uses of the_repository have been
+ rewritten to use the right repository structure instance in the
+ read-cache.c codepath.
+ source: <pull.2253.v4.git.git.1774895886678.gitgitgadget@gmail.com>
 
 
-* ds/backfill-revs (2026-03-26) 6 commits
-  (merged to 'next' on 2026-03-27 at d4703fdd35)
- + t5620: test backfill's unknown argument handling
- + path-walk: support wildcard pathspecs for blob filtering
- + backfill: work with prefix pathspecs
- + backfill: accept revision arguments
- + t5620: prepare branched repo for revision tests
- + revision: include object-name.h
+* jt/fast-import-signed-modes (2026-03-26) 5 commits
+  (merged to 'next' on 2026-04-01 at bec92be5e9)
+ + fast-import: add 'abort-if-invalid' mode to '--signed-tags=<mode>'
+ + fast-import: add 'sign-if-invalid' mode to '--signed-tags=<mode>'
+ + fast-import: add 'strip-if-invalid' mode to '--signed-tags=<mode>'
+ + fast-import: add 'abort-if-invalid' mode to '--signed-commits=<mode>'
+ + fast-export: check for unsupported signing modes earlier
 
- `git backfill` learned to accept revision and pathspec arguments.
- source: <pull.2070.v3.git.1774538094.gitgitgadget@gmail.com>
-
-
-* jk/c23-const-preserving-fixes (2026-03-26) 5 commits
-  (merged to 'next' on 2026-03-31 at c813b9b814)
- + config: store allocated string in non-const pointer
- + rev-parse: avoid writing to const string for parent marks
- + revision: avoid writing to const string for parent marks
- + rev-parse: simplify dotdot parsing
- + revision: make handle_dotdot() interface less confusing
-
- Adjust the codebase for C23 that changes functions like strchr()
- that discarded constness when they return a pointer into a const
- string to preserve constness.
- source: <20260326190243.GA412983@coredump.intra.peff.net>
- source: <20260326192320.GA418281@coredump.intra.peff.net>
+ Handling of signed commits and tags in fast-import has been made more
+ configurable.
+ source: <20260326191414.3783974-1-jltobler@gmail.com>
 
 
-* js/cmake-needs-writev-compat-too (2026-04-03) 1 commit
-  (merged to 'next' on 2026-04-03 at c0dfe4a67d)
- + cmake: use writev(3p) wrapper as needed
+* mm/line-log-use-standard-diff-output (2026-03-16) 4 commits
+  (merged to 'next' on 2026-04-01 at 724e6526dc)
+ + doc: note that -L supports patch formatting and pickaxe options
+ + t4211: add tests for -L with standard diff options
+ + line-log: route -L output through the standard diff pipeline
+ + line-log: fix crash when combined with pickaxe options
 
- Build instruction for recently added writev() compatibility wrapper
- has been also added to cmake.
- source: <pull.2078.git.1775206502134.gitgitgadget@gmail.com>
-
-
-* js/mingw-use-strftime-directly-in-ucrt-build (2026-04-03) 1 commit
-  (merged to 'next' on 2026-04-03 at 3ed53e1e28)
- + mingw: use strftime() directly in UCRT builds
-
- MinGW build updates.
- source: <pull.2079.git.1775210183103.gitgitgadget@gmail.com>
+ The way the "git log -L<range>:<file>" feature is bolted onto the
+ log/diff machinery is being reworked a bit to make the feature
+ compatible with more diff options, like -S/G.
+ cf. <xmqqbjg3y8i9.fsf@gitster.g>
+ source: <pull.2065.v2.git.1773714095.gitgitgadget@gmail.com>
 
 
-* mf/format-patch-commit-list-format (2026-03-23) 9 commits
-  (merged to 'next' on 2026-03-24 at 0f5b6702eb)
- + format-patch: --commit-list-format without prefix
- + format-patch: add preset for --commit-list-format
- + format-patch: wrap generate_commit_list_cover()
- + format.commitListFormat: strip meaning from empty
- + docs/pretty-formats: add %(count) and %(total)
- + format-patch: rename --cover-letter-format option
- + format-patch: refactor generate_commit_list_cover
- + pretty.c: better die message %(count) and %(total)
- + Merge branch 'mf/format-patch-cover-letter-format' into mf/format-patch-commit-list-format
- (this branch is used by mf/format-patch-commit-list-format-doc; uses mf/format-patch-cover-letter-format.)
+* ps/commit-graph-overflow-fix (2026-03-23) 1 commit
+  (merged to 'next' on 2026-04-01 at c502054354)
+ + commit-graph: fix writing generations with dates exceeding 34 bits
 
- Improve the recently introduced `git format-patch
- --commit-list-format` (formerly `--cover-letter-format`) option,
- including a new "modern" preset and better CLI ergonomics.
- source: <cover.1774284699.git.mroik@delayed.space>
+ Fix a regression in writing the commit-graph where commits with dates
+ exceeding 34 bits (beyond year 2514) could cause an underflow and
+ crash Git during the generation data overflow chunk writing.
+ source: <20260324-pks-commit-graph-overflow-v2-1-843568cf8780@pks.im>
 
 
-* mf/format-patch-commit-list-format-doc (2026-03-27) 3 commits
-  (merged to 'next' on 2026-03-31 at 8f775bd513)
- + format-patch: removing unconditional wrapping
- + docs: fix --commit-list-format related entries
- + Merge branch 'mf/format-patch-commit-list-format' into mf/format-patch-commit-list-format-doc
- (this branch uses mf/format-patch-commit-list-format and mf/format-patch-cover-letter-format.)
+* ps/fsck-wo-the-repository (2026-03-23) 12 commits
+  (merged to 'next' on 2026-04-01 at 6ab7607f2d)
+ + builtin/fsck: stop using `the_repository` in error reporting
+ + builtin/fsck: stop using `the_repository` when marking objects
+ + builtin/fsck: stop using `the_repository` when checking packed objects
+ + builtin/fsck: stop using `the_repository` with loose objects
+ + builtin/fsck: stop using `the_repository` when checking reflogs
+ + builtin/fsck: stop using `the_repository` when checking refs
+ + builtin/fsck: stop using `the_repository` when snapshotting refs
+ + builtin/fsck: fix trivial dependence on `the_repository`
+ + fsck: drop USE_THE_REPOSITORY
+ + fsck: store repository in fsck options
+ + fsck: initialize fsck options via a function
+ + fetch-pack: move fsck options into function scope
 
- Doc updates.
- source: <cover.1774640789.git.mroik@delayed.space>
-
-
-* mf/format-patch-cover-letter-format (2026-03-06) 5 commits
-  (merged to 'next' on 2026-03-09 at e872adca7b)
- + docs: add usage for the cover-letter fmt feature
- + format-patch: add commitListFormat config
- + format-patch: add ability to use alt cover format
- + format-patch: move cover letter summary generation
- + pretty.c: add %(count) and %(total) placeholders
- (this branch is used by mf/format-patch-commit-list-format and mf/format-patch-commit-list-format-doc.)
-
- "git format-patch --cover-letter" learns to use a simpler format
- instead of the traditional shortlog format to list its commits with
- a new --cover-letter-format option and format.commitListFormat
- configuration variable.
- source: <cover.1772839973.git.mroik@delayed.space>
+ Internals of "git fsck" have been refactored to not depend on the
+ global `the_repository` variable.
+ source: <20260323-b4-pks-fsck-without-the-repository-v2-0-e8dc79bca651@pks.im>
 
 
-* ps/dash-buggy-0.5.13-workaround (2026-04-01) 2 commits
-  (merged to 'next' on 2026-04-02 at 5766caf01e)
- + t9300: work around partial read bug in Dash v0.5.13
- + t: work around multibyte bug in quoted heredocs with Dash v0.5.13
+* ps/receive-pack-updateinstead-in-worktree (2026-03-30) 3 commits
+  (merged to 'next' on 2026-04-01 at df61eac37b)
+ + receive-pack: use worktree HEAD for updateInstead
+ + t5516: clean up cloned and new-wt in denyCurrentBranch and worktrees test
+ + t5516: test updateInstead with worktree and unborn bare HEAD
 
- The way dash 0.5.13 handles non-ASCII contents in here-doc
- is buggy and breaks our existing tests, which unfortunately
- have been rewritten to avoid triggering the bug.
- source: <20260402-pks-tests-with-dash-v2-0-cd7ab11dabc0@pks.im>
-
-
-* ps/odb-generic-object-name-handling (2026-03-20) 16 commits
-  (merged to 'next' on 2026-03-31 at c14d7bdd1e)
- + odb: introduce generic `odb_find_abbrev_len()`
- + object-file: move logic to compute packed abbreviation length
- + object-name: move logic to compute loose abbreviation length
- + object-name: simplify computing common prefixes
- + object-name: abbreviate loose object names without `disambiguate_state`
- + object-name: merge `update_candidates()` and `match_prefix()`
- + object-name: backend-generic `get_short_oid()`
- + object-name: backend-generic `repo_collect_ambiguous()`
- + object-name: extract function to parse object ID prefixes
- + object-name: move logic to iterate through packed prefixed objects
- + object-name: move logic to iterate through loose prefixed objects
- + odb: introduce `struct odb_for_each_object_options`
- + oidtree: extend iteration to allow for arbitrary return codes
- + oidtree: modernize the code a bit
- + Merge branch 'ps/object-counting' into ps/odb-generic-object-name-handling
- + object-file: fix sparse 'plain integer as NULL pointer' error
- (this branch is used by ps/odb-cleanup and ps/odb-in-core.)
-
- Object name handling (disambiguation and abbreviation) has been
- refactored to be backend-generic, moving logic into the respective
- object database backends.
- cf. <874ilxm4wp.fsf@toon--20250203-5JQV3.mail-host-address-is-not-set>
- source: <20260320-b4-pks-odb-source-abbrev-v2-0-fe65dcd8c735@pks.im>
+ The check in "receive-pack" to prevent a checked out branch from
+ getting updated via updateInstead mechanism has been corrected.
+ source: <20260330111822.165188-1-pabloosabaterr@gmail.com>
 
 
-* pw/worktree-reduce-the-repository (2026-03-26) 3 commits
-  (merged to 'next' on 2026-03-30 at f967ececef)
- + worktree: reject NULL worktree in get_worktree_git_dir()
- + worktree add: stop reading ".git/HEAD"
- + worktree: remove "the_repository" from is_current_worktree()
+* rs/history-short-help-fix (2026-04-06) 1 commit
+  (merged to 'next' on 2026-04-07 at d3d6ef5197)
+ + history: fix short help for argument of --update-refs
 
- Reduce the reference to the_repository in the worktree subsystem.
- source: <cover.1774534617.git.phillip.wood@dunelm.org.uk>
+ Glitches in "git history -h" have been corrected.
+ source: <ff6a940c-39fc-4dbf-a164-7770c7f26a31@web.de>
 
 
-* qb/doc-git-stash-push-optionality (2026-03-30) 1 commit
-  (merged to 'next' on 2026-03-31 at 66ece1b5d6)
- + docs: fix "git stash [push]" documentation
+* sp/add-patch-with-fewer-the-repository (2026-03-17) 1 commit
+  (merged to 'next' on 2026-04-01 at b9edaddcff)
+ + add-patch: use repository instance from add_i_state instead of the_repository
 
- Doc update.
- source: <pull.2255.v2.git.git.1774877075694.gitgitgadget@gmail.com>
-
-
-* sa/replay-revert (2026-03-25) 2 commits
-  (merged to 'next' on 2026-03-30 at ef4896a676)
- + replay: add --revert mode to reverse commit changes
- + sequencer: extract revert message formatting into shared function
- (this branch is used by tc/replay-ref.)
-
- "git replay" (experimental) learns, in addition to "pick" and
- "replay", a new operating mode "revert".
- source: <20260325202354.10628-1-siddharthasthana31@gmail.com>
+ Reduce dependency on `the_repository` in add-patch.c file.
+ source: <20260317155230.619378-1-shreyanshpaliwalcmsmn@gmail.com>
 
 
-* sp/doc-gitignore-oowt (2026-03-28) 1 commit
-  (merged to 'next' on 2026-03-31 at ab3e6e484e)
- + doc: gitignore: clarify pattern base for info/exclude and core.excludesFile
+* th/backfill-auto-detect-sparseness-fix (2026-04-04) 1 commit
+  (merged to 'next' on 2026-04-07 at c47ef7d0f1)
+ + backfill: auto-detect sparse-checkout from config
 
- Doc update.
- source: <20260328152233.1140327-1-shreyanshpaliwalcmsmn@gmail.com>
-
-
-* tb/stdin-packs-excluded-but-open (2026-03-27) 5 commits
-  (merged to 'next' on 2026-03-31 at e8927aa861)
- + repack: mark non-MIDX packs above the split as excluded-open
- + pack-objects: support excluded-open packs with --stdin-packs
- + t7704: demonstrate failure with once-cruft objects above the geometric split
- + pack-objects: refactor `read_packs_list_from_stdin()` to use `strmap`
- + pack-objects: plug leak in `read_stdin_packs()`
-
- pack-objects's --stdin-packs=follow mode learns to handle
- excluded-but-open packs.
- source: <cover.1774641999.git.me@ttaylorr.com>
+ "git backfill" is capable of auto-detecting a sparsely checked out
+ working tree, which was broken.
+ source: <20260404111557.17220-1-viking4@gmail.com>
 
 
-* tc/replay-down-to-root (2026-03-24) 1 commit
-  (merged to 'next' on 2026-03-31 at 47456fcc12)
- + replay: support replaying down from root commit
+* yc/path-walk-fix-error-reporting (2026-03-20) 1 commit
+  (merged to 'next' on 2026-04-01 at ddcff8b9c6)
+ + path-walk: fix NULL pointer dereference in error message
 
- git replay now supports replaying down to the root commit.
- source: <20260324-toon-replay-down-to-root-v2-1-34e723489f6e@iotcl.com>
-
-
-* th/t6101-unhide-git-failures (2026-03-28) 1 commit
-  (merged to 'next' on 2026-03-31 at 8867bcf2b4)
- + t6101: avoid suppressing git's exit code
-
- Test cleanup.
- source: <20260328135935.180646-1-vikingtc4@gmail.com>
-
-
-* th/t8003-unhide-git-failures (2026-03-28) 2 commits
-  (merged to 'next' on 2026-03-30 at ad41378b07)
- + t8003: modernise style
- + t8003: avoid suppressing git's exit code
-
- Test clean-up.
- source: <20260328132955.172262-2-vikingtc4@gmail.com>
-
-
-* za/t2000-modernise (2026-03-27) 1 commit
-  (merged to 'next' on 2026-03-31 at 279c41a3e0)
- + t2000: modernise overall structure
-
- Test cleanup.
- source: <20260327234019.95591-1-zakariyahali100@gmail.com>
+ The value of a wrong pointer variable was referenced in an error
+ message that reported that it shouldn't be NULL.
+ source: <20260320114823.3151961-1-ysinghcin@gmail.com>
 
 --------------------------------------------------
 [New Topics]
+
+* jt/index-fd-wo-repo-regression-fix-maint (2026-04-07) 1 commit
+ + object-file: avoid ODB transaction when not writing objects
+ (this branch is used by jt/index-fd-wo-repo-regression-fix.)
+
+ During Git 2.52 timeframe, we broke streaming computation of object
+ hash outside a repository, which has been corrected.
+
+ Will merge to 'master'.
+
+
+* jt/index-fd-wo-repo-regression-fix (2026-04-07) 1 commit
+  (merged to 'next' on 2026-04-07 at 7339897c7c)
+ + Merge branch 'jt/index-fd-wo-repo-regression-fix-maint' into HEAD
+ (this branch uses jt/index-fd-wo-repo-regression-fix-maint.)
+
+ During Git 2.52 timeframe, we broke streaming computation of object
+ hash outside a repository, which has been corrected.
+
+ Will merge to 'master'.
+
+--------------------------------------------------
+[Cooking]
 
 * js/adjust-tests-to-explicitly-access-bare-repo (2026-04-02) 17 commits
  - git p4 clone --bare: need to be explicit about the gitdir
@@ -406,15 +307,16 @@ Release tarballs are available at:
 
 
 * ds/rev-list-maximal-only-optim (2026-04-06) 3 commits
- - rev-list: use reduce_heads() for --maximal-only
- - p6011: add perf test for rev-list --maximal-only
- - t6600: test --maximal-only and --independent
+  (merged to 'next' on 2026-04-07 at 7a70817efa)
+ + rev-list: use reduce_heads() for --maximal-only
+ + p6011: add perf test for rev-list --maximal-only
+ + t6600: test --maximal-only and --independent
 
  "git rev-list --maximal-only" has been optimized by borrowing the
  logic used by "git show-branch --independent", which computes the
  same kind of information much more efficiently.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.2082.git.1775482048.gitgitgadget@gmail.com>
 
 
@@ -431,50 +333,32 @@ Release tarballs are available at:
 
 
 * kh/doc-config-list (2026-04-05) 2 commits
- - doc: gitcvs-migration: rephrase “man page”
- - doc: replace git config --list/-l with `list`
+  (merged to 'next' on 2026-04-07 at fb95f091cc)
+ + doc: gitcvs-migration: rephrase “man page”
+ + doc: replace git config --list/-l with `list`
 
  "git config list" is the official way to spell "git config -l" and
  "git config --list".  Use it to update the documentation.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <V2_CV_doc_deprecation_config_--list.569@msgid.xyz>
 
 
 * lp/repack-propagate-promisor-debugging-info (2026-04-06) 6 commits
- - SQUASH???
- - t7703: test for promisor file content after geometric repack
- - t7700: test for promisor file content after repack
- - repack-promisor: preserve content of promisor files after repack
- - pack-write: add helper to fill promisor file after repack
- - pack-write: add explanation to promisor file content
+ . SQUASH???
+ . t7703: test for promisor file content after geometric repack
+ . t7700: test for promisor file content after repack
+ . repack-promisor: preserve content of promisor files after repack
+ . pack-write: add helper to fill promisor file after repack
+ . pack-write: add explanation to promisor file content
 
  When fetching objects into a lazily cloned repository, .promisor
  files are created with information meant to help debugging.  "git
  repack" has been taught to carry this information forward to
  packfiles that are newly created.
 
- Expecting a reroll?
+ Expecting a reroll.
  source: <cover.1775431990.git.lorenzo.pegorari2002@gmail.com>
-
-
-* rs/history-short-help-fix (2026-04-06) 1 commit
- - history: fix short help for argument of --update-refs
-
- Glitches in "git history -h" have been corrected.
-
- Will merge to 'next' and then to 'master'.
- source: <ff6a940c-39fc-4dbf-a164-7770c7f26a31@web.de>
-
-
-* th/backfill-auto-detect-sparseness-fix (2026-04-04) 1 commit
- - backfill: auto-detect sparse-checkout from config
-
- "git backfill" is capable of auto-detecting a sparsely checked out
- working tree, which was broken.
-
- Will merge to 'next' and then to 'master'.
- source: <20260404111557.17220-1-viking4@gmail.com>
 
 
 * th/promisor-quiet-per-repo (2026-04-06) 1 commit
@@ -483,8 +367,6 @@ Release tarballs are available at:
  Comments?
  source: <20260406183041.783800-1-vikingtc4@gmail.com>
 
---------------------------------------------------
-[Cooking]
 
 * jt/odb-transaction-write (2026-04-02) 7 commits
  - odb/transaction: make `write_object_stream()` pluggable
@@ -631,18 +513,6 @@ Release tarballs are available at:
  source: <cover.1774820449.git.me@ttaylorr.com>
 
 
-* jd/read-cache-trace-wo-the-repository (2026-03-30) 1 commit
-  (merged to 'next' on 2026-04-01 at 7047e45a6d)
- + read-cache: use istate->repo for trace2 logging
-
- A handful of inappropriate uses of the_repository have been
- rewritten to use the right repository structure instance in the
- read-cache.c codepath.
-
- Will merge to 'master'.
- source: <pull.2253.v4.git.git.1774895886678.gitgitgadget@gmail.com>
-
-
 * jd/unpack-trees-wo-the-repository (2026-03-31) 2 commits
  - unpack-trees: use repository from index instead of global
  - unpack-trees: use repository from index instead of global
@@ -653,19 +523,6 @@ Release tarballs are available at:
 
  Comments?
  source: <pull.2258.v2.git.git.1774971267.gitgitgadget@gmail.com>
-
-
-* ps/receive-pack-updateinstead-in-worktree (2026-03-30) 3 commits
-  (merged to 'next' on 2026-04-01 at df61eac37b)
- + receive-pack: use worktree HEAD for updateInstead
- + t5516: clean up cloned and new-wt in denyCurrentBranch and worktrees test
- + t5516: test updateInstead with worktree and unborn bare HEAD
-
- The check in "receive-pack" to prevent a checked out branch from
- getting updated via updateInstead mechanism has been corrected.
-
- Will merge to 'master'.
- source: <20260330111822.165188-1-pabloosabaterr@gmail.com>
 
 
 * ps/setup-wo-the-repository (2026-03-30) 18 commits
@@ -720,21 +577,6 @@ Release tarballs are available at:
  source: <20260401-toon-replay-arbitrary-ref-v3-0-a0b4fabb34b3@iotcl.com>
 
 
-* jt/fast-import-signed-modes (2026-03-26) 5 commits
-  (merged to 'next' on 2026-04-01 at bec92be5e9)
- + fast-import: add 'abort-if-invalid' mode to '--signed-tags=<mode>'
- + fast-import: add 'sign-if-invalid' mode to '--signed-tags=<mode>'
- + fast-import: add 'strip-if-invalid' mode to '--signed-tags=<mode>'
- + fast-import: add 'abort-if-invalid' mode to '--signed-commits=<mode>'
- + fast-export: check for unsupported signing modes earlier
-
- Handling of signed commits and tags in fast-import has been made more
- configurable.
-
- Will merge to 'master'.
- source: <20260326191414.3783974-1-jltobler@gmail.com>
-
-
 * ps/graph-lane-limit (2026-03-27) 3 commits
  - graph: add truncation mark to capped lanes
  - graph: add --graph-lane-limit option
@@ -749,7 +591,7 @@ Release tarballs are available at:
  source: <20260328001113.1275291-1-pabloosabaterr@gmail.com>
 
 
-* cc/promisor-auto-config-url (2026-04-02) 10 commits
+* cc/promisor-auto-config-url (2026-04-07) 10 commits
  - t5710: use proper file:// URIs for absolute paths
  - promisor-remote: remove the 'accepted' strvec
  - promisor-remote: keep accepted promisor_info structs alive
@@ -761,44 +603,11 @@ Release tarballs are available at:
  - promisor-remote: pass config entry to all_fields_match() directly
  - promisor-remote: try accepted remotes before others in get_direct()
 
- Promisor remote handling is enhanced to auto-configure remotes based
- on a URL whitelist.
+ Promisor remote handling has been refactored and fixed in
+ preparation for auto-configuration of advertised remotes.
 
- Comments?
- source: <20260402070613.85934-1-christian.couder@gmail.com>
-
-
-* ps/fsck-wo-the-repository (2026-03-23) 12 commits
-  (merged to 'next' on 2026-04-01 at 6ab7607f2d)
- + builtin/fsck: stop using `the_repository` in error reporting
- + builtin/fsck: stop using `the_repository` when marking objects
- + builtin/fsck: stop using `the_repository` when checking packed objects
- + builtin/fsck: stop using `the_repository` with loose objects
- + builtin/fsck: stop using `the_repository` when checking reflogs
- + builtin/fsck: stop using `the_repository` when checking refs
- + builtin/fsck: stop using `the_repository` when snapshotting refs
- + builtin/fsck: fix trivial dependence on `the_repository`
- + fsck: drop USE_THE_REPOSITORY
- + fsck: store repository in fsck options
- + fsck: initialize fsck options via a function
- + fetch-pack: move fsck options into function scope
-
- Internals of "git fsck" have been refactored to not depend on the
- global `the_repository` variable.
-
- Will merge to 'master'.
- source: <20260323-b4-pks-fsck-without-the-repository-v2-0-e8dc79bca651@pks.im>
-
-
-* yc/path-walk-fix-error-reporting (2026-03-20) 1 commit
-  (merged to 'next' on 2026-04-01 at ddcff8b9c6)
- + path-walk: fix NULL pointer dereference in error message
-
- The value of a wrong pointer variable was referenced in an error
- message that reported that it shouldn't be NULL.
-
- Will merge to 'master'.
- source: <20260320114823.3151961-1-ysinghcin@gmail.com>
+ Will merge to 'next'?
+ source: <20260407115243.358642-1-christian.couder@gmail.com>
 
 
 * jr/bisect-custom-terms-in-output (2026-03-20) 1 commit
@@ -810,38 +619,6 @@ Release tarballs are available at:
  Expecting a reroll?
  cf. <xmqqfr5tdbpc.fsf@gitster.g>
  source: <20260320-bisect-terms-v1-1-c30c9540542a@schlaraffenlan.de>
-
-
-* jc/whitespace-incomplete-line (2026-03-17) 1 commit
-  (merged to 'next' on 2026-04-01 at 10a4d95236)
- + apply: fix new-style empty context line triggering incomplete-line check
-
- Fix whitespace correction for new-style empty context lines.
-
- Will merge to 'master'.
- source: <xmqqldfql4hp.fsf@gitster.g>
-
-
-* sp/add-patch-with-fewer-the-repository (2026-03-17) 1 commit
-  (merged to 'next' on 2026-04-01 at b9edaddcff)
- + add-patch: use repository instance from add_i_state instead of the_repository
-
- Reduce dependency on `the_repository` in add-patch.c file.
-
- Will merge to 'master'.
- source: <20260317155230.619378-1-shreyanshpaliwalcmsmn@gmail.com>
-
-
-* ps/commit-graph-overflow-fix (2026-03-23) 1 commit
-  (merged to 'next' on 2026-04-01 at c502054354)
- + commit-graph: fix writing generations with dates exceeding 34 bits
-
- Fix a regression in writing the commit-graph where commits with dates
- exceeding 34 bits (beyond year 2514) could cause an underflow and
- crash Git during the generation data overflow chunk writing.
-
- Will merge to 'master'.
- source: <20260324-pks-commit-graph-overflow-v2-1-843568cf8780@pks.im>
 
 
 * ua/push-remote-group (2026-03-27) 3 commits
@@ -902,22 +679,6 @@ Release tarballs are available at:
  Expecting review responses.
  cf. <xmqqse9zo93p.fsf@gitster.g>
  source: <SY0P300MB080186A23FB9582AD793F0D1CE40A@SY0P300MB0801.AUSP300.PROD.OUTLOOK.COM>
-
-
-* mm/line-log-use-standard-diff-output (2026-03-16) 4 commits
-  (merged to 'next' on 2026-04-01 at 724e6526dc)
- + doc: note that -L supports patch formatting and pickaxe options
- + t4211: add tests for -L with standard diff options
- + line-log: route -L output through the standard diff pipeline
- + line-log: fix crash when combined with pickaxe options
-
- The way the "git log -L<range>:<file>" feature is bolted onto the
- log/diff machinery is being reworked a bit to make the feature
- compatible with more diff options, like -S/G.
-
- Will merge to 'master'.
- cf. <xmqqbjg3y8i9.fsf@gitster.g>
- source: <pull.2065.v2.git.1773714095.gitgitgadget@gmail.com>
 
 
 * ab/clone-default-object-filter (2026-03-14) 1 commit
@@ -988,7 +749,8 @@ Release tarballs are available at:
  source: <pull.2224.v3.git.git.1773238778894.gitgitgadget@gmail.com>
 
 
-* pt/fsmonitor-linux (2026-04-06) 13 commits
+* pt/fsmonitor-linux (2026-04-07) 14 commits
+ - SQUASH???
  - fsmonitor: convert shown khash to strset in do_handle_client
  - fsmonitor: add tests for Linux
  - fsmonitor: add timeout to daemon stop command
@@ -1005,7 +767,8 @@ Release tarballs are available at:
 
  The fsmonitor daemon has been implemented for Linux.
 
- Needs review.
+ Expecting a reroll.
+ cf. <xmqqika24mj0.fsf@gitster.g>
  source: <pull.2147.v13.git.git.1775498098.gitgitgadget@gmail.com>
 
 
@@ -1024,7 +787,7 @@ Release tarballs are available at:
  - repository: fix repo_init() memleak due to missing _clear()
  - Merge branch 'ar/config-hook-cleanups' into ar/parallel-hooks
 
- Needs review.
+ Will merge to 'next'?
  source: <20260404082934.173788-1-adrian.ratiu@collabora.com>
 
 
