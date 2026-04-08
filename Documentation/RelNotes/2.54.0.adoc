@@ -509,6 +509,12 @@ Fixes since v2.53
    working tree, which was broken.
    (merge 339eba65a7 th/backfill-auto-detect-sparseness-fix later to maint).
 
+ * add_files_to_cache() used diff_files() to detect only the paths that
+   are different between the index and the working tree and add them,
+   which does not need rename detection, which interfered with unnecessary
+   conflicts.
+   (merge c0ce43376b ng/add-files-to-cache-wo-rename later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge d79fff4a11 jk/remote-tracking-ref-leakfix later to maint).
    (merge 7a747f972d dd/t5403-modernise later to maint).
