@@ -333,9 +333,10 @@ static int xdl_cleanup_records(xdlclassifier_t *cf, xdfile_t *xdf1, xdfile_t *xd
 		    (action1[i] == INVESTIGATE && !xdl_clean_mmatch(action1, i, xdf1->dstart, xdf1->dend))) {
 			xdf1->reference_index[xdf1->nreff++] = i;
 			/* changed[i] remains false, i.e. keep */
-		} else
+		} else {
 			xdf1->changed[i] = true;
 			/* i.e. discard */
+		}
 	}
 
 	xdf2->nreff = 0;
@@ -344,9 +345,10 @@ static int xdl_cleanup_records(xdlclassifier_t *cf, xdfile_t *xdf1, xdfile_t *xd
 		    (action2[i] == INVESTIGATE && !xdl_clean_mmatch(action2, i, xdf2->dstart, xdf2->dend))) {
 			xdf2->reference_index[xdf2->nreff++] = i;
 			/* changed[i] remains false, i.e. keep */
-		} else
+		} else {
 			xdf2->changed[i] = true;
 			/* i.e. discard */
+		}
 	}
 
 cleanup:
