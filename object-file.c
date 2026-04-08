@@ -1642,6 +1642,34 @@ static int index_blob_packfile_transaction(struct odb_transaction_files *transac
 	return 0;
 }
 
+static int hash_blob_stream(const struct git_hash_algo *hash_algo,
+			    struct object_id *result_oid, int fd, size_t size)
+{
+	unsigned char buf[16384];
+	struct git_hash_ctx ctx;
+	unsigned header_len;
+
+	header_len = format_object_header((char *)buf, sizeof(buf),
+					  OBJ_BLOB, size);
+	hash_algo->init_fn(&ctx);
+	git_hash_update(&ctx, buf, header_len);
+
+	while (size) {
+		size_t rsize = size < sizeof(buf) ? size : sizeof(buf);
+		ssize_t read_result = read_in_full(fd, buf, rsize);
+
+		if ((read_result < 0) || ((size_t)read_result != rsize))
+			return -1;
+
+		git_hash_update(&ctx, buf, rsize);
+		size -= read_result;
+	}
+
+	git_hash_final_oid(result_oid, &ctx);
+
+	return 0;
+}
+
 int index_fd(struct index_state *istate, struct object_id *oid,
 	     int fd, struct stat *st,
 	     enum object_type type, const char *path, unsigned flags)
@@ -1663,18 +1691,23 @@ int index_fd(struct index_state *istate, struct object_id *oid,
 		ret = index_core(istate, oid, fd, xsize_t(st->st_size),
 				 type, path, flags);
 	} else {
-		struct object_database *odb = the_repository->objects;
-		struct odb_transaction_files *files_transaction;
-		struct odb_transaction *transaction;
+		if (flags & INDEX_WRITE_OBJECT) {
+			struct object_database *odb = the_repository->objects;
+			struct odb_transaction_files *files_transaction;
+			struct odb_transaction *transaction;
 
-		transaction = odb_transaction_begin(odb);
-		files_transaction = container_of(odb->transaction,
-						 struct odb_transaction_files,
-						 base);
-		ret = index_blob_packfile_transaction(files_transaction, oid, fd,
-						      xsize_t(st->st_size),
-						      path, flags);
-		odb_transaction_commit(transaction);
+			transaction = odb_transaction_begin(odb);
+			files_transaction = container_of(odb->transaction,
+							 struct odb_transaction_files,
+							 base);
+			ret = index_blob_packfile_transaction(files_transaction, oid, fd,
+							      xsize_t(st->st_size),
+							      path, flags);
+			odb_transaction_commit(transaction);
+		} else {
+			ret = hash_blob_stream(the_repository->hash_algo, oid,
+					       fd, xsize_t(st->st_size));
+		}
 	}
 
 	close(fd);
