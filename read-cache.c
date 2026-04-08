@@ -4033,6 +4033,7 @@ int add_files_to_cache(struct repository *repo, const char *prefix,
 	rev.diffopt.format_callback = update_callback;
 	rev.diffopt.format_callback_data = &data;
 	rev.diffopt.flags.override_submodule_config = 1;
+	rev.diffopt.detect_rename = 0; /* staging worktree changes does not need renames */
 	rev.max_count = 0; /* do not compare unmerged paths with stage #2 */
 
 	/*
