@@ -9,8 +9,8 @@
 #ifndef REFTABLE_RECORD_H
 #define REFTABLE_RECORD_H
 
+#include "reftable-system.h"
 #include "reftable-basics.h"
-#include <stdint.h>
 
 /*
  * Basic data types
