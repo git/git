@@ -1895,14 +1895,19 @@ void run_processes_parallel(const struct run_process_parallel_opts *opts)
 					   "max:%"PRIuMAX,
 					   (uintmax_t)opts->processes);
 
+	pp_init(&pp, opts, &pp_sig);
+
 	/*
 	 * Child tasks might receive input via stdin, terminating early (or not), so
 	 * ignore the default SIGPIPE which gets handled by each feed_pipe_fn which
 	 * actually writes the data to children stdin fds.
+	 *
+	 * This _must_ come after pp_init(), because it installs its own
+	 * SIGPIPE handler (to cleanup children), and we want to supersede
+	 * that.
 	 */
 	sigchain_push(SIGPIPE, SIG_IGN);
 
-	pp_init(&pp, opts, &pp_sig);
 	while (1) {
 		for (i = 0;
 		    i < spawn_cap && !pp.shutdown &&
@@ -1928,9 +1933,9 @@ void run_processes_parallel(const struct run_process_parallel_opts *opts)
 		}
 	}
 
-	pp_cleanup(&pp, opts);
-
 	sigchain_pop(SIGPIPE);
+
+	pp_cleanup(&pp, opts);
 
 	if (do_trace2)
 		trace2_region_leave(tr2_category, tr2_label, NULL);
