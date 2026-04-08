@@ -1,19 +1,17 @@
 #ifndef ODB_H
 #define ODB_H
 
-#include "hashmap.h"
 #include "object.h"
 #include "oidset.h"
 #include "oidmap.h"
 #include "string-list.h"
 #include "thread-utils.h"
 
-struct oidmap;
-struct oidtree;
+struct cached_object_entry;
+struct packed_git;
+struct repository;
 struct strbuf;
 struct strvec;
-struct repository;
-struct multi_pack_index;
 
 /*
  * Set this to 0 to prevent odb_read_object_info_extended() from fetching missing
@@ -30,10 +28,6 @@ extern int fetch_if_missing;
  * `err` must not be null.
  */
 char *compute_alternate_path(const char *path, struct strbuf *err);
-
-struct packed_git;
-struct packfile_store;
-struct cached_object_entry;
 
 /*
  * A transaction may be started for an object database prior to writing new
@@ -395,11 +389,11 @@ int odb_read_object_info(struct object_database *odb,
 			 const struct object_id *oid,
 			 unsigned long *sizep);
 
-enum has_object_flags {
+enum odb_has_object_flags {
 	/* Retry packed storage after checking packed and loose storage */
-	HAS_OBJECT_RECHECK_PACKED = (1 << 0),
+	ODB_HAS_OBJECT_RECHECK_PACKED = (1 << 0),
 	/* Allow fetching the object in case the repository has a promisor remote. */
-	HAS_OBJECT_FETCH_PROMISOR = (1 << 1),
+	ODB_HAS_OBJECT_FETCH_PROMISOR = (1 << 1),
 };
 
 /*
@@ -408,7 +402,7 @@ enum has_object_flags {
  */
 int odb_has_object(struct object_database *odb,
 		   const struct object_id *oid,
-		   enum has_object_flags flags);
+		   enum odb_has_object_flags flags);
 
 int odb_freshen_object(struct object_database *odb,
 		       const struct object_id *oid);
@@ -522,7 +516,7 @@ int odb_for_each_object(struct object_database *odb,
 			const struct object_info *request,
 			odb_for_each_object_cb cb,
 			void *cb_data,
-			unsigned flags);
+			enum odb_for_each_object_flags flags);
 
 enum odb_count_objects_flags {
 	/*
@@ -561,19 +555,19 @@ int odb_find_abbrev_len(struct object_database *odb,
 			int min_len,
 			unsigned *out);
 
-enum {
+enum odb_write_object_flags {
 	/*
 	 * By default, `odb_write_object()` does not actually write anything
 	 * into the object store, but only computes the object ID. This flag
 	 * changes that so that the object will be written as a loose object
 	 * and persisted.
 	 */
-	WRITE_OBJECT_PERSIST = (1 << 0),
+	ODB_WRITE_OBJECT_PERSIST = (1 << 0),
 
 	/*
 	 * Do not print an error in case something goes wrong.
 	 */
-	WRITE_OBJECT_SILENT = (1 << 1),
+	ODB_WRITE_OBJECT_SILENT = (1 << 1),
 };
 
 /*
@@ -589,7 +583,7 @@ int odb_write_object_ext(struct object_database *odb,
 			 enum object_type type,
 			 struct object_id *oid,
 			 struct object_id *compat_oid,
-			 unsigned flags);
+			 enum odb_write_object_flags flags);
 
 static inline int odb_write_object(struct object_database *odb,
 				   const void *buf, unsigned long len,

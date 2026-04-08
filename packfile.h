@@ -354,7 +354,7 @@ typedef int each_packed_object_fn(const struct object_id *oid,
 				  void *data);
 int for_each_object_in_pack(struct packed_git *p,
 			    each_packed_object_fn, void *data,
-			    unsigned flags);
+			    enum odb_for_each_object_flags flags);
 
 /*
  * Iterate through all packed objects in the given packfile store and invoke

@@ -239,7 +239,7 @@ int cache_tree_fully_valid(struct cache_tree *it)
 		return 0;
 	if (it->entry_count < 0 ||
 	    odb_has_object(the_repository->objects, &it->oid,
-			   HAS_OBJECT_RECHECK_PACKED | HAS_OBJECT_FETCH_PROMISOR))
+			   ODB_HAS_OBJECT_RECHECK_PACKED | ODB_HAS_OBJECT_FETCH_PROMISOR))
 		return 0;
 	for (i = 0; i < it->subtree_nr; i++) {
 		if (!cache_tree_fully_valid(it->down[i]->cache_tree))
@@ -292,7 +292,7 @@ static int update_one(struct cache_tree *it,
 
 	if (0 <= it->entry_count &&
 	    odb_has_object(the_repository->objects, &it->oid,
-			   HAS_OBJECT_RECHECK_PACKED | HAS_OBJECT_FETCH_PROMISOR))
+			   ODB_HAS_OBJECT_RECHECK_PACKED | ODB_HAS_OBJECT_FETCH_PROMISOR))
 		return it->entry_count;
 
 	/*
@@ -400,7 +400,7 @@ static int update_one(struct cache_tree *it,
 		if (is_null_oid(oid) ||
 		    (!ce_missing_ok &&
 		     !odb_has_object(the_repository->objects, oid,
-				     HAS_OBJECT_RECHECK_PACKED | HAS_OBJECT_FETCH_PROMISOR))) {
+				     ODB_HAS_OBJECT_RECHECK_PACKED | ODB_HAS_OBJECT_FETCH_PROMISOR))) {
 			strbuf_release(&buffer);
 			if (expected_missing)
 				return -1;
@@ -448,7 +448,7 @@ static int update_one(struct cache_tree *it,
 		struct object_id oid;
 		hash_object_file(the_hash_algo, buffer.buf, buffer.len,
 				 OBJ_TREE, &oid);
-		if (odb_has_object(the_repository->objects, &oid, HAS_OBJECT_RECHECK_PACKED))
+		if (odb_has_object(the_repository->objects, &oid, ODB_HAS_OBJECT_RECHECK_PACKED))
 			oidcpy(&it->oid, &oid);
 		else
 			to_invalidate = 1;
@@ -456,7 +456,7 @@ static int update_one(struct cache_tree *it,
 		hash_object_file(the_hash_algo, buffer.buf, buffer.len,
 				 OBJ_TREE, &it->oid);
 	} else if (odb_write_object_ext(the_repository->objects, buffer.buf, buffer.len, OBJ_TREE,
-					&it->oid, NULL, flags & WRITE_TREE_SILENT ? WRITE_OBJECT_SILENT : 0)) {
+					&it->oid, NULL, flags & WRITE_TREE_SILENT ? ODB_WRITE_OBJECT_SILENT : 0)) {
 		strbuf_release(&buffer);
 		return -1;
 	}

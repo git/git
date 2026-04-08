@@ -425,7 +425,7 @@ int ref_resolves_to_object(const char *refname,
 	if (flags & REF_ISBROKEN)
 		return 0;
 	if (!odb_has_object(repo->objects, oid,
-			    HAS_OBJECT_RECHECK_PACKED | HAS_OBJECT_FETCH_PROMISOR)) {
+			    ODB_HAS_OBJECT_RECHECK_PACKED | ODB_HAS_OBJECT_FETCH_PROMISOR)) {
 		error(_("%s does not point to a valid object!"), refname);
 		return 0;
 	}

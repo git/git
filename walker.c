@@ -155,7 +155,7 @@ static int process(struct walker *walker, struct object *obj)
 	obj->flags |= SEEN;
 
 	if (odb_has_object(the_repository->objects, &obj->oid,
-			   HAS_OBJECT_RECHECK_PACKED | HAS_OBJECT_FETCH_PROMISOR)) {
+			   ODB_HAS_OBJECT_RECHECK_PACKED | ODB_HAS_OBJECT_FETCH_PROMISOR)) {
 		/* We already have it, so we should scan it now. */
 		obj->flags |= TO_SCAN;
 	}
