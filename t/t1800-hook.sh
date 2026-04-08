@@ -6,16 +6,16 @@ test_description='git-hook command and config-managed multihooks'
 . "$TEST_DIRECTORY"/lib-terminal.sh
 
 setup_hooks () {
-	test_config hook.ghi.command "/path/ghi"
-	test_config hook.ghi.event pre-commit --add
-	test_config hook.ghi.event test-hook --add
-	test_config_global hook.def.command "/path/def"
+	test_config hook.ghi.command "/path/ghi" &&
+	test_config hook.ghi.event pre-commit --add &&
+	test_config hook.ghi.event test-hook --add &&
+	test_config_global hook.def.command "/path/def" &&
 	test_config_global hook.def.event pre-commit --add
 }
 
 setup_hookdir () {
-	mkdir .git/hooks
-	write_script .git/hooks/pre-commit <<-EOF
+	mkdir -p .git/hooks &&
+	write_script .git/hooks/pre-commit <<-EOF &&
 	echo \"Legacy Hook\"
 	EOF
 	test_when_finished rm -rf .git/hooks
