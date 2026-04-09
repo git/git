@@ -124,6 +124,9 @@ UI, Workflows & Features
  * Handling of signed commits and tags in fast-import has been made more
    configurable.
 
+ * "git config list" is the official way to spell "git config -l" and
+   "git config --list".  Use it to update the documentation.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -315,6 +318,14 @@ Performance, Internal Implementation, Development Support etc.
  * The way the "git log -L<range>:<file>" feature is bolted onto the
    log/diff machinery is being reworked a bit to make the feature
    compatible with more diff options, like -S/G.
+
+ * Further work to adjust the codebase for C23 that changes functions
+   like strchr() that discarded constness when they return a pointer into
+   a const string to preserve constness.
+
+ * "git rev-list --maximal-only" has been optimized by borrowing the
+   logic used by "git show-branch --independent", which computes the
+   same kind of information much more efficiently.
 
 
 Fixes since v2.53
