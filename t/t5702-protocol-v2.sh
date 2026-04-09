@@ -1125,6 +1125,28 @@ test_expect_success 'clone with http:// using protocol v2 rejects invalid symref
 	test_grep "remote advertised invalid symref-target" stderr
 '
 
+test_expect_success 'clone via http:// using protocol v2 rejects invalid ref from ls-refs' '
+	P="$HTTPD_DOCUMENT_ROOT_PATH/http_lsref_invalid" &&
+
+	git init "$P" &&
+	test_commit -C "$P" one &&
+	git -C "$P" checkout -b branchwithstuff &&
+	test_commit -C "$P" two &&
+
+	# Inject a ref with invalid characters
+	write_script "$HTTPD_ROOT_PATH/one-time-script" <<-\EOF &&
+	sed "s| refs/heads/main| refs/heads/ma*n|" "$1"
+	EOF
+
+	git -c protocol.version=2 \
+		clone "$HTTPD_URL/one_time_script/http_lsref_invalid" \
+		http_lsref_child 2>stderr &&
+
+	# The invalid ref name should be rejected with a warning
+	git -C http_lsref_child rev-parse refs/remotes/origin/branchwithstuff &&
+	test_grep "remote advertised invalid ref name" stderr
+'
+
 test_expect_success 'fetch with http:// using protocol v2' '
 	test_when_finished "rm -f log" &&
 

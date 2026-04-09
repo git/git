@@ -440,6 +440,13 @@ static int process_ref_v2(struct packet_reader *reader, struct ref ***list,
 		goto out;
 	}
 
+	if (check_refname_format(line_sections.items[i].string,
+			         REFNAME_ALLOW_ONELEVEL)) {
+		warning(_("remote advertised invalid ref name '%s', ignoring"),
+			line_sections.items[i].string);
+		goto out;
+	}
+
 	ref = alloc_ref(line_sections.items[i++].string);
 
 	memcpy(ref->old_oid.hash, old_oid.hash, reader->hash_algo->rawsz);
