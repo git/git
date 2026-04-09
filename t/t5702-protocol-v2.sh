@@ -1102,6 +1102,29 @@ test_expect_success 'clone with http:// using protocol v2 rejects invalid unborn
 	test_grep "remote advertised invalid symref-target" stderr
 '
 
+test_expect_success 'clone with http:// using protocol v2 rejects invalid symref-target' '
+	P="$HTTPD_DOCUMENT_ROOT_PATH/http_head_invalid" &&
+
+	git init "$P" &&
+	test_commit -C "$P" one &&
+
+	# Advertise a symref-target HEAD to include invalid characters
+	write_script "$HTTPD_ROOT_PATH/one-time-script" <<-\EOF &&
+	sed "s|symref-target:refs/heads/main|symref-target:refs/heads/ma*n|" "$1"
+	EOF
+
+	git -c protocol.version=2 \
+		clone "$HTTPD_URL/one_time_script/http_head_invalid" \
+		http_head_child 2>stderr &&
+
+	# Client rejects the invalid HEAD and guess_remote_head falls back
+	# to a ref matching the OID matching, being refs/heads/main
+	echo "refs/heads/main" >expect &&
+	git -C http_head_child symbolic-ref HEAD >actual &&
+	test_cmp expect actual &&
+	test_grep "remote advertised invalid symref-target" stderr
+'
+
 test_expect_success 'fetch with http:// using protocol v2' '
 	test_when_finished "rm -f log" &&
 
