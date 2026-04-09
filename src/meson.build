@@ -29,6 +29,7 @@ libgit_rs = custom_target('git_rs',
 )
 libgit_dependencies += declare_dependency(link_with: libgit_rs)
 
+cargo = find_program('cargo', dirs: program_path, native: true, required: get_option('rust'))
 if get_option('tests')
   test('rust', cargo,
     args: [
