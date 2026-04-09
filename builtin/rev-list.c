@@ -25,6 +25,7 @@
 #include "oidset.h"
 #include "oidmap.h"
 #include "packfile.h"
+#include "commit-reach.h"
 #include "quote.h"
 #include "strbuf.h"
 
@@ -633,6 +634,61 @@ static int try_bitmap_disk_usage(struct rev_info *revs,
 	return 0;
 }
 
+/*
+ * If revs->maximal_only is set and no other walk modifiers are provided,
+ * run a faster computation to filter the independent commits and prepare
+ * them for output. Set revs->no_walk to prevent later walking.
+ *
+ * If this algorithm doesn't apply, then no changes are made to revs.
+ */
+static void prepare_maximal_independent(struct rev_info *revs)
+{
+	struct commit_list *c;
+
+	if (!revs->maximal_only)
+		return;
+
+	for (c = revs->commits; c; c = c->next) {
+		if (c->item->object.flags & UNINTERESTING)
+			return;
+	}
+
+	if (revs->limited ||
+	    revs->topo_order ||
+	    revs->first_parent_only ||
+	    revs->reverse ||
+	    revs->max_count >= 0 ||
+	    revs->skip_count >= 0 ||
+	    revs->min_age != (timestamp_t)-1 ||
+	    revs->max_age != (timestamp_t)-1 ||
+	    revs->min_parents > 0 ||
+	    revs->max_parents >= 0 ||
+	    revs->prune_data.nr ||
+	    revs->count ||
+	    revs->left_right ||
+	    revs->boundary ||
+	    revs->tag_objects ||
+	    revs->tree_objects ||
+	    revs->blob_objects ||
+	    revs->filter.choice ||
+	    revs->reflog_info ||
+	    revs->diff ||
+	    revs->grep_filter.pattern_list ||
+	    revs->grep_filter.header_list ||
+	    revs->verbose_header ||
+	    revs->print_parents ||
+	    revs->edge_hint ||
+	    revs->unpacked ||
+	    revs->no_kept_objects ||
+	    revs->line_level_traverse)
+		return;
+
+	reduce_heads_replace(&revs->commits);
+
+	/* Modify 'revs' to only output this commit list. */
+	revs->no_walk = 1;
+}
+
 int cmd_rev_list(int argc,
 		 const char **argv,
 		 const char *prefix,
@@ -875,6 +931,9 @@ int cmd_rev_list(int argc,
 
 	if (prepare_revision_walk(&revs))
 		die("revision walk setup failed");
+
+	prepare_maximal_independent(&revs);
+
 	if (revs.tree_objects)
 		mark_edges_uninteresting(&revs, show_edge, 0);
 
