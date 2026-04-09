@@ -19,6 +19,7 @@
 #include "tree-walk.h"
 #include "object-file.h"
 #include "odb.h"
+#include "odb/transaction.h"
 #include "refs.h"
 #include "resolve-undo.h"
 #include "parse-options.h"
