@@ -424,7 +424,10 @@ static int process_ref_v2(struct packet_reader *reader, struct ref ***list,
 				const char *arg = line_sections.items[i].string;
 
 				if (skip_prefix(arg, "symref-target:", &arg)) {
-					*unborn_head_target = xstrdup(arg);
+					if (!check_refname_format(arg, 0))
+						*unborn_head_target = xstrdup(arg);
+					else
+						warning(_("remote advertised invalid symref-target '%s', ignoring"), arg);
 					break;
 				}
 			}

@@ -1559,6 +1559,7 @@ int cmd_clone(int argc,
 		}
 
 		if (transport_ls_refs_options.unborn_head_target &&
+		    !check_refname_format(transport_ls_refs_options.unborn_head_target, 0) &&
 		    skip_prefix(transport_ls_refs_options.unborn_head_target,
 				"refs/heads/", &branch)) {
 			unborn_head  = xstrdup(transport_ls_refs_options.unborn_head_target);
