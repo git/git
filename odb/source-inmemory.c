@@ -3,20 +3,29 @@
 #include "odb.h"
 #include "odb/source-inmemory.h"
 #include "odb/streaming.h"
+#include "oidtree.h"
 #include "repository.h"
 
-static const struct cached_object *find_cached_object(struct odb_source_inmemory *source,
-						      const struct object_id *oid)
+struct inmemory_object {
+	enum object_type type;
+	const void *buf;
+	unsigned long size;
+};
+
+static const struct inmemory_object *find_cached_object(struct odb_source_inmemory *source,
+							const struct object_id *oid)
 {
-	static const struct cached_object empty_tree = {
+	static const struct inmemory_object empty_tree = {
 		.type = OBJ_TREE,
 		.buf = "",
 	};
-	const struct cached_object_entry *co = source->objects;
+	const struct inmemory_object *object;
 
-	for (size_t i = 0; i < source->objects_nr; i++, co++)
-		if (oideq(&co->oid, oid))
-			return &co->value;
+	if (source->objects) {
+		object = oidtree_get(source->objects, oid);
+		if (object)
+			return object;
+	}
 
 	if (oid->algo && oideq(oid, hash_algos[oid->algo].empty_tree))
 		return &empty_tree;
@@ -30,7 +39,7 @@ static int odb_source_inmemory_read_object_info(struct odb_source *source,
 						enum object_info_flags flags UNUSED)
 {
 	struct odb_source_inmemory *inmemory = odb_source_inmemory_downcast(source);
-	const struct cached_object *object;
+	const struct inmemory_object *object;
 
 	object = find_cached_object(inmemory, oid);
 	if (!object)
@@ -88,7 +97,7 @@ static int odb_source_inmemory_read_object_stream(struct odb_read_stream **out,
 {
 	struct odb_source_inmemory *inmemory = odb_source_inmemory_downcast(source);
 	struct odb_read_stream_inmemory *stream;
-	const struct cached_object *object;
+	const struct inmemory_object *object;
 
 	object = find_cached_object(inmemory, oid);
 	if (!object)
@@ -113,17 +122,23 @@ static int odb_source_inmemory_write_object(struct odb_source *source,
 					    enum odb_write_object_flags flags UNUSED)
 {
 	struct odb_source_inmemory *inmemory = odb_source_inmemory_downcast(source);
-	struct cached_object_entry *object;
+	struct inmemory_object *object;
 
 	hash_object_file(source->odb->repo->hash_algo, buf, len, type, oid);
 
-	ALLOC_GROW(inmemory->objects, inmemory->objects_nr + 1,
-		   inmemory->objects_alloc);
-	object = &inmemory->objects[inmemory->objects_nr++];
-	object->value.size = len;
-	object->value.type = type;
-	object->value.buf = xmemdupz(buf, len);
-	oidcpy(&object->oid, oid);
+	if (!inmemory->objects) {
+		CALLOC_ARRAY(inmemory->objects, 1);
+		oidtree_init(inmemory->objects);
+	} else if (oidtree_contains(inmemory->objects, oid)) {
+		return 0;
+	}
+
+	CALLOC_ARRAY(object, 1);
+	object->size = len;
+	object->type = type;
+	object->buf = xmemdupz(buf, len);
+
+	oidtree_insert(inmemory->objects, oid, object);
 
 	return 0;
 }
@@ -167,12 +182,29 @@ out:
 	return ret;
 }
 
+static int inmemory_object_free(const struct object_id *oid UNUSED,
+				void *node_data,
+				void *cb_data UNUSED)
+{
+	struct inmemory_object *object = node_data;
+	free((void *) object->buf);
+	free(object);
+	return 0;
+}
+
 static void odb_source_inmemory_free(struct odb_source *source)
 {
 	struct odb_source_inmemory *inmemory = odb_source_inmemory_downcast(source);
-	for (size_t i = 0; i < inmemory->objects_nr; i++)
-		free((char *) inmemory->objects[i].value.buf);
-	free(inmemory->objects);
+
+	if (inmemory->objects) {
+		struct object_id null_oid = { 0 };
+
+		oidtree_each(inmemory->objects, &null_oid, 0,
+			     inmemory_object_free, NULL);
+		oidtree_clear(inmemory->objects);
+		free(inmemory->objects);
+	}
+
 	free(inmemory->base.path);
 	free(inmemory);
 }

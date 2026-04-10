@@ -3,14 +3,7 @@
 
 #include "odb/source.h"
 
-struct cached_object_entry {
-	struct object_id oid;
-	struct cached_object {
-		enum object_type type;
-		const void *buf;
-		unsigned long size;
-	} value;
-};
+struct oidtree;
 
 /*
  * An in-memory source that you can write objects to that shall be made
@@ -20,9 +13,7 @@ struct cached_object_entry {
  */
 struct odb_source_inmemory {
 	struct odb_source base;
-
-	struct cached_object_entry *objects;
-	size_t objects_nr, objects_alloc;
+	struct oidtree *objects;
 };
 
 /* Create a new in-memory object database source. */
