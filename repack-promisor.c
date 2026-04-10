@@ -34,6 +34,122 @@ static int write_oid(const struct object_id *oid,
 	return 0;
 }
 
+/*
+ * Go through all .promisor files contained in repo (excluding those whose name
+ * appears in not_repacked_basenames, which acts as a ignorelist), and copies
+ * their content inside the destination file "<packtmp>-<dest_hex>.promisor".
+ * Each line of a never repacked .promisor file is: "<oid> <ref>" (as described
+ * in the write_promisor_file() function).
+ * After a repack, the copied lines will be: "<oid> <ref> <time>", where <time>
+ * is the time (in Unix time) at which the .promisor file was last modified.
+ * Only the lines whose <oid> is present inside "<packtmp>-<dest_hex>.idx" will
+ * be copied.
+ * The contents of all .promisor files are assumed to be correctly formed.
+ */
+static void copy_promisor_content(struct repository *repo,
+					      const char *dest_hex,
+					      const char *packtmp,
+					      struct strset *not_repacked_basenames)
+{
+	char *dest_idx_name;
+	char *dest_promisor_name;
+	FILE *dest;
+	struct strset dest_content = STRSET_INIT;
+	struct strbuf dest_to_write = STRBUF_INIT;
+	struct strbuf source_promisor_name = STRBUF_INIT;
+	struct strbuf line = STRBUF_INIT;
+	struct object_id dest_oid;
+	struct packed_git *dest_pack, *p;
+	int err;
+
+	dest_idx_name = mkpathdup("%s-%s.idx", packtmp, dest_hex);
+	get_oid_hex_algop(dest_hex, &dest_oid, repo->hash_algo);
+	dest_pack = parse_pack_index(repo, dest_oid.hash, dest_idx_name);
+
+	/* Open the .promisor dest file, and fill dest_content with its content */
+	dest_promisor_name = mkpathdup("%s-%s.promisor", packtmp, dest_hex);
+	dest = xfopen(dest_promisor_name, "r+");
+	while (strbuf_getline(&line, dest) != EOF)
+		strset_add(&dest_content, line.buf);
+
+	repo_for_each_pack(repo, p) {
+		FILE *source;
+		struct stat source_stat;
+
+		if (!p->pack_promisor)
+			continue;
+
+		if (not_repacked_basenames &&
+			strset_contains(not_repacked_basenames, pack_basename(p)))
+			continue;
+
+		strbuf_reset(&source_promisor_name);
+		strbuf_addstr(&source_promisor_name, p->pack_name);
+		strbuf_strip_suffix(&source_promisor_name, ".pack");
+		strbuf_addstr(&source_promisor_name, ".promisor");
+
+		if (stat(source_promisor_name.buf, &source_stat))
+			die(_("File not found: %s"), source_promisor_name.buf);
+
+		source = xfopen(source_promisor_name.buf, "r");
+
+		while (strbuf_getline(&line, source) != EOF) {
+			struct string_list line_sections = STRING_LIST_INIT_DUP;
+			struct object_id oid;
+
+			/* Split line into <oid>, <ref> and <time> (if <time> exists) */
+			string_list_split(&line_sections, line.buf, " ", 3);
+
+			/* Ignore the lines where <oid> doesn't appear in the dest_pack */
+			get_oid_hex_algop(line_sections.items[0].string, &oid, repo->hash_algo);
+			if (!find_pack_entry_one(&oid, dest_pack)) {
+				string_list_clear(&line_sections, 0);
+				continue;
+			}
+
+			/* If <time> doesn't exist, retrieve it and add it to line */
+			if (line_sections.nr < 3)
+				strbuf_addf(&line, " %" PRItime, (timestamp_t)source_stat.st_mtime);
+
+			/*
+			 * Add the finalized line to dest_to_write and dest_content if it
+			 * wasn't already present inside dest_content
+			 */
+			if (strset_add(&dest_content, line.buf)) {
+				strbuf_addbuf(&dest_to_write, &line);
+				strbuf_addch(&dest_to_write, '\n');
+			}
+
+			string_list_clear(&line_sections, 0);
+		}
+
+		err = ferror(source);
+		err |= fclose(source);
+		if (err)
+			die(_("Could not read '%s' promisor file"), source_promisor_name.buf);
+	}
+
+	/* If dest_to_write is not empty, then there are new lines to append */
+	if (dest_to_write.len) {
+		if (fseek(dest, 0L, SEEK_END))
+			die_errno(_("fseek failed"));
+		fprintf(dest, "%s", dest_to_write.buf);
+	}
+
+	err = ferror(dest);
+	err |= fclose(dest);
+	if (err)
+		die(_("Could not write '%s' promisor file"), dest_promisor_name);
+
+	close_pack_index(dest_pack);
+	free(dest_idx_name);
+	free(dest_promisor_name);
+	strset_clear(&dest_content);
+	strbuf_release(&dest_to_write);
+	strbuf_release(&source_promisor_name);
+	strbuf_release(&line);
+}
+
 static void finish_repacking_promisor_objects(struct repository *repo,
 					      struct child_process *cmd,
 					      struct string_list *names,
