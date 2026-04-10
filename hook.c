@@ -125,6 +125,7 @@ struct hook_config_cache_entry {
  * event_hooks: event-name to list of friendly-names map.
  * disabled_hooks: set of friendly-names with hook.<friendly-name>.enabled = false.
  * parallel_hooks: friendly-name to parallel flag.
+ * event_jobs: event-name to per-event jobs count (stored as uintptr_t, NULL == unset).
  * jobs: value of the global hook.jobs key. Defaults to 0 if unset (stored in r->hook_jobs).
  */
 struct hook_all_config_cb {
@@ -132,6 +133,7 @@ struct hook_all_config_cb {
 	struct strmap event_hooks;
 	struct string_list disabled_hooks;
 	struct strmap parallel_hooks;
+	struct strmap event_jobs;
 	unsigned int jobs;
 };
 
@@ -231,6 +233,18 @@ static int hook_config_lookup_all(const char *key, const char *value,
 			warning(_("hook.%s.parallel must be a boolean,"
 				  " ignoring: '%s'"),
 				hook_name, value);
+	} else if (!strcmp(subkey, "jobs")) {
+		unsigned int v;
+		if (!git_parse_uint(value, &v))
+			warning(_("hook.%s.jobs must be a positive integer,"
+				  " ignoring: '%s'"),
+				hook_name, value);
+		else if (!v)
+			warning(_("hook.%s.jobs must be positive,"
+				  " ignoring: 0"), hook_name);
+		else
+			strmap_put(&data->event_jobs, hook_name,
+				   (void *)(uintptr_t)v);
 	}
 
 	free(hook_name);
@@ -276,6 +290,7 @@ static void build_hook_config_map(struct repository *r, struct strmap *cache)
 	strmap_init(&cb_data.event_hooks);
 	string_list_init_dup(&cb_data.disabled_hooks);
 	strmap_init(&cb_data.parallel_hooks);
+	strmap_init(&cb_data.event_jobs);
 
 	/* Parse all configs in one run, capturing hook.* including hook.jobs. */
 	repo_config(r, hook_config_lookup_all, &cb_data);
@@ -323,8 +338,10 @@ static void build_hook_config_map(struct repository *r, struct strmap *cache)
 		strmap_put(cache, e->key, hooks);
 	}
 
-	if (r)
+	if (r) {
 		r->hook_jobs = cb_data.jobs;
+		r->event_jobs = cb_data.event_jobs;
+	}
 
 	strmap_clear(&cb_data.commands, 1);
 	strmap_clear(&cb_data.parallel_hooks, 0); /* values are uintptr_t, not heap ptrs */
@@ -587,6 +604,7 @@ static void warn_non_parallel_hooks_override(unsigned int jobs,
 /* Determine how many jobs to use for hook execution. */
 static unsigned int get_hook_jobs(struct repository *r,
 				  struct run_hooks_opt *options,
+				  const char *hook_name,
 				  struct string_list *hook_list)
 {
 	/*
@@ -606,16 +624,34 @@ static unsigned int get_hook_jobs(struct repository *r,
 	 */
 	options->jobs = 1;
 	if (r) {
-		if (r->gitdir && r->hook_config_cache && r->hook_jobs)
-			options->jobs = r->hook_jobs;
-		else
+		if (r->gitdir && r->hook_config_cache) {
+			void *event_jobs;
+
+			if (r->hook_jobs)
+				options->jobs = r->hook_jobs;
+
+			event_jobs = strmap_get(&r->event_jobs, hook_name);
+			if (event_jobs)
+				options->jobs = (unsigned int)(uintptr_t)event_jobs;
+		} else {
+			unsigned int event_jobs;
+			char *key;
+
 			repo_config_get_uint(r, "hook.jobs", &options->jobs);
+
+			key = xstrfmt("hook.%s.jobs", hook_name);
+			if (!repo_config_get_uint(r, key, &event_jobs) && event_jobs)
+				options->jobs = event_jobs;
+			free(key);
+		}
 	}
 
 	/*
 	 * Cap to serial any configured hook not marked as parallel = true.
 	 * This enforces the parallel = false default, even for "traditional"
 	 * hooks from the hookdir which cannot be marked parallel = true.
+	 * The same restriction applies whether jobs came from hook.jobs or
+	 * hook.<event>.jobs.
 	 */
 	for (size_t i = 0; i < hook_list->nr; i++) {
 		struct hook *h = hook_list->items[i].util;
@@ -642,7 +678,7 @@ int run_hooks_opt(struct repository *r, const char *hook_name,
 		.options = options,
 	};
 	int ret = 0;
-	unsigned int jobs = get_hook_jobs(r, options, hook_list);
+	unsigned int jobs = get_hook_jobs(r, options, hook_name, hook_list);
 	const struct run_process_parallel_opts opts = {
 		.tr2_category = "hook",
 		.tr2_label = hook_name,
