@@ -681,6 +681,12 @@ For C programs:
          char *dogs[] = ...;
          walk_all_dogs(dogs);
 
+ - For file timestamps, do not use "st_mtim" (and other timestamp
+   members in "struct stat") unconditionally; not everybody is POSIX
+   (grep for USE_ST_TIMESPEC).  If you only need a timestamp in whole
+   second resolution, "st_mtime" should work fine everywhere.
+
+
 For Perl programs:
 
  - Most of the C guidelines above apply.
