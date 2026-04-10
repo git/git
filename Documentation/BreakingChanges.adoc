@@ -190,7 +190,7 @@ milestones for the introduction of Rust:
 1. Initially, with Git 2.52, support for Rust will be auto-detected by Meson and
    disabled in our Makefile so that the project can sort out the initial
    infrastructure.
-2. In Git 2.53, both build systems will default-enable support for Rust.
+2. In Git 2.55, both build systems will default-enable support for Rust.
    Consequently, builds will break by default if Rust is not available on the
    build host. The use of Rust can still be explicitly disabled via build
    flags.
