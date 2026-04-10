@@ -128,6 +128,45 @@ static int odb_source_inmemory_write_object(struct odb_source *source,
 	return 0;
 }
 
+static int odb_source_inmemory_write_object_stream(struct odb_source *source,
+						   struct odb_write_stream *stream,
+						   size_t len,
+						   struct object_id *oid)
+{
+	char buf[16384];
+	size_t total_read = 0;
+	char *data;
+	int ret;
+
+	CALLOC_ARRAY(data, len);
+	while (!stream->is_finished) {
+		ssize_t bytes_read;
+
+		bytes_read = odb_write_stream_read(stream, buf, sizeof(buf));
+		if (total_read + bytes_read > len) {
+			ret = error("object stream yielded more bytes than expected");
+			goto out;
+		}
+
+		memcpy(data + total_read, buf, bytes_read);
+		total_read += bytes_read;
+	}
+
+	if (total_read != len) {
+		ret = error("object stream yielded less bytes than expected");
+		goto out;
+	}
+
+	ret = odb_source_inmemory_write_object(source, data, len, OBJ_BLOB, oid,
+					       NULL, 0);
+	if (ret < 0)
+		goto out;
+
+out:
+	free(data);
+	return ret;
+}
+
 static void odb_source_inmemory_free(struct odb_source *source)
 {
 	struct odb_source_inmemory *inmemory = odb_source_inmemory_downcast(source);
@@ -149,6 +188,7 @@ struct odb_source_inmemory *odb_source_inmemory_new(struct object_database *odb)
 	source->base.read_object_info = odb_source_inmemory_read_object_info;
 	source->base.read_object_stream = odb_source_inmemory_read_object_stream;
 	source->base.write_object = odb_source_inmemory_write_object;
+	source->base.write_object_stream = odb_source_inmemory_write_object_stream;
 
 	return source;
 }
