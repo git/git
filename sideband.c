@@ -439,7 +439,6 @@ void send_sideband(int fd, int band, const char *data, ssize_t sz, int packet_ma
 	const char *p = data;
 
 	while (sz) {
-		struct iovec iov[2];
 		unsigned n;
 		char hdr[5];
 
@@ -449,19 +448,12 @@ void send_sideband(int fd, int band, const char *data, ssize_t sz, int packet_ma
 		if (0 <= band) {
 			xsnprintf(hdr, sizeof(hdr), "%04x", n + 5);
 			hdr[4] = band;
-			iov[0].iov_base = hdr;
-			iov[0].iov_len = 5;
+			write_or_die(fd, hdr, 5);
 		} else {
 			xsnprintf(hdr, sizeof(hdr), "%04x", n + 4);
-			iov[0].iov_base = hdr;
-			iov[0].iov_len = 4;
+			write_or_die(fd, hdr, 4);
 		}
-
-		iov[1].iov_base = (void *) p;
-		iov[1].iov_len = n;
-
-		writev_or_die(fd, iov, ARRAY_SIZE(iov));
-
+		write_or_die(fd, p, n);
 		p += n;
 		sz -= n;
 	}

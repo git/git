@@ -1429,7 +1429,6 @@ checkfuncs = {
   'initgroups' : [],
   'strtoumax' : ['strtoumax.c', 'strtoimax.c'],
   'pread' : ['pread.c'],
-  'writev' : ['writev.c'],
 }
 
 if host_machine.system() == 'windows'
