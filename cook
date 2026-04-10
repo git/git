@@ -158,6 +158,7 @@ sub get_source {
 	my @id = ();
 	my %msgs = ();
 	my @msgs = ();
+	my %children = ();
 	my %source = ();
 	my %skip_me = ();
 
@@ -175,15 +176,19 @@ sub get_source {
 
 	# Collect parent messages that are not in the series,
 	# as they are likely to be the cover letters.
+	# but of course the patch could be a reply to an
+	# ordinary message.
 	for my $msg (@msgs) {
 		for my $parent (@{$msgs{$msg}}) {
 			if (!exists $msgs{$parent}) {
 				$source{$parent}++;
+				$children{$parent} ||= [];
+				push @{$children{$parent}}, $msg;
 			}
 		}
 	}
 
-	reduce_sources(\@msgs, \%msgs, \%source);
+	reduce_sources(\@msgs, \%msgs, \%source, \%children);
 
 	map {
 		" source: <$_>";
@@ -193,10 +198,10 @@ sub get_source {
 
 sub reduce_sources {
 	# Message-source specific hack
-	my ($msgs_array, $msgs_map, $src_map) = @_;
+	my ($msgs_array, $msgs_map, $src_map, $child_map) = @_;
 
-	# messages without parent, or a singleton patch
-	if ((! %$src_map && @{$msgs_array}) || (@{$msgs_array} == 1)) {
+	# a singleton
+	if (@{$msgs_array} == 1) {
 		%{$src_map} = ($msgs_array->[0] => 1);
 		return;
 	}
@@ -213,6 +218,16 @@ sub reduce_sources {
 		return;
 	}
 
+	# replace a parent with its sole child
+	my %replace = ();
+	for my $src (keys %$src_map) {
+		if (@{$child_map->{$src}} == 1) {
+			$replace{$child_map->{$src}->[0]} = 1;
+		} else {
+			$replace{$src} = $src_map->{$src};
+		}
+	}
+	%$src_map = %replace;
 }
 
 =head1
