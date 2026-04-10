@@ -9,6 +9,7 @@
 struct oidtree_node {
 	struct cb_node base;
 	struct object_id key;
+	void *data;
 };
 
 void oidtree_init(struct oidtree *ot)
@@ -25,15 +26,22 @@ void oidtree_clear(struct oidtree *ot)
 	}
 }
 
-void oidtree_insert(struct oidtree *ot, const struct object_id *oid)
+struct oidtree_data {
+	struct object_id oid;
+};
+
+void oidtree_insert(struct oidtree *ot, const struct object_id *oid,
+		    void *data)
 {
 	struct oidtree_node *on;
+	struct cb_node *node;
 
 	if (!oid->algo)
 		BUG("oidtree_insert requires oid->algo");
 
 	on = mem_pool_alloc(&ot->mem_pool, sizeof(*on));
 	oidcpy(&on->key, oid);
+	on->data = data;
 
 	/*
 	 * n.b. Current callers won't get us duplicates, here.  If a
@@ -41,13 +49,19 @@ void oidtree_insert(struct oidtree *ot, const struct object_id *oid)
 	 * that won't be freed until oidtree_clear.  Currently it's not
 	 * worth maintaining a free list
 	 */
-	cb_insert(&ot->tree, &on->base, sizeof(*oid));
+	node = cb_insert(&ot->tree, &on->base, sizeof(*oid));
+	if (node) {
+		struct oidtree_node *preexisting = container_of(node, struct oidtree_node, base);
+		preexisting->data = data;
+	}
 }
 
-bool oidtree_contains(struct oidtree *ot, const struct object_id *oid)
+static struct oidtree_node *oidtree_lookup(struct oidtree *ot,
+					   const struct object_id *oid)
 {
 	struct object_id k;
 	size_t klen = sizeof(k);
+	struct cb_node *node;
 
 	oidcpy(&k, oid);
 
@@ -58,7 +72,20 @@ bool oidtree_contains(struct oidtree *ot, const struct object_id *oid)
 	klen += BUILD_ASSERT_OR_ZERO(offsetof(struct object_id, hash) <
 				offsetof(struct object_id, algo));
 
-	return !!cb_lookup(&ot->tree, (const uint8_t *)&k, klen);
+	node = cb_lookup(&ot->tree, (const uint8_t *)&k, klen);
+	return node ? container_of(node, struct oidtree_node, base) : NULL;
+}
+
+bool oidtree_contains(struct oidtree *ot, const struct object_id *oid)
+{
+	struct oidtree_node *node = oidtree_lookup(ot, oid);
+	return node ? 1 : 0;
+}
+
+void *oidtree_get(struct oidtree *ot, const struct object_id *oid)
+{
+	struct oidtree_node *node = oidtree_lookup(ot, oid);
+	return node ? node->data : NULL;
 }
 
 struct oidtree_each_data {
@@ -82,7 +109,7 @@ static int iter(struct cb_node *n, void *cb_data)
 			return 0;
 	}
 
-	return data->cb(&node->key, data->cb_data);
+	return data->cb(&node->key, node->data, data->cb_data);
 }
 
 int oidtree_each(struct oidtree *ot, const struct object_id *prefix,

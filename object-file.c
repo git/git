@@ -1857,6 +1857,7 @@ static int for_each_object_wrapper_cb(const struct object_id *oid,
 }
 
 static int for_each_prefixed_object_wrapper_cb(const struct object_id *oid,
+					       void *node_data UNUSED,
 					       void *cb_data)
 {
 	struct for_each_object_wrapper_data *data = cb_data;
@@ -2002,7 +2003,7 @@ static int append_loose_object(const struct object_id *oid,
 			       const char *path UNUSED,
 			       void *data)
 {
-	oidtree_insert(data, oid);
+	oidtree_insert(data, oid, NULL);
 	return 0;
 }
 
