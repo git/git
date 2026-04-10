@@ -1190,4 +1190,42 @@ test_expect_success 'friendly-name matching unknown event warns' '
 	test_grep "same as its event" err
 '
 
+test_expect_success 'hooks in parallel that do not read input' '
+	# Add this to our $PATH to avoid having to write the whole trash
+	# directory into our config options, which would require quoting.
+	mkdir bin &&
+	PATH=$PWD/bin:$PATH &&
+
+	write_script bin/hook-fast <<-\EOF &&
+	# This hook does not read its input, so the parent process
+	# may see SIGPIPE if it is not ignored. It should happen
+	# relatively quickly.
+	exit 0
+	EOF
+
+	write_script bin/hook-slow <<-\EOF &&
+	# This hook is slow, so we expect it to still be running
+	# when the other hook has exited (and the parent has a pipe error
+	# writing to it).
+	#
+	# So we want to be slow enough that we expect this to happen, but not
+	# so slow that the test takes forever. 1 second is probably enough
+	# in practice (and if it is occasionally not on a loaded system, we
+	# will err on the side of having the test pass).
+	sleep 1
+	exit 0
+	EOF
+
+	git init --bare parallel.git &&
+	git -C parallel.git config hook.fast.command "hook-fast" &&
+	git -C parallel.git config hook.fast.event pre-receive &&
+	git -C parallel.git config hook.fast.parallel true &&
+	git -C parallel.git config hook.slow.command "hook-slow" &&
+	git -C parallel.git config hook.slow.event pre-receive &&
+	git -C parallel.git config hook.slow.parallel true &&
+	git -C parallel.git config hook.jobs 2 &&
+
+	git push ./parallel.git "+refs/heads/*:refs/heads/*"
+'
+
 test_done
