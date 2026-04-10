@@ -733,24 +733,12 @@ int odb_pretend_object(struct object_database *odb,
 		       void *buf, unsigned long len, enum object_type type,
 		       struct object_id *oid)
 {
-	struct cached_object_entry *co;
-	char *co_buf;
-
 	hash_object_file(odb->repo->hash_algo, buf, len, type, oid);
 	if (odb_has_object(odb, oid, 0))
 		return 0;
 
-	ALLOC_GROW(odb->inmemory_objects->objects,
-		   odb->inmemory_objects->objects_nr + 1,
-		   odb->inmemory_objects->objects_alloc);
-	co = &odb->inmemory_objects->objects[odb->inmemory_objects->objects_nr++];
-	co->value.size = len;
-	co->value.type = type;
-	co_buf = xmalloc(len);
-	memcpy(co_buf, buf, len);
-	co->value.buf = co_buf;
-	oidcpy(&co->oid, oid);
-	return 0;
+	return odb_source_write_object(&odb->inmemory_objects->base,
+				       buf, len, type, oid, NULL, 0);
 }
 
 void *odb_read_object(struct object_database *odb,

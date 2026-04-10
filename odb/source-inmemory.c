@@ -1,4 +1,5 @@
 #include "git-compat-util.h"
+#include "object-file.h"
 #include "odb.h"
 #include "odb/source-inmemory.h"
 #include "odb/streaming.h"
@@ -104,6 +105,29 @@ static int odb_source_inmemory_read_object_stream(struct odb_read_stream **out,
 	return 0;
 }
 
+static int odb_source_inmemory_write_object(struct odb_source *source,
+					    const void *buf, unsigned long len,
+					    enum object_type type,
+					    struct object_id *oid,
+					    struct object_id *compat_oid UNUSED,
+					    enum odb_write_object_flags flags UNUSED)
+{
+	struct odb_source_inmemory *inmemory = odb_source_inmemory_downcast(source);
+	struct cached_object_entry *object;
+
+	hash_object_file(source->odb->repo->hash_algo, buf, len, type, oid);
+
+	ALLOC_GROW(inmemory->objects, inmemory->objects_nr + 1,
+		   inmemory->objects_alloc);
+	object = &inmemory->objects[inmemory->objects_nr++];
+	object->value.size = len;
+	object->value.type = type;
+	object->value.buf = xmemdupz(buf, len);
+	oidcpy(&object->oid, oid);
+
+	return 0;
+}
+
 static void odb_source_inmemory_free(struct odb_source *source)
 {
 	struct odb_source_inmemory *inmemory = odb_source_inmemory_downcast(source);
@@ -124,6 +148,7 @@ struct odb_source_inmemory *odb_source_inmemory_new(struct object_database *odb)
 	source->base.free = odb_source_inmemory_free;
 	source->base.read_object_info = odb_source_inmemory_read_object_info;
 	source->base.read_object_stream = odb_source_inmemory_read_object_stream;
+	source->base.write_object = odb_source_inmemory_write_object;
 
 	return source;
 }
