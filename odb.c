@@ -560,7 +560,7 @@ static int do_oid_object_info_extended(struct object_database *odb,
 	if (is_null_oid(real))
 		return -1;
 
-	if (!odb_source_read_object_info(&odb->inmemory_objects->base, oid, oi, flags))
+	if (!odb_source_read_object_info(odb->inmemory_objects, oid, oi, flags))
 		return 0;
 
 	odb_prepare_alternates(odb);
@@ -737,7 +737,7 @@ int odb_pretend_object(struct object_database *odb,
 	if (odb_has_object(odb, oid, 0))
 		return 0;
 
-	return odb_source_write_object(&odb->inmemory_objects->base,
+	return odb_source_write_object(odb->inmemory_objects,
 				       buf, len, type, oid, NULL, 0);
 }
 
@@ -1020,7 +1020,7 @@ struct object_database *odb_new(struct repository *repo,
 	o->sources = odb_source_new(o, primary_source, true);
 	o->sources_tail = &o->sources->next;
 	o->alternate_db = xstrdup_or_null(secondary_sources);
-	o->inmemory_objects = odb_source_inmemory_new(o);
+	o->inmemory_objects = &odb_source_inmemory_new(o)->base;
 
 	free(to_free);
 
@@ -1045,7 +1045,7 @@ static void odb_free_sources(struct object_database *o)
 		o->sources = next;
 	}
 
-	odb_source_free(&o->inmemory_objects->base);
+	odb_source_free(o->inmemory_objects);
 	o->inmemory_objects = NULL;
 
 	kh_destroy_odb_path_map(o->source_by_path);

@@ -81,7 +81,7 @@ struct object_database {
 	 * to write them into the object store (e.g. a browse-only
 	 * application).
 	 */
-	struct odb_source_inmemory *inmemory_objects;
+	struct odb_source *inmemory_objects;
 
 	/*
 	 * A fast, rough count of the number of objects in the repository.
