@@ -774,8 +774,7 @@ int odb_pretend_object(struct object_database *odb,
 	char *co_buf;
 
 	hash_object_file(odb->repo->hash_algo, buf, len, type, oid);
-	if (odb_has_object(odb, oid, 0) ||
-	    find_cached_object(odb, oid))
+	if (odb_has_object(odb, oid, 0))
 		return 0;
 
 	ALLOC_GROW(odb->inmemory_objects->objects,
