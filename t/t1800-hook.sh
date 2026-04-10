@@ -832,4 +832,20 @@ test_expect_success 'client hooks: pre-push runs in parallel when hook.jobs > 1'
 	test_cmp expect repo-parallel/hook.order
 '
 
+test_expect_success 'hook.jobs=2 is ignored for force-serial hooks (pre-commit)' '
+	test_when_finished "rm -f sentinel.started sentinel.done hook.order" &&
+	test_config hook.hook-1.event pre-commit &&
+	test_config hook.hook-1.command \
+	    "touch sentinel.started; sleep 2; touch sentinel.done" &&
+	test_config hook.hook-1.parallel true &&
+	test_config hook.hook-2.event pre-commit &&
+	test_config hook.hook-2.command \
+	    "$(sentinel_detector sentinel hook.order)" &&
+	test_config hook.hook-2.parallel true &&
+	test_config hook.jobs 2 &&
+	git commit --allow-empty -m "test: verify force-serial on pre-commit" &&
+	echo serial >expect &&
+	test_cmp expect hook.order
+'
+
 test_done
