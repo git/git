@@ -294,6 +294,15 @@ out:
 	return ret;
 }
 
+static int odb_source_inmemory_freshen_object(struct odb_source *source,
+					      const struct object_id *oid)
+{
+	struct odb_source_inmemory *inmemory = odb_source_inmemory_downcast(source);
+	if (find_cached_object(inmemory, oid))
+		return 1;
+	return 0;
+}
+
 static int inmemory_object_free(const struct object_id *oid UNUSED,
 				void *node_data,
 				void *cb_data UNUSED)
@@ -336,6 +345,7 @@ struct odb_source_inmemory *odb_source_inmemory_new(struct object_database *odb)
 	source->base.count_objects = odb_source_inmemory_count_objects;
 	source->base.write_object = odb_source_inmemory_write_object;
 	source->base.write_object_stream = odb_source_inmemory_write_object_stream;
+	source->base.freshen_object = odb_source_inmemory_freshen_object;
 
 	return source;
 }
