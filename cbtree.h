@@ -6,9 +6,9 @@
  *
  * This is adapted to store arbitrary data (not just NUL-terminated C strings
  * and allocates no memory internally.  The user needs to allocate
- * "struct cb_node" and fill cb_node.k[] with arbitrary match data
- * for memcmp.
- * If "klen" is variable, then it should be embedded into "c_node.k[]"
+ * "struct cb_node" and provide `key_offset` to indicate where the key can be
+ * found relative to the `struct cb_node` for memcmp.
+ * If "klen" is variable, then it should be embedded into the key.
  * Recursion is bound by the maximum value of "klen" used.
  */
 #ifndef CBTREE_H
@@ -23,18 +23,19 @@ struct cb_node {
 	 */
 	uint32_t byte;
 	uint8_t otherbits;
-	uint8_t k[FLEX_ARRAY]; /* arbitrary data, unaligned */
 };
 
 struct cb_tree {
 	struct cb_node *root;
+	ptrdiff_t key_offset;
 };
 
-#define CBTREE_INIT { 0 }
-
-static inline void cb_init(struct cb_tree *t)
+static inline void cb_init(struct cb_tree *t,
+			   ptrdiff_t key_offset)
 {
-	struct cb_tree blank = CBTREE_INIT;
+	struct cb_tree blank = {
+		.key_offset = key_offset,
+	};
 	memcpy(t, &blank, sizeof(*t));
 }
 
