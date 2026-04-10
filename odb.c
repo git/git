@@ -14,6 +14,7 @@
 #include "object-file.h"
 #include "object-name.h"
 #include "odb.h"
+#include "odb/source-inmemory.h"
 #include "packfile.h"
 #include "path.h"
 #include "promisor-remote.h"
@@ -53,9 +54,9 @@ static const struct cached_object *find_cached_object(struct object_database *ob
 		.type = OBJ_TREE,
 		.buf = "",
 	};
-	const struct cached_object_entry *co = object_store->cached_objects;
+	const struct cached_object_entry *co = object_store->inmemory_objects->objects;
 
-	for (size_t i = 0; i < object_store->cached_object_nr; i++, co++)
+	for (size_t i = 0; i < object_store->inmemory_objects->objects_nr; i++, co++)
 		if (oideq(&co->oid, oid))
 			return &co->value;
 
@@ -792,9 +793,10 @@ int odb_pretend_object(struct object_database *odb,
 	    find_cached_object(odb, oid))
 		return 0;
 
-	ALLOC_GROW(odb->cached_objects,
-		   odb->cached_object_nr + 1, odb->cached_object_alloc);
-	co = &odb->cached_objects[odb->cached_object_nr++];
+	ALLOC_GROW(odb->inmemory_objects->objects,
+		   odb->inmemory_objects->objects_nr + 1,
+		   odb->inmemory_objects->objects_alloc);
+	co = &odb->inmemory_objects->objects[odb->inmemory_objects->objects_nr++];
 	co->value.size = len;
 	co->value.type = type;
 	co_buf = xmalloc(len);
@@ -1083,6 +1085,7 @@ struct object_database *odb_new(struct repository *repo,
 	o->sources = odb_source_new(o, primary_source, true);
 	o->sources_tail = &o->sources->next;
 	o->alternate_db = xstrdup_or_null(secondary_sources);
+	o->inmemory_objects = odb_source_inmemory_new(o);
 
 	free(to_free);
 
@@ -1123,9 +1126,11 @@ void odb_free(struct object_database *o)
 	odb_close(o);
 	odb_free_sources(o);
 
-	for (size_t i = 0; i < o->cached_object_nr; i++)
-		free((char *) o->cached_objects[i].value.buf);
-	free(o->cached_objects);
+	for (size_t i = 0; i < o->inmemory_objects->objects_nr; i++)
+		free((char *) o->inmemory_objects->objects[i].value.buf);
+	free(o->inmemory_objects->objects);
+	free(o->inmemory_objects->base.path);
+	free(o->inmemory_objects);
 
 	string_list_clear(&o->submodule_source_paths, 0);
 

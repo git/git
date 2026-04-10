@@ -8,6 +8,7 @@
 #include "thread-utils.h"
 
 struct cached_object_entry;
+struct odb_source_inmemory;
 struct packed_git;
 struct repository;
 struct strbuf;
@@ -80,8 +81,7 @@ struct object_database {
 	 * to write them into the object store (e.g. a browse-only
 	 * application).
 	 */
-	struct cached_object_entry *cached_objects;
-	size_t cached_object_nr, cached_object_alloc;
+	struct odb_source_inmemory *inmemory_objects;
 
 	/*
 	 * A fast, rough count of the number of objects in the repository.

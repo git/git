@@ -404,6 +404,7 @@ libgit_sources = [
   'odb.c',
   'odb/source.c',
   'odb/source-files.c',
+  'odb/source-inmemory.c',
   'odb/streaming.c',
   'odb/transaction.c',
   'oid-array.c',
