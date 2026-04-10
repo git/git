@@ -207,6 +207,25 @@ static int odb_source_inmemory_find_abbrev_len(struct odb_source *source,
 	return ret;
 }
 
+static int count_objects_cb(const struct object_id *oid UNUSED,
+			    struct object_info *oi UNUSED,
+			    void *cb_data)
+{
+	unsigned long *counter = cb_data;
+	(*counter)++;
+	return 0;
+}
+
+static int odb_source_inmemory_count_objects(struct odb_source *source,
+					     enum odb_count_objects_flags flags UNUSED,
+					     unsigned long *out)
+{
+	struct odb_for_each_object_options opts = { 0 };
+	*out = 0;
+	return odb_source_inmemory_for_each_object(source, NULL, count_objects_cb,
+						   out, &opts);
+}
+
 static int odb_source_inmemory_write_object(struct odb_source *source,
 					    const void *buf, unsigned long len,
 					    enum object_type type,
@@ -314,6 +333,7 @@ struct odb_source_inmemory *odb_source_inmemory_new(struct object_database *odb)
 	source->base.read_object_stream = odb_source_inmemory_read_object_stream;
 	source->base.for_each_object = odb_source_inmemory_for_each_object;
 	source->base.find_abbrev_len = odb_source_inmemory_find_abbrev_len;
+	source->base.count_objects = odb_source_inmemory_count_objects;
 	source->base.write_object = odb_source_inmemory_write_object;
 	source->base.write_object_stream = odb_source_inmemory_write_object_stream;
 
