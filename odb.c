@@ -32,21 +32,6 @@
 KHASH_INIT(odb_path_map, const char * /* key: odb_path */,
 	struct odb_source *, 1, fspathhash, fspatheq)
 
-/*
- * This is meant to hold a *small* number of objects that you would
- * want odb_read_object() to be able to return, but yet you do not want
- * to write them into the object store (e.g. a browse-only
- * application).
- */
-struct cached_object_entry {
-	struct object_id oid;
-	struct cached_object {
-		enum object_type type;
-		const void *buf;
-		unsigned long size;
-	} value;
-};
-
 static const struct cached_object *find_cached_object(struct object_database *object_store,
 						      const struct object_id *oid)
 {
@@ -1109,6 +1094,10 @@ static void odb_free_sources(struct object_database *o)
 		odb_source_free(o->sources);
 		o->sources = next;
 	}
+
+	odb_source_free(&o->inmemory_objects->base);
+	o->inmemory_objects = NULL;
+
 	kh_destroy_odb_path_map(o->source_by_path);
 	o->source_by_path = NULL;
 }
@@ -1125,12 +1114,6 @@ void odb_free(struct object_database *o)
 
 	odb_close(o);
 	odb_free_sources(o);
-
-	for (size_t i = 0; i < o->inmemory_objects->objects_nr; i++)
-		free((char *) o->inmemory_objects->objects[i].value.buf);
-	free(o->inmemory_objects->objects);
-	free(o->inmemory_objects->base.path);
-	free(o->inmemory_objects);
 
 	string_list_clear(&o->submodule_source_paths, 0);
 
