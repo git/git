@@ -1,6 +1,7 @@
 #include "git-compat-util.h"
 #include "odb.h"
 #include "odb/source-inmemory.h"
+#include "odb/streaming.h"
 #include "repository.h"
 
 static const struct cached_object *find_cached_object(struct odb_source_inmemory *source,
@@ -53,6 +54,56 @@ static int odb_source_inmemory_read_object_info(struct odb_source *source,
 	return 0;
 }
 
+struct odb_read_stream_inmemory {
+	struct odb_read_stream base;
+	const unsigned char *buf;
+	size_t offset;
+};
+
+static ssize_t odb_read_stream_inmemory_read(struct odb_read_stream *stream,
+					     char *buf, size_t buf_len)
+{
+	struct odb_read_stream_inmemory *inmemory =
+		container_of(stream, struct odb_read_stream_inmemory, base);
+	size_t bytes = buf_len;
+
+	if (buf_len > inmemory->base.size - inmemory->offset)
+		bytes = inmemory->base.size - inmemory->offset;
+
+	memcpy(buf, inmemory->buf + inmemory->offset, bytes);
+	inmemory->offset += bytes;
+
+	return bytes;
+}
+
+static int odb_read_stream_inmemory_close(struct odb_read_stream *stream UNUSED)
+{
+	return 0;
+}
+
+static int odb_source_inmemory_read_object_stream(struct odb_read_stream **out,
+						  struct odb_source *source,
+						  const struct object_id *oid)
+{
+	struct odb_source_inmemory *inmemory = odb_source_inmemory_downcast(source);
+	struct odb_read_stream_inmemory *stream;
+	const struct cached_object *object;
+
+	object = find_cached_object(inmemory, oid);
+	if (!object)
+		return -1;
+
+	CALLOC_ARRAY(stream, 1);
+	stream->base.read = odb_read_stream_inmemory_read;
+	stream->base.close = odb_read_stream_inmemory_close;
+	stream->base.size = object->size;
+	stream->base.type = object->type;
+	stream->buf = object->buf;
+
+	*out = &stream->base;
+	return 0;
+}
+
 static void odb_source_inmemory_free(struct odb_source *source)
 {
 	struct odb_source_inmemory *inmemory = odb_source_inmemory_downcast(source);
@@ -72,6 +123,7 @@ struct odb_source_inmemory *odb_source_inmemory_new(struct object_database *odb)
 
 	source->base.free = odb_source_inmemory_free;
 	source->base.read_object_info = odb_source_inmemory_read_object_info;
+	source->base.read_object_stream = odb_source_inmemory_read_object_stream;
 
 	return source;
 }
