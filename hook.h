@@ -235,6 +235,12 @@ void hook_free(void *p, const char *str);
 void hook_cache_clear(struct strmap *cache);
 
 /**
+ * Returns true if `name` is a recognized hook event name
+ * (e.g. "pre-commit", "post-receive").
+ */
+bool is_known_hook(const char *name);
+
+/**
  * Returns the path to the hook file, or NULL if the hook is missing
  * or disabled. Note that this points to static storage that will be
  * overwritten by further calls to find_hook and run_hook_*.

@@ -5,12 +5,22 @@
 #include "environment.h"
 #include "gettext.h"
 #include "hook.h"
+#include "hook-list.h"
 #include "parse.h"
 #include "path.h"
 #include "run-command.h"
 #include "setup.h"
 #include "strbuf.h"
 #include "strmap.h"
+
+bool is_known_hook(const char *name)
+{
+	const char **h;
+	for (h = hook_name_list; *h; h++)
+		if (!strcmp(*h, name))
+			return true;
+	return false;
+}
 
 const char *find_hook(struct repository *r, const char *name)
 {
