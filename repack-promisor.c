@@ -1,11 +1,17 @@
 #include "git-compat-util.h"
 #include "repack.h"
+#include "hash.h"
 #include "hex.h"
+#include "odb.h"
 #include "pack.h"
 #include "packfile.h"
 #include "path.h"
 #include "repository.h"
 #include "run-command.h"
+#include "strbuf.h"
+#include "string-list.h"
+#include "strmap.h"
+#include "strvec.h"
 
 struct write_oid_context {
 	struct child_process *cmd;
