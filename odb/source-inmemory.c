@@ -33,6 +33,28 @@ static const struct inmemory_object *find_cached_object(struct odb_source_inmemo
 	return NULL;
 }
 
+static void populate_object_info(struct odb_source_inmemory *source,
+				 struct object_info *oi,
+				 const struct inmemory_object *object)
+{
+	if (!oi)
+		return;
+
+	if (oi->typep)
+		*(oi->typep) = object->type;
+	if (oi->sizep)
+		*(oi->sizep) = object->size;
+	if (oi->disk_sizep)
+		*(oi->disk_sizep) = 0;
+	if (oi->delta_base_oid)
+		oidclr(oi->delta_base_oid, source->base.odb->repo->hash_algo);
+	if (oi->contentp)
+		*oi->contentp = xmemdupz(object->buf, object->size);
+	if (oi->mtimep)
+		*oi->mtimep = 0;
+	oi->whence = OI_CACHED;
+}
+
 static int odb_source_inmemory_read_object_info(struct odb_source *source,
 						const struct object_id *oid,
 						struct object_info *oi,
@@ -45,22 +67,7 @@ static int odb_source_inmemory_read_object_info(struct odb_source *source,
 	if (!object)
 		return -1;
 
-	if (oi) {
-		if (oi->typep)
-			*(oi->typep) = object->type;
-		if (oi->sizep)
-			*(oi->sizep) = object->size;
-		if (oi->disk_sizep)
-			*(oi->disk_sizep) = 0;
-		if (oi->delta_base_oid)
-			oidclr(oi->delta_base_oid, source->odb->repo->hash_algo);
-		if (oi->contentp)
-			*oi->contentp = xmemdupz(object->buf, object->size);
-		if (oi->mtimep)
-			*oi->mtimep = 0;
-		oi->whence = OI_CACHED;
-	}
-
+	populate_object_info(inmemory, oi, object);
 	return 0;
 }
 
@@ -112,6 +119,54 @@ static int odb_source_inmemory_read_object_stream(struct odb_read_stream **out,
 
 	*out = &stream->base;
 	return 0;
+}
+
+struct odb_source_inmemory_for_each_object_data {
+	struct odb_source_inmemory *inmemory;
+	const struct object_info *request;
+	odb_for_each_object_cb cb;
+	void *cb_data;
+};
+
+static int odb_source_inmemory_for_each_object_cb(const struct object_id *oid,
+						  void *node_data, void *cb_data)
+{
+	struct odb_source_inmemory_for_each_object_data *data = cb_data;
+	struct inmemory_object *object = node_data;
+
+	if (data->request) {
+		struct object_info oi = *data->request;
+		populate_object_info(data->inmemory, &oi, object);
+		return data->cb(oid, &oi, data->cb_data);
+	} else {
+		return data->cb(oid, NULL, data->cb_data);
+	}
+}
+
+static int odb_source_inmemory_for_each_object(struct odb_source *source,
+					       const struct object_info *request,
+					       odb_for_each_object_cb cb,
+					       void *cb_data,
+					       const struct odb_for_each_object_options *opts)
+{
+	struct odb_source_inmemory *inmemory = odb_source_inmemory_downcast(source);
+	struct odb_source_inmemory_for_each_object_data payload = {
+		.inmemory = inmemory,
+		.request = request,
+		.cb = cb,
+		.cb_data = cb_data,
+	};
+	struct object_id null_oid = { 0 };
+
+	if ((opts->flags & ODB_FOR_EACH_OBJECT_PROMISOR_ONLY) ||
+	    (opts->flags & ODB_FOR_EACH_OBJECT_LOCAL_ONLY && !source->local))
+		return 0;
+	if (!inmemory->objects)
+		return 0;
+
+	return oidtree_each(inmemory->objects,
+			    opts->prefix ? opts->prefix : &null_oid, opts->prefix_hex_len,
+			    odb_source_inmemory_for_each_object_cb, &payload);
 }
 
 static int odb_source_inmemory_write_object(struct odb_source *source,
@@ -219,6 +274,7 @@ struct odb_source_inmemory *odb_source_inmemory_new(struct object_database *odb)
 	source->base.free = odb_source_inmemory_free;
 	source->base.read_object_info = odb_source_inmemory_read_object_info;
 	source->base.read_object_stream = odb_source_inmemory_read_object_stream;
+	source->base.for_each_object = odb_source_inmemory_for_each_object;
 	source->base.write_object = odb_source_inmemory_write_object;
 	source->base.write_object_stream = odb_source_inmemory_write_object_stream;
 
