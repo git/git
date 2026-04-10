@@ -54,6 +54,11 @@ OPTIONS
 	Prepend <prefix>/ to paths in the archive.  Can be repeated; its
 	rightmost value is used for all tracked files.  See below which
 	value gets used by `--add-file`.
++
+The <prefix> is used as given and is not normalized. It may
+include leading slashes or parent directory components (e.g.,
+`../`). Some archive consumers may treat such paths as
+potentially unsafe and adjust or warn during extraction.
 
 -o <file>::
 --output=<file>::
