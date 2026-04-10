@@ -71,6 +71,8 @@ static void copy_promisor_content(struct repository *repo,
 	dest_idx_name = mkpathdup("%s-%s.idx", packtmp, dest_hex);
 	get_oid_hex_algop(dest_hex, &dest_oid, repo->hash_algo);
 	dest_pack = parse_pack_index(repo, dest_oid.hash, dest_idx_name);
+	if (!dest_pack)
+		BUG("parse_pack_index() failed.");
 
 	/* Open the .promisor dest file, and fill dest_content with its content */
 	dest_promisor_name = mkpathdup("%s-%s.promisor", packtmp, dest_hex);
@@ -115,7 +117,8 @@ static void copy_promisor_content(struct repository *repo,
 
 			/* If <time> doesn't exist, retrieve it and add it to line */
 			if (line_sections.nr < 3)
-				strbuf_addf(&line, " %" PRItime, (timestamp_t)source_stat.st_mtime);
+				strbuf_addf(&line, " %" PRItime,
+					    (timestamp_t)source_stat.st_mtime);
 
 			/*
 			 * Add the finalized line to dest_to_write and dest_content if it
@@ -148,6 +151,7 @@ static void copy_promisor_content(struct repository *repo,
 		die(_("Could not write '%s' promisor file"), dest_promisor_name);
 
 	close_pack_index(dest_pack);
+	free(dest_pack);
 	free(dest_idx_name);
 	free(dest_promisor_name);
 	strset_clear(&dest_content);
