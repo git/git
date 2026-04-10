@@ -303,6 +303,32 @@ static int odb_source_inmemory_freshen_object(struct odb_source *source,
 	return 0;
 }
 
+static int odb_source_inmemory_begin_transaction(struct odb_source *source UNUSED,
+						 struct odb_transaction **out UNUSED)
+{
+	return error("in-memory source does not support transactions");
+}
+
+static int odb_source_inmemory_read_alternates(struct odb_source *source UNUSED,
+					       struct strvec *out UNUSED)
+{
+	return 0;
+}
+
+static int odb_source_inmemory_write_alternate(struct odb_source *source UNUSED,
+					       const char *alternate UNUSED)
+{
+	return error("in-memory source does not support alternates");
+}
+
+static void odb_source_inmemory_close(struct odb_source *source UNUSED)
+{
+}
+
+static void odb_source_inmemory_reprepare(struct odb_source *source UNUSED)
+{
+}
+
 static int inmemory_object_free(const struct object_id *oid UNUSED,
 				void *node_data,
 				void *cb_data UNUSED)
@@ -338,6 +364,8 @@ struct odb_source_inmemory *odb_source_inmemory_new(struct object_database *odb)
 	odb_source_init(&source->base, odb, ODB_SOURCE_INMEMORY, "source", false);
 
 	source->base.free = odb_source_inmemory_free;
+	source->base.close = odb_source_inmemory_close;
+	source->base.reprepare = odb_source_inmemory_reprepare;
 	source->base.read_object_info = odb_source_inmemory_read_object_info;
 	source->base.read_object_stream = odb_source_inmemory_read_object_stream;
 	source->base.for_each_object = odb_source_inmemory_for_each_object;
@@ -346,6 +374,9 @@ struct odb_source_inmemory *odb_source_inmemory_new(struct object_database *odb)
 	source->base.write_object = odb_source_inmemory_write_object;
 	source->base.write_object_stream = odb_source_inmemory_write_object_stream;
 	source->base.freshen_object = odb_source_inmemory_freshen_object;
+	source->base.begin_transaction = odb_source_inmemory_begin_transaction;
+	source->base.read_alternates = odb_source_inmemory_read_alternates;
+	source->base.write_alternate = odb_source_inmemory_write_alternate;
 
 	return source;
 }
