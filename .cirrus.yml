@@ -11,7 +11,7 @@ freebsd_task:
     DEFAULT_UNIT_TEST_TARGET: unit-tests-prove
     DEVELOPER: 1
   freebsd_instance:
-    image_family: freebsd-14-3
+    image: freebsd-14-4-release-amd64-ufs
     memory: 2G
   install_script:
     pkg install -y gettext gmake perl5
