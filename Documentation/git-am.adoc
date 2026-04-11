@@ -91,7 +91,7 @@ OPTIONS
 
 --no-message-id::
 	Do not add the Message-ID header to the commit message.
-	`no-message-id` is useful to override `am.messageid`.
+	`--no-message-id` is useful to override `am.messageid`.
 
 -q::
 --quiet::
