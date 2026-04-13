@@ -819,6 +819,20 @@ static void write_selected_commits_v1(struct bitmap_writer *writer,
 	}
 }
 
+static int pseudo_merge_commit_pos_cmp(const void *_va, const void *_vb,
+				       void *_data)
+{
+	struct bitmap_writer *writer = _data;
+	uint32_t pos_a = find_object_pos(writer, _va, NULL);
+	uint32_t pos_b = find_object_pos(writer, _vb, NULL);
+
+	if (pos_a < pos_b)
+		return -1;
+	if (pos_a > pos_b)
+		return 1;
+	return 0;
+}
+
 static void write_pseudo_merges(struct bitmap_writer *writer,
 				struct hashfile *f)
 {
@@ -876,7 +890,12 @@ static void write_pseudo_merges(struct bitmap_writer *writer,
 		oid_array_append(&commits, &kh_key(writer->pseudo_merge_commits, i));
 	}
 
-	oid_array_sort(&commits);
+	/*
+	 * Sort the commits by their bit position so that the lookup
+	 * table can be binary searched by the reader (see
+	 * find_pseudo_merge()).
+	 */
+	QSORT_S(commits.oid, commits.nr, pseudo_merge_commit_pos_cmp, writer);
 
 	/* write lookup table (non-extended) */
 	for (i = 0; i < commits.nr; i++) {

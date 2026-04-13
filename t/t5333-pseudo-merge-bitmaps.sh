@@ -462,7 +462,7 @@ test_expect_success 'use pseudo-merge in boundary traversal' '
 	)
 '
 
-test_expect_failure 'apply pseudo-merges during fill-in traversal' '
+test_expect_success 'apply pseudo-merges during fill-in traversal' '
 	git init pseudo-merge-fill-in-traversal &&
 	test_when_finished "rm -fr pseudo-merge-fill-in-traversal" &&
 	(
