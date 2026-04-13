@@ -14,7 +14,7 @@ git interpret-trailers [--in-place] [--trim-empty]
 
 DESCRIPTION
 -----------
-Add or parse _trailer_ lines at the end of the otherwise
+Add or parse trailers metadata at the end of the otherwise
 free-form part of a commit message. For example, in the following commit
 message
 
