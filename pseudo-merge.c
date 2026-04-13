@@ -236,6 +236,8 @@ static int find_pseudo_merge_group_for_ref(const struct reference *ref, void *_d
 	c = lookup_commit(the_repository, maybe_peeled);
 	if (!c)
 		return 0;
+	if (repo_parse_commit(the_repository, c))
+		return 0;
 	if (!packlist_find(writer->to_pack, maybe_peeled))
 		return 0;
 

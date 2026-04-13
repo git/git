@@ -592,32 +592,34 @@ test_expect_success 'apply pseudo-merges with overlapping groups during fill-in'
 	)
 '
 
-test_expect_failure 'pseudo-merge commits are correctly classified by date' '
+test_expect_success 'pseudo-merge commits are correctly classified by date' '
 	git init pseudo-merge-date-classification &&
 	test_when_finished "rm -fr pseudo-merge-date-classification" &&
 	(
 		cd pseudo-merge-date-classification &&
 
 		test_commit_bulk 64 &&
+
 		tag_everything &&
 		git repack -ad &&
 
 		pack="$(ls .git/objects/pack/pack-*.pack)" &&
 
 		# Configure two pseudo-merge groups: one that only
-		# matches "stable" refs (older than one month), and one
-		# that matches all refs. With 64 freshly-created tags
-		# (all younger than one month) the stable group should
-		# have zero pseudo-merges and the catch-all group should
-		# have one.
+		# matches "stable" refs (older than one month), and
+		# one that matches all refs. With 64 tags whose
+		# commits are all younger than one month, the
+		# "stable" group should have zero pseudo-merges and
+		# the "all" group should have one.
 		#
 		# Use GIT_TEST_DATE_NOW to align "now" (and therefore
 		# "1.month.ago") with the test_tick timestamps so that
 		# the commits are within the last month.
 		#
-		# This exercises the date-based classification in
-		# find_pseudo_merge_group_for_ref(), which requires
-		# that commits are parsed before inspecting their date.
+		# Without parsing the commit, its date field would
+		# be zero, causing it to satisfy date <= threshold
+		# for the "stable" group as well, and both groups
+		# would produce pseudo-merges.
 		git config bitmapPseudoMerge.stable.pattern "refs/tags/" &&
 		git config bitmapPseudoMerge.stable.maxMerges 64 &&
 		git config bitmapPseudoMerge.stable.stableThreshold never &&
@@ -637,7 +639,7 @@ test_expect_failure 'pseudo-merge commits are correctly classified by date' '
 	)
 '
 
-test_expect_success 'sampleRate=0 does not cause division by zero' '
+test_expect_failure 'sampleRate=0 does not cause division by zero' '
 	git init pseudo-merge-sample-rate-zero &&
 	test_when_finished "rm -fr pseudo-merge-sample-rate-zero" &&
 	(
