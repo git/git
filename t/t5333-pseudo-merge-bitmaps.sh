@@ -662,4 +662,34 @@ test_expect_success 'sampleRate=0 does not cause division by zero' '
 	)
 '
 
+test_expect_success 'duplicate pseudo-merge pattern does not leak' '
+	git init pseudo-merge-dup-pattern &&
+	test_when_finished "rm -fr pseudo-merge-dup-pattern" &&
+
+	(
+		cd pseudo-merge-dup-pattern &&
+
+		test_commit_bulk 64 &&
+		tag_everything &&
+		git repack -ad &&
+
+		pack=$(ls .git/objects/pack/pack-*.pack) &&
+
+		# Set the same group'\''s pattern twice. The second
+		# assignment should cleanly release the compiled regex
+		# from the first without leaking.
+		git config bitmapPseudoMerge.test.pattern "refs/tags/" &&
+		git config --add bitmapPseudoMerge.test.pattern "refs/tags/" &&
+		git config bitmapPseudoMerge.test.maxMerges 1 &&
+		git config bitmapPseudoMerge.test.threshold now &&
+		git config bitmapPseudoMerge.test.stableThreshold never &&
+
+		git rev-parse HEAD~63 |
+		test-tool bitmap write "$(basename $pack)" &&
+
+		test_pseudo_merges >merges &&
+		test_line_count = 1 merges
+	)
+'
+
 test_done

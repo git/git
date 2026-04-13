@@ -150,7 +150,10 @@ static int pseudo_merge_config(const char *var, const char *value,
 	if (!strcmp(key, "pattern")) {
 		struct strbuf re = STRBUF_INIT;
 
-		free(group->pattern);
+		if (group->pattern) {
+			regfree(group->pattern);
+			free(group->pattern);
+		}
 		if (*value != '^')
 			strbuf_addch(&re, '^');
 		strbuf_addstr(&re, value);
