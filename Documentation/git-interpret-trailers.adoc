@@ -16,7 +16,12 @@ DESCRIPTION
 -----------
 Add or parse trailers metadata at the end of the otherwise
 free-form part of a commit message, or any other kind of text.
-For example, in the following commit message
+
+A _trailer_ in its simplest form is a key-value pair with a colon as a
+separator. A _trailer block_ consists of one or more trailers. The
+trailer block needs to be preceded by a blank line, where a _blank line_
+is either an empty or a whitespace-only line. For example, in the
+following commit message
 
 ------------------------------------------------
 subject
