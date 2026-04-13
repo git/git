@@ -103,6 +103,10 @@ of the message in turn is either (i) at the end of the input, or (ii)
 the last non-whitespace lines before a line that starts with `---`
 (followed by a space or the end of the line).
 
+This command ignores comment lines (see `core.commentString` in
+linkgit:git-config[1]). This is for use with the `prepare-commit-msg`
+and `commit-msg` hooks.
+
 When reading trailers, there can be no whitespace before or inside the
 _<key>_, but any number of regular space and tab characters are allowed
 between the _<key>_ and the separator. There can be whitespaces before,
