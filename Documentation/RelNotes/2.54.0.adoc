@@ -526,6 +526,12 @@ Fixes since v2.53
    conflicts.
    (merge c0ce43376b ng/add-files-to-cache-wo-rename later to maint).
 
+ * Doc mark-up update for entries in the glossary with bulleted lists.
+   (merge a65cbd87ea jk/doc-markup-sub-list-indentation later to maint).
+
+ * CI dependency updates.
+   (merge 4bdb17e3a8 jc/ci-github-actions-use-checkout-v5 later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge d79fff4a11 jk/remote-tracking-ref-leakfix later to maint).
    (merge 7a747f972d dd/t5403-modernise later to maint).
