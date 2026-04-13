@@ -639,7 +639,7 @@ test_expect_success 'pseudo-merge commits are correctly classified by date' '
 	)
 '
 
-test_expect_failure 'sampleRate=0 does not cause division by zero' '
+test_expect_success 'sampleRate=0 does not cause division by zero' '
 	git init pseudo-merge-sample-rate-zero &&
 	test_when_finished "rm -fr pseudo-merge-sample-rate-zero" &&
 	(

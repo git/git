@@ -169,8 +169,8 @@ static int pseudo_merge_config(const char *var, const char *value,
 		}
 	} else if (!strcmp(key, "samplerate")) {
 		group->sample_rate = git_config_double(var, value, ctx->kvi);
-		if (!(0 <= group->sample_rate && group->sample_rate <= 1)) {
-			warning(_("%s must be between 0 and 1, using default"), var);
+		if (!(0 < group->sample_rate && group->sample_rate <= 1)) {
+			warning(_("%s must be between 0 (exclusive) and 1, using default"), var);
 			group->sample_rate = DEFAULT_PSEUDO_MERGE_SAMPLE_RATE;
 		}
 	} else if (!strcmp(key, "threshold")) {
