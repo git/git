@@ -559,9 +559,9 @@ static struct pseudo_merge *pseudo_merge_at(const struct pseudo_merge_map *pm,
 		if (got == want)
 			return use_pseudo_merge(pm, &pm->v[mi]);
 		else if (got < want)
-			hi = mi;
-		else
 			lo = mi + 1;
+		else
+			hi = mi;
 	}
 
 	warning(_("could not find pseudo-merge for commit %s at offset %"PRIuMAX),

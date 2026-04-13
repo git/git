@@ -496,7 +496,7 @@ test_expect_success 'apply pseudo-merges during fill-in traversal' '
 	)
 '
 
-test_expect_failure 'apply pseudo-merges from multiple groups during fill-in' '
+test_expect_success 'apply pseudo-merges from multiple groups during fill-in' '
 	git init pseudo-merge-fill-in-multi &&
 	test_when_finished "rm -fr pseudo-merge-fill-in-multi" &&
 	(
