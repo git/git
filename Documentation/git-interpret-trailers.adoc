@@ -15,8 +15,8 @@ git interpret-trailers [--in-place] [--trim-empty]
 DESCRIPTION
 -----------
 Add or parse trailers metadata at the end of the otherwise
-free-form part of a commit message. For example, in the following commit
-message
+free-form part of a commit message, or any other kind of text.
+For example, in the following commit message
 
 ------------------------------------------------
 subject
