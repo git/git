@@ -1,0 +1,36 @@
+#!/bin/sh
+# compute relnotes entries
+
+master=${master-master}
+maint=${maint-maint}
+
+tmp=/var/tmp/RE-tmp.$$
+trap 'rm -f "$tmp" "$tmp".*' 0
+
+git rev-list --first-parent --parents --merges --reverse "$@" |
+while read commit before side
+do
+	git cat-file commit $commit >"$tmp"
+	branch=$(sed -ne "s/^Merge branch '\([^']*\)'.*/\1/p" "$tmp")
+
+	sed -e '1,/^Merge branch /d' -e '/^\* /,$d;' "$tmp" |
+	git stripspace -s |
+	sed -e 's/^/   /' -e '1s/^   / * /' >"$tmp.desc"
+
+	if test -s "$tmp.desc"
+	then
+		cat "$tmp.desc"
+	else
+		echo " * [$branch]"
+	fi
+
+	master_count=$(git rev-list ^$master $side | wc -l)
+	maint_count=$(git rev-list ^$maint $side | wc -l)
+	if test "$master_count" = "$maint_count" && test "$maint_count" != 0
+	then
+		Meta/ML "$branch"
+	fi
+
+	echo
+done
+
