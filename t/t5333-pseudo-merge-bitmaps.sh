@@ -549,7 +549,7 @@ test_expect_success 'apply pseudo-merges from multiple groups during fill-in' '
 	)
 '
 
-test_expect_failure 'apply pseudo-merges with overlapping groups during fill-in' '
+test_expect_success 'apply pseudo-merges with overlapping groups during fill-in' '
 	test_when_finished "rm -fr pseudo-merge-fill-in-overlap" &&
 	git init pseudo-merge-fill-in-overlap &&
 	(

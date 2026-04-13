@@ -877,7 +877,7 @@ static void write_pseudo_merges(struct bitmap_writer *writer,
 
 	next_ext = st_add(hashfile_total(f),
 			  st_mult(kh_size(writer->pseudo_merge_commits),
-				  sizeof(uint64_t)));
+				  sizeof(uint32_t) + sizeof(uint64_t)));
 
 	table_start = hashfile_total(f);
 
