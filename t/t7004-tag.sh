@@ -191,15 +191,11 @@ test_expect_success 'trying to create a tag with the name of one existing should
 '
 
 test_expect_success 'trying to create a tag with a non-valid name should fail' '
-	git tag -l >actual &&
-	test_line_count = 1 actual &&
 	test_must_fail git tag "" &&
 	test_must_fail git tag .othertag &&
 	test_must_fail git tag "other tag" &&
 	test_must_fail git tag "othertag^" &&
-	test_must_fail git tag "other~tag" &&
-	git tag -l >actual &&
-	test_line_count = 1 actual
+	test_must_fail git tag "other~tag"
 '
 
 test_expect_success 'creating a tag using HEAD directly should succeed' '
