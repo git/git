@@ -155,8 +155,10 @@ test_expect_success 'Multiple -l or --list options are equivalent to one -l opti
 '
 
 test_expect_success 'listing all tags if one exists should output that tag' '
-	test $(git tag -l) = mytag &&
-	test $(git tag) = mytag
+	git tag -l >actual &&
+	test_grep "^mytag$" actual &&
+	git tag >actual &&
+	test_grep "^mytag$" actual
 '
 
 # pattern matching:
@@ -166,11 +168,15 @@ test_expect_success 'listing a tag using a matching pattern should succeed' '
 '
 
 test_expect_success 'listing a tag with --ignore-case' '
-	test $(git tag -l --ignore-case MYTAG) = mytag
+	echo mytag >expect &&
+	git tag -l --ignore-case MYTAG >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'listing a tag using a matching pattern should output that tag' '
-	test $(git tag -l mytag) = mytag
+	echo mytag >expect &&
+	git tag -l mytag >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'listing tags using a non-matching pattern should succeed' '
@@ -427,8 +433,12 @@ test_expect_success 'listing tags -n in column with column.ui ignored' '
 
 test_expect_success 'a non-annotated tag created without parameters should point to HEAD' '
 	git tag non-annotated-tag &&
-	test $(git cat-file -t non-annotated-tag) = commit &&
-	test $(git rev-parse non-annotated-tag) = $(git rev-parse HEAD)
+	echo commit >expect &&
+	git cat-file -t non-annotated-tag >actual &&
+	test_cmp expect actual &&
+	git rev-parse HEAD >expect &&
+	git rev-parse non-annotated-tag >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'trying to verify an unknown tag should fail' '
@@ -1517,11 +1527,11 @@ test_expect_success GPG 'verify signed tag fails when public key is not present'
 '
 
 test_expect_success 'git tag -a fails if tag annotation is empty' '
-	! (GIT_EDITOR=cat git tag -a initial-comment)
+	test_must_fail env GIT_EDITOR=cat git tag -a initial-comment
 '
 
 test_expect_success 'message in editor has initial comment' '
-	! (GIT_EDITOR=cat git tag -a initial-comment >actual)
+	test_must_fail env GIT_EDITOR=cat git tag -a initial-comment >actual
 '
 
 test_expect_success 'message in editor has initial comment: first line' '
