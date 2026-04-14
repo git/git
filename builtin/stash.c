@@ -44,7 +44,7 @@
 #define BUILTIN_STASH_POP_USAGE \
 	N_("git stash pop [--index] [-q | --quiet] [<stash>]")
 #define BUILTIN_STASH_APPLY_USAGE \
-	N_("git stash apply [--index] [-q | --quiet] [--label-ours=<label>] [--label-theirs=<label>] [--label-base=<label>] [<stash>]")
+	N_("git stash apply [--index] [-q | --quiet] [<stash>]")
 #define BUILTIN_STASH_BRANCH_USAGE \
 	N_("git stash branch <branchname> [<stash>]")
 #define BUILTIN_STASH_STORE_USAGE \
@@ -590,11 +590,8 @@ static void unstage_changes_unless_new(struct object_id *orig_tree)
 		die(_("could not write index"));
 }
 
-static int do_apply_stash_with_labels(const char *prefix,
-				      struct stash_info *info,
-				      int index, int quiet,
-				      const char *label_ours, const char *label_theirs,
-				      const char *label_base)
+static int do_apply_stash(const char *prefix, struct stash_info *info,
+			  int index, int quiet)
 {
 	int clean, ret;
 	int has_index = index;
@@ -646,9 +643,9 @@ static int do_apply_stash_with_labels(const char *prefix,
 
 	init_ui_merge_options(&o, the_repository);
 
-	o.branch1 = label_ours ? label_ours : "Updated upstream";
-	o.branch2 = label_theirs ? label_theirs : "Stashed changes";
-	o.ancestor = label_base ? label_base : "Stash base";
+	o.branch1 = "Updated upstream";
+	o.branch2 = "Stashed changes";
+	o.ancestor = "Stash base";
 
 	if (oideq(&info->b_tree, &c_tree))
 		o.branch1 = "Version stash was based on";
@@ -720,31 +717,17 @@ restore_untracked:
 	return ret;
 }
 
-static int do_apply_stash(const char *prefix, struct stash_info *info,
-			  int index, int quiet)
-{
-	return do_apply_stash_with_labels(prefix, info, index, quiet,
-					  NULL, NULL, NULL);
-}
-
 static int apply_stash(int argc, const char **argv, const char *prefix,
 		       struct repository *repo UNUSED)
 {
 	int ret = -1;
 	int quiet = 0;
 	int index = use_index;
-	const char *label_ours = NULL, *label_theirs = NULL, *label_base = NULL;
 	struct stash_info info = STASH_INFO_INIT;
 	struct option options[] = {
 		OPT__QUIET(&quiet, N_("be quiet, only report errors")),
 		OPT_BOOL(0, "index", &index,
 			 N_("attempt to recreate the index")),
-		OPT_STRING(0, "label-ours", &label_ours, N_("label"),
-			   N_("label for the upstream side in conflict markers")),
-		OPT_STRING(0, "label-theirs", &label_theirs, N_("label"),
-			   N_("label for the stashed side in conflict markers")),
-		OPT_STRING(0, "label-base", &label_base, N_("label"),
-			   N_("label for the base in diff3 conflict markers")),
 		OPT_END()
 	};
 
@@ -754,8 +737,7 @@ static int apply_stash(int argc, const char **argv, const char *prefix,
 	if (get_stash_info(&info, argc, argv))
 		goto cleanup;
 
-	ret = do_apply_stash_with_labels(prefix, &info, index, quiet,
-					 label_ours, label_theirs, label_base);
+	ret = do_apply_stash(prefix, &info, index, quiet);
 cleanup:
 	free_stash_info(&info);
 	return ret;
