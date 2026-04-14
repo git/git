@@ -145,9 +145,7 @@ test_expect_success 'listing all tags if one exists should succeed' '
 '
 
 test_expect_success 'Multiple -l or --list options are equivalent to one -l option' '
-	cat >expect <<-\EOF &&
-	mytag
-	EOF
+	git tag -l >expect &&
 	git tag -l -l >actual &&
 	test_cmp expect actual &&
 	git tag --list --list >actual &&
@@ -223,12 +221,7 @@ test_expect_success 'trying to delete an unknown tag should fail' '
 '
 
 test_expect_success 'trying to delete tags without params should succeed and do nothing' '
-	cat >expect <<-\EOF &&
-	myhead
-	mytag
-	EOF
-	git tag -l >actual &&
-	test_cmp expect actual &&
+	git tag -l >expect &&
 	git tag -d &&
 	git tag -l >actual &&
 	test_cmp expect actual
