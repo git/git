@@ -291,21 +291,21 @@ static int next_flush(int stateless_rpc, int count)
 }
 
 static void mark_tips(struct fetch_negotiator *negotiator,
-		      const struct oid_array *negotiation_tips)
+		      const struct oid_array *negotiation_restrict_tips)
 {
 	struct refs_for_each_ref_options opts = {
 		.flags = REFS_FOR_EACH_INCLUDE_BROKEN,
 	};
 	int i;
 
-	if (!negotiation_tips) {
+	if (!negotiation_restrict_tips) {
 		refs_for_each_ref_ext(get_main_ref_store(the_repository),
 				      rev_list_insert_ref_oid, negotiator, &opts);
 		return;
 	}
 
-	for (i = 0; i < negotiation_tips->nr; i++)
-		rev_list_insert_ref(negotiator, &negotiation_tips->oid[i]);
+	for (i = 0; i < negotiation_restrict_tips->nr; i++)
+		rev_list_insert_ref(negotiator, &negotiation_restrict_tips->oid[i]);
 	return;
 }
 
@@ -355,7 +355,7 @@ static int find_common(struct fetch_negotiator *negotiator,
 			   PACKET_READ_CHOMP_NEWLINE |
 			   PACKET_READ_DIE_ON_ERR_PACKET);
 
-	mark_tips(negotiator, args->negotiation_tips);
+	mark_tips(negotiator, args->negotiation_restrict_tips);
 	for_each_cached_alternate(negotiator, insert_one_alternate_object);
 
 	fetching = 0;
@@ -1728,7 +1728,7 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 			else
 				state = FETCH_SEND_REQUEST;
 
-			mark_tips(negotiator, args->negotiation_tips);
+			mark_tips(negotiator, args->negotiation_restrict_tips);
 			for_each_cached_alternate(negotiator,
 						  insert_one_alternate_object);
 			break;
@@ -2177,7 +2177,7 @@ static void clear_common_flag(struct oidset *s)
 	}
 }
 
-void negotiate_using_fetch(const struct oid_array *negotiation_tips,
+void negotiate_using_fetch(const struct oid_array *negotiation_restrict_tips,
 			   const struct string_list *server_options,
 			   int stateless_rpc,
 			   int fd[],
@@ -2195,13 +2195,13 @@ void negotiate_using_fetch(const struct oid_array *negotiation_tips,
 	timestamp_t min_generation = GENERATION_NUMBER_INFINITY;
 
 	fetch_negotiator_init(the_repository, &negotiator);
-	mark_tips(&negotiator, negotiation_tips);
+	mark_tips(&negotiator, negotiation_restrict_tips);
 
 	packet_reader_init(&reader, fd[0], NULL, 0,
 			   PACKET_READ_CHOMP_NEWLINE |
 			   PACKET_READ_DIE_ON_ERR_PACKET);
 
-	oid_array_for_each((struct oid_array *) negotiation_tips,
+	oid_array_for_each((struct oid_array *) negotiation_restrict_tips,
 			   add_to_object_array,
 			   &nt_object_array);
 

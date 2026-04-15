@@ -1534,7 +1534,7 @@ static int add_oid(const struct reference *ref, void *cb_data)
 	return 0;
 }
 
-static void add_negotiation_tips(struct git_transport_options *smart_options)
+static void add_negotiation_restrict_tips(struct git_transport_options *smart_options)
 {
 	struct oid_array *oids = xcalloc(1, sizeof(*oids));
 	int i;
@@ -1561,7 +1561,7 @@ static void add_negotiation_tips(struct git_transport_options *smart_options)
 			warning(_("ignoring %s=%s because it does not match any refs"),
 				"--negotiation-restrict", s);
 	}
-	smart_options->negotiation_tips = oids;
+	smart_options->negotiation_restrict_tips = oids;
 }
 
 static struct transport *prepare_transport(struct remote *remote, int deepen,
@@ -1597,7 +1597,7 @@ static struct transport *prepare_transport(struct remote *remote, int deepen,
 	}
 	if (negotiation_tip.nr) {
 		if (transport->smart_options)
-			add_negotiation_tips(transport->smart_options);
+			add_negotiation_restrict_tips(transport->smart_options);
 		else
 			warning(_("ignoring %s because the protocol does not support it"),
 				"--negotiation-restrict");

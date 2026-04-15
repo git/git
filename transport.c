@@ -463,7 +463,7 @@ static int fetch_refs_via_pack(struct transport *transport,
 	args.refetch = data->options.refetch;
 	args.stateless_rpc = transport->stateless_rpc;
 	args.server_options = transport->server_options;
-	args.negotiation_tips = data->options.negotiation_tips;
+	args.negotiation_restrict_tips = data->options.negotiation_restrict_tips;
 	args.reject_shallow_remote = transport->smart_options->reject_shallow;
 
 	if (!data->finished_handshake) {
@@ -491,7 +491,7 @@ static int fetch_refs_via_pack(struct transport *transport,
 			warning(_("server does not support wait-for-done"));
 			ret = -1;
 		} else {
-			negotiate_using_fetch(data->options.negotiation_tips,
+			negotiate_using_fetch(data->options.negotiation_restrict_tips,
 					      transport->server_options,
 					      transport->stateless_rpc,
 					      data->fd,
@@ -979,9 +979,9 @@ static int disconnect_git(struct transport *transport)
 		finish_connect(data->conn);
 	}
 
-	if (data->options.negotiation_tips) {
-		oid_array_clear(data->options.negotiation_tips);
-		free(data->options.negotiation_tips);
+	if (data->options.negotiation_restrict_tips) {
+		oid_array_clear(data->options.negotiation_restrict_tips);
+		free(data->options.negotiation_restrict_tips);
 	}
 	list_objects_filter_release(&data->options.filter_options);
 	oid_array_clear(&data->extra_have);

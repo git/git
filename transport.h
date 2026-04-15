@@ -40,13 +40,13 @@ struct git_transport_options {
 
 	/*
 	 * This is only used during fetch. See the documentation of
-	 * negotiation_tips in struct fetch_pack_args.
+	 * negotiation_restrict_tips in struct fetch_pack_args.
 	 *
 	 * This field is only supported by transports that support connect or
 	 * stateless_connect. Set this field directly instead of using
 	 * transport_set_option().
 	 */
-	struct oid_array *negotiation_tips;
+	struct oid_array *negotiation_restrict_tips;
 
 	/*
 	 * If allocated, whenever transport_fetch_refs() is called, add known
