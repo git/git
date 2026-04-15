@@ -969,7 +969,7 @@ endif
 CFLAGS = -g -O2 -Wall
 LDFLAGS =
 CC_LD_DYNPATH = -Wl,-rpath,
-BASIC_CFLAGS = -I.
+BASIC_CFLAGS = -I. -Ilib
 BASIC_LDFLAGS =
 
 # library flags
@@ -994,7 +994,7 @@ SANITIZE_LEAK =
 SANITIZE_ADDRESS =
 
 # For the 'coccicheck' target
-SPATCH_INCLUDE_FLAGS = --all-includes $(addprefix -I ,compat ewah refs sha256 trace2 win32 xdiff)
+SPATCH_INCLUDE_FLAGS = --all-includes $(addprefix -I lib/,compat ewah refs sha256 trace2 win32 xdiff)
 SPATCH_FLAGS =
 SPATCH_TEST_FLAGS =
 
@@ -1085,292 +1085,292 @@ FOUND_SOURCE_FILES := $(filter-out $(GENERATED_H),$(shell $(SOURCES_CMD)))
 FOUND_C_SOURCES = $(filter %.c,$(FOUND_SOURCE_FILES))
 FOUND_H_SOURCES = $(filter %.h,$(FOUND_SOURCE_FILES))
 
-COCCI_SOURCES = $(filter-out $(THIRD_PARTY_SOURCES) reftable/%,$(FOUND_C_SOURCES))
+COCCI_SOURCES = $(filter-out $(THIRD_PARTY_SOURCES) lib/reftable/%,$(FOUND_C_SOURCES))
 
 LIB_H = $(FOUND_H_SOURCES)
 
-LIB_OBJS += abspath.o
-LIB_OBJS += add-interactive.o
-LIB_OBJS += add-patch.o
-LIB_OBJS += advice.o
-LIB_OBJS += alias.o
-LIB_OBJS += alloc.o
-LIB_OBJS += apply.o
-LIB_OBJS += archive-tar.o
-LIB_OBJS += archive-zip.o
-LIB_OBJS += archive.o
-LIB_OBJS += attr.o
-LIB_OBJS += base85.o
-LIB_OBJS += bisect.o
-LIB_OBJS += blame.o
-LIB_OBJS += blob.o
-LIB_OBJS += bloom.o
-LIB_OBJS += branch.o
-LIB_OBJS += bundle-uri.o
-LIB_OBJS += bundle.o
-LIB_OBJS += cache-tree.o
-LIB_OBJS += cbtree.o
-LIB_OBJS += chdir-notify.o
-LIB_OBJS += checkout.o
-LIB_OBJS += chunk-format.o
-LIB_OBJS += color.o
-LIB_OBJS += column.o
-LIB_OBJS += combine-diff.o
-LIB_OBJS += commit-graph.o
-LIB_OBJS += commit-reach.o
-LIB_OBJS += commit.o
-LIB_OBJS += common-exit.o
-LIB_OBJS += common-init.o
-LIB_OBJS += compat/nonblock.o
-LIB_OBJS += compat/obstack.o
-LIB_OBJS += compat/open.o
-LIB_OBJS += compat/terminal.o
-LIB_OBJS += compiler-tricks/not-constant.o
-LIB_OBJS += config.o
-LIB_OBJS += connect.o
-LIB_OBJS += connected.o
-LIB_OBJS += convert.o
-LIB_OBJS += copy.o
-LIB_OBJS += credential.o
-LIB_OBJS += csum-file.o
-LIB_OBJS += ctype.o
-LIB_OBJS += date.o
-LIB_OBJS += decorate.o
-LIB_OBJS += delta-islands.o
-LIB_OBJS += diagnose.o
-LIB_OBJS += diff-delta.o
-LIB_OBJS += diff-merges.o
-LIB_OBJS += diff-lib.o
-LIB_OBJS += diff-no-index.o
-LIB_OBJS += diff.o
-LIB_OBJS += diffcore-break.o
-LIB_OBJS += diffcore-delta.o
-LIB_OBJS += diffcore-order.o
-LIB_OBJS += diffcore-pickaxe.o
-LIB_OBJS += diffcore-rename.o
-LIB_OBJS += diffcore-rotate.o
-LIB_OBJS += dir-iterator.o
-LIB_OBJS += dir.o
-LIB_OBJS += editor.o
-LIB_OBJS += entry.o
-LIB_OBJS += environment.o
-LIB_OBJS += ewah/bitmap.o
-LIB_OBJS += ewah/ewah_bitmap.o
-LIB_OBJS += ewah/ewah_io.o
-LIB_OBJS += ewah/ewah_rlw.o
-LIB_OBJS += exec-cmd.o
-LIB_OBJS += fetch-negotiator.o
-LIB_OBJS += fetch-pack.o
-LIB_OBJS += fmt-merge-msg.o
-LIB_OBJS += fsck.o
-LIB_OBJS += fsmonitor.o
-LIB_OBJS += fsmonitor-ipc.o
-LIB_OBJS += fsmonitor-settings.o
-LIB_OBJS += gettext.o
-LIB_OBJS += git-zlib.o
-LIB_OBJS += gpg-interface.o
-LIB_OBJS += graph.o
-LIB_OBJS += grep.o
-LIB_OBJS += hash-lookup.o
-LIB_OBJS += hash.o
-LIB_OBJS += hashmap.o
-LIB_OBJS += help.o
-LIB_OBJS += hex.o
-LIB_OBJS += hex-ll.o
-LIB_OBJS += hook.o
-LIB_OBJS += ident.o
-LIB_OBJS += json-writer.o
-LIB_OBJS += kwset.o
-LIB_OBJS += levenshtein.o
-LIB_OBJS += line-log.o
-LIB_OBJS += line-range.o
-LIB_OBJS += linear-assignment.o
-LIB_OBJS += list-objects-filter-options.o
-LIB_OBJS += list-objects-filter.o
-LIB_OBJS += list-objects.o
-LIB_OBJS += lockfile.o
-LIB_OBJS += log-tree.o
-LIB_OBJS += loose.o
-LIB_OBJS += ls-refs.o
-LIB_OBJS += mailinfo.o
-LIB_OBJS += mailmap.o
-LIB_OBJS += match-trees.o
-LIB_OBJS += mem-pool.o
-LIB_OBJS += merge-blobs.o
-LIB_OBJS += merge-ll.o
-LIB_OBJS += merge-ort.o
-LIB_OBJS += merge-ort-wrappers.o
-LIB_OBJS += merge.o
-LIB_OBJS += midx.o
-LIB_OBJS += midx-write.o
-LIB_OBJS += name-hash.o
-LIB_OBJS += negotiator/default.o
-LIB_OBJS += negotiator/noop.o
-LIB_OBJS += negotiator/skipping.o
-LIB_OBJS += notes-cache.o
-LIB_OBJS += notes-merge.o
-LIB_OBJS += notes-utils.o
-LIB_OBJS += notes.o
-LIB_OBJS += object-file-convert.o
-LIB_OBJS += object-file.o
-LIB_OBJS += object-name.o
-LIB_OBJS += object.o
-LIB_OBJS += odb.o
-LIB_OBJS += odb/source.o
-LIB_OBJS += odb/source-files.o
-LIB_OBJS += odb/streaming.o
-LIB_OBJS += oid-array.o
-LIB_OBJS += oidmap.o
-LIB_OBJS += oidset.o
-LIB_OBJS += oidtree.o
-LIB_OBJS += pack-bitmap-write.o
-LIB_OBJS += pack-bitmap.o
-LIB_OBJS += pack-check.o
-LIB_OBJS += pack-mtimes.o
-LIB_OBJS += pack-objects.o
-LIB_OBJS += pack-refs.o
-LIB_OBJS += pack-revindex.o
-LIB_OBJS += pack-write.o
-LIB_OBJS += packfile.o
-LIB_OBJS += pager.o
-LIB_OBJS += parallel-checkout.o
-LIB_OBJS += parse.o
-LIB_OBJS += parse-options-cb.o
-LIB_OBJS += parse-options.o
-LIB_OBJS += patch-delta.o
-LIB_OBJS += patch-ids.o
-LIB_OBJS += path.o
-LIB_OBJS += path-walk.o
-LIB_OBJS += pathspec.o
-LIB_OBJS += pkt-line.o
-LIB_OBJS += preload-index.o
-LIB_OBJS += pretty.o
-LIB_OBJS += prio-queue.o
-LIB_OBJS += progress.o
-LIB_OBJS += promisor-remote.o
-LIB_OBJS += prompt.o
-LIB_OBJS += protocol.o
-LIB_OBJS += protocol-caps.o
-LIB_OBJS += prune-packed.o
-LIB_OBJS += pseudo-merge.o
-LIB_OBJS += quote.o
-LIB_OBJS += range-diff.o
-LIB_OBJS += reachable.o
-LIB_OBJS += read-cache.o
-LIB_OBJS += rebase-interactive.o
-LIB_OBJS += rebase.o
-LIB_OBJS += ref-filter.o
-LIB_OBJS += reflog-walk.o
-LIB_OBJS += reflog.o
-LIB_OBJS += refs.o
-LIB_OBJS += refs/debug.o
-LIB_OBJS += refs/files-backend.o
-LIB_OBJS += refs/reftable-backend.o
-LIB_OBJS += refs/iterator.o
-LIB_OBJS += refs/packed-backend.o
-LIB_OBJS += refs/ref-cache.o
-LIB_OBJS += refspec.o
-LIB_OBJS += reftable/basics.o
-LIB_OBJS += reftable/block.o
-LIB_OBJS += reftable/blocksource.o
-LIB_OBJS += reftable/error.o
-LIB_OBJS += reftable/fsck.o
-LIB_OBJS += reftable/iter.o
-LIB_OBJS += reftable/merged.o
-LIB_OBJS += reftable/pq.o
-LIB_OBJS += reftable/record.o
-LIB_OBJS += reftable/stack.o
-LIB_OBJS += reftable/system.o
-LIB_OBJS += reftable/table.o
-LIB_OBJS += reftable/tree.o
-LIB_OBJS += reftable/writer.o
-LIB_OBJS += remote.o
-LIB_OBJS += repack.o
-LIB_OBJS += repack-cruft.o
-LIB_OBJS += repack-filtered.o
-LIB_OBJS += repack-geometry.o
-LIB_OBJS += repack-midx.o
-LIB_OBJS += repack-promisor.o
-LIB_OBJS += replace-object.o
-LIB_OBJS += replay.o
-LIB_OBJS += repo-settings.o
-LIB_OBJS += repository.o
-LIB_OBJS += rerere.o
-LIB_OBJS += reset.o
-LIB_OBJS += resolve-undo.o
-LIB_OBJS += revision.o
-LIB_OBJS += run-command.o
-LIB_OBJS += send-pack.o
-LIB_OBJS += sequencer.o
-LIB_OBJS += serve.o
-LIB_OBJS += server-info.o
-LIB_OBJS += setup.o
-LIB_OBJS += shallow.o
-LIB_OBJS += sideband.o
-LIB_OBJS += sigchain.o
-LIB_OBJS += sparse-index.o
-LIB_OBJS += split-index.o
-LIB_OBJS += stable-qsort.o
-LIB_OBJS += statinfo.o
-LIB_OBJS += strbuf.o
-LIB_OBJS += string-list.o
-LIB_OBJS += strmap.o
-LIB_OBJS += strvec.o
-LIB_OBJS += sub-process.o
-LIB_OBJS += submodule-config.o
-LIB_OBJS += submodule.o
-LIB_OBJS += symlinks.o
-LIB_OBJS += tag.o
-LIB_OBJS += tempfile.o
-LIB_OBJS += thread-utils.o
-LIB_OBJS += tmp-objdir.o
-LIB_OBJS += trace.o
-LIB_OBJS += trace2.o
-LIB_OBJS += trace2/tr2_cfg.o
-LIB_OBJS += trace2/tr2_cmd_name.o
-LIB_OBJS += trace2/tr2_ctr.o
-LIB_OBJS += trace2/tr2_dst.o
-LIB_OBJS += trace2/tr2_sid.o
-LIB_OBJS += trace2/tr2_sysenv.o
-LIB_OBJS += trace2/tr2_tbuf.o
-LIB_OBJS += trace2/tr2_tgt_event.o
-LIB_OBJS += trace2/tr2_tgt_normal.o
-LIB_OBJS += trace2/tr2_tgt_perf.o
-LIB_OBJS += trace2/tr2_tls.o
-LIB_OBJS += trace2/tr2_tmr.o
-LIB_OBJS += trailer.o
-LIB_OBJS += transport-helper.o
-LIB_OBJS += transport.o
-LIB_OBJS += tree-diff.o
-LIB_OBJS += tree-walk.o
-LIB_OBJS += tree.o
-LIB_OBJS += unpack-trees.o
-LIB_OBJS += upload-pack.o
-LIB_OBJS += url.o
-LIB_OBJS += urlmatch.o
-LIB_OBJS += usage.o
-LIB_OBJS += userdiff.o
-LIB_OBJS += utf8.o
+LIB_OBJS += lib/abspath.o
+LIB_OBJS += lib/add-interactive.o
+LIB_OBJS += lib/add-patch.o
+LIB_OBJS += lib/advice.o
+LIB_OBJS += lib/alias.o
+LIB_OBJS += lib/alloc.o
+LIB_OBJS += lib/apply.o
+LIB_OBJS += lib/archive-tar.o
+LIB_OBJS += lib/archive-zip.o
+LIB_OBJS += lib/archive.o
+LIB_OBJS += lib/attr.o
+LIB_OBJS += lib/base85.o
+LIB_OBJS += lib/bisect.o
+LIB_OBJS += lib/blame.o
+LIB_OBJS += lib/blob.o
+LIB_OBJS += lib/bloom.o
+LIB_OBJS += lib/branch.o
+LIB_OBJS += lib/bundle-uri.o
+LIB_OBJS += lib/bundle.o
+LIB_OBJS += lib/cache-tree.o
+LIB_OBJS += lib/cbtree.o
+LIB_OBJS += lib/chdir-notify.o
+LIB_OBJS += lib/checkout.o
+LIB_OBJS += lib/chunk-format.o
+LIB_OBJS += lib/color.o
+LIB_OBJS += lib/column.o
+LIB_OBJS += lib/combine-diff.o
+LIB_OBJS += lib/commit-graph.o
+LIB_OBJS += lib/commit-reach.o
+LIB_OBJS += lib/commit.o
+LIB_OBJS += lib/common-exit.o
+LIB_OBJS += lib/common-init.o
+LIB_OBJS += lib/compat/nonblock.o
+LIB_OBJS += lib/compat/obstack.o
+LIB_OBJS += lib/compat/open.o
+LIB_OBJS += lib/compat/terminal.o
+LIB_OBJS += lib/compiler-tricks/not-constant.o
+LIB_OBJS += lib/config.o
+LIB_OBJS += lib/connect.o
+LIB_OBJS += lib/connected.o
+LIB_OBJS += lib/convert.o
+LIB_OBJS += lib/copy.o
+LIB_OBJS += lib/credential.o
+LIB_OBJS += lib/csum-file.o
+LIB_OBJS += lib/ctype.o
+LIB_OBJS += lib/date.o
+LIB_OBJS += lib/decorate.o
+LIB_OBJS += lib/delta-islands.o
+LIB_OBJS += lib/diagnose.o
+LIB_OBJS += lib/diff-delta.o
+LIB_OBJS += lib/diff-merges.o
+LIB_OBJS += lib/diff-lib.o
+LIB_OBJS += lib/diff-no-index.o
+LIB_OBJS += lib/diff.o
+LIB_OBJS += lib/diffcore-break.o
+LIB_OBJS += lib/diffcore-delta.o
+LIB_OBJS += lib/diffcore-order.o
+LIB_OBJS += lib/diffcore-pickaxe.o
+LIB_OBJS += lib/diffcore-rename.o
+LIB_OBJS += lib/diffcore-rotate.o
+LIB_OBJS += lib/dir-iterator.o
+LIB_OBJS += lib/dir.o
+LIB_OBJS += lib/editor.o
+LIB_OBJS += lib/entry.o
+LIB_OBJS += lib/environment.o
+LIB_OBJS += lib/ewah/bitmap.o
+LIB_OBJS += lib/ewah/ewah_bitmap.o
+LIB_OBJS += lib/ewah/ewah_io.o
+LIB_OBJS += lib/ewah/ewah_rlw.o
+LIB_OBJS += lib/exec-cmd.o
+LIB_OBJS += lib/fetch-negotiator.o
+LIB_OBJS += lib/fetch-pack.o
+LIB_OBJS += lib/fmt-merge-msg.o
+LIB_OBJS += lib/fsck.o
+LIB_OBJS += lib/fsmonitor.o
+LIB_OBJS += lib/fsmonitor-ipc.o
+LIB_OBJS += lib/fsmonitor-settings.o
+LIB_OBJS += lib/gettext.o
+LIB_OBJS += lib/git-zlib.o
+LIB_OBJS += lib/gpg-interface.o
+LIB_OBJS += lib/graph.o
+LIB_OBJS += lib/grep.o
+LIB_OBJS += lib/hash-lookup.o
+LIB_OBJS += lib/hash.o
+LIB_OBJS += lib/hashmap.o
+LIB_OBJS += lib/help.o
+LIB_OBJS += lib/hex.o
+LIB_OBJS += lib/hex-ll.o
+LIB_OBJS += lib/hook.o
+LIB_OBJS += lib/ident.o
+LIB_OBJS += lib/json-writer.o
+LIB_OBJS += lib/kwset.o
+LIB_OBJS += lib/levenshtein.o
+LIB_OBJS += lib/line-log.o
+LIB_OBJS += lib/line-range.o
+LIB_OBJS += lib/linear-assignment.o
+LIB_OBJS += lib/list-objects-filter-options.o
+LIB_OBJS += lib/list-objects-filter.o
+LIB_OBJS += lib/list-objects.o
+LIB_OBJS += lib/lockfile.o
+LIB_OBJS += lib/log-tree.o
+LIB_OBJS += lib/loose.o
+LIB_OBJS += lib/ls-refs.o
+LIB_OBJS += lib/mailinfo.o
+LIB_OBJS += lib/mailmap.o
+LIB_OBJS += lib/match-trees.o
+LIB_OBJS += lib/mem-pool.o
+LIB_OBJS += lib/merge-blobs.o
+LIB_OBJS += lib/merge-ll.o
+LIB_OBJS += lib/merge-ort.o
+LIB_OBJS += lib/merge-ort-wrappers.o
+LIB_OBJS += lib/merge.o
+LIB_OBJS += lib/midx.o
+LIB_OBJS += lib/midx-write.o
+LIB_OBJS += lib/name-hash.o
+LIB_OBJS += lib/negotiator/default.o
+LIB_OBJS += lib/negotiator/noop.o
+LIB_OBJS += lib/negotiator/skipping.o
+LIB_OBJS += lib/notes-cache.o
+LIB_OBJS += lib/notes-merge.o
+LIB_OBJS += lib/notes-utils.o
+LIB_OBJS += lib/notes.o
+LIB_OBJS += lib/object-file-convert.o
+LIB_OBJS += lib/object-file.o
+LIB_OBJS += lib/object-name.o
+LIB_OBJS += lib/object.o
+LIB_OBJS += lib/odb.o
+LIB_OBJS += lib/odb/source.o
+LIB_OBJS += lib/odb/source-files.o
+LIB_OBJS += lib/odb/streaming.o
+LIB_OBJS += lib/oid-array.o
+LIB_OBJS += lib/oidmap.o
+LIB_OBJS += lib/oidset.o
+LIB_OBJS += lib/oidtree.o
+LIB_OBJS += lib/pack-bitmap-write.o
+LIB_OBJS += lib/pack-bitmap.o
+LIB_OBJS += lib/pack-check.o
+LIB_OBJS += lib/pack-mtimes.o
+LIB_OBJS += lib/pack-objects.o
+LIB_OBJS += lib/pack-refs.o
+LIB_OBJS += lib/pack-revindex.o
+LIB_OBJS += lib/pack-write.o
+LIB_OBJS += lib/packfile.o
+LIB_OBJS += lib/pager.o
+LIB_OBJS += lib/parallel-checkout.o
+LIB_OBJS += lib/parse.o
+LIB_OBJS += lib/parse-options-cb.o
+LIB_OBJS += lib/parse-options.o
+LIB_OBJS += lib/patch-delta.o
+LIB_OBJS += lib/patch-ids.o
+LIB_OBJS += lib/path.o
+LIB_OBJS += lib/path-walk.o
+LIB_OBJS += lib/pathspec.o
+LIB_OBJS += lib/pkt-line.o
+LIB_OBJS += lib/preload-index.o
+LIB_OBJS += lib/pretty.o
+LIB_OBJS += lib/prio-queue.o
+LIB_OBJS += lib/progress.o
+LIB_OBJS += lib/promisor-remote.o
+LIB_OBJS += lib/prompt.o
+LIB_OBJS += lib/protocol.o
+LIB_OBJS += lib/protocol-caps.o
+LIB_OBJS += lib/prune-packed.o
+LIB_OBJS += lib/pseudo-merge.o
+LIB_OBJS += lib/quote.o
+LIB_OBJS += lib/range-diff.o
+LIB_OBJS += lib/reachable.o
+LIB_OBJS += lib/read-cache.o
+LIB_OBJS += lib/rebase-interactive.o
+LIB_OBJS += lib/rebase.o
+LIB_OBJS += lib/ref-filter.o
+LIB_OBJS += lib/reflog-walk.o
+LIB_OBJS += lib/reflog.o
+LIB_OBJS += lib/refs.o
+LIB_OBJS += lib/refs/debug.o
+LIB_OBJS += lib/refs/files-backend.o
+LIB_OBJS += lib/refs/reftable-backend.o
+LIB_OBJS += lib/refs/iterator.o
+LIB_OBJS += lib/refs/packed-backend.o
+LIB_OBJS += lib/refs/ref-cache.o
+LIB_OBJS += lib/refspec.o
+LIB_OBJS += lib/reftable/basics.o
+LIB_OBJS += lib/reftable/block.o
+LIB_OBJS += lib/reftable/blocksource.o
+LIB_OBJS += lib/reftable/error.o
+LIB_OBJS += lib/reftable/fsck.o
+LIB_OBJS += lib/reftable/iter.o
+LIB_OBJS += lib/reftable/merged.o
+LIB_OBJS += lib/reftable/pq.o
+LIB_OBJS += lib/reftable/record.o
+LIB_OBJS += lib/reftable/stack.o
+LIB_OBJS += lib/reftable/system.o
+LIB_OBJS += lib/reftable/table.o
+LIB_OBJS += lib/reftable/tree.o
+LIB_OBJS += lib/reftable/writer.o
+LIB_OBJS += lib/remote.o
+LIB_OBJS += lib/repack.o
+LIB_OBJS += lib/repack-cruft.o
+LIB_OBJS += lib/repack-filtered.o
+LIB_OBJS += lib/repack-geometry.o
+LIB_OBJS += lib/repack-midx.o
+LIB_OBJS += lib/repack-promisor.o
+LIB_OBJS += lib/replace-object.o
+LIB_OBJS += lib/replay.o
+LIB_OBJS += lib/repo-settings.o
+LIB_OBJS += lib/repository.o
+LIB_OBJS += lib/rerere.o
+LIB_OBJS += lib/reset.o
+LIB_OBJS += lib/resolve-undo.o
+LIB_OBJS += lib/revision.o
+LIB_OBJS += lib/run-command.o
+LIB_OBJS += lib/send-pack.o
+LIB_OBJS += lib/sequencer.o
+LIB_OBJS += lib/serve.o
+LIB_OBJS += lib/server-info.o
+LIB_OBJS += lib/setup.o
+LIB_OBJS += lib/shallow.o
+LIB_OBJS += lib/sideband.o
+LIB_OBJS += lib/sigchain.o
+LIB_OBJS += lib/sparse-index.o
+LIB_OBJS += lib/split-index.o
+LIB_OBJS += lib/stable-qsort.o
+LIB_OBJS += lib/statinfo.o
+LIB_OBJS += lib/strbuf.o
+LIB_OBJS += lib/string-list.o
+LIB_OBJS += lib/strmap.o
+LIB_OBJS += lib/strvec.o
+LIB_OBJS += lib/sub-process.o
+LIB_OBJS += lib/submodule-config.o
+LIB_OBJS += lib/submodule.o
+LIB_OBJS += lib/symlinks.o
+LIB_OBJS += lib/tag.o
+LIB_OBJS += lib/tempfile.o
+LIB_OBJS += lib/thread-utils.o
+LIB_OBJS += lib/tmp-objdir.o
+LIB_OBJS += lib/trace.o
+LIB_OBJS += lib/trace2.o
+LIB_OBJS += lib/trace2/tr2_cfg.o
+LIB_OBJS += lib/trace2/tr2_cmd_name.o
+LIB_OBJS += lib/trace2/tr2_ctr.o
+LIB_OBJS += lib/trace2/tr2_dst.o
+LIB_OBJS += lib/trace2/tr2_sid.o
+LIB_OBJS += lib/trace2/tr2_sysenv.o
+LIB_OBJS += lib/trace2/tr2_tbuf.o
+LIB_OBJS += lib/trace2/tr2_tgt_event.o
+LIB_OBJS += lib/trace2/tr2_tgt_normal.o
+LIB_OBJS += lib/trace2/tr2_tgt_perf.o
+LIB_OBJS += lib/trace2/tr2_tls.o
+LIB_OBJS += lib/trace2/tr2_tmr.o
+LIB_OBJS += lib/trailer.o
+LIB_OBJS += lib/transport-helper.o
+LIB_OBJS += lib/transport.o
+LIB_OBJS += lib/tree-diff.o
+LIB_OBJS += lib/tree-walk.o
+LIB_OBJS += lib/tree.o
+LIB_OBJS += lib/unpack-trees.o
+LIB_OBJS += lib/upload-pack.o
+LIB_OBJS += lib/url.o
+LIB_OBJS += lib/urlmatch.o
+LIB_OBJS += lib/usage.o
+LIB_OBJS += lib/userdiff.o
+LIB_OBJS += lib/utf8.o
 ifndef WITH_RUST
-LIB_OBJS += varint.o
+LIB_OBJS += lib/varint.o
 endif
-LIB_OBJS += version.o
-LIB_OBJS += versioncmp.o
-LIB_OBJS += walker.o
-LIB_OBJS += wildmatch.o
-LIB_OBJS += worktree.o
-LIB_OBJS += wrapper.o
-LIB_OBJS += write-or-die.o
-LIB_OBJS += ws.o
-LIB_OBJS += wt-status.o
-LIB_OBJS += xdiff-interface.o
-LIB_OBJS += xdiff/xdiffi.o
-LIB_OBJS += xdiff/xemit.o
-LIB_OBJS += xdiff/xhistogram.o
-LIB_OBJS += xdiff/xmerge.o
-LIB_OBJS += xdiff/xpatience.o
-LIB_OBJS += xdiff/xprepare.o
-LIB_OBJS += xdiff/xutils.o
+LIB_OBJS += lib/version.o
+LIB_OBJS += lib/versioncmp.o
+LIB_OBJS += lib/walker.o
+LIB_OBJS += lib/wildmatch.o
+LIB_OBJS += lib/worktree.o
+LIB_OBJS += lib/wrapper.o
+LIB_OBJS += lib/write-or-die.o
+LIB_OBJS += lib/ws.o
+LIB_OBJS += lib/wt-status.o
+LIB_OBJS += lib/xdiff-interface.o
+LIB_OBJS += lib/xdiff/xdiffi.o
+LIB_OBJS += lib/xdiff/xemit.o
+LIB_OBJS += lib/xdiff/xhistogram.o
+LIB_OBJS += lib/xdiff/xmerge.o
+LIB_OBJS += lib/xdiff/xpatience.o
+LIB_OBJS += lib/xdiff/xprepare.o
+LIB_OBJS += lib/xdiff/xutils.o
 
 BUILTIN_OBJS += builtin/add.o
 BUILTIN_OBJS += builtin/am.o
@@ -1509,14 +1509,14 @@ BUILTIN_OBJS += builtin/write-tree.o
 # files which are taken from some third-party source where we want to be
 # less strict about issues such as coding style so we don't diverge from
 # upstream unnecessarily (making merging in future changes easier).
-THIRD_PARTY_SOURCES += compat/inet_ntop.c
-THIRD_PARTY_SOURCES += compat/inet_pton.c
-THIRD_PARTY_SOURCES += compat/nedmalloc/%
-THIRD_PARTY_SOURCES += compat/obstack.%
-THIRD_PARTY_SOURCES += compat/poll/%
-THIRD_PARTY_SOURCES += compat/regex/%
-THIRD_PARTY_SOURCES += sha1collisiondetection/%
-THIRD_PARTY_SOURCES += sha1dc/%
+THIRD_PARTY_SOURCES += lib/compat/inet_ntop.c
+THIRD_PARTY_SOURCES += lib/compat/inet_pton.c
+THIRD_PARTY_SOURCES += lib/compat/nedmalloc/%
+THIRD_PARTY_SOURCES += lib/compat/obstack.%
+THIRD_PARTY_SOURCES += lib/compat/poll/%
+THIRD_PARTY_SOURCES += lib/compat/regex/%
+THIRD_PARTY_SOURCES += lib/sha1collisiondetection/%
+THIRD_PARTY_SOURCES += lib/sha1dc/%
 THIRD_PARTY_SOURCES += $(UNIT_TEST_DIR)/clar/%
 THIRD_PARTY_SOURCES += $(UNIT_TEST_DIR)/clar/clar/%
 
@@ -1746,7 +1746,7 @@ endif
 
 ifdef NO_LIBGEN_H
 	COMPAT_CFLAGS += -DNO_LIBGEN_H
-	COMPAT_OBJS += compat/basename.o
+	COMPAT_OBJS += lib/compat/basename.o
 endif
 
 ifdef USE_LIBPCRE1
@@ -1812,7 +1812,7 @@ else
         endif
         ifdef USE_CURL_FOR_IMAP_SEND
 		BASIC_CFLAGS += -DUSE_CURL_FOR_IMAP_SEND
-		IMAP_SEND_BUILDDEPS = http.o
+		IMAP_SEND_BUILDDEPS = lib/http.o
 		IMAP_SEND_LDFLAGS += $(CURL_LIBCURL)
         endif
         ifndef NO_EXPAT
@@ -1933,11 +1933,11 @@ ifdef NO_NSEC
 endif
 ifdef SNPRINTF_RETURNS_BOGUS
 	COMPAT_CFLAGS += -DSNPRINTF_RETURNS_BOGUS
-	COMPAT_OBJS += compat/snprintf.o
+	COMPAT_OBJS += lib/compat/snprintf.o
 endif
 ifdef FREAD_READS_DIRECTORIES
 	COMPAT_CFLAGS += -DFREAD_READS_DIRECTORIES
-	COMPAT_OBJS += compat/fopen.o
+	COMPAT_OBJS += lib/compat/fopen.o
 endif
 ifdef OPEN_RETURNS_EINTR
 	COMPAT_CFLAGS += -DOPEN_RETURNS_EINTR
@@ -1952,38 +1952,38 @@ endif
 ifdef NO_POLL
 	NO_POLL_H = YesPlease
 	NO_SYS_POLL_H = YesPlease
-	COMPAT_CFLAGS += -DNO_POLL -Icompat/poll
-	COMPAT_OBJS += compat/poll/poll.o
+	COMPAT_CFLAGS += -DNO_POLL -Ilib/compat/poll
+	COMPAT_OBJS += lib/compat/poll/poll.o
 endif
 ifdef NO_STRCASESTR
 	COMPAT_CFLAGS += -DNO_STRCASESTR
-	COMPAT_OBJS += compat/strcasestr.o
+	COMPAT_OBJS += lib/compat/strcasestr.o
 endif
 ifdef NO_STRLCPY
 	COMPAT_CFLAGS += -DNO_STRLCPY
-	COMPAT_OBJS += compat/strlcpy.o
+	COMPAT_OBJS += lib/compat/strlcpy.o
 endif
 ifdef NO_STRTOUMAX
 	COMPAT_CFLAGS += -DNO_STRTOUMAX
-	COMPAT_OBJS += compat/strtoumax.o compat/strtoimax.o
+	COMPAT_OBJS += lib/compat/strtoumax.o lib/compat/strtoimax.o
 endif
 ifdef NO_STRTOULL
 	COMPAT_CFLAGS += -DNO_STRTOULL
 endif
 ifdef NO_SETENV
 	COMPAT_CFLAGS += -DNO_SETENV
-	COMPAT_OBJS += compat/setenv.o
+	COMPAT_OBJS += lib/compat/setenv.o
 endif
 ifdef NO_MKDTEMP
 	COMPAT_CFLAGS += -DNO_MKDTEMP
 endif
 ifdef MKDIR_WO_TRAILING_SLASH
 	COMPAT_CFLAGS += -DMKDIR_WO_TRAILING_SLASH
-	COMPAT_OBJS += compat/mkdir.o
+	COMPAT_OBJS += lib/compat/mkdir.o
 endif
 ifdef NO_UNSETENV
 	COMPAT_CFLAGS += -DNO_UNSETENV
-	COMPAT_OBJS += compat/unsetenv.o
+	COMPAT_OBJS += lib/compat/unsetenv.o
 endif
 ifdef NO_SYS_SELECT_H
 	BASIC_CFLAGS += -DNO_SYS_SELECT_H
@@ -2005,11 +2005,11 @@ ifdef NO_INITGROUPS
 endif
 ifdef NO_MMAP
 	COMPAT_CFLAGS += -DNO_MMAP
-	COMPAT_OBJS += compat/mmap.o
+	COMPAT_OBJS += lib/compat/mmap.o
 else
         ifdef USE_WIN32_MMAP
 		COMPAT_CFLAGS += -DUSE_WIN32_MMAP
-		COMPAT_OBJS += compat/win32mmap.o
+		COMPAT_OBJS += lib/compat/win32mmap.o
         endif
 endif
 ifdef MMAP_PREVENTS_DELETE
@@ -2027,7 +2027,7 @@ ifdef NO_SETITIMER
 endif
 ifdef NO_PREAD
 	COMPAT_CFLAGS += -DNO_PREAD
-	COMPAT_OBJS += compat/pread.o
+	COMPAT_OBJS += lib/compat/pread.o
 endif
 ifdef NO_FAST_WORKING_DIRECTORY
 	BASIC_CFLAGS += -DNO_FAST_WORKING_DIRECTORY
@@ -2037,7 +2037,7 @@ ifdef NO_TRUSTABLE_FILEMODE
 endif
 ifdef NEEDS_MODE_TRANSLATION
 	COMPAT_CFLAGS += -DNEEDS_MODE_TRANSLATION
-	COMPAT_OBJS += compat/stat.o
+	COMPAT_OBJS += lib/compat/stat.o
 endif
 ifdef NO_IPV6
 	BASIC_CFLAGS += -DNO_IPV6
@@ -2053,18 +2053,18 @@ else
 endif
 endif
 ifdef NO_INET_NTOP
-	LIB_OBJS += compat/inet_ntop.o
+	LIB_OBJS += lib/compat/inet_ntop.o
 	BASIC_CFLAGS += -DNO_INET_NTOP
 endif
 ifdef NO_INET_PTON
-	LIB_OBJS += compat/inet_pton.o
+	LIB_OBJS += lib/compat/inet_pton.o
 	BASIC_CFLAGS += -DNO_INET_PTON
 endif
 ifdef NO_UNIX_SOCKETS
 	BASIC_CFLAGS += -DNO_UNIX_SOCKETS
 else
-	LIB_OBJS += unix-socket.o
-	LIB_OBJS += unix-stream-server.o
+	LIB_OBJS += lib/unix-socket.o
+	LIB_OBJS += lib/unix-stream-server.o
 endif
 
 # Simple IPC requires threads and platform-specific IPC support.
@@ -2080,14 +2080,14 @@ endif
 #
 ifdef USE_WIN32_IPC
 	BASIC_CFLAGS += -DSUPPORTS_SIMPLE_IPC
-	LIB_OBJS += compat/simple-ipc/ipc-shared.o
-	LIB_OBJS += compat/simple-ipc/ipc-win32.o
+	LIB_OBJS += lib/compat/simple-ipc/ipc-shared.o
+	LIB_OBJS += lib/compat/simple-ipc/ipc-win32.o
 else
 ifndef NO_PTHREADS
 ifndef NO_UNIX_SOCKETS
 	BASIC_CFLAGS += -DSUPPORTS_SIMPLE_IPC
-	LIB_OBJS += compat/simple-ipc/ipc-shared.o
-	LIB_OBJS += compat/simple-ipc/ipc-unix-socket.o
+	LIB_OBJS += lib/compat/simple-ipc/ipc-shared.o
+	LIB_OBJS += lib/compat/simple-ipc/ipc-unix-socket.o
 endif
 endif
 endif
@@ -2122,7 +2122,7 @@ ifdef OPENSSL_SHA1
 	BASIC_CFLAGS += -DSHA1_OPENSSL
 else
 ifdef BLK_SHA1
-	LIB_OBJS += block-sha1/sha1.o
+	LIB_OBJS += lib/block-sha1/sha1.o
 	BASIC_CFLAGS += -DSHA1_BLK
 else
 ifdef APPLE_COMMON_CRYPTO_SHA1
@@ -2130,7 +2130,7 @@ ifdef APPLE_COMMON_CRYPTO_SHA1
 	BASIC_CFLAGS += -DSHA1_APPLE
 else
 	BASIC_CFLAGS += -DSHA1_DC
-	LIB_OBJS += sha1dc_git.o
+	LIB_OBJS += lib/sha1dc_git.o
 ifdef DC_SHA1_EXTERNAL
         ifdef DC_SHA1_SUBMODULE
                 ifneq ($(DC_SHA1_SUBMODULE),auto)
@@ -2141,12 +2141,12 @@ $(error Only set DC_SHA1_EXTERNAL or DC_SHA1_SUBMODULE, not both)
 	EXTLIBS += -lsha1detectcoll
 else
 ifdef DC_SHA1_SUBMODULE
-	LIB_OBJS += sha1collisiondetection/lib/sha1.o
-	LIB_OBJS += sha1collisiondetection/lib/ubc_check.o
+	LIB_OBJS += lib/sha1collisiondetection/lib/sha1.o
+	LIB_OBJS += lib/sha1collisiondetection/lib/ubc_check.o
 	BASIC_CFLAGS += -DDC_SHA1_SUBMODULE
 else
-	LIB_OBJS += sha1dc/sha1.o
-	LIB_OBJS += sha1dc/ubc_check.o
+	LIB_OBJS += lib/sha1dc/sha1.o
+	LIB_OBJS += lib/sha1dc/ubc_check.o
 endif
 	BASIC_CFLAGS += \
 		-DSHA1DC_NO_STANDARD_INCLUDES \
@@ -2166,7 +2166,7 @@ endif
 else
 ifdef BLK_SHA1_UNSAFE
 ifndef BLK_SHA1
-	LIB_OBJS += block-sha1/sha1.o
+	LIB_OBJS += lib/block-sha1/sha1.o
 	BASIC_CFLAGS += -DSHA1_BLK_UNSAFE
 endif
 else
@@ -2191,23 +2191,23 @@ ifdef GCRYPT_SHA256
 	BASIC_CFLAGS += -DSHA256_GCRYPT
 	EXTLIBS += -lgcrypt
 else
-	LIB_OBJS += sha256/block/sha256.o
+	LIB_OBJS += lib/sha256/block/sha256.o
 	BASIC_CFLAGS += -DSHA256_BLK
 endif
 endif
 endif
 
 ifdef SHA1_MAX_BLOCK_SIZE
-	LIB_OBJS += compat/sha1-chunked.o
+	LIB_OBJS += lib/compat/sha1-chunked.o
 	BASIC_CFLAGS += -DSHA1_MAX_BLOCK_SIZE="$(SHA1_MAX_BLOCK_SIZE)"
 endif
 ifdef NO_HSTRERROR
 	COMPAT_CFLAGS += -DNO_HSTRERROR
-	COMPAT_OBJS += compat/hstrerror.o
+	COMPAT_OBJS += lib/compat/hstrerror.o
 endif
 ifdef NO_MEMMEM
 	COMPAT_CFLAGS += -DNO_MEMMEM
-	COMPAT_OBJS += compat/memmem.o
+	COMPAT_OBJS += lib/compat/memmem.o
 endif
 ifdef NO_GETPAGESIZE
 	COMPAT_CFLAGS += -DNO_GETPAGESIZE
@@ -2218,7 +2218,7 @@ endif
 ifdef HAVE_ISO_QSORT_S
 	COMPAT_CFLAGS += -DHAVE_ISO_QSORT_S
 else
-	COMPAT_OBJS += compat/qsort_s.o
+	COMPAT_OBJS += lib/compat/qsort_s.o
 endif
 ifdef RUNTIME_PREFIX
 	COMPAT_CFLAGS += -DRUNTIME_PREFIX
@@ -2255,12 +2255,12 @@ ifdef UNRELIABLE_FSTAT
 	BASIC_CFLAGS += -DUNRELIABLE_FSTAT
 endif
 ifdef NO_REGEX
-	COMPAT_CFLAGS += -Icompat/regex
-	COMPAT_OBJS += compat/regex/regex.o
+	COMPAT_CFLAGS += -Ilib/compat/regex
+	COMPAT_OBJS += lib/compat/regex/regex.o
 else
 ifdef USE_ENHANCED_BASIC_REGULAR_EXPRESSIONS
 	COMPAT_CFLAGS += -DUSE_ENHANCED_BASIC_REGULAR_EXPRESSIONS
-	COMPAT_OBJS += compat/regcomp_enhanced.o
+	COMPAT_OBJS += lib/compat/regcomp_enhanced.o
 endif
 endif
 ifdef NATIVE_CRLF
@@ -2268,14 +2268,14 @@ ifdef NATIVE_CRLF
 endif
 
 ifdef USE_NED_ALLOCATOR
-	COMPAT_CFLAGS += -Icompat/nedmalloc
-	COMPAT_OBJS += compat/nedmalloc/nedmalloc.o
+	COMPAT_CFLAGS += -Ilib/compat/nedmalloc
+	COMPAT_OBJS += lib/compat/nedmalloc/nedmalloc.o
 	OVERRIDE_STRDUP = YesPlease
 endif
 
 ifdef OVERRIDE_STRDUP
 	COMPAT_CFLAGS += -DOVERRIDE_STRDUP
-	COMPAT_OBJS += compat/strdup.o
+	COMPAT_OBJS += lib/compat/strdup.o
 endif
 
 ifdef GIT_TEST_CMP_USE_COPIED_CONTEXT
@@ -2337,7 +2337,7 @@ ifneq ($(findstring openssl,$(CSPRNG_METHOD)),)
 endif
 
 ifndef HAVE_PLATFORM_PROCINFO
-	COMPAT_OBJS += compat/stub/procinfo.o
+	COMPAT_OBJS += lib/compat/stub/procinfo.o
 endif
 
 ifdef RUNTIME_PREFIX
@@ -2367,25 +2367,25 @@ endif
 
 ifdef FILENO_IS_A_MACRO
 	COMPAT_CFLAGS += -DFILENO_IS_A_MACRO
-	COMPAT_OBJS += compat/fileno.o
+	COMPAT_OBJS += lib/compat/fileno.o
 endif
 
 ifdef NEED_ACCESS_ROOT_HANDLER
 	COMPAT_CFLAGS += -DNEED_ACCESS_ROOT_HANDLER
-	COMPAT_OBJS += compat/access.o
+	COMPAT_OBJS += lib/compat/access.o
 endif
 
 ifdef FSMONITOR_DAEMON_BACKEND
 	COMPAT_CFLAGS += -DHAVE_FSMONITOR_DAEMON_BACKEND
-	COMPAT_OBJS += compat/fsmonitor/fsm-listen-$(FSMONITOR_DAEMON_BACKEND).o
-	COMPAT_OBJS += compat/fsmonitor/fsm-health-$(FSMONITOR_DAEMON_BACKEND).o
-	COMPAT_OBJS += compat/fsmonitor/fsm-ipc-$(FSMONITOR_DAEMON_BACKEND).o
+	COMPAT_OBJS += lib/compat/fsmonitor/fsm-listen-$(FSMONITOR_DAEMON_BACKEND).o
+	COMPAT_OBJS += lib/compat/fsmonitor/fsm-health-$(FSMONITOR_DAEMON_BACKEND).o
+	COMPAT_OBJS += lib/compat/fsmonitor/fsm-ipc-$(FSMONITOR_DAEMON_BACKEND).o
 endif
 
 ifdef FSMONITOR_OS_SETTINGS
 	COMPAT_CFLAGS += -DHAVE_FSMONITOR_OS_SETTINGS
-	COMPAT_OBJS += compat/fsmonitor/fsm-settings-$(FSMONITOR_OS_SETTINGS).o
-	COMPAT_OBJS += compat/fsmonitor/fsm-path-utils-$(FSMONITOR_OS_SETTINGS).o
+	COMPAT_OBJS += lib/compat/fsmonitor/fsm-settings-$(FSMONITOR_OS_SETTINGS).o
+	COMPAT_OBJS += lib/compat/fsmonitor/fsm-path-utils-$(FSMONITOR_OS_SETTINGS).o
 endif
 
 ifdef WITH_BREAKING_CHANGES
@@ -2669,7 +2669,7 @@ git$X: git.o GIT-LDFLAGS $(BUILTIN_OBJS) $(GITLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) \
 		$(filter %.o,$^) $(LIBS)
 
-help.sp help.s help.o: command-list.h
+lib/help.sp lib/help.s lib/help.o: command-list.h
 builtin/bugreport.sp builtin/bugreport.s builtin/bugreport.o: hook-list.h
 builtin/hook.sp builtin/hook.s builtin/hook.o: hook-list.h
 
@@ -2682,13 +2682,13 @@ builtin/help.sp builtin/help.s builtin/help.o: EXTRA_CPPFLAGS = \
 PAGER_ENV_SQ = $(subst ','\'',$(PAGER_ENV))
 PAGER_ENV_CQ = "$(subst ",\",$(subst \,\\,$(PAGER_ENV)))"
 PAGER_ENV_CQ_SQ = $(subst ','\'',$(PAGER_ENV_CQ))
-pager.sp pager.s pager.o: EXTRA_CPPFLAGS = \
+lib/pager.sp lib/pager.s lib/pager.o: EXTRA_CPPFLAGS = \
 	-DPAGER_ENV='$(PAGER_ENV_CQ_SQ)'
 
-version-def.h: version-def.h.in GIT-VERSION-GEN GIT-VERSION-FILE GIT-USER-AGENT
+version-def.h: lib/version-def.h.in GIT-VERSION-GEN GIT-VERSION-FILE GIT-USER-AGENT
 	$(QUIET_GEN)$(call version_gen,"$(shell pwd)",$<,$@)
 
-version.sp version.s version.o: version-def.h
+lib/version.sp lib/version.s lib/version.o: version-def.h
 
 $(BUILT_INS): git$X
 	$(QUIET_BUILT_IN)$(RM) $@ && \
@@ -2881,7 +2881,7 @@ ifdef INCLUDE_LIBGIT_RS
 endif
 
 ifndef NO_CURL
-	OBJECTS += http.o http-walker.o remote-curl.o
+	OBJECTS += lib/http.o lib/http-walker.o remote-curl.o
 endif
 
 .PHONY: objects
@@ -2946,50 +2946,50 @@ compile_commands.json:
 	@if test -s $@+; then mv $@+ $@; else $(RM) $@+; fi
 endif
 
-exec-cmd.sp exec-cmd.s exec-cmd.o: GIT-PREFIX
-exec-cmd.sp exec-cmd.s exec-cmd.o: EXTRA_CPPFLAGS = \
+lib/exec-cmd.sp lib/exec-cmd.s lib/exec-cmd.o: GIT-PREFIX
+lib/exec-cmd.sp lib/exec-cmd.s lib/exec-cmd.o: EXTRA_CPPFLAGS = \
 	'-DGIT_EXEC_PATH="$(gitexecdir_SQ)"' \
 	'-DGIT_LOCALE_PATH="$(localedir_relative_SQ)"' \
 	'-DBINDIR="$(bindir_relative_SQ)"' \
 	'-DFALLBACK_RUNTIME_PREFIX="$(prefix_SQ)"'
 
-setup.sp setup.s setup.o: GIT-PREFIX
-setup.sp setup.s setup.o: EXTRA_CPPFLAGS = \
+lib/setup.sp lib/setup.s lib/setup.o: GIT-PREFIX
+lib/setup.sp lib/setup.s lib/setup.o: EXTRA_CPPFLAGS = \
 	-DDEFAULT_GIT_TEMPLATE_DIR='"$(template_dir_SQ)"'
 
-config.sp config.s config.o: GIT-PREFIX
-config.sp config.s config.o: EXTRA_CPPFLAGS = \
+lib/config.sp lib/config.s lib/config.o: GIT-PREFIX
+lib/config.sp lib/config.s lib/config.o: EXTRA_CPPFLAGS = \
 	-DETC_GITCONFIG='"$(ETC_GITCONFIG_SQ)"'
 
-attr.sp attr.s attr.o: GIT-PREFIX
-attr.sp attr.s attr.o: EXTRA_CPPFLAGS = \
+lib/attr.sp lib/attr.s lib/attr.o: GIT-PREFIX
+lib/attr.sp lib/attr.s lib/attr.o: EXTRA_CPPFLAGS = \
 	-DETC_GITATTRIBUTES='"$(ETC_GITATTRIBUTES_SQ)"'
 
-gettext.sp gettext.s gettext.o: GIT-PREFIX
-gettext.sp gettext.s gettext.o: EXTRA_CPPFLAGS = \
+lib/gettext.sp lib/gettext.s lib/gettext.o: GIT-PREFIX
+lib/gettext.sp lib/gettext.s lib/gettext.o: EXTRA_CPPFLAGS = \
 	-DGIT_LOCALE_PATH='"$(localedir_relative_SQ)"'
 
-http-push.sp http.sp http-walker.sp remote-curl.sp imap-send.sp: SP_EXTRA_FLAGS += \
+http-push.sp lib/http.sp lib/http-walker.sp remote-curl.sp imap-send.sp: SP_EXTRA_FLAGS += \
 	-DCURL_DISABLE_TYPECHECK
 
 pack-revindex.sp: SP_EXTRA_FLAGS += -Wno-memcpy-max-count
 
 ifdef NO_EXPAT
-http-walker.sp http-walker.s http-walker.o: EXTRA_CPPFLAGS = -DNO_EXPAT
+lib/http-walker.sp lib/http-walker.s lib/http-walker.o: EXTRA_CPPFLAGS = -DNO_EXPAT
 endif
 
 ifdef NO_REGEX
-compat/regex/regex.sp compat/regex/regex.o: EXTRA_CPPFLAGS = \
+lib/compat/regex/regex.sp lib/compat/regex/regex.o: EXTRA_CPPFLAGS = \
 	-DGAWK -DNO_MBSUPPORT
 endif
 
 ifdef USE_NED_ALLOCATOR
-compat/nedmalloc/nedmalloc.sp compat/nedmalloc/nedmalloc.o: EXTRA_CPPFLAGS = \
+lib/compat/nedmalloc/nedmalloc.sp lib/compat/nedmalloc/nedmalloc.o: EXTRA_CPPFLAGS = \
 	-DNDEBUG -DREPLACE_SYSTEM_ALLOCATOR
-compat/nedmalloc/nedmalloc.sp: SP_EXTRA_FLAGS += -Wno-non-pointer-null
+lib/compat/nedmalloc/nedmalloc.sp: SP_EXTRA_FLAGS += -Wno-non-pointer-null
 endif
 
-headless-git.o: compat/win32/headless.c GIT-CFLAGS
+headless-git.o: lib/compat/win32/headless.c GIT-CFLAGS
 	$(QUIET_CC)$(CC) $(ALL_CFLAGS) $(COMPAT_CFLAGS) \
 		-fno-stack-protector -o $@ -c -Wall -Wwrite-strings $<
 
@@ -3003,10 +3003,10 @@ git-imap-send$X: imap-send.o $(IMAP_SEND_BUILDDEPS) GIT-LDFLAGS $(GITLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(IMAP_SEND_LDFLAGS) $(LIBS)
 
-git-http-fetch$X: http.o http-walker.o http-fetch.o GIT-LDFLAGS $(GITLIBS)
+git-http-fetch$X: lib/http.o lib/http-walker.o http-fetch.o GIT-LDFLAGS $(GITLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(CURL_LIBCURL) $(LIBS)
-git-http-push$X: http.o http-push.o GIT-LDFLAGS $(GITLIBS)
+git-http-push$X: lib/http.o http-push.o GIT-LDFLAGS $(GITLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(CURL_LIBCURL) $(EXPAT_LIBEXPAT) $(LIBS)
 
@@ -3016,7 +3016,7 @@ $(REMOTE_CURL_ALIASES): $(REMOTE_CURL_PRIMARY)
 	ln -s $< $@ 2>/dev/null || \
 	cp $< $@
 
-$(REMOTE_CURL_PRIMARY): remote-curl.o http.o http-walker.o GIT-LDFLAGS $(GITLIBS)
+$(REMOTE_CURL_PRIMARY): remote-curl.o lib/http.o lib/http-walker.o GIT-LDFLAGS $(GITLIBS)
 	$(QUIET_LINK)$(CC) $(ALL_CFLAGS) -o $@ $(ALL_LDFLAGS) $(filter %.o,$^) \
 		$(CURL_LIBCURL) $(EXPAT_LIBEXPAT) $(LIBS)
 
@@ -3180,8 +3180,8 @@ LOCALIZED_C_CORE += builtin/clone.c
 LOCALIZED_C_CORE += builtin/index-pack.c
 LOCALIZED_C_CORE += builtin/push.c
 LOCALIZED_C_CORE += builtin/reset.c
-LOCALIZED_C_CORE += remote.c
-LOCALIZED_C_CORE += wt-status.c
+LOCALIZED_C_CORE += lib/remote.c
+LOCALIZED_C_CORE += lib/wt-status.c
 
 LOCALIZED_C_CORE_GEN_PO = $(LOCALIZED_C_CORE:%=.build/pot/po/%.po)
 
@@ -3420,18 +3420,18 @@ $(SP_OBJ): %.sp: %.c %.o $(GENERATED_H)
 .PHONY: sparse
 sparse: $(SP_OBJ)
 
-EXCEPT_HDRS := $(GENERATED_H) unicode-width.h compat/% xdiff/% $(UNIT_TEST_DIR)/clar/% $(UNIT_TEST_DIR)/clar/clar/%
+EXCEPT_HDRS := $(GENERATED_H) lib/unicode-width.h lib/compat/% lib/xdiff/% $(UNIT_TEST_DIR)/clar/% $(UNIT_TEST_DIR)/clar/clar/%
 ifndef OPENSSL_SHA1
-	EXCEPT_HDRS += sha1/openssl.h
+	EXCEPT_HDRS += lib/sha1/openssl.h
 endif
 ifndef OPENSSL_SHA256
-	EXCEPT_HDRS += sha256/openssl.h
+	EXCEPT_HDRS += lib/sha256/openssl.h
 endif
 ifndef NETTLE_SHA256
-	EXCEPT_HDRS += sha256/nettle.h
+	EXCEPT_HDRS += lib/sha256/nettle.h
 endif
 ifndef GCRYPT_SHA256
-	EXCEPT_HDRS += sha256/gcrypt.h
+	EXCEPT_HDRS += lib/sha256/gcrypt.h
 endif
 CHK_HDRS = $(filter-out $(EXCEPT_HDRS),$(LIB_H))
 HCO = $(patsubst %.h,%.hco,$(CHK_HDRS))
@@ -3783,13 +3783,13 @@ GIT_ARCHIVE_EXTRA_FILES = \
 	--add-file=.dist-tmp-dir/git-gui/version
 ifdef DC_SHA1_SUBMODULE
 GIT_ARCHIVE_EXTRA_FILES += \
-	--prefix=$(GIT_TARNAME)/sha1collisiondetection/ \
-	--add-file=sha1collisiondetection/LICENSE.txt \
-	--prefix=$(GIT_TARNAME)/sha1collisiondetection/lib/ \
-	--add-file=sha1collisiondetection/lib/sha1.c \
-	--add-file=sha1collisiondetection/lib/sha1.h \
-	--add-file=sha1collisiondetection/lib/ubc_check.c \
-	--add-file=sha1collisiondetection/lib/ubc_check.h
+	--prefix=$(GIT_TARNAME)/lib/sha1collisiondetection/ \
+	--add-file=lib/sha1collisiondetection/LICENSE.txt \
+	--prefix=$(GIT_TARNAME)/lib/sha1collisiondetection/lib/ \
+	--add-file=lib/sha1collisiondetection/lib/sha1.c \
+	--add-file=lib/sha1collisiondetection/lib/sha1.h \
+	--add-file=lib/sha1collisiondetection/lib/ubc_check.c \
+	--add-file=lib/sha1collisiondetection/lib/ubc_check.h
 endif
 dist: git-archive$(X) configure
 	@$(RM) -r .dist-tmp-dir
@@ -3919,7 +3919,7 @@ ifdef MSVC
 	$(RM) $(patsubst %.exe,%.pdb,$(TEST_PROGRAMS))
 	$(RM) $(patsubst %.exe,%.iobj,$(TEST_PROGRAMS))
 	$(RM) $(patsubst %.exe,%.ipdb,$(TEST_PROGRAMS))
-	$(RM) compat/vcbuild/MSVC-DEFS-GEN
+	$(RM) lib/compat/vcbuild/MSVC-DEFS-GEN
 endif
 
 .PHONY: all install profile-clean cocciclean clean strip

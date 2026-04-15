@@ -62,10 +62,10 @@ if(NOT DEFINED CMAKE_EXPORT_COMPILE_COMMANDS)
 endif()
 
 if(USE_VCPKG)
-	set(VCPKG_DIR "${CMAKE_SOURCE_DIR}/compat/vcbuild/vcpkg")
+	set(VCPKG_DIR "${CMAKE_SOURCE_DIR}/lib/compat/vcbuild/vcpkg")
 	if(NOT EXISTS ${VCPKG_DIR})
 		message("Initializing vcpkg and building the Git's dependencies (this will take a while...)")
-		execute_process(COMMAND ${CMAKE_SOURCE_DIR}/compat/vcbuild/vcpkg_install.bat)
+		execute_process(COMMAND ${CMAKE_SOURCE_DIR}/lib/compat/vcbuild/vcpkg_install.bat)
 	endif()
 	list(APPEND CMAKE_PREFIX_PATH "${VCPKG_DIR}/installed/x64-windows")
 
@@ -194,7 +194,7 @@ else()
 	find_program(MSGFMT_EXE msgfmt)
 	if(NOT MSGFMT_EXE)
 		if(USE_VCPKG)
-			set(MSGFMT_EXE ${CMAKE_SOURCE_DIR}/compat/vcbuild/vcpkg/downloads/tools/msys2/msys64/usr/bin/msgfmt.exe)
+			set(MSGFMT_EXE ${CMAKE_SOURCE_DIR}/lib/compat/vcbuild/vcpkg/downloads/tools/msys2/msys64/usr/bin/msgfmt.exe)
 		endif()
 		if(NOT EXISTS ${MSGFMT_EXE})
 			message(WARNING "Text Translations won't be built")
@@ -212,13 +212,14 @@ endif()
 
 #default behaviour
 include_directories(${CMAKE_SOURCE_DIR})
+include_directories(${CMAKE_SOURCE_DIR}/lib)
 add_compile_definitions(GIT_HOST_CPU="${CMAKE_SYSTEM_PROCESSOR}")
 add_compile_definitions(SHA256_BLK INTERNAL_QSORT RUNTIME_PREFIX)
 add_compile_definitions(NO_OPENSSL SHA1_DC SHA1DC_NO_STANDARD_INCLUDES
 			SHA1DC_INIT_SAFE_HASH_DEFAULT=0
 			SHA1DC_CUSTOM_INCLUDE_SHA1_C="git-compat-util.h"
 			SHA1DC_CUSTOM_INCLUDE_UBC_CHECK_C="git-compat-util.h" )
-list(APPEND compat_SOURCES sha1dc_git.c sha1dc/sha1.c sha1dc/ubc_check.c block-sha1/sha1.c sha256/block/sha256.c compat/qsort_s.c)
+list(APPEND compat_SOURCES lib/sha1dc_git.c lib/sha1dc/sha1.c lib/sha1dc/ubc_check.c lib/block-sha1/sha1.c lib/sha256/block/sha256.c lib/compat/qsort_s.c)
 
 
 add_compile_definitions(PAGER_ENV="LESS=FRX LV=-c"
@@ -248,44 +249,44 @@ endif()
 #Platform Specific
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 	if(CMAKE_C_COMPILER_ID STREQUAL "MSVC" OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
-		include_directories(${CMAKE_SOURCE_DIR}/compat/vcbuild/include)
+		include_directories(${CMAKE_SOURCE_DIR}/lib/compat/vcbuild/include)
 		add_compile_definitions(_CRT_SECURE_NO_WARNINGS _CRT_NONSTDC_NO_DEPRECATE)
 	endif()
-	include_directories(${CMAKE_SOURCE_DIR}/compat/win32)
+	include_directories(${CMAKE_SOURCE_DIR}/lib/compat/win32)
 	add_compile_definitions(HAVE_ALLOCA_H NO_POSIX_GOODIES NATIVE_CRLF NO_UNIX_SOCKETS WIN32
 				_CONSOLE DETECT_MSYS_TTY STRIP_EXTENSION=".exe"  NO_SYMLINK_HEAD UNRELIABLE_FSTAT
 				NOGDI OBJECT_CREATION_MODE=1 __USE_MINGW_ANSI_STDIO=0
 				USE_NED_ALLOCATOR OVERRIDE_STRDUP MMAP_PREVENTS_DELETE USE_WIN32_MMAP
 				HAVE_WPGMPTR ENSURE_MSYSTEM_IS_SET HAVE_RTLGENRANDOM)
 	list(APPEND compat_SOURCES
-		compat/mingw.c
-		compat/winansi.c
-		compat/win32/flush.c
-		compat/win32/path-utils.c
-		compat/win32/pthread.c
-		compat/win32mmap.c
-		compat/win32/syslog.c
-		compat/win32/trace2_win32_process_info.c
-		compat/win32/dirent.c
-		compat/nedmalloc/nedmalloc.c
-		compat/strdup.c)
+		lib/compat/mingw.c
+		lib/compat/winansi.c
+		lib/compat/win32/flush.c
+		lib/compat/win32/path-utils.c
+		lib/compat/win32/pthread.c
+		lib/compat/win32mmap.c
+		lib/compat/win32/syslog.c
+		lib/compat/win32/trace2_win32_process_info.c
+		lib/compat/win32/dirent.c
+		lib/compat/nedmalloc/nedmalloc.c
+		lib/compat/strdup.c)
 	set(NO_UNIX_SOCKETS 1)
 
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 	add_compile_definitions(PROCFS_EXECUTABLE_PATH="/proc/self/exe" HAVE_DEV_TTY )
-	list(APPEND compat_SOURCES unix-socket.c unix-stream-server.c compat/linux/procinfo.c)
+	list(APPEND compat_SOURCES lib/unix-socket.c lib/unix-stream-server.c lib/compat/linux/procinfo.c)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-	list(APPEND compat_SOURCES compat/darwin/procinfo.c)
+	list(APPEND compat_SOURCES lib/compat/darwin/procinfo.c)
 endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-	list(APPEND compat_SOURCES compat/simple-ipc/ipc-shared.c compat/simple-ipc/ipc-win32.c)
+	list(APPEND compat_SOURCES lib/compat/simple-ipc/ipc-shared.c lib/compat/simple-ipc/ipc-win32.c)
 	add_compile_definitions(SUPPORTS_SIMPLE_IPC)
 	set(SUPPORTS_SIMPLE_IPC 1)
 else()
 	# Simple IPC requires both Unix sockets and pthreads on Unix-based systems.
 	if(NOT NO_UNIX_SOCKETS AND NOT NO_PTHREADS)
-		list(APPEND compat_SOURCES compat/simple-ipc/ipc-shared.c compat/simple-ipc/ipc-unix-socket.c)
+		list(APPEND compat_SOURCES lib/compat/simple-ipc/ipc-shared.c lib/compat/simple-ipc/ipc-unix-socket.c)
 		add_compile_definitions(SUPPORTS_SIMPLE_IPC)
 		set(SUPPORTS_SIMPLE_IPC 1)
 	endif()
@@ -294,22 +295,22 @@ endif()
 if(SUPPORTS_SIMPLE_IPC)
 	if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 		add_compile_definitions(HAVE_FSMONITOR_DAEMON_BACKEND)
-		list(APPEND compat_SOURCES compat/fsmonitor/fsm-listen-win32.c)
-		list(APPEND compat_SOURCES compat/fsmonitor/fsm-health-win32.c)
-		list(APPEND compat_SOURCES compat/fsmonitor/fsm-ipc-win32.c)
-		list(APPEND compat_SOURCES compat/fsmonitor/fsm-path-utils-win32.c)
+		list(APPEND compat_SOURCES lib/compat/fsmonitor/fsm-listen-win32.c)
+		list(APPEND compat_SOURCES lib/compat/fsmonitor/fsm-health-win32.c)
+		list(APPEND compat_SOURCES lib/compat/fsmonitor/fsm-ipc-win32.c)
+		list(APPEND compat_SOURCES lib/compat/fsmonitor/fsm-path-utils-win32.c)
 
 		add_compile_definitions(HAVE_FSMONITOR_OS_SETTINGS)
-		list(APPEND compat_SOURCES compat/fsmonitor/fsm-settings-win32.c)
+		list(APPEND compat_SOURCES lib/compat/fsmonitor/fsm-settings-win32.c)
 	elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 		add_compile_definitions(HAVE_FSMONITOR_DAEMON_BACKEND)
-		list(APPEND compat_SOURCES compat/fsmonitor/fsm-listen-darwin.c)
-		list(APPEND compat_SOURCES compat/fsmonitor/fsm-health-darwin.c)
-		list(APPEND compat_SOURCES compat/fsmonitor/fsm-ipc-darwin.c)
-		list(APPEND compat_SOURCES compat/fsmonitor/fsm-path-utils-darwin.c)
+		list(APPEND compat_SOURCES lib/compat/fsmonitor/fsm-listen-darwin.c)
+		list(APPEND compat_SOURCES lib/compat/fsmonitor/fsm-health-darwin.c)
+		list(APPEND compat_SOURCES lib/compat/fsmonitor/fsm-ipc-darwin.c)
+		list(APPEND compat_SOURCES lib/compat/fsmonitor/fsm-path-utils-darwin.c)
 
 		add_compile_definitions(HAVE_FSMONITOR_OS_SETTINGS)
-		list(APPEND compat_SOURCES compat/fsmonitor/fsm-settings-darwin.c)
+		list(APPEND compat_SOURCES lib/compat/fsmonitor/fsm-settings-darwin.c)
 	endif()
 endif()
 
@@ -319,7 +320,7 @@ set(EXE_EXTENSION ${CMAKE_EXECUTABLE_SUFFIX})
 check_include_file(libgen.h HAVE_LIBGEN_H)
 if(NOT HAVE_LIBGEN_H)
 	add_compile_definitions(NO_LIBGEN_H)
-	list(APPEND compat_SOURCES compat/basename.c)
+	list(APPEND compat_SOURCES lib/compat/basename.c)
 endif()
 
 check_include_file(sys/sysinfo.h HAVE_SYSINFO)
@@ -392,42 +393,42 @@ foreach(f ${function_checks})
 endforeach()
 
 if(NOT HAVE_POLL_H OR NOT HAVE_SYS_POLL_H OR NOT HAVE_POLL)
-	include_directories(${CMAKE_SOURCE_DIR}/compat/poll)
+	include_directories(${CMAKE_SOURCE_DIR}/lib/compat/poll)
 	add_compile_definitions(NO_POLL)
-	list(APPEND compat_SOURCES compat/poll/poll.c)
+	list(APPEND compat_SOURCES lib/compat/poll/poll.c)
 endif()
 
 if(NOT HAVE_STRCASESTR)
-	list(APPEND compat_SOURCES compat/strcasestr.c)
+	list(APPEND compat_SOURCES lib/compat/strcasestr.c)
 endif()
 
 if(NOT HAVE_STRLCPY)
-	list(APPEND compat_SOURCES compat/strlcpy.c)
+	list(APPEND compat_SOURCES lib/compat/strlcpy.c)
 endif()
 
 if(NOT HAVE_STRTOUMAX)
-	list(APPEND compat_SOURCES compat/strtoumax.c compat/strtoimax.c)
+	list(APPEND compat_SOURCES lib/compat/strtoumax.c lib/compat/strtoimax.c)
 endif()
 
 if(NOT HAVE_SETENV)
-	list(APPEND compat_SOURCES compat/setenv.c)
+	list(APPEND compat_SOURCES lib/compat/setenv.c)
 endif()
 
 if(NOT HAVE_PREAD)
-	list(APPEND compat_SOURCES compat/pread.c)
+	list(APPEND compat_SOURCES lib/compat/pread.c)
 endif()
 
 if(NOT HAVE_MEMMEM)
-	list(APPEND compat_SOURCES compat/memmem.c)
+	list(APPEND compat_SOURCES lib/compat/memmem.c)
 endif()
 
 if(NOT WIN32)
 	if(NOT HAVE_UNSETENV)
-		list(APPEND compat_SOURCES compat/unsetenv.c)
+		list(APPEND compat_SOURCES lib/compat/unsetenv.c)
 	endif()
 
 	if(NOT HAVE_HSTRERROR)
-		list(APPEND compat_SOURCES compat/hstrerror.c)
+		list(APPEND compat_SOURCES lib/compat/hstrerror.c)
 	endif()
 endif()
 
@@ -484,7 +485,7 @@ int main(void)
 SNPRINTF_OK)
 if(NOT SNPRINTF_OK)
 	add_compile_definitions(SNPRINTF_RETURNS_BOGUS)
-	list(APPEND compat_SOURCES compat/snprintf.c)
+	list(APPEND compat_SOURCES lib/compat/snprintf.c)
 endif()
 
 check_c_source_runs("
@@ -499,7 +500,7 @@ int main(void)
 FREAD_READS_DIRECTORIES_NO)
 if(NOT FREAD_READS_DIRECTORIES_NO)
 	add_compile_definitions(FREAD_READS_DIRECTORIES)
-	list(APPEND compat_SOURCES compat/fopen.c)
+	list(APPEND compat_SOURCES lib/compat/fopen.c)
 endif()
 
 check_c_source_compiles("
@@ -514,8 +515,8 @@ int main(void)
 }"
 HAVE_REGEX)
 if(NOT HAVE_REGEX)
-	include_directories(${CMAKE_SOURCE_DIR}/compat/regex)
-	list(APPEND compat_SOURCES compat/regex/regex.c )
+	include_directories(${CMAKE_SOURCE_DIR}/lib/compat/regex)
+	list(APPEND compat_SOURCES lib/compat/regex/regex.c )
 	add_compile_definitions(NO_REGEX NO_MBSUPPORT GAWK)
 endif()
 
@@ -668,10 +669,10 @@ list(TRANSFORM compat_SOURCES PREPEND "${CMAKE_SOURCE_DIR}/")
 add_custom_command(OUTPUT "${CMAKE_BINARY_DIR}/version-def.h"
 	COMMAND "${SH_EXE}" "${CMAKE_SOURCE_DIR}/GIT-VERSION-GEN"
 		"${CMAKE_SOURCE_DIR}"
-		"${CMAKE_SOURCE_DIR}/version-def.h.in"
+		"${CMAKE_SOURCE_DIR}/lib/version-def.h.in"
 		"${CMAKE_BINARY_DIR}/version-def.h"
 	DEPENDS "${SH_EXE}" "${CMAKE_SOURCE_DIR}/GIT-VERSION-GEN"
-		"${CMAKE_SOURCE_DIR}/version-def.h.in"
+		"${CMAKE_SOURCE_DIR}/lib/version-def.h.in"
 	VERBATIM)
 list(APPEND libgit_SOURCES "${CMAKE_BINARY_DIR}/version-def.h")
 
@@ -730,7 +731,7 @@ if(WIN32)
 		message(FATAL_ERROR "Unhandled compiler: ${CMAKE_C_COMPILER_ID}")
 	endif()
 
-	add_executable(headless-git ${CMAKE_SOURCE_DIR}/compat/win32/headless.c)
+	add_executable(headless-git ${CMAKE_SOURCE_DIR}/lib/compat/win32/headless.c)
 	if(CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
 		target_link_options(headless-git PUBLIC -municode -Wl,-subsystem,windows)
 	elseif(CMAKE_C_COMPILER_ID STREQUAL "MSVC")
@@ -765,15 +766,15 @@ add_executable(scalar ${CMAKE_SOURCE_DIR}/scalar.c)
 target_link_libraries(scalar common-main)
 
 if(CURL_FOUND)
-	add_library(http_obj OBJECT ${CMAKE_SOURCE_DIR}/http.c)
+	add_library(http_obj OBJECT ${CMAKE_SOURCE_DIR}/lib/http.c)
 
 	add_executable(git-imap-send ${CMAKE_SOURCE_DIR}/imap-send.c)
 	target_link_libraries(git-imap-send http_obj common-main ${CURL_LIBRARIES})
 
-	add_executable(git-http-fetch ${CMAKE_SOURCE_DIR}/http-walker.c ${CMAKE_SOURCE_DIR}/http-fetch.c)
+	add_executable(git-http-fetch ${CMAKE_SOURCE_DIR}/lib/http-walker.c ${CMAKE_SOURCE_DIR}/http-fetch.c)
 	target_link_libraries(git-http-fetch http_obj common-main ${CURL_LIBRARIES})
 
-	add_executable(git-remote-http ${CMAKE_SOURCE_DIR}/http-walker.c ${CMAKE_SOURCE_DIR}/remote-curl.c)
+	add_executable(git-remote-http ${CMAKE_SOURCE_DIR}/lib/http-walker.c ${CMAKE_SOURCE_DIR}/remote-curl.c)
 	target_link_libraries(git-remote-http http_obj common-main ${CURL_LIBRARIES} )
 
 	if(EXPAT_FOUND)
@@ -1199,7 +1200,7 @@ string(REPLACE "@USE_LIBPCRE2@" "" git_build_options "${git_build_options}")
 string(REPLACE "@WITH_BREAKING_CHANGES@" "" git_build_options "${git_build_options}")
 string(REPLACE "@X@" "${EXE_EXTENSION}" git_build_options "${git_build_options}")
 if(USE_VCPKG)
-	string(APPEND git_build_options "PATH=\"$PATH:$TEST_DIRECTORY/../compat/vcbuild/vcpkg/installed/x64-windows/bin\"\n")
+	string(APPEND git_build_options "PATH=\"$PATH:$TEST_DIRECTORY/../lib/compat/vcbuild/vcpkg/installed/x64-windows/bin\"\n")
 endif()
 file(WRITE ${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS ${git_build_options})
 

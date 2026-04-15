@@ -505,10 +505,10 @@ lint-docs-man-section-order: $(LINT_DOCS_MAN_SECTION_ORDER)
 .PHONY: lint-docs-fsck-msgids
 LINT_DOCS_FSCK_MSGIDS = .build/lint-docs/fsck-msgids.ok
 $(LINT_DOCS_FSCK_MSGIDS): lint-fsck-msgids.perl
-$(LINT_DOCS_FSCK_MSGIDS): ../fsck.h fsck-msgids.adoc
+$(LINT_DOCS_FSCK_MSGIDS): ../lib/fsck.h fsck-msgids.adoc
 	$(call mkdir_p_parent_template)
 	$(QUIET_GEN)$(PERL_PATH) lint-fsck-msgids.perl \
-		../fsck.h fsck-msgids.adoc $@
+		../lib/fsck.h fsck-msgids.adoc $@
 lint-docs-fsck-msgids: $(LINT_DOCS_FSCK_MSGIDS)
 
 ## Lint: delimited sections
