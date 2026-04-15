@@ -229,7 +229,8 @@ void commit_post_rewrite(struct repository *r,
 			 const struct object_id *new_head);
 
 void create_autostash(struct repository *r, const char *path);
-void create_autostash_ref(struct repository *r, const char *refname);
+void create_autostash_ref(struct repository *r, const char *refname,
+			  const char *message, bool silent);
 int save_autostash(const char *path);
 int save_autostash_ref(struct repository *r, const char *refname);
 int apply_autostash(const char *path);
