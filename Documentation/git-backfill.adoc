@@ -9,7 +9,7 @@ git-backfill - Download missing objects in a partial clone
 SYNOPSIS
 --------
 [synopsis]
-git backfill [--min-batch-size=<n>] [--[no-]sparse] [<revision-range>]
+git backfill [--min-batch-size=<n>] [--[no-]sparse] [--[no-]include-edges] [<revision-range>]
 
 DESCRIPTION
 -----------
@@ -62,6 +62,13 @@ OPTIONS
 	Only download objects if they appear at a path that matches the
 	current sparse-checkout. If the sparse-checkout feature is enabled,
 	then `--sparse` is assumed and can be disabled with `--no-sparse`.
+
+`--include-edges`::
+`--no-include-edges`::
+	Include blobs from boundary commits in the backfill.  Useful in
+	preparation for commands like `git log -p A..B` or `git replay
+	--onto TARGET A..B`, where A..B normally excludes A but you need
+	the blobs from A as well.  `--include-edges` is the default.
 
 `<revision-range>`::
 	Backfill only blobs reachable from commits in the specified

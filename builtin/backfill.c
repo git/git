@@ -26,7 +26,7 @@
 #include "path-walk.h"
 
 static const char * const builtin_backfill_usage[] = {
-	N_("git backfill [--min-batch-size=<n>] [--[no-]sparse] [<revision-range>]"),
+	N_("git backfill [--min-batch-size=<n>] [--[no-]sparse] [--[no-]include-edges] [<revision-range>]"),
 	NULL
 };
 
@@ -35,6 +35,7 @@ struct backfill_context {
 	struct oid_array current_batch;
 	size_t min_batch_size;
 	int sparse;
+	int include_edges;
 	struct rev_info revs;
 };
 
@@ -116,6 +117,8 @@ static int do_backfill(struct backfill_context *ctx)
 	/* Walk from HEAD if otherwise unspecified. */
 	if (!ctx->revs.pending.nr)
 		add_head_to_pending(&ctx->revs);
+	if (ctx->include_edges)
+		ctx->revs.edge_hint = 1;
 
 	info.blobs = 1;
 	info.tags = info.commits = info.trees = 0;
@@ -143,12 +146,15 @@ int cmd_backfill(int argc, const char **argv, const char *prefix, struct reposit
 		.min_batch_size = 50000,
 		.sparse = -1,
 		.revs = REV_INFO_INIT,
+		.include_edges = 1,
 	};
 	struct option options[] = {
 		OPT_UNSIGNED(0, "min-batch-size", &ctx.min_batch_size,
 			     N_("Minimum number of objects to request at a time")),
 		OPT_BOOL(0, "sparse", &ctx.sparse,
 			 N_("Restrict the missing objects to the current sparse-checkout")),
+		OPT_BOOL(0, "include-edges", &ctx.include_edges,
+			 N_("Include blobs from boundary commits in the backfill")),
 		OPT_END(),
 	};
 	struct repo_config_values *cfg = repo_config_values(the_repository);

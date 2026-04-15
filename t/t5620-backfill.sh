@@ -257,11 +257,12 @@ test_expect_success 'backfill with revision range' '
 	git -C backfill-revs rev-list --quiet --objects --missing=print HEAD >missing &&
 	test_line_count = 48 missing &&
 
-	git -C backfill-revs backfill HEAD~2..HEAD &&
+	GIT_TRACE2_EVENT="$(pwd)/backfill-trace" git -C backfill-revs backfill HEAD~2..HEAD &&
 
-	# 30 objects downloaded.
+	# 36 objects downloaded, 12 still missing
+	test_trace2_data promisor fetch_count 36 <backfill-trace &&
 	git -C backfill-revs rev-list --quiet --objects --missing=print HEAD >missing &&
-	test_line_count = 18 missing
+	test_line_count = 12 missing
 '
 
 test_expect_success 'backfill with revisions over stdin' '
@@ -279,11 +280,12 @@ test_expect_success 'backfill with revisions over stdin' '
 	^HEAD~2
 	EOF
 
-	git -C backfill-revs backfill --stdin <in &&
+	GIT_TRACE2_EVENT="$(pwd)/backfill-trace" git -C backfill-revs backfill --stdin <in &&
 
-	# 30 objects downloaded.
+	# 36 objects downloaded, 12 still missing
+	test_trace2_data promisor fetch_count 36 <backfill-trace &&
 	git -C backfill-revs rev-list --quiet --objects --missing=print HEAD >missing &&
-	test_line_count = 18 missing
+	test_line_count = 12 missing
 '
 
 test_expect_success 'backfill with prefix pathspec' '
@@ -396,6 +398,102 @@ test_expect_success 'backfill with --since' '
 	# 6 missing: v1 of file.1.txt in all 6 directories
 	git -C backfill-since rev-list --quiet --objects --missing=print HEAD >missing &&
 	test_line_count = 6 missing
+'
+
+test_expect_success 'backfill range with include-edges enables fetch-free git-log' '
+	git clone --no-checkout --filter=blob:none	\
+		--single-branch --branch=main		\
+		"file://$(pwd)/srv.bare" backfill-log &&
+
+	# Backfill the range with default include edges.
+	git -C backfill-log backfill HEAD~2..HEAD &&
+
+	# git log -p needs edge blobs for the "before" side of
+	# diffs.  With edge inclusion, all needed blobs are local.
+	GIT_TRACE2_EVENT="$(pwd)/log-trace" git \
+		-C backfill-log log -p HEAD~2..HEAD >log-output &&
+
+	# No promisor fetches should have been needed.
+	! grep "fetch_count" log-trace
+'
+
+test_expect_success 'backfill range without include edges causes on-demand fetches in git-log' '
+	git clone --no-checkout --filter=blob:none	\
+		--single-branch --branch=main		\
+		"file://$(pwd)/srv.bare" backfill-log-no-bdy &&
+
+	# Backfill WITHOUT include edges -- file.3 v1 blobs are missing.
+	git -C backfill-log-no-bdy backfill --no-include-edges HEAD~2..HEAD &&
+
+	# git log -p HEAD~2..HEAD computes diff of commit 7 against
+	# commit 6.  It needs file.3 v1 (the "before" side), which was
+	# not backfilled.  This triggers on-demand promisor fetches.
+	GIT_TRACE2_EVENT="$(pwd)/log-no-bdy-trace" git \
+		-C backfill-log-no-bdy log -p HEAD~2..HEAD >log-output &&
+
+	grep "fetch_count" log-no-bdy-trace
+'
+
+test_expect_success 'backfill range enables fetch-free replay' '
+	# Create a repo with a branch to replay.
+	git init replay-src &&
+	(
+		cd replay-src &&
+		git config uploadpack.allowfilter 1 &&
+		git config uploadpack.allowanysha1inwant 1 &&
+		test_commit base &&
+		git checkout -b topic &&
+		test_commit topic-change &&
+		git checkout main &&
+		test_commit main-change
+	) &&
+	git clone --bare --filter=blob:none \
+		"file://$(pwd)/replay-src" replay-dest.git &&
+
+	# Backfill the replay range: --onto main, replaying topic~1..topic.
+	# For replay, we need TARGET^! plus the range.
+	main_oid=$(git -C replay-dest.git rev-parse main) &&
+	topic_oid=$(git -C replay-dest.git rev-parse topic) &&
+	base_oid=$(git -C replay-dest.git rev-parse topic~1) &&
+	git -C replay-dest.git backfill \
+		"$main_oid^!" "$base_oid..$topic_oid" &&
+
+	# Now replay should complete without any promisor fetches.
+	GIT_TRACE2_EVENT="$(pwd)/replay-trace" git -C replay-dest.git \
+		replay --onto main topic~1..topic >replay-out &&
+
+	! grep "fetch_count" replay-trace
+'
+
+test_expect_success 'backfill enables fetch-free merge' '
+	# Create a repo with two branches to merge.
+	git init merge-src &&
+	(
+		cd merge-src &&
+		git config uploadpack.allowfilter 1 &&
+		git config uploadpack.allowanysha1inwant 1 &&
+		test_commit merge-base &&
+		git checkout -b side &&
+		test_commit side-change &&
+		git checkout main &&
+		test_commit main-side-change
+	) &&
+	git clone --filter=blob:none \
+		"file://$(pwd)/merge-src" merge-dest &&
+
+	# The clone checked out main, fetching its blobs.
+	# Backfill the three endpoint commits needed for merge.
+	main_oid=$(git -C merge-dest rev-parse origin/main) &&
+	side_oid=$(git -C merge-dest rev-parse origin/side) &&
+	mbase=$(git -C merge-dest merge-base origin/main origin/side) &&
+	git -C merge-dest backfill --no-include-edges \
+		"$main_oid^!" "$side_oid^!" "$mbase^!" &&
+
+	# Merge should complete without promisor fetches.
+	GIT_TRACE2_EVENT="$(pwd)/merge-trace" git -C merge-dest \
+		merge origin/side -m "test merge" &&
+
+	! grep "fetch_count" merge-trace
 '
 
 . "$TEST_DIRECTORY"/lib-httpd.sh
