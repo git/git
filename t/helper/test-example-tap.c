@@ -1,5 +1,5 @@
 #include "test-tool.h"
-#include "t/unit-tests/test-lib.h"
+#include "../unit-tests/test-lib.h"
 
 /*
  * The purpose of this "unit test" is to verify a few invariants of the unit
