@@ -78,6 +78,28 @@ static int fill_missing_blobs(const char *path UNUSED,
 	return 0;
 }
 
+static void reject_unsupported_rev_list_options(struct rev_info *revs)
+{
+	if (revs->diffopt.pickaxe)
+		die(_("'%s' cannot be used with 'git backfill'"),
+		    (revs->diffopt.pickaxe_opts & DIFF_PICKAXE_REGEX) ? "-G" : "-S");
+	if (revs->diffopt.filter || revs->diffopt.filter_not)
+		die(_("'%s' cannot be used with 'git backfill'"),
+		    "--diff-filter");
+	if (revs->diffopt.flags.follow_renames)
+		die(_("'%s' cannot be used with 'git backfill'"),
+		    "--follow");
+	if (revs->line_level_traverse)
+		die(_("'%s' cannot be used with 'git backfill'"),
+		    "-L");
+	if (revs->explicit_diff_merges)
+		die(_("'%s' cannot be used with 'git backfill'"),
+		    "--diff-merges");
+	if (revs->filter.choice)
+		die(_("'%s' cannot be used with 'git backfill'"),
+		    "--filter");
+}
+
 static int do_backfill(struct backfill_context *ctx)
 {
 	struct path_walk_info info = PATH_WALK_INFO_INIT;
@@ -144,6 +166,7 @@ int cmd_backfill(int argc, const char **argv, const char *prefix, struct reposit
 
 	if (argc > 1)
 		die(_("unrecognized argument: %s"), argv[1]);
+	reject_unsupported_rev_list_options(&ctx.revs);
 
 	repo_config(repo, git_default_config, NULL);
 
