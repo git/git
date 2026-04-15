@@ -1,0 +1,4 @@
+(eval-when (:compile-toplevel :load-toplevel :execute)  ; RIGHT
+  (set-macro-character #\?
+		       (lambda (stream char)
+			 `(make-pattern-variable ,(read stream)))))  ; ChangeMe

@@ -911,7 +911,8 @@ patterns are available:
 
 - `rust` suitable for source code in the Rust language.
 
-- `scheme` suitable for source code in the Scheme language.
+- `scheme` suitable for source code in most Lisp dialects,
+  including Scheme, Emacs Lisp, Common Lisp, and Clojure.
 
 - `tex` suitable for source code for LaTeX documents.
 
