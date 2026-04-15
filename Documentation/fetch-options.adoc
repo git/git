@@ -49,6 +49,7 @@ the current repository has the same history as the source repository.
 	`.git/shallow`. This option updates `.git/shallow` and accepts such
 	refs.
 
+`--negotiation-restrict=(<commit>|<glob>)`::
 `--negotiation-tip=(<commit>|<glob>)`::
 	By default, Git will report, to the server, commits reachable
 	from all local refs to find common commits in an attempt to
@@ -57,6 +58,9 @@ the current repository has the same history as the source repository.
 	This is useful to speed up fetches when the user knows which
 	local ref is likely to have commits in common with the
 	upstream ref being fetched.
++
+`--negotiation-restrict` is the preferred name for this option;
+`--negotiation-tip` is accepted as a synonym.
 +
 This option may be specified more than once; if so, Git will report
 commits reachable from any of the given commits.
