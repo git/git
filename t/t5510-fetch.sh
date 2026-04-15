@@ -1507,6 +1507,72 @@ test_expect_success 'CLI --negotiation-restrict overrides remote config' '
 	test_grep ! "fetch> have $BETA_1" trace
 '
 
+test_expect_success '--negotiation-require includes configured refs as haves' '
+	test_when_finished rm -f trace &&
+	setup_negotiation_tip server server 0 &&
+
+	GIT_TRACE_PACKET="$(pwd)/trace" git -C client fetch \
+		--negotiation-restrict=alpha_1 \
+		--negotiation-require=refs/tags/beta_1 \
+		origin alpha_s beta_s &&
+
+	ALPHA_1=$(git -C client rev-parse alpha_1) &&
+	test_grep "fetch> have $ALPHA_1" trace &&
+	BETA_1=$(git -C client rev-parse beta_1) &&
+	test_grep "fetch> have $BETA_1" trace
+'
+
+test_expect_success '--negotiation-require works with glob patterns' '
+	test_when_finished rm -f trace &&
+	setup_negotiation_tip server server 0 &&
+
+	GIT_TRACE_PACKET="$(pwd)/trace" git -C client fetch \
+		--negotiation-restrict=alpha_1 \
+		--negotiation-require="refs/tags/beta_*" \
+		origin alpha_s beta_s &&
+
+	BETA_1=$(git -C client rev-parse beta_1) &&
+	test_grep "fetch> have $BETA_1" trace &&
+	BETA_2=$(git -C client rev-parse beta_2) &&
+	test_grep "fetch> have $BETA_2" trace
+'
+
+test_expect_success '--negotiation-require is additive with negotiation' '
+	test_when_finished rm -f trace &&
+	setup_negotiation_tip server server 0 &&
+
+	GIT_TRACE_PACKET="$(pwd)/trace" git -C client fetch \
+		--negotiation-require=refs/tags/beta_1 \
+		origin alpha_s beta_s &&
+
+	BETA_1=$(git -C client rev-parse beta_1) &&
+	test_grep "fetch> have $BETA_1" trace
+'
+
+test_expect_success '--negotiation-require ignores non-existent refs silently' '
+	setup_negotiation_tip server server 0 &&
+
+	git -C client fetch --quiet \
+		--negotiation-restrict=alpha_1 \
+		--negotiation-require=refs/tags/nonexistent \
+		origin alpha_s beta_s 2>err &&
+	test_must_be_empty err
+'
+
+test_expect_success '--negotiation-require avoids duplicates with negotiator' '
+	test_when_finished rm -f trace &&
+	setup_negotiation_tip server server 0 &&
+
+	ALPHA_1=$(git -C client rev-parse alpha_1) &&
+	GIT_TRACE_PACKET="$(pwd)/trace" git -C client fetch \
+		--negotiation-restrict=alpha_1 \
+		--negotiation-require=refs/tags/alpha_1 \
+		origin alpha_s beta_s &&
+
+	test_grep "fetch> have $ALPHA_1" trace >matches &&
+	test_line_count = 1 matches
+'
+
 test_expect_success SYMLINKS 'clone does not get confused by a D/F conflict' '
 	git init df-conflict &&
 	(

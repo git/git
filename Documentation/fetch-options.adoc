@@ -73,6 +73,25 @@ See also the `fetch.negotiationAlgorithm` and `push.negotiate`
 configuration variables documented in linkgit:git-config[1], and the
 `--negotiate-only` option below.
 
+`--negotiation-require=<revision>`::
+	Ensure that the given ref tip is always sent as a "have" line
+	during fetch negotiation, regardless of what the negotiation
+	algorithm selects.  This is useful to guarantee that common
+	history reachable from specific refs is always considered, even
+	when `--negotiation-restrict` restricts the set of tips or when
+	the negotiation algorithm would otherwise skip them.
++
+This option may be specified more than once; if so, each ref is sent
+unconditionally.
++
+The argument may be an exact ref name (e.g. `refs/heads/release`) or a
+glob pattern (e.g. `refs/heads/release/{asterisk}`).  The pattern syntax
+is the same as for `--negotiation-restrict`.
++
+If `--negotiation-restrict` is used, the have set is first restricted by
+that option and then increased to include the tips specified by
+`--negotiation-require`.
+
 `--negotiate-only`::
 	Do not fetch anything from the server, and instead print the
 	ancestors of the provided `--negotiation-tip=` arguments,

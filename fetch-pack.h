@@ -23,6 +23,13 @@ struct fetch_pack_args {
 	 */
 	const struct oid_array *negotiation_restrict_tips;
 
+	/*
+	 * If non-empty, ref patterns whose tips should always be sent
+	 * as "have" lines during negotiation, regardless of what the
+	 * negotiation algorithm selects.
+	 */
+	const struct string_list *negotiation_require;
+
 	unsigned deepen_relative:1;
 	unsigned quiet:1;
 	unsigned keep_pack:1;
@@ -93,7 +100,8 @@ void negotiate_using_fetch(const struct oid_array *negotiation_restrict_tips,
 			   const struct string_list *server_options,
 			   int stateless_rpc,
 			   int fd[],
-			   struct oidset *acked_commits);
+			   struct oidset *acked_commits,
+			   const struct string_list *negotiation_require);
 
 /*
  * Print an appropriate error message for each sought ref that wasn't

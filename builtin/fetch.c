@@ -99,6 +99,7 @@ static struct transport *gsecondary;
 static struct refspec refmap = REFSPEC_INIT_FETCH;
 static struct string_list server_options = STRING_LIST_INIT_DUP;
 static struct string_list negotiation_tip = STRING_LIST_INIT_NODUP;
+static struct string_list negotiation_require = STRING_LIST_INIT_NODUP;
 
 struct fetch_config {
 	enum display_format display_format;
@@ -1615,6 +1616,13 @@ static struct transport *prepare_transport(struct remote *remote, int deepen,
 			strbuf_release(&config_name);
 		}
 	}
+	if (negotiation_require.nr) {
+		if (transport->smart_options)
+			transport->smart_options->negotiation_require = &negotiation_require;
+		else
+			warning(_("ignoring %s because the protocol does not support it"),
+				"--negotiation-require");
+	}
 	return transport;
 }
 
@@ -2583,6 +2591,8 @@ int cmd_fetch(int argc,
 				N_("report that we have only objects reachable from this object")),
 		OPT_STRING_LIST(0, "negotiation-restrict", &negotiation_tip, N_("revision"),
 				N_("report that we have only objects reachable from this object")),
+		OPT_STRING_LIST(0, "negotiation-require", &negotiation_require, N_("revision"),
+				N_("ensure this ref is always sent as a negotiation have")),
 		OPT_BOOL(0, "negotiate-only", &negotiate_only,
 			 N_("do not fetch a packfile; instead, print ancestors of negotiation tips")),
 		OPT_PARSE_LIST_OBJECTS_FILTER(&filter_options),
