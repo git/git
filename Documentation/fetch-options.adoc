@@ -91,6 +91,10 @@ is the same as for `--negotiation-restrict`.
 If `--negotiation-restrict` is used, the have set is first restricted by
 that option and then increased to include the tips specified by
 `--negotiation-require`.
++
+If this option is not specified on the command line, then any
+`remote.<name>.negotiationRequire` config values for the current remote
+are used instead.
 
 `--negotiate-only`::
 	Do not fetch anything from the server, and instead print the

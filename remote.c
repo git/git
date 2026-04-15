@@ -153,6 +153,7 @@ static struct remote *make_remote(struct remote_state *remote_state,
 	refspec_init_fetch(&ret->fetch);
 	string_list_init_dup(&ret->server_options);
 	string_list_init_dup(&ret->negotiation_restrict);
+	string_list_init_dup(&ret->negotiation_require);
 
 	ALLOC_GROW(remote_state->remotes, remote_state->remotes_nr + 1,
 		   remote_state->remotes_alloc);
@@ -181,6 +182,7 @@ static void remote_clear(struct remote *remote)
 	FREE_AND_NULL(remote->http_proxy_authmethod);
 	string_list_clear(&remote->server_options, 0);
 	string_list_clear(&remote->negotiation_restrict, 0);
+	string_list_clear(&remote->negotiation_require, 0);
 }
 
 static void add_merge(struct branch *branch, const char *name)
@@ -568,6 +570,10 @@ static int handle_config(const char *key, const char *value,
 		if (!value)
 			return config_error_nonbool(key);
 		string_list_append(&remote->negotiation_restrict, value);
+	} else if (!strcmp(subkey, "negotiationrequire")) {
+		if (!value)
+			return config_error_nonbool(key);
+		string_list_append(&remote->negotiation_require, value);
 	} else if (!strcmp(subkey, "followremotehead")) {
 		const char *no_warn_branch;
 		if (!strcmp(value, "never"))

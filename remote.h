@@ -118,6 +118,7 @@ struct remote {
 
 	struct string_list server_options;
 	struct string_list negotiation_restrict;
+	struct string_list negotiation_require;
 
 	enum follow_remote_head_settings follow_remote_head;
 	const char *no_warn_branch;
