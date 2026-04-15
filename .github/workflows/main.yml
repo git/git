@@ -179,7 +179,7 @@ jobs:
       uses: actions/checkout@v5
       with:
         repository: 'microsoft/vcpkg'
-        path: 'compat/vcbuild/vcpkg'
+        path: 'lib/compat/vcbuild/vcpkg'
     - name: download vcpkg artifacts
       uses: git-for-windows/get-azure-pipelines-artifact@v0
       with:
@@ -189,11 +189,11 @@ jobs:
       uses: microsoft/setup-msbuild@v2
     - name: copy dlls to root
       shell: cmd
-      run: compat\vcbuild\vcpkg_copy_dlls.bat release
+      run: lib\compat\vcbuild\vcpkg_copy_dlls.bat release
     - name: generate Visual Studio solution
       shell: bash
       run: |
-        cmake `pwd`/contrib/buildsystems/ -DCMAKE_PREFIX_PATH=`pwd`/compat/vcbuild/vcpkg/installed/x64-windows \
+        cmake `pwd`/contrib/buildsystems/ -DCMAKE_PREFIX_PATH=`pwd`/lib/compat/vcbuild/vcpkg/installed/x64-windows \
         -DNO_GETTEXT=YesPlease -DPERL_TESTS=OFF -DPYTHON_TESTS=OFF -DCURL_NO_CURL_CMAKE=ON
     - name: MSBuild
       run: msbuild git.sln -property:Configuration=Release -property:Platform=x64 -maxCpuCount:4 -property:PlatformToolset=v142
@@ -201,7 +201,7 @@ jobs:
       shell: bash
       env:
         MSVC: 1
-        VCPKG_ROOT: ${{github.workspace}}\compat\vcbuild\vcpkg
+        VCPKG_ROOT: ${{github.workspace}}\lib\compat\vcbuild\vcpkg
       run: |
         mkdir -p artifacts &&
         eval "$(make -n artifacts-tar INCLUDE_DLLS_IN_ARTIFACTS=YesPlease ARTIFACTS_DIRECTORY=artifacts NO_GETTEXT=YesPlease 2>&1 | grep ^tar)"
