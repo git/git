@@ -783,8 +783,10 @@ static int merge_working_tree(const struct checkout_opts *opts,
 	struct tree *new_tree;
 
 	repo_hold_locked_index(the_repository, &lock_file, LOCK_DIE_ON_ERROR);
-	if (repo_read_index_preload(the_repository, NULL, 0) < 0)
+	if (repo_read_index_preload(the_repository, NULL, 0) < 0) {
+		rollback_lock_file(&lock_file);
 		return error(_("index file corrupt"));
+	}
 
 	resolve_undo_clear_index(the_repository->index);
 	if (opts->new_orphan_branch && opts->orphan_from_empty_tree) {
@@ -797,14 +799,18 @@ static int merge_working_tree(const struct checkout_opts *opts,
 	} else {
 		new_tree = repo_get_commit_tree(the_repository,
 						new_branch_info->commit);
-		if (!new_tree)
+		if (!new_tree) {
+			rollback_lock_file(&lock_file);
 			return error(_("unable to read tree (%s)"),
 				     oid_to_hex(&new_branch_info->commit->object.oid));
+		}
 	}
 	if (opts->discard_changes) {
 		ret = reset_tree(new_tree, opts, 1, writeout_error, new_branch_info);
-		if (ret)
+		if (ret) {
+			rollback_lock_file(&lock_file);
 			return ret;
+		}
 	} else {
 		struct tree_desc trees[2];
 		struct tree *tree;
@@ -814,6 +820,7 @@ static int merge_working_tree(const struct checkout_opts *opts,
 		refresh_index(the_repository->index, REFRESH_QUIET, NULL, NULL, NULL);
 
 		if (unmerged_index(the_repository->index)) {
+			rollback_lock_file(&lock_file);
 			error(_("you need to resolve your current index first"));
 			return 1;
 		}
@@ -857,15 +864,19 @@ static int merge_working_tree(const struct checkout_opts *opts,
 			struct strbuf sb = STRBUF_INIT;
 			struct strbuf old_commit_shortname = STRBUF_INIT;
 
-			if (!opts->merge)
+			if (!opts->merge) {
+				rollback_lock_file(&lock_file);
 				return 1;
+			}
 
 			/*
 			 * Without old_branch_info->commit, the below is the same as
 			 * the two-tree unpack we already tried and failed.
 			 */
-			if (!old_branch_info->commit)
+			if (!old_branch_info->commit) {
+				rollback_lock_file(&lock_file);
 				return 1;
+			}
 			old_tree = repo_get_commit_tree(the_repository,
 							old_branch_info->commit);
 
@@ -897,8 +908,10 @@ static int merge_working_tree(const struct checkout_opts *opts,
 			ret = reset_tree(new_tree,
 					 opts, 1,
 					 writeout_error, new_branch_info);
-			if (ret)
+			if (ret) {
+				rollback_lock_file(&lock_file);
 				return ret;
+			}
 			o.ancestor = old_branch_info->name;
 			if (!old_branch_info->name) {
 				strbuf_add_unique_abbrev(&old_commit_shortname,
@@ -920,8 +933,10 @@ static int merge_working_tree(const struct checkout_opts *opts,
 					 writeout_error, new_branch_info);
 			strbuf_release(&o.obuf);
 			strbuf_release(&old_commit_shortname);
-			if (ret)
+			if (ret) {
+				rollback_lock_file(&lock_file);
 				return ret;
+			}
 		}
 	}
 
