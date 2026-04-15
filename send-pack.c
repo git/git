@@ -433,6 +433,8 @@ static void reject_invalid_nonce(const char *nonce, int len)
 
 static void get_commons_through_negotiation(struct repository *r,
 					    const char *url,
+					    const struct string_list *negotiation_require,
+					    const struct string_list *negotiation_restrict,
 					    const struct ref *remote_refs,
 					    struct oid_array *commons)
 {
@@ -445,13 +447,30 @@ static void get_commons_through_negotiation(struct repository *r,
 	child.no_stdin = 1;
 	child.out = -1;
 	strvec_pushl(&child.args, "fetch", "--negotiate-only", NULL);
-	for (ref = remote_refs; ref; ref = ref->next) {
-		if (!is_null_oid(&ref->new_oid)) {
-			strvec_pushf(&child.args, "--negotiation-tip=%s",
-				     oid_to_hex(&ref->new_oid));
-			nr_negotiation_tip++;
+
+	if (negotiation_restrict && negotiation_restrict->nr) {
+		struct string_list_item *item;
+		for_each_string_list_item(item, negotiation_restrict)
+			strvec_pushf(&child.args, "--negotiation-restrict=%s",
+				     item->string);
+		nr_negotiation_tip = negotiation_restrict->nr;
+	} else {
+		for (ref = remote_refs; ref; ref = ref->next) {
+			if (!is_null_oid(&ref->new_oid)) {
+				strvec_pushf(&child.args, "--negotiation-tip=%s",
+					     oid_to_hex(&ref->new_oid));
+				nr_negotiation_tip++;
+			}
 		}
 	}
+
+	if (negotiation_require && negotiation_require->nr) {
+		struct string_list_item *item;
+		for_each_string_list_item(item, negotiation_require)
+			strvec_pushf(&child.args, "--negotiation-require=%s",
+				     item->string);
+	}
+
 	strvec_push(&child.args, url);
 
 	if (!nr_negotiation_tip) {
@@ -528,7 +547,10 @@ int send_pack(struct repository *r,
 	repo_config_get_bool(r, "push.negotiate", &push_negotiate);
 	if (push_negotiate) {
 		trace2_region_enter("send_pack", "push_negotiate", r);
-		get_commons_through_negotiation(r, args->url, remote_refs, &commons);
+		get_commons_through_negotiation(r, args->url,
+					       args->negotiation_require,
+					       args->negotiation_restrict,
+					       remote_refs, &commons);
 		trace2_region_leave("send_pack", "push_negotiate", r);
 	}
 
