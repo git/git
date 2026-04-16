@@ -1259,7 +1259,6 @@ static int write_midx_internal(struct write_midx_opts *opts)
 	struct tempfile *incr;
 	struct write_midx_context ctx = {
 		.preferred_pack_idx = NO_PREFERRED_PACK,
-		.version = MIDX_VERSION_V2,
 	 };
 	struct multi_pack_index *midx_to_free = NULL;
 	int bitmapped_packs_concat_len = 0;
@@ -1275,6 +1274,9 @@ static int write_midx_internal(struct write_midx_opts *opts)
 	ctx.repo = r;
 	ctx.source = opts->source;
 
+	ctx.version = ((opts->flags & MIDX_WRITE_COMPACT)
+		       ? MIDX_VERSION_V2
+		       : MIDX_VERSION_V1);
 	repo_config_get_int(ctx.repo, "midx.version", &ctx.version);
 	if (ctx.version != MIDX_VERSION_V1 && ctx.version != MIDX_VERSION_V2)
 		die(_("unknown MIDX version: %d"), ctx.version);
