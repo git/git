@@ -98,6 +98,9 @@ compact::
 	--[no-]bitmap::
 		Control whether or not a multi-pack bitmap is written.
 --
++
+Note that the compact command requires writing a version-2 midx that
+cannot be read by versions of Git prior to v2.54.
 
 verify::
 	Verify the contents of the MIDX file.
