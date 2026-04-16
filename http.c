@@ -665,6 +665,11 @@ static void init_curl_http_auth(CURL *result)
 	}
 }
 
+void http_reauth_prepare(int all_capabilities)
+{
+	credential_fill(the_repository, &http_auth, all_capabilities);
+}
+
 /* *var must be free-able */
 static void var_override(char **var, char *value)
 {
@@ -2398,7 +2403,7 @@ static int http_request_recoverable(const char *url,
 				sleep(retry_delay);
 			}
 		} else if (ret == HTTP_REAUTH) {
-			credential_fill(the_repository, &http_auth, 1);
+			http_reauth_prepare(1);
 		}
 
 		ret = http_request(url, result, target, options);
