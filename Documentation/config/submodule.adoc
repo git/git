@@ -40,7 +40,7 @@ submodule.<name>.ignore::
 	takes only differences between the HEAD of the submodule and the commit
 	recorded in the superproject into account. "untracked" will additionally
 	let submodules with modified tracked files in their work tree show up.
-	When set to "none"(default) It also show submodules as changed if they have
+	When set to "none" (default) it also shows submodules as changed if they have
 	untracked files in their work tree.
 	This setting overrides any setting made in .gitmodules for this submodule,
 	both settings can be overridden on the command line by using the

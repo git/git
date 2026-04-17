@@ -22,7 +22,7 @@ sendemail.smtpSSLClientCert::
 sendemail.smtpSSLClientKey::
 	Path to the client private key file that corresponds to the client
 	certificate. To avoid misconfiguration, this configuration must be used
-	in conjunction with `sendemail.smtpSSLClientKey` or the
+	in conjunction with `sendemail.smtpSSLClientCert` or the
 	`--smtp-ssl-client-cert` option. If the client key is included in the
 	client certificate, the choice of private key depends on the format of
 	the certificate. Visit https://metacpan.org/pod/IO::Socket::SSL for more

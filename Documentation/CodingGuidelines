@@ -688,7 +688,7 @@ For C programs:
          walk_dog(dog[1]);
 
    Cases where the array is employed as a whole rather than as its unit parts,
-   the plural forms is preferable. E.g:
+   the plural form is preferable. E.g:
 
          char *dogs[] = ...;
          walk_all_dogs(dogs);

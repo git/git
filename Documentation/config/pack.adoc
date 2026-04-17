@@ -161,7 +161,7 @@ pack.usePathWalk::
 
 pack.preferBitmapTips::
 	Specifies a ref hierarchy (e.g., "refs/heads/"); can be
-	given multiple times to specify more than one hierarchies.
+	given multiple times to specify more than one hierarchy.
 	When selecting which commits will receive bitmaps, prefer a
 	commit at the tip of a reference that is contained in any of
 	the configured hierarchies.

@@ -36,7 +36,7 @@ UI, Workflows & Features
  * Extend the alias configuration syntax to allow aliases using
    characters outside ASCII alphanumeric (plus '-').
 
- * A signature on a commit that was GPG signed long time ago ought to
+ * A signature on a commit that was GPG signed a long time ago ought to
    be still valid after the key that was used to sign it has expired,
    but we showed them in alarming red.
 
@@ -88,7 +88,7 @@ UI, Workflows & Features
  * "git repo structure" command learns to report maximum values on
    various aspects of objects it inspects.
 
- * "git rebase" learns "--trailer" command to drive the
+ * "git rebase" learns "--trailer" option to drive the
    interpret-trailers machinery.
 
  * "git fast-import" learned to optionally replace signature on
@@ -119,7 +119,7 @@ UI, Workflows & Features
  * "git replay" (experimental) learns, in addition to "pick" and
    "replay", a new operating mode "revert".
 
- * git replay now supports replaying down to the root commit.
+ * "git replay" now supports replaying down to the root commit.
 
  * Handling of signed commits and tags in fast-import has been made more
    configurable.
@@ -207,7 +207,7 @@ Performance, Internal Implementation, Development Support etc.
    from getting added.
 
  * The core.attributesfile is intended to be set per repository, but
-   were kept track of by a single global variable in-core, which has
+   was kept track of by a single global variable in-core, which has
    been corrected by moving it to per-repository data structure.
 
  * Use the hook API to replace ad-hoc invocation of hook scripts via
@@ -232,8 +232,8 @@ Performance, Internal Implementation, Development Support etc.
  * Reduce dependence on the global the_hash_algo and the_repository
    variables of wt-status code path.
 
-  * The way combined list-object filter options are parsed has been
-    revamped.
+ * The way combined list-object filter options are parsed has been
+   revamped.
 
  * Editorconfig filename patterns were specified incorrectly, making
    many source files inside subdirectories unaffected, which has been
@@ -272,7 +272,7 @@ Performance, Internal Implementation, Development Support etc.
  * split-index.c has been updated to not use the global the_repository
    and the_hash_algo variables.
 
- * The unsigned integer that is used as an bitset to specify the kind
+ * The unsigned integer that is used as a bitset to specify the kind
    of branches interpret_branch_name() function has been changed to
    use a dedicated enum type.
 
@@ -282,7 +282,7 @@ Performance, Internal Implementation, Development Support etc.
  * Code paths that loop over another array to push each element into a
    strvec have been rewritten to use strvec_pushv() instead.
 
- * In case homebrew breaks REG_ENHANCED again, leave a in-code comment
+ * In case homebrew breaks REG_ENHANCED again, leave an in-code comment
    to suggest use of our replacement regex as a workaround.
 
  * MinGW build updates.
@@ -382,7 +382,7 @@ Fixes since v2.53
    (merge f4eff7116d ps/pack-concat-wo-backfill later to maint).
 
  * "git switch <name>", in an attempt to create a local branch <name>
-   after a remote tracking branch of the same name gave an advise
+   after a remote tracking branch of the same name gave an advice
    message to disambiguate using "git checkout", which has been
    updated to use "git switch".
    (merge 12fee11f21 jc/checkout-switch-restore later to maint).
@@ -396,7 +396,7 @@ Fixes since v2.53
  * "git format-patch --from=<me>" did not honor the command line
    option when writing out the cover letter, which has been corrected.
 
- * Update build precedure for mergetool documentation in meson-based builds.
+ * Update build procedure for mergetool documentation in meson-based builds.
    (merge 58e4eeeeb5 pw/meson-doc-mergetool later to maint).
 
  * An earlier attempt to optimize "git subtree" discarded too much
