@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Apr 2026, #04)
-X-master-at: 9e8f4e9c04e3efa494e78b710e0c5f6cc77a0a5e
-X-next-at: 96b250ada0479af53128b98c3cfefe452196b568
+Subject: What's cooking in git.git (Apr 2026, #05)
+X-master-at: e8955061076952cc5eab0300424fc48b601fe12d
+X-next-at: c7ae2d5bb8f97b06f1b31df2f2456646924c8be7
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Apr 2026, #04)
+What's cooking in git.git (Apr 2026, #05)
 -----------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,7 +46,128 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* jk/midx-write-v1-by-default (2026-04-16) 1 commit
+  (merged to 'next' on 2026-04-16 at 1b296b0f55)
+ + MIDX: revert the default version to v1
+
+ As writing version 2 MIDX files by default breaks older versions of
+ Git and its reimplementations, use V2 only when necessary.
+ source: <20260416200659.GB1887222@coredump.intra.peff.net>
+
+--------------------------------------------------
 [New Topics]
+
+* sb/userdiff-lisp-family (2026-04-14) 2 commits
+ - userdiff: extend Scheme support to cover other Lisp dialects
+ - userdiff: tighten word-diff test case of the scheme driver
+
+ The userdiff driver for the Scheme language has been extended to
+ cover other Lisp dialects.
+
+ Will merge to 'next'.
+ source: <pull.2000.v4.git.1776220063.gitgitgadget@gmail.com>
+
+
+* ss/t7004-unhide-git-failures (2026-04-14) 3 commits
+ - t7004: avoid subshells to capture git exit codes
+ - t7004: dynamically grab expected state in tests
+ - t7004: drop hardcoded tag count in invalid name test
+
+ Test clean-up.
+
+ Will merge to 'next'?
+ source: <20260414141828.27576-1-r.siddharth.shrimali@gmail.com>
+
+
+* tb/pseudo-merge-bugfixes (2026-04-13) 8 commits
+ - pack-bitmap: prevent pattern leak on pseudo-merge re-assignment
+ - pack-bitmap: reject pseudo-merge "sampleRate" of 0
+ - pack-bitmap: parse commits in `find_pseudo_merge_group_for_ref()`
+ - pack-bitmap: fix pseudo-merge lookup for shared commits
+ - pack-bitmap: fix inverted binary search in `pseudo_merge_at()`
+ - pack-bitmap-write: sort pseudo-merge commit lookup table in pack order
+ - t5333: demonstrate various pseudo-merge bugs
+ - t/helper: add 'test-tool bitmap write' subcommand
+
+ Expecting a reroll.
+ cf. <ad60PJ/pM/wG3krQ@nand.local>
+ source: <cover.1776124588.git.me@ttaylorr.com>
+
+
+* ds/fetch-negotiation-options (2026-04-15) 7 commits
+ - send-pack: pass negotiation config in push
+ - remote: add negotiationRequire config as default for --negotiation-require
+ - fetch: add --negotiation-require option for negotiation
+ - remote: add remote.*.negotiationRestrict config
+ - transport: rename negotiation_tips
+ - fetch: add --negotiation-restrict option
+ - t5516: fix test order flakiness
+
+ The negotiation tip options in "git fetch" have been reworked to
+ allow requiring certain refs to be sent as "have" lines, and to
+ restrict negotiation to a specific set of refs.
+
+ Needs review.
+ source: <pull.2085.v2.git.1776266066.gitgitgadget@gmail.com>
+
+
+* en/backfill-fixes-and-edges (2026-04-15) 3 commits
+ - backfill: default to grabbing edge blobs too
+ - backfill: document acceptance of revision-range in more standard manner
+ - backfill: reject rev-list arguments that do not make sense
+
+ The 'git backfill' command now rejects revision-limiting options that
+ are incompatible with its operation, uses standard documentation for
+ revision ranges, and includes blobs from boundary commits by default
+ to improve performance of subsequent operations.
+
+ Needs review.
+ source: <pull.2088.git.1776297482.gitgitgadget@gmail.com>
+
+
+* mc/http-emptyauth-negotiate-fix (2026-04-16) 3 commits
+ - t5563: add tests for http.emptyAuth with Negotiate
+ - http: attempt Negotiate auth in http.emptyAuth=auto mode
+ - http: extract http_reauth_prepare() from retry paths
+
+ The 'http.emptyAuth=auto' configuration now correctly attempts
+ Negotiate authentication before falling back to manual credentials.
+ This allows seamless Kerberos ticket-based authentication without
+ requiring users to explicitly set 'http.emptyAuth=true'.
+
+ Will merge to 'next'.
+ source: <pull.2087.git.1776331259.gitgitgadget@gmail.com>
+
+
+* en/batch-prefetch (2026-04-16) 3 commits
+ - grep: prefetch necessary blobs
+ - builtin/log: prefetch necessary blobs for `git cherry`
+ - patch-ids.h: add missing trailing parenthesis in documentation comment
+
+ In a lazy clone, "git cherry" and "git grep" often fetch necessary
+ blob objects one by one from promisor remotes.  It has been corrected
+ to collect necessary object names and fetch them in bulk to gain
+ reasonable performance.
+
+ Needs review.
+ source: <pull.2089.git.1776379694.gitgitgadget@gmail.com>
+
+
+* en/diffstat-utf8-truncation-fix (2026-04-17) 1 commit
+ - diff: fix out-of-bounds reads and NULL deref in diffstat UTF-8 truncation
+
+ The computation to shorten the filenames shown in diffstat measured
+ width of individual UTF-8 characters to add up, but forgot to take
+ into account error cases (e.g., an invalid UTF-8 sequence, or a
+ control character).
+
+ Needs review.
+ source: <pull.2093.git.1776443163041.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[Cooking]
 
 * sp/refs-reduce-the-repository (2026-04-04) 3 commits
   (merged to 'next' on 2026-04-09 at bb1d626802)
@@ -86,7 +207,7 @@ Release tarballs are available at:
  tentative objects (like the virtual blob object that represents the
  working tree file used by "git blame").
 
- Comments?
+ Will merge to 'next'?
  source: <20260410-b4-pks-odb-source-inmemory-v3-0-22fd0fad58fe@pks.im>
 
 
@@ -94,212 +215,32 @@ Release tarballs are available at:
  - CodingGuidelines: st_mtimespec vs st_mtim vs st_mtime
 
  Doc update.
+
+ Will merge to 'next'.
  source: <xmqqzf3aofdj.fsf_-_@gitster.g>
 
 
-* ps/test-set-e-clean (2026-04-13) 12 commits
- . t: detect errors outside of test cases
- . t9902: fix use of `read` with `set -e`
- . t6002: fix use of `expr` with `set -e`
- . t1301: don't fail in case setfacl(1) doesn't exist or fails
- . t0008: silence error in subshell when using `grep -v`
- . t: prepare `test_when_finished ()`/`test_atexit()` for `set -e`
- . t: prepare execution of potentially failing commands for `set -e`
- . t: prepare conditional test execution for `set -e`
- . t: prepare `git config --unset` calls for `set -e`
- . t: prepare `stop_git_daemon ()` for `set -e`
- . t: prepare `test_must_fail ()` for `set -e`
- . t: prepare `test_match_signal ()` calls for `set -e`
+* ps/test-set-e-clean (2026-04-17) 12 commits
+ - t: detect errors outside of test cases
+ - t9902: fix use of `read` with `set -e`
+ - t6002: fix use of `expr` with `set -e`
+ - t1301: don't fail in case setfacl(1) doesn't exist or fails
+ - t0008: silence error in subshell when using `grep -v`
+ - t: prepare `test_when_finished ()`/`test_atexit()` for `set -e`
+ - t: prepare execution of potentially failing commands for `set -e`
+ - t: prepare conditional test execution for `set -e`
+ - t: prepare `git config --unset` calls for `set -e`
+ - t: prepare `stop_git_daemon ()` for `set -e`
+ - t: prepare `test_must_fail ()` for `set -e`
+ - t: prepare `test_match_signal ()` calls for `set -e`
 
  The test suite harness and many individual test scripts have been
  updated to work correctly when 'set -e' is in effect, which helps
  detect misspelled test commands.
 
- Comments?
- source: <20260413-b4-pks-tests-with-set-e-v1-0-5b83763a0e84@pks.im>
+ Will merge to 'next'?
+ source: <20260417-b4-pks-tests-with-set-e-v4-0-44d43efdafb1@pks.im>
 
---------------------------------------------------
-[Graduated to 'master']
-
-* bc/ref-storage-default-doc-update (2026-04-02) 1 commit
-  (merged to 'next' on 2026-04-09 at 6b423ab8ba)
- + docs: correct information about reftable
-
- Doc update.
- source: <20260402224241.4104726-1-sandals@crustytoothpaste.net>
-
-
-* ds/rev-list-maximal-only-optim (2026-04-06) 3 commits
-  (merged to 'next' on 2026-04-07 at 7a70817efa)
- + rev-list: use reduce_heads() for --maximal-only
- + p6011: add perf test for rev-list --maximal-only
- + t6600: test --maximal-only and --independent
-
- "git rev-list --maximal-only" has been optimized by borrowing the
- logic used by "git show-branch --independent", which computes the
- same kind of information much more efficiently.
- source: <pull.2082.git.1775482048.gitgitgadget@gmail.com>
-
-
-* jc/ci-github-actions-use-checkout-v5 (2026-04-13) 1 commit
-  (merged to 'next' on 2026-04-13 at 9c883467ad)
- + CI: bump actions/checkout from 4 to 5 for rust-analysis job
-
- CI dependency updates.
- source: <xmqqfr4yhg5v.fsf@gitster.g>
-
-
-* jc/no-writev-does-not-work (2026-04-09) 5 commits
-  (merged to 'next' on 2026-04-10 at 779546e6a3)
- + writev: retract the topic until we have a better emulation
- + Revert "compat/posix: introduce writev(3p) wrapper"
- + Revert "wrapper: introduce writev(3p) wrappers"
- + Revert "sideband: use writev(3p) to send pktlines"
- + Revert "cmake: use writev(3p) wrapper as needed"
-
- We used writev() in limited code paths and supplied emulation for
- platforms without working writev(), but the emulation was too
- faithful to the spec to make the result useless to send even 64kB;
- revert the topic and plan to restart the effort later.
- source: <xmqqmrzbreav.fsf_-_@gitster.g>
-
-
-* jd/cache-tree-trace-wo-the-repository (2026-03-31) 1 commit
-  (merged to 'next' on 2026-04-02 at e36937bb5e)
- + cache-tree: use index state repository in trace2 calls
-
- Code cleanup.
- source: <pull.2259.git.git.1774951373588.gitgitgadget@gmail.com>
-
-
-* jk/c23-const-preserving-fixes-more (2026-04-03) 13 commits
-  (merged to 'next' on 2026-04-06 at 9eebe11338)
- + git-compat-util: fix CONST_OUTPARAM typo and indentation
-  (merged to 'next' on 2026-04-02 at b060d988f4)
- + refs/files-backend: drop const to fix strchr() warning
- + http: drop const to fix strstr() warning
- + range-diff: drop const to fix strstr() warnings
- + pkt-line: make packet_reader.line non-const
- + skip_prefix(): check const match between in and out params
- + pseudo-merge: fix disk reads from find_pseudo_merge()
- + find_last_dir_sep(): convert inline function to macro
- + run-command: explicitly cast away constness when assigning to void
- + pager: explicitly cast away strchr() constness
- + transport-helper: drop const to fix strchr() warnings
- + http: add const to fix strchr() warnings
- + convert: add const to fix strchr() warnings
-
- Further work to adjust the codebase for C23 that changes functions
- like strchr() that discarded constness when they return a pointer into
- a const string to preserve constness.
- source: <20260402041433.GA3501120@coredump.intra.peff.net>
- source: <20260404054211.GA1346444@coredump.intra.peff.net>
-
-
-* jk/doc-markup-sub-list-indentation (2026-04-11) 1 commit
-  (merged to 'next' on 2026-04-13 at 738824c9ca)
- + gitglossary: fix indentation of sub-lists
-
- Doc mark-up update for entries in the glossary with bulleted lists.
- source: <20260411215518.GA1651019@coredump.intra.peff.net>
-
-
-* jt/index-fd-wo-repo-regression-fix-maint (2026-04-07) 1 commit
- + object-file: avoid ODB transaction when not writing objects
- (this branch is used by jt/index-fd-wo-repo-regression-fix.)
-
- During Git 2.52 timeframe, we broke streaming computation of object
- hash outside a repository, which has been corrected.
-
-
-* kh/doc-am-xref (2026-04-11) 2 commits
-  (merged to 'next' on 2026-04-13 at 400039b45c)
- + doc: am: correct to full --no-message-id
- + doc: am: revert Message-ID trailer claim
-
- Doc update.
- source: <msg-id_is_not_trailer.570@msgid.xyz>
- source: <typo_--no-message-id.572@msgid.xyz>
-
-
-* kh/doc-config-list (2026-04-05) 2 commits
-  (merged to 'next' on 2026-04-07 at fb95f091cc)
- + doc: gitcvs-migration: rephrase “man page”
- + doc: replace git config --list/-l with `list`
-
- "git config list" is the official way to spell "git config -l" and
- "git config --list".  Use it to update the documentation.
- source: <V2_CV_doc_deprecation_config_--list.569@msgid.xyz>
-
-
-* ng/add-files-to-cache-wo-rename (2026-04-01) 1 commit
-  (merged to 'next' on 2026-04-02 at 8723880fc0)
- + read-cache: disable renames in add_files_to_cache
-
- add_files_to_cache() used diff_files() to detect only the paths that
- are different between the index and the working tree and add them,
- which does not need rename detection, which interfered with unnecessary
- conflicts.
- source: <20260401190033.11325-1-blindmansion@gmail.com>
-
-
-* ps/archive-prefix-doc (2026-04-08) 1 commit
-  (merged to 'next' on 2026-04-09 at ed6aa0e448)
- + archive: document --prefix handling of absolute and parent paths
-
- Doc update.
- source: <20260408160005.193621-2-pushkarkumarsingh1970@gmail.com>
-
-
-* ps/odb-cleanup (2026-03-31) 7 commits
-  (merged to 'next' on 2026-04-02 at 1dd8236dfb)
- + odb: drop unneeded headers and forward decls
- + odb: rename `odb_has_object()` flags
- + odb: use enum for `odb_write_object` flags
- + odb: rename `odb_write_object()` flags
- + treewide: use enum for `odb_for_each_object()` flags
- + CodingGuidelines: document our style for flags
- + Merge branch 'ps/odb-generic-object-name-handling' into ps/odb-cleanup
- (this branch is used by ps/odb-in-memory)
-
- Various code clean-up around odb subsystem.
- source: <20260401-pks-odb-cleanups-v1-0-89adba9ada68@pks.im>
-
-
-* ps/reftable-portability (2026-04-02) 5 commits
-  (merged to 'next' on 2026-04-02 at 04adce37b9)
- + reftable/system: add abstraction to mmap files
- + reftable/system: add abstraction to retrieve time in milliseconds
- + reftable/fsck: use REFTABLE_UNUSED instead of UNUSED
- + reftable/stack: provide fsync(3p) via system header
- + reftable: introduce "reftable-system.h" header
-
- Update reftable library part with what is used in libgit2 to improve
- portability to different target codebases and platforms.
- source: <20260402-pks-reftable-portability-fixes-v2-0-bc110cee0ae0@pks.im>
-
-
-* ss/t7004-unhide-git-failures (2026-03-31) 1 commit
-  (merged to 'next' on 2026-04-02 at fec00b153f)
- + t7004: replace wc -l with modern test helpers
-
- Test clean-up.
- source: <20260401062029.54757-1-r.siddharth.shrimali@gmail.com>
-
-
-* tc/replay-ref (2026-04-01) 4 commits
-  (merged to 'next' on 2026-04-03 at 196ecde80b)
- + replay: allow to specify a ref with option --ref
- + replay: use stuck form in documentation and help message
- + builtin/replay: mark options as not negatable
- + Merge branch 'sa/replay-revert' into tc/replay-ref
-
- The experimental `git replay` command learned the `--ref=<ref>` option
- to allow specifying which ref to update, overriding the default behavior.
- source: <20260401-toon-replay-arbitrary-ref-v3-0-a0b4fabb34b3@iotcl.com>
-
---------------------------------------------------
-[Cooking]
 
 * js/adjust-tests-to-explicitly-access-bare-repo (2026-04-02) 17 commits
  - git p4 clone --bare: need to be explicit about the gitdir
@@ -324,23 +265,9 @@ Release tarballs are available at:
  allowed; rewrite some of them to avoid the assumption, rewrite
  others to explicitly set safe.bareRepository to allow them.
 
- Comments?
+ Waiting for review response.
+ cf. <xmqq1pgsdrdw.fsf@gitster.g>
  source: <pull.2076.git.1775140403.gitgitgadget@gmail.com>
-
-
-* pw/xdiff-shrink-memory-consumption (2026-04-02) 5 commits
- - xdiff: reduce the size of array
- - xprepare: simplify error handling
- - xdiff: cleanup xdl_clean_mmatch()
- - xdiff: reduce size of action arrays
- - Merge branch 'en/xdiff-cleanup-3' into pw/xdiff-shrink-memory-consumption
- (this branch uses en/xdiff-cleanup-3.)
-
- Shrink wasted memory in Myers diff that does not account for common
- prefix and suffix removal.
-
- On hold, waiting for the base topic.
- source: <cover.1775141855.git.phillip.wood@dunelm.org.uk>
 
 
 * cl/conditional-config-on-worktree-path (2026-04-03) 2 commits
@@ -376,7 +303,7 @@ Release tarballs are available at:
  commit, which has been corrected by making the spot below a root
  unavailable.
 
- Comments?
+ Will merge to 'next'?
  source: <20260404092425.550346-2-pabloosabaterr@gmail.com>
 
 
@@ -386,19 +313,21 @@ Release tarballs are available at:
  The code path to update the configuration file has been taught to
  use a short timeout to retry.
 
- Comments?
+ Waiting for a review response.
+ cf. <adYvSZeN0ZVqwRhi@pks.im>
  source: <20260403100135.3901610-1-joerg@thalheim.io>
 
 
-* sp/refs-with-less-the-repository (2026-04-03) 3 commits
+* sp/refs-with-less-the-repository (2026-04-04) 3 commits
  - refs/reftable-backend: drop uses of the_repository
  - refs: remove the_hash_algo global state
  - refs: add struct repository parameter in get_files_ref_lock_timeout_ms()
 
  Reduce the reference to the_repository in the refs subsystem.
 
- Comments?
- source: <20260403120938.1142533-1-shreyanshpaliwalcmsmn@gmail.com>
+ Will merge to 'next'.
+ cf. <adYV6NK93Kzg1EYG@pks.im>
+ source: <20260404135914.61195-1-shreyanshpaliwalcmsmn@gmail.com>
 
 
 * dl/cache-tree-fully-valid-fix (2026-04-06) 1 commit
@@ -440,12 +369,17 @@ Release tarballs are available at:
  repack" has been taught to carry this information forward to
  packfiles that are newly created.
 
- Waiting for a review response on use of parse_pack_index()
+ Expecting a (hopefully small and final) reroll.
+ cf. <adpVMfHowCBY75I1@lorenzo-VM>
  source: <cover.1775861047.git.lorenzo.pegorari2002@gmail.com>
 
 
 * th/promisor-quiet-per-repo (2026-04-06) 1 commit
  - promisor-remote: fix promisor.quiet to use the correct repository
+
+ The "promisor.quiet" configuration variable was not used from
+ relevant submodules when commands like "grep --recurse-submodules"
+ triggered a lazy fetch, which has been corrected.
 
  Comments?
  source: <20260406183041.783800-1-vikingtc4@gmail.com>
@@ -468,15 +402,14 @@ Release tarballs are available at:
  source: <20260402213220.2651523-1-jltobler@gmail.com>
 
 
-* sa/cat-file-batch-mailmap-switch (2026-03-31) 1 commit
+* sa/cat-file-batch-mailmap-switch (2026-04-15) 1 commit
  - cat-file: add mailmap subcommand to --batch-command
 
  "git cat-file --batch" learns an in-line command "mailmap"
  that lets the user toggle use of mailmap.
 
- Expecting a (hopefully small and final) reroll?
- cf. <xmqqo6k3ztxr.fsf@gitster.g>
- source: <20260331121111.9614-2-siddharthasthana31@gmail.com>
+ Will merge to 'next'?
+ source: <20260416033250.4327-2-siddharthasthana31@gmail.com>
 
 
 * tb/incremental-midx-part-3.3 (2026-03-29) 16 commits
@@ -596,15 +529,15 @@ Release tarballs are available at:
  source: <20260407115243.358642-1-christian.couder@gmail.com>
 
 
-* jr/bisect-custom-terms-in-output (2026-03-20) 1 commit
+* jr/bisect-custom-terms-in-output (2026-04-17) 2 commits
+ - rev-parse: use selected alternate terms to look up refs
  - bisect: use selected alternate terms in status output
 
  "git bisect" now uses the selected terms (e.g., old/new) more
  consistently in its output.
 
- Expecting a reroll?
- cf. <xmqqfr5tdbpc.fsf@gitster.g>
- source: <20260320-bisect-terms-v1-1-c30c9540542a@schlaraffenlan.de>
+ Needs review.
+ source: <20260417-bisect-terms-v3-0-d659fa547261@schlaraffenlan.de>
 
 
 * ua/push-remote-group (2026-03-27) 3 commits
@@ -621,20 +554,20 @@ Release tarballs are available at:
  source: <20260325190906.1153080-1-usmanakinyemi202@gmail.com>
 
 
-* hn/git-checkout-m-with-stash (2026-04-12) 4 commits
-  (merged to 'next' on 2026-04-13 at b4e5a964fa)
- + checkout: -m (--merge) uses autostash when switching branches
- + sequencer: teach autostash apply to take optional conflict marker labels
- + sequencer: allow create_autostash to run silently
- + stash: add --label-ours, --label-theirs, --label-base for apply
+* hn/git-checkout-m-with-stash (2026-04-15) 5 commits
+ - checkout -m: autostash when switching branches
+ - checkout: rollback lock on early returns in merge_working_tree
+ - sequencer: teach autostash apply to take optional conflict marker labels
+ - sequencer: allow create_autostash to run silently
+ - stash: add --label-ours, --label-theirs, --label-base for apply
 
  "git checkout -m another-branch" was invented to deal with local
  changes to paths that are different between the current and the new
  branch, but it gave only one chance to resolve conflicts.  The command
  was taught to create a stash to save the local changes.
 
- Will cook in 'next'.
- source: <pull.2234.v10.git.git.1775994705.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ source: <pull.2234.v14.git.git.1776270259.gitgitgadget@gmail.com>
 
 
 * kh/name-rev-custom-format (2026-03-20) 2 commits
@@ -644,7 +577,8 @@ Release tarballs are available at:
  "git name-rev" learned to use custom format instead of the object
  name in an extended SHA-1 expression form.
 
- Comments?
+ Expecting a reroll.
+ cf. </1873f57e-76b4-48d0-8034-73f72f5fe93d@app.fastmail.com>
  source: <V2_CV_name-rev_--format.51b@msgid.xyz>
 
 
@@ -732,30 +666,30 @@ Release tarballs are available at:
  was not propagated properly to child "git fetch" processes, which
  has been corrected.
 
- Comments?
+ Will discard.
+ cf. <xmqqik9s6qvd.fsf@gitster.g>
  source: <pull.2224.v3.git.git.1773238778894.gitgitgadget@gmail.com>
 
 
-* pt/fsmonitor-linux (2026-04-08) 13 commits
-  (merged to 'next' on 2026-04-13 at 37fa47889d)
- + fsmonitor: convert shown khash to strset in do_handle_client
- + fsmonitor: add tests for Linux
- + fsmonitor: add timeout to daemon stop command
- + fsmonitor: close inherited file descriptors and detach in daemon
- + run-command: add close_fd_above_stderr option
- + fsmonitor: implement filesystem change listener for Linux
- + fsmonitor: rename fsm-settings-darwin.c to fsm-settings-unix.c
- + fsmonitor: rename fsm-ipc-darwin.c to fsm-ipc-unix.c
- + fsmonitor: use pthread_cond_timedwait for cookie wait
- + compat/win32: add pthread_cond_timedwait
- + fsmonitor: fix hashmap memory leak in fsmonitor_run_daemon
- + fsmonitor: fix khash memory leak in do_handle_client
- + t9210, t9211: disable GIT_TEST_SPLIT_INDEX for scalar clone tests
+* pt/fsmonitor-linux (2026-04-15) 13 commits
+ - fsmonitor: convert shown khash to strset in do_handle_client
+ - fsmonitor: add tests for Linux
+ - fsmonitor: add timeout to daemon stop command
+ - fsmonitor: close inherited file descriptors and detach in daemon
+ - run-command: add close_fd_above_stderr option
+ - fsmonitor: implement filesystem change listener for Linux
+ - fsmonitor: rename fsm-settings-darwin.c to fsm-settings-unix.c
+ - fsmonitor: rename fsm-ipc-darwin.c to fsm-ipc-unix.c
+ - fsmonitor: use pthread_cond_timedwait for cookie wait
+ - compat/win32: add pthread_cond_timedwait
+ - fsmonitor: fix hashmap memory leak in fsmonitor_run_daemon
+ - fsmonitor: fix khash memory leak in do_handle_client
+ - t9210, t9211: disable GIT_TEST_SPLIT_INDEX for scalar clone tests
 
  The fsmonitor daemon has been implemented for Linux.
 
- Will cook in 'next'.
- source: <pull.2147.v14.git.git.1775710775.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ source: <pull.2147.v15.git.git.1776259657.gitgitgadget@gmail.com>
 
 
 * ar/parallel-hooks (2026-04-10) 13 commits
@@ -778,6 +712,21 @@ Release tarballs are available at:
  source: <20260410090608.75283-1-adrian.ratiu@collabora.com>
 
 
+* pw/xdiff-shrink-memory-consumption (2026-04-02) 5 commits
+ - xdiff: reduce the size of array
+ - xprepare: simplify error handling
+ - xdiff: cleanup xdl_clean_mmatch()
+ - xdiff: reduce size of action arrays
+ - Merge branch 'en/xdiff-cleanup-3' into pw/xdiff-shrink-memory-consumption
+ (this branch uses en/xdiff-cleanup-3.)
+
+ Shrink wasted memory in Myers diff that does not account for common
+ prefix and suffix removal.
+
+ On hold, waiting for the base topic.
+ source: <cover.1775141855.git.phillip.wood@dunelm.org.uk>
+
+
 * en/xdiff-cleanup-3 (2026-04-08) 6 commits
  - xdiff/xdl_cleanup_records: put braces around the else clause
  - xdiff/xdl_cleanup_records: make setting action easier to follow
@@ -789,5 +738,6 @@ Release tarballs are available at:
 
  Preparation of the xdiff/ codebase to work with Rust.
 
- Will merge to 'next'?
+ Expecting a (hopefully small and final) reroll?
+ cf. <32c34d0d-9358-43e3-9d58-5999b3ffd6c2@gmail.com>
  source: <pull.2156.v5.git.git.1775679988.gitgitgadget@gmail.com>
