@@ -107,6 +107,46 @@ priority configuration file (e.g. `.git/config` in a repository) to clear
 the values inherited from a lower priority configuration files (e.g.
 `$HOME/.gitconfig`).
 
+remote.<name>.negotiationRestrict::
+	When negotiating with this remote during `git fetch` and `git push`,
+	restrict the commits advertised as "have" lines to only those
+	reachable from refs matching the given patterns.  This multi-valued
+	config option behaves like `--negotiation-restrict` on the command
+	line.
++
+Each value is either an exact ref name (e.g. `refs/heads/release`) or a
+glob pattern (e.g. `refs/heads/release/*`).  The pattern syntax is the
+same as for `--negotiation-restrict`.
++
+These config values are used as defaults for the `--negotiation-restrict`
+command-line option.  If `--negotiation-restrict` (or its synonym
+`--negotiation-tip`) is specified on the command line, then the config
+values are not used.
+
+remote.<name>.negotiationRequire::
+	When negotiating with this remote during `git fetch` and `git push`,
+	the client advertises a list of commits that exist locally.  In
+	repos with many references, this list of "haves" can be truncated.
+	Depending on data shape, dropping certain references may be
+	expensive.  This multi-valued config option specifies ref patterns
+	whose tips should always be sent as "have" commits during fetch
+	negotiation with this remote.
++
+Each value is either an exact ref name (e.g. `refs/heads/release`) or a
+glob pattern (e.g. `refs/heads/release/*`).  The pattern syntax is the same
+as for `--negotiation-restrict`.
++
+These config values are used as defaults for the `--negotiation-require`
+command-line option.  If `--negotiation-require` is specified on the
+command line, then the config values are not used.
++
+This option is additive with the normal negotiation process: the
+negotiation algorithm still runs and advertises its own selected commits,
+but the refs matching `remote.<name>.negotiationRequire` are sent
+unconditionally on top of those heuristically selected commits.  This
+option is also used during push negotiation when `push.negotiate` is
+enabled.
+
 remote.<name>.followRemoteHEAD::
 	How linkgit:git-fetch[1] should handle updates to `remotes/<name>/HEAD`
 	when fetching using the configured refspecs of a remote.
