@@ -20,6 +20,7 @@ test_repo_info () {
 	repo_name=$3
 	key=$4
 	expected_value=$5
+	repo_flag=${6:--C}
 
 	test_expect_success "setup: $label" '
 		eval "$init_command $repo_name"
@@ -27,13 +28,13 @@ test_repo_info () {
 
 	test_expect_success "lines: $label" '
 		echo "$key=$expected_value" > expect &&
-		git -C "$repo_name" repo info "$key" >actual &&
+		git $repo_flag "$repo_name" repo info "$key" >actual &&
 		test_cmp expect actual
 	'
 
 	test_expect_success "nul: $label" '
 		printf "%s\n%s\0" "$key" "$expected_value" >expect &&
-		git -C "$repo_name" repo info --format=nul "$key" >actual &&
+		git $repo_flag "$repo_name" repo info --format=nul "$key" >actual &&
 		test_cmp_bin expect actual
 	'
 }
@@ -48,7 +49,7 @@ test_repo_info 'bare repository = false is retrieved correctly' \
 	'git init' 'nonbare' 'layout.bare' 'false'
 
 test_repo_info 'bare repository = true is retrieved correctly' \
-	'git init --bare' 'bare' 'layout.bare' 'true'
+	'git init --bare' 'bare' 'layout.bare' 'true' '--git-dir'
 
 test_repo_info 'shallow repository = false is retrieved correctly' \
 	'git init' 'nonshallow' 'layout.shallow' 'false'

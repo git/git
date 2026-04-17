@@ -259,7 +259,7 @@ test_http_push_nonff () {
 
 	test_expect_success 'non-fast-forward push fails' '
 		cd "$REMOTE_REPO" &&
-		HEAD=$(git rev-parse --verify HEAD) &&
+		HEAD=$(git --git-dir=. rev-parse --verify HEAD) &&
 
 		cd "$LOCAL_REPO" &&
 		git checkout $BRANCH &&
@@ -270,7 +270,7 @@ test_http_push_nonff () {
 		(
 			cd "$REMOTE_REPO" &&
 			echo "$HEAD" >expect &&
-			git rev-parse --verify HEAD >actual &&
+			git --git-dir=. rev-parse --verify HEAD >actual &&
 			test_cmp expect actual
 		)
 	'
@@ -284,18 +284,16 @@ test_http_push_nonff () {
 	'
 
 	test_expect_${EXPECT_CAS_RESULT} 'force with lease aka cas' '
-		HEAD=$(	cd "$REMOTE_REPO" && git rev-parse --verify HEAD ) &&
+		HEAD=$(git --git-dir="$REMOTE_REPO" rev-parse --verify HEAD) &&
 		test_when_finished '\''
-			(cd "$REMOTE_REPO" && git update-ref HEAD "$HEAD")
+			git --git-dir="$REMOTE_REPO" update-ref HEAD "$HEAD"
 		'\'' &&
 		(
 			cd "$LOCAL_REPO" &&
 			git push -v --force-with-lease=$BRANCH:$HEAD origin
 		) &&
 		git rev-parse --verify "$BRANCH" >expect &&
-		(
-			cd "$REMOTE_REPO" && git rev-parse --verify HEAD
-		) >actual &&
+		git --git-dir="$REMOTE_REPO" rev-parse --verify HEAD >actual &&
 		test_cmp expect actual
 	'
 }

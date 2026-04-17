@@ -346,17 +346,14 @@ test_expect_success 'setup bare' '
 
 test_expect_success 'bare repository: check that .gitattribute is ignored' '
 	(
-		cd bare.git &&
-		(
-			echo "f	test=f" &&
-			echo "a/i test=a/i"
-		) >.gitattributes &&
-		attr_check f unspecified &&
-		attr_check a/f unspecified &&
-		attr_check a/c/f unspecified &&
-		attr_check a/i unspecified &&
-		attr_check subdir/a/i unspecified
-	)
+		echo "f	test=f" &&
+		echo "a/i test=a/i"
+	) >bare.git/.gitattributes &&
+	attr_check f unspecified --git-dir=bare.git &&
+	attr_check a/f unspecified --git-dir=bare.git &&
+	attr_check a/c/f unspecified --git-dir=bare.git &&
+	attr_check a/i unspecified --git-dir=bare.git &&
+	attr_check subdir/a/i unspecified --git-dir=bare.git
 '
 
 bad_attr_source_err="fatal: bad --attr-source or GIT_ATTR_SOURCE"
@@ -449,41 +446,32 @@ test_expect_success 'diff without repository with attr source' '
 '
 
 test_expect_success 'bare repository: with --source' '
-	(
-		cd bare.git &&
-		attr_check_source foo/bar/f f tag-1 &&
-		attr_check_source foo/bar/a/i n tag-1 &&
-		attr_check_source foo/bar/f unspecified tag-2 &&
-		attr_check_source foo/bar/a/i m tag-2 &&
-		attr_check_source foo/bar/g g tag-2 &&
-		attr_check_source foo/bar/g unspecified tag-1
-	)
+	attr_check_source foo/bar/f f tag-1 --git-dir=bare.git &&
+	attr_check_source foo/bar/a/i n tag-1 --git-dir=bare.git &&
+	attr_check_source foo/bar/f unspecified tag-2 --git-dir=bare.git &&
+	attr_check_source foo/bar/a/i m tag-2 --git-dir=bare.git &&
+	attr_check_source foo/bar/g g tag-2 --git-dir=bare.git &&
+	attr_check_source foo/bar/g unspecified tag-1 --git-dir=bare.git
 '
 
 test_expect_success 'bare repository: check that --cached honors index' '
-	(
-		cd bare.git &&
-		GIT_INDEX_FILE=../.git/index \
-		git check-attr --cached --stdin --all <../stdin-all |
-		sort >actual &&
-		test_cmp ../specified-all actual
-	)
+	GIT_INDEX_FILE=.git/index \
+	git --git-dir=bare.git check-attr --cached --stdin --all <stdin-all |
+	sort >actual &&
+	test_cmp specified-all actual
 '
 
 test_expect_success 'bare repository: test info/attributes' '
+	mkdir -p bare.git/info &&
 	(
-		cd bare.git &&
-		mkdir info &&
-		(
-			echo "f	test=f" &&
-			echo "a/i test=a/i"
-		) >info/attributes &&
-		attr_check f f &&
-		attr_check a/f f &&
-		attr_check a/c/f f &&
-		attr_check a/i a/i &&
-		attr_check subdir/a/i unspecified
-	)
+		echo "f	test=f" &&
+		echo "a/i test=a/i"
+	) >bare.git/info/attributes &&
+	attr_check f f --git-dir=bare.git &&
+	attr_check a/f f --git-dir=bare.git &&
+	attr_check a/c/f f --git-dir=bare.git &&
+	attr_check a/i a/i --git-dir=bare.git &&
+	attr_check subdir/a/i unspecified --git-dir=bare.git
 '
 
 test_expect_success 'binary macro expanded by -a' '
