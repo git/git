@@ -1077,12 +1077,14 @@ test_expect_success 'bisect terms shows good/bad after start' '
 
 test_expect_success 'bisect start with one term1 and term2' '
 	git bisect reset &&
-	git bisect start --term-old term2 --term-new term1 &&
-	git bisect term2 $HASH1 &&
+	git bisect start --term-old term2 --term-new term1 >bisect_result &&
+	test_grep "status: waiting for both '\''term2'\'' and '\''term1'\'' commits" bisect_result &&
+	git bisect term2 $HASH1 >bisect_result &&
+	test_grep "status: waiting for '\''term1'\'' commit, 1 '\''term2'\'' commit known" bisect_result &&
 	git bisect term1 $HASH4 &&
 	git bisect term1 &&
 	git bisect term1 >bisect_result &&
-	grep "$HASH2 is the first term1 commit" bisect_result &&
+	test_grep "$HASH2 is the first term1 commit" bisect_result &&
 	git bisect log >log_to_replay.txt &&
 	git bisect reset
 '
@@ -1100,6 +1102,16 @@ test_expect_success 'bogus command does not start bisect' '
 test_expect_success 'bisect replay with term1 and term2' '
 	git bisect replay log_to_replay.txt >bisect_result &&
 	grep "$HASH2 is the first term1 commit" bisect_result &&
+	git bisect reset
+'
+
+test_expect_success 'bisect run term1 term2' '
+	git bisect reset &&
+	git bisect start --term-new term1 --term-old term2 $HASH4 $HASH1 &&
+	git bisect term1 &&
+	git bisect run false >bisect_result &&
+	test_grep "bisect found first term1 commit" bisect_result &&
+	git bisect log >log_to_replay.txt &&
 	git bisect reset
 '
 
@@ -1224,29 +1236,29 @@ test_expect_success 'bisect visualize with a filename with dash and space' '
 test_expect_success 'bisect state output with multiple good commits' '
 	git bisect reset &&
 	git bisect start >output &&
-	grep "waiting for both good and bad commits" output &&
+	grep "waiting for both '\''good'\'' and '\''bad'\'' commits" output &&
 	git bisect log >output &&
-	grep "waiting for both good and bad commits" output &&
+	grep "waiting for both '\''good'\'' and '\''bad'\'' commits" output &&
 	git bisect good "$HASH1" >output &&
-	grep "waiting for bad commit, 1 good commit known" output &&
+	grep "waiting for '\''bad'\'' commit, 1 '\''good'\'' commit known" output &&
 	git bisect log >output &&
-	grep "waiting for bad commit, 1 good commit known" output &&
+	grep "waiting for '\''bad'\'' commit, 1 '\''good'\'' commit known" output &&
 	git bisect good "$HASH2" >output &&
-	grep "waiting for bad commit, 2 good commits known" output &&
+	grep "waiting for '\''bad'\'' commit, 2 '\''good'\'' commits known" output &&
 	git bisect log >output &&
-	grep "waiting for bad commit, 2 good commits known" output
+	grep "waiting for '\''bad'\'' commit, 2 '\''good'\'' commits known" output
 '
 
 test_expect_success 'bisect state output with bad commit' '
 	git bisect reset &&
 	git bisect start >output &&
-	grep "waiting for both good and bad commits" output &&
+	grep "waiting for both '\''good'\'' and '\''bad'\'' commits" output &&
 	git bisect log >output &&
-	grep "waiting for both good and bad commits" output &&
+	grep "waiting for both '\''good'\'' and '\''bad'\'' commits" output &&
 	git bisect bad "$HASH4" >output &&
-	grep -F "waiting for good commit(s), bad commit known" output &&
+	grep -F "waiting for '\''good'\'' commit(s), '\''bad'\'' commit known" output &&
 	git bisect log >output &&
-	grep -F "waiting for good commit(s), bad commit known" output
+	grep -F "waiting for '\''good'\'' commit(s), '\''bad'\'' commit known" output
 '
 
 test_expect_success 'verify correct error message' '

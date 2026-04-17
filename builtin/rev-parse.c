@@ -10,6 +10,7 @@
 #include "builtin.h"
 
 #include "abspath.h"
+#include "bisect.h"
 #include "config.h"
 #include "commit.h"
 #include "environment.h"
@@ -940,13 +941,23 @@ int cmd_rev_parse(int argc,
 				continue;
 			}
 			if (!strcmp(arg, "--bisect")) {
+				char *prefix;
+				char *term_bad = NULL;
+				char *term_good = NULL;
 				struct refs_for_each_ref_options opts = { 0 };
-				opts.prefix = "refs/bisect/bad";
+				read_bisect_terms(&term_bad, &term_good);
+				prefix = xstrfmt("refs/bisect/%s", term_bad);
+				opts.prefix = prefix;
 				refs_for_each_ref_ext(get_main_ref_store(the_repository),
 						      show_reference, NULL, &opts);
-				opts.prefix = "refs/bisect/good";
+				free(prefix);
+				prefix = xstrfmt("refs/bisect/%s", term_good);
+				opts.prefix = prefix;
 				refs_for_each_ref_ext(get_main_ref_store(the_repository),
 						      anti_reference, NULL, &opts);
+				free(prefix);
+				free(term_good);
+				free(term_bad);
 				continue;
 			}
 			if (opt_with_value(arg, "--branches", &arg)) {
