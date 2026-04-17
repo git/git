@@ -1394,8 +1394,10 @@ static int run_pre_push_hook(struct transport *transport,
 	opt.feed_pipe_cb_data_free = pre_push_hook_data_free;
 
 	/*
-	 * pre-push hooks expect stdout & stderr to be separate, so don't merge
-	 * them to keep backwards compatibility with existing hooks.
+	 * pre-push hooks keep stdout and stderr separate by default for
+	 * backwards compatibility. When the user opts into parallel execution
+	 * via hook.jobs > 1 or -j, get_hook_jobs() will set stdout_to_stderr=1
+	 * automatically so run-command can de-interleave the outputs.
 	 */
 	opt.stdout_to_stderr = 0;
 
