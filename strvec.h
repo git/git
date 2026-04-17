@@ -43,6 +43,11 @@ struct strvec {
  */
 void strvec_init(struct strvec *);
 
+/*
+ * Initializes an array large enough to store `alloc` elements.
+ */
+void strvec_init_alloc(struct strvec *, size_t alloc);
+
 /* Push a copy of a string onto the end of the array. */
 const char *strvec_push(struct strvec *, const char *);
 
