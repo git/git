@@ -16,6 +16,11 @@ fedora-breaking-changes-musl|linux-breaking-changes)
 	MESONFLAGS="$MESONFLAGS -Dbreaking_changes=true"
 	;;
 linux-TEST-vars)
+	# Ubuntu uses Dash by default, but we only enable use of `set -e`
+	# when using Bash 5+. Ensure that we have at least one CI job that uses
+	# it.
+	export TEST_SHELL_PATH=/usr/bin/bash
+
 	export OPENSSL_SHA1_UNSAFE=YesPlease
 	export GIT_TEST_SPLIT_INDEX=yes
 	export GIT_TEST_FULL_IN_PACK_ARRAY=true
