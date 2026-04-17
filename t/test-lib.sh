@@ -15,6 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see https://www.gnu.org/licenses/ .
 
+# Enable the use of errexit so that any unexpected failures will cause us to
+# abort tests, even when outside of a specific test case. Note that we only
+# enable this on Bash 5 and newer, as `set -e` has wildly different behaviour
+# across shells. The list of allowed shells may be extended going forward.
+if test "${BASH_VERSINFO:=0}" -ge 5
+then
+	set -e
+fi
+
 # Test the binaries we have just built.  The tests are kept in
 # t/ subdirectory and are run in 'trash directory' subdirectory.
 if test -z "$TEST_DIRECTORY"
