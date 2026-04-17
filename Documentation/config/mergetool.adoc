@@ -52,13 +52,13 @@
 	if `merge.tool` is configured as _<variant>_), Git will consult
 	`mergetool.<variant>.layout` to determine the tool's layout. If the
 	variant-specific configuration is not available, `vimdiff` ' s is used as
-	fallback.  If that too is not available, a default layout with 4 windows
-	will be used.  To configure the layout, see the 'BACKEND SPECIFIC HINTS'
+	fallback. If that too is not available, a default layout with 4 windows
+	will be used.
 ifdef::git-mergetool[]
-	section.
+To configure the layout, see the 'BACKEND SPECIFIC HINTS' section.
 endif::[]
 ifndef::git-mergetool[]
-	section in linkgit:git-mergetool[1].
+To configure the layout, see the 'BACKEND SPECIFIC HINTS' section in linkgit:git-mergetool[1].
 endif::[]
 
 `mergetool.hideResolved`::
