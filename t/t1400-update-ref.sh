@@ -35,6 +35,10 @@ test_expect_success setup '
 	cd -
 '
 
+test_expect_successo "xyz" '
+	true
+'
+
 test_expect_success "create $m" '
 	git update-ref $m $A &&
 	test $A = $(git show-ref -s --verify $m)
