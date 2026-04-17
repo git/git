@@ -100,9 +100,9 @@ int cmd_hash_object(int argc,
 			     hash_object_usage, 0);
 
 	if (flags & INDEX_WRITE_OBJECT)
-		prefix = setup_git_directory();
+		prefix = setup_git_directory(the_repository);
 	else
-		prefix = setup_git_directory_gently(&nongit);
+		prefix = setup_git_directory_gently(the_repository, &nongit);
 
 	if (nongit && !the_hash_algo)
 		repo_set_hash_algo(the_repository, GIT_HASH_DEFAULT);

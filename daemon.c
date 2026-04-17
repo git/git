@@ -244,14 +244,14 @@ static const char *path_ok(const char *directory, struct hostinfo *hi)
 	}
 
 	enter_repo_flags = strict_paths ? ENTER_REPO_STRICT : 0;
-	path = enter_repo(dir, enter_repo_flags);
+	path = enter_repo(the_repository, dir, enter_repo_flags);
 	if (!path && base_path && base_path_relaxed) {
 		/*
 		 * if we fail and base_path_relaxed is enabled, try without
 		 * prefixing the base path
 		 */
 		dir = directory;
-		path = enter_repo(dir, enter_repo_flags);
+		path = enter_repo(the_repository, dir, enter_repo_flags);
 	}
 
 	if (!path) {

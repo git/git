@@ -34,7 +34,7 @@ int cmd__submodule_config(int argc, const char **argv)
 	if (my_argc % 2 != 0)
 		die_usage(argc, argv, "Wrong number of arguments.");
 
-	setup_git_directory();
+	setup_git_directory(the_repository);
 
 	while (*arg) {
 		struct object_id commit_oid;

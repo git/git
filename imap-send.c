@@ -1799,7 +1799,7 @@ int cmd_main(int argc, const char **argv)
 	int nongit_ok;
 	int ret;
 
-	setup_git_directory_gently(&nongit_ok);
+	setup_git_directory_gently(the_repository, &nongit_ok);
 	repo_config(the_repository, git_imap_config, &server);
 
 	argc = parse_options(argc, (const char **)argv, "", imap_send_options, imap_send_usage, 0);

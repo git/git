@@ -2072,7 +2072,7 @@ static int handle_dotdot_1(const char *a_name, const char *b_name,
 		return -1;
 
 	if (!cant_be_filename) {
-		verify_non_filename(revs->prefix, full_name);
+		verify_non_filename(the_repository, revs->prefix, full_name);
 	}
 
 	a_obj = parse_object(revs->repo, &a_oid);
@@ -2225,7 +2225,7 @@ static int handle_revision_arg_1(const char *arg_, struct rev_info *revs, int fl
 		goto out;
 	}
 	if (!cant_be_filename)
-		verify_non_filename(revs->prefix, arg);
+		verify_non_filename(the_repository, revs->prefix, arg);
 	object = get_reference(revs, arg, &oid, flags ^ local_flags);
 	if (!object) {
 		ret = (revs->ignore_missing || revs->do_not_die_on_missing_objects) ? 0 : -1;
@@ -3069,7 +3069,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 			 * but the latter we have checked in the main loop.
 			 */
 			for (j = i; j < argc; j++)
-				verify_filename(revs->prefix, argv[j], j == i);
+				verify_filename(the_repository, revs->prefix, argv[j], j == i);
 
 			strvec_pushv(&prune_data, argv + i);
 			break;
