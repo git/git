@@ -57,7 +57,7 @@ static int insert_loose_map(struct odb_source *source,
 	inserted |= insert_oid_pair(map->to_compat, oid, compat_oid);
 	inserted |= insert_oid_pair(map->to_storage, compat_oid, oid);
 	if (inserted)
-		oidtree_insert(files->loose->cache, compat_oid);
+		oidtree_insert(files->loose->cache, compat_oid, NULL);
 
 	return inserted;
 }

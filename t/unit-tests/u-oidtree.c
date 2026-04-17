@@ -19,7 +19,7 @@ static int fill_tree_loc(struct oidtree *ot, const char *hexes[], size_t n)
 	for (size_t i = 0; i < n; i++) {
 		struct object_id oid;
 		cl_parse_any_oid(hexes[i], &oid);
-		oidtree_insert(ot, &oid);
+		oidtree_insert(ot, &oid, NULL);
 	}
 	return 0;
 }
@@ -38,9 +38,9 @@ struct expected_hex_iter {
 	const char *query;
 };
 
-static int check_each_cb(const struct object_id *oid, void *data)
+static int check_each_cb(const struct object_id *oid, void *node_data UNUSED, void *cb_data)
 {
-	struct expected_hex_iter *hex_iter = data;
+	struct expected_hex_iter *hex_iter = cb_data;
 	struct object_id expected;
 
 	cl_assert(hex_iter->i < hex_iter->expected_hexes.nr);
@@ -104,4 +104,24 @@ void test_oidtree__each(void)
 	check_each(&ot, "3210", "321", NULL);
 	check_each(&ot, "32100", "321", NULL);
 	check_each(&ot, "32", "320", "321", NULL);
+}
+
+void test_oidtree__insert_overwrites_data(void)
+{
+	struct object_id oid;
+	struct oidtree ot;
+	int a, b;
+
+	cl_parse_any_oid("1", &oid);
+
+	oidtree_init(&ot);
+
+	oidtree_insert(&ot, &oid, NULL);
+	cl_assert_equal_p(oidtree_get(&ot, &oid), NULL);
+	oidtree_insert(&ot, &oid, &a);
+	cl_assert_equal_p(oidtree_get(&ot, &oid), &a);
+	oidtree_insert(&ot, &oid, &b);
+	cl_assert_equal_p(oidtree_get(&ot, &oid), &b);
+
+	oidtree_clear(&ot);
 }
