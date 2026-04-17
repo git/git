@@ -2596,7 +2596,10 @@ cleanup:
 void release_http_pack_request(struct http_pack_request *preq)
 {
 	if (preq->packfile) {
-		fclose(preq->packfile);
+		if (preq->stream_to_stdout)
+			fflush(preq->packfile);
+		else
+			fclose(preq->packfile);
 		preq->packfile = NULL;
 	}
 	preq->slot = NULL;
@@ -2612,8 +2615,15 @@ static const char *default_index_pack_args[] =
 int finish_http_pack_request(struct http_pack_request *preq)
 {
 	struct child_process ip = CHILD_PROCESS_INIT;
-	int tmpfile_fd;
+	int tmpfile_fd = -1;
 	int ret = 0;
+
+	if (preq->stream_to_stdout) {
+		if (fflush(preq->packfile))
+			return -1;
+		preq->packfile = NULL;
+		return 0;
+	}
 
 	fclose(preq->packfile);
 	preq->packfile = NULL;
@@ -2637,7 +2647,8 @@ int finish_http_pack_request(struct http_pack_request *preq)
 	}
 
 cleanup:
-	close(tmpfile_fd);
+	if (tmpfile_fd >= 0)
+		close(tmpfile_fd);
 	unlink(preq->tmpfile.buf);
 	return ret;
 }
@@ -2662,8 +2673,8 @@ struct http_pack_request *new_http_pack_request(
 					    strbuf_detach(&buf, NULL));
 }
 
-struct http_pack_request *new_direct_http_pack_request(
-	const unsigned char *packed_git_hash, char *url)
+static struct http_pack_request *new_direct_http_pack_request_1(
+	const unsigned char *packed_git_hash, char *url, int stream_to_stdout)
 {
 	off_t prev_posn = 0;
 	struct http_pack_request *preq;
@@ -2672,14 +2683,19 @@ struct http_pack_request *new_direct_http_pack_request(
 	strbuf_init(&preq->tmpfile, 0);
 
 	preq->url = url;
+	preq->stream_to_stdout = !!stream_to_stdout;
 
-	odb_pack_name(the_repository, &preq->tmpfile, packed_git_hash, "pack");
-	strbuf_addstr(&preq->tmpfile, ".temp");
-	preq->packfile = fopen(preq->tmpfile.buf, "a");
-	if (!preq->packfile) {
-		error("Unable to open local file %s for pack",
-		      preq->tmpfile.buf);
-		goto abort;
+	if (preq->stream_to_stdout) {
+		preq->packfile = stdout;
+	} else {
+		odb_pack_name(the_repository, &preq->tmpfile, packed_git_hash, "pack");
+		strbuf_addstr(&preq->tmpfile, ".temp");
+		preq->packfile = fopen(preq->tmpfile.buf, "a");
+		if (!preq->packfile) {
+			error("Unable to open local file %s for pack",
+			      preq->tmpfile.buf);
+			goto abort;
+		}
 	}
 
 	preq->slot = get_active_slot();
@@ -2693,8 +2709,9 @@ struct http_pack_request *new_direct_http_pack_request(
 	 * If there is data present from a previous transfer attempt,
 	 * resume where it left off
 	 */
-	prev_posn = ftello(preq->packfile);
-	if (prev_posn>0) {
+	if (!preq->stream_to_stdout)
+		prev_posn = ftello(preq->packfile);
+	if (prev_posn > 0) {
 		if (http_is_verbose)
 			fprintf(stderr,
 				"Resuming fetch of pack %s at byte %"PRIuMAX"\n",
@@ -2710,6 +2727,18 @@ abort:
 	free(preq->url);
 	free(preq);
 	return NULL;
+}
+
+struct http_pack_request *new_direct_http_pack_request(
+	const unsigned char *packed_git_hash, char *url)
+{
+	return new_direct_http_pack_request_1(packed_git_hash, url, 0);
+}
+
+struct http_pack_request *new_direct_http_pack_request_to_stdout(
+	const unsigned char *packed_git_hash, char *url)
+{
+	return new_direct_http_pack_request_1(packed_git_hash, url, 1);
 }
 
 /* Helpers for fetching objects (loose) */
