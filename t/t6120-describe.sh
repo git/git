@@ -658,6 +658,102 @@ test_expect_success 'name-rev --annotate-stdin works with commitGraph' '
 	)
 '
 
+test_expect_success 'name-rev --format setup' '
+	mkdir repo-format &&
+	git -C repo-format init &&
+	test_commit -C repo-format first &&
+	test_commit -C repo-format second &&
+	test_commit -C repo-format third &&
+	test_commit -C repo-format fourth &&
+	test_commit -C repo-format fifth &&
+	test_commit -C repo-format sixth &&
+	test_commit -C repo-format seventh &&
+	test_commit -C repo-format eighth
+'
+
+test_expect_success 'name-rev --format --no-name-only' '
+	cat >expect <<-\EOF &&
+	HEAD~3 [fifth]
+	HEAD [eighth]
+	HEAD~5 [third]
+	EOF
+	git -C repo-format name-rev --format="[%s]" \
+		--no-name-only HEAD~3 HEAD HEAD~5 >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'name-rev --format --no-format is the same as regular name-rev' '
+	git -C repo-format name-rev HEAD~2 HEAD~3 >expect &&
+	test_file_not_empty expect &&
+	git -C repo-format name-rev --format="huh?" \
+		--no-format HEAD~2 HEAD~3 >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'name-rev --format=%s for argument revs' '
+	cat >expect <<-\EOF &&
+	eighth
+	seventh
+	fifth
+	EOF
+	git -C repo-format name-rev --format=%s \
+		HEAD HEAD~ HEAD~3 >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--name-rev --format=reference --annotate-stdin from rev-list same as log' '
+	git -C repo-format log --format=reference >expect &&
+	test_file_not_empty expect &&
+	git -C repo-format rev-list HEAD >list &&
+	git -C repo-format name-rev --format=reference \
+		--annotate-stdin <list >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--name-rev --format=<pretty> --annotate-stdin with running text and tree oid' '
+	cmit_oid=$(git -C repo-format rev-parse :/fifth) &&
+	reference=$(git -C repo-format log -n1 --format=reference :/fifth) &&
+	tree=$(git -C repo-format rev-parse HEAD^{tree}) &&
+	cat >expect <<-EOF &&
+	We thought we fixed this in ${reference}.
+	But look at this tree: ${tree}.
+	EOF
+	git -C repo-format name-rev --format=reference --annotate-stdin \
+		>actual <<-EOF &&
+	We thought we fixed this in ${cmit_oid}.
+	But look at this tree: ${tree}.
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'name-rev --format=<pretty> with %N (note)' '
+	test_when_finished "git -C repo-format notes remove" &&
+	git -C repo-format notes add -m"Make a note" &&
+	printf "Make a note\n\n\n" >expect &&
+	git -C repo-format name-rev --format="tformat:%N" \
+		HEAD HEAD~ >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'name-rev --format=<pretty> --notes<ref>' '
+	# One custom notes ref
+	test_when_finished "git -C repo-format notes remove" &&
+	test_when_finished "git -C repo-format notes --ref=word remove" &&
+	git -C repo-format notes add -m"default" &&
+	git -C repo-format notes --ref=word add -m"custom" &&
+	printf "custom\n\n" >expect &&
+	git -C repo-format name-rev --format="tformat:%N" \
+		--notes=word \
+		HEAD >actual &&
+	test_cmp expect actual &&
+	# Glob all
+	printf "default\ncustom\n\n" >expect &&
+	git -C repo-format name-rev --format="tformat:%N" \
+		--notes=* \
+		HEAD >actual &&
+	test_cmp expect actual
+'
+
 #               B
 #               o
 #  H             \
