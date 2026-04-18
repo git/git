@@ -192,22 +192,62 @@ static int verify_cache(struct index_state *istate, int flags)
 	for (i = 0; i + 1 < istate->cache_nr; i++) {
 		/* path/file always comes after path because of the way
 		 * the cache is sorted.  Also path can appear only once,
-		 * which means conflicting one would immediately follow.
+		 * so path/file is likely the immediately following path
+		 * but might be separated if there is e.g. a
+		 * path-internal/... file.
 		 */
 		const struct cache_entry *this_ce = istate->cache[i];
 		const struct cache_entry *next_ce = istate->cache[i + 1];
 		const char *this_name = this_ce->name;
 		const char *next_name = next_ce->name;
 		int this_len = ce_namelen(this_ce);
+		const char *conflict_name = NULL;
+
 		if (this_len < ce_namelen(next_ce) &&
-		    next_name[this_len] == '/' &&
+		    next_name[this_len] <= '/' &&
 		    strncmp(this_name, next_name, this_len) == 0) {
+			if (next_name[this_len] == '/') {
+				conflict_name = next_name;
+			} else if (next_name[this_len] < '/') {
+				/*
+				 * The immediately next entry shares our
+				 * prefix but sorts before "path/" (e.g.,
+				 * "path-internal" between "path" and
+				 * "path/file", since '-' (0x2D) < '/'
+				 * (0x2F)).  Binary search to find where
+				 * "path/" would be and check for a D/F
+				 * conflict there.
+				 */
+				struct cache_entry *other;
+				struct strbuf probe = STRBUF_INIT;
+				int pos;
+
+				strbuf_add(&probe, this_name, this_len);
+				strbuf_addch(&probe, '/');
+				pos = index_name_pos_sparse(istate,
+							    probe.buf,
+							    probe.len);
+				strbuf_release(&probe);
+
+				if (pos < 0)
+					pos = -pos - 1;
+				if (pos >= (int)istate->cache_nr)
+					continue;
+				other = istate->cache[pos];
+				if (other->name[this_len] == '/' &&
+				    ce_namelen(other) > this_len &&
+				    !strncmp(this_name, other->name, this_len))
+					conflict_name = other->name;
+			}
+		}
+
+		if (conflict_name) {
 			if (10 < ++funny) {
 				fprintf(stderr, "...\n");
 				break;
 			}
 			fprintf(stderr, "You have both %s and %s\n",
-				this_name, next_name);
+				this_name, conflict_name);
 		}
 	}
 	if (funny)
