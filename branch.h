@@ -147,6 +147,18 @@ int install_branch_config(int flag, const char *local, const char *origin, const
 int read_branch_desc(struct strbuf *, const char *branch_name);
 
 /*
+ * Store in 'buf' a prefix to the name of a branch to create by using the given
+ * string 'name_prefix'. It can either be a simple string to a shorthand
+ * starting with '@'.
+ *
+ * Currently, only '@{current}' is managed, and will retrieve the current branch
+ * to use as prefix.
+ *
+ * Return 1 if the function failed to set the branch prefix, 0 otherwise.
+ */
+int add_branch_prefix(const char *name_prefix, struct strbuf *buf);
+
+/*
  * Check if a branch is checked out in the main worktree or any linked
  * worktree and die (with a message describing its checkout location) if
  * it is.
