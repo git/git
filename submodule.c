@@ -2106,7 +2106,7 @@ static void submodule_reset_index(const char *path, const char *super_prefix)
 	cp.no_stdin = 1;
 	cp.dir = path;
 
-	/* TODO: determine if this might overwright untracked files */
+	/* TODO: determine if this might overwrite untracked files */
 	strvec_pushl(&cp.args, "read-tree", "-u", "--reset", NULL);
 	strvec_pushf(&cp.args, "--super-prefix=%s%s/",
 		     (super_prefix ? super_prefix : ""), path);
