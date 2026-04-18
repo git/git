@@ -28,9 +28,12 @@
 #include "object-file.h"
 #include "object-name.h"
 #include "odb.h"
+#include "oid-array.h"
+#include "oidset.h"
 #include "packfile.h"
 #include "pager.h"
 #include "path.h"
+#include "promisor-remote.h"
 #include "read-cache-ll.h"
 #include "write-or-die.h"
 
@@ -692,6 +695,143 @@ static int grep_tree(struct grep_opt *opt, const struct pathspec *pathspec,
 	return hit;
 }
 
+static void collect_blob_oids_for_tree(struct repository *repo,
+				       const struct pathspec *pathspec,
+				       struct tree_desc *tree,
+				       struct strbuf *base,
+				       int tn_len,
+				       struct oidset *blob_oids)
+{
+	struct name_entry entry;
+	int old_baselen = base->len;
+	struct strbuf name = STRBUF_INIT;
+	enum interesting match = entry_not_interesting;
+
+	while (tree_entry(tree, &entry)) {
+		if (match != all_entries_interesting) {
+			strbuf_addstr(&name, base->buf + tn_len);
+			match = tree_entry_interesting(repo->index,
+						       &entry, &name,
+						       pathspec);
+			strbuf_reset(&name);
+
+			if (match == all_entries_not_interesting)
+				break;
+			if (match == entry_not_interesting)
+				continue;
+		}
+
+		strbuf_add(base, entry.path, tree_entry_len(&entry));
+
+		if (S_ISREG(entry.mode)) {
+			oidset_insert(blob_oids, &entry.oid);
+		} else if (S_ISDIR(entry.mode)) {
+			enum object_type type;
+			struct tree_desc sub_tree;
+			void *data;
+			unsigned long size;
+
+			data = odb_read_object(repo->objects, &entry.oid,
+					       &type, &size);
+			if (!data)
+				die(_("unable to read tree (%s)"),
+				    oid_to_hex(&entry.oid));
+
+			strbuf_addch(base, '/');
+			init_tree_desc(&sub_tree, &entry.oid, data, size);
+			collect_blob_oids_for_tree(repo, pathspec, &sub_tree,
+						   base, tn_len, blob_oids);
+			free(data);
+		}
+		/*
+		 * ...no else clause for S_ISGITLINK: submodules have their
+		 * own promisor configuration and would need separate fetches
+		 * anyway.
+		 */
+
+		strbuf_setlen(base, old_baselen);
+	}
+
+	strbuf_release(&name);
+}
+
+static void collect_blob_oids_for_treeish(struct grep_opt *opt,
+					  const struct pathspec *pathspec,
+					  const struct object_id *tree_ish_oid,
+					  const char *name,
+					  struct oidset *blob_oids)
+{
+	struct tree_desc tree;
+	void *data;
+	unsigned long size;
+	struct strbuf base = STRBUF_INIT;
+	int len;
+
+	data = odb_read_object_peeled(opt->repo->objects, tree_ish_oid,
+				      OBJ_TREE, &size, NULL);
+
+	if (!data)
+		return;
+
+	len = name ? strlen(name) : 0;
+	if (len) {
+		strbuf_add(&base, name, len);
+		strbuf_addch(&base, ':');
+	}
+	init_tree_desc(&tree, tree_ish_oid, data, size);
+
+	collect_blob_oids_for_tree(opt->repo, pathspec, &tree,
+				   &base, base.len, blob_oids);
+
+	strbuf_release(&base);
+	free(data);
+}
+
+static void prefetch_grep_blobs(struct grep_opt *opt,
+				const struct pathspec *pathspec,
+				const struct object_array *list)
+{
+	struct oidset blob_oids = OIDSET_INIT;
+
+	/* Exit if we're not in a partial clone */
+	if (!repo_has_promisor_remote(opt->repo))
+		return;
+
+	/* For each tree, gather the blobs in it */
+	for (int i = 0; i < list->nr; i++) {
+		struct object *real_obj;
+
+		obj_read_lock();
+		real_obj = deref_tag(opt->repo, list->objects[i].item,
+				     NULL, 0);
+		obj_read_unlock();
+
+		if (real_obj &&
+		    (real_obj->type == OBJ_COMMIT ||
+		     real_obj->type == OBJ_TREE))
+			collect_blob_oids_for_treeish(opt, pathspec,
+						      &real_obj->oid,
+						      list->objects[i].name,
+						      &blob_oids);
+	}
+
+	/* Prefetch the blobs we found */
+	if (oidset_size(&blob_oids)) {
+		struct oid_array to_fetch = OID_ARRAY_INIT;
+		struct oidset_iter iter;
+		const struct object_id *oid;
+
+		oidset_iter_init(&blob_oids, &iter);
+		while ((oid = oidset_iter_next(&iter)))
+			oid_array_append(&to_fetch, oid);
+
+		promisor_remote_get_direct(opt->repo, to_fetch.oid, to_fetch.nr);
+
+		oid_array_clear(&to_fetch);
+	}
+	oidset_clear(&blob_oids);
+}
+
 static int grep_object(struct grep_opt *opt, const struct pathspec *pathspec,
 		       struct object *obj, const char *name, const char *path)
 {
@@ -731,6 +871,8 @@ static int grep_objects(struct grep_opt *opt, const struct pathspec *pathspec,
 	unsigned int i;
 	int hit = 0;
 	const unsigned int nr = list->nr;
+
+	prefetch_grep_blobs(opt, pathspec, list);
 
 	for (i = 0; i < nr; i++) {
 		struct object *real_obj;
