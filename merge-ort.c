@@ -2954,32 +2954,6 @@ static int process_renames(struct merge_options *opt,
 			continue;
 
 		/*
-		 * Rename caching from a previous commit might give us an
-		 * irrelevant rename for the current commit.
-		 *
-		 * Imagine:
-		 *     foo/A -> bar/A
-		 * was a cached rename for the upstream side from the
-		 * previous commit (without the directories being renamed),
-		 * but the next commit being replayed
-		 *     * does NOT add or delete files
-		 *     * does NOT have directory renames
-		 *     * does NOT modify any files under bar/
-		 *     * does NOT modify foo/A
-		 *     * DOES modify other files under foo/ (otherwise the
-		 *       !oldinfo check above would have already exited for
-		 *       us)
-		 * In such a case, our trivial directory resolution will
-		 * have already merged bar/, and our attempt to process
-		 * the cached
-		 *     foo/A -> bar/A
-		 * would be counterproductive, and lack the necessary
-		 * information anyway.  Skip such renames.
-		 */
-		if (!newinfo)
-			continue;
-
-		/*
 		 * diff_filepairs have copies of pathnames, thus we have to
 		 * use standard 'strcmp()' (negated) instead of '=='.
 		 */
@@ -3328,6 +3302,28 @@ static void use_cached_pairs(struct merge_options *opt,
 		const char *new_name = entry->value;
 		if (!new_name)
 			new_name = old_name;
+
+		/*
+		 * If this is a rename and the target path is either
+		 * absent from opt->priv->paths (because a parent
+		 * directory was trivially resolved) or already cleanly
+		 * resolved (e.g. all three sides agree on its content),
+		 * the cached rename is irrelevant for this commit.
+		 * Skip it here rather than in process_renames() to
+		 * preserve VERIFY_CI(newinfo)'s ability to catch bugs
+		 * for non-cached renames (see 979ee83e8a90 (merge-ort:
+		 * fix corner case recursive submodule/directory conflict
+		 * handling, 2025-12-29) for an example of a bug that
+		 * assertion caught).  The rename remains in cached_pairs
+		 * for use in subsequent commits.
+		 */
+		if (entry->value) {
+			struct merged_info *mi;
+
+			mi = strmap_get(&opt->priv->paths, new_name);
+			if (!mi || mi->clean)
+				continue;
+		}
 
 		/*
 		 * cached_pairs has *copies* of old_name and new_name,
