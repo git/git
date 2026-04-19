@@ -1022,18 +1022,18 @@ static int traverse_trees_wrapper(struct index_state *istate,
 	return 0;
 }
 
-static void setup_path_info(struct merge_options *opt,
-			    struct string_list_item *result,
-			    const char *current_dir_name,
-			    int current_dir_name_len,
-			    char *fullpath, /* we'll take over ownership */
-			    struct name_entry *names,
-			    struct name_entry *merged_version,
-			    unsigned is_null,     /* boolean */
-			    unsigned df_conflict, /* boolean */
-			    unsigned filemask,
-			    unsigned dirmask,
-			    int resolved          /* boolean */)
+static int setup_path_info(struct merge_options *opt,
+			   struct string_list_item *result,
+			   const char *current_dir_name,
+			   int current_dir_name_len,
+			   char *fullpath, /* we'll take over ownership */
+			   struct name_entry *names,
+			   struct name_entry *merged_version,
+			   unsigned is_null,     /* boolean */
+			   unsigned df_conflict, /* boolean */
+			   unsigned filemask,
+			   unsigned dirmask,
+			   int resolved          /* boolean */)
 {
 	/* result->util is void*, so mi is a convenience typed variable */
 	struct merged_info *mi;
@@ -1077,9 +1077,11 @@ static void setup_path_info(struct merge_options *opt,
 			 */
 			mi->is_null = 1;
 	}
-	strmap_put(&opt->priv->paths, fullpath, mi);
+	if (strmap_put(&opt->priv->paths, fullpath, mi))
+		return error(_("tree has duplicate entries for '%s'"), fullpath);
 	result->string = fullpath;
 	result->util = mi;
+	return 0;
 }
 
 static void add_pair(struct merge_options *opt,
@@ -1346,9 +1348,10 @@ static int collect_merge_info_callback(int n,
 	 */
 	if (side1_matches_mbase && side2_matches_mbase) {
 		/* mbase, side1, & side2 all match; use mbase as resolution */
-		setup_path_info(opt, &pi, dirname, info->pathlen, fullpath,
-				names, names+0, mbase_null, 0 /* df_conflict */,
-				filemask, dirmask, 1 /* resolved */);
+		if (setup_path_info(opt, &pi, dirname, info->pathlen, fullpath,
+				    names, names+0, mbase_null, 0 /* df_conflict */,
+				    filemask, dirmask, 1 /* resolved */))
+			return -1; /* Quit traversing */
 		return mask;
 	}
 
@@ -1360,9 +1363,10 @@ static int collect_merge_info_callback(int n,
 	 */
 	if (sides_match && filemask == 0x07) {
 		/* use side1 (== side2) version as resolution */
-		setup_path_info(opt, &pi, dirname, info->pathlen, fullpath,
-				names, names+1, side1_null, 0,
-				filemask, dirmask, 1);
+		if (setup_path_info(opt, &pi, dirname, info->pathlen, fullpath,
+				    names, names+1, side1_null, 0,
+				    filemask, dirmask, 1))
+			return -1; /* Quit traversing */
 		return mask;
 	}
 
@@ -1374,18 +1378,20 @@ static int collect_merge_info_callback(int n,
 	 */
 	if (side1_matches_mbase && filemask == 0x07) {
 		/* use side2 version as resolution */
-		setup_path_info(opt, &pi, dirname, info->pathlen, fullpath,
-				names, names+2, side2_null, 0,
-				filemask, dirmask, 1);
+		if (setup_path_info(opt, &pi, dirname, info->pathlen, fullpath,
+				    names, names+2, side2_null, 0,
+				    filemask, dirmask, 1))
+			return -1; /* Quit traversing */
 		return mask;
 	}
 
 	/* Similar to above but swapping sides 1 and 2 */
 	if (side2_matches_mbase && filemask == 0x07) {
 		/* use side1 version as resolution */
-		setup_path_info(opt, &pi, dirname, info->pathlen, fullpath,
-				names, names+1, side1_null, 0,
-				filemask, dirmask, 1);
+		if (setup_path_info(opt, &pi, dirname, info->pathlen, fullpath,
+				    names, names+1, side1_null, 0,
+				    filemask, dirmask, 1))
+			return -1; /* Quit traversing */
 		return mask;
 	}
 
@@ -1409,8 +1415,9 @@ static int collect_merge_info_callback(int n,
 	 * unconflict some more cases, but that comes later so all we can
 	 * do now is record the different non-null file hashes.)
 	 */
-	setup_path_info(opt, &pi, dirname, info->pathlen, fullpath,
-			names, NULL, 0, df_conflict, filemask, dirmask, 0);
+	if (setup_path_info(opt, &pi, dirname, info->pathlen, fullpath,
+			    names, NULL, 0, df_conflict, filemask, dirmask, 0))
+		return -1; /* Quit traversing */
 
 	ci = pi.util;
 	VERIFY_CI(ci);
@@ -1738,7 +1745,6 @@ static int collect_merge_info(struct merge_options *opt,
 	setup_traverse_info(&info, opt->priv->toplevel_dir);
 	info.fn = collect_merge_info_callback;
 	info.data = opt;
-	info.show_all_errors = 1;
 
 	if (repo_parse_tree(opt->repo, merge_base) < 0 ||
 	    repo_parse_tree(opt->repo, side1) < 0 ||
