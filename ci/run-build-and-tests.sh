@@ -8,6 +8,12 @@
 export TEST_CONTRIB_TOO=yes
 
 case "$jobname" in
+almalinux-*|debian-*|fedora-*|linux-*)
+	export GIT_TEST_USE_SET_E=yes
+	;;
+esac
+
+case "$jobname" in
 fedora-breaking-changes-musl|linux-breaking-changes)
 	export WITH_BREAKING_CHANGES=YesPlease
 	export WITH_RUST=YesPlease
