@@ -498,9 +498,9 @@ include shared.mak
 #
 # == Optional Rust support ==
 #
-# Define WITH_RUST if you want to include features and subsystems written in
-# Rust into Git. For now, Rust is still an optional feature of the build
-# process. With Git 3.0 though, Rust will always be enabled.
+# Define NO_RUST if you want to disable features and subsystems written in Rust
+# from being compiled into Git. For now, Rust is still an optional feature of
+# the build process. With Git 3.0 though, Rust will always be enabled.
 #
 # Building Rust code requires Cargo.
 #
@@ -1351,7 +1351,7 @@ LIB_OBJS += urlmatch.o
 LIB_OBJS += usage.o
 LIB_OBJS += userdiff.o
 LIB_OBJS += utf8.o
-ifndef WITH_RUST
+ifdef NO_RUST
 LIB_OBJS += varint.o
 endif
 LIB_OBJS += version.o
@@ -1590,7 +1590,7 @@ endif
 ALL_CFLAGS = $(DEVELOPER_CFLAGS) $(CPPFLAGS) $(CFLAGS) $(CFLAGS_APPEND)
 ALL_LDFLAGS = $(LDFLAGS) $(LDFLAGS_APPEND)
 
-ifdef WITH_RUST
+ifndef NO_RUST
 BASIC_CFLAGS += -DWITH_RUST
 GITLIBS += $(RUST_LIB)
 ifeq ($(uname_S),Windows)
