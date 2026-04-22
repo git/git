@@ -159,38 +159,6 @@ It will:
   and these location lines will help translation tools to locate
   translation context easily.
 
-Once you are done testing the translation (see below), it's better
-to commit a location-less "po/XX.po" file to save repository space
-and make a user-friendly patch for review.
-
-To save a location-less "po/XX.po" automatically in repository, you
-can:
-
-First define a new attribute for "po/XX.po" by appending the following
-line in ".git/info/attributes":
-
-```
-/po/XX.po filter=gettext-no-location
-```
-
-Then define the driver for the "gettext-no-location" clean filter to
-strip out both filenames and locations from the contents as follows:
-
-```shell
-git config --global filter.gettext-no-location.clean \
-           "msgcat --no-location -"
-```
-
-For users who have gettext version 0.20 or higher, it is also possible
-to define a clean filter to preserve filenames but not locations:
-
-```shell
-git config --global filter.gettext-no-location.clean \
-           "msgcat --add-location=file -"
-```
-
-You're now ready to ask the l10n coordinator to pull from you.
-
 
 ## Fuzzy translation
 
@@ -227,6 +195,45 @@ L10n coordinator will check your contributions using a helper program
 git-po-helper check-po po/XX.po
 git-po-helper check-commits <rev-list-opts>
 ```
+
+
+## Preparing a "XX.po" file for commit
+
+Once you are done testing the translation, it's better to commit a
+location-less "po/XX.po" file to save repository space and make a
+user-friendly patch for review.
+
+To save a location-less "po/XX.po" automatically in the repository,
+follow these steps:
+
+First, check which filter is configured for your "po/XX.po" file:
+
+```
+git check-attr filter po/XX.po
+```
+
+The filter configuration is defined in the "po/.gitattributes" file.
+
+Then define the driver for the filter. Most languages use the
+"gettext-no-location" clean filter, which strips out both filenames and line
+numbers from location comments. To set this up, run the following command:
+
+```shell
+git config --global filter.gettext-no-location.clean \
+           "msgcat --no-location -"
+```
+
+Some PO files use the "gettext-no-line-number" clean filter, which keeps
+filenames but strips line numbers. This filter requires gettext 0.20 or
+later. The only benefit is being able to locate source files from location
+comments when the .po file is not updated from the POT via `make po-update`.
+
+```shell
+git config --global filter.gettext-no-line-number.clean \
+           "msgcat --add-location=file -"
+```
+
+You're now ready to ask the l10n coordinator to pull from you.
 
 
 ## Marking strings for translation
@@ -392,15 +399,30 @@ Git's tests are run under `LANG=C LC_ALL=C`. So the tests do not need be
 changed to account for translations as they're added.
 
 
+## AI-assisted translation and review
+
+[po/AGENTS.md](AGENTS.md) describes optional workflows for AI coding assistants
+that help with Git localization: updating templates and PO files, translating
+`po/XX.po`, and reviewing translations. Those workflows often use git-po-helper
+together with the gettext tools; see the PO helper section below for what the
+program does and how to build or install it. AI assistants are optional; treat
+their output as a draft and have it reviewed by contributors who know Git and
+the target language well.
+
+When you prompt a coding assistant, mention that file explicitly, for example:
+"Translate po/XX.po with reference to po/AGENTS.md" (replace XX with your
+language code).
+
+
 ## PO helper
 
-To make the maintenance of "XX.po" easier, the l10n coordinator and l10n
-team leaders can use a helper program named "git-po-helper". It is a
-wrapper to gettext suite, specifically written for the purpose of Git
-l10n workflow.
+`git-po-helper` is a helper for Git l10n coordinators and contributors. It
+automates checks that contributions follow project conventions (PO syntax,
+commit messages, which paths may change, and related rules) and can work with
+AI coding agents for tasks such as translating new entries, and reviewing
+translations.
 
-To build and install the helper program from source, see
-[git-po-helper/README][].
+Build and install instructions are in [git-po-helper/README][].
 
 
 ## Conventions

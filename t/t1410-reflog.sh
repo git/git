@@ -23,7 +23,7 @@ check_have () {
 }
 
 check_fsck () {
-	git fsck --full >fsck.output
+	git fsck --full >fsck.output || true
 	case "$1" in
 	'')
 		test_must_be_empty fsck.output ;;

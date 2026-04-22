@@ -10,7 +10,14 @@ export TEST_CONTRIB_TOO=yes
 case "$jobname" in
 linux-musl-meson)
 	MESONFLAGS="$MESONFLAGS -Drust=disabled"
+	export GIT_TEST_USE_SET_E=yes
 	;;
+almalinux-*|debian-*|fedora-*|linux-*)
+	export GIT_TEST_USE_SET_E=yes
+	;;
+esac
+
+case "$jobname" in
 fedora-breaking-changes-musl|linux-breaking-changes)
 	export WITH_BREAKING_CHANGES=YesPlease
 	MESONFLAGS="$MESONFLAGS -Dbreaking_changes=true"

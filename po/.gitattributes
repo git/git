@@ -1,0 +1,35 @@
+# Git Attributes for PO Files
+#
+# This file configures Git filters to automatically strip location information
+# from PO files when committing, producing cleaner diffs and saving repository
+# space.
+#
+# Two filter types are used:
+# 1. gettext-no-location: Strips both filenames and line numbers
+#    (e.g., removes "#: main.c:123" entirely)
+# 2. gettext-no-line-number: Preserves filenames but removes line numbers, which
+#    requires gettext 0.20 or higher
+#    (e.g., "#: main.c:123" becomes "#: main.c")
+#
+# See `po/README.md` for instructions on setting up the required filter drivers.
+
+# Default: Strip the whole location comments for all .po files
+*.po	filter=gettext-no-location
+
+# Legacy, unmaintained PO files: filter disabled to avoid index vs
+# working-tree mismatch (these files still have location comments).
+el.po	-filter
+is.po	-filter
+it.po	-filter
+ko.po	-filter
+pl.po	-filter
+pt_PT.po	-filter
+
+# These files use gettext-no-line-number (keep filenames, strip line
+# numbers). The choice is per l10n team preference. Requires gettext 0.20+.
+# The only benefit is locating source files from location comments when
+# the .po file is not updated from the POT via make po-update.
+ca.po	filter=gettext-no-line-number
+id.po	filter=gettext-no-line-number
+zh_CN.po	filter=gettext-no-line-number
+zh_TW.po	filter=gettext-no-line-number
