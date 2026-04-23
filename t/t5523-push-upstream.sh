@@ -120,6 +120,29 @@ test_expect_success TTY 'push --no-progress suppresses progress' '
 	test_grep ! "Writing objects" err
 '
 
+test_expect_success TTY 'push.showProgress=false suppresses progress' '
+	ensure_fresh_upstream &&
+
+	test_terminal git -c push.showProgress=false push -u upstream main \
+		>out 2>err &&
+	test_grep ! "Writing objects" err
+'
+
+test_expect_success 'push.showProgress=true forces progress on non-tty' '
+	ensure_fresh_upstream &&
+
+	git -c push.showProgress=true push -u upstream main >out 2>err &&
+	test_grep "Writing objects" err
+'
+
+test_expect_success TTY '--progress overrides push.showProgress=false' '
+	ensure_fresh_upstream &&
+
+	test_terminal git -c push.showProgress=false push -u --progress \
+		upstream main >out 2>err &&
+	test_grep "Writing objects" err
+'
+
 test_expect_success TTY 'quiet push' '
 	ensure_fresh_upstream &&
 

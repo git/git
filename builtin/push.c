@@ -539,6 +539,9 @@ static int git_push_config(const char *k, const char *v,
 		else
 			*flags &= ~TRANSPORT_PUSH_FORCE_IF_INCLUDES;
 		return 0;
+	} else if (!strcmp(k, "push.showprogress")) {
+		progress = git_config_bool(k, v);
+		return 0;
 	}
 
 	return git_default_config(k, v, ctx, NULL);

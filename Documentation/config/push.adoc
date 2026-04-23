@@ -137,3 +137,11 @@ This will result in only b (a and c are cleared).
 	If set to `false`, disable use of bitmaps for `git push` even if
 	`pack.useBitmaps` is `true`, without preventing other git operations
 	from using bitmaps. Default is `true`.
+
+`push.showProgress`::
+	If set to `false`, suppress progress reporting during `git push`,
+	equivalent to passing `--no-progress` on the command line. If set
+	to `true`, force progress reporting, equivalent to `--progress`.
+	If unset, progress is reported when standard error is connected to
+	a terminal. An explicit `--progress` or `--no-progress` on the
+	command line overrides this configuration.
