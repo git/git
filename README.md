@@ -1,18 +1,37 @@
 [![Build status](https://github.com/git/git/workflows/CI/badge.svg)](https://github.com/git/git/actions?query=branch%3Amaster+event%3Apush)
 
-Git - fast, scalable, distributed revision control system
-=========================================================
+Ace - Git For The 21st Century
+==============================
 
-Git is a fast, scalable, distributed revision control system with an
-unusually rich command set that provides both high-level operations
-and full access to internals.
+Ace is a forward-looking fork of Git built for modern development
+workflows. It keeps Git's speed, distributed model, and low-level power,
+while adding higher-level workflow features for stacked work, deeply nested
+branch trees, and tool-driven collaboration.
 
-Git is an Open Source project covered by the GNU General Public
-License version 2 (some parts of it are under different licenses,
-compatible with the GPLv2). It was originally written by Linus
+Ace is designed to stay Git-native. Repositories, commits, trees, blobs,
+and refs remain compatible with Git tooling. Ace also treats Mercurial
+compatibility as an interoperability goal, not as a reason to replace the
+underlying Git storage model.
+
+Current Ace direction:
+
+- virtual sub-branch trees with explicit parent-child metadata
+- stack-aware rebase and merge workflows
+- Mercurial-compatible bookmark import and export
+- Ace-aware branch rename and subtree deletion
+- agent integration points for tools such as Claude Code and OpenCode
+- compatibility-first evolution on top of native Git repositories
+
+Ace is based on Git and remains an Open Source project covered by the GNU
+General Public License version 2 (some parts of it are under different
+licenses, compatible with the GPLv2). Git was originally written by Linus
 Torvalds with help of a group of hackers around the net.
 
 Please read the file [INSTALL][] for installation instructions.
+
+If you want the classic Git experience, the standard commands remain
+available. If you want the Ace workflow layer, start with
+`Documentation/git-ace.adoc`.
 
 Many Git online resources are accessible from <https://git-scm.com/>
 including full documentation and Git related tools.

@@ -724,6 +724,7 @@ UNIT_TEST_BIN = $(UNIT_TEST_DIR)/bin
 # interactive shell sessions without exporting it.
 unexport CDPATH
 
+SCRIPT_SH += git-ace.sh
 SCRIPT_SH += git-difftool--helper.sh
 SCRIPT_SH += git-filter-branch.sh
 SCRIPT_SH += git-merge-octopus.sh

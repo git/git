@@ -1,0 +1,215 @@
+git-ace(1)
+==========
+
+NAME
+----
+git-ace - Manage infinitely nested branch trees with explicit parent-child metadata
+
+SYNOPSIS
+--------
+[verse]
+'git ace' init
+'git ace' create [--parent <branch> | --root] <branch> [<start-point>]
+'git ace' checkout <branch>
+'git ace' resolve <branch>
+'git ace' rename <old> <new>
+'git ace' delete [--force] [--with-descendants] <branch>
+'git ace' hg export-bookmarks [<path>]
+'git ace' hg import-bookmarks [<path>]
+'git ace' hg export-named-branches [<path>]
+'git ace' hg import-named-branches [<path>]
+'git ace' agent list
+'git ace' agent run <agent> [<branch>] -- [<arg>...]
+'git ace' set-parent <branch> <parent>
+'git ace' clear-parent <branch>
+'git ace' parent [<branch>]
+'git ace' children [--recursive] <branch>
+'git ace' chain [<branch>]
+'git ace' tree [<branch>]
+'git ace' rebase-stack <branch>
+'git ace' merge-stack <branch>
+'git ace' foreach-descendant <branch> -- <command> [<arg>...]
+
+DESCRIPTION
+-----------
+`git ace` adds an explicit branch-tree layer on top of normal Git branches.
+Each branch can have a parent branch, each parent can have any number of
+children, and that structure can continue to any depth.
+
+Ace stores its metadata under `.git/ace/branches/`, which means:
+
+- existing Git branch storage remains unchanged
+- normal Git commands continue to work
+- branch lineage can be queried and operated on as a stack
+
+Ace branch names are virtual branch names. They can be infinitely nested, such as
+`topic/parser/validation`, even though Git itself cannot store both `topic` and
+`topic/parser` as ordinary refs at the same time. Ace maps those virtual names to
+safe real branch refs internally.
+
+Slash-delimited names such as `feature/ui/header` are recommended for human
+readability, but the Ace metadata is the source of truth for hierarchy.
+
+COMMANDS
+--------
+init::
+	Create the Ace metadata directory for the current repository.
+
+create::
+	Create a new branch and attach it to a parent.
+	When `--parent` is omitted, the current branch becomes the parent.
+	When `--root` is used, the branch is created without parent metadata.
+
+checkout::
+	Resolve an Ace virtual branch name to its backing Git branch and check it out.
+
+resolve::
+	Print the backing Git branch ref for an Ace virtual branch, or echo the local
+	branch unchanged when the name is already a normal Git branch.
+
+rename::
+	Rename an Ace branch. Ace rewrites the backing Git branch name and updates
+	related Ace metadata, including descendant parent references.
+
+delete::
+	Delete an Ace branch. By default Ace refuses to delete a branch with
+	descendants. Use `--with-descendants` to delete the entire subtree and
+	`--force` to use Git's force-delete behavior.
+
+agent::
+	Expose Ace branch context to external agent tools such as Claude Code and
+	OpenCode. Configure a launcher with `ace.agent.<name>.command` or let Ace
+	fall back to invoking `<name>` from `PATH`.
+
+hg::
+	Import and export Mercurial-compatible bookmark data. Ace stays Git-native,
+	but can exchange branch pointers with Mercurial workflows through bookmark
+	files and simple named-branch tip files.
+
+set-parent::
+	Assign or replace the parent for an existing branch. Ace rejects cycles.
+
+clear-parent::
+	Remove the parent metadata from a branch, making it a root branch in the Ace tree.
+
+parent::
+	Print the parent of the given branch, or of the current branch if omitted.
+
+children::
+	List direct children of a branch. With `--recursive`, print all descendants.
+
+chain::
+	Print the ancestry chain from the root branch down to the selected branch.
+
+tree::
+	Render the full branch tree for the selected branch's root.
+
+rebase-stack::
+	Rebase each descendant branch onto its current parent, recursively.
+	This is useful after updating an intermediate branch in a stacked workflow.
+
+merge-stack::
+	Merge each parent branch into its descendants, recursively.
+
+foreach-descendant::
+	Check out each descendant in depth-first order and execute the provided command.
+
+EXAMPLES
+--------
+Create a branch stack:
+
+------------
+$ git ace create feature/base
+$ git ace checkout feature/base
+$ git ace create feature/base/parser
+$ git ace checkout feature/base/parser
+$ git ace create feature/base/parser/validation
+------------
+
+Inspect the tree:
+
+------------
+$ git ace tree
+main
+  feature/base
+    feature/base/parser
+      feature/base/parser/validation
+------------
+
+Rebase descendants after updating a parent branch:
+
+------------
+$ git ace checkout feature/base
+$ git commit -am "update base branch"
+$ git ace rebase-stack feature/base
+------------
+
+Run a command across all descendants:
+
+------------
+$ git ace foreach-descendant feature/base -- git status --short
+------------
+
+Invoke OpenCode with Ace context:
+
+------------
+$ git config ace.agent.opencode.command /usr/local/bin/opencode
+$ git ace agent run opencode feature/base/parser -- implement parser fixes
+------------
+
+Export Ace branches as Mercurial-compatible bookmarks:
+
+------------
+$ git ace hg export-bookmarks bookmarks.current
+------------
+
+Import Mercurial-compatible bookmarks into Ace backing branches:
+
+------------
+$ git ace hg import-bookmarks bookmarks.current
+------------
+
+Export root Ace branches as Mercurial-style named branch tips:
+
+------------
+$ git ace hg export-named-branches branch-tips.current
+------------
+
+Rename a branch subtree safely:
+
+------------
+$ git ace rename feature/base feature/core
+------------
+
+Delete a branch subtree safely:
+
+------------
+$ git ace delete --with-descendants feature/core
+------------
+
+NOTES
+-----
+Ace manages lineage metadata, stack operations, rename handling, and subtree
+deletion for Ace-owned branches. Direct low-level Git branch mutations outside
+of Ace can still leave Ace metadata out of sync.
+
+COMPATIBILITY
+-------------
+Ace is designed to preserve Git compatibility by keeping all history in native
+Git commits and by storing each Ace virtual branch on a normal backing Git
+branch. Mercurial compatibility should be built as an import/export layer over
+that metadata model rather than by replacing Git storage.
+
+The `git ace hg` commands follow that rule directly: they translate bookmark
+state at the branch-pointer layer while leaving commits and repository storage
+fully Git-native.
+
+Agent integrations also inherit that rule: they operate on native Git state and
+Ace metadata, which keeps Claude Code, OpenCode, Git tooling, and Mercurial
+interop workflows aligned around the same repository contents.
+
+SEE ALSO
+--------
+linkgit:git-branch[1],
+linkgit:git-rebase[1],
+linkgit:git-merge[1]

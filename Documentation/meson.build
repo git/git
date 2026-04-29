@@ -1,5 +1,6 @@
 manpages = {
   # Category 1.
+  'git-ace.adoc' : 1,
   'git-add.adoc' : 1,
   'git-am.adoc' : 1,
   'git-annotate.adoc' : 1,
