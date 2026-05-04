@@ -17,6 +17,7 @@
 #include "quote.h"
 #include "run-command.h"
 #include "strbuf.h"
+#include <limits.h>
 
 static const char * const ace_usage[] = {
     "git ace [--ai] <subcommand> [<args>...]",
@@ -50,36 +51,101 @@ int cmd_ace(int argc, const char **argv, const char *prefix)
     new_argv[new_argc] = NULL;
 
     if (ai_mode) {
-        /* Build a new argument vector that calls the existing agent runner.
-         * The expected form is:
-         *   git ace agent run opencode <subcommand> [<args>...]
+        /* Build a new argument vector that runs the Opencode harness.
+         * If "--no-sandbox" was not specified we launch the harness inside a
+         * Docker container that limits network access (no external internet) and
+         * mounts only the current repository. When "--no-sandbox" is present we
+         * invoke the harness directly.
          */
-        struct child_process cp = CHILD_PROCESS_INIT;
-        const char **cp_argv;
-        int cp_argc = 0;
-        int j;
-
-        /* Count needed slots: "git", "ace", "agent", "run", "opencode" + new_argv */
-        cp_argc = 5 + new_argc;
-        cp_argv = xcalloc(cp_argc + 1, sizeof(char *));
-        j = 0;
-        cp_argv[j++] = "git";
-        cp_argv[j++] = "ace";
-        cp_argv[j++] = "agent";
-        cp_argv[j++] = "run";
-        cp_argv[j++] = "opencode";
-        for (i = 0; i < new_argc; i++)
-            cp_argv[j++] = new_argv[i];
-        cp_argv[j] = NULL;
-
-        cp.argv = cp_argv;
-        cp.use_shell = 0;
-        cp.no_stdin = 0;
-        cp.stdout_to_stderr = 0;
-        cp.err = STDERR_FILENO;
-        if (run_process(&cp))
-            return -1;
-        free(cp_argv);
+        int sandbox = 1;
+        int filtered_argc = 0;
+        const char **filtered_argv = NULL;
+        int k;
+        /* Remove "--no-sandbox" from the arguments passed to the harness. */
+        for (k = 0; k < new_argc; k++) {
+            if (!strcmp(new_argv[k], "--no-sandbox")) {
+                sandbox = 0;
+                continue;
+            }
+            filtered_argc++;
+        }
+        filtered_argv = xcalloc(filtered_argc + 1, sizeof(char *));
+        filtered_argc = 0;
+        for (k = 0; k < new_argc; k++) {
+            if (!strcmp(new_argv[k], "--no-sandbox"))
+                continue;
+            filtered_argv[filtered_argc++] = new_argv[k];
+        }
+        filtered_argv[filtered_argc] = NULL;
+ 
+        if (sandbox) {
+            struct child_process cp = CHILD_PROCESS_INIT;
+            const char **cp_argv;
+            int cp_argc = 0;
+            int idx = 0;
+            /* Docker command:
+             * docker run --rm -v $(pwd):/repo -w /repo --network=none opencode/harness <args>
+             */
+            cp_argc = 7 + filtered_argc; /* docker run ... image + args */
+            cp_argv = xcalloc(cp_argc + 1, sizeof(char *));
+            idx = 0;
+            cp_argv[idx++] = "docker";
+            cp_argv[idx++] = "run";
+            cp_argv[idx++] = "--rm";
+            cp_argv[idx++] = "-v";
+            cp_argv[idx++] = "%s:/repo"; /* placeholder will be expanded */
+            cp_argv[idx++] = "-w";
+            cp_argv[idx++] = "/repo";
+            cp_argv[idx++] = "--network=none";
+            cp_argv[idx++] = "opencode/harness";
+            for (k = 0; k < filtered_argc; k++)
+                cp_argv[idx++] = filtered_argv[k];
+            cp_argv[idx] = NULL;
+            cp.argv = cp_argv;
+            cp.use_shell = 0;
+            cp.no_stdin = 0;
+            cp.stdout_to_stderr = 0;
+            cp.err = STDERR_FILENO;
+            /* Expand the volume mount placeholder with the current working directory */
+            char cwd[PATH_MAX];
+            if (!getcwd(cwd, sizeof(cwd)))
+                cwd[0] = '\0';
+            struct strbuf vol = STRBUF_INIT;
+            strbuf_addf(&vol, "%s:/repo", cwd);
+            free(cp_argv[4]);
+            cp_argv[4] = xstrdup(vol.buf);
+            strbuf_release(&vol);
+            if (run_process(&cp)) {
+                free(cp_argv);
+                free(filtered_argv);
+                free(new_argv);
+                return -1;
+            }
+            free(cp_argv);
+        } else {
+            /* Direct execution of the harness without sandbox */
+            struct child_process cp = CHILD_PROCESS_INIT;
+            const char **cp_argv;
+            int cp_argc = 1 + filtered_argc; /* harness + args */
+            cp_argv = xcalloc(cp_argc + 1, sizeof(char *));
+            cp_argv[0] = "opencode/harness";
+            for (k = 0; k < filtered_argc; k++)
+                cp_argv[1 + k] = filtered_argv[k];
+            cp_argv[cp_argc] = NULL;
+            cp.argv = cp_argv;
+            cp.use_shell = 0;
+            cp.no_stdin = 0;
+            cp.stdout_to_stderr = 0;
+            cp.err = STDERR_FILENO;
+            if (run_process(&cp)) {
+                free(cp_argv);
+                free(filtered_argv);
+                free(new_argv);
+                return -1;
+            }
+            free(cp_argv);
+        }
+        free(filtered_argv);
         free(new_argv);
         return 0;
     }
