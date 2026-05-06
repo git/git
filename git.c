@@ -354,6 +354,10 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 			setenv(GIT_ADVICE_ENVIRONMENT, "0", 1);
 			if (envchanged)
 				*envchanged = 1;
+		} else if (!strcmp(cmd, "--everything-is-local")) {
+    			printf("and local is everything\n");
+    			exit(0);
+			
 		} else {
 			fprintf(stderr, _("unknown option: %s\n"), cmd);
 			usage(git_usage_string);
