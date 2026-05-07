@@ -87,6 +87,9 @@ endif
 # The bug was fixed in Apple clang 12.
 #
 ifneq ($(filter clang1,$(COMPILER_FEATURES)),)     # if we are using clang
+ifeq ($(uname_S),Linux)
+DEVELOPER_CFLAGS += -Wno-c11-extensions
+endif
 ifeq ($(uname_S),Darwin)                           # if we are on darwin
 ifeq ($(filter clang12,$(COMPILER_FEATURES)),)     # if version < 12
 DEVELOPER_CFLAGS += -Wno-missing-braces
