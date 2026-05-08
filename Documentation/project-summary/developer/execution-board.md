@@ -16,8 +16,8 @@ This document turns `q2-2026-plan.md` into a lightweight execution board for the
 - `done` Implement `git ace status` for stack-wide status and health reporting.
 - `done` Define how metadata drift should be detected and explained to users.
 - `done` Implement Ace Sequencer for conflict UX in `rebase-stack` and `merge-stack`.
-- `pending` Expand documentation around rename/delete/parent edge cases.
-- `pending` Identify the highest-risk test gaps for Ace metadata operations.
+- `done` Implement `git ace repair` to fix metadata drift.
+- `done` Fix testing coverage for edge cases across operations.
 
 ## Goal 2: Clarify Product And Organization Identity
 
