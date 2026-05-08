@@ -15,7 +15,7 @@ This document turns `q2-2026-plan.md` into a lightweight execution board for the
 
 - `done` Implement `git ace status` for stack-wide status and health reporting.
 - `done` Define how metadata drift should be detected and explained to users.
-- `done` Define expected conflict UX for `rebase-stack` and `merge-stack`.
+- `done` Implement Ace Sequencer for conflict UX in `rebase-stack` and `merge-stack`.
 - `pending` Expand documentation around rename/delete/parent edge cases.
 - `pending` Identify the highest-risk test gaps for Ace metadata operations.
 

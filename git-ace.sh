@@ -22,6 +22,8 @@ USAGE="<command> [<args>]
    or: ace tree [<branch>]
    or: ace rebase-stack <branch>
    or: ace merge-stack <branch>
+   or: ace continue
+   or: ace abort
    or: ace foreach-descendant <branch> -- <command> [<arg>...]"
 LONG_USAGE="Manage infinitely nested branch trees with explicit parent-child metadata.
 
@@ -47,6 +49,8 @@ Commands:
   tree                render the branch tree from the chosen root
   rebase-stack        rebase every descendant onto its current parent
   merge-stack         merge every parent into its descendants
+  continue            resume a halted stack operation
+  abort               abort a halted stack operation
   foreach-descendant  run a command while checking out each descendant"
 SUBDIRECTORY_OK=Yes
 
@@ -584,24 +588,59 @@ run_descendant_command () {
 	done
 }
 
-rebase_descendants () {
-	ace_branch_name=$1
-	for ace_child_name in $(list_children "$ace_branch_name")
+generate_plan () {
+	ace_op=$1
+	ace_parent_name=$2
+	for ace_child_name in $(list_children "$ace_parent_name")
 	do
-		git checkout "$(resolve_real_branch "$ace_child_name")" >/dev/null 2>&1 || return 1
-		git rebase "$(resolve_real_branch "$ace_branch_name")" || return 1
-		rebase_descendants "$ace_child_name" || return 1
+		printf "%s %s %s\n" "$ace_op" "$ace_child_name" "$ace_parent_name"
+		generate_plan "$ace_op" "$ace_child_name"
 	done
 }
 
-merge_descendants () {
-	ace_branch_name=$1
-	for ace_child_name in $(list_children "$ace_branch_name")
+run_sequencer () {
+	ace_sequencer_dir="$(git rev-parse --git-dir)/ace/sequencer"
+	ace_plan_file="$ace_sequencer_dir/plan"
+	
+	while test -s "$ace_plan_file"
 	do
-		git checkout "$(resolve_real_branch "$ace_child_name")" >/dev/null 2>&1 || return 1
-		git merge --no-edit "$(resolve_real_branch "$ace_branch_name")" || return 1
-		merge_descendants "$ace_child_name" || return 1
+		read -r ace_op ace_child_name ace_parent_name <"$ace_plan_file" || break
+		
+		git checkout "$(resolve_real_branch "$ace_child_name")" >/dev/null 2>&1 || exit 1
+		
+		if test "$ace_op" = "rebase"; then
+			printf "Rebasing %s onto %s...\n" "$ace_child_name" "$ace_parent_name"
+			if ! git rebase "$(resolve_real_branch "$ace_parent_name")"; then
+				printf "Ace: Stack rebase halted due to conflicts in %s.\n\n" "$ace_child_name"
+				printf "To continue:\n"
+				printf "  1. Resolve the conflicts in the working directory.\n"
+				printf "  2. Run \`git rebase --continue\`.\n"
+				printf "  3. Run \`git ace continue\` to resume rebasing the rest of the stack.\n\n"
+				printf "To abort:\n"
+				printf "  1. Run \`git rebase --abort\`.\n"
+				printf "  2. Run \`git ace abort\`.\n"
+				exit 1
+			fi
+		elif test "$ace_op" = "merge"; then
+			printf "Merging %s into %s...\n" "$ace_parent_name" "$ace_child_name"
+			if ! git merge --no-edit "$(resolve_real_branch "$ace_parent_name")"; then
+				printf "Ace: Stack merge halted due to conflicts in %s.\n\n" "$ace_child_name"
+				printf "To continue:\n"
+				printf "  1. Resolve the conflicts in the working directory.\n"
+				printf "  2. Run \`git commit\`.\n"
+				printf "  3. Run \`git ace continue\` to resume merging the rest of the stack.\n\n"
+				printf "To abort:\n"
+				printf "  1. Run \`git merge --abort\`.\n"
+				printf "  2. Run \`git ace abort\`.\n"
+				exit 1
+			fi
+		fi
+		
+		tail -n +2 "$ace_plan_file" > "$ace_plan_file.tmp" && mv "$ace_plan_file.tmp" "$ace_plan_file"
 	done
+	
+	rm -rf "$ace_sequencer_dir"
+	printf "Stack operation complete.\n"
 }
 
 cmd=${1:-}
@@ -851,19 +890,55 @@ rebase-stack)
 	test $# -eq 1 || usage
 	ensure_known_branch "$1"
 	original=$(current_branch)
-	rebase_descendants "$1"
+	ace_sequencer_dir="$(git rev-parse --git-dir)/ace/sequencer"
+	ace_plan_file="$ace_sequencer_dir/plan"
+	mkdir -p "$ace_sequencer_dir"
+	generate_plan "rebase" "$1" > "$ace_plan_file"
+	run_sequencer
 	status=$?
-	git checkout "$original" >/dev/null 2>&1 || status=$?
+	if test ! -d "$ace_sequencer_dir"; then
+		git checkout "$original" >/dev/null 2>&1
+	fi
 	exit "$status"
 	;;
 merge-stack)
 	test $# -eq 1 || usage
 	ensure_known_branch "$1"
 	original=$(current_branch)
-	merge_descendants "$1"
+	ace_sequencer_dir="$(git rev-parse --git-dir)/ace/sequencer"
+	ace_plan_file="$ace_sequencer_dir/plan"
+	mkdir -p "$ace_sequencer_dir"
+	generate_plan "merge" "$1" > "$ace_plan_file"
+	run_sequencer
 	status=$?
-	git checkout "$original" >/dev/null 2>&1 || status=$?
+	if test ! -d "$ace_sequencer_dir"; then
+		git checkout "$original" >/dev/null 2>&1
+	fi
 	exit "$status"
+	;;
+continue)
+	test $# -eq 0 || usage
+	ace_sequencer_dir="$(git rev-parse --git-dir)/ace/sequencer"
+	ace_plan_file="$ace_sequencer_dir/plan"
+	test -f "$ace_plan_file" || die "No Ace stack operation in progress."
+	if test -d "$(git rev-parse --git-dir)/rebase-merge" || test -f "$(git rev-parse --git-dir)/MERGE_HEAD"; then
+		die "Native Git operation is still in progress. Please resolve conflicts and finish it first."
+	fi
+	tail -n +2 "$ace_plan_file" > "$ace_plan_file.tmp" && mv "$ace_plan_file.tmp" "$ace_plan_file"
+	run_sequencer
+	;;
+abort)
+	test $# -eq 0 || usage
+	ace_sequencer_dir="$(git rev-parse --git-dir)/ace/sequencer"
+	ace_plan_file="$ace_sequencer_dir/plan"
+	test -f "$ace_plan_file" || die "No Ace stack operation in progress."
+	rm -rf "$ace_sequencer_dir"
+	printf "Ace stack operation aborted.\n"
+	if test -d "$(git rev-parse --git-dir)/rebase-merge"; then
+		printf "Note: You may still need to run 'git rebase --abort\'.\n"
+	elif test -f "$(git rev-parse --git-dir)/MERGE_HEAD"; then
+		printf "Note: You may still need to run 'git merge --abort\'.\n"
+	fi
 	;;
 foreach-descendant)
 	test $# -ge 3 || usage
