@@ -25,3 +25,6 @@ Additional detail:
 - `architecture.md`: top-level implementation model and main subsystems.
 - `components.md`: notable project areas and what they do.
 - `history-safety-design.md`: preview and safety design notes for history rewriting commands.
+- `stack-status-spec.md`: Concrete design for stack-wide health and status reporting.
+- `metadata-drift-spec.md`: Strategy for detecting and recovering from Ace/Git state mismatches.
+- `stack-conflict-ux.md`: Proposed user experience for handling conflicts during stack operations.
