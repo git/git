@@ -24,3 +24,4 @@ Additional detail:
 - `ace-internals.md`: Ace metadata layout, execution model, and operational constraints.
 - `architecture.md`: top-level implementation model and main subsystems.
 - `components.md`: notable project areas and what they do.
+- `history-safety-design.md`: preview and safety design notes for history rewriting commands.

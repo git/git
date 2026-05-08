@@ -103,3 +103,15 @@ The current implementation is elegant, but its simplicity implies a few constrai
 - Be very careful with rename, delete, and parent-update logic.
 - Prefer additive designs that keep Ace inspectable and Git-compatible.
 - If a future feature needs much richer Ace state, document why filesystem metadata is no longer enough before replacing it.
++
++### Agent Environment Contract
++
++The specific contract provided to agents executed via `git ace agent run <agent-name>` is as follows:
++
++- `ACE_AGENT_NAME`: The resolved name of the agent executable being invoked.
++- `ACE_BRANCH`: The current or target Ace virtual branch (e.g., `feature/ui/header`).
++- `ACE_REAL_BRANCH`: The underlying Git ref (e.g., `ace/feature_ui_header-a1b2c3d4e5f6`).
++- `ACE_PARENT_BRANCH`: The Ace virtual branch parent, if one is configured.
++- `ACE_REPOSITORY_ROOT`: The absolute path to the repository root directory.
++- `ACE_VCS_BACKEND`: Hard-coded to `git` to signal the underlying storage engine.
++- `ACE_INTEROP_TARGETS`: A comma-separated list of active interop targets, currently `git,mercurial`.

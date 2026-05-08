@@ -40,8 +40,8 @@ This document turns `q2-2026-plan.md` into a lightweight execution board for the
 - `done` Add explicit tests for Ace branch rename with descendants.
 - `done` Add explicit tests for Ace branch deletion fallback behavior.
 - `done` Add tests for cycle prevention in parent assignment.
-- `pending` Add documentation and test strategy for agent environment contract.
-- `pending` Add preview/safety design notes for `git history` and `git replay`.
+- `done` Add documentation and test strategy for agent environment contract.
+- `done` Add preview/safety design notes for `git history` and `git replay`.
 
 ## Known Constraints
 

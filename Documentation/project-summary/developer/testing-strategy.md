@@ -23,6 +23,7 @@ Highest-risk areas:
 - rebase-stack and merge-stack sequencing
 - descendant command traversal
 - metadata drift or misuse scenarios
+- agent environment variable isolation and formatting
 
 Minimum testing expectations:
 
@@ -32,6 +33,7 @@ Minimum testing expectations:
 - delete with descendants and current-branch fallback behavior
 - cycle rejection in `set-parent`
 - tree/chain/children output consistency
+- mock agent execution verifying the environment contract (all `ACE_*` variables)
 
 Recommended test style:
 
