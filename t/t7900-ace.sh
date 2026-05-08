@@ -54,6 +54,25 @@ test_expect_success 'recursive children and tree span nested hierarchy' '
 	test_cmp expected-tree actual-tree
 '
 
+test_expect_success 'status warns about drift and repair fixes it' '
+	git ace create drift/test &&
+	git ace checkout drift/test &&
+	test_commit drift-base file.txt "base" &&
+	drift_ref=$(git ace resolve drift/test) &&
+	git checkout "$(cat root-branch)" &&
+	git branch -D "$drift_ref" &&
+	git ace create topic/parser/drift-test &&
+	git ace checkout topic/parser/drift-test &&
+	git ace status >actual-status &&
+	test_grep "drift/test \[DANGLING\]" actual-status &&
+	test_grep "Health:" actual-status &&
+	test_grep "drift/test is dangling (backing ref missing)" actual-status &&
+	git ace repair --clean-dangling >repair-out &&
+	test_grep "Cleaning dangling virtual branch: drift/test" repair-out &&
+	git ace status >actual-status2 &&
+	! grep "drift/test" actual-status2
+'
+
 test_expect_success 'set-parent rejects cycles' '
 	test_must_fail git ace set-parent topic topic/parser/validation 2>err &&
 	test_grep "refusing to create cycle" err &&
@@ -99,11 +118,13 @@ test_expect_success 'Mercurial bookmark export writes Ace branch pointers' '
 	root_ref=$(git rev-parse "$root_branch") &&
 	topic_ref=$(git rev-parse "$(git ace resolve topic)") &&
 	parser_ref=$(git rev-parse "$(git ace resolve topic/parser)") &&
+	drift_test_ref=$(git rev-parse "$(git ace resolve topic/parser/drift-test)") &&
 	validation_ref=$(git rev-parse "$(git ace resolve topic/parser/validation)") &&
 	git ace hg export-bookmarks hg-bookmarks &&
 	cat >expected-bookmarks <<-EOF &&
 	$topic_ref topic
 	$parser_ref topic/parser
+	$drift_test_ref topic/parser/drift-test
 	$validation_ref topic/parser/validation
 	EOF
 	test_cmp expected-bookmarks hg-bookmarks
@@ -156,6 +177,7 @@ test_expect_success 'rename updates descendant metadata and backing refs' '
 	  epic
 	    epic/parser
 	      epic/parser/validation
+	        epic/parser/drift-test
 	EOF
 	git ace tree epic/parser/validation >actual-renamed-tree &&
 	test_cmp expected-renamed-tree actual-renamed-tree &&

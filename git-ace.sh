@@ -7,6 +7,7 @@ USAGE="<command> [<args>]
    or: ace resolve <branch>
    or: ace rename <old> <new>
    or: ace status
+   or: ace repair [--clean-dangling] [--adopt-orphans]
    or: ace delete [--force] [--with-descendants] <branch>
    or: ace hg export-bookmarks [<path>]
    or: ace hg import-bookmarks [<path>]
@@ -38,6 +39,7 @@ Commands:
   resolve             print the backing Git branch for a branch name
   rename              rename an Ace branch and rewrite related metadata
   status              show stack-wide status, health, and topology
+  repair              detect and fix metadata drift
   delete              delete an Ace branch and optionally its descendants
   hg                  import and export Mercurial-compatible bookmark data
   agent               invoke Claude Code, OpenCode, or another configured agent
@@ -746,6 +748,39 @@ status)
 	test -n "$DRIFT_WARNINGS" && printf "
 Health:
 %b" "$DRIFT_WARNINGS"
+	;;
+repair)
+	ensure_store
+	clean_dangling=
+	adopt_orphans=
+	while test $# -gt 0; do
+		case "$1" in
+		--clean-dangling) clean_dangling=1; shift ;;
+		--adopt-orphans) adopt_orphans=1; shift ;;
+		*) die "unknown option for repair: $1" ;;
+		esac
+	done
+	test -n "$clean_dangling" -o -n "$adopt_orphans" || die "repair requires --clean-dangling or --adopt-orphans"
+	if test -n "$clean_dangling"; then
+		for ace_branch_name in $(list_ace_branches); do
+			ace_real_branch=$(resolve_real_branch "$ace_branch_name" 2>/dev/null)
+			if test -z "$ace_real_branch" || ! git show-ref --verify --quiet "refs/heads/$ace_real_branch"; then
+				printf "Cleaning dangling virtual branch: %s\n" "$ace_branch_name"
+				rm -rf "$(branch_dir "$ace_branch_name")"
+			fi
+		done
+	fi
+	if test -n "$adopt_orphans"; then
+		for orphan_ref in $(git for-each-ref --format="%(refname:short)" refs/heads/ace/); do
+			virt_branch=$(virtual_branch_for_real "$orphan_ref")
+			if test -z "$virt_branch"; then
+				slug=$(echo "$orphan_ref" | sed "s|^ace/||" | sed "s|-[a-f0-9]*$||")
+				new_virt="recovered/$slug"
+				printf "Adopting orphaned ref %s as %s\n" "$orphan_ref" "$new_virt"
+				set_branch_ref "$new_virt" "$orphan_ref"
+			fi
+		done
+	fi
 	;;
 delete)
 	ace_force_delete=
