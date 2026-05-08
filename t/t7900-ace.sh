@@ -56,7 +56,9 @@ test_expect_success 'recursive children and tree span nested hierarchy' '
 
 test_expect_success 'set-parent rejects cycles' '
 	test_must_fail git ace set-parent topic topic/parser/validation 2>err &&
-	test_grep "refusing to create cycle" err
+	test_grep "refusing to create cycle" err &&
+	test_must_fail git ace set-parent topic topic 2>err2 &&
+	test_grep "refusing to create cycle" err2
 '
 
 test_expect_success 'rebase-stack rebases descendants onto updated parent' '
@@ -144,6 +146,7 @@ test_expect_success 'Mercurial named branch import creates root Ace branches' '
 '
 
 test_expect_success 'rename updates descendant metadata and backing refs' '
+	parser_oid=$(git rev-parse "$(git ace resolve topic/parser)") &&
 	git ace rename topic epic &&
 	echo epic/parser >expected-renamed-parent &&
 	git ace parent epic/parser/validation >actual-renamed-parent &&
@@ -156,7 +159,10 @@ test_expect_success 'rename updates descendant metadata and backing refs' '
 	EOF
 	git ace tree epic/parser/validation >actual-renamed-tree &&
 	test_cmp expected-renamed-tree actual-renamed-tree &&
-	test_must_fail git ace resolve topic
+	test_must_fail git ace resolve topic &&
+	git ace resolve epic/parser >actual-renamed-parser-ref &&
+	test "$(git rev-parse "$(cat actual-renamed-parser-ref)")" = "$parser_oid" &&
+	git ace checkout epic/parser
 '
 
 test_expect_success 'delete refuses subtree removal without explicit flag' '
@@ -179,6 +185,17 @@ test_expect_success 'delete with descendants removes subtree metadata and refs' 
 	! git show-ref --verify --quiet "refs/heads/$epic_ref" &&
 	! git show-ref --verify --quiet "refs/heads/$parser_ref" &&
 	! git show-ref --verify --quiet "refs/heads/$validation_ref"
+'
+
+test_expect_success 'delete with descendants checks out fallback branch if current branch is deleted' '
+	git checkout "$(cat root-branch)" &&
+	git ace create temp-tree &&
+	git ace checkout temp-tree &&
+	git ace create temp-tree/child &&
+	git ace checkout temp-tree/child &&
+	git ace delete --with-descendants --force temp-tree &&
+	test_must_fail git ace resolve temp-tree/child &&
+	test "$(git branch --show-current)" = "$(cat root-branch)"
 '
 
 test_done
