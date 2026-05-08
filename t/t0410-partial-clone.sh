@@ -717,7 +717,29 @@ test_expect_success 'setup for promisor.quiet tests' '
 	git -C server rm foo.t &&
 	git -C server commit -m remove &&
 	git -C server config uploadpack.allowanysha1inwant 1 &&
-	git -C server config uploadpack.allowfilter 1
+	git -C server config uploadpack.allowfilter 1 &&
+
+	# Setup for submodule repo test: superproject whose submodule is a
+	# partial clone, so that promisor.quiet is read via a non-main repo.
+	rm -rf sub-pc-src sub-pc-srv.bare super-src super-work &&
+	git init sub-pc-src &&
+	test_commit -C sub-pc-src initial file.txt "hello" &&
+
+	git clone --bare sub-pc-src sub-pc-srv.bare &&
+	git -C sub-pc-srv.bare config uploadpack.allowfilter 1 &&
+	git -C sub-pc-srv.bare config uploadpack.allowanysha1inwant 1 &&
+
+	git init super-src &&
+	git -C super-src -c protocol.file.allow=always \
+		submodule add "file://$(pwd)/sub-pc-srv.bare" sub &&
+	git -C super-src commit -m "add submodule" &&
+
+	git -c protocol.file.allow=always clone super-src super-work &&
+	git -C super-work -c protocol.file.allow=always \
+		submodule update --init --filter=blob:none sub &&
+
+	# Allow file:// in the submodule so that lazy-fetch subprocesses work.
+	git -C super-work/sub config protocol.file.allow always
 '
 
 test_expect_success TTY 'promisor.quiet=false shows progress messages' '
@@ -750,6 +772,27 @@ test_expect_success TTY 'promisor.quiet=unconfigured shows progress messages' '
 
 	# Ensure that progress messages are written
 	grep "Receiving objects" err
+'
+
+test_expect_success 'promisor.quiet from submodule repo is honored' '
+	rm -f pc-quiet-trace &&
+
+	# Set promisor.quiet only in the submodule, not the superproject.
+	git -C super-work/sub config promisor.quiet true &&
+
+	# Push a new commit+blob to the server; the blob stays missing in the
+	# partial-clone submodule until a lazy fetch is triggered.
+	test_commit -C sub-pc-src updated new-file.txt "world" &&
+	git -C sub-pc-src push "$(pwd)/sub-pc-srv.bare" HEAD:master &&
+	git -C super-work/sub -c protocol.file.allow=always fetch origin &&
+	git -C super-work/sub reset --mixed origin/master &&
+
+	# grep descends into the submodule and triggers a lazy fetch for the
+	# missing blob; verify the fetch subprocess carries --quiet.
+	GIT_TRACE2_EVENT="$(pwd)/pc-quiet-trace" \
+		git -C super-work grep --cached --recurse-submodules "world" \
+		2>/dev/null &&
+	grep negotiationAlgorithm pc-quiet-trace | grep -e --quiet
 '
 
 . "$TEST_DIRECTORY"/lib-httpd.sh

@@ -541,4 +541,37 @@ test_expect_success 'geometric repack works with promisor packs' '
 	)
 '
 
+test_expect_success 'check .promisor file content after geometric repack' '
+	test_when_finished rm -rf prom_test &&
+	git init prom_test &&
+	path=prom_test/.git/objects/pack &&
+
+	(
+		# Create 2 packs with 3 objs each, and manually create .promisor files
+		test_commit_bulk -C prom_test --start=1 1 &&  # 3 objects
+		prom1=$(ls $path/*.pack | sed "s/\.pack/.promisor/") &&
+		oid1=$(git -C prom_test rev-parse HEAD) &&
+		echo "$oid1 ref1" >"$prom1" &&
+		test_commit_bulk -C prom_test --start=2 1 &&  # 3 objects
+		prom2=$(ls $path/*.pack | sed "s/\.pack/.promisor/; \|$prom1|d") &&
+		oid2=$(git -C prom_test rev-parse HEAD) &&
+		echo "$oid2 ref2" >"$prom2" &&
+
+		# Create 1 pack with 12 objs, and manually create .promisor file
+		test_commit_bulk -C prom_test --start=3 4 &&  # 12 objects
+		prom3=$(ls $path/*.pack | sed "s/\.pack/.promisor/; \|$prom1|d; \|$prom2|d") &&
+		oid3=$(git -C prom_test rev-parse HEAD) &&
+		echo "$oid3 ref3" >"$prom3" &&
+
+		# Geometric repack, and check if correct
+		git -C prom_test repack --geometric 2 -d &&
+		prom=$(ls $path/*.pack | sed "s/\.pack/.promisor/; \|$prom3|d") &&
+		# $prom should have repacked only the first 2 small packs, so it should only
+		# contain the following: "$oid1 ref1 <time>" & "$oid2 ref2 <time>"
+		test_grep "$oid1 ref1 " "$prom" &&
+		test_grep "$oid2 ref2 " "$prom" &&
+		test_grep ! "$oid3 ref3" "$prom"
+	)
+'
+
 test_done

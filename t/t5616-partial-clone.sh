@@ -908,6 +908,66 @@ test_expect_success PERL_TEST_HELPERS 'tolerate server sending REF_DELTA against
 	! test -e "$HTTPD_ROOT_PATH/one-time-script"
 '
 
+test_expect_success PERL_TEST_HELPERS 'lazy-fetch of REF_DELTA with missing base does not recurse' '
+	SERVER="$HTTPD_DOCUMENT_ROOT_PATH/server" &&
+	rm -rf "$SERVER" repo &&
+	test_create_repo "$SERVER" &&
+	test_config -C "$SERVER" uploadpack.allowfilter 1 &&
+	test_config -C "$SERVER" uploadpack.allowanysha1inwant 1 &&
+
+	# Create a commit with 2 blobs to be used as delta base and content.
+	for i in $(test_seq 10)
+	do
+		echo "this is a line" >>"$SERVER/foo.txt" &&
+		echo "this is another line" >>"$SERVER/bar.txt" || return 1
+	done &&
+	git -C "$SERVER" add foo.txt bar.txt &&
+	git -C "$SERVER" commit -m initial &&
+	BLOB_FOO=$(git -C "$SERVER" rev-parse HEAD:foo.txt) &&
+	BLOB_BAR=$(git -C "$SERVER" rev-parse HEAD:bar.txt) &&
+
+	# Partial clone with blob:none. The client has commits and
+	# trees but no blobs.
+	test_config -C "$SERVER" protocol.version 2 &&
+	git -c protocol.version=2 clone --no-checkout \
+		--filter=blob:none $HTTPD_URL/one_time_script/server repo &&
+
+	# Sanity check: client does not have either blob locally.
+	git -C repo rev-list --objects --ignore-missing \
+		-- $BLOB_FOO >objlist &&
+	test_line_count = 0 objlist &&
+
+	# Craft a thin pack where BLOB_FOO is a REF_DELTA against
+	# BLOB_BAR. Since the client has neither blob (blob:none
+	# filter), the delta base will be missing. This simulates a
+	# misbehaving server that sends REF_DELTA against an object
+	# the client does not have.
+	test-tool -C "$SERVER" pack-deltas --num-objects=1 >thin.pack <<-EOF &&
+	REF_DELTA $BLOB_FOO $BLOB_BAR
+	EOF
+
+	replace_packfile thin.pack &&
+
+	# Trigger a lazy fetch for BLOB_FOO. The child fetch spawned
+	# by fetch_objects() receives our crafted thin pack. Its
+	# index-pack encounters the missing delta base (BLOB_BAR) and
+	# tries to lazy-fetch it via promisor_remote_get_direct().
+	#
+	# With the fix: fetch_objects() propagates GIT_NO_LAZY_FETCH=1
+	# to the child, so the depth-2 fetch is blocked and we see the
+	# "lazy fetching disabled" warning. The object cannot be
+	# resolved, so cat-file fails.
+	#
+	# Without the fix: the depth-2 fetch would proceed, potentially
+	# recursing unboundedly with a persistently misbehaving server.
+	test_must_fail git -C repo -c protocol.version=2 \
+		cat-file -p $BLOB_FOO 2>err &&
+	test_grep "lazy fetching disabled" err &&
+
+	# Ensure that the one-time-script was used.
+	! test -e "$HTTPD_ROOT_PATH/one-time-script"
+'
+
 # DO NOT add non-httpd-specific tests here, because the last part of this
 # test script is only executed when httpd is available and enabled.
 

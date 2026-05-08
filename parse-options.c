@@ -7,6 +7,8 @@
 #include "string-list.h"
 #include "strmap.h"
 #include "utf8.h"
+#include "autocorrect.h"
+#include "levenshtein.h"
 
 static int disallow_abbreviated_options;
 
@@ -606,17 +608,119 @@ static enum parse_opt_result parse_nodash_opt(struct parse_opt_ctx_t *p,
 	return PARSE_OPT_ERROR;
 }
 
-static enum parse_opt_result parse_subcommand(const char *arg,
-					      const struct option *options)
+static int parse_subcommand(const char *arg, const struct option *options)
 {
-	for (; options->type != OPTION_END; options++)
-		if (options->type == OPTION_SUBCOMMAND &&
-		    !strcmp(options->long_name, arg)) {
-			*(parse_opt_subcommand_fn **)options->value = options->subcommand_fn;
-			return PARSE_OPT_SUBCOMMAND;
-		}
+	for (; options->type != OPTION_END; options++) {
+		parse_opt_subcommand_fn **opt_val;
 
-	return PARSE_OPT_UNKNOWN;
+		if (options->type != OPTION_SUBCOMMAND ||
+		    strcmp(options->long_name, arg))
+			continue;
+
+		opt_val = options->value;
+		*opt_val = options->subcommand_fn;
+		return 0;
+	}
+
+	return -1;
+}
+
+static void find_subcommands(struct string_list *list,
+			     const struct option *options)
+{
+	for (; options->type != OPTION_END; options++) {
+		if (options->type == OPTION_SUBCOMMAND)
+			string_list_append(list, options->long_name);
+	}
+}
+
+static int similar_enough(const char *cmd, unsigned int edit)
+{
+	size_t len = strlen(cmd);
+	unsigned int allowed = len < 3 ? 0 : len < 6 ? 1 : 2;
+
+	return edit <= allowed;
+}
+
+static const char *autocorrect_subcommand(const char *cmd,
+					  struct string_list *cmds)
+{
+	struct autocorrect autocorrect = { 0 };
+	unsigned int min = UINT_MAX;
+	unsigned int ties = 0;
+	struct string_list_item *cand;
+	struct string_list_item *best = NULL;
+
+	autocorrect_resolve(&autocorrect);
+
+	/*
+	 * Builtin subcommands are small enough that printing them all via
+	 * usage_with_options() is sufficient. Therefore, AUTOCORRECT_HINT
+	 * acts like AUTOCORRECT_NEVER.
+	 */
+	if (autocorrect.mode == AUTOCORRECT_HINT ||
+	    autocorrect.mode == AUTOCORRECT_NEVER)
+		return NULL;
+
+	for_each_string_list_item(cand, cmds) {
+		unsigned int edit = levenshtein(cmd, cand->string, 1, 1, 1, 1);
+
+		if (edit < min) {
+			min = edit;
+			best = cand;
+			ties = 0;
+		} else if (edit == min) {
+			ties++;
+		}
+	}
+
+	if (!ties && similar_enough(cmd, min)) {
+		fprintf_ln(stderr,
+			   _("WARNING: You called a subcommand named '%s', which does not exist."),
+			   cmd);
+
+		autocorrect_confirm(&autocorrect, best->string);
+		return best->string;
+	}
+
+	return NULL;
+}
+
+static enum parse_opt_result handle_subcommand(struct parse_opt_ctx_t *ctx,
+					       const char *arg,
+					       const struct option *options,
+					       const char * const usagestr[])
+{
+	int err;
+	const char *assumed;
+	struct string_list cmds = STRING_LIST_INIT_NODUP;
+
+	err = parse_subcommand(arg, options);
+	if (!err)
+		return PARSE_OPT_SUBCOMMAND;
+
+	if (ctx->flags & PARSE_OPT_SUBCOMMAND_OPTIONAL &&
+	    !(ctx->flags & PARSE_OPT_SUBCOMMAND_AUTOCORR)) {
+		/*
+		 * arg is neither a short or long option nor a subcommand.
+		 * Since this command has a default operation mode, we have to
+		 * treat this arg and all remaining args as args meant to that
+		 * default operation mode.  So we are done parsing.
+		 */
+		return PARSE_OPT_DONE;
+	}
+
+	find_subcommands(&cmds, options);
+	assumed = autocorrect_subcommand(arg, &cmds);
+
+	if (!assumed) {
+		error(_("unknown subcommand: `%s'"), arg);
+		usage_with_options(usagestr, options);
+	}
+
+	string_list_clear(&cmds, 0);
+	parse_subcommand(assumed, options);
+	return PARSE_OPT_SUBCOMMAND;
 }
 
 static void check_typos(const char *arg, const struct option *options)
@@ -1011,38 +1115,16 @@ enum parse_opt_result parse_options_step(struct parse_opt_ctx_t *ctx,
 		if (*arg != '-' || !arg[1]) {
 			if (parse_nodash_opt(ctx, arg, options) == 0)
 				continue;
-			if (!ctx->has_subcommands) {
-				if (ctx->flags & PARSE_OPT_STOP_AT_NON_OPTION)
-					return PARSE_OPT_NON_OPTION;
-				ctx->out[ctx->cpidx++] = ctx->argv[0];
-				continue;
-			}
-			switch (parse_subcommand(arg, options)) {
-			case PARSE_OPT_SUBCOMMAND:
-				return PARSE_OPT_SUBCOMMAND;
-			case PARSE_OPT_UNKNOWN:
-				if (ctx->flags & PARSE_OPT_SUBCOMMAND_OPTIONAL)
-					/*
-					 * arg is neither a short or long
-					 * option nor a subcommand.  Since
-					 * this command has a default
-					 * operation mode, we have to treat
-					 * this arg and all remaining args
-					 * as args meant to that default
-					 * operation mode.
-					 * So we are done parsing.
-					 */
-					return PARSE_OPT_DONE;
-				error(_("unknown subcommand: `%s'"), arg);
-				usage_with_options(usagestr, options);
-			case PARSE_OPT_COMPLETE:
-			case PARSE_OPT_HELP:
-			case PARSE_OPT_ERROR:
-			case PARSE_OPT_DONE:
-			case PARSE_OPT_NON_OPTION:
-				/* Impossible. */
-				BUG("parse_subcommand() cannot return these");
-			}
+
+			if (ctx->has_subcommands)
+				return handle_subcommand(ctx, arg, options,
+							 usagestr);
+
+			if (ctx->flags & PARSE_OPT_STOP_AT_NON_OPTION)
+				return PARSE_OPT_NON_OPTION;
+
+			ctx->out[ctx->cpidx++] = ctx->argv[0];
+			continue;
 		}
 
 		/* lone -h asks for help */

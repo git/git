@@ -603,6 +603,15 @@ void write_promisor_file(const char *promisor_name, struct ref **sought, int nr_
 	int i, err;
 	FILE *output = xfopen(promisor_name, "w");
 
+	/*
+	 * Write in the .promisor file the ref names and associated hashes,
+	 * obtained by fetch-pack, at the point of generation of the
+	 * corresponding packfile. These pieces of info are only used to make
+	 * it easier to debug issues with partial clones, as we can identify
+	 * what refs (and their associated hashes) were fetched at the time
+	 * the packfile was downloaded, and if necessary, compare those hashes
+	 * against what the promisor remote reports now.
+	 */
 	for (i = 0; i < nr_sought; i++)
 		fprintf(output, "%s %s\n", oid_to_hex(&sought[i]->old_oid),
 			sought[i]->name);

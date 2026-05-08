@@ -552,12 +552,13 @@ int cmd_push(int argc,
 	int flags = 0;
 	int tags = 0;
 	int push_cert = -1;
-	int rc;
+	int rc = 0;
+	int base_flags;
 	const char *repo = NULL;	/* default repository */
 	struct string_list push_options_cmdline = STRING_LIST_INIT_DUP;
+	struct string_list remote_group = STRING_LIST_INIT_DUP;
 	struct string_list *push_options;
 	const struct string_list_item *item;
-	struct remote *remote;
 
 	struct option options[] = {
 		OPT__VERBOSITY(&verbosity),
@@ -620,39 +621,45 @@ int cmd_push(int argc,
 	else if (recurse_submodules == RECURSE_SUBMODULES_ONLY)
 		flags |= TRANSPORT_RECURSE_SUBMODULES_ONLY;
 
-	if (tags)
-		refspec_append(&rs, "refs/tags/*");
-
 	if (argc > 0)
 		repo = argv[0];
 
-	remote = pushremote_get(repo);
-	if (!remote) {
-		if (repo)
-			die(_("bad repository '%s'"), repo);
-		die(_("No configured push destination.\n"
-		    "Either specify the URL from the command-line or configure a remote repository using\n"
-		    "\n"
-		    "    git remote add <name> <url>\n"
-		    "\n"
-		    "and then push using the remote name\n"
-		    "\n"
-		    "    git push <name>\n"));
-	}
-
-	if (argc > 0)
-		set_refspecs(argv + 1, argc - 1, remote);
-
-	if (remote->mirror)
-		flags |= (TRANSPORT_PUSH_MIRROR|TRANSPORT_PUSH_FORCE);
-
-	if (flags & TRANSPORT_PUSH_ALL) {
-		if (argc >= 2)
-			die(_("--all can't be combined with refspecs"));
-	}
-	if (flags & TRANSPORT_PUSH_MIRROR) {
-		if (argc >= 2)
-			die(_("--mirror can't be combined with refspecs"));
+	if (repo) {
+		if (!add_remote_or_group(repo, &remote_group)) {
+			/*
+			 * Not a configured remote name or group name.
+			 * Try treating it as a direct URL or path, e.g.
+			 *   git push /tmp/foo.git
+			 *   git push https://github.com/user/repo.git
+			 * pushremote_get() creates an anonymous remote
+			 * from the URL so the loop below can handle it
+			 * identically to a named remote.
+			 */
+			struct remote *r = pushremote_get(repo);
+			if (!r)
+				die(_("bad repository '%s'"), repo);
+			string_list_append(&remote_group, r->name);
+		}
+	} else {
+		struct remote *r = pushremote_get(NULL);
+		if (!r)
+			die(_("No configured push destination.\n"
+			    "Either specify the URL from the command-line or configure a remote repository using\n"
+			    "\n"
+			    "    git remote add <name> <url>\n"
+			    "\n"
+			    "and then push using the remote name\n"
+			    "\n"
+			    "    git push <name>\n"
+			    "\n"
+			    "To push to multiple remotes at once, configure a remote group using\n"
+			    "\n"
+			    "    git config remotes.<groupname> \"<remote1> <remote2>\"\n"
+			    "\n"
+			    "and then push using the group name\n"
+			    "\n"
+			    "    git push <groupname>\n"));
+		string_list_append(&remote_group, r->name);
 	}
 
 	if (!is_empty_cas(&cas) && (flags & TRANSPORT_PUSH_FORCE_IF_INCLUDES))
@@ -662,10 +669,60 @@ int cmd_push(int argc,
 		if (strchr(item->string, '\n'))
 			die(_("push options must not have new line characters"));
 
-	rc = do_push(flags, push_options, remote);
+	/*
+	 * Push to each remote in remote_group. For a plain "git push <remote>"
+	 * or a default push, remote_group has exactly one entry and the loop
+	 * runs once — there is nothing structurally special about that case.
+	 * For a group, the loop runs once per member remote.
+	 *
+	 * Mirror detection and the --mirror/--all + refspec conflict checks
+	 * are done per remote inside the loop. A remote configured with
+	 * remote.NAME.mirror=true implies mirror mode for that remote only —
+	 * other non-mirror remotes in the same group are unaffected.
+	 *
+	 * rs is rebuilt from scratch for each remote so that per-remote push
+	 * mappings (remote.NAME.push config) are resolved against the correct
+	 * remote. iter_flags is derived from a clean snapshot of flags taken
+	 * before the loop so that a mirror remote cannot bleed
+	 * TRANSPORT_PUSH_FORCE into subsequent non-mirror remotes in the
+	 * same group.
+	 */
+	base_flags = flags;
+	for (size_t i = 0; i < remote_group.nr; i++) {
+		int iter_flags = base_flags;
+		struct remote *r = pushremote_get(remote_group.items[i].string);
+		if (!r)
+			die(_("no such remote or remote group: %s"),
+			    remote_group.items[i].string);
+
+		if (r->mirror)
+			iter_flags |= (TRANSPORT_PUSH_MIRROR|TRANSPORT_PUSH_FORCE);
+
+		if (iter_flags & TRANSPORT_PUSH_ALL) {
+			if (argc >= 2)
+				die(_("--all can't be combined with refspecs"));
+		}
+		if (iter_flags & TRANSPORT_PUSH_MIRROR) {
+			if (argc >= 2)
+				die(_("--mirror can't be combined with refspecs"));
+		}
+
+		refspec_clear(&rs);
+		rs = (struct refspec) REFSPEC_INIT_PUSH;
+
+		if (tags)
+			refspec_append(&rs, "refs/tags/*");
+		if (argc > 0)
+			set_refspecs(argv + 1, argc - 1, r);
+
+		rc |= do_push(iter_flags, push_options, r);
+	}
+
 	string_list_clear(&push_options_cmdline, 0);
 	string_list_clear(&push_options_config, 0);
+	string_list_clear(&remote_group, 0);
 	clear_cas_option(&cas);
+
 	if (rc == -1)
 		usage_with_options(push_usage, options);
 	else

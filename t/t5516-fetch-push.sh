@@ -254,6 +254,36 @@ test_expect_success 'push with negotiation does not attempt to fetch submodules'
 	! grep "Fetching submodule" err
 '
 
+test_expect_success 'push with negotiation and remote.<name>.negotiationRequire' '
+	test_when_finished rm -rf negotiation_require &&
+	mk_empty negotiation_require &&
+	git push negotiation_require $the_first_commit:refs/remotes/origin/first_commit &&
+	test_commit -C negotiation_require unrelated_commit &&
+	git -C negotiation_require config receive.hideRefs refs/remotes/origin/first_commit &&
+	test_when_finished "rm event" &&
+	GIT_TRACE2_EVENT="$(pwd)/event" \
+		git -c protocol.version=2 -c push.negotiate=1 \
+		-c remote.negotiation_require.negotiationRequire=refs/heads/main \
+		push negotiation_require refs/heads/main:refs/remotes/origin/main &&
+	test_grep \"key\":\"total_rounds\" event &&
+	grep_wrote 2 event # 1 commit, 1 tree
+'
+
+test_expect_success 'push with negotiation and remote.<name>.negotiationRestrict' '
+	test_when_finished rm -rf negotiation_restrict &&
+	mk_empty negotiation_restrict &&
+	git push negotiation_restrict $the_first_commit:refs/remotes/origin/first_commit &&
+	test_commit -C negotiation_restrict unrelated_commit &&
+	git -C negotiation_restrict config receive.hideRefs refs/remotes/origin/first_commit &&
+	test_when_finished "rm event" &&
+	GIT_TRACE2_EVENT="$(pwd)/event" \
+		git -c protocol.version=2 -c push.negotiate=1 \
+		-c remote.negotiation_restrict.negotiationRestrict=refs/heads/main \
+		push negotiation_restrict refs/heads/main:refs/remotes/origin/main &&
+	test_grep \"key\":\"total_rounds\" event &&
+	grep_wrote 2 event # 1 commit, 1 tree
+'
+
 test_expect_success 'push without wildcard' '
 	mk_empty testrepo &&
 
@@ -1349,7 +1379,7 @@ test_expect_success 'fetch follows tags by default' '
 		git for-each-ref >tmp1 &&
 		sed -n "p; s|refs/heads/main$|refs/remotes/origin/main|p" tmp1 |
 		sed -n "p; s|refs/heads/main$|refs/remotes/origin/HEAD|p"  |
-		sort -k 4 >../expect
+		sort -k 3 >../expect
 	) &&
 	test_when_finished "rm -rf dst" &&
 	git init dst &&

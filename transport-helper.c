@@ -756,7 +756,7 @@ static int fetch_refs(struct transport *transport,
 		set_helper_option(transport, "filter", spec);
 	}
 
-	if (data->transport_options.negotiation_tips)
+	if (data->transport_options.negotiation_restrict_tips)
 		warning("Ignoring --negotiation-tip because the protocol does not support it.");
 
 	if (data->fetch)

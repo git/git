@@ -57,6 +57,20 @@ static int use_mailmap;
 
 static char *replace_idents_using_mailmap(char *, size_t *);
 
+/*
+ * The mailmap is initialized with .strdup_strings set to 0,
+ * but read_mailmap() sets the bit to 1 (this is true even when
+ * not a single mailmap entry is read), so it can be used for
+ * lazy loading.
+ */
+static void load_mailmap(void)
+{
+	if (mailmap.strdup_strings)
+		return;
+
+	read_mailmap(the_repository, &mailmap);
+}
+
 static char *replace_idents_using_mailmap(char *object_buf, size_t *size)
 {
 	struct strbuf sb = STRBUF_INIT;
@@ -692,6 +706,20 @@ static void parse_cmd_info(struct batch_options *opt,
 	batch_one_object(line, output, opt, data);
 }
 
+static void parse_cmd_mailmap(struct batch_options *opt UNUSED,
+			      const char *line,
+			      struct strbuf *output UNUSED,
+			      struct expand_data *data UNUSED)
+{
+	use_mailmap = git_parse_maybe_bool(line);
+
+	if (use_mailmap < 0)
+		die(_("mailmap: invalid boolean '%s'"), line);
+
+	if (use_mailmap)
+		load_mailmap();
+}
+
 static void dispatch_calls(struct batch_options *opt,
 		struct strbuf *output,
 		struct expand_data *data,
@@ -725,9 +753,10 @@ static const struct parse_cmd {
 	parse_cmd_fn_t fn;
 	unsigned takes_args;
 } commands[] = {
-	{ "contents", parse_cmd_contents, 1},
-	{ "info", parse_cmd_info, 1},
-	{ "flush", NULL, 0},
+	{ "contents", parse_cmd_contents, 1 },
+	{ "info", parse_cmd_info, 1 },
+	{ "flush", NULL, 0 },
+	{ "mailmap", parse_cmd_mailmap, 1 },
 };
 
 static void batch_objects_command(struct batch_options *opt,
@@ -1131,7 +1160,7 @@ int cmd_cat_file(int argc,
 	opt_epts = (opt == 'e' || opt == 'p' || opt == 't' || opt == 's');
 
 	if (use_mailmap)
-		read_mailmap(the_repository, &mailmap);
+		load_mailmap();
 
 	switch (batch.objects_filter.choice) {
 	case LOFC_DISABLED:
