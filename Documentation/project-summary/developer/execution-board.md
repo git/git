@@ -13,7 +13,7 @@ This document turns `q2-2026-plan.md` into a lightweight execution board for the
 
 ## Goal 1: Strengthen `git ace`
 
-- `done` Define a concrete spec for stack-wide status and health reporting.
+- `done` Implement `git ace status` for stack-wide status and health reporting.
 - `done` Define how metadata drift should be detected and explained to users.
 - `done` Define expected conflict UX for `rebase-stack` and `merge-stack`.
 - `pending` Expand documentation around rename/delete/parent edge cases.

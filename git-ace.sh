@@ -6,6 +6,7 @@ USAGE="<command> [<args>]
    or: ace checkout <branch>
    or: ace resolve <branch>
    or: ace rename <old> <new>
+   or: ace status
    or: ace delete [--force] [--with-descendants] <branch>
    or: ace hg export-bookmarks [<path>]
    or: ace hg import-bookmarks [<path>]
@@ -34,6 +35,7 @@ Commands:
   checkout            resolve an Ace branch name and check it out
   resolve             print the backing Git branch for a branch name
   rename              rename an Ace branch and rewrite related metadata
+  status              show stack-wide status, health, and topology
   delete              delete an Ace branch and optionally its descendants
   hg                  import and export Mercurial-compatible bookmark data
   agent               invoke Claude Code, OpenCode, or another configured agent
@@ -502,6 +504,75 @@ print_tree () {
 	done
 }
 
+
+print_status_tree () {
+	ace_branch_name=$1
+	ace_depth=$2
+	ace_parent_name=$3
+	indent=""
+	ace_count=$ace_depth
+	while test "$ace_count" -gt 0
+	do
+		indent="$indent  "
+		ace_count=$((ace_count - 1))
+	done
+	ace_real_branch=$(resolve_real_branch "$ace_branch_name" 2>/dev/null)
+	sync_info=""
+	if test -z "$ace_real_branch" || ! git show-ref --verify --quiet "refs/heads/$ace_real_branch"
+	then
+		sync_info="[DANGLING]"
+		DRIFT_WARNINGS="${DRIFT_WARNINGS}⚠️  $ace_branch_name is dangling (backing ref missing).
+"
+	else
+		if test -n "$ace_parent_name"
+		then
+			ace_real_parent=$(resolve_real_branch "$ace_parent_name" 2>/dev/null)
+			if test -n "$ace_real_parent" && git show-ref --verify --quiet "refs/heads/$ace_real_parent"
+			then
+				ahead=$(git rev-list --count "${ace_real_parent}..${ace_real_branch}" 2>/dev/null || echo "?")
+				behind=$(git rev-list --count "${ace_real_branch}..${ace_real_parent}" 2>/dev/null || echo "?")
+				sync_info="(ahead $ahead, behind $behind)"
+				base=$(git merge-base "$ace_real_parent" "$ace_real_branch" 2>/dev/null)
+				parent_oid=$(git rev-parse "$ace_real_parent" 2>/dev/null)
+				if test "$base" != "$parent_oid"
+				then
+					sync_info="$sync_info [needs rebase]"
+					DRIFT_WARNINGS="${DRIFT_WARNINGS}⚠️  $ace_branch_name is out of sync with $ace_parent_name. Run \`git ace rebase-stack $ace_parent_name\`.
+"
+				else
+					sync_info="$sync_info [synced]"
+				fi
+			else
+				sync_info="[ORPHANED PARENT]"
+			fi
+		else
+			sync_info="[root]"
+		fi
+	fi
+	marker=""
+	test "$ace_branch_name" = "$CURRENT_VIRTUAL_BRANCH" && marker=" *CURRENT*"
+	if test "$ace_depth" -eq 0
+	then
+		printf "%s%s %s%s
+" "$indent" "$ace_branch_name" "$sync_info" "$marker"
+	else
+		printf "%s│
+" "$indent"
+		printf "%s└── %s %s%s
+" "$indent" "$ace_branch_name" "$sync_info" "$marker"
+	fi
+	if test "$ace_branch_name" = "$CURRENT_VIRTUAL_BRANCH"
+	then
+		uncommitted=$(git status --porcelain | grep -c "^" || echo 0)
+		test "$uncommitted" -gt 0 && printf "%s      ~ %s uncommitted changes
+" "$indent" "$uncommitted"
+	fi
+	for ace_child_name in $(list_children "$ace_branch_name")
+	do
+		print_status_tree "$ace_child_name" $((ace_depth + 1)) "$ace_branch_name" || return 1
+	done
+}
+
 run_descendant_command () {
 	ace_branch_name=$1
 	shift
@@ -614,6 +685,28 @@ rename)
 	test $# -eq 2 || usage
 	ensure_known_branch "$1"
 	rename_ace_branch "$1" "$2"
+	;;
+
+status)
+	ensure_store
+	CURRENT_VIRTUAL_BRANCH=$(current_display_branch)
+	DRIFT_WARNINGS=""
+	if ! is_ace_branch "$CURRENT_VIRTUAL_BRANCH"
+	then
+		git status
+		exit 0
+	fi
+	branch=$CURRENT_VIRTUAL_BRANCH
+	while parent=$(branch_parent "$branch") && test -n "$parent"
+	do
+		branch=$parent
+	done
+	echo "Stack Status:"
+	echo ""
+	print_status_tree "$branch" 0 ""
+	test -n "$DRIFT_WARNINGS" && printf "
+Health:
+%b" "$DRIFT_WARNINGS"
 	;;
 delete)
 	ace_force_delete=
