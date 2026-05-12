@@ -646,4 +646,104 @@ test_expect_success 'status.compareBranches with remapped push and upstream remo
 	test_cmp expect actual
 '
 
+test_expect_success 'status.compareBranches behind both upstream and push' '
+	test_config -C test push.default current &&
+	test_config -C test remote.pushDefault origin &&
+	test_config -C test status.compareBranches "@{upstream} @{push}" &&
+	git -C test checkout -b feature13 upstream/main &&
+	(cd test && advance work13) &&
+	git -C test push origin &&
+	git -C test branch --set-upstream-to upstream/ahead &&
+	git -C test reset --hard HEAD^ &&
+	git -C test status >actual &&
+	cat >expect <<-EOF &&
+	On branch feature13
+	Your branch is behind ${SQ}upstream/ahead${SQ} by 1 commit, and can be fast-forwarded.
+	  (use "git pull" to update your local branch)
+
+	Your branch is behind ${SQ}origin/feature13${SQ} by 1 commit, and can be fast-forwarded.
+	  (use "git pull origin feature13" to update your local branch)
+
+	nothing to commit, working tree clean
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'status.compareBranches with remapped push and behind push branch' '
+	test_config -C test remote.pushDefault origin &&
+	test_config -C test remote.origin.push refs/heads/feature14:refs/heads/remapped14 &&
+	test_config -C test status.compareBranches "@{push}" &&
+	git -C test checkout -b feature14 upstream/main &&
+	(cd test && advance work14) &&
+	git -C test push &&
+	git -C test reset --hard HEAD^ &&
+	git -C test status >actual &&
+	cat >expect <<-EOF &&
+	On branch feature14
+	Your branch is behind ${SQ}origin/remapped14${SQ} by 1 commit, and can be fast-forwarded.
+	  (use "git pull origin remapped14" to update your local branch)
+
+	nothing to commit, working tree clean
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'status.compareBranches with behind push branch and no upstream' '
+	test_config -C test push.default current &&
+	test_config -C test remote.pushDefault origin &&
+	test_config -C test status.compareBranches "@{push}" &&
+	git -C test checkout --no-track -b feature15 upstream/main &&
+	(cd test && advance work15) &&
+	git -C test push origin &&
+	git -C test reset --hard HEAD^ &&
+	git -C test status >actual &&
+	cat >expect <<-EOF &&
+	On branch feature15
+	Your branch is behind ${SQ}origin/feature15${SQ} by 1 commit, and can be fast-forwarded.
+	  (use "git pull origin feature15" to update your local branch)
+
+	nothing to commit, working tree clean
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'status.compareBranches behind upstream-equals-push suggests plain pull' '
+	test_config -C test status.compareBranches "@{upstream} @{push}" &&
+	git -C test checkout -b feature16 origin/main &&
+	(cd test && advance work16) &&
+	git -C test push origin HEAD:main &&
+	git -C test reset --hard HEAD^ &&
+	git -C test status >actual &&
+	cat >expect <<-EOF &&
+	On branch feature16
+	Your branch is behind ${SQ}origin/main${SQ} by 1 commit, and can be fast-forwarded.
+	  (use "git pull" to update your local branch)
+
+	nothing to commit, working tree clean
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'status.compareBranches suppresses advice when push tracking ref is unconventional' '
+	test_config -C test push.default current &&
+	test_config -C test remote.imported.url ../. &&
+	test_config -C test remote.imported.fetch "+refs/heads/*:refs/imported/imported/*" &&
+	test_config -C test branch.feature17.pushRemote imported &&
+	test_config -C test status.compareBranches "@{push}" &&
+	git -C test fetch imported &&
+	git -C test checkout --no-track -b feature17 refs/imported/imported/main &&
+	(cd test && advance work17) &&
+	git -C test push imported HEAD:feature17 &&
+	git -C test fetch imported &&
+	git -C test reset --hard HEAD^ &&
+	git -C test status >actual &&
+	cat >expect <<-EOF &&
+	On branch feature17
+	Your branch is behind ${SQ}imported/imported/feature17${SQ} by 1 commit, and can be fast-forwarded.
+
+	nothing to commit, working tree clean
+	EOF
+	test_cmp expect actual
+'
+
 test_done
