@@ -85,11 +85,11 @@ recognize. This is intended so that tools which wrap Git can use the hook
 infrastructure to run their own hooks; see "WRAPPERS" for more guidance.
 
 In general, when instructions suggest adding a script to
-`.git/hooks/<hook-event>`, you can specify it in the config instead by running:
+`.git/hooks/<hook-name>`, you can specify it in the config instead by running:
 
 ----
-git config set hook.<some-name>.command <path-to-script>
-git config set --append hook.<some-name>.event <hook-event>
+git config set hook.<friendly-name>.command <path-to-script>
+git config set --append hook.<friendly-name>.event <hook-name>
 ----
 
 This way you can share the script between multiple repos. That is, `cp
