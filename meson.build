@@ -836,6 +836,12 @@ if get_option('warning_level') in ['2','3', 'everything'] and compiler.get_argum
       libgit_c_args += cflag
     endif
   endforeach
+
+  # Clang generates warnings when compiling glibc 2.43 because of the use of
+  # _Generic.
+  if compiler.get_id() == 'clang'
+    libgit_c_args += '-Wno-c11-extensions'
+  endif
 endif
 
 if get_option('breaking_changes')
