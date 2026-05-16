@@ -2,6 +2,7 @@
 
 [![Agent Build](https://github.com/dutixlf/git-ag/actions/workflows/agent-build.yml/badge.svg)](https://github.com/dutixlf/git-ag/actions/workflows/agent-build.yml)
 [![Upstream Sync](https://github.com/dutixlf/git-ag/actions/workflows/upstream-sync.yml/badge.svg)](https://github.com/dutixlf/git-ag/actions/workflows/upstream-sync.yml)
+[![Release](https://github.com/dutixlf/git-ag/actions/workflows/release.yml/badge.svg)](https://github.com/dutixlf/git-ag/releases)
 
 A backward-compatible fork of Git that adds **opt-in agent metadata** to commits, branches, and repository state. Agent features are invisible to standard Git unless you explicitly invoke the `agent-*` commands or the `refs/agent/` namespace.
 
@@ -18,13 +19,27 @@ git-agent stores this context **inside the repository**, so it travels with the 
 
 ## Quick start
 
-### One-liner install
+### One-liner install (auto-download binary or build from source)
 
 ```bash
 curl -sL https://raw.githubusercontent.com/dutixlf/git-ag/master/install.sh | sh
 ```
 
-Or manually:
+Or grab a pre-built binary from [Releases](https://github.com/dutixlf/git-ag/releases):
+
+```bash
+# Linux
+wget https://github.com/dutixlf/git-ag/releases/latest/download/git-agent-linux-x86_64.tar.gz
+tar xzf git-agent-linux-x86_64.tar.gz -C $HOME/.local --strip-components=1
+
+# macOS
+wget https://github.com/dutixlf/git-ag/releases/latest/download/git-agent-macos-universal.tar.gz
+tar xzf git-agent-macos-universal.tar.gz -C $HOME/.local --strip-components=1
+
+# Windows: download .tar.gz, extract to C:\Program Files\Git\agent\
+```
+
+Or build from source:
 
 ```bash
 git clone https://github.com/dutixlf/git-ag.git
@@ -256,6 +271,8 @@ Exposes:
 - `repo://orientation` → `git agent-orient` JSON
 - `repo://semantic_diff` → `git agent-diff` JSON
 
+See [`contrib/agent-mcp/SETUP.md`](contrib/agent-mcp/SETUP.md) for VS Code, Cursor, Claude Desktop, and Nix/Home Manager configuration.
+
 AI editors can query repository state without shelling out.
 
 ## More documentation
@@ -273,6 +290,7 @@ This fork uses **two lightweight workflows** instead of the upstream heavy matri
 |----------|---------|-------------|
 | `agent-build.yml` | push / PR to `master` | builds with `NO_CURL=YesPlease NO_RUST=YesPlease`, runs all 5 agent test suites, smoke-tests `git agent-orient` |
 | `upstream-sync.yml` | weekly (Mon 06:00 UTC) + manual | fast-forwards `master` from `git/git`; creates a PR if FF is not possible |
+| `release.yml` | tag `v*` push + manual | builds Linux/macOS/Windows binaries, uploads to [GitHub Releases](https://github.com/dutixlf/git-ag/releases) |
 
 The upstream `main.yml` (Windows builds, fuzzing, Coverity, dockrized tests) is **disabled by default** because it requires infrastructure this fork does not have. To re-enable it, edit `.github/workflows/main.yml` and uncomment the `push` / `pull_request` triggers.
 
