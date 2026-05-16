@@ -14,6 +14,7 @@
 #include "parse-options.h"
 #include "pretty.h"
 #include "revision.h"
+#include "hex.h"
 #include "strbuf.h"
 #include "trailer.h"
 

@@ -87,7 +87,7 @@ static void free_annotations(struct agent_annotation *head)
 }
 
 static struct agent_annotation *parse_composite_blob(const char *blob,
-						     size_t len)
+							     size_t len)
 {
 	struct agent_annotation *head = NULL, *tail = NULL;
 	const char *p = blob;
@@ -101,7 +101,7 @@ static struct agent_annotation *parse_composite_blob(const char *blob,
 		size_t data_len = 0;
 
 		/* Expect "annotation: <key>\n" */
-		if (strncmp(p, "annotation: ", 12))
+		if (end - p < 12 || strncmp(p, "annotation: ", 12))
 			break;
 		p += 12;
 		nl = memchr(p, '\n', end - p);
@@ -118,12 +118,13 @@ static struct agent_annotation *parse_composite_blob(const char *blob,
 			char *num_end;
 			char *num = xmemdupz(p, nl - p);
 			data_len = strtoul(num, &num_end, 10);
-			free(num);
-			if (num_end == p || (*num_end && !isspace(*num_end)))
+			if (num == num_end || (*num_end && !isspace(*num_end))) {
+				free(num);
 				break;
+			}
+			free(num);
 		}
 		p = nl + 1;
-
 		if (p + data_len > end)
 			break;
 		data = xmemdupz(p, data_len);
@@ -292,80 +293,41 @@ int agent_ref_read(const struct object_id *commit_oid,
 		   const char *key,
 		   struct strbuf *buf)
 {
-	struct strbuf refname = STRBUF_INIT;
-	struct object_id tree_oid, blob_oid;
+	struct object_id blob_oid;
 	char *data = NULL;
 	enum object_type type;
 	unsigned long size = 0;
 	struct agent_annotation *list, *ann;
 	int ret = -1;
-	struct object_id resolved;
-	char *tree_data = NULL;
-	unsigned long tree_size = 0;
-	struct tree_desc desc;
-	struct name_entry entry;
 	struct strbuf path = STRBUF_INIT;
 
 	strbuf_reset(buf);
-	oidclr(&blob_oid, the_repository->hash_algo);
 
-	/* Look up the agent/commits ref directly. */
-	strbuf_addstr(&refname, AGENT_REFS_COMMITS);
-	if (refs_read_ref(get_main_ref_store(the_repository),
-			  refname.buf, &resolved)) {
-		strbuf_release(&refname);
-		return -1;
-	}
-	oidcpy(&tree_oid, &resolved);
+	/* The notes tree is flat (full SHA as filename), so we can
+	 * look up the blob directly via <ref>:<hex> syntax.
+	 */
+	strbuf_addf(&path, "%s:%s", AGENT_REFS_COMMITS,
+		    oid_to_hex(commit_oid));
+	if (repo_get_oid(the_repository, path.buf, &blob_oid))
+		goto done;
 
-	tree_data = odb_read_object(the_repository->objects, &tree_oid,
-				    &type, &tree_size);
-	if (!tree_data || type != OBJ_TREE) {
-		strbuf_release(&refname);
-		strbuf_release(&path);
-		return -1;
-	}
+	data = odb_read_object(the_repository->objects, &blob_oid,
+				   &type, &size);
+	if (!data || type != OBJ_BLOB)
+		goto done;
 
-	init_tree_desc(&desc, &tree_oid, tree_data, tree_size);
-	while (tree_entry(&desc, &entry)) {
-		const char *hex = oid_to_hex(commit_oid);
-		size_t hexlen = strlen(hex);
-		if (entry.pathlen == hexlen &&
-		    !memcmp(entry.path, hex, hexlen)) {
-			oidcpy(&blob_oid, &entry.oid);
+	list = parse_composite_blob(data, size);
+	for (ann = list; ann; ann = ann->next) {
+		if (!strcmp(ann->key, key)) {
+			strbuf_add(buf, ann->data, ann->len);
+			ret = 0;
 			break;
 		}
 	}
-	if (is_null_oid(&blob_oid)) {
-		/* Not found at top level, try simple lookup via show path. */
-		strbuf_addf(&path, "%s:%s", AGENT_REFS_COMMITS,
-			    oid_to_hex(commit_oid));
-		if (!repo_get_oid(the_repository, path.buf, &blob_oid)) {
-			/* blob_oid is the blob, we need its content */
-			data = odb_read_object(the_repository->objects,
-					       &blob_oid, &type, &size);
-		}
-	} else {
-		data = odb_read_object(the_repository->objects, &blob_oid,
-				       &type, &size);
-	}
+	free_annotations(list);
 
-	if (data && type == OBJ_BLOB) {
-		list = parse_composite_blob(data, size);
-		for (ann = list; ann; ann = ann->next) {
-			if (!strcmp(ann->key, key)) {
-				strbuf_add(buf, ann->data, ann->len);
-				ret = 0;
-				break;
-			}
-		}
-		free_annotations(list);
-	} else {
-	}
-
-	free(tree_data);
+done:
 	free(data);
-	strbuf_release(&refname);
 	strbuf_release(&path);
 	return ret;
 }
