@@ -4,7 +4,7 @@
 
 set -e
 
-REPO_URL="${REPO_URL:-https://github.com/dutixlf/test.git}"
+REPO_URL="${REPO_URL:-https://github.com/dutixlf/git-ag.git}"
 PREFIX="${PREFIX:-$HOME/.local}"
 
 TMPDIR=$(mktemp -d)

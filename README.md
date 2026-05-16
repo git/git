@@ -18,14 +18,14 @@ git-agent stores this context **inside the repository**, so it travels with the 
 ### One-liner install
 
 ```bash
-curl -sL https://raw.githubusercontent.com/dutixlf/test/master/install.sh | sh
+curl -sL https://raw.githubusercontent.com/dutixlf/git-ag/master/install.sh | sh
 ```
 
 Or manually:
 
 ```bash
-git clone https://github.com/dutixlf/test.git
-cd test
+git clone https://github.com/dutixlf/git-ag.git
+cd git-ag
 make -j$(nproc) NO_CURL=YesPlease NO_RUST=YesPlease
 make prefix=$HOME/.local install
 export PATH="$HOME/.local/bin:$PATH"
