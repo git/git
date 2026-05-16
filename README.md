@@ -15,13 +15,23 @@ git-agent stores this context **inside the repository**, so it travels with the 
 
 ## Quick start
 
-### Build
+### One-liner install
 
 ```bash
-make NO_CURL=YesPlease NO_RUST=YesPlease
+curl -sL https://raw.githubusercontent.com/dutixlf/test/master/install.sh | sh
 ```
 
-No installation required — you can run directly from `bin-wrappers/git`.
+Or manually:
+
+```bash
+git clone https://github.com/dutixlf/test.git
+cd test
+make -j$(nproc) NO_CURL=YesPlease NO_RUST=YesPlease
+make prefix=$HOME/.local install
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+No installation required for development — you can run directly from `bin-wrappers/git`.
 
 ### Make an agent commit
 

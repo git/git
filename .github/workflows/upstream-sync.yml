@@ -1,0 +1,53 @@
+name: Upstream Sync
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'  # Every Monday 06:00 UTC
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Add upstream remote
+        run: |
+          git remote add upstream https://github.com/git/git.git || true
+          git fetch upstream --no-tags --depth=100 master
+
+      - name: Attempt fast-forward merge
+        id: merge
+        run: |
+          git checkout master
+          if git merge --ff-only upstream/master; then
+            echo "fast_forward=true" >> $GITHUB_OUTPUT
+          else
+            echo "fast_forward=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Push if fast-forward
+        if: steps.merge.outputs.fast_forward == 'true'
+        run: |
+          git push origin master
+          echo "Successfully fast-forwarded to upstream"
+
+      - name: Create merge PR if not fast-forward
+        if: steps.merge.outputs.fast_forward == 'false'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: upstream-sync-${{ github.run_id }}
+          title: 'Sync with upstream git/git'
+          body: |
+            Automated upstream sync failed fast-forward.
+            Manual resolution required.
+          base: master
