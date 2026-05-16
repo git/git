@@ -26,6 +26,8 @@ jobs:
 
       - name: Run agent tests
         run: |
+          # Must use the freshly-built git binary, not the system one,
+          # so that agent-commit/agent-log builtins are available.
           export PATH="$PWD/bin-wrappers:$PATH"
           cd t
           bash t9900-agent-trailers.sh -i
