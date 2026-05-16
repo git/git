@@ -12,18 +12,26 @@ Run directly for stdio transport (default MCP mode):
 python contrib/agent-mcp/agent_mcp_server.py
 ```
 
-Set `GIT_AGENT_REPO` to point at the repository to serve:
+The server **auto-detects the active repository** from the current working
+directory (walking upward until it finds `.git`). It then resolves the
+`git-agent` binary by trying, in order:
 
-```bash
-GIT_AGENT_REPO=/path/to/repo python contrib/agent-mcp/agent_mcp_server.py
-```
+1. The `git` already in `PATH`
+2. `./bin-wrappers/git` inside the detected repo (useful when the repo IS the git-agent source tree)
+3. `~/.local/bin/git` (a previous user install)
+4. If none of the above work, the server **bootstraps itself** by cloning
+   `dutixlf/git-ag` into `~/.cache/git-agent`, building it with
+   `NO_CURL=YesPlease NO_RUST=YesPlease`, and using the freshly-built
+   `bin-wrappers/git`.
+
+No environment variables required.
 
 ## Resources
 
 | URI | Description |
 |-----|-------------|
 | `repo://orientation` | JSON from `git agent-orient` |
-| `repo://semantic_diff` | JSON from `git agent-diff HEAD~1..HEAD` |
+| `repo://semantic_diff` | JSON from `git agent-diff HEAD~1 HEAD` |
 
 ## Extending
 
