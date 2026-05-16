@@ -1,5 +1,8 @@
 # git-agent — Agent-Native Git
 
+[![Agent Build](https://github.com/dutixlf/git-ag/actions/workflows/agent-build.yml/badge.svg)](https://github.com/dutixlf/git-ag/actions/workflows/agent-build.yml)
+[![Upstream Sync](https://github.com/dutixlf/git-ag/actions/workflows/upstream-sync.yml/badge.svg)](https://github.com/dutixlf/git-ag/actions/workflows/upstream-sync.yml)
+
 A backward-compatible fork of Git that adds **opt-in agent metadata** to commits, branches, and repository state. Agent features are invisible to standard Git unless you explicitly invoke the `agent-*` commands or the `refs/agent/` namespace.
 
 ## Why?
@@ -261,6 +264,22 @@ AI editors can query repository state without shelling out.
 - `Documentation/agent-semantic-diff.txt` — JSON schema for semantic diff
 - `AGENTS.md` — internal architecture notes
 - `t/t9900-*.sh` — integration tests
+
+## CI/CD
+
+This fork uses **two lightweight workflows** instead of the upstream heavy matrix:
+
+| Workflow | Trigger | What it does |
+|----------|---------|-------------|
+| `agent-build.yml` | push / PR to `master` | builds with `NO_CURL=YesPlease NO_RUST=YesPlease`, runs all 5 agent test suites, smoke-tests `git agent-orient` |
+| `upstream-sync.yml` | weekly (Mon 06:00 UTC) + manual | fast-forwards `master` from `git/git`; creates a PR if FF is not possible |
+
+The upstream `main.yml` (Windows builds, fuzzing, Coverity, dockrized tests) is **disabled by default** because it requires infrastructure this fork does not have. To re-enable it, edit `.github/workflows/main.yml` and uncomment the `push` / `pull_request` triggers.
+
+### Required repository settings
+
+1. **Actions permissions**: `Settings → Actions → General → Workflow permissions` → choose **"Read and write permissions"** (needed for the upstream-sync workflow to push).
+2. **Secrets**: none required for basic build/sync. Coverity scans require `COVERITY_SCAN_TOKEN` and `COVERITY_SCAN_EMAIL` if you re-enable `coverity.yml`.
 
 ## License
 
