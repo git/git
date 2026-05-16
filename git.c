@@ -528,6 +528,12 @@ static int run_builtin(struct cmd_struct *p, int argc, const char **argv, struct
 
 static struct cmd_struct commands[] = {
 	{ "add", cmd_add, RUN_SETUP | NEED_WORK_TREE },
+	{ "agent-commit", cmd_agent_commit, RUN_SETUP | NEED_WORK_TREE },
+	{ "agent-diff", cmd_agent_diff, RUN_SETUP },
+	{ "agent-log", cmd_agent_log, RUN_SETUP },
+	{ "agent-orient", cmd_agent_orient, RUN_SETUP_GENTLY },
+	{ "agent-session", cmd_agent_session, RUN_SETUP },
+	{ "agent-verify", cmd_agent_verify, RUN_SETUP },
 	{ "am", cmd_am, RUN_SETUP | NEED_WORK_TREE },
 	{ "annotate", cmd_annotate, RUN_SETUP },
 	{ "apply", cmd_apply, RUN_SETUP_GENTLY },
