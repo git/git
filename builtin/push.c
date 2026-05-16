@@ -21,6 +21,7 @@
 #include "send-pack.h"
 #include "trace2.h"
 #include "color.h"
+#include "refs.h"
 
 static const char * const push_usage[] = {
 	N_("git push [<options>] [<repository> [<refspec>...]]"),
@@ -416,6 +417,40 @@ static int push_with_options(struct transport *transport, struct refspec *rs,
 	return 1;
 }
 
+static int has_agent_ref_cb(const struct reference *ref, void *cb_data)
+{
+	if (starts_with(ref->name, "refs/agent/")) {
+		*(int *)cb_data = 1;
+		return 1; /* stop iterating */
+	}
+	return 0;
+}
+
+static void push_agent_refs(struct remote *remote)
+{
+	int has_agent_refs = 0;
+	struct child_process cp = CHILD_PROCESS_INIT;
+	struct strvec *args;
+	int ret;
+
+	refs_for_each_ref(get_main_ref_store(the_repository),
+			  has_agent_ref_cb, &has_agent_refs);
+	if (!has_agent_refs)
+		return;
+
+	cp.git_cmd = 1;
+	args = &cp.args;
+	strvec_push(args, "push");
+	strvec_push(args, "--quiet");
+	strvec_push(args, remote->name);
+	strvec_push(args, "+refs/agent/*:refs/agent/*");
+
+	ret = run_command(&cp);
+	if (ret)
+		warning(_("agent refs push to '%s' failed (%d)"),
+			remote->name, ret);
+}
+
 static int do_push(int flags,
 		   const struct string_list *push_options,
 		   struct remote *remote)
@@ -663,6 +698,8 @@ int cmd_push(int argc,
 			die(_("push options must not have new line characters"));
 
 	rc = do_push(flags, push_options, remote);
+	if (!rc)
+		push_agent_refs(remote);
 	string_list_clear(&push_options_cmdline, 0);
 	string_list_clear(&push_options_config, 0);
 	clear_cas_option(&cas);
