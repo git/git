@@ -26,6 +26,7 @@ jobs:
 
       - name: Run agent tests
         run: |
+          export PATH="$PWD/bin-wrappers:$PATH"
           cd t
           bash t9900-agent-trailers.sh -i
           bash t9901-agent-refs.sh -i
