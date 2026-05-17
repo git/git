@@ -157,9 +157,9 @@ log(f"=== FastMCP server start: repo={_active_repo} ===")
 mcp = FastMCP("git-agent")
 
 
-@mcp.resource("repo://orientation", mime_type="application/json")
+@mcp.resource("repo://orientation")
 def get_orientation() -> str:
-    """Repository orientation JSON."""
+    """Repository orientation text."""
     log("get_orientation called")
     return run_git_agent("orient")
 
