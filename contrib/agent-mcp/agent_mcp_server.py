@@ -2,9 +2,15 @@
 """
 Git-Agent MCP Server — FastMCP implementation.
 
-Exposes resources:
-  repo://orientation   -> JSON from `git agent-orient`
-  repo://semantic_diff -> JSON from `git agent-diff HEAD~1 HEAD`
+Exposes TOOLS (callable by the AI):
+  get_repo_orientation()   -> text from `git agent-orient`
+  get_semantic_diff(base, head) -> JSON from `git agent-diff`
+  list_agent_commits(n)    -> recent commits with agent metadata
+  read_agent_reasoning(commit) -> reasoning annotation for a commit
+
+Also exposes RESOURCES (for passive context injection):
+  repo://orientation
+  repo://semantic_diff
 
 Auto-detects repo from CWD and bootstraps git-agent if missing.
 """
@@ -26,6 +32,7 @@ sys.stderr = os.fdopen(sys.stderr.fileno(), "w", buffering=1)
 # ---------------------------------------------------------------------------
 LOG_FILE = os.path.expanduser("~/.git-agent-mcp.log")
 
+
 def _raw_log(msg):
     try:
         with open(LOG_FILE, "a") as f:
@@ -33,6 +40,7 @@ def _raw_log(msg):
             f.flush()
     except Exception:
         pass
+
 
 _raw_log("=== SCRIPT ENTRY ===")
 _raw_log(f"cwd={os.getcwd()}  python={sys.executable}  args={sys.argv}")
@@ -47,6 +55,7 @@ if os.path.isdir(VENV_SITE) and VENV_SITE not in sys.path:
 
 try:
     from mcp.server.fastmcp import FastMCP
+
     _raw_log("FastMCP imported OK")
 except Exception as e:
     _raw_log(f"FAILED to import FastMCP: {e}")
@@ -182,17 +191,89 @@ log(f"=== FastMCP server start: repo={_active_repo} ===")
 mcp = FastMCP("git-agent")
 
 
+# ---------------------------------------------------------------------------
+# TOOLS — callable by the AI assistant
+# ---------------------------------------------------------------------------
+@mcp.tool()
+def get_repo_orientation() -> str:
+    """Return repository orientation: branch, recent commits, agent metadata."""
+    log("TOOL: get_repo_orientation called")
+    return run_git_agent("orient")
+
+
+@mcp.tool()
+def get_semantic_diff(base: str = "HEAD~1", head: str = "HEAD") -> str:
+    """Return semantic diff JSON between two commits (default HEAD~1..HEAD)."""
+    log(f"TOOL: get_semantic_diff called base={base} head={head}")
+    return run_git_agent("diff", base, head)
+
+
+@mcp.tool()
+def list_agent_commits(n: int = 5) -> str:
+    """List recent agent commits with metadata. Returns formatted text."""
+    log(f"TOOL: list_agent_commits called n={n}")
+    return run_git_agent("log", "-" + str(n), "HEAD")
+
+
+@mcp.tool()
+def read_agent_reasoning(commit: str = "HEAD") -> str:
+    """Read the agent reasoning annotation for a commit (default HEAD)."""
+    log(f"TOOL: read_agent_reasoning called commit={commit}")
+    return run_git_agent("log", "--reasoning", "-1", commit)
+
+
+@mcp.tool()
+def read_agent_plan(commit: str = "HEAD") -> str:
+    """Read the agent plan annotation for a commit (default HEAD)."""
+    log(f"TOOL: read_agent_plan called commit={commit}")
+    return run_git_agent("log", "--plan", "-1", commit)
+
+
+@mcp.tool()
+def read_agent_context(commit: str = "HEAD") -> str:
+    """Read the agent context annotation for a commit (default HEAD)."""
+    log(f"TOOL: read_agent_context called commit={commit}")
+    return run_git_agent("log", "--context", "-1", commit)
+
+
+@mcp.tool()
+def verify_agent_trailers(commit: str = "HEAD") -> str:
+    """Verify agent trailers on a commit and return JSON report."""
+    log(f"TOOL: verify_agent_trailers called commit={commit}")
+    return run_git_agent("verify", commit)
+
+
+@mcp.tool()
+def start_agent_session(session_id: str, task: str = "") -> str:
+    """Start a new agent session with optional task description."""
+    log(f"TOOL: start_agent_session called session_id={session_id}")
+    args = ["--start", "--session-id=" + session_id]
+    if task:
+        args.append("--task=" + task)
+    return run_git_agent("session", *args)
+
+
+@mcp.tool()
+def end_agent_session(session_id: str) -> str:
+    """End an agent session and return its log."""
+    log(f"TOOL: end_agent_session called session_id={session_id}")
+    return run_git_agent("session", "--end", "--session-id=" + session_id)
+
+
+# ---------------------------------------------------------------------------
+# RESOURCES — passive data for context injection
+# ---------------------------------------------------------------------------
 @mcp.resource("repo://orientation")
-def get_orientation() -> str:
-    """Repository orientation text."""
-    log("get_orientation called")
+def get_orientation_resource() -> str:
+    """Repository orientation text (passive resource)."""
+    log("RESOURCE: get_orientation called")
     return run_git_agent("orient")
 
 
 @mcp.resource("repo://semantic_diff", mime_type="application/json")
-def get_semantic_diff() -> str:
-    """Semantic diff JSON (HEAD~1..HEAD)."""
-    log("get_semantic_diff called")
+def get_semantic_diff_resource() -> str:
+    """Semantic diff JSON (HEAD~1..HEAD) (passive resource)."""
+    log("RESOURCE: get_semantic_diff called")
     return run_git_agent("diff", "HEAD~1", "HEAD")
 
 
