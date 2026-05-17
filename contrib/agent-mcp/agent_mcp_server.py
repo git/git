@@ -223,10 +223,6 @@ def main():
     global _active_repo
     _active_repo = find_git_root()
 
-    # Pre-resolve git-agent so we can report any bootstrap errors early.
-    resolve_git_agent()
-
-    mcp_send(handle_initialize({}))
     while True:
         try:
             req = mcp_recv()
