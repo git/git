@@ -18,6 +18,13 @@ import os
 import subprocess
 import sys
 
+LOG_FILE = os.path.expanduser("~/.git-agent-mcp.log")
+
+def log(msg):
+    with open(LOG_FILE, "a") as f:
+        f.write(msg + "\n")
+        f.flush()
+
 # ---------------------------------------------------------------------------
 # State
 # ---------------------------------------------------------------------------
@@ -30,9 +37,11 @@ def find_git_root(start="."):
     path = os.path.abspath(start)
     while True:
         if os.path.isdir(os.path.join(path, ".git")):
+            log(f"find_git_root: found {path}")
             return path
         parent = os.path.dirname(path)
         if parent == path:
+            log(f"find_git_root: no .git found, using {os.path.abspath(start)}")
             return os.path.abspath(start)
         path = parent
 
@@ -145,7 +154,9 @@ def run_git_agent(*args):
 
 def mcp_send(msg):
     payload = json.dumps(msg)
-    sys.stdout.write(f"Content-Length: {len(payload)}\r\n\r\n{payload}")
+    out = f"Content-Length: {len(payload)}\r\n\r\n{payload}"
+    log(f"mcp_send: {payload[:200]}")
+    sys.stdout.write(out)
     sys.stdout.flush()
 
 def mcp_recv():
@@ -153,6 +164,7 @@ def mcp_recv():
     while True:
         line = sys.stdin.readline()
         if not line:
+            log("mcp_recv: EOF on stdin (readline)")
             raise EOFError
         if line == "\r\n" or line == "\n":
             break
@@ -161,10 +173,13 @@ def mcp_recv():
         k, v = line.strip().split(": ", 1)
         headers[k] = v
     length = int(headers.get("Content-Length", 0))
+    log(f"mcp_recv: Content-Length={length}")
     if length:
         body = sys.stdin.read(length)
         if not body:
+            log("mcp_recv: EOF on stdin (read body)")
             raise EOFError
+        log(f"mcp_recv: body={body[:200]}")
         return json.loads(body)
     return None
 
@@ -222,15 +237,19 @@ METHODS = {
 def main():
     global _active_repo
     _active_repo = find_git_root()
+    log(f"main: active_repo={_active_repo}, pid={os.getpid()}")
 
     while True:
         try:
             req = mcp_recv()
         except EOFError:
+            log("main: EOFError, exiting")
             break
         if req is None:
+            log("main: req is None, exiting")
             break
         method = req.get("method", "")
+        log(f"main: method={method}")
         params = req.get("params", {})
         handler = METHODS.get(method)
         if handler:
@@ -242,4 +261,6 @@ def main():
             mcp_send({"jsonrpc": "2.0", "id": req["id"], "result": result})
 
 if __name__ == "__main__":
+    log("=== server start ===")
     main()
+    log("=== server exit ===")
