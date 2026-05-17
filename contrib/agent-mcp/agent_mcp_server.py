@@ -188,8 +188,10 @@ def mcp_recv():
 # ---------------------------------------------------------------------------
 
 def handle_initialize(params):
+    # Mirror the client's requested protocol version (or fall back to ours).
+    requested = params.get("protocolVersion", "2024-11-05") if params else "2024-11-05"
     return {
-        "protocolVersion": "2024-11-05",
+        "protocolVersion": requested,
         "capabilities": {},
         "serverInfo": {"name": "git-agent-mcp", "version": "0.2.0"},
     }
