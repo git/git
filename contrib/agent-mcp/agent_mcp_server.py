@@ -13,6 +13,29 @@ import json
 import os
 import subprocess
 import sys
+import time
+import traceback
+
+# Unbuffered stdout/stderr so opencode sees responses immediately
+os.environ["PYTHONUNBUFFERED"] = "1"
+sys.stdout = os.fdopen(sys.stdout.fileno(), "w", buffering=1)
+sys.stderr = os.fdopen(sys.stderr.fileno(), "w", buffering=1)
+
+# ---------------------------------------------------------------------------
+# Crash-safe logging — starts BEFORE any imports that might fail
+# ---------------------------------------------------------------------------
+LOG_FILE = os.path.expanduser("~/.git-agent-mcp.log")
+
+def _raw_log(msg):
+    try:
+        with open(LOG_FILE, "a") as f:
+            f.write(f"[{time.strftime('%H:%M:%S')}] [PID:{os.getpid()}] {msg}\n")
+            f.flush()
+    except Exception:
+        pass
+
+_raw_log("=== SCRIPT ENTRY ===")
+_raw_log(f"cwd={os.getcwd()}  python={sys.executable}  args={sys.argv}")
 
 # Allow running from venv without explicit activation
 VENV_SITE = os.path.join(
@@ -20,13 +43,15 @@ VENV_SITE = os.path.join(
 )
 if os.path.isdir(VENV_SITE) and VENV_SITE not in sys.path:
     sys.path.insert(0, VENV_SITE)
+    _raw_log(f"Added venv site-packages: {VENV_SITE}")
 
-from mcp.server.fastmcp import FastMCP
-
-# ---------------------------------------------------------------------------
-# Logging
-# ---------------------------------------------------------------------------
-LOG_FILE = os.path.expanduser("~/.git-agent-mcp.log")
+try:
+    from mcp.server.fastmcp import FastMCP
+    _raw_log("FastMCP imported OK")
+except Exception as e:
+    _raw_log(f"FAILED to import FastMCP: {e}")
+    _raw_log(traceback.format_exc())
+    raise
 
 
 def log(msg):
@@ -172,4 +197,11 @@ def get_semantic_diff() -> str:
 
 
 if __name__ == "__main__":
-    mcp.run()
+    try:
+        _raw_log("=== FastMCP server starting mcp.run() ===")
+        mcp.run()
+        _raw_log("=== FastMCP server mcp.run() returned normally ===")
+    except Exception as e:
+        _raw_log(f"=== FastMCP server crashed: {e} ===")
+        _raw_log(traceback.format_exc())
+        raise
