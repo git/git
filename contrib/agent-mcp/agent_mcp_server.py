@@ -237,7 +237,9 @@ def main():
             result = handler(params)
         else:
             result = {}
-        mcp_send({"jsonrpc": "2.0", "id": req.get("id"), "result": result})
+        # Notifications (no "id") do not get a response per MCP spec
+        if "id" in req:
+            mcp_send({"jsonrpc": "2.0", "id": req["id"], "result": result})
 
 if __name__ == "__main__":
     main()
