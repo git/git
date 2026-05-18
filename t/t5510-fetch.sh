@@ -1736,6 +1736,27 @@ test_expect_success REFFILES "HEAD is updated even with conflicts" '
 . "$TEST_DIRECTORY"/lib-httpd.sh
 start_httpd
 
+test_expect_success 'fetch.showProgress=true forces progress on non-tty' '
+	test_when_finished "rm -rf src dst" &&
+	git init src &&
+	test_commit -C src one &&
+	git clone "file://$(pwd)/src" dst &&
+	test_commit -C src two &&
+	git -C dst -c fetch.showProgress=true fetch origin >out 2>err &&
+	test_grep "remote: Enumerating objects" err
+'
+
+test_expect_success 'fetch.showProgress=false is overridden by --progress' '
+	test_when_finished "rm -rf src dst" &&
+	git init src &&
+	test_commit -C src one &&
+	git clone "file://$(pwd)/src" dst &&
+	test_commit -C src two &&
+	git -C dst -c fetch.showProgress=false fetch --progress origin \
+		>out 2>err &&
+	test_grep "remote: Enumerating objects" err
+'
+
 test_expect_success '--negotiation-tip limits "have" lines sent with HTTP protocol v2' '
 	setup_negotiation_tip "$HTTPD_DOCUMENT_ROOT_PATH/server" \
 		"$HTTPD_URL/smart/server" 1 &&
