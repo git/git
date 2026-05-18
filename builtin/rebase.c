@@ -97,6 +97,7 @@ struct rebase_options {
 	struct commit *orig_head;
 	struct commit *onto;
 	const char *onto_name;
+	char *onto_decorations;
 	const char *revisions;
 	const char *switch_to;
 	int root, root_with_onto;
@@ -163,6 +164,7 @@ static void rebase_options_release(struct rebase_options *opts)
 	free(opts->default_backend);
 	free(opts->reflog_action);
 	free(opts->head_name);
+	free(opts->onto_decorations);
 	strvec_clear(&opts->git_am_opts);
 	free(opts->gpg_sign_opt);
 	string_list_clear(&opts->exec, 0);
@@ -270,7 +272,8 @@ static int get_revision_ranges(struct commit *upstream, struct commit *onto,
 
 static int init_basic_state(struct replay_opts *opts, const char *head_name,
 			    struct commit *onto,
-			    const struct object_id *orig_head)
+			    const struct object_id *orig_head,
+			    const char *onto_decorations)
 {
 	FILE *interactive;
 
@@ -285,7 +288,8 @@ static int init_basic_state(struct replay_opts *opts, const char *head_name,
 		return error_errno(_("could not mark as interactive"));
 	fclose(interactive);
 
-	return write_basic_state(opts, head_name, onto, orig_head);
+	return write_basic_state(opts, head_name, onto, orig_head,
+				 onto_decorations);
 }
 
 static int do_interactive_rebase(struct rebase_options *opts, unsigned flags)
@@ -314,7 +318,8 @@ static int do_interactive_rebase(struct rebase_options *opts, unsigned flags)
 
 	if (init_basic_state(&replay,
 			     opts->head_name ? opts->head_name : "detached HEAD",
-			     opts->onto, &opts->orig_head->object.oid))
+			     opts->onto, &opts->orig_head->object.oid,
+			     opts->onto_decorations))
 		goto cleanup;
 
 	if (!opts->upstream && opts->squash_onto)
@@ -512,6 +517,46 @@ static int read_basic_state(struct rebase_options *opts)
 	return 0;
 }
 
+struct collect_onto_decorations_cb {
+	const struct object_id *onto_oid;
+	const char *exclude_ref;
+	struct strbuf buf;
+};
+
+static int collect_onto_decorations(const struct reference *ref, void *cb_data)
+{
+	struct collect_onto_decorations_cb *cb = cb_data;
+
+	if (!oideq(ref->oid, cb->onto_oid))
+		return 0;
+	if (ref->target) /* symbolic refs (e.g. refs/remotes/.../HEAD) */
+		return 0;
+	if (cb->exclude_ref && !strcmp(ref->name, cb->exclude_ref))
+		return 0;
+	if (!starts_with(ref->name, "refs/heads/") &&
+	    !starts_with(ref->name, "refs/remotes/") &&
+	    !starts_with(ref->name, "refs/tags/"))
+		return 0;
+	if (cb->buf.len)
+		strbuf_addch(&cb->buf, '\n');
+	strbuf_addstr(&cb->buf, ref->name);
+	return 0;
+}
+
+static void compute_onto_decorations(struct rebase_options *opts)
+{
+	struct collect_onto_decorations_cb cb = {
+		.onto_oid = &opts->onto->object.oid,
+		.exclude_ref = opts->head_name,
+		.buf = STRBUF_INIT,
+	};
+
+	refs_for_each_ref(get_main_ref_store(the_repository),
+			  collect_onto_decorations, &cb);
+	free(opts->onto_decorations);
+	opts->onto_decorations = strbuf_detach(&cb.buf, NULL);
+}
+
 static int rebase_write_basic_state(struct rebase_options *opts)
 {
 	write_file(state_dir_path("head-name", opts), "%s",
@@ -520,6 +565,9 @@ static int rebase_write_basic_state(struct rebase_options *opts)
 		   opts->onto ? oid_to_hex(&opts->onto->object.oid) : "");
 	write_file(state_dir_path("orig-head", opts), "%s",
 		   oid_to_hex(&opts->orig_head->object.oid));
+	if (opts->onto_decorations && *opts->onto_decorations)
+		write_file(state_dir_path("onto-decorations", opts), "%s",
+			   opts->onto_decorations);
 	if (!(opts->flags & REBASE_NO_QUIET))
 		write_file(state_dir_path("quiet", opts), "%s", "");
 	if (opts->flags & REBASE_VERBOSE)
@@ -1863,6 +1911,8 @@ int cmd_rebase(int argc,
 		diffcore_std(&opts);
 		diff_flush(&opts);
 	}
+
+	compute_onto_decorations(&options);
 
 	if (is_merge(&options))
 		goto run_rebase;

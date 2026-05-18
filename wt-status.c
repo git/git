@@ -894,6 +894,7 @@ void wt_status_state_free_buffers(struct wt_status_state *state)
 {
 	FREE_AND_NULL(state->branch);
 	FREE_AND_NULL(state->onto);
+	FREE_AND_NULL(state->onto_decorations);
 	FREE_AND_NULL(state->detached_from);
 	FREE_AND_NULL(state->bisecting_from);
 }
@@ -1642,6 +1643,43 @@ static void show_sparse_checkout_in_use(struct wt_status *s,
 /*
  * Extract branch information from rebase/bisect
  */
+static char *get_onto_decorations(const struct worktree *wt, const char *path)
+{
+	struct strbuf raw = STRBUF_INIT;
+	struct strbuf out = STRBUF_INIT;
+	const char *p;
+
+	if (strbuf_read_file(&raw, worktree_git_path(wt, "%s", path), 0) <= 0) {
+		strbuf_release(&raw);
+		return NULL;
+	}
+
+	p = raw.buf;
+	while (*p) {
+		const char *eol = strchrnul(p, '\n');
+		const char *ref = p;
+		size_t reflen;
+
+		skip_prefix(ref, "refs/heads/", &ref) ||
+			skip_prefix(ref, "refs/remotes/", &ref) ||
+			skip_prefix(ref, "refs/tags/", &ref);
+		reflen = eol - ref;
+		if (reflen) {
+			if (out.len)
+				strbuf_addstr(&out, ", ");
+			strbuf_add(&out, ref, reflen);
+		}
+		p = *eol ? eol + 1 : eol;
+	}
+
+	strbuf_release(&raw);
+	if (!out.len) {
+		strbuf_release(&out);
+		return NULL;
+	}
+	return strbuf_detach(&out, NULL);
+}
+
 static char *get_branch(const struct worktree *wt, const char *path)
 {
 	struct strbuf sb = STRBUF_INIT;
@@ -1759,6 +1797,8 @@ int wt_status_check_rebase(const struct worktree *wt,
 			state->rebase_in_progress = 1;
 			state->branch = get_branch(wt, "rebase-apply/head-name");
 			state->onto = get_branch(wt, "rebase-apply/onto");
+			state->onto_decorations =
+				get_onto_decorations(wt, "rebase-apply/onto-decorations");
 		}
 	} else if (!stat(worktree_git_path(wt, "rebase-merge"), &st)) {
 		if (!stat(worktree_git_path(wt, "rebase-merge/interactive"), &st))
@@ -1767,6 +1807,8 @@ int wt_status_check_rebase(const struct worktree *wt,
 			state->rebase_in_progress = 1;
 		state->branch = get_branch(wt, "rebase-merge/head-name");
 		state->onto = get_branch(wt, "rebase-merge/onto");
+		state->onto_decorations =
+			get_onto_decorations(wt, "rebase-merge/onto-decorations");
 	} else
 		return 0;
 	return 1;
@@ -1896,6 +1938,7 @@ static void wt_longstatus_print(struct wt_status *s)
 	if (s->branch) {
 		const char *on_what = _("On branch ");
 		const char *branch_name = s->branch;
+		int showing_onto = 0;
 		if (!strcmp(branch_name, "HEAD")) {
 			branch_status_color = color(WT_STATUS_NOBRANCH, s);
 			if (s->state.rebase_in_progress ||
@@ -1905,6 +1948,7 @@ static void wt_longstatus_print(struct wt_status *s)
 				else
 					on_what = _("rebase in progress; onto ");
 				branch_name = s->state.onto;
+				showing_onto = 1;
 			} else if (s->state.detached_from) {
 				branch_name = s->state.detached_from;
 				if (s->state.detached_at)
@@ -1919,7 +1963,11 @@ static void wt_longstatus_print(struct wt_status *s)
 			skip_prefix(branch_name, "refs/heads/", &branch_name);
 		status_printf(s, color(WT_STATUS_HEADER, s), "%s", "");
 		status_printf_more(s, branch_status_color, "%s", on_what);
-		status_printf_more(s, branch_color, "%s\n", branch_name);
+		if (showing_onto && s->state.onto_decorations)
+			status_printf_more(s, branch_color, "%s (%s)\n",
+					   branch_name, s->state.onto_decorations);
+		else
+			status_printf_more(s, branch_color, "%s\n", branch_name);
 		if (!s->is_initial)
 			wt_longstatus_print_tracking(s);
 	}

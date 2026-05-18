@@ -94,6 +94,7 @@ struct wt_status_state {
 	int sparse_checkout_percentage; /* SPARSE_CHECKOUT_DISABLED if not sparse */
 	char *branch;
 	char *onto;
+	char *onto_decorations;
 	char *detached_from;
 	char *bisecting_from;
 	struct object_id detached_oid;

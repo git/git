@@ -201,6 +201,7 @@ static GIT_PATH_FUNC(rebase_path_quiet, "rebase-merge/quiet")
 static GIT_PATH_FUNC(rebase_path_signoff, "rebase-merge/signoff")
 static GIT_PATH_FUNC(rebase_path_head_name, "rebase-merge/head-name")
 static GIT_PATH_FUNC(rebase_path_onto, "rebase-merge/onto")
+static GIT_PATH_FUNC(rebase_path_onto_decorations, "rebase-merge/onto-decorations")
 static GIT_PATH_FUNC(rebase_path_autostash, "rebase-merge/autostash")
 static GIT_PATH_FUNC(rebase_path_strategy, "rebase-merge/strategy")
 static GIT_PATH_FUNC(rebase_path_strategy_opts, "rebase-merge/strategy_opts")
@@ -3312,7 +3313,8 @@ static void write_strategy_opts(struct replay_opts *opts)
 }
 
 int write_basic_state(struct replay_opts *opts, const char *head_name,
-		      struct commit *onto, const struct object_id *orig_head)
+		      struct commit *onto, const struct object_id *orig_head,
+		      const char *onto_decorations)
 {
 	if (head_name)
 		write_file(rebase_path_head_name(), "%s\n", head_name);
@@ -3322,6 +3324,9 @@ int write_basic_state(struct replay_opts *opts, const char *head_name,
 	if (orig_head)
 		write_file(rebase_path_orig_head(), "%s\n",
 			   oid_to_hex(orig_head));
+	if (onto_decorations && *onto_decorations)
+		write_file(rebase_path_onto_decorations(), "%s",
+			   onto_decorations);
 
 	if (opts->quiet)
 		write_file(rebase_path_quiet(), "%s", "");

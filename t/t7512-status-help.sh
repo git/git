@@ -14,6 +14,20 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . "$TEST_DIRECTORY"/lib-rebase.sh
 
+# Print the refs (other than $HEAD_REF) that point at $1, formatted to match
+# git status' "rebase in progress; onto <oid> (<decorations>)" output.
+onto_decorations () {
+	rev=$1 &&
+	head_ref=$2 &&
+	git for-each-ref \
+		--format='%(refname)' \
+		--exclude="$head_ref" \
+		--points-at="$rev" \
+		refs/heads/ refs/remotes/ refs/tags/ |
+	sed 's,^refs/heads/,,; s,^refs/remotes/,,; s,^refs/tags/,,' |
+	paste -sd, - | sed 's/,/, /g'
+}
+
 set_fake_editor
 
 test_expect_success 'prepare for conflicts' '
@@ -77,9 +91,10 @@ test_expect_success 'prepare for rebase conflicts' '
 test_expect_success 'status when rebase --apply in progress before resolving conflicts' '
 	test_when_finished "git rebase --abort" &&
 	ONTO=$(git rev-parse --short HEAD^^) &&
+	DECO=$(onto_decorations HEAD^^ refs/heads/rebase_conflicts) &&
 	test_must_fail git rebase --apply HEAD^ --onto HEAD^^ &&
 	cat >expected <<EOF &&
-rebase in progress; onto $ONTO
+rebase in progress; onto $ONTO ($DECO)
 You are currently rebasing branch '\''rebase_conflicts'\'' on '\''$ONTO'\''.
   (fix conflicts and then run "git rebase --continue")
   (use "git rebase --skip" to skip this patch)
@@ -101,11 +116,12 @@ test_expect_success 'status when rebase --apply in progress before rebase --cont
 	git reset --hard rebase_conflicts &&
 	test_when_finished "git rebase --abort" &&
 	ONTO=$(git rev-parse --short HEAD^^) &&
+	DECO=$(onto_decorations HEAD^^ refs/heads/rebase_conflicts) &&
 	test_must_fail git rebase --apply HEAD^ --onto HEAD^^ &&
 	echo three >main.txt &&
 	git add main.txt &&
 	cat >expected <<EOF &&
-rebase in progress; onto $ONTO
+rebase in progress; onto $ONTO ($DECO)
 You are currently rebasing branch '\''rebase_conflicts'\'' on '\''$ONTO'\''.
   (all conflicts fixed: run "git rebase --continue")
 
@@ -134,10 +150,11 @@ test_expect_success 'prepare for rebase_i_conflicts' '
 test_expect_success 'status during rebase -i when conflicts unresolved' '
 	test_when_finished "git rebase --abort" &&
 	ONTO=$(git rev-parse --short rebase_i_conflicts) &&
+	DECO=$(onto_decorations rebase_i_conflicts refs/heads/rebase_i_conflicts_second) &&
 	LAST_COMMIT=$(git rev-parse --short rebase_i_conflicts_second) &&
 	test_must_fail git rebase -i rebase_i_conflicts &&
 	cat >expected <<EOF &&
-interactive rebase in progress; onto $ONTO
+interactive rebase in progress; onto $ONTO ($DECO)
 Last command done (1 command done):
    pick $LAST_COMMIT # one_second
 No commands remaining.
@@ -162,11 +179,12 @@ test_expect_success 'status during rebase -i after resolving conflicts' '
 	git reset --hard rebase_i_conflicts_second &&
 	test_when_finished "git rebase --abort" &&
 	ONTO=$(git rev-parse --short rebase_i_conflicts) &&
+	DECO=$(onto_decorations rebase_i_conflicts refs/heads/rebase_i_conflicts_second) &&
 	LAST_COMMIT=$(git rev-parse --short rebase_i_conflicts_second) &&
 	test_must_fail git rebase -i rebase_i_conflicts &&
 	git add main.txt &&
 	cat >expected <<EOF &&
-interactive rebase in progress; onto $ONTO
+interactive rebase in progress; onto $ONTO ($DECO)
 Last command done (1 command done):
    pick $LAST_COMMIT # one_second
 No commands remaining.
@@ -196,9 +214,10 @@ test_expect_success 'status when rebasing -i in edit mode' '
 	export FAKE_LINES &&
 	test_when_finished "git rebase --abort" &&
 	ONTO=$(git rev-parse --short HEAD~2) &&
+	DECO=$(onto_decorations HEAD~2 refs/heads/rebase_i_edit) &&
 	git rebase -i HEAD~2 &&
 	cat >expected <<EOF &&
-interactive rebase in progress; onto $ONTO
+interactive rebase in progress; onto $ONTO ($DECO)
 Last commands done (2 commands done):
    pick $COMMIT2 # two_rebase_i
    edit $COMMIT3 # three_rebase_i
@@ -228,10 +247,11 @@ test_expect_success 'status when splitting a commit' '
 	export FAKE_LINES &&
 	test_when_finished "git rebase --abort" &&
 	ONTO=$(git rev-parse --short HEAD~3) &&
+	DECO=$(onto_decorations HEAD~3 refs/heads/split_commit) &&
 	git rebase -i HEAD~3 &&
 	git reset HEAD^ &&
 	cat >expected <<EOF &&
-interactive rebase in progress; onto $ONTO
+interactive rebase in progress; onto $ONTO ($DECO)
 Last commands done (2 commands done):
    pick $COMMIT2 # two_split
    edit $COMMIT3 # three_split
@@ -266,10 +286,11 @@ test_expect_success 'status after editing the last commit with --amend during a 
 	export FAKE_LINES &&
 	test_when_finished "git rebase --abort" &&
 	ONTO=$(git rev-parse --short HEAD~3) &&
+	DECO=$(onto_decorations HEAD~3 refs/heads/amend_last) &&
 	git rebase -i HEAD~3 &&
 	git commit --amend -m "foo" &&
 	cat >expected <<EOF &&
-interactive rebase in progress; onto $ONTO
+interactive rebase in progress; onto $ONTO ($DECO)
 Last commands done (3 commands done):
    pick $COMMIT3 # three_amend
    edit $COMMIT4 # four_amend
@@ -304,10 +325,11 @@ test_expect_success 'status: (continue first edit) second edit' '
 	COMMIT3=$(git rev-parse --short several_edits^) &&
 	COMMIT4=$(git rev-parse --short several_edits) &&
 	ONTO=$(git rev-parse --short HEAD~3) &&
+	DECO=$(onto_decorations HEAD~3 refs/heads/several_edits) &&
 	git rebase -i HEAD~3 &&
 	git rebase --continue &&
 	cat >expected <<EOF &&
-interactive rebase in progress; onto $ONTO
+interactive rebase in progress; onto $ONTO ($DECO)
 Last commands done (2 commands done):
    edit $COMMIT2 # two_edits
    edit $COMMIT3 # three_edits
@@ -334,11 +356,12 @@ test_expect_success 'status: (continue first edit) second edit and split' '
 	COMMIT3=$(git rev-parse --short several_edits^) &&
 	COMMIT4=$(git rev-parse --short several_edits) &&
 	ONTO=$(git rev-parse --short HEAD~3) &&
+	DECO=$(onto_decorations HEAD~3 refs/heads/several_edits) &&
 	git rebase -i HEAD~3 &&
 	git rebase --continue &&
 	git reset HEAD^ &&
 	cat >expected <<EOF &&
-interactive rebase in progress; onto $ONTO
+interactive rebase in progress; onto $ONTO ($DECO)
 Last commands done (2 commands done):
    edit $COMMIT2 # two_edits
    edit $COMMIT3 # three_edits
@@ -369,11 +392,12 @@ test_expect_success 'status: (continue first edit) second edit and amend' '
 	COMMIT3=$(git rev-parse --short several_edits^) &&
 	COMMIT4=$(git rev-parse --short several_edits) &&
 	ONTO=$(git rev-parse --short HEAD~3) &&
+	DECO=$(onto_decorations HEAD~3 refs/heads/several_edits) &&
 	git rebase -i HEAD~3 &&
 	git rebase --continue &&
 	git commit --amend -m "foo" &&
 	cat >expected <<EOF &&
-interactive rebase in progress; onto $ONTO
+interactive rebase in progress; onto $ONTO ($DECO)
 Last commands done (2 commands done):
    edit $COMMIT2 # two_edits
    edit $COMMIT3 # three_edits
@@ -400,11 +424,12 @@ test_expect_success 'status: (amend first edit) second edit' '
 	COMMIT3=$(git rev-parse --short several_edits^) &&
 	COMMIT4=$(git rev-parse --short several_edits) &&
 	ONTO=$(git rev-parse --short HEAD~3) &&
+	DECO=$(onto_decorations HEAD~3 refs/heads/several_edits) &&
 	git rebase -i HEAD~3 &&
 	git commit --amend -m "a" &&
 	git rebase --continue &&
 	cat >expected <<EOF &&
-interactive rebase in progress; onto $ONTO
+interactive rebase in progress; onto $ONTO ($DECO)
 Last commands done (2 commands done):
    edit $COMMIT2 # two_edits
    edit $COMMIT3 # three_edits
@@ -428,6 +453,7 @@ test_expect_success 'status: (amend first edit) second edit and split' '
 	export FAKE_LINES &&
 	test_when_finished "git rebase --abort" &&
 	ONTO=$(git rev-parse --short HEAD~3) &&
+	DECO=$(onto_decorations HEAD~3 refs/heads/several_edits) &&
 	COMMIT2=$(git rev-parse --short several_edits^^) &&
 	COMMIT3=$(git rev-parse --short several_edits^) &&
 	COMMIT4=$(git rev-parse --short several_edits) &&
@@ -436,7 +462,7 @@ test_expect_success 'status: (amend first edit) second edit and split' '
 	git rebase --continue &&
 	git reset HEAD^ &&
 	cat >expected <<EOF &&
-interactive rebase in progress; onto $ONTO
+interactive rebase in progress; onto $ONTO ($DECO)
 Last commands done (2 commands done):
    edit $COMMIT2 # two_edits
    edit $COMMIT3 # three_edits
@@ -467,12 +493,13 @@ test_expect_success 'status: (amend first edit) second edit and amend' '
 	COMMIT3=$(git rev-parse --short several_edits^) &&
 	COMMIT4=$(git rev-parse --short several_edits) &&
 	ONTO=$(git rev-parse --short HEAD~3) &&
+	DECO=$(onto_decorations HEAD~3 refs/heads/several_edits) &&
 	git rebase -i HEAD~3 &&
 	git commit --amend -m "c" &&
 	git rebase --continue &&
 	git commit --amend -m "d" &&
 	cat >expected <<EOF &&
-interactive rebase in progress; onto $ONTO
+interactive rebase in progress; onto $ONTO ($DECO)
 Last commands done (2 commands done):
    edit $COMMIT2 # two_edits
    edit $COMMIT3 # three_edits
@@ -499,13 +526,14 @@ test_expect_success 'status: (split first edit) second edit' '
 	COMMIT3=$(git rev-parse --short several_edits^) &&
 	COMMIT4=$(git rev-parse --short several_edits) &&
 	ONTO=$(git rev-parse --short HEAD~3) &&
+	DECO=$(onto_decorations HEAD~3 refs/heads/several_edits) &&
 	git rebase -i HEAD~3 &&
 	git reset HEAD^ &&
 	git add main.txt &&
 	git commit -m "e" &&
 	git rebase --continue &&
 	cat >expected <<EOF &&
-interactive rebase in progress; onto $ONTO
+interactive rebase in progress; onto $ONTO ($DECO)
 Last commands done (2 commands done):
    edit $COMMIT2 # two_edits
    edit $COMMIT3 # three_edits
@@ -532,6 +560,7 @@ test_expect_success 'status: (split first edit) second edit and split' '
 	COMMIT3=$(git rev-parse --short several_edits^) &&
 	COMMIT4=$(git rev-parse --short several_edits) &&
 	ONTO=$(git rev-parse --short HEAD~3) &&
+	DECO=$(onto_decorations HEAD~3 refs/heads/several_edits) &&
 	git rebase -i HEAD~3 &&
 	git reset HEAD^ &&
 	git add main.txt &&
@@ -539,7 +568,7 @@ test_expect_success 'status: (split first edit) second edit and split' '
 	git rebase --continue &&
 	git reset HEAD^ &&
 	cat >expected <<EOF &&
-interactive rebase in progress; onto $ONTO
+interactive rebase in progress; onto $ONTO ($DECO)
 Last commands done (2 commands done):
    edit $COMMIT2 # two_edits
    edit $COMMIT3 # three_edits
@@ -570,6 +599,7 @@ test_expect_success 'status: (split first edit) second edit and amend' '
 	COMMIT3=$(git rev-parse --short several_edits^) &&
 	COMMIT4=$(git rev-parse --short several_edits) &&
 	ONTO=$(git rev-parse --short HEAD~3) &&
+	DECO=$(onto_decorations HEAD~3 refs/heads/several_edits) &&
 	git rebase -i HEAD~3 &&
 	git reset HEAD^ &&
 	git add main.txt &&
@@ -577,7 +607,7 @@ test_expect_success 'status: (split first edit) second edit and amend' '
 	git rebase --continue &&
 	git commit --amend -m "h" &&
 	cat >expected <<EOF &&
-interactive rebase in progress; onto $ONTO
+interactive rebase in progress; onto $ONTO ($DECO)
 Last commands done (2 commands done):
    edit $COMMIT2 # two_edits
    edit $COMMIT3 # three_edits
@@ -739,9 +769,10 @@ test_expect_success 'status when rebase --apply conflicts with statushints disab
 	test_commit three_statushints main.txt three &&
 	test_when_finished "git rebase --abort" &&
 	ONTO=$(git rev-parse --short HEAD^^) &&
+	DECO=$(onto_decorations HEAD^^ refs/heads/statushints_disabled) &&
 	test_must_fail git rebase --apply HEAD^ --onto HEAD^^ &&
 	cat >expected <<EOF &&
-rebase in progress; onto $ONTO
+rebase in progress; onto $ONTO ($DECO)
 You are currently rebasing branch '\''statushints_disabled'\'' on '\''$ONTO'\''.
 
 Unmerged paths:
@@ -751,6 +782,45 @@ no changes added to commit
 EOF
 	git status --untracked-files=no >actual &&
 	test_cmp expected actual
+'
+
+
+test_expect_success 'status decorates "onto" with refs pointing at the target' '
+	git reset --hard main &&
+	git checkout -B onto_deco_topic &&
+	test_commit deco_diverge main.txt diverged_from_main &&
+	# Build the onto commit on a fresh branch and point a remote
+	# tracking ref and a tag at it. These should all appear in the
+	# decoration; the topic branch (the head_name) should not.
+	git checkout -B onto_deco_base main &&
+	test_commit deco_base main.txt base &&
+	git update-ref refs/remotes/origin/onto_deco_base HEAD &&
+	git tag deco_tag &&
+	git checkout onto_deco_topic &&
+	test_when_finished "git rebase --abort" &&
+	ONTO=$(git rev-parse --short onto_deco_base) &&
+	test_must_fail git rebase onto_deco_base &&
+	git status --untracked-files=no >actual_status &&
+	grep "^interactive rebase in progress; onto $ONTO (onto_deco_base, origin/onto_deco_base, deco_base, deco_tag)$" actual_status
+'
+
+
+test_expect_success 'status onto decorations captured at rebase start, not at conflict time' '
+	git reset --hard main &&
+	git checkout -B onto_deco_frozen_topic &&
+	test_commit frozen_diverge main.txt diverged &&
+	git checkout -B onto_deco_frozen main &&
+	test_commit frozen_base main.txt base &&
+	git tag frozen_marker &&
+	git checkout onto_deco_frozen_topic &&
+	test_when_finished "git rebase --abort" &&
+	ONTO=$(git rev-parse --short onto_deco_frozen) &&
+	test_must_fail git rebase onto_deco_frozen &&
+	# Drop the decoration ref AFTER the rebase started; the status
+	# message should still reflect the refs as seen at rebase start.
+	git update-ref -d refs/tags/frozen_marker &&
+	git status --untracked-files=no >actual_status &&
+	grep "^interactive rebase in progress; onto $ONTO (onto_deco_frozen, frozen_base, frozen_marker)$" actual_status
 '
 
 
@@ -978,9 +1048,10 @@ test_expect_success 'status: one command done nothing remaining' '
 	export FAKE_LINES &&
 	test_when_finished "git rebase --abort" &&
 	ONTO=$(git rev-parse --short HEAD~3) &&
+	DECO=$(onto_decorations HEAD~3 refs/heads/several_commits) &&
 	test_must_fail git rebase -i HEAD~3 &&
 	cat >expected <<EOF &&
-interactive rebase in progress; onto $ONTO
+interactive rebase in progress; onto $ONTO ($DECO)
 Last command done (1 command done):
    exec exit 15
 No commands remaining.
@@ -999,12 +1070,13 @@ test_expect_success 'status: two commands done with some white lines in done fil
 	export FAKE_LINES &&
 	test_when_finished "git rebase --abort" &&
 	ONTO=$(git rev-parse --short HEAD~3) &&
+	DECO=$(onto_decorations HEAD~3 refs/heads/several_commits) &&
 	COMMIT4=$(git rev-parse --short HEAD) &&
 	COMMIT3=$(git rev-parse --short HEAD^) &&
 	COMMIT2=$(git rev-parse --short HEAD^^) &&
 	test_must_fail git rebase -i HEAD~3 &&
 	cat >expected <<EOF &&
-interactive rebase in progress; onto $ONTO
+interactive rebase in progress; onto $ONTO ($DECO)
 Last commands done (2 commands done):
    pick $COMMIT2 # two_commit
    exec exit 15
@@ -1027,12 +1099,13 @@ test_expect_success 'status: two remaining commands with some white lines in tod
 	export FAKE_LINES &&
 	test_when_finished "git rebase --abort" &&
 	ONTO=$(git rev-parse --short HEAD~4) &&
+	DECO=$(onto_decorations HEAD~4 refs/heads/several_commits) &&
 	COMMIT4=$(git rev-parse --short HEAD) &&
 	COMMIT3=$(git rev-parse --short HEAD^) &&
 	COMMIT2=$(git rev-parse --short HEAD^^) &&
 	test_must_fail git rebase -i HEAD~4 &&
 	cat >expected <<EOF &&
-interactive rebase in progress; onto $ONTO
+interactive rebase in progress; onto $ONTO ($DECO)
 Last commands done (3 commands done):
    pick $COMMIT2 # two_commit
    exec exit 15
