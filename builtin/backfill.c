@@ -26,7 +26,7 @@
 #include "path-walk.h"
 
 static const char * const builtin_backfill_usage[] = {
-	N_("git backfill [--min-batch-size=<n>] [--[no-]sparse]"),
+	N_("git backfill [--min-batch-size=<n>] [--[no-]sparse] [--[no-]include-edges] [<revision-range>]"),
 	NULL
 };
 
@@ -35,6 +35,7 @@ struct backfill_context {
 	struct oid_array current_batch;
 	size_t min_batch_size;
 	int sparse;
+	int include_edges;
 	struct rev_info revs;
 };
 
@@ -78,6 +79,28 @@ static int fill_missing_blobs(const char *path UNUSED,
 	return 0;
 }
 
+static void reject_unsupported_rev_list_options(struct rev_info *revs)
+{
+	if (revs->diffopt.pickaxe)
+		die(_("'%s' cannot be used with 'git backfill'"),
+		    (revs->diffopt.pickaxe_opts & DIFF_PICKAXE_REGEX) ? "-G" : "-S");
+	if (revs->diffopt.filter || revs->diffopt.filter_not)
+		die(_("'%s' cannot be used with 'git backfill'"),
+		    "--diff-filter");
+	if (revs->diffopt.flags.follow_renames)
+		die(_("'%s' cannot be used with 'git backfill'"),
+		    "--follow");
+	if (revs->line_level_traverse)
+		die(_("'%s' cannot be used with 'git backfill'"),
+		    "-L");
+	if (revs->explicit_diff_merges)
+		die(_("'%s' cannot be used with 'git backfill'"),
+		    "--diff-merges");
+	if (revs->filter.choice)
+		die(_("'%s' cannot be used with 'git backfill'"),
+		    "--filter");
+}
+
 static int do_backfill(struct backfill_context *ctx)
 {
 	struct path_walk_info info = PATH_WALK_INFO_INIT;
@@ -94,6 +117,8 @@ static int do_backfill(struct backfill_context *ctx)
 	/* Walk from HEAD if otherwise unspecified. */
 	if (!ctx->revs.pending.nr)
 		add_head_to_pending(&ctx->revs);
+	if (ctx->include_edges)
+		ctx->revs.edge_hint = 1;
 
 	info.blobs = 1;
 	info.tags = info.commits = info.trees = 0;
@@ -121,12 +146,15 @@ int cmd_backfill(int argc, const char **argv, const char *prefix, struct reposit
 		.min_batch_size = 50000,
 		.sparse = -1,
 		.revs = REV_INFO_INIT,
+		.include_edges = 1,
 	};
 	struct option options[] = {
 		OPT_UNSIGNED(0, "min-batch-size", &ctx.min_batch_size,
 			     N_("Minimum number of objects to request at a time")),
 		OPT_BOOL(0, "sparse", &ctx.sparse,
 			 N_("Restrict the missing objects to the current sparse-checkout")),
+		OPT_BOOL(0, "include-edges", &ctx.include_edges,
+			 N_("Include blobs from boundary commits in the backfill")),
 		OPT_END(),
 	};
 	struct repo_config_values *cfg = repo_config_values(the_repository);
@@ -144,6 +172,7 @@ int cmd_backfill(int argc, const char **argv, const char *prefix, struct reposit
 
 	if (argc > 1)
 		die(_("unrecognized argument: %s"), argv[1]);
+	reject_unsupported_rev_list_options(&ctx.revs);
 
 	repo_config(repo, git_default_config, NULL);
 

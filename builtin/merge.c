@@ -537,7 +537,8 @@ static void finish(struct commit *head_commit,
 	run_hooks_l(the_repository, "post-merge", squash ? "1" : "0", NULL);
 
 	if (new_head)
-		apply_autostash_ref(the_repository, "MERGE_AUTOSTASH");
+		apply_autostash_ref(the_repository, "MERGE_AUTOSTASH",
+				    NULL, NULL, NULL, NULL);
 	strbuf_release(&reflog_message);
 }
 
@@ -1672,12 +1673,14 @@ int cmd_merge(int argc,
 		}
 
 		if (autostash)
-			create_autostash_ref(the_repository, "MERGE_AUTOSTASH");
+			create_autostash_ref(the_repository, "MERGE_AUTOSTASH",
+					     NULL, false);
 		if (checkout_fast_forward(the_repository,
 					  &head_commit->object.oid,
 					  &commit->object.oid,
 					  overwrite_ignore)) {
-			apply_autostash_ref(the_repository, "MERGE_AUTOSTASH");
+			apply_autostash_ref(the_repository, "MERGE_AUTOSTASH",
+					    NULL, NULL, NULL, NULL);
 			ret = 1;
 			goto done;
 		}
@@ -1764,7 +1767,8 @@ int cmd_merge(int argc,
 		die_ff_impossible();
 
 	if (autostash)
-		create_autostash_ref(the_repository, "MERGE_AUTOSTASH");
+		create_autostash_ref(the_repository, "MERGE_AUTOSTASH",
+				     NULL, false);
 
 	/* We are going to make a new commit. */
 	git_committer_info(IDENT_STRICT);
@@ -1849,7 +1853,8 @@ int cmd_merge(int argc,
 		else
 			fprintf(stderr, _("Merge with strategy %s failed.\n"),
 				use_strategies[0]->name);
-		apply_autostash_ref(the_repository, "MERGE_AUTOSTASH");
+		apply_autostash_ref(the_repository, "MERGE_AUTOSTASH",
+				    NULL, NULL, NULL, NULL);
 		ret = 2;
 		goto done;
 	} else if (best_strategy == wt_strategy)

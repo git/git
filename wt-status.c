@@ -1827,7 +1827,7 @@ void wt_status_get_state(struct repository *r,
 	struct stat st;
 	struct object_id oid;
 	enum replay_action action;
-	struct worktree *wt = get_worktree_from_repository(r);
+	struct worktree *wt = get_current_worktree(r);
 
 	if (!stat(git_path_merge_head(r), &st)) {
 		wt_status_check_rebase(wt, state);

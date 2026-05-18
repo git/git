@@ -322,11 +322,11 @@ do
 		${HC}file:1:5:mmap
 		${HC}file:2:5:mmap
 		${HC}file:3:5:mmap
-		${HC}file:3:13:mmap
+		${HC}file:3:14:mmap
 		${HC}file:4:5:mmap
-		${HC}file:4:13:mmap
+		${HC}file:4:14:mmap
 		${HC}file:5:5:mmap
-		${HC}file:5:13:mmap
+		${HC}file:5:14:mmap
 		EOF
 		git grep --column -n -o -e mmap $H >actual &&
 		test_cmp expected actual

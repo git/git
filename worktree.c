@@ -66,7 +66,7 @@ static int is_current_worktree(struct worktree *wt)
 	return is_current;
 }
 
-struct worktree *get_worktree_from_repository(struct repository *repo)
+struct worktree *get_current_worktree(struct repository *repo)
 {
 	struct worktree *wt = xcalloc(1, sizeof(*wt));
 	char *gitdir = absolute_pathdup(repo->gitdir);

@@ -14,6 +14,13 @@ UI, Workflows & Features
    to a remote repository are mostly disabled by default, except for
    ANSI color escape sequences.
 
+ * "ort" merge backend improvements.
+
+ * "git checkout -m another-branch" was invented to deal with local
+   changes to paths that are different between the current and the new
+   branch, but it gave only one chance to resolve conflicts.  The command
+   was taught to create a stash to save the local changes.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -45,10 +52,6 @@ Fixes since v2.54
  * Revert a recent change that introduced a regression to help mksh users.
    (merge 8b44deebaf jk/revert-aa-reap-transport-child-processes later to maint).
 
- * Other code cleanup, docfix, build fix, etc.
-   (merge 80f4b802e9 ja/doc-difftool-synopsis-style later to maint).
-   (merge b96490241e jc/doc-timestamps-in-stat later to maint).
-
  * Update various GitHub Actions versions.
    (merge 4a6ed9d09f js/ci-github-actions-update later to maint).
 
@@ -56,9 +59,27 @@ Fixes since v2.54
    test..
    (merge b33bea27a2 js/t5564-socks-use-short-path later to maint).
 
- * Test fix.
-   (merge 66ae1a48ec jc/t5551-fix-expensive later to maint).
-
  * To help Windows 10 installations, avoid removing files whose
    contents are still mmap()'ed.
    (merge 4bb086cfa2 js/maintenance-fix-deadlock-on-win10 later to maint).
+
+ * The 'git backfill' command now rejects revision-limiting options that
+   are incompatible with its operation, uses standard documentation for
+   revision ranges, and includes blobs from boundary commits by default
+   to improve performance of subsequent operations.
+   (merge a1ad4a0fca en/backfill-fixes-and-edges later to maint).
+
+ * "git grep" update.
+   (merge 9ff4b5ab1b rs/grep-column-only-match-fix later to maint).
+
+ * Headers from glibc 2.43 when used with clang does not allow
+   disabling C11 language features, causing build failures..
+   (merge 0a6d29090c ps/clang-w-glibc-2.43-and-_Generic later to maint).
+
+ * Other code cleanup, docfix, build fix, etc.
+   (merge 80f4b802e9 ja/doc-difftool-synopsis-style later to maint).
+   (merge b96490241e jc/doc-timestamps-in-stat later to maint).
+   (merge 66ae1a48ec jc/t5551-fix-expensive later to maint).
+   (merge ef85286e51 ss/t7004-unhide-git-failures later to maint).
+   (merge 7584d10bc2 mf/format-patch-cover-letter-format-docfix later to maint).
+   (merge 8547908eb3 pw/rename-to-get-current-worktree later to maint).

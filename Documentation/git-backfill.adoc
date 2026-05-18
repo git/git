@@ -9,7 +9,7 @@ git-backfill - Download missing objects in a partial clone
 SYNOPSIS
 --------
 [synopsis]
-git backfill [--min-batch-size=<n>] [--[no-]sparse]
+git backfill [--min-batch-size=<n>] [--[no-]sparse] [--[no-]include-edges] [<revision-range>]
 
 DESCRIPTION
 -----------
@@ -43,7 +43,7 @@ smaller network calls than downloading the entire repository at clone
 time.
 
 By default, `git backfill` downloads all blobs reachable from the `HEAD`
-commit. This set can be restricted or expanded using various options.
+commit. This set can be restricted or expanded using various options below.
 
 THIS COMMAND IS EXPERIMENTAL. ITS BEHAVIOR MAY CHANGE IN THE FUTURE.
 
@@ -63,7 +63,23 @@ OPTIONS
 	current sparse-checkout. If the sparse-checkout feature is enabled,
 	then `--sparse` is assumed and can be disabled with `--no-sparse`.
 
-You may also specify the commit limiting options from linkgit:git-rev-list[1].
+`--include-edges`::
+`--no-include-edges`::
+	Include blobs from boundary commits in the backfill.  Useful in
+	preparation for commands like `git log -p A..B` or `git replay
+	--onto TARGET A..B`, where A..B normally excludes A but you need
+	the blobs from A as well.  `--include-edges` is the default.
+
+`<revision-range>`::
+	Backfill only blobs reachable from commits in the specified
+	revision range.  When no _<revision-range>_ is specified, it
+	defaults to `HEAD` (i.e. the whole history leading to the
+	current commit).  For a complete list of ways to spell
+	_<revision-range>_, see the "Specifying Ranges" section of
+	linkgit:gitrevisions[7].
++
+You may also use commit-limiting options understood by
+linkgit:git-rev-list[1] such as `--first-parent`, `--since`, or pathspecs.
 
 SEE ALSO
 --------
