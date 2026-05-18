@@ -274,4 +274,50 @@ test_expect_success '"git checkout ." report should not include failed entries' 
 	)
 '
 
+# Regression test: parallel checkout + fscache stale directory listing.
+#
+# When checkout.workers > 1, checkout_entry_ca() enqueues files for deferred
+# writing instead of writing them inline. The inline write_entry() path calls
+# flush_fscache() after each file, keeping the Windows fscache in sync with
+# newly-created directories. The deferred path skips this flush, so
+# has_dirs_only_path() sees stale ENOENT for directories that mkdir() just
+# created. The recovery path in create_directories() then tries to unlink+
+# recreate the directory, which fails because it already has children.
+#
+# The trigger is: two files sharing a parent directory that does not yet exist
+# on disk when `git checkout <tree> -- <pathspec>` runs.
+test_expect_success MINGW 'parallel checkout with fscache does not fail on new directories' '
+	git init fscache-pc &&
+	(
+		cd fscache-pc &&
+		git config core.fscache true &&
+
+		# Commit B1: files in a nested directory
+		mkdir -p sub/deep/dir &&
+		echo one >sub/deep/dir/file1.txt &&
+		echo two >sub/deep/dir/file2.txt &&
+		git add sub &&
+		git commit -m "B1: with sub/deep/dir" &&
+		git tag B1 &&
+
+		# Commit B2: the directory is gone
+		git rm -rf sub &&
+		git commit -m "B2: without sub" &&
+
+		# Now restore both files from B1 with parallel checkout.
+		# This is the pathspec checkout path (checkout_worktree in
+		# builtin/checkout.c), which defers writes via enqueue_checkout
+		# when workers > 1 and does not flush fscache between entries.
+		git -c checkout.workers=2 \
+		    -c checkout.thresholdForParallelism=0 \
+		    checkout B1 -- sub/deep/dir/file1.txt sub/deep/dir/file2.txt &&
+
+		# Verify both files are correctly restored
+		echo one >expect1 &&
+		echo two >expect2 &&
+		test_cmp expect1 sub/deep/dir/file1.txt &&
+		test_cmp expect2 sub/deep/dir/file2.txt
+	)
+'
+
 test_done
