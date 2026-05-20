@@ -623,9 +623,9 @@ test_expect_success 'verify collecting omits in combined: filter' '
 	omitted_2=$(echo a     | git hash-object --stdin) &&
 	omitted_3=$(echo abcde | git hash-object --stdin) &&
 
-	grep ~$omitted_1 actual &&
-	grep ~$omitted_2 actual &&
-	grep ~$omitted_3 actual &&
+	grep "~$omitted_1" actual &&
+	grep "~$omitted_2" actual &&
+	grep "~$omitted_3" actual &&
 	test_line_count = 3 actual
 '
 

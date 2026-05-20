@@ -946,7 +946,7 @@ static int post_rpc(struct rpc_state *rpc, int stateless_connect, int flush_rece
 		do {
 			err = probe_rpc(rpc, &results);
 			if (err == HTTP_REAUTH)
-				credential_fill(the_repository, &http_auth, 0);
+				http_reauth_prepare(0);
 		} while (err == HTTP_REAUTH);
 		if (err != HTTP_OK)
 			return -1;
@@ -1068,7 +1068,7 @@ retry:
 	rpc->any_written = 0;
 	err = run_slot(slot, NULL);
 	if (err == HTTP_REAUTH && !large_request) {
-		credential_fill(the_repository, &http_auth, 0);
+		http_reauth_prepare(0);
 		curl_slist_free_all(headers);
 		goto retry;
 	}

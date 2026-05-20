@@ -69,6 +69,7 @@ test_tool_sources = [
   'test-submodule-nested-repo-config.c',
   'test-submodule.c',
   'test-subprocess.c',
+  'test-synthesize.c',
   'test-tool.c',
   'test-trace2.c',
   'test-truncate.c',

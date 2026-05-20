@@ -101,8 +101,12 @@ test_expect_success "maintenance.autoDetach overrides gc.autoDetach" '
 test_expect_success 'register uses XDG_CONFIG_HOME config if it exists' '
 	test_when_finished rm -r .config/git/config &&
 	(
+		# Override HOME so that .gitconfig (which test-lib.sh may
+		# have created, e.g. to set safe.bareRepository) does not
+		# take precedence over the XDG location.
+		HOME=$PWD/must-not-exist &&
 		XDG_CONFIG_HOME=.config &&
-		export XDG_CONFIG_HOME &&
+		export HOME XDG_CONFIG_HOME &&
 		mkdir -p $XDG_CONFIG_HOME/git &&
 		>$XDG_CONFIG_HOME/git/config &&
 		git maintenance register &&
@@ -124,8 +128,12 @@ test_expect_success 'register does not need XDG_CONFIG_HOME config to exist' '
 test_expect_success 'unregister uses XDG_CONFIG_HOME config if it exists' '
 	test_when_finished rm -r .config/git/config &&
 	(
+		# Override HOME so that .gitconfig (which test-lib.sh may
+		# have created, e.g. to set safe.bareRepository) does not
+		# take precedence over the XDG location.
+		HOME=$PWD/must-not-exist &&
 		XDG_CONFIG_HOME=.config &&
-		export XDG_CONFIG_HOME &&
+		export HOME XDG_CONFIG_HOME &&
 		mkdir -p $XDG_CONFIG_HOME/git &&
 		>$XDG_CONFIG_HOME/git/config &&
 		git maintenance register &&

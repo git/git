@@ -712,6 +712,12 @@ static inline uint64_t u64_add(uint64_t a, uint64_t b)
 # endif
 #endif
 
+/*
+ * Default buffer size for buffered I/O in index-pack, unpack-objects,
+ * and the hashfile layer in csum-file.
+ */
+#define DEFAULT_IO_BUFFER_SIZE (128 * 1024)
+
 #ifdef HAVE_ALLOCA_H
 # include <alloca.h>
 # define xalloca(size)      (alloca(size))

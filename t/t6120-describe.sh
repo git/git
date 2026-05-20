@@ -298,6 +298,20 @@ test_expect_success 'name-rev --annotate-stdin' '
 	test_cmp expect actual
 '
 
+test_expect_success 'name-rev --annotate-stdin --name-only' '
+	>expect.unsorted &&
+	for rev in $(git rev-list --all)
+	do
+		name=$(git name-rev --name-only $rev) &&
+		echo "$name" >>expect.unsorted || return 1
+	done &&
+	sort <expect.unsorted >expect &&
+	git name-rev --annotate-stdin --name-only \
+		<list >actual.unsorted &&
+	sort <actual.unsorted >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'name-rev --stdin deprecated' '
 	git rev-list --all >list &&
 	if ! test_have_prereq WITH_BREAKING_CHANGES
@@ -786,5 +800,199 @@ test_expect_success 'do not be fooled by invalid describe format ' '
 	git rev-parse --short HEAD >out &&
 	test_must_fail git cat-file -t "refs/tags/super-invalid/./../...../ ~^:/?*[////\\\\\\&}/busted.lock-42-g"$(cat out)
 '
+
+test_expect_success 'setup: format-rev' '
+	mkdir repo-format &&
+	git -C repo-format init &&
+	test_commit -C repo-format first &&
+	test_commit -C repo-format second &&
+	test_commit -C repo-format third &&
+	test_commit -C repo-format fourth &&
+	test_commit -C repo-format fifth &&
+	test_commit -C repo-format sixth &&
+	test_commit -C repo-format seventh &&
+	test_commit -C repo-format eighth
+'
+
+test_expect_success 'format-rev --stdin-mode=revs' '
+	cat >expect <<-\EOF &&
+	eighth
+	seventh
+	fifth
+	EOF
+	git -C repo-format format-rev --stdin-mode=revs \
+		--format=%s >actual <<-\EOF &&
+	HEAD
+	HEAD~
+	HEAD~3
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'format-rev --stdin-mode=text from rev-list same as log' '
+	git -C repo-format log --format=reference >expect &&
+	test_file_not_empty expect &&
+	git -C repo-format rev-list HEAD >list &&
+	git -C repo-format format-rev --stdin-mode=text \
+		--format=reference <list >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'format-rev --stdin-mode=text with running text and tree oid' '
+	cmit_oid=$(git -C repo-format rev-parse fifth) &&
+	reference=$(git -C repo-format log -n1 --format=reference fifth) &&
+	tree=$(git -C repo-format rev-parse HEAD^{tree}) &&
+	cat >expect <<-EOF &&
+	We thought we fixed this in ${reference}.
+	But look at this tree: ${tree}.
+	EOF
+	git -C repo-format format-rev --stdin-mode=text --format=reference \
+		>actual <<-EOF &&
+	We thought we fixed this in ${cmit_oid}.
+	But look at this tree: ${tree}.
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'format-rev with %N (note)' '
+	test_when_finished "git -C repo-format notes remove" &&
+	git -C repo-format notes add -m"Make a note" &&
+	printf "Make a note\n\n\n" >expect &&
+	git -C repo-format format-rev --stdin-mode=revs \
+		--format="tformat:%N" \
+		>actual <<-\EOF &&
+	HEAD
+	HEAD~
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'format-rev --notes<ref> (custom notes ref)' '
+	# One custom notes ref
+	test_when_finished "git -C repo-format notes remove" &&
+	test_when_finished "git -C repo-format notes --ref=word remove" &&
+	git -C repo-format notes add -m"default" &&
+	git -C repo-format notes --ref=word add -m"custom" &&
+	printf "custom\n\n" >expect &&
+	git -C repo-format format-rev --stdin-mode=revs \
+		--format="tformat:%N" \
+		--notes=word \
+		>actual <<-\EOF &&
+	HEAD
+	EOF
+	test_cmp expect actual &&
+	# Glob all
+	printf "default\ncustom\n\n" >expect &&
+	git -C repo-format format-rev --stdin-mode=revs \
+		--format="tformat:%N" \
+		--notes=* >actual <<-\EOF &&
+	HEAD
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'format-rev --stdin-mode=revs on annotated tag peels to commit' '
+	test_when_finished "git -C repo-format tag -d version" &&
+	git -C repo-format tag -a -m"new version" version &&
+	cat >expect <<-\EOF &&
+	eighth
+	EOF
+	git -C repo-format format-rev --stdin-mode=revs \
+		--format=%s \
+		>actual <<-\EOF &&
+	version
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'format-rev --stdin-mode=revs lookup failures' '
+	test_when_finished "git -C repo-format tag -d tag-to-tree" &&
+	invalid_syntax=not-valid &&
+	non_existing_oid=${EMPTY_BLOB} &&
+	tree=$(git -C repo-format rev-parse eighth^{tree}) &&
+	git -C repo-format tag -a -mmessage tag-to-tree "$tree" &&
+	tag_to_tree=$(git -C repo-format rev-parse tag-to-tree) &&
+	cat >expect <<-EOF &&
+	Could not get object name for ${invalid_syntax}. Skipping.
+	Could not get object for ${non_existing_oid}. Skipping.
+	Could not get commit for ${tree}. Skipping.
+	Could not get commit for ${tag_to_tree}. Skipping.
+	EOF
+	git -C repo-format format-rev --stdin-mode=revs \
+		--format=%s \
+		2>actual >out <<-EOF &&
+	${invalid_syntax}
+	${non_existing_oid}
+	${tree}
+	${tag_to_tree}
+	EOF
+	test_line_count = 0 out &&
+	test_cmp expect actual
+'
+
+
+test_expect_success 'format-rev -z --stdin-mode=text with object name lookup failures' '
+	printf "%s\0" "$(git -C repo-format rev-parse HEAD)" >input &&
+	printf "%s\0" "$(git -C repo-format rev-parse HEAD^{tree})" >>input &&
+	printf "%s\0" "$EMPTY_BLOB" >>input &&
+	printf "%s\0" "$(git -C repo-format log --format=%s -1)" >expect &&
+	printf "%s\0" "$(git -C repo-format rev-parse HEAD^{tree})" >>expect &&
+	printf "%s\0" "$EMPTY_BLOB" >>expect &&
+	git -C repo-format format-rev --stdin-mode=text \
+		--format=%s -z <input >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'setup: format-rev input and output separators' '
+	git -C repo-format rev-list HEAD >input-lf &&
+	git -C repo-format rev-list -z HEAD >input-nul &&
+	git -C repo-format log --format=%s >output-lf &&
+	git -C repo-format log -z --format=%s >output-nul &&
+	echo revs >stdin-modes &&
+	echo text >>stdin-modes
+'
+
+while read mode
+do
+	test_expect_success "format-rev -z --stdin-mode=$mode" '
+		cat output-nul >expect &&
+		git -C repo-format format-rev --stdin-mode="$mode" \
+			--format=%s -z <input-nul >actual &&
+		test_cmp expect actual
+	'
+
+	test_expect_success "format-rev -z --no-null-input --no-null-output --stdin-mode=$mode" '
+		cat output-lf >expect &&
+		git -C repo-format format-rev --stdin-mode="$mode" \
+			--format=%s -z --no-null-input --no-null-output \
+			<input-lf >actual &&
+		test_cmp expect actual
+	'
+
+	test_expect_success "format-rev ---null-input --stdin-mode=$mode" '
+		cat output-lf >expect &&
+		git -C repo-format format-rev --stdin-mode="$mode" \
+			--format=%s --null-input \
+			<input-nul >actual &&
+		test_cmp expect actual
+	'
+
+	test_expect_success "format-rev --null-output --stdin-mode=$mode" '
+		cat output-nul >expect &&
+		git -C repo-format format-rev --stdin-mode="$mode" \
+			--format=%s --null-output \
+			<input-lf >actual &&
+		test_cmp expect actual
+	'
+
+	test_expect_success "format-rev -z --stdin-mode=$mode with multi-line output" '
+		format="%s%n%aI" &&
+		git -C repo-format log -z --format="$format" \
+			>expect &&
+		git -C repo-format format-rev --stdin-mode="$mode" \
+			--format="$format" -z <input-nul >actual &&
+		test_cmp expect actual
+	'
+done <stdin-modes
 
 test_done

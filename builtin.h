@@ -195,6 +195,7 @@ int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix, struct re
 int cmd_for_each_ref(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_for_each_repo(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_format_patch(int argc, const char **argv, const char *prefix, struct repository *repo);
+int cmd_format_rev(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_fsck(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_fsmonitor__daemon(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_gc(int argc, const char **argv, const char *prefix, struct repository *repo);

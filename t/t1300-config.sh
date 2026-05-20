@@ -11,6 +11,13 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-terminal.sh
 
+# test-lib.sh may have added global config (e.g. safe.bareRepository)
+# that would appear in "git config --list" output and break tests
+# that expect exact config contents.
+test_expect_success 'remove global config from test-lib.sh' '
+	test_might_fail git config --global --unset-all safe.bareRepository
+'
+
 for mode in legacy subcommands
 do
 

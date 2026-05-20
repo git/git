@@ -24,6 +24,7 @@ test_expect_success 'setup' '
 test_expect_success 'git ls-files without path restriction.' '
 	test_when_finished "rm -f expect" &&
 	git ls-files --others >output &&
+	test_filter_gitconfig output &&
 	cat >expect <<-\EOF &&
 	--
 	-foo
@@ -63,6 +64,7 @@ test_expect_success 'git ls-files with path restriction with -- --.' '
 test_expect_success 'git ls-files with no path restriction.' '
 	test_when_finished "rm -f expect" &&
 	git ls-files --others -- >output &&
+	test_filter_gitconfig output &&
 	cat >expect <<-\EOF &&
 	--
 	-foo

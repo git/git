@@ -8,6 +8,7 @@ git-history - EXPERIMENTAL: Rewrite history
 SYNOPSIS
 --------
 [synopsis]
+git history fixup <commit> [--dry-run] [--update-refs=(branches|head)] [--reedit-message] [--empty=(drop|keep|abort)]
 git history reword <commit> [--dry-run] [--update-refs=(branches|head)]
 git history split <commit> [--dry-run] [--update-refs=(branches|head)] [--] [<pathspec>...]
 
@@ -22,8 +23,9 @@ THIS COMMAND IS EXPERIMENTAL. THE BEHAVIOR MAY CHANGE.
 This command is related to linkgit:git-rebase[1] in that both commands can be
 used to rewrite history. There are a couple of major differences though:
 
-* linkgit:git-history[1] can work in a bare repository as it does not need to
-  touch either the index or the worktree.
+* Most subcommands of linkgit:git-history[1] can work in a bare repository as
+  they do not need to touch either the index or the worktree. The `fixup`
+  subcommand is an exception to this, as it reads staged changes from the index.
 * linkgit:git-history[1] does not execute any linkgit:githooks[5] at the
   current point in time. This may change in the future.
 * linkgit:git-history[1] by default updates all branches that are descendants
@@ -48,10 +50,27 @@ conflicts. This limitation is by design as history rewrites are not intended to
 be stateful operations. The limitation can be lifted once (if) Git learns about
 first-class conflicts.
 
+When using `fixup` with `--empty=drop`, dropping the root commit is not yet
+supported.
+
 COMMANDS
 --------
 
 The following commands are available to rewrite history in different ways:
+
+`fixup <commit>`::
+	Apply the currently staged changes to the specified commit. This is
+	similar in nature to `git commit --fixup=<commit>` followed by `git
+	rebase --autosquash <commit>~`. Changes are applied to the target
+	commit by performing a three-way merge between the HEAD commit, the
+	target commit and the tree generated from staged changes.
++
+The commit message and authorship of the target commit are preserved by
+default, unless you specify `--reedit-message`.
++
+If applying the staged changes would result in a conflict, the command
+aborts with an error. All branches that are descendants of the original
+commit are updated to point to the rewritten history.
 
 `reword <commit>`::
 	Rewrite the commit message of the specified commit. All the other
@@ -87,6 +106,31 @@ OPTIONS
 	objects will be written into the repository, so applying these printed
 	ref updates is generally safe.
 
+`--reedit-message`::
+	Open an editor to modify the target commit's message.
+
+`--empty=(drop|keep|abort)`::
+	Control what happens when a commit becomes empty as a result of the
+	fixup. This can happen in two situations:
++
+--
+* The fixup target itself becomes empty because the staged changes exactly
+  cancel out all changes introduced by that commit.
+
+* A descendant commit becomes empty during replay because it introduced the
+  same change that was just fixed up into an ancestor.
+--
++
+With `drop` (the default), empty commits are removed from the rewritten
+history. Descendants of a dropped target commit are replayed directly onto
+the target's parent. Note that dropping the root commit is not supported;
+see LIMITATIONS.
++
+With `keep`, empty commits are retained in the rewritten history as-is.
++
+With `abort`, the command stops with an error if any commit would become
+empty.
+
 `--update-refs=(branches|head)`::
 	Control which references will be updated by the command, if any. With
 	`branches`, all local branches that point to commits which are
@@ -95,6 +139,36 @@ OPTIONS
 
 EXAMPLES
 --------
+
+Fixup a commit
+~~~~~~~~~~~~~~
+
+----------
+$ git log --oneline --stat
+abc1234 (HEAD -> main) third
+ third.txt | 1 +
+def5678 second
+ second.txt | 1 +
+ghi9012 first
+ first.txt | 1 +
+
+$ echo "change" >>unrelated.txt
+$ git add unrelated.txt
+$ git history fixup ghi9012
+
+$ git log --oneline --stat
+jkl3456 (HEAD -> main) third
+ third.txt | 1 +
+mno7890 second
+ second.txt | 1 +
+pqr1234 first
+ first.txt     | 1 +
+ unrelated.txt | 1 +
+----------
+
+The staged addition of `unrelated.txt` has been incorporated into the `first`
+commit. All descendant commits have been replayed on top of the rewritten
+history.
 
 Split a commit
 ~~~~~~~~~~~~~~

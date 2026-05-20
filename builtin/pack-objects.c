@@ -629,14 +629,21 @@ static off_t write_reuse_object(struct hashfile *f, struct object_entry *entry,
 	struct packed_git *p = IN_PACK(entry);
 	struct pack_window *w_curs = NULL;
 	uint32_t pos;
-	off_t offset;
+	off_t offset, cur;
 	enum object_type type = oe_type(entry);
+	enum object_type in_pack_type;
 	off_t datalen;
 	unsigned char header[MAX_PACK_OBJECT_HEADER],
 		      dheader[MAX_PACK_OBJECT_HEADER];
 	unsigned hdrlen;
 	const unsigned hashsz = the_hash_algo->rawsz;
-	unsigned long entry_size = SIZE(entry);
+	size_t entry_size;
+
+	cur = entry->in_pack_offset;
+	in_pack_type = unpack_object_header(p, &w_curs, &cur, &entry_size);
+	if (in_pack_type < 0)
+		die(_("write_reuse_object: unable to parse object header of %s"),
+		    oid_to_hex(&entry->idx.oid));
 
 	if (DELTA(entry))
 		type = (allow_ofs_delta && DELTA(entry)->idx.offset) ?
@@ -664,7 +671,8 @@ static off_t write_reuse_object(struct hashfile *f, struct object_entry *entry,
 	datalen -= entry->in_pack_header_size;
 
 	if (!pack_to_stdout && p->index_version == 1 &&
-	    check_pack_inflate(p, &w_curs, offset, datalen, entry_size)) {
+	    check_pack_inflate(p, &w_curs, offset, datalen,
+			       cast_size_t_to_ulong(entry_size))) {
 		error(_("corrupt packed object for %s"),
 		      oid_to_hex(&entry->idx.oid));
 		unuse_pack(&w_curs);
@@ -1087,7 +1095,7 @@ static void write_reused_pack_one(struct packed_git *reuse_packfile,
 {
 	off_t offset, next, cur;
 	enum object_type type;
-	unsigned long size;
+	size_t size;
 
 	offset = pack_pos_to_offset(reuse_packfile, pos);
 	next = pack_pos_to_offset(reuse_packfile, pos + 1);
@@ -2243,7 +2251,7 @@ static void check_object(struct object_entry *entry, uint32_t object_index)
 		off_t ofs;
 		unsigned char *buf, c;
 		enum object_type type;
-		unsigned long in_pack_size;
+		size_t in_pack_size;
 
 		buf = use_pack(p, &w_curs, entry->in_pack_offset, &avail);
 
@@ -2270,7 +2278,7 @@ static void check_object(struct object_entry *entry, uint32_t object_index)
 		default:
 			/* Not a delta hence we've already got all we need. */
 			oe_set_type(entry, entry->in_pack_type);
-			SET_SIZE(entry, in_pack_size);
+			SET_SIZE(entry, cast_size_t_to_ulong(in_pack_size));
 			entry->in_pack_header_size = used;
 			if (oe_type(entry) < OBJ_COMMIT || oe_type(entry) > OBJ_BLOB)
 				goto give_up;
@@ -2324,8 +2332,8 @@ static void check_object(struct object_entry *entry, uint32_t object_index)
 		if (have_base &&
 		    can_reuse_delta(&base_ref, entry, &base_entry)) {
 			oe_set_type(entry, entry->in_pack_type);
-			SET_SIZE(entry, in_pack_size); /* delta size */
-			SET_DELTA_SIZE(entry, in_pack_size);
+			SET_SIZE(entry, cast_size_t_to_ulong(in_pack_size)); /* delta size */
+			SET_DELTA_SIZE(entry, cast_size_t_to_ulong(in_pack_size));
 
 			if (base_entry) {
 				SET_DELTA(entry, base_entry);
@@ -2734,16 +2742,18 @@ unsigned long oe_get_size_slow(struct packing_data *pack,
 	struct pack_window *w_curs;
 	unsigned char *buf;
 	enum object_type type;
-	unsigned long used, avail, size;
+	unsigned long used, avail;
+	size_t size;
 
 	if (e->type_ != OBJ_OFS_DELTA && e->type_ != OBJ_REF_DELTA) {
+		unsigned long sz;
 		packing_data_lock(&to_pack);
 		if (odb_read_object_info(the_repository->objects,
-					 &e->idx.oid, &size) < 0)
+					 &e->idx.oid, &sz) < 0)
 			die(_("unable to get size of %s"),
 			    oid_to_hex(&e->idx.oid));
 		packing_data_unlock(&to_pack);
-		return size;
+		return sz;
 	}
 
 	p = oe_in_pack(pack, e);
@@ -2760,7 +2770,7 @@ unsigned long oe_get_size_slow(struct packing_data *pack,
 
 	unuse_pack(&w_curs);
 	packing_data_unlock(&to_pack);
-	return size;
+	return cast_size_t_to_ulong(size);
 }
 
 static int try_delta(struct unpacked *trg, struct unpacked *src,

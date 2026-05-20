@@ -36,6 +36,7 @@ test_expect_success 'setup: directories' '
 
 test_expect_success 'ls-files --others handles untracked git repositories' '
 	git ls-files -o >output &&
+	test_filter_gitconfig output &&
 	cat >expect <<-EOF &&
 	nonrepo-untracked-file/untracked
 	output

@@ -269,7 +269,8 @@ static struct commit *pick_regular_commit(struct repository *repo,
 					  struct commit *onto,
 					  struct merge_options *merge_opt,
 					  struct merge_result *result,
-					  enum replay_mode mode)
+					  enum replay_mode mode,
+					  enum replay_empty_commit_action empty)
 {
 	struct commit *base, *replayed_base;
 	struct tree *pickme_tree, *base_tree, *replayed_base_tree;
@@ -321,12 +322,25 @@ static struct commit *pick_regular_commit(struct repository *repo,
 	}
 	merge_opt->ancestor = NULL;
 	merge_opt->branch2 = NULL;
+
 	if (!result->clean)
 		return NULL;
-	/* Drop commits that become empty */
+
+	/* Handle commits that become empty */
 	if (oideq(&replayed_base_tree->object.oid, &result->tree->object.oid) &&
-	    !oideq(&pickme_tree->object.oid, &base_tree->object.oid))
-		return replayed_base;
+	    !oideq(&pickme_tree->object.oid, &base_tree->object.oid)) {
+		switch (empty) {
+		case REPLAY_EMPTY_COMMIT_DROP:
+			return replayed_base;
+		case REPLAY_EMPTY_COMMIT_KEEP:
+			break;
+		case REPLAY_EMPTY_COMMIT_ABORT:
+			result->clean = error(_("commit %s became empty after replay"),
+					      oid_to_hex(&pickme->object.oid));
+			return NULL;
+		}
+	}
+
 	return create_commit(repo, result->tree, pickme, replayed_base, mode);
 }
 
@@ -417,7 +431,7 @@ int replay_revisions(struct rev_info *revs,
 
 		last_commit = pick_regular_commit(revs->repo, commit, replayed_commits,
 						  mode == REPLAY_MODE_REVERT ? last_commit : onto,
-						  &merge_opt, &result, mode);
+						  &merge_opt, &result, mode, opts->empty);
 		if (!last_commit)
 			break;
 
@@ -456,6 +470,11 @@ int replay_revisions(struct rev_info *revs,
 						   &commit->object.oid,
 						   &last_commit->object.oid);
 		}
+	}
+
+	if (result.clean < 0) {
+		ret = -1;
+		goto out;
 	}
 
 	if (!result.clean) {

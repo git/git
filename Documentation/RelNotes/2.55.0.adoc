@@ -21,6 +21,12 @@ UI, Workflows & Features
    branch, but it gave only one chance to resolve conflicts.  The command
    was taught to create a stash to save the local changes.
 
+ * A new builtin "git format-rev" is introduced for pretty formatting
+   one revision expression per line or commit object names found in
+   running text.
+
+ * "git history" learned "fixup" command.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -30,6 +36,10 @@ Performance, Internal Implementation, Development Support etc.
 
  * Rust support is enabled by default (but still allows opting out) in
    some future version of Git.
+
+ * Preparation of the xdiff/ codebase to work with Rust.
+
+ * Use a larger buffer size in the code paths to ingest pack stream.
 
 
 Fixes since v2.54
@@ -76,6 +86,56 @@ Fixes since v2.54
    disabling C11 language features, causing build failures..
    (merge 0a6d29090c ps/clang-w-glibc-2.43-and-_Generic later to maint).
 
+ * The 'http.emptyAuth=auto' configuration now correctly attempts
+   Negotiate authentication before falling back to manual credentials.
+   This allows seamless Kerberos ticket-based authentication without
+   requiring users to explicitly set 'http.emptyAuth=true'.
+   (merge 4919938d28 mc/http-emptyauth-negotiate-fix later to maint).
+
+ * Ramifications of turning off commit-graph has been documented a bit
+   more clearly.
+   (merge 48c855bb8f kh/doc-commit-graph later to maint).
+
+ * "git rebase --update-refs", when used with an rebase.instructionFormat
+   with "%d" (describe) in it, tried to update local branch HEAD by
+   mistake, which has been corrected.
+   (merge 106b6885c7 ag/rebase-update-refs-limit-to-branches later to maint).
+
+ * Tweak the way how sideband messages from remote are printed while
+   we talk with a remote repository to avoid tickling terminal
+   emulator glitches.
+   (merge 31e8fcabd8 rs/sideband-clear-line-before-print later to maint).
+
+ * The configuration variable submodule.fetchJobs was not read correctly,
+   which has been corrected.
+   (merge aa45a5902f sj/submodule-update-clone-config-fix later to maint).
+
+ * Update code paths that assumed "unsigned long" was long enough for
+   "size_t".
+   (merge 7a094d68a2 js/objects-larger-than-4gb-on-windows later to maint).
+
+ * Stop using unmaintained custom allocator in Windows build which was
+   the last user of the code.
+   (merge 0b72550110 js/mingw-no-nedmalloc later to maint).
+
+ * The computation to shorten the filenames shown in diffstat measured
+   width of individual UTF-8 characters to add up, but forgot to take
+   into account error cases (e.g., an invalid UTF-8 sequence, or a
+   control character).
+   (merge 09d86a3b98 en/diffstat-utf8-truncation-fix later to maint).
+
+ * Some tests assume that bare repository accesses are by default
+   allowed; rewrite some of them to avoid the assumption, rewrite
+   others to explicitly set safe.bareRepository to allow them.
+   (merge 985b38ca6c js/adjust-tests-to-explicitly-access-bare-repo later to maint).
+
+ * Signing commit with custom encoding was passing the data to be
+   signed at a wrong stage in the pipeline, which has been corrected.
+   (merge 7735d7eee3 bc/sign-commit-with-custom-encoding later to maint).
+
+ * Further update to the i18n alias support to avoid regressions.
+   (merge 21186cf9bb jh/alias-i18n-fixes later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 80f4b802e9 ja/doc-difftool-synopsis-style later to maint).
    (merge b96490241e jc/doc-timestamps-in-stat later to maint).
@@ -83,3 +143,5 @@ Fixes since v2.54
    (merge ef85286e51 ss/t7004-unhide-git-failures later to maint).
    (merge 7584d10bc2 mf/format-patch-cover-letter-format-docfix later to maint).
    (merge 8547908eb3 pw/rename-to-get-current-worktree later to maint).
+   (merge 890229b3f3 sg/t6112-unwanted-tilde-expansion-fix later to maint).
+   (merge ab9753e7bc kh/doc-restore-double-underscores-fix later to maint).

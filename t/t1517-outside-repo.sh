@@ -122,7 +122,8 @@ do
 	archimport | citool | credential-netrc | credential-libsecret | \
 	credential-osxkeychain | cvsexportcommit | cvsimport | cvsserver | \
 	daemon | \
-	difftool--helper | filter-branch | fsck-objects | get-tar-commit-id | \
+	difftool--helper | filter-branch | format-rev | fsck-objects | \
+	get-tar-commit-id | \
 	gui | gui--askpass | \
 	http-backend | http-fetch | http-push | init-db | \
 	merge-octopus | merge-one-file | merge-resolve | mergetool | \

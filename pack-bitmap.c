@@ -2270,7 +2270,7 @@ static int try_partial_reuse(struct bitmap_index *bitmap_git,
 {
 	off_t delta_obj_offset;
 	enum object_type type;
-	unsigned long size;
+	size_t size;
 
 	if (pack_pos >= pack->p->num_objects)
 		return -1; /* not actually in the pack */

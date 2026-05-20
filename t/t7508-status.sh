@@ -263,6 +263,7 @@ test_expect_success 'status with gitignore' '
 	!! untracked
 	EOF
 	git status -s --ignored >output &&
+	test_filter_gitconfig output &&
 	test_cmp expect output &&
 
 	cat >expect <<\EOF &&
@@ -296,6 +297,7 @@ Ignored files:
 
 EOF
 	git status --ignored >output &&
+	test_filter_gitconfig output &&
 	test_cmp expect output
 '
 
@@ -328,6 +330,7 @@ test_expect_success 'status with gitignore (nothing untracked)' '
 	!! untracked
 	EOF
 	git status -s --ignored >output &&
+	test_filter_gitconfig output &&
 	test_cmp expect output &&
 
 	cat >expect <<\EOF &&
@@ -358,6 +361,7 @@ Ignored files:
 
 EOF
 	git status --ignored >output &&
+	test_filter_gitconfig output &&
 	test_cmp expect output
 '
 

@@ -30,6 +30,7 @@ test_expect_success 'Verify behavior of status on directories with ignored files
 		dir/ignored/ignored_1.ign dir/ignored/ignored_2.ign &&
 
 	git status --porcelain=v2 --ignored=matching --untracked-files=all >output &&
+	test_filter_gitconfig output &&
 	test_cmp expect output
 '
 

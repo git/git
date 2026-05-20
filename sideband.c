@@ -295,7 +295,7 @@ static void maybe_colorize_sideband(struct strbuf *dest, const char *src, int n)
 
 #define DISPLAY_PREFIX "remote: "
 
-#define ANSI_SUFFIX "\033[K"
+#define ANSI_PREFIX "\033[K"
 #define DUMB_SUFFIX "        "
 
 int demultiplex_sideband(const char *me, int status,
@@ -304,15 +304,18 @@ int demultiplex_sideband(const char *me, int status,
 			 struct strbuf *scratch,
 			 enum sideband_type *sideband_type)
 {
-	static const char *suffix;
+	static const char *prefix, *suffix;
 	const char *b, *brk;
 	int band;
 
 	if (!suffix) {
-		if (isatty(2) && !is_terminal_dumb())
-			suffix = ANSI_SUFFIX;
-		else
+		if (isatty(2) && !is_terminal_dumb()) {
+			prefix = ANSI_PREFIX DISPLAY_PREFIX;
+			suffix = "";
+		} else {
+			prefix = DISPLAY_PREFIX;
 			suffix = DUMB_SUFFIX;
+		}
 	}
 
 	if (status == PACKET_READ_EOF) {
@@ -346,8 +349,7 @@ int demultiplex_sideband(const char *me, int status,
 	case 3:
 		if (die_on_error)
 			die(_("remote error: %s"), buf + 1);
-		strbuf_addf(scratch, "%s%s", scratch->len ? "\n" : "",
-			    DISPLAY_PREFIX);
+		strbuf_addf(scratch, "%s%s", scratch->len ? "\n" : "", prefix);
 		maybe_colorize_sideband(scratch, buf + 1, len);
 
 		*sideband_type = SIDEBAND_REMOTE_ERROR;
@@ -378,7 +380,7 @@ int demultiplex_sideband(const char *me, int status,
 				strbuf_addstr(scratch, suffix);
 
 			if (!scratch->len)
-				strbuf_addstr(scratch, DISPLAY_PREFIX);
+				strbuf_addstr(scratch, prefix);
 
 			/*
 			 * A use case that we should not add clear-to-eol suffix
@@ -404,8 +406,8 @@ int demultiplex_sideband(const char *me, int status,
 		}
 
 		if (*b) {
-			strbuf_addstr(scratch, scratch->len ?
-				    "" : DISPLAY_PREFIX);
+			if (!scratch->len)
+				strbuf_addstr(scratch, prefix);
 			maybe_colorize_sideband(scratch, b, strlen(b));
 		}
 		return 0;

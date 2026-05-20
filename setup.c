@@ -1485,7 +1485,11 @@ static int allowed_bare_repo_cb(const char *key, const char *value,
 
 static enum allowed_bare_repo get_allowed_bare_repo(void)
 {
+#ifdef WITH_BREAKING_CHANGES
+	enum allowed_bare_repo result = ALLOWED_BARE_REPO_EXPLICIT;
+#else
 	enum allowed_bare_repo result = ALLOWED_BARE_REPO_ALL;
+#endif
 	git_protected_config(allowed_bare_repo_cb, &result);
 	return result;
 }

@@ -592,14 +592,21 @@ static int git_unknown_cmd_config(const char *var, const char *value,
 	/* Also use aliases for command lookup */
 	if (!parse_config_key(var, "alias", &subsection, &subsection_len,
 			      &key)) {
+		size_t key_len = strlen(key);
+
 		if (subsection) {
 			/* [alias "name"] command = value */
 			if (!strcmp(key, "command"))
 				add_cmdname(&cfg->aliases, subsection,
 					    subsection_len);
+			else {
+				key = var + strlen("alias.");
+				key_len = strlen(key);
+				add_cmdname(&cfg->aliases, key, key_len);
+			}
 		} else {
 			/* alias.name = value */
-			add_cmdname(&cfg->aliases, key, strlen(key));
+			add_cmdname(&cfg->aliases, key, key_len);
 		}
 	}
 

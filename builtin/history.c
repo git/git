@@ -10,6 +10,7 @@
 #include "gettext.h"
 #include "hex.h"
 #include "lockfile.h"
+#include "merge-ort.h"
 #include "oidmap.h"
 #include "parse-options.h"
 #include "path.h"
@@ -23,6 +24,8 @@
 #include "unpack-trees.h"
 #include "wt-status.h"
 
+#define GIT_HISTORY_FIXUP_USAGE \
+	N_("git history fixup <commit> [--dry-run] [--update-refs=(branches|head)] [--reedit-message] [--empty=(drop|keep|abort)]")
 #define GIT_HISTORY_REWORD_USAGE \
 	N_("git history reword <commit> [--dry-run] [--update-refs=(branches|head)]")
 #define GIT_HISTORY_SPLIT_USAGE \
@@ -91,13 +94,18 @@ static int fill_commit_message(struct repository *repo,
 	return 0;
 }
 
-static int commit_tree_with_edited_message_ext(struct repository *repo,
-					       const char *action,
-					       struct commit *commit_with_message,
-					       const struct commit_list *parents,
-					       const struct object_id *old_tree,
-					       const struct object_id *new_tree,
-					       struct commit **out)
+enum commit_tree_flags {
+	COMMIT_TREE_EDIT_MESSAGE = (1 << 0),
+};
+
+static int commit_tree_ext(struct repository *repo,
+			   const char *action,
+			   struct commit *commit_with_message,
+			   const struct commit_list *parents,
+			   const struct object_id *old_tree,
+			   const struct object_id *new_tree,
+			   struct commit **out,
+			   enum commit_tree_flags flags)
 {
 	const char *exclude_gpgsig[] = {
 		/* We reencode the message, so the encoding needs to be stripped. */
@@ -122,10 +130,14 @@ static int commit_tree_with_edited_message_ext(struct repository *repo,
 		original_author = xmemdupz(ptr, len);
 	find_commit_subject(original_message, &original_body);
 
-	ret = fill_commit_message(repo, old_tree, new_tree,
-				  original_body, action, &commit_message);
-	if (ret < 0)
-		goto out;
+	if (flags & COMMIT_TREE_EDIT_MESSAGE) {
+		ret = fill_commit_message(repo, old_tree, new_tree,
+					  original_body, action, &commit_message);
+		if (ret < 0)
+			goto out;
+	} else {
+		strbuf_addstr(&commit_message, original_body);
+	}
 
 	original_extra_headers = read_commit_extra_headers(commit_with_message,
 							   exclude_gpgsig);
@@ -168,8 +180,8 @@ static int commit_tree_with_edited_message(struct repository *repo,
 		oidcpy(&parent_tree_oid, repo->hash_algo->empty_tree);
 	}
 
-	return commit_tree_with_edited_message_ext(repo, action, original, original->parents,
-						   &parent_tree_oid, tree_oid, out);
+	return commit_tree_ext(repo, action, original, original->parents,
+			       &parent_tree_oid, tree_oid, out, COMMIT_TREE_EDIT_MESSAGE);
 }
 
 enum ref_action {
@@ -326,10 +338,13 @@ static int handle_reference_updates(struct rev_info *revs,
 				    struct commit *original,
 				    struct commit *rewritten,
 				    const char *reflog_msg,
-				    int dry_run)
+				    int dry_run,
+				    enum replay_empty_commit_action empty)
 {
 	const struct name_decoration *decoration;
-	struct replay_revisions_options opts = { 0 };
+	struct replay_revisions_options opts = {
+		.empty = empty,
+	};
 	struct replay_result result = { 0 };
 	struct ref_transaction *transaction = NULL;
 	struct strbuf err = STRBUF_INIT;
@@ -425,6 +440,236 @@ out:
 	return ret;
 }
 
+static int commit_became_empty(struct repository *repo,
+			       struct commit *original,
+			       struct tree *result)
+{
+	struct commit *parent = original->parents ? original->parents->item : NULL;
+	struct object_id parent_tree_oid;
+
+	if (parent) {
+		if (repo_parse_commit(repo, parent))
+			return error(_("unable to parse parent of %s"),
+				     oid_to_hex(&original->object.oid));
+
+		parent_tree_oid = repo_get_commit_tree(repo, parent)->object.oid;
+	} else {
+		oidcpy(&parent_tree_oid, repo->hash_algo->empty_tree);
+	}
+
+	return oideq(&result->object.oid, &parent_tree_oid);
+}
+
+static int parse_opt_empty(const struct option *opt, const char *arg, int unset)
+{
+	enum replay_empty_commit_action *value = opt->value;
+
+	BUG_ON_OPT_NEG(unset);
+
+	if (!strcmp(arg, "drop"))
+		*value = REPLAY_EMPTY_COMMIT_DROP;
+	else if (!strcmp(arg, "keep"))
+		*value = REPLAY_EMPTY_COMMIT_KEEP;
+	else if (!strcmp(arg, "abort"))
+		*value = REPLAY_EMPTY_COMMIT_ABORT;
+	else
+		die(_("unrecognized '--empty=' action '%s'; "
+		      "valid values are \"drop\", \"keep\", and \"abort\"."), arg);
+
+	return 0;
+}
+
+static int cmd_history_fixup(int argc,
+			     const char **argv,
+			     const char *prefix,
+			     struct repository *repo)
+{
+	const char * const usage[] = {
+		GIT_HISTORY_FIXUP_USAGE,
+		NULL,
+	};
+	enum replay_empty_commit_action empty = REPLAY_EMPTY_COMMIT_DROP;
+	enum ref_action action = REF_ACTION_DEFAULT;
+	enum commit_tree_flags flags = 0;
+	int dry_run = 0;
+	struct option options[] = {
+		OPT_CALLBACK_F(0, "update-refs", &action, "(branches|head)",
+			       N_("control which refs should be updated"),
+			       PARSE_OPT_NONEG, parse_ref_action),
+		OPT_BOOL('n', "dry-run", &dry_run,
+			 N_("perform a dry-run without updating any refs")),
+		OPT_BIT(0, "reedit-message", &flags,
+			N_("open an editor to modify the commit message"),
+			COMMIT_TREE_EDIT_MESSAGE),
+		OPT_CALLBACK_F(0, "empty", &empty, "(drop|keep|abort)",
+			       N_("how to handle commits that become empty"),
+			       PARSE_OPT_NONEG, parse_opt_empty),
+		OPT_END(),
+	};
+	struct merge_result merge_result = { 0 };
+	struct merge_options merge_opts = { 0 };
+	struct strbuf reflog_msg = STRBUF_INIT;
+	struct commit *head_commit, *original, *rewritten;
+	struct tree *head_tree, *original_tree, *index_tree;
+	struct rev_info revs = { 0 };
+	bool skip_commit = false;
+	int ret;
+
+	argc = parse_options(argc, argv, prefix, options, usage, 0);
+	if (argc != 1) {
+		ret = error(_("command expects a single revision"));
+		goto out;
+	}
+	repo_config(repo, git_default_config, NULL);
+
+	if (action == REF_ACTION_DEFAULT)
+		action = REF_ACTION_BRANCHES;
+
+	if (is_bare_repository()) {
+		ret = error(_("cannot run fixup in a bare repository"));
+		goto out;
+	}
+
+	/* Resolve the original commit, which is the one we want to fix up. */
+	original = lookup_commit_reference_by_name(argv[0]);
+	if (!original) {
+		ret = error(_("commit cannot be found: %s"), argv[0]);
+		goto out;
+	}
+
+	/*
+	 * Resolve HEAD so we can use its tree as the merge base: the staged
+	 * changes are expressed as a diff from HEAD's tree to the index tree.
+	 */
+	head_commit = lookup_commit_reference_by_name("HEAD");
+	if (!head_commit) {
+		ret = error(_("cannot look up HEAD"));
+		goto out;
+	}
+
+	head_tree = repo_get_commit_tree(repo, head_commit);
+	if (!head_tree) {
+		ret = error(_("cannot get tree for HEAD"));
+		goto out;
+	}
+
+	if (repo_read_index(repo) < 0) {
+		ret = error(_("unable to read index"));
+		goto out;
+	}
+
+	if (!repo_index_has_changes(repo, head_tree, NULL)) {
+		ret = error(_("nothing to fixup: no staged changes"));
+		goto out;
+	}
+
+	/*
+	 * Write the index as a tree object. This is the "theirs" side of the
+	 * three-way merge: it is HEAD's tree with the staged changes applied.
+	 */
+	index_tree = write_in_core_index_as_tree(repo, repo->index);
+	if (!index_tree) {
+		ret = error(_("unable to write index as a tree"));
+		goto out;
+	}
+
+	original_tree = repo_get_commit_tree(repo, original);
+	if (!original_tree) {
+		ret = error(_("cannot get tree for commit %s"), argv[0]);
+		goto out;
+	}
+
+	/*
+	 * Perform the three-way merge to reapply changes in the index onto the
+	 * target commit. This is using basically the same logic as a
+	 * cherry-pick, where the base commit is our HEAD, ours is the original
+	 * tree and theirs is the index tree.
+	 */
+	init_basic_merge_options(&merge_opts, repo);
+	merge_opts.ancestor = "HEAD";
+	merge_opts.branch1 = argv[0];
+	merge_opts.branch2 = "staged";
+	merge_incore_nonrecursive(&merge_opts, head_tree,
+				  original_tree, index_tree, &merge_result);
+
+	if (merge_result.clean < 0) {
+		ret = error(_("merge failed while applying fixup"));
+		goto out;
+	}
+
+	if (!merge_result.clean) {
+		ret = error(_("fixup would produce conflicts; aborting"));
+		goto out;
+	}
+
+	ret = commit_became_empty(repo, original, merge_result.tree);
+	if (ret < 0)
+		goto out;
+	if (ret > 0) {
+		switch (empty) {
+		case REPLAY_EMPTY_COMMIT_DROP:
+			/*
+			 * Drop the target commit by replaying its descendants
+			 * directly onto its parent.
+			 */
+			rewritten = original->parents ? original->parents->item : NULL;
+
+			/*
+			 * TODO: we don't yet have the ability to drop root
+			 * commits, but there's ultimately no good reason for
+			 * this restriction to exist other than a technical
+			 * limitation.
+			 */
+			if (!rewritten) {
+				ret = error(_("cannot drop root commit %s: "
+					      "it has no parent to replay onto"),
+					    argv[0]);
+				goto out;
+			}
+
+			skip_commit = true;
+			break;
+		case REPLAY_EMPTY_COMMIT_KEEP:
+			/* Proceed and record the empty commit. */
+			break;
+		case REPLAY_EMPTY_COMMIT_ABORT:
+			ret = error(_("fixup makes commit %s empty"), argv[0]);
+			goto out;
+		}
+	}
+
+	ret = setup_revwalk(repo, action, original, &revs);
+	if (ret)
+		goto out;
+
+	if (!skip_commit) {
+		ret = commit_tree_ext(repo, "fixup", original, original->parents,
+				      &original_tree->object.oid, &merge_result.tree->object.oid,
+				      &rewritten, flags);
+		if (ret < 0) {
+			ret = error(_("failed writing fixed-up commit"));
+			goto out;
+		}
+	}
+
+	strbuf_addf(&reflog_msg, "fixup: updating %s", argv[0]);
+
+	ret = handle_reference_updates(&revs, action, original, rewritten,
+				       reflog_msg.buf, dry_run, empty);
+	if (ret < 0) {
+		ret = error(_("failed replaying descendants"));
+		goto out;
+	}
+
+	ret = 0;
+
+out:
+	merge_finalize(&merge_opts, &merge_result);
+	strbuf_release(&reflog_msg);
+	release_revisions(&revs);
+	return ret;
+}
+
 static int cmd_history_reword(int argc,
 			      const char **argv,
 			      const char *prefix,
@@ -478,7 +723,7 @@ static int cmd_history_reword(int argc,
 	strbuf_addf(&reflog_msg, "reword: updating %s", argv[0]);
 
 	ret = handle_reference_updates(&revs, action, original, rewritten,
-				       reflog_msg.buf, dry_run);
+				       reflog_msg.buf, dry_run, REPLAY_EMPTY_COMMIT_ABORT);
 	if (ret < 0) {
 		ret = error(_("failed replaying descendants"));
 		goto out;
@@ -616,9 +861,8 @@ static int split_commit(struct repository *repo,
 	 * The first commit is constructed from the split-out tree. The base
 	 * that shall be diffed against is the parent of the original commit.
 	 */
-	ret = commit_tree_with_edited_message_ext(repo, "split-out", original,
-						  original->parents, &parent_tree_oid,
-						  &split_tree->object.oid, &first_commit);
+	ret = commit_tree_ext(repo, "split-out", original, original->parents, &parent_tree_oid,
+			      &split_tree->object.oid, &first_commit, COMMIT_TREE_EDIT_MESSAGE);
 	if (ret < 0) {
 		ret = error(_("failed writing first commit"));
 		goto out;
@@ -634,9 +878,8 @@ static int split_commit(struct repository *repo,
 	old_tree_oid = &repo_get_commit_tree(repo, first_commit)->object.oid;
 	new_tree_oid = &repo_get_commit_tree(repo, original)->object.oid;
 
-	ret = commit_tree_with_edited_message_ext(repo, "split-out", original,
-						  parents, old_tree_oid,
-						  new_tree_oid, &second_commit);
+	ret = commit_tree_ext(repo, "split-out", original, parents, old_tree_oid,
+			      new_tree_oid, &second_commit, COMMIT_TREE_EDIT_MESSAGE);
 	if (ret < 0) {
 		ret = error(_("failed writing second commit"));
 		goto out;
@@ -717,7 +960,7 @@ static int cmd_history_split(int argc,
 	strbuf_addf(&reflog_msg, "split: updating %s", argv[0]);
 
 	ret = handle_reference_updates(&revs, action, original, rewritten,
-				       reflog_msg.buf, dry_run);
+				       reflog_msg.buf, dry_run, REPLAY_EMPTY_COMMIT_ABORT);
 	if (ret < 0) {
 		ret = error(_("failed replaying descendants"));
 		goto out;
@@ -738,12 +981,14 @@ int cmd_history(int argc,
 		struct repository *repo)
 {
 	const char * const usage[] = {
+		GIT_HISTORY_FIXUP_USAGE,
 		GIT_HISTORY_REWORD_USAGE,
 		GIT_HISTORY_SPLIT_USAGE,
 		NULL,
 	};
 	parse_opt_subcommand_fn *fn = NULL;
 	struct option options[] = {
+		OPT_SUBCOMMAND("fixup", &fn, cmd_history_fixup),
 		OPT_SUBCOMMAND("reword", &fn, cmd_history_reword),
 		OPT_SUBCOMMAND("split", &fn, cmd_history_split),
 		OPT_END(),

@@ -146,6 +146,12 @@ $ git show-ref -s | git commit-graph write --stdin-commits
 $ git rev-parse HEAD | git commit-graph write --stdin-commits --append
 ------------------------------------------------
 
+CAVEATS
+-------
+
+The existence of replace objects or commit grafts turns off reading or
+writing to the commit-graph. See linkgit:git-replace[1].
+
 CONFIGURATION
 -------------
 

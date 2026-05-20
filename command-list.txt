@@ -108,6 +108,7 @@ git-fmt-merge-msg                       purehelpers
 git-for-each-ref                        plumbinginterrogators
 git-for-each-repo                       plumbinginterrogators
 git-format-patch                        mainporcelain
+git-format-rev                          plumbinginterrogators
 git-fsck                                ancillaryinterrogators          complete
 git-gc                                  mainporcelain
 git-get-tar-commit-id                   plumbinginterrogators

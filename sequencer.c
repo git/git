@@ -6460,8 +6460,14 @@ static int add_decorations_to_list(const struct commit *commit,
 		/*
 		 * If the branch is the current HEAD, then it will be
 		 * updated by the default rebase behavior.
+		 * Exclude it from the list of refs to update,
+		 * as well as any non-branch decorations.
+		 * Non-branch decorations may be present if the pretty format
+		 * includes "%d", which would have loaded all refs
+		 * into the global decoration table.
 		 */
-		if (head_ref && !strcmp(head_ref, decoration->name)) {
+		if ((head_ref && !strcmp(head_ref, decoration->name)) ||
+		    (decoration->type != DECORATION_REF_LOCAL)) {
 			decoration = decoration->next;
 			continue;
 		}

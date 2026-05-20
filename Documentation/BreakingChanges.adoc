@@ -216,6 +216,30 @@ would be significant, we may decide to defer this change to a subsequent minor
 release. This evaluation will also take into account our own experience with
 how painful it is to keep Rust an optional component.
 
+* The default value of `safe.bareRepository` will change from `all` to
+  `explicit`. It is all too easy for an attacker to trick a user into cloning a
+  repository that contains an embedded bare repository with malicious hooks
+  configured. If the user enters that subdirectory and runs any Git command, Git
+  discovers the bare repository and the hooks fire. The user does not even need
+  to run a Git command explicitly: many shell prompts run `git status` in the
+  background to display branch and dirty state information, and `git status` in
+  turn may invoke the fsmonitor hook if so configured, making the user
+  vulnerable the moment they `cd` into the directory. The `safe.bareRepository`
+  configuration variable was introduced in 8959555cee (setup_git_directory():
+  add an owner check for the top-level directory, 2022-03-02) with a default of
+  `all` to preserve backwards compatibility.
++
+Changing the default to `explicit` means that Git will refuse to work with bare
+repositories that are discovered implicitly by walking up the directory tree.
+Bare repositories specified explicitly via the `--git-dir` command-line option
+or the `GIT_DIR` environment variable continue to work regardless of this
+setting. Repositories that look like a `.git` directory, a worktree, or a
+submodule directory are also unaffected.
++
+Users who rely on implicit discovery of bare repositories can restore the
+previous behavior by setting `safe.bareRepository=all` in their global or
+system configuration.
+
 === Removals
 
 * Support for grafting commits has long been superseded by git-replace(1).

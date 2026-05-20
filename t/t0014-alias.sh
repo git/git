@@ -128,6 +128,12 @@ test_expect_success 'subsection syntax works' '
 	test_grep "ran-subsection" output
 '
 
+test_expect_success 'simple dotted alias syntax still works' '
+	test_config alias.simple.dotted "!echo ran-simple-dotted" &&
+	git simple.dotted >output &&
+	test_grep "ran-simple-dotted" output
+'
+
 test_expect_success 'subsection syntax only accepts command key' '
 	test_config alias.invalid.notcommand value &&
 	test_must_fail git invalid 2>error &&
@@ -181,6 +187,12 @@ test_expect_success 'subsection aliases listed in help -a' '
 	test_config alias."förgrena".command "!echo test" &&
 	git help -a >output &&
 	test_grep "förgrena" output
+'
+
+test_expect_success 'simple dotted aliases listed in help -a' '
+	test_config alias.simple.listed "!echo test" &&
+	git help -a >output &&
+	test_grep "simple.listed" output
 '
 
 test_expect_success 'empty subsection treated as no subsection' '

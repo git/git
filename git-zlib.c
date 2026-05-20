@@ -30,6 +30,9 @@ static const char *zerr_to_string(int status)
  */
 /* #define ZLIB_BUF_MAX ((uInt)-1) */
 #define ZLIB_BUF_MAX ((uInt) 1024 * 1024 * 1024) /* 1GB */
+
+/* uLong is 32-bit on Windows, even on 64-bit systems */
+#define ULONG_MAX_VALUE maximum_unsigned_value_of_type(uLong)
 static inline uInt zlib_buf_cap(unsigned long len)
 {
 	return (ZLIB_BUF_MAX < len) ? ZLIB_BUF_MAX : len;
@@ -39,31 +42,37 @@ static void zlib_pre_call(git_zstream *s)
 {
 	s->z.next_in = s->next_in;
 	s->z.next_out = s->next_out;
-	s->z.total_in = s->total_in;
-	s->z.total_out = s->total_out;
+	s->z.total_in = (uLong)(s->total_in & ULONG_MAX_VALUE);
+	s->z.total_out = (uLong)(s->total_out & ULONG_MAX_VALUE);
 	s->z.avail_in = zlib_buf_cap(s->avail_in);
 	s->z.avail_out = zlib_buf_cap(s->avail_out);
 }
 
 static void zlib_post_call(git_zstream *s, int status)
 {
-	unsigned long bytes_consumed;
-	unsigned long bytes_produced;
+	size_t bytes_consumed;
+	size_t bytes_produced;
 
 	bytes_consumed = s->z.next_in - s->next_in;
 	bytes_produced = s->z.next_out - s->next_out;
-	if (s->z.total_out != s->total_out + bytes_produced)
+	/*
+	 * zlib's total_out/total_in are uLong which may wrap for >4GB.
+	 * We track our own totals and verify only the low bits match.
+	 */
+	if ((s->z.total_out & ULONG_MAX_VALUE) !=
+	    ((s->total_out + bytes_produced) & ULONG_MAX_VALUE))
 		BUG("total_out mismatch");
 	/*
 	 * zlib does not update total_in when it returns Z_NEED_DICT,
 	 * causing a mismatch here. Skip the sanity check in that case.
 	 */
 	if (status != Z_NEED_DICT &&
-	    s->z.total_in != s->total_in + bytes_consumed)
+	    (s->z.total_in & ULONG_MAX_VALUE) !=
+	    ((s->total_in + bytes_consumed) & ULONG_MAX_VALUE))
 		BUG("total_in mismatch");
 
-	s->total_out = s->z.total_out;
-	s->total_in = s->z.total_in;
+	s->total_out += bytes_produced;
+	s->total_in += bytes_consumed;
 	/* zlib-ng marks `next_in` as `const`, so we have to cast it away. */
 	s->next_in = (unsigned char *) s->z.next_in;
 	s->next_out = s->z.next_out;

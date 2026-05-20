@@ -1637,12 +1637,12 @@ static int find_invalid_utf8(const char *buf, int len)
 }
 
 /*
- * This verifies that the buffer is in proper utf8 format.
+ * This ensures that the buffer is in proper utf8 format.
  *
  * If it isn't, it assumes any non-utf8 characters are Latin1,
  * and does the conversion.
  */
-static int verify_utf8(struct strbuf *buf)
+static int ensure_utf8(struct strbuf *buf)
 {
 	int ok = 1;
 	long pos = 0;
@@ -1726,6 +1726,7 @@ int commit_tree_extended(const char *msg, size_t msg_len,
 	struct repository *r = the_repository;
 	int result = 0;
 	int encoding_is_utf8;
+	bool warned = false;
 	struct strbuf buffer = STRBUF_INIT, compat_buffer = STRBUF_INIT;
 	struct strbuf sig = STRBUF_INIT, compat_sig = STRBUF_INIT;
 	struct object_id *parent_buf = NULL, *compat_oid = NULL;
@@ -1747,6 +1748,13 @@ int commit_tree_extended(const char *msg, size_t msg_len,
 		oidcpy(&parent_buf[i++], &p->item->object.oid);
 
 	write_commit_tree(&buffer, msg, msg_len, tree, parent_buf, nparents, author, committer, extra);
+
+	/* And check the encoding. */
+	if (encoding_is_utf8 && !ensure_utf8(&buffer)) {
+		fprintf(stderr, _(commit_utf8_warn));
+		warned = true;
+	}
+
 	if (sign_commit && sign_buffer(&buffer, &sig, sign_commit,
 				       SIGN_BUFFER_USE_DEFAULT_KEY)) {
 		result = -1;
@@ -1779,6 +1787,9 @@ int commit_tree_extended(const char *msg, size_t msg_len,
 				  mapped_parents, nparents, author, committer, compat_extra);
 		free_commit_extra_headers(compat_extra);
 		free(mapped_parents);
+
+		if (encoding_is_utf8 && !ensure_utf8(&compat_buffer) && !warned)
+			fprintf(stderr, _(commit_utf8_warn));
 
 		if (sign_commit && sign_buffer(&compat_buffer, &compat_sig,
 					       sign_commit,
@@ -1817,10 +1828,6 @@ int commit_tree_extended(const char *msg, size_t msg_len,
 				add_header_signature(&compat_buffer, bufs[i].sig, bufs[i].algo);
 		}
 	}
-
-	/* And check the encoding. */
-	if (encoding_is_utf8 && (!verify_utf8(&buffer) || !verify_utf8(&compat_buffer)))
-		fprintf(stderr, _(commit_utf8_warn));
 
 	if (r->compat_hash_algo) {
 		hash_object_file(r->compat_hash_algo, compat_buffer.buf, compat_buffer.len,

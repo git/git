@@ -55,6 +55,7 @@ manpages = {
   'git-for-each-ref.adoc' : 1,
   'git-for-each-repo.adoc' : 1,
   'git-format-patch.adoc' : 1,
+  'git-format-rev.adoc' : 1,
   'git-fsck-objects.adoc' : 1,
   'git-fsck.adoc' : 1,
   'git-fsmonitor--daemon.adoc' : 1,

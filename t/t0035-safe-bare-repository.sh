@@ -44,9 +44,14 @@ test_expect_success 'setup an embedded bare repo, secondary worktree and submodu
 	test_path_is_dir outer-repo/.git/modules/subn
 '
 
-test_expect_success 'safe.bareRepository unset' '
+test_expect_success !WITH_BREAKING_CHANGES 'safe.bareRepository unset' '
 	test_unconfig --global safe.bareRepository &&
 	expect_accepted_implicit -C outer-repo/bare-repo
+'
+
+test_expect_success WITH_BREAKING_CHANGES 'safe.bareRepository unset (defaults to explicit)' '
+	test_unconfig --global safe.bareRepository &&
+	expect_rejected -C outer-repo/bare-repo
 '
 
 test_expect_success 'safe.bareRepository=all' '
@@ -63,7 +68,8 @@ test_expect_success 'safe.bareRepository in the repository' '
 	# safe.bareRepository must not be "explicit", otherwise
 	# git config fails with "fatal: not in a git directory" (like
 	# safe.directory)
-	test_config -C outer-repo/bare-repo safe.bareRepository all &&
+	test_when_finished "git config --file outer-repo/bare-repo/config --unset safe.bareRepository" &&
+	git config --file outer-repo/bare-repo/config safe.bareRepository all &&
 	test_config_global safe.bareRepository explicit &&
 	expect_rejected -C outer-repo/bare-repo
 '

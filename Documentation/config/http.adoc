@@ -59,7 +59,18 @@ http.emptyAuth::
 	Attempt authentication without seeking a username or password.  This
 	can be used to attempt GSS-Negotiate authentication without specifying
 	a username in the URL, as libcurl normally requires a username for
-	authentication.
+	authentication. Possible values are:
++
+--
+* `auto` (default) - Send empty credentials only if the server's 401 response
+  advertises an authentication mechanism that requires them (such as
+  GSS-Negotiate); otherwise fall back to prompting via the credential helper.
+* `true` - Always send empty credentials on the very first request, before
+  receiving any 401 response from the server.
+* `false` - Never send empty credentials. Mechanisms that require
+  empty credentials or an explicit username, such as GSS-Negotiate, will not
+  work.
+--
 
 http.proactiveAuth::
 	Attempt authentication without first making an unauthenticated attempt and

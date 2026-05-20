@@ -813,7 +813,9 @@ test_expect_success 'clone with includeIf' '
 	test_when_finished "rm -rf repo \"$HTTPD_DOCUMENT_ROOT_PATH/repo.git\"" &&
 	git clone --bare --no-local src "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
 
-	test_when_finished "rm \"$HOME\"/.gitconfig" &&
+	test_when_finished "cp \"$HOME\"/.gitconfig.bak \
+		\"$HOME\"/.gitconfig 2>/dev/null || rm -f \"$HOME\"/.gitconfig" &&
+	cp "$HOME"/.gitconfig "$HOME"/.gitconfig.bak 2>/dev/null &&
 	cat >"$HOME"/.gitconfig <<-EOF &&
 	[includeIf "onbranch:something"]
 		path = /does/not/exist.inc

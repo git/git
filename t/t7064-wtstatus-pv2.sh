@@ -231,6 +231,7 @@ test_expect_success 'ignored files are printed with --ignored' '
 	EOF
 
 	git status --porcelain=v2 --ignored --untracked-files=all >actual &&
+	test_filter_gitconfig actual &&
 	test_cmp expect actual
 '
 

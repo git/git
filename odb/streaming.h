@@ -21,7 +21,7 @@ struct odb_read_stream {
 	odb_read_stream_close_fn close;
 	odb_read_stream_read_fn read;
 	enum object_type type;
-	unsigned long size; /* inflated size of full object */
+	size_t size; /* inflated size of full object */
 };
 
 /*

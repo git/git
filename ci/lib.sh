@@ -314,6 +314,15 @@ export DEFAULT_TEST_TARGET=prove
 export GIT_TEST_CLONE_2GB=true
 export SKIP_DASHED_BUILT_INS=YesPlease
 
+# Enable expensive tests on push builds to integration branches, but
+# not on PR builds where the extra time is not justified for every
+# iteration.
+case "$GITHUB_EVENT_NAME,$CI_BRANCH" in
+push,*next*|push,*master*|push,*main*|push,*maint*)
+	export GIT_TEST_LONG=YesPlease
+	;;
+esac
+
 case "$distro" in
 ubuntu-*)
 	# Python 2 is end of life, and Ubuntu 23.04 and newer don't actually

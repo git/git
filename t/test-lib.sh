@@ -1624,6 +1624,19 @@ cd -P "$TRASH_DIRECTORY" || BAIL_OUT "cannot cd -P to \"$TRASH_DIRECTORY\""
 TRASH_DIRECTORY=$(pwd)
 HOME="$TRASH_DIRECTORY"
 
+if test -n "$WITH_BREAKING_CHANGES"
+then
+	git config --global safe.bareRepository all &&
+	# Only write to .git/info/exclude when the directory exists
+	# (i.e. when git init created the repo). If we mkdir -p it
+	# ourselves, tests that expect to create .git/info/ themselves
+	# (e.g. t0008) would fail.
+	if test -d .git/info
+	then
+		echo "/.gitconfig" >>.git/info/exclude
+	fi
+fi
+
 start_test_output "$0"
 
 # Convenience

@@ -462,4 +462,14 @@ test_expect_success 'custom `gpg.program`' '
 	git commit -S --allow-empty -m signed-commit
 '
 
+test_expect_success GPG 'commit verifies with non-UTF-8 commit message' '
+	printf "I hate\\376\\377UTF-8\\n" >message &&
+	echo unusual-message >file &&
+	git add file &&
+	test_tick && git commit -S -F message 2>err &&
+	git verify-commit HEAD &&
+	grep "commit message did not conform to UTF-8" err >lines &&
+	test_line_count = 1 lines
+'
+
 test_done

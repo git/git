@@ -178,7 +178,7 @@ struct hashfile *hashfd_ext(const struct git_hash_algo *algop,
 	f->algop = unsafe_hash_algo(algop);
 	f->algop->init_fn(&f->ctx);
 
-	f->buffer_len = opts->buffer_len ? opts->buffer_len : 128 * 1024;
+	f->buffer_len = opts->buffer_len ? opts->buffer_len : DEFAULT_IO_BUFFER_SIZE;
 	f->buffer = xmalloc(f->buffer_len);
 	f->check_buffer = NULL;
 

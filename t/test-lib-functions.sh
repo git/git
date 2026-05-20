@@ -2069,3 +2069,11 @@ test_trailing_hash () {
 test_redact_non_printables () {
     tr -d "\n\r" | tr "[\001-\040][\177-\377]" "."
 }
+
+# Remove .gitconfig entries from a file in place.  test-lib.sh may
+# create $HOME/.gitconfig (e.g. to set safe.bareRepository) which
+# can appear in ls-files or status output.
+test_filter_gitconfig () {
+	sed "/\\.gitconfig/d" "$1" >"$1.filtered" &&
+	mv "$1.filtered" "$1"
+}

@@ -110,7 +110,7 @@ static int verify_packfile(struct repository *r,
 		void *data;
 		struct object_id oid;
 		enum object_type type;
-		unsigned long size;
+		size_t size;
 		off_t curpos;
 		int data_valid;
 
@@ -143,7 +143,9 @@ static int verify_packfile(struct repository *r,
 			data = NULL;
 			data_valid = 0;
 		} else {
-			data = unpack_entry(r, p, entries[i].offset, &type, &size);
+			unsigned long sz;
+			data = unpack_entry(r, p, entries[i].offset, &type, &sz);
+			size = sz;
 			data_valid = 1;
 		}
 

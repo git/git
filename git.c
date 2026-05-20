@@ -584,6 +584,7 @@ static struct cmd_struct commands[] = {
 	{ "for-each-ref", cmd_for_each_ref, RUN_SETUP },
 	{ "for-each-repo", cmd_for_each_repo, RUN_SETUP_GENTLY },
 	{ "format-patch", cmd_format_patch, RUN_SETUP },
+	{ "format-rev", cmd_format_rev, RUN_SETUP },
 	{ "fsck", cmd_fsck, RUN_SETUP },
 	{ "fsck-objects", cmd_fsck, RUN_SETUP },
 	{ "fsmonitor--daemon", cmd_fsmonitor__daemon, RUN_SETUP },

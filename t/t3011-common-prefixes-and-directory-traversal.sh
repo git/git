@@ -26,7 +26,7 @@ test_expect_success 'setup' '
 '
 
 test_expect_success 'git ls-files -o shows the right entries' '
-	cat <<-EOF >expect &&
+	cat >expect <<-EOF &&
 	.gitignore
 	actual
 	an_ignored_dir/ignored
@@ -39,6 +39,7 @@ test_expect_success 'git ls-files -o shows the right entries' '
 	untracked_repo/
 	EOF
 	git ls-files -o >actual &&
+	test_filter_gitconfig actual &&
 	test_cmp expect actual
 '
 
