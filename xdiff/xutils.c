@@ -23,8 +23,8 @@
 #include "xinclude.h"
 
 
-uint64_t xdl_bogosqrt(uint64_t n) {
-	uint64_t i;
+long xdl_bogosqrt(long n) {
+	long i;
 
 	/*
 	 * Classical integer square root approximation using shifts.

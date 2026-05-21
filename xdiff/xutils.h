@@ -25,7 +25,7 @@
 
 
 
-uint64_t xdl_bogosqrt(uint64_t n);
+long xdl_bogosqrt(long n);
 int xdl_emit_diffrec(char const *rec, long size, char const *pre, long psize,
 		     xdemitcb_t *ecb);
 int xdl_cha_init(chastore_t *cha, long isize, long icount);

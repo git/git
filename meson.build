@@ -290,7 +290,6 @@ libgit_sources = [
   'archive-zip.c',
   'archive.c',
   'attr.c',
-  'autocorrect.c',
   'base85.c',
   'bisect.c',
   'blame.c',

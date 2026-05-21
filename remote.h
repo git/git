@@ -117,8 +117,6 @@ struct remote {
 	char *http_proxy_authmethod;
 
 	struct string_list server_options;
-	struct string_list negotiation_restrict;
-	struct string_list negotiation_require;
 
 	enum follow_remote_head_settings follow_remote_head;
 	const char *no_warn_branch;
@@ -348,18 +346,6 @@ const char *repo_remote_from_url(struct repository *repo, const char *url);
 int branch_has_merge_config(struct branch *branch);
 
 int branch_merge_matches(struct branch *, int n, const char *);
-
-/* list of the remote in a group as configured */
-struct remote_group_data {
-	const char *name;
-	struct string_list *list;
-};
-
-int get_remote_group(const char *key, const char *value,
-                    const struct config_context *ctx,
-                    void *priv);
-
-int add_remote_or_group(const char *name, struct string_list *list);
 
 /**
  * Return the fully-qualified refname of the tracking branch for `branch`.
