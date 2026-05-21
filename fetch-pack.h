@@ -21,14 +21,7 @@ struct fetch_pack_args {
 	 * If not NULL, during packfile negotiation, fetch-pack will send "have"
 	 * lines only with these tips and their ancestors.
 	 */
-	const struct oid_array *negotiation_restrict_tips;
-
-	/*
-	 * If non-empty, ref patterns whose tips should always be sent
-	 * as "have" lines during negotiation, regardless of what the
-	 * negotiation algorithm selects.
-	 */
-	const struct string_list *negotiation_require;
+	const struct oid_array *negotiation_tips;
 
 	unsigned deepen_relative:1;
 	unsigned quiet:1;
@@ -96,12 +89,11 @@ struct ref *fetch_pack(struct fetch_pack_args *args,
  * In the capability advertisement that has happened prior to invoking this
  * function, the "wait-for-done" capability must be present.
  */
-void negotiate_using_fetch(const struct oid_array *negotiation_restrict_tips,
+void negotiate_using_fetch(const struct oid_array *negotiation_tips,
 			   const struct string_list *server_options,
 			   int stateless_rpc,
 			   int fd[],
-			   struct oidset *acked_commits,
-			   const struct string_list *negotiation_require);
+			   struct oidset *acked_commits);
 
 /*
  * Print an appropriate error message for each sought ref that wasn't
