@@ -25,10 +25,12 @@
 #include "preload-index.h"
 #include "read-cache.h"
 #include "refs.h"
+#include "refspec.h"
 #include "remote.h"
 #include "repo-settings.h"
 #include "resolve-undo.h"
 #include "revision.h"
+#include "run-command.h"
 #include "sequencer.h"
 #include "setup.h"
 #include "sparse-index.h"
@@ -63,6 +65,7 @@ struct checkout_opts {
 	int count_checkout_paths;
 	int overlay_mode;
 	int dwim_new_local_branch;
+	int fetch;
 	int discard_changes;
 	int accept_ref;
 	int accept_pathspec;
@@ -115,6 +118,128 @@ struct branch_info {
 	 */
 	char *checkout;
 };
+
+static void fetch_remote_for_start_point(const char *arg, int quiet)
+{
+	struct strbuf dst = STRBUF_INIT;
+	struct tracking tracking = { 0 };
+	struct string_list tracking_srcs = STRING_LIST_INIT_DUP;
+	struct string_list ambiguous_remotes = STRING_LIST_INIT_DUP;
+	struct child_process cmd = CHILD_PROCESS_INIT;
+	struct remote *named_remote;
+	int bare_ns;
+
+	strbuf_addf(&dst, "refs/remotes/%s", arg);
+	if (check_refname_format(dst.buf, 0))
+		die(_("cannot fetch start-point '%s': not a valid "
+		      "remote-tracking name"), arg);
+
+	named_remote = remote_get(arg);
+	bare_ns = !strchr(arg, '/') ||
+		(named_remote && remote_is_configured(named_remote, 1));
+	if (bare_ns) {
+		char *head_path = xstrfmt("refs/remotes/%s/HEAD", arg);
+		const char *head_target =
+			refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
+						head_path,
+						RESOLVE_REF_READING,
+						NULL, NULL);
+		if (head_target &&
+		    starts_with(head_target, dst.buf) &&
+		    head_target[dst.len] == '/') {
+			strbuf_reset(&dst);
+			strbuf_addstr(&dst, head_target);
+			bare_ns = 0;
+		}
+		free(head_path);
+	}
+
+	tracking.spec.dst = dst.buf;
+	tracking.srcs = &tracking_srcs;
+	find_tracking_remote_for_ref(&tracking, &ambiguous_remotes);
+
+	if (tracking.matches > 1) {
+		int status = die_message(_("cannot fetch start-point '%s': "
+					   "fetch refspecs of multiple remotes "
+					   "map to '%s'"), arg, dst.buf);
+		advise_ambiguous_fetch_refspec(dst.buf, &ambiguous_remotes);
+		exit(status);
+	}
+
+	if (!tracking.matches) {
+		if (bare_ns && named_remote &&
+		    remote_is_configured(named_remote, 1)) {
+			int status = die_message(_("cannot fetch start-point '%s' "
+						   "because 'refs/remotes/%s/HEAD' "
+						   "does not exist."), arg, arg);
+			advise(_("To create it run\n"
+				 "\n"
+				 "    git remote set-head %s --auto\n"), arg);
+			exit(status);
+		}
+		die(_("cannot fetch start-point '%s': no configured remote's "
+		      "fetch refspec matches it"), arg);
+	}
+
+	strvec_push(&cmd.args, "fetch");
+	if (quiet)
+		strvec_push(&cmd.args, "--quiet");
+	strvec_pushl(&cmd.args, tracking.remote,
+		     tracking_srcs.items[0].string, NULL);
+	cmd.git_cmd = 1;
+	if (run_command(&cmd)) {
+		if (refs_ref_exists(get_main_ref_store(the_repository), dst.buf))
+			warning(_("failed to fetch start-point '%s'; "
+				  "using existing '%s'"), arg, dst.buf);
+		else
+			die(_("failed to fetch start-point '%s'"), arg);
+	}
+
+	string_list_clear(&tracking_srcs, 0);
+	string_list_clear(&ambiguous_remotes, 0);
+	strbuf_release(&dst);
+}
+
+static int parse_opt_checkout_track(const struct option *opt,
+				    const char *arg, int unset)
+{
+	struct checkout_opts *opts = opt->value;
+	struct string_list tokens = STRING_LIST_INIT_DUP;
+	struct string_list_item *item;
+	int saw_direct = 0;
+	int ret = 0;
+
+	opts->fetch = 0;
+	if (unset) {
+		opts->track = BRANCH_TRACK_NEVER;
+		return 0;
+	}
+	opts->track = BRANCH_TRACK_EXPLICIT;
+	if (!arg)
+		return 0;
+
+	string_list_split(&tokens, arg, ",", -1);
+	for_each_string_list_item(item, &tokens) {
+		if (!strcmp(item->string, "fetch"))
+			opts->fetch = 1;
+		else if (!strcmp(item->string, "direct"))
+			saw_direct = 1;
+		else if (!strcmp(item->string, "inherit"))
+			opts->track = BRANCH_TRACK_INHERIT;
+		else {
+			ret = error(_("option `%s' expects \"%s\", \"%s\", "
+				      "or \"%s\""),
+				    "--track", "direct", "inherit", "fetch");
+			goto out;
+		}
+	}
+	if (saw_direct && opts->track == BRANCH_TRACK_INHERIT)
+		ret = error(_("option `%s' cannot combine \"%s\" and \"%s\""),
+			    "--track", "direct", "inherit");
+out:
+	string_list_clear(&tokens, 0);
+	return ret;
+}
 
 static void branch_info_release(struct branch_info *info)
 {
@@ -1789,10 +1914,10 @@ static struct option *add_common_switch_branch_options(
 {
 	struct option options[] = {
 		OPT_BOOL('d', "detach", &opts->force_detach, N_("detach HEAD at named commit")),
-		OPT_CALLBACK_F('t', "track",  &opts->track, "(direct|inherit)",
+		OPT_CALLBACK_F('t', "track",  opts, "(direct|inherit|fetch)[,...]",
 			N_("set branch tracking configuration"),
 			PARSE_OPT_OPTARG,
-			parse_opt_tracking_mode),
+			parse_opt_checkout_track),
 		OPT__FORCE(&opts->force, N_("force checkout (throw away local modifications)"),
 			   PARSE_OPT_NOCOMPLETE),
 		OPT_STRING(0, "orphan", &opts->new_orphan_branch, N_("new-branch"), N_("new unborn branch")),
@@ -1997,8 +2122,13 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 			opts->dwim_new_local_branch &&
 			opts->track == BRANCH_TRACK_UNSPECIFIED &&
 			!opts->new_branch;
-		int n = parse_branchname_arg(argc, argv, dwim_ok, which_command,
-					     &new_branch_info, opts, &rev);
+		int n;
+
+		if (opts->fetch)
+			fetch_remote_for_start_point(argv[0], opts->quiet);
+
+		n = parse_branchname_arg(argc, argv, dwim_ok, which_command,
+					 &new_branch_info, opts, &rev);
 		argv += n;
 		argc -= n;
 	} else if (!opts->accept_ref && opts->from_treeish) {
