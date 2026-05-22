@@ -224,7 +224,8 @@ A branch is not deleted when:
   distinguished from a branch that just looks fully merged right
   after a pull; this is determined by the remote's configured push and
   fetch refspecs,
-* it is the local upstream of a branch that is not being deleted.
+* it is the local upstream of a branch that is not being deleted, or
+* `branch.<name>.deleteMerged` is set to `false`.
 --
 +
 When such a local upstream branch has its own upstream deleted by the
