@@ -25,6 +25,7 @@ git branch (-m|-M) [<old-branch>] <new-branch>
 git branch (-c|-C) [<old-branch>] <new-branch>
 git branch (-d|-D) [-r] <branch-name>...
 git branch --edit-description [<branch-name>]
+git branch (--delete-merged <branch>)... [<pattern>...]
 
 DESCRIPTION
 -----------
@@ -200,6 +201,35 @@ This option is only applicable in non-verbose mode.
 `--show-current`::
 	Print the name of the current branch. In detached `HEAD` state,
 	nothing is printed.
+
+`--delete-merged <branch>`::
+	Delete local branches whose configured upstream matches
+	_<branch>_, but only when their tip is reachable from that
+	upstream. In other words, the work on the branch has already
+	landed on the upstream it tracks, so the local copy is no longer
+	needed. The option can be repeated to widen the upstream match.
+	Optional _<pattern>_ arguments limit which local branches are
+	considered, e.g. `git branch --delete-merged 'origin/*'
+	'topic-*'`.
++
+A branch is not deleted when:
++
+--
+* its configured upstream ref no longer exists,
+* it is checked out in any worktree, or
+* pushing it by name to the remote configured by
+  `branch.<name>.remote` would update its upstream, so it cannot be
+  distinguished from a branch that just looks "fully merged" right
+  after a pull.
+--
++
+A branch whose work has not yet been merged into its upstream is
+silently skipped. Delete it with `git branch -D` if you want to
+remove it anyway.
++
+A branch that a surviving branch depends on through a chain of local
+upstreams is kept, so a branch is never deleted out from under stacked
+work.
 
 `-v`::
 `-vv`::
