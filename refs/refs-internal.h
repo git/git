@@ -40,6 +40,13 @@ struct ref_transaction;
 #define REF_LOG_ONLY (1 << 7)
 
 /*
+ * The reference contains a peeled object ID. This is used when the
+ * new_oid is pointing to a tag object and the reference backend
+ * wants to also store the peeled value for optimized retrieval.
+ */
+#define REF_HAVE_PEELED (1 << 15)
+
+/*
  * Return the length of time to retry acquiring a loose reference lock
  * before giving up, in milliseconds:
  */
@@ -91,6 +98,12 @@ struct ref_update {
 	 * `old_oid` is `null_oid`).
 	 */
 	struct object_id old_oid;
+
+	/*
+	 * If the new_oid points to a tag object, set this to the peeled
+	 * object ID for optimized retrieval without needed to hit the odb.
+	 */
+	struct object_id peeled;
 
 	/*
 	 * If set, point the reference to this value. This can also be
@@ -169,6 +182,7 @@ struct ref_update *ref_transaction_add_update(
 		const char *refname, unsigned int flags,
 		const struct object_id *new_oid,
 		const struct object_id *old_oid,
+		const struct object_id *peeled,
 		const char *new_target, const char *old_target,
 		const char *committer_info,
 		const char *msg);
@@ -386,6 +400,21 @@ struct ref_store;
 				 REF_STORE_MAIN)
 
 /*
+ * Options for initializing the ref backend. All backend-agnostic information
+ * which backends required will be held here.
+ */
+struct ref_store_init_options {
+	/* The kind of operations that the ref_store is allowed to perform. */
+	unsigned int access_flags;
+
+	/*
+	 * Denotes under what conditions reflogs should be created when updating
+	 * references.
+	 */
+	enum log_refs_config log_all_ref_updates;
+};
+
+/*
  * Initialize the ref_store for the specified gitdir. These functions
  * should call base_ref_store_init() to initialize the shared part of
  * the ref_store and to record the ref_store for later lookup.
@@ -393,7 +422,7 @@ struct ref_store;
 typedef struct ref_store *ref_store_init_fn(struct repository *repo,
 					    const char *payload,
 					    const char *gitdir,
-					    unsigned int flags);
+					    const struct ref_store_init_options *opts);
 /*
  * Release all memory and resources associated with the ref store.
  */
@@ -420,10 +449,6 @@ typedef int ref_transaction_finish_fn(struct ref_store *refs,
 typedef int ref_transaction_abort_fn(struct ref_store *refs,
 				     struct ref_transaction *transaction,
 				     struct strbuf *err);
-
-typedef int ref_transaction_commit_fn(struct ref_store *refs,
-				      struct ref_transaction *transaction,
-				      struct strbuf *err);
 
 typedef int optimize_fn(struct ref_store *ref_store,
 			struct refs_optimize_opts *opts);

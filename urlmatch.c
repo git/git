@@ -5,6 +5,7 @@
 #include "hex-ll.h"
 #include "strbuf.h"
 #include "urlmatch.h"
+#include "url.h"
 
 #define URL_ALPHA "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 #define URL_DIGIT "0123456789"
@@ -438,6 +439,132 @@ static char *url_normalize_1(const char *url, struct url_info *out_info, char al
 char *url_normalize(const char *url, struct url_info *out_info)
 {
 	return url_normalize_1(url, out_info, 0);
+}
+
+char *url_parse(const char *url_orig, struct url_info *out_info)
+{
+	struct strbuf url;
+	char *host, *separator;
+	char *detached, *normalized;
+	char *url_decoded;
+	enum url_scheme scheme = URL_SCHEME_LOCAL;
+	struct url_info local_info;
+	struct url_info *info = out_info ? out_info : &local_info;
+	bool scp_syntax = false;
+
+	if (is_url(url_orig))
+		url_decoded = url_decode(url_orig);
+	else
+		url_decoded = xstrdup(url_orig);
+
+	strbuf_init(&url, strlen(url_decoded) + sizeof("ssh://"));
+	strbuf_addstr(&url, url_decoded);
+	free(url_decoded);
+
+	host = strstr(url.buf, "://");
+	if (host) {
+		/*
+		 * Temporarily NUL-terminate the scheme name
+		 * so we can pass it to url_get_scheme(),
+		 * then restore the ':' so the buffer
+		 * is intact for url_normalize() below.
+		 */
+		char saved = *host;
+		*host = '\0';
+		scheme = url_get_scheme(url.buf);
+		*host = saved;
+		host += 3;
+	} else {
+		if (!url_is_local_not_ssh(url.buf)) {
+			scp_syntax = true;
+			scheme = URL_SCHEME_SSH;
+			strbuf_insertstr(&url, 0, "ssh://");
+			host = url.buf + strlen("ssh://");
+		}
+	}
+
+	/*
+	 * Path starts after ':' in scp style SSH URLs.
+	 *
+	 * The host portion can begin with an optional "user@",
+	 * and the host itself can be wrapped in '[' ']' brackets.
+	 * The bracket form is git's legacy way of supporting:
+	 *
+	 *   - IPv6 literals: [::1]:repo
+	 *   - host:port pairs in the short form: [myhost:123]:src
+	 *   - Plain hostnames that happen to need bracketing: [host]:path
+	 *
+	 * Treat '[' followed by 0 or 1 inner colons as the host:port
+	 * or plain hostname form and strip the brackets so url_normalize
+	 * sees host[:port] natively. Two or more inner colons mark an
+	 * IPv6 literal: keep the brackets for url_normalize to recognize.
+	 *
+	 * The scp path separator is the ':' that follows the host part,
+	 * and we must skip over user@ and any '[...]' before searching.
+	 */
+	if (scp_syntax) {
+		char *user_at;
+		char *host_start;
+		char *bracket_end;
+
+		user_at = strchr(host, '@');
+		host_start = user_at ? user_at + 1 : host;
+
+		if (*host_start == '[') {
+			char *p;
+			int inner_colons;
+
+			bracket_end = strchr(host_start, ']');
+			inner_colons = 0;
+			for (p = host_start + 1; bracket_end && p < bracket_end; p++)
+				if (*p == ':')
+					inner_colons++;
+
+			if (bracket_end && inner_colons <= 1) {
+				size_t close_off = bracket_end - url.buf;
+				size_t open_off = host_start - url.buf;
+				strbuf_remove(&url, close_off, 1);
+				strbuf_remove(&url, open_off, 1);
+				separator = url.buf + close_off - 1;
+			} else if (bracket_end) {
+				separator = strchr(bracket_end + 1, ':');
+			} else {
+				separator = strchr(host_start, ':');
+			}
+		} else {
+			separator = strchr(host_start, ':');
+		}
+
+		if (separator) {
+			if (separator[1] == '/')
+				strbuf_remove(&url, separator - url.buf, 1);
+			else
+				*separator = '/';
+		}
+	}
+
+	detached = strbuf_detach(&url, NULL);
+	normalized = url_normalize(detached, info);
+	free(detached);
+
+	if (!normalized)
+		return NULL;
+
+	/*
+	 * Point path to ~ for URLs like this:
+	 *
+	 *     ssh://host.xz/~user/repo
+	 *     git://host.xz/~user/repo
+	 *     host.xz:~user/repo
+	 */
+	if (scheme == URL_SCHEME_GIT || scheme == URL_SCHEME_SSH) {
+		if (normalized[info->path_off + 1] == '~') {
+			info->path_off++;
+			info->path_len--;
+		}
+	}
+
+	return normalized;
 }
 
 static size_t url_match_prefix(const char *url,

@@ -156,6 +156,7 @@ manpages = {
   'git-update-server-info.adoc' : 1,
   'git-upload-archive.adoc' : 1,
   'git-upload-pack.adoc' : 1,
+  'git-url-parse.adoc' : 1,
   'git-var.adoc' : 1,
   'git-verify-commit.adoc' : 1,
   'git-verify-pack.adoc' : 1,

@@ -1196,6 +1196,20 @@ test_expect_success 'stdin -z create ref fails with empty new value' '
 	test_must_fail git rev-parse --verify -q $c
 '
 
+test_expect_success 'stdin -z create ref fails with non commit object' '
+	printf $F "create $c" "$(test_oid 001)" >stdin &&
+	test_must_fail git update-ref -z --stdin <stdin 2>err &&
+	grep "fatal: trying to write ref ${SQ}$c${SQ} with nonexistent object" err &&
+	test_must_fail git rev-parse --verify -q $c
+'
+
+test_expect_success 'stdin -z update ref fails with non commit object' '
+	printf $F "update $b" "$(test_oid 001)" "" >stdin &&
+	test_must_fail git update-ref -z --stdin <stdin 2>err &&
+	grep "fatal: trying to write ref ${SQ}$b${SQ} with nonexistent object" err &&
+	test_must_fail git rev-parse --verify -q $c
+'
+
 test_expect_success 'stdin -z update ref works with right old value' '
 	printf $F "update $b" "$m~1" "$m" >stdin &&
 	git update-ref -z --stdin <stdin &&

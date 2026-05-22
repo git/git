@@ -700,49 +700,19 @@ int server_supports(const char *feature)
 	return !!server_feature_value(feature, NULL);
 }
 
-enum protocol {
-	PROTO_LOCAL = 1,
-	PROTO_FILE,
-	PROTO_SSH,
-	PROTO_GIT
-};
-
-int url_is_local_not_ssh(const char *url)
+static const char *url_scheme_name(enum url_scheme scheme)
 {
-	const char *colon = strchr(url, ':');
-	const char *slash = strchr(url, '/');
-	return !colon || (slash && slash < colon) ||
-		(has_dos_drive_prefix(url) && is_valid_path(url));
-}
-
-static const char *prot_name(enum protocol protocol)
-{
-	switch (protocol) {
-		case PROTO_LOCAL:
-		case PROTO_FILE:
+	switch (scheme) {
+		case URL_SCHEME_LOCAL:
+		case URL_SCHEME_FILE:
 			return "file";
-		case PROTO_SSH:
+		case URL_SCHEME_SSH:
 			return "ssh";
-		case PROTO_GIT:
+		case URL_SCHEME_GIT:
 			return "git";
 		default:
 			return "unknown protocol";
 	}
-}
-
-static enum protocol get_protocol(const char *name)
-{
-	if (!strcmp(name, "ssh"))
-		return PROTO_SSH;
-	if (!strcmp(name, "git"))
-		return PROTO_GIT;
-	if (!strcmp(name, "git+ssh")) /* deprecated - do not use */
-		return PROTO_SSH;
-	if (!strcmp(name, "ssh+git")) /* deprecated - do not use */
-		return PROTO_SSH;
-	if (!strcmp(name, "file"))
-		return PROTO_FILE;
-	die(_("protocol '%s' is not supported"), name);
 }
 
 static char *host_end(char **hoststart, int removebrackets)
@@ -1081,14 +1051,14 @@ static char *get_port(char *host)
  * Extract protocol and relevant parts from the specified connection URL.
  * The caller must free() the returned strings.
  */
-static enum protocol parse_connect_url(const char *url_orig, char **ret_host,
-				       char **ret_path)
+static enum url_scheme parse_connect_url(const char *url_orig, char **ret_host,
+					 char **ret_path)
 {
 	char *url;
 	char *host, *path;
 	char *end;
 	int separator = '/';
-	enum protocol protocol = PROTO_LOCAL;
+	enum url_scheme scheme = URL_SCHEME_LOCAL;
 
 	if (is_url(url_orig))
 		url = url_decode(url_orig);
@@ -1098,12 +1068,14 @@ static enum protocol parse_connect_url(const char *url_orig, char **ret_host,
 	host = strstr(url, "://");
 	if (host) {
 		*host = '\0';
-		protocol = get_protocol(url);
+		scheme = url_get_scheme(url);
+		if (scheme == URL_SCHEME_UNKNOWN)
+			die(_("protocol '%s' is not supported"), url);
 		host += 3;
 	} else {
 		host = url;
 		if (!url_is_local_not_ssh(url)) {
-			protocol = PROTO_SSH;
+			scheme = URL_SCHEME_SSH;
 			separator = ':';
 		}
 	}
@@ -1114,13 +1086,13 @@ static enum protocol parse_connect_url(const char *url_orig, char **ret_host,
 	 */
 	end = host_end(&host, 0);
 
-	if (protocol == PROTO_LOCAL)
+	if (scheme == URL_SCHEME_LOCAL)
 		path = end;
-	else if (protocol == PROTO_FILE && *host != '/' &&
+	else if (scheme == URL_SCHEME_FILE && *host != '/' &&
 		 !has_dos_drive_prefix(host) &&
 		 offset_1st_component(host - 2) > 1)
 		path = host - 2; /* include the leading "//" */
-	else if (protocol == PROTO_FILE && has_dos_drive_prefix(end))
+	else if (scheme == URL_SCHEME_FILE && has_dos_drive_prefix(end))
 		path = end; /* "file://$(pwd)" may be "file://C:/projects/repo" */
 	else
 		path = strchr(end, separator);
@@ -1136,7 +1108,7 @@ static enum protocol parse_connect_url(const char *url_orig, char **ret_host,
 	end = path; /* Need to \0 terminate host here */
 	if (separator == ':')
 		path++; /* path starts after ':' */
-	if (protocol == PROTO_GIT || protocol == PROTO_SSH) {
+	if (scheme == URL_SCHEME_GIT || scheme == URL_SCHEME_SSH) {
 		if (path[1] == '~')
 			path++;
 	}
@@ -1147,7 +1119,7 @@ static enum protocol parse_connect_url(const char *url_orig, char **ret_host,
 	*ret_host = xstrdup(host);
 	*ret_path = path;
 	free(url);
-	return protocol;
+	return scheme;
 }
 
 static const char *get_ssh_command(void)
@@ -1432,7 +1404,7 @@ struct child_process *git_connect(int fd[2], const char *url,
 {
 	char *hostandport, *path;
 	struct child_process *conn;
-	enum protocol protocol;
+	enum url_scheme scheme;
 	enum protocol_version version = get_protocol_version_config();
 
 	/*
@@ -1449,14 +1421,14 @@ struct child_process *git_connect(int fd[2], const char *url,
 	 */
 	signal(SIGCHLD, SIG_DFL);
 
-	protocol = parse_connect_url(url, &hostandport, &path);
-	if ((flags & CONNECT_DIAG_URL) && (protocol != PROTO_SSH)) {
+	scheme = parse_connect_url(url, &hostandport, &path);
+	if ((flags & CONNECT_DIAG_URL) && (scheme != URL_SCHEME_SSH)) {
 		printf("Diag: url=%s\n", url ? url : "NULL");
-		printf("Diag: protocol=%s\n", prot_name(protocol));
+		printf("Diag: protocol=%s\n", url_scheme_name(scheme));
 		printf("Diag: hostandport=%s\n", hostandport ? hostandport : "NULL");
 		printf("Diag: path=%s\n", path ? path : "NULL");
 		conn = NULL;
-	} else if (protocol == PROTO_GIT) {
+	} else if (scheme == URL_SCHEME_GIT) {
 		conn = git_connect_git(fd, hostandport, path, prog, version, flags);
 		conn->trace2_child_class = "transport/git";
 	} else {
@@ -1479,7 +1451,7 @@ struct child_process *git_connect(int fd[2], const char *url,
 
 		conn->use_shell = 1;
 		conn->in = conn->out = -1;
-		if (protocol == PROTO_SSH) {
+		if (scheme == URL_SCHEME_SSH) {
 			char *ssh_host = hostandport;
 			const char *port = NULL;
 			transport_check_allowed("ssh");
@@ -1490,7 +1462,7 @@ struct child_process *git_connect(int fd[2], const char *url,
 
 			if (flags & CONNECT_DIAG_URL) {
 				printf("Diag: url=%s\n", url ? url : "NULL");
-				printf("Diag: protocol=%s\n", prot_name(protocol));
+				printf("Diag: protocol=%s\n", url_scheme_name(scheme));
 				printf("Diag: userandhost=%s\n", ssh_host ? ssh_host : "NULL");
 				printf("Diag: port=%s\n", port ? port : "NONE");
 				printf("Diag: path=%s\n", path ? path : "NULL");

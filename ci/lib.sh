@@ -314,11 +314,13 @@ export DEFAULT_TEST_TARGET=prove
 export GIT_TEST_CLONE_2GB=true
 export SKIP_DASHED_BUILT_INS=YesPlease
 
-# Enable expensive tests on push builds to integration branches, but
-# not on PR builds where the extra time is not justified for every
-# iteration.
+# In order to give maximum test coverage to contributor builds,
+# preferrably even before the changes consume public review bandwidth,
+# enable "expensive" tests for PR events.
+# In order to catch bugs introduced at integration time by mismerges,
+# enable the long tests for pushes to the integration branches as well.
 case "$GITHUB_EVENT_NAME,$CI_BRANCH" in
-push,*next*|push,*master*|push,*main*|push,*maint*)
+pull_request,*|push,*next*|push,*master*|push,*main*|push,*maint*)
 	export GIT_TEST_LONG=YesPlease
 	;;
 esac

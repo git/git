@@ -23,17 +23,6 @@ test_description='git conflicts when checking files out test.'
 
 . ./test-lib.sh
 
-show_files() {
-	# show filesystem files, just [-dl] for type and name
-	find path? -ls |
-	sed -e 's/^[0-9]* * [0-9]* * \([-bcdl]\)[^ ]* *[0-9]* *[^ ]* *[^ ]* *[0-9]* [A-Z][a-z][a-z] [0-9][0-9] [^ ]* /fs: \1 /'
-	# what's in the cache, just mode and name
-	git ls-files --stage |
-	sed -e 's/^\([0-9]*\) [0-9a-f]* [0-3] /ca: \1 /'
-	# what's in the tree, just mode and name.
-	git ls-tree -r "$1" |
-	sed -e 's/^\([0-9]*\)	[^ ]*	[0-9a-f]*	/tr: \1 /'
-}
 
 test_expect_success 'prepare files path0 and path1/file1' '
 	date >path0 &&
@@ -83,59 +72,21 @@ test_expect_success SYMLINKS 'checkout-index -f twice with --prefix' '
 # path path3 is occupied by a non-directory.  With "-f" it should remove
 # the symlink path3 and create directory path3 and file path3/file1.
 
-test_expect_success 'prepare path2/file0 and index' '
+test_expect_success 'checkout-index -f resolves symlink conflict on leading path' '
 	mkdir path2 &&
 	date >path2/file0 &&
-	git update-index --add path2/file0
-'
-
-test_expect_success 'write tree with path2/file0' '
-	tree1=$(git write-tree)
-'
-
-test_debug 'show_files $tree1'
-
-test_expect_success 'prepare path3/file1 and index' '
+	git update-index --add path2/file0 &&
+	tree1=$(git write-tree) &&
 	mkdir path3 &&
 	date >path3/file1 &&
-	git update-index --add path3/file1
-'
-
-test_expect_success 'write tree with path3/file1' '
-	tree2=$(git write-tree)
-'
-
-test_debug 'show_files $tree2'
-
-test_expect_success 'read previously written tree and checkout.' '
+	git update-index --add path3/file1 &&
+	tree2=$(git write-tree) &&
 	rm -fr path3 &&
 	git read-tree -m $tree1 &&
-	git checkout-index -f -a
-'
-
-test_debug 'show_files $tree1'
-
-test_expect_success 'add a symlink' '
-	test_ln_s_add path2 path3
-'
-
-test_expect_success 'write tree with symlink path3' '
-	tree3=$(git write-tree)
-'
-
-test_debug 'show_files $tree3'
-
-# Morten says "Got that?" here.
-# Test begins.
-
-test_expect_success 'read previously written tree and checkout.' '
+	git checkout-index -f -a &&
+	test_ln_s_add path2 path3 &&
 	git read-tree $tree2 &&
-	git checkout-index -f -a
-'
-
-test_debug 'show_files $tree2'
-
-test_expect_success 'checking out conflicting path with -f' '
+	git checkout-index -f -a &&
 	test_path_is_dir_not_symlink path2 &&
 	test_path_is_dir_not_symlink path3 &&
 	test_path_is_file_not_symlink path2/file0 &&

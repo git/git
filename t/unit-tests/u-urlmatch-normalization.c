@@ -245,3 +245,48 @@ void test_urlmatch_normalization__equivalents(void)
 	compare_normalized_urls("https://@x.y/^/../abc", "httpS://@x.y:0443/abc", 1);
 	compare_normalized_urls("https://@x.y/^/..", "httpS://@x.y:0443/", 1);
 }
+
+static void check_parsed_path(const char *url, const char *expected_path)
+{
+	struct url_info info;
+	char *parsed = url_parse(url, &info);
+	char *path;
+
+	cl_assert(parsed != NULL);
+	path = xstrndup(parsed + info.path_off, info.path_len);
+	cl_assert_equal_s(path, expected_path);
+	free(path);
+	free(parsed);
+}
+
+void test_urlmatch_normalization__parse_scp(void)
+{
+	check_parsed_path("host:path", "/path");
+	check_parsed_path("user@host:path", "/path");
+	check_parsed_path("host:~user/repo", "~user/repo");
+	check_parsed_path("user@host:~user/repo", "~user/repo");
+	check_parsed_path("[host]:src", "/src");
+	check_parsed_path("[host:123]:src", "/src");
+	check_parsed_path("[::1]:repo", "/repo");
+	check_parsed_path("user@[::1]:repo", "/repo");
+}
+
+void test_urlmatch_normalization__parse_url_form(void)
+{
+	check_parsed_path("ssh://host/repo", "/repo");
+	check_parsed_path("ssh://host/~user/repo", "~user/repo");
+	check_parsed_path("git://host:9418/repo", "/repo");
+	check_parsed_path("git://host/~user/repo", "~user/repo");
+	check_parsed_path("ssh://[::1]:1234/repo", "/repo");
+	check_parsed_path("http://[2001:db8::1]/repo", "/repo");
+}
+
+void test_urlmatch_normalization__parse_strips_query_and_fragment(void)
+{
+	check_parsed_path("ssh://host/~user/repo?q", "~user/repo");
+	check_parsed_path("ssh://host/~user/repo#frag", "~user/repo");
+	check_parsed_path("git://host/~user/repo?q", "~user/repo");
+	check_parsed_path("user@host:~user/repo?q", "~user/repo");
+	check_parsed_path("https://host/repo?q", "/repo");
+	check_parsed_path("https://host/repo#frag", "/repo");
+}
