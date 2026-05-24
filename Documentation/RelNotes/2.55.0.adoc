@@ -148,6 +148,11 @@ Fixes since v2.54
    commits deep, which has been corrected to be a no-op instead.
    (merge 2431f5e0e5 sp/shallow-deepen-on-non-shallow-repo-fix later to maint).
 
+ * "git maintenance" that goes background did not use the lockfile to
+   prevent multiple maintenance processes from running at the same
+   time, which has been corrected.
+   (merge 29364f1624 ps/maintenance-daemonize-lockfix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 80f4b802e9 ja/doc-difftool-synopsis-style later to maint).
    (merge b96490241e jc/doc-timestamps-in-stat later to maint).
@@ -158,3 +163,5 @@ Fixes since v2.54
    (merge ab9753e7bc kh/doc-restore-double-underscores-fix later to maint).
    (merge 4a9e097228 za/t2000-modernise-more later to maint).
    (merge b635fd0725 kh/doc-log-decorate-list later to maint).
+   (merge 65ea197dca jk/commit-sign-overflow-fix later to maint).
+   (merge 3ccb16052a jk/apply-leakfix later to maint).

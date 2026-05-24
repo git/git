@@ -1558,16 +1558,16 @@ int commit_tree(const char *msg, size_t msg_len, const struct object_id *tree,
 	return result;
 }
 
-static int find_invalid_utf8(const char *buf, int len)
+static bool has_invalid_utf8(const char *buf, size_t len, size_t *bad_offset)
 {
-	int offset = 0;
+	size_t offset = 0;
 	static const unsigned int max_codepoint[] = {
 		0x7f, 0x7ff, 0xffff, 0x10ffff
 	};
 
 	while (len) {
 		unsigned char c = *buf++;
-		int bytes, bad_offset;
+		unsigned bytes;
 		unsigned int codepoint;
 		unsigned int min_val, max_val;
 
@@ -1578,7 +1578,7 @@ static int find_invalid_utf8(const char *buf, int len)
 		if (c < 0x80)
 			continue;
 
-		bad_offset = offset-1;
+		*bad_offset = offset-1;
 
 		/*
 		 * Count how many more high bits set: that's how
@@ -1595,11 +1595,11 @@ static int find_invalid_utf8(const char *buf, int len)
 		 * codepoints beyond U+10FFFF, which are guaranteed never to exist.
 		 */
 		if (bytes < 1 || 3 < bytes)
-			return bad_offset;
+			return true;
 
 		/* Do we *have* that many bytes? */
 		if (len < bytes)
-			return bad_offset;
+			return true;
 
 		/*
 		 * Place the encoded bits at the bottom of the value and compute the
@@ -1617,23 +1617,23 @@ static int find_invalid_utf8(const char *buf, int len)
 			codepoint <<= 6;
 			codepoint |= *buf & 0x3f;
 			if ((*buf++ & 0xc0) != 0x80)
-				return bad_offset;
+				return true;
 		} while (--bytes);
 
 		/* Reject codepoints that are out of range for the sequence length. */
 		if (codepoint < min_val || codepoint > max_val)
-			return bad_offset;
+			return true;
 		/* Surrogates are only for UTF-16 and cannot be encoded in UTF-8. */
 		if ((codepoint & 0x1ff800) == 0xd800)
-			return bad_offset;
+			return true;
 		/* U+xxFFFE and U+xxFFFF are guaranteed non-characters. */
 		if ((codepoint & 0xfffe) == 0xfffe)
-			return bad_offset;
+			return true;
 		/* So are anything in the range U+FDD0..U+FDEF. */
 		if (codepoint >= 0xfdd0 && codepoint <= 0xfdef)
-			return bad_offset;
+			return true;
 	}
-	return -1;
+	return false;
 }
 
 /*
@@ -1645,15 +1645,14 @@ static int find_invalid_utf8(const char *buf, int len)
 static int ensure_utf8(struct strbuf *buf)
 {
 	int ok = 1;
-	long pos = 0;
+	size_t pos = 0;
 
 	for (;;) {
-		int bad;
+		size_t bad;
 		unsigned char c;
 		unsigned char replace[2];
 
-		bad = find_invalid_utf8(buf->buf + pos, buf->len - pos);
-		if (bad < 0)
+		if (!has_invalid_utf8(buf->buf + pos, buf->len - pos, &bad))
 			return ok;
 		pos += bad;
 		ok = 0;

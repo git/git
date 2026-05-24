@@ -149,6 +149,21 @@ void verify_non_filename(const char *prefix, const char *name);
 int path_inside_repo(const char *prefix, const char *path);
 
 void sanitize_stdfds(void);
+
+/*
+ * Daemonize the current process by forking and then exiting the parent
+ * process. Returns 0 when successful, in which case the parent process will
+ * have exited and it's the child process that continues to run the code.
+ * Otherwise, a negative error code is returned and the parent process will
+ * continue execution.
+ *
+ * Note that this function will also perform the following changes:
+ *
+ *   - Standard file descriptors in the child process are closed.
+ *   - The child process is made a session leader via setsid(3p).
+ *   - All tempfiles owned by the parent process are reassigned to the
+ *     daemonized child process.
+ */
 int daemonize(void);
 
 /*

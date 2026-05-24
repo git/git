@@ -2166,12 +2166,26 @@ int daemonize(void)
 	errno = ENOSYS;
 	return -1;
 #else
-	switch (fork()) {
+	pid_t parent_pid = getpid();
+	pid_t child_pid = fork();
+
+	switch (child_pid) {
 		case 0:
+			/*
+			 * We're in the child process, so we take ownership of
+			 * all tempfiles.
+			 */
+			reassign_tempfile_ownership(parent_pid, getpid());
 			break;
 		case -1:
 			die_errno(_("fork failed"));
 		default:
+			/*
+			 * We're in the parent process, so we drop ownership of
+			 * all tempfiles to prevent us from removing them upon
+			 * exit.
+			 */
+			reassign_tempfile_ownership(parent_pid, child_pid);
 			exit(0);
 	}
 	if (setsid() == -1)

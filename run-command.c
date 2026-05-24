@@ -1944,10 +1944,14 @@ void run_processes_parallel(const struct run_process_parallel_opts *opts)
 int prepare_auto_maintenance(struct repository *r, int quiet,
 			     struct child_process *maint)
 {
-	int enabled, auto_detach;
+	int enabled = 1, auto_detach;
 
-	if (!repo_config_get_bool(r, "maintenance.auto", &enabled) &&
-	    !enabled)
+	if (repo_config_get_bool(r, "maintenance.auto", &enabled)) {
+		int gc_threshold;
+		if (!repo_config_get_int(r, "gc.auto", &gc_threshold))
+			enabled = gc_threshold > 0;
+	}
+	if (!enabled)
 		return 0;
 
 	/*

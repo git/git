@@ -282,4 +282,15 @@ int delete_tempfile(struct tempfile **tempfile_p);
  */
 int rename_tempfile(struct tempfile **tempfile_p, const char *path);
 
+/*
+ * Reassign ownership of all active tempfiles whose `owner` field matches
+ * `from` to `to`.
+ *
+ * This is intended for use by `daemonize()`; after `fork(2)`-ing, the parent
+ * transfers ownership to the daemonized child so that its atexit handler does
+ * not unlink tempfiles that should outlive it, and the child claims the
+ * inherited tempfiles so that they are cleaned up when the daemon exits.
+ */
+void reassign_tempfile_ownership(pid_t from, pid_t to);
+
 #endif /* TEMPFILE_H */
