@@ -5,7 +5,8 @@
 #include "object.h"
 #include "pathspec.h"
 
-unsigned int ce_mode_from_stat(const struct cache_entry *ce,
+unsigned int ce_mode_from_stat(struct index_state *istate,
+				const struct cache_entry *ce,
 				unsigned int mode);
 
 static inline int ce_to_dtype(const struct cache_entry *ce)

@@ -442,7 +442,7 @@ void fill_stat_cache_info(struct index_state *istate, struct cache_entry *ce, st
  * for lstat() for a tracked path that is known to be up-to-date via
  * some out-of-line means (like fsmonitor).
  */
-int fake_lstat(const struct cache_entry *ce, struct stat *st);
+int fake_lstat(struct index_state *istate, const struct cache_entry *ce, struct stat *st);
 
 #define REFRESH_REALLY                   (1 << 0) /* ignore_valid */
 #define REFRESH_UNMERGED                 (1 << 1) /* allow unmerged */
