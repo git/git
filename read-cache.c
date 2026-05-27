@@ -206,10 +206,13 @@ unsigned int ce_mode_from_stat(struct index_state *istate,
 				const struct cache_entry *ce,
 				unsigned int mode)
 {
+	struct repository *repo = (istate && istate->repo) ? istate->repo : the_repository;
+	struct repo_config_values *cfg = repo_config_values(repo);
+
 	if (!has_symlinks && S_ISREG(mode) &&
 	    ce && S_ISLNK(ce->ce_mode))
 		return ce->ce_mode;
-	if (!trust_executable_bit && S_ISREG(mode)) {
+	if (!cfg->trust_executable_bit && S_ISREG(mode)) {
 		if (ce && S_ISREG(ce->ce_mode))
 			return ce->ce_mode;
 		return create_ce_mode(0666);
@@ -219,11 +222,14 @@ unsigned int ce_mode_from_stat(struct index_state *istate,
 
 static unsigned int st_mode_from_ce(struct index_state *istate, const struct cache_entry *ce)
 {
+	struct repository *repo = (istate && istate->repo) ? istate->repo : the_repository;
+	struct repo_config_values *cfg = repo_config_values(repo);
+
 	switch (ce->ce_mode & S_IFMT) {
 	case S_IFLNK:
 		return has_symlinks ? S_IFLNK : (S_IFREG | 0644);
 	case S_IFREG:
-		return (ce->ce_mode & (trust_executable_bit ? 0755 : 0644)) | S_IFREG;
+		return (ce->ce_mode & (cfg->trust_executable_bit ? 0755 : 0644)) | S_IFREG;
 	case S_IFGITLINK:
 		return S_IFDIR | 0755;
 	case S_IFDIR:
@@ -324,6 +330,8 @@ static int ce_match_stat_basic(struct index_state *istate,
 			       const struct cache_entry *ce, struct stat *st)
 {
 	unsigned int changed = 0;
+	struct repository *repo = (istate && istate->repo) ? istate->repo : the_repository;
+	struct repo_config_values *cfg = repo_config_values(repo);
 
 	if (ce->ce_flags & CE_REMOVE)
 		return MODE_CHANGED | DATA_CHANGED | TYPE_CHANGED;
@@ -334,7 +342,7 @@ static int ce_match_stat_basic(struct index_state *istate,
 		/* We consider only the owner x bit to be relevant for
 		 * "mode changes"
 		 */
-		if (trust_executable_bit &&
+		if (cfg->trust_executable_bit &&
 		    (0100 & (ce->ce_mode ^ st->st_mode)))
 			changed |= MODE_CHANGED;
 		break;
@@ -735,6 +743,9 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 			  (intent_only ? ADD_CACHE_NEW_ONLY : 0));
 	unsigned hash_flags = pretend ? 0 : INDEX_WRITE_OBJECT;
 
+	struct repository *repo = (istate && istate->repo) ? istate->repo : the_repository;
+	struct repo_config_values *cfg = repo_config_values(repo);
+
 	if (flags & ADD_CACHE_RENORMALIZE)
 		hash_flags |= INDEX_RENORMALIZE;
 
@@ -755,7 +766,7 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 		ce->ce_flags |= CE_INTENT_TO_ADD;
 
 
-	if (trust_executable_bit && has_symlinks) {
+	if (cfg->trust_executable_bit && has_symlinks) {
 		ce->ce_mode = create_ce_mode(st_mode);
 	} else {
 		/* If there is an existing entry, pick the mode bits and type
