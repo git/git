@@ -204,7 +204,6 @@ void fill_stat_cache_info(struct index_state *istate, struct cache_entry *ce, st
 
 static unsigned int st_mode_from_ce(const struct cache_entry *ce)
 {
-	extern int trust_executable_bit, has_symlinks;
 
 	switch (ce->ce_mode & S_IFMT) {
 	case S_IFLNK:
