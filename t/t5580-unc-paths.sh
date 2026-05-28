@@ -44,6 +44,8 @@ test_expect_success clone '
 '
 
 test_expect_success 'clone without file://' '
+	test_must_fail git clone "$UNCPATH" clone-without-file &&
+	git config set --global --append safe.directory "$UNCPATH/.git" &&
 	git clone "$UNCPATH" clone-without-file
 '
 
