@@ -204,10 +204,11 @@ void fill_stat_cache_info(struct index_state *istate, struct cache_entry *ce, st
 
 unsigned int ce_mode_from_stat(const struct cache_entry *ce, unsigned int mode)
 {
-	if (!has_symlinks && S_ISREG(mode) &&
+	struct repo_config_values *cfg = repo_config_values(the_repository);
+	if (!cfg->has_symlinks && S_ISREG(mode) &&
 	    ce && S_ISLNK(ce->ce_mode))
 		return ce->ce_mode;
-	if (!trust_executable_bit && S_ISREG(mode)) {
+	if (!cfg->trust_executable_bit && S_ISREG(mode)) {
 		if (ce && S_ISREG(ce->ce_mode))
 			return ce->ce_mode;
 		return create_ce_mode(0666);
@@ -219,9 +220,9 @@ static unsigned int st_mode_from_ce(const struct cache_entry *ce)
 {
 	switch (ce->ce_mode & S_IFMT) {
 	case S_IFLNK:
-		return has_symlinks ? S_IFLNK : (S_IFREG | 0644);
+		return repo_config_values(the_repository)->has_symlinks ? S_IFLNK : (S_IFREG | 0644);
 	case S_IFREG:
-		return (ce->ce_mode & (trust_executable_bit ? 0755 : 0644)) | S_IFREG;
+		return (ce->ce_mode & (repo_config_values(the_repository)->trust_executable_bit ? 0755 : 0644)) | S_IFREG;
 	case S_IFGITLINK:
 		return S_IFDIR | 0755;
 	case S_IFDIR:
@@ -331,13 +332,14 @@ static int ce_match_stat_basic(const struct cache_entry *ce, struct stat *st)
 		/* We consider only the owner x bit to be relevant for
 		 * "mode changes"
 		 */
-		if (trust_executable_bit &&
-		    (0100 & (ce->ce_mode ^ st->st_mode)))
-			changed |= MODE_CHANGED;
+		if (0100 & (ce->ce_mode ^ st->st_mode)) {
+			if (repo_config_values(the_repository)->trust_executable_bit)
+				changed |= MODE_CHANGED;
+		}
 		break;
 	case S_IFLNK:
 		if (!S_ISLNK(st->st_mode) &&
-		    (has_symlinks || !S_ISREG(st->st_mode)))
+		    (repo_config_values(the_repository)->has_symlinks || !S_ISREG(st->st_mode)))
 			changed |= TYPE_CHANGED;
 		break;
 	case S_IFGITLINK:
@@ -731,6 +733,7 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 	int add_option = (ADD_CACHE_OK_TO_ADD|ADD_CACHE_OK_TO_REPLACE|
 			  (intent_only ? ADD_CACHE_NEW_ONLY : 0));
 	unsigned hash_flags = pretend ? 0 : INDEX_WRITE_OBJECT;
+	struct repo_config_values *cfg = repo_config_values(the_repository);
 
 	if (flags & ADD_CACHE_RENORMALIZE)
 		hash_flags |= INDEX_RENORMALIZE;
@@ -752,7 +755,7 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 		ce->ce_flags |= CE_INTENT_TO_ADD;
 
 
-	if (trust_executable_bit && has_symlinks) {
+	if (cfg->trust_executable_bit && cfg->has_symlinks) {
 		ce->ce_mode = create_ce_mode(st_mode);
 	} else {
 		/* If there is an existing entry, pick the mode bits and type

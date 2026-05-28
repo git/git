@@ -1043,7 +1043,7 @@ int mingw_chdir(const char *dirname)
 	if (xutftowcs_path(wdirname, dirname) < 0)
 		return -1;
 
-	if (has_symlinks) {
+	if (repo_config_values(the_repository)->has_symlinks) {
 		HANDLE hnd = CreateFileW(wdirname, 0,
 				FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL,
 				OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
@@ -2903,7 +2903,7 @@ int symlink(const char *target, const char *link)
 	int len;
 
 	/* fail if symlinks are disabled or API is not supported (WinXP) */
-	if (!has_symlinks) {
+	if (!repo_config_values(the_repository)->has_symlinks) {
 		errno = ENOSYS;
 		return -1;
 	}
@@ -3181,7 +3181,7 @@ static void setup_windows_environment(void)
 	 * symlink support.
 	 */
 	if (!(tmp = getenv("MSYS")) || !strstr(tmp, "winsymlinks:nativestrict"))
-		has_symlinks = 0;
+		repo_config_values(the_repository)->has_symlinks = 0;
 }
 
 static void get_current_user_sid(PSID *sid, HANDLE *linked_token)
