@@ -208,6 +208,8 @@ void open_in_gdb(void);
  */
 int err_win_to_posix(DWORD winerr);
 
+int mingw_core_symlinks_default(void);
+
 #ifndef NO_UNIX_SOCKETS
 int mingw_have_unix_sockets(void);
 #undef have_unix_sockets
