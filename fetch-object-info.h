@@ -14,6 +14,9 @@ struct object_info;
 /*
  * Sends git-cat-file object-info command into the request buf and read the
  * results from packets.
+ *
+ * Modifies args->object_info_options, on return it contains only the supported
+ * options by the server.
  */
 int fetch_object_info(enum protocol_version version, struct object_info_args *args,
 		      struct packet_reader *reader, struct object_info *object_info_data,

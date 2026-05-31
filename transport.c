@@ -443,7 +443,6 @@ static int fetch_object_info_via_pack(struct transport *transport)
 	args.server_options = transport->server_options;
 	args.oids = transport->smart_options->object_info_oids;
 	args.object_info_options = transport->smart_options->object_info_options;
-	string_list_sort(args.object_info_options);
 
 	connect_setup(transport, 0);
 	packet_reader_init(&reader, data->fd[0], NULL, 0,
