@@ -65,6 +65,7 @@ pidfile="$TRASH_DIRECTORY/p4d.pid"
 
 stop_p4d_and_watchdog () {
 	kill -9 $p4d_pid $watchdog_pid
+	wait $p4d_pid $watchdog_pid 2>/dev/null
 }
 
 # git p4 submit generates a temp file, which will
@@ -174,8 +175,7 @@ retry_until_success () {
 }
 
 stop_and_cleanup_p4d () {
-	kill -9 $p4d_pid $watchdog_pid
-	wait $p4d_pid
+	stop_p4d_and_watchdog
 	rm -rf "$db" "$cli" "$pidfile"
 }
 
