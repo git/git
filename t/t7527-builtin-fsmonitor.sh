@@ -25,7 +25,8 @@ maybe_timeout () {
 		"$@"
 	fi
 }
-verify_fsmonitor_works () {
+
+test_lazy_prereq FSMONITOR_WORKS '
 	git init test_fsmonitor_smoke || return 1
 
 	GIT_TRACE_FSMONITOR="$PWD/smoke.trace" &&
@@ -50,9 +51,9 @@ verify_fsmonitor_works () {
 	ret=$?
 	rm -rf test_fsmonitor_smoke smoke.trace
 	return $ret
-}
+'
 
-if ! verify_fsmonitor_works
+if ! test_have_prereq FSMONITOR_WORKS
 then
 	skip_all="filesystem does not deliver fsmonitor events (container/overlayfs?)"
 	test_done
