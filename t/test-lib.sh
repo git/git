@@ -1299,10 +1299,10 @@ test_done () {
 			error "Tests passed but trash directory already removed before test cleanup; aborting"
 
 			cd "$TRASH_DIRECTORY/.." &&
-			rm -fr "$TRASH_DIRECTORY" || {
+			rm -fr "$TRASH_DIRECTORY" 2>/dev/null || {
 				# try again in a bit
 				sleep 5;
-				rm -fr "$TRASH_DIRECTORY"
+				rm -fr "$TRASH_DIRECTORY" 2>/dev/null
 			} ||
 			error "Tests passed but test cleanup failed; aborting"
 		fi
