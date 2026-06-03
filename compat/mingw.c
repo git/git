@@ -3392,7 +3392,7 @@ int is_valid_win32_path(const char *path, int allow_literal_nul)
 	const char *p = path;
 	int preceding_space_or_period = 0, i = 0, periods = 0;
 
-	if (!protect_ntfs)
+	if (!repo_protect_ntfs(the_repository))
 		return 1;
 
 	skip_dos_drive_prefix((char **)&path);
