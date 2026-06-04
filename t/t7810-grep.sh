@@ -18,8 +18,9 @@ test_invalid_grep_expression() {
 	'
 }
 
-LC_ALL=en_US.UTF-8 test-tool regex '^.$' '¿' &&
-  test_set_prereq MB_REGEX
+test_lazy_prereq MB_REGEX '
+	LC_ALL=en_US.UTF-8 test-tool regex "^.$" "¿"
+'
 
 cat >hello.c <<EOF
 #include <assert.h>
