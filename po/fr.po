@@ -60,7 +60,7 @@
 #   trailers         |  lignes terminales
 #   regex            |  regex
 #   regular          |
-#     expression     |  expression régulière
+#   expression       |  expression régulière
 #   remote           |  distante (ou serveur distant)
 #   repository       |  dépôt
 #   revision         |  révision
