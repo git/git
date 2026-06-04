@@ -1,0 +1,8 @@
+`files`;; for loose files with packed-refs.
+ifndef::with-breaking-changes[]
+	This is the default.
+endif::with-breaking-changes[]
+`reftable`;; for the reftable format.
+ifdef::with-breaking-changes[]
+	This is the default.
+endif::with-breaking-changes[]

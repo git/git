@@ -1,0 +1,482 @@
+Git 2.16 Release Notes
+======================
+
+Backward compatibility notes and other notable changes.
+
+ * Use of an empty string as a pathspec element that is used for
+   'everything matches' is now an error.
+
+
+Updates since v2.15
+-------------------
+
+UI, Workflows & Features
+
+ * An empty string as a pathspec element that means "everything"
+   i.e. 'git add ""', is now illegal.  We started this by first
+   deprecating and warning a pathspec that has such an element in
+   2.11 (Nov 2016).
+
+ * A hook script that is set unexecutable is simply ignored.  Git
+   notifies when such a file is ignored, unless the message is
+   squelched via advice.ignoredHook configuration.
+
+ * "git pull" has been taught to accept "--[no-]signoff" option and
+   pass it down to "git merge".
+
+ * The "--push-option=<string>" option to "git push" now defaults to a
+   list of strings configured via push.pushOption variable.
+
+ * "gitweb" checks if a directory is searchable with Perl's "-x"
+   operator, which can be enhanced by using "filetest 'access'"
+   pragma, which now we do.
+
+ * "git stash save" has been deprecated in favour of "git stash push".
+
+ * The set of paths output from "git status --ignored" was tied
+   closely with its "--untracked=<mode>" option, but now it can be
+   controlled more flexibly.  Most notably, a directory that is
+   ignored because it is listed to be ignored in the ignore/exclude
+   mechanism can be handled differently from a directory that ends up
+   to be ignored only because all files in it are ignored.
+
+ * The remote-helper for talking to MediaWiki has been updated to
+   truncate an overlong pagename so that ".mw" suffix can still be
+   added.
+
+ * The remote-helper for talking to MediaWiki has been updated to
+   work with mediawiki namespaces.
+
+ * The "--format=..." option "git for-each-ref" takes learned to show
+   the name of the 'remote' repository and the ref at the remote side
+   that is affected for 'upstream' and 'push' via "%(push:remotename)"
+   and friends.
+
+ * Doc and message updates to teach users "bisect view" is a synonym
+   for "bisect visualize".
+
+ * "git bisect run" that did not specify any command to run used to go
+   ahead and treated all commits to be tested as 'good'.  This has
+   been corrected by making the command error out.
+
+ * The SubmittingPatches document has been converted to produce an
+   HTML version via AsciiDoc/Asciidoctor.
+
+ * We learned to optionally talk to a file system monitor via new
+   fsmonitor extension to speed up "git status" and other operations
+   that need to see which paths have been modified.  Currently we only
+   support "watchman".  See File System Monitor section of
+   git-update-index(1) for more detail.
+
+ * The "diff" family of commands learned to ignore differences in
+   carriage return at the end of line.
+
+ * Places that know about "sendemail.to", like documentation and shell
+   completion (in contrib/) have been taught about "sendemail.tocmd",
+   too.
+
+ * "git add --renormalize ." is a new and safer way to record the fact
+   that you are correcting the end-of-line convention and other
+   "convert_to_git()" glitches in the in-repository data.
+
+ * "git branch" and "git checkout -b" are now forbidden from creating
+   a branch whose name is "HEAD".
+
+ * "git branch --list" learned to show its output through the pager by
+   default when the output is going to a terminal, which is controlled
+   by the pager.branch configuration variable.  This is similar to a
+   recent change to "git tag --list".
+
+ * "git grep -W", "git diff -W" and their friends learned a heuristic
+   to extend a pre-context beyond the line that matches the "function
+   pattern" (aka "diff.*.xfuncname") to include a comment block, if
+   exists, that immediately precedes it.
+
+ * "git config --expiry-date gc.reflogexpire" can read "2.weeks" from
+   the configuration and report it as a timestamp, just like "--int"
+   would read "1k" and report 1024, to help consumption by scripts.
+
+ * The shell completion (in contrib/) learned that "git pull" can take
+   the "--autostash" option.
+
+ * The tagnames "git log --decorate" uses to annotate the commits can
+   now be limited to subset of available refs with the two additional
+   options, --decorate-refs[-exclude]=<pattern>.
+
+ * "git grep" compiled with libpcre2 sometimes triggered a segfault,
+   which is being fixed.
+
+ * "git send-email" tries to see if the sendmail program is available
+   in /usr/lib and /usr/sbin; extend the list of locations to be
+   checked to also include directories on $PATH.
+
+ * "git diff" learned, "--anchored", a variant of the "--patience"
+   algorithm, to which the user can specify which 'unique' line to be
+   used as anchoring points.
+
+ * The way "git worktree add" determines what branch to create from
+   where and checkout in the new worktree has been updated a bit.
+
+ * Ancient part of codebase still shows dots after an abbreviated
+   object name just to show that it is not a full object name, but
+   these ellipses are confusing to people who newly discovered Git
+   who are used to seeing abbreviated object names and find them
+   confusing with the range syntax.
+
+ * With a configuration variable rebase.abbreviateCommands set,
+   "git rebase -i" produces the todo list with a single-letter
+   command names.
+
+ * "git worktree add" learned to run the post-checkout hook, just like
+   "git checkout" does, after the initial checkout.
+
+ * "git svn" has been updated to strip CRs in the commit messages, as
+   recent versions of Subversion rejects them.
+
+ * "git imap-send" did not correctly quote the folder name when
+   making a request to the server, which has been corrected.
+
+ * Error messages from "git rebase" have been somewhat cleaned up.
+
+ * Git has been taught to support an https:// URL used for http.proxy
+   when using recent versions of libcurl.
+
+ * "git merge" learned to pay attention to merge.verifySignatures
+   configuration variable and pretend as if '--verify-signatures'
+   option was given from the command line.
+
+ * "git describe" was taught to dig trees deeper to find a
+   <commit-ish>:<path> that refers to a given blob object.
+
+
+Performance, Internal Implementation, Development Support etc.
+
+ * An earlier update made it possible to use an on-stack in-core
+   lockfile structure (as opposed to having to deliberately leak an
+   on-heap one).  Many codepaths have been updated to take advantage
+   of this new facility.
+
+ * Calling cmd_foo() as if it is a general purpose helper function is
+   a no-no.  Correct two instances of such to set an example.
+
+ * We try to see if somebody runs our test suite with a shell that
+   does not support "local" like bash/dash does.
+
+ * An early part of piece-by-piece rewrite of "git bisect" in C.
+
+ * GSoC to piece-by-piece rewrite "git submodule" in C.
+
+ * Optimize the code to find shortest unique prefix of object names.
+
+ * Pathspec-limited revision traversal was taught not to keep finding
+   unneeded differences once it knows two trees are different inside
+   given pathspec.
+
+ * Conversion from uchar[20] to struct object_id continues.
+
+ * Code cleanup.
+
+ * A single-word "unsigned flags" in the diff options is being split
+   into a structure with many bitfields.
+
+ * TravisCI build updates.
+
+ * Parts of a test to drive the long-running content filter interface
+   has been split into its own module, hopefully to eventually become
+   reusable.
+
+ * Drop (perhaps overly cautious) sanity check before using the index
+   read from the filesystem at runtime.
+
+ * The build procedure has been taught to avoid some unnecessary
+   instability in the build products.
+
+ * A new mechanism to upgrade the wire protocol in place is proposed
+   and demonstrated that it works with the older versions of Git
+   without harming them.
+
+ * An infrastructure to define what hash function is used in Git is
+   introduced, and an effort to plumb that throughout various
+   codepaths has been started.
+
+ * The code to iterate over loose object files got optimized.
+
+ * An internal function that was left for backward compatibility has
+   been removed, as there is no remaining callers.
+
+ * Historically, the diff machinery for rename detection had a
+   hardcoded limit of 32k paths; this is being lifted to allow users
+   trade cycles with a (possibly) easier to read result.
+
+ * The tracing infrastructure has been optimized for cases where no
+   tracing is requested.
+
+ * In preparation for implementing narrow/partial clone, the object
+   walking machinery has been taught a way to tell it to "filter" some
+   objects from enumeration.
+
+ * A few structures and variables that are implementation details of
+   the decorate API have been renamed and then the API got documented
+   better.
+
+ * Assorted updates for TravisCI integration.
+   (merge 4f26366679 sg/travis-fixes later to maint).
+
+ * Introduce a helper to simplify code to parse a common pattern that
+   expects either "--key" or "--key=<something>".
+
+ * "git version --build-options" learned to report the host CPU and
+   the exact commit object name the binary was built from.
+
+Also contains various documentation updates and code clean-ups.
+
+
+Fixes since v2.15
+-----------------
+
+ * "auto" as a value for the columnar output configuration ought to
+   judge "is the output consumed by humans?" with the same criteria as
+   "auto" for coloured output configuration, i.e. either the standard
+   output stream is going to tty, or a pager is in use.  We forgot the
+   latter, which has been fixed.
+
+ * The experimental "color moved lines differently in diff output"
+   feature was buggy around "ignore whitespace changes" edges, which
+   has been corrected.
+
+ * Instead of using custom line comparison and hashing functions to
+   implement "moved lines" coloring in the diff output, use the pair
+   of these functions from lower-layer xdiff/ code.
+
+ * Some codepaths did not check for errors when asking what branch the
+   HEAD points at, which have been fixed.
+
+ * "git commit", after making a commit, did not check for errors when
+   asking on what branch it made the commit, which has been corrected.
+
+ * "git status --ignored -u" did not stop at a working tree of a
+   separate project that is embedded in an ignored directory and
+   listed files in that other project, instead of just showing the
+   directory itself as ignored.
+
+ * A broken access to object databases in recent update to "git grep
+   --recurse-submodules" has been fixed.
+
+ * A recent regression in "git rebase -i" that broke execution of git
+   commands from subdirectories via "exec" instruction has been fixed.
+
+ * A (possibly flakey) test fix.
+
+ * "git check-ref-format --branch @{-1}" bit a "BUG()" when run
+   outside a repository for obvious reasons; clarify the documentation
+   and make sure we do not even try to expand the at-mark magic in
+   such a case, but still call the validation logic for branch names.
+
+ * "git fetch --recurse-submodules" now knows that submodules can be
+   moved around in the superproject in addition to getting updated,
+   and finds the ones that need to be fetched accordingly.
+
+ * Command line completion (in contrib/) update.
+
+ * Description of blame.{showroot,blankboundary,showemail,date}
+   configuration variables have been added to "git config --help".
+
+ * After an error from lstat(), diff_populate_filespec() function
+   sometimes still went ahead and used invalid data in struct stat,
+   which has been fixed.
+
+ * UNC paths are also relevant in Cygwin builds and they are now
+   tested just like Mingw builds.
+
+ * Correct start-up sequence so that a repository could be placed
+   immediately under the root directory again (which was broken at
+   around Git 2.13).
+
+ * The credential helper for libsecret (in contrib/) has been improved
+   to allow possibly prompting the end user to unlock secrets that are
+   currently locked (otherwise the secrets may not be loaded).
+
+ * MinGW updates.
+
+ * Error checking in "git imap-send" for empty response has been
+   improved.
+
+ * Recent update to the refs infrastructure implementation started
+   rewriting packed-refs file more often than before; this has been
+   optimized again for most trivial cases.
+
+ * Some error messages did not quote filenames shown in it, which have
+   been fixed.
+
+ * "git rebase -i" recently started misbehaving when a submodule that
+   is configured with 'submodule.<name>.ignore' is dirty; this has
+   been corrected.
+
+ * Building with NO_LIBPCRE1_JIT did not disable it, which has been fixed.
+
+ * We used to add an empty alternate object database to the system
+   that does not help anything; it has been corrected.
+
+ * Doc update around use of "format-patch --subject-prefix" etc.
+
+ * A fix for an ancient bug in "git apply --ignore-space-change" codepath.
+
+ * Clarify and enhance documentation for "merge-base --fork-point", as
+   it was clear what it computed but not why/what for.
+
+ * A few scripts (both in production and tests) incorrectly redirected
+   their error output.  These have been corrected.
+
+ * "git notes" sent its error message to its standard output stream,
+   which was corrected.
+
+ * The three-way merge performed by "git cherry-pick" was confused
+   when a new submodule was added in the meantime, which has been
+   fixed (or "papered over").
+
+ * The sequencer machinery (used by "git cherry-pick A..B", and "git
+   rebase -i", among other things) would have lost a commit if stopped
+   due to an unlockable index file, which has been fixed.
+
+ * "git apply --inaccurate-eof" when used with "--ignore-space-change"
+   triggered an internal sanity check, which has been fixed.
+
+ * Command line completion (in contrib/) has been taught about the
+   "--copy" option of "git branch".
+
+ * When "git rebase" prepared a mailbox of changes and fed it to "git
+   am" to replay them, it was confused when a stray "From " happened
+   to be in the log message of one of the replayed changes.  This has
+   been corrected.
+
+ * There was a recent semantic mismerge in the codepath to write out a
+   section of a configuration section, which has been corrected.
+
+ * Mentions of "git-rebase" and "git-am" (dashed form) still remained
+   in end-user visible strings emitted by the "git rebase" command;
+   they have been corrected.
+
+ * Contrary to the documentation, "git pull -4/-6 other-args" did not
+   ask the underlying "git fetch" to go over IPv4/IPv6, which has been
+   corrected.
+
+ * "git checkout --recursive" may overwrite and rewind the history of
+   the branch that happens to be checked out in submodule
+   repositories, which might not be desirable.  Detach the HEAD but
+   still allow the recursive checkout to succeed in such a case.
+   (merge 57f22bf997 sb/submodule-recursive-checkout-detach-head later to maint).
+
+ * "git branch --set-upstream" has been deprecated and (sort of)
+   removed, as "--set-upstream-to" is the preferred one these days.
+   The documentation still had "--set-upstream" listed on its
+   synopsis section, which has been corrected.
+   (merge a060f3d3d8 tz/branch-doc-remove-set-upstream later to maint).
+
+ * Internally we use 0{40} as a placeholder object name to signal the
+   codepath that there is no such object (e.g. the fast-forward check
+   while "git fetch" stores a new remote-tracking ref says "we know
+   there is no 'old' thing pointed at by the ref, as we are creating
+   it anew" by passing 0{40} for the 'old' side), and expect that a
+   codepath to locate an in-core object to return NULL as a sign that
+   the object does not exist.  A look-up for an object that does not
+   exist however is quite costly with a repository with large number
+   of packfiles.  This access pattern has been optimized.
+   (merge 87b5e236a1 jk/fewer-pack-rescan later to maint).
+
+ * In addition to "git stash -m message", the command learned to
+   accept "git stash -mmessage" form.
+   (merge 5675473fcb ph/stash-save-m-option-fix later to maint).
+
+ * @{-N} in "git checkout @{-N}" may refer to a detached HEAD state,
+   but the documentation was not clear about it, which has been fixed.
+   (merge 75ce149575 ks/doc-checkout-previous later to maint).
+
+ * A regression in the progress eye-candy was fixed.
+   (merge 9c5951cacf jk/progress-delay-fix later to maint).
+
+ * The code internal to the recursive merge strategy was not fully
+   prepared to see a path that is renamed to try overwriting another
+   path that is only different in case on case insensitive systems.
+   This does not matter in the current code, but will start to matter
+   once the rename detection logic starts taking hints from nearby
+   paths moving to some directory and moves a new path along with them.
+   (merge 4cba2b0108 en/merge-recursive-icase-removal later to maint).
+
+ * An v2.12-era regression in pathspec match logic, which made it look
+   into submodule tree even when it is not desired, has been fixed.
+   (merge eef3df5a93 bw/pathspec-match-submodule-boundary later to maint).
+
+ * Amending commits in git-gui broke the author name that is non-ascii
+   due to incorrect encoding conversion.
+
+ * Recent update to the submodule configuration code broke "diff-tree"
+   by accidentally stopping to read from the index upfront.
+   (merge fd66bcc31f bw/submodule-config-cleanup later to maint).
+
+ * Git shows a message to tell the user that it is waiting for the
+   user to finish editing when spawning an editor, in case the editor
+   opens to a hidden window or somewhere obscure and the user gets
+   lost.
+   (merge abfb04d0c7 ls/editor-waiting-message later to maint).
+
+ * The "safe crlf" check incorrectly triggered for contents that does
+   not use CRLF as line endings, which has been corrected.
+   (merge 649f1f0948 tb/check-crlf-for-safe-crlf later to maint).
+
+ * "git clone --shared" to borrow from a (secondary) worktree did not
+   work, even though "git clone --local" did.  Both are now accepted.
+   (merge b3b05971c1 es/clone-shared-worktree later to maint).
+
+ * The build procedure now allows not just the repositories but also
+   the refs to be used to take pre-formatted manpages and html
+   documents to install.
+   (merge 65289e9dcd rb/quick-install-doc later to maint).
+
+ * Update the shell prompt script (in contrib/) to strip trailing CR
+   from strings read from various "state" files.
+   (merge 041fe8fc83 ra/prompt-eread-fix later to maint).
+
+ * "git merge -s recursive" did not correctly abort when the index is
+   dirty, if the merged tree happened to be the same as the current
+   HEAD, which has been fixed.
+
+ * Bytes with high-bit set were encoded incorrectly and made
+   credential helper fail.
+   (merge 4c267f2ae3 jd/fix-strbuf-add-urlencode-bytes later to maint).
+
+ * "git rebase -p -X<option>" did not propagate the option properly
+   down to underlying merge strategy backend.
+   (merge dd6fb0053c js/fix-merge-arg-quoting-in-rebase-p later to maint).
+
+ * "git merge -s recursive" did not correctly abort when the index is
+   dirty, if the merged tree happened to be the same as the current
+   HEAD, which has been fixed.
+   (merge f309e8e768 ew/empty-merge-with-dirty-index-maint later to maint).
+
+ * Other minor doc, test and build updates and code cleanups.
+   (merge 1a1fc2d5b5 rd/man-prune-progress later to maint).
+   (merge 0ba014035a rd/man-reflog-add-n later to maint).
+   (merge e54b63359f rd/doc-notes-prune-fix later to maint).
+   (merge ff4c9b413a sp/doc-info-attributes later to maint).
+   (merge 7db2cbf4f1 jc/receive-pack-hook-doc later to maint).
+   (merge 5a0526264b tg/t-readme-updates later to maint).
+   (merge 5e83cca0b8 jk/no-optional-locks later to maint).
+   (merge 826c778f7c js/hashmap-update-sample later to maint).
+   (merge 176b2d328c sg/setup-doc-update later to maint).
+   (merge 1b09073514 rs/am-builtin-leakfix later to maint).
+   (merge addcf6cfde rs/fmt-merge-msg-string-leak-fix later to maint).
+   (merge c3ff8f6c14 rs/strbuf-read-once-reset-length later to maint).
+   (merge 6b0eb884f9 db/doc-workflows-neuter-the-maintainer later to maint).
+   (merge 8c87bdfb21 jk/cvsimport-quoting later to maint).
+   (merge 176cb979fe rs/fmt-merge-msg-leakfix later to maint).
+   (merge 5a03360e73 tb/delimit-pretty-trailers-args-with-comma later to maint).
+   (merge d0e6326026 ot/pretty later to maint).
+   (merge 44103f4197 sb/test-helper-excludes later to maint).
+   (merge 170078693f jt/transport-no-more-rsync later to maint).
+   (merge c07b3adff1 bw/path-doc later to maint).
+   (merge bf9d7df950 tz/lib-git-svn-svnserve-tests later to maint).
+   (merge dec366c9a8 sr/http-sslverify-config-doc later to maint).
+   (merge 3f824e91c8 jk/test-suite-tracing later to maint).
+   (merge 1feb061701 db/doc-config-section-names-with-bs later to maint).
+   (merge 74dea0e13c jh/memihash-opt later to maint).
+   (merge 2e9fdc795c ma/bisect-leakfix later to maint).

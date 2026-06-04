@@ -1,0 +1,12 @@
+8e32a6d901327a23ef831511badce7bf3bf46689 refs/heads/branches-one
+0567da4d5edd2ff4bb292a465ba9e64dcad9536b refs/remotes/origin/HEAD
+b4ab76b1a01ea602209932134a44f1e6bd610832 refs/remotes/origin/main
+8e32a6d901327a23ef831511badce7bf3bf46689 refs/remotes/origin/one
+0567da4d5edd2ff4bb292a465ba9e64dcad9536b refs/remotes/origin/three
+6134ee8f857693b96ff1cc98d3e2fd62b199e5a8 refs/remotes/origin/two
+ecf3b3627b498bdcb735cc4343bf165f76964e9a refs/tags/tag-main
+8e32a6d901327a23ef831511badce7bf3bf46689 refs/tags/tag-one
+22feea448b023a2d864ef94b013735af34d238ba refs/tags/tag-one-tree
+c61a82b60967180544e3c19f819ddbd0c9f89899 refs/tags/tag-three
+0e3b14047d3ee365f4f2a1b673db059c3972589c refs/tags/tag-three-file
+525b7fb068d59950d185a8779dc957c77eed73ba refs/tags/tag-two

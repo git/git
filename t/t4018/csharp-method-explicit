@@ -1,0 +1,12 @@
+using System;
+
+class Example : IDisposable
+{
+    void IDisposable.Dispose() // RIGHT
+    {
+        // Filler
+        // Filler
+        
+        // ChangeMe
+    }
+}

@@ -1,0 +1,53 @@
+Git v1.7.11.3 Release Notes
+===========================
+
+Fixes since v1.7.11.3
+---------------------
+
+ * The error message from "git push $there :bogo" (and its equivalent
+   "git push $there --delete bogo") mentioned that we tried and failed
+   to guess what ref is being deleted based on the LHS of the refspec,
+   which we don't.
+
+ * A handful of files and directories we create had tighter than
+   necessary permission bits when the user wanted to have group
+   writability (e.g. by setting "umask 002").
+
+ * "commit --amend" used to refuse amending a commit with an empty log
+   message, with or without "--allow-empty-message".
+
+ * "git commit --amend --only --" was meant to allow "Clever" people to
+   rewrite the commit message without making any change even when they
+   have already changes for the next commit added to their index, but
+   it never worked as advertised since it was introduced in 1.3.0 era.
+
+ * Even though the index can record pathnames longer than 1<<12 bytes,
+   in some places we were not comparing them in full, potentially
+   replacing index entries instead of adding.
+
+ * "git show"'s auto-walking behaviour was an unreliable and
+   unpredictable hack; it now behaves just like "git log" does when it
+   walks.
+
+ * "git diff", "git status" and anything that internally uses the
+   comparison machinery was utterly broken when the difference
+   involved a file with "-" as its name.  This was due to the way "git
+   diff --no-index" was incorrectly bolted on to the system, making
+   any comparison that involves a file "-" at the root level
+   incorrectly read from the standard input.
+
+ * We did not have test to make sure "git rebase" without extra options
+   filters out an empty commit in the original history.
+
+ * "git fast-export" produced an input stream for fast-import without
+   properly quoting pathnames when they contain SPs in them.
+
+ * "git checkout --detach", when you are still on an unborn branch,
+   should be forbidden, but it wasn't.
+
+ * Some implementations of Perl terminates "lines" with CRLF even when
+   the script is operating on just a sequence of bytes.  Make sure to
+   use "$PERL_PATH", the version of Perl the user told Git to use, in
+   our tests to avoid unnecessary breakages in tests.
+
+Also contains minor typofixes and documentation updates.

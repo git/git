@@ -1,0 +1,7 @@
+2 	echo "outer here-doc does not allow indented end-tag" ?!LINT: missing '&&'?!
+3 	cat >file <<-\EOF &&
+4 	but this inner here-doc
+5 	does allow indented EOF
+6 	EOF
+7 	echo "missing chain after" ?!LINT: missing '&&'?!
+8 	echo "but this line is OK because it's the end"

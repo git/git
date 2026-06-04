@@ -1,0 +1,110 @@
+git-refs(1)
+===========
+
+NAME
+----
+git-refs - Low-level access to refs
+
+
+SYNOPSIS
+--------
+[synopsis]
+git refs migrate --ref-format=<format> [--no-reflog] [--dry-run]
+git refs verify [--strict] [--verbose]
+git refs list [--count=<count>] [--shell|--perl|--python|--tcl]
+		   [(--sort=<key>)...] [--format=<format>]
+		   [--include-root-refs] [--points-at=<object>]
+		   [--merged[=<object>]] [--no-merged[=<object>]]
+		   [--contains[=<object>]] [--no-contains[=<object>]]
+		   [(--exclude=<pattern>)...] [--start-after=<marker>]
+		   [ --stdin | (<pattern>...)]
+git refs exists <ref>
+git refs optimize [--all] [--no-prune] [--auto] [--include <pattern>] [--exclude <pattern>]
+
+DESCRIPTION
+-----------
+
+This command provides low-level access to refs.
+
+COMMANDS
+--------
+
+`migrate`::
+	Migrate ref store between different formats.
+
+`verify`::
+	Verify reference database consistency.
+
+list::
+	List references in the repository with support for filtering,
+	formatting, and sorting. This subcommand is an alias for
+	linkgit:git-for-each-ref[1] and offers identical functionality.
+
+exists::
+	Check whether the given reference exists. Returns an exit code of 0 if
+	it does, 2 if it is missing, and 1 in case looking up the reference
+	failed with an error other than the reference being missing. This does
+	not verify whether the reference resolves to an actual object.
+
+optimize::
+	Optimizes references to improve repository performance and reduce disk
+	usage. This subcommand is an alias for linkgit:git-pack-refs[1] and
+	offers identical functionality.
+
+OPTIONS
+-------
+
+The following options are specific to `git refs migrate`:
+
+`--ref-format=<format>`::
+	The ref format to migrate the ref store to. Can be one of:
++
+include::ref-storage-format.adoc[]
+
+`--dry-run`::
+	Perform the migration, but do not modify the repository. The migrated
+	refs will be written into a separate directory that can be inspected
+	separately. The name of the directory will be reported on stdout. This
+	can be used to double check that the migration works as expected before
+	performing the actual migration.
+
+`--reflog`::
+`--no-reflog`::
+	Choose between migrating the reflog data to the new backend,
+	and discarding them.  The default is "--reflog", to migrate.
+
+The following options are specific to `git refs verify`:
+
+`--strict`::
+	Enable stricter error checking. This will cause warnings to be
+	reported as errors. See linkgit:git-fsck[1].
+
+`--verbose`::
+	When verifying the reference database consistency, be chatty.
+
+The following options are specific to 'git refs list':
+
+include::for-each-ref-options.adoc[]
+
+The following options are specific to 'git refs optimize':
+
+include::pack-refs-options.adoc[]
+
+KNOWN LIMITATIONS
+-----------------
+
+The ref format migration has several known limitations in its current form:
+
+* It is not possible to migrate repositories that have worktrees.
+
+* There is no way to block concurrent writes to the repository during an
+  ongoing migration. Concurrent writes can lead to an inconsistent migrated
+  state. Users are expected to block writes on a higher level. If your
+  repository is registered for scheduled maintenance, it is recommended to
+  unregister it first with git-maintenance(1).
+
+These limitations may eventually be lifted.
+
+GIT
+---
+Part of the linkgit:git[1] suite

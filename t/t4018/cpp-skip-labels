@@ -1,0 +1,8 @@
+void RIGHT (void)
+{
+repeat:		// C++ comment
+next:		/* C comment */
+	do_something();
+
+	ChangeMe;
+}

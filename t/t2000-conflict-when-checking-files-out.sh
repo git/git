@@ -1,0 +1,96 @@
+#!/bin/sh
+#
+# Copyright (c) 2005 Junio C Hamano
+#
+
+test_description='git conflicts when checking files out test.'
+
+# The first test registers the following filesystem structure in the
+# cache:
+#
+#     path0       - a file
+#     path1/file1 - a file in a directory
+#
+# And then tries to checkout in a work tree that has the following:
+#
+#     path0/file0 - a file in a directory
+#     path1       - a file
+#
+# The git checkout-index command should fail when attempting to checkout
+# path0, finding it is occupied by a directory, and path1/file1, finding
+# path1 is occupied by a non-directory.  With "-f" flag, it should remove
+# the conflicting paths and succeed.
+
+. ./test-lib.sh
+
+
+test_expect_success 'prepare files path0 and path1/file1' '
+	date >path0 &&
+	mkdir path1 &&
+	date >path1/file1 &&
+	git update-index --add path0 path1/file1
+'
+
+test_expect_success 'prepare working tree files with D/F conflicts' '
+	rm -fr path0 path1 &&
+	mkdir path0 &&
+	date >path0/file0 &&
+	date >path1
+'
+
+test_expect_success 'git checkout-index without -f should fail on conflicting work tree.' '
+	test_must_fail git checkout-index -a
+'
+
+test_expect_success 'git checkout-index with -f should succeed.' '
+	git checkout-index -f -a &&
+	test_path_is_file path0 &&
+	test_path_is_dir path1 &&
+	test_path_is_file path1/file1
+'
+
+test_expect_success SYMLINKS 'checkout-index -f twice with --prefix' '
+	mkdir -p tar/get &&
+	ln -s tar/get there &&
+	echo first &&
+	git checkout-index -a -f --prefix=there/ &&
+	echo second &&
+	git checkout-index -a -f --prefix=there/
+'
+
+# The second test registers the following filesystem structure in the cache:
+#
+#     path2/file0	- a file in a directory
+#     path3/file1 - a file in a directory
+#
+# and attempts to check it out when the work tree has:
+#
+#     path2/file0 - a file in a directory
+#     path3       - a symlink pointing at "path2"
+#
+# Checkout cache should fail to extract path3/file1 because the leading
+# path path3 is occupied by a non-directory.  With "-f" it should remove
+# the symlink path3 and create directory path3 and file path3/file1.
+
+test_expect_success 'checkout-index -f resolves symlink conflict on leading path' '
+	mkdir path2 &&
+	date >path2/file0 &&
+	git update-index --add path2/file0 &&
+	tree1=$(git write-tree) &&
+	mkdir path3 &&
+	date >path3/file1 &&
+	git update-index --add path3/file1 &&
+	tree2=$(git write-tree) &&
+	rm -fr path3 &&
+	git read-tree -m $tree1 &&
+	git checkout-index -f -a &&
+	test_ln_s_add path2 path3 &&
+	git read-tree $tree2 &&
+	git checkout-index -f -a &&
+	test_path_is_dir_not_symlink path2 &&
+	test_path_is_dir_not_symlink path3 &&
+	test_path_is_file_not_symlink path2/file0 &&
+	test_path_is_file_not_symlink path3/file1
+'
+
+test_done

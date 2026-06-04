@@ -1,0 +1,24 @@
+# git Makefile configuration, included in main Makefile
+# @configure_input@
+
+CC = @CC@
+CFLAGS = @CFLAGS@
+CPPFLAGS = @CPPFLAGS@
+LDFLAGS = @LDFLAGS@
+AR = @AR@
+TAR = @TAR@
+DIFF = @DIFF@
+PACKAGE_TARNAME = @PACKAGE_TARNAME@
+#INSTALL = @INSTALL@		# needs install-sh or install.sh in sources
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = @bindir@
+gitexecdir = @libexecdir@/git-core
+datarootdir = @datarootdir@
+template_dir = @datadir@/git-core/templates
+sysconfdir = @sysconfdir@
+docdir = @docdir@
+
+mandir = @mandir@
+htmldir = @htmldir@

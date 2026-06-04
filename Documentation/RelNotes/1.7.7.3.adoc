@@ -1,0 +1,19 @@
+Git v1.7.7.3 Release Notes
+==========================
+
+Fixes since v1.7.7.2
+--------------------
+
+ * Adjust the "quick-install-doc" procedures as preformatted
+   html/manpage are no longer in the source repository.
+
+ * The logic to optimize the locality of the data in a pack introduced in
+   1.7.7 was grossly inefficient.
+
+ * The logic to filter out forked projects in the project list in
+   "gitweb" was broken for some time.
+
+ * "git branch -m/-M" advertised to update RENAME_REF ref in the
+   commit log message that introduced the feature but not anywhere in
+   the documentation, and never did update such a ref anyway. This
+   undocumented misfeature that did not exist has been excised.

@@ -1,0 +1,441 @@
+Git v2.50 Release Notes
+=======================
+
+UI, Workflows & Features
+------------------------
+
+ * A post-processing filter for "diff --raw" output has been
+   introduced.
+
+ * "git repack" learned "--combine-cruft-below-size" option that
+   controls how cruft-packs are combined.
+
+ * TCP keepalive behaviour on http transports can now be configured by
+   calling cURL library.
+
+ * Incrementally updating multi-pack index files.
+
+ * "git reflog" learns "drop" subcommand, that discards the entire
+   reflog data for a ref.
+
+ * A new userdiff driver for ".ini" format configuration files has
+   been added.
+
+ * The job to coalesce loose objects into packfiles in "git
+   maintenance" now has configurable batch size.
+
+ * "git clone" still gave the message about the default branch name;
+   this message has been turned into an advice message that can be
+   turned off.
+
+ * "git rev-list" learns machine-parsable output format that delimits
+   each field with NUL.
+
+ * "git maintenance" learns a new task to expire reflog entries.
+
+ * Auth-related (and unrelated) error handling in send-email has been
+   made more robust.
+
+ * Updating multiple references have only been possible in an all-or-nothing
+   fashion with transactions, but it can be more efficient to batch
+   multiple updates even when some of them are allowed to fail in a
+   best-effort manner.  A new "best effort batches of updates" mode
+   has been introduced.
+
+ * "git help --build-options" reports SHA-1 and SHA-256 backends used
+   in the build.
+
+ * "git cat-file --batch" and friends learned to allow "--filter=" to
+   omit certain objects, just like the transport layer does.
+
+ * "git blame --porcelain" mode now talks about unblamable lines and
+   lines that are blamed to an ignored commit.
+
+ * The build procedure installs bash (but not zsh) completion script.
+
+ * send-email has been updated to work better with Outlook's SMTP server.
+
+ * "git diff --minimal" used to give non-minimal output when its
+   optimization kicked in, which has been disabled.
+
+ * "git index-pack --fix-thin" used to abort to prevent a cycle in
+   delta chains from forming in a corner case even when there is no
+   such cycle.
+
+ * Make repository clean-up tasks that "gc" can do available to "git
+   maintenance" front-end.
+
+ * Bundle-URI feature did not use refs recorded in the bundle other
+   than normal branches as anchoring points to optimize the follow-up
+   fetch during "git clone"; now it is told to utilize all.
+
+ * The `send-email` documentation has been updated with OAuth2.0
+   related examples.
+
+ * Two of the "scalar" subcommands that add a repository that hasn't
+   been under "scalar"'s control are taught an option not to enable the
+   scheduled maintenance on it.
+
+ * The userdiff pattern for shell scripts has been updated to cope
+   with more bash-isms.
+
+ * "git merge-tree" learned an option to see if it resolves cleanly
+   without actually creating a result.
+
+ * The commit title in the "rebase -i" todo file are now prefixed with
+   '#', just like a merge commit being replayed.
+
+ * "git receive-pack" optionally learns not to care about connectivity
+   check, which can be useful when the repository arranges to ensure
+   connectivity by some other means.
+
+ * "git notes --help" documentation updates.
+
+
+Performance, Internal Implementation, Development Support etc.
+--------------------------------------------------------------
+
+ * A handful of built-in command implementations have been rewritten
+   to use the repository instance supplied by git.c:run_builtin(), its
+   caller.
+
+ * "git fsck" becomes more careful when checking the refs.
+
+ * "git fast-export | git fast-import" learns to deal with commit and
+   tag objects with embedded signatures a bit better.  This is highly
+   experimental and the format of the data stream may change in the
+   future without compatibility guarantees.
+
+ * The code paths to check whether a refname X is available (by seeing
+   if another ref X/Y exists, etc.) have been optimized.
+
+ * First step of deprecating and removing merge-recursive.
+
+ * In protocol v2 where the refs advertisement is constrained, we try
+   to tell the server side not to limit the advertisement when there
+   is no specific need to, which has been the source of confusion and
+   recent bugs.  Revamp the logic to simplify.
+
+ * Update meson based build procedure for breaking changes support.
+
+ * Enable -Wunreachable-code for developer builds.
+
+ * Ensure what we write in assert() does not have side effects,
+   and introduce ASSERT() macro to mark those that cannot be
+   mechanically checked for lack of side effects.
+
+ * Give more meaningful error return values from block writer layer of
+   the reftable ref-API backend.
+
+ * Make the code in reftable library less reliant on the service
+   routines it used to borrow from Git proper, to make it easier to
+   use by external users of the library.
+
+ * CI update.
+
+ * The object layer has been updated to take an explicit repository
+   instance as a parameter in more code paths.
+
+ * Some warnings from "-Wsign-compare" for builtin/rm.c have been
+   squelched.
+
+ * A few traditional unit tests have been rewritten to use the clar
+   framework.
+
+ * Some warnings from "-Wsign-compare" for pathspec.c have been
+   squelched.
+
+ * "make test" used to have a hard dependency on (basic) Perl; tests
+   have been rewritten help environment with NO_PERL test the build as
+   much as possible.
+
+ * Remove remnants of the recursive merge strategy backend, which was
+   superseded by the ort merge strategy.
+
+ * Optimize the code to dedup references recorded in a bundle file.
+
+ * Update parse-options API to catch mistakes to pass address of an
+   integral variable of a wrong type/size.
+
+ * Since a call to repo_config() can be called with repo set to NULL
+   these days, a command that is marked as RUN_SETUP in the builtin
+   command table does not have to check repo with NULL before making
+   the call.
+
+ * Overhaul of the reftable API.
+
+ * Reduce requirement for Perl in our documentation build and a few
+   scripts.
+
+ * The build procedure based on Meson learned to drive the
+   benchmarking tests.
+
+ * Code clean-up for meson-based build infrastructure.
+
+ * Add an equivalent to "make hdr-check" target to meson based builds.
+
+ * Further code clean-up in the object-store layer.
+
+ * Build performance fix.
+
+ * Teach "git send-email" to also consult `hostname -f` for mail
+   domain to compute the identity given to SMTP servers.
+
+ * The dependency on the_repository variable has been reduced from the
+   code paths in "git replay".
+
+ * Support to create a loose object file with unknown object type has
+   been dropped.
+
+ * The code path to access the "packed-refs" file while "fsck" is
+   taught to mmap the file, instead of reading the whole file into
+   memory.
+
+ * Assorted fixes for issues found with CodeQL.
+
+ * Remove the leftover hints to the test framework to mark tests that
+   do not pass the leak checker tests, as they should no longer be
+   needed.
+
+ * When a stale .midx file refers to .pack files that no longer exist,
+   we ended up checking for these non-existent files repeatedly, which
+   has been optimized by memoizing the non-existence.
+
+ * Build settings have been improved for BSD based systems.
+
+ * Newer version of libcURL detected curl_easy_setopt() calls we made
+   with platform-natural "int" when we should have used "long", which
+   all have been corrected.
+
+ * Tests that compare $HOME and $(pwd), which should be the same
+   directory unless the tests chdir's around, would fail when the user
+   enters the test directory via symbolic links, which has been
+   corrected.
+
+
+Fixes since v2.49
+-----------------
+
+ * The refname exclusion logic in the packed-ref backend has been
+   broken for some time, which confused upload-pack to advertise
+   different set of refs.  This has been corrected.
+   (merge 10e8a9352b tb/refs-exclude-fixes later to maint).
+
+ * The merge-recursive and merge-ort machinery crashed in corner cases
+   when certain renames are involved.
+   (merge 3adba40858 en/merge-process-renames-crash-fix later to maint).
+
+ * Certain "cruft" objects would have never been refreshed when there
+   are multiple cruft packs in the repository, which has been
+   corrected.
+   (merge 08f612ba70 tb/multi-cruft-pack-refresh-fix later to maint).
+
+ * The xdiff code on 32-bit platform misbehaved when an insanely large
+   context size is given, which has been corrected.
+   (merge d39e28e68c rs/xdiff-context-length-fix later to maint).
+
+ * GitHub Actions CI switched on a CI/CD variable that does not exist
+   when choosing what packages to install etc., which has been
+   corrected.
+   (merge ee89f7c79d kn/ci-meson-check-build-docs-fix later to maint).
+
+ * Using "git name-rev --stdin" as an example, improve the framework to
+   prepare tests to pretend to be in the future where the breaking
+   changes have already happened.
+   (merge de3dec1187 jc/name-rev-stdin later to maint).
+
+ * An earlier code refactoring of the hash machinery missed a few
+   required calls to init_fn.
+   (merge d39f04b638 jh/hash-init-fixes later to maint).
+
+ * A documentation page was left out from formatting and installation,
+   which has been corrected.
+   (merge ae85116f18 pw/build-breaking-changes-doc later to maint).
+
+ * The bash command line completion script (in contrib/) has been
+   updated to cope with remote repository nicknames with slashes in
+   them.
+   (merge 778d2f1760 dm/completion-remote-names-fix later to maint).
+
+ * "Dubious ownership" checks on Windows has been tightened up.
+   (merge 5bb88e89ef js/mingw-admins-are-special later to maint).
+
+ * Layout configuration in vimdiff backend didn't work as advertised,
+   which has been corrected.
+   (merge 93bab2d04b fr/vimdiff-layout-fixes later to maint).
+
+ * Fix our use of zlib corner cases.
+   (merge 1cb2f293f5 jk/zlib-inflate-fixes later to maint).
+
+ * Fix lockfile contention in reftable code on Windows.
+   (merge 0a3dceabf1 ps/mingw-creat-excl-fix later to maint).
+
+ * "git-merge-file" documentation source, which has lines that look
+   like conflict markers, lacked custom conflict marker size defined,
+   which has been corrected..
+   (merge d3b5832381 pw/custom-conflict-marker-size-for-merge-related-docs later to maint).
+
+ * Squelch false-positive from sparse.
+   (merge da87b58014 dd/sparse-glibc-workaround later to maint).
+
+ * Adjust to the deprecation of use of Ubuntu 20.04 GitHub Actions CI.
+   (merge 832d9f6d0b js/ci-github-update-ubuntu later to maint).
+
+ * Work around CI breakage due to fedora base image getting updated.
+   (merge 8a471a663b js/ci-fedora-gawk later to maint).
+
+ * A ref transaction corner case fix.
+   (merge b9fadeead7 jt/ref-transaction-abort-fix later to maint).
+
+ * Random build fixes.
+   (merge 85e1d6819f ps/misc-build-fixes later to maint).
+
+ * "git fetch [<remote>]" with only the configured fetch refspec
+   should be the only thing to update refs/remotes/<remote>/HEAD,
+   but the code was overly eager to do so in other cases.
+
+ * Incorrect sorting of refs with bytes with high-bit set on platforms
+   with signed char led to a BUG, which has been corrected.
+
+ * "make perf" fixes.
+   (merge 1665f12fa0 pb/perf-test-fixes later to maint).
+
+ * Doc mark-up updates.
+   (merge 5a5565ec44 ja/doc-reset-mv-rm-markup-updates later to maint).
+
+ * Work around false positive from CodeQL checker.
+   (merge 0f558141ed js/range-check-codeql-workaround later to maint).
+
+ * "git log --{left,right}-only A...B", when A and B does not share
+   any common ancestor, now behaves as expected.
+   (merge e7ef4be7c2 mh/left-right-limited later to maint).
+
+ * Document the convention to disable hooks altogether by setting the
+   hooksPath configuration variable to /dev/null.
+   (merge 1b2eee94f1 ds/doc-disable-hooks later to maint).
+
+ * Make sure outage of third-party sites that supply P4, Git-LFS, and
+   JGit we use for testing would not prevent our CI jobs from running
+   at all.
+
+ * Various build tweaks, including CSPRNG selection on some platforms.
+   (merge cdda67de03 rj/build-tweaks later to maint).
+
+ * Developer support fix..
+   (merge 32b74b9809 js/git-perf-env-override later to maint).
+
+ * Fix for scheduled maintenance tasks on platforms using launchctl.
+   (merge eb2d7beb0e jh/gc-launchctl-schedule-fix later to maint).
+
+ * Update to arm64 Windows port (part of which had been reverted as it
+   broke builds for existing platforms, which may need to be redone in
+   future releases).
+
+ * hashmap API clean-up to ensure hashmap_clear() leaves a cleared map
+   in a reusable state.
+   (merge 9481877de3 en/hashmap-clear-fix later to maint).
+
+ * "git mv a a/b dst" would ask to move the directory 'a' itself, as
+   well as its contents, in a single destination directory, which is
+   a contradicting request that is impossible to satisfy. This case is
+   now detected and the command errors out.
+   (merge 974f0d4664 ps/mv-contradiction-fix later to maint).
+
+ * Further refinement on CI messages when an optional external
+   software is unavailable (e.g. due to third-party service outage).
+   (merge 956acbefbd jc/ci-skip-unavailable-external-software later to maint).
+
+ * Test result aggregation did not work in Meson based CI jobs.
+   (merge bd38ed5be1 ps/ci-test-aggreg-fix-for-meson later to maint).
+
+ * Code clean-up around stale CI elements and building with Visual Studio.
+   (merge a7b060f67f js/ci-buildsystems-cleanup later to maint).
+
+ * "git add 'f?o'" did not add 'foo' if 'f?o', an unusual pathname,
+   also existed on the working tree, which has been corrected.
+   (merge ec727e189c kj/glob-path-with-special-char later to maint).
+
+ * The fallback implementation of open_nofollow() depended on
+   open("symlink", O_NOFOLLOW) to set errno to ELOOP, but a few BSD
+   derived systems use different errno, which has been worked around.
+   (merge f47bcc3413 cf/wrapper-bsd-eloop later to maint).
+
+ * Use-after-free fix in the sequencer.
+   (merge 5dbaec628d pw/sequencer-reflog-use-after-free later to maint).
+
+ * win+Meson CI pipeline, unlike other pipelines for Windows,
+   used to build artifacts in developer mode, which has been changed to
+   build them in release mode for consistency.
+   (merge 184abdcf05 js/ci-build-win-in-release-mode later to maint).
+
+ * CI settings at GitLab has been updated to run MSVC based Meson job
+   automatically (as opposed to be done only upon manual request).
+   (merge 6389579b2f ps/ci-gitlab-enable-msvc-meson-job later to maint).
+
+ * "git apply" and "git add -i/-p" code paths no longer unnecessarily
+   expand sparse-index while working.
+   (merge ecf9ba20e3 ds/sparse-apply-add-p later to maint).
+
+ * Avoid adding directory path to a sparse-index tree entries to the
+   name-hash, since they would bloat the hashtable without anybody
+   querying for them.  This was done already for a single threaded
+   part of the code, but now the multi-threaded code also does the
+   same.
+   (merge 2e60aabc75 am/sparse-index-name-hash-fix later to maint).
+
+ * Recent versions of Perl started warning against "! A =~ /pattern/"
+   which does not negate the result of the matching.  As it turns out
+   that the problematic function is not even called, it was removed.
+   (merge 67cae845d2 op/cvsserver-perl-warning later to maint).
+
+ * "git apply --index/--cached" when applying a deletion patch in
+   reverse failed to give the mode bits of the path "removed" by the
+   patch to the file it creates, which has been corrected.
+
+ * "git verify-refs" errored out in a repository in which
+   linked worktrees were prepared with Git 2.43 or lower.
+   (merge d5b3c38b8a sj/ref-contents-check-fix later to maint).
+
+ * Update total_ram() function on BSD variants.
+
+ * Update online_cpus() function on BSD variants.
+
+ * Revert a botched bswap.h change that broke ntohll() functions on
+   big-endian systems with __builtin_bswap32/64().
+
+ * Fixes for GitHub Actions Coverity job.
+   (merge 3cc4fc1ebd js/github-ci-win-coverity-fix later to maint).
+
+ * Other code cleanup, docfix, build fix, etc.
+   (merge 227c4f33a0 ja/doc-block-delimiter-markup-fix later to maint).
+   (merge 2bfd3b3685 ab/decorate-code-cleanup later to maint).
+   (merge 5337daddc7 am/dir-dedup-decl-of-repository later to maint).
+   (merge 554051d691 en/diff-rename-follow-fix later to maint).
+   (merge a18c18b470 en/random-cleanups later to maint).
+   (merge 5af21c9acb hj/doc-rev-list-ancestry-fix later to maint).
+   (merge 26d76ca284 aj/doc-restore-p-update later to maint).
+   (merge 2c0dcb9754 cc/lop-remote later to maint).
+   (merge 7b399322a2 ja/doc-branch-markup later to maint).
+   (merge ee434e1807 pw/doc-pack-refs-markup-fix later to maint).
+   (merge c000918eb7 tb/bitamp-typofix later to maint).
+   (merge fa8cd29676 js/imap-send-peer-cert-verify later to maint).
+   (merge 98b423bc1c rs/clear-commit-marks-simplify later to maint).
+   (merge 133d065dd6 ta/bulk-checkin-signed-compare-false-warning-fix later to maint).
+   (merge d2827dc31e es/meson-build-skip-coccinelle later to maint).
+   (merge ee8edb7156 dk/vimdiff-doc-fix later to maint).
+   (merge 107d889303 md/t1403-path-is-file later to maint).
+   (merge abd4192b07 js/comma-semicolon-confusion later to maint).
+   (merge 27b7264206 ab/environment-clean-header later to maint).
+   (merge ff4a749354 as/typofix-in-env-h-header later to maint).
+   (merge 86eef3541e az/tighten-string-array-constness later to maint).
+   (merge 25292c301d lo/remove-log-reencode-from-rev-info later to maint).
+   (merge 1aa50636fd jk/p5332-testfix later to maint).
+   (merge 42cf4ac552 ps/ci-resurrect-p4-on-github later to maint).
+   (merge 104add8368 js/diff-codeql-false-positive-workaround later to maint).
+   (merge f62977b93c en/get-tree-entry-doc later to maint).
+   (merge e5dd0a05ed ly/am-split-stgit-leakfix later to maint).
+   (merge bac220e154 rc/t1001-test-path-is-file later to maint).
+   (merge 91db6c735d ly/reftable-writer-leakfix later to maint).
+   (merge 20e4e9ad0b jc/doc-synopsis-option-markup later to maint).
+   (merge cddcee7f64 es/meson-configure-build-options-fix later to maint).
+   (merge cea9f55f00 wk/sparse-checkout-doc-fix later to maint).

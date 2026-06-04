@@ -1,0 +1,33 @@
+versionsort.prereleaseSuffix (deprecated)::
+	Deprecated alias for `versionsort.suffix`.  Ignored if
+	`versionsort.suffix` is set.
+
+versionsort.suffix::
+	Even when version sort is used in linkgit:git-tag[1], tagnames
+	with the same base version but different suffixes are still sorted
+	lexicographically, resulting e.g. in prerelease tags appearing
+	after the main release (e.g. "1.0-rc1" after "1.0").  This
+	variable can be specified to determine the sorting order of tags
+	with different suffixes.
++
+By specifying a single suffix in this variable, any tagname containing
+that suffix will appear before the corresponding main release.  E.g. if
+the variable is set to "-rc", then all "1.0-rcX" tags will appear before
+"1.0".  If specified multiple times, once per suffix, then the order of
+suffixes in the configuration will determine the sorting order of tagnames
+with those suffixes.  E.g. if "-pre" appears before "-rc" in the
+configuration, then all "1.0-preX" tags will be listed before any
+"1.0-rcX" tags.  The placement of the main release tag relative to tags
+with various suffixes can be determined by specifying the empty suffix
+among those other suffixes.  E.g. if the suffixes "-rc", "", "-ck", and
+"-bfs" appear in the configuration in this order, then all "v4.8-rcX" tags
+are listed first, followed by "v4.8", then "v4.8-ckX" and finally
+"v4.8-bfsX".
++
+If more than one suffix matches the same tagname, then that tagname will
+be sorted according to the suffix which starts at the earliest position in
+the tagname.  If more than one different matching suffix starts at
+that earliest position, then that tagname will be sorted according to the
+longest of those suffixes.
+The sorting order between different suffixes is undefined if they are
+in multiple config files.

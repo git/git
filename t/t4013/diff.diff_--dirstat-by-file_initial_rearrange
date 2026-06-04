@@ -1,0 +1,3 @@
+$ git diff --dirstat-by-file initial rearrange
+ 100.0% dir/
+$

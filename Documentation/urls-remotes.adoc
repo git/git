@@ -1,0 +1,138 @@
+include::urls.adoc[]
+
+REMOTES[[REMOTES]]
+------------------
+
+The name of one of the following can be used instead
+of a URL as _<repository>_ argument:
+
+* a remote in the Git configuration file: `$GIT_DIR/config`,
+* a file in the `$GIT_DIR/remotes` directory, or
+* a file in the `$GIT_DIR/branches` directory.
+
+All of these also allow you to omit the refspec from the command line
+because they each contain a refspec which git will use by default.
+
+Named remote in configuration file
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You can choose to provide the name of a remote which you had previously
+configured using linkgit:git-remote[1], linkgit:git-config[1]
+or even by a manual edit to the `$GIT_DIR/config` file.  The URL of
+this remote will be used to access the repository.  The refspec
+of this remote will be used by default when you do
+not provide a refspec on the command line.  The entry in the
+config file would appear like this:
+
+------------
+	[remote "<name>"]
+		url = <URL>
+		pushurl = <pushurl>
+		push = <refspec>
+		fetch = <refspec>
+------------
+
+The _<pushurl>_ is used for pushes only. It is optional and defaults
+to _<URL>_. Pushing to a remote affects all defined pushurls or all
+defined urls if no pushurls are defined. Fetch, however, will only
+fetch from the first defined url if multiple urls are defined.
+
+Named file in `$GIT_DIR/remotes`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You can choose to provide the name of a
+file in `$GIT_DIR/remotes`.  The URL
+in this file will be used to access the repository.  The refspec
+in this file will be used as default when you do not
+provide a refspec on the command line.  This file should have the
+following format:
+
+------------
+	URL: one of the above URL formats
+	Push: <refspec>
+	Pull: <refspec>
+
+------------
+
+`Push:` lines are used by `git push` and
+`Pull:` lines are used by `git pull` and `git fetch`.
+Multiple `Push:` and `Pull:` lines may
+be specified for additional branch mappings.
+
+Named file in `$GIT_DIR/branches`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You can choose to provide the name of a
+file in `$GIT_DIR/branches`.
+The URL in this file will be used to access the repository.
+This file should have the following format:
+
+
+------------
+	<URL>#<head>
+------------
+
+_<URL>_ is required; `#<head>` is optional.
+
+Depending on the operation, git will use one of the following
+refspecs, if you don't provide one on the command line.
+_<branch>_ is the name of this file in `$GIT_DIR/branches` and
+_<head>_ defaults to `master`.
+
+git fetch uses:
+
+------------
+	refs/heads/<head>:refs/heads/<branch>
+------------
+
+git push uses:
+
+------------
+	HEAD:refs/heads/<head>
+------------
+
+
+[[UPSTREAM-BRANCHES]]
+UPSTREAM BRANCHES
+-----------------
+
+Branches in Git can optionally have an upstream remote branch.
+Git defaults to using the upstream branch for remote operations, for example:
+
+* It's the default for `git pull` or `git fetch` with no arguments.
+* It's the default for `git push` with no arguments, with some exceptions.
+  For example, you can use the `branch.<name>.pushRemote` option to push
+  to a different remote than you pull from, and by default with
+  `push.default=simple` the upstream branch you configure must have
+  the same name.
+* Various commands, including `git checkout` and `git status`, will
+  show you how many commits have been added to your current branch and
+  the upstream since you forked from it, for example "Your branch and
+  'origin/main' have diverged, and have 2 and 3 different commits each
+  respectively".
+
+The upstream is stored in `.git/config`, in the "`remote`" and "`merge`"
+fields. For example, if `main`'s upstream is `origin/main`:
+
+------------
+[branch "main"]
+   remote = origin
+   merge = refs/heads/main
+------------
+
+You can set an upstream branch explicitly with
+`git push --set-upstream <remote> <branch>`
+but Git will often automatically set the upstream for you, for example:
+
+* When you clone a repository, Git will automatically set the upstream
+  for the default branch.
+* If you have the `push.autoSetupRemote` configuration option set,
+  `git push` will automatically set the upstream the first time you push
+  a branch.
+* Checking out a remote-tracking branch with `git checkout <branch>`
+  will automatically create a local branch with that name and set
+  the upstream to the remote branch.
+
+[NOTE]
+Upstream branches are sometimes referred to as "tracking information",
+as in "set the branch's tracking information".

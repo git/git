@@ -1,0 +1,28 @@
+Git v1.6.5.8 Release Notes
+==========================
+
+Fixes since v1.6.5.7
+--------------------
+
+* "git count-objects" did not handle packfiles that are bigger than 4G on
+  platforms with 32-bit off_t.
+
+* "git rebase -i" did not abort cleanly if it failed to launch the editor.
+
+* "git blame" did not work well when commit lacked the author name.
+
+* "git fast-import" choked when handling a tag that points at an object
+  that is not a commit.
+
+* "git reset --hard" did not work correctly when GIT_WORK_TREE environment
+  variable is used to point at the root of the true work tree.
+
+* "git grep" fed a buffer that is not NUL-terminated to underlying
+  regexec().
+
+* "git checkout -m other" while on a branch that does not have any commit
+  segfaulted, instead of failing.
+
+* "git branch -a other" should have diagnosed the command as an error.
+
+Other minor documentation updates are also included.

@@ -1,0 +1,8 @@
+sub RIGHTwithheredocument {
+	print <<"EOF"
+decoy here-doc
+EOF
+	# some lines of context
+	# to pad it out
+	print "ChangeMe\n";
+}

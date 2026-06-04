@@ -1,0 +1,21 @@
+From: A U Thor <au.thor@example.com>
+Date: Thu Dec 4 16:00:00 2008 -0800
+Subject: Six
+
+Applying this patch with --whitespace=fix should lose 
+the trailing whitespace after "Six".
+
+diff --git i/file-2 w/file-2
+index 06e567b..b6f3a16 100644
+--- i/file-2
++++ w/file-2
+@@ -1,7 +1,7 @@
+ 1
+ 2
+-3
++Three
+ 4
+ 5
+-6
++Six 
+ 7

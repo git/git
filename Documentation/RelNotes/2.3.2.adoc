@@ -1,0 +1,79 @@
+Git v2.3.2 Release Notes
+========================
+
+Fixes since v2.3.1
+------------------
+
+ * "update-index --refresh" used to leak when an entry cannot be
+   refreshed for whatever reason.
+
+ * "git fast-import" used to crash when it could not close and
+   conclude the resulting packfile cleanly.
+
+ * "git blame" died, trying to free an uninitialized piece of memory.
+
+ * "git merge-file" did not work correctly in a subdirectory.
+
+ * "git submodule add" failed to squash "path/to/././submodule" to
+   "path/to/submodule".
+
+ * In v2.2.0, we broke "git prune" that runs in a repository that
+   borrows from an alternate object store.
+
+ * Certain older vintages of cURL give irregular output from
+   "curl-config --vernum", which confused our build system.
+
+ * An earlier workaround to squelch unhelpful deprecation warnings
+   from the compiler on Mac OSX unnecessarily set minimum required
+   version of the OS, which the user might want to raise (or lower)
+   for other reasons.
+
+ * Longstanding configuration variable naming rules has been added to
+   the documentation.
+
+ * The credential helper for Windows (in contrib/) used to mishandle
+   a user name with an at-sign in it.
+
+ * Older GnuPG implementations may not correctly import the keyring
+   material we prepare for the tests to use.
+
+ * Clarify in the documentation that "remote.<nick>.pushURL" and
+   "remote.<nick>.URL" are there to name the same repository accessed
+   via different transports, not two separate repositories.
+
+ * The pack bitmap support did not build with older versions of GCC.
+
+ * Reading configuration from a blob object, when it ends with a lone
+   CR, use to confuse the configuration parser.
+
+ * We didn't format an integer that wouldn't fit in "int" but in
+   "uintmax_t" correctly.
+
+ * "git push --signed" gave an incorrectly worded error message when
+   the other side did not support the capability.
+
+ * "git fetch" over a remote-helper that cannot respond to "list"
+   command could not fetch from a symbolic reference e.g. HEAD.
+
+ * The insn sheet "git rebase -i" creates did not fully honor
+   core.abbrev settings.
+
+ * The tests that wanted to see that file becomes unreadable after
+   running "chmod a-r file", and the tests that wanted to make sure it
+   is not run as root, we used "can we write into the / directory?" as
+   a cheap substitute, but on some platforms that is not a good
+   heuristics.  The tests and their prerequisites have been updated to
+   check what they really require.
+
+ * The configuration variable 'mailinfo.scissors' was hard to
+   discover in the documentation.
+
+ * Correct a breakage to git-svn around v2.2 era that triggers
+   premature closing of FileHandle.
+
+ * Even though we officially haven't dropped Perl 5.8 support, the
+   Getopt::Long package that came with it does not support "--no-"
+   prefix to negate a boolean option; manually add support to help
+   people with older Getopt::Long package.
+
+Also contains typofixes, documentation updates and trivial code clean-ups.

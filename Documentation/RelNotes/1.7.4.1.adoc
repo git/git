@@ -1,0 +1,27 @@
+Git v1.7.4.1 Release Notes
+==========================
+
+Fixes since v1.7.4
+------------------
+
+ * On Windows platform, the codepath to spawn a new child process forgot
+   to first flush the output buffer.
+
+ * "git bundle" did not use OFS_DELTA encoding, making its output a few
+   per-cent larger than necessarily.
+
+ * The option to tell "git clone" to recurse into the submodules was
+   misspelled with an underscore "--recurse_submodules".
+
+ * "git diff --cached HEAD" before the first commit does what an end user
+   would expect (namely, show what would be committed without further "git
+   add").
+
+ * "git fast-import" didn't accept the command to ask for "notes" feature
+   to be present in its input stream, even though it was capable of the
+   feature.
+
+ * "git fsck" gave up scanning loose object files in directories with
+   garbage files.
+
+And other minor fixes and documentation updates.

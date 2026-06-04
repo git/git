@@ -1,0 +1,76 @@
+head	1.2;
+access;
+symbols
+	vtag-2:1.1.1.2
+	vtag-1:1.1.1.1
+	vbranchA:1.1.1;
+locks; strict;
+comment	@# @;
+
+
+1.2
+date	2004.02.09.15.43.14;	author kfogel;	state Exp;
+branches;
+next	1.1;
+
+1.1
+date	2004.02.09.15.43.13;	author kfogel;	state Exp;
+branches
+	1.1.1.1;
+next	;
+
+1.1.1.1
+date	2004.02.09.15.43.13;	author kfogel;	state Exp;
+branches;
+next	1.1.1.2;
+
+1.1.1.2
+date	2004.02.09.15.43.13;	author kfogel;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.2
+log
+@First regular commit, to imported-modified-imported.txt, on HEAD.
+@
+text
+@This is a modification of imported-modified-imported.txt on HEAD.
+It should supersede the version from the vendor branch.
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d1 2
+a2 1
+This is vtag-1 (on vbranchA) of imported-modified-imported.txt.
+@
+
+
+1.1.1.1
+log
+@Import (vbranchA, vtag-1).
+@
+text
+@@
+
+
+1.1.1.2
+log
+@Import (vbranchA, vtag-2).
+@
+text
+@d1 1
+a1 1
+This is vtag-2 (on vbranchA) of imported-modified-imported.txt.
+@
+
+

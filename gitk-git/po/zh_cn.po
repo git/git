@@ -1,0 +1,1073 @@
+# Translation of gitk to Simplified Chinese.
+#
+# Translators:
+# YanKe <imyanke@163.com>, 2017
+msgid ""
+msgstr ""
+"Project-Id-Version: Gitk Chinese Localization Project\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2017-02-28 23:11+0800\n"
+"PO-Revision-Date: 2017-03-11 02:27+0800\n"
+"Last-Translator: YanKe <imyanke@163.com>\n"
+"Language-Team: Chinese\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: zh_CN\n"
+
+msgid "Couldn't get list of unmerged files:"
+msgstr "不能获取未合并文件列表："
+
+msgid "Color words"
+msgstr "着色显示差异"
+
+msgid "Markup words"
+msgstr "标记显示差异"
+
+msgid "Error parsing revisions:"
+msgstr "解析版本错误："
+
+msgid "Error executing --argscmd command:"
+msgstr "运行 --argscmd命令出错"
+
+msgid "No files selected: --merge specified but no files are unmerged."
+msgstr "没有选中文件：--指定merge参数但没有未合并的文件。"
+
+msgid ""
+"No files selected: --merge specified but no unmerged files are within file "
+"limit."
+msgstr "没有选中文件：--指定merge参数但没有未合并的文件在文件中"
+
+msgid "Error executing git log:"
+msgstr "执行git log命令出错："
+
+msgid "Reading"
+msgstr "读取中"
+
+msgid "Reading commits..."
+msgstr "提交记录读取中..."
+
+msgid "No commits selected"
+msgstr "未选中任何提交"
+
+msgid "Command line"
+msgstr "命令行"
+
+msgid "Can't parse git log output:"
+msgstr "不能解析git log输出："
+
+msgid "No commit information available"
+msgstr "无可用提交信息"
+
+msgid "OK"
+msgstr "确定"
+
+msgid "Cancel"
+msgstr "取消"
+
+msgid "&Update"
+msgstr "更新"
+
+msgid "&Reload"
+msgstr "重新加载"
+
+msgid "Reread re&ferences"
+msgstr "重新读取引用"
+
+msgid "&List references"
+msgstr "列出引用(分支以及tag)"
+
+msgid "Start git &gui"
+msgstr "启动git gui客户端"
+
+msgid "&Quit"
+msgstr "退出"
+
+msgid "&File"
+msgstr "文件"
+
+msgid "&Preferences"
+msgstr "偏好设置"
+
+msgid "&Edit"
+msgstr "编辑"
+
+msgid "&New view..."
+msgstr "新视图..."
+
+msgid "&Edit view..."
+msgstr "编辑视图..."
+
+msgid "&Delete view"
+msgstr "删除视图"
+
+msgid "&All files"
+msgstr "所有文件"
+
+msgid "&View"
+msgstr "视图"
+
+msgid "&About gitk"
+msgstr "关于gitk"
+
+msgid "&Key bindings"
+msgstr "快捷键"
+
+msgid "&Help"
+msgstr "帮助"
+
+msgid "SHA1 ID:"
+msgstr "SHA1 ID："
+
+msgid "Row"
+msgstr "行"
+
+msgid "Find"
+msgstr "查找"
+
+msgid "commit"
+msgstr "提交"
+
+msgid "containing:"
+msgstr "包含："
+
+msgid "touching paths:"
+msgstr "影响路径："
+
+msgid "adding/removing string:"
+msgstr "增加/删除字符串："
+
+msgid "changing lines matching:"
+msgstr "改变行匹配："
+
+msgid "Exact"
+msgstr "精确匹配"
+
+msgid "IgnCase"
+msgstr "忽略大小写"
+
+msgid "Regexp"
+msgstr "正则"
+
+msgid "All fields"
+msgstr "所有字段"
+
+msgid "Headline"
+msgstr "标题"
+
+msgid "Comments"
+msgstr "提交注释"
+
+msgid "Author"
+msgstr "作者"
+
+msgid "Committer"
+msgstr "提交者"
+
+msgid "Search"
+msgstr "搜索"
+
+msgid "Diff"
+msgstr "差异"
+
+msgid "Old version"
+msgstr "老版本"
+
+msgid "New version"
+msgstr "新版本"
+
+msgid "Lines of context"
+msgstr "Diff上下文显示行数"
+
+msgid "Ignore space change"
+msgstr "忽略空格修改"
+
+msgid "Line diff"
+msgstr "按行显示差异"
+
+msgid "Patch"
+msgstr "补丁"
+
+msgid "Tree"
+msgstr "树"
+
+msgid "Diff this -> selected"
+msgstr "比较从当前提交到选中提交的差异"
+
+msgid "Diff selected -> this"
+msgstr "比较从选中提交到当前提交的差异"
+
+msgid "Make patch"
+msgstr "制作补丁"
+
+msgid "Create tag"
+msgstr "创建tag"
+
+msgid "Copy commit summary"
+msgstr "复制提交摘要"
+
+msgid "Write commit to file"
+msgstr "写入提交到文件"
+
+msgid "Create new branch"
+msgstr "创建新分支"
+
+msgid "Cherry-pick this commit"
+msgstr "在此提交运用补丁(cherry-pick)命令"
+
+msgid "Reset HEAD branch to here"
+msgstr "将分支头(HEAD)重置到此处"
+
+msgid "Mark this commit"
+msgstr "标记此提交"
+
+msgid "Return to mark"
+msgstr "返回到标记"
+
+msgid "Find descendant of this and mark"
+msgstr "查找本次提交的子提交并标记"
+
+msgid "Compare with marked commit"
+msgstr "和已标记的提交作比较"
+
+msgid "Diff this -> marked commit"
+msgstr "比较从当前提交到已标记提交的差异"
+
+msgid "Diff marked commit -> this"
+msgstr "比较从已标记提交到当前提交的差异"
+
+msgid "Revert this commit"
+msgstr "撤销(revert)此提交"
+
+msgid "Check out this branch"
+msgstr "检出(checkout)此分支"
+
+msgid "Rename this branch"
+msgstr "重命名(Rename)此分支"
+
+msgid "Remove this branch"
+msgstr "删除(Remove)此分支"
+
+msgid "Copy branch name"
+msgstr "复制分支名称"
+
+msgid "Highlight this too"
+msgstr "高亮此处"
+
+msgid "Highlight this only"
+msgstr "只高亮此处"
+
+msgid "External diff"
+msgstr "外部diff"
+
+msgid "Blame parent commit"
+msgstr "Blame父提交"
+
+msgid "Copy path"
+msgstr "复制路径"
+
+msgid "Show origin of this line"
+msgstr "显示此行原始提交"
+
+msgid "Run git gui blame on this line"
+msgstr "在此行运行git gui客户端的blame"
+
+msgid "About gitk"
+msgstr "关于gitk"
+
+msgid ""
+"\n"
+"Gitk - a commit viewer for git\n"
+"\n"
+"Copyright © 2005-2016 Paul Mackerras\n"
+"\n"
+"Use and redistribute under the terms of the GNU General Public License"
+msgstr ""
+"\n"
+"Gitk — 一个git的提交查看器\n"
+"\n"
+"© 2005-2016 Paul Mackerras\n"
+"\n"
+"在GNU许可证下使用以及分发"
+
+msgid "Close"
+msgstr "关闭"
+
+msgid "Gitk key bindings"
+msgstr "Gitk快捷键"
+
+msgid "Gitk key bindings:"
+msgstr "Gitk快捷键："
+
+#, tcl-format
+msgid "<%s-Q>\t\tQuit"
+msgstr "<%s-Q>\t\t退出"
+
+#, tcl-format
+msgid "<%s-W>\t\tClose window"
+msgstr "<%s-W>\t\t关闭窗口"
+
+msgid "<Home>\t\tMove to first commit"
+msgstr "<Home>\t\t移动到第一次提交"
+
+msgid "<End>\t\tMove to last commit"
+msgstr "<End>\t\t移动到最后一次提交"
+
+msgid "<Up>, p, k\tMove up one commit"
+msgstr "<Up>, p, k\t移动到上一次提交"
+
+msgid "<Down>, n, j\tMove down one commit"
+msgstr "<Down>, n, j\t移动到下一次提交"
+
+msgid "<Left>, z, h\tGo back in history list"
+msgstr "<Left>, z, h\t历史列表的上一项"
+
+msgid "<Right>, x, l\tGo forward in history list"
+msgstr "<Right>, x, l\t历史列表的下一项"
+
+#, tcl-format
+msgid "<%s-n>\tGo to n-th parent of current commit in history list"
+msgstr "<%s-n>\t在历史列表中前往本次提交的第n个父提交"
+
+msgid "<PageUp>\tMove up one page in commit list"
+msgstr "<PageUp>\t上一页提交列表"
+
+msgid "<PageDown>\tMove down one page in commit list"
+msgstr "<PageDown>\t下一页提交列表"
+
+#, tcl-format
+msgid "<%s-Home>\tScroll to top of commit list"
+msgstr "<%s-Home>\t滚动到提交列表顶部"
+
+#, tcl-format
+msgid "<%s-End>\tScroll to bottom of commit list"
+msgstr "<%s-End>\t滚动到提交列表底部"
+
+#, tcl-format
+msgid "<%s-Up>\tScroll commit list up one line"
+msgstr "<%s-Up>\t向上滚动一行提交列表"
+
+#, tcl-format
+msgid "<%s-Down>\tScroll commit list down one line"
+msgstr "<%s-Down>\t向下滚动一行提交列表"
+
+#, tcl-format
+msgid "<%s-PageUp>\tScroll commit list up one page"
+msgstr "<%s-PageUp>\t向上滚动一页提交列表"
+
+#, tcl-format
+msgid "<%s-PageDown>\tScroll commit list down one page"
+msgstr "<%s-PageDown>\t向下滚动一页提交列表"
+
+msgid "<Shift-Up>\tFind backwards (upwards, later commits)"
+msgstr "<Shift-Up>\t向后查找(向上的，更晚的提交)"
+
+msgid "<Shift-Down>\tFind forwards (downwards, earlier commits)"
+msgstr "<Shift-Down>\t向前查找(向下的，更早的提交)"
+
+msgid "<Delete>, b\tScroll diff view up one page"
+msgstr "<Delete>, b\t向上滚动diff视图一页"
+
+msgid "<Backspace>\tScroll diff view up one page"
+msgstr "<Backspace>\t向上滚动diff视图一页"
+
+msgid "<Space>\t\tScroll diff view down one page"
+msgstr "<Space>\t\t向下滚动diff视图一页"
+
+msgid "u\t\tScroll diff view up 18 lines"
+msgstr "u\t\t向上滚动diff视图18行"
+
+msgid "d\t\tScroll diff view down 18 lines"
+msgstr "d\t\t向下滚动diff视图18行"
+
+#, tcl-format
+msgid "<%s-F>\t\tFind"
+msgstr "<%s-F>\t\t查找"
+
+#, tcl-format
+msgid "<%s-G>\t\tMove to next find hit"
+msgstr "<%s-G>\t\t移动到下一次查找命中"
+
+msgid "<Return>\tMove to next find hit"
+msgstr "<Return>\t\t移动到下一次查找命中"
+
+msgid "g\t\tGo to commit"
+msgstr "g\t\t转到提交"
+
+msgid "/\t\tFocus the search box"
+msgstr "/\t\t选中搜索框"
+
+msgid "?\t\tMove to previous find hit"
+msgstr "?\t\t移动到上一次查找命中"
+
+msgid "f\t\tScroll diff view to next file"
+msgstr "f\t\t滚动diff视图到下一个文件"
+
+#, tcl-format
+msgid "<%s-S>\t\tSearch for next hit in diff view"
+msgstr "<%s-S>\t\t在diff视图中查找下一此命中"
+
+#, tcl-format
+msgid "<%s-R>\t\tSearch for previous hit in diff view"
+msgstr "<%s-R>\t\t在diff视图中查找上一次命中"
+
+#, tcl-format
+msgid "<%s-KP+>\tIncrease font size"
+msgstr "<%s-KP+>\t增大字体大小"
+
+#, tcl-format
+msgid "<%s-plus>\tIncrease font size"
+msgstr "<%s-plus>\t增大字体大小"
+
+#, tcl-format
+msgid "<%s-KP->\tDecrease font size"
+msgstr "<%s-KP->\t减小字体大小"
+
+#, tcl-format
+msgid "<%s-minus>\tDecrease font size"
+msgstr "<%s-minus>\t减小字体大小"
+
+msgid "<F5>\t\tUpdate"
+msgstr "<F5>\t\t更新"
+
+#, tcl-format
+msgid "Error creating temporary directory %s:"
+msgstr "创建临时目录出错%s："
+
+#, tcl-format
+msgid "Error getting \"%s\" from %s:"
+msgstr "从%s获取\"%s\"出错："
+
+msgid "command failed:"
+msgstr "执行命令失败："
+
+msgid "No such commit"
+msgstr "无此提交"
+
+msgid "git gui blame: command failed:"
+msgstr "git gui blame：执行命令失败："
+
+#, tcl-format
+msgid "Couldn't read merge head: %s"
+msgstr "不能读取合并头(merge head)：%s"
+
+#, tcl-format
+msgid "Error reading index: %s"
+msgstr "读取索引出错：%s"
+
+#, tcl-format
+msgid "Couldn't start git blame: %s"
+msgstr "不能执行git blame：%s"
+
+msgid "Searching"
+msgstr "搜索中"
+
+#, tcl-format
+msgid "Error running git blame: %s"
+msgstr "运行git blame出错：%s"
+
+#, tcl-format
+msgid "That line comes from commit %s,  which is not in this view"
+msgstr "此行来自提交%s，不在此视图中"
+
+msgid "External diff viewer failed:"
+msgstr "外部diff查看器失败："
+
+msgid "All files"
+msgstr "所有文件"
+
+msgid "View"
+msgstr "视图"
+
+msgid "Gitk view definition"
+msgstr "Gitk视图定义"
+
+msgid "Remember this view"
+msgstr "记住此视图"
+
+msgid "References (space separated list):"
+msgstr "引用(空格切分的列表)："
+
+msgid "Branches & tags:"
+msgstr "分支和tags"
+
+msgid "All refs"
+msgstr "所有引用"
+
+msgid "All (local) branches"
+msgstr "所有(本地)分支"
+
+msgid "All tags"
+msgstr "所有tag"
+
+msgid "All remote-tracking branches"
+msgstr "所有远程跟踪分支"
+
+msgid "Commit Info (regular expressions):"
+msgstr "提交信息 (正则表达式)："
+
+msgid "Author:"
+msgstr "作者："
+
+msgid "Committer:"
+msgstr "提交者："
+
+msgid "Commit Message:"
+msgstr "提交信息："
+
+msgid "Matches all Commit Info criteria"
+msgstr "匹配所有提交信息标准"
+
+msgid "Matches no Commit Info criteria"
+msgstr "匹配无提交信息标准"
+
+msgid "Changes to Files:"
+msgstr "文件修改列表："
+
+msgid "Fixed String"
+msgstr "固定字符串"
+
+msgid "Regular Expression"
+msgstr "正则表达式："
+
+msgid "Search string:"
+msgstr "搜索字符串："
+
+msgid ""
+"Commit Dates (\"2 weeks ago\", \"2009-03-17 15:27:38\", \"March 17, 2009 "
+"15:27:38\"):"
+msgstr ""
+"提交日期 (\"2星期之前\", \"2009-03-17 15:27:38\", \"5月 17, 2009 15:27:38\"):"
+
+msgid "Since:"
+msgstr "自："
+
+msgid "Until:"
+msgstr "到："
+
+msgid "Limit and/or skip a number of revisions (positive integer):"
+msgstr "限制 且/或 跳过一定数量的版本(正整数)："
+
+msgid "Number to show:"
+msgstr "显示数量："
+
+msgid "Number to skip:"
+msgstr "跳过数量："
+
+msgid "Miscellaneous options:"
+msgstr "其他选项："
+
+msgid "Strictly sort by date"
+msgstr "严格按日期整理"
+
+msgid "Mark branch sides"
+msgstr "标记分支边界"
+
+msgid "Limit to first parent"
+msgstr "限制到第一个父提交"
+
+msgid "Simple history"
+msgstr "简易历史"
+
+msgid "Additional arguments to git log:"
+msgstr "git log命令的额外参数："
+
+msgid "Enter files and directories to include, one per line:"
+msgstr "输入文件和文件夹来引用，每行一个："
+
+msgid "Command to generate more commits to include:"
+msgstr "命令产生更多的提交来引用："
+
+msgid "Gitk: edit view"
+msgstr "Gitk: 编辑视图"
+
+msgid "-- criteria for selecting revisions"
+msgstr "-- 用来选择版本的规则"
+
+msgid "View Name"
+msgstr "视图名称"
+
+msgid "Apply (F5)"
+msgstr "应用(F5)"
+
+msgid "Error in commit selection arguments:"
+msgstr "提交选择参数错误："
+
+msgid "None"
+msgstr "无"
+
+msgid "Descendant"
+msgstr "子提交"
+
+msgid "Not descendant"
+msgstr "非子提交"
+
+msgid "Ancestor"
+msgstr "父提交"
+
+msgid "Not ancestor"
+msgstr "非父提交"
+
+msgid "Local changes checked in to index but not committed"
+msgstr "已添加到索引但未提交的修改"
+
+msgid "Local uncommitted changes, not checked in to index"
+msgstr "未添加到索引且未提交的修改"
+
+msgid "and many more"
+msgstr "更多"
+
+msgid "many"
+msgstr "很多"
+
+msgid "Tags:"
+msgstr "Tags:"
+
+msgid "Parent"
+msgstr "父节点"
+
+msgid "Child"
+msgstr "子节点"
+
+msgid "Branch"
+msgstr "分支"
+
+msgid "Follows"
+msgstr "之后的tag"
+
+msgid "Precedes"
+msgstr "之前的tag"
+
+#, tcl-format
+msgid "Error getting diffs: %s"
+msgstr "获取差异错误：%s"
+
+msgid "Goto:"
+msgstr "转到："
+
+#, tcl-format
+msgid "Short SHA1 id %s is ambiguous"
+msgstr "短格式的SHA1提交号%s不明确、有歧义"
+
+#, tcl-format
+msgid "Revision %s is not known"
+msgstr "版本%s未知"
+
+#, tcl-format
+msgid "SHA1 id %s is not known"
+msgstr "提交号(SHA1 id)%s未知"
+
+#, tcl-format
+msgid "Revision %s is not in the current view"
+msgstr "版本%s不在当前视图中"
+
+msgid "Date"
+msgstr "日期"
+
+msgid "Children"
+msgstr "子节点"
+
+#, tcl-format
+msgid "Reset %s branch to here"
+msgstr "重置分支%s到此处"
+
+msgid "Detached head: can't reset"
+msgstr "分离的头(head)：不能重置(reset)"
+
+msgid "Skipping merge commit "
+msgstr "跳过合并提交"
+
+msgid "Error getting patch ID for "
+msgstr "获取补丁ID出错"
+
+msgid " - stopping\n"
+msgstr " — 停止中\n"
+
+msgid "Commit "
+msgstr "提交"
+
+msgid ""
+" is the same patch as\n"
+"       "
+msgstr ""
+" 是相同的补丁(patch)\n"
+"       "
+
+msgid ""
+" differs from\n"
+"       "
+msgstr ""
+" 差异来自\n"
+"       "
+
+msgid ""
+"Diff of commits:\n"
+"\n"
+msgstr ""
+"提交的差异(Diff)：\n"
+"\n"
+
+#, tcl-format
+msgid " has %s children - stopping\n"
+msgstr "有%s子节点 — 停止中\n"
+
+#, tcl-format
+msgid "Error writing commit to file: %s"
+msgstr "写入提交到文件出错：%s"
+
+#, tcl-format
+msgid "Error diffing commits: %s"
+msgstr "比较提交差异出错：%s"
+
+msgid "Top"
+msgstr "顶部"
+
+msgid "From"
+msgstr "从"
+
+msgid "To"
+msgstr "到"
+
+msgid "Generate patch"
+msgstr "生成补丁(patch)"
+
+msgid "From:"
+msgstr "从："
+
+msgid "To:"
+msgstr "到："
+
+msgid "Reverse"
+msgstr "反向(Reverse)"
+
+msgid "Output file:"
+msgstr "输出文件："
+
+msgid "Generate"
+msgstr "生成"
+
+msgid "Error creating patch:"
+msgstr "创建补丁(patch)出错："
+
+msgid "ID:"
+msgstr "ID:"
+
+msgid "Tag name:"
+msgstr "Tag名称："
+
+msgid "Tag message is optional"
+msgstr "Tag信息是可选的"
+
+msgid "Tag message:"
+msgstr "Tag信息："
+
+msgid "Create"
+msgstr "创建"
+
+msgid "No tag name specified"
+msgstr "未指定tag名称"
+
+#, tcl-format
+msgid "Tag \"%s\" already exists"
+msgstr "Tag\"%s\"已经存在"
+
+msgid "Error creating tag:"
+msgstr "创建tag出错："
+
+msgid "Command:"
+msgstr "命令："
+
+msgid "Write"
+msgstr "写入"
+
+msgid "Error writing commit:"
+msgstr "写入提交出错："
+
+msgid "Create branch"
+msgstr "创建分支"
+
+#, tcl-format
+msgid "Rename branch %s"
+msgstr "重命名分支%s"
+
+msgid "Rename"
+msgstr "重命名"
+
+msgid "Name:"
+msgstr "名称："
+
+msgid "Please specify a name for the new branch"
+msgstr "请指定新分支的名称"
+
+#, tcl-format
+msgid "Branch '%s' already exists. Overwrite?"
+msgstr "分支\"%s\"已经存在。覆盖它？"
+
+msgid "Please specify a new name for the branch"
+msgstr "请重新指定新分支的名称"
+
+#, tcl-format
+msgid "Commit %s is already included in branch %s -- really re-apply it?"
+msgstr "提交%s已经存在于分支%s。确定重新应用它？"
+
+msgid "Cherry-picking"
+msgstr "打补丁中(Cherry-picking)"
+
+#, tcl-format
+msgid ""
+"Cherry-pick failed because of local changes to file '%s'.\n"
+"Please commit, reset or stash your changes and try again."
+msgstr ""
+"打补丁(Cherry-pick)失败，因为本地修改了文件\"%s\"。\n"
+"请提交(commit)、重置(reset)或暂存(stash)修改后重试。"
+
+msgid ""
+"Cherry-pick failed because of merge conflict.\n"
+"Do you wish to run git citool to resolve it?"
+msgstr ""
+"打补丁(Cherry-pick)失败因为合并冲突。\n"
+"你是否希望运行git citool 来解决冲突？"
+
+msgid "No changes committed"
+msgstr "无已经提交的修改"
+
+#, tcl-format
+msgid "Commit %s is not included in branch %s -- really revert it?"
+msgstr "提交%s不包含在分支%s中，确认回滚(revert)它？"
+
+msgid "Reverting"
+msgstr "回滚中(Reverting)"
+
+#, tcl-format
+msgid ""
+"Revert failed because of local changes to the following files:%s Please "
+"commit, reset or stash  your changes and try again."
+msgstr ""
+"回滚(revert)失败，因为如下的本地文件修改：%s\n"
+"请提交(commit)、重置(reset)或者暂存(stash)改变后重试。"
+
+msgid ""
+"Revert failed because of merge conflict.\n"
+" Do you wish to run git citool to resolve it?"
+msgstr ""
+"回滚(revert)失败，因为合并冲突。\n"
+"你是否希望运行git citool来解决冲突？"
+
+msgid "Confirm reset"
+msgstr "确认重置(reset)"
+
+#, tcl-format
+msgid "Reset branch %s to %s?"
+msgstr "重置(reset)分支%s到%s？"
+
+msgid "Reset type:"
+msgstr "重置(reset)类型："
+
+msgid "Soft: Leave working tree and index untouched"
+msgstr "软性：离开工作树，索引未改变"
+
+msgid "Mixed: Leave working tree untouched, reset index"
+msgstr "混合：离开工作树(未改变)，索引重置"
+
+msgid ""
+"Hard: Reset working tree and index\n"
+"(discard ALL local changes)"
+msgstr ""
+"硬性：重置工作树和索引\n"
+"(丢弃所有的本地修改)"
+
+msgid "Resetting"
+msgstr "重置中(Resetting)"
+
+#, tcl-format
+msgid "A local branch named %s exists already"
+msgstr "本地分支%s已经存在"
+
+msgid "Checking out"
+msgstr "检出中(Checking out)"
+
+msgid "Cannot delete the currently checked-out branch"
+msgstr "不能删除当前检出(checkout)分支"
+
+#, tcl-format
+msgid ""
+"The commits on branch %s aren't on any other branch.\n"
+"Really delete branch %s?"
+msgstr ""
+"在分支%s上的提交不在其他任何分支上。\n"
+"确认删除分支%s？"
+
+#, tcl-format
+msgid "Tags and heads: %s"
+msgstr "Tags和头指针(heads)：%s"
+
+msgid "Filter"
+msgstr "过滤器"
+
+msgid ""
+"Error reading commit topology information; branch and preceding/following "
+"tag information will be incomplete."
+msgstr "读取提交拓扑信息出错；分支和之前/之后的tag信息将不能完成。"
+
+msgid "Tag"
+msgstr "标签(Tag)"
+
+msgid "Id"
+msgstr "Id"
+
+msgid "Gitk font chooser"
+msgstr "Gitk字体选择"
+
+msgid "B"
+msgstr "粗体"
+
+msgid "I"
+msgstr "斜体"
+
+msgid "Commit list display options"
+msgstr "提交列表展示选项"
+
+msgid "Maximum graph width (lines)"
+msgstr "最大图宽度(行数)"
+
+#, no-tcl-format
+msgid "Maximum graph width (% of pane)"
+msgstr "最大图宽度(%窗口百分比)"
+
+msgid "Show local changes"
+msgstr "显示本地修改"
+
+msgid "Auto-select SHA1 (length)"
+msgstr "自动选择SHA1(长度)"
+
+msgid "Hide remote refs"
+msgstr "隐藏远程引用"
+
+msgid "Diff display options"
+msgstr "差异(Diff)展示选项"
+
+msgid "Tab spacing"
+msgstr "制表符宽度"
+
+msgid "Display nearby tags/heads"
+msgstr "显示临近的tags/heads"
+
+msgid "Maximum # tags/heads to show"
+msgstr "最大tags/heads展示数量"
+
+msgid "Limit diffs to listed paths"
+msgstr "diff中列出文件限制"
+
+msgid "Support per-file encodings"
+msgstr "单独文件编码支持"
+
+msgid "External diff tool"
+msgstr "外部差异(diff)工具"
+
+msgid "Choose..."
+msgstr "选择..."
+
+msgid "General options"
+msgstr "常规选项"
+
+msgid "Use themed widgets"
+msgstr "使用主题小部件"
+
+msgid "(change requires restart)"
+msgstr "(需重启生效)"
+
+msgid "(currently unavailable)"
+msgstr "(当前不可用)"
+
+msgid "Colors: press to choose"
+msgstr "颜色：点击来选择"
+
+msgid "Interface"
+msgstr "界面"
+
+msgid "interface"
+msgstr "界面"
+
+msgid "Background"
+msgstr "背景"
+
+msgid "background"
+msgstr "背景"
+
+msgid "Foreground"
+msgstr "前景"
+
+msgid "foreground"
+msgstr "前景"
+
+msgid "Diff: old lines"
+msgstr "差异(Diff)：老代码行"
+
+msgid "diff old lines"
+msgstr "差异(diff)老代码行"
+
+msgid "Diff: new lines"
+msgstr "差异(Diff)：新代码行"
+
+msgid "diff new lines"
+msgstr "差异(diff)新代码行"
+
+msgid "Diff: hunk header"
+msgstr "差异(Diff)：补丁片段头信息"
+
+msgid "diff hunk header"
+msgstr "差异(diff)补丁片段头信息"
+
+msgid "Marked line bg"
+msgstr "已标记代码行背景"
+
+msgid "marked line background"
+msgstr "已标记代码行背景"
+
+msgid "Select bg"
+msgstr "选择背景"
+
+msgid "Fonts: press to choose"
+msgstr "字体：点击来选择"
+
+msgid "Main font"
+msgstr "主字体"
+
+msgid "Diff display font"
+msgstr "差异(Diff)显示字体"
+
+msgid "User interface font"
+msgstr "用户界面字体"
+
+msgid "Gitk preferences"
+msgstr "Gitk偏好设置"
+
+msgid "General"
+msgstr "常规"
+
+msgid "Colors"
+msgstr "颜色"
+
+msgid "Fonts"
+msgstr "字体"
+
+#, tcl-format
+msgid "Gitk: choose color for %s"
+msgstr "Gitk：选择颜色用于%s"
+
+msgid ""
+"Sorry, gitk cannot run with this version of Tcl/Tk.\n"
+" Gitk requires at least Tcl/Tk 8.4."
+msgstr ""
+"对不起，gitk不能运行在当前版本的Tcl/Tk中。\n"
+"Gitk运行需要最低版本为Tcl/Tk8.4。"
+
+msgid "Cannot find a git repository here."
+msgstr "在此位置未发现git仓库。"
+
+#, tcl-format
+msgid "Ambiguous argument '%s': both revision and filename"
+msgstr "不明确有歧义的参数\"%s\"：版本和文件名称"
+
+msgid "Bad arguments to gitk:"
+msgstr "运行gitk参数错误："

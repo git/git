@@ -1,0 +1,17 @@
+Git v2.12.5 Release Notes
+=========================
+
+Fixes since v2.12.4
+-------------------
+
+ * "git cvsserver" no longer is invoked by "git daemon" by default,
+   as it is old and largely unmaintained.
+
+ * Various Perl scripts did not use safe_pipe_capture() instead of
+   backticks, leaving them susceptible to end-user input.  They have
+   been corrected.
+
+Credits go to joernchen <joernchen@phenoelit.de> for finding the
+unsafe constructs in "git cvsserver", and to Jeff King at GitHub for
+finding and fixing instances of the same issue in other scripts.
+

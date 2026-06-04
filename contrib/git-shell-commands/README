@@ -1,0 +1,18 @@
+Sample programs callable through git-shell.  Place a directory named
+'git-shell-commands' in the home directory of a user whose shell is
+git-shell.  Then anyone logging in as that user will be able to run
+executables in the 'git-shell-commands' directory.
+
+Provided commands:
+
+help: Prints out the names of available commands.  When run
+interactively, git-shell will automatically run 'help' on startup,
+provided it exists.
+
+list: Displays any bare repository whose name ends with ".git" under
+user's home directory.  No other git repositories are visible,
+although they might be clonable through git-shell.  'list' is designed
+to minimize the number of calls to git that must be made in finding
+available repositories; if your setup has additional repositories that
+should be user-discoverable, you may wish to modify 'list'
+accordingly.

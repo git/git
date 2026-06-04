@@ -1,0 +1,17 @@
+test_expect_success 'if-in-loop' '
+(
+	for i in a b c
+	do
+		if false
+		then
+# LINT: missing "&&" on "echo" okay since "exit 1" signals error explicitly
+			echo "err"
+			exit 1
+# LINT: missing "&&" on "fi"
+		fi
+		foo
+# LINT: missing "&&" on "done"
+	done
+	bar
+)
+'

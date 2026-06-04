@@ -1,0 +1,6 @@
+defmodule Test do
+  test "RIGHT" do
+    assert true == true
+    assert ChangeMe
+  end
+end

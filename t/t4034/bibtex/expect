@@ -1,0 +1,15 @@
+<BOLD>diff --git a/pre b/post<RESET>
+<BOLD>index 95cd55b..ddcba9b 100644<RESET>
+<BOLD>--- a/pre<RESET>
+<BOLD>+++ b/post<RESET>
+<CYAN>@@ -1,9 +1,10 @@<RESET>
+@article{aldous1987uie,<RESET>
+  title={{Ultimate instability of exponential back-off protocol for acknowledgment-based transmission control of random access communication channels}},<RESET>
+  author={Aldous, <RED>D.<RESET><GREEN>David<RESET>},
+  journal={Information Theory, IEEE Transactions on},<RESET>
+  volume={<RED>33<RESET><GREEN>Bogus.<RESET>},
+  number={<RED>2<RESET><GREEN>4<RESET>},
+  pages={219--223},<RESET>
+  year=<GREEN>1987,<RESET>
+<GREEN>  note={This is in fact a rather funny read since ethernet works well in practice. The<RESET> {<RED>1987<RESET><GREEN>\em pre} reference is the right one, however.<RESET>}<RED>,<RESET>
+}<RESET>

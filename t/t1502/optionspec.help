@@ -1,0 +1,36 @@
+cat <<\EOF
+usage: some-command [options] <args>...
+
+    some-command does foo and bar!
+
+    -h, --help            show the help
+    --[no-]foo            some nifty option --foo
+    --[no-]bar ...        some cool option --bar with an argument
+    -b, --[no-]baz        a short and long option
+
+An option group Header
+    -C[...]               option C with an optional argument
+    -d, --[no-]data[=...] short and long option with an optional argument
+
+Argument hints
+    -B <arg>              short option required argument
+    --[no-]bar2 <arg>     long option required argument
+    -e, --[no-]fuz <with-space>
+                          short and long option required argument
+    -s[<some>]            short option optional argument
+    --[no-]long[=<data>]  long option optional argument
+    -g, --[no-]fluf[=<path>]
+                          short and long option optional argument
+    --[no-]longest <very-long-argument-hint>
+                          a very long argument hint
+    --[no-]pair <key=value>
+                          with an equals sign in the hint
+    --[no-]aswitch        help te=t contains? fl*g characters!`
+    --[no-]bswitch <hint> hint has trailing tab character
+    --[no-]cswitch        switch has trailing tab character
+    --[no-]short-hint <a> with a one symbol hint
+
+Extras
+    --[no-]extra1         line above used to cause a segfault but no longer does
+
+EOF

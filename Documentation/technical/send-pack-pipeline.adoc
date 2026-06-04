@@ -1,0 +1,63 @@
+Git-send-pack internals
+=======================
+
+Overall operation
+-----------------
+
+. Connects to the remote side and invokes git-receive-pack.
+
+. Learns what refs the remote has and what commit they point at.
+  Matches them to the refspecs we are pushing.
+
+. Checks if there are non-fast-forwards.  Unlike fetch-pack,
+  the repository send-pack runs in is supposed to be a superset
+  of the recipient in fast-forward cases, so there is no need
+  for want/have exchanges, and fast-forward check can be done
+  locally.  Tell the result to the other end.
+
+. Calls pack_objects() which generates a packfile and sends it
+  over to the other end.
+
+. If the remote side is new enough (v1.1.0 or later), wait for
+  the unpack and hook status from the other end.
+
+. Exit with appropriate error codes.
+
+
+Pack_objects pipeline
+---------------------
+
+This function gets one file descriptor (`fd`) which is either a
+socket (over the network) or a pipe (local).  What's written to
+this fd goes to git-receive-pack to be unpacked.
+
+    send-pack ---> fd ---> receive-pack
+
+The function pack_objects creates a pipe and then forks.  The
+forked child execs pack-objects with --revs to receive revision
+parameters from its standard input. This process will write the
+packfile to the other end.
+
+    send-pack
+       |
+       pack_objects() ---> fd ---> receive-pack
+          | ^ (pipe)
+	  v |
+         (child)
+
+The child dup2's to arrange its standard output to go back to
+the other end, and read its standard input to come from the
+pipe.  After that it exec's pack-objects.  On the other hand,
+the parent process, before starting to feed the child pipeline,
+closes the reading side of the pipe and fd to receive-pack.
+
+    send-pack
+       |
+       pack_objects(parent)
+          |
+	  v [0]
+         pack-objects [0] ---> receive-pack
+
+
+[jc: the pipeline was much more complex and needed documentation before
+ I understood an earlier bug, but now it is trivial and straightforward.]

@@ -1,0 +1,3 @@
+$ git diff-tree --summary initial mode
+ mode change 100644 => 100755 file0
+$

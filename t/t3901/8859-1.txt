@@ -1,0 +1,4 @@
+: to be sourced in t3901 -- this is latin-1
+GIT_AUTHOR_NAME="Áéí óú" &&
+GIT_COMMITTER_NAME=$GIT_AUTHOR_NAME &&
+export GIT_AUTHOR_NAME GIT_COMMITTER_NAME

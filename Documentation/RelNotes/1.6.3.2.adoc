@@ -1,0 +1,61 @@
+GIT v1.6.3.2 Release Notes
+==========================
+
+Fixes since v1.6.3.1
+--------------------
+
+ * A few codepaths picked up the first few bytes from an sha1[] by
+   casting the (char *) pointer to (int *); GCC 4.4 did not like this,
+   and aborted compilation.
+
+ * Some unlink(2) failures went undiagnosed.
+
+ * The "recursive" merge strategy misbehaved when faced rename/delete
+   conflicts while coming up with an intermediate merge base.
+
+ * The low-level merge algorithm did not handle a degenerate case of
+   merging a file with itself using itself as the common ancestor
+   gracefully.  It should produce the file itself, but instead
+   produced an empty result.
+
+ * GIT_TRACE mechanism segfaulted when tracing a shell-quoted aliases.
+
+ * OpenBSD also uses st_ctimspec in "struct stat", instead of "st_ctim".
+
+ * With NO_CROSS_DIRECTORY_HARDLINKS, "make install" can be told not to
+   create hardlinks between $(gitexecdir)/git-$builtin_commands and
+   $(bindir)/git.
+
+ * command completion code in bash did not reliably detect that we are
+   in a bare repository.
+
+ * "git add ." in an empty directory complained that pathspec "." did not
+   match anything, which may be technically correct, but not useful.  We
+   silently make it a no-op now.
+
+ * "git add -p" (and "patch" action in "git add -i") was broken when
+   the first hunk that adds a line at the top was split into two and
+   both halves are marked to be used.
+
+ * "git blame path" misbehaved at the commit where path became file
+   from a directory with some files in it.
+
+ * "git for-each-ref" had a segfaulting bug when dealing with a tag object
+   created by an ancient git.
+
+ * "git format-patch -k" still added patch numbers if format.numbered
+   configuration was set.
+
+ * "git grep --color ''" did not terminate.  The command also had
+   subtle bugs with its -w option.
+
+ * http-push had a small use-after-free bug.
+
+ * "git push" was converting OFS_DELTA pack representation into less
+   efficient REF_DELTA representation unconditionally upon transfer,
+   making the transferred data unnecessarily larger.
+
+ * "git remote show origin" segfaulted when origin was still empty.
+
+Many other general usability updates around help text, diagnostic messages
+and documentation are included as well.

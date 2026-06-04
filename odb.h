@@ -1,0 +1,576 @@
+#ifndef ODB_H
+#define ODB_H
+
+#include "object.h"
+#include "oidset.h"
+#include "oidmap.h"
+#include "string-list.h"
+#include "thread-utils.h"
+
+struct cached_object_entry;
+struct odb_source_inmemory;
+struct packed_git;
+struct repository;
+struct strbuf;
+struct strvec;
+
+/*
+ * Set this to 0 to prevent odb_read_object_info_extended() from fetching missing
+ * blobs. This has a difference only if extensions.partialClone is set.
+ *
+ * Its default value is 1.
+ */
+extern int fetch_if_missing;
+
+/*
+ * Compute the exact path an alternate is at and returns it. In case of
+ * error NULL is returned and the human readable error is added to `err`
+ * `path` may be relative and should point to $GIT_DIR.
+ * `err` must not be null.
+ */
+char *compute_alternate_path(const char *path, struct strbuf *err);
+
+/*
+ * The object database encapsulates access to objects in a repository. It
+ * manages one or more sources that store the actual objects which are
+ * configured via alternates.
+ */
+struct object_database {
+	/* Repository that owns this database. */
+	struct repository *repo;
+
+	/*
+	 * State of current current object database transaction. Only one
+	 * transaction may be pending at a time. Is NULL when no transaction is
+	 * configured.
+	 */
+	struct odb_transaction *transaction;
+
+	/*
+	 * Set of all object directories; the main directory is first (and
+	 * cannot be NULL after initialization). Subsequent directories are
+	 * alternates.
+	 */
+	struct odb_source *sources;
+	struct odb_source **sources_tail;
+	struct kh_odb_path_map *source_by_path;
+
+	int loaded_alternates;
+
+	/*
+	 * A list of alternate object directories loaded from the environment;
+	 * this should not generally need to be accessed directly, but will
+	 * populate the "sources" list when odb_prepare_alternates() is run.
+	 */
+	char *alternate_db;
+
+	/*
+	 * Objects that should be substituted by other objects
+	 * (see git-replace(1)).
+	 */
+	struct oidmap replace_map;
+	unsigned replace_map_initialized : 1;
+	pthread_mutex_t replace_mutex; /* protect object replace functions */
+
+	struct commit_graph *commit_graph;
+	unsigned commit_graph_attempted : 1; /* if loading has been attempted */
+
+	/*
+	 * This is meant to hold a *small* number of objects that you would
+	 * want odb_read_object() to be able to return, but yet you do not want
+	 * to write them into the object store (e.g. a browse-only
+	 * application).
+	 */
+	struct odb_source *inmemory_objects;
+
+	/*
+	 * A fast, rough count of the number of objects in the repository.
+	 * These two fields are not meant for direct access. Use
+	 * odb_count_objects() instead.
+	 */
+	unsigned long object_count;
+	unsigned object_count_flags;
+	unsigned object_count_valid : 1;
+
+	/*
+	 * Submodule source paths that will be added as additional sources to
+	 * allow lookup of submodule objects via the main object database.
+	 */
+	struct string_list submodule_source_paths;
+};
+
+/*
+ * Create a new object database for the given repository.
+ *
+ * If the primary source parameter is set it will override the usual primary
+ * object directory derived from the repository's common directory. The
+ * alternate sources are expected to be a PATH_SEP-separated list of secondary
+ * sources. Note that these alternate sources will be added in addition to, not
+ * instead of, the alternates identified by the primary source.
+ *
+ * Returns the newly created object database.
+ */
+struct object_database *odb_new(struct repository *repo,
+				const char *primary_source,
+				const char *alternate_sources);
+
+/* Free the object database and release all resources. */
+void odb_free(struct object_database *o);
+
+/*
+ * Close the object database and all of its sources so that any held resources
+ * will be released. The database can still be used after closing it, in which
+ * case these resources may be reallocated.
+ */
+void odb_close(struct object_database *o);
+
+/*
+ * Clear caches, reload alternates and then reload object sources so that new
+ * objects may become accessible.
+ */
+void odb_reprepare(struct object_database *o);
+
+/*
+ * Find source by its object directory path. Returns a `NULL` pointer in case
+ * the source could not be found.
+ */
+struct odb_source *odb_find_source(struct object_database *odb, const char *obj_dir);
+
+/* Same as `odb_find_source()`, but dies in case the source doesn't exist. */
+struct odb_source *odb_find_source_or_die(struct object_database *odb, const char *obj_dir);
+
+/*
+ * Replace the current writable object directory with the specified temporary
+ * object directory; returns the former primary source.
+ */
+struct odb_source *odb_set_temporary_primary_source(struct object_database *odb,
+						    const char *dir, int will_destroy);
+
+/*
+ * Restore the primary source that was previously replaced by
+ * `odb_set_temporary_primary_source()`.
+ */
+void odb_restore_primary_source(struct object_database *odb,
+				struct odb_source *restore_source,
+				const char *old_path);
+
+/*
+ * Call odb_add_submodule_source_by_path() to add the submodule at the given
+ * path to a list. The object stores of all submodules in that list will be
+ * added as additional sources in the object store when looking up objects.
+ */
+void odb_add_submodule_source_by_path(struct object_database *odb,
+				      const char *path);
+
+/*
+ * Iterate through all alternates of the database and execute the provided
+ * callback function for each of them. Stop iterating once the callback
+ * function returns a non-zero value, in which case the value is bubbled up
+ * from the callback.
+ */
+typedef int odb_for_each_alternate_fn(struct odb_source *, void *);
+int odb_for_each_alternate(struct object_database *odb,
+			   odb_for_each_alternate_fn cb, void *payload);
+
+/*
+ * Iterate through all alternates of the database and yield their respective
+ * references.
+ */
+typedef void odb_for_each_alternate_ref_fn(const struct object_id *oid, void *);
+void odb_for_each_alternate_ref(struct object_database *odb,
+				odb_for_each_alternate_ref_fn cb, void *payload);
+
+/*
+ * Create a temporary file rooted in the primary alternate's directory, or die
+ * on failure. The filename is taken from "pattern", which should have the
+ * usual "XXXXXX" trailer, and the resulting filename is written into the
+ * "template" buffer. Returns the open descriptor.
+ */
+int odb_mkstemp(struct object_database *odb,
+		struct strbuf *temp_filename, const char *pattern);
+
+/*
+ * Prepare alternate object sources for the given database by reading
+ * "objects/info/alternates" and opening the respective sources.
+ */
+void odb_prepare_alternates(struct object_database *odb);
+
+/*
+ * Check whether the object database has any alternates. The primary object
+ * source does not count as alternate.
+ */
+int odb_has_alternates(struct object_database *odb);
+
+/*
+ * Add the directory to the on-disk alternates file; the new entry will also
+ * take effect in the current process.
+ */
+void odb_add_to_alternates_file(struct object_database *odb,
+				const char *dir);
+
+/*
+ * Add the directory to the in-memory list of alternate sources (along with any
+ * recursive alternates it points to), but do not modify the on-disk alternates
+ * file.
+ */
+struct odb_source *odb_add_to_alternates_memory(struct object_database *odb,
+						const char *dir);
+
+/*
+ * Read an object from the database. Returns the object data and assigns object
+ * type and size to the `type` and `size` pointers, if these pointers are
+ * non-NULL. Returns a `NULL` pointer in case the object does not exist.
+ *
+ * This function dies on corrupt objects; the callers who want to deal with
+ * them should arrange to call odb_read_object_info_extended() and give error
+ * messages themselves.
+ */
+void *odb_read_object(struct object_database *odb,
+		      const struct object_id *oid,
+		      enum object_type *type,
+		      unsigned long *size);
+
+void *odb_read_object_peeled(struct object_database *odb,
+			     const struct object_id *oid,
+			     enum object_type required_type,
+			     unsigned long *size,
+			     struct object_id *oid_ret);
+
+/*
+ * Add an object file to the in-memory object store, without writing it
+ * to disk.
+ *
+ * Callers are responsible for calling write_object_file to record the
+ * object in persistent storage before writing any other new objects
+ * that reference it.
+ */
+int odb_pretend_object(struct object_database *odb,
+		       void *buf, unsigned long len, enum object_type type,
+		       struct object_id *oid);
+
+struct object_info {
+	/* Request */
+	enum object_type *typep;
+	unsigned long *sizep;
+	off_t *disk_sizep;
+	struct object_id *delta_base_oid;
+	void **contentp;
+
+	/*
+	 * The time the given looked-up object has been last modified.
+	 *
+	 * Note: the mtime may be ambiguous in case the object exists multiple
+	 * times in the object database. It is thus _not_ recommended to use
+	 * this field outside of contexts where you would read every instance
+	 * of the object, like for example with `odb_for_each_object()`. As it
+	 * is impossible to say at the ODB level what the intent of the caller
+	 * is (e.g. whether to find the oldest or newest object), it is the
+	 * responsibility of the caller to disambiguate the mtimes.
+	 */
+	time_t *mtimep;
+
+	/* Response */
+	enum {
+		OI_CACHED,
+		OI_LOOSE,
+		OI_PACKED,
+	} whence;
+	union {
+		/*
+		 * struct {
+		 * 	... Nothing to expose in this case
+		 * } cached;
+		 * struct {
+		 * 	... Nothing to expose in this case
+		 * } loose;
+		 */
+		struct {
+			struct packed_git *pack;
+			off_t offset;
+			enum packed_object_type {
+				PACKED_OBJECT_TYPE_UNKNOWN,
+				PACKED_OBJECT_TYPE_FULL,
+				PACKED_OBJECT_TYPE_OFS_DELTA,
+				PACKED_OBJECT_TYPE_REF_DELTA,
+			} type;
+		} packed;
+	} u;
+};
+
+/*
+ * Initializer for a "struct object_info" that wants no items. You may
+ * also memset() the memory to all-zeroes.
+ */
+#define OBJECT_INFO_INIT { 0 }
+
+/* Flags that can be passed to `odb_read_object_info_extended()`. */
+enum object_info_flags {
+	/* Invoke lookup_replace_object() on the given hash. */
+	OBJECT_INFO_LOOKUP_REPLACE = (1 << 0),
+
+	/* Do not reprepare object sources when the first lookup has failed. */
+	OBJECT_INFO_QUICK = (1 << 1),
+
+	/*
+	 * Do not attempt to fetch the object if missing (even if fetch_is_missing is
+	 * nonzero).
+	 */
+	OBJECT_INFO_SKIP_FETCH_OBJECT = (1 << 2),
+
+	/* Die if object corruption (not just an object being missing) was detected. */
+	OBJECT_INFO_DIE_IF_CORRUPT = (1 << 3),
+
+	/*
+	 * We have already tried reading the object, but it couldn't be found
+	 * via any of the attached sources, and are now doing a second read.
+	 * This second read asks the individual sources to also evaluate
+	 * whether any on-disk state may have changed that may have caused the
+	 * object to appear.
+	 *
+	 * This flag is for internal use, only. The second read only occurs
+	 * when `OBJECT_INFO_QUICK` was not passed.
+	 */
+	OBJECT_INFO_SECOND_READ = (1 << 4),
+
+	/*
+	 * This is meant for bulk prefetching of missing blobs in a partial
+	 * clone. Implies OBJECT_INFO_SKIP_FETCH_OBJECT and OBJECT_INFO_QUICK.
+	 */
+	OBJECT_INFO_FOR_PREFETCH = (OBJECT_INFO_SKIP_FETCH_OBJECT | OBJECT_INFO_QUICK),
+};
+
+/*
+ * Read object info from the object database and populate the `object_info`
+ * structure. Returns 0 on success, a negative error code otherwise.
+ */
+int odb_read_object_info_extended(struct object_database *odb,
+				  const struct object_id *oid,
+				  struct object_info *oi,
+				  enum object_info_flags flags);
+
+/*
+ * Read a subset of object info for the given object ID. Returns an `enum
+ * object_type` on success, a negative error code otherwise. If successful and
+ * `sizep` is non-NULL, then the size of the object will be written to the
+ * pointer.
+ */
+int odb_read_object_info(struct object_database *odb,
+			 const struct object_id *oid,
+			 unsigned long *sizep);
+
+enum odb_has_object_flags {
+	/* Retry packed storage after checking packed and loose storage */
+	ODB_HAS_OBJECT_RECHECK_PACKED = (1 << 0),
+	/* Allow fetching the object in case the repository has a promisor remote. */
+	ODB_HAS_OBJECT_FETCH_PROMISOR = (1 << 1),
+};
+
+/*
+ * Returns 1 if the object exists. This function will not lazily fetch objects
+ * in a partial clone by default.
+ */
+int odb_has_object(struct object_database *odb,
+		   const struct object_id *oid,
+		   enum odb_has_object_flags flags);
+
+int odb_freshen_object(struct object_database *odb,
+		       const struct object_id *oid);
+
+void odb_assert_oid_type(struct object_database *odb,
+			 const struct object_id *oid, enum object_type expect);
+
+/*
+ * Enabling the object read lock allows multiple threads to safely call the
+ * following functions in parallel: odb_read_object(),
+ * odb_read_object_peeled(), odb_read_object_info() and odb().
+ *
+ * obj_read_lock() and obj_read_unlock() may also be used to protect other
+ * section which cannot execute in parallel with object reading. Since the used
+ * lock is a recursive mutex, these sections can even contain calls to object
+ * reading functions. However, beware that in these cases zlib inflation won't
+ * be performed in parallel, losing performance.
+ *
+ * TODO: odb_read_object_info_extended()'s call stack has a recursive behavior. If
+ * any of its callees end up calling it, this recursive call won't benefit from
+ * parallel inflation.
+ */
+void enable_obj_read_lock(void);
+void disable_obj_read_lock(void);
+
+extern int obj_read_use_lock;
+extern pthread_mutex_t obj_read_mutex;
+
+static inline void obj_read_lock(void)
+{
+	if(obj_read_use_lock)
+		pthread_mutex_lock(&obj_read_mutex);
+}
+
+static inline void obj_read_unlock(void)
+{
+	if(obj_read_use_lock)
+		pthread_mutex_unlock(&obj_read_mutex);
+}
+
+/* Flags for for_each_*_object(). */
+enum odb_for_each_object_flags {
+	/* Iterate only over local objects, not alternates. */
+	ODB_FOR_EACH_OBJECT_LOCAL_ONLY = (1<<0),
+
+	/* Only iterate over packs obtained from the promisor remote. */
+	ODB_FOR_EACH_OBJECT_PROMISOR_ONLY = (1<<1),
+
+	/*
+	 * Visit objects within a pack in packfile order rather than .idx order
+	 */
+	ODB_FOR_EACH_OBJECT_PACK_ORDER = (1<<2),
+
+	/* Only iterate over packs that are not marked as kept in-core. */
+	ODB_FOR_EACH_OBJECT_SKIP_IN_CORE_KEPT_PACKS = (1<<3),
+
+	/* Only iterate over packs that do not have .keep files. */
+	ODB_FOR_EACH_OBJECT_SKIP_ON_DISK_KEPT_PACKS = (1<<4),
+};
+
+/*
+ * A callback function that can be used to iterate through objects. If given,
+ * the optional `oi` parameter will be populated the same as if you would call
+ * `odb_read_object_info()`.
+ *
+ * Returning a non-zero error code will cause iteration to abort. The error
+ * code will be propagated.
+ */
+typedef int (*odb_for_each_object_cb)(const struct object_id *oid,
+				      struct object_info *oi,
+				      void *cb_data);
+
+/*
+ * Options that can be passed to `odb_for_each_object()` and its
+ * backend-specific implementations.
+ */
+struct odb_for_each_object_options {
+	/* A bitfield of `odb_for_each_object_flags`. */
+	enum odb_for_each_object_flags flags;
+
+	/*
+	 * If set, only iterate through objects whose first `prefix_hex_len`
+	 * hex characters matches the given prefix.
+	 */
+	const struct object_id *prefix;
+	size_t prefix_hex_len;
+};
+
+/*
+ * Iterate through all objects contained in the object database. Note that
+ * objects may be iterated over multiple times in case they are either stored
+ * in different backends or in case they are stored in multiple sources.
+ * If an object info request is given, then the object info will be read and
+ * passed to the callback as if `odb_read_object_info()` was called for the
+ * object.
+ *
+ * Returning a non-zero error code from the callback function will cause
+ * iteration to abort. The error code will be propagated.
+ *
+ * Returns 0 on success, a negative error code in case a failure occurred, or
+ * an arbitrary non-zero error code returned by the callback itself.
+ */
+int odb_for_each_object_ext(struct object_database *odb,
+			    const struct object_info *request,
+			    odb_for_each_object_cb cb,
+			    void *cb_data,
+			    const struct odb_for_each_object_options *opts);
+
+/* Same as `odb_for_each_object_ext()` with `opts.flags` set to the given flags. */
+int odb_for_each_object(struct object_database *odb,
+			const struct object_info *request,
+			odb_for_each_object_cb cb,
+			void *cb_data,
+			enum odb_for_each_object_flags flags);
+
+enum odb_count_objects_flags {
+	/*
+	 * Instead of providing an accurate count, allow the number of objects
+	 * to be approximated. Details of how this approximation works are
+	 * subject to the specific source's implementation.
+	 */
+	ODB_COUNT_OBJECTS_APPROXIMATE = (1 << 0),
+};
+
+/*
+ * Count the number of objects in the given object database. This object count
+ * may double-count objects that are stored in multiple backends, or which are
+ * stored multiple times in a single backend.
+ *
+ * Returns 0 on success, a negative error code otherwise. The number of objects
+ * will be assigned to the `out` pointer on success.
+ */
+int odb_count_objects(struct object_database *odb,
+		      enum odb_count_objects_flags flags,
+		      unsigned long *out);
+
+/*
+ * Given an object ID, find the minimum required length required to make the
+ * object ID unique across the whole object database.
+ *
+ * The `min_len` determines the minimum abbreviated length that'll be returned
+ * by this function. If `min_len < 0`, then the function will set a sensible
+ * default minimum abbreviation length.
+ *
+ * Returns 0 on success, a negative error code otherwise. The computed length
+ * will be assigned to `*out`.
+ */
+int odb_find_abbrev_len(struct object_database *odb,
+			const struct object_id *oid,
+			int min_len,
+			unsigned *out);
+
+enum odb_write_object_flags {
+	/*
+	 * By default, `odb_write_object()` does not actually write anything
+	 * into the object store, but only computes the object ID. This flag
+	 * changes that so that the object will be written as a loose object
+	 * and persisted.
+	 */
+	ODB_WRITE_OBJECT_PERSIST = (1 << 0),
+
+	/*
+	 * Do not print an error in case something goes wrong.
+	 */
+	ODB_WRITE_OBJECT_SILENT = (1 << 1),
+};
+
+/*
+ * Write an object into the object database. The object is being written into
+ * the local alternate of the repository. If provided, the converted object ID
+ * as well as the compatibility object ID are written to the respective
+ * pointers.
+ *
+ * Returns 0 on success, a negative error code otherwise.
+ */
+int odb_write_object_ext(struct object_database *odb,
+			 const void *buf, unsigned long len,
+			 enum object_type type,
+			 struct object_id *oid,
+			 struct object_id *compat_oid,
+			 enum odb_write_object_flags flags);
+
+static inline int odb_write_object(struct object_database *odb,
+				   const void *buf, unsigned long len,
+				   enum object_type type,
+				   struct object_id *oid)
+{
+	return odb_write_object_ext(odb, buf, len, type, oid, NULL, 0);
+}
+
+struct odb_write_stream;
+
+int odb_write_object_stream(struct object_database *odb,
+			    struct odb_write_stream *stream, size_t len,
+			    struct object_id *oid);
+
+void parse_alternates(const char *string,
+		      int sep,
+		      const char *relative_base,
+		      struct strvec *out);
+
+#endif /* ODB_H */

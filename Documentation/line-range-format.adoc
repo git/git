@@ -1,0 +1,32 @@
+_<start>_ and _<end>_ can take one of these forms:
+
+- _<number>_
++
+If _<start>_ or _<end>_ is a number, it specifies an
+absolute line number (lines count from 1).
++
+
+- `/<regex>/`
++
+This form will use the first line matching the given
+POSIX _<regex>_. If _<start>_ is a regex, it will search from the end of
+the previous `-L` range, if any, otherwise from the start of file.
+If _<start>_ is `^/<regex>/`, it will search from the start of file.
+If _<end>_ is a regex, it will search starting at the line given by
+_<start>_.
++
+
+- `+<offset>` or `-<offset>`
++
+This is only valid for _<end>_ and will specify a number
+of lines before or after the line given by _<start>_.
+
++
+If `:<funcname>` is given in place of _<start>_ and _<end>_, it is a
+regular expression that denotes the range from the first funcname line
+that matches _<funcname>_, up to the next funcname line. `:<funcname>`
+searches from the end of the previous `-L` range, if any, otherwise
+from the start of file. `^:<funcname>` searches from the start of
+file. The function names are determined in the same way as `git diff`
+works out patch hunk headers (see 'Defining a custom hunk-header'
+in linkgit:gitattributes[5]).

@@ -1,0 +1,6 @@
+public record RIGHT (String components, String after, String space) {
+    static int ONE;
+    static int TWO;
+    static int THREE;
+    static int ChangeMe;
+}

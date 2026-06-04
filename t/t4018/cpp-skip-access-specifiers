@@ -1,0 +1,8 @@
+class RIGHT : public Baseclass
+{
+public:
+protected:
+private:
+	void DoSomething();
+	int ChangeMe;
+};

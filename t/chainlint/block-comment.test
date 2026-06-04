@@ -1,0 +1,10 @@
+test_expect_success 'block-comment' '
+(
+	{
+		# show a
+		echo a &&
+		# show b
+		echo b
+	}
+)
+'

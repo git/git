@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        platform:
+          - os: ubuntu-latest
+            generator: Unix Makefiles
+            env:
+              CFLAGS: "-Werror -Wall -Wextra"
+          - os: ubuntu-latest
+            generator: Unix Makefiles
+            env:
+              CC: "clang"
+              CFLAGS: "-Werror -Wall -Wextra -fsanitize=leak"
+          - os: ubuntu-latest
+            generator: Unix Makefiles
+            image: i386/debian:latest
+            env:
+              CFLAGS: "-Werror -Wall -Wextra"
+          - os: macos-latest
+            generator: Unix Makefiles
+            env:
+              CFLAGS: "-Werror -Wall -Wextra"
+          - os: windows-latest
+            generator: Visual Studio 17 2022
+          - os: windows-latest
+            generator: MSYS Makefiles
+            env:
+              CFLAGS: "-Werror -Wall -Wextra"
+          - os: windows-latest
+            generator: MinGW Makefiles
+            env:
+              CFLAGS: "-Werror -Wall -Wextra"
+      fail-fast: false
+
+    runs-on: ${{ matrix.platform.os }}
+    container: ${{matrix.platform.image}}
+
+    env:
+      CC: ${{matrix.platform.env.CC}}
+      CFLAGS: ${{matrix.platform.env.CFLAGS}}
+
+    steps:
+    - name: Prepare 32 bit container image
+      if: matrix.platform.image == 'i386/debian:latest'
+      run: apt -q update && apt -q -y install cmake gcc libc6-amd64 lib64stdc++6 make python3
+    - name: Check out
+      uses: actions/checkout@v6
+    - name: Build
+      shell: bash
+      run: |
+        mkdir build
+        cd build
+        cmake .. -G "${{matrix.platform.generator}}"
+        cmake --build . --verbose
+    - name: Test
+      shell: bash
+      run: |
+        cd build
+        CTEST_OUTPUT_ON_FAILURE=1 ctest --build-config Debug

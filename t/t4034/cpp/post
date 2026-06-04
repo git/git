@@ -1,0 +1,30 @@
+Foo() : x(0&42) { bar(x.Find); }
+cout<<"Hello World?\n"<<endl;
+(1 +1e10 0xabcdef) '2'
+// long double
+3.141592654e+10l
+// float
+120E6f
+// hex
+0xdeaf'1eaf+7ULL
+// octal
+01234560
+// binary
+0b1100+e1
+// expression
+1.5-e+3+f
+// another one
+str.e+75
+[a] b->*v d.*e
+~!a !~b c+ d- e**f g&&h
+a*=b c/=d e%=f
+a++b c--d
+a<<=b c>>=d
+a<=b c<d e>=f g>h i<=>j
+a!=b c=d
+a^=b c|=d e&=f
+a|b
+a?:b
+a==b c+d e-f g*h i/j k%l m<<n o>>p q&r s^t u|v
+a,b
+a:b

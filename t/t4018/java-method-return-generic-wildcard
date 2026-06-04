@@ -1,0 +1,9 @@
+class MyExample {
+    public List<? extends Comparable> foo(String[] RIGHT) {
+        someMethodCall();
+        someOtherMethod()
+            .doThat();
+        // Whatever...
+        return Arrays.asList("ChangeMe");
+    }
+}

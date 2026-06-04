@@ -1,0 +1,12 @@
+2 git ls-tree --name-only -r refs/notes/many_notes |
+3 while read path
+4 do
+5 	test "$path" = "foobar/non-note.txt" && continue
+6 	test "$path" = "deadbeef" && continue
+7 	test "$path" = "de/adbeef" && continue
+8 
+9 	if test $(expr length "$path") -ne $hexsz
+10 	then
+11 		return 1
+12 	fi
+13 done

@@ -1,0 +1,258 @@
+GIT v1.6.0 Release Notes
+========================
+
+User visible changes
+--------------------
+
+With the default Makefile settings, most of the programs are now
+installed outside your $PATH, except for "git", "gitk" and
+some server side programs that need to be accessible for technical
+reasons.  Invoking a git subcommand as "git-xyzzy" from the command
+line has been deprecated since early 2006 (and officially announced in
+1.5.4 release notes); use of them from your scripts after adding
+output from "git --exec-path" to the $PATH is still supported in this
+release, but users are again strongly encouraged to adjust their
+scripts to use "git xyzzy" form, as we will stop installing
+"git-xyzzy" hardlinks for built-in commands in later releases.
+
+An earlier change to page "git status" output was overwhelmingly unpopular
+and has been reverted.
+
+Source changes needed for porting to MinGW environment are now all in the
+main git.git codebase.
+
+By default, packfiles created with this version uses delta-base-offset
+encoding introduced in v1.4.4.  Pack idx files are using version 2 that
+allows larger packs and added robustness thanks to its CRC checking,
+introduced in v1.5.2 and v1.4.4.5.  If you want to keep your repositories
+backwards compatible past these versions, set repack.useDeltaBaseOffset
+to false or pack.indexVersion to 1, respectively.
+
+We used to prevent sample hook scripts shipped in templates/ from
+triggering by default by relying on the fact that we install them as
+unexecutable, but on some filesystems, this approach does not work.
+They are now shipped with ".sample" suffix.  If you want to activate
+any of these samples as-is, rename them to drop the ".sample" suffix,
+instead of running "chmod +x" on them.  For example, you can rename
+hooks/post-update.sample to hooks/post-update to enable the sample
+hook that runs update-server-info, in order to make repositories
+friendly to dumb protocols (i.e. HTTP).
+
+GIT_CONFIG, which was only documented as affecting "git config", but
+actually affected all git commands, now only affects "git config".
+GIT_LOCAL_CONFIG, also only documented as affecting "git config" and
+not different from GIT_CONFIG in a useful way, is removed.
+
+The ".dotest" temporary area "git am" and "git rebase" use is now moved
+inside the $GIT_DIR, to avoid mistakes of adding it to the project by
+accident.
+
+An ancient merge strategy "stupid" has been removed.
+
+
+Updates since v1.5.6
+--------------------
+
+(subsystems)
+
+* git-p4 in contrib learned "allowSubmit" configuration to control on
+  which branch to allow "submit" subcommand.
+
+* git-gui learned to stage changes per-line.
+
+(portability)
+
+* Changes for MinGW port have been merged, thanks to Johannes Sixt and
+  gangs.
+
+* Sample hook scripts shipped in templates/ are now suffixed with
+  *.sample.
+
+* perl's in-place edit (-i) does not work well without backup files on Windows;
+  some tests are rewritten to cope with this.
+
+(documentation)
+
+* Updated howto/update-hook-example
+
+* Got rid of usage of "git-foo" from the tutorial and made typography
+  more consistent.
+
+* Disambiguating "--" between revs and paths is finally documented.
+
+(performance, robustness, sanity etc.)
+
+* index-pack used too much memory when dealing with a deep delta chain.
+  This has been optimized.
+
+* reduced excessive inlining to shrink size of the "git" binary.
+
+* verify-pack checks the object CRC when using version 2 idx files.
+
+* When an object is corrupt in a pack, the object became unusable even
+  when the same object is available in a loose form,  We now try harder to
+  fall back to these redundant objects when able.  In particular, "git
+  repack -a -f" can be used to fix such a corruption as long as necessary
+  objects are available.
+
+* Performance of "git-blame -C -C" operation is vastly improved.
+
+* git-clone does not create refs in loose form anymore (it behaves as
+  if you immediately ran git-pack-refs after cloning).  This will help
+  repositories with insanely large number of refs.
+
+* core.fsyncobjectfiles configuration can be used to ensure that the loose
+  objects created will be fsync'ed (this is only useful on filesystems
+  that does not order data writes properly).
+
+* "git commit-tree" plumbing can make Octopus with more than 16 parents.
+  "git commit" has been capable of this for quite some time.
+
+(usability, bells and whistles)
+
+* even more documentation pages are now accessible via "man" and "git help".
+
+* A new environment variable GIT_CEILING_DIRECTORIES can be used to stop
+  the discovery process of the toplevel of working tree; this may be useful
+  when you are working in a slow network disk and are outside any working tree,
+  as bash-completion and "git help" may still need to run in these places.
+
+* By default, stash entries never expire.  Set reflogexpire in [gc
+  "refs/stash"] to a reasonable value to get traditional auto-expiration
+  behaviour back
+
+* Longstanding latency issue with bash completion script has been
+  addressed.  This will need to be backmerged to 'maint' later.
+
+* pager.<cmd> configuration variable can be used to enable/disable the
+  default paging behaviour per command.
+
+* "git-add -i" has a new action 'e/dit' to allow you edit the patch hunk
+  manually.
+
+* git-am records the original tip of the branch in ORIG_HEAD before it
+  starts applying patches.
+
+* git-apply can handle a patch that touches the same path more than once
+  much better than before.
+
+* git-apply can be told not to trust the line counts recorded in the input
+  patch but recount, with the new --recount option.
+
+* git-apply can be told to apply a patch to a path deeper than what the
+  patch records with --directory option.
+
+* git-archive can be told to omit certain paths from its output using
+  export-ignore attributes.
+
+* git-archive uses the zlib default compression level when creating
+  zip archive.
+
+* git-archive's command line options --exec and --remote can take their
+  parameters as separate command line arguments, similar to other commands.
+  IOW, both "--exec=path" and "--exec path" are now supported.
+
+* With -v option, git-branch describes the remote tracking statistics
+  similar to the way git-checkout reports by how many commits your branch
+  is ahead/behind.
+
+* git-branch's --contains option used to always require a commit parameter
+  to limit the branches with; it now defaults to list branches that
+  contains HEAD if this parameter is omitted.
+
+* git-branch's --merged and --no-merged option used to always limit the
+  branches relative to the HEAD, but they can now take an optional commit
+  argument that is used in place of HEAD.
+
+* git-bundle can read the revision arguments from the standard input.
+
+* git-cherry-pick can replay a root commit now.
+
+* git-clone can clone from a remote whose URL would be rewritten by
+  configuration stored in $HOME/.gitconfig now.
+
+* "git-clone --mirror" is a handy way to set up a bare mirror repository.
+
+* git-cvsserver learned to respond to "cvs co -c".
+
+* git-diff --check now checks leftover merge conflict markers.
+
+* "git-diff -p" learned to grab a better hunk header lines in
+  BibTex, Pascal/Delphi, and Ruby files and also pays attention to
+  chapter and part boundary in TeX documents.
+
+* When remote side used to have branch 'foo' and git-fetch finds that now
+  it has branch 'foo/bar', it refuses to lose the existing remote tracking
+  branch and its reflog.  The error message has been improved to suggest
+  pruning the remote if the user wants to proceed and get the latest set
+  of branches from the remote, including such 'foo/bar'.
+
+* fast-export learned to export and import marks file; this can be used to
+  interface with fast-import incrementally.
+
+* fast-import and fast-export learned to export and import gitlinks.
+
+* "gitk" left background process behind after being asked to dig very deep
+  history and the user killed the UI; the process is killed when the UI goes
+  away now.
+
+* git-rebase records the original tip of branch in ORIG_HEAD before it is
+  rewound.
+
+* "git rerere" can be told to update the index with auto-reused resolution
+  with rerere.autoupdate configuration variable.
+
+* git-rev-parse learned $commit^! and $commit^@ notations used in "log"
+  family.  These notations are available in gitk as well, because the gitk
+  command internally uses rev-parse to interpret its arguments.
+
+* git-rev-list learned --children option to show child commits it
+  encountered during the traversal, instead of showing parent commits.
+
+* git-send-mail can talk not just over SSL but over TLS now.
+
+* git-shortlog honors custom output format specified with "--pretty=format:".
+
+* "git-stash save" learned --keep-index option.  This lets you stash away the
+  local changes and bring the changes staged in the index to your working
+  tree for examination and testing.
+
+* git-stash also learned branch subcommand to create a new branch out of
+  stashed changes.
+
+* git-status gives the remote tracking statistics similar to the way
+  git-checkout reports by how many commits your branch is ahead/behind.
+
+* "git-svn dcommit" is now aware of auto-props setting the subversion user
+  has.
+
+* You can tell "git status -u" to even more aggressively omit checking
+  untracked files with --untracked-files=no.
+
+* Original SHA-1 value for "update-ref -d" is optional now.
+
+* Error codes from gitweb are made more descriptive where possible, rather
+  than "403 forbidden" as we used to issue everywhere.
+
+(internal)
+
+* git-merge has been reimplemented in C.
+
+
+Fixes since v1.5.6
+------------------
+
+All of the fixes in v1.5.6 maintenance series are included in
+this release, unless otherwise noted.
+
+ * git-clone ignored its -u option; the fix needs to be backported to
+   'maint';
+
+ * git-mv used to lose the distinction between changes that are staged
+   and that are only in the working tree, by staging both in the index
+   after moving such a path.
+
+ * "git-rebase -i -p" rewrote the parents to wrong ones when amending
+   (either edit or squash) was involved, and did not work correctly
+   when fast forwarding.
+

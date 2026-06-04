@@ -1,0 +1,241 @@
+git-pull(1)
+===========
+
+NAME
+----
+git-pull - Fetch from and integrate with another repository or a local branch
+
+
+SYNOPSIS
+--------
+[synopsis]
+git pull [<options>] [<repository> [<refspec>...]]
+
+
+DESCRIPTION
+-----------
+
+Integrate changes from a remote repository into the current branch.
+
+First, `git pull` runs `git fetch` with the same arguments
+(excluding merge options) to fetch remote branch(es).
+Then it decides which remote branch to integrate: if you run `git pull`
+with no arguments this defaults to the <<UPSTREAM-BRANCHES,upstream>>
+for the current branch.
+Then it integrates that branch into the current branch.
+
+There are 4 main options for integrating the remote branch:
+
+1. `git pull --ff-only` will only do "fast-forward" updates: it
+   fails if your local branch has diverged from the remote branch.
+   This is the default.
+2. `git pull --rebase` runs `git rebase`
+3. `git pull --no-rebase` runs `git merge`.
+4. `git pull --squash` runs `git merge --squash`
+
+You can also set the configuration options `pull.rebase`, `pull.squash`,
+or `pull.ff` with your preferred behaviour.
+
+If there's a merge conflict during the merge or rebase that you don't
+want to handle, you can safely abort it with `git merge --abort` or
+`git rebase --abort`.
+
+OPTIONS
+-------
+
+_<repository>_::
+	The "remote" repository to pull from.  This can be either
+	a URL (see the section <<URLS,GIT URLS>> below) or the name
+	of a remote (see the section <<REMOTES,REMOTES>> below).
++
+Defaults to the configured upstream for the current branch, or `origin`.
+See <<UPSTREAM-BRANCHES,UPSTREAM BRANCHES>> below for more on how to
+configure upstreams.
+
+_<refspec>_::
+	Which branch or other reference(s) to fetch and integrate into the
+	current branch, for example `main` in `git pull origin main`.
+	Defaults to the configured upstream for the current branch.
++
+This can be a branch, tag, or other collection of reference(s).
+See <<fetch-refspec,_<refspec>_>> below under "Options related to fetching"
+for the full syntax, and <<DEFAULT-BEHAVIOUR,DEFAULT BEHAVIOUR>> below
+for how `git pull` uses this argument to determine which remote branch
+to integrate.
+
+`-q`::
+`--quiet`::
+	This is passed to both underlying git-fetch to squelch reporting of
+	during transfer, and underlying git-merge to squelch output during
+	merging.
+
+`-v`::
+`--verbose`::
+	Pass `--verbose` to git-fetch and git-merge.
+
+`--recurse-submodules[=(yes|on-demand|no)]`::
+`--no-recurse-submodules`::
+	This option controls if new commits of populated submodules should
+	be fetched, and if the working trees of active submodules should be
+	updated, too (see linkgit:git-fetch[1], linkgit:git-config[1] and
+	linkgit:gitmodules[5]).
++
+If the checkout is done via rebase, local submodule commits are rebased as well.
++
+If the update is done via merge, the submodule conflicts are resolved and checked out.
+
+Options related to merging
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:git-pull: 1
+
+include::merge-options.adoc[]
+
+`-r`::
+`--rebase[=(true|merges|false|interactive)]`::
+`true`;; rebase the current branch on top of the upstream
+	branch after fetching. If there is a remote-tracking branch
+	corresponding to the upstream branch and the upstream branch
+	was rebased since last fetched, the rebase uses that information
+	to avoid rebasing non-local changes. This is the default.
+
+`merges`;; rebase using `git rebase --rebase-merges` so that
+the local merge commits are included in the rebase (see
+linkgit:git-rebase[1] for details).
+`false`;; merge the upstream branch into the current branch.
+`interactive`;; enable the interactive mode of rebase.
+
++
+See `pull.rebase`, `branch.<name>.rebase` and `branch.autoSetupRebase` in
+linkgit:git-config[1] if you want to make `git pull` always use
+`--rebase` instead of merging.
++
+[NOTE]
+This is a potentially _dangerous_ mode of operation.
+It rewrites history, which does not bode well when you
+published that history already.  Do *not* use this option
+unless you have read linkgit:git-rebase[1] carefully.
+
+`--no-rebase`::
+	This is shorthand for `--rebase=false`.
+
+Options related to fetching
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+include::fetch-options.adoc[]
+
+include::pull-fetch-param.adoc[]
+
+include::urls-remotes.adoc[]
+
+include::merge-strategies.adoc[]
+
+[[DEFAULT-BEHAVIOUR]]
+DEFAULT BEHAVIOUR
+-----------------
+
+Often people use `git pull` without giving any parameter.
+Traditionally, this has been equivalent to saying `git pull
+origin`.  However, when configuration `branch.<name>.remote` is
+present while on branch `<name>`, that value is used instead of
+`origin`.
+
+In order to determine what URL to use to fetch from, the value
+of the configuration `remote.<origin>.url` is consulted
+and if there is not any such variable, the value on the `URL:` line
+in `$GIT_DIR/remotes/<origin>` is used.
+
+In order to determine what remote branches to fetch (and
+optionally store in the remote-tracking branches) when the command is
+run without any refspec parameters on the command line, values
+of the configuration variable `remote.<origin>.fetch` are
+consulted, and if there aren't any, `$GIT_DIR/remotes/<origin>`
+is consulted and its `Pull:` lines are used.
+In addition to the refspec formats described in the OPTIONS
+section, you can have a globbing refspec that looks like this:
+
+------------
+refs/heads/*:refs/remotes/origin/*
+------------
+
+A globbing refspec must have a non-empty RHS (i.e. must store
+what were fetched in remote-tracking branches), and its LHS and RHS
+must end with `/*`.  The above specifies that all remote
+branches are tracked using remote-tracking branches in
+`refs/remotes/origin/` hierarchy under the same name.
+
+The rule to determine which remote branch to merge after
+fetching is a bit involved, in order not to break backward
+compatibility.
+
+If explicit refspecs were given on the command
+line of `git pull`, they are all merged.
+
+When no refspec was given on the command line, then `git pull`
+uses the refspec from the configuration or
+`$GIT_DIR/remotes/<origin>`.  In such cases, the following
+rules apply:
+
+. If `branch.<name>.merge` configuration for the current
+  branch _<name>_ exists, that is the name of the branch at the
+  remote site that is merged.
+
+. If the refspec is a globbing one, nothing is merged.
+
+. Otherwise the remote branch of the first refspec is merged.
+
+
+EXAMPLES
+--------
+
+* Update the remote-tracking branches for the repository
+  you cloned from, then merge one of them into your
+  current branch:
++
+------------------------------------------------
+$ git pull
+$ git pull origin
+------------------------------------------------
++
+Normally the branch merged in is the `HEAD` of the remote repository,
+but the choice is determined by the `branch.<name>.remote` and
+`branch.<name>.merge` options; see linkgit:git-config[1] for details.
+
+* Merge into the current branch the remote branch `next`:
++
+------------------------------------------------
+$ git pull origin next
+------------------------------------------------
++
+This leaves a copy of `next` temporarily in `FETCH_HEAD`, and
+updates the remote-tracking branch `origin/next`.
+The same can be done by invoking fetch and merge:
++
+------------------------------------------------
+$ git fetch origin
+$ git merge origin/next
+------------------------------------------------
+
+
+If you tried a pull which resulted in complex conflicts and
+would want to start over, you can recover with `git reset`.
+
+
+include::transfer-data-leaks.adoc[]
+
+BUGS
+----
+Using `--recurse-submodules` can only fetch new commits in already checked
+out submodules right now. When e.g. upstream added a new submodule in the
+just fetched commits of the superproject the submodule itself cannot be
+fetched, making it impossible to check out that submodule later without
+having to do a fetch again. This is expected to be fixed in a future Git
+version.
+
+SEE ALSO
+--------
+linkgit:git-fetch[1], linkgit:git-merge[1], linkgit:git-config[1]
+
+GIT
+---
+Part of the linkgit:git[1] suite

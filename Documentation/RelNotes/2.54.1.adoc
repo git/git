@@ -1,0 +1,29 @@
+Git v2.54.1 Release Notes
+=========================
+
+This release is primarily to merge fixes accumulated on the 'master'
+front to prepare for 2.55 release that are still relevant to 2.54.x
+maintenance track.
+
+Fixes since v2.54
+-----------------
+
+ * Headers from glibc 2.43 when used with clang does not allow
+   disabling C11 language features, causing build failures..
+
+ * Revert a recent change that introduced a regression to help mksh users.
+
+ * Update various GitHub Actions versions.
+
+ * Avoid hitting the pathname limit for socks proxy socket during the
+   test.
+
+ * To help Windows 10 installations, avoid removing files whose
+   contents are still mmap()'ed.
+
+ * Stop using unmaintained custom allocator in Windows build which was
+   the last user of the code.
+
+ * Further update to the i18n alias support to avoid regressions.
+
+Also contains minor documentation updates and code clean-ups.

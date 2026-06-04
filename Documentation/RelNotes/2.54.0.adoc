@@ -1,0 +1,588 @@
+Git v2.54 Release Notes
+=======================
+
+UI, Workflows & Features
+------------------------
+
+ * "git add -p" and friends note what the current status of the hunk
+   being shown is.
+
+ * "git history" history rewriting (experimental) command has been
+   added.
+
+ * "git replay" is taught to drop commits that become empty (not the
+   ones that are empty in the original).
+
+ * The help text and the documentation for the "--expire" option of
+   "git worktree [list|prune]" have been improved.
+
+ * When "git show-index" is run outside a repository, it silently
+   defaults to SHA-1; the tool now warns when this happens.
+
+ * "git merge-file" can be run outside a repository, but it ignored
+   all configuration, even the per-user ones.  The command now uses
+   available configuration files to find its customization.
+
+ * "auto filter" logic for large-object promisor remote.
+
+ * "git rev-list" and friends learn "--maximal-only" to show only the
+   commits that are not reachable by other commits.
+
+ * Command line completion (in contrib/) update for
+   "stash import/export".
+
+ * "git repo info" learns "--keys" action to list known keys.
+
+ * Extend the alias configuration syntax to allow aliases using
+   characters outside ASCII alphanumeric (plus '-').
+
+ * A signature on a commit that was GPG signed a long time ago ought to
+   be still valid after the key that was used to sign it has expired,
+   but we showed them in alarming red.
+
+ * "git subtree split --prefix=P <commit>" now checks the prefix P
+   against the tree of the (potentially quite different from the
+   current working tree) given commit.
+
+ * "git add -p" learned a new mode that allows the user to revisit a
+   file that was already dealt with.
+
+ * Allow the directory in which reference backends store their data to
+   be specified.
+
+ * "gitweb" has been taught to be mobile friendly.
+
+ * "git apply --directory=./un/../normalized/path" now normalizes the
+   given path before using it.
+
+ * "git maintenance" starts using the "geometric" strategy by default.
+
+ * "git config list" is taught to show the values interpreted for
+   specific type with "--type=<X>" option.
+
+ * "git add <submodule>" has been taught to honor
+   submodule.<name>.ignore that is set to "all" (and requires "git add
+   -f" to override it).
+
+ * Hook commands are now allowed to be defined (possibly centrally)
+   in the configuration files, and run multiple of them for the same
+   hook event.
+
+ * The way end-users can add their own "git <cmd>" subcommand by
+   storing "git-<cmd>" in a directory on their $PATH has not been
+   documented clearly, which has been corrected.
+
+ * "git send-email" learns to pass hostname/port to Authen::SASL
+   module.
+
+ * "git send-email" learns to support use of client-side certificates.
+
+ * "git send-email" has learned to be a bit more careful when it
+   accepts charset to use from the end-user, to avoid 'y' (mistaken
+   'yes' when expecting a charset like 'UTF-8') and other nonsense.
+
+ * "git status" learned to show comparison between the current branch
+   and various other branches listed on status.compareBranches
+   configuration.
+
+ * "git repo structure" command learns to report maximum values on
+   various aspects of objects it inspects.
+
+ * "git rebase" learns "--trailer" option to drive the
+   interpret-trailers machinery.
+
+ * "git fast-import" learned to optionally replace signature on
+   commits whose signatures get invalidated due to replaying by
+   signing afresh.
+
+ * "git history" learned the "split" subcommand.
+
+ * The reference-transaction hook was taught to be triggered before
+   taking locks on references in the "preparing" phase.
+
+ * "git apply" now reports the name of the input file along with the
+   line number when it encounters a corrupt patch, and correctly
+   resets the line counter when processing multiple patch files.
+
+ * The HTTP transport learned to react to "429 Too Many Requests".
+
+ * "git repo info -h" and "git repo structure -h" limit their help output
+   to the part that is specific to the subcommand.
+
+ * "git format-patch --cover-letter" learns to use a simpler format
+   instead of the traditional shortlog format to list its commits with
+   a new --commit-list-format option and format.commitListFormat
+   configuration variable.
+
+ * `git backfill` learned to accept revision and pathspec arguments.
+
+ * "git replay" (experimental) learns, in addition to "pick" and
+   "replay", a new operating mode "revert".
+
+ * "git replay" now supports replaying down to the root commit.
+
+ * Handling of signed commits and tags in fast-import has been made more
+   configurable.
+
+ * "git config list" is the official way to spell "git config -l" and
+   "git config --list".  Use it to update the documentation.
+
+
+Performance, Internal Implementation, Development Support etc.
+--------------------------------------------------------------
+
+ * Avoid local submodule repository directory paths overlapping with
+   each other by encoding submodule names before using them as path
+   components.
+
+ * The string_list API gains a new helper, string_list_sort_u(), and
+   new unit tests to extend coverage.
+
+ * Improve set-up time of a perf test.
+
+ * ISO C23 redefines strchr and friends that traditionally took
+   a const pointer and returned a non-const pointer derived from it to
+   preserve constness (i.e., if you ask for a substring in a const
+   string, you get a const pointer to the substring).  Update code
+   paths that used non-const pointer to receive their results that did
+   not have to be non-const to adjust.
+
+ * Rename three functions around the commit_list data structure.
+
+ * Transaction to create objects (or not) is currently tied to the
+   repository, but in the future a repository can have multiple object
+   sources, which may have different transaction mechanisms.  Make the
+   odb transaction API per object source.
+
+ * "git merge-ours" is taught to work better in a sparse checkout.
+
+ * Allow recording process ID of the process that holds the lock next
+   to a lockfile for diagnosis.
+
+ * Reduce dependency on the_repository of xdiff-interface layer.
+
+ * Code clean-up to use the commit_stack API.
+
+ * "git diff --anchored=<text>" has been optimized.
+
+ * A CodingGuidelines update.
+
+ * Add process ancestry data to trace2 on macOS to match what we
+   already do on Linux and Windows.  Also adjust the way Windows
+   implementation reports this information to match the other two.
+
+ * A handful of places used refs_for_each_ref_in() API incorrectly,
+   which has been corrected.
+
+ * Some tests assumed "iconv" is available without honoring ICONV
+   prerequisite, which has been corrected.
+
+ * Revamp object enumeration API around odb.
+
+ * Additional tests were introduced to see the interaction with netrc
+   auth with auth failure on the http transport.
+
+ * A couple of bugs in use of flag bits around odb API has been
+   corrected, and the flag bits reordered.
+
+ * Plumb gitk/git-gui build and install procedure in meson based
+   builds.
+
+ * The code to accept shallow "git push" has been optimized.
+
+ * Simplify build procedure for oxskeychain (in contrib/).
+
+ * Fix dependency screw-up in meson-based builds.
+
+ * Wean the mailmap code off of the_repository dependency.
+
+ * API clean-up for the worktree subsystem.
+
+ * The last uses of the_repository in "tree-diff.c" have been
+   eradicated.
+
+ * Clean-up the code around "git repo info" command.
+
+ * Mark the merge-ort codebase to prevent more uses of the_repository
+   from getting added.
+
+ * The core.attributesfile is intended to be set per repository, but
+   was kept track of by a single global variable in-core, which has
+   been corrected by moving it to per-repository data structure.
+
+ * Use the hook API to replace ad-hoc invocation of hook scripts via
+   the run_command() API.
+
+ * Code refactoring around refs-for-each-* API functions.
+
+ * The parse-options API learned to notice an options[] array with
+   duplicated long options.
+   (merge 237e520d81 rs/parse-options-duplicated-long-options later to maint).
+
+ * The code to maintain mapping between object names in multiple hash
+   functions is being added, written in Rust.
+
+ * A bit of OIDmap API enhancement and cleanup.
+
+ * Move gitlab CI from macOS 14 images that are being deprecated.
+
+ * The object source API is getting restructured to allow plugging new
+   backends.
+
+ * Reduce dependence on the global the_hash_algo and the_repository
+   variables of wt-status code path.
+
+ * The way combined list-object filter options are parsed has been
+   revamped.
+
+ * Editorconfig filename patterns were specified incorrectly, making
+   many source files inside subdirectories unaffected, which has been
+   corrected.
+
+ * The run_command() API lost its implicit dependency on the singleton
+   `the_repository` instance.
+
+ * The unit test helper function was taught to use backslash +
+   mnemonic notation for certain control characters like "\t", instead
+   of octal notation like "\011".
+
+ * Adjust test-lint to allow "sed -E" to use ERE in the patterns.
+
+ * Clar (unit testing framework) update from the upstream.
+
+ * Reduce system overhead "git upload-pack" spends on relaying "git
+   pack-objects" output to the "git fetch" running on the other end of
+   the connection.
+
+ * Add a coccinelle rule to break the build when "struct strbuf" gets
+   passed by value.
+
+ * Further work on incremental repacking using MIDX/bitmap
+
+ * The logic to count objects has been cleaned up.
+
+ * Tweak the build infrastructure by moving tools around.
+
+ * Uses of prio_queue as a LIFO stack of commits have been written
+   with commit_stack.
+
+ * The cleanup of remaining bitmaps in "ahead_behind()" has been
+   simplified.
+
+ * split-index.c has been updated to not use the global the_repository
+   and the_hash_algo variables.
+
+ * The unsigned integer that is used as a bitset to specify the kind
+   of branches interpret_branch_name() function has been changed to
+   use a dedicated enum type.
+
+ * Various updates to contrib/diff-highlight, including documentation
+   updates, test improvements, and color configuration handling.
+
+ * Code paths that loop over another array to push each element into a
+   strvec have been rewritten to use strvec_pushv() instead.
+
+ * In case homebrew breaks REG_ENHANCED again, leave an in-code comment
+   to suggest use of our replacement regex as a workaround.
+
+ * MinGW build updates.
+
+ * The way dash 0.5.13 handles non-ASCII contents in here-doc
+   is buggy and breaks our existing tests, which unfortunately
+   have been rewritten to avoid triggering the bug.
+
+ * Object name handling (disambiguation and abbreviation) has been
+   refactored to be backend-generic, moving logic into the respective
+   object database backends.
+
+ * pack-objects's --stdin-packs=follow mode learns to handle
+   excluded-but-open packs.
+
+ * A few code paths that spawned child processes for network
+   connection weren't wait(2)ing for their children and letting "init"
+   reap them instead; they have been tightened.
+
+ * Adjust the codebase for C23 that changes functions like strchr()
+   that discarded constness when they return a pointer into a const
+   string to preserve constness.
+
+ * A handful of inappropriate uses of the_repository have been
+   rewritten to use the right repository structure instance in the
+   read-cache.c codepath.
+
+ * Internals of "git fsck" have been refactored to not depend on the
+   global `the_repository` variable.
+
+ * Reduce dependency on `the_repository` in add-patch.c file.
+
+ * The way the "git log -L<range>:<file>" feature is bolted onto the
+   log/diff machinery is being reworked a bit to make the feature
+   compatible with more diff options, like -S/G.
+
+ * Further work to adjust the codebase for C23 that changes functions
+   like strchr() that discarded constness when they return a pointer into
+   a const string to preserve constness.
+
+ * "git rev-list --maximal-only" has been optimized by borrowing the
+   logic used by "git show-branch --independent", which computes the
+   same kind of information much more efficiently.
+
+
+Fixes since v2.53
+-----------------
+
+ * HTTP transport failed to authenticate in some code paths, which has
+   been corrected.
+   (merge ed0f7a62f7 ap/http-probe-rpc-use-auth later to maint).
+
+ * The computation of column width made by "git diff --stat" was
+   confused when pathnames contain non-ASCII characters.
+   (merge 04f5d95ef7 lp/diff-stat-utf8-display-width-fix later to maint).
+
+ * The "-z" and "--max-depth" documentation (and implementation of
+   "-z") in the "git last-modified" command have been updated.
+   (merge 9dcc09bed1 tc/last-modified-options-cleanup later to maint).
+
+ * A handful of code paths that started using batched ref update API
+   (after Git 2.51 or so) lost detailed error output, which have been
+   corrected.
+   (merge eff9299eac kn/ref-batch-output-error-reporting-fix later to maint).
+
+ * "git blame --ignore-revs=... --color-lines" did not account for
+   ignored revisions passing blame to the same commit an adjacent line
+   gets blamed for.
+   (merge d519082d4e rs/blame-ignore-colors-fix later to maint).
+
+ * Coccinelle rules update.
+   (merge 60614838a4 tc/memzero-array later to maint).
+
+ * Giving "git last-modified" a tree (not a commit-ish) died an
+   uncontrolled death, which has been corrected.
+   (merge 525ef52301 tc/last-modified-not-a-tree later to maint).
+
+ * Test contrib/ things in CI to catch breakages before they enter the
+   "next" branch.
+   (merge c591c3ceff jc/ci-test-contrib-too later to maint).
+
+ * A handful of documentation pages have been modernized to use the
+   "synopsis" style.
+   (merge a34d1d53a6 ja/doc-synopsis-style-even-more later to maint).
+
+ * Small clean-up of xdiff library to remove unnecessary data
+   duplication.
+   (merge 5086213bd2 pw/xdiff-cleanups later to maint).
+
+ * Update sample commit-msg hook to complain when a log message has
+   material mailinfo considers the end of log message in the middle.
+   (merge 83804c361b pw/commit-msg-sample-hook later to maint).
+
+ * "git pack-objects --stdin-packs" with "--exclude-promisor-objects"
+   fetched objects that are promised, which was not wanted.  This has
+   been fixed.
+   (merge f4eff7116d ps/pack-concat-wo-backfill later to maint).
+
+ * "git switch <name>", in an attempt to create a local branch <name>
+   after a remote tracking branch of the same name gave an advice
+   message to disambiguate using "git checkout", which has been
+   updated to use "git switch".
+   (merge 12fee11f21 jc/checkout-switch-restore later to maint).
+
+ * It does not make much sense to apply the "incomplete-line"
+   whitespace rule to symbolic links, whose contents almost always
+   lack the final newline.  "git apply" and "git diff" are now taught
+   to exclude them for a change to symbolic links.
+   (merge 6a41481c6d jc/whitespace-incomplete-line later to maint).
+
+ * "git format-patch --from=<me>" did not honor the command line
+   option when writing out the cover letter, which has been corrected.
+
+ * Update build procedure for mergetool documentation in meson-based builds.
+   (merge 58e4eeeeb5 pw/meson-doc-mergetool later to maint).
+
+ * An earlier attempt to optimize "git subtree" discarded too much
+   relevant histories, which has been corrected.
+
+ * A prefetch call can be triggered to access a stale diff_queue entry
+   after diffcore-break breaks a filepair into two and freed the
+   original entry that is no longer used, leading to a segfault, which
+   has been corrected.
+   (merge 2d88ab078d hy/diff-lazy-fetch-with-break-fix later to maint).
+
+ * "git fetch --deepen" that tries to go beyond merged branch used to
+   get confused where the updated shallow points are, which has been
+   corrected.
+   (merge 3ef68ff40e sp/shallow-deepen-relative-fix later to maint).
+
+ * "fsck" iterates over packfiles and its access to pack data caused
+   the list to be permuted, which caused it to loop forever; the code
+   to access pack data by "fsck" has been updated to avoid this.
+   (merge 13eb65d366 ps/fsck-stream-from-the-right-object-instance later to maint).
+
+ * "git log --graph --stat" did not count the display width of colored
+   graph part of its own output correctly, which has been corrected.
+   (merge 064b869efc lp/diff-stat-utf8-display-width-fix later to maint).
+
+ * The configuration variable format.noprefix did not behave as a
+   proper boolean variable, which has now been fixed and documented.
+   (merge ea3a62c40e kh/format-patch-noprefix-is-boolean later to maint).
+
+ * CI fix.
+   (merge eb35167dd4 ps/ci-reduce-gitlab-envsize later to maint).
+
+ * "git diff --no-index --find-object=<object-name>" outside a
+   repository of course wouldn't be able to find the object and died
+   while parsing the command line.  The command is made to die in a
+   bit more user-friendly way.
+   (merge b0ddc7947c mm/diff-no-index-find-object later to maint).
+
+ * Fix typo-induced breakages in fsmonitor-watchman sample hook.
+   (merge 41366e4677 pt/fsmonitor-watchman-sample-fix later to maint).
+
+ * "git for-each-repo" started from a secondary worktree did not work
+   as expected, which has been corrected.
+   (merge e87493b9b4 ds/for-each-repo-w-worktree later to maint).
+
+ * The construct 'test "$(command)" = expectation' loses the exit
+   status from the command, which has been fixed by breaking up the
+   statement into pieces.
+   (merge d3edca979a fp/t3310-unhide-git-failures later to maint).
+
+ * While discovering a ".git" directory, the code treats any stat()
+   failure as a sign that a filesystem entity .git does not exist
+   there, and ignores ".git" that is not a "gitdir" file or a
+   directory.  The code has been tightened to notice and report
+   filesystem corruption better.
+   (merge 1dd27bfbfd ty/setup-error-tightening later to maint).
+
+ * Plug a few leaks where mmap'ed memory regions are not unmapped.
+   (merge a8a69bbb64 jk/unleak-mmap later to maint).
+
+ * A test now uses the symbolic constant $ZERO_OID instead of 40 "0" to
+   work better with SHA-256 as well as SHA-1.
+   (merge 30310f3cc4 ss/t3200-test-zero-oid later to maint).
+
+ * Instead of hardcoded 'origin', use the configured default remote
+   when fetching from submodules.
+   (merge 3b5fb32da8 ng/submodule-default-remote later to maint).
+
+ * The code in "git help" that shows configuration items in sorted
+   order was awkwardly organized and prone to bugs.
+
+ * "imap-send" used to use functions whose use is going to be removed
+   with OpenSSL 4.0; rewrite them using public API that has been
+   available since OpenSSL 1.1 since 2016 or so.
+   (merge 6392a0b75d bb/imap-send-openssl-4.0-prep later to maint).
+
+ * Fix an example in the user-manual.
+   (merge 5514f14617 gj/user-manual-fix-grep-example later to maint).
+
+ * The final clean-up phase of the diff output could turn the result of
+   histogram diff algorithm suboptimal, which has been corrected.
+   (merge e417277ae9 yc/histogram-hunk-shift-fix later to maint).
+
+ * "git diff -U<num>" was too lenient in its command line parsing and
+   took an empty string as a valid <num>.
+   (merge 4f6a803aba ty/doc-diff-u-wo-number later to maint).
+
+ * The handling of the incomplete lines at the end by "git
+   diff-highlight" has been fixed.
+
+ * merge-file --object-id used to trigger a BUG when run in a linked
+   worktree, which has been fixed.
+   (merge 57246b7c62 mr/merge-file-object-id-worktree-fix later to maint).
+
+ * "git apply -p<n>" parses <n> more carefully now.
+   (merge d05d84c5f5 mf/apply-p-no-atoi later to maint).
+
+ * A test to run a .bat file with whitespaces in the name with arguments
+   with whitespaces in them was flaky in that sometimes it got killed
+   before it produced expected side effects, which has been rewritten to
+   make it more robust.
+   (merge 3ad4921838 jk/t0061-bat-test-update later to maint).
+
+ * "git ls-remote '+refs/tags/*:refs/tags/*' https://..." run outside a
+   repository would dereference a NULL while trying to see if the given
+   refspec is a single-object refspec, which has been corrected.
+   (merge 4e5dc601dd kj/refspec-parsing-outside-repository later to maint).
+
+ * Fix a regression in writing the commit-graph where commits with dates
+   exceeding 34 bits (beyond year 2514) could cause an underflow and
+   crash Git during the generation data overflow chunk writing.
+
+ * The value of a wrong pointer variable was referenced in an error
+   message that reported that it shouldn't be NULL.
+   (merge 753ecf4205 yc/path-walk-fix-error-reporting later to maint).
+
+ * The check in "receive-pack" to prevent a checked out branch from
+   getting updated via updateInstead mechanism has been corrected.
+
+ * "git backfill" is capable of auto-detecting a sparsely checked out
+   working tree, which was broken.
+   (merge 339eba65a7 th/backfill-auto-detect-sparseness-fix later to maint).
+
+ * add_files_to_cache() used diff_files() to detect only the paths that
+   are different between the index and the working tree and add them,
+   which does not need rename detection, which interfered with unnecessary
+   conflicts.
+   (merge c0ce43376b ng/add-files-to-cache-wo-rename later to maint).
+
+ * Doc mark-up update for entries in the glossary with bulleted lists.
+   (merge a65cbd87ea jk/doc-markup-sub-list-indentation later to maint).
+
+ * CI dependency updates.
+   (merge 4bdb17e3a8 jc/ci-github-actions-use-checkout-v5 later to maint).
+
+ * Other code cleanup, docfix, build fix, etc.
+   (merge d79fff4a11 jk/remote-tracking-ref-leakfix later to maint).
+   (merge 7a747f972d dd/t5403-modernise later to maint).
+   (merge 81021871ea sp/myfirstcontribution-include-update later to maint).
+   (merge 49223593fd ac/sparse-checkout-string-list-cleanup later to maint).
+   (merge a824421d36 sp/t5500-cleanup later to maint).
+   (merge df1c5d7ed7 kh/doc-shortlog-fix later to maint).
+   (merge 2d45507f15 am/doc-github-contributiong-link-to-submittingpatches later to maint).
+   (merge 68060b9262 hs/t9160-test-paths later to maint).
+   (merge 486386c687 cs/subtree-reftable-testfix later to maint).
+   (merge 0728012c53 jc/diff-highlight-main-master-testfix later to maint).
+   (merge 831989ef38 mc/doc-send-email-signed-off-by-cc later to maint).
+   (merge c44b3f3203 sd/doc-my1c-api-config-reference-fix later to maint).
+   (merge 6c21e53bad rs/version-wo-the-repository later to maint).
+   (merge 10c68d2577 rs/clean-includes later to maint).
+   (merge 168d575719 bk/t2003-modernise later to maint).
+   (merge 6bfef81c9a kh/doc-rerere-options-xref later to maint).
+   (merge aaf3cc3d8d sd/t7003-test-path-is-helpers later to maint).
+   (merge 2668b6bdc4 jc/doc-rerere-update later to maint).
+   (merge 2f99f50f2d jc/doc-cg-c-comment later to maint).
+   (merge a454cdca42 kh/doc-am-format-sendmail later to maint).
+   (merge 8b0061b5c5 jk/ref-filter-lrstrip-optim later to maint).
+   (merge 5133837392 ps/ci-gitlab-msvc-updates later to maint).
+   (merge 143e84958c db/doc-fetch-jobs-auto later to maint).
+   (merge 0678e01f02 ap/use-test-seq-f-more later to maint).
+   (merge 96286f14b0 ty/symlinks-use-unsigned-for-bitset later to maint).
+   (merge b10e0cb1f3 kh/doc-am-xref later to maint).
+   (merge ed84bc1c0d kh/doc-patch-id-4 later to maint).
+   (merge 7451864bfa sc/pack-redundant-leakfix later to maint).
+   (merge f87593ab1a cx/fetch-display-ubfix later to maint).
+   (merge a66c8c7f91 jk/repo-structure-cleanup later to maint).
+   (merge 5ee8782f87 ss/test-that-that-typofix later to maint).
+   (merge f31b322008 fp/t3310-test-path-is-helpers later to maint).
+   (merge b22ed4c4f9 kj/path-micro-code-cleanup later to maint).
+   (merge a56fa1ca05 lp/doc-gitprotocol-pack-fixes later to maint).
+   (merge 0d6bb8b541 ss/t3700-modernize later to maint).
+   (merge 63c00a677b ss/t9123-setup-inside-test-expect-success later to maint).
+   (merge beca0ca4be os/doc-git-custom-commands later to maint).
+   (merge 4c223571be ty/patch-ids-document-lazy-eval later to maint).
+   (merge 476365ac85 jc/doc-wholesale-replace-before-next later to maint).
+   (merge 35f220b639 ss/submodule--helper-use-xmalloc later to maint).
+   (merge 02cbae61df cf/constness-fixes later to maint).
+   (merge 69efd53c81 ms/t7605-test-path-is-helpers later to maint).
+   (merge d39cef3a1a ss/t0410-delete-object-cleanup later to maint).
+   (merge 2f05039717 rj/pack-refs-tests-path-is-helpers later to maint).
+   (merge 2594747ad1 jk/transport-color-leakfix later to maint).
+   (merge 48430e44ac mf/t0008-cleanup later to maint).
+   (merge fc8a4f15e7 gi/doc-boolean-config-typofix later to maint).
+   (merge 37182267a0 kh/doc-interpret-trailers-1 later to maint).
+   (merge f64c50e768 jc/rerere-modern-strbuf-handling later to maint).
+   (merge 699248d89e th/t8003-unhide-git-failures later to maint).
+   (merge d8e34f971b za/t2000-modernise later to maint).
+   (merge 849988bc74 th/t6101-unhide-git-failures later to maint).
+   (merge 0f0ce07625 sp/doc-gitignore-oowt later to maint).

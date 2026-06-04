@@ -1,0 +1,130 @@
+git-mergetool(1)
+================
+
+NAME
+----
+git-mergetool - Run merge conflict resolution tools to resolve merge conflicts
+
+SYNOPSIS
+--------
+[synopsis]
+git mergetool [--tool=<tool>] [-y | --[no-]prompt] [<file>...]
+
+DESCRIPTION
+-----------
+
+Use `git mergetool` to run one of several merge utilities to resolve
+merge conflicts.  It is typically run after `git merge`.
+
+If one or more <file> parameters are given, the merge tool program will
+be run to resolve differences in each file (skipping those without
+conflicts).  Specifying a directory will include all unresolved files in
+that path.  If no _<file>_ names are specified, `git mergetool` will run
+the merge tool program on every file with merge conflicts.
+
+OPTIONS
+-------
+`-t <tool>`::
+`--tool=<tool>`::
+	Use the merge resolution program specified by _<tool>_.
+	Valid values include `emerge`, `gvimdiff`, `kdiff3`,
+	`meld`, `vimdiff`, and `tortoisemerge`. Run `git mergetool --tool-help`
+	for the list of valid _<tool>_ settings.
++
+If a merge resolution program is not specified, `git mergetool`
+will use the configuration variable `merge.tool`.  If the
+configuration variable `merge.tool` is not set, `git mergetool`
+will pick a suitable default.
++
+You can explicitly provide a full path to the tool by setting the
+configuration variable `mergetool.<tool>.path`. For example, you
+can configure the absolute path to kdiff3 by setting
+`mergetool.kdiff3.path`. Otherwise, `git mergetool` assumes the
+tool is available in `$PATH`.
++
+Instead of running one of the known merge tool programs,
+`git mergetool` can be customized to run an alternative program
+by specifying the command line to invoke in a configuration
+variable `mergetool.<tool>.cmd`.
++
+When `git mergetool` is invoked with this tool (either through the
+`-t` or `--tool` option or the `merge.tool` configuration
+variable), the configured command line will be invoked with `BASE`
+set to the name of a temporary file containing the common base for
+the merge, if available; `LOCAL` set to the name of a temporary
+file containing the contents of the file on the current branch;
+`REMOTE` set to the name of a temporary file containing the
+contents of the file to be merged, and `MERGED` set to the name
+of the file to which the merge tool should write the result of the
+merge resolution.
++
+If the custom merge tool correctly indicates the success of a
+merge resolution with its exit code, then the configuration
+variable `mergetool.<tool>.trustExitCode` can be set to `true`.
+Otherwise, `git mergetool` will prompt the user to indicate the
+success of the resolution after the custom tool has exited.
+
+`--tool-help`::
+	Print a list of merge tools that may be used with `--tool`.
+
+`-y`::
+`--no-prompt`::
+	Don't prompt before each invocation of the merge resolution
+	program.
+	This is the default if the merge resolution program is
+	explicitly specified with the `--tool` option or with the
+	`merge.tool` configuration variable.
+
+`--prompt`::
+	Prompt before each invocation of the merge resolution program
+	to give the user a chance to skip the path.
+
+`-g`::
+`--gui`::
+	When `git-mergetool` is invoked with the `-g` or `--gui` option,
+	the default merge tool will be read from the configured
+	`merge.guitool` variable instead of `merge.tool`. If
+	`merge.guitool` is not set, we will fallback to the tool
+	configured under `merge.tool`. This may be autoselected using
+	the configuration variable `mergetool.guiDefault`.
+
+`--no-gui`::
+	This overrides a previous `-g` or `--gui` setting or
+	`mergetool.guiDefault` configuration and reads the default merge
+	tool from the configured `merge.tool` variable.
+
+`-O<orderfile>`::
+	Process files in the order specified in the
+	_<orderfile>_, which has one shell glob pattern per line.
+	This overrides the `diff.orderFile` configuration variable
+	(see linkgit:git-config[1]).  To cancel `diff.orderFile`,
+	use `-O/dev/null`.
+
+CONFIGURATION
+-------------
+:git-mergetool: 1
+
+include::includes/cmd-config-section-all.adoc[]
+
+include::config/mergetool.adoc[]
+
+TEMPORARY FILES
+---------------
+`git mergetool` creates `*.orig` backup files while resolving merges.
+These are safe to remove once a file has been merged and its
+`git mergetool` session has completed.
+
+Setting the `mergetool.keepBackup` configuration variable to `false`
+causes `git mergetool` to automatically remove the backup files as files
+are successfully merged.
+
+BACKEND SPECIFIC HINTS
+----------------------
+
+vimdiff
+~~~~~~~
+include::mergetools/vimdiff.adoc[]
+
+GIT
+---
+Part of the linkgit:git[1] suite

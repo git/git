@@ -1,0 +1,242 @@
+= Unit Testing
+
+In our current testing environment, we spend a significant amount of effort
+crafting end-to-end tests for error conditions that could easily be captured by
+unit tests (or we simply forgo some hard-to-setup and rare error conditions).
+Unit tests additionally provide stability to the codebase and can simplify
+debugging through isolation. Writing unit tests in pure C, rather than with our
+current shell/test-tool helper setup, simplifies test setup, simplifies passing
+data around (no shell-isms required), and reduces testing runtime by not
+spawning a separate process for every test invocation.
+
+We believe that a large body of unit tests, living alongside the existing test
+suite, will improve code quality for the Git project.
+
+== Definitions
+
+For the purposes of this document, we'll use *test framework* to refer to
+projects that support writing test cases and running tests within the context
+of a single executable. *Test harness* will refer to projects that manage
+running multiple executables (each of which may contain multiple test cases) and
+aggregating their results.
+
+In reality, these terms are not strictly defined, and many of the projects
+discussed below contain features from both categories.
+
+For now, we will evaluate projects solely on their framework features. Since we
+are relying on having TAP output (see below), we can assume that any framework
+can be made to work with a harness that we can choose later.
+
+
+== Summary
+
+We believe the best way forward is to implement a custom TAP framework for the
+Git project. We use a version of the framework originally proposed in
+https://lore.kernel.org/git/c902a166-98ce-afba-93f2-ea6027557176@gmail.com/[1].
+
+See the <<framework-selection,Framework Selection>> section below for the
+rationale behind this decision.
+
+
+== Choosing a test harness
+
+During upstream discussion, it was occasionally noted that `prove` provides many
+convenient features, such as scheduling slower tests first, or re-running
+previously failed tests.
+
+While we already support the use of `prove` as a test harness for the shell
+tests, it is not strictly required. The t/Makefile allows running shell tests
+directly (though with interleaved output if parallelism is enabled). Git
+developers who wish to use `prove` as a more advanced harness can do so by
+setting DEFAULT_TEST_TARGET=prove in their config.mak.
+
+We will follow a similar approach for unit tests: by default the test
+executables will be run directly from the t/Makefile, but `prove` can be
+configured with DEFAULT_UNIT_TEST_TARGET=prove.
+
+
+[[framework-selection]]
+== Framework selection
+
+There are a variety of features we can use to rank the candidate frameworks, and
+those features have different priorities:
+
+* Critical features: we probably won't consider a framework without these
+** Can we legally / easily use the project?
+*** <<license,License>>
+*** <<vendorable-or-ubiquitous,Vendorable or ubiquitous>>
+*** <<maintainable-extensible,Maintainable / extensible>>
+*** <<major-platform-support,Major platform support>>
+** Does the project support our bare-minimum needs?
+*** <<tap-support,TAP support>>
+*** <<diagnostic-output,Diagnostic output>>
+*** <<runtime-skippable-tests,Runtime-skippable tests>>
+* Nice-to-have features:
+** <<parallel-execution,Parallel execution>>
+** <<mock-support,Mock support>>
+** <<signal-error-handling,Signal & error-handling>>
+* Tie-breaker stats
+** <<project-kloc,Project KLOC>>
+** <<adoption,Adoption>>
+
+[[license]]
+=== License
+
+We must be able to legally use the framework in connection with Git. As Git is
+licensed only under GPLv2, we must eliminate any LGPLv3, GPLv3, or Apache 2.0
+projects.
+
+[[vendorable-or-ubiquitous]]
+=== Vendorable or ubiquitous
+
+We want to avoid forcing Git developers to install new tools just to run unit
+tests. Any prospective frameworks and harnesses must either be vendorable
+(meaning, we can copy their source directly into Git's repository), or so
+ubiquitous that it is reasonable to expect that most developers will have the
+tools installed already.
+
+[[maintainable-extensible]]
+=== Maintainable / extensible
+
+It is unlikely that any pre-existing project perfectly fits our needs, so any
+project we select will need to be actively maintained and open to accepting
+changes. Alternatively, assuming we are vendoring the source into our repo, it
+must be simple enough that Git developers can feel comfortable making changes as
+needed to our version.
+
+In the comparison table below, "True" means that the framework seems to have
+active developers, that it is simple enough that Git developers can make changes
+to it, and that the project seems open to accepting external contributions (or
+that it is vendorable). "Partial" means that at least one of the above
+conditions holds.
+
+[[major-platform-support]]
+=== Major platform support
+
+At a bare minimum, unit-testing must work on Linux, MacOS, and Windows.
+
+In the comparison table below, "True" means that it works on all three major
+platforms with no issues. "Partial" means that there may be annoyances on one or
+more platforms, but it is still usable in principle.
+
+[[tap-support]]
+=== TAP support
+
+The https://testanything.org/[Test Anything Protocol] is a text-based interface
+that allows tests to communicate with a test harness. It is already used by
+Git's integration test suite. Supporting TAP output is a mandatory feature for
+any prospective test framework.
+
+In the comparison table below, "True" means this is natively supported.
+"Partial" means TAP output must be generated by post-processing the native
+output.
+
+Frameworks that do not have at least Partial support will not be evaluated
+further.
+
+[[diagnostic-output]]
+=== Diagnostic output
+
+When a test case fails, the framework must generate enough diagnostic output to
+help developers find the appropriate test case in source code in order to debug
+the failure.
+
+[[runtime-skippable-tests]]
+=== Runtime-skippable tests
+
+Test authors may wish to skip certain test cases based on runtime circumstances,
+so the framework should support this.
+
+[[parallel-execution]]
+=== Parallel execution
+
+Ideally, we will build up a significant collection of unit test cases, most
+likely split across multiple executables. It will be necessary to run these
+tests in parallel to enable fast develop-test-debug cycles.
+
+In the comparison table below, "True" means that individual test cases within a
+single test executable can be run in parallel. We assume that executable-level
+parallelism can be handled by the test harness.
+
+[[mock-support]]
+=== Mock support
+
+Unit test authors may wish to test code that interacts with objects that may be
+inconvenient to handle in a test (e.g. interacting with a network service).
+Mocking allows test authors to provide a fake implementation of these objects
+for more convenient tests.
+
+[[signal-error-handling]]
+=== Signal & error handling
+
+The test framework should fail gracefully when test cases are themselves buggy
+or when they are interrupted by signals during runtime.
+
+[[project-kloc]]
+=== Project KLOC
+
+The size of the project, in thousands of lines of code as measured by
+https://dwheeler.com/sloccount/[sloccount] (rounded up to the next multiple of
+1,000). As a tie-breaker, we probably prefer a project with fewer LOC.
+
+[[adoption]]
+=== Adoption
+
+As a tie-breaker, we prefer a more widely-used project. We use the number of
+GitHub / GitLab stars to estimate this.
+
+
+=== Comparison
+
+:true: [lime-background]#True#
+:false: [red-background]#False#
+:partial: [yellow-background]#Partial#
+
+:gpl: [lime-background]#GPL v2#
+:isc: [lime-background]#ISC#
+:mit: [lime-background]#MIT#
+:expat: [lime-background]#Expat#
+:lgpl: [lime-background]#LGPL v2.1#
+
+:custom-impl: https://lore.kernel.org/git/c902a166-98ce-afba-93f2-ea6027557176@gmail.com/[Custom Git impl.]
+:greatest: https://github.com/silentbicycle/greatest[Greatest]
+:criterion: https://github.com/Snaipe/Criterion[Criterion]
+:c-tap: https://github.com/rra/c-tap-harness/[C TAP]
+:check: https://libcheck.github.io/check/[Check]
+:clar: https://github.com/clar-test/clar[Clar]
+
+[format="csv",options="header",width="33%",subs="specialcharacters,attributes,quotes,macros"]
+|=====
+Framework,"<<license,License>>","<<vendorable-or-ubiquitous,Vendorable or ubiquitous>>","<<maintainable-extensible,Maintainable / extensible>>","<<major-platform-support,Major platform support>>","<<tap-support,TAP support>>","<<diagnostic-output,Diagnostic output>>","<<runtime--skippable-tests,Runtime- skippable tests>>","<<parallel-execution,Parallel execution>>","<<mock-support,Mock support>>","<<signal-error-handling,Signal & error handling>>","<<project-kloc,Project KLOC>>","<<adoption,Adoption>>"
+{custom-impl},{gpl},{true},{true},{true},{true},{true},{true},{false},{false},{false},1,0
+{greatest},{isc},{true},{partial},{true},{partial},{true},{true},{false},{false},{false},3,1400
+{criterion},{mit},{false},{partial},{true},{true},{true},{true},{true},{false},{true},19,1800
+{c-tap},{expat},{true},{partial},{partial},{true},{false},{true},{false},{false},{false},4,33
+{check},{lgpl},{false},{partial},{true},{true},{true},{false},{false},{false},{true},17,973
+{clar},{isc},{false},{partial},{true},{true},{true},{true},{false},{false},{true},1,192
+|=====
+
+=== Additional framework candidates
+
+Several suggested frameworks have been eliminated from consideration:
+
+* Incompatible licenses:
+** https://github.com/zorgnax/libtap[libtap] (LGPL v3)
+** https://cmocka.org/[cmocka] (Apache 2.0)
+* Missing source: https://www.kindahl.net/mytap/doc/index.html[MyTap]
+* No TAP support:
+** https://nemequ.github.io/munit/[µnit]
+** https://github.com/google/cmockery[cmockery]
+** https://github.com/lpabon/cmockery2[cmockery2]
+** https://github.com/ThrowTheSwitch/Unity[Unity]
+** https://github.com/siu/minunit[minunit]
+** https://cunit.sourceforge.net/[CUnit]
+
+
+== Milestones
+
+* Add useful tests of library-like code
+* Integrate with
+  https://lore.kernel.org/git/20230502211454.1673000-1-calvinwan@google.com/[stdlib
+  work]
+* Run alongside regular `make test` target

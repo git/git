@@ -1,0 +1,25 @@
+Git v2.7.6 Release Notes
+========================
+
+Fixes since v2.7.5
+------------------
+
+ * A "ssh://..." URL can result in a "ssh" command line with a
+   hostname that begins with a dash "-", which would cause the "ssh"
+   command to instead (mis)treat it as an option.  This is now
+   prevented by forbidding such a hostname (which will not be
+   necessary in the real world).
+
+ * Similarly, when GIT_PROXY_COMMAND is configured, the command is
+   run with host and port that are parsed out from "ssh://..." URL;
+   a poorly written GIT_PROXY_COMMAND could be tricked into treating
+   a string that begins with a dash "-".  This is now prevented by
+   forbidding such a hostname and port number (again, which will not
+   be necessary in the real world).
+
+ * In the same spirit, a repository name that begins with a dash "-"
+   is also forbidden now.
+
+Credits go to Brian Neel at GitLab, Joern Schneeweisz of Recurity
+Labs and Jeff King at GitHub.
+

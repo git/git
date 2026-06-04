@@ -1,0 +1,32 @@
+ifndef::git-stash[]
+:see-show: See the description of the 'show' command in linkgit:git-stash[1].
+endif::git-stash[]
+
+ifdef::git-stash[]
+:see-show:
+endif::git-stash[]
+
+`stash.index`::
+	If this is set to true, `git stash apply` and `git stash pop` will
+	behave as if `--index` was supplied. Defaults to false.
+ifndef::git-stash[]
+See the descriptions in linkgit:git-stash[1].
++
+This also affects invocations of linkgit:git-stash[1] via `--autostash` from
+commands like linkgit:git-merge[1], linkgit:git-rebase[1], and
+linkgit:git-pull[1].
+endif::git-stash[]
+
+`stash.showIncludeUntracked`::
+	If this is set to true, the `git stash show` command will show
+	the untracked files of a stash entry. Defaults to false. {see-show}
+
+`stash.showPatch`::
+	If this is set to true, the `git stash show` command without an
+	option will show the stash entry in patch form.  Defaults to false.
+	{see-show}
+
+`stash.showStat`::
+	If this is set to true, the `git stash show` command without an
+	option will show a diffstat of the stash entry.  Defaults to true.
+	{see-show}

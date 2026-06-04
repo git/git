@@ -1,0 +1,215 @@
+git-format-rev(1)
+=================
+
+NAME
+----
+git-format-rev - EXPERIMENTAL: Pretty format revisions on demand
+
+
+SYNOPSIS
+--------
+[synopsis]
+(EXPERIMENTAL!) git format-rev --stdin-mode=<mode> --format=<pretty> [--[no-]notes=<ref>] [-z] [--[no-]null-output] [--[no-]null-input]
+
+DESCRIPTION
+-----------
+
+Pretty format revisions from standard input.
+
+THIS COMMAND IS EXPERIMENTAL. THE BEHAVIOR MAY CHANGE.
+
+OPTIONS
+-------
+
+`--stdin-mode=<mode>`::
+	How to interpret standard input data:
++
+--
+`revs`;; Each line or record (see the <<io,INPUT AND OUTPUT FORMATS>>
+	section) is interpreted as a commit. Any kind of revision
+	expression can be used (see linkgit:gitrevisions[7]). Annotated
+	tags are peeled (see linkgit:gitglossary[7]).
++
+The argument `rev` is also accepted.
+
+`text`;; Formats all commit object names found in freeform text. These
+	must the full object names, i.e. abbreviated hexidecimal object
+	names will not be interpreted.
++
+Anything that is parsed as an object name but that is not found to be a
+commit object name is left alone (echoed).
+--
+
+`--format=<pretty>`::
+	Pretty format string.
+
+`--notes=<ref>`::
+`--no-notes`::
+	Custom notes ref. Notes are displayed when using the `%N`
+	atom. See linkgit:git-notes[1].
+
+`-z`::
+`--null`::
+	Use _NUL_ character to terminate both input and output instead
+	of newline. This option cannot be negated.
++
+This is useful if both the input and output could contain newlines or if
+the input to this command also uses _NUL_ character termination; see the
+<<io,INPUT AND OUTPUT FORMATS>> section below.
++
+The mode `--stdin-mode=text` can have use for this option when it needs
+to process input like for example `git last-modified -z`; see the
+<<examples,EXAMPLES>> section below.
+
+`--null-output`::
+`--no-null-output`::
+	Use _NUL_ character to terminate output instead of newline. The
+	default is `--no-null-output`.
++
+This is useful if the output could contain newlines, for example if the
+`%n` (newline) atom is used.
+
+`--null-input`::
+`--no-null-input`::
+	Use _NUL_ character to terminate input instead of newline. The
+	default is `--no-null-input`.
++
+This is useful if the input revision expressions could contain newlines.
+
+[[io]]
+INPUT AND OUTPUT FORMAT
+-----------------------
+
+The command uses newlines for both input and output termination by
+default. See the `-z`, `--null-output`, and `--null-input` options for
+using _NUL_ character as the terminator.
+
+The mode `--stdin-mode=revs` outputs one formatted commit followed by
+the terminator. This could either be called a _line_ or a _record_ in
+case "line" is too suggestive of newline termination.
+
+Note that this means that the terminator character (newline or _NUL_)
+acts as a _terminator_, not a _separator_. In other words, the final
+line or record is also terminated by the terminator character.
+
+The mode `--stdin-mode=text` replaces each object name with the
+formatted commit, i.e. the format `%s` would transform some commit
+object name to `<subject>` without any termination. Like this:
+
+----
+Did we not fix this in "<subject>"?
+----
+
+It is safe to interactively read and write from this command since each
+record is immediately flushed.
+
+[[examples]]
+EXAMPLES
+--------
+
+The command linkgit:git-last-modified[1] shows the commit that each file
+was last modified in.
+
+----
+$ git last-modified -- README.md Makefile
+7798034171030be0909c56377a4e0e10e6d2df93	Makefile
+c50fbb2dd225e7e82abba4380423ae105089f4d7	README.md
+----
+
+We can pipe the result to this command in order to replace the object
+name with the commit author.
+
+----
+$ git last-modified -- README.md Makefile |
+    git format-rev --stdin-mode=text --format=%an
+Junio C Hamano	Makefile
+Todd Zullinger	README.md
+----
+
+Another example is _formatting commits in commit messages_. Given this commit message:
+
+----
+Fix off-by-one error
+
+Fix off-by-one error introduced in
+e83c5163316f89bfbde7d9ab23ca2e25604af290.
+
+We thought we fixed this in 5569bf9bbedd63a00780fc5c110e0cfab3aa97b9 but
+that only covered 1/3 of the faulty cases.
+----
+
+We can format the commits and use par(1) to reflow the text, say in a
+`commit-msg` hook:
+
+----
+$ git config set hook.reference-commits.event commit-msg
+$ git config set hook.reference-commits.command reference-commits
+$ cat $(which reference-commits)
+#/bin/sh
+
+msg="$1"
+rewritten=$(mktemp)
+git format-rev --stdin-mode=text --format=reference <"$msg" |
+    par >"$rewritten"
+mv "$rewritten" "$msg"
+----
+
+Which will produce something like this:
+
+----
+Fix off-by-one error
+
+Fix off-by-one error introduced in e83c5163316 (Implement better memory
+allocator, 2005-04-07).
+
+We thought we fixed this in 5569bf9bbed (Fix memory allocator,
+2005-06-22) but that only covered 1/3 of the faulty cases.
+----
+
+DISCUSSION
+----------
+
+This command lets you format any number of revisions in any order
+through one command invocation. Consider the
+linkgit:git-last-modified[1] case from the <<examples,EXAMPLES>> section
+above:
+
+1. There might be hundreds of files
+2. Commits can be repeated, i.e. two or more files were last modified in
+   the same commit
+
+Two widely-used commands which pretty formats commits are
+linkgit:git-log[1] and linkgit:git-show[1]. It turns out that they are
+not a good fit for the above use case.
+
+- The output of linkgit:git-last-modified[1] would have to be processed
+  in stages since you need to transform the first column separately and
+  then link the author to the filename. But this is surmountable.
+- You can feed each commit to `git show` or `git log --no-walk -1`. But
+  that means that you need to create a process for each line.
+- Let’s say that you want to use one process, not one per line. So you
+  want to feed all the commits to the command. Now you face the problem
+  that you have to feed all the commits to the commands before you get
+  any output (this is also the case for the `--stdin` modes). In other
+  words, you cannot loop through each line, get the author for the
+  commit, and output the author and the filename. You need to feed all
+  the commits, get back all the output, and match the output with the
+  filename.
+- But the next problem is that commands will deduplicate the input and
+  only output one commit one single time only. Thus you cannot make the
+  output order match the input order, since a commit could have been
+  repeated in the original input.
+
+In short, it is straightforward to use these two commands if you use one
+process per line. It is much more work if you just want to use one
+process, but still doable. In contrast, this problem is solved with just
+another shell pipeline with this command.
+
+SEE ALSO
+--------
+linkgit:git-name-rev[1],
+linkgit:git-log[1].
+
+GIT
+---
+Part of the linkgit:git[1] suite

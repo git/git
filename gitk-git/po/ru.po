@@ -1,0 +1,1090 @@
+# Translation of gitk to Russian.
+#
+# Translators:
+# 0xAX <kuleshovmail@gmail.com>, 2014
+# Alex Riesen <raa.lkml@gmail.com>, 2015
+# Dimitriy Ryazantcev <DJm00n@mail.ru>, 2015-2016
+# Dmitry Potapov <dpotapov@gmail.com>, 2009
+# Skip <bsvskip@rambler.ru>, 2011
+msgid ""
+msgstr ""
+"Project-Id-Version: Gitk Russian Localization Project\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2016-12-15 00:18+0200\n"
+"PO-Revision-Date: 2016-12-14 22:23+0000\n"
+"Last-Translator: Dimitriy Ryazantcev <DJm00n@mail.ru>\n"
+"Language-Team: Russian (http://www.transifex.com/djm00n/git-po-ru/language/"
+"ru/)\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: ru\n"
+"Plural-Forms: nplurals=4; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<12 || n%100>14) ? 1 : n%10==0 || (n%10>=5 && n%10<=9) || "
+"(n%100>=11 && n%100<=14)? 2 : 3);\n"
+
+msgid "Couldn't get list of unmerged files:"
+msgstr "Невозможно получить список файлов незавершённой операции слияния:"
+
+msgid "Color words"
+msgstr "Цветные слова"
+
+msgid "Markup words"
+msgstr "Помеченые слова"
+
+msgid "Error parsing revisions:"
+msgstr "Ошибка при разборе редакции:"
+
+msgid "Error executing --argscmd command:"
+msgstr "Ошибка выполнения команды заданной --argscmd:"
+
+msgid "No files selected: --merge specified but no files are unmerged."
+msgstr ""
+"Файлы не выбраны: указан --merge, но не было найдено ни одного файла где эта "
+"операция должна быть завершена."
+
+msgid ""
+"No files selected: --merge specified but no unmerged files are within file "
+"limit."
+msgstr ""
+"Файлы не выбраны: указан --merge, но в рамках указанного ограничения на "
+"имена файлов нет ни одного где эта операция должна быть завершена."
+
+msgid "Error executing git log:"
+msgstr "Ошибка запуска git log:"
+
+msgid "Reading"
+msgstr "Чтение"
+
+msgid "Reading commits..."
+msgstr "Чтение коммитов..."
+
+msgid "No commits selected"
+msgstr "Ничего не выбрано"
+
+msgid "Command line"
+msgstr "Командная строка"
+
+msgid "Can't parse git log output:"
+msgstr "Ошибка обработки вывода команды git log:"
+
+msgid "No commit information available"
+msgstr "Нет информации о коммите"
+
+msgid "OK"
+msgstr "Ok"
+
+msgid "Cancel"
+msgstr "Отмена"
+
+msgid "&Update"
+msgstr "Обновить"
+
+msgid "&Reload"
+msgstr "Перечитать"
+
+msgid "Reread re&ferences"
+msgstr "Обновить список ссылок"
+
+msgid "&List references"
+msgstr "Список ссылок"
+
+msgid "Start git &gui"
+msgstr "Запустить git gui"
+
+msgid "&Quit"
+msgstr "Завершить"
+
+msgid "&File"
+msgstr "Файл"
+
+msgid "&Preferences"
+msgstr "Настройки"
+
+msgid "&Edit"
+msgstr "Редактировать"
+
+msgid "&New view..."
+msgstr "Новое представление..."
+
+msgid "&Edit view..."
+msgstr "Редактировать представление..."
+
+msgid "&Delete view"
+msgstr "Удалить представление"
+
+msgid "&All files"
+msgstr "Все файлы"
+
+msgid "&View"
+msgstr "Представление"
+
+msgid "&About gitk"
+msgstr "О gitk"
+
+msgid "&Key bindings"
+msgstr "Назначения клавиатуры"
+
+msgid "&Help"
+msgstr "Подсказка"
+
+msgid "SHA1 ID:"
+msgstr "SHA1 ID:"
+
+msgid "Row"
+msgstr "Строка"
+
+msgid "Find"
+msgstr "Поиск"
+
+msgid "commit"
+msgstr "коммит"
+
+msgid "containing:"
+msgstr "содержащее:"
+
+msgid "touching paths:"
+msgstr "касательно файлов:"
+
+msgid "adding/removing string:"
+msgstr "добавив/удалив строку:"
+
+msgid "changing lines matching:"
+msgstr "изменяя совпадающие строки:"
+
+msgid "Exact"
+msgstr "Точно"
+
+msgid "IgnCase"
+msgstr "Игнорировать большие/маленькие"
+
+msgid "Regexp"
+msgstr "Регулярные выражения"
+
+msgid "All fields"
+msgstr "Во всех полях"
+
+msgid "Headline"
+msgstr "Заголовок"
+
+msgid "Comments"
+msgstr "Комментарии"
+
+msgid "Author"
+msgstr "Автор"
+
+msgid "Committer"
+msgstr "Коммитер"
+
+msgid "Search"
+msgstr "Найти"
+
+msgid "Diff"
+msgstr "Сравнить"
+
+msgid "Old version"
+msgstr "Старая версия"
+
+msgid "New version"
+msgstr "Новая версия"
+
+msgid "Lines of context"
+msgstr "Строк контекста"
+
+msgid "Ignore space change"
+msgstr "Игнорировать пробелы"
+
+msgid "Line diff"
+msgstr "Изменения строк"
+
+msgid "Patch"
+msgstr "Патч"
+
+msgid "Tree"
+msgstr "Файлы"
+
+msgid "Diff this -> selected"
+msgstr "Сравнить этот коммит с выделенным"
+
+msgid "Diff selected -> this"
+msgstr "Сравнить выделенный с этим коммитом"
+
+msgid "Make patch"
+msgstr "Создать патч"
+
+msgid "Create tag"
+msgstr "Создать метку"
+
+msgid "Copy commit summary"
+msgstr "Копировать информацию о коммите"
+
+msgid "Write commit to file"
+msgstr "Сохранить коммит в файл"
+
+msgid "Create new branch"
+msgstr "Создать ветку"
+
+msgid "Cherry-pick this commit"
+msgstr "Копировать этот коммит в текущую ветку"
+
+msgid "Reset HEAD branch to here"
+msgstr "Установить HEAD на этот коммит"
+
+msgid "Mark this commit"
+msgstr "Пометить этот коммит"
+
+msgid "Return to mark"
+msgstr "Вернуться на пометку"
+
+msgid "Find descendant of this and mark"
+msgstr "Найти и пометить потомка этого коммита"
+
+msgid "Compare with marked commit"
+msgstr "Сравнить с помеченным коммитом"
+
+msgid "Diff this -> marked commit"
+msgstr "Сравнить выделенное с помеченным коммитом"
+
+msgid "Diff marked commit -> this"
+msgstr "Сравнить помеченный с этим коммитом"
+
+msgid "Revert this commit"
+msgstr "Обратить изменения этого коммита"
+
+msgid "Check out this branch"
+msgstr "Перейти на эту ветку"
+
+msgid "Rename this branch"
+msgstr "Переименовать эту ветку"
+
+msgid "Remove this branch"
+msgstr "Удалить эту ветку"
+
+msgid "Copy branch name"
+msgstr "Копировать имя ветки"
+
+msgid "Highlight this too"
+msgstr "Подсветить этот тоже"
+
+msgid "Highlight this only"
+msgstr "Подсветить только этот"
+
+msgid "External diff"
+msgstr "Программа сравнения"
+
+msgid "Blame parent commit"
+msgstr "Авторы изменений родительского коммита"
+
+msgid "Copy path"
+msgstr "Копировать путь"
+
+msgid "Show origin of this line"
+msgstr "Показать источник этой строки"
+
+msgid "Run git gui blame on this line"
+msgstr "Запустить git gui blame для этой строки"
+
+msgid "About gitk"
+msgstr "О gitk"
+
+msgid ""
+"\n"
+"Gitk - a commit viewer for git\n"
+"\n"
+"Copyright © 2005-2016 Paul Mackerras\n"
+"\n"
+"Use and redistribute under the terms of the GNU General Public License"
+msgstr ""
+"\n"
+"Gitk — программа просмотра истории репозиториев git\n"
+"\n"
+"© 2005-2016 Paul Mackerras\n"
+"\n"
+"Использование и распространение согласно условиям GNU General Public License"
+
+msgid "Close"
+msgstr "Закрыть"
+
+msgid "Gitk key bindings"
+msgstr "Назначения клавиатуры в Gitk"
+
+msgid "Gitk key bindings:"
+msgstr "Назначения клавиатуры в Gitk:"
+
+#, tcl-format
+msgid "<%s-Q>\t\tQuit"
+msgstr "<%s-Q>\t\tЗавершить"
+
+#, tcl-format
+msgid "<%s-W>\t\tClose window"
+msgstr "<%s-W>\t\tЗакрыть окно"
+
+msgid "<Home>\t\tMove to first commit"
+msgstr "<Home>\t\tПерейти к первому коммиту"
+
+msgid "<End>\t\tMove to last commit"
+msgstr "<End>\t\tПерейти к последнему коммиту"
+
+msgid "<Up>, p, k\tMove up one commit"
+msgstr "<Up>, p, k\tПерейти на один коммит вверх"
+
+msgid "<Down>, n, j\tMove down one commit"
+msgstr "<Down>, n, j\tПерейти на один коммит вниз"
+
+msgid "<Left>, z, h\tGo back in history list"
+msgstr "<Left>, z, h\tПоказать ранее посещённое состояние"
+
+msgid "<Right>, x, l\tGo forward in history list"
+msgstr "<Right>, x, l\tПоказать следующий посещённый коммит"
+
+#, tcl-format
+msgid "<%s-n>\tGo to n-th parent of current commit in history list"
+msgstr "<%s-n>\tПерейти на n родителя от текущего коммита"
+
+msgid "<PageUp>\tMove up one page in commit list"
+msgstr "<PageUp>\tПерейти на страницу выше в списке коммитов"
+
+msgid "<PageDown>\tMove down one page in commit list"
+msgstr "<PageDown>\tПерейти на страницу ниже в списке коммитов"
+
+#, tcl-format
+msgid "<%s-Home>\tScroll to top of commit list"
+msgstr "<%s-Home>\tПерейти на начало списка коммитов"
+
+#, tcl-format
+msgid "<%s-End>\tScroll to bottom of commit list"
+msgstr "<%s-End>\tПерейти на конец списка коммитов"
+
+#, tcl-format
+msgid "<%s-Up>\tScroll commit list up one line"
+msgstr "<%s-Up>\tПровернуть список коммитов вверх"
+
+#, tcl-format
+msgid "<%s-Down>\tScroll commit list down one line"
+msgstr "<%s-Down>\tПровернуть список коммитов вниз"
+
+#, tcl-format
+msgid "<%s-PageUp>\tScroll commit list up one page"
+msgstr "<%s-PageUp>\tПровернуть список коммитов на страницу вверх"
+
+#, tcl-format
+msgid "<%s-PageDown>\tScroll commit list down one page"
+msgstr "<%s-PageDown>\tПровернуть список коммитов на страницу вниз"
+
+msgid "<Shift-Up>\tFind backwards (upwards, later commits)"
+msgstr "<Shift-Up>\tПоиск в обратном порядке (вверх, среди новых коммитов)"
+
+msgid "<Shift-Down>\tFind forwards (downwards, earlier commits)"
+msgstr "<Shift-Down>\tПоиск (вниз, среди старых коммитов)"
+
+msgid "<Delete>, b\tScroll diff view up one page"
+msgstr "<Delete>, b\tПрокрутить список изменений на страницу выше"
+
+msgid "<Backspace>\tScroll diff view up one page"
+msgstr "<Backspace>\tПрокрутить список изменений на страницу выше"
+
+msgid "<Space>\t\tScroll diff view down one page"
+msgstr "<Leertaste>\t\tПрокрутить список изменений на страницу ниже"
+
+msgid "u\t\tScroll diff view up 18 lines"
+msgstr "u\t\tПрокрутить список изменений на 18 строк вверх"
+
+msgid "d\t\tScroll diff view down 18 lines"
+msgstr "d\t\tПрокрутить список изменений на 18 строк вниз"
+
+#, tcl-format
+msgid "<%s-F>\t\tFind"
+msgstr "<%s-F>\t\tПоиск"
+
+#, tcl-format
+msgid "<%s-G>\t\tMove to next find hit"
+msgstr "<%s-G>\t\tПерейти к следующему найденному коммиту"
+
+msgid "<Return>\tMove to next find hit"
+msgstr "<Return>\tПерейти к следующему найденному коммиту"
+
+msgid "g\t\tGo to commit"
+msgstr "g\t\tПерейти на коммит"
+
+msgid "/\t\tFocus the search box"
+msgstr "/\t\tПерейти к полю поиска"
+
+msgid "?\t\tMove to previous find hit"
+msgstr "?\t\tПерейти к предыдущему найденному коммиту"
+
+msgid "f\t\tScroll diff view to next file"
+msgstr "f\t\tПрокрутить список изменений к следующему файлу"
+
+#, tcl-format
+msgid "<%s-S>\t\tSearch for next hit in diff view"
+msgstr "<%s-S>\t\tПродолжить поиск в списке изменений"
+
+#, tcl-format
+msgid "<%s-R>\t\tSearch for previous hit in diff view"
+msgstr "<%s-R>\t\tПерейти к предыдущему найденному тексту в списке изменений"
+
+#, tcl-format
+msgid "<%s-KP+>\tIncrease font size"
+msgstr "<%s-KP+>\tУвеличить размер шрифта"
+
+#, tcl-format
+msgid "<%s-plus>\tIncrease font size"
+msgstr "<%s-plus>\tУвеличить размер шрифта"
+
+#, tcl-format
+msgid "<%s-KP->\tDecrease font size"
+msgstr "<%s-KP->\tУменьшить размер шрифта"
+
+#, tcl-format
+msgid "<%s-minus>\tDecrease font size"
+msgstr "<%s-minus>\tУменьшить размер шрифта"
+
+msgid "<F5>\t\tUpdate"
+msgstr "<F5>\t\tОбновить"
+
+#, tcl-format
+msgid "Error creating temporary directory %s:"
+msgstr "Ошибка создания временного каталога %s:"
+
+#, tcl-format
+msgid "Error getting \"%s\" from %s:"
+msgstr "Ошибка получения «%s» из %s:"
+
+msgid "command failed:"
+msgstr "ошибка выполнения команды:"
+
+msgid "No such commit"
+msgstr "Коммит не найден"
+
+msgid "git gui blame: command failed:"
+msgstr "git gui blame: ошибка выполнения команды:"
+
+#, tcl-format
+msgid "Couldn't read merge head: %s"
+msgstr "Ошибка чтения MERGE_HEAD: %s"
+
+#, tcl-format
+msgid "Error reading index: %s"
+msgstr "Ошибка чтения индекса: %s"
+
+#, tcl-format
+msgid "Couldn't start git blame: %s"
+msgstr "Ошибка запуска git blame: %s"
+
+msgid "Searching"
+msgstr "Поиск"
+
+#, tcl-format
+msgid "Error running git blame: %s"
+msgstr "Ошибка выполнения git blame: %s"
+
+#, tcl-format
+msgid "That line comes from commit %s,  which is not in this view"
+msgstr ""
+"Эта строка принадлежит коммиту %s, который не показан в этом представлении"
+
+msgid "External diff viewer failed:"
+msgstr "Ошибка выполнения программы сравнения:"
+
+msgid "All files"
+msgstr "Все файлы"
+
+msgid "View"
+msgstr "Представление"
+
+msgid "Gitk view definition"
+msgstr "Gitk определение представлений"
+
+msgid "Remember this view"
+msgstr "Запомнить представление"
+
+msgid "References (space separated list):"
+msgstr "Ссылки (разделённые пробелом):"
+
+msgid "Branches & tags:"
+msgstr "Ветки и метки"
+
+msgid "All refs"
+msgstr "Все ссылки"
+
+msgid "All (local) branches"
+msgstr "Все (локальные) ветки"
+
+msgid "All tags"
+msgstr "Все метки"
+
+msgid "All remote-tracking branches"
+msgstr "Все внешние отслеживаемые ветки"
+
+msgid "Commit Info (regular expressions):"
+msgstr "Информация о коммите (регулярные выражения):"
+
+msgid "Author:"
+msgstr "Автор:"
+
+msgid "Committer:"
+msgstr "Коммитер:"
+
+msgid "Commit Message:"
+msgstr "Сообщение коммита:"
+
+msgid "Matches all Commit Info criteria"
+msgstr "Совпадает со всеми условиями информации о коммите"
+
+msgid "Matches no Commit Info criteria"
+msgstr "Не совпадает с условиями информации о коммите"
+
+msgid "Changes to Files:"
+msgstr "Изменения файлов:"
+
+msgid "Fixed String"
+msgstr "Обычная строка"
+
+msgid "Regular Expression"
+msgstr "Регулярное выражение:"
+
+msgid "Search string:"
+msgstr "Строка для поиска:"
+
+msgid ""
+"Commit Dates (\"2 weeks ago\", \"2009-03-17 15:27:38\", \"March 17, 2009 "
+"15:27:38\"):"
+msgstr ""
+"Даты коммита («2 недели назад», «2009-03-17 15:27:38», «17 марта 2009 "
+"15:27:38»):"
+
+msgid "Since:"
+msgstr "С даты:"
+
+msgid "Until:"
+msgstr "По дату:"
+
+msgid "Limit and/or skip a number of revisions (positive integer):"
+msgstr "Ограничить и/или пропустить количество редакций (положительное число):"
+
+msgid "Number to show:"
+msgstr "Показать количество:"
+
+msgid "Number to skip:"
+msgstr "Пропустить количество:"
+
+msgid "Miscellaneous options:"
+msgstr "Различные опции:"
+
+msgid "Strictly sort by date"
+msgstr "Строгая сортировка по дате"
+
+msgid "Mark branch sides"
+msgstr "Отметить стороны веток"
+
+msgid "Limit to first parent"
+msgstr "Ограничить первым предком"
+
+msgid "Simple history"
+msgstr "Упрощенная история"
+
+msgid "Additional arguments to git log:"
+msgstr "Дополнительные аргументы для git log:"
+
+msgid "Enter files and directories to include, one per line:"
+msgstr "Файлы и каталоги для ограничения истории, по одному на строку:"
+
+msgid "Command to generate more commits to include:"
+msgstr "Дополнительная команда для списка коммитов:"
+
+msgid "Gitk: edit view"
+msgstr "Gitk: изменить представление"
+
+msgid "-- criteria for selecting revisions"
+msgstr "— критерий поиска редакций"
+
+msgid "View Name"
+msgstr "Имя представления"
+
+msgid "Apply (F5)"
+msgstr "Применить (F5)"
+
+msgid "Error in commit selection arguments:"
+msgstr "Ошибка в параметрах выбора коммитов:"
+
+msgid "None"
+msgstr "Ни одного"
+
+msgid "Descendant"
+msgstr "Порождённое"
+
+msgid "Not descendant"
+msgstr "Не порождённое"
+
+msgid "Ancestor"
+msgstr "Предок"
+
+msgid "Not ancestor"
+msgstr "Не предок"
+
+msgid "Local changes checked in to index but not committed"
+msgstr "Проиндексированные изменения"
+
+msgid "Local uncommitted changes, not checked in to index"
+msgstr "Непроиндексированные изменения"
+
+msgid "and many more"
+msgstr "и многое другое"
+
+msgid "many"
+msgstr "много"
+
+msgid "Tags:"
+msgstr "Метки:"
+
+msgid "Parent"
+msgstr "Предок"
+
+msgid "Child"
+msgstr "Потомок"
+
+msgid "Branch"
+msgstr "Ветка"
+
+msgid "Follows"
+msgstr "Следует за"
+
+msgid "Precedes"
+msgstr "Предшествует"
+
+#, tcl-format
+msgid "Error getting diffs: %s"
+msgstr "Ошибка получения изменений: %s"
+
+msgid "Goto:"
+msgstr "Перейти к:"
+
+#, tcl-format
+msgid "Short SHA1 id %s is ambiguous"
+msgstr "Сокращённый SHA1 идентификатор %s неоднозначен"
+
+#, tcl-format
+msgid "Revision %s is not known"
+msgstr "Редакция %s не найдена"
+
+#, tcl-format
+msgid "SHA1 id %s is not known"
+msgstr "SHA1 идентификатор %s не найден"
+
+#, tcl-format
+msgid "Revision %s is not in the current view"
+msgstr "Редакция %s не найдена в текущем представлении"
+
+msgid "Date"
+msgstr "Дата"
+
+msgid "Children"
+msgstr "Потомки"
+
+#, tcl-format
+msgid "Reset %s branch to here"
+msgstr "Сбросить ветку %s на этот коммит"
+
+msgid "Detached head: can't reset"
+msgstr "Коммит не принадлежит ни одной ветке, сбросить невозможно"
+
+msgid "Skipping merge commit "
+msgstr "Пропускаю коммит-слияние"
+
+msgid "Error getting patch ID for "
+msgstr "Не удалось получить идентификатор патча для "
+
+msgid " - stopping\n"
+msgstr " — останов\n"
+
+msgid "Commit "
+msgstr "Коммит"
+
+msgid ""
+" is the same patch as\n"
+"       "
+msgstr ""
+" такой же патч, как и\n"
+"       "
+
+msgid ""
+" differs from\n"
+"       "
+msgstr ""
+" отличается от\n"
+"       "
+
+msgid ""
+"Diff of commits:\n"
+"\n"
+msgstr ""
+"Различия коммитов:\n"
+"\n"
+
+#, tcl-format
+msgid " has %s children - stopping\n"
+msgstr " является %s потомком — останов\n"
+
+#, tcl-format
+msgid "Error writing commit to file: %s"
+msgstr "Произошла ошибка при записи коммита в файл: %s"
+
+#, tcl-format
+msgid "Error diffing commits: %s"
+msgstr "Произошла ошибка при выводе различий коммитов: %s"
+
+msgid "Top"
+msgstr "Верх"
+
+msgid "From"
+msgstr "От"
+
+msgid "To"
+msgstr "До"
+
+msgid "Generate patch"
+msgstr "Создать патч"
+
+msgid "From:"
+msgstr "От:"
+
+msgid "To:"
+msgstr "До:"
+
+msgid "Reverse"
+msgstr "В обратном порядке"
+
+msgid "Output file:"
+msgstr "Файл для сохранения:"
+
+msgid "Generate"
+msgstr "Создать"
+
+msgid "Error creating patch:"
+msgstr "Ошибка создания патча:"
+
+msgid "ID:"
+msgstr "ID:"
+
+msgid "Tag name:"
+msgstr "Имя метки:"
+
+msgid "Tag message is optional"
+msgstr "Описание метки указывать не обязательно"
+
+msgid "Tag message:"
+msgstr "Описание метки:"
+
+msgid "Create"
+msgstr "Создать"
+
+msgid "No tag name specified"
+msgstr "Не задано имя метки"
+
+#, tcl-format
+msgid "Tag \"%s\" already exists"
+msgstr "Метка «%s» уже существует"
+
+msgid "Error creating tag:"
+msgstr "Ошибка создания метки:"
+
+msgid "Command:"
+msgstr "Команда:"
+
+msgid "Write"
+msgstr "Запись"
+
+msgid "Error writing commit:"
+msgstr "Произошла ошибка при записи коммита:"
+
+msgid "Create branch"
+msgstr "Создать ветку"
+
+#, tcl-format
+msgid "Rename branch %s"
+msgstr "Переименовать ветку %s"
+
+msgid "Rename"
+msgstr "Переименовать"
+
+msgid "Name:"
+msgstr "Имя:"
+
+msgid "Please specify a name for the new branch"
+msgstr "Укажите имя для новой ветки"
+
+#, tcl-format
+msgid "Branch '%s' already exists. Overwrite?"
+msgstr "Ветка «%s» уже существует. Переписать?"
+
+msgid "Please specify a new name for the branch"
+msgstr "Укажите имя для новой ветки"
+
+#, tcl-format
+msgid "Commit %s is already included in branch %s -- really re-apply it?"
+msgstr "Коммит %s уже включён в ветку %s. Продолжить операцию?"
+
+msgid "Cherry-picking"
+msgstr "Копирование коммита"
+
+#, tcl-format
+msgid ""
+"Cherry-pick failed because of local changes to file '%s'.\n"
+"Please commit, reset or stash your changes and try again."
+msgstr ""
+"Копирование коммита невозможно из-за изменений в файле «%s».\n"
+"Закоммитьте, сбросьте или спрячьте изменения и повторите операцию."
+
+msgid ""
+"Cherry-pick failed because of merge conflict.\n"
+"Do you wish to run git citool to resolve it?"
+msgstr ""
+"Копирование изменений невозможно из-за незавершённой операции слияния.\n"
+"Запустить git citool для завершения этой операции?"
+
+msgid "No changes committed"
+msgstr "Изменения не закоммичены"
+
+#, tcl-format
+msgid "Commit %s is not included in branch %s -- really revert it?"
+msgstr "Коммит %s не включён в ветку %s. Продолжить операцию?"
+
+msgid "Reverting"
+msgstr "Обращение изменений"
+
+#, tcl-format
+msgid ""
+"Revert failed because of local changes to the following files:%s Please "
+"commit, reset or stash  your changes and try again."
+msgstr ""
+"Возврат изменений коммита не удался из-за локальных изменений в указанных "
+"файлах: %s\n"
+"Закоммитьте, сбросьте или спрячьте изменения и повторите операцию."
+
+msgid ""
+"Revert failed because of merge conflict.\n"
+" Do you wish to run git citool to resolve it?"
+msgstr ""
+"Возврат изменений невозможен из-за незавершённой операции слияния.\n"
+"Запустить git citool для завершения этой операции?"
+
+msgid "Confirm reset"
+msgstr "Подтвердите операцию перехода"
+
+#, tcl-format
+msgid "Reset branch %s to %s?"
+msgstr "Сбросить ветку %s на коммит %s?"
+
+msgid "Reset type:"
+msgstr "Тип операции перехода:"
+
+msgid "Soft: Leave working tree and index untouched"
+msgstr "Лёгкий: оставить рабочий каталог и индекс неизменными"
+
+msgid "Mixed: Leave working tree untouched, reset index"
+msgstr "Смешанный: оставить рабочий каталог неизменным, установить индекс"
+
+msgid ""
+"Hard: Reset working tree and index\n"
+"(discard ALL local changes)"
+msgstr ""
+"Жесткий: переписать индекс и рабочий каталог\n"
+"(все изменения в рабочем каталоге будут потеряны)"
+
+msgid "Resetting"
+msgstr "Сброс"
+
+#, tcl-format
+msgid "A local branch named %s exists already"
+msgstr "Локальная ветка с именем %s уже существует"
+
+msgid "Checking out"
+msgstr "Переход"
+
+msgid "Cannot delete the currently checked-out branch"
+msgstr "Активная ветка не может быть удалена"
+
+#, tcl-format
+msgid ""
+"The commits on branch %s aren't on any other branch.\n"
+"Really delete branch %s?"
+msgstr ""
+"Коммиты из ветки %s не принадлежат больше никакой другой ветке.\n"
+"Действительно удалить ветку %s?"
+
+#, tcl-format
+msgid "Tags and heads: %s"
+msgstr "Метки и ветки: %s"
+
+msgid "Filter"
+msgstr "Фильтровать"
+
+msgid ""
+"Error reading commit topology information; branch and preceding/following "
+"tag information will be incomplete."
+msgstr ""
+"Ошибка чтения истории проекта; информация о ветках и коммитах вокруг меток "
+"(до/после) может быть неполной."
+
+msgid "Tag"
+msgstr "Метка"
+
+msgid "Id"
+msgstr "Id"
+
+msgid "Gitk font chooser"
+msgstr "Шрифт Gitk"
+
+msgid "B"
+msgstr "Ж"
+
+msgid "I"
+msgstr "К"
+
+msgid "Commit list display options"
+msgstr "Параметры показа списка коммитов"
+
+msgid "Maximum graph width (lines)"
+msgstr "Макс. ширина графа (строк)"
+
+#, no-tcl-format
+msgid "Maximum graph width (% of pane)"
+msgstr "Макс. ширина графа (% ширины панели)"
+
+msgid "Show local changes"
+msgstr "Показывать изменения в рабочем каталоге"
+
+msgid "Auto-select SHA1 (length)"
+msgstr "Автоматически выделить SHA1 (длинна)"
+
+msgid "Hide remote refs"
+msgstr "Скрыть внешние ссылки"
+
+msgid "Diff display options"
+msgstr "Параметры показа изменений"
+
+msgid "Tab spacing"
+msgstr "Ширина табуляции"
+
+msgid "Display nearby tags/heads"
+msgstr "Показывать близкие метки/ветки"
+
+msgid "Maximum # tags/heads to show"
+msgstr "Показывать максимальное количество меток/веток"
+
+msgid "Limit diffs to listed paths"
+msgstr "Ограничить показ изменений выбранными файлами"
+
+msgid "Support per-file encodings"
+msgstr "Поддержка кодировок в отдельных файлах"
+
+msgid "External diff tool"
+msgstr "Программа для показа изменений"
+
+msgid "Choose..."
+msgstr "Выберите..."
+
+msgid "General options"
+msgstr "Общие опции"
+
+msgid "Use themed widgets"
+msgstr "Использовать стили виджетов"
+
+msgid "(change requires restart)"
+msgstr "(изменение потребует перезапуск)"
+
+msgid "(currently unavailable)"
+msgstr "(недоступно в данный момент)"
+
+msgid "Colors: press to choose"
+msgstr "Цвета: нажмите для выбора"
+
+msgid "Interface"
+msgstr "Интерфейс"
+
+msgid "interface"
+msgstr "интерфейс"
+
+msgid "Background"
+msgstr "Фон"
+
+msgid "background"
+msgstr "фон"
+
+msgid "Foreground"
+msgstr "Передний план"
+
+msgid "foreground"
+msgstr "передний план"
+
+msgid "Diff: old lines"
+msgstr "Изменения: старый текст"
+
+msgid "diff old lines"
+msgstr "старый текст изменения"
+
+msgid "Diff: new lines"
+msgstr "Изменения: новый текст"
+
+msgid "diff new lines"
+msgstr "новый текст изменения"
+
+msgid "Diff: hunk header"
+msgstr "Изменения: заголовок блока"
+
+msgid "diff hunk header"
+msgstr "заголовок блока изменений"
+
+msgid "Marked line bg"
+msgstr "Фон выбранной строки"
+
+msgid "marked line background"
+msgstr "фон выбранной строки"
+
+msgid "Select bg"
+msgstr "Выберите фон"
+
+msgid "Fonts: press to choose"
+msgstr "Шрифт: нажмите для выбора"
+
+msgid "Main font"
+msgstr "Основной шрифт"
+
+msgid "Diff display font"
+msgstr "Шрифт показа изменений"
+
+msgid "User interface font"
+msgstr "Шрифт интерфейса"
+
+msgid "Gitk preferences"
+msgstr "Настройки Gitk"
+
+msgid "General"
+msgstr "Общие"
+
+msgid "Colors"
+msgstr "Цвета"
+
+msgid "Fonts"
+msgstr "Шрифты"
+
+#, tcl-format
+msgid "Gitk: choose color for %s"
+msgstr "Gitk: выберите цвет для %s"
+
+msgid ""
+"Sorry, gitk cannot run with this version of Tcl/Tk.\n"
+" Gitk requires at least Tcl/Tk 8.4."
+msgstr ""
+"К сожалению gitk не может работать с этой версий Tcl/Tk.\n"
+"Требуется как минимум Tcl/Tk 8.4."
+
+msgid "Cannot find a git repository here."
+msgstr "Git-репозитарий не найден в текущем каталоге."
+
+#, tcl-format
+msgid "Ambiguous argument '%s': both revision and filename"
+msgstr "Неоднозначный аргумент «%s»: существует как редакция и как имя файла"
+
+msgid "Bad arguments to gitk:"
+msgstr "Неправильные аргументы для gitk:"

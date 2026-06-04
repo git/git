@@ -1,0 +1,8 @@
+Git v2.47.3 Release Notes
+=========================
+
+This release merges up the fixes that appears in v2.43.7, v2.44.4,
+v2.45.4, and v2.46.4 to address the following CVEs: CVE-2025-27613,
+CVE-2025-27614, CVE-2025-46334, CVE-2025-46835, CVE-2025-48384,
+CVE-2025-48385, and CVE-2025-48386. See the release notes for v2.43.7
+for details.

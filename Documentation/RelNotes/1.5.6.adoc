@@ -1,0 +1,115 @@
+GIT v1.5.6 Release Notes
+========================
+
+Updates since v1.5.5
+--------------------
+
+(subsystems)
+
+* Comes with updated gitk and git-gui.
+
+(portability)
+
+* git will build on AIX better than before now.
+
+* core.ignorecase configuration variable can be used to work better on
+  filesystems that are not case sensitive.
+
+* "git init" now autodetects the case sensitivity of the filesystem and
+  sets core.ignorecase accordingly.
+
+* cpio is no longer used; neither "curl" binary (libcurl is still used).
+
+(documentation)
+
+* Many freestanding documentation pages have been converted and made
+  available to "git help" (aka "man git<something>") as section 7 of
+  the manual pages. This means bookmarks to some HTML documentation
+  files may need to be updated (eg "tutorial.html" became
+  "gittutorial.html").
+
+(performance)
+
+* "git clone" was rewritten in C.  This will hopefully help cloning a
+  repository with insane number of refs.
+
+* "git rebase --onto $there $from $branch" used to switch to the tip of
+  $branch only to immediately reset back to $from, smudging work tree
+  files unnecessarily.  This has been optimized.
+
+* Object creation codepath in "git-svn" has been optimized by enhancing
+  plumbing commands git-cat-file and git-hash-object.
+
+(usability, bells and whistles)
+
+* "git add -p" (and the "patch" subcommand of "git add -i") can choose to
+  apply (or not apply) mode changes independently from contents changes.
+
+* "git bisect help" gives longer and more helpful usage information.
+
+* "git bisect" does not use a special branch "bisect" anymore; instead, it
+  does its work on a detached HEAD.
+
+* "git branch" (and "git checkout -b") can be told to set up
+  branch.<name>.rebase automatically, so that later you can say "git pull"
+  and magically cause "git pull --rebase" to happen.
+
+* "git branch --merged" and "git branch --no-merged" can be used to list
+  branches that have already been merged (or not yet merged) to the
+  current branch.
+
+* "git cherry-pick" and "git revert" can add a sign-off.
+
+* "git commit" mentions the author identity when you are committing
+  somebody else's changes.
+
+* "git diff/log --dirstat" output is consistent between binary and textual
+  changes.
+
+* "git filter-branch" rewrites signed tags by demoting them to annotated.
+
+* "git format-patch --no-binary" can produce a patch that lack binary
+  changes (i.e. cannot be used to propagate the whole changes) meant only
+  for reviewing.
+
+* "git init --bare" is a synonym for "git --bare init" now.
+
+* "git gc --auto" honors a new pre-auto-gc hook to temporarily disable it.
+
+* "git log --pretty=tformat:<custom format>" gives a LF after each entry,
+  instead of giving a LF between each pair of entries which is how
+  "git log --pretty=format:<custom format>" works.
+
+* "git log" and friends learned the "--graph" option to show the ancestry
+  graph at the left margin of the output.
+
+* "git log" and friends can be told to use date format that is different
+  from the default via 'log.date' configuration variable.
+
+* "git send-email" now can send out messages outside a git repository.
+
+* "git send-email --compose" was made aware of rfc2047 quoting.
+
+* "git status" can optionally include output from "git submodule
+  summary".
+
+* "git svn" learned --add-author-from option to propagate the authorship
+  by munging the commit log message.
+
+* new object creation and looking up in "git svn" has been optimized.
+
+* "gitweb" can read from a system-wide configuration file.
+
+(internal)
+
+* "git unpack-objects" and "git receive-pack" is now more strict about
+  detecting breakage in the objects they receive over the wire.
+
+
+Fixes since v1.5.5
+------------------
+
+All of the fixes in v1.5.5 maintenance series are included in
+this release, unless otherwise noted.
+
+And there are too numerous small fixes to otherwise note here ;-)

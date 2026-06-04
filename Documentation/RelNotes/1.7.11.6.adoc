@@ -1,0 +1,84 @@
+Git v1.7.11.6 Release Notes
+===========================
+
+Fixes since v1.7.11.5
+---------------------
+
+ * "ciabot" script (in contrib/) has been updated with extensive
+   documentation.
+
+ * "git foo" errored out with "Not a directory" when the user had a
+   non-directory on $PATH, and worse yet it masked an alias "foo" from
+   running.
+
+ * When the user exports a non-default IFS without HT, scripts that
+   rely on being able to parse "ls-files -s | while read a b c..."
+   started to fail.  Protect them from such a misconfiguration.
+
+ * When the user gives an argument that can be taken as both a
+   revision name and a pathname without disambiguating with "--", we
+   used to give a help message "Use '--' to separate".  The message
+   has been clarified to show where that '--' goes on the command
+   line.
+
+ * Documentation for the configuration file format had a confusing
+   example.
+
+ * Older parts of the documentation described as if having a regular
+   file in .git/refs/ hierarchy were the only way to have branches and
+   tags, which is not true for quite some time.
+
+ * It was generally understood that "--long-option"s to many of our
+   subcommands can be abbreviated to the unique prefix, but it was not
+   easy to find it described for new readers of the documentation set.
+
+ * The "--topo-order", "--date-order" (and the lack of either means
+   the default order) options to "rev-list" and "log" family of
+   commands were poorly described in the documentation.
+
+ * "git commit --amend" let the user edit the log message and then
+   died when the human-readable committer name was given
+   insufficiently by getpwent(3).
+
+ * The exit status code from "git config" was way overspecified while
+   being incorrect.  The implementation has been updated to give the
+   documented status for a case that was documented, and introduce a
+   new code for "all other errors".
+
+ * The output from "git diff -B" for a file that ends with an
+   incomplete line did not put "\ No newline..." on a line of its own.
+
+ * "git diff" had a confusion between taking data from a path in the
+   working tree and taking data from an object that happens to have
+   name 0{40} recorded in a tree.
+
+ * The "--rebase" option to "git pull" can be abbreviated to "-r",
+   but we didn't document it.
+
+ * When "git push" triggered the automatic gc on the receiving end, a
+   message from "git prune" that said it was removing cruft leaked to
+   the standard output, breaking the communication protocol.
+
+ * The reflog entries left by "git rebase" and "git rebase -i" were
+   inconsistent (the interactive one gave an abbreviated object name).
+
+ * "git send-email" did not unquote encoded words that appear on the
+   header correctly, and lost "_" from strings.
+
+ * "git stash apply/pop" did not trigger "rerere" upon conflicts
+   unlike other mergy operations.
+
+ * "git submodule <cmd> path" did not error out when the path to the
+   submodule was misspelt.
+
+ * "git submodule update -f" did not update paths in the working tree
+   that has local changes.
+   (merge 01d4721 sz/submodule-force-update later to maint).
+
+ * "gitweb" when used with PATH_INFO failed to notice directories with
+   SP (and other characters that need URL-style quoting) in them.
+
+ * Fallback 'getpass' implementation made unportable use of stdio API.
+
+ * A utility shell function test_seq has been added as a replacement
+   for the 'seq' utility found on some platforms.

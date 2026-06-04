@@ -1,0 +1,284 @@
+default:
+  timeout: 2h
+
+stages:
+  - build
+  - test
+  - analyze
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_REF_PROTECTED == "true"
+
+test:linux:
+  image: $image
+  stage: test
+  needs: [ ]
+  tags:
+    - saas-linux-medium-amd64
+  variables:
+    CUSTOM_PATH: "/custom"
+    TEST_OUTPUT_DIRECTORY: "/tmp/test-output"
+  before_script:
+    - ./ci/install-dependencies.sh
+  script:
+    - useradd builder --create-home
+    - chown -R builder "${CI_PROJECT_DIR}"
+    - sudo --preserve-env --set-home --user=builder ./ci/run-build-and-tests.sh
+  after_script:
+    - |
+      if test "$CI_JOB_STATUS" != 'success'
+      then
+        sudo --preserve-env --set-home --user=builder ./ci/print-test-failures.sh
+        mv "$TEST_OUTPUT_DIRECTORY"/failed-test-artifacts t/
+      fi
+  parallel:
+    matrix:
+      - jobname: linux-sha256
+        image: ubuntu:rolling
+        CC: clang
+      - jobname: linux-reftable
+        image: ubuntu:rolling
+        CC: clang
+      - jobname: linux-breaking-changes
+        image: ubuntu:20.04
+        CC: gcc
+      - jobname: fedora-breaking-changes-meson
+        image: fedora:latest
+      - jobname: linux-TEST-vars
+        image: ubuntu:20.04
+        CC: gcc
+        CC_PACKAGE: gcc-8
+      - jobname: linux-leaks
+        image: ubuntu:rolling
+        CC: gcc
+      - jobname: linux-reftable-leaks
+        image: ubuntu:rolling
+        CC: gcc
+      - jobname: linux-asan-ubsan
+        image: ubuntu:rolling
+        CC: clang
+      - jobname: linux-musl-meson
+        image: alpine:latest
+      - jobname: linux32
+        image: i386/ubuntu:20.04
+      - jobname: linux-meson
+        image: ubuntu:rolling
+        CC: gcc
+  artifacts:
+    paths:
+      - t/failed-test-artifacts
+    reports:
+      junit: build/meson-logs/testlog.junit.xml
+    when: on_failure
+
+test:osx:
+  image: $image
+  stage: test
+  needs: [ ]
+  tags:
+    - saas-macos-large-m2pro
+  variables:
+    TEST_OUTPUT_DIRECTORY: "/Volumes/RAMDisk"
+  before_script:
+    # Create a 4GB RAM disk that we use to store test output on. This small hack
+    # significantly speeds up tests by more than a factor of 2 because the
+    # macOS runners use network-attached storage as disks, which is _really_
+    # slow with the many small writes that our tests do.
+    - sudo diskutil apfs create $(hdiutil attach -nomount ram://8192000) RAMDisk
+    - ./ci/install-dependencies.sh
+  script:
+    - ./ci/run-build-and-tests.sh
+  after_script:
+    - |
+      if test "$CI_JOB_STATUS" != 'success'
+      then
+        ./ci/print-test-failures.sh
+        mv "$TEST_OUTPUT_DIRECTORY"/failed-test-artifacts t/
+      fi
+  parallel:
+    matrix:
+      - jobname: osx-clang
+        image: macos-15-xcode-16
+        CC: clang
+      - jobname: osx-reftable
+        image: macos-26-xcode-26
+        CC: clang
+      - jobname: osx-meson
+        image: macos-26-xcode-26
+        CC: clang
+  artifacts:
+    paths:
+      - t/failed-test-artifacts
+    reports:
+      junit: build/meson-logs/testlog.junit.xml
+    when: on_failure
+
+.windows_before_script: &windows_before_script
+  # Disabling realtime monitoring fails on some of the runners, but it
+  # significantly speeds up test execution in the case where it works. We thus
+  # try our luck, but ignore any failures.
+  - Set-MpPreference -DisableRealtimeMonitoring $true; $true
+
+build:mingw64:
+  stage: build
+  tags:
+    - saas-windows-medium-amd64
+  variables:
+    NO_PERL: 1
+  before_script:
+    - *windows_before_script
+    - ./ci/install-sdk.ps1 -directory "git-sdk"
+  script:
+    - git-sdk/usr/bin/bash.exe -l -c 'ci/make-test-artifacts.sh artifacts'
+  artifacts:
+    paths:
+      - artifacts
+      - git-sdk
+
+test:mingw64:
+  stage: test
+  tags:
+    - saas-windows-medium-amd64
+  needs:
+    - job: "build:mingw64"
+      artifacts: true
+  before_script:
+    - *windows_before_script
+    - git-sdk/usr/bin/bash.exe -l -c 'tar xf artifacts/artifacts.tar.gz'
+    - New-Item -Path .git/info -ItemType Directory
+    - New-Item .git/info/exclude -ItemType File -Value "/git-sdk"
+  script:
+    - git-sdk/usr/bin/bash.exe -l -c "ci/run-test-slice.sh $CI_NODE_INDEX $CI_NODE_TOTAL"
+  after_script:
+    - git-sdk/usr/bin/bash.exe -l -c 'ci/print-test-failures.sh'
+  parallel: 10
+
+.msvc-meson:
+  variables:
+    TEST_OUTPUT_DIRECTORY: "C:/Git-Test"
+  tags:
+    - saas-windows-medium-amd64
+  before_script:
+    - *windows_before_script
+    - choco install -y git meson ninja rust-ms
+    - Import-Module $env:ChocolateyInstall\helpers\chocolateyProfile.psm1
+    - refreshenv
+    - New-Item -Path $env:TEST_OUTPUT_DIRECTORY -ItemType Directory
+
+build:msvc-meson:
+  extends: .msvc-meson
+  stage: build
+  script:
+    - meson setup build --vsenv -Dperl=disabled -Dbackend_max_links=1 -Dcredential_helpers=wincred -Dtest_output_directory="$TEST_OUTPUT_DIRECTORY"
+    - meson compile -C build
+  artifacts:
+    paths:
+      - build
+
+test:msvc-meson:
+  extends: .msvc-meson
+  stage: test
+  timeout: 6h
+  needs:
+    - job: "build:msvc-meson"
+      artifacts: true
+  script:
+    - |
+      & "C:/Program Files/Git/usr/bin/bash.exe" -l -c 'ci/run-test-slice-meson.sh build $CI_NODE_INDEX $CI_NODE_TOTAL'
+  after_script:
+    - |
+      if ($env:CI_JOB_STATUS -ne "success") {
+        & "C:/Program Files/Git/usr/bin/bash.exe" -l -c 'ci/print-test-failures.sh'
+        Move-Item -Path "$env:TEST_OUTPUT_DIRECTORY/failed-test-artifacts" -Destination t/
+      }
+  parallel: 10
+  artifacts:
+    paths:
+      - t/failed-test-artifacts
+    reports:
+      junit: build/meson-logs/testlog.junit.xml
+    when: on_failure
+
+test:fuzz-smoke-tests:
+  image: ubuntu:latest
+  stage: test
+  needs: [ ]
+  variables:
+    CC: clang
+  before_script:
+    - ./ci/install-dependencies.sh
+  script:
+    - ./ci/run-build-and-minimal-fuzzers.sh
+
+static-analysis:
+  image: ubuntu:22.04
+  stage: analyze
+  needs: [ ]
+  variables:
+    jobname: StaticAnalysis
+  before_script:
+    - ./ci/install-dependencies.sh
+  script:
+    - ./ci/run-static-analysis.sh
+    - ./ci/check-directional-formatting.bash
+
+rust-analysis:
+  image: ubuntu:rolling
+  stage: analyze
+  needs: [ ]
+  variables:
+    jobname: RustAnalysis
+  before_script:
+    - ./ci/install-dependencies.sh
+  script:
+    - ./ci/run-rust-checks.sh
+
+check-whitespace:
+  image: ubuntu:latest
+  stage: analyze
+  needs: [ ]
+  before_script:
+    - ./ci/install-dependencies.sh
+  # Since $CI_MERGE_REQUEST_TARGET_BRANCH_SHA is only defined for merged
+  # pipelines, we fallback to $CI_MERGE_REQUEST_DIFF_BASE_SHA, which should
+  # be defined in all pipelines.
+  script:
+    - |
+      R=${CI_MERGE_REQUEST_TARGET_BRANCH_SHA:-${CI_MERGE_REQUEST_DIFF_BASE_SHA:?}} || exit
+      ./ci/check-whitespace.sh "$R"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+
+check-style:
+  image: ubuntu:latest
+  stage: analyze
+  needs: [ ]
+  allow_failure: true
+  variables:
+    CC: clang
+    jobname: ClangFormat
+  before_script:
+    - ./ci/install-dependencies.sh
+  # Since $CI_MERGE_REQUEST_TARGET_BRANCH_SHA is only defined for merged
+  # pipelines, we fallback to $CI_MERGE_REQUEST_DIFF_BASE_SHA, which should
+  # be defined in all pipelines.
+  script:
+    - |
+      R=${CI_MERGE_REQUEST_TARGET_BRANCH_SHA:-${CI_MERGE_REQUEST_DIFF_BASE_SHA:?}} || exit
+      ./ci/run-style-check.sh "$R"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+
+documentation:
+  image: ubuntu:latest
+  stage: analyze
+  needs: [ ]
+  variables:
+    jobname: Documentation
+  before_script:
+    - ./ci/install-dependencies.sh
+  script:
+    - ./ci/test-documentation.sh

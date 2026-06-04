@@ -1,0 +1,54 @@
+#!/bin/sh
+
+test_description='Test git update-server-info'
+
+. ./test-lib.sh
+
+test_expect_success 'setup' 'test_commit file'
+
+test_expect_success 'create info/refs' '
+	git update-server-info &&
+	test_path_is_file .git/info/refs
+'
+
+test_expect_success 'modify and store mtime' '
+	test-tool chmtime =0 .git/info/refs &&
+	test-tool chmtime --get .git/info/refs >a
+'
+
+test_expect_success 'info/refs is not needlessly overwritten' '
+	git update-server-info &&
+	test-tool chmtime --get .git/info/refs >b &&
+	test_cmp a b
+'
+
+test_expect_success 'info/refs can be forced to update' '
+	git update-server-info -f &&
+	test-tool chmtime --get .git/info/refs >b &&
+	! test_cmp a b
+'
+
+test_expect_success 'info/refs updates when changes are made' '
+	test-tool chmtime =0 .git/info/refs &&
+	test-tool chmtime --get .git/info/refs >b &&
+	test_cmp a b &&
+	git update-ref refs/heads/foo HEAD &&
+	git update-server-info &&
+	test-tool chmtime --get .git/info/refs >b &&
+	! test_cmp a b
+'
+
+test_expect_success 'midx does not create duplicate pack entries' '
+	git repack -d --write-midx &&
+	git repack -d &&
+	grep ^P .git/objects/info/packs >packs &&
+	uniq -d <packs >dups &&
+	test_must_be_empty dups
+'
+
+test_expect_success 'update-server-info does not crash with -h' '
+	test_expect_code 129 git update-server-info -h >usage &&
+	test_grep "[Uu]sage: git update-server-info " usage
+'
+
+test_done

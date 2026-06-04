@@ -1,0 +1,41 @@
+<testsuites>
+	<testsuite id="0" name="selftest" hostname="localhost" timestamp="2024-09-06T10:04:08" tests="8" failures="8" errors="0">
+		<testcase name="1" classname="selftest" time="0.00">
+			<failure type="assert"><![CDATA[Function call failed: -1
+(null)]]></failure>
+		</testcase>
+		<testcase name="2" classname="selftest" time="0.00">
+			<failure type="assert"><![CDATA[Expression is not true: 100 == 101
+(null)]]></failure>
+		</testcase>
+		<testcase name="strings" classname="selftest" time="0.00">
+			<failure type="assert"><![CDATA[String mismatch: "mismatched" != actual ("this one fails")
+'mismatched' != 'expected' (at byte 0)]]></failure>
+		</testcase>
+		<testcase name="strings_with_length" classname="selftest" time="0.00">
+			<failure type="assert"><![CDATA[String mismatch: "exactly" != actual ("this one fails")
+'exa' != 'exp' (at byte 2)]]></failure>
+		</testcase>
+		<testcase name="int" classname="selftest" time="0.00">
+			<failure type="assert"><![CDATA[101 != value ("extra note on failing test")
+101 != 100]]></failure>
+		</testcase>
+		<testcase name="int_fmt" classname="selftest" time="0.00">
+			<failure type="assert"><![CDATA[022 != value
+0022 != 0144]]></failure>
+		</testcase>
+		<testcase name="bool" classname="selftest" time="0.00">
+			<failure type="assert"><![CDATA[0 != value
+0 != 1]]></failure>
+		</testcase>
+		<testcase name="multiline_description" classname="selftest" time="0.00">
+			<failure type="assert"><![CDATA[Function call failed: −1
+description line 1
+description line 2]]></failure>
+		</testcase>
+		<testcase name="null_string" classname="selftest" time="0.00">
+			<failure type="assert"><![CDATA[String mismatch: "expected" != actual ("this one fails")
+'expected' != NULL]]></failure>
+		</testcase>
+	</testsuite>
+</testsuites>

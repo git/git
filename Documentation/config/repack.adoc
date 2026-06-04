@@ -1,0 +1,66 @@
+repack.useDeltaBaseOffset::
+	By default, linkgit:git-repack[1] creates packs that use
+	delta-base offset. If you need to share your repository with
+	Git older than version 1.4.4, either directly or via a dumb
+	protocol such as http, then you need to set this option to
+	"false" and repack. Access from old Git versions over the
+	native protocol are unaffected by this option.
+
+repack.packKeptObjects::
+	If set to true, makes `git repack` act as if
+	`--pack-kept-objects` was passed. See linkgit:git-repack[1] for
+	details. Defaults to `false` normally, but `true` if a bitmap
+	index is being written (either via `--write-bitmap-index` or
+	`repack.writeBitmaps`).
+
+repack.useDeltaIslands::
+	If set to true, makes `git repack` act as if `--delta-islands`
+	was passed. Defaults to `false`.
+
+repack.writeBitmaps::
+	When true, git will write a bitmap index when packing all
+	objects to disk (e.g., when `git repack -a` is run).  This
+	index can speed up the "counting objects" phase of subsequent
+	packs created for clones and fetches, at the cost of some disk
+	space and extra time spent on the initial repack.  This has
+	no effect if multiple packfiles are created.
+	Defaults to true on bare repos, false otherwise.
+
+repack.updateServerInfo::
+	If set to false, linkgit:git-repack[1] will not run
+	linkgit:git-update-server-info[1]. Defaults to true. Can be overridden
+	when true by the `-n` option of linkgit:git-repack[1].
+
+repack.cruftWindow::
+repack.cruftWindowMemory::
+repack.cruftDepth::
+repack.cruftThreads::
+	Parameters used by linkgit:git-pack-objects[1] when generating
+	a cruft pack and the respective parameters are not given over
+	the command line. See similarly named `pack.*` configuration
+	variables for defaults and meaning.
+
+repack.midxMustContainCruft::
+	When set to true, linkgit:git-repack[1] will unconditionally include
+	cruft pack(s), if any, in the multi-pack index when invoked with
+	`--write-midx`. When false, cruft packs are only included in the MIDX
+	when necessary (e.g., because they might be required to form a
+	reachability closure with MIDX bitmaps). Defaults to true.
+
+repack.midxSplitFactor::
+	The factor used in the geometric merging condition when
+	compacting incremental MIDX layers during `git repack` when
+	invoked with the `--write-midx=incremental` option.
++
+Adjacent layers are merged when the accumulated object count of the
+newer layer exceeds `1/<N>` of the object count of the next deeper
+layer. Must be at least 2. Defaults to 2.
+
+repack.midxNewLayerThreshold::
+	The minimum number of packs in the tip MIDX layer before those
+	packs are considered as candidates for geometric repacking
+	during `git repack --write-midx=incremental`.
++
+When the tip layer has fewer packs than this threshold, those packs are
+excluded from the geometric repack entirely, and are thus left
+unmodified. Must be at least 1. Defaults to 8.

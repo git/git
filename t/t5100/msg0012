@@ -1,0 +1,7 @@
+textlive-* исправлены на texlive-*
+docutils заменён на python-docutils
+
+Действительно, оказалось, что rest2web вытягивает за собой
+python-docutils. В то время как сам rest2web не нужен.
+
+Signed-off-by: Dmitriy Blinov <bda@mnsspb.ru>

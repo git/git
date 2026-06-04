@@ -1,0 +1,82 @@
+Git 2.43.1 Release Notes
+========================
+
+There is nothing exciting to see here.  Relative to Git 2.43, this
+release contains the fixes that have already been merged to the
+'master' branch of the development towards the next major release.
+
+Fixes since Git 2.43.0
+----------------------
+
+ * The way CI testing used "prove" could lead to running the test
+   suite twice needlessly, which has been corrected.
+
+ * Newer versions of Getopt::Long started giving warnings against our
+   (ab)use of it in "git send-email".  Bump the minimum version
+   requirement for Perl to 5.8.1 (from September 2002) to allow
+   simplifying our implementation.
+
+ * Earlier we stopped relying on commit-graph that (still) records
+   information about commits that are lost from the object store,
+   which has negative performance implications.  The default has been
+   flipped to disable this pessimization.
+
+ * Stale URLs have been updated to their current counterparts (or
+   archive.org) and HTTP links are replaced with working HTTPS links.
+
+ * trace2 streams used to record the URLs that potentially embed
+   authentication material, which has been corrected.
+
+ * The sample pre-commit hook that tries to catch introduction of new
+   paths that use potentially non-portable characters did not notice
+   an existing path getting renamed to such a problematic path, when
+   rename detection was enabled.
+
+ * The command line parser for the "log" family of commands was too
+   loose when parsing certain numbers, e.g., silently ignoring the
+   extra 'q' in "git log -n 1q" without complaining, which has been
+   tightened up.
+
+ * "git $cmd --end-of-options --rev -- --path" for some $cmd failed
+   to interpret "--rev" as a rev, and "--path" as a path.  This was
+   fixed for many programs like "reset" and "checkout".
+
+ * "git bisect reset" has been taught to clean up state files and refs
+   even when BISECT_START file is gone.
+
+ * Some codepaths did not correctly parse configuration variables
+   specified with valueless "true", which has been corrected.
+
+ * Code clean-up for sanity checking of command line options for "git
+   show-ref".
+
+ * The code to parse the From e-mail header has been updated to avoid
+   recursion.
+
+ * "git fetch --atomic" issued an unnecessary empty error message,
+   which has been corrected.
+
+ * Command line completion script (in contrib/) learned to work better
+   with the reftable backend.
+
+ * "git status" is taught to show both the branch being bisected and
+   being rebased when both are in effect at the same time.
+   cf. <xmqqil76kyov.fsf@gitster.g>
+
+ * "git archive --list extra garbage" silently ignored excess command
+   line parameters, which has been corrected.
+
+ * "git sparse-checkout set" added default patterns even when the
+   patterns are being fed from the standard input, which has been
+   corrected.
+
+ * Unlike other environment variables that took the usual
+   true/false/yes/no as well as 0/1, GIT_FLUSH only understood 0/1,
+   which has been corrected.
+
+ * Clearing in-core repository (happens during e.g., "git fetch
+   --recurse-submodules" with commit graph enabled) made in-core
+   commit object in an inconsistent state by discarding the necessary
+   data from commit-graph too early, which has been corrected.
+
+Also contains various documentation updates, code clean-ups and minor fixups.

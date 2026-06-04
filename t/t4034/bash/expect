@@ -1,0 +1,36 @@
+<BOLD>diff --git a/pre b/post<RESET>
+<BOLD>index 09ac008..60ba6a2 100644<RESET>
+<BOLD>--- a/pre<RESET>
+<BOLD>+++ b/post<RESET>
+<CYAN>@@ -1,31 +1,31 @@<RESET>
+<RED>my_var<RESET><GREEN>new_var<RESET>=10
+x=<RED>123<RESET><GREEN>456<RESET>
+echo <RED>$1<RESET><GREEN>$2<RESET>
+echo <RED>$USER<RESET><GREEN>$USERNAME<RESET>
+${<RED>HOME<RESET><GREEN>HOMEDIR<RESET>}
+((a<RED>+<RESET><GREEN>+=<RESET>b))
+((a<RED>*<RESET><GREEN>*=<RESET>b))
+((a<RED>/<RESET><GREEN>/=<RESET>b))
+((a<RED>%<RESET><GREEN>%=<RESET>b))
+((a<RED>|<RESET><GREEN>|=<RESET>b))
+((a<RED>^<RESET><GREEN>^=<RESET>b))
+((a<RED>=<RESET><GREEN>==<RESET>b))
+((a<RED>!<RESET><GREEN>!=<RESET>b))
+((a<RED><<RESET><GREEN><=<RESET>b))
+((a<RED>><RESET><GREEN>>=<RESET>b))
+$((a<RED><<RESET><GREEN><<<RESET>b))
+$((a<RED>><RESET><GREEN>>><RESET>b))
+$((a<RED>&<RESET><GREEN>&&<RESET>b))
+$((a<RED>|<RESET><GREEN>||<RESET>b))
+${a<RED>:<RESET><GREEN>:-<RESET>b}
+${a<RED>:<RESET><GREEN>:=<RESET>b}
+${a<RED>:<RESET><GREEN>:+<RESET>b}
+${a<RED>:<RESET><GREEN>:?<RESET>b}
+${a<RED>#<RESET><GREEN>##<RESET>*/}
+${a<RED>%<RESET><GREEN>%%<RESET>.*}
+${a<RED>^<RESET><GREEN>^^<RESET>}
+${a<RED>,<RESET><GREEN>,,<RESET>}
+${<GREEN>!<RESET>a}
+${a[<RED>*<RESET><GREEN>@<RESET>]}
+ls <RED>-a<RESET><GREEN>-x<RESET>
+ls <RED>--all<RESET><GREEN>--color<RESET>

@@ -1,0 +1,2 @@
+EUC_JAPAN_NAME="山田 太郎"
+EUC_JAPAN_MSG="ブレームのテストです。"

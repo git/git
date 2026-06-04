@@ -1,0 +1,99 @@
+Git 2.51.1 Release Notes
+========================
+
+There shouldn't be anything exciting to see here.  This is primarily
+to flush the "do you still use it?" improvements that has landed on
+the master front, together with a handful of low-hanging, low-impact
+fixes that should be safe.
+
+
+Fixes since Git 2.51.0
+----------------------
+
+ * The "do you still use it?" message given by a command that is
+   deeply deprecated and allow us to suggest alternatives has been
+   updated.
+
+ * The compatObjectFormat extension is used to hide an incomplete
+   feature that is not yet usable for any purpose other than
+   developing the feature further.  Document it as such to discourage
+   its use by mere mortals.
+
+ * Manual page for "gitk" is updated with the current maintainer's
+   name.
+
+ * Update the instructions for using GGG in the MyFirstContribution
+   document to say that a GitHub PR could be made against `git/git`
+   instead of `gitgitgadget/git`.
+
+ * Clang-format update to let our control macros be formatted the way we
+   had them traditionally, e.g., "for_each_string_list_item()" without
+   space before the parentheses.
+
+ * A few places where a size_t value was cast to curl_off_t without
+   checking has been updated to use the existing helper function.
+
+ * The start_delayed_progress() function in the progress eye-candy API
+   did not clear its internal state, making an initial delay value
+   larger than 1 second ineffective, which has been corrected.
+
+ * Makefile tried to run multiple "cargo build" which would not work
+   very well; serialize their execution to work around this problem.
+
+ * Adjust to the way newer versions of cURL selectively enable tracing
+   options, so that our tests can continue to work.
+
+ * During interactive rebase, using 'drop' on a merge commit led to
+   an error, which has been corrected.
+
+ * "git refs migrate" to migrate the reflog entries from a refs
+   backend to another had a handful of bugs squashed.
+
+ * "git push" had a code path that led to BUG() but it should have
+   been a die(), as it is a response to a usual but invalid end-user
+   action to attempt pushing an object that does not exist.
+
+ * Various bugs about rename handling in "ort" merge strategy have
+   been fixed.
+
+ * "git diff --no-index" run inside a subdirectory under control of a
+   Git repository operated at the top of the working tree and stripped
+   the prefix from the output, and oddballs like "-" (stdin) did not
+   work correctly because of it.  Correct the set-up by undoing what
+   the set-up sequence did to cwd and prefix.
+
+ * Various options to "git diff" that make comparison ignore certain
+   aspects of the differences (like "space changes are ignored",
+   "differences in lines that match these regular expressions are
+   ignored") did not work well with "--name-only" and friends.
+
+ * Under a race against another process that is repacking the
+   repository, especially a partially cloned one, "git fetch" may
+   mistakenly think some objects we do have are missing, which has
+   been corrected.
+
+ * "git repack --path-walk" lost objects in some corner cases, which
+   has been corrected.
+   cf. <CABPp-BHFxxGrqKc0m==TjQNjDGdO=H5Rf6EFsf2nfE1=TuraOQ@mail.gmail.com>
+
+ * Fixes multiple crashes around midx write-out codepaths.
+
+ * A broken or malicious "git fetch" can say that it has the same
+   object for many many times, and the upload-pack serving it can
+   exhaust memory storing them redundantly, which has been corrected.
+
+ * A corner case bug in "git log -L..." has been corrected.
+
+ * Some among "git add -p" and friends ignored color.diff and/or
+   color.ui configuration variables, which is an old regression, which
+   has been corrected.
+
+ * "git rebase -i" failed to clean-up the commit log message when the
+   command commits the final one in a chain of "fixup" commands, which
+   has been corrected.
+
+ * Deal more gracefully with directory / file conflicts when the files
+   backend is used for ref storage, by failing only the ones that are
+   involved in the conflict while allowing others.
+
+Also contains various documentation updates, code cleanups and minor fixups.

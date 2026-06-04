@@ -1,0 +1,14 @@
+test_expect_success 'pipe' '
+(
+# LINT: no "&&" needed on line ending with "|"
+	foo |
+	bar |
+	baz &&
+
+# LINT: final line of pipe sequence ("cow") lacking "&&"
+	fish |
+	cow
+
+	sunder
+)
+'

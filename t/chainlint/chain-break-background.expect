@@ -1,0 +1,9 @@
+2 JGIT_DAEMON_PID= &&
+3 git init --bare empty.git &&
+4 >empty.git/git-daemon-export-ok &&
+5 mkfifo jgit_daemon_output &&
+6 {
+7 	jgit daemon --port="$JGIT_DAEMON_PORT" . >jgit_daemon_output &
+8 	JGIT_DAEMON_PID=$!
+9 } &&
+10 test_expect_code 2 git ls-remote --exit-code git://localhost:$JGIT_DAEMON_PORT/empty.git

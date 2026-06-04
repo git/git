@@ -1,0 +1,297 @@
+#!/bin/sh
+
+test_description='miscellaneous rev-list tests'
+
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
+. ./test-lib.sh
+
+test_expect_success setup '
+	echo content1 >wanted_file &&
+	echo content2 >unwanted_file &&
+	git add wanted_file unwanted_file &&
+	test_tick &&
+	git commit -m one
+'
+
+test_expect_success 'rev-list --objects heeds pathspecs' '
+	git rev-list --objects HEAD -- wanted_file >output &&
+	grep wanted_file output &&
+	! grep unwanted_file output
+'
+
+test_expect_success 'rev-list --objects with pathspecs and deeper paths' '
+	mkdir foo &&
+	>foo/file &&
+	git add foo/file &&
+	test_tick &&
+	git commit -m two &&
+
+	git rev-list --objects HEAD -- foo >output &&
+	grep foo/file output &&
+
+	git rev-list --objects HEAD -- foo/file >output &&
+	grep foo/file output &&
+	! grep unwanted_file output
+'
+
+test_expect_success 'rev-list --objects with pathspecs and copied files' '
+	git checkout --orphan junio-testcase &&
+	git rm -rf . &&
+
+	mkdir two &&
+	echo frotz >one &&
+	cp one two/three &&
+	git add one two/three &&
+	test_tick &&
+	git commit -m that &&
+
+	ONE=$(git rev-parse HEAD:one) &&
+	git rev-list --objects HEAD two >output &&
+	grep "$ONE two/three" output &&
+	! grep one output
+'
+
+test_expect_success 'rev-list --objects --no-object-names has no space/names' '
+	git rev-list --objects --no-object-names HEAD >output &&
+	! grep wanted_file output &&
+	! grep unwanted_file output &&
+	! grep " " output
+'
+
+test_expect_success 'rev-list --objects --no-object-names works with cat-file' '
+	git rev-list --objects --no-object-names --all >list-output &&
+	git cat-file --batch-check <list-output >cat-output &&
+	! grep missing cat-output
+'
+
+test_expect_success '--no-object-names and --object-names are last-one-wins' '
+	git rev-list --objects --no-object-names --object-names --all >output &&
+	grep wanted_file output &&
+	git rev-list --objects --object-names --no-object-names --all >output &&
+	! grep wanted_file output
+'
+
+test_expect_success 'rev-list A..B and rev-list ^A B are the same' '
+	test_tick &&
+	git commit --allow-empty -m another &&
+	git tag -a -m "annotated" v1.0 &&
+	git rev-list --objects ^v1.0^ v1.0 >expect &&
+	git rev-list --objects v1.0^..v1.0 >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'propagate uninteresting flag down correctly' '
+	git rev-list --objects ^HEAD^{tree} HEAD^{tree} >actual &&
+	test_must_be_empty actual
+'
+
+test_expect_success 'symleft flag bit is propagated down from tag' '
+	git log --format="%m %s" --left-right v1.0...main >actual &&
+	cat >expect <<-\EOF &&
+	< another
+	< that
+	> two
+	> one
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'rev-list can show index objects' '
+	# Of the blobs and trees in the index, note:
+	#
+	#   - we do not show two/three, because it is the
+	#     same blob as "one", and we show objects only once
+	#
+	#   - we do show the tree "two", because it has a valid cache tree
+	#     from the last commit
+	#
+	#   - we do not show the root tree; since we updated the index, it
+	#     does not have a valid cache tree
+	#
+	echo only-in-index >only-in-index &&
+	test_when_finished "git reset --hard" &&
+	rev1=$(git rev-parse HEAD:one) &&
+	rev2=$(git rev-parse HEAD:two) &&
+	revi=$(git hash-object only-in-index) &&
+	cat >expect <<-EOF &&
+	$rev1 one
+	$revi only-in-index
+	$rev2 two
+	EOF
+	git add only-in-index &&
+	git rev-list --objects --indexed-objects >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rev-list can negate index objects' '
+	git rev-parse HEAD >expect &&
+	git rev-list -1 --objects HEAD --not --indexed-objects >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--bisect and --first-parent can be combined' '
+	git rev-list --bisect --first-parent HEAD
+'
+
+test_expect_success '--header shows a NUL after each commit' '
+	# We know that there is no Q in the true payload; names and
+	# addresses of the authors and the committers do not have
+	# any, and object names or header names do not, either.
+	git rev-list --header --max-count=2 HEAD |
+	nul_to_q |
+	grep "^Q" >actual &&
+	cat >expect <<-EOF &&
+	Q$(git rev-parse HEAD~1)
+	Q
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'rev-list --end-of-options' '
+	git update-ref refs/heads/--output=yikes HEAD &&
+	git rev-list --end-of-options --output=yikes >actual &&
+	test_path_is_missing yikes &&
+	git rev-list HEAD >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'rev-list --count' '
+	count=$(git rev-list --count HEAD) &&
+	git rev-list HEAD >actual &&
+	test_line_count = $count actual
+'
+
+test_expect_success 'rev-list --count --objects' '
+	count=$(git rev-list --count --objects HEAD) &&
+	git rev-list --objects HEAD >actual &&
+	test_line_count = $count actual
+'
+
+test_expect_success 'rev-list --unpacked' '
+	git repack -ad &&
+	test_commit unpacked &&
+
+	git rev-list --objects --no-object-names unpacked^.. >expect.raw &&
+	sort expect.raw >expect &&
+
+	git rev-list --all --objects --unpacked --no-object-names >actual.raw &&
+	sort actual.raw >actual &&
+
+	test_cmp expect actual
+'
+
+test_expect_success 'rev-list one-sided unrelated symmetric diff' '
+	test_tick &&
+	git commit --allow-empty -m xyz &&
+	git branch cmp &&
+	git rebase --force-rebase --root &&
+
+	git rev-list --left-only  HEAD...cmp >head &&
+	git rev-list --right-only HEAD...cmp >cmp  &&
+
+	sort head >head.sorted &&
+	sort cmp >cmp.sorted &&
+	comm -12 head.sorted cmp.sorted >actual &&
+	test_line_count = 0 actual
+'
+
+test_expect_success 'rev-list -z' '
+	test_when_finished rm -rf repo &&
+
+	git init repo &&
+	test_commit -C repo 1 &&
+	test_commit -C repo 2 &&
+
+	oid1=$(git -C repo rev-parse HEAD~) &&
+	oid2=$(git -C repo rev-parse HEAD) &&
+
+	printf "%s\0%s\0" "$oid2" "$oid1" >expect &&
+	git -C repo rev-list -z HEAD >actual &&
+
+	test_cmp expect actual
+'
+
+test_expect_success 'rev-list -z --objects' '
+	test_when_finished rm -rf repo &&
+
+	git init repo &&
+	test_commit -C repo 1 &&
+	test_commit -C repo 2 &&
+
+	oid1=$(git -C repo rev-parse HEAD:1.t) &&
+	oid2=$(git -C repo rev-parse HEAD:2.t) &&
+	path1=1.t &&
+	path2=2.t &&
+
+	printf "%s\0path=%s\0%s\0path=%s\0" "$oid1" "$path1" "$oid2" "$path2" \
+		>expect &&
+	git -C repo rev-list -z --objects HEAD:1.t HEAD:2.t >actual &&
+
+	test_cmp expect actual
+'
+
+test_expect_success 'rev-list -z --boundary' '
+	test_when_finished rm -rf repo &&
+
+	git init repo &&
+	test_commit -C repo 1 &&
+	test_commit -C repo 2 &&
+
+	oid1=$(git -C repo rev-parse HEAD~) &&
+	oid2=$(git -C repo rev-parse HEAD) &&
+
+	printf "%s\0%s\0boundary=yes\0" "$oid2" "$oid1" >expect &&
+	git -C repo rev-list -z --boundary HEAD~.. >actual &&
+
+	test_cmp expect actual
+'
+
+test_expect_success 'rev-list --boundary incompatible with --maximal-only' '
+	test_when_finished rm -rf repo &&
+
+	git init repo &&
+	test_commit -C repo 1 &&
+	test_commit -C repo 2 &&
+
+	oid1=$(git -C repo rev-parse HEAD~) &&
+	oid2=$(git -C repo rev-parse HEAD) &&
+
+	test_must_fail git -C repo rev-list --boundary --maximal-only \
+		HEAD~1..HEAD 2>err &&
+	test_grep "cannot be used together" err
+'
+
+test_expect_success 'rev-list --maximal-only and --pretty' '
+	test_when_finished rm -rf repo &&
+
+	git init repo &&
+	test_commit -C repo 1 &&
+	oid1=$(git -C repo rev-parse HEAD) &&
+	test_commit -C repo 2 &&
+	oid2=$(git -C repo rev-parse HEAD) &&
+	git -C repo checkout --detach HEAD~1 &&
+	test_commit -C repo 3 &&
+	oid3=$(git -C repo rev-parse HEAD) &&
+
+	cat >expect <<-EOF &&
+	commit $oid3
+	$oid3
+	commit $oid2
+	$oid2
+	EOF
+
+	git -C repo rev-list --pretty="%H" --maximal-only $oid1 $oid2 $oid3 >out &&
+	test_cmp expect out &&
+
+	cat >expect <<-EOF &&
+	$oid3
+	$oid2
+	EOF
+
+	git -C repo log --pretty="%H" --maximal-only $oid1 $oid2 $oid3 >out &&
+	test_cmp expect out
+'
+
+test_done

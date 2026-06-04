@@ -1,0 +1,152 @@
+MERGE STRATEGIES
+----------------
+
+The merge mechanism (`git merge` and `git pull` commands) allows the
+backend 'merge strategies' to be chosen with `-s` option.  Some strategies
+can also take their own options, which can be passed by giving `-X<option>`
+arguments to `git merge` and/or `git pull`.
+
+`ort`::
+	This is the default merge strategy when pulling or merging one
+	branch.  This strategy can only resolve two heads using a
+	3-way merge algorithm.  When there is more than one common
+	ancestor that can be used for 3-way merge, it creates a merged
+	tree of the common ancestors and uses that as the reference
+	tree for the 3-way merge.  This has been reported to result in
+	fewer merge conflicts without causing mismerges by tests done
+	on actual merge commits taken from Linux 2.6 kernel
+	development history.  Additionally this strategy can detect
+	and handle merges involving renames.  It does not make use of
+	detected copies.  The name for this algorithm is an acronym
+	("Ostensibly Recursive's Twin") and came from the fact that it
+	was written as a replacement for the previous default
+	algorithm, `recursive`.
++
+In the case where the path is a submodule, if the submodule commit used on
+one side of the merge is a descendant of the submodule commit used on the
+other side of the merge, Git attempts to fast-forward to the
+descendant. Otherwise, Git will treat this case as a conflict, suggesting
+as a resolution a submodule commit that is descendant of the conflicting
+ones, if one exists.
++
+The `ort` strategy can take the following options:
+
+`ours`;;
+	This option forces conflicting hunks to be auto-resolved cleanly by
+	favoring 'our' version.  Changes from the other tree that do not
+	conflict with our side are reflected in the merge result.
+	For a binary file, the entire contents are taken from our side.
++
+This should not be confused with the `ours` merge strategy, which does not
+even look at what the other tree contains at all.  It discards everything
+the other tree did, declaring 'our' history contains all that happened in it.
+
+`theirs`;;
+	This is the opposite of `ours`; note that, unlike `ours`, there is
+	no `theirs` merge strategy to confuse this merge option with.
+
+`ignore-space-change`;;
+`ignore-all-space`;;
+`ignore-space-at-eol`;;
+`ignore-cr-at-eol`;;
+	Treats lines with the indicated type of whitespace change as
+	unchanged for the sake of a three-way merge.  Whitespace
+	changes mixed with other changes to a line are not ignored.
+	See also linkgit:git-diff[1] `-b`, `-w`,
+	`--ignore-space-at-eol`, and `--ignore-cr-at-eol`.
++
+* If 'their' version only introduces whitespace changes to a line,
+  'our' version is used;
+* If 'our' version introduces whitespace changes but 'their'
+  version includes a substantial change, 'their' version is used;
+* Otherwise, the merge proceeds in the usual way.
+
+`renormalize`;;
+	This runs a virtual check-out and check-in of all three stages
+	of any file which needs a three-way merge.  This option is
+	meant to be used when merging branches with different clean
+	filters or end-of-line normalization rules.  See "Merging
+	branches with differing checkin/checkout attributes" in
+	linkgit:gitattributes[5] for details.
+
+`no-renormalize`;;
+	Disables the `renormalize` option.  This overrides the
+	`merge.renormalize` configuration variable.
+
+`find-renames[=<n>]`;;
+	Turn on rename detection, optionally setting the similarity
+	threshold.  This is the default. This overrides the
+	`merge.renames` configuration variable.
+	See also linkgit:git-diff[1] `--find-renames`.
+
+`rename-threshold=<n>`;;
+	Deprecated synonym for `find-renames=<n>`.
+
+`no-renames`;;
+	Turn off rename detection. This overrides the `merge.renames`
+	configuration variable.
+	See also linkgit:git-diff[1] `--no-renames`.
+
+`histogram`;;
+	Deprecated synonym for `diff-algorithm=histogram`.
+
+`patience`;;
+	Deprecated synonym for `diff-algorithm=patience`.
+
+`diff-algorithm=(histogram|minimal|myers|patience)`;;
+	Use a different diff algorithm while merging, which can help
+	avoid mismerges that occur due to unimportant matching lines
+	(such as braces from distinct functions).  See also
+	linkgit:git-diff[1] `--diff-algorithm`.  Note that `ort`
+	defaults to `diff-algorithm=histogram`, while regular diffs
+	currently default to the `diff.algorithm` config setting.
+
+`subtree[=<path>]`;;
+	This option is a more advanced form of 'subtree' strategy, where
+	the strategy makes a guess on how two trees must be shifted to
+	match with each other when merging.  Instead, the specified path
+	is prefixed (or stripped from the beginning) to make the shape of
+	two trees to match.
+
+`recursive`::
+	This is now a synonym for `ort`.  It was an alternative
+	implementation until v2.49.0, but was redirected to mean `ort`
+	in v2.50.0.  The previous recursive strategy was the default
+	strategy for resolving two heads from Git v0.99.9k until
+	v2.33.0.
+
+`resolve`::
+	This can only resolve two heads (i.e. the current branch
+	and another branch you pulled from) using a 3-way merge
+	algorithm.  It tries to carefully detect criss-cross
+	merge ambiguities.  It does not handle renames.
+
+`octopus`::
+	This resolves cases with more than two heads, but refuses to do
+	a complex merge that needs manual resolution.  It is
+	primarily meant to be used for bundling topic branch
+	heads together.  This is the default merge strategy when
+	pulling or merging more than one branch.
+
+`ours`::
+	This resolves any number of heads, but the resulting tree of the
+	merge is always that of the current branch head, effectively
+	ignoring all changes from all other branches.  It is meant to
+	be used to supersede old development history of side
+	branches.  Note that this is different from the `-Xours` option to
+	the `ort` merge strategy.
+
+`subtree`::
+	This is a modified `ort` strategy. When merging trees A and
+	B, if B corresponds to a subtree of A, B is first adjusted to
+	match the tree structure of A, instead of reading the trees at
+	the same level. This adjustment is also done to the common
+	ancestor tree.
+
+With the strategies that use 3-way merge (including the default, `ort`),
+if a change is made on both branches, but later reverted on one of the
+branches, that change will be present in the merged result; some people find
+this behavior confusing.  It occurs because only the heads and the merge base
+are considered when performing a merge, not the individual commits.  The merge
+algorithm therefore considers the reverted change as no change at all, and
+substitutes the changed version instead.

@@ -1,0 +1,13 @@
+test_expect_success 'command-substitution' '
+(
+	foo &&
+# LINT: closing ")" of $(...) not misinterpreted as subshell-closing ")"
+	bar=$(gobble) &&
+	baz
+) &&
+(
+# LINT: missing "&&" on $(...)
+	bar=$(gobble blocks)
+	baz
+)
+'

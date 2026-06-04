@@ -1,0 +1,66 @@
+GIT v1.5.4.4 Release Notes
+==========================
+
+Fixes since v1.5.4.3
+--------------------
+
+ * Building and installing with an overtight umask such as 077 made
+   installed templates unreadable by others, while the rest of the install
+   are done in a way that is friendly to umask 022.
+
+ * "git cvsexportcommit -w $cvsdir" misbehaved when GIT_DIR is set to a
+   relative directory.
+
+ * "git http-push" had an invalid memory access that could lead it to
+   segfault.
+
+ * When "git rebase -i" gave control back to the user for a commit that is
+   marked to be edited, it just said "modify it with commit --amend",
+   without saying what to do to continue after modifying it.  Give an
+   explicit instruction to run "rebase --continue" to be more helpful.
+
+ * "git send-email" in 1.5.4.3 issued a bogus empty In-Reply-To: header.
+
+ * "git bisect" showed mysterious "won't bisect on seeked tree" error message.
+   This was leftover from Cogito days to prevent "bisect" starting from a
+   cg-seeked state.  We still keep the Cogito safety, but running "git bisect
+   start" when another bisect was in effect will clean up and start over.
+
+ * "git push" with an explicit PATH to receive-pack did not quite work if
+   receive-pack was not on usual PATH.  We earlier fixed the same issue
+   with "git fetch" and upload-pack, but somehow forgot to do so in the
+   other direction.
+
+ * git-gui's info dialog was not displayed correctly when the user tries
+   to commit nothing (i.e. without staging anything).
+
+ * "git revert" did not properly fail when attempting to run with a
+   dirty index.
+
+ * "git merge --no-commit --no-ff <other>" incorrectly made commits.
+
+ * "git merge --squash --no-ff <other>", which is a nonsense combination
+   of options, was not rejected.
+
+ * "git ls-remote" and "git remote show" against an empty repository
+   failed, instead of just giving an empty result (regression).
+
+ * "git fast-import" did not handle a renamed path whose name needs to be
+   quoted, due to a bug in unquote_c_style() function.
+
+ * "git cvsexportcommit" was confused when multiple files with the same
+   basename needed to be pushed out in the same commit.
+
+ * "git daemon" did not send early errors to syslog.
+
+ * "git log --merge" did not work well with --left-right option.
+
+ * "git svn" prompted for client cert password every time it accessed the
+   server.
+
+ * The reset command in "git fast-import" data stream was documented to
+   end with an optional LF, but it actually required one.
+
+ * "git svn dcommit/rebase" did not honor --rewrite-root option.
+
+Also included are a handful documentation updates.

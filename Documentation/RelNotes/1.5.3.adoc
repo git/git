@@ -1,0 +1,366 @@
+GIT v1.5.3 Release Notes
+========================
+
+Updates since v1.5.2
+--------------------
+
+* The commit walkers other than http are officially deprecated,
+  but still supported for now.
+
+* The submodule support has Porcelain layer.
+
+  Note that the current submodule support is minimal and this is
+  deliberately so.  A design decision we made is that operations
+  at the supermodule level do not recurse into submodules by
+  default.  The expectation is that later we would add a
+  mechanism to tell git which submodules the user is interested
+  in, and this information might be used to determine the
+  recursive behaviour of certain commands (e.g. "git checkout"
+  and "git diff"), but currently we haven't agreed on what that
+  mechanism should look like.  Therefore, if you use submodules,
+  you would probably need "git submodule update" on the
+  submodules you care about after running a "git checkout" at
+  the supermodule level.
+
+* There are a handful pack-objects changes to help you cope better
+  with repositories with pathologically large blobs in them.
+
+* For people who need to import from Perforce, a front-end for
+  fast-import is in contrib/fast-import/.
+
+* Comes with git-gui 0.8.2.
+
+* Comes with updated gitk.
+
+* New commands and options.
+
+  - "git log --date=<format>" can use more formats: iso8601, rfc2822.
+
+  - The hunk header output from "git diff" family can be customized
+    with the attributes mechanism.  See gitattributes(5) for details.
+
+  - "git stash" allows you to quickly save away your work in
+    progress and replay it later on an updated state.
+
+  - "git rebase" learned an "interactive" mode that let you
+    pick and reorder which commits to rebuild.
+
+  - "git fsck" can save its findings in $GIT_DIR/lost-found, without a
+    separate invocation of "git lost-found" command.  The blobs stored by
+    lost-found are stored in plain format to allow you to grep in them.
+
+  - $GIT_WORK_TREE environment variable can be used together with
+    $GIT_DIR to work in a subdirectory of a working tree that is
+    not located at "$GIT_DIR/..".
+
+  - Giving "--file=<file>" option to "git config" is the same as
+    running the command with GIT_CONFIG=<file> environment.
+
+  - "git log" learned a new option "--follow", to follow
+    renaming history of a single file.
+
+  - "git filter-branch" lets you rewrite the revision history of
+    specified branches. You can specify a number of filters to
+    modify the commits, files and trees.
+
+  - "git cvsserver" learned new options (--base-path, --export-all,
+    --strict-paths) inspired by "git daemon".
+
+  - "git daemon --base-path-relaxed" can help migrating a repository URL
+    that did not use to use --base-path to use --base-path.
+
+  - "git commit" can use "-t templatefile" option and commit.template
+    configuration variable to prime the commit message given to you in the
+    editor.
+
+  - "git submodule" command helps you manage the projects from
+    the superproject that contain them.
+
+  - In addition to core.compression configuration option,
+    core.loosecompression and pack.compression options can
+    independently tweak zlib compression levels used for loose
+    and packed objects.
+
+  - "git ls-tree -l" shows size of blobs pointed at by the
+    tree entries, similar to "/bin/ls -l".
+
+  - "git rev-list" learned --regexp-ignore-case and
+    --extended-regexp options to tweak its matching logic used
+    for --grep filtering.
+
+  - "git describe --contains" is a handier way to call more
+    obscure command "git name-rev --tags".
+
+  - "git gc --aggressive" tells the command to spend more cycles
+    to optimize the repository harder.
+
+  - "git repack" learned a "window-memory" limit which
+    dynamically reduces the window size to stay within the
+    specified memory usage.
+
+  - "git repack" can be told to split resulting packs to avoid
+    exceeding limit specified with "--max-pack-size".
+
+  - "git fsck" gained --verbose option.  This is really really
+    verbose but it might help you identify exact commit that is
+    corrupt in your repository.
+
+  - "git format-patch" learned --numbered-files option.  This
+    may be useful for MH users.
+
+  - "git format-patch" learned format.subjectprefix configuration
+    variable, which serves the same purpose as "--subject-prefix"
+    option.
+
+  - "git tag -n -l" shows tag annotations while listing tags.
+
+  - "git cvsimport" can optionally use the separate-remote layout.
+
+  - "git blame" can be told to see through commits that change
+    whitespaces and indentation levels with "-w" option.
+
+  - "git send-email" can be told not to thread the messages when
+    sending out more than one patches.
+
+  - "git send-email" can also be told how to find whom to cc the
+    message to for each message via --cc-cmd.
+
+  - "git config" learned NUL terminated output format via -z to
+    help scripts.
+
+  - "git add" learned "--refresh <paths>..." option to selectively refresh
+    the cached stat information.
+
+  - "git init -q" makes the command quieter.
+
+  - "git -p command" now has a cousin of opposite sex, "git --no-pager
+    command".
+
+* Updated behavior of existing commands.
+
+  - "gitweb" can offer multiple snapshot formats.
+
+    ***NOTE*** Unfortunately, this changes the format of the
+    $feature{snapshot}{default} entry in the per-site
+    configuration file 'gitweb_config.perl'.  It used to be a
+    three-element tuple that describe a single format; with the
+    new configuration item format, you only have to say the name
+    of the format ('tgz', 'tbz2' or 'zip').  Please update the
+    your configuration file accordingly.
+
+  - "git clone" uses -l (hardlink files under .git) by default when
+    cloning locally.
+
+  - URL used for "git clone" and friends can specify nonstandard SSH port
+    by using ssh://host:port/path/to/repo syntax.
+
+  - "git bundle create" can now create a bundle without negative refs,
+    i.e. "everything since the beginning up to certain points".
+
+  - "git diff" (but not the plumbing level "git diff-tree") now
+    recursively descends into trees by default.
+
+  - "git diff" does not show differences that come only from
+    stat-dirtiness in the form of "diff --git" header anymore.
+    It runs "update-index --refresh" silently as needed.
+
+  - "git tag -l" used to match tags by globbing its parameter as if it
+    has wildcard '*' on both ends, which made "git tag -l gui" to match
+    tag 'gitgui-0.7.0'; this was very annoying.  You now have to add
+    asterisk on the sides you want to wildcard yourself.
+
+  - The editor to use with many interactive commands can be
+    overridden with GIT_EDITOR environment variable, or if it
+    does not exist, with core.editor configuration variable.  As
+    before, if you have neither, environment variables VISUAL
+    and EDITOR are consulted in this order, and then finally we
+    fall back on "vi".
+
+  - "git rm --cached" does not complain when removing a newly
+    added file from the index anymore.
+
+  - Options to "git log" to affect how --grep/--author options look for
+    given strings now have shorter abbreviations.  -i is for ignore case,
+    and -E is for extended regexp.
+
+  - "git log" learned --log-size to show the number of bytes in
+    the log message part of the output to help qgit.
+
+  - "git log --name-status" does not require you to give "-r" anymore.
+    As a general rule, Porcelain commands should recurse when showing
+    diff.
+
+  - "git format-patch --root A" can be used to format everything
+    since the beginning up to A.  This was supported with
+    "git format-patch --root A A" for a long time, but was not
+    properly documented.
+
+  - "git svn dcommit" retains local merge information.
+
+  - "git svnimport" allows an empty string to be specified as the
+    trunk/ directory.  This is necessary to suck data from a SVN
+    repository that doe not have trunk/ branches/ and tags/ organization
+    at all.
+
+  - "git config" to set values also honors type flags like --bool
+    and --int.
+
+  - core.quotepath configuration can be used to make textual git
+    output to emit most of the characters in the path literally.
+
+  - "git mergetool" chooses its backend more wisely, taking
+    notice of its environment such as use of X, Gnome/KDE, etc.
+
+  - "gitweb" shows merge commits a lot nicer than before.  The
+    default view uses more compact --cc format, while the UI
+    allows to choose normal diff with any parent.
+
+  - snapshot files "gitweb" creates from a repository at
+    $path/$project/.git are more useful.  We use $project part
+    in the filename, which we used to discard.
+
+  - "git cvsimport" creates lightweight tags; there is no
+    interesting information we can record in an annotated tag,
+    and the handcrafted ones the old code created was not
+    properly formed anyway.
+
+  - "git push" pretends that you immediately fetched back from
+    the remote by updating corresponding remote tracking
+    branches if you have any.
+
+  - The diffstat given after a merge (or a pull) honors the
+    color.diff configuration.
+
+  - "git commit --amend" is now compatible with various message source
+    options such as -m/-C/-c/-F.
+
+  - "git apply --whitespace=strip" removes blank lines added at
+    the end of the file.
+
+  - "git fetch" over git native protocols with "-v" option shows
+    connection status, and the IP address of the other end, to
+    help diagnosing problems.
+
+  - We used to have core.legacyheaders configuration, when
+    set to false, allowed git to write loose objects in a format
+    that mimics the format used by objects stored in packs.  It
+    turns out that this was not so useful.  Although we will
+    continue to read objects written in that format, we do not
+    honor that configuration anymore and create loose objects in
+    the legacy/traditional format.
+
+  - "--find-copies-harder" option to diff family can now be
+    spelled as "-C -C" for brevity.
+
+  - "git mailsplit" (hence "git am") can read from Maildir
+    formatted mailboxes.
+
+  - "git cvsserver" does not barf upon seeing "cvs login"
+    request.
+
+  - "pack-objects" honors "delta" attribute set in
+    .gitattributes.  It does not attempt to deltify blobs that
+    come from paths with delta attribute set to false.
+
+  - "new-workdir" script (in contrib) can now be used with a
+    bare repository.
+
+  - "git mergetool" learned to use gvimdiff.
+
+  - "gitview" (in contrib) has a better blame interface.
+
+  - "git log" and friends did not handle a commit log message
+    that is larger than 16kB; they do now.
+
+  - "--pretty=oneline" output format for "git log" and friends
+    deals with "malformed" commit log messages that have more
+    than one lines in the first paragraph better.  We used to
+    show the first line, cutting the title at mid-sentence; we
+    concatenate them into a single line and treat the result as
+    "oneline".
+
+  - "git p4import" has been demoted to contrib status.  For
+    a superior option, checkout the "git p4" front end to
+    "git fast-import" (also in contrib).  The man page and p4
+    rpm have been removed as well.
+
+  - "git mailinfo" (hence "am") now tries to see if the message
+    is in utf-8 first, instead of assuming iso-8859-1, if
+    incoming e-mail does not say what encoding it is in.
+
+* Builds
+
+  - old-style function definitions (most notably, a function
+    without parameter defined with "func()", not "func(void)")
+    have been eradicated.
+
+  - "git tag" and "git verify-tag" have been rewritten in C.
+
+* Performance Tweaks
+
+  - "git pack-objects" avoids re-deltification cost by caching
+    small enough delta results it creates while looking for the
+    best delta candidates.
+
+  - "git pack-objects" learned a new heuristic to prefer delta
+    that is shallower in depth over the smallest delta
+    possible.  This improves both overall packfile access
+    performance and packfile density.
+
+  - diff-delta code that is used for packing has been improved
+    to work better on big files.
+
+  - when there are more than one pack files in the repository,
+    the runtime used to try finding an object always from the
+    newest packfile; it now tries the same packfile as we found
+    the object requested the last time, which exploits the
+    locality of references.
+
+  - verifying pack contents done by "git fsck --full" got boost
+    by carefully choosing the order to verify objects in them.
+
+  - "git read-tree -m" to read into an already populated index
+    has been optimized vastly.  The effect of this can be seen
+    when switching branches that have differences in only a
+    handful paths.
+
+  - "git add paths..." and "git commit paths..." has also been
+    heavily optimized.
+
+Fixes since v1.5.2
+------------------
+
+All of the fixes in v1.5.2 maintenance series are included in
+this release, unless otherwise noted.
+
+* Bugfixes
+
+  - "gitweb" had trouble handling non UTF-8 text with older
+    Encode.pm Perl module.
+
+  - "git svn" misparsed the data from the commits in the repository when
+    the user had "color.diff = true" in the configuration.  This has been
+    fixed.
+
+  - There was a case where "git svn dcommit" clobbered changes made on the
+    SVN side while committing multiple changes.
+
+  - "git-write-tree" had a bad interaction with racy-git avoidance and
+    gitattributes mechanisms.
+
+  - "git --bare command" overrode existing GIT_DIR setting and always
+    made it treat the current working directory as GIT_DIR.
+
+  - "git ls-files --error-unmatch" does not complain if you give the
+    same path pattern twice by mistake.
+
+  - "git init" autodetected core.filemode but not core.symlinks, which
+    made a new directory created automatically by "git clone" cumbersome
+    to use on filesystems that require these configurations to be set.
+
+  - "git log" family of commands behaved differently when run as "git
+    log" (no pathspec) and as "git log --" (again, no pathspec).  This
+    inconsistency was introduced somewhere in v1.3.0 series but now has
+    been corrected.
+
+  - "git rebase -m" incorrectly displayed commits that were skipped.

@@ -1,0 +1,6 @@
+(module A RIGHT
+  (export with-display-exception)
+  (extern (display-exception display-exception ChangeMe))
+  (def (with-display-exception thunk)
+    (with-catch (lambda (e) (display-exception e (current-error-port)) e)
+      thunk)))

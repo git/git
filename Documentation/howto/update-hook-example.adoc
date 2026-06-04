@@ -1,0 +1,192 @@
+From: Junio C Hamano <gitster@pobox.com> and Carl Baldwin <cnb@fc.hp.com>
+Subject: control access to branches.
+Date: Thu, 17 Nov 2005 23:55:32 -0800
+Message-ID: <7vfypumlu3.fsf@assigned-by-dhcp.cox.net>
+Abstract: An example hooks/update script is presented to
+ implement repository maintenance policies, such as who can push
+ into which branch and who can make a tag.
+Content-type: text/asciidoc
+
+How to use the update hook
+==========================
+
+When your developer runs git-push into the repository,
+git-receive-pack is run (either locally or over ssh) as that
+developer, so is hooks/update script.  Quoting from the relevant
+section of the documentation:
+
+    Before each ref is updated, if $GIT_DIR/hooks/update file exists
+    and executable, it is called with three parameters:
+
+           $GIT_DIR/hooks/update refname sha1-old sha1-new
+
+    The refname parameter is relative to $GIT_DIR; e.g. for the
+    master head this is "refs/heads/master".  Two sha1 are the
+    object names for the refname before and after the update.  Note
+    that the hook is called before the refname is updated, so either
+    sha1-old is 0{40} (meaning there is no such ref yet), or it
+    should match what is recorded in refname.
+
+So if your policy is (1) always require fast-forward push
+(i.e. never allow "git-push repo +branch:branch"), (2) you
+have a list of users allowed to update each branch, and (3) you
+do not let tags to be overwritten, then you can use something
+like this as your hooks/update script.
+
+[jc: editorial note.  This is a much improved version by Carl
+since I posted the original outline]
+
+----------------------------------------------------
+#!/bin/bash
+
+umask 002
+
+# If you are having trouble with this access control hook script
+# you can try setting this to true.  It will tell you exactly
+# why a user is being allowed/denied access.
+
+verbose=false
+
+# Default shell globbing messes things up downstream
+GLOBIGNORE=*
+
+function grant {
+  $verbose && echo >&2 "-Grant-		$1"
+  echo grant
+  exit 0
+}
+
+function deny {
+  $verbose && echo >&2 "-Deny-		$1"
+  echo deny
+  exit 1
+}
+
+function info {
+  $verbose && echo >&2 "-Info-		$1"
+}
+
+# Implement generic branch and tag policies.
+# - Tags should not be updated once created.
+# - Branches should only be fast-forwarded unless their pattern starts with '+'
+case "$1" in
+  refs/tags/*)
+    git rev-parse --verify -q "$1" &&
+    deny >/dev/null "You can't overwrite an existing tag"
+    ;;
+  refs/heads/*)
+    # No rebasing or rewinding
+    if expr "$2" : '0*$' >/dev/null; then
+      info "The branch '$1' is new..."
+    else
+      # updating -- make sure it is a fast-forward
+      mb=$(git merge-base "$2" "$3")
+      case "$mb,$2" in
+        "$2,$mb") info "Update is fast-forward" ;;
+	*)	  noff=y; info "This is not a fast-forward update.";;
+      esac
+    fi
+    ;;
+  *)
+    deny >/dev/null \
+    "Branch is not under refs/heads or refs/tags.  What are you trying to do?"
+    ;;
+esac
+
+# Implement per-branch controls based on username
+allowed_users_file=$GIT_DIR/info/allowed-users
+username=$(id -u -n)
+info "The user is: '$username'"
+
+if test -f "$allowed_users_file"
+then
+  rc=$(grep -Ev '^(#|$)' $allowed_users_file |
+    while read heads user_patterns
+    do
+      # does this rule apply to us?
+      head_pattern=${heads#+}
+      matchlen=$(expr "$1" : "${head_pattern#+}")
+      test "$matchlen" = ${#1} || continue
+
+      # if non-ff, $heads must be with the '+' prefix
+      test -n "$noff" &&
+      test "$head_pattern" = "$heads" && continue
+
+      info "Found matching head pattern: '$head_pattern'"
+      for user_pattern in $user_patterns; do
+        info "Checking user: '$username' against pattern: '$user_pattern'"
+        matchlen=$(expr "$username" : "$user_pattern")
+        if test "$matchlen" = "${#username}"
+        then
+          grant "Allowing user: '$username' with pattern: '$user_pattern'"
+        fi
+      done
+      deny "The user is not in the access list for this branch"
+    done
+  )
+  case "$rc" in
+    grant) grant >/dev/null "Granting access based on $allowed_users_file" ;;
+    deny)  deny  >/dev/null "Denying  access based on $allowed_users_file" ;;
+    *) ;;
+  esac
+fi
+
+allowed_groups_file=$GIT_DIR/info/allowed-groups
+groups=$(id -G -n)
+info "The user belongs to the following groups:"
+info "'$groups'"
+
+if test -f "$allowed_groups_file"
+then
+  rc=$(grep -Ev '^(#|$)' $allowed_groups_file |
+    while read heads group_patterns
+    do
+      # does this rule apply to us?
+      head_pattern=${heads#+}
+      matchlen=$(expr "$1" : "${head_pattern#+}")
+      test "$matchlen" = ${#1} || continue
+
+      # if non-ff, $heads must be with the '+' prefix
+      test -n "$noff" &&
+      test "$head_pattern" = "$heads" && continue
+
+      info "Found matching head pattern: '$head_pattern'"
+      for group_pattern in $group_patterns; do
+        for groupname in $groups; do
+          info "Checking group: '$groupname' against pattern: '$group_pattern'"
+          matchlen=$(expr "$groupname" : "$group_pattern")
+          if test "$matchlen" = "${#groupname}"
+          then
+            grant "Allowing group: '$groupname' with pattern: '$group_pattern'"
+          fi
+        done
+      done
+      deny "None of the user's groups are in the access list for this branch"
+    done
+  )
+  case "$rc" in
+    grant) grant >/dev/null "Granting access based on $allowed_groups_file" ;;
+    deny)  deny  >/dev/null "Denying  access based on $allowed_groups_file" ;;
+    *) ;;
+  esac
+fi
+
+deny >/dev/null "There are no more rules to check.  Denying access"
+----------------------------------------------------
+
+This uses two files, $GIT_DIR/info/allowed-users and
+allowed-groups, to describe which heads can be pushed into by
+whom.  The format of each file would look like this:
+
+    refs/heads/master   junio
+    +refs/heads/seen    junio
+    refs/heads/cogito$  pasky
+    refs/heads/bw/.*    linus
+    refs/heads/tmp/.*   .*
+    refs/tags/v[0-9].*  junio
+
+With this, Linus can push or create "bw/penguin" or "bw/zebra"
+or "bw/panda" branches, Pasky can do only "cogito", and JC can
+do master and "seen" branches and make versioned tags.  And anybody
+can do tmp/blah branches. The '+' sign at the "seen" record means
+that JC can make non-fast-forward pushes on it.

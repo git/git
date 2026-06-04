@@ -1,0 +1,105 @@
+Git v2.14.2 Release Notes
+=========================
+
+Fixes since v2.14.1
+-------------------
+
+ * Because recent Git for Windows do come with a real msgfmt, the
+   build procedure for git-gui has been updated to use it instead of a
+   hand-rolled substitute.
+
+ * "%C(color name)" in the pretty print format always produced ANSI
+   color escape codes, which was an early design mistake.  They now
+   honor the configuration (e.g. "color.ui = never") and also tty-ness
+   of the output medium.
+
+ * The http.{sslkey,sslCert} configuration variables are to be
+   interpreted as a pathname that honors "~[username]/" prefix, but
+   weren't, which has been fixed.
+
+ * Numerous bugs in walking of reflogs via "log -g" and friends have
+   been fixed.
+
+ * "git commit" when seeing an totally empty message said "you did not
+   edit the message", which is clearly wrong.  The message has been
+   corrected.
+
+ * When a directory is not readable, "gitweb" fails to build the
+   project list.  Work this around by skipping such a directory.
+
+ * A recently added test for the "credential-cache" helper revealed
+   that EOF detection done around the time the connection to the cache
+   daemon is torn down were flaky.  This was fixed by reacting to
+   ECONNRESET and behaving as if we got an EOF.
+
+ * Some versions of GnuPG fail to kill gpg-agent it auto-spawned
+   and such a left-over agent can interfere with a test.  Work it
+   around by attempting to kill one before starting a new test.
+
+ * "git log --tag=no-such-tag" showed log starting from HEAD, which
+   has been fixed---it now shows nothing.
+
+ * The "tag.pager" configuration variable was useless for those who
+   actually create tag objects, as it interfered with the use of an
+   editor.  A new mechanism has been introduced for commands to enable
+   pager depending on what operation is being carried out to fix this,
+   and then "git tag -l" is made to run pager by default.
+
+ * "git push --recurse-submodules $there HEAD:$target" was not
+   propagated down to the submodules, but now it is.
+
+ * Commands like "git rebase" accepted the --rerere-autoupdate option
+   from the command line, but did not always use it.  This has been
+   fixed.
+
+ * "git clone --recurse-submodules --quiet" did not pass the quiet
+   option down to submodules.
+
+ * "git am -s" has been taught that some input may end with a trailer
+   block that is not Signed-off-by: and it should refrain from adding
+   an extra blank line before adding a new sign-off in such a case.
+
+ * "git svn" used with "--localtime" option did not compute the tz
+   offset for the timestamp in question and instead always used the
+   current time, which has been corrected.
+
+ * Memory leaks in a few error codepaths have been plugged.
+
+ * bash 4.4 or newer gave a warning on NUL byte in command
+   substitution done in "git stash"; this has been squelched.
+
+ * "git grep -L" and "git grep --quiet -L" reported different exit
+   codes; this has been corrected.
+
+ * When handshake with a subprocess filter notices that the process
+   asked for an unknown capability, Git did not report what program
+   the offending subprocess was running.  This has been corrected.
+
+ * "git apply" that is used as a better "patch -p1" failed to apply a
+   taken from a file with CRLF line endings to a file with CRLF line
+   endings.  The root cause was because it misused convert_to_git()
+   that tried to do "safe-crlf" processing by looking at the index
+   entry at the same path, which is a nonsense---in that mode, "apply"
+   is not working on the data in (or derived from) the index at all.
+   This has been fixed.
+
+ * Killing "git merge --edit" before the editor returns control left
+   the repository in a state with MERGE_MSG but without MERGE_HEAD,
+   which incorrectly tells the subsequent "git commit" that there was
+   a squash merge in progress.  This has been fixed.
+
+ * "git archive" did not work well with pathspecs and the
+   export-ignore attribute.
+
+ * "git cvsserver" no longer is invoked by "git daemon" by default,
+   as it is old and largely unmaintained.
+
+ * Various Perl scripts did not use safe_pipe_capture() instead of
+   backticks, leaving them susceptible to end-user input.  They have
+   been corrected.
+
+Also contains various documentation updates and code clean-ups.
+
+Credits go to joernchen <joernchen@phenoelit.de> for finding the
+unsafe constructs in "git cvsserver", and to Jeff King at GitHub for
+finding and fixing instances of the same issue in other scripts.

@@ -1,0 +1,10 @@
+test_expect_success 'if-condition-split' '
+# LINT: "if" condition split across multiple lines at "&&" or "||"
+if bob &&
+   marcia ||
+   kevin
+then
+	echo "nomads"
+	echo "for sure"
+fi
+'

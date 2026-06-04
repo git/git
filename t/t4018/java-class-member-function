@@ -1,0 +1,12 @@
+public class Beer
+{
+	int special;
+	public static void main(String RIGHT[])
+	{
+		someMethodCall();
+		someOtherMethod("17")
+			.doThat();
+		// Whatever
+		System.out.print("ChangeMe");
+	}
+}

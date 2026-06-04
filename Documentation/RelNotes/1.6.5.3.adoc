@@ -1,0 +1,63 @@
+Git v1.6.5.3 Release Notes
+==========================
+
+Fixes since v1.6.5.2
+--------------------
+
+ * info/grafts file didn't ignore trailing CR at the end of lines.
+
+ * Packages generated on newer FC were unreadable by older versions of
+   RPM as the new default is to use stronger hash.
+
+ * output from "git blame" was unreadable when the file ended in an
+   incomplete line.
+
+ * "git add -i/-p" didn't handle deletion of empty files correctly.
+
+ * "git clone" takes up to two parameters, but did not complain when
+   given more arguments than necessary and silently ignored them.
+
+ * "git cvsimport" did not read files given as command line arguments
+   correctly when it is run from a subdirectory.
+
+ * "git diff --color-words -U0" didn't work correctly.
+
+ * The handling of blank lines at the end of file by "git diff/apply
+   --whitespace" was inconsistent with the other kinds of errors.
+   They are now colored, warned against, and fixed the same way as others.
+
+ * There was no way to allow blank lines at the end of file without
+   allowing extra blanks at the end of lines.  You can use blank-at-eof
+   and blank-at-eol whitespace error class to specify them separately.
+   The old trailing-space error class is now a short-hand to set both.
+
+ * "-p" option to "git format-patch" was supposed to suppress diffstat
+   generation, but it was broken since 1.6.1.
+
+ * "git imap-send" did not compile cleanly with newer OpenSSL.
+
+ * "git help -a" outside of a git repository was broken.
+
+ * "git ls-files -i" was supposed to be inverse of "git ls-files" without -i
+   with respect to exclude patterns, but it was broken since 1.6.5.2.
+
+ * "git ls-remote" outside of a git repository over http was broken.
+
+ * "git rebase -i" gave bogus error message when the command word was
+   misspelled.
+
+ * "git receive-pack" that is run in response to "git push" did not run
+   garbage collection nor update-server-info, but in larger hosting sites,
+   these almost always need to be run.  To help site administrators, the
+   command now runs "gc --auto" and "u-s-i" by setting receive.autogc
+   and receive.updateserverinfo configuration variables, respectively.
+
+ * Release notes spelled the package name with incorrect capitalization.
+
+ * "gitweb" did not escape non-ascii characters correctly in the URL.
+
+ * "gitweb" showed "patch" link even for merge commits.
+
+ * "gitweb" showed incorrect links for blob line numbers in pathinfo mode.
+
+Other minor documentation updates are included.

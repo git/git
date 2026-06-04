@@ -1,0 +1,187 @@
+git-gc(1)
+=========
+
+NAME
+----
+git-gc - Cleanup unnecessary files and optimize the local repository
+
+
+SYNOPSIS
+--------
+[verse]
+'git gc' [--aggressive] [--auto] [--[no-]detach] [--quiet] [--prune=<date> | --no-prune] [--force] [--keep-largest-pack]
+
+DESCRIPTION
+-----------
+Runs a number of housekeeping tasks within the current repository,
+such as compressing file revisions (to reduce disk space and increase
+performance), removing unreachable objects which may have been
+created from prior invocations of 'git add', packing refs, pruning
+reflog, rerere metadata or stale working trees. May also update ancillary
+indexes such as the commit-graph.
+
+When common porcelain operations that create objects are run, they
+will check whether the repository has grown substantially since the
+last maintenance, and if so run `git gc` automatically. See `gc.auto`
+below for how to disable this behavior.
+
+Running `git gc` manually should only be needed when adding objects to
+a repository without regularly running such porcelain commands, to do
+a one-off repository optimization, or e.g. to clean up a suboptimal
+mass-import. See the "PACKFILE OPTIMIZATION" section in
+linkgit:git-fast-import[1] for more details on the import case.
+
+OPTIONS
+-------
+
+--aggressive::
+	Usually 'git gc' runs very quickly while providing good disk
+	space utilization and performance.  This option will cause
+	'git gc' to more aggressively optimize the repository at the expense
+	of taking much more time.  The effects of this optimization are
+	mostly persistent. See the "AGGRESSIVE" section below for details.
+
+--auto::
+	With this option, 'git gc' checks whether any housekeeping is
+	required; if not, it exits without performing any work.
++
+See the `gc.auto` option in the "CONFIGURATION" section below for how
+this heuristic works.
++
+Once housekeeping is triggered by exceeding the limits of
+configuration options such as `gc.auto` and `gc.autoPackLimit`, all
+other housekeeping tasks (e.g. rerere, working trees, reflog...) will
+be performed as well.
+
+--detach::
+--no-detach::
+	Run in the background if the system supports it. This option overrides
+	the `gc.autoDetach` config.
+
+--cruft::
+--no-cruft::
+	When expiring unreachable objects, pack them separately into a
+	cruft pack instead of storing them as loose objects. `--cruft`
+	is on by default.
+
+--max-cruft-size=<n>::
+	When packing unreachable objects into a cruft pack, limit the
+	size of new cruft packs to be at most `<n>` bytes. Overrides any
+	value specified via the `gc.maxCruftSize` configuration. See
+	the `--max-cruft-size` option of linkgit:git-repack[1] for
+	more.
+
+--expire-to=<dir>::
+	When packing unreachable objects into a cruft pack, write a cruft
+	pack containing pruned objects (if any) to the directory `<dir>`.
+	This option only has an effect when used together with `--cruft`.
+	See the `--expire-to` option of linkgit:git-repack[1] for
+	more information.
+
+--prune=<date>::
+	Prune loose objects older than date (default is 2 weeks ago,
+	overridable by the config variable `gc.pruneExpire`).
+	--prune=now prunes loose objects regardless of their age and
+	increases the risk of corruption if another process is writing to
+	the repository concurrently; see "NOTES" below. --prune is on by
+	default.
+
+--no-prune::
+	Do not prune any loose objects.
+
+--quiet::
+	Suppress all progress reports.
+
+--force::
+	Force `git gc` to run even if there may be another `git gc`
+	instance running on this repository.
+
+--keep-largest-pack::
+	All packs except the largest non-cruft pack, any packs marked
+	with a `.keep` file, and any cruft pack(s) are consolidated into
+	a single pack. When this option is used, `gc.bigPackThreshold`
+	is ignored.
+
+AGGRESSIVE
+----------
+
+When the `--aggressive` option is supplied, linkgit:git-repack[1] will
+be invoked with the `-f` flag, which in turn will pass
+`--no-reuse-delta` to linkgit:git-pack-objects[1]. This will throw
+away any existing deltas and re-compute them, at the expense of
+spending much more time on the repacking.
+
+The effects of this are mostly persistent, e.g. when packs and loose
+objects are coalesced into one another pack the existing deltas in
+that pack might get re-used, but there are also various cases where we
+might pick a sub-optimal delta from a newer pack instead.
+
+Furthermore, supplying `--aggressive` will tweak the `--depth` and
+`--window` options passed to linkgit:git-repack[1]. See the
+`gc.aggressiveDepth` and `gc.aggressiveWindow` settings below. By
+using a larger window size we're more likely to find more optimal
+deltas.
+
+It's probably not worth it to use this option on a given repository
+without running tailored performance benchmarks on it. It takes a lot
+more time, and the resulting space/delta optimization may or may not
+be worth it. Not using this at all is the right trade-off for most
+users and their repositories.
+
+CONFIGURATION
+-------------
+
+include::includes/cmd-config-section-all.adoc[]
+
+include::config/gc.adoc[]
+
+NOTES
+-----
+
+'git gc' tries very hard not to delete objects that are referenced
+anywhere in your repository. In particular, it will keep not only
+objects referenced by your current set of branches and tags, but also
+objects referenced by the index, remote-tracking branches, reflogs
+(which may reference commits in branches that were later amended or
+rewound), and anything else in the refs/* namespace. Note that a note
+(of the kind created by 'git notes') attached to an object does not
+contribute in keeping the object alive. If you are expecting some
+objects to be deleted and they aren't, check all of those locations
+and decide whether it makes sense in your case to remove those
+references.
+
+On the other hand, when 'git gc' runs concurrently with another process,
+there is a risk of it deleting an object that the other process is using
+but hasn't created a reference to. This may just cause the other process
+to fail or may corrupt the repository if the other process later adds a
+reference to the deleted object. Git has two features that significantly
+mitigate this problem:
+
+. Any object with modification time newer than the `--prune` date is kept,
+  along with everything reachable from it.
+
+. Most operations that add an object to the database update the
+  modification time of the object if it is already present so that #1
+  applies.
+
+However, these features fall short of a complete solution, so users who
+run commands concurrently have to live with some risk of corruption (which
+seems to be low in practice).
+
+HOOKS
+-----
+
+The 'git gc --auto' command will run the 'pre-auto-gc' hook.  See
+linkgit:githooks[5] for more information.
+
+
+SEE ALSO
+--------
+linkgit:git-prune[1]
+linkgit:git-reflog[1]
+linkgit:git-repack[1]
+linkgit:git-rerere[1]
+
+GIT
+---
+Part of the linkgit:git[1] suite

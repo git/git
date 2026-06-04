@@ -1,0 +1,34 @@
+Git 1.7.12.3 Release Notes
+==========================
+
+Fixes since v1.7.12.2
+---------------------
+
+ * "git am" mishandled a patch attached as application/octet-stream
+   (e.g. not text/*); Content-Transfer-Encoding (e.g. base64) was not
+   honored correctly.
+
+ * It was unclear in the documentation for "git blame" that it is
+   unnecessary for users to use the "--follow" option.
+
+ * A repository created with "git clone --single" had its fetch
+   refspecs set up just like a clone without "--single", leading the
+   subsequent "git fetch" to slurp all the other branches, defeating
+   the whole point of specifying "only this branch".
+
+ * "git fetch" over http had an old workaround for an unlikely server
+   misconfiguration; it turns out that this hurts debuggability of the
+   configuration in general, and has been reverted.
+
+ * "git fetch" over http advertised that it supports "deflate", which
+   is much less common, and did not advertise the more common "gzip" on
+   its Accept-Encoding header.
+
+ * "git receive-pack" (the counterpart to "git push") did not give
+   progress output while processing objects it received to the user
+   when run over the smart-http protocol.
+
+ * "git status" honored the ignore=dirty settings in .gitmodules but
+   "git commit" didn't.
+
+Also contains a handful of documentation updates.

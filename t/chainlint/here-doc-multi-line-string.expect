@@ -1,0 +1,7 @@
+2 (
+3 	cat <<-\TXT && echo "multi-line
+4 	string" ?!LINT: missing '&&'?!
+5 	fizzle
+6 	TXT
+7 	bap
+8 )

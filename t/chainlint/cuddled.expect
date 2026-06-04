@@ -1,0 +1,17 @@
+2 (cd foo &&
+3 	bar
+4 ) &&
+5 
+6 (cd foo ?!LINT: missing '&&'?!
+7 	bar
+8 ) &&
+9 
+10 (
+11 	cd foo &&
+12 	bar) &&
+13 
+14 (cd foo &&
+15 	bar) &&
+16 
+17 (cd foo ?!LINT: missing '&&'?!
+18 	bar)

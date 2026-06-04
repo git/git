@@ -1,0 +1,2148 @@
+# Bulgarian translation of git-gui po-file.
+# Copyright (C) 2012, 2013, 2014, 2015, 2016, 2024, 2025, 2026 Alexander Shopov <ash@kambanaria.org>.
+# This file is distributed under the same license as the git package.
+# Alexander Shopov <ash@kambanaria.org>, 2012, 2013, 2014, 2015, 2016, 2024, 2025, 2026.
+#
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: git-gui master\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-07-22 17:37+0200\n"
+"PO-Revision-Date: 2026-01-19 10:12+0100\n"
+"Last-Translator: Alexander Shopov <ash@kambanaria.org>\n"
+"Language-Team: Bulgarian <dict@fsa-bg.org>\n"
+"Language: bg\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#, tcl-format
+msgid "Invalid font specified in %s:"
+msgstr "Указан е неправилен шрифт в „%s“:"
+
+msgid "Main Font"
+msgstr "Основен шрифт"
+
+msgid "Diff/Console Font"
+msgstr "Шрифт за разликите/конзолата"
+
+msgid "git-gui: fatal error"
+msgstr "git-gui: фатална грешка"
+
+msgid "Cannot find git in PATH."
+msgstr "Командата git липсва в пътя (PATH)."
+
+msgid "Cannot parse Git version string:"
+msgstr "Низът с версията на Git не може да се анализира:"
+
+msgid "Insufficient git version, require: "
+msgstr "Прекалено ниска версия на git, необходима е поне: "
+
+msgid "git returned:"
+msgstr "git върна:"
+
+msgid "Git directory not found:"
+msgstr "Директорията на Git не е открита:"
+
+msgid "Cannot move to top of working directory:"
+msgstr "Не може да се премине към родителската директория."
+
+msgid "Cannot use bare repository:"
+msgstr "Голо хранилище не може да се използва:"
+
+msgid "No working directory"
+msgstr "Работната директория липсва"
+
+msgid "Refreshing file status..."
+msgstr "Обновяване на състоянието на файла…"
+
+msgid "Scanning for modified files ..."
+msgstr "Проверка за променени файлове…"
+
+msgid "Calling prepare-commit-msg hook..."
+msgstr "Куката „prepare-commit-msg“ се изпълнява в момента…"
+
+msgid "Commit declined by prepare-commit-msg hook."
+msgstr "Подаването е отхвърлено от куката „prepare-commit-msg“."
+
+msgid "Ready."
+msgstr "Готово."
+
+#, tcl-format
+msgid ""
+"Display limit (gui.maxfilesdisplayed = %s) reached, not showing all %s files."
+msgstr ""
+"Достигнат е максималният размер на списъка за "
+"извеждане(gui.maxfilesdisplayed = %s), съответно не са показани всички %s "
+"файла."
+
+msgid "Unmodified"
+msgstr "Непроменен"
+
+msgid "Modified, not staged"
+msgstr "Променен, но не е в индекса"
+
+msgid "Staged for commit"
+msgstr "В индекса за подаване"
+
+msgid "Portions staged for commit"
+msgstr "Части са в индекса за подаване"
+
+msgid "Staged for commit, missing"
+msgstr "В индекса за подаване, но липсва"
+
+msgid "File type changed, not staged"
+msgstr "Видът на файла е сменен, но не е в индекса"
+
+msgid "File type changed, old type staged for commit"
+msgstr "Видът на файла е сменен, но новият вид не е в индекса"
+
+msgid "File type changed, staged"
+msgstr "Видът на файла е сменен и е в индекса"
+
+msgid "File type change staged, modification not staged"
+msgstr "Видът на файла е сменен в индекса, но не и съдържанието"
+
+msgid "File type change staged, file missing"
+msgstr "Видът на файла е сменен в индекса, но файлът липсва"
+
+msgid "Untracked, not staged"
+msgstr "Неследен"
+
+msgid "Missing"
+msgstr "Липсващ"
+
+msgid "Staged for removal"
+msgstr "В индекса за изтриване"
+
+msgid "Staged for removal, still present"
+msgstr "В индекса за изтриване, но още го има"
+
+msgid "Requires merge resolution"
+msgstr "Изисква коригиране при сливане"
+
+msgid "Couldn't find gitk in PATH"
+msgstr "Командата „gitk“ липсва в пътищата, определени от променливата PATH."
+
+#, tcl-format
+msgid "Starting %s... please wait..."
+msgstr "Стартиране на „%s“…, изчакайте…"
+
+msgid "Couldn't find git gui in PATH"
+msgstr ""
+"Командата „git gui“ липсва в пътищата, определени от променливата PATH."
+
+msgid "Repository"
+msgstr "Хранилище"
+
+msgid "Edit"
+msgstr "Редактиране"
+
+msgid "Branch"
+msgstr "Клон"
+
+msgid "Commit@@noun"
+msgstr "Подаване"
+
+msgid "Merge"
+msgstr "Сливане"
+
+msgid "Remote"
+msgstr "Отдалечено хранилище"
+
+msgid "Tools"
+msgstr "Команди"
+
+msgid "Explore Working Copy"
+msgstr "Разглеждане на работното копие"
+
+msgid "Git Bash"
+msgstr "Bash за Git"
+
+msgid "Browse Current Branch's Files"
+msgstr "Разглеждане на файловете в текущия клон"
+
+msgid "Browse Branch Files..."
+msgstr "Разглеждане на текущия клон…"
+
+msgid "Visualize Current Branch's History"
+msgstr "Визуализация на историята на текущия клон"
+
+msgid "Visualize All Branch History"
+msgstr "Визуализация на историята на всички клонове"
+
+#, tcl-format
+msgid "Browse %s's Files"
+msgstr "Разглеждане на файловете в „%s“"
+
+#, tcl-format
+msgid "Visualize %s's History"
+msgstr "Визуализация на историята на „%s“"
+
+msgid "Database Statistics"
+msgstr "Статистика на базата от данни"
+
+msgid "Compress Database"
+msgstr "Компресиране на базата от данни"
+
+msgid "Verify Database"
+msgstr "Проверка на базата от данни"
+
+msgid "Create Desktop Icon"
+msgstr "Добавяне на икона на работния плот"
+
+msgid "Quit"
+msgstr "Спиране на програмата"
+
+msgid "Undo"
+msgstr "Отмяна"
+
+msgid "Redo"
+msgstr "Повторение"
+
+msgid "Cut"
+msgstr "Отрязване"
+
+msgid "Copy"
+msgstr "Копиране"
+
+msgid "Paste"
+msgstr "Поставяне"
+
+msgid "Delete"
+msgstr "Изтриване"
+
+msgid "Select All"
+msgstr "Избиране на всичко"
+
+msgid "Create..."
+msgstr "Създаване…"
+
+msgid "Checkout..."
+msgstr "Изтегляне…"
+
+msgid "Rename..."
+msgstr "Преименуване…"
+
+msgid "Delete..."
+msgstr "Изтриване…"
+
+msgid "Reset..."
+msgstr "Отмяна на промѐните…"
+
+msgid "Done"
+msgstr "Готово"
+
+msgid "Commit@@verb"
+msgstr "Подаване"
+
+msgid "Amend Last Commit"
+msgstr "Поправяне на последното подаване"
+
+msgid "Rescan"
+msgstr "Обновяване"
+
+msgid "Stage To Commit"
+msgstr "Към индекса за подаване"
+
+msgid "Stage Changed Files To Commit"
+msgstr "Всички променени файлове към индекса за подаване"
+
+msgid "Unstage From Commit"
+msgstr "Изваждане от индекса за подаване"
+
+msgid "Revert Changes"
+msgstr "Връщане на оригинала"
+
+msgid "Show Less Context"
+msgstr "По-малко контекст"
+
+msgid "Show More Context"
+msgstr "Повече контекст"
+
+msgid "Sign Off"
+msgstr "Подписване"
+
+msgid "Local Merge..."
+msgstr "Локално сливане…"
+
+msgid "Abort Merge..."
+msgstr "Преустановяване на сливане…"
+
+msgid "Add..."
+msgstr "Добавяне…"
+
+msgid "Push..."
+msgstr "Изтласкване…"
+
+msgid "Delete Branch..."
+msgstr "Изтриване на клон…"
+
+msgid "Options..."
+msgstr "Опции…"
+
+msgid "Remove..."
+msgstr "Премахване…"
+
+msgid "Help"
+msgstr "Помощ"
+
+#, tcl-format
+msgid "About %s"
+msgstr "Относно „%s“"
+
+msgid "Online Documentation"
+msgstr "Документация в Интернет"
+
+msgid "Show SSH Key"
+msgstr "Показване на ключа за SSH"
+
+msgid "usage:"
+msgstr "употреба:"
+
+msgid "Usage"
+msgstr "Употреба"
+
+msgid "Error"
+msgstr "Грешка"
+
+#, tcl-format
+msgid "fatal: cannot stat path %s: No such file or directory"
+msgstr "ФАТАЛНА ГРЕШКА: пътят „%s“ липсва: такъв файл или директория няма"
+
+msgid "Current Branch:"
+msgstr "Текущ клон:"
+
+msgid "Unstaged Changes"
+msgstr "Промени извън индекса"
+
+msgid "Staged Changes (Will Commit)"
+msgstr "Промени в индекса (за подаване)"
+
+msgid "Stage Changed"
+msgstr "Добавяне към индекса"
+
+msgid "Push"
+msgstr "Изтласкване"
+
+msgid "Initial Commit Message:"
+msgstr "Първоначално съобщение при подаване:"
+
+msgid "Amended Commit Message:"
+msgstr "Поправено съобщение при подаване:"
+
+msgid "Amended Initial Commit Message:"
+msgstr "Поправено първоначално съобщение при подаване:"
+
+msgid "Amended Merge Commit Message:"
+msgstr "Поправено съобщение при подаване със сливане:"
+
+msgid "Merge Commit Message:"
+msgstr "Съобщение при подаване със сливане:"
+
+msgid "Commit Message:"
+msgstr "Съобщение при подаване:"
+
+msgid "Copy All"
+msgstr "Копиране на всичко"
+
+msgid "File:"
+msgstr "Файл:"
+
+msgid "Open"
+msgstr "Отваряне"
+
+msgid "Refresh"
+msgstr "Обновяване"
+
+msgid "Decrease Font Size"
+msgstr "По-дребен шрифт"
+
+msgid "Increase Font Size"
+msgstr "По-едър шрифт"
+
+msgid "Encoding"
+msgstr "Кодиране"
+
+msgid "Apply/Reverse Hunk"
+msgstr "Прилагане/връщане на парче"
+
+msgid "Apply/Reverse Line"
+msgstr "Прилагане/връщане на ред"
+
+msgid "Revert Hunk"
+msgstr "Връщане на парче"
+
+msgid "Revert Line"
+msgstr "Връщане на ред"
+
+msgid "Undo Last Revert"
+msgstr "Отмяна на последното връщане"
+
+msgid "Run Merge Tool"
+msgstr "Изпълнение на програмата за сливане"
+
+msgid "Use Remote Version"
+msgstr "Версия от отдалеченото хранилище"
+
+msgid "Use Local Version"
+msgstr "Локална версия"
+
+msgid "Revert To Base"
+msgstr "Връщане към родителската версия"
+
+msgid "Visualize These Changes In The Submodule"
+msgstr "Визуализиране на промѐните в подмодула"
+
+msgid "Visualize Current Branch History In The Submodule"
+msgstr "Визуализация на историята на текущия клон в историята за подмодула"
+
+msgid "Visualize All Branch History In The Submodule"
+msgstr "Визуализация на историята на всички клони в историята за подмодула"
+
+msgid "Start git gui In The Submodule"
+msgstr "Стартиране на „git gui“ за подмодула"
+
+msgid "Unstage Hunk From Commit"
+msgstr "Изваждане на парчето от подаването"
+
+msgid "Unstage Lines From Commit"
+msgstr "Изваждане на редовете от подаването"
+
+msgid "Revert Lines"
+msgstr "Връщане на редовете"
+
+msgid "Unstage Line From Commit"
+msgstr "Изваждане на реда от подаването"
+
+msgid "Stage Hunk For Commit"
+msgstr "Добавяне на парчето за подаване"
+
+msgid "Stage Lines For Commit"
+msgstr "Добавяне на редовете за подаване"
+
+msgid "Stage Line For Commit"
+msgstr "Добавяне на реда за подаване"
+
+msgid "Initializing..."
+msgstr "Инициализиране…"
+
+msgid "git-gui - a graphical user interface for Git."
+msgstr "git-gui — графичен интерфейс за Git."
+
+#, tcl-format
+msgid "%s (%s): File Viewer"
+msgstr "%s (%s): Преглед на файлове"
+
+msgid "Commit:"
+msgstr "Подаване:"
+
+msgid "Copy Commit"
+msgstr "Копиране на подаване"
+
+msgid "Find Text..."
+msgstr "Търсене на текст…"
+
+msgid "Goto Line..."
+msgstr "Към ред…"
+
+msgid "Do Full Copy Detection"
+msgstr "Пълно търсене на копиране"
+
+msgid "Show History Context"
+msgstr "Показване на контекста от историята"
+
+msgid "Blame Parent Commit"
+msgstr "Анотиране на родителското подаване"
+
+#, tcl-format
+msgid "Reading %s..."
+msgstr "Чете се „%s“…"
+
+msgid "Loading copy/move tracking annotations..."
+msgstr "Зареждане на анотациите за проследяване на копирането/преместването…"
+
+msgid "lines annotated"
+msgstr "реда анотирани"
+
+msgid "Loading original location annotations..."
+msgstr "Зареждане на анотациите за първоначалното местоположение…"
+
+msgid "Annotation complete."
+msgstr "Анотирането завърши."
+
+msgid "Busy"
+msgstr "Операцията не е завършила"
+
+msgid "Annotation process is already running."
+msgstr "В момента тече процес на анотиране."
+
+msgid "Running thorough copy detection..."
+msgstr "Изпълнява се цялостен процес на откриване на копиране…"
+
+msgid "Loading annotation..."
+msgstr "Зареждане на анотации…"
+
+msgid "Author:"
+msgstr "Автор:"
+
+msgid "Committer:"
+msgstr "Подал:"
+
+msgid "Original File:"
+msgstr "Първоначален файл:"
+
+msgid "Cannot find HEAD commit:"
+msgstr "Подаването за връх „HEAD“ не може да се открие:"
+
+msgid "Cannot find parent commit:"
+msgstr "Родителското подаване не може да се открие"
+
+msgid "Unable to display parent"
+msgstr "Родителят не може да се покаже"
+
+msgid "Error loading diff:"
+msgstr "Грешка при зареждане на разлика:"
+
+msgid "Originally By:"
+msgstr "Първоначално от:"
+
+msgid "In File:"
+msgstr "Във файл:"
+
+msgid "Copied Or Moved Here By:"
+msgstr "Копирано или преместено тук от:"
+
+#, tcl-format
+msgid "%s (%s): Checkout Branch"
+msgstr "%s (%s): Клон за изтегляне"
+
+msgid "Checkout Branch"
+msgstr "Клон за изтегляне"
+
+msgid "Checkout"
+msgstr "Изтегляне"
+
+msgid "Cancel"
+msgstr "Отказване"
+
+msgid "Revision"
+msgstr "Версия"
+
+msgid "Options"
+msgstr "Опции"
+
+msgid "Fetch Tracking Branch"
+msgstr "Изтегляне на промѐните от следения клон"
+
+msgid "Detach From Local Branch"
+msgstr "Изтриване от локалния клон"
+
+#, tcl-format
+msgid "%s (%s): Create Branch"
+msgstr "%s (%s): Създаване на клон"
+
+msgid "Create New Branch"
+msgstr "Създаване на нов клон"
+
+msgid "Create"
+msgstr "Създаване"
+
+msgid "Branch Name"
+msgstr "Име на клона"
+
+msgid "Name:"
+msgstr "Име:"
+
+msgid "Match Tracking Branch Name"
+msgstr "Съвпадане по името на следения клон"
+
+msgid "Starting Revision"
+msgstr "Начална версия"
+
+msgid "Update Existing Branch:"
+msgstr "Обновяване на съществуващ клон:"
+
+msgid "No"
+msgstr "Не"
+
+msgid "Fast Forward Only"
+msgstr "Само тривиално превъртащо сливане"
+
+msgid "Reset"
+msgstr "Отначало"
+
+msgid "Checkout After Creation"
+msgstr "Преминаване към клона след създаването му"
+
+msgid "Please select a tracking branch."
+msgstr "Изберете клон за следени."
+
+#, tcl-format
+msgid "Tracking branch %s is not a branch in the remote repository."
+msgstr "Следящият клон — „%s“, не съществува в отдалеченото хранилище."
+
+msgid "Please supply a branch name."
+msgstr "Дайте име на клона."
+
+#, tcl-format
+msgid "'%s' is not an acceptable branch name."
+msgstr "„%s“ не може да се използва за име на клон."
+
+#, tcl-format
+msgid "%s (%s): Delete Branch"
+msgstr "%s (%s): Изтриване на клон"
+
+msgid "Delete Local Branch"
+msgstr "Изтриване на локален клон"
+
+msgid "Local Branches"
+msgstr "Локални клони"
+
+msgid "Delete Only If Merged Into"
+msgstr "Изтриване, само ако промѐните са слети и другаде"
+
+msgid "Always (Do not perform merge checks)"
+msgstr "Винаги (без проверка за сливане)"
+
+#, tcl-format
+msgid "The following branches are not completely merged into %s:"
+msgstr "Не всички промѐни в клоните са слети в „%s“:"
+
+msgid ""
+"Recovering deleted branches is difficult.\n"
+"\n"
+"Delete the selected branches?"
+msgstr ""
+"Възстановяването на изтрити клони може да е трудно.\n"
+"\n"
+"Сигурни ли сте, че искате да триете?"
+
+#, tcl-format
+msgid " - %s:"
+msgstr " — „%s:“"
+
+#, tcl-format
+msgid ""
+"Failed to delete branches:\n"
+"%s"
+msgstr ""
+"Неуспешно триене на клони:\n"
+"%s"
+
+#, tcl-format
+msgid "%s (%s): Rename Branch"
+msgstr "%s (%s): Преименуване на клон"
+
+msgid "Rename Branch"
+msgstr "Преименуване на клон"
+
+msgid "Rename"
+msgstr "Преименуване"
+
+msgid "Branch:"
+msgstr "Клон:"
+
+msgid "New Name:"
+msgstr "Ново име:"
+
+msgid "Please select a branch to rename."
+msgstr "Изберете клон за преименуване."
+
+#, tcl-format
+msgid "Branch '%s' already exists."
+msgstr "Клонът „%s“ вече съществува."
+
+#, tcl-format
+msgid "Failed to rename '%s'."
+msgstr "Неуспешно преименуване на „%s“."
+
+msgid "Starting..."
+msgstr "Стартиране…"
+
+#, tcl-format
+msgid "%s (%s): File Browser"
+msgstr "%s (%s): Файлов браузър"
+
+#, tcl-format
+msgid "Loading %s..."
+msgstr "Зареждане на „%s“…"
+
+msgid "[Up To Parent]"
+msgstr "[Към родителя]"
+
+#, tcl-format
+msgid "%s (%s): Browse Branch Files"
+msgstr "%s (%s): Разглеждане на файловете в клона"
+
+msgid "Browse Branch Files"
+msgstr "Разглеждане на файловете в клона"
+
+msgid "Browse"
+msgstr "Разглеждане"
+
+#, tcl-format
+msgid "Fetching %s from %s"
+msgstr "Доставяне на „%s“ от „%s“"
+
+#, tcl-format
+msgid "fatal: Cannot resolve %s"
+msgstr "фатална грешка: „%s“ не може да се открие"
+
+msgid "Close"
+msgstr "Затваряне"
+
+#, tcl-format
+msgid "Branch '%s' does not exist."
+msgstr "Клонът „%s“ не съществува."
+
+#, tcl-format
+msgid "Failed to configure simplified git-pull for '%s'."
+msgstr "Неуспешно настройване на опростен git-pull за „%s“."
+
+#, tcl-format
+msgid ""
+"Branch '%s' already exists.\n"
+"\n"
+"It cannot fast-forward to %s.\n"
+"A merge is required."
+msgstr ""
+"Клонът „%s“ съществува.\n"
+"\n"
+"Той не може да се слее тривиално до „%s“.\n"
+"Необходимо е сливане."
+
+#, tcl-format
+msgid "Merge strategy '%s' not supported."
+msgstr "Стратегия за сливане „%s“ не се поддържа."
+
+#, tcl-format
+msgid "Failed to update '%s'."
+msgstr "Неуспешно обновяване на „%s“."
+
+msgid "Staging area (index) is already locked."
+msgstr "Индексът вече е заключен."
+
+msgid ""
+"Last scanned state does not match repository state.\n"
+"\n"
+"Another Git program has modified this repository since the last scan.  A "
+"rescan must be performed before the current branch can be changed.\n"
+"\n"
+"The rescan will be automatically started now.\n"
+msgstr ""
+"Състоянието при последната проверка не отговаря на състоянието на "
+"хранилището.\n"
+"\n"
+"Някой друг процес за Git е променил хранилището междувременно. Състоянието "
+"трябва да се провери, преди да се премине към нов клон.\n"
+"\n"
+"Автоматично ще започне нова проверка.\n"
+
+#, tcl-format
+msgid "Updating working directory to '%s'..."
+msgstr "Работната директория се привежда към „%s“…"
+
+msgid "files checked out"
+msgstr "файла са изтеглени"
+
+#, tcl-format
+msgid "Aborted checkout of '%s' (file level merging is required)."
+msgstr ""
+"Преустановяване на изтеглянето на „%s“ (необходимо е пофайлово сливане)."
+
+msgid "File level merge required."
+msgstr "Необходимо е пофайлово сливане."
+
+#, tcl-format
+msgid "Staying on branch '%s'."
+msgstr "Оставане върху клона „%s“."
+
+msgid ""
+"You are no longer on a local branch.\n"
+"\n"
+"If you wanted to be on a branch, create one now starting from 'This Detached "
+"Checkout'."
+msgstr ""
+"Вече не сте на локален клон.\n"
+"\n"
+"Ако искате да сте на клон, създайте базиран на „Това несвързано изтегляне“."
+
+#, tcl-format
+msgid "Checked out '%s'."
+msgstr "„%s“ е изтеглен."
+
+#, tcl-format
+msgid "Resetting '%s' to '%s' will lose the following commits:"
+msgstr ""
+"Зануляването на „%s“ към „%s“ ще доведе до загубването на следните подавания:"
+
+msgid "Recovering lost commits may not be easy."
+msgstr "Възстановяването на загубените подавания може да е трудно."
+
+#, tcl-format
+msgid "Reset '%s'?"
+msgstr "Зануляване на „%s“?"
+
+msgid "Visualize"
+msgstr "Визуализация"
+
+#, tcl-format
+msgid ""
+"Failed to set current branch.\n"
+"\n"
+"This working directory is only partially switched.  We successfully updated "
+"your files, but failed to update an internal Git file.\n"
+"\n"
+"This should not have occurred.  %s will now close and give up."
+msgstr ""
+"Неуспешно задаване на текущия клон.\n"
+"\n"
+"Работната директория е само частично обновена: файловете са обновени "
+"успешно, но някой от вътрешните, служебни файлове на Git не е бил.\n"
+"\n"
+"Това състояние е аварийно и не трябва да се случва. Програмата „%s“ ще "
+"преустанови работа."
+
+msgid "Select"
+msgstr "Избор"
+
+msgid "Font Family"
+msgstr "Шрифт"
+
+msgid "Font Size"
+msgstr "Размер"
+
+msgid "Font Example"
+msgstr "Мостра"
+
+msgid ""
+"This is example text.\n"
+"If you like this text, it can be your font."
+msgstr ""
+"Това е примерен текст.\n"
+"Ако ви харесва как изглежда, изберете шрифта."
+
+msgid "Git Gui"
+msgstr "ГПИ на Git"
+
+msgid "Create New Repository"
+msgstr "Създаване на ново хранилище"
+
+msgid "New..."
+msgstr "Ново…"
+
+msgid "Clone Existing Repository"
+msgstr "Клониране на съществуващо хранилище"
+
+msgid "Clone..."
+msgstr "Клониране…"
+
+msgid "Open Existing Repository"
+msgstr "Отваряне на съществуващо хранилище"
+
+msgid "Open..."
+msgstr "Отваряне…"
+
+msgid "Recent Repositories"
+msgstr "Скоро ползвани"
+
+msgid "Open Recent Repository:"
+msgstr "Отваряне на хранилище ползвано наскоро:"
+
+#, tcl-format
+msgid "Failed to create repository %s:"
+msgstr "Неуспешно създаване на хранилището „%s“:"
+
+msgid "Directory:"
+msgstr "Директория:"
+
+msgid "Git Repository"
+msgstr "Хранилище на Git"
+
+#, tcl-format
+msgid "Directory %s already exists."
+msgstr "Вече съществува директория „%s“."
+
+#, tcl-format
+msgid "File %s already exists."
+msgstr "Вече съществува файл „%s“."
+
+msgid "Clone"
+msgstr "Клониране"
+
+msgid "Source Location:"
+msgstr "Адрес на източника:"
+
+msgid "Target Directory:"
+msgstr "Целева директория:"
+
+msgid "Clone Type:"
+msgstr "Вид клониране:"
+
+msgid "Standard (Fast, Semi-Redundant, Hardlinks)"
+msgstr "Стандартно (бързо, частично споделяне на файлове, твърди връзки)"
+
+msgid "Full Copy (Slower, Redundant Backup)"
+msgstr "Пълно (бавно, пълноценно резервно копие)"
+
+msgid "Shared (Fastest, Not Recommended, No Backup)"
+msgstr "Споделено (най-бързо, не се препоръчва, не прави резервно копие)"
+
+msgid "Recursively clone submodules too"
+msgstr "Рекурсивно клониране и на подмодулите"
+
+#, tcl-format
+msgid "Not a Git repository: %s"
+msgstr "Това не е хранилище на Git: %s"
+
+msgid "Hardlinks are unavailable.  Falling back to copying."
+msgstr "Не се поддържат твърди връзки. Преминава се към копиране."
+
+msgid "Standard only available for local repository."
+msgstr "Само локални хранилища може да се клонират стандартно"
+
+msgid "Shared only available for local repository."
+msgstr "Само локални хранилища може да се клонират споделено"
+
+#, tcl-format
+msgid "Location %s already exists."
+msgstr "Местоположението „%s“ вече съществува."
+
+#, tcl-format
+msgid "Cloning from %s"
+msgstr "Клониране на „%s“"
+
+msgid "Clone failed."
+msgstr "Неуспешно клониране."
+
+msgid "Repository:"
+msgstr "Хранилище:"
+
+#, tcl-format
+msgid "Failed to open repository %s:"
+msgstr "Неуспешно отваряне на хранилището „%s“:"
+
+msgid "This Detached Checkout"
+msgstr "Това несвързано изтегляне"
+
+msgid "Revision Expression:"
+msgstr "Израз за версия:"
+
+msgid "Local Branch"
+msgstr "Локален клон"
+
+msgid "Tracking Branch"
+msgstr "Следящ клон"
+
+msgid "Tag"
+msgstr "Етикет"
+
+#, tcl-format
+msgid "Invalid revision: %s"
+msgstr "Неправилна версия: %s"
+
+msgid "No revision selected."
+msgstr "Не е избрана версия."
+
+msgid "Revision expression is empty."
+msgstr "Изразът за версия е празен."
+
+msgid "Updated"
+msgstr "Обновен"
+
+msgid "URL"
+msgstr "Адрес"
+
+msgid ""
+"There is nothing to amend.\n"
+"\n"
+"You are about to create the initial commit.  There is no commit before this "
+"to amend.\n"
+msgstr ""
+"Няма какво да се поправи.\n"
+"\n"
+"Ще създадете първоначалното подаване. Преди него няма други подавания, които "
+"да поправите.\n"
+
+msgid ""
+"Cannot amend while merging.\n"
+"\n"
+"You are currently in the middle of a merge that has not been fully "
+"completed.  You cannot amend the prior commit unless you first abort the "
+"current merge activity.\n"
+msgstr ""
+"По време на сливане не може да поправяте.\n"
+"\n"
+"В момента все още не сте завършили операция по сливане. Не може да поправите "
+"предишното подаване, освен ако първо не преустановите текущото сливане.\n"
+
+msgid "Error loading commit data for amend:"
+msgstr "Грешка при зареждане на данните от подаване, които да се поправят:"
+
+msgid "Unable to obtain your identity:"
+msgstr "Идентификацията ви не може да се определи:"
+
+msgid "Invalid GIT_COMMITTER_IDENT:"
+msgstr "Неправилно поле „GIT_COMMITTER_IDENT“:"
+
+#, tcl-format
+msgid "warning: Tcl does not support encoding '%s'."
+msgstr "предупреждение: Tcl не поддържа кодирането „%s“."
+
+msgid ""
+"Last scanned state does not match repository state.\n"
+"\n"
+"Another Git program has modified this repository since the last scan.  A "
+"rescan must be performed before another commit can be created.\n"
+"\n"
+"The rescan will be automatically started now.\n"
+msgstr ""
+"Състоянието при последната проверка не отговаря на състоянието на "
+"хранилището.\n"
+"\n"
+"Някой друг процес за Git е променил хранилището междувременно. Състоянието "
+"трябва да се провери преди ново подаване.\n"
+"\n"
+"Автоматично ще започне нова проверка.\n"
+
+#, tcl-format
+msgid ""
+"Unmerged files cannot be committed.\n"
+"\n"
+"File %s has merge conflicts.  You must resolve them and stage the file "
+"before committing.\n"
+msgstr ""
+"Неслетите файлове не може да се подадат.\n"
+"\n"
+"Във файла „%s“ има конфликти при сливане. За да го подадете, трябва първо да "
+"коригирате конфликтите и да добавите файла към индекса за подаване.\n"
+
+#, tcl-format
+msgid ""
+"Unknown file state %s detected.\n"
+"\n"
+"File %s cannot be committed by this program.\n"
+msgstr ""
+"Непознато състояние на файл „%s“.\n"
+"\n"
+"Файлът „%s“ не може да се подаде чрез текущата програма.\n"
+
+msgid ""
+"No changes to commit.\n"
+"\n"
+"You must stage at least 1 file before you can commit.\n"
+msgstr ""
+"Няма промѐни за подаване.\n"
+"\n"
+"Трябва да добавите поне един файл към индекса, за да подадете.\n"
+
+msgid "Calling pre-commit hook..."
+msgstr "Изпълняване на куката преди подаване…"
+
+msgid "Commit declined by pre-commit hook."
+msgstr "Подаването е отхвърлено от куката преди подаване."
+
+msgid ""
+"You are about to commit on a detached head. This is a potentially dangerous "
+"thing to do because if you switch to another branch you will lose your "
+"changes and it can be difficult to retrieve them later from the reflog. You "
+"should probably cancel this commit and create a new branch to continue.\n"
+" \n"
+" Do you really want to proceed with your Commit?"
+msgstr ""
+"Ще подадете към несвързан, отделѐн указател „HEAD“. Това е опасно, защото "
+"при преминаването към клон ще загубите промѐните си, като единственият начин "
+"да ги върнете ще е чрез журнала на указателите (reflog). Най-вероятно трябва "
+"да не правите това подаване, а да създадете нов клон, преди да продължите.\n"
+" \n"
+"Сигурни ли сте, че искате да извършите текущото подаване?"
+
+msgid "Calling commit-msg hook..."
+msgstr "Изпълняване на куката за съобщението при подаване…"
+
+msgid "Commit declined by commit-msg hook."
+msgstr "Подаването е отхвърлено от куката за съобщението при подаване."
+
+msgid ""
+"Please supply a commit message.\n"
+"\n"
+"A good commit message has the following format:\n"
+"\n"
+"- First line: Describe in one sentence what you did.\n"
+"- Second line: Blank\n"
+"- Remaining lines: Describe why this change is good.\n"
+msgstr ""
+"Задайте добро съобщение при подаване.\n"
+"\n"
+"Използвайте следния формат:\n"
+"\n"
+"● Първи ред: описание в едно изречение на промяната.\n"
+"● Втори ред: празен.\n"
+"● Останалите редове: опишете защо се налага тази промяна.\n"
+
+msgid "Committing changes..."
+msgstr "Подаване на промѐните…"
+
+msgid "write-tree failed:"
+msgstr "неуспешно запазване на дървото (write-tree):"
+
+msgid "Commit failed."
+msgstr "Неуспешно подаване."
+
+#, tcl-format
+msgid "Commit %s appears to be corrupt"
+msgstr "Подаването „%s“ изглежда повредено"
+
+msgid ""
+"No changes to commit.\n"
+"\n"
+"No files were modified by this commit and it was not a merge commit.\n"
+"\n"
+"A rescan will be automatically started now.\n"
+msgstr ""
+"Няма промѐни за подаване.\n"
+"\n"
+"В това подаване не са променяни никакви файлове, а и не е подаване със "
+"сливане.\n"
+"\n"
+"Автоматично ще започне нова проверка.\n"
+
+msgid "No changes to commit."
+msgstr "Няма промѐни за подаване."
+
+msgid "commit-tree failed:"
+msgstr "неуспешно подаване на дървото (commit-tree):"
+
+msgid "update-ref failed:"
+msgstr "неуспешно обновяване на указателите (update-ref):"
+
+#, tcl-format
+msgid "Created commit %s: %s"
+msgstr "Успешно подаване %s: %s"
+
+msgid "Working... please wait..."
+msgstr "В момента се извършва действие, изчакайте…"
+
+msgid "Success"
+msgstr "Успех"
+
+msgid "Error: Command Failed"
+msgstr "Грешка: неуспешно изпълнение на команда"
+
+msgid "Number of loose objects"
+msgstr "Брой непакетирани обекти"
+
+msgid "Disk space used by loose objects"
+msgstr "Дисково пространство заето от непакетирани обекти"
+
+msgid "Number of packed objects"
+msgstr "Брой пакетирани обекти"
+
+msgid "Number of packs"
+msgstr "Брой пакети"
+
+msgid "Disk space used by packed objects"
+msgstr "Дисково пространство заето от пакетирани обекти"
+
+msgid "Packed objects waiting for pruning"
+msgstr "Пакетирани обекти за окастряне"
+
+msgid "Garbage files"
+msgstr "Файлове за боклука"
+
+#, tcl-format
+msgid "%s:"
+msgstr "%s:"
+
+#, tcl-format
+msgid "%s (%s): Database Statistics"
+msgstr "%s (%s): Статистика на базата от данни"
+
+msgid "Compressing the object database"
+msgstr "Компресиране на базата с данни за обектите"
+
+msgid "Verifying the object database with fsck-objects"
+msgstr "Проверка на базата с данни за обектите с програмата „fsck-objects“"
+
+#, tcl-format
+msgid ""
+"This repository currently has approximately %i loose objects.\n"
+"\n"
+"To maintain optimal performance it is strongly recommended that you compress "
+"the database.\n"
+"\n"
+"Compress the database now?"
+msgstr ""
+"В това хранилище в момента има към %i непакетирани обекти.\n"
+"\n"
+"За добра производителност се препоръчва да компресирате базата с данни за "
+"обектите.\n"
+"\n"
+"Да се започне ли компресирането?"
+
+#, tcl-format
+msgid "Invalid date from Git: %s"
+msgstr "Неправилни данни от Git: %s"
+
+msgid ""
+"* No differences detected; stage the file to de-list it from Unstaged "
+"Changes.\n"
+msgstr ""
+"● Няма разлики. Добавете файла към индекса, за да се извади от промѐните "
+"извън индекса.\n"
+
+msgid "* Click to find other files that may have the same state.\n"
+msgstr "● Натиснете, за да потърсите други файлове в това състояние.\n"
+
+#, tcl-format
+msgid "Loading diff of %s..."
+msgstr "Зареждане на разликите в „%s“…"
+
+msgid ""
+"LOCAL: deleted\n"
+"REMOTE:\n"
+msgstr ""
+"ЛОКАЛНО: изтрит\n"
+"ОТДАЛЕЧЕНО:\n"
+
+msgid ""
+"REMOTE: deleted\n"
+"LOCAL:\n"
+msgstr ""
+"ОТДАЛЕЧЕНО: изтрит\n"
+"ЛОКАЛНО:\n"
+
+msgid "LOCAL:\n"
+msgstr "ЛОКАЛНО:\n"
+
+msgid "REMOTE:\n"
+msgstr "ОТДАЛЕЧЕНО:\n"
+
+#, tcl-format
+msgid "Unable to display %s"
+msgstr "Файлът „%s“ не може да се покаже"
+
+msgid "Error loading file:"
+msgstr "Грешка при зареждане на файл:"
+
+msgid "Git Repository (subproject)"
+msgstr "Хранилище на Git (подмодул)"
+
+msgid "* Binary file (not showing content)."
+msgstr "● Двоичен файл (съдържанието не се показва)."
+
+#, tcl-format
+msgid ""
+"* Untracked file is %d bytes.\n"
+"* Showing only first %d bytes.\n"
+msgstr ""
+"● Неследеният файл е %d байта.\n"
+"● Показват се само първите %d байта.\n"
+
+#, tcl-format
+msgid ""
+"\n"
+"* Untracked file clipped here by %s.\n"
+"* To see the entire file, use an external editor.\n"
+msgstr ""
+"\n"
+"● Неследеният файл е отрязан дотук от програмата „%s“.\n"
+"● Използвайте външен редактор, за да видите целия файл.\n"
+
+msgid "Failed to unstage selected hunk."
+msgstr "Избраното парче не може да се извади от индекса."
+
+msgid "Failed to revert selected hunk."
+msgstr "Избраното парче не може да се върне."
+
+msgid "Failed to stage selected hunk."
+msgstr "Избраното парче не може да се добави към индекса."
+
+msgid "Failed to unstage selected line."
+msgstr "Избраният ред не може да се извади от индекса."
+
+msgid "Failed to revert selected line."
+msgstr "Избраният ред не може да се върне."
+
+msgid "Failed to stage selected line."
+msgstr "Избраният ред не може да се добави към индекса."
+
+msgid "Failed to undo last revert."
+msgstr "Неуспешна отмяна на последното връщане."
+
+msgid "Default"
+msgstr "Стандартното"
+
+#, tcl-format
+msgid "System (%s)"
+msgstr "Системното (%s)"
+
+msgid "Other"
+msgstr "Друго"
+
+#, tcl-format
+msgid "%s: error"
+msgstr "%s: грешка"
+
+#, tcl-format
+msgid "%s: warning"
+msgstr "%s: предупреждение"
+
+#, tcl-format
+msgid "%s hook failed:"
+msgstr "%s: грешка от куката"
+
+msgid "You must correct the above errors before committing."
+msgstr "Преди да можете да подадете, коригирайте горните грешки."
+
+#, tcl-format
+msgid "%s (%s): error"
+msgstr "%s (%s): грешка"
+
+msgid "Unable to unlock the index."
+msgstr "Индексът не може да се отключи."
+
+msgid "Index Error"
+msgstr "Грешка в индекса"
+
+msgid ""
+"Updating the Git index failed.  A rescan will be automatically started to "
+"resynchronize git-gui."
+msgstr ""
+"Неуспешно обновяване на индекса на Git. Автоматично ще започне нова проверка "
+"за синхронизирането на git-gui."
+
+msgid "Continue"
+msgstr "Продължаване"
+
+msgid "Unlock Index"
+msgstr "Отключване на индекса"
+
+msgid "files"
+msgstr "файлове"
+
+msgid "Unstaging selected files from commit"
+msgstr "Изваждане на избраните файлове от подаването"
+
+#, tcl-format
+msgid "Unstaging %s from commit"
+msgstr "Изваждане на „%s“ от подаването"
+
+msgid "Ready to commit."
+msgstr "Готовност за подаване."
+
+msgid "Adding selected files"
+msgstr "Добавяне на избраните файлове"
+
+#, tcl-format
+msgid "Adding %s"
+msgstr "Добавяне на „%s“"
+
+#, tcl-format
+msgid "Stage %d untracked files?"
+msgstr "Да се добавят ли %d неследени файла към индекса?"
+
+msgid "Adding all changed files"
+msgstr "Добавяне на всички променени файлове"
+
+#, tcl-format
+msgid "Revert changes in file %s?"
+msgstr "Да се махнат ли промѐните във файла „%s“?"
+
+#, tcl-format
+msgid "Revert changes in these %i files?"
+msgstr "Да се махнат ли промѐните в тези %i файла?"
+
+msgid "Any unstaged changes will be permanently lost by the revert."
+msgstr ""
+"Всички промѐни, които не са били добавени в индекса, ще се загубят "
+"безвъзвратно."
+
+msgid "Do Nothing"
+msgstr "Нищо да не се прави"
+
+#, tcl-format
+msgid "Delete untracked file %s?"
+msgstr "Да се изтрие ли неследеният файл „%s“?"
+
+#, tcl-format
+msgid "Delete these %i untracked files?"
+msgstr "Да се изтрият ли тези %d неследени файла?"
+
+msgid "Files will be permanently deleted."
+msgstr "Файловете ще се изтрият окончателно."
+
+msgid "Delete Files"
+msgstr "Изтриване на файлове"
+
+msgid "Deleting"
+msgstr "Изтриване"
+
+msgid "Encountered errors deleting files:\n"
+msgstr "Грешки при изтриване на файловете:\n"
+
+#, tcl-format
+msgid "None of the %d selected files could be deleted."
+msgstr "Никой от избраните %d файла не бе изтрит."
+
+#, tcl-format
+msgid "%d of the %d selected files could not be deleted."
+msgstr "%d от избраните %d файла не бяха изтрити."
+
+msgid "Reverting selected files"
+msgstr "Махане на промѐните в избраните файлове"
+
+#, tcl-format
+msgid "Reverting %s"
+msgstr "Махане на промѐните в „%s“"
+
+msgid "Goto Line:"
+msgstr "Към ред:"
+
+msgid "Go"
+msgstr "Към"
+
+msgid ""
+"Cannot merge while amending.\n"
+"\n"
+"You must finish amending this commit before starting any type of merge.\n"
+msgstr ""
+"По време на поправяне не може да сливане.\n"
+"\n"
+"Трябва да завършите поправянето на текущото подаване, преди да започнете "
+"сливане.\n"
+
+msgid ""
+"Last scanned state does not match repository state.\n"
+"\n"
+"Another Git program has modified this repository since the last scan.  A "
+"rescan must be performed before a merge can be performed.\n"
+"\n"
+"The rescan will be automatically started now.\n"
+msgstr ""
+"Последно установеното състояние не отговаря на това в хранилището.\n"
+"\n"
+"Някой друг процес за Git е променил хранилището междувременно. Състоянието "
+"трябва да се провери, преди да се извърши сливане.\n"
+"\n"
+"Автоматично ще започне нова проверка.\n"
+"\n"
+
+#, tcl-format
+msgid ""
+"You are in the middle of a conflicted merge.\n"
+"\n"
+"File %s has merge conflicts.\n"
+"\n"
+"You must resolve them, stage the file, and commit to complete the current "
+"merge.  Only then can you begin another merge.\n"
+msgstr ""
+"В момента тече сливане, но има конфликти.\n"
+"\n"
+"Погледнете файла „%s“.\n"
+"\n"
+"Трябва да коригирате конфликтите в него, да го добавите към индекса и да "
+"завършите текущото сливане чрез подаване. Чак тогава може да започнете ново "
+"сливане.\n"
+
+#, tcl-format
+msgid ""
+"You are in the middle of a change.\n"
+"\n"
+"File %s is modified.\n"
+"\n"
+"You should complete the current commit before starting a merge.  Doing so "
+"will help you abort a failed merge, should the need arise.\n"
+msgstr ""
+"В момента тече подаване.\n"
+"\n"
+"Файлът „%s“ е променен.\n"
+"\n"
+"Трябва да завършите текущото подаване, преди да започнете сливане. Така ще "
+"можете лесно да преустановите сливането, ако възникне нужда.\n"
+
+#, tcl-format
+msgid "%s of %s"
+msgstr "%s от общо %s"
+
+#, tcl-format
+msgid "Merging %s and %s..."
+msgstr "Сливане на „%s“ и „%s“…"
+
+msgid "Merge completed successfully."
+msgstr "Сливането завърши успешно."
+
+msgid "Merge failed.  Conflict resolution is required."
+msgstr "Неуспешно сливане — има конфликти за коригиране."
+
+#, tcl-format
+msgid "%s (%s): Merge"
+msgstr "%s (%s): Сливане"
+
+#, tcl-format
+msgid "Merge Into %s"
+msgstr "Сливане в „%s“"
+
+msgid "Revision To Merge"
+msgstr "Версия за сливане"
+
+msgid ""
+"Cannot abort while amending.\n"
+"\n"
+"You must finish amending this commit.\n"
+msgstr ""
+"Поправянето не може да се преустанови.\n"
+"\n"
+"Трябва да завършите поправката на това подаване.\n"
+
+msgid ""
+"Abort merge?\n"
+"\n"
+"Aborting the current merge will cause *ALL* uncommitted changes to be lost.\n"
+"\n"
+"Continue with aborting the current merge?"
+msgstr ""
+"Да се преустанови ли сливането?\n"
+"\n"
+"В такъв случай ●ВСИЧКИ● неподадени промѐни ще се загубят безвъзвратно.\n"
+"\n"
+"Наистина ли да се преустанови сливането?"
+
+msgid ""
+"Reset changes?\n"
+"\n"
+"Resetting the changes will cause *ALL* uncommitted changes to be lost.\n"
+"\n"
+"Continue with resetting the current changes?"
+msgstr ""
+"Да се занулят ли промѐните?\n"
+"\n"
+"В такъв случай ●ВСИЧКИ● неподадени промѐни ще се загубят безвъзвратно.\n"
+"\n"
+"Наистина ли да се занулят промѐните?"
+
+msgid "Aborting"
+msgstr "Преустановяване"
+
+msgid "files reset"
+msgstr "файла със занулени промѐни"
+
+msgid "Abort failed."
+msgstr "Неуспешно преустановяване."
+
+msgid "Abort completed.  Ready."
+msgstr "Успешно преустановяване. Готовност за следващо действие."
+
+msgid "Force resolution to the base version?"
+msgstr "Да се използва базовата версия"
+
+msgid "Force resolution to this branch?"
+msgstr "Да се използва версията от този клон"
+
+msgid "Force resolution to the other branch?"
+msgstr "Да се използва версията от другия клон"
+
+#, tcl-format
+msgid ""
+"Note that the diff shows only conflicting changes.\n"
+"\n"
+"%s will be overwritten.\n"
+"\n"
+"This operation can be undone only by restarting the merge."
+msgstr ""
+"Разликата показва само разликите с конфликт.\n"
+"\n"
+"Файлът „%s“ ще се презапише.\n"
+"\n"
+"Тази операция може да се отмени само чрез започване на сливането наново."
+
+#, tcl-format
+msgid "File %s seems to have unresolved conflicts, still stage?"
+msgstr ""
+"Изглежда, че все още има некоригирани конфликти във файла „%s“. Да се добави "
+"ли файлът към индекса?"
+
+#, tcl-format
+msgid "Adding resolution for %s"
+msgstr "Добавяне на корекция на конфликтите в „%s“"
+
+msgid "Cannot resolve deletion or link conflicts using a tool"
+msgstr ""
+"Конфликтите при символни връзки или изтриване не може да се коригират с "
+"външна програма."
+
+msgid "Conflict file does not exist"
+msgstr "Файлът, в който е конфликтът, не съществува"
+
+#, tcl-format
+msgid "Not a GUI merge tool: '%s'"
+msgstr "Това не е графична програма за сливане: „%s“"
+
+#, tcl-format
+msgid ""
+"Unable to process square brackets in \"mergetool.%s.cmd\" configuration "
+"option.\n"
+"\n"
+"Please remove the square brackets."
+msgstr ""
+"Квадратните скоби в настройката „mergetool.%s.cmd“ не може да се обработят.\n"
+"\n"
+"Махнете ги."
+
+#, tcl-format
+msgid ""
+"Unsupported merge tool '%s'.\n"
+"\n"
+"To use this tool, configure \"mergetool.%s.cmd\" as shown in the git-config "
+"manual page."
+msgstr ""
+"Неподдържана програма за сливане: „%s“.\n"
+"\n"
+"За да я използвате, настройте „mergetool.%s.cmd“ както както е обяснено в "
+"страницата на ръководството за „git-config“."
+
+msgid "Merge tool is already running, terminate it?"
+msgstr "Програмата за сливане вече е стартирана. Да се изключи ли?"
+
+#, tcl-format
+msgid ""
+"Error retrieving versions:\n"
+"%s"
+msgstr ""
+"Грешка при изтеглянето на версии:\n"
+"%s"
+
+#, tcl-format
+msgid ""
+"Could not start the merge tool:\n"
+"\n"
+"%s"
+msgstr ""
+"Програмата за сливане не може да се стартира:\n"
+"\n"
+"%s"
+
+msgid "Running merge tool..."
+msgstr "Стартиране на програмата за сливане…"
+
+msgid "Merge tool failed."
+msgstr "Грешка в програмата за сливане."
+
+#, tcl-format
+msgid "Invalid global encoding '%s'"
+msgstr "Неправилно глобално кодиране „%s“"
+
+#, tcl-format
+msgid "Invalid repo encoding '%s'"
+msgstr "Неправилно кодиране „%s“ на хранилището"
+
+msgid "Restore Defaults"
+msgstr "Стандартни настройки"
+
+msgid "Save"
+msgstr "Запазване"
+
+#, tcl-format
+msgid "%s Repository"
+msgstr "Хранилище „%s“"
+
+msgid "Global (All Repositories)"
+msgstr "Глобално (за всички хранилища)"
+
+msgid "User Name"
+msgstr "Потребителско име"
+
+msgid "Email Address"
+msgstr "Адрес на е-поща"
+
+msgid "Summarize Merge Commits"
+msgstr "Обобщаване на подаванията при сливане"
+
+msgid "Merge Verbosity"
+msgstr "Подробности при сливанията"
+
+msgid "Show Diffstat After Merge"
+msgstr "Извеждане на статистика след сливанията"
+
+msgid "Use Merge Tool"
+msgstr "Използване на програма за сливане"
+
+msgid "Trust File Modification Timestamps"
+msgstr "Доверие във времето на промяна на файловете"
+
+msgid "Prune Tracking Branches During Fetch"
+msgstr "Окастряне на следящите клонове при доставяне"
+
+msgid "Match Tracking Branches"
+msgstr "Напасване на следящите клонове"
+
+msgid "Use Textconv For Diffs and Blames"
+msgstr "Използване на „textconv“ за разликите и анотирането"
+
+msgid "Blame Copy Only On Changed Files"
+msgstr "Анотиране на копието само по променените файлове"
+
+msgid "Maximum Length of Recent Repositories List"
+msgstr "Максимален брой на списъка „Скоро ползвани“ хранилища"
+
+msgid "Minimum Letters To Blame Copy On"
+msgstr "Минимален брой знаци за анотиране на копието"
+
+msgid "Blame History Context Radius (days)"
+msgstr "Исторически обхват за анотиране в дни"
+
+msgid "Number of Diff Context Lines"
+msgstr "Брой редове за контекста на разликите"
+
+msgid "Additional Diff Parameters"
+msgstr "Аргументи към командата за разликите"
+
+msgid "Commit Message Text Width"
+msgstr "Широчина на текста на съобщението при подаване"
+
+msgid "New Branch Name Template"
+msgstr "Шаблон за името на новите клони"
+
+msgid "Default File Contents Encoding"
+msgstr "Кодиране на файловете"
+
+msgid "Warn before committing to a detached head"
+msgstr "Предупреждаване при подаване към несвързан указател"
+
+msgid "Staging of untracked files"
+msgstr "Добавяне на неследените файлове към индекса"
+
+msgid "Show untracked files"
+msgstr "Показване на неследените файлове"
+
+msgid "Tab spacing"
+msgstr "Ширина на табулацията"
+
+msgid "Change"
+msgstr "Смяна"
+
+msgid "Spelling Dictionary:"
+msgstr "Правописен речник:"
+
+msgid "Change Font"
+msgstr "Смяна на шрифта"
+
+#, tcl-format
+msgid "Choose %s"
+msgstr "Избор на „%s“"
+
+msgid "pt."
+msgstr "тчк."
+
+msgid "Preferences"
+msgstr "Настройки"
+
+msgid "Failed to completely save options:"
+msgstr "Неуспешно запазване на настройките:"
+
+#, tcl-format
+msgid "%s (%s): Add Remote"
+msgstr "%s (%s): Добавяне на отдалечено хранилище"
+
+msgid "Add New Remote"
+msgstr "Добавяне на отдалечено хранилище"
+
+msgid "Add"
+msgstr "Добавяне"
+
+msgid "Remote Details"
+msgstr "Данни за отдалеченото хранилище"
+
+msgid "Location:"
+msgstr "Местоположение:"
+
+msgid "Further Action"
+msgstr "Следващо действие"
+
+msgid "Fetch Immediately"
+msgstr "Незабавно доставяне"
+
+msgid "Initialize Remote Repository and Push"
+msgstr "Инициализиране на отдалеченото хранилище и изтласкване на промѐните"
+
+msgid "Do Nothing Else Now"
+msgstr "Да не се прави нищо"
+
+msgid "Please supply a remote name."
+msgstr "Задайте име за отдалеченото хранилище."
+
+#, tcl-format
+msgid "'%s' is not an acceptable remote name."
+msgstr "Отдалечено хранилище не може да се казва „%s“."
+
+#, tcl-format
+msgid "Failed to add remote '%s' of location '%s'."
+msgstr "Неуспешно добавяне на отдалеченото хранилище „%s“ от адрес „%s“."
+
+#, tcl-format
+msgid "fetch %s"
+msgstr "доставяне на „%s“"
+
+#, tcl-format
+msgid "Fetching the %s"
+msgstr "Доставяне на „%s“"
+
+#, tcl-format
+msgid "Do not know how to initialize repository at location '%s'."
+msgstr "Хранилището с местоположение „%s“ не може да се инициализира."
+
+#, tcl-format
+msgid "push %s"
+msgstr "изтласкване на „%s“"
+
+#, tcl-format
+msgid "Setting up the %s (at %s)"
+msgstr "Добавяне на хранилище „%s“ (с адрес „%s“)"
+
+#, tcl-format
+msgid "%s (%s): Delete Branch Remotely"
+msgstr "%s (%s): Изтриване на отдалечения клон"
+
+msgid "Delete Branch Remotely"
+msgstr "Изтриване на отдалечения клон"
+
+msgid "From Repository"
+msgstr "От хранилище"
+
+msgid "Remote:"
+msgstr "Отдалечено хранилище:"
+
+msgid "Arbitrary Location:"
+msgstr "Произволно местоположение:"
+
+msgid "Branches"
+msgstr "Клони"
+
+msgid "Delete Only If"
+msgstr "Изтриване, само ако"
+
+msgid "Merged Into:"
+msgstr "Слят в:"
+
+msgid "A branch is required for 'Merged Into'."
+msgstr "За данните „Слят в“ е необходимо да зададете клон."
+
+#, tcl-format
+msgid ""
+"The following branches are not completely merged into %s:\n"
+"\n"
+" - %s"
+msgstr ""
+"Следните клони не са слети напълно в „%s“:\n"
+"\n"
+" ● %s"
+
+#, tcl-format
+msgid ""
+"One or more of the merge tests failed because you have not fetched the "
+"necessary commits.  Try fetching from %s first."
+msgstr ""
+"Поне една от пробите за сливане е неуспешна, защото не сте доставили всички "
+"необходими подавания. Пробвайте първо да доставите подаванията от „%s“."
+
+msgid "Please select one or more branches to delete."
+msgstr "Изберете поне един клон за изтриване."
+
+#, tcl-format
+msgid "Deleting branches from %s"
+msgstr "Изтриване на клони от „%s“"
+
+msgid "No repository selected."
+msgstr "Не е избрано хранилище."
+
+#, tcl-format
+msgid "Scanning %s..."
+msgstr "Претърсване на „%s“…"
+
+msgid "Push to"
+msgstr "Изтласкване към"
+
+msgid "Remove Remote"
+msgstr "Премахване на отдалечено хранилище"
+
+msgid "Prune from"
+msgstr "Окастряне от"
+
+msgid "Fetch from"
+msgstr "Доставяне от"
+
+msgid "All"
+msgstr "Всички"
+
+msgid "Find:"
+msgstr "Търсене:"
+
+msgid "Next"
+msgstr "Следваща поява"
+
+msgid "Prev"
+msgstr "Предишна поява"
+
+msgid "RegExp"
+msgstr "РегИзр"
+
+msgid "Case"
+msgstr "Главни/Малки"
+
+#, tcl-format
+msgid "%s (%s): Create Desktop Icon"
+msgstr "%s (%s): Добавяне на икона на работния плот"
+
+#, tcl-format
+msgid "Replace existing shortcut: %s?"
+msgstr "Да се замени ли съществуващата клавишна комбинация: %s?"
+
+msgid "Cannot write shortcut:"
+msgstr "Клавишната комбинация не може да се запази:"
+
+msgid "Cannot write icon:"
+msgstr "Иконата не може да се запази:"
+
+msgid "Unsupported spell checker"
+msgstr "Тази програма за проверка на правописа не се поддържа"
+
+msgid "Spell checking is unavailable"
+msgstr "Липсва програма за проверка на правописа"
+
+msgid "Invalid spell checking configuration"
+msgstr "Неправилни настройки на проверката на правописа"
+
+#, tcl-format
+msgid "Reverting dictionary to %s."
+msgstr "Ползване на речник за език „%s“."
+
+msgid "Spell checker silently failed on startup"
+msgstr "Програмата за правопис даже не стартира успешно."
+
+msgid "Unrecognized spell checker"
+msgstr "Непозната програма за проверка на правописа"
+
+msgid "No Suggestions"
+msgstr "Няма предложения"
+
+msgid "Unexpected EOF from spell checker"
+msgstr "Неочакван край на файл от програмата за проверка на правописа"
+
+msgid "Spell Checker Failed"
+msgstr "Грешка в програмата за проверка на правописа"
+
+msgid "No keys found."
+msgstr "Не са открити ключове."
+
+#, tcl-format
+msgid "Found a public key in: %s"
+msgstr "Открит е публичен ключ в „%s“"
+
+msgid "Generate Key"
+msgstr "Генериране на ключ"
+
+msgid "Copy To Clipboard"
+msgstr "Копиране към системния буфер"
+
+msgid "Your OpenSSH Public Key"
+msgstr "Публичният ви ключ за OpenSSH"
+
+msgid "Generating..."
+msgstr "Генериране…"
+
+#, tcl-format
+msgid ""
+"Could not start ssh-keygen:\n"
+"\n"
+"%s"
+msgstr ""
+"Програмата „ssh-keygen“ не може да се стартира:\n"
+"\n"
+"%s"
+
+msgid "Generation failed."
+msgstr "Неуспешно генериране."
+
+msgid "Generation succeeded, but no keys found."
+msgstr "Генерирането завърши успешно, а не са намерени ключове."
+
+#, tcl-format
+msgid "Your key is in: %s"
+msgstr "Ключът ви е в „%s“"
+
+#, tcl-format
+msgid "%s ... %*i of %*i %s (%3i%%)"
+msgstr "%s… %*i от общо %*i %s (%3i%%)"
+
+#, tcl-format
+msgid "%s (%s): Add Tool"
+msgstr "%s (%s): Добавяне на команда"
+
+msgid "Add New Tool Command"
+msgstr "Добавяне на команда"
+
+msgid "Add globally"
+msgstr "Глобално добавяне"
+
+msgid "Tool Details"
+msgstr "Подробности за командата"
+
+msgid "Use '/' separators to create a submenu tree:"
+msgstr "За създаване на подменюта използвайте знака „/“ за разделител:"
+
+msgid "Command:"
+msgstr "Команда:"
+
+msgid "Show a dialog before running"
+msgstr "Преди изпълнение да се извежда диалогов прозорец"
+
+msgid "Ask the user to select a revision (sets $REVISION)"
+msgstr "Потребителят да укаже версия (задаване на променливата $REVISION)"
+
+msgid "Ask the user for additional arguments (sets $ARGS)"
+msgstr ""
+"Потребителят да укаже допълнителни аргументи (задаване на променливата $ARGS)"
+
+msgid "Don't show the command output window"
+msgstr "Без показване на прозорец с изхода от командата"
+
+msgid "Run only if a diff is selected ($FILENAME not empty)"
+msgstr ""
+"Стартиране само след избор на разлика (променливата $FILENAME не е празна)"
+
+msgid "Please supply a name for the tool."
+msgstr "Задайте име за командата."
+
+#, tcl-format
+msgid "Tool '%s' already exists."
+msgstr "Командата „%s“ вече съществува."
+
+#, tcl-format
+msgid ""
+"Could not add tool:\n"
+"%s"
+msgstr ""
+"Командата не може да се добави:\n"
+"%s"
+
+#, tcl-format
+msgid "%s (%s): Remove Tool"
+msgstr "%s (%s): Премахване на команда"
+
+msgid "Remove Tool Commands"
+msgstr "Премахване на команди"
+
+msgid "Remove"
+msgstr "Премахване"
+
+msgid "(Blue denotes repository-local tools)"
+msgstr "(командите към локалното хранилище са обозначени в синьо)"
+
+#, tcl-format
+msgid "%s (%s):"
+msgstr "%s (%s):"
+
+#, tcl-format
+msgid "Run Command: %s"
+msgstr "Изпълнение на командата „%s“"
+
+msgid "Arguments"
+msgstr "Аргументи"
+
+msgid "OK"
+msgstr "Добре"
+
+#, tcl-format
+msgid "Running %s requires a selected file."
+msgstr "За изпълнението на „%s“ трябва да изберете файл."
+
+#, tcl-format
+msgid "Are you sure you want to run %1$s on file \"%2$s\"?"
+msgstr "Сигурни ли сте, че искате да изпълните „%1$s“ върху файла „%2$s“?"
+
+#, tcl-format
+msgid "Are you sure you want to run %s?"
+msgstr "Сигурни ли сте, че искате да изпълните „%s“?"
+
+#, tcl-format
+msgid "Tool: %s"
+msgstr "Команда: %s"
+
+#, tcl-format
+msgid "Running: %s"
+msgstr "Изпълнение: %s"
+
+#, tcl-format
+msgid "Tool completed successfully: %s"
+msgstr "Командата завърши успешно: %s"
+
+#, tcl-format
+msgid "Tool failed: %s"
+msgstr "Командата върна грешка: %s"
+
+#, tcl-format
+msgid "Fetching new changes from %s"
+msgstr "Доставяне на промѐните от „%s“"
+
+#, tcl-format
+msgid "remote prune %s"
+msgstr "окастряне на следящите клони към „%s“"
+
+#, tcl-format
+msgid "Pruning tracking branches deleted from %s"
+msgstr "Окастряне на следящите клони на изтритите клони от „%s“"
+
+msgid "fetch all remotes"
+msgstr "доставяне от всички отдалечени"
+
+msgid "Fetching new changes from all remotes"
+msgstr "Доставяне на промѐните от всички отдалечени хранилища"
+
+msgid "remote prune all remotes"
+msgstr "окастряне на следящите изтрити"
+
+msgid "Pruning tracking branches deleted from all remotes"
+msgstr ""
+"Окастряне на следящите клони на изтритите клони от всички отдалечени "
+"хранилища"
+
+#, tcl-format
+msgid "Pushing changes to %s"
+msgstr "Изтласкване на промѐните към „%s“"
+
+#, tcl-format
+msgid "Mirroring to %s"
+msgstr "Изтласкване на всичко към „%s“"
+
+#, tcl-format
+msgid "Pushing %s %s to %s"
+msgstr "Изтласкване на %s „%s“ към „%s“"
+
+msgid "Push Branches"
+msgstr "Клони за изтласкване"
+
+msgid "Source Branches"
+msgstr "Клони-източници"
+
+msgid "Destination Repository"
+msgstr "Целево хранилище"
+
+msgid "Transfer Options"
+msgstr "Настройки при пренасянето"
+
+msgid "Force overwrite existing branch (may discard changes)"
+msgstr ""
+"Изрично презаписване на съществуващ клон (някои промѐни може да се загубят)"
+
+msgid "Use thin pack (for slow network connections)"
+msgstr "Максимална компресия (за бавни мрежови връзки)"
+
+msgid "Include tags"
+msgstr "Включване на етикетите"
+
+#, tcl-format
+msgid "%s (%s): Push"
+msgstr "%s (%s): Изтласкване"

@@ -1,0 +1,37 @@
+Git v1.6.6.1 Release Notes
+==========================
+
+Fixes since v1.6.6
+------------------
+
+ * "git blame" did not work well when commit lacked the author name.
+
+ * "git branch -a name" wasn't diagnosed as an error.
+
+ * "git count-objects" did not handle packfiles that are bigger than 4G on
+   platforms with 32-bit off_t.
+
+ * "git checkout -m other" while on a branch that does not have any commit
+   segfaulted, instead of failing.
+
+ * "git fast-import" choked when fed a tag that do not point at a
+   commit.
+
+ * "git grep" finding from work tree files could have fed garbage to
+   the underlying regexec(3).
+
+ * "git grep -L" didn't show empty files (they should never match, and
+   they should always appear in -L output as unmatching).
+
+ * "git rebase -i" did not abort cleanly if it failed to launch the editor.
+
+ * "git reset --hard" did not work correctly when GIT_WORK_TREE environment
+   variable is used to point at the root of the true work tree.
+
+ * http-backend was not listed in the command list in the documentation.
+
+ * Building on FreeBSD (both 7 and 8) needs OLD_ICONV set in the Makefile
+
+ * "git checkout -m some-branch" while on an unborn branch crashed.
+
+Other minor documentation updates are included.

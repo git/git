@@ -1,0 +1,12 @@
+Git v1.7.10.5 Release Notes
+===========================
+
+Fixes since v1.7.10.4
+---------------------
+
+ * "git fast-export" did not give a readable error message when the
+   same mark erroneously appeared twice in the --import-marks input.
+
+ * "git rebase -p" used to pay attention to rebase.autosquash which
+    was wrong.  "git rebase -p -i" should, but "git rebase -p" by
+    itself should not.

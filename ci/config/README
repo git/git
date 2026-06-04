@@ -1,0 +1,14 @@
+You can configure some aspects of the GitHub Actions-based CI on a
+per-repository basis by setting "variables" and "secrets" from with the
+GitHub web interface. These can be found at:
+
+  https://github.com/<user>/git/settings/secrets/actions
+
+The following variables can be used:
+
+ - CI_BRANCHES
+
+   By default, CI is run when any branch is pushed. If this variable is
+   non-empty, then only the branches it lists will run CI. Branch names
+   should be separated by spaces, and should use their shortened form
+   (e.g., "main", not "refs/heads/main").

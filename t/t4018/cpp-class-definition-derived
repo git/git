@@ -1,0 +1,5 @@
+class RIGHT :
+	public Baseclass
+{
+	int ChangeMe;
+};

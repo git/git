@@ -1,0 +1,336 @@
+Git v2.53 Release Notes
+=======================
+
+UI, Workflows & Features
+------------------------
+
+ * "git maintenance" command learned "is-needed" subcommand to tell if
+   it is necessary to perform various maintenance tasks.
+
+ * "git replay" (experimental) learned to perform ref updates itself
+   in a transaction by default, instead of emitting where each refs
+   should point at and leaving the actual update to another command.
+
+ * "git blame" learns "--diff-algorithm=<algo>" option.
+
+ * "git repo info" learned "--all" option.
+
+ * Both "git apply" and "git diff" learn a new whitespace error class,
+   "incomplete-line".
+
+ * Add a new manual that describes the data model.
+
+ * "git fast-import" learns "--signed-commits=strip-if-invalid" option
+   to drop invalid cryptographic signature from objects.
+
+ * The use of "revision" (a connected set of commits) has been
+   clarified in the "git replay" documentation.
+
+ * A help message from "git branch" now mentions "git help" instead of
+   "man" when suggesting to read some documentation.
+
+ * "git repo struct" learned to take "-z" as a synonym to "--format=nul".
+
+ * More object database related information are shown in "git repo
+   structure" output.
+
+ * Improve the error message when a bad argument is given to the
+   `--onto` option of "git replay".  Test coverage of "git replay" has
+   been improved.
+
+ * The iconv library on macOS fails to correctly handle stateful
+   ISO/IEC 2022:1994 encoded strings.  Work it around instead of
+   replacing it wholesale from homebrew.
+
+ * Upstream symbolic link support on Windows from Git-for-Windows.
+
+
+Performance, Internal Implementation, Development Support etc.
+--------------------------------------------------------------
+
+ * The list of packfiles used in a running Git process is moved from
+   the packed_git structure into the packfile store.
+
+ * Some ref backend storage can hold not just the object name of an
+   annotated tag, but the object name of the object the tag points at.
+   The code to handle this information has been streamlined.
+
+ * As "git diff --quiet" only cares about the existence of any
+   changes, disable rename/copy detection to skip more expensive
+   processing whose result will be discarded anyway.
+
+ * A part of code paths that deals with loose objects has been cleaned
+   up.
+
+ * "make strip" has been taught to strip "scalar" as well as "git".
+
+ * Dockerized jobs at the GitHub Actions CI have been taught to show
+   more details of failed tests.
+
+ * Code refactoring around object database sources.
+
+ * Halve the memory consumed by artificial filepairs created during
+   "git diff --find-copies-harder", also making the operation run
+   faster.
+
+ * The "git_istream" abstraction has been revamped to make it easier
+   to interface with pluggable object database design.
+
+ * Rewrite the only use of "mktemp()" that is subject to TOCTOU race
+   and Stop using the insecure "mktemp()" function.
+   (merge 10bba537c4 rs/ban-mktemp later to maint).
+
+ * In-code comment update to clarify that single-letter options are
+   outside of the scope of command line completion script.
+   (merge dc8a00fafe jc/completion-no-single-letter-options later to maint).
+
+ * MEMZERO_ARRAY() helper is introduced to avoid clearing only the
+   first N bytes of an N-element array whose elements are larger than
+   a byte.
+
+ * "git diff-files -R --find-copies-harder" has been taught to use
+   the potential copy sources from the index correctly.
+
+ * Require C99 style flexible array member support from all platforms.
+
+ * The code path that enumerates promisor objects have been optimized
+   to skip pointlessly parsing blob objects.
+
+ * Prepare test suite for Git for Windows that supports symbolic
+   links.
+
+ * Import newer version of "clar", unit testing framework.
+   (merge 84071a6dea ps/clar-integers later to maint).
+
+ * The packfile_store data structure is moved from object store to odb
+   source.
+
+ * The object-info API has been cleaned up.
+
+ * Further preparation to upstream symbolic link support on Windows.
+
+ * Remove implicit reliance on the_repository global in the APIs
+   around tree objects and make it explicit which repository to work
+   in.
+
+ * "git bugreport" and "git version --build-options" learned to
+   include use of 'gettext' feature, to make it easier to diagnose
+   problems around l10n.
+
+ * Dscho observed that SVN tests are taking too much time in CI leak
+   checking tasks, but most time is spent not in our code but in libsvn
+   code (which happen to be written in Perl), whose leaks have little
+   value to discover for us.  Skip SVN, P4, and CVS tests in the leak
+   checking tasks.
+   (merge 047bd7dfe3 js/ci-leak-skip-svn later to maint).
+
+
+Fixes since v2.52
+-----------------
+
+ * Ever since we added whitespace rules for this project, we misspelt
+   an entry, which has been corrected.
+   (merge 358e94dc70 jc/gitattributes-whitespace-no-indent-fix later to maint).
+
+ * The code to expand attribute macros has been rewritten to avoid
+   recursion to avoid running out of stack space in an uncontrolled
+   way.
+   (merge 42ed046866 jk/attr-macroexpand-wo-recursion later to maint).
+
+ * Adding a repository that uses a different hash function is a no-no,
+   but "git submodule add" did not prevent it, which has been corrected.
+   (merge 6fe288bfbc bc/submodule-force-same-hash later to maint).
+
+ * An earlier check added to osx keychain credential helper to avoid
+   storing the credential itself supplied was overeager and rejected
+   credential material supplied by other helper backends that it would
+   have wanted to store, which has been corrected.
+   (merge 4580bcd235 kn/osxkeychain-idempotent-store-fix later to maint).
+
+ * The "git repo structure" subcommand tried to align its output but
+   mixed up byte count and display column width, which has been
+   corrected.
+   (merge 7a03a10a3a jx/repo-struct-utf8width-fix later to maint).
+
+ * Yet another corner case fix around renames in the "ort" merge
+   strategy.
+   (merge a562d90a35 en/ort-rename-another-fix later to maint).
+
+ * Test leakfix.
+   (merge 14b561e768 jk/test-mktemp-leakfix later to maint).
+
+ * Update a version of action used at the GitHub Actions CI.
+   (merge cd99203f86 js/ci-github-setup-go-update later to maint).
+
+ * The "return errno = EFOO, -1" construct, which is heavily used in
+   compat/mingw.c and triggers warnings under "-Wcomma", has been
+   rewritten to avoid the warnings.
+   (merge af3919816f js/mingw-assign-comma-fix later to maint).
+
+ * Makefile based build have recently been updated to build a
+   libgit.a that also has reftable and xdiff objects; CMake based
+   build procedure has been updated to match.
+   (merge b0d5c88cca js/cmake-libgit-fix later to maint).
+
+ * Under-allocation fix.
+   (merge d22a488482 js/wincred-get-credential-alloc-fix later to maint).
+
+ * "git worktree list" attempts to show paths to worktrees while
+   aligning them, but miscounted display columns for the paths when
+   non-ASCII characters were involved, which has been corrected.
+   (merge 08dfa59835 pw/worktree-list-display-width-fix later to maint).
+
+ * "Windows+meson" job at the GitHub Actions CI was hard to debug, as
+   it did not show and save failed test artifacts, which has been
+   corrected.
+   (merge 17bd1108ea jk/ci-windows-meson-test-fix later to maint).
+
+ * Emulation code clean-up.
+   (merge 2367c6bcd6 gf/win32-pthread-cond-wait-err later to maint).
+
+ * Various issues detected by Asan have been corrected.
+   (merge a031b6181a jk/asan-bonanza later to maint).
+
+ * "git config get --path" segfaulted on an ":(optional)path" that
+   does not exist, which has been corrected.
+   (merge 0bd16856ff jc/optional-path later to maint).
+
+ * The "--committer-date-is-author-date" option of "git am/rebase" is
+   a misguided one.  The documentation is updated to discourage its
+   use.
+   (merge fbf3d0669f kh/doc-committer-date-is-author-date later to maint).
+
+ * The option help text given by "git config unset -h" described
+   the "--all" option to "replace", not "unset", multiple variables,
+   which has been corrected.
+   (merge 18bf67b753 rs/config-unset-opthelp-fix later to maint).
+
+ * The error message given by "git config set", when the variable
+   being updated has more than one values defined, used old style "git
+   config" syntax with an incorrect option in its hint, both of which
+   have been corrected.
+   (merge df963f0df4 rs/config-set-multi-error-message-fix later to maint).
+
+ * "git replay" forgot to omit the "gpgsig-sha256" extended header
+   from the resulting commit the same way it omits "gpgsig", which has
+   been corrected.
+   (merge 9f3a115087 pw/replay-exclude-gpgsig-fix later to maint).
+
+ * A few tests have been updated to work under the shell compatible
+   mode of zsh.
+   (merge a92f243a94 bc/zsh-testsuite later to maint).
+
+ * The way patience diff finds LCS has been optimized.
+   (merge c7e3b8085b yc/xdiff-patience-optim later to maint).
+
+ * Recent optimization to "last-modified" command introduced use of
+   uninitialized block of memory, which has been corrected.
+   (merge fe4e60759b tc/last-modified-active-paths-optimization later to maint).
+
+ * "git last-modified" used to mishandle "--" to mark the beginning of
+   pathspec, which has been corrected.
+   (merge 05491b90ce js/last-modified-with-sparse-checkouts later to maint).
+
+ * Emulation code clean-up.
+   (merge 42aa7603aa gf/win32-pthread-cond-init later to maint).
+
+ * "git submodule add" to add a submodule under <name> segfaulted,
+   when a submodule.<name>.something is already in .gitmodules file
+   without defining where its submodule.<name>.path is, which has been
+   corrected.
+   (merge dd8e8c786e jc/submodule-add later to maint).
+
+ * "git fetch" that involves fetching tags, when a tag being fetched
+   needs to overwrite existing one, failed to fetch other tags, which
+   has been corrected.
+   (merge b7b17ec8a6 kn/fix-fetch-backfill-tag-with-batched-ref-updates later to maint).
+
+ * Document "rev-list --filter-provided-objects" better.
+   (merge 6d8dc99478 jt/doc-rev-list-filter-provided-objects later to maint).
+
+ * Even when there is no changes in the packfile and no need to
+   recompute bitmaps, "git repack" recomputed and updated the MIDX
+   file, which has been corrected.
+   (merge 6ce9d558ce ps/repack-avoid-noop-midx-rewrite later to maint).
+
+ * Update HTTP tests to adjust for changes in curl 8.18.0
+   (merge 17f4b01da7 jk/test-curl-updates later to maint).
+
+ * Workaround the "iconv" shipped as part of macOS, which is broken
+   handling stateful ISO/IEC 2022 encoded strings.
+   (merge cee341e9dd rs/macos-iconv-workaround later to maint).
+
+ * Running "git diff" with "--name-only" and other options that allows
+   us not to look at the blob contents, while objects that are lazily
+   fetched from a promisor remote, caused use-after-free, which has
+   been corrected.
+
+ * The ort merge machinery hit an assertion failure in a history with
+   criss-cross merges renamed a directory and a non-directory, which
+   has been corrected.
+   (merge 979ee83e8a en/ort-recursive-d-f-conflict-fix later to maint).
+
+ * Diagnose invalid bundle-URI that lack the URI entry, instead of
+   crashing.
+   (merge 7796c14a1a sb/bundle-uri-without-uri later to maint).
+
+ * Mailmap update for Karsten
+   (merge e97678c4ef js/mailmap-karsten-blees later to maint).
+
+ * Perf-test fixes.
+   (merge 79d301c767 jk/t-perf-fixes later to maint).
+
+ * Fix for a performance regression in "git cat-file".
+   (merge 9e8b448dd8 jk/cat-file-avoid-bitmap-when-unneeded later to maint).
+
+ * Update a FAQ entry on synching two separate repositories using the
+   "git stash export/import" recently introduced.
+   (merge 02fc44a989 bc/doc-stash-import-export later to maint).
+
+ * "git fsck" used inconsistent set of refs to show a confused
+   warning, which has been corrected.
+
+ * Some error messages from the http transport layer lacked the
+   terminating newline, which has been corrected.
+   (merge a8227ae8d5 kt/http-backend-errors later to maint).
+
+ * "git repack --geometric" did not work with promisor packs, which
+   has been corrected.
+
+ * The logic that avoids reusing MIDX files with a wrong checksum was
+   broken, which has been corrected.
+
+ * Other code cleanup, docfix, build fix, etc.
+   (merge 46207a54cc qj/doc-http-bad-want-response later to maint).
+   (merge df90eccd93 kh/doc-commit-extra-references later to maint).
+   (merge f18aa68861 rs/xmkstemp-simplify later to maint).
+   (merge fddba8f737 ja/doc-synopsis-style later to maint).
+   (merge 22ce0cb639 en/xdiff-cleanup-2 later to maint).
+   (merge 8ef7355a8f je/doc-pull later to maint).
+   (merge 48176f953f jc/capability-leak later to maint).
+   (merge 8cbbdc92f7 kh/doc-pre-commit-fix later to maint).
+   (merge d4bc39a4d9 mh/doc-config-gui-gcwarning later to maint).
+   (merge 41d425008a kh/doc-send-email-paragraph-fix later to maint).
+   (merge d4b732899e jc/macports-darwinports later to maint).
+   (merge bab391761d kj/pull-options-decl-cleanup later to maint).
+   (merge 007b8994d4 rs/t4014-git-version-string-fix later to maint).
+   (merge 4ce170c522 ds/doc-scalar-config later to maint).
+   (merge a0c813951a jc/doc-commit-signoff-config later to maint).
+   (merge 8ee262985a ja/doc-misc-fixes later to maint).
+   (merge 1722c2244b mh/doc-core-attributesfile later to maint).
+   (merge c469ca26c5 dk/ci-rust-fix later to maint).
+   (merge 12f0be0857 gf/clear-path-cache-cleanup later to maint).
+   (merge 949df6ed6b js/test-func-comment-fix later to maint).
+   (merge 93f894c001 bc/checkout-error-message-fix later to maint).
+   (merge abf05d856f rs/show-branch-prio-queue later to maint).
+   (merge 06188ea5f3 rs/parse-config-expiry-simplify later to maint).
+   (merge 861dbb1586 dd/t5403-modernise later to maint).
+   (merge acffc5e9e5 ja/doc-synopsis-style-more later to maint).
+   (merge 6c5c7e7071 ac/t1420-use-more-direct-check later to maint).
+   (merge 2ac93bfcbc ds/builtin-doc-update later to maint).
+   (merge 3f051fc9c9 kh/doc-patch-id later to maint).
+   (merge 555c8464e5 je/doc-reset later to maint).
+   (merge 220f888d7e ps/t1410-cleanup later to maint).
+   (merge 5814b04c02 ps/config-doc-get-urlmatch-fix later to maint).
+   (merge 5ae594f30b sb/doc-update-ref-markup-fix later to maint).
+   (merge bc8556d066 ty/t1005-test-path-is-helpers later to maint).

@@ -1,0 +1,7 @@
+abstract class Klass
+{
+    abstract public function RIGHT(): ?string
+    {
+        return 'ChangeMe';
+    }
+}

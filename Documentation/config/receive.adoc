@@ -1,0 +1,145 @@
+receive.advertiseAtomic::
+	By default, git-receive-pack will advertise the atomic push
+	capability to its clients. If you don't want to advertise this
+	capability, set this variable to false.
+
+receive.advertisePushOptions::
+	When set to true, git-receive-pack will advertise the push options
+	capability to its clients. False by default.
+
+receive.autogc::
+	By default, git-receive-pack will run "git maintenance run --auto" after
+	receiving data from git-push and updating refs.  You can stop
+	it by setting this variable to false.
+
+receive.certNonceSeed::
+	By setting this variable to a string, `git receive-pack`
+	will accept a `git push --signed` and verify it by using
+	a "nonce" protected by HMAC using this string as a secret
+	key.
+
+receive.certNonceSlop::
+	When a `git push --signed` sends a push certificate with a
+	"nonce" that was issued by a receive-pack serving the same
+	repository within this many seconds, export the "nonce"
+	found in the certificate to `GIT_PUSH_CERT_NONCE` to the
+	hooks (instead of what the receive-pack asked the sending
+	side to include).  This may allow writing checks in
+	`pre-receive` and `post-receive` a bit easier.  Instead of
+	checking `GIT_PUSH_CERT_NONCE_SLOP` environment variable
+	that records by how many seconds the nonce is stale to
+	decide if they want to accept the certificate, they only
+	can check `GIT_PUSH_CERT_NONCE_STATUS` is `OK`.
+
+receive.fsckObjects::
+	If it is set to true, git-receive-pack will check all received
+	objects. See `transfer.fsckObjects` for what's checked.
+	Defaults to false. If not set, the value of
+	`transfer.fsckObjects` is used instead.
+
+receive.fsck.<msg-id>::
+	Acts like `fsck.<msg-id>`, but is used by
+	linkgit:git-receive-pack[1] instead of
+	linkgit:git-fsck[1]. See the `fsck.<msg-id>` documentation for
+	details.
+
+receive.fsck.skipList::
+	Acts like `fsck.skipList`, but is used by
+	linkgit:git-receive-pack[1] instead of
+	linkgit:git-fsck[1]. See the `fsck.skipList` documentation for
+	details.
+
+receive.keepAlive::
+	After receiving the pack from the client, `receive-pack` may
+	produce no output (if `--quiet` was specified) while processing
+	the pack, causing some networks to drop the TCP connection.
+	With this option set, if `receive-pack` does not transmit
+	any data in this phase for `receive.keepAlive` seconds, it will
+	send a short keepalive packet.  The default is 5 seconds; set
+	to 0 to disable keepalives entirely.
+
+receive.unpackLimit::
+	If the number of objects received in a push is below this
+	limit then the objects will be unpacked into loose object
+	files. However if the number of received objects equals or
+	exceeds this limit then the received pack will be stored as
+	a pack, after adding any missing delta bases.  Storing the
+	pack from a push can make the push operation complete faster,
+	especially on slow filesystems.  If not set, the value of
+	`transfer.unpackLimit` is used instead.
+
+receive.maxInputSize::
+	If the size of the incoming pack stream is larger than this
+	limit, then git-receive-pack will error out, instead of
+	accepting the pack file. If not set or set to 0, then the size
+	is unlimited.
+
+receive.denyDeletes::
+	If set to true, git-receive-pack will deny a ref update that deletes
+	the ref. Use this to prevent such a ref deletion via a push.
+
+receive.denyDeleteCurrent::
+	If set to true, git-receive-pack will deny a ref update that
+	deletes the currently checked out branch of a non-bare repository.
+
+receive.denyCurrentBranch::
+	If set to true or "refuse", git-receive-pack will deny a ref update
+	to the currently checked out branch of a non-bare repository.
+	Such a push is potentially dangerous because it brings the HEAD
+	out of sync with the index and working tree. If set to "warn",
+	print a warning of such a push to stderr, but allow the push to
+	proceed. If set to false or "ignore", allow such pushes with no
+	message. Defaults to "refuse".
++
+Another option is "updateInstead" which will update the working
+tree if pushing into the current branch.  This option is
+intended for synchronizing working directories when one side is not easily
+accessible via interactive ssh (e.g. a live web site, hence the requirement
+that the working directory be clean). This mode also comes in handy when
+developing inside a VM to test and fix code on different Operating Systems.
++
+By default, "updateInstead" will refuse the push if the working tree or
+the index have any difference from the HEAD, but the `push-to-checkout`
+hook can be used to customize this.  See linkgit:githooks[5].
+
+receive.denyNonFastForwards::
+	If set to true, git-receive-pack will deny a ref update which is
+	not a fast-forward. Use this to prevent such an update via a push,
+	even if that push is forced. This configuration variable is
+	set when initializing a shared repository.
+
+receive.hideRefs::
+	This variable is the same as `transfer.hideRefs`, but applies
+	only to `receive-pack` (and so affects pushes, but not fetches).
+	An attempt to update or delete a hidden ref by `git push` is
+	rejected.
+
+receive.procReceiveRefs::
+	This is a multi-valued variable that defines reference prefixes
+	to match the commands in `receive-pack`.  Commands matching the
+	prefixes will be executed by an external hook "proc-receive",
+	instead of the internal `execute_commands` function.  If this
+	variable is not defined, the "proc-receive" hook will never be
+	used, and all commands will be executed by the internal
+	`execute_commands` function.
++
+For example, if this variable is set to "refs/for", pushing to reference
+such as "refs/for/master" will not create or update a reference named
+"refs/for/master", but may create or update a pull request directly by
+running the hook "proc-receive".
++
+Optional modifiers can be provided in the beginning of the value to filter
+commands for specific actions: create (a), modify (m), delete (d).
+A `!` can be included in the modifiers to negate the reference prefix entry.
+E.g.:
++
+	git config --system --add receive.procReceiveRefs ad:refs/heads
+	git config --system --add receive.procReceiveRefs !:refs/heads
+
+receive.updateServerInfo::
+	If set to true, git-receive-pack will run git-update-server-info
+	after receiving data from git-push and updating refs.
+
+receive.shallowUpdate::
+	If set to true, .git/shallow can be updated when new refs
+	require new shallow roots. Otherwise those refs are rejected.

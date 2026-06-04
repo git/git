@@ -1,0 +1,9 @@
+Note: At present, there is no interoperability between SHA-256
+repositories and SHA-1 repositories.
+
+Historically, we warned that SHA-256 repositories may later need
+backward incompatible changes when we introduce such interoperability
+features. Today, we only expect compatible changes. Furthermore, if such
+changes prove to be necessary, it can be expected that SHA-256 repositories
+created with today's Git will be usable by future versions of Git
+without data loss.

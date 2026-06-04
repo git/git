@@ -1,0 +1,33 @@
+$ git diff-tree --root --patch-with-raw initial
+444ac553ac7612cc88969031b02b3767fb8a353a
+:000000 100644 0000000000000000000000000000000000000000 35d242ba79ae89ac695e26b3d4c27a8e6f028f9e A	dir/sub
+:000000 100644 0000000000000000000000000000000000000000 01e79c32a8c99c557f0757da7cb6d65b3414466d A	file0
+:000000 100644 0000000000000000000000000000000000000000 01e79c32a8c99c557f0757da7cb6d65b3414466d A	file2
+
+diff --git a/dir/sub b/dir/sub
+new file mode 100644
+index 0000000..35d242b
+--- /dev/null
++++ b/dir/sub
+@@ -0,0 +1,2 @@
++A
++B
+diff --git a/file0 b/file0
+new file mode 100644
+index 0000000..01e79c3
+--- /dev/null
++++ b/file0
+@@ -0,0 +1,3 @@
++1
++2
++3
+diff --git a/file2 b/file2
+new file mode 100644
+index 0000000..01e79c3
+--- /dev/null
++++ b/file2
+@@ -0,0 +1,3 @@
++1
++2
++3
+$

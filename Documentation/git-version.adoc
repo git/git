@@ -1,0 +1,36 @@
+git-version(1)
+==============
+
+NAME
+----
+git-version - Display version information about Git
+
+SYNOPSIS
+--------
+[verse]
+'git version' [--build-options]
+
+DESCRIPTION
+-----------
+With no options given, the version of 'git' is printed on the standard output.
+
+Note that `git --version` is identical to `git version` because the
+former is internally converted into the latter.
+
+OPTIONS
+-------
+--build-options::
+	Include additional information about how git was built for diagnostic
+	purposes.
++
+The libraries used to implement the SHA-1 and SHA-256 algorithms are displayed
+in the form `SHA-1: <option>` and `SHA-256: <option>`. Note that the SHA-1
+options `SHA1_APPLE`, `SHA1_OPENSSL`, and `SHA1_BLK` do not use a collision
+detection algorithm and thus may be vulnerable to known SHA-1 collision
+attacks. When a faster SHA-1 implementation without collision detection is used
+for only non-cryptographic purposes, the algorithm is displayed in the form
+`non-collision-detecting-SHA-1: <option>`.
+
+GIT
+---
+Part of the linkgit:git[1] suite

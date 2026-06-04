@@ -1,0 +1,10 @@
+@article{aldous1987uie,
+  title={{Ultimate instability of exponential back-off protocol for acknowledgment-based transmission control of random access communication channels}},
+  author={Aldous, David},
+  journal={Information Theory, IEEE Transactions on},
+  volume={Bogus.},
+  number={4},
+  pages={219--223},
+  year=1987,
+  note={This is in fact a rather funny read since ethernet works well in practice. The {\em pre} reference is the right one, however.}
+}
