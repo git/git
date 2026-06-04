@@ -47,7 +47,7 @@ test:linux:
         CC: gcc
         CC_PACKAGE: gcc-8
       - jobname: linux-breaking-changes
-        image: ubuntu:20.04
+        image: ubuntu:rolling
         CC: gcc
       - jobname: fedora-breaking-changes-meson
         image: fedora:latest
