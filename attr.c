@@ -793,7 +793,7 @@ static struct attr_stack *read_attr_from_index(struct index_state *istate,
 {
 	struct attr_stack *stack = NULL;
 	char *buf;
-	unsigned long size;
+	size_t size;
 	int sparse_dir_pos = -1;
 
 	if (!istate)
