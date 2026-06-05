@@ -18,7 +18,7 @@ static const char *usage_str[] = {
 	NULL
 };
 
-static unsigned long do_compress(void **pptr, unsigned long size)
+static size_t do_compress(void **pptr, size_t size)
 {
 	git_zstream stream;
 	void *in, *out;
@@ -48,8 +48,8 @@ static void write_ref_delta(struct hashfile *f,
 			    struct object_id *base)
 {
 	unsigned char header[MAX_PACK_OBJECT_HEADER];
-	unsigned long delta_size, compressed_size, hdrlen;
-	size_t size, base_size, delta_size_st = 0;
+	unsigned long compressed_size, hdrlen;
+	size_t size, base_size, delta_size;
 	enum object_type type;
 	void *base_buf, *delta_buf;
 	void *buf = odb_read_object(the_repository->objects,
@@ -65,8 +65,7 @@ static void write_ref_delta(struct hashfile *f,
 		die("unable to read %s", oid_to_hex(base));
 
 	delta_buf = diff_delta(base_buf, base_size,
-			       buf, size, &delta_size_st, 0);
-	delta_size = cast_size_t_to_ulong(delta_size_st);
+			       buf, size, &delta_size, 0);
 
 	compressed_size = do_compress(&delta_buf, delta_size);
 
