@@ -33,6 +33,7 @@ test_expect_success 'empty repository' '
 		|   * Count                 |    0   |
 		|     * Branches            |    0   |
 		|     * Tags                |    0   |
+		|       * Annotated         |    0   |
 		|     * Remotes             |    0   |
 		|     * Others              |    0   |
 		|                           |        |
@@ -97,6 +98,7 @@ test_expect_success SHA1 'repository with references and objects' '
 		|   * Count                 |      4     |
 		|     * Branches            |      1     |
 		|     * Tags                |      1     |
+		|       * Annotated         |      1     |
 		|     * Remotes             |      1     |
 		|     * Others              |      1     |
 		|                           |            |
@@ -150,11 +152,13 @@ test_expect_success SHA1 'lines and nul format' '
 	(
 		cd repo &&
 		test_commit_bulk 42 &&
+		git tag lightweight-tag-is-not-counted-as-annotated &&
 		git tag -a foo -m bar &&
 
 		cat >expect <<-EOF &&
 		references.branches.count=1
-		references.tags.count=1
+		references.tags.count=2
+		references.tags.annotated.count=1
 		references.remotes.count=0
 		references.others.count=0
 		objects.commits.count=42
