@@ -131,13 +131,15 @@ void free_commit_buffer_slab(struct buffer_slab *bs);
  * Associate an object buffer with the commit. The ownership of the
  * memory is handed over to the commit, and must be free()-able.
  */
-void set_commit_buffer(struct repository *r, struct commit *, void *buffer, unsigned long size);
+void set_commit_buffer(struct repository *r, struct commit *,
+		       void *buffer, size_t size);
 
 /*
  * Get any cached object buffer associated with the commit. Returns NULL
  * if none. The resulting memory should not be freed.
  */
-const void *get_cached_commit_buffer(struct repository *, const struct commit *, unsigned long *size);
+const void *get_cached_commit_buffer(struct repository *,
+				     const struct commit *, size_t *size);
 
 /*
  * Get the commit's object contents, either from cache or by reading the object
@@ -146,7 +148,7 @@ const void *get_cached_commit_buffer(struct repository *, const struct commit *,
  */
 const void *repo_get_commit_buffer(struct repository *r,
 				   const struct commit *,
-				   unsigned long *size);
+				   size_t *size);
 
 /*
  * Tell the commit subsystem that we are done with a particular commit buffer.
