@@ -10,7 +10,7 @@ SYNOPSIS
 [synopsis]
 git repo info [--format=(lines|nul) | -z] [--all | <key>...]
 git repo info --keys [--format=(lines|nul) | -z]
-git repo structure [--format=(table|lines|nul) | -z]
+git repo structure [<options>]
 
 DESCRIPTION
 -----------
@@ -56,7 +56,7 @@ supported:
 `nul`:::
 	Similar to `lines`, but using a _NUL_ character after each value.
 
-`structure [--format=(table|lines|nul) | -z]`::
+`structure`::
 	Retrieve statistics about the current repository structure. The
 	following kinds of information are reported:
 +
@@ -65,6 +65,21 @@ supported:
 * Total inflated size of reachable objects by type
 * Total disk size of reachable objects by type
 * Largest reachable objects in the repository by type
++
+By default every reference enumerated by `for-each-ref` contributes to
+the counts and object walk. Use `--ref-filter` to narrow the scope.
+
+	`--ref-filter=<pattern>`;;
+		Only count references whose full name matches one of the
+		given <pattern>s, and only seed the object walk from
+		those references. The option is repeatable; multiple
+		patterns form a union. Patterns use the same `wildmatch`
+		semantics as `git for-each-ref`'s positional arguments,
+		so `*` does not cross `/`. Examples:
+		`--ref-filter='refs/heads/*'` for local branches,
+		`--ref-filter='refs/tags/v*'` for release tags,
+		`--ref-filter='refs/remotes/origin/*'` for a single
+		remote's branches.
 +
 The output format can be chosen through the flag `--format`. Three formats are
 supported:
