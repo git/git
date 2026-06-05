@@ -313,6 +313,23 @@ test_expect_success '--top rejects negative values' '
 	test_grep "must be non-negative" err
 '
 
+test_expect_success 'repo.structure.top supplies the default for --top' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		test_commit foo &&
+
+		git -c repo.structure.top=2 \
+			repo structure --format=lines >with-config &&
+		test_grep "^objects.blobs.top.by_count.1.path=" with-config &&
+
+		git -c repo.structure.top=2 \
+			repo structure --format=lines --top=0 >cli-override &&
+		test_grep ! "\.top\." cli-override
+	)
+'
+
 test_expect_success 'git repo structure -h shows only repo structure usage' '
 	git repo structure -h >actual &&
 	test_grep "git repo structure" actual &&
