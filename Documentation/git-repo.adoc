@@ -65,6 +65,8 @@ supported:
 * Total inflated size of reachable objects by type
 * Total disk size of reachable objects by type
 * Largest reachable objects in the repository by type
+* Optionally, the top-_N_ largest paths by count, on-disk size, and
+  inflated size (see `--top` below)
 +
 By default every reference enumerated by `for-each-ref` contributes to
 the counts and object walk. Use `--ref-filter` to narrow the scope.
@@ -80,6 +82,15 @@ the counts and object walk. Use `--ref-filter` to narrow the scope.
 		`--ref-filter='refs/tags/v*'` for release tags,
 		`--ref-filter='refs/remotes/origin/*'` for a single
 		remote's branches.
+
+	`--top=<n>`;;
+		Also report the _n_ largest paths in the repository,
+		separately for trees and blobs and separately ranked by
+		object count, on-disk size, and inflated size. Defaults
+		to `0`, which suppresses the detail tables. The default
+		can also be set via the `repo.structure.top` configuration
+		variable; an explicit `--top=<n>` on the command line
+		overrides the configured value.
 +
 The output format can be chosen through the flag `--format`. Three formats are
 supported:
