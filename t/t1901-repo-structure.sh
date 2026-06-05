@@ -228,6 +228,41 @@ test_expect_success 'progress meter option' '
 	)
 '
 
+test_expect_success '--ref-filter narrows the set of refs' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		test_commit foo &&
+		git tag v1 &&
+		git update-ref refs/remotes/origin/main HEAD &&
+
+		git repo structure --format=lines \
+			--ref-filter="refs/heads/*" >out &&
+		test_grep "^references.branches.count=1$" out &&
+		test_grep "^references.tags.count=0$" out &&
+		test_grep "^references.remotes.count=0$" out
+	)
+'
+
+test_expect_success '--ref-filter unions multiple patterns' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		test_commit foo &&
+		git tag v1 &&
+		git update-ref refs/remotes/origin/main HEAD &&
+
+		git repo structure --format=lines \
+			--ref-filter="refs/heads/*" \
+			--ref-filter="refs/tags/*" >out &&
+		test_grep "^references.branches.count=1$" out &&
+		test_grep "^references.tags.count=2$" out &&
+		test_grep "^references.remotes.count=0$" out
+	)
+'
+
 test_expect_success 'git repo structure -h shows only repo structure usage' '
 	git repo structure -h >actual &&
 	test_grep "git repo structure" actual &&
