@@ -2802,8 +2802,7 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 {
 	struct object_entry *trg_entry = trg->entry;
 	struct object_entry *src_entry = src->entry;
-	unsigned long trg_size, src_size, sizediff, max_size, sz;
-	size_t delta_size;
+	size_t trg_size, src_size, delta_size, sizediff, max_size, sz;
 	unsigned ref_depth;
 	enum object_type type;
 	void *delta_buf;
@@ -2856,12 +2855,10 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 
 	/* Load data if not already done */
 	if (!trg->data) {
-		size_t sz_st = 0;
 		packing_data_lock(&to_pack);
 		trg->data = odb_read_object(the_repository->objects,
 					    &trg_entry->idx.oid, &type,
-					    &sz_st);
-		sz = cast_size_t_to_ulong(sz_st);
+					    &sz);
 		packing_data_unlock(&to_pack);
 		if (!trg->data)
 			die(_("object %s cannot be read"),
@@ -2873,12 +2870,10 @@ static int try_delta(struct unpacked *trg, struct unpacked *src,
 		*mem_usage += sz;
 	}
 	if (!src->data) {
-		size_t sz_st = 0;
 		packing_data_lock(&to_pack);
 		src->data = odb_read_object(the_repository->objects,
 					    &src_entry->idx.oid, &type,
-					    &sz_st);
-		sz = cast_size_t_to_ulong(sz_st);
+					    &sz);
 		packing_data_unlock(&to_pack);
 		if (!src->data) {
 			if (src_entry->preferred_base) {
