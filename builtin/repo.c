@@ -2,6 +2,7 @@
 
 #include "builtin.h"
 #include "commit.h"
+#include "config.h"
 #include "environment.h"
 #include "hash.h"
 #include "hex.h"
@@ -1185,6 +1186,22 @@ static void structure_count_objects(struct object_stats *stats,
 	stop_progress(&data.progress);
 }
 
+static int repo_structure_config_cb(const char *var, const char *value,
+				    const struct config_context *cctx,
+				    void *cb)
+{
+	int *top_nr = cb;
+
+	if (!strcmp(var, "repo.structure.top")) {
+		*top_nr = git_config_int(var, value, cctx->kvi);
+		if (*top_nr < 0)
+			die(_("repo.structure.top must be non-negative"));
+		return 0;
+	}
+
+	return git_default_config(var, value, cctx, NULL);
+}
+
 static int cmd_repo_structure(int argc, const char **argv, const char *prefix,
 			      struct repository *repo)
 {
@@ -1215,6 +1232,8 @@ static int cmd_repo_structure(int argc, const char **argv, const char *prefix,
 			       "per category")),
 		OPT_END()
 	};
+
+	repo_config(repo, repo_structure_config_cb, &top_nr);
 
 	argc = parse_options(argc, argv, prefix, options, repo_structure_usage, 0);
 	if (argc)
