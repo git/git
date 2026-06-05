@@ -263,6 +263,56 @@ test_expect_success '--ref-filter unions multiple patterns' '
 	)
 '
 
+test_expect_success '--top omitted: no top.* keys' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		test_commit foo &&
+
+		git repo structure --format=lines >out &&
+		test_grep ! "\.top\." out
+	)
+'
+
+test_expect_success '--top=N reports the N largest paths per axis' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		mkdir -p dir1 dir2 &&
+		echo small >dir1/small.txt &&
+		printf "%010000d" 0 >dir2/big.txt &&
+		git add . &&
+		test_tick &&
+		git commit -m commit &&
+
+		git repo structure --format=lines --top=2 >out &&
+
+		# Two ranked entries on each axis for both types.
+		for axis in by_count by_disk_size by_inflated_size
+		do
+			for type in trees blobs
+			do
+				key=objects.${type}.top.${axis} &&
+				test_grep -E "^${key}\.1\.path=" out &&
+				test_grep -E "^${key}\.2\.path=" out &&
+				test_grep ! -E "^${key}\.3\." out || return 1
+			done
+		done &&
+
+		# The big blob outranks the small one on disk and inflated.
+		key=objects.blobs.top &&
+		test_grep "^${key}.by_disk_size.1.path=dir2/big.txt$" out &&
+		test_grep "^${key}.by_inflated_size.1.path=dir2/big.txt$" out
+	)
+'
+
+test_expect_success '--top rejects negative values' '
+	test_must_fail git repo structure --top=-1 2>err &&
+	test_grep "must be non-negative" err
+'
+
 test_expect_success 'git repo structure -h shows only repo structure usage' '
 	git repo structure -h >actual &&
 	test_grep "git repo structure" actual &&
