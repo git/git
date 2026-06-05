@@ -49,7 +49,7 @@ static int decode_tree_entry(struct tree_desc *desc, const char *buf, unsigned l
 
 static int init_tree_desc_internal(struct tree_desc *desc,
 				   const struct object_id *oid,
-				   const void *buffer, unsigned long size,
+				   const void *buffer, size_t size,
 				   struct strbuf *err,
 				   enum tree_desc_flags flags)
 {
@@ -63,7 +63,7 @@ static int init_tree_desc_internal(struct tree_desc *desc,
 }
 
 void init_tree_desc(struct tree_desc *desc, const struct object_id *tree_oid,
-		    const void *buffer, unsigned long size)
+		    const void *buffer, size_t size)
 {
 	struct strbuf err = STRBUF_INIT;
 	if (init_tree_desc_internal(desc, tree_oid, buffer, size, &err, 0))
@@ -72,7 +72,7 @@ void init_tree_desc(struct tree_desc *desc, const struct object_id *tree_oid,
 }
 
 int init_tree_desc_gently(struct tree_desc *desc, const struct object_id *oid,
-			  const void *buffer, unsigned long size,
+			  const void *buffer, size_t size,
 			  enum tree_desc_flags flags)
 {
 	struct strbuf err = STRBUF_INIT;
