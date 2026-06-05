@@ -335,7 +335,7 @@ static const char *get_next_line(const char *start, const char *end)
 }
 
 static int find_line_starts(int **line_starts, const char *buf,
-			    unsigned long len)
+			    size_t len)
 {
 	const char *end = buf + len;
 	const char *p;
