@@ -319,6 +319,7 @@ struct ref_stats {
 	size_t branches;
 	size_t remotes;
 	size_t tags;
+	size_t annotated_tags;
 	size_t others;
 };
 
@@ -504,6 +505,8 @@ static void stats_table_setup_structure(struct stats_table *table,
 	stats_table_count_addf(table, ref_total, "  * %s", _("Count"));
 	stats_table_count_addf(table, refs->branches, "    * %s", _("Branches"));
 	stats_table_count_addf(table, refs->tags, "    * %s", _("Tags"));
+	stats_table_count_addf(table, refs->annotated_tags,
+			       "      * %s", _("Annotated"));
 	stats_table_count_addf(table, refs->remotes, "    * %s", _("Remotes"));
 	stats_table_count_addf(table, refs->others, "    * %s", _("Others"));
 
@@ -687,6 +690,8 @@ static void structure_keyvalue_print(struct repo_structure *stats,
 		       stats->refs.branches, value_delim);
 	print_keyvalue("references.tags.count", key_delim,
 		       stats->refs.tags, value_delim);
+	print_keyvalue("references.tags.annotated.count", key_delim,
+		       stats->refs.annotated_tags, value_delim);
 	print_keyvalue("references.remotes.count", key_delim,
 		       stats->refs.remotes, value_delim);
 	print_keyvalue("references.others.count", key_delim,
@@ -739,6 +744,7 @@ static void structure_keyvalue_print(struct repo_structure *stats,
 struct count_references_data {
 	struct ref_stats *stats;
 	struct rev_info *revs;
+	struct repository *repo;
 	struct progress *progress;
 };
 
@@ -757,6 +763,9 @@ static int count_references(const struct reference *ref, void *cb_data)
 		break;
 	case FILTER_REFS_TAGS:
 		stats->tags++;
+		if (odb_read_object_info(data->repo->objects,
+					 ref->oid, NULL) == OBJ_TAG)
+			stats->annotated_tags++;
 		break;
 	case FILTER_REFS_OTHERS:
 		stats->others++;
@@ -785,6 +794,7 @@ static void structure_count_references(struct ref_stats *stats,
 	struct count_references_data data = {
 		.stats = stats,
 		.revs = revs,
+		.repo = repo,
 	};
 
 	if (show_progress)
