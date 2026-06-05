@@ -777,8 +777,7 @@ enum get_oid_result get_tree_entry_follow_symlinks(struct repository *r,
 			goto done;
 		} else if (S_ISLNK(*mode)) {
 			/* Follow a symlink */
-			unsigned long link_len;
-			size_t link_len_st = 0;
+			size_t link_len;
 			size_t len;
 			char *contents, *contents_start;
 			struct dir_state *parent;
@@ -798,8 +797,7 @@ enum get_oid_result get_tree_entry_follow_symlinks(struct repository *r,
 
 			contents = odb_read_object(r->objects,
 						   &current_tree_oid, &type,
-						   &link_len_st);
-			link_len = cast_size_t_to_ulong(link_len_st);
+						   &link_len);
 
 			if (!contents)
 				goto done;
