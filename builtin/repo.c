@@ -316,6 +316,40 @@ struct largest_objects {
 	struct object_data tree_entries;
 };
 
+/*
+ * Per-path summary of all objects that share a given (path, type) under the
+ * path-walk traversal: the count of objects, their on-disk size, and their
+ * inflated size.
+ */
+struct path_size_summary {
+	char *path;
+	size_t nr;
+	size_t disk_size;
+	size_t inflated_size;
+};
+
+typedef int (*path_summary_cmp)(const struct path_size_summary *,
+				const struct path_size_summary *);
+
+/*
+ * A bounded, descending-sorted list of the largest summaries seen so far,
+ * with a fixed comparison function defining "largest". New summaries are
+ * inserted with maybe_insert_into_top_paths(); smaller ones fall off the
+ * end of the list.
+ */
+struct top_paths_table {
+	path_summary_cmp cmp_fn;
+	size_t nr;
+	size_t alloc;
+	struct path_size_summary *data;
+};
+
+struct top_paths {
+	struct top_paths_table by_count;
+	struct top_paths_table by_disk;
+	struct top_paths_table by_inflated;
+};
+
 struct ref_stats {
 	size_t branches;
 	size_t remotes;
@@ -336,6 +370,8 @@ struct object_stats {
 	struct object_values inflated_sizes;
 	struct object_values disk_sizes;
 	struct largest_objects largest;
+	struct top_paths top_trees;
+	struct top_paths top_blobs;
 };
 
 struct repo_structure {
@@ -580,6 +616,41 @@ static void stats_table_setup_structure(struct stats_table *table,
 				     "    * %s", _("Maximum size"));
 }
 
+static void stats_table_add_top_paths(struct stats_table *table,
+				      const struct top_paths *top,
+				      const char *header)
+{
+	if (!top->by_count.nr && !top->by_disk.nr && !top->by_inflated.nr)
+		return;
+
+	stats_table_addf(table, "");
+	stats_table_addf(table, "* %s", header);
+
+	stats_table_addf(table, "  * %s", _("Top by count"));
+	for (size_t i = 0; i < top->by_count.nr; i++)
+		stats_table_count_addf(table, top->by_count.data[i].nr,
+				       "    * %s", top->by_count.data[i].path);
+
+	stats_table_addf(table, "  * %s", _("Top by disk size"));
+	for (size_t i = 0; i < top->by_disk.nr; i++)
+		stats_table_size_addf(table, top->by_disk.data[i].disk_size,
+				      "    * %s", top->by_disk.data[i].path);
+
+	stats_table_addf(table, "  * %s", _("Top by inflated size"));
+	for (size_t i = 0; i < top->by_inflated.nr; i++)
+		stats_table_size_addf(table,
+				      top->by_inflated.data[i].inflated_size,
+				      "    * %s",
+				      top->by_inflated.data[i].path);
+}
+
+static void stats_table_setup_top_paths(struct stats_table *table,
+					struct object_stats *objects)
+{
+	stats_table_add_top_paths(table, &objects->top_trees, _("Top trees"));
+	stats_table_add_top_paths(table, &objects->top_blobs, _("Top blobs"));
+}
+
 #define INDEX_WIDTH 4
 
 static void stats_table_print_structure(const struct stats_table *table)
@@ -684,6 +755,54 @@ static void print_object_data(const char *key, char key_delim,
 	       value_delim);
 }
 
+static void print_keyvalue_path(const char *key, char key_delim,
+				const char *path, char value_delim)
+{
+	printf("%s%c", key, key_delim);
+	if (key_delim == '=')
+		quote_c_style(path, NULL, stdout, 0);
+	else
+		fputs(path, stdout);
+	fputc(value_delim, stdout);
+}
+
+static void top_paths_keyvalue_print(const char *prefix,
+				     const struct top_paths *top,
+				     char key_delim, char value_delim)
+{
+	for (size_t i = 0; i < top->by_count.nr; i++) {
+		printf("%s.by_count.%" PRIuMAX ".",
+		       prefix, (uintmax_t)(i + 1));
+		print_keyvalue_path("path", key_delim,
+				    top->by_count.data[i].path, value_delim);
+		printf("%s.by_count.%" PRIuMAX ".",
+		       prefix, (uintmax_t)(i + 1));
+		print_keyvalue("count", key_delim,
+			       top->by_count.data[i].nr, value_delim);
+	}
+	for (size_t i = 0; i < top->by_disk.nr; i++) {
+		printf("%s.by_disk_size.%" PRIuMAX ".",
+		       prefix, (uintmax_t)(i + 1));
+		print_keyvalue_path("path", key_delim,
+				    top->by_disk.data[i].path, value_delim);
+		printf("%s.by_disk_size.%" PRIuMAX ".",
+		       prefix, (uintmax_t)(i + 1));
+		print_keyvalue("disk_size", key_delim,
+			       top->by_disk.data[i].disk_size, value_delim);
+	}
+	for (size_t i = 0; i < top->by_inflated.nr; i++) {
+		printf("%s.by_inflated_size.%" PRIuMAX ".",
+		       prefix, (uintmax_t)(i + 1));
+		print_keyvalue_path("path", key_delim,
+				    top->by_inflated.data[i].path, value_delim);
+		printf("%s.by_inflated_size.%" PRIuMAX ".",
+		       prefix, (uintmax_t)(i + 1));
+		print_keyvalue("inflated_size", key_delim,
+			       top->by_inflated.data[i].inflated_size,
+			       value_delim);
+	}
+}
+
 static void structure_keyvalue_print(struct repo_structure *stats,
 				     char key_delim, char value_delim)
 {
@@ -738,6 +857,11 @@ static void structure_keyvalue_print(struct repo_structure *stats,
 			  &stats->objects.largest.parent_count, value_delim);
 	print_object_data("objects.trees.max_entries", key_delim,
 			  &stats->objects.largest.tree_entries, value_delim);
+
+	top_paths_keyvalue_print("objects.trees.top", &stats->objects.top_trees,
+				 key_delim, value_delim);
+	top_paths_keyvalue_print("objects.blobs.top", &stats->objects.top_blobs,
+				 key_delim, value_delim);
 
 	fflush(stdout);
 }
@@ -835,7 +959,87 @@ struct count_objects_data {
 	struct object_database *odb;
 	struct object_stats *stats;
 	struct progress *progress;
+	size_t top_nr;
 };
+
+static int cmp_by_nr(const struct path_size_summary *s1,
+		     const struct path_size_summary *s2)
+{
+	return (s1->nr > s2->nr) - (s1->nr < s2->nr);
+}
+
+static int cmp_by_disk_size(const struct path_size_summary *s1,
+			    const struct path_size_summary *s2)
+{
+	return (s1->disk_size > s2->disk_size) -
+	       (s1->disk_size < s2->disk_size);
+}
+
+static int cmp_by_inflated_size(const struct path_size_summary *s1,
+				const struct path_size_summary *s2)
+{
+	return (s1->inflated_size > s2->inflated_size) -
+	       (s1->inflated_size < s2->inflated_size);
+}
+
+static void init_top_paths_table(struct top_paths_table *top, size_t limit,
+				 path_summary_cmp cmp)
+{
+	top->cmp_fn = cmp;
+	top->alloc = limit;
+	top->nr = 0;
+	CALLOC_ARRAY(top->data, limit);
+}
+
+static void init_top_paths(struct top_paths *top, size_t limit)
+{
+	init_top_paths_table(&top->by_count, limit, cmp_by_nr);
+	init_top_paths_table(&top->by_disk, limit, cmp_by_disk_size);
+	init_top_paths_table(&top->by_inflated, limit, cmp_by_inflated_size);
+}
+
+static void clear_top_paths_table(struct top_paths_table *top)
+{
+	for (size_t i = 0; i < top->nr; i++)
+		free(top->data[i].path);
+	free(top->data);
+}
+
+static void clear_top_paths(struct top_paths *top)
+{
+	clear_top_paths_table(&top->by_count);
+	clear_top_paths_table(&top->by_disk);
+	clear_top_paths_table(&top->by_inflated);
+}
+
+/*
+ * Insert 'summary' into 'top' if it ranks among the top alloc entries by the
+ * table's comparator. The list is kept sorted from largest (index 0) to
+ * smallest. If the table is already full, the smallest entry is evicted to
+ * make room.
+ */
+static void maybe_insert_into_top_paths(struct top_paths_table *top,
+					const struct path_size_summary *summary)
+{
+	size_t pos = top->nr;
+
+	while (pos > 0 && top->cmp_fn(&top->data[pos - 1], summary) < 0)
+		pos--;
+
+	if (pos >= top->alloc)
+		return;
+
+	if (top->nr == top->alloc)
+		free(top->data[top->nr - 1].path);
+	else
+		top->nr++;
+
+	for (size_t i = top->nr - 1; i > pos; i--)
+		top->data[i] = top->data[i - 1];
+
+	top->data[pos] = *summary;
+	top->data[pos].path = xstrdup(summary->path);
+}
 
 static void check_largest(struct object_data *data, struct object_id *oid,
 			  size_t value)
@@ -860,11 +1064,12 @@ static size_t count_tree_entries(struct object *obj)
 	return count;
 }
 
-static int count_objects(const char *path UNUSED, struct oid_array *oids,
+static int count_objects(const char *path, struct oid_array *oids,
 			 enum object_type type, void *cb_data)
 {
 	struct count_objects_data *data = cb_data;
 	struct object_stats *stats = data->stats;
+	struct path_size_summary summary = { .path = (char *)path };
 	size_t object_count;
 
 	for (size_t i = 0; i < oids->nr; i++) {
@@ -887,6 +1092,10 @@ static int count_objects(const char *path UNUSED, struct oid_array *oids,
 
 		obj = parse_object_buffer(the_repository, &oids->oid[i], type,
 					  inflated, content, &eaten);
+
+		summary.nr++;
+		summary.disk_size += disk;
+		summary.inflated_size += inflated;
 
 		switch (type) {
 		case OBJ_TAG:
@@ -930,6 +1139,22 @@ static int count_objects(const char *path UNUSED, struct oid_array *oids,
 			free(content);
 	}
 
+	if (data->top_nr) {
+		struct top_paths *top = NULL;
+
+		if (type == OBJ_TREE)
+			top = &stats->top_trees;
+		else if (type == OBJ_BLOB)
+			top = &stats->top_blobs;
+
+		if (top) {
+			maybe_insert_into_top_paths(&top->by_count, &summary);
+			maybe_insert_into_top_paths(&top->by_disk, &summary);
+			maybe_insert_into_top_paths(&top->by_inflated,
+						    &summary);
+		}
+	}
+
 	object_count = get_total_object_values(&stats->type_counts);
 	display_progress(data->progress, object_count);
 
@@ -938,12 +1163,14 @@ static int count_objects(const char *path UNUSED, struct oid_array *oids,
 
 static void structure_count_objects(struct object_stats *stats,
 				    struct rev_info *revs,
-				    struct repository *repo, int show_progress)
+				    struct repository *repo, size_t top_nr,
+				    int show_progress)
 {
 	struct path_walk_info info = PATH_WALK_INFO_INIT;
 	struct count_objects_data data = {
 		.odb = repo->objects,
 		.stats = stats,
+		.top_nr = top_nr,
 	};
 
 	info.revs = revs;
@@ -969,6 +1196,7 @@ static int cmd_repo_structure(int argc, const char **argv, const char *prefix,
 	struct repo_structure stats = { 0 };
 	struct rev_info revs;
 	int show_progress = -1;
+	int top_nr = 0;
 	struct string_list ref_filters = STRING_LIST_INIT_DUP;
 	struct option options[] = {
 		OPT_CALLBACK_F(0, "format", &format, N_("format"),
@@ -982,25 +1210,37 @@ static int cmd_repo_structure(int argc, const char **argv, const char *prefix,
 		OPT_STRING_LIST(0, "ref-filter", &ref_filters, N_("pattern"),
 				N_("only count refs matching <pattern>; "
 				   "repeat to union multiple patterns")),
+		OPT_INTEGER(0, "top", &top_nr,
+			    N_("report the top <n> largest paths "
+			       "per category")),
 		OPT_END()
 	};
 
 	argc = parse_options(argc, argv, prefix, options, repo_structure_usage, 0);
 	if (argc)
 		usage(_("too many arguments"));
+	if (top_nr < 0)
+		die(_("--top=<n> must be non-negative"));
 
 	repo_init_revisions(repo, &revs, prefix);
 
 	if (show_progress < 0)
 		show_progress = isatty(2);
 
+	if (top_nr) {
+		init_top_paths(&stats.objects.top_trees, top_nr);
+		init_top_paths(&stats.objects.top_blobs, top_nr);
+	}
+
 	structure_count_references(&stats.refs, &revs, repo, &ref_filters,
 				   show_progress);
-	structure_count_objects(&stats.objects, &revs, repo, show_progress);
+	structure_count_objects(&stats.objects, &revs, repo, top_nr,
+				show_progress);
 
 	switch (format) {
 	case FORMAT_TABLE:
 		stats_table_setup_structure(&table, &stats);
+		stats_table_setup_top_paths(&table, &stats.objects);
 		stats_table_print_structure(&table);
 		break;
 	case FORMAT_NEWLINE_TERMINATED:
@@ -1015,6 +1255,10 @@ static int cmd_repo_structure(int argc, const char **argv, const char *prefix,
 
 	stats_table_clear(&table);
 	string_list_clear(&ref_filters, 0);
+	if (top_nr) {
+		clear_top_paths(&stats.objects.top_trees);
+		clear_top_paths(&stats.objects.top_blobs);
+	}
 	release_revisions(&revs);
 
 	return 0;
