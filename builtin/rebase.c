@@ -118,6 +118,7 @@ struct rebase_options {
 	int allow_rerere_autoupdate;
 	int keep_empty;
 	int autosquash;
+	int fixup_all;
 	char *gpg_sign_opt;
 	int autostash;
 	int committer_date_is_author_date;
@@ -329,7 +330,8 @@ static int do_interactive_rebase(struct rebase_options *opts, unsigned flags)
 	ret = complete_action(the_repository, &replay, flags,
 		shortrevisions, opts->onto_name, opts->onto,
 		&opts->orig_head->object.oid, &opts->exec,
-		opts->autosquash, opts->update_refs, &todo_list);
+		opts->autosquash, opts->fixup_all, opts->update_refs,
+		&todo_list);
 
 cleanup:
 	replay_opts_release(&replay);
@@ -1205,6 +1207,8 @@ int cmd_rebase(int argc,
 		OPT_BOOL(0, "autosquash", &options.autosquash,
 			 N_("move commits that begin with "
 			    "squash!/fixup! under -i")),
+		OPT_BOOL(0, "fixup", &options.fixup_all,
+			 N_("fold all commits in the range into the oldest one")),
 		OPT_BOOL(0, "update-refs", &options.update_refs,
 			 N_("update branches that point to commits "
 			    "that are being rebased")),
@@ -1593,6 +1597,9 @@ int cmd_rebase(int argc,
 		imply_merge(&options, "--rebase-merges");
 	options.rebase_merges = (options.rebase_merges >= 0) ? options.rebase_merges :
 				((options.config_rebase_merges >= 0) ? options.config_rebase_merges : 0);
+
+	if (options.fixup_all && options.autosquash != 1)
+		die(_("--fixup requires --autosquash"));
 
 	if (options.autosquash == 1) {
 		imply_merge(&options, "--autosquash");

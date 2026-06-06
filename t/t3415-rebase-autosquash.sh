@@ -510,4 +510,50 @@ test_expect_success 'pick and fixup respect commit.cleanup' '
 	test_commit_message HEAD -m "something"
 '
 
+test_expect_success '--fixup folds the range into the oldest commit' '
+	rm -f .git/hooks/prepare-commit-msg &&
+	git reset --hard base &&
+	test_commit --no-tag fold1 file_fold a &&
+	test_commit --no-tag fold2 file_fold b &&
+	test_commit --no-tag fold3 file_fold c &&
+	git rebase --autosquash --fixup HEAD~3 &&
+	test_cmp_rev base HEAD~1 &&
+	test_commit_message HEAD -m "fold1" &&
+	echo c >expect &&
+	test_cmp expect file_fold
+'
+
+test_expect_success '--fixup folds smoothly when a fixup! commit is in the series' '
+	rm -f .git/hooks/prepare-commit-msg &&
+	git reset --hard base &&
+	test_commit --no-tag foldA file_fold a &&
+	test_commit --no-tag foldB file_fold b &&
+	git commit --allow-empty --fixup HEAD~1 &&
+	git rebase --autosquash --fixup HEAD~3 &&
+	test_cmp_rev base HEAD~1 &&
+	test_commit_message HEAD -m "foldA" &&
+	echo b >expect &&
+	test_cmp expect file_fold
+'
+
+test_expect_success '--fixup picks the oldest commit even if it is a fixup!' '
+	rm -f .git/hooks/prepare-commit-msg &&
+	git reset --hard base &&
+	test_commit --no-tag fixupbase file_fix a &&
+	git commit --allow-empty --fixup HEAD &&
+	test_commit --no-tag fixuptail file_fix b &&
+	git rebase --autosquash --fixup HEAD~3 &&
+	test_cmp_rev base HEAD~1 &&
+	echo b >expect &&
+	test_cmp expect file_fix
+'
+
+test_expect_success '--fixup requires --autosquash' '
+	git reset --hard base &&
+	test_must_fail git rebase --fixup HEAD~1 2>err &&
+	test_grep "fixup requires --autosquash" err &&
+	test_must_fail git rebase --no-autosquash --fixup HEAD~1 2>err &&
+	test_grep "fixup requires --autosquash" err
+'
+
 test_done

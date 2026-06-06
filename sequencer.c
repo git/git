@@ -6558,7 +6558,7 @@ int complete_action(struct repository *r, struct replay_opts *opts, unsigned fla
 		    const char *shortrevisions, const char *onto_name,
 		    struct commit *onto, const struct object_id *orig_head,
 		    struct string_list *commands, unsigned autosquash,
-		    unsigned update_refs,
+		    unsigned fixup_all, unsigned update_refs,
 		    struct todo_list *todo_list)
 {
 	char shortonto[GIT_MAX_HEXSZ + 1];
@@ -6581,7 +6581,9 @@ int complete_action(struct repository *r, struct replay_opts *opts, unsigned fla
 	if (update_refs && todo_list_add_update_ref_commands(todo_list))
 		return -1;
 
-	if (autosquash && todo_list_rearrange_squash(todo_list))
+	if (fixup_all)
+		todo_list_fixup_all_but_first(todo_list);
+	else if (autosquash && todo_list_rearrange_squash(todo_list))
 		return -1;
 
 	if (commands->nr)
@@ -6842,6 +6844,26 @@ cleanup:
 	clear_commit_todo_item(&commit_todo);
 
 	return ret;
+}
+
+int todo_list_fixup_all_but_first(struct todo_list *todo_list)
+{
+	int i, seen_pick = 0;
+
+	for (i = 0; i < todo_list->nr; i++) {
+		struct todo_item *item = todo_list->items + i;
+
+		if (!item->commit || item->command == TODO_DROP)
+			continue;
+		if (!seen_pick) {
+			seen_pick = 1;
+			item->command = TODO_PICK;
+			continue;
+		}
+		item->command = TODO_FIXUP;
+	}
+
+	return 0;
 }
 
 int sequencer_determine_whence(struct repository *r, enum commit_whence *whence)
