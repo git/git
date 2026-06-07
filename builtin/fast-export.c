@@ -285,7 +285,7 @@ static void show_progress(void)
  * There's no need to cache this result with anonymize_mem, since
  * we already handle blob content caching with marks.
  */
-static char *anonymize_blob(unsigned long *size)
+static char *anonymize_blob(size_t *size)
 {
 	static int counter;
 	struct strbuf out = STRBUF_INIT;
@@ -296,7 +296,7 @@ static char *anonymize_blob(unsigned long *size)
 
 static void export_blob(const struct object_id *oid)
 {
-	unsigned long size;
+	size_t size;
 	enum object_type type;
 	char *buf;
 	struct object *object;
@@ -317,10 +317,8 @@ static void export_blob(const struct object_id *oid)
 		object = (struct object *)lookup_blob(the_repository, oid);
 		eaten = 0;
 	} else {
-		size_t size_st = 0;
 		buf = odb_read_object(the_repository->objects, oid, &type,
-				      &size_st);
-		size = cast_size_t_to_ulong(size_st);
+				      &size);
 		if (!buf)
 			die(_("could not read blob %s"), oid_to_hex(oid));
 		if (check_object_signature(the_repository, oid, buf, size,
