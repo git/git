@@ -2861,20 +2861,18 @@ void setup_scoreboard(struct blame_scoreboard *sb,
 		sb->final_buf_size = o->file.size;
 	}
 	else {
-		size_t final_buf_size_st = 0;
 		o = get_origin(sb->final, sb->path);
 		if (fill_blob_sha1_and_mode(sb->repo, o))
 			die(_("no such path %s in %s"), sb->path, final_commit_name);
 
 		if (sb->revs->diffopt.flags.allow_textconv &&
 		    textconv_object(sb->repo, sb->path, o->mode, &o->blob_oid, 1, (char **) &sb->final_buf,
-				    &final_buf_size_st))
+				    &sb->final_buf_size))
 			;
 		else
 			sb->final_buf = odb_read_object(the_repository->objects,
 							&o->blob_oid, &type,
-							&final_buf_size_st);
-		sb->final_buf_size = cast_size_t_to_ulong(final_buf_size_st);
+							&sb->final_buf_size);
 
 		if (!sb->final_buf)
 			die(_("cannot read blob %s for path %s"),
