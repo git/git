@@ -238,7 +238,7 @@ static struct commit *fake_working_tree_commit(struct repository *r,
 		struct stat st;
 		const char *read_from;
 		char *buf_ptr;
-		unsigned long buf_len;
+		size_t buf_len;
 
 		if (contents_from) {
 			if (stat(contents_from, &st) < 0)
@@ -335,7 +335,7 @@ static const char *get_next_line(const char *start, const char *end)
 }
 
 static int find_line_starts(int **line_starts, const char *buf,
-			    unsigned long len)
+			    size_t len)
 {
 	const char *end = buf + len;
 	const char *p;
@@ -1034,20 +1034,17 @@ static void fill_origin_blob(struct diff_options *opt,
 {
 	if (!o->file.ptr) {
 		enum object_type type;
-		unsigned long file_size;
+		size_t file_size;
 
 		(*num_read_blob)++;
 		if (opt->flags.allow_textconv &&
 		    textconv_object(opt->repo, o->path, o->mode,
 				    &o->blob_oid, 1, &file->ptr, &file_size))
 			;
-		else {
-			size_t file_size_st = 0;
+		else
 			file->ptr = odb_read_object(the_repository->objects,
 						    &o->blob_oid, &type,
-						    &file_size_st);
-			file_size = cast_size_t_to_ulong(file_size_st);
-		}
+						    &file_size);
 		file->size = file_size;
 
 		if (!file->ptr)
@@ -2864,22 +2861,20 @@ void setup_scoreboard(struct blame_scoreboard *sb,
 		sb->final_buf_size = o->file.size;
 	}
 	else {
+		size_t final_buf_size_st = 0;
 		o = get_origin(sb->final, sb->path);
 		if (fill_blob_sha1_and_mode(sb->repo, o))
 			die(_("no such path %s in %s"), sb->path, final_commit_name);
 
 		if (sb->revs->diffopt.flags.allow_textconv &&
 		    textconv_object(sb->repo, sb->path, o->mode, &o->blob_oid, 1, (char **) &sb->final_buf,
-				    &sb->final_buf_size))
+				    &final_buf_size_st))
 			;
-		else {
-			size_t final_buf_size_st = 0;
+		else
 			sb->final_buf = odb_read_object(the_repository->objects,
 							&o->blob_oid, &type,
 							&final_buf_size_st);
-			sb->final_buf_size =
-				cast_size_t_to_ulong(final_buf_size_st);
-		}
+		sb->final_buf_size = cast_size_t_to_ulong(final_buf_size_st);
 
 		if (!sb->final_buf)
 			die(_("cannot read blob %s for path %s"),
