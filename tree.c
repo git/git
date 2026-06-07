@@ -172,7 +172,7 @@ struct tree *lookup_tree(struct repository *r, const struct object_id *oid)
 	return object_as_type(obj, OBJ_TREE, 0);
 }
 
-int parse_tree_buffer(struct tree *item, void *buffer, unsigned long size)
+int parse_tree_buffer(struct tree *item, void *buffer, size_t size)
 {
 	if (item->object.parsed)
 		return 0;
