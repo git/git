@@ -584,7 +584,7 @@ static int show_blob_object(const struct object_id *oid, struct rev_info *rev, c
 	struct object_id oidc;
 	struct object_context obj_context = {0};
 	char *buf;
-	unsigned long size;
+	size_t size;
 
 	fflush(rev->diffopt.file);
 	if (!rev->diffopt.flags.textconv_set_via_cmdline ||
