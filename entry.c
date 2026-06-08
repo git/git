@@ -49,10 +49,23 @@ static void create_directories(const char *path, int path_len,
 		 */
 		if (mkdir(buf, 0777)) {
 			if (errno == EEXIST && state->force &&
-			    !unlink_or_warn(buf) && !mkdir(buf, 0777))
+			    !unlink_or_warn(buf) && !mkdir(buf, 0777)) {
+				flush_fscache();
 				continue;
+			}
 			die_errno("cannot create directory at '%s'", buf);
 		}
+
+		/*
+		 * Flush the lstat cache of directory listings so that
+		 * subsequent has_dirs_only_path() calls see the
+		 * just-created directory. Without this, the Windows
+		 * fscache returns stale ENOENT for the new directory,
+		 * causing the next entry sharing this parent to
+		 * incorrectly hit the mkdir/unlink recovery path
+		 * above, which then fails with "Directory not empty".
+		 */
+		flush_fscache();
 	}
 	free(buf);
 }
