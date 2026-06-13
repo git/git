@@ -281,6 +281,33 @@ test_expect_success 'fetch --prune with a branch name keeps branches' '
 	)
 '
 
+test_expect_success 'fetch --prune with OIDs keeps branches' '
+	git clone . prune-oids &&
+	(
+		cd prune-oids &&
+		git update-ref refs/remotes/origin/extrabranch main &&
+		git rev-parse main >oids &&
+
+		git fetch --prune --stdin origin <oids &&
+		git rev-parse origin/extrabranch
+	)
+'
+
+test_expect_success 'fetch --prune with mixed refspecs prunes branches' '
+	git clone . prune-mixed &&
+	(
+		cd prune-mixed &&
+		git update-ref refs/remotes/origin/extrabranch main &&
+		{
+			git rev-parse main &&
+			echo "refs/heads/*:refs/remotes/origin/*"
+		} >refspecs &&
+
+		git fetch --prune --stdin origin <refspecs &&
+		test_must_fail git rev-parse origin/extrabranch
+	)
+'
+
 test_expect_success 'fetch --prune with a namespace keeps other namespaces' '
 	git clone . prune-namespace &&
 	(
