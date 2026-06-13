@@ -1384,4 +1384,59 @@ test_expect_success REFLINK '--reflink carries untracked files and reconciles ch
 	)
 '
 
+test_expect_success 'ephemeral: DWIM-created branch is owned and reaped on remove' '
+	test_when_finished "git worktree remove -f eph || :; git branch -D eph 2>/dev/null || :" &&
+	git worktree add eph &&
+	echo refs/heads/eph >expect &&
+	test_cmp expect .git/worktrees/eph/owned-branch &&
+	git rev-parse --verify refs/heads/eph &&
+	git worktree remove eph &&
+	test_must_fail git rev-parse --verify --quiet refs/heads/eph
+'
+
+test_expect_success 'ephemeral: -b branch is not owned and is kept on remove' '
+	test_when_finished "git worktree remove -f nb || :; git branch -D named 2>/dev/null || :" &&
+	git worktree add -b named nb &&
+	test_path_is_missing .git/worktrees/nb/owned-branch &&
+	git worktree remove nb &&
+	git rev-parse --verify refs/heads/named
+'
+
+test_expect_success 'ephemeral: pre-existing branch is not owned' '
+	test_when_finished "git worktree remove -f pe || :; git branch -D pre 2>/dev/null || :" &&
+	git branch pre &&
+	git worktree add pe pre &&
+	test_path_is_missing .git/worktrees/pe/owned-branch &&
+	git worktree remove pe &&
+	git rev-parse --verify refs/heads/pre
+'
+
+test_expect_success 'ephemeral: --keep-branch keeps an owned branch' '
+	test_when_finished "git branch -D keepme 2>/dev/null || :" &&
+	git worktree add keepme &&
+	git worktree remove --keep-branch keepme &&
+	git rev-parse --verify refs/heads/keepme
+'
+
+test_expect_success 'ephemeral: branch -m follows the marker and stays ephemeral' '
+	test_when_finished "git worktree remove -f mv || :; git branch -D mv2 2>/dev/null || :" &&
+	git worktree add mv &&
+	git -C mv branch -m mv mv2 &&
+	echo refs/heads/mv2 >expect &&
+	test_cmp expect .git/worktrees/mv/owned-branch &&
+	git worktree remove mv &&
+	test_must_fail git rev-parse --verify --quiet refs/heads/mv2
+'
+
+test_expect_success 'ephemeral: commits survive the reap when anchored by a normal branch' '
+	test_when_finished "git worktree remove -f anc || :; git branch -D anchored 2>/dev/null || :" &&
+	git worktree add anc &&
+	test_commit -C anc agentwork &&
+	tip=$(git -C anc rev-parse HEAD) &&
+	git branch anchored "$tip" &&
+	git worktree remove anc &&
+	test_must_fail git rev-parse --verify --quiet refs/heads/anc &&
+	test "$(git rev-parse anchored)" = "$tip"
+'
+
 test_done

@@ -41,7 +41,7 @@
 #define BUILTIN_WORKTREE_PRUNE_USAGE \
 	N_("git worktree prune [-n] [-v] [--expire <expire>]")
 #define BUILTIN_WORKTREE_REMOVE_USAGE \
-	N_("git worktree remove [-f] <worktree>")
+	N_("git worktree remove [-f] [--keep-branch] <worktree>")
 #define BUILTIN_WORKTREE_REPAIR_USAGE \
 	N_("git worktree repair [<path>...]")
 #define BUILTIN_WORKTREE_UNLOCK_USAGE \
@@ -130,7 +130,33 @@ struct add_opts {
 	int relative_paths;
 	int reflink;
 	const char *keep_locked;
+	const char *owned_branch;
 };
+
+/*
+ * An "owned" (ephemeral) branch is one that "git worktree add" created itself
+ * because the user did not name a branch (the DWIM auto-name case). Its
+ * lifetime is bound to the worktree: it is recorded in the worktree's
+ * administrative directory at creation and reaped when the worktree is
+ * removed. A pre-existing branch, or one named explicitly with -b/-B, is never
+ * owned.
+ */
+static char *read_owned_branch(const char *id)
+{
+	struct strbuf path = STRBUF_INIT, buf = STRBUF_INIT;
+	char *ret = NULL;
+
+	repo_common_path_append(the_repository, &path,
+				"worktrees/%s/owned-branch", id);
+	if (strbuf_read_file(&buf, path.buf, 64) > 0) {
+		strbuf_trim(&buf);
+		if (buf.len)
+			ret = strbuf_detach(&buf, NULL);
+	}
+	strbuf_release(&path);
+	strbuf_release(&buf);
+	return ret;
+}
 
 static int show_only;
 static int verbose;
@@ -771,6 +797,16 @@ static int add_worktree(const char *path, const char *refname,
 	if (the_repository->repository_format_worktree_config)
 		copy_filtered_worktree_config(sb_repo.buf);
 
+	/*
+	 * Record an owned (ephemeral) branch so that "git worktree remove" can
+	 * reap it. Only DWIM-created branches are owned (see read_owned_branch()).
+	 */
+	if (opts->owned_branch) {
+		strbuf_reset(&sb);
+		strbuf_addf(&sb, "%s/owned-branch", sb_repo.buf);
+		write_file(sb.buf, "refs/heads/%s", opts->owned_branch);
+	}
+
 	strvec_pushf(&child_env, "%s=%s", GIT_DIR_ENVIRONMENT, sb_git.buf);
 	strvec_pushf(&child_env, "%s=%s", GIT_WORK_TREE_ENVIRONMENT, path);
 
@@ -1147,6 +1183,13 @@ static int add(int ac, const char **av, const char *prefix,
 		if (s)
 			branch = branch_to_free = s;
 		new_branch = new_branch_to_free;
+
+		/*
+		 * A branch auto-created from the path (the user named no
+		 * branch) is owned by this worktree and reaped on removal.
+		 */
+		if (new_branch_to_free)
+			opts.owned_branch = new_branch_to_free;
 
 		/* DWIM: Infer --orphan when repo has no refs. */
 		opts.orphan = (!s) && dwim_orphan(&opts, !!opt_track, 1);
@@ -1651,15 +1694,19 @@ static int remove_worktree(int ac, const char **av, const char *prefix,
 			   struct repository *repo UNUSED)
 {
 	int force = 0;
+	int keep_branch = 0;
 	struct option options[] = {
 		OPT__FORCE(&force,
 			 N_("force removal even if worktree is dirty or locked"),
 			 PARSE_OPT_NOCOMPLETE),
+		OPT_BOOL(0, "keep-branch", &keep_branch,
+			 N_("keep the worktree's owned (ephemeral) branch")),
 		OPT_END()
 	};
 	struct worktree **worktrees, *wt;
 	struct strbuf errmsg = STRBUF_INIT;
 	const char *reason = NULL;
+	char *owned = NULL;
 	int ret = 0;
 
 	ac = parse_options(ac, av, prefix, options, git_worktree_remove_usage, 0);
@@ -1685,6 +1732,10 @@ static int remove_worktree(int ac, const char **av, const char *prefix,
 		    errmsg.buf);
 	strbuf_release(&errmsg);
 
+	/* read the owned-branch marker before the admin dir is deleted */
+	if (!keep_branch)
+		owned = read_owned_branch(wt->id);
+
 	if (file_exists(wt->path)) {
 		if (!force)
 			check_clean_worktree(wt, av[0]);
@@ -1697,6 +1748,27 @@ static int remove_worktree(int ac, const char **av, const char *prefix,
 	 */
 	ret |= delete_git_dir(wt->id);
 	delete_worktrees_dir_if_empty();
+
+	/*
+	 * Reap the worktree's owned (ephemeral) branch now that the worktree
+	 * is gone and the branch is no longer checked out. This is
+	 * unconditional by design: the branch was created for this worktree
+	 * and is disposable. To keep the work, anchor it with an ordinary
+	 * branch (or pass --keep-branch) before removing the worktree.
+	 */
+	if (owned) {
+		struct ref_store *refs = get_main_ref_store(the_repository);
+		if (refs_ref_exists(refs, owned)) {
+			if (refs_delete_ref(refs, NULL, owned, NULL, 0))
+				ret = error(_("failed to reap branch '%s'"), owned);
+			else {
+				const char *name = owned;
+				skip_prefix(owned, "refs/heads/", &name);
+				fprintf_ln(stderr, _("Removed branch '%s'"), name);
+			}
+		}
+		free(owned);
+	}
 
 	free_worktrees(worktrees);
 	return ret;

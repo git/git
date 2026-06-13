@@ -1873,7 +1873,7 @@ test_expect_success 'updateInstead with bare repository worktree and unborn bare
 '
 
 test_expect_success 'refuse fetch to current branch of worktree' '
-	test_when_finished "git worktree remove --force wt && git branch -D wt" &&
+	test_when_finished "git worktree remove --force --keep-branch wt && git branch -D wt" &&
 	git worktree add wt &&
 	test_commit apple &&
 	test_must_fail git fetch . HEAD:wt &&

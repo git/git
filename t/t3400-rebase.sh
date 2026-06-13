@@ -471,7 +471,7 @@ test_expect_success 'git rebase --update-ref with core.commentChar and branch on
 	test_when_finished git branch -D base topic2 &&
 	test_when_finished git checkout main &&
 	test_when_finished git branch -D wt-topic &&
-	test_when_finished git worktree remove wt-topic &&
+	test_when_finished git worktree remove --keep-branch wt-topic &&
 	git checkout main &&
 	git checkout -b base &&
 	git checkout -b topic2 &&
