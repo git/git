@@ -1627,9 +1627,12 @@ static void show_rebase_in_progress(struct wt_status *s,
 		else
 			status_printf_ln(s, color,
 					 _("You are currently splitting a commit during a rebase."));
-		if (s->hints)
+		if (s->hints) {
 			status_printf_ln(s, color,
 				_("  (Once your working directory is clean, run \"git rebase --continue\")"));
+			status_printf_ln(s, color,
+				_("  (use \"git rebase --abort\" to check out the original branch)"));
+		}
 	} else {
 		if (s->state.branch)
 			status_printf_ln(s, color,
@@ -1644,6 +1647,8 @@ static void show_rebase_in_progress(struct wt_status *s,
 				_("  (use \"git commit --amend\" to amend the current commit)"));
 			status_printf_ln(s, color,
 				_("  (use \"git rebase --continue\" once you are satisfied with your changes)"));
+			status_printf_ln(s, color,
+				_("  (use \"git rebase --abort\" to check out the original branch)"));
 		}
 	}
 	wt_longstatus_print_trailer(s);

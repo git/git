@@ -206,6 +206,7 @@ No commands remaining.
 You are currently editing a commit while rebasing branch '\''rebase_i_edit'\'' on '\''$ONTO'\''.
   (use "git commit --amend" to amend the current commit)
   (use "git rebase --continue" once you are satisfied with your changes)
+  (use "git rebase --abort" to check out the original branch)
 
 nothing to commit (use -u to show untracked files)
 EOF
@@ -240,6 +241,7 @@ Next command to do (1 remaining command):
   (use "git rebase --edit-todo" to view and edit)
 You are currently splitting a commit while rebasing branch '\''split_commit'\'' on '\''$ONTO'\''.
   (Once your working directory is clean, run "git rebase --continue")
+  (use "git rebase --abort" to check out the original branch)
 
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
@@ -278,6 +280,7 @@ No commands remaining.
 You are currently editing a commit while rebasing branch '\''amend_last'\'' on '\''$ONTO'\''.
   (use "git commit --amend" to amend the current commit)
   (use "git rebase --continue" once you are satisfied with your changes)
+  (use "git rebase --abort" to check out the original branch)
 
 nothing to commit (use -u to show untracked files)
 EOF
@@ -317,6 +320,7 @@ Next command to do (1 remaining command):
 You are currently editing a commit while rebasing branch '\''several_edits'\'' on '\''$ONTO'\''.
   (use "git commit --amend" to amend the current commit)
   (use "git rebase --continue" once you are satisfied with your changes)
+  (use "git rebase --abort" to check out the original branch)
 
 nothing to commit (use -u to show untracked files)
 EOF
@@ -347,6 +351,7 @@ Next command to do (1 remaining command):
   (use "git rebase --edit-todo" to view and edit)
 You are currently splitting a commit while rebasing branch '\''several_edits'\'' on '\''$ONTO'\''.
   (Once your working directory is clean, run "git rebase --continue")
+  (use "git rebase --abort" to check out the original branch)
 
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
@@ -383,6 +388,7 @@ Next command to do (1 remaining command):
 You are currently editing a commit while rebasing branch '\''several_edits'\'' on '\''$ONTO'\''.
   (use "git commit --amend" to amend the current commit)
   (use "git rebase --continue" once you are satisfied with your changes)
+  (use "git rebase --abort" to check out the original branch)
 
 nothing to commit (use -u to show untracked files)
 EOF
@@ -414,6 +420,7 @@ Next command to do (1 remaining command):
 You are currently editing a commit while rebasing branch '\''several_edits'\'' on '\''$ONTO'\''.
   (use "git commit --amend" to amend the current commit)
   (use "git rebase --continue" once you are satisfied with your changes)
+  (use "git rebase --abort" to check out the original branch)
 
 nothing to commit (use -u to show untracked files)
 EOF
@@ -445,6 +452,7 @@ Next command to do (1 remaining command):
   (use "git rebase --edit-todo" to view and edit)
 You are currently splitting a commit while rebasing branch '\''several_edits'\'' on '\''$ONTO'\''.
   (Once your working directory is clean, run "git rebase --continue")
+  (use "git rebase --abort" to check out the original branch)
 
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
@@ -488,6 +496,7 @@ Next command to do (1 remaining command):
 You are currently editing a commit while rebasing branch '\''several_edits'\'' on '\''$ONTO'\''.
   (use "git commit --amend" to amend the current commit)
   (use "git rebase --continue" once you are satisfied with your changes)
+  (use "git rebase --abort" to check out the original branch)
 
 nothing to commit (use -u to show untracked files)
 EOF
@@ -521,6 +530,7 @@ Next command to do (1 remaining command):
 You are currently editing a commit while rebasing branch '\''several_edits'\'' on '\''$ONTO'\''.
   (use "git commit --amend" to amend the current commit)
   (use "git rebase --continue" once you are satisfied with your changes)
+  (use "git rebase --abort" to check out the original branch)
 
 nothing to commit (use -u to show untracked files)
 EOF
@@ -562,6 +572,7 @@ Next commands to do (2 remaining commands):
   (use "git rebase --edit-todo" to view and edit)
 You are currently splitting a commit while rebasing branch '\''several_edits'\'' on '\''$ONTO'\''.
   (Once your working directory is clean, run "git rebase --continue")
+  (use "git rebase --abort" to check out the original branch)
 
 Changes not staged for commit:
   (use "git add <file>..." to update what will be committed)
@@ -609,6 +620,7 @@ Next commands to do (2 remaining commands):
 You are currently editing a commit while rebasing branch '\''several_edits'\'' on '\''$ONTO'\''.
   (use "git commit --amend" to amend the current commit)
   (use "git rebase --continue" once you are satisfied with your changes)
+  (use "git rebase --abort" to check out the original branch)
 
 nothing to commit (use -u to show untracked files)
 EOF
@@ -740,6 +752,7 @@ No commands remaining.
 You are currently editing a commit while rebasing branch '\''bisect'\'' on '\''$ONTO'\''.
   (use "git commit --amend" to amend the current commit)
   (use "git rebase --continue" once you are satisfied with your changes)
+  (use "git rebase --abort" to check out the original branch)
 
 You are currently bisecting, started from branch '\''bisect_while_rebasing'\''.
   (use "git bisect reset" to get back to the original branch)
@@ -1009,6 +1022,7 @@ No commands remaining.
 You are currently editing a commit while rebasing branch '\''several_commits'\'' on '\''$ONTO'\''.
   (use "git commit --amend" to amend the current commit)
   (use "git rebase --continue" once you are satisfied with your changes)
+  (use "git rebase --abort" to check out the original branch)
 
 nothing to commit (use -u to show untracked files)
 EOF
@@ -1037,6 +1051,7 @@ Next commands to do (2 remaining commands):
 You are currently editing a commit while rebasing branch '\''several_commits'\'' on '\''$ONTO'\''.
   (use "git commit --amend" to amend the current commit)
   (use "git rebase --continue" once you are satisfied with your changes)
+  (use "git rebase --abort" to check out the original branch)
 
 nothing to commit (use -u to show untracked files)
 EOF
@@ -1066,6 +1081,7 @@ Next commands to do (2 remaining commands):
 You are currently editing a commit while rebasing branch '\''several_commits'\'' on '\''$ONTO'\''.
   (use "git commit --amend" to amend the current commit)
   (use "git rebase --continue" once you are satisfied with your changes)
+  (use "git rebase --abort" to check out the original branch)
 
 nothing to commit (use -u to show untracked files)
 EOF
@@ -1086,6 +1102,7 @@ Next command to do (1 remaining command):
 You are currently editing a commit while rebasing branch '\''several_commits'\'' on '\''$ONTO'\''.
   (use "git commit --amend" to amend the current commit)
   (use "git rebase --continue" once you are satisfied with your changes)
+  (use "git rebase --abort" to check out the original branch)
 
 nothing to commit (use -u to show untracked files)
 EOF

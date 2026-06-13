@@ -3899,7 +3899,9 @@ static int do_exec(struct repository *r, const char *command_line, int quiet)
 			  "You can fix the problem, and then run\n"
 			  "\n"
 			  "  git rebase --continue\n"
-			  "\n"),
+			  "\n"
+			  "To abort and get back to the state before \"git rebase\", run "
+			  "\"git rebase --abort\".\n"),
 			command_line,
 			dirty ? _("and made changes to the index and/or the "
 				"working tree.\n") : "");
@@ -3912,7 +3914,9 @@ static int do_exec(struct repository *r, const char *command_line, int quiet)
 			  "Commit or stash your changes, and then run\n"
 			  "\n"
 			  "  git rebase --continue\n"
-			  "\n"), command_line);
+			  "\n"
+			  "To abort and get back to the state before \"git rebase\", run "
+			  "\"git rebase --abort\".\n"), command_line);
 		status = 1;
 	}
 
