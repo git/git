@@ -372,8 +372,8 @@ if {[tk windowingsystem] eq "aqua"} {
 set _appname {Git Gui}
 set _gitdir {}
 set _gitworktree {}
-set _isbare {}
 set _githtmldir {}
+set _prefix {}
 set _reponame {}
 set _shellpath {@@SHELL_PATH@@}
 
@@ -523,29 +523,7 @@ proc get_config {name} {
 }
 
 proc is_bare {} {
-	global _isbare
-	global _gitdir
-	global _gitworktree
-
-	if {$_isbare eq {}} {
-		if {[catch {
-			set _bare [git rev-parse --is-bare-repository]
-			switch  -- $_bare {
-			true { set _isbare 1 }
-			false { set _isbare 0}
-			default { throw }
-			}
-		}]} {
-			if {[is_config_true core.bare]
-				|| ($_gitworktree eq {}
-					&& [lindex [file split $_gitdir] end] ne {.git})} {
-				set _isbare 1
-			} else {
-				set _isbare 0
-			}
-		}
-	}
-	return $_isbare
+	return [expr {$::_gitworktree eq {}}]
 }
 
 ######################################################################
@@ -670,6 +648,9 @@ proc load_current_branch {} {
 
 	set current_branch [git branch --show-current]
 	set is_detached [expr [string length $current_branch] == 0]
+	if {$is_detached} {
+		set current_branch {HEAD}
+	}
 }
 
 auto_load tk_optionMenu
@@ -1043,6 +1024,8 @@ proc load_config {include_global} {
 ##
 ## feature option selection
 
+enable_option picker
+enable_option gitdir_discovery
 if {[regexp {^git-(.+)$} [file tail $argv0] _junk subcommand]} {
 	unset _junk
 } else {
@@ -1054,6 +1037,9 @@ if {$subcommand eq {gui.sh}} {
 if {$subcommand eq {gui} && [llength $argv] > 0} {
 	set subcommand [lindex $argv 0]
 	set argv [lrange $argv 1 end]
+	if {$subcommand eq {gui}} {
+		disable_option picker
+	}
 }
 
 enable_option multicommit
@@ -1069,6 +1055,7 @@ blame {
 	disable_option multicommit
 	disable_option branch
 	disable_option transport
+	disable_option picker
 }
 citool {
 	enable_option singlecommit
@@ -1077,6 +1064,7 @@ citool {
 	disable_option multicommit
 	disable_option branch
 	disable_option transport
+	disable_option picker
 
 	while {[llength $argv] > 0} {
 		set a [lindex $argv 0]
@@ -1098,6 +1086,9 @@ citool {
 
 		set argv [lrange $argv 1 end]
 	}
+}
+pick {
+	disable_option gitdir_discovery
 }
 }
 
@@ -1122,25 +1113,137 @@ unset argv0dir
 ##
 ## repository setup
 
+proc find_worktree_from_gitdir {} {
+	# this is invoked only if the current directory is inside the repository
+	set worktree {}
+	if {[file tail $::_gitdir] eq {.git}} {
+		# the dir containing .git is a worktree if repo allows it
+		# Check that git reports parent as a worktree (gitdir might not allow a worktree)
+		if {[catch {
+				set parent [file dirname $::_gitdir]
+				set worktree [git -C $parent rev-parse --show-toplevel]
+			}]} {
+			set worktree {}
+		}
+	} elseif [file exists {gitdir}] {
+		# a worktree gitdir has .gitdir naming worktree/.git
+		# assure git run there reports this dir as the gitdir (links might be broken)
+		if {[catch {
+				set fd_gitdir [open {gitdir} {r}]
+				set worktree [file dirname [read $fd_gitdir]]
+				catch {close $fd_gitdir}
+				set worktree_gitdir [git -C $worktree rev-parse --absolute-git-dir]
+				if {$::_gitdir ne $worktree_gitdir} {
+					set worktree {}
+				}
+			}]} {
+			catch {close $fd_gitdir}
+			set worktree {}
+		}
+	}
+	return $worktree
+}
+
+proc is_gitvars_error {err} {
+	set havevars 0
+	set GIT_DIR {}
+	set GIT_WORK_TREE {}
+	catch {set GIT_DIR $::env(GIT_DIR); set havevars 1}
+	catch {set GIT_WORK_TREE $::env(GIT_WORK_TREE); set havevars 1}
+
+	if {$havevars} {
+		catch {wm withdraw .}
+		error_popup [strcat [mc "Invalid configuration:"] \
+		   "\n" "GIT_DIR: " $GIT_DIR \
+		   "\n" "GIT_WORK_TREE: " $GIT_WORK_TREE \
+			"\n\n$err"]
+		return 1
+	}
+	return 0
+}
+
+proc set_gitdir_vars {} {
+	global _gitdir _gitworktree env
+	set env(GIT_DIR) $_gitdir
+	if {$_gitworktree ne {}} {
+		set env(GIT_WORK_TREE) $_gitworktree
+	}
+}
+
+proc unset_gitdir_vars {} {
+	global env
+	catch {unset env(GIT_DIR)}
+	catch {unset env(GIT_WORK_TREE)}
+}
+
+# find repository
+set _gitdir {}
+if {[is_enabled gitdir_discovery]} {
+	if {[catch {
+			set _gitdir [git rev-parse --absolute-git-dir]
+		} err]} {
+		if {[is_gitvars_error $err]} {
+			exit 1
+		}
+		set _gitdir {}
+	}
+}
+
 set picked 0
-if {[catch {
-		set _gitdir $env(GIT_DIR)
-		set _prefix {}
-		}]
-	&& [catch {
-		# beware that from the .git dir this sets _gitdir to .
-		# and _prefix to the empty string
-		set _gitdir [git rev-parse --git-dir]
-		set _prefix [git rev-parse --show-prefix]
-	} err]} {
+if {$_gitdir eq {} && [is_enabled picker]} {
+	unset_gitdir_vars
 	load_config 1
 	apply_config
 	choose_repository::pick
-	if {![file isdirectory $_gitdir]} {
+	if {[catch {
+			set _gitdir [git rev-parse --absolute-git-dir]
+		} err]} {
+		catch {wm withdraw .}
+		error_popup [strcat [mc "Unusable repo/worktree:"] " [pwd] \n\n$err"]
 		exit 1
 	}
 	set picked 1
 }
+
+if {$_gitdir eq {}} {
+	catch {wm withdraw .}
+	error_popup [strcat [mc "Git directory not found:"] "\n\n$err"]
+	exit 1
+}
+
+# find worktree, continue without if not required
+if {[catch {
+		set _gitworktree [git rev-parse --show-toplevel]
+		set _prefix [git rev-parse --show-prefix]
+	} err]} {
+	if {[is_gitvars_error $err]} {
+		exit 1
+	}
+	set _gitworktree {}
+	set _prefix {}
+}
+
+if {[is_bare]} {
+	# Maybe we are in an embedded or worktree specific gitdir
+	if {[set _gitworktree [find_worktree_from_gitdir]] ne {}} {
+		set _prefix {}
+	}
+}
+
+if {![is_bare]} {
+	if {[catch {cd $_gitworktree} err]} {
+		catch {wm withdraw .}
+		error_popup [strcat [mc "No working directory"] " $_gitworktree:\n\n$err"]
+		exit 1
+	}
+} elseif {![is_enabled bare]} {
+	catch {wm withdraw .}
+	error_popup [strcat [mc "Cannot use bare repository:"] "\n\n$_gitdir"]
+	exit 1
+}
+
+# repository and worktree config are complete, export them
+set_gitdir_vars
 
 # Use object format as hash algorithm (either "sha1" or "sha256")
 set hashalgorithm [git rev-parse --show-object-format]
@@ -1153,62 +1256,16 @@ if {$hashalgorithm eq "sha1"} {
 	exit 1
 }
 
-# we expand the _gitdir when it's just a single dot (i.e. when we're being
-# run from the .git dir itself) lest the routines to find the worktree
-# get confused
-if {$_gitdir eq "."} {
-	set _gitdir [pwd]
-}
-
-if {![file isdirectory $_gitdir]} {
-	catch {wm withdraw .}
-	error_popup [strcat [mc "Git directory not found:"] "\n\n$_gitdir"]
-	exit 1
-}
 # _gitdir exists, so try loading the config
 load_config 0
 apply_config
 
-set _gitworktree [git rev-parse --show-toplevel]
-
-if {$_prefix ne {}} {
-	if {$_gitworktree eq {}} {
-		regsub -all {[^/]+/} $_prefix ../ cdup
-	} else {
-		set cdup $_gitworktree
-	}
-	if {[catch {cd $cdup} err]} {
-		catch {wm withdraw .}
-		error_popup [strcat [mc "Cannot move to top of working directory:"] "\n\n$err"]
-		exit 1
-	}
-	set _gitworktree [pwd]
-	unset cdup
-} elseif {![is_enabled bare]} {
-	if {[is_bare]} {
-		catch {wm withdraw .}
-		error_popup [strcat [mc "Cannot use bare repository:"] "\n\n$_gitdir"]
-		exit 1
-	}
-	if {$_gitworktree eq {}} {
-		set _gitworktree [file dirname $_gitdir]
-	}
-	if {[catch {cd $_gitworktree} err]} {
-		catch {wm withdraw .}
-		error_popup [strcat [mc "No working directory"] " $_gitworktree:\n\n$err"]
-		exit 1
-	}
-	set _gitworktree [pwd]
-}
 set _reponame [file split [file normalize $_gitdir]]
 if {[lindex $_reponame end] eq {.git}} {
 	set _reponame [lindex $_reponame end-1]
 } else {
 	set _reponame [lindex $_reponame end]
 }
-
-set env(GIT_DIR) $_gitdir
-set env(GIT_WORK_TREE) $_gitworktree
 
 ######################################################################
 ##
@@ -2007,7 +2064,6 @@ proc incr_font_size {font {amt 1}} {
 
 proc do_gitk {revs {is_submodule false}} {
 	global current_diff_path file_states current_diff_side ui_index
-	global _gitdir _gitworktree
 
 	# -- Always start gitk through whatever we were loaded with.  This
 	#    lets us bypass using shell process on Windows systems.
@@ -2017,15 +2073,9 @@ proc do_gitk {revs {is_submodule false}} {
 	if {$exe eq {}} {
 		error_popup [mc "Couldn't find gitk in PATH"]
 	} else {
-		global env
-
 		set pwd [pwd]
 
-		if {!$is_submodule} {
-			if {![is_bare]} {
-				cd $_gitworktree
-			}
-		} else {
+		if {$is_submodule} {
 			cd $current_diff_path
 			if {$revs eq {--}} {
 				set s $file_states($current_diff_path)
@@ -2050,13 +2100,11 @@ proc do_gitk {revs {is_submodule false}} {
 			# TODO we could make life easier (start up faster?) for gitk
 			# by setting these to the appropriate values to allow gitk
 			# to skip the heuristics to find their proper value
-			unset env(GIT_DIR)
-			unset env(GIT_WORK_TREE)
+			unset_gitdir_vars
 		}
 		safe_exec_bg [concat $cmd $revs "--" "--"]
 
-		set env(GIT_DIR) $_gitdir
-		set env(GIT_WORK_TREE) $_gitworktree
+		set_gitdir_vars
 		cd $pwd
 
 		if {[info exists main_status]} {
@@ -2079,21 +2127,16 @@ proc do_git_gui {} {
 	if {$exe eq {}} {
 		error_popup [mc "Couldn't find git gui in PATH"]
 	} else {
-		global env
-		global _gitdir _gitworktree
-
 		# see note in do_gitk about unsetting these vars when
 		# running tools in a submodule
-		unset env(GIT_DIR)
-		unset env(GIT_WORK_TREE)
+		unset_gitdir_vars
 
 		set pwd [pwd]
 		cd $current_diff_path
 
 		safe_exec_bg [concat $exe gui]
 
-		set env(GIT_DIR) $_gitdir
-		set env(GIT_WORK_TREE) $_gitworktree
+		set_gitdir_vars
 		cd $pwd
 
 		set status_operation [$::main_status \
@@ -2965,7 +3008,21 @@ proc normalize_relpath {path} {
 		}
 		lappend elements $item
 	}
-	return [eval file join $elements]
+	if {$elements ne {}} {
+		return [eval file join $elements]
+	} else {
+		return {.}
+	}
+}
+
+proc show_parse_err {err} {
+	if {[tk windowingsystem] eq "win32"} {
+		catch {wm withdraw .}
+		error_popup $err
+	} else {
+		puts stderr $err
+	}
+	exit 1
 }
 
 # -- Not a normal commit type invocation?  Do that instead!
@@ -2974,108 +3031,103 @@ switch -- $subcommand {
 browser -
 blame {
 	if {$subcommand eq "blame"} {
-		set subcommand_args {[--line=<num>] rev? path}
+		set subcommand_args {[--line=<num>] [rev] [--] <filename>}
+		set required_pathtype blob
 	} else {
-		set subcommand_args {rev? path}
+		set subcommand_args {[rev] [--] <dirname>}
+		set required_pathtype tree
 	}
-	if {$argv eq {}} usage
+	set maxargs [llength $subcommand_args]
+	set nargs [llength $argv]
+	if {$nargs < 1 || $nargs > $maxargs} usage
 	set head {}
 	set path {}
 	set jump_spec {}
-	set is_path 0
-	foreach a $argv {
-		set p [file join $_prefix $a]
 
-		if {$is_path || [file exists $p]} {
-			if {$path ne {}} usage
-			set path [normalize_relpath $p]
-			break
+	set iarg 0
+	foreach a $argv {
+		incr iarg
+		if {$iarg == $nargs} {
+			# final argument is path
+			set path [normalize_relpath [file join $_prefix $a]]
 		} elseif {$a eq {--}} {
-			if {$path ne {}} {
-				if {$head ne {}} usage
-				set head $path
-				set path {}
+			# allow before required final arg that must be path
+			if {$iarg != $nargs - 1} {
+				usage
 			}
-			set is_path 1
 		} elseif {[regexp {^--line=(\d+)$} $a a lnum]} {
-			if {$jump_spec ne {} || $head ne {}} usage
+			# --line can only be the first arg
+			if {$iarg != 1 || $subcommand ne {blame}} usage
 			set jump_spec [list $lnum]
 		} elseif {$head eq {}} {
-			if {$head ne {}} usage
 			set head $a
-			set is_path 1
 		} else {
 			usage
 		}
 	}
-	unset is_path
 
-	if {$head ne {} && $path eq {}} {
-		if {[string index $head 0] eq {/}} {
-			set path [normalize_relpath $head]
-			set head {}
+	# If head not given, use current branch (HEAD),
+	# and blame will use worktree if there is one.
+	set use_worktree 0
+	if {$head eq {}} {
+		load_current_branch
+		set head $current_branch
+		if {$subcommand eq {blame} && ![is_bare]} {
+			if {![file isfile $path]} {
+				show_parse_err [mc "fatal: no such file '%s' in worktree" $path]
+			}
+			set use_worktree 1
+		}
+	} else {
+		if {[catch {
+				set commitid \
+					[git rev-parse --verify --end-of-options \
+					[strcat $head "^{commit}"]]
+			}]} {
+			show_parse_err [mc "fatal: '%s' is not a valid rev'" $head]
 		} else {
-			set path [normalize_relpath $_prefix$head]
-			set head {}
+			set current_branch $head
 		}
 	}
 
-	if {$head eq {}} {
-		load_current_branch
-	} else {
-		if {[regexp [string map "@@ [expr $hashlength - 1]" {^[0-9a-f]{1,@@}$}] $head]} {
-			if {[catch {
-					set head [git rev-parse --verify $head]
-				} err]} {
-				if {[tk windowingsystem] eq "win32"} {
-					tk_messageBox -icon error -title [mc Error] -message $err
-				} else {
-					puts stderr $err
-				}
-				exit 1
-			}
+	# check path is known in head, and is file / directory as required
+	set pathtype {}
+	catch {set pathtype [git ls-tree {--format=%(objecttype)} $head $path]}
+	if {$pathtype ne {} && $path eq {.}} {
+		# ls-tree gives contents of root-dir, we need root-dir itself
+		set pathtype {tree}
+	}
+
+	if {$pathtype ne $required_pathtype} {
+		switch -- $required_pathtype {
+			tree {show_parse_err \
+				[mc "'%s' is not a directory in rev '%s'" $path $head]}
+			blob {show_parse_err \
+				[mc "'%s' is not a filename in rev '%s'" $path $head]}
 		}
-		set current_branch $head
 	}
 
 	wm deiconify .
 	switch -- $subcommand {
 	browser {
-		if {$jump_spec ne {}} usage
-		if {$head eq {}} {
-			if {$path ne {} && [file isdirectory $path]} {
-				set head $current_branch
-			} else {
-				set head $path
-				set path {}
-			}
-		}
 		browser::new $head $path
 	}
 	blame   {
-		if {$head eq {} && ![file exists $path]} {
-			catch {wm withdraw .}
-			tk_messageBox \
-				-icon error \
-				-type ok \
-				-title [mc "git-gui: fatal error"] \
-				-message [mc "fatal: cannot stat path %s: No such file or directory" $path]
-			exit 1
-		}
-		blame::new $head $path $jump_spec
+		blame::new [expr {$use_worktree ? {} : $head}] $path $jump_spec
 	}
 	}
 	return
 }
 citool -
-gui {
+gui -
+pick {
 	if {[llength $argv] != 0} {
 		usage
 	}
 	# fall through to setup UI for commits
 }
 default {
-	set err "[mc usage:] $argv0 \[{blame|browser|citool}\]"
+	set err "[mc usage:] $argv0 \[{blame|browser|citool|gui|pick}\]"
 	if {[tk windowingsystem] eq "win32"} {
 		wm withdraw .
 		tk_messageBox -icon error -message $err \

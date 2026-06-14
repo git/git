@@ -8,9 +8,9 @@ git-imap-send - Send a collection of patches from stdin to an IMAP folder
 
 SYNOPSIS
 --------
-[verse]
-'git imap-send' [-v] [-q] [--[no-]curl] [(--folder|-f) <folder>]
-'git imap-send' --list
+[synopsis]
+git imap-send [-v] [-q] [--[no-]curl] [(--folder|-f) <folder>]
+git imap-send --list
 
 
 DESCRIPTION
@@ -32,30 +32,30 @@ $ git format-patch --signoff --stdout --attach origin | git imap-send
 OPTIONS
 -------
 
--v::
---verbose::
+`-v`::
+`--verbose`::
 	Be verbose.
 
--q::
---quiet::
+`-q`::
+`--quiet`::
 	Be quiet.
 
--f <folder>::
---folder=<folder>::
+`-f <folder>`::
+`--folder=<folder>`::
 	Specify the folder in which the emails have to saved.
 	For example: `--folder=[Gmail]/Drafts` or `-f INBOX/Drafts`.
 
---curl::
+`--curl`::
 	Use libcurl to communicate with the IMAP server, unless tunneling
 	into it.  Ignored if Git was built without the USE_CURL_FOR_IMAP_SEND
 	option set.
 
---no-curl::
+`--no-curl`::
 	Talk to the IMAP server using git's own IMAP routines instead of
 	using libcurl.  Ignored if Git was built with the NO_OPENSSL option
 	set.
 
---list::
+`--list`::
 	Run the IMAP LIST command to output a list of all the folders present.
 
 CONFIGURATION

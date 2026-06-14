@@ -46,3 +46,21 @@ repack.midxMustContainCruft::
 	`--write-midx`. When false, cruft packs are only included in the MIDX
 	when necessary (e.g., because they might be required to form a
 	reachability closure with MIDX bitmaps). Defaults to true.
+
+repack.midxSplitFactor::
+	The factor used in the geometric merging condition when
+	compacting incremental MIDX layers during `git repack` when
+	invoked with the `--write-midx=incremental` option.
++
+Adjacent layers are merged when the accumulated object count of the
+newer layer exceeds `1/<N>` of the object count of the next deeper
+layer. Must be at least 2. Defaults to 2.
+
+repack.midxNewLayerThreshold::
+	The minimum number of packs in the tip MIDX layer before those
+	packs are considered as candidates for geometric repacking
+	during `git repack --write-midx=incremental`.
++
+When the tip layer has fewer packs than this threshold, those packs are
+excluded from the geometric repack entirely, and are thus left
+unmodified. Must be at least 1. Defaults to 8.

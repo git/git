@@ -886,7 +886,7 @@ static void deepen(struct upload_pack_data *data, int depth)
 					     data->deepen_relative, depth,
 					     SHALLOW, NOT_SHALLOW);
 		send_shallow(data, result);
-		free_commit_list(result);
+		commit_list_free(result);
 	}
 
 	send_unshallow(data);
@@ -900,7 +900,7 @@ static void deepen_by_rev_list(struct upload_pack_data *data,
 	disable_commit_graph(the_repository);
 	result = get_shallow_commits_by_rev_list(argv, SHALLOW, NOT_SHALLOW);
 	send_shallow(data, result);
-	free_commit_list(result);
+	commit_list_free(result);
 	send_unshallow(data);
 }
 

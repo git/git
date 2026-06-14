@@ -155,15 +155,45 @@ check_parse '2100-00-00 00:00:00 -11' bad
 check_parse '2100-00-00 00:00:00 +11' bad
 REQUIRE_64BIT_TIME=
 
+add_time_offset() {
+	case "$3" in
+	hours)
+		unit=$(( 60*60 ))
+		;;
+	days)
+		unit=$(( 24*60*60 ))
+		;;
+	esac
+	offset=$(( $2 * unit ))
+	echo $(( $1 + offset ))
+}
+
 check_approxidate() {
+	old_date=$GIT_TEST_DATE_NOW
+	if test "$3" = "failure"
+	then
+		expection="$3"
+	else
+		expection=${4:-success}
+		offset="$3"
+	fi
+	if test -n "$offset"
+	then
+		GIT_TEST_DATE_NOW=$(add_time_offset $old_date $offset)
+		caption="$1; offset $offset"
+	else
+		caption=$1
+	fi
 	echo "$1 -> $2 +0000" >expect
-	test_expect_${3:-success} "parse approxidate ($1)" "
+	test_expect_$expection "parse approxidate ($caption)" "
 	test-tool date approxidate '$1' >actual &&
 	test_cmp expect actual
 	"
+	GIT_TEST_DATE_NOW=$old_date
 }
 
 check_approxidate now '2009-08-30 19:20:00'
+check_approxidate today '2009-08-30 00:00:00'
 check_approxidate '5 seconds ago' '2009-08-30 19:19:55'
 check_approxidate 5.seconds.ago '2009-08-30 19:19:55'
 check_approxidate 10.minutes.ago '2009-08-30 19:10:00'
@@ -179,14 +209,26 @@ check_approxidate '6pm yesterday' '2009-08-29 18:00:00'
 check_approxidate '3:00' '2009-08-30 03:00:00'
 check_approxidate '15:00' '2009-08-30 15:00:00'
 check_approxidate 'noon today' '2009-08-30 12:00:00'
+check_approxidate 'today at noon' '2009-08-30 12:00:00' '-12 hours'
+check_approxidate 'noon today' '2009-09-01 12:00:00' '+36 hours'
 check_approxidate 'noon yesterday' '2009-08-29 12:00:00'
+check_approxidate 'noon yesterday' '2009-08-29 12:00:00' '-12 hours'
+check_approxidate 'last Friday at noon' '2009-08-28 12:00:00'
+check_approxidate 'last Friday at noon' '2009-08-28 12:00:00' '-12 hours'
+check_approxidate 'tea last saturday' '2009-08-29 17:00:00'
+check_approxidate 'tea last saturday' '2009-08-29 17:00:00' '-12 hours'
 check_approxidate 'January 5th noon pm' '2009-01-05 12:00:00'
+check_approxidate 'January 5th noon pm' '2009-01-05 12:00:00' '-12 hours'
+check_approxidate 'January 5th today pm' '2009-01-30 12:00:00'
 check_approxidate '10am noon' '2009-08-29 12:00:00'
+check_approxidate 'January 5th yesterday' '2009-01-29 19:20:00'
+check_approxidate 'January 5th yesterday' '2008-12-31 19:20:00' '+2 days'
 
 check_approxidate 'last tuesday' '2009-08-25 19:20:00'
 check_approxidate 'July 5th' '2009-07-05 19:20:00'
 check_approxidate '06/05/2009' '2009-06-05 19:20:00'
 check_approxidate '06.05.2009' '2009-05-06 19:20:00'
+check_approxidate 'Jan 5 today' '2009-01-30 00:00:00'
 
 check_approxidate 'Jun 6, 5AM' '2009-06-06 05:00:00'
 check_approxidate '5AM Jun 6' '2009-06-06 05:00:00'

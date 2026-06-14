@@ -237,9 +237,9 @@ int cmd_init_db(int argc,
 		if (!git_work_tree_cfg)
 			git_work_tree_cfg = xgetcwd();
 		if (work_tree)
-			set_git_work_tree(work_tree);
+			set_git_work_tree(the_repository, work_tree);
 		else
-			set_git_work_tree(git_work_tree_cfg);
+			set_git_work_tree(the_repository, git_work_tree_cfg);
 		if (access(repo_get_work_tree(the_repository), X_OK))
 			die_errno (_("Cannot access work tree '%s'"),
 				   repo_get_work_tree(the_repository));
@@ -248,11 +248,11 @@ int cmd_init_db(int argc,
 		if (real_git_dir)
 			die(_("--separate-git-dir incompatible with bare repository"));
 		if (work_tree)
-			set_git_work_tree(work_tree);
+			set_git_work_tree(the_repository, work_tree);
 	}
 
 	flags |= INIT_DB_EXIST_OK;
-	ret = init_db(git_dir, real_git_dir, template_dir, hash_algo,
+	ret = init_db(the_repository, git_dir, real_git_dir, template_dir, hash_algo,
 		      ref_storage_format, initial_branch,
 		      init_shared_repository, flags);
 

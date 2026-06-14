@@ -120,7 +120,7 @@ static struct commit *create_commit(struct repository *repo,
 out:
 	repo_unuse_commit_buffer(repo, based_on, message);
 	free_commit_extra_headers(extra);
-	free_commit_list(parents);
+	commit_list_free(parents);
 	strbuf_release(&msg);
 	free(author);
 	return (struct commit *)obj;

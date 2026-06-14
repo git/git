@@ -67,6 +67,7 @@ void object_array_init(struct object_array *array);
  * revision.h:               0---------10         15               23--------28
  * fetch-pack.c:             01    67
  * negotiator/default.c:       2--5
+ * negotiator/skipping.c:      2--5
  * walker.c:                 0-2
  * upload-pack.c:                4       11-----14  16-----19
  * builtin/blame.c:                        12-13
@@ -74,15 +75,15 @@ void object_array_init(struct object_array *array);
  * bundle.c:                                        16
  * http-push.c:                          11-----14
  * commit-graph.c:                                15
- * commit-reach.c:                                  16-----19
+ * commit-reach.c:                                  16-------20
  * builtin/last-modified.c:                         1617
- * sha1-name.c:                                              20
+ * object-name.c:                                            20
  * list-objects-filter.c:                                      21
  * bloom.c:                                                    2122
  * builtin/fsck.c:           0--3
  * builtin/index-pack.c:                                     2021
  * reflog.c:                           10--12
- * builtin/show-branch.c:    0-------------------------------------------26
+ * builtin/show-branch.c:    0-----------------------------------------------28
  * builtin/unpack-objects.c:                                 2021
  * pack-bitmap.h:                                              2122
  */

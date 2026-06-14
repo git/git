@@ -451,6 +451,8 @@ include::config/guitool.adoc[]
 
 include::config/help.adoc[]
 
+include::config/hook.adoc[]
+
 include::config/http.adoc[]
 
 include::config/i18n.adoc[]

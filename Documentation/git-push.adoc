@@ -18,17 +18,28 @@ git push [--all | --branches | --mirror | --tags] [--follow-tags] [--atomic] [-n
 
 DESCRIPTION
 -----------
-
-Updates one or more branches, tags, or other references in a remote
-repository from your local repository, and sends all necessary data
-that isn't already on the remote.
+Updates one or more branches, tags, or other references in one or more
+remote repositories from your local repository, and sends all necessary
+data that isn't already on the remote.
 
 The simplest way to push is `git push <remote> <branch>`.
 `git push origin main` will push the local `main` branch to the `main`
 branch on the remote named `origin`.
 
-The `<repository>` argument defaults to the upstream for the current branch,
-or `origin` if there's no configured upstream.
+You can also push to multiple remotes at once by using a remote group.
+A remote group is a named list of remotes configured via `remotes.<name>`
+in your git config:
+
+	$ git config remotes.all-remotes "origin gitlab backup"
+
+Then `git push all-remotes` will push to `origin`, `gitlab`, and
+`backup` in turn, as if you had run `git push` against each one
+individually.  Each remote is pushed independently using its own
+push mapping configuration. There is a `remotes.<group>` entry in
+the configuration file. (See linkgit:git-config[1]).
+
+The `<repository>` argument defaults to the upstream for the current
+branch, or `origin` if there's no configured upstream.
 
 To decide which branches, tags, or other refs to push, Git uses
 (in order of precedence):
@@ -55,8 +66,10 @@ OPTIONS
 _<repository>_::
 	The "remote" repository that is the destination of a push
 	operation.  This parameter can be either a URL
-	(see the section <<URLS,GIT URLS>> below) or the name
-	of a remote (see the section <<REMOTES,REMOTES>> below).
+	(see the section <<URLS,GIT URLS>> below), the name
+	of a remote (see the section <<REMOTES,REMOTES>> below),
+	or the name of a remote group
+	(see the section <<REMOTE-GROUPS,REMOTE GROUPS>> below).
 
 `<refspec>...`::
 	Specify what destination ref to update with what source object.
@@ -429,6 +442,57 @@ further recursion will occur. In this case, `only` is treated as `on-demand`.
 	Use IPv6 addresses only, ignoring IPv4 addresses.
 
 include::urls-remotes.adoc[]
+
+[[REMOTE-GROUPS]]
+REMOTE GROUPS
+-------------
+
+A remote group is a named list of remotes configured via `remotes.<name>`
+in your git config:
+
+	$ git config remotes.all-remotes "r1 r2 r3"
+
+When a group name is given as the `<repository>` argument, the push is
+performed to each member remote in turn.  The defining principle is:
+
+	git push <options> all-remotes <args>
+
+is exactly equivalent to:
+
+	git push <options> r1 <args>
+	git push <options> r2 <args>
+	...
+	git push <options> rN <args>
+
+where r1, r2, ..., rN are the members of `all-remotes`.  No special
+behaviour is added or removed — the group is purely a shorthand for
+running the same push command against each member remote individually.
+
+When pushing to a group of more than one remote, Git spawns a separate
+`git push` subprocess for each member remote in sequence.  Each subprocess
+receives the same flags and refspecs as the original invocation.  This
+means that per-remote push mappings configured via `remote.<name>.push`
+and mirror mode (`remote.<name>.mirror`) are evaluated independently for
+each remote, and a mirror remote in the group cannot affect the push
+behaviour of other non-mirror remotes in the same group.
+
+The `--atomic` option is not supported for group pushes, because atomicity
+can only be guaranteed within a single transport connection to a single
+remote.  Git will refuse the invocation with an error if `--atomic` is
+combined with a group name.
+
+If any member remote fails whether due to a push rejection (e.g. a
+non-fast-forward update, a server-side hook refusing a ref) or a connection
+error (e.g. the repository does not exist, authentication fails, or the
+network is unreachable), Git reports the error and continues pushing to
+the remaining remotes in the group.  The overall exit code is non-zero if
+any member push fails.
+
+This means the user is responsible for ensuring that the sequence of
+individual pushes makes sense. If `git push r1`` would fail for a given
+set of options and arguments, then `git push all-remotes` will fail in
+the same way when it reaches r1. The group push does not do anything
+special to make a failing individual push succeed.
 
 OUTPUT
 ------

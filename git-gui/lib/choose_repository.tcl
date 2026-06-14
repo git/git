@@ -15,7 +15,7 @@ field w_recentlist ; # Listbox containing recent repositories
 field w_localpath  ; # Entry widget bound to local_path
 
 field done              0 ; # Finished picking the repository?
-field clone_ok      false ; # clone succeeeded
+field pick_ok           0 ; # true if repo pick/clone succeeded
 field local_path       {} ; # Where this repository is locally
 field origin_url       {} ; # Where we are cloning from
 field origin_name  origin ; # What we shall call 'origin'
@@ -220,6 +220,8 @@ constructor pick {} {
 	if {$top eq {.}} {
 		eval destroy [winfo children $top]
 	}
+
+	return $pick_ok
 }
 
 method _center {} {
@@ -327,8 +329,7 @@ method _git_init {} {
 	}
 
 	_append_recentrepos [pwd]
-	set ::_gitdir .git
-	set ::_prefix {}
+	set pick_ok 1
 	return 1
 }
 
@@ -409,6 +410,7 @@ method _do_new2 {} {
 	if {![_git_init $this]} {
 		return
 	}
+	set pick_ok 1
 	set done 1
 }
 
@@ -621,7 +623,7 @@ method _do_clone2 {} {
 	}
 
 	tkwait variable @done
-	if {!$clone_ok} {
+	if {!$pick_ok} {
 		error_popup [mc "Clone failed."]
 		return
 	}
@@ -632,18 +634,12 @@ method _do_clone2_done {ok} {
 	if {$ok} {
 		if {[catch {
 			cd $local_path
-			set ::_gitdir .git
-			set ::_prefix {}
 			_append_recentrepos [pwd]
 		} err]} {
 			set ok 0
 		}
 	}
-	if {!$ok} {
-		set ::_gitdir {}
-		set ::_prefix {}
-	}
-	set clone_ok $ok
+	set pick_ok $ok
 	set done 1
 }
 
@@ -721,8 +717,7 @@ method _do_open2 {} {
 	}
 
 	_append_recentrepos [pwd]
-	set ::_gitdir $actualgit
-	set ::_prefix {}
+	set pick_ok 1
 	set done 1
 }
 

@@ -466,6 +466,7 @@ out:
 
 static int too_many_loose_objects(int limit)
 {
+	struct odb_source_files *files = odb_source_files_downcast(the_repository->objects->sources);
 	/*
 	 * This is weird, but stems from legacy behaviour: the GC auto
 	 * threshold was always essentially interpreted as if it was rounded up
@@ -474,9 +475,8 @@ static int too_many_loose_objects(int limit)
 	int auto_threshold = DIV_ROUND_UP(limit, 256) * 256;
 	unsigned long loose_count;
 
-	if (odb_source_loose_count_objects(the_repository->objects->sources,
-					   ODB_COUNT_OBJECTS_APPROXIMATE,
-					   &loose_count) < 0)
+	if (odb_source_count_objects(&files->loose->base, ODB_COUNT_OBJECTS_APPROXIMATE,
+				     &loose_count) < 0)
 		return 0;
 
 	return loose_count > auto_threshold;

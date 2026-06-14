@@ -17,8 +17,9 @@
 #define PARENT2		(1u<<17)
 #define STALE		(1u<<18)
 #define RESULT		(1u<<19)
+#define ENQUEUED	(1u<<20)
 
-static const unsigned all_flags = (PARENT1 | PARENT2 | STALE | RESULT);
+static const unsigned all_flags = (PARENT1 | PARENT2 | STALE | RESULT | ENQUEUED);
 
 static int compare_commits_by_gen(const void *_a, const void *_b)
 {
@@ -39,14 +40,60 @@ static int compare_commits_by_gen(const void *_a, const void *_b)
 	return 0;
 }
 
-static int queue_has_nonstale(struct prio_queue *queue)
+/*
+ * A prio_queue with O(1) termination check.  'max_nonstale' tracks
+ * the lowest-priority non-stale commit enqueued so far; once it is
+ * popped, every remaining entry is known to be STALE.
+ */
+struct nonstale_queue {
+	struct prio_queue pq;
+	struct commit *max_nonstale;
+};
+
+static void nonstale_queue_put(struct nonstale_queue *queue,
+			       struct commit *c)
 {
-	for (size_t i = 0; i < queue->nr; i++) {
-		struct commit *commit = queue->array[i].data;
-		if (!(commit->object.flags & STALE))
-			return 1;
-	}
-	return 0;
+	struct commit *old = queue->max_nonstale;
+
+	prio_queue_put(&queue->pq, c);
+	if (c->object.flags & STALE)
+		return;
+	if (!old || queue->pq.compare(old, c, queue->pq.cb_data) <= 0)
+		queue->max_nonstale = c;
+}
+
+static struct commit *nonstale_queue_get(struct nonstale_queue *queue)
+{
+	struct commit *commit = prio_queue_get(&queue->pq);
+
+	if (commit == queue->max_nonstale)
+		queue->max_nonstale = NULL;
+
+	return commit;
+}
+
+static void clear_nonstale_queue(struct nonstale_queue *queue)
+{
+	clear_prio_queue(&queue->pq);
+	queue->max_nonstale = NULL;
+}
+
+static void nonstale_queue_put_dedup(struct nonstale_queue *queue,
+				     struct commit *c)
+{
+	if (c->object.flags & ENQUEUED)
+		return;
+	c->object.flags |= ENQUEUED;
+	nonstale_queue_put(queue, c);
+}
+
+static struct commit *nonstale_queue_get_dedup(struct nonstale_queue *queue)
+{
+	struct commit *commit = nonstale_queue_get(queue);
+
+	if (commit)
+		commit->object.flags &= ~ENQUEUED;
+	return commit;
 }
 
 /* all input commits in one and twos[] must have been parsed! */
@@ -54,31 +101,33 @@ static int paint_down_to_common(struct repository *r,
 				struct commit *one, int n,
 				struct commit **twos,
 				timestamp_t min_generation,
-				int ignore_missing_commits,
+				enum merge_base_flags mb_flags,
 				struct commit_list **result)
 {
-	struct prio_queue queue = { compare_commits_by_gen_then_commit_date };
+	struct nonstale_queue queue = {
+		{ compare_commits_by_gen_then_commit_date }
+	};
 	int i;
 	timestamp_t last_gen = GENERATION_NUMBER_INFINITY;
 	struct commit_list **tail = result;
 
 	if (!min_generation && !corrected_commit_dates_enabled(r))
-		queue.compare = compare_commits_by_commit_date;
+		queue.pq.compare = compare_commits_by_commit_date;
 
 	one->object.flags |= PARENT1;
 	if (!n) {
 		commit_list_append(one, result);
 		return 0;
 	}
-	prio_queue_put(&queue, one);
+	nonstale_queue_put_dedup(&queue, one);
 
 	for (i = 0; i < n; i++) {
 		twos[i]->object.flags |= PARENT2;
-		prio_queue_put(&queue, twos[i]);
+		nonstale_queue_put_dedup(&queue, twos[i]);
 	}
 
-	while (queue_has_nonstale(&queue)) {
-		struct commit *commit = prio_queue_get(&queue);
+	while (queue.max_nonstale) {
+		struct commit *commit = nonstale_queue_get_dedup(&queue);
 		struct commit_list *parents;
 		int flags;
 		timestamp_t generation = commit_graph_generation(commit);
@@ -97,6 +146,14 @@ static int paint_down_to_common(struct repository *r,
 			if (!(commit->object.flags & RESULT)) {
 				commit->object.flags |= RESULT;
 				tail = commit_list_append(commit, tail);
+				/*
+				 * The queue is generation-ordered; no
+				 * remaining common ancestor can be a
+				 * descendant of this one.
+				 */
+				if (!(mb_flags & MERGE_BASE_FIND_ALL) &&
+				    generation < GENERATION_NUMBER_INFINITY)
+					break;
 			}
 			/* Mark parents of a found merge stale */
 			flags |= STALE;
@@ -108,7 +165,7 @@ static int paint_down_to_common(struct repository *r,
 			if ((p->object.flags & flags) == flags)
 				continue;
 			if (repo_parse_commit(r, p)) {
-				clear_prio_queue(&queue);
+				clear_nonstale_queue(&queue);
 				commit_list_free(*result);
 				*result = NULL;
 				/*
@@ -118,17 +175,17 @@ static int paint_down_to_common(struct repository *r,
 				 * corrupt commits would already have been
 				 * dispatched with a `die()`.
 				 */
-				if (ignore_missing_commits)
+				if (mb_flags & MERGE_BASE_IGNORE_MISSING_COMMITS)
 					return 0;
 				return error(_("could not parse commit %s"),
 					     oid_to_hex(&p->object.oid));
 			}
 			p->object.flags |= flags;
-			prio_queue_put(&queue, p);
+			nonstale_queue_put_dedup(&queue, p);
 		}
 	}
 
-	clear_prio_queue(&queue);
+	clear_nonstale_queue(&queue);
 	commit_list_sort_by_date(result);
 	return 0;
 }
@@ -136,6 +193,7 @@ static int paint_down_to_common(struct repository *r,
 static int merge_bases_many(struct repository *r,
 			    struct commit *one, int n,
 			    struct commit **twos,
+			    enum merge_base_flags mb_flags,
 			    struct commit_list **result)
 {
 	struct commit_list *list = NULL, **tail = result;
@@ -165,7 +223,7 @@ static int merge_bases_many(struct repository *r,
 				     oid_to_hex(&twos[i]->object.oid));
 	}
 
-	if (paint_down_to_common(r, one, n, twos, 0, 0, &list)) {
+	if (paint_down_to_common(r, one, n, twos, 0, mb_flags, &list)) {
 		commit_list_free(list);
 		return -1;
 	}
@@ -246,7 +304,8 @@ static int remove_redundant_no_gen(struct repository *r,
 				min_generation = curr_generation;
 		}
 		if (paint_down_to_common(r, array[i], filled,
-					 work, min_generation, 0, &common)) {
+					 work, min_generation,
+					 MERGE_BASE_FIND_ALL, &common)) {
 			clear_commit_marks(array[i], all_flags);
 			clear_commit_marks_many(filled, work, all_flags);
 			commit_list_free(common);
@@ -425,6 +484,7 @@ static int get_merge_bases_many_0(struct repository *r,
 				  size_t n,
 				  struct commit **twos,
 				  int cleanup,
+				  enum merge_base_flags mb_flags,
 				  struct commit_list **result)
 {
 	struct commit_list *list, **tail = result;
@@ -432,7 +492,7 @@ static int get_merge_bases_many_0(struct repository *r,
 	size_t cnt, i;
 	int ret;
 
-	if (merge_bases_many(r, one, n, twos, result) < 0)
+	if (merge_bases_many(r, one, n, twos, mb_flags, result) < 0)
 		return -1;
 	for (i = 0; i < n; i++) {
 		if (one == twos[i])
@@ -475,16 +535,18 @@ int repo_get_merge_bases_many(struct repository *r,
 			      struct commit **twos,
 			      struct commit_list **result)
 {
-	return get_merge_bases_many_0(r, one, n, twos, 1, result);
+	return get_merge_bases_many_0(r, one, n, twos, 1,
+				     MERGE_BASE_FIND_ALL, result);
 }
 
 int repo_get_merge_bases_many_dirty(struct repository *r,
 				    struct commit *one,
 				    size_t n,
 				    struct commit **twos,
+				    enum merge_base_flags mb_flags,
 				    struct commit_list **result)
 {
-	return get_merge_bases_many_0(r, one, n, twos, 0, result);
+	return get_merge_bases_many_0(r, one, n, twos, 0, mb_flags, result);
 }
 
 int repo_get_merge_bases(struct repository *r,
@@ -492,7 +554,8 @@ int repo_get_merge_bases(struct repository *r,
 			 struct commit *two,
 			 struct commit_list **result)
 {
-	return get_merge_bases_many_0(r, one, 1, &two, 1, result);
+	return get_merge_bases_many_0(r, one, 1, &two, 1,
+				     MERGE_BASE_FIND_ALL, result);
 }
 
 /*
@@ -537,6 +600,10 @@ int repo_in_merge_bases_many(struct repository *r, struct commit *commit,
 	struct commit_list *bases = NULL;
 	int ret = 0, i;
 	timestamp_t generation, max_generation = GENERATION_NUMBER_ZERO;
+	enum merge_base_flags mb_flags = MERGE_BASE_FIND_ALL;
+
+	if (ignore_missing_commits)
+		mb_flags |= MERGE_BASE_IGNORE_MISSING_COMMITS;
 
 	if (repo_parse_commit(r, commit))
 		return ignore_missing_commits ? 0 : -1;
@@ -555,7 +622,7 @@ int repo_in_merge_bases_many(struct repository *r, struct commit *commit,
 
 	if (paint_down_to_common(r, commit,
 				 nr_reference, reference,
-				 generation, ignore_missing_commits, &bases))
+				 generation, mb_flags, &bases))
 		ret = -1;
 	else if (commit->object.flags & PARENT2)
 		ret = 1;
@@ -1022,11 +1089,11 @@ struct commit_list *get_reachable_subset(struct commit **from, size_t nr_from,
 define_commit_slab(bit_arrays, struct bitmap *);
 static struct bit_arrays bit_arrays;
 
-static void insert_no_dup(struct prio_queue *queue, struct commit *c)
+static void insert_no_dup(struct nonstale_queue *queue, struct commit *c)
 {
 	if (c->object.flags & PARENT2)
 		return;
-	prio_queue_put(queue, c);
+	nonstale_queue_put(queue, c);
 	c->object.flags |= PARENT2;
 }
 
@@ -1051,7 +1118,9 @@ void ahead_behind(struct repository *r,
 		  struct commit **commits, size_t commits_nr,
 		  struct ahead_behind_count *counts, size_t counts_nr)
 {
-	struct prio_queue queue = { .compare = compare_commits_by_gen_then_commit_date };
+	struct nonstale_queue queue = {
+		{ .compare = compare_commits_by_gen_then_commit_date }
+	};
 	size_t width = DIV_ROUND_UP(commits_nr, BITS_IN_EWORD);
 
 	if (!commits_nr || !counts_nr)
@@ -1074,8 +1143,8 @@ void ahead_behind(struct repository *r,
 		insert_no_dup(&queue, c);
 	}
 
-	while (queue_has_nonstale(&queue)) {
-		struct commit *c = prio_queue_get(&queue);
+	while (queue.max_nonstale) {
+		struct commit *c = nonstale_queue_get(&queue);
 		struct commit_list *p;
 		struct bitmap *bitmap_c = get_bit_array(c, width);
 
@@ -1117,15 +1186,14 @@ void ahead_behind(struct repository *r,
 
 	/* STALE is used here, PARENT2 is used by insert_no_dup(). */
 	repo_clear_commit_marks(r, PARENT2 | STALE);
-	for (size_t i = 0; i < queue.nr; i++)
-		free_bit_array(queue.array[i].data);
+	for (size_t i = 0; i < queue.pq.nr; i++)
+		free_bit_array(queue.pq.array[i].data);
 	clear_bit_arrays(&bit_arrays);
-	clear_prio_queue(&queue);
+	clear_nonstale_queue(&queue);
 }
 
 struct commit_and_index {
 	struct commit *commit;
-	unsigned int index;
 	timestamp_t generation;
 };
 
@@ -1165,13 +1233,15 @@ void tips_reachable_from_bases(struct repository *r,
 
 	for (size_t i = 0; i < tips_nr; i++) {
 		commits[i].commit = tips[i];
-		commits[i].index = i;
 		commits[i].generation = commit_graph_generation(tips[i]);
 	}
 
 	/* Sort with generation number ascending. */
 	QSORT(commits, tips_nr, compare_commit_and_index_by_generation);
 	min_generation = commits[0].generation;
+
+	for (size_t i = 0; i < tips_nr; i++)
+		commits[i].commit->object.flags |= RESULT;
 
 	while (bases) {
 		repo_parse_commit(r, bases->item);
@@ -1183,20 +1253,16 @@ void tips_reachable_from_bases(struct repository *r,
 		int explored_all_parents = 1;
 		struct commit_list *p;
 		struct commit *c = stack->item;
-		timestamp_t c_gen = commit_graph_generation(c);
 
 		/* Does it match any of our tips? */
-		for (size_t j = min_generation_index; j < tips_nr; j++) {
-			if (c_gen < commits[j].generation)
-				break;
+		{
+			if (c->object.flags & RESULT) {
+				c->object.flags |= mark;
 
-			if (commits[j].commit == c) {
-				tips[commits[j].index]->object.flags |= mark;
-
-				if (j == min_generation_index) {
-					unsigned int k = j + 1;
+				if (commits[min_generation_index].commit->object.flags & mark) {
+					unsigned int k = min_generation_index + 1;
 					while (k < tips_nr &&
-					       (tips[commits[k].index]->object.flags & mark))
+					       (commits[k].commit->object.flags & mark))
 						k++;
 
 					/* Terminate early if all found. */
@@ -1232,6 +1298,8 @@ void tips_reachable_from_bases(struct repository *r,
 	}
 
 done:
+	for (size_t i = 0; i < tips_nr; i++)
+		commits[i].commit->object.flags &= ~RESULT;
 	free(commits);
 	repo_clear_commit_marks(r, SEEN);
 	commit_list_free(stack);

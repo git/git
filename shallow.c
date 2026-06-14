@@ -399,7 +399,7 @@ static int write_shallow_commits_1(struct strbuf *out, int use_pack_protocol,
 	if (!extra)
 		return data.count;
 	for (size_t i = 0; i < extra->nr; i++) {
-		strbuf_addstr(out, oid_to_hex(extra->oid + i));
+		strbuf_add_oid_hex(out, extra->oid + i);
 		strbuf_addch(out, '\n');
 		data.count++;
 	}

@@ -7,6 +7,7 @@
 #include "odb.h"
 #include "odb/source.h"
 #include "odb/source-files.h"
+#include "odb/source-loose.h"
 #include "packfile.h"
 #include "strbuf.h"
 #include "write-or-die.h"
@@ -27,7 +28,7 @@ static void odb_source_files_free(struct odb_source *source)
 {
 	struct odb_source_files *files = odb_source_files_downcast(source);
 	chdir_notify_unregister(NULL, odb_source_files_reparent, files);
-	odb_source_loose_free(files->loose);
+	odb_source_free(&files->loose->base);
 	packfile_store_free(files->packed);
 	odb_source_release(&files->base);
 	free(files);
@@ -36,13 +37,14 @@ static void odb_source_files_free(struct odb_source *source)
 static void odb_source_files_close(struct odb_source *source)
 {
 	struct odb_source_files *files = odb_source_files_downcast(source);
+	odb_source_close(&files->loose->base);
 	packfile_store_close(files->packed);
 }
 
 static void odb_source_files_reprepare(struct odb_source *source)
 {
 	struct odb_source_files *files = odb_source_files_downcast(source);
-	odb_source_loose_reprepare(&files->base);
+	odb_source_reprepare(&files->loose->base);
 	packfile_store_reprepare(files->packed);
 }
 
@@ -54,7 +56,7 @@ static int odb_source_files_read_object_info(struct odb_source *source,
 	struct odb_source_files *files = odb_source_files_downcast(source);
 
 	if (!packfile_store_read_object_info(files->packed, oid, oi, flags) ||
-	    !odb_source_loose_read_object_info(source, oid, oi, flags))
+	    !odb_source_read_object_info(&files->loose->base, oid, oi, flags))
 		return 0;
 
 	return -1;
@@ -66,7 +68,7 @@ static int odb_source_files_read_object_stream(struct odb_read_stream **out,
 {
 	struct odb_source_files *files = odb_source_files_downcast(source);
 	if (!packfile_store_read_object_stream(out, files->packed, oid) ||
-	    !odb_source_loose_read_object_stream(out, source, oid))
+	    !odb_source_read_object_stream(out, &files->loose->base, oid))
 		return 0;
 	return -1;
 }
@@ -81,7 +83,7 @@ static int odb_source_files_for_each_object(struct odb_source *source,
 	int ret;
 
 	if (!(opts->flags & ODB_FOR_EACH_OBJECT_PROMISOR_ONLY)) {
-		ret = odb_source_loose_for_each_object(source, request, cb, cb_data, opts);
+		ret = odb_source_for_each_object(&files->loose->base, request, cb, cb_data, opts);
 		if (ret)
 			return ret;
 	}
@@ -108,7 +110,7 @@ static int odb_source_files_count_objects(struct odb_source *source,
 	if (!(flags & ODB_COUNT_OBJECTS_APPROXIMATE)) {
 		unsigned long loose_count;
 
-		ret = odb_source_loose_count_objects(source, flags, &loose_count);
+		ret = odb_source_count_objects(&files->loose->base, flags, &loose_count);
 		if (ret < 0)
 			goto out;
 
@@ -135,7 +137,7 @@ static int odb_source_files_find_abbrev_len(struct odb_source *source,
 	if (ret < 0)
 		goto out;
 
-	ret = odb_source_loose_find_abbrev_len(source, oid, len, &len);
+	ret = odb_source_find_abbrev_len(&files->loose->base, oid, len, &len);
 	if (ret < 0)
 		goto out;
 
@@ -151,7 +153,7 @@ static int odb_source_files_freshen_object(struct odb_source *source,
 {
 	struct odb_source_files *files = odb_source_files_downcast(source);
 	if (packfile_store_freshen_object(files->packed, oid) ||
-	    odb_source_loose_freshen_object(source, oid))
+	    odb_source_freshen_object(&files->loose->base, oid))
 		return 1;
 	return 0;
 }
@@ -163,8 +165,9 @@ static int odb_source_files_write_object(struct odb_source *source,
 					 struct object_id *compat_oid,
 					 enum odb_write_object_flags flags)
 {
-	return odb_source_loose_write_object(source, buf, len, type,
-					     oid, compat_oid, flags);
+	struct odb_source_files *files = odb_source_files_downcast(source);
+	return odb_source_write_object(&files->loose->base, buf, len, type,
+				       oid, compat_oid, flags);
 }
 
 static int odb_source_files_write_object_stream(struct odb_source *source,
@@ -172,7 +175,8 @@ static int odb_source_files_write_object_stream(struct odb_source *source,
 						size_t len,
 						struct object_id *oid)
 {
-	return odb_source_loose_write_stream(source, stream, len, oid);
+	struct odb_source_files *files = odb_source_files_downcast(source);
+	return odb_source_write_object_stream(&files->loose->base, stream, len, oid);
 }
 
 static int odb_source_files_begin_transaction(struct odb_source *source,
@@ -264,7 +268,7 @@ struct odb_source_files *odb_source_files_new(struct object_database *odb,
 
 	CALLOC_ARRAY(files, 1);
 	odb_source_init(&files->base, odb, ODB_SOURCE_FILES, path, local);
-	files->loose = odb_source_loose_new(&files->base);
+	files->loose = odb_source_loose_new(odb, path, local);
 	files->packed = packfile_store_new(&files->base);
 
 	files->base.free = odb_source_files_free;

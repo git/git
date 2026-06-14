@@ -273,8 +273,9 @@ int cmd_send_pack(int argc,
 		fd[0] = 0;
 		fd[1] = 1;
 	} else {
-		conn = git_connect(fd, dest, "git-receive-pack", receivepack,
-			args.verbose ? CONNECT_VERBOSE : 0);
+		conn = git_connect(fd, dest, GIT_CONNECT_RECEIVE_PACK,
+				   receivepack,
+				   args.verbose ? CONNECT_VERBOSE : 0);
 	}
 
 	packet_reader_init(&reader, fd[0], NULL, 0,

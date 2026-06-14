@@ -29,11 +29,18 @@ void oidtree_init(struct oidtree *ot);
  */
 void oidtree_clear(struct oidtree *ot);
 
-/* Insert the object ID into the tree. */
-void oidtree_insert(struct oidtree *ot, const struct object_id *oid);
+/*
+ * Insert the object ID into the tree and store the given pointer alongside
+ * with it. The data pointer of any preexisting entry will be overwritten.
+ */
+void oidtree_insert(struct oidtree *ot, const struct object_id *oid,
+		    void *data);
 
 /* Check whether the tree contains the given object ID. */
 bool oidtree_contains(struct oidtree *ot, const struct object_id *oid);
+
+/* Get the payload stored with the given object ID. */
+void *oidtree_get(struct oidtree *ot, const struct object_id *oid);
 
 /*
  * Callback function used for `oidtree_each()`. Returning a non-zero exit code
@@ -41,6 +48,7 @@ bool oidtree_contains(struct oidtree *ot, const struct object_id *oid);
  * of `oidtree_each()`.
  */
 typedef int (*oidtree_each_cb)(const struct object_id *oid,
+			       void *node_data,
 			       void *cb_data);
 
 /*

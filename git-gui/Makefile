@@ -64,6 +64,7 @@ REMOVE_F0  = $(RM_RF) # space is required here
 REMOVE_F1  =
 CLEAN_DST  = true
 
+ifneq ($(findstring s,$(firstword -$(MAKEFLAGS))),s)
 ifndef V
 	QUIET          = @
 	QUIET_GEN      = $(QUIET)echo '   ' GEN '$@' &&
@@ -89,16 +90,13 @@ ifndef V
 	REMOVE_F0 = dst=
 	REMOVE_F1 = && echo '   ' REMOVE `basename "$$dst"` && $(RM_RF) "$$dst"
 endif
+endif
 
 TCLTK_PATH ?= wish
 ifeq (./,$(dir $(TCLTK_PATH)))
 	TCL_PATH ?= $(subst wish,tclsh,$(TCLTK_PATH))
 else
 	TCL_PATH ?= $(dir $(TCLTK_PATH))$(notdir $(subst wish,tclsh,$(TCLTK_PATH)))
-endif
-
-ifeq ($(findstring $(firstword -$(MAKEFLAGS)),s),s)
-QUIET_GEN =
 endif
 
 -include config.mak

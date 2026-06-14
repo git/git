@@ -1,6 +1,8 @@
 #ifndef TRANSPORT_INTERNAL_H
 #define TRANSPORT_INTERNAL_H
 
+#include "connect.h"
+
 struct ref;
 struct transport;
 struct strvec;
@@ -58,7 +60,8 @@ struct transport_vtable {
 	 * process involved generating new commits.
 	 **/
 	int (*push_refs)(struct transport *transport, struct ref *refs, int flags);
-	int (*connect)(struct transport *connection, const char *name,
+	int (*connect)(struct transport *connection,
+		       enum git_connect_service service,
 		       const char *executable, int fd[2]);
 
 	/** get_refs_list(), fetch(), and push_refs() can keep

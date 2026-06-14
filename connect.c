@@ -1399,7 +1399,7 @@ static void fill_ssh_args(struct child_process *conn, const char *ssh_host,
  * the connection failed).
  */
 struct child_process *git_connect(int fd[2], const char *url,
-				  const char *name,
+				  enum git_connect_service service,
 				  const char *prog, int flags)
 {
 	char *hostandport, *path;
@@ -1413,7 +1413,7 @@ struct child_process *git_connect(int fd[2], const char *url,
 	 * fetch, ls-remote, etc), then fallback to v0 since we don't know how
 	 * to do anything else (like push or remote archive) via v2.
 	 */
-	if (version == protocol_v2 && strcmp("git-upload-pack", name))
+	if (version == protocol_v2 && service != GIT_CONNECT_UPLOAD_PACK)
 		version = protocol_v0;
 
 	/* Without this we cannot rely on waitpid() to tell

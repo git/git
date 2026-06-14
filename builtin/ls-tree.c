@@ -26,20 +26,23 @@ static const char * const ls_tree_usage[] = {
 static void expand_objectsize(struct strbuf *line, const struct object_id *oid,
 			      const enum object_type type, unsigned int padded)
 {
+	static const char padding[] = "       ";
+	size_t min_len = padded ? strlen(padding) : 0;
+	size_t orig_len = line->len;
+	size_t len;
+
 	if (type == OBJ_BLOB) {
 		unsigned long size;
 		if (odb_read_object_info(the_repository->objects, oid, &size) < 0)
 			die(_("could not get object info about '%s'"),
 			    oid_to_hex(oid));
-		if (padded)
-			strbuf_addf(line, "%7"PRIuMAX, (uintmax_t)size);
-		else
-			strbuf_addf(line, "%"PRIuMAX, (uintmax_t)size);
-	} else if (padded) {
-		strbuf_addf(line, "%7s", "-");
+		strbuf_add_uint(line, size);
 	} else {
 		strbuf_addstr(line, "-");
 	}
+	len = line->len - orig_len;
+	if (len < min_len)
+		strbuf_insert(line, orig_len, padding, min_len - len);
 }
 
 struct ls_tree_options {

@@ -80,6 +80,10 @@ OPTIONS
 +
 You may also use commit-limiting options understood by
 linkgit:git-rev-list[1] such as `--first-parent`, `--since`, or pathspecs.
++
+Most `--filter=<spec>` options don't work with the purpose of
+`git backfill`, but the `sparse:<oid>` filter is integrated to provide a
+focused set of paths to download, distinct from the `--sparse` option.
 
 SEE ALSO
 --------

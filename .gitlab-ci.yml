@@ -79,7 +79,7 @@ test:osx:
   stage: test
   needs: [ ]
   tags:
-    - saas-macos-medium-m1
+    - saas-macos-large-m2pro
   variables:
     TEST_OUTPUT_DIRECTORY: "/Volumes/RAMDisk"
   before_script:
@@ -104,10 +104,10 @@ test:osx:
         image: macos-15-xcode-16
         CC: clang
       - jobname: osx-reftable
-        image: macos-15-xcode-16
+        image: macos-26-xcode-26
         CC: clang
       - jobname: osx-meson
-        image: macos-15-xcode-16
+        image: macos-26-xcode-26
         CC: clang
   artifacts:
     paths:

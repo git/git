@@ -2985,7 +2985,7 @@ static struct untracked_cache_dir *validate_untracked_cache(struct dir_struct *d
 		return NULL;
 
 	/*
-	 * We only support $GIT_DIR/info/exclude and core.excludesfile
+	 * We only support $GIT_COMMON_DIR/info/exclude and core.excludesfile
 	 * as the global ignore rule files. Any other additions
 	 * (e.g. from command line) invalidate the cache. This
 	 * condition also catches running setup_standard_excludes()
@@ -3078,7 +3078,7 @@ static struct untracked_cache_dir *validate_untracked_cache(struct dir_struct *d
 		istate->cache_changed |= UNTRACKED_CHANGED;
 	}
 
-	/* Validate $GIT_DIR/info/exclude and core.excludesfile */
+	/* Validate $GIT_COMMON_DIR/info/exclude and core.excludesfile */
 	root = dir->untracked->root;
 	if (!oideq(&dir->internal.ss_info_exclude.oid,
 		   &dir->untracked->ss_info_exclude.oid)) {

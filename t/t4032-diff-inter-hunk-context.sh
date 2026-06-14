@@ -116,4 +116,10 @@ test_expect_success 'diff.interHunkContext invalid' '
 	test_must_fail git diff
 '
 
+test_expect_success '--inter-hunk-context rejects negative value' '
+	test_unconfig diff.interHunkContext &&
+	test_must_fail git diff --inter-hunk-context=-1 2>err &&
+	test_grep "expects a non-negative integer" err
+'
+
 test_done

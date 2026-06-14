@@ -284,7 +284,7 @@ static int setup_revwalk(struct repository *repo,
 
 		commit_list_insert(original, &from_list);
 		ret = repo_is_descendant_of(repo, head, from_list);
-		free_commit_list(from_list);
+		commit_list_free(from_list);
 
 		if (ret < 0) {
 			ret = error(_("cannot determine descendance"));
@@ -892,7 +892,7 @@ out:
 	if (index_file.len)
 		unlink(index_file.buf);
 	strbuf_release(&index_file);
-	free_commit_list(parents);
+	commit_list_free(parents);
 	release_index(&index);
 	return ret;
 }

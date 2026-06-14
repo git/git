@@ -17,10 +17,20 @@ int repo_get_merge_bases_many(struct repository *r,
 			      struct commit *one, size_t n,
 			      struct commit **twos,
 			      struct commit_list **result);
-/* To be used only when object flags after this call no longer matter */
+enum merge_base_flags {
+	MERGE_BASE_IGNORE_MISSING_COMMITS = (1 << 0),
+	MERGE_BASE_FIND_ALL               = (1 << 1),
+};
+
+/*
+ * To be used only when object flags after this call no longer matter.
+ * Without MERGE_BASE_FIND_ALL and with generation numbers available,
+ * returns after finding the first merge-base, skipping the STALE drain.
+ */
 int repo_get_merge_bases_many_dirty(struct repository *r,
 				    struct commit *one, size_t n,
 				    struct commit **twos,
+				    enum merge_base_flags mb_flags,
 				    struct commit_list **result);
 
 int get_octopus_merge_bases(struct commit_list *in, struct commit_list **result);

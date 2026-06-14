@@ -10,6 +10,7 @@
 #include "builtin.h"
 
 #include "abspath.h"
+#include "bisect.h"
 #include "config.h"
 #include "commit.h"
 #include "environment.h"
@@ -739,7 +740,7 @@ int cmd_rev_parse(int argc,
 
 	/* No options; just report on whether we're in a git repo or not. */
 	if (argc == 1) {
-		setup_git_directory();
+		setup_git_directory(the_repository);
 		repo_config(the_repository, git_default_config, NULL);
 		return 0;
 	}
@@ -749,7 +750,7 @@ int cmd_rev_parse(int argc,
 
 		if (as_is) {
 			if (show_file(arg, output_prefix) && as_is < 2)
-				verify_filename(prefix, arg, 0);
+				verify_filename(the_repository, prefix, arg, 0);
 			continue;
 		}
 
@@ -774,7 +775,7 @@ int cmd_rev_parse(int argc,
 
 		/* The rest of the options require a git repository. */
 		if (!did_repo_setup) {
-			prefix = setup_git_directory();
+			prefix = setup_git_directory(the_repository);
 			repo_config(the_repository, git_default_config, NULL);
 			did_repo_setup = 1;
 
@@ -940,13 +941,23 @@ int cmd_rev_parse(int argc,
 				continue;
 			}
 			if (!strcmp(arg, "--bisect")) {
+				char *prefix;
+				char *term_bad = NULL;
+				char *term_good = NULL;
 				struct refs_for_each_ref_options opts = { 0 };
-				opts.prefix = "refs/bisect/bad";
+				read_bisect_terms(&term_bad, &term_good);
+				prefix = xstrfmt("refs/bisect/%s", term_bad);
+				opts.prefix = prefix;
 				refs_for_each_ref_ext(get_main_ref_store(the_repository),
 						      show_reference, NULL, &opts);
-				opts.prefix = "refs/bisect/good";
+				free(prefix);
+				prefix = xstrfmt("refs/bisect/%s", term_good);
+				opts.prefix = prefix;
 				refs_for_each_ref_ext(get_main_ref_store(the_repository),
 						      anti_reference, NULL, &opts);
+				free(prefix);
+				free(term_good);
+				free(term_bad);
 				continue;
 			}
 			if (opt_with_value(arg, "--branches", &arg)) {
@@ -1006,7 +1017,7 @@ int cmd_rev_parse(int argc,
 			}
 			if (!strcmp(arg, "--show-cdup")) {
 				const char *pfx = prefix;
-				if (!is_inside_work_tree()) {
+				if (!is_inside_work_tree(the_repository)) {
 					const char *work_tree =
 						repo_get_work_tree(the_repository);
 					if (work_tree)
@@ -1063,12 +1074,12 @@ int cmd_rev_parse(int argc,
 				continue;
 			}
 			if (!strcmp(arg, "--is-inside-git-dir")) {
-				printf("%s\n", is_inside_git_dir() ? "true"
+				printf("%s\n", is_inside_git_dir(the_repository) ? "true"
 						: "false");
 				continue;
 			}
 			if (!strcmp(arg, "--is-inside-work-tree")) {
-				printf("%s\n", is_inside_work_tree() ? "true"
+				printf("%s\n", is_inside_work_tree(the_repository) ? "true"
 						: "false");
 				continue;
 			}
@@ -1173,7 +1184,7 @@ int cmd_rev_parse(int argc,
 		as_is = 1;
 		if (!show_file(arg, output_prefix))
 			continue;
-		verify_filename(prefix, arg, 1);
+		verify_filename(the_repository, prefix, arg, 1);
 	}
 	strbuf_release(&buf);
 	if (verify) {

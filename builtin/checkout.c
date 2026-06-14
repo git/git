@@ -31,6 +31,7 @@
 #include "revision.h"
 #include "sequencer.h"
 #include "setup.h"
+#include "sparse-index.h"
 #include "strvec.h"
 #include "submodule.h"
 #include "symlinks.h"
@@ -141,15 +142,65 @@ static int post_checkout_hook(struct commit *old_commit, struct commit *new_comm
 	return run_hooks_opt(the_repository, "post-checkout", &opt);
 }
 
+/*
+ * Handle a tree object and determine if we need to recurse into the
+ * tree (READ_TREE_RECURSIVE) or skip it (0).
+ */
+static int try_update_sparse_directory(const struct object_id *oid,
+				       struct strbuf *base,
+				       const char *pathname,
+				       int overlay_mode)
+{
+	struct strbuf dirpath = STRBUF_INIT;
+	struct cache_entry *old;
+	int pos, result = READ_TREE_RECURSIVE;
+
+	if (!the_repository->index->sparse_index)
+		return result;
+
+	strbuf_addbuf(&dirpath, base);
+	strbuf_addstr(&dirpath, pathname);
+	strbuf_addch(&dirpath, '/');
+
+	pos = index_name_pos_sparse(the_repository->index,
+				    dirpath.buf, dirpath.len);
+	if (pos < 0)
+		goto cleanup;
+
+	old = the_repository->index->cache[pos];
+	if (!S_ISSPARSEDIR(old->ce_mode))
+		goto cleanup;
+
+	if (oideq(oid, &old->oid)) {
+		/* Tree content already matches; no need to descend. */
+		result = 0;
+	} else if (!overlay_mode) {
+		/*
+		 * In non-overlay mode (e.g., restore --staged), replace the
+		 * sparse directory OID directly since files not present in
+		 * the source tree should be removed anyway.
+		 */
+		oidcpy(&old->oid, oid);
+		old->ce_flags |= CE_UPDATE;
+		result = 0;
+	}
+
+cleanup:
+	strbuf_release(&dirpath);
+	return result;
+}
+
 static int update_some(const struct object_id *oid, struct strbuf *base,
-		       const char *pathname, unsigned mode, void *context UNUSED)
+		       const char *pathname, unsigned mode, void *context)
 {
 	int len;
 	struct cache_entry *ce;
 	int pos;
+	int overlay_mode = context ? *((int *)context) : 1;
 
 	if (S_ISDIR(mode))
-		return READ_TREE_RECURSIVE;
+		return try_update_sparse_directory(oid, base, pathname,
+						   overlay_mode);
 
 	len = base->len + strlen(pathname);
 	ce = make_empty_cache_entry(the_repository->index, len);
@@ -165,7 +216,7 @@ static int update_some(const struct object_id *oid, struct strbuf *base,
 	 * entry in place. Whether it is UPTODATE or not, checkout_entry will
 	 * do the right thing.
 	 */
-	pos = index_name_pos(the_repository->index, ce->name, ce->ce_namelen);
+	pos = index_name_pos_sparse(the_repository->index, ce->name, ce->ce_namelen);
 	if (pos >= 0) {
 		struct cache_entry *old = the_repository->index->cache[pos];
 		if (ce->ce_mode == old->ce_mode &&
@@ -182,10 +233,11 @@ static int update_some(const struct object_id *oid, struct strbuf *base,
 	return 0;
 }
 
-static int read_tree_some(struct tree *tree, const struct pathspec *pathspec)
+static int read_tree_some(struct tree *tree, const struct pathspec *pathspec,
+			  int overlay_mode)
 {
 	read_tree(the_repository, tree,
-		  pathspec, update_some, NULL);
+		  pathspec, update_some, &overlay_mode);
 
 	/* update the index with the given tree's info
 	 * for all args, expanding wildcards, and exit
@@ -580,7 +632,8 @@ static int checkout_paths(const struct checkout_opts *opts,
 		return error(_("index file corrupt"));
 
 	if (opts->source_tree)
-		read_tree_some(opts->source_tree, &opts->pathspec);
+		read_tree_some(opts->source_tree, &opts->pathspec,
+			       opts->overlay_mode);
 	if (opts->merge)
 		unmerge_index(the_repository->index, &opts->pathspec, CE_MATCHED);
 
@@ -1484,7 +1537,7 @@ static int parse_branchname_arg(int argc, const char **argv,
 		 * it would be extremely annoying.
 		 */
 		if (argc)
-			verify_non_filename(opts->prefix, arg);
+			verify_non_filename(the_repository, opts->prefix, arg);
 	} else if (opts->accept_pathspec) {
 		argcount++;
 		argv++;

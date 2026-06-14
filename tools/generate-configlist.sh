@@ -42,9 +42,12 @@ if test -n "$DEPFILE"
 then
 	QUOTED_OUTPUT="$(printf '%s\n' "$OUTPUT" | sed 's,[&/\],\\&,g')"
 	{
+		printf '%s' "$QUOTED_OUTPUT: "
 		printf '%s\n' "$SOURCE_DIR"/Documentation/*config.adoc \
 			"$SOURCE_DIR"/Documentation/config/*.adoc |
-			sed -e 's/[# ]/\\&/g' -e "s/^/$QUOTED_OUTPUT: /"
+			sed -e 's/[# ]/\\&/g' |
+			tr '\n' ' '
+		printf '\n'
 		printf '%s:\n' "$SOURCE_DIR"/Documentation/*config.adoc \
 			"$SOURCE_DIR"/Documentation/config/*.adoc |
 			sed -e 's/[# ]/\\&/g'

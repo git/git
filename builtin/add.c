@@ -16,6 +16,7 @@
 #include "run-command.h"
 #include "object-file.h"
 #include "odb.h"
+#include "odb/transaction.h"
 #include "parse-options.h"
 #include "path.h"
 #include "preload-index.h"

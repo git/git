@@ -57,6 +57,20 @@ static int use_mailmap;
 
 static char *replace_idents_using_mailmap(char *, size_t *);
 
+/*
+ * The mailmap is initialized with .strdup_strings set to 0,
+ * but read_mailmap() sets the bit to 1 (this is true even when
+ * not a single mailmap entry is read), so it can be used for
+ * lazy loading.
+ */
+static void load_mailmap(void)
+{
+	if (mailmap.strdup_strings)
+		return;
+
+	read_mailmap(the_repository, &mailmap);
+}
+
 static char *replace_idents_using_mailmap(char *object_buf, size_t *size)
 {
 	struct strbuf sb = STRBUF_INIT;
@@ -320,7 +334,7 @@ static int expand_atom(struct strbuf *sb, const char *atom, int len,
 {
 	if (is_atom("objectname", atom, len)) {
 		if (!data->mark_query)
-			strbuf_addstr(sb, oid_to_hex(&data->oid));
+			strbuf_add_oid_hex(sb, &data->oid);
 	} else if (is_atom("objecttype", atom, len)) {
 		if (data->mark_query)
 			data->info.typep = &data->type;
@@ -330,12 +344,12 @@ static int expand_atom(struct strbuf *sb, const char *atom, int len,
 		if (data->mark_query)
 			data->info.sizep = &data->size;
 		else
-			strbuf_addf(sb, "%"PRIuMAX , (uintmax_t)data->size);
+			strbuf_add_uint(sb, data->size);
 	} else if (is_atom("objectsize:disk", atom, len)) {
 		if (data->mark_query)
 			data->info.disk_sizep = &data->disk_size;
 		else
-			strbuf_addf(sb, "%"PRIuMAX, (uintmax_t)data->disk_size);
+			strbuf_add_uint(sb, data->disk_size);
 	} else if (is_atom("rest", atom, len)) {
 		if (data->mark_query)
 			data->split_on_whitespace = 1;
@@ -345,8 +359,7 @@ static int expand_atom(struct strbuf *sb, const char *atom, int len,
 		if (data->mark_query)
 			data->info.delta_base_oid = &data->delta_base_oid;
 		else
-			strbuf_addstr(sb,
-				      oid_to_hex(&data->delta_base_oid));
+			strbuf_add_oid_hex(sb, &data->delta_base_oid);
 	} else if (is_atom("objectmode", atom, len)) {
 		if (!data->mark_query && !(S_IFINVALID == data->mode))
 			strbuf_addf(sb, "%06o", data->mode);
@@ -692,6 +705,20 @@ static void parse_cmd_info(struct batch_options *opt,
 	batch_one_object(line, output, opt, data);
 }
 
+static void parse_cmd_mailmap(struct batch_options *opt UNUSED,
+			      const char *line,
+			      struct strbuf *output UNUSED,
+			      struct expand_data *data UNUSED)
+{
+	use_mailmap = git_parse_maybe_bool(line);
+
+	if (use_mailmap < 0)
+		die(_("mailmap: invalid boolean '%s'"), line);
+
+	if (use_mailmap)
+		load_mailmap();
+}
+
 static void dispatch_calls(struct batch_options *opt,
 		struct strbuf *output,
 		struct expand_data *data,
@@ -725,9 +752,10 @@ static const struct parse_cmd {
 	parse_cmd_fn_t fn;
 	unsigned takes_args;
 } commands[] = {
-	{ "contents", parse_cmd_contents, 1},
-	{ "info", parse_cmd_info, 1},
-	{ "flush", NULL, 0},
+	{ "contents", parse_cmd_contents, 1 },
+	{ "info", parse_cmd_info, 1 },
+	{ "flush", NULL, 0 },
+	{ "mailmap", parse_cmd_mailmap, 1 },
 };
 
 static void batch_objects_command(struct batch_options *opt,
@@ -862,8 +890,9 @@ static void batch_each_object(struct batch_options *opt,
 	 */
 	odb_prepare_alternates(the_repository->objects);
 	for (source = the_repository->objects->sources; source; source = source->next) {
-		int ret = odb_source_loose_for_each_object(source, NULL, batch_one_object_oi,
-							   &payload, &opts);
+		struct odb_source_files *files = odb_source_files_downcast(source);
+		int ret = odb_source_for_each_object(&files->loose->base, NULL, batch_one_object_oi,
+						     &payload, &opts);
 		if (ret)
 			break;
 	}
@@ -1131,7 +1160,7 @@ int cmd_cat_file(int argc,
 	opt_epts = (opt == 'e' || opt == 'p' || opt == 't' || opt == 's');
 
 	if (use_mailmap)
-		read_mailmap(the_repository, &mailmap);
+		load_mailmap();
 
 	switch (batch.objects_filter.choice) {
 	case LOFC_DISABLED:

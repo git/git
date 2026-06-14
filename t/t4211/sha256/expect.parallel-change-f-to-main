@@ -5,7 +5,6 @@ Date:   Fri Apr 12 16:16:24 2013 +0200
 
     Merge across the rename
 
-
 commit 4f7a58195a92c400e28a2354328587f1ff14fb77f5cf894536f17ccbc72931b9
 Author: Thomas Rast <trast@student.ethz.ch>
 Date:   Thu Feb 28 10:49:50 2013 +0100

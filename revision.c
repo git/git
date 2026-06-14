@@ -473,10 +473,10 @@ static struct commit *handle_commit(struct rev_info *revs,
 	die("%s is unknown object", name);
 }
 
-static int everybody_uninteresting(struct commit_list *orig,
+static int everybody_uninteresting(struct prio_queue *orig,
 				   struct commit **interesting_cache)
 {
-	struct commit_list *list = orig;
+	size_t i;
 
 	if (*interesting_cache) {
 		struct commit *commit = *interesting_cache;
@@ -484,9 +484,8 @@ static int everybody_uninteresting(struct commit_list *orig,
 			return 0;
 	}
 
-	while (list) {
-		struct commit *commit = list->item;
-		list = list->next;
+	for (i = 0; i < orig->nr; i++) {
+		struct commit *commit = orig->array[i].data;
 		if (commit->object.flags & UNINTERESTING)
 			continue;
 
@@ -1300,20 +1299,17 @@ static void cherry_pick_list(struct commit_list *list, struct rev_info *revs)
 /* How many extra uninteresting commits we want to see.. */
 #define SLOP 5
 
-static int still_interesting(struct commit_list *src, timestamp_t date, int slop,
+static int still_interesting(struct prio_queue *src, timestamp_t date, int slop,
 			     struct commit **interesting_cache)
 {
 	/*
-	 * No source list at all? We're definitely done..
+	 * Since src is sorted by date, it is enough to peek at the
+	 * first entry to compare dates.  No entry at all means done.
 	 */
-	if (!src)
+	struct commit *commit = prio_queue_peek(src);
+	if (!commit)
 		return 0;
-
-	/*
-	 * Does the destination list contain entries with a date
-	 * before the source list? Definitely _not_ done.
-	 */
-	if (date <= src->item->date)
+	if (date <= commit->date)
 		return SLOP;
 
 	/*
@@ -1451,6 +1447,7 @@ static int limit_list(struct rev_info *revs)
 	struct commit_list *newlist = NULL;
 	struct commit_list **p = &newlist;
 	struct commit *interesting_cache = NULL;
+	struct prio_queue queue = { .compare = compare_commits_by_commit_date };
 
 	if (revs->ancestry_path_implicit_bottoms) {
 		collect_bottom_commits(original_list,
@@ -1461,6 +1458,11 @@ static int limit_list(struct rev_info *revs)
 
 	while (original_list) {
 		struct commit *commit = pop_commit(&original_list);
+		prio_queue_put(&queue, commit);
+	}
+
+	while (queue.nr) {
+		struct commit *commit = prio_queue_get(&queue);
 		struct object *obj = &commit->object;
 
 		if (commit == interesting_cache)
@@ -1468,11 +1470,13 @@ static int limit_list(struct rev_info *revs)
 
 		if (revs->max_age != -1 && (commit->date < revs->max_age))
 			obj->flags |= UNINTERESTING;
-		if (process_parents(revs, commit, &original_list, NULL) < 0)
+		if (process_parents(revs, commit, NULL, &queue) < 0) {
+			clear_prio_queue(&queue);
 			return -1;
+		}
 		if (obj->flags & UNINTERESTING) {
 			mark_parents_uninteresting(revs, commit);
-			slop = still_interesting(original_list, date, slop, &interesting_cache);
+			slop = still_interesting(&queue, date, slop, &interesting_cache);
 			if (slop)
 				continue;
 			break;
@@ -1509,7 +1513,7 @@ static int limit_list(struct rev_info *revs)
 		}
 	}
 
-	commit_list_free(original_list);
+	clear_prio_queue(&queue);
 	revs->commits = newlist;
 	return 0;
 }
@@ -2072,7 +2076,7 @@ static int handle_dotdot_1(const char *a_name, const char *b_name,
 		return -1;
 
 	if (!cant_be_filename) {
-		verify_non_filename(revs->prefix, full_name);
+		verify_non_filename(the_repository, revs->prefix, full_name);
 	}
 
 	a_obj = parse_object(revs->repo, &a_oid);
@@ -2225,7 +2229,7 @@ static int handle_revision_arg_1(const char *arg_, struct rev_info *revs, int fl
 		goto out;
 	}
 	if (!cant_be_filename)
-		verify_non_filename(revs->prefix, arg);
+		verify_non_filename(the_repository, revs->prefix, arg);
 	object = get_reference(revs, arg, &oid, flags ^ local_flags);
 	if (!object) {
 		ret = (revs->ignore_missing || revs->do_not_die_on_missing_objects) ? 0 : -1;
@@ -2606,6 +2610,8 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 	} else if (!strcmp(arg, "--no-graph")) {
 		graph_clear(revs->graph);
 		revs->graph = NULL;
+	} else if (skip_prefix(arg, "--graph-lane-limit=", &optarg)) {
+		revs->graph_max_lanes = parse_count(optarg);
 	} else if (!strcmp(arg, "--encode-email-headers")) {
 		revs->encode_email_headers = 1;
 	} else if (!strcmp(arg, "--no-encode-email-headers")) {
@@ -3067,7 +3073,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 			 * but the latter we have checked in the main loop.
 			 */
 			for (j = i; j < argc; j++)
-				verify_filename(revs->prefix, argv[j], j == i);
+				verify_filename(the_repository, revs->prefix, argv[j], j == i);
 
 			strvec_pushv(&prune_data, argv + i);
 			break;
@@ -3112,6 +3118,14 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 		object_context_release(&oc);
 	}
 
+	if (revs->line_level_traverse) {
+		if (want_ancestry(revs))
+			revs->limited = 1;
+		revs->topo_order = 1;
+		if (!revs->diffopt.output_format)
+			revs->diffopt.output_format = DIFF_FORMAT_PATCH;
+	}
+
 	/* Did the user ask for any diff output? Run the diff! */
 	if (revs->diffopt.output_format & ~DIFF_FORMAT_NO_OUTPUT)
 		revs->diff = 1;
@@ -3124,14 +3138,6 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 
 	if (revs->diffopt.objfind)
 		revs->simplify_history = 0;
-
-	if (revs->line_level_traverse) {
-		if (want_ancestry(revs))
-			revs->limited = 1;
-		revs->topo_order = 1;
-		if (!revs->diffopt.output_format)
-			revs->diffopt.output_format = DIFF_FORMAT_PATCH;
-	}
 
 	if (revs->topo_order && !generation_numbers_enabled(the_repository))
 		revs->limited = 1;
@@ -3175,12 +3181,20 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 
 	if (revs->no_walk && revs->graph)
 		die(_("options '%s' and '%s' cannot be used together"), "--no-walk", "--graph");
+
+	if (revs->graph_max_lanes > 0 && !revs->graph)
+		die(_("the option '%s' requires '%s'"), "--graph-lane-limit", "--graph");
+
 	if (!revs->reflog_info && revs->grep_filter.use_reflog_filter)
 		die(_("the option '%s' requires '%s'"), "--grep-reflog", "--walk-reflogs");
 
 	if (revs->line_level_traverse &&
-	    (revs->diffopt.output_format & ~(DIFF_FORMAT_PATCH | DIFF_FORMAT_NO_OUTPUT)))
-		die(_("-L does not yet support diff formats besides -p and -s"));
+	    (revs->full_diff ||
+	     (revs->diffopt.output_format &
+	      ~(DIFF_FORMAT_PATCH | DIFF_FORMAT_NO_OUTPUT |
+		DIFF_FORMAT_RAW | DIFF_FORMAT_NAME |
+		DIFF_FORMAT_NAME_STATUS | DIFF_FORMAT_SUMMARY))))
+		die(_("-L does not yet support the requested diff format"));
 
 	if (revs->expand_tabs_in_log < 0)
 		revs->expand_tabs_in_log = revs->expand_tabs_in_log_default;

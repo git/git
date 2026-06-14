@@ -1814,4 +1814,21 @@ test_expect_success 'apply with empty conflict labels' '
 	test_grep "^>>>>>>>$" conflict-file
 '
 
+test_expect_success 'stash show --include-untracked includes untracked files' '
+	git reset --hard &&
+
+	echo tracked >tracked &&
+	git add tracked &&
+	git commit -m "base" &&
+
+	echo change >>tracked &&
+	echo untracked >untracked &&
+
+	git stash push --include-untracked &&
+	test_path_is_missing untracked &&
+
+	git stash show --include-untracked >actual &&
+	test_grep "untracked" actual
+'
+
 test_done

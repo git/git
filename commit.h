@@ -203,25 +203,6 @@ struct commit_list *commit_list_reverse(struct commit_list *list);
 
 void commit_list_free(struct commit_list *list);
 
-/*
- * Deprecated compatibility functions for `struct commit_list`, to be removed
- * once Git 2.53 is released.
- */
-static inline struct commit_list *copy_commit_list(struct commit_list *l)
-{
-	return commit_list_copy(l);
-}
-
-static inline struct commit_list *reverse_commit_list(struct commit_list *l)
-{
-	return commit_list_reverse(l);
-}
-
-static inline void free_commit_list(struct commit_list *l)
-{
-	commit_list_free(l);
-}
-
 struct rev_info; /* in revision.h, it circularly uses enum cmit_fmt */
 
 const char *repo_logmsg_reencode(struct repository *r,

@@ -344,7 +344,7 @@ const char *fsck_describe_object(struct fsck_options *options,
 	buf = bufs + b;
 	b = (b + 1) % ARRAY_SIZE(bufs);
 	strbuf_reset(buf);
-	strbuf_addstr(buf, oid_to_hex(oid));
+	strbuf_add_oid_hex(buf, oid);
 	if (name)
 		strbuf_addf(buf, " (%s)", name);
 

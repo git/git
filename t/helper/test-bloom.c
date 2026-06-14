@@ -52,7 +52,7 @@ static const char *const bloom_usage = "\n"
 
 int cmd__bloom(int argc, const char **argv)
 {
-	setup_git_directory();
+	setup_git_directory(the_repository);
 
 	if (argc < 2)
 		usage(bloom_usage);

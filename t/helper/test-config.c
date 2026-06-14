@@ -102,7 +102,7 @@ int cmd__config(int argc, const char **argv)
 		return 0;
 	}
 
-	setup_git_directory();
+	setup_git_directory(the_repository);
 
 	git_configset_init(&cs);
 

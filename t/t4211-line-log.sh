@@ -155,8 +155,45 @@ test_expect_success '-p shows the default patch output' '
 	test_cmp expect actual
 '
 
-test_expect_success '--raw is forbidden' '
-	test_must_fail git log -L1,24:b.c --raw
+test_expect_success '--raw shows mode, oid, status and path' '
+	git log -L1,24:b.c --raw --format= >actual &&
+	test_grep "^:100644 100644 [0-9a-f]\{7\} [0-9a-f]\{7\} M	b.c$" actual &&
+	test_grep ! "^diff --git" actual &&
+	test_grep ! "^@@" actual
+'
+
+test_expect_success '--name-only shows path' '
+	git log -L1,24:b.c --name-only --format= >actual &&
+	test_grep "^b.c$" actual &&
+	test_grep ! "^diff --git" actual &&
+	test_grep ! "^@@" actual
+'
+
+test_expect_success '--name-status shows status and path' '
+	git log -L1,24:b.c --name-status --format= >actual &&
+	test_grep "^M	b.c$" actual &&
+	test_grep ! "^diff --git" actual &&
+	test_grep ! "^@@" actual
+'
+
+test_expect_success '--stat is not yet supported with -L' '
+	test_must_fail git log -L1,24:b.c --stat 2>err &&
+	test_grep "does not yet support" err
+'
+
+test_expect_success '--numstat is not yet supported with -L' '
+	test_must_fail git log -L1,24:b.c --numstat 2>err &&
+	test_grep "does not yet support" err
+'
+
+test_expect_success '--shortstat is not yet supported with -L' '
+	test_must_fail git log -L1,24:b.c --shortstat 2>err &&
+	test_grep "does not yet support" err
+'
+
+test_expect_success '--dirstat is not yet supported with -L' '
+	test_must_fail git log -L1,24:b.c --dirstat 2>err &&
+	test_grep "does not yet support" err
 '
 
 test_expect_success 'setup for checking fancy rename following' '
@@ -368,7 +405,6 @@ test_expect_success '-L diff output includes index and new file mode' '
 
 test_expect_success '-L with --word-diff' '
 	cat >expect <<-\EOF &&
-
 	diff --git a/file.c b/file.c
 	--- a/file.c
 	+++ b/file.c
@@ -377,7 +413,6 @@ test_expect_success '-L with --word-diff' '
 	{
 	    return [-F2;-]{+F2 + 2;+}
 	}
-
 	diff --git a/file.c b/file.c
 	new file mode 100644
 	--- /dev/null
@@ -433,7 +468,6 @@ test_expect_success 'show line-log with graph' '
 	null_blob=$(test_oid zero | cut -c1-7) &&
 	qz_to_tab_space >expect <<-EOF &&
 	* $head_oid Modify func2() in file.c
-	|Z
 	| diff --git a/file.c b/file.c
 	| index $head_blob_old..$head_blob_new 100644
 	| --- a/file.c
@@ -445,7 +479,6 @@ test_expect_success 'show line-log with graph' '
 	| +    return F2 + 2;
 	|  }
 	* $root_oid Add func1() and func2() in file.c
-	ZZ
 	  diff --git a/file.c b/file.c
 	  new file mode 100644
 	  index $null_blob..$root_blob
@@ -494,23 +527,17 @@ test_expect_success '-L --find-object does not crash with merge and rename' '
 		--find-object=$(git rev-parse HEAD:file) >actual
 '
 
-# Commit-level filtering with pickaxe does not yet work for -L.
-# show_log() prints the commit header before diffcore_std() runs
-# pickaxe, so commits cannot be suppressed even when no diff pairs
-# survive filtering.  Fixing this would require deferring show_log()
-# until after diffcore_std(), which is a larger restructuring of the
-# log-tree output pipeline.
-test_expect_failure '-L -G should filter commits by pattern' '
+test_expect_success '-L -G should filter commits by pattern' '
 	git log --format="%s" --no-patch -L 1,1:file -G "nomatch" >actual &&
 	test_must_be_empty actual
 '
 
-test_expect_failure '-L -S should filter commits by pattern' '
+test_expect_success '-L -S should filter commits by pattern' '
 	git log --format="%s" --no-patch -L 1,1:file -S "nomatch" >actual &&
 	test_must_be_empty actual
 '
 
-test_expect_failure '-L --find-object should filter commits by object' '
+test_expect_success '-L --find-object should filter commits by object' '
 	git log --format="%s" --no-patch -L 1,1:file \
 		--find-object=$ZERO_OID >actual &&
 	test_must_be_empty actual
@@ -709,6 +736,49 @@ test_expect_success '-L with -G filters to diff-text matches' '
 	# and have "F2 + 2" in their diff.
 	test $(grep -c "^diff --git" actual) = 1 &&
 	grep "F2 + 2" actual
+'
+
+test_expect_success '-L with --diff-filter=M excludes root commit' '
+	git checkout parent-oids &&
+	git log -L:func2:file.c --diff-filter=M --format=%s --no-patch >actual &&
+	# Root commit is an Add (A), not a Modify (M), so it should
+	# be excluded; only the modification commit remains.
+	echo "Modify func2() in file.c" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success '-L with --diff-filter=A shows only root commit' '
+	git checkout parent-oids &&
+	git log -L:func2:file.c --diff-filter=A --format=%s --no-patch >actual &&
+	echo "Add func1() and func2() in file.c" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success '-L with -S suppresses non-matching commits' '
+	git checkout parent-oids &&
+	git log -L:func2:file.c -S "F2 + 2" --format=%s --no-patch >actual &&
+	# Only the commit that changes the count of "F2 + 2" should appear.
+	echo "Modify func2() in file.c" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success '--full-diff is not yet supported with -L' '
+	test_must_fail git log -L1,24:b.c --full-diff 2>err &&
+	test_grep "does not yet support" err
+'
+
+test_expect_success '-L --oneline has no extra blank line before diff' '
+	git checkout parent-oids &&
+	git log --oneline -L:func2:file.c -1 >actual &&
+	# Oneline header on line 1, diff starts immediately on line 2
+	sed -n 2p actual >line2 &&
+	test_grep "^diff --git" line2
+'
+
+test_expect_success '--summary shows new file on root commit' '
+	git checkout parent-oids &&
+	git log -L:func2:file.c --summary --format= >actual &&
+	test_grep "create mode 100644 file.c" actual
 '
 
 test_done

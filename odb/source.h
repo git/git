@@ -13,6 +13,12 @@ enum odb_source_type {
 
 	/* The "files" backend that uses loose objects and packfiles. */
 	ODB_SOURCE_FILES,
+
+	/* The "loose" backend that uses loose objects, only. */
+	ODB_SOURCE_LOOSE,
+
+	/* The "in-memory" backend that stores objects in memory. */
+	ODB_SOURCE_INMEMORY,
 };
 
 struct object_id;

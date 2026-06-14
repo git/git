@@ -223,7 +223,7 @@ int cmd_fetch_pack(int argc,
 		int flags = args.verbose ? CONNECT_VERBOSE : 0;
 		if (args.diag_url)
 			flags |= CONNECT_DIAG_URL;
-		conn = git_connect(fd, dest, "git-upload-pack",
+		conn = git_connect(fd, dest, GIT_CONNECT_UPLOAD_PACK,
 				   args.uploadpack, flags);
 		if (!conn)
 			return args.diag_url ? 0 : 1;

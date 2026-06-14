@@ -402,9 +402,11 @@ will be automatically changed to version `1`.
 	of filenames that cause collisions in Git's default name-hash
 	algorithm.
 +
-Incompatible with `--delta-islands`, `--shallow`, or `--filter`. The
-`--use-bitmap-index` option will be ignored in the presence of
-`--path-walk.`
+Incompatible with `--delta-islands`. The `--use-bitmap-index` option is
+ignored in the presence of `--path-walk`. The `--path-walk` option
+supports the `--filter=<spec>` forms `blob:none`, `blob:limit=<n>`,
+`tree:0`, `object:type=<type>`, and `sparse:<oid>`. These supported filter
+types can be combined with the `combine:<spec>+<spec>` form.
 
 
 DELTA ISLANDS

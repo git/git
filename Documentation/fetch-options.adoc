@@ -49,6 +49,7 @@ the current repository has the same history as the source repository.
 	`.git/shallow`. This option updates `.git/shallow` and accepts such
 	refs.
 
+`--negotiation-restrict=(<commit>|<glob>)`::
 `--negotiation-tip=(<commit>|<glob>)`::
 	By default, Git will report, to the server, commits reachable
 	from all local refs to find common commits in an attempt to
@@ -57,6 +58,9 @@ the current repository has the same history as the source repository.
 	This is useful to speed up fetches when the user knows which
 	local ref is likely to have commits in common with the
 	upstream ref being fetched.
++
+`--negotiation-restrict` is the preferred name for this option;
+`--negotiation-tip` is accepted as a synonym.
 +
 This option may be specified more than once; if so, Git will report
 commits reachable from any of the given commits.
@@ -69,9 +73,32 @@ See also the `fetch.negotiationAlgorithm` and `push.negotiate`
 configuration variables documented in linkgit:git-config[1], and the
 `--negotiate-only` option below.
 
+`--negotiation-include=(<commit>|<glob>)`::
+	Ensure that the commits at the given tips are always sent as "have"
+	lines during fetch negotiation, regardless of what the negotiation
+	algorithm selects.  This is useful to guarantee that common
+	history reachable from specific refs is always considered, even
+	when `--negotiation-restrict` restricts the set of tips or when
+	the negotiation algorithm would otherwise skip them.
++
+This option may be specified more than once; if so, each commit is sent
+unconditionally.
++
+The argument may be an exact ref name (e.g. `refs/heads/release`), an
+object hash, or a glob pattern (e.g. `refs/heads/release/{asterisk}`).
+The pattern syntax is the same as for `--negotiation-restrict`.
++
+If `--negotiation-restrict` is used, the have set is first restricted by
+that option and then increased to include the tips specified by
+`--negotiation-include`.
++
+If this option is not specified on the command line, then any
+`remote.<name>.negotiationInclude` config values for the current remote
+are used instead.
+
 `--negotiate-only`::
 	Do not fetch anything from the server, and instead print the
-	ancestors of the provided `--negotiation-tip=` arguments,
+	ancestors of the provided `--negotiation-restrict=` arguments,
 	which we have in common with the server.
 +
 This is incompatible with `--recurse-submodules=(yes|on-demand)`.

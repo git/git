@@ -817,6 +817,17 @@ relevant for debugging.
 Then fix the problem and push your fix to your GitHub fork. This will
 trigger a new CI build to ensure all tests pass.
 
+Even if you do not use GitHub CI to test your changes, pay close
+attention to new failures on the branches when the maintainer pushes
+out after your topic gets merged to the 'seen' branch to make sure
+that your topic is not breaking the CI, and retract your breaking
+topic quickly while you fix the breakage you caused.
+
+To see maintainer's push, keep an eye on this page:
+
+  `https://github.com/git/git/actions/workflows/main.yml?query=event%3Apush+actor%3Agitster`
+
+
 [[mua]]
 == MUA specific hints
 

@@ -331,7 +331,7 @@ can give `--exclude-per-directory=.gitignore`, and then specify:
   1. The file specified by the `core.excludesfile` configuration
      variable, if exists, or the `$XDG_CONFIG_HOME/git/ignore` file.
 
-  2. The `$GIT_DIR/info/exclude` file.
+  2. The `$GIT_COMMON_DIR/info/exclude` file.
 
 via the `--exclude-from=` option.
 

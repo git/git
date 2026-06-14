@@ -34,7 +34,8 @@ void prepare_pack_objects(struct child_process *cmd,
 void pack_objects_args_release(struct pack_objects_args *args);
 
 void repack_remove_redundant_pack(struct repository *repo, const char *dir_name,
-				  const char *base_name);
+				  const char *base_name,
+				  bool wrote_incremental_midx);
 
 struct write_pack_opts {
 	struct pack_objects_args *po_args;
@@ -56,6 +57,7 @@ struct packed_git;
 
 struct existing_packs {
 	struct repository *repo;
+	struct odb_source *source;
 	struct string_list kept_packs;
 	struct string_list non_kept_packs;
 	struct string_list cruft_packs;
@@ -82,8 +84,10 @@ void existing_packs_retain_cruft(struct existing_packs *existing,
 				 struct packed_git *cruft);
 void existing_packs_mark_for_deletion(struct existing_packs *existing,
 				      struct string_list *names);
+void existing_packs_retain_midx_packs(struct existing_packs *existing);
 void existing_packs_remove_redundant(struct existing_packs *existing,
-				     const char *packdir);
+				     const char *packdir,
+				     bool wrote_incremental_midx);
 void existing_packs_release(struct existing_packs *existing);
 
 struct generated_pack;
@@ -107,6 +111,10 @@ struct pack_geometry {
 	uint32_t promisor_pack_nr, promisor_pack_alloc;
 	uint32_t promisor_split;
 
+	uint32_t midx_layer_threshold;
+	bool midx_layer_threshold_set;
+	bool midx_tip_rewritten;
+
 	int split_factor;
 };
 
@@ -124,10 +132,17 @@ struct packed_git *pack_geometry_preferred_pack(struct pack_geometry *geometry);
 void pack_geometry_remove_redundant(struct pack_geometry *geometry,
 				    struct string_list *names,
 				    struct existing_packs *existing,
-				    const char *packdir);
+				    const char *packdir,
+				    bool wrote_incremental_midx);
 void pack_geometry_release(struct pack_geometry *geometry);
 
 struct tempfile;
+
+enum repack_write_midx_mode {
+	REPACK_WRITE_MIDX_NONE,
+	REPACK_WRITE_MIDX_DEFAULT,
+	REPACK_WRITE_MIDX_INCREMENTAL,
+};
 
 struct repack_write_midx_opts {
 	struct existing_packs *existing;
@@ -138,10 +153,13 @@ struct repack_write_midx_opts {
 	int show_progress;
 	int write_bitmaps;
 	int midx_must_contain_cruft;
+	int midx_split_factor;
+	int midx_new_layer_threshold;
+	enum repack_write_midx_mode mode;
 };
 
 void midx_snapshot_refs(struct repository *repo, struct tempfile *f);
-int write_midx_included_packs(struct repack_write_midx_opts *opts);
+int repack_write_midx(struct repack_write_midx_opts *opts);
 
 int write_filtered_pack(const struct write_pack_opts *opts,
 			struct existing_packs *existing,

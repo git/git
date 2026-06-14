@@ -150,7 +150,7 @@ with a configuration like so:
 	pattern = "refs/"
 	threshold = now
 	stableThreshold = never
-	sampleRate = 100
+	sampleRate = 1
 	maxMerges = 64
 ----
 
@@ -177,7 +177,7 @@ like:
 	pattern = "refs/virtual/([0-9]+)/(heads|tags)/"
 	threshold = now
 	stableThreshold = never
-	sampleRate = 100
+	sampleRate = 1
 	maxMerges = 64
 ----
 

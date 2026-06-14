@@ -1738,21 +1738,11 @@ int cmd_merge(int argc,
 		struct commit_list *j;
 
 		for (j = remoteheads; j; j = j->next) {
-			struct commit_list *common_one = NULL;
-			struct commit *common_item;
-
-			/*
-			 * Here we *have* to calculate the individual
-			 * merge_bases again, otherwise "git merge HEAD^
-			 * HEAD^^" would be missed.
-			 */
-			if (repo_get_merge_bases(the_repository, head_commit,
-						 j->item, &common_one) < 0)
+			int ret = repo_in_merge_bases(the_repository,
+						      j->item, head_commit);
+			if (ret < 0)
 				exit(128);
-
-			common_item = common_one->item;
-			commit_list_free(common_one);
-			if (!oideq(&common_item->object.oid, &j->item->object.oid)) {
+			if (!ret) {
 				up_to_date = 0;
 				break;
 			}

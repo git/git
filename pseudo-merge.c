@@ -150,7 +150,10 @@ static int pseudo_merge_config(const char *var, const char *value,
 	if (!strcmp(key, "pattern")) {
 		struct strbuf re = STRBUF_INIT;
 
-		free(group->pattern);
+		if (group->pattern) {
+			regfree(group->pattern);
+			free(group->pattern);
+		}
 		if (*value != '^')
 			strbuf_addch(&re, '^');
 		strbuf_addstr(&re, value);
@@ -169,8 +172,8 @@ static int pseudo_merge_config(const char *var, const char *value,
 		}
 	} else if (!strcmp(key, "samplerate")) {
 		group->sample_rate = git_config_double(var, value, ctx->kvi);
-		if (!(0 <= group->sample_rate && group->sample_rate <= 1)) {
-			warning(_("%s must be between 0 and 1, using default"), var);
+		if (!(0 < group->sample_rate && group->sample_rate <= 1)) {
+			warning(_("%s must be between 0 (exclusive) and 1, using default"), var);
 			group->sample_rate = DEFAULT_PSEUDO_MERGE_SAMPLE_RATE;
 		}
 	} else if (!strcmp(key, "threshold")) {
@@ -235,6 +238,8 @@ static int find_pseudo_merge_group_for_ref(const struct reference *ref, void *_d
 
 	c = lookup_commit(the_repository, maybe_peeled);
 	if (!c)
+		return 0;
+	if (repo_parse_commit(the_repository, c))
 		return 0;
 	if (!packlist_find(writer->to_pack, maybe_peeled))
 		return 0;
@@ -559,9 +564,9 @@ static struct pseudo_merge *pseudo_merge_at(const struct pseudo_merge_map *pm,
 		if (got == want)
 			return use_pseudo_merge(pm, &pm->v[mi]);
 		else if (got < want)
-			hi = mi;
-		else
 			lo = mi + 1;
+		else
+			hi = mi;
 	}
 
 	warning(_("could not find pseudo-merge for commit %s at offset %"PRIuMAX),
@@ -600,7 +605,7 @@ static int nth_pseudo_merge_ext(const struct pseudo_merge_map *pm,
 		return error(_("out-of-bounds read: (%"PRIuMAX" >= %"PRIuMAX")"),
 			     (uintmax_t)ofs, (uintmax_t)pm->map_size);
 
-	read_pseudo_merge_commit_at(merge, pm->map + ofs);
+	merge->pseudo_merge_ofs = ofs;
 
 	return 0;
 }
@@ -671,7 +676,7 @@ int apply_pseudo_merges_for_commit(const struct pseudo_merge_map *pm,
 		off_t ofs = merge_commit.pseudo_merge_ofs & ~((uint64_t)1<<63);
 		uint32_t i;
 
-		if (pseudo_merge_ext_at(pm, &ext, ofs) < -1) {
+		if (pseudo_merge_ext_at(pm, &ext, ofs) < 0) {
 			warning(_("could not read extended pseudo-merge table "
 				  "for commit %s"),
 				oid_to_hex(&commit->object.oid));

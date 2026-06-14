@@ -506,7 +506,7 @@ static int cmd__synthesize__pack(int argc, const char **argv,
 		OPT_END()
 	};
 
-	setup_git_directory_gently(&non_git);
+	setup_git_directory_gently(the_repository, &non_git);
 	repo = the_repository;
 	algo = unsafe_hash_algo(repo->hash_algo);
 

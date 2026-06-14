@@ -32,7 +32,7 @@ int cmd__pack_mtimes(int argc, const char **argv)
 	struct strbuf buf = STRBUF_INIT;
 	struct packed_git *p;
 
-	setup_git_directory();
+	setup_git_directory(the_repository);
 
 	if (argc != 2)
 		usage(pack_mtimes_usage);

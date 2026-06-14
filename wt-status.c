@@ -1206,7 +1206,7 @@ static void wt_longstatus_print_verbose(struct wt_status *s)
 		status_printf_ln(s, c,
 			"--------------------------------------------------");
 		status_printf_ln(s, c, _("Changes not staged for commit:"));
-		setup_work_tree();
+		setup_work_tree(the_repository);
 		rev.diffopt.a_prefix = "i/";
 		rev.diffopt.b_prefix = "w/";
 		run_diff_files(&rev, 0);

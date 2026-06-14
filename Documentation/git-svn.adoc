@@ -439,7 +439,7 @@ Any other arguments are passed directly to 'git log'
 'show-ignore'::
 	Recursively finds and lists the svn:ignore and svn:global-ignores
 	properties on directories. The output is suitable for appending to
-	the $GIT_DIR/info/exclude file.
+	the $GIT_COMMON_DIR/info/exclude file.
 
 'mkdirs'::
 	Attempts to recreate empty directories that core Git cannot track

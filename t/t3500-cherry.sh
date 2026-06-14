@@ -78,4 +78,31 @@ test_expect_success 'cherry ignores whitespace' '
 	test_cmp expect actual
 '
 
+# Reuse the expect file from the previous test, in a partial clone
+test_expect_success 'cherry in partial clone does bulk prefetch' '
+	test_config uploadpack.allowfilter 1 &&
+	test_config uploadpack.allowanysha1inwant 1 &&
+	test_when_finished "rm -rf copy" &&
+
+	git clone --bare --filter=blob:none file://"$(pwd)" copy &&
+	(
+		cd copy &&
+		GIT_TRACE2_EVENT="$(pwd)/trace.output" git cherry upstream-with-space feature-without-space >actual &&
+		test_cmp ../expect actual &&
+
+		grep "child_start.*fetch.negotiationAlgorithm" trace.output >fetches &&
+		test_line_count = 1 fetches &&
+		test_trace2_data promisor fetch_count 4 <trace.output &&
+
+		# A second invocation should not refetch any blobs, since
+		# the prefetch is expected to filter out OIDs that are
+		# already present locally.
+		GIT_TRACE2_EVENT="$(pwd)/trace2.output" git cherry upstream-with-space feature-without-space >actual &&
+		test_cmp ../expect actual &&
+
+		! grep "child_start.*fetch.negotiationAlgorithm" trace2.output &&
+		! grep "\"key\":\"fetch_count\"" trace2.output
+	)
+'
+
 test_done

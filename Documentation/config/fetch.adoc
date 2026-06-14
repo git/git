@@ -76,7 +76,7 @@
 	default is `skipping`.  Unknown values will cause `git fetch` to
 	error out.
 +
-See also the `--negotiate-only` and `--negotiation-tip` options to
+See also the `--negotiate-only` and `--negotiation-restrict` options to
 linkgit:git-fetch[1].
 
 `fetch.showForcedUpdates`::

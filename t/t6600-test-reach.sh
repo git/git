@@ -612,6 +612,51 @@ test_expect_success 'for-each-ref merged:none' '
 		--format="%(refname)" --stdin
 '
 
+test_expect_success 'for-each-ref merged:duplicate, all reachable' '
+	git branch dup-a commit-3-3 &&
+	git branch dup-b commit-3-3 &&
+	cat >input <<-\EOF &&
+	refs/heads/commit-1-1
+	refs/heads/dup-a
+	refs/heads/dup-b
+	EOF
+	cat >expect <<-\EOF &&
+	refs/heads/commit-1-1
+	refs/heads/dup-a
+	refs/heads/dup-b
+	EOF
+	run_all_modes git for-each-ref --merged=commit-5-5 \
+		--format="%(refname)" --stdin
+'
+
+test_expect_success 'for-each-ref merged:duplicate, none reachable' '
+	cat >input <<-\EOF &&
+	refs/heads/dup-a
+	refs/heads/dup-b
+	refs/heads/commit-9-9
+	EOF
+	>expect &&
+	run_all_modes git for-each-ref --merged=commit-2-2 \
+		--format="%(refname)" --stdin
+'
+
+test_expect_success 'for-each-ref merged:duplicate at min generation' '
+	git branch dup-c commit-1-1 &&
+	git branch dup-d commit-1-1 &&
+	cat >input <<-\EOF &&
+	refs/heads/dup-c
+	refs/heads/dup-d
+	refs/heads/commit-5-5
+	EOF
+	cat >expect <<-\EOF &&
+	refs/heads/commit-5-5
+	refs/heads/dup-c
+	refs/heads/dup-d
+	EOF
+	run_all_modes git for-each-ref --merged=commit-5-5 \
+		--format="%(refname)" --stdin
+'
+
 # For get_branch_base_for_tip, we only care about
 # first-parent history. Here is the test graph with
 # second parents removed:
@@ -880,6 +925,46 @@ test_expect_success 'rev-list --maximal-only matches merge-base --independent' '
 		refs/heads/commit-8-4 >actual &&
 	sort actual >actual.sorted &&
 	test_cmp expect.sorted actual.sorted
+'
+
+# The following tests verify the early-exit optimisation in
+# paint_down_to_common when merge-base is invoked without --all.
+# Each test checks all four commit-graph configurations.
+
+merge_base_all_modes () {
+	test_when_finished rm -rf .git/objects/info/commit-graph &&
+	git merge-base "$@" >actual &&
+	test_cmp expect actual &&
+	cp commit-graph-full .git/objects/info/commit-graph &&
+	git merge-base "$@" >actual &&
+	test_cmp expect actual &&
+	cp commit-graph-half .git/objects/info/commit-graph &&
+	git merge-base "$@" >actual &&
+	test_cmp expect actual &&
+	cp commit-graph-no-gdat .git/objects/info/commit-graph &&
+	git merge-base "$@" >actual &&
+	test_cmp expect actual
+}
+
+test_expect_success 'merge-base without --all (unique base)' '
+	git rev-parse commit-5-3 >expect &&
+	merge_base_all_modes commit-5-7 commit-8-3
+'
+
+test_expect_success 'merge-base without --all is one of --all results' '
+	test_when_finished rm -rf .git/objects/info/commit-graph &&
+
+	cp commit-graph-full .git/objects/info/commit-graph &&
+	git merge-base --all commit-5-7 commit-4-8 commit-6-6 commit-8-3 >all &&
+	git merge-base commit-5-7 commit-4-8 commit-6-6 commit-8-3 >single &&
+	test_line_count = 1 single &&
+	grep -F -f single all &&
+
+	cp commit-graph-half .git/objects/info/commit-graph &&
+	git merge-base --all commit-5-7 commit-4-8 commit-6-6 commit-8-3 >all &&
+	git merge-base commit-5-7 commit-4-8 commit-6-6 commit-8-3 >single &&
+	test_line_count = 1 single &&
+	grep -F -f single all
 '
 
 test_done

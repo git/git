@@ -2532,7 +2532,7 @@ int refs_update_symref_extended(struct ref_store *refs, const char *ref,
 	if (referent && refs_read_symbolic_ref(refs, ref, referent) == NOT_A_SYMREF) {
 		struct object_id oid;
 		if (!refs_read_ref(refs, ref, &oid)) {
-			strbuf_addstr(referent, oid_to_hex(&oid));
+			strbuf_add_oid_hex(referent, &oid);
 			ret = NOT_A_SYMREF;
 		}
 	}
@@ -3487,7 +3487,7 @@ int repo_migrate_ref_storage_format(struct repository *repo,
 	 * repository format so that clients will use the new ref store.
 	 * We also need to swap out the repository's main ref store.
 	 */
-	initialize_repository_version(hash_algo_by_ptr(repo->hash_algo), format, 1);
+	initialize_repository_version(the_repository, hash_algo_by_ptr(repo->hash_algo), format, 1);
 
 	/*
 	 * Unset the old ref store and release it. `get_main_ref_store()` will

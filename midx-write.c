@@ -29,8 +29,7 @@ extern void clear_midx_files_ext(struct odb_source *source, const char *ext,
 				 const char *keep_hash);
 extern void clear_incremental_midx_files_ext(struct odb_source *source,
 					     const char *ext,
-					     const char **keep_hashes,
-					     uint32_t hashes_nr);
+					     const struct strvec *keep_hashes);
 extern int cmp_idx_or_pack_name(const char *idx_or_pack_name,
 				const char *idx_name);
 
@@ -1109,8 +1108,7 @@ done:
 }
 
 static void clear_midx_files(struct odb_source *source,
-			     const char **hashes, uint32_t hashes_nr,
-			     unsigned incremental)
+			     const struct strvec *hashes, unsigned incremental)
 {
 	/*
 	 * if incremental:
@@ -1124,13 +1122,15 @@ static void clear_midx_files(struct odb_source *source,
 	 */
 	struct strbuf buf = STRBUF_INIT;
 	const char *exts[] = { MIDX_EXT_BITMAP, MIDX_EXT_REV, MIDX_EXT_MIDX };
-	uint32_t i, j;
+	uint32_t i;
 
 	for (i = 0; i < ARRAY_SIZE(exts); i++) {
-		clear_incremental_midx_files_ext(source, exts[i],
-						 hashes, hashes_nr);
-		for (j = 0; j < hashes_nr; j++)
-			clear_midx_files_ext(source, exts[i], hashes[j]);
+		clear_incremental_midx_files_ext(source, exts[i], hashes);
+		if (hashes) {
+			for (size_t j = 0; j < hashes->nr; j++)
+				clear_midx_files_ext(source, exts[i],
+						     hashes->v[j]);
+		}
 	}
 
 	if (incremental)
@@ -1152,7 +1152,7 @@ static bool midx_needs_update(struct multi_pack_index *midx, struct write_midx_c
 
 	/*
 	 * Ensure that we have a valid checksum before consulting the
-	 * exisiting MIDX in order to determine if we can avoid an
+	 * existing MIDX in order to determine if we can avoid an
 	 * update.
 	 *
 	 * This is necessary because the given MIDX is loaded directly
@@ -1208,14 +1208,16 @@ static bool midx_needs_update(struct multi_pack_index *midx, struct write_midx_c
 			BUG("same pack added twice?");
 	}
 
-	for (uint32_t i = 0; i < ctx->nr; i++) {
-		strbuf_reset(&buf);
-		strbuf_addstr(&buf, midx->pack_names[i]);
-		strbuf_strip_suffix(&buf, ".idx");
+	for (struct multi_pack_index *m = midx; m; m = m->base_midx) {
+		for (uint32_t i = 0; i < m->num_packs; i++) {
+			strbuf_reset(&buf);
+			strbuf_addstr(&buf, m->pack_names[i]);
+			strbuf_strip_suffix(&buf, ".idx");
 
-		if (!strset_contains(&packs, buf.buf))
-			goto out;
-		strset_remove(&packs, buf.buf);
+			if (!strset_contains(&packs, buf.buf))
+				goto out;
+			strset_remove(&packs, buf.buf);
+		}
 	}
 
 	needed = false;
@@ -1245,6 +1247,7 @@ struct write_midx_opts {
 
 	const char *preferred_pack_name;
 	const char *refs_snapshot;
+	const char *incremental_base;
 	unsigned flags;
 };
 
@@ -1255,7 +1258,7 @@ static int write_midx_internal(struct write_midx_opts *opts)
 	unsigned char midx_hash[GIT_MAX_RAWSZ];
 	uint32_t start_pack;
 	struct hashfile *f = NULL;
-	struct lock_file lk;
+	struct lock_file lk = LOCK_INIT;
 	struct tempfile *incr;
 	struct write_midx_context ctx = {
 		.preferred_pack_idx = NO_PREFERRED_PACK,
@@ -1265,8 +1268,7 @@ static int write_midx_internal(struct write_midx_opts *opts)
 	int pack_name_concat_len = 0;
 	int dropped_packs = 0;
 	int result = -1;
-	const char **keep_hashes = NULL;
-	size_t keep_hashes_nr = 0;
+	struct strvec keep_hashes = STRVEC_INIT;
 	struct chunkfile *cf;
 
 	trace2_region_enter("midx", "write_midx_internal", r);
@@ -1329,10 +1331,31 @@ static int write_midx_internal(struct write_midx_opts *opts)
 
 	/*
 	 * If compacting MIDX layer(s) in the range [from, to], then the
-	 * compacted MIDX will share the same base MIDX as 'from'.
+	 * compacted MIDX will share the same base MIDX as 'from',
+	 * unless a custom --base is specified (see below).
 	 */
 	if (ctx.compact)
 		ctx.base_midx = ctx.compact_from->base_midx;
+
+	if (opts->incremental_base) {
+		if (!strcmp(opts->incremental_base, "none")) {
+			ctx.base_midx = NULL;
+		} else {
+			while (ctx.base_midx) {
+				const char *cmp = midx_get_checksum_hex(ctx.base_midx);
+				if (!strcmp(opts->incremental_base, cmp))
+					break;
+
+				ctx.base_midx = ctx.base_midx->base_midx;
+			}
+
+			if (!ctx.base_midx) {
+				error(_("could not find base MIDX '%s'"),
+				      opts->incremental_base);
+				goto cleanup;
+			}
+		}
+	}
 
 	ctx.nr = 0;
 	ctx.alloc = ctx.m ? ctx.m->num_packs + ctx.m->num_packs_in_base : 16;
@@ -1600,11 +1623,14 @@ static int write_midx_internal(struct write_midx_opts *opts)
 	}
 
 	if (ctx.incremental) {
-		struct strbuf lock_name = STRBUF_INIT;
+		if (!(opts->flags & MIDX_WRITE_NO_CHAIN)) {
+			struct strbuf lock_name = STRBUF_INIT;
 
-		get_midx_chain_filename(opts->source, &lock_name);
-		hold_lock_file_for_update(&lk, lock_name.buf, LOCK_DIE_ON_ERROR);
-		strbuf_release(&lock_name);
+			get_midx_chain_filename(opts->source, &lock_name);
+			hold_lock_file_for_update(&lk, lock_name.buf,
+						  LOCK_DIE_ON_ERROR);
+			strbuf_release(&lock_name);
+		}
 
 		incr = mks_tempfile_m(midx_name.buf, 0444);
 		if (!incr) {
@@ -1706,33 +1732,23 @@ static int write_midx_internal(struct write_midx_opts *opts)
 	if (ctx.num_multi_pack_indexes_before == UINT32_MAX)
 		die(_("too many multi-pack-indexes"));
 
-	if (ctx.compact) {
-		struct multi_pack_index *m;
-
-		/*
-		 * Keep all MIDX layers excluding those in the range [from, to].
-		 */
-		for (m = ctx.base_midx; m; m = m->base_midx)
-			keep_hashes_nr++;
-		for (m = ctx.m;
-		     m && midx_hashcmp(m, ctx.compact_to, r->hash_algo);
-		     m = m->base_midx)
-			keep_hashes_nr++;
-
-		keep_hashes_nr++; /* include the compacted layer */
-	} else {
-		keep_hashes_nr = ctx.num_multi_pack_indexes_before + 1;
-	}
-	CALLOC_ARRAY(keep_hashes, keep_hashes_nr);
+	if (!is_lock_file_locked(&lk))
+		printf("%s\n", hash_to_hex_algop(midx_hash, r->hash_algo));
+	else if (opts->flags & MIDX_WRITE_NO_CHAIN)
+		BUG("lockfile held with MIDX_WRITE_NO_CHAIN set?");
 
 	if (ctx.incremental) {
-		FILE *chainf = fdopen_lock_file(&lk, "w");
 		struct strbuf final_midx_name = STRBUF_INIT;
 		struct multi_pack_index *m = ctx.base_midx;
+		struct multi_pack_index **layers = NULL;
+		size_t layers_nr = 0, layers_alloc = 0;
 
-		if (!chainf) {
-			error_errno(_("unable to open multi-pack-index chain file"));
-			goto cleanup;
+		if (is_lock_file_locked(&lk)){
+			FILE *chainf = fdopen_lock_file(&lk, "w");
+			if (!chainf) {
+				error_errno(_("unable to open multi-pack-index chain file"));
+				goto cleanup;
+			}
 		}
 
 		if (link_midx_to_chain(ctx.base_midx) < 0)
@@ -1749,60 +1765,64 @@ static int write_midx_internal(struct write_midx_opts *opts)
 		strbuf_release(&final_midx_name);
 
 		if (ctx.compact) {
-			struct multi_pack_index *m;
-			uint32_t num_layers_before_from = 0;
-			uint32_t i;
+			struct multi_pack_index *mp;
 
-			for (m = ctx.base_midx; m; m = m->base_midx)
-				num_layers_before_from++;
-
-			m = ctx.base_midx;
-			for (i = 0; i < num_layers_before_from; i++) {
-				uint32_t j = num_layers_before_from - i - 1;
-
-				keep_hashes[j] = xstrdup(midx_get_checksum_hex(m));
-				m = m->base_midx;
+			for (mp = ctx.base_midx; mp; mp = mp->base_midx) {
+				ALLOC_GROW(layers, layers_nr + 1, layers_alloc);
+				layers[layers_nr++] = mp;
 			}
+			while (layers_nr)
+				strvec_push(&keep_hashes,
+					    midx_get_checksum_hex(layers[--layers_nr]));
 
-			keep_hashes[i] = xstrdup(hash_to_hex_algop(midx_hash,
-								   r->hash_algo));
+			strvec_push(&keep_hashes,
+				    hash_to_hex_algop(midx_hash,
+						     r->hash_algo));
 
-			i = 0;
-			for (m = ctx.m;
-			     m && midx_hashcmp(m, ctx.compact_to, r->hash_algo);
-			     m = m->base_midx) {
-				keep_hashes[keep_hashes_nr - i - 1] =
-					xstrdup(midx_get_checksum_hex(m));
-				i++;
+			for (mp = ctx.m;
+			     mp && midx_hashcmp(mp, ctx.compact_to,
+						r->hash_algo);
+			     mp = mp->base_midx) {
+				ALLOC_GROW(layers, layers_nr + 1, layers_alloc);
+				layers[layers_nr++] = mp;
 			}
+			while (layers_nr)
+				strvec_push(&keep_hashes,
+					    midx_get_checksum_hex(layers[--layers_nr]));
 		} else {
-			keep_hashes[ctx.num_multi_pack_indexes_before] =
-				xstrdup(hash_to_hex_algop(midx_hash,
-							  r->hash_algo));
-
-			for (uint32_t i = 0; i < ctx.num_multi_pack_indexes_before; i++) {
-				uint32_t j = ctx.num_multi_pack_indexes_before - i - 1;
-
-				keep_hashes[j] = xstrdup(midx_get_checksum_hex(m));
-				m = m->base_midx;
+			for (; m; m = m->base_midx) {
+				ALLOC_GROW(layers, layers_nr + 1, layers_alloc);
+				layers[layers_nr++] = m;
 			}
+			while (layers_nr)
+				strvec_push(&keep_hashes,
+					    midx_get_checksum_hex(layers[--layers_nr]));
+
+			strvec_push(&keep_hashes,
+				    hash_to_hex_algop(midx_hash,
+						     r->hash_algo));
 		}
 
-		for (uint32_t i = 0; i < keep_hashes_nr; i++)
-			fprintf(get_lock_file_fp(&lk), "%s\n", keep_hashes[i]);
+		free(layers);
+
+		if (is_lock_file_locked(&lk))
+			for (size_t i = 0; i < keep_hashes.nr; i++)
+				fprintf(get_lock_file_fp(&lk), "%s\n",
+					keep_hashes.v[i]);
 	} else {
-		keep_hashes[ctx.num_multi_pack_indexes_before] =
-			xstrdup(hash_to_hex_algop(midx_hash, r->hash_algo));
+		strvec_push(&keep_hashes,
+			    hash_to_hex_algop(midx_hash, r->hash_algo));
 	}
 
 	if (ctx.m || ctx.base_midx)
 		odb_close(ctx.repo->objects);
 
-	if (commit_lock_file(&lk) < 0)
-		die_errno(_("could not write multi-pack-index"));
+	if (is_lock_file_locked(&lk)) {
+		if (commit_lock_file(&lk) < 0)
+			die_errno(_("could not write multi-pack-index"));
 
-	clear_midx_files(opts->source, keep_hashes, keep_hashes_nr,
-			 ctx.incremental);
+		clear_midx_files(opts->source, &keep_hashes, ctx.incremental);
+	}
 	result = 0;
 
 cleanup:
@@ -1818,11 +1838,7 @@ cleanup:
 	free(ctx.entries);
 	free(ctx.pack_perm);
 	free(ctx.pack_order);
-	if (keep_hashes) {
-		for (uint32_t i = 0; i < keep_hashes_nr; i++)
-			free((char *)keep_hashes[i]);
-		free(keep_hashes);
-	}
+	strvec_clear(&keep_hashes);
 	strbuf_release(&midx_name);
 	close_midx(midx_to_free);
 
@@ -1833,7 +1849,8 @@ cleanup:
 
 int write_midx_file(struct odb_source *source,
 		    const char *preferred_pack_name,
-		    const char *refs_snapshot, unsigned flags)
+		    const char *refs_snapshot,
+		    unsigned flags)
 {
 	struct write_midx_opts opts = {
 		.source = source,
@@ -1848,13 +1865,16 @@ int write_midx_file(struct odb_source *source,
 int write_midx_file_only(struct odb_source *source,
 			 struct string_list *packs_to_include,
 			 const char *preferred_pack_name,
-			 const char *refs_snapshot, unsigned flags)
+			 const char *refs_snapshot,
+			 const char *incremental_base,
+			 unsigned flags)
 {
 	struct write_midx_opts opts = {
 		.source = source,
 		.packs_to_include = packs_to_include,
 		.preferred_pack_name = preferred_pack_name,
 		.refs_snapshot = refs_snapshot,
+		.incremental_base = incremental_base,
 		.flags = flags,
 	};
 
@@ -1864,12 +1884,14 @@ int write_midx_file_only(struct odb_source *source,
 int write_midx_file_compact(struct odb_source *source,
 			    struct multi_pack_index *from,
 			    struct multi_pack_index *to,
+			    const char *incremental_base,
 			    unsigned flags)
 {
 	struct write_midx_opts opts = {
 		.source = source,
 		.compact_from = from,
 		.compact_to = to,
+		.incremental_base = incremental_base,
 		.flags = flags | MIDX_WRITE_COMPACT,
 	};
 

@@ -6,9 +6,15 @@
 #include "oidtree.h"
 #include "hash.h"
 
+struct oidtree_node {
+	struct cb_node base;
+	struct object_id key;
+	void *data;
+};
+
 void oidtree_init(struct oidtree *ot)
 {
-	cb_init(&ot->tree);
+	cb_init(&ot->tree, offsetof(struct oidtree_node, key));
 	mem_pool_init(&ot->mem_pool, 0);
 }
 
@@ -20,22 +26,22 @@ void oidtree_clear(struct oidtree *ot)
 	}
 }
 
-void oidtree_insert(struct oidtree *ot, const struct object_id *oid)
+struct oidtree_data {
+	struct object_id oid;
+};
+
+void oidtree_insert(struct oidtree *ot, const struct object_id *oid,
+		    void *data)
 {
-	struct cb_node *on;
-	struct object_id k;
+	struct oidtree_node *on;
+	struct cb_node *node;
 
 	if (!oid->algo)
 		BUG("oidtree_insert requires oid->algo");
 
-	on = mem_pool_alloc(&ot->mem_pool, sizeof(*on) + sizeof(*oid));
-
-	/*
-	 * Clear the padding and copy the result in separate steps to
-	 * respect the 4-byte alignment needed by struct object_id.
-	 */
-	oidcpy(&k, oid);
-	memcpy(on->k, &k, sizeof(k));
+	on = mem_pool_alloc(&ot->mem_pool, sizeof(*on));
+	oidcpy(&on->key, oid);
+	on->data = data;
 
 	/*
 	 * n.b. Current callers won't get us duplicates, here.  If a
@@ -43,13 +49,19 @@ void oidtree_insert(struct oidtree *ot, const struct object_id *oid)
 	 * that won't be freed until oidtree_clear.  Currently it's not
 	 * worth maintaining a free list
 	 */
-	cb_insert(&ot->tree, on, sizeof(*oid));
+	node = cb_insert(&ot->tree, &on->base, sizeof(*oid));
+	if (node) {
+		struct oidtree_node *preexisting = container_of(node, struct oidtree_node, base);
+		preexisting->data = data;
+	}
 }
 
-bool oidtree_contains(struct oidtree *ot, const struct object_id *oid)
+static struct oidtree_node *oidtree_lookup(struct oidtree *ot,
+					   const struct object_id *oid)
 {
 	struct object_id k;
 	size_t klen = sizeof(k);
+	struct cb_node *node;
 
 	oidcpy(&k, oid);
 
@@ -60,7 +72,20 @@ bool oidtree_contains(struct oidtree *ot, const struct object_id *oid)
 	klen += BUILD_ASSERT_OR_ZERO(offsetof(struct object_id, hash) <
 				offsetof(struct object_id, algo));
 
-	return !!cb_lookup(&ot->tree, (const uint8_t *)&k, klen);
+	node = cb_lookup(&ot->tree, (const uint8_t *)&k, klen);
+	return node ? container_of(node, struct oidtree_node, base) : NULL;
+}
+
+bool oidtree_contains(struct oidtree *ot, const struct object_id *oid)
+{
+	struct oidtree_node *node = oidtree_lookup(ot, oid);
+	return node ? 1 : 0;
+}
+
+void *oidtree_get(struct oidtree *ot, const struct object_id *oid)
+{
+	struct oidtree_node *node = oidtree_lookup(ot, oid);
+	return node ? node->data : NULL;
 }
 
 struct oidtree_each_data {
@@ -73,21 +98,18 @@ struct oidtree_each_data {
 
 static int iter(struct cb_node *n, void *cb_data)
 {
+	struct oidtree_node *node = container_of(n, struct oidtree_node, base);
 	struct oidtree_each_data *data = cb_data;
-	struct object_id k;
 
-	/* Copy to provide 4-byte alignment needed by struct object_id. */
-	memcpy(&k, n->k, sizeof(k));
-
-	if (data->algo != GIT_HASH_UNKNOWN && data->algo != k.algo)
+	if (data->algo != GIT_HASH_UNKNOWN && data->algo != node->key.algo)
 		return 0;
 
 	if (data->last_nibble_at) {
-		if ((k.hash[*data->last_nibble_at] ^ data->last_byte) & 0xf0)
+		if ((node->key.hash[*data->last_nibble_at] ^ data->last_byte) & 0xf0)
 			return 0;
 	}
 
-	return data->cb(&k, data->cb_data);
+	return data->cb(&node->key, node->data, data->cb_data);
 }
 
 int oidtree_each(struct oidtree *ot, const struct object_id *prefix,

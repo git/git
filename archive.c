@@ -786,7 +786,7 @@ int write_archive(int argc, const char **argv, const char *prefix,
 		 * die ourselves; but its error message will be more specific
 		 * than what we could write here.
 		 */
-		setup_git_directory();
+		setup_git_directory(the_repository);
 	}
 
 	parse_treeish_arg(argv, &args, remote);
