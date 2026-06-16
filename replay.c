@@ -18,11 +18,6 @@
  */
 #define the_repository DO_NOT_USE_THE_REPOSITORY
 
-enum replay_mode {
-	REPLAY_MODE_PICK,
-	REPLAY_MODE_REVERT,
-};
-
 static const char *short_commit_name(struct repository *repo,
 				     struct commit *commit)
 {
@@ -81,7 +76,7 @@ static struct commit *create_commit(struct repository *repo,
 				    struct tree *tree,
 				    struct commit *based_on,
 				    struct commit *parent,
-				    enum replay_mode mode)
+				    bool reverse)
 {
 	struct object_id ret;
 	struct object *obj = NULL;
@@ -98,15 +93,13 @@ static struct commit *create_commit(struct repository *repo,
 
 	commit_list_insert(parent, &parents);
 	extra = read_commit_extra_headers(based_on, exclude_gpgsig);
-	if (mode == REPLAY_MODE_REVERT) {
+	if (reverse) {
 		generate_revert_message(&msg, based_on, repo);
 		/* For revert, use current user as author (NULL = use default) */
-	} else if (mode == REPLAY_MODE_PICK) {
+	} else {
 		find_commit_subject(message, &orig_message);
 		strbuf_addstr(&msg, orig_message);
 		author = get_author(message);
-	} else {
-		BUG("unexpected replay mode %d", mode);
 	}
 	reset_ident_date();
 	if (commit_tree_extended(msg.buf, msg.len, &tree->object.oid, parents,
@@ -269,7 +262,7 @@ static struct commit *pick_regular_commit(struct repository *repo,
 					  struct commit *onto,
 					  struct merge_options *merge_opt,
 					  struct merge_result *result,
-					  enum replay_mode mode,
+					  bool reverse,
 					  enum replay_empty_commit_action empty)
 {
 	struct commit *base, *replayed_base;
@@ -287,7 +280,21 @@ static struct commit *pick_regular_commit(struct repository *repo,
 	replayed_base_tree = repo_get_commit_tree(repo, replayed_base);
 	pickme_tree = repo_get_commit_tree(repo, pickme);
 
-	if (mode == REPLAY_MODE_PICK) {
+	if (reverse) {
+		/* Revert: swap base and pickme to reverse the diff */
+		const char *pickme_name = short_commit_name(repo, pickme);
+		merge_opt->branch1 = short_commit_name(repo, replayed_base);
+		merge_opt->branch2 = xstrfmt("parent of %s", pickme_name);
+		merge_opt->ancestor = pickme_name;
+
+		merge_incore_nonrecursive(merge_opt,
+					  pickme_tree,
+					  replayed_base_tree,
+					  base_tree,
+					  result);
+
+		free((char *)merge_opt->branch2);
+	} else {
 		/* Cherry-pick: normal order */
 		merge_opt->branch1 = short_commit_name(repo, replayed_base);
 		merge_opt->branch2 = short_commit_name(repo, pickme);
@@ -303,22 +310,6 @@ static struct commit *pick_regular_commit(struct repository *repo,
 					  result);
 
 		free((char *)merge_opt->ancestor);
-	} else if (mode == REPLAY_MODE_REVERT) {
-		/* Revert: swap base and pickme to reverse the diff */
-		const char *pickme_name = short_commit_name(repo, pickme);
-		merge_opt->branch1 = short_commit_name(repo, replayed_base);
-		merge_opt->branch2 = xstrfmt("parent of %s", pickme_name);
-		merge_opt->ancestor = pickme_name;
-
-		merge_incore_nonrecursive(merge_opt,
-					  pickme_tree,
-					  replayed_base_tree,
-					  base_tree,
-					  result);
-
-		free((char *)merge_opt->branch2);
-	} else {
-		BUG("unexpected replay mode %d", mode);
 	}
 	merge_opt->ancestor = NULL;
 	merge_opt->branch2 = NULL;
@@ -341,7 +332,7 @@ static struct commit *pick_regular_commit(struct repository *repo,
 		}
 	}
 
-	return create_commit(repo, result->tree, pickme, replayed_base, mode);
+	return create_commit(repo, result->tree, pickme, replayed_base, reverse);
 }
 
 void replay_result_release(struct replay_result *result)
@@ -381,13 +372,13 @@ int replay_revisions(struct rev_info *revs,
 	char *revert;
 	const char *ref;
 	struct object_id old_oid;
-	enum replay_mode mode = REPLAY_MODE_PICK;
+	bool reverse;
 	int ret;
 
 	advance = xstrdup_or_null(opts->advance);
 	revert = xstrdup_or_null(opts->revert);
-	if (revert)
-		mode = REPLAY_MODE_REVERT;
+	reverse = !!revert;
+
 	set_up_replay_mode(revs->repo, &revs->cmdline, opts->onto,
 			   &detached_head, &advance, &revert, &onto, &update_refs);
 
@@ -430,8 +421,8 @@ int replay_revisions(struct rev_info *revs,
 			die(_("replaying merge commits is not supported yet!"));
 
 		last_commit = pick_regular_commit(revs->repo, commit, replayed_commits,
-						  mode == REPLAY_MODE_REVERT ? last_commit : onto,
-						  &merge_opt, &result, mode, opts->empty);
+						  reverse ? last_commit : onto,
+						  &merge_opt, &result, reverse, opts->empty);
 		if (!last_commit)
 			break;
 
