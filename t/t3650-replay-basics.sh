@@ -625,7 +625,7 @@ test_expect_success 'replay --linearize produces the same patches' '
 	# and the replayed chain (main..tip) must produce identical patches.
 	git range-diff I..topic-with-merge main..$tip >out &&
 	test_file_not_empty out &&
-	! grep -v "=" out &&
+	test_grep ! -v "=" out &&
 
 	git log --oneline main..$tip >out &&
 	test_line_count = 3 out
