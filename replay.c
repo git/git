@@ -277,11 +277,15 @@ static struct commit *pick_regular_commit(struct repository *repo,
 					  struct commit *onto,
 					  struct merge_options *merge_opt,
 					  struct merge_result *result,
+					  struct commit *replayed_base,
 					  bool reverse,
 					  enum replay_empty_commit_action empty)
 {
-	struct commit *base, *replayed_base;
+	struct commit *base;
 	struct tree *pickme_tree, *base_tree, *replayed_base_tree;
+
+	if (replayed_base && reverse)
+		BUG("Linearizing commits is not supported when replaying in reverse");
 
 	if (pickme->parents) {
 		base = pickme->parents->item;
@@ -291,7 +295,8 @@ static struct commit *pick_regular_commit(struct repository *repo,
 		base_tree = lookup_tree(repo, repo->hash_algo->empty_tree);
 	}
 
-	replayed_base = get_mapped_commit(replayed_commits, base, onto);
+	if (!replayed_base)
+		replayed_base = get_mapped_commit(replayed_commits, base, onto);
 	replayed_base_tree = repo_get_commit_tree(repo, replayed_base);
 	pickme_tree = repo_get_commit_tree(repo, pickme);
 
@@ -430,12 +435,25 @@ int replay_revisions(struct rev_info *revs,
 	while ((commit = get_revision(revs))) {
 		const struct name_decoration *decoration;
 
-		if (commit->parents && commit->parents->next)
-			die(_("replaying merge commits is not supported yet!"));
+		if (commit->parents && commit->parents->next) {
+			if (!opts->linearize)
+				die(_("replaying merge commits is not supported yet!"));
+			/*
+			 * Drop the merge commit: do not pick it and leave
+			 * last_commit unchanged, so its children (and any ref
+			 * pointing at it) are reparented onto the previous
+			 * non-merge commit, which the ref-update loop below uses.
+			 */
+		} else {
+			struct commit *to_pick = reverse ? last_commit : onto;
+			last_commit =
+				pick_regular_commit(revs->repo, commit,
+						    replayed_commits, to_pick,
+						    &merge_opt, &result,
+						    opts->linearize ? last_commit : NULL,
+						    reverse, opts->empty);
+		}
 
-		last_commit = pick_regular_commit(revs->repo, commit, replayed_commits,
-						  reverse ? last_commit : onto,
-						  &merge_opt, &result, reverse, opts->empty);
 		if (!last_commit)
 			break;
 
