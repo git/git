@@ -651,9 +651,24 @@ free_strings:
 	return ret;
 }
 
+static void reject_empty_subsection(const char *key)
+{
+	const char *first_dot = strchr(key, '.');
+	const char *rest;
+
+	if (!first_dot || !starts_with(first_dot, ".."))
+		return;
+	/* Only an alias may legitimately have an empty subsection. */
+	if (skip_iprefix(key, "alias", &rest) && rest == first_dot)
+		return;
+	die(_("empty subsection in '%s'"), key);
+}
+
 static char *normalize_value(const char *key, const char *value,
 			     int type, struct key_value_info *kvi)
 {
+	reject_empty_subsection(key);
+
 	if (!value)
 		return NULL;
 

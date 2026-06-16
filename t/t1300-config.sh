@@ -469,6 +469,17 @@ test_expect_success 'invalid key' '
 	test_must_fail git config inval.2key blabla
 '
 
+test_expect_success 'setting a key with an empty subsection fails' '
+	test_must_fail git config "branch..pushremote" upstream 2>err &&
+	test_grep "empty subsection in .branch\\.\\.pushremote." err
+'
+
+test_expect_success 'an empty subsection is accepted for an alias' '
+	test_when_finished "git config --remove-section \"alias.\"" &&
+	git config "alias..r" rev-parse 2>err &&
+	test_must_be_empty err
+'
+
 test_expect_success 'set with 1 arg of "key=value": valid key suggests split form' '
 	test_must_fail git config set pull.rebase=false 2>err &&
 	test_grep "missing value to set to the variable .pull\\.rebase=false." err &&

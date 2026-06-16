@@ -630,14 +630,13 @@ test_expect_success 'branch.*.pushremote config order is irrelevant' '
 '
 
 test_expect_success 'push rejects empty branch name entries' '
-	mk_test one_repo heads/main &&
-	test_config remote.one.url one_repo &&
-	test_config branch..remote one &&
-	test_config branch..merge refs/heads/ &&
-	test_config branch.main.remote one &&
-	test_config branch.main.merge refs/heads/main &&
+	test_when_finished "git config --remove-section \"branch.\"" &&
+	cat >>.git/config <<-\EOF &&
+	[branch ""]
+		remote = one
+	EOF
 	test_must_fail git push 2>err &&
-	grep "bad config variable .branch\.\." err
+	test_grep "bad config variable .branch\.\." err
 '
 
 test_expect_success 'push ignores "branch." config without subsection' '
