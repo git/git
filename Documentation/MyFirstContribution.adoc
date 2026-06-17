@@ -1330,6 +1330,26 @@ previous one" patches over 2 days), reviewers would strongly prefer if a
 single polished version came 2 days later instead, and that version with
 fewer mistakes were the only one they would need to review.
 
+This consideration applies not only when going from the initial patch to v2,
+but also to later iterations of the same series. There is no fixed rule for how
+long to wait before sending a new version. A useful default is to send at most
+one new version of the same patch series per day. This gives multiple reviewers
+time to comment, gives reviewers across time zones a fair chance to
+participate, lets you batch feedback together, and gives you time to think
+through the comments you received. Knowing that you should not immediately send
+another version also encourages you to review the patches more carefully before
+sending them, catch small mistakes such as typos and off-by-one errors
+yourself, and let reviewers spend more of their attention on design,
+algorithms, and other substantial issues.
+
+The right timing depends on the topic and the feedback. Larger series usually
+need more review time. If the only comments so far are minor, such as typo
+fixes, it often makes sense to wait a little longer in case deeper reviews are
+still coming. If the comments require substantial rework, sending a new version
+sooner may save reviewers from spending time on a version you already know will
+change significantly. If the topic is close to being accepted and the remaining
+comments are small, a quicker new version may also be fine.
+
 
 [[reviewing]]
 === Responding to Reviews

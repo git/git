@@ -58,7 +58,14 @@ area.
 It is often beneficial to allow some time for reviewers to provide
 feedback before sending a new version, rather than sending an updated
 series immediately after receiving a review. This helps collect broader
-input and avoids unnecessary churn from many rapid iterations.
+input, gives reviewers in different time zones a fair chance to comment,
+and avoids unnecessary churn from many rapid iterations.  Waiting also
+encourages you to polish each version before sending it, so reviewers can
+focus on substantial issues rather than typos or other small mistakes.
++
+As a rough default, avoid sending more than one new version of the same
+series per day, while considering the size of the series, the depth of
+review, and how close the topic is to being accepted.
 
 . These early update iterations are expected to be full replacements,
   not incremental updates on top of what you posted already.  If you
@@ -619,7 +626,8 @@ letter" message (see below), the first patch, or the respective preceding patch.
 Here is a link:MyFirstContribution.html#v2-git-send-email[step-by-step guide] on
 how to submit updated versions of a patch series.  Before sending another
 version, make sure you have answered meaningful review comments in the existing
-discussion.
+discussion.  Also give reviewers enough time to comment before sending another
+version.
 
 If your log message (including your name on the
 `Signed-off-by` trailer) is not writable in ASCII, make sure that
