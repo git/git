@@ -1337,11 +1337,13 @@ fewer mistakes were the only one they would need to review.
 After a few days, you will hopefully receive a reply to your patchset with some
 comments. Woohoo! Now you can get back to work.
 
-It's good manners to reply to each comment, notifying the reviewer that you have
-made the change suggested, feel the original is better, or that the comment
-inspired you to do something a new way which is superior to both the original
-and the suggested change. This way reviewers don't need to inspect your v2 to
-figure out whether you implemented their comment or not.
+It's good manners to reply to each comment in the mailing list discussion
+instead of letting the next version of your patch be your only response. Tell
+the reviewer whether you plan to make the suggested change, keep the original,
+or pursue a different approach. This way reviewers can respond to your reasoning
+before you spend time preparing a version they may not agree with, and later do
+not need to inspect your v2 to figure out whether you implemented their comment
+or not.
 
 Reviewers may ask you about what you wrote in the patchset, either in
 the proposed commit log message or in the changes themselves.  You
