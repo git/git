@@ -11,6 +11,7 @@ SYNOPSIS
 git history fixup <commit> [--dry-run] [--update-refs=(branches|head)] [--reedit-message] [--empty=(drop|keep|abort)]
 git history reword <commit> [--dry-run] [--update-refs=(branches|head)]
 git history split <commit> [--dry-run] [--update-refs=(branches|head)] [--] [<pathspec>...]
+git history squash <revision-range> [--dry-run] [--update-refs=(branches|head)] [--reedit-message]
 
 DESCRIPTION
 -----------
@@ -96,6 +97,25 @@ linkgit:gitglossary[7].
 +
 It is invalid to select either all or no hunks, as that would lead to
 one of the commits becoming empty.
+
+`squash <revision-range>`::
+	Fold all commits in _<revision-range>_ into the oldest commit of that
+	range. The resulting commit keeps the oldest commit's message and
+	authorship and takes the tree of the range's newest commit, so the
+	whole range collapses into a single commit. Commits above the range
+	are replayed on top of the result.
++
+The range is given in the usual `<base>..<tip>` form, where _<base>_ is
+the commit just below the oldest commit to squash. For example, `git
+history squash @~3..` folds the three most recent commits into one, and
+`git history squash @~5..@~2` squashes an interior range while leaving
+the two newest commits in place.
++
+The oldest commit's message and authorship are preserved by default,
+unless you specify `--reedit-message`. A merge commit inside the range is
+folded like any other, but the range must have a single base, so a range
+that reaches more than one entry point (for example a side branch that
+forked before the range and was later merged into it) is rejected.
 
 OPTIONS
 -------
