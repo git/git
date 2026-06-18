@@ -1944,4 +1944,30 @@ test_expect_success '--delete-merged requires at least one <branch>' '
 	test_grep "requires at least one <branch>" err
 '
 
+test_expect_success '--delete-merged honours branch.<name>.deleteMerged=false' '
+	test_when_finished "rm -rf repo" &&
+	setup_repo_for_delete_merged &&
+	merged_branch deleted origin/next &&
+	merged_branch kept origin/next &&
+	git -C repo config branch.kept.deleteMerged false &&
+	git -C repo checkout --detach &&
+
+	git -C repo branch --delete-merged origin/next 2>err &&
+
+	test_grep "Skipping .kept." err &&
+	test_must_fail git -C repo rev-parse --verify refs/heads/deleted &&
+	git -C repo rev-parse --verify refs/heads/kept
+'
+
+test_expect_success "branch -d still deletes a deleteMerged=false branch" '
+	test_when_finished "rm -rf repo" &&
+	setup_repo_for_delete_merged &&
+	merged_branch kept origin/next &&
+	git -C repo config branch.kept.deleteMerged false &&
+	git -C repo checkout --detach &&
+
+	git -C repo branch -d kept &&
+	test_must_fail git -C repo rev-parse --verify refs/heads/kept
+'
+
 test_done

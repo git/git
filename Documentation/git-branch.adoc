@@ -215,10 +215,11 @@ A branch is not deleted when:
 +
 --
 * its upstream remote-tracking branch no longer exists,
-* it is checked out in any worktree, or
+* it is checked out in any worktree,
 * its push destination (`<branch>@{push}`) equals its upstream
   (`<branch>@{upstream}`), so it cannot be distinguished from a
-  branch that just looks "fully merged" right after a pull.
+  branch that just looks "fully merged" right after a pull, or
+* `branch.<name>.deleteMerged` is set to `false`.
 --
 +
 A branch whose work has not yet been merged into its upstream is
