@@ -135,6 +135,43 @@ test_expect_success 'preserves authorship of the oldest commit' '
 	test_cmp expect actual
 '
 
+test_expect_success '--reedit-message offers every folded-in message' '
+	git reset --hard start &&
+	echo b >file &&
+	git add file &&
+	git commit -m "re-one subject" -m "re-one body line" &&
+	test_commit re-two file c &&
+	test_commit re-three file d &&
+
+	write_script editor <<-\EOF &&
+	cp "$1" buffer &&
+	echo combined >"$1"
+	EOF
+	test_set_editor "$(pwd)/editor" &&
+	git history squash --reedit-message start.. &&
+
+	grep "re-one subject" buffer &&
+	grep "re-one body line" buffer &&
+	grep re-two buffer &&
+	grep re-three buffer &&
+	git log --format="%s" -1 >actual &&
+	echo combined >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success '--reedit-message aborts on an empty message' '
+	git reset --hard three &&
+	head_before=$(git rev-parse HEAD) &&
+
+	write_script editor <<-\EOF &&
+	>"$1"
+	EOF
+	test_set_editor "$(pwd)/editor" &&
+	test_must_fail git history squash --reedit-message start.. &&
+
+	test_cmp_rev "$head_before" HEAD
+'
+
 test_expect_success '--dry-run predicts the rewrite without performing it' '
 	git reset --hard three &&
 	head_before=$(git rev-parse HEAD) &&
