@@ -150,10 +150,10 @@ test_expect_success '--reedit-message offers every folded-in message' '
 	test_set_editor "$(pwd)/editor" &&
 	git history squash --reedit-message start.. &&
 
-	grep "re-one subject" buffer &&
-	grep "re-one body line" buffer &&
-	grep re-two buffer &&
-	grep re-three buffer &&
+	test_grep "re-one subject" buffer &&
+	test_grep "re-one body line" buffer &&
+	test_grep re-two buffer &&
+	test_grep re-three buffer &&
 	git log --format="%s" -1 >actual &&
 	echo combined >expect &&
 	test_cmp expect actual
@@ -177,7 +177,7 @@ test_expect_success '--dry-run predicts the rewrite without performing it' '
 	head_before=$(git rev-parse HEAD) &&
 
 	git history squash --dry-run start.. >out &&
-	grep "^update refs/heads/" out >update &&
+	test_grep "^update refs/heads/" out >update &&
 	predicted=$(awk "{print \$3}" update) &&
 	test_cmp_rev "$head_before" HEAD &&
 
