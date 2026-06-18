@@ -1892,8 +1892,12 @@ test_expect_success '--delete-merged deletes merged branches and spares the rest
 	) &&
 	sha=$(git -C repo rev-parse --short merged) &&
 
-	git -C repo branch --delete-merged origin/next >actual 2>&1 &&
+	git -C repo branch --dry-run --delete-merged origin/next >actual 2>&1 &&
+	echo "Would delete branch merged (was $sha)." >expect &&
+	test_cmp expect actual &&
+	git -C repo rev-parse --verify refs/heads/merged &&
 
+	git -C repo branch --delete-merged origin/next >actual 2>&1 &&
 	echo "Deleted branch merged (was $sha)." >expect &&
 	test_cmp expect actual &&
 	git -C repo for-each-ref --format="%(refname:short)" refs/heads/ >actual &&
@@ -1968,6 +1972,11 @@ test_expect_success "branch -d still deletes a deleteMerged=false branch" '
 
 	git -C repo branch -d kept &&
 	test_must_fail git -C repo rev-parse --verify refs/heads/kept
+'
+
+test_expect_success '--dry-run without --delete-merged is rejected' '
+	test_must_fail git -C forked branch --dry-run 2>err &&
+	test_grep "requires --delete-merged" err
 '
 
 test_done
