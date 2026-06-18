@@ -25,6 +25,7 @@ git branch (-m|-M) [<old-branch>] <new-branch>
 git branch (-c|-C) [<old-branch>] <new-branch>
 git branch (-d|-D) [-r] <branch-name>...
 git branch --edit-description [<branch-name>]
+git branch --delete-merged <branch>...
 
 DESCRIPTION
 -----------
@@ -200,6 +201,29 @@ This option is only applicable in non-verbose mode.
 `--show-current`::
 	Print the name of the current branch. In detached `HEAD` state,
 	nothing is printed.
+
+`--delete-merged <branch>...`::
+	Delete the local branches that `--forked` would list for the
+	given _<branch>_ arguments, but only those whose tip is
+	reachable from their configured upstream. In other words, the
+	work on the branch has already landed on the upstream it
+	tracks, so the local copy is no longer needed. Several
+	_<branch>_ patterns may be given, e.g. `git branch
+	--delete-merged origin/main 'feature*'`.
++
+A branch is not deleted when:
++
+--
+* its upstream remote-tracking branch no longer exists,
+* it is checked out in any worktree, or
+* its push destination (`<branch>@{push}`) equals its upstream
+  (`<branch>@{upstream}`), so it cannot be distinguished from a
+  branch that just looks "fully merged" right after a pull.
+--
++
+A branch whose work has not yet been merged into its upstream is
+silently skipped. Delete it with `git branch -D` if you want to
+remove it anyway.
 
 `-v`::
 `-vv`::
