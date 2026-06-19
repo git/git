@@ -632,8 +632,9 @@ test_expect_success 'subcommand - unknown subcommand shows error and usage' '
 
 test_expect_success 'subcommand - subcommands cannot be abbreviated' '
 	test_expect_code 129 test-tool parse-subcommand cmd subcmd-o 2>err &&
-	grep "^error: unknown subcommand: \`subcmd-o$SQ$" err &&
-	grep ^usage: err
+	grep "^The most similar subcommands are$" err &&
+	grep "subcmd-one$" err &&
+	grep "subcmd-two$" err
 '
 
 test_expect_success 'subcommand - no negated subcommands' '

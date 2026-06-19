@@ -37,8 +37,8 @@ test_systemd_analyze_verify () {
 test_expect_success 'help text' '
 	test_expect_code 129 git maintenance -h >actual &&
 	test_grep "usage: git maintenance <subcommand>" actual &&
-	test_expect_code 129 git maintenance barf 2>err &&
-	test_grep "unknown subcommand: \`barf'\''" err &&
+	test_expect_code 129 git maintenance abarf 2>err &&
+	test_grep "unknown subcommand: \`abarf'\''" err &&
 	test_grep "usage: git maintenance" err &&
 	test_expect_code 129 git maintenance 2>err &&
 	test_grep "error: need a subcommand" err &&
