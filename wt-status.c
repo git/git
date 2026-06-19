@@ -1366,34 +1366,117 @@ static int split_commit_in_progress(struct wt_status *s)
 }
 
 /*
+ * If the whitespace-delimited token starting at or just after *pp *
+ * is a hex object id that is longer than its default abbreviation, *
+ * abbreviate it in-place, shrinking `line` accordingly. On return
+ * *pp points one past the (possibly abbreviated) token. Leaves both
+ * `line` and *pp-advanced-past-the-token unchanged in all other cases
+ * (non-hex token, unresolvable, or a refname that happens to consist
+ * only of hex digits).
+ */
+static void abbrev_oid_in_line(struct repository *r,
+			       struct strbuf *line, char **pp)
+{
+	char *p = *pp;
+	char *end_of_object_name, saved;
+	const char *abbrev;
+	struct object_id oid;
+	bool have_oid;
+
+	p += strspn(p, " \t");
+	end_of_object_name = p + strcspn(p, " \t");
+	/*
+	 * For "merge" and "reset" the object name may be a label or
+	 * ref rather than a hex object id. Only abbreviate the object
+	 * name if it is a hex object id.
+	 */
+	for (const char *q = p; q < end_of_object_name; q++) {
+		if (!isxdigit(*q))
+			goto out;
+	}
+	saved = *end_of_object_name;
+	*end_of_object_name = '\0';
+	have_oid = !repo_get_oid(r, p, &oid);
+	*end_of_object_name = saved;
+	if (!have_oid)
+		goto out; /* object name was a label */
+	abbrev = repo_find_unique_abbrev(r, &oid, DEFAULT_ABBREV);
+	if (!starts_with(p, abbrev))
+		goto out; /* object name was a refname containing only xdigits */
+	p += strlen(abbrev);
+	strbuf_remove(line, p - line->buf, end_of_object_name - p);
+	end_of_object_name = p;
+out:
+	*pp = end_of_object_name;
+}
+
+static void skip_dash_c(char **pp)
+{
+	char *p = *pp;
+
+	p += strspn(p, " \t");
+	/* The (void) cast is required to silence -Wunused-value */
+	(void)(skip_prefix(p, "-C", &p) || skip_prefix(p, "-c", &p));
+	*pp = p;
+}
+
+/*
  * Turn
  * "pick d6a2f0303e897ec257dd0e0a39a5ccb709bc2047 some message"
  * into
  * "pick d6a2f03 some message"
  *
- * The function assumes that the line does not contain useless spaces
- * before or after the command.
+ * Returns false on comment lines, true otherwise
  */
-static void abbrev_oid_in_line(struct repository *r, struct strbuf *line)
+static bool format_todo_line(struct repository *r, struct strbuf *line)
 {
-	struct string_list split = STRING_LIST_INIT_DUP;
-	struct object_id oid;
+	enum todo_command cmd;
+	char *p = line->buf;
 
-	if (starts_with(line->buf, "exec ") ||
-	    starts_with(line->buf, "x ") ||
-	    starts_with(line->buf, "label ") ||
-	    starts_with(line->buf, "l "))
-		return;
+	if (!sequencer_parse_todo_command((const char**)&p, &cmd))
+		return true; /* keep invalid lines */
 
-	if ((2 <= string_list_split(&split, line->buf, " ", 2)) &&
-	    !repo_get_oid(r, split.items[1].string, &oid)) {
-		strbuf_reset(line);
-		strbuf_addf(line, "%s ", split.items[0].string);
-		strbuf_add_unique_abbrev(line, &oid, DEFAULT_ABBREV);
-		for (size_t i = 2; i < split.nr; i++)
-			strbuf_addf(line, " %s", split.items[i].string);
+	switch (cmd) {
+	case TODO_COMMENT:
+		return false;
+
+	case TODO_MERGE:
+		skip_dash_c(&p);
+		while (true) {
+			p += strspn(p, " \t");
+			if (!p[0] || (p[0] == '#' && (!p[1] || isspace(p[1]))))
+				break;
+			abbrev_oid_in_line(r, line, &p);
+		}
+		break;
+
+	case TODO_FIXUP:
+		skip_dash_c(&p);
+		/* fallthrough */
+	case TODO_DROP:
+	case TODO_EDIT:
+	case TODO_PICK:
+	case TODO_RESET:
+	case TODO_REVERT:
+	case TODO_REWORD:
+	case TODO_SQUASH:
+		abbrev_oid_in_line(r, line, &p);
+		break;
+
+	/*
+	 * Avoid "default" and instead list all the other commands so
+	 * that -Wswitch (which is included in -Wall) warns if a new
+	 * command is added without handling it in this function.
+	 */
+	case TODO_BREAK:
+	case TODO_EXEC:
+	case TODO_LABEL:
+	case TODO_NOOP:
+	case TODO_UPDATE_REF:
+		break;
 	}
-	string_list_clear(&split, 0);
+
+	return true;
 }
 
 static int read_rebase_todolist(struct repository *r, const char *fname, struct string_list *lines)
@@ -1411,13 +1494,9 @@ static int read_rebase_todolist(struct repository *r, const char *fname, struct 
 			  repo_git_path_replace(r, &buf, "%s", fname));
 	}
 	while (!strbuf_getline_lf(&buf, f)) {
-		if (starts_with(buf.buf, comment_line_str))
-			continue;
 		strbuf_trim(&buf);
-		if (!buf.len)
-			continue;
-		abbrev_oid_in_line(r, &buf);
-		string_list_append(lines, buf.buf);
+		if (format_todo_line(r, &buf))
+			string_list_append(lines, buf.buf);
 	}
 	fclose(f);
 

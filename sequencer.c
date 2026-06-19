@@ -2627,6 +2627,27 @@ static int is_command(enum todo_command command, const char **bol)
 	return 0;
 }
 
+bool sequencer_parse_todo_command(const char **p, enum todo_command *cmd)
+{
+	const char *s = *p;
+
+	for (int i = 0; i < TODO_COMMENT; i++)
+		if (is_command(i, p)) {
+			*cmd = i;
+			return true;
+		}
+
+	if (starts_with(s, comment_line_str)) {
+		*cmd = TODO_COMMENT;
+		return true;
+	} else if (s[0] == '\n' || (s[0] == '\r' && s[1] == '\n') || !s[0]) {
+		*cmd = TODO_COMMENT;
+		return true;
+	}
+
+	return false;
+}
+
 static int check_label_or_ref_arg(enum todo_command command, const char *arg)
 {
 	switch (command) {
@@ -2716,29 +2737,23 @@ static int parse_insn_line(struct repository *r, struct replay_opts *opts,
 {
 	struct object_id commit_oid;
 	char *end_of_object_name;
-	int i, saved, status, padding;
+	int saved, status, padding;
 
 	item->flags = 0;
 
 	/* left-trim */
 	bol += strspn(bol, " \t");
 
-	if (bol == eol || *bol == '\r' || starts_with_mem(bol, eol - bol, comment_line_str)) {
-		item->command = TODO_COMMENT;
+	if (!sequencer_parse_todo_command(&bol, &item->command))
+		return error(_("invalid command '%.*s'"),
+			     (int)strcspn(bol, " \t\r\n"), bol);
+
+	if (item->command == TODO_COMMENT) {
 		item->commit = NULL;
 		item->arg_offset = bol - buf;
 		item->arg_len = eol - bol;
 		return 0;
 	}
-
-	for (i = 0; i < TODO_COMMENT; i++)
-		if (is_command(i, &bol)) {
-			item->command = i;
-			break;
-		}
-	if (i >= TODO_COMMENT)
-		return error(_("invalid command '%.*s'"),
-			     (int)strcspn(bol, " \t\r\n"), bol);
 
 	/* Eat up extra spaces/ tabs before object name */
 	padding = strspn(bol, " \t");
