@@ -598,8 +598,10 @@ your existing e-mail client (often optimized for "multipart/*" MIME
 type e-mails) might render your patches unusable.
 
 NOTE: Here we outline the procedure using `format-patch` and
-`send-email`, but you can instead use GitGitGadget to send in your
-patches (see link:MyFirstContribution.html[MyFirstContribution]).
+`send-email`, but you can instead use GitGitGadget or `b4` to send in
+your patches (see link:MyFirstContribution.html[MyFirstContribution]).
+Contributors are encouraged to use `b4`, which automates much of the
+bookkeeping that is otherwise done by hand.
 
 People on the Git mailing list need to be able to read and
 comment on the changes you are submitting.  It is important for
