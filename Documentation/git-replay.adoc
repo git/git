@@ -80,10 +80,13 @@ incompatible with `--contained` (which is a modifier for `--onto` only).
 	Control how references are updated. The mode can be:
 +
 --
-	* `update` (default): Update refs directly using an atomic transaction.
-	  All refs are updated or none are (all-or-nothing behavior).
-	* `print`: Output update-ref commands for pipeline use. This is the
-	  traditional behavior where output can be piped to `git update-ref --stdin`.
+////
+Expanded description list compared to 'replay.refAction'.
+////
+`update`;; (default) Update refs directly using an atomic transaction.
+	All refs are updated or none are (all-or-nothing behavior).
+`print`;; Output update-ref commands for pipeline use. This is the
+	traditional behavior where output can be piped to `git update-ref --stdin`.
 --
 +
 The default mode can be configured via the `replay.refAction` configuration variable.
@@ -208,6 +211,11 @@ $ git replay --onto=112233 --ref=refs/heads/mybranch aabbcc..ddeeff
 This replays the range `aabbcc..ddeeff` onto commit `112233` and updates
 `refs/heads/mybranch` to point at the result. This can be useful when you want
 to use bare commit IDs instead of branch names.
+
+CONFIGURATION
+-------------
+:git-replay: 1
+include::config/replay.adoc[]
 
 GIT
 ---
