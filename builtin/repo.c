@@ -58,7 +58,7 @@ struct repo_info_field {
 
 static int get_layout_bare(struct repository *repo UNUSED, struct strbuf *buf)
 {
-	strbuf_addstr(buf, is_bare_repository() ? "true" : "false");
+	strbuf_addstr(buf, is_bare_repository(the_repository) ? "true" : "false");
 	return 0;
 }
 

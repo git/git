@@ -1,4 +1,3 @@
-#define USE_THE_REPOSITORY_VARIABLE
 #define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
@@ -795,14 +794,23 @@ static int check_repository_format_gently(const char *gitdir,
 		has_common = 0;
 	}
 
-	if (!has_common) {
-		if (candidate->is_bare != -1) {
-			is_bare_repository_cfg = candidate->is_bare;
-		}
-		if (candidate->work_tree) {
-			free(git_work_tree_cfg);
-			git_work_tree_cfg = xstrdup(candidate->work_tree);
-		}
+	if (startup_info->force_bare_repository) {
+		candidate->is_bare = 1;
+		FREE_AND_NULL(candidate->work_tree);
+	} else if (has_common) {
+		/*
+		 * When sharing a common dir with another repository (e.g. a
+		 * linked worktree), do not let this repository's config
+		 * dictate bareness; it is inherited from the main worktree.
+		 */
+		candidate->is_bare = -1;
+
+		/*
+		 * Furthermore, "core.worktree" is supposed to be ignored when
+		 * we have a commondir configured, unless it comes from the
+		 * per-worktree configuration.
+		 */
+		FREE_AND_NULL(candidate->work_tree);
 	}
 
 	return 0;
@@ -1141,8 +1149,8 @@ static const char *setup_explicit_git_dir(struct repository *repo,
 	/* #3, #7, #11, #15, #19, #23, #27, #31 (see t1510) */
 	if (work_tree_env)
 		set_git_work_tree(repo, work_tree_env);
-	else if (is_bare_repository_cfg > 0) {
-		if (git_work_tree_cfg) {
+	else if (repo_fmt->is_bare > 0) {
+		if (repo_fmt->work_tree) {
 			/* #22.2, #30 */
 			warning("core.bare and core.worktree do not make sense");
 			repo->worktree_config_is_bogus = true;
@@ -1153,15 +1161,15 @@ static const char *setup_explicit_git_dir(struct repository *repo,
 		free(gitfile);
 		return NULL;
 	}
-	else if (git_work_tree_cfg) { /* #6, #14 */
-		if (is_absolute_path(git_work_tree_cfg))
-			set_git_work_tree(repo, git_work_tree_cfg);
+	else if (repo_fmt->work_tree) { /* #6, #14 */
+		if (is_absolute_path(repo_fmt->work_tree))
+			set_git_work_tree(repo, repo_fmt->work_tree);
 		else {
 			char *core_worktree;
 			if (chdir(gitdirenv))
 				die_errno(_("cannot chdir to '%s'"), gitdirenv);
-			if (chdir(git_work_tree_cfg))
-				die_errno(_("cannot chdir to '%s'"), git_work_tree_cfg);
+			if (chdir(repo_fmt->work_tree))
+				die_errno(_("cannot chdir to '%s'"), repo_fmt->work_tree);
 			core_worktree = xgetcwd();
 			if (chdir(cwd->buf))
 				die_errno(_("cannot come back to cwd"));
@@ -1214,7 +1222,7 @@ static const char *setup_discovered_git_dir(struct repository *repo,
 		return NULL;
 
 	/* --work-tree is set without --git-dir; use discovered one */
-	if (getenv(GIT_WORK_TREE_ENVIRONMENT) || git_work_tree_cfg) {
+	if (getenv(GIT_WORK_TREE_ENVIRONMENT) || repo_fmt->work_tree) {
 		char *to_free = NULL;
 		const char *ret;
 
@@ -1228,7 +1236,7 @@ static const char *setup_discovered_git_dir(struct repository *repo,
 	}
 
 	/* #16.2, #17.2, #20.2, #21.2, #24, #25, #28, #29 (see t1510) */
-	if (is_bare_repository_cfg > 0) {
+	if (repo_fmt->is_bare > 0) {
 		set_git_dir(repo, gitdir, (offset != cwd->len));
 		if (chdir(cwd->buf))
 			die_errno(_("cannot come back to cwd"));
@@ -1264,7 +1272,7 @@ static const char *setup_bare_git_dir(struct repository *repo,
 	setenv(GIT_IMPLICIT_WORK_TREE_ENVIRONMENT, "0", 1);
 
 	/* --work-tree is set without --git-dir; use discovered one */
-	if (getenv(GIT_WORK_TREE_ENVIRONMENT) || git_work_tree_cfg) {
+	if (getenv(GIT_WORK_TREE_ENVIRONMENT) || repo_fmt->work_tree) {
 		static const char *gitdir;
 
 		gitdir = offset == cwd->len ? "." : xmemdupz(cwd->buf, offset);
@@ -1765,6 +1773,7 @@ int apply_repository_format(struct repository *repo,
 		alternate_object_directories = xstrdup_or_null(getenv(ALTERNATE_DB_ENVIRONMENT));
 	}
 
+	repo->bare_cfg = format->is_bare;
 	repo_set_hash_algo(repo, format->hash_algo);
 	repo->objects = odb_new(repo, object_directory,
 				alternate_object_directories);
@@ -2574,7 +2583,7 @@ static int create_default_files(struct repository *repo,
 		repo_settings_set_shared_repository(repo,
 						    init_shared_repository);
 
-	is_bare_repository_cfg = !work_tree;
+	repo->bare_cfg = !work_tree;
 
 	/*
 	 * We would have created the above under user's umask -- under
@@ -2600,7 +2609,7 @@ static int create_default_files(struct repository *repo,
 	}
 	repo_config_set(repo, "core.filemode", filemode ? "true" : "false");
 
-	if (is_bare_repository())
+	if (is_bare_repository(repo))
 		repo_config_set(repo, "core.bare", "true");
 	else {
 		repo_config_set(repo, "core.bare", "false");

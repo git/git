@@ -46,7 +46,6 @@ int has_symlinks = 1;
 int minimum_abbrev = 4, default_abbrev = -1;
 int ignore_case;
 int assume_unchanged;
-int is_bare_repository_cfg = -1; /* unspecified */
 char *git_commit_encoding;
 char *git_log_output_encoding;
 char *apply_default_whitespace;
@@ -90,9 +89,6 @@ int auto_comment_line_char;
 bool warn_on_auto_comment_char;
 #endif /* !WITH_BREAKING_CHANGES */
 
-/* This is set by setup_git_directory_gently() and/or git_default_config() */
-char *git_work_tree_cfg;
-
 /*
  * Repository-local GIT_* environment variables; see environment.h for details.
  */
@@ -126,10 +122,10 @@ const char *getenv_safe(struct strvec *argv, const char *name)
 	return argv->v[argv->nr - 1];
 }
 
-int is_bare_repository(void)
+int is_bare_repository(struct repository *repo)
 {
 	/* if core.bare is not 'false', let's see if there is a work tree */
-	return is_bare_repository_cfg && !repo_get_work_tree(the_repository);
+	return repo->bare_cfg && !repo_get_work_tree(repo);
 }
 
 int repo_protect_ntfs(struct repository *repo)
@@ -349,7 +345,7 @@ int git_default_core_config(const char *var, const char *value,
 	}
 
 	if (!strcmp(var, "core.bare")) {
-		is_bare_repository_cfg = git_config_bool(var, value);
+		the_repository->bare_cfg = git_config_bool(var, value);
 		return 0;
 	}
 

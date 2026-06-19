@@ -118,6 +118,13 @@ struct repository {
 	bool worktree_config_is_bogus;
 
 	/*
+	 * Whether the repository is bare, as set by "core.bare" config or
+	 * inferred during repository discovery. -1 means unset/unknown, 0
+	 * means non-bare, 1 means bare.
+	 */
+	int bare_cfg;
+
+	/*
 	 * Path from the root of the top-level superproject down to this
 	 * repository.  This is only non-NULL if the repository is initialized
 	 * as a submodule of another repository.
