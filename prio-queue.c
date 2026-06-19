@@ -76,6 +76,29 @@ static void sift_down_root(struct prio_queue *queue)
 	}
 }
 
+static void sift_up_rebalance(struct prio_queue *queue)
+{
+	size_t ix, child;
+
+	/* Cascade: promote smaller child at each level. */
+	for (ix = 0; (child = ix * 2 + 1) < queue->nr; ix = child) {
+		if (child + 1 < queue->nr &&
+		    compare(queue, child, child + 1) >= 0)
+			child++;
+		queue->array[ix] = queue->array[child];
+	}
+
+	/* Place the last element at the vacancy and sift up. */
+	queue->array[ix] = queue->array[queue->nr];
+	while (ix) {
+		size_t parent = (ix - 1) / 2;
+		if (compare(queue, parent, ix) <= 0)
+			break;
+		swap(queue, parent, ix);
+		ix = parent;
+	}
+}
+
 void *prio_queue_get(struct prio_queue *queue)
 {
 	void *result;
@@ -89,8 +112,7 @@ void *prio_queue_get(struct prio_queue *queue)
 	if (!--queue->nr)
 		return result;
 
-	queue->array[0] = queue->array[queue->nr];
-	sift_down_root(queue);
+	sift_up_rebalance(queue);
 	return result;
 }
 
