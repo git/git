@@ -146,6 +146,15 @@ enum ref_transaction_error refs_verify_refname_available(struct ref_store *refs,
 
 int refs_ref_exists(struct ref_store *refs, const char *refname);
 
+enum log_refs_config {
+	LOG_REFS_UNSET = -1,
+	LOG_REFS_NONE = 0,
+	LOG_REFS_NORMAL,
+	LOG_REFS_ALWAYS
+};
+
+enum log_refs_config refs_parse_log_all_ref_updates_config(const char *value);
+
 int should_autocreate_reflog(enum log_refs_config log_all_ref_updates,
 			     const char *refname);
 

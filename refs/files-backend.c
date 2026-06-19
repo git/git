@@ -117,6 +117,21 @@ static void files_ref_store_reparent(const char *name UNUSED,
 	refs->gitcommondir = tmp;
 }
 
+static int files_ref_store_config(const char *var, const char *value,
+				  const struct config_context *ctx UNUSED,
+				  void *payload)
+{
+	struct files_ref_store *refs = payload;
+
+	if (!strcmp(var, "core.prefersymlinkrefs")) {
+		refs->prefer_symlink_refs = git_config_bool(var, value);
+	} else if (!strcmp(var, "core.logallrefupdates")) {
+		refs->log_all_ref_updates = refs_parse_log_all_ref_updates_config(value);
+	}
+
+	return 0;
+}
+
 /*
  * Create a new submodule ref cache and add it to the internal
  * set of caches.
@@ -141,10 +156,9 @@ static struct ref_store *files_ref_store_init(struct repository *repo,
 	refs->packed_ref_store =
 		packed_ref_store_init(repo, NULL, refs->gitcommondir, opts);
 	refs->store_flags = opts->access_flags;
-	refs->log_all_ref_updates = opts->log_all_ref_updates;
+	refs->log_all_ref_updates = LOG_REFS_UNSET;
 
-	repo_config_get_bool(repo, "core.prefersymlinkrefs", &refs->prefer_symlink_refs);
-
+	repo_config(repo, files_ref_store_config, refs);
 	chdir_notify_register(NULL, files_ref_store_reparent, refs);
 
 	strbuf_release(&refdir);
