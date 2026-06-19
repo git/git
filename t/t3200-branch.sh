@@ -1037,7 +1037,8 @@ test_expect_success '--set-upstream-to fails on locked config' '
 	test_when_finished "rm -f .git/config.lock" &&
 	>.git/config.lock &&
 	git branch locked &&
-	test_must_fail git branch --set-upstream-to locked 2>err &&
+	test_must_fail git -c core.configLockTimeout=0 \
+		branch --set-upstream-to locked 2>err &&
 	test_grep "could not lock config file .git/config" err
 '
 
@@ -1068,7 +1069,8 @@ test_expect_success '--unset-upstream should fail if config is locked' '
 	test_when_finished "rm -f .git/config.lock" &&
 	git branch --set-upstream-to locked &&
 	>.git/config.lock &&
-	test_must_fail git branch --unset-upstream 2>err &&
+	test_must_fail git -c core.configLockTimeout=0 \
+		branch --unset-upstream 2>err &&
 	test_grep "could not lock config file .git/config" err
 '
 

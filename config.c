@@ -2951,6 +2951,24 @@ char *git_config_prepare_comment_string(const char *comment)
 	return prepared;
 }
 
+/*
+ * How long to retry acquiring config.lock when another process holds
+ * it. Default matches core.packedRefsTimeout; override via
+ * core.configLockTimeout.
+ */
+static long config_lock_timeout_ms(struct repository *r)
+{
+	static int configured;
+	static int timeout_ms = 1000;
+
+	if (!configured) {
+		repo_config_get_int(r, "core.configlocktimeout", &timeout_ms);
+		configured = 1;
+	}
+
+	return timeout_ms;
+}
+
 static void validate_comment_string(const char *comment)
 {
 	size_t leading_blanks;
@@ -3034,7 +3052,8 @@ int repo_config_set_multivar_in_file_gently(struct repository *r,
 	 * The lock serves a purpose in addition to locking: the new
 	 * contents of .git/config will be written into it.
 	 */
-	fd = hold_lock_file_for_update(&lock, config_filename, 0);
+	fd = hold_lock_file_for_update_timeout(&lock, config_filename, 0,
+					       config_lock_timeout_ms(r));
 	if (fd < 0) {
 		error_errno(_("could not lock config file %s"), config_filename);
 		ret = CONFIG_NO_LOCK;
@@ -3379,7 +3398,8 @@ static int repo_config_copy_or_rename_section_in_file(
 	if (!config_filename)
 		config_filename = filename_buf = repo_git_path(r, "config");
 
-	out_fd = hold_lock_file_for_update(&lock, config_filename, 0);
+	out_fd = hold_lock_file_for_update_timeout(&lock, config_filename, 0,
+						   config_lock_timeout_ms(r));
 	if (out_fd < 0) {
 		ret = error(_("could not lock config file %s"), config_filename);
 		goto out;
