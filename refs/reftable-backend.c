@@ -362,6 +362,11 @@ static int reftable_be_config(const char *var, const char *value,
 		refs->write_options.lock_timeout_ms = lock_timeout;
 	} else if (!strcmp(var, "core.logallrefupdates")) {
 		refs->log_all_ref_updates = refs_parse_log_all_ref_updates_config(value);
+	} else if (!strcmp(var, "core.sharedrepository")) {
+		mode_t mask = umask(0);
+		umask(mask);
+		refs->write_options.default_permissions = calc_shared_perm(git_config_perm(var, value),
+									   0666 & ~mask);
 	}
 
 	return 0;
@@ -412,7 +417,8 @@ static struct ref_store *reftable_be_init(struct repository *repo,
 	default:
 		BUG("unknown hash algorithm %d", repo->hash_algo->format_id);
 	}
-	refs->write_options.default_permissions = calc_shared_perm(repo, 0666 & ~mask);
+
+	refs->write_options.default_permissions = 0666 & ~mask;
 	refs->write_options.disable_auto_compact =
 		!git_env_bool("GIT_TEST_REFTABLE_AUTOCOMPACTION", 1);
 	refs->write_options.lock_timeout_ms = 100;

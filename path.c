@@ -736,11 +736,10 @@ return_null:
 	return NULL;
 }
 
-int calc_shared_perm(struct repository *repo,
-		     int mode)
+int calc_shared_perm(int shared_repo, int mode)
 {
 	int tweak;
-	int shared_repo = repo_settings_get_shared_repository(repo);
+
 	if (shared_repo < 0)
 		tweak = -shared_repo;
 	else
@@ -763,13 +762,15 @@ int adjust_shared_perm(struct repository *repo,
 		       const char *path)
 {
 	int old_mode, new_mode;
+	int shared_repository;
 
-	if (!repo_settings_get_shared_repository(repo))
+	shared_repository = repo_settings_get_shared_repository(repo);
+	if (!shared_repository)
 		return 0;
 	if (get_st_mode_bits(path, &old_mode) < 0)
 		return -1;
 
-	new_mode = calc_shared_perm(repo, old_mode);
+	new_mode = calc_shared_perm(shared_repository, old_mode);
 	if (S_ISDIR(old_mode)) {
 		/* Copy read bits to execute bits */
 		new_mode |= (new_mode & 0444) >> 2;
