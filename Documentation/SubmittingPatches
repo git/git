@@ -51,6 +51,21 @@ area.
   respond to them with "Reply-All" on the mailing list, while taking
   them into account while preparing an updated set of patches.
 +
+Be particularly mindful of critiques regarding the high-level design
+or viability of your proposal (e.g., questioning if the feature is
+worth implementing, or if the chosen approach is appropriate).  Defend
+your design decisions on the list first, work with reviewers and other
+members to improve the design before revising the implementation, to
+avoid wasting effort on an implementation before its design is solid.
++
+Make sure that any new version explains and justifies those design
+decisions more clearly, in the cover letter and in the revised commit
+messages.  Aim to make the reviewers say "it is now clear why we may
+want to do this with the updated version".
++
+Topics with unresolved fundamental design critiques will not be
+considered ready for merging.
++
 It is often beneficial to allow some time for reviewers to provide
 feedback before sending a new version, rather than sending an updated
 series immediately after receiving a review. This helps collect broader
@@ -322,6 +337,10 @@ The body should provide a meaningful commit message, which:
   result with the change is better.
 
 . alternate solutions considered but discarded, if any.
+
+. records the resolution of design or viability concerns raised by the
+  community during the review, if any, ensuring the historical record
+  explains why the chosen approach was accepted over alternatives.
 
 [[present-tense]]
 The problem statement that describes the status quo is written in the
