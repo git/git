@@ -162,6 +162,54 @@ void cache_tree_invalidate_path(struct index_state *istate, const char *path)
 		istate->cache_changed |= CACHE_TREE_CHANGED;
 }
 
+/*
+ * Check whether this_ce and the next entry in the index form a D/F
+ * conflict ("path" vs "path/file").  Returns the conflicting "path/..."
+ * name when one is found, or NULL otherwise.
+ *
+ * The cache is sorted, so "path/file" sorts after "path" and the
+ * conflict is usually visible as adjacent entries.  But other entries
+ * can sort between them -- e.g. "path-internal" sits between "path"
+ * and "path/file" because '-' (0x2D) precedes '/' (0x2F) -- so when
+ * the immediately following entry shares our prefix but starts with a
+ * character that sorts before '/', binary search for "path/" instead.
+ */
+static const char *find_df_conflict(struct index_state *istate,
+				    const struct cache_entry *this_ce,
+				    const struct cache_entry *next_ce)
+{
+	const char *this_name = this_ce->name;
+	const char *next_name = next_ce->name;
+	int this_len = ce_namelen(this_ce);
+	const struct cache_entry *other;
+	struct strbuf probe = STRBUF_INIT;
+	int pos;
+
+	if (this_len >= ce_namelen(next_ce) ||
+	    next_name[this_len] > '/' ||
+	    strncmp(this_name, next_name, this_len))
+		return NULL;
+
+	if (next_name[this_len] == '/')
+		return next_name;
+
+	strbuf_add(&probe, this_name, this_len);
+	strbuf_addch(&probe, '/');
+	pos = index_name_pos_sparse(istate, probe.buf, probe.len);
+	strbuf_release(&probe);
+
+	if (pos < 0)
+		pos = -pos - 1;
+	if (pos >= (int)istate->cache_nr)
+		return NULL;
+	other = istate->cache[pos];
+	if (ce_namelen(other) > this_len &&
+	    other->name[this_len] == '/' &&
+	    !strncmp(this_name, other->name, this_len))
+		return other->name;
+	return NULL;
+}
+
 static int verify_cache(struct index_state *istate, int flags)
 {
 	unsigned i, funny;
@@ -191,24 +239,18 @@ static int verify_cache(struct index_state *istate, int flags)
 	 */
 	funny = 0;
 	for (i = 0; i + 1 < istate->cache_nr; i++) {
-		/* path/file always comes after path because of the way
-		 * the cache is sorted.  Also path can appear only once,
-		 * which means conflicting one would immediately follow.
-		 */
 		const struct cache_entry *this_ce = istate->cache[i];
 		const struct cache_entry *next_ce = istate->cache[i + 1];
-		const char *this_name = this_ce->name;
-		const char *next_name = next_ce->name;
-		int this_len = ce_namelen(this_ce);
-		if (this_len < ce_namelen(next_ce) &&
-		    next_name[this_len] == '/' &&
-		    strncmp(this_name, next_name, this_len) == 0) {
+		const char *conflict_name;
+
+		conflict_name = find_df_conflict(istate, this_ce, next_ce);
+		if (conflict_name) {
 			if (10 < ++funny) {
 				fprintf(stderr, "...\n");
 				break;
 			}
 			fprintf(stderr, "You have both %s and %s\n",
-				this_name, next_name);
+				this_ce->name, conflict_name);
 		}
 	}
 	if (funny)
