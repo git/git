@@ -1453,6 +1453,11 @@ effect which had not occurred to you. It is always okay to ask for clarification
 if you aren't sure why a change was suggested, or what the reviewer is asking
 you to do.
 
+When replying to review comments, quote only the parts of the message that are
+relevant to your response. It is usually helpful to trim away unrelated context,
+such as large portions of the patch that are not being discussed, while keeping
+enough quoted text for readers to understand what you are responding to.
+
 Make sure your email client has a plaintext email mode and it is turned on; the
 Git list rejects HTML email. Please also follow the mailing list etiquette
 outlined in the
