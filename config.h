@@ -88,6 +88,7 @@ typedef int (*config_parser_event_fn_t)(enum config_event_t type,
 struct config_options {
 	unsigned int respect_includes : 1;
 	unsigned int ignore_repo : 1;
+	unsigned int ignore_refs : 1;
 	unsigned int ignore_worktree : 1;
 	unsigned int ignore_cmdline : 1;
 	unsigned int system_gently : 1;

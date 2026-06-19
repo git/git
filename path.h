@@ -145,7 +145,7 @@ const char *git_path_shallow(struct repository *r);
 
 int ends_with_path_components(const char *path, const char *components);
 
-int calc_shared_perm(struct repository *repo, int mode);
+int calc_shared_perm(int shared_repository, int mode);
 int adjust_shared_perm(struct repository *repo, const char *path);
 
 char *interpolate_path(const char *path, int real_home);

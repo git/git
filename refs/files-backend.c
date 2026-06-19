@@ -100,6 +100,38 @@ static void clear_loose_ref_cache(struct files_ref_store *refs)
 	}
 }
 
+static void files_ref_store_reparent(const char *name UNUSED,
+				     const char *old_cwd,
+				     const char *new_cwd,
+				     void *payload)
+{
+	struct files_ref_store *refs = payload;
+	char *tmp;
+
+	tmp = reparent_relative_path(old_cwd, new_cwd, refs->base.gitdir);
+	free(refs->base.gitdir);
+	refs->base.gitdir = tmp;
+
+	tmp = reparent_relative_path(old_cwd, new_cwd, refs->gitcommondir);
+	free(refs->gitcommondir);
+	refs->gitcommondir = tmp;
+}
+
+static int files_ref_store_config(const char *var, const char *value,
+				  const struct config_context *ctx UNUSED,
+				  void *payload)
+{
+	struct files_ref_store *refs = payload;
+
+	if (!strcmp(var, "core.prefersymlinkrefs")) {
+		refs->prefer_symlink_refs = git_config_bool(var, value);
+	} else if (!strcmp(var, "core.logallrefupdates")) {
+		refs->log_all_ref_updates = refs_parse_log_all_ref_updates_config(value);
+	}
+
+	return 0;
+}
+
 /*
  * Create a new submodule ref cache and add it to the internal
  * set of caches.
@@ -109,6 +141,12 @@ static struct ref_store *files_ref_store_init(struct repository *repo,
 					      const char *gitdir,
 					      const struct ref_store_init_options *opts)
 {
+	struct config_options config_opts = {
+		.respect_includes = 1,
+		.ignore_refs = 1,
+		.commondir = repo->commondir,
+		.git_dir = repo->gitdir,
+	};
 	struct files_ref_store *refs = xcalloc(1, sizeof(*refs));
 	struct ref_store *ref_store = (struct ref_store *)refs;
 	struct strbuf ref_common_dir = STRBUF_INIT;
@@ -124,13 +162,10 @@ static struct ref_store *files_ref_store_init(struct repository *repo,
 	refs->packed_ref_store =
 		packed_ref_store_init(repo, NULL, refs->gitcommondir, opts);
 	refs->store_flags = opts->access_flags;
-	refs->log_all_ref_updates = opts->log_all_ref_updates;
+	refs->log_all_ref_updates = LOG_REFS_UNSET;
 
-	repo_config_get_bool(repo, "core.prefersymlinkrefs", &refs->prefer_symlink_refs);
-
-	chdir_notify_reparent("files-backend $GIT_DIR", &refs->base.gitdir);
-	chdir_notify_reparent("files-backend $GIT_COMMONDIR",
-			      &refs->gitcommondir);
+	config_with_options(files_ref_store_config, refs, NULL, repo, &config_opts);
+	chdir_notify_register(NULL, files_ref_store_reparent, refs);
 
 	strbuf_release(&refdir);
 
@@ -182,6 +217,7 @@ static void files_ref_store_release(struct ref_store *ref_store)
 	free(refs->gitcommondir);
 	ref_store_release(refs->packed_ref_store);
 	free(refs->packed_ref_store);
+	chdir_notify_unregister(NULL, files_ref_store_reparent, refs);
 }
 
 static void files_reflog_path(struct files_ref_store *refs,

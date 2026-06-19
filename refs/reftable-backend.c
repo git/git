@@ -330,37 +330,57 @@ static void fill_reftable_log_record(struct reftable_log_record *log, const stru
 
 static int reftable_be_config(const char *var, const char *value,
 			      const struct config_context *ctx,
-			      void *_opts)
+			      void *payload)
 {
-	struct reftable_write_options *opts = _opts;
+	struct reftable_ref_store *refs = payload;
 
 	if (!strcmp(var, "reftable.blocksize")) {
 		unsigned long block_size = git_config_ulong(var, value, ctx->kvi);
 		if (block_size > 16777215)
 			die("reftable block size cannot exceed 16MB");
-		opts->block_size = block_size;
+		refs->write_options.block_size = block_size;
 	} else if (!strcmp(var, "reftable.restartinterval")) {
 		unsigned long restart_interval = git_config_ulong(var, value, ctx->kvi);
 		if (restart_interval > UINT16_MAX)
 			die("reftable block size cannot exceed %u", (unsigned)UINT16_MAX);
-		opts->restart_interval = restart_interval;
+		refs->write_options.restart_interval = restart_interval;
 	} else if (!strcmp(var, "reftable.indexobjects")) {
-		opts->skip_index_objects = !git_config_bool(var, value);
+		refs->write_options.skip_index_objects = !git_config_bool(var, value);
 	} else if (!strcmp(var, "reftable.geometricfactor")) {
 		unsigned long factor = git_config_ulong(var, value, ctx->kvi);
 		if (factor > UINT8_MAX)
 			die("reftable geometric factor cannot exceed %u", (unsigned)UINT8_MAX);
-		opts->auto_compaction_factor = factor;
+		refs->write_options.auto_compaction_factor = factor;
 	} else if (!strcmp(var, "reftable.locktimeout")) {
 		int64_t lock_timeout = git_config_int64(var, value, ctx->kvi);
 		if (lock_timeout > LONG_MAX)
 			die("reftable lock timeout cannot exceed %"PRIdMAX, (intmax_t)LONG_MAX);
 		if (lock_timeout < 0 && lock_timeout != -1)
 			die("reftable lock timeout does not support negative values other than -1");
-		opts->lock_timeout_ms = lock_timeout;
+		refs->write_options.lock_timeout_ms = lock_timeout;
+	} else if (!strcmp(var, "core.logallrefupdates")) {
+		refs->log_all_ref_updates = refs_parse_log_all_ref_updates_config(value);
+	} else if (!strcmp(var, "core.sharedrepository")) {
+		mode_t mask = umask(0);
+		umask(mask);
+		refs->write_options.default_permissions = calc_shared_perm(git_config_perm(var, value),
+									   0666 & ~mask);
 	}
 
 	return 0;
+}
+
+static void reftable_be_reparent(const char *name UNUSED,
+				 const char *old_cwd,
+				 const char *new_cwd,
+				 void *payload)
+{
+	struct reftable_ref_store *refs = payload;
+	char *tmp;
+
+	tmp = reparent_relative_path(old_cwd, new_cwd, refs->base.gitdir);
+	free(refs->base.gitdir);
+	refs->base.gitdir = tmp;
 }
 
 static struct ref_store *reftable_be_init(struct repository *repo,
@@ -368,6 +388,12 @@ static struct ref_store *reftable_be_init(struct repository *repo,
 					  const char *gitdir,
 					  const struct ref_store_init_options *opts)
 {
+	struct config_options config_opts = {
+		.respect_includes = 1,
+		.ignore_refs = 1,
+		.commondir = repo->commondir,
+		.git_dir = repo->gitdir,
+	};
 	struct reftable_ref_store *refs = xcalloc(1, sizeof(*refs));
 	struct strbuf ref_common_dir = STRBUF_INIT;
 	struct strbuf refdir = STRBUF_INIT;
@@ -383,7 +409,6 @@ static struct ref_store *reftable_be_init(struct repository *repo,
 
 	base_ref_store_init(&refs->base, repo, refdir.buf, &refs_be_reftable);
 	strmap_init(&refs->worktree_backends);
-	refs->log_all_ref_updates = opts->log_all_ref_updates;
 	refs->store_flags = opts->access_flags;
 
 	switch (repo->hash_algo->format_id) {
@@ -396,12 +421,14 @@ static struct ref_store *reftable_be_init(struct repository *repo,
 	default:
 		BUG("unknown hash algorithm %d", repo->hash_algo->format_id);
 	}
-	refs->write_options.default_permissions = calc_shared_perm(repo, 0666 & ~mask);
+
+	refs->write_options.default_permissions = 0666 & ~mask;
 	refs->write_options.disable_auto_compact =
 		!git_env_bool("GIT_TEST_REFTABLE_AUTOCOMPACTION", 1);
 	refs->write_options.lock_timeout_ms = 100;
+	refs->log_all_ref_updates = LOG_REFS_UNSET;
 
-	repo_config(repo, reftable_be_config, &refs->write_options);
+	config_with_options(reftable_be_config, refs, NULL, repo, &config_opts);
 
 	/*
 	 * It is somewhat unfortunate that we have to mirror the default block
@@ -445,7 +472,7 @@ static struct ref_store *reftable_be_init(struct repository *repo,
 			goto done;
 	}
 
-	chdir_notify_reparent("reftables-backend $GIT_DIR", &refs->base.gitdir);
+	chdir_notify_register(NULL, reftable_be_reparent, refs);
 
 done:
 	assert(refs->err != REFTABLE_API_ERROR);
@@ -472,6 +499,7 @@ static void reftable_be_release(struct ref_store *ref_store)
 		free(be);
 	}
 	strmap_clear(&refs->worktree_backends, 0);
+	chdir_notify_unregister(NULL, reftable_be_reparent, refs);
 }
 
 static int reftable_be_create_on_disk(struct ref_store *ref_store,
