@@ -611,28 +611,74 @@ struct emit_callback {
 };
 
 /*
- * State for the line-range callback wrappers that sit between
- * xdi_diff_outf() and fn_out_consume().  xdiff produces a normal,
- * unfiltered diff; the wrappers intercept each hunk header and line,
- * track post-image position, and forward only lines that fall within
- * the requested ranges.  Contiguous in-range lines are collected into
- * range hunks and flushed with a synthetic @@ header so that
- * fn_out_consume() sees well-formed unified-diff fragments.
+ * Line-range filter: scopes "git log -L" output to the tracked ranges.
  *
- * Removal lines ('-') cannot be classified by post-image position, so
- * they are buffered in pending_rm until the next '+' or ' ' line
- * reveals whether they precede an in-range line (flush into range hunk) or
- * an out-of-range line (discard).
+ * It sits between xdi_diff_outf() and an output callback (fn_out_consume,
+ * diffstat_consume, checkdiff_consume).  xdiff produces a normal diff; the
+ * filter forwards only the lines inside the requested ranges, collecting
+ * contiguous in-range lines into a "range hunk" emitted with a synthetic
+ * @@ header so the callback sees well-formed unified-diff fragments.
+ *
+ * A diff describes the change from a pre-image to a post-image.  Each
+ * line is context (' ', in both), a removal ('-', pre-image only), or
+ * an addition ('+', post-image only).  -L tracks ranges in the
+ * post-image, so a line is in range by its post-image position.
+ *
+ * Two 1-based cursors track the next line in each image, named as in
+ * struct emit_callback and seeded from the xdiff hunk header:
+ *
+ *	lno_in_postimage  advances on '+' and ' '   (lines in the post-image)
+ *	lno_in_preimage   advances on '-' and ' '   (lines in the pre-image)
+ *
+ * Ranges are 0-based half-open [start, end), so a line is tested at the
+ * 0-based index idx_in_postimage = lno_in_postimage - 1.
+ *
+ * A '-' is not present in the post-image, so it has no post-image line
+ * number of its own.  Since it does not advance lno_in_postimage, it is
+ * classified at the idx_in_postimage that the following '+'/' ' will
+ * occupy.  xdiff emits a change's removals before its additions, so that
+ * index is already known when the '-' arrives.
+ *
+ * The synthetic "@@ -<old> +<new> @@" header has two sides, old (the
+ * pre-image) and new (the post-image), matching the xdiff_emit_hunk_fn
+ * callback; the hunk.old_begin / hunk.new_begin fields below hold those
+ * begins, and flush_range_hunk() derives the counts from the buffered
+ * lines.
+ *
+ * Example, tracking post-image line 2 (range [1, 2)) of:
+ *
+ *	pre-image  post-image
+ *	1 a        1 a
+ *	2 b        2 X      (b -> X)
+ *	3 c        3 c
+ *
+ *	classify each line by idx_in_postimage.  The pre and post columns
+ *	are each cursor's value while that line is classified, i.e. before
+ *	the line advances them (pre = lno_in_preimage,
+ *	post = lno_in_postimage, idx = idx_in_postimage):
+ *	' a'  pre 1  post 1  idx 0  ->  before start, skip
+ *	'-b'  pre 2  post 2  idx 1  ->  keep (removal)
+ *	'+X'  pre 3  post 2  idx 1  ->  keep (addition)
+ *	' c'  pre 3  post 3  idx 2  ->  past end, flush
+ *
+ * -b and +X share idx = 1 because -b did not advance lno_in_postimage;
+ * both land in the range hunk, flushed when ' c' crosses the range end.
  */
-struct line_range_callback {
+struct line_range_filter {
 	xdiff_emit_line_fn orig_line_fn;
+	/*
+	 * Optional; consumers that report file line numbers (e.g.
+	 * checkdiff) need the synthetic hunk header to set their
+	 * post-image position before in-range lines are replayed.
+	 */
+	xdiff_emit_hunk_fn orig_hunk_fn;
 	void *orig_cb_data;
 	const struct range_set *ranges;	/* 0-based [start, end) */
 	unsigned int cur_range;		/* index into the range_set */
 
 	/* Post/pre-image line counters (1-based, set from hunk headers) */
-	long lno_post;
-	long lno_pre;
+	long lno_in_postimage;
+	long lno_in_preimage;
 
 	/*
 	 * Function name from most recent xdiff hunk header;
@@ -641,17 +687,17 @@ struct line_range_callback {
 	char func[80];
 	long funclen;
 
-	/* Range hunk being accumulated for the current range */
-	struct strbuf rhunk;
-	long rhunk_old_begin, rhunk_old_count;
-	long rhunk_new_begin, rhunk_new_count;
-	int rhunk_active;
-	int rhunk_has_changes;		/* any '+' or '-' lines? */
-
-	/* Removal lines not yet known to be in-range */
-	struct strbuf pending_rm;
-	int pending_rm_count;
-	long pending_rm_pre_begin;	/* pre-image line of first pending */
+	/*
+	 * The range hunk being accumulated.  At most one is live at a time:
+	 * it is flushed and reset as the cursor leaves each range (and once
+	 * more at end of diff), then reused for the next range.
+	 */
+	struct {
+		struct strbuf lines;	/* buffered in-range diff lines */
+		long old_begin;
+		long new_begin;
+		int active;
+	} hunk;
 
 	int ret;			/* latched error from orig_line_fn */
 };
@@ -2541,26 +2587,60 @@ static int quick_consume(void *priv, char *line UNUSED, unsigned long len UNUSED
 	return 1;
 }
 
-static void discard_pending_rm(struct line_range_callback *s)
+static void line_range_filter_init(struct line_range_filter *filter,
+				   const struct range_set *ranges,
+				   xdiff_emit_line_fn line_fn,
+				   void *cb_data)
 {
-	strbuf_reset(&s->pending_rm);
-	s->pending_rm_count = 0;
+	memset(filter, 0, sizeof(*filter));
+	filter->orig_line_fn = line_fn;
+	filter->orig_cb_data = cb_data;
+	filter->ranges = ranges;
+	strbuf_init(&filter->hunk.lines, 0);
 }
 
-static void flush_rhunk(struct line_range_callback *s)
+/*
+ * Begin a range hunk at the first in-range line.  Its position fixes the
+ * hunk's begins, taken from the two image cursors before they advance:
+ * new_begin from the post-image, old_begin from the pre-image.  The line
+ * counts are not tracked here; flush_range_hunk() derives them from the
+ * buffered lines.
+ */
+static void begin_range_hunk(struct line_range_filter *filter)
+{
+	filter->hunk.active = 1;
+	filter->hunk.new_begin = filter->lno_in_postimage;
+	filter->hunk.old_begin = filter->lno_in_preimage;
+	strbuf_reset(&filter->hunk.lines);
+}
+
+static void flush_range_hunk(struct line_range_filter *filter)
 {
 	struct strbuf hdr = STRBUF_INIT;
 	const char *p, *end;
+	long old_count = 0, new_count = 0;
+	int has_changes = 0;
 
-	if (!s->rhunk_active || s->ret)
+	if (!filter->hunk.active || filter->ret)
 		return;
 
-	/* Drain any pending removal lines into the range hunk */
-	if (s->pending_rm_count) {
-		strbuf_addbuf(&s->rhunk, &s->pending_rm);
-		s->rhunk_old_count += s->pending_rm_count;
-		s->rhunk_has_changes = 1;
-		discard_pending_rm(s);
+	/*
+	 * Derive the hunk's geometry from the buffered lines: a ' '
+	 * counts on both sides, a '-' on the old side, a '+' on the new.
+	 * A '-' or '+' marks a real change; the "\ No newline at end of
+	 * file" marker (line[0] == '\\') counts on neither side.
+	 */
+	p = filter->hunk.lines.buf;
+	end = p + filter->hunk.lines.len;
+	while (p < end) {
+		const char *eol = memchr(p, '\n', end - p);
+		if (*p == ' ' || *p == '-')
+			old_count++;
+		if (*p == ' ' || *p == '+')
+			new_count++;
+		if (*p == '-' || *p == '+')
+			has_changes = 1;
+		p = eol ? eol + 1 : end;
 	}
 
 	/*
@@ -2569,22 +2649,28 @@ static void flush_rhunk(struct line_range_callback *s)
 	 * ctxlen causes xdiff to emit context covering a range that
 	 * has no changes in this commit.
 	 */
-	if (!s->rhunk_has_changes) {
-		s->rhunk_active = 0;
-		strbuf_reset(&s->rhunk);
+	if (!has_changes) {
+		filter->hunk.active = 0;
+		strbuf_reset(&filter->hunk.lines);
 		return;
 	}
 
-	strbuf_addf(&hdr, "@@ -%ld,%ld +%ld,%ld @@",
-		    s->rhunk_old_begin, s->rhunk_old_count,
-		    s->rhunk_new_begin, s->rhunk_new_count);
-	if (s->funclen > 0) {
-		strbuf_addch(&hdr, ' ');
-		strbuf_add(&hdr, s->func, s->funclen);
-	}
-	strbuf_addch(&hdr, '\n');
+	xdiff_emit_hunk_header(&hdr, filter->hunk.old_begin, old_count,
+			       filter->hunk.new_begin, new_count,
+			       filter->func, filter->funclen);
 
-	s->ret = s->orig_line_fn(s->orig_cb_data, hdr.buf, hdr.len);
+	/*
+	 * Inform a line-numbering consumer of the post-image position
+	 * before replaying lines, mirroring the hunk callback xdiff
+	 * would have issued for a non-scoped diff.
+	 */
+	if (filter->orig_hunk_fn)
+		filter->orig_hunk_fn(filter->orig_cb_data,
+				filter->hunk.old_begin, old_count,
+				filter->hunk.new_begin, new_count,
+				filter->func, filter->funclen);
+
+	filter->ret = filter->orig_line_fn(filter->orig_cb_data, hdr.buf, hdr.len);
 	strbuf_release(&hdr);
 
 	/*
@@ -2592,135 +2678,159 @@ static void flush_rhunk(struct line_range_callback *s)
 	 * The cast discards const because xdiff_emit_line_fn takes
 	 * char *, though fn_out_consume does not modify the buffer.
 	 */
-	p = s->rhunk.buf;
-	end = p + s->rhunk.len;
-	while (!s->ret && p < end) {
+	p = filter->hunk.lines.buf;
+	end = p + filter->hunk.lines.len;
+	while (!filter->ret && p < end) {
 		const char *eol = memchr(p, '\n', end - p);
 		unsigned long line_len = eol ? (unsigned long)(eol - p + 1)
 					     : (unsigned long)(end - p);
-		s->ret = s->orig_line_fn(s->orig_cb_data, (char *)p, line_len);
+		filter->ret = filter->orig_line_fn(filter->orig_cb_data, (char *)p, line_len);
 		p += line_len;
 	}
 
-	s->rhunk_active = 0;
-	strbuf_reset(&s->rhunk);
+	filter->hunk.active = 0;
+	strbuf_reset(&filter->hunk.lines);
 }
 
 static void line_range_hunk_fn(void *data,
-			       long old_begin, long old_nr UNUSED,
-			       long new_begin, long new_nr UNUSED,
+			       long old_begin, long old_nr,
+			       long new_begin, long new_nr,
 			       const char *func, long funclen)
 {
-	struct line_range_callback *s = data;
+	struct line_range_filter *filter = data;
 
 	/*
-	 * When count > 0, begin is 1-based.  When count == 0, begin is
-	 * adjusted down by 1 by xdl_emit_hunk_hdr(), but no lines of
-	 * that type will arrive, so the value is unused.
-	 *
-	 * Any pending removal lines from the previous xdiff hunk are
-	 * intentionally left in pending_rm: the line callback will
-	 * flush or discard them when the next content line reveals
-	 * whether the removals precede in-range content.
+	 * Seed the per-image line cursors from the hunk header's begins.  For
+	 * a side with no lines (count 0), xdiff's callback has already moved
+	 * its begin to the line before the change, so add one back to recover
+	 * the true 1-based start.  xdiff_emit_hunk_header() reapplies that -1
+	 * when the clipped hunk is emitted.
 	 */
-	s->lno_post = new_begin;
-	s->lno_pre = old_begin;
+	filter->lno_in_postimage = new_nr ? new_begin : new_begin + 1;
+	filter->lno_in_preimage = old_nr ? old_begin : old_begin + 1;
 
 	if (funclen > 0) {
-		if (funclen > (long)sizeof(s->func))
-			funclen = sizeof(s->func);
-		memcpy(s->func, func, funclen);
+		if (funclen > (long)sizeof(filter->func))
+			funclen = sizeof(filter->func);
+		memcpy(filter->func, func, funclen);
 	}
-	s->funclen = funclen;
+	filter->funclen = funclen;
 }
 
 static int line_range_line_fn(void *priv, char *line, unsigned long len)
 {
-	struct line_range_callback *s = priv;
-	const struct range *cur;
-	long lno_0, cur_pre;
+	struct line_range_filter *filter = priv;
+	long idx_in_postimage;
+	int in_range;
 
-	if (s->ret)
-		return s->ret;
-
-	if (line[0] == '-') {
-		if (!s->pending_rm_count)
-			s->pending_rm_pre_begin = s->lno_pre;
-		s->lno_pre++;
-		strbuf_add(&s->pending_rm, line, len);
-		s->pending_rm_count++;
-		return s->ret;
-	}
+	if (filter->ret)
+		return filter->ret;
 
 	if (line[0] == '\\') {
-		if (s->pending_rm_count)
-			strbuf_add(&s->pending_rm, line, len);
-		else if (s->rhunk_active)
-			strbuf_add(&s->rhunk, line, len);
-		/* otherwise outside tracked range; drop silently */
-		return s->ret;
+		if (filter->hunk.active)
+			strbuf_add(&filter->hunk.lines, line, len);
+		return filter->ret;
 	}
 
-	if (line[0] != '+' && line[0] != ' ')
+	if (line[0] != '+' && line[0] != ' ' && line[0] != '-')
 		BUG("unexpected diff line type '%c'", line[0]);
 
-	lno_0 = s->lno_post - 1;
-	cur_pre = s->lno_pre;	/* save before advancing for context lines */
-	s->lno_post++;
-	if (line[0] == ' ')
-		s->lno_pre++;
+	/*
+	 * idx_in_postimage is this line's 0-based post-image index (see the model on
+	 * struct line_range_filter).  The cursors are advanced only after
+	 * the line is classified, so a '-' is tested at the same idx_in_postimage as
+	 * the '+'/' ' that follows it.
+	 */
+	idx_in_postimage = filter->lno_in_postimage - 1;
 
-	/* Advance past ranges we've passed */
-	while (s->cur_range < s->ranges->nr &&
-	       lno_0 >= s->ranges->ranges[s->cur_range].end) {
-		if (s->rhunk_active)
-			flush_rhunk(s);
-		discard_pending_rm(s);
-		s->cur_range++;
+	/* Retire ranges we have passed, flushing the one we leave. */
+	while (filter->cur_range < filter->ranges->nr &&
+	       idx_in_postimage >= filter->ranges->ranges[filter->cur_range].end) {
+		if (filter->hunk.active)
+			flush_range_hunk(filter);
+		filter->cur_range++;
 	}
 
-	/* Past all ranges */
-	if (s->cur_range >= s->ranges->nr) {
-		discard_pending_rm(s);
-		return s->ret;
+	in_range = filter->cur_range < filter->ranges->nr &&
+		   idx_in_postimage >= filter->ranges->ranges[filter->cur_range].start &&
+		   idx_in_postimage < filter->ranges->ranges[filter->cur_range].end;
+
+	if (in_range) {
+		if (!filter->hunk.active)
+			begin_range_hunk(filter);
+
+		strbuf_add(&filter->hunk.lines, line, len);
 	}
 
-	cur = &s->ranges->ranges[s->cur_range];
+	/*
+	 * Advance each image's cursor: a line present in that image (see
+	 * the model) consumes one of its line numbers.
+	 */
+	if (line[0] != '-')
+		filter->lno_in_postimage++;
+	if (line[0] != '+')
+		filter->lno_in_preimage++;
 
-	/* Before current range */
-	if (lno_0 < cur->start) {
-		discard_pending_rm(s);
-		return s->ret;
+	return filter->ret;
+}
+
+/*
+ * Run an xdiff pass through an initialized line-range filter, flush the
+ * final range hunk, and release the filter.  Inflates ctxlen to the largest
+ * range span first, so that every change within a single range lands in one
+ * xdiff hunk and the inter-change context is emitted; the filter then clips
+ * back to range boundaries.  The optimal ctxlen depends on where changes fall
+ * within the range, which is only known after xdiff runs, so the max span is
+ * the upper bound that guarantees correctness in a single pass.  Every
+ * consumer (patch, diffstat, check) relies on one xdiff hunk per range, so
+ * this lives here rather than at each call site.  Also clears
+ * XDL_EMIT_NO_HUNK_HDR: the filter seeds its per-image position from the hunk
+ * headers, so a consumer that otherwise suppresses them (diffstat) still gets
+ * them here.  Returns non-zero if xdiff or any forwarded callback failed.
+ */
+static int line_range_filter_diff(struct line_range_filter *filter,
+				  mmfile_t *mf1, mmfile_t *mf2,
+				  xpparam_t *xpp, xdemitconf_t *xecfg)
+{
+	const struct range_set *ranges = filter->ranges;
+	long max_span = 0;
+	unsigned int i;
+	int ret;
+
+	for (i = 0; i < ranges->nr; i++) {
+		long span = ranges->ranges[i].end - ranges->ranges[i].start;
+		if (span > max_span)
+			max_span = span;
 	}
+	if (max_span > xecfg->ctxlen)
+		xecfg->ctxlen = max_span;
 
-	/* In range so start a new range hunk if needed */
-	if (!s->rhunk_active) {
-		s->rhunk_active = 1;
-		s->rhunk_has_changes = 0;
-		s->rhunk_new_begin = lno_0 + 1;
-		s->rhunk_old_begin = s->pending_rm_count
-			? s->pending_rm_pre_begin : cur_pre;
-		s->rhunk_old_count = 0;
-		s->rhunk_new_count = 0;
-		strbuf_reset(&s->rhunk);
+	/* the filter seeds its per-image position from hunk headers */
+	xecfg->flags &= ~XDL_EMIT_NO_HUNK_HDR;
+
+	ret = xdi_diff_outf(mf1, mf2, line_range_hunk_fn,
+			    line_range_line_fn, filter, xpp, xecfg);
+	if (!ret) {
+		flush_range_hunk(filter);
+		ret = filter->ret;
 	}
+	strbuf_release(&filter->hunk.lines);
+	return ret;
+}
 
-	/* Flush pending removals into range hunk */
-	if (s->pending_rm_count) {
-		strbuf_addbuf(&s->rhunk, &s->pending_rm);
-		s->rhunk_old_count += s->pending_rm_count;
-		s->rhunk_has_changes = 1;
-		discard_pending_rm(s);
-	}
+/*
+ * Expose the in-file line-range filter to callers outside diff.c (e.g.
+ * pickaxe -G); see xdiff-interface.h for the contract.
+ */
+int diff_emit_line_ranges(mmfile_t *one, mmfile_t *two,
+			  const struct range_set *ranges,
+			  xdiff_emit_line_fn line_fn, void *cb_data,
+			  xpparam_t *xpp, xdemitconf_t *xecfg)
+{
+	struct line_range_filter filter;
 
-	strbuf_add(&s->rhunk, line, len);
-	s->rhunk_new_count++;
-	if (line[0] == '+')
-		s->rhunk_has_changes = 1;
-	else
-		s->rhunk_old_count++;
-
-	return s->ret;
+	line_range_filter_init(&filter, ranges, line_fn, cb_data);
+	return line_range_filter_diff(&filter, one, two, xpp, xecfg);
 }
 
 static void pprint_rename(struct strbuf *name, const char *a, const char *b)
@@ -4099,51 +4209,15 @@ static void builtin_diff(const char *name_a,
 			xdi_diff_outf(&mf1, &mf2, NULL, quick_consume,
 				      &ecbdata, &xpp, &xecfg);
 		} else if (line_ranges) {
-			struct line_range_callback lr_state;
-			unsigned int i;
-			long max_span = 0;
+			struct line_range_filter lr_filter;
 
-			memset(&lr_state, 0, sizeof(lr_state));
-			lr_state.orig_line_fn = fn_out_consume;
-			lr_state.orig_cb_data = &ecbdata;
-			lr_state.ranges = line_ranges;
-			strbuf_init(&lr_state.rhunk, 0);
-			strbuf_init(&lr_state.pending_rm, 0);
+			line_range_filter_init(&lr_filter, line_ranges,
+					       fn_out_consume, &ecbdata);
 
-			/*
-			 * Inflate ctxlen so that all changes within
-			 * any single range are merged into one xdiff
-			 * hunk and the inter-change context is emitted.
-			 * The callback clips back to range boundaries.
-			 *
-			 * The optimal ctxlen depends on where changes
-			 * fall within the range, which is only known
-			 * after xdiff runs; the max range span is the
-			 * upper bound that guarantees correctness in a
-			 * single pass.
-			 */
-			for (i = 0; i < line_ranges->nr; i++) {
-				long span = line_ranges->ranges[i].end -
-					    line_ranges->ranges[i].start;
-				if (span > max_span)
-					max_span = span;
-			}
-			if (max_span > xecfg.ctxlen)
-				xecfg.ctxlen = max_span;
-
-			if (xdi_diff_outf(&mf1, &mf2,
-					  line_range_hunk_fn,
-					  line_range_line_fn,
-					  &lr_state, &xpp, &xecfg))
+			if (line_range_filter_diff(&lr_filter, &mf1, &mf2,
+						   &xpp, &xecfg))
 				die("unable to generate diff for %s",
 				    one->path);
-
-			flush_rhunk(&lr_state);
-			if (lr_state.ret)
-				die("unable to generate diff for %s",
-				    one->path);
-			strbuf_release(&lr_state.rhunk);
-			strbuf_release(&lr_state.pending_rm);
 		} else if (xdi_diff_outf(&mf1, &mf2, NULL, fn_out_consume,
 					 &ecbdata, &xpp, &xecfg))
 			die("unable to generate diff for %s", one->path);
@@ -4261,7 +4335,18 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 		xecfg.ctxlen = o->context;
 		xecfg.interhunkctxlen = o->interhunkcontext;
 		xecfg.flags = XDL_EMIT_NO_HUNK_HDR;
-		if (xdi_diff_outf(&mf1, &mf2, NULL,
+
+		if (p->line_ranges) {
+			struct line_range_filter lr_filter;
+
+			line_range_filter_init(&lr_filter, p->line_ranges,
+					       diffstat_consume, diffstat);
+
+			if (line_range_filter_diff(&lr_filter, &mf1, &mf2,
+						   &xpp, &xecfg))
+				die("unable to generate diffstat for %s",
+				    one->path);
+		} else if (xdi_diff_outf(&mf1, &mf2, NULL,
 				  diffstat_consume, diffstat, &xpp, &xecfg))
 			die("unable to generate diffstat for %s", one->path);
 
@@ -4291,11 +4376,29 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 	diff_free_filespec_data(two);
 }
 
+/*
+ * Is the 0-based line index within any of the tracked ranges?
+ * (range_set ranges are 0-based, half-open [start, end).)  This is a
+ * one-shot query for a single line and scans; the streaming filter
+ * (line_range_line_fn) uses a forward cursor instead.
+ */
+static int idx_in_ranges(const struct range_set *ranges, long idx)
+{
+	unsigned int i;
+
+	for (i = 0; i < ranges->nr; i++)
+		if (idx >= ranges->ranges[i].start &&
+		    idx < ranges->ranges[i].end)
+			return 1;
+	return 0;
+}
+
 static void builtin_checkdiff(const char *name_a, const char *name_b,
 			      const char *attr_path,
 			      struct diff_filespec *one,
 			      struct diff_filespec *two,
-			      struct diff_options *o)
+			      struct diff_options *o,
+			      const struct range_set *line_ranges)
 {
 	mmfile_t mf1, mf2;
 	struct checkdiff_t data;
@@ -4335,7 +4438,19 @@ static void builtin_checkdiff(const char *name_a, const char *name_b,
 		memset(&xecfg, 0, sizeof(xecfg));
 		xecfg.ctxlen = 1; /* at least one context line */
 		xpp.flags = 0;
-		if (xdi_diff_outf(&mf1, &mf2, checkdiff_consume_hunk,
+
+		if (line_ranges) {
+			struct line_range_filter lr_filter;
+
+			line_range_filter_init(&lr_filter, line_ranges,
+					       checkdiff_consume, &data);
+			lr_filter.orig_hunk_fn = checkdiff_consume_hunk;
+
+			if (line_range_filter_diff(&lr_filter, &mf1, &mf2,
+						   &xpp, &xecfg))
+				die("unable to generate checkdiff for %s",
+				    one->path);
+		} else if (xdi_diff_outf(&mf1, &mf2, checkdiff_consume_hunk,
 				  checkdiff_consume, &data,
 				  &xpp, &xecfg))
 			die("unable to generate checkdiff for %s", one->path);
@@ -4347,6 +4462,17 @@ static void builtin_checkdiff(const char *name_a, const char *name_b,
 			ecbdata.ws_rule = data.ws_rule;
 			check_blank_at_eof(&mf1, &mf2, &ecbdata);
 			blank_at_eof = ecbdata.blank_at_eof_in_postimage;
+
+			/*
+			 * check_blank_at_eof() scans the whole file; with -L,
+			 * keep the report only when its line is in a tracked
+			 * range.  The error's location is the first trailing
+			 * blank line (blank_at_eof, 1-based; ranges 0-based), so
+			 * we scope by that line.
+			 */
+			if (blank_at_eof && line_ranges &&
+			    !idx_in_ranges(line_ranges, blank_at_eof - 1))
+				blank_at_eof = 0;
 
 			if (blank_at_eof) {
 				static char *err;
@@ -5143,7 +5269,8 @@ static void run_checkdiff(struct diff_filepair *p, struct diff_options *o)
 	diff_fill_oid_info(p->one, o->repo->index);
 	diff_fill_oid_info(p->two, o->repo->index);
 
-	builtin_checkdiff(name, other, attr_path, p->one, p->two, o);
+	builtin_checkdiff(name, other, attr_path, p->one, p->two, o,
+			  p->line_ranges);
 }
 
 void repo_diff_setup(struct repository *r, struct diff_options *options)
