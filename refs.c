@@ -3570,8 +3570,6 @@ void refs_compute_filesystem_location(const char *gitdir, const char *payload,
 				      bool *is_worktree, struct strbuf *refdir,
 				      struct strbuf *ref_common_dir)
 {
-	struct strbuf sb = STRBUF_INIT;
-
 	*is_worktree = get_common_dir_noenv(ref_common_dir, gitdir);
 
 	if (!payload) {
@@ -3585,8 +3583,8 @@ void refs_compute_filesystem_location(const char *gitdir, const char *payload,
 	}
 
 	if (!is_absolute_path(payload)) {
-		strbuf_addf(&sb, "%s/%s", ref_common_dir->buf, payload);
-		strbuf_realpath(ref_common_dir, sb.buf, 1);
+		strbuf_addf(ref_common_dir, "/%s", payload);
+		strbuf_realpath(ref_common_dir, ref_common_dir->buf, 1);
 	} else {
 		strbuf_realpath(ref_common_dir, payload, 1);
 	}
@@ -3599,6 +3597,4 @@ void refs_compute_filesystem_location(const char *gitdir, const char *payload,
 			BUG("worktree path does not contain slash");
 		strbuf_addf(refdir, "/worktrees/%s", wt_id + 1);
 	}
-
-	strbuf_release(&sb);
 }
