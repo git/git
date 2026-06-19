@@ -972,7 +972,7 @@ see test-lib-functions.sh for the full list and their options.
  - test_lazy_prereq <prereq> <script>
 
    Declare the way to determine if a test prerequisite <prereq> is
-   satisified or not, but delay the actual determination until the
+   satisfied or not, but delay the actual determination until the
    prerequisite is actually used by "test_have_prereq" or the
    three-arg form of the test_expect_* functions.  For example, this
    is how the SYMLINKS prerequisite is declared to see if the platform

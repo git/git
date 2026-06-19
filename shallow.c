@@ -245,7 +245,11 @@ struct commit_list *get_shallow_commits(struct object_array *heads,
 					int depth, int shallow_flag, int not_shallow_flag)
 {
 	if (shallows && deepen_relative) {
-		depth += get_shallows_depth(heads, shallows);
+		int cur_shallow_depth = get_shallows_depth(heads, shallows);
+		if (cur_shallow_depth)
+			depth += cur_shallow_depth;
+		else
+			return NULL;
 	}
 	return get_shallows_or_depth(heads, NULL, NULL,
 				     depth, shallow_flag, not_shallow_flag);
@@ -395,7 +399,7 @@ static int write_shallow_commits_1(struct strbuf *out, int use_pack_protocol,
 	if (!extra)
 		return data.count;
 	for (size_t i = 0; i < extra->nr; i++) {
-		strbuf_addstr(out, oid_to_hex(extra->oid + i));
+		strbuf_add_oid_hex(out, extra->oid + i);
 		strbuf_addch(out, '\n');
 		data.count++;
 	}

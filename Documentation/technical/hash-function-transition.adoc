@@ -545,7 +545,7 @@ Alternates
 ~~~~~~~~~~
 For the same reason, a SHA-256 repository cannot borrow objects from a
 SHA-1 repository using objects/info/alternates or
-$GIT_ALTERNATE_OBJECT_REPOSITORIES.
+$GIT_ALTERNATE_OBJECT_DIRECTORIES.
 
 git notes
 ~~~~~~~~~

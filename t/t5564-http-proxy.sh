@@ -102,4 +102,10 @@ test_expect_success 'Unix socket requires localhost' - <<\EOT
 	}
 EOT
 
+test_expect_success 'unknown proxy scheme is rejected' '
+	test_must_fail git clone -c http.proxy=htpp://127.0.0.1 \
+		https://example.com/repo.git 2>err &&
+	test_grep "unsupported proxy scheme '\''htpp'\''" err
+'
+
 test_done

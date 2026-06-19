@@ -527,7 +527,7 @@ void free_island_marks(void)
 		kh_destroy_oid_map(island_marks);
 	}
 
-	/* detect use-after-free with a an address which is never valid: */
+	/* detect use-after-free with an address which is never valid: */
 	island_marks = (void *)-1;
 }
 

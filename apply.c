@@ -4881,8 +4881,10 @@ static int apply_patch(struct apply_state *state,
 
 	state->patch_input_file = filename;
 	state->linenr = 1;
-	if (read_patch_file(&buf, fd) < 0)
-		return -128;
+	if (read_patch_file(&buf, fd) < 0) {
+		res = -128;
+		goto end;
+	}
 	offset = 0;
 	while (offset < buf.len) {
 		struct patch *patch;

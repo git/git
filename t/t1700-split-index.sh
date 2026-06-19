@@ -502,7 +502,7 @@ test_expect_success 'do not refresh null base index' '
 		git checkout main &&
 		git update-index --split-index &&
 		test_commit more &&
-		# must not write a new shareindex, or we wont catch the problem
+		# must not write a new shareindex, or we will not catch the problem
 		git -c splitIndex.maxPercentChange=100 merge --no-edit side-branch 2>err &&
 		# i.e. do not expect warnings like
 		# could not freshen shared index .../shareindex.00000...

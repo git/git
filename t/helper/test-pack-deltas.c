@@ -95,7 +95,7 @@ int cmd__pack_deltas(int argc, const char **argv)
 	if (argc || num_objects < 0)
 		usage_with_options(usage_str, options);
 
-	setup_git_directory();
+	setup_git_directory(the_repository);
 
 	f = hashfd(the_repository->hash_algo, 1, "<stdout>");
 	write_pack_header(f, num_objects);

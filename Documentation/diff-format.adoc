@@ -19,9 +19,9 @@ compared differs:
 `git-diff-files [<pattern>...]`::
         compares the index and the files on the filesystem.
 
-The `git-diff-tree` command begins its output by printing the hash of
-what is being compared. After that, all the commands print one output
-line per changed file.
+All the commands print one output line per changed file,
+except `git diff-files` in the case of an unmerged file, which prints
+both an "unmerged" and an "in-place edit" line.
 
 An output line is formatted this way:
 
@@ -37,13 +37,13 @@ unmerged       :000000 000000 0000000 0000000 U file6
 That is, from the left to the right:
 
 . a colon.
-. mode for "src"; 000000 if creation or unmerged.
+. mode for "src"; 000000 if creation, or if "src" is from the index and is unmerged.
 . a space.
-. mode for "dst"; 000000 if deletion or unmerged.
+. mode for "dst"; 000000 if deletion, or if "dst" is from the index and is unmerged.
 . a space.
-. sha1 for "src"; 0\{40\} if creation or unmerged.
+. sha1 for "src"; 0\{40\} if creation, or if "src" is from the index and is unmerged.
 . a space.
-. sha1 for "dst"; 0\{40\} if deletion, unmerged or "work tree out of sync with the index".
+. sha1 for "dst"; 0\{40\} if deletion, if "dst" is from the index and is unmerged, or if "dst" is from the work tree and is out of sync with the index.
 . a space.
 . status, followed by optional "score" number.
 . a tab or a NUL when `-z` option is used.

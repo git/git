@@ -71,13 +71,13 @@ Node-kind: file
 Node-action: add
 Prop-content-length: 10
 Text-content-length: 2401
-Text-content-md5: bfd8ff778d1492dc6758567373176a89
+Text-content-md5: d6a3917748b0c09ad85c2783f1d4dac1
 Content-length: 2411
 
 PROPS-END
 # -DCOLLISION_CHECK if you believe that SHA1's
 # 1461501637330902918203684832716283019655932542976 hashes do not give you
-# enough guarantees about no collisions between objects ever hapenning.
+# enough guarantees about no collisions between objects ever happening.
 #
 # -DNSEC if you want git to care about sub-second file mtimes and ctimes.
 # Note that you need some new glibc (at least >2.2.4) for this, and it will
@@ -201,12 +201,12 @@ Node-path: branches/left/Makefile
 Node-kind: file
 Node-action: change
 Text-content-length: 2465
-Text-content-md5: 16e38d9753b061731650561ce01b1195
+Text-content-md5: 3f413450a7a26596d9e512ee385a9b19
 Content-length: 2465
 
 # -DCOLLISION_CHECK if you believe that SHA1's
 # 1461501637330902918203684832716283019655932542976 hashes do not give you
-# enough guarantees about no collisions between objects ever hapenning.
+# enough guarantees about no collisions between objects ever happening.
 #
 # -DNSEC if you want git to care about sub-second file mtimes and ctimes.
 # Note that you need some new glibc (at least >2.2.4) for this, and it will
@@ -305,12 +305,12 @@ Node-path: trunk/Makefile
 Node-kind: file
 Node-action: change
 Text-content-length: 2521
-Text-content-md5: 0668418a621333f4aa8b6632cd63e2a0
+Text-content-md5: 89788781014278d76ff23648b8b08b2d
 Content-length: 2521
 
 # -DCOLLISION_CHECK if you believe that SHA1's
 # 1461501637330902918203684832716283019655932542976 hashes do not give you
-# enough guarantees about no collisions between objects ever hapenning.
+# enough guarantees about no collisions between objects ever happening.
 #
 # -DNSEC if you want git to care about sub-second file mtimes and ctimes.
 # Note that you need some new glibc (at least >2.2.4) for this, and it will
@@ -412,12 +412,12 @@ Node-path: branches/left/Makefile
 Node-kind: file
 Node-action: change
 Text-content-length: 2593
-Text-content-md5: 5ccff689fb290e00b85fe18ee50c54ba
+Text-content-md5: 706d73919e6f319a0e624aa50c8b8b38
 Content-length: 2593
 
 # -DCOLLISION_CHECK if you believe that SHA1's
 # 1461501637330902918203684832716283019655932542976 hashes do not give you
-# enough guarantees about no collisions between objects ever hapenning.
+# enough guarantees about no collisions between objects ever happening.
 #
 # -DNSEC if you want git to care about sub-second file mtimes and ctimes.
 # Note that you need some new glibc (at least >2.2.4) for this, and it will
@@ -529,12 +529,12 @@ Node-path: trunk/Makefile
 Node-kind: file
 Node-action: change
 Text-content-length: 2713
-Text-content-md5: 0afbe34f244cd662b1f97d708c687f90
+Text-content-md5: 1c05266da99e8f01a5ccf816be47a484
 Content-length: 2713
 
 # -DCOLLISION_CHECK if you believe that SHA1's
 # 1461501637330902918203684832716283019655932542976 hashes do not give you
-# enough guarantees about no collisions between objects ever hapenning.
+# enough guarantees about no collisions between objects ever happening.
 #
 # -DNSEC if you want git to care about sub-second file mtimes and ctimes.
 # Note that you need some new glibc (at least >2.2.4) for this, and it will

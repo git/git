@@ -254,7 +254,7 @@ then
 		CI_OS_NAME=osx
 		JOBS=$(nproc)
 		;;
-	*,alpine:*|*,fedora:*|*,ubuntu:*|*,i386/ubuntu:*)
+	*,almalinux:*|*,alpine:*|*,debian:*|*,fedora:*|*,ubuntu:*|*,i386/ubuntu:*)
 		CI_OS_NAME=linux
 		JOBS=$(nproc)
 		;;
@@ -314,6 +314,17 @@ export DEFAULT_TEST_TARGET=prove
 export GIT_TEST_CLONE_2GB=true
 export SKIP_DASHED_BUILT_INS=YesPlease
 
+# In order to give maximum test coverage to contributor builds,
+# preferrably even before the changes consume public review bandwidth,
+# enable "expensive" tests for PR events.
+# In order to catch bugs introduced at integration time by mismerges,
+# enable the long tests for pushes to the integration branches as well.
+case "$GITHUB_EVENT_NAME,$CI_BRANCH" in
+pull_request,*|push,*next*|push,*master*|push,*main*|push,*maint*)
+	export GIT_TEST_LONG=YesPlease
+	;;
+esac
+
 case "$distro" in
 ubuntu-*)
 	# Python 2 is end of life, and Ubuntu 23.04 and newer don't actually
@@ -371,6 +382,9 @@ linux-asan-ubsan)
 	;;
 osx-meson)
 	MESONFLAGS="$MESONFLAGS -Dcredential_helpers=osxkeychain"
+	;;
+windows-*)
+	export NO_RUST=UnfortunatelyYes
 	;;
 esac
 

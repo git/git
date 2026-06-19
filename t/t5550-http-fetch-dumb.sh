@@ -555,4 +555,24 @@ test_expect_success 'dumb http can fetch index v1' '
 	git -C idx-v1 fsck
 '
 
+test_expect_success 'absolute-path alternate when url has no path' '
+	src=$HTTPD_DOCUMENT_ROOT_PATH/repo.git &&
+	alt=absolute-alt.git &&
+	git clone --bare --shared "$src" "$alt" &&
+
+	# Our repo has an alternate pointing to the absolute filesystem path,
+	# but that will not make any sense to an http client. So we will
+	# manually give it the equivalent path that the http server will
+	# understand.
+	echo "/dumb/repo.git/objects" >"$alt/objects/info/http-alternates" &&
+
+	# Now make our alt repository available at the root of the http
+	# server without any path (i.e., just http://localhost:1234).
+	git -C "$alt" update-server-info &&
+	mv absolute-alt.git/* "$HTTPD_DOCUMENT_ROOT_PATH" &&
+
+	git -c http.followRedirects=true clone "$HTTPD_URL" alt-clone.git 2>err &&
+	test_grep "adding alternate object store: $HTTPD_URL/dumb/repo.git" err
+'
+
 test_done

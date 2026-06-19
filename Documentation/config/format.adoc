@@ -102,7 +102,7 @@ format.coverLetter::
 	Default is false.
 
 format.commitListFormat::
-	When the `--cover-letter-format` option is not given, `format-patch`
+	When the `--commit-list-format` option is not given, `format-patch`
 	uses the value of this variable to decide how to format the entry of
 	each commit. Defaults to `shortlog`.
 

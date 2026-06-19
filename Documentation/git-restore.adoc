@@ -41,7 +41,7 @@ given, otherwise from the index.
 +
 As a special case, you may use `"<rev-A>...<rev-B>"` as a shortcut for the
 merge base of _<rev-A>_ and _<rev-B>_ if there is exactly one merge base. You can
-leave out at most one of _<rev-A>__ and _<rev-B>_, in which case it defaults to `HEAD`.
+leave out at most one of _<rev-A>_ and _<rev-B>_, in which case it defaults to `HEAD`.
 
 `-p`::
 `--patch`::

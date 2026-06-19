@@ -457,6 +457,14 @@ endif::git-diff[]
 +
 Note that despite the name of the first mode, color is used to
 highlight the changed parts in all modes if enabled.
++
+The `--word-diff` option operates by taking the same line-by-line
+diff that is produced without the option and computing
+word-by-word changes within each hunk.  This may produce a
+larger diff than a dedicated word-diff tool would.  If Git
+acquires a different implementation in the future, the output
+may change.  Note that this is similar to the `--diff-algorithm`
+option, which may also change the output.
 
 `--word-diff-regex=<regex>`::
 	Use _<regex>_ to decide what a word is, instead of considering

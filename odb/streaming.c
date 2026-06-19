@@ -157,15 +157,26 @@ static int open_istream_incore(struct odb_read_stream **out,
 		.base.read = read_istream_incore,
 	};
 	struct odb_incore_read_stream *st;
+	unsigned long size_ul;
 	int ret;
 
 	oi.typep = &stream.base.type;
-	oi.sizep = &stream.base.size;
+	/*
+	 * object_info.sizep is unsigned long* (32-bit on Windows), but
+	 * stream.base.size is size_t (64-bit). We use a temporary variable
+	 * because the types are incompatible. Note: this path still truncates
+	 * for >4GB objects, but large objects should use pack streaming
+	 * (packfile_store_read_object_stream) which handles size_t properly.
+	 * This incore fallback is only used for small objects or when pack
+	 * streaming is unavailable.
+	 */
+	oi.sizep = &size_ul;
 	oi.contentp = (void **)&stream.buf;
 	ret = odb_read_object_info_extended(odb, oid, &oi,
 					    OBJECT_INFO_DIE_IF_CORRUPT);
 	if (ret)
 		return ret;
+	stream.base.size = size_ul;
 
 	CALLOC_ARRAY(st, 1);
 	*st = stream;
@@ -232,6 +243,16 @@ struct odb_read_stream *odb_read_stream_open(struct object_database *odb,
 	return st;
 }
 
+ssize_t odb_write_stream_read(struct odb_write_stream *st, void *buf, size_t sz)
+{
+	return st->read(st, buf, sz);
+}
+
+void odb_write_stream_release(struct odb_write_stream *st)
+{
+	free(st->data);
+}
+
 int odb_stream_blob_to_fd(struct object_database *odb,
 			  int fd,
 			  const struct object_id *oid,
@@ -286,4 +307,45 @@ int odb_stream_blob_to_fd(struct object_database *odb,
  close_and_exit:
 	odb_read_stream_close(st);
 	return result;
+}
+
+struct read_object_fd_data {
+	int fd;
+	size_t remaining;
+};
+
+static ssize_t read_object_fd(struct odb_write_stream *stream,
+			      unsigned char *buf, size_t len)
+{
+	struct read_object_fd_data *data = stream->data;
+	ssize_t read_result;
+	size_t count;
+
+	if (stream->is_finished)
+		return 0;
+
+	count = data->remaining < len ? data->remaining : len;
+	read_result = read_in_full(data->fd, buf, count);
+	if (read_result < 0 || (size_t)read_result != count)
+		return -1;
+
+	data->remaining -= count;
+	if (!data->remaining)
+		stream->is_finished = 1;
+
+	return read_result;
+}
+
+void odb_write_stream_from_fd(struct odb_write_stream *stream, int fd,
+			      size_t size)
+{
+	struct read_object_fd_data *data;
+
+	CALLOC_ARRAY(data, 1);
+	data->fd = fd;
+	data->remaining = size;
+
+	stream->data = data;
+	stream->read = read_object_fd;
+	stream->is_finished = 0;
 }

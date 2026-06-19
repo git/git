@@ -35,7 +35,7 @@ my $emit_all;
 #
 # In other languages, `1+2` would typically be scanned as three tokens
 # (`1`, `+`, and `2`), but in shell it is a single token. However, the similar
-# `1 + 2`, which embeds whitepace, is scanned as three token in shell, as well.
+# `1 + 2`, which embeds whitespace, is scanned as three token in shell, as well.
 # In shell, several characters with special meaning lose that meaning when not
 # surrounded by whitespace. For instance, the negation operator `!` is special
 # when standing alone surrounded by whitespace; whereas in `foo!uucp` it is

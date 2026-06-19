@@ -1055,6 +1055,14 @@ test_expect_success 'submodule update can be run in parallel' '
 	)
 '
 
+test_expect_success 'submodule update honors fetch jobs config from .gitmodules' '
+	test_when_finished "rm -rf super3" &&
+	git clone cloned super3 &&
+	git -C super3 config -f .gitmodules submodule.fetchJobs 67 &&
+	GIT_TRACE="$(pwd)/trace.out" git -C super3 submodule update --init &&
+	test_grep "67 tasks" trace.out
+'
+
 test_expect_success 'git clone passes the parallel jobs config on to submodules' '
 	test_when_finished "rm -rf super4" &&
 	GIT_TRACE=$(pwd)/trace.out git clone --recurse-submodules --jobs 7 . super4 &&

@@ -42,15 +42,15 @@ test:linux:
       - jobname: linux-reftable
         image: ubuntu:rolling
         CC: clang
-      - jobname: linux-breaking-changes
-        image: ubuntu:20.04
-        CC: gcc
-      - jobname: fedora-breaking-changes-meson
-        image: fedora:latest
       - jobname: linux-TEST-vars
         image: ubuntu:20.04
         CC: gcc
         CC_PACKAGE: gcc-8
+      - jobname: linux-breaking-changes
+        image: ubuntu:rolling
+        CC: gcc
+      - jobname: fedora-breaking-changes-meson
+        image: fedora:latest
       - jobname: linux-leaks
         image: ubuntu:rolling
         CC: gcc
@@ -60,13 +60,20 @@ test:linux:
       - jobname: linux-asan-ubsan
         image: ubuntu:rolling
         CC: clang
-      - jobname: linux-musl-meson
-        image: alpine:latest
-      - jobname: linux32
-        image: i386/ubuntu:20.04
       - jobname: linux-meson
         image: ubuntu:rolling
         CC: gcc
+      - jobname: linux-musl-meson
+        image: alpine:latest
+        # Supported until 2025-04-02.
+      - jobname: linux32
+        image: i386/ubuntu:20.04
+      # A RHEL 8 compatible distro.  Supported until 2029-05-31.
+      - jobname: almalinux-8
+        image: almalinux:8
+      # Supported until 2026-08-31.
+      - jobname: debian-11
+        image: debian:11
   artifacts:
     paths:
       - t/failed-test-artifacts
@@ -79,7 +86,7 @@ test:osx:
   stage: test
   needs: [ ]
   tags:
-    - saas-macos-medium-m1
+    - saas-macos-large-m2pro
   variables:
     TEST_OUTPUT_DIRECTORY: "/Volumes/RAMDisk"
   before_script:
@@ -104,10 +111,10 @@ test:osx:
         image: macos-15-xcode-16
         CC: clang
       - jobname: osx-reftable
-        image: macos-15-xcode-16
+        image: macos-26-xcode-26
         CC: clang
       - jobname: osx-meson
-        image: macos-15-xcode-16
+        image: macos-26-xcode-26
         CC: clang
   artifacts:
     paths:

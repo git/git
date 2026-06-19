@@ -159,7 +159,7 @@ test_expect_success 'diff succeeds even if prefetch triggered by break-rewrites'
 	# We need baz to trigger break-rewrites detection.
 	git -C client reset --hard HEAD &&
 
-	# break-rewrites detction in reset.
+	# break-rewrites detection in reset.
 	git -C client reset HEAD~1
 '
 

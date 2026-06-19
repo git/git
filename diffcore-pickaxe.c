@@ -203,7 +203,7 @@ static void pickaxe(struct diff_queue_struct *q, struct diff_options *o,
 		for (i = 0; i < q->nr; i++)
 			diff_free_filepair(q->queue[i]);
 	} else {
-		/* Showing only the filepairs that has the needle */
+		/* Showing only the filepairs that have the needle */
 		for (i = 0; i < q->nr; i++) {
 			struct diff_filepair *p = q->queue[i];
 			if (pickaxe_match(p, o, regexp, kws, fn))

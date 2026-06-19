@@ -1,6 +1,7 @@
 #define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "abspath.h"
+#include "advice.h"
 #include "config.h"
 #include "color.h"
 #include "date.h"
@@ -207,6 +208,26 @@ static void check_argc(int argc, int min, int max)
 	else
 		error(_("wrong number of arguments, should be from %d to %d"),
 		      min, max);
+	exit(129);
+}
+
+static NORETURN void die_missing_set_value(const char *arg)
+{
+	const char *last_dot = strrchr(arg, '.');
+	const char *eq = last_dot ? strchr(last_dot + 1, '=') : NULL;
+	char *prefix = eq ? xstrndup(arg, eq - arg) : NULL;
+
+	if (prefix && git_config_key_is_valid(prefix)) {
+		error(_("missing value to set to the variable '%s'"), arg);
+		advise(_("did you mean \"git config set %s %s\"?"),
+		       prefix, eq + 1);
+	} else if (git_config_key_is_valid(arg)) {
+		error(_("missing value to set to the variable '%s'"), arg);
+	} else {
+		error(_("missing value to set to a variable with an invalid name '%s'"),
+		      arg);
+	}
+	free(prefix);
 	exit(129);
 }
 
@@ -1133,6 +1154,8 @@ static int cmd_config_set(int argc, const char **argv, const char *prefix,
 
 	argc = parse_options(argc, argv, prefix, opts, builtin_config_set_usage,
 			     PARSE_OPT_STOP_AT_NON_OPTION);
+	if (argc == 1)
+		die_missing_set_value(argv[0]);
 	check_argc(argc, 2, 2);
 
 	if ((flags & CONFIG_FLAGS_FIXED_VALUE) && !value_pattern)
@@ -1371,6 +1394,7 @@ static int cmd_config_actions(int argc, const char **argv, const char *prefix)
 	};
 	char *value = NULL, *comment = NULL;
 	int ret = 0;
+	int actions_implicit;
 	struct key_value_info default_kvi = KVI_INIT;
 
 	argc = parse_options(argc, argv, prefix, opts,
@@ -1385,7 +1409,8 @@ static int cmd_config_actions(int argc, const char **argv, const char *prefix)
 		exit(129);
 	}
 
-	if (actions == 0)
+	actions_implicit = (actions == 0);
+	if (actions_implicit)
 		switch (argc) {
 		case 1: actions = ACTION_GET; break;
 		case 2: actions = ACTION_SET; break;
@@ -1394,6 +1419,11 @@ static int cmd_config_actions(int argc, const char **argv, const char *prefix)
 			error(_("no action specified"));
 			exit(129);
 		}
+	if (actions_implicit && argc == 1) {
+		const char *last_dot = strrchr(argv[0], '.');
+		if (last_dot && strchr(last_dot + 1, '='))
+			die_missing_set_value(argv[0]);
+	}
 	if (display_opts.omit_values &&
 	    !(actions == ACTION_LIST || actions == ACTION_GET_REGEXP)) {
 		error(_("--name-only is only applicable to --list or --get-regexp"));

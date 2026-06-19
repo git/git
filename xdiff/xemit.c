@@ -46,11 +46,19 @@ static long saturating_add(long a, long b)
 xdchange_t *xdl_get_hunk(xdchange_t **xscr, xdemitconf_t const *xecfg)
 {
 	xdchange_t *xch, *xchp, *lxch;
-	long max_common = saturating_add(saturating_add(xecfg->ctxlen,
-							xecfg->ctxlen),
-					 xecfg->interhunkctxlen);
-	long max_ignorable = xecfg->ctxlen;
+	long max_common;
+	long max_ignorable;
 	long ignored = 0; /* number of ignored blank lines */
+
+	if (xecfg->ctxlen < 0)
+		BUG("negative context length: %ld", xecfg->ctxlen);
+	if (xecfg->interhunkctxlen < 0)
+		BUG("negative inter-hunk context length: %ld", xecfg->interhunkctxlen);
+
+	max_common = saturating_add(saturating_add(xecfg->ctxlen,
+						   xecfg->ctxlen),
+				    xecfg->interhunkctxlen);
+	max_ignorable = xecfg->ctxlen;
 
 	/* remove ignorable changes that are too far before other changes */
 	for (xchp = *xscr; xchp && xchp->ignore; xchp = xchp->next) {

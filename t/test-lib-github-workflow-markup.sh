@@ -18,7 +18,7 @@
 #
 # The idea is for `test-lib.sh` to source this file when run in GitHub
 # workflows; these functions will then override (empty) functions
-# that are are called at the appropriate times during the test runs.
+# that are called at the appropriate times during the test runs.
 
 test_skip_test_preamble=t
 

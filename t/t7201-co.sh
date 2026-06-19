@@ -102,7 +102,10 @@ test_expect_success 'checkout -m with dirty tree' '
 
 	test "$(git symbolic-ref HEAD)" = "refs/heads/side" &&
 
-	printf "M\t%s\n" one >expect.messages &&
+	cat >expect.messages <<-\EOF &&
+	The following paths have local changes:
+	M	one
+	EOF
 	test_cmp expect.messages messages &&
 
 	fill "M	one" "A	three" "D	two" >expect.main &&
@@ -208,6 +211,72 @@ test_expect_success 'checkout --merge --conflict=diff3 <branch>' '
 	>>>>>>> local
 	EOF
 	test_cmp expect two
+'
+
+test_expect_success 'checkout -m with mixed staged and unstaged changes' '
+	git checkout -f main &&
+	git clean -f &&
+
+	fill 0 x y z >same &&
+	git add same &&
+	fill 1 2 3 4 5 6 7 >one &&
+	git checkout -m side >actual 2>&1 &&
+	test_grep "Applied autostash" actual &&
+	fill 0 x y z >expect &&
+	test_cmp expect same &&
+	fill 1 2 3 4 5 6 7 >expect &&
+	test_cmp expect one
+'
+
+test_expect_success 'checkout -m creates a recoverable stash on conflict' '
+	git checkout -f main &&
+	git clean -f &&
+
+	fill 1 2 3 4 5 >one &&
+	test_must_fail git checkout side 2>stderr &&
+	test_grep "Your local changes" stderr &&
+	git checkout -m side >actual 2>&1 &&
+	test_grep "resulted in conflicts" actual &&
+	test_grep "git stash drop" actual &&
+	test_grep "git stash pop" actual &&
+	test_grep "The following paths have local changes" actual &&
+	git log -p -1 --format="%gs%n%B" -g --diff-merges=1 refs/stash >actual &&
+	sed /^index/d actual >actual.trimmed &&
+	cat >expect <<-EOF &&
+	autostash while switching to ${SQ}side${SQ}
+	On main: autostash while switching to ${SQ}side${SQ}
+
+	diff --git a/one b/one
+	--- a/one
+	+++ b/one
+	@@ -3,6 +3,3 @@
+	 3
+	 4
+	 5
+	-6
+	-7
+	-8
+	EOF
+	test_cmp expect actual.trimmed &&
+	git stash drop &&
+	git reset --hard
+'
+
+test_expect_success 'checkout -m which would overwrite untracked file' '
+	git checkout -f --detach main &&
+	test_commit another-file &&
+	git checkout HEAD^ &&
+	>another-file.t &&
+	fill 1 2 3 4 5 >one &&
+	test_must_fail git checkout -m @{-1} 2>err &&
+	q_to_tab >expect <<-\EOF &&
+	error: The following untracked working tree files would be overwritten by checkout:
+	Qanother-file.t
+	Please move or remove them before you switch branches.
+	Aborting
+	Applied autostash.
+	EOF
+	test_cmp expect err
 '
 
 test_expect_success 'switch to another branch while carrying a deletion' '

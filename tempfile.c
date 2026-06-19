@@ -373,3 +373,15 @@ int delete_tempfile(struct tempfile **tempfile_p)
 
 	return err ? -1 : 0;
 }
+
+void reassign_tempfile_ownership(pid_t from, pid_t to)
+{
+	volatile struct volatile_list_head *pos;
+
+	list_for_each(pos, &tempfile_list) {
+		struct tempfile *p = list_entry(pos, struct tempfile, list);
+
+		if (is_tempfile_active(p) && p->owner == from)
+			p->owner = to;
+	}
+}

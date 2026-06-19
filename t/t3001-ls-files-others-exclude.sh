@@ -72,6 +72,7 @@ test_expect_success 'git ls-files --others with various exclude options.' '
        --exclude-per-directory=.gitignore \
        --exclude-from=.git/ignore \
 	>output &&
+	test_filter_gitconfig output &&
 	test_cmp expect output
 '
 
@@ -84,6 +85,7 @@ test_expect_success 'git ls-files --others with \r\n line endings.' '
        --exclude-per-directory=.gitignore \
        --exclude-from=.git/ignore \
 	>output &&
+	test_filter_gitconfig output &&
 	test_cmp expect output
 '
 
@@ -99,6 +101,7 @@ test_expect_success 'git ls-files --others with various exclude options.' '
        --exclude-per-directory=.gitignore \
        --exclude-from=.git/ignore \
 	>output &&
+	test_filter_gitconfig output &&
 	test_cmp expect output
 '
 

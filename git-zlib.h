@@ -7,8 +7,8 @@ typedef struct git_zstream {
 	struct z_stream_s z;
 	unsigned long avail_in;
 	unsigned long avail_out;
-	unsigned long total_in;
-	unsigned long total_out;
+	size_t total_in;
+	size_t total_out;
 	unsigned char *next_in;
 	unsigned char *next_out;
 } git_zstream;

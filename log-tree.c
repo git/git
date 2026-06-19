@@ -1105,6 +1105,12 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 	if (!all_need_diff && !opt->merges_need_diff)
 		return 0;
 
+	if (opt->line_level_traverse) {
+		line_log_queue_pairs(opt, commit);
+		log_tree_diff_flush(opt);
+		return !opt->loginfo;
+	}
+
 	parse_commit_or_die(commit);
 	oid = get_commit_tree_oid(commit);
 
@@ -1178,10 +1184,6 @@ int log_tree_commit(struct rev_info *opt, struct commit *commit)
 	log.parent = NULL;
 	opt->loginfo = &log;
 	opt->diffopt.no_free = 1;
-
-	/* NEEDSWORK: no restoring of no_free?  Why? */
-	if (opt->line_level_traverse)
-		return line_log_print(opt, commit);
 
 	if (opt->track_linear && !opt->linear && !opt->reverse_output_stage)
 		fprintf(opt->diffopt.file, "\n%s\n", opt->break_bar);

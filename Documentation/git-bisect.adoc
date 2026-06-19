@@ -8,20 +8,20 @@ git-bisect - Use binary search to find the commit that introduced a bug
 
 SYNOPSIS
 --------
-[verse]
-'git bisect' start [--term-(bad|new)=<term-new> --term-(good|old)=<term-old>]
-		   [--no-checkout] [--first-parent] [<bad> [<good>...]] [--] [<pathspec>...]
-'git bisect' (bad|new|<term-new>) [<rev>]
-'git bisect' (good|old|<term-old>) [<rev>...]
-'git bisect' terms [--term-(good|old) | --term-(bad|new)]
-'git bisect' skip [(<rev>|<range>)...]
-'git bisect' next
-'git bisect' reset [<commit>]
-'git bisect' (visualize|view)
-'git bisect' replay <logfile>
-'git bisect' log
-'git bisect' run <cmd> [<arg>...]
-'git bisect' help
+[synopsis]
+git bisect start [--term-(bad|new)=<term-new> --term-(good|old)=<term-old>]
+		 [--no-checkout] [--first-parent] [<bad> [<good>...]] [--] [<pathspec>...]
+git bisect (bad|new|<term-new>) [<rev>]
+git bisect (good|old|<term-old>) [<rev>...]
+git bisect terms [--term-(good|old) | --term-(bad|new)]
+git bisect skip [(<rev>|<range>)...]
+git bisect next
+git bisect reset [<commit>]
+git bisect (visualize|view)
+git bisect replay <logfile>
+git bisect log
+git bisect run <cmd> [<arg>...]
+git bisect help
 
 DESCRIPTION
 -----------
@@ -94,11 +94,10 @@ Bisect reset
 ~~~~~~~~~~~~
 
 After a bisect session, to clean up the bisection state and return to
-the original HEAD, issue the following command:
+the original `HEAD`, issue the following command:
 
-------------------------------------------------
-$ git bisect reset
-------------------------------------------------
+[synopsis]
+git bisect reset
 
 By default, this will return your tree to the commit that was checked
 out before `git bisect start`.  (A new `git bisect start` will also do
@@ -107,9 +106,9 @@ that, as it cleans up the old bisection state.)
 With an optional argument, you can return to a different commit
 instead:
 
-------------------------------------------------
-$ git bisect reset <commit>
-------------------------------------------------
+[synopsis]
+git bisect reset <commit>
+
 
 For example, `git bisect reset bisect/bad` will check out the first
 bad revision, while `git bisect reset HEAD` will leave you on the
@@ -143,23 +142,20 @@ To use "old" and "new" instead of "good" and bad, you must run `git
 bisect start` without commits as argument and then run the following
 commands to add the commits:
 
-------------------------------------------------
+[synopsis]
 git bisect old [<rev>]
-------------------------------------------------
 
 to indicate that a commit was before the sought change, or
 
-------------------------------------------------
+[synopsis]
 git bisect new [<rev>...]
-------------------------------------------------
 
 to indicate that it was after.
 
 To get a reminder of the currently used terms, use
 
-------------------------------------------------
+[synopsis]
 git bisect terms
-------------------------------------------------
 
 You can get just the old term with `git bisect terms --term-old`
 or `git bisect terms --term-good`; `git bisect terms --term-new`
@@ -171,21 +167,20 @@ If you would like to use your own terms instead of "bad"/"good" or
 subcommands like `reset`, `start`, ...) by starting the
 bisection using
 
-------------------------------------------------
+[synopsis]
 git bisect start --term-old <term-old> --term-new <term-new>
-------------------------------------------------
 
 For example, if you are looking for a commit that introduced a
 performance regression, you might use
 
 ------------------------------------------------
-git bisect start --term-old fast --term-new slow
+$ git bisect start --term-old fast --term-new slow
 ------------------------------------------------
 
 Or if you are looking for the commit that fixed a bug, you might use
 
 ------------------------------------------------
-git bisect start --term-new fixed --term-old broken
+$ git bisect start --term-new fixed --term-old broken
 ------------------------------------------------
 
 Then, use `git bisect <term-old>` and `git bisect <term-new>` instead
@@ -194,7 +189,7 @@ of `git bisect good` and `git bisect bad` to mark commits.
 Bisect visualize/view
 ~~~~~~~~~~~~~~~~~~~~~
 
-To see the currently remaining suspects in 'gitk', issue the following
+To see the currently remaining suspects in `gitk`, issue the following
 command during the bisection process (the subcommand `view` can be used
 as an alternative to `visualize`):
 
@@ -203,12 +198,13 @@ $ git bisect visualize
 ------------
 
 Git detects a graphical environment through various environment variables:
-`DISPLAY`, which is set in X Window System environments on Unix systems.
-`SESSIONNAME`, which is set under Cygwin in interactive desktop sessions.
-`MSYSTEM`, which is set under Msys2 and Git for Windows.
-`SECURITYSESSIONID`, which may be set on macOS in interactive desktop sessions.
 
-If none of these environment variables is set, 'git log' is used instead.
+`DISPLAY`:: which is set in X Window System environments on Unix systems.
+`SESSIONNAME`:: which is set under Cygwin in interactive desktop sessions.
+`MSYSTEM`:: which is set under Msys2 and Git for Windows.
+`SECURITYSESSIONID`:: which may be set on macOS in interactive desktop sessions.
+
+If none of these environment variables is set, `git log` is used instead.
 You can also give command-line options such as `-p` and `--stat`.
 
 ------------
@@ -332,18 +328,17 @@ Bisect run
 If you have a script that can tell if the current source code is good
 or bad, you can bisect by issuing the command:
 
-------------
-$ git bisect run my_script arguments
-------------
+[synopsis]
+git bisect run <cmd> [<arg>...]
 
-Note that the script (`my_script` in the above example) should exit
+Note that _<cmd>_ run with _<arg>_  should exit
 with code 0 if the current source code is good/old, and exit with a
 code between 1 and 127 (inclusive), except 125, if the current source
 code is bad/new.
 
 Any other exit code will abort the bisect process. It should be noted
-that a program that terminates via `exit(-1)` leaves $? = 255, (see the
-exit(3) manual page), as the value is chopped with `& 0377`.
+that a program that terminates via `exit(-1)` leaves `$?` = 255, (see the
+`exit`(3) manual page), as the value is chopped with `& 0377`.
 
 The special exit code 125 should be used when the current source code
 cannot be tested. If the script exits with this code, the current
@@ -355,12 +350,12 @@ details do not matter, as they are normal errors in the script, as far as
 `bisect run` is concerned).
 
 You may often find that during a bisect session you want to have
-temporary modifications (e.g. s/#define DEBUG 0/#define DEBUG 1/ in a
+temporary modifications (e.g. `s/#define DEBUG 0/#define DEBUG 1/` in a
 header file, or "revision that does not have this commit needs this
 patch applied to work around another problem this bisection is not
 interested in") applied to the revision being tested.
 
-To cope with such a situation, after the inner 'git bisect' finds the
+To cope with such a situation, after the inner `git bisect` finds the
 next revision to test, the script can apply the patch
 before compiling, run the real test, and afterwards decide if the
 revision (possibly with the needed patch) passed the test and then
@@ -370,20 +365,18 @@ determine the eventual outcome of the bisect session.
 
 OPTIONS
 -------
---no-checkout::
-+
-Do not checkout the new working tree at each iteration of the bisection
-process. Instead just update the reference named `BISECT_HEAD` to make
-it point to the commit that should be tested.
+`--no-checkout`::
+	Do not checkout the new working tree at each iteration of the bisection
+	process. Instead just update the reference named `BISECT_HEAD` to make
+	it point to the commit that should be tested.
 +
 This option may be useful when the test you would perform in each step
 does not require a checked out tree.
 +
 If the repository is bare, `--no-checkout` is assumed.
 
---first-parent::
-+
-Follow only the first parent commit upon seeing a merge commit.
+`--first-parent`::
+	Follow only the first parent commit upon seeing a merge commit.
 +
 In detecting regressions introduced through the merging of a branch, the merge
 commit will be identified as introduction of the bug and its ancestors will be
@@ -395,7 +388,7 @@ branch contained broken or non-buildable commits, but the merge itself was OK.
 EXAMPLES
 --------
 
-* Automatically bisect a broken build between v1.2 and HEAD:
+* Automatically bisect a broken build between v1.2 and `HEAD`:
 +
 ------------
 $ git bisect start HEAD v1.2 --      # HEAD is bad, v1.2 is good
@@ -403,7 +396,7 @@ $ git bisect run make                # "make" builds the app
 $ git bisect reset                   # quit the bisect session
 ------------
 
-* Automatically bisect a test failure between origin and HEAD:
+* Automatically bisect a test failure between origin and `HEAD`:
 +
 ------------
 $ git bisect start HEAD origin --    # HEAD is bad, origin is good
@@ -430,7 +423,7 @@ and `exit 1` otherwise.
 +
 It is safer if both `test.sh` and `check_test_case.sh` are
 outside the repository to prevent interactions between the bisect,
-make and test processes and the scripts.
+`make` and test processes and the scripts.
 
 * Automatically bisect with temporary modifications (hot-fix):
 +
@@ -491,9 +484,9 @@ $ git bisect run sh -c '
 $ git bisect reset                   # quit the bisect session
 ------------
 +
-In this case, when 'git bisect run' finishes, bisect/bad will refer to a commit that
+In this case, when `git bisect run` finishes, `bisect/bad` will refer to a commit that
 has at least one parent whose reachable graph is fully traversable in the sense
-required by 'git pack objects'.
+required by `git pack-objects`.
 
 * Look for a fix instead of a regression in the code
 +

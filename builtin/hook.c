@@ -4,22 +4,14 @@
 #include "environment.h"
 #include "gettext.h"
 #include "hook.h"
-#include "hook-list.h"
 #include "parse-options.h"
+#include "thread-utils.h"
 
 #define BUILTIN_HOOK_RUN_USAGE \
-	N_("git hook run [--allow-unknown-hook-name] [--ignore-missing] [--to-stdin=<path>] <hook-name> [-- <hook-args>]")
+	N_("git hook run [--allow-unknown-hook-name] [--ignore-missing] [--to-stdin=<path>] [(-j|--jobs) <n>]\n" \
+	   "<hook-name> [-- <hook-args>]")
 #define BUILTIN_HOOK_LIST_USAGE \
 	N_("git hook list [--allow-unknown-hook-name] [-z] [--show-scope] <hook-name>")
-
-static int is_known_hook(const char *name)
-{
-	const char **p;
-	for (p = hook_name_list; *p; p++)
-		if (!strcmp(*p, name))
-			return 1;
-	return 0;
-}
 
 static const char * const builtin_hook_usage[] = {
 	BUILTIN_HOOK_RUN_USAGE,
@@ -96,14 +88,22 @@ static int list(int argc, const char **argv, const char *prefix,
 			const char *name = h->u.configured.friendly_name;
 			const char *scope = show_scope ?
 				config_scope_name(h->u.configured.scope) : NULL;
+			/*
+			 * Show the most relevant disable reason. Event-level
+			 * takes precedence: if the whole event is off, that
+			 * is what the user needs to know. The per-hook
+			 * "disabled" surfaces once the event is re-enabled.
+			 */
+			const char *disability =
+				h->u.configured.event_disabled ? "event-disabled\t" :
+				h->u.configured.disabled       ? "disabled\t"       :
+								 "";
 			if (scope)
-				printf("%s\t%s%s%c", scope,
-				       h->u.configured.disabled ? "disabled\t" : "",
-				       name, line_terminator);
+				printf("%s\t%s%s%c", scope, disability, name,
+				       line_terminator);
 			else
-				printf("%s%s%c",
-				       h->u.configured.disabled ? "disabled\t" : "",
-				       name, line_terminator);
+				printf("%s%s%c", disability, name,
+				       line_terminator);
 			break;
 		}
 		default:
@@ -124,6 +124,7 @@ static int run(int argc, const char **argv, const char *prefix,
 	struct run_hooks_opt opt = RUN_HOOKS_OPT_INIT;
 	int ignore_missing = 0;
 	int allow_unknown = 0;
+	int jobs = 0;
 	const char *hook_name;
 	struct option run_options[] = {
 		OPT_BOOL(0, "allow-unknown-hook-name", &allow_unknown,
@@ -132,6 +133,8 @@ static int run(int argc, const char **argv, const char *prefix,
 			 N_("silently ignore missing requested <hook-name>")),
 		OPT_STRING(0, "to-stdin", &opt.path_to_stdin, N_("path"),
 			   N_("file to read into hooks' stdin")),
+		OPT_INTEGER('j', "jobs", &jobs,
+			    N_("run up to <n> hooks simultaneously (-1 for CPU count)")),
 		OPT_END(),
 	};
 	int ret;
@@ -139,6 +142,15 @@ static int run(int argc, const char **argv, const char *prefix,
 	argc = parse_options(argc, argv, prefix, run_options,
 			     builtin_hook_run_usage,
 			     PARSE_OPT_KEEP_DASHDASH);
+
+	if (jobs == -1)
+		opt.jobs = online_cpus();
+	else if (jobs < 0)
+		die(_("invalid value for -j: %d"
+		     " (use -1 for CPU count or a"
+		     " positive integer)"), jobs);
+	else
+		opt.jobs = jobs;
 
 	if (!argc)
 		goto usage;

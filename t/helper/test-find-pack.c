@@ -25,7 +25,7 @@ int cmd__find_pack(int argc, const char **argv)
 	struct object_id oid;
 	struct packed_git *p;
 	int count = -1, actual_count = 0;
-	const char *prefix = setup_git_directory();
+	const char *prefix = setup_git_directory(the_repository);
 
 	struct option options[] = {
 		OPT_INTEGER('c', "check-count", &count, "expected number of packs"),

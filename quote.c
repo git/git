@@ -171,9 +171,7 @@ char *sq_dequote(char *arg)
 	return sq_dequote_step(arg, NULL);
 }
 
-static int sq_dequote_to_argv_internal(char *arg,
-				       const char ***argv, int *nr, int *alloc,
-				       struct strvec *array)
+int sq_dequote_to_strvec(char *arg, struct strvec *array)
 {
 	char *next = arg;
 
@@ -191,25 +189,10 @@ static int sq_dequote_to_argv_internal(char *arg,
 				c = *++next;
 			} while (isspace(c));
 		}
-		if (argv) {
-			ALLOC_GROW(*argv, *nr + 1, *alloc);
-			(*argv)[(*nr)++] = dequoted;
-		}
-		if (array)
-			strvec_push(array, dequoted);
+		strvec_push(array, dequoted);
 	} while (next);
 
 	return 0;
-}
-
-int sq_dequote_to_argv(char *arg, const char ***argv, int *nr, int *alloc)
-{
-	return sq_dequote_to_argv_internal(arg, argv, nr, alloc, NULL);
-}
-
-int sq_dequote_to_strvec(char *arg, struct strvec *array)
-{
-	return sq_dequote_to_argv_internal(arg, NULL, NULL, NULL, array);
 }
 
 /* 1 means: quote as octal

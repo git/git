@@ -52,7 +52,7 @@ struct hashfd_options {
 	 */
 	struct progress *progress;
 
-	/* The length of the buffer that shall be used read read data. */
+	/* The length of the buffer that shall be used to read data. */
 	size_t buffer_len;
 };
 

@@ -9,6 +9,7 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 test_expect_success setup '
 	git config --global advice.statusuoption false &&
+	echo "/.gitconfig" >>.git/info/exclude &&
 	test_commit A &&
 	test_commit B oneside added &&
 	git checkout A^0 &&
@@ -221,7 +222,6 @@ test_expect_success 'status --branch with detached HEAD' '
 	git status --branch --porcelain >actual &&
 	cat >expected <<-EOF &&
 	## HEAD (no branch)
-	?? .gitconfig
 	?? actual
 	?? expect
 	?? expected
@@ -237,7 +237,6 @@ test_expect_success 'status --porcelain=v1 --branch with detached HEAD' '
 	git status --branch --porcelain=v1 >actual &&
 	cat >expected <<-EOF &&
 	## HEAD (no branch)
-	?? .gitconfig
 	?? actual
 	?? expect
 	?? expected

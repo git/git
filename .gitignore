@@ -71,6 +71,7 @@
 /git-for-each-ref
 /git-for-each-repo
 /git-format-patch
+/git-format-rev
 /git-fsck
 /git-fsck-objects
 /git-fsmonitor--daemon
@@ -182,6 +183,7 @@
 /git-update-server-info
 /git-upload-archive
 /git-upload-pack
+/git-url-parse
 /git-var
 /git-verify-commit
 /git-verify-pack

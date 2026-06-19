@@ -11,7 +11,7 @@ SYNOPSIS
 [verse]
 'git repack' [-a] [-A] [-d] [-f] [-F] [-l] [-n] [-q] [-b] [-m]
 	[--window=<n>] [--depth=<n>] [--threads=<n>] [--keep-pack=<pack-name>]
-	[--write-midx] [--name-hash-version=<n>] [--path-walk]
+	[--write-midx[=<mode>]] [--name-hash-version=<n>] [--path-walk]
 
 DESCRIPTION
 -----------
@@ -250,9 +250,47 @@ pack as the preferred pack for object selection by the MIDX (see
 linkgit:git-multi-pack-index[1]).
 
 -m::
---write-midx::
+--write-midx[=<mode>]::
 	Write a multi-pack index (see linkgit:git-multi-pack-index[1])
-	containing the non-redundant packs.
+	containing the non-redundant packs. The following modes are
+	available:
++
+--
+	`default`;;
+		Write a single MIDX covering all packs. This is the
+		default when `--write-midx` is given without an
+		explicit mode.
+
+	`incremental`;;
+		Write an incremental MIDX chain instead of a single
+		flat MIDX.
++
+Without `--geometric`, a new MIDX layer is appended to the existing
+chain (or a new chain is started) containing whatever packs were written
+by the repack. Existing layers are preserved as-is.
++
+When combined with `--geometric`, the incremental mode maintains a chain
+of MIDX layers that is compacted over time using a geometric merging
+strategy. Each repack creates a new tip layer containing the newly
+written pack(s). Adjacent layers are then merged whenever the newer
+layer's object count exceeds `1/repack.midxSplitFactor` of the next
+deeper layer's count. Layers that do not meet this condition are
+retained as-is.
++
+The result is that newer (tip) layers tend to contain many small packs
+with relatively few objects, while older (deeper) layers contain fewer,
+larger packs covering more objects. Because compaction is driven by the
+tip of the chain, newer layers are also rewritten more frequently than
+older ones, which are only touched when enough objects have accumulated
+to justify merging into them. This keeps the total number of layers
+logarithmic relative to the total number of objects.
++
+Only packs in the tip MIDX layer are considered as candidates for the
+geometric repack; packs in deeper layers are left untouched. If the tip
+layer contains fewer packs than `repack.midxNewLayerThreshold`, those
+packs are excluded from the geometry entirely, and a new layer is
+created for any new pack(s) without disturbing the existing chain.
+--
 
 --name-hash-version=<n>::
 	Provide this argument to the underlying `git pack-objects` process.

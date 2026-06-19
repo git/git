@@ -846,4 +846,64 @@ test_expect_success 'rename a file, use it on first pick, but irrelevant on seco
 	)
 '
 
+#
+# In the following testcase:
+#   Base:     subdir/file_1
+#   Upstream: file_1         (renamed from subdir/file)
+#   Topic_1:  subdir/file_2  (modified subdir/file)
+#   Topic_2:  subdir/file_2, file_2  (added another "file" with same contents)
+#   Topic_3:  file_2         (deleted subdir/file)
+#
+#
+# This testcase presents no problems for git traditionally, but the fact that
+#    subdir/file -> file
+# gets cached after the first pick presents a problem for the third commit
+# to be replayed, because file has contents file_2 on all three sides and
+# is thus trivially resolved early.  The point of renames is to allow us to
+# three-way merge contents across multiple filenames, but if the target is
+# already resolved, we risk throwing an assertion.  Verify that the code
+# correctly drops the irrelevant rename in order to avoid hitting that
+# assertion.
+#
+test_expect_success 'cached rename does not assert on trivially clean target' '
+	git init cached-rename-trivially-clean-target &&
+	(
+		cd cached-rename-trivially-clean-target &&
+
+		mkdir subdir &&
+		printf "%s\n" 1 2 3 >subdir/file &&
+		git add subdir/file &&
+		git commit -m orig &&
+
+		git branch upstream &&
+		git branch topic &&
+
+		git switch upstream &&
+		git mv subdir/file file &&
+		git commit -m "rename subdir/file to file" &&
+
+		git switch topic &&
+
+		echo 4 >>subdir/file &&
+		git add subdir/file &&
+		git commit -m "modify subdir/file" &&
+
+		cp subdir/file file &&
+		git add file &&
+		git commit -m "copy subdir/file to file" &&
+
+		git rm subdir/file &&
+		git commit -m "delete subdir/file" &&
+
+		git switch upstream &&
+		git replay --onto HEAD upstream..topic &&
+		git checkout topic &&
+
+		git ls-files >tracked-files &&
+		test_line_count = 1 tracked-files &&
+		printf "%s\n" 1 2 3 4 >expect &&
+		test_cmp expect file
+	)
+'
+
 test_done

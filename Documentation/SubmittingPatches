@@ -92,7 +92,7 @@ input and avoids unnecessary churn from many rapid iterations.
   topic are appropriate, so such an incremental updates are limited to
   small corrections and polishing.  After a topic cooks for some time
   (like 7 calendar days) in 'next' without needing further tweaks on
-  top, it gets merged to the 'master' branch and wait to become part
+  top, it gets merged to the 'master' branch and waits to become part
   of the next major release.
 
 In the following sections, many techniques and conventions are listed
@@ -237,6 +237,7 @@ Do not forget to update the documentation to describe the updated
 behavior and make sure that the resulting documentation set formats
 well (try the Documentation/doc-diff script).
 
+[[typofixes]]
 We currently have a liberal mixture of US and UK English norms for
 spelling and grammar, which is somewhat unfortunate.  A huge patch that
 touches the files all over the place only to correct the inconsistency
@@ -470,6 +471,30 @@ highlighted above.
 
 Only capitalize the very first letter of the trailer, i.e. favor
 "Signed-off-by" over "Signed-Off-By" and "Acked-by:" over "Acked-By".
+
+[[cover-letter]]
+=== Cover Letter
+
+The purpose of your cover letter is to sell your changes, explain what
+they are about, and get your target audience interested enough to read
+the patches.
+
+. Every code change comes with risk of regression and maintenance cost.
+  The cover letter should clearly communicate why the value of your
+  proposed change is worth applying. You can also describe how the risk
+  is reduced by the design choices you made while writing the patches.
+
+. Make sure your target audience can understand what the patches are
+  about and why they are needed without prior context.
+
+. For a second or subsequent iteration of the same topic, make sure
+  people who missed the earlier discussion can still understand what
+  the patches are about, so they can judge if the topic is worth their
+  time to read and comment on.
+
+. To help those who are familiar with earlier iterations, give a
+  summary of changes since the previous rounds.
+
 
 [[ai]]
 === Use of Artificial Intelligence (AI)
@@ -816,6 +841,17 @@ relevant for debugging.
 
 Then fix the problem and push your fix to your GitHub fork. This will
 trigger a new CI build to ensure all tests pass.
+
+Even if you do not use GitHub CI to test your changes, pay close
+attention to new failures on the branches when the maintainer pushes
+out after your topic gets merged to the 'seen' branch to make sure
+that your topic is not breaking the CI, and retract your breaking
+topic quickly while you fix the breakage you caused.
+
+To see maintainer's push, keep an eye on this page:
+
+  `https://github.com/git/git/actions/workflows/main.yml?query=event%3Apush+actor%3Agitster`
+
 
 [[mua]]
 == MUA specific hints

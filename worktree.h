@@ -42,7 +42,7 @@ struct worktree **get_worktrees_without_reading_head(void);
  * Construct a struct worktree corresponding to repo->gitdir and
  * repo->worktree.
  */
-struct worktree *get_worktree_from_repository(struct repository *repo);
+struct worktree *get_current_worktree(struct repository *repo);
 
 /*
  * Returns 1 if linked worktrees exist, 0 otherwise.

@@ -9,6 +9,8 @@
 #include "hex.h"
 #include "object-file.h"
 #include "odb.h"
+#include "odb/streaming.h"
+#include "odb/transaction.h"
 #include "object.h"
 #include "delta.h"
 #include "pack.h"
@@ -23,8 +25,7 @@
 static int dry_run, quiet, recover, has_errors, strict;
 static const char unpack_usage[] = "git unpack-objects [-n] [-q] [-r] [--strict]";
 
-/* We always read in 4kB chunks. */
-static unsigned char buffer[4096];
+static unsigned char buffer[DEFAULT_IO_BUFFER_SIZE];
 static unsigned int offset, len;
 static off_t consumed_bytes;
 static off_t max_input_size;
@@ -359,24 +360,21 @@ static void unpack_non_delta_entry(enum object_type type, unsigned long size,
 
 struct input_zstream_data {
 	git_zstream *zstream;
-	unsigned char buf[8192];
 	int status;
 };
 
-static const void *feed_input_zstream(struct odb_write_stream *in_stream,
-				      unsigned long *readlen)
+static ssize_t feed_input_zstream(struct odb_write_stream *in_stream,
+				  unsigned char *buf, size_t buf_len)
 {
 	struct input_zstream_data *data = in_stream->data;
 	git_zstream *zstream = data->zstream;
 	void *in = fill(1);
 
-	if (in_stream->is_finished) {
-		*readlen = 0;
-		return NULL;
-	}
+	if (in_stream->is_finished)
+		return 0;
 
-	zstream->next_out = data->buf;
-	zstream->avail_out = sizeof(data->buf);
+	zstream->next_out = buf;
+	zstream->avail_out = buf_len;
 	zstream->next_in = in;
 	zstream->avail_in = len;
 
@@ -384,9 +382,7 @@ static const void *feed_input_zstream(struct odb_write_stream *in_stream,
 
 	in_stream->is_finished = data->status != Z_OK;
 	use(len - zstream->avail_in);
-	*readlen = sizeof(data->buf) - zstream->avail_out;
-
-	return data->buf;
+	return buf_len - zstream->avail_out;
 }
 
 static void stream_blob(unsigned long size, unsigned nr)
@@ -533,7 +529,7 @@ static void unpack_one(unsigned nr)
 {
 	unsigned shift;
 	unsigned char *pack;
-	unsigned long size, c;
+	size_t size, c;
 	enum object_type type;
 
 	obj_list[nr].offset = consumed_bytes;
@@ -545,6 +541,8 @@ static void unpack_one(unsigned nr)
 	size = (c & 15);
 	shift = 4;
 	while (c & 0x80) {
+		if ((bitsizeof(size_t) - 7) < shift)
+			die(_("object size too large for this platform"));
 		pack = fill(1);
 		c = *pack;
 		use(1);

@@ -16,14 +16,18 @@ ordering and formatting options, such as `--reverse`.
 `-<number>`::
 `-n <number>`::
 `--max-count=<number>`::
-	Limit the output to _<number>_ commits.
+	Limit the output to the first _<number>_ commits that would be shown.
+
+`--max-count-oldest=<number>`::
+	Limit the output to the last _<number>_ commits that would be shown.
 
 `--skip=<number>`::
 	Skip _<number>_ commits before starting to show the commit output.
 
 `--since=<date>`::
 `--after=<date>`::
-	Show commits more recent than _<date>_.
+	Show commits more recent than _<date>_.  As a special case,
+	'today' means the last midnight.
 
 `--since-as-filter=<date>`::
 	Show all commits more recent than _<date>_. This visits
@@ -1258,6 +1262,12 @@ This implies the `--topo-order` option by default, but the
 	do not belong to a linear branch. This option puts a barrier
 	in between them in that case. If _<barrier>_ is specified, it
 	is the string that will be shown instead of the default one.
+
+`--graph-lane-limit=<n>`::
+	When `--graph` is used, limit the number of graph lanes to be shown.
+	Lanes over the limit are replaced with a truncation mark '~'.
+	By default it is set to 0 (no limit), zero and negative values
+	are ignored and treated as no limit.
 
 ifdef::git-rev-list[]
 `--count`::

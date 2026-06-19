@@ -76,6 +76,12 @@ extern int http_is_verbose;
 extern ssize_t http_post_buffer;
 extern struct credential http_auth;
 
+/**
+ * Prepare for an HTTP re-authentication retry. This fills credentials
+ * via credential_fill() so the next request can include them.
+ */
+void http_reauth_prepare(int all_capabilities);
+
 extern char curl_errorstr[CURL_ERROR_SIZE];
 
 enum http_follow_config {

@@ -19,7 +19,7 @@
 #
 # The idea is for `test-lib.sh` to source this file when the user asks
 # for JUnit XML; these functions will then override (empty) functions
-# that are are called at the appropriate times during the test runs.
+# that are called at the appropriate times during the test runs.
 
 start_test_output () {
 	junit_xml_dir="$TEST_OUTPUT_DIRECTORY/out"

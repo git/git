@@ -620,8 +620,22 @@ static int run_connect(struct transport *transport, struct strbuf *cmdbuf)
 	return ret;
 }
 
+static const char *connect_service_cmd(enum git_connect_service service)
+{
+	switch (service) {
+	case GIT_CONNECT_UPLOAD_PACK:
+		return "git-upload-pack";
+	case GIT_CONNECT_RECEIVE_PACK:
+		return "git-receive-pack";
+	case GIT_CONNECT_UPLOAD_ARCHIVE:
+		return "git-upload-archive";
+	}
+	BUG("unknown git_connect_service: %d", service);
+}
+
 static int process_connect_service(struct transport *transport,
-				   const char *name, const char *exec)
+				   enum git_connect_service service,
+				   const char *exec)
 {
 	struct helper_data *data = transport->data;
 	struct strbuf cmdbuf = STRBUF_INIT;
@@ -631,7 +645,7 @@ static int process_connect_service(struct transport *transport,
 	 * Handle --upload-pack and friends. This is fire and forget...
 	 * just warn if it fails.
 	 */
-	if (strcmp(name, exec)) {
+	if (strcmp(connect_service_cmd(service), exec)) {
 		int r = set_helper_option(transport, "servpath", exec);
 		if (r > 0)
 			warning(_("setting remote service path not supported by protocol"));
@@ -640,13 +654,15 @@ static int process_connect_service(struct transport *transport,
 	}
 
 	if (data->connect) {
-		strbuf_addf(&cmdbuf, "connect %s\n", name);
+		strbuf_addf(&cmdbuf, "connect %s\n",
+			    connect_service_cmd(service));
 		ret = run_connect(transport, &cmdbuf);
 	} else if (data->stateless_connect &&
 		   (get_protocol_version_config() == protocol_v2) &&
-		   (!strcmp("git-upload-pack", name) ||
-		    !strcmp("git-upload-archive", name))) {
-		strbuf_addf(&cmdbuf, "stateless-connect %s\n", name);
+		   (service == GIT_CONNECT_UPLOAD_PACK ||
+		    service == GIT_CONNECT_UPLOAD_ARCHIVE)) {
+		strbuf_addf(&cmdbuf, "stateless-connect %s\n",
+			    connect_service_cmd(service));
 		ret = run_connect(transport, &cmdbuf);
 		if (ret)
 			transport->stateless_rpc = 1;
@@ -660,32 +676,33 @@ static int process_connect(struct transport *transport,
 				     int for_push)
 {
 	struct helper_data *data = transport->data;
-	const char *name;
+	enum git_connect_service service;
 	const char *exec;
 	int ret;
 
-	name = for_push ? "git-receive-pack" : "git-upload-pack";
+	service = for_push ? GIT_CONNECT_RECEIVE_PACK : GIT_CONNECT_UPLOAD_PACK;
 	if (for_push)
 		exec = data->transport_options.receivepack;
 	else
 		exec = data->transport_options.uploadpack;
 
-	ret = process_connect_service(transport, name, exec);
+	ret = process_connect_service(transport, service, exec);
 	if (ret)
 		do_take_over(transport);
 	return ret;
 }
 
-static int connect_helper(struct transport *transport, const char *name,
-		   const char *exec, int fd[2])
+static int connect_helper(struct transport *transport, enum git_connect_service service,
+			  const char *exec, int fd[2])
 {
 	struct helper_data *data = transport->data;
 
 	/* Get_helper so connect is inited. */
 	get_helper(transport);
 
-	if (!process_connect_service(transport, name, exec))
-		die(_("can't connect to subservice %s"), name);
+	if (!process_connect_service(transport, service, exec))
+		die(_("can't connect to subservice %s"),
+		    connect_service_cmd(service));
 
 	fd[0] = data->helper->out;
 	fd[1] = data->helper->in;
@@ -754,8 +771,9 @@ static int fetch_refs(struct transport *transport,
 		set_helper_option(transport, "filter", spec);
 	}
 
-	if (data->transport_options.negotiation_tips)
-		warning("Ignoring --negotiation-tip because the protocol does not support it.");
+	if (data->transport_options.negotiation_restrict_tips)
+		warning(_("ignoring %s because the protocol does not support it."),
+			"--negotiation-restrict");
 
 	if (data->fetch)
 		return fetch_with_fetch(transport, nr_heads, to_fetch);
@@ -1051,7 +1069,7 @@ static int push_refs_with_push(struct transport *transport,
 			if (ref->peer_ref)
 				strbuf_addstr(&buf, ref->peer_ref->name);
 			else
-				strbuf_addstr(&buf, oid_to_hex(&ref->new_oid));
+				strbuf_add_oid_hex(&buf, &ref->new_oid);
 		}
 		strbuf_addch(&buf, ':');
 		strbuf_addstr(&buf, ref->name);
@@ -1343,24 +1361,18 @@ int transport_helper_init(struct transport *transport, const char *name)
 /* This should be enough to hold debugging message. */
 #define PBUFFERSIZE 8192
 
+static int transfer_debug_enabled = -1;
+
 /* Print bidirectional transfer loop debug message. */
 __attribute__((format (printf, 1, 2)))
 static void transfer_debug(const char *fmt, ...)
 {
-	/*
-	 * NEEDSWORK: This function is sometimes used from multiple threads, and
-	 * we end up using debug_enabled racily. That "should not matter" since
-	 * we always write the same value, but it's still wrong. This function
-	 * is listed in .tsan-suppressions for the time being.
-	 */
-
 	va_list args;
 	char msgbuf[PBUFFERSIZE];
-	static int debug_enabled = -1;
 
-	if (debug_enabled < 0)
-		debug_enabled = getenv("GIT_TRANSLOOP_DEBUG") ? 1 : 0;
-	if (!debug_enabled)
+	if (transfer_debug_enabled < 0)
+		BUG("somebody forgot to check GIT_TRANSLOOP_DEBUG!");
+	if (!transfer_debug_enabled)
 		return;
 
 	va_start(args, fmt);
@@ -1629,6 +1641,9 @@ static int tloop_spawnwait_tasks(struct bidirectional_transfer_state *s)
 int bidirectional_transfer_loop(int input, int output)
 {
 	struct bidirectional_transfer_state state;
+
+	if (transfer_debug_enabled < 0)
+		transfer_debug_enabled = getenv("GIT_TRANSLOOP_DEBUG") ? 1 : 0;
 
 	/* Fill the state fields. */
 	state.ptg.src = input;

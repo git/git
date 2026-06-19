@@ -545,6 +545,7 @@ static void atfork_parent(struct atfork_state *as)
 		"restoring signal mask");
 #endif
 }
+
 #endif /* GIT_WINDOWS_NATIVE */
 
 static inline void set_cloexec(int fd)
@@ -829,6 +830,17 @@ fail_pipe:
 		} else if (cmd->out > 1) {
 			child_dup2(cmd->out, 1);
 			child_close(cmd->out);
+		}
+
+		if (cmd->close_fd_above_stderr) {
+			long max_fd = sysconf(_SC_OPEN_MAX);
+			int fd;
+			if (max_fd < 0 || max_fd > 4096)
+				max_fd = 4096;
+			for (fd = 3; fd < max_fd; fd++) {
+				if (fd != child_notifier)
+					close(fd);
+			}
 		}
 
 		if (cmd->dir && chdir(cmd->dir))
@@ -1944,10 +1956,14 @@ void run_processes_parallel(const struct run_process_parallel_opts *opts)
 int prepare_auto_maintenance(struct repository *r, int quiet,
 			     struct child_process *maint)
 {
-	int enabled, auto_detach;
+	int enabled = 1, auto_detach;
 
-	if (!repo_config_get_bool(r, "maintenance.auto", &enabled) &&
-	    !enabled)
+	if (repo_config_get_bool(r, "maintenance.auto", &enabled)) {
+		int gc_threshold;
+		if (!repo_config_get_int(r, "gc.auto", &gc_threshold))
+			enabled = gc_threshold > 0;
+	}
+	if (!enabled)
 		return 0;
 
 	/*

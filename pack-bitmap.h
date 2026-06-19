@@ -132,6 +132,8 @@ int bitmap_has_oid_in_uninteresting(struct bitmap_index *, const struct object_i
 
 off_t get_disk_usage_from_bitmap(struct bitmap_index *, struct rev_info *);
 
+struct bitmap_pos_cache_entry;
+
 struct bitmap_writer {
 	struct repository *repo;
 	struct ewah_bitmap *commits;
@@ -142,6 +144,11 @@ struct bitmap_writer {
 	kh_oid_map_t *bitmaps;
 	struct packing_data *to_pack;
 	struct multi_pack_index *midx; /* if appending to a MIDX chain */
+
+	struct bitmap_pos_cache_entry *pos_cache;
+	size_t pos_cache_nr;
+	uint64_t pos_cache_hits;
+	uint64_t pos_cache_misses;
 
 	struct bitmapped_commit *selected;
 	unsigned int selected_nr, selected_alloc;

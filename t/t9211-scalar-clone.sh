@@ -8,6 +8,11 @@ test_description='test the `scalar clone` subcommand'
 GIT_TEST_MAINT_SCHEDULER="crontab:test-tool crontab cron.txt,launchctl:true,schtasks:true"
 export GIT_TEST_MAINT_SCHEDULER
 
+# index.skipHash (Scalar default) and GIT_TEST_SPLIT_INDEX are
+# incompatible: the shared index gets a null OID and fails to
+# load on re-read.  Every test here uses scalar clone.
+sane_unset GIT_TEST_SPLIT_INDEX
+
 test_expect_success 'set up repository to clone' '
 	rm -rf .git &&
 	git init to-clone &&

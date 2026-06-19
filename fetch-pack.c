@@ -25,6 +25,7 @@
 #include "oidset.h"
 #include "packfile.h"
 #include "odb.h"
+#include "object-name.h"
 #include "path.h"
 #include "connected.h"
 #include "fetch-negotiator.h"
@@ -290,21 +291,21 @@ static int next_flush(int stateless_rpc, int count)
 }
 
 static void mark_tips(struct fetch_negotiator *negotiator,
-		      const struct oid_array *negotiation_tips)
+		      const struct oid_array *negotiation_restrict_tips)
 {
 	struct refs_for_each_ref_options opts = {
 		.flags = REFS_FOR_EACH_INCLUDE_BROKEN,
 	};
 	int i;
 
-	if (!negotiation_tips) {
+	if (!negotiation_restrict_tips) {
 		refs_for_each_ref_ext(get_main_ref_store(the_repository),
 				      rev_list_insert_ref_oid, negotiator, &opts);
 		return;
 	}
 
-	for (i = 0; i < negotiation_tips->nr; i++)
-		rev_list_insert_ref(negotiator, &negotiation_tips->oid[i]);
+	for (i = 0; i < negotiation_restrict_tips->nr; i++)
+		rev_list_insert_ref(negotiator, &negotiation_restrict_tips->oid[i]);
 	return;
 }
 
@@ -331,6 +332,21 @@ static void send_filter(struct fetch_pack_args *args,
 	}
 }
 
+static void add_oids_to_set(const struct oid_array *array,
+			    struct oidset *set)
+{
+	if (!array)
+		return;
+
+	for (size_t i = 0; i < array->nr; i++) {
+		struct object_id *oid = &array->oid[i];
+		if (!odb_has_object(the_repository->objects, oid, 0))
+			die(_("the object %s does not exist"), oid_to_hex(oid));
+
+		oidset_insert(set, oid);
+	}
+}
+
 static int find_common(struct fetch_negotiator *negotiator,
 		       struct fetch_pack_args *args,
 		       int fd[2], struct object_id *result_oid,
@@ -346,6 +362,7 @@ static int find_common(struct fetch_negotiator *negotiator,
 	struct strbuf req_buf = STRBUF_INIT;
 	size_t state_len = 0;
 	struct packet_reader reader;
+	struct oidset negotiation_include_oids = OIDSET_INIT;
 
 	if (args->stateless_rpc && multi_ack == 1)
 		die(_("the option '%s' requires '%s'"), "--stateless-rpc", "multi_ack_detailed");
@@ -354,7 +371,7 @@ static int find_common(struct fetch_negotiator *negotiator,
 			   PACKET_READ_CHOMP_NEWLINE |
 			   PACKET_READ_DIE_ON_ERR_PACKET);
 
-	mark_tips(negotiator, args->negotiation_tips);
+	mark_tips(negotiator, args->negotiation_restrict_tips);
 	for_each_cached_alternate(negotiator, insert_one_alternate_object);
 
 	fetching = 0;
@@ -473,6 +490,27 @@ static int find_common(struct fetch_negotiator *negotiator,
 	trace2_region_enter("fetch-pack", "negotiation_v0_v1", the_repository);
 	flushes = 0;
 	retval = -1;
+
+	/* Send unconditional haves from --negotiation-include */
+	add_oids_to_set(args->negotiation_include_tips,
+			&negotiation_include_oids);
+	if (oidset_size(&negotiation_include_oids)) {
+		struct oidset_iter iter;
+		oidset_iter_init(&negotiation_include_oids, &iter);
+
+		while ((oid = oidset_iter_next(&iter))) {
+			struct commit *commit;
+			packet_buf_write(&req_buf, "have %s\n",
+					 oid_to_hex(oid));
+			print_verbose(args, "have %s", oid_to_hex(oid));
+			count++;
+
+			commit = lookup_commit(the_repository, oid);
+			if (commit)
+				negotiator->have_sent(negotiator, commit);
+		}
+	}
+
 	while ((oid = negotiator->next(negotiator))) {
 		packet_buf_write(&req_buf, "have %s\n", oid_to_hex(oid));
 		print_verbose(args, "have %s", oid_to_hex(oid));
@@ -583,6 +621,7 @@ done:
 		flushes++;
 	}
 	strbuf_release(&req_buf);
+	oidset_clear(&negotiation_include_oids);
 
 	if (!got_ready || !no_done)
 		consume_shallow_list(args, &reader);
@@ -1304,10 +1343,26 @@ static void add_common(struct strbuf *req_buf, struct oidset *common)
 
 static int add_haves(struct fetch_negotiator *negotiator,
 		     struct strbuf *req_buf,
-		     int *haves_to_send)
+		     int *haves_to_send,
+		     struct oidset *negotiation_include_oids)
 {
 	int haves_added = 0;
 	const struct object_id *oid;
+
+	/* Send unconditional haves from --negotiation-include */
+	if (negotiation_include_oids) {
+		struct oidset_iter iter;
+		oidset_iter_init(negotiation_include_oids, &iter);
+
+		while ((oid = oidset_iter_next(&iter))) {
+			struct commit *commit = lookup_commit(the_repository, oid);
+			if (commit) {
+				packet_buf_write(req_buf, "have %s\n",
+						 oid_to_hex(oid));
+				negotiator->have_sent(negotiator, commit);
+			}
+		}
+	}
 
 	while ((oid = negotiator->next(negotiator))) {
 		packet_buf_write(req_buf, "have %s\n", oid_to_hex(oid));
@@ -1357,7 +1412,8 @@ static int send_fetch_request(struct fetch_negotiator *negotiator, int fd_out,
 			      struct fetch_pack_args *args,
 			      const struct ref *wants, struct oidset *common,
 			      int *haves_to_send, int *in_vain,
-			      int sideband_all, int seen_ack)
+			      int sideband_all, int seen_ack,
+			      struct oidset *negotiation_include_oids)
 {
 	int haves_added;
 	int done_sent = 0;
@@ -1412,7 +1468,8 @@ static int send_fetch_request(struct fetch_negotiator *negotiator, int fd_out,
 	/* Add all of the common commits we've found in previous rounds */
 	add_common(&req_buf, common);
 
-	haves_added = add_haves(negotiator, &req_buf, haves_to_send);
+	haves_added = add_haves(negotiator, &req_buf, haves_to_send,
+			       negotiation_include_oids);
 	*in_vain += haves_added;
 	trace2_data_intmax("negotiation_v2", the_repository, "haves_added", haves_added);
 	trace2_data_intmax("negotiation_v2", the_repository, "in_vain", *in_vain);
@@ -1657,6 +1714,7 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 	struct ref *ref = copy_ref_list(orig_ref);
 	enum fetch_state state = FETCH_CHECK_LOCAL;
 	struct oidset common = OIDSET_INIT;
+	struct oidset negotiation_include_oids = OIDSET_INIT;
 	struct packet_reader reader;
 	int in_vain = 0, negotiation_started = 0;
 	int negotiation_round = 0;
@@ -1730,7 +1788,9 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 			else
 				state = FETCH_SEND_REQUEST;
 
-			mark_tips(negotiator, args->negotiation_tips);
+			mark_tips(negotiator, args->negotiation_restrict_tips);
+			add_oids_to_set(args->negotiation_include_tips,
+					&negotiation_include_oids);
 			for_each_cached_alternate(negotiator,
 						  insert_one_alternate_object);
 			break;
@@ -1749,7 +1809,8 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 					       &common,
 					       &haves_to_send, &in_vain,
 					       reader.use_sideband,
-					       seen_ack)) {
+					       seen_ack,
+					       &negotiation_include_oids)) {
 				trace2_region_leave_printf("negotiation_v2", "round",
 							   the_repository, "%d",
 							   negotiation_round);
@@ -1886,6 +1947,7 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 
 	fsck_options_clear(&fsck_options);
 	oidset_clear(&common);
+	oidset_clear(&negotiation_include_oids);
 	return ref;
 }
 
@@ -2180,16 +2242,18 @@ static void clear_common_flag(struct oidset *s)
 	}
 }
 
-void negotiate_using_fetch(const struct oid_array *negotiation_tips,
+void negotiate_using_fetch(const struct oid_array *negotiation_restrict_tips,
 			   const struct string_list *server_options,
 			   int stateless_rpc,
 			   int fd[],
-			   struct oidset *acked_commits)
+			   struct oidset *acked_commits,
+			   const struct oid_array *negotiation_include_tips)
 {
 	struct fetch_negotiator negotiator;
 	struct packet_reader reader;
 	struct object_array nt_object_array = OBJECT_ARRAY_INIT;
 	struct strbuf req_buf = STRBUF_INIT;
+	struct oidset negotiation_include_oids = OIDSET_INIT;
 	int haves_to_send = INITIAL_FLUSH;
 	int in_vain = 0;
 	int seen_ack = 0;
@@ -2198,13 +2262,16 @@ void negotiate_using_fetch(const struct oid_array *negotiation_tips,
 	timestamp_t min_generation = GENERATION_NUMBER_INFINITY;
 
 	fetch_negotiator_init(the_repository, &negotiator);
-	mark_tips(&negotiator, negotiation_tips);
+	mark_tips(&negotiator, negotiation_restrict_tips);
+
+	add_oids_to_set(negotiation_include_tips,
+			&negotiation_include_oids);
 
 	packet_reader_init(&reader, fd[0], NULL, 0,
 			   PACKET_READ_CHOMP_NEWLINE |
 			   PACKET_READ_DIE_ON_ERR_PACKET);
 
-	oid_array_for_each((struct oid_array *) negotiation_tips,
+	oid_array_for_each((struct oid_array *) negotiation_restrict_tips,
 			   add_to_object_array,
 			   &nt_object_array);
 
@@ -2224,7 +2291,8 @@ void negotiate_using_fetch(const struct oid_array *negotiation_tips,
 
 		packet_buf_write(&req_buf, "wait-for-done");
 
-		haves_added = add_haves(&negotiator, &req_buf, &haves_to_send);
+		haves_added = add_haves(&negotiator, &req_buf, &haves_to_send,
+				       &negotiation_include_oids);
 		in_vain += haves_added;
 		if (!haves_added || (seen_ack && in_vain >= MAX_IN_VAIN))
 			last_iteration = 1;
@@ -2276,6 +2344,7 @@ void negotiate_using_fetch(const struct oid_array *negotiation_tips,
 
 	clear_common_flag(acked_commits);
 	object_array_clear(&nt_object_array);
+	oidset_clear(&negotiation_include_oids);
 	negotiator.release(&negotiator);
 	strbuf_release(&req_buf);
 }

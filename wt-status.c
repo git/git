@@ -1206,7 +1206,7 @@ static void wt_longstatus_print_verbose(struct wt_status *s)
 		status_printf_ln(s, c,
 			"--------------------------------------------------");
 		status_printf_ln(s, c, _("Changes not staged for commit:"));
-		setup_work_tree();
+		setup_work_tree(the_repository);
 		rev.diffopt.a_prefix = "i/";
 		rev.diffopt.b_prefix = "w/";
 		run_diff_files(&rev, 0);
@@ -1827,7 +1827,7 @@ void wt_status_get_state(struct repository *r,
 	struct stat st;
 	struct object_id oid;
 	enum replay_action action;
-	struct worktree *wt = get_worktree_from_repository(r);
+	struct worktree *wt = get_current_worktree(r);
 
 	if (!stat(git_path_merge_head(r), &st)) {
 		wt_status_check_rebase(wt, state);

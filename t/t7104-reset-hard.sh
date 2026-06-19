@@ -21,7 +21,7 @@ test_expect_success setup '
 	rm -f hello &&
 	mkdir -p hello &&
 	>hello/world &&
-	test "$(git ls-files -o)" = hello/world
+	test "$(git ls-files -o --exclude-standard)" = hello/world
 
 '
 

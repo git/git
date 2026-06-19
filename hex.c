@@ -3,6 +3,7 @@
 #include "git-compat-util.h"
 #include "hash.h"
 #include "hex.h"
+#include "strbuf.h"
 
 static int get_hash_hex_algop(const char *hex, unsigned char *hash,
 			      const struct git_hash_algo *algop)
@@ -121,4 +122,13 @@ char *hash_to_hex(const unsigned char *hash)
 char *oid_to_hex(const struct object_id *oid)
 {
 	return hash_to_hex_algop(oid->hash, &hash_algos[oid->algo]);
+}
+
+void strbuf_add_oid_hex(struct strbuf *sb, const struct object_id *oid)
+{
+	const struct git_hash_algo *algop = oid->algo ?
+		&hash_algos[oid->algo] : the_hash_algo;
+	strbuf_grow(sb, algop->hexsz);
+	hash_to_hex_algop_r(sb->buf + sb->len, oid->hash, algop);
+	strbuf_setlen(sb, sb->len + algop->hexsz);
 }

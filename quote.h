@@ -2,6 +2,7 @@
 #define QUOTE_H
 
 struct strbuf;
+struct strvec;
 
 extern int quote_path_fully;
 
@@ -67,17 +68,10 @@ char *sq_dequote_step(char *src, char **next);
 
 /*
  * Same as the above, but can be used to unwrap many arguments in the
- * same string separated by space. Like sq_quote, it works in place,
- * modifying arg and appending pointers into it to argv.
+ * same string separated by space. The strvec will duplicate and take
+ * ownership of the strings, but note that "arg" is still modified in-place
+ * during parsing.
  */
-int sq_dequote_to_argv(char *arg, const char ***argv, int *nr, int *alloc);
-
-/*
- * Same as above, but store the unquoted strings in a strvec. We will
- * still modify arg in place, but unlike sq_dequote_to_argv, the strvec
- * will duplicate and take ownership of the strings.
- */
-struct strvec;
 int sq_dequote_to_strvec(char *arg, struct strvec *);
 
 int unquote_c_style(struct strbuf *, const char *quoted, const char **endp);

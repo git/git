@@ -31,7 +31,7 @@ static int run_remote_archiver(int argc, const char **argv,
 
 	_remote = remote_get(remote);
 	transport = transport_get(_remote, _remote->url.v[0]);
-	transport_connect(transport, "git-upload-archive", exec, fd);
+	transport_connect(transport, GIT_CONNECT_UPLOAD_ARCHIVE, exec, fd);
 
 	/*
 	 * Inject a fake --format field at the beginning of the

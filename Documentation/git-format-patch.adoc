@@ -221,10 +221,9 @@ populated with placeholder text.
 	for generating the cover letter.
 
 --subject-prefix=<subject-prefix>::
-	Instead of the standard '[PATCH]' prefix in the subject
-	line, instead use '[<subject-prefix>]'. This can be used
-	to name a patch series, and can be combined with the
-	`--numbered` option.
+	Use '[<subject-prefix>]' instead of the standard '[PATCH]'
+	prefix in the subject line. This can be used to name a patch
+	series, and can be combined with the `--numbered` option.
 +
 The configuration variable `format.subjectPrefix` may also be used
 to configure a subject prefix to apply to a given repository for

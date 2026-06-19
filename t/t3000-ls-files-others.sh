@@ -53,16 +53,19 @@ test_expect_success 'setup: expected output' '
 
 test_expect_success 'ls-files --others' '
 	git ls-files --others >output &&
+	test_filter_gitconfig output &&
 	test_cmp expected1 output
 '
 
 test_expect_success 'ls-files --others --directory' '
 	git ls-files --others --directory >output &&
+	test_filter_gitconfig output &&
 	test_cmp expected2 output
 '
 
 test_expect_success '--no-empty-directory hides empty directory' '
 	git ls-files --others --directory --no-empty-directory >output &&
+	test_filter_gitconfig output &&
 	test_cmp expected3 output
 '
 
@@ -70,6 +73,7 @@ test_expect_success 'ls-files --others handles non-submodule .git' '
 	mkdir not-a-submodule &&
 	echo foo >not-a-submodule/.git &&
 	git ls-files -o >output &&
+	test_filter_gitconfig output &&
 	test_cmp expected1 output
 '
 

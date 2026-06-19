@@ -78,3 +78,9 @@ struct strbuf SB;
 @@
 - SB.buf ? SB.buf : ""
 + SB.buf
+
+@@
+expression SB, OID;
+@@
+- strbuf_addstr(SB, oid_to_hex(OID))
++ strbuf_add_oid_hex(SB, OID)

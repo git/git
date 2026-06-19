@@ -13,7 +13,6 @@
 #include "revision.h"
 #include "xdiff-interface.h"
 #include "strbuf.h"
-#include "log-tree.h"
 #include "line-log.h"
 #include "setup.h"
 #include "strvec.h"
@@ -589,7 +588,7 @@ parse_lines(struct repository *r, struct commit *commit,
 		range_part = xstrndup(item->string, name_part - item->string);
 		name_part++;
 
-		full_name = prefix_path(prefix, prefix ? strlen(prefix) : 0,
+		full_name = prefix_path(r, prefix, prefix ? strlen(prefix) : 0,
 					name_part);
 
 		spec = alloc_filespec(full_name);
@@ -1004,29 +1003,18 @@ static int process_all_files(struct line_log_data **range_out,
 	return changed;
 }
 
-int line_log_print(struct rev_info *rev, struct commit *commit)
+void line_log_queue_pairs(struct rev_info *rev, struct commit *commit)
 {
-	show_log(rev);
-	if (!(rev->diffopt.output_format & DIFF_FORMAT_NO_OUTPUT)) {
-		struct line_log_data *range = lookup_line_range(rev, commit);
-		struct line_log_data *r;
-		const char *prefix = diff_line_prefix(&rev->diffopt);
+	struct line_log_data *range = lookup_line_range(rev, commit);
+	struct line_log_data *r;
 
-		fprintf(rev->diffopt.file, "%s\n", prefix);
-
-		for (r = range; r; r = r->next) {
-			if (r->pair) {
-				struct diff_filepair *p =
-					diff_filepair_dup(r->pair);
-				p->line_ranges = &r->ranges;
-				diff_q(&diff_queued_diff, p);
-			}
+	for (r = range; r; r = r->next) {
+		if (r->pair) {
+			struct diff_filepair *p = diff_filepair_dup(r->pair);
+			p->line_ranges = &r->ranges;
+			diff_q(&diff_queued_diff, p);
 		}
-
-		diffcore_std(&rev->diffopt);
-		diff_flush(&rev->diffopt);
 	}
-	return 1;
 }
 
 static int bloom_filter_check(struct rev_info *rev,

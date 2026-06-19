@@ -848,6 +848,10 @@ advertised, it can reply with "promisor-remote=<pr-names>" where
 where `pr-name` is the urlencoded name of a promisor remote the server
 advertised and the client accepts.
 
+The promisor remotes that the client accepted will be tried before the
+other configured promisor remotes when the client attempts to fetch
+missing objects.
+
 Note that, everywhere in this document, the ';' and ',' characters
 MUST be encoded if they appear in `pr-name` or `field-value`.
 

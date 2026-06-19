@@ -548,7 +548,7 @@ static int check_one_conflict(struct index_state *istate, int i, int *type)
 
 /*
  * Scan the index and find paths that have conflicts that rerere can
- * handle, i.e. the ones that has both stages #2 and #3.
+ * handle, i.e. the ones that have both stages #2 and #3.
  *
  * NEEDSWORK: we do not record or replay a previous "resolve by
  * deletion" for a delete-modify conflict, as that is inherently risky

@@ -84,7 +84,7 @@ struct reftable_flock {
  * to acquire the lock. If `timeout_ms` is 0 we don't wait, if it is negative
  * we block indefinitely.
  *
- * Retrun 0 on success, a reftable error code on error. Specifically,
+ * Return 0 on success, a reftable error code on error. Specifically,
  * `REFTABLE_LOCK_ERROR` should be returned in case the target path is already
  * locked.
  */

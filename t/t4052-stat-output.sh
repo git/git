@@ -420,7 +420,7 @@ test_expect_success 'merge --stat respects COLUMNS with long name' '
 # enough terminal display width, will contain the following line:
 #     "<RED>|<RESET>  ${FILENAME} | 0"
 # where "<RED>" and "<RESET>" are ANSI escape codes to color the text.
-# To calculate the minimium terminal display width MIN_TERM_WIDTH so that the
+# To calculate the minimum terminal display width MIN_TERM_WIDTH so that the
 # FILENAME in the diffstat will not be shortened, we take the FILENAME length
 # and add 9 to it.
 # To check if the diffstat width, when the line_prefix (the "<RED>|<RESET>" of
@@ -443,6 +443,31 @@ test_expect_success 'diffstat where line_prefix contains ANSI escape codes is co
 	test_grep "<RED>|<RESET>  ${FILENAME} | 0" out &&
 	COLUMNS=$((MIN_TERM_WIDTH - 1)) git log --graph --stat -n1 | test_decode_color >out &&
 	test_grep "<RED>|<RESET>  ${FILENAME_TRIMMED} | 0" out
+'
+
+test_expect_success 'diffstat truncation with invalid UTF-8 does not crash' '
+	empty_blob=$(git hash-object -w --stdin </dev/null) &&
+	printf "100644 blob $empty_blob\taaa-\300-aaa\n" |
+	git mktree >tree_file &&
+	tree=$(cat tree_file) &&
+	empty_tree=$(git mktree </dev/null) &&
+	c1=$(git commit-tree -m before $empty_tree) &&
+	c2=$(git commit-tree -m after -p $c1 $tree) &&
+	git -c core.quotepath=false diff --stat --stat-name-width=5 $c1..$c2 >output &&
+	test_grep "| 0" output
+'
+
+test_expect_success FUNNYNAMES 'diffstat truncation with control chars does not read out of bounds' '
+	FNAME=$(printf "aaa-\302\237\302\237\302\237-aaa") &&
+	git commit --allow-empty -m setup &&
+	>$FNAME &&
+	git add -- $FNAME &&
+	git commit -m "add file with control char name" &&
+	git -c core.quotepath=false diff --stat --stat-name-width=5 HEAD~1..HEAD >output &&
+	test_grep "| 0" output &&
+	rm -- $FNAME &&
+	git rm -- $FNAME &&
+	git commit -m "remove test file"
 '
 
 test_done

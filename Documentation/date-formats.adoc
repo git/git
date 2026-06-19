@@ -9,6 +9,11 @@ Git internal format::
 	`<unix-timestamp>` is the number of seconds since the UNIX epoch.
 	`<time-zone-offset>` is a positive or negative offset from UTC.
 	For example CET (which is 1 hour ahead of UTC) is `+0100`.
++
+It is safer to prepend the `<unix-timestamp>` with `@` (e.g.,
+`@0 +0000`), which forces Git to interpret it as a raw timestamp. This
+is required for values less than 100,000,000 (which have fewer than 9
+digits) to avoid confusion with other date formats like `YYYYMMDD`.
 
 RFC 2822::
 	The standard date format as described by RFC 2822, for example

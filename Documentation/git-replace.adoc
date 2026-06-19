@@ -145,6 +145,13 @@ commit instead of the replaced commit.
 There may be other problems when using 'git rev-list' related to
 pending objects.
 
+CAVEATS
+-------
+
+The existence of replace objects or commit grafts turns off reading or
+writing to the commit-graph, which can cause performance issues. See
+linkgit:git-commit-graph[1].
+
 SEE ALSO
 --------
 linkgit:git-hash-object[1]

@@ -27,4 +27,16 @@ test_perf 'describe HEAD with one tag' '
 	git describe --match=new HEAD
 '
 
+test_expect_success 'set up many unrelated refs' '
+	ref_count=10000 &&
+	git tag -m tip tip HEAD &&
+	test_seq -f "create refs/heads/describe-perf/%05d HEAD" $ref_count |
+	git update-ref --stdin &&
+	git pack-refs --all
+'
+
+test_perf 'describe exact tag with many unrelated refs' '
+	git describe --exact-match HEAD
+'
+
 test_done

@@ -14,7 +14,7 @@
 static struct multi_pack_index *setup_midx(const char *object_dir)
 {
 	struct odb_source *source;
-	setup_git_directory();
+	setup_git_directory(the_repository);
 	source = odb_find_source(the_repository->objects, object_dir);
 	if (!source)
 		source = odb_add_to_alternates_memory(the_repository->objects,

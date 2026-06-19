@@ -8,11 +8,19 @@
 export TEST_CONTRIB_TOO=yes
 
 case "$jobname" in
+linux-musl-meson)
+	MESONFLAGS="$MESONFLAGS -Drust=disabled"
+	export GIT_TEST_USE_SET_E=yes
+	;;
+almalinux-*|debian-*|fedora-*|linux-*)
+	export GIT_TEST_USE_SET_E=yes
+	;;
+esac
+
+case "$jobname" in
 fedora-breaking-changes-musl|linux-breaking-changes)
 	export WITH_BREAKING_CHANGES=YesPlease
-	export WITH_RUST=YesPlease
 	MESONFLAGS="$MESONFLAGS -Dbreaking_changes=true"
-	MESONFLAGS="$MESONFLAGS -Drust=enabled"
 	;;
 linux-TEST-vars)
 	export OPENSSL_SHA1_UNSAFE=YesPlease
@@ -30,6 +38,7 @@ linux-TEST-vars)
 	export GIT_TEST_PACK_USE_BITMAP_BOUNDARY_TRAVERSAL=1
 	;;
 linux-clang)
+	export NO_RUST=UnfortunatelyYes
 	export GIT_TEST_DEFAULT_HASH=sha1
 	;;
 linux-sha256)

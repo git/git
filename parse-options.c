@@ -1149,7 +1149,7 @@ unknown:
 		    (ctx->flags & PARSE_OPT_KEEP_UNKNOWN_OPT)) {
 			/*
 			 * Found an unknown option given to a command with
-			 * subcommands that has a default operation mode:
+			 * subcommands that have a default operation mode:
 			 * we treat this option and all remaining args as
 			 * arguments meant to that default operation mode.
 			 * So we are done parsing.

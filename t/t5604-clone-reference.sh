@@ -360,4 +360,27 @@ test_expect_success SYMLINKS 'clone repo with symlinked objects directory' '
 	grep "is a symlink, refusing to clone with --local" err
 '
 
+test_expect_success 'dissociate from repo with commit graph' '
+	git init orig &&
+	# We are trying to make sure the dissociated repo can
+	# find the tree of the tip commit, so the test could still
+	# serve its purpose with an empty tree. But having actual
+	# content future-proofs us against any kind of internal
+	# empty-tree optimizations.
+	echo content >orig/file &&
+	git -C orig add . &&
+	git -C orig commit -m foo &&
+
+	# We will use graph.git as our "local" source to dissociate
+	# from.
+	git clone --bare orig graph.git &&
+	git -C graph.git commit-graph write --reachable &&
+
+	# And then finally clone orig, using graph.git to get our objects. This
+	# must be non-bare so that we perform the checkout step, which will
+	# need to access the tree of HEAD, which we will have originally loaded
+	# via the commit graph.
+	git clone --no-local --reference graph.git --dissociate orig clone
+'
+
 test_done

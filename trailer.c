@@ -988,10 +988,9 @@ static int ends_with_blank_line(const char *buf, size_t len)
 
 static void unfold_value(struct strbuf *val)
 {
-	struct strbuf out = STRBUF_INIT;
 	size_t i;
+	size_t pos = 0;
 
-	strbuf_grow(&out, val->len);
 	i = 0;
 	while (i < val->len) {
 		char c = val->buf[i++];
@@ -999,18 +998,14 @@ static void unfold_value(struct strbuf *val)
 			/* Collapse continuation down to a single space. */
 			while (i < val->len && isspace(val->buf[i]))
 				i++;
-			strbuf_addch(&out, ' ');
-		} else {
-			strbuf_addch(&out, c);
+			c = ' ';
 		}
+		val->buf[pos++] = c;
 	}
+	strbuf_setlen(val, pos);
 
 	/* Empty lines may have left us with whitespace cruft at the edges */
-	strbuf_trim(&out);
-
-	/* output goes back to val as if we modified it in-place */
-	strbuf_swap(&out, val);
-	strbuf_release(&out);
+	strbuf_trim(val);
 }
 
 static struct trailer_block *trailer_block_new(void)

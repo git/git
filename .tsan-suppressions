@@ -7,7 +7,6 @@
 # A static variable is written to racily, but we always write the same value, so
 # in practice it (hopefully!) doesn't matter.
 race:^want_color$
-race:^transfer_debug$
 
 # A boolean value, which tells whether the replace_map has been initialized or
 # not, is read racily with an update. As this variable is written to only once,

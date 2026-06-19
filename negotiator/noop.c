@@ -29,6 +29,12 @@ static int ack(struct fetch_negotiator *n UNUSED, struct commit *c UNUSED)
 	return 0;
 }
 
+static void have_sent(struct fetch_negotiator *n UNUSED,
+		      struct commit *c UNUSED)
+{
+	/* nothing to do */
+}
+
 static void release(struct fetch_negotiator *n UNUSED)
 {
 	/* nothing to release */
@@ -40,6 +46,7 @@ void noop_negotiator_init(struct fetch_negotiator *negotiator)
 	negotiator->add_tip = add_tip;
 	negotiator->next = next;
 	negotiator->ack = ack;
+	negotiator->have_sent = have_sent;
 	negotiator->release = release;
 	negotiator->data = NULL;
 }

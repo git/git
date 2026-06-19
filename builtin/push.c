@@ -10,6 +10,7 @@
 #include "config.h"
 #include "environment.h"
 #include "gettext.h"
+#include "hex.h"
 #include "refspec.h"
 #include "run-command.h"
 #include "remote.h"
@@ -544,6 +545,123 @@ static int git_push_config(const char *k, const char *v,
 	return git_default_config(k, v, ctx, NULL);
 }
 
+static int push_multiple(struct string_list *list,
+			 const struct string_list *push_options,
+			 int flags,
+			 int tags,
+			 const char **refspecs,
+			 int refspec_nr)
+{
+	int result = 0;
+	size_t i;
+	struct strvec argv = STRVEC_INIT;
+
+	strvec_push(&argv, "push");
+
+	if (flags & TRANSPORT_PUSH_FORCE)
+		strvec_push(&argv, "--force");
+	if (flags & TRANSPORT_PUSH_DRY_RUN)
+		strvec_push(&argv, "--dry-run");
+	if (flags & TRANSPORT_PUSH_PORCELAIN)
+		strvec_push(&argv, "--porcelain");
+	if (flags & TRANSPORT_PUSH_PRUNE)
+		strvec_push(&argv, "--prune");
+	if (flags & TRANSPORT_PUSH_NO_HOOK)
+		strvec_push(&argv, "--no-verify");
+	if (flags & TRANSPORT_PUSH_FOLLOW_TAGS)
+		strvec_push(&argv, "--follow-tags");
+	if (flags & TRANSPORT_PUSH_SET_UPSTREAM)
+		strvec_push(&argv, "--set-upstream");
+	if (flags & TRANSPORT_PUSH_FORCE_IF_INCLUDES)
+		strvec_push(&argv, "--force-if-includes");
+	if (flags & TRANSPORT_PUSH_ALL)
+		strvec_push(&argv, "--all");
+	if (flags & TRANSPORT_PUSH_MIRROR)
+		strvec_push(&argv, "--mirror");
+
+	if (flags & TRANSPORT_PUSH_CERT_ALWAYS)
+		strvec_push(&argv, "--signed=yes");
+	else if (flags & TRANSPORT_PUSH_CERT_IF_ASKED)
+		strvec_push(&argv, "--signed=if-asked");
+	if (!thin)
+		strvec_push(&argv, "--no-thin");
+
+	if (deleterefs)
+		strvec_push(&argv, "--delete");
+
+	if (receivepack)
+		strvec_pushf(&argv, "--receive-pack=%s", receivepack);
+	if (verbosity >= 2)
+		strvec_push(&argv, "-v");
+	if (verbosity >= 1)
+		strvec_push(&argv, "-v");
+	else if (verbosity < 0)
+		strvec_push(&argv, "-q");
+	if (progress > 0)
+		strvec_push(&argv, "--progress");
+	else if (progress == 0)
+		strvec_push(&argv, "--no-progress");
+
+	if (family == TRANSPORT_FAMILY_IPV4)
+		strvec_push(&argv, "--ipv4");
+	else if (family == TRANSPORT_FAMILY_IPV6)
+		strvec_push(&argv, "--ipv6");
+
+	if (recurse_submodules == RECURSE_SUBMODULES_CHECK)
+		strvec_push(&argv, "--recurse-submodules=check");
+	else if (recurse_submodules == RECURSE_SUBMODULES_ON_DEMAND)
+		strvec_push(&argv, "--recurse-submodules=on-demand");
+	else if (recurse_submodules == RECURSE_SUBMODULES_ONLY)
+		strvec_push(&argv, "--recurse-submodules=only");
+	else if (recurse_submodules == RECURSE_SUBMODULES_OFF)
+		strvec_push(&argv, "--recurse-submodules=no");
+
+
+	if (tags)
+		strvec_push(&argv, "--tags");
+
+	for (i = 0; i < push_options->nr; i++)
+		strvec_pushf(&argv, "--push-option=%s",
+			     push_options->items[i].string);
+
+	for (i = 0; i < cas.nr; i++) {
+		if (cas.entry[i].use_tracking) {
+			strvec_pushf(&argv, "--force-with-lease=%s",
+				     cas.entry[i].refname);
+		} else if (!is_null_oid(&cas.entry[i].expect)) {
+			strvec_pushf(&argv, "--force-with-lease=%s:%s",
+				     cas.entry[i].refname,
+				     oid_to_hex(&cas.entry[i].expect));
+		} else {
+			strvec_push(&argv, "--force-with-lease");
+		}
+	}
+
+	for (i = 0; i < list->nr; i++) {
+		const char *name = list->items[i].string;
+		struct child_process cmd = CHILD_PROCESS_INIT;
+		int j;
+
+		strvec_pushv(&cmd.args, argv.v);
+		strvec_push(&cmd.args, name);
+
+		for (j = 0; j < refspec_nr; j++)
+			strvec_push(&cmd.args, refspecs[j]);
+
+		if (verbosity >= 0)
+			printf(_("Pushing to %s\n"), name);
+
+		cmd.git_cmd = 1;
+		if (run_command(&cmd)) {
+			error(_("could not push to %s"), name);
+			result = 1;
+		}
+	}
+
+	strvec_clear(&argv);
+	return result;
+}
+
 int cmd_push(int argc,
 	     const char **argv,
 	     const char *prefix,
@@ -552,12 +670,13 @@ int cmd_push(int argc,
 	int flags = 0;
 	int tags = 0;
 	int push_cert = -1;
-	int rc;
+	int rc = 0;
+	int base_flags;
 	const char *repo = NULL;	/* default repository */
 	struct string_list push_options_cmdline = STRING_LIST_INIT_DUP;
+	struct string_list remote_group = STRING_LIST_INIT_DUP;
 	struct string_list *push_options;
 	const struct string_list_item *item;
-	struct remote *remote;
 
 	struct option options[] = {
 		OPT__VERBOSITY(&verbosity),
@@ -620,39 +739,45 @@ int cmd_push(int argc,
 	else if (recurse_submodules == RECURSE_SUBMODULES_ONLY)
 		flags |= TRANSPORT_RECURSE_SUBMODULES_ONLY;
 
-	if (tags)
-		refspec_append(&rs, "refs/tags/*");
-
 	if (argc > 0)
 		repo = argv[0];
 
-	remote = pushremote_get(repo);
-	if (!remote) {
-		if (repo)
-			die(_("bad repository '%s'"), repo);
-		die(_("No configured push destination.\n"
-		    "Either specify the URL from the command-line or configure a remote repository using\n"
-		    "\n"
-		    "    git remote add <name> <url>\n"
-		    "\n"
-		    "and then push using the remote name\n"
-		    "\n"
-		    "    git push <name>\n"));
-	}
-
-	if (argc > 0)
-		set_refspecs(argv + 1, argc - 1, remote);
-
-	if (remote->mirror)
-		flags |= (TRANSPORT_PUSH_MIRROR|TRANSPORT_PUSH_FORCE);
-
-	if (flags & TRANSPORT_PUSH_ALL) {
-		if (argc >= 2)
-			die(_("--all can't be combined with refspecs"));
-	}
-	if (flags & TRANSPORT_PUSH_MIRROR) {
-		if (argc >= 2)
-			die(_("--mirror can't be combined with refspecs"));
+	if (repo) {
+		if (!add_remote_or_group(repo, &remote_group)) {
+			/*
+			 * Not a configured remote name or group name.
+			 * Try treating it as a direct URL or path, e.g.
+			 *   git push /tmp/foo.git
+			 *   git push https://github.com/user/repo.git
+			 * pushremote_get() creates an anonymous remote
+			 * from the URL so the loop below can handle it
+			 * identically to a named remote.
+			 */
+			struct remote *r = pushremote_get(repo);
+			if (!r)
+				die(_("bad repository '%s'"), repo);
+			string_list_append(&remote_group, r->name);
+		}
+	} else {
+		struct remote *r = pushremote_get(NULL);
+		if (!r)
+			die(_("No configured push destination.\n"
+			    "Either specify the URL from the command-line or configure a remote repository using\n"
+			    "\n"
+			    "    git remote add <name> <url>\n"
+			    "\n"
+			    "and then push using the remote name\n"
+			    "\n"
+			    "    git push <name>\n"
+			    "\n"
+			    "To push to multiple remotes at once, configure a remote group using\n"
+			    "\n"
+			    "    git config remotes.<groupname> \"<remote1> <remote2>\"\n"
+			    "\n"
+			    "and then push using the group name\n"
+			    "\n"
+			    "    git push <groupname>\n"));
+		string_list_append(&remote_group, r->name);
 	}
 
 	if (!is_empty_cas(&cas) && (flags & TRANSPORT_PUSH_FORCE_IF_INCLUDES))
@@ -662,10 +787,70 @@ int cmd_push(int argc,
 		if (strchr(item->string, '\n'))
 			die(_("push options must not have new line characters"));
 
-	rc = do_push(flags, push_options, remote);
+	if (remote_group.nr == 1) {
+		/*
+		 * Single remote (the common case): run do_push() directly
+		 * in this process.  The loop runs exactly once.
+		 *
+		 * Mirror detection and the --mirror/--all + refspec conflict
+		 * checks are done here.  rs is rebuilt so that per-remote push
+		 * mappings (remote.NAME.push config) are resolved against the
+		 * correct remote.  inner_flags is a snapshot of flags so that a
+		 * mirror remote cannot bleed TRANSPORT_PUSH_FORCE into any
+		 * subsequent call.
+		 */
+		base_flags = flags;
+		{
+			int inner_flags = base_flags;
+			struct remote *r = pushremote_get(remote_group.items[0].string);
+			if (!r)
+				die(_("no such remote or remote group: %s"),
+				    remote_group.items[0].string);
+
+			if (r->mirror)
+				inner_flags |= (TRANSPORT_PUSH_MIRROR|TRANSPORT_PUSH_FORCE);
+
+			if (inner_flags & TRANSPORT_PUSH_ALL) {
+				if (argc >= 2)
+					die(_("--all can't be combined with refspecs"));
+			}
+			if (inner_flags & TRANSPORT_PUSH_MIRROR) {
+				if (argc >= 2)
+					die(_("--mirror can't be combined with refspecs"));
+			}
+
+			refspec_clear(&rs);
+			rs = (struct refspec) REFSPEC_INIT_PUSH;
+
+			if (tags)
+				refspec_append(&rs, "refs/tags/*");
+			if (argc > 0)
+				set_refspecs(argv + 1, argc - 1, r);
+
+			rc = do_push(inner_flags, push_options, r);
+		}
+	} else {
+		/*
+		 * Multiple remotes: spawn one "git push <remote> [<refspecs>]"
+		 * subprocess per remote, sequentially.
+		 *
+		 * Options that only make sense for a single transport connection
+		 * are rejected here.
+		 */
+		if (flags & TRANSPORT_PUSH_ATOMIC)
+			die(_("--atomic can only be used when pushing to one remote"));
+
+		rc = push_multiple(&remote_group, push_options, flags,
+				   tags,
+				   argc > 1 ? argv + 1 : NULL,
+				   argc > 1 ? argc - 1 : 0);
+	}
+
 	string_list_clear(&push_options_cmdline, 0);
 	string_list_clear(&push_options_config, 0);
+	string_list_clear(&remote_group, 0);
 	clear_cas_option(&cas);
+
 	if (rc == -1)
 		usage_with_options(push_usage, options);
 	else

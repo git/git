@@ -2469,7 +2469,8 @@ proc makewindow {} {
         -selectbackground $selectbgcolor \
         -background $bgcolor -bd 0 \
         -xscrollincr $linespc \
-        -yscrollincr $linespc -yscrollcommand "scrollcanv $cscroll"
+        -yscrollincr $linespc -yscrollcommand "scrollcanv $cscroll" \
+        -xscrollcommand ".tf.histframe.cxsb set"
     .tf.histframe.pwclist add $canv
     set canv2 .tf.histframe.pwclist.canv2
     canvas $canv2 \
@@ -2487,9 +2488,11 @@ proc makewindow {} {
         .tf.histframe.pwclist sashpos 0 [lindex $::geometry(pwsash0) 0]
     }
 
-    # a scroll bar to rule them
+    # a scroll bar to rule them (vertical), and one for horizontal scroll of left pane
     ttk::scrollbar $cscroll -command {allcanvs yview}
     pack $cscroll -side right -fill y
+    ttk::scrollbar .tf.histframe.cxsb -orient horizontal -command "$canv xview"
+    pack .tf.histframe.cxsb -side bottom -fill x
     bind .tf.histframe.pwclist <Configure> {resizeclistpanes %W %w}
     lappend bglist $canv $canv2 $canv3
     pack .tf.histframe.pwclist -fill both -expand 1 -side left

@@ -33,6 +33,11 @@ char *oid_to_hex_r(char *out, const struct object_id *oid);
 char *hash_to_hex_algop(const unsigned char *hash, const struct git_hash_algo *);	/* static buffer result! */
 char *oid_to_hex(const struct object_id *oid);						/* same static buffer */
 
+struct strbuf;
+
+/* Apply oid_to_hex_r() to a strbuf to append the hexadecimal hash. */
+void strbuf_add_oid_hex(struct strbuf *sb, const struct object_id *oid);
+
 /*
  * Parse a 40-character hexadecimal object ID starting from hex, updating the
  * pointer specified by end when parsing stops.  The resulting object ID is

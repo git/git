@@ -276,13 +276,15 @@ boolean::
        When a variable is said to take a boolean value, many
        synonyms are accepted for 'true' and 'false'; these are all
        case-insensitive.
-
++
+--
 	true;; Boolean true literals are `yes`, `on`, `true`,
 		and `1`.  Also, a variable defined without `= <value>`
 		is taken as true.
 
 	false;; Boolean false literals are `no`, `off`, `false`,
 		`0` and the empty string.
+--
 +
 When converting a value to its canonical form using the `--type=bool` type
 specifier, 'git config' will ensure that the output is "true" or
@@ -451,6 +453,8 @@ include::config/guitool.adoc[]
 
 include::config/help.adoc[]
 
+include::config/hook.adoc[]
+
 include::config/http.adoc[]
 
 include::config/i18n.adoc[]
@@ -522,6 +526,8 @@ include::config/sendemail.adoc[]
 include::config/sequencer.adoc[]
 
 include::config/showbranch.adoc[]
+
+include::config/sideband.adoc[]
 
 include::config/sparse.adoc[]
 

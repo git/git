@@ -11,6 +11,13 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-terminal.sh
 
+# test-lib.sh may have added global config (e.g. safe.bareRepository)
+# that would appear in "git config --list" output and break tests
+# that expect exact config contents.
+test_expect_success 'remove global config from test-lib.sh' '
+	test_might_fail git config --global --unset-all safe.bareRepository
+'
+
 for mode in legacy subcommands
 do
 
@@ -460,6 +467,62 @@ EOF
 
 test_expect_success 'invalid key' '
 	test_must_fail git config inval.2key blabla
+'
+
+test_expect_success 'set with 1 arg of "key=value": valid key suggests split form' '
+	test_must_fail git config set pull.rebase=false 2>err &&
+	test_grep "missing value to set to the variable .pull\\.rebase=false." err &&
+	test_grep "did you mean .git config set pull\\.rebase false." err
+'
+
+test_expect_success 'set with 1 arg of "key=value": implicit form suggests split form' '
+	test_must_fail git config pull.rebase=false 2>err &&
+	test_grep "missing value to set to the variable .pull\\.rebase=false." err &&
+	test_grep "did you mean .git config set pull\\.rebase false." err
+'
+
+test_expect_success 'set with 1 arg of "key=value": invalid key does not suggest split form' '
+	test_must_fail git config set foo=bar 2>err &&
+	test_grep "missing value to set to a variable with an invalid name .foo=bar." err &&
+	test_grep ! "did you mean" err
+'
+
+test_expect_success 'set with 1 arg: variable name starting with digit is invalid' '
+	test_must_fail git config set foo.1bar=baz 2>err &&
+	test_grep "missing value to set to a variable with an invalid name .foo\\.1bar=baz." err &&
+	test_grep ! "did you mean" err
+'
+
+test_expect_success 'set with 1 arg: digit-led section name is valid' '
+	test_must_fail git config set 1foo.bar=baz 2>err &&
+	test_grep "missing value to set to the variable .1foo\\.bar=baz." err &&
+	test_grep "did you mean .git config set 1foo\\.bar baz." err
+'
+
+test_expect_success 'set with 1 arg: subsection plus invalid variable name' '
+	test_must_fail git config set foo.some.b_r=baz 2>err &&
+	test_grep "missing value to set to a variable with an invalid name .foo\\.some\\.b_r=baz." err &&
+	test_grep ! "did you mean" err
+'
+
+test_expect_success 'set with 1 arg of valid key reports missing value' '
+	test_must_fail git config set pull.rebase 2>err &&
+	test_grep "missing value to set to the variable .pull\\.rebase." err &&
+	test_grep ! "did you mean" err
+'
+
+test_expect_success 'set with 2 args including "=" in invalid key does not suggest' '
+	test_must_fail git config set pull.rebase=false true 2>err &&
+	test_grep "invalid key: pull\\.rebase=false" err &&
+	test_grep ! "did you mean" err
+'
+
+test_expect_success '"=" inside subsection is valid' '
+	test_when_finished "rm -f subsection.cfg" &&
+	git config set -f subsection.cfg foo.bar=baz.boo qux &&
+	echo qux >expect &&
+	git config get -f subsection.cfg foo.bar=baz.boo >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'correct key' '

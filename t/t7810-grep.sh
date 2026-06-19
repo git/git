@@ -18,8 +18,9 @@ test_invalid_grep_expression() {
 	'
 }
 
-LC_ALL=en_US.UTF-8 test-tool regex '^.$' '¿' &&
-  test_set_prereq MB_REGEX
+test_lazy_prereq MB_REGEX '
+	LC_ALL=en_US.UTF-8 test-tool regex "^.$" "¿"
+'
 
 cat >hello.c <<EOF
 #include <assert.h>
@@ -322,11 +323,11 @@ do
 		${HC}file:1:5:mmap
 		${HC}file:2:5:mmap
 		${HC}file:3:5:mmap
-		${HC}file:3:13:mmap
+		${HC}file:3:14:mmap
 		${HC}file:4:5:mmap
-		${HC}file:4:13:mmap
+		${HC}file:4:14:mmap
 		${HC}file:5:5:mmap
-		${HC}file:5:13:mmap
+		${HC}file:5:14:mmap
 		EOF
 		git grep --column -n -o -e mmap $H >actual &&
 		test_cmp expected actual
@@ -1927,6 +1928,64 @@ test_expect_success 'grep does not report i-t-a and assume unchanged with -L' '
 	git ls-files | grep -v "^intend-to-add-assume-unchanged\$" >expected &&
 	git grep -L "nonexistent_string" >actual &&
 	test_cmp expected actual
+'
+
+test_expect_success 'grep of revision in partial clone batches prefetch and honors pathspec' '
+	test_when_finished "rm -rf grep-partial-src grep-partial" &&
+
+	git init grep-partial-src &&
+	(
+		cd grep-partial-src &&
+		git config uploadpack.allowfilter 1 &&
+		git config uploadpack.allowanysha1inwant 1 &&
+		mkdir a b &&
+		echo "needle in haystack" >a/matches.txt &&
+		echo "nothing to see here" >a/nomatch.txt &&
+		echo "needle again" >b/matches.md &&
+		git add . &&
+		git commit -m "initial"
+	) &&
+
+	git clone --no-checkout --filter=blob:none \
+		"file://$(pwd)/grep-partial-src" grep-partial &&
+
+	# All three blobs are missing immediately after a blobless clone.
+	git -C grep-partial rev-list --quiet --objects \
+		--missing=print HEAD >missing &&
+	test_line_count = 3 missing &&
+
+	# A pathspec-limited grep should prefetch only the two blobs
+	# in a/.  It should fetch both blobs in one batched request.
+	GIT_TRACE2_EVENT="$(pwd)/grep-trace-pathspec" \
+		git -C grep-partial grep -c "needle" HEAD -- "a/*.txt" >result &&
+
+	# Only a/matches.txt contains "needle" among the matched paths.
+	test_line_count = 1 result &&
+
+	# Exactly the two a/*.txt blobs should have been requested, and
+	# the server packed those two objects in the response.
+	test_trace2_data promisor fetch_count 2 <grep-trace-pathspec &&
+	test_trace2_data pack-objects written 2 <grep-trace-pathspec &&
+
+	# b/matches.md should still be missing locally.
+	git -C grep-partial rev-list --quiet --objects \
+		--missing=print HEAD >missing &&
+	test_line_count = 1 missing &&
+
+	# A second grep without a pathspec must recurse into both
+	# subdirectories, but should request only the still-missing blob
+	# from the promisor.
+	GIT_TRACE2_EVENT="$(pwd)/grep-trace-all" \
+		git -C grep-partial grep -c "needle" HEAD >result &&
+
+	test_line_count = 2 result &&
+	test_trace2_data promisor fetch_count 1 <grep-trace-all &&
+	test_trace2_data pack-objects written 1 <grep-trace-all &&
+
+	# Everything is local now.
+	git -C grep-partial rev-list --quiet --objects \
+		--missing=print HEAD >missing &&
+	test_line_count = 0 missing
 '
 
 test_done

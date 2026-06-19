@@ -2195,7 +2195,7 @@ __git_log_common_options="
 	--not --all
 	--branches --tags --remotes
 	--first-parent --merges --no-merges
-	--max-count=
+	--max-count= --max-count-oldest=
 	--max-age= --since= --after=
 	--min-age= --until= --before=
 	--min-parents= --max-parents=

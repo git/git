@@ -75,7 +75,7 @@ test_create_pre2_32_repo () {
 #
 # Create a simple subtree on a new branch named ORPHAN in REPO.
 # The subtree is then merged into the current branch of REPO,
-# under PREFIX. The generated subtree has has one commit
+# under PREFIX. The generated subtree has one commit
 # with subject and tag FILENAME with a single file "FILENAME.t"
 #
 # When this method returns:

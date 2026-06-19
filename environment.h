@@ -91,6 +91,16 @@ struct repo_config_values {
 	/* section "core" config values */
 	char *attributes_file;
 	int apply_sparse_checkout;
+	int trust_ctime;
+	int check_stat;
+	int zlib_compression_level;
+	int pack_compression_level;
+	int precomposed_unicode;
+	int core_sparse_checkout_cone;
+	int warn_on_object_refname_ambiguity;
+
+	/* section "sparse" config values */
+	int sparse_expect_files_outside_of_patterns;
 
 	/* section "branch" config values */
 	enum branch_track branch_track;
@@ -130,13 +140,6 @@ void repo_config_values_init(struct repo_config_values *cfg);
  * `the_repository`. We should eventually get rid of these and make the
  * dependency on a repository explicit:
  *
- *   - `setup_git_env()` ideally shouldn't exist as it modifies global state,
- *     namely the environment. The current process shouldn't ever access that
- *     state via envvars though, but should instead consult a `struct
- *     repository`. When spawning new processes, we would ideally also pass a
- *     `struct repository` and then set up the environment variables for the
- *     child process, only.
- *
  *   - `have_git_dir()` should not have to exist at all. Instead, we should
  *     decide on whether or not we have a `struct repository`.
  *
@@ -147,7 +150,6 @@ void repo_config_values_init(struct repo_config_values *cfg);
  * Please do not add new global config variables here.
  */
 # ifdef USE_THE_REPOSITORY_VARIABLE
-void setup_git_env(const char *git_dir);
 
 /*
  * Returns true iff we have a configured git repository (either via
@@ -161,25 +163,16 @@ extern char *git_work_tree_cfg;
 
 /* Environment bits from configuration mechanism */
 extern int trust_executable_bit;
-extern int trust_ctime;
-extern int check_stat;
 extern int has_symlinks;
 extern int minimum_abbrev, default_abbrev;
 extern int ignore_case;
 extern int assume_unchanged;
-extern int warn_on_object_refname_ambiguity;
 extern char *apply_default_whitespace;
 extern char *apply_default_ignorewhitespace;
-extern int zlib_compression_level;
-extern int pack_compression_level;
 extern unsigned long pack_size_limit_cfg;
 
-extern int precomposed_unicode;
 extern int protect_hfs;
 extern int protect_ntfs;
-
-extern int core_sparse_checkout_cone;
-extern int sparse_expect_files_outside_of_patterns;
 
 enum rebase_setup_type {
 	AUTOREBASE_NEVER = 0,

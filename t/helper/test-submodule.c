@@ -99,7 +99,7 @@ static int cmd__submodule_is_active(int argc, const char **argv)
 	if (argc != 1)
 		usage_with_options(submodule_is_active_usage, options);
 
-	setup_git_directory();
+	setup_git_directory(the_repository);
 
 	return !is_submodule_active(the_repository, argv[0]);
 }
@@ -142,7 +142,7 @@ static int cmd__submodule_config_list(int argc, const char **argv)
 	argc = parse_options(argc, argv, "test-tools", options, usage,
 			     PARSE_OPT_KEEP_ARGV0);
 
-	setup_git_directory();
+	setup_git_directory(the_repository);
 
 	if (argc == 2)
 		return print_config_from_gitmodules(the_repository, argv[1]);
@@ -161,7 +161,7 @@ static int cmd__submodule_config_set(int argc, const char **argv)
 	argc = parse_options(argc, argv, "test-tools", options, usage,
 			     PARSE_OPT_KEEP_ARGV0);
 
-	setup_git_directory();
+	setup_git_directory(the_repository);
 
 	/* Equivalent to ACTION_SET in builtin/config.c */
 	if (argc == 3) {
@@ -183,7 +183,7 @@ static int cmd__submodule_config_unset(int argc, const char **argv)
 		NULL
 	};
 
-	setup_git_directory();
+	setup_git_directory(the_repository);
 
 	if (argc == 2) {
 		if (!is_writing_gitmodules_ok())
@@ -202,7 +202,7 @@ static int cmd__submodule_config_writeable(int argc, const char **argv UNUSED)
 		"test-tool submodule config-writeable",
 		NULL
 	};
-	setup_git_directory();
+	setup_git_directory(the_repository);
 
 	if (argc == 1)
 		return is_writing_gitmodules_ok() ? 0 : -1;

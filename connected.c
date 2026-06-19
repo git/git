@@ -76,6 +76,8 @@ int check_connected(oid_iterate_fn fn, void *cb_data,
 promisor_pack_found:
 			;
 		} while ((oid = fn(cb_data)) != NULL);
+		if (opt->err_fd)
+			close(opt->err_fd);
 		return 0;
 	}
 
