@@ -325,7 +325,7 @@ struct object *parse_object_with_flags(struct repository *r,
 {
 	int skip_hash = !!(flags & PARSE_OBJECT_SKIP_HASH_CHECK);
 	int discard_tree = !!(flags & PARSE_OBJECT_DISCARD_TREE);
-	unsigned long size;
+	size_t size;
 	enum object_type type;
 	int eaten;
 	const struct object_id *repl = lookup_replace_object(r, oid);

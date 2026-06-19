@@ -141,7 +141,7 @@ struct packing_data {
 	uint32_t index_size;
 
 	unsigned int *in_pack_pos;
-	unsigned long *delta_size;
+	size_t *delta_size;
 
 	/*
 	 * Only one of these can be non-NULL and they have different

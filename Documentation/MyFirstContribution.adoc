@@ -790,7 +790,7 @@ We can note a few things:
   v3", etc. in place of "PATCH". For example, "[PATCH v2 1/3]" would be the first of
   three patches in the second iteration. Each iteration is sent with a new cover
   letter (like "[PATCH v2 0/3]" above), itself a reply to the cover letter of the
-  previous iteration (more on that below).
+  first iteration (more on that below).
 
 NOTE: A single-patch topic is sent with "[PATCH]", "[PATCH v2]", etc. without
 _i_/_n_ numbering (in the above thread overview, no single-patch topic appears,
@@ -833,7 +833,7 @@ This patchset is part of the MyFirstContribution tutorial and should not
 be merged.
 ----
 
-At this point the tutorial diverges, in order to demonstrate two
+At this point the tutorial diverges, in order to demonstrate three
 different methods of formatting your patchset and getting it reviewed.
 
 The first method to be covered is GitGitGadget, which is useful for those
@@ -845,9 +845,14 @@ more fine-grained control over the emails to be sent. This method requires some
 setup which can change depending on your system and will not be covered in this
 tutorial.
 
+The third method to be covered is `b4`, which builds on top of `git
+format-patch` and `git send-email`. This method is the recommended way to
+submit patches via mail as it automates a lot of the bookkeeping required by
+`git send-email`.
+
 Regardless of which method you choose, your engagement with reviewers will be
-the same; the review process will be covered after the sections on GitGitGadget
-and `git send-email`.
+the same; the review process will be covered after the sections on GitGitGadget,
+`git send-email` and `b4`.
 
 [[howto-ggg]]
 == Sending Patches via GitGitGadget
@@ -1214,7 +1219,7 @@ between your last version and now, if it's something significant. You do not
 need the exact same body in your second cover letter; focus on explaining to
 reviewers the changes you've made that may not be as visible.
 
-You will also need to go and find the Message-ID of your previous cover letter.
+You will also need to go and find the Message-ID of your first cover letter.
 You can either note it when you send the first series, from the output of `git
 send-email`, or you can look it up on the
 https://lore.kernel.org/git[mailing list]. Find your cover letter in the
@@ -1227,8 +1232,8 @@ Message-ID: <foo.12345.author@example.com>
 
 Your Message-ID is `<foo.12345.author@example.com>`. This example will be used
 below as well; make sure to replace it with the correct Message-ID for your
-**previous cover letter** - that is, if you're sending v2, use the Message-ID
-from v1; if you're sending v3, use the Message-ID from v2.
+**first cover letter** - that is, for any subsequent version that you send,
+always use the Message-ID from v1.
 
 While you're looking at the email, you should also note who is CC'd, as it's
 common practice in the mailing list to keep all CCs on a thread. You can add
@@ -1295,6 +1300,87 @@ index 88f126184c..38da593a60 100644
 --
 2.21.0.392.gf8f6787159e-goog
 ----
+
+[[howto-b4]]
+== Sending Patches with `b4`
+
+`b4` is a tool that builds on top of `git format-patch` and `git send-email`.
+It automates much of the bookkeeping involved in sending a patch series to a
+mailing-list-based project.
+
+Refer to the https://b4.docs.kernel.org/[b4 documentation] for a full reference.
+
+[[prep-b4]]
+=== Preparing a Patch Series
+
+`b4` tracks your patch series as a branch. To start tracking the `psuh` branch
+you have been working on, run:
+
+----
+$ b4 prep --enroll master
+----
+
+This enrolls the current branch, using `master` as the base of the topic. `b4`
+manages the cover letter as part of the branch, so you can edit it at any time
+with:
+
+----
+$ b4 prep --edit-cover
+----
+
+The cover letter not only tracks the content of the top-level mail, but also
+the set of recipients. You can add recipients by adding `To:` and `Cc:`
+trailer lines.
+
+[[send-b4]]
+=== Sending the Patches
+
+Before sending the series out for real, you can inspect what `b4` would send by
+passing `--dry-run`:
+
+----
+$ b4 send --dry-run
+----
+
+Once you are happy with the result, send the series with:
+
+----
+$ b4 send
+----
+
+[[v2-b4]]
+=== Sending v2
+
+When you are ready to send a new iteration of your series, refine your
+patches as usual using linkgit:git-rebase[1]. Note that you typically want to
+rebase on top of the cover letter. You can configure an alias to enable easy
+rebases going forward:
+
+---
+$ git config set alias.b4-rebase 'rebase "HEAD^{/--- b4-submit-tracking ---}"'
+$ git b4-rebase -i
+---
+
+Before sending out the new version you should also update the cover letter with
+`b4 prep --edit-cover` to note the relevant changes compared to the previous
+version. You can inspect the changes between the two versions with `b4 prep
+--compare-to=v1`.
+
+Same as with the first version, you can use `b4 send` to send out the second
+version. `b4` automatically bumps the version to `v2`, generates the range-diff
+against the previous iteration, and threads the new series as a reply to the
+cover letter of the first version.
+
+[[configure-b4]]
+=== Configure b4
+
+`b4` can be configured via linkgit:git-config[1]. In addition to that, projects
+can have their own set of defaults in `.b4-config` in the root tree, which also
+uses Git's config format. The user's configuration always takes precedence over
+the per-project defaults.
+
+Refer to the https://b4.docs.kernel.org/en/latest/config.html[b4 config documentation]
+for more information on the available options.
 
 [[now-what]]
 == My Patch Got Emailed - Now What?

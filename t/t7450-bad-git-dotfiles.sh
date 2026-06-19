@@ -350,7 +350,7 @@ test_expect_success 'git dirs of sibling submodules must not be nested' '
 test_expect_success 'submodule git dir nesting detection must work with parallel cloning' '
 	test_must_fail git clone --recurse-submodules --jobs=2 nested clone_parallel 2>err &&
 	cat err &&
-	grep -E "(already exists|is inside git dir|not a git repository)" err &&
+	grep -E "(already exists|is inside git dir|does not point to a valid repository)" err &&
 	{
 		test_path_is_missing .git/modules/hippo/HEAD ||
 		test_path_is_missing .git/modules/hippo/hooks/HEAD

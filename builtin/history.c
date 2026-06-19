@@ -525,7 +525,7 @@ static int cmd_history_fixup(int argc,
 	if (action == REF_ACTION_DEFAULT)
 		action = REF_ACTION_BRANCHES;
 
-	if (is_bare_repository()) {
+	if (is_bare_repository(repo)) {
 		ret = error(_("cannot run fixup in a bare repository"));
 		goto out;
 	}
