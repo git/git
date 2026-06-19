@@ -457,6 +457,8 @@ int cmd_repack(int argc,
 	}
 
 	if (!names.nr) {
+		struct odb_source_files *files = odb_source_files_downcast(existing.source);
+
 		if (!po_args.quiet)
 			printf_ln(_("Nothing new to pack."));
 		/*
@@ -472,7 +474,7 @@ int cmd_repack(int argc,
 		 * midx_has_unknown_packs() will make the decision for
 		 * us.
 		 */
-		if (!get_multi_pack_index(existing.source))
+		if (!get_multi_pack_index(files->packed))
 			midx_must_contain_cruft = 1;
 	}
 
@@ -625,10 +627,12 @@ int cmd_repack(int argc,
 		update_server_info(repo, 0);
 
 	if (git_env_bool(GIT_TEST_MULTI_PACK_INDEX, 0)) {
+		struct odb_source_files *files = odb_source_files_downcast(existing.source);
 		unsigned flags = 0;
+
 		if (git_env_bool(GIT_TEST_MULTI_PACK_INDEX_WRITE_INCREMENTAL, 0))
 			flags |= MIDX_WRITE_INCREMENTAL;
-		write_midx_file(existing.source, NULL, NULL, flags);
+		write_midx_file(files->packed, NULL, NULL, flags);
 	}
 
 cleanup:

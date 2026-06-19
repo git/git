@@ -4,7 +4,7 @@
 #include "odb/source.h"
 
 struct odb_source_loose;
-struct packfile_store;
+struct odb_source_packed;
 
 /*
  * The files object database source uses a combination of loose objects and
@@ -13,7 +13,7 @@ struct packfile_store;
 struct odb_source_files {
 	struct odb_source base;
 	struct odb_source_loose *loose;
-	struct packfile_store *packed;
+	struct odb_source_packed *packed;
 };
 
 /* Allocate and initialize a new object source. */

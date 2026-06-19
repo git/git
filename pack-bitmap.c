@@ -238,7 +238,7 @@ static uint32_t bitmap_name_hash(struct bitmap_index *index, uint32_t pos)
 static struct repository *bitmap_repo(struct bitmap_index *bitmap_git)
 {
 	if (bitmap_is_midx(bitmap_git))
-		return bitmap_git->midx->source->odb->repo;
+		return bitmap_git->midx->source->base.odb->repo;
 	return bitmap_git->pack->repo;
 }
 
@@ -711,7 +711,8 @@ static int open_midx_bitmap(struct repository *r,
 
 	odb_prepare_alternates(r->objects);
 	for (source = r->objects->sources; source; source = source->next) {
-		struct multi_pack_index *midx = get_multi_pack_index(source);
+		struct odb_source_files *files = odb_source_files_downcast(source);
+		struct multi_pack_index *midx = get_multi_pack_index(files->packed);
 		if (midx && !open_midx_bitmap_1(bitmap_git, midx))
 			ret = 0;
 	}
@@ -3399,7 +3400,8 @@ int verify_bitmap_files(struct repository *r)
 
 	odb_prepare_alternates(r->objects);
 	for (source = r->objects->sources; source; source = source->next) {
-		struct multi_pack_index *m = get_multi_pack_index(source);
+		struct odb_source_files *files = odb_source_files_downcast(source);
+		struct multi_pack_index *m = get_multi_pack_index(files->packed);
 		char *midx_bitmap_name;
 
 		if (!m)
