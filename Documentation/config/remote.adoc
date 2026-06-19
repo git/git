@@ -91,6 +91,15 @@ remote.<name>.promisor::
 	When set to true, this remote will be used to fetch promisor
 	objects.
 
+remote.<name>.advertisedAs::
+	When a promisor remote is automatically configured using
+	information advertised by a server through the
+	`promisor-remote` protocol capability (see
+	`promisor.acceptFromServerUrl`), the server's originally
+	advertised name is saved in this variable. This is for
+	information, tracing and debugging purposes. Users should not
+	typically modify or create such configuration entries.
+
 remote.<name>.partialclonefilter::
 	The filter that will be applied when fetching from this	promisor remote.
 	Changing or clearing this value will only affect fetches for new commits.
