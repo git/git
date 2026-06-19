@@ -925,7 +925,7 @@ int verify_repository_format(const struct repository_format *format,
 	return 0;
 }
 
-void read_gitfile_error_die(int error_code, const char *path, const char *dir)
+void read_gitfile_error_die(int error_code, const char *path)
 {
 	switch (error_code) {
 	case READ_GITFILE_ERR_NOT_A_FILE:
@@ -945,7 +945,8 @@ void read_gitfile_error_die(int error_code, const char *path, const char *dir)
 	case READ_GITFILE_ERR_NO_PATH:
 		die(_("no path in gitfile: %s"), path);
 	case READ_GITFILE_ERR_NOT_A_REPO:
-		die(_("not a git repository: %s"), dir);
+		die(_("gitfile does not point to a valid repository: %s"),
+		    path);
 	default:
 		BUG("unknown error code");
 	}
@@ -1036,7 +1037,7 @@ cleanup_return:
 	if (return_error_code)
 		*return_error_code = error_code;
 	else if (error_code)
-		read_gitfile_error_die(error_code, path, dir);
+		read_gitfile_error_die(error_code, path);
 
 	free(buf);
 	return error_code ? NULL : path;
@@ -1637,7 +1638,7 @@ static enum discovery_result setup_git_directory_gently_1(struct strbuf *dir,
 					return GIT_DIR_INVALID_GITFILE;
 			default:
 				if (die_on_error)
-					read_gitfile_error_die(error_code, dir->buf, NULL);
+					read_gitfile_error_die(error_code, dir->buf);
 				else
 					return GIT_DIR_INVALID_GITFILE;
 			}
