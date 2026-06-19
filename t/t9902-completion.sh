@@ -2811,17 +2811,15 @@ test_expect_success 'complete files' '
 
 	touch untracked &&
 
-	: TODO .gitignore should not be here &&
 	test_completion "git rm " <<-\EOF &&
-	.gitignore
 	modified
 	EOF
 
+	test_completion "git rm ." ".gitignore" &&
+
 	test_completion "git clean " "untracked" &&
 
-	: TODO .gitignore should not be here &&
 	test_completion "git mv " <<-\EOF &&
-	.gitignore
 	modified
 	EOF
 
@@ -2832,9 +2830,7 @@ test_expect_success 'complete files' '
 
 	mkdir untracked-dir &&
 
-	: TODO .gitignore should not be here &&
 	test_completion "git mv modified " <<-\EOF &&
-	.gitignore
 	dir
 	modified
 	untracked
@@ -2843,9 +2839,7 @@ test_expect_success 'complete files' '
 
 	test_completion "git commit " "modified" &&
 
-	: TODO .gitignore should not be here &&
 	test_completion "git ls-files " <<-\EOF &&
-	.gitignore
 	dir
 	modified
 	EOF
