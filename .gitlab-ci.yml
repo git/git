@@ -168,11 +168,16 @@ test:mingw64:
     TEST_OUTPUT_DIRECTORY: "C:/Git-Test"
   tags:
     - saas-windows-medium-amd64
+  cache:
+    key:
+      files:
+        - ci/install-dependencies.ps1
+    paths:
+      - .dependencies
   before_script:
     - *windows_before_script
-    - choco install -y git meson ninja rust-ms
-    - Import-Module $env:ChocolateyInstall\helpers\chocolateyProfile.psm1
-    - refreshenv
+    - ./ci/install-dependencies.ps1
+    - $env:Path = "C:\Meson;C:\Rust\bin;$env:Path"
     - New-Item -Path $env:TEST_OUTPUT_DIRECTORY -ItemType Directory
 
 build:msvc-meson:
