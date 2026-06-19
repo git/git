@@ -173,8 +173,15 @@ ifeq ($(uname_S),Darwin)
 		NEEDS_GOOD_LIBICONV = UnfortunatelyYes
         endif
 
-	# Silence Xcode 16.3+ linker warning about __DATA,__common alignment.
-	LD_MAJOR_VERSION = $(shell ld -v 2>&1 | sed -n 's/.*PROJECT:ld-\([0-9]*\).*/\1/p')
+	# ld reports "PROJECT:{ld,ld64,dyld}-NNN", match any of the three.
+	LD_MAJOR_VERSION = $(shell ld -v 2>&1 | sed -n 's/.*PROJECT:[^ ]*-\([0-9][0-9]*\).*/\1/p')
+
+	# Silence the Xcode 15+ warning about archives listed more than once.
+        ifeq ($(shell test -n "$(LD_MAJOR_VERSION)" && test "$(LD_MAJOR_VERSION)" -ge 907 && echo 1),1)
+		BASIC_LDFLAGS += -Wl,-no_warn_duplicate_libraries
+        endif
+
+	# Silence the Xcode 16.3+ warning about __DATA,__common alignment.
         ifeq ($(shell test -n "$(LD_MAJOR_VERSION)" && test "$(LD_MAJOR_VERSION)" -ge 1167 && echo 1),1)
 		BASIC_CFLAGS += -fno-common
         endif
