@@ -18,3 +18,6 @@
 For instance, if you configured the `diff.algorithm` variable to a
 non-default value and want to use the default one, then you
 have to use `--diff-algorithm=default` option.
++
+If you explicitly choose a diff algorithm, it also bypasses
+`diff.<driver>.process` (see linkgit:gitattributes[5]).

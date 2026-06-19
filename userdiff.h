@@ -3,6 +3,7 @@
 
 #include "notes-cache.h"
 
+struct diff_subprocess;
 struct index_state;
 struct repository;
 
@@ -31,6 +32,10 @@ struct userdiff_driver {
 	char *textconv_owned;
 	struct notes_cache *textconv_cache;
 	int textconv_want_cache;
+	const char *process;
+	char *process_owned;
+	struct diff_subprocess *diff_subprocess;
+	unsigned diff_process_failed : 1;
 };
 enum userdiff_driver_type {
 	USERDIFF_DRIVER_TYPE_BUILTIN = 1<<0,

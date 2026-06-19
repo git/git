@@ -519,6 +519,7 @@ integration_tests = [
   't4072-diff-max-depth.sh',
   't4073-diff-stat-name-width.sh',
   't4074-diff-shifted-matched-group.sh',
+  't4080-diff-process.sh',
   't4100-apply-stat.sh',
   't4101-apply-nonl.sh',
   't4102-apply-rename.sh',

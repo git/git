@@ -821,6 +821,149 @@ NOTE: If `diff.<name>.command` is defined for path with the
 (see above), and adding `diff.<name>.algorithm` has no effect, as the
 algorithm is not passed to the external diff driver.
 
+Using an external diff process
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If `diff.<name>.process` is defined, Git sends the old and new file
+content to an external tool and receives back a list of changed
+regions (pairs of line ranges in the old and new file).  Git uses
+these instead of its builtin diff algorithm, but still controls
+all output formatting, so features like word diff, function context,
+color, and blame work normally.  This is achieved by using the
+long-running process protocol (described in
+Documentation/technical/long-running-process-protocol.adoc).
+Unlike `diff.<name>.command`, which replaces Git's output entirely,
+the diff process feeds results back into the standard pipeline.
+
+First, in `.gitattributes`, assign the `diff` attribute for paths.
+
+------------------------
+*.c diff=cdiff
+------------------------
+
+Then, define a "diff.<name>.process" configuration to specify
+the diff process command.
+
+----------------------------------------------------------------
+[diff "cdiff"]
+  process = /path/to/diff-process-tool
+----------------------------------------------------------------
+
+When Git encounters the first file that needs to be diffed, it starts
+the process and performs the handshake.  In the handshake, the welcome
+message sent by Git is "git-diff-client", only version 1 is supported,
+and the supported capability is "hunks" (the changed regions
+described below).
+
+For each file, Git sends a list of "key=value" pairs terminated with
+a flush packet, followed by the old and new file content as packetized
+data, each terminated with a flush packet.  The pathname is relative
+to the repository root.  When `diff.<name>.textconv` is also set,
+the tool receives the textconv-transformed content rather than the
+raw blob.  Git does not send binary files to the diff process.
+
+-----------------------
+packet:          git> command=hunks
+packet:          git> pathname=path/file.c
+packet:          git> 0000
+packet:          git> OLD_CONTENT
+packet:          git> 0000
+packet:          git> NEW_CONTENT
+packet:          git> 0000
+-----------------------
+
+The tool is expected to respond with zero or more hunk lines,
+a flush packet, and a status packet terminated with a flush packet.
+Each hunk line has the form:
+
+  `hunk <old_start> <old_count> <new_start> <new_count>`
+
+where `<old_start>` and `<old_count>` identify a range of lines in
+the old file, and `<new_start>` and `<new_count>` identify the
+replacement range in the new file.  Start values are 1-based and
+counts are non-negative.  Ranges must not extend beyond the end of
+the file.  For example, `hunk 3 2 3 4` means that 2 lines starting
+at line 3 in the old file were replaced by 4 lines starting at
+line 3 in the new file.  An `<old_count>` of 0 means no lines were
+removed (pure insertion); a `<new_count>` of 0 means no lines were
+added (pure deletion).  A start value of 0 is accepted when
+the corresponding count is 0 (e.g., `hunk 0 0 1 5` for a newly
+added file), matching what `git diff` itself emits for empty
+file sides.
+
+Lines are delimited by newlines.  A file `"foo\nbar\n"` and a
+file `"foo\nbar"` both have 2 lines.
+
+Hunks must be listed in order and must not overlap.  Any line
+not covered by a hunk is treated as unchanged, so the total
+number of unchanged lines must be the same on both sides.
+For example, if the old file has 10 lines and the hunks cover
+4 of them (`old_count` values summing to 4), then 6 old lines
+are unchanged.  The new file must also have exactly 6 lines
+not covered by hunks, so the `new_count` values must sum to
+`new_file_lines - 6`.
+
+-----------------------
+packet:          git< hunk 1 3 1 5
+packet:          git< hunk 10 2 12 2
+packet:          git< 0000
+packet:          git< status=success
+packet:          git< 0000
+-----------------------
+
+If the tool responds with hunks and "success", Git marks those lines
+as changed and feeds them into the standard diff pipeline.  Patch
+output features (word diff, function context, color) work normally.
+Note that `--stat` and other summary formats use their own diff path
+and are not affected by the diff process.
+
+If no hunk lines precede the flush, followed by "success", Git
+treats the files as having no changes: `git diff` produces no output
+and `git blame` skips the commit, attributing lines to earlier commits.
+
+-----------------------
+packet:          git< 0000
+packet:          git< status=success
+packet:          git< 0000
+-----------------------
+
+If the tool returns invalid hunks (out of bounds, overlapping, or
+mismatched unchanged line counts), Git warns and falls back to the
+builtin diff algorithm.
+
+In case the tool cannot or does not want to process the content,
+it is expected to respond with an "error" status.  Git warns and
+falls back to the builtin diff algorithm for this file.  The tool
+remains available for subsequent files.
+
+-----------------------
+packet:          git< 0000
+packet:          git< status=error
+packet:          git< 0000
+-----------------------
+
+In case the tool cannot or does not want to process the content as
+well as any future content for the lifetime of the Git process, it
+is expected to respond with an "abort" status.  Git silently falls
+back to the builtin diff algorithm for this file and does not send
+further requests to the tool.
+
+-----------------------
+packet:          git< 0000
+packet:          git< status=abort
+packet:          git< 0000
+-----------------------
+
+If the tool dies during the communication or does not adhere to the
+protocol then Git will stop the process and fall back to the builtin
+diff algorithm.  Git warns once and does not restart the process for
+subsequent files.
+
+Tools should ignore unknown keys in the per-file request to remain
+forward-compatible.  Future versions of Git may send additional
+`command=` values; tools that receive an unrecognized command should
+respond with `status=error` rather than terminating.
+
 Defining a custom hunk-header
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

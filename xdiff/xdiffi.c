@@ -1085,16 +1085,135 @@ static void xdl_mark_ignorable_regex(xdchange_t *xscr, const xdfenv_t *xe,
 	}
 }
 
+/*
+ * Populate the changed[] arrays from externally supplied hunks,
+ * bypassing the diff algorithm.  Validates that hunks are in order,
+ * non-overlapping, and within bounds.
+ *
+ * Returns 0 on success, -1 on validation failure.
+ */
+static int xdl_populate_hunks_from_external(xdfenv_t *xe,
+					    struct xdl_hunk *hunks,
+					    size_t nr_hunks)
+{
+	size_t i;
+	long j, prev_old_end = 0, prev_new_end = 0;
+	long changed_old = 0, changed_new = 0;
+
+	/*
+	 * xdl_prepare_env() may dirty changed[] via xdl_cleanup_records().
+	 * Clear them so only the external hunks are marked.
+	 */
+	xdl_clear_changed(&xe->xdf1);
+	xdl_clear_changed(&xe->xdf2);
+
+	for (i = 0; i < nr_hunks; i++) {
+		struct xdl_hunk *h = &hunks[i];
+
+		if (h->old_count < 0 || h->new_count < 0) {
+			warning("diff process hunk %"PRIuMAX": "
+				"negative count (old=%ld, new=%ld)",
+				(uintmax_t)(i + 1),
+				h->old_count, h->new_count);
+			return -1;
+		}
+		if (h->old_start < 1 || h->new_start < 1) {
+			warning("diff process hunk %"PRIuMAX": "
+				"start must be >= 1 (old=%ld, new=%ld)",
+				(uintmax_t)(i + 1),
+				h->old_start, h->new_start);
+			return -1;
+		}
+
+		/*
+		 * Range must fit: start + count - 1 <= nrec,
+		 * rewritten to avoid overflow.  Same for both sides.
+		 *
+		 * When count is 0 (pure insert/delete) the check
+		 * reduces to 0 > nrec - start + 1, which rejects
+		 * start > nrec + 1 and allows start == nrec + 1
+		 * (the position after the last line).
+		 */
+		if (h->old_count > (long)xe->xdf1.nrec - h->old_start + 1) {
+			warning("diff process hunk %"PRIuMAX": "
+				"old range %ld+%ld exceeds %lu lines",
+				(uintmax_t)(i + 1),
+				h->old_start, h->old_count,
+				(unsigned long)xe->xdf1.nrec);
+			return -1;
+		}
+		if (h->new_count > (long)xe->xdf2.nrec - h->new_start + 1) {
+			warning("diff process hunk %"PRIuMAX": "
+				"new range %ld+%ld exceeds %lu lines",
+				(uintmax_t)(i + 1),
+				h->new_start, h->new_count,
+				(unsigned long)xe->xdf2.nrec);
+			return -1;
+		}
+
+		/* Ordering: no overlap with previous hunk (adjacent is OK) */
+		if (h->old_start < prev_old_end ||
+		    h->new_start < prev_new_end) {
+			warning("diff process hunk %"PRIuMAX": "
+				"overlaps with previous hunk",
+				(uintmax_t)(i + 1));
+			return -1;
+		}
+
+		for (j = 0; j < h->old_count; j++)
+			xe->xdf1.changed[h->old_start - 1 + j] = true;
+		for (j = 0; j < h->new_count; j++)
+			xe->xdf2.changed[h->new_start - 1 + j] = true;
+
+		prev_old_end = h->old_start + h->old_count;
+		prev_new_end = h->new_start + h->new_count;
+	}
+
+	/*
+	 * Synchronization invariant: unchanged line counts must match.
+	 * Otherwise xdl_build_script() would walk off one array.
+	 *
+	 * Count changed lines from the arrays rather than accumulating
+	 * during the loop to avoid any overflow in the summation.
+	 */
+	for (j = 0; j < (long)xe->xdf1.nrec; j++)
+		if (xe->xdf1.changed[j])
+			changed_old++;
+	for (j = 0; j < (long)xe->xdf2.nrec; j++)
+		if (xe->xdf2.changed[j])
+			changed_new++;
+	if ((long)xe->xdf1.nrec - changed_old !=
+	    (long)xe->xdf2.nrec - changed_new) {
+		warning("diff process: unchanged line count mismatch "
+			"(old: %ld unchanged, new: %ld unchanged)",
+			(long)xe->xdf1.nrec - changed_old,
+			(long)xe->xdf2.nrec - changed_new);
+		return -1;
+	}
+
+	return 0;
+}
+
 int xdl_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
 	     xdemitconf_t const *xecfg, xdemitcb_t *ecb) {
 	xdchange_t *xscr;
 	xdfenv_t xe;
 	emit_func_t ef = xecfg->hunk_func ? xdl_call_hunk_func : xdl_emit_diff;
 
-	if (xdl_do_diff(mf1, mf2, xpp, &xe) < 0) {
-
-		return -1;
+	if (xpp->external_hunks) {
+		if (xdl_prepare_env(mf1, mf2, xpp, &xe) < 0)
+			return -1;
+		if (xdl_populate_hunks_from_external(&xe,
+						     xpp->external_hunks,
+						     xpp->external_hunks_nr) == 0)
+			goto diff_done;
+		xdl_free_env(&xe);
 	}
+
+	if (xdl_do_diff(mf1, mf2, xpp, &xe) < 0)
+		return -1;
+
+diff_done:
 	if (xdl_change_compact(&xe.xdf1, &xe.xdf2, xpp->flags) < 0 ||
 	    xdl_change_compact(&xe.xdf2, &xe.xdf1, xpp->flags) < 0 ||
 	    xdl_build_script(&xe, &xscr) < 0) {

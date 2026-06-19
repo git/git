@@ -329,6 +329,7 @@ libgit_sources = [
   'diff-merges.c',
   'diff-lib.c',
   'diff-no-index.c',
+  'diff-process.c',
   'diff.c',
   'diffcore-break.c',
   'diffcore-delta.c',
