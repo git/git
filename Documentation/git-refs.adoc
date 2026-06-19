@@ -20,6 +20,10 @@ git refs list [--count=<count>] [--shell|--perl|--python|--tcl]
 		   [ --stdin | (<pattern>...)]
 git refs exists <ref>
 git refs optimize [--all] [--no-prune] [--auto] [--include <pattern>] [--exclude <pattern>]
+git refs create [--message=<reason>] [--no-deref] [--create-reflog] <ref> <new-value>
+git refs delete [--message=<reason>] [--no-deref] <ref> [<old-value>]
+git refs update [--message=<reason>] [--no-deref] [--create-reflog] <ref> <new-value> [<old-value>]
+git refs rename [--message=<reason>] <old-ref> <new-ref>
 
 DESCRIPTION
 -----------
@@ -50,6 +54,28 @@ optimize::
 	Optimizes references to improve repository performance and reduce disk
 	usage. This subcommand is an alias for linkgit:git-pack-refs[1] and
 	offers identical functionality.
+
+create::
+	Create the given reference, which must not already exist, pointing at
+	`<new-value>`.
+
+delete::
+	Delete the given reference. This subcommand mirrors `git update-ref -d`
+	(see linkgit:git-update-ref[1]). When `<old-value>` is given, the
+	reference is only deleted after verifying that it currently contains
+	`<old-value>`.
+
+update::
+	Update the given reference to point at `<new-value>`. If `<old-value>`
+	is given, the reference is only updated after verifying that it
+	currently contains `<old-value>`. As a special case, an all-zeroes
+	`<new-value>` deletes the branch, whereas an all-zeroes `<old-value>`
+	ensures that the branch does not yet exist.
+
+rename::
+	Rename the reference `<oldref>` to `<newref>`. The old reference must
+	exist and the new reference must not yet exist, and both must have a
+	well-formed name (see linkgit:git-check-ref-format[1]).
 
 OPTIONS
 -------
@@ -89,6 +115,20 @@ include::for-each-ref-options.adoc[]
 The following options are specific to 'git refs optimize':
 
 include::pack-refs-options.adoc[]
+
+The following options are specific to commands which write references:
+
+`--create-reflog`::
+	Create a reflog for the reference even if one would not ordinarily be
+	created.
+
+`--message=<reason>`::
+	Use the given <reason> string for the reflog entry associated with the
+	update. An empty message is rejected.
+
+`--no-deref`::
+	Operate on <ref> itself rather than the reference it points to via a
+	symbolic ref.
 
 KNOWN LIMITATIONS
 -----------------
