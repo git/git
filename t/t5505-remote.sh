@@ -91,28 +91,28 @@ test_expect_success 'filters for promisor remotes are listed by git remote -v' '
 	test_when_finished "rm -rf pc" &&
 	git clone --filter=blob:none "file://$(pwd)/srv.bare" pc &&
 	git -C pc remote -v >out &&
-	grep "srv.bare (fetch) \[blob:none\]" out &&
+	test_grep "srv.bare (fetch) \[blob:none\]" out &&
 
 	git -C pc config remote.origin.partialCloneFilter object:type=commit &&
 	git -C pc remote -v >out &&
-	grep "srv.bare (fetch) \[object:type=commit\]" out
+	test_grep "srv.bare (fetch) \[object:type=commit\]" out
 '
 
 test_expect_success 'filters should not be listed for non promisor remotes (remote -v)' '
 	test_when_finished "rm -rf pc" &&
 	git clone one pc &&
 	git -C pc remote -v >out &&
-	! grep "(fetch) \[.*\]" out
+	test_grep ! "(fetch) \[.*\]" out
 '
 
 test_expect_success 'filters are listed by git remote -v only' '
 	test_when_finished "rm -rf pc" &&
 	git clone --filter=blob:none "file://$(pwd)/srv.bare" pc &&
 	git -C pc remote >out &&
-	! grep "\[blob:none\]" out &&
+	test_grep ! "\[blob:none\]" out &&
 
 	git -C pc remote show >out &&
-	! grep "\[blob:none\]" out
+	test_grep ! "\[blob:none\]" out
 '
 
 test_expect_success 'check remote-tracking' '
@@ -261,7 +261,7 @@ test_expect_success 'without subcommand accepts -v' '
 
 test_expect_success 'without subcommand does not take arguments' '
 	test_expect_code 129 git -C test remote origin 2>err &&
-	grep "^error: unknown subcommand:" err
+	test_grep "^error: unknown subcommand:" err
 '
 
 cat >test/expect <<EOF
@@ -798,7 +798,7 @@ test_expect_success 'add --no-tags' '
 		cd add-no-tags &&
 		git init &&
 		git remote add -f --no-tags origin ../one &&
-		grep tagOpt .git/config &&
+		test_grep tagOpt .git/config &&
 		git tag -l some-tag >../test/output &&
 		git tag -l foobar-tag >../test/output &&
 		git config remote.origin.tagopt >>../test/output
@@ -972,7 +972,7 @@ test_expect_success 'rename a remote' '
 		GIT_TRACE2_EVENT=$(pwd)/trace \
 			git remote rename --progress origin upstream &&
 		test_region progress "Renaming remote references" trace &&
-		grep "pushRemote" .git/config &&
+		test_grep "pushRemote" .git/config &&
 		test -z "$(git for-each-ref refs/remotes/origin)" &&
 		test "$(git symbolic-ref refs/remotes/upstream/HEAD)" = "refs/remotes/upstream/main" &&
 		test "$(git rev-parse upstream/main)" = "$(git rev-parse main)" &&
@@ -989,7 +989,7 @@ test_expect_success 'rename a remote renames repo remote.pushDefault' '
 		cd four.1 &&
 		git config remote.pushDefault origin &&
 		git remote rename origin upstream &&
-		grep pushDefault .git/config &&
+		test_grep pushDefault .git/config &&
 		test "$(git config --local remote.pushDefault)" = "upstream"
 	)
 '
@@ -1198,7 +1198,7 @@ test_expect_success 'remote prune to cause a dangling symref' '
 		cd eight &&
 		git branch -a
 	) 2>err &&
-	! grep "points nowhere" err &&
+	test_grep ! "points nowhere" err &&
 	(
 		cd eight &&
 		test_must_fail git branch nomore origin

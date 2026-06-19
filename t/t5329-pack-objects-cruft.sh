@@ -468,8 +468,8 @@ test_expect_success 'cruft --local drops unreachable objects' '
 
 		test-tool pack-mtimes "$(basename $(ls $packdir/pack-*.mtimes))" \
 		       >objects &&
-		! grep $object objects &&
-		grep $cruft objects
+		test_grep ! $object objects &&
+		test_grep $cruft objects
 	)
 '
 
@@ -515,7 +515,7 @@ test_expect_success 'cruft objects are freshend via loose' '
 
 		test_path_is_missing "$loose" &&
 		test-tool pack-mtimes "$(basename "$(ls $packdir/pack-*.mtimes)")" >cruft &&
-		grep "$blob" cruft &&
+		test_grep "$blob" cruft &&
 
 		# write the same object again
 		git hash-object -w -t blob contents &&
@@ -657,7 +657,7 @@ test_expect_success 'multi-valued gc.recentObjectsHook' '
 		# ensure that a dirty exit halts cruft pack generation
 		git config --add gc.recentObjectsHook ./extra-tips.c &&
 		test_must_fail git repack --cruft --cruft-expiration=now -d 2>err &&
-		grep "unable to enumerate additional recent objects" err &&
+		test_grep "unable to enumerate additional recent objects" err &&
 
 		# and that the existing cruft pack is left alone
 		test_path_is_file "$mtimes"

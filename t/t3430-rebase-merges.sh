@@ -161,7 +161,7 @@ test_expect_success '`reset` rejects trees' '
 	test_when_finished "test_might_fail git rebase --abort" &&
 	test_must_fail env GIT_SEQUENCE_EDITOR="echo reset A^{tree} >" \
 		git rebase -i B C >out 2>err &&
-	grep "object .* is a tree" err &&
+	test_grep "object .* is a tree" err &&
 	test_must_be_empty out
 '
 
@@ -170,7 +170,7 @@ test_expect_success '`reset` only looks for labels under refs/rewritten/' '
 	git branch refs/rewritten/my-label A &&
 	test_must_fail env GIT_SEQUENCE_EDITOR="echo reset my-label >" \
 		git rebase -i B C >out 2>err &&
-	grep "could not resolve ${SQ}my-label${SQ}" err &&
+	test_grep "could not resolve ${SQ}my-label${SQ}" err &&
 	test_must_be_empty out
 '
 
@@ -185,18 +185,18 @@ test_expect_success 'failed `merge -C` writes patch (may be rescheduled, too)' '
 	test_tick &&
 	test_must_fail git rebase -ir HEAD &&
 	test_cmp_rev REBASE_HEAD H^0 &&
-	grep "^merge -C .* G$" .git/rebase-merge/done &&
-	grep "^merge -C .* G$" .git/rebase-merge/git-rebase-todo &&
+	test_grep "^merge -C .* G$" .git/rebase-merge/done &&
+	test_grep "^merge -C .* G$" .git/rebase-merge/git-rebase-todo &&
 	test_path_is_missing .git/rebase-merge/patch &&
 	echo changed >file1 &&
 	git add file1 &&
 	test_must_fail git rebase --continue 2>err &&
-	grep "error: you have staged changes in your working tree" err &&
+	test_grep "error: you have staged changes in your working tree" err &&
 
 	: fail because of merge conflict &&
 	git reset --hard conflicting-G &&
 	test_must_fail git rebase --continue &&
-	! grep "^merge -C .* G$" .git/rebase-merge/git-rebase-todo &&
+	test_grep ! "^merge -C .* G$" .git/rebase-merge/git-rebase-todo &&
 	test_path_is_file .git/rebase-merge/patch
 '
 
@@ -208,8 +208,8 @@ test_expect_success 'failed `merge <branch>` does not crash' '
 	test_config sequence.editor \""$PWD"/replace-editor.sh\" &&
 	test_tick &&
 	test_must_fail git rebase -ir HEAD &&
-	! grep "^merge G$" .git/rebase-merge/git-rebase-todo &&
-	grep "^Merge branch ${SQ}G${SQ}$" .git/rebase-merge/message
+	test_grep ! "^merge G$" .git/rebase-merge/git-rebase-todo &&
+	test_grep "^Merge branch ${SQ}G${SQ}$" .git/rebase-merge/message
 '
 
 test_expect_success 'merge -c commits before rewording and reloads todo-list' '
@@ -481,8 +481,8 @@ test_expect_success 'labels that are object IDs are rewritten' '
 	test_config sequence.editor \""$PWD"/replace-editor.sh\" &&
 	test_tick &&
 	git rebase -i -r A &&
-	grep "^label $third-" .git/ORIGINAL-TODO &&
-	! grep "^label $third$" .git/ORIGINAL-TODO
+	test_grep "^label $third-" .git/ORIGINAL-TODO &&
+	test_grep ! "^label $third$" .git/ORIGINAL-TODO
 '
 
 test_expect_success 'octopus merges' '
@@ -533,9 +533,9 @@ test_expect_success 'with --autosquash and --exec' '
 	EOF
 	test_tick &&
 	git rebase -ir --autosquash --exec ./show.sh A >actual &&
-	grep "B: +Booh" actual &&
-	grep "E: +Booh" actual &&
-	grep "G: +G" actual
+	test_grep "B: +Booh" actual &&
+	test_grep "E: +Booh" actual &&
+	test_grep "G: +G" actual
 '
 
 test_expect_success '--continue after resolving conflicts after a merge' '
@@ -546,7 +546,7 @@ test_expect_success '--continue after resolving conflicts after a merge' '
 	git checkout -b conflicts-in-merge H &&
 	test_commit H2 H2.t conflicts H2-conflict &&
 	test_must_fail git rebase -r already-has-g &&
-	grep conflicts H2.t &&
+	test_grep conflicts H2.t &&
 	echo resolved >H2.t &&
 	git add -u &&
 	git rebase --continue &&
@@ -616,9 +616,9 @@ test_expect_success 'truncate label names' '
 
 	done="$(git rev-parse --git-path rebase-merge/done)" &&
 	git -c rebase.maxLabelLength=14 rebase --rebase-merges -x "cp \"$done\" out" --root &&
-	grep "label 0123456789-我$" out &&
+	test_grep "label 0123456789-我$" out &&
 	git -c rebase.maxLabelLength=13 rebase --rebase-merges -x "cp \"$done\" out" --root &&
-	grep "label 0123456789-$" out
+	test_grep "label 0123456789-$" out
 '
 
 test_expect_success 'reword fast-forwarded empty merge commit' '

@@ -1,0 +1,3 @@
+test_expect_success 'grep piping to another command is not flagged' '
+	grep pattern file | wc -l
+'

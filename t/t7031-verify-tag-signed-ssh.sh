@@ -71,8 +71,8 @@ test_expect_success GPGSSH 'verify and show ssh signatures' '
 		for tag in initial second merge fourth-signed sixth-signed seventh-signed
 		do
 			git verify-tag $tag 2>actual &&
-			grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual &&
-			! grep "${GPGSSH_BAD_SIGNATURE}" actual &&
+			test_grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual &&
+			test_grep ! "${GPGSSH_BAD_SIGNATURE}" actual &&
 			echo $tag OK || exit 1
 		done
 	) &&
@@ -80,8 +80,8 @@ test_expect_success GPGSSH 'verify and show ssh signatures' '
 		for tag in fourth-unsigned fifth-unsigned sixth-unsigned
 		do
 			test_must_fail git verify-tag $tag 2>actual &&
-			! grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual &&
-			! grep "${GPGSSH_BAD_SIGNATURE}" actual &&
+			test_grep ! "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual &&
+			test_grep ! "${GPGSSH_BAD_SIGNATURE}" actual &&
 			echo $tag OK || exit 1
 		done
 	) &&
@@ -89,9 +89,9 @@ test_expect_success GPGSSH 'verify and show ssh signatures' '
 		for tag in eighth-signed-alt
 		do
 			test_must_fail git verify-tag $tag 2>actual &&
-			grep "${GPGSSH_GOOD_SIGNATURE_UNTRUSTED}" actual &&
-			! grep "${GPGSSH_BAD_SIGNATURE}" actual &&
-			grep "${GPGSSH_KEY_NOT_TRUSTED}" actual &&
+			test_grep "${GPGSSH_GOOD_SIGNATURE_UNTRUSTED}" actual &&
+			test_grep ! "${GPGSSH_BAD_SIGNATURE}" actual &&
+			test_grep "${GPGSSH_KEY_NOT_TRUSTED}" actual &&
 			echo $tag OK || exit 1
 		done
 	)
@@ -100,26 +100,26 @@ test_expect_success GPGSSH 'verify and show ssh signatures' '
 test_expect_success GPGSSH,GPGSSH_VERIFYTIME 'verify-tag exits failure on expired signature key' '
 	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
 	test_must_fail git verify-tag expired-signed 2>actual &&
-	! grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual
+	test_grep ! "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual
 '
 
 test_expect_success GPGSSH,GPGSSH_VERIFYTIME 'verify-tag exits failure on not yet valid signature key' '
 	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
 	test_must_fail git verify-tag notyetvalid-signed 2>actual &&
-	! grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual
+	test_grep ! "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual
 '
 
 test_expect_success GPGSSH,GPGSSH_VERIFYTIME 'verify-tag succeeds with tag date and key validity matching' '
 	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
 	git verify-tag timeboxedvalid-signed 2>actual &&
-	grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual &&
-	! grep "${GPGSSH_BAD_SIGNATURE}" actual
+	test_grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual &&
+	test_grep ! "${GPGSSH_BAD_SIGNATURE}" actual
 '
 
 test_expect_success GPGSSH,GPGSSH_VERIFYTIME 'verify-tag fails with tag date outside of key validity' '
 	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
 	test_must_fail git verify-tag timeboxedinvalid-signed 2>actual &&
-	! grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual
+	test_grep ! "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual
 '
 
 test_expect_success GPGSSH 'detect fudged ssh signature' '
@@ -128,9 +128,9 @@ test_expect_success GPGSSH 'detect fudged ssh signature' '
 	sed -e "/^tag / s/seventh/7th-forged/" raw >forged1 &&
 	git hash-object -w -t tag forged1 >forged1.tag &&
 	test_must_fail git verify-tag $(cat forged1.tag) 2>actual1 &&
-	grep "${GPGSSH_BAD_SIGNATURE}" actual1 &&
-	! grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual1 &&
-	! grep "${GPGSSH_GOOD_SIGNATURE_UNTRUSTED}" actual1
+	test_grep "${GPGSSH_BAD_SIGNATURE}" actual1 &&
+	test_grep ! "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual1 &&
+	test_grep ! "${GPGSSH_GOOD_SIGNATURE_UNTRUSTED}" actual1
 '
 
 test_expect_success GPGSSH 'verify ssh signatures with --raw' '
@@ -139,8 +139,8 @@ test_expect_success GPGSSH 'verify ssh signatures with --raw' '
 		for tag in initial second merge fourth-signed sixth-signed seventh-signed
 		do
 			git verify-tag --raw $tag 2>actual &&
-			grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual &&
-			! grep "${GPGSSH_BAD_SIGNATURE}" actual &&
+			test_grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual &&
+			test_grep ! "${GPGSSH_BAD_SIGNATURE}" actual &&
 			echo $tag OK || exit 1
 		done
 	) &&
@@ -148,8 +148,8 @@ test_expect_success GPGSSH 'verify ssh signatures with --raw' '
 		for tag in fourth-unsigned fifth-unsigned sixth-unsigned
 		do
 			test_must_fail git verify-tag --raw $tag 2>actual &&
-			! grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual &&
-			! grep "${GPGSSH_BAD_SIGNATURE}" actual &&
+			test_grep ! "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual &&
+			test_grep ! "${GPGSSH_BAD_SIGNATURE}" actual &&
 			echo $tag OK || exit 1
 		done
 	) &&
@@ -157,8 +157,8 @@ test_expect_success GPGSSH 'verify ssh signatures with --raw' '
 		for tag in eighth-signed-alt
 		do
 			test_must_fail git verify-tag --raw $tag 2>actual &&
-			grep "${GPGSSH_GOOD_SIGNATURE_UNTRUSTED}" actual &&
-			! grep "${GPGSSH_BAD_SIGNATURE}" actual &&
+			test_grep "${GPGSSH_GOOD_SIGNATURE_UNTRUSTED}" actual &&
+			test_grep ! "${GPGSSH_BAD_SIGNATURE}" actual &&
 			echo $tag OK || exit 1
 		done
 	)
@@ -167,8 +167,8 @@ test_expect_success GPGSSH 'verify ssh signatures with --raw' '
 test_expect_success GPGSSH 'verify signatures with --raw ssh' '
 	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
 	git verify-tag --raw sixth-signed 2>actual &&
-	grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual &&
-	! grep "${GPGSSH_BAD_SIGNATURE}" actual &&
+	test_grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual &&
+	test_grep ! "${GPGSSH_BAD_SIGNATURE}" actual &&
 	echo sixth-signed OK
 '
 

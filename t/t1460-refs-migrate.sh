@@ -212,7 +212,7 @@ do
 			test_commit -C repo initial &&
 			git -C repo refs migrate --dry-run \
 				--ref-format=$to_format >output &&
-			grep "Finished dry-run migration of refs" output &&
+			test_grep "Finished dry-run migration of refs" output &&
 			test_path_is_dir repo/.git/ref_migration.* &&
 			echo $from_format >expect &&
 			git -C repo rev-parse --show-ref-format >actual &&

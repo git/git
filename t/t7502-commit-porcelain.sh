@@ -529,7 +529,7 @@ test_expect_success 'verbose respects diff config' '
 
 	test_config diff.noprefix true &&
 	git status -v >actual &&
-	grep "diff --git negative negative" actual
+	test_grep "diff --git negative negative" actual
 '
 
 mesg_with_comment_and_newlines='

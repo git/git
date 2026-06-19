@@ -216,17 +216,17 @@ test_expect_success 'git p4 clone simple branches' '
 		test_path_is_file file1 &&
 		test_path_is_file file2 &&
 		test_path_is_file file3 &&
-		grep update file2 &&
+		test_grep update file2 &&
 		git reset --hard p4/depot/branch2 &&
 		test_path_is_file file1 &&
 		test_path_is_file file2 &&
 		test ! -f file3 &&
-		! grep update file2 &&
+		test_grep ! update file2 &&
 		git reset --hard p4/depot/branch3 &&
 		test_path_is_file file1 &&
 		test_path_is_file file2 &&
 		test_path_is_file file3 &&
-		grep update file2 &&
+		test_grep update file2 &&
 		cd "$cli" &&
 		cd branch1 &&
 		p4 edit file2 &&
@@ -235,7 +235,7 @@ test_expect_success 'git p4 clone simple branches' '
 		cd "$git" &&
 		git reset --hard p4/depot/branch1 &&
 		git p4 rebase &&
-		grep file2_ file2
+		test_grep file2_ file2
 	)
 '
 
@@ -292,29 +292,29 @@ test_expect_success 'git p4 clone complex branches' '
 		test_path_is_file file1 &&
 		test_path_is_file file2 &&
 		test_path_is_file file3 &&
-		grep update file2 &&
+		test_grep update file2 &&
 		git reset --hard p4/depot/branch2 &&
 		test_path_is_file file1 &&
 		test_path_is_file file2 &&
 		test_path_is_missing file3 &&
-		! grep update file2 &&
+		test_grep ! update file2 &&
 		git reset --hard p4/depot/branch3 &&
 		test_path_is_file file1 &&
 		test_path_is_file file2 &&
 		test_path_is_file file3 &&
-		grep update file2 &&
+		test_grep update file2 &&
 		git reset --hard p4/depot/branch4 &&
 		git diff-tree --quiet HEAD &&
 		test_path_is_file file1 &&
 		test_path_is_file file2 &&
 		test_path_is_missing file3 &&
-		! grep update file2 &&
+		test_grep ! update file2 &&
 		git reset --hard p4/depot/branch5 &&
 		git diff-tree --quiet HEAD &&
 		test_path_is_file file1 &&
 		test_path_is_file file2 &&
 		test_path_is_file file3 &&
-		! grep update file2 &&
+		test_grep ! update file2 &&
 		test_must_fail git show-ref --verify refs/git-p4-tmp
 	)
 '
@@ -346,27 +346,27 @@ test_expect_success 'git p4 sync changes to two branches in the same changelist'
 		test_path_is_file file1 &&
 		test_path_is_file file2 &&
 		test_path_is_file file3 &&
-		grep update file2 &&
+		test_grep update file2 &&
 		git reset --hard p4/depot/branch2 &&
 		test_path_is_file file1 &&
 		test_path_is_file file2 &&
 		test_path_is_missing file3 &&
-		! grep update file2 &&
+		test_grep ! update file2 &&
 		git reset --hard p4/depot/branch3 &&
 		test_path_is_file file1 &&
 		test_path_is_file file2 &&
 		test_path_is_missing file3 &&
-		grep update file2 &&
+		test_grep update file2 &&
 		git reset --hard p4/depot/branch4 &&
 		test_path_is_file file1 &&
 		test_path_is_file file2 &&
 		test_path_is_file file3 &&
-		! grep update file2 &&
+		test_grep ! update file2 &&
 		git reset --hard p4/depot/branch5 &&
 		test_path_is_file file1 &&
 		test_path_is_file file2 &&
 		test_path_is_file file3 &&
-		! grep update file2 &&
+		test_grep ! update file2 &&
 		test_must_fail git show-ref --verify refs/git-p4-tmp
 	)
 '
@@ -398,27 +398,27 @@ test_expect_failure 'git p4 clone file subset branch' '
 		test_path_is_file file1 &&
 		test_path_is_file file2 &&
 		test_path_is_file file3 &&
-		grep update file2 &&
+		test_grep update file2 &&
 		git reset --hard p4/depot/branch2 &&
 		test_path_is_file file1 &&
 		test_path_is_file file2 &&
 		test_path_is_missing file3 &&
-		! grep update file2 &&
+		test_grep ! update file2 &&
 		git reset --hard p4/depot/branch3 &&
 		test_path_is_file file1 &&
 		test_path_is_file file2 &&
 		test_path_is_missing file3 &&
-		grep update file2 &&
+		test_grep update file2 &&
 		git reset --hard p4/depot/branch4 &&
 		test_path_is_file file1 &&
 		test_path_is_file file2 &&
 		test_path_is_file file3 &&
-		! grep update file2 &&
+		test_grep ! update file2 &&
 		git reset --hard p4/depot/branch5 &&
 		test_path_is_file file1 &&
 		test_path_is_file file2 &&
 		test_path_is_file file3 &&
-		! grep update file2 &&
+		test_grep ! update file2 &&
 		git reset --hard p4/depot/branch6 &&
 		test_path_is_file file1 &&
 		test_path_is_missing file2 &&
@@ -622,19 +622,19 @@ test_expect_success 'git p4 clone simple branches with base folder on server sid
 		test_path_is_file file2 &&
 		test_path_is_file file3 &&
 		test_path_is_file sub_file1 &&
-		grep update file2 &&
+		test_grep update file2 &&
 		git reset --hard p4/depot/branch2 &&
 		test_path_is_file file1 &&
 		test_path_is_file file2 &&
 		test ! -f file3 &&
 		test_path_is_file sub_file1 &&
-		! grep update file2 &&
+		test_grep ! update file2 &&
 		git reset --hard p4/depot/branch3 &&
 		test_path_is_file file1 &&
 		test_path_is_file file2 &&
 		test_path_is_file file3 &&
 		test_path_is_file sub_file1 &&
-		grep update file2 &&
+		test_grep update file2 &&
 		cd "$cli" &&
 		cd branch1 &&
 		p4 edit file2 &&
@@ -643,7 +643,7 @@ test_expect_success 'git p4 clone simple branches with base folder on server sid
 		cd "$git" &&
 		git reset --hard p4/depot/branch1 &&
 		git p4 rebase &&
-		grep file2_ file2
+		test_grep file2_ file2
 	)
 '
 
@@ -661,7 +661,7 @@ test_expect_success 'Update a file in git side and submit to P4 using client vie
 		cd "$cli" &&
 		p4 sync ... &&
 		cd branch1 &&
-		grep "client spec" file1
+		test_grep "client spec" file1
 	)
 '
 

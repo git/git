@@ -81,8 +81,8 @@ test_bitmap_cases () {
 			git repack -ad &&
 		ls .git/objects/pack/ | grep bitmap >output &&
 		test_line_count = 1 output &&
-		grep "\"key\":\"num_selected_commits\",\"value\":\"106\"" trace &&
-		grep "\"key\":\"num_maximal_commits\",\"value\":\"107\"" trace
+		test_grep "\"key\":\"num_selected_commits\",\"value\":\"106\"" trace &&
+		test_grep "\"key\":\"num_maximal_commits\",\"value\":\"107\"" trace
 	'
 
 	basic_bitmap_tests
@@ -532,8 +532,8 @@ test_bitmap_cases () {
 			test_line_count = 2 bitmaps &&
 
 			GIT_TRACE2_EVENT=$(pwd)/trace2.txt git rev-list --use-bitmap-index HEAD &&
-			grep "opened bitmap" trace2.txt &&
-			grep "ignoring extra bitmap" trace2.txt
+			test_grep "opened bitmap" trace2.txt &&
+			test_grep "ignoring extra bitmap" trace2.txt
 		)
 	'
 
@@ -634,7 +634,7 @@ test_expect_success 'boundary-based traversal is used when requested' '
 	do
 		eval "GIT_TRACE2_EVENT=1 $argv rev-list --objects \
 			--use-bitmap-index second..other 2>perf" &&
-		grep "\"region_enter\".*\"label\":\"haves/boundary\"" perf ||
+		test_grep "\"region_enter\".*\"label\":\"haves/boundary\"" perf ||
 			return 1
 	done &&
 
@@ -646,7 +646,7 @@ test_expect_success 'boundary-based traversal is used when requested' '
 	do
 		eval "GIT_TRACE2_EVENT=1 $argv rev-list --objects \
 			--use-bitmap-index second..other 2>perf" &&
-		grep "\"region_enter\".*\"label\":\"haves/classic\"" perf ||
+		test_grep "\"region_enter\".*\"label\":\"haves/classic\"" perf ||
 			return 1
 	done
 '
@@ -668,7 +668,7 @@ test_bitmap_cases "pack.writeBitmapLookupTable"
 test_expect_success 'verify writing bitmap lookup table when enabled' '
 	GIT_TRACE2_EVENT="$(pwd)/trace2" \
 		git repack -ad &&
-	grep "\"label\":\"writing_lookup_table\"" trace2
+	test_grep "\"label\":\"writing_lookup_table\"" trace2
 '
 
 test_expect_success 'truncated bitmap fails gracefully (lookup table)' '

@@ -120,7 +120,7 @@ test_expect_success 'prune: prune former HEAD after checking out branch' '
 	git checkout --quiet main &&
 	git reflog expire --all &&
 	git prune -v >prune_actual &&
-	grep "$head_oid" prune_actual
+	test_grep "$head_oid" prune_actual
 '
 
 test_expect_success 'prune: do not prune heads listed as an argument' '
@@ -214,7 +214,7 @@ test_expect_success 'garbage report in count-objects -v' '
 	>.git/objects/pack/fake2.keep &&
 	>.git/objects/pack/fake3.idx &&
 	git count-objects -v 2>stderr &&
-	grep "index file .git/objects/pack/fake.idx is too small" stderr &&
+	test_grep "index file .git/objects/pack/fake.idx is too small" stderr &&
 	grep "^warning:" stderr | sort >actual &&
 	cat >expected <<\EOF &&
 warning: garbage found: .git/objects/pack/fake.bar
@@ -252,8 +252,8 @@ test_expect_success 'prune .git/shallow' '
 	oid=$(echo hi|git commit-tree HEAD^{tree}) &&
 	echo $oid >.git/shallow &&
 	git prune --dry-run >out &&
-	grep $oid .git/shallow &&
-	grep $oid out &&
+	test_grep $oid .git/shallow &&
+	test_grep $oid out &&
 	git prune &&
 	test_path_is_missing .git/shallow
 '

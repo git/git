@@ -205,7 +205,7 @@ test_expect_success EXPENSIVE,LONG_IS_64BIT,UNZIP,UNZIP_ZIP64_SUPPORT,ZIPINFO \
 
 	"$GIT_UNZIP" -t big.zip &&
 	"$ZIPINFO" big.zip >big.lst &&
-	grep $size big.lst
+	test_grep $size big.lst
 '
 
 build_tree() {

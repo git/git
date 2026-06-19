@@ -204,7 +204,7 @@ test_expect_success 'git branch -M baz bam should succeed when baz is checked ou
 
 test_expect_success 'git branch -M baz bam should add entries to HEAD reflog' '
 	git reflog show HEAD >actual &&
-	grep "HEAD@{0}: Branch: renamed refs/heads/baz to refs/heads/bam" actual
+	test_grep "HEAD@{0}: Branch: renamed refs/heads/baz to refs/heads/bam" actual
 '
 
 test_expect_success 'git branch -M should leave orphaned HEAD alone' '
@@ -339,7 +339,7 @@ test_expect_success 'git branch -d on orphan HEAD (unmerged)' '
 	test_when_finished "git branch -D to-delete" &&
 	git branch to-delete main &&
 	test_must_fail git branch -d to-delete 2>err &&
-	grep "not fully merged" err
+	test_grep "not fully merged" err
 '
 
 test_expect_success 'git branch -d on orphan HEAD (unmerged, graph)' '
@@ -350,7 +350,7 @@ test_expect_success 'git branch -d on orphan HEAD (unmerged, graph)' '
 	test_when_finished "rm -rf .git/objects/commit-graph*" &&
 	git commit-graph write --reachable &&
 	test_must_fail git branch -d to-delete 2>err &&
-	grep "not fully merged" err
+	test_grep "not fully merged" err
 '
 
 test_expect_success 'git branch -v -d t should work' '
@@ -712,7 +712,7 @@ test_expect_success 'git branch -C c1 c2 should succeed when c1 is checked out' 
 test_expect_success 'git branch -C c1 c2 should never touch HEAD' '
 	msg="Branch: copied refs/heads/c1 to refs/heads/c2" &&
 	git reflog HEAD >actual &&
-	! grep "$msg$" actual
+	test_grep ! "$msg$" actual
 '
 
 test_expect_success 'git branch -C main should work when main is checked out' '
@@ -930,7 +930,7 @@ test_expect_success 'deleting currently checked out branch fails' '
 	git worktree add -b my7 my7 &&
 	test_must_fail git -C my7 branch -d my7 &&
 	test_must_fail git branch -d my7 2>actual &&
-	grep "^error: cannot delete branch .my7. used by worktree at " actual &&
+	test_grep "^error: cannot delete branch .my7. used by worktree at " actual &&
 	rm -r my7 &&
 	git worktree prune
 '
@@ -941,7 +941,7 @@ test_expect_success 'deleting in-use branch fails' '
 	git -C my7 bisect start HEAD HEAD~2 &&
 	test_must_fail git -C my7 branch -d my7 &&
 	test_must_fail git branch -d my7 2>actual &&
-	grep "^error: cannot delete branch .my7. used by worktree at " actual &&
+	test_grep "^error: cannot delete branch .my7. used by worktree at " actual &&
 	rm -r my7 &&
 	git worktree prune
 '

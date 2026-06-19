@@ -100,7 +100,7 @@ test_rebase () {
 		echo untracked >three.t &&
 		test_when_finished "rm three.t" &&
 		test_must_fail git rebase $args HEAD rebase-fast-forward 2>err &&
-		grep "untracked working tree files would be overwritten by checkout" err &&
+		test_grep "untracked working tree files would be overwritten by checkout" err &&
 		test_path_is_missing .git/post-checkout.args
 
 '

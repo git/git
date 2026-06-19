@@ -958,13 +958,13 @@ test_expect_success 'merge-base without --all is one of --all results' '
 	git merge-base --all commit-5-7 commit-4-8 commit-6-6 commit-8-3 >all &&
 	git merge-base commit-5-7 commit-4-8 commit-6-6 commit-8-3 >single &&
 	test_line_count = 1 single &&
-	grep -F -f single all &&
+	test_grep -F -f single all &&
 
 	cp commit-graph-half .git/objects/info/commit-graph &&
 	git merge-base --all commit-5-7 commit-4-8 commit-6-6 commit-8-3 >all &&
 	git merge-base commit-5-7 commit-4-8 commit-6-6 commit-8-3 >single &&
 	test_line_count = 1 single &&
-	grep -F -f single all
+	test_grep -F -f single all
 '
 
 test_done

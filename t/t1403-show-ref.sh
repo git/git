@@ -213,19 +213,19 @@ test_expect_success 'show-ref --verify with dangling ref' '
 
 test_expect_success 'show-ref sub-modes are mutually exclusive' '
 	test_must_fail git show-ref --verify --exclude-existing 2>err &&
-	grep "verify" err &&
-	grep "exclude-existing" err &&
-	grep "cannot be used together" err &&
+	test_grep "verify" err &&
+	test_grep "exclude-existing" err &&
+	test_grep "cannot be used together" err &&
 
 	test_must_fail git show-ref --verify --exists 2>err &&
-	grep "verify" err &&
-	grep "exists" err &&
-	grep "cannot be used together" err &&
+	test_grep "verify" err &&
+	test_grep "exists" err &&
+	test_grep "cannot be used together" err &&
 
 	test_must_fail git show-ref --exclude-existing --exists 2>err &&
-	grep "exclude-existing" err &&
-	grep "exists" err &&
-	grep "cannot be used together" err
+	test_grep "exclude-existing" err &&
+	test_grep "exists" err &&
+	test_grep "cannot be used together" err
 '
 
 test_done

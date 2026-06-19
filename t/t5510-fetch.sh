@@ -856,7 +856,7 @@ test_expect_success 'fetch from GIT URL with a non-applying branch.<name>.merge 
 # the strange name is: a\!'b
 test_expect_success 'quoting of a strangely named repo' '
 	test_must_fail git fetch "a\\!'\''b" > result 2>&1 &&
-	grep "fatal: '\''a\\\\!'\''b'\''" result
+	test_grep "fatal: '\''a\\\\!'\''b'\''" result
 '
 
 test_expect_success 'bundle should record HEAD correctly' '
@@ -1010,14 +1010,14 @@ test_expect_success 'fetch --dry-run does not touch FETCH_HEAD, but still prints
 	rm -f .git/FETCH_HEAD err &&
 	git fetch --dry-run . 2>err &&
 	! test -f .git/FETCH_HEAD &&
-	grep FETCH_HEAD err
+	test_grep FETCH_HEAD err
 '
 
 test_expect_success '--no-write-fetch-head does not touch FETCH_HEAD, and does not print what would be written' '
 	rm -f .git/FETCH_HEAD err &&
 	git fetch --no-write-fetch-head . 2>err &&
 	! test -f .git/FETCH_HEAD &&
-	! grep FETCH_HEAD err
+	test_grep ! FETCH_HEAD err
 '
 
 test_expect_success '--write-fetch-head gets defeated by --dry-run' '
@@ -1435,7 +1435,7 @@ test_expect_success 'fetching with auto-gc does not lock up' '
 		git config maintenance.strategy gc &&
 		GIT_ASK_YESNO="$TRASH_DIRECTORY/askyesno" git fetch --verbose >fetch.out 2>&1 &&
 		test_grep "Auto packing the repository" fetch.out &&
-		! grep "Should I try again" fetch.out
+		test_grep ! "Should I try again" fetch.out
 	)
 '
 
@@ -1444,7 +1444,7 @@ do
 	test_expect_success "$section.hideRefs affects connectivity check" '
 		GIT_TRACE="$PWD"/trace git -c $section.hideRefs=refs -c \
 			$section.hideRefs="!refs/tags/" fetch &&
-		grep "git rev-list .*--exclude-hidden=fetch" trace
+		test_grep "git rev-list .*--exclude-hidden=fetch" trace
 	'
 done
 

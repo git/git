@@ -542,7 +542,7 @@ test_expect_success 'submit --update-shelve' '
 		cd "$cli" &&
 		change=$(last_shelve) &&
 		p4 unshelve -c $change -s $change &&
-		grep -q updated-line shelf.t &&
+		test_grep -q updated-line shelf.t &&
 		p4 describe -S $change | grep added-file.t &&
 		test_path_is_missing shelved-change-1.t &&
 		p4 revert ...

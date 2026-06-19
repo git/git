@@ -436,7 +436,7 @@ test_expect_success 'B: accept invalid timezone with raw-permissive' '
 	git init invalid-timezone &&
 	git -C invalid-timezone fast-import --date-format=raw-permissive <input &&
 	git -C invalid-timezone cat-file -p invalid-timezone >out &&
-	grep "1234567890 [+]051800" out
+	test_grep "1234567890 [+]051800" out
 '
 
 test_expect_success 'B: accept and fixup committer with no name' '
@@ -2326,7 +2326,7 @@ test_expect_success 'R: export-marks feature results in a marks file being creat
 	EOF
 
 	git fast-import --allow-unsafe-features <input &&
-	grep :1 git.marks
+	test_grep :1 git.marks
 '
 
 test_expect_success 'R: export-marks options can be overridden by commandline options' '
@@ -2340,7 +2340,7 @@ test_expect_success 'R: export-marks options can be overridden by commandline op
 	EOF
 	git fast-import --allow-unsafe-features \
 			--export-marks=cmdline-sub/other.marks <input &&
-	grep :1 cmdline-sub/other.marks &&
+	test_grep :1 cmdline-sub/other.marks &&
 	test_path_is_missing feature-sub
 '
 
@@ -3816,9 +3816,9 @@ test_expect_success 'X: replace ref that becomes useless is removed' '
 		sed -e s/othername/somename/ tmp >tmp2 &&
 		git fast-import --force <tmp2 2>msgs &&
 
-		grep "dropping.*since it would point to itself" msgs &&
+		test_grep "dropping.*since it would point to itself" msgs &&
 		git show-ref >refs &&
-		! grep refs/replace refs
+		test_grep ! refs/replace refs
 	)
 '
 

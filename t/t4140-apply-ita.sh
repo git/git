@@ -14,11 +14,11 @@ test_expect_success setup '
 	cat blueprint >test-file &&
 	git add -N test-file &&
 	git diff >creation-patch &&
-	grep "new file mode 100644" creation-patch &&
+	test_grep "new file mode 100644" creation-patch &&
 
 	rm -f test-file &&
 	git diff >deletion-patch &&
-	grep "deleted file mode 100644" deletion-patch &&
+	test_grep "deleted file mode 100644" deletion-patch &&
 
 	git rm -f test-file &&
 	test_write_lines 6 >>committed-file &&

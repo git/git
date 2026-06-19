@@ -342,8 +342,8 @@ test_expect_success 'merge --squash --autostash conflict does not attempt to app
 	>unrelated &&
 	git add unrelated &&
 	test_must_fail git merge --squash c7 --autostash >out 2>err &&
-	! grep "Applying autostash resulted in conflicts." err &&
-	grep "When finished, apply stashed changes with \`git stash pop\`" out
+	test_grep ! "Applying autostash resulted in conflicts." err &&
+	test_grep "When finished, apply stashed changes with \`git stash pop\`" out
 '
 
 test_expect_success 'merge c3 with c7 with commit.cleanup = scissors' '
@@ -990,7 +990,7 @@ test_expect_success 'merge --no-ff --edit' '
 	EDITOR=./editor git merge --no-ff --edit c1 &&
 	verify_parents $c0 $c1 &&
 	git cat-file commit HEAD >raw &&
-	grep "work done on the side branch" raw &&
+	test_grep "work done on the side branch" raw &&
 	sed "1,/^$/d" >actual raw &&
 	test_cmp expected actual
 '
@@ -1157,13 +1157,13 @@ test_expect_success 'merge suggests matching remote refname' '
 	git pack-refs --all --prune &&
 
 	test_must_fail git merge not-local 2>stderr &&
-	grep origin/not-local stderr
+	test_grep origin/not-local stderr
 '
 
 test_expect_success 'suggested names are not ambiguous' '
 	git update-ref refs/heads/origin/not-local HEAD &&
 	test_must_fail git merge not-local 2>stderr &&
-	grep remotes/origin/not-local stderr
+	test_grep remotes/origin/not-local stderr
 '
 
 test_done

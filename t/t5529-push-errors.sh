@@ -44,14 +44,14 @@ test_expect_success 'detect missing sha1 expressions early' '
 # 'builtin/push.c:set_refspecs()' and we want to test that regression.
 test_expect_success 'detect empty remote with existing local ref' '
 	test_must_fail git push "" main 2> stderr &&
-	grep "fatal: bad repository ${SQ}${SQ}" stderr
+	test_grep "fatal: bad repository ${SQ}${SQ}" stderr
 '
 
 # While similar to the previous test, here we want to ensure that
 # even targeted refspecs are handled.
 test_expect_success 'detect empty remote with targeted refspec' '
 	test_must_fail git push "" HEAD:refs/heads/main 2> stderr &&
-	grep "fatal: bad repository ${SQ}${SQ}" stderr
+	test_grep "fatal: bad repository ${SQ}${SQ}" stderr
 '
 
 test_expect_success 'detect ambiguous refs early' '

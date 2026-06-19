@@ -139,9 +139,9 @@ test_expect_success ICONV 'reencoding iso-8859-7' '
 	test $(($(test_oid hexsz) + 181)) -eq "$(git -C new cat-file -s i18n)" &&
 	# ...and for the expected translation of bytes.
 	git -C new cat-file commit i18n >actual &&
-	grep $(printf "\317\200") actual &&
+	test_grep $(printf "\317\200") actual &&
 	# Also make sure the commit does not have the "encoding" header
-	! grep ^encoding actual
+	test_grep ! ^encoding actual
 '
 
 test_expect_success 'aborting on iso-8859-7' '
@@ -170,9 +170,9 @@ test_expect_success 'preserving iso-8859-7' '
 	test $(($(test_oid hexsz) + 200)) -eq "$(git -C new cat-file -s i18n-no-recoding)" &&
 	# ...as well as the expected byte.
 	git -C new cat-file commit i18n-no-recoding >actual &&
-	grep $(printf "\360") actual &&
+	test_grep $(printf "\360") actual &&
 	# Also make sure the commit has the "encoding" header
-	grep ^encoding actual
+	test_grep ^encoding actual
 '
 
 test_expect_success 'encoding preserved if reencoding fails' '
@@ -186,13 +186,13 @@ test_expect_success 'encoding preserved if reencoding fails' '
 	git -C new cat-file commit i18n-invalid >actual &&
 
 	# Make sure the commit still has the encoding header
-	grep ^encoding actual &&
+	test_grep ^encoding actual &&
 	# Verify that the commit has the expected size; i.e.
 	# that no bytes were re-encoded to a different encoding.
 	test $(($(test_oid hexsz) + 212)) -eq "$(git -C new cat-file -s i18n-invalid)" &&
 	# ...and check for the original special bytes
-	grep $(printf "\360") actual &&
-	grep $(printf "\377") actual
+	test_grep $(printf "\360") actual &&
+	test_grep $(printf "\377") actual
 '
 
 test_expect_success 'import/export-marks' '
@@ -244,14 +244,14 @@ test_expect_success 'signed-tags=abort' '
 test_expect_success 'signed-tags=verbatim' '
 
 	git fast-export --signed-tags=verbatim sign-your-name > output &&
-	grep PGP output
+	test_grep PGP output
 
 '
 
 test_expect_success 'signed-tags=warn-verbatim' '
 
 	git fast-export --signed-tags=warn-verbatim sign-your-name >output 2>err &&
-	grep PGP output &&
+	test_grep PGP output &&
 	test -s err
 
 '
@@ -261,7 +261,7 @@ test_expect_success 'signed-tags=warn-verbatim' '
 test_expect_success 'signed-tags=warn' '
 
 	git fast-export --signed-tags=warn sign-your-name >output 2>err &&
-	grep PGP output &&
+	test_grep PGP output &&
 	test -s err
 
 '
@@ -269,13 +269,13 @@ test_expect_success 'signed-tags=warn' '
 test_expect_success 'signed-tags=strip' '
 
 	git fast-export --signed-tags=strip sign-your-name > output &&
-	! grep PGP output
+	test_grep ! PGP output
 
 '
 
 test_expect_success 'signed-tags=warn-strip' '
 	git fast-export --signed-tags=warn-strip sign-your-name >output 2>err &&
-	! grep PGP output &&
+	test_grep ! PGP output &&
 	test -s err
 '
 
@@ -345,7 +345,7 @@ test_expect_success GPG 'signed-commits=verbatim' '
 
 	git fast-export --signed-commits=verbatim --reencode=no commit-signing >output &&
 	test_grep -E "^gpgsig $GIT_DEFAULT_HASH openpgp" output &&
-	grep "encoding ISO-8859-1" output &&
+	test_grep "encoding ISO-8859-1" output &&
 	git -C new fast-import <output &&
 	STRIPPED=$(git -C new rev-parse --verify refs/heads/commit-signing) &&
 	test $COMMIT_SIGNING = $STRIPPED
@@ -356,7 +356,7 @@ test_expect_success GPG 'signed-commits=warn-verbatim' '
 
 	git fast-export --signed-commits=warn-verbatim --reencode=no commit-signing >output 2>err &&
 	test_grep -E "^gpgsig $GIT_DEFAULT_HASH openpgp" output &&
-	grep "encoding ISO-8859-1" output &&
+	test_grep "encoding ISO-8859-1" output &&
 	test -s err &&
 	git -C new fast-import <output &&
 	STRIPPED=$(git -C new rev-parse --verify refs/heads/commit-signing) &&
@@ -367,8 +367,8 @@ test_expect_success GPG 'signed-commits=warn-verbatim' '
 test_expect_success GPG 'signed-commits=strip' '
 
 	git fast-export --signed-commits=strip --reencode=no commit-signing >output &&
-	! grep ^gpgsig output &&
-	grep "^encoding ISO-8859-1" output &&
+	test_grep ! ^gpgsig output &&
+	test_grep "^encoding ISO-8859-1" output &&
 	sed "s/commit-signing/commit-strip-signing/" output | git -C new fast-import &&
 	STRIPPED=$(git -C new rev-parse --verify refs/heads/commit-strip-signing) &&
 	test $COMMIT_SIGNING != $STRIPPED
@@ -378,8 +378,8 @@ test_expect_success GPG 'signed-commits=strip' '
 test_expect_success GPG 'signed-commits=warn-strip' '
 
 	git fast-export --signed-commits=warn-strip --reencode=no commit-signing >output 2>err &&
-	! grep ^gpgsig output &&
-	grep "^encoding ISO-8859-1" output &&
+	test_grep ! ^gpgsig output &&
+	test_grep "^encoding ISO-8859-1" output &&
 	test -s err &&
 	sed "s/commit-signing/commit-strip-signing/" output | git -C new fast-import &&
 	STRIPPED=$(git -C new rev-parse --verify refs/heads/commit-strip-signing) &&
@@ -406,7 +406,7 @@ test_expect_success GPGSM 'round-trip X.509 signed commit' '
 	test_grep -E "^gpgsig $GIT_DEFAULT_HASH x509" output &&
 	git -C new fast-import <output &&
 	git -C new cat-file commit refs/heads/x509-signing >actual &&
-	grep "^gpgsig" actual &&
+	test_grep "^gpgsig" actual &&
 	IMPORTED=$(git -C new rev-parse refs/heads/x509-signing) &&
 	test $X509_COMMIT = $IMPORTED
 
@@ -431,7 +431,7 @@ test_expect_success GPGSSH 'round-trip SSH signed commit' '
 	test_grep -E "^gpgsig $GIT_DEFAULT_HASH ssh" output &&
 	git -C new fast-import <output &&
 	git -C new cat-file commit refs/heads/ssh-signing >actual &&
-	grep "^gpgsig" actual &&
+	test_grep "^gpgsig" actual &&
 	IMPORTED=$(git -C new rev-parse refs/heads/ssh-signing) &&
 	test $SSH_COMMIT = $IMPORTED
 
@@ -520,7 +520,7 @@ test_expect_success 'fast-export -C -C | fast-import' '
 	mkdir new &&
 	git --git-dir=new/.git init &&
 	git fast-export -C -C --signed-tags=strip --all > output &&
-	grep "^C file2 file4\$" output &&
+	test_grep "^C file2 file4\$" output &&
 	git -C new fast-import <output &&
 	test $ENTRY = $(git -C new rev-parse --verify refs/heads/copy)
 
@@ -548,11 +548,11 @@ test_expect_success 'cope with tagger-less tags' '
 	ANNOTATED_TAG_COUNT=$((ANNOTATED_TAG_COUNT + 1)) &&
 	git fast-export -C -C --signed-tags=strip --all > output &&
 	test $(grep -c "^tag " output) = $ANNOTATED_TAG_COUNT &&
-	! grep "Unspecified Tagger" output &&
+	test_grep ! "Unspecified Tagger" output &&
 	git fast-export -C -C --signed-tags=strip --all \
 		--fake-missing-tagger > output &&
 	test $(grep -c "^tag " output) = $ANNOTATED_TAG_COUNT &&
-	grep "Unspecified Tagger" output
+	test_grep "Unspecified Tagger" output
 
 '
 
@@ -628,7 +628,7 @@ test_expect_success 'rewrite tag predating pathspecs to nothing' '
 		test_commit bar &&
 
 		git fast-export --tag-of-filtered-object=rewrite --all -- bar.t >output &&
-		grep from.$ZERO_OID output
+		test_grep from.$ZERO_OID output
 	)
 '
 
@@ -670,7 +670,7 @@ test_expect_success 'path limiting with import-marks does not lose unmodified fi
 	test_tick &&
 	git commit -mnext file &&
 	git fast-export --import-marks=marks simple -- file file0 >actual &&
-	grep file0 actual
+	test_grep file0 actual
 '
 
 test_expect_success 'path limiting works' '
@@ -753,7 +753,7 @@ test_expect_success 'handling tags of blobs' '
 test_expect_success 'handling nested tags' '
 	git tag -a -m "This is a nested tag" nested muss &&
 	git fast-export --mark-tags nested >output &&
-	grep "^from $ZERO_OID$" output &&
+	test_grep "^from $ZERO_OID$" output &&
 	grep "^tag nested$" output >tag_lines &&
 	test_line_count = 2 tag_lines
 '
@@ -926,7 +926,7 @@ test_expect_success 'merge commit gets exported with --import-marks' '
 
 		echo ":1 $(git rev-parse HEAD^^)" >marks &&
 		git fast-export --import-marks=marks main >out &&
-		grep Yeah out
+		test_grep Yeah out
 	)
 '
 

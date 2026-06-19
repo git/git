@@ -275,7 +275,7 @@ test_expect_success '--set-upstream-to does not change branch' '
 	git branch --set-upstream-to main from-topic_2 &&
 	git config branch.from-main.merge > actual &&
 	git rev-parse from-topic_2 >actual2 &&
-	grep -q "^refs/heads/main$" actual &&
+	test_grep -q "^refs/heads/main$" actual &&
 	cmp expect2 actual2
 '
 

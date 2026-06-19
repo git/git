@@ -36,7 +36,7 @@ test_expect_success 'add superproject worktree' '
 
 test_expect_failure 'submodule is checked out just after worktree add' '
 	git -C worktree diff --submodule main"^!" >out &&
-	grep "file1 updated" out
+	test_grep "file1 updated" out
 '
 
 test_expect_success 'add superproject worktree and initialize submodules' '
@@ -46,7 +46,7 @@ test_expect_success 'add superproject worktree and initialize submodules' '
 
 test_expect_success 'submodule is checked out just after submodule update in linked worktree' '
 	git -C worktree-submodule-update diff --submodule main"^!" >out &&
-	grep "file1 updated" out
+	test_grep "file1 updated" out
 '
 
 test_expect_success 'add superproject worktree and manually add submodule worktree' '
@@ -56,7 +56,7 @@ test_expect_success 'add superproject worktree and manually add submodule worktr
 
 test_expect_success 'submodule is checked out after manually adding submodule worktree' '
 	git -C linked_submodule diff --submodule main"^!" >out &&
-	grep "file1 updated" out
+	test_grep "file1 updated" out
 '
 
 test_expect_success 'checkout --recurse-submodules uses $GIT_DIR for submodules in a linked worktree' '

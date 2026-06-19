@@ -70,9 +70,9 @@ test_expect_success 'diff skips same-OID blobs' '
 
 	# Ensure that only a and another-a are fetched.
 	GIT_TRACE_PACKET="$(pwd)/trace" git -C client diff HEAD^ HEAD &&
-	grep "want $(cat hash-old-a)" trace &&
-	grep "want $(cat hash-new-a)" trace &&
-	! grep "want $(cat hash-b)" trace
+	test_grep "want $(cat hash-old-a)" trace &&
+	test_grep "want $(cat hash-new-a)" trace &&
+	test_grep ! "want $(cat hash-b)" trace
 '
 
 test_expect_success 'when fetching missing objects, diff skips GITLINKs' '
@@ -103,8 +103,8 @@ test_expect_success 'when fetching missing objects, diff skips GITLINKs' '
 	# Ensure that a and another-a are fetched, and check (by successful
 	# execution of the diff) that no invalid OIDs are sent.
 	GIT_TRACE_PACKET="$(pwd)/trace" git -C client diff HEAD^ HEAD &&
-	grep "want $(cat hash-old-a)" trace &&
-	grep "want $(cat hash-new-a)" trace
+	test_grep "want $(cat hash-old-a)" trace &&
+	test_grep "want $(cat hash-new-a)" trace
 '
 
 test_expect_success 'diff with rename detection batches blobs' '
@@ -127,7 +127,7 @@ test_expect_success 'diff with rename detection batches blobs' '
 	# Ensure that there is exactly 1 negotiation by checking that there is
 	# only 1 "done" line sent. ("done" marks the end of negotiation.)
 	GIT_TRACE_PACKET="$(pwd)/trace" git -C client diff --raw -M HEAD^ HEAD >out &&
-	grep ":100644 100644.*R[0-9][0-9][0-9].*b.*c" out &&
+	test_grep ":100644 100644.*R[0-9][0-9][0-9].*b.*c" out &&
 	grep "fetch> done" trace >done_lines &&
 	test_line_count = 1 done_lines
 '

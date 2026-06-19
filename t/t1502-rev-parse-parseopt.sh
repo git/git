@@ -331,7 +331,7 @@ test_expect_success 'ambiguous: --no matches both --noble and --no-noble' '
 	EOF
 	test_expect_code 129 env GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS=false \
 	git rev-parse --parseopt -- <spec 2>err --no &&
-	grep "error: ambiguous option: no (could be --noble or --no-noble)" err
+	test_grep "error: ambiguous option: no (could be --noble or --no-noble)" err
 '
 
 test_done

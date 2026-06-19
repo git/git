@@ -353,7 +353,7 @@ test_expect_success 'include cycles are detected' '
 	git -C cycle --git-dir=. config include.path cycle &&
 	git config -f cycle/cycle include.path config &&
 	test_must_fail git -C cycle --git-dir=. config --get-all test.value 2>stderr &&
-	grep "exceeded maximum include depth" stderr
+	test_grep "exceeded maximum include depth" stderr
 '
 
 test_expect_success 'onbranch with unborn branch' '

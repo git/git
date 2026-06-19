@@ -937,7 +937,7 @@ test_expect_success 'git tag --format with ahead-behind' '
 	test_cmp expect actual.focus &&
 
 	# Error reported for tags that point to non-commits.
-	grep "error: object [0-9a-f]* is a blob, not a commit" err
+	test_grep "error: object [0-9a-f]* is a blob, not a commit" err
 '
 
 # trying to verify annotated non-signed tags:

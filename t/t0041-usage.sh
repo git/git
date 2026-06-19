@@ -13,7 +13,7 @@ test_expect_success 'setup ' '
 
 test_expect_success 'tag --contains <existent_tag>' '
 	git tag --contains "v1.0" >actual 2>actual.err &&
-	grep "v1.0" actual &&
+	test_grep "v1.0" actual &&
 	test_line_count = 0 actual.err
 '
 

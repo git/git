@@ -127,7 +127,7 @@ test_expect_success SYMLINKS 'dir-iterator should not follow symlinks by default
 test_expect_success SYMLINKS 'dir-iterator does not resolve top-level symlinks' '
 	test_must_fail test-tool dir-iterator ./dir5 >out &&
 
-	grep "ENOTDIR" out
+	test_grep "ENOTDIR" out
 '
 
 test_done

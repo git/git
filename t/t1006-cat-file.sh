@@ -685,8 +685,8 @@ test_expect_success '%(deltabase) reports packed delta bases' '
 	git repack -ad &&
 	git cat-file --batch-check="%(deltabase)" <blobs >actual &&
 	{
-		grep "$(git rev-parse HEAD:foo)" actual ||
-		grep "$(git rev-parse HEAD:foo-plus)" actual
+		test_grep "$(git rev-parse HEAD:foo)" actual ||
+		test_grep "$(git rev-parse HEAD:foo-plus)" actual
 	}
 '
 
@@ -815,7 +815,7 @@ test_expect_success 'cat-file -t and -s on corrupt loose object' '
 		# Swap the two to corrupt the repository
 		mv -f "$other_path" "$empty_path" &&
 		test_must_fail git fsck 2>err.fsck &&
-		grep "hash-path mismatch" err.fsck &&
+		test_grep "hash-path mismatch" err.fsck &&
 
 		# confirm that cat-file is reading the new swapped-in
 		# blob...
@@ -1307,37 +1307,37 @@ test_expect_success 'cat-file --batch-all-objects --batch-check ignores replace'
 test_expect_success 'batch-command empty command' '
 	echo "" >cmd &&
 	test_expect_code 128 git cat-file --batch-command <cmd 2>err &&
-	grep "^fatal:.*empty command in input.*" err
+	test_grep "^fatal:.*empty command in input.*" err
 '
 
 test_expect_success 'batch-command whitespace before command' '
 	echo " info deadbeef" >cmd &&
 	test_expect_code 128 git cat-file --batch-command <cmd 2>err &&
-	grep "^fatal:.*whitespace before command.*" err
+	test_grep "^fatal:.*whitespace before command.*" err
 '
 
 test_expect_success 'batch-command unknown command' '
 	echo unknown_command >cmd &&
 	test_expect_code 128 git cat-file --batch-command <cmd 2>err &&
-	grep "^fatal:.*unknown command.*" err
+	test_grep "^fatal:.*unknown command.*" err
 '
 
 test_expect_success 'batch-command missing arguments' '
 	echo "info" >cmd &&
 	test_expect_code 128 git cat-file --batch-command <cmd 2>err &&
-	grep "^fatal:.*info requires arguments.*" err
+	test_grep "^fatal:.*info requires arguments.*" err
 '
 
 test_expect_success 'batch-command flush with arguments' '
 	echo "flush arg" >cmd &&
 	test_expect_code 128 git cat-file --batch-command --buffer <cmd 2>err &&
-	grep "^fatal:.*flush takes no arguments.*" err
+	test_grep "^fatal:.*flush takes no arguments.*" err
 '
 
 test_expect_success 'batch-command flush without --buffer' '
 	echo "flush" >cmd &&
 	test_expect_code 128 git cat-file --batch-command <cmd 2>err &&
-	grep "^fatal:.*flush is only for --buffer mode.*" err
+	test_grep "^fatal:.*flush is only for --buffer mode.*" err
 '
 
 perl_script='

@@ -63,8 +63,8 @@ test_expect_success GPG 'verify and show signatures' '
 		for tag in initial second merge fourth-signed sixth-signed seventh-signed
 		do
 			git verify-tag $tag 2>actual &&
-			grep "Good signature from" actual &&
-			! grep "BAD signature from" actual &&
+			test_grep "Good signature from" actual &&
+			test_grep ! "BAD signature from" actual &&
 			echo $tag OK || exit 1
 		done
 	) &&
@@ -72,8 +72,8 @@ test_expect_success GPG 'verify and show signatures' '
 		for tag in fourth-unsigned fifth-unsigned sixth-unsigned
 		do
 			test_must_fail git verify-tag $tag 2>actual &&
-			! grep "Good signature from" actual &&
-			! grep "BAD signature from" actual &&
+			test_grep ! "Good signature from" actual &&
+			test_grep ! "BAD signature from" actual &&
 			echo $tag OK || exit 1
 		done
 	) &&
@@ -81,9 +81,9 @@ test_expect_success GPG 'verify and show signatures' '
 		for tag in eighth-signed-alt
 		do
 			git verify-tag $tag 2>actual &&
-			grep "Good signature from" actual &&
-			! grep "BAD signature from" actual &&
-			grep "not certified" actual &&
+			test_grep "Good signature from" actual &&
+			test_grep ! "BAD signature from" actual &&
+			test_grep "not certified" actual &&
 			echo $tag OK || exit 1
 		done
 	)
@@ -91,32 +91,32 @@ test_expect_success GPG 'verify and show signatures' '
 
 test_expect_success GPGSM 'verify and show signatures x509' '
 	git verify-tag ninth-signed-x509 2>actual &&
-	grep "Good signature from" actual &&
-	! grep "BAD signature from" actual &&
+	test_grep "Good signature from" actual &&
+	test_grep ! "BAD signature from" actual &&
 	echo ninth-signed-x509 OK
 '
 
 test_expect_success GPGSM 'verify and show signatures x509 with low minTrustLevel' '
 	test_config gpg.minTrustLevel undefined &&
 	git verify-tag ninth-signed-x509 2>actual &&
-	grep "Good signature from" actual &&
-	! grep "BAD signature from" actual &&
+	test_grep "Good signature from" actual &&
+	test_grep ! "BAD signature from" actual &&
 	echo ninth-signed-x509 OK
 '
 
 test_expect_success GPGSM 'verify and show signatures x509 with matching minTrustLevel' '
 	test_config gpg.minTrustLevel fully &&
 	git verify-tag ninth-signed-x509 2>actual &&
-	grep "Good signature from" actual &&
-	! grep "BAD signature from" actual &&
+	test_grep "Good signature from" actual &&
+	test_grep ! "BAD signature from" actual &&
 	echo ninth-signed-x509 OK
 '
 
 test_expect_success GPGSM 'verify and show signatures x509 with high minTrustLevel' '
 	test_config gpg.minTrustLevel ultimate &&
 	test_must_fail git verify-tag ninth-signed-x509 2>actual &&
-	grep "Good signature from" actual &&
-	! grep "BAD signature from" actual &&
+	test_grep "Good signature from" actual &&
+	test_grep ! "BAD signature from" actual &&
 	echo ninth-signed-x509 OK
 '
 
@@ -125,8 +125,8 @@ test_expect_success GPG 'detect fudged signature' '
 	sed -e "/^tag / s/seventh/7th-forged/" raw >forged1 &&
 	git hash-object -w -t tag forged1 >forged1.tag &&
 	test_must_fail git verify-tag $(cat forged1.tag) 2>actual1 &&
-	grep "BAD signature from" actual1 &&
-	! grep "Good signature from" actual1
+	test_grep "BAD signature from" actual1 &&
+	test_grep ! "Good signature from" actual1
 '
 
 test_expect_success GPG 'verify signatures with --raw' '
@@ -134,8 +134,8 @@ test_expect_success GPG 'verify signatures with --raw' '
 		for tag in initial second merge fourth-signed sixth-signed seventh-signed
 		do
 			git verify-tag --raw $tag 2>actual &&
-			grep "GOODSIG" actual &&
-			! grep "BADSIG" actual &&
+			test_grep "GOODSIG" actual &&
+			test_grep ! "BADSIG" actual &&
 			echo $tag OK || exit 1
 		done
 	) &&
@@ -143,8 +143,8 @@ test_expect_success GPG 'verify signatures with --raw' '
 		for tag in fourth-unsigned fifth-unsigned sixth-unsigned
 		do
 			test_must_fail git verify-tag --raw $tag 2>actual &&
-			! grep "GOODSIG" actual &&
-			! grep "BADSIG" actual &&
+			test_grep ! "GOODSIG" actual &&
+			test_grep ! "BADSIG" actual &&
 			echo $tag OK || exit 1
 		done
 	) &&
@@ -152,9 +152,9 @@ test_expect_success GPG 'verify signatures with --raw' '
 		for tag in eighth-signed-alt
 		do
 			git verify-tag --raw $tag 2>actual &&
-			grep "GOODSIG" actual &&
-			! grep "BADSIG" actual &&
-			grep "TRUST_UNDEFINED" actual &&
+			test_grep "GOODSIG" actual &&
+			test_grep ! "BADSIG" actual &&
+			test_grep "TRUST_UNDEFINED" actual &&
 			echo $tag OK || exit 1
 		done
 	)
@@ -162,8 +162,8 @@ test_expect_success GPG 'verify signatures with --raw' '
 
 test_expect_success GPGSM 'verify signatures with --raw x509' '
 	git verify-tag --raw ninth-signed-x509 2>actual &&
-	grep "GOODSIG" actual &&
-	! grep "BADSIG" actual &&
+	test_grep "GOODSIG" actual &&
+	test_grep ! "BADSIG" actual &&
 	echo ninth-signed-x509 OK
 '
 

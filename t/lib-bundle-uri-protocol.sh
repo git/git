@@ -63,9 +63,9 @@ test_expect_success "connect with $BUNDLE_URI_PROTOCOL:// using protocol v2: no 
 		>actual 2>err &&
 
 	# Server responded using protocol v2
-	grep "< version 2" log &&
+	test_grep "< version 2" log &&
 
-	! grep bundle-uri log
+	test_grep ! bundle-uri log
 '
 
 test_expect_success "connect with $BUNDLE_URI_PROTOCOL:// using protocol v2: have bundle-uri" '
@@ -78,10 +78,10 @@ test_expect_success "connect with $BUNDLE_URI_PROTOCOL:// using protocol v2: hav
 		>actual 2>err &&
 
 	# Server responded using protocol v2
-	grep "< version 2" log &&
+	test_grep "< version 2" log &&
 
 	# Server advertised bundle-uri capability
-	grep "< bundle-uri" log
+	test_grep "< bundle-uri" log
 '
 
 test_expect_success "clone with $BUNDLE_URI_PROTOCOL:// using protocol v2: request bundle-uris" '
@@ -95,13 +95,13 @@ test_expect_success "clone with $BUNDLE_URI_PROTOCOL:// using protocol v2: reque
 		>actual 2>err &&
 
 	# Server responded using protocol v2
-	grep "< version 2" log &&
+	test_grep "< version 2" log &&
 
 	# Server advertised bundle-uri capability
-	grep "< bundle-uri" log &&
+	test_grep "< bundle-uri" log &&
 
 	# Client did not issue bundle-uri command
-	! grep "> command=bundle-uri" log &&
+	test_grep ! "> command=bundle-uri" log &&
 
 	GIT_TRACE_PACKET="$PWD/log" \
 	git \
@@ -111,13 +111,13 @@ test_expect_success "clone with $BUNDLE_URI_PROTOCOL:// using protocol v2: reque
 		>actual 2>err &&
 
 	# Server responded using protocol v2
-	grep "< version 2" log &&
+	test_grep "< version 2" log &&
 
 	# Server advertised bundle-uri capability
-	grep "< bundle-uri" log &&
+	test_grep "< bundle-uri" log &&
 
 	# Client issued bundle-uri command
-	grep "> command=bundle-uri" log &&
+	test_grep "> command=bundle-uri" log &&
 
 	GIT_TRACE_PACKET="$PWD/log3" \
 	git \
@@ -128,13 +128,13 @@ test_expect_success "clone with $BUNDLE_URI_PROTOCOL:// using protocol v2: reque
 		>actual 2>err &&
 
 	# Server responded using protocol v2
-	grep "< version 2" log3 &&
+	test_grep "< version 2" log3 &&
 
 	# Server advertised bundle-uri capability
-	grep "< bundle-uri" log3 &&
+	test_grep "< bundle-uri" log3 &&
 
 	# Client did not issue bundle-uri command (--bundle-uri override)
-	! grep "> command=bundle-uri" log3
+	test_grep ! "> command=bundle-uri" log3
 '
 
 # The remaining tests will all assume transfer.bundleURI=true

@@ -88,7 +88,7 @@ test_expect_success 'test-tool env-helper reads config thanks to trace2' '
 	test_must_fail \
 		env HOME="$(pwd)/home" \
 		git config -l 2>err &&
-	grep "exceeded maximum include depth" err &&
+	test_grep "exceeded maximum include depth" err &&
 
 	# This validates that the assumption that we attempt to
 	# read the configuration and fail very early in the start-up
@@ -100,7 +100,7 @@ test_expect_success 'test-tool env-helper reads config thanks to trace2' '
 		test-tool -C no-such-directory \
 		env-helper --type=bool --default=0 \
 		--exit-code GIT_TEST_ENV_HELPER 2>err &&
-	grep "exceeded maximum include depth" err
+	test_grep "exceeded maximum include depth" err
 '
 
 test_done

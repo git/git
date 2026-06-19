@@ -124,7 +124,7 @@ do
 	do
 		test_expect_success "reject 'git $cmd --no-$opt'" '
 			test_must_fail git $cmd --no-$opt 2>err &&
-			grep "unknown option .no-$opt" err
+			test_grep "unknown option .no-$opt" err
 		'
 	done
 done
@@ -212,7 +212,7 @@ test_expect_success 'push with negotiation' '
 	GIT_TRACE2_EVENT="$(pwd)/event" \
 		git -c protocol.version=2 -c push.negotiate=1 \
 		push testrepo refs/heads/main:refs/remotes/origin/main &&
-	grep \"key\":\"total_rounds\",\"value\":\"1\" event &&
+	test_grep \"key\":\"total_rounds\",\"value\":\"1\" event &&
 	grep_wrote 2 event # 1 commit, 1 tree
 '
 
@@ -250,8 +250,8 @@ test_expect_success 'push with negotiation does not attempt to fetch submodules'
 	GIT_TRACE2_EVENT="$(pwd)/event"  git -c submodule.recurse=true \
 		-c protocol.version=2 -c push.negotiate=1 \
 		push testrepo refs/heads/main:refs/remotes/origin/main 2>err &&
-	grep \"key\":\"total_rounds\",\"value\":\"1\" event &&
-	! grep "Fetching submodule" err
+	test_grep \"key\":\"total_rounds\",\"value\":\"1\" event &&
+	test_grep ! "Fetching submodule" err
 '
 
 test_expect_success 'push with negotiation and remote.<name>.negotiationInclude' '
@@ -637,7 +637,7 @@ test_expect_success 'push rejects empty branch name entries' '
 	test_config branch.main.remote one &&
 	test_config branch.main.merge refs/heads/main &&
 	test_must_fail git push 2>err &&
-	grep "bad config variable .branch\.\." err
+	test_grep "bad config variable .branch\.\." err
 '
 
 test_expect_success 'push ignores "branch." config without subsection' '
@@ -923,7 +923,7 @@ test_expect_success 'warn on push to HEAD of non-bare repository' '
 		git config receive.denyCurrentBranch warn
 	) &&
 	git push testrepo main 2>stderr &&
-	grep "warning: updating the current branch" stderr
+	test_grep "warning: updating the current branch" stderr
 '
 
 test_expect_success 'deny push to HEAD of non-bare repository' '
@@ -945,7 +945,7 @@ test_expect_success 'allow push to HEAD of bare repository (bare)' '
 		git config core.bare true
 	) &&
 	git push testrepo main 2>stderr &&
-	! grep "warning: updating the current branch" stderr
+	test_grep ! "warning: updating the current branch" stderr
 '
 
 test_expect_success 'allow push to HEAD of non-bare repository (config)' '
@@ -956,7 +956,7 @@ test_expect_success 'allow push to HEAD of non-bare repository (config)' '
 		git config receive.denyCurrentBranch false
 	) &&
 	git push testrepo main 2>stderr &&
-	! grep "warning: updating the current branch" stderr
+	test_grep ! "warning: updating the current branch" stderr
 '
 
 test_expect_success !WITH_BREAKING_CHANGES 'fetch with branches' '
@@ -1068,7 +1068,7 @@ test_expect_success 'push into aliased refs (inconsistent)' '
 		git commit -a -m child2 &&
 		git branch bar &&
 		test_must_fail git push ../child1 foo bar 2>stderr &&
-		grep "refusing inconsistent update" stderr
+		test_grep "refusing inconsistent update" stderr
 	)
 '
 
@@ -1161,7 +1161,7 @@ test_expect_success 'push --porcelain' '
 test_expect_success 'push --porcelain bad url' '
 	mk_empty testrepo &&
 	test_must_fail git push >.git/bar --porcelain asdfasdfasd refs/heads/main:refs/remotes/origin/main &&
-	! grep -q Done .git/bar
+	test_grep ! -q Done .git/bar
 '
 
 test_expect_success 'push --porcelain rejected' '

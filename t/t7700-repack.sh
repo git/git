@@ -177,7 +177,7 @@ test_expect_success 'packed unreachable obs in alternate ODB are not loosened' '
 	rm -f .git/objects/pack/* &&
 	mv pack-* .git/objects/pack/ &&
 	git verify-pack -v -- .git/objects/pack/*.idx >packlist &&
-	! grep "^$coid " packlist &&
+	test_grep ! "^$coid " packlist &&
 	echo >.git/objects/info/alternates &&
 	test_must_fail git show $coid
 '
@@ -194,7 +194,7 @@ test_expect_success 'local packed unreachable obs that exist in alternate ODB ar
 	rm -f .git/objects/pack/* &&
 	mv pack-* .git/objects/pack/ &&
 	git verify-pack -v -- .git/objects/pack/*.idx >packlist &&
-	! grep "^$coid " &&
+	test_grep ! "^$coid " packlist &&
 	echo >.git/objects/info/alternates &&
 	test_must_fail git show $coid
 '
@@ -226,8 +226,8 @@ test_expect_success 'repack --keep-pack' '
 		test_line_count = 4 old-counts &&
 		git repack -a -d --keep-pack $P1 --keep-pack $P4 &&
 		ls .git/objects/pack/*.pack >new-counts &&
-		grep -q $P1 new-counts &&
-		grep -q $P4 new-counts &&
+		test_grep -q $P1 new-counts &&
+		test_grep -q $P4 new-counts &&
 		test_line_count = 3 new-counts &&
 		git fsck &&
 
@@ -276,7 +276,7 @@ test_expect_success 'repacking fails when missing .pack actually means missing o
 
 		test_must_fail git fsck &&
 		test_must_fail env GIT_COMMIT_GRAPH_PARANOIA=true git repack --cruft -d 2>err &&
-		grep "bad object" err &&
+		test_grep "bad object" err &&
 
 		# Before failing, the repack did not modify the
 		# pack directory.
@@ -460,8 +460,8 @@ test_expect_success '--filter works with --pack-kept-objects and .keep packs' '
 
 		# Object bar is in both the old .keep pack and the new
 		# pack that contained the filtered out objects
-		grep "$bar_pack" bar_pack_1 &&
-		grep "$foo_pack_1" bar_pack_1 &&
+		test_grep "$bar_pack" bar_pack_1 &&
+		test_grep "$foo_pack_1" bar_pack_1 &&
 		test "$foo_pack_1" != "$head_pack_1"
 	)
 '

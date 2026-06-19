@@ -224,10 +224,10 @@ test_expect_success 'persist filter settings' '
 		GIT_TEST_BLOOM_SETTINGS_NUM_HASHES=9 \
 		GIT_TEST_BLOOM_SETTINGS_BITS_PER_ENTRY=15 \
 		git commit-graph write --reachable --changed-paths &&
-	grep "{\"hash_version\":1,\"num_hashes\":9,\"bits_per_entry\":15,\"max_changed_paths\":512" trace2.txt &&
+	test_grep "{\"hash_version\":1,\"num_hashes\":9,\"bits_per_entry\":15,\"max_changed_paths\":512" trace2.txt &&
 	GIT_TRACE2_EVENT="$(pwd)/trace2-auto.txt" \
 		git commit-graph write --reachable --changed-paths &&
-	grep "{\"hash_version\":1,\"num_hashes\":9,\"bits_per_entry\":15,\"max_changed_paths\":512" trace2-auto.txt
+	test_grep "{\"hash_version\":1,\"num_hashes\":9,\"bits_per_entry\":15,\"max_changed_paths\":512" trace2-auto.txt
 '
 
 test_max_changed_paths () {
@@ -494,7 +494,7 @@ test_expect_success 'ensure Bloom filters with incompatible settings are ignored
 		>expect 2>err &&
 	git -C $repo log --oneline --no-decorate -- file >actual 2>err &&
 	test_cmp expect actual &&
-	grep "disabling Bloom filters for commit-graph layer .$layer." err
+	test_grep "disabling Bloom filters for commit-graph layer .$layer." err
 '
 
 test_expect_success 'merge graph layers with incompatible Bloom settings' '
@@ -503,8 +503,8 @@ test_expect_success 'merge graph layers with incompatible Bloom settings' '
 	>trace2.txt &&
 	GIT_TRACE2_EVENT="$(pwd)/trace2.txt" \
 		git -C $repo commit-graph write --reachable --changed-paths 2>err &&
-	grep "disabling Bloom filters for commit-graph layer .$layer." err &&
-	grep "{\"hash_version\":1,\"num_hashes\":7,\"bits_per_entry\":10,\"max_changed_paths\":512" trace2.txt &&
+	test_grep "disabling Bloom filters for commit-graph layer .$layer." err &&
+	test_grep "{\"hash_version\":1,\"num_hashes\":7,\"bits_per_entry\":10,\"max_changed_paths\":512" trace2.txt &&
 
 	test_path_is_file $repo/$graph &&
 	test_dir_is_empty $repo/$graphdir &&
@@ -516,7 +516,7 @@ test_expect_success 'merge graph layers with incompatible Bloom settings' '
 		git -C $repo log --oneline --no-decorate -- file >actual 2>err &&
 
 	test_cmp expect actual &&
-	grep "statistics:{\"filter_not_present\":0," trace.perf &&
+	test_grep "statistics:{\"filter_not_present\":0," trace.perf &&
 	test_must_be_empty err
 '
 
@@ -554,8 +554,8 @@ test_expect_success 'ensure Bloom filter with incompatible versions are ignored'
 	>trace2.txt &&
 	GIT_TRACE2_EVENT="$(pwd)/trace2.txt" \
 		git -C $repo -c commitGraph.changedPathsVersion=2 commit-graph write --reachable --changed-paths 2>err &&
-	grep "disabling Bloom filters for commit-graph layer .$layer." err &&
-	grep "{\"hash_version\":2,\"num_hashes\":7,\"bits_per_entry\":10,\"max_changed_paths\":512" trace2.txt
+	test_grep "disabling Bloom filters for commit-graph layer .$layer." err &&
+	test_grep "{\"hash_version\":2,\"num_hashes\":7,\"bits_per_entry\":10,\"max_changed_paths\":512" trace2.txt
 '
 
 get_first_changed_path_filter () {
@@ -776,7 +776,7 @@ test_expect_success PERL_TEST_HELPERS 'Bloom reader notices too-small data chunk
 test_expect_success PERL_TEST_HELPERS 'Bloom reader notices out-of-bounds filter offsets' '
 	check_corrupt_graph BIDX 12 FFFFFFFF &&
 	# use grep to avoid depending on exact chunk size
-	grep "warning: ignoring out-of-range offset (4294967295) for changed-path filter at pos 3 of .git/objects/info/commit-graph" err
+	test_grep "warning: ignoring out-of-range offset (4294967295) for changed-path filter at pos 3 of .git/objects/info/commit-graph" err
 '
 
 test_expect_success PERL_TEST_HELPERS 'Bloom reader notices too-small index chunk' '

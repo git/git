@@ -44,7 +44,7 @@ test_expect_success 'setup' '
 test_expect_success 'patch-id output is well-formed' '
 	git log -p -1 >log.output &&
 	git patch-id <log.output >output &&
-	grep "^$OID_REGEX $(git rev-parse HEAD)$" output
+	test_grep "^$OID_REGEX $(git rev-parse HEAD)$" output
 '
 
 #calculate patch id. Make sure output is not empty.

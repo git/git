@@ -27,9 +27,9 @@ test_expect_success 'list refs with git:// using protocol v2' '
 		ls-remote --symref "$GIT_DAEMON_URL/parent" >actual &&
 
 	# Client requested to use protocol v2
-	grep "ls-remote> .*\\\0\\\0version=2\\\0$" log &&
+	test_grep "ls-remote> .*\\\0\\\0version=2\\\0$" log &&
 	# Server responded using protocol v2
-	grep "ls-remote< version 2" log &&
+	test_grep "ls-remote< version 2" log &&
 
 	git ls-remote --symref "$GIT_DAEMON_URL/parent" >expect &&
 	test_cmp expect actual
@@ -59,9 +59,9 @@ test_expect_success 'clone with git:// using protocol v2' '
 	test_cmp expect actual &&
 
 	# Client requested to use protocol v2
-	grep "clone> .*\\\0\\\0version=2\\\0$" log &&
+	test_grep "clone> .*\\\0\\\0version=2\\\0$" log &&
 	# Server responded using protocol v2
-	grep "clone< version 2" log
+	test_grep "clone< version 2" log
 '
 
 test_expect_success 'fetch with git:// using protocol v2' '
@@ -77,9 +77,9 @@ test_expect_success 'fetch with git:// using protocol v2' '
 	test_cmp expect actual &&
 
 	# Client requested to use protocol v2
-	grep "fetch> .*\\\0\\\0version=2\\\0$" log &&
+	test_grep "fetch> .*\\\0\\\0version=2\\\0$" log &&
 	# Server responded using protocol v2
-	grep "fetch< version 2" log
+	test_grep "fetch< version 2" log
 '
 
 test_expect_success 'fetch by hash without tag following with protocol v2 does not list refs' '
@@ -91,8 +91,8 @@ test_expect_success 'fetch by hash without tag following with protocol v2 does n
 	GIT_TRACE_PACKET="$(pwd)/log" git -C daemon_child -c protocol.version=2 \
 		fetch --no-tags origin $(cat two_a_hash) &&
 
-	grep "fetch< version 2" log &&
-	! grep "fetch> command=ls-refs" log
+	test_grep "fetch< version 2" log &&
+	test_grep ! "fetch> command=ls-refs" log
 '
 
 test_expect_success 'pull with git:// using protocol v2' '
@@ -106,9 +106,9 @@ test_expect_success 'pull with git:// using protocol v2' '
 	test_cmp expect actual &&
 
 	# Client requested to use protocol v2
-	grep "fetch> .*\\\0\\\0version=2\\\0$" log &&
+	test_grep "fetch> .*\\\0\\\0version=2\\\0$" log &&
 	# Server responded using protocol v2
-	grep "fetch< version 2" log
+	test_grep "fetch< version 2" log
 '
 
 test_expect_success 'push with git:// and a config of v2 does not request v2' '
@@ -130,9 +130,9 @@ test_expect_success 'push with git:// and a config of v2 does not request v2' '
 	test_cmp expect actual &&
 
 	# Client requested to use protocol v2
-	! grep "push> .*\\\0\\\0version=2\\\0$" log &&
+	test_grep ! "push> .*\\\0\\\0version=2\\\0$" log &&
 	# Server responded using protocol v2
-	! grep "push< version 2" log
+	test_grep ! "push< version 2" log
 '
 
 stop_git_daemon
@@ -151,7 +151,7 @@ test_expect_success 'list refs with file:// using protocol v2' '
 		ls-remote --symref "file://$(pwd)/file_parent" >actual &&
 
 	# Server responded using protocol v2
-	grep "ls-remote< version 2" log &&
+	test_grep "ls-remote< version 2" log &&
 
 	git ls-remote --symref "file://$(pwd)/file_parent" >expect &&
 	test_cmp expect actual
@@ -181,8 +181,8 @@ test_expect_success 'server-options are sent when using ls-remote' '
 	EOF
 
 	test_cmp expect actual &&
-	grep "server-option=hello" log &&
-	grep "server-option=world" log
+	test_grep "server-option=hello" log &&
+	test_grep "server-option=world" log
 '
 
 test_expect_success 'server-options from configuration are used by ls-remote' '
@@ -241,12 +241,12 @@ test_expect_success 'clone with file:// using protocol v2' '
 	test_cmp expect actual &&
 
 	# Server responded using protocol v2
-	grep "clone< version 2" log &&
+	test_grep "clone< version 2" log &&
 
 	# Client sent ref-prefixes to filter the ref-advertisement
-	grep "ref-prefix HEAD" log &&
-	grep "ref-prefix refs/heads/" log &&
-	grep "ref-prefix refs/tags/" log
+	test_grep "ref-prefix HEAD" log &&
+	test_grep "ref-prefix refs/heads/" log &&
+	test_grep "ref-prefix refs/tags/" log
 '
 
 test_expect_success 'clone of empty repo propagates name of default branch' '
@@ -311,7 +311,7 @@ test_expect_success 'clone propagates unborn HEAD from non-empty repo' '
 	echo "refs/heads/mydefaultbranch" >expect &&
 	git -C file_unborn_child symbolic-ref HEAD >actual &&
 	test_cmp expect actual &&
-	grep "warning: remote HEAD refers to nonexistent ref" stderr
+	test_grep "warning: remote HEAD refers to nonexistent ref" stderr
 '
 
 test_expect_success 'clone propagates object-format from empty repo' '
@@ -343,7 +343,7 @@ test_expect_success 'bare clone propagates unborn HEAD from non-empty repo' '
 	echo "refs/heads/mydefaultbranch" >expect &&
 	git -C file_unborn_child.git symbolic-ref HEAD >actual &&
 	test_cmp expect actual &&
-	! grep "warning:" stderr
+	test_grep ! "warning:" stderr
 '
 
 test_expect_success 'defaulted HEAD uses remote branch if available' '
@@ -366,7 +366,7 @@ test_expect_success 'defaulted HEAD uses remote branch if available' '
 	git -C file_unborn_child symbolic-ref HEAD >actual &&
 	test_cmp expect actual &&
 	test_path_is_file file_unborn_child/stuff.t &&
-	! grep "warning:" stderr
+	test_grep ! "warning:" stderr
 '
 
 test_expect_success 'fetch with file:// using protocol v2' '
@@ -382,7 +382,7 @@ test_expect_success 'fetch with file:// using protocol v2' '
 	test_cmp expect actual &&
 
 	# Server responded using protocol v2
-	grep "fetch< version 2" log
+	test_grep "fetch< version 2" log
 '
 
 test_expect_success 'ref advertisement is filtered during fetch using protocol v2' '
@@ -398,8 +398,8 @@ test_expect_success 'ref advertisement is filtered during fetch using protocol v
 	git -C file_parent log -1 --format=%s >expect &&
 	test_cmp expect actual &&
 
-	grep "refs/heads/main" log &&
-	! grep "refs/heads/unwanted-branch" log
+	test_grep "refs/heads/main" log &&
+	test_grep ! "refs/heads/unwanted-branch" log
 '
 
 test_expect_success 'server-options are sent when fetching' '
@@ -414,8 +414,8 @@ test_expect_success 'server-options are sent when fetching' '
 	git -C file_parent log -1 --format=%s >expect &&
 	test_cmp expect actual &&
 
-	grep "server-option=hello" log &&
-	grep "server-option=world" log
+	test_grep "server-option=hello" log &&
+	test_grep "server-option=world" log
 '
 
 test_expect_success 'server-options are sent when fetch multiple remotes' '
@@ -485,8 +485,8 @@ test_expect_success 'server-options are sent when cloning' '
 		clone --server-option=hello --server-option=world \
 		"file://$(pwd)/file_parent" myclone &&
 
-	grep "server-option=hello" log &&
-	grep "server-option=world" log
+	test_grep "server-option=hello" log &&
+	test_grep "server-option=world" log
 '
 
 test_expect_success 'server-options from configuration are used by git-clone' '
@@ -578,12 +578,12 @@ test_expect_success 'setup filter tests' '
 test_expect_success 'partial clone' '
 	GIT_TRACE_PACKET="$(pwd)/trace" git -c protocol.version=2 \
 		clone --filter=blob:none "file://$(pwd)/server" client &&
-	grep "version 2" trace &&
+	test_grep "version 2" trace &&
 
 	# Ensure that the old version of the file is missing
 	git -C client rev-list --quiet --objects --missing=print main \
 		>observed.oids &&
-	grep "$(git -C server rev-parse message1:a.txt)" observed.oids &&
+	test_grep "$(git -C server rev-parse message1:a.txt)" observed.oids &&
 
 	# Ensure that client passes fsck
 	git -C client fsck
@@ -593,11 +593,11 @@ test_expect_success 'dynamically fetch missing object' '
 	rm "$(pwd)/trace" &&
 	GIT_TRACE_PACKET="$(pwd)/trace" git -C client -c protocol.version=2 \
 		cat-file -p $(git -C server rev-parse message1:a.txt) &&
-	grep "version 2" trace
+	test_grep "version 2" trace
 '
 
 test_expect_success 'when dynamically fetching missing object, do not list refs' '
-	! grep "git> command=ls-refs" trace
+	test_grep ! "git> command=ls-refs" trace
 '
 
 test_expect_success 'partial fetch' '
@@ -607,12 +607,12 @@ test_expect_success 'partial fetch' '
 
 	GIT_TRACE_PACKET="$(pwd)/trace" git -C client -c protocol.version=2 \
 		fetch --filter=blob:none "$SERVER" main:refs/heads/other &&
-	grep "version 2" trace &&
+	test_grep "version 2" trace &&
 
 	# Ensure that the old version of the file is missing
 	git -C client rev-list --quiet --objects --missing=print other \
 		>observed.oids &&
-	grep "$(git -C server rev-parse message1:a.txt)" observed.oids &&
+	test_grep "$(git -C server rev-parse message1:a.txt)" observed.oids &&
 
 	# Ensure that client passes fsck
 	git -C client fsck
@@ -625,14 +625,14 @@ test_expect_success 'do not advertise filter if not configured to do so' '
 	git -C server config uploadpack.allowfilter 1 &&
 	GIT_TRACE_PACKET="$(pwd)/trace" git -c protocol.version=2 \
 		ls-remote "$SERVER" &&
-	grep "fetch=.*filter" trace &&
+	test_grep "fetch=.*filter" trace &&
 
 	rm "$(pwd)/trace" &&
 	git -C server config uploadpack.allowfilter 0 &&
 	GIT_TRACE_PACKET="$(pwd)/trace" git -c protocol.version=2 \
 		ls-remote "$SERVER" &&
 	grep "fetch=" trace >fetch_capabilities &&
-	! grep filter fetch_capabilities
+	test_grep ! filter fetch_capabilities
 '
 
 test_expect_success 'partial clone warns if filter is not advertised' '
@@ -658,7 +658,7 @@ test_expect_success 'even with handcrafted request, filter does not work if not 
 
 	test_must_fail test-tool -C server serve-v2 --stateless-rpc \
 		<in >/dev/null 2>err &&
-	grep "unexpected line: .filter blob:none." err &&
+	test_grep "unexpected line: .filter blob:none." err &&
 
 	# Exercise to ensure that if advertised, filter works
 	git -C server config uploadpack.allowfilter 1 &&
@@ -675,8 +675,8 @@ test_expect_success 'default refspec is used to filter ref when fetching' '
 	git -C file_parent log -1 --format=%s three >expect &&
 	test_cmp expect actual &&
 
-	grep "ref-prefix refs/heads/" log &&
-	grep "ref-prefix refs/tags/" log
+	test_grep "ref-prefix refs/heads/" log &&
+	test_grep "ref-prefix refs/tags/" log
 '
 
 test_expect_success 'set up parent for prefix tests' '
@@ -750,9 +750,9 @@ test_expect_success 'fetch supports various ways of have lines' '
 		"$(git -C server rev-parse fetch-by-sha1)" &&
 
 	# Ensure that the appropriate prefixes are sent (using a sample)
-	grep "fetch> ref-prefix dwim" trace &&
-	grep "fetch> ref-prefix refs/heads/dwim" trace &&
-	grep "fetch> ref-prefix refs/tags/prefix" trace &&
+	test_grep "fetch> ref-prefix dwim" trace &&
+	test_grep "fetch> ref-prefix refs/heads/dwim" trace &&
+	test_grep "fetch> ref-prefix refs/tags/prefix" trace &&
 
 	# Ensure that the correct objects are returned
 	git -C client cat-file -e $(git -C server rev-parse dwim) &&
@@ -779,9 +779,9 @@ test_expect_success 'fetch supports include-tag and tag following' '
 	GIT_TRACE_PACKET="$(pwd)/trace" git -C client -c protocol.version=2 \
 		fetch "$(pwd)/server" to_fetch:to_fetch &&
 
-	grep "fetch> ref-prefix to_fetch" trace &&
-	grep "fetch> ref-prefix refs/tags/" trace &&
-	grep "fetch> include-tag" trace &&
+	test_grep "fetch> ref-prefix to_fetch" trace &&
+	test_grep "fetch> ref-prefix refs/tags/" trace &&
+	test_grep "fetch> include-tag" trace &&
 
 	git -C client cat-file -e $(git -C client rev-parse annotated_tag)
 '
@@ -805,7 +805,7 @@ test_expect_success 'upload-pack respects client shallows' '
 	GIT_TRACE_PACKET="$(pwd)/trace" git -C client -c protocol.version=2 \
 		fetch origin newbranch &&
 	# Ensure that protocol v2 is used
-	grep "fetch< version 2" trace
+	test_grep "fetch< version 2" trace
 '
 
 test_expect_success 'ensure that multiple fetches in same process from a shallow repo works' '
@@ -823,7 +823,7 @@ test_expect_success 'ensure that multiple fetches in same process from a shallow
 	GIT_TRACE_PACKET="$(pwd)/trace" git -C client -c protocol.version=2 \
 		fetch --shallow-exclude one origin &&
 	# Ensure that protocol v2 is used
-	grep "fetch< version 2" trace
+	test_grep "fetch< version 2" trace
 '
 
 test_expect_success 'deepen-relative' '
@@ -844,7 +844,7 @@ test_expect_success 'deepen-relative' '
 	GIT_TRACE_PACKET="$(pwd)/trace" git -C client -c protocol.version=2 \
 		fetch --deepen=1 origin &&
 	# Ensure that protocol v2 is used
-	grep "fetch< version 2" trace &&
+	test_grep "fetch< version 2" trace &&
 
 	git -C client log --pretty=tformat:%s origin/main >actual &&
 	cat >expected <<-\EOF &&
@@ -909,7 +909,7 @@ test_expect_success 'file:// --negotiate-only' '
 		--negotiation-tip=$(git -C client rev-parse HEAD) \
 		origin >out &&
 	COMMON=$(git -C "$SERVER" rev-parse two) &&
-	grep "$COMMON" out
+	test_grep "$COMMON" out
 '
 
 test_expect_success 'file:// --negotiate-only with protocol v0' '
@@ -932,7 +932,7 @@ test_expect_success 'push with custom path does not request v2' '
 		--receive-pack="env >../env.trace; git-receive-pack" \
 		origin HEAD:refs/heads/custom-push-test &&
 	test_path_is_file env.trace &&
-	! grep ^GIT_PROTOCOL env.trace
+	test_grep ! ^GIT_PROTOCOL env.trace
 '
 
 test_expect_success 'fetch with custom path does request v2' '
@@ -940,7 +940,7 @@ test_expect_success 'fetch with custom path does request v2' '
 	git -C client fetch \
 		--upload-pack="env >../env.trace; git-upload-pack" \
 		origin HEAD &&
-	grep ^GIT_PROTOCOL=version=2 env.trace
+	test_grep ^GIT_PROTOCOL=version=2 env.trace
 '
 
 test_expect_success 'archive with custom path does not request v2' '
@@ -950,7 +950,7 @@ test_expect_success 'archive with custom path does not request v2' '
 		--remote=origin \
 		HEAD >/dev/null &&
 	test_path_is_file env.trace &&
-	! grep ^GIT_PROTOCOL env.trace
+	test_grep ! ^GIT_PROTOCOL env.trace
 '
 
 test_expect_success 'reject client packfile-uris if not advertised' '
@@ -994,11 +994,11 @@ test_expect_success 'clone with http:// using protocol v2' '
 	test_cmp expect actual &&
 
 	# Client requested to use protocol v2
-	grep "Git-Protocol: version=2" log &&
+	test_grep "Git-Protocol: version=2" log &&
 	# Server responded using protocol v2
-	grep "git< version 2" log &&
+	test_grep "git< version 2" log &&
 	# Verify that the chunked encoding sending codepath is NOT exercised
-	! grep "Send header: Transfer-Encoding: chunked" log
+	test_grep ! "Send header: Transfer-Encoding: chunked" log
 '
 
 test_expect_success 'clone repository with http:// using protocol v2 with incomplete pktline length' '
@@ -1011,9 +1011,9 @@ test_expect_success 'clone repository with http:// using protocol v2 with incomp
 		clone "$HTTPD_URL/smart/incomplete_length" incomplete_length_child 2>err &&
 
 	# Client requested to use protocol v2
-	grep "Git-Protocol: version=2" log &&
+	test_grep "Git-Protocol: version=2" log &&
 	# Server responded using protocol v2
-	grep "git< version 2" log &&
+	test_grep "git< version 2" log &&
 	# Client reported appropriate failure
 	test_grep "bytes of length header were received" err
 '
@@ -1028,9 +1028,9 @@ test_expect_success 'clone repository with http:// using protocol v2 with incomp
 		clone "$HTTPD_URL/smart/incomplete_body" incomplete_body_child 2>err &&
 
 	# Client requested to use protocol v2
-	grep "Git-Protocol: version=2" log &&
+	test_grep "Git-Protocol: version=2" log &&
 	# Server responded using protocol v2
-	grep "git< version 2" log &&
+	test_grep "git< version 2" log &&
 	# Client reported appropriate failure
 	test_grep "bytes of body are still expected" err
 '
@@ -1043,9 +1043,9 @@ test_expect_success 'clone with http:// using protocol v2 and invalid parameters
 		clone --shallow-since=20151012 "$HTTPD_URL/smart/http_parent" http_child_invalid &&
 
 	# Client requested to use protocol v2
-	grep "Git-Protocol: version=2" log &&
+	test_grep "Git-Protocol: version=2" log &&
 	# Server responded using protocol v2
-	grep "git< version 2" log
+	test_grep "git< version 2" log
 '
 
 test_expect_success 'clone big repository with http:// using protocol v2' '
@@ -1070,11 +1070,11 @@ test_expect_success 'clone big repository with http:// using protocol v2' '
 		clone "$HTTPD_URL/smart/big" big_child &&
 
 	# Client requested to use protocol v2
-	grep "Git-Protocol: version=2" log &&
+	test_grep "Git-Protocol: version=2" log &&
 	# Server responded using protocol v2
-	grep "git< version 2" log &&
+	test_grep "git< version 2" log &&
 	# Verify that the chunked encoding sending codepath is exercised
-	grep "Send header: Transfer-Encoding: chunked" log
+	test_grep "Send header: Transfer-Encoding: chunked" log
 '
 
 test_expect_success 'fetch with http:// using protocol v2' '
@@ -1090,7 +1090,7 @@ test_expect_success 'fetch with http:// using protocol v2' '
 	test_cmp expect actual &&
 
 	# Server responded using protocol v2
-	grep "git< version 2" log
+	test_grep "git< version 2" log
 '
 
 test_expect_success 'fetch with http:// by hash without tag following with protocol v2 does not list refs' '
@@ -1102,8 +1102,8 @@ test_expect_success 'fetch with http:// by hash without tag following with proto
 	GIT_TRACE_PACKET="$(pwd)/log" git -C http_child -c protocol.version=2 \
 		fetch --no-tags origin $(cat two_a_hash) &&
 
-	grep "fetch< version 2" log &&
-	! grep "fetch> command=ls-refs" log
+	test_grep "fetch< version 2" log &&
+	test_grep ! "fetch> command=ls-refs" log
 '
 
 test_expect_success 'fetch from namespaced repo respects namespaces' '
@@ -1120,7 +1120,7 @@ test_expect_success 'fetch from namespaced repo respects namespaces' '
 		refs/heads/main:refs/heads/theirs &&
 
 	# Server responded using protocol v2
-	grep "fetch< version 2" log &&
+	test_grep "fetch< version 2" log &&
 
 	git -C "$HTTPD_DOCUMENT_ROOT_PATH/nsrepo" rev-parse one >expect &&
 	git -C http_child rev-parse theirs >actual &&
@@ -1157,9 +1157,9 @@ test_expect_success 'push with http:// and a config of v2 does not request v2' '
 	test_cmp expect actual &&
 
 	# Client did not request to use protocol v2
-	! grep "Git-Protocol: version=2" log &&
+	test_grep ! "Git-Protocol: version=2" log &&
 	# Server did not respond using protocol v2
-	! grep "git< version 2" log
+	test_grep ! "git< version 2" log
 '
 
 test_expect_success 'when server sends "ready", expect DELIM' '
@@ -1207,8 +1207,8 @@ test_expect_success 'when server does not send "ready", expect FLUSH' '
 	test_must_fail env GIT_TRACE_PACKET="$(pwd)/log" git -C http_child \
 		-c protocol.version=2 \
 		fetch "$HTTPD_URL/one_time_script/http_parent" 2> err &&
-	grep "fetch< .*acknowledgments" log &&
-	! grep "fetch< .*ready" log &&
+	test_grep "fetch< .*acknowledgments" log &&
+	test_grep ! "fetch< .*ready" log &&
 	test_grep "expected no other sections to be sent after no .ready." err
 '
 
@@ -1247,7 +1247,7 @@ test_expect_success 'part of packfile response provided as URI' '
 	do
 		git verify-pack --object-format=$(test_oid algo) --verbose $idx >out &&
 		{
-			grep -E "^[0-9a-f]{16,} " out || :
+			grep -E "^[0-9a-f]{16,} " out || : # lint-ok: data filter
 		} >out.objectlist &&
 		if test_line_count = 1 out.objectlist
 		then
@@ -1446,7 +1446,7 @@ test_expect_success 'packfile-uri path redacted in trace' '
 		-c fetch.uriprotocols=http,https \
 		clone "$HTTPD_URL/smart/http_parent" http_child &&
 
-	grep -F "clone< \\1$(cat packh) $HTTPD_URL/<redacted>" log
+	test_grep -F "clone< \\1$(cat packh) $HTTPD_URL/<redacted>" log
 '
 
 test_expect_success 'packfile-uri path not redacted in trace when GIT_TRACE_REDACT=0' '
@@ -1472,7 +1472,7 @@ test_expect_success 'packfile-uri path not redacted in trace when GIT_TRACE_REDA
 		-c fetch.uriprotocols=http,https \
 		clone "$HTTPD_URL/smart/http_parent" http_child &&
 
-	grep -F "clone< \\1$(cat packh) $HTTPD_URL/dumb/mypack-$(cat packh).pack" log
+	test_grep -F "clone< \\1$(cat packh) $HTTPD_URL/dumb/mypack-$(cat packh).pack" log
 '
 
 test_expect_success 'http:// --negotiate-only' '
@@ -1487,7 +1487,7 @@ test_expect_success 'http:// --negotiate-only' '
 		--negotiation-tip=$(git -C client rev-parse HEAD) \
 		origin >out &&
 	COMMON=$(git -C "$SERVER" rev-parse two) &&
-	grep "$COMMON" out
+	test_grep "$COMMON" out
 '
 
 test_expect_success 'http:// --negotiate-only without wait-for-done support' '
