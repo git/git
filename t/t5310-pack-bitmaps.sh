@@ -577,6 +577,42 @@ test_bitmap_cases
 
 sane_unset GIT_TEST_PACK_USE_BITMAP_BOUNDARY_TRAVERSAL
 
+test_expect_success 'path-walk repack can write and use bitmap indexes' '
+	test_when_finished "rm -rf path-walk-bitmap" &&
+	git init path-walk-bitmap &&
+	(
+		cd path-walk-bitmap &&
+		test_commit first &&
+		test_commit second &&
+		test_commit third &&
+
+		git repack -a -d -b --path-walk &&
+		git rev-list --test-bitmap --use-bitmap-index HEAD &&
+
+		git rev-parse HEAD >in &&
+
+		git rev-list --objects --no-object-names HEAD >expect.raw &&
+		sort expect.raw >expect &&
+
+		for reuse in true false
+		do
+			: >trace.txt &&
+
+			GIT_TRACE2_EVENT="$(pwd)/trace.txt" \
+			git -c pack.allowPackReuse=$reuse pack-objects \
+				--stdout --revs --path-walk --use-bitmap-index \
+				<in >out.pack &&
+			test_grep "\"category\":\"bitmap\",\"key\":\"bitmap/hits\"" trace.txt &&
+
+			git index-pack out.pack &&
+
+			list_packed_objects out.idx >actual.raw &&
+			sort actual.raw >actual &&
+			test_cmp expect actual || return 1
+		done
+	)
+'
+
 test_expect_success 'incremental repack fails when bitmaps are requested' '
 	test_commit more-1 &&
 	test_must_fail git repack -d 2>err &&
