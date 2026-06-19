@@ -375,7 +375,7 @@ or, on an older version of Git without support for --pretty=reference:
 ....
 
 [[sign-off]]
-=== Certify your work by adding your `Signed-off-by` trailer
+=== Certify your work by adding your `Signed-off-by:` trailer
 
 To improve tracking of who did what, we ask you to certify that you
 wrote the patch or have the right to pass it on under the same license
@@ -412,7 +412,7 @@ d. I understand and agree that this project and the contribution
    this project or the open source license(s) involved.
 ____
 
-you add a "Signed-off-by" trailer to your commit, that looks like
+you add a `Signed-off-by:` trailer to your commit, that looks like
 this:
 
 ....
@@ -422,11 +422,15 @@ this:
 This line can be added by Git if you run the git-commit command with
 the -s option.
 
-Notice that you can place your own `Signed-off-by` trailer when
+Notice that you can place your own `Signed-off-by:` trailer when
 forwarding somebody else's patch with the above rules for
 D-C-O.  Indeed you are encouraged to do so.  Do not forget to
 place an in-body "From: " line at the beginning to properly attribute
 the change to its true author (see (2) above).
+
+Place this `Signed-off-by:` trailer at the end, after trailers added by
+others and after other trailers added by you; see
+<<commit-trailers,Commit trailers>> below ("chronological order").
 
 This procedure originally came from the Linux kernel project, so our
 rule is quite similar to theirs, but what exactly it means to sign-off
@@ -434,7 +438,7 @@ your patch differs from project to project, so it may be different
 from that of the project you are accustomed to.
 
 [[real-name]]
-Please use a known identity in the `Signed-off-by` trailer, since we cannot
+Please use a known identity in the `Signed-off-by:` trailer, since we cannot
 accept anonymous contributions. It is common, but not required, to use some form
 of your real name. We realize that some contributors are not comfortable doing
 so or prefer to contribute under a pseudonym or preferred name and we can accept
@@ -445,7 +449,15 @@ The goal of this policy is to allow us to have sufficient information to contact
 you if questions arise about your contribution.
 
 [[commit-trailers]]
-If you like, you can put extra trailers at the end:
+=== Commit trailers
+It is polite to credit people who have helped with your work to a
+substantial enough degree. This project uses commit trailers for that,
+where the credited person is written out like a Git author, i.e. with
+both their name and their email address. Note that the threshold to
+credit someone is a judgement call, and crediting someone for simple
+review work is certainly not necessary.
+
+These are the common trailers in use:
 
 . `Reported-by:` is used to credit someone who found the bug that
   the patch attempts to fix.
@@ -458,6 +470,10 @@ If you like, you can put extra trailers at the end:
   and found it to have the desired effect.
 . `Co-authored-by:` is used to indicate that people exchanged drafts
    of a patch before submitting it.
+. `Based-on-patch-by:` is used when someone else authored parts of the
+  patch that you are submitting. This might be relevant if someone sent
+  a patch to the mailing list with their sign-off. (Be mindful and ask
+  them to sign off on it if they did not.)
 . `Helped-by:` is used to credit someone who suggested ideas for
   changes without providing the precise changes in patch form.
 . `Mentored-by:` is used to credit someone with helping develop a
@@ -469,8 +485,18 @@ While you can also create your own trailer if the situation warrants it, we
 encourage you to instead use one of the common trailers in this project
 highlighted above.
 
+Other projects might regularly refer to other kinds of data, like
+`Fixes:` and `Link:` in the Linux Kernel project, but these ones in
+particular are not used in this project.
+
 Only capitalize the very first letter of the trailer, i.e. favor
-"Signed-off-by" over "Signed-Off-By" and "Acked-by:" over "Acked-By".
+`Signed-off-by:` over `Signed-Off-By:` and `Acked-by:` over `Acked-By:`.
+
+As mentioned under <<dco,DCO>> above, trailers are added in
+chronological order; one person might sign-off on a patch and send it to
+someone else, who then in turn adds her own sign-off. Further, any
+trailers that you add beyond your sign-off should come before that
+sign-off. That makes it clear what trailers which person added.
 
 [[cover-letter]]
 === Cover Letter
@@ -587,8 +613,8 @@ when the maintainer did not heavily participate in the discussion and
 instead left the review to trusted others.
 
 Do not forget to add trailers such as `Acked-by:`, `Reviewed-by:` and
-`Tested-by:` lines as necessary to credit people who helped your
-patch, and "cc:" them when sending such a final version for inclusion.
+`Tested-by:` (see <<commit-trailers,Commit trailers>>), and "cc:" them
+when sending such a final version for inclusion.
 
 ==== `format-patch` and `send-email`
 
@@ -618,7 +644,7 @@ Here is a link:MyFirstContribution.html#v2-git-send-email[step-by-step guide] on
 how to submit updated versions of a patch series.
 
 If your log message (including your name on the
-`Signed-off-by` trailer) is not writable in ASCII, make sure that
+`Signed-off-by:` trailer) is not writable in ASCII, make sure that
 you send off a message in the correct encoding.
 
 WARNING: Be wary of your MUAs word-wrap
@@ -638,7 +664,7 @@ previously sent.
 The `git format-patch` command follows the best current practice to
 format the body of an e-mail message.  At the beginning of the
 patch should come your commit message, ending with the
-`Signed-off-by` trailers, and a line that consists of three dashes,
+`Signed-off-by:` trailers, and a line that consists of three dashes,
 followed by the diffstat information and the patch itself.  If
 you are forwarding a patch from somebody else, optionally, at
 the beginning of the e-mail message just before the commit
