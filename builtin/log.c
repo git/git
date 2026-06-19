@@ -613,7 +613,7 @@ static int show_blob_object(const struct object_id *oid, struct rev_info *rev, c
 
 static int show_tag_object(const struct object_id *oid, struct rev_info *rev)
 {
-	unsigned long size;
+	size_t size;
 	enum object_type type;
 	char *buf = odb_read_object(the_repository->objects, oid, &type, &size);
 	unsigned long offset = 0;

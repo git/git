@@ -1764,7 +1764,7 @@ static int set_head(const struct ref *remote_refs, struct remote *remote)
 
 	if (!head_name)
 		goto cleanup;
-	baremirror = is_bare_repository() && remote->mirror;
+	baremirror = is_bare_repository(the_repository) && remote->mirror;
 	create_only = follow_remote_head == FOLLOW_REMOTE_ALWAYS ? 0 : !baremirror;
 	if (baremirror) {
 		strbuf_addstr(&b_head, "HEAD");

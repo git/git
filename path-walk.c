@@ -368,7 +368,7 @@ static int walk_path(struct path_walk_context *ctx,
 		struct oid_array filtered = OID_ARRAY_INIT;
 
 		for (size_t i = 0; i < list->oids.nr; i++) {
-			unsigned long size;
+			size_t size;
 
 			if (odb_read_object_info(ctx->repo->objects,
 						 &list->oids.oid[i],

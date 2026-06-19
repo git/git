@@ -112,7 +112,7 @@ static int match_host(const struct url_info *url_info,
 	return (!url_len && !pat_len);
 }
 
-static char *url_normalize_1(const char *url, struct url_info *out_info, char allow_globs)
+static char *url_normalize_1(const char *url, struct url_info *out_info, bool allow_globs)
 {
 	/*
 	 * Normalize NUL-terminated url using the following rules:
@@ -438,7 +438,12 @@ static char *url_normalize_1(const char *url, struct url_info *out_info, char al
 
 char *url_normalize(const char *url, struct url_info *out_info)
 {
-	return url_normalize_1(url, out_info, 0);
+	return url_normalize_1(url, out_info, false);
+}
+
+char *url_normalize_pattern(const char *url, struct url_info *out_info)
+{
+	return url_normalize_1(url, out_info, true);
 }
 
 char *url_parse(const char *url_orig, struct url_info *out_info)
@@ -704,7 +709,7 @@ int urlmatch_config_entry(const char *var, const char *value,
 		struct url_info norm_info;
 
 		config_url = xmemdupz(key, dot - key);
-		norm_url = url_normalize_1(config_url, &norm_info, 1);
+		norm_url = url_normalize_1(config_url, &norm_info, true);
 		if (norm_url)
 			retval = match_urls(url, &norm_info, &matched);
 		else if (collect->fallback_match_fn)

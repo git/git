@@ -125,6 +125,7 @@ integration_tests = [
   't0090-cache-tree.sh',
   't0091-bugreport.sh',
   't0092-diagnose.sh',
+  't0093-verify-cache-df-gap.sh',
   't0095-bloom.sh',
   't0100-previous.sh',
   't0101-at-syntax.sh',

@@ -455,9 +455,10 @@ off_t nth_packed_object_offset(const struct packed_git *, uint32_t n);
 off_t find_pack_entry_one(const struct object_id *oid, struct packed_git *);
 
 int is_pack_valid(struct packed_git *);
-void *unpack_entry(struct repository *r, struct packed_git *, off_t, enum object_type *, unsigned long *);
+void *unpack_entry(struct repository *r, struct packed_git *, off_t,
+		   enum object_type *, size_t *);
 unsigned long unpack_object_header_buffer(const unsigned char *buf, unsigned long len, enum object_type *type, size_t *sizep);
-unsigned long get_size_from_delta(struct packed_git *, struct pack_window **, off_t);
+size_t get_size_from_delta(struct packed_git *, struct pack_window **, off_t);
 int unpack_object_header(struct packed_git *, struct pack_window **, off_t *, size_t *);
 off_t get_delta_base(struct packed_git *p, struct pack_window **w_curs,
 		     off_t *curpos, enum object_type type,

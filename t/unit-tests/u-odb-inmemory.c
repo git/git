@@ -20,7 +20,7 @@ static void cl_assert_object_info(struct odb_source_inmemory *source,
 				  const char *expected_content)
 {
 	enum object_type actual_type;
-	unsigned long actual_size;
+	size_t actual_size;
 	void *actual_content;
 	struct object_info oi = {
 		.typep = &actual_type,

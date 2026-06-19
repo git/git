@@ -177,8 +177,7 @@ test_expect_success "init + fetch with promisor.advertise set to 'true'" '
 	git -C server config promisor.advertise true &&
 	test_when_finished "rm -rf client" &&
 
-	mkdir client &&
-	git -C client init &&
+	git init client &&
 	git -C client config remote.lop.promisor true &&
 	git -C client config remote.lop.fetch "+refs/heads/*:refs/remotes/lop/*" &&
 	git -C client config remote.lop.url "$TRASH_DIRECTORY_URL/lop" &&
@@ -231,8 +230,7 @@ test_expect_success "init + fetch two promisors but only one advertised" '
 	# Create a promisor that will be configured but not be used
 	git init --bare unused_lop &&
 
-	mkdir client &&
-	git -C client init &&
+	git init client &&
 	git -C client config remote.unused_lop.promisor true &&
 	git -C client config remote.unused_lop.fetch "+refs/heads/*:refs/remotes/unused_lop/*" &&
 	git -C client config remote.unused_lop.url "$TRASH_DIRECTORY_URL/unused_lop" &&
@@ -387,6 +385,202 @@ test_expect_success "clone with 'KnownUrl' and empty url, so not advertised" '
 
 	# Check that the largest object is still missing on the server
 	check_missing_objects server 1 "$oid"
+'
+
+test_expect_success "clone with 'None' but URL allowlisted" '
+	git -C server config promisor.advertise true &&
+	test_when_finished "rm -rf client" &&
+
+	GIT_NO_LAZY_FETCH=0 git clone -c remote.lop.promisor=true \
+		-c remote.lop.fetch="+refs/heads/*:refs/remotes/lop/*" \
+		-c remote.lop.url="$TRASH_DIRECTORY_URL/lop" \
+		-c promisor.acceptfromserver=None \
+		-c promisor.acceptFromServerUrl="$ENCODED_TRASH_DIRECTORY_URL/*" \
+		--no-local --filter="blob:limit=5k" server client &&
+
+	# Check that the largest object is still missing on the server
+	check_missing_objects server 1 "$oid"
+'
+
+test_expect_success "clone with 'None' but URL not in allowlist" '
+	git -C server config promisor.advertise true &&
+	test_when_finished "rm -rf client" &&
+
+	GIT_NO_LAZY_FETCH=0 git clone -c remote.lop.promisor=true \
+		-c remote.lop.fetch="+refs/heads/*:refs/remotes/lop/*" \
+		-c remote.lop.url="$TRASH_DIRECTORY_URL/lop" \
+		-c promisor.acceptfromserver=None \
+		-c promisor.acceptFromServerUrl="https://example.com/*" \
+		--no-local --filter="blob:limit=5k" server client &&
+
+	# Check that the largest object is not missing on the server
+	check_missing_objects server 0 "" &&
+
+	# Reinitialize server so that the largest object is missing again
+	initialize_server 1 "$oid"
+'
+
+test_expect_success "clone with 'None' but URL allowlisted in one pattern out of two" '
+	git -C server config promisor.advertise true &&
+	test_when_finished "rm -rf client" &&
+
+	GIT_NO_LAZY_FETCH=0 git clone -c remote.lop.promisor=true \
+		-c remote.lop.fetch="+refs/heads/*:refs/remotes/lop/*" \
+		-c remote.lop.url="$TRASH_DIRECTORY_URL/lop" \
+		-c promisor.acceptfromserver=None \
+		-c promisor.acceptFromServerUrl="https://example.com/*" \
+		-c promisor.acceptFromServerUrl="$ENCODED_TRASH_DIRECTORY_URL/*" \
+		--no-local --filter="blob:limit=5k" server client &&
+
+	# Check that the largest object is still missing on the server
+	check_missing_objects server 1 "$oid"
+'
+
+test_expect_success "clone with 'None', URL allowlisted, but client has different URL" '
+	git -C server config promisor.advertise true &&
+	test_when_finished "rm -rf client" &&
+
+	# The client configures "lop" with a different URL (serverTwo) than
+	# what the server advertises (lop). Even though the advertised URL
+	# matches the allowlist, the remote is rejected because the
+	# configured URL does not match the advertised one.
+	GIT_NO_LAZY_FETCH=0 git clone -c remote.lop.promisor=true \
+		-c remote.lop.fetch="+refs/heads/*:refs/remotes/lop/*" \
+		-c remote.lop.url="$TRASH_DIRECTORY_URL/serverTwo" \
+		-c promisor.acceptfromserver=None \
+		-c promisor.acceptFromServerUrl="$ENCODED_TRASH_DIRECTORY_URL/*" \
+		--no-local --filter="blob:limit=5k" server client &&
+
+	# Check that the largest object is not missing on the server
+	check_missing_objects server 0 "" &&
+
+	# Reinitialize server so that the largest object is missing again
+	initialize_server 1 "$oid"
+'
+
+test_expect_success "clone with URL allowlisted and no remote already configured" '
+	git -C server config promisor.advertise true &&
+	test_when_finished "rm -rf client" &&
+	test_when_finished "rm -f full_names" &&
+
+	GIT_NO_LAZY_FETCH=0 git clone \
+		-c promisor.acceptfromserver=None \
+		-c promisor.acceptFromServerUrl="$ENCODED_TRASH_DIRECTORY_URL/*" \
+		--no-local --filter="blob:limit=5k" server client &&
+
+	# Check that exactly one remote has been auto-created, identified
+	# by "remote.<name>.advertisedAs" == "lop".
+	git -C client config get --all --show-names --regexp \
+		"remote\..*\.advertisedas" >full_names &&
+	test_line_count = 1 full_names &&
+	REMOTE_NAME=$(sed "s/^remote\.\(.*\)\.advertisedas .*$/\1/" full_names) &&
+
+	# Check ".url" and ".promisor" values
+	printf "%s\n" "$TRASH_DIRECTORY_URL/lop" "true" >expect &&
+	git -C client config "remote.$REMOTE_NAME.url" >actual &&
+	git -C client config "remote.$REMOTE_NAME.promisor" >>actual &&
+	test_cmp expect actual &&
+
+	# Check that the largest object is still missing on the server
+	check_missing_objects server 1 "$oid"
+'
+
+test_expect_success "clone with named URL allowlisted and no pre-configured remote" '
+	git -C server config promisor.advertise true &&
+	test_when_finished "rm -rf client" &&
+
+	GIT_NO_LAZY_FETCH=0 git clone \
+		-c promisor.acceptfromserver=None \
+		-c promisor.acceptFromServerUrl="cdn=$ENCODED_TRASH_DIRECTORY_URL/*" \
+		--no-local --filter="blob:limit=5k" server client &&
+
+	# Check that a remote has been auto-created with the right "cdn" name and fields.
+	printf "%s\n" "$TRASH_DIRECTORY_URL/lop" "true" "lop" >expect &&
+	git -C client config "remote.cdn.url" >actual &&
+	git -C client config "remote.cdn.promisor" >>actual &&
+	git -C client config "remote.cdn.advertisedAs" >>actual &&
+	test_cmp expect actual &&
+
+	# Check that the largest object is still missing on the server
+	check_missing_objects server 1 "$oid"
+'
+
+test_expect_success "clone with URL allowlisted but colliding name" '
+	git -C server config promisor.advertise true &&
+	test_when_finished "rm -rf client" &&
+
+	GIT_NO_LAZY_FETCH=0 git clone -c remote.cdn.promisor=true \
+		-c remote.cdn.fetch="+refs/heads/*:refs/remotes/lop/*" \
+		-c remote.cdn.url="https://example.com/cdn" \
+		-c promisor.acceptfromserver=None \
+		-c promisor.acceptFromServerUrl="cdn=$ENCODED_TRASH_DIRECTORY_URL/*" \
+		--no-local --filter="blob:limit=5k" server client &&
+
+	# Check that a remote has been auto-created with the right "cdn-1" name and fields.
+	printf "%s\n" "$TRASH_DIRECTORY_URL/lop" "true" "lop" >expect &&
+	git -C client config "remote.cdn-1.url" >actual &&
+	git -C client config "remote.cdn-1.promisor" >>actual &&
+	git -C client config "remote.cdn-1.advertisedAs" >>actual &&
+	test_cmp expect actual &&
+
+	# Check that the original "cdn" remote was not overwritten.
+	printf "%s\n" "https://example.com/cdn" "true" >expect &&
+	git -C client config "remote.cdn.url" >actual &&
+	git -C client config "remote.cdn.promisor" >>actual &&
+	test_cmp expect actual &&
+
+	# Check that the largest object is still missing on the server
+	check_missing_objects server 1 "$oid"
+'
+
+test_expect_success "clone with URL allowlisted and reusable remote" '
+	git -C server config promisor.advertise true &&
+	test_when_finished "rm -rf client" &&
+
+	GIT_NO_LAZY_FETCH=0 git clone \
+		-c remote.cdn.fetch="+refs/heads/*:refs/remotes/lop/*" \
+		-c remote.cdn.url="$TRASH_DIRECTORY_URL/lop" \
+		-c promisor.acceptfromserver=None \
+		-c promisor.acceptFromServerUrl="cdn=$ENCODED_TRASH_DIRECTORY_URL/*" \
+		--no-local --filter="blob:limit=5k" server client &&
+
+	# Check that the existing "cdn" remote has been properly updated.
+	printf "%s\n" "$TRASH_DIRECTORY_URL/lop" "true" "lop" "+refs/heads/*:refs/remotes/lop/*" >expect &&
+	git -C client config "remote.cdn.url" >actual &&
+	git -C client config "remote.cdn.promisor" >>actual &&
+	git -C client config "remote.cdn.advertisedAs" >>actual &&
+	git -C client config "remote.cdn.fetch" >>actual &&
+	test_cmp expect actual &&
+
+	# Check that no new "cdn-1" remote has been created.
+	test_must_fail git -C client config "remote.cdn-1.url" &&
+
+	# Check that the largest object is still missing on the server
+	check_missing_objects server 1 "$oid"
+'
+
+test_expect_success "clone with invalid promisor.acceptFromServerUrl" '
+	git -C server config promisor.advertise true &&
+	test_when_finished "rm -rf client" &&
+
+	# As "bad name" contains a space, which is not a valid remote name,
+	# the pattern should be rejected with a warning and no remote created.
+	GIT_NO_LAZY_FETCH=0 git clone \
+		-c promisor.acceptfromserver=None \
+		-c "promisor.acceptFromServerUrl=bad name=https://example.com/*" \
+		--no-local --filter="blob:limit=5k" server client 2>err &&
+
+	# Check that a warning was emitted
+	test_grep "invalid remote name '\''bad name'\''" err &&
+
+	# Check that no remote was auto-created
+	test_must_fail git -C client config get --regexp "remote\..*\.advertisedas" &&
+
+	# Check that the largest object is not missing on the server
+	check_missing_objects server 0 "" &&
+
+	# Reinitialize server so that the largest object is missing again
+	initialize_server 1 "$oid"
 '
 
 test_expect_success "clone with promisor.sendFields" '

@@ -6,6 +6,6 @@ struct index_state;
 
 void *merge_blobs(struct index_state *, const char *,
 		  struct blob *, struct blob *,
-		  struct blob *, unsigned long *);
+		  struct blob *, size_t *);
 
 #endif /* MERGE_BLOBS_H */

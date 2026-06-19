@@ -250,7 +250,7 @@ static int ce_compare_link(const struct cache_entry *ce, size_t expected_size)
 {
 	int match = -1;
 	void *buffer;
-	unsigned long size;
+	size_t size;
 	enum object_type type;
 	struct strbuf sb = STRBUF_INIT;
 
@@ -1002,7 +1002,7 @@ static enum verify_path_result verify_path_internal(const char *path,
 			return PATH_OK;
 		if (is_dir_sep(c)) {
 inside:
-			if (protect_hfs) {
+			if (repo_protect_hfs(the_repository)) {
 
 				if (is_hfs_dotgit(path))
 					return PATH_INVALID;
@@ -1011,7 +1011,7 @@ inside:
 						return PATH_INVALID;
 				}
 			}
-			if (protect_ntfs) {
+			if (repo_protect_ntfs(the_repository)) {
 #if defined GIT_WINDOWS_NATIVE || defined __CYGWIN__
 				if (c == '\\')
 					return PATH_INVALID;
@@ -1035,7 +1035,8 @@ inside:
 			if (c == '\0')
 				return S_ISDIR(mode) ? PATH_DIR_WITH_SEP :
 						       PATH_INVALID;
-		} else if (c == '\\' && protect_ntfs) {
+		} else if (c == '\\' &&
+			   repo_protect_ntfs(the_repository)) {
 			if (is_ntfs_dotgit(path))
 				return PATH_INVALID;
 			if (S_ISLNK(mode)) {
@@ -3462,7 +3463,7 @@ void *read_blob_data_from_index(struct index_state *istate,
 				const char *path, unsigned long *size)
 {
 	int pos, len;
-	unsigned long sz;
+	size_t sz;
 	enum object_type type;
 	void *data;
 
@@ -3490,7 +3491,7 @@ void *read_blob_data_from_index(struct index_state *istate,
 		return NULL;
 	}
 	if (size)
-		*size = sz;
+		*size = cast_size_t_to_ulong(sz);
 	return data;
 }
 

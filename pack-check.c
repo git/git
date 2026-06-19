@@ -143,9 +143,8 @@ static int verify_packfile(struct repository *r,
 			data = NULL;
 			data_valid = 0;
 		} else {
-			unsigned long sz;
-			data = unpack_entry(r, p, entries[i].offset, &type, &sz);
-			size = sz;
+			data = unpack_entry(r, p, entries[i].offset, &type,
+					    &size);
 			data_valid = 1;
 		}
 

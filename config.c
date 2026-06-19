@@ -1462,7 +1462,7 @@ int git_config_from_blob_oid(config_fn_t fn,
 {
 	enum object_type type;
 	char *buf;
-	unsigned long size;
+	size_t size;
 	int ret;
 
 	buf = odb_read_object(repo->objects, oid, &type, &size);

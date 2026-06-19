@@ -520,7 +520,7 @@ static int grep_submodule(struct grep_opt *opt,
 		enum object_type object_type;
 		struct tree_desc tree;
 		void *data;
-		unsigned long size;
+		size_t size;
 		struct strbuf base = STRBUF_INIT;
 
 		obj_read_lock();
@@ -573,7 +573,7 @@ static int grep_cache(struct grep_opt *opt,
 			enum object_type type;
 			struct tree_desc tree;
 			void *data;
-			unsigned long size;
+			size_t size;
 
 			data = odb_read_object(the_repository->objects, &ce->oid,
 					       &type, &size);
@@ -666,7 +666,7 @@ static int grep_tree(struct grep_opt *opt, const struct pathspec *pathspec,
 			enum object_type type;
 			struct tree_desc sub;
 			void *data;
-			unsigned long size;
+			size_t size;
 
 			data = odb_read_object(the_repository->objects,
 					       &entry.oid, &type, &size);
@@ -730,7 +730,7 @@ static void collect_blob_oids_for_tree(struct repository *repo,
 			enum object_type type;
 			struct tree_desc sub_tree;
 			void *data;
-			unsigned long size;
+			size_t size;
 
 			data = odb_read_object(repo->objects, &entry.oid,
 					       &type, &size);
@@ -764,7 +764,7 @@ static void collect_blob_oids_for_treeish(struct grep_opt *opt,
 {
 	struct tree_desc tree;
 	void *data;
-	unsigned long size;
+	size_t size;
 	struct strbuf base = STRBUF_INIT;
 	int len;
 
@@ -841,7 +841,7 @@ static int grep_object(struct grep_opt *opt, const struct pathspec *pathspec,
 	if (obj->type == OBJ_COMMIT || obj->type == OBJ_TREE) {
 		struct tree_desc tree;
 		void *data;
-		unsigned long size;
+		size_t size;
 		struct strbuf base;
 		int hit, len;
 
