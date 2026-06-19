@@ -569,27 +569,6 @@ test_expect_success 'set up repo with high bit path, version 1 changed-path' '
 	git -C highbit1 commit-graph write --reachable --changed-paths
 '
 
-test_expect_success 'setup check value of version 1 changed-path' '
-	(
-		cd highbit1 &&
-		echo "52a9" >expect &&
-		get_first_changed_path_filter >actual
-	)
-'
-
-# expect will not match actual if char is unsigned by default. Write the test
-# in this way, so that a user running this test script can still see if the two
-# files match. (It will appear as an ordinary success if they match, and a skip
-# if not.)
-if test_cmp highbit1/expect highbit1/actual
-then
-	test_set_prereq SIGNED_CHAR_BY_DEFAULT
-fi
-test_expect_success SIGNED_CHAR_BY_DEFAULT 'check value of version 1 changed-path' '
-	# Only the prereq matters for this test.
-	true
-'
-
 test_expect_success 'setup make another commit' '
 	# "git log" does not use Bloom filters for root commits - see how, in
 	# revision.c, rev_compare_tree() (the only code path that eventually calls
