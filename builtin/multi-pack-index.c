@@ -225,7 +225,8 @@ static int cmd_multi_pack_index_write(int argc, const char **argv,
 	}
 
 	ret = write_midx_file(source->packed, opts.preferred_pack,
-			      opts.refs_snapshot, opts.flags);
+			      opts.refs_snapshot, opts.incremental_base,
+			      opts.flags);
 
 	free(opts.refs_snapshot);
 	return ret;

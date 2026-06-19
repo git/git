@@ -131,7 +131,7 @@ int prepare_multi_pack_index_one(struct odb_source_packed *source);
  */
 int write_midx_file(struct odb_source_packed *source,
 		    const char *preferred_pack_name, const char *refs_snapshot,
-		    unsigned flags);
+		    const char *incremental_base, unsigned flags);
 int write_midx_file_only(struct odb_source_packed *source,
 			 struct string_list *packs_to_include,
 			 const char *preferred_pack_name,
