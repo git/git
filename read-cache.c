@@ -771,12 +771,12 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 	 * case of the file being added to the repository matches (is folded into) the existing
 	 * entry's directory case.
 	 */
-	if (ignore_case) {
+	if (repo_ignore_case(the_repository)) {
 		adjust_dirname_case(istate, ce->name);
 	}
 	if (!(flags & ADD_CACHE_RENORMALIZE)) {
 		alias = index_file_exists(istate, ce->name,
-					  ce_namelen(ce), ignore_case);
+					  ce_namelen(ce), repo_ignore_case(the_repository));
 		if (alias &&
 		    !ce_stage(alias) &&
 		    !ie_match_stat(istate, alias, st, ce_option)) {
@@ -797,7 +797,7 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 	} else
 		set_object_name_for_intent_to_add_entry(ce);
 
-	if (ignore_case && alias && different_name(ce, alias))
+	if (repo_ignore_case(the_repository) && alias && different_name(ce, alias))
 		ce = create_alias_ce(istate, ce, alias);
 	ce->ce_flags |= CE_ADDED;
 

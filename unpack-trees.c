@@ -2428,7 +2428,7 @@ static int check_ok_to_remove(const char *name, int len, int dtype,
 	 *
 	 * Ignore that lstat() if it matches.
 	 */
-	if (ignore_case && icase_exists(o, name, len, st))
+	if (repo_ignore_case(the_repository) && icase_exists(o, name, len, st))
 		return 0;
 
 	if (o->internal.dir &&

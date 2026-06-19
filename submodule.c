@@ -2390,7 +2390,7 @@ static int validate_submodule_encoded_git_dir(char *git_dir, const char *submodu
 
 	/* Prevent conflicts on case-folding filesystems */
 	repo_config_get_bool(the_repository, "core.ignorecase", &config_ignorecase);
-	if (ignore_case || config_ignorecase) {
+	if (repo_ignore_case(the_repository) || config_ignorecase) {
 		bool suffixes_match = !strcmp(last_submodule_name, submodule_name);
 		return check_casefolding_conflict(git_dir, submodule_name,
 						  suffixes_match);
