@@ -625,7 +625,7 @@ static int oid_object_info_convert(struct repository *r,
 	enum object_type type;
 	struct object_id oid, delta_base_oid;
 	struct object_info new_oi, *oi;
-	unsigned long size;
+	size_t size;
 	void *content;
 	int ret;
 
@@ -716,7 +716,7 @@ int odb_read_object_info_extended(struct object_database *odb,
 /* returns enum object_type or negative */
 int odb_read_object_info(struct object_database *odb,
 			 const struct object_id *oid,
-			 unsigned long *sizep)
+			 size_t *sizep)
 {
 	enum object_type type;
 	struct object_info oi = OBJECT_INFO_INIT;
@@ -730,7 +730,7 @@ int odb_read_object_info(struct object_database *odb,
 }
 
 int odb_pretend_object(struct object_database *odb,
-		       void *buf, unsigned long len, enum object_type type,
+		       void *buf, size_t len, enum object_type type,
 		       struct object_id *oid)
 {
 	hash_object_file(odb->repo->hash_algo, buf, len, type, oid);
@@ -744,7 +744,7 @@ int odb_pretend_object(struct object_database *odb,
 void *odb_read_object(struct object_database *odb,
 		      const struct object_id *oid,
 		      enum object_type *type,
-		      unsigned long *size)
+		      size_t *size)
 {
 	struct object_info oi = OBJECT_INFO_INIT;
 	unsigned flags = OBJECT_INFO_DIE_IF_CORRUPT | OBJECT_INFO_LOOKUP_REPLACE;
@@ -762,12 +762,12 @@ void *odb_read_object(struct object_database *odb,
 void *odb_read_object_peeled(struct object_database *odb,
 			     const struct object_id *oid,
 			     enum object_type required_type,
-			     unsigned long *size,
+			     size_t *size,
 			     struct object_id *actual_oid_return)
 {
 	enum object_type type;
 	void *buffer;
-	unsigned long isize;
+	size_t isize;
 	struct object_id actual_oid;
 
 	oidcpy(&actual_oid, oid);

@@ -84,7 +84,7 @@ static char *replace_idents_using_mailmap(char *object_buf, size_t *size)
 
 static int filter_object(const char *path, unsigned mode,
 			 const struct object_id *oid,
-			 char **buf, unsigned long *size)
+			 char **buf, size_t *size)
 {
 	enum object_type type;
 
@@ -120,7 +120,7 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name)
 	struct object_id oid;
 	enum object_type type;
 	char *buf;
-	unsigned long size;
+	size_t size;
 	struct object_context obj_context = {0};
 	struct object_info oi = OBJECT_INFO_INIT;
 	unsigned flags = OBJECT_INFO_LOOKUP_REPLACE;
@@ -163,11 +163,8 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name)
 		if (odb_read_object_info_extended(the_repository->objects, &oid, &oi, flags) < 0)
 			die("git cat-file: could not get object info");
 
-		if (use_mailmap && (type == OBJ_COMMIT || type == OBJ_TAG)) {
-			size_t s = size;
-			buf = replace_idents_using_mailmap(buf, &s);
-			size = cast_size_t_to_ulong(s);
-		}
+		if (use_mailmap && (type == OBJ_COMMIT || type == OBJ_TAG))
+			buf = replace_idents_using_mailmap(buf, &size);
 
 		printf("%"PRIuMAX"\n", (uintmax_t)size);
 		ret = 0;
@@ -188,9 +185,15 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name)
 		break;
 
 	case 'c':
-		if (textconv_object(the_repository, path, obj_context.mode,
-				    &oid, 1, &buf, &size))
+	{
+		unsigned long size_ul = 0;
+		int textconv_ret = textconv_object(the_repository, path,
+						   obj_context.mode, &oid, 1,
+						   &buf, &size_ul);
+		size = size_ul;
+		if (textconv_ret)
 			break;
+	}
 		/* else fallthrough */
 
 	case 'p':
@@ -216,11 +219,8 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name)
 		if (!buf)
 			die("Cannot read object %s", obj_name);
 
-		if (use_mailmap) {
-			size_t s = size;
-			buf = replace_idents_using_mailmap(buf, &s);
-			size = cast_size_t_to_ulong(s);
-		}
+		if (use_mailmap)
+			buf = replace_idents_using_mailmap(buf, &size);
 
 		/* otherwise just spit out the data */
 		break;
@@ -263,11 +263,8 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name)
 		buf = odb_read_object_peeled(the_repository->objects, &oid,
 					     exp_type_id, &size, NULL);
 
-		if (use_mailmap) {
-			size_t s = size;
-			buf = replace_idents_using_mailmap(buf, &s);
-			size = cast_size_t_to_ulong(s);
-		}
+		if (use_mailmap)
+			buf = replace_idents_using_mailmap(buf, &size);
 		break;
 	}
 	default:
@@ -288,7 +285,7 @@ cleanup:
 struct expand_data {
 	struct object_id oid;
 	enum object_type type;
-	unsigned long size;
+	size_t size;
 	unsigned short mode;
 	off_t disk_size;
 	const char *rest;
@@ -404,7 +401,7 @@ static void print_object_or_die(struct batch_options *opt, struct expand_data *d
 			fflush(stdout);
 		if (opt->transform_mode) {
 			char *contents;
-			unsigned long size;
+			size_t size;
 
 			if (!data->rest)
 				die("missing path for '%s'", oid_to_hex(oid));
@@ -416,9 +413,12 @@ static void print_object_or_die(struct batch_options *opt, struct expand_data *d
 					    oid_to_hex(oid), data->rest);
 			} else if (opt->transform_mode == 'c') {
 				enum object_type type;
-				if (!textconv_object(the_repository,
-						     data->rest, 0100644, oid,
-						     1, &contents, &size))
+				unsigned long size_ul = 0;
+				if (textconv_object(the_repository,
+						    data->rest, 0100644, oid,
+						    1, &contents, &size_ul))
+					size = size_ul;
+				else
 					contents = odb_read_object(the_repository->objects,
 								   oid, &type, &size);
 				if (!contents)
@@ -434,7 +434,7 @@ static void print_object_or_die(struct batch_options *opt, struct expand_data *d
 	}
 	else {
 		enum object_type type;
-		unsigned long size;
+		size_t size;
 		void *contents;
 
 		contents = odb_read_object(the_repository->objects, oid,
@@ -442,11 +442,8 @@ static void print_object_or_die(struct batch_options *opt, struct expand_data *d
 		if (!contents)
 			die("object %s disappeared", oid_to_hex(oid));
 
-		if (use_mailmap) {
-			size_t s = size;
-			contents = replace_idents_using_mailmap(contents, &s);
-			size = cast_size_t_to_ulong(s);
-		}
+		if (use_mailmap)
+			contents = replace_idents_using_mailmap(contents, &size);
 
 		if (type != data->type)
 			die("object %s changed type!?", oid_to_hex(oid));
@@ -549,15 +546,13 @@ static void batch_object_write(const char *obj_name,
 		}
 
 		if (use_mailmap && (data->type == OBJ_COMMIT || data->type == OBJ_TAG)) {
-			size_t s = data->size;
 			char *buf = NULL;
 
 			buf = odb_read_object(the_repository->objects, &data->oid,
 					      &data->type, &data->size);
 			if (!buf)
 				die(_("unable to read %s"), oid_to_hex(&data->oid));
-			buf = replace_idents_using_mailmap(buf, &s);
-			data->size = cast_size_t_to_ulong(s);
+			buf = replace_idents_using_mailmap(buf, &data->size);
 
 			free(buf);
 		}

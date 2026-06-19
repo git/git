@@ -784,13 +784,14 @@ static int count_objects(const char *path UNUSED, struct oid_array *oids,
 	for (size_t i = 0; i < oids->nr; i++) {
 		struct object_info oi = OBJECT_INFO_INIT;
 		unsigned long inflated;
+		size_t inflated_st = 0;
 		struct commit *commit;
 		struct object *obj;
 		void *content;
 		off_t disk;
 		int eaten;
 
-		oi.sizep = &inflated;
+		oi.sizep = &inflated_st;
 		oi.disk_sizep = &disk;
 		oi.contentp = &content;
 
@@ -798,6 +799,7 @@ static int count_objects(const char *path UNUSED, struct oid_array *oids,
 						  OBJECT_INFO_SKIP_FETCH_OBJECT |
 						  OBJECT_INFO_QUICK) < 0)
 			continue;
+		inflated = cast_size_t_to_ulong(inflated_st);
 
 		obj = parse_object_buffer(the_repository, &oids->oid[i], type,
 					  inflated, content, &eaten);

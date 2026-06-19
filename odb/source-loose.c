@@ -72,7 +72,7 @@ static int read_object_info_from_path(struct odb_source_loose *loose,
 	void *map = NULL;
 	git_zstream stream, *stream_to_end = NULL;
 	char hdr[MAX_HEADER_LEN];
-	unsigned long size_scratch;
+	size_t size_scratch;
 	enum object_type type_scratch;
 	struct stat st;
 
@@ -355,7 +355,6 @@ static int odb_source_loose_read_object_stream(struct odb_read_stream **out,
 	struct object_info oi = OBJECT_INFO_INIT;
 	struct odb_loose_read_stream *st;
 	unsigned long mapsize;
-	unsigned long size_ul;
 	void *mapped;
 
 	mapped = odb_source_loose_map_object(loose, oid, &mapsize);
@@ -379,18 +378,11 @@ static int odb_source_loose_read_object_stream(struct odb_read_stream **out,
 		goto error;
 	}
 
-	/*
-	 * object_info.sizep is unsigned long* (32-bit on Windows), but
-	 * st->base.size is size_t (64-bit). Use temporary variable.
-	 * Note: loose objects >4GB would still truncate here, but such
-	 * large loose objects are uncommon (they'd normally be packed).
-	 */
-	oi.sizep = &size_ul;
+	oi.sizep = &st->base.size;
 	oi.typep = &st->base.type;
 
 	if (parse_loose_header(st->hdr, &oi) < 0 || st->base.type < 0)
 		goto error;
-	st->base.size = size_ul;
 
 	st->mapped = mapped;
 	st->mapsize = mapsize;

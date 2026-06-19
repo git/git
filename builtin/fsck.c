@@ -724,7 +724,7 @@ static int fsck_loose(const struct object_id *oid, const char *path,
 	struct for_each_loose_cb *data = cb_data;
 	struct object *obj;
 	enum object_type type = OBJ_NONE;
-	unsigned long size;
+	size_t size;
 	void *contents = NULL;
 	int eaten;
 	struct object_info oi = OBJECT_INFO_INIT;

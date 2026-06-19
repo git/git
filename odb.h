@@ -228,12 +228,12 @@ struct odb_source *odb_add_to_alternates_memory(struct object_database *odb,
 void *odb_read_object(struct object_database *odb,
 		      const struct object_id *oid,
 		      enum object_type *type,
-		      unsigned long *size);
+		      size_t *size);
 
 void *odb_read_object_peeled(struct object_database *odb,
 			     const struct object_id *oid,
 			     enum object_type required_type,
-			     unsigned long *size,
+			     size_t *size,
 			     struct object_id *oid_ret);
 
 /*
@@ -245,13 +245,13 @@ void *odb_read_object_peeled(struct object_database *odb,
  * that reference it.
  */
 int odb_pretend_object(struct object_database *odb,
-		       void *buf, unsigned long len, enum object_type type,
+		       void *buf, size_t len, enum object_type type,
 		       struct object_id *oid);
 
 struct object_info {
 	/* Request */
 	enum object_type *typep;
-	unsigned long *sizep;
+	size_t *sizep;
 	off_t *disk_sizep;
 	struct object_id *delta_base_oid;
 	void **contentp;
@@ -356,7 +356,7 @@ int odb_read_object_info_extended(struct object_database *odb,
  */
 int odb_read_object_info(struct object_database *odb,
 			 const struct object_id *oid,
-			 unsigned long *sizep);
+			 size_t *sizep);
 
 enum odb_has_object_flags {
 	/* Retry packed storage after checking packed and loose storage */

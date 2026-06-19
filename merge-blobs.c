@@ -9,7 +9,7 @@
 static int fill_mmfile_blob(mmfile_t *f, struct blob *obj)
 {
 	void *buf;
-	unsigned long size;
+	size_t size;
 	enum object_type type;
 
 	buf = odb_read_object(the_repository->objects, &obj->object.oid,
@@ -35,7 +35,7 @@ static void *three_way_filemerge(struct index_state *istate,
 				 mmfile_t *base,
 				 mmfile_t *our,
 				 mmfile_t *their,
-				 unsigned long *size)
+				 size_t *size)
 {
 	enum ll_merge_result merge_status;
 	mmbuffer_t res;
@@ -61,7 +61,7 @@ static void *three_way_filemerge(struct index_state *istate,
 
 void *merge_blobs(struct index_state *istate, const char *path,
 		  struct blob *base, struct blob *our,
-		  struct blob *their, unsigned long *size)
+		  struct blob *their, size_t *size)
 {
 	void *res = NULL;
 	mmfile_t f1, f2, common;

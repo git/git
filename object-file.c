@@ -300,7 +300,7 @@ int parse_loose_header(const char *hdr, struct object_info *oi)
 	}
 
 	if (oi->sizep)
-		*oi->sizep = cast_size_t_to_ulong(size);
+		*oi->sizep = size;
 
 	/*
 	 * The length must be followed by a zero byte
@@ -932,7 +932,7 @@ int force_object_loose(struct odb_source *source,
 	struct odb_source_files *files = odb_source_files_downcast(source);
 	const struct git_hash_algo *compat = source->odb->repo->compat_hash_algo;
 	void *buf;
-	unsigned long len;
+	size_t len;
 	struct object_info oi = OBJECT_INFO_INIT;
 	struct object_id compat_oid;
 	enum object_type type;
@@ -1616,7 +1616,7 @@ int read_loose_object(struct repository *repo,
 	unsigned long mapsize;
 	git_zstream stream;
 	char hdr[MAX_HEADER_LEN];
-	unsigned long *size = oi->sizep;
+	size_t *size = oi->sizep;
 
 	fd = git_open(path);
 	if (fd >= 0)
