@@ -159,7 +159,7 @@ static int odb_source_files_freshen_object(struct odb_source *source,
 }
 
 static int odb_source_files_write_object(struct odb_source *source,
-					 const void *buf, unsigned long len,
+					 const void *buf, size_t len,
 					 enum object_type type,
 					 struct object_id *oid,
 					 struct object_id *compat_oid,

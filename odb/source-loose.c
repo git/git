@@ -583,7 +583,7 @@ static int odb_source_loose_freshen_object(struct odb_source *source,
 }
 
 static int odb_source_loose_write_object(struct odb_source *source,
-					 const void *buf, unsigned long len,
+					 const void *buf, size_t len,
 					 enum object_type type, struct object_id *oid,
 					 struct object_id *compat_oid_in,
 					 enum odb_write_object_flags flags)
@@ -593,7 +593,7 @@ static int odb_source_loose_write_object(struct odb_source *source,
 	const struct git_hash_algo *compat = source->odb->repo->compat_hash_algo;
 	struct object_id compat_oid;
 	char hdr[MAX_HEADER_LEN];
-	int hdrlen = sizeof(hdr);
+	size_t hdrlen = sizeof(hdr);
 
 	/* Generate compat_oid */
 	if (compat) {
