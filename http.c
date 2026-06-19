@@ -2425,7 +2425,21 @@ static int http_request_recoverable(const char *url,
 	if (options->effective_url && options->base_url) {
 		if (update_url_from_redirect(options->base_url,
 					     url, options->effective_url)) {
+			struct strvec wwwauth_headers = STRVEC_INIT;
+
+			/*
+			 * Preserve wwwauth_headers across the call to
+			 * credential_from_url(): if the effective URL doesn't
+			 * specify its own credentials, a credential helper
+			 * might need the wwwauth[] array from the server's
+			 * redirect response in order to authenticate.
+			 */
+			strvec_pushv(&wwwauth_headers,
+				     http_auth.wwwauth_headers.v);
 			credential_from_url(&http_auth, options->base_url->buf);
+			strvec_pushv(&http_auth.wwwauth_headers,
+				     wwwauth_headers.v);
+			strvec_clear(&wwwauth_headers);
 			url = options->effective_url->buf;
 		}
 	}
