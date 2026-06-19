@@ -662,8 +662,8 @@ static int mark_complete_oid(const struct reference *ref, void *cb_data UNUSED)
 static void mark_recent_complete_commits(struct fetch_pack_args *args,
 					 timestamp_t cutoff)
 {
-	while (complete.nr) {
-		struct commit *item = prio_queue_peek(&complete);
+	struct commit *item;
+	while ((item = prio_queue_peek(&complete))) {
 		if (item->date < cutoff)
 			break;
 		print_verbose(args, _("Marking %s as complete"),

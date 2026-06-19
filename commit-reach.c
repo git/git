@@ -1121,6 +1121,7 @@ void ahead_behind(struct repository *r,
 	struct nonstale_queue queue = {
 		{ .compare = compare_commits_by_gen_then_commit_date }
 	};
+	void *entry;
 	size_t width = DIV_ROUND_UP(commits_nr, BITS_IN_EWORD);
 
 	if (!commits_nr || !counts_nr)
@@ -1186,8 +1187,8 @@ void ahead_behind(struct repository *r,
 
 	/* STALE is used here, PARENT2 is used by insert_no_dup(). */
 	repo_clear_commit_marks(r, PARENT2 | STALE);
-	for (size_t i = 0; i < queue.pq.nr; i++)
-		free_bit_array(queue.pq.array[i].data);
+	prio_queue_for_each(&queue.pq, entry)
+		free_bit_array(entry);
 	clear_bit_arrays(&bit_arrays);
 	clear_nonstale_queue(&queue);
 }
@@ -1320,7 +1321,7 @@ int get_branch_base_for_tip(struct repository *r,
 			    size_t bases_nr)
 {
 	int best_index = -1;
-	struct commit *branch_point = NULL;
+	struct commit *c, *branch_point = NULL;
 	struct prio_queue queue = { compare_commits_by_gen_then_commit_date };
 	int found_missing_gen = 0;
 
@@ -1373,8 +1374,7 @@ int get_branch_base_for_tip(struct repository *r,
 		prio_queue_put(&queue, c);
 	}
 
-	while (queue.nr) {
-		struct commit *c = prio_queue_get(&queue);
+	while ((c = prio_queue_get(&queue))) {
 		int best_for_c = get_best(c);
 		int best_for_p, positive;
 		struct commit *parent;
