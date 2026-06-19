@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 (EXPERIMENTAL!) 'git replay' ([--contained] --onto=<newbase> | --advance=<branch> | --revert=<branch>)
-			     [--ref=<ref>] [--ref-action=<mode>] <revision-range>
+			     [--ref=<ref>] [--ref-action=<mode>] [--linearize] <revision-range>
 
 DESCRIPTION
 -----------
@@ -90,6 +90,12 @@ Expanded description list compared to 'replay.refAction'.
 --
 +
 The default mode can be configured via the `replay.refAction` configuration variable.
+
+--linearize::
+	In this mode, `git replay` imitates `git rebase --no-rebase-merges`,
+	i.e. it cherry-picks only non-merge commits, each one on top of the
+	previous one.
+	This option is incompatible with `--revert`.
 
 <revision-range>::
 	Range of commits to replay; see "Specifying Ranges" in
