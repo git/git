@@ -53,8 +53,7 @@ This is the same as the `--decorate` option of the `git log`.
 `log.follow`::
 	If `true`, `git log` will act as if the `--follow` option was used when
 	a single <path> is given.  This has the same limitations as `--follow`,
-	i.e. it cannot be used to follow multiple files and does not work well
-	on non-linear history.
+	i.e. it cannot be used to follow multiple files.
 
 `log.graphColors`::
 	A list of colors, separated by commas, that can be used to draw

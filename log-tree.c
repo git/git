@@ -3,6 +3,7 @@
 
 #include "git-compat-util.h"
 #include "commit-reach.h"
+#include "commit-slab.h"
 #include "config.h"
 #include "diff.h"
 #include "diffcore.h"
@@ -1089,6 +1090,96 @@ static int do_remerge_diff(struct rev_info *opt,
 	return !opt->loginfo;
 }
 
+/* Per-commit path storage for --follow across merges */
+define_commit_slab(follow_pathspec_slab, char *);
+
+static const char *pathspec_single_path(const struct pathspec *ps)
+{
+	if (ps->nr != 1)
+		return NULL;
+	return ps->items[0].match;
+}
+
+static void set_pathspec_to_single_path(struct pathspec *ps, const char *path)
+{
+	const char *paths[2] = { path, NULL };
+
+	clear_pathspec(ps);
+	parse_pathspec(ps,
+		       PATHSPEC_ALL_MAGIC & ~PATHSPEC_LITERAL,
+		       PATHSPEC_LITERAL_PATH, "", paths);
+}
+
+static void remember_follow_pathspec(struct rev_info *opt,
+				     struct commit *c, const char *path)
+{
+	char **slot;
+
+	if (!path)
+		return;
+	if (!opt->follow_pathspec_slab) {
+		opt->follow_pathspec_slab = xmalloc(sizeof(*opt->follow_pathspec_slab));
+		init_follow_pathspec_slab(opt->follow_pathspec_slab);
+	}
+	slot = follow_pathspec_slab_at(opt->follow_pathspec_slab, c);
+	if (*slot && !strcmp(*slot, path))
+		return;
+	free(*slot);
+	*slot = xstrdup(path);
+}
+
+static const char *recall_follow_pathspec(struct rev_info *opt,
+					  struct commit *c)
+{
+	char **slot;
+
+	if (!opt->follow_pathspec_slab)
+		return NULL;
+	slot = follow_pathspec_slab_peek(opt->follow_pathspec_slab, c);
+	return slot ? *slot : NULL;
+}
+
+static void free_follow_pathspec_slot(char **slot)
+{
+	FREE_AND_NULL(*slot);
+}
+
+void release_follow_pathspec_slab(struct rev_info *opt)
+{
+	if (!opt->follow_pathspec_slab)
+		return;
+	deep_clear_follow_pathspec_slab(opt->follow_pathspec_slab,
+					free_follow_pathspec_slot);
+	FREE_AND_NULL(opt->follow_pathspec_slab);
+}
+
+/* Compute a path to follow in parent, if there is one */
+static void propagate_follow_pathspec_to_parent(struct rev_info *opt,
+						struct commit *commit,
+						struct commit *parent)
+{
+	struct diff_options diff_opts;
+	const char *path;
+
+	parse_commit_or_die(parent);
+	repo_diff_setup(opt->diffopt.repo, &diff_opts);
+	copy_pathspec(&diff_opts.pathspec, &opt->diffopt.pathspec);
+	diff_opts.flags.recursive = 1;
+	diff_opts.flags.follow_renames = 1;
+	diff_opts.output_format = DIFF_FORMAT_NO_OUTPUT;
+	diff_setup_done(&diff_opts);
+	diff_tree_oid(get_commit_tree_oid(parent),
+		      get_commit_tree_oid(commit),
+		      "", &diff_opts);
+
+	path = pathspec_single_path(&diff_opts.pathspec);
+	if (path)
+		remember_follow_pathspec(opt, parent, path);
+
+	diff_queue_clear(&diff_queued_diff);
+	diff_free(&diff_opts);
+}
+
 /*
  * Show the diff of a commit.
  *
@@ -1185,6 +1276,16 @@ int log_tree_commit(struct rev_info *opt, struct commit *commit)
 	opt->loginfo = &log;
 	opt->diffopt.no_free = 1;
 
+	/* Any recorded path for this commit? If so, restore it */
+	if (opt->diffopt.flags.follow_renames) {
+		const char *stored = recall_follow_pathspec(opt, commit);
+		if (stored) {
+			const char *current = pathspec_single_path(&opt->diffopt.pathspec);
+			if (!current || strcmp(current, stored))
+				set_pathspec_to_single_path(&opt->diffopt.pathspec, stored);
+		}
+	}
+
 	if (opt->track_linear && !opt->linear && !opt->reverse_output_stage)
 		fprintf(opt->diffopt.file, "\n%s\n", opt->break_bar);
 	shown = log_tree_diff(opt, commit, &log);
@@ -1197,6 +1298,21 @@ int log_tree_commit(struct rev_info *opt, struct commit *commit)
 		fprintf(opt->diffopt.file, "\n%s\n", opt->break_bar);
 	if (shown)
 		show_diff_of_diff(opt);
+
+	/* Record what path each parent of this commit should use */
+	if (opt->diffopt.flags.follow_renames) {
+		struct commit_list *parents = get_saved_parents(opt, commit);
+		if (parents && parents->next) {
+			struct commit_list *p;
+			for (p = parents; p; p = p->next)
+				propagate_follow_pathspec_to_parent(opt, commit,
+								    p->item);
+		} else if (parents) {
+			remember_follow_pathspec(opt, parents->item,
+				pathspec_single_path(&opt->diffopt.pathspec));
+		}
+	}
+
 	opt->loginfo = NULL;
 	maybe_flush_or_die(opt->diffopt.file, "stdout");
 	opt->diffopt.no_free = no_free;
