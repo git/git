@@ -870,4 +870,280 @@ test_expect_success 'tracking info copied with autoSetupMerge=inherit' '
 	test_cmp_config "" --default "" branch.main2.merge
 '
 
+test_expect_success 'setup upstream for --track=fetch tests' '
+	git checkout main &&
+	git init fetch_upstream &&
+	test_commit -C fetch_upstream u_main &&
+	git remote add fetch_upstream fetch_upstream &&
+	git fetch fetch_upstream &&
+	git -C fetch_upstream checkout -b fetch_new &&
+	test_commit -C fetch_upstream u_new
+'
+
+test_expect_success 'checkout --track=fetch -b picks up branch created upstream after clone' '
+	git checkout main &&
+	test_must_fail git rev-parse --verify refs/remotes/fetch_upstream/fetch_new &&
+	git checkout --track=fetch -b local_new fetch_upstream/fetch_new &&
+	test_cmp_rev refs/remotes/fetch_upstream/fetch_new HEAD &&
+	test_cmp_config fetch_upstream branch.local_new.remote &&
+	test_cmp_config refs/heads/fetch_new branch.local_new.merge
+'
+
+test_expect_success 'checkout --track=fetch <remote>/<branch> leaves other tracking branches untouched' '
+	git checkout main &&
+	git -C fetch_upstream checkout -b fetch_target &&
+	test_commit -C fetch_upstream u_target_pre &&
+	git -C fetch_upstream checkout -b fetch_other &&
+	test_commit -C fetch_upstream u_other_pre &&
+	git fetch fetch_upstream &&
+	other_before=$(git rev-parse refs/remotes/fetch_upstream/fetch_other) &&
+	git -C fetch_upstream checkout fetch_target &&
+	test_commit -C fetch_upstream u_target_post &&
+	git -C fetch_upstream checkout fetch_other &&
+	test_commit -C fetch_upstream u_other_post &&
+	git checkout --track=fetch -b local_target fetch_upstream/fetch_target &&
+	test_cmp_rev refs/remotes/fetch_upstream/fetch_target HEAD &&
+	test "$(git rev-parse refs/remotes/fetch_upstream/fetch_other)" = "$other_before"
+'
+
+test_expect_success 'checkout --track=fetch with bare remote name fetches only <remote>/HEAD target' '
+	git checkout main &&
+	git -C fetch_upstream checkout main &&
+	git remote set-head fetch_upstream main &&
+	git -C fetch_upstream checkout -b fetch_unrelated &&
+	test_commit -C fetch_upstream u_unrelated_pre &&
+	git fetch fetch_upstream fetch_unrelated &&
+	unrelated_before=$(git rev-parse refs/remotes/fetch_upstream/fetch_unrelated) &&
+	git -C fetch_upstream checkout main &&
+	test_commit -C fetch_upstream u_main_post &&
+	git -C fetch_upstream checkout fetch_unrelated &&
+	test_commit -C fetch_upstream u_unrelated_post &&
+	git checkout --track=fetch -b local_from_remote fetch_upstream &&
+	test_cmp_rev refs/remotes/fetch_upstream/main HEAD &&
+	test "$(git rev-parse refs/remotes/fetch_upstream/fetch_unrelated)" = "$unrelated_before"
+'
+
+test_expect_success 'checkout --track=fetch aborts and does not create branch when no existing ref' '
+	git checkout main &&
+	test_might_fail git branch -D bogus &&
+	test_must_fail git checkout --track=fetch -b bogus fetch_upstream/does_not_exist &&
+	test_must_fail git rev-parse --verify refs/heads/bogus
+'
+
+test_expect_success 'checkout --track=fetch warns and proceeds when fetch fails but ref exists' '
+	git checkout main &&
+	git -C fetch_upstream checkout -b fetch_offline &&
+	test_commit -C fetch_upstream u_offline &&
+	git fetch fetch_upstream fetch_offline &&
+	saved_url=$(git config remote.fetch_upstream.url) &&
+	test_when_finished "git config remote.fetch_upstream.url \"$saved_url\"" &&
+	git config remote.fetch_upstream.url ./does-not-exist &&
+	git checkout --track=fetch -b local_offline fetch_upstream/fetch_offline 2>err &&
+	test_grep "failed to fetch" err &&
+	test_cmp_rev refs/remotes/fetch_upstream/fetch_offline HEAD
+'
+
+test_expect_success 'checkout --track=fetch resolves through configured fetch refspec' '
+	git checkout main &&
+	git remote add fetch_custom ./fetch_upstream &&
+	test_when_finished "git remote remove fetch_custom" &&
+	git config --replace-all remote.fetch_custom.fetch \
+		"+refs/heads/*:refs/remotes/custom-ns/*" &&
+	git -C fetch_upstream checkout -b fetch_refspec &&
+	test_commit -C fetch_upstream u_refspec &&
+	test_must_fail git rev-parse --verify refs/remotes/custom-ns/fetch_refspec &&
+	git checkout --track=fetch -b local_refspec custom-ns/fetch_refspec &&
+	test_cmp_rev refs/remotes/custom-ns/fetch_refspec HEAD
+'
+
+test_expect_success 'checkout --track=fetch on namespace bare name follows <ns>/HEAD' '
+	git checkout main &&
+	git remote add fetch_ns ./fetch_upstream &&
+	test_when_finished "git remote remove fetch_ns" &&
+	test_when_finished "git update-ref -d refs/remotes/ns_alias/HEAD" &&
+	git config --replace-all remote.fetch_ns.fetch \
+		"+refs/heads/*:refs/remotes/ns_alias/*" &&
+	git fetch fetch_ns &&
+	git symbolic-ref refs/remotes/ns_alias/HEAD refs/remotes/ns_alias/main &&
+	git -C fetch_upstream checkout main &&
+	test_commit -C fetch_upstream u_ns_post &&
+	git checkout --track=fetch -b local_ns ns_alias &&
+	test_cmp_rev refs/remotes/ns_alias/main HEAD &&
+	test_cmp_config fetch_ns branch.local_ns.remote &&
+	test_cmp_config refs/heads/main branch.local_ns.merge
+'
+
+test_expect_success '--track=fetch on bare hierarchical remote name follows <ns>/HEAD' '
+	git checkout main &&
+	git remote add nested/bare ./fetch_upstream &&
+	test_when_finished "git remote remove nested/bare" &&
+	test_when_finished "git update-ref -d refs/remotes/nested/bare/HEAD" &&
+	git fetch nested/bare &&
+	git symbolic-ref refs/remotes/nested/bare/HEAD \
+		refs/remotes/nested/bare/main &&
+	git -C fetch_upstream checkout main &&
+	test_commit -C fetch_upstream u_nested_bare_post &&
+	git checkout --track=fetch -b local_nested_bare nested/bare &&
+	test_cmp_rev refs/remotes/nested/bare/main HEAD
+'
+
+test_expect_success 'checkout --track=fetch handles hierarchical remote name' '
+	git checkout main &&
+	git remote add nested/remote ./fetch_upstream &&
+	test_when_finished "git remote remove nested/remote" &&
+	git -C fetch_upstream checkout -b fetch_hier &&
+	test_commit -C fetch_upstream u_hier &&
+	test_must_fail git rev-parse --verify refs/remotes/nested/remote/fetch_hier &&
+	git checkout --track=fetch -b local_hier nested/remote/fetch_hier &&
+	test_cmp_rev refs/remotes/nested/remote/fetch_hier HEAD
+'
+
+test_expect_success 'checkout --track=fetch dies on bare remote name with no <ns>/HEAD' '
+	git checkout main &&
+	git remote add fetch_nohead ./fetch_upstream &&
+	test_when_finished "git remote remove fetch_nohead" &&
+	test_might_fail git symbolic-ref -d refs/remotes/fetch_nohead/HEAD &&
+	test_must_fail git checkout --track=fetch -b local_nohead fetch_nohead 2>err &&
+	test_grep "refs/remotes/fetch_nohead/HEAD" err &&
+	test_grep "git remote set-head fetch_nohead --auto" err &&
+	test_must_fail git rev-parse --verify refs/heads/local_nohead
+'
+
+test_expect_success 'checkout --track=fetch on bare unknown name does not suggest set-head' '
+	git checkout main &&
+	test_must_fail git rev-parse --verify refs/remotes/no_such_ns/HEAD &&
+	test_must_fail git config --get remote.no_such_ns.url &&
+	test_must_fail git checkout --track=fetch -b local_unknown no_such_ns 2>err &&
+	test_grep "no configured remote" err &&
+	test_grep ! "set-head" err &&
+	test_must_fail git rev-parse --verify refs/heads/local_unknown
+'
+
+test_expect_success 'checkout --track=fetch rejects <ns>/HEAD pointing outside namespace' '
+	git checkout main &&
+	git remote add fetch_crossns ./fetch_upstream &&
+	test_when_finished "git remote remove fetch_crossns" &&
+	test_when_finished "git update-ref -d refs/remotes/fetch_crossns/HEAD" &&
+	git fetch fetch_crossns &&
+	git symbolic-ref refs/remotes/fetch_crossns/HEAD \
+		refs/remotes/fetch_upstream/u_main &&
+	test_must_fail git checkout --track=fetch -b local_crossns fetch_crossns 2>err &&
+	test_grep "refs/remotes/fetch_crossns/HEAD" err &&
+	test_must_fail git rev-parse --verify refs/heads/local_crossns
+'
+
+test_expect_success 'checkout --track=fetch dies on ambiguous fetch refspec match' '
+	git checkout main &&
+	git remote add fetch_ambig_a ./fetch_upstream &&
+	git remote add fetch_ambig_b ./fetch_upstream &&
+	test_when_finished "git remote remove fetch_ambig_a" &&
+	test_when_finished "git remote remove fetch_ambig_b" &&
+	git config --replace-all remote.fetch_ambig_a.fetch \
+		"+refs/heads/*:refs/remotes/ambig_ns/*" &&
+	git config --replace-all remote.fetch_ambig_b.fetch \
+		"+refs/heads/*:refs/remotes/ambig_ns/*" &&
+	git -C fetch_upstream checkout -b fetch_ambig &&
+	test_commit -C fetch_upstream u_ambig &&
+	test_must_fail git checkout --track=fetch -b local_ambig ambig_ns/fetch_ambig 2>err &&
+	test_grep "fetch_ambig_a" err &&
+	test_grep "fetch_ambig_b" err &&
+	test_grep "tracking namespaces" err &&
+	test_must_fail git rev-parse --verify refs/heads/local_ambig
+'
+
+test_expect_success 'checkout --track=fetch rejects invalid refname components' '
+	git checkout main &&
+	test_must_fail git checkout --track=fetch -b local_invalid "foo..bar" 2>err &&
+	test_grep "valid" err &&
+	test_must_fail git rev-parse --verify refs/heads/local_invalid
+'
+
+test_expect_success 'checkout --track=fetch,inherit rejects invalid refname components' '
+	git checkout main &&
+	test_must_fail git checkout --track=fetch,inherit -b local_invalid \
+		"foo..bar" 2>err &&
+	test_grep "valid" err &&
+	test_must_fail git rev-parse --verify refs/heads/local_invalid
+'
+
+test_expect_success 'checkout --track=inherit,direct is rejected' '
+	test_must_fail git checkout --track=inherit,direct -b bad fetch_upstream/fetch_new 2>err &&
+	test_grep "cannot combine" err
+'
+
+test_expect_success 'checkout --track=direct,inherit is rejected' '
+	test_must_fail git checkout --track=direct,inherit -b bad fetch_upstream/fetch_new 2>err &&
+	test_grep "cannot combine" err
+'
+
+test_expect_success 'checkout --track=fetch then --track=direct drops fetch (last-one-wins)' '
+	git checkout main &&
+	git -C fetch_upstream checkout -b fetch_lastwin &&
+	test_commit -C fetch_upstream u_lastwin &&
+	test_must_fail git rev-parse --verify refs/remotes/fetch_upstream/fetch_lastwin &&
+	test_must_fail git checkout --track=fetch --track=direct \
+		-b local_lastwin fetch_upstream/fetch_lastwin &&
+	test_must_fail git rev-parse --verify refs/remotes/fetch_upstream/fetch_lastwin
+'
+
+test_expect_success 'checkout --track=fetch then --no-track drops fetch' '
+	git checkout main &&
+	git -C fetch_upstream checkout -b fetch_notrack &&
+	test_commit -C fetch_upstream u_notrack &&
+	test_must_fail git rev-parse --verify refs/remotes/fetch_upstream/fetch_notrack &&
+	test_must_fail git checkout --track=fetch --no-track \
+		-b local_notrack fetch_upstream/fetch_notrack &&
+	test_must_fail git rev-parse --verify refs/remotes/fetch_upstream/fetch_notrack
+'
+
+test_expect_success 'checkout --track=fetch,inherit fetches remote-tracking start-point' '
+	git checkout main &&
+	git -C fetch_upstream checkout -b fetch_inherit &&
+	test_commit -C fetch_upstream u_inherit &&
+	test_must_fail git rev-parse --verify refs/remotes/fetch_upstream/fetch_inherit &&
+	git checkout --track=fetch,inherit -b local_inherit \
+		fetch_upstream/fetch_inherit &&
+	test_cmp_rev refs/remotes/fetch_upstream/fetch_inherit HEAD
+'
+
+test_expect_success 'checkout --track=fetch,inherit errors when start-point does not map to a remote' '
+	git checkout main &&
+	test_must_fail git checkout --track=fetch,inherit -b bad main 2>err &&
+	test_grep "no configured remote" err &&
+	test_must_fail git rev-parse --verify refs/heads/bad
+'
+
+test_expect_success 'checkout --track=fetch on local start-point errors' '
+	git checkout main &&
+	test_must_fail git checkout --track=fetch -b bad main 2>err &&
+	test_grep "no configured remote" err &&
+	test_must_fail git rev-parse --verify refs/heads/bad
+'
+
+test_expect_success 'checkout --track=bogus reports an error' '
+	git checkout main &&
+	test_must_fail git checkout --track=bogus -b bogus_branch fetch_upstream/fetch_new 2>err &&
+	test_grep "expects" err
+'
+
+test_expect_success 'checkout -q --track=fetch silences the fetch output' '
+	git checkout main &&
+	git -C fetch_upstream checkout -b fetch_quiet &&
+	test_commit -C fetch_upstream u_quiet &&
+	test_must_fail git rev-parse --verify refs/remotes/fetch_upstream/fetch_quiet &&
+	git checkout -q --track=fetch -b local_quiet \
+		fetch_upstream/fetch_quiet 2>err &&
+	test_grep ! "-> fetch_upstream/fetch_quiet" err &&
+	test_cmp_rev refs/remotes/fetch_upstream/fetch_quiet HEAD
+'
+
+test_expect_success 'switch --track=fetch -c picks up branch created upstream after clone' '
+	git checkout main &&
+	git -C fetch_upstream checkout -b fetch_switch &&
+	test_commit -C fetch_upstream u_switch &&
+	test_must_fail git rev-parse --verify refs/remotes/fetch_upstream/fetch_switch &&
+	git switch --track=fetch -c local_switch fetch_upstream/fetch_switch &&
+	test_cmp_rev refs/remotes/fetch_upstream/fetch_switch HEAD
+'
+
 test_done
