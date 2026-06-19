@@ -2359,15 +2359,22 @@ void ref_store_release(struct ref_store *ref_store)
 
 struct ref_store *get_main_ref_store(struct repository *r)
 {
+	static bool initializing;
+
 	if (r->refs_private)
 		return r->refs_private;
 
 	if (!r->gitdir)
 		BUG("attempting to get main_ref_store outside of repository");
+	if (initializing)
+		BUG("main reference store creation is recursing");
 
+	initializing = true;
 	r->refs_private = ref_store_init(r, r->ref_storage_format,
 					 r->gitdir, REF_STORE_ALL_CAPS);
 	r->refs_private = maybe_debug_wrap_ref_store(r->gitdir, r->refs_private);
+	initializing = false;
+
 	return r->refs_private;
 }
 

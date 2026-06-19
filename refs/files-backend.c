@@ -141,6 +141,12 @@ static struct ref_store *files_ref_store_init(struct repository *repo,
 					      const char *gitdir,
 					      const struct ref_store_init_options *opts)
 {
+	struct config_options config_opts = {
+		.respect_includes = 1,
+		.ignore_refs = 1,
+		.commondir = repo->commondir,
+		.git_dir = repo->gitdir,
+	};
 	struct files_ref_store *refs = xcalloc(1, sizeof(*refs));
 	struct ref_store *ref_store = (struct ref_store *)refs;
 	struct strbuf ref_common_dir = STRBUF_INIT;
@@ -158,7 +164,7 @@ static struct ref_store *files_ref_store_init(struct repository *repo,
 	refs->store_flags = opts->access_flags;
 	refs->log_all_ref_updates = LOG_REFS_UNSET;
 
-	repo_config(repo, files_ref_store_config, refs);
+	config_with_options(files_ref_store_config, refs, NULL, repo, &config_opts);
 	chdir_notify_register(NULL, files_ref_store_reparent, refs);
 
 	strbuf_release(&refdir);

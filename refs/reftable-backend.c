@@ -390,6 +390,12 @@ static struct ref_store *reftable_be_init(struct repository *repo,
 					  const char *gitdir,
 					  const struct ref_store_init_options *opts)
 {
+	struct config_options config_opts = {
+		.respect_includes = 1,
+		.ignore_refs = 1,
+		.commondir = repo->commondir,
+		.git_dir = repo->gitdir,
+	};
 	struct reftable_ref_store *refs = xcalloc(1, sizeof(*refs));
 	struct strbuf ref_common_dir = STRBUF_INIT;
 	struct strbuf refdir = STRBUF_INIT;
@@ -424,7 +430,7 @@ static struct ref_store *reftable_be_init(struct repository *repo,
 	refs->write_options.lock_timeout_ms = 100;
 	refs->log_all_ref_updates = LOG_REFS_UNSET;
 
-	repo_config(repo, reftable_be_config, refs);
+	config_with_options(reftable_be_config, refs, NULL, repo, &config_opts);
 
 	/*
 	 * It is somewhat unfortunate that we have to mirror the default block

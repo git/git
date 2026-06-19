@@ -302,7 +302,9 @@ static int include_by_branch(struct config_include_data *data,
 	struct strbuf pattern = STRBUF_INIT;
 	const char *refname, *shortname;
 
-	if (!data->repo || data->repo->ref_storage_format == REF_STORAGE_FORMAT_UNKNOWN)
+	if (!data->repo ||
+	    data->opts->ignore_refs ||
+	    data->repo->ref_storage_format == REF_STORAGE_FORMAT_UNKNOWN)
 		return 0;
 
 	refname = refs_resolve_ref_unsafe(get_main_ref_store(data->repo),
