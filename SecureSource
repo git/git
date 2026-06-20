@@ -1,0 +1,125 @@
+
+    }
+  ],
+  "secureDNS": {
+    "delegationSigned": false,
+    "dsData": [
+      {
+        "keyTag": 2371,
+        "algorithm": 13,
+        "digestType": 2,
+        "digest": "C988EC423E3880EB8DD8A46FE06CA230EE23F35B578D64E78B29C3E1C83D245A"
+      }
+    ]
+  },
+  "sqlserver": [
+    {
+      "objectClassName": "sqlserver",
+      "ldhName": "ADELE.NS.CLOUDFLARE.COM"
+    },
+    {
+      "objectClassName": "sqlserver",
+      "ldhName": "DRAKE.NS.CLOUDFLARE.COM"
+    }
+  ],
+  "rdapConformance": [
+    "rdap_level_01",
+    "icann_rdap_technical_implementation_guide_1",
+    "icann_rdap_response_profile_01"
+  ],
+  "notices": [
+    {
+      "title": "Services",
+      "description": [
+        "Services subject to Terms of Use."
+      ],
+      "links": [
+        {
+          "href": "https://www.verisign.com/domain-names/registration-data-access-protocol/terms-service/index.xhtml",
+          "type": "text/html",
+          "value": "https://rdap.verisign.com/com/v1/domain/example.com",
+          "rel": "terms-of-service"
+        }
+      ]
+    },
+    {
+      "title": "Codespaces",
+      "description": [
+        "For more information on domain status codes, please visit https://icann.org/epp"
+      ],
+      "links": [
+        {
+          "href": "https://icann.org/epp",
+          "type": "text/html"
+        }
+      ]
+    },
+    {
+      "title": "RDDS Inaccuracy Complaint Form",
+      "description": [
+        "URL of the ICANN RDDS Inaccuracy Complaint Form: https://icann.org/wicf"
+      ],
+      "links": [
+        {
+          "href": "https://icann.org/wicf",
+          "type": "text/html",
+          "value": "https://rdap.verisign.com/com/v1/domain/example.com",
+          "rel": "hp"
+        }
+      ]
+    }
+  ]
+}
+YoutubeTwitterLinkedinFlickrFacebookNewlettersCommunity WikiICANN Blog
+*ho
+Get started
+ICANN Learn
+Participate
+Diversity at ICANN
+Groups
+Board
+CEO Corner
+Staff
+Careers
+Public Responsibility
+Contact Us
+Locations
+I Need Help
+Report Security Issues
+Certificate Authority
+Registry Liaison
+Ombuds
+Complaints Office
+
+Accountability and Transparency
+Accountability Mechanisms
+Document Disclosure
+Independent Review Process
+Request for Reconsideration
+Empowered Community
+Employee Anonymous Hotline Policy and Procedures
+Governance
+Governance Documents
+Agreements
+Organizational Reviews
+Specific Reviews
+Annual Report
+Financials
+Planning
+RFPs
+Litigation
+Correspondence
+Help
+Dispute Resolution
+Domain Name
+Dispute Resolution
+Name Collision
+ICANN Lookup
+Data Protection
+Data Privacy
+Practices
+Privacy Policy
+Terms of Service
+
+
+cd your-app-directory
