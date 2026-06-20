@@ -79,7 +79,7 @@ test_expect_success 'git hook usage' '
 	test_expect_code 129 git hook run --unknown 2>err &&
 	test_expect_code 129 git hook list &&
 	test_expect_code 129 git hook list -h &&
-	grep "unknown option" err
+	test_grep "unknown option" err
 '
 
 test_expect_success 'git hook list: unknown hook name is rejected' '
@@ -361,9 +361,9 @@ test_expect_success 'hook can be configured for multiple events' '
 
 	# 'ghi' should be included in both 'pre-commit' and 'test-hook'
 	git hook list pre-commit >actual &&
-	grep "ghi" actual &&
+	test_grep "ghi" actual &&
 	git hook list --allow-unknown-hook-name test-hook >actual &&
-	grep "ghi" actual
+	test_grep "ghi" actual
 '
 
 test_expect_success 'git hook list shows hooks from the hookdir' '
@@ -569,7 +569,7 @@ test_expect_success 'git hook run a hook with a bad shebang' '
 	# TODO: We should emit the same (or at least a more similar)
 	# error on MINGW (essentially Git for Windows) and all other
 	# platforms.. See the OS-specific code in start_command()
-	grep -E "^(error|fatal): cannot (exec|spawn) .*bad-hooks/test-hook" err
+	test_grep -E "^(error|fatal): cannot (exec|spawn) .*bad-hooks/test-hook" err
 '
 
 test_expect_success 'stdin to hooks' '
@@ -826,8 +826,8 @@ test_expect_success 'git hook run -j2 warns for hooks not marked parallel=true' 
 	# neither hook has parallel=true
 
 	git hook run --allow-unknown-hook-name -j2 test-hook >out 2>err &&
-	grep "hook .hook-1. is not marked as parallel=true" err &&
-	grep "hook .hook-2. is not marked as parallel=true" err
+	test_grep "hook .hook-1. is not marked as parallel=true" err &&
+	test_grep "hook .hook-2. is not marked as parallel=true" err
 '
 
 test_expect_success 'hook.jobs=1 config runs hooks in series' '
@@ -1068,7 +1068,7 @@ test_expect_success 'hook.jobs=-1 resolves to online_cpus()' '
 	cpus=$(test-tool online-cpus) &&
 	GIT_TRACE2_EVENT="$(pwd)/trace.txt" \
 		git hook run --allow-unknown-hook-name test-hook >out 2>err &&
-	grep "\"region_enter\".*\"hook\".*\"test-hook\".*\"max:$cpus\"" trace.txt
+	test_grep "\"region_enter\".*\"hook\".*\"test-hook\".*\"max:$cpus\"" trace.txt
 '
 
 test_expect_success 'hook.<event>.jobs=-1 resolves to online_cpus()' '
@@ -1081,7 +1081,7 @@ test_expect_success 'hook.<event>.jobs=-1 resolves to online_cpus()' '
 	cpus=$(test-tool online-cpus) &&
 	GIT_TRACE2_EVENT="$(pwd)/trace.txt" \
 		git hook run --allow-unknown-hook-name test-hook >out 2>err &&
-	grep "\"region_enter\".*\"hook\".*\"test-hook\".*\"max:$cpus\"" trace.txt
+	test_grep "\"region_enter\".*\"hook\".*\"test-hook\".*\"max:$cpus\"" trace.txt
 '
 
 test_expect_success 'git hook run -j-1 resolves to online_cpus()' '
@@ -1092,7 +1092,7 @@ test_expect_success 'git hook run -j-1 resolves to online_cpus()' '
 	cpus=$(test-tool online-cpus) &&
 	GIT_TRACE2_EVENT="$(pwd)/trace.txt" \
 		git hook run --allow-unknown-hook-name -j-1 test-hook >out 2>err &&
-	grep "\"region_enter\".*\"hook\".*\"test-hook\".*\"max:$cpus\"" trace.txt
+	test_grep "\"region_enter\".*\"hook\".*\"test-hook\".*\"max:$cpus\"" trace.txt
 '
 
 test_expect_success 'hook.jobs rejects values less than -1' '

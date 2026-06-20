@@ -37,6 +37,18 @@ struct url_info {
 char *url_normalize(const char *, struct url_info *);
 char *url_parse(const char *, struct url_info *);
 
+/*
+ * Like url_normalize(), but also allows '*' glob characters in the host
+ * portion. Use this when normalizing URL patterns from user configuration.
+ *
+ * Note that '*' is a valid path character per RFC 3986 (as a sub-delim),
+ * so glob patterns using '*' in the path are also accepted.
+ *
+ * Returns a newly allocated normalized string and fills out_info if
+ * non-NULL, or NULL if the pattern is invalid.
+ */
+char *url_normalize_pattern(const char *url, struct url_info *out_info);
+
 struct urlmatch_item {
 	size_t hostmatch_len;
 	size_t pathmatch_len;

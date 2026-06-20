@@ -776,11 +776,11 @@ test_expect_success 'reflog: can delete separate reflog entries' '
 		test_commit file3 &&
 		test_commit file4 &&
 		git reflog >actual &&
-		grep file3 actual &&
+		test_grep file3 actual &&
 
 		git reflog delete HEAD@{1} &&
 		git reflog >actual &&
-		! grep file3 actual
+		test_grep ! file3 actual
 	)
 '
 
@@ -902,8 +902,8 @@ test_expect_success 'reflog: garbage collection deletes reflog entries' '
 		done &&
 		git reflog refs/heads/main >actual &&
 		test_line_count = 10 actual &&
-		grep "commit (initial): number 1" actual &&
-		grep "commit: number 10" actual &&
+		test_grep "commit (initial): number 1" actual &&
+		test_grep "commit: number 10" actual &&
 
 		git gc &&
 		git reflog refs/heads/main >actual &&

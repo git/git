@@ -32,7 +32,7 @@ test_expect_success 'ambiguous main-worktree/HEAD' '
 	test_when_finished git update-ref -d refs/heads/main-worktree/HEAD &&
 	git update-ref refs/heads/main-worktree/HEAD $(git rev-parse HEAD) &&
 	git rev-parse main-worktree/HEAD 2>warn &&
-	grep "main-worktree/HEAD.*ambiguous" warn
+	test_grep "main-worktree/HEAD.*ambiguous" warn
 '
 
 test_expect_success 'resolve worktrees/xx/HEAD' '
@@ -45,7 +45,7 @@ test_expect_success 'ambiguous worktrees/xx/HEAD' '
 	git update-ref refs/heads/worktrees/wt1/HEAD $(git rev-parse HEAD) &&
 	test_when_finished git update-ref -d refs/heads/worktrees/wt1/HEAD &&
 	git rev-parse worktrees/wt1/HEAD 2>warn &&
-	grep "worktrees/wt1/HEAD.*ambiguous" warn
+	test_grep "worktrees/wt1/HEAD.*ambiguous" warn
 '
 
 test_expect_success 'reflog of main-worktree/HEAD' '

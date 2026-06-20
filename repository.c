@@ -73,6 +73,7 @@ void initialize_repository(struct repository *repo)
 	ALLOC_ARRAY(repo->index, 1);
 	index_state_init(repo->index, repo);
 	repo->check_deprecated_config = true;
+	repo->bare_cfg = -1;
 	repo_config_values_init(&repo->config_values_private_);
 
 	/*
@@ -419,6 +420,11 @@ void repo_clear(struct repository *repo)
 	if (repo->remote_state) {
 		remote_state_clear(repo->remote_state);
 		FREE_AND_NULL(repo->remote_state);
+	}
+
+	if (repo->refs_private) {
+		ref_store_release(repo->refs_private);
+		FREE_AND_NULL(repo->refs_private);
 	}
 
 	strmap_for_each_entry(&repo->submodule_ref_stores, &iter, e)

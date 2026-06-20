@@ -21,23 +21,23 @@ test_expect_success 'run based on configured value' '
 
 	git for-each-repo --config=run.key commit --allow-empty -m "ran" &&
 	git -C one log -1 --pretty=format:%s >message &&
-	grep ran message &&
+	test_grep ran message &&
 	git -C two log -1 --pretty=format:%s >message &&
-	! grep ran message &&
+	test_grep ! ran message &&
 	git -C three log -1 --pretty=format:%s >message &&
-	grep ran message &&
+	test_grep ran message &&
 	git -C ~/four log -1 --pretty=format:%s >message &&
-	grep ran message &&
+	test_grep ran message &&
 
 	git for-each-repo --config=run.key -- commit --allow-empty -m "ran again" &&
 	git -C one log -1 --pretty=format:%s >message &&
-	grep again message &&
+	test_grep again message &&
 	git -C two log -1 --pretty=format:%s >message &&
-	! grep again message &&
+	test_grep ! again message &&
 	git -C three log -1 --pretty=format:%s >message &&
-	grep again message &&
+	test_grep again message &&
 	git -C ~/four log -1 --pretty=format:%s >message &&
-	grep again message &&
+	test_grep again message &&
 
 	git -C three for-each-repo --config=run.key -- \
 		commit --allow-empty -m "ran from worktree" &&

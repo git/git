@@ -471,3 +471,13 @@ int xdl_prepare_env(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
 
 	return 0;
 }
+
+/*
+ * Reset the changed[] array so that no lines are marked as changed.
+ * Also clears the sentinel slots at changed[-1] and changed[nrec]
+ * that xdl_change_compact() relies on during backward scans.
+ */
+void xdl_clear_changed(xdfile_t *xdf)
+{
+	memset(xdf->changed - 1, 0, (xdf->nrec + 2) * sizeof(bool));
+}

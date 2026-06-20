@@ -49,7 +49,7 @@ test_expect_success 'verify blob:none packfile has no blobs' '
 	git -C r1 index-pack ../filter.pack &&
 
 	git -C r1 verify-pack -v ../filter.pack >verify_result &&
-	! grep blob verify_result
+	test_grep ! blob verify_result
 '
 
 test_expect_success 'verify blob:none packfile without --stdout' '
@@ -57,7 +57,7 @@ test_expect_success 'verify blob:none packfile without --stdout' '
 	HEAD
 	EOF
 	git -C r1 verify-pack -v "mypackname-$(cat packhash).pack" >verify_result &&
-	! grep blob verify_result
+	test_grep ! blob verify_result
 '
 
 test_expect_success 'verify normal and blob:none packfiles have same commits/trees' '
@@ -85,7 +85,7 @@ test_expect_success 'get an error for missing tree object' '
 	test_must_fail git -C r5 pack-objects --revs --stdout 2>bad_tree <<-EOF &&
 	HEAD
 	EOF
-	grep "bad tree object" bad_tree
+	test_grep "bad tree object" bad_tree
 '
 
 test_expect_success 'setup for tests of tree:0' '
@@ -101,7 +101,7 @@ test_expect_success 'verify tree:0 packfile has no blobs or trees' '
 	EOF
 	git -C r1 index-pack ../commitsonly.pack &&
 	git -C r1 verify-pack -v ../commitsonly.pack >objs &&
-	! grep -E "tree|blob" objs
+	test_grep ! -E "tree|blob" objs
 '
 
 test_expect_success 'grab tree directly when using tree:0' '
@@ -156,7 +156,7 @@ test_expect_success 'verify blob:limit=500 omits all blobs' '
 	git -C r2 index-pack ../filter.pack &&
 
 	git -C r2 verify-pack -v ../filter.pack >verify_result &&
-	! grep blob verify_result
+	test_grep ! blob verify_result
 '
 
 test_expect_success 'verify blob:limit=1000' '
@@ -166,7 +166,7 @@ test_expect_success 'verify blob:limit=1000' '
 	git -C r2 index-pack ../filter.pack &&
 
 	git -C r2 verify-pack -v ../filter.pack >verify_result &&
-	! grep blob verify_result
+	test_grep ! blob verify_result
 '
 
 test_expect_success 'verify blob:limit=1001' '

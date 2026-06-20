@@ -18,11 +18,6 @@
  */
 #define the_repository DO_NOT_USE_THE_REPOSITORY
 
-enum replay_mode {
-	REPLAY_MODE_PICK,
-	REPLAY_MODE_REVERT,
-};
-
 static const char *short_commit_name(struct repository *repo,
 				     struct commit *commit)
 {
@@ -81,7 +76,7 @@ static struct commit *create_commit(struct repository *repo,
 				    struct tree *tree,
 				    struct commit *based_on,
 				    struct commit *parent,
-				    enum replay_mode mode)
+				    bool reverse)
 {
 	struct object_id ret;
 	struct object *obj = NULL;
@@ -98,15 +93,13 @@ static struct commit *create_commit(struct repository *repo,
 
 	commit_list_insert(parent, &parents);
 	extra = read_commit_extra_headers(based_on, exclude_gpgsig);
-	if (mode == REPLAY_MODE_REVERT) {
+	if (reverse) {
 		generate_revert_message(&msg, based_on, repo);
 		/* For revert, use current user as author (NULL = use default) */
-	} else if (mode == REPLAY_MODE_PICK) {
+	} else {
 		find_commit_subject(message, &orig_message);
 		strbuf_addstr(&msg, orig_message);
 		author = get_author(message);
-	} else {
-		BUG("unexpected replay mode %d", mode);
 	}
 	reset_ident_date();
 	if (commit_tree_extended(msg.buf, msg.len, &tree->object.oid, parents,
@@ -250,9 +243,9 @@ static void set_up_replay_mode(struct repository *repo,
 	strset_clear(&rinfo.positive_refs);
 }
 
-static struct commit *mapped_commit(kh_oid_map_t *replayed_commits,
-				    struct commit *commit,
-				    struct commit *fallback)
+static struct commit *get_mapped_commit(kh_oid_map_t *replayed_commits,
+					struct commit *commit,
+					struct commit *fallback)
 {
 	khint_t pos;
 	if (!commit)
@@ -263,17 +256,36 @@ static struct commit *mapped_commit(kh_oid_map_t *replayed_commits,
 	return kh_value(replayed_commits, pos);
 }
 
+static void put_mapped_commit(kh_oid_map_t *replayed_commits,
+			      struct commit *commit,
+			      struct commit *new_commit)
+{
+	khint_t pos;
+	int ret;
+
+	pos = kh_put_oid_map(replayed_commits, commit->object.oid, &ret);
+	if (ret == 0)
+		BUG("Duplicate rewritten commit: %s\n",
+		    oid_to_hex(&commit->object.oid));
+
+	kh_value(replayed_commits, pos) = new_commit;
+}
+
 static struct commit *pick_regular_commit(struct repository *repo,
 					  struct commit *pickme,
 					  kh_oid_map_t *replayed_commits,
 					  struct commit *onto,
 					  struct merge_options *merge_opt,
 					  struct merge_result *result,
-					  enum replay_mode mode,
+					  struct commit *replayed_base,
+					  bool reverse,
 					  enum replay_empty_commit_action empty)
 {
-	struct commit *base, *replayed_base;
+	struct commit *base;
 	struct tree *pickme_tree, *base_tree, *replayed_base_tree;
+
+	if (replayed_base && reverse)
+		BUG("Linearizing commits is not supported when replaying in reverse");
 
 	if (pickme->parents) {
 		base = pickme->parents->item;
@@ -283,11 +295,26 @@ static struct commit *pick_regular_commit(struct repository *repo,
 		base_tree = lookup_tree(repo, repo->hash_algo->empty_tree);
 	}
 
-	replayed_base = mapped_commit(replayed_commits, base, onto);
+	if (!replayed_base)
+		replayed_base = get_mapped_commit(replayed_commits, base, onto);
 	replayed_base_tree = repo_get_commit_tree(repo, replayed_base);
 	pickme_tree = repo_get_commit_tree(repo, pickme);
 
-	if (mode == REPLAY_MODE_PICK) {
+	if (reverse) {
+		/* Revert: swap base and pickme to reverse the diff */
+		const char *pickme_name = short_commit_name(repo, pickme);
+		merge_opt->branch1 = short_commit_name(repo, replayed_base);
+		merge_opt->branch2 = xstrfmt("parent of %s", pickme_name);
+		merge_opt->ancestor = pickme_name;
+
+		merge_incore_nonrecursive(merge_opt,
+					  pickme_tree,
+					  replayed_base_tree,
+					  base_tree,
+					  result);
+
+		free((char *)merge_opt->branch2);
+	} else {
 		/* Cherry-pick: normal order */
 		merge_opt->branch1 = short_commit_name(repo, replayed_base);
 		merge_opt->branch2 = short_commit_name(repo, pickme);
@@ -303,22 +330,6 @@ static struct commit *pick_regular_commit(struct repository *repo,
 					  result);
 
 		free((char *)merge_opt->ancestor);
-	} else if (mode == REPLAY_MODE_REVERT) {
-		/* Revert: swap base and pickme to reverse the diff */
-		const char *pickme_name = short_commit_name(repo, pickme);
-		merge_opt->branch1 = short_commit_name(repo, replayed_base);
-		merge_opt->branch2 = xstrfmt("parent of %s", pickme_name);
-		merge_opt->ancestor = pickme_name;
-
-		merge_incore_nonrecursive(merge_opt,
-					  pickme_tree,
-					  replayed_base_tree,
-					  base_tree,
-					  result);
-
-		free((char *)merge_opt->branch2);
-	} else {
-		BUG("unexpected replay mode %d", mode);
 	}
 	merge_opt->ancestor = NULL;
 	merge_opt->branch2 = NULL;
@@ -341,7 +352,7 @@ static struct commit *pick_regular_commit(struct repository *repo,
 		}
 	}
 
-	return create_commit(repo, result->tree, pickme, replayed_base, mode);
+	return create_commit(repo, result->tree, pickme, replayed_base, reverse);
 }
 
 void replay_result_release(struct replay_result *result)
@@ -381,13 +392,13 @@ int replay_revisions(struct rev_info *revs,
 	char *revert;
 	const char *ref;
 	struct object_id old_oid;
-	enum replay_mode mode = REPLAY_MODE_PICK;
+	bool reverse;
 	int ret;
 
 	advance = xstrdup_or_null(opts->advance);
 	revert = xstrdup_or_null(opts->revert);
-	if (revert)
-		mode = REPLAY_MODE_REVERT;
+	reverse = !!revert;
+
 	set_up_replay_mode(revs->repo, &revs->cmdline, opts->onto,
 			   &detached_head, &advance, &revert, &onto, &update_refs);
 
@@ -423,24 +434,31 @@ int replay_revisions(struct rev_info *revs,
 	replayed_commits = kh_init_oid_map();
 	while ((commit = get_revision(revs))) {
 		const struct name_decoration *decoration;
-		khint_t pos;
-		int hr;
 
-		if (commit->parents && commit->parents->next)
-			die(_("replaying merge commits is not supported yet!"));
+		if (commit->parents && commit->parents->next) {
+			if (!opts->linearize)
+				die(_("replaying merge commits is not supported yet!"));
+			/*
+			 * Drop the merge commit: do not pick it and leave
+			 * last_commit unchanged, so its children (and any ref
+			 * pointing at it) are reparented onto the previous
+			 * non-merge commit, which the ref-update loop below uses.
+			 */
+		} else {
+			struct commit *to_pick = reverse ? last_commit : onto;
+			last_commit =
+				pick_regular_commit(revs->repo, commit,
+						    replayed_commits, to_pick,
+						    &merge_opt, &result,
+						    opts->linearize ? last_commit : NULL,
+						    reverse, opts->empty);
+		}
 
-		last_commit = pick_regular_commit(revs->repo, commit, replayed_commits,
-						  mode == REPLAY_MODE_REVERT ? last_commit : onto,
-						  &merge_opt, &result, mode, opts->empty);
 		if (!last_commit)
 			break;
 
 		/* Record commit -> last_commit mapping */
-		pos = kh_put_oid_map(replayed_commits, commit->object.oid, &hr);
-		if (hr == 0)
-			BUG("Duplicate rewritten commit: %s\n",
-			    oid_to_hex(&commit->object.oid));
-		kh_value(replayed_commits, pos) = last_commit;
+		put_mapped_commit(replayed_commits, commit, last_commit);
 
 		/* Update any necessary branches */
 		if (ref)

@@ -3,6 +3,7 @@
 test_description='multi-pack-index compaction'
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-midx.sh
 
 GIT_TEST_MULTI_PACK_INDEX=0
 GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP=0
@@ -12,12 +13,6 @@ objdir=.git/objects
 packdir=$objdir/pack
 midxdir=$packdir/multi-pack-index.d
 midx_chain=$midxdir/multi-pack-index-chain
-
-nth_line() {
-	local n="$1"
-	shift
-	awk "NR==$n" "$@"
-}
 
 write_packs () {
 	for c in "$@"
@@ -321,8 +316,8 @@ test_expect_success 'MIDX compaction with --no-write-chain-file' '
 		} >$midx_chain &&
 
 		test-tool read-midx $objdir $layer >midx.data &&
-		grep "^pack-B-.*\.idx" midx.data &&
-		grep "^pack-C-.*\.idx" midx.data
+		test_grep "^pack-B-.*\.idx" midx.data &&
+		test_grep "^pack-C-.*\.idx" midx.data
 
 	)
 '

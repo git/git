@@ -133,8 +133,8 @@ test_expect_success GPGSSH 'verify and show signatures' '
 		do
 			git verify-commit $commit &&
 			git show --pretty=short --show-signature $commit >actual &&
-			grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual &&
-			! grep "${GPGSSH_BAD_SIGNATURE}" actual &&
+			test_grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual &&
+			test_grep ! "${GPGSSH_BAD_SIGNATURE}" actual &&
 			echo $commit OK || exit 1
 		done
 	) &&
@@ -144,8 +144,8 @@ test_expect_success GPGSSH 'verify and show signatures' '
 		do
 			test_must_fail git verify-commit $commit &&
 			git show --pretty=short --show-signature $commit >actual &&
-			! grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual &&
-			! grep "${GPGSSH_BAD_SIGNATURE}" actual &&
+			test_grep ! "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual &&
+			test_grep ! "${GPGSSH_BAD_SIGNATURE}" actual &&
 			echo $commit OK || exit 1
 		done
 	) &&
@@ -153,9 +153,9 @@ test_expect_success GPGSSH 'verify and show signatures' '
 		for commit in eighth-signed-alt twelfth-signed-alt
 		do
 			git show --pretty=short --show-signature $commit >actual &&
-			grep "${GPGSSH_GOOD_SIGNATURE_UNTRUSTED}" actual &&
-			! grep "${GPGSSH_BAD_SIGNATURE}" actual &&
-			grep "${GPGSSH_KEY_NOT_TRUSTED}" actual &&
+			test_grep "${GPGSSH_GOOD_SIGNATURE_UNTRUSTED}" actual &&
+			test_grep ! "${GPGSSH_BAD_SIGNATURE}" actual &&
+			test_grep "${GPGSSH_KEY_NOT_TRUSTED}" actual &&
 			echo $commit OK || exit 1
 		done
 	)
@@ -164,34 +164,34 @@ test_expect_success GPGSSH 'verify and show signatures' '
 test_expect_success GPGSSH 'verify-commit exits failure on untrusted signature' '
 	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
 	test_must_fail git verify-commit eighth-signed-alt 2>actual &&
-	grep "${GPGSSH_GOOD_SIGNATURE_UNTRUSTED}" actual &&
-	! grep "${GPGSSH_BAD_SIGNATURE}" actual &&
-	grep "${GPGSSH_KEY_NOT_TRUSTED}" actual
+	test_grep "${GPGSSH_GOOD_SIGNATURE_UNTRUSTED}" actual &&
+	test_grep ! "${GPGSSH_BAD_SIGNATURE}" actual &&
+	test_grep "${GPGSSH_KEY_NOT_TRUSTED}" actual
 '
 
 test_expect_success GPGSSH,GPGSSH_VERIFYTIME 'verify-commit exits failure on expired signature key' '
 	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
 	test_must_fail git verify-commit expired-signed 2>actual &&
-	! grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual
+	test_grep ! "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual
 '
 
 test_expect_success GPGSSH,GPGSSH_VERIFYTIME 'verify-commit exits failure on not yet valid signature key' '
 	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
 	test_must_fail git verify-commit notyetvalid-signed 2>actual &&
-	! grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual
+	test_grep ! "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual
 '
 
 test_expect_success GPGSSH,GPGSSH_VERIFYTIME 'verify-commit succeeds with commit date and key validity matching' '
 	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
 	git verify-commit timeboxedvalid-signed 2>actual &&
-	grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual &&
-	! grep "${GPGSSH_BAD_SIGNATURE}" actual
+	test_grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual &&
+	test_grep ! "${GPGSSH_BAD_SIGNATURE}" actual
 '
 
 test_expect_success GPGSSH,GPGSSH_VERIFYTIME 'verify-commit exits failure with commit date outside of key validity' '
 	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
 	test_must_fail git verify-commit timeboxedinvalid-signed 2>actual &&
-	! grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual
+	test_grep ! "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual
 '
 
 test_expect_success GPGSSH 'verify-commit exits success with matching minTrustLevel' '
@@ -217,8 +217,8 @@ test_expect_success GPGSSH 'verify signatures with --raw' '
 		for commit in initial second merge fourth-signed fifth-signed sixth-signed seventh-signed
 		do
 			git verify-commit --raw $commit 2>actual &&
-			grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual &&
-			! grep "${GPGSSH_BAD_SIGNATURE}" actual &&
+			test_grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual &&
+			test_grep ! "${GPGSSH_BAD_SIGNATURE}" actual &&
 			echo $commit OK || exit 1
 		done
 	) &&
@@ -226,8 +226,8 @@ test_expect_success GPGSSH 'verify signatures with --raw' '
 		for commit in merge^2 fourth-unsigned sixth-unsigned seventh-unsigned
 		do
 			test_must_fail git verify-commit --raw $commit 2>actual &&
-			! grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual &&
-			! grep "${GPGSSH_BAD_SIGNATURE}" actual &&
+			test_grep ! "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual &&
+			test_grep ! "${GPGSSH_BAD_SIGNATURE}" actual &&
 			echo $commit OK || exit 1
 		done
 	) &&
@@ -235,8 +235,8 @@ test_expect_success GPGSSH 'verify signatures with --raw' '
 		for commit in eighth-signed-alt
 		do
 			test_must_fail git verify-commit --raw $commit 2>actual &&
-			grep "${GPGSSH_GOOD_SIGNATURE_UNTRUSTED}" actual &&
-			! grep "${GPGSSH_BAD_SIGNATURE}" actual &&
+			test_grep "${GPGSSH_GOOD_SIGNATURE_UNTRUSTED}" actual &&
+			test_grep ! "${GPGSSH_BAD_SIGNATURE}" actual &&
 			echo $commit OK || exit 1
 		done
 	)
@@ -244,7 +244,7 @@ test_expect_success GPGSSH 'verify signatures with --raw' '
 
 test_expect_success GPGSSH 'proper header is used for hash algorithm' '
 	git cat-file commit fourth-signed >output &&
-	grep "^$(test_oid header) -----BEGIN SSH SIGNATURE-----" output
+	test_grep "^$(test_oid header) -----BEGIN SSH SIGNATURE-----" output
 '
 
 test_expect_success GPGSSH 'show signed commit with signature' '
@@ -268,9 +268,9 @@ test_expect_success GPGSSH 'detect fudged signature' '
 	git hash-object -w -t commit forged1 >forged1.commit &&
 	test_must_fail git verify-commit $(cat forged1.commit) &&
 	git show --pretty=short --show-signature $(cat forged1.commit) >actual1 &&
-	grep "${GPGSSH_BAD_SIGNATURE}" actual1 &&
-	! grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual1 &&
-	! grep "${GPGSSH_GOOD_SIGNATURE_UNTRUSTED}" actual1
+	test_grep "${GPGSSH_BAD_SIGNATURE}" actual1 &&
+	test_grep ! "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual1 &&
+	test_grep ! "${GPGSSH_GOOD_SIGNATURE_UNTRUSTED}" actual1
 '
 
 test_expect_success GPGSSH 'detect fudged signature with NUL' '
@@ -281,8 +281,8 @@ test_expect_success GPGSSH 'detect fudged signature with NUL' '
 	git hash-object --literally -w -t commit forged2 >forged2.commit &&
 	test_must_fail git verify-commit $(cat forged2.commit) &&
 	git show --pretty=short --show-signature $(cat forged2.commit) >actual2 &&
-	grep "${GPGSSH_BAD_SIGNATURE}" actual2 &&
-	! grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual2
+	test_grep "${GPGSSH_BAD_SIGNATURE}" actual2 &&
+	test_grep ! "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual2
 '
 
 test_expect_success GPGSSH 'amending already signed commit' '
@@ -293,8 +293,8 @@ test_expect_success GPGSSH 'amending already signed commit' '
 	git commit --amend -S --no-edit &&
 	git verify-commit HEAD &&
 	git show -s --show-signature HEAD >actual &&
-	grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual &&
-	! grep "${GPGSSH_BAD_SIGNATURE}" actual
+	test_grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual &&
+	test_grep ! "${GPGSSH_BAD_SIGNATURE}" actual
 '
 
 test_expect_success GPGSSH 'show good signature with custom format' '
@@ -386,7 +386,7 @@ test_expect_success GPGSSH 'log.showsignature behaves like --show-signature' '
 	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
 	test_config log.showsignature true &&
 	git show initial >actual &&
-	grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual
+	test_grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual
 '
 
 test_expect_success GPGSSH 'check config gpg.format values' '
@@ -410,8 +410,8 @@ test_expect_failure GPGSSH 'detect fudged commit with double signature (TODO)' '
 	git hash-object -w -t commit double-commit >double-commit.commit &&
 	test_must_fail git verify-commit $(cat double-commit.commit) &&
 	git show --pretty=short --show-signature $(cat double-commit.commit) >double-actual &&
-	grep "BAD signature from" double-actual &&
-	grep "Good signature from" double-actual
+	test_grep "BAD signature from" double-actual &&
+	test_grep "Good signature from" double-actual
 '
 
 test_expect_failure GPGSSH 'show double signature with custom format (TODO)' '
@@ -463,8 +463,8 @@ test_expect_failure GPGSSH 'verify-commit verifies multiply signed commits (TODO
 	head=$(git hash-object -t commit -w commit) &&
 	git reset --hard $head &&
 	git verify-commit $head 2>actual &&
-	grep "Good signature from" actual &&
-	! grep "BAD signature from" actual
+	test_grep "Good signature from" actual &&
+	test_grep ! "BAD signature from" actual
 '
 
 test_done

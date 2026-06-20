@@ -13,13 +13,16 @@
 
 static struct multi_pack_index *setup_midx(const char *object_dir)
 {
+	struct odb_source_files *files;
 	struct odb_source *source;
 	setup_git_directory(the_repository);
 	source = odb_find_source(the_repository->objects, object_dir);
 	if (!source)
 		source = odb_add_to_alternates_memory(the_repository->objects,
 						      object_dir);
-	return load_multi_pack_index(source);
+	files = odb_source_files_downcast(source);
+
+	return load_multi_pack_index(files->packed);
 }
 
 static int read_midx_file(const char *object_dir, const char *checksum,
@@ -70,7 +73,7 @@ static int read_midx_file(const char *object_dir, const char *checksum,
 	for (i = 0; i < m->num_packs; i++)
 		printf("%s\n", m->pack_names[i]);
 
-	printf("object-dir: %s\n", m->source->path);
+	printf("object-dir: %s\n", m->source->base.path);
 
 	if (show_objects) {
 		struct object_id oid;

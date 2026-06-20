@@ -32,7 +32,16 @@ test_expect_success 'setup' '
 		echo "X:$line" >>test-tool-tags || return 1
 	done &&
 
-	commit=$(git commit-tree $(git rev-parse HEAD^{tree})) &&
+	git rev-list --first-parent --max-count=8192 HEAD >contains-commits &&
+	test_file_not_empty contains-commits &&
+	git update-ref refs/contains-perf-base "$(tail -n 1 contains-commits)" &&
+	awk "{
+		printf \"update refs/contains-perf/%04d %s\\n\", NR, \$1
+	}" contains-commits |
+		git update-ref --stdin &&
+	git pack-refs --include "refs/contains-perf/*" &&
+
+	commit=$(git commit-tree HEAD^{tree}) &&
 	git update-ref refs/heads/disjoint-base $commit &&
 
 	git commit-graph write --reachable
@@ -60,6 +69,23 @@ test_perf 'contains: git branch --merged' '
 
 test_perf 'contains: git tag --merged' '
 	xargs git tag --merged=HEAD <tags
+'
+
+test_perf 'contains: git for-each-ref' '
+	git for-each-ref --contains=refs/contains-perf-base --stdin <refs
+'
+
+test_perf 'contains: git branch' '
+	xargs git branch --contains=refs/contains-perf-base <branches
+'
+
+test_perf 'contains: git tag' '
+	xargs git tag --contains=refs/contains-perf-base <tags
+'
+
+test_perf 'contains: synthetic shared history' '
+	git for-each-ref --contains=refs/contains-perf-base \
+		refs/contains-perf/ >/dev/null
 '
 
 test_perf 'is-base check: test-tool reach (refs)' '

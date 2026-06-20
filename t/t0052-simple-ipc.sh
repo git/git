@@ -33,19 +33,19 @@ test_expect_success 'servers cannot share the same path' '
 test_expect_success 'big response' '
 	test-tool simple-ipc send --token=big >actual &&
 	test_line_count -ge 10000 actual &&
-	grep -q "big: [0]*9999\$" actual
+	test_grep -q "big: [0]*9999\$" actual
 '
 
 test_expect_success 'chunk response' '
 	test-tool simple-ipc send --token=chunk >actual &&
 	test_line_count -ge 10000 actual &&
-	grep -q "big: [0]*9999\$" actual
+	test_grep -q "big: [0]*9999\$" actual
 '
 
 test_expect_success 'slow response' '
 	test-tool simple-ipc send --token=slow >actual &&
 	test_line_count -ge 100 actual &&
-	grep -q "big: [0]*99\$" actual
+	test_grep -q "big: [0]*99\$" actual
 '
 
 # Send an IPC with n=100,000 bytes of ballast.  This should be large enough
@@ -54,7 +54,7 @@ test_expect_success 'slow response' '
 #
 test_expect_success 'sendbytes' '
 	test-tool simple-ipc sendbytes --bytecount=100000 --byte=A >actual &&
-	grep "sent:A00100000 rcvd:A00100000" actual
+	test_grep "sent:A00100000 rcvd:A00100000" actual
 '
 
 # Start a series of <threads> client threads that each make <batchsize>
@@ -93,7 +93,7 @@ test_expect_success 'stress test threads' '
 		--batchsize=13 \
 		>actual &&
 	test_line_count = 92 actual &&
-	grep "good 91" actual &&
+	test_grep "good 91" actual &&
 	grep "sent:A" <actual >actual_a &&
 	cat >expect_a <<-EOF &&
 		sent:A00000019 rcvd:A00000019

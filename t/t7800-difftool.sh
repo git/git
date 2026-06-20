@@ -431,32 +431,32 @@ test_expect_success 'setup with 2 files different' '
 test_expect_success 'say no to the first file' '
 	(echo n && echo) >input &&
 	git difftool -x cat branch <input >output &&
-	grep m2 output &&
-	grep br2 output &&
-	! grep main output &&
-	! grep branch output
+	test_grep m2 output &&
+	test_grep br2 output &&
+	test_grep ! main output &&
+	test_grep ! branch output
 '
 
 test_expect_success 'say no to the second file' '
 	(echo && echo n) >input &&
 	git difftool -x cat branch <input >output &&
-	grep main output &&
-	grep branch output &&
-	! grep m2 output &&
-	! grep br2 output
+	test_grep main output &&
+	test_grep branch output &&
+	test_grep ! m2 output &&
+	test_grep ! br2 output
 '
 
 test_expect_success 'ending prompt input with EOF' '
 	git difftool -x cat branch </dev/null >output &&
-	! grep main output &&
-	! grep branch output &&
-	! grep m2 output &&
-	! grep br2 output
+	test_grep ! main output &&
+	test_grep ! branch output &&
+	test_grep ! m2 output &&
+	test_grep ! br2 output
 '
 
 test_expect_success 'difftool --tool-help' '
 	git difftool --tool-help >output &&
-	grep tool output
+	test_grep tool output
 '
 
 test_expect_success 'setup change in subdirectory' '

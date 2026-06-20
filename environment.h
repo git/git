@@ -98,6 +98,10 @@ struct repo_config_values {
 	int precomposed_unicode;
 	int core_sparse_checkout_cone;
 	int warn_on_object_refname_ambiguity;
+	int protect_hfs;
+	int protect_ntfs;
+	int trust_executable_bit;
+	int ignore_case;
 
 	/* section "sparse" config values */
 	int sparse_expect_files_outside_of_patterns;
@@ -133,7 +137,31 @@ int git_default_config(const char *, const char *,
 int git_default_core_config(const char *var, const char *value,
 			    const struct config_context *ctx, void *cb);
 
+/*
+ * Getters for the `protect_hfs` and `protect_ntfs` fields of `struct repo_config_values`.
+ * They check `repo->gitdir` to prevent calling repo_config_values()
+ * before the configuration is loaded or in bare environments.
+ */
+int repo_protect_hfs(struct repository *repo);
+int repo_protect_ntfs(struct repository *repo);
+
+/*
+ * Getter for the `trust_executable_bit` field of `struct repo_config_values`.
+ * It checks `repo->initialized` to prevent calling repo_config_values()`
+ * before the repository setup is fully complete or in non-git environments.
+ */
+int repo_trust_executable_bit(struct repository *repo);
+
+/*
+ * Getter for the `ignore_case` field of `struct repo_config_values`.
+ * It checks `repo->initialized` to prevent calling repo_config_values()`
+ * before the repository setup is fully complete or in non-git environments.
+ */
+int repo_ignore_case(struct repository *repo);
+
 void repo_config_values_init(struct repo_config_values *cfg);
+
+int is_bare_repository(struct repository *repo);
 
 /*
  * TODO: All the below state either explicitly or implicitly relies on
@@ -157,22 +185,13 @@ void repo_config_values_init(struct repo_config_values *cfg);
  */
 int have_git_dir(void);
 
-extern int is_bare_repository_cfg;
-int is_bare_repository(void);
-extern char *git_work_tree_cfg;
-
 /* Environment bits from configuration mechanism */
-extern int trust_executable_bit;
 extern int has_symlinks;
 extern int minimum_abbrev, default_abbrev;
-extern int ignore_case;
 extern int assume_unchanged;
 extern char *apply_default_whitespace;
 extern char *apply_default_ignorewhitespace;
 extern unsigned long pack_size_limit_cfg;
-
-extern int protect_hfs;
-extern int protect_ntfs;
 
 enum rebase_setup_type {
 	AUTOREBASE_NEVER = 0,

@@ -25,9 +25,9 @@
 #define NO_PREFERRED_PACK (~((uint32_t)0))
 
 extern int midx_checksum_valid(struct multi_pack_index *m);
-extern void clear_midx_files_ext(struct odb_source *source, const char *ext,
+extern void clear_midx_files_ext(struct odb_source_packed *source, const char *ext,
 				 const char *keep_hash);
-extern void clear_incremental_midx_files_ext(struct odb_source *source,
+extern void clear_incremental_midx_files_ext(struct odb_source_packed *source,
 					     const char *ext,
 					     const struct strvec *keep_hashes);
 extern int cmp_idx_or_pack_name(const char *idx_or_pack_name,
@@ -119,7 +119,7 @@ struct write_midx_context {
 	struct string_list *to_include;
 
 	struct repository *repo;
-	struct odb_source *source;
+	struct odb_source_packed *source;
 };
 
 static uint32_t midx_pack_perm(struct write_midx_context *ctx,
@@ -133,8 +133,17 @@ static uint32_t midx_pack_perm(struct write_midx_context *ctx,
 static int should_include_pack(const struct write_midx_context *ctx,
 			       const char *file_name)
 {
+	struct multi_pack_index *m = ctx->m;
 	/*
-	 * Note that at most one of ctx->m and ctx->to_include are set,
+	 * When writing incrementally, ctx->m may contain layers above
+	 * the selected base MIDX, which must be included in the new
+	 * layer.
+	 */
+	if (ctx->incremental)
+		m = ctx->base_midx;
+
+	/*
+	 * Note that at most one of m and ctx->to_include are set,
 	 * so we are testing midx_contains_pack() and
 	 * string_list_has_string() independently (guarded by the
 	 * appropriate NULL checks).
@@ -148,10 +157,7 @@ static int should_include_pack(const struct write_midx_context *ctx,
 	 * should be performed independently (likely checking
 	 * to_include before the existing MIDX).
 	 */
-	if (ctx->m && midx_contains_pack(ctx->m, file_name))
-		return 0;
-	else if (ctx->base_midx && midx_contains_pack(ctx->base_midx,
-						      file_name))
+	if (m && midx_contains_pack(m, file_name))
 		return 0;
 	else if (ctx->to_include &&
 		 !string_list_has_string(ctx->to_include, file_name))
@@ -1107,7 +1113,7 @@ done:
 	return ret;
 }
 
-static void clear_midx_files(struct odb_source *source,
+static void clear_midx_files(struct odb_source_packed *source,
 			     const struct strvec *hashes, unsigned incremental)
 {
 	/*
@@ -1237,7 +1243,7 @@ static int midx_hashcmp(const struct multi_pack_index *a,
 }
 
 struct write_midx_opts {
-	struct odb_source *source; /* non-optional */
+	struct odb_source_packed *source; /* non-optional */
 
 	struct string_list *packs_to_include;
 	struct string_list *packs_to_drop;
@@ -1253,7 +1259,7 @@ struct write_midx_opts {
 
 static int write_midx_internal(struct write_midx_opts *opts)
 {
-	struct repository *r = opts->source->odb->repo;
+	struct repository *r = opts->source->base.odb->repo;
 	struct strbuf midx_name = STRBUF_INIT;
 	unsigned char midx_hash[GIT_MAX_RAWSZ];
 	uint32_t start_pack;
@@ -1301,7 +1307,7 @@ static int write_midx_internal(struct write_midx_opts *opts)
 	if (ctx.incremental)
 		strbuf_addf(&midx_name,
 			    "%s/pack/multi-pack-index.d/tmp_midx_XXXXXX",
-			    opts->source->path);
+			    opts->source->base.path);
 	else
 		get_midx_filename(opts->source, &midx_name);
 	if (safe_create_leading_directories(r, midx_name.buf))
@@ -1396,7 +1402,7 @@ static int write_midx_internal(struct write_midx_opts *opts)
 		fill_packs_from_midx_range(&ctx, bitmap_order);
 	} else {
 		ctx.to_include = opts->packs_to_include;
-		for_each_file_in_pack_dir(opts->source->path, add_pack_to_midx, &ctx);
+		for_each_file_in_pack_dir(opts->source->base.path, add_pack_to_midx, &ctx);
 	}
 	stop_progress(&ctx.progress);
 
@@ -1847,22 +1853,24 @@ cleanup:
 	return result;
 }
 
-int write_midx_file(struct odb_source *source,
+int write_midx_file(struct odb_source_packed *source,
 		    const char *preferred_pack_name,
 		    const char *refs_snapshot,
+		    const char *incremental_base,
 		    unsigned flags)
 {
 	struct write_midx_opts opts = {
 		.source = source,
 		.preferred_pack_name = preferred_pack_name,
 		.refs_snapshot = refs_snapshot,
+		.incremental_base = incremental_base,
 		.flags = flags,
 	};
 
 	return write_midx_internal(&opts);
 }
 
-int write_midx_file_only(struct odb_source *source,
+int write_midx_file_only(struct odb_source_packed *source,
 			 struct string_list *packs_to_include,
 			 const char *preferred_pack_name,
 			 const char *refs_snapshot,
@@ -1881,7 +1889,7 @@ int write_midx_file_only(struct odb_source *source,
 	return write_midx_internal(&opts);
 }
 
-int write_midx_file_compact(struct odb_source *source,
+int write_midx_file_compact(struct odb_source_packed *source,
 			    struct multi_pack_index *from,
 			    struct multi_pack_index *to,
 			    const char *incremental_base,
@@ -1898,7 +1906,7 @@ int write_midx_file_compact(struct odb_source *source,
 	return write_midx_internal(&opts);
 }
 
-int expire_midx_packs(struct odb_source *source, unsigned flags)
+int expire_midx_packs(struct odb_source_packed *source, unsigned flags)
 {
 	uint32_t i, *count, result = 0;
 	struct string_list packs_to_drop = STRING_LIST_INIT_DUP;
@@ -1915,7 +1923,7 @@ int expire_midx_packs(struct odb_source *source, unsigned flags)
 
 	if (flags & MIDX_PROGRESS)
 		progress = start_delayed_progress(
-					  source->odb->repo,
+					  source->base.odb->repo,
 					  _("Counting referenced objects"),
 					  m->num_objects);
 	for (i = 0; i < m->num_objects; i++) {
@@ -1927,7 +1935,7 @@ int expire_midx_packs(struct odb_source *source, unsigned flags)
 
 	if (flags & MIDX_PROGRESS)
 		progress = start_delayed_progress(
-					  source->odb->repo,
+					  source->base.odb->repo,
 					  _("Finding and deleting unreferenced packfiles"),
 					  m->num_packs);
 	for (i = 0; i < m->num_packs; i++) {
@@ -2085,9 +2093,9 @@ static void fill_included_packs_batch(struct repository *r,
 	free(pack_info);
 }
 
-int midx_repack(struct odb_source *source, size_t batch_size, unsigned flags)
+int midx_repack(struct odb_source_packed *source, size_t batch_size, unsigned flags)
 {
-	struct repository *r = source->odb->repo;
+	struct repository *r = source->base.odb->repo;
 	int result = 0;
 	uint32_t i, packs_to_repack = 0;
 	unsigned char *include_pack;
@@ -2131,7 +2139,7 @@ int midx_repack(struct odb_source *source, size_t batch_size, unsigned flags)
 
 	strvec_push(&cmd.args, "pack-objects");
 
-	strvec_pushf(&cmd.args, "%s/pack/pack", source->path);
+	strvec_pushf(&cmd.args, "%s/pack/pack", source->base.path);
 
 	if (delta_base_offset)
 		strvec_push(&cmd.args, "--delta-base-offset");

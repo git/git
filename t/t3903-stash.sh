@@ -20,21 +20,21 @@ test_expect_success 'setup' '
 
 test_expect_success 'usage on cmd and subcommand invalid option' '
 	test_expect_code 129 git stash --invalid-option 2>usage &&
-	grep "or: git stash" usage &&
+	test_grep "or: git stash" usage &&
 
 	test_expect_code 129 git stash push --invalid-option 2>usage &&
-	! grep "or: git stash" usage
+	test_grep ! "or: git stash" usage
 '
 
 test_expect_success 'usage on main command -h emits a summary of subcommands' '
 	test_expect_code 129 git stash -h >usage &&
-	grep -F "usage: git stash list" usage &&
-	grep -F "or: git stash show" usage
+	test_grep -F "usage: git stash list" usage &&
+	test_grep -F "or: git stash show" usage
 '
 
 test_expect_success 'usage for subcommands should emit subcommand usage' '
 	test_expect_code 129 git stash push -h >usage &&
-	grep -F "usage: git stash [push" usage
+	test_grep -F "usage: git stash [push" usage
 '
 
 diff_cmp () {
@@ -965,7 +965,7 @@ test_expect_success 'store updates stash ref and reflog' '
 	test $(git rev-parse stash) = $STASH_ID &&
 	git reflog --format=%H stash| grep $STASH_ID &&
 	git stash pop &&
-	grep quux bazzy
+	test_grep quux bazzy
 '
 
 test_expect_success 'handle stash specification with spaces' '
@@ -977,7 +977,7 @@ test_expect_success 'handle stash specification with spaces' '
 	echo cow >file &&
 	git stash &&
 	git stash apply "stash@{$stamp}" &&
-	grep pig file
+	test_grep pig file
 '
 
 test_expect_success 'setup stash with index and worktree changes' '
@@ -1500,9 +1500,9 @@ test_expect_success 'stash export can accept specified stashes' '
 
 test_expect_success 'stash export rejects invalid arguments' '
 	test_must_fail git stash export --print --to-ref refs/heads/invalid 2>err &&
-	grep "exactly one of --print and --to-ref is required" err &&
+	test_grep "exactly one of --print and --to-ref is required" err &&
 	test_must_fail git stash export 2>err2 &&
-	grep "exactly one of --print and --to-ref is required" err2
+	test_grep "exactly one of --print and --to-ref is required" err2
 '
 
 test_expect_success 'stash can import and export zero stashes' '
@@ -1519,7 +1519,7 @@ test_expect_success 'stash rejects invalid attempts to import commits' '
 	git stash import foo &&
 	test_must_fail git stash import HEAD 2>output &&
 	oid=$(git rev-parse HEAD) &&
-	grep "$oid is not a valid exported stash commit" output &&
+	test_grep "$oid is not a valid exported stash commit" output &&
 	test_cmp_rev stash@{0} t-stash0 &&
 
 	git checkout --orphan orphan &&
@@ -1527,7 +1527,7 @@ test_expect_success 'stash rejects invalid attempts to import commits' '
 	git update-ref refs/heads/orphan "$(cat fake-commit)" &&
 	oid=$(git rev-parse HEAD) &&
 	test_must_fail git stash import orphan 2>output &&
-	grep "found stash commit $oid without expected prefix" output &&
+	test_grep "found stash commit $oid without expected prefix" output &&
 	test_cmp_rev stash@{0} t-stash0 &&
 
 	git checkout --orphan orphan2 &&
@@ -1535,7 +1535,7 @@ test_expect_success 'stash rejects invalid attempts to import commits' '
 	git update-ref refs/heads/orphan2 "$(cat fake-commit)" &&
 	oid=$(git rev-parse HEAD) &&
 	test_must_fail git stash import orphan2 2>output &&
-	grep "found root commit $oid with invalid data" output &&
+	test_grep "found root commit $oid with invalid data" output &&
 	test_cmp_rev stash@{0} t-stash0
 '
 
@@ -1741,7 +1741,7 @@ test_expect_success 'submodules does not affect the branch recorded in stash mes
 		git stash push -m "custom stash for work_branch" &&
 
 		git stash list >../actual_stash_list.txt &&
-		grep "On work_branch: custom stash for work_branch" ../actual_stash_list.txt
+		test_grep "On work_branch: custom stash for work_branch" ../actual_stash_list.txt
 	)
 '
 
@@ -1751,7 +1751,7 @@ test_expect_success SANITIZE_LEAK 'stash show handles -- without leaking' '
 
 test_expect_success 'controlled error return on unrecognized option' '
 	test_expect_code 129 git stash show -p --invalid 2>usage &&
-	grep -e "^usage: git stash show" usage
+	test_grep -e "^usage: git stash show" usage
 '
 
 test_expect_success 'stash.index=true implies --index' '

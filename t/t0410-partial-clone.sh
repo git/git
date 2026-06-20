@@ -206,7 +206,7 @@ test_expect_success 'fetching of missing objects' '
 	git -C repo cat-file -p "$HASH" 2>err &&
 
 	# Ensure that no spurious FETCH_HEAD messages are written
-	! grep FETCH_HEAD err &&
+	test_grep ! FETCH_HEAD err &&
 
 	# Ensure that the .promisor file is written, and check that its
 	# associated packfile contains the object
@@ -214,7 +214,7 @@ test_expect_success 'fetching of missing objects' '
 	test_line_count = 1 promisorlist &&
 	IDX=$(sed "s/promisor$/idx/" promisorlist) &&
 	git verify-pack --verbose "$IDX" >out &&
-	grep "$HASH" out
+	test_grep "$HASH" out
 '
 
 test_expect_success 'fetching of a promised object that promisor remote no longer has' '
@@ -228,7 +228,7 @@ test_expect_success 'fetching of a promised object that promisor remote no longe
 
 	rm -rf unreliable-server/.git/objects/* &&
 	test_must_fail git -C unreliable-client checkout HEAD 2>err &&
-	grep "could not fetch.*from promisor remote" err
+	test_grep "could not fetch.*from promisor remote" err
 '
 
 test_expect_success 'fetching of missing objects works with ref-in-want enabled' '
@@ -240,7 +240,7 @@ test_expect_success 'fetching of missing objects works with ref-in-want enabled'
 	rm -rf repo/.git/objects/* &&
 	rm -f trace &&
 	GIT_TRACE_PACKET="$(pwd)/trace" git -C repo cat-file -p "$HASH" &&
-	grep "fetch< fetch=.*ref-in-want" trace
+	test_grep "fetch< fetch=.*ref-in-want" trace
 '
 
 test_expect_success 'fetching from another promisor remote' '
@@ -263,7 +263,7 @@ test_expect_success 'fetching from another promisor remote' '
 	test_line_count = 1 promisorlist &&
 	IDX=$(sed "s/promisor$/idx/" promisorlist) &&
 	git verify-pack --verbose "$IDX" >out &&
-	grep "$HASH2" out
+	test_grep "$HASH2" out
 '
 
 test_expect_success 'fetching with --filter configures a promisor remote' '
@@ -286,7 +286,7 @@ test_expect_success 'fetching with --filter configures a promisor remote' '
 	test_line_count = 1 promisorlist &&
 	IDX=$(sed "s/promisor$/idx/" promisorlist) &&
 	git verify-pack --verbose "$IDX" >out &&
-	grep "$HASH3" out
+	test_grep "$HASH3" out
 '
 
 test_expect_success 'fetching of missing blobs works' '
@@ -327,8 +327,8 @@ test_expect_success 'fetching of missing trees does not fetch blobs' '
 
 	# Ensure that the tree, but not the blob, is fetched
 	git -C repo rev-list --objects --missing=print $(cat treehash) >objects &&
-	grep "^$(cat treehash)" objects &&
-	grep "^[?]$(cat blobhash)" objects
+	test_grep "^$(cat treehash)" objects &&
+	test_grep "^[?]$(cat blobhash)" objects
 '
 
 test_expect_success 'rev-list stops traversal at missing and promised commit' '
@@ -343,8 +343,8 @@ test_expect_success 'rev-list stops traversal at missing and promised commit' '
 	git -C repo config core.repositoryformatversion 1 &&
 	git -C repo config extensions.partialclone "arbitrary string" &&
 	git -C repo rev-list --exclude-promisor-objects --objects bar >out &&
-	grep $(git -C repo rev-parse bar) out &&
-	! grep $FOO out
+	test_grep $(git -C repo rev-parse bar) out &&
+	test_grep ! $FOO out
 '
 
 test_expect_success 'missing tree objects with --missing=allow-promisor and --exclude-promisor-objects' '
@@ -413,10 +413,10 @@ test_expect_success 'rev-list stops traversal at missing and promised tree' '
 	git -C repo config core.repositoryformatversion 1 &&
 	git -C repo config extensions.partialclone "arbitrary string" &&
 	git -C repo rev-list --exclude-promisor-objects --objects HEAD >out &&
-	grep $(git -C repo rev-parse foo) out &&
-	! grep $TREE out &&
-	grep $(git -C repo rev-parse HEAD) out &&
-	! grep $TREE2 out
+	test_grep $(git -C repo rev-parse foo) out &&
+	test_grep ! $TREE out &&
+	test_grep $(git -C repo rev-parse HEAD) out &&
+	test_grep ! $TREE2 out
 '
 
 test_expect_success 'rev-list stops traversal at missing and promised blob' '
@@ -432,8 +432,8 @@ test_expect_success 'rev-list stops traversal at missing and promised blob' '
 	git -C repo config core.repositoryformatversion 1 &&
 	git -C repo config extensions.partialclone "arbitrary string" &&
 	git -C repo rev-list --exclude-promisor-objects --objects HEAD >out &&
-	grep $(git -C repo rev-parse HEAD) out &&
-	! grep $BLOB out
+	test_grep $(git -C repo rev-parse HEAD) out &&
+	test_grep ! $BLOB out
 '
 
 test_expect_success 'rev-list stops traversal at promisor commit, tree, and blob' '
@@ -451,10 +451,10 @@ test_expect_success 'rev-list stops traversal at promisor commit, tree, and blob
 	git -C repo config core.repositoryformatversion 1 &&
 	git -C repo config extensions.partialclone "arbitrary string" &&
 	git -C repo rev-list --exclude-promisor-objects --objects HEAD >out &&
-	! grep $COMMIT out &&
-	! grep $TREE out &&
-	! grep $BLOB out &&
-	grep $(git -C repo rev-parse bar) out  # sanity check that some walking was done
+	test_grep ! $COMMIT out &&
+	test_grep ! $TREE out &&
+	test_grep ! $BLOB out &&
+	test_grep $(git -C repo rev-parse bar) out  # sanity check that some walking was done
 '
 
 test_expect_success 'rev-list dies for missing objects on cmd line' '
@@ -523,10 +523,10 @@ test_expect_success 'gc repacks promisor objects separately from non-promisor ob
 	test_line_count = 1 promisorlist &&
 	PROMISOR_PACKFILE=$(sed "s/.promisor/.pack/" <promisorlist) &&
 	git verify-pack $PROMISOR_PACKFILE -v >out &&
-	grep "$TREE_ONE" out &&
-	grep "$TREE_TWO" out &&
-	! grep "$(git -C repo rev-parse one)" out &&
-	! grep "$(git -C repo rev-parse two)" out &&
+	test_grep "$TREE_ONE" out &&
+	test_grep "$TREE_TWO" out &&
+	test_grep ! "$(git -C repo rev-parse one)" out &&
+	test_grep ! "$(git -C repo rev-parse two)" out &&
 
 	# Remove the promisor packfile and associated files
 	rm $(sed "s/.promisor//" <promisorlist).* &&
@@ -536,10 +536,10 @@ test_expect_success 'gc repacks promisor objects separately from non-promisor ob
 	ls repo/.git/objects/pack/pack-*.pack >packlist &&
 	test_line_count = 1 packlist &&
 	git verify-pack repo/.git/objects/pack/pack-*.pack -v >out &&
-	grep "$(git -C repo rev-parse one)" out &&
-	grep "$(git -C repo rev-parse two)" out &&
-	! grep "$TREE_ONE" out &&
-	! grep "$TREE_TWO" out
+	test_grep "$(git -C repo rev-parse one)" out &&
+	test_grep "$(git -C repo rev-parse two)" out &&
+	test_grep ! "$TREE_ONE" out &&
+	test_grep ! "$TREE_TWO" out
 '
 
 test_expect_success 'gc does not repack promisor objects if there are none' '
@@ -616,8 +616,8 @@ test_expect_success 'gc stops traversal when a missing but promised object is re
 	ls repo/.git/objects/pack/pack-*.pack >packlist &&
 	test_line_count = 1 packlist &&
 	git verify-pack repo/.git/objects/pack/pack-*.pack -v >out &&
-	grep "$(git -C repo rev-parse HEAD)" out &&
-	! grep "$TREE_HASH" out
+	test_grep "$(git -C repo rev-parse HEAD)" out &&
+	test_grep ! "$TREE_HASH" out
 '
 
 test_expect_success 'do not fetch when checking existence of tree we construct ourselves' '
@@ -647,10 +647,10 @@ test_expect_success 'exact rename does not need to fetch the blob lazily' '
 
 	git clone --filter=blob:none --bare "file://$(pwd)/repo" partial.git &&
 	git -C partial.git rev-list --objects --missing=print HEAD >out &&
-	grep "[?]$FILE_HASH" out &&
+	test_grep "[?]$FILE_HASH" out &&
 	git -C partial.git log --follow -- new-file.txt &&
 	git -C partial.git rev-list --objects --missing=print HEAD >out &&
-	grep "[?]$FILE_HASH" out
+	test_grep "[?]$FILE_HASH" out
 '
 
 test_expect_success 'lazy-fetch when accessing object not in the_repository' '
@@ -665,7 +665,7 @@ test_expect_success 'lazy-fetch when accessing object not in the_repository' '
 
 	# Sanity check that the file is missing
 	git -C partial.git rev-list --objects --missing=print HEAD >out &&
-	grep "[?]$FILE_HASH" out &&
+	test_grep "[?]$FILE_HASH" out &&
 
 	# The no-lazy-fetch mechanism prevents Git from fetching
 	test_must_fail env GIT_NO_LAZY_FETCH=1 \
@@ -680,7 +680,7 @@ test_expect_success 'lazy-fetch when accessing object not in the_repository' '
 
 	# Sanity check that the file is still missing
 	git -C partial.git rev-list --objects --missing=print HEAD >out &&
-	grep "[?]$FILE_HASH" out &&
+	test_grep "[?]$FILE_HASH" out &&
 
 	git -C full cat-file -s "$FILE_HASH" >expect &&
 	test-tool partial-clone object-info partial.git "$FILE_HASH" >actual &&
@@ -688,7 +688,7 @@ test_expect_success 'lazy-fetch when accessing object not in the_repository' '
 
 	# Sanity check that the file is now present
 	git -C partial.git rev-list --objects --missing=print HEAD >out &&
-	! grep "[?]$FILE_HASH" out
+	test_grep ! "[?]$FILE_HASH" out
 '
 
 test_expect_success 'push should not fetch new commit objects' '
@@ -705,9 +705,9 @@ test_expect_success 'push should not fetch new commit objects' '
 	COMMIT=$(git -C server rev-parse server2) &&
 
 	test_must_fail git -C client push 2>err &&
-	grep "fetch first" err &&
+	test_grep "fetch first" err &&
 	git -C client rev-list --objects --missing=print "$COMMIT" >objects &&
-	grep "^[?]$COMMIT" objects
+	test_grep "^[?]$COMMIT" objects
 '
 
 test_expect_success 'setup for promisor.quiet tests' '
@@ -750,7 +750,7 @@ test_expect_success TTY 'promisor.quiet=false shows progress messages' '
 	test_terminal git -C repo cat-file -p foo:foo.t 2>err &&
 
 	# Ensure that progress messages are written
-	grep "Receiving objects" err
+	test_grep "Receiving objects" err
 '
 
 test_expect_success TTY 'promisor.quiet=true does not show progress messages' '
@@ -761,7 +761,7 @@ test_expect_success TTY 'promisor.quiet=true does not show progress messages' '
 	test_terminal git -C repo cat-file -p foo:foo.t 2>err &&
 
 	# Ensure that no progress messages are written
-	! grep "Receiving objects" err
+	test_grep ! "Receiving objects" err
 '
 
 test_expect_success TTY 'promisor.quiet=unconfigured shows progress messages' '
@@ -771,7 +771,7 @@ test_expect_success TTY 'promisor.quiet=unconfigured shows progress messages' '
 	test_terminal git -C repo cat-file -p foo:foo.t 2>err &&
 
 	# Ensure that progress messages are written
-	grep "Receiving objects" err
+	test_grep "Receiving objects" err
 '
 
 test_expect_success 'promisor.quiet from submodule repo is honored' '
@@ -819,7 +819,7 @@ test_expect_success 'fetching of missing objects from an HTTP server' '
 	test_line_count = 1 promisorlist &&
 	IDX=$(sed "s/promisor$/idx/" promisorlist) &&
 	git verify-pack --verbose "$IDX" >out &&
-	grep "$HASH" out
+	test_grep "$HASH" out
 '
 
 # DO NOT add non-httpd-specific tests here, because the last part of this

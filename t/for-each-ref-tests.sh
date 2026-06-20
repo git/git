@@ -523,7 +523,7 @@ test_expect_success 'Verify descending sort' '
 
 test_expect_success 'Give help even with invalid sort atoms' '
 	test_expect_code 129 ${git_for_each_ref} --sort=bogus -h >actual 2>&1 &&
-	grep "^usage: ${git_for_each_ref}" actual
+	test_grep "^usage: ${git_for_each_ref}" actual
 '
 
 cat >expected <<\EOF
@@ -622,7 +622,7 @@ test_expect_success 'Quoting style: tcl' '
 for i in "--perl --shell" "-s --python" "--python --tcl" "--tcl --perl"; do
 	test_expect_success "more than one quoting style: $i" "
 		test_must_fail ${git_for_each_ref} $i 2>err &&
-		grep '^error: more than one quoting style' err
+		test_grep '^error: more than one quoting style' err
 	"
 done
 
@@ -1892,7 +1892,7 @@ test_expect_success "${git_for_each_ref} --stdin: fails if extra args" '
 	>in &&
 	test_must_fail ${git_for_each_ref} --format="%(refname)" \
 		--stdin refs/heads/extra <in 2>err &&
-	grep "unknown arguments supplied with --stdin" err
+	test_grep "unknown arguments supplied with --stdin" err
 '
 
 test_expect_success "${git_for_each_ref} --stdin: matches" '
@@ -1955,11 +1955,11 @@ test_expect_success "${git_for_each_ref} with nested tags" '
 
 test_expect_success 'is-base atom with non-commits' '
 	${git_for_each_ref} --format="%(is-base:HEAD) %(refname)" >out 2>err &&
-	grep "(HEAD) refs/heads/main" out &&
+	test_grep "(HEAD) refs/heads/main" out &&
 
 	test_line_count = 2 err &&
-	grep "error: object .* is a commit, not a blob" err &&
-	grep "error: bad tag pointer to" err
+	test_grep "error: object .* is a commit, not a blob" err &&
+	test_grep "error: bad tag pointer to" err
 '
 
 GRADE_FORMAT="%(signature:grade)%0a%(signature:key)%0a%(signature:signer)%0a%(signature:fingerprint)%0a%(signature:primarykeyfingerprint)"

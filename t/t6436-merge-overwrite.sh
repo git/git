@@ -189,10 +189,10 @@ test_expect_success 'set up unborn branch and content' '
 
 test_expect_success 'will not clobber WT/index when merging into unborn' '
 	git merge main &&
-	grep foo tracked-file &&
+	test_grep foo tracked-file &&
 	git show :tracked-file >expect &&
-	grep foo expect &&
-	grep bar untracked-file
+	test_grep foo expect &&
+	test_grep bar untracked-file
 '
 
 test_done

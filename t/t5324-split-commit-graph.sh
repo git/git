@@ -297,7 +297,7 @@ test_expect_success 'verify notices chain slice which is bogus (base)' '
 		echo "garbage" >$base_file &&
 		test_must_fail git commit-graph verify 2>test_err &&
 		grep -v "^+" test_err >err &&
-		grep "commit-graph file is too small" err
+		test_grep "commit-graph file is too small" err
 	)
 '
 
@@ -310,7 +310,7 @@ test_expect_success 'verify notices chain slice which is bogus (tip)' '
 		echo "garbage" >$tip_file &&
 		test_must_fail git commit-graph verify 2>test_err &&
 		grep -v "^+" test_err >err &&
-		grep "commit-graph file is too small" err
+		test_grep "commit-graph file is too small" err
 	)
 '
 
@@ -379,7 +379,7 @@ test_expect_success 'verify notices too-short chain file' '
 		echo "garbage" >$graphdir/commit-graph-chain &&
 		test_must_fail git commit-graph verify 2>test_err &&
 		grep -v "^+" test_err >err &&
-		grep "commit-graph chain file too small" err
+		test_grep "commit-graph chain file too small" err
 	)
 '
 
@@ -410,7 +410,7 @@ test_expect_success PERL_TEST_HELPERS 'reader bounds-checks base-graph chunk' '
 		git -c core.commitGraph=false log >expect.out &&
 		git -c core.commitGraph=true log >out 2>err &&
 		test_cmp expect.out out &&
-		grep "commit-graph base graphs chunk is too small" err
+		test_grep "commit-graph base graphs chunk is too small" err
 	)
 '
 
@@ -421,7 +421,7 @@ test_expect_success 'add octopus merge' '
 	git commit-graph write --reachable --split &&
 	git commit-graph verify --progress 2>err &&
 	test_line_count = 1 err &&
-	grep "Verifying commits in commit graph: 100% (18/18)" err &&
+	test_grep "Verifying commits in commit graph: 100% (18/18)" err &&
 	test_grep ! warning err &&
 	test_line_count = 3 $graphdir/commit-graph-chain
 '

@@ -200,13 +200,13 @@ test_expect_success 'parallel checkout respects --[no]-force' '
 		# We expect 0 workers because there is nothing to be done
 		test_checkout_workers 0 git checkout HEAD &&
 		test_path_is_file D &&
-		grep changed D &&
-		grep changed F.t &&
+		test_grep changed D &&
+		test_grep changed F.t &&
 
 		test_checkout_workers 2 git checkout --force HEAD &&
 		test_path_is_dir D &&
-		grep D/F D/F.t &&
-		grep F F.t
+		test_grep D/F D/F.t &&
+		test_grep F F.t
 	)
 '
 
@@ -224,8 +224,8 @@ test_expect_success SYMLINKS 'parallel checkout checks for symlinks in leading d
 
 		test_checkout_workers 2 git checkout --force HEAD &&
 		! test -h D &&
-		grep D/A D/A.t &&
-		grep D/B D/B.t
+		test_grep D/A D/A.t &&
+		test_grep D/B D/B.t
 	)
 '
 
@@ -268,7 +268,7 @@ test_expect_success '"git checkout ." report should not include failed entries' 
 		#  - missing-delay.a: the delay filter will drop this path
 		#  - parallel-*.a: the blob will be missing
 		#
-		grep "Updated 3 paths from the index" err &&
+		test_grep "Updated 3 paths from the index" err &&
 		test_stdout_line_count = 3 ls *.b &&
 		! ls *.a
 	)

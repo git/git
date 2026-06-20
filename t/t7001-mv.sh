@@ -46,7 +46,7 @@ test_expect_success 'commiting the change' '
 
 test_expect_success 'checking the commit' '
 	git diff-tree -r -M --name-status  HEAD^ HEAD >actual &&
-	grep "^R100..*path0/COPYING..*path1/COPYING" actual
+	test_grep "^R100..*path0/COPYING..*path1/COPYING" actual
 '
 
 test_expect_success 'moving the file back into subdirectory' '
@@ -60,7 +60,7 @@ test_expect_success 'commiting the change' '
 
 test_expect_success 'checking the commit' '
 	git diff-tree -r -M --name-status  HEAD^ HEAD >actual &&
-	grep "^R100..*path1/COPYING..*path0/COPYING" actual
+	test_grep "^R100..*path1/COPYING..*path0/COPYING" actual
 '
 
 test_expect_success 'mv --dry-run does not move file' '
@@ -147,8 +147,8 @@ test_expect_success 'commiting the change' '
 
 test_expect_success 'checking the commit' '
 	git diff-tree -r -M --name-status  HEAD^ HEAD >actual &&
-	grep "^R100..*path0/COPYING..*path2/COPYING" actual &&
-	grep "^R100..*path0/README..*path2/README" actual
+	test_grep "^R100..*path0/COPYING..*path2/COPYING" actual &&
+	test_grep "^R100..*path0/README..*path2/README" actual
 '
 
 test_expect_success 'succeed when source is a prefix of destination' '
@@ -165,8 +165,8 @@ test_expect_success 'commiting the change' '
 
 test_expect_success 'checking the commit' '
 	git diff-tree -r -M --name-status  HEAD^ HEAD >actual &&
-	grep "^R100..*path2/COPYING..*path1/path2/COPYING" actual &&
-	grep "^R100..*path2/README..*path1/path2/README" actual
+	test_grep "^R100..*path2/COPYING..*path1/path2/COPYING" actual &&
+	test_grep "^R100..*path2/README..*path1/path2/README" actual
 '
 
 test_expect_success 'do not move directory over existing directory' '
@@ -200,7 +200,7 @@ test_expect_success "Michael Cassar's test case" '
 
 	T=$(git write-tree) &&
 	git ls-tree -r $T >out &&
-	grep partA/outline.txt out
+	test_grep partA/outline.txt out
 '
 
 rm -fr papers partA path?
@@ -504,7 +504,7 @@ test_expect_success 'mv -k does not accidentally destroy submodules' '
 	mkdir dummy dest &&
 	git mv -k dummy sub dest &&
 	git status --porcelain >actual &&
-	grep "^R  sub -> dest/sub" actual &&
+	test_grep "^R  sub -> dest/sub" actual &&
 	git reset --hard &&
 	git checkout .
 '

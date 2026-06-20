@@ -19,6 +19,8 @@
 #include "tag.h"
 #include "trace2.h"
 #include "blame.h"
+#include "diff-process.h"
+#include "xdiff-interface.h"
 #include "alloc.h"
 #include "commit-slab.h"
 #include "bloom.h"
@@ -314,17 +316,25 @@ static struct commit *fake_working_tree_commit(struct repository *r,
 
 
 
+static int diff_hunks_xpp(mmfile_t *file_a, mmfile_t *file_b,
+			  xdl_emit_hunk_consume_func_t hunk_func,
+			  void *cb_data, xpparam_t *xpp)
+{
+	xdemitconf_t xecfg = {0};
+	xdemitcb_t ecb = {NULL};
+
+	xecfg.hunk_func = hunk_func;
+	ecb.priv = cb_data;
+	return xdi_diff(file_a, file_b, xpp, &xecfg, &ecb);
+}
+
 static int diff_hunks(mmfile_t *file_a, mmfile_t *file_b,
 		      xdl_emit_hunk_consume_func_t hunk_func, void *cb_data, int xdl_opts)
 {
 	xpparam_t xpp = {0};
-	xdemitconf_t xecfg = {0};
-	xdemitcb_t ecb = {NULL};
 
 	xpp.flags = xdl_opts;
-	xecfg.hunk_func = hunk_func;
-	ecb.priv = cb_data;
-	return xdi_diff(file_a, file_b, &xpp, &xecfg, &ecb);
+	return diff_hunks_xpp(file_a, file_b, hunk_func, cb_data, &xpp);
 }
 
 static const char *get_next_line(const char *start, const char *end)
@@ -1041,10 +1051,13 @@ static void fill_origin_blob(struct diff_options *opt,
 		    textconv_object(opt->repo, o->path, o->mode,
 				    &o->blob_oid, 1, &file->ptr, &file_size))
 			;
-		else
+		else {
+			size_t file_size_st = 0;
 			file->ptr = odb_read_object(the_repository->objects,
 						    &o->blob_oid, &type,
-						    &file_size);
+						    &file_size_st);
+			file_size = cast_size_t_to_ulong(file_size_st);
+		}
 		file->size = file_size;
 
 		if (!file->ptr)
@@ -1943,6 +1956,7 @@ static void pass_blame_to_parent(struct blame_scoreboard *sb,
 				 struct blame_origin *parent, int ignore_diffs)
 {
 	mmfile_t file_p, file_o;
+	xpparam_t xpp = {0};
 	struct blame_chunk_cb_data d;
 	struct blame_entry *newdest = NULL;
 
@@ -1961,10 +1975,21 @@ static void pass_blame_to_parent(struct blame_scoreboard *sb,
 			 &sb->num_read_blob, ignore_diffs);
 	sb->num_get_patch++;
 
-	if (diff_hunks(&file_p, &file_o, blame_chunk_cb, &d, sb->xdl_opts))
-		die("unable to generate diff (%s -> %s)",
-		    oid_to_hex(&parent->commit->object.oid),
-		    oid_to_hex(&target->commit->object.oid));
+	xpp.flags = sb->xdl_opts;
+	/*
+	 * If the diff process considers the files equivalent,
+	 * skip the diff so blame looks past this commit.
+	 */
+	if (diff_process_fill_hunks(&sb->revs->diffopt, target->path,
+				    &file_p, &file_o, &xpp)
+	    != DIFF_PROCESS_EQUIVALENT) {
+		if (diff_hunks_xpp(&file_p, &file_o, blame_chunk_cb,
+				   &d, &xpp))
+			die("unable to generate diff (%s -> %s)",
+			    oid_to_hex(&parent->commit->object.oid),
+			    oid_to_hex(&target->commit->object.oid));
+	}
+	free(xpp.external_hunks);
 	/* The rest are the same as the parent */
 	blame_chunk(&d.dstq, &d.srcq, INT_MAX, d.offset, INT_MAX, 0,
 		    parent, target, 0);
@@ -2869,10 +2894,14 @@ void setup_scoreboard(struct blame_scoreboard *sb,
 		    textconv_object(sb->repo, sb->path, o->mode, &o->blob_oid, 1, (char **) &sb->final_buf,
 				    &sb->final_buf_size))
 			;
-		else
+		else {
+			size_t final_buf_size_st = 0;
 			sb->final_buf = odb_read_object(the_repository->objects,
 							&o->blob_oid, &type,
-							&sb->final_buf_size);
+							&final_buf_size_st);
+			sb->final_buf_size =
+				cast_size_t_to_ulong(final_buf_size_st);
+		}
 
 		if (!sb->final_buf)
 			die(_("cannot read blob %s for path %s"),

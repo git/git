@@ -8,7 +8,7 @@ test_description='adding and checking out large blobs'
 test_expect_success 'core.bigFileThreshold must be non-negative' '
 	: >input &&
 	test_must_fail git -c core.bigFileThreshold=-1 hash-object input >out 2>err &&
-	grep "bad numeric config value" err &&
+	test_grep "bad numeric config value" err &&
 	test_must_be_empty out
 '
 
@@ -148,12 +148,12 @@ test_expect_success 'diff --stat' '
 
 test_expect_success 'diff' '
 	git diff HEAD^ HEAD >actual &&
-	grep "Binary files.*differ" actual
+	test_grep "Binary files.*differ" actual
 '
 
 test_expect_success 'diff --cached' '
 	git diff --cached HEAD^ >actual &&
-	grep "Binary files.*differ" actual
+	test_grep "Binary files.*differ" actual
 '
 
 test_expect_success 'hash-object' '

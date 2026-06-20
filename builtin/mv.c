@@ -419,7 +419,7 @@ dir_check:
 			goto act_on_entry;
 		}
 		if (lstat(dst, &st) == 0 &&
-		    (!ignore_case || strcasecmp(src, dst))) {
+		    (!repo_ignore_case(the_repository) || strcasecmp(src, dst))) {
 			bad = _("destination exists");
 			if (force) {
 				/*

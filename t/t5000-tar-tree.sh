@@ -323,14 +323,14 @@ test_expect_success 'setup tar filters' '
 
 test_expect_success 'archive --list mentions user filter' '
 	git archive --list >output &&
-	grep "^tar\.foo\$" output &&
-	grep "^bar\$" output
+	test_grep "^tar\.foo\$" output &&
+	test_grep "^bar\$" output
 '
 
 test_expect_success 'archive --list shows only enabled remote filters' '
 	git archive --list --remote=. >output &&
-	! grep "^tar\.foo\$" output &&
-	grep "^bar\$" output
+	test_grep ! "^tar\.foo\$" output &&
+	test_grep "^bar\$" output
 '
 
 test_expect_success 'invoke tar filter by format' '
@@ -440,7 +440,7 @@ test_expect_success 'catch non-matching pathspec' '
 
 test_expect_success 'reject paths outside the current directory' '
 	test_must_fail git -C a/bin archive HEAD .. >/dev/null 2>err &&
-	grep "outside the current directory" err
+	test_grep "outside the current directory" err
 '
 
 test_expect_success 'allow pathspecs that resolve to the current directory' '

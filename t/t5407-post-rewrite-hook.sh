@@ -195,19 +195,19 @@ test_expect_success 'git rebase with failed pick' '
 		set_replace_editor todo &&
 		test_must_fail git rebase -i D D 2>err
 	) &&
-	grep "would be overwritten" err &&
+	test_grep "would be overwritten" err &&
 	rm bar &&
 
 	test_must_fail git rebase --continue 2>err &&
-	grep "would be overwritten" err &&
+	test_grep "would be overwritten" err &&
 	rm G &&
 
 	test_must_fail git rebase --continue 2>err &&
-	grep "would be overwritten" err &&
+	test_grep "would be overwritten" err &&
 	rm H &&
 
 	test_must_fail git rebase --continue 2>err &&
-	grep "would be overwritten" err &&
+	test_grep "would be overwritten" err &&
 	rm I &&
 
 	git rebase --continue &&

@@ -176,15 +176,15 @@ test_expect_success 'gc.reflogExpire{Unreachable,}=never skips "expire" via "gc"
 
 	# Check that git-pack-refs is run as a sanity check (done via
 	# gc_before_repack()) but that git-expire is not.
-	grep -E "^trace: (built-in|exec|run_command): git pack-refs --" trace.out &&
-	! grep -E "^trace: (built-in|exec|run_command): git reflog expire --" trace.out
+	test_grep -E "^trace: (built-in|exec|run_command): git pack-refs --" trace.out &&
+	test_grep ! -E "^trace: (built-in|exec|run_command): git reflog expire --" trace.out
 '
 
 test_expect_success 'one of gc.reflogExpire{Unreachable,}=never does not skip "expire" via "gc"' '
 	>trace.out &&
 	test_config gc.reflogExpire never &&
 	GIT_TRACE=$(pwd)/trace.out git gc &&
-	grep -E "^trace: (built-in|exec|run_command): git reflog expire --" trace.out
+	test_grep -E "^trace: (built-in|exec|run_command): git reflog expire --" trace.out
 '
 
 test_expect_success 'gc.repackFilter launches repack with a filter' '
@@ -196,7 +196,7 @@ test_expect_success 'gc.repackFilter launches repack with a filter' '
 	GIT_TRACE=$(pwd)/trace.out git -C bare.git -c gc.repackFilter=blob:none \
 		-c repack.writeBitmaps=false -c gc.cruftPacks=false gc &&
 	test_stdout_line_count = 2 ls bare.git/objects/pack/*.pack &&
-	grep -E "^trace: (built-in|exec|run_command): git repack .* --filter=blob:none ?.*" trace.out
+	test_grep -E "^trace: (built-in|exec|run_command): git repack .* --filter=blob:none ?.*" trace.out
 '
 
 test_expect_success 'gc.repackFilterTo store filtered out objects' '

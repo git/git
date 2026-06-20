@@ -81,6 +81,7 @@ int cmd_init_db(int argc,
 	const char *template_dir = NULL;
 	char *template_dir_to_free = NULL;
 	unsigned int flags = 0;
+	int bare = startup_info->force_bare_repository ? 1 : -1;
 	const char *object_format = NULL;
 	const char *ref_format = NULL;
 	const char *initial_branch = NULL;
@@ -90,7 +91,7 @@ int cmd_init_db(int argc,
 	const struct option init_db_options[] = {
 		OPT_STRING(0, "template", &template_dir, N_("template-directory"),
 				N_("directory from which templates will be used")),
-		OPT_SET_INT(0, "bare", &is_bare_repository_cfg,
+		OPT_SET_INT(0, "bare", &bare,
 				N_("create a bare repository"), 1),
 		{
 			.type = OPTION_CALLBACK,
@@ -116,7 +117,7 @@ int cmd_init_db(int argc,
 
 	argc = parse_options(argc, argv, prefix, init_db_options, init_db_usage, 0);
 
-	if (real_git_dir && is_bare_repository_cfg == 1)
+	if (real_git_dir && bare == 1)
 		die(_("options '%s' and '%s' cannot be used together"), "--separate-git-dir", "--bare");
 
 	if (real_git_dir && !is_absolute_path(real_git_dir))
@@ -160,7 +161,7 @@ int cmd_init_db(int argc,
 	} else if (0 < argc) {
 		usage(init_db_usage[0]);
 	}
-	if (is_bare_repository_cfg == 1) {
+	if (bare == 1) {
 		char *cwd = xgetcwd();
 		setenv(GIT_DIR_ENVIRONMENT, cwd, argc > 0);
 		free(cwd);
@@ -187,7 +188,7 @@ int cmd_init_db(int argc,
 	 */
 	git_dir = xstrdup_or_null(getenv(GIT_DIR_ENVIRONMENT));
 	work_tree = xstrdup_or_null(getenv(GIT_WORK_TREE_ENVIRONMENT));
-	if ((!git_dir || is_bare_repository_cfg == 1) && work_tree)
+	if ((!git_dir || bare == 1) && work_tree)
 		die(_("%s (or --work-tree=<directory>) not allowed without "
 			  "specifying %s (or --git-dir=<directory>)"),
 		    GIT_WORK_TREE_ENVIRONMENT,
@@ -224,22 +225,31 @@ int cmd_init_db(int argc,
 		strbuf_release(&sb);
 	}
 
-	if (is_bare_repository_cfg < 0)
-		is_bare_repository_cfg = guess_repository_type(git_dir);
+	if (bare < 0)
+		bare = guess_repository_type(git_dir);
 
-	if (!is_bare_repository_cfg) {
+	if (!bare) {
 		const char *git_dir_parent = strrchr(git_dir, '/');
-		if (git_dir_parent) {
-			char *rel = xstrndup(git_dir, git_dir_parent - git_dir);
-			git_work_tree_cfg = real_pathdup(rel, 1);
-			free(rel);
-		}
-		if (!git_work_tree_cfg)
-			git_work_tree_cfg = xgetcwd();
-		if (work_tree)
+
+		if (work_tree) {
 			set_git_work_tree(the_repository, work_tree);
-		else
-			set_git_work_tree(the_repository, git_work_tree_cfg);
+		} else {
+			char *work_tree_cfg = NULL;
+
+			if (git_dir_parent) {
+				char *rel = xstrndup(git_dir, git_dir_parent - git_dir);
+				work_tree_cfg = real_pathdup(rel, 1);
+				free(rel);
+			}
+
+			if (!work_tree_cfg)
+				work_tree_cfg = xgetcwd();
+
+			set_git_work_tree(the_repository, work_tree_cfg);
+
+			free(work_tree_cfg);
+		}
+
 		if (access(repo_get_work_tree(the_repository), X_OK))
 			die_errno (_("Cannot access work tree '%s'"),
 				   repo_get_work_tree(the_repository));

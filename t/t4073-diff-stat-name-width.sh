@@ -21,41 +21,41 @@ test_expect_success 'setup' '
 
 test_expect_success 'test name-width long enough for filepath' '
 	git diff HEAD~1 HEAD --stat --stat-name-width=12 >out &&
-	grep "d你好/f再见 |" out &&
+	test_grep "d你好/f再见 |" out &&
 	git diff HEAD~1 HEAD --stat --stat-name-width=11 >out &&
-	grep "d你好/f再见 |" out
+	test_grep "d你好/f再见 |" out
 '
 
 test_expect_success 'test name-width not long enough for dir name' '
 	git diff HEAD~1 HEAD --stat --stat-name-width=10 >out &&
-	grep ".../f再见  |" out &&
+	test_grep ".../f再见  |" out &&
 	git diff HEAD~1 HEAD --stat --stat-name-width=9 >out &&
-	grep ".../f再见 |" out
+	test_grep ".../f再见 |" out
 '
 
 test_expect_success 'test name-width not long enough for slash' '
 	git diff HEAD~1 HEAD --stat --stat-name-width=8 >out &&
-	grep "...f再见 |" out
+	test_grep "...f再见 |" out
 '
 
 test_expect_success 'test name-width not long enough for file name' '
 	git diff HEAD~1 HEAD --stat --stat-name-width=7 >out &&
-	grep "...再见 |" out &&
+	test_grep "...再见 |" out &&
 	git diff HEAD~1 HEAD --stat --stat-name-width=6 >out &&
-	grep "...见  |" out &&
+	test_grep "...见  |" out &&
 	git diff HEAD~1 HEAD --stat --stat-name-width=5 >out &&
-	grep "...见 |" out &&
+	test_grep "...见 |" out &&
 	git diff HEAD~1 HEAD --stat --stat-name-width=4 >out &&
-	grep "...  |" out
+	test_grep "...  |" out
 '
 
 test_expect_success 'test name-width minimum length' '
 	git diff HEAD~1 HEAD --stat --stat-name-width=3 >out &&
-	grep "... |" out &&
+	test_grep "... |" out &&
 	git diff HEAD~1 HEAD --stat --stat-name-width=2 >out &&
-	grep "... |" out &&
+	test_grep "... |" out &&
 	git diff HEAD~1 HEAD --stat --stat-name-width=1 >out &&
-	grep "... |" out
+	test_grep "... |" out
 '
 
 test_done

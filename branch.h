@@ -1,8 +1,24 @@
 #ifndef BRANCH_H
 #define BRANCH_H
 
+#include "refspec.h"
+
+struct string_list;
 struct repository;
 struct strbuf;
+
+struct tracking {
+	struct refspec_item spec;
+	struct string_list *srcs;
+	const char *remote;
+	int matches;
+};
+
+void find_tracking_remote_for_ref(struct tracking *tracking,
+				  struct string_list *ambiguous_remotes);
+
+void advise_ambiguous_fetch_refspec(const char *dst,
+				    const struct string_list *ambiguous_remotes);
 
 enum branch_track {
 	BRANCH_TRACK_UNSPECIFIED = -1,

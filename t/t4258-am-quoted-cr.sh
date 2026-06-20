@@ -16,7 +16,7 @@ test_expect_success 'setup' '
 test_expect_success 'am warn if quoted-cr is found' '
 	git reset --hard one &&
 	test_must_fail git am "$DATA/mbox" 2>err &&
-	grep "quoted CRLF detected" err
+	test_grep "quoted CRLF detected" err
 '
 
 test_expect_success 'am --quoted-cr=strip' '

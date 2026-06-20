@@ -21,7 +21,7 @@ int cmd__delta(int argc, const char **argv)
 	int fd;
 	struct strbuf from = STRBUF_INIT, data = STRBUF_INIT;
 	char *out_buf;
-	unsigned long out_size;
+	size_t out_size;
 
 	if (argc != 5 || (strcmp(argv[1], "-d") && strcmp(argv[1], "-p")))
 		usage(usage_str);
@@ -31,11 +31,13 @@ int cmd__delta(int argc, const char **argv)
 	if (strbuf_read_file(&data, argv[3], 0) < 0)
 		die_errno("unable to read '%s'", argv[3]);
 
-	if (argv[1][1] == 'd')
+	if (argv[1][1] == 'd') {
+		unsigned long delta_size;
 		out_buf = diff_delta(from.buf, from.len,
 				     data.buf, data.len,
-				     &out_size, 0);
-	else
+				     &delta_size, 0);
+		out_size = delta_size;
+	} else
 		out_buf = patch_delta(from.buf, from.len,
 				      data.buf, data.len,
 				      &out_size);

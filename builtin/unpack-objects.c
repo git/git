@@ -231,7 +231,7 @@ static int check_object(struct object *obj, enum object_type type,
 		die("object type mismatch");
 
 	if (!(obj->flags & FLAG_OPEN)) {
-		unsigned long size;
+		size_t size;
 		int type = odb_read_object_info(the_repository->objects, &obj->oid, &size);
 		if (type != obj->type || type <= 0)
 			die("object of unexpected type");
@@ -314,7 +314,7 @@ static void resolve_delta(unsigned nr, enum object_type type,
 			  void *delta, unsigned long delta_size)
 {
 	void *result;
-	unsigned long result_size;
+	size_t result_size;
 
 	result = patch_delta(base, base_size,
 			     delta, delta_size,
@@ -436,6 +436,7 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
 {
 	void *delta_data, *base;
 	unsigned long base_size;
+	size_t base_size_st = 0;
 	struct object_id base_oid;
 
 	if (type == OBJ_REF_DELTA) {
@@ -512,7 +513,8 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
 		return;
 
 	base = odb_read_object(the_repository->objects, &base_oid,
-			       &type, &base_size);
+			       &type, &base_size_st);
+	base_size = cast_size_t_to_ulong(base_size_st);
 	if (!base) {
 		error("failed to read delta-pack base object %s",
 		      oid_to_hex(&base_oid));

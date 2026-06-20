@@ -638,25 +638,33 @@ __git_ls_files_helper ()
 }
 
 
-# __git_index_files accepts 1 or 2 arguments:
+# __git_index_files accepts 1 to 4 arguments:
 # 1: Options to pass to ls-files (required).
 # 2: A directory path (optional).
 #    If provided, only files within the specified directory are listed.
 #    Sub directories are never recursed.  Path must have a trailing
 #    slash.
 # 3: List only paths matching this path component (optional).
+# 4: Hide paths whose first component starts with a dot if this is
+#    "hide-dotfiles" and the third argument is empty (optional).
 __git_index_files ()
 {
-	local root="$2" match="$3"
+	local root="$2" match="$3" hide_dotfiles="${4-}"
+	local hide_dotfiles_awk=0
+	if [ "$hide_dotfiles" = "hide-dotfiles" ] && [ -z "$match" ]; then
+		hide_dotfiles_awk=1
+	fi
 
 	__git_ls_files_helper "$root" "$1" "${match:-?}" |
-	awk -F / -v pfx="${2//\\/\\\\}" '{
+	awk -F / -v pfx="${2//\\/\\\\}" -v hide_dotfiles="$hide_dotfiles_awk" '{
 		paths[$1] = 1
 	}
 	END {
 		for (p in paths) {
 			if (substr(p, 1, 1) != "\"") {
 				# No special characters, easy!
+				if (hide_dotfiles == 1 && substr(p, 1, 1) == ".")
+					continue
 				print pfx p
 				continue
 			}
@@ -675,8 +683,10 @@ __git_index_files ()
 				# We have seen the same directory unquoted,
 				# skip it.
 				continue
-			else
-				print pfx p
+
+			if (hide_dotfiles == 1 && substr(p, 1, 1) == ".")
+				continue
+			print pfx p
 		}
 	}
 	function dequote(p,    bs_idx, out, esc, esc_idx, dec) {
@@ -721,13 +731,15 @@ __git_index_files ()
 	}'
 }
 
-# __git_complete_index_file requires 1 argument:
+# __git_complete_index_file accepts 1 or 2 arguments:
 # 1: the options to pass to ls-file
+# 2: Hide paths whose first component starts with a dot if this is
+#    "hide-dotfiles" and the current word is empty (optional).
 #
 # The exception is --committable, which finds the files appropriate commit.
 __git_complete_index_file ()
 {
-	local dequoted_word pfx="" cur_
+	local dequoted_word pfx="" cur_ hide_dotfiles="${2-}"
 
 	__git_dequote "$cur"
 
@@ -740,7 +752,7 @@ __git_complete_index_file ()
 		cur_="$dequoted_word"
 	esac
 
-	__gitcomp_file_direct "$(__git_index_files "$1" "$pfx" "$cur_")"
+	__gitcomp_file_direct "$(__git_index_files "$1" "$pfx" "$cur_" "$hide_dotfiles")"
 }
 
 # Lists branches from the local repository.
@@ -2164,7 +2176,7 @@ _git_ls_files ()
 
 	# XXX ignore options like --modified and always suggest all cached
 	# files.
-	__git_complete_index_file "--cached"
+	__git_complete_index_file "--cached" hide-dotfiles
 }
 
 _git_ls_remote ()
@@ -2397,9 +2409,9 @@ _git_mv ()
 	if [ $(__git_count_arguments "mv") -gt 0 ]; then
 		# We need to show both cached and untracked files (including
 		# empty directories) since this may not be the last argument.
-		__git_complete_index_file "--cached --others --directory"
+		__git_complete_index_file "--cached --others --directory" hide-dotfiles
 	else
-		__git_complete_index_file "--cached"
+		__git_complete_index_file "--cached" hide-dotfiles
 	fi
 }
 
@@ -3219,7 +3231,7 @@ _git_rm ()
 		;;
 	esac
 
-	__git_complete_index_file "--cached"
+	__git_complete_index_file "--cached" hide-dotfiles
 }
 
 _git_shortlog ()

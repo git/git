@@ -92,11 +92,9 @@ static int create_file(const char *path, unsigned int mode)
 void *read_blob_entry(const struct cache_entry *ce, size_t *size)
 {
 	enum object_type type;
-	unsigned long ul;
 	void *blob_data = odb_read_object(the_repository->objects, &ce->oid,
-					  &type, &ul);
+					  &type, size);
 
-	*size = ul;
 	if (blob_data) {
 		if (type == OBJ_BLOB)
 			return blob_data;

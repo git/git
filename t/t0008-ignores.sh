@@ -790,8 +790,8 @@ test_expect_success 'existing file and directory' '
 	>one &&
 	mkdir top-level-dir &&
 	git check-ignore one top-level-dir >actual &&
-	grep one actual &&
-	grep top-level-dir actual
+	test_grep one actual &&
+	test_grep top-level-dir actual
 '
 
 test_expect_success 'existing directory and file' '
@@ -800,8 +800,8 @@ test_expect_success 'existing directory and file' '
 	>one &&
 	mkdir top-level-dir &&
 	git check-ignore top-level-dir one >actual &&
-	grep one actual &&
-	grep top-level-dir actual
+	test_grep one actual &&
+	test_grep top-level-dir actual
 '
 
 test_expect_success 'exact prefix matching (with root)' '

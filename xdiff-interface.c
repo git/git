@@ -91,6 +91,25 @@ static int xdiff_outf(void *priv_, mmbuffer_t *mb, int nbuf)
 	return 0;
 }
 
+static int strbuf_out_line(void *priv, mmbuffer_t *mb, int nbuf)
+{
+	struct strbuf *out = priv;
+	int i;
+	for (i = 0; i < nbuf; i++)
+		strbuf_add(out, mb[i].ptr, mb[i].size);
+	return 0;
+}
+
+void xdiff_emit_hunk_header(struct strbuf *out,
+			    long old_begin, long old_count,
+			    long new_begin, long new_count,
+			    const char *func, long funclen)
+{
+	xdemitcb_t ecb = { .priv = out, .out_line = strbuf_out_line };
+	xdl_emit_hunk_hdr(old_begin, old_count, new_begin, new_count,
+			  func, funclen, &ecb);
+}
+
 /*
  * Trim down common substring at the end of the buffers,
  * but end on a complete line.
@@ -124,7 +143,12 @@ int xdi_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp, xdemitconf_t co
 	if (mf1->size > MAX_XDIFF_SIZE || mf2->size > MAX_XDIFF_SIZE)
 		return -1;
 
-	if (!xecfg->ctxlen && !(xecfg->flags & XDL_EMIT_FUNCCONTEXT))
+	/*
+	 * External hunks reference line numbers in the original content;
+	 * trimming the tail would change line counts and invalidate them.
+	 */
+	if (!xpp->external_hunks &&
+	    !xecfg->ctxlen && !(xecfg->flags & XDL_EMIT_FUNCCONTEXT))
 		trim_common_tail(&a, &b);
 
 	return xdl_diff(&a, &b, xpp, xecfg, xecb);
@@ -179,7 +203,7 @@ int read_mmfile(mmfile_t *ptr, const char *filename)
 void read_mmblob(mmfile_t *ptr, struct object_database *odb,
 		 const struct object_id *oid)
 {
-	unsigned long size;
+	size_t size;
 	enum object_type type;
 
 	if (is_null_oid(oid)) {

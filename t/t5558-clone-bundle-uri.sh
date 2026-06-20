@@ -8,14 +8,14 @@ test_description='test fetching bundles with --bundle-uri'
 test_expect_success 'fail to clone from non-existent file' '
 	test_when_finished rm -rf test &&
 	git clone --bundle-uri="$(pwd)/does-not-exist" . test 2>err &&
-	grep "failed to download bundle from URI" err
+	test_grep "failed to download bundle from URI" err
 '
 
 test_expect_success 'fail to clone from non-bundle file' '
 	test_when_finished rm -rf test &&
 	echo bogus >bogus &&
 	git clone --bundle-uri="$(pwd)/bogus" . test 2>err &&
-	grep "is not a bundle" err
+	test_grep "is not a bundle" err
 '
 
 test_expect_success 'create bundle' '
@@ -197,7 +197,7 @@ test_expect_success 'clone bundle list (file, no heuristic)' '
 
 	git clone --bundle-uri="file://$(pwd)/bundle-list" \
 		clone-from clone-list-file 2>err &&
-	! grep "Repository lacks these prerequisite commits" err &&
+	test_grep ! "Repository lacks these prerequisite commits" err &&
 
 	git -C clone-from for-each-ref --format="%(objectname)" >oids &&
 	git -C clone-list-file cat-file --batch-check <oids &&
@@ -242,9 +242,9 @@ test_expect_success 'clone bundle list (file, all mode, some failures)' '
 	GIT_TRACE2_PERF=1 \
 	git clone --bundle-uri="file://$(pwd)/bundle-list" \
 		clone-from clone-all-some 2>err &&
-	! grep "Repository lacks these prerequisite commits" err &&
-	! grep "fatal" err &&
-	grep "warning: failed to download bundle from URI" err &&
+	test_grep ! "Repository lacks these prerequisite commits" err &&
+	test_grep ! "fatal" err &&
+	test_grep "warning: failed to download bundle from URI" err &&
 
 	git -C clone-from for-each-ref --format="%(objectname)" >oids &&
 	git -C clone-all-some cat-file --batch-check <oids &&
@@ -275,15 +275,15 @@ test_expect_success 'clone bundle list (file, all mode, all failures)' '
 
 	git clone --bundle-uri="file://$(pwd)/bundle-list" \
 		clone-from clone-all-fail 2>err &&
-	! grep "Repository lacks these prerequisite commits" err &&
-	! grep "fatal" err &&
-	grep "warning: failed to download bundle from URI" err &&
+	test_grep ! "Repository lacks these prerequisite commits" err &&
+	test_grep ! "fatal" err &&
+	test_grep "warning: failed to download bundle from URI" err &&
 
 	git -C clone-from for-each-ref --format="%(objectname)" >oids &&
 	git -C clone-all-fail cat-file --batch-check <oids &&
 
 	git -C clone-all-fail for-each-ref --format="%(refname)" >refs &&
-	! grep "refs/bundles/heads/" refs
+	test_grep ! "refs/bundles/heads/" refs
 '
 
 test_expect_success 'clone bundle list (file, any mode)' '
@@ -306,7 +306,7 @@ test_expect_success 'clone bundle list (file, any mode)' '
 
 	git clone --bundle-uri="file://$(pwd)/bundle-list" \
 		clone-from clone-any-file 2>err &&
-	! grep "Repository lacks these prerequisite commits" err &&
+	test_grep ! "Repository lacks these prerequisite commits" err &&
 
 	git -C clone-from for-each-ref --format="%(objectname)" >oids &&
 	git -C clone-any-file cat-file --batch-check <oids &&
@@ -336,14 +336,14 @@ test_expect_success 'clone bundle list (file, any mode, all failures)' '
 
 	git clone --bundle-uri="file://$(pwd)/bundle-list" \
 		clone-from clone-any-fail 2>err &&
-	! grep "fatal" err &&
-	grep "warning: failed to download bundle from URI" err &&
+	test_grep ! "fatal" err &&
+	test_grep "warning: failed to download bundle from URI" err &&
 
 	git -C clone-from for-each-ref --format="%(objectname)" >oids &&
 	git -C clone-any-fail cat-file --batch-check <oids &&
 
 	git -C clone-any-fail for-each-ref --format="%(refname)" >refs &&
-	! grep "refs/bundles/heads/" refs
+	test_grep ! "refs/bundles/heads/" refs
 '
 
 test_expect_success 'negotiation: bundle with part of wanted commits' '
@@ -477,14 +477,14 @@ start_httpd
 test_expect_success 'fail to fetch from non-existent HTTP URL' '
 	test_when_finished rm -rf test &&
 	git clone --bundle-uri="$HTTPD_URL/does-not-exist" . test 2>err &&
-	grep "failed to download bundle from URI" err
+	test_grep "failed to download bundle from URI" err
 '
 
 test_expect_success 'fail to fetch from non-bundle HTTP URL' '
 	test_when_finished rm -rf test &&
 	echo bogus >"$HTTPD_DOCUMENT_ROOT_PATH/bogus" &&
 	git clone --bundle-uri="$HTTPD_URL/bogus" . test 2>err &&
-	grep "is not a bundle" err
+	test_grep "is not a bundle" err
 '
 
 test_expect_success 'clone HTTP bundle' '
@@ -536,7 +536,7 @@ test_expect_success 'clone bundle list (HTTP, no heuristic)' '
 	GIT_TRACE2_EVENT="$(pwd)/trace-clone.txt" \
 		git clone --bundle-uri="$HTTPD_URL/bundle-list" \
 		clone-from clone-list-http  2>err &&
-	! grep "Repository lacks these prerequisite commits" err &&
+	test_grep ! "Repository lacks these prerequisite commits" err &&
 
 	git -C clone-from for-each-ref --format="%(objectname)" >oids &&
 	git -C clone-list-http cat-file --batch-check <oids &&
@@ -576,8 +576,8 @@ test_expect_success 'clone bundle list (HTTP, any mode)' '
 
 	git clone --bundle-uri="$HTTPD_URL/bundle-list" \
 		clone-from clone-any-http 2>err &&
-	! grep "fatal" err &&
-	grep "warning: failed to download bundle from URI" err &&
+	test_grep ! "fatal" err &&
+	test_grep "warning: failed to download bundle from URI" err &&
 
 	git -C clone-from for-each-ref --format="%(objectname)" >oids &&
 	git -C clone-any-http cat-file --batch-check <oids &&

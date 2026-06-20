@@ -1209,7 +1209,7 @@ static int get_oid_oneline(struct repository *r,
 		l->item->object.flags |= ONELINE_SEEN;
 		prio_queue_put(&copy, l->item);
 	}
-	while (copy.nr) {
+	while (prio_queue_size(&copy)) {
 		const char *p, *buf;
 		struct commit *commit;
 		int matches;

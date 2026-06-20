@@ -19,7 +19,7 @@ test_expect_success '--exists with missing reference' '
 
 test_expect_success '--exists does not use DWIM' '
 	test_expect_code 2 ${git_show_ref_exists} $GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME 2>err &&
-	grep "reference does not exist" err
+	test_grep "reference does not exist" err
 '
 
 test_expect_success '--exists with HEAD' '

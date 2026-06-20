@@ -29,7 +29,7 @@ test_expect_success 'convert non-incremental MIDX to incremental' '
 	test_path_is_missing $packdir/multi-pack-index &&
 	test_path_is_file $midx_chain &&
 	test_line_count = 2 $midx_chain &&
-	grep $old_hash $midx_chain
+	test_grep $old_hash $midx_chain
 '
 
 compare_results_with_midx 'incremental MIDX'
@@ -128,7 +128,12 @@ test_expect_success 'write MIDX layer with --base=none and --no-write-chain-file
 		--no-write-chain-file --base=none)" &&
 
 	test_cmp "$midx_chain.bak" "$midx_chain" &&
-	test_path_is_file "$midxdir/multi-pack-index-$layer.midx"
+	test_path_is_file "$midxdir/multi-pack-index-$layer.midx" &&
+
+	echo "$layer" >"$midx_chain" &&
+	test-tool read-midx --show-objects "$objdir" "$layer" >midx.objects &&
+	test_grep "^$(git rev-parse 2.2) " midx.objects &&
+	cp "$midx_chain.bak" "$midx_chain"
 '
 
 test_expect_success 'write MIDX layer with --base=<hash> and --no-write-chain-file' '
@@ -136,11 +141,20 @@ test_expect_success 'write MIDX layer with --base=<hash> and --no-write-chain-fi
 	git repack -d &&
 
 	cp "$midx_chain" "$midx_chain.bak" &&
+	base="$(nth_line 1 "$midx_chain")" &&
 	layer="$(git multi-pack-index write --bitmap --incremental \
-		--no-write-chain-file --base="$(nth_line 1 "$midx_chain")")" &&
+		--no-write-chain-file --base="$base")" &&
 
 	test_cmp "$midx_chain.bak" "$midx_chain" &&
-	test_path_is_file "$midxdir/multi-pack-index-$layer.midx"
+	test_path_is_file "$midxdir/multi-pack-index-$layer.midx" &&
+
+	{
+		echo "$base" &&
+		echo "$layer"
+	} >"$midx_chain" &&
+	test-tool read-midx --show-objects "$objdir" "$layer" >midx.objects &&
+	test_grep "^$(git rev-parse 2.2) " midx.objects &&
+	cp "$midx_chain.bak" "$midx_chain"
 '
 
 for reuse in false single multi

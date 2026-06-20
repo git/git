@@ -174,6 +174,11 @@ struct diff_flags {
 	unsigned allow_external;
 
 	/**
+	 * Disables diff.<driver>.process.  Set by --no-ext-diff.
+	 */
+	unsigned no_diff_process;
+
+	/**
 	 * For communication between the calling program and the options parser;
 	 * tell the calling program to signal the presence of difference using
 	 * program exit code.

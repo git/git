@@ -29,7 +29,7 @@ test_expect_success 'error handling' '
 		P4PASSWD=badpassword &&
 		export P4PASSWD &&
 		test_must_fail git p4 clone //depot/foo 2>errmsg &&
-		grep -q "failure accessing depot.*P4PASSWD" errmsg
+		test_grep -q "failure accessing depot.*P4PASSWD" errmsg
 	)
 '
 
@@ -41,7 +41,7 @@ test_expect_success 'ticket logged out' '
 		test_commit "ticket-auth-check" &&
 		p4 logout &&
 		test_must_fail git p4 submit 2>errmsg &&
-		grep -q "failure accessing depot" errmsg
+		test_grep -q "failure accessing depot" errmsg
 	)
 '
 

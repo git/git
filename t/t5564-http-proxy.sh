@@ -20,14 +20,14 @@ setup_askpass_helper
 test_expect_success 'proxy requires password' '
 	test_config_global http.proxy $HTTPD_DEST &&
 	test_must_fail git clone $HTTPD_URL/smart/repo.git 2>err &&
-	grep "error.*407" err
+	test_grep "error.*407" err
 '
 
 test_expect_success 'clone through proxy with auth' '
 	test_when_finished "rm -rf clone" &&
 	test_config_global http.proxy http://proxuser:proxpass@$HTTPD_DEST &&
 	GIT_TRACE_CURL=$PWD/trace git clone $HTTPD_URL/smart/repo.git clone &&
-	grep -i "Proxy-Authorization: Basic <redacted>" trace
+	test_grep -i "Proxy-Authorization: Basic <redacted>" trace
 '
 
 test_expect_success 'clone can prompt for proxy password' '
@@ -82,7 +82,7 @@ test_expect_success SOCKS_PROXY 'clone via Unix socket' '
 			GIT_TRACE_CURL=$PWD/trace \
 			GIT_TRACE_CURL_COMPONENTS=socks \
 			git clone "$HTTPD_URL/smart/repo.git" clone 2>err &&
-			grep -i "SOCKS4 request granted" trace
+			test_grep -i "SOCKS4 request granted" trace
 		} ||
 		old_libcurl_error err
 	}
@@ -90,14 +90,14 @@ test_expect_success SOCKS_PROXY 'clone via Unix socket' '
 
 test_expect_success 'Unix socket requires socks*:' - <<\EOT
 	! git clone -c http.proxy=localhost/path https://example.com/repo.git 2>err && {
-		grep -Fx "fatal: Invalid proxy URL 'localhost/path': only SOCKS proxies support paths" err ||
+		test_grep -Fx "fatal: Invalid proxy URL 'localhost/path': only SOCKS proxies support paths" err ||
 		old_libcurl_error err
 	}
 EOT
 
 test_expect_success 'Unix socket requires localhost' - <<\EOT
 	! git clone -c http.proxy=socks4://127.0.0.1/path https://example.com/repo.git 2>err && {
-		grep -Fx "fatal: Invalid proxy URL 'socks4://127.0.0.1/path': host must be localhost if a path is present" err ||
+		test_grep -Fx "fatal: Invalid proxy URL 'socks4://127.0.0.1/path': host must be localhost if a path is present" err ||
 		old_libcurl_error err
 	}
 EOT

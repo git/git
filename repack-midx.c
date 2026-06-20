@@ -557,13 +557,14 @@ static void repack_make_midx_append_plan(struct repack_write_midx_opts *opts,
 					 struct midx_compaction_step **steps_p,
 					 size_t *steps_nr_p)
 {
+	struct odb_source_files *files = odb_source_files_downcast(opts->existing->source);
 	struct multi_pack_index *m;
 	struct midx_compaction_step *steps = NULL;
 	struct midx_compaction_step *step;
 	size_t steps_nr = 0, steps_alloc = 0;
 
 	odb_reprepare(opts->existing->repo->objects);
-	m = get_multi_pack_index(opts->existing->source);
+	m = get_multi_pack_index(files->packed);
 
 	if (opts->names->nr) {
 		struct strbuf buf = STRBUF_INIT;
@@ -606,6 +607,7 @@ static int repack_make_midx_compaction_plan(struct repack_write_midx_opts *opts,
 					    struct midx_compaction_step **steps_p,
 					    size_t *steps_nr_p)
 {
+	struct odb_source_files *files = odb_source_files_downcast(opts->existing->source);
 	struct multi_pack_index *m;
 	struct midx_compaction_step *steps = NULL;
 	struct midx_compaction_step step = { 0 };
@@ -618,7 +620,7 @@ static int repack_make_midx_compaction_plan(struct repack_write_midx_opts *opts,
 			    opts->existing->repo);
 
 	odb_reprepare(opts->existing->repo->objects);
-	m = get_multi_pack_index(opts->existing->source);
+	m = get_multi_pack_index(files->packed);
 
 	for (i = 0; m && i < m->num_packs + m->num_packs_in_base; i++) {
 		if (prepare_midx_pack(m, i)) {
@@ -938,6 +940,7 @@ out:
 
 static int write_midx_incremental(struct repack_write_midx_opts *opts)
 {
+	struct odb_source_files *files = odb_source_files_downcast(opts->existing->source);
 	struct midx_compaction_step *steps = NULL;
 	struct strbuf lock_name = STRBUF_INIT;
 	struct lock_file lf;
@@ -946,7 +949,7 @@ static int write_midx_incremental(struct repack_write_midx_opts *opts)
 	size_t i;
 	int ret = 0;
 
-	get_midx_chain_filename(opts->existing->source, &lock_name);
+	get_midx_chain_filename(files->packed, &lock_name);
 	if (safe_create_leading_directories(opts->existing->repo,
 					    lock_name.buf))
 		die_errno(_("unable to create leading directories of %s"),

@@ -199,7 +199,7 @@ test_expect_success "fetch --recurse-submodules -j2 has the same output behaviou
 	) &&
 	test_must_be_empty actual.out &&
 	verify_fetch_result actual.err &&
-	grep "2 tasks" trace.out
+	test_grep "2 tasks" trace.out
 '
 
 test_expect_success "fetch alone only fetches superproject" '
@@ -723,25 +723,25 @@ test_expect_success 'fetching submodules respects parallel settings' '
 	(
 		cd downstream &&
 		GIT_TRACE=$(pwd)/trace.out git fetch &&
-		grep "1 tasks" trace.out &&
+		test_grep "1 tasks" trace.out &&
 		>trace.out &&
 
 		GIT_TRACE=$(pwd)/trace.out git fetch --jobs 7 &&
-		grep "7 tasks" trace.out &&
+		test_grep "7 tasks" trace.out &&
 		>trace.out &&
 
 		git config submodule.fetchJobs 8 &&
 		GIT_TRACE=$(pwd)/trace.out git fetch &&
-		grep "8 tasks" trace.out &&
+		test_grep "8 tasks" trace.out &&
 		>trace.out &&
 
 		GIT_TRACE=$(pwd)/trace.out git fetch --jobs 9 &&
-		grep "9 tasks" trace.out &&
+		test_grep "9 tasks" trace.out &&
 		>trace.out &&
 
 		GIT_TRACE=$(pwd)/trace.out git -c submodule.fetchJobs=0 fetch &&
-		grep "preparing to run up to [0-9]* tasks" trace.out &&
-		! grep "up to 0 tasks" trace.out &&
+		test_grep "preparing to run up to [0-9]* tasks" trace.out &&
+		test_grep ! "up to 0 tasks" trace.out &&
 		>trace.out
 	)
 '
@@ -1259,7 +1259,7 @@ test_expect_success "fetch --all with --no-recurse-submodules only fetches super
 		git config submodule.recurse true &&
 		git fetch --all --no-recurse-submodules 2>../fetch-log
 	) &&
-	! grep "Fetching submodule" fetch-log
+	test_grep ! "Fetching submodule" fetch-log
 '
 
 test_done

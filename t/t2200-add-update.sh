@@ -241,7 +241,7 @@ test_expect_success 'add -u avoids rename pairing on unmerged paths' '
 test_expect_success '"add -u non-existent" should fail' '
 	test_must_fail git add -u non-existent &&
 	git ls-files >actual &&
-	! grep "non-existent" actual
+	test_grep ! "non-existent" actual
 '
 
 test_expect_success '"commit -a" implies "add -u" if index becomes empty' '

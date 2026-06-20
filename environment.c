@@ -41,12 +41,9 @@
 static int pack_compression_seen;
 static int zlib_compression_seen;
 
-int trust_executable_bit = 1;
 int has_symlinks = 1;
 int minimum_abbrev = 4, default_abbrev = -1;
-int ignore_case;
 int assume_unchanged;
-int is_bare_repository_cfg = -1; /* unspecified */
 char *git_commit_encoding;
 char *git_log_output_encoding;
 char *apply_default_whitespace;
@@ -74,12 +71,10 @@ unsigned long pack_size_limit_cfg;
 #ifndef PROTECT_HFS_DEFAULT
 #define PROTECT_HFS_DEFAULT 0
 #endif
-int protect_hfs = PROTECT_HFS_DEFAULT;
 
 #ifndef PROTECT_NTFS_DEFAULT
 #define PROTECT_NTFS_DEFAULT 1
 #endif
-int protect_ntfs = PROTECT_NTFS_DEFAULT;
 
 /*
  * The character that begins a commented line in user-editable file
@@ -91,9 +86,6 @@ char *comment_line_str_to_free;
 int auto_comment_line_char;
 bool warn_on_auto_comment_char;
 #endif /* !WITH_BREAKING_CHANGES */
-
-/* This is set by setup_git_directory_gently() and/or git_default_config() */
-char *git_work_tree_cfg;
 
 /*
  * Repository-local GIT_* environment variables; see environment.h for details.
@@ -128,10 +120,38 @@ const char *getenv_safe(struct strvec *argv, const char *name)
 	return argv->v[argv->nr - 1];
 }
 
-int is_bare_repository(void)
+int is_bare_repository(struct repository *repo)
 {
 	/* if core.bare is not 'false', let's see if there is a work tree */
-	return is_bare_repository_cfg && !repo_get_work_tree(the_repository);
+	return repo->bare_cfg && !repo_get_work_tree(repo);
+}
+
+int repo_protect_ntfs(struct repository *repo)
+{
+	return repo->gitdir ?
+		repo_config_values(repo)->protect_ntfs :
+		PROTECT_NTFS_DEFAULT;
+}
+
+int repo_protect_hfs(struct repository *repo)
+{
+	return repo->gitdir ?
+		repo_config_values(repo)->protect_hfs :
+		PROTECT_HFS_DEFAULT;
+}
+
+int repo_trust_executable_bit(struct repository *repo)
+{
+	return (repo && repo->initialized) ?
+		repo_config_values(repo)->trust_executable_bit :
+		1;
+}
+
+int repo_ignore_case(struct repository *repo)
+{
+	return (repo && repo->initialized) ?
+		repo_config_values(repo)->ignore_case :
+		0;
 }
 
 int have_git_dir(void)
@@ -297,7 +317,7 @@ int git_default_core_config(const char *var, const char *value,
 
 	/* This needs a better name */
 	if (!strcmp(var, "core.filemode")) {
-		trust_executable_bit = git_config_bool(var, value);
+		cfg->trust_executable_bit = git_config_bool(var, value);
 		return 0;
 	}
 	if (!strcmp(var, "core.trustctime")) {
@@ -327,7 +347,7 @@ int git_default_core_config(const char *var, const char *value,
 	}
 
 	if (!strcmp(var, "core.ignorecase")) {
-		ignore_case = git_config_bool(var, value);
+		cfg->ignore_case = git_config_bool(var, value);
 		return 0;
 	}
 
@@ -337,7 +357,7 @@ int git_default_core_config(const char *var, const char *value,
 	}
 
 	if (!strcmp(var, "core.bare")) {
-		is_bare_repository_cfg = git_config_bool(var, value);
+		the_repository->bare_cfg = git_config_bool(var, value);
 		return 0;
 	}
 
@@ -533,12 +553,12 @@ int git_default_core_config(const char *var, const char *value,
 	}
 
 	if (!strcmp(var, "core.protecthfs")) {
-		protect_hfs = git_config_bool(var, value);
+		cfg->protect_hfs = git_config_bool(var, value);
 		return 0;
 	}
 
 	if (!strcmp(var, "core.protectntfs")) {
-		protect_ntfs = git_config_bool(var, value);
+		cfg->protect_ntfs = git_config_bool(var, value);
 		return 0;
 	}
 
@@ -716,6 +736,10 @@ void repo_config_values_init(struct repo_config_values *cfg)
 {
 	cfg->attributes_file = NULL;
 	cfg->apply_sparse_checkout = 0;
+	cfg->protect_hfs = PROTECT_HFS_DEFAULT;
+	cfg->protect_ntfs = PROTECT_NTFS_DEFAULT;
+	cfg->trust_executable_bit = 1;
+	cfg->ignore_case = 0;
 	cfg->branch_track = BRANCH_TRACK_REMOTE;
 	cfg->trust_ctime = 1;
 	cfg->check_stat = 1;

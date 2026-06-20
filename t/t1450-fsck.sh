@@ -68,7 +68,7 @@ test_expect_success 'object with hash mismatch' '
 		git update-ref refs/heads/bogus $cmt &&
 
 		test_must_fail git fsck 2>out &&
-		grep "$oldoid: hash-path mismatch, found at: .*$new" out
+		test_grep "$oldoid: hash-path mismatch, found at: .*$new" out
 	)
 '
 
@@ -172,7 +172,7 @@ test_expect_success 'commit with multiple signatures is okay' '
 	test_when_finished "git update-ref -d refs/heads/bogus" &&
 	git fsck 2>out &&
 	cat out &&
-	! grep "commit $new" out
+	test_grep ! "commit $new" out
 '
 
 test_expect_success 'email without @ is okay' '
@@ -183,7 +183,7 @@ test_expect_success 'email without @ is okay' '
 	git update-ref refs/heads/bogus "$new" &&
 	test_when_finished "git update-ref -d refs/heads/bogus" &&
 	git fsck 2>out &&
-	! grep "commit $new" out
+	test_grep ! "commit $new" out
 '
 
 test_expect_success 'email with embedded > is not okay' '
@@ -626,7 +626,7 @@ test_expect_success 'fsck notices excessively large tree entry name' '
 		cd large-name &&
 		test_commit a-long-name &&
 		git -c fsck.largePathname=warn:10 fsck 2>out &&
-		grep "warning.*large pathname" out
+		test_grep "warning.*large pathname" out
 	)
 '
 
@@ -849,7 +849,7 @@ test_expect_success 'fsck errors in packed objects' '
 	test_must_fail git fsck 2>out &&
 	test_grep "error in commit $one.* - bad name" out &&
 	test_grep "error in commit $two.* - bad name" out &&
-	! grep corrupt out
+	test_grep ! corrupt out
 '
 
 test_expect_success 'fsck handles multiple packfiles with big blobs' '
@@ -1027,7 +1027,7 @@ test_expect_success 'bogus head does not fallback to all heads' '
 	test_when_finished "git rm --cached foo" &&
 	remove_object $blob &&
 	test_must_fail git fsck $ZERO_OID >out 2>&1 &&
-	! grep $blob out
+	test_grep ! $blob out
 '
 
 # Corrupt the checksum on the index.

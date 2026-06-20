@@ -57,7 +57,7 @@ test_expect_success 'intent to add does not clobber existing paths' '
 	git add -N file elif &&
 	empty=$(git hash-object --stdin </dev/null) &&
 	git ls-files -s >actual &&
-	! grep "$empty" actual
+	test_grep ! "$empty" actual
 '
 
 test_expect_success 'i-t-a entry is simply ignored' '
@@ -124,7 +124,7 @@ test_expect_success 'cache-tree does not ignore dir that has i-t-a entries' '
 		git add -N 2/1 &&
 		git commit -m committed &&
 		git ls-tree -r HEAD >actual &&
-		grep 2/2 actual
+		test_grep 2/2 actual
 	)
 '
 
@@ -312,7 +312,7 @@ test_expect_success 'apply --intent-to-add' '
 	echo new >new-ita &&
 	git add -N new-ita &&
 	git diff >expected &&
-	grep "new file" expected &&
+	test_grep "new file" expected &&
 	git reset --hard &&
 	git apply --intent-to-add expected &&
 	git diff >actual &&

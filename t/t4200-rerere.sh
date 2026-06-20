@@ -83,7 +83,7 @@ test_expect_success 'activate rerere, old style (conflicting merge)' '
 
 	sha1=$(sed "s/	.*//" .git/MERGE_RR) &&
 	rr=.git/rr-cache/$sha1 &&
-	grep "^=======\$" $rr/preimage &&
+	test_grep "^=======\$" $rr/preimage &&
 	test_path_is_missing $rr/postimage &&
 	test_path_is_missing $rr/thisimage
 '
@@ -96,7 +96,7 @@ test_expect_success 'rerere.enabled works, too' '
 
 	sha1=$(sed "s/	.*//" .git/MERGE_RR) &&
 	rr=.git/rr-cache/$sha1 &&
-	grep ^=======$ $rr/preimage
+	test_grep ^=======$ $rr/preimage
 '
 
 test_expect_success 'set up rr-cache' '
@@ -177,7 +177,7 @@ test_expect_success 'first postimage wins' '
 
 	test_must_fail git merge first &&
 	# rerere kicked in
-	! grep "^=======\$" a1 &&
+	test_grep ! "^=======\$" a1 &&
 	test_cmp expect a1
 '
 

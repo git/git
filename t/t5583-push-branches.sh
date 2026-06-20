@@ -60,21 +60,21 @@ test_expect_success '--all or --branches can not be combined with refspecs' '
 	test_must_fail git push remote-1 --all main >actual.all 2>&1 &&
 	test_must_fail git push remote-1 --branches main >actual.branches 2>&1 &&
 	test_cmp actual.all actual.branches &&
-	grep "be combined with refspecs" actual.all
+	test_grep "be combined with refspecs" actual.all
 '
 
 test_expect_success '--all or --branches can not be combined with --mirror' '
 	test_must_fail git push remote-1 --all --mirror >actual.all 2>&1 &&
 	test_must_fail git push remote-1 --branches --mirror >actual.branches 2>&1 &&
 	test_cmp actual.all actual.branches &&
-	grep "cannot be used together" actual.all
+	test_grep "cannot be used together" actual.all
 '
 
 test_expect_success '--all or --branches can not be combined with --tags' '
 	test_must_fail git push remote-1 --all --tags >actual.all 2>&1 &&
 	test_must_fail git push remote-1 --branches --tags >actual.branches 2>&1 &&
 	test_cmp actual.all actual.branches &&
-	grep "cannot be used together" actual.all
+	test_grep "cannot be used together" actual.all
 '
 
 
@@ -82,7 +82,7 @@ test_expect_success '--all or --branches can not be combined with --delete' '
 	test_must_fail git push remote-1 --all --delete >actual.all 2>&1 &&
 	test_must_fail git push remote-1 --branches --delete >actual.branches 2>&1 &&
 	test_cmp actual.all actual.branches &&
-	grep "cannot be used together" actual.all
+	test_grep "cannot be used together" actual.all
 '
 
 test_expect_success '--all or --branches combines with --follow-tags have same behavior' '

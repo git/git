@@ -48,6 +48,10 @@ all advice messages.
 		to create a local branch after the fact.
 	diverging::
 		Shown when a fast-forward is not possible.
+	fetchRemoteHEADWarn::
+		Shown when linkgit:git-fetch[1] reveals that a remote `HEAD`
+		differs from what is set locally and the user has opted into
+		receiving a warning in this situation.
 	fetchShowForcedUpdates::
 		Shown when linkgit:git-fetch[1] takes a long time
 		to calculate forced updates after ref updates, or to warn

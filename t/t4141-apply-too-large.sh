@@ -16,7 +16,7 @@ test_expect_success EXPENSIVE 'git apply rejects patches that are too large' '
 		EOF
 		test-tool genzeros
 	} | test_copy_bytes $sz | test_must_fail git apply 2>err &&
-	grep "patch too large" err
+	test_grep "patch too large" err
 '
 
 test_done

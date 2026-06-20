@@ -738,7 +738,7 @@ test_expect_success 'filenames seen by tools start with ./' '
 	test_config mergetool.myecho.trustExitCode true &&
 	test_must_fail git merge main &&
 	git mergetool --no-prompt --tool myecho -- both >actual &&
-	grep ^\./both_LOCAL_ actual
+	test_grep ^\./both_LOCAL_ actual
 '
 
 test_lazy_prereq MKTEMP '
@@ -755,8 +755,8 @@ test_expect_success MKTEMP 'temporary filenames are used with mergetool.writeToT
 	test_config mergetool.myecho.trustExitCode true &&
 	test_must_fail git merge main &&
 	git mergetool --no-prompt --tool myecho -- both >actual &&
-	! grep ^\./both_LOCAL_ actual &&
-	grep /both_LOCAL_ actual
+	test_grep ! ^\./both_LOCAL_ actual &&
+	test_grep /both_LOCAL_ actual
 '
 
 test_expect_success 'diff.orderFile configuration is honored' '
@@ -816,12 +816,12 @@ test_expect_success 'mergetool -Oorder-file is honored' '
 test_expect_success 'mergetool --tool-help shows recognized tools' '
 	# Check a few known tools are correctly shown
 	git mergetool --tool-help >mergetools &&
-	grep vimdiff mergetools &&
-	grep vimdiff3 mergetools &&
-	grep gvimdiff2 mergetools &&
-	grep araxis mergetools &&
-	grep xxdiff mergetools &&
-	grep meld mergetools
+	test_grep vimdiff mergetools &&
+	test_grep vimdiff3 mergetools &&
+	test_grep gvimdiff2 mergetools &&
+	test_grep araxis mergetools &&
+	test_grep xxdiff mergetools &&
+	test_grep meld mergetools
 '
 
 test_expect_success 'mergetool hideResolved' '

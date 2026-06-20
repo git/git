@@ -17,6 +17,9 @@ enum odb_source_type {
 	/* The "loose" backend that uses loose objects, only. */
 	ODB_SOURCE_LOOSE,
 
+	/* The "packed" backend that uses packfiles. */
+	ODB_SOURCE_PACKED,
+
 	/* The "in-memory" backend that stores objects in memory. */
 	ODB_SOURCE_INMEMORY,
 };
@@ -199,7 +202,7 @@ struct odb_source {
 	 * return 0 on success, a negative error code otherwise.
 	 */
 	int (*write_object)(struct odb_source *source,
-			    const void *buf, unsigned long len,
+			    const void *buf, size_t len,
 			    enum object_type type,
 			    struct object_id *oid,
 			    struct object_id *compat_oid,

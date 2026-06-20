@@ -131,8 +131,8 @@ test_expect_success 'git help succeeds without git.html' '
 
 test_expect_success 'git help --user-interfaces' '
 	git help --user-interfaces >help.output &&
-	grep "^   attributes   " help.output &&
-	grep "^   mailmap   " help.output
+	test_grep "^   attributes   " help.output &&
+	test_grep "^   mailmap   " help.output
 '
 
 test_expect_success 'git help -c' '

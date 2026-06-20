@@ -89,8 +89,8 @@ test_expect_success GPG 'verify and show signatures' '
 		do
 			git verify-commit $commit &&
 			git show --pretty=short --show-signature $commit >actual &&
-			grep "Good signature from" actual &&
-			! grep "BAD signature from" actual &&
+			test_grep "Good signature from" actual &&
+			test_grep ! "BAD signature from" actual &&
 			echo $commit OK || exit 1
 		done
 	) &&
@@ -100,8 +100,8 @@ test_expect_success GPG 'verify and show signatures' '
 		do
 			test_must_fail git verify-commit $commit &&
 			git show --pretty=short --show-signature $commit >actual &&
-			! grep "Good signature from" actual &&
-			! grep "BAD signature from" actual &&
+			test_grep ! "Good signature from" actual &&
+			test_grep ! "BAD signature from" actual &&
 			echo $commit OK || exit 1
 		done
 	) &&
@@ -109,9 +109,9 @@ test_expect_success GPG 'verify and show signatures' '
 		for commit in eighth-signed-alt twelfth-signed-alt
 		do
 			git show --pretty=short --show-signature $commit >actual &&
-			grep "Good signature from" actual &&
-			! grep "BAD signature from" actual &&
-			grep "not certified" actual &&
+			test_grep "Good signature from" actual &&
+			test_grep ! "BAD signature from" actual &&
+			test_grep "not certified" actual &&
 			echo $commit OK || exit 1
 		done
 	)
@@ -119,16 +119,16 @@ test_expect_success GPG 'verify and show signatures' '
 
 test_expect_success GPG 'verify-commit exits failure on unknown signature' '
 	test_must_fail env GNUPGHOME="$GNUPGHOME_NOT_USED" git verify-commit initial 2>actual &&
-	! grep "Good signature from" actual &&
-	! grep "BAD signature from" actual &&
-	grep -q -F -e "No public key" -e "public key not found" actual
+	test_grep ! "Good signature from" actual &&
+	test_grep ! "BAD signature from" actual &&
+	test_grep -q -F -e "No public key" -e "public key not found" actual
 '
 
 test_expect_success GPG 'verify-commit exits success on untrusted signature' '
 	git verify-commit eighth-signed-alt 2>actual &&
-	grep "Good signature from" actual &&
-	! grep "BAD signature from" actual &&
-	grep "not certified" actual
+	test_grep "Good signature from" actual &&
+	test_grep ! "BAD signature from" actual &&
+	test_grep "not certified" actual
 '
 
 test_expect_success GPG 'verify-commit exits success with matching minTrustLevel' '
@@ -151,8 +151,8 @@ test_expect_success GPG 'verify signatures with --raw' '
 		for commit in initial second merge fourth-signed fifth-signed sixth-signed seventh-signed
 		do
 			git verify-commit --raw $commit 2>actual &&
-			grep "GOODSIG" actual &&
-			! grep "BADSIG" actual &&
+			test_grep "GOODSIG" actual &&
+			test_grep ! "BADSIG" actual &&
 			echo $commit OK || exit 1
 		done
 	) &&
@@ -160,8 +160,8 @@ test_expect_success GPG 'verify signatures with --raw' '
 		for commit in merge^2 fourth-unsigned sixth-unsigned seventh-unsigned
 		do
 			test_must_fail git verify-commit --raw $commit 2>actual &&
-			! grep "GOODSIG" actual &&
-			! grep "BADSIG" actual &&
+			test_grep ! "GOODSIG" actual &&
+			test_grep ! "BADSIG" actual &&
 			echo $commit OK || exit 1
 		done
 	) &&
@@ -169,9 +169,9 @@ test_expect_success GPG 'verify signatures with --raw' '
 		for commit in eighth-signed-alt
 		do
 			git verify-commit --raw $commit 2>actual &&
-			grep "GOODSIG" actual &&
-			! grep "BADSIG" actual &&
-			grep "TRUST_UNDEFINED" actual &&
+			test_grep "GOODSIG" actual &&
+			test_grep ! "BADSIG" actual &&
+			test_grep "TRUST_UNDEFINED" actual &&
 			echo $commit OK || exit 1
 		done
 	)
@@ -179,7 +179,7 @@ test_expect_success GPG 'verify signatures with --raw' '
 
 test_expect_success GPG 'proper header is used for hash algorithm' '
 	git cat-file commit fourth-signed >output &&
-	grep "^$(test_oid header) -----BEGIN PGP SIGNATURE-----" output
+	test_grep "^$(test_oid header) -----BEGIN PGP SIGNATURE-----" output
 '
 
 test_expect_success GPG 'show signed commit with signature' '
@@ -201,8 +201,8 @@ test_expect_success GPG 'detect fudged signature' '
 	git hash-object -w -t commit forged1 >forged1.commit &&
 	test_must_fail git verify-commit $(cat forged1.commit) &&
 	git show --pretty=short --show-signature $(cat forged1.commit) >actual1 &&
-	grep "BAD signature from" actual1 &&
-	! grep "Good signature from" actual1
+	test_grep "BAD signature from" actual1 &&
+	test_grep ! "Good signature from" actual1
 '
 
 test_expect_success GPG 'detect fudged signature with NUL' '
@@ -212,8 +212,8 @@ test_expect_success GPG 'detect fudged signature with NUL' '
 	git hash-object --literally -w -t commit forged2 >forged2.commit &&
 	test_must_fail git verify-commit $(cat forged2.commit) &&
 	git show --pretty=short --show-signature $(cat forged2.commit) >actual2 &&
-	grep "BAD signature from" actual2 &&
-	! grep "Good signature from" actual2
+	test_grep "BAD signature from" actual2 &&
+	test_grep ! "Good signature from" actual2
 '
 
 test_expect_success GPG 'amending already signed commit' '
@@ -221,8 +221,8 @@ test_expect_success GPG 'amending already signed commit' '
 	git commit --amend -S --no-edit &&
 	git verify-commit HEAD &&
 	git show -s --show-signature HEAD >actual &&
-	grep "Good signature from" actual &&
-	! grep "BAD signature from" actual
+	test_grep "Good signature from" actual &&
+	test_grep ! "BAD signature from" actual
 '
 
 test_expect_success GPG2 'bare signature' '
@@ -326,8 +326,8 @@ test_expect_success GPG 'show lack of signature with custom format' '
 test_expect_success GPG 'log.showsignature behaves like --show-signature' '
 	test_config log.showsignature true &&
 	git show initial >actual &&
-	grep "gpg: Signature made" actual &&
-	grep "gpg: Good signature" actual
+	test_grep "gpg: Signature made" actual &&
+	test_grep "gpg: Good signature" actual
 '
 
 test_expect_success GPG 'check config gpg.format values' '
@@ -349,8 +349,8 @@ test_expect_success GPG 'detect fudged commit with double signature' '
 	git hash-object -w -t commit double-commit >double-commit.commit &&
 	test_must_fail git verify-commit $(cat double-commit.commit) &&
 	git show --pretty=short --show-signature $(cat double-commit.commit) >double-actual &&
-	grep "BAD signature from" double-actual &&
-	grep "Good signature from" double-actual
+	test_grep "BAD signature from" double-actual &&
+	test_grep "Good signature from" double-actual
 '
 
 test_expect_success GPG 'show double signature with custom format' '
@@ -404,8 +404,8 @@ test_expect_success GPG 'verify-commit verifies multiply signed commits' '
 	head=$(git hash-object -t commit -w commit) &&
 	git reset --hard $head &&
 	git verify-commit $head 2>actual &&
-	grep "Good signature from" actual &&
-	! grep "BAD signature from" actual
+	test_grep "Good signature from" actual &&
+	test_grep ! "BAD signature from" actual
 '
 
 test_expect_success 'custom `gpg.program`' '
@@ -449,7 +449,7 @@ test_expect_success 'custom `gpg.program`' '
 
 	test_must_fail env LET_GPG_PROGRAM_FAIL=1 \
 	git commit -S --allow-empty -m must-fail 2>err &&
-	grep zOMG err &&
+	test_grep zOMG err &&
 
 	# `gpg.program` starts with `~`, the path should be interpreted to be relative to `$HOME`
 	test_config gpg.program "~/fake-gpg" &&

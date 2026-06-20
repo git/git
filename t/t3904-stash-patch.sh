@@ -103,8 +103,8 @@ test_expect_success 'stash -p with split hunk' '
 	printf "%s\n" s n y q |
 	git stash -p 2>error &&
 	test_must_be_empty error &&
-	grep "added line 1" test &&
-	! grep "added line 2" test
+	test_grep "added line 1" test &&
+	test_grep ! "added line 2" test
 '
 
 test_expect_success 'stash -p not confused by GIT_PAGER_IN_USE' '

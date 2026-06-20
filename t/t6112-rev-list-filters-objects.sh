@@ -45,8 +45,8 @@ test_expect_success 'specify blob explicitly prevents filtering' '
 		 awk -f print_2.awk) &&
 
 	git -C r1 rev-list --objects --filter=blob:none HEAD $file_3 >observed &&
-	grep "$file_3" observed &&
-	! grep "$file_4" observed
+	test_grep "$file_3" observed &&
+	test_grep ! "$file_4" observed
 '
 
 test_expect_success 'verify emitted+omitted == all' '
@@ -324,7 +324,7 @@ test_expect_success 'rev-list W/ --missing=print and --missing=allow-any for tre
 
 	git -C r3.b rev-list --missing=allow-any --objects HEAD \
 		>objs 2>rev_list_err &&
-	! grep $TREE objs &&
+	test_grep ! $TREE objs &&
 	test_must_be_empty rev_list_err
 '
 
@@ -353,7 +353,7 @@ test_expect_success 'verify skipping tree iteration when not collecting omits' '
 	test_line_count = 2 actual &&
 
 	# Make sure no other trees were considered besides the root.
-	! grep "Skipping contents of tree [^.]" filter_trace &&
+	test_grep ! "Skipping contents of tree [^.]" filter_trace &&
 
 	# Try this again with "combine:". If both sub-filters are skipping
 	# trees, the composite filter should also skip trees. This is not
@@ -539,7 +539,7 @@ test_expect_success 'combine:... with more than two sub-filters' '
 		HEAD >actual &&
 
 	test_cmp expect actual &&
-	grep "Add to combine filter-spec: sparse:oid=main:p%3bat%25ter%2bn" \
+	test_grep "Add to combine filter-spec: sparse:oid=main:p%3bat%25ter%2bn" \
 		trace1 &&
 
 	# Repeat the above test, but this time, the characters to encode are in
@@ -551,7 +551,7 @@ test_expect_success 'combine:... with more than two sub-filters' '
 		HEAD >actual &&
 
 	test_cmp expect actual &&
-	grep "Add to combine filter-spec: sparse:oid=main:%5e%7epattern" \
+	test_grep "Add to combine filter-spec: sparse:oid=main:%5e%7epattern" \
 		trace2
 '
 
@@ -623,9 +623,9 @@ test_expect_success 'verify collecting omits in combined: filter' '
 	omitted_2=$(echo a     | git hash-object --stdin) &&
 	omitted_3=$(echo abcde | git hash-object --stdin) &&
 
-	grep "~$omitted_1" actual &&
-	grep "~$omitted_2" actual &&
-	grep "~$omitted_3" actual &&
+	test_grep "~$omitted_1" actual &&
+	test_grep "~$omitted_2" actual &&
+	test_grep "~$omitted_3" actual &&
 	test_line_count = 3 actual
 '
 
@@ -654,7 +654,7 @@ test_expect_success 'tree:<depth> which filters out blob but given as arg' '
 	blob_hash=$(git -C r4 rev-parse HEAD:subdir/bar) &&
 
 	git -C r4 rev-list --objects --filter=tree:1 HEAD $blob_hash >actual &&
-	grep ^$blob_hash actual
+	test_grep ^$blob_hash actual
 '
 
 # Delete some loose objects and use rev-list, but WITHOUT any filtering.
@@ -693,8 +693,8 @@ test_expect_success 'expand blob limit in protocol' '
 	git -C r2 config --local uploadpack.allowfilter 1 &&
 	GIT_TRACE_PACKET="$(pwd)/trace" git -c protocol.version=2 clone \
 		--filter=blob:limit=1k "file://$(pwd)/r2" limit &&
-	! grep "blob:limit=1k" trace &&
-	grep "blob:limit=1024" trace
+	test_grep ! "blob:limit=1k" trace &&
+	test_grep "blob:limit=1024" trace
 '
 
 test_expect_success EXPENSIVE 'large sparse filter file ignored' '

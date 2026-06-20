@@ -9,13 +9,20 @@
 	_<start>_ and _<end>_ (or _<funcname>_) must exist in the starting revision.
 	You can specify this option more than once. Implies `--patch`.
 	Patch output can be suppressed using `--no-patch`.
-	Non-patch diff formats `--raw`, `--name-only`, `--name-status`,
-	and `--summary` are supported.  Diff stat formats
-	(`--stat`, `--numstat`, `--shortstat`, `--dirstat`) are not
-	currently implemented.
+	The following non-patch diff formats are supported: `--raw`,
+	`--name-only`, `--name-status`, `--summary`, `--check`,
+	`--stat`, `--numstat`, and `--shortstat`.
+	The stat formats show range-scoped counts: only lines within
+	the tracked range are counted.  `--dirstat` is not supported
+	with `-L`: it summarizes change as each directory's share of
+	the total churn, not as counts for the tracked lines.  Use
+	`--numstat` for exact per-file counts within the range.
 +
 Patch formatting options such as `--word-diff`, `--color-moved`,
 `--no-prefix`, and whitespace options (`-w`, `-b`) are supported,
-as are pickaxe options (`-S`, `-G`) and `--diff-filter`.
+as are pickaxe options (`-S`, `-G`) and `--diff-filter`.  `-G` is
+scoped to the tracked range; `-S` is still evaluated over the whole
+file, so an `-S` query may select a commit for a change outside the
+range.
 +
 include::line-range-format.adoc[]

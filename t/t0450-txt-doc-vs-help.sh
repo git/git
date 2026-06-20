@@ -87,7 +87,7 @@ do
 	# -h output assertions
 	test_expect_success "$builtin -h output has no \t" '
 		h2s="$(help_to_synopsis "$builtin")" &&
-		! grep "$HT" "$h2s"
+		test_grep ! "$HT" "$h2s"
 	'
 
 	test_expect_success "$builtin -h output has dashed labels" '

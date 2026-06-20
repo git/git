@@ -863,7 +863,7 @@ test_expect_success 'status -s without relative paths' '
 	test_cmp expect output &&
 
 	git status -s --ignored >output &&
-	grep "^!! \"expect with spaces\"$" output &&
+	test_grep "^!! \"expect with spaces\"$" output &&
 	grep -v "^!! " output >output-wo-ignored &&
 	test_cmp expect output-wo-ignored
 '
@@ -908,7 +908,7 @@ test_expect_success 'status shows detached HEAD properly after checking out non-
 	git clone upstream downstream &&
 	git -C downstream checkout @{u} &&
 	git -C downstream status >actual &&
-	grep -E "HEAD detached at [0-9a-f]+" actual
+	test_grep -E "HEAD detached at [0-9a-f]+" actual
 '
 
 test_expect_success 'setup status submodule summary' '
@@ -1127,7 +1127,7 @@ test_expect_success POSIXPERM,SANITY 'status succeeds in a read-only repository'
 		# make dir1/tracked stat-dirty
 		>dir1/tracked1 && mv -f dir1/tracked1 dir1/tracked &&
 		git status -s >output &&
-		! grep dir1/tracked output &&
+		test_grep ! dir1/tracked output &&
 		# make sure "status" succeeded without writing index out
 		git diff-files | grep dir1/tracked
 	)
