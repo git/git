@@ -3583,8 +3583,8 @@ static int checkdiff_consume(void *priv, char *line, unsigned long len)
 }
 
 static unsigned char *deflate_it(char *data,
-				 unsigned long size,
-				 unsigned long *result_size)
+				 size_t size,
+				 size_t *result_size)
 {
 	size_t bound;
 	unsigned char *deflated;
@@ -3613,10 +3613,10 @@ static void emit_binary_diff_body(struct diff_options *o,
 	void *delta;
 	void *deflated;
 	void *data;
-	unsigned long orig_size;
-	unsigned long delta_size;
-	unsigned long deflate_size;
-	unsigned long data_size;
+	size_t orig_size;
+	size_t delta_size;
+	size_t deflate_size;
+	size_t data_size;
 
 	/* We could do deflated delta, or we could do just deflated two,
 	 * whichever is smaller.
@@ -3624,11 +3624,9 @@ static void emit_binary_diff_body(struct diff_options *o,
 	delta = NULL;
 	deflated = deflate_it(two->ptr, two->size, &deflate_size);
 	if (one->size && two->size) {
-		size_t delta_size_st = 0;
 		delta = diff_delta(one->ptr, one->size,
 				   two->ptr, two->size,
-				   &delta_size_st, deflate_size);
-		delta_size = cast_size_t_to_ulong(delta_size_st);
+				   &delta_size, deflate_size);
 		if (delta) {
 			void *to_free = delta;
 			orig_size = delta_size;
@@ -4574,9 +4572,8 @@ int diff_populate_filespec(struct repository *r,
 		}
 	}
 	else {
-		size_t size_st = 0;
 		struct object_info info = {
-			.sizep = &size_st
+			.sizep = &s->size
 		};
 
 		if (!(size_only || check_binary))
@@ -4598,7 +4595,6 @@ int diff_populate_filespec(struct repository *r,
 			die("unable to read %s", oid_to_hex(&s->oid));
 
 object_read:
-		s->size = cast_size_t_to_ulong(size_st);
 		if (size_only || check_binary) {
 			if (size_only)
 				return 0;
@@ -4613,7 +4609,6 @@ object_read:
 			if (odb_read_object_info_extended(r->objects, &s->oid, &info,
 							  OBJECT_INFO_LOOKUP_REPLACE))
 				die("unable to read %s", oid_to_hex(&s->oid));
-			s->size = cast_size_t_to_ulong(size_st);
 		}
 		s->should_free = 1;
 	}
@@ -7825,7 +7820,7 @@ int textconv_object(struct repository *r,
 		    const struct object_id *oid,
 		    int oid_valid,
 		    char **buf,
-		    unsigned long *buf_size)
+		    size_t *buf_size)
 {
 	struct diff_filespec *df;
 	struct userdiff_driver *textconv;
