@@ -272,293 +272,293 @@ version_gen_environment.set('GIT_VERSION', get_option('version'))
 compiler = meson.get_compiler('c')
 
 compat_sources = [
-  'compat/nonblock.c',
-  'compat/obstack.c',
-  'compat/open.c',
-  'compat/terminal.c',
+  'lib/compat/nonblock.c',
+  'lib/compat/obstack.c',
+  'lib/compat/open.c',
+  'lib/compat/terminal.c',
 ]
 
 libgit_sources = [
-  'abspath.c',
-  'add-interactive.c',
-  'add-patch.c',
-  'advice.c',
-  'alias.c',
-  'alloc.c',
-  'apply.c',
-  'archive-tar.c',
-  'archive-zip.c',
-  'archive.c',
-  'attr.c',
-  'base85.c',
-  'bisect.c',
-  'blame.c',
-  'blob.c',
-  'bloom.c',
-  'branch.c',
-  'bundle-uri.c',
-  'bundle.c',
-  'cache-tree.c',
-  'cbtree.c',
-  'chdir-notify.c',
-  'checkout.c',
-  'chunk-format.c',
-  'color.c',
-  'column.c',
-  'combine-diff.c',
-  'commit-graph.c',
-  'commit-reach.c',
-  'commit.c',
-  'common-exit.c',
-  'common-init.c',
-  'compiler-tricks/not-constant.c',
-  'config.c',
-  'connect.c',
-  'connected.c',
-  'convert.c',
-  'copy.c',
-  'credential.c',
-  'csum-file.c',
-  'ctype.c',
-  'date.c',
-  'decorate.c',
-  'delta-islands.c',
-  'diagnose.c',
-  'diff-delta.c',
-  'diff-merges.c',
-  'diff-lib.c',
-  'diff-no-index.c',
-  'diff.c',
-  'diffcore-break.c',
-  'diffcore-delta.c',
-  'diffcore-order.c',
-  'diffcore-pickaxe.c',
-  'diffcore-rename.c',
-  'diffcore-rotate.c',
-  'dir-iterator.c',
-  'dir.c',
-  'editor.c',
-  'entry.c',
-  'environment.c',
-  'ewah/bitmap.c',
-  'ewah/ewah_bitmap.c',
-  'ewah/ewah_io.c',
-  'ewah/ewah_rlw.c',
-  'exec-cmd.c',
-  'fetch-negotiator.c',
-  'fetch-pack.c',
-  'fmt-merge-msg.c',
-  'fsck.c',
-  'fsmonitor.c',
-  'fsmonitor-ipc.c',
-  'fsmonitor-settings.c',
-  'gettext.c',
-  'git-zlib.c',
-  'gpg-interface.c',
-  'graph.c',
-  'grep.c',
-  'hash-lookup.c',
-  'hash.c',
-  'hashmap.c',
-  'help.c',
-  'hex.c',
-  'hex-ll.c',
-  'hook.c',
-  'ident.c',
-  'json-writer.c',
-  'kwset.c',
-  'levenshtein.c',
-  'line-log.c',
-  'line-range.c',
-  'linear-assignment.c',
-  'list-objects-filter-options.c',
-  'list-objects-filter.c',
-  'list-objects.c',
-  'lockfile.c',
-  'log-tree.c',
-  'loose.c',
-  'ls-refs.c',
-  'mailinfo.c',
-  'mailmap.c',
-  'match-trees.c',
-  'mem-pool.c',
-  'merge-blobs.c',
-  'merge-ll.c',
-  'merge-ort.c',
-  'merge-ort-wrappers.c',
-  'merge.c',
-  'midx.c',
-  'midx-write.c',
-  'name-hash.c',
-  'negotiator/default.c',
-  'negotiator/noop.c',
-  'negotiator/skipping.c',
-  'notes-cache.c',
-  'notes-merge.c',
-  'notes-utils.c',
-  'notes.c',
-  'object-file-convert.c',
-  'object-file.c',
-  'object-name.c',
-  'object.c',
-  'odb.c',
-  'odb/source.c',
-  'odb/source-files.c',
-  'odb/source-inmemory.c',
-  'odb/source-loose.c',
-  'odb/source-packed.c',
-  'odb/streaming.c',
-  'odb/transaction.c',
-  'oid-array.c',
-  'oidmap.c',
-  'oidset.c',
-  'oidtree.c',
-  'pack-bitmap-write.c',
-  'pack-bitmap.c',
-  'pack-check.c',
-  'pack-mtimes.c',
-  'pack-objects.c',
-  'pack-refs.c',
-  'pack-revindex.c',
-  'pack-write.c',
-  'packfile.c',
-  'packfile-list.c',
-  'pager.c',
-  'parallel-checkout.c',
-  'parse.c',
-  'parse-options-cb.c',
-  'parse-options.c',
-  'patch-delta.c',
-  'patch-ids.c',
-  'path.c',
-  'path-walk.c',
-  'pathspec.c',
-  'pkt-line.c',
-  'preload-index.c',
-  'pretty.c',
-  'prio-queue.c',
-  'progress.c',
-  'promisor-remote.c',
-  'prompt.c',
-  'protocol.c',
-  'protocol-caps.c',
-  'prune-packed.c',
-  'pseudo-merge.c',
-  'quote.c',
-  'range-diff.c',
-  'reachable.c',
-  'read-cache.c',
-  'rebase-interactive.c',
-  'rebase.c',
-  'ref-filter.c',
-  'reflog-walk.c',
-  'reflog.c',
-  'refs.c',
-  'refs/debug.c',
-  'refs/files-backend.c',
-  'refs/reftable-backend.c',
-  'refs/iterator.c',
-  'refs/packed-backend.c',
-  'refs/ref-cache.c',
-  'refspec.c',
-  'reftable/basics.c',
-  'reftable/error.c',
-  'reftable/block.c',
-  'reftable/blocksource.c',
-  'reftable/fsck.c',
-  'reftable/iter.c',
-  'reftable/merged.c',
-  'reftable/pq.c',
-  'reftable/record.c',
-  'reftable/stack.c',
-  'reftable/system.c',
-  'reftable/table.c',
-  'reftable/tree.c',
-  'reftable/writer.c',
-  'remote.c',
-  'repack.c',
-  'repack-cruft.c',
-  'repack-filtered.c',
-  'repack-geometry.c',
-  'repack-midx.c',
-  'repack-promisor.c',
-  'replace-object.c',
-  'replay.c',
-  'repo-settings.c',
-  'repository.c',
-  'rerere.c',
-  'reset.c',
-  'resolve-undo.c',
-  'revision.c',
-  'run-command.c',
-  'send-pack.c',
-  'sequencer.c',
-  'serve.c',
-  'server-info.c',
-  'setup.c',
-  'shallow.c',
-  'sideband.c',
-  'sigchain.c',
-  'sparse-index.c',
-  'split-index.c',
-  'stable-qsort.c',
-  'statinfo.c',
-  'strbuf.c',
-  'string-list.c',
-  'strmap.c',
-  'strvec.c',
-  'sub-process.c',
-  'submodule-config.c',
-  'submodule.c',
-  'symlinks.c',
-  'tag.c',
-  'tempfile.c',
-  'thread-utils.c',
-  'tmp-objdir.c',
-  'trace.c',
-  'trace2.c',
-  'trace2/tr2_cfg.c',
-  'trace2/tr2_cmd_name.c',
-  'trace2/tr2_ctr.c',
-  'trace2/tr2_dst.c',
-  'trace2/tr2_sid.c',
-  'trace2/tr2_sysenv.c',
-  'trace2/tr2_tbuf.c',
-  'trace2/tr2_tgt_event.c',
-  'trace2/tr2_tgt_normal.c',
-  'trace2/tr2_tgt_perf.c',
-  'trace2/tr2_tls.c',
-  'trace2/tr2_tmr.c',
-  'trailer.c',
-  'transport-helper.c',
-  'transport.c',
-  'tree-diff.c',
-  'tree-walk.c',
-  'tree.c',
-  'unpack-trees.c',
-  'upload-pack.c',
-  'url.c',
-  'urlmatch.c',
-  'usage.c',
-  'userdiff.c',
-  'utf8.c',
-  'version.c',
-  'versioncmp.c',
-  'walker.c',
-  'wildmatch.c',
-  'worktree.c',
-  'wrapper.c',
-  'write-or-die.c',
-  'ws.c',
-  'wt-status.c',
-  'xdiff-interface.c',
-  'xdiff/xdiffi.c',
-  'xdiff/xemit.c',
-  'xdiff/xhistogram.c',
-  'xdiff/xmerge.c',
-  'xdiff/xpatience.c',
-  'xdiff/xprepare.c',
-  'xdiff/xutils.c',
+  'lib/abspath.c',
+  'lib/add-interactive.c',
+  'lib/add-patch.c',
+  'lib/advice.c',
+  'lib/alias.c',
+  'lib/alloc.c',
+  'lib/apply.c',
+  'lib/archive-tar.c',
+  'lib/archive-zip.c',
+  'lib/archive.c',
+  'lib/attr.c',
+  'lib/base85.c',
+  'lib/bisect.c',
+  'lib/blame.c',
+  'lib/blob.c',
+  'lib/bloom.c',
+  'lib/branch.c',
+  'lib/bundle-uri.c',
+  'lib/bundle.c',
+  'lib/cache-tree.c',
+  'lib/cbtree.c',
+  'lib/chdir-notify.c',
+  'lib/checkout.c',
+  'lib/chunk-format.c',
+  'lib/color.c',
+  'lib/column.c',
+  'lib/combine-diff.c',
+  'lib/commit-graph.c',
+  'lib/commit-reach.c',
+  'lib/commit.c',
+  'lib/common-exit.c',
+  'lib/common-init.c',
+  'lib/compiler-tricks/not-constant.c',
+  'lib/config.c',
+  'lib/connect.c',
+  'lib/connected.c',
+  'lib/convert.c',
+  'lib/copy.c',
+  'lib/credential.c',
+  'lib/csum-file.c',
+  'lib/ctype.c',
+  'lib/date.c',
+  'lib/decorate.c',
+  'lib/delta-islands.c',
+  'lib/diagnose.c',
+  'lib/diff-delta.c',
+  'lib/diff-merges.c',
+  'lib/diff-lib.c',
+  'lib/diff-no-index.c',
+  'lib/diff.c',
+  'lib/diffcore-break.c',
+  'lib/diffcore-delta.c',
+  'lib/diffcore-order.c',
+  'lib/diffcore-pickaxe.c',
+  'lib/diffcore-rename.c',
+  'lib/diffcore-rotate.c',
+  'lib/dir-iterator.c',
+  'lib/dir.c',
+  'lib/editor.c',
+  'lib/entry.c',
+  'lib/environment.c',
+  'lib/ewah/bitmap.c',
+  'lib/ewah/ewah_bitmap.c',
+  'lib/ewah/ewah_io.c',
+  'lib/ewah/ewah_rlw.c',
+  'lib/exec-cmd.c',
+  'lib/fetch-negotiator.c',
+  'lib/fetch-pack.c',
+  'lib/fmt-merge-msg.c',
+  'lib/fsck.c',
+  'lib/fsmonitor.c',
+  'lib/fsmonitor-ipc.c',
+  'lib/fsmonitor-settings.c',
+  'lib/gettext.c',
+  'lib/git-zlib.c',
+  'lib/gpg-interface.c',
+  'lib/graph.c',
+  'lib/grep.c',
+  'lib/hash-lookup.c',
+  'lib/hash.c',
+  'lib/hashmap.c',
+  'lib/help.c',
+  'lib/hex.c',
+  'lib/hex-ll.c',
+  'lib/hook.c',
+  'lib/ident.c',
+  'lib/json-writer.c',
+  'lib/kwset.c',
+  'lib/levenshtein.c',
+  'lib/line-log.c',
+  'lib/line-range.c',
+  'lib/linear-assignment.c',
+  'lib/list-objects-filter-options.c',
+  'lib/list-objects-filter.c',
+  'lib/list-objects.c',
+  'lib/lockfile.c',
+  'lib/log-tree.c',
+  'lib/loose.c',
+  'lib/ls-refs.c',
+  'lib/mailinfo.c',
+  'lib/mailmap.c',
+  'lib/match-trees.c',
+  'lib/mem-pool.c',
+  'lib/merge-blobs.c',
+  'lib/merge-ll.c',
+  'lib/merge-ort.c',
+  'lib/merge-ort-wrappers.c',
+  'lib/merge.c',
+  'lib/midx.c',
+  'lib/midx-write.c',
+  'lib/name-hash.c',
+  'lib/negotiator/default.c',
+  'lib/negotiator/noop.c',
+  'lib/negotiator/skipping.c',
+  'lib/notes-cache.c',
+  'lib/notes-merge.c',
+  'lib/notes-utils.c',
+  'lib/notes.c',
+  'lib/object-file-convert.c',
+  'lib/object-file.c',
+  'lib/object-name.c',
+  'lib/object.c',
+  'lib/odb.c',
+  'lib/odb/source.c',
+  'lib/odb/source-files.c',
+  'lib/odb/source-inmemory.c',
+  'lib/odb/source-loose.c',
+  'lib/odb/source-packed.c',
+  'lib/odb/streaming.c',
+  'lib/odb/transaction.c',
+  'lib/oid-array.c',
+  'lib/oidmap.c',
+  'lib/oidset.c',
+  'lib/oidtree.c',
+  'lib/pack-bitmap-write.c',
+  'lib/pack-bitmap.c',
+  'lib/pack-check.c',
+  'lib/pack-mtimes.c',
+  'lib/pack-objects.c',
+  'lib/pack-refs.c',
+  'lib/pack-revindex.c',
+  'lib/pack-write.c',
+  'lib/packfile.c',
+  'lib/packfile-list.c',
+  'lib/pager.c',
+  'lib/parallel-checkout.c',
+  'lib/parse.c',
+  'lib/parse-options-cb.c',
+  'lib/parse-options.c',
+  'lib/patch-delta.c',
+  'lib/patch-ids.c',
+  'lib/path.c',
+  'lib/path-walk.c',
+  'lib/pathspec.c',
+  'lib/pkt-line.c',
+  'lib/preload-index.c',
+  'lib/pretty.c',
+  'lib/prio-queue.c',
+  'lib/progress.c',
+  'lib/promisor-remote.c',
+  'lib/prompt.c',
+  'lib/protocol.c',
+  'lib/protocol-caps.c',
+  'lib/prune-packed.c',
+  'lib/pseudo-merge.c',
+  'lib/quote.c',
+  'lib/range-diff.c',
+  'lib/reachable.c',
+  'lib/read-cache.c',
+  'lib/rebase-interactive.c',
+  'lib/rebase.c',
+  'lib/ref-filter.c',
+  'lib/reflog-walk.c',
+  'lib/reflog.c',
+  'lib/refs.c',
+  'lib/refs/debug.c',
+  'lib/refs/files-backend.c',
+  'lib/refs/reftable-backend.c',
+  'lib/refs/iterator.c',
+  'lib/refs/packed-backend.c',
+  'lib/refs/ref-cache.c',
+  'lib/refspec.c',
+  'lib/reftable/basics.c',
+  'lib/reftable/error.c',
+  'lib/reftable/block.c',
+  'lib/reftable/blocksource.c',
+  'lib/reftable/fsck.c',
+  'lib/reftable/iter.c',
+  'lib/reftable/merged.c',
+  'lib/reftable/pq.c',
+  'lib/reftable/record.c',
+  'lib/reftable/stack.c',
+  'lib/reftable/system.c',
+  'lib/reftable/table.c',
+  'lib/reftable/tree.c',
+  'lib/reftable/writer.c',
+  'lib/remote.c',
+  'lib/repack.c',
+  'lib/repack-cruft.c',
+  'lib/repack-filtered.c',
+  'lib/repack-geometry.c',
+  'lib/repack-midx.c',
+  'lib/repack-promisor.c',
+  'lib/replace-object.c',
+  'lib/replay.c',
+  'lib/repo-settings.c',
+  'lib/repository.c',
+  'lib/rerere.c',
+  'lib/reset.c',
+  'lib/resolve-undo.c',
+  'lib/revision.c',
+  'lib/run-command.c',
+  'lib/send-pack.c',
+  'lib/sequencer.c',
+  'lib/serve.c',
+  'lib/server-info.c',
+  'lib/setup.c',
+  'lib/shallow.c',
+  'lib/sideband.c',
+  'lib/sigchain.c',
+  'lib/sparse-index.c',
+  'lib/split-index.c',
+  'lib/stable-qsort.c',
+  'lib/statinfo.c',
+  'lib/strbuf.c',
+  'lib/string-list.c',
+  'lib/strmap.c',
+  'lib/strvec.c',
+  'lib/sub-process.c',
+  'lib/submodule-config.c',
+  'lib/submodule.c',
+  'lib/symlinks.c',
+  'lib/tag.c',
+  'lib/tempfile.c',
+  'lib/thread-utils.c',
+  'lib/tmp-objdir.c',
+  'lib/trace.c',
+  'lib/trace2.c',
+  'lib/trace2/tr2_cfg.c',
+  'lib/trace2/tr2_cmd_name.c',
+  'lib/trace2/tr2_ctr.c',
+  'lib/trace2/tr2_dst.c',
+  'lib/trace2/tr2_sid.c',
+  'lib/trace2/tr2_sysenv.c',
+  'lib/trace2/tr2_tbuf.c',
+  'lib/trace2/tr2_tgt_event.c',
+  'lib/trace2/tr2_tgt_normal.c',
+  'lib/trace2/tr2_tgt_perf.c',
+  'lib/trace2/tr2_tls.c',
+  'lib/trace2/tr2_tmr.c',
+  'lib/trailer.c',
+  'lib/transport-helper.c',
+  'lib/transport.c',
+  'lib/tree-diff.c',
+  'lib/tree-walk.c',
+  'lib/tree.c',
+  'lib/unpack-trees.c',
+  'lib/upload-pack.c',
+  'lib/url.c',
+  'lib/urlmatch.c',
+  'lib/usage.c',
+  'lib/userdiff.c',
+  'lib/utf8.c',
+  'lib/version.c',
+  'lib/versioncmp.c',
+  'lib/walker.c',
+  'lib/wildmatch.c',
+  'lib/worktree.c',
+  'lib/wrapper.c',
+  'lib/write-or-die.c',
+  'lib/ws.c',
+  'lib/wt-status.c',
+  'lib/xdiff-interface.c',
+  'lib/xdiff/xdiffi.c',
+  'lib/xdiff/xemit.c',
+  'lib/xdiff/xhistogram.c',
+  'lib/xdiff/xmerge.c',
+  'lib/xdiff/xpatience.c',
+  'lib/xdiff/xprepare.c',
+  'lib/xdiff/xutils.c',
 ]
 
 libgit_sources += custom_target(
@@ -713,17 +713,16 @@ builtin_sources = [
 ]
 
 third_party_excludes = [
-  ':!contrib',
-  ':!compat/inet_ntop.c',
-  ':!compat/inet_pton.c',
-  ':!compat/obstack.*',
-  ':!compat/poll',
-  ':!compat/regex',
-  ':!sha1collisiondetection',
-  ':!sha1dc',
+  ':!lib/contrib',
+  ':!lib/compat/inet_ntop.c',
+  ':!lib/compat/inet_pton.c',
+  ':!lib/compat/obstack.*',
+  ':!lib/compat/poll',
+  ':!lib/compat/regex',
+  ':!lib/sha1collisiondetection',
+  ':!lib/sha1dc',
   ':!t/unit-tests/clar',
   ':!t/t[0-9][0-9][0-9][0-9]*',
-  ':!xdiff',
 ]
 
 headers_to_check = []
@@ -840,7 +839,7 @@ if help_format_opt != 'man'
     libgit_c_args += '-DDEFAULT_HELP_FORMAT="' + help_format_opt + '"'
 endif
 
-libgit_include_directories = [ '.' ]
+libgit_include_directories = [ 'lib' ]
 libgit_dependencies = [ ]
 
 # Treat any warning level above 1 the same as we treat DEVELOPER=1 in our
@@ -1189,8 +1188,8 @@ endif
 
 if not has_poll_h and not has_sys_poll_h
   libgit_c_args += '-DNO_POLL'
-  compat_sources += 'compat/poll/poll.c'
-  libgit_include_directories += 'compat/poll'
+  compat_sources += 'lib/compat/poll/poll.c'
+  libgit_include_directories += 'lib/compat/poll'
 endif
 
 if not compiler.has_header('inttypes.h')
@@ -1205,7 +1204,7 @@ endif
 # implementation to threat things like drive prefixes specially.
 if host_machine.system() == 'windows' or not compiler.has_header('libgen.h')
   libgit_c_args += '-DNO_LIBGEN_H'
-  compat_sources += 'compat/basename.c'
+  compat_sources += 'lib/compat/basename.c'
 endif
 
 if compiler.has_header('paths.h')
@@ -1235,7 +1234,7 @@ if host_machine.system() != 'windows'
   foreach symbol : ['inet_ntop', 'inet_pton', 'hstrerror']
     if not compiler.has_function(symbol, dependencies: networking_dependencies)
       libgit_c_args += '-DNO_' + symbol.to_upper()
-      compat_sources += 'compat/' + symbol + '.c'
+      compat_sources += 'lib/compat/' + symbol + '.c'
     endif
   endforeach
 endif
@@ -1267,8 +1266,8 @@ endif
 
 if compiler.has_function('socket', dependencies: networking_dependencies)
   libgit_sources += [
-    'unix-socket.c',
-    'unix-stream-server.c',
+    'lib/unix-socket.c',
+    'lib/unix-stream-server.c',
   ]
   build_options_config.set('NO_UNIX_SOCKETS', '')
 else
@@ -1277,7 +1276,7 @@ else
 endif
 
 if host_machine.system() == 'darwin'
-  compat_sources += 'compat/precompose_utf8.c'
+  compat_sources += 'lib/compat/precompose_utf8.c'
   libgit_c_args += '-DPRECOMPOSE_UNICODE'
   libgit_c_args += '-DPROTECT_HFS_DEFAULT'
 endif
@@ -1285,17 +1284,17 @@ endif
 # Configure general compatibility wrappers.
 if host_machine.system() == 'cygwin'
   compat_sources += [
-    'compat/win32/path-utils.c',
+    'lib/compat/win32/path-utils.c',
   ]
 elif host_machine.system() == 'windows'
   compat_sources += [
-    'compat/winansi.c',
-    'compat/win32/dirent.c',
-    'compat/win32/flush.c',
-    'compat/win32/path-utils.c',
-    'compat/win32/pthread.c',
-    'compat/win32/syslog.c',
-    'compat/win32mmap.c',
+    'lib/compat/winansi.c',
+    'lib/compat/win32/dirent.c',
+    'lib/compat/win32/flush.c',
+    'lib/compat/win32/path-utils.c',
+    'lib/compat/win32/pthread.c',
+    'lib/compat/win32/syslog.c',
+    'lib/compat/win32mmap.c',
   ]
 
   libgit_c_args += [
@@ -1311,23 +1310,23 @@ elif host_machine.system() == 'windows'
   ]
 
   libgit_dependencies += compiler.find_library('ntdll')
-  libgit_include_directories += 'compat/win32'
+  libgit_include_directories += 'lib/compat/win32'
   if compiler.get_id() == 'msvc'
-    libgit_include_directories += 'compat/vcbuild/include'
-    compat_sources += 'compat/msvc.c'
+    libgit_include_directories += 'lib/compat/vcbuild/include'
+    compat_sources += 'lib/compat/msvc.c'
   else
-    compat_sources += 'compat/mingw.c'
+    compat_sources += 'lib/compat/mingw.c'
   endif
 endif
 
 if host_machine.system() == 'linux'
-  compat_sources += 'compat/linux/procinfo.c'
+  compat_sources += 'lib/compat/linux/procinfo.c'
 elif host_machine.system() == 'windows'
-  compat_sources += 'compat/win32/trace2_win32_process_info.c'
+  compat_sources += 'lib/compat/win32/trace2_win32_process_info.c'
 elif host_machine.system() == 'darwin'
-  compat_sources += 'compat/darwin/procinfo.c'
+  compat_sources += 'lib/compat/darwin/procinfo.c'
 else
-  compat_sources += 'compat/stub/procinfo.c'
+  compat_sources += 'lib/compat/stub/procinfo.c'
 endif
 
 if host_machine.system() == 'cygwin' or host_machine.system() == 'windows'
@@ -1341,14 +1340,14 @@ endif
 # Configure the simple-ipc subsystem required fro the fsmonitor.
 if host_machine.system() == 'windows'
   compat_sources += [
-    'compat/simple-ipc/ipc-shared.c',
-    'compat/simple-ipc/ipc-win32.c',
+    'lib/compat/simple-ipc/ipc-shared.c',
+    'lib/compat/simple-ipc/ipc-win32.c',
   ]
   libgit_c_args += '-DSUPPORTS_SIMPLE_IPC'
 else
   compat_sources += [
-    'compat/simple-ipc/ipc-shared.c',
-    'compat/simple-ipc/ipc-unix-socket.c',
+    'lib/compat/simple-ipc/ipc-shared.c',
+    'lib/compat/simple-ipc/ipc-unix-socket.c',
   ]
   libgit_c_args += '-DSUPPORTS_SIMPLE_IPC'
 endif
@@ -1372,11 +1371,11 @@ if fsmonitor_backend != ''
   libgit_c_args += '-DHAVE_FSMONITOR_OS_SETTINGS'
 
   compat_sources += [
-    'compat/fsmonitor/fsm-health-' + fsmonitor_backend + '.c',
-    'compat/fsmonitor/fsm-ipc-' + fsmonitor_os + '.c',
-    'compat/fsmonitor/fsm-listen-' + fsmonitor_backend + '.c',
-    'compat/fsmonitor/fsm-path-utils-' + fsmonitor_backend + '.c',
-    'compat/fsmonitor/fsm-settings-' + fsmonitor_os + '.c',
+    'lib/compat/fsmonitor/fsm-health-' + fsmonitor_backend + '.c',
+    'lib/compat/fsmonitor/fsm-ipc-' + fsmonitor_os + '.c',
+    'lib/compat/fsmonitor/fsm-listen-' + fsmonitor_backend + '.c',
+    'lib/compat/fsmonitor/fsm-path-utils-' + fsmonitor_backend + '.c',
+    'lib/compat/fsmonitor/fsm-settings-' + fsmonitor_os + '.c',
   ]
 endif
 build_options_config.set_quoted('FSMONITOR_DAEMON_BACKEND', fsmonitor_backend)
@@ -1387,7 +1386,7 @@ if not get_option('b_sanitize').contains('address') and get_option('regex').allo
 
   if compiler.get_define('REG_ENHANCED', prefix: '#include <regex.h>') != ''
     libgit_c_args += '-DUSE_ENHANCED_BASIC_REGULAR_EXPRESSIONS'
-    compat_sources += 'compat/regcomp_enhanced.c'
+    compat_sources += 'lib/compat/regcomp_enhanced.c'
   endif
 elif not get_option('regex').enabled()
   libgit_c_args += [
@@ -1396,13 +1395,13 @@ elif not get_option('regex').enabled()
     '-DNO_MBSUPPORT',
   ]
   build_options_config.set('NO_REGEX', '1')
-  compat_sources += 'compat/regex/regex.c'
-  libgit_include_directories += 'compat/regex'
+  compat_sources += 'lib/compat/regex/regex.c'
+  libgit_include_directories += 'lib/compat/regex'
 else
     error('Native regex support requested but not found')
 endif
 
-# setitimer and friends are provided by compat/mingw.c.
+# setitimer and friends are provided by lib/compat/mingw.c.
 if host_machine.system() != 'windows'
   if not compiler.compiles('''
     #include <sys/time.h>
@@ -1460,7 +1459,7 @@ else
 
   if get_option('b_sanitize').contains('address') or get_option('b_sanitize').contains('leak')
     libgit_c_args += '-DNO_MMAP'
-    compat_sources += 'compat/mmap.c'
+    compat_sources += 'lib/compat/mmap.c'
   else
     checkfuncs += { 'mmap': ['mmap.c'] }
   endif
@@ -1470,7 +1469,7 @@ foreach func, impls : checkfuncs
   if not compiler.has_function(func)
     libgit_c_args += '-DNO_' + func.to_upper()
     foreach impl : impls
-      compat_sources += 'compat/' + impl
+      compat_sources += 'lib/compat/' + impl
     endforeach
   endif
 endforeach
@@ -1481,13 +1480,13 @@ endif
 
 if not compiler.has_function('strdup')
   libgit_c_args += '-DOVERRIDE_STRDUP'
-  compat_sources += 'compat/strdup.c'
+  compat_sources += 'lib/compat/strdup.c'
 endif
 
 if not compiler.has_function('qsort')
   libgit_c_args += '-DINTERNAL_QSORT'
 endif
-compat_sources += 'compat/qsort_s.c'
+compat_sources += 'lib/compat/qsort_s.c'
 
 if compiler.has_function('getdelim')
   libgit_c_args += '-DHAVE_GETDELIM'
@@ -1543,7 +1542,7 @@ if meson.can_run_host_binaries() and compiler.run('''
   }
 ''', name: 'fread reads directories').returncode() == 0
   libgit_c_args += '-DFREAD_READS_DIRECTORIES'
-  compat_sources += 'compat/fopen.c'
+  compat_sources += 'lib/compat/fopen.c'
 endif
 
 if not meson.is_cross_build() and fs.exists('/dev/tty')
@@ -1596,9 +1595,9 @@ if sha1_backend == 'sha1dc'
   libgit_c_args += '-DSHA1DC_CUSTOM_INCLUDE_UBC_CHECK_C="git-compat-util.h"'
 
   libgit_sources += [
-    'sha1dc_git.c',
-    'sha1dc/sha1.c',
-    'sha1dc/ubc_check.c',
+    'lib/sha1dc_git.c',
+    'lib/sha1dc/sha1.c',
+    'lib/sha1dc/ubc_check.c',
   ]
 endif
 if sha1_backend == 'CommonCrypto' or sha1_unsafe_backend == 'CommonCrypto'
@@ -1631,7 +1630,7 @@ if sha1_backend == 'block' or sha1_unsafe_backend == 'block'
     libgit_c_args += '-DSHA1_BLK_UNSAFE'
   endif
 
-  libgit_sources += 'block-sha1/sha1.c'
+  libgit_sources += 'lib/block-sha1/sha1.c'
 endif
 
 if sha256_backend == 'openssl'
@@ -1647,7 +1646,7 @@ elif sha256_backend == 'gcrypt'
   libgit_c_args += '-DSHA256_GCRYPT'
 elif sha256_backend == 'block'
   libgit_c_args += '-DSHA256_BLK'
-  libgit_sources += 'sha256/block/sha256.c'
+  libgit_sources += 'lib/sha256/block/sha256.c'
 else
   error('Unhandled SHA256 backend ' + sha256_backend)
 endif
@@ -1752,7 +1751,7 @@ version_def_h = custom_target(
     '@INPUT@',
     '@OUTPUT@',
   ],
-  input: meson.current_source_dir() / 'version-def.h.in',
+  input: meson.current_source_dir() / 'lib/version-def.h.in',
   output: 'version-def.h',
   # Depend on GIT-VERSION-FILE so that we don't always try to rebuild this
   # target for the same commit.
@@ -1771,7 +1770,7 @@ if rust_option.allowed()
   endif
 else
   libgit_sources += [
-    'varint.c',
+    'lib/varint.c',
   ]
 endif
 
@@ -1894,8 +1893,8 @@ bin_wrappers += executable('scalar',
 if curl.found()
   libgit_curl = declare_dependency(
     sources: [
-      'http.c',
-      'http-walker.c',
+      'lib/http.c',
+      'lib/http-walker.c',
     ],
     dependencies: [libgit_commonmain, curl],
   )
@@ -2199,21 +2198,21 @@ if get_option('docs') != []
 endif
 
 exclude_from_check_headers = [
-  'compat/',
-  'unicode-width.h',
+  'lib/compat/',
+  'lib/unicode-width.h',
 ]
 
 if sha1_backend != 'openssl'
-  exclude_from_check_headers += 'sha1/openssl.h'
+  exclude_from_check_headers += 'lib/sha1/openssl.h'
 endif
 if sha256_backend != 'openssl'
-  exclude_from_check_headers += 'sha256/openssl.h'
+  exclude_from_check_headers += 'lib/sha256/openssl.h'
 endif
 if sha256_backend != 'nettle'
-  exclude_from_check_headers += 'sha256/nettle.h'
+  exclude_from_check_headers += 'lib/sha256/nettle.h'
 endif
 if sha256_backend != 'gcrypt'
-  exclude_from_check_headers += 'sha256/gcrypt.h'
+  exclude_from_check_headers += 'lib/sha256/gcrypt.h'
 endif
 
 if headers_to_check.length() != 0 and compiler.get_argument_syntax() == 'gcc'
@@ -2248,6 +2247,7 @@ if headers_to_check.length() != 0 and compiler.get_argument_syntax() == 'gcc'
         compiler.cmd_array(),
         libgit_c_args,
         '-I', meson.project_source_root(),
+        '-I', meson.project_source_root() / 'lib',
         '-I', meson.project_source_root() / 't/unit-tests',
         '-o', '/dev/null',
         '-c', '-xc',

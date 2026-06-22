@@ -5,10 +5,10 @@ REM it to build the third-party libraries that git requires when it
 REM is built using MSVC.
 REM
 REM [1] Install VCPKG.
-REM     [a] Create <root>/compat/vcbuild/vcpkg/
+REM     [a] Create <root>/lib/compat/vcbuild/vcpkg/
 REM     [b] Download "vcpkg".
 REM     [c] Compile using the currently installed version of VS.
-REM     [d] Create <root>/compat/vcbuild/vcpkg/vcpkg.exe
+REM     [d] Create <root>/lib/compat/vcbuild/vcpkg/vcpkg.exe
 REM
 REM [2] Install third-party libraries.
 REM     [a] Download each (which may also install CMAKE).
