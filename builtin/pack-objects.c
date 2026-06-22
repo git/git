@@ -1777,7 +1777,8 @@ static int want_object_in_pack_mtime(const struct object_id *oid,
 	odb_prepare_alternates(the_repository->objects);
 
 	for (source = the_repository->objects->sources; source; source = source->next) {
-		struct multi_pack_index *m = get_multi_pack_index(source);
+		struct odb_source_files *files = odb_source_files_downcast(source);
+		struct multi_pack_index *m = get_multi_pack_index(files->packed);
 		struct pack_entry e;
 
 		if (m && fill_midx_entry(m, oid, &e)) {
@@ -4506,8 +4507,8 @@ static void add_objects_in_unpacked_packs(void)
 		if (!source->local)
 			continue;
 
-		if (packfile_store_for_each_object(files->packed, &oi,
-						   add_object_in_unpacked_pack, NULL, &opts))
+		if (odb_source_for_each_object(&files->packed->base, &oi,
+					       add_object_in_unpacked_pack, NULL, &opts))
 			die(_("cannot open pack index"));
 	}
 }

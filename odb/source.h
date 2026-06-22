@@ -17,6 +17,9 @@ enum odb_source_type {
 	/* The "loose" backend that uses loose objects, only. */
 	ODB_SOURCE_LOOSE,
 
+	/* The "packed" backend that uses packfiles. */
+	ODB_SOURCE_PACKED,
+
 	/* The "in-memory" backend that stores objects in memory. */
 	ODB_SOURCE_INMEMORY,
 };
