@@ -49,7 +49,7 @@ static int decode_tree_entry(struct tree_desc *desc, const char *buf, unsigned l
 
 static int init_tree_desc_internal(struct tree_desc *desc,
 				   const struct object_id *oid,
-				   const void *buffer, unsigned long size,
+				   const void *buffer, size_t size,
 				   struct strbuf *err,
 				   enum tree_desc_flags flags)
 {
@@ -63,7 +63,7 @@ static int init_tree_desc_internal(struct tree_desc *desc,
 }
 
 void init_tree_desc(struct tree_desc *desc, const struct object_id *tree_oid,
-		    const void *buffer, unsigned long size)
+		    const void *buffer, size_t size)
 {
 	struct strbuf err = STRBUF_INIT;
 	if (init_tree_desc_internal(desc, tree_oid, buffer, size, &err, 0))
@@ -72,7 +72,7 @@ void init_tree_desc(struct tree_desc *desc, const struct object_id *tree_oid,
 }
 
 int init_tree_desc_gently(struct tree_desc *desc, const struct object_id *oid,
-			  const void *buffer, unsigned long size,
+			  const void *buffer, size_t size,
 			  enum tree_desc_flags flags)
 {
 	struct strbuf err = STRBUF_INIT;
@@ -777,8 +777,7 @@ enum get_oid_result get_tree_entry_follow_symlinks(struct repository *r,
 			goto done;
 		} else if (S_ISLNK(*mode)) {
 			/* Follow a symlink */
-			unsigned long link_len;
-			size_t link_len_st = 0;
+			size_t link_len;
 			size_t len;
 			char *contents, *contents_start;
 			struct dir_state *parent;
@@ -798,8 +797,7 @@ enum get_oid_result get_tree_entry_follow_symlinks(struct repository *r,
 
 			contents = odb_read_object(r->objects,
 						   &current_tree_oid, &type,
-						   &link_len_st);
-			link_len = cast_size_t_to_ulong(link_len_st);
+						   &link_len);
 
 			if (!contents)
 				goto done;
