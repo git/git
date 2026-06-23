@@ -212,7 +212,7 @@ void append_grep_pattern(struct grep_opt *opt, const char *pat, const char *orig
 void append_header_grep_pattern(struct grep_opt *, enum grep_header_field, const char *);
 void compile_grep_patterns(struct grep_opt *opt);
 void free_grep_patterns(struct grep_opt *opt);
-int grep_buffer(struct grep_opt *opt, const char *buf, unsigned long size);
+int grep_buffer(struct grep_opt *opt, const char *buf, size_t size);
 
 /* The field parameter is only used to filter header patterns
  * (where appropriate). If filtering isn't desirable
@@ -235,7 +235,7 @@ struct grep_source {
 	struct repository *repo; /* if GREP_SOURCE_OID */
 
 	const char *buf;
-	unsigned long size;
+	size_t size;
 
 	char *path; /* for attribute lookups */
 	struct userdiff_driver *driver;
