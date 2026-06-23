@@ -53,6 +53,7 @@ char *mingw_strbuf_realpath(struct strbuf *resolved, const char *path);
  */
 int is_path_owned_by_current_sid(const char *path, struct strbuf *report);
 #define is_path_owned_by_current_user is_path_owned_by_current_sid
+int is_valid_windows_path_element(wchar_t ch);
 
 /**
  * Verifies that the given path is a valid one on Windows.
