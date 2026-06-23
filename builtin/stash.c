@@ -2086,7 +2086,7 @@ static int write_commit_with_parents(struct repository *r,
 	const char *orig_author, *orig_committer;
 	char *author = NULL, *committer = NULL;
 	const char *buffer;
-	unsigned long bufsize;
+	size_t bufsize;
 	const char *p;
 	struct strbuf msg = STRBUF_INIT;
 	int ret = 0;
@@ -2138,7 +2138,7 @@ static int do_import_stash(struct repository *r, const char *rev)
 	struct object_id chain;
 	int res = 0;
 	const char *buffer = NULL;
-	unsigned long bufsize;
+	size_t bufsize;
 	struct commit *this = NULL;
 	struct commit_list *items = NULL, *cur;
 	char *msg = NULL;
