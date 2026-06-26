@@ -214,3 +214,59 @@ test_expect_success "test bundle-uri with $BUNDLE_URI_PROTOCOL:// using protocol
 		>actual &&
 	test_cmp_config_output expect actual
 '
+
+# Advertised bundle URIs are subject to protocol.*.allow; "file" (and bare or
+# UNC paths) is denied by default, so such a URI must be skipped, not fetched.
+advertise_uri () {
+	test_config -C "$BUNDLE_URI_PARENT" bundle.version 1 &&
+	test_config -C "$BUNDLE_URI_PARENT" bundle.mode all &&
+	test_config -C "$BUNDLE_URI_PARENT" bundle.payload.uri "$1"
+}
+
+ignores_advertised_uri () {
+	rm -rf victim &&
+	advertise_uri "$1" &&
+	git -c transfer.bundleURI=true -c protocol.version=2 \
+		clone "$BUNDLE_URI_REPO_URI" victim &&
+	git -C victim for-each-ref refs/bundles/ >refs &&
+	test_must_be_empty refs
+}
+
+test_expect_success "create bundle to advertise" '
+	git -C "$BUNDLE_URI_PARENT" bundle create "$PWD/payload.bundle" main
+'
+
+test_expect_success "ignore non-HTTP(S) bundle URI with $BUNDLE_URI_PROTOCOL://" '
+	ignores_advertised_uri "$PWD/payload.bundle" &&
+	ignores_advertised_uri "file://$PWD/payload.bundle"
+'
+
+test_expect_success "protocol.file.allow=always honors file bundle URI with $BUNDLE_URI_PROTOCOL://" '
+	rm -rf victim &&
+	advertise_uri "$PWD/payload.bundle" &&
+	git -c transfer.bundleURI=true -c protocol.version=2 \
+		-c protocol.file.allow=always \
+		clone "$BUNDLE_URI_REPO_URI" victim &&
+	git -C victim rev-parse --verify refs/bundles/heads/main
+'
+
+# same path via a UNC administrative share (cf. t5580-unc-paths.sh)
+if test_have_prereq CYGWIN
+then
+	UNCPATH="$(cygpath -aw .)"
+elif test_have_prereq MINGW
+then
+	UNCPATH="$(pwd)"
+fi
+case "$UNCPATH" in
+[A-Za-z]:*)
+	WITHOUTDRIVE="${UNCPATH#?:}"
+	UNCPATH="//localhost/${UNCPATH%%:*}\$$WITHOUTDRIVE"
+	test -d "$UNCPATH" && test_set_prereq ADMIN_UNC
+	;;
+esac
+
+test_expect_success ADMIN_UNC "ignore UNC bundle URI with $BUNDLE_URI_PROTOCOL://" '
+	ignores_advertised_uri "$UNCPATH/payload.bundle" &&
+	ignores_advertised_uri "file://$UNCPATH/payload.bundle"
+'
