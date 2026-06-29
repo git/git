@@ -140,6 +140,12 @@ int is_builtin(const char *s);
 } while (0)
 
 int cmd_add(int argc, const char **argv, const char *prefix, struct repository *repo);
+int cmd_agent_commit(int argc, const char **argv, const char *prefix, struct repository *repo);
+int cmd_agent_diff(int argc, const char **argv, const char *prefix, struct repository *repo);
+int cmd_agent_log(int argc, const char **argv, const char *prefix, struct repository *repo);
+int cmd_agent_orient(int argc, const char **argv, const char *prefix, struct repository *repo);
+int cmd_agent_session(int argc, const char **argv, const char *prefix, struct repository *repo);
+int cmd_agent_verify(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_am(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_annotate(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_apply(int argc, const char **argv, const char *prefix, struct repository *repo);

@@ -1,6 +1,12 @@
 name: CI
 
-on: [push, pull_request]
+on:
+  workflow_dispatch:
+  # Uncomment below to run full upstream CI (requires matching infrastructure)
+  # push:
+  #   branches: [master, main]
+  # pull_request:
+  #   branches: [master, main]
 
 env:
   DEVELOPER: 1

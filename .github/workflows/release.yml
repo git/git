@@ -1,0 +1,74 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libssl-dev gettext zlib1g-dev
+      - name: Build
+        run: make -j$(nproc) NO_CURL=YesPlease NO_RUST=YesPlease prefix=$PWD/dist install
+      - name: Strip
+        run: strip dist/bin/git dist/bin/git-* 2>/dev/null || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: git-agent-linux-x86_64
+          path: dist/
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install deps
+        run: brew install gettext openssl zlib
+      - name: Build
+        run: make -j$(sysctl -n hw.ncpu) NO_CURL=YesPlease NO_RUST=YesPlease prefix=$PWD/dist install
+      - uses: actions/upload-artifact@v4
+        with:
+          name: git-agent-macos-universal
+          path: dist/
+
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: git-for-windows/setup-git-for-windows-sdk@v2
+      - name: Build
+        shell: bash
+        run: make -j$(nproc) NO_CURL=YesPlease NO_RUST=YesPlease prefix=$PWD/dist install
+      - uses: actions/upload-artifact@v4
+        with:
+          name: git-agent-windows-x86_64
+          path: dist/
+
+  release:
+    needs: [build-linux, build-macos, build-windows]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Package
+        run: |
+          cd artifacts
+          for dir in */; do
+            base="${dir%/}"
+            tar czf "../${base}.tar.gz" -C "$dir" .
+          done
+          cd ..
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: '*.tar.gz'
+          draft: true
+          generate_release_notes: true

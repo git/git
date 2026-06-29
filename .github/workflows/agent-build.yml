@@ -1,0 +1,42 @@
+name: Agent Build
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential libssl-dev libcurl4-openssl-dev \
+            libexpat1-dev gettext zlib1g-dev \
+            asciidoc xmlto docbook2x install-info
+
+      - name: Build
+        run: |
+          make -j$(nproc) NO_CURL=YesPlease NO_RUST=YesPlease
+
+      - name: Run agent tests
+        run: |
+          # Must use the freshly-built git binary, not the system one,
+          # so that agent-commit/agent-log builtins are available.
+          export PATH="$PWD/bin-wrappers:$PATH"
+          cd t
+          bash t9900-agent-trailers.sh -i
+          bash t9901-agent-refs.sh -i
+          bash t9902-agent-session.sh -i
+          bash t9903-agent-semantic-diff.sh -i
+          bash t9904-agent-commands.sh -i
+
+      - name: Quick functional test
+        run: |
+          ./bin-wrappers/git --version
+          ./bin-wrappers/git agent-orient

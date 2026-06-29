@@ -1,0 +1,103 @@
+Agent Trailer Schema
+====================
+
+Git's existing trailer mechanism (see `git-interpret-trailers(1)`) is
+used to attach structured metadata to commit messages.  Agent trailers
+use the namespace `Agent-*`.  All agent trailer fields are optional;
+absent fields are simply omitted from the commit message.
+
+This document defines the official schema for agent trailers.
+
+
+Trailer Fields
+--------------
+
+`Agent-Id` <string>::
+	Model or agent identifier.  Examples: `claude-sonnet-4`,
+	`gpt-4`, `copilot`.  Free-form string.
+
+`Agent-Task` <string>::
+	External task or ticket identifier.  Example: `TASK-441`.
+	May be used to filter history by task.
+
+`Agent-Confidence` <float>::
+	Agent's self-assessed confidence in this commit, expressed as a
+	floating-point number between `0.0` and `1.0` inclusive.
+	Values outside this range should be treated as malformed.
+
+`Agent-Intent` <string>::
+	Human-readable summary of the agent's goal for this commit.
+	Recommended maximum length: 120 characters.  Longer strings are
+	accepted but may be truncated by tooling.
+
+`Agent-Context-Hash` <sha256-hex>::
+	SHA-256 hash of the task context blob the agent used to produce
+	this commit.  Must be exactly 64 hexadecimal characters.
+	The context blob itself is stored under `refs/agent/commits/`
+	(see `git-agent-commit(1)`).
+
+`Agent-Parent-Commit` <sha1>::
+	If the agent forked reasoning mid-task and resumed from a
+	previous commit, this field links to that branch point.
+	Format is the standard abbreviated or full object name.
+
+`Agent-Autonomy` <enum>::
+	Whether a human reviewed the commit before it was made.
+	Valid values: `full` (no human review), `supervised` (human
+	reviewed and approved), `dry-run` (agent-only preview, not
+	actually committed to the real branch).
+
+`Agent-Tool-Version` <string>::
+	Version of the MCP or tooling layer used to drive the agent.
+	Example: `git-agent-mcp/0.1.0`.
+
+`Agent-Checkpoint` (no value)::
+	When present (with any value, or empty), marks this commit as
+	a safe rollback point.  `git agent-rollback` (if implemented)
+	jumps to the nearest commit bearing this trailer.
+
+
+Validation
+----------
+
+Malformed agent trailers MUST produce a warning but MUST NOT cause
+`git log`, `git show`, or any other standard git command to fail.
+This ensures backwards compatibility: old commits with malformed agent
+trailers are never rendered unreadable by future validation logic.
+
+The following conditions trigger warnings:
+
+ - `Agent-Confidence` is not a valid float, or is outside [0.0, 1.0].
+ - `Agent-Autonomy` is not one of the defined enum values.
+ - `Agent-Context-Hash` is not exactly 64 hex characters.
+
+Warnings are emitted during `git interpret-trailers --parse`,
+`git agent-verify`, and any other tool that explicitly validates
+commit trailers.
+
+
+Example Commit Message
+----------------------
+
+	Refactor auth layer to use JWT
+
+	The legacy auth_v1 code has been replaced by a JWT-based
+	validator.  Retry logic with exponential backoff is now
+	built into auth_init().
+
+	Agent-Id: claude-sonnet-4
+	Agent-Task: TASK-441
+	Agent-Confidence: 0.91
+	Agent-Intent: extract JWT parsing into jwt.c
+	Agent-Autonomy: supervised
+	Agent-Context-Hash: 7f83b1657ff1fc53b92dc18148a1d65dfc2d4b1fa5d0...
+	Signed-off-by: Agent <agent@example.com>
+
+
+Backwards Compatibility
+-----------------------
+
+Standard git commands ignore all unknown trailers.  Therefore
+repositories that contain agent trailers are fully readable and
+writable by unmodified git clients.  The agent-native layer is
+entirely opt-in.

@@ -866,6 +866,57 @@ static int path_exists(const char *path)
 	return !stat(path, &sb);
 }
 
+/*
+ * If the remote advertises refs/agent/*, add them to the fetch refspec
+ * and pull them down so agent metadata travels with the clone.
+ */
+static void clone_fetch_agent_refs(const char *remote)
+{
+	struct child_process ls_remote = CHILD_PROCESS_INIT;
+	struct strbuf out = STRBUF_INIT;
+	int agent_refs_found = 0;
+
+	strvec_pushl(&ls_remote.args, "ls-remote", "--quiet", "--refs",
+		     remote, "refs/agent/*", NULL);
+	ls_remote.git_cmd = 1;
+	ls_remote.no_stdin = 1;
+	ls_remote.no_stderr = 1;
+	ls_remote.out = -1;
+
+	if (!start_command(&ls_remote)) {
+		strbuf_read(&out, ls_remote.out, 0);
+		close(ls_remote.out);
+		finish_command(&ls_remote);
+		agent_refs_found = out.len > 0;
+	}
+
+	if (agent_refs_found) {
+		struct child_process fetch = CHILD_PROCESS_INIT;
+		struct strbuf key = STRBUF_INIT;
+		struct strbuf value = STRBUF_INIT;
+
+		strbuf_addf(&key, "remote.%s.fetch", remote);
+		strbuf_addstr(&value, "+refs/agent/*:refs/agent/*");
+		repo_config_set_multivar(the_repository, key.buf,
+					 value.buf, "^$", 0);
+		strbuf_release(&key);
+		strbuf_release(&value);
+
+		strvec_pushl(&fetch.args, "fetch", remote,
+			     "+refs/agent/*:refs/agent/*", NULL);
+		fetch.git_cmd = 1;
+		fetch.no_stdin = 1;
+		fetch.no_stderr = 1;
+		fetch.out = -1;
+		if (!start_command(&fetch)) {
+			close(fetch.out);
+			finish_command(&fetch);
+		}
+	}
+
+	strbuf_release(&out);
+}
+
 int cmd_clone(int argc,
 	      const char **argv,
 	      const char *prefix,
@@ -1617,6 +1668,8 @@ int cmd_clone(int argc,
 
 	transport_unlock_pack(transport, 0);
 	transport_disconnect(transport);
+
+	clone_fetch_agent_refs(remote_name);
 
 	if (option_dissociate) {
 		odb_close(the_repository->objects);
