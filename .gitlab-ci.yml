@@ -88,13 +88,8 @@ test:osx:
   tags:
     - saas-macos-large-m2pro
   variables:
-    TEST_OUTPUT_DIRECTORY: "/Volumes/RAMDisk"
+    TEST_OUTPUT_DIRECTORY: "/tmp/test-output"
   before_script:
-    # Create a 4GB RAM disk that we use to store test output on. This small hack
-    # significantly speeds up tests by more than a factor of 2 because the
-    # macOS runners use network-attached storage as disks, which is _really_
-    # slow with the many small writes that our tests do.
-    - sudo diskutil apfs create $(hdiutil attach -nomount ram://8192000) RAMDisk
     - ./ci/install-dependencies.sh
   script:
     - ./ci/run-build-and-tests.sh
