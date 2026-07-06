@@ -638,45 +638,52 @@ __git_ls_files_helper ()
 }
 
 
-# __git_index_files accepts 1 or 2 arguments:
+# __git_index_files accepts 1 to 3 arguments:
 # 1: Options to pass to ls-files (required).
 # 2: A directory path (optional).
 #    If provided, only files within the specified directory are listed.
 #    Sub directories are never recursed.  Path must have a trailing
 #    slash.
 # 3: List only paths matching this path component (optional).
+#
+# If the third argument is empty, paths that begin with a dot (dotfiles)
+# are hidden. This matches user expectations where dotfiles are considered
+# hidden configuration files/directories and shouldn't clutter default
+# completions unless explicitly requested by typing a dot.
 __git_index_files ()
 {
 	local root="$2" match="$3"
+	local hide_dotfiles_awk=0
+	if [ -z "$match" ]; then
+		hide_dotfiles_awk=1
+	fi
 
 	__git_ls_files_helper "$root" "$1" "${match:-?}" |
-	awk -F / -v pfx="${2//\\/\\\\}" '{
+	awk -F / -v pfx="${2//\\/\\\\}" -v hide_dotfiles="$hide_dotfiles_awk" '{
 		paths[$1] = 1
 	}
 	END {
 		for (p in paths) {
-			if (substr(p, 1, 1) != "\"") {
-				# No special characters, easy!
-				print pfx p
-				continue
+			if (substr(p, 1, 1) == "\"") {
+				# The path is quoted.
+				p = dequote(p)
+				if (p == "")
+					continue
+
+				# Even when a directory name itself does not contain
+				# any special characters, it will still be quoted if
+				# any of its (stripped) trailing path components do.
+				# Because of this we may have seen the same directory
+				# both quoted and unquoted.
+				if (p in paths)
+					# We have seen the same directory unquoted,
+					# skip it.
+					continue
 			}
 
-			# The path is quoted.
-			p = dequote(p)
-			if (p == "")
+			if (hide_dotfiles == 1 && substr(p, 1, 1) == ".")
 				continue
-
-			# Even when a directory name itself does not contain
-			# any special characters, it will still be quoted if
-			# any of its (stripped) trailing path components do.
-			# Because of this we may have seen the same directory
-			# both quoted and unquoted.
-			if (p in paths)
-				# We have seen the same directory unquoted,
-				# skip it.
-				continue
-			else
-				print pfx p
+			print pfx p
 		}
 	}
 	function dequote(p,    bs_idx, out, esc, esc_idx, dec) {
@@ -721,8 +728,8 @@ __git_index_files ()
 	}'
 }
 
-# __git_complete_index_file requires 1 argument:
-# 1: the options to pass to ls-file
+# __git_complete_index_file accepts 1 argument:
+# 1: the options to pass to ls-files
 #
 # The exception is --committable, which finds the files appropriate commit.
 __git_complete_index_file ()
