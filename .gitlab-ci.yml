@@ -147,6 +147,9 @@ test:mingw64:
   needs:
     - job: "build:mingw64"
       artifacts: true
+  variables:
+    # Windows runners don't have enough RAM to run EXPENSIVE tests.
+    GIT_TEST_LONG: false
   before_script:
     - *windows_before_script
     - git-sdk/usr/bin/bash.exe -l -c 'tar xf artifacts/artifacts.tar.gz'
@@ -195,6 +198,9 @@ test:msvc-meson:
   script:
     - |
       & "C:/Program Files/Git/usr/bin/bash.exe" -l -c 'ci/run-test-slice-meson.sh build $CI_NODE_INDEX $CI_NODE_TOTAL'
+  variables:
+    # Windows runners don't have enough RAM to run EXPENSIVE tests.
+    GIT_TEST_LONG: false
   after_script:
     - |
       if ($env:CI_JOB_STATUS -ne "success") {
