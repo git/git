@@ -321,7 +321,7 @@ export SKIP_DASHED_BUILT_INS=YesPlease
 # enable the long tests for pushes to the integration branches as well.
 case "$GITHUB_EVENT_NAME,$CI_BRANCH" in
 pull_request,*|push,*next*|push,*master*|push,*main*|push,*maint*)
-	export GIT_TEST_LONG=YesPlease
+	export GIT_TEST_LONG=true
 	;;
 esac
 
