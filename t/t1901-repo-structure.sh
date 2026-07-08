@@ -33,6 +33,7 @@ test_expect_success 'empty repository' '
 		|   * Count                 |    0   |
 		|     * Branches            |    0   |
 		|     * Tags                |    0   |
+		|       * Annotated         |    0   |
 		|     * Remotes             |    0   |
 		|     * Others              |    0   |
 		|                           |        |
@@ -97,6 +98,7 @@ test_expect_success SHA1 'repository with references and objects' '
 		|   * Count                 |      4     |
 		|     * Branches            |      1     |
 		|     * Tags                |      1     |
+		|       * Annotated         |      1     |
 		|     * Remotes             |      1     |
 		|     * Others              |      1     |
 		|                           |            |
@@ -150,11 +152,13 @@ test_expect_success SHA1 'lines and nul format' '
 	(
 		cd repo &&
 		test_commit_bulk 42 &&
+		git tag lightweight-tag-is-not-counted-as-annotated &&
 		git tag -a foo -m bar &&
 
 		cat >expect <<-EOF &&
 		references.branches.count=1
-		references.tags.count=1
+		references.tags.count=2
+		references.tags.annotated.count=1
 		references.remotes.count=0
 		references.others.count=0
 		objects.commits.count=42
@@ -221,6 +225,108 @@ test_expect_success 'progress meter option' '
 
 		test_file_not_empty out &&
 		test_line_count = 0 err
+	)
+'
+
+test_expect_success '--ref-filter narrows the set of refs' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		test_commit foo &&
+		git tag v1 &&
+		git update-ref refs/remotes/origin/main HEAD &&
+
+		git repo structure --format=lines \
+			--ref-filter="refs/heads/*" >out &&
+		test_grep "^references.branches.count=1$" out &&
+		test_grep "^references.tags.count=0$" out &&
+		test_grep "^references.remotes.count=0$" out
+	)
+'
+
+test_expect_success '--ref-filter unions multiple patterns' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		test_commit foo &&
+		git tag v1 &&
+		git update-ref refs/remotes/origin/main HEAD &&
+
+		git repo structure --format=lines \
+			--ref-filter="refs/heads/*" \
+			--ref-filter="refs/tags/*" >out &&
+		test_grep "^references.branches.count=1$" out &&
+		test_grep "^references.tags.count=2$" out &&
+		test_grep "^references.remotes.count=0$" out
+	)
+'
+
+test_expect_success '--top omitted: no top.* keys' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		test_commit foo &&
+
+		git repo structure --format=lines >out &&
+		test_grep ! "\.top\." out
+	)
+'
+
+test_expect_success '--top=N reports the N largest paths per axis' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		mkdir -p dir1 dir2 &&
+		echo small >dir1/small.txt &&
+		printf "%010000d" 0 >dir2/big.txt &&
+		git add . &&
+		test_tick &&
+		git commit -m commit &&
+
+		git repo structure --format=lines --top=2 >out &&
+
+		# Two ranked entries on each axis for both types.
+		for axis in by_count by_disk_size by_inflated_size
+		do
+			for type in trees blobs
+			do
+				key=objects.${type}.top.${axis} &&
+				test_grep -E "^${key}\.1\.path=" out &&
+				test_grep -E "^${key}\.2\.path=" out &&
+				test_grep ! -E "^${key}\.3\." out || return 1
+			done
+		done &&
+
+		# The big blob outranks the small one on disk and inflated.
+		key=objects.blobs.top &&
+		test_grep "^${key}.by_disk_size.1.path=dir2/big.txt$" out &&
+		test_grep "^${key}.by_inflated_size.1.path=dir2/big.txt$" out
+	)
+'
+
+test_expect_success '--top rejects negative values' '
+	test_must_fail git repo structure --top=-1 2>err &&
+	test_grep "must be non-negative" err
+'
+
+test_expect_success 'repo.structure.top supplies the default for --top' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		test_commit foo &&
+
+		git -c repo.structure.top=2 \
+			repo structure --format=lines >with-config &&
+		test_grep "^objects.blobs.top.by_count.1.path=" with-config &&
+
+		git -c repo.structure.top=2 \
+			repo structure --format=lines --top=0 >cli-override &&
+		test_grep ! "\.top\." cli-override
 	)
 '
 
