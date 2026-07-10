@@ -46,6 +46,7 @@ import optparse
 import os
 import platform
 import re
+import shlex
 import shutil
 import stat
 import subprocess
@@ -2234,7 +2235,7 @@ class P4Submit(Command, P4UserMap):
             else:
                 die("unknown modifier %s for %s" % (modifier, path))
 
-        diffcmd = "git diff-tree --full-index -p \"%s\"" % (id)
+        diffcmd = "git diff-tree --full-index -p " + shlex.quote(id)
         patchcmd = diffcmd + " | git apply "
         tryPatchCmd = patchcmd + "--check -"
         applyPatchCmd = patchcmd + "--check --apply -"
