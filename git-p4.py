@@ -2234,16 +2234,25 @@ class P4Submit(Command, P4UserMap):
             else:
                 die("unknown modifier %s for %s" % (modifier, path))
 
-        diffcmd = "git diff-tree --full-index -p \"%s\"" % (id)
-        patchcmd = diffcmd + " | git apply "
-        tryPatchCmd = patchcmd + "--check -"
-        applyPatchCmd = patchcmd + "--check --apply -"
+        def runGitApplyPipeline(commit_id, apply_args):
+            """Run 'git diff-tree | git apply' pipeline safely without a shell."""
+            diff_proc = subprocess.Popen(
+                ["git", "diff-tree", "--full-index", "-p", commit_id],
+                stdout=subprocess.PIPE)
+            apply_proc = subprocess.Popen(
+                ["git", "apply"] + apply_args + ["-"],
+                stdin=diff_proc.stdout)
+            diff_proc.stdout.close()
+            apply_proc.communicate()
+            diff_proc.wait()
+            return apply_proc.returncode
+
         patch_succeeded = True
 
         if verbose:
-            print("TryPatch: %s" % tryPatchCmd)
+            print("TryPatch: git diff-tree --full-index -p %s | git apply --check -" % id)
 
-        if os.system(tryPatchCmd) != 0:
+        if runGitApplyPipeline(id, ["--check"]) != 0:
             fixed_rcs_keywords = False
             patch_succeeded = False
             print("Unfortunately applying the change failed!")
@@ -2279,7 +2288,7 @@ class P4Submit(Command, P4UserMap):
 
             if fixed_rcs_keywords:
                 print("Retrying the patch with RCS keywords cleaned up")
-                if os.system(tryPatchCmd) == 0:
+                if runGitApplyPipeline(id, ["--check"]) == 0:
                     patch_succeeded = True
                     print("Patch succeesed this time with RCS keywords cleaned")
 
