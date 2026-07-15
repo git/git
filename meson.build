@@ -278,7 +278,20 @@ compat_sources = [
   'compat/terminal.c',
 ]
 
+hook_list = custom_target(
+  input: 'Documentation/githooks.adoc',
+  output: 'hook-list.h',
+  command: [
+    shell,
+    meson.current_source_dir() + '/tools/generate-hooklist.sh',
+    meson.current_source_dir(),
+    '@OUTPUT@',
+  ],
+  env: script_environment,
+)
+
 libgit_sources = [
+  hook_list,
   'abspath.c',
   'add-interactive.c',
   'add-patch.c',
@@ -566,19 +579,8 @@ libgit_sources += custom_target(
   env: script_environment,
 )
 
-libgit_sources += custom_target(
-  input: 'Documentation/githooks.adoc',
-  output: 'hook-list.h',
-  command: [
-    shell,
-    meson.current_source_dir() + '/tools/generate-hooklist.sh',
-    meson.current_source_dir(),
-    '@OUTPUT@',
-  ],
-  env: script_environment,
-)
-
 builtin_sources = [
+  hook_list,
   'builtin/add.c',
   'builtin/am.c',
   'builtin/annotate.c',
