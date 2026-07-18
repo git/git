@@ -1018,6 +1018,52 @@ test_expect_success 'rename a remote renames repo remote.pushDefault but keeps g
 	)
 '
 
+test_expect_success 'adding fork remote normalizes pushRemote URL' '
+	git clone --bare one fork.git &&
+	git clone one rename-and-add &&
+	git -C rename-and-add checkout -b topic --track origin/main &&
+	git -C rename-and-add commit --allow-empty -m topic-change &&
+	test_config -C rename-and-add push.default current &&
+	fork_url="$(pwd)/fork.git" &&
+	git -C rename-and-add config branch.topic.pushRemote "$fork_url" &&
+	test_config -C rename-and-add status.compareBranches "@{upstream} @{push}" &&
+	git -C rename-and-add push &&
+	test "$(git -C fork.git rev-parse refs/heads/topic)" = \
+	     "$(git -C rename-and-add rev-parse refs/heads/topic)" &&
+	git -C rename-and-add status >actual.before &&
+	cat >expect.before <<-EOF &&
+	On branch topic
+	Your branch is ahead of ${SQ}origin/main${SQ} by 1 commit.
+	  (use "git push" to publish your local commits)
+
+	nothing to commit, working tree clean
+	EOF
+	test_cmp expect.before actual.before &&
+	git -C rename-and-add remote rename origin upstream &&
+	git -C rename-and-add remote add -f origin "$fork_url" &&
+	test "$(git -C rename-and-add config branch.topic.remote)" = upstream &&
+	test "$(git -C rename-and-add config branch.topic.merge)" = refs/heads/main &&
+	test "$(git -C rename-and-add config branch.topic.pushRemote)" = origin &&
+	git -C rename-and-add status >actual &&
+	cat >expect <<-EOF &&
+	On branch topic
+	Your branch is ahead of ${SQ}upstream/main${SQ} by 1 commit.
+
+	Your branch is up to date with ${SQ}origin/topic${SQ}.
+
+	nothing to commit, working tree clean
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'adding duplicate remote URL does not choose a pushRemote name' '
+	git init duplicate-url &&
+	git -C duplicate-url remote add first git@example.com:fork/repo.git &&
+	git -C duplicate-url config branch.topic.pushRemote git@example.com:fork/repo.git &&
+	git -C duplicate-url remote add second git@example.com:fork/repo.git &&
+	test "$(git -C duplicate-url config branch.topic.pushRemote)" = git@example.com:fork/repo.git
+'
+
 test_expect_success 'rename handles remote without fetch refspec' '
 	git clone --bare one no-refspec.git &&
 	# confirm assumption that bare clone does not create refspec

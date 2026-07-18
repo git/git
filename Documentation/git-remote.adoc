@@ -52,6 +52,10 @@ Add a remote named _<name>_ for the repository at
 _<URL>_.  The command `git fetch <name>` can then be used to create and
 update remote-tracking branches `<name>/<branch>`.
 +
+If a `branch.<branch>.pushRemote` value is the same URL and cannot be
+interpreted as a remote name, it is replaced with _<name>_ so that pushes
+can be associated with the remote-tracking branches.
++
 With `-f` option, `git fetch <name>` is run immediately after
 the remote information is set up.
 +

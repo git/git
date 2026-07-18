@@ -174,10 +174,49 @@ static int check_remote_collision(struct remote *remote, void *data)
 	return 0;
 }
 
+struct pushremote_url_info {
+	const char *url;
+	struct string_list keys;
+};
+
+static int collect_pushremote_urls(const char *key, const char *value,
+				   const struct config_context *ctx UNUSED,
+				   void *data)
+{
+	struct pushremote_url_info *info = data;
+	size_t key_len;
+
+	if (!starts_with(key, "branch.") ||
+	    !strip_suffix(key, ".pushremote", &key_len) ||
+	    !value || strcmp(value, info->url))
+		return 0;
+
+	string_list_insert(&info->keys, key);
+	return 0;
+}
+
+static void normalize_pushremote_urls(const char *name, const char *url)
+{
+	struct pushremote_url_info info = {
+		.url = url,
+		.keys = STRING_LIST_INIT_DUP,
+	};
+
+	if (valid_remote_name(url))
+		return;
+
+	repo_config(the_repository, collect_pushremote_urls, &info);
+	for (size_t i = 0; i < info.keys.nr; i++)
+		repo_config_set(the_repository, info.keys.items[i].string, name);
+
+	string_list_clear(&info.keys, 0);
+}
+
 static int add(int argc, const char **argv, const char *prefix,
-	       struct repository *repo UNUSED)
+	       struct repository *repo)
 {
 	int fetch = 0, fetch_tags = TAGS_DEFAULT;
+	int url_already_named;
 	unsigned mirror = MIRROR_NONE;
 	struct string_list track = STRING_LIST_INIT_NODUP;
 	const char *master = NULL;
@@ -225,6 +264,7 @@ static int add(int argc, const char **argv, const char *prefix,
 		die(_("'%s' is not a valid remote name"), name);
 
 	for_each_remote(check_remote_collision, (void *)name);
+	url_already_named = !!repo_remote_from_url(repo, url);
 
 	strbuf_addf(&buf, "remote.%s.url", name);
 	repo_config_set(the_repository, buf.buf, url);
@@ -252,6 +292,9 @@ static int add(int argc, const char **argv, const char *prefix,
 		repo_config_set(the_repository, buf.buf,
 				fetch_tags == TAGS_SET ? "--tags" : "--no-tags");
 	}
+
+	if (!url_already_named)
+		normalize_pushremote_urls(name, url);
 
 	if (fetch && fetch_remote(name)) {
 		result = 1;
