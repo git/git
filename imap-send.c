@@ -48,6 +48,18 @@
 
 static int verbosity;
 static int list_folders;
+
+static void imap_quote(struct strbuf *sb, const char *str)
+{
+	strbuf_addch(sb, '"');
+	for (; *str; str++) {
+		if (*str == '\\' || *str == '"')
+			strbuf_addch(sb, '\\');
+		strbuf_addch(sb, *str);
+	}
+	strbuf_addch(sb, '"');
+}
+
 static int use_curl = USE_CURL_DEFAULT;
 static char *opt_folder;
 
@@ -1322,9 +1334,19 @@ static struct imap_store *imap_open_store(struct imap_server_conf *srvc, const c
 			if (!imap->buf.sock.ssl)
 				imap_warn("*** IMAP Warning *** Password is being "
 					  "sent in the clear\n");
-			if (imap_exec(ctx, NULL, "LOGIN \"%s\" \"%s\"", srvc->user, srvc->pass) != RESP_OK) {
-				fprintf(stderr, "IMAP error: LOGIN failed\n");
-				goto bail;
+			{
+				struct strbuf user = STRBUF_INIT;
+				struct strbuf pass = STRBUF_INIT;
+				imap_quote(&user, srvc->user);
+				imap_quote(&pass, srvc->pass);
+				if (imap_exec(ctx, NULL, "LOGIN %s %s", user.buf, pass.buf) != RESP_OK) {
+					strbuf_release(&user);
+					strbuf_release(&pass);
+					fprintf(stderr, "IMAP error: LOGIN failed\n");
+					goto bail;
+				}
+				strbuf_release(&user);
+				strbuf_release(&pass);
 			}
 		}
 	} /* !preauth */
@@ -1335,21 +1357,28 @@ static struct imap_store *imap_open_store(struct imap_server_conf *srvc, const c
 
 	/* check the target mailbox exists */
 	ctx->name = folder;
-	switch (imap_exec(ctx, NULL, "EXAMINE \"%s\"", ctx->name)) {
-	case RESP_OK:
-		/* ok */
-		break;
-	case RESP_BAD:
-		fprintf(stderr, "IMAP error: could not check mailbox\n");
-		goto out;
-	case RESP_NO:
-		if (imap_exec(ctx, NULL, "CREATE \"%s\"", ctx->name) == RESP_OK) {
-			imap_info("Created missing mailbox\n");
-		} else {
-			fprintf(stderr, "IMAP error: could not create missing mailbox\n");
+	{
+		struct strbuf name = STRBUF_INIT;
+		imap_quote(&name, ctx->name);
+		switch (imap_exec(ctx, NULL, "EXAMINE %s", name.buf)) {
+		case RESP_OK:
+			/* ok */
+			break;
+		case RESP_BAD:
+			fprintf(stderr, "IMAP error: could not check mailbox\n");
+			strbuf_release(&name);
 			goto out;
+		case RESP_NO:
+			if (imap_exec(ctx, NULL, "CREATE %s", name.buf) == RESP_OK) {
+				imap_info("Created missing mailbox\n");
+			} else {
+				fprintf(stderr, "IMAP error: could not create missing mailbox\n");
+				strbuf_release(&name);
+				goto out;
+			}
+			break;
 		}
-		break;
+		strbuf_release(&name);
 	}
 
 	ctx->prefix = "";
@@ -1416,7 +1445,18 @@ static int imap_store_msg(struct imap_store *ctx, struct strbuf *msg)
 
 	box = ctx->name;
 	prefix = !strcmp(box, "INBOX") ? "" : ctx->prefix;
-	ret = imap_exec_m(ctx, &cb, "APPEND \"%s%s\" ", prefix, box);
+	{
+		struct strbuf mailbox = STRBUF_INIT;
+		struct strbuf quoted = STRBUF_INIT;
+		if (*prefix)
+			strbuf_addf(&mailbox, "%s%s", prefix, box);
+		else
+			strbuf_addstr(&mailbox, box);
+		imap_quote(&quoted, mailbox.buf);
+		ret = imap_exec_m(ctx, &cb, "APPEND %s ", quoted.buf);
+		strbuf_release(&quoted);
+		strbuf_release(&mailbox);
+	}
 	imap->caps = imap->rcaps;
 	if (ret != DRV_OK)
 		return ret;
