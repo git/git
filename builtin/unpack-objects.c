@@ -2,7 +2,6 @@
 #define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "builtin.h"
-#include "bulk-checkin.h"
 #include "config.h"
 #include "environment.h"
 #include "gettext.h"
@@ -204,8 +203,8 @@ static void write_cached_object(struct object *obj, struct obj_buffer *obj_buf)
 {
 	struct object_id oid;
 
-	if (write_object_file(obj_buf->buffer, obj_buf->size,
-			      obj->type, &oid) < 0)
+	if (odb_write_object(the_repository->objects, obj_buf->buffer, obj_buf->size,
+			     obj->type, &oid) < 0)
 		die("failed to write object %s", oid_to_hex(&obj->oid));
 	obj->flags |= FLAG_WRITTEN;
 }
@@ -272,16 +271,16 @@ static void write_object(unsigned nr, enum object_type type,
 			 void *buf, unsigned long size)
 {
 	if (!strict) {
-		if (write_object_file(buf, size, type,
-				      &obj_list[nr].oid) < 0)
+		if (odb_write_object(the_repository->objects, buf, size, type,
+				     &obj_list[nr].oid) < 0)
 			die("failed to write object");
 		added_object(nr, type, buf, size);
 		free(buf);
 		obj_list[nr].obj = NULL;
 	} else if (type == OBJ_BLOB) {
 		struct blob *blob;
-		if (write_object_file(buf, size, type,
-				      &obj_list[nr].oid) < 0)
+		if (odb_write_object(the_repository->objects, buf, size, type,
+				     &obj_list[nr].oid) < 0)
 			die("failed to write object");
 		added_object(nr, type, buf, size);
 		free(buf);
@@ -364,7 +363,7 @@ struct input_zstream_data {
 	int status;
 };
 
-static const void *feed_input_zstream(struct input_stream *in_stream,
+static const void *feed_input_zstream(struct odb_write_stream *in_stream,
 				      unsigned long *readlen)
 {
 	struct input_zstream_data *data = in_stream->data;
@@ -394,7 +393,7 @@ static void stream_blob(unsigned long size, unsigned nr)
 {
 	git_zstream zstream = { 0 };
 	struct input_zstream_data data = { 0 };
-	struct input_stream in_stream = {
+	struct odb_write_stream in_stream = {
 		.read = feed_input_zstream,
 		.data = &data,
 	};
@@ -403,7 +402,7 @@ static void stream_blob(unsigned long size, unsigned nr)
 	data.zstream = &zstream;
 	git_inflate_init(&zstream);
 
-	if (stream_loose_object(&in_stream, size, &info->oid))
+	if (odb_write_object_stream(the_repository->objects, &in_stream, size, &info->oid))
 		die(_("failed to write object in stream"));
 
 	if (data.status != Z_STREAM_END)
@@ -583,6 +582,7 @@ static void unpack_all(void)
 {
 	int i;
 	unsigned char *hdr = fill(sizeof(struct pack_header));
+	struct odb_transaction *transaction;
 
 	if (get_be32(hdr) != PACK_SIGNATURE)
 		die("bad pack file");
@@ -598,12 +598,12 @@ static void unpack_all(void)
 		progress = start_progress(the_repository,
 					  _("Unpacking objects"), nr_objects);
 	CALLOC_ARRAY(obj_list, nr_objects);
-	begin_odb_transaction();
+	transaction = odb_transaction_begin(the_repository->objects);
 	for (i = 0; i < nr_objects; i++) {
 		unpack_one(i);
 		display_progress(progress, i + 1);
 	}
-	end_odb_transaction();
+	odb_transaction_commit(transaction);
 	stop_progress(&progress);
 
 	if (delta_list)
@@ -621,7 +621,7 @@ int cmd_unpack_objects(int argc,
 
 	disable_replace_refs();
 
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 
 	quiet = !isatty(2);
 

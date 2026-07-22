@@ -4,6 +4,7 @@
 #include "pack-objects.h"
 #include "packfile.h"
 #include "parse.h"
+#include "repository.h"
 
 static uint32_t locate_object_entry_hash(struct packing_data *pdata,
 					 const struct object_id *oid,
@@ -95,13 +96,13 @@ static void prepare_in_pack_by_idx(struct packing_data *pdata)
 	 * (i.e. in_pack_idx also zero) should return NULL.
 	 */
 	mapping[cnt++] = NULL;
-	for (p = get_all_packs(pdata->repo); p; p = p->next, cnt++) {
+	repo_for_each_pack(pdata->repo, p) {
 		if (cnt == nr) {
 			free(mapping);
 			return;
 		}
 		p->index = cnt;
-		mapping[cnt] = p;
+		mapping[cnt++] = p;
 	}
 	pdata->in_pack_by_idx = mapping;
 }

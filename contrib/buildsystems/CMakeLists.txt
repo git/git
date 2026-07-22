@@ -14,6 +14,11 @@ Note: Visual Studio also has the option of opening `CMakeLists.txt`
 directly; Using this option, Visual Studio will not find the source code,
 though, therefore the `File>Open>Folder...` option is preferred.
 
+Visual Studio does not produce a .sln solution file nor the .vcxproj files
+that may be required by VS extension tools.
+
+To generate the .sln/.vcxproj files run CMake manually, as described below.
+
 Instructions to run CMake manually:
 
     mkdir -p contrib/buildsystems/out
@@ -22,7 +27,7 @@ Instructions to run CMake manually:
 
 This will build the git binaries in contrib/buildsystems/out
 directory (our top-level .gitignore file knows to ignore contents of
-this directory).
+this directory). The project .sln and .vcxproj files are also generated.
 
 Possible build configurations(-DCMAKE_BUILD_TYPE) with corresponding
 compiler flags
@@ -35,16 +40,15 @@ empty(default) :
 NOTE: -DCMAKE_BUILD_TYPE is optional. For multi-config generators like Visual Studio
 this option is ignored
 
-This process generates a Makefile(Linux/*BSD/MacOS) , Visual Studio solution(Windows) by default.
+This process generates a Makefile(Linux/*BSD/MacOS), Visual Studio solution(Windows) by default.
 Run `make` to build Git on Linux/*BSD/MacOS.
 Open git.sln on Windows and build Git.
 
-NOTE: By default CMake uses Makefile as the build tool on Linux and Visual Studio in Windows,
-to use another tool say `ninja` add this to the command line when configuring.
-`-G Ninja`
-
 NOTE: By default CMake will install vcpkg locally to your source tree on configuration,
 to avoid this, add `-DNO_VCPKG=TRUE` to the command line when configuring.
+
+The Visual Studio default generator changed in v16.6 from its Visual Studio
+implemenation to `Ninja` This required changes to many CMake scripts.
 
 ]]
 cmake_minimum_required(VERSION 3.14)
@@ -59,15 +63,29 @@ endif()
 
 if(NOT DEFINED CMAKE_EXPORT_COMPILE_COMMANDS)
 	set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
+	message("settting CMAKE_EXPORT_COMPILE_COMMANDS: ${CMAKE_EXPORT_COMPILE_COMMANDS}")
 endif()
 
 if(USE_VCPKG)
 	set(VCPKG_DIR "${CMAKE_SOURCE_DIR}/compat/vcbuild/vcpkg")
+	message("WIN32: ${WIN32}") # show its underlying text values
+	message("VCPKG_DIR: ${VCPKG_DIR}")
+	message("VCPKG_ARCH: ${VCPKG_ARCH}") # maybe unset
+	message("MSVC: ${MSVC}")
+	message("CMAKE_GENERATOR: ${CMAKE_GENERATOR}")
+	message("CMAKE_CXX_COMPILER_ID: ${CMAKE_CXX_COMPILER_ID}")
+	message("CMAKE_GENERATOR_PLATFORM: ${CMAKE_GENERATOR_PLATFORM}")
+	message("CMAKE_EXPORT_COMPILE_COMMANDS: ${CMAKE_EXPORT_COMPILE_COMMANDS}")
+	message("ENV(CMAKE_EXPORT_COMPILE_COMMANDS): $ENV{CMAKE_EXPORT_COMPILE_COMMANDS}")
 	if(NOT EXISTS ${VCPKG_DIR})
 		message("Initializing vcpkg and building the Git's dependencies (this will take a while...)")
-		execute_process(COMMAND ${CMAKE_SOURCE_DIR}/compat/vcbuild/vcpkg_install.bat)
+		execute_process(COMMAND ${CMAKE_SOURCE_DIR}/compat/vcbuild/vcpkg_install.bat ${VCPKG_ARCH})
 	endif()
-	list(APPEND CMAKE_PREFIX_PATH "${VCPKG_DIR}/installed/x64-windows")
+	if(NOT EXISTS ${VCPKG_ARCH})
+		message("VCPKG_ARCH: unset, using 'x64-windows'")
+		set(VCPKG_ARCH "x64-windows") # default from vcpkg_install.bat
+	endif()
+	list(APPEND CMAKE_PREFIX_PATH "${VCPKG_DIR}/installed/${VCPKG_ARCH}")
 
 	# In the vcpkg edition, we need this to be able to link to libcurl
 	set(CURL_NO_CURL_CMAKE ON)
@@ -208,11 +226,19 @@ if(CMAKE_C_COMPILER_ID STREQUAL "MSVC")
 	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR})
 	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR})
 	add_compile_options(/MP /std:c11)
+	add_link_options(/MANIFEST:NO)
 endif()
 
 #default behaviour
 include_directories(${CMAKE_SOURCE_DIR})
-add_compile_definitions(GIT_HOST_CPU="${CMAKE_SYSTEM_PROCESSOR}")
+
+# When cross-compiling, define HOST_CPU as the canonical name of the CPU on
+# which the built Git will run (for instance "x86_64").
+if(NOT HOST_CPU)
+	add_compile_definitions(GIT_HOST_CPU="${CMAKE_SYSTEM_PROCESSOR}")
+else()
+	add_compile_definitions(GIT_HOST_CPU="${HOST_CPU}")
+endif()
 add_compile_definitions(SHA256_BLK INTERNAL_QSORT RUNTIME_PREFIX)
 add_compile_definitions(NO_OPENSSL SHA1_DC SHA1DC_NO_STANDARD_INCLUDES
 			SHA1DC_INIT_SAFE_HASH_DEFAULT=0
@@ -256,7 +282,14 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 				_CONSOLE DETECT_MSYS_TTY STRIP_EXTENSION=".exe"  NO_SYMLINK_HEAD UNRELIABLE_FSTAT
 				NOGDI OBJECT_CREATION_MODE=1 __USE_MINGW_ANSI_STDIO=0
 				USE_NED_ALLOCATOR OVERRIDE_STRDUP MMAP_PREVENTS_DELETE USE_WIN32_MMAP
-				HAVE_WPGMPTR ENSURE_MSYSTEM_IS_SET HAVE_RTLGENRANDOM)
+				HAVE_WPGMPTR HAVE_RTLGENRANDOM)
+	if(CMAKE_GENERATOR_PLATFORM STREQUAL "x64")
+		add_compile_definitions(ENSURE_MSYSTEM_IS_SET="MINGW64" MINGW_PREFIX="mingw64")
+	elseif(CMAKE_GENERATOR_PLATFORM STREQUAL "arm64")
+		add_compile_definitions(ENSURE_MSYSTEM_IS_SET="CLANGARM64" MINGW_PREFIX="clangarm64")
+	elseif(CMAKE_GENERATOR_PLATFORM STREQUAL "x86")
+		add_compile_definitions(ENSURE_MSYSTEM_IS_SET="MINGW32" MINGW_PREFIX="mingw32")
+	endif()
 	list(APPEND compat_SOURCES
 		compat/mingw.c
 		compat/winansi.c
@@ -267,13 +300,17 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
 		compat/win32/syslog.c
 		compat/win32/trace2_win32_process_info.c
 		compat/win32/dirent.c
+		compat/win32/wsl.c
 		compat/nedmalloc/nedmalloc.c
-		compat/strdup.c)
+		compat/strdup.c
+		compat/win32/fscache.c)
 	set(NO_UNIX_SOCKETS 1)
 
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 	add_compile_definitions(PROCFS_EXECUTABLE_PATH="/proc/self/exe" HAVE_DEV_TTY )
 	list(APPEND compat_SOURCES unix-socket.c unix-stream-server.c compat/linux/procinfo.c)
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+	list(APPEND compat_SOURCES compat/darwin/procinfo.c)
 endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
@@ -409,10 +446,6 @@ endif()
 
 if(NOT HAVE_SETENV)
 	list(APPEND compat_SOURCES compat/setenv.c)
-endif()
-
-if(NOT HAVE_MKDTEMP)
-	list(APPEND compat_SOURCES compat/mkdtemp.c)
 endif()
 
 if(NOT HAVE_PREAD)
@@ -638,7 +671,7 @@ set(EXCLUSION_PROGS_CACHE ${EXCLUSION_PROGS} CACHE STRING "Programs not built" F
 if(NOT EXISTS ${CMAKE_BINARY_DIR}/command-list.h OR NOT EXCLUSION_PROGS_CACHE STREQUAL EXCLUSION_PROGS)
 	list(REMOVE_ITEM EXCLUSION_PROGS empty)
 	message("Generating command-list.h")
-	execute_process(COMMAND "${SH_EXE}" "${CMAKE_SOURCE_DIR}/generate-cmdlist.sh"
+	execute_process(COMMAND "${SH_EXE}" "${CMAKE_SOURCE_DIR}/tools/generate-cmdlist.sh"
 				${EXCLUSION_PROGS}
 				"${CMAKE_SOURCE_DIR}"
 				"${CMAKE_BINARY_DIR}/command-list.h")
@@ -646,14 +679,14 @@ endif()
 
 if(NOT EXISTS ${CMAKE_BINARY_DIR}/config-list.h)
 	message("Generating config-list.h")
-	execute_process(COMMAND "${SH_EXE}" "${CMAKE_SOURCE_DIR}/generate-configlist.sh"
+	execute_process(COMMAND "${SH_EXE}" "${CMAKE_SOURCE_DIR}/tools/generate-configlist.sh"
 				"${CMAKE_SOURCE_DIR}"
 				"${CMAKE_BINARY_DIR}/config-list.h")
 endif()
 
 if(NOT EXISTS ${CMAKE_BINARY_DIR}/hook-list.h)
 	message("Generating hook-list.h")
-	execute_process(COMMAND "${SH_EXE}" ${CMAKE_SOURCE_DIR}/generate-hooklist.sh
+	execute_process(COMMAND "${SH_EXE}" ${CMAKE_SOURCE_DIR}/tools/generate-hooklist.sh
 				"${CMAKE_SOURCE_DIR}"
 				"${CMAKE_BINARY_DIR}/hook-list.h")
 endif()
@@ -678,18 +711,6 @@ add_custom_command(OUTPUT "${CMAKE_BINARY_DIR}/version-def.h"
 list(APPEND libgit_SOURCES "${CMAKE_BINARY_DIR}/version-def.h")
 
 add_library(libgit ${libgit_SOURCES} ${compat_SOURCES})
-
-#libxdiff
-parse_makefile_for_sources(libxdiff_SOURCES ${CMAKE_SOURCE_DIR}/Makefile "XDIFF_OBJS")
-
-list(TRANSFORM libxdiff_SOURCES PREPEND "${CMAKE_SOURCE_DIR}/")
-add_library(xdiff STATIC ${libxdiff_SOURCES})
-
-#reftable
-parse_makefile_for_sources(reftable_SOURCES ${CMAKE_SOURCE_DIR}/Makefile "REFTABLE_OBJS")
-
-list(TRANSFORM reftable_SOURCES PREPEND "${CMAKE_SOURCE_DIR}/")
-add_library(reftable STATIC ${reftable_SOURCES})
 
 if(WIN32)
 	add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/git.rc
@@ -720,7 +741,7 @@ endif()
 #link all required libraries to common-main
 add_library(common-main OBJECT ${CMAKE_SOURCE_DIR}/common-main.c)
 
-target_link_libraries(common-main libgit xdiff reftable ${ZLIB_LIBRARIES})
+target_link_libraries(common-main libgit ${ZLIB_LIBRARIES})
 if(Intl_FOUND)
 	target_link_libraries(common-main ${Intl_LIBRARIES})
 endif()
@@ -745,6 +766,7 @@ if(WIN32)
 	endif()
 
 	add_executable(headless-git ${CMAKE_SOURCE_DIR}/compat/win32/headless.c)
+	list(APPEND PROGRAMS_BUILT headless-git)
 	if(CMAKE_C_COMPILER_ID STREQUAL "GNU" OR CMAKE_C_COMPILER_ID STREQUAL "Clang")
 		target_link_options(headless-git PUBLIC -municode -Wl,-subsystem,windows)
 	elseif(CMAKE_C_COMPILER_ID STREQUAL "MSVC")
@@ -846,11 +868,11 @@ foreach(script ${git_shell_scripts})
 	endif()
 
 	add_custom_command(OUTPUT "${CMAKE_BINARY_DIR}/${shell_gen_path}"
-		COMMAND "${SH_EXE}" "${CMAKE_SOURCE_DIR}/generate-script.sh"
+		COMMAND "${SH_EXE}" "${CMAKE_SOURCE_DIR}/tools/generate-script.sh"
 			"${CMAKE_SOURCE_DIR}/${script}.sh"
 			"${CMAKE_BINARY_DIR}/${shell_gen_path}"
 			"${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS"
-		DEPENDS "${CMAKE_SOURCE_DIR}/generate-script.sh"
+		DEPENDS "${CMAKE_SOURCE_DIR}/tools/generate-script.sh"
 			"${CMAKE_SOURCE_DIR}/${script}.sh"
 		VERBATIM)
 	list(APPEND shell_gen ${CMAKE_BINARY_DIR}/${shell_gen_path})
@@ -889,13 +911,13 @@ foreach(script ${git_perl_scripts} ${perl_modules})
 	file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/${perl_gen_dir}")
 
 	add_custom_command(OUTPUT "${CMAKE_BINARY_DIR}/${perl_gen_path}"
-		COMMAND "${SH_EXE}" "${CMAKE_SOURCE_DIR}/generate-perl.sh"
+		COMMAND "${SH_EXE}" "${CMAKE_SOURCE_DIR}/tools/generate-perl.sh"
 			"${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS"
 			"${CMAKE_BINARY_DIR}/GIT-VERSION-FILE"
 			"${CMAKE_BINARY_DIR}/GIT-PERL-HEADER"
 			"${CMAKE_SOURCE_DIR}/${script}"
 			"${CMAKE_BINARY_DIR}/${perl_gen_path}"
-		DEPENDS "${CMAKE_SOURCE_DIR}/generate-perl.sh"
+		DEPENDS "${CMAKE_SOURCE_DIR}/tools/generate-perl.sh"
 			"${CMAKE_SOURCE_DIR}/${script}"
 			"${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS"
 			"${CMAKE_BINARY_DIR}/GIT-VERSION-FILE"
@@ -906,11 +928,11 @@ add_custom_target(perl-gen ALL DEPENDS ${perl_gen})
 
 # Python script
 add_custom_command(OUTPUT "${CMAKE_BINARY_DIR}/git-p4"
-	COMMAND "${SH_EXE}" "${CMAKE_SOURCE_DIR}/generate-python.sh"
+	COMMAND "${SH_EXE}" "${CMAKE_SOURCE_DIR}/tools/generate-python.sh"
 		"${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS"
 		"${CMAKE_SOURCE_DIR}/git-p4.py"
 		"${CMAKE_BINARY_DIR}/git-p4"
-	DEPENDS "${CMAKE_SOURCE_DIR}/generate-python.sh"
+	DEPENDS "${CMAKE_SOURCE_DIR}/tools/generate-python.sh"
 		"${CMAKE_SOURCE_DIR}/git-p4.py"
 		"${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS"
 	VERBATIM)
@@ -945,7 +967,7 @@ list(TRANSFORM git_perl_scripts PREPEND "${CMAKE_BINARY_DIR}/")
 
 #install
 foreach(program ${PROGRAMS_BUILT})
-if(program MATCHES "^(git|git-shell|scalar)$")
+if(program MATCHES "^(git|git-shell|headless-git|scalar)$")
 install(TARGETS ${program}
 	RUNTIME DESTINATION bin)
 else()
@@ -1005,7 +1027,9 @@ parse_makefile_for_sources(clar-test_SOURCES ${CMAKE_SOURCE_DIR}/Makefile "CLAR_
 list(TRANSFORM clar-test_SOURCES REPLACE "\\$\\(UNIT_TEST_DIR\\)/" "${CMAKE_SOURCE_DIR}/t/unit-tests/")
 add_library(clar-test-lib STATIC ${clar-test_SOURCES})
 
-parse_makefile_for_scripts(unit_test_PROGRAMS "UNIT_TEST_PROGRAMS" "")
+file(GLOB unit_test_PROGRAMS "${CMAKE_SOURCE_DIR}/t/unit-tests/t-*.c")
+list(TRANSFORM unit_test_PROGRAMS REPLACE "${CMAKE_SOURCE_DIR}/" "")
+list(TRANSFORM unit_test_PROGRAMS REPLACE ".c" "")
 foreach(unit_test ${unit_test_PROGRAMS})
 	add_executable("${unit_test}" "${CMAKE_SOURCE_DIR}/t/unit-tests/${unit_test}.c")
 	target_link_libraries("${unit_test}" unit-test-lib clar-test-lib common-main)
@@ -1211,7 +1235,7 @@ string(REPLACE "@USE_LIBPCRE2@" "" git_build_options "${git_build_options}")
 string(REPLACE "@WITH_BREAKING_CHANGES@" "" git_build_options "${git_build_options}")
 string(REPLACE "@X@" "${EXE_EXTENSION}" git_build_options "${git_build_options}")
 if(USE_VCPKG)
-	string(APPEND git_build_options "PATH=\"$PATH:$TEST_DIRECTORY/../compat/vcbuild/vcpkg/installed/x64-windows/bin\"\n")
+	string(APPEND git_build_options "PATH=\"$PATH:$TEST_DIRECTORY/../compat/vcbuild/vcpkg/installed/${VCPKG_ARCH}/bin\"\n")
 endif()
 file(WRITE ${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS ${git_build_options})
 

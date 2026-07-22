@@ -114,16 +114,19 @@ static void display(struct progress *progress, uint64_t n, const char *done)
 	const char *tp;
 	struct strbuf *counters_sb = &progress->counters_sb;
 	int show_update = 0;
+	int update = !!progress_update;
 	int last_count_len = counters_sb->len;
 
-	if (progress->delay && (!progress_update || --progress->delay))
+	progress_update = 0;
+
+	if (progress->delay && (!update || --progress->delay))
 		return;
 
 	progress->last_value = n;
 	tp = (progress->throughput) ? progress->throughput->display.buf : "";
 	if (progress->total) {
 		unsigned percent = n * 100 / progress->total;
-		if (percent != progress->last_percent || progress_update) {
+		if (percent != progress->last_percent || update) {
 			progress->last_percent = percent;
 
 			strbuf_reset(counters_sb);
@@ -133,7 +136,7 @@ static void display(struct progress *progress, uint64_t n, const char *done)
 				    tp);
 			show_update = 1;
 		}
-	} else if (progress_update) {
+	} else if (update) {
 		strbuf_reset(counters_sb);
 		strbuf_addf(counters_sb, "%"PRIuMAX"%s", (uintmax_t)n, tp);
 		show_update = 1;
@@ -166,7 +169,6 @@ static void display(struct progress *progress, uint64_t n, const char *done)
 			}
 			fflush(stderr);
 		}
-		progress_update = 0;
 	}
 }
 
@@ -281,7 +283,7 @@ static int get_default_delay(void)
 	static int delay_in_secs = -1;
 
 	if (delay_in_secs < 0)
-		delay_in_secs = git_env_ulong("GIT_PROGRESS_DELAY", 2);
+		delay_in_secs = git_env_ulong("GIT_PROGRESS_DELAY", 1);
 
 	return delay_in_secs;
 }

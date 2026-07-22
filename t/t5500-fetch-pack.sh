@@ -154,7 +154,8 @@ test_expect_success 'clone shallow depth 1 with fsck' '
 '
 
 test_expect_success 'clone shallow' '
-	git clone --no-single-branch --depth 2 "file://$(pwd)/." shallow
+	git clone --no-single-branch --depth 2 "file://$(pwd)/." shallow &&
+	git -C shallow config set maintenance.auto false
 '
 
 test_expect_success 'clone shallow depth count' '
@@ -892,15 +893,20 @@ test_expect_success 'shallow since with commit graph and already-seen commit' '
 	test_commit other &&
 	git commit-graph write --reachable &&
 	git config core.commitGraph true &&
+	oid_algo=$(test_oid algo) &&
+	oid_other=$(git rev-parse other) &&
+	oid_main=$(git rev-parse main) &&
 
-	GIT_PROTOCOL=version=2 git upload-pack . <<-EOF >/dev/null
-	0012command=fetch
-	$(echo "object-format=$(test_oid algo)" | packetize)
-	00010013deepen-since 1
-	$(echo "want $(git rev-parse other)" | packetize)
-	$(echo "have $(git rev-parse main)" | packetize)
+	test-tool pkt-line pack >input <<-EOF &&
+	command=fetch
+	object-format=$oid_algo
+	0001
+	deepen-since 1
+	want $oid_other
+	have $oid_main
 	0000
 	EOF
+	GIT_PROTOCOL=version=2 git upload-pack . <input >/dev/null
 	)
 '
 
@@ -952,6 +958,29 @@ test_expect_success 'fetching deepen' '
 	two
 	EOF
 	test_cmp expected actual
+	)
+'
+
+test_expect_success 'fetching deepen beyond merged branch' '
+	test_create_repo shallow-deepen-merged &&
+	(
+		cd shallow-deepen-merged &&
+		git commit --allow-empty -m one &&
+		git commit --allow-empty -m two &&
+		git commit --allow-empty -m three &&
+		git switch -c branch &&
+		git commit --allow-empty -m four &&
+		git commit --allow-empty -m five &&
+		git switch main &&
+		git merge --no-ff branch &&
+		cd - &&
+		git clone --bare --depth 3 "file://$(pwd)/shallow-deepen-merged" deepen.git &&
+		git -C deepen.git fetch origin --deepen=1 &&
+		git -C deepen.git rev-list --all >actual &&
+		for commit in $(sed "/^$/d" deepen.git/shallow)
+		do
+			test_grep "$commit" actual || exit 1
+		done
 	)
 '
 

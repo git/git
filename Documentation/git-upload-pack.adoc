@@ -25,7 +25,8 @@ repository.  For push operations, see 'git send-pack'.
 OPTIONS
 -------
 
---[no-]strict::
+--strict::
+--no-strict::
 	Do not try <directory>/.git/ if <directory> is not a Git directory.
 
 --timeout=<n>::

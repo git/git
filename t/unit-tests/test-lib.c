@@ -396,8 +396,23 @@ int check_uint_loc(const char *loc, const char *check, int ok,
 static void print_one_char(char ch, char quote)
 {
 	if ((unsigned char)ch < 0x20u || ch == 0x7f) {
-		/* TODO: improve handling of \a, \b, \f ... */
-		printf("\\%03o", (unsigned char)ch);
+		char esc;
+		switch (ch) {
+		case '\a': esc = 'a'; break;
+		case '\b': esc = 'b'; break;
+		case '\t': esc = 't'; break;
+		case '\n': esc = 'n'; break;
+		case '\v': esc = 'v'; break;
+		case '\f': esc = 'f'; break;
+		case '\r': esc = 'r'; break;
+		default: esc = 0; break;
+		}
+		if (esc) {
+			putc('\\', stdout);
+			putc(esc, stdout);
+		} else {
+			printf("\\%03o", (unsigned char)ch);
+		}
 	} else {
 		if (ch == '\\' || ch == quote)
 			putc('\\', stdout);

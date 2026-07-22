@@ -29,7 +29,7 @@ static unsigned int parse_flags(const char *str, struct flag_definition *defs)
 	if (!strcmp(str, "0"))
 		return 0;
 
-	string_list_split(&masks, str, ',', 64);
+	string_list_split(&masks, str, ",", 64);
 	for (size_t i = 0; i < masks.nr; i++) {
 		const char *name = masks.items[i].string;
 		struct flag_definition *def = defs;
@@ -154,27 +154,31 @@ static int cmd_rename_ref(struct ref_store *refs, const char **argv)
 	return refs_rename_ref(refs, oldref, newref, logmsg);
 }
 
-static int each_ref(const char *refname, const char *referent UNUSED, const struct object_id *oid,
-		    int flags, void *cb_data UNUSED)
+static int each_ref(const struct reference *ref, void *cb_data UNUSED)
 {
-	printf("%s %s 0x%x\n", oid_to_hex(oid), refname, flags);
+	printf("%s %s 0x%x\n", oid_to_hex(ref->oid), ref->name, ref->flags);
 	return 0;
 }
 
 static int cmd_for_each_ref(struct ref_store *refs, const char **argv)
 {
 	const char *prefix = notnull(*argv++, "prefix");
-
-	return refs_for_each_ref_in(refs, prefix, each_ref, NULL);
+	struct refs_for_each_ref_options opts = {
+		.prefix = prefix,
+		.trim_prefix = strlen(prefix),
+	};
+	return refs_for_each_ref_ext(refs, each_ref, NULL, &opts);
 }
 
 static int cmd_for_each_ref__exclude(struct ref_store *refs, const char **argv)
 {
 	const char *prefix = notnull(*argv++, "prefix");
-	const char **exclude_patterns = argv;
+	struct refs_for_each_ref_options opts = {
+		.prefix = prefix,
+		.exclude_patterns = argv,
+	};
 
-	return refs_for_each_fullref_in(refs, prefix, exclude_patterns, each_ref,
-					NULL);
+	return refs_for_each_ref_ext(refs, each_ref, NULL, &opts);
 }
 
 static int cmd_resolve_ref(struct ref_store *refs, const char **argv)
@@ -215,7 +219,8 @@ static int cmd_for_each_reflog(struct ref_store *refs,
 	return refs_for_each_reflog(refs, each_reflog, NULL);
 }
 
-static int each_reflog_ent(struct object_id *old_oid, struct object_id *new_oid,
+static int each_reflog_ent(const char *refname UNUSED,
+			   struct object_id *old_oid, struct object_id *new_oid,
 			   const char *committer, timestamp_t timestamp,
 			   int tz, const char *msg, void *cb_data UNUSED)
 {

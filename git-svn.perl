@@ -305,6 +305,19 @@ sub term_init {
 			: new Term::ReadLine 'git-svn';
 }
 
+sub deprecated_warning {
+    my @lines = @_;
+    if (-t STDERR) {
+        @lines = map { "\e[33m$_\e[0m" } @lines;
+    }
+    warn join("\n", @lines), "\n";
+}
+
+deprecated_warning(
+	"WARNING: \`git svn\` is no longer supported by the Git for Windows project.",
+	"See https://github.com/git-for-windows/git/issues/5405 for details."
+);
+
 my $cmd;
 for (my $i = 0; $i < @ARGV; $i++) {
 	if (defined $cmd{$ARGV[$i]}) {

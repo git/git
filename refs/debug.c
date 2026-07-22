@@ -1,7 +1,6 @@
 #include "git-compat-util.h"
 #include "hex.h"
 #include "refs-internal.h"
-#include "string-list.h"
 #include "trace.h"
 
 static struct trace_key trace_refs = TRACE_KEY_INIT(REFS);
@@ -45,6 +44,14 @@ static int debug_create_on_disk(struct ref_store *refs, int flags, struct strbuf
 	struct debug_ref_store *drefs = (struct debug_ref_store *)refs;
 	int res = drefs->refs->be->create_on_disk(drefs->refs, flags, err);
 	trace_printf_key(&trace_refs, "create_on_disk: %d\n", res);
+	return res;
+}
+
+static int debug_remove_on_disk(struct ref_store *refs, struct strbuf *err)
+{
+	struct debug_ref_store *drefs = (struct debug_ref_store *)refs;
+	int res = drefs->refs->be->remove_on_disk(drefs->refs, err);
+	trace_printf_key(&trace_refs, "remove_on_disk: %d\n", res);
 	return res;
 }
 
@@ -117,11 +124,22 @@ static int debug_transaction_abort(struct ref_store *refs,
 	return res;
 }
 
-static int debug_pack_refs(struct ref_store *ref_store, struct pack_refs_opts *opts)
+static int debug_optimize(struct ref_store *ref_store, struct refs_optimize_opts *opts)
 {
 	struct debug_ref_store *drefs = (struct debug_ref_store *)ref_store;
-	int res = drefs->refs->be->pack_refs(drefs->refs, opts);
-	trace_printf_key(&trace_refs, "pack_refs: %d\n", res);
+	int res = drefs->refs->be->optimize(drefs->refs, opts);
+	trace_printf_key(&trace_refs, "optimize: %d\n", res);
+	return res;
+}
+
+static int debug_optimize_required(struct ref_store *ref_store,
+				   struct refs_optimize_opts *opts,
+				   bool *required)
+{
+	struct debug_ref_store *drefs = (struct debug_ref_store *)ref_store;
+	int res = drefs->refs->be->optimize_required(drefs->refs, opts, required);
+	trace_printf_key(&trace_refs, "optimize_required: %s, res: %d\n",
+			 *required ? "yes" : "no", res);
 	return res;
 }
 
@@ -161,31 +179,20 @@ static int debug_ref_iterator_advance(struct ref_iterator *ref_iterator)
 		trace_printf_key(&trace_refs, "iterator_advance: (%d)\n", res);
 	else
 		trace_printf_key(&trace_refs, "iterator_advance: %s (0)\n",
-			diter->iter->refname);
+			diter->iter->ref.name);
 
-	diter->base.refname = diter->iter->refname;
-	diter->base.oid = diter->iter->oid;
-	diter->base.flags = diter->iter->flags;
+	diter->base.ref = diter->iter->ref;
 	return res;
 }
 
 static int debug_ref_iterator_seek(struct ref_iterator *ref_iterator,
-				   const char *prefix)
+				   const char *refname, unsigned int flags)
 {
 	struct debug_ref_iterator *diter =
 		(struct debug_ref_iterator *)ref_iterator;
-	int res = diter->iter->vtable->seek(diter->iter, prefix);
-	trace_printf_key(&trace_refs, "iterator_seek: %s: %d\n", prefix ? prefix : "", res);
-	return res;
-}
-
-static int debug_ref_iterator_peel(struct ref_iterator *ref_iterator,
-				   struct object_id *peeled)
-{
-	struct debug_ref_iterator *diter =
-		(struct debug_ref_iterator *)ref_iterator;
-	int res = diter->iter->vtable->peel(diter->iter, peeled);
-	trace_printf_key(&trace_refs, "iterator_peel: %s: %d\n", diter->iter->refname, res);
+	int res = diter->iter->vtable->seek(diter->iter, refname, flags);
+	trace_printf_key(&trace_refs, "iterator_seek: %s flags: %d: %d\n",
+			 refname ? refname : "", flags, res);
 	return res;
 }
 
@@ -200,7 +207,6 @@ static void debug_ref_iterator_release(struct ref_iterator *ref_iterator)
 static struct ref_iterator_vtable debug_ref_iterator_vtable = {
 	.advance = debug_ref_iterator_advance,
 	.seek = debug_ref_iterator_seek,
-	.peel = debug_ref_iterator_peel,
 	.release = debug_ref_iterator_release,
 };
 
@@ -276,7 +282,8 @@ struct debug_reflog {
 	void *cb_data;
 };
 
-static int debug_print_reflog_ent(struct object_id *old_oid,
+static int debug_print_reflog_ent(const char *refname,
+				  struct object_id *old_oid,
 				  struct object_id *new_oid,
 				  const char *committer, timestamp_t timestamp,
 				  int tz, const char *msg, void *cb_data)
@@ -291,7 +298,7 @@ static int debug_print_reflog_ent(struct object_id *old_oid,
 	if (new_oid)
 		oid_to_hex_r(n, new_oid);
 
-	ret = dbg->fn(old_oid, new_oid, committer, timestamp, tz, msg,
+	ret = dbg->fn(refname, old_oid, new_oid, committer, timestamp, tz, msg,
 		      dbg->cb_data);
 	trace_printf_key(&trace_refs,
 			 "reflog_ent %s (ret %d): %s -> %s, %s %ld \"%.*s\"\n",
@@ -431,6 +438,7 @@ struct ref_storage_be refs_be_debug = {
 	.init = NULL,
 	.release = debug_release,
 	.create_on_disk = debug_create_on_disk,
+	.remove_on_disk = debug_remove_on_disk,
 
 	/*
 	 * None of these should be NULL. If the "files" backend (in
@@ -442,7 +450,9 @@ struct ref_storage_be refs_be_debug = {
 	.transaction_finish = debug_transaction_finish,
 	.transaction_abort = debug_transaction_abort,
 
-	.pack_refs = debug_pack_refs,
+	.optimize = debug_optimize,
+	.optimize_required = debug_optimize_required,
+
 	.rename_ref = debug_rename_ref,
 	.copy_ref = debug_copy_ref,
 

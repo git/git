@@ -112,7 +112,7 @@ int cmd_ls_remote(int argc,
 	 * depending on what object hash the remote uses.
 	 */
 	if (!the_repository->hash_algo)
-		repo_set_hash_algo(the_repository, GIT_HASH_SHA1);
+		repo_set_hash_algo(the_repository, GIT_HASH_DEFAULT);
 
 	packet_trace_identity("ls-remote");
 
@@ -156,7 +156,7 @@ int cmd_ls_remote(int argc,
 			continue;
 		if (!tail_match(&pattern, ref->name))
 			continue;
-		item = ref_array_push(&ref_array, ref->name, &ref->old_oid);
+		item = ref_array_push(&ref_array, ref->name, &ref->old_oid, NULL);
 		item->symref = xstrdup_or_null(ref->symref);
 	}
 

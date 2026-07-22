@@ -77,7 +77,6 @@ static struct string_list option_required_reference = STRING_LIST_INIT_NODUP;
 static struct string_list option_optional_reference = STRING_LIST_INIT_NODUP;
 static int max_jobs = -1;
 static struct string_list option_recurse_submodules = STRING_LIST_INIT_NODUP;
-static struct list_objects_filter_options filter_options = LIST_OBJECTS_FILTER_INIT;
 static int config_filter_submodules = -1;    /* unspecified */
 static int option_remote_submodules;
 
@@ -617,13 +616,15 @@ static int git_sparse_checkout_init(const char *repo)
 {
 	struct child_process cmd = CHILD_PROCESS_INIT;
 	int result = 0;
+	struct repo_config_values *cfg = repo_config_values(the_repository);
+
 	strvec_pushl(&cmd.args, "-C", repo, "sparse-checkout", "set", NULL);
 
 	/*
 	 * We must apply the setting in the current process
 	 * for the later checkout to use the sparse-checkout file.
 	 */
-	core_apply_sparse_checkout = 1;
+	cfg->apply_sparse_checkout = 1;
 
 	cmd.git_cmd = 1;
 	if (run_command(&cmd)) {
@@ -634,7 +635,9 @@ static int git_sparse_checkout_init(const char *repo)
 	return result;
 }
 
-static int checkout(int submodule_progress, int filter_submodules,
+static int checkout(int submodule_progress,
+		    struct list_objects_filter_options *filter_options,
+		    int filter_submodules,
 		    enum ref_storage_format ref_storage_format)
 {
 	struct object_id oid;
@@ -680,10 +683,10 @@ static int checkout(int submodule_progress, int filter_submodules,
 	opts.dst_index = the_repository->index;
 	init_checkout_metadata(&opts.meta, head, &oid, NULL);
 
-	tree = parse_tree_indirect(&oid);
+	tree = repo_parse_tree_indirect(the_repository, &oid);
 	if (!tree)
 		die(_("unable to parse commit %s"), oid_to_hex(&oid));
-	if (parse_tree(tree) < 0)
+	if (repo_parse_tree(the_repository, tree) < 0)
 		exit(128);
 	init_tree_desc(&t, &tree->object.oid, tree->buffer, tree->size);
 	if (unpack_trees(1, &t, &opts) < 0)
@@ -723,9 +726,9 @@ static int checkout(int submodule_progress, int filter_submodules,
 			strvec_pushf(&cmd.args, "--ref-format=%s",
 				     ref_storage_format_to_name(ref_storage_format));
 
-		if (filter_submodules && filter_options.choice)
+		if (filter_submodules && filter_options->choice)
 			strvec_pushf(&cmd.args, "--filter=%s",
-				     expand_list_objects_filter_spec(&filter_options));
+				     expand_list_objects_filter_spec(filter_options));
 
 		if (option_single_branch >= 0)
 			strvec_push(&cmd.args, option_single_branch ?
@@ -762,16 +765,16 @@ static int write_one_config(const char *key, const char *value,
 {
 	/*
 	 * give git_clone_config a chance to write config values back to the
-	 * environment, since git_config_set_multivar_gently only deals with
+	 * environment, since repo_config_set_multivar_gently only deals with
 	 * config-file writes
 	 */
 	int apply_failed = git_clone_config(key, value, ctx, data);
 	if (apply_failed)
 		return apply_failed;
 
-	return git_config_set_multivar_gently(key,
-					      value ? value : "true",
-					      CONFIG_REGEX_NONE, 0);
+	return repo_config_set_multivar_gently(the_repository, key,
+					       value ? value : "true",
+					       CONFIG_REGEX_NONE, 0);
 }
 
 static void write_config(struct string_list *config)
@@ -822,12 +825,12 @@ static void write_refspec_config(const char *src_ref_prefix,
 		/* Configure the remote */
 		if (value.len) {
 			strbuf_addf(&key, "remote.%s.fetch", remote_name);
-			git_config_set_multivar(key.buf, value.buf, "^$", 0);
+			repo_config_set_multivar(the_repository, key.buf, value.buf, "^$", 0);
 			strbuf_reset(&key);
 
 			if (option_mirror) {
 				strbuf_addf(&key, "remote.%s.mirror", remote_name);
-				git_config_set(key.buf, "true");
+				repo_config_set(the_repository, key.buf, "true");
 				strbuf_reset(&key);
 			}
 		}
@@ -903,6 +906,7 @@ int cmd_clone(int argc,
 	enum transport_family family = TRANSPORT_FAMILY_ALL;
 	struct string_list option_config = STRING_LIST_INIT_DUP;
 	int option_dissociate = 0;
+	struct list_objects_filter_options filter_options = LIST_OBJECTS_FILTER_INIT;
 	int option_filter_submodules = -1; /* unspecified */
 	struct string_list server_options = STRING_LIST_INIT_NODUP;
 	const char *bundle_uri = NULL;
@@ -999,9 +1003,11 @@ int cmd_clone(int argc,
 		NULL
 	};
 
+	filter_options.allow_auto_filter = 1;
+
 	packet_trace_identity("clone");
 
-	git_config(git_clone_config, NULL);
+	repo_config(the_repository, git_clone_config, NULL);
 
 	argc = parse_options(argc, argv, prefix, builtin_clone_options,
 			     builtin_clone_usage, 0);
@@ -1136,8 +1142,7 @@ int cmd_clone(int argc,
 		int val;
 
 		/* remove duplicates */
-		string_list_sort(&option_recurse_submodules);
-		string_list_remove_duplicates(&option_recurse_submodules, 0);
+		string_list_sort_u(&option_recurse_submodules, 0);
 
 		/*
 		 * NEEDSWORK: In a multi-working-tree world, this needs to be
@@ -1150,7 +1155,7 @@ int cmd_clone(int argc,
 			strbuf_reset(&sb);
 		}
 
-		if (!git_config_get_bool("submodule.stickyRecursiveClone", &val) &&
+		if (!repo_config_get_bool(the_repository, "submodule.stickyRecursiveClone", &val) &&
 		    val)
 			string_list_append(&option_config, "submodule.recurse=true");
 
@@ -1225,12 +1230,7 @@ int cmd_clone(int argc,
 	initialize_repository_version(GIT_HASH_UNKNOWN,
 				      the_repository->ref_storage_format, 1);
 
-	strbuf_addf(&buf, "%s/HEAD", git_dir);
-	write_file(buf.buf, "ref: refs/heads/.invalid");
-
-	strbuf_reset(&buf);
-	strbuf_addf(&buf, "%s/refs", git_dir);
-	safe_create_dir(the_repository, buf.buf, 1);
+	refs_create_refdir_stubs(the_repository, git_dir, NULL);
 
 	/*
 	 * additional config can be injected with -c, make sure it's included
@@ -1242,7 +1242,7 @@ int cmd_clone(int argc,
 	 * re-read config after init_db and write_config to pick up any config
 	 * injected by --template and --config, respectively.
 	 */
-	git_config(git_clone_config, NULL);
+	repo_config(the_repository, git_clone_config, NULL);
 
 	/*
 	 * If option_reject_shallow is specified from CLI option,
@@ -1294,18 +1294,18 @@ int cmd_clone(int argc,
 			src_ref_prefix = "refs/";
 		strbuf_addstr(&branch_top, src_ref_prefix);
 
-		git_config_set("core.bare", "true");
+		repo_config_set(the_repository, "core.bare", "true");
 	} else if (!option_rev) {
 		strbuf_addf(&branch_top, "refs/remotes/%s/", remote_name);
 	}
 
 	strbuf_addf(&key, "remote.%s.url", remote_name);
-	git_config_set(key.buf, repo);
+	repo_config_set(the_repository, key.buf, repo);
 	strbuf_reset(&key);
 
 	if (!option_tags) {
 		strbuf_addf(&key, "remote.%s.tagOpt", remote_name);
-		git_config_set(key.buf, "--no-tags");
+		repo_config_set(the_repository, key.buf, "--no-tags");
 		strbuf_reset(&key);
 	}
 
@@ -1442,7 +1442,7 @@ int cmd_clone(int argc,
 	hash_algo = hash_algo_by_ptr(transport_get_hash_algo(transport));
 	initialize_repository_version(hash_algo, the_repository->ref_storage_format, 1);
 	repo_set_hash_algo(the_repository, hash_algo);
-	create_reference_database(the_repository->ref_storage_format, NULL, 1);
+	create_reference_database(NULL, 1);
 
 	/*
 	 * Before fetching from the remote, download and install bundle
@@ -1467,7 +1467,7 @@ int cmd_clone(int argc,
 			warning(_("failed to fetch objects from bundle URI '%s'"),
 				bundle_uri);
 		else if (has_heuristic)
-			git_config_set_gently("fetch.bundleuri", bundle_uri);
+			repo_config_set_gently(the_repository, "fetch.bundleuri", bundle_uri);
 
 		remote_state_clear(the_repository->remote_state);
 		free(the_repository->remote_state);
@@ -1617,7 +1617,7 @@ int cmd_clone(int argc,
 	transport_disconnect(transport);
 
 	if (option_dissociate) {
-		close_object_store(the_repository->objects);
+		odb_close(the_repository->objects);
 		dissociate_from_references();
 	}
 
@@ -1625,8 +1625,12 @@ int cmd_clone(int argc,
 		return 1;
 
 	junk_mode = JUNK_LEAVE_REPO;
-	err = checkout(submodule_progress, filter_submodules,
+	err = checkout(submodule_progress,
+		       &filter_options,
+		       filter_submodules,
 		       ref_storage_format);
+
+	list_objects_filter_release(&filter_options);
 
 	string_list_clear(&option_not, 0);
 	string_list_clear(&option_config, 0);

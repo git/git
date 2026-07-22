@@ -524,12 +524,11 @@ static void filter_sparse_oid__init(
 	struct filter *filter)
 {
 	struct filter_sparse_data *d = xcalloc(1, sizeof(*d));
-	struct object_context oc;
 	struct object_id sparse_oid;
 
-	if (get_oid_with_context(the_repository,
-				 filter_options->sparse_oid_name,
-				 GET_OID_BLOB, &sparse_oid, &oc))
+	if (repo_get_oid_with_flags(the_repository,
+				    filter_options->sparse_oid_name,
+				    &sparse_oid, GET_OID_BLOB))
 		die(_("unable to access sparse blob in '%s'"),
 		    filter_options->sparse_oid_name);
 	if (add_patterns_from_blob_to_list(&sparse_oid, "", 0, &d->pl) < 0)
@@ -544,8 +543,6 @@ static void filter_sparse_oid__init(
 	filter->filter_data = d;
 	filter->filter_object_fn = filter_sparse;
 	filter->free_fn = filter_sparse_free;
-
-	object_context_release(&oc);
 }
 
 /*
@@ -748,6 +745,13 @@ static void filter_combine__init(
 	filter->finalize_omits_fn = filter_combine__finalize_omits;
 }
 
+static void filter_auto__init(
+	struct list_objects_filter_options *filter_options UNUSED,
+	struct filter *filter UNUSED)
+{
+	BUG("LOFC_AUTO should have been resolved before initializing the filter");
+}
+
 typedef void (*filter_init_fn)(
 	struct list_objects_filter_options *filter_options,
 	struct filter *filter);
@@ -763,6 +767,7 @@ static filter_init_fn s_filters[] = {
 	filter_sparse_oid__init,
 	filter_object_type__init,
 	filter_combine__init,
+	filter_auto__init,
 };
 
 struct filter *list_objects_filter__init(

@@ -172,9 +172,15 @@ void string_list_remove_empty_items(struct string_list *list, int free_util);
 /* Use these functions only on sorted lists: */
 
 /** Determine if the string_list has a given string or not. */
-int string_list_has_string(const struct string_list *list, const char *string);
-int string_list_find_insert_index(const struct string_list *list, const char *string,
-				  int negative_existing_index);
+bool string_list_has_string(const struct string_list *list, const char *string);
+
+/**
+ * Find the index at which a new element should be inserted into the
+ * string_list to maintain sorted order. If exact_match is not NULL,
+ * it will be set to true if the string already exists in the list.
+ */
+size_t string_list_find_insert_index(const struct string_list *list, const char *string,
+				     bool *exact_match);
 
 /**
  * Insert a new element to the string_list. The returned pointer can
@@ -234,6 +240,12 @@ struct string_list_item *string_list_append_nodup(struct string_list *list, char
 void string_list_sort(struct string_list *list);
 
 /**
+ * Sort the list and then remove duplicate entries.  If free_util is true,
+ * call free() on the util members of any items that have to be deleted.
+ */
+void string_list_sort_u(struct string_list *list, int free_util);
+
+/**
  * Like `string_list_has_string()` but for unsorted lists. Linear in
  * size of the list.
  */
@@ -254,7 +266,7 @@ struct string_list_item *unsorted_string_list_lookup(struct string_list *list,
 void unsorted_string_list_delete_item(struct string_list *list, int i, int free_util);
 
 /**
- * Split string into substrings on character `delim` and append the
+ * Split string into substrings on characters in `delim` and append the
  * substrings to `list`.  The input string is not modified.
  * list->strdup_strings must be set, as new memory needs to be
  * allocated to hold the substrings.  If maxsplit is non-negative,
@@ -262,15 +274,15 @@ void unsorted_string_list_delete_item(struct string_list *list, int i, int free_
  * appended to list.
  *
  * Examples:
- *   string_list_split(l, "foo:bar:baz", ':', -1) -> ["foo", "bar", "baz"]
- *   string_list_split(l, "foo:bar:baz", ':', 0) -> ["foo:bar:baz"]
- *   string_list_split(l, "foo:bar:baz", ':', 1) -> ["foo", "bar:baz"]
- *   string_list_split(l, "foo:bar:", ':', -1) -> ["foo", "bar", ""]
- *   string_list_split(l, "", ':', -1) -> [""]
- *   string_list_split(l, ":", ':', -1) -> ["", ""]
+ *   string_list_split(l, "foo:bar:baz", ":", -1) -> ["foo", "bar", "baz"]
+ *   string_list_split(l, "foo:bar:baz", ":", 0) -> ["foo:bar:baz"]
+ *   string_list_split(l, "foo:bar:baz", ":", 1) -> ["foo", "bar:baz"]
+ *   string_list_split(l, "foo:bar:", ":", -1) -> ["foo", "bar", ""]
+ *   string_list_split(l, "", ":", -1) -> [""]
+ *   string_list_split(l, ":", ":", -1) -> ["", ""]
  */
 int string_list_split(struct string_list *list, const char *string,
-		      int delim, int maxsplit);
+		      const char *delim, int maxsplit);
 
 /*
  * Like string_list_split(), except that string is split in-place: the
@@ -281,4 +293,21 @@ int string_list_split(struct string_list *list, const char *string,
  */
 int string_list_split_in_place(struct string_list *list, char *string,
 			       const char *delim, int maxsplit);
+
+/* Flag bits for split_f and split_in_place_f functions */
+enum {
+	/*
+	 * trim whitespaces around resulting string piece before adding
+	 * it to the list
+	 */
+	STRING_LIST_SPLIT_TRIM = (1 << 0),
+	/* omit adding empty string piece to the resulting list */
+	STRING_LIST_SPLIT_NONEMPTY = (1 << 1),
+};
+
+int string_list_split_f(struct string_list *, const char *string,
+			const char *delim, int maxsplit, unsigned flags);
+
+int string_list_split_in_place_f(struct string_list *, char *string,
+				 const char *delim, int maxsplit, unsigned flags);
 #endif /* STRING_LIST_H */

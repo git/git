@@ -13,7 +13,8 @@
 #    *) git email aliases for git-send-email
 #    *) tree paths within 'ref:path/to/file' expressions
 #    *) file paths within current working directory and index
-#    *) common --long-options
+#    *) common --long-options but not single-letter options
+#    *) arguments to long and single-letter options
 #
 # To use these routines:
 #
@@ -2218,7 +2219,7 @@ __git_log_gitk_options="
 "
 # Options that go well for log and shortlog (not gitk)
 __git_log_shortlog_options="
-	--author= --committer= --grep=
+	--author= --grep= --exclude=
 	--all-match --invert-grep
 "
 # Options accepted by log and show
@@ -2296,6 +2297,7 @@ __git_complete_log_opts ()
 			$__git_log_shortlog_options
 			$__git_log_gitk_options
 			$__git_log_show_options
+			--committer=
 			--root --topo-order --date-order --reverse
 			--follow --full-diff
 			--abbrev-commit --no-abbrev-commit --abbrev=
@@ -3229,7 +3231,7 @@ _git_shortlog ()
 		__gitcomp "
 			$__git_log_common_options
 			$__git_log_shortlog_options
-			--numbered --summary --email
+			--committer --numbered --summary --email
 			"
 		return
 		;;
@@ -3463,7 +3465,7 @@ _git_sparse_checkout ()
 
 _git_stash ()
 {
-	local subcommands='push list show apply clear drop pop create branch'
+	local subcommands='push list show apply clear drop pop create branch import export'
 	local subcommand="$(__git_find_on_cmdline "$subcommands save")"
 
 	if [ -z "$subcommand" ]; then
@@ -3489,6 +3491,9 @@ _git_stash ()
 	show,--*)
 		__gitcomp_builtin stash_show "$__git_diff_common_options"
 		;;
+	export,--*)
+		__gitcomp_builtin stash_export "--print --to-ref"
+		;;
 	*,--*)
 		__gitcomp_builtin "stash_$subcommand"
 		;;
@@ -3500,7 +3505,10 @@ _git_stash ()
 					| sed -n -e 's/:.*//p')"
 		fi
 		;;
-	show,*|apply,*|drop,*|pop,*)
+	import,*)
+		__git_complete_refs
+		;;
+	show,*|apply,*|drop,*|pop,*|export,*)
 		__gitcomp_nl "$(__git stash list \
 				| sed -n -e 's/:.*//p')"
 		;;

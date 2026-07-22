@@ -1,0 +1,79 @@
+Loaded 1 suites:
+Started (test status codes: OK='.' FAILURE='F' SKIPPED='S')
+FFFFFFFFFFFFFFF
+
+  1) Failure:
+combined::1 [file:42]
+  Function call failed: -1
+
+  2) Failure:
+combined::2 [file:42]
+  Expression is not true: 100 == 101
+
+  3) Failure:
+combined::strings [file:42]
+  String mismatch: "mismatched" != actual ("this one fails")
+  'mismatched' != 'expected' (at byte 0)
+
+  4) Failure:
+combined::strings_with_length [file:42]
+  String mismatch: "exactly" != actual ("this one fails")
+  'exa' != 'exp' (at byte 2)
+
+  5) Failure:
+combined::int [file:42]
+  Expected comparison to hold: 101 == value
+  101 != 100
+
+  6) Failure:
+combined::int_note [file:42]
+  Expected comparison to hold: 101 == value
+  extra note on failing test
+
+  7) Failure:
+combined::int_fmt [file:42]
+  Expected comparison to hold: 022 == value
+  0022 != 0144
+
+  8) Failure:
+combined::bool [file:42]
+  0 != value
+  0 != 1
+
+  9) Failure:
+combined::multiline_description [file:42]
+  Function call failed: -1
+  description line 1
+  description line 2
+
+  10) Failure:
+combined::null_string [file:42]
+  String mismatch: "expected" != actual ("this one fails")
+  'expected' != NULL
+
+  11) Failure:
+combined::failf [file:42]
+  Test failed.
+  some reason: foo
+
+  12) Failure:
+combined::compare_i [file:42]
+  Expected comparison to hold: two < 1
+  2 >= 1
+
+  13) Failure:
+combined::compare_i_with_format [file:42]
+  Expected comparison to hold: two < 1
+  foo: bar
+
+  14) Failure:
+combined::compare_u [file:42]
+  Expected comparison to hold: two < 1
+  2 >= 1
+
+  15) Failure:
+combined::compare_u_with_format [file:42]
+  Expected comparison to hold: two < 1
+  foo: bar
+
+written summary file to summary.xml

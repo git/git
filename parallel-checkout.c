@@ -13,7 +13,7 @@
 #include "read-cache-ll.h"
 #include "run-command.h"
 #include "sigchain.h"
-#include "streaming.h"
+#include "odb/streaming.h"
 #include "symlinks.h"
 #include "thread-utils.h"
 #include "trace2.h"
@@ -57,12 +57,12 @@ void get_parallel_checkout_configs(int *num_workers, int *threshold)
 		return;
 	}
 
-	if (git_config_get_int("checkout.workers", num_workers))
+	if (repo_config_get_int(the_repository, "checkout.workers", num_workers))
 		*num_workers = DEFAULT_NUM_WORKERS;
 	else if (*num_workers < 1)
 		*num_workers = online_cpus();
 
-	if (git_config_get_int("checkout.thresholdForParallelism", threshold))
+	if (repo_config_get_int(the_repository, "checkout.thresholdForParallelism", threshold))
 		*threshold = DEFAULT_THRESHOLD_FOR_PARALLELISM;
 }
 
@@ -281,7 +281,8 @@ static int write_pc_item_to_fd(struct parallel_checkout_item *pc_item, int fd,
 
 	filter = get_stream_filter_ca(&pc_item->ca, &pc_item->ce->oid);
 	if (filter) {
-		if (stream_blob_to_fd(fd, &pc_item->ce->oid, filter, 1)) {
+		if (odb_stream_blob_to_fd(the_repository->objects, fd,
+					  &pc_item->ce->oid, filter, 1)) {
 			/* On error, reset fd to try writing without streaming */
 			if (reset_fd(fd, path))
 				return -1;
@@ -639,6 +640,7 @@ static void write_items_sequentially(struct checkout *state)
 {
 	size_t i;
 
+	flush_fscache();
 	for (i = 0; i < parallel_checkout.nr; i++) {
 		struct parallel_checkout_item *pc_item = &parallel_checkout.items[i];
 		write_pc_item(pc_item, state);

@@ -483,10 +483,6 @@ test_expect_success 'combine:... with non-encoded reserved chars' '
 		"must escape char in sub-filter-spec: .\~."
 '
 
-test_expect_success 'validate err msg for "combine:<valid-filter>+"' '
-	expect_invalid_filter_spec combine:tree:2+ "expected .tree:<depth>."
-'
-
 test_expect_success 'combine:... with edge-case hex digits: Ff Aa 0 9' '
 	git -C r3 rev-list --objects --filter="combine:tree:2+bl%6Fb:n%6fne" \
 		HEAD >actual &&

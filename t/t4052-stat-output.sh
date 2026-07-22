@@ -413,4 +413,36 @@ test_expect_success 'merge --stat respects COLUMNS with long name' '
 	test_cmp expect actual
 '
 
+# We want git-log to print only 1 commit containing a single branch graph and a
+# diffstat (the diffstat display width, when not manually set through the
+# option "--stat-width", will be automatically calculated).
+# The diffstat will be only one file, with a placeholder FILENAME, that, with
+# enough terminal display width, will contain the following line:
+#     "<RED>|<RESET>  ${FILENAME} | 0"
+# where "<RED>" and "<RESET>" are ANSI escape codes to color the text.
+# To calculate the minimium terminal display width MIN_TERM_WIDTH so that the
+# FILENAME in the diffstat will not be shortened, we take the FILENAME length
+# and add 9 to it.
+# To check if the diffstat width, when the line_prefix (the "<RED>|<RESET>" of
+# the graph) contains ANSI escape codes (the ANSI escape codes to color the
+# text), is calculated correctly, we:
+#     1. check if it contains the line defined before when using MIN_TERM_WIDTH
+#     2. check if it contains the line defined before, but with the FILENAME
+#        shortened by only one character, when using MIN_TERM_WIDTH - 1
+
+test_expect_success 'diffstat where line_prefix contains ANSI escape codes is correct width' '
+	FILENAME="placeholder-text-placeholder-text" &&
+	FILENAME_TRIMMED="...eholder-text-placeholder-text" &&
+	MIN_TERM_WIDTH=$((${#FILENAME} + 9)) &&
+	test_config color.diff always &&
+	git commit --allow-empty --allow-empty-message &&
+	>${FILENAME} &&
+	git add ${FILENAME} &&
+	git commit --allow-empty-message &&
+	COLUMNS=$((MIN_TERM_WIDTH)) git log --graph --stat -n1 | test_decode_color >out &&
+	test_grep "<RED>|<RESET>  ${FILENAME} | 0" out &&
+	COLUMNS=$((MIN_TERM_WIDTH - 1)) git log --graph --stat -n1 | test_decode_color >out &&
+	test_grep "<RED>|<RESET>  ${FILENAME_TRIMMED} | 0" out
+'
+
 test_done

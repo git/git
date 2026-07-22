@@ -41,7 +41,7 @@ int cmd__cache_tree(int argc, const char **argv)
 		die(_("unable to read index file"));
 
 	oidcpy(&oid, &the_repository->index->cache_tree->oid);
-	tree = parse_tree_indirect(&oid);
+	tree = repo_parse_tree_indirect(the_repository, &oid);
 	if (!tree)
 		die(_("not a tree object: %s"), oid_to_hex(&oid));
 

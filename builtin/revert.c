@@ -4,6 +4,7 @@
 #include "builtin.h"
 #include "parse-options.h"
 #include "diff.h"
+#include "environment.h"
 #include "gettext.h"
 #include "revision.h"
 #include "rerere.h"
@@ -111,7 +112,7 @@ static int run_sequencer(int argc, const char **argv, const char *prefix,
 	const char * const * usage_str = revert_or_cherry_pick_usage(opts);
 	const char *me = action_name(opts);
 	const char *cleanup_arg = NULL;
-	const char sentinel_value;
+	const char sentinel_value = 0; /* value not important */
 	const char *strategy = &sentinel_value;
 	const char *gpg_sign = &sentinel_value;
 	enum empty_action empty_opt = EMPTY_COMMIT_UNSPECIFIED;
@@ -285,6 +286,9 @@ int cmd_revert(int argc,
 	struct replay_opts opts = REPLAY_OPTS_INIT;
 	int res;
 
+#ifndef WITH_BREAKING_CHANGES
+	warn_on_auto_comment_char = true;
+#endif /* !WITH_BREAKING_CHANGES */
 	opts.action = REPLAY_REVERT;
 	sequencer_init_config(&opts);
 	res = run_sequencer(argc, argv, prefix, &opts);
@@ -302,6 +306,9 @@ struct repository *repo UNUSED)
 	struct replay_opts opts = REPLAY_OPTS_INIT;
 	int res;
 
+#ifndef WITH_BREAKING_CHANGES
+	warn_on_auto_comment_char = true;
+#endif /* !WITH_BREAKING_CHANGES */
 	opts.action = REPLAY_PICK;
 	sequencer_init_config(&opts);
 	res = run_sequencer(argc, argv, prefix, &opts);

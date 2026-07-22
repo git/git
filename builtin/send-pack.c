@@ -1,5 +1,6 @@
 #include "builtin.h"
 #include "config.h"
+#include "environment.h"
 #include "hex.h"
 #include "pkt-line.h"
 #include "run-command.h"

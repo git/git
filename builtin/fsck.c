@@ -13,11 +13,11 @@
 #include "fsck.h"
 #include "parse-options.h"
 #include "progress.h"
-#include "streaming.h"
 #include "packfile.h"
 #include "object-file.h"
 #include "object-name.h"
 #include "odb.h"
+#include "odb/streaming.h"
 #include "path.h"
 #include "read-cache-ll.h"
 #include "replace-object.h"
@@ -51,6 +51,7 @@ static int show_progress = -1;
 static int show_dangling = 1;
 static int name_objects;
 static int check_references = 1;
+static timestamp_t now;
 #define ERROR_OBJECT 01
 #define ERROR_REACHABLE 02
 #define ERROR_PACK 04
@@ -161,7 +162,8 @@ static int mark_object(struct object *obj, enum object_type type,
 		return 0;
 
 	if (!(obj->flags & HAS_OBJ)) {
-		if (parent && !odb_has_object(the_repository->objects, &obj->oid, 1)) {
+		if (parent && !odb_has_object(the_repository->objects, &obj->oid,
+					      HAS_OBJECT_RECHECK_PACKED)) {
 			printf_ln(_("broken link from %7s %s\n"
 				    "              to %7s %s"),
 				  printable_type(&parent->oid, parent->type),
@@ -218,15 +220,17 @@ static int mark_used(struct object *obj, enum object_type type UNUSED,
 	return 0;
 }
 
-static void mark_unreachable_referents(const struct object_id *oid)
+static int mark_unreachable_referents(const struct object_id *oid,
+				      struct object_info *oi UNUSED,
+				      void *data UNUSED)
 {
 	struct fsck_options options = FSCK_OPTIONS_DEFAULT;
 	struct object *obj = lookup_object(the_repository, oid);
 
 	if (!obj || !(obj->flags & HAS_OBJ))
-		return; /* not part of our original set */
+		return 0; /* not part of our original set */
 	if (obj->flags & REACHABLE)
-		return; /* reachable objects already traversed */
+		return 0; /* reachable objects already traversed */
 
 	/*
 	 * Avoid passing OBJ_NONE to fsck_walk, which will parse the object
@@ -243,22 +247,7 @@ static void mark_unreachable_referents(const struct object_id *oid)
 	fsck_walk(obj, NULL, &options);
 	if (obj->type == OBJ_TREE)
 		free_tree_buffer((struct tree *)obj);
-}
 
-static int mark_loose_unreachable_referents(const struct object_id *oid,
-					    const char *path UNUSED,
-					    void *data UNUSED)
-{
-	mark_unreachable_referents(oid);
-	return 0;
-}
-
-static int mark_packed_unreachable_referents(const struct object_id *oid,
-					     struct packed_git *pack UNUSED,
-					     uint32_t pos UNUSED,
-					     void *data UNUSED)
-{
-	mark_unreachable_referents(oid);
 	return 0;
 }
 
@@ -340,7 +329,8 @@ static void check_unreachable_object(struct object *obj)
 			}
 			f = xfopen(filename, "w");
 			if (obj->type == OBJ_BLOB) {
-				if (stream_blob_to_fd(fileno(f), &obj->oid, NULL, 1))
+				if (odb_stream_blob_to_fd(the_repository->objects, fileno(f),
+							  &obj->oid, NULL, 1))
 					die_errno(_("could not write '%s'"), filename);
 			} else
 				fprintf(f, "%s\n", describe_object(&obj->oid));
@@ -393,11 +383,8 @@ static void check_connectivity(void)
 		 * and ignore any that weren't present in our earlier
 		 * traversal.
 		 */
-		for_each_loose_object(mark_loose_unreachable_referents, NULL, 0);
-		for_each_packed_object(the_repository,
-				       mark_packed_unreachable_referents,
-				       NULL,
-				       0);
+		odb_for_each_object(the_repository->objects, NULL,
+				    mark_unreachable_referents, NULL, 0);
 	}
 
 	/* Look up all the requirements, warn about missing objects.. */
@@ -502,12 +489,14 @@ static void fsck_handle_reflog_oid(const char *refname, struct object_id *oid,
 	}
 }
 
-static int fsck_handle_reflog_ent(struct object_id *ooid, struct object_id *noid,
+static int fsck_handle_reflog_ent(const char *refname,
+				  struct object_id *ooid, struct object_id *noid,
 				  const char *email UNUSED,
 				  timestamp_t timestamp, int tz UNUSED,
-				  const char *message UNUSED, void *cb_data)
+				  const char *message UNUSED, void *cb_data UNUSED)
 {
-	const char *refname = cb_data;
+	if (now && timestamp > now)
+		return 0;
 
 	if (verbose)
 		fprintf_ln(stderr, _("Checking reflog %s->%s"),
@@ -525,19 +514,32 @@ static int fsck_handle_reflog(const char *logname, void *cb_data)
 	strbuf_worktree_ref(cb_data, &refname, logname);
 	refs_for_each_reflog_ent(get_main_ref_store(the_repository),
 				 refname.buf, fsck_handle_reflog_ent,
-				 refname.buf);
+				 NULL);
 	strbuf_release(&refname);
 	return 0;
 }
 
-static int fsck_handle_ref(const char *refname, const char *referent UNUSED, const struct object_id *oid,
-			   int flag UNUSED, void *cb_data UNUSED)
+struct ref_snapshot {
+	char *refname;
+	struct object_id oid;
+	/* TODO: Maybe supplement with latest reflog entry info too? */
+};
+
+struct snapshot {
+	size_t nr;
+	size_t alloc;
+	struct ref_snapshot *ref;
+	/* TODO: Consider also snapshotting the index of each worktree. */
+};
+
+static int snapshot_ref(const struct reference *ref, void *cb_data)
 {
+	struct snapshot *snap = cb_data;
 	struct object *obj;
 
-	obj = parse_object(the_repository, oid);
+	obj = parse_object(the_repository, ref->oid);
 	if (!obj) {
-		if (is_promisor_object(the_repository, oid)) {
+		if (is_promisor_object(the_repository, ref->oid)) {
 			/*
 			 * Increment default_refs anyway, because this is a
 			 * valid ref.
@@ -546,53 +548,133 @@ static int fsck_handle_ref(const char *refname, const char *referent UNUSED, con
 			 return 0;
 		}
 		error(_("%s: invalid sha1 pointer %s"),
-		      refname, oid_to_hex(oid));
+		      ref->name, oid_to_hex(ref->oid));
 		errors_found |= ERROR_REACHABLE;
 		/* We'll continue with the rest despite the error.. */
 		return 0;
 	}
-	if (obj->type != OBJ_COMMIT && is_branch(refname)) {
-		error(_("%s: not a commit"), refname);
+	if (obj->type != OBJ_COMMIT && is_branch(ref->name)) {
+		error(_("%s: not a commit"), ref->name);
 		errors_found |= ERROR_REFS;
 	}
 	default_refs++;
+
+	ALLOC_GROW(snap->ref, snap->nr + 1, snap->alloc);
+	snap->ref[snap->nr].refname = xstrdup(ref->name);
+	oidcpy(&snap->ref[snap->nr].oid, ref->oid);
+	snap->nr++;
+
+	return 0;
+}
+
+static int fsck_handle_ref(const struct reference *ref, void *cb_data UNUSED)
+{
+	struct object *obj;
+
+	obj = parse_object(the_repository, ref->oid);
 	obj->flags |= USED;
 	fsck_put_object_name(&fsck_walk_options,
-			     oid, "%s", refname);
+			     ref->oid, "%s", ref->name);
 	mark_object_reachable(obj);
 
 	return 0;
 }
 
-static int fsck_head_link(const char *head_ref_name,
-			  const char **head_points_at,
-			  struct object_id *head_oid);
-
-static void get_default_heads(void)
+static void snapshot_refs(struct snapshot *snap, int argc, const char **argv)
 {
+	struct refs_for_each_ref_options opts = {
+		.flags = REFS_FOR_EACH_INCLUDE_BROKEN,
+	};
 	struct worktree **worktrees, **p;
 	const char *head_points_at;
 	struct object_id head_oid;
 
-	refs_for_each_rawref(get_main_ref_store(the_repository),
-			     fsck_handle_ref, NULL);
+	for (int i = 0; i < argc; i++) {
+		const char *arg = argv[i];
+		struct object_id oid;
+		if (!repo_get_oid(the_repository, arg, &oid)) {
+			struct reference ref = {
+				.name = arg,
+				.oid = &oid,
+			};
+
+			snapshot_ref(&ref, snap);
+			continue;
+		}
+		error(_("invalid parameter: expected sha1, got '%s'"), arg);
+		errors_found |= ERROR_OBJECT;
+	}
+
+	if (argc) {
+		include_reflogs = 0;
+		return;
+	}
+
+	refs_for_each_ref_ext(get_main_ref_store(the_repository),
+			      snapshot_ref, snap, &opts);
 
 	worktrees = get_worktrees();
 	for (p = worktrees; *p; p++) {
 		struct worktree *wt = *p;
-		struct strbuf ref = STRBUF_INIT;
+		struct strbuf refname = STRBUF_INIT;
 
-		strbuf_worktree_ref(wt, &ref, "HEAD");
-		fsck_head_link(ref.buf, &head_points_at, &head_oid);
-		if (head_points_at && !is_null_oid(&head_oid))
-			fsck_handle_ref(ref.buf, NULL, &head_oid, 0, NULL);
-		strbuf_release(&ref);
+		strbuf_worktree_ref(wt, &refname, "HEAD");
 
-		if (include_reflogs)
-			refs_for_each_reflog(get_worktree_ref_store(wt),
-					     fsck_handle_reflog, wt);
+		head_points_at = refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
+							 refname.buf, 0, &head_oid, NULL);
+
+		if (head_points_at && !is_null_oid(&head_oid)) {
+			struct reference ref = {
+				.name = refname.buf,
+				.oid = &head_oid,
+			};
+
+			snapshot_ref(&ref, snap);
+		}
+		strbuf_release(&refname);
+
+		/*
+		 * TODO: Could use refs_for_each_reflog(...) to find
+		 * latest entry instead of using a global 'now' for that
+		 * purpose.
+		 */
 	}
 	free_worktrees(worktrees);
+
+	/* Ignore reflogs newer than now */
+	now = time(NULL);
+}
+
+
+static void free_snapshot_refs(struct snapshot *snap)
+{
+	for (size_t i = 0; i < snap->nr; i++)
+		free(snap->ref[i].refname);
+	free(snap->ref);
+}
+
+static void process_refs(struct snapshot *snap)
+{
+	struct worktree **worktrees, **p;
+
+	for (size_t i = 0; i < snap->nr; i++) {
+		struct reference ref = {
+			.name = snap->ref[i].refname,
+			.oid = &snap->ref[i].oid,
+		};
+		fsck_handle_ref(&ref, NULL);
+	}
+
+	if (include_reflogs) {
+		worktrees = get_worktrees();
+		for (p = worktrees; *p; p++) {
+			struct worktree *wt = *p;
+
+			refs_for_each_reflog(get_worktree_ref_store(wt),
+					     fsck_handle_reflog, wt);
+		}
+		free_worktrees(worktrees);
+	}
 
 	/*
 	 * Not having any default heads isn't really fatal, but
@@ -632,7 +714,7 @@ static int fsck_loose(const struct object_id *oid, const char *path,
 	oi.sizep = &size;
 	oi.typep = &type;
 
-	if (read_loose_object(path, oid, &real_oid, &contents, &oi) < 0) {
+	if (read_loose_object(the_repository, path, oid, &real_oid, &contents, &oi) < 0) {
 		if (contents && !oideq(&real_oid, oid))
 			err = error(_("%s: hash-path mismatch, found at: %s"),
 				    oid_to_hex(&real_oid), path);
@@ -687,7 +769,7 @@ static int fsck_subdir(unsigned int nr, const char *path UNUSED, void *data)
 	return 0;
 }
 
-static void fsck_object_dir(const char *path)
+static void fsck_source(struct odb_source *source)
 {
 	struct progress *progress = NULL;
 	struct for_each_loose_cb cb_data = {
@@ -701,47 +783,10 @@ static void fsck_object_dir(const char *path)
 		progress = start_progress(the_repository,
 					  _("Checking object directories"), 256);
 
-	for_each_loose_file_in_objdir(path, fsck_loose, fsck_cruft, fsck_subdir,
-				      &cb_data);
+	for_each_loose_file_in_source(source, fsck_loose,
+				      fsck_cruft, fsck_subdir, &cb_data);
 	display_progress(progress, 256);
 	stop_progress(&progress);
-}
-
-static int fsck_head_link(const char *head_ref_name,
-			  const char **head_points_at,
-			  struct object_id *head_oid)
-{
-	int null_is_error = 0;
-
-	if (verbose)
-		fprintf_ln(stderr, _("Checking %s link"), head_ref_name);
-
-	*head_points_at = refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
-						  head_ref_name, 0, head_oid,
-						  NULL);
-	if (!*head_points_at) {
-		errors_found |= ERROR_REFS;
-		return error(_("invalid %s"), head_ref_name);
-	}
-	if (!strcmp(*head_points_at, head_ref_name))
-		/* detached HEAD */
-		null_is_error = 1;
-	else if (!starts_with(*head_points_at, "refs/heads/")) {
-		errors_found |= ERROR_REFS;
-		return error(_("%s points to something strange (%s)"),
-			     head_ref_name, *head_points_at);
-	}
-	if (is_null_oid(head_oid)) {
-		if (null_is_error) {
-			errors_found |= ERROR_REFS;
-			return error(_("%s: detached HEAD points at nothing"),
-				     head_ref_name);
-		}
-		fprintf_ln(stderr,
-			   _("notice: %s points to an unborn branch (%s)"),
-			   head_ref_name, *head_points_at + 11);
-	}
-	return 0;
 }
 
 static int fsck_cache_tree(struct cache_tree *it, const char *index_path)
@@ -842,44 +887,31 @@ static void fsck_index(struct index_state *istate, const char *index_path,
 	fsck_resolve_undo(istate, index_path);
 }
 
-static void mark_object_for_connectivity(const struct object_id *oid)
+static int mark_object_for_connectivity(const struct object_id *oid,
+					struct object_info *oi UNUSED,
+					void *cb_data UNUSED)
 {
 	struct object *obj = lookup_unknown_object(the_repository, oid);
 	obj->flags |= HAS_OBJ;
-}
-
-static int mark_loose_for_connectivity(const struct object_id *oid,
-				       const char *path UNUSED,
-				       void *data UNUSED)
-{
-	mark_object_for_connectivity(oid);
-	return 0;
-}
-
-static int mark_packed_for_connectivity(const struct object_id *oid,
-					struct packed_git *pack UNUSED,
-					uint32_t pos UNUSED,
-					void *data UNUSED)
-{
-	mark_object_for_connectivity(oid);
 	return 0;
 }
 
 static int check_pack_rev_indexes(struct repository *r, int show_progress)
 {
 	struct progress *progress = NULL;
+	struct packed_git *p;
 	uint32_t pack_count = 0;
 	int res = 0;
 
 	if (show_progress) {
-		for (struct packed_git *p = get_all_packs(r); p; p = p->next)
+		repo_for_each_pack(r, p)
 			pack_count++;
 		progress = start_delayed_progress(the_repository,
 						  "Verifying reverse pack-indexes", pack_count);
 		pack_count = 0;
 	}
 
-	for (struct packed_git *p = get_all_packs(r); p; p = p->next) {
+	repo_for_each_pack(r, p) {
 		int load_error = load_pack_revindex_from_disk(p);
 
 		if (load_error < 0) {
@@ -956,8 +988,12 @@ int cmd_fsck(int argc,
 	     const char *prefix,
 	     struct repository *repo UNUSED)
 {
-	int i;
 	struct odb_source *source;
+	struct snapshot snap = {
+		.nr = 0,
+		.alloc = 0,
+		.ref = NULL
+	};
 
 	/* fsck knows how to handle missing promisor objects */
 	fetch_if_missing = 0;
@@ -987,20 +1023,30 @@ int cmd_fsck(int argc,
 	if (name_objects)
 		fsck_enable_object_names(&fsck_walk_options);
 
-	git_config(git_fsck_config, &fsck_obj_options);
+	repo_config(the_repository, git_fsck_config, &fsck_obj_options);
 	prepare_repo_settings(the_repository);
 
 	if (check_references)
 		fsck_refs(the_repository);
 
+	/*
+	 * Take a snapshot of the refs before walking objects to avoid looking
+	 * at a set of refs that may be changed by the user while we are walking
+	 * objects. We can still walk over new objects that are added during the
+	 * execution of fsck but won't miss any objects that were reachable.
+	 */
+	snapshot_refs(&snap, argc, argv);
+
+	/* Ensure we get a "fresh" view of the odb */
+	odb_reprepare(the_repository->objects);
+
 	if (connectivity_only) {
-		for_each_loose_object(mark_loose_for_connectivity, NULL, 0);
-		for_each_packed_object(the_repository,
-				       mark_packed_for_connectivity, NULL, 0);
+		odb_for_each_object(the_repository->objects, NULL,
+				    mark_object_for_connectivity, NULL, 0);
 	} else {
 		odb_prepare_alternates(the_repository->objects);
 		for (source = the_repository->objects->sources; source; source = source->next)
-			fsck_object_dir(source->path);
+			fsck_source(source);
 
 		if (check_full) {
 			struct packed_git *p;
@@ -1008,8 +1054,7 @@ int cmd_fsck(int argc,
 			struct progress *progress = NULL;
 
 			if (show_progress) {
-				for (p = get_all_packs(the_repository); p;
-				     p = p->next) {
+				repo_for_each_pack(the_repository, p) {
 					if (open_pack_index(p))
 						continue;
 					total += p->num_objects;
@@ -1018,8 +1063,8 @@ int cmd_fsck(int argc,
 				progress = start_progress(the_repository,
 							  _("Checking objects"), total);
 			}
-			for (p = get_all_packs(the_repository); p;
-			     p = p->next) {
+
+			repo_for_each_pack(the_repository, p) {
 				/* verify gives error messages itself */
 				if (verify_pack(the_repository,
 						p, fsck_obj_buffer,
@@ -1034,42 +1079,18 @@ int cmd_fsck(int argc,
 			errors_found |= ERROR_OBJECT;
 	}
 
-	for (i = 0; i < argc; i++) {
-		const char *arg = argv[i];
-		struct object_id oid;
-		if (!repo_get_oid(the_repository, arg, &oid)) {
-			struct object *obj = lookup_object(the_repository,
-							   &oid);
+	/* Process the snapshotted refs and the reflogs. */
+	process_refs(&snap);
 
-			if (!obj || !(obj->flags & HAS_OBJ)) {
-				if (is_promisor_object(the_repository, &oid))
-					continue;
-				error(_("%s: object missing"), oid_to_hex(&oid));
-				errors_found |= ERROR_OBJECT;
-				continue;
-			}
-
-			obj->flags |= USED;
-			fsck_put_object_name(&fsck_walk_options, &oid,
-					     "%s", arg);
-			mark_object_reachable(obj);
-			continue;
-		}
-		error(_("invalid parameter: expected sha1, got '%s'"), arg);
-		errors_found |= ERROR_OBJECT;
-	}
-
-	/*
-	 * If we've not been given any explicit head information, do the
-	 * default ones from .git/refs. We also consider the index file
-	 * in this case (ie this implies --cache).
-	 */
-	if (!argc) {
-		get_default_heads();
+	/* If not given any explicit objects, process index files too. */
+	if (!argc)
 		keep_cache_objects = 1;
-	}
-
 	if (keep_cache_objects) {
+		/*
+		 * TODO: Consider first walking these indexes in snapshot_refs,
+		 * to snapshot where the index entries used to point, and then
+		 * check those snapshotted locations here.
+		 */
 		struct worktree **worktrees, **p;
 
 		verify_index_checksum = 1;
@@ -1087,7 +1108,7 @@ int cmd_fsck(int argc,
 			 * and may get overwritten by other calls
 			 * while we're examining the index.
 			 */
-			path = xstrdup(worktree_git_path(the_repository, wt, "index"));
+			path = xstrdup(worktree_git_path(wt, "index"));
 			wt_gitdir = get_worktree_git_dir(wt);
 
 			read_index_from(&istate, path, wt_gitdir);
@@ -1142,5 +1163,6 @@ int cmd_fsck(int argc,
 		}
 	}
 
+	free_snapshot_refs(&snap);
 	return errors_found;
 }

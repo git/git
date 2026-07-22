@@ -1,0 +1,2 @@
+option('parent_project_dir', type: 'string', value: '',
+  description: 'The directory of the parent project. This is used so that the version can be determined even in case git-gui is included as a subtree.')

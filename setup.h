@@ -36,6 +36,8 @@ int is_nonbare_repository_dir(struct strbuf *path);
 #define READ_GITFILE_ERR_NO_PATH 6
 #define READ_GITFILE_ERR_NOT_A_REPO 7
 #define READ_GITFILE_ERR_TOO_LARGE 8
+#define READ_GITFILE_ERR_MISSING 9
+#define READ_GITFILE_ERR_IS_A_DIR 10
 void read_gitfile_error_die(int error_code, const char *path, const char *dir);
 const char *read_gitfile_gently(const char *path, int *return_error_code);
 #define read_gitfile(path) read_gitfile_gently((path), NULL)
@@ -94,8 +96,45 @@ static inline int discover_git_directory(struct strbuf *commondir,
 	return 0;
 }
 
-void set_git_dir(const char *path, int make_realpath);
 void set_git_work_tree(const char *tree);
+
+/* Flags that can be passed to `enter_repo()`. */
+enum {
+	/*
+	 * Callers that require exact paths (as opposed to allowing known
+	 * suffixes like ".git", ".git/.git" to be omitted) can set this bit.
+	 */
+	ENTER_REPO_STRICT = (1<<0),
+
+	/*
+	 * Callers that are willing to run without ownership check can set this
+	 * bit.
+	 */
+	ENTER_REPO_ANY_OWNER_OK = (1<<1),
+};
+
+/*
+ * Discover and enter a repository.
+ *
+ * First, one directory to try is determined by the following algorithm.
+ *
+ * (0) If "strict" is given, the path is used as given and no DWIM is
+ *     done. Otherwise:
+ * (1) "~/path" to mean path under the running user's home directory;
+ * (2) "~user/path" to mean path under named user's home directory;
+ * (3) "relative/path" to mean cwd relative directory; or
+ * (4) "/absolute/path" to mean absolute directory.
+ *
+ * Unless "strict" is given, we check "%s/.git", "%s", "%s.git/.git", "%s.git"
+ * in this order. We select the first one that is a valid git repository, and
+ * chdir() to it. If none match, or we fail to chdir, we return NULL.
+ *
+ * If all goes well, we return the directory we used to chdir() (but
+ * before ~user is expanded), avoiding getcwd() resolving symbolic
+ * links.  User relative paths are also returned as they are given,
+ * except DWIM suffixing.
+ */
+const char *enter_repo(const char *path, unsigned flags);
 
 const char *setup_git_directory_gently(int *);
 const char *setup_git_directory(void);
@@ -130,10 +169,12 @@ struct repository_format {
 	char *partial_clone; /* value of extensions.partialclone */
 	int worktree_config;
 	int relative_worktrees;
+	int submodule_path_cfg;
 	int is_bare;
 	int hash_algo;
 	int compat_hash_algo;
 	enum ref_storage_format ref_storage_format;
+	char *ref_storage_payload;
 	int sparse_index;
 	char *work_tree;
 	struct string_list unknown_extensions;
@@ -149,7 +190,7 @@ struct repository_format {
 { \
 	.version = -1, \
 	.is_bare = -1, \
-	.hash_algo = GIT_HASH_SHA1, \
+	.hash_algo = GIT_HASH_DEFAULT, \
 	.ref_storage_format = REF_STORAGE_FORMAT_FILES, \
 	.unknown_extensions = STRING_LIST_INIT_DUP, \
 	.v1_only_extensions = STRING_LIST_INIT_DUP, \
@@ -203,8 +244,7 @@ int init_db(const char *git_dir, const char *real_git_dir,
 void initialize_repository_version(int hash_algo,
 				   enum ref_storage_format ref_storage_format,
 				   int reinit);
-void create_reference_database(enum ref_storage_format ref_storage_format,
-			       const char *initial_branch, int quiet);
+void create_reference_database(const char *initial_branch, int quiet);
 
 /*
  * NOTE NOTE NOTE!!

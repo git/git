@@ -52,7 +52,7 @@ char *unique_tracking_name(const char *name, struct object_id *oid,
 {
 	struct tracking_name_data cb_data = TRACKING_NAME_DATA_INIT;
 	const char *default_remote = NULL;
-	if (!git_config_get_string_tmp("checkout.defaultremote", &default_remote))
+	if (!repo_config_get_string_tmp(the_repository, "checkout.defaultremote", &default_remote))
 		cb_data.default_remote = default_remote;
 	cb_data.src_ref = xstrfmt("refs/heads/%s", name);
 	cb_data.dst_oid = oid;

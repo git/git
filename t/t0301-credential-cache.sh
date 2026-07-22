@@ -12,7 +12,7 @@ test -z "$NO_UNIX_SOCKETS" || {
 if test_have_prereq MINGW
 then
 	service_running=$(sc query afunix | grep "4  RUNNING")
-	test -z "$service_running" || {
+	test -n "$service_running" || {
 		skip_all='skipping credential-cache tests, unix sockets not available'
 		test_done
 	}
@@ -123,7 +123,8 @@ test_expect_success SYMLINKS 'use user socket if user directory is a symlink to 
 		rmdir \"\$HOME/dir/\" &&
 		rm \"\$HOME/.git-credential-cache\"
 	" &&
-	mkdir -p -m 700 "$HOME/dir/" &&
+	mkdir -p "$HOME/dir/" &&
+	chmod 700 "$HOME/dir/" &&
 	ln -s "$HOME/dir" "$HOME/.git-credential-cache" &&
 	check approve cache <<-\EOF &&
 	protocol=https

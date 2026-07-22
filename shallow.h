@@ -1,12 +1,14 @@
 #ifndef SHALLOW_H
 #define SHALLOW_H
 
+#include "commit.h"
 #include "lockfile.h"
 #include "object.h"
 #include "repository.h"
 #include "strbuf.h"
 
 struct oid_array;
+struct strvec;
 
 void set_alternate_shallow_file(struct repository *r, const char *path, int override);
 int register_shallow(struct repository *r, const struct object_id *oid);
@@ -34,10 +36,12 @@ int commit_shallow_file(struct repository *r, struct shallow_lock *lk);
 /* rollback $GIT_DIR/shallow and reset stat-validity checks */
 void rollback_shallow_file(struct repository *r, struct shallow_lock *lk);
 
+int get_shallows_depth(struct object_array *heads, struct object_array *shallows);
 struct commit_list *get_shallow_commits(struct object_array *heads,
+					struct object_array *shallows, int deepen_relative,
 					int depth, int shallow_flag, int not_shallow_flag);
-struct commit_list *get_shallow_commits_by_rev_list(
-		int ac, const char **av, int shallow_flag, int not_shallow_flag);
+struct commit_list *get_shallow_commits_by_rev_list(struct strvec *argv,
+						    int shallow_flag, int not_shallow_flag);
 int write_shallow_commits(struct strbuf *out, int use_pack_protocol,
 			  const struct oid_array *extra);
 
@@ -68,8 +72,7 @@ struct shallow_info {
 	int *need_reachability_test;
 	int *reachable;
 	int *shallow_ref;
-	struct commit **commits;
-	size_t nr_commits;
+	struct commit_stack commits;
 };
 
 void prepare_shallow_info(struct shallow_info *, struct oid_array *);

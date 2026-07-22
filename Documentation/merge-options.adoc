@@ -56,7 +56,7 @@ ifdef::git-pull[]
 `--ff-only`::
 	Only update to the new history if there is no divergent local
 	history.  This is the default when no method for reconciling
-	divergent histories is provided (via the --rebase=* flags).
+	divergent histories is provided (via the `--rebase` flags).
 
 `--ff`::
 `--no-ff`::
@@ -135,7 +135,8 @@ ifdef::git-pull[]
 Only useful when merging.
 endif::git-pull[]
 
-`--[no-]verify`::
+`--verify`::
+`--no-verify`::
 	By default, the pre-merge and commit-msg hooks are run.
 	When `--no-verify` is given, these are bypassed.
 	See also linkgit:githooks[5].

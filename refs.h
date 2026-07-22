@@ -31,6 +31,8 @@ enum ref_transaction_error {
 	REF_TRANSACTION_ERROR_INVALID_NEW_VALUE = -6,
 	/* Expected ref to be symref, but is a regular ref */
 	REF_TRANSACTION_ERROR_EXPECTED_SYMREF = -7,
+	/* Cannot create ref due to case-insensitive filesystem */
+	REF_TRANSACTION_ERROR_CASE_CONFLICT = -8,
 };
 
 /*
@@ -168,7 +170,7 @@ int ref_store_remove_on_disk(struct ref_store *refs, struct strbuf *err);
  *
  *   peel_object(r, oid, &peeled);
  *
- * with the "oid" value given to the each_ref_fn callback, except
+ * with the "oid" value given to the refs_for_each_cb callback, except
  * that some ref storage may be able to answer the query without
  * actually loading the object in memory.
  */
@@ -327,40 +329,115 @@ int check_tag_ref(struct strbuf *sb, const char *name);
 struct ref_transaction;
 
 /*
- * Bit values set in the flags argument passed to each_ref_fn() and
+ * Bit values set in the flags argument passed to refs_for_each_cb() and
  * stored in ref_iterator::flags. Other bits are for internal use
  * only:
  */
+enum reference_status {
+	/* Reference is a symbolic reference. */
+	REF_ISSYMREF = (1 << 0),
 
-/* Reference is a symbolic reference. */
-#define REF_ISSYMREF 0x01
+	/* Reference is a packed reference. */
+	REF_ISPACKED = (1 << 1),
 
-/* Reference is a packed reference. */
-#define REF_ISPACKED 0x02
+	/*
+	 * Reference cannot be resolved to an object name: dangling symbolic
+	 * reference (directly or indirectly), corrupt reference file,
+	 * reference exists but name is bad, or symbolic reference refers to
+	 * ill-formatted reference name.
+	 */
+	REF_ISBROKEN = (1 << 2),
+
+	/*
+	 * Reference name is not well formed.
+	 *
+	 * See git-check-ref-format(1) for the definition of well formed ref names.
+	 */
+	REF_BAD_NAME = (1 << 3),
+};
+
+/* A reference passed to `for_each_ref()`-style callbacks. */
+struct reference {
+	/* The fully-qualified name of the reference. */
+	const char *name;
+
+	/* The target of a symbolic ref. `NULL` for direct references. */
+	const char *target;
+
+	/*
+	 * The object ID of a reference. Either the direct object ID or the
+	 * resolved object ID in the case of a symbolic ref. May be the zero
+	 * object ID in case the symbolic ref cannot be resolved.
+	 */
+	const struct object_id *oid;
+
+	/*
+	 * An optional peeled object ID. This field _may_ be set for tags in
+	 * case the peeled value is present in the backend. Please refer to
+	 * `reference_get_peeled_oid()`.
+	 */
+	const struct object_id *peeled_oid;
+
+	/* A bitfield of `enum reference_status` flags. */
+	unsigned flags;
+};
 
 /*
- * Reference cannot be resolved to an object name: dangling symbolic
- * reference (directly or indirectly), corrupt reference file,
- * reference exists but name is bad, or symbolic reference refers to
- * ill-formatted reference name.
- */
-#define REF_ISBROKEN 0x04
-
-/*
- * Reference name is not well formed.
+ * Peel the tag to a non-tag commit. If present, this uses the peeled object ID
+ * exposed by the reference backend. Otherwise, the object is peeled via the
+ * object database, which is less efficient.
  *
- * See git-check-ref-format(1) for the definition of well formed ref names.
+ * Return `0` if the reference could be peeled, a negative error code
+ * otherwise.
  */
-#define REF_BAD_NAME 0x08
+int reference_get_peeled_oid(struct repository *repo,
+			     const struct reference *ref,
+			     struct object_id *peeled_oid);
 
 /*
  * The signature for the callback function for the for_each_*()
- * functions below.  The memory pointed to by the refname and oid
- * arguments is only guaranteed to be valid for the duration of a
+ * functions below.  The memory pointed to by the `struct reference`
+ * argument is only guaranteed to be valid for the duration of a
  * single callback invocation.
  */
-typedef int each_ref_fn(const char *refname, const char *referent,
-			const struct object_id *oid, int flags, void *cb_data);
+typedef int refs_for_each_cb(const struct reference *ref, void *cb_data);
+
+/*
+ * These flags are passed to refs_ref_iterator_begin() (and do_for_each_ref(),
+ * which feeds it).
+ */
+enum refs_for_each_flag {
+	/*
+	 * Include broken references in a do_for_each_ref*() iteration, which
+	 * would normally be omitted. This includes both refs that point to
+	 * missing objects (a true repository corruption), ones with illegal
+	 * names (which we prefer not to expose to callers), as well as
+	 * dangling symbolic refs (i.e., those that point to a non-existent
+	 * ref; this is not a corruption, but as they have no valid oid, we
+	 * omit them from normal iteration results).
+	 */
+	REFS_FOR_EACH_INCLUDE_BROKEN = (1 << 0),
+
+	/*
+	 * Only include per-worktree refs in a do_for_each_ref*() iteration.
+	 * Normally this will be used with a files ref_store, since that's
+	 * where all reference backends will presumably store their
+	 * per-worktree refs.
+	 */
+	REFS_FOR_EACH_PER_WORKTREE_ONLY = (1 << 1),
+
+	/*
+	 * Omit dangling symrefs from output; this only has an effect with
+	 * INCLUDE_BROKEN, since they are otherwise not included at all.
+	 */
+	REFS_FOR_EACH_OMIT_DANGLING_SYMREFS = (1 << 2),
+
+	/*
+	 * Include root refs i.e. HEAD and pseudorefs along with the regular
+	 * refs.
+	 */
+	REFS_FOR_EACH_INCLUDE_ROOT_REFS = (1 << 3),
+};
 
 /*
  * The following functions invoke the specified callback function for
@@ -372,68 +449,75 @@ typedef int each_ref_fn(const char *refname, const char *referent,
  * stop the iteration. Returned references are sorted.
  */
 int refs_head_ref(struct ref_store *refs,
-		  each_ref_fn fn, void *cb_data);
-int refs_for_each_ref(struct ref_store *refs,
-		      each_ref_fn fn, void *cb_data);
-int refs_for_each_ref_in(struct ref_store *refs, const char *prefix,
-			 each_ref_fn fn, void *cb_data);
-int refs_for_each_tag_ref(struct ref_store *refs,
-			  each_ref_fn fn, void *cb_data);
-int refs_for_each_branch_ref(struct ref_store *refs,
-			     each_ref_fn fn, void *cb_data);
-int refs_for_each_remote_ref(struct ref_store *refs,
-			     each_ref_fn fn, void *cb_data);
-int refs_for_each_replace_ref(struct ref_store *refs,
-			      each_ref_fn fn, void *cb_data);
+		  refs_for_each_cb fn, void *cb_data);
+int refs_head_ref_namespaced(struct ref_store *refs,
+			     refs_for_each_cb fn, void *cb_data);
 
-/*
- * references matching any pattern in "exclude_patterns" are omitted from the
- * result set on a best-effort basis.
- */
-int refs_for_each_fullref_in(struct ref_store *refs, const char *prefix,
-			     const char **exclude_patterns,
-			     each_ref_fn fn, void *cb_data);
+
+struct refs_for_each_ref_options {
+	/* Only iterate over references that have this given prefix. */
+	const char *prefix;
+
+	/*
+	 * A globbing pattern that can be used to only yield refs that match.
+	 * If given, refs will be matched against the pattern with
+	 * `wildmatch()`.
+	 *
+	 * If the pattern doesn't contain any globbing characters then it is
+	 * treated as if it was ending with "/" and "*".
+	 */
+	const char *pattern;
+
+	/*
+	 * If set, only yield refs part of the configured namespace. Exclude
+	 * patterns will be rewritten to apply to the namespace, and the prefix
+	 * will be considered relative to the namespace.
+	 */
+	const char *namespace;
+
+	/*
+	 * Exclude any references that match any of these patterns on a
+	 * best-effort basis. The caller needs to be prepared for the exclude
+	 * patterns to be ignored.
+	 *
+	 * The array must be terminated with a NULL sentinel value.
+	 */
+	const char **exclude_patterns;
+
+	/*
+	 * The number of bytes to trim from the refname. Note that the trimmed
+	 * bytes must not cause the reference to become empty. As such, this
+	 * field should typically only be set when one uses a `prefix` ending
+	 * in a slash.
+	 */
+	size_t trim_prefix;
+
+	/* Flags that change which refs will be included. */
+	enum refs_for_each_flag flags;
+};
+
+int refs_for_each_ref(struct ref_store *refs,
+		      refs_for_each_cb fn, void *cb_data);
+int refs_for_each_ref_ext(struct ref_store *refs,
+			  refs_for_each_cb cb, void *cb_data,
+			  const struct refs_for_each_ref_options *opts);
+int refs_for_each_tag_ref(struct ref_store *refs,
+			  refs_for_each_cb fn, void *cb_data);
+int refs_for_each_branch_ref(struct ref_store *refs,
+			     refs_for_each_cb fn, void *cb_data);
+int refs_for_each_remote_ref(struct ref_store *refs,
+			     refs_for_each_cb fn, void *cb_data);
+int refs_for_each_replace_ref(struct ref_store *refs,
+			      refs_for_each_cb fn, void *cb_data);
 
 /**
- * iterate all refs in "patterns" by partitioning patterns into disjoint sets
+ * Iterate all refs in "prefixes" by partitioning prefixes into disjoint sets
  * and iterating the longest-common prefix of each set.
- *
- * references matching any pattern in "exclude_patterns" are omitted from the
- * result set on a best-effort basis.
- *
- * callers should be prepared to ignore references that they did not ask for.
  */
-int refs_for_each_fullref_in_prefixes(struct ref_store *refs,
-				      const char *namespace,
-				      const char **patterns,
-				      const char **exclude_patterns,
-				      each_ref_fn fn, void *cb_data);
-
-/* iterates all refs that match the specified glob pattern. */
-int refs_for_each_glob_ref(struct ref_store *refs, each_ref_fn fn,
-			   const char *pattern, void *cb_data);
-
-int refs_for_each_glob_ref_in(struct ref_store *refs, each_ref_fn fn,
-			      const char *pattern, const char *prefix, void *cb_data);
-
-int refs_head_ref_namespaced(struct ref_store *refs, each_ref_fn fn, void *cb_data);
-
-/*
- * references matching any pattern in "exclude_patterns" are omitted from the
- * result set on a best-effort basis.
- */
-int refs_for_each_namespaced_ref(struct ref_store *refs,
-				 const char **exclude_patterns,
-				 each_ref_fn fn, void *cb_data);
-
-/* can be used to learn about broken ref and symref */
-int refs_for_each_rawref(struct ref_store *refs, each_ref_fn fn, void *cb_data);
-
-/*
- * Iterates over all refs including root refs, i.e. pseudorefs and HEAD.
- */
-int refs_for_each_include_root_refs(struct ref_store *refs, each_ref_fn fn,
-				    void *cb_data);
+int refs_for_each_ref_in_prefixes(struct ref_store *refs,
+				  const char **prefixes,
+				  const struct refs_for_each_ref_options *opts,
+				  refs_for_each_cb cb, void *cb_data);
 
 /*
  * Normalizes partial refs to their fully qualified form.
@@ -452,32 +536,38 @@ static inline const char *has_glob_specials(const char *pattern)
 	return strpbrk(pattern, "?*[");
 }
 
-void refs_warn_dangling_symref(struct ref_store *refs, FILE *fp,
-			       const char *msg_fmt, const char *refname);
 void refs_warn_dangling_symrefs(struct ref_store *refs, FILE *fp,
-				const char *msg_fmt, const struct string_list *refnames);
+				const char *indent, int dry_run,
+				const struct string_list *refnames);
 
 /*
- * Flags for controlling behaviour of pack_refs()
- * PACK_REFS_PRUNE: Prune loose refs after packing
- * PACK_REFS_AUTO: Pack refs on a best effort basis. The heuristics and end
- *                 result are decided by the ref backend. Backends may ignore
- *                 this flag and fall back to a normal repack.
+ * Flags for controlling behaviour of refs_optimize()
+ * REFS_OPTIMIZE_PRUNE: Prune loose refs after packing
+ * REFS_OPTIMIZE_AUTO: Pack refs on a best effort basis. The heuristics and end
+ *                     result are decided by the ref backend. Backends may ignore
+ *                     this flag and fall back to a normal repack.
  */
-#define PACK_REFS_PRUNE (1 << 0)
-#define PACK_REFS_AUTO  (1 << 1)
+#define REFS_OPTIMIZE_PRUNE (1 << 0)
+#define REFS_OPTIMIZE_AUTO  (1 << 1)
 
-struct pack_refs_opts {
+struct refs_optimize_opts {
 	unsigned int flags;
 	struct ref_exclusions *exclusions;
 	struct string_list *includes;
 };
 
 /*
- * Write a packed-refs file for the current repository.
- * flags: Combination of the above PACK_REFS_* flags.
+ * Optimize the ref store. The exact behavior is up to the backend.
+ * For the files backend, this is equivalent to packing refs.
  */
-int refs_pack_refs(struct ref_store *refs, struct pack_refs_opts *opts);
+int refs_optimize(struct ref_store *refs, struct refs_optimize_opts *opts);
+
+/*
+ * Check if refs backend can be optimized by calling 'refs_optimize'.
+ */
+int refs_optimize_required(struct ref_store *ref_store,
+			   struct refs_optimize_opts *opts,
+			   bool *required);
 
 /*
  * Setup reflog before using. Fill in err and return -1 on failure.
@@ -559,10 +649,13 @@ int refs_delete_reflog(struct ref_store *refs, const char *refname);
  * The cb_data is a caller-supplied pointer given to the iterator
  * functions.
  */
-typedef int each_reflog_ent_fn(
-		struct object_id *old_oid, struct object_id *new_oid,
-		const char *committer, timestamp_t timestamp,
-		int tz, const char *msg, void *cb_data);
+typedef int each_reflog_ent_fn(const char *refname,
+			       struct object_id *old_oid,
+			       struct object_id *new_oid,
+			       const char *committer,
+			       timestamp_t timestamp,
+			       int tz, const char *msg,
+			       void *cb_data);
 
 /* Iterate over reflog entries in the log for `refname`. */
 
@@ -601,6 +694,24 @@ int refs_for_each_reflog(struct ref_store *refs, each_reflog_fn fn, void *cb_dat
  * repeated slashes are accepted.
  */
 int check_refname_format(const char *refname, int flags);
+
+struct fsck_ref_report;
+
+/*
+ * Perform generic checks for a specific direct ref. This function is
+ * expected to be called by the ref backends for every symbolic ref.
+ */
+int refs_fsck_ref(struct ref_store *refs, struct fsck_options *o,
+		  struct fsck_ref_report *report,
+		  const char *refname, const struct object_id *oid);
+
+/*
+ * Perform generic checks for a specific symref target. This function is
+ * expected to be called by the ref backends for every symbolic ref.
+ */
+int refs_fsck_symref(struct ref_store *refs, struct fsck_options *o,
+		     struct fsck_ref_report *report,
+		     const char *refname, const char *target);
 
 /*
  * Check the reference database for consistency. Return 0 if refs and
@@ -761,12 +872,19 @@ struct ref_transaction *ref_store_transaction_begin(struct ref_store *refs,
 #define REF_SKIP_CREATE_REFLOG (1 << 12)
 
 /*
+ * When writing a REF_LOG_ONLY record, use the old and new object IDs provided
+ * in the update instead of resolving the old object ID. The caller must also
+ * set both REF_HAVE_OLD and REF_HAVE_NEW.
+ */
+#define REF_LOG_USE_PROVIDED_OIDS (1 << 13)
+
+/*
  * Bitmask of all of the flags that are allowed to be passed in to
  * ref_transaction_update() and friends:
  */
 #define REF_TRANSACTION_UPDATE_ALLOWED_FLAGS                                  \
 	(REF_NO_DEREF | REF_FORCE_CREATE_REFLOG | REF_SKIP_OID_VERIFICATION | \
-	 REF_SKIP_REFNAME_VERIFICATION | REF_SKIP_CREATE_REFLOG)
+	 REF_SKIP_REFNAME_VERIFICATION | REF_SKIP_CREATE_REFLOG | REF_LOG_USE_PROVIDED_OIDS)
 
 /*
  * Add a reference update to transaction. `new_oid` is the value that
@@ -794,6 +912,21 @@ int ref_transaction_update(struct ref_transaction *transaction,
 			   const char *old_target,
 			   unsigned int flags, const char *msg,
 			   struct strbuf *err);
+
+/*
+ * Similar to `ref_transaction_update`, but this function is only for adding
+ * a reflog update. Supports providing custom committer information. The index
+ * field can be utiltized to order updates as desired. When set to zero, the
+ * updates default to being ordered by refname.
+ */
+int ref_transaction_update_reflog(struct ref_transaction *transaction,
+				  const char *refname,
+				  const struct object_id *new_oid,
+				  const struct object_id *old_oid,
+				  const char *committer_info,
+				  const char *msg,
+				  uint64_t index,
+				  struct strbuf *err);
 
 /*
  * Add a reference creation to transaction. new_oid is the value that
@@ -902,6 +1035,7 @@ typedef void ref_transaction_for_each_rejected_update_fn(const char *refname,
 							 const char *old_target,
 							 const char *new_target,
 							 enum ref_transaction_error err,
+							 const char *details,
 							 void *cb_data);
 void ref_transaction_for_each_rejected_update(struct ref_transaction *transaction,
 					      ref_transaction_for_each_rejected_update_fn cb,
@@ -1194,5 +1328,122 @@ int repo_migrate_ref_storage_format(struct repository *repo,
 				    enum ref_storage_format format,
 				    unsigned int flags,
 				    struct strbuf *err);
+
+/*
+ * Reference iterators
+ *
+ * A reference iterator encapsulates the state of an in-progress
+ * iteration over references. Create an instance of `struct
+ * ref_iterator` via one of the functions in this module.
+ *
+ * A freshly-created ref_iterator doesn't yet point at a reference. To
+ * advance the iterator, call ref_iterator_advance(). If successful,
+ * this sets the iterator's refname, oid, and flags fields to describe
+ * the next reference and returns ITER_OK. The data pointed at by
+ * refname and oid belong to the iterator; if you want to retain them
+ * after calling ref_iterator_advance() again or calling
+ * ref_iterator_free(), you must make a copy. When the iteration has
+ * been exhausted, ref_iterator_advance() releases any resources
+ * associated with the iteration, frees the ref_iterator object, and
+ * returns ITER_DONE. If you want to abort the iteration early, call
+ * ref_iterator_free(), which also frees the ref_iterator object and
+ * any associated resources. If there was an internal error advancing
+ * to the next entry, ref_iterator_advance() aborts the iteration,
+ * frees the ref_iterator, and returns ITER_ERROR.
+ *
+ * Putting it all together, a typical iteration looks like this:
+ *
+ *     int ok;
+ *     struct ref_iterator *iter = ...;
+ *
+ *     while ((ok = ref_iterator_advance(iter)) == ITER_OK) {
+ *             if (want_to_stop_iteration()) {
+ *                     ok = ITER_DONE;
+ *                     break;
+ *             }
+ *
+ *             // Access information about the current reference:
+ *             if (!(iter->flags & REF_ISSYMREF))
+ *                     printf("%s is %s\n", iter->refname, oid_to_hex(iter->oid));
+ *     }
+ *
+ *     if (ok != ITER_DONE)
+ *             handle_error();
+ *     ref_iterator_free(iter);
+ */
+struct ref_iterator;
+
+/*
+ * Return an iterator that goes over each reference in `refs` for
+ * which the refname begins with prefix. If trim is non-zero, then
+ * trim that many characters off the beginning of each refname.
+ * The output is ordered by refname.
+ */
+struct ref_iterator *refs_ref_iterator_begin(
+	struct ref_store *refs,
+	const char *prefix, const char **exclude_patterns,
+	int trim, enum refs_for_each_flag flags);
+
+/*
+ * Advance the iterator to the first or next item and return ITER_OK.
+ * If the iteration is exhausted, free the resources associated with
+ * the ref_iterator and return ITER_DONE. On errors, free the iterator
+ * resources and return ITER_ERROR. It is a bug to use ref_iterator or
+ * call this function again after it has returned ITER_DONE or
+ * ITER_ERROR.
+ */
+int ref_iterator_advance(struct ref_iterator *ref_iterator);
+
+enum ref_iterator_seek_flag {
+	/*
+	 * When the REF_ITERATOR_SEEK_SET_PREFIX flag is set, the iterator's prefix is
+	 * updated to match the provided string, affecting all subsequent iterations. If
+	 * not, the iterator seeks to the specified reference and clears any previously
+	 * set prefix.
+	 */
+	REF_ITERATOR_SEEK_SET_PREFIX = (1 << 0),
+};
+
+/*
+ * Seek the iterator to the first reference matching the given seek string.
+ * The seek string is matched as a literal string, without regard for path
+ * separators. If seek is NULL or the empty string, seek the iterator to the
+ * first reference again.
+ *
+ * This function is expected to behave as if a new ref iterator has been
+ * created, but allows reuse of existing iterators for optimization.
+ *
+ * Returns 0 on success, a negative error code otherwise.
+ */
+int ref_iterator_seek(struct ref_iterator *ref_iterator, const char *refname,
+		      unsigned int flags);
+
+/* Free the reference iterator and any associated resources. */
+void ref_iterator_free(struct ref_iterator *ref_iterator);
+
+/*
+ * The common backend for the for_each_*ref* functions. Call fn for
+ * each reference in iter. If the iterator itself ever returns
+ * ITER_ERROR, return -1. If fn ever returns a non-zero value, stop
+ * the iteration and return that value. Otherwise, return 0. In any
+ * case, free the iterator when done. This function is basically an
+ * adapter between the callback style of reference iteration and the
+ * iterator style.
+ */
+int do_for_each_ref_iterator(struct ref_iterator *iter,
+			     refs_for_each_cb fn, void *cb_data);
+
+/*
+ * Git only recognizes a directory as a repository if it contains:
+ * - HEAD file
+ * - refs/ folder
+ * While it is necessary within the files backend, newer backends may not
+ * follow the same structure. To go around this, we create stubs as necessary.
+ *
+ * If provided with a 'refs_heads_content', we create the 'refs/heads/head' file
+ * with the provided message.
+ */
+void refs_create_refdir_stubs(struct repository *repo, const char *refdir,
+			      const char *refs_heads_content);
 
 #endif /* REFS_H */

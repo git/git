@@ -11,12 +11,8 @@ test_description='Test special whitespace in diff engine.
 . "$TEST_DIRECTORY"/lib-diff.sh
 
 for opt_res in --patch --quiet -s --stat --shortstat --dirstat=lines \
-	       --raw! --name-only! --name-status!
+	       --raw --name-only --name-status
 do
-	opts=${opt_res%!} expect_failure=
-	test "$opts" = "$opt_res" ||
-		expect_failure="test_expect_code 1"
-
 	test_expect_success "status with $opts (different)" '
 		echo foo >x &&
 		git add x &&
@@ -43,9 +39,82 @@ do
 		echo foo >x &&
 		git add x &&
 		echo " foo" >x &&
-		$expect_failure git diff -w $opts --exit-code x
+		git diff -w $opts --exit-code x
 	'
 done
+
+test_expect_success "incomplete line in both pre- and post-image context" '
+	(echo foo && echo baz | tr -d "\012") >x &&
+	git add x &&
+	(echo bar && echo baz | tr -d "\012") >x &&
+	git diff x &&
+	git -c core.whitespace=incomplete diff --check x &&
+	git diff -R x &&
+	git -c core.whitespace=incomplete diff -R --check x
+'
+
+test_expect_success "incomplete lines on both pre- and post-image" '
+	# The interpretation taken here is "since you are touching
+	# the line anyway, you would better fix the incomplete line
+	# while you are at it."  but this is debatable.
+	echo foo | tr -d "\012" >x &&
+	git add x &&
+	echo bar | tr -d "\012" >x &&
+	git diff x &&
+	test_must_fail git -c core.whitespace=incomplete diff --check x >error &&
+	test_grep "no newline at the end of file" error &&
+	git diff -R x &&
+	test_must_fail git -c core.whitespace=incomplete diff -R --check x >error &&
+	test_grep "no newline at the end of file" error
+'
+
+test_expect_success "fix incomplete line in pre-image" '
+	echo foo | tr -d "\012" >x &&
+	git add x &&
+	echo bar >x &&
+	git diff x &&
+	git -c core.whitespace=incomplete diff --check x &&
+	git diff -R x &&
+	test_must_fail git -c core.whitespace=incomplete diff -R --check x >error &&
+	test_grep "no newline at the end of file" error
+'
+
+test_expect_success "new incomplete line in post-image" '
+	echo foo >x &&
+	git add x &&
+	echo bar | tr -d "\012" >x &&
+	git diff x &&
+	test_must_fail git -c core.whitespace=incomplete diff --check x >error &&
+	test_grep "no newline at the end of file" error &&
+	git diff -R x &&
+	git -c core.whitespace=incomplete diff -R --check x
+'
+
+test_expect_success SYMLINKS "incomplete-line error is disabled for symlinks" '
+	test_when_finished "git reset --hard" &&
+	test_when_finished "rm -f mylink" &&
+
+	# a regular file with an incomplete line
+	printf "%s" one >mylink &&
+	git add mylink &&
+
+	# a symbolic link
+	rm mylink &&
+	ln -s two mylink &&
+
+	git -c diff.color=always -c core.whitespace=incomplete \
+		diff mylink >forward.raw &&
+	test_decode_color >forward <forward.raw &&
+	test_grep ! "<BRED>\\\\ No newline at end of file<RESET>" forward &&
+
+	git -c diff.color=always -c core.whitespace=incomplete \
+		diff -R mylink >reverse.raw &&
+	test_decode_color >reverse <reverse.raw &&
+	test_grep "<BRED>\\\\ No newline at end of file<RESET>" reverse &&
+
+	git -c core.whitespace=incomplete diff --check mylink &&
+	test_must_fail git -c core.whitespace=incomplete diff --check -R mylink
+'
 
 test_expect_success "Ray Lehtiniemi's example" '
 	cat <<-\EOF >x &&
@@ -1044,7 +1113,8 @@ test_expect_success 'ws-error-highlight test setup' '
 	{
 		echo "0. blank-at-eol " &&
 		echo "1. still-blank-at-eol " &&
-		echo "2. and a new line "
+		echo "2. and a new line " &&
+		printf "3. and more"
 	} >x &&
 	new_hash_x=$(git hash-object x) &&
 	after=$(git rev-parse --short "$new_hash_x") &&
@@ -1054,11 +1124,13 @@ test_expect_success 'ws-error-highlight test setup' '
 	<BOLD>index $before..$after 100644<RESET>
 	<BOLD>--- a/x<RESET>
 	<BOLD>+++ b/x<RESET>
-	<CYAN>@@ -1,2 +1,3 @@<RESET>
+	<CYAN>@@ -1,2 +1,4 @@<RESET>
 	 0. blank-at-eol <RESET>
 	<RED>-<RESET><RED>1. blank-at-eol<RESET><BLUE> <RESET>
 	<GREEN>+<RESET><GREEN>1. still-blank-at-eol<RESET><BLUE> <RESET>
 	<GREEN>+<RESET><GREEN>2. and a new line<RESET><BLUE> <RESET>
+	<GREEN>+<RESET><GREEN>3. and more<RESET>
+	<BLUE>\ No newline at end of file<RESET>
 	EOF
 
 	cat >expect.all <<-EOF &&
@@ -1066,11 +1138,13 @@ test_expect_success 'ws-error-highlight test setup' '
 	<BOLD>index $before..$after 100644<RESET>
 	<BOLD>--- a/x<RESET>
 	<BOLD>+++ b/x<RESET>
-	<CYAN>@@ -1,2 +1,3 @@<RESET>
+	<CYAN>@@ -1,2 +1,4 @@<RESET>
 	 <RESET>0. blank-at-eol<RESET><BLUE> <RESET>
 	<RED>-<RESET><RED>1. blank-at-eol<RESET><BLUE> <RESET>
 	<GREEN>+<RESET><GREEN>1. still-blank-at-eol<RESET><BLUE> <RESET>
 	<GREEN>+<RESET><GREEN>2. and a new line<RESET><BLUE> <RESET>
+	<GREEN>+<RESET><GREEN>3. and more<RESET>
+	<BLUE>\ No newline at end of file<RESET>
 	EOF
 
 	cat >expect.none <<-EOF
@@ -1078,16 +1152,19 @@ test_expect_success 'ws-error-highlight test setup' '
 	<BOLD>index $before..$after 100644<RESET>
 	<BOLD>--- a/x<RESET>
 	<BOLD>+++ b/x<RESET>
-	<CYAN>@@ -1,2 +1,3 @@<RESET>
+	<CYAN>@@ -1,2 +1,4 @@<RESET>
 	 0. blank-at-eol <RESET>
 	<RED>-1. blank-at-eol <RESET>
 	<GREEN>+1. still-blank-at-eol <RESET>
 	<GREEN>+2. and a new line <RESET>
+	<GREEN>+3. and more<RESET>
+	\ No newline at end of file<RESET>
 	EOF
 
 '
 
 test_expect_success 'test --ws-error-highlight option' '
+	git config core.whitespace blank-at-eol,incomplete-line &&
 
 	git diff --color --ws-error-highlight=default,old >current.raw &&
 	test_decode_color <current.raw >current &&
@@ -1104,6 +1181,7 @@ test_expect_success 'test --ws-error-highlight option' '
 '
 
 test_expect_success 'test diff.wsErrorHighlight config' '
+	git config core.whitespace blank-at-eol,incomplete-line &&
 
 	git -c diff.wsErrorHighlight=default,old diff --color >current.raw &&
 	test_decode_color <current.raw >current &&
@@ -1120,6 +1198,7 @@ test_expect_success 'test diff.wsErrorHighlight config' '
 '
 
 test_expect_success 'option overrides diff.wsErrorHighlight' '
+	git config core.whitespace blank-at-eol,incomplete-line &&
 
 	git -c diff.wsErrorHighlight=none \
 		diff --color --ws-error-highlight=default,old >current.raw &&
@@ -1139,6 +1218,8 @@ test_expect_success 'option overrides diff.wsErrorHighlight' '
 '
 
 test_expect_success 'detect moved code, complete file' '
+	git config core.whitespace blank-at-eol &&
+
 	git reset --hard &&
 	cat <<-\EOF >test.c &&
 	#include<stdio.h>

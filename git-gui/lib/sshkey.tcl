@@ -18,7 +18,7 @@ proc find_ssh_key {} {
 }
 
 proc do_ssh_key {} {
-	global sshkey_title have_tk85 sshkey_fd use_ttk NS
+	global sshkey_title sshkey_fd
 
 	set w .sshkey_dialog
 	if {[winfo exists $w]} {
@@ -38,9 +38,9 @@ proc do_ssh_key {} {
 		set gen_state   disabled
 	}
 
-	${NS}::frame $w.header
-	${NS}::label $w.header.lbl -textvariable sshkey_title -anchor w
-	${NS}::button $w.header.gen -text [mc "Generate Key"] \
+	ttk::frame $w.header
+	ttk::label $w.header.lbl -textvariable sshkey_title -anchor w
+	ttk::button $w.header.gen -text [mc "Generate Key"] \
 		-command [list make_ssh_key $w] -state $gen_state
 	pack $w.header.lbl -side left -expand 1 -fill x
 	pack $w.header.gen -side right
@@ -48,17 +48,14 @@ proc do_ssh_key {} {
 
 	text $w.contents -width 60 -height 10 -wrap char -relief sunken
 	pack $w.contents -fill both -expand 1
-	if {$have_tk85} {
-		set clr darkblue
-		if {$use_ttk} { set clr [ttk::style lookup . -selectbackground] }
-		$w.contents configure -inactiveselectbackground $clr
-	}
+	set clr [ttk::style lookup . -selectbackground]
+	$w.contents configure -inactiveselectbackground $clr
 
-	${NS}::frame $w.buttons
-	${NS}::button $w.buttons.close -text [mc Close] \
+	ttk::frame $w.buttons
+	ttk::button $w.buttons.close -text [mc Close] \
 		-default active -command [list destroy $w]
 	pack $w.buttons.close -side right
-	${NS}::button $w.buttons.copy -text [mc "Copy To Clipboard"] \
+	ttk::button $w.buttons.copy -text [mc "Copy To Clipboard"] \
 		-command [list tk_textCopy $w.contents]
 	pack $w.buttons.copy -side left
 	pack $w.buttons -side bottom -fill x -pady 5 -padx 5

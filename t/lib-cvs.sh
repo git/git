@@ -2,6 +2,12 @@
 
 . ./test-lib.sh
 
+if test -n "$NO_CVS_TESTS"
+then
+	skip_all='skipping git cvs tests, NO_CVS_TESTS defined'
+	test_done
+fi
+
 unset CVS_SERVER
 
 if ! type cvs >/dev/null 2>&1

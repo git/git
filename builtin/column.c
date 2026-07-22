@@ -42,9 +42,9 @@ int cmd_column(int argc,
 	/* This one is special and must be the first one */
 	if (argc > 1 && starts_with(argv[1], "--command=")) {
 		command = argv[1] + 10;
-		git_config(column_config, (void *)command);
+		repo_config(the_repository, column_config, (void *)command);
 	} else
-		git_config(column_config, NULL);
+		repo_config(the_repository, column_config, NULL);
 
 	memset(&copts, 0, sizeof(copts));
 	copts.padding = 1;

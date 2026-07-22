@@ -1,4 +1,6 @@
 # Configuration for Git installation
+option('htmldir', type: 'string', value: '',
+  description: 'Directory to install HTML docs to. Defaults to <datadir>/doc/git-doc')
 option('perllibdir', type: 'string', value: '',
   description: 'Directory to install perl lib to. Defaults to <datadir>/perl5')
 
@@ -19,6 +21,10 @@ option('runtime_prefix', type: 'boolean', value: false,
   description: 'Resolve ancillary tooling and support files relative to the location of the runtime binary instead of hard-coding them into the binary.')
 option('sane_tool_path', type: 'array', value: [],
   description: 'An array of paths to pick up tools from in case the normal tools are broken or lacking.')
+option('msystem', type: 'string', value: '',
+  description: 'Fall-back on Windows when MSYSTEM is not set.')
+option('mingw_prefix', type: 'string', value: '',
+  description: 'Fall-back on Windows when MINGW_PREFIX is not set.')
 
 # Build information compiled into Git and other parts like documentation.
 option('build_date', type: 'string', value: '',
@@ -41,11 +47,15 @@ option('expat', type: 'feature', value: 'enabled',
   description: 'Build helpers used to push to remotes with the HTTP transport.')
 option('gettext', type: 'feature', value: 'auto',
   description: 'Build translation files.')
+option('gitk', type: 'feature', value: 'auto',
+  description: 'Build the Gitk graphical repository browser. Requires Tcl/Tk.')
+option('git_gui', type: 'feature', value: 'auto',
+  description: 'Build the git-gui graphical user interface for Git. Requires Tcl/Tk.')
 option('gitweb', type: 'feature', value: 'auto',
   description: 'Build Git web interface. Requires Perl.')
 option('iconv', type: 'feature', value: 'auto',
   description: 'Support reencoding strings with different encodings.')
-option('pcre2', type: 'feature', value: 'enabled',
+option('pcre2', type: 'feature', value: 'auto',
   description: 'Support Perl-compatible regular expressions in e.g. git-grep(1).')
 option('perl', type: 'feature', value: 'auto',
   description: 'Build tools written in Perl.')
@@ -71,6 +81,8 @@ option('zlib_backend', type: 'combo', choices: ['auto', 'zlib', 'zlib-ng'], valu
 # Build tweaks.
 option('breaking_changes', type: 'boolean', value: false,
   description: 'Enable upcoming breaking changes.')
+option('rust', type: 'feature', value: 'auto',
+  description: 'Enable building with Rust.')
 option('macos_use_homebrew_gettext', type: 'boolean', value: true,
   description: 'Use gettext from Homebrew instead of the slightly-broken system-provided one.')
 

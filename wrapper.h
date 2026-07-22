@@ -37,6 +37,8 @@ int xsnprintf(char *dst, size_t max, const char *fmt, ...);
 
 int xgethostname(char *buf, size_t len);
 
+char *git_mkdtemp(char *pattern);
+
 /* set default permissions by passing mode arguments to open(2) */
 int git_mkstemps_mode(char *pattern, int suffix_len, int mode);
 int git_mkstemp_mode(char *pattern, int mode);
@@ -44,6 +46,15 @@ int git_mkstemp_mode(char *pattern, int mode);
 ssize_t read_in_full(int fd, void *buf, size_t count);
 ssize_t write_in_full(int fd, const void *buf, size_t count);
 ssize_t pread_in_full(int fd, void *buf, size_t count, off_t offset);
+
+/*
+ * Try to write all iovecs. Returns -1 in case an error occurred with a proper
+ * errno set, the number of bytes written otherwise.
+ *
+ * Note that the iovec will be modified as a result of this call to adjust for
+ * partial writes!
+ */
+ssize_t writev_in_full(int fd, struct iovec *iov, int iovcnt);
 
 static inline ssize_t write_str_in_full(int fd, const char *str)
 {
@@ -66,7 +77,9 @@ void write_file_buf(const char *path, const char *buf, size_t len);
 __attribute__((format (printf, 2, 3)))
 void write_file(const char *path, const char *fmt, ...);
 
-/* Return 1 if the file is empty or does not exists, 0 otherwise. */
+/* Return 1 if the file does not exist, 0 otherwise. */
+int is_missing_file(const char *filename);
+/* Return 1 if the file is empty or does not exist, 0 otherwise. */
 int is_empty_or_missing_file(const char *filename);
 
 enum fsync_action {

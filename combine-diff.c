@@ -749,7 +749,7 @@ static void show_line_to_eol(const char *line, int len, const char *reset)
 
 static void dump_sline(struct sline *sline, const char *line_prefix,
 		       unsigned long cnt, int num_parent,
-		       int use_color, int result_deleted)
+		       enum git_colorbool use_color, int result_deleted)
 {
 	unsigned long mark = (1UL<<num_parent);
 	unsigned long no_pre_delete = (2UL<<num_parent);
@@ -1315,7 +1315,7 @@ static struct diff_filepair *combined_pair(struct combine_diff_path *p,
 	struct diff_filepair *pair;
 	struct diff_filespec *pool;
 
-	pair = xmalloc(sizeof(*pair));
+	CALLOC_ARRAY(pair, 1);
 	CALLOC_ARRAY(pool, st_add(num_parent, 1));
 	pair->one = pool + 1;
 	pair->two = pool;
@@ -1515,8 +1515,9 @@ void diff_tree_combined(const struct object_id *oid,
 
 	diffopts = *opt;
 	copy_pathspec(&diffopts.pathspec, &opt->pathspec);
-	diffopts.flags.recursive = 1;
 	diffopts.flags.allow_external = 0;
+	if (!opt->flags.no_recursive_diff_tree_combined)
+		diffopts.flags.recursive = 1;
 
 	/* find set of paths that everybody touches
 	 *

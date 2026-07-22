@@ -18,13 +18,13 @@
 #include "list-objects-filter-options.h"
 #include "parse-options.h"
 #include "userdiff.h"
-#include "streaming.h"
 #include "oid-array.h"
 #include "packfile.h"
 #include "pack-bitmap.h"
 #include "object-file.h"
 #include "object-name.h"
 #include "odb.h"
+#include "odb/streaming.h"
 #include "replace-object.h"
 #include "promisor-remote.h"
 #include "mailmap.h"
@@ -95,7 +95,7 @@ static int filter_object(const char *path, unsigned mode,
 
 static int stream_blob(const struct object_id *oid)
 {
-	if (stream_blob_to_fd(1, oid, NULL, 0))
+	if (odb_stream_blob_to_fd(the_repository->objects, 1, oid, NULL, 0))
 		die("unable to stream %s to stdout", oid_to_hex(oid));
 	return 0;
 }
@@ -487,15 +487,14 @@ static void batch_object_write(const char *obj_name,
 			data->info.sizep = &data->size;
 
 		if (pack)
-			ret = packed_object_info(the_repository, pack,
-						 offset, &data->info);
+			ret = packed_object_info(pack, offset, &data->info);
 		else
 			ret = odb_read_object_info_extended(the_repository->objects,
 							    &data->oid, &data->info,
 							    OBJECT_INFO_LOOKUP_REPLACE);
 		if (ret < 0) {
 			if (data->mode == S_IFGITLINK)
-				report_object_status(opt, oid_to_hex(&data->oid), &data->oid, "submodule");
+				report_object_status(opt, NULL, &data->oid, "submodule");
 			else
 				report_object_status(opt, obj_name, &data->oid, "missing");
 			return;
@@ -807,11 +806,14 @@ struct for_each_object_payload {
 	void *payload;
 };
 
-static int batch_one_object_loose(const struct object_id *oid,
-				  const char *path UNUSED,
-				  void *_payload)
+static int batch_one_object_oi(const struct object_id *oid,
+			       struct object_info *oi,
+			       void *_payload)
 {
 	struct for_each_object_payload *payload = _payload;
+	if (oi && oi->whence == OI_PACKED)
+		return payload->callback(oid, oi->u.packed.pack, oi->u.packed.offset,
+					 payload->payload);
 	return payload->callback(oid, NULL, 0, payload->payload);
 }
 
@@ -846,15 +848,30 @@ static void batch_each_object(struct batch_options *opt,
 		.callback = callback,
 		.payload = _payload,
 	};
-	struct bitmap_index *bitmap = prepare_bitmap_git(the_repository);
+	struct bitmap_index *bitmap = NULL;
+	struct odb_source *source;
 
-	for_each_loose_object(batch_one_object_loose, &payload, 0);
+	/*
+	 * TODO: we still need to tap into implementation details of the object
+	 * database sources. Ideally, we should extend `odb_for_each_object()`
+	 * to handle object filters itself so that we can move the filtering
+	 * logic into the individual sources.
+	 */
+	odb_prepare_alternates(the_repository->objects);
+	for (source = the_repository->objects->sources; source; source = source->next) {
+		int ret = odb_source_loose_for_each_object(source, NULL, batch_one_object_oi,
+							   &payload, flags);
+		if (ret)
+			break;
+	}
 
-	if (bitmap && !for_each_bitmapped_object(bitmap, &opt->objects_filter,
-						 batch_one_object_bitmapped, &payload)) {
+	if (opt->objects_filter.choice != LOFC_DISABLED &&
+	    (bitmap = prepare_bitmap_git(the_repository)) &&
+	    !for_each_bitmapped_object(bitmap, &opt->objects_filter,
+				       batch_one_object_bitmapped, &payload)) {
 		struct packed_git *pack;
 
-		for (pack = get_all_packs(the_repository); pack; pack = pack->next) {
+		repo_for_each_pack(the_repository, pack) {
 			if (bitmap_index_contains_pack(bitmap, pack) ||
 			    open_pack_index(pack))
 				continue;
@@ -862,8 +879,15 @@ static void batch_each_object(struct batch_options *opt,
 						&payload, flags);
 		}
 	} else {
-		for_each_packed_object(the_repository, batch_one_object_packed,
-				       &payload, flags);
+		struct object_info oi = { 0 };
+
+		for (source = the_repository->objects->sources; source; source = source->next) {
+			struct odb_source_files *files = odb_source_files_downcast(source);
+			int ret = packfile_store_for_each_object(files->packed, &oi,
+								 batch_one_object_oi, &payload, flags);
+			if (ret)
+				break;
+		}
 	}
 
 	free_bitmap_index(bitmap);
@@ -923,7 +947,7 @@ static int batch_objects(struct batch_options *opt)
 			cb.seen = &seen;
 
 			batch_each_object(opt, batch_unordered_object,
-					  FOR_EACH_OBJECT_PACK_ORDER, &cb);
+					  ODB_FOR_EACH_OBJECT_PACK_ORDER, &cb);
 
 			oidset_clear(&seen);
 		} else {
@@ -1095,7 +1119,7 @@ int cmd_cat_file(int argc,
 		OPT_END()
 	};
 
-	git_config(git_cat_file_config, NULL);
+	repo_config(the_repository, git_cat_file_config, NULL);
 
 	batch.buffer_output = -1;
 
@@ -1104,7 +1128,7 @@ int cmd_cat_file(int argc,
 	opt_epts = (opt == 'e' || opt == 'p' || opt == 't' || opt == 's');
 
 	if (use_mailmap)
-		read_mailmap(&mailmap);
+		read_mailmap(the_repository, &mailmap);
 
 	switch (batch.objects_filter.choice) {
 	case LOFC_DISABLED:

@@ -544,7 +544,7 @@ static int run_dir_diff(struct repository *repo,
 				}
 				add_path(&wtdir, wtdir_len, dst_path);
 				if (dt_options->symlinks) {
-					if (symlink(wtdir.buf, rdir.buf)) {
+					if (create_symlink(lstate.istate, wtdir.buf, rdir.buf)) {
 						ret = error_errno("could not symlink '%s' to '%s'", wtdir.buf, rdir.buf);
 						goto finish;
 					}

@@ -1,4 +1,6 @@
 /fuzz_corpora
+/target/
+/Cargo.lock
 /GIT-BUILD-DIR
 /GIT-BUILD-OPTIONS
 /GIT-CFLAGS
@@ -77,6 +79,7 @@
 /git-grep
 /git-hash-object
 /git-help
+/git-history
 /git-hook
 /git-http-backend
 /git-http-fetch
@@ -87,6 +90,7 @@
 /git-init-db
 /git-interpret-trailers
 /git-instaweb
+/git-last-modified
 /git-log
 /git-ls-files
 /git-ls-remote
@@ -139,6 +143,7 @@
 /git-repack
 /git-replace
 /git-replay
+/git-repo
 /git-request-pull
 /git-rerere
 /git-reset
@@ -166,6 +171,7 @@
 /git-submodule
 /git-submodule--helper
 /git-subtree
+/git-survey
 /git-svn
 /git-switch
 /git-symbolic-ref
@@ -252,5 +258,6 @@ Release/
 /git.VC.db
 *.dSYM
 /contrib/buildsystems/out
+CMakeSettings.json
 /contrib/libgit-rs/target
 /contrib/libgit-sys/target

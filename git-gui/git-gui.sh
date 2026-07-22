@@ -30,9 +30,7 @@ along with this program; if not, see <https://www.gnu.org/licenses/>.}]
 ##
 ## Tcl/Tk sanity check
 
-if {[catch {package require Tcl 8.5} err]
- || [catch {package require Tk  8.5} err]
-} {
+if {[catch {package require Tcl 8.6-} err]} {
 	catch {wm withdraw .}
 	tk_messageBox \
 		-icon error \
@@ -76,24 +74,35 @@ proc is_Cygwin {} {
 }
 
 ######################################################################
+## Enable Tcl8 profile in Tcl9, allowing consumption of data that has
+## bytes not conforming to the assumed encoding profile.
+
+if {[package vcompare $::tcl_version 9.0] >= 0} {
+	rename open _strict_open
+	proc open args {
+		set f [_strict_open {*}$args]
+		chan configure $f -profile tcl8
+		return $f
+	}
+	proc convertfrom args {
+		return [encoding convertfrom -profile tcl8 {*}$args]
+	}
+} else {
+	proc convertfrom args {
+		return [encoding convertfrom {*}$args]
+	}
+}
+
+######################################################################
 ##
 ## PATH lookup. Sanitize $PATH, assure exec/open use only that
 
 if {[is_Windows]} {
 	set _path_sep {;}
-	set _search_exe .exe
 } else {
 	set _path_sep {:}
-	set _search_exe {}
 }
 
-if {[is_Windows]} {
-	set gitguidir [file dirname [info script]]
-	regsub -all ";" $gitguidir "\\;" gitguidir
-	set env(PATH) "$gitguidir;$env(PATH)"
-}
-
-set _search_path {}
 set _path_seen [dict create]
 foreach p [split $env(PATH) $_path_sep] {
 	# Keep only absolute paths, getting rid of ., empty, etc.
@@ -102,27 +111,24 @@ foreach p [split $env(PATH) $_path_sep] {
 	}
 	# Keep only the first occurence of any duplicates.
 	set norm_p [file normalize $p]
-	if {[dict exists $_path_seen $norm_p]} {
-		continue
-	}
 	dict set _path_seen $norm_p 1
-	lappend _search_path $norm_p
 }
+set _search_path [dict keys $_path_seen]
 unset _path_seen
 
 set env(PATH) [join $_search_path $_path_sep]
 
 if {[is_Windows]} {
 	proc _which {what args} {
-		global _search_exe _search_path
+		global _search_path
 
 		if {[lsearch -exact $args -script] >= 0} {
 			set suffix {}
-		} elseif {[string match *$_search_exe [string tolower $what]]} {
+		} elseif {[string match *.exe [string tolower $what]]} {
 			# The search string already has the file extension
 			set suffix {}
 		} else {
-			set suffix $_search_exe
+			set suffix .exe
 		}
 
 		foreach p $_search_path {
@@ -187,7 +193,9 @@ if {[is_Windows]} {
 			set command_line [string trim [string range $arg0 1 end]]
 			lset args 0 "| [sanitize_command_line $command_line 0]"
 		}
-		uplevel 1 real_open $args
+		set fd [real_open {*}$args]
+		fconfigure $fd -eofchar {}
+		return $fd
 	}
 
 } else {
@@ -365,7 +373,6 @@ set _appname {Git Gui}
 set _gitdir {}
 set _gitworktree {}
 set _isbare {}
-set _gitexec {}
 set _githtmldir {}
 set _reponame {}
 set _shellpath {@@SHELL_PATH@@}
@@ -428,20 +435,6 @@ proc gitdir {args} {
 		return $_gitdir
 	}
 	return [eval [list file join $_gitdir] $args]
-}
-
-proc gitexec {args} {
-	global _gitexec
-	if {$_gitexec eq {}} {
-		if {[catch {set _gitexec [git --exec-path]} err]} {
-			error "Git not installed?\n\n$err"
-		}
-		set _gitexec [file normalize $_gitexec]
-	}
-	if {$args eq {}} {
-		return $_gitexec
-	}
-	return [eval [list file join $_gitexec] $args]
 }
 
 proc githtmldir {args} {
@@ -576,56 +569,6 @@ proc _trace_exec {cmd} {
 
 #'"  fix poor old emacs font-lock mode
 
-proc _git_cmd {name} {
-	global _git_cmd_path
-
-	if {[catch {set v $_git_cmd_path($name)}]} {
-		switch -- $name {
-		  version   -
-		--version   -
-		--exec-path { return [list $::_git $name] }
-		}
-
-		set p [gitexec git-$name$::_search_exe]
-		if {[file exists $p]} {
-			set v [list $p]
-		} elseif {[is_Windows] && [file exists [gitexec git-$name]]} {
-			# Try to determine what sort of magic will make
-			# git-$name go and do its thing, because native
-			# Tcl on Windows doesn't know it.
-			#
-			set p [gitexec git-$name]
-			set f [safe_open_file $p r]
-			set s [gets $f]
-			close $f
-
-			switch -glob -- [lindex $s 0] {
-			#!*sh     { set i sh     }
-			#!*perl   { set i perl   }
-			#!*python { set i python }
-			default   { error "git-$name is not supported: $s" }
-			}
-
-			upvar #0 _$i interp
-			if {![info exists interp]} {
-				set interp [_which $i]
-			}
-			if {$interp eq {}} {
-				error "git-$name requires $i (not in PATH)"
-			}
-			set v [concat [list $interp] [lrange $s 1 end] [list $p]]
-		} else {
-			# Assume it is builtin to git somehow and we
-			# aren't actually able to see a file for it.
-			#
-			set v [list $::_git $name]
-		}
-		set _git_cmd_path($name) $v
-	}
-	return $v
-}
-
-# Run a shell command connected via pipes on stdout.
 # This is for use with textconv filters and uses sh -c "..." to allow it to
 # contain a command with arguments. We presume this
 # to be a shellscript that the configured shell (/bin/sh by default) knows
@@ -636,30 +579,13 @@ proc open_cmd_pipe {cmd path} {
 	return [open |$run r]
 }
 
-proc _lappend_nice {cmd_var} {
-	global _nice
-	upvar $cmd_var cmd
-
-	if {![info exists _nice]} {
-		set _nice [_which nice]
-		if {[catch {safe_exec [list $_nice git version]}]} {
-			set _nice {}
-		} elseif {[is_Windows] && [file dirname $_nice] ne [file dirname $::_git]} {
-			set _nice {}
-		}
-	}
-	if {$_nice ne {}} {
-		lappend cmd $_nice
-	}
-}
-
 proc git {args} {
 	git_redir $args {}
 }
 
 proc git_redir {cmd redir} {
 	set fd [git_read $cmd $redir]
-	fconfigure $fd -translation binary -encoding utf-8
+	fconfigure $fd -encoding utf-8
 	set result [string trimright [read $fd] "\n"]
 	close $fd
 	if {$::_trace} {
@@ -676,35 +602,33 @@ proc safe_open_command {cmd {redir {}}} {
 	} err]} {
 		error $err
 	}
-	fconfigure $fd -eofchar {}
 	return $fd
 }
 
 proc git_read {cmd {redir {}}} {
-	set cmdp [_git_cmd [lindex $cmd 0]]
-	set cmd [lrange $cmd 1 end]
+	global _git
+	set cmdp [concat [list $_git] $cmd]
 
-	return [safe_open_command [concat $cmdp $cmd] $redir]
+	return [safe_open_command $cmdp $redir]
+}
+
+set _nice [list [_which nice]]
+if {[catch {safe_exec [list {*}$_nice git version]}]} {
+	set _nice {}
 }
 
 proc git_read_nice {cmd} {
-	set opt [list]
-
-	_lappend_nice opt
-
-	set cmdp [_git_cmd [lindex $cmd 0]]
-	set cmd [lrange $cmd 1 end]
-
-	return [safe_open_command [concat $opt $cmdp $cmd]]
+	set cmdp [list {*}$::_nice $::_git {*}$cmd]
+	return [safe_open_command $cmdp]
 }
 
 proc git_write {cmd} {
+	global _git
 	set cmd [make_arglist_safe $cmd]
-	set cmdp [_git_cmd [lindex $cmd 0]]
-	set cmd [lrange $cmd 1 end]
+	set cmdp [concat [list $_git] $cmd]
 
-	_trace_exec [concat $cmdp $cmd]
-	return [open [concat [list | ] $cmdp $cmd] w]
+	_trace_exec $cmdp
+	return [open [concat [list | ] $cmdp] w]
 }
 
 proc githook_read {hook_name args} {
@@ -744,27 +668,8 @@ proc sq {value} {
 proc load_current_branch {} {
 	global current_branch is_detached
 
-	set fd [safe_open_file [gitdir HEAD] r]
-	fconfigure $fd -translation binary -encoding utf-8
-	if {[gets $fd ref] < 1} {
-		set ref {}
-	}
-	close $fd
-
-	set pfx {ref: refs/heads/}
-	set len [string length $pfx]
-	if {[string equal -length $len $pfx $ref]} {
-		# We're on a branch.  It might not exist.  But
-		# HEAD looks good enough to be a branch.
-		#
-		set current_branch [string range $ref $len end]
-		set is_detached 0
-	} else {
-		# Assume this is a detached head.
-		#
-		set current_branch HEAD
-		set is_detached 1
-	}
+	set current_branch [git branch --show-current]
+	set is_detached [expr [string length $current_branch] == 0]
 }
 
 auto_load tk_optionMenu
@@ -914,18 +819,9 @@ proc apply_config {} {
 		font configure ${font}italic -slant italic
 	}
 
-	global use_ttk NS
-	set use_ttk 0
-	set NS {}
-	if {$repo_config(gui.usettk)} {
-		set use_ttk [package vsatisfies [package provide Tk] 8.5]
-		if {$use_ttk} {
-			set NS ttk
-			bind [winfo class .] <<ThemeChanged>> [list InitTheme]
-			pave_toplevel .
-			color::sync_with_theme
-		}
-	}
+	bind [winfo class .] <<ThemeChanged>> [list InitTheme]
+	pave_toplevel .
+	color::sync_with_theme
 
 	global comment_string
 	set comment_string [get_config core.commentstring]
@@ -992,6 +888,8 @@ if {$_git eq {}} {
 ##
 ## version check
 
+set MIN_GIT_VERSION 2.36
+
 if {[catch {set _git_version [git --version]} err]} {
 	catch {wm withdraw .}
 	tk_messageBox \
@@ -1002,9 +900,10 @@ if {[catch {set _git_version [git --version]} err]} {
 
 $err
 
-[appname] requires Git 1.5.0 or later."
+[appname] requires Git $MIN_GIT_VERSION or later."
 	exit 1
 }
+
 if {![regsub {^git version } $_git_version {} _git_version]} {
 	catch {wm withdraw .}
 	tk_messageBox \
@@ -1029,85 +928,21 @@ proc get_trimmed_version {s} {
 set _real_git_version $_git_version
 set _git_version [get_trimmed_version $_git_version]
 
-if {![regexp {^[1-9]+(\.[0-9]+)+$} $_git_version]} {
-	catch {wm withdraw .}
-	if {[tk_messageBox \
-		-icon warning \
-		-type yesno \
-		-default no \
-		-title "[appname]: warning" \
-		-message [mc "Git version cannot be determined.
+if {[catch {set vcheck [package vcompare $_git_version $MIN_GIT_VERSION]}] ||
+	[expr $vcheck < 0] } {
 
-%s claims it is version '%s'.
-
-%s requires at least Git 1.5.0 or later.
-
-Assume '%s' is version 1.5.0?
-" $_git $_real_git_version [appname] $_real_git_version]] eq {yes}} {
-		set _git_version 1.5.0
-	} else {
-		exit 1
-	}
-}
-unset _real_git_version
-
-proc git-version {args} {
-	global _git_version
-
-	switch [llength $args] {
-	0 {
-		return $_git_version
-	}
-
-	2 {
-		set op [lindex $args 0]
-		set vr [lindex $args 1]
-		set cm [package vcompare $_git_version $vr]
-		return [expr $cm $op 0]
-	}
-
-	4 {
-		set type [lindex $args 0]
-		set name [lindex $args 1]
-		set parm [lindex $args 2]
-		set body [lindex $args 3]
-
-		if {($type ne {proc} && $type ne {method})} {
-			error "Invalid arguments to git-version"
-		}
-		if {[llength $body] < 2 || [lindex $body end-1] ne {default}} {
-			error "Last arm of $type $name must be default"
-		}
-
-		foreach {op vr cb} [lrange $body 0 end-2] {
-			if {[git-version $op $vr]} {
-				return [uplevel [list $type $name $parm $cb]]
-			}
-		}
-
-		return [uplevel [list $type $name $parm [lindex $body end]]]
-	}
-
-	default {
-		error "git-version >= x"
-	}
-
-	}
-}
-
-if {[git-version < 1.5]} {
+	set msg1 [mc "Insufficient git version, require: "]
+	set msg2 [mc "git returned:"]
+	set message "$msg1 $MIN_GIT_VERSION\n$msg2 $_real_git_version"
 	catch {wm withdraw .}
 	tk_messageBox \
 		-icon error \
 		-type ok \
 		-title [mc "git-gui: fatal error"] \
-		-message "[appname] requires Git 1.5.0 or later.
-
-You are using [git-version]:
-
-[git --version]"
+		-message $message
 	exit 1
 }
+unset _real_git_version
 
 ######################################################################
 ##
@@ -1161,7 +996,7 @@ proc _parse_config {arr_name args} {
 			[concat config \
 			$args \
 			--null --list]]
-		fconfigure $fd_rc -translation binary -encoding utf-8
+		fconfigure $fd_rc -encoding utf-8
 		set buf [read $fd_rc]
 		close $fd_rc
 	}
@@ -1270,12 +1105,18 @@ citool {
 ##
 ## execution environment
 
-set have_tk85 [expr {[package vcompare $tk_version "8.5"] >= 0}]
-
 # Suggest our implementation of askpass, if none is set
+set argv0dir [file dirname [file normalize $::argv0]]
 if {![info exists env(SSH_ASKPASS)]} {
-	set env(SSH_ASKPASS) [gitexec git-gui--askpass]
+	set env(SSH_ASKPASS) [file join $argv0dir git-gui--askpass]
 }
+if {![info exists env(GIT_ASKPASS)]} {
+	set env(GIT_ASKPASS) [file join $argv0dir git-gui--askpass]
+}
+if {![info exists env(GIT_ASK_YESNO)]} {
+	set env(GIT_ASK_YESNO) [file join $argv0dir git-gui--askyesno]
+}
+unset argv0dir
 
 ######################################################################
 ##
@@ -1295,7 +1136,21 @@ if {[catch {
 	load_config 1
 	apply_config
 	choose_repository::pick
+	if {![file isdirectory $_gitdir]} {
+		exit 1
+	}
 	set picked 1
+}
+
+# Use object format as hash algorithm (either "sha1" or "sha256")
+set hashalgorithm [git rev-parse --show-object-format]
+if {$hashalgorithm eq "sha1"} {
+	set hashlength 40
+} elseif {$hashalgorithm eq "sha256"} {
+	set hashlength 64
+} else {
+	puts stderr "Unknown hash algorithm: $hashalgorithm"
+	exit 1
 }
 
 # we expand the _gitdir when it's just a single dot (i.e. when we're being
@@ -1314,20 +1169,7 @@ if {![file isdirectory $_gitdir]} {
 load_config 0
 apply_config
 
-# v1.7.0 introduced --show-toplevel to return the canonical work-tree
-if {[package vcompare $_git_version 1.7.0] >= 0} {
-	set _gitworktree [git rev-parse --show-toplevel]
-} else {
-	# try to set work tree from environment, core.worktree or use
-	# cdup to obtain a relative path to the top of the worktree. If
-	# run from the top, the ./ prefix ensures normalize expands pwd.
-	if {[catch { set _gitworktree $env(GIT_WORK_TREE) }]} {
-		set _gitworktree [get_config core.worktree]
-		if {$_gitworktree eq ""} {
-			set _gitworktree [file normalize ./[git rev-parse --show-cdup]]
-		}
-	}
-}
+set _gitworktree [git rev-parse --show-toplevel]
 
 if {$_prefix ne {}} {
 	if {$_gitworktree eq {}} {
@@ -1391,8 +1233,8 @@ set is_conflict_diff 0
 set last_revert {}
 set last_revert_enc {}
 
-set nullid "0000000000000000000000000000000000000000"
-set nullid2 "0000000000000000000000000000000000000001"
+set nullid [string repeat 0 $hashlength]
+set nullid2 "[string repeat 0 [expr $hashlength - 1]]1"
 
 ######################################################################
 ##
@@ -1553,18 +1395,7 @@ proc rescan_stage2 {fd after} {
 		close $fd
 	}
 
-	if {[package vcompare $::_git_version 1.6.3] >= 0} {
-		set ls_others [list --exclude-standard]
-	} else {
-		set ls_others [list --exclude-per-directory=.gitignore]
-		if {[have_info_exclude]} {
-			lappend ls_others "--exclude-from=[gitdir info exclude]"
-		}
-		set user_exclude [get_config core.excludesfile]
-		if {$user_exclude ne {} && [file readable $user_exclude]} {
-			lappend ls_others "--exclude-from=[file normalize $user_exclude]"
-		}
-	}
+	set ls_others [list --exclude-standard]
 
 	set buf_rdi {}
 	set buf_rdf {}
@@ -1572,22 +1403,18 @@ proc rescan_stage2 {fd after} {
 
 	set rescan_active 2
 	ui_status [mc "Scanning for modified files ..."]
-	if {[git-version >= "1.7.2"]} {
-		set fd_di [git_read [list diff-index --cached --ignore-submodules=dirty -z [PARENT]]]
-	} else {
-		set fd_di [git_read [list diff-index --cached -z [PARENT]]]
-	}
+	set fd_di [git_read [list diff-index --cached --ignore-submodules=dirty -z [PARENT]]]
 	set fd_df [git_read [list diff-files -z]]
 
-	fconfigure $fd_di -blocking 0 -translation binary -encoding binary
-	fconfigure $fd_df -blocking 0 -translation binary -encoding binary
+	fconfigure $fd_di -blocking 0 -translation binary
+	fconfigure $fd_df -blocking 0 -translation binary
 
 	fileevent $fd_di readable [list read_diff_index $fd_di $after]
 	fileevent $fd_df readable [list read_diff_files $fd_df $after]
 
 	if {[is_config_true gui.displayuntracked]} {
 		set fd_lo [git_read [concat ls-files --others -z $ls_others]]
-		fconfigure $fd_lo -blocking 0 -translation binary -encoding binary
+		fconfigure $fd_lo -blocking 0 -translation binary
 		fileevent $fd_lo readable [list read_ls_others $fd_lo $after]
 		incr rescan_active
 	}
@@ -1601,7 +1428,6 @@ proc load_message {file {encoding {}}} {
 		if {[catch {set fd [safe_open_file $f r]}]} {
 			return 0
 		}
-		fconfigure $fd -eofchar {}
 		if {$encoding ne {}} {
 			fconfigure $fd -encoding $encoding
 		}
@@ -1658,7 +1484,7 @@ proc run_prepare_commit_msg_hook {} {
 	ui_status [mc "Calling prepare-commit-msg hook..."]
 	set pch_error {}
 
-	fconfigure $fd_ph -blocking 0 -translation binary -eofchar {}
+	fconfigure $fd_ph -blocking 0 -translation binary
 	fileevent $fd_ph readable \
 		[list prepare_commit_msg_hook_wait $fd_ph]
 
@@ -1704,7 +1530,7 @@ proc read_diff_index {fd after} {
 		set i [split [string range $buf_rdi $c [expr {$z1 - 2}]] { }]
 		set p [string range $buf_rdi $z1 [expr {$z2 - 1}]]
 		merge_state \
-			[encoding convertfrom utf-8 $p] \
+			[convertfrom utf-8 $p] \
 			[lindex $i 4]? \
 			[list [lindex $i 0] [lindex $i 2]] \
 			[list]
@@ -1737,7 +1563,7 @@ proc read_diff_files {fd after} {
 		set i [split [string range $buf_rdf $c [expr {$z1 - 2}]] { }]
 		set p [string range $buf_rdf $z1 [expr {$z2 - 1}]]
 		merge_state \
-			[encoding convertfrom utf-8 $p] \
+			[convertfrom utf-8 $p] \
 			?[lindex $i 4] \
 			[list] \
 			[list [lindex $i 0] [lindex $i 2]]
@@ -1760,7 +1586,7 @@ proc read_ls_others {fd after} {
 	set pck [split $buf_rlo "\0"]
 	set buf_rlo [lindex $pck end]
 	foreach p [lrange $pck 0 end-1] {
-		set p [encoding convertfrom utf-8 $p]
+		set p [convertfrom utf-8 $p]
 		if {[string index $p end] eq {/}} {
 			set p [string range $p 0 end-1]
 		}
@@ -1845,10 +1671,9 @@ proc short_path {path} {
 }
 
 set next_icon_id 0
-set null_sha1 [string repeat 0 40]
 
 proc merge_state {path new_state {head_info {}} {index_info {}}} {
-	global file_states next_icon_id null_sha1
+	global file_states next_icon_id nullid
 
 	set s0 [string index $new_state 0]
 	set s1 [string index $new_state 1]
@@ -1870,7 +1695,7 @@ proc merge_state {path new_state {head_info {}} {index_info {}}} {
 	elseif {$s1 eq {_}} {set s1 _}
 
 	if {$s0 eq {A} && $s1 eq {_} && $head_info eq {}} {
-		set head_info [list 0 $null_sha1]
+		set head_info [list 0 $nullid]
 	} elseif {$s0 ne {_} && [string index $state 0] eq {_}
 		&& $head_info eq {}} {
 		set head_info $index_info
@@ -2109,6 +1934,7 @@ set all_icons(U$ui_index)   file_merge
 set all_icons(T$ui_index)   file_statechange
 
 set all_icons(_$ui_workdir) file_plain
+set all_icons(A$ui_workdir) file_plain
 set all_icons(M$ui_workdir) file_mod
 set all_icons(D$ui_workdir) file_question
 set all_icons(U$ui_workdir) file_merge
@@ -2135,6 +1961,7 @@ foreach i {
 		{A_ {mc "Staged for commit"}}
 		{AM {mc "Portions staged for commit"}}
 		{AD {mc "Staged for commit, missing"}}
+		{AA {mc "Intended to be added"}}
 
 		{_D {mc "Missing"}}
 		{D_ {mc "Staged for removal"}}
@@ -2323,7 +2150,7 @@ proc do_quit {{rc {1}}} {
 	global ui_comm is_quitting repo_config commit_type
 	global GITGUI_BCK_exists GITGUI_BCK_i
 	global ui_comm_spell
-	global ret_code use_ttk
+	global ret_code
 
 	if {$is_quitting} return
 	set is_quitting 1
@@ -2381,13 +2208,8 @@ proc do_quit {{rc {1}}} {
 		}
 		set cfg_geometry [list]
 		lappend cfg_geometry [wm geometry .]
-		if {$use_ttk} {
-			lappend cfg_geometry [.vpane sashpos 0]
-			lappend cfg_geometry [.vpane.files sashpos 0]
-		} else {
-			lappend cfg_geometry [lindex [.vpane sash coord 0] 0]
-			lappend cfg_geometry [lindex [.vpane.files sash coord 0] 1]
-		}
+		lappend cfg_geometry [.vpane sashpos 0]
+		lappend cfg_geometry [.vpane.files sashpos 0]
 		if {[catch {set rc_geometry $repo_config(gui.geometry)}]} {
 			set rc_geometry {}
 		}
@@ -3203,7 +3025,7 @@ blame {
 	if {$head eq {}} {
 		load_current_branch
 	} else {
-		if {[regexp {^[0-9a-f]{1,39}$} $head]} {
+		if {[regexp [string map "@@ [expr $hashlength - 1]" {^[0-9a-f]{1,@@}$}] $head]} {
 			if {[catch {
 					set head [git rev-parse --verify $head]
 				} err]} {
@@ -3269,13 +3091,12 @@ default {
 
 # -- Branch Control
 #
-${NS}::frame .branch
-if {!$use_ttk} {.branch configure -borderwidth 1 -relief sunken}
-${NS}::label .branch.l1 \
+ttk::frame .branch
+ttk::label .branch.l1 \
 	-text [mc "Current Branch:"] \
 	-anchor w \
 	-justify left
-${NS}::label .branch.cb \
+ttk::label .branch.cb \
 	-textvariable current_branch \
 	-anchor w \
 	-justify left
@@ -3285,13 +3106,9 @@ pack .branch -side top -fill x
 
 # -- Main Window Layout
 #
-${NS}::panedwindow .vpane -orient horizontal
-${NS}::panedwindow .vpane.files -orient vertical
-if {$use_ttk} {
-	.vpane add .vpane.files
-} else {
-	.vpane add .vpane.files -sticky nsew -height 100 -width 200
-}
+ttk::panedwindow .vpane -orient horizontal
+ttk::panedwindow .vpane.files -orient vertical
+.vpane add .vpane.files
 pack .vpane -anchor n -side top -fill both -expand 1
 
 # -- Working Directory File List
@@ -3308,8 +3125,8 @@ ttext $ui_workdir \
 	-xscrollcommand {.vpane.files.workdir.sx set} \
 	-yscrollcommand {.vpane.files.workdir.sy set} \
 	-state disabled
-${NS}::scrollbar .vpane.files.workdir.sx -orient h -command [list $ui_workdir xview]
-${NS}::scrollbar .vpane.files.workdir.sy -orient v -command [list $ui_workdir yview]
+ttk::scrollbar .vpane.files.workdir.sx -orient h -command [list $ui_workdir xview]
+ttk::scrollbar .vpane.files.workdir.sy -orient v -command [list $ui_workdir yview]
 pack .vpane.files.workdir.title -side top -fill x
 pack .vpane.files.workdir.sx -side bottom -fill x
 pack .vpane.files.workdir.sy -side right -fill y
@@ -3330,8 +3147,8 @@ ttext $ui_index \
 	-xscrollcommand {.vpane.files.index.sx set} \
 	-yscrollcommand {.vpane.files.index.sy set} \
 	-state disabled
-${NS}::scrollbar .vpane.files.index.sx -orient h -command [list $ui_index xview]
-${NS}::scrollbar .vpane.files.index.sy -orient v -command [list $ui_index yview]
+ttk::scrollbar .vpane.files.index.sx -orient h -command [list $ui_index xview]
+ttk::scrollbar .vpane.files.index.sy -orient v -command [list $ui_index yview]
 pack .vpane.files.index.title -side top -fill x
 pack .vpane.files.index.sx -side bottom -fill x
 pack .vpane.files.index.sy -side right -fill y
@@ -3341,10 +3158,6 @@ pack $ui_index -side left -fill both -expand 1
 #
 .vpane.files add .vpane.files.workdir
 .vpane.files add .vpane.files.index
-if {!$use_ttk} {
-	.vpane.files paneconfigure .vpane.files.workdir -sticky news
-	.vpane.files paneconfigure .vpane.files.index -sticky news
-}
 
 proc set_selection_colors {w has_focus} {
 	foreach tag [list in_diff in_sel] {
@@ -3365,78 +3178,63 @@ unset i
 
 # -- Diff and Commit Area
 #
-if {$have_tk85} {
-	${NS}::panedwindow .vpane.lower -orient vertical
-	${NS}::frame .vpane.lower.commarea
-	${NS}::frame .vpane.lower.diff -relief sunken -borderwidth 1 -height 500
-	.vpane.lower add .vpane.lower.diff
-	.vpane.lower add .vpane.lower.commarea
-	.vpane add .vpane.lower
-	if {$use_ttk} {
-		.vpane.lower pane .vpane.lower.diff -weight 1
-		.vpane.lower pane .vpane.lower.commarea -weight 0
-	} else {
-		.vpane.lower paneconfigure .vpane.lower.diff -stretch always
-		.vpane.lower paneconfigure .vpane.lower.commarea -stretch never
-	}
-} else {
-	frame .vpane.lower -height 300 -width 400
-	frame .vpane.lower.commarea
-	frame .vpane.lower.diff -relief sunken -borderwidth 1
-	pack .vpane.lower.diff -fill both -expand 1
-	pack .vpane.lower.commarea -side bottom -fill x
-	.vpane add .vpane.lower
-	.vpane paneconfigure .vpane.lower -sticky nsew
-}
+ttk::panedwindow .vpane.lower -orient vertical
+ttk::frame .vpane.lower.commarea
+ttk::frame .vpane.lower.diff -relief sunken -borderwidth 1 -height 500
+.vpane.lower add .vpane.lower.diff
+.vpane.lower add .vpane.lower.commarea
+.vpane add .vpane.lower
+.vpane.lower pane .vpane.lower.diff -weight 1
+.vpane.lower pane .vpane.lower.commarea -weight 0
 
 # -- Commit Area Buttons
 #
-${NS}::frame .vpane.lower.commarea.buttons
-${NS}::label .vpane.lower.commarea.buttons.l -text {} \
+ttk::frame .vpane.lower.commarea.buttons
+ttk::label .vpane.lower.commarea.buttons.l -text {} \
 	-anchor w \
 	-justify left
 pack .vpane.lower.commarea.buttons.l -side top -fill x
 pack .vpane.lower.commarea.buttons -side left -fill y
 
-${NS}::button .vpane.lower.commarea.buttons.rescan -text [mc Rescan] \
+ttk::button .vpane.lower.commarea.buttons.rescan -text [mc Rescan] \
 	-command ui_do_rescan
 pack .vpane.lower.commarea.buttons.rescan -side top -fill x
 lappend disable_on_lock \
 	{.vpane.lower.commarea.buttons.rescan conf -state}
 
-${NS}::button .vpane.lower.commarea.buttons.incall -text [mc "Stage Changed"] \
+ttk::button .vpane.lower.commarea.buttons.incall -text [mc "Stage Changed"] \
 	-command do_add_all
 pack .vpane.lower.commarea.buttons.incall -side top -fill x
 lappend disable_on_lock \
 	{.vpane.lower.commarea.buttons.incall conf -state}
 
 if {![is_enabled nocommitmsg]} {
-	${NS}::button .vpane.lower.commarea.buttons.signoff -text [mc "Sign Off"] \
+	ttk::button .vpane.lower.commarea.buttons.signoff -text [mc "Sign Off"] \
 		-command do_signoff
 	pack .vpane.lower.commarea.buttons.signoff -side top -fill x
 }
 
-${NS}::button .vpane.lower.commarea.buttons.commit -text [commit_btn_caption] \
+ttk::button .vpane.lower.commarea.buttons.commit -text [commit_btn_caption] \
 	-command do_commit
 pack .vpane.lower.commarea.buttons.commit -side top -fill x
 lappend disable_on_lock \
 	{.vpane.lower.commarea.buttons.commit conf -state}
 
 if {![is_enabled nocommit]} {
-	${NS}::button .vpane.lower.commarea.buttons.push -text [mc Push] \
+	ttk::button .vpane.lower.commarea.buttons.push -text [mc Push] \
 		-command do_push_anywhere
 	pack .vpane.lower.commarea.buttons.push -side top -fill x
 }
 
 # -- Commit Message Buffer
 #
-${NS}::frame .vpane.lower.commarea.buffer
-${NS}::frame .vpane.lower.commarea.buffer.header
+ttk::frame .vpane.lower.commarea.buffer
+ttk::frame .vpane.lower.commarea.buffer.header
 set ui_comm .vpane.lower.commarea.buffer.frame.t
 set ui_coml .vpane.lower.commarea.buffer.header.l
 
 if {![is_enabled nocommit]} {
-	${NS}::checkbutton .vpane.lower.commarea.buffer.header.amend \
+	ttk::checkbutton .vpane.lower.commarea.buffer.header.amend \
 		-text [mc "Amend Last Commit"] \
 		-variable commit_type_is_amend \
 		-command do_select_commit_type
@@ -3444,7 +3242,7 @@ if {![is_enabled nocommit]} {
 		[list .vpane.lower.commarea.buffer.header.amend conf -state]
 }
 
-${NS}::label $ui_coml \
+ttk::label $ui_coml \
 	-anchor w \
 	-justify left
 proc trace_commit_type {varname args} {
@@ -3479,10 +3277,10 @@ ttext $ui_comm \
 	-font font_diff \
 	-xscrollcommand {.vpane.lower.commarea.buffer.frame.sbx set} \
 	-yscrollcommand {.vpane.lower.commarea.buffer.frame.sby set}
-${NS}::scrollbar .vpane.lower.commarea.buffer.frame.sbx \
+ttk::scrollbar .vpane.lower.commarea.buffer.frame.sbx \
 	-orient horizontal \
 	-command [list $ui_comm xview]
-${NS}::scrollbar .vpane.lower.commarea.buffer.frame.sby \
+ttk::scrollbar .vpane.lower.commarea.buffer.frame.sby \
 	-orient vertical \
 	-command [list $ui_comm yview]
 
@@ -3605,9 +3403,9 @@ ttext $ui_diff \
 	-yscrollcommand {.vpane.lower.diff.body.sby set} \
 	-state disabled
 catch {$ui_diff configure -tabstyle wordprocessor}
-${NS}::scrollbar .vpane.lower.diff.body.sbx -orient horizontal \
+ttk::scrollbar .vpane.lower.diff.body.sbx -orient horizontal \
 	-command [list $ui_diff xview]
-${NS}::scrollbar .vpane.lower.diff.body.sby -orient vertical \
+ttk::scrollbar .vpane.lower.diff.body.sby -orient vertical \
 	-command [list $ui_diff yview]
 pack .vpane.lower.diff.body.sbx -side bottom -fill x
 pack .vpane.lower.diff.body.sby -side right -fill y
@@ -3908,29 +3706,14 @@ proc on_ttk_pane_mapped {w pane pos} {
 	bind $w <Map> {}
 	after 0 [list after idle [list $w sashpos $pane $pos]]
 }
-proc on_tk_pane_mapped {w pane x y} {
-	bind $w <Map> {}
-	after 0 [list after idle [list $w sash place $pane $x $y]]
-}
 proc on_application_mapped {} {
-	global repo_config use_ttk
+	global repo_config
 	bind . <Map> {}
 	set gm $repo_config(gui.geometry)
-	if {$use_ttk} {
-		bind .vpane <Map> \
-			[list on_ttk_pane_mapped %W 0 [lindex $gm 1]]
-		bind .vpane.files <Map> \
-			[list on_ttk_pane_mapped %W 0 [lindex $gm 2]]
-	} else {
-		bind .vpane <Map> \
-			[list on_tk_pane_mapped %W 0 \
-			[lindex $gm 1] \
-			[lindex [.vpane sash coord 0] 1]]
-		bind .vpane.files <Map> \
-			[list on_tk_pane_mapped %W 0 \
-			[lindex [.vpane.files sash coord 0] 0] \
-			[lindex $gm 2]]
-	}
+	bind .vpane <Map> \
+		[list on_ttk_pane_mapped %W 0 [lindex $gm 1]]
+	bind .vpane.files <Map> \
+		[list on_ttk_pane_mapped %W 0 [lindex $gm 2]]
 	wm geometry . [lindex $gm 0]
 }
 if {[info exists repo_config(gui.geometry)]} {
@@ -4118,6 +3901,24 @@ if {[winfo exists $ui_comm]} {
 	}
 
 	backup_commit_buffer
+
+	# Grey out comment lines (which are stripped from the final commit message by
+	# wash_commit_message).
+	$ui_comm tag configure commit_comment -foreground gray
+	proc dim_commit_comment_lines {} {
+		global ui_comm comment_string
+		$ui_comm tag remove commit_comment 1.0 end
+		set text [$ui_comm get 1.0 end]
+		# See also cmt_rx in wash_commit_message
+		set cmt_rx [strcat {^} [regsub -all {\W} $comment_string {\\&}]]
+		set ranges [regexp -all -indices -inline -line -- $cmt_rx $text]
+		foreach pair $ranges {
+			set idx "1.0 + [lindex $pair 0] chars"
+			$ui_comm tag add commit_comment $idx "$idx lineend + 1 char"
+		}
+	}
+	dim_commit_comment_lines
+	bind $ui_comm <<Modified>> { after idle dim_commit_comment_lines }
 
 	# -- If the user has aspell available we can drive it
 	#    in pipe mode to spellcheck the commit message.

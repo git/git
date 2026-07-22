@@ -107,7 +107,7 @@ int load_bloom_filter_from_graph(struct commit_graph *g,
  * Not considered to be cryptographically secure.
  * Implemented as described in https://en.wikipedia.org/wiki/MurmurHash#Algorithm
  */
-uint32_t murmur3_seeded_v2(uint32_t seed, const char *data, size_t len)
+static uint32_t murmur3_seeded_v2(uint32_t seed, const char *data, size_t len)
 {
 	const uint32_t c1 = 0xcc9e2d51;
 	const uint32_t c2 = 0x1b873593;
@@ -221,9 +221,7 @@ static uint32_t murmur3_seeded_v1(uint32_t seed, const char *data, size_t len)
 	return seed;
 }
 
-void fill_bloom_key(const char *data,
-		    size_t len,
-		    struct bloom_key *key,
+void bloom_key_fill(struct bloom_key *key, const char *data, size_t len,
 		    const struct bloom_filter_settings *settings)
 {
 	int i;
@@ -243,7 +241,7 @@ void fill_bloom_key(const char *data,
 		key->hashes[i] = hash0 + i * hash1;
 }
 
-void clear_bloom_key(struct bloom_key *key)
+void bloom_key_clear(struct bloom_key *key)
 {
 	FREE_AND_NULL(key->hashes);
 }
@@ -280,6 +278,55 @@ void deinit_bloom_filters(void)
 	deep_clear_bloom_filter_slab(&bloom_filters, free_one_bloom_filter);
 }
 
+struct bloom_keyvec *bloom_keyvec_new(const char *path, size_t len,
+				      const struct bloom_filter_settings *settings)
+{
+	struct bloom_keyvec *vec;
+	const char *p;
+	size_t sz;
+	size_t nr = 1;
+
+	p = path;
+	while (*p) {
+		/*
+		 * At this point, the path is normalized to use Unix-style
+		 * path separators. This is required due to how the
+		 * changed-path Bloom filters store the paths.
+		 */
+		if (*p == '/')
+			nr++;
+		p++;
+	}
+
+	sz = sizeof(struct bloom_keyvec);
+	sz += nr * sizeof(struct bloom_key);
+	vec = (struct bloom_keyvec *)xcalloc(1, sz);
+	if (!vec)
+		return NULL;
+	vec->count = nr;
+
+	bloom_key_fill(&vec->key[0], path, len, settings);
+	nr = 1;
+	p = path + len - 1;
+	while (p > path) {
+		if (*p == '/') {
+			bloom_key_fill(&vec->key[nr++], path, p - path, settings);
+		}
+		p--;
+	}
+	assert(nr == vec->count);
+	return vec;
+}
+
+void bloom_keyvec_free(struct bloom_keyvec *vec)
+{
+	if (!vec)
+		return;
+	for (size_t nr = 0; nr < vec->count; nr++)
+		bloom_key_clear(&vec->key[nr]);
+	free(vec);
+}
+
 static int pathmap_cmp(const void *hashmap_cmp_fn_data UNUSED,
 		       const struct hashmap_entry *eptr,
 		       const struct hashmap_entry *entry_or_key,
@@ -307,7 +354,7 @@ static void init_truncated_large_filter(struct bloom_filter *filter,
 
 static int has_entries_with_high_bit(struct repository *r, struct tree *t)
 {
-	if (parse_tree(t))
+	if (repo_parse_tree(r, t))
 		return 1;
 
 	if (!(t->object.flags & VISITED)) {
@@ -405,10 +452,12 @@ struct bloom_filter *get_or_compute_bloom_filter(struct repository *r,
 	filter = bloom_filter_slab_at(&bloom_filters, c);
 
 	if (!filter->data) {
+		struct commit_graph *g;
 		uint32_t graph_pos;
-		if (repo_find_commit_pos_in_graph(r, c, &graph_pos))
-			load_bloom_filter_from_graph(r->objects->commit_graph,
-						     filter, graph_pos);
+
+		g = repo_find_commit_pos_in_graph(r, c, &graph_pos);
+		if (g)
+			load_bloom_filter_from_graph(g, filter, graph_pos);
 	}
 
 	if (filter->data && filter->len) {
@@ -452,7 +501,7 @@ struct bloom_filter *get_or_compute_bloom_filter(struct repository *r,
 		struct hashmap_iter iter;
 
 		for (i = 0; i < diff_queued_diff.nr; i++) {
-			const char *path = diff_queued_diff.queue[i]->two->path;
+			char *path = diff_queued_diff.queue[i]->two->path;
 
 			/*
 			 * Add each leading directory of the changed file, i.e. for
@@ -474,7 +523,7 @@ struct bloom_filter *get_or_compute_bloom_filter(struct repository *r,
 					free(e);
 
 				if (!last_slash)
-					last_slash = (char*)path;
+					last_slash = path;
 				*last_slash = '\0';
 
 			} while (*path);
@@ -500,9 +549,9 @@ struct bloom_filter *get_or_compute_bloom_filter(struct repository *r,
 
 		hashmap_for_each_entry(&pathmap, &iter, e, entry) {
 			struct bloom_key key;
-			fill_bloom_key(e->path, strlen(e->path), &key, settings);
+			bloom_key_fill(&key, e->path, strlen(e->path), settings);
 			add_key_to_filter(&key, filter, settings);
-			clear_bloom_key(&key);
+			bloom_key_clear(&key);
 		}
 
 	cleanup:
@@ -539,4 +588,27 @@ int bloom_filter_contains(const struct bloom_filter *filter,
 	}
 
 	return 1;
+}
+
+int bloom_filter_contains_vec(const struct bloom_filter *filter,
+			      const struct bloom_keyvec *vec,
+			      const struct bloom_filter_settings *settings)
+{
+	int ret = 1;
+
+	for (size_t nr = 0; ret > 0 && nr < vec->count; nr++)
+		ret = bloom_filter_contains(filter, &vec->key[nr], settings);
+
+	return ret;
+}
+
+uint32_t test_bloom_murmur3_seeded(uint32_t seed, const char *data, size_t len,
+				   int version)
+{
+	assert(version == 1 || version == 2);
+
+	if (version == 2)
+		return murmur3_seeded_v2(seed, data, len);
+	else
+		return murmur3_seeded_v1(seed, data, len);
 }

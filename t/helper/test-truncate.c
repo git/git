@@ -21,5 +21,8 @@ int cmd__truncate(int argc, const char **argv)
 
 	if (ftruncate(fd, (off_t) sz) < 0)
 		die_errno("failed to truncate file");
+
+	close(fd);
+
 	return 0;
 }

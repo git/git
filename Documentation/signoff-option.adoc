@@ -16,3 +16,7 @@ endif::git-commit[]
 +
 The `--no-signoff` option can be used to countermand an earlier `--signoff`
 option on the command line.
++
+Git does not (and will not) have a configuration variable to enable
+the `--signoff` command line option by default; see the
+`commit.signoff` entry in linkgit:gitfaq[7] for more details.

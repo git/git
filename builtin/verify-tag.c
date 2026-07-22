@@ -7,6 +7,7 @@
  */
 #include "builtin.h"
 #include "config.h"
+#include "environment.h"
 #include "gettext.h"
 #include "tag.h"
 #include "object-name.h"
@@ -60,13 +61,13 @@ int cmd_verify_tag(int argc,
 			continue;
 		}
 
-		if (gpg_verify_tag(&oid, name, flags)) {
+		if (gpg_verify_tag(repo, &oid, name, flags)) {
 			had_error = 1;
 			continue;
 		}
 
 		if (format.format)
-			pretty_print_ref(name, &oid, &format);
+			pretty_print_ref(name, &oid, NULL, &format);
 	}
 	return had_error;
 }

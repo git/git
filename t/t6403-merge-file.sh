@@ -355,12 +355,12 @@ test_expect_success "expected conflict markers" '
 
 test_expect_success 'binary files cannot be merged' '
 	test_must_fail git merge-file -p \
-		orig.txt "$TEST_DIRECTORY"/test-binary-1.png new1.txt 2> merge.err &&
+		orig.txt "$TEST_DIRECTORY"/lib-diff/test-binary-1.png new1.txt 2> merge.err &&
 	grep "Cannot merge binary files" merge.err
 '
 
 test_expect_success 'binary files cannot be merged with --object-id' '
-	cp "$TEST_DIRECTORY"/test-binary-1.png . &&
+	cp "$TEST_DIRECTORY"/lib-diff/test-binary-1.png . &&
 	git add orig.txt new1.txt test-binary-1.png &&
 	test_must_fail git merge-file --object-id \
 		:orig.txt :test-binary-1.png :new1.txt 2> merge.err &&
@@ -425,6 +425,42 @@ test_expect_success '"diff3 -m" style output (2)' '
 	git config merge.conflictstyle diff3 &&
 	test_must_fail git merge-file -p \
 		new8.txt new5.txt new9.txt >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'merge.conflictStyle honored outside repo' '
+	test_config_global merge.conflictStyle diff3 &&
+	cat >nongit-base <<-\EOF &&
+	line1
+	original
+	line3
+	EOF
+	cat >nongit-ours <<-\EOF &&
+	line1
+	ours
+	line3
+	EOF
+	cat >nongit-theirs <<-\EOF &&
+	line1
+	theirs
+	line3
+	EOF
+	cat >expect <<-\EOF &&
+	line1
+	<<<<<<< ours
+	ours
+	||||||| base
+	original
+	=======
+	theirs
+	>>>>>>> theirs
+	line3
+	EOF
+	test_must_fail nongit git merge-file -p \
+		-L ours -L base -L theirs \
+		"$PWD/nongit-ours" \
+		"$PWD/nongit-base" \
+		"$PWD/nongit-theirs" >actual &&
 	test_cmp expect actual
 '
 
@@ -504,6 +540,15 @@ test_expect_success '--object-id fails without repository' '
 	empty="$(test_oid empty_blob)" &&
 	nongit test_must_fail git merge-file --object-id $empty $empty $empty 2>err &&
 	grep "not a git repository" err
+'
+
+test_expect_success 'run in a linked worktree with --object-id' '
+	empty="$(test_oid empty_blob)" &&
+	git worktree add work &&
+	git -C work merge-file --object-id $empty $empty $empty >actual &&
+	git worktree remove work &&
+	git merge-file --object-id $empty $empty $empty >expected &&
+	test_cmp actual expected
 '
 
 test_expect_success 'merging C files with "myers" diff algorithm creates some spurious conflicts' '

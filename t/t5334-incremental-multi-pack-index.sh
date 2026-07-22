@@ -15,6 +15,7 @@ midx_chain=$midxdir/multi-pack-index-chain
 
 test_expect_success 'convert non-incremental MIDX to incremental' '
 	test_commit base &&
+	git config set maintenance.auto false &&
 	git repack -ad &&
 	git multi-pack-index write &&
 

@@ -682,7 +682,8 @@ static int tree_write_stack_finish_subtree(struct tree_write_stack *tws)
 		ret = tree_write_stack_finish_subtree(n);
 		if (ret)
 			return ret;
-		ret = write_object_file(n->buf.buf, n->buf.len, OBJ_TREE, &s);
+		ret = odb_write_object(the_repository->objects, n->buf.buf,
+				       n->buf.len, OBJ_TREE, &s);
 		if (ret)
 			return ret;
 		strbuf_release(&n->buf);
@@ -847,7 +848,8 @@ int combine_notes_concatenate(struct object_id *cur_oid,
 	free(new_msg);
 
 	/* create a new blob object from buf */
-	ret = write_object_file(buf, buf_len, OBJ_BLOB, cur_oid);
+	ret = odb_write_object(the_repository->objects, buf,
+			       buf_len, OBJ_BLOB, cur_oid);
 	free(buf);
 	return ret;
 }
@@ -892,7 +894,7 @@ static int string_list_add_note_lines(struct string_list *list,
 	 * later, along with any empty strings that came from empty
 	 * lines within the file.
 	 */
-	string_list_split(list, data, '\n', -1);
+	string_list_split(list, data, "\n", -1);
 	free(data);
 	return 0;
 }
@@ -919,15 +921,15 @@ int combine_notes_cat_sort_uniq(struct object_id *cur_oid,
 	if (string_list_add_note_lines(&sort_uniq_list, new_oid))
 		goto out;
 	string_list_remove_empty_items(&sort_uniq_list, 0);
-	string_list_sort(&sort_uniq_list);
-	string_list_remove_duplicates(&sort_uniq_list, 0);
+	string_list_sort_u(&sort_uniq_list, 0);
 
 	/* create a new blob object from sort_uniq_list */
 	if (for_each_string_list(&sort_uniq_list,
 				 string_list_join_lines_helper, &buf))
 		goto out;
 
-	ret = write_object_file(buf.buf, buf.len, OBJ_BLOB, cur_oid);
+	ret = odb_write_object(the_repository->objects, buf.buf,
+			       buf.len, OBJ_BLOB, cur_oid);
 
 out:
 	strbuf_release(&buf);
@@ -935,13 +937,11 @@ out:
 	return ret;
 }
 
-static int string_list_add_one_ref(const char *refname, const char *referent UNUSED,
-				   const struct object_id *oid UNUSED,
-				   int flag UNUSED, void *cb)
+static int string_list_add_one_ref(const struct reference *ref, void *cb)
 {
 	struct string_list *refs = cb;
-	if (!unsorted_string_list_has_string(refs, refname))
-		string_list_append(refs, refname);
+	if (!unsorted_string_list_has_string(refs, ref->name))
+		string_list_append(refs, ref->name);
 	return 0;
 }
 
@@ -952,8 +952,11 @@ void string_list_add_refs_by_glob(struct string_list *list, const char *glob)
 {
 	assert(list->strdup_strings);
 	if (has_glob_specials(glob)) {
-		refs_for_each_glob_ref(get_main_ref_store(the_repository),
-				       string_list_add_one_ref, glob, list);
+		struct refs_for_each_ref_options opts = {
+			.pattern = glob,
+		};
+		refs_for_each_ref_ext(get_main_ref_store(the_repository),
+				      string_list_add_one_ref, list, &opts);
 	} else {
 		struct object_id oid;
 		if (repo_get_oid(the_repository, glob, &oid))
@@ -970,8 +973,8 @@ void string_list_add_refs_from_colon_sep(struct string_list *list,
 	char *globs_copy = xstrdup(globs);
 	int i;
 
-	string_list_split_in_place(&split, globs_copy, ":", -1);
-	string_list_remove_empty_items(&split, 0);
+	string_list_split_in_place_f(&split, globs_copy, ":", -1,
+				     STRING_LIST_SPLIT_NONEMPTY);
 
 	for (i = 0; i < split.nr; i++)
 		string_list_add_refs_by_glob(list, split.items[i].string);
@@ -1123,7 +1126,7 @@ void load_display_notes(struct display_notes_opt *opt)
 			load_config_refs = 1;
 	}
 
-	git_config(notes_display_config, &load_config_refs);
+	repo_config(the_repository, notes_display_config, &load_config_refs);
 
 	if (opt) {
 		struct string_list_item *item;
@@ -1215,7 +1218,8 @@ int write_notes_tree(struct notes_tree *t, struct object_id *result)
 	ret = for_each_note(t, flags, write_each_note, &cb_data) ||
 	      write_each_non_note_until(NULL, &cb_data) ||
 	      tree_write_stack_finish_subtree(&root) ||
-	      write_object_file(root.buf.buf, root.buf.len, OBJ_TREE, result);
+	      odb_write_object(the_repository->objects, root.buf.buf,
+			       root.buf.len, OBJ_TREE, result);
 	strbuf_release(&root.buf);
 	return ret;
 }

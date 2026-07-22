@@ -3,6 +3,7 @@
 #include "test-tool.h"
 #include "advice.h"
 #include "config.h"
+#include "environment.h"
 #include "setup.h"
 
 int cmd__advise_if_enabled(int argc, const char **argv)
@@ -11,7 +12,7 @@ int cmd__advise_if_enabled(int argc, const char **argv)
 		die("usage: %s <advice>", argv[0]);
 
 	setup_git_directory();
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 
 	/*
 	 * Any advice type can be used for testing, but NESTED_TAG was

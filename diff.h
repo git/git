@@ -7,6 +7,7 @@
 #include "hash.h"
 #include "pathspec.h"
 #include "strbuf.h"
+#include "color.h"
 
 struct oidset;
 
@@ -125,6 +126,13 @@ struct diff_flags {
 	 */
 	unsigned recursive;
 	unsigned tree_in_recursive;
+
+	/*
+	 * Historically diff_tree_combined() overrides recursive to 1. To
+	 * suppress this behavior, set the flag below.
+	 * It has no effect if recursive is already set to 1.
+	 */
+	unsigned no_recursive_diff_tree_combined;
 
 	/* Affects the way how a file that is seemingly binary is treated. */
 	unsigned binary;
@@ -283,7 +291,7 @@ struct diff_options {
 	/* diff-filter bits */
 	unsigned int filter, filter_not;
 
-	int use_color;
+	enum git_colorbool use_color;
 
 	/* Number of context lines to generate in patch output. */
 	int context;
@@ -323,9 +331,9 @@ struct diff_options {
 
 	int ita_invisible_in_index;
 /* white-space error highlighting */
-#define WSEH_NEW (1<<12)
-#define WSEH_CONTEXT (1<<13)
-#define WSEH_OLD (1<<14)
+#define WSEH_NEW        (1<<16)
+#define WSEH_CONTEXT    (1<<17)
+#define WSEH_OLD        (1<<18)
 	unsigned ws_error_highlight;
 	const char *prefix;
 	int prefix_length;
@@ -404,6 +412,14 @@ struct diff_options {
 	struct strmap *additional_path_headers;
 
 	int no_free;
+
+	/*
+	 * The value '0' is a valid max-depth (for no recursion), and value '-1'
+	 * also (for unlimited recursion), so the extra "valid" flag is used to
+	 * determined whether the user specified option --max-depth.
+	 */
+	int max_depth;
+	int max_depth_valid;
 };
 
 unsigned diff_filter_bit(char status);
@@ -459,7 +475,7 @@ enum color_diff {
 	DIFF_FILE_NEW_BOLD = 22,
 };
 
-const char *diff_get_color(int diff_use_color, enum color_diff ix);
+const char *diff_get_color(enum git_colorbool diff_use_color, enum color_diff ix);
 #define diff_get_color_opt(o, ix) \
 	diff_get_color((o)->use_color, ix)
 
@@ -555,6 +571,11 @@ void diff_change(struct diff_options *,
 		 int old_oid_valid, int new_oid_valid,
 		 const char *fullpath,
 		 unsigned dirty_submodule1, unsigned dirty_submodule2);
+
+void diff_same(struct diff_options *,
+	       unsigned mode,
+	       const struct object_id *oid,
+	       const char *fullpath);
 
 struct diff_filepair *diff_unmerge(struct diff_options *, const char *path);
 

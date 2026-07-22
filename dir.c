@@ -30,6 +30,7 @@
 #include "read-cache-ll.h"
 #include "setup.h"
 #include "sparse-index.h"
+#include "strbuf.h"
 #include "submodule-config.h"
 #include "symlinks.h"
 #include "trace2.h"
@@ -85,6 +86,33 @@ struct dirent *readdir_skip_dot_and_dotdot(DIR *dirp)
 			break;
 	}
 	return e;
+}
+
+int for_each_file_in_dir(struct strbuf *path, file_iterator fn, const void *data)
+{
+	struct dirent *e;
+	int res = 0;
+	size_t baselen = path->len;
+	DIR *dir = opendir(path->buf);
+
+	if (!dir)
+		return 0;
+
+	while (!res && (e = readdir_skip_dot_and_dotdot(dir)) != NULL) {
+		unsigned char dtype = get_dtype(e, path, 0);
+		strbuf_setlen(path, baselen);
+		strbuf_addstr(path, e->d_name);
+
+		if (dtype == DT_REG) {
+			res = fn(path->buf, data);
+		} else if (dtype == DT_DIR) {
+			strbuf_addch(path, '/');
+			res = for_each_file_in_dir(path, fn, data);
+		}
+	}
+
+	closedir(dir);
+	return res;
 }
 
 int count_slashes(const char *s)
@@ -277,7 +305,7 @@ int within_depth(const char *name, int namelen,
 		if (depth > max_depth)
 			return 0;
 	}
-	return 1;
+	return depth <= max_depth;
 }
 
 /*
@@ -1128,16 +1156,64 @@ static int add_patterns(const char *fname, const char *base, int baselen,
 	size_t size = 0;
 	char *buf;
 
-	if (flags & PATTERN_NOFOLLOW)
-		fd = open_nofollow(fname, O_RDONLY);
-	else
-		fd = open(fname, O_RDONLY);
-
-	if (fd < 0 || fstat(fd, &st) < 0) {
-		if (fd < 0)
-			warn_on_fopen_errors(fname);
+	/*
+	 * A performance optimization for status.
+	 *
+	 * During a status scan, git looks in each directory for a .gitignore
+	 * file before scanning the directory.  Since .gitignore files are not
+	 * that common, we can waste a lot of time looking for files that are
+	 * not there.  Fortunately, the fscache already knows if the directory
+	 * contains a .gitignore file, since it has already read the directory
+	 * and it already has the stat-data.
+	 *
+	 * If the fscache is enabled, use the fscache-lstat() interlude to see
+	 * if the file exists (in the fscache hash maps) before trying to open()
+	 * it.
+	 *
+	 * This causes problem when the .gitignore file is a symlink, because
+	 * we call lstat() rather than stat() on the symlnk and the resulting
+	 * stat-data is for the symlink itself rather than the target file.
+	 * We CANNOT use stat() here because the fscache DOES NOT install an
+	 * interlude for stat() and mingw_stat() always calls "open-fstat-close"
+	 * on the file and defeats the purpose of the optimization here.  Since
+	 * symlinks are even more rare than .gitignore files, we force a fstat()
+	 * after our open() to get stat-data for the target file.
+	 *
+	 * Since `clang`'s `-Wunreachable-code` mode is clever, it would figure
+	 * out that on non-Windows platforms, this `lstat()` is unreachable.
+	 * We do want to keep the conditional block for the sake of Windows,
+	 * though, so let's use the `NOT_CONSTANT()` trick to suppress that error.
+	 */
+	if (NOT_CONSTANT(is_fscache_enabled(fname))) {
+		if (lstat(fname, &st) < 0) {
+			fd = -1;
+		} else {
+			fd = open(fname, O_RDONLY);
+			if (fd < 0)
+				warn_on_fopen_errors(fname);
+			else if (S_ISLNK(st.st_mode) && fstat(fd, &st) < 0) {
+				warn_on_fopen_errors(fname);
+				close(fd);
+				fd = -1;
+			}
+		}
+	} else {
+		if (flags & PATTERN_NOFOLLOW)
+			fd = open_nofollow(fname, O_RDONLY);
 		else
-			close(fd);
+			fd = open(fname, O_RDONLY);
+
+		if (fd < 0 || fstat(fd, &st) < 0) {
+			if (fd < 0)
+				warn_on_fopen_errors(fname);
+			else {
+				close(fd);
+				fd = -1;
+			}
+		}
+	}
+
+	if (fd < 0) {
 		if (!istate)
 			return -1;
 		r = read_skip_worktree_file_from_index(istate, fname,
@@ -1360,18 +1436,25 @@ int match_pathname(const char *pathname, int pathlen,
 
 		if (fspathncmp(pattern, name, prefix))
 			return 0;
-		pattern += prefix;
-		patternlen -= prefix;
-		name    += prefix;
-		namelen -= prefix;
 
 		/*
 		 * If the whole pattern did not have a wildcard,
 		 * then our prefix match is all we need; we
 		 * do not need to call fnmatch at all.
 		 */
-		if (!patternlen && !namelen)
+		if (patternlen == prefix && namelen == prefix)
 			return 1;
+
+		/*
+		 * Retain one character of the prefix to
+		 * pass to fnmatch, which lets it distinguish
+		 * the start of a directory component correctly.
+		 */
+		prefix--;
+		pattern += prefix;
+		patternlen -= prefix;
+		name    += prefix;
+		namelen -= prefix;
 	}
 
 	return fnmatch_icase_mem(pattern, patternlen,
@@ -1516,7 +1599,9 @@ done:
 
 int init_sparse_checkout_patterns(struct index_state *istate)
 {
-	if (!core_apply_sparse_checkout)
+	struct repo_config_values *cfg = repo_config_values(the_repository);
+
+	if (!cfg->apply_sparse_checkout)
 		return 1;
 	if (istate->sparse_checkout_patterns)
 		return 0;
@@ -3481,15 +3566,15 @@ int get_sparse_checkout_patterns(struct pattern_list *pl)
 
 int remove_path(const char *name)
 {
-	char *slash;
+	const char *last;
 
 	if (unlink(name) && !is_missing_file_error(errno))
 		return -1;
 
-	slash = strrchr(name, '/');
-	if (slash) {
+	last = strrchr(name, '/');
+	if (last) {
 		char *dirs = xstrdup(name);
-		slash = dirs + (slash - name);
+		char *slash = dirs + (last - name);
 		do {
 			*slash = '\0';
 			if (startup_info->original_cwd &&
@@ -3579,7 +3664,8 @@ static void write_one_dir(struct untracked_cache_dir *untracked,
 	struct stat_data stat_data;
 	struct strbuf *out = &wd->out;
 	unsigned char intbuf[16];
-	unsigned int intlen, value;
+	unsigned int value;
+	uint8_t intlen;
 	int i = wd->index++;
 
 	/*
@@ -3632,7 +3718,7 @@ void write_untracked_extension(struct strbuf *out, struct untracked_cache *untra
 	struct ondisk_untracked_cache *ouc;
 	struct write_data wd;
 	unsigned char varbuf[16];
-	int varint_len;
+	uint8_t varint_len;
 	const unsigned hashsz = the_hash_algo->rawsz;
 
 	CALLOC_ARRAY(ouc, 1);
@@ -3738,7 +3824,7 @@ static int read_one_dir(struct untracked_cache_dir **untracked_,
 	struct untracked_cache_dir ud, *untracked;
 	const unsigned char *data = rd->data, *end = rd->end;
 	const unsigned char *eos;
-	unsigned int value;
+	uint64_t value;
 	int i;
 
 	memset(&ud, 0, sizeof(ud));
@@ -3830,7 +3916,8 @@ struct untracked_cache *read_untracked_extension(const void *data, unsigned long
 	struct read_data rd;
 	const unsigned char *next = data, *end = (const unsigned char *)data + sz;
 	const char *ident;
-	int ident_len;
+	uint64_t ident_len;
+	uint64_t varint_len;
 	ssize_t len;
 	const char *exclude_per_dir;
 	const unsigned hashsz = the_hash_algo->rawsz;
@@ -3867,8 +3954,8 @@ struct untracked_cache *read_untracked_extension(const void *data, unsigned long
 	if (next >= end)
 		goto done2;
 
-	len = decode_varint(&next);
-	if (next > end || len == 0)
+	varint_len = decode_varint(&next);
+	if (next > end || varint_len == 0)
 		goto done2;
 
 	rd.valid      = ewah_new();
@@ -3877,9 +3964,9 @@ struct untracked_cache *read_untracked_extension(const void *data, unsigned long
 	rd.data	      = next;
 	rd.end	      = end;
 	rd.index      = 0;
-	ALLOC_ARRAY(rd.ucd, len);
+	ALLOC_ARRAY(rd.ucd, varint_len);
 
-	if (read_one_dir(&uc->root, &rd) || rd.index != len)
+	if (read_one_dir(&uc->root, &rd) || rd.index != varint_len)
 		goto done;
 
 	next = rd.data;
@@ -4091,8 +4178,8 @@ void connect_work_tree_and_git_dir(const char *work_tree_,
 	write_file(gitfile_sb.buf, "gitdir: %s",
 		   relative_path(git_dir, work_tree, &rel_path));
 	/* Update core.worktree setting */
-	git_config_set_in_file(cfg_sb.buf, "core.worktree",
-			       relative_path(work_tree, git_dir, &rel_path));
+	repo_config_set_in_file(the_repository, cfg_sb.buf, "core.worktree",
+				relative_path(work_tree, git_dir, &rel_path));
 
 	strbuf_release(&gitfile_sb);
 	strbuf_release(&cfg_sb);

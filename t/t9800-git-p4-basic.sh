@@ -286,7 +286,7 @@ test_expect_success 'exit when p4 fails to produce marshaled output' '
 	EOF
 	chmod 755 badp4dir/p4 &&
 	(
-		PATH="$TRASH_DIRECTORY/badp4dir:$PATH" &&
+		PATH="$TRASH_DIRECTORY/badp4dir$PATH_SEP$PATH" &&
 		export PATH &&
 		test_expect_code 1 git p4 clone --dest="$git" //depot >errs 2>&1
 	) &&

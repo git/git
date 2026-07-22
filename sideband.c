@@ -26,22 +26,47 @@ static struct keyword_entry keywords[] = {
 	{ "error",	GIT_COLOR_BOLD_RED },
 };
 
+static enum {
+	ALLOW_NO_CONTROL_CHARACTERS = 0,
+	ALLOW_ALL_CONTROL_CHARACTERS = 1,
+	ALLOW_ANSI_COLOR_SEQUENCES = 2
+} allow_control_characters = ALLOW_ANSI_COLOR_SEQUENCES;
+
 /* Returns a color setting (GIT_COLOR_NEVER, etc). */
-static int use_sideband_colors(void)
+static enum git_colorbool use_sideband_colors(void)
 {
-	static int use_sideband_colors_cached = -1;
+	static enum git_colorbool use_sideband_colors_cached = GIT_COLOR_UNKNOWN;
 
 	const char *key = "color.remote";
 	struct strbuf sb = STRBUF_INIT;
 	const char *value;
 	int i;
 
-	if (use_sideband_colors_cached >= 0)
+	if (use_sideband_colors_cached != GIT_COLOR_UNKNOWN)
 		return use_sideband_colors_cached;
 
-	if (!git_config_get_string_tmp(key, &value))
+	switch (repo_config_get_maybe_bool(the_repository, "sideband.allowcontrolcharacters", &i)) {
+	case 0: /* Boolean value */
+		allow_control_characters = i ? ALLOW_ALL_CONTROL_CHARACTERS :
+			ALLOW_NO_CONTROL_CHARACTERS;
+		break;
+	case -1: /* non-Boolean value */
+		if (repo_config_get_string_tmp(the_repository, "sideband.allowcontrolcharacters",
+					      &value))
+			; /* huh? `get_maybe_bool()` returned -1 */
+		else if (!strcmp(value, "color"))
+			allow_control_characters = ALLOW_ANSI_COLOR_SEQUENCES;
+		else
+			warning(_("unrecognized value for `sideband."
+				  "allowControlCharacters`: '%s'"), value);
+		break;
+	default:
+		break; /* not configured */
+	}
+
+	if (!repo_config_get_string_tmp(the_repository, key, &value))
 		use_sideband_colors_cached = git_config_colorbool(key, value);
-	else if (!git_config_get_string_tmp("color.ui", &value))
+	else if (!repo_config_get_string_tmp(the_repository, "color.ui", &value))
 		use_sideband_colors_cached = git_config_colorbool("color.ui", value);
 	else
 		use_sideband_colors_cached = GIT_COLOR_AUTO;
@@ -49,7 +74,7 @@ static int use_sideband_colors(void)
 	for (i = 0; i < ARRAY_SIZE(keywords); i++) {
 		strbuf_reset(&sb);
 		strbuf_addf(&sb, "%s.%s", key, keywords[i].keyword);
-		if (git_config_get_string_tmp(sb.buf, &value))
+		if (repo_config_get_string_tmp(the_repository, sb.buf, &value))
 			continue;
 		color_parse(value, keywords[i].color);
 	}
@@ -64,6 +89,55 @@ void list_config_color_sideband_slots(struct string_list *list, const char *pref
 
 	for (i = 0; i < ARRAY_SIZE(keywords); i++)
 		list_config_item(list, prefix, keywords[i].keyword);
+}
+
+static int handle_ansi_color_sequence(struct strbuf *dest, const char *src, int n)
+{
+	int i;
+
+	/*
+	 * Valid ANSI color sequences are of the form
+	 *
+	 * ESC [ [<n> [; <n>]*] m
+	 */
+
+	if (allow_control_characters != ALLOW_ANSI_COLOR_SEQUENCES ||
+	    n < 3 || src[0] != '\x1b' || src[1] != '[')
+		return 0;
+
+	for (i = 2; i < n; i++) {
+		if (src[i] == 'm') {
+			strbuf_add(dest, src, i + 1);
+			return i;
+		}
+		if (!isdigit(src[i]) && src[i] != ';')
+			break;
+	}
+
+	return 0;
+}
+
+static void strbuf_add_sanitized(struct strbuf *dest, const char *src, int n)
+{
+	int i;
+
+	if (allow_control_characters == ALLOW_ALL_CONTROL_CHARACTERS) {
+		strbuf_add(dest, src, n);
+		return;
+	}
+
+	strbuf_grow(dest, n);
+	for (; n && *src; src++, n--) {
+		if (!iscntrl(*src) || *src == '\t' || *src == '\n')
+			strbuf_addch(dest, *src);
+		else if ((i = handle_ansi_color_sequence(dest, src, n))) {
+			src += i;
+			n -= i;
+		} else {
+			strbuf_addch(dest, '^');
+			strbuf_addch(dest, 0x40 + *src);
+		}
+	}
 }
 
 /*
@@ -81,7 +155,7 @@ static void maybe_colorize_sideband(struct strbuf *dest, const char *src, int n)
 	int i;
 
 	if (!want_color_stderr(use_sideband_colors())) {
-		strbuf_add(dest, src, n);
+		strbuf_add_sanitized(dest, src, n);
 		return;
 	}
 
@@ -114,7 +188,7 @@ static void maybe_colorize_sideband(struct strbuf *dest, const char *src, int n)
 		}
 	}
 
-	strbuf_add(dest, src, n);
+	strbuf_add_sanitized(dest, src, n);
 }
 
 
@@ -264,6 +338,7 @@ void send_sideband(int fd, int band, const char *data, ssize_t sz, int packet_ma
 	const char *p = data;
 
 	while (sz) {
+		struct iovec iov[2];
 		unsigned n;
 		char hdr[5];
 
@@ -273,12 +348,19 @@ void send_sideband(int fd, int band, const char *data, ssize_t sz, int packet_ma
 		if (0 <= band) {
 			xsnprintf(hdr, sizeof(hdr), "%04x", n + 5);
 			hdr[4] = band;
-			write_or_die(fd, hdr, 5);
+			iov[0].iov_base = hdr;
+			iov[0].iov_len = 5;
 		} else {
 			xsnprintf(hdr, sizeof(hdr), "%04x", n + 4);
-			write_or_die(fd, hdr, 4);
+			iov[0].iov_base = hdr;
+			iov[0].iov_len = 4;
 		}
-		write_or_die(fd, p, n);
+
+		iov[1].iov_base = (void *) p;
+		iov[1].iov_len = n;
+
+		writev_or_die(fd, iov, ARRAY_SIZE(iov));
+
 		p += n;
 		sz -= n;
 	}

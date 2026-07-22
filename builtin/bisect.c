@@ -27,13 +27,14 @@ static GIT_PATH_FUNC(git_path_bisect_first_parent, "BISECT_FIRST_PARENT")
 static GIT_PATH_FUNC(git_path_bisect_run, "BISECT_RUN")
 
 #define BUILTIN_GIT_BISECT_START_USAGE \
-	N_("git bisect start [--term-(new|bad)=<term> --term-(old|good)=<term>]" \
-	   "    [--no-checkout] [--first-parent] [<bad> [<good>...]] [--]" \
-	   "    [<pathspec>...]")
-#define BUILTIN_GIT_BISECT_STATE_USAGE \
-	N_("git bisect (good|bad) [<rev>...]")
+	N_("git bisect start [--term-(bad|new)=<term-new> --term-(good|old)=<term-old>]\n" \
+	   "                 [--no-checkout] [--first-parent] [<bad> [<good>...]] [--] [<pathspec>...]")
+#define BUILTIN_GIT_BISECT_BAD_USAGE \
+	N_("git bisect (bad|new|<term-new>) [<rev>]")
+#define BUILTIN_GIT_BISECT_GOOD_USAGE \
+	N_("git bisect (good|old|<term-old>) [<rev>...]")
 #define BUILTIN_GIT_BISECT_TERMS_USAGE \
-	"git bisect terms [--term-good | --term-bad]"
+	"git bisect terms [--term-(good|old) | --term-(bad|new)]"
 #define BUILTIN_GIT_BISECT_SKIP_USAGE \
 	N_("git bisect skip [(<rev>|<range>)...]")
 #define BUILTIN_GIT_BISECT_NEXT_USAGE \
@@ -41,17 +42,20 @@ static GIT_PATH_FUNC(git_path_bisect_run, "BISECT_RUN")
 #define BUILTIN_GIT_BISECT_RESET_USAGE \
 	N_("git bisect reset [<commit>]")
 #define BUILTIN_GIT_BISECT_VISUALIZE_USAGE \
-	"git bisect visualize"
+	"git bisect (visualize|view)"
 #define BUILTIN_GIT_BISECT_REPLAY_USAGE \
 	N_("git bisect replay <logfile>")
 #define BUILTIN_GIT_BISECT_LOG_USAGE \
 	"git bisect log"
 #define BUILTIN_GIT_BISECT_RUN_USAGE \
 	N_("git bisect run <cmd> [<arg>...]")
+#define BUILTIN_GIT_BISECT_HELP_USAGE \
+	"git bisect help"
 
 static const char * const git_bisect_usage[] = {
 	BUILTIN_GIT_BISECT_START_USAGE,
-	BUILTIN_GIT_BISECT_STATE_USAGE,
+	BUILTIN_GIT_BISECT_BAD_USAGE,
+	BUILTIN_GIT_BISECT_GOOD_USAGE,
 	BUILTIN_GIT_BISECT_TERMS_USAGE,
 	BUILTIN_GIT_BISECT_SKIP_USAGE,
 	BUILTIN_GIT_BISECT_NEXT_USAGE,
@@ -60,6 +64,7 @@ static const char * const git_bisect_usage[] = {
 	BUILTIN_GIT_BISECT_REPLAY_USAGE,
 	BUILTIN_GIT_BISECT_LOG_USAGE,
 	BUILTIN_GIT_BISECT_RUN_USAGE,
+	BUILTIN_GIT_BISECT_HELP_USAGE,
 	NULL
 };
 
@@ -358,10 +363,7 @@ static int check_and_set_terms(struct bisect_terms *terms, const char *cmd)
 	return 0;
 }
 
-static int inc_nr(const char *refname UNUSED,
-		  const char *referent UNUSED,
-		  const struct object_id *oid UNUSED,
-		  int flag UNUSED, void *cb_data)
+static int inc_nr(const struct reference *ref UNUSED, void *cb_data)
 {
 	unsigned int *nr = (unsigned int *)cb_data;
 	(*nr)++;
@@ -420,13 +422,17 @@ static void bisect_status(struct bisect_state *state,
 {
 	char *bad_ref = xstrfmt("refs/bisect/%s", terms->term_bad);
 	char *good_glob = xstrfmt("%s-*", terms->term_good);
+	struct refs_for_each_ref_options opts = {
+		.pattern = good_glob,
+		.prefix = "refs/bisect/",
+		.trim_prefix = strlen("refs/bisect/"),
+	};
 
 	if (refs_ref_exists(get_main_ref_store(the_repository), bad_ref))
 		state->nr_bad = 1;
 
-	refs_for_each_glob_ref_in(get_main_ref_store(the_repository), inc_nr,
-				  good_glob, "refs/bisect/",
-				  (void *) &state->nr_good);
+	refs_for_each_ref_ext(get_main_ref_store(the_repository),
+			      inc_nr, &state->nr_good, &opts);
 
 	free(good_glob);
 	free(bad_ref);
@@ -549,18 +555,21 @@ finish:
 	return res;
 }
 
-static int add_bisect_ref(const char *refname, const char *referent UNUSED, const struct object_id *oid,
-			  int flags UNUSED, void *cb)
+static int add_bisect_ref(const struct reference *ref, void *cb)
 {
 	struct add_bisect_ref_data *data = cb;
 
-	add_pending_oid(data->revs, refname, oid, data->object_flags);
+	add_pending_oid(data->revs, ref->name, ref->oid, data->object_flags);
 
 	return 0;
 }
 
 static int prepare_revs(struct bisect_terms *terms, struct rev_info *revs)
 {
+	struct refs_for_each_ref_options opts = {
+		.prefix = "refs/bisect/",
+		.trim_prefix = strlen("refs/bisect/"),
+	};
 	int res = 0;
 	struct add_bisect_ref_data cb = { revs };
 	char *good = xstrfmt("%s-*", terms->term_good);
@@ -580,11 +589,16 @@ static int prepare_revs(struct bisect_terms *terms, struct rev_info *revs)
 	reset_revision_walk();
 	repo_init_revisions(the_repository, revs, NULL);
 	setup_revisions(0, NULL, revs, NULL);
-	refs_for_each_glob_ref_in(get_main_ref_store(the_repository),
-				  add_bisect_ref, bad, "refs/bisect/", &cb);
+
+	opts.pattern = bad;
+	refs_for_each_ref_ext(get_main_ref_store(the_repository),
+			      add_bisect_ref, &cb, &opts);
+
 	cb.object_flags = UNINTERESTING;
-	refs_for_each_glob_ref_in(get_main_ref_store(the_repository),
-				  add_bisect_ref, good, "refs/bisect/", &cb);
+	opts.pattern = good;
+	refs_for_each_ref_ext(get_main_ref_store(the_repository),
+			      add_bisect_ref, &cb, &opts);
+
 	if (prepare_revision_walk(revs))
 		res = error(_("revision walk setup failed"));
 
@@ -1165,12 +1179,9 @@ static int bisect_visualize(struct bisect_terms *terms, int argc,
 	return run_command(&cmd);
 }
 
-static int get_first_good(const char *refname UNUSED,
-			  const char *referent UNUSED,
-			  const struct object_id *oid,
-			  int flag UNUSED, void *cb_data)
+static int get_first_good(const struct reference *ref, void *cb_data)
 {
-	oidcpy(cb_data, oid);
+	oidcpy(cb_data, ref->oid);
 	return 1;
 }
 
@@ -1193,10 +1204,14 @@ static int verify_good(const struct bisect_terms *terms, const char *command)
 	char *good_glob = xstrfmt("%s-*", terms->term_good);
 	int no_checkout = refs_ref_exists(get_main_ref_store(the_repository),
 					  "BISECT_HEAD");
+	struct refs_for_each_ref_options opts = {
+		.pattern = good_glob,
+		.prefix = "refs/bisect/",
+		.trim_prefix = strlen("refs/bisect/"),
+	};
 
-	refs_for_each_glob_ref_in(get_main_ref_store(the_repository),
-				  get_first_good, good_glob, "refs/bisect/",
-				  &good_rev);
+	refs_for_each_ref_ext(get_main_ref_store(the_repository),
+			      get_first_good, &good_rev, &opts);
 	free(good_glob);
 
 	if (refs_read_ref(get_main_ref_store(the_repository), no_checkout ? "BISECT_HEAD" : "HEAD", &current_rev))
@@ -1453,9 +1468,13 @@ int cmd_bisect(int argc,
 		if (!argc)
 			usage_msg_opt(_("need a command"), git_bisect_usage, options);
 
+		if (!strcmp(argv[0], "help"))
+			usage_with_options(git_bisect_usage, options);
+
 		set_terms(&terms, "bad", "good");
 		get_terms(&terms);
-		if (check_and_set_terms(&terms, argv[0]))
+		if (check_and_set_terms(&terms, argv[0]) ||
+		    !one_of(argv[0], terms.term_good, terms.term_bad, NULL))
 			usage_msg_optf(_("unknown command: '%s'"), git_bisect_usage,
 				       options, argv[0]);
 		res = bisect_state(&terms, argc, argv);

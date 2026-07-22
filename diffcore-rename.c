@@ -379,7 +379,7 @@ struct dir_rename_info {
 
 static char *get_dirname(const char *filename)
 {
-	char *slash = strrchr(filename, '/');
+	const char *slash = strrchr(filename, '/');
 	return slash ? xstrndup(filename, slash - filename) : xstrdup("");
 }
 
@@ -987,7 +987,7 @@ static int find_basename_matches(struct diff_options *options,
 			strintmap_set(&dests, base, i);
 	}
 
-	if (options->repo == the_repository && repo_has_promisor_remote(the_repository)) {
+	if (repo_has_promisor_remote(options->repo)) {
 		dpf_options.missing_object_cb = basename_prefetch;
 		dpf_options.missing_object_data = &prefetch_options;
 	}
@@ -1574,7 +1574,7 @@ void diffcore_rename_extended(struct diff_options *options,
 
 	/* Finish setting up dpf_options */
 	prefetch_options.skip_unmodified = skip_unmodified;
-	if (options->repo == the_repository && repo_has_promisor_remote(the_repository)) {
+	if (repo_has_promisor_remote(options->repo)) {
 		dpf_options.missing_object_cb = inexact_prefetch;
 		dpf_options.missing_object_data = &prefetch_options;
 	}

@@ -384,10 +384,10 @@ int packet_length(const char lenbuf_hex[4], size_t size)
 		hexval(lenbuf_hex[3]);
 }
 
-static char *find_packfile_uri_path(const char *buffer)
+static const char *find_packfile_uri_path(const char *buffer)
 {
 	const char *URI_MARK = "://";
-	char *path;
+	const char *path;
 	int len;
 
 	/* First char is sideband mark */
@@ -417,7 +417,7 @@ enum packet_read_status packet_read_with_status(int fd, char **src_buffer,
 {
 	int len;
 	char linelen[4];
-	char *uri_path_start;
+	const char *uri_path_start;
 
 	if (get_packet_data(fd, src_buffer, src_len, linelen, 4, options) < 0) {
 		*pktlen = -1;
@@ -617,7 +617,7 @@ void packet_reader_init(struct packet_reader *reader, int fd,
 	reader->buffer_size = sizeof(packet_buffer);
 	reader->options = options;
 	reader->me = "git";
-	reader->hash_algo = &hash_algos[GIT_HASH_SHA1];
+	reader->hash_algo = &hash_algos[GIT_HASH_SHA1_LEGACY];
 	strbuf_init(&reader->scratch, 0);
 }
 

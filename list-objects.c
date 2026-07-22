@@ -167,10 +167,10 @@ static void process_tree(struct traversal_context *ctx,
 	    !revs->include_check_obj(&tree->object, revs->include_check_data))
 		return;
 
-	if (ctx->depth > max_allowed_tree_depth)
+	if (ctx->depth > revs->repo->settings.max_allowed_tree_depth)
 		die("exceeded maximum allowed tree depth");
 
-	failed_parse = parse_tree_gently(tree, 1);
+	failed_parse = repo_parse_tree_gently(the_repository, tree, 1);
 	if (failed_parse) {
 		if (revs->ignore_missing_links)
 			return;

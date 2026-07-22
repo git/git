@@ -213,10 +213,32 @@ static uint32_t bitmap_num_objects(struct bitmap_index *index)
 	return index->pack->num_objects;
 }
 
+static uint32_t bitmap_name_hash(struct bitmap_index *index, uint32_t pos)
+{
+	if (bitmap_is_midx(index)) {
+		while (index && pos < index->midx->num_objects_in_base) {
+			ASSERT(bitmap_is_midx(index));
+			index = index->base;
+		}
+
+		if (!index)
+			BUG("NULL base bitmap for object position: %"PRIu32, pos);
+
+		pos -= index->midx->num_objects_in_base;
+		if (pos >= index->midx->num_objects)
+			BUG("out-of-bounds midx bitmap object at %"PRIu32, pos);
+	}
+
+	if (!index->hashes)
+		return 0;
+
+	return get_be32(index->hashes + pos);
+}
+
 static struct repository *bitmap_repo(struct bitmap_index *bitmap_git)
 {
 	if (bitmap_is_midx(bitmap_git))
-		return bitmap_git->midx->repo;
+		return bitmap_git->midx->source->odb->repo;
 	return bitmap_git->pack->repo;
 }
 
@@ -418,13 +440,12 @@ char *midx_bitmap_filename(struct multi_pack_index *midx)
 {
 	struct strbuf buf = STRBUF_INIT;
 	if (midx->has_chain)
-		get_split_midx_filename_ext(midx->repo->hash_algo, &buf,
-					    midx->object_dir,
-					    get_midx_checksum(midx),
+		get_split_midx_filename_ext(midx->source, &buf,
+					    midx_get_checksum_hash(midx),
 					    MIDX_EXT_BITMAP);
 	else
-		get_midx_filename_ext(midx->repo->hash_algo, &buf,
-				      midx->object_dir, get_midx_checksum(midx),
+		get_midx_filename_ext(midx->source, &buf,
+				      midx_get_checksum_hash(midx),
 				      MIDX_EXT_BITMAP);
 
 	return strbuf_detach(&buf, NULL);
@@ -463,7 +484,7 @@ static int open_midx_bitmap_1(struct bitmap_index *bitmap_git,
 
 	if (bitmap_git->pack || bitmap_git->midx) {
 		struct strbuf buf = STRBUF_INIT;
-		get_midx_filename(midx->repo->hash_algo, &buf, midx->object_dir);
+		get_midx_filename(midx->source, &buf);
 		trace2_data_string("bitmap", bitmap_repo(bitmap_git),
 				   "ignoring extra midx bitmap file", buf.buf);
 		close(fd);
@@ -481,7 +502,7 @@ static int open_midx_bitmap_1(struct bitmap_index *bitmap_git,
 	if (load_bitmap_header(bitmap_git) < 0)
 		goto cleanup;
 
-	if (!hasheq(get_midx_checksum(bitmap_git->midx), bitmap_git->checksum,
+	if (!hasheq(midx_get_checksum_hash(bitmap_git->midx), bitmap_git->checksum,
 		    bitmap_repo(bitmap_git)->hash_algo)) {
 		error(_("checksum doesn't match in MIDX and bitmap"));
 		goto cleanup;
@@ -493,7 +514,7 @@ static int open_midx_bitmap_1(struct bitmap_index *bitmap_git,
 	}
 
 	for (i = 0; i < bitmap_git->midx->num_packs + bitmap_git->midx->num_packs_in_base; i++) {
-		if (prepare_midx_pack(bitmap_repo(bitmap_git), bitmap_git->midx, i)) {
+		if (prepare_midx_pack(bitmap_git->midx, i)) {
 			warning(_("could not open pack %s"),
 				bitmap_git->midx->pack_names[i]);
 			goto cleanup;
@@ -665,7 +686,7 @@ static int open_pack_bitmap(struct repository *r,
 	struct packed_git *p;
 	int ret = -1;
 
-	for (p = get_all_packs(r); p; p = p->next) {
+	repo_for_each_pack(r, p) {
 		if (open_pack_bitmap_1(bitmap_git, p) == 0) {
 			ret = 0;
 			/*
@@ -683,13 +704,15 @@ static int open_pack_bitmap(struct repository *r,
 static int open_midx_bitmap(struct repository *r,
 			    struct bitmap_index *bitmap_git)
 {
+	struct odb_source *source;
 	int ret = -1;
-	struct multi_pack_index *midx;
 
 	assert(!bitmap_git->map);
 
-	for (midx = get_multi_pack_index(r); midx; midx = midx->next) {
-		if (!open_midx_bitmap_1(bitmap_git, midx))
+	odb_prepare_alternates(r->objects);
+	for (source = r->objects->sources; source; source = source->next) {
+		struct multi_pack_index *midx = get_multi_pack_index(source);
+		if (midx && !open_midx_bitmap_1(bitmap_git, midx))
 			ret = 0;
 	}
 	return ret;
@@ -1723,8 +1746,7 @@ static void show_objects_for_type(
 				pack = bitmap_git->pack;
 			}
 
-			if (bitmap_git->hashes)
-				hash = get_be32(bitmap_git->hashes + index_pos);
+			hash = bitmap_name_hash(bitmap_git, index_pos);
 
 			show_reach(&oid, object_type, 0, hash, pack, ofs, payload);
 		}
@@ -1854,8 +1876,7 @@ static unsigned long get_size_by_pos(struct bitmap_index *bitmap_git,
 			ofs = pack_pos_to_offset(pack, pos);
 		}
 
-		if (packed_object_info(bitmap_repo(bitmap_git), pack, ofs,
-				       &oi) < 0) {
+		if (packed_object_info(pack, ofs, &oi) < 0) {
 			struct object_id oid;
 			nth_bitmap_object_oid(bitmap_git, &oid,
 					      pack_pos_to_index(pack, pos));
@@ -2464,7 +2485,7 @@ void reuse_partial_packfile_from_bitmap(struct bitmap_index *bitmap_git,
 		struct multi_pack_index *m = bitmap_git->midx;
 		for (i = 0; i < m->num_packs + m->num_packs_in_base; i++) {
 			struct bitmapped_pack pack;
-			if (nth_bitmapped_pack(r, bitmap_git->midx, &pack, i) < 0) {
+			if (nth_bitmapped_pack(bitmap_git->midx, &pack, i) < 0) {
 				warning(_("unable to load pack: '%s', disabling pack-reuse"),
 					bitmap_git->midx->pack_names[i]);
 				free(packs);
@@ -2798,8 +2819,7 @@ void test_bitmap_walk(struct rev_info *revs)
 
 		if (bitmap_is_midx(found))
 			fprintf_ln(stderr, "Located via MIDX '%s'.",
-				   hash_to_hex_algop(get_midx_checksum(found->midx),
-						     revs->repo->hash_algo));
+				   midx_get_checksum_hex(found->midx));
 		else
 			fprintf_ln(stderr, "Located via pack '%s'.",
 				   hash_to_hex_algop(found->pack->hash,
@@ -3123,8 +3143,8 @@ uint32_t *create_bitmap_mapping(struct bitmap_index *bitmap_git,
 
 		if (oe) {
 			reposition[i] = oe_in_pack_pos(mapping, oe) + 1;
-			if (bitmap_git->hashes && !oe->hash)
-				oe->hash = get_be32(bitmap_git->hashes + index_pos);
+			if (!oe->hash)
+				oe->hash = bitmap_name_hash(bitmap_git, index_pos);
 		}
 	}
 
@@ -3293,13 +3313,41 @@ int bitmap_is_midx(struct bitmap_index *bitmap_git)
 	return !!bitmap_git->midx;
 }
 
-const struct string_list *bitmap_preferred_tips(struct repository *r)
+static const struct string_list *bitmap_preferred_tips(struct repository *r)
 {
 	const struct string_list *dest;
 
 	if (!repo_config_get_string_multi(r, "pack.preferbitmaptips", &dest))
 		return dest;
 	return NULL;
+}
+
+void for_each_preferred_bitmap_tip(struct repository *repo,
+				   refs_for_each_cb cb, void *cb_data)
+{
+	struct refs_for_each_ref_options opts = { 0 };
+	struct string_list_item *item;
+	const struct string_list *preferred_tips;
+	struct strbuf buf = STRBUF_INIT;
+
+	preferred_tips = bitmap_preferred_tips(repo);
+	if (!preferred_tips)
+		return;
+
+	for_each_string_list_item(item, preferred_tips) {
+		opts.prefix = item->string;
+
+		if (!ends_with(opts.prefix, "/")) {
+			strbuf_reset(&buf);
+			strbuf_addf(&buf, "%s/", opts.prefix);
+			opts.prefix = buf.buf;
+		}
+
+		refs_for_each_ref_ext(get_main_ref_store(repo),
+				      cb, cb_data, &opts);
+	}
+
+	strbuf_release(&buf);
 }
 
 int bitmap_is_preferred_refname(struct repository *r, const char *refname)
@@ -3345,17 +3393,24 @@ static int verify_bitmap_file(const struct git_hash_algo *algop,
 
 int verify_bitmap_files(struct repository *r)
 {
+	struct odb_source *source;
+	struct packed_git *p;
 	int res = 0;
 
-	for (struct multi_pack_index *m = get_multi_pack_index(r);
-	     m; m = m->next) {
-		char *midx_bitmap_name = midx_bitmap_filename(m);
+	odb_prepare_alternates(r->objects);
+	for (source = r->objects->sources; source; source = source->next) {
+		struct multi_pack_index *m = get_multi_pack_index(source);
+		char *midx_bitmap_name;
+
+		if (!m)
+			continue;
+
+		midx_bitmap_name = midx_bitmap_filename(m);
 		res |= verify_bitmap_file(r->hash_algo, midx_bitmap_name);
 		free(midx_bitmap_name);
 	}
 
-	for (struct packed_git *p = get_all_packs(r);
-	     p; p = p->next) {
+	repo_for_each_pack(r, p) {
 		char *pack_bitmap_name = pack_bitmap_filename(p);
 		res |= verify_bitmap_file(r->hash_algo, pack_bitmap_name);
 		free(pack_bitmap_name);

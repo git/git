@@ -25,7 +25,7 @@ static void gpg_interface_lazy_init(void)
 	if (done)
 		return;
 	done = 1;
-	git_config(git_gpg_config, NULL);
+	repo_config(the_repository, git_gpg_config, NULL);
 }
 
 static char *configured_signing_key;
@@ -142,6 +142,18 @@ static struct gpg_format *get_format_by_sig(const char *sig)
 			if (starts_with(sig, gpg_format[i].sigs[j]))
 				return gpg_format + i;
 	return NULL;
+}
+
+const char *get_signature_format(const char *buf)
+{
+	struct gpg_format *format = get_format_by_sig(buf);
+	return format ? format->name : "unknown";
+}
+
+int valid_signature_format(const char *format)
+{
+       return (!!get_format_by_name(format) ||
+	       !strcmp(format, "unknown"));
 }
 
 void signature_check_clear(struct signature_check *sigc)
@@ -370,7 +382,8 @@ static int verify_gpg_signed_buffer(struct signature_check *sigc,
 
 	delete_tempfile(&temp);
 
-	ret |= !strstr(gpg_stdout.buf, "\n[GNUPG:] GOODSIG ");
+	ret |= !strstr(gpg_stdout.buf, "\n[GNUPG:] GOODSIG ") &&
+	       !strstr(gpg_stdout.buf, "\n[GNUPG:] EXPKEYSIG ");
 	sigc->output = strbuf_detach(&gpg_stderr, NULL);
 	sigc->gpg_status = strbuf_detach(&gpg_stdout, NULL);
 
@@ -386,7 +399,7 @@ static void parse_ssh_output(struct signature_check *sigc)
 {
 	const char *line, *principal, *search;
 	char *to_free;
-	char *key = NULL;
+	const char *key;
 
 	/*
 	 * ssh-keygen output should be:
@@ -431,7 +444,7 @@ static void parse_ssh_output(struct signature_check *sigc)
 
 	key = strstr(line, "key ");
 	if (key) {
-		sigc->fingerprint = xstrdup(strstr(line, "key ") + 4);
+		sigc->fingerprint = xstrdup(key + 4);
 		sigc->key = xstrdup(sigc->fingerprint);
 	} else {
 		/*
@@ -668,7 +681,7 @@ int check_signature(struct signature_check *sigc,
 	if (status && !sigc->output)
 		return !!status;
 
-	status |= sigc->result != 'G';
+	status |= sigc->result != 'G' && sigc->result != 'Y';
 	status |= sigc->trust_level < configured_min_trust_level;
 
 	return !!status;
@@ -782,8 +795,16 @@ static int git_gpg_config(const char *var, const char *value,
 		fmtname = "ssh";
 
 	if (fmtname) {
+		char *program;
+		int status;
+
 		fmt = get_format_by_name(fmtname);
-		return git_config_string((char **) &fmt->program, var, value);
+		status = git_config_pathname(&program, var, value);
+		if (status)
+			return status;
+		if (program)
+			fmt->program = program;
+		return status;
 	}
 
 	return 0;
@@ -809,8 +830,7 @@ static char *get_ssh_key_fingerprint(const char *signing_key)
 	struct child_process ssh_keygen = CHILD_PROCESS_INIT;
 	int ret = -1;
 	struct strbuf fingerprint_stdout = STRBUF_INIT;
-	struct strbuf **fingerprint;
-	char *fingerprint_ret;
+	char *fingerprint_ret, *begin, *delim;
 	const char *literal_key = NULL;
 
 	/*
@@ -833,13 +853,17 @@ static char *get_ssh_key_fingerprint(const char *signing_key)
 		die_errno(_("failed to get the ssh fingerprint for key '%s'"),
 			  signing_key);
 
-	fingerprint = strbuf_split_max(&fingerprint_stdout, ' ', 3);
-	if (!fingerprint[1])
-		die_errno(_("failed to get the ssh fingerprint for key '%s'"),
+	begin = fingerprint_stdout.buf;
+	delim = strchr(begin, ' ');
+	if (!delim)
+		die(_("failed to get the ssh fingerprint for key %s"),
 			  signing_key);
-
-	fingerprint_ret = strbuf_detach(fingerprint[1], NULL);
-	strbuf_list_free(fingerprint);
+	begin = delim + 1;
+	delim = strchr(begin, ' ');
+	if (!delim)
+	    die(_("failed to get the ssh fingerprint for key %s"),
+			  signing_key);
+	fingerprint_ret = xmemdupz(begin, delim - begin);
 	strbuf_release(&fingerprint_stdout);
 	return fingerprint_ret;
 }
@@ -850,12 +874,12 @@ static char *get_default_ssh_signing_key(void)
 	struct child_process ssh_default_key = CHILD_PROCESS_INIT;
 	int ret = -1;
 	struct strbuf key_stdout = STRBUF_INIT, key_stderr = STRBUF_INIT;
-	struct strbuf **keys;
 	char *key_command = NULL;
 	const char **argv;
 	int n;
 	char *default_key = NULL;
 	const char *literal_key = NULL;
+	char *begin, *new_line, *first_line;
 
 	if (!ssh_default_key_command)
 		die(_("either user.signingkey or gpg.ssh.defaultKeyCommand needs to be configured"));
@@ -864,7 +888,7 @@ static char *get_default_ssh_signing_key(void)
 	n = split_cmdline(key_command, &argv);
 
 	if (n < 0)
-		die("malformed build-time gpg.ssh.defaultKeyCommand: %s",
+		die(_("malformed build-time gpg.ssh.defaultKeyCommand: %s"),
 		    split_cmdline_strerror(n));
 
 	strvec_pushv(&ssh_default_key.args, argv);
@@ -872,19 +896,24 @@ static char *get_default_ssh_signing_key(void)
 			   &key_stderr, 0);
 
 	if (!ret) {
-		keys = strbuf_split_max(&key_stdout, '\n', 2);
-		if (keys[0] && is_literal_ssh_key(keys[0]->buf, &literal_key)) {
+		begin = key_stdout.buf;
+		new_line = strchr(begin, '\n');
+		if (new_line)
+			first_line = xmemdupz(begin, new_line - begin);
+		else
+			first_line = xstrdup(begin);
+		if (is_literal_ssh_key(first_line, &literal_key)) {
 			/*
 			 * We only use `is_literal_ssh_key` here to check validity
 			 * The prefix will be stripped when the key is used.
 			 */
-			default_key = strbuf_detach(keys[0], NULL);
+			default_key = first_line;
 		} else {
+			free(first_line);
 			warning(_("gpg.ssh.defaultKeyCommand succeeded but returned no keys: %s %s"),
 				key_stderr.buf, key_stdout.buf);
 		}
 
-		strbuf_list_free(keys);
 	} else {
 		warning(_("gpg.ssh.defaultKeyCommand failed: %s %s"),
 			key_stderr.buf, key_stdout.buf);
@@ -945,11 +974,20 @@ const char *gpg_trust_level_to_str(enum signature_trust_level level)
 	return sigcheck_gpg_trust_level[level].display_key;
 }
 
-int sign_buffer(struct strbuf *buffer, struct strbuf *signature, const char *signing_key)
+int sign_buffer(struct strbuf *buffer, struct strbuf *signature,
+		const char *signing_key, enum sign_buffer_flags flags)
 {
+	char *keyid_to_free = NULL;
+	int ret = 0;
+
 	gpg_interface_lazy_init();
 
-	return use_format->sign_buffer(buffer, signature, signing_key);
+	if ((flags & SIGN_BUFFER_USE_DEFAULT_KEY) && (!signing_key || !*signing_key))
+		signing_key = keyid_to_free = get_signing_key();
+
+	ret = use_format->sign_buffer(buffer, signature, signing_key);
+	free(keyid_to_free);
+	return ret;
 }
 
 /*
@@ -1112,4 +1150,30 @@ out:
 	strbuf_release(&ssh_signature_filename);
 	FREE_AND_NULL(ssh_signing_key_file);
 	return ret;
+}
+
+int parse_sign_mode(const char *arg, enum sign_mode *mode, const char **keyid)
+{
+	if (!strcmp(arg, "abort")) {
+		*mode = SIGN_ABORT;
+	} else if (!strcmp(arg, "verbatim") || !strcmp(arg, "ignore")) {
+		*mode = SIGN_VERBATIM;
+	} else if (!strcmp(arg, "warn-verbatim") || !strcmp(arg, "warn")) {
+		*mode = SIGN_WARN_VERBATIM;
+	} else if (!strcmp(arg, "warn-strip")) {
+		*mode = SIGN_WARN_STRIP;
+	} else if (!strcmp(arg, "strip")) {
+		*mode = SIGN_STRIP;
+	} else if (!strcmp(arg, "strip-if-invalid")) {
+		*mode = SIGN_STRIP_IF_INVALID;
+	} else if (!strcmp(arg, "sign-if-invalid")) {
+		*mode = SIGN_SIGN_IF_INVALID;
+	} else if (skip_prefix(arg, "sign-if-invalid=", &arg)) {
+		*mode = SIGN_SIGN_IF_INVALID;
+		if (keyid)
+			*keyid = arg;
+	} else {
+		return -1;
+	}
+	return 0;
 }

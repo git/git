@@ -32,7 +32,7 @@ proc new_unmerged {path {title {}}} {
 }
 
 constructor _new {path unmerged_only title} {
-	global current_branch is_detached use_ttk NS
+	global current_branch is_detached
 
 	if {![info exists ::all_remotes]} {
 		load_all_remotes
@@ -41,65 +41,60 @@ constructor _new {path unmerged_only title} {
 	set w $path
 
 	if {$title ne {}} {
-		${NS}::labelframe $w -text $title
+		ttk::labelframe $w -text $title
 	} else {
-		${NS}::frame $w
+		ttk::frame $w
 	}
 	bind $w <Destroy> [cb _delete %W]
 
 	if {$is_detached} {
-		${NS}::radiobutton $w.detachedhead_r \
+		ttk::radiobutton $w.detachedhead_r \
 			-text [mc "This Detached Checkout"] \
 			-value HEAD \
 			-variable @revtype
-		if {!$use_ttk} {$w.detachedhead_r configure -anchor w}
 		grid $w.detachedhead_r -sticky we -padx {0 5} -columnspan 2
 	}
 
-	${NS}::radiobutton $w.expr_r \
+	ttk::radiobutton $w.expr_r \
 		-text [mc "Revision Expression:"] \
 		-value expr \
 		-variable @revtype
-	${NS}::entry $w.expr_t \
+	ttk::entry $w.expr_t \
 		-width 50 \
 		-textvariable @c_expr \
 		-validate key \
 		-validatecommand [cb _validate %d %S]
 	grid $w.expr_r $w.expr_t -sticky we -padx {0 5}
 
-	${NS}::frame $w.types
-	${NS}::radiobutton $w.types.head_r \
+	ttk::frame $w.types
+	ttk::radiobutton $w.types.head_r \
 		-text [mc "Local Branch"] \
 		-value head \
 		-variable @revtype
 	pack $w.types.head_r -side left
-	${NS}::radiobutton $w.types.trck_r \
+	ttk::radiobutton $w.types.trck_r \
 		-text [mc "Tracking Branch"] \
 		-value trck \
 		-variable @revtype
 	pack $w.types.trck_r -side left
-	${NS}::radiobutton $w.types.tag_r \
+	ttk::radiobutton $w.types.tag_r \
 		-text [mc "Tag"] \
 		-value tag \
 		-variable @revtype
 	pack $w.types.tag_r -side left
 	set w_filter $w.types.filter
-	${NS}::entry $w_filter \
+	ttk::entry $w_filter \
 		-width 12 \
 		-textvariable @filter \
 		-validate key \
 		-validatecommand [cb _filter %P]
 	pack $w_filter -side right
-	pack [${NS}::label $w.types.filter_icon \
+	pack [ttk::label $w.types.filter_icon \
 		-image ::choose_rev::img_find \
 		] -side right
 	grid $w.types -sticky we -padx {0 5} -columnspan 2
 
-	if {$use_ttk} {
-		ttk::frame $w.list -style SListbox.TFrame -padding 2
-	} else {
-		frame $w.list
-	}
+	ttk::frame $w.list -style SListbox.TFrame -padding 2
 	set w_list $w.list.l
 	listbox $w_list \
 		-font font_diff \
@@ -109,9 +104,7 @@ constructor _new {path unmerged_only title} {
 		-exportselection false \
 		-xscrollcommand [cb _sb_set $w.list.sbx h] \
 		-yscrollcommand [cb _sb_set $w.list.sby v]
-	if {$use_ttk} {
-		$w_list configure -relief flat -highlightthickness 0 -borderwidth 0
-	}
+	$w_list configure -relief flat -highlightthickness 0 -borderwidth 0
 	pack $w_list -fill both -expand 1
 	grid $w.list -sticky nswe -padx {20 5} -columnspan 2
 	bind $w_list <Any-Motion>  [cb _show_tooltip @%x,%y]
@@ -154,7 +147,7 @@ constructor _new {path unmerged_only title} {
 		refs/remotes \
 		refs/tags \
 		]]
-	fconfigure $fr_fd -translation lf -encoding utf-8
+	fconfigure $fr_fd -encoding utf-8
 	while {[gets $fr_fd line] > 0} {
 		set line [eval $line]
 		if {[lindex $line 1 0] eq {tag}} {
@@ -238,12 +231,10 @@ constructor _new {path unmerged_only title} {
 }
 
 method none {text} {
-	global NS use_ttk
 	if {![winfo exists $w.none_r]} {
-		${NS}::radiobutton $w.none_r \
+		ttk::radiobutton $w.none_r \
 			-value none \
 			-variable @revtype
-		if {!$use_ttk} {$w.none_r configure -anchor w}
 		grid $w.none_r -sticky we -padx {0 5} -columnspan 2
 	}
 	$w.none_r configure -text $text
@@ -429,7 +420,6 @@ method _delete {current} {
 }
 
 method _sb_set {sb orient first last} {
-	global NS
 	set old_focus [focus -lastfor $w]
 
 	if {$first == 0 && $last == 1} {
@@ -445,10 +435,10 @@ method _sb_set {sb orient first last} {
 
 	if {![winfo exists $sb]} {
 		if {$orient eq {h}} {
-			${NS}::scrollbar $sb -orient h -command [list $w_list xview]
+			ttk::scrollbar $sb -orient h -command [list $w_list xview]
 			pack $sb -fill x -side bottom -before $w_list
 		} else {
-			${NS}::scrollbar $sb -orient v -command [list $w_list yview]
+			ttk::scrollbar $sb -orient v -command [list $w_list yview]
 			pack $sb -fill y -side right -before $w_list
 		}
 		if {$old_focus ne {}} {
@@ -580,7 +570,7 @@ method _reflog_last {name} {
 	set last {}
 	if {[catch {set last [file mtime [gitdir $name]]}]
 	&& ![catch {set g [safe_open_file [gitdir logs $name] r]}]} {
-		fconfigure $g -translation binary
+		fconfigure $g -encoding iso8859-1
 		while {[gets $g line] >= 0} {
 			if {[regexp {> ([1-9][0-9]*) } $line line when]} {
 				set last $when

@@ -23,6 +23,7 @@ use Getopt::Long;
 use Git::LoadCPAN::Error qw(:try);
 use Git;
 use Git::I18N;
+use Encode qw(find_encoding);
 
 Getopt::Long::Configure qw/ pass_through /;
 
@@ -62,10 +63,12 @@ git send-email --translate-aliases
     --smtp-user             <str>  * Username for SMTP-AUTH.
     --smtp-pass             <str>  * Password for SMTP-AUTH; not necessary.
     --smtp-encryption       <str>  * tls or ssl; anything else disables.
-    --smtp-ssl                     * Deprecated. Use '--smtp-encryption ssl'.
+    --smtp-ssl                     * Deprecated. Use `--smtp-encryption ssl`.
     --smtp-ssl-cert-path    <str>  * Path to ca-certificates (either directory or file).
                                      Pass an empty string to disable certificate
                                      verification.
+    --smtp-ssl-client-cert  <str>  * Path to the client certificate file
+    --smtp-ssl-client-key   <str>  * Path to the private key file for the client certificate
     --smtp-domain           <str>  * The domain name sent to HELO/EHLO handshake
     --smtp-auth             <str>  * Space-separated list of allowed AUTH mechanisms, or
                                      "none" to disable authentication.
@@ -73,6 +76,10 @@ git send-email --translate-aliases
     --no-smtp-auth                 * Disable SMTP authentication. Shorthand for
                                      `--smtp-auth=none`
     --smtp-debug            <0|1>  * Disable, enable Net::SMTP debug.
+    --imap-sent-folder      <str>  * IMAP folder where a copy of the emails should be sent.
+                                     Make sure `git imap-send` is set up to use this feature.
+    --[no-]use-imap-only           * Only copy emails to the IMAP folder specified by
+                                     `--imap-sent-folder` instead of actually sending them.
 
     --batch-size            <int>  * send max <int> message per connection.
     --relogin-delay         <int>  * delay <int> seconds between two successive login.
@@ -200,7 +207,7 @@ my $re_encoded_word = qr/=\?($re_token)\?($re_token)\?($re_encoded_text)\?=/;
 
 # Variables we fill in automatically, or via prompting:
 my (@to,@cc,@xh,$envelope_sender,
-	$initial_in_reply_to,$reply_to,$initial_subject,@files,
+	$initial_in_reply_to,$reply_to,$initial_subject,@files,@imap_copy,
 	$author,$sender,$smtp_authpass,$annotate,$compose,$time);
 # Things we either get from config, *or* are overridden on the
 # command-line.
@@ -275,8 +282,10 @@ my ($cover_cc, $cover_to);
 my ($to_cmd, $cc_cmd, $header_cmd);
 my ($smtp_server, $smtp_server_port, @smtp_server_options);
 my ($smtp_authuser, $smtp_encryption, $smtp_ssl_cert_path);
+my ($smtp_ssl_client_cert, $smtp_ssl_client_key);
 my ($batch_size, $relogin_delay);
 my ($identity, $aliasfiletype, @alias_files, $smtp_domain, $smtp_auth);
+my ($imap_sent_folder);
 my ($confirm);
 my (@suppress_cc);
 my ($auto_8bit_encoding);
@@ -293,6 +302,7 @@ my $mailmap = 0;
 my $target_xfer_encoding = 'auto';
 my $forbid_sendmail_variables = 1;
 my $outlook_id_fix = 'auto';
+my $use_imap_only = 0;
 
 my %config_bool_settings = (
     "thread" => \$thread,
@@ -309,6 +319,7 @@ my %config_bool_settings = (
     "forbidsendmailvariables" => \$forbid_sendmail_variables,
     "mailmap" => \$mailmap,
     "outlookidfix" => \$outlook_id_fix,
+    "useimaponly" => \$use_imap_only,
 );
 
 my %config_settings = (
@@ -322,6 +333,7 @@ my %config_settings = (
     "smtpauth" => \$smtp_auth,
     "smtpbatchsize" => \$batch_size,
     "smtprelogindelay" => \$relogin_delay,
+    "imapsentfolder" => \$imap_sent_folder,
     "to" => \@config_to,
     "tocmd" => \$to_cmd,
     "cc" => \@config_cc,
@@ -342,6 +354,8 @@ my %config_settings = (
 my %config_path_settings = (
     "aliasesfile" => \@alias_files,
     "smtpsslcertpath" => \$smtp_ssl_cert_path,
+    "smtpsslclientcert" => \$smtp_ssl_client_cert,
+    "smtpsslclientkey" => \$smtp_ssl_client_key,
     "mailmap.file" => \$mailmap_file,
     "mailmap.blob" => \$mailmap_blob,
 );
@@ -523,10 +537,14 @@ my %options = (
 		    "smtp-ssl" => sub { $smtp_encryption = 'ssl' },
 		    "smtp-encryption=s" => \$smtp_encryption,
 		    "smtp-ssl-cert-path=s" => \$smtp_ssl_cert_path,
+		    "smtp-ssl-client-cert=s" => \$smtp_ssl_client_cert,
+		    "smtp-ssl-client-key=s" => \$smtp_ssl_client_key,
 		    "smtp-debug:i" => \$debug_net_smtp,
 		    "smtp-domain:s" => \$smtp_domain,
 		    "smtp-auth=s" => \$smtp_auth,
 		    "no-smtp-auth" => sub {$smtp_auth = 'none'},
+		    "imap-sent-folder=s" => \$imap_sent_folder,
+		    "use-imap-only!" => \$use_imap_only,
 		    "annotate!" => \$annotate,
 		    "compose" => \$compose,
 		    "quiet" => \$quiet,
@@ -1034,9 +1052,27 @@ if (!defined $auto_8bit_encoding && scalar %broken_encoding) {
 	foreach my $f (sort keys %broken_encoding) {
 		print "    $f\n";
 	}
-	$auto_8bit_encoding = ask(__("Which 8bit encoding should I declare [UTF-8]? "),
-				  valid_re => qr/.{4}/, confirm_only => 1,
-				  default => "UTF-8");
+	while (1) {
+		my $encoding = ask(
+			__("Declare which 8bit encoding to use [default: UTF-8]? "),
+			valid_re => qr/^\S+$/,
+			default  => "UTF-8");
+		next unless defined $encoding;
+		if (find_encoding($encoding)) {
+			$auto_8bit_encoding = $encoding;
+			last;
+		}
+		my $yesno = ask(
+			sprintf(
+			__("'%s' does not appear to be a valid charset name. Use it anyway [y/N]? "),
+			$encoding),
+			valid_re => qr/^(?:y|n)/i,
+			default => "n");
+		if (defined $yesno && $yesno =~ /^y/i) {
+			$auto_8bit_encoding = $encoding;
+			last;
+		}
+	}
 }
 
 if (!$force) {
@@ -1464,6 +1500,8 @@ sub smtp_auth_maybe {
 						user     => $cred->{'username'},
 						pass     => $cred->{'password'},
 						authname => $cred->{'username'},
+						host     => $smtp_server,
+						(defined $smtp_server_port ? (port => $smtp_server_port) : ()),
 					}
 				);
 				$result = $smtp->auth($sasl);
@@ -1510,6 +1548,8 @@ sub handle_smtp_error {
 }
 
 sub ssl_verify_params {
+	my %ret = ();
+
 	eval {
 		require IO::Socket::SSL;
 		IO::Socket::SSL->import(qw/SSL_VERIFY_PEER SSL_VERIFY_NONE/);
@@ -1521,20 +1561,36 @@ sub ssl_verify_params {
 
 	if (!defined $smtp_ssl_cert_path) {
 		# use the OpenSSL defaults
-		return (SSL_verify_mode => SSL_VERIFY_PEER());
+		$ret{SSL_verify_mode} = SSL_VERIFY_PEER();
+	}
+	else {
+		if ($smtp_ssl_cert_path eq "") {
+			$ret{SSL_verify_mode} = SSL_VERIFY_NONE();
+		} elsif (-d $smtp_ssl_cert_path) {
+			$ret{SSL_verify_mode} = SSL_VERIFY_PEER();
+			$ret{SSL_ca_path} = $smtp_ssl_cert_path;
+		} elsif (-f $smtp_ssl_cert_path) {
+			$ret{SSL_verify_mode} = SSL_VERIFY_PEER();
+			$ret{SSL_ca_file} = $smtp_ssl_cert_path;
+		} else {
+			die sprintf(__("CA path \"%s\" does not exist"), $smtp_ssl_cert_path);
+		}
 	}
 
-	if ($smtp_ssl_cert_path eq "") {
-		return (SSL_verify_mode => SSL_VERIFY_NONE());
-	} elsif (-d $smtp_ssl_cert_path) {
-		return (SSL_verify_mode => SSL_VERIFY_PEER(),
-			SSL_ca_path => $smtp_ssl_cert_path);
-	} elsif (-f $smtp_ssl_cert_path) {
-		return (SSL_verify_mode => SSL_VERIFY_PEER(),
-			SSL_ca_file => $smtp_ssl_cert_path);
-	} else {
-		die sprintf(__("CA path \"%s\" does not exist"), $smtp_ssl_cert_path);
+	if (defined $smtp_ssl_client_cert) {
+		$ret{SSL_cert_file} = $smtp_ssl_client_cert;
 	}
+	if (defined $smtp_ssl_client_key) {
+		if (!defined $smtp_ssl_client_cert) {
+			# Accept the client key only when a certificate is given.
+			# We die here because this case is a user error.
+			die sprintf(__("Only client key \"%s\" specified"),
+				    $smtp_ssl_client_key);
+		}
+		$ret{SSL_key_file} = $smtp_ssl_client_key;
+	}
+
+	return %ret;
 }
 
 sub file_name_is_absolute {
@@ -1678,6 +1734,8 @@ EOF
 
 	if ($dry_run) {
 		# We don't want to send the email.
+	} elsif ($use_imap_only) {
+		die __("The destination IMAP folder is not properly defined.") if !defined $imap_sent_folder;
 	} elsif (defined $sendmail_cmd || file_name_is_absolute($smtp_server)) {
 		my $pid = open my $sm, '|-';
 		defined $pid or die $!;
@@ -1829,6 +1887,17 @@ EOF
 		print "\n";
 	}
 
+	if ($imap_sent_folder && !$dry_run) {
+		my $imap_header = $header;
+		if (@initial_bcc) {
+			# Bcc is not a part of $header, so we add it here.
+			# This is only for the IMAP copy, not for the actual email
+			# sent to the recipients.
+			$imap_header .= "Bcc: " . join(", ", @initial_bcc) . "\n";
+		}
+		push @imap_copy, "From git-send-email\n$imap_header\n$message";
+	}
+
 	return 1;
 }
 
@@ -1930,6 +1999,9 @@ sub pre_process_file {
 				if (!$initial_in_reply_to || $thread) {
 					$in_reply_to = $1;
 				}
+			}
+			elsif (/^Reply-To: (.*)/i) {
+				$reply_to = $1;
 			}
 			elsif (/^References: (.*)/i) {
 				if (!$initial_in_reply_to || $thread) {
@@ -2222,6 +2294,19 @@ sub cleanup_compose_files {
 }
 
 $smtp->quit if $smtp;
+
+if ($imap_sent_folder && @imap_copy && !$dry_run) {
+	my $imap_input = join("\n", @imap_copy);
+	eval {
+		print "\nStarting git imap-send...\n";
+		my ($fh, $ctx) = Git::command_input_pipe(['imap-send', '-f', $imap_sent_folder]);
+		print $fh $imap_input;
+		Git::command_close_pipe($fh, $ctx);
+		1;
+	} or do {
+		warn "Warning: failed to send messages to IMAP folder $imap_sent_folder: $@";
+	};
+}
 
 sub apply_transfer_encoding {
 	my $message = shift;

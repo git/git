@@ -15,6 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see https://www.gnu.org/licenses/ .
 
+# On Unix/Linux, the path separator is the colon, on other systems it
+# may be different, though. On Windows, for example, it is a semicolon.
+# If the PATH variable contains semicolons, it is pretty safe to assume
+# that the path separator is a semicolon.
+case "$PATH" in
+*\;*) PATH_SEP=\; ;;
+*) PATH_SEP=: ;;
+esac
+
 # Test the binaries we have just built.  The tests are kept in
 # t/ subdirectory and are run in 'trash directory' subdirectory.
 if test -z "$TEST_DIRECTORY"
@@ -77,6 +86,7 @@ prepend_var GIT_SAN_OPTIONS : strip_path_prefix="$GIT_BUILD_DIR/"
 # want that one to complain to stderr).
 prepend_var ASAN_OPTIONS : $GIT_SAN_OPTIONS
 prepend_var ASAN_OPTIONS : detect_leaks=0
+prepend_var ASAN_OPTIONS : strict_string_checks=1
 export ASAN_OPTIONS
 
 prepend_var LSAN_OPTIONS : $GIT_SAN_OPTIONS
@@ -127,14 +137,22 @@ then
 	export GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS
 fi
 
-# Explicitly set the default branch name for testing, to avoid the
-# transitory "git init" warning under --verbose.
-: ${GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME:=master}
+# Explicitly set the default branch name for testing, to squelch hints
+# from "git init" during the transition period.  Should be removed
+# after we decide to remove ADVICE_DEFAULT_BRANCH_NAME
+if test -z "$WITH_BREAKING_CHANGES"
+then
+	: ${GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME:=master}
+else
+	: ${GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME:=main}
+fi
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 
 ################################################################
 # It appears that people try to run tests without building...
-"${GIT_TEST_INSTALLED:-$GIT_BUILD_DIR}/git$X" >/dev/null
+GIT_BINARY="${GIT_TEST_INSTALLED:-$GIT_BUILD_DIR}/git$X"
+"$GIT_BINARY" >/dev/null
 if test $? != 1
 then
 	if test -n "$GIT_TEST_INSTALLED"
@@ -536,7 +554,8 @@ export GIT_COMMITTER_EMAIL GIT_COMMITTER_NAME
 export GIT_COMMITTER_DATE GIT_AUTHOR_DATE
 export EDITOR
 
-GIT_DEFAULT_HASH="${GIT_TEST_DEFAULT_HASH:-sha1}"
+GIT_TEST_BUILTIN_HASH=$("$GIT_BINARY" version --build-options | sed -ne 's/^default-hash: //p')
+GIT_DEFAULT_HASH="${GIT_TEST_DEFAULT_HASH:-$GIT_TEST_BUILTIN_HASH}"
 export GIT_DEFAULT_HASH
 GIT_DEFAULT_REF_FORMAT="${GIT_TEST_DEFAULT_REF_FORMAT:-files}"
 export GIT_DEFAULT_REF_FORMAT
@@ -1382,7 +1401,7 @@ then
 		done
 	done
 	IFS=$OLDIFS
-	PATH=$GIT_VALGRIND/bin:$PATH
+	PATH=$GIT_VALGRIND/bin$PATH_SEP$PATH
 	GIT_EXEC_PATH=$GIT_VALGRIND/bin
 	export GIT_VALGRIND
 	GIT_VALGRIND_MODE="$valgrind"
@@ -1394,7 +1413,7 @@ elif test -n "$GIT_TEST_INSTALLED"
 then
 	GIT_EXEC_PATH=$($GIT_TEST_INSTALLED/git --exec-path)  ||
 	error "Cannot run git from $GIT_TEST_INSTALLED."
-	PATH=$GIT_TEST_INSTALLED:$GIT_BUILD_DIR/t/helper:$PATH
+	PATH=$GIT_TEST_INSTALLED$PATH_SEP$GIT_BUILD_DIR/t/helper$PATH_SEP$PATH
 	GIT_EXEC_PATH=${GIT_TEST_EXEC_PATH:-$GIT_EXEC_PATH}
 else # normal case, use ../bin-wrappers only unless $with_dashes:
 	if test -n "$no_bin_wrappers"
@@ -1410,12 +1429,12 @@ else # normal case, use ../bin-wrappers only unless $with_dashes:
 			fi
 			with_dashes=t
 		fi
-		PATH="$git_bin_dir:$PATH"
+		PATH="$git_bin_dir$PATH_SEP$PATH"
 	fi
 	GIT_EXEC_PATH=$GIT_BUILD_DIR
 	if test -n "$with_dashes"
 	then
-		PATH="$GIT_BUILD_DIR:$GIT_BUILD_DIR/t/helper:$PATH"
+		PATH="$GIT_BUILD_DIR$PATH_SEP$GIT_BUILD_DIR/t/helper$PATH_SEP$PATH"
 	fi
 fi
 GIT_TEMPLATE_DIR="$GIT_TEST_TEMPLATE_DIR"
@@ -1652,17 +1671,30 @@ Darwin)
 	test_set_prereq EXECKEEPSPID
 	;;
 *MINGW*)
-	# Windows has its own (incompatible) sort and find
-	sort () {
-		/usr/bin/sort "$@"
-	}
-	find () {
-		/usr/bin/find "$@"
-	}
-	# git sees Windows-style pwd
-	pwd () {
-		builtin pwd -W
-	}
+	if test -x /usr/bin/sort
+	then
+		# Windows has its own (incompatible) sort; override
+		sort () {
+			/usr/bin/sort "$@"
+		}
+	fi
+	if test -x /usr/bin/find
+	then
+		# Windows has its own (incompatible) find; override
+		find () {
+			/usr/bin/find "$@"
+		}
+	fi
+	# On Windows, Git wants Windows paths. But /usr/bin/pwd spits out
+	# Unix-style paths. At least in Bash, we have a builtin pwd that
+	# understands the -W option to force "mixed" paths, i.e. with drive
+	# prefix but still with forward slashes. Let's use that, if available.
+	if type builtin >/dev/null 2>&1
+	then
+		pwd () {
+			builtin pwd -W
+		}
+	fi
 	# no POSIX permissions
 	# backslashes in pathspec are converted to '/'
 	# exec does not inherit the PID
@@ -1672,6 +1704,12 @@ Darwin)
 	test_set_prereq GREP_STRIPS_CR
 	test_set_prereq WINDOWS
 	GIT_TEST_CMP="GIT_DIR=/dev/null git diff --no-index --ignore-cr-at-eol --"
+	if ! type iconv >/dev/null 2>&1
+	then
+		iconv () {
+			test-tool iconv "$@"
+		}
+	fi
 	;;
 *CYGWIN*)
 	test_set_prereq POSIXPERM
@@ -1710,7 +1748,6 @@ esac
 ( COLUMNS=1 && test $COLUMNS = 1 ) && test_set_prereq COLUMNS_CAN_BE_1
 test -z "$NO_CURL" && test_set_prereq LIBCURL
 test -z "$NO_GITWEB" && test_set_prereq GITWEB
-test -z "$NO_ICONV" && test_set_prereq ICONV
 test -z "$NO_PERL" && test_set_prereq PERL
 test -z "$NO_PTHREADS" && test_set_prereq PTHREADS
 test -z "$NO_PYTHON" && test_set_prereq PYTHON
@@ -1720,6 +1757,17 @@ test -z "$NO_GETTEXT" && test_set_prereq GETTEXT
 test -n "$SANITIZE_LEAK" && test_set_prereq SANITIZE_LEAK
 test -n "$GIT_VALGRIND_ENABLED" && test_set_prereq VALGRIND
 test -n "$PERL_PATH" && test_set_prereq PERL_TEST_HELPERS
+
+test_lazy_prereq ICONV '
+	# We require Git to be built with iconv support, and we require the
+	# iconv binary to exist.
+	#
+	# NEEDSWORK: We might eventually want to split this up into two
+	# prerequisites: one for NO_ICONV, and one for the iconv(1) binary, as
+	# some tests only depend on either of these.
+	test -z "$NO_ICONV" &&
+	iconv -f utf8 -t utf8 </dev/null
+'
 
 if test -z "$GIT_TEST_CHECK_CACHE_TREE"
 then
@@ -1841,6 +1889,10 @@ test_lazy_prereq UNZIP '
 	test $? -ne 127
 '
 
+test_lazy_prereq BUSYBOX '
+	case "$($SHELL --help 2>&1)" in *BusyBox*) true;; *) false;; esac
+'
+
 run_with_limited_cmdline () {
 	(ulimit -s 128 && "$@")
 }
@@ -1881,6 +1933,10 @@ test_lazy_prereq LONG_IS_64BIT '
 	test 8 -le "$(build_option sizeof-long)"
 '
 
+test_lazy_prereq RUST '
+	test "$(build_option rust)" = enabled
+'
+
 test_lazy_prereq TIME_IS_64BIT 'test-tool date is64bit'
 test_lazy_prereq TIME_T_IS_64BIT 'test-tool date time_t-is64bit'
 
@@ -1908,8 +1964,25 @@ test_lazy_prereq SHA1 '
 	esac
 '
 
+test_lazy_prereq DEFAULT_HASH_ALGORITHM '
+	test "$GIT_TEST_BUILTIN_HASH" = "$GIT_DEFAULT_HASH"
+'
+
 test_lazy_prereq DEFAULT_REPO_FORMAT '
 	test_have_prereq SHA1,REFFILES
+'
+# BROKEN_OBJECTS is a test whether we can write deliberately broken objects and
+# expect them to work.  When running using SHA-256 mode with SHA-1
+# compatibility, we cannot write such objects because there's no SHA-1
+# compatibility value for a nonexistent object.
+test_lazy_prereq BROKEN_OBJECTS '
+	! test_have_prereq COMPAT_HASH
+'
+
+# COMPAT_HASH is a test if we're operating in a repository with SHA-256 with
+# SHA-1 compatibility.
+test_lazy_prereq COMPAT_HASH '
+	test -n "$test_repo_compat_hash_algo"
 '
 
 # Ensure that no test accidentally triggers a Git command
@@ -1919,6 +1992,10 @@ test_lazy_prereq DEFAULT_REPO_FORMAT '
 # to avoid errors.
 GIT_TEST_MAINT_SCHEDULER="none:exit 1"
 export GIT_TEST_MAINT_SCHEDULER
+
+# Ensure that tests cannot race with background maintenance by default.
+GIT_TEST_MAINT_AUTO_DETACH="false"
+export GIT_TEST_MAINT_AUTO_DETACH
 
 # Does this platform support `git fsmonitor--daemon`
 #

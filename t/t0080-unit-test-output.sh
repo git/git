@@ -6,10 +6,10 @@ test_description='Test the output of the unit test framework'
 
 test_expect_success 'TAP output from unit tests' - <<\EOT
 	cat >expect <<-EOF &&
-	# BUG: check outside of test at t/helper/test-example-tap.c:75
+	# BUG: check outside of test at t/helper/test-example-tap.c:77
 	ok 1 - passing test
 	ok 2 - passing test and assertion return 1
-	# check "1 == 2" failed at t/helper/test-example-tap.c:79
+	# check "1 == 2" failed at t/helper/test-example-tap.c:81
 	#    left: 1
 	#   right: 2
 	not ok 3 - failing test
@@ -34,53 +34,65 @@ test_expect_success 'TAP output from unit tests' - <<\EOT
 	not ok 15 - failing check after TEST_TODO()
 	ok 16 - failing check after TEST_TODO() returns 0
 	# check "!strcmp("\thello\\\\", "there\"\n")" failed at t/helper/test-example-tap.c:62
-	#    left: "\011hello\\\\"
-	#   right: "there\"\012"
+	#    left: "\thello\\\\"
+	#   right: "there\"\n"
 	# check "!strcmp("NULL", NULL)" failed at t/helper/test-example-tap.c:63
 	#    left: "NULL"
 	#   right: NULL
 	# check "'a' == '\n'" failed at t/helper/test-example-tap.c:64
 	#    left: 'a'
-	#   right: '\012'
+	#   right: '\n'
 	# check "'\\\\' == '\\''" failed at t/helper/test-example-tap.c:65
 	#    left: '\\\\'
 	#   right: '\\''
+	# check "'\a' == '\v'" failed at t/helper/test-example-tap.c:66
+	#    left: '\a'
+	#   right: '\v'
+	# check "'\x00' == '\x01'" failed at t/helper/test-example-tap.c:67
+	#    left: '\000'
+	#   right: '\001'
 	not ok 17 - messages from failing string and char comparison
-	# BUG: test has no checks at t/helper/test-example-tap.c:94
+	# BUG: test has no checks at t/helper/test-example-tap.c:96
 	not ok 18 - test with no checks
 	ok 19 - test with no checks returns 0
 	ok 20 - if_test passing test
-	# check "1 == 2" failed at t/helper/test-example-tap.c:100
+	# check "1 == 2" failed at t/helper/test-example-tap.c:102
 	#    left: 1
 	#   right: 2
 	not ok 21 - if_test failing test
 	not ok 22 - if_test passing TEST_TODO() # TODO
-	# todo check 'check(1)' succeeded at t/helper/test-example-tap.c:104
+	# todo check 'check(1)' succeeded at t/helper/test-example-tap.c:106
 	not ok 23 - if_test failing TEST_TODO()
-	# check "0" failed at t/helper/test-example-tap.c:106
+	# check "0" failed at t/helper/test-example-tap.c:108
 	# skipping test - missing prerequisite
-	# skipping check '1' at t/helper/test-example-tap.c:108
+	# skipping check '1' at t/helper/test-example-tap.c:110
 	ok 24 - if_test test_skip() # SKIP
 	# skipping test - missing prerequisite
 	ok 25 - if_test test_skip() inside TEST_TODO() # SKIP
-	# check "0" failed at t/helper/test-example-tap.c:113
+	# check "0" failed at t/helper/test-example-tap.c:115
 	not ok 26 - if_test TEST_TODO() after failing check
-	# check "0" failed at t/helper/test-example-tap.c:119
+	# check "0" failed at t/helper/test-example-tap.c:121
 	not ok 27 - if_test failing check after TEST_TODO()
-	# check "!strcmp("\thello\\\\", "there\"\n")" failed at t/helper/test-example-tap.c:122
-	#    left: "\011hello\\\\"
-	#   right: "there\"\012"
-	# check "!strcmp("NULL", NULL)" failed at t/helper/test-example-tap.c:123
+	# check "!strcmp("\thello\\\\", "there\"\n")" failed at t/helper/test-example-tap.c:124
+	#    left: "\thello\\\\"
+	#   right: "there\"\n"
+	# check "!strcmp("NULL", NULL)" failed at t/helper/test-example-tap.c:125
 	#    left: "NULL"
 	#   right: NULL
-	# check "'a' == '\n'" failed at t/helper/test-example-tap.c:124
+	# check "'a' == '\n'" failed at t/helper/test-example-tap.c:126
 	#    left: 'a'
-	#   right: '\012'
-	# check "'\\\\' == '\\''" failed at t/helper/test-example-tap.c:125
+	#   right: '\n'
+	# check "'\\\\' == '\\''" failed at t/helper/test-example-tap.c:127
 	#    left: '\\\\'
 	#   right: '\\''
+	# check "'\a' == '\v'" failed at t/helper/test-example-tap.c:128
+	#    left: '\a'
+	#   right: '\v'
+	# check "'\x00' == '\x01'" failed at t/helper/test-example-tap.c:129
+	#    left: '\000'
+	#   right: '\001'
 	not ok 28 - if_test messages from failing string and char comparison
-	# BUG: test has no checks at t/helper/test-example-tap.c:127
+	# BUG: test has no checks at t/helper/test-example-tap.c:131
 	not ok 29 - if_test test with no checks
 	1..29
 	EOF

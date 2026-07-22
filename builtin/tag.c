@@ -149,11 +149,11 @@ static int verify_tag(const char *name, const char *ref UNUSED,
 	if (format->format)
 		flags = GPG_VERIFY_OMIT_STATUS;
 
-	if (gpg_verify_tag(oid, name, flags))
+	if (gpg_verify_tag(the_repository, oid, name, flags))
 		return -1;
 
 	if (format->format)
-		pretty_print_ref(name, oid, format);
+		pretty_print_ref(name, oid, NULL, format);
 
 	return 0;
 }
@@ -167,7 +167,7 @@ static int do_sign(struct strbuf *buffer, struct object_id **compat_oid,
 	char *keyid = get_signing_key();
 	int ret = -1;
 
-	if (sign_buffer(buffer, &sig, keyid))
+	if (sign_buffer(buffer, &sig, keyid, 0))
 		goto out;
 
 	if (compat) {
@@ -176,7 +176,7 @@ static int do_sign(struct strbuf *buffer, struct object_id **compat_oid,
 		if (convert_object_file(the_repository ,&compat_buf, algo, compat,
 					buffer->buf, buffer->len, OBJ_TAG, 1))
 			goto out;
-		if (sign_buffer(&compat_buf, &compat_sig, keyid))
+		if (sign_buffer(&compat_buf, &compat_sig, keyid, 0))
 			goto out;
 		add_header_signature(&compat_buf, &sig, algo);
 		strbuf_addbuf(&compat_buf, &compat_sig);
@@ -271,8 +271,8 @@ static int build_tag_object(struct strbuf *buf, int sign, struct object_id *resu
 	struct object_id *compat_oid = NULL, compat_oid_buf;
 	if (sign && do_sign(buf, &compat_oid, &compat_oid_buf) < 0)
 		return error(_("unable to sign the tag"));
-	if (write_object_file_flags(buf->buf, buf->len, OBJ_TAG, result,
-				    compat_oid, 0) < 0)
+	if (odb_write_object_ext(the_repository->objects, buf->buf,
+				 buf->len, OBJ_TAG, result, compat_oid, 0) < 0)
 		return error(_("unable to write tag file"));
 	return 0;
 }
@@ -499,8 +499,8 @@ int cmd_tag(int argc,
 		OPT_CALLBACK_F('m', "message", &msg, N_("message"),
 			       N_("tag message"), PARSE_OPT_NONEG, parse_msg_arg),
 		OPT_FILENAME('F', "file", &msgfile, N_("read message from file")),
-		OPT_PASSTHRU_ARGV(0, "trailer", &trailer_args, N_("trailer"),
-				  N_("add custom trailer(s)"), PARSE_OPT_NONEG),
+		OPT_STRVEC(0, "trailer", &trailer_args, N_("trailer"),
+			   N_("add custom trailer(s)")),
 		OPT_BOOL('e', "edit", &edit_flag, N_("force edit of tag message")),
 		OPT_BOOL('s', "sign", &opt.sign, N_("annotated and GPG-signed tag")),
 		OPT_CLEANUP(&cleanup_arg),
@@ -546,7 +546,7 @@ int cmd_tag(int argc,
 	 * Try to set sort keys from config. If config does not set any,
 	 * fall back on default (refname) sorting.
 	 */
-	git_config(git_tag_config, &sorting_options);
+	repo_config(the_repository, git_tag_config, &sorting_options);
 	if (!sorting_options.nr)
 		string_list_append(&sorting_options, "refname");
 
@@ -567,6 +567,9 @@ int cmd_tag(int argc,
 
 	if (cmdmode == 'l')
 		setup_auto_pager("tag", 1);
+
+	if (trailer_args.nr)
+		trailer_config_init();
 
 	if (opt.sign == -1)
 		opt.sign = cmdmode ? 0 : config_sign_tag > 0;

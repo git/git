@@ -81,7 +81,7 @@ int cmd__read_graph(int argc, const char **argv)
 
 	prepare_repo_settings(the_repository);
 
-	graph = read_commit_graph_one(the_repository, source);
+	graph = read_commit_graph_one(source);
 	if (!graph) {
 		ret = 1;
 		goto done;

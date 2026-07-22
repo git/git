@@ -12,8 +12,8 @@
 #include "tar.h"
 #include "archive.h"
 #include "odb.h"
+#include "odb/streaming.h"
 #include "strbuf.h"
-#include "streaming.h"
 #include "run-command.h"
 #include "write-or-die.h"
 
@@ -129,22 +129,20 @@ static void write_trailer(void)
  */
 static int stream_blocked(struct repository *r, const struct object_id *oid)
 {
-	struct git_istream *st;
-	enum object_type type;
-	unsigned long sz;
+	struct odb_read_stream *st;
 	char buf[BLOCKSIZE];
 	ssize_t readlen;
 
-	st = open_istream(r, oid, &type, &sz, NULL);
+	st = odb_read_stream_open(r->objects, oid, NULL);
 	if (!st)
 		return error(_("cannot stream blob %s"), oid_to_hex(oid));
 	for (;;) {
-		readlen = read_istream(st, buf, sizeof(buf));
+		readlen = odb_read_stream_read(st, buf, sizeof(buf));
 		if (readlen <= 0)
 			break;
 		do_write_blocked(buf, readlen);
 	}
-	close_istream(st);
+	odb_read_stream_close(st);
 	if (!readlen)
 		finish_record();
 	return readlen;
@@ -537,7 +535,7 @@ void init_tar_archiver(void)
 	tar_filter_config("tar.tgz.remote", "true", NULL);
 	tar_filter_config("tar.tar.gz.command", internal_gzip_command, NULL);
 	tar_filter_config("tar.tar.gz.remote", "true", NULL);
-	git_config(git_tar_config, NULL);
+	repo_config(the_repository, git_tar_config, NULL);
 	for (i = 0; i < nr_tar_filters; i++) {
 		/* omit any filters that never had a command configured */
 		if (tar_filters[i]->filter_command)

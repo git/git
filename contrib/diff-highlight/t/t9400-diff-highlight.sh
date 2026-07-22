@@ -10,6 +10,8 @@ DIFF_HIGHLIGHT="$CURR_DIR"/../diff-highlight
 CW="$(printf "\033[7m")"	# white
 CR="$(printf "\033[27m")"	# reset
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . "$TEST_DIRECTORY"/test-lib.sh
 
 if ! test_have_prereq PERL
@@ -336,6 +338,17 @@ test_expect_success 'diff-highlight handles --graph with leading dash' '
 	git log --graph -p -1 | "$DIFF_HIGHLIGHT" >actual.raw &&
 	trim_graph <actual.raw | sed -n "/^---/,\$p" >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'highlight diff that removes final newline' '
+	printf "content\n" >a &&
+	printf "content" >b &&
+	dh_test a b <<-\EOF
+	@@ -1 +1 @@
+	-content
+	+content
+	\ No newline at end of file
+	EOF
 '
 
 test_done

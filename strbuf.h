@@ -367,6 +367,31 @@ void strbuf_addbuf_percentquote(struct strbuf *dst, const struct strbuf *src);
  */
 void strbuf_add_percentencode(struct strbuf *dst, const char *src, int flags);
 
+enum humanise_flags {
+	/*
+	 * Use rate based units for humanised values.
+	 */
+	HUMANISE_RATE = (1 << 0),
+	/*
+	 * Use compact "B" unit symbol instead of "byte/bytes" for humanised
+	 * values.
+	 */
+	HUMANISE_COMPACT = (1 << 1),
+};
+
+/**
+ * Converts the given byte size into a downscaled human-readable value and
+ * corresponding unit as two separate strings.
+ */
+void humanise_bytes(off_t bytes, char **value, const char **unit,
+		    unsigned flags);
+
+/**
+ * Converts the given count into a downscaled human-readable value and
+ * corresponding unit as two separate strings.
+ */
+void humanise_count(size_t count, char **value, const char **unit);
+
 /**
  * Append the given byte size as a human-readable string (i.e. 12.23 KiB,
  * 3.50 MiB).
@@ -660,9 +685,9 @@ char *xstrvfmt(const char *fmt, va_list ap);
 __attribute__((format (printf, 1, 2)))
 char *xstrfmt(const char *fmt, ...);
 
-int starts_with(const char *str, const char *prefix);
-int istarts_with(const char *str, const char *prefix);
-int starts_with_mem(const char *str, size_t len, const char *prefix);
+bool starts_with(const char *str, const char *prefix);
+bool istarts_with(const char *str, const char *prefix);
+bool starts_with_mem(const char *str, size_t len, const char *prefix);
 
 /*
  * If the string "str" is the same as the string in "prefix", then the "arg"
@@ -678,16 +703,16 @@ int starts_with_mem(const char *str, size_t len, const char *prefix);
  * can be used instead of !strcmp(arg, "--key") and then
  * skip_prefix(arg, "--key=", &arg) to parse such an option.
  */
-int skip_to_optional_arg_default(const char *str, const char *prefix,
+bool skip_to_optional_arg_default(const char *str, const char *prefix,
 				 const char **arg, const char *def);
 
-static inline int skip_to_optional_arg(const char *str, const char *prefix,
+static inline bool skip_to_optional_arg(const char *str, const char *prefix,
 				       const char **arg)
 {
 	return skip_to_optional_arg_default(str, prefix, arg, "");
 }
 
-static inline int ends_with(const char *str, const char *suffix)
+static inline bool ends_with(const char *str, const char *suffix)
 {
 	size_t len;
 	return strip_suffix(str, suffix, &len);

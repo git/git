@@ -36,7 +36,8 @@ OPTIONS
 	fails if the name of packed archive does not end
 	with .pack).
 
---[no-]rev-index::
+--rev-index::
+--no-rev-index::
 	When this flag is provided, generate a reverse index
 	(a `.rev` file) corresponding to the given pack. If
 	`--verify` is given, ensure that the existing

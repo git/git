@@ -48,7 +48,7 @@
 struct hashmap {
 	int nr, alloc;
 	struct entry {
-		unsigned long hash;
+		size_t minimal_perfect_hash;
 		/*
 		 * 0 = unused entry, 1 = first line, 2 = second, etc.
 		 * line2 is NON_UNIQUE if the line is not unique
@@ -61,12 +61,6 @@ struct hashmap {
 		 * initially, "next" reflects only the order in file1.
 		 */
 		struct entry *next, *previous;
-
-		/*
-		 * If 1, this entry can serve as an anchor. See
-		 * Documentation/diff-options.adoc for more information.
-		 */
-		unsigned anchor : 1;
 	} *entries, *first, *last;
 	/* were common records found? */
 	unsigned long has_matches;
@@ -85,12 +79,11 @@ static int is_anchor(xpparam_t const *xpp, const char *line)
 }
 
 /* The argument "pass" is 1 for the first file, 2 for the second. */
-static void insert_record(xpparam_t const *xpp, int line, struct hashmap *map,
-			  int pass)
+static void insert_record(int line, struct hashmap *map, int pass)
 {
-	xrecord_t **records = pass == 1 ?
+	xrecord_t *records = pass == 1 ?
 		map->env->xdf1.recs : map->env->xdf2.recs;
-	xrecord_t *record = records[line - 1];
+	xrecord_t *record = &records[line - 1];
 	/*
 	 * After xdl_prepare_env() (or more precisely, due to
 	 * xdl_classify_record()), the "ha" member of the records (AKA lines)
@@ -101,10 +94,10 @@ static void insert_record(xpparam_t const *xpp, int line, struct hashmap *map,
 	 * So we multiply ha by 2 in the hope that the hashing was
 	 * "unique enough".
 	 */
-	int index = (int)((record->ha << 1) % map->alloc);
+	int index = (int)((record->minimal_perfect_hash << 1) % map->alloc);
 
 	while (map->entries[index].line1) {
-		if (map->entries[index].hash != record->ha) {
+		if (map->entries[index].minimal_perfect_hash != record->minimal_perfect_hash) {
 			if (++index >= map->alloc)
 				index = 0;
 			continue;
@@ -120,8 +113,7 @@ static void insert_record(xpparam_t const *xpp, int line, struct hashmap *map,
 	if (pass == 2)
 		return;
 	map->entries[index].line1 = line;
-	map->entries[index].hash = record->ha;
-	map->entries[index].anchor = is_anchor(xpp, map->env->xdf1.recs[line - 1]->ptr);
+	map->entries[index].minimal_perfect_hash = record->minimal_perfect_hash;
 	if (!map->first)
 		map->first = map->entries + index;
 	if (map->last) {
@@ -153,11 +145,11 @@ static int fill_hashmap(xpparam_t const *xpp, xdfenv_t *env,
 
 	/* First, fill with entries from the first file */
 	while (count1--)
-		insert_record(xpp, line1++, result, 1);
+		insert_record(line1++, result, 1);
 
 	/* Then search for matches in the second file */
 	while (count2--)
-		insert_record(xpp, line2++, result, 2);
+		insert_record(line2++, result, 2);
 
 	return 0;
 }
@@ -194,6 +186,8 @@ static int binary_search(struct entry **sequence, int longest,
  */
 static int find_longest_common_sequence(struct hashmap *map, struct entry **res)
 {
+	xpparam_t const *xpp = map->xpp;
+	xrecord_t const *recs = map->env->xdf2.recs;
 	struct entry **sequence;
 	int longest = 0, i;
 	struct entry *entry;
@@ -211,13 +205,16 @@ static int find_longest_common_sequence(struct hashmap *map, struct entry **res)
 	for (entry = map->first; entry; entry = entry->next) {
 		if (!entry->line2 || entry->line2 == NON_UNIQUE)
 			continue;
-		i = binary_search(sequence, longest, entry);
+		if (longest == 0 || entry->line2 > sequence[longest - 1]->line2)
+			i = longest - 1;
+		else
+			i = binary_search(sequence, longest, entry);
 		entry->previous = i < 0 ? NULL : sequence[i];
 		++i;
 		if (i <= anchor_i)
 			continue;
 		sequence[i] = entry;
-		if (entry->anchor) {
+		if (is_anchor(xpp, (const char*)recs[entry->line2 - 1].ptr)) {
 			anchor_i = i;
 			longest = anchor_i + 1;
 		} else if (i == longest) {
@@ -246,9 +243,9 @@ static int find_longest_common_sequence(struct hashmap *map, struct entry **res)
 
 static int match(struct hashmap *map, int line1, int line2)
 {
-	xrecord_t *record1 = map->env->xdf1.recs[line1 - 1];
-	xrecord_t *record2 = map->env->xdf2.recs[line2 - 1];
-	return record1->ha == record2->ha;
+	xrecord_t *record1 = &map->env->xdf1.recs[line1 - 1];
+	xrecord_t *record2 = &map->env->xdf2.recs[line2 - 1];
+	return record1->minimal_perfect_hash == record2->minimal_perfect_hash;
 }
 
 static int patience_diff(xpparam_t const *xpp, xdfenv_t *env,
@@ -331,11 +328,11 @@ static int patience_diff(xpparam_t const *xpp, xdfenv_t *env,
 	/* trivial case: one side is empty */
 	if (!count1) {
 		while(count2--)
-			env->xdf2.rchg[line2++ - 1] = 1;
+			env->xdf2.changed[line2++ - 1] = true;
 		return 0;
 	} else if (!count2) {
 		while(count1--)
-			env->xdf1.rchg[line1++ - 1] = 1;
+			env->xdf1.changed[line1++ - 1] = true;
 		return 0;
 	}
 
@@ -347,9 +344,9 @@ static int patience_diff(xpparam_t const *xpp, xdfenv_t *env,
 	/* are there any matching lines at all? */
 	if (!map.has_matches) {
 		while(count1--)
-			env->xdf1.rchg[line1++ - 1] = 1;
+			env->xdf1.changed[line1++ - 1] = true;
 		while(count2--)
-			env->xdf2.rchg[line2++ - 1] = 1;
+			env->xdf2.changed[line2++ - 1] = true;
 		xdl_free(map.entries);
 		return 0;
 	}
@@ -370,5 +367,5 @@ static int patience_diff(xpparam_t const *xpp, xdfenv_t *env,
 
 int xdl_do_patience_diff(xpparam_t const *xpp, xdfenv_t *env)
 {
-	return patience_diff(xpp, env, 1, env->xdf1.nrec, 1, env->xdf2.nrec);
+	return patience_diff(xpp, env, 1, (int)env->xdf1.nrec, 1, (int)env->xdf2.nrec);
 }

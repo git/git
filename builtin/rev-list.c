@@ -28,6 +28,14 @@
 #include "quote.h"
 #include "strbuf.h"
 
+struct rev_list_info {
+	struct rev_info *revs;
+	int flags;
+	int show_timestamp;
+	int hdr_termination;
+	const char *header_prefix;
+};
+
 static const char rev_list_usage[] =
 "git rev-list [<options>] <commit>... [--] [<path>...]\n"
 "\n"
@@ -80,9 +88,19 @@ static int arg_print_omitted; /* print objects omitted by filter */
 
 struct missing_objects_map_entry {
 	struct oidmap_entry entry;
-	const char *path;
+	char *path;
 	unsigned type;
 };
+
+static void missing_objects_map_entry_free(void *e)
+{
+	struct missing_objects_map_entry *entry =
+		container_of(e, struct missing_objects_map_entry, entry);
+
+	free(entry->path);
+	free(entry);
+}
+
 static struct oidmap missing_objects;
 enum missing_action {
 	MA_ERROR = 0,    /* fail if any missing objects are encountered */
@@ -208,7 +226,7 @@ static inline void finish_object__ma(struct object *obj, const char *name)
 
 static void finish_commit(struct commit *commit)
 {
-	free_commit_list(commit->parents);
+	commit_list_free(commit->parents);
 	commit->parents = NULL;
 	free_commit_buffer(the_repository->parsed_objects,
 			   commit);
@@ -636,7 +654,7 @@ int cmd_rev_list(int argc,
 
 	show_usage_if_asked(argc, argv, rev_list_usage);
 
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 	repo_init_revisions(the_repository, &revs, prefix);
 	revs.abbrev = DEFAULT_ABBREV;
 	revs.commit_format = CMIT_FMT_UNSPECIFIED;
@@ -652,17 +670,21 @@ int cmd_rev_list(int argc,
 	 *
 	 * Let "--missing" to conditionally set fetch_if_missing.
 	 */
+
 	/*
-	 * NEEDSWORK: These loops that attempt to find presence of
-	 * options without understanding that the options they are
-	 * skipping are broken (e.g., it would not know "--grep
+	 * NEEDSWORK: The next loop is utterly broken.  It tries to
+	 * notice an option is used, but without understanding if each
+	 * option takes an argument, which fundamentally would not
+	 * work.  It would not know "--grep
 	 * --exclude-promisor-objects" is not triggering
-	 * "--exclude-promisor-objects" option).  We really need
-	 * setup_revisions() to have a mechanism to allow and disallow
-	 * some sets of options for different commands (like rev-list,
-	 * replay, etc). Such a mechanism should do an early parsing
-	 * of options and be able to manage the `--missing=...` and
-	 * `--exclude-promisor-objects` options below.
+	 * "--exclude-promisor-objects" option, for example.
+	 *
+	 * We really need setup_revisions() to have a mechanism to
+	 * allow and disallow some sets of options for different
+	 * commands (like rev-list, replay, etc). Such a mechanism
+	 * should do an early parsing of options and be able to manage
+	 * the `--missing=...` and `--exclude-promisor-objects`
+	 * options below.
 	 */
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
@@ -923,10 +945,9 @@ int cmd_rev_list(int argc,
 		while ((entry = oidmap_iter_next(&iter))) {
 			print_missing_object(entry, arg_missing_action ==
 							    MA_PRINT_INFO);
-			free((void *)entry->path);
 		}
 
-		oidmap_clear(&missing_objects, true);
+		oidmap_clear_with_free(&missing_objects, missing_objects_map_entry_free);
 	}
 
 	stop_progress(&progress);

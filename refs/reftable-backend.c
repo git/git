@@ -6,26 +6,28 @@
 #include "../config.h"
 #include "../dir.h"
 #include "../environment.h"
+#include "../fsck.h"
 #include "../gettext.h"
 #include "../hash.h"
 #include "../hex.h"
-#include "../iterator.h"
 #include "../ident.h"
-#include "../lockfile.h"
+#include "../iterator.h"
 #include "../object.h"
+#include "../parse.h"
 #include "../path.h"
 #include "../refs.h"
 #include "../reftable/reftable-basics.h"
-#include "../reftable/reftable-stack.h"
-#include "../reftable/reftable-record.h"
 #include "../reftable/reftable-error.h"
+#include "../reftable/reftable-fsck.h"
 #include "../reftable/reftable-iterator.h"
+#include "../reftable/reftable-record.h"
+#include "../reftable/reftable-stack.h"
 #include "../repo-settings.h"
 #include "../setup.h"
 #include "../strmap.h"
 #include "../trace2.h"
+#include "../worktree.h"
 #include "../write-or-die.h"
-#include "parse.h"
 #include "refs-internal.h"
 
 /*
@@ -171,6 +173,37 @@ static struct reftable_ref_store *reftable_be_downcast(struct ref_store *ref_sto
 	return refs;
 }
 
+static int backend_for_worktree(struct reftable_backend **out,
+				struct reftable_ref_store *store,
+				const char *worktree_name)
+{
+	struct strbuf worktree_dir = STRBUF_INIT;
+	int ret;
+
+	*out = strmap_get(&store->worktree_backends, worktree_name);
+	if (*out) {
+		ret = 0;
+		goto out;
+	}
+
+	strbuf_addf(&worktree_dir, "%s/worktrees/%s/reftable",
+		    store->base.repo->commondir, worktree_name);
+
+	CALLOC_ARRAY(*out, 1);
+	store->err = ret = reftable_backend_init(*out, worktree_dir.buf,
+						 &store->write_options);
+	if (ret < 0) {
+		free(*out);
+		goto out;
+	}
+
+	strmap_put(&store->worktree_backends, worktree_name, *out);
+
+out:
+	strbuf_release(&worktree_dir);
+	return ret;
+}
+
 /*
  * Some refs are global to the repository (refs/heads/{*}), while others are
  * local to the worktree (eg. HEAD, refs/bisect/{*}). We solve this by having
@@ -190,19 +223,19 @@ static int backend_for(struct reftable_backend **out,
 		       const char **rewritten_ref,
 		       int reload)
 {
-	struct reftable_backend *be;
 	const char *wtname;
 	int wtname_len;
+	int ret;
 
 	if (!refname) {
-		be = &store->main_backend;
+		*out = &store->main_backend;
+		ret = 0;
 		goto out;
 	}
 
 	switch (parse_worktree_ref(refname, &wtname, &wtname_len, rewritten_ref)) {
 	case REF_WORKTREE_OTHER: {
 		static struct strbuf wtname_buf = STRBUF_INIT;
-		struct strbuf wt_dir = STRBUF_INIT;
 
 		/*
 		 * We're using a static buffer here so that we don't need to
@@ -222,20 +255,8 @@ static int backend_for(struct reftable_backend **out,
 		 * already and error out when trying to write a reference via
 		 * both stacks.
 		 */
-		be = strmap_get(&store->worktree_backends, wtname_buf.buf);
-		if (!be) {
-			strbuf_addf(&wt_dir, "%s/worktrees/%s/reftable",
-				    store->base.repo->commondir, wtname_buf.buf);
+		ret = backend_for_worktree(out, store, wtname_buf.buf);
 
-			CALLOC_ARRAY(be, 1);
-			store->err = reftable_backend_init(be, wt_dir.buf,
-							   &store->write_options);
-			assert(store->err != REFTABLE_API_ERROR);
-
-			strmap_put(&store->worktree_backends, wtname_buf.buf, be);
-		}
-
-		strbuf_release(&wt_dir);
 		goto out;
 	}
 	case REF_WORKTREE_CURRENT:
@@ -244,27 +265,24 @@ static int backend_for(struct reftable_backend **out,
 		 * main worktree. We thus return the main stack in that case.
 		 */
 		if (!store->worktree_backend.stack)
-			be = &store->main_backend;
+			*out = &store->main_backend;
 		else
-			be = &store->worktree_backend;
+			*out = &store->worktree_backend;
+		ret = 0;
 		goto out;
 	case REF_WORKTREE_MAIN:
 	case REF_WORKTREE_SHARED:
-		be = &store->main_backend;
+		*out = &store->main_backend;
+		ret = 0;
 		goto out;
 	default:
 		BUG("unhandled worktree reference type");
 	}
 
 out:
-	if (reload) {
-		int ret = reftable_stack_reload(be->stack);
-		if (ret)
-			return ret;
-	}
-	*out = be;
-
-	return 0;
+	if (reload && !ret)
+		ret = reftable_stack_reload((*out)->stack);
+	return ret;
 }
 
 static int should_write_log(struct reftable_ref_store *refs, const char *refname)
@@ -354,18 +372,25 @@ static int reftable_be_fsync(int fd)
 }
 
 static struct ref_store *reftable_be_init(struct repository *repo,
+					  const char *payload,
 					  const char *gitdir,
 					  unsigned int store_flags)
 {
 	struct reftable_ref_store *refs = xcalloc(1, sizeof(*refs));
+	struct strbuf ref_common_dir = STRBUF_INIT;
+	struct strbuf refdir = STRBUF_INIT;
 	struct strbuf path = STRBUF_INIT;
-	int is_worktree;
+	bool is_worktree;
 	mode_t mask;
 
 	mask = umask(0);
 	umask(mask);
 
-	base_ref_store_init(&refs->base, repo, gitdir, &refs_be_reftable);
+	refs_compute_filesystem_location(gitdir, payload, &is_worktree, &refdir,
+					 &ref_common_dir);
+
+	reftable_set_alloc(malloc, realloc, free);
+	base_ref_store_init(&refs->base, repo, refdir.buf, &refs_be_reftable);
 	strmap_init(&refs->worktree_backends);
 	refs->store_flags = store_flags;
 	refs->log_all_ref_updates = repo_settings_get_log_all_ref_updates(repo);
@@ -386,7 +411,7 @@ static struct ref_store *reftable_be_init(struct repository *repo,
 	refs->write_options.lock_timeout_ms = 100;
 	refs->write_options.fsync = reftable_be_fsync;
 
-	git_config(reftable_be_config, &refs->write_options);
+	repo_config(the_repository, reftable_be_config, &refs->write_options);
 
 	/*
 	 * It is somewhat unfortunate that we have to mirror the default block
@@ -401,14 +426,11 @@ static struct ref_store *reftable_be_init(struct repository *repo,
 	/*
 	 * Set up the main reftable stack that is hosted in GIT_COMMON_DIR.
 	 * This stack contains both the shared and the main worktree refs.
-	 *
-	 * Note that we don't try to resolve the path in case we have a
-	 * worktree because `get_common_dir_noenv()` already does it for us.
 	 */
-	is_worktree = get_common_dir_noenv(&path, gitdir);
+	strbuf_addbuf(&path, &ref_common_dir);
 	if (!is_worktree) {
 		strbuf_reset(&path);
-		strbuf_realpath(&path, gitdir, 0);
+		strbuf_realpath(&path, ref_common_dir.buf, 0);
 	}
 	strbuf_addstr(&path, "/reftable");
 	refs->err = reftable_backend_init(&refs->main_backend, path.buf,
@@ -425,10 +447,9 @@ static struct ref_store *reftable_be_init(struct repository *repo,
 	 * do it efficiently.
 	 */
 	if (is_worktree) {
-		strbuf_reset(&path);
-		strbuf_addf(&path, "%s/reftable", gitdir);
+		strbuf_addstr(&refdir, "/reftable");
 
-		refs->err = reftable_backend_init(&refs->worktree_backend, path.buf,
+		refs->err = reftable_backend_init(&refs->worktree_backend, refdir.buf,
 						  &refs->write_options);
 		if (refs->err)
 			goto done;
@@ -438,6 +459,8 @@ static struct ref_store *reftable_be_init(struct repository *repo,
 
 done:
 	assert(refs->err != REFTABLE_API_ERROR);
+	strbuf_release(&ref_common_dir);
+	strbuf_release(&refdir);
 	strbuf_release(&path);
 	return &refs->base;
 }
@@ -473,19 +496,6 @@ static int reftable_be_create_on_disk(struct ref_store *ref_store,
 	safe_create_dir(the_repository, sb.buf, 1);
 	strbuf_reset(&sb);
 
-	strbuf_addf(&sb, "%s/HEAD", refs->base.gitdir);
-	write_file(sb.buf, "ref: refs/heads/.invalid");
-	adjust_shared_perm(the_repository, sb.buf);
-	strbuf_reset(&sb);
-
-	strbuf_addf(&sb, "%s/refs", refs->base.gitdir);
-	safe_create_dir(the_repository, sb.buf, 1);
-	strbuf_reset(&sb);
-
-	strbuf_addf(&sb, "%s/refs/heads", refs->base.gitdir);
-	write_file(sb.buf, "this repository uses the reftable format");
-	adjust_shared_perm(the_repository, sb.buf);
-
 	strbuf_release(&sb);
 	return 0;
 }
@@ -511,30 +521,6 @@ static int reftable_be_remove_on_disk(struct ref_store *ref_store,
 			    strerror(errno));
 		ret = -1;
 	}
-	strbuf_reset(&sb);
-
-	strbuf_addf(&sb, "%s/HEAD", refs->base.gitdir);
-	if (unlink(sb.buf) < 0) {
-		strbuf_addf(err, "could not delete stub HEAD: %s",
-			    strerror(errno));
-		ret = -1;
-	}
-	strbuf_reset(&sb);
-
-	strbuf_addf(&sb, "%s/refs/heads", refs->base.gitdir);
-	if (unlink(sb.buf) < 0) {
-		strbuf_addf(err, "could not delete stub heads: %s",
-			    strerror(errno));
-		ret = -1;
-	}
-	strbuf_reset(&sb);
-
-	strbuf_addf(&sb, "%s/refs", refs->base.gitdir);
-	if (rmdir(sb.buf) < 0) {
-		strbuf_addf(err, "could not delete refs directory: %s",
-			    strerror(errno));
-		ret = -1;
-	}
 
 	strbuf_release(&sb);
 	return ret;
@@ -546,6 +532,7 @@ struct reftable_ref_iterator {
 	struct reftable_iterator iter;
 	struct reftable_ref_record ref;
 	struct object_id oid;
+	struct object_id peeled_oid;
 
 	char *prefix;
 	size_t prefix_len;
@@ -643,7 +630,7 @@ static int reftable_ref_iterator_advance(struct ref_iterator *ref_iterator)
 		 * the root refs are to be included. We emulate the same behaviour here.
 		 */
 		if (!starts_with(iter->ref.refname, "refs/") &&
-		    !(iter->flags & DO_FOR_EACH_INCLUDE_ROOT_REFS &&
+		    !(iter->flags & REFS_FOR_EACH_INCLUDE_ROOT_REFS &&
 		      is_root_ref(iter->ref.refname))) {
 			continue;
 		}
@@ -657,7 +644,7 @@ static int reftable_ref_iterator_advance(struct ref_iterator *ref_iterator)
 		if (iter->exclude_patterns && should_exclude_current_ref(iter))
 			continue;
 
-		if (iter->flags & DO_FOR_EACH_PER_WORKTREE_ONLY &&
+		if (iter->flags & REFS_FOR_EACH_PER_WORKTREE_ONLY &&
 		    parse_worktree_ref(iter->ref.refname, NULL, NULL, NULL) !=
 			    REF_WORKTREE_CURRENT)
 			continue;
@@ -669,6 +656,8 @@ static int reftable_ref_iterator_advance(struct ref_iterator *ref_iterator)
 			break;
 		case REFTABLE_REF_VAL2:
 			oidread(&iter->oid, iter->ref.value.val2.value,
+				refs->base.repo->hash_algo);
+			oidread(&iter->peeled_oid, iter->ref.value.val2.target_value,
 				refs->base.repo->hash_algo);
 			break;
 		case REFTABLE_REF_SYMREF:
@@ -693,20 +682,23 @@ static int reftable_ref_iterator_advance(struct ref_iterator *ref_iterator)
 			flags |= REF_BAD_NAME | REF_ISBROKEN;
 		}
 
-		if (iter->flags & DO_FOR_EACH_OMIT_DANGLING_SYMREFS &&
+		if (iter->flags & REFS_FOR_EACH_OMIT_DANGLING_SYMREFS &&
 		    flags & REF_ISSYMREF &&
 		    flags & REF_ISBROKEN)
 			continue;
 
-		if (!(iter->flags & DO_FOR_EACH_INCLUDE_BROKEN) &&
+		if (!(iter->flags & REFS_FOR_EACH_INCLUDE_BROKEN) &&
 		    !ref_resolves_to_object(iter->ref.refname, refs->base.repo,
 					    &iter->oid, flags))
 				continue;
 
-		iter->base.refname = iter->ref.refname;
-		iter->base.referent = referent;
-		iter->base.oid = &iter->oid;
-		iter->base.flags = flags;
+		memset(&iter->base.ref, 0, sizeof(iter->base.ref));
+		iter->base.ref.name = iter->ref.refname;
+		iter->base.ref.target = referent;
+		iter->base.ref.oid = &iter->oid;
+		if (iter->ref.value_type == REFTABLE_REF_VAL2)
+			iter->base.ref.peeled_oid = &iter->peeled_oid;
+		iter->base.ref.flags = flags;
 
 		break;
 	}
@@ -719,32 +711,22 @@ static int reftable_ref_iterator_advance(struct ref_iterator *ref_iterator)
 }
 
 static int reftable_ref_iterator_seek(struct ref_iterator *ref_iterator,
-				      const char *prefix)
+				      const char *refname, unsigned int flags)
 {
 	struct reftable_ref_iterator *iter =
 		(struct reftable_ref_iterator *)ref_iterator;
 
-	free(iter->prefix);
-	iter->prefix = xstrdup_or_null(prefix);
-	iter->prefix_len = prefix ? strlen(prefix) : 0;
-	iter->err = reftable_iterator_seek_ref(&iter->iter, prefix);
+	/* Unset any previously set prefix */
+	FREE_AND_NULL(iter->prefix);
+	iter->prefix_len = 0;
+
+	if (flags & REF_ITERATOR_SEEK_SET_PREFIX) {
+		iter->prefix = xstrdup_or_null(refname);
+		iter->prefix_len = refname ? strlen(refname) : 0;
+	}
+	iter->err = reftable_iterator_seek_ref(&iter->iter, refname);
 
 	return iter->err;
-}
-
-static int reftable_ref_iterator_peel(struct ref_iterator *ref_iterator,
-				      struct object_id *peeled)
-{
-	struct reftable_ref_iterator *iter =
-		(struct reftable_ref_iterator *)ref_iterator;
-
-	if (iter->ref.value_type == REFTABLE_REF_VAL2) {
-		oidread(peeled, iter->ref.value.val2.target_value,
-			iter->refs->base.repo->hash_algo);
-		return 0;
-	}
-
-	return -1;
 }
 
 static void reftable_ref_iterator_release(struct ref_iterator *ref_iterator)
@@ -764,7 +746,6 @@ static void reftable_ref_iterator_release(struct ref_iterator *ref_iterator)
 static struct ref_iterator_vtable reftable_ref_iterator_vtable = {
 	.advance = reftable_ref_iterator_advance,
 	.seek = reftable_ref_iterator_seek,
-	.peel = reftable_ref_iterator_peel,
 	.release = reftable_ref_iterator_release,
 };
 
@@ -822,7 +803,7 @@ static struct reftable_ref_iterator *ref_iterator_for_stack(struct reftable_ref_
 
 	iter = xcalloc(1, sizeof(*iter));
 	base_ref_iterator_init(&iter->base, &reftable_ref_iterator_vtable);
-	iter->base.oid = &iter->oid;
+	iter->base.ref.oid = &iter->oid;
 	iter->flags = flags;
 	iter->refs = refs;
 	iter->exclude_patterns = filter_exclude_patterns(exclude_patterns);
@@ -839,7 +820,8 @@ static struct reftable_ref_iterator *ref_iterator_for_stack(struct reftable_ref_
 	if (ret)
 		goto done;
 
-	ret = reftable_ref_iterator_seek(&iter->base, prefix);
+	ret = reftable_ref_iterator_seek(&iter->base, prefix,
+					 REF_ITERATOR_SEEK_SET_PREFIX);
 	if (ret)
 		goto done;
 
@@ -857,7 +839,7 @@ static struct ref_iterator *reftable_be_iterator_begin(struct ref_store *ref_sto
 	struct reftable_ref_store *refs;
 	unsigned int required_flags = REF_STORE_READ;
 
-	if (!(flags & DO_FOR_EACH_INCLUDE_BROKEN))
+	if (!(flags & REFS_FOR_EACH_INCLUDE_BROKEN))
 		required_flags |= REF_STORE_ODB;
 	refs = reftable_be_downcast(ref_store, required_flags, "ref_iterator_begin");
 
@@ -1006,10 +988,6 @@ static int prepare_transaction_update(struct write_transaction_table_arg **out,
 	if (!arg) {
 		struct reftable_addition *addition;
 
-		ret = reftable_stack_reload(be->stack);
-		if (ret)
-			return ret;
-
 		ret = reftable_stack_new_addition(&addition, be->stack,
 						  REFTABLE_STACK_NEW_ADDITION_RELOAD);
 		if (ret) {
@@ -1096,6 +1074,20 @@ static enum ref_transaction_error prepare_single_update(struct reftable_ref_stor
 	if (ret)
 		return REF_TRANSACTION_ERROR_GENERIC;
 
+	if (u->flags & REF_LOG_USE_PROVIDED_OIDS) {
+		if (!(u->flags & REF_HAVE_OLD) ||
+		    !(u->flags & REF_HAVE_NEW) ||
+		    !(u->flags & REF_LOG_ONLY)) {
+			strbuf_addf(err, _("trying to write reflog for '%s' "
+					   "with incomplete values"), u->refname);
+			return REF_TRANSACTION_ERROR_GENERIC;
+		}
+
+		if (queue_transaction_update(refs, tx_data, u, &u->old_oid, err))
+			return REF_TRANSACTION_ERROR_GENERIC;
+		return 0;
+	}
+
 	/* Verify that the new object ID is valid. */
 	if ((u->flags & REF_HAVE_NEW) && !is_null_oid(&u->new_oid) &&
 	    !(u->flags & REF_SKIP_OID_VERIFICATION) &&
@@ -1180,8 +1172,6 @@ static enum ref_transaction_error prepare_single_update(struct reftable_ref_stor
 	if (ret > 0) {
 		/* The reference does not exist, but we expected it to. */
 		strbuf_addf(err, _("cannot lock ref '%s': "
-
-
 				   "unable to resolve reference '%s'"),
 			    ref_update_original_update_refname(u), u->refname);
 		return REF_TRANSACTION_ERROR_NONEXISTENT_REF;
@@ -1235,13 +1225,8 @@ static enum ref_transaction_error prepare_single_update(struct reftable_ref_stor
 
 			new_update->parent_update = u;
 
-			/*
-			 * Change the symbolic ref update to log only. Also, it
-			 * doesn't need to check its old OID value, as that will be
-			 * done when new_update is processed.
-			 */
+			/* Change the symbolic ref update to log only. */
 			u->flags |= REF_LOG_ONLY | REF_NO_DEREF;
-			u->flags &= ~REF_HAVE_OLD;
 		}
 	}
 
@@ -1265,8 +1250,33 @@ static enum ref_transaction_error prepare_single_update(struct reftable_ref_stor
 		ret = ref_update_check_old_target(referent->buf, u, err);
 		if (ret)
 			return ret;
-	} else if ((u->flags & REF_HAVE_OLD) && !oideq(&current_oid, &u->old_oid)) {
-		if (is_null_oid(&u->old_oid)) {
+	} else if ((u->flags & (REF_LOG_ONLY | REF_HAVE_OLD)) == REF_HAVE_OLD) {
+		if (oideq(&current_oid, &u->old_oid)) {
+			/*
+			 * Normally matching the expected old oid is enough. Either we
+			 * found the ref at the expected state, or we are creating and
+			 * expect the null oid (and likewise found nothing).
+			 *
+			 * But there is one exception for the null oid: if we found a
+			 * symref pointing to nothing we'll also get the null oid. In
+			 * regular recursive mode, that's good (we'll write to what the
+			 * symref points to, which doesn't exist). But in no-deref
+			 * mode, it means we'll clobber the symref, even though the
+			 * caller asked for this to be a creation event. So flag
+			 * that case to preserve the dangling symref.
+			 *
+			 * Everything else is OK and we can fall through to the
+			 * end of the conditional chain.
+			 */
+			if ((u->flags & REF_NO_DEREF) &&
+			    referent->len &&
+			    is_null_oid(&u->old_oid)) {
+				strbuf_addf(err, _("cannot lock ref '%s': "
+					    "dangling symref already exists"),
+					    ref_update_original_update_refname(u));
+				return REF_TRANSACTION_ERROR_CREATE_EXISTS;
+			}
+		} else if (is_null_oid(&u->old_oid)) {
 			strbuf_addf(err, _("cannot lock ref '%s': "
 					   "reference already exists"),
 				    ref_update_original_update_refname(u));
@@ -1376,10 +1386,9 @@ static int reftable_be_transaction_prepare(struct ref_store *ref_store,
 					    &refnames_to_check, head_type,
 					    &head_referent, &referent, err);
 		if (ret) {
-			if (ref_transaction_maybe_set_rejected(transaction, i, ret)) {
-				strbuf_reset(err);
+			if (ref_transaction_maybe_set_rejected(transaction, i,
+							       ret, err)) {
 				ret = 0;
-
 				continue;
 			}
 			goto done;
@@ -1607,7 +1616,8 @@ static int write_transaction_table(struct reftable_writer *writer, void *cb_data
 			ref.refname = (char *)u->refname;
 			ref.update_index = ts;
 
-			peel_error = peel_object(arg->refs->base.repo, &u->new_oid, &peeled);
+			peel_error = peel_object(arg->refs->base.repo, &u->new_oid, &peeled,
+						 PEEL_OBJECT_VERIFY_TAGGED_OBJECT_TYPE);
 			if (!peel_error) {
 				ref.value_type = REFTABLE_REF_VAL2;
 				memcpy(ref.value.val2.target_value, peeled.hash, GIT_MAX_RAWSZ);
@@ -1674,11 +1684,11 @@ done:
 	return ret;
 }
 
-static int reftable_be_pack_refs(struct ref_store *ref_store,
-				 struct pack_refs_opts *opts)
+static int reftable_be_optimize(struct ref_store *ref_store,
+				struct refs_optimize_opts *opts)
 {
 	struct reftable_ref_store *refs =
-		reftable_be_downcast(ref_store, REF_STORE_WRITE | REF_STORE_ODB, "pack_refs");
+		reftable_be_downcast(ref_store, REF_STORE_WRITE | REF_STORE_ODB, "optimize_refs");
 	struct reftable_stack *stack;
 	int ret;
 
@@ -1689,7 +1699,7 @@ static int reftable_be_pack_refs(struct ref_store *ref_store,
 	if (!stack)
 		stack = refs->main_backend.stack;
 
-	if (opts->flags & PACK_REFS_AUTO)
+	if (opts->flags & REFS_OPTIMIZE_AUTO)
 		ret = reftable_stack_auto_compact(stack);
 	else
 		ret = reftable_stack_compact_all(stack, NULL);
@@ -1705,6 +1715,29 @@ static int reftable_be_pack_refs(struct ref_store *ref_store,
 
 out:
 	return ret;
+}
+
+static int reftable_be_optimize_required(struct ref_store *ref_store,
+					 struct refs_optimize_opts *opts,
+					 bool *required)
+{
+	struct reftable_ref_store *refs = reftable_be_downcast(ref_store, REF_STORE_READ,
+							       "optimize_refs_required");
+	struct reftable_stack *stack;
+	bool use_heuristics = false;
+
+	if (refs->err)
+		return refs->err;
+
+	stack = refs->worktree_backend.stack;
+	if (!stack)
+		stack = refs->main_backend.stack;
+
+	if (opts->flags & REFS_OPTIMIZE_AUTO)
+		use_heuristics = true;
+
+	return reftable_stack_compaction_required(stack, use_heuristics,
+						  required);
 }
 
 struct write_create_symref_arg {
@@ -1960,7 +1993,8 @@ static int reftable_be_rename_ref(struct ref_store *ref_store,
 	ret = backend_for(&arg.be, refs, newrefname, &newrefname, 1);
 	if (ret)
 		goto done;
-	ret = reftable_stack_add(arg.be->stack, &write_copy_table, &arg);
+	ret = reftable_stack_add(arg.be->stack, &write_copy_table, &arg,
+				 REFTABLE_STACK_NEW_ADDITION_RELOAD);
 
 done:
 	assert(ret != REFTABLE_API_ERROR);
@@ -1989,7 +2023,8 @@ static int reftable_be_copy_ref(struct ref_store *ref_store,
 	ret = backend_for(&arg.be, refs, newrefname, &newrefname, 1);
 	if (ret)
 		goto done;
-	ret = reftable_stack_add(arg.be->stack, &write_copy_table, &arg);
+	ret = reftable_stack_add(arg.be->stack, &write_copy_table, &arg,
+				 REFTABLE_STACK_NEW_ADDITION_RELOAD);
 
 done:
 	assert(ret != REFTABLE_API_ERROR);
@@ -2029,7 +2064,7 @@ static int reftable_reflog_iterator_advance(struct ref_iterator *ref_iterator)
 
 		strbuf_reset(&iter->last_name);
 		strbuf_addstr(&iter->last_name, iter->log.refname);
-		iter->base.refname = iter->log.refname;
+		iter->base.ref.name = iter->log.refname;
 
 		break;
 	}
@@ -2042,16 +2077,10 @@ static int reftable_reflog_iterator_advance(struct ref_iterator *ref_iterator)
 }
 
 static int reftable_reflog_iterator_seek(struct ref_iterator *ref_iterator UNUSED,
-					 const char *prefix UNUSED)
+					 const char *refname UNUSED,
+					 unsigned int flags UNUSED)
 {
 	BUG("reftable reflog iterator cannot be seeked");
-	return -1;
-}
-
-static int reftable_reflog_iterator_peel(struct ref_iterator *ref_iterator UNUSED,
-					 struct object_id *peeled UNUSED)
-{
-	BUG("reftable reflog iterator cannot be peeled");
 	return -1;
 }
 
@@ -2067,7 +2096,6 @@ static void reftable_reflog_iterator_release(struct ref_iterator *ref_iterator)
 static struct ref_iterator_vtable reftable_reflog_iterator_vtable = {
 	.advance = reftable_reflog_iterator_advance,
 	.seek = reftable_reflog_iterator_seek,
-	.peel = reftable_reflog_iterator_peel,
 	.release = reftable_reflog_iterator_release,
 };
 
@@ -2140,7 +2168,7 @@ static int yield_log_record(struct reftable_ref_store *refs,
 
 	full_committer = fmt_ident(log->value.update.name, log->value.update.email,
 				   WANT_COMMITTER_IDENT, NULL, IDENT_NO_DATE);
-	return fn(&old_oid, &new_oid, full_committer,
+	return fn(log->refname, &old_oid, &new_oid, full_committer,
 		  log->value.update.time, log->value.update.tz_offset,
 		  log->value.update.message, cb_data);
 }
@@ -2360,7 +2388,8 @@ static int reftable_be_create_reflog(struct ref_store *ref_store,
 		goto done;
 	arg.stack = be->stack;
 
-	ret = reftable_stack_add(be->stack, &write_reflog_existence_table, &arg);
+	ret = reftable_stack_add(be->stack, &write_reflog_existence_table, &arg,
+				 REFTABLE_STACK_NEW_ADDITION_RELOAD);
 
 done:
 	return ret;
@@ -2431,7 +2460,8 @@ static int reftable_be_delete_reflog(struct ref_store *ref_store,
 		return ret;
 	arg.stack = be->stack;
 
-	ret = reftable_stack_add(be->stack, &write_reflog_delete_table, &arg);
+	ret = reftable_stack_add(be->stack, &write_reflog_delete_table, &arg,
+				 REFTABLE_STACK_NEW_ADDITION_RELOAD);
 
 	assert(ret != REFTABLE_API_ERROR);
 	return ret;
@@ -2469,7 +2499,7 @@ static int write_reflog_expiry_table(struct reftable_writer *writer, void *cb_da
 		ref.refname = (char *)arg->refname;
 		ref.update_index = ts;
 
-		if (!peel_object(arg->refs->base.repo, &arg->update_oid, &peeled)) {
+		if (!peel_object(arg->refs->base.repo, &arg->update_oid, &peeled, 0)) {
 			ref.value_type = REFTABLE_REF_VAL2;
 			memcpy(ref.value.val2.target_value, peeled.hash, GIT_MAX_RAWSZ);
 			memcpy(ref.value.val2.value, arg->update_oid.hash, GIT_MAX_RAWSZ);
@@ -2552,15 +2582,16 @@ static int reftable_be_reflog_expire(struct ref_store *ref_store,
 	if (ret < 0)
 		goto done;
 
+	ret = reftable_stack_new_addition(&add, be->stack,
+					  REFTABLE_STACK_NEW_ADDITION_RELOAD);
+	if (ret < 0)
+		goto done;
+
 	ret = reftable_stack_init_log_iterator(be->stack, &it);
 	if (ret < 0)
 		goto done;
 
 	ret = reftable_iterator_seek_log(&it, refname);
-	if (ret < 0)
-		goto done;
-
-	ret = reftable_stack_new_addition(&add, be->stack, 0);
 	if (ret < 0)
 		goto done;
 
@@ -2668,11 +2699,124 @@ done:
 	return ret;
 }
 
-static int reftable_be_fsck(struct ref_store *ref_store UNUSED,
-			    struct fsck_options *o UNUSED,
-			    struct worktree *wt UNUSED)
+static void reftable_fsck_verbose_handler(const char *msg, void *cb_data)
 {
-	return 0;
+	struct fsck_options *o = cb_data;
+
+	if (o->verbose)
+		fprintf_ln(stderr, "%s", msg);
+}
+
+static const enum fsck_msg_id fsck_msg_id_map[] = {
+	[REFTABLE_FSCK_ERROR_TABLE_NAME] = FSCK_MSG_BAD_REFTABLE_TABLE_NAME,
+};
+
+static int reftable_fsck_error_handler(struct reftable_fsck_info *info,
+				       void *cb_data)
+{
+	struct fsck_ref_report report = { .path = info->path };
+	struct fsck_options *o = cb_data;
+	enum fsck_msg_id msg_id;
+
+	if (info->error < 0 || info->error >= REFTABLE_FSCK_MAX_VALUE)
+		BUG("unknown fsck error: %d", (int)info->error);
+
+	msg_id = fsck_msg_id_map[info->error];
+
+	if (!msg_id)
+		BUG("fsck_msg_id value missing for reftable error: %d", (int)info->error);
+
+	return fsck_report_ref(o, &report, msg_id, "%s", info->msg);
+}
+
+static int reftable_be_fsck(struct ref_store *ref_store, struct fsck_options *o,
+			    struct worktree *wt)
+{
+	struct reftable_ref_store *refs =
+		reftable_be_downcast(ref_store, REF_STORE_READ, "fsck");
+	struct reftable_ref_iterator *iter = NULL;
+	struct reftable_ref_record ref = { 0 };
+	struct fsck_ref_report report = { 0 };
+	struct strbuf refname = STRBUF_INIT;
+	struct reftable_backend *backend;
+	int ret, errors = 0;
+
+	if (is_main_worktree(wt)) {
+		backend = &refs->main_backend;
+	} else {
+		ret = backend_for_worktree(&backend, refs, wt->id);
+		if (ret < 0) {
+			ret = error(_("reftable stack for worktree '%s' is broken"),
+				    wt->id);
+			goto out;
+		}
+	}
+
+	errors |= reftable_fsck_check(backend->stack, reftable_fsck_error_handler,
+				      reftable_fsck_verbose_handler, o);
+
+	iter = ref_iterator_for_stack(refs, backend->stack, "", NULL, 0);
+	if (!iter) {
+		ret = error(_("could not create iterator for worktree '%s'"), wt->id);
+		goto out;
+	}
+
+	while (1) {
+		ret = reftable_iterator_next_ref(&iter->iter, &ref);
+		if (ret > 0)
+			break;
+		if (ret < 0) {
+			ret = error(_("could not read record for worktree '%s'"), wt->id);
+			goto out;
+		}
+
+		strbuf_reset(&refname);
+		if (!is_main_worktree(wt))
+			strbuf_addf(&refname, "worktrees/%s/", wt->id);
+		strbuf_addstr(&refname, ref.refname);
+		report.path = refname.buf;
+
+		switch (ref.value_type) {
+		case REFTABLE_REF_VAL1:
+		case REFTABLE_REF_VAL2: {
+			struct object_id oid;
+			unsigned hash_id;
+
+			switch (reftable_stack_hash_id(backend->stack)) {
+			case REFTABLE_HASH_SHA1:
+				hash_id = GIT_HASH_SHA1;
+				break;
+			case REFTABLE_HASH_SHA256:
+				hash_id = GIT_HASH_SHA256;
+				break;
+			default:
+				BUG("unhandled hash ID %d",
+				    reftable_stack_hash_id(backend->stack));
+			}
+
+			oidread(&oid, reftable_ref_record_val1(&ref),
+				&hash_algos[hash_id]);
+
+			errors |= refs_fsck_ref(ref_store, o, &report, ref.refname, &oid);
+			break;
+		}
+		case REFTABLE_REF_SYMREF:
+			errors |= refs_fsck_symref(ref_store, o, &report, ref.refname,
+						   ref.value.symref);
+			break;
+		default:
+			BUG("unhandled reference value type %d", ref.value_type);
+		}
+	}
+
+	ret = errors ? -1 : 0;
+
+out:
+	if (iter)
+		ref_iterator_free(&iter->base);
+	reftable_ref_record_release(&ref);
+	strbuf_release(&refname);
+	return ret;
 }
 
 struct ref_storage_be refs_be_reftable = {
@@ -2686,7 +2830,9 @@ struct ref_storage_be refs_be_reftable = {
 	.transaction_finish = reftable_be_transaction_finish,
 	.transaction_abort = reftable_be_transaction_abort,
 
-	.pack_refs = reftable_be_pack_refs,
+	.optimize = reftable_be_optimize,
+	.optimize_required = reftable_be_optimize_required,
+
 	.rename_ref = reftable_be_rename_ref,
 	.copy_ref = reftable_be_copy_ref,
 

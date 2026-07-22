@@ -40,10 +40,10 @@ test_expect_success 'clone can prompt for proxy password' '
 
 start_socks() {
 	mkfifo socks_output &&
-	{
+	(
 		"$PERL_PATH" "$TEST_DIRECTORY/socks4-proxy.pl" "$1" >socks_output &
 		echo $! > "$TRASH_DIRECTORY/socks.pid"
-	} &&
+	) &&
 	read line <socks_output &&
 	test "$line" = ready
 }
@@ -72,7 +72,9 @@ test_expect_success SOCKS_PROXY 'clone via Unix socket' '
 	test_when_finished "rm -rf clone" &&
 	test_config_global http.proxy "socks4://localhost$PWD/%2530.sock" && {
 		{
-			GIT_TRACE_CURL=$PWD/trace git clone "$HTTPD_URL/smart/repo.git" clone 2>err &&
+			GIT_TRACE_CURL=$PWD/trace \
+			GIT_TRACE_CURL_COMPONENTS=socks \
+			git clone "$HTTPD_URL/smart/repo.git" clone 2>err &&
 			grep -i "SOCKS4 request granted" trace
 		} ||
 		old_libcurl_error err

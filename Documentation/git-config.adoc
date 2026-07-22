@@ -117,15 +117,15 @@ OPTIONS
 
 --comment <message>::
 	Append a comment at the end of new or modified lines.
-
-	If _<message>_ begins with one or more whitespaces followed
-	by "#", it is used as-is.  If it begins with "#", a space is
-	prepended before it is used.  Otherwise, a string " # " (a
-	space followed by a hash followed by a space) is prepended
-	to it.  And the resulting string is placed immediately after
-	the value defined for the variable.  The _<message>_ must
-	not contain linefeed characters (no multi-line comments are
-	permitted).
++
+If _<message>_ begins with one or more whitespaces followed
+by "#", it is used as-is.  If it begins with "#", a space is
+prepended before it is used.  Otherwise, a string " # " (a
+space followed by a hash followed by a space) is prepended
+to it.  And the resulting string is placed immediately after
+the value defined for the variable.  The _<message>_ must
+not contain linefeed characters (no multi-line comments are
+permitted).
 
 --all::
 	With `get`, return all values for a multi-valued key.
@@ -221,7 +221,7 @@ Use `--no-value` to unset _<pattern>_.
 +
 Valid `<type>`'s include:
 +
-- 'bool': canonicalize values `true`, `yes`,`on`, and positive
+- 'bool': canonicalize values `true`, `yes`, `on`, and positive
   numbers as "true", and values `false`, `no`, `off` and `0` as
   "false".
 - 'int': canonicalize values as simple decimal numbers. An optional suffix of
@@ -240,6 +240,9 @@ Valid `<type>`'s include:
   that the given value is canonicalize-able as an ANSI color, but it is written
   as-is.
 +
+If the command is in `list` mode, then the `--type <type>` argument will apply
+to each listed config value. If the value does not successfully parse in that
+format, then it will be omitted from the list.
 
 --bool::
 --int::
@@ -295,7 +298,8 @@ Valid `<type>`'s include:
 	When the color setting for `name` is undefined, the command uses
 	`color.ui` as fallback.
 
---[no-]includes::
+--includes::
+--no-includes::
 	Respect `include.*` directives in config files when looking up
 	values. Defaults to `off` when a specific file is given (e.g.,
 	using `--file`, `--global`, etc) and `on` when searching all
@@ -331,7 +335,7 @@ recommended to migrate to the new syntax.
 	Replaced by `git config get --all --show-names --regexp <name-regexp>`.
 
 --get-urlmatch <name> <URL>::
-	Replaced by `git config get --all --show-names --url=<URL> <name>`.
+	Replaced by `git config get --url=<URL> <name>`.
 
 --get-color <name> [<default>]::
 	Replaced by `git config get --type=color [--default=<default>] <name>`.

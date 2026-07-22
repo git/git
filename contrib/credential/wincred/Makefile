@@ -4,20 +4,22 @@ all:: git-credential-wincred.exe
 -include ../../../config.mak.autogen
 -include ../../../config.mak
 
-CC ?= gcc
-RM ?= rm -f
-CFLAGS ?= -O2 -Wall
-
 prefix ?= /usr/local
-libexecdir ?= $(prefix)/libexec/git-core
+gitexecdir ?= $(prefix)/libexec/git-core
 
+CC ?= gcc
+CFLAGS ?= -O2 -Wall
 INSTALL ?= install
+RM ?= rm -f
 
-git-credential-wincred.exe : git-credential-wincred.c
-	$(LINK.c) $^ $(LOADLIBES) $(LDLIBS) -o $@
+git-credential-wincred.exe: git-credential-wincred.c
+	$(LINK.c) -o $@ $^ $(LDFLAGS) $(LDLIBS)
 
 install: git-credential-wincred.exe
-	$(INSTALL) -m 755 $^ $(libexecdir)
+	$(INSTALL) -d -m 755 $(DESTDIR)$(gitexecdir)
+	$(INSTALL) -m 755 $< $(DESTDIR)$(gitexecdir)
 
 clean:
 	$(RM) git-credential-wincred.exe
+
+.PHONY: all install clean

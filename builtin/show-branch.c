@@ -18,6 +18,7 @@
 #include "commit-slab.h"
 #include "date.h"
 #include "wildmatch.h"
+#include "prio-queue.h"
 
 static const char*const show_branch_usage[] = {
     N_("git show-branch [-a | --all] [-r | --remotes] [--topo-order | --date-order]\n"
@@ -29,7 +30,7 @@ static const char*const show_branch_usage[] = {
     NULL
 };
 
-static int showbranch_use_color = -1;
+static enum git_colorbool showbranch_use_color = GIT_COLOR_UNKNOWN;
 
 static struct strvec default_args = STRVEC_INIT;
 
@@ -59,11 +60,10 @@ static const char *get_color_reset_code(void)
 	return "";
 }
 
-static struct commit *interesting(struct commit_list *list)
+static struct commit *interesting(struct prio_queue *queue)
 {
-	while (list) {
-		struct commit *commit = list->item;
-		list = list->next;
+	for (size_t i = 0; i < queue->nr; i++) {
+		struct commit *commit = queue->array[i].data;
 		if (commit->object.flags & UNINTERESTING)
 			continue;
 		return commit;
@@ -222,17 +222,18 @@ static int mark_seen(struct commit *commit, struct commit_list **seen_p)
 	return 0;
 }
 
-static void join_revs(struct commit_list **list_p,
+static void join_revs(struct prio_queue *queue,
 		      struct commit_list **seen_p,
 		      int num_rev, int extra)
 {
 	int all_mask = ((1u << (REV_SHIFT + num_rev)) - 1);
 	int all_revs = all_mask & ~((1u << REV_SHIFT) - 1);
 
-	while (*list_p) {
+	while (queue->nr) {
 		struct commit_list *parents;
-		int still_interesting = !!interesting(*list_p);
-		struct commit *commit = pop_commit(list_p);
+		int still_interesting = !!interesting(queue);
+		struct commit *commit = prio_queue_peek(queue);
+		bool get_pending = true;
 		int flags = commit->object.flags & all_mask;
 
 		if (!still_interesting && extra <= 0)
@@ -253,8 +254,14 @@ static void join_revs(struct commit_list **list_p,
 			if (mark_seen(p, seen_p) && !still_interesting)
 				extra--;
 			p->object.flags |= flags;
-			commit_list_insert_by_date(p, list_p);
+			if (get_pending)
+				prio_queue_replace(queue, p);
+			else
+				prio_queue_put(queue, p);
+			get_pending = false;
 		}
+		if (get_pending)
+			prio_queue_get(queue);
 	}
 
 	/*
@@ -413,34 +420,32 @@ static int append_ref(const char *refname, const struct object_id *oid,
 	return 0;
 }
 
-static int append_head_ref(const char *refname, const char *referent UNUSED, const struct object_id *oid,
-			   int flag UNUSED, void *cb_data UNUSED)
+static int append_head_ref(const struct reference *ref, void *cb_data UNUSED)
 {
 	struct object_id tmp;
 	int ofs = 11;
-	if (!starts_with(refname, "refs/heads/"))
+	if (!starts_with(ref->name, "refs/heads/"))
 		return 0;
 	/* If both heads/foo and tags/foo exists, get_sha1 would
 	 * get confused.
 	 */
-	if (repo_get_oid(the_repository, refname + ofs, &tmp) || !oideq(&tmp, oid))
+	if (repo_get_oid(the_repository, ref->name + ofs, &tmp) || !oideq(&tmp, ref->oid))
 		ofs = 5;
-	return append_ref(refname + ofs, oid, 0);
+	return append_ref(ref->name + ofs, ref->oid, 0);
 }
 
-static int append_remote_ref(const char *refname, const char *referent UNUSED, const struct object_id *oid,
-			     int flag UNUSED, void *cb_data UNUSED)
+static int append_remote_ref(const struct reference *ref, void *cb_data UNUSED)
 {
 	struct object_id tmp;
 	int ofs = 13;
-	if (!starts_with(refname, "refs/remotes/"))
+	if (!starts_with(ref->name, "refs/remotes/"))
 		return 0;
 	/* If both heads/foo and tags/foo exists, get_sha1 would
 	 * get confused.
 	 */
-	if (repo_get_oid(the_repository, refname + ofs, &tmp) || !oideq(&tmp, oid))
+	if (repo_get_oid(the_repository, ref->name + ofs, &tmp) || !oideq(&tmp, ref->oid))
 		ofs = 5;
-	return append_ref(refname + ofs, oid, 0);
+	return append_ref(ref->name + ofs, ref->oid, 0);
 }
 
 static int append_tag_ref(const char *refname, const struct object_id *oid,
@@ -454,27 +459,26 @@ static int append_tag_ref(const char *refname, const struct object_id *oid,
 static const char *match_ref_pattern = NULL;
 static int match_ref_slash = 0;
 
-static int append_matching_ref(const char *refname, const char *referent UNUSED, const struct object_id *oid,
-			       int flag, void *cb_data)
+static int append_matching_ref(const struct reference *ref, void *cb_data)
 {
 	/* we want to allow pattern hold/<asterisk> to show all
 	 * branches under refs/heads/hold/, and v0.99.9? to show
 	 * refs/tags/v0.99.9a and friends.
 	 */
 	const char *tail;
-	int slash = count_slashes(refname);
-	for (tail = refname; *tail && match_ref_slash < slash; )
+	int slash = count_slashes(ref->name);
+	for (tail = ref->name; *tail && match_ref_slash < slash; )
 		if (*tail++ == '/')
 			slash--;
 	if (!*tail)
 		return 0;
 	if (wildmatch(match_ref_pattern, tail, 0))
 		return 0;
-	if (starts_with(refname, "refs/heads/"))
-		return append_head_ref(refname, NULL, oid, flag, cb_data);
-	if (starts_with(refname, "refs/tags/"))
-		return append_tag_ref(refname, oid, flag, cb_data);
-	return append_ref(refname, oid, 0);
+	if (starts_with(ref->name, "refs/heads/"))
+		return append_head_ref(ref, cb_data);
+	if (starts_with(ref->name, "refs/tags/"))
+		return append_tag_ref(ref->name, ref->oid, ref->flags, cb_data);
+	return append_ref(ref->name, ref->oid, 0);
 }
 
 static void snarf_refs(int head, int remotes)
@@ -642,7 +646,8 @@ int cmd_show_branch(int ac,
 {
 	struct commit *rev[MAX_REVS], *commit;
 	char *reflog_msg[MAX_REVS] = {0};
-	struct commit_list *list = NULL, *seen = NULL;
+	struct commit_list *seen = NULL;
+	struct prio_queue queue = { compare_commits_by_commit_date };
 	unsigned int rev_mask[MAX_REVS];
 	int num_rev, i, extra = 0;
 	int all_heads = 0, all_remotes = 0;
@@ -710,7 +715,7 @@ int cmd_show_branch(int ac,
 
 	init_commit_name_slab(&name_slab);
 
-	git_config(git_show_branch_config, NULL);
+	repo_config(the_repository, git_show_branch_config, NULL);
 
 	/* If nothing is specified, try the default first */
 	if (ac == 1 && default_args.nr) {
@@ -886,14 +891,14 @@ int cmd_show_branch(int ac,
 		 */
 		commit->object.flags |= flag;
 		if (commit->object.flags == flag)
-			commit_list_insert_by_date(commit, &list);
+			prio_queue_put(&queue, commit);
 		rev[num_rev] = commit;
 	}
 	for (i = 0; i < num_rev; i++)
 		rev_mask[i] = rev[i]->object.flags;
 
 	if (0 <= extra)
-		join_revs(&list, &seen, num_rev, extra);
+		join_revs(&queue, &seen, num_rev, extra);
 
 	commit_list_sort_by_date(&seen);
 
@@ -1003,8 +1008,8 @@ int cmd_show_branch(int ac,
 out:
 	for (size_t i = 0; i < ARRAY_SIZE(reflog_msg); i++)
 		free(reflog_msg[i]);
-	free_commit_list(seen);
-	free_commit_list(list);
+	commit_list_free(seen);
+	clear_prio_queue(&queue);
 	free(args_copy);
 	free(head);
 	return ret;

@@ -3,6 +3,7 @@
 #include "../../git-compat-util.h"
 #include "../../json-writer.h"
 #include "../../repository.h"
+#include "../../strvec.h"
 #include "../../trace2.h"
 #include "lazyload.h"
 #include <psapi.h>
@@ -32,12 +33,7 @@ static int find_pid(DWORD pid, HANDLE hSnapshot, PROCESSENTRY32 *pe32)
 }
 
 /*
- * Accumulate JSON array of our parent processes:
- *     [
- *         exe-name-parent,
- *         exe-name-grand-parent,
- *         ...
- *     ]
+ * Accumulate array of our parent process names.
  *
  * Note: we only report the filename of the process executable; the
  *       only way to get its full pathname is to use OpenProcess()
@@ -73,7 +69,7 @@ static int find_pid(DWORD pid, HANDLE hSnapshot, PROCESSENTRY32 *pe32)
  * simple and avoid the alloc/realloc overhead.  It is OK if we
  * truncate the search and return a partial answer.
  */
-static void get_processes(struct json_writer *jw, HANDLE hSnapshot)
+static void get_processes(struct strvec *names, HANDLE hSnapshot)
 {
 	PROCESSENTRY32 pe32;
 	DWORD pid;
@@ -82,19 +78,19 @@ static void get_processes(struct json_writer *jw, HANDLE hSnapshot)
 
 	pid = GetCurrentProcessId();
 	while (find_pid(pid, hSnapshot, &pe32)) {
-		/* Only report parents. Omit self from the JSON output. */
+		/* Only report parents. Omit self from the output. */
 		if (nr_pids)
-			jw_array_string(jw, pe32.szExeFile);
+			strvec_push(names, pe32.szExeFile);
 
 		/* Check for cycle in snapshot. (Yes, it happened.) */
 		for (k = 0; k < nr_pids; k++)
 			if (pid == pid_list[k]) {
-				jw_array_string(jw, "(cycle)");
+				strvec_push(names, "(cycle)");
 				return;
 			}
 
 		if (nr_pids == NR_PIDS_LIMIT) {
-			jw_array_string(jw, "(truncated)");
+			strvec_push(names, "(truncated)");
 			return;
 		}
 
@@ -105,24 +101,14 @@ static void get_processes(struct json_writer *jw, HANDLE hSnapshot)
 }
 
 /*
- * Emit JSON data for the current and parent processes.  Individual
- * trace2 targets can decide how to actually print it.
+ * Collect the list of parent process names.
  */
-static void get_ancestry(void)
+static void get_ancestry(struct strvec *names)
 {
 	HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 
 	if (hSnapshot != INVALID_HANDLE_VALUE) {
-		struct json_writer jw = JSON_WRITER_INIT;
-
-		jw_array_begin(&jw, 0);
-		get_processes(&jw, hSnapshot);
-		jw_end(&jw);
-
-		trace2_data_json("process", the_repository, "windows/ancestry",
-				 &jw);
-
-		jw_release(&jw);
+		get_processes(names, hSnapshot);
 		CloseHandle(hSnapshot);
 	}
 }
@@ -176,13 +162,35 @@ static void get_peak_memory_info(void)
 
 void trace2_collect_process_info(enum trace2_process_info_reason reason)
 {
+	struct strvec names = STRVEC_INIT;
+
 	if (!trace2_is_enabled())
 		return;
 
 	switch (reason) {
 	case TRACE2_PROCESS_INFO_STARTUP:
 		get_is_being_debugged();
-		get_ancestry();
+		get_ancestry(&names);
+		if (names.nr) {
+			/*
+			  Emit the ancestry data as a data_json event to
+			  maintain compatibility for consumers of the older
+			  "windows/ancestry" event.
+			 */
+			struct json_writer jw = JSON_WRITER_INIT;
+			jw_array_begin(&jw, 0);
+			for (size_t i = 0; i < names.nr; i++)
+				jw_array_string(&jw, names.v[i]);
+			jw_end(&jw);
+			trace2_data_json("process", the_repository,
+					 "windows/ancestry", &jw);
+			jw_release(&jw);
+
+			/* Emit the ancestry data with the new event. */
+			trace2_cmd_ancestry(names.v);
+		}
+
+		strvec_clear(&names);
 		return;
 
 	case TRACE2_PROCESS_INFO_EXIT:

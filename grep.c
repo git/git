@@ -1263,12 +1263,12 @@ static void show_line(struct grep_opt *opt,
 		 */
 		show_line_header(opt, name, lno, cno, sign);
 	}
-	if (opt->color || opt->only_matching) {
+	if (want_color(opt->color) || opt->only_matching) {
 		regmatch_t match;
 		enum grep_context ctx = GREP_CONTEXT_BODY;
 		int eflags = 0;
 
-		if (opt->color) {
+		if (want_color(opt->color)) {
 			if (sign == ':')
 				match_color = opt->colors[GREP_COLOR_MATCH_SELECTED];
 			else
@@ -1646,6 +1646,8 @@ static int grep_source_1(struct grep_opt *opt, struct grep_source *gs, int colle
 
 	bol = gs->buf;
 	left = gs->size;
+	if (left && gs->buf[left-1] == '\n')
+		left--;
 	while (left) {
 		const char *eol;
 		int hit;

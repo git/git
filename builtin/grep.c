@@ -9,6 +9,7 @@
 
 #include "builtin.h"
 #include "abspath.h"
+#include "environment.h"
 #include "gettext.h"
 #include "hex.h"
 #include "config.h"
@@ -481,7 +482,7 @@ static int grep_submodule(struct grep_opt *opt,
 	 *	"forget" the sparse-index feature switch. As a result, the index
 	 *	of these submodules are expanded unexpectedly.
 	 *
-	 * 2. "core_apply_sparse_checkout"
+	 * 2. "config_values_private_.apply_sparse_checkout"
 	 *	When running `grep` in the superproject, this setting is
 	 *	populated using the superproject's configs. However, once
 	 *	initialized, this config is globally accessible and is read by
@@ -1035,7 +1036,7 @@ int cmd_grep(int argc,
 	grep_prefix = prefix;
 
 	grep_init(&opt, the_repository);
-	git_config(grep_cmd_config, &opt);
+	repo_config(the_repository, grep_cmd_config, &opt);
 
 	/*
 	 * If there is no -- then the paths must exist in the working
@@ -1058,7 +1059,7 @@ int cmd_grep(int argc,
 
 	if (use_index && !startup_info->have_repository) {
 		int fallback = 0;
-		git_config_get_bool("grep.fallbacktonoindex", &fallback);
+		repo_config_get_bool(the_repository, "grep.fallbacktonoindex", &fallback);
 		if (fallback)
 			use_index = 0;
 		else
@@ -1090,7 +1091,7 @@ int cmd_grep(int argc,
 	if (show_in_pager == default_pager)
 		show_in_pager = git_pager(the_repository, 1);
 	if (show_in_pager) {
-		opt.color = 0;
+		opt.color = GIT_COLOR_NEVER;
 		opt.name_only = 1;
 		opt.null_following_name = 1;
 		opt.output_priv = &path_list;
@@ -1212,8 +1213,16 @@ int cmd_grep(int argc,
 		 */
 		if (recurse_submodules)
 			repo_read_gitmodules(the_repository, 1);
-		if (startup_info->have_repository)
-			(void)get_packed_git(the_repository);
+
+		if (startup_info->have_repository) {
+			struct odb_source *source;
+
+			odb_prepare_alternates(the_repository->objects);
+			for (source = the_repository->objects->sources; source; source = source->next) {
+				struct odb_source_files *files = odb_source_files_downcast(source);
+				packfile_store_prepare(files->packed);
+			}
+		}
 
 		start_threads(&opt);
 	} else {

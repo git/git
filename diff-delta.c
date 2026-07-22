@@ -171,7 +171,7 @@ struct delta_index * create_delta_index(const void *buf, unsigned long bufsize)
 	mem = hash + hsize;
 	entry = mem;
 
-	memset(hash, 0, hsize * sizeof(*hash));
+	MEMZERO_ARRAY(hash, hsize);
 
 	/* allocate an array to count hash entries */
 	hash_count = calloc(hsize, sizeof(*hash_count));

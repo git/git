@@ -7,6 +7,9 @@ test_description='git maintenance builtin'
 GIT_TEST_COMMIT_GRAPH=0
 GIT_TEST_MULTI_PACK_INDEX=0
 
+# Ensure that auto-maintenance detaches as usual.
+sane_unset GIT_TEST_MAINT_AUTO_DETACH
+
 test_lazy_prereq XMLLINT '
 	xmllint --version
 '
@@ -42,14 +45,17 @@ test_expect_success 'help text' '
 	test_grep "usage: git maintenance" err
 '
 
-test_expect_success 'run [--auto|--quiet]' '
+test_expect_success 'run [--auto|--quiet] with gc strategy' '
+	test_config maintenance.strategy gc &&
 	GIT_TRACE2_EVENT="$(pwd)/run-no-auto.txt" \
 		git maintenance run 2>/dev/null &&
 	GIT_TRACE2_EVENT="$(pwd)/run-auto.txt" \
 		git maintenance run --auto 2>/dev/null &&
 	GIT_TRACE2_EVENT="$(pwd)/run-no-quiet.txt" \
 		git maintenance run --no-quiet 2>/dev/null &&
+	git maintenance is-needed &&
 	test_subcommand git gc --quiet --no-detach --skip-foreground-tasks <run-no-auto.txt &&
+	! git maintenance is-needed --auto &&
 	test_subcommand ! git gc --auto --quiet --no-detach --skip-foreground-tasks <run-auto.txt &&
 	test_subcommand git gc --no-quiet --no-detach --skip-foreground-tasks <run-no-quiet.txt
 '
@@ -180,6 +186,11 @@ test_expect_success 'commit-graph auto condition' '
 
 	test_commit first &&
 
+	! git -c maintenance.commit-graph.auto=0 \
+		maintenance is-needed --auto --task=commit-graph &&
+	git -c maintenance.commit-graph.auto=1 \
+		maintenance is-needed --auto --task=commit-graph &&
+
 	GIT_TRACE2_EVENT="$(pwd)/cg-zero-means-no.txt" \
 		git -c maintenance.commit-graph.auto=0 $COMMAND &&
 	GIT_TRACE2_EVENT="$(pwd)/cg-one-satisfied.txt" \
@@ -197,6 +208,31 @@ test_expect_success 'commit-graph auto condition' '
 	test_subcommand ! $COMMIT_GRAPH_WRITE <cg-zero-means-no.txt &&
 	test_subcommand $COMMIT_GRAPH_WRITE <cg-one-satisfied.txt &&
 	test_subcommand $COMMIT_GRAPH_WRITE <cg-two-satisfied.txt
+'
+
+test_expect_success 'commit-graph auto condition with merges' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		git config set maintenance.auto false &&
+		test_commit initial &&
+		git switch --create feature &&
+		test_commit feature-1 &&
+		test_commit feature-2 &&
+		git switch - &&
+		test_commit main-1 &&
+		test_commit main-2 &&
+		git merge feature &&
+
+		# We have 6 commits, none of which are covered by a commit
+		# graph. So this must be the boundary at which we start to
+		# perform maintenance.
+		test_must_fail git -c maintenance.commit-graph.auto=7 \
+			maintenance is-needed --auto --task=commit-graph &&
+		git -c maintenance.commit-graph.auto=6 \
+			maintenance is-needed --auto --task=commit-graph
+	)
 '
 
 test_expect_success 'run --task=bogus' '
@@ -290,16 +326,23 @@ test_expect_success 'maintenance.loose-objects.auto' '
 		git -c maintenance.loose-objects.auto=1 maintenance \
 		run --auto --task=loose-objects 2>/dev/null &&
 	test_subcommand ! git prune-packed --quiet <trace-lo1.txt &&
+
 	printf data-A | git hash-object -t blob --stdin -w &&
+	! git -c maintenance.loose-objects.auto=2 \
+		maintenance is-needed --auto --task=loose-objects &&
 	GIT_TRACE2_EVENT="$(pwd)/trace-loA" \
 		git -c maintenance.loose-objects.auto=2 \
 		maintenance run --auto --task=loose-objects 2>/dev/null &&
 	test_subcommand ! git prune-packed --quiet <trace-loA &&
+
 	printf data-B | git hash-object -t blob --stdin -w &&
+	git -c maintenance.loose-objects.auto=2 \
+		maintenance is-needed --auto --task=loose-objects &&
 	GIT_TRACE2_EVENT="$(pwd)/trace-loB" \
 		git -c maintenance.loose-objects.auto=2 \
 		maintenance run --auto --task=loose-objects 2>/dev/null &&
 	test_subcommand git prune-packed --quiet <trace-loB &&
+
 	GIT_TRACE2_EVENT="$(pwd)/trace-loC" \
 		git -c maintenance.loose-objects.auto=2 \
 		maintenance run --auto --task=loose-objects 2>/dev/null &&
@@ -421,10 +464,13 @@ run_incremental_repack_and_verify () {
 	test_commit A &&
 	git repack -adk &&
 	git multi-pack-index write &&
+	! git -c maintenance.incremental-repack.auto=1 \
+		maintenance is-needed --auto --task=incremental-repack &&
 	GIT_TRACE2_EVENT="$(pwd)/midx-init.txt" git \
 		-c maintenance.incremental-repack.auto=1 \
 		maintenance run --auto --task=incremental-repack 2>/dev/null &&
 	test_subcommand ! git multi-pack-index write --no-progress <midx-init.txt &&
+
 	test_commit B &&
 	git pack-objects --revs .git/objects/pack/pack <<-\EOF &&
 	HEAD
@@ -434,11 +480,14 @@ run_incremental_repack_and_verify () {
 		-c maintenance.incremental-repack.auto=2 \
 		maintenance run --auto --task=incremental-repack 2>/dev/null &&
 	test_subcommand ! git multi-pack-index write --no-progress <trace-A &&
+
 	test_commit C &&
 	git pack-objects --revs .git/objects/pack/pack <<-\EOF &&
 	HEAD
 	^HEAD~1
 	EOF
+	git -c maintenance.incremental-repack.auto=2 \
+		maintenance is-needed --auto --task=incremental-repack &&
 	GIT_TRACE2_EVENT=$(pwd)/trace-B git \
 		-c maintenance.incremental-repack.auto=2 \
 		maintenance run --auto --task=incremental-repack 2>/dev/null &&
@@ -451,6 +500,7 @@ test_expect_success 'maintenance.incremental-repack.auto' '
 	(
 		cd incremental-repack-true &&
 		git config core.multiPackIndex true &&
+		git config maintenance.auto false &&
 		run_incremental_repack_and_verify
 	)
 '
@@ -461,7 +511,179 @@ test_expect_success 'maintenance.incremental-repack.auto (when config is unset)'
 	(
 		cd incremental-repack-unset &&
 		test_unconfig core.multiPackIndex &&
+		git config maintenance.auto false &&
 		run_incremental_repack_and_verify
+	)
+'
+
+run_and_verify_geometric_pack () {
+	EXPECTED_PACKS="$1" &&
+
+	# Verify that we perform a geometric repack.
+	rm -f "trace2.txt" &&
+	GIT_TRACE2_EVENT="$(pwd)/trace2.txt" \
+		git maintenance run --task=geometric-repack 2>/dev/null &&
+	test_subcommand git repack -d -l --geometric=2 \
+		--quiet --write-midx <trace2.txt &&
+
+	# Verify that the number of packfiles matches our expectation.
+	ls -l .git/objects/pack/*.pack >packfiles &&
+	test_line_count = "$EXPECTED_PACKS" packfiles &&
+
+	# And verify that there are no loose objects anymore.
+	git count-objects -v >count &&
+	test_grep '^count: 0$' count
+}
+
+test_expect_success 'geometric repacking task' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		git config set maintenance.auto false &&
+		test_commit initial &&
+
+		# The initial repack causes an all-into-one repack.
+		GIT_TRACE2_EVENT="$(pwd)/initial-repack.txt" \
+			git maintenance run --task=geometric-repack 2>/dev/null &&
+		test_subcommand git repack -d -l --cruft --cruft-expiration=2.weeks.ago \
+			--quiet --write-midx <initial-repack.txt &&
+
+		# Repacking should now cause a no-op geometric repack because
+		# no packfiles need to be combined.
+		ls -l .git/objects/pack/*.pack >before &&
+		run_and_verify_geometric_pack 1 &&
+		ls -l .git/objects/pack/*.pack >after &&
+		test_cmp before after &&
+
+		# This incremental change creates a new packfile that only
+		# soaks up loose objects. The packfiles are not getting merged
+		# at this point.
+		test_commit loose &&
+		run_and_verify_geometric_pack 2 &&
+
+		# Both packfiles have 3 objects, so the next run would cause us
+		# to merge all packfiles together. This should be turned into
+		# an all-into-one-repack.
+		GIT_TRACE2_EVENT="$(pwd)/all-into-one-repack.txt" \
+			git maintenance run --task=geometric-repack 2>/dev/null &&
+		test_subcommand git repack -d -l --cruft --cruft-expiration=2.weeks.ago \
+			--quiet --write-midx <all-into-one-repack.txt &&
+
+		# The geometric repack soaks up unreachable objects.
+		echo blob-1 | git hash-object -w --stdin -t blob &&
+		run_and_verify_geometric_pack 2 &&
+
+		# A second unreachable object should be written into another packfile.
+		echo blob-2 | git hash-object -w --stdin -t blob &&
+		run_and_verify_geometric_pack 3 &&
+
+		# And these two small packs should now be merged via the
+		# geometric repack. The large packfile should remain intact.
+		run_and_verify_geometric_pack 2 &&
+
+		# If we now add two more objects and repack twice we should
+		# then see another all-into-one repack. This time around
+		# though, as we have unreachable objects, we should also see a
+		# cruft pack.
+		echo blob-3 | git hash-object -w --stdin -t blob &&
+		echo blob-4 | git hash-object -w --stdin -t blob &&
+		run_and_verify_geometric_pack 3 &&
+		GIT_TRACE2_EVENT="$(pwd)/cruft-repack.txt" \
+			git maintenance run --task=geometric-repack 2>/dev/null &&
+		test_subcommand git repack -d -l --cruft --cruft-expiration=2.weeks.ago \
+			--quiet --write-midx <cruft-repack.txt &&
+		ls .git/objects/pack/*.pack >packs &&
+		test_line_count = 2 packs &&
+		ls .git/objects/pack/*.mtimes >cruft &&
+		test_line_count = 1 cruft
+	)
+'
+
+test_geometric_repack_needed () {
+	NEEDED="$1"
+	GEOMETRIC_CONFIG="$2" &&
+	rm -f trace2.txt &&
+	GIT_TRACE2_EVENT="$(pwd)/trace2.txt" \
+		git ${GEOMETRIC_CONFIG:+-c maintenance.geometric-repack.$GEOMETRIC_CONFIG} \
+		maintenance run --auto --task=geometric-repack 2>/dev/null &&
+	case "$NEEDED" in
+	true)
+		test_grep "\[\"git\",\"repack\"," trace2.txt;;
+	false)
+		! test_grep "\[\"git\",\"repack\"," trace2.txt;;
+	*)
+		BUG "invalid parameter: $NEEDED";;
+	esac
+}
+
+test_expect_success 'geometric repacking with --auto' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		git config set maintenance.auto false &&
+
+		# An empty repository does not need repacking, except when
+		# explicitly told to do it.
+		test_geometric_repack_needed false &&
+		test_geometric_repack_needed false auto=0 &&
+		test_geometric_repack_needed false auto=1 &&
+		test_geometric_repack_needed true auto=-1 &&
+
+		test_oid_init &&
+
+		# Loose objects cause a repack when crossing the limit. Note
+		# that the number of objects gets extrapolated by having a look
+		# at the "objects/17/" shard.
+		test_commit "$(test_oid blob17_1)" &&
+		test_geometric_repack_needed false &&
+		test_commit "$(test_oid blob17_2)" &&
+		test_geometric_repack_needed false auto=257 &&
+		test_geometric_repack_needed true auto=256 &&
+
+		# Force another repack.
+		test_commit first &&
+		test_commit second &&
+		test_geometric_repack_needed true auto=-1 &&
+
+		# We now have two packfiles that would be merged together. As
+		# such, the repack should always happen unless the user has
+		# disabled the auto task.
+		test_geometric_repack_needed false auto=0 &&
+		test_geometric_repack_needed true auto=9000
+	)
+'
+
+test_expect_success 'geometric repacking honors configured split factor' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		git config set maintenance.auto false &&
+
+		# Create three different packs with 9, 2 and 1 object, respectively.
+		# This is done so that only a subset of packs would be merged
+		# together so that we can verify that `git repack` receives the
+		# correct geometric factor.
+		for i in $(test_seq 9)
+		do
+			echo first-$i | git hash-object -w --stdin -t blob || return 1
+		done &&
+		git repack --geometric=2 -d &&
+
+		for i in $(test_seq 2)
+		do
+			echo second-$i | git hash-object -w --stdin -t blob || return 1
+		done &&
+		git repack --geometric=2 -d &&
+
+		echo third | git hash-object -w --stdin -t blob &&
+		git repack --geometric=2 -d &&
+
+		test_geometric_repack_needed false splitFactor=2 &&
+		test_geometric_repack_needed true splitFactor=3 &&
+		test_subcommand git repack -d -l --geometric=3 --quiet --write-midx <trace2.txt
 	)
 '
 
@@ -485,9 +707,15 @@ test_expect_success 'reflog-expire task --auto only packs when exceeding limits'
 	git reflog expire --all --expire=now &&
 	test_commit reflog-one &&
 	test_commit reflog-two &&
+
+	! git -c maintenance.reflog-expire.auto=3 \
+		maintenance is-needed --auto --task=reflog-expire &&
 	GIT_TRACE2_EVENT="$(pwd)/reflog-expire-auto.txt" \
 		git -c maintenance.reflog-expire.auto=3 maintenance run --auto --task=reflog-expire &&
 	test_subcommand ! git reflog expire --all <reflog-expire-auto.txt &&
+
+	git -c maintenance.reflog-expire.auto=2 \
+		maintenance is-needed --auto --task=reflog-expire &&
 	GIT_TRACE2_EVENT="$(pwd)/reflog-expire-auto.txt" \
 		git -c maintenance.reflog-expire.auto=2 maintenance run --auto --task=reflog-expire &&
 	test_subcommand git reflog expire --all <reflog-expire-auto.txt
@@ -514,6 +742,7 @@ test_expect_success 'worktree-prune task --auto only prunes with prunable worktr
 	test_expect_worktree_prune ! git maintenance run --auto --task=worktree-prune &&
 	mkdir .git/worktrees &&
 	: >.git/worktrees/abc &&
+	git maintenance is-needed --auto --task=worktree-prune &&
 	test_expect_worktree_prune git maintenance run --auto --task=worktree-prune
 '
 
@@ -530,22 +759,7 @@ test_expect_success 'worktree-prune task with --auto honors maintenance.worktree
 	test_expect_worktree_prune ! git -c maintenance.worktree-prune.auto=0 maintenance run --auto --task=worktree-prune &&
 	# A positive value should require at least this many prunable worktrees.
 	test_expect_worktree_prune ! git -c maintenance.worktree-prune.auto=4 maintenance run --auto --task=worktree-prune &&
-	test_expect_worktree_prune git -c maintenance.worktree-prune.auto=3 maintenance run --auto --task=worktree-prune
-'
-
-test_expect_success 'worktree-prune task with --auto honors maintenance.worktree-prune.auto' '
-	# A negative value should always prune.
-	test_expect_worktree_prune git -c maintenance.worktree-prune.auto=-1 maintenance run --auto --task=worktree-prune &&
-
-	mkdir .git/worktrees &&
-	: >.git/worktrees/first &&
-	: >.git/worktrees/second &&
-	: >.git/worktrees/third &&
-
-	# Zero should never prune.
-	test_expect_worktree_prune ! git -c maintenance.worktree-prune.auto=0 maintenance run --auto --task=worktree-prune &&
-	# A positive value should require at least this many prunable worktrees.
-	test_expect_worktree_prune ! git -c maintenance.worktree-prune.auto=4 maintenance run --auto --task=worktree-prune &&
+	git -c maintenance.worktree-prune.auto=3 maintenance is-needed --auto --task=worktree-prune &&
 	test_expect_worktree_prune git -c maintenance.worktree-prune.auto=3 maintenance run --auto --task=worktree-prune
 '
 
@@ -554,11 +768,13 @@ test_expect_success 'worktree-prune task honors gc.worktreePruneExpire' '
 	rm -rf worktree &&
 
 	rm -f worktree-prune.txt &&
+	! git -c gc.worktreePruneExpire=1.week.ago maintenance is-needed --auto --task=worktree-prune &&
 	GIT_TRACE2_EVENT="$(pwd)/worktree-prune.txt" git -c gc.worktreePruneExpire=1.week.ago maintenance run --auto --task=worktree-prune &&
 	test_subcommand ! git worktree prune --expire 1.week.ago <worktree-prune.txt &&
 	test_path_is_dir .git/worktrees/worktree &&
 
 	rm -f worktree-prune.txt &&
+	git -c gc.worktreePruneExpire=now maintenance is-needed --auto --task=worktree-prune &&
 	GIT_TRACE2_EVENT="$(pwd)/worktree-prune.txt" git -c gc.worktreePruneExpire=now maintenance run --auto --task=worktree-prune &&
 	test_subcommand git worktree prune --expire now <worktree-prune.txt &&
 	test_path_is_missing .git/worktrees/worktree
@@ -583,10 +799,13 @@ test_expect_success 'rerere-gc task without --auto always collects garbage' '
 
 test_expect_success 'rerere-gc task with --auto only prunes with prunable entries' '
 	test_when_finished "rm -rf .git/rr-cache" &&
+	! git maintenance is-needed --auto --task=rerere-gc &&
 	test_expect_rerere_gc ! git maintenance run --auto --task=rerere-gc &&
 	mkdir .git/rr-cache &&
+	! git maintenance is-needed --auto --task=rerere-gc &&
 	test_expect_rerere_gc ! git maintenance run --auto --task=rerere-gc &&
 	: >.git/rr-cache/entry &&
+	git maintenance is-needed --auto --task=rerere-gc &&
 	test_expect_rerere_gc git maintenance run --auto --task=rerere-gc
 '
 
@@ -594,17 +813,22 @@ test_expect_success 'rerere-gc task with --auto honors maintenance.rerere-gc.aut
 	test_when_finished "rm -rf .git/rr-cache" &&
 
 	# A negative value should always prune.
+	git -c maintenance.rerere-gc.auto=-1 maintenance is-needed --auto --task=rerere-gc &&
 	test_expect_rerere_gc git -c maintenance.rerere-gc.auto=-1 maintenance run --auto --task=rerere-gc &&
 
 	# A positive value prunes when there is at least one entry.
+	! git -c maintenance.rerere-gc.auto=9000 maintenance is-needed --auto --task=rerere-gc &&
 	test_expect_rerere_gc ! git -c maintenance.rerere-gc.auto=9000 maintenance run --auto --task=rerere-gc &&
 	mkdir .git/rr-cache &&
+	! git -c maintenance.rerere-gc.auto=9000 maintenance is-needed --auto --task=rerere-gc &&
 	test_expect_rerere_gc ! git -c maintenance.rerere-gc.auto=9000 maintenance run --auto --task=rerere-gc &&
 	: >.git/rr-cache/entry-1 &&
+	git -c maintenance.rerere-gc.auto=9000 maintenance is-needed --auto --task=rerere-gc &&
 	test_expect_rerere_gc git -c maintenance.rerere-gc.auto=9000 maintenance run --auto --task=rerere-gc &&
 
 	# Zero should never prune.
 	: >.git/rr-cache/entry-1 &&
+	! git -c maintenance.rerere-gc.auto=0 maintenance is-needed --auto --task=rerere-gc &&
 	test_expect_rerere_gc ! git -c maintenance.rerere-gc.auto=0 maintenance run --auto --task=rerere-gc
 '
 
@@ -714,6 +938,76 @@ test_expect_success 'maintenance.strategy inheritance' '
 	test_subcommand git prune-packed --quiet <modified-daily.txt &&
 	test_subcommand ! git multi-pack-index write --no-progress \
 		<modified-daily.txt
+'
+
+test_strategy () {
+	STRATEGY="$1"
+	shift
+
+	cat >expect &&
+	rm -f trace2.txt &&
+	GIT_TRACE2_EVENT="$(pwd)/trace2.txt" \
+		git -c maintenance.strategy=$STRATEGY maintenance run --quiet "$@" &&
+	sed -n 's/{"event":"child_start","sid":"[^/"]*",.*,"argv":\["\(.*\)\"]}/\1/p' <trace2.txt |
+		sed 's/","/ /g'  >actual
+	test_cmp expect actual
+}
+
+test_expect_success 'maintenance.strategy is respected' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		test_commit initial &&
+
+		test_must_fail git -c maintenance.strategy=unknown maintenance run 2>err &&
+		test_grep "unknown maintenance strategy: .unknown." err &&
+
+		test_strategy incremental <<-\EOF &&
+		git pack-refs --all --prune
+		git reflog expire --all
+		git gc --quiet --no-detach --skip-foreground-tasks
+		EOF
+
+		test_strategy incremental --schedule=weekly <<-\EOF &&
+		git pack-refs --all --prune
+		git prune-packed --quiet
+		git multi-pack-index write --no-progress
+		git multi-pack-index expire --no-progress
+		git multi-pack-index repack --no-progress --batch-size=1
+		git commit-graph write --split --reachable --no-progress
+		EOF
+
+		test_strategy gc <<-\EOF &&
+		git pack-refs --all --prune
+		git reflog expire --all
+		git gc --quiet --no-detach --skip-foreground-tasks
+		EOF
+
+		test_strategy gc --schedule=weekly <<-\EOF &&
+		git pack-refs --all --prune
+		git reflog expire --all
+		git gc --quiet --no-detach --skip-foreground-tasks
+		EOF
+
+		test_strategy geometric <<-\EOF &&
+		git pack-refs --all --prune
+		git reflog expire --all
+		git repack -d -l --geometric=2 --quiet --write-midx
+		git commit-graph write --split --reachable --no-progress
+		git worktree prune --expire 3.months.ago
+		git rerere gc
+		EOF
+
+		test_strategy geometric --schedule=weekly <<-\EOF
+		git pack-refs --all --prune
+		git reflog expire --all
+		git repack -d -l --geometric=2 --quiet --write-midx
+		git commit-graph write --split --reachable --no-progress
+		git worktree prune --expire 3.months.ago
+		git rerere gc
+		EOF
+	)
 '
 
 test_expect_success 'register and unregister' '
@@ -1091,6 +1385,11 @@ test_expect_success 'fails when running outside of a repository' '
 	nongit test_must_fail git maintenance start &&
 	nongit test_must_fail git maintenance register &&
 	nongit test_must_fail git maintenance unregister
+'
+
+test_expect_success 'fails when configured to use an invalid strategy' '
+	test_must_fail git -c maintenance.strategy=invalid maintenance run --schedule=hourly 2>err &&
+	test_grep "unknown maintenance strategy: .invalid." err
 '
 
 test_expect_success 'register and unregister bare repo' '

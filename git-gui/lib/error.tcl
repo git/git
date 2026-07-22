@@ -71,13 +71,12 @@ proc ask_popup {msg} {
 }
 
 proc hook_failed_popup {hook msg {is_fatal 1}} {
-	global use_ttk NS
 	set w .hookfail
 	Dialog $w
 	wm withdraw $w
 
-	${NS}::frame $w.m
-	${NS}::label $w.m.l1 -text [mc "%s hook failed:" $hook] \
+	ttk::frame $w.m
+	ttk::label $w.m.l1 -text [mc "%s hook failed:" $hook] \
 		-anchor w \
 		-justify left \
 		-font font_uibold
@@ -89,10 +88,10 @@ proc hook_failed_popup {hook msg {is_fatal 1}} {
 		-width 80 -height 10 \
 		-font font_diff \
 		-yscrollcommand [list $w.m.sby set]
-	${NS}::scrollbar $w.m.sby -command [list $w.m.t yview]
+	ttk::scrollbar $w.m.sby -command [list $w.m.t yview]
 	pack $w.m.l1 -side top -fill x
 	if {$is_fatal} {
-		${NS}::label $w.m.l2 \
+		ttk::label $w.m.l2 \
 			-text [mc "You must correct the above errors before committing."] \
 			-anchor w \
 			-justify left \
@@ -106,7 +105,7 @@ proc hook_failed_popup {hook msg {is_fatal 1}} {
 	$w.m.t insert 1.0 $msg
 	$w.m.t conf -state disabled
 
-	${NS}::button $w.ok -text OK \
+	ttk::button $w.ok -text OK \
 		-width 15 \
 		-command "destroy $w"
 	pack $w.ok -side bottom -anchor e -pady 10 -padx 10

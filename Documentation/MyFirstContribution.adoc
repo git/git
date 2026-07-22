@@ -52,6 +52,15 @@ respond to you. It's better to ask your questions in the channel so that you
 can be answered if you disconnect and so that others can learn from the
 conversation.
 
+==== https://discord.gg/GRFVkzgxRd[#discord] on Discord
+This is an unofficial Git Discord server for everyone, from people just
+starting out with Git to those who develop it. It's a great place to ask
+questions, share tips, and connect with the broader Git community in real time.
+
+The server has channels for general discussions and specific channels for those
+who use Git and those who develop it. The server's search functionality also
+allows you to find previous conversations and answers to common questions.
+
 [[getting-started]]
 == Getting Started
 
@@ -322,7 +331,8 @@ on the command line, including the name of our command. (If `prefix` is empty
 for you, try `cd Documentation/ && ../bin-wrappers/git psuh`). That's not so
 helpful. So what other context can we get?
 
-Add a line to `#include "config.h"` and `#include "repository.h"`.
+Add a line to `#include "config.h"`, `#include "repository.h"` and
+`#include "environment.h"`.
 Then, add the following bits to the function body:
 function body:
 
@@ -342,7 +352,7 @@ function body:
 apply standard precedence rules. `repo_config_get_string_tmp()` will look up
 a specific key ("user.name") and give you the value. There are a number of
 single-key lookup functions like this one; you can see them all (and more info
-about how to use `repo_config()`) in `Documentation/technical/api-config.adoc`.
+about how to use `repo_config()`) in `config.h`.
 
 You should see that the name printed matches the one you see when you run:
 
@@ -420,6 +430,7 @@ Add the following includes:
 ----
 #include "commit.h"
 #include "pretty.h"
+#include "strbuf.h"
 ----
 
 Then, add the following lines within your implementation of `cmd_psuh()` near
@@ -494,8 +505,8 @@ git-psuh - Delight users' typo with a shy horse
 
 SYNOPSIS
 --------
-[verse]
-'git-psuh [<arg>...]'
+[synopsis]
+git psuh [<arg>...]
 
 DESCRIPTION
 -----------
@@ -717,9 +728,10 @@ $ prove -j$(nproc) --shuffle t[0-9]*.sh
 ----
 
 NOTE: You can also do this with `make test` or use any testing harness which can
-speak TAP. `prove` can run concurrently. `shuffle` randomizes the order the
-tests are run in, which makes them resilient against unwanted inter-test
-dependencies. `prove` also makes the output nicer.
+speak TAP. `prove` can run concurrently. `-j$(nproc)` runs tests using all
+available CPUs in parallel, but the job count can be adjusted as needed.
+`shuffle` randomizes the order the tests are run in, which makes them resilient
+against unwanted inter-test dependencies. `prove` also makes the output nicer.
 
 Go ahead and commit this change, as well.
 
@@ -908,10 +920,13 @@ Now you should be able to go and check out your newly created branch on GitHub.
 === Sending a PR to GitGitGadget
 
 In order to have your code tested and formatted for review, you need to start by
-opening a Pull Request against `gitgitgadget/git`. Head to
-https://github.com/gitgitgadget/git and open a PR either with the "New pull
-request" button or the convenient "Compare & pull request" button that may
-appear with the name of your newly pushed branch.
+opening a Pull Request against either `gitgitgadget/git` or `git/git`. Head to
+https://github.com/gitgitgadget/git or https://github.com/git/git and open a PR
+either with the "New pull request" button or the convenient "Compare & pull
+request" button that may appear with the name of your newly pushed branch.
+
+The differences between using `gitgitgadget/git` and `git/git` as your base can
+be found [here](https://gitgitgadget.github.io/#should-i-use-gitgitgadget-on-gitgitgadgets-git-fork-or-on-gits-github-mirror)
 
 Review the PR's title and description, as they're used by GitGitGadget
 respectively as the subject and body of the cover letter for your change. Refer
@@ -1140,6 +1155,11 @@ automatically pass this list of emails to `send-email`.
 NOTE: When you are sending a real patch, it will go to git@vger.kernel.org - but
 please don't send your patchset from the tutorial to the real mailing list! For
 now, you can send it to yourself, to make sure you understand how it will look.
+
+NOTE: After sending your patches, you can confirm that they reached the mailing
+list by visiting https://lore.kernel.org/git/. Use the search bar to find your
+name or the subject of your patch. If it appears, your email was successfully
+delivered.
 
 After you run the command above, you will be presented with an interactive
 prompt for each patch that's about to go out. This gives you one last chance to

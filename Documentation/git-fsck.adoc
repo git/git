@@ -31,7 +31,8 @@ index file, all SHA-1 references in the `refs` namespace, and all reflogs
 	Print out objects that exist but that aren't reachable from any
 	of the reference nodes.
 
---[no-]dangling::
+--dangling::
+--no-dangling::
 	Print objects that exist but that are never 'directly' used (default).
 	`--no-dangling` can be used to omit this information from the output.
 
@@ -97,14 +98,16 @@ care about this output and want to speed it up further.
 	compatible with linkgit:git-rev-parse[1], e.g.
 	`HEAD@{1234567890}~25^2:src/`.
 
---[no-]progress::
+--progress::
+--no-progress::
 	Progress status is reported on the standard error stream by
 	default when it is attached to a terminal, unless
 	--no-progress or --verbose is specified. --progress forces
 	progress status even if the standard error stream is not
 	directed to a terminal.
 
---[no-]references::
+--references::
+--no-references::
 	Control whether to check the references database consistency
 	via 'git refs verify'. See linkgit:git-refs[1] for details.
 	The default is to check the references database.

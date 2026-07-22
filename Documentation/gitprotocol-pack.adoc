@@ -47,7 +47,9 @@ process defined in this protocol is terminated.
 Transports
 ----------
 There are three transports over which the packfile protocol is
-initiated.  The Git transport is a simple, unauthenticated server that
+initiated.
+
+The Git transport is a simple, unauthenticated server that
 takes the command (almost always 'upload-pack', though Git
 servers can be configured to be globally writable, in which 'receive-
 pack' initiation is also allowed) with which the client wishes to
@@ -65,7 +67,7 @@ Extra Parameters
 ----------------
 
 The protocol provides a mechanism in which clients can send additional
-information in its first message to the server. These are called "Extra
+information in their first message to the server. These are called "Extra
 Parameters", and are supported by the Git, SSH, and HTTP protocols.
 
 Each Extra Parameter takes the form of `<key>=<value>` or `<key>`.
@@ -115,7 +117,7 @@ process on the server side over the Git protocol is this:
 SSH Transport
 -------------
 
-Initiating the upload-pack or receive-pack processes over SSH is
+Initiating the 'upload-pack' or 'receive-pack' processes over SSH is
 executing the binary on the server via SSH remote execution.
 It is basically equivalent to running this:
 
@@ -129,7 +131,7 @@ two commands, or even just one of them.
 
 In an ssh:// format URI, it's absolute in the URI, so the '/' after
 the host name (or port number) is sent as an argument, which is then
-read by the remote git-upload-pack exactly as is, so it's effectively
+read by the remote 'git-upload-pack' exactly as is, so it's effectively
 an absolute path in the remote filesystem.
 
        git clone ssh://user@example.com/project.git
@@ -161,7 +163,7 @@ supports passing environment variables as an argument.
 
 A few things to remember here:
 
-- The "command name" is spelled with dash (e.g. git-upload-pack), but
+- The "command name" is spelled with dash (e.g. 'git-upload-pack'), but
   this can be overridden by the client;
 
 - The repository path is always quoted with single quotes.
@@ -277,7 +279,7 @@ out of what the server said it could do with the first 'want' line.
   filter-request    =  PKT-LINE("filter" SP filter-spec)
 ----
 
-Clients MUST send all the obj-ids it wants from the reference
+Clients MUST send all the obj-ids they want from the reference
 discovery phase as 'want' lines. Clients MUST send at least one
 'want' command in the request body. Clients MUST NOT mention an
 obj-id in a 'want' command which did not appear in the response
@@ -375,10 +377,10 @@ In multi_ack_detailed mode:
 
 Without either multi_ack or multi_ack_detailed:
 
- * upload-pack sends "ACK obj-id" on the first common object it finds.
+ * 'upload-pack' sends "ACK obj-id" on the first common object it finds.
    After that it says nothing until the client gives it a "done".
 
- * upload-pack sends "NAK" on a flush-pkt if no common object
+ * 'upload-pack' sends "NAK" on a flush-pkt if no common object
    has been found yet.  If one has been found, and thus an ACK
    was already sent, it's silent on the flush-pkt.
 

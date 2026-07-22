@@ -34,6 +34,8 @@
 #include "commit-graph.h"
 #include "sigchain.h"
 #include "mergesort.h"
+#include "prio-queue.h"
+#include "promisor-remote.h"
 
 static int transfer_unpack_limit = -1;
 static int fetch_unpack_limit = -1;
@@ -142,7 +144,8 @@ static struct commit *deref_without_lazy_fetch(const struct object_id *oid,
 	commit = lookup_commit_in_graph(the_repository, oid);
 	if (commit) {
 		if (mark_tags_complete_and_check_obj_db) {
-			if (!odb_has_object(the_repository->objects, oid, 0))
+			if (!odb_has_object(the_repository->objects, oid,
+					    HAS_OBJECT_RECHECK_PACKED))
 				die_in_commit_graph_only(oid);
 		}
 		return commit;
@@ -186,13 +189,9 @@ static int rev_list_insert_ref(struct fetch_negotiator *negotiator,
 	return 0;
 }
 
-static int rev_list_insert_ref_oid(const char *refname UNUSED,
-				   const char *referent UNUSED,
-				   const struct object_id *oid,
-				   int flag UNUSED,
-				   void *cb_data)
+static int rev_list_insert_ref_oid(const struct reference *ref, void *cb_data)
 {
-	return rev_list_insert_ref(cb_data, oid);
+	return rev_list_insert_ref(cb_data, ref->oid);
 }
 
 enum ack_type {
@@ -294,11 +293,14 @@ static int next_flush(int stateless_rpc, int count)
 static void mark_tips(struct fetch_negotiator *negotiator,
 		      const struct oid_array *negotiation_tips)
 {
+	struct refs_for_each_ref_options opts = {
+		.flags = REFS_FOR_EACH_INCLUDE_BROKEN,
+	};
 	int i;
 
 	if (!negotiation_tips) {
-		refs_for_each_rawref(get_main_ref_store(the_repository),
-				     rev_list_insert_ref_oid, negotiator);
+		refs_for_each_ref_ext(get_main_ref_store(the_repository),
+				      rev_list_insert_ref_oid, negotiator, &opts);
 		return;
 	}
 
@@ -601,7 +603,7 @@ done:
 	return count ? retval : 0;
 }
 
-static struct commit_list *complete;
+static struct prio_queue complete = { compare_commits_by_commit_date };
 
 static int mark_complete(const struct object_id *oid)
 {
@@ -609,26 +611,25 @@ static int mark_complete(const struct object_id *oid)
 
 	if (commit && !(commit->object.flags & COMPLETE)) {
 		commit->object.flags |= COMPLETE;
-		commit_list_insert(commit, &complete);
+		prio_queue_put(&complete, commit);
 	}
 	return 0;
 }
 
-static int mark_complete_oid(const char *refname UNUSED,
-			     const char *referent UNUSED,
-			     const struct object_id *oid,
-			     int flag UNUSED,
-			     void *cb_data UNUSED)
+static int mark_complete_oid(const struct reference *ref, void *cb_data UNUSED)
 {
-	return mark_complete(oid);
+	return mark_complete(ref->oid);
 }
 
 static void mark_recent_complete_commits(struct fetch_pack_args *args,
 					 timestamp_t cutoff)
 {
-	while (complete && cutoff <= complete->item->date) {
+	while (complete.nr) {
+		struct commit *item = prio_queue_peek(&complete);
+		if (item->date < cutoff)
+			break;
 		print_verbose(args, _("Marking %s as complete"),
-			      oid_to_hex(&complete->item->object.oid));
+			      oid_to_hex(&item->object.oid));
 		pop_most_recent_commit(&complete, COMPLETE);
 	}
 }
@@ -763,6 +764,7 @@ static void mark_complete_and_common_ref(struct fetch_negotiator *negotiator,
 	save_commit_buffer = 0;
 
 	trace2_region_enter("fetch-pack", "parse_remote_refs_and_find_cutoff", NULL);
+	enable_fscache(0);
 	for (ref = *refs; ref; ref = ref->next) {
 		struct commit *commit;
 
@@ -787,6 +789,7 @@ static void mark_complete_and_common_ref(struct fetch_negotiator *negotiator,
 		if (!cutoff || cutoff < commit->date)
 			cutoff = commit->date;
 	}
+	disable_fscache();
 	trace2_region_leave("fetch-pack", "parse_remote_refs_and_find_cutoff", NULL);
 
 	/*
@@ -795,10 +798,13 @@ static void mark_complete_and_common_ref(struct fetch_negotiator *negotiator,
 	 */
 	trace2_region_enter("fetch-pack", "mark_complete_local_refs", NULL);
 	if (!args->deepen) {
-		refs_for_each_rawref(get_main_ref_store(the_repository),
-				     mark_complete_oid, NULL);
+		struct refs_for_each_ref_options opts = {
+			.flags = REFS_FOR_EACH_INCLUDE_BROKEN,
+		};
+
+		refs_for_each_ref_ext(get_main_ref_store(the_repository),
+				      mark_complete_oid, NULL, &opts);
 		for_each_cached_alternate(NULL, mark_alternate_complete);
-		commit_list_sort_by_date(&complete);
 		if (cutoff)
 			mark_recent_complete_commits(args, cutoff);
 	}
@@ -1343,7 +1349,7 @@ static void write_fetch_command_and_capabilities(struct strbuf *req_buf,
 			die(_("mismatched algorithms: client %s; server %s"),
 			    the_hash_algo->name, hash_name);
 		packet_buf_write(req_buf, "object-format=%s", the_hash_algo->name);
-	} else if (hash_algo_by_ptr(the_hash_algo) != GIT_HASH_SHA1) {
+	} else if (hash_algo_by_ptr(the_hash_algo) != GIT_HASH_SHA1_LEGACY) {
 		die(_("the server does not support algorithm '%s'"),
 		    the_hash_algo->name);
 	}
@@ -1665,6 +1671,29 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 	struct string_list packfile_uris = STRING_LIST_INIT_DUP;
 	int i;
 	struct strvec index_pack_args = STRVEC_INIT;
+	const char *promisor_remote_config;
+
+	if (server_feature_v2("promisor-remote", &promisor_remote_config))
+		promisor_remote_reply(promisor_remote_config, NULL);
+
+	if (args->filter_options.choice == LOFC_AUTO) {
+		struct strbuf errbuf = STRBUF_INIT;
+		char *constructed_filter = promisor_remote_construct_filter(r);
+
+		list_objects_filter_release(&args->filter_options);
+		/* Disallow 'auto' as a result of the resolution of this 'auto' filter below */
+		args->filter_options.allow_auto_filter = 0;
+
+		if (constructed_filter &&
+		    gently_parse_list_objects_filter(&args->filter_options,
+						     constructed_filter,
+						     &errbuf))
+			die(_("couldn't resolve 'auto' filter '%s': %s"),
+			    constructed_filter, errbuf.buf);
+
+		free(constructed_filter);
+		strbuf_release(&errbuf);
+	}
 
 	negotiator = &negotiator_alloc;
 	if (args->refetch)
@@ -1869,8 +1898,9 @@ int fetch_pack_fsck_config(const char *var, const char *value,
 
 		if (git_config_pathname(&path, var, value))
 			return -1;
-		strbuf_addf(msg_types, "%cskiplist=%s",
-			msg_types->len ? ',' : '=', path);
+		if (path)
+			strbuf_addf(msg_types, "%cskiplist=%s",
+				    msg_types->len ? ',' : '=', path);
 		free(path);
 		return 0;
 	}
@@ -1901,22 +1931,22 @@ static int fetch_pack_config_cb(const char *var, const char *value,
 
 static void fetch_pack_config(void)
 {
-	git_config_get_int("fetch.unpacklimit", &fetch_unpack_limit);
-	git_config_get_int("transfer.unpacklimit", &transfer_unpack_limit);
-	git_config_get_bool("repack.usedeltabaseoffset", &prefer_ofs_delta);
-	git_config_get_bool("fetch.fsckobjects", &fetch_fsck_objects);
-	git_config_get_bool("transfer.fsckobjects", &transfer_fsck_objects);
-	git_config_get_bool("transfer.advertisesid", &advertise_sid);
+	repo_config_get_int(the_repository, "fetch.unpacklimit", &fetch_unpack_limit);
+	repo_config_get_int(the_repository, "transfer.unpacklimit", &transfer_unpack_limit);
+	repo_config_get_bool(the_repository, "repack.usedeltabaseoffset", &prefer_ofs_delta);
+	repo_config_get_bool(the_repository, "fetch.fsckobjects", &fetch_fsck_objects);
+	repo_config_get_bool(the_repository, "transfer.fsckobjects", &transfer_fsck_objects);
+	repo_config_get_bool(the_repository, "transfer.advertisesid", &advertise_sid);
 	if (!uri_protocols.nr) {
 		char *str;
 
-		if (!git_config_get_string("fetch.uriprotocols", &str) && str) {
-			string_list_split(&uri_protocols, str, ',', -1);
+		if (!repo_config_get_string(the_repository, "fetch.uriprotocols", &str) && str) {
+			string_list_split(&uri_protocols, str, ",", -1);
 			free(str);
 		}
 	}
 
-	git_config(fetch_pack_config_cb, NULL);
+	repo_config(the_repository, fetch_pack_config_cb, NULL);
 }
 
 static void fetch_pack_setup(void)
@@ -1979,7 +2009,7 @@ static void update_shallow(struct fetch_pack_args *args,
 		 * remote is shallow, but this is a clone, there are
 		 * no objects in repo to worry about. Accept any
 		 * shallow points that exist in the pack (iow in repo
-		 * after get_pack() and reprepare_packed_git())
+		 * after get_pack() and odb_reprepare())
 		 */
 		struct oid_array extra = OID_ARRAY_INIT;
 		struct object_id *oid = si->shallow->oid;
@@ -2104,7 +2134,7 @@ struct ref *fetch_pack(struct fetch_pack_args *args,
 		ref_cpy = do_fetch_pack(args, fd, ref, sought, nr_sought,
 					&si, pack_lockfiles);
 	}
-	reprepare_packed_git(the_repository);
+	odb_reprepare(the_repository->objects);
 
 	if (!args->cloning && args->deepen) {
 		struct check_connected_options opt = CHECK_CONNECTED_INIT;

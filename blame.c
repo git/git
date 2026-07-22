@@ -1311,7 +1311,7 @@ static void add_bloom_key(struct blame_bloom_data *bd,
 	}
 
 	bd->keys[bd->nr] = xmalloc(sizeof(struct bloom_key));
-	fill_bloom_key(path, strlen(path), bd->keys[bd->nr], bd->settings);
+	bloom_key_fill(bd->keys[bd->nr], path, strlen(path), bd->settings);
 	bd->nr++;
 }
 
@@ -2368,7 +2368,7 @@ static struct commit_list *first_scapegoat(struct rev_info *revs, struct commit 
 		if (revs->first_parent_only &&
 		    commit->parents &&
 		    commit->parents->next) {
-			free_commit_list(commit->parents->next);
+			commit_list_free(commit->parents->next);
 			commit->parents->next = NULL;
 		}
 		return commit->parents;
@@ -2908,9 +2908,6 @@ void setup_blame_bloom_data(struct blame_scoreboard *sb)
 {
 	struct blame_bloom_data *bd;
 	struct bloom_filter_settings *bs;
-
-	if (!sb->repo->objects->commit_graph)
-		return;
 
 	bs = get_bloom_filter_settings(sb->repo);
 	if (!bs)

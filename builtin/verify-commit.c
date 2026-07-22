@@ -7,6 +7,7 @@
  */
 #include "builtin.h"
 #include "config.h"
+#include "environment.h"
 #include "gettext.h"
 #include "object-name.h"
 #include "commit.h"

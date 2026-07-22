@@ -48,6 +48,25 @@ test_expect_success 'submodule deinit works on empty repository' '
 	git submodule deinit --all
 '
 
+test_expect_success 'submodule add with incomplete .gitmodules' '
+	test_when_finished "rm -f expect actual" &&
+	test_when_finished "git config remove-section submodule.one" &&
+	test_when_finished "git rm -f one .gitmodules" &&
+	git init one &&
+	git -C one commit --allow-empty -m one-initial &&
+	git config -f .gitmodules submodule.one.ignore all &&
+
+	git submodule add ./one &&
+
+	for var in ignore path url
+	do
+		git config -f .gitmodules --get "submodule.one.$var" ||
+		return 1
+	done >actual &&
+	test_write_lines all one ./one >expect &&
+	test_cmp expect actual
+'
+
 test_expect_success 'setup - initial commit' '
 	>t &&
 	git add t &&
@@ -405,6 +424,31 @@ test_expect_success 'submodule add in subdirectory with relative path should fai
 		test_must_fail git submodule add ../../ submod3 2>../../output.err
 	) &&
 	test_grep toplevel output.err
+'
+
+test_expect_success 'submodule add of a different algorithm fails' '
+	git init --object-format=sha256 sha256 &&
+	(
+		cd sha256 &&
+		test_commit abc &&
+		git init --object-format=sha1 submodule &&
+		test_commit -C submodule def &&
+		test_must_fail git submodule add "$submodurl" submodule 2>err &&
+		test_grep "cannot add a submodule of a different hash algorithm" err &&
+		git ls-files --stage >entries &&
+		test_grep ! ^160000 entries
+	) &&
+	git init --object-format=sha1 sha1 &&
+	(
+		cd sha1 &&
+		test_commit abc &&
+		git init --object-format=sha256 submodule &&
+		test_commit -C submodule def &&
+		test_must_fail git submodule add "$submodurl" submodule 2>err &&
+		test_grep "cannot add a submodule of a different hash algorithm" err &&
+		git ls-files --stage >entries &&
+		test_grep ! ^160000 entries
+	)
 '
 
 test_expect_success 'setup - add an example entry to .gitmodules' '
@@ -1479,6 +1523,29 @@ test_expect_success '`submodule init` and `init.templateDir`' '
 		git config --unset init.templateDir &&
 		test_grep ! HOOK-RUN err &&
 		test_path_is_missing sub-local/hook.run
+	)
+'
+
+test_expect_success 'submodule add fails when name is reused' '
+	git init test-submodule &&
+	(
+		cd test-submodule &&
+		git commit --allow-empty -m init &&
+
+		git init ../child-origin &&
+		git -C ../child-origin commit --allow-empty -m init &&
+
+		git submodule add ../child-origin child &&
+		git commit -m "Add submodule child" &&
+
+		git mv child child_old &&
+		git commit -m "Move child to child_old" &&
+
+		# Now adding a *new* repo at the old name must fail
+		git init ../child2-origin &&
+		git -C ../child2-origin commit --allow-empty -m init &&
+		test_must_fail git submodule add ../child2-origin child 2>err &&
+		test_grep "already used for" err
 	)
 '
 

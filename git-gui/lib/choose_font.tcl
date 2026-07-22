@@ -17,7 +17,6 @@ variable all_families [list]  ; # All fonts known to Tk
 
 constructor pick {path title a_family a_size} {
 	variable all_families
-	global use_ttk NS
 
 	set v_family $a_family
 	set v_size $a_size
@@ -33,25 +32,25 @@ constructor pick {path title a_family a_size} {
 	wm title $top "[appname] ([reponame]): $title"
 	wm geometry $top "+[winfo rootx $path]+[winfo rooty $path]"
 
-	${NS}::label $w.header -text $title -font font_uibold -anchor center
+	ttk::label $w.header -text $title -font font_uibold -anchor center
 	pack $w.header -side top -fill x
 
-	${NS}::frame $w.buttons
-	${NS}::button $w.buttons.select \
+	ttk::frame $w.buttons
+	ttk::button $w.buttons.select \
 		-text [mc Select] \
 		-default active \
 		-command [cb _select]
-	${NS}::button $w.buttons.cancel \
+	ttk::button $w.buttons.cancel \
 		-text [mc Cancel] \
 		-command [list destroy $w]
 	pack $w.buttons.select -side right
 	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
-	${NS}::frame $w.inner
+	ttk::frame $w.inner
 
-	${NS}::frame $w.inner.family
-	${NS}::label $w.inner.family.l \
+	ttk::frame $w.inner.family
+	ttk::label $w.inner.family.l \
 		-text [mc "Font Family"] \
 		-anchor w
 	set w_family $w.inner.family.v
@@ -66,13 +65,13 @@ constructor pick {path title a_family a_size} {
 		-height 10 \
 		-yscrollcommand [list $w.inner.family.sby set]
 	rmsel_tag $w_family
-	${NS}::scrollbar $w.inner.family.sby -command [list $w_family yview]
+	ttk::scrollbar $w.inner.family.sby -command [list $w_family yview]
 	pack $w.inner.family.l -side top -fill x
 	pack $w.inner.family.sby -side right -fill y
 	pack $w_family -fill both -expand 1
 
-	${NS}::frame $w.inner.size
-	${NS}::label $w.inner.size.l \
+	ttk::frame $w.inner.size
+	ttk::label $w.inner.size.l \
 		-text [mc "Font Size"] \
 		-anchor w
 	tspinbox $w.inner.size.v \
@@ -88,8 +87,8 @@ constructor pick {path title a_family a_size} {
 	grid columnconfigure $w.inner 0 -weight 1
 	pack $w.inner -fill both -expand 1 -padx 5 -pady 5
 
-	${NS}::frame $w.example
-	${NS}::label $w.example.l \
+	ttk::frame $w.example
+	ttk::label $w.example.l \
 		-text [mc "Font Example"] \
 		-anchor w
 	set w_example $w.example.t

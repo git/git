@@ -348,6 +348,7 @@ int cmd__path_utils(int argc, const char **argv)
 	if (argc == 4 && !strcmp(argv[1], "longest_ancestor_length")) {
 		int len;
 		struct string_list ceiling_dirs = STRING_LIST_INIT_DUP;
+		const char path_sep[] = { PATH_SEP, '\0' };
 		char *path = xstrdup(argv[2]);
 
 		/*
@@ -362,7 +363,7 @@ int cmd__path_utils(int argc, const char **argv)
 		 */
 		if (normalize_path_copy(path, path))
 			die("Path \"%s\" could not be normalized", argv[2]);
-		string_list_split(&ceiling_dirs, argv[3], PATH_SEP, -1);
+		string_list_split(&ceiling_dirs, argv[3], path_sep, -1);
 		filter_string_list(&ceiling_dirs, 0,
 				   normalize_ceiling_entry, NULL);
 		len = longest_ancestor_length(path, &ceiling_dirs);
@@ -476,14 +477,20 @@ int cmd__path_utils(int argc, const char **argv)
 
 	if (argc > 5 && !strcmp(argv[1], "slice-tests")) {
 		int res = 0;
-		long offset, stride, i;
+		long slice, slices_total, i;
 		struct string_list list = STRING_LIST_INIT_NODUP;
 		struct stat st;
 
-		offset = strtol(argv[2], NULL, 10);
-		stride = strtol(argv[3], NULL, 10);
-		if (stride < 1)
-			stride = 1;
+		slices_total = strtol(argv[3], NULL, 10);
+		if (slices_total < 1)
+			die("there must be at least one slice, got '%s'",
+			    argv[3]);
+
+		slice = strtol(argv[2], NULL, 10);
+		if (1 > slice || slice > slices_total)
+			die("slice must be in the range 1 <= slice <= %ld, got '%s'",
+			    slices_total, argv[2]);
+
 		for (i = 4; i < argc; i++)
 			if (stat(argv[i], &st))
 				res = error_errno("Cannot stat '%s'", argv[i]);
@@ -491,7 +498,7 @@ int cmd__path_utils(int argc, const char **argv)
 				string_list_append(&list, argv[i])->util =
 					(void *)(intptr_t)st.st_size;
 		QSORT(list.items, list.nr, cmp_by_st_size);
-		for (i = offset; i < list.nr; i+= stride)
+		for (i = slice - 1; i < list.nr; i+= slices_total)
 			printf("%s\n", list.items[i].string);
 
 		return !!res;

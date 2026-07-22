@@ -4,7 +4,6 @@
 
 #include "git-compat-util.h"
 #include "abspath.h"
-#include "environment.h"
 #include "gettext.h"
 #include "repository.h"
 #include "strbuf.h"
@@ -59,7 +58,7 @@ static void strbuf_cleanup_path(struct strbuf *sb)
 
 static int dir_prefix(const char *buf, const char *dir)
 {
-	int len = strlen(dir);
+	size_t len = strlen(dir);
 	return !strncmp(buf, dir, len) &&
 		(is_dir_sep(buf[len]) || buf[len] == '\0');
 }
@@ -486,17 +485,16 @@ const char *mkpath(const char *fmt, ...)
 	return cleanup_path(pathname->buf);
 }
 
-const char *worktree_git_path(struct repository *r,
-			      const struct worktree *wt, const char *fmt, ...)
+const char *worktree_git_path(const struct worktree *wt, const char *fmt, ...)
 {
 	struct strbuf *pathname = get_pathname();
 	va_list args;
 
-	if (wt && wt->repo != r)
-		BUG("worktree not connected to expected repository");
+	if (!wt)
+		BUG("%s() called with NULL worktree", __func__);
 
 	va_start(args, fmt);
-	repo_git_pathv(r, wt, pathname, fmt, args);
+	repo_git_pathv(wt->repo, wt, pathname, fmt, args);
 	va_end(args);
 	return pathname->buf;
 }
@@ -738,122 +736,22 @@ return_null:
 	return NULL;
 }
 
-/*
- * First, one directory to try is determined by the following algorithm.
- *
- * (0) If "strict" is given, the path is used as given and no DWIM is
- *     done. Otherwise:
- * (1) "~/path" to mean path under the running user's home directory;
- * (2) "~user/path" to mean path under named user's home directory;
- * (3) "relative/path" to mean cwd relative directory; or
- * (4) "/absolute/path" to mean absolute directory.
- *
- * Unless "strict" is given, we check "%s/.git", "%s", "%s.git/.git", "%s.git"
- * in this order. We select the first one that is a valid git repository, and
- * chdir() to it. If none match, or we fail to chdir, we return NULL.
- *
- * If all goes well, we return the directory we used to chdir() (but
- * before ~user is expanded), avoiding getcwd() resolving symbolic
- * links.  User relative paths are also returned as they are given,
- * except DWIM suffixing.
- */
-const char *enter_repo(const char *path, unsigned flags)
-{
-	static struct strbuf validated_path = STRBUF_INIT;
-	static struct strbuf used_path = STRBUF_INIT;
-
-	if (!path)
-		return NULL;
-
-	if (!(flags & ENTER_REPO_STRICT)) {
-		static const char *suffix[] = {
-			"/.git", "", ".git/.git", ".git", NULL,
-		};
-		const char *gitfile;
-		int len = strlen(path);
-		int i;
-		while ((1 < len) && (path[len-1] == '/'))
-			len--;
-
-		/*
-		 * We can handle arbitrary-sized buffers, but this remains as a
-		 * sanity check on untrusted input.
-		 */
-		if (PATH_MAX <= len)
-			return NULL;
-
-		strbuf_reset(&used_path);
-		strbuf_reset(&validated_path);
-		strbuf_add(&used_path, path, len);
-		strbuf_add(&validated_path, path, len);
-
-		if (used_path.buf[0] == '~') {
-			char *newpath = interpolate_path(used_path.buf, 0);
-			if (!newpath)
-				return NULL;
-			strbuf_attach(&used_path, newpath, strlen(newpath),
-				      strlen(newpath));
-		}
-		for (i = 0; suffix[i]; i++) {
-			struct stat st;
-			size_t baselen = used_path.len;
-			strbuf_addstr(&used_path, suffix[i]);
-			if (!stat(used_path.buf, &st) &&
-			    (S_ISREG(st.st_mode) ||
-			    (S_ISDIR(st.st_mode) && is_git_directory(used_path.buf)))) {
-				strbuf_addstr(&validated_path, suffix[i]);
-				break;
-			}
-			strbuf_setlen(&used_path, baselen);
-		}
-		if (!suffix[i])
-			return NULL;
-		gitfile = read_gitfile(used_path.buf);
-		if (!(flags & ENTER_REPO_ANY_OWNER_OK))
-			die_upon_dubious_ownership(gitfile, NULL, used_path.buf);
-		if (gitfile) {
-			strbuf_reset(&used_path);
-			strbuf_addstr(&used_path, gitfile);
-		}
-		if (chdir(used_path.buf))
-			return NULL;
-		path = validated_path.buf;
-	}
-	else {
-		const char *gitfile = read_gitfile(path);
-		if (!(flags & ENTER_REPO_ANY_OWNER_OK))
-			die_upon_dubious_ownership(gitfile, NULL, path);
-		if (gitfile)
-			path = gitfile;
-		if (chdir(path))
-			return NULL;
-	}
-
-	if (is_git_directory(".")) {
-		set_git_dir(".", 0);
-		check_repository_format(NULL);
-		return path;
-	}
-
-	return NULL;
-}
-
 int calc_shared_perm(struct repository *repo,
 		     int mode)
 {
 	int tweak;
-
-	if (repo_settings_get_shared_repository(repo) < 0)
-		tweak = -repo_settings_get_shared_repository(repo);
+	int shared_repo = repo_settings_get_shared_repository(repo);
+	if (shared_repo < 0)
+		tweak = -shared_repo;
 	else
-		tweak = repo_settings_get_shared_repository(repo);
+		tweak = shared_repo;
 
 	if (!(mode & S_IWUSR))
 		tweak &= ~0222;
 	if (mode & S_IXUSR)
 		/* Copy read bits to execute bits */
 		tweak |= (tweak & 0444) >> 2;
-	if (repo_settings_get_shared_repository(repo) < 0)
+	if (shared_repo < 0)
 		mode = (mode & ~0777) | tweak;
 	else
 		mode |= tweak;
@@ -1212,6 +1110,14 @@ const char *remove_leading_path(const char *in, const char *prefix)
  * end with a '/', then the callers need to be fixed up accordingly.
  *
  */
+
+static const char *skip_slashes(const char *p)
+{
+	while (is_dir_sep(*p))
+		p++;
+	return p;
+}
+
 int normalize_path_copy_len(char *dst, const char *src, int *prefix_len)
 {
 	char *dst0;
@@ -1229,8 +1135,7 @@ int normalize_path_copy_len(char *dst, const char *src, int *prefix_len)
 	}
 	dst0 = dst;
 
-	while (is_dir_sep(*src))
-		src++;
+	src = skip_slashes(src);
 
 	for (;;) {
 		char c = *src;
@@ -1250,8 +1155,7 @@ int normalize_path_copy_len(char *dst, const char *src, int *prefix_len)
 			} else if (is_dir_sep(src[1])) {
 				/* (2) */
 				src += 2;
-				while (is_dir_sep(*src))
-					src++;
+				src = skip_slashes(src);
 				continue;
 			} else if (src[1] == '.') {
 				if (!src[2]) {
@@ -1261,8 +1165,7 @@ int normalize_path_copy_len(char *dst, const char *src, int *prefix_len)
 				} else if (is_dir_sep(src[2])) {
 					/* (4) */
 					src += 3;
-					while (is_dir_sep(*src))
-						src++;
+					src = skip_slashes(src);
 					goto up_one;
 				}
 			}
@@ -1282,6 +1185,8 @@ int normalize_path_copy_len(char *dst, const char *src, int *prefix_len)
 
 	up_one:
 		/*
+		 * strip the last component
+		 *
 		 * dst0..dst is prefix portion, and dst[-1] is '/';
 		 * go up one level.
 		 */
@@ -1421,6 +1326,45 @@ char *strip_path_suffix(const char *path, const char *suffix)
 	ssize_t offset = stripped_path_suffix_offset(path, suffix);
 
 	return offset == -1 ? NULL : xstrndup(path, offset);
+}
+
+int is_mount_point_via_stat(struct strbuf *path)
+{
+	size_t len = path->len;
+	dev_t current_dev;
+	struct stat st;
+
+	if (!strcmp("/", path->buf))
+		return 1;
+
+	strbuf_addstr(path, "/.");
+	if (lstat(path->buf, &st)) {
+		/*
+		 * If we cannot access the current directory, we cannot say
+		 * that it is a bind mount.
+		 */
+		strbuf_setlen(path, len);
+		return 0;
+	}
+	current_dev = st.st_dev;
+
+	/* Now look at the parent directory */
+	strbuf_addch(path, '.');
+	if (lstat(path->buf, &st)) {
+		/*
+		 * If we cannot access the parent directory, we cannot say
+		 * that it is a bind mount.
+		 */
+		strbuf_setlen(path, len);
+		return 0;
+	}
+	strbuf_setlen(path, len);
+
+	/*
+	 * If the device ID differs between current and parent directory,
+	 * then it is a bind mount.
+	 */
+	return current_dev != st.st_dev;
 }
 
 int daemon_avoid_alias(const char *p)
@@ -1640,6 +1584,7 @@ int looks_like_command_line_option(const char *str)
 char *xdg_config_home_for(const char *subdir, const char *filename)
 {
 	const char *home, *config_home;
+	char *home_config = NULL;
 
 	assert(subdir);
 	assert(filename);
@@ -1648,10 +1593,26 @@ char *xdg_config_home_for(const char *subdir, const char *filename)
 		return mkpathdup("%s/%s/%s", config_home, subdir, filename);
 
 	home = getenv("HOME");
-	if (home)
-		return mkpathdup("%s/.config/%s/%s", home, subdir, filename);
+	if (home && *home)
+		home_config = mkpathdup("%s/.config/%s/%s", home, subdir, filename);
 
-	return NULL;
+	#ifdef WIN32
+	{
+		const char *appdata = getenv("APPDATA");
+		if (appdata && *appdata) {
+			char *appdata_config = mkpathdup("%s/Git/%s", appdata, filename);
+			if (file_exists(appdata_config)) {
+				if (home_config && file_exists(home_config))
+					warning("'%s' was ignored because '%s' exists.", home_config, appdata_config);
+				free(home_config);
+				return appdata_config;
+			}
+			free(appdata_config);
+		}
+	}
+	#endif
+
+	return home_config;
 }
 
 char *xdg_config_home(const char *filename)

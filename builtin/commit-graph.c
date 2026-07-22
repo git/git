@@ -2,6 +2,7 @@
 #include "builtin.h"
 #include "commit.h"
 #include "config.h"
+#include "environment.h"
 #include "gettext.h"
 #include "hex.h"
 #include "parse-options.h"
@@ -101,14 +102,15 @@ static int graph_verify(int argc, const char **argv, const char *prefix,
 	if (opts.progress)
 		flags |= COMMIT_GRAPH_WRITE_PROGRESS;
 
-	source = odb_find_source(the_repository->objects, opts.obj_dir);
+	source = odb_find_source_or_die(the_repository->objects, opts.obj_dir);
 	graph_name = get_commit_graph_filename(source);
 	chain_name = get_commit_graph_chain_filename(source);
 	if (open_commit_graph(graph_name, &fd, &st))
 		opened = OPENED_GRAPH;
 	else if (errno != ENOENT)
 		die_errno(_("Could not open commit-graph '%s'"), graph_name);
-	else if (open_commit_graph_chain(chain_name, &fd, &st))
+	else if (open_commit_graph_chain(chain_name, &fd, &st,
+					 the_repository->hash_algo))
 		opened = OPENED_CHAIN;
 	else if (errno != ENOENT)
 		die_errno(_("could not open commit-graph chain '%s'"), chain_name);
@@ -120,15 +122,15 @@ static int graph_verify(int argc, const char **argv, const char *prefix,
 	if (opened == OPENED_NONE)
 		return 0;
 	else if (opened == OPENED_GRAPH)
-		graph = load_commit_graph_one_fd_st(the_repository, fd, &st, source);
+		graph = load_commit_graph_one_fd_st(source, fd, &st);
 	else
-		graph = load_commit_graph_chain_fd_st(the_repository, fd, &st,
+		graph = load_commit_graph_chain_fd_st(the_repository->objects, fd, &st,
 						      &incomplete_chain);
 
 	if (!graph)
 		return 1;
 
-	ret = verify_commit_graph(the_repository, graph, flags);
+	ret = verify_commit_graph(graph, flags);
 	free_commit_graph(graph);
 
 	if (incomplete_chain) {
@@ -208,6 +210,8 @@ static int git_commit_graph_write_config(const char *var, const char *value,
 {
 	if (!strcmp(var, "commitgraph.maxnewfilters"))
 		write_opts.max_new_filters = git_config_int(var, value, ctx->kvi);
+	else if (!strcmp(var, "commitgraph.changedpaths"))
+		opts.enable_changed_paths = git_config_bool(var, value) ? 1 : -1;
 	/*
 	 * No need to fall-back to 'git_default_config', since this was already
 	 * called in 'cmd_commit_graph()'.
@@ -265,7 +269,7 @@ static int graph_write(int argc, const char **argv, const char *prefix,
 
 	trace2_cmd_mode("write");
 
-	git_config(git_commit_graph_write_config, &opts);
+	repo_config(the_repository, git_commit_graph_write_config, &opts);
 
 	argc = parse_options(argc, argv, prefix,
 			     options,
@@ -289,7 +293,7 @@ static int graph_write(int argc, const char **argv, const char *prefix,
 	    git_env_bool(GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS, 0))
 		flags |= COMMIT_GRAPH_WRITE_BLOOM_FILTERS;
 
-	source = odb_find_source(the_repository->objects, opts.obj_dir);
+	source = odb_find_source_or_die(the_repository->objects, opts.obj_dir);
 
 	if (opts.reachable) {
 		if (write_commit_graph_reachable(source, flags, &write_opts))
@@ -347,7 +351,7 @@ int cmd_commit_graph(int argc,
 	};
 	struct option *options = parse_options_concat(builtin_commit_graph_options, common_opts);
 
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 
 	disable_replace_refs();
 	save_commit_buffer = 0;

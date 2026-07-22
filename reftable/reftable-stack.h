@@ -68,12 +68,15 @@ int reftable_addition_commit(struct reftable_addition *add);
  * transaction. Releases the lock if held. */
 void reftable_addition_destroy(struct reftable_addition *add);
 
-/* add a new table to the stack. The write_table function must call
- * reftable_writer_set_limits, add refs and return an error value. */
+/*
+ * Add a new table to the stack. The write_table function must call
+ * reftable_writer_set_limits, add refs and return an error value.
+ * The flags are passed through to `reftable_stack_new_addition()`.
+ */
 int reftable_stack_add(struct reftable_stack *st,
 		       int (*write_table)(struct reftable_writer *wr,
 					  void *write_arg),
-		       void *write_arg);
+		       void *write_arg, unsigned flags);
 
 struct reftable_iterator;
 
@@ -119,6 +122,17 @@ struct reftable_log_expiry_config {
  * non-NULL */
 int reftable_stack_compact_all(struct reftable_stack *st,
 			       struct reftable_log_expiry_config *config);
+
+/*
+ * Check if compaction is required.
+ *
+ * When `use_heuristics` is false, check if all tables can be compacted to a
+ * single table. If true, use heuristics to determine if the tables need to be
+ * compacted to maintain geometric progression.
+ */
+int reftable_stack_compaction_required(struct reftable_stack *st,
+				       bool use_heuristics,
+				       bool *required);
 
 /* heuristically compact unbalanced table stack. */
 int reftable_stack_auto_compact(struct reftable_stack *st);

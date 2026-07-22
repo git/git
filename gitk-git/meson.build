@@ -25,6 +25,6 @@ custom_target(
   install_dir: get_option('bindir'),
 )
 
-if find_program('msgfmt').found()
+if find_program('msgfmt', required: false).found()
   subdir('po')
 endif

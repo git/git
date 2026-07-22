@@ -231,6 +231,10 @@ then
 	distro=$(echo "$CI_JOB_IMAGE" | tr : -)
 elif test true = "$GITLAB_CI"
 then
+	# This environment is multiple kB in size and may cause us to exceed
+	# xargs(1) limits on Windows.
+	unset GITLAB_FEATURES
+
 	CI_TYPE=gitlab-ci
 	CI_BRANCH="$CI_COMMIT_REF_NAME"
 	CI_COMMIT="$CI_COMMIT_SHA"
@@ -356,6 +360,9 @@ linux-musl-meson)
 	;;
 linux-leaks|linux-reftable-leaks)
 	export SANITIZE=leak
+	export NO_CVS_TESTS=LetsSaveSomeTime
+	export NO_SVN_TESTS=LetsSaveSomeTime
+	export NO_P4_TESTS=LetsSaveSomeTime
 	;;
 linux-asan-ubsan)
 	export SANITIZE=address,undefined

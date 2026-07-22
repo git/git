@@ -42,7 +42,7 @@ test_expect_success 'checkout one stage 0 to temporary file' '
 	test_line_count = 1 actual &&
 	test $(cut "-d	" -f2 actual) = path1 &&
 	p=$(cut "-d	" -f1 actual) &&
-	test -f $p &&
+	test_path_is_file $p &&
 	test $(cat $p) = tree1path1
 '
 
@@ -55,7 +55,7 @@ test_expect_success 'checkout all stage 0 to temporary files' '
 	do
 		test $(grep $f actual | cut "-d	" -f2) = $f &&
 		p=$(grep $f actual | cut "-d	" -f1) &&
-		test -f $p &&
+		test_path_is_file $p &&
 		test $(cat $p) = tree1$f || return 1
 	done
 '
@@ -71,7 +71,7 @@ test_expect_success 'checkout one stage 2 to temporary file' '
 	test_line_count = 1 actual &&
 	test $(cut "-d	" -f2 actual) = path1 &&
 	p=$(cut "-d	" -f1 actual) &&
-	test -f $p &&
+	test_path_is_file $p &&
 	test $(cat $p) = tree2path1
 '
 
@@ -83,7 +83,7 @@ test_expect_success 'checkout all stage 2 to temporary files' '
 	do
 		test $(grep $f actual | cut "-d	" -f2) = $f &&
 		p=$(grep $f actual | cut "-d	" -f1) &&
-		test -f $p &&
+		test_path_is_file $p &&
 		test $(cat $p) = tree2$f || return 1
 	done
 '
@@ -108,9 +108,9 @@ test_expect_success 'checkout all stages/one file to temporary files' '
 	test_line_count = 1 actual &&
 	test $(cut "-d	" -f2 actual) = path1 &&
 	cut "-d	" -f1 actual | (read s1 s2 s3 &&
-	test -f $s1 &&
-	test -f $s2 &&
-	test -f $s3 &&
+	test_path_is_file $s1 &&
+	test_path_is_file $s2 &&
+	test_path_is_file $s3 &&
 	test $(cat $s1) = tree1path1 &&
 	test $(cat $s2) = tree2path1 &&
 	test $(cat $s3) = tree3path1)
@@ -143,8 +143,8 @@ test_expect_success 'checkout some stages/one file to temporary files' '
 	test $(cut "-d	" -f2 actual) = path2 &&
 	cut "-d	" -f1 actual | (read s1 s2 s3 &&
 	test $s1 = . &&
-	test -f $s2 &&
-	test -f $s3 &&
+	test_path_is_file $s2 &&
+	test_path_is_file $s3 &&
 	test $(cat $s2) = tree2path2 &&
 	test $(cat $s3) = tree3path2)
 '
@@ -162,9 +162,9 @@ test_expect_success '-- path0: no entry' '
 test_expect_success '-- path1: all 3 stages' '
 	test $(grep path1 actual | cut "-d	" -f2) = path1 &&
 	grep path1 actual | cut "-d	" -f1 | (read s1 s2 s3 &&
-	test -f $s1 &&
-	test -f $s2 &&
-	test -f $s3 &&
+	test_path_is_file $s1 &&
+	test_path_is_file $s2 &&
+	test_path_is_file $s3 &&
 	test $(cat $s1) = tree1path1 &&
 	test $(cat $s2) = tree2path1 &&
 	test $(cat $s3) = tree3path1)
@@ -174,8 +174,8 @@ test_expect_success '-- path2: no stage 1, have stage 2 and 3' '
 	test $(grep path2 actual | cut "-d	" -f2) = path2 &&
 	grep path2 actual | cut "-d	" -f1 | (read s1 s2 s3 &&
 	test $s1 = . &&
-	test -f $s2 &&
-	test -f $s3 &&
+	test_path_is_file $s2 &&
+	test_path_is_file $s3 &&
 	test $(cat $s2) = tree2path2 &&
 	test $(cat $s3) = tree3path2)
 '
@@ -183,9 +183,9 @@ test_expect_success '-- path2: no stage 1, have stage 2 and 3' '
 test_expect_success '-- path3: no stage 2, have stage 1 and 3' '
 	test $(grep path3 actual | cut "-d	" -f2) = path3 &&
 	grep path3 actual | cut "-d	" -f1 | (read s1 s2 s3 &&
-	test -f $s1 &&
+	test_path_is_file $s1 &&
 	test $s2 = . &&
-	test -f $s3 &&
+	test_path_is_file $s3 &&
 	test $(cat $s1) = tree1path3 &&
 	test $(cat $s3) = tree3path3)
 '
@@ -193,8 +193,8 @@ test_expect_success '-- path3: no stage 2, have stage 1 and 3' '
 test_expect_success '-- path4: no stage 3, have stage 1 and 3' '
 	test $(grep path4 actual | cut "-d	" -f2) = path4 &&
 	grep path4 actual | cut "-d	" -f1 | (read s1 s2 s3 &&
-	test -f $s1 &&
-	test -f $s2 &&
+	test_path_is_file $s1 &&
+	test_path_is_file $s2 &&
 	test $s3 = . &&
 	test $(cat $s1) = tree1path4 &&
 	test $(cat $s2) = tree2path4)
@@ -203,7 +203,7 @@ test_expect_success '-- path4: no stage 3, have stage 1 and 3' '
 test_expect_success '-- asubdir/path5: no stage 2 and 3 have stage 1' '
 	test $(grep asubdir/path5 actual | cut "-d	" -f2) = asubdir/path5 &&
 	grep asubdir/path5 actual | cut "-d	" -f1 | (read s1 s2 s3 &&
-	test -f $s1 &&
+	test_path_is_file $s1 &&
 	test $s2 = . &&
 	test $s3 = . &&
 	test $(cat $s1) = tree1asubdir/path5)
@@ -216,7 +216,7 @@ test_expect_success 'checkout --temp within subdir' '
 		test_line_count = 1 actual &&
 		test $(grep path5 actual | cut "-d	" -f2) = path5 &&
 		grep path5 actual | cut "-d	" -f1 | (read s1 s2 s3 &&
-		test -f ../$s1 &&
+		test_path_is_file ../$s1 &&
 		test $s2 = . &&
 		test $s3 = . &&
 		test $(cat ../$s1) = tree1asubdir/path5)
@@ -230,7 +230,7 @@ test_expect_success 'checkout --temp symlink' '
 	test_line_count = 1 actual &&
 	test $(cut "-d	" -f2 actual) = path6 &&
 	p=$(cut "-d	" -f1 actual) &&
-	test -f $p &&
+	test_path_is_file $p &&
 	test $(cat $p) = path7
 '
 

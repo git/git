@@ -50,6 +50,10 @@ test_expect_success 'git diff-tree HEAD HEAD' '
 	test_expect_code 0 git diff-tree --quiet HEAD HEAD >cnt &&
 	test_line_count = 0 cnt
 '
+test_expect_success 'git diff-tree -w HEAD^ HEAD' '
+	test_expect_code 1 git diff-tree --quiet -w HEAD^ HEAD >cnt &&
+	test_line_count = 0 cnt
+'
 test_expect_success 'git diff-files' '
 	test_expect_code 0 git diff-files --quiet >cnt &&
 	test_line_count = 0 cnt

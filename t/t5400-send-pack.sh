@@ -187,6 +187,7 @@ test_expect_success 'receive-pack runs auto-gc in remote repo' '
 		cd child &&
 		git config gc.autopacklimit 1 &&
 		git config gc.autodetach false &&
+		git config maintenance.strategy gc &&
 		git branch test_auto_gc &&
 		# And create a file that follows the temporary object naming
 		# convention for the auto-gc to remove

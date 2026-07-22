@@ -39,6 +39,11 @@ void oidset_init(struct oidset *set, size_t initial_size);
 int oidset_contains(const struct oidset *set, const struct object_id *oid);
 
 /**
+ * Returns true iff `a` and `b` contain the exact same OIDs.
+ */
+bool oidset_equal(const struct oidset *a, const struct oidset *b);
+
+/**
  * Insert the oid into the set; a copy is made, so "oid" does not need
  * to persist after this function is called.
  *
@@ -94,11 +99,11 @@ void oidset_parse_file_carefully(struct oidset *set, const char *path,
 				 oidset_parse_tweak_fn fn, void *cbdata);
 
 struct oidset_iter {
-	kh_oid_set_t *set;
+	const kh_oid_set_t *set;
 	khiter_t iter;
 };
 
-static inline void oidset_iter_init(struct oidset *set,
+static inline void oidset_iter_init(const struct oidset *set,
 				    struct oidset_iter *iter)
 {
 	iter->set = &set->set;

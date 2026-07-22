@@ -63,7 +63,7 @@ jobs:
             origin \
             ${{ github.ref }} \
             $args
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         with:
           go-version: '>=1.16'
           cache: false

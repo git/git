@@ -26,8 +26,7 @@ Can you count to funk?
     ~~~~ sh
     $ mkdir tests
     $ cp -r $CLAR_ROOT/clar* tests
-    $ cp $CLAR_ROOT/test/clar_test.h tests
-    $ cp $CLAR_ROOT/test/main.c.sample tests/main.c
+    $ cp $CLAR_ROOT/example/*.c tests
     ~~~~
 
 - **One: Write some tests**
@@ -147,7 +146,7 @@ To use Clar:
 
 1. copy the Clar boilerplate to your test directory
 2. copy (and probably modify) the sample `main.c` (from
-   `$CLAR_PATH/test/main.c.sample`)
+   `$CLAR_PATH/example/main.c`)
 3. run the Clar mixer (a.k.a. `generate.py`) to scan your test directory and
    write out the test suite metadata.
 4. compile your test files and the Clar boilerplate into a single test
@@ -159,7 +158,7 @@ The Clar boilerplate gives you a set of useful test assertions and features
 the `clar.c` and `clar.h` files, plus the code in the `clar/` subdirectory.
 You should not need to edit these files.
 
-The sample `main.c` (i.e. `$CLAR_PATH/test/main.c.sample`) file invokes
+The sample `main.c` (i.e. `$CLAR_PATH/example/main.c`) file invokes
 `clar_test(argc, argv)` to run the tests.  Usually, you will edit this file
 to perform any framework specific initialization and teardown that you need.
 
@@ -251,11 +250,16 @@ suite.
 
 -   `cl_fixture(const char *)`: Gets the full path to a fixture file.
 
-Please do note that these methods are *always* available whilst running a
-test, even when calling auxiliary/static functions inside the same file.
+### Auxiliary / helper functions
 
-It's strongly encouraged to perform test assertions in auxiliary methods,
-instead of returning error values. This is considered good Clar style.
+The clar API is always available while running a test, even when calling
+"auxiliary" (helper) functions.
+
+You're encouraged to perform test assertions in those auxiliary
+methods, instead of returning error values. This is considered good
+Clar style. _However_, when you do this, you need to call `cl_invoke`
+to preserve the current state; this ensures that failures are reported
+as coming from the actual test, instead of the auxiliary method.
 
 Style Example:
 
@@ -310,20 +314,19 @@ static void check_string(const char *str)
 
 void test_example__a_test_with_auxiliary_methods(void)
 {
-    check_string("foo");
-    check_string("bar");
+    cl_invoke(check_string("foo"));
+    cl_invoke(check_string("bar"));
 }
 ~~~~
 
 About Clar
 ==========
 
-Clar has been written from scratch by [Vicent Martí](https://github.com/vmg),
-to replace the old testing framework in [libgit2][libgit2].
-
-Do you know what languages are *in* on the SF startup scene? Node.js *and*
-Latin.  Follow [@vmg](https://www.twitter.com/vmg) on Twitter to
-receive more lessons on word etymology. You can be hip too.
-
+Clar was originally written by [Vicent Martí](https://github.com/vmg),
+to replace the old testing framework in [libgit2][libgit2]. It is
+currently maintained by [Edward Thomson](https://github.com/ethomson),
+and used by the [libgit2][libgit2] and [git][git] projects, amongst
+others.
 
 [libgit2]: https://github.com/libgit2/libgit2
+[git]: https://github.com/git/git

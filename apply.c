@@ -48,9 +48,9 @@ struct gitdiff_data {
 
 static void git_apply_config(void)
 {
-	git_config_get_string("apply.whitespace", &apply_default_whitespace);
-	git_config_get_string("apply.ignorewhitespace", &apply_default_ignorewhitespace);
-	git_config(git_xmerge_config, NULL);
+	repo_config_get_string(the_repository, "apply.whitespace", &apply_default_whitespace);
+	repo_config_get_string(the_repository, "apply.ignorewhitespace", &apply_default_ignorewhitespace);
+	repo_config(the_repository, git_xmerge_config, NULL);
 }
 
 static int parse_whitespace_option(struct apply_state *state, const char *option)
@@ -1640,6 +1640,14 @@ static void record_ws_error(struct apply_state *state,
 	    state->squelch_whitespace_errors < state->whitespace_error)
 		return;
 
+	/*
+	 * line[len] for an incomplete line points at the "\n" at the end
+	 * of patch input line, so "%.*s" would drop the last letter on line;
+	 * compensate for it.
+	 */
+	if (result & WS_INCOMPLETE_LINE)
+		len++;
+
 	err = whitespace_error_string(result);
 	if (state->apply_verbosity > verbosity_silent)
 		fprintf(stderr, "%s:%d: %s.\n%.*s\n",
@@ -1671,6 +1679,35 @@ static void check_old_for_crlf(struct patch *patch, const char *line, int len)
 
 
 /*
+ * Just saw a single line in a fragment.  If it is a part of this hunk
+ * that is a context " ", an added "+", or a removed "-" line, it may
+ * be followed by "\\ No newline..." to signal that the last "\n" on
+ * this line needs to be dropped.  Depending on locale settings when
+ * the patch was produced we don't know what this line would exactly
+ * say. The only thing we do know is that it begins with "\ ".
+ * Checking for 12 is just for sanity check; "\ No newline..." would
+ * be at least that long in any l10n.
+ *
+ * Return 0 if the line we saw is not followed by "\ No newline...",
+ * or length of that line.  The caller will use it to skip over the
+ * "\ No newline..." line.
+ */
+static int adjust_incomplete(const char *line, int len,
+			     unsigned long size)
+{
+	int nextlen;
+
+	if (*line != '\n' && *line != ' ' && *line != '+' && *line != '-')
+		return 0;
+	if (size - len < 12 || memcmp(line + len, "\\ ", 2))
+		return 0;
+	nextlen = linelen(line + len, size - len);
+	if (nextlen < 12)
+		return 0;
+	return nextlen;
+}
+
+/*
  * Parse a unified diff. Note that this really needs to parse each
  * fragment separately, since the only way to know the difference
  * between a "---" that is part of a patch, and a "---" that starts
@@ -1684,8 +1721,29 @@ static int parse_fragment(struct apply_state *state,
 {
 	int added, deleted;
 	int len = linelen(line, size), offset;
+	int skip_len = 0;
 	unsigned long oldlines, newlines;
 	unsigned long leading, trailing;
+
+	/* do not complain a symbolic link being an incomplete line */
+	if (patch->ws_rule & WS_INCOMPLETE_LINE) {
+		/*
+		 * We want to figure out if the postimage is a
+		 * symbolic link when applying the patch normally, or
+		 * if the preimage is a symbolic link when applying
+		 * the patch in reverse.  A normal patch only has
+		 * old_mode without new_mode.  If it changes the
+		 * filemode, new_mode has value, which is different
+		 * from old_mode.
+		 */
+		unsigned mode = (state->apply_in_reverse
+				 ? patch->old_mode
+				 : patch->new_mode
+				 ? patch->new_mode
+				 : patch->old_mode);
+		if (mode && S_ISLNK(mode))
+			patch->ws_rule &= ~WS_INCOMPLETE_LINE;
+	}
 
 	offset = parse_fragment_header(line, len, fragment);
 	if (offset < 0)
@@ -1710,6 +1768,22 @@ static int parse_fragment(struct apply_state *state,
 		len = linelen(line, size);
 		if (!len || line[len-1] != '\n')
 			return -1;
+
+		/*
+		 * For an incomplete line, skip_len counts the bytes
+		 * on "\\ No newline..." marker line that comes next
+		 * to the current line.
+		 *
+		 * Reduce "len" to drop the newline at the end of
+		 * line[], but add one to "skip_len", which will be
+		 * added back to "len" for the next iteration, to
+		 * compensate.
+		 */
+		skip_len = adjust_incomplete(line, len, size);
+		if (skip_len) {
+			len--;
+			skip_len++;
+		}
 		switch (*line) {
 		default:
 			return -1;
@@ -1745,19 +1819,12 @@ static int parse_fragment(struct apply_state *state,
 			newlines--;
 			trailing = 0;
 			break;
+		}
 
-		/*
-		 * We allow "\ No newline at end of file". Depending
-		 * on locale settings when the patch was produced we
-		 * don't know what this line looks like. The only
-		 * thing we do know is that it begins with "\ ".
-		 * Checking for 12 is just for sanity check -- any
-		 * l10n of "\ No newline..." is at least that long.
-		 */
-		case '\\':
-			if (len < 12 || memcmp(line, "\\ ", 2))
-				return -1;
-			break;
+		/* eat the "\\ No newline..." as well, if exists */
+		if (skip_len) {
+			len += skip_len;
+			state->linenr++;
 		}
 	}
 	if (oldlines || newlines)
@@ -1767,14 +1834,6 @@ static int parse_fragment(struct apply_state *state,
 
 	fragment->leading = leading;
 	fragment->trailing = trailing;
-
-	/*
-	 * If a fragment ends with an incomplete line, we failed to include
-	 * it in the above loop because we hit oldlines == newlines == 0
-	 * before seeing it.
-	 */
-	if (12 < size && !memcmp(line, "\\ ", 2))
-		offset += linelen(line, size);
 
 	patch->lines_added += added;
 	patch->lines_deleted += deleted;
@@ -3529,9 +3588,9 @@ static int three_way_merge(struct apply_state *state,
 	else if (oideq(base, theirs) || oideq(ours, theirs))
 		return resolve_to(image, ours);
 
-	read_mmblob(&base_file, base);
-	read_mmblob(&our_file, ours);
-	read_mmblob(&their_file, theirs);
+	read_mmblob(&base_file, the_repository->objects, base);
+	read_mmblob(&our_file, the_repository->objects, ours);
+	read_mmblob(&their_file, the_repository->objects, theirs);
 	merge_opts.variant = state->merge_variant;
 	status = ll_merge(&result, path,
 			  &base_file, "base",
@@ -3621,7 +3680,7 @@ static int try_threeway(struct apply_state *state,
 
 	/* Preimage the patch was prepared for */
 	if (patch->is_new)
-		write_object_file("", 0, OBJ_BLOB, &pre_oid);
+		odb_write_object(the_repository->objects, "", 0, OBJ_BLOB, &pre_oid);
 	else if (repo_get_oid(the_repository, patch->old_oid_prefix, &pre_oid) ||
 		 read_blob_object(&buf, &pre_oid, patch->old_mode))
 		return error(_("repository lacks the necessary blob to perform 3-way merge."));
@@ -3637,7 +3696,8 @@ static int try_threeway(struct apply_state *state,
 		return -1;
 	}
 	/* post_oid is theirs */
-	write_object_file(tmp_image.buf.buf, tmp_image.buf.len, OBJ_BLOB, &post_oid);
+	odb_write_object(the_repository->objects, tmp_image.buf.buf,
+			 tmp_image.buf.len, OBJ_BLOB, &post_oid);
 	image_clear(&tmp_image);
 
 	/* our_oid is ours */
@@ -3650,7 +3710,8 @@ static int try_threeway(struct apply_state *state,
 			return error(_("cannot read the current contents of '%s'"),
 				     patch->old_name);
 	}
-	write_object_file(tmp_image.buf.buf, tmp_image.buf.len, OBJ_BLOB, &our_oid);
+	odb_write_object(the_repository->objects, tmp_image.buf.buf,
+			 tmp_image.buf.len, OBJ_BLOB, &our_oid);
 	image_clear(&tmp_image);
 
 	/* in-core three-way merge between post and our using pre as base */
@@ -3777,7 +3838,7 @@ static int check_preimage(struct apply_state *state,
 		if (*ce && !(*ce)->ce_mode)
 			BUG("ce_mode == 0 for path '%s'", old_name);
 
-		if (trust_executable_bit)
+		if (trust_executable_bit || !S_ISREG(st->st_mode))
 			st_mode = ce_mode_from_stat(*ce, st->st_mode);
 		else if (*ce)
 			st_mode = (*ce)->ce_mode;
@@ -4103,7 +4164,7 @@ static int preimage_oid_in_gitlink_patch(struct patch *p, struct object_id *oid)
 	 */
 	struct fragment *hunk = p->fragments;
 	static const char heading[] = "-Subproject commit ";
-	char *preimage;
+	const char *preimage;
 
 	if (/* does the patch have only one hunk? */
 	    hunk && !hunk->next &&
@@ -4360,7 +4421,8 @@ static int add_index_file(struct apply_state *state,
 			}
 			fill_stat_cache_info(state->repo->index, ce, &st);
 		}
-		if (write_object_file(buf, size, OBJ_BLOB, &ce->oid) < 0) {
+		if (odb_write_object(the_repository->objects, buf, size,
+				     OBJ_BLOB, &ce->oid) < 0) {
 			discard_cache_entry(ce);
 			return error(_("unable to create backing store "
 				       "for newly created file %s"), path);
@@ -4398,7 +4460,7 @@ static int try_create_file(struct apply_state *state, const char *path,
 		/* Although buf:size is counted string, it also is NUL
 		 * terminated.
 		 */
-		return !!symlink(buf, path);
+		return !!create_symlink(state && state->repo ? state->repo->index : NULL, buf, path);
 
 	fd = open(path, O_CREAT | O_EXCL | O_WRONLY, (mode & 0100) ? 0777 : 0666);
 	if (fd < 0)
@@ -4919,7 +4981,8 @@ static int apply_option_parse_p(const struct option *opt,
 
 	BUG_ON_OPT_NEG(unset);
 
-	state->p_value = atoi(arg);
+	if (strtol_i(arg, 10, &state->p_value) < 0 || state->p_value < 0)
+		die(_("option -p expects a non-negative integer, got '%s'"), arg);
 	state->p_value_known = 1;
 	return 0;
 }
@@ -4960,6 +5023,10 @@ static int apply_option_parse_directory(const struct option *opt,
 
 	strbuf_reset(&state->root);
 	strbuf_addstr(&state->root, arg);
+
+	if (strbuf_normalize_path(&state->root) < 0)
+		return error(_("unable to normalize directory: '%s'"), arg);
+
 	strbuf_complete(&state->root, '/');
 	return 0;
 }

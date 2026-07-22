@@ -41,4 +41,7 @@
 #undef asctime_r
 #define asctime_r(t, buf) BANNED(asctime_r)
 
+#undef mktemp
+#define mktemp(x) BANNED(mktemp)
+
 #endif /* BANNED_H */

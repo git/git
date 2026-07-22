@@ -125,7 +125,6 @@ check-meson:
 	@mkdir -p mesontmp && \
 	printf "%s\n" \
 		"integration_tests t[0-9][0-9][0-9][0-9]-*.sh" \
-		"unit_test_programs unit-tests/t-*.c" \
 		"clar_test_suites unit-tests/u-*.c" | \
 	while read -r variable pattern; do \
 		awk "/^$$variable = \[\$$/ {flag=1 ; next } /^]$$/ { flag=0 } flag { gsub(/^  \047/, \"\"); gsub(/\047,\$$/, \"\"); print }" meson.build >mesontmp/meson.txt && \
@@ -190,15 +189,9 @@ perf:
 
 .PHONY: libgit-sys-test libgit-rs-test
 libgit-sys-test:
-	$(QUIET)(\
-		cd ../contrib/libgit-sys && \
-		cargo test \
-	)
-libgit-rs-test:
-	$(QUIET)(\
-		cd ../contrib/libgit-rs && \
-		cargo test \
-	)
+	$(QUIET)cargo test --manifest-path ../contrib/libgit-sys/Cargo.toml
+libgit-rs-test: libgit-sys-test
+	$(QUIET)cargo test --manifest-path ../contrib/libgit-rs/Cargo.toml
 ifdef INCLUDE_LIBGIT_RS
-all:: libgit-sys-test libgit-rs-test
+all:: libgit-rs-test
 endif

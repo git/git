@@ -72,7 +72,8 @@ int verify_pack_revindex(struct packed_git *p);
  * multi-pack index by mmap-ing it and assigning pointers in the
  * multi_pack_index to point at it.
  *
- * A negative number is returned on error.
+ * A negative number is returned on error. A positive number is returned in
+ * case the multi-pack-index does not have a reverse index.
  */
 int load_midx_revindex(struct multi_pack_index *m);
 

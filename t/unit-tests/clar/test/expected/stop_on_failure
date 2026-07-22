@@ -1,0 +1,8 @@
+Loaded 1 suites:
+Started (test status codes: OK='.' FAILURE='F' SKIPPED='S')
+F
+
+  1) Failure:
+combined::1 [file:42]
+  Function call failed: -1
+

@@ -14,6 +14,7 @@
 #include "strbuf.h"
 #include "object-name.h"
 #include "odb.h"
+#include "odb/source.h"
 #include "parse-options.h"
 #include "thread-utils.h"
 #include "tree-walk.h"
@@ -983,7 +984,7 @@ int config_set_in_gitmodules_file_gently(const char *key, const char *value)
 {
 	int ret;
 
-	ret = git_config_set_in_file_gently(GITMODULES_FILE, key, NULL, value);
+	ret = repo_config_set_in_file_gently(the_repository, GITMODULES_FILE, key, NULL, value);
 	if (ret < 0)
 		/* Maybe the user already did that, don't error out here */
 		warning(_("Could not update .gitmodules entry %s"), key);

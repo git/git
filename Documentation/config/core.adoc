@@ -75,8 +75,8 @@ The built-in file system monitor is currently available only on a
 limited set of supported platforms.  Currently, this includes Windows
 and MacOS.
 +
-	Otherwise, this variable contains the pathname of the "fsmonitor"
-	hook command.
+Otherwise, this variable contains the pathname of the "fsmonitor"
+hook command.
 +
 This hook command is used to identify all files that may have changed
 since the requested date/time. This information is used to speed up
@@ -290,6 +290,9 @@ core.preferSymlinkRefs::
 	and other symbolic reference files, use symbolic links.
 	This is sometimes needed to work with old scripts that
 	expect HEAD to be a symbolic link.
++
+This configuration is deprecated and will be removed in Git 3.0. Symbolic refs
+will always be written as textual symrefs.
 
 core.alternateRefsCommand::
 	When advertising tips of available history from an alternate, use the shell to
@@ -344,6 +347,17 @@ still use "/different/path" as the root of the work tree and can cause
 confusion unless you know what you are doing (e.g. you are creating a
 read-only snapshot of the same index to a location different from the
 repository's usual working tree).
+
+core.lockfilePid::
+	If true, Git will create a PID file alongside lock files. When a
+	lock acquisition fails and a PID file exists, Git can provide
+	additional diagnostic information about the process holding the
+	lock, including whether it is still running. Defaults to `false`.
++
+The PID file is named by inserting `~pid` before the `.lock` suffix.
+For example, if the lock file is `index.lock`, the PID file will be
+`index~pid.lock`. The file contains a single line in the format
+`pid <value>` followed by a newline.
 
 core.logAllRefUpdates::
 	Enable the reflog. Updates to a ref <ref> is logged to the file
@@ -489,10 +503,9 @@ core.askPass::
 	command-line argument and write the password on its STDOUT.
 
 core.attributesFile::
-	In addition to `.gitattributes` (per-directory) and
-	`.git/info/attributes`, Git looks into this file for attributes
-	(see linkgit:gitattributes[5]). Path expansions are made the same
-	way as for `core.excludesFile`. Its default value is
+	Specifies the pathname to the file that contains attributes (see
+	linkgit:gitattributes[5]), in addition to `.gitattributes` (per-directory)
+	and `.git/info/attributes`. Its default value is
 	`$XDG_CONFIG_HOME/git/attributes`. If `$XDG_CONFIG_HOME` is either not
 	set or empty, `$HOME/.config/git/attributes` is used instead.
 
@@ -531,9 +544,25 @@ core.commentString::
 	commented, and removes them after the editor returns
 	(default '#').
 +
-If set to "auto", `git-commit` would select a character that is not
+ifndef::with-breaking-changes[]
+If set to "auto", `git-commit` will select a character that is not
 the beginning character of any line in existing commit messages.
+Support for this value is deprecated and will be removed in Git 3.0
+due to the following limitations:
 +
+--
+* It is incompatible with adding comments in a commit message
+  template. This includes the conflicts comments added to
+  the commit message by `cherry-pick`, `merge`, `rebase` and
+  `revert`.
+* It is incompatible with adding comments to the commit message
+  in the `prepare-commit-msg` hook.
+* It is incompatible with the `fixup` and `squash` commands when
+  rebasing,
+* It is not respected by `git notes`
+--
++
+endif::with-breaking-changes[]
 Note that these two variables are aliases of each other, and in modern
 versions of Git you are free to use a string (e.g., `//` or `⁑⁕⁑`) with
 `commentChar`. Versions of Git prior to v2.45.0 will ignore
@@ -610,6 +639,8 @@ core.whitespace::
   part of the line terminator, i.e. with it, `trailing-space`
   does not trigger if the character before such a carriage-return
   is not a whitespace (not enabled by default).
+* `incomplete-line` treats the last line of a file that is missing the
+  newline at the end as an error (not enabled by default).
 * `tabwidth=<n>` tells how many character positions a tab occupies; this
   is relevant for `indent-with-non-tab` and when Git fixes `tab-in-indent`
   errors. The default tab width is 8. Allowed values are 1 to 63.
@@ -690,17 +721,24 @@ relatively high IO latencies.  When enabled, Git will do the
 index comparison to the filesystem data in parallel, allowing
 overlapping IO's.  Defaults to true.
 
+core.fscache::
+	Enable additional caching of file system data for some operations.
++
+Git for Windows uses this to bulk-read and cache lstat data of entire
+directories (instead of doing lstat file by file).
+
+core.longpaths::
+	Enable long path (> 260) support for builtin commands in Git for
+	Windows. This is disabled by default, as long paths are not supported
+	by Windows Explorer, cmd.exe and the Git for Windows tool chain
+	(msys, bash, tcl, perl...). Only enable this if you know what you're
+	doing and are prepared to live with a few quirks.
+
 core.unsetenvvars::
 	Windows-only: comma-separated list of environment variables'
 	names that need to be unset before spawning any other process.
 	Defaults to `PERL5LIB` to account for the fact that Git for
 	Windows insists on using its own Perl interpreter.
-
-core.restrictinheritedhandles::
-	Windows-only: override whether spawned processes inherit only standard
-	file handles (`stdin`, `stdout` and `stderr`) or all handles. Can be
-	`auto`, `true` or `false`. Defaults to `auto`, which means `true` on
-	Windows 7 and later, and `false` on older Windows versions.
 
 core.createObject::
 	You can set this to 'link', in which case a hardlink followed by
@@ -763,3 +801,9 @@ core.maxTreeDepth::
 	to allow Git to abort cleanly, and should not generally need to
 	be adjusted. When Git is compiled with MSVC, the default is 512.
 	Otherwise, the default is 2048.
+
+core.WSLCompat::
+	Tells Git whether to enable wsl compatibility mode.
+	The default value is false. When set to true, Git will set the mode
+	bits of the file in the way of wsl, so that the executable flag of
+	files can be set or read correctly.

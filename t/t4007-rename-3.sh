@@ -41,6 +41,16 @@ test_expect_success 'copy detection, cached' '
 	compare_diff_raw current expected
 '
 
+test_expect_success 'exit code of quiet copy detection' '
+	test_expect_code 1 \
+	git diff --quiet --cached --find-copies-harder $tree
+'
+
+test_expect_success 'exit code of quiet copy detection with --no-ext-diff' '
+	test_expect_code 1 \
+	git diff --quiet --cached --find-copies-harder --no-ext-diff $tree
+'
+
 # In the tree, there is only path0/COPYING.  In the cache, path0 and
 # path1 both have COPYING and the latter is a copy of path0/COPYING.
 # However when we say we care only about path1, we should just see
@@ -57,7 +67,28 @@ test_expect_success 'copy, limited to a subtree' '
 '
 
 test_expect_success 'tweak work tree' '
-	rm -f path0/COPYING &&
+	rm -f path0/COPYING
+'
+
+cat >expected <<EOF
+:100644 100644 $blob $blob C100	path1/COPYING	path0/COPYING
+EOF
+
+# The cache has path0/COPYING and path1/COPYING, the working tree only
+# path1/COPYING.  This is a deletion -- we don't treat deduplication
+# specially.  In reverse it should be detected as a copy, though.
+test_expect_success 'copy detection, files to index' '
+	git diff-files -C --find-copies-harder -R >current &&
+	compare_diff_raw current expected
+'
+
+test_expect_success 'copy detection, files to preloaded index' '
+	GIT_TEST_PRELOAD_INDEX=1 \
+	git diff-files -C --find-copies-harder -R >current &&
+	compare_diff_raw current expected
+'
+
+test_expect_success 'tweak index' '
 	git update-index --remove path0/COPYING
 '
 # In the tree, there is only path0/COPYING.  In the cache, path0 does

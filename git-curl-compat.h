@@ -38,11 +38,26 @@
 #endif
 
 /**
+ * CURLSSLOPT_AUTO_CLIENT_CERT was added in 7.77.0, released in May
+ * 2021.
+ */
+#if LIBCURL_VERSION_NUM >= 0x074d00
+#define GIT_CURL_HAVE_CURLSSLOPT_AUTO_CLIENT_CERT
+#endif
+
+/**
  * CURLOPT_PROTOCOLS_STR and CURLOPT_REDIR_PROTOCOLS_STR were added in 7.85.0,
  * released in August 2022.
  */
 #if LIBCURL_VERSION_NUM >= 0x075500
 #define GIT_CURL_HAVE_CURLOPT_PROTOCOLS_STR 1
+#endif
+
+/**
+ * curl_global_trace() was added in 8.3.0, released September 2023.
+ */
+#if LIBCURL_VERSION_NUM >= 0x080300
+#define GIT_CURL_HAVE_GLOBAL_TRACE 1
 #endif
 
 /**

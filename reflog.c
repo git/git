@@ -3,6 +3,7 @@
 
 #include "git-compat-util.h"
 #include "config.h"
+#include "environment.h"
 #include "gettext.h"
 #include "parse-options.h"
 #include "odb.h"
@@ -79,6 +80,20 @@ int reflog_expire_config(const char *var, const char *value,
 		break;
 	}
 	return 0;
+}
+
+void reflog_clear_expire_config(struct reflog_expire_options *opts)
+{
+	struct reflog_expire_entry_option *ent = opts->entries, *tmp;
+
+	while (ent) {
+		tmp = ent;
+		ent = ent->next;
+		free(tmp);
+	}
+
+	opts->entries = NULL;
+	opts->entries_tail = NULL;
 }
 
 void reflog_expire_options_set_refname(struct reflog_expire_options *cb,
@@ -408,16 +423,13 @@ int should_expire_reflog_ent_verbose(struct object_id *ooid,
 	return expire;
 }
 
-static int push_tip_to_list(const char *refname UNUSED,
-			    const char *referent UNUSED,
-			    const struct object_id *oid,
-			    int flags, void *cb_data)
+static int push_tip_to_list(const struct reference *ref, void *cb_data)
 {
 	struct commit_list **list = cb_data;
 	struct commit *tip_commit;
-	if (flags & REF_ISSYMREF)
+	if (ref->flags & REF_ISSYMREF)
 		return 0;
-	tip_commit = lookup_commit_reference_gently(the_repository, oid, 1);
+	tip_commit = lookup_commit_reference_gently(the_repository, ref->oid, 1);
 	if (!tip_commit)
 		return 0;
 	commit_list_insert(tip_commit, list);
@@ -481,7 +493,7 @@ void reflog_expiry_cleanup(void *cb_data)
 	case UE_HEAD:
 		for (elem = cb->tips; elem; elem = elem->next)
 			clear_commit_marks(elem->item, REACHABLE);
-		free_commit_list(cb->tips);
+		commit_list_free(cb->tips);
 		break;
 	case UE_NORMAL:
 		clear_commit_marks(cb->tip_commit, REACHABLE);
@@ -489,10 +501,11 @@ void reflog_expiry_cleanup(void *cb_data)
 	}
 	for (elem = cb->mark_list; elem; elem = elem->next)
 		clear_commit_marks(elem->item, REACHABLE);
-	free_commit_list(cb->mark_list);
+	commit_list_free(cb->mark_list);
 }
 
-int count_reflog_ent(struct object_id *ooid UNUSED,
+int count_reflog_ent(const char *refname UNUSED,
+		     struct object_id *ooid UNUSED,
 		     struct object_id *noid UNUSED,
 		     const char *email UNUSED,
 		     timestamp_t timestamp, int tz UNUSED,

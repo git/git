@@ -1823,7 +1823,9 @@ static void mark_new_skip_worktree(struct pattern_list *pl,
 	 * 2. Widen worktree according to sparse-checkout file.
 	 * Matched entries will have skip_wt_flag cleared (i.e. "in")
 	 */
+	enable_fscache(istate->cache_nr);
 	clear_ce_flags(istate, select_flag, skip_wt_flag, pl, show_progress);
+	disable_fscache();
 }
 
 static void populate_from_existing_patterns(struct unpack_trees_options *o,
@@ -1888,6 +1890,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 	struct pattern_list pl;
 	int free_pattern_list = 0;
 	struct dir_struct dir = DIR_INIT;
+	struct repo_config_values *cfg = repo_config_values(the_repository);
 
 	if (o->reset == UNPACK_RESET_INVALID)
 		BUG("o->reset had a value of 1; should be UNPACK_TREES_*_UNTRACKED");
@@ -1924,7 +1927,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 	if (o->prefix)
 		update_sparsity_for_prefix(o->prefix, o->src_index);
 
-	if (!core_apply_sparse_checkout || !o->update)
+	if (!cfg->apply_sparse_checkout || !o->update)
 		o->skip_sparse_checkout = 1;
 	if (!o->skip_sparse_checkout) {
 		memset(&pl, 0, sizeof(pl));

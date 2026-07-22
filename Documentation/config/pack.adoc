@@ -160,12 +160,13 @@ pack.usePathWalk::
 	processes. See linkgit:git-pack-objects[1] for full details.
 
 pack.preferBitmapTips::
+	Specifies a ref hierarchy (e.g., "refs/heads/"); can be
+	given multiple times to specify more than one hierarchies.
 	When selecting which commits will receive bitmaps, prefer a
-	commit at the tip of any reference that is a suffix of any value
-	of this configuration over any other commits in the "selection
-	window".
+	commit at the tip of a reference that is contained in any of
+	the configured hierarchies.
 +
-Note that setting this configuration to `refs/foo` does not mean that
+Note that setting this configuration to `refs/foo/` does not mean that
 the commits at the tips of `refs/foo/bar` and `refs/foo/baz` will
 necessarily be selected. This is because commits are selected for
 bitmaps from within a series of windows of variable length.

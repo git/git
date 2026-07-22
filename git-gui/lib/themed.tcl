@@ -21,10 +21,10 @@ namespace eval color {
 		set inactive_select_bg	[convert_rgb_to_gray $select_bg]
 		set inactive_select_fg	$select_fg
 
-		set color::select_bg $select_bg
-		set color::select_fg $select_fg
-		set color::inactive_select_bg $inactive_select_bg
-		set color::inactive_select_fg $inactive_select_fg
+		set ::color::select_bg $select_bg
+		set ::color::select_fg $select_fg
+		set ::color::inactive_select_bg $inactive_select_bg
+		set ::color::inactive_select_fg $inactive_select_fg
 
 		proc add_option {key val} {
 			option add $key $val widgetDefault
@@ -190,8 +190,7 @@ proc InitEntryFrame {} {
 }
 
 proc gold_frame {w args} {
-	global use_ttk
-	if {$use_ttk && ![is_MacOSX]} {
+	if {![is_MacOSX]} {
 		eval [linsert $args 0 ttk::frame $w -style Gold.TFrame]
 	} else {
 		eval [linsert $args 0 frame $w -background gold]
@@ -199,8 +198,7 @@ proc gold_frame {w args} {
 }
 
 proc tlabel {w args} {
-	global use_ttk
-	if {$use_ttk && ![is_MacOSX]} {
+	if {![is_MacOSX]} {
 		set cmd [list ttk::label $w -style Color.TLabel]
 		foreach {k v} $args {
 			switch -glob -- $k {
@@ -216,17 +214,7 @@ proc tlabel {w args} {
 
 # The padded label gets used in the about class.
 proc paddedlabel {w args} {
-	global use_ttk
-	if {$use_ttk} {
-		eval [linsert $args 0 ttk::label $w -style Padded.TLabel]
-	} else {
-		eval [linsert $args 0 label $w \
-				  -padx 5 -pady 5 \
-				  -justify left \
-				  -anchor w \
-				  -borderwidth 1 \
-				  -relief solid]
-	}
+	eval [linsert $args 0 ttk::label $w -style Padded.TLabel]
 }
 
 # Create a toplevel for use as a dialog.
@@ -242,8 +230,7 @@ proc Dialog {w args} {
 # Tk toplevels are not themed - so pave it over with a themed frame to get
 # the base color correct per theme.
 proc pave_toplevel {w} {
-	global use_ttk
-	if {$use_ttk && ![winfo exists $w.!paving]} {
+	if {![winfo exists $w.!paving]} {
 		set paving [ttk::frame $w.!paving]
 		place $paving -x 0 -y 0 -relwidth 1 -relheight 1
 		lower $paving
@@ -254,20 +241,11 @@ proc pave_toplevel {w} {
 # On many themes the border for a scrolled listbox needs to go around the
 # listbox and the scrollbar.
 proc slistbox {w args} {
-	global use_ttk NS
-	if {$use_ttk} {
-		set f [ttk::frame $w -style SListbox.TFrame -padding 2]
-	} else {
-		set f [frame $w -relief flat]
-	}
+	set f [ttk::frame $w -style SListbox.TFrame -padding 2]
     if {[catch {
-		if {$use_ttk} {
-			eval [linsert $args 0 listbox $f.list -relief flat \
-					  -highlightthickness 0 -borderwidth 0]
-		} else {
-			eval [linsert $args 0 listbox $f.list]
-		}
-        ${NS}::scrollbar $f.vs -command [list $f.list yview]
+		eval [linsert $args 0 listbox $f.list -relief flat \
+				  -highlightthickness 0 -borderwidth 0]
+        ttk::scrollbar $f.vs -command [list $f.list yview]
         $f.list configure -yscrollcommand [list $f.vs set]
         grid $f.list $f.vs -sticky news
         grid rowconfigure $f 0 -weight 1
@@ -285,67 +263,42 @@ proc slistbox {w args} {
 
 # fetch the background color from a widget.
 proc get_bg_color {w} {
-	global use_ttk
-	if {$use_ttk} {
-		set bg [ttk::style lookup [winfo class $w] -background]
-	} else {
-		set bg [$w cget -background]
-	}
+	set bg [ttk::style lookup [winfo class $w] -background]
 	return $bg
 }
 
-# ttk::spinbox didn't get added until 8.6
+# ttk::spinbox
 proc tspinbox {w args} {
-	global use_ttk
-	if {$use_ttk && [llength [info commands ttk::spinbox]] > 0} {
-		eval [linsert $args 0 ttk::spinbox $w]
-	} else {
-		eval [linsert $args 0 spinbox $w]
-	}
+	eval [linsert $args 0 ttk::spinbox $w]
 }
 
 # Create a text widget with any theme specific properties.
 proc ttext {w args} {
-	global use_ttk
-	if {$use_ttk} {
-		switch -- [ttk_get_current_theme] {
-			"vista" - "xpnative" {
-				lappend args -highlightthickness 0 -borderwidth 0
-			}
+	switch -- [ttk_get_current_theme] {
+		"vista" - "xpnative" {
+			lappend args -highlightthickness 0 -borderwidth 0
 		}
 	}
 	set w [eval [linsert $args 0 text $w]]
-	if {$use_ttk} {
-		if {[winfo class [winfo parent $w]] eq "EntryFrame"} {
-			bind $w <FocusIn> {[winfo parent %W] state focus}
-			bind $w <FocusOut> {[winfo parent %W] state !focus}
-		}
+	if {[winfo class [winfo parent $w]] eq "EntryFrame"} {
+		bind $w <FocusIn> {[winfo parent %W] state focus}
+		bind $w <FocusOut> {[winfo parent %W] state !focus}
 	}
 	return $w
 }
 
 # themed frame suitable for surrounding a text field.
 proc textframe {w args} {
-	global use_ttk
-	if {$use_ttk} {
-		if {[catch {ttk::style layout EntryFrame}]} {
-			InitEntryFrame
-		}
-		eval [linsert $args 0 ttk::frame $w -class EntryFrame -style EntryFrame]
-	} else {
-		eval [linsert $args 0 frame $w]
+	if {[catch {ttk::style layout EntryFrame}]} {
+		InitEntryFrame
 	}
+	eval [linsert $args 0 ttk::frame $w -class EntryFrame -style EntryFrame]
 	return $w
 }
 
 proc tentry {w args} {
-	global use_ttk
-	if {$use_ttk} {
-		InitTheme
-		ttk::entry $w -style Edged.Entry
-	} else {
-		entry $w
-	}
+	InitTheme
+	ttk::entry $w -style Edged.Entry
 
 	rename $w _$w
 	interp alias {} $w {} tentry_widgetproc $w
@@ -353,25 +306,14 @@ proc tentry {w args} {
 	return $w
 }
 proc tentry_widgetproc {w cmd args} {
-	global use_ttk
 	switch -- $cmd {
 		state {
-			if {$use_ttk} {
-				return [uplevel 1 [list _$w $cmd] $args]
-			} else {
-				if {[lsearch -exact $args pressed] != -1} {
-					_$w configure -background lightpink
-				} else {
-					_$w configure -background lightgreen
-				}
-			}
+			return [uplevel 1 [list _$w $cmd] $args]
 		}
 		configure {
-			if {$use_ttk} {
-				if {[set n [lsearch -exact $args -background]] != -1} {
-					set args [lreplace $args $n [incr n]]
-					if {[llength $args] == 0} {return}
-				}
+			if {[set n [lsearch -exact $args -background]] != -1} {
+				set args [lreplace $args $n [incr n]]
+				if {[llength $args] == 0} {return}
 			}
 			return [uplevel 1 [list _$w $cmd] $args]
 		}

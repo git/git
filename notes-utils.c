@@ -40,7 +40,7 @@ void create_notes_commit(struct repository *r,
 			NULL))
 		die("Failed to commit notes tree to database");
 
-	free_commit_list(parents_to_free);
+	commit_list_free(parents_to_free);
 }
 
 void commit_notes(struct repository *r, struct notes_tree *t, const char *msg)
@@ -162,7 +162,7 @@ struct notes_rewrite_cfg *init_copy_notes_for_rewrite(const char *cmd)
 		c->refs_from_env = 1;
 		string_list_add_refs_from_colon_sep(c->refs, rewrite_refs_env);
 	}
-	git_config(notes_rewrite_config, c);
+	repo_config(the_repository, notes_rewrite_config, c);
 	if (!c->enabled || !c->refs->nr) {
 		string_list_clear(c->refs, 0);
 		free(c->refs);

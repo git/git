@@ -6,6 +6,7 @@
 #define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
+#include "environment.h"
 #include "gettext.h"
 #include "hex.h"
 #include "lockfile.h"
@@ -31,7 +32,7 @@ static int list_tree(struct object_id *oid)
 
 	if (nr_trees >= MAX_UNPACK_TREES)
 		die("I cannot read more than %d trees", MAX_UNPACK_TREES);
-	tree = parse_tree_indirect(oid);
+	tree = repo_parse_tree_indirect(the_repository, oid);
 	if (!tree)
 		return -1;
 	trees[nr_trees++] = tree;
@@ -168,7 +169,7 @@ int cmd_read_tree(int argc,
 	opts.src_index = the_repository->index;
 	opts.dst_index = the_repository->index;
 
-	git_config(git_read_tree_config, NULL);
+	repo_config(the_repository, git_read_tree_config, NULL);
 
 	argc = parse_options(argc, argv, cmd_prefix, read_tree_options,
 			     read_tree_usage, 0);
@@ -267,7 +268,7 @@ int cmd_read_tree(int argc,
 	cache_tree_free(&the_repository->index->cache_tree);
 	for (i = 0; i < nr_trees; i++) {
 		struct tree *tree = trees[i];
-		if (parse_tree(tree) < 0)
+		if (repo_parse_tree(the_repository, tree) < 0)
 			return 128;
 		init_tree_desc(t+i, &tree->object.oid, tree->buffer, tree->size);
 	}

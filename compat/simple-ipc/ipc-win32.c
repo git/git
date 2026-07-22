@@ -686,7 +686,7 @@ static LPSECURITY_ATTRIBUTES get_sa(struct my_sa_data *d)
 		goto fail;
 	}
 
-	memset(ea, 0, NR_EA * sizeof(EXPLICIT_ACCESS));
+	MEMZERO_ARRAY(ea, NR_EA);
 
 	ea[0].grfAccessPermissions = GENERIC_READ | GENERIC_WRITE;
 	ea[0].grfAccessMode = SET_ACCESS;

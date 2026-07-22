@@ -162,18 +162,18 @@ static void am_state_init(struct am_state *state)
 
 	state->prec = 4;
 
-	git_config_get_bool("am.threeway", &state->threeway);
+	repo_config_get_bool(the_repository, "am.threeway", &state->threeway);
 
 	state->utf8 = 1;
 
-	git_config_get_bool("am.messageid", &state->message_id);
+	repo_config_get_bool(the_repository, "am.messageid", &state->message_id);
 
 	state->scissors = SCISSORS_UNSET;
 	state->quoted_cr = quoted_cr_unset;
 
 	strvec_init(&state->git_apply_opts);
 
-	if (!git_config_get_bool("commit.gpgsign", &gpgsign))
+	if (!repo_config_get_bool(the_repository, "commit.gpgsign", &gpgsign))
 		state->sign_commit = gpgsign ? "" : NULL;
 }
 
@@ -965,7 +965,7 @@ static int split_mail(struct am_state *state, enum patch_format patch_format,
 {
 	if (keep_cr < 0) {
 		keep_cr = 0;
-		git_config_get_bool("am.keepcr", &keep_cr);
+		repo_config_get_bool(the_repository, "am.keepcr", &keep_cr);
 	}
 
 	switch (patch_format) {
@@ -1408,7 +1408,7 @@ static void write_commit_patch(const struct am_state *state, struct commit *comm
 	rev_info.no_commit_id = 1;
 	rev_info.diffopt.flags.binary = 1;
 	rev_info.diffopt.flags.full_index = 1;
-	rev_info.diffopt.use_color = 0;
+	rev_info.diffopt.use_color = GIT_COLOR_NEVER;
 	rev_info.diffopt.file = fp;
 	rev_info.diffopt.close_file = 1;
 	add_pending_object(&rev_info, &commit->object, "");
@@ -1441,7 +1441,7 @@ static void write_index_patch(const struct am_state *state)
 	rev_info.disable_stdin = 1;
 	rev_info.no_commit_id = 1;
 	rev_info.diffopt.output_format = DIFF_FORMAT_PATCH;
-	rev_info.diffopt.use_color = 0;
+	rev_info.diffopt.use_color = GIT_COLOR_NEVER;
 	rev_info.diffopt.file = fp;
 	rev_info.diffopt.close_file = 1;
 	add_pending_object(&rev_info, &tree->object, "");
@@ -1726,7 +1726,7 @@ static void do_commit(const struct am_state *state)
 
 	run_hooks(the_repository, "post-applypatch");
 
-	free_commit_list(parents);
+	commit_list_free(parents);
 	strbuf_release(&sb);
 }
 
@@ -1937,7 +1937,7 @@ next:
 	 */
 	if (!state->rebasing) {
 		am_destroy(state);
-		run_auto_maintenance(state->quiet);
+		run_auto_maintenance(the_repository, state->quiet);
 	}
 }
 
@@ -1998,7 +1998,7 @@ static int fast_forward_to(struct tree *head, struct tree *remote, int reset)
 	struct unpack_trees_options opts;
 	struct tree_desc t[2];
 
-	if (parse_tree(head) || parse_tree(remote))
+	if (repo_parse_tree(the_repository, head) || repo_parse_tree(the_repository, remote))
 		return -1;
 
 	repo_hold_locked_index(the_repository, &lock_file, LOCK_DIE_ON_ERROR);
@@ -2038,7 +2038,7 @@ static int merge_tree(struct tree *tree)
 	struct unpack_trees_options opts;
 	struct tree_desc t[1];
 
-	if (parse_tree(tree))
+	if (repo_parse_tree(the_repository, tree))
 		return -1;
 
 	repo_hold_locked_index(the_repository, &lock_file, LOCK_DIE_ON_ERROR);
@@ -2071,11 +2071,11 @@ static int clean_index(const struct object_id *head, const struct object_id *rem
 	struct tree *head_tree, *remote_tree, *index_tree;
 	struct object_id index;
 
-	head_tree = parse_tree_indirect(head);
+	head_tree = repo_parse_tree_indirect(the_repository, head);
 	if (!head_tree)
 		return error(_("Could not parse object '%s'."), oid_to_hex(head));
 
-	remote_tree = parse_tree_indirect(remote);
+	remote_tree = repo_parse_tree_indirect(the_repository, remote);
 	if (!remote_tree)
 		return error(_("Could not parse object '%s'."), oid_to_hex(remote));
 
@@ -2089,7 +2089,7 @@ static int clean_index(const struct object_id *head, const struct object_id *rem
 				0, NULL))
 		return -1;
 
-	index_tree = parse_tree_indirect(&index);
+	index_tree = repo_parse_tree_indirect(the_repository, &index);
 	if (!index_tree)
 		return error(_("Could not parse object '%s'."), oid_to_hex(&index));
 
@@ -2406,6 +2406,7 @@ int cmd_am(int argc,
 			.type = OPTION_CALLBACK,
 			.long_name = "show-current-patch",
 			.value = &resume_mode,
+			.precision = sizeof(resume_mode),
 			.argh = "(diff|raw)",
 			.help = N_("show the patch being applied"),
 			.flags = PARSE_OPT_CMDMODE | PARSE_OPT_OPTARG | PARSE_OPT_NONEG | PARSE_OPT_LITERAL_ARGHELP,
@@ -2444,7 +2445,7 @@ int cmd_am(int argc,
 
 	show_usage_with_options_if_asked(argc, argv, usage, options);
 
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 
 	am_state_init(&state);
 

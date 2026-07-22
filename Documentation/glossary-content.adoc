@@ -297,8 +297,8 @@ This commit is referred to as a "merge commit", or sometimes just a
 	identified by its <<def_object_name,object name>>. The objects usually
 	live in `$GIT_DIR/objects/`.
 
-[[def_object_identifier]]object identifier (oid)::
-	Synonym for <<def_object_name,object name>>.
+[[def_object_identifier]]object identifier, object ID, oid::
+	Synonyms for <<def_object_name,object name>>.
 
 [[def_object_name]]object name::
 	The unique identifier of an <<def_object,object>>.  The
@@ -418,9 +418,8 @@ full pathname may have special meaning:
 
  - A leading "`**`" followed by a slash means match in all
    directories. For example, "`**/foo`" matches file or directory
-   "`foo`" anywhere, the same as pattern "`foo`". "`**/foo/bar`"
-   matches file or directory "`bar`" anywhere that is directly
-   under directory "`foo`".
+   "`foo`" anywhere. "`**/foo/bar`" matches file or directory "`bar`"
+   anywhere that is directly under directory "`foo`".
 
  - A trailing "`/**`" matches everything inside. For example,
    "`abc/**`" matches all files inside directory "abc", relative

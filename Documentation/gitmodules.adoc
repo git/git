@@ -70,7 +70,10 @@ submodule.<name>.ignore::
 --
 	all;; The submodule will never be considered modified (but will
 	    nonetheless show up in the output of status and commit when it has
-	    been staged).
+	    been staged). Add `(new commits)` can be overruled using the
+	    `git add --force <submodule.path>`.
+		The setting affects `status`, `update-index`, `diff` and `log`(due
+		to underlaying `diff`).
 
 	dirty;; All changes to the submodule's work tree will be ignored, only
 	    committed differences between the `HEAD` of the submodule and its

@@ -8,6 +8,10 @@ insert_final_newline = true
 indent_style = tab
 tab_width = 8
 
+[templates/hooks/*.sample]
+indent_style = tab
+tab_width = 8
+
 [*.py]
 indent_style = space
 indent_size = 4

@@ -22,9 +22,10 @@ struct complete_reflogs {
 	int nr, alloc;
 };
 
-static int read_one_reflog(struct object_id *ooid, struct object_id *noid,
-		const char *email, timestamp_t timestamp, int tz,
-		const char *message, void *cb_data)
+static int read_one_reflog(const char *refname UNUSED,
+			   struct object_id *ooid, struct object_id *noid,
+			   const char *email, timestamp_t timestamp, int tz,
+			   const char *message, void *cb_data)
 {
 	struct complete_reflogs *array = cb_data;
 	struct reflog_info *item;
@@ -156,7 +157,8 @@ int add_reflog_for_walk(struct reflog_walk_info *info,
 	int recno = -1;
 	struct string_list_item *item;
 	struct complete_reflogs *reflogs;
-	char *branch, *at = strchr(name, '@');
+	char *branch;
+	const char *at = strchr(name, '@');
 	struct commit_reflog *commit_reflog;
 	enum selector_type selector = SELECTOR_NONE;
 

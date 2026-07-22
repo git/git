@@ -38,6 +38,8 @@
 #include "trace2.h"
 #include "dir.h"
 #include "add-interactive.h"
+#include "strbuf.h"
+#include "quote.h"
 
 #define REFRESH_INDEX_DELAY_WARNING_IN_MS (2 * 1000)
 
@@ -46,6 +48,7 @@ static const char * const git_reset_usage[] = {
 	N_("git reset [-q] [<tree-ish>] [--] <pathspec>..."),
 	N_("git reset [-q] [--pathspec-from-file [--pathspec-file-nul]] [<tree-ish>]"),
 	N_("git reset --patch [<tree-ish>] [--] [<pathspec>...]"),
+	N_("DEPRECATED: git reset [-q] [--stdin [-z]] [<tree-ish>]"),
 	NULL
 };
 
@@ -118,7 +121,7 @@ static int reset_index(const char *ref, const struct object_id *oid, int reset_t
 		goto out;
 
 	if (reset_type == MIXED || reset_type == HARD) {
-		tree = parse_tree_indirect(oid);
+		tree = repo_parse_tree_indirect(the_repository, oid);
 		if (!tree) {
 			error(_("unable to read tree (%s)"), oid_to_hex(oid));
 			goto out;
@@ -346,6 +349,8 @@ int cmd_reset(int argc,
 	struct object_id oid;
 	struct pathspec pathspec;
 	int intent_to_add = 0;
+	struct interactive_options interactive_opts = INTERACTIVE_OPTIONS_INIT;
+	int nul_term_line = 0, read_from_stdin = 0;
 	const struct option options[] = {
 		OPT__QUIET(&quiet, N_("be quiet, only report errors")),
 		OPT_BOOL(0, "no-refresh", &no_refresh,
@@ -370,18 +375,34 @@ int cmd_reset(int argc,
 			       PARSE_OPT_OPTARG,
 			       option_parse_recurse_submodules_worktree_updater),
 		OPT_BOOL('p', "patch", &patch_mode, N_("select hunks interactively")),
+		OPT_BOOL(0, "auto-advance", &interactive_opts.auto_advance,
+			 N_("auto advance to the next file when selecting hunks interactively")),
+		OPT_DIFF_UNIFIED(&interactive_opts.context),
+		OPT_DIFF_INTERHUNK_CONTEXT(&interactive_opts.interhunkcontext),
 		OPT_BOOL('N', "intent-to-add", &intent_to_add,
 				N_("record only the fact that removed paths will be added later")),
 		OPT_PATHSPEC_FROM_FILE(&pathspec_from_file),
 		OPT_PATHSPEC_FILE_NUL(&pathspec_file_nul),
+		OPT_BOOL('z', NULL, &nul_term_line,
+			N_("DEPRECATED (use --pathspec-file-nul instead): paths are separated with NUL character")),
+		OPT_BOOL(0, "stdin", &read_from_stdin,
+				N_("DEPRECATED (use --pathspec-from-file=- instead): read paths from <stdin>")),
 		OPT_END()
 	};
 
-	git_config(git_reset_config, NULL);
+	repo_config(the_repository, git_reset_config, NULL);
 
 	argc = parse_options(argc, argv, prefix, options, git_reset_usage,
 						PARSE_OPT_KEEP_DASHDASH);
 	parse_args(&pathspec, argv, prefix, patch_mode, &rev);
+
+	if (read_from_stdin) {
+		warning(_("--stdin is deprecated, please use --pathspec-from-file=- instead"));
+		free(pathspec_from_file);
+		pathspec_from_file = xstrdup("-");
+		if (nul_term_line)
+			pathspec_file_nul = 1;
+	}
 
 	if (pathspec_from_file) {
 		if (patch_mode)
@@ -414,11 +435,16 @@ int cmd_reset(int argc,
 		struct tree *tree;
 		if (repo_get_oid_treeish(the_repository, rev, &oid))
 			die(_("Failed to resolve '%s' as a valid tree."), rev);
-		tree = parse_tree_indirect(&oid);
+		tree = repo_parse_tree_indirect(the_repository, &oid);
 		if (!tree)
 			die(_("Could not parse object '%s'."), rev);
 		oidcpy(&oid, &tree->object.oid);
 	}
+
+	if (interactive_opts.context < -1)
+		die(_("'%s' cannot be negative"), "--unified");
+	if (interactive_opts.interhunkcontext < -1)
+		die(_("'%s' cannot be negative"), "--inter-hunk-context");
 
 	prepare_repo_settings(the_repository);
 	the_repository->settings.command_requires_full_index = 0;
@@ -427,9 +453,16 @@ int cmd_reset(int argc,
 		if (reset_type != NONE)
 			die(_("options '%s' and '%s' cannot be used together"), "--patch", "--{hard,mixed,soft}");
 		trace2_cmd_mode("patch-interactive");
-		update_ref_status = !!run_add_p(the_repository, ADD_P_RESET, rev,
-				   &pathspec);
+		update_ref_status = !!run_add_p(the_repository, ADD_P_RESET,
+						&interactive_opts, rev, &pathspec, 0);
 		goto cleanup;
+	} else {
+		if (interactive_opts.context != -1)
+			die(_("the option '%s' requires '%s'"), "--unified", "--patch");
+		if (interactive_opts.interhunkcontext != -1)
+			die(_("the option '%s' requires '%s'"), "--inter-hunk-context", "--patch");
+		if (!interactive_opts.auto_advance)
+			die(_("the option '%s' requires '%s'"), "--no-auto-advance", "--patch");
 	}
 
 	/* git reset tree [--] paths... can be used to

@@ -209,6 +209,7 @@ static GIT_PATH_FUNC(rebase_path_reschedule_failed_exec, "rebase-merge/reschedul
 static GIT_PATH_FUNC(rebase_path_no_reschedule_failed_exec, "rebase-merge/no-reschedule-failed-exec")
 static GIT_PATH_FUNC(rebase_path_drop_redundant_commits, "rebase-merge/drop_redundant_commits")
 static GIT_PATH_FUNC(rebase_path_keep_redundant_commits, "rebase-merge/keep_redundant_commits")
+static GIT_PATH_FUNC(rebase_path_trailer, "rebase-merge/trailer")
 
 /*
  * A 'struct replay_ctx' represents the private state of the sequencer.
@@ -327,7 +328,7 @@ static int git_sequencer_config(const char *k, const char *v,
 void sequencer_init_config(struct replay_opts *opts)
 {
 	opts->default_msg_cleanup = COMMIT_MSG_CLEANUP_NONE;
-	git_config(git_sequencer_config, opts);
+	repo_config(the_repository, git_sequencer_config, opts);
 }
 
 static inline int is_rebase_i(const struct replay_opts *opts)
@@ -420,6 +421,7 @@ void replay_opts_release(struct replay_opts *opts)
 	if (opts->revs)
 		release_revisions(opts->revs);
 	free(opts->revs);
+	strvec_clear(&opts->trailer_args);
 	replay_ctx_release(ctx);
 	free(opts->ctx);
 }
@@ -767,7 +769,7 @@ static int do_recursive_merge(struct repository *r,
 		o.buffer_output = 2;
 	o.show_rename_progress = 1;
 
-	head_tree = parse_tree_indirect(head);
+	head_tree = repo_parse_tree_indirect(the_repository, head);
 	if (!head_tree)
 		return error(_("unable to read tree (%s)"), oid_to_hex(head));
 	next_tree = next ? repo_get_commit_tree(r, next) : empty_tree(r);
@@ -1087,7 +1089,6 @@ N_("you have staged changes in your working tree\n"
 #define CLEANUP_MSG (1<<3)
 #define VERIFY_MSG  (1<<4)
 #define CREATE_ROOT_COMMIT (1<<5)
-#define VERBATIM_MSG (1<<6)
 
 static int run_command_silent_on_success(struct child_process *cmd)
 {
@@ -1124,9 +1125,6 @@ static int run_git_commit(const char *defmsg,
 			  unsigned int flags)
 {
 	struct child_process cmd = CHILD_PROCESS_INIT;
-
-	if ((flags & CLEANUP_MSG) && (flags & VERBATIM_MSG))
-		BUG("CLEANUP_MSG and VERBATIM_MSG are mutually exclusive");
 
 	cmd.git_cmd = 1;
 
@@ -1166,8 +1164,6 @@ static int run_git_commit(const char *defmsg,
 		strvec_pushl(&cmd.args, "-C", "HEAD", NULL);
 	if ((flags & CLEANUP_MSG))
 		strvec_push(&cmd.args, "--cleanup=strip");
-	if ((flags & VERBATIM_MSG))
-		strvec_push(&cmd.args, "--cleanup=verbatim");
 	if ((flags & EDIT_MSG))
 		strvec_push(&cmd.args, "-e");
 	else if (!(flags & CLEANUP_MSG) &&
@@ -1298,32 +1294,40 @@ int update_head_with_reflog(const struct commit *old_head,
 	return ret;
 }
 
+static int pipe_from_strbuf(int hook_stdin_fd, void *pp_cb, void *pp_task_cb UNUSED)
+{
+	struct hook_cb_data *hook_cb = pp_cb;
+	struct strbuf *to_pipe = hook_cb->options->feed_pipe_ctx;
+	int ret;
+
+	if (!to_pipe)
+		BUG("pipe_from_strbuf called without feed_pipe_ctx");
+
+	ret = write_in_full(hook_stdin_fd, to_pipe->buf, to_pipe->len);
+	if (ret < 0 && errno != EPIPE)
+		return ret;
+
+	return 1; /* done writing */
+}
+
 static int run_rewrite_hook(const struct object_id *oldoid,
 			    const struct object_id *newoid)
 {
-	struct child_process proc = CHILD_PROCESS_INIT;
+	struct run_hooks_opt opt = RUN_HOOKS_OPT_INIT;
 	int code;
 	struct strbuf sb = STRBUF_INIT;
-	const char *hook_path = find_hook(the_repository, "post-rewrite");
 
-	if (!hook_path)
-		return 0;
-
-	strvec_pushl(&proc.args, hook_path, "amend", NULL);
-	proc.in = -1;
-	proc.stdout_to_stderr = 1;
-	proc.trace2_hook_name = "post-rewrite";
-
-	code = start_command(&proc);
-	if (code)
-		return code;
 	strbuf_addf(&sb, "%s %s\n", oid_to_hex(oldoid), oid_to_hex(newoid));
-	sigchain_push(SIGPIPE, SIG_IGN);
-	write_in_full(proc.in, sb.buf, sb.len);
-	close(proc.in);
+
+	opt.feed_pipe_ctx = &sb;
+	opt.feed_pipe = pipe_from_strbuf;
+
+	strvec_push(&opt.args, "amend");
+
+	code = run_hooks_opt(the_repository, "post-rewrite", &opt);
+
 	strbuf_release(&sb);
-	sigchain_pop(SIGPIPE);
-	return finish_command(&proc);
+	return code;
 }
 
 void commit_post_rewrite(struct repository *r,
@@ -1540,9 +1544,6 @@ static int try_to_commit(struct repository *r,
 	enum commit_msg_cleanup_mode cleanup;
 	int res = 0;
 
-	if ((flags & CLEANUP_MSG) && (flags & VERBATIM_MSG))
-		BUG("CLEANUP_MSG and VERBATIM_MSG are mutually exclusive");
-
 	if (parse_head(r, &current_head))
 		return -1;
 
@@ -1567,7 +1568,7 @@ static int try_to_commit(struct repository *r,
 			res = error(_("unable to parse commit author"));
 			goto out;
 		}
-		parents = copy_commit_list(current_head->parents);
+		parents = commit_list_copy(current_head->parents);
 		extra = read_commit_extra_headers(current_head, exclude_gpgsig);
 	} else if (current_head &&
 		   (!(flags & CREATE_ROOT_COMMIT) || (flags & AMEND_MSG))) {
@@ -1618,8 +1619,6 @@ static int try_to_commit(struct repository *r,
 
 	if (flags & CLEANUP_MSG)
 		cleanup = COMMIT_MSG_CLEANUP_ALL;
-	else if (flags & VERBATIM_MSG)
-		cleanup = COMMIT_MSG_CLEANUP_NONE;
 	else if ((opts->signoff || opts->record_origin) &&
 		 !opts->explicit_cleanup)
 		cleanup = COMMIT_MSG_CLEANUP_SPACE;
@@ -1701,7 +1700,7 @@ static int try_to_commit(struct repository *r,
 
 out:
 	free_commit_extra_headers(extra);
-	free_commit_list(parents);
+	commit_list_free(parents);
 	strbuf_release(&err);
 	strbuf_release(&commit_msg);
 	free(amend_author);
@@ -2030,11 +2029,14 @@ static int append_squash_message(struct strbuf *buf, const char *body,
 	if (is_fixup_flag(command, flag) && !seen_squash(ctx)) {
 		/*
 		 * We're replacing the commit message so we need to
-		 * append the Signed-off-by: trailer if the user
-		 * requested '--signoff'.
+		 * append any trailers if the user requested
+		 * '--signoff' or '--trailer'.
 		 */
 		if (opts->signoff)
 			append_signoff(buf, 0, 0);
+
+		if (opts->trailer_args.nr)
+			amend_strbuf_with_trailers(buf, &opts->trailer_args);
 
 		if ((command == TODO_FIXUP) &&
 		    (flag & TODO_REPLACE_FIXUP_MSG) &&
@@ -2436,7 +2438,6 @@ static int do_pick_commit(struct repository *r,
 		if (!final_fixup)
 			msg_file = rebase_path_squash_msg();
 		else if (file_exists(rebase_path_fixup_msg())) {
-			flags |= VERBATIM_MSG;
 			msg_file = rebase_path_fixup_msg();
 		} else {
 			const char *dest = git_path_squash_msg(r);
@@ -2454,6 +2455,9 @@ static int do_pick_commit(struct repository *r,
 
 	if (opts->signoff && !is_fixup(command))
 		append_signoff(&ctx->message, 0, 0);
+
+	if (opts->trailer_args.nr && !is_fixup(command))
+		amend_strbuf_with_trailers(&ctx->message, &opts->trailer_args);
 
 	if (is_rebase_i(opts) && write_author_script(msg.message) < 0)
 		res = -1;
@@ -2480,8 +2484,8 @@ static int do_pick_commit(struct repository *r,
 		res |= try_merge_command(r, opts->strategy,
 					 opts->xopts.nr, opts->xopts.v,
 					common, oid_to_hex(&head), remotes);
-		free_commit_list(common);
-		free_commit_list(remotes);
+		commit_list_free(common);
+		commit_list_free(remotes);
 	}
 
 	/*
@@ -2721,6 +2725,7 @@ static int check_merge_commit_insn(enum todo_command command)
 		return error(_("cannot squash merge commit into another commit"));
 
 	case TODO_MERGE:
+	case TODO_DROP:
 		return 0;
 
 	default:
@@ -3183,6 +3188,33 @@ static void read_strategy_opts(struct replay_opts *opts, struct strbuf *buf)
 	parse_strategy_opts(opts, buf->buf);
 }
 
+static int read_trailers(struct replay_opts *opts, struct strbuf *buf)
+{
+	ssize_t len;
+
+	strbuf_reset(buf);
+	len = strbuf_read_file(buf, rebase_path_trailer(), 0);
+	if (len > 0) {
+		char *p = buf->buf, *nl;
+
+		trailer_config_init();
+
+		while ((nl = strchr(p, '\n'))) {
+			*nl = '\0';
+			if (!*p)
+				return error(_("trailers file contains empty line"));
+			strvec_push(&opts->trailer_args, p);
+			p = nl + 1;
+		}
+	} else if (!len) {
+		return error(_("trailers file is empty"));
+	} else if (errno != ENOENT) {
+		return error(_("cannot read trailers files"));
+	}
+
+	return 0;
+}
+
 static int read_populate_opts(struct replay_opts *opts)
 {
 	struct replay_ctx *ctx = opts->ctx;
@@ -3244,6 +3276,11 @@ static int read_populate_opts(struct replay_opts *opts)
 			opts->keep_redundant_commits = 1;
 
 		read_strategy_opts(opts, &buf);
+
+		if (read_trailers(opts, &buf)) {
+			ret = -1;
+			goto done_rebase_i;
+		}
 		strbuf_reset(&buf);
 
 		if (read_oneliner(&ctx->current_fixups,
@@ -3339,6 +3376,14 @@ int write_basic_state(struct replay_opts *opts, const char *head_name,
 		write_file(rebase_path_reschedule_failed_exec(), "%s", "");
 	else
 		write_file(rebase_path_no_reschedule_failed_exec(), "%s", "");
+	if (opts->trailer_args.nr) {
+		struct strbuf buf = STRBUF_INIT;
+
+		for (size_t i = 0; i < opts->trailer_args.nr; i++)
+			strbuf_addf(&buf, "%s\n", opts->trailer_args.v[i]);
+		write_file(rebase_path_trailer(), "%s", buf.buf);
+		strbuf_release(&buf);
+	}
 
 	return 0;
 }
@@ -3650,57 +3695,57 @@ static int save_opts(struct replay_opts *opts)
 	int res = 0;
 
 	if (opts->no_commit)
-		res |= git_config_set_in_file_gently(opts_file,
+		res |= repo_config_set_in_file_gently(the_repository, opts_file,
 					"options.no-commit", NULL, "true");
 	if (opts->edit >= 0)
-		res |= git_config_set_in_file_gently(opts_file, "options.edit", NULL,
+		res |= repo_config_set_in_file_gently(the_repository, opts_file, "options.edit", NULL,
 						     opts->edit ? "true" : "false");
 	if (opts->allow_empty)
-		res |= git_config_set_in_file_gently(opts_file,
+		res |= repo_config_set_in_file_gently(the_repository, opts_file,
 					"options.allow-empty", NULL, "true");
 	if (opts->allow_empty_message)
-		res |= git_config_set_in_file_gently(opts_file,
+		res |= repo_config_set_in_file_gently(the_repository, opts_file,
 				"options.allow-empty-message", NULL, "true");
 	if (opts->drop_redundant_commits)
-		res |= git_config_set_in_file_gently(opts_file,
+		res |= repo_config_set_in_file_gently(the_repository, opts_file,
 				"options.drop-redundant-commits", NULL, "true");
 	if (opts->keep_redundant_commits)
-		res |= git_config_set_in_file_gently(opts_file,
+		res |= repo_config_set_in_file_gently(the_repository, opts_file,
 				"options.keep-redundant-commits", NULL, "true");
 	if (opts->signoff)
-		res |= git_config_set_in_file_gently(opts_file,
+		res |= repo_config_set_in_file_gently(the_repository, opts_file,
 					"options.signoff", NULL, "true");
 	if (opts->record_origin)
-		res |= git_config_set_in_file_gently(opts_file,
+		res |= repo_config_set_in_file_gently(the_repository, opts_file,
 					"options.record-origin", NULL, "true");
 	if (opts->allow_ff)
-		res |= git_config_set_in_file_gently(opts_file,
+		res |= repo_config_set_in_file_gently(the_repository, opts_file,
 					"options.allow-ff", NULL, "true");
 	if (opts->mainline) {
 		struct strbuf buf = STRBUF_INIT;
 		strbuf_addf(&buf, "%d", opts->mainline);
-		res |= git_config_set_in_file_gently(opts_file,
+		res |= repo_config_set_in_file_gently(the_repository, opts_file,
 					"options.mainline", NULL, buf.buf);
 		strbuf_release(&buf);
 	}
 	if (opts->strategy)
-		res |= git_config_set_in_file_gently(opts_file,
+		res |= repo_config_set_in_file_gently(the_repository, opts_file,
 					"options.strategy", NULL, opts->strategy);
 	if (opts->gpg_sign)
-		res |= git_config_set_in_file_gently(opts_file,
+		res |= repo_config_set_in_file_gently(the_repository, opts_file,
 					"options.gpg-sign", NULL, opts->gpg_sign);
 	for (size_t i = 0; i < opts->xopts.nr; i++)
-		res |= git_config_set_multivar_in_file_gently(opts_file,
+		res |= repo_config_set_multivar_in_file_gently(the_repository, opts_file,
 				"options.strategy-option",
 				opts->xopts.v[i], "^$", NULL, 0);
 	if (opts->allow_rerere_auto)
-		res |= git_config_set_in_file_gently(opts_file,
+		res |= repo_config_set_in_file_gently(the_repository, opts_file,
 				"options.allow-rerere-auto", NULL,
 				opts->allow_rerere_auto == RERERE_AUTOUPDATE ?
 				"true" : "false");
 
 	if (opts->explicit_cleanup)
-		res |= git_config_set_in_file_gently(opts_file,
+		res |= repo_config_set_in_file_gently(the_repository, opts_file,
 				"options.default-msg-cleanup", NULL,
 				describe_cleanup_mode(opts->default_msg_cleanup));
 	return res;
@@ -4055,7 +4100,7 @@ static int do_reset(struct repository *r,
 		goto cleanup;
 	}
 
-	tree = parse_tree_indirect(&oid);
+	tree = repo_parse_tree_indirect(the_repository, &oid);
 	if (!tree)
 		return error(_("unable to read tree (%s)"), oid_to_hex(&oid));
 	prime_cache_tree(r, r->index, tree);
@@ -4320,7 +4365,7 @@ static int do_merge(struct repository *r,
 		      git_path_merge_head(r), 0);
 	write_message("no-ff", 5, git_path_merge_mode(r), 0);
 
-	bases = reverse_commit_list(bases);
+	bases = commit_list_reverse(bases);
 
 	repo_read_index(r);
 	init_ui_merge_options(&o, r);
@@ -4384,8 +4429,8 @@ static int do_merge(struct repository *r,
 leave_merge:
 	strbuf_release(&ref_name);
 	rollback_lock_file(&lock);
-	free_commit_list(to_merge);
-	free_commit_list(bases);
+	commit_list_free(to_merge);
+	commit_list_free(bases);
 	return ret;
 }
 
@@ -5834,7 +5879,7 @@ static int make_script_with_merges(struct pretty_print_context *pp,
 		*cmd_reset = abbr ? "t" : "reset",
 		*cmd_merge = abbr ? "m" : "merge";
 
-	git_config_get_int("rebase.maxlabellength", &state.max_label_length);
+	repo_config_get_int(the_repository, "rebase.maxlabellength", &state.max_label_length);
 
 	oidmap_init(&commit2todo, 0);
 	oidmap_init(&state.commit2label, 0);
@@ -6042,11 +6087,11 @@ static int make_script_with_merges(struct pretty_print_context *pp,
 			oidset_insert(&shown, oid);
 		}
 
-		free_commit_list(list);
+		commit_list_free(list);
 	}
 
-	free_commit_list(commits);
-	free_commit_list(tips);
+	commit_list_free(commits);
+	commit_list_free(tips);
 
 	strbuf_release(&label_from_message);
 	strbuf_release(&oneline);
@@ -6063,8 +6108,8 @@ static int make_script_with_merges(struct pretty_print_context *pp,
 	return 0;
 }
 
-int sequencer_make_script(struct repository *r, struct strbuf *out, int argc,
-			  const char **argv, unsigned flags)
+int sequencer_make_script(struct repository *r, struct strbuf *out,
+			  struct strvec *argv, unsigned flags)
 {
 	char *format = NULL;
 	struct pretty_print_context pp = {0};
@@ -6089,7 +6134,7 @@ int sequencer_make_script(struct repository *r, struct strbuf *out, int argc,
 	revs.topo_order = 1;
 
 	revs.pretty_given = 1;
-	git_config_get_string("rebase.instructionFormat", &format);
+	repo_config_get_string(the_repository, "rebase.instructionFormat", &format);
 	if (!format || !*format) {
 		free(format);
 		format = xstrdup("# %s");
@@ -6105,7 +6150,8 @@ int sequencer_make_script(struct repository *r, struct strbuf *out, int argc,
 	pp.fmt = revs.commit_format;
 	pp.output_encoding = get_log_output_encoding();
 
-	if (setup_revisions(argc, argv, &revs, NULL) > 1) {
+	setup_revisions_from_strvec(argv, &revs, NULL);
+	if (argv->nr > 1) {
 		ret = error(_("make_script: unhandled options"));
 		goto cleanup;
 	}

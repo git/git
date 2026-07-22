@@ -273,6 +273,18 @@ sub highlight_line {
 # or suffix (disregarding boring bits like whitespace and colorization).
 sub is_pair_interesting {
 	my ($a, $pa, $sa, $b, $pb, $sb) = @_;
+
+	# We hit this case if the prefix consumed the entire line, meaning
+	# that two lines are identical. This generally shouldn't happen,
+	# since it implies the diff isn't minimal (you could shrink the hunk by
+	# making this a context line). But you can see it when the line
+	# content is the same, but the trailing newline is dropped, like:
+	#
+	#   -foo
+	#   +foo
+	#   \No newline at end of file
+	return 0 if $pa == @$a || $pb == @$b;
+
 	my $prefix_a = join('', @$a[0..($pa-1)]);
 	my $prefix_b = join('', @$b[0..($pb-1)]);
 	my $suffix_a = join('', @$a[($sa+1)..$#$a]);

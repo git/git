@@ -1,16 +1,77 @@
 #!/bin/sh
 
-test_description='git-hook command'
+test_description='git-hook command and config-managed multihooks'
 
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-terminal.sh
+
+setup_hooks () {
+	test_config hook.ghi.command "/path/ghi"
+	test_config hook.ghi.event pre-commit --add
+	test_config hook.ghi.event test-hook --add
+	test_config_global hook.def.command "/path/def"
+	test_config_global hook.def.event pre-commit --add
+}
+
+setup_hookdir () {
+	mkdir .git/hooks
+	write_script .git/hooks/pre-commit <<-EOF
+	echo \"Legacy Hook\"
+	EOF
+	test_when_finished rm -rf .git/hooks
+}
 
 test_expect_success 'git hook usage' '
 	test_expect_code 129 git hook &&
 	test_expect_code 129 git hook run &&
 	test_expect_code 129 git hook run -h &&
+	test_expect_code 129 git hook list -h &&
 	test_expect_code 129 git hook run --unknown 2>err &&
+	test_expect_code 129 git hook list &&
+	test_expect_code 129 git hook list -h &&
 	grep "unknown option" err
+'
+
+test_expect_success 'git hook list: nonexistent hook' '
+	cat >stderr.expect <<-\EOF &&
+	warning: No hooks found for event '\''test-hook'\''
+	EOF
+	test_expect_code 1 git hook list test-hook 2>stderr.actual &&
+	test_cmp stderr.expect stderr.actual
+'
+
+test_expect_success 'git hook list: traditional hook from hookdir' '
+	test_hook test-hook <<-EOF &&
+	echo Test hook
+	EOF
+
+	cat >expect <<-\EOF &&
+	hook from hookdir
+	EOF
+	git hook list test-hook >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'git hook list: configured hook' '
+	test_config hook.myhook.command "echo Hello" &&
+	test_config hook.myhook.event test-hook --add &&
+
+	echo "myhook" >expect &&
+	git hook list test-hook >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'git hook list: -z shows NUL-terminated output' '
+	test_hook test-hook <<-EOF &&
+	echo Test hook
+	EOF
+	test_config hook.myhook.command "echo Hello" &&
+	test_config hook.myhook.event test-hook --add &&
+
+	printf "myhookQhook from hookdirQ" >expect &&
+	git hook list -z test-hook >actual.raw &&
+	nul_to_q <actual.raw >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'git hook run: nonexistent hook' '
@@ -83,12 +144,18 @@ test_expect_success 'git hook run -- pass arguments' '
 	test_cmp expect actual
 '
 
-test_expect_success 'git hook run -- out-of-repo runs excluded' '
-	test_hook test-hook <<-EOF &&
-	echo Test hook
-	EOF
+test_expect_success 'git hook run: out-of-repo runs execute global hooks' '
+	test_config_global hook.global-hook.event test-hook --add &&
+	test_config_global hook.global-hook.command "echo no repo no problems" --add &&
 
-	nongit test_must_fail git hook run test-hook
+	echo "global-hook" >expect &&
+	nongit git hook list test-hook >actual &&
+	test_cmp expect actual &&
+
+	echo "no repo no problems" >expect &&
+
+	nongit git hook run test-hook 2>actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'git -c core.hooksPath=<PATH> hook run' '
@@ -150,6 +217,170 @@ test_expect_success TTY 'git commit: stdout and stderr are connected to a TTY' '
 	test_hook_tty commit -m"B.new"
 '
 
+test_expect_success 'git hook list orders by config order' '
+	setup_hooks &&
+
+	cat >expected <<-\EOF &&
+	def
+	ghi
+	EOF
+
+	git hook list pre-commit >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'git hook list reorders on duplicate event declarations' '
+	setup_hooks &&
+
+	# 'def' is usually configured globally; move it to the end by
+	# configuring it locally.
+	test_config hook.def.event "pre-commit" --add &&
+
+	cat >expected <<-\EOF &&
+	ghi
+	def
+	EOF
+
+	git hook list pre-commit >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'git hook list: empty event value resets events' '
+	setup_hooks &&
+
+	# ghi is configured for pre-commit; reset it with an empty value
+	test_config hook.ghi.event "" --add &&
+
+	# only def should remain for pre-commit
+	echo "def" >expected &&
+	git hook list pre-commit >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'hook can be configured for multiple events' '
+	setup_hooks &&
+
+	# 'ghi' should be included in both 'pre-commit' and 'test-hook'
+	git hook list pre-commit >actual &&
+	grep "ghi" actual &&
+	git hook list test-hook >actual &&
+	grep "ghi" actual
+'
+
+test_expect_success 'git hook list shows hooks from the hookdir' '
+	setup_hookdir &&
+
+	cat >expected <<-\EOF &&
+	hook from hookdir
+	EOF
+
+	git hook list pre-commit >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'inline hook definitions execute oneliners' '
+	test_config hook.oneliner.event "pre-commit" &&
+	test_config hook.oneliner.command "echo \"Hello World\"" &&
+
+	echo "Hello World" >expected &&
+
+	# hooks are run with stdout_to_stderr = 1
+	git hook run pre-commit 2>actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'inline hook definitions resolve paths' '
+	write_script sample-hook.sh <<-\EOF &&
+	echo \"Sample Hook\"
+	EOF
+
+	test_when_finished "rm sample-hook.sh" &&
+
+	test_config hook.sample-hook.event pre-commit &&
+	test_config hook.sample-hook.command "\"$(pwd)/sample-hook.sh\"" &&
+
+	echo \"Sample Hook\" >expected &&
+
+	# hooks are run with stdout_to_stderr = 1
+	git hook run pre-commit 2>actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'hookdir hook included in git hook run' '
+	setup_hookdir &&
+
+	echo \"Legacy Hook\" >expected &&
+
+	# hooks are run with stdout_to_stderr = 1
+	git hook run pre-commit 2>actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'stdin to multiple hooks' '
+	test_config hook.stdin-a.event "test-hook" &&
+	test_config hook.stdin-a.command "xargs -P1 -I% echo a%" &&
+	test_config hook.stdin-b.event "test-hook" &&
+	test_config hook.stdin-b.command "xargs -P1 -I% echo b%" &&
+
+	cat >input <<-\EOF &&
+	1
+	2
+	3
+	EOF
+
+	cat >expected <<-\EOF &&
+	a1
+	a2
+	a3
+	b1
+	b2
+	b3
+	EOF
+
+	git hook run --to-stdin=input test-hook 2>actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'rejects hooks with no commands configured' '
+	test_config hook.broken.event "test-hook" &&
+	test_must_fail git hook list test-hook 2>actual &&
+	test_grep "hook.broken.command" actual &&
+	test_must_fail git hook run test-hook 2>actual &&
+	test_grep "hook.broken.command" actual
+'
+
+test_expect_success 'disabled hook is not run' '
+	test_config hook.skipped.event "test-hook" &&
+	test_config hook.skipped.command "echo \"Should not run\"" &&
+	test_config hook.skipped.enabled false &&
+
+	git hook run --ignore-missing test-hook 2>actual &&
+	test_must_be_empty actual
+'
+
+test_expect_success 'disabled hook does not appear in git hook list' '
+	test_config hook.active.event "pre-commit" &&
+	test_config hook.active.command "echo active" &&
+	test_config hook.inactive.event "pre-commit" &&
+	test_config hook.inactive.command "echo inactive" &&
+	test_config hook.inactive.enabled false &&
+
+	git hook list pre-commit >actual &&
+	test_grep "active" actual &&
+	test_grep ! "inactive" actual
+'
+
+test_expect_success 'globally disabled hook can be re-enabled locally' '
+	test_config_global hook.global-hook.event "test-hook" &&
+	test_config_global hook.global-hook.command "echo \"global-hook ran\"" &&
+	test_config_global hook.global-hook.enabled false &&
+	test_config hook.global-hook.enabled true &&
+
+	echo "global-hook ran" >expected &&
+	git hook run test-hook 2>actual &&
+	test_cmp expected actual
+'
+
 test_expect_success 'git hook run a hook with a bad shebang' '
 	test_when_finished "rm -rf bad-hooks" &&
 	mkdir bad-hooks &&
@@ -167,6 +398,7 @@ test_expect_success 'git hook run a hook with a bad shebang' '
 '
 
 test_expect_success 'stdin to hooks' '
+	mkdir -p .git/hooks &&
 	write_script .git/hooks/test-hook <<-\EOF &&
 	echo BEGIN stdin
 	cat
@@ -182,6 +414,143 @@ test_expect_success 'stdin to hooks' '
 	echo hello >input &&
 	git hook run --to-stdin=input test-hook 2>actual &&
 	test_cmp expect actual
+'
+
+check_stdout_separate_from_stderr () {
+	for hook in "$@"
+	do
+		# Ensure hook's stdout is only in stdout, not stderr
+		test_grep "Hook $hook stdout" stdout.actual || return 1
+		test_grep ! "Hook $hook stdout" stderr.actual || return 1
+
+		# Ensure hook's stderr is only in stderr, not stdout
+		test_grep "Hook $hook stderr" stderr.actual || return 1
+		test_grep ! "Hook $hook stderr" stdout.actual || return 1
+	done
+}
+
+check_stdout_merged_to_stderr () {
+	for hook in "$@"
+	do
+		# Ensure hook's stdout is only in stderr, not stdout
+		test_grep "Hook $hook stdout" stderr.actual || return 1
+		test_grep ! "Hook $hook stdout" stdout.actual || return 1
+
+		# Ensure hook's stderr is only in stderr, not stdout
+		test_grep "Hook $hook stderr" stderr.actual || return 1
+		test_grep ! "Hook $hook stderr" stdout.actual || return 1
+	done
+}
+
+setup_hooks () {
+	for hook in "$@"
+	do
+		test_hook $hook <<-EOF
+		echo >&1 Hook $hook stdout
+		echo >&2 Hook $hook stderr
+		EOF
+	done
+}
+
+test_expect_success 'client hooks: pre-push expects separate stdout and stderr' '
+	test_when_finished "rm -f stdout.actual stderr.actual" &&
+	git init --bare remote &&
+	git remote add origin remote &&
+	test_commit A &&
+	setup_hooks pre-push &&
+	git push origin HEAD:main >stdout.actual 2>stderr.actual &&
+	check_stdout_separate_from_stderr pre-push
+'
+
+test_expect_success 'client hooks: commit hooks expect stdout redirected to stderr' '
+	hooks="pre-commit prepare-commit-msg \
+		commit-msg post-commit \
+		reference-transaction" &&
+	setup_hooks $hooks &&
+	test_when_finished "rm -f stdout.actual stderr.actual" &&
+	git checkout -B main &&
+	git checkout -b branch-a &&
+	test_commit commit-on-branch-a &&
+	git commit --allow-empty -m "Test" >stdout.actual 2>stderr.actual &&
+	check_stdout_merged_to_stderr $hooks
+'
+
+test_expect_success 'client hooks: checkout hooks expect stdout redirected to stderr' '
+	setup_hooks post-checkout reference-transaction &&
+	test_when_finished "rm -f stdout.actual stderr.actual" &&
+	git checkout -b new-branch main >stdout.actual 2>stderr.actual &&
+	check_stdout_merged_to_stderr post-checkout reference-transaction
+'
+
+test_expect_success 'client hooks: merge hooks expect stdout redirected to stderr' '
+	setup_hooks pre-merge-commit post-merge reference-transaction &&
+	test_when_finished "rm -f stdout.actual stderr.actual" &&
+	test_commit new-branch-commit &&
+	git merge --no-ff branch-a >stdout.actual 2>stderr.actual &&
+	check_stdout_merged_to_stderr pre-merge-commit post-merge reference-transaction
+'
+
+test_expect_success 'client hooks: post-rewrite hooks expect stdout redirected to stderr' '
+	setup_hooks post-rewrite reference-transaction &&
+	test_when_finished "rm -f stdout.actual stderr.actual" &&
+	git commit --amend --allow-empty --no-edit >stdout.actual 2>stderr.actual &&
+	check_stdout_merged_to_stderr post-rewrite reference-transaction
+'
+
+test_expect_success 'client hooks: applypatch hooks expect stdout redirected to stderr' '
+	setup_hooks applypatch-msg pre-applypatch post-applypatch &&
+	test_when_finished "rm -f stdout.actual stderr.actual" &&
+	git checkout -b branch-b main &&
+	test_commit branch-b &&
+	git format-patch -1 --stdout >patch &&
+	git checkout -b branch-c main &&
+	git am patch >stdout.actual 2>stderr.actual &&
+	check_stdout_merged_to_stderr applypatch-msg pre-applypatch post-applypatch
+'
+
+test_expect_success 'client hooks: rebase hooks expect stdout redirected to stderr' '
+	setup_hooks pre-rebase &&
+	test_when_finished "rm -f stdout.actual stderr.actual" &&
+	git checkout -b branch-d main &&
+	test_commit branch-d &&
+	git checkout main &&
+	test_commit diverge-main &&
+	git checkout branch-d &&
+	git rebase main >stdout.actual 2>stderr.actual &&
+	check_stdout_merged_to_stderr pre-rebase
+'
+
+test_expect_success 'client hooks: post-index-change expects stdout redirected to stderr' '
+	setup_hooks post-index-change &&
+	test_when_finished "rm -f stdout.actual stderr.actual" &&
+	oid=$(git hash-object -w --stdin </dev/null) &&
+	git update-index --add --cacheinfo 100644 $oid new-file \
+	    >stdout.actual 2>stderr.actual &&
+	check_stdout_merged_to_stderr post-index-change
+'
+
+test_expect_success 'server hooks expect stdout redirected to stderr' '
+	test_when_finished "rm -f stdout.actual stderr.actual" &&
+	git init --bare remote-server &&
+	git remote add origin-server remote-server &&
+	cd remote-server &&
+	setup_hooks pre-receive update post-receive post-update &&
+	cd .. &&
+	git push origin-server HEAD:new-branch >stdout.actual 2>stderr.actual &&
+	check_stdout_merged_to_stderr pre-receive update post-receive post-update
+'
+
+test_expect_success 'server push-to-checkout hook expects stdout redirected to stderr' '
+	test_when_finished "rm -f stdout.actual stderr.actual" &&
+	git init server &&
+	git -C server checkout -b main &&
+	test_config -C server receive.denyCurrentBranch updateInstead &&
+	git remote add origin-server-2 server &&
+	cd server &&
+	setup_hooks push-to-checkout &&
+	cd .. &&
+	git push origin-server-2 HEAD:main >stdout.actual 2>stderr.actual &&
+	check_stdout_merged_to_stderr push-to-checkout
 '
 
 test_done

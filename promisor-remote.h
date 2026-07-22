@@ -15,6 +15,7 @@ struct object_id;
 struct promisor_remote {
 	struct promisor_remote *next;
 	char *partial_clone_filter;
+	char *advertised_filter;
 	unsigned int accepted : 1;
 	const char name[FLEX_ARRAY];
 };
@@ -48,12 +49,12 @@ char *promisor_remote_info(struct repository *repo);
 /*
  * Prepare a reply to a "promisor-remote" advertisement from a server.
  * Check the value of "promisor.acceptfromserver" and maybe the
- * configured promisor remotes, if any, to prepare the reply.
- * Return value is NULL if no promisor remote from the server
- * is accepted. Otherwise it contains the names of the accepted promisor
- * remotes separated by ';'. See gitprotocol-v2(5).
+ * configured promisor remotes, if any, to prepare the reply. If the
+ * `accepted_out` argument is not NULL, it is set to either NULL or to
+ * the names of the accepted promisor remotes separated by ';' if
+ * any. See gitprotocol-v2(5).
  */
-char *promisor_remote_reply(const char *info);
+void promisor_remote_reply(const char *info, char **accepted_out);
 
 /*
  * Set the 'accepted' flag for some promisor remotes. Useful on the
@@ -66,5 +67,11 @@ void mark_promisor_remotes_as_accepted(struct repository *repo, const char *remo
  * Has any promisor remote been accepted by the client?
  */
 int repo_has_accepted_promisor_remote(struct repository *r);
+
+/*
+ * Use the filters from the accepted remotes to create a combined
+ * filter (useful in `--filter=auto` mode).
+ */
+char *promisor_remote_construct_filter(struct repository *repo);
 
 #endif /* PROMISOR_REMOTE_H */

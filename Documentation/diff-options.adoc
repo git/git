@@ -37,32 +37,32 @@ endif::git-diff[]
 endif::git-format-patch[]
 
 ifdef::git-log[]
--m::
+`-m`::
 	Show diffs for merge commits in the default format. This is
 	similar to `--diff-merges=on`, except `-m` will
 	produce no output unless `-p` is given as well.
 
--c::
+`-c`::
 	Produce combined diff output for merge commits.
 	Shortcut for `--diff-merges=combined -p`.
 
---cc::
+`--cc`::
 	Produce dense combined diff output for merge commits.
 	Shortcut for `--diff-merges=dense-combined -p`.
 
---dd::
+`--dd`::
 	Produce diff with respect to first parent for both merge and
 	regular commits.
 	Shortcut for `--diff-merges=first-parent -p`.
 
---remerge-diff::
+`--remerge-diff`::
 	Produce remerge-diff output for merge commits.
 	Shortcut for `--diff-merges=remerge -p`.
 
---no-diff-merges::
+`--no-diff-merges`::
 	Synonym for `--diff-merges=off`.
 
---diff-merges=<format>::
+`--diff-merges=<format>`::
 	Specify diff format to be used for merge commits. Default is
 	{diff-merges-default} unless `--first-parent` is in use, in
 	which case `first-parent` is the default.
@@ -70,48 +70,54 @@ ifdef::git-log[]
 The following formats are supported:
 +
 --
-off, none::
+`off`::
+`none`::
 	Disable output of diffs for merge commits. Useful to override
 	implied value.
 
-on, m::
+`on`::
+`m`::
 	Make diff output for merge commits to be shown in the default
 	format. The default format can be changed using
 	`log.diffMerges` configuration variable, whose default value
 	is `separate`.
 
-first-parent, 1::
+`first-parent`::
+`1`::
 	Show full diff with respect to first parent. This is the same
 	format as `--patch` produces for non-merge commits.
 
-separate::
+`separate`::
 	Show full diff with respect to each of parents.
 	Separate log entry and diff is generated for each parent.
 
-combined, c::
+`combined`::
+`c`::
 	Show differences from each of the parents to the merge
 	result simultaneously instead of showing pairwise diff between
 	a parent and the result one at a time. Furthermore, it lists
 	only files which were modified from all parents.
 
-dense-combined, cc::
+`dense-combined`::
+`cc`::
 	Further compress output produced by `--diff-merges=combined`
 	by omitting uninteresting hunks whose contents in the parents
 	have only two variants and the merge result picks one of them
 	without modification.
 
-remerge, r::
-	Remerge two-parent merge commits to create a temporary tree
+`remerge`::
+`r`:: Remerge two-parent merge commits to create a temporary tree
 	object--potentially containing files with conflict markers
 	and such.  A diff is then shown between that temporary tree
 	and the actual merge commit.
+--
 +
 The output emitted when this option is used is subject to change, and
 so is its interaction with other options (unless explicitly
 documented).
---
 
---combined-all-paths::
+
+`--combined-all-paths`::
 	Cause combined diffs (used for merge commits) to
 	list the name of the file from all parents.  It thus only has
 	effect when `--diff-merges=[dense-]combined` is in use, and
@@ -121,8 +127,10 @@ endif::git-log[]
 
 `-U<n>`::
 `--unified=<n>`::
-	Generate diffs with _<n>_ lines of context instead of
-	the usual three.
+	Generate diffs with _<n>_ lines of context. The number of context
+	lines defaults to `diff.context` or 3 if the configuration variable
+	is unset. (`-U` without `<n>` is silently accepted as a synonym for
+	`-p` due to a historical accident).
 ifndef::git-format-patch[]
 	Implies `--patch`.
 endif::git-format-patch[]
@@ -191,26 +199,7 @@ and starts with _<text>_, this algorithm attempts to prevent it from
 appearing as a deletion or addition in the output. It uses the "patience
 diff" algorithm internally.
 
-`--diff-algorithm=(patience|minimal|histogram|myers)`::
-	Choose a diff algorithm. The variants are as follows:
-+
---
-   `default`;;
-   `myers`;;
-	The basic greedy diff algorithm. Currently, this is the default.
-   `minimal`;;
-	Spend extra time to make sure the smallest possible diff is
-	produced.
-   `patience`;;
-	Use "patience diff" algorithm when generating patches.
-   `histogram`;;
-	This algorithm extends the patience algorithm to "support
-	low-occurrence common elements".
---
-+
-For instance, if you configured the `diff.algorithm` variable to a
-non-default value and want to use the default one, then you
-have to use `--diff-algorithm=default` option.
+include::diff-algorithm-option.adoc[]
 
 `--stat[=<width>[,<name-width>[,<count>]]]`::
 	Generate a diffstat. By default, as much space as necessary
@@ -499,7 +488,8 @@ endif::git-format-patch[]
 	Turn off rename detection, even when the configuration
 	file gives the default to do so.
 
-`--[no-]rename-empty`::
+`--rename-empty`::
+`--no-rename-empty`::
 	Whether to use empty blobs as rename source.
 
 ifndef::git-format-patch[]
@@ -871,10 +861,18 @@ endif::git-format-patch[]
 	Do not show any source or destination prefix.
 
 `--default-prefix`::
+ifdef::git-format-patch[]
+	Use the default source and destination prefixes ("a/" and "b/").
+	This overrides configuration variables such as `format.noprefix`,
+	`diff.srcPrefix`, `diff.dstPrefix`, and `diff.mnemonicPrefix`
+	(see linkgit:git-config[1]).
+endif::git-format-patch[]
+ifndef::git-format-patch[]
 	Use the default source and destination prefixes ("a/" and "b/").
 	This overrides configuration variables such as `diff.noprefix`,
 	`diff.srcPrefix`, `diff.dstPrefix`, and `diff.mnemonicPrefix`
 	(see linkgit:git-config[1]).
+endif::git-format-patch[]
 
 `--line-prefix=<prefix>`::
 	Prepend an additional _<prefix>_ to every line of output.
@@ -886,6 +884,34 @@ endif::git-format-patch[]
 	and non-existent in `git diff --cached`. This option could be
 	reverted with `--ita-visible-in-index`. Both options are
 	experimental and could be removed in future.
+
+--max-depth=<depth>::
+	For each pathspec given on command line, descend at most `<depth>`
+	levels of directories. A value of `-1` means no limit.
+	Cannot be combined with wildcards in the pathspec.
+	Given a tree containing `foo/bar/baz`, the following list shows the
+	matches generated by each set of options:
++
+--
+ - `--max-depth=0 -- foo`: `foo`
+
+ - `--max-depth=1 -- foo`: `foo/bar`
+
+ - `--max-depth=1 -- foo/bar`: `foo/bar/baz`
+
+ - `--max-depth=1 -- foo foo/bar`: `foo/bar/baz`
+
+ - `--max-depth=2 -- foo`: `foo/bar/baz`
+--
++
+If no pathspec is given, the depth is measured as if all
+top-level entries were specified. Note that this is different
+than measuring from the root, in that `--max-depth=0` would
+still return `foo`. This allows you to still limit depth while
+asking for a subset of the top-level entries.
++
+Note that this option is only supported for diffs between tree objects,
+not against the index or working tree.
 
 For more detailed explanation on these common options, see also
 linkgit:gitdiffcore[7].

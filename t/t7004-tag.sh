@@ -2293,24 +2293,26 @@ test_expect_success '--contains combined with --no-contains' '
 # don't recurse down to tags for trees or blobs pointed to by *those*
 # commits.
 test_expect_success 'Does --[no-]contains stop at commits? Yes!' '
-	cd no-contains &&
-	blob=$(git rev-parse v0.3:v0.3.t) &&
-	tree=$(git rev-parse v0.3^{tree}) &&
-	git tag tag-blob $blob &&
-	git tag tag-tree $tree &&
-	git tag --contains v0.3 >actual &&
-	cat >expected <<-\EOF &&
-	v0.3
-	v0.4
-	v0.5
-	EOF
-	test_cmp expected actual &&
-	git tag --no-contains v0.3 >actual &&
-	cat >expected <<-\EOF &&
-	v0.1
-	v0.2
-	EOF
-	test_cmp expected actual
+	(
+		cd no-contains &&
+		blob=$(git rev-parse v0.3:v0.3.t) &&
+		tree=$(git rev-parse v0.3^{tree}) &&
+		git tag tag-blob $blob &&
+		git tag tag-tree $tree &&
+		git tag --contains v0.3 >actual &&
+		cat >expected <<-\EOF &&
+		v0.3
+		v0.4
+		v0.5
+		EOF
+		test_cmp expected actual &&
+		git tag --no-contains v0.3 >actual &&
+		cat >expected <<-\EOF &&
+		v0.1
+		v0.2
+		EOF
+		test_cmp expected actual
+	)
 '
 
 test_expect_success 'If tag is created then tag message file is unlinked' '
@@ -2330,6 +2332,26 @@ test_expect_success 'If tag cannot be created then tag message file is not unlin
 	git tag foo/bar &&
 	test_must_fail env GIT_EDITOR=./fakeeditor git tag -a foo &&
 	test_path_exists .git/TAG_EDITMSG
+'
+
+test_expect_success 'annotated tag version sort' '
+	git tag -a -m "sample 1.0" vsample-1.0 &&
+	git tag -a -m "sample 2.0" vsample-2.0 &&
+	git tag -a -m "sample 10.0" vsample-10.0 &&
+	cat >expect <<-EOF &&
+	vsample-1.0
+	vsample-2.0
+	vsample-10.0
+	EOF
+
+	git tag --list --sort=version:tag vsample-\* >actual &&
+	test_cmp expect actual &&
+
+	# Ensure that we also handle this case alright in the case we have the
+	# peeled values cached e.g. via the packed-refs file.
+	git pack-refs --all &&
+	git tag --list --sort=version:tag vsample-\* &&
+	test_cmp expect actual
 '
 
 test_done

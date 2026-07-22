@@ -26,6 +26,7 @@ static struct whitespace_rule {
 	{ "blank-at-eol", WS_BLANK_AT_EOL, 0 },
 	{ "blank-at-eof", WS_BLANK_AT_EOF, 0 },
 	{ "tab-in-indent", WS_TAB_IN_INDENT, 0, 1 },
+	{ "incomplete-line", WS_INCOMPLETE_LINE, 0, 0 },
 };
 
 unsigned parse_whitespace_rule(const char *string)
@@ -139,6 +140,11 @@ char *whitespace_error_string(unsigned ws)
 			strbuf_addstr(&err, ", ");
 		strbuf_addstr(&err, "tab in indent");
 	}
+	if (ws & WS_INCOMPLETE_LINE) {
+		if (err.len)
+			strbuf_addstr(&err, ", ");
+		strbuf_addstr(&err, "no newline at the end of file");
+	}
 	return strbuf_detach(&err, NULL);
 }
 
@@ -179,6 +185,9 @@ static unsigned ws_check_emit_1(const char *line, int len, unsigned ws_rule,
 
 	if (trailing_whitespace == -1)
 		trailing_whitespace = len;
+
+	if (!trailing_newline && (ws_rule & WS_INCOMPLETE_LINE))
+		result |= WS_INCOMPLETE_LINE;
 
 	/* Check indentation */
 	for (i = 0; i < trailing_whitespace; i++) {
@@ -290,6 +299,17 @@ void ws_fix_copy(struct strbuf *dst, const char *src, int len, unsigned ws_rule,
 	int last_tab_in_indent = -1;
 	int last_space_in_indent = -1;
 	int need_fix_leading_space = 0;
+
+	/*
+	 * Remembering that we need to add '\n' at the end
+	 * is sufficient to fix an incomplete line.
+	 */
+	if (ws_rule & WS_INCOMPLETE_LINE) {
+		if (0 < len && src[len - 1] != '\n') {
+			fixed = 1;
+			add_nl_to_tail = 1;
+		}
+	}
 
 	/*
 	 * Strip trailing whitespace

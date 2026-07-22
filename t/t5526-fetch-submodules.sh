@@ -834,11 +834,18 @@ test_expect_success "fetch new submodule commits on-demand outside standard refs
 	git commit -m "updated submodules outside of refs/heads" &&
 	E=$(git rev-parse HEAD) &&
 	git update-ref refs/changes/3 $E &&
+	FETCH_TRACE="$(pwd)/trace.out" &&
+	test_when_finished "rm -f \"$FETCH_TRACE\"" &&
 	(
 		cd downstream &&
-		git fetch --recurse-submodules origin refs/changes/3:refs/heads/my_branch &&
+		GIT_TRACE="$FETCH_TRACE" git fetch --recurse-submodules origin \
+			refs/changes/3:refs/heads/my_branch &&
 		git -C submodule cat-file -t $C &&
 		git -C sub1 cat-file -t $D &&
+		test_grep "trace: built-in: git submodule--helper get-default-remote sub1" \
+			"$FETCH_TRACE" &&
+		test_grep "trace: built-in: git fetch .* --submodule-prefix=sub1/ origin" \
+			"$FETCH_TRACE" &&
 		git checkout --recurse-submodules FETCH_HEAD
 	)
 '
@@ -926,6 +933,68 @@ test_expect_success 'fetch new submodule commit intermittently referenced by sup
 		git -C sub1 cat-file -t $D &&
 		git -C sub1 cat-file -t $E &&
 		git -C sub1 cat-file -t $F
+	)
+'
+
+test_expect_success 'fetch new submodule commits on-demand outside standard refspec with custom remote name' '
+	# depends on the previous test for setup
+
+	# Rename the remote in sub1 from "origin" to "custom_remote"
+	git -C downstream/sub1 remote rename origin custom_remote &&
+
+	# Create new commits in the original submodules
+	C=$(git -C submodule commit-tree \
+		-m "change outside refs/heads for custom remote" HEAD^{tree}) &&
+	git -C submodule update-ref refs/changes/custom1 $C &&
+	git update-index --cacheinfo 160000 $C submodule &&
+	test_tick &&
+
+	D=$(git -C sub1 commit-tree \
+		-m "change outside refs/heads for custom remote" HEAD^{tree}) &&
+	git -C sub1 update-ref refs/changes/custom2 $D &&
+	git update-index --cacheinfo 160000 $D sub1 &&
+
+	git commit \
+		-m "updated submodules outside of refs/heads for custom remote" &&
+	E=$(git rev-parse HEAD) &&
+	git update-ref refs/changes/custom3 $E &&
+	FETCH_TRACE="$(pwd)/trace.out" &&
+	test_when_finished "rm -f \"$FETCH_TRACE\"" &&
+	(
+		cd downstream &&
+		GIT_TRACE="$FETCH_TRACE" git fetch --recurse-submodules origin \
+			refs/changes/custom3:refs/heads/my_other_branch &&
+		git -C submodule cat-file -t $C &&
+		git -C sub1 cat-file -t $D &&
+		test_grep "trace: built-in: git submodule--helper get-default-remote sub1" \
+			"$FETCH_TRACE" &&
+		test_grep "trace: built-in: git fetch .* --submodule-prefix=sub1/ custom_remote $D" \
+			"$FETCH_TRACE" &&
+		git checkout --recurse-submodules FETCH_HEAD
+	)
+'
+
+test_expect_success 'fetch new submodule commit on-demand in FETCH_HEAD from custom remote' '
+	# depends on the previous test for setup
+
+	C=$(git -C submodule commit-tree -m "another change outside refs/heads for custom remote" HEAD^{tree}) &&
+	git -C submodule update-ref refs/changes/custom4 $C &&
+	git update-index --cacheinfo 160000 $C submodule &&
+	test_tick &&
+
+	D=$(git -C sub1 commit-tree -m "another change outside refs/heads for custom remote" HEAD^{tree}) &&
+	git -C sub1 update-ref refs/changes/custom5 $D &&
+	git update-index --cacheinfo 160000 $D sub1 &&
+
+	git commit -m "updated submodules outside of refs/heads" &&
+	E=$(git rev-parse HEAD) &&
+	git update-ref refs/changes/custom6 $E &&
+	(
+		cd downstream &&
+		git fetch --recurse-submodules origin refs/changes/custom6 &&
+		git -C submodule cat-file -t $C &&
+		git -C sub1 cat-file -t $D &&
+		git checkout --recurse-submodules FETCH_HEAD
 	)
 '
 

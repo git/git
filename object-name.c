@@ -28,6 +28,7 @@
 #include "commit-reach.h"
 #include "date.h"
 #include "object-file-convert.h"
+#include "prio-queue.h"
 
 static int get_oid_oneline(struct repository *r, const char *, struct object_id *,
 			   const struct commit_list *);
@@ -115,7 +116,7 @@ static void find_short_object_filename(struct disambiguate_state *ds)
 	struct odb_source *source;
 
 	for (source = ds->repo->objects->sources; source && !ds->ambiguous; source = source->next)
-		oidtree_each(odb_loose_cache(source, &ds->bin_pfx),
+		oidtree_each(odb_source_loose_cache(source, &ds->bin_pfx),
 				&ds->bin_pfx, ds->len, match_prefix, ds);
 }
 
@@ -198,19 +199,25 @@ static void unique_in_pack(struct packed_git *p,
 
 static void find_short_packed_object(struct disambiguate_state *ds)
 {
-	struct multi_pack_index *m;
+	struct odb_source *source;
 	struct packed_git *p;
 
 	/* Skip, unless oids from the storage hash algorithm are wanted */
 	if (ds->bin_pfx.algo && (&hash_algos[ds->bin_pfx.algo] != ds->repo->hash_algo))
 		return;
 
-	for (m = get_multi_pack_index(ds->repo); m && !ds->ambiguous;
-	     m = m->next)
-		unique_in_midx(m, ds);
-	for (p = get_packed_git(ds->repo); p && !ds->ambiguous;
-	     p = p->next)
+	odb_prepare_alternates(ds->repo->objects);
+	for (source = ds->repo->objects->sources; source && !ds->ambiguous; source = source->next) {
+		struct multi_pack_index *m = get_multi_pack_index(source);
+		if (m)
+			unique_in_midx(m, ds);
+	}
+
+	repo_for_each_pack(ds->repo, p) {
+		if (ds->ambiguous)
+			break;
 		unique_in_pack(p, ds);
+	}
 }
 
 static int finish_object_disambiguation(struct disambiguate_state *ds,
@@ -442,7 +449,7 @@ static int show_ambiguous_object(const struct object_id *oid, void *data)
 	} else if (type == OBJ_TAG) {
 		struct tag *tag = lookup_tag(ds->repo, oid);
 
-		if (!parse_tag(tag) && tag->tag) {
+		if (!parse_tag(ds->repo, tag) && tag->tag) {
 			/*
 			 * TRANSLATORS: This is a line of ambiguous
 			 * tag object output. E.g.:
@@ -591,7 +598,7 @@ static enum get_oid_result get_short_oid(struct repository *r,
 	 * or migrated from loose to packed.
 	 */
 	if (status == MISSING_OBJECT) {
-		reprepare_packed_git(r);
+		odb_reprepare(r->objects);
 		find_short_object_filename(&ds);
 		find_short_packed_object(&ds);
 		status = finish_object_disambiguation(&ds, oid);
@@ -691,15 +698,14 @@ static inline char get_hex_char_from_oid(const struct object_id *oid,
 		return hex[oid->hash[pos >> 1] & 0xf];
 }
 
-static int extend_abbrev_len(const struct object_id *oid, void *cb_data)
+static int extend_abbrev_len(const struct object_id *oid,
+			     struct min_abbrev_data *mad)
 {
-	struct min_abbrev_data *mad = cb_data;
-
 	unsigned int i = mad->init_len;
 	while (mad->hex[i] && mad->hex[i] == get_hex_char_from_oid(oid, i))
 		i++;
 
-	if (i < GIT_MAX_RAWSZ && i >= mad->cur_len)
+	if (mad->hex[i] && i >= mad->cur_len)
 		mad->cur_len = i + 1;
 
 	return 0;
@@ -792,12 +798,16 @@ static void find_abbrev_len_for_pack(struct packed_git *p,
 
 static void find_abbrev_len_packed(struct min_abbrev_data *mad)
 {
-	struct multi_pack_index *m;
 	struct packed_git *p;
 
-	for (m = get_multi_pack_index(mad->repo); m; m = m->next)
-		find_abbrev_len_for_midx(m, mad);
-	for (p = get_packed_git(mad->repo); p; p = p->next)
+	odb_prepare_alternates(mad->repo->objects);
+	for (struct odb_source *source = mad->repo->objects->sources; source; source = source->next) {
+		struct multi_pack_index *m = get_multi_pack_index(source);
+		if (m)
+			find_abbrev_len_for_midx(m, mad);
+	}
+
+	repo_for_each_pack(mad->repo, p)
 		find_abbrev_len_for_pack(p, mad);
 }
 
@@ -827,7 +837,11 @@ int repo_find_unique_abbrev_r(struct repository *r, char *hex,
 	const unsigned hexsz = algo->hexsz;
 
 	if (len < 0) {
-		unsigned long count = repo_approximate_object_count(r);
+		unsigned long count;
+
+		if (odb_count_objects(r->objects, ODB_COUNT_OBJECTS_APPROXIMATE, &count) < 0)
+			count = 0;
+
 		/*
 		 * Add one because the MSB only tells us the highest bit set,
 		 * not including the value of all the _other_ bits (so "15"
@@ -1271,7 +1285,7 @@ static int peel_onion(struct repository *r, const char *name, int len,
 		commit_list_insert((struct commit *)o, &list);
 		ret = get_oid_oneline(r, prefix, oid, list);
 
-		free_commit_list(list);
+		commit_list_free(list);
 		free(prefix);
 		return ret;
 	}
@@ -1436,18 +1450,16 @@ struct handle_one_ref_cb {
 	struct commit_list **list;
 };
 
-static int handle_one_ref(const char *path, const char *referent UNUSED, const struct object_id *oid,
-			  int flag UNUSED,
-			  void *cb_data)
+static int handle_one_ref(const struct reference *ref, void *cb_data)
 {
 	struct handle_one_ref_cb *cb = cb_data;
 	struct commit_list **list = cb->list;
-	struct object *object = parse_object(cb->repo, oid);
+	struct object *object = parse_object(cb->repo, ref->oid);
 	if (!object)
 		return 0;
 	if (object->type == OBJ_TAG) {
-		object = deref_tag(cb->repo, object, path,
-				   strlen(path));
+		object = deref_tag(cb->repo, object, ref->name,
+				   strlen(ref->name));
 		if (!object)
 			return 0;
 	}
@@ -1461,7 +1473,7 @@ static int get_oid_oneline(struct repository *r,
 			   const char *prefix, struct object_id *oid,
 			   const struct commit_list *list)
 {
-	struct commit_list *copy = NULL, **copy_tail = &copy;
+	struct prio_queue copy = { compare_commits_by_commit_date };
 	const struct commit_list *l;
 	int found = 0;
 	int negative = 0;
@@ -1483,9 +1495,9 @@ static int get_oid_oneline(struct repository *r,
 
 	for (l = list; l; l = l->next) {
 		l->item->object.flags |= ONELINE_SEEN;
-		copy_tail = &commit_list_insert(l->item, copy_tail)->next;
+		prio_queue_put(&copy, l->item);
 	}
-	while (copy) {
+	while (copy.nr) {
 		const char *p, *buf;
 		struct commit *commit;
 		int matches;
@@ -1507,7 +1519,7 @@ static int get_oid_oneline(struct repository *r,
 	regfree(&regex);
 	for (l = list; l; l = l->next)
 		clear_commit_marks(l->item, ONELINE_SEEN);
-	free_commit_list(copy);
+	clear_prio_queue(&copy);
 	return found ? 0 : -1;
 }
 
@@ -1516,7 +1528,8 @@ struct grab_nth_branch_switch_cbdata {
 	struct strbuf *sb;
 };
 
-static int grab_nth_branch_switch(struct object_id *ooid UNUSED,
+static int grab_nth_branch_switch(const char *refname UNUSED,
+				  struct object_id *ooid UNUSED,
 				  struct object_id *noid UNUSED,
 				  const char *email UNUSED,
 				  timestamp_t timestamp UNUSED,
@@ -1614,7 +1627,7 @@ int repo_get_oid_mb(struct repository *r,
 	if (!two)
 		return -1;
 	if (repo_get_merge_bases(r, one, two, &mbs) < 0) {
-		free_commit_list(mbs);
+		commit_list_free(mbs);
 		return -1;
 	}
 	if (!mbs || mbs->next)
@@ -1623,7 +1636,7 @@ int repo_get_oid_mb(struct repository *r,
 		st = 0;
 		oidcpy(oid, &mbs->item->object.oid);
 	}
-	free_commit_list(mbs);
+	commit_list_free(mbs);
 	return st;
 }
 
@@ -1747,7 +1760,7 @@ int repo_interpret_branch_name(struct repository *r,
 			       struct strbuf *buf,
 			       const struct interpret_branch_name_options *options)
 {
-	char *at;
+	const char *at;
 	const char *start;
 	int len;
 
@@ -1848,55 +1861,35 @@ int repo_get_oid_committish(struct repository *r,
 			    const char *name,
 			    struct object_id *oid)
 {
-	struct object_context unused;
-	int ret = get_oid_with_context(r, name, GET_OID_COMMITTISH,
-				       oid, &unused);
-	object_context_release(&unused);
-	return ret;
+	return repo_get_oid_with_flags(r, name, oid, GET_OID_COMMITTISH);
 }
 
 int repo_get_oid_treeish(struct repository *r,
 			 const char *name,
 			 struct object_id *oid)
 {
-	struct object_context unused;
-	int ret = get_oid_with_context(r, name, GET_OID_TREEISH,
-				       oid, &unused);
-	object_context_release(&unused);
-	return ret;
+	return repo_get_oid_with_flags(r, name, oid, GET_OID_TREEISH);
 }
 
 int repo_get_oid_commit(struct repository *r,
 			const char *name,
 			struct object_id *oid)
 {
-	struct object_context unused;
-	int ret = get_oid_with_context(r, name, GET_OID_COMMIT,
-				       oid, &unused);
-	object_context_release(&unused);
-	return ret;
+	return repo_get_oid_with_flags(r, name, oid, GET_OID_COMMIT);
 }
 
 int repo_get_oid_tree(struct repository *r,
 		      const char *name,
 		      struct object_id *oid)
 {
-	struct object_context unused;
-	int ret = get_oid_with_context(r, name, GET_OID_TREE,
-				       oid, &unused);
-	object_context_release(&unused);
-	return ret;
+	return repo_get_oid_with_flags(r, name, oid, GET_OID_TREE);
 }
 
 int repo_get_oid_blob(struct repository *r,
 		      const char *name,
 		      struct object_id *oid)
 {
-	struct object_context unused;
-	int ret = get_oid_with_context(r, name, GET_OID_BLOB,
-				       oid, &unused);
-	object_context_release(&unused);
-	return ret;
+	return repo_get_oid_with_flags(r, name, oid, GET_OID_BLOB);
 }
 
 /* Must be called only when object_name:filename doesn't exist. */
@@ -2061,10 +2054,9 @@ static enum get_oid_result get_oid_with_context_1(struct repository *repo,
 			cb.list = &list;
 			refs_for_each_ref(get_main_ref_store(repo), handle_one_ref, &cb);
 			refs_head_ref(get_main_ref_store(repo), handle_one_ref, &cb);
-			commit_list_sort_by_date(&list);
 			ret = get_oid_oneline(repo, name + 2, oid, list);
 
-			free_commit_list(list);
+			commit_list_free(list);
 			return ret;
 		}
 		if (namelen < 3 ||

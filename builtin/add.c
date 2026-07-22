@@ -7,19 +7,21 @@
 #include "builtin.h"
 #include "advice.h"
 #include "config.h"
+#include "environment.h"
 #include "lockfile.h"
 #include "editor.h"
 #include "dir.h"
 #include "gettext.h"
 #include "pathspec.h"
 #include "run-command.h"
+#include "object-file.h"
+#include "odb.h"
 #include "parse-options.h"
 #include "path.h"
 #include "preload-index.h"
 #include "diff.h"
 #include "read-cache.h"
 #include "revision.h"
-#include "bulk-checkin.h"
 #include "strvec.h"
 #include "submodule.h"
 #include "add-interactive.h"
@@ -29,6 +31,7 @@ static const char * const builtin_add_usage[] = {
 	NULL
 };
 static int patch_interactive, add_interactive, edit_interactive;
+static struct interactive_options interactive_opts = INTERACTIVE_OPTIONS_INIT;
 static int take_worktree_changes;
 static int add_renormalize;
 static int pathspec_file_nul;
@@ -157,7 +160,7 @@ static int refresh(struct repository *repo, int verbose, const struct pathspec *
 int interactive_add(struct repository *repo,
 		    const char **argv,
 		    const char *prefix,
-		    int patch)
+		    int patch, struct interactive_options *interactive_opts)
 {
 	struct pathspec pathspec;
 	int ret;
@@ -169,9 +172,9 @@ int interactive_add(struct repository *repo,
 		       prefix, argv);
 
 	if (patch)
-		ret = !!run_add_p(repo, ADD_P_ADD, NULL, &pathspec);
+		ret = !!run_add_p(repo, ADD_P_ADD, interactive_opts, NULL, &pathspec, 0);
 	else
-		ret = !!run_add_i(repo, &pathspec);
+		ret = !!run_add_i(repo, &pathspec, interactive_opts);
 
 	clear_pathspec(&pathspec);
 	return ret;
@@ -198,7 +201,7 @@ static int edit_patch(struct repository *repo,
 
 	argc = setup_revisions(argc, argv, &rev, NULL);
 	rev.diffopt.output_format = DIFF_FORMAT_PATCH;
-	rev.diffopt.use_color = 0;
+	rev.diffopt.use_color = GIT_COLOR_NEVER;
 	rev.diffopt.flags.ignore_dirty_submodules = 1;
 	out = xopen(file, O_CREAT | O_WRONLY | O_TRUNC, 0666);
 	rev.diffopt.file = xfdopen(out, "w");
@@ -253,6 +256,10 @@ static struct option builtin_add_options[] = {
 	OPT_GROUP(""),
 	OPT_BOOL('i', "interactive", &add_interactive, N_("interactive picking")),
 	OPT_BOOL('p', "patch", &patch_interactive, N_("select hunks interactively")),
+	OPT_BOOL(0, "auto-advance", &interactive_opts.auto_advance,
+		 N_("auto advance to the next file when selecting hunks interactively")),
+	OPT_DIFF_UNIFIED(&interactive_opts.context),
+	OPT_DIFF_INTERHUNK_CONTEXT(&interactive_opts.interhunkcontext),
 	OPT_BOOL('e', "edit", &edit_interactive, N_("edit current diff and apply")),
 	OPT__FORCE(&ignored_too, N_("allow adding otherwise ignored files"), 0),
 	OPT_BOOL('u', "update", &take_worktree_changes, N_("update tracked files")),
@@ -385,6 +392,7 @@ int cmd_add(int argc,
 	char *seen = NULL;
 	char *ps_matched = NULL;
 	struct lock_file lock_file = LOCK_INIT;
+	struct odb_transaction *transaction;
 
 	repo_config(repo, add_config, NULL);
 
@@ -394,6 +402,11 @@ int cmd_add(int argc,
 	prepare_repo_settings(repo);
 	repo->settings.command_requires_full_index = 0;
 
+	if (interactive_opts.context < -1)
+		die(_("'%s' cannot be negative"), "--unified");
+	if (interactive_opts.interhunkcontext < -1)
+		die(_("'%s' cannot be negative"), "--inter-hunk-context");
+
 	if (patch_interactive)
 		add_interactive = 1;
 	if (add_interactive) {
@@ -401,7 +414,14 @@ int cmd_add(int argc,
 			die(_("options '%s' and '%s' cannot be used together"), "--dry-run", "--interactive/--patch");
 		if (pathspec_from_file)
 			die(_("options '%s' and '%s' cannot be used together"), "--pathspec-from-file", "--interactive/--patch");
-		exit(interactive_add(repo, argv + 1, prefix, patch_interactive));
+		exit(interactive_add(repo, argv + 1, prefix, patch_interactive, &interactive_opts));
+	} else {
+		if (interactive_opts.context != -1)
+			die(_("the option '%s' requires '%s'"), "--unified", "--interactive/--patch");
+		if (interactive_opts.interhunkcontext != -1)
+			die(_("the option '%s' requires '%s'"), "--inter-hunk-context", "--interactive/--patch");
+		if (!interactive_opts.auto_advance)
+			die(_("the option '%s' requires '%s'"), "--no-auto-advance", "--interactive/--patch");
 	}
 
 	if (edit_interactive) {
@@ -476,6 +496,10 @@ int cmd_add(int argc,
 
 	die_in_unpopulated_submodule(repo->index, prefix);
 	die_path_inside_submodule(repo->index, &pathspec);
+
+	enable_fscache(0);
+	/* We do not really re-read the index but update the up-to-date flags */
+	preload_index(repo->index, &pathspec, 0);
 
 	if (add_new_files) {
 		int baselen;
@@ -560,7 +584,7 @@ int cmd_add(int argc,
 		string_list_clear(&only_match_skip_worktree, 0);
 	}
 
-	begin_odb_transaction();
+	transaction = odb_transaction_begin(repo->objects);
 
 	ps_matched = xcalloc(pathspec.nr, 1);
 	if (add_renormalize)
@@ -568,7 +592,7 @@ int cmd_add(int argc,
 	else
 		exit_status |= add_files_to_cache(repo, prefix,
 						  &pathspec, ps_matched,
-						  include_sparse, flags);
+						  include_sparse, flags, ignored_too);
 
 	if (take_worktree_changes && !add_renormalize && !ignore_add_errors &&
 	    report_path_error(ps_matched, &pathspec))
@@ -579,7 +603,7 @@ int cmd_add(int argc,
 
 	if (chmod_arg && pathspec.nr)
 		exit_status |= chmod_pathspec(repo, &pathspec, chmod_arg[0], show_only);
-	end_odb_transaction();
+	odb_transaction_commit(transaction);
 
 finish:
 	if (write_locked_index(repo->index, &lock_file,
@@ -589,5 +613,6 @@ finish:
 	free(ps_matched);
 	dir_clear(&dir);
 	clear_pathspec(&pathspec);
+	enable_fscache(0);
 	return exit_status;
 }

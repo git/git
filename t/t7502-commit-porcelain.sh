@@ -623,6 +623,48 @@ test_expect_success 'cleanup commit messages (scissors option,-F,-e, scissors on
 	test_must_be_empty actual
 '
 
+test_expect_success 'helper-editor' '
+
+	write_script lf-to-crlf.sh <<-\EOF
+	sed "s/\$/Q/" <"$1" | tr Q "\\015" >"$1".new &&
+	mv -f "$1".new "$1"
+	EOF
+'
+
+test_expect_success 'cleanup commit messages (scissors option,-F,-e, CR/LF line endings)' '
+
+	test_config core.editor "\"$PWD/lf-to-crlf.sh\"" &&
+	scissors="# ------------------------ >8 ------------------------" &&
+
+	test_write_lines >text \
+	"# Keep this comment" "" " $scissors" \
+	"# Keep this comment, too" "$scissors" \
+	"# Remove this comment" "$scissors" \
+	"Remove this comment, too" &&
+
+	test_write_lines >expect \
+	"# Keep this comment" "" " $scissors" \
+	"# Keep this comment, too" &&
+
+	git commit --cleanup=scissors -e -F text --allow-empty &&
+	git cat-file -p HEAD >raw &&
+	sed -e "1,/^\$/d" raw >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'cleanup commit messages (scissors option,-F,-e, scissors on first line, CR/LF line endings)' '
+
+	scissors="# ------------------------ >8 ------------------------" &&
+	test_write_lines >text \
+	"$scissors" \
+	"# Remove this comment and any following lines" &&
+	cp text /tmp/test2-text &&
+	git commit --cleanup=scissors -e -F text --allow-empty --allow-empty-message &&
+	git cat-file -p HEAD >raw &&
+	sed -e "1,/^\$/d" raw >actual &&
+	test_must_be_empty actual
+'
+
 test_expect_success 'cleanup commit messages (strip option,-F)' '
 
 	echo >>negative &&
@@ -956,13 +998,39 @@ test_expect_success 'commit --status with custom comment character' '
 	test_grep "^; Changes to be committed:" .git/COMMIT_EDITMSG
 '
 
-test_expect_success 'switch core.commentchar' '
+test_expect_success !WITH_BREAKING_CHANGES 'switch core.commentchar' '
 	test_commit "#foo" foo &&
-	GIT_EDITOR=.git/FAKE_EDITOR git -c core.commentChar=auto commit --amend &&
+	cat >config-include <<-\EOF &&
+	[core]
+	    commentString=:
+	    commentString=%
+	    commentChar=auto
+	EOF
+	test_when_finished "rm config-include" &&
+	test_config include.path "$(pwd)/config-include" &&
+	test_config core.commentChar ! &&
+	GIT_EDITOR=.git/FAKE_EDITOR git commit --amend 2>err &&
+	sed -n "s/^hint: *\$//p; s/^hint: //p; s/^warning: //p" err >actual &&
+	cat >expect <<-EOF &&
+	Support for ${SQ}core.commentChar=auto${SQ} is deprecated and will be removed in Git 3.0
+
+	To use the default comment string (#) please run
+
+	    git config unset core.commentChar
+	    git config unset --file ~/config-include --all core.commentString
+	    git config unset --file ~/config-include core.commentChar
+
+	To set a custom comment string please run
+
+	    git config set --file ~/config-include core.commentChar <comment string>
+
+	where ${SQ}<comment string>${SQ} is the string you wish to use.
+	EOF
+	test_cmp expect actual &&
 	test_grep "^; Changes to be committed:" .git/COMMIT_EDITMSG
 '
 
-test_expect_success 'switch core.commentchar but out of options' '
+test_expect_success !WITH_BREAKING_CHANGES 'switch core.commentchar but out of options' '
 	cat >text <<\EOF &&
 # 1
 ; 2
@@ -980,6 +1048,26 @@ EOF
 		test_set_editor .git/FAKE_EDITOR &&
 		test_must_fail git -c core.commentChar=auto commit --amend
 	)
+'
+
+test_expect_success WITH_BREAKING_CHANGES 'core.commentChar=auto is rejected' '
+	test_config core.commentChar auto &&
+	test_must_fail git rev-parse --git-dir 2>err &&
+	sed -n "s/^hint: *\$//p; s/^hint: //p; s/^fatal: //p" err >actual &&
+	cat >expect <<-EOF &&
+	Support for ${SQ}core.commentChar=auto${SQ} has been removed in Git 3.0
+
+	To use the default comment string (#) please run
+
+	    git config unset core.commentChar
+
+	To set a custom comment string please run
+
+	    git config set core.commentChar <comment string>
+
+	where ${SQ}<comment string>${SQ} is the string you wish to use.
+	EOF
+	test_cmp expect actual
 '
 
 test_done

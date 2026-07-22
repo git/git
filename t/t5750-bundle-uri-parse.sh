@@ -286,4 +286,30 @@ test_expect_success 'parse config format edge cases: creationToken heuristic' '
 	grep "could not parse bundle list key creationToken with value '\''bogus'\''" err
 '
 
+test_expect_success 'parse config format: bundle with missing uri' '
+	cat >input <<-\EOF &&
+	[bundle]
+		version = 1
+		mode = all
+	[bundle "missing-uri"]
+		creationToken = 1
+	EOF
+
+	test_must_fail test-tool bundle-uri parse-config input 2>err &&
+	grep "bundle '\''missing-uri'\'' has no uri" err
+'
+
+test_expect_success 'parse config format: bundle with url instead of uri' '
+	cat >input <<-\EOF &&
+	[bundle]
+		version = 1
+		mode = all
+	[bundle "typo"]
+		url = https://example.com/bundle.bdl
+	EOF
+
+	test_must_fail test-tool bundle-uri parse-config input 2>err &&
+	grep "bundle '\''typo'\'' has no uri" err
+'
+
 test_done

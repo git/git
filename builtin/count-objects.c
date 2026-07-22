@@ -7,6 +7,7 @@
 #include "builtin.h"
 #include "config.h"
 #include "dir.h"
+#include "environment.h"
 #include "gettext.h"
 #include "path.h"
 #include "parse-options.h"
@@ -106,7 +107,7 @@ int cmd_count_objects(int argc,
 		OPT_END(),
 	};
 
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 
 	argc = parse_options(argc, argv, prefix, opts, count_objects_usage, 0);
 	/* we do not take arguments other than flags for now */
@@ -117,7 +118,7 @@ int cmd_count_objects(int argc,
 		report_linked_checkout_garbage(the_repository);
 	}
 
-	for_each_loose_file_in_objdir(repo_get_object_directory(the_repository),
+	for_each_loose_file_in_source(the_repository->objects->sources,
 				      count_loose, count_cruft, NULL, NULL);
 
 	if (verbose) {
@@ -128,7 +129,7 @@ int cmd_count_objects(int argc,
 		struct strbuf pack_buf = STRBUF_INIT;
 		struct strbuf garbage_buf = STRBUF_INIT;
 
-		for (p = get_all_packs(the_repository); p; p = p->next) {
+		repo_for_each_pack(the_repository, p) {
 			if (!p->pack_local)
 				continue;
 			if (open_pack_index(p))

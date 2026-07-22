@@ -1,5 +1,3 @@
-#define USE_THE_REPOSITORY_VARIABLE
-
 #include "git-compat-util.h"
 #include "hex.h"
 #include "tree.h"
@@ -25,10 +23,10 @@ int read_tree_at(struct repository *r,
 	int len, oldlen = base->len;
 	enum interesting retval = entry_not_interesting;
 
-	if (depth > max_allowed_tree_depth)
+	if (depth > r->settings.max_allowed_tree_depth)
 		return error("exceeded maximum allowed tree depth");
 
-	if (parse_tree(tree))
+	if (repo_parse_tree(r, tree))
 		return -1;
 
 	init_tree_desc(&desc, &tree->object.oid, tree->buffer, tree->size);
@@ -185,7 +183,8 @@ int parse_tree_buffer(struct tree *item, void *buffer, unsigned long size)
 	return 0;
 }
 
-int parse_tree_gently(struct tree *item, int quiet_on_missing)
+int repo_parse_tree_gently(struct repository *r, struct tree *item,
+			   int quiet_on_missing)
 {
 	 enum object_type type;
 	 void *buffer;
@@ -193,8 +192,7 @@ int parse_tree_gently(struct tree *item, int quiet_on_missing)
 
 	if (item->object.parsed)
 		return 0;
-	buffer = odb_read_object(the_repository->objects, &item->object.oid,
-				 &type, &size);
+	buffer = odb_read_object(r->objects, &item->object.oid, &type, &size);
 	if (!buffer)
 		return quiet_on_missing ? -1 :
 			error("Could not read %s",
@@ -214,9 +212,9 @@ void free_tree_buffer(struct tree *tree)
 	tree->object.parsed = 0;
 }
 
-struct tree *parse_tree_indirect(const struct object_id *oid)
+struct tree *repo_parse_tree_indirect(struct repository *r,
+				      const struct object_id *oid)
 {
-	struct repository *r = the_repository;
 	struct object *obj = parse_object(r, oid);
 	return (struct tree *)repo_peel_to_type(r, NULL, 0, obj, OBJ_TREE);
 }

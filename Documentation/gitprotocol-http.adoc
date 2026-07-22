@@ -318,7 +318,7 @@ Extra Parameter.
 
 
 Smart Service git-upload-pack
-------------------------------
+-----------------------------
 This service reads from the repository pointed to by `$GIT_URL`.
 
 Clients MUST first perform ref discovery with
@@ -443,7 +443,8 @@ If no "want" objects are received, send an error:
 TODO: Define error if no "want" lines are requested.
 
 If any "want" object is not reachable, send an error:
-TODO: Define error if an invalid "want" is requested.
+When a Git server receives an invalid or malformed `want` line, it
+responds with an error message that includes the offending object name.
 
 Create an empty list, `s_common`.
 

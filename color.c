@@ -9,7 +9,7 @@
 #include "pager.h"
 #include "strbuf.h"
 
-static int git_use_color_default = GIT_COLOR_AUTO;
+static enum git_colorbool git_use_color_default = GIT_COLOR_AUTO;
 int color_stdout_is_tty = -1;
 
 /*
@@ -223,11 +223,6 @@ static int parse_attr(const char *name, size_t len)
 	return -1;
 }
 
-int color_parse(const char *value, char *dst)
-{
-	return color_parse_mem(value, strlen(value), dst);
-}
-
 /*
  * Write the ANSI color codes for "c" to "out"; the string should
  * already have the ANSI escape code in it. "out" should have enough
@@ -264,7 +259,8 @@ static int color_empty(const struct color *c)
 	return c->type <= COLOR_NORMAL;
 }
 
-int color_parse_mem(const char *value, int value_len, char *dst)
+static int color_parse_mem_1(const char *value, int value_len,
+			     char *dst, int quiet)
 {
 	const char *ptr = value;
 	int len = value_len;
@@ -365,33 +361,48 @@ int color_parse_mem(const char *value, int value_len, char *dst)
 	OUT(0);
 	return 0;
 bad:
-	return error(_("invalid color value: %.*s"), value_len, value);
+	return quiet ? -1 : error(_("invalid color value: %.*s"), value_len, value);
 #undef OUT
 }
 
-int git_config_colorbool(const char *var, const char *value)
+int color_parse_mem(const char *value, int value_len, char *dst)
+{
+	return color_parse_mem_1(value, value_len, dst, 0);
+}
+
+int color_parse(const char *value, char *dst)
+{
+	return color_parse_mem(value, strlen(value), dst);
+}
+
+int color_parse_quietly(const char *value, char *dst)
+{
+	return color_parse_mem_1(value, strlen(value), dst, 1);
+}
+
+enum git_colorbool git_config_colorbool(const char *var, const char *value)
 {
 	if (value) {
 		if (!strcasecmp(value, "never"))
-			return 0;
+			return GIT_COLOR_NEVER;
 		if (!strcasecmp(value, "always"))
-			return 1;
+			return GIT_COLOR_ALWAYS;
 		if (!strcasecmp(value, "auto"))
 			return GIT_COLOR_AUTO;
 	}
 
 	if (!var)
-		return -1;
+		return GIT_COLOR_UNKNOWN;
 
 	/* Missing or explicit false to turn off colorization */
 	if (!git_config_bool(var, value))
-		return 0;
+		return GIT_COLOR_NEVER;
 
 	/* any normal truth value defaults to 'auto' */
 	return GIT_COLOR_AUTO;
 }
 
-static int check_auto_color(int fd)
+static bool check_auto_color(int fd)
 {
 	static int color_stderr_is_tty = -1;
 	int *is_tty_p = fd == 1 ? &color_stdout_is_tty : &color_stderr_is_tty;
@@ -399,12 +410,12 @@ static int check_auto_color(int fd)
 		*is_tty_p = isatty(fd);
 	if (*is_tty_p || (fd == 1 && pager_in_use() && pager_use_color)) {
 		if (!is_terminal_dumb())
-			return 1;
+			return true;
 	}
-	return 0;
+	return false;
 }
 
-int want_color_fd(int fd, int var)
+bool want_color_fd(int fd, enum git_colorbool var)
 {
 	/*
 	 * NEEDSWORK: This function is sometimes used from multiple threads, and
@@ -418,7 +429,7 @@ int want_color_fd(int fd, int var)
 	if (fd < 1 || fd >= ARRAY_SIZE(want_auto))
 		BUG("file descriptor out of range: %d", fd);
 
-	if (var < 0)
+	if (var == GIT_COLOR_UNKNOWN)
 		var = git_use_color_default;
 
 	if (var == GIT_COLOR_AUTO) {
@@ -426,7 +437,7 @@ int want_color_fd(int fd, int var)
 			want_auto[fd] = check_auto_color(fd);
 		return want_auto[fd];
 	}
-	return var;
+	return var == GIT_COLOR_ALWAYS;
 }
 
 int git_color_config(const char *var, const char *value, void *cb UNUSED)

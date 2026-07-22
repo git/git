@@ -39,6 +39,12 @@ struct worktree **get_worktrees(void);
 struct worktree **get_worktrees_without_reading_head(void);
 
 /*
+ * Construct a struct worktree corresponding to repo->gitdir and
+ * repo->worktree.
+ */
+struct worktree *get_worktree_from_repository(struct repository *repo);
+
+/*
  * Returns 1 if linked worktrees exist, 0 otherwise.
  */
 int submodule_uses_worktrees(const char *path);
@@ -191,7 +197,7 @@ int is_shared_symref(const struct worktree *wt,
  * Similar to head_ref() for all HEADs _except_ one from the current
  * worktree, which is covered by head_ref().
  */
-int other_head_refs(each_ref_fn fn, void *cb_data);
+int other_head_refs(refs_for_each_cb fn, void *cb_data);
 
 int is_worktree_being_rebased(const struct worktree *wt, const char *target);
 int is_worktree_being_bisected(const struct worktree *wt, const char *target);
@@ -234,7 +240,7 @@ int init_worktree_config(struct repository *r);
  *  dotgit: "/path/to/foo/.git"
  *  gitdir: "/path/to/repo/worktrees/foo/gitdir"
  */
-void write_worktree_linking_files(struct strbuf dotgit, struct strbuf gitdir,
+void write_worktree_linking_files(const char *dotgit, const char *gitdir,
 				  int use_relative_paths);
 
 #endif

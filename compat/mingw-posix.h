@@ -96,6 +96,7 @@ struct sigaction {
 	unsigned sa_flags;
 };
 #define SA_RESTART 0
+#define SA_NOCLDSTOP 1
 
 struct itimerval {
 	struct timeval it_value, it_interval;
@@ -120,10 +121,6 @@ struct utsname {
  * trivial stubs
  */
 
-static inline int readlink(const char *path UNUSED, char *buf UNUSED, size_t bufsiz UNUSED)
-{ errno = ENOSYS; return -1; }
-static inline int symlink(const char *oldpath UNUSED, const char *newpath UNUSED)
-{ errno = ENOSYS; return -1; }
 static inline int fchmod(int fildes UNUSED, mode_t mode UNUSED)
 { errno = ENOSYS; return -1; }
 #ifndef __MINGW64_VERSION_MAJOR
@@ -196,6 +193,10 @@ int setitimer(int type, struct itimerval *in, struct itimerval *out);
 int sigaction(int sig, struct sigaction *in, struct sigaction *out);
 int link(const char *oldpath, const char *newpath);
 int uname(struct utsname *buf);
+int readlink(const char *path, char *buf, size_t bufsiz);
+struct index_state;
+int mingw_create_symlink(struct index_state *index, const char *target, const char *link);
+#define create_symlink mingw_create_symlink
 
 /*
  * replacements of existing functions
@@ -239,9 +240,6 @@ int mingw_chdir(const char *dirname);
 
 int mingw_chmod(const char *filename, int mode);
 #define chmod mingw_chmod
-
-char *mingw_mktemp(char *template);
-#define mktemp mingw_mktemp
 
 char *mingw_getcwd(char *pointer, int len);
 #define getcwd mingw_getcwd
@@ -292,6 +290,11 @@ int mingw_socket(int domain, int type, int protocol);
 int mingw_connect(int sockfd, struct sockaddr *sa, size_t sz);
 #define connect mingw_connect
 
+char *mingw_strerror(int errnum);
+#ifndef _UCRT
+#define strerror mingw_strerror
+#endif
+
 int mingw_bind(int sockfd, struct sockaddr *sa, size_t sz);
 #define bind mingw_bind
 
@@ -338,6 +341,17 @@ static inline int getrlimit(int resource, struct rlimit *rlp)
 }
 
 /*
+ * The unit of FILETIME is 100-nanoseconds since January 1, 1601, UTC.
+ * Returns the 100-nanoseconds ("hekto nanoseconds") since the epoch.
+ */
+static inline long long filetime_to_hnsec(const FILETIME *ft)
+{
+	long long winTime = ((long long)ft->dwHighDateTime << 32) + ft->dwLowDateTime;
+	/* Windows to Unix Epoch conversion */
+	return winTime - 116444736000000000LL;
+}
+
+/*
  * Use mingw specific stat()/lstat()/fstat() implementations on Windows,
  * including our own struct stat with 64 bit st_size and nanosecond-precision
  * file times.
@@ -352,6 +366,13 @@ struct timespec {
 };
 #endif
 #endif
+
+static inline void filetime_to_timespec(const FILETIME *ft, struct timespec *ts)
+{
+	long long hnsec = filetime_to_hnsec(ft);
+	ts->tv_sec = (time_t)(hnsec / 10000000);
+	ts->tv_nsec = (hnsec % 10000000) * 100;
+}
 
 struct mingw_stat {
     _dev_t st_dev;
@@ -385,7 +406,7 @@ int mingw_fstat(int fd, struct stat *buf);
 #ifdef lstat
 #undef lstat
 #endif
-#define lstat mingw_lstat
+extern int (*lstat)(const char *file_name, struct stat *buf);
 
 
 int mingw_utime(const char *file_name, const struct utimbuf *times);

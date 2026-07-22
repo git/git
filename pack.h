@@ -145,7 +145,8 @@ void stage_tmp_packfiles(struct repository *repo,
 			 struct pack_idx_option *pack_idx_opts,
 			 unsigned char hash[],
 			 char **idx_tmp_name);
-void rename_tmp_packfile_idx(struct strbuf *basename,
+void rename_tmp_packfile_idx(struct repository *repo,
+			     struct strbuf *basename,
 			     char **idx_tmp_name);
 
 #endif

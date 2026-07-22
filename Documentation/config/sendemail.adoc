@@ -12,6 +12,22 @@ sendemail.smtpSSLCertPath::
 	Path to ca-certificates (either a directory or a single file).
 	Set it to an empty string to disable certificate verification.
 
+sendemail.smtpSSLClientCert::
+	Path to the client certificate file to present if requested by the
+	server. This is required when the server is set up to verify client
+	certificates. If the corresponding private key is not included in the
+	file, it must be supplied using `sendemail.smtpSSLClientKey` or the
+	`--smtp-ssl-client-key` option.
+
+sendemail.smtpSSLClientKey::
+	Path to the client private key file that corresponds to the client
+	certificate. To avoid misconfiguration, this configuration must be used
+	in conjunction with `sendemail.smtpSSLClientKey` or the
+	`--smtp-ssl-client-cert` option. If the client key is included in the
+	client certificate, the choice of private key depends on the format of
+	the certificate. Visit https://metacpan.org/pod/IO::Socket::SSL for more
+	details.
+
 sendemail.<identity>.*::
 	Identity-specific versions of the `sendemail.*` parameters
 	found below, taking precedence over those when this
@@ -31,8 +47,8 @@ sendemail.confirm::
 	values.
 
 sendemail.mailmap::
-	If true, makes linkgit:git-send-email[1] assume `--mailmap`,
-	otherwise assume `--no-mailmap`. False by default.
+	If `true`, makes linkgit:git-send-email[1] assume `--mailmap`,
+	otherwise assume `--no-mailmap`. `False` by default.
 
 sendemail.mailmap.file::
 	The location of a linkgit:git-send-email[1] specific augmenting
@@ -88,6 +104,8 @@ sendemail.smtpServer::
 sendemail.smtpServerPort::
 sendemail.smtpServerOption::
 sendemail.smtpUser::
+sendemail.imapSentFolder::
+sendemail.useImapOnly::
 sendemail.thread::
 sendemail.transferEncoding::
 sendemail.validate::
@@ -95,6 +113,11 @@ sendemail.xmailer::
 	These configuration variables all provide a default for
 	linkgit:git-send-email[1] command-line options. See its
 	documentation for details.
+
+sendemail.outlookidfix::
+	If `true`, makes linkgit:git-send-email[1] assume `--outlook-id-fix`,
+	and if `false` assume `--no-outlook-id-fix`. If not specified, it will
+	behave the same way as if `--outlook-id-fix` is not specified.
 
 sendemail.signedOffCc (deprecated)::
 	Deprecated alias for `sendemail.signedOffByCc`.

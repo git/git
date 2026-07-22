@@ -77,12 +77,6 @@ char *git_prompt(const char *prompt, int flags)
 
 int git_read_line_interactively(struct strbuf *line)
 {
-	int ret;
-
 	fflush(stdout);
-	ret = strbuf_getline_lf(line, stdin);
-	if (ret != EOF)
-		strbuf_trim_trailing_newline(line);
-
-	return ret;
+	return strbuf_getline(line, stdin);
 }

@@ -95,7 +95,7 @@ int read_bundle_header_fd(int fd, struct bundle_header *header,
 	 * by an "object-format=" capability, which is being handled in
 	 * `parse_capability()`.
 	 */
-	header->hash_algo = &hash_algos[GIT_HASH_SHA1];
+	header->hash_algo = &hash_algos[GIT_HASH_SHA1_LEGACY];
 
 	/* The bundle header ends with an empty line */
 	while (!strbuf_getwholeline_fd(&buf, fd, '\n') &&
@@ -507,7 +507,7 @@ int create_bundle(struct repository *r, const char *path,
 	 *    SHA1.
 	 * 2. @filter is required because we parsed an object filter.
 	 */
-	if (the_hash_algo != &hash_algos[GIT_HASH_SHA1] || revs.filter.choice)
+	if (the_hash_algo != &hash_algos[GIT_HASH_SHA1_LEGACY] || revs.filter.choice)
 		min_version = 3;
 
 	if (argc > 1) {

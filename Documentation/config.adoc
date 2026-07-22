@@ -114,8 +114,7 @@ whose format and meaning depends on the keyword. Supported keywords
 are:
 
 `gitdir`::
-
-	The data that follows the keyword `gitdir:` is used as a glob
+	The data that follows the keyword `gitdir` and a colon is used as a glob
 	pattern. If the location of the .git directory matches the
 	pattern, the include condition is met.
 +
@@ -148,7 +147,7 @@ refer to linkgit:gitignore[5] for details. For convenience:
 	case-insensitively (e.g. on case-insensitive file systems)
 
 `onbranch`::
-	The data that follows the keyword `onbranch:` is taken to be a
+	The data that follows the keyword `onbranch` and a colon is taken to be a
 	pattern with standard globbing wildcards and two additional
 	ones, `**/` and `/**`, that can match multiple path components.
 	If we are in a worktree where the name of the branch that is
@@ -161,8 +160,8 @@ all branches that begin with `foo/`. This is useful if your branches are
 organized hierarchically and you would like to apply a configuration to
 all the branches in that hierarchy.
 
-`hasconfig:remote.*.url:`::
-	The data that follows this keyword is taken to
+`hasconfig:remote.*.url`::
+	The data that follows this keyword and a colon is taken to
 	be a pattern with standard globbing wildcards and two
 	additional ones, `**/` and `/**`, that can match multiple
 	components. The first time this keyword is seen, the rest of
@@ -358,7 +357,9 @@ compiled without runtime prefix support, the compiled-in prefix will be
 substituted instead. In the unlikely event that a literal path needs to
 be specified that should _not_ be expanded, it needs to be prefixed by
 `./`, like so: `./%(prefix)/bin`.
-
++
+If prefixed with `:(optional)`, the configuration variable is treated
+as if it does not exist, if the named path does not exist.
 
 Variables
 ~~~~~~~~~
@@ -518,9 +519,13 @@ include::config/safe.adoc[]
 
 include::config/sendemail.adoc[]
 
+include::config/sendpack.adoc[]
+
 include::config/sequencer.adoc[]
 
 include::config/showbranch.adoc[]
+
+include::config/sideband.adoc[]
 
 include::config/sparse.adoc[]
 
@@ -533,6 +538,8 @@ include::config/stash.adoc[]
 include::config/status.adoc[]
 
 include::config/submodule.adoc[]
+
+include::config/survey.adoc[]
 
 include::config/tag.adoc[]
 
@@ -555,5 +562,7 @@ include::config/user.adoc[]
 include::config/versionsort.adoc[]
 
 include::config/web.adoc[]
+
+include::config/windows.adoc[]
 
 include::config/worktree.adoc[]

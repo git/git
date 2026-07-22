@@ -219,7 +219,8 @@ If you just want to run git as if it was started in `<path>` then use
 	List commands by group. This is an internal/experimental
 	option and may change or be removed in the future. Supported
 	groups are: builtins, parseopt (builtin commands that use
-	parse-options), main (all commands in libexec directory),
+	parse-options), deprecated (deprecated builtins),
+	main (all commands in libexec directory),
 	others (all other commands in `$PATH` that have git- prefix),
 	list-<category> (see categories in command-list.txt),
 	nohelpers (exclude helper commands), alias and config
@@ -234,7 +235,10 @@ GIT COMMANDS
 ------------
 
 We divide Git into high level ("porcelain") commands and low level
-("plumbing") commands.
+("plumbing") commands.  For defining command aliases, see
+linkgit:git-config[1] and look for descriptions of `alias.*`.
+For installing custom "git" subcommands, see the description for
+the 'PATH' environment variable in this manual.
 
 High-level commands (porcelain)
 -------------------------------
@@ -486,6 +490,14 @@ System
 	`$HOMEDRIVE$HOMEPATH` if both `$HOMEDRIVE` and `$HOMEPATH` exist;
 	otherwise `$USERPROFILE` if `$USERPROFILE` exists.
 
+`PATH`::
+	When a user runs 'git <command>' that is not part of the core Git programs
+	(installed in GIT_EXEC_PATH), 'git-<command>' that is runnable by the user
+	in a directory on `$PATH` is invoked. Argument passed after the command
+	name are passed as-is to the program. To execute `git <foo>`, `git` finds
+	command `<foo>` (either a core Git program found in 'GIT_EXEC_PATH', or a
+	custom one in a directory on 'PATH'), before trying `foo` as an alias.
+
 The Git Repository
 ~~~~~~~~~~~~~~~~~~
 These environment variables apply to 'all' core Git commands. Nb: it
@@ -582,6 +594,11 @@ double-quotes and respecting backslash escapes. E.g., the value
 	If this variable is set, the default reference backend format for new
 	repositories will be set to this value. The default is "files".
 	See `--ref-format` in linkgit:git-init[1].
+
+`GIT_REFERENCE_BACKEND`::
+    Specify which reference backend to be used along with its URI.
+    See `extensions.refStorage` option in linkgit:git-config[1] for more
+    details. Overrides the config variable when used.
 
 Git Commits
 ~~~~~~~~~~~
@@ -684,7 +701,7 @@ other
 
 `GIT_PROGRESS_DELAY`::
 	A number controlling how many seconds to delay before showing
-	optional progress indicators. Defaults to 2.
+	optional progress indicators. Defaults to 1.
 
 `GIT_EDITOR`::
 	This environment variable overrides `$EDITOR` and `$VISUAL`.

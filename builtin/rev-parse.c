@@ -217,19 +217,17 @@ static int show_default(void)
 	return 0;
 }
 
-static int show_reference(const char *refname, const char *referent UNUSED, const struct object_id *oid,
-			  int flag UNUSED, void *cb_data UNUSED)
+static int show_reference(const struct reference *ref, void *cb_data UNUSED)
 {
-	if (ref_excluded(&ref_excludes, refname))
+	if (ref_excluded(&ref_excludes, ref->name))
 		return 0;
-	show_rev(NORMAL, oid, refname);
+	show_rev(NORMAL, ref->oid, ref->name);
 	return 0;
 }
 
-static int anti_reference(const char *refname, const char *referent UNUSED, const struct object_id *oid,
-			  int flag UNUSED, void *cb_data UNUSED)
+static int anti_reference(const struct reference *ref, void *cb_data UNUSED)
 {
-	show_rev(REVERSED, oid, refname);
+	show_rev(REVERSED, ref->oid, ref->name);
 	return 0;
 }
 
@@ -615,13 +613,22 @@ static int opt_with_value(const char *arg, const char *opt, const char **value)
 
 static void handle_ref_opt(const char *pattern, const char *prefix)
 {
-	if (pattern)
-		refs_for_each_glob_ref_in(get_main_ref_store(the_repository),
-					  show_reference, pattern, prefix,
-					  NULL);
-	else
-		refs_for_each_ref_in(get_main_ref_store(the_repository),
-				     prefix, show_reference, NULL);
+	if (pattern) {
+		struct refs_for_each_ref_options opts = {
+			.pattern = pattern,
+			.prefix = prefix,
+			.trim_prefix = prefix ? strlen(prefix) : 0,
+		};
+		refs_for_each_ref_ext(get_main_ref_store(the_repository),
+				      show_reference, NULL, &opts);
+	} else {
+		struct refs_for_each_ref_options opts = {
+			.prefix = prefix,
+			.trim_prefix = strlen(prefix),
+		};
+		refs_for_each_ref_ext(get_main_ref_store(the_repository),
+				      show_reference, NULL, &opts);
+	}
 	clear_ref_exclusions(&ref_excludes);
 }
 
@@ -708,7 +715,6 @@ int cmd_rev_parse(int argc,
 	struct object_id oid;
 	unsigned int flags = 0;
 	const char *name = NULL;
-	struct object_context unused;
 	struct strbuf buf = STRBUF_INIT;
 	int seen_end_of_options = 0;
 	enum format_type format = FORMAT_DEFAULT;
@@ -734,7 +740,7 @@ int cmd_rev_parse(int argc,
 	/* No options; just report on whether we're in a git repo or not. */
 	if (argc == 1) {
 		setup_git_directory();
-		git_config(git_default_config, NULL);
+		repo_config(the_repository, git_default_config, NULL);
 		return 0;
 	}
 
@@ -769,7 +775,7 @@ int cmd_rev_parse(int argc,
 		/* The rest of the options require a git repository. */
 		if (!did_repo_setup) {
 			prefix = setup_git_directory();
-			git_config(git_default_config, NULL);
+			repo_config(the_repository, git_default_config, NULL);
 			did_repo_setup = 1;
 
 			prepare_repo_settings(the_repository);
@@ -934,14 +940,13 @@ int cmd_rev_parse(int argc,
 				continue;
 			}
 			if (!strcmp(arg, "--bisect")) {
-				refs_for_each_fullref_in(get_main_ref_store(the_repository),
-							 "refs/bisect/bad",
-							 NULL, show_reference,
-							 NULL);
-				refs_for_each_fullref_in(get_main_ref_store(the_repository),
-							 "refs/bisect/good",
-							 NULL, anti_reference,
-							 NULL);
+				struct refs_for_each_ref_options opts = { 0 };
+				opts.prefix = "refs/bisect/bad";
+				refs_for_each_ref_ext(get_main_ref_store(the_repository),
+						      show_reference, NULL, &opts);
+				opts.prefix = "refs/bisect/good";
+				refs_for_each_ref_ext(get_main_ref_store(the_repository),
+						      anti_reference, NULL, &opts);
 				continue;
 			}
 			if (opt_with_value(arg, "--branches", &arg)) {
@@ -1108,11 +1113,20 @@ int cmd_rev_parse(int argc,
 				const char *val = arg ? arg : "storage";
 
 				if (strcmp(val, "storage") &&
+				    strcmp(val, "compat") &&
 				    strcmp(val, "input") &&
 				    strcmp(val, "output"))
 					die(_("unknown mode for --show-object-format: %s"),
 					    arg);
-				puts(the_hash_algo->name);
+
+				if (!strcmp(val, "compat")) {
+					if (the_repository->compat_hash_algo)
+						puts(the_repository->compat_hash_algo->name);
+					else
+						putchar('\n');
+				} else {
+					puts(the_hash_algo->name);
+				}
 				continue;
 			}
 			if (!strcmp(arg, "--show-ref-format")) {
@@ -1141,9 +1155,8 @@ int cmd_rev_parse(int argc,
 			name++;
 			type = REVERSED;
 		}
-		if (!get_oid_with_context(the_repository, name,
-					  flags, &oid, &unused)) {
-			object_context_release(&unused);
+		if (!repo_get_oid_with_flags(the_repository, name, &oid,
+					     flags)) {
 			if (output_algo)
 				repo_oid_to_algop(the_repository, &oid,
 						  output_algo, &oid);
@@ -1153,7 +1166,6 @@ int cmd_rev_parse(int argc,
 				show_rev(type, &oid, name);
 			continue;
 		}
-		object_context_release(&unused);
 		if (verify)
 			die_no_single_rev(quiet);
 		if (has_dashdash)

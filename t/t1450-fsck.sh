@@ -105,7 +105,7 @@ test_expect_success REFFILES 'HEAD link pointing at a funny object' '
 	echo $ZERO_OID >.git/HEAD &&
 	# avoid corrupt/broken HEAD from interfering with repo discovery
 	test_must_fail env GIT_DIR=.git git fsck 2>out &&
-	test_grep "detached HEAD points" out
+	test_grep "HEAD: badRefOid: points to invalid object ID ${SQ}$ZERO_OID${SQ}" out
 '
 
 test_expect_success 'HEAD link pointing at a funny place' '
@@ -113,7 +113,7 @@ test_expect_success 'HEAD link pointing at a funny place' '
 	test-tool ref-store main create-symref HEAD refs/funny/place &&
 	# avoid corrupt/broken HEAD from interfering with repo discovery
 	test_must_fail env GIT_DIR=.git git fsck 2>out &&
-	test_grep "HEAD points to something strange" out
+	test_grep "HEAD: badHeadTarget: HEAD points to non-branch ${SQ}refs/funny/place${SQ}" out
 '
 
 test_expect_success REFFILES 'HEAD link pointing at a funny object (from different wt)' '
@@ -123,7 +123,7 @@ test_expect_success REFFILES 'HEAD link pointing at a funny object (from differe
 	echo $ZERO_OID >.git/HEAD &&
 	# avoid corrupt/broken HEAD from interfering with repo discovery
 	test_must_fail git -C wt fsck 2>out &&
-	test_grep "main-worktree/HEAD: detached HEAD points" out
+	test_grep "HEAD: badRefOid: points to invalid object ID ${SQ}$ZERO_OID${SQ}" out
 '
 
 test_expect_success REFFILES 'other worktree HEAD link pointing at a funny object' '
@@ -131,7 +131,7 @@ test_expect_success REFFILES 'other worktree HEAD link pointing at a funny objec
 	git worktree add other &&
 	echo $ZERO_OID >.git/worktrees/other/HEAD &&
 	test_must_fail git fsck 2>out &&
-	test_grep "worktrees/other/HEAD: detached HEAD points" out
+	test_grep "worktrees/other/HEAD: badRefOid: points to invalid object ID ${SQ}$ZERO_OID${SQ}" out
 '
 
 test_expect_success 'other worktree HEAD link pointing at missing object' '
@@ -148,7 +148,7 @@ test_expect_success 'other worktree HEAD link pointing at a funny place' '
 	git worktree add other &&
 	git -C other symbolic-ref HEAD refs/funny/place &&
 	test_must_fail git fsck 2>out &&
-	test_grep "worktrees/other/HEAD points to something strange" out
+	test_grep "worktrees/other/HEAD: badHeadTarget: HEAD points to non-branch ${SQ}refs/funny/place${SQ}" out
 '
 
 test_expect_success 'commit with multiple signatures is okay' '
@@ -452,6 +452,60 @@ test_expect_success 'tag with NUL in header' '
 	test_when_finished "git update-ref -d refs/tags/wrong" &&
 	test_must_fail git fsck --tags 2>out &&
 	test_grep "error in tag $tag.*unterminated header: NUL at offset" out
+'
+
+test_expect_success 'tag accepts gpgsig header even if not validly signed' '
+	test_oid_cache <<-\EOF &&
+	header sha1:gpgsig-sha256
+	header sha256:gpgsig
+	EOF
+	header=$(test_oid header) &&
+	sha=$(git rev-parse HEAD) &&
+	cat >good-tag <<-EOF &&
+	object $sha
+	type commit
+	tag good
+	tagger T A Gger <tagger@example.com> 1234567890 -0000
+	$header -----BEGIN PGP SIGNATURE-----
+	 Not a valid signature
+	 -----END PGP SIGNATURE-----
+
+	This is a good tag.
+	EOF
+
+	tag=$(git hash-object --literally -t tag -w --stdin <good-tag) &&
+	test_when_finished "remove_object $tag" &&
+	git update-ref refs/tags/good $tag &&
+	test_when_finished "git update-ref -d refs/tags/good" &&
+	git -c fsck.extraHeaderEntry=error fsck --tags
+'
+
+test_expect_success 'tag rejects invalid headers' '
+	test_oid_cache <<-\EOF &&
+	header sha1:gpgsig-sha256
+	header sha256:gpgsig
+	EOF
+	header=$(test_oid header) &&
+	sha=$(git rev-parse HEAD) &&
+	cat >bad-tag <<-EOF &&
+	object $sha
+	type commit
+	tag good
+	tagger T A Gger <tagger@example.com> 1234567890 -0000
+	$header -----BEGIN PGP SIGNATURE-----
+	 Not a valid signature
+	 -----END PGP SIGNATURE-----
+	junk
+
+	This is a bad tag with junk at the end of the headers.
+	EOF
+
+	tag=$(git hash-object --literally -t tag -w --stdin <bad-tag) &&
+	test_when_finished "remove_object $tag" &&
+	git update-ref refs/tags/bad $tag &&
+	test_when_finished "git update-ref -d refs/tags/bad" &&
+	test_must_fail git -c fsck.extraHeaderEntry=error fsck --tags 2>out &&
+	test_grep "error in tag $tag.*invalid format - extra header" out
 '
 
 test_expect_success 'cleaned up' '
@@ -798,6 +852,44 @@ test_expect_success 'fsck errors in packed objects' '
 	! grep corrupt out
 '
 
+test_expect_success 'fsck handles multiple packfiles with big blobs' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		# We construct two packfiles with two objects in common and one
+		# object not in common. The objects in common can then be
+		# corrupted in one of the packfiles, respectively. The other
+		# objects that are unique to the packs are merely used to not
+		# have both packs contain the same data.
+		blob_one=$(test-tool genrandom one 200k | git hash-object -t blob -w --stdin) &&
+		blob_two=$(test-tool genrandom two 200k | git hash-object -t blob -w --stdin) &&
+		blob_three=$(test-tool genrandom three 200k | git hash-object -t blob -w --stdin) &&
+		blob_four=$(test-tool genrandom four 200k | git hash-object -t blob -w --stdin) &&
+		pack_one=$(printf "%s\n" "$blob_one" "$blob_two" "$blob_three" | git pack-objects .git/objects/pack/pack) &&
+		pack_two=$(printf "%s\n" "$blob_two" "$blob_three" "$blob_four" | git pack-objects .git/objects/pack/pack) &&
+		chmod a+w .git/objects/pack/pack-*.pack &&
+
+		# Corrupt blob two in the first pack.
+		git verify-pack -v .git/objects/pack/pack-$pack_one >objects &&
+		offset_one=$(sed <objects -n "s/^$blob_two .* \(.*\)$/\1/p") &&
+		printf "\0" | dd of=.git/objects/pack/pack-$pack_one.pack bs=1 conv=notrunc seek=$offset_one &&
+
+		# Corrupt blob three in the second pack.
+		git verify-pack -v .git/objects/pack/pack-$pack_two >objects &&
+		offset_two=$(sed <objects -n "s/^$blob_three .* \(.*\)$/\1/p") &&
+		printf "\0" | dd of=.git/objects/pack/pack-$pack_two.pack bs=1 conv=notrunc seek=$offset_two &&
+
+		# We now expect to see two failures for the corrupted objects,
+		# even though they exist in a non-corrupted form in the
+		# respective other pack.
+		test_must_fail git -c core.bigFileThreshold=100k fsck 2>err &&
+		test_grep "unknown object type 0 at offset $offset_one in .git/objects/pack/pack-$pack_one.pack" err &&
+		test_grep "unknown object type 0 at offset $offset_two in .git/objects/pack/pack-$pack_two.pack" err
+	)
+'
+
 test_expect_success 'fsck fails on corrupt packfile' '
 	hsh=$(git commit-tree -m mycommit HEAD^{tree}) &&
 	pack=$(echo $hsh | git pack-objects .git/objects/pack/pack) &&
@@ -864,7 +956,7 @@ test_expect_success 'fsck detects trailing loose garbage (large blob)' '
 test_expect_success 'fsck detects truncated loose object' '
 	# make it big enough that we know we will truncate in the data
 	# portion, not the header
-	test-tool genrandom truncate 4096 >file &&
+	test-tool genrandom truncate 4k >file &&
 	blob=$(git hash-object -w file) &&
 	file=$(sha1_file $blob) &&
 	test_when_finished "remove_object $blob" &&

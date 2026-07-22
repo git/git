@@ -264,7 +264,7 @@ static struct option builtin_merge_options[] = {
 	OPT_BOOL(0, "stat", &show_diffstat,
 		N_("show a diffstat at the end of the merge")),
 	OPT_BOOL(0, "summary", &show_diffstat, N_("(synonym to --stat)")),
-	OPT_CALLBACK_F(0, "compact-summary", &show_diffstat, N_("compact-summary"),
+	OPT_CALLBACK_F(0, "compact-summary", &show_diffstat, NULL,
 		       N_("show a compact-summary at the end of the merge"),
 		       PARSE_OPT_NOARG,
 		       option_parse_compact_summary),
@@ -506,7 +506,7 @@ static void finish(struct commit *head_commit,
 			 * We ignore errors in 'gc --auto', since the
 			 * user should see them.
 			 */
-			run_auto_maintenance(verbosity < 0);
+			run_auto_maintenance(the_repository, verbosity < 0);
 		}
 	}
 	if (new_head && show_diffstat) {
@@ -756,19 +756,19 @@ static int read_tree_trivial(struct object_id *common, struct object_id *head,
 	opts.trivial_merges_only = 1;
 	opts.merge = 1;
 	opts.preserve_ignored = 0; /* FIXME: !overwrite_ignore */
-	trees[nr_trees] = parse_tree_indirect(common);
+	trees[nr_trees] = repo_parse_tree_indirect(the_repository, common);
 	if (!trees[nr_trees++])
 		return -1;
-	trees[nr_trees] = parse_tree_indirect(head);
+	trees[nr_trees] = repo_parse_tree_indirect(the_repository, head);
 	if (!trees[nr_trees++])
 		return -1;
-	trees[nr_trees] = parse_tree_indirect(one);
+	trees[nr_trees] = repo_parse_tree_indirect(the_repository, one);
 	if (!trees[nr_trees++])
 		return -1;
 	opts.fn = threeway_merge;
 	cache_tree_free(&the_repository->index->cache_tree);
 	for (i = 0; i < nr_trees; i++) {
-		parse_tree(trees[i]);
+		repo_parse_tree(the_repository, trees[i]);
 		init_tree_desc(t+i, &trees[i]->object.oid,
 			       trees[i]->buffer, trees[i]->size);
 	}
@@ -831,7 +831,7 @@ static int try_merge_strategy(const char *strategy, struct commit_list *common,
 				       LOCK_DIE_ON_ERROR);
 		clean = merge_ort_recursive(&o, head, remoteheads->item,
 					    reversed, &result);
-		free_commit_list(reversed);
+		commit_list_free(reversed);
 		strbuf_release(&o.obuf);
 
 		if (clean < 0) {
@@ -875,7 +875,7 @@ static void add_strategies(const char *string, unsigned attr)
 	if (string) {
 		struct string_list list = STRING_LIST_INIT_DUP;
 		struct string_list_item *item;
-		string_list_split(&list, string, ' ', -1);
+		string_list_split(&list, string, " ", -1);
 		for_each_string_list_item(item, &list)
 			append_strategy(get_strategy(item->string));
 		string_list_clear(&list, 0);
@@ -1006,7 +1006,7 @@ static int merge_trivial(struct commit *head, struct commit_list *remoteheads)
 	finish(head, remoteheads, &result_commit, "In-index merge");
 
 	remove_merge_branch_state(the_repository);
-	free_commit_list(parents);
+	commit_list_free(parents);
 	return 0;
 }
 
@@ -1022,7 +1022,7 @@ static int finish_automerge(struct commit *head,
 	struct object_id result_commit;
 
 	write_tree_trivial(result_tree);
-	free_commit_list(common);
+	commit_list_free(common);
 	parents = remoteheads;
 	if (!head_subsumed || fast_forward == FF_NO)
 		commit_list_insert(head, &parents);
@@ -1035,7 +1035,7 @@ static int finish_automerge(struct commit *head,
 
 	strbuf_release(&buf);
 	remove_merge_branch_state(the_repository);
-	free_commit_list(parents);
+	commit_list_free(parents);
 	return 0;
 }
 
@@ -1197,7 +1197,7 @@ static struct commit_list *reduce_parents(struct commit *head_commit,
 
 	/* Find what parents to record by checking independent ones. */
 	parents = reduce_heads(remoteheads);
-	free_commit_list(remoteheads);
+	commit_list_free(remoteheads);
 
 	remoteheads = NULL;
 	remotes = &remoteheads;
@@ -1374,10 +1374,14 @@ int cmd_merge(int argc,
 	struct commit_list *remoteheads = NULL, *p;
 	void *branch_to_free;
 	int orig_argc = argc;
+	int merge_log_config = -1;
 
 	show_usage_with_options_if_asked(argc, argv,
 					 builtin_merge_usage, builtin_merge_options);
 
+#ifndef WITH_BREAKING_CHANGES
+	warn_on_auto_comment_char = true;
+#endif /* !WITH_BREAKING_CHANGES */
 	prepare_repo_settings(the_repository);
 	the_repository->settings.command_requires_full_index = 0;
 
@@ -1392,7 +1396,7 @@ int cmd_merge(int argc,
 		skip_prefix(branch, "refs/heads/", &branch);
 
 	init_diff_ui_defaults();
-	git_config(git_merge_config, NULL);
+	repo_config(the_repository, git_merge_config, &merge_log_config);
 
 	if (!branch || is_null_oid(&head_oid))
 		head_commit = NULL;
@@ -1744,7 +1748,7 @@ int cmd_merge(int argc,
 				exit(128);
 
 			common_item = common_one->item;
-			free_commit_list(common_one);
+			commit_list_free(common_one);
 			if (!oideq(&common_item->object.oid, &j->item->object.oid)) {
 				up_to_date = 0;
 				break;
@@ -1862,7 +1866,7 @@ int cmd_merge(int argc,
 	if (squash) {
 		finish(head_commit, remoteheads, NULL, NULL);
 
-		git_test_write_commit_graph_or_die();
+		git_test_write_commit_graph_or_die(the_repository->objects->sources);
 	} else
 		write_merge_state(remoteheads);
 
@@ -1876,8 +1880,8 @@ int cmd_merge(int argc,
 
 done:
 	if (!automerge_was_ok) {
-		free_commit_list(common);
-		free_commit_list(remoteheads);
+		commit_list_free(common);
+		commit_list_free(remoteheads);
 	}
 	strbuf_release(&buf);
 	free(branch_to_free);

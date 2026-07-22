@@ -1,0 +1,81 @@
+git-last-modified(1)
+====================
+
+NAME
+----
+git-last-modified - EXPERIMENTAL: Show when files were last modified
+
+
+SYNOPSIS
+--------
+[synopsis]
+git last-modified [--recursive] [--show-trees] [--max-depth=<depth>] [-z]
+		  [<revision-range>] [[--] <pathspec>...]
+
+DESCRIPTION
+-----------
+
+Shows which commit last modified each of the relevant files and subdirectories.
+A commit renaming a path, or changing it's mode is also taken into account.
+
+THIS COMMAND IS EXPERIMENTAL. THE BEHAVIOR MAY CHANGE.
+
+OPTIONS
+-------
+
+`-r`::
+`--recursive`::
+	Recursively traverse into all subtrees. By default, the command only
+	shows tree entries matching the `<pathspec>`. With this option, it
+	descends into subtrees and displays all entries within them.
+	Equivalent to `--max-depth=-1`.
+
+`-t`::
+`--show-trees`::
+	Show tree entries even when recursing into them.
+
+`--max-depth=<depth>`::
+	For each pathspec given on the command line, traverse at most `<depth>`
+	levels into subtrees. A negative value means no limit.
+	The default is 0, which shows all paths matching the pathspec
+	without descending into subtrees.
+
+`-z`::
+	Terminate each line with a _NUL_ character rather than a newline.
+
+`<revision-range>`::
+	Only traverse commits in the specified revision range. When no
+	`<revision-range>` is specified, it defaults to `HEAD` (i.e. the whole
+	history leading to the current commit). For a complete list of ways to
+	spell `<revision-range>`, see the 'Specifying Ranges' section of
+	linkgit:gitrevisions[7].
+
+`[--] <pathspec>...`::
+	Show the commit that last modified each path matching _<pathspec>_.
+	If no _<pathspec>_ is given, all files and subdirectories are included.
+	See linkgit:gitglossary[7] for details on pathspec syntax.
+
+OUTPUT
+------
+
+The output is in the format:
+
+------------
+ <oid> TAB <path> LF
+------------
+
+If a path contains any special characters, the path is C-style quoted. To
+avoid quoting, pass option `-z` to terminate each line with a NUL.
+
+------------
+ <oid> TAB <path> NUL
+------------
+
+SEE ALSO
+--------
+linkgit:git-blame[1],
+linkgit:git-log[1].
+
+GIT
+---
+Part of the linkgit:git[1] suite

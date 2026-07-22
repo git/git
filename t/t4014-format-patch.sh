@@ -980,7 +980,7 @@ test_expect_success 'format-patch --ignore-if-in-upstream HEAD' '
 
 test_expect_success 'get git version' '
 	git_version=$(git --version) &&
-	git_version=${git_version##* }
+	git_version=${git_version#git version }
 '
 
 signature() {
@@ -1469,6 +1469,14 @@ test_expect_success '--from uses committer ident' '
 
 	EOF
 	sed -ne "/^From:/p; /^$/p; /^---$/q" patch >patch.head &&
+	test_cmp expect patch.head
+'
+
+test_expect_success '--from applies to cover letter' '
+	test_when_finished "rm -rf patches" &&
+	git format-patch -1 --cover-letter --from="Foo Bar <author@example.com>" -o patches &&
+	echo "From: Foo Bar <author@example.com>" >expect &&
+	grep "^From:" patches/0000-cover-letter.patch >patch.head &&
 	test_cmp expect patch.head
 '
 
@@ -2541,10 +2549,26 @@ test_expect_success 'format-patch respects format.noprefix' '
 	grep "^--- blorp" actual
 '
 
+test_expect_success 'format.noprefix=false' '
+	git -c format.noprefix=false format-patch -1 --stdout >actual &&
+	grep "^--- a/blorp" actual
+'
+
 test_expect_success 'format-patch --default-prefix overrides format.noprefix' '
 	git -c format.noprefix \
 		format-patch -1 --default-prefix --stdout >actual &&
 	grep "^--- a/blorp" actual
+'
+
+test_expect_success 'errors on format.noprefix which is not boolean' '
+	cat >expect <<-EOF &&
+	fatal: bad boolean config value ${SQ}not-a-bool${SQ} for ${SQ}format.noprefix${SQ}
+	hint: ${SQ}format.noprefix${SQ} used to accept any value and treat that as ${SQ}true${SQ}.
+	hint: Now it only accepts boolean values, like what ${SQ}diff.noprefix${SQ} does.
+	EOF
+	test_must_fail git -c format.noprefix=not-a-bool \
+		format-patch -1 --stdout 2>actual &&
+	test_cmp expect actual
 '
 
 test_done

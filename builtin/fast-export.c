@@ -9,6 +9,7 @@
 
 #include "builtin.h"
 #include "config.h"
+#include "environment.h"
 #include "gettext.h"
 #include "hex.h"
 #include "refs.h"
@@ -29,13 +30,12 @@
 #include "quote.h"
 #include "remote.h"
 #include "blob.h"
+#include "gpg-interface.h"
 
 static const char *const fast_export_usage[] = {
 	N_("git fast-export [<rev-list-opts>]"),
 	NULL
 };
-
-enum sign_mode { SIGN_ABORT, SIGN_VERBATIM, SIGN_STRIP, SIGN_WARN_VERBATIM, SIGN_WARN_STRIP };
 
 static int progress;
 static enum sign_mode signed_tag_mode = SIGN_ABORT;
@@ -57,23 +57,16 @@ static struct hashmap anonymized_seeds;
 static struct revision_sources revision_sources;
 
 static int parse_opt_sign_mode(const struct option *opt,
-				     const char *arg, int unset)
+			       const char *arg, int unset)
 {
 	enum sign_mode *val = opt->value;
+
 	if (unset)
 		return 0;
-	else if (!strcmp(arg, "abort"))
-		*val = SIGN_ABORT;
-	else if (!strcmp(arg, "verbatim") || !strcmp(arg, "ignore"))
-		*val = SIGN_VERBATIM;
-	else if (!strcmp(arg, "warn-verbatim") || !strcmp(arg, "warn"))
-		*val = SIGN_WARN_VERBATIM;
-	else if (!strcmp(arg, "warn-strip"))
-		*val = SIGN_WARN_STRIP;
-	else if (!strcmp(arg, "strip"))
-		*val = SIGN_STRIP;
-	else
-		return error("Unknown %s mode: %s", opt->long_name, arg);
+
+	if (parse_sign_mode(arg, val, NULL))
+		return error(_("unknown %s mode: %s"), opt->long_name, arg);
+
 	return 0;
 }
 
@@ -89,7 +82,7 @@ static int parse_opt_tag_of_filtered_mode(const struct option *opt,
 	else if (!strcmp(arg, "rewrite"))
 		*val = REWRITE;
 	else
-		return error("Unknown tag-of-filtered mode: %s", arg);
+		return error(_("unknown tag-of-filtered mode: %s"), arg);
 	return 0;
 }
 
@@ -114,7 +107,7 @@ static int parse_opt_reencode_mode(const struct option *opt,
 		if (!strcasecmp(arg, "abort"))
 			*val = REENCODE_ABORT;
 		else
-			return error("Unknown reencoding mode: %s", arg);
+			return error(_("unknown reencoding mode: %s"), arg);
 	}
 
 	return 0;
@@ -325,16 +318,16 @@ static void export_blob(const struct object_id *oid)
 	} else {
 		buf = odb_read_object(the_repository->objects, oid, &type, &size);
 		if (!buf)
-			die("could not read blob %s", oid_to_hex(oid));
+			die(_("could not read blob %s"), oid_to_hex(oid));
 		if (check_object_signature(the_repository, oid, buf, size,
 					   type) < 0)
-			die("oid mismatch in blob %s", oid_to_hex(oid));
+			die(_("oid mismatch in blob %s"), oid_to_hex(oid));
 		object = parse_object_buffer(the_repository, oid, type,
 					     size, buf, &eaten);
 	}
 
 	if (!object)
-		die("Could not read blob %s", oid_to_hex(oid));
+		die(_("could not read blob %s"), oid_to_hex(oid));
 
 	mark_next_object(object);
 
@@ -343,7 +336,7 @@ static void export_blob(const struct object_id *oid)
 		printf("original-oid %s\n", oid_to_hex(oid));
 	printf("data %"PRIuMAX"\n", (uintmax_t)size);
 	if (size && fwrite(buf, size, 1, stdout) != 1)
-		die_errno("could not write blob '%s'", oid_to_hex(oid));
+		die_errno(_("could not write blob '%s'"), oid_to_hex(oid));
 	printf("\n");
 
 	show_progress();
@@ -506,10 +499,10 @@ static void show_filemodify(struct diff_queue_struct *q,
 			break;
 
 		default:
-			die("Unexpected comparison status '%c' for %s, %s",
-				q->queue[i]->status,
-				ospec->path ? ospec->path : "none",
-				spec->path ? spec->path : "none");
+			die(_("unexpected comparison status '%c' for %s, %s"),
+			    q->queue[i]->status,
+			    ospec->path ? ospec->path : _("none"),
+			    spec->path ? spec->path : _("none"));
 		}
 	}
 }
@@ -652,6 +645,38 @@ static const char *find_commit_multiline_header(const char *msg,
 	return strbuf_detach(&val, NULL);
 }
 
+static void print_signature(const char *signature, const char *object_hash)
+{
+	if (!signature)
+		return;
+
+	printf("gpgsig %s %s\ndata %u\n%s\n",
+	       object_hash,
+	       get_signature_format(signature),
+	       (unsigned)strlen(signature),
+	       signature);
+}
+
+static const char *append_signatures_for_header(struct string_list *signatures,
+						const char *pos,
+						const char *header,
+						const char *object_hash)
+{
+	const char *signature;
+	const char *start = pos;
+	const char *end = pos;
+
+	while ((signature = find_commit_multiline_header(start + 1,
+							 header,
+							 &end))) {
+		string_list_append(signatures, signature)->util = (void *)object_hash;
+		free((char *)signature);
+		start = end;
+	}
+
+	return end;
+}
+
 static void handle_commit(struct commit *commit, struct rev_info *rev,
 			  struct string_list *paths_of_changed_objects)
 {
@@ -660,7 +685,7 @@ static void handle_commit(struct commit *commit, struct rev_info *rev,
 	const char *author, *author_end, *committer, *committer_end;
 	const char *encoding = NULL;
 	size_t encoding_len;
-	const char *signature_alg = NULL, *signature = NULL;
+	struct string_list signatures = STRING_LIST_INIT_DUP;
 	const char *message;
 	char *reencoded = NULL;
 	struct commit_list *p;
@@ -674,14 +699,14 @@ static void handle_commit(struct commit *commit, struct rev_info *rev,
 
 	author = strstr(commit_buffer_cursor, "\nauthor ");
 	if (!author)
-		die("could not find author in commit %s",
+		die(_("could not find author in commit %s"),
 		    oid_to_hex(&commit->object.oid));
 	author++;
 	commit_buffer_cursor = author_end = strchrnul(author, '\n');
 
 	committer = strstr(commit_buffer_cursor, "\ncommitter ");
 	if (!committer)
-		die("could not find committer in commit %s",
+		die(_("could not find committer in commit %s"),
 		    oid_to_hex(&commit->object.oid));
 	committer++;
 	commit_buffer_cursor = committer_end = strchrnul(committer, '\n');
@@ -700,10 +725,11 @@ static void handle_commit(struct commit *commit, struct rev_info *rev,
 	}
 
 	if (*commit_buffer_cursor == '\n') {
-		if ((signature = find_commit_multiline_header(commit_buffer_cursor + 1, "gpgsig", &commit_buffer_cursor)))
-			signature_alg = "sha1";
-		else if ((signature = find_commit_multiline_header(commit_buffer_cursor + 1, "gpgsig-sha256", &commit_buffer_cursor)))
-			signature_alg = "sha256";
+		const char *after_sha1 = append_signatures_for_header(&signatures, commit_buffer_cursor,
+								      "gpgsig", "sha1");
+		const char *after_sha256 = append_signatures_for_header(&signatures, commit_buffer_cursor,
+									"gpgsig-sha256", "sha256");
+		commit_buffer_cursor = (after_sha1 > after_sha256) ? after_sha1 : after_sha256;
 	}
 
 	message = strstr(commit_buffer_cursor, "\n\n");
@@ -755,8 +781,8 @@ static void handle_commit(struct commit *commit, struct rev_info *rev,
 		case REENCODE_NO:
 			break;
 		case REENCODE_ABORT:
-			die("Encountered commit-specific encoding %.*s in commit "
-			    "%s; use --reencode=[yes|no] to handle it",
+			die(_("encountered commit-specific encoding %.*s in commit "
+			      "%s; use --reencode=[yes|no] to handle it"),
 			    (int)encoding_len, encoding,
 			    oid_to_hex(&commit->object.oid));
 		}
@@ -769,30 +795,43 @@ static void handle_commit(struct commit *commit, struct rev_info *rev,
 	printf("%.*s\n%.*s\n",
 	       (int)(author_end - author), author,
 	       (int)(committer_end - committer), committer);
-	if (signature) {
+	if (signatures.nr) {
 		switch (signed_commit_mode) {
-		case SIGN_ABORT:
-			die("encountered signed commit %s; use "
-			    "--signed-commits=<mode> to handle it",
-			    oid_to_hex(&commit->object.oid));
+		/* Exporting modes */
 		case SIGN_WARN_VERBATIM:
-			warning("exporting signed commit %s",
-				oid_to_hex(&commit->object.oid));
+			warning(_("exporting %"PRIuMAX" signature(s) for commit %s"),
+				(uintmax_t)signatures.nr, oid_to_hex(&commit->object.oid));
 			/* fallthru */
 		case SIGN_VERBATIM:
-			printf("gpgsig %s\ndata %u\n%s",
-			       signature_alg,
-			       (unsigned)strlen(signature),
-			       signature);
+			for (size_t i = 0; i < signatures.nr; i++) {
+				struct string_list_item *item = &signatures.items[i];
+				print_signature(item->string, item->util);
+			}
 			break;
+
+		/* Stripping modes */
 		case SIGN_WARN_STRIP:
-			warning("stripping signature from commit %s",
+			warning(_("stripping signature(s) from commit %s"),
 				oid_to_hex(&commit->object.oid));
 			/* fallthru */
 		case SIGN_STRIP:
 			break;
+
+		/* Aborting modes */
+		case SIGN_ABORT:
+			die(_("encountered signed commit %s; use "
+			      "--signed-commits=<mode> to handle it"),
+			    oid_to_hex(&commit->object.oid));
+		case SIGN_STRIP_IF_INVALID:
+			die(_("'strip-if-invalid' is not a valid mode for "
+			      "git fast-export with --signed-commits=<mode>"));
+		case SIGN_SIGN_IF_INVALID:
+			die(_("'sign-if-invalid' is not a valid mode for "
+			      "git fast-export with --signed-commits=<mode>"));
+		default:
+			BUG("invalid signed_commit_mode value %d", signed_commit_mode);
 		}
-		free((char *)signature);
+		string_list_clear(&signatures, 0);
 	}
 	if (!reencoded && encoding)
 		printf("encoding %.*s\n", (int)encoding_len, encoding);
@@ -864,7 +903,8 @@ static void handle_tag(const char *name, struct tag *tag)
 		tagged = ((struct tag *)tagged)->tagged;
 	}
 	if (tagged->type == OBJ_TREE) {
-		warning("Omitting tag %s,\nsince tags of trees (or tags of tags of trees, etc.) are not supported.",
+		warning(_("omitting tag %s,\nsince tags of trees (or tags "
+			  "of tags of trees, etc.) are not supported."),
 			oid_to_hex(&tag->object.oid));
 		return;
 	}
@@ -872,7 +912,7 @@ static void handle_tag(const char *name, struct tag *tag)
 	buf = odb_read_object(the_repository->objects, &tag->object.oid,
 			      &type, &size);
 	if (!buf)
-		die("could not read tag %s", oid_to_hex(&tag->object.oid));
+		die(_("could not read tag %s"), oid_to_hex(&tag->object.oid));
 	message = memmem(buf, size, "\n\n", 2);
 	if (message) {
 		message += 2;
@@ -905,27 +945,39 @@ static void handle_tag(const char *name, struct tag *tag)
 
 	/* handle signed tags */
 	if (message) {
-		const char *signature = strstr(message,
-					       "\n-----BEGIN PGP SIGNATURE-----\n");
-		if (signature)
+		size_t sig_offset = parse_signed_buffer(message, message_size);
+		if (sig_offset < message_size)
 			switch (signed_tag_mode) {
-			case SIGN_ABORT:
-				die("encountered signed tag %s; use "
-				    "--signed-tags=<mode> to handle it",
-				    oid_to_hex(&tag->object.oid));
+			/* Exporting modes */
 			case SIGN_WARN_VERBATIM:
-				warning("exporting signed tag %s",
+				warning(_("exporting signed tag %s"),
 					oid_to_hex(&tag->object.oid));
 				/* fallthru */
 			case SIGN_VERBATIM:
 				break;
+
+			/* Stripping modes */
 			case SIGN_WARN_STRIP:
-				warning("stripping signature from tag %s",
+				warning(_("stripping signature from tag %s"),
 					oid_to_hex(&tag->object.oid));
 				/* fallthru */
 			case SIGN_STRIP:
-				message_size = signature + 1 - message;
+				message_size = sig_offset;
 				break;
+
+			/* Aborting modes */
+			case SIGN_ABORT:
+				die(_("encountered signed tag %s; use "
+				      "--signed-tags=<mode> to handle it"),
+				    oid_to_hex(&tag->object.oid));
+			case SIGN_STRIP_IF_INVALID:
+				die(_("'strip-if-invalid' is not a valid mode for "
+				      "git fast-export with --signed-tags=<mode>"));
+			case SIGN_SIGN_IF_INVALID:
+				die(_("'sign-if-invalid' is not a valid mode for "
+				      "git fast-export with --signed-tags=<mode>"));
+			default:
+				BUG("invalid signed_commit_mode value %d", signed_commit_mode);
 			}
 	}
 
@@ -935,8 +987,8 @@ static void handle_tag(const char *name, struct tag *tag)
 	if (!tagged_mark) {
 		switch (tag_of_filtered_mode) {
 		case TAG_FILTERING_ABORT:
-			die("tag %s tags unexported object; use "
-			    "--tag-of-filtered-object=<mode> to handle it",
+			die(_("tag %s tags unexported object; use "
+			      "--tag-of-filtered-object=<mode> to handle it"),
 			    oid_to_hex(&tag->object.oid));
 		case DROP:
 			/* Ignore this tag altogether */
@@ -944,7 +996,7 @@ static void handle_tag(const char *name, struct tag *tag)
 			return;
 		case REWRITE:
 			if (tagged->type == OBJ_TAG && !mark_tags) {
-				die(_("Error: Cannot export nested tags unless --mark-tags is specified."));
+				die(_("cannot export nested tags unless --mark-tags is specified."));
 			} else if (tagged->type == OBJ_COMMIT) {
 				p = rewrite_commit((struct commit *)tagged);
 				if (!p) {
@@ -1000,7 +1052,7 @@ static struct commit *get_commit(struct rev_cmdline_entry *e, const char *full_n
 			tag = (struct tag *)tag->tagged;
 		}
 		if (!tag)
-			die("Tag %s points nowhere?", e->name);
+			die(_("tag %s points nowhere?"), e->name);
 		return (struct commit *)tag;
 	}
 	default:
@@ -1038,7 +1090,7 @@ static void get_tags_and_duplicates(struct rev_cmdline_info *info)
 
 		commit = get_commit(e, full_name);
 		if (!commit) {
-			warning("%s: Unexpected object of type %s, skipping.",
+			warning(_("%s: unexpected object of type %s, skipping."),
 				e->name,
 				type_name(e->item->type));
 			free(full_name);
@@ -1053,7 +1105,7 @@ static void get_tags_and_duplicates(struct rev_cmdline_info *info)
 			free(full_name);
 			continue;
 		default: /* OBJ_TAG (nested tags) is already handled */
-			warning("Tag points to object of unexpected type %s, skipping.",
+			warning(_("tag points to object of unexpected type %s, skipping."),
 				type_name(commit->object.type));
 			free(full_name);
 			continue;
@@ -1072,8 +1124,7 @@ static void get_tags_and_duplicates(struct rev_cmdline_info *info)
 			free(full_name);
 	}
 
-	string_list_sort(&extra_refs);
-	string_list_remove_duplicates(&extra_refs, 0);
+	string_list_sort_u(&extra_refs, 0);
 }
 
 static void handle_tags_and_duplicates(struct string_list *extras)
@@ -1149,7 +1200,7 @@ static void export_marks(char *file)
 
 	f = fopen_for_writing(file);
 	if (!f)
-		die_errno("Unable to open marks file %s for writing.", file);
+		die_errno(_("unable to open marks file %s for writing."), file);
 
 	for (i = 0; i < idnums.size; i++) {
 		if (deco->base && deco->base->type == 1) {
@@ -1166,7 +1217,7 @@ static void export_marks(char *file)
 	e |= ferror(f);
 	e |= fclose(f);
 	if (e)
-		error("Unable to write marks file %s.", file);
+		error(_("unable to write marks file %s."), file);
 }
 
 static void import_marks(char *input_file, int check_exists)
@@ -1189,20 +1240,20 @@ static void import_marks(char *input_file, int check_exists)
 
 		line_end = strchr(line, '\n');
 		if (line[0] != ':' || !line_end)
-			die("corrupt mark line: %s", line);
+			die(_("corrupt mark line: %s"), line);
 		*line_end = '\0';
 
 		mark = strtoumax(line + 1, &mark_end, 10);
 		if (!mark || mark_end == line + 1
 			|| *mark_end != ' ' || get_oid_hex(mark_end + 1, &oid))
-			die("corrupt mark line: %s", line);
+			die(_("corrupt mark line: %s"), line);
 
 		if (last_idnum < mark)
 			last_idnum = mark;
 
 		type = odb_read_object_info(the_repository->objects, &oid, NULL);
 		if (type < 0)
-			die("object not found: %s", oid_to_hex(&oid));
+			die(_("object not found: %s"), oid_to_hex(&oid));
 
 		if (type != OBJ_COMMIT)
 			/* only commits */
@@ -1210,12 +1261,12 @@ static void import_marks(char *input_file, int check_exists)
 
 		commit = lookup_commit(the_repository, &oid);
 		if (!commit)
-			die("not a commit? can't happen: %s", oid_to_hex(&oid));
+			die(_("not a commit? can't happen: %s"), oid_to_hex(&oid));
 
 		object = &commit->object;
 
 		if (object->flags & SHOWN)
-			error("Object %s already has a mark", oid_to_hex(&oid));
+			error(_("object %s already has a mark"), oid_to_hex(&oid));
 
 		mark_object(object, mark);
 
@@ -1327,7 +1378,7 @@ int cmd_fast_export(int argc,
 		usage_with_options (fast_export_usage, options);
 
 	/* we handle encodings */
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 
 	repo_init_revisions(the_repository, &revs, prefix);
 	init_revision_sources(&revision_sources);
@@ -1369,7 +1420,7 @@ int cmd_fast_export(int argc,
 	get_tags_and_duplicates(&revs.cmdline);
 
 	if (prepare_revision_walk(&revs))
-		die("revision walk setup failed");
+		die(_("revision walk setup failed"));
 
 	revs.reverse = 1;
 	revs.diffopt.format_callback = show_filemodify;

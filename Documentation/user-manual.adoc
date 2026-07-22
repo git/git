@@ -4270,7 +4270,7 @@ So, look into `builtin/cat-file.c`, search for `cmd_cat_file()` and look what
 it does.
 
 ------------------------------------------------------------------
-        git_config(git_default_config);
+        repo_config(the_repository, git_default_config);
         if (argc != 3)
 		usage("git cat-file [-t|-s|-e|-p|<type>] <sha1>");
         if (get_sha1(argv[2], sha1))
@@ -4466,7 +4466,7 @@ $ git show		    # most recent commit
 $ git diff v2.6.15..v2.6.16 # diff between two tagged versions
 $ git diff v2.6.15..HEAD    # diff with current head
 $ git grep "foo()"	    # search working directory for "foo()"
-$ git grep v2.6.15 "foo()"  # search old tree for "foo()"
+$ git grep "foo()" v2.6.15  # search old tree for "foo()"
 $ git show v2.6.15:a.txt    # look at old version of a.txt
 -----------------------------------------------
 

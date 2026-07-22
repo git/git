@@ -1,0 +1,12 @@
+`-U<n>`::
+`--unified=<n>`::
+	Generate diffs with _<n>_ lines of context. The number of context
+	lines defaults to `diff.context` or 3 if the configuration variable
+	is unset. (`-U` without `<n>` is silently accepted as a synonym for
+	`-p` due to a historical accident).
+
+`--inter-hunk-context=<n>`::
+	Show the context between diff hunks, up to the specified _<number>_
+	of lines, thereby fusing hunks that are close to each other.
+	Defaults to `diff.interHunkContext` or 0 if the config option
+	is unset.

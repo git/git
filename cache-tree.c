@@ -8,7 +8,6 @@
 #include "tree.h"
 #include "tree-walk.h"
 #include "cache-tree.h"
-#include "bulk-checkin.h"
 #include "object-file.h"
 #include "odb.h"
 #include "read-cache-ll.h"
@@ -456,9 +455,8 @@ static int update_one(struct cache_tree *it,
 	} else if (dryrun) {
 		hash_object_file(the_hash_algo, buffer.buf, buffer.len,
 				 OBJ_TREE, &it->oid);
-	} else if (write_object_file_flags(buffer.buf, buffer.len, OBJ_TREE,
-					   &it->oid, NULL, flags & WRITE_TREE_SILENT
-					   ? WRITE_OBJECT_FILE_SILENT : 0)) {
+	} else if (odb_write_object_ext(the_repository->objects, buffer.buf, buffer.len, OBJ_TREE,
+					&it->oid, NULL, flags & WRITE_TREE_SILENT ? WRITE_OBJECT_SILENT : 0)) {
 		strbuf_release(&buffer);
 		return -1;
 	}
@@ -475,6 +473,7 @@ static int update_one(struct cache_tree *it,
 
 int cache_tree_update(struct index_state *istate, int flags)
 {
+	struct odb_transaction *transaction;
 	int skip, i;
 
 	i = verify_cache(istate, flags);
@@ -490,10 +489,10 @@ int cache_tree_update(struct index_state *istate, int flags)
 
 	trace_performance_enter();
 	trace2_region_enter("cache_tree", "update", the_repository);
-	begin_odb_transaction();
+	transaction = odb_transaction_begin(the_repository->objects);
 	i = update_one(istate->cache_tree, istate->cache, istate->cache_nr,
 		       "", 0, &skip, flags);
-	end_odb_transaction();
+	odb_transaction_commit(transaction);
 	trace2_region_leave("cache_tree", "update", the_repository);
 	trace_performance_leave("cache_tree_update");
 	if (i < 0)
@@ -549,12 +548,41 @@ void cache_tree_write(struct strbuf *sb, struct cache_tree *root)
 	trace2_region_leave("cache_tree", "write", the_repository);
 }
 
+static int parse_int(const char **ptr, unsigned long *len_p, int *out)
+{
+	const char *s = *ptr;
+	unsigned long len = *len_p;
+	int ret = 0;
+	int sign = 1;
+
+	while (len && *s == '-') {
+		sign *= -1;
+		s++;
+		len--;
+	}
+
+	while (len) {
+		if (!isdigit(*s))
+			break;
+		ret *= 10;
+		ret += *s - '0';
+		s++;
+		len--;
+	}
+
+	if (s == *ptr)
+		return -1;
+
+	*ptr = s;
+	*len_p = len;
+	*out = sign * ret;
+	return 0;
+}
+
 static struct cache_tree *read_one(const char **buffer, unsigned long *size_p)
 {
 	const char *buf = *buffer;
 	unsigned long size = *size_p;
-	const char *cp;
-	char *ep;
 	struct cache_tree *it;
 	int i, subtree_nr;
 	const unsigned rawsz = the_hash_algo->rawsz;
@@ -570,19 +598,14 @@ static struct cache_tree *read_one(const char **buffer, unsigned long *size_p)
 	buf++; size--;
 	it = cache_tree();
 
-	cp = buf;
-	it->entry_count = strtol(cp, &ep, 10);
-	if (cp == ep)
+	if (parse_int(&buf, &size, &it->entry_count) < 0)
 		goto free_return;
-	cp = ep;
-	subtree_nr = strtol(cp, &ep, 10);
-	if (cp == ep)
+	if (!size || *buf != ' ')
 		goto free_return;
-	while (size && *buf && *buf != '\n') {
-		size--;
-		buf++;
-	}
-	if (!size)
+	buf++; size--;
+	if (parse_int(&buf, &size, &subtree_nr) < 0)
+		goto free_return;
+	if (!size || *buf != '\n')
 		goto free_return;
 	buf++; size--;
 	if (0 <= it->entry_count) {
@@ -700,11 +723,11 @@ static int write_index_as_tree_internal(struct object_id *oid,
 	return 0;
 }
 
-struct tree* write_in_core_index_as_tree(struct repository *repo) {
+struct tree *write_in_core_index_as_tree(struct repository *repo,
+					 struct index_state *index_state) {
 	struct object_id o;
 	int was_valid, ret;
 
-	struct index_state *index_state	= repo->index;
 	was_valid = index_state->cache_tree &&
 		    cache_tree_fully_valid(index_state->cache_tree);
 
@@ -790,7 +813,7 @@ static void prime_cache_tree_rec(struct repository *r,
 			struct cache_tree_sub *sub;
 			struct tree *subtree = lookup_tree(r, &entry.oid);
 
-			if (parse_tree(subtree) < 0)
+			if (repo_parse_tree(the_repository, subtree) < 0)
 				exit(128);
 			sub = cache_tree_sub(it, entry.path);
 			sub->cache_tree = cache_tree();

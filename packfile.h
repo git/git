@@ -4,15 +4,16 @@
 #include "list.h"
 #include "object.h"
 #include "odb.h"
+#include "odb/source-files.h"
 #include "oidset.h"
+#include "repository.h"
+#include "strmap.h"
 
 /* in odb.h */
 struct object_info;
+struct odb_read_stream;
 
 struct packed_git {
-	struct hashmap_entry packmap_ent;
-	struct packed_git *next;
-	struct list_head mru;
 	struct pack_window *windows;
 	off_t pack_size;
 	const void *index_data;
@@ -52,19 +53,238 @@ struct packed_git {
 	char pack_name[FLEX_ARRAY]; /* more */
 };
 
-static inline int pack_map_entry_cmp(const void *cmp_data UNUSED,
-				     const struct hashmap_entry *entry,
-				     const struct hashmap_entry *entry2,
-				     const void *keydata)
+struct packfile_list {
+	struct packfile_list_entry *head, *tail;
+};
+
+struct packfile_list_entry {
+	struct packfile_list_entry *next;
+	struct packed_git *pack;
+};
+
+void packfile_list_clear(struct packfile_list *list);
+void packfile_list_remove(struct packfile_list *list, struct packed_git *pack);
+void packfile_list_prepend(struct packfile_list *list, struct packed_git *pack);
+void packfile_list_append(struct packfile_list *list, struct packed_git *pack);
+
+/*
+ * Find the pack within the "packs" list whose index contains the object
+ * "oid". For general object lookups, you probably don't want this; use
+ * find_pack_entry() instead.
+ */
+struct packed_git *packfile_list_find_oid(struct packfile_list_entry *packs,
+					  const struct object_id *oid);
+
+/*
+ * A store that manages packfiles for a given object database.
+ */
+struct packfile_store {
+	struct odb_source *source;
+
+	/*
+	 * The list of packfiles in the order in which they have been most
+	 * recently used.
+	 */
+	struct packfile_list packs;
+
+	/*
+	 * Cache of packfiles which are marked as "kept", either because there
+	 * is an on-disk ".keep" file or because they are marked as "kept" in
+	 * memory.
+	 *
+	 * Should not be accessed directly, but via
+	 * `packfile_store_get_kept_pack_cache()`. The list of packs gets
+	 * invalidated when the stored flags and the flags passed to
+	 * `packfile_store_get_kept_pack_cache()` mismatch.
+	 */
+	struct {
+		struct packed_git **packs;
+		unsigned flags;
+	} kept_cache;
+
+	/* The multi-pack index that belongs to this specific packfile store. */
+	struct multi_pack_index *midx;
+
+	/*
+	 * A map of packfile names to packed_git structs for tracking which
+	 * packs have been loaded already.
+	 */
+	struct strmap packs_by_path;
+
+	/*
+	 * Whether packfiles have already been populated with this store's
+	 * packs.
+	 */
+	bool initialized;
+
+	/*
+	 * Usually, packfiles will be reordered to the front of the `packs`
+	 * list whenever an object is looked up via them. This has the effect
+	 * that packs that contain a lot of accessed objects will be located
+	 * towards the front.
+	 *
+	 * This is usually desireable, but there are exceptions. One exception
+	 * is when the looking up multiple objects in a loop for each packfile.
+	 * In that case, we may easily end up with an infinite loop as the
+	 * packfiles get reordered to the front repeatedly.
+	 *
+	 * Setting this field to `true` thus disables these reorderings.
+	 */
+	bool skip_mru_updates;
+};
+
+/*
+ * Allocate and initialize a new empty packfile store for the given object
+ * database source.
+ */
+struct packfile_store *packfile_store_new(struct odb_source *source);
+
+/*
+ * Free the packfile store and all its associated state. All packfiles
+ * tracked by the store will be closed.
+ */
+void packfile_store_free(struct packfile_store *store);
+
+/*
+ * Close all packfiles associated with this store. The packfiles won't be
+ * free'd, so they can be re-opened at a later point in time.
+ */
+void packfile_store_close(struct packfile_store *store);
+
+/*
+ * Prepare the packfile store by loading packfiles and multi-pack indices for
+ * all alternates. This becomes a no-op if the store is already prepared.
+ *
+ * It shouldn't typically be necessary to call this function directly, as
+ * functions that access the store know to prepare it.
+ */
+void packfile_store_prepare(struct packfile_store *store);
+
+/*
+ * Clear the packfile caches and try to look up any new packfiles that have
+ * appeared since last preparing the packfiles store.
+ *
+ * This function must be called under the `odb_read_lock()`.
+ */
+void packfile_store_reprepare(struct packfile_store *store);
+
+/*
+ * Add the pack to the store so that contained objects become accessible via
+ * the store. This moves ownership into the store.
+ */
+void packfile_store_add_pack(struct packfile_store *store,
+			     struct packed_git *pack);
+
+/*
+ * Get all packs managed by the given store, including packfiles that are
+ * referenced by multi-pack indices.
+ */
+struct packfile_list_entry *packfile_store_get_packs(struct packfile_store *store);
+
+struct repo_for_each_pack_data {
+	struct odb_source *source;
+	struct packfile_list_entry *entry;
+};
+
+static inline struct repo_for_each_pack_data repo_for_eack_pack_data_init(struct repository *repo)
 {
-	const char *key = keydata;
-	const struct packed_git *pg1, *pg2;
+	struct repo_for_each_pack_data data = { 0 };
 
-	pg1 = container_of(entry, const struct packed_git, packmap_ent);
-	pg2 = container_of(entry2, const struct packed_git, packmap_ent);
+	odb_prepare_alternates(repo->objects);
 
-	return strcmp(pg1->pack_name, key ? key : pg2->pack_name);
+	for (struct odb_source *source = repo->objects->sources; source; source = source->next) {
+		struct odb_source_files *files = odb_source_files_downcast(source);
+		struct packfile_list_entry *entry = packfile_store_get_packs(files->packed);
+		if (!entry)
+			continue;
+		data.source = source;
+		data.entry = entry;
+		break;
+	}
+
+	return data;
 }
+
+static inline void repo_for_each_pack_data_next(struct repo_for_each_pack_data *data)
+{
+	struct odb_source *source;
+
+	data->entry = data->entry->next;
+	if (data->entry)
+		return;
+
+	for (source = data->source->next; source; source = source->next) {
+		struct odb_source_files *files = odb_source_files_downcast(source);
+		struct packfile_list_entry *entry = packfile_store_get_packs(files->packed);
+		if (!entry)
+			continue;
+		data->source = source;
+		data->entry = entry;
+		return;
+	}
+
+	data->source = NULL;
+	data->entry = NULL;
+}
+
+/*
+ * Load and iterate through all packs of the given repository. This helper
+ * function will yield packfiles from all object sources connected to the
+ * repository.
+ */
+#define repo_for_each_pack(repo, p) \
+	for (struct repo_for_each_pack_data eack_pack_data = repo_for_eack_pack_data_init(repo); \
+	     ((p) = (eack_pack_data.entry ? eack_pack_data.entry->pack : NULL)); \
+	     repo_for_each_pack_data_next(&eack_pack_data))
+
+int packfile_store_read_object_stream(struct odb_read_stream **out,
+				      struct packfile_store *store,
+				      const struct object_id *oid);
+
+/*
+ * Try to read the object identified by its ID from the object store and
+ * populate the object info with its data. Returns 1 in case the object was
+ * not found, 0 if it was and read successfully, and a negative error code in
+ * case the object was corrupted.
+ */
+int packfile_store_read_object_info(struct packfile_store *store,
+				    const struct object_id *oid,
+				    struct object_info *oi,
+				    enum object_info_flags flags);
+
+/*
+ * Open the packfile and add it to the store if it isn't yet known. Returns
+ * either the newly opened packfile or the preexisting packfile. Returns a
+ * `NULL` pointer in case the packfile could not be opened.
+ */
+struct packed_git *packfile_store_load_pack(struct packfile_store *store,
+					    const char *idx_path, int local);
+
+int packfile_store_freshen_object(struct packfile_store *store,
+				  const struct object_id *oid);
+
+enum kept_pack_type {
+	KEPT_PACK_ON_DISK = (1 << 0),
+	KEPT_PACK_IN_CORE = (1 << 1),
+};
+
+/*
+ * Count the number objects contained in the given packfile store. If
+ * successful, the number of objects will be written to the `out` pointer.
+ *
+ * Return 0 on success, a negative error code otherwise.
+ */
+int packfile_store_count_objects(struct packfile_store *store,
+				 enum odb_count_objects_flags flags,
+				 unsigned long *out);
+
+/*
+ * Retrieve the cache of kept packs from the given packfile store. Accepts a
+ * combination of `kept_pack_type` flags. The cache is computed on demand and
+ * will be recomputed whenever the flags change.
+ */
+struct packed_git **packfile_store_get_kept_pack_cache(struct packfile_store *store,
+						       unsigned flags);
 
 struct pack_window {
 	struct pack_window *next;
@@ -132,38 +352,28 @@ typedef int each_packed_object_fn(const struct object_id *oid,
 				  void *data);
 int for_each_object_in_pack(struct packed_git *p,
 			    each_packed_object_fn, void *data,
-			    enum for_each_object_flags flags);
-int for_each_packed_object(struct repository *repo, each_packed_object_fn cb,
-			   void *data, enum for_each_object_flags flags);
+			    unsigned flags);
+
+/*
+ * Iterate through all packed objects in the given packfile store and invoke
+ * the callback function for each of them. If an object info request is given,
+ * then the object info will be read for every individual object and passed to
+ * the callback as if `packfile_store_read_object_info()` was called for the
+ * object.
+ *
+ * The flags parameter is a combination of `odb_for_each_object_flags`.
+ */
+int packfile_store_for_each_object(struct packfile_store *store,
+				   const struct object_info *request,
+				   odb_for_each_object_cb cb,
+				   void *cb_data,
+				   unsigned flags);
 
 /* A hook to report invalid files in pack directory */
 #define PACKDIR_FILE_PACK 1
 #define PACKDIR_FILE_IDX 2
 #define PACKDIR_FILE_GARBAGE 4
 extern void (*report_garbage)(unsigned seen_bits, const char *path);
-
-void reprepare_packed_git(struct repository *r);
-void install_packed_git(struct repository *r, struct packed_git *pack);
-
-struct packed_git *get_packed_git(struct repository *r);
-struct list_head *get_packed_git_mru(struct repository *r);
-struct multi_pack_index *get_multi_pack_index(struct repository *r);
-struct multi_pack_index *get_local_multi_pack_index(struct repository *r);
-struct packed_git *get_all_packs(struct repository *r);
-
-/*
- * Give a rough count of objects in the repository. This sacrifices accuracy
- * for speed.
- */
-unsigned long repo_approximate_object_count(struct repository *r);
-
-/*
- * Find the pack within the "packs" list whose index contains the object "oid".
- * For general object lookups, you probably don't want this; use
- * find_pack_entry() instead.
- */
-struct packed_git *find_oid_pack(const struct object_id *oid,
-				 struct packed_git *packs);
 
 void pack_report(struct repository *repo);
 
@@ -188,7 +398,6 @@ struct object_database;
 unsigned char *use_pack(struct packed_git *, struct pack_window **, off_t, unsigned long *);
 void close_pack_windows(struct packed_git *);
 void close_pack(struct packed_git *);
-void close_object_store(struct object_database *o);
 void unuse_pack(struct pack_window **);
 void clear_delta_base_cache(void);
 struct packed_git *add_packed_git(struct repository *r, const char *path,
@@ -247,33 +456,29 @@ off_t get_delta_base(struct packed_git *p, struct pack_window **w_curs,
 		     off_t *curpos, enum object_type type,
 		     off_t delta_obj_offset);
 
+int packfile_read_object_stream(struct odb_read_stream **out,
+				const struct object_id *oid,
+				struct packed_git *pack,
+				off_t offset);
+
 void release_pack_memory(size_t);
 
 /* global flag to enable extra checks when accessing packed objects */
 extern int do_check_packed_object_crc;
 
-int packed_object_info(struct repository *r,
-		       struct packed_git *pack,
+/*
+ * Look up the object info for a specific offset in the packfile.
+ * Returns zero on success, a negative error code otherwise.
+ */
+int packed_object_info(struct packed_git *pack,
 		       off_t offset, struct object_info *);
 
 void mark_bad_packed_object(struct packed_git *, const struct object_id *);
 const struct packed_git *has_packed_and_bad(struct repository *, const struct object_id *);
 
-#define ON_DISK_KEEP_PACKS 1
-#define IN_CORE_KEEP_PACKS 2
-
-/*
- * Iff a pack file in the given repository contains the object named by sha1,
- * return true and store its location to e.
- */
-int find_pack_entry(struct repository *r, const struct object_id *oid, struct pack_entry *e);
-int find_kept_pack_entry(struct repository *r, const struct object_id *oid, unsigned flags, struct pack_entry *e);
-
 int has_object_pack(struct repository *r, const struct object_id *oid);
 int has_object_kept_pack(struct repository *r, const struct object_id *oid,
 			 unsigned flags);
-
-struct packed_git **kept_pack_cache(struct repository *r, unsigned flags);
 
 /*
  * Return 1 if an object in a promisor packfile is or refers to the given

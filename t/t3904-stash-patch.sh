@@ -107,4 +107,23 @@ test_expect_success 'stash -p with split hunk' '
 	! grep "added line 2" test
 '
 
+test_expect_success 'stash -p not confused by GIT_PAGER_IN_USE' '
+	echo to-stash >test &&
+	# Set both GIT_PAGER_IN_USE and TERM. Our goal is to entice any
+	# diff subprocesses into thinking that they could output
+	# color, even though their stdout is not going into a tty.
+	echo y |
+	GIT_PAGER_IN_USE=1 TERM=vt100 git stash -p &&
+	git diff --exit-code
+'
+
+test_expect_success 'index push not confused by GIT_PAGER_IN_USE' '
+	echo index >test &&
+	git add test &&
+	echo working-tree >test &&
+	# As above, we try to entice the child diff into using color.
+	GIT_PAGER_IN_USE=1 TERM=vt100 git stash push test &&
+	git diff --exit-code
+'
+
 test_done

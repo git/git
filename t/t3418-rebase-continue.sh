@@ -82,7 +82,7 @@ test_expect_success 'rebase --continue remembers merge strategy and options' '
 
 	rm -f actual &&
 	(
-		PATH=./test-bin:$PATH &&
+		PATH=./test-bin$PATH_SEP$PATH &&
 		test_must_fail git rebase -s funny -X"option=arg with space" \
 				-Xop\"tion\\ -X"new${LF}line " main topic
 	) &&
@@ -91,7 +91,7 @@ test_expect_success 'rebase --continue remembers merge strategy and options' '
 	echo "Resolved" >F2 &&
 	git add F2 &&
 	(
-		PATH=./test-bin:$PATH &&
+		PATH=./test-bin$PATH_SEP$PATH &&
 		git rebase --continue
 	) &&
 	test_cmp expect actual
@@ -326,6 +326,19 @@ test_expect_success 'there is no --no-reschedule-failed-exec in an ongoing rebas
 	test_must_fail git rebase -x false HEAD~2 &&
 	test_expect_code 129 git rebase --continue --no-reschedule-failed-exec &&
 	test_expect_code 129 git rebase --edit-todo --no-reschedule-failed-exec
+'
+
+test_expect_success !WITH_BREAKING_CHANGES 'no change in comment character due to conflicts markers with core.commentChar=auto' '
+	git checkout -b branch-a &&
+	test_commit A F1 &&
+	git checkout -b branch-b HEAD^ &&
+	test_commit B F1 &&
+	test_must_fail git rebase branch-a &&
+	printf "B\nA\n" >F1 &&
+	git add F1 &&
+	GIT_EDITOR="cat >actual" git -c core.commentChar=auto rebase --continue &&
+	# Check that "#" is still the comment character.
+	test_grep "^# Changes to be committed" actual
 '
 
 test_orig_head_helper () {

@@ -202,14 +202,17 @@ test_expect_success 'scalar clone --no-... opts' '
 test_expect_success 'scalar reconfigure' '
 	git init one/src &&
 	scalar register one &&
-	git -C one/src config core.preloadIndex false &&
+	git -C one/src config unset gui.gcwarning &&
 	scalar reconfigure one &&
-	test true = "$(git -C one/src config core.preloadIndex)" &&
-	git -C one/src config core.preloadIndex false &&
+	test false = "$(git -C one/src config gui.gcwarning)" &&
+	git -C one/src config unset gui.gcwarning &&
 	rm one/src/cron.txt &&
 	GIT_TRACE2_EVENT="$(pwd)/reconfigure" scalar reconfigure -a &&
 	test_path_is_file one/src/cron.txt &&
-	test true = "$(git -C one/src config core.preloadIndex)" &&
+	test false = "$(git -C one/src config gui.gcwarning)" &&
+	test_grep "GCWarning = false # set by scalar" one/src/.git/config &&
+	test_grep "excludeDecoration = refs/prefetch/\* # set by scalar" one/src/.git/config &&
+
 	test_subcommand git maintenance start <reconfigure &&
 	test_subcommand ! git maintenance unregister --force <reconfigure &&
 
@@ -231,25 +234,29 @@ test_expect_success 'scalar reconfigure --all with includeIf.onbranch' '
 		git init $num/src &&
 		scalar register $num/src &&
 		git -C $num/src config includeif."onbranch:foo".path something &&
-		git -C $num/src config core.preloadIndex false || return 1
+		git -C $num/src config unset gui.gcwarning || return 1
 	done &&
 
 	scalar reconfigure --all &&
 
 	for num in $repos
 	do
-		test true = "$(git -C $num/src config core.preloadIndex)" || return 1
+		test false = "$(git -C $num/src config gui.gcwarning)" || return 1
 	done
 '
 
 test_expect_success 'scalar reconfigure --all with detached HEADs' '
+	# This test demonstrates an issue with index.skipHash=true and
+	# this test variable for the split index. Disable the test variable.
+	sane_unset GIT_TEST_SPLIT_INDEX &&
+
 	repos="two three four" &&
 	for num in $repos
 	do
 		rm -rf $num/src &&
 		git init $num/src &&
 		scalar register $num/src &&
-		git -C $num/src config core.preloadIndex false &&
+		git -C $num/src config unset gui.gcwarning &&
 		test_commit -C $num/src initial &&
 		git -C $num/src switch --detach HEAD || return 1
 	done &&
@@ -258,7 +265,7 @@ test_expect_success 'scalar reconfigure --all with detached HEADs' '
 
 	for num in $repos
 	do
-		test true = "$(git -C $num/src config core.preloadIndex)" || return 1
+		test false = "$(git -C $num/src config gui.gcwarning)" || return 1
 	done
 '
 
@@ -290,7 +297,7 @@ test_expect_success 'scalar supports -c/-C' '
 	git init sub &&
 	scalar -C sub -c status.aheadBehind=bogus register &&
 	test -z "$(git -C sub config --local status.aheadBehind)" &&
-	test true = "$(git -C sub config core.preloadIndex)"
+	test false = "$(git -C sub config gui.gcwarning)"
 '
 
 test_expect_success '`scalar [...] <dir>` errors out when dir is missing' '

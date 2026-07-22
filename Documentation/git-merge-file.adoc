@@ -85,6 +85,9 @@ object store and the object ID of its blob is written to standard output.
 
 --zdiff3::
 	Show conflicts in "zdiff3" style.
++
+The `--diff3` and `--zdiff3` options default to the value of the
+`merge.conflictStyle` configuration variable (see linkgit:git-config[1]).
 
 --ours::
 --theirs::

@@ -1122,7 +1122,8 @@ static int count_ident(const char *cp, unsigned long size)
 static int ident_to_git(const char *src, size_t len,
 			struct strbuf *buf, int ident)
 {
-	char *dst, *dollar;
+	char *dst;
+	const char *dollar;
 
 	if (!ident || (src && !count_ident(src, len)))
 		return 0;
@@ -1326,7 +1327,7 @@ void convert_attrs(struct index_state *istate,
 					 "eol", "text", "working-tree-encoding",
 					 NULL);
 		user_convert_tail = &user_convert;
-		git_config(read_convert_config, NULL);
+		repo_config(the_repository, read_convert_config, NULL);
 	}
 
 	git_check_attr(istate, path, check);

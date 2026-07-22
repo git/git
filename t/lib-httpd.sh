@@ -167,6 +167,7 @@ prepare_httpd() {
 	install_script error.sh
 	install_script apply-one-time-script.sh
 	install_script nph-custom-auth.sh
+	install_script ntlm-handshake.sh
 
 	ln -s "$LIB_HTTPD_MODULE_PATH" "$HTTPD_ROOT_PATH/modules"
 
@@ -319,13 +320,22 @@ setup_askpass_helper() {
 	'
 }
 
-set_askpass() {
+set_askpass () {
 	>"$TRASH_DIRECTORY/askpass-query" &&
 	echo "$1" >"$TRASH_DIRECTORY/askpass-user" &&
 	echo "$2" >"$TRASH_DIRECTORY/askpass-pass"
 }
 
-expect_askpass() {
+set_netrc () {
+	# $HOME=$TRASH_DIRECTORY
+	echo "machine $1 login $2 password $3" >"$TRASH_DIRECTORY/.netrc"
+}
+
+clear_netrc () {
+	rm -f "$TRASH_DIRECTORY/.netrc"
+}
+
+expect_askpass () {
 	dest=$HTTPD_DEST${3+/$3}
 
 	{

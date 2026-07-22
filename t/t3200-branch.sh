@@ -1494,7 +1494,8 @@ test_expect_success 'refuse --edit-description on unborn branch for now' '
 '
 
 test_expect_success '--merged catches invalid object names' '
-	test_must_fail git branch --merged 0000000000000000000000000000000000000000
+	test_must_fail git branch --merged $ZERO_OID 2>err &&
+	test_grep "must point to a commit" err
 '
 
 test_expect_success '--list during rebase' '
@@ -1707,9 +1708,9 @@ test_expect_success '--track overrides branch.autoSetupMerge' '
 '
 
 test_expect_success 'errors if given a bad branch name' '
-	cat <<-\EOF >expect &&
-	fatal: '\''foo..bar'\'' is not a valid branch name
-	hint: See `man git check-ref-format`
+	cat <<-EOF >expect &&
+	fatal: ${SQ}foo..bar${SQ} is not a valid branch name
+	hint: See ${SQ}git help check-ref-format${SQ}
 	hint: Disable this message with "git config set advice.refSyntax false"
 	EOF
 	test_must_fail git branch foo..bar >actual 2>&1 &&

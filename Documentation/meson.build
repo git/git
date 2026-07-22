@@ -64,6 +64,7 @@ manpages = {
   'git-gui.adoc' : 1,
   'git-hash-object.adoc' : 1,
   'git-help.adoc' : 1,
+  'git-history.adoc' : 1,
   'git-hook.adoc' : 1,
   'git-http-backend.adoc' : 1,
   'git-http-fetch.adoc' : 1,
@@ -74,6 +75,7 @@ manpages = {
   'git-init.adoc' : 1,
   'git-instaweb.adoc' : 1,
   'git-interpret-trailers.adoc' : 1,
+  'git-last-modified.adoc' : 1,
   'git-log.adoc' : 1,
   'git-ls-files.adoc' : 1,
   'git-ls-remote.adoc' : 1,
@@ -116,6 +118,7 @@ manpages = {
   'git-repack.adoc' : 1,
   'git-replace.adoc' : 1,
   'git-replay.adoc' : 1,
+  'git-repo.adoc' : 1,
   'git-request-pull.adoc' : 1,
   'git-rerere.adoc' : 1,
   'git-reset.adoc' : 1,
@@ -141,6 +144,7 @@ manpages = {
   'git-status.adoc' : 1,
   'git-stripspace.adoc' : 1,
   'git-submodule.adoc' : 1,
+  'git-survey.adoc' : 1,
   'git-svn.adoc' : 1,
   'git-switch.adoc' : 1,
   'git-symbolic-ref.adoc' : 1,
@@ -171,6 +175,7 @@ manpages = {
   'gitformat-chunk.adoc' : 5,
   'gitformat-commit-graph.adoc' : 5,
   'gitformat-index.adoc' : 5,
+  'gitformat-loose.adoc' : 5,
   'gitformat-pack.adoc' : 5,
   'gitformat-signature.adoc' : 5,
   'githooks.adoc' : 5,
@@ -190,6 +195,7 @@ manpages = {
   'gitcore-tutorial.adoc' : 7,
   'gitcredentials.adoc' : 7,
   'gitcvs-migration.adoc' : 7,
+  'gitdatamodel.adoc' : 7,
   'gitdiffcore.adoc' : 7,
   'giteveryday.adoc' : 7,
   'gitfaq.adoc' : 7,
@@ -349,12 +355,9 @@ foreach mode : [ 'diff', 'merge' ]
     command: [
       shell,
       '@INPUT@',
-      '..',
+      meson.project_source_root(),
       mode,
       '@OUTPUT@'
-    ],
-    env: [
-      'MERGE_TOOLS_DIR=' + meson.project_source_root() / 'mergetools',
     ],
     input: 'generate-mergetool-list.sh',
     output: 'mergetools-' + mode + '.adoc',
@@ -375,8 +378,7 @@ foreach manpage, category : manpages
       output: fs.stem(manpage) + '.xml',
     )
 
-    manpage_path = fs.stem(manpage) + '.' + category.to_string()
-    manpage_target = custom_target(
+    doc_targets += custom_target(
       command: [
         xmlto,
         '-m', '@INPUT0@',
@@ -392,14 +394,14 @@ foreach manpage, category : manpages
         'manpage-normal.xsl',
         'manpage-bold-literal.xsl',
       ],
-      output: manpage_path,
+      output: fs.stem(manpage) + '.' + category.to_string(),
       install: true,
       install_dir: get_option('mandir') / 'man' + category.to_string(),
     )
   endif
 
   if get_option('docs').contains('html')
-    custom_target(
+    doc_targets += custom_target(
       command: asciidoc_common_options + [
         '--backend=' + asciidoc_html,
         '--doctype=manpage',
@@ -410,7 +412,7 @@ foreach manpage, category : manpages
       input: manpage,
       output: fs.stem(manpage) + '.html',
       install: true,
-      install_dir: get_option('datadir') / 'doc/git-doc',
+      install_dir: htmldir,
     )
   endif
 endforeach
@@ -421,7 +423,7 @@ if get_option('docs').contains('html')
     output: 'docinfo.html',
     copy: true,
     install: true,
-    install_dir: get_option('datadir') / 'doc/git-doc',
+    install_dir: htmldir,
   )
 
   configure_file(
@@ -429,11 +431,11 @@ if get_option('docs').contains('html')
     output: 'docbook-xsl.css',
     copy: true,
     install: true,
-    install_dir: get_option('datadir') / 'doc/git-doc',
+    install_dir: htmldir,
   )
 
   install_symlink('index.html',
-    install_dir: get_option('datadir') / 'doc/git-doc',
+    install_dir: htmldir,
     pointing_to: 'git.html',
   )
 
@@ -451,7 +453,7 @@ if get_option('docs').contains('html')
     depends: documentation_deps,
   )
 
-  custom_target(
+  doc_targets += custom_target(
     command: [
       xsltproc,
       '--xinclude',
@@ -464,7 +466,7 @@ if get_option('docs').contains('html')
     input: 'docbook.xsl',
     output: 'user-manual.html',
     install: true,
-    install_dir: get_option('datadir') / 'doc/git-doc',
+    install_dir: htmldir,
   )
 
   articles = [
@@ -480,7 +482,7 @@ if get_option('docs').contains('html')
   ]
 
   foreach article : articles
-    custom_target(
+    doc_targets += custom_target(
       command: asciidoc_common_options + [
         '--backend=' + asciidoc_html,
         '--out-file=@OUTPUT@',
@@ -490,7 +492,7 @@ if get_option('docs').contains('html')
       output: fs.stem(article) + '.html',
       depends: documentation_deps,
       install: true,
-      install_dir: get_option('datadir') / 'doc/git-doc',
+      install_dir: htmldir,
     )
   endforeach
 

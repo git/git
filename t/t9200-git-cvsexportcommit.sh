@@ -11,6 +11,13 @@ if ! test_have_prereq PERL; then
 	test_done
 fi
 
+case "$PWD" in
+*:*)
+	skip_all='cvs would get confused by the colon in `pwd`; skipping tests'
+	test_done
+	;;
+esac
+
 cvs >/dev/null 2>&1
 if test $? -ne 1
 then
@@ -30,13 +37,17 @@ export CVSROOT CVSWORK GIT_DIR
 
 rm -rf "$CVSROOT" "$CVSWORK"
 
-cvs init &&
-test -d "$CVSROOT" &&
-cvs -Q co -d "$CVSWORK" . &&
-echo >empty &&
-git add empty &&
-git commit -q -a -m "Initial" 2>/dev/null ||
-exit 1
+if ! cvs init || ! test -d "$CVSROOT" || ! cvs -Q co -d "$CVSWORK" .
+then
+	skip_all="cvs repository set-up fails"
+	test_done
+fi
+
+test_expect_success 'git setup' '
+	echo >empty &&
+	git add empty &&
+	git commit -q -a -m Initial
+'
 
 check_entries () {
 	# $1 == directory, $2 == expected
@@ -54,8 +65,8 @@ test_expect_success 'New file' '
 	mkdir A B C D E F &&
 	echo hello1 >A/newfile1.txt &&
 	echo hello2 >B/newfile2.txt &&
-	cp "$TEST_DIRECTORY"/test-binary-1.png C/newfile3.png &&
-	cp "$TEST_DIRECTORY"/test-binary-1.png D/newfile4.png &&
+	cp "$TEST_DIRECTORY"/lib-diff/test-binary-1.png C/newfile3.png &&
+	cp "$TEST_DIRECTORY"/lib-diff/test-binary-1.png D/newfile4.png &&
 	git add A/newfile1.txt &&
 	git add B/newfile2.txt &&
 	git add C/newfile3.png &&
@@ -80,8 +91,8 @@ test_expect_success 'Remove two files, add two and update two' '
 	rm -f B/newfile2.txt &&
 	rm -f C/newfile3.png &&
 	echo Hello5  >E/newfile5.txt &&
-	cp "$TEST_DIRECTORY"/test-binary-2.png D/newfile4.png &&
-	cp "$TEST_DIRECTORY"/test-binary-1.png F/newfile6.png &&
+	cp "$TEST_DIRECTORY"/lib-diff/test-binary-2.png D/newfile4.png &&
+	cp "$TEST_DIRECTORY"/lib-diff/test-binary-1.png F/newfile6.png &&
 	git add E/newfile5.txt &&
 	git add F/newfile6.png &&
 	git commit -a -m "Test: Remove, add and update" &&
@@ -169,7 +180,7 @@ test_expect_success 'New file with spaces in file name' '
 	mkdir "G g" &&
 	echo ok then >"G g/with spaces.txt" &&
 	git add "G g/with spaces.txt" && \
-	cp "$TEST_DIRECTORY"/test-binary-1.png "G g/with spaces.png" && \
+	cp "$TEST_DIRECTORY"/lib-diff/test-binary-1.png "G g/with spaces.png" && \
 	git add "G g/with spaces.png" &&
 	git commit -a -m "With spaces" &&
 	id=$(git rev-list --max-count=1 HEAD) &&
@@ -181,7 +192,7 @@ test_expect_success 'New file with spaces in file name' '
 
 test_expect_success 'Update file with spaces in file name' '
 	echo Ok then >>"G g/with spaces.txt" &&
-	cat "$TEST_DIRECTORY"/test-binary-1.png >>"G g/with spaces.png" && \
+	cat "$TEST_DIRECTORY"/lib-diff/test-binary-1.png >>"G g/with spaces.png" && \
 	git add "G g/with spaces.png" &&
 	git commit -a -m "Update with spaces" &&
 	id=$(git rev-list --max-count=1 HEAD) &&
@@ -206,7 +217,7 @@ test_expect_success !MINGW 'File with non-ascii file name' '
 	mkdir -p Å/goo/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z/å/ä/ö &&
 	echo Foo >Å/goo/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z/å/ä/ö/gårdetsågårdet.txt &&
 	git add Å/goo/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z/å/ä/ö/gårdetsågårdet.txt &&
-	cp "$TEST_DIRECTORY"/test-binary-1.png Å/goo/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z/å/ä/ö/gårdetsågårdet.png &&
+	cp "$TEST_DIRECTORY"/lib-diff/test-binary-1.png Å/goo/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z/å/ä/ö/gårdetsågårdet.png &&
 	git add Å/goo/a/b/c/d/e/f/g/h/i/j/k/l/m/n/o/p/q/r/s/t/u/v/w/x/y/z/å/ä/ö/gårdetsågårdet.png &&
 	git commit -a -m "Går det så går det" && \
 	id=$(git rev-list --max-count=1 HEAD) &&
@@ -303,7 +314,7 @@ test_expect_success 're-commit a removed filename which remains in CVS attic' '
 	git commit -m "Added attic_gremlin" &&
 	git cvsexportcommit -w "$CVSWORK" -c HEAD &&
 	(cd "$CVSWORK" && cvs -Q update -d) &&
-	test -f "$CVSWORK/attic_gremlin"
+	test_path_is_file "$CVSWORK/attic_gremlin"
 '
 
 # the state of the CVS sandbox may be indeterminate for ' space'

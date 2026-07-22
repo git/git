@@ -1,6 +1,7 @@
 #define USE_THE_REPOSITORY_VARIABLE
 
 #include "builtin.h"
+#include "environment.h"
 #include "tree-walk.h"
 #include "xdiff-interface.h"
 #include "help.h"
@@ -446,17 +447,20 @@ static int real_merge(struct merge_tree_options *o,
 
 		if (repo_get_oid_treeish(the_repository, merge_base, &base_oid))
 			die(_("could not parse as tree '%s'"), merge_base);
-		base_tree = parse_tree_indirect(&base_oid);
+		base_tree = repo_parse_tree_indirect(the_repository,
+						     &base_oid);
 		if (!base_tree)
 			die(_("unable to read tree (%s)"), oid_to_hex(&base_oid));
 		if (repo_get_oid_treeish(the_repository, branch1, &head_oid))
 			die(_("could not parse as tree '%s'"), branch1);
-		parent1_tree = parse_tree_indirect(&head_oid);
+		parent1_tree = repo_parse_tree_indirect(the_repository,
+							&head_oid);
 		if (!parent1_tree)
 			die(_("unable to read tree (%s)"), oid_to_hex(&head_oid));
 		if (repo_get_oid_treeish(the_repository, branch2, &merge_oid))
 			die(_("could not parse as tree '%s'"), branch2);
-		parent2_tree = parse_tree_indirect(&merge_oid);
+		parent2_tree = repo_parse_tree_indirect(the_repository,
+							&merge_oid);
 		if (!parent2_tree)
 			die(_("unable to read tree (%s)"), oid_to_hex(&merge_oid));
 
@@ -482,9 +486,9 @@ static int real_merge(struct merge_tree_options *o,
 			exit(128);
 		if (!merge_bases && !o->allow_unrelated_histories)
 			die(_("refusing to merge unrelated histories"));
-		merge_bases = reverse_commit_list(merge_bases);
+		merge_bases = commit_list_reverse(merge_bases);
 		merge_incore_recursive(&opt, merge_bases, parent1, parent2, &result);
-		free_commit_list(merge_bases);
+		commit_list_free(merge_bases);
 	}
 
 	if (result.clean < 0)
@@ -618,32 +622,34 @@ int cmd_merge_tree(int argc,
 			    "--merge-base", "--stdin");
 		line_termination = '\0';
 		while (strbuf_getline_lf(&buf, stdin) != EOF) {
-			struct strbuf **split;
+			struct string_list split = STRING_LIST_INIT_NODUP;
 			const char *input_merge_base = NULL;
 
-			split = strbuf_split(&buf, ' ');
-			if (!split[0] || !split[1])
+			string_list_split_in_place_f(&split, buf.buf, " ", -1,
+						     STRING_LIST_SPLIT_TRIM);
+
+			if (split.nr < 2)
 				die(_("malformed input line: '%s'."), buf.buf);
-			strbuf_rtrim(split[0]);
-			strbuf_rtrim(split[1]);
 
 			/* parse the merge-base */
-			if (!strcmp(split[1]->buf, "--")) {
-				input_merge_base = split[0]->buf;
+			if (!strcmp(split.items[1].string, "--")) {
+				input_merge_base = split.items[0].string;
 			}
 
-			if (input_merge_base && split[2] && split[3] && !split[4]) {
-				strbuf_rtrim(split[2]);
-				strbuf_rtrim(split[3]);
-				real_merge(&o, input_merge_base, split[2]->buf, split[3]->buf, prefix);
-			} else if (!input_merge_base && !split[2]) {
-				real_merge(&o, NULL, split[0]->buf, split[1]->buf, prefix);
+			if (input_merge_base && split.nr == 4) {
+				real_merge(&o, input_merge_base,
+					   split.items[2].string, split.items[3].string,
+					   prefix);
+			} else if (!input_merge_base && split.nr == 2) {
+				real_merge(&o, NULL,
+					   split.items[0].string, split.items[1].string,
+					   prefix);
 			} else {
 				die(_("malformed input line: '%s'."), buf.buf);
 			}
 			maybe_flush_or_die(stdout, "stdout");
 
-			strbuf_list_free(split);
+			string_list_clear(&split, 0);
 		}
 		strbuf_release(&buf);
 
@@ -683,7 +689,7 @@ int cmd_merge_tree(int argc,
 	if (argc != expected_remaining_argc)
 		usage_with_options(merge_tree_usage, mt_options);
 
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 
 	/* Do the relevant type of merge */
 	if (o.mode == MODE_REAL)

@@ -41,7 +41,14 @@ static int patch_id_neq(const void *cmpfn_data,
 			const struct hashmap_entry *entry_or_key,
 			const void *keydata UNUSED)
 {
-	/* NEEDSWORK: const correctness? */
+	/*
+	 * We drop the 'const' modifier here intentionally.
+	 *
+	 * Even though eptr and entry_or_key are const, we want to
+	 * lazily compute their .patch_id members; see b3dfeebb (rebase:
+	 * avoid computing unnecessary patch IDs, 2016-07-29). So we cast
+	 * the constness away with container_of().
+	 */
 	struct diff_options *opt = (void *)cmpfn_data;
 	struct patch_id *a, *b;
 

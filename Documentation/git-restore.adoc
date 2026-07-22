@@ -28,8 +28,6 @@ otherwise from the index. Use `--source` to restore from a different commit.
 See "Reset, restore and revert" in linkgit:git[1] for the differences
 between the three commands.
 
-THIS COMMAND IS EXPERIMENTAL. THE BEHAVIOR MAY CHANGE.
-
 OPTIONS
 -------
 `-s <tree>`::
@@ -51,6 +49,8 @@ leave out at most one of _<rev-A>__ and _<rev-B>_, in which case it defaults to 
 	restore source and the restore location. See the "Interactive
 	Mode" section of linkgit:git-add[1] to learn how to operate
 	the `--patch` mode.
+
+include::diff-context-options.adoc[]
 
 `-W`::
 `--worktree`::

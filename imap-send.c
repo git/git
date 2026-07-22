@@ -28,6 +28,7 @@
 #include "advice.h"
 #include "config.h"
 #include "credential.h"
+#include "environment.h"
 #include "gettext.h"
 #include "run-command.h"
 #include "parse-options.h"
@@ -218,8 +219,14 @@ static int ssl_socket_connect(struct imap_socket *sock UNUSED,
 
 #else
 
-static int host_matches(const char *host, const char *pattern)
+static int host_matches(const char *host, const ASN1_STRING *asn1_str)
 {
+	const char *pattern = (const char *)ASN1_STRING_get0_data(asn1_str);
+
+	/* embedded NUL characters may open a security hole */
+	if (memchr(pattern, '\0', ASN1_STRING_length(asn1_str)))
+	    return 0;
+
 	if (pattern[0] == '*' && pattern[1] == '.') {
 		pattern += 2;
 		if (!(host = strchr(host, '.')))
@@ -232,9 +239,13 @@ static int host_matches(const char *host, const char *pattern)
 
 static int verify_hostname(X509 *cert, const char *hostname)
 {
-	int len;
+#if (OPENSSL_VERSION_NUMBER >= 0x40000000L)
+	const X509_NAME *subj;
+#else
 	X509_NAME *subj;
-	char cname[1000];
+#endif
+	const X509_NAME_ENTRY *cname_entry;
+	const ASN1_STRING *cname;
 	int i, found;
 	STACK_OF(GENERAL_NAME) *subj_alt_names;
 
@@ -243,10 +254,11 @@ static int verify_hostname(X509 *cert, const char *hostname)
 	if ((subj_alt_names = X509_get_ext_d2i(cert, NID_subject_alt_name, NULL, NULL))) {
 		int num_subj_alt_names = sk_GENERAL_NAME_num(subj_alt_names);
 		for (i = 0; !found && i < num_subj_alt_names; i++) {
+			int ntype;
 			GENERAL_NAME *subj_alt_name = sk_GENERAL_NAME_value(subj_alt_names, i);
-			if (subj_alt_name->type == GEN_DNS &&
-			    strlen((const char *)subj_alt_name->d.ia5->data) == (size_t)subj_alt_name->d.ia5->length &&
-			    host_matches(hostname, (const char *)(subj_alt_name->d.ia5->data)))
+			ASN1_STRING *subj_alt_str = GENERAL_NAME_get0_value(subj_alt_name, &ntype);
+
+			if (ntype == GEN_DNS && host_matches(hostname, subj_alt_str))
 				found = 1;
 		}
 		sk_GENERAL_NAME_pop_free(subj_alt_names, GENERAL_NAME_free);
@@ -257,12 +269,14 @@ static int verify_hostname(X509 *cert, const char *hostname)
 	/* try the common name */
 	if (!(subj = X509_get_subject_name(cert)))
 		return error("cannot get certificate subject");
-	if ((len = X509_NAME_get_text_by_NID(subj, NID_commonName, cname, sizeof(cname))) < 0)
+	if ((i = X509_NAME_get_index_by_NID(subj, NID_commonName, -1)) < 0 ||
+	    (cname_entry = X509_NAME_get_entry(subj, i)) == NULL ||
+	    (cname = X509_NAME_ENTRY_get_data(cname_entry)) == NULL)
 		return error("cannot get certificate common name");
-	if (strlen(cname) == (size_t)len && host_matches(hostname, cname))
+	if (host_matches(hostname, cname))
 		return 0;
 	return error("certificate owner '%s' does not match hostname '%s'",
-		     cname, hostname);
+		     ASN1_STRING_get0_data(cname), hostname);
 }
 
 static int ssl_socket_connect(struct imap_socket *sock,
@@ -1441,14 +1455,24 @@ static int count_messages(struct strbuf *all_msgs)
 
 	while (1) {
 		if (starts_with(p, "From ")) {
-			p = strstr(p+5, "\nFrom: ");
-			if (!p) break;
-			p = strstr(p+7, "\nDate: ");
-			if (!p) break;
-			p = strstr(p+7, "\nSubject: ");
-			if (!p) break;
-			p += 10;
-			count++;
+			if (starts_with(p, "From git-send-email")) {
+				p = strstr(p+5, "\nFrom: ");
+				if (!p) break;
+				p += 7;
+				p = strstr(p, "\nTo: ");
+				if (!p) break;
+				p += 5;
+				count++;
+			} else {
+				p = strstr(p+5, "\nFrom: ");
+				if (!p) break;
+				p = strstr(p+7, "\nDate: ");
+				if (!p) break;
+				p = strstr(p+7, "\nSubject: ");
+				if (!p) break;
+				p += 10;
+				count++;
+			}
 		}
 		p = strstr(p+5, "\nFrom ");
 		if (!p)
@@ -1710,7 +1734,7 @@ static int curl_append_msgs_to_imap(struct imap_server_conf *server,
 		lf_to_crlf(&msgbuf.buf);
 
 		curl_easy_setopt(curl, CURLOPT_INFILESIZE_LARGE,
-				 (curl_off_t)(msgbuf.buf.len-prev_len));
+				 cast_size_t_to_curl_off_t(msgbuf.buf.len-prev_len));
 
 		res = curl_easy_perform(curl);
 
@@ -1776,7 +1800,7 @@ int cmd_main(int argc, const char **argv)
 	int ret;
 
 	setup_git_directory_gently(&nongit_ok);
-	git_config(git_imap_config, &server);
+	repo_config(the_repository, git_imap_config, &server);
 
 	argc = parse_options(argc, (const char **)argv, "", imap_send_options, imap_send_usage, 0);
 

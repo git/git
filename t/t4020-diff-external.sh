@@ -44,6 +44,16 @@ test_expect_success 'GIT_EXTERNAL_DIFF environment and --no-ext-diff' '
 
 '
 
+test_expect_success 'GIT_EXTERNAL_DIFF and --output' '
+	cat >expect <<-EOF &&
+	file $(git rev-parse --verify HEAD:file) 100644 file $(test_oid zero) 100644
+	EOF
+	GIT_EXTERNAL_DIFF=echo git diff --output=out >stdout &&
+	cut -d" " -f1,3- <out >actual &&
+	test_must_be_empty stdout &&
+	test_cmp expect actual
+'
+
 test_expect_success SYMLINKS 'typechange diff' '
 	rm -f file &&
 	ln -s elif file &&

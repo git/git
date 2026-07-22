@@ -8,7 +8,7 @@ field oldname
 field newname
 
 constructor dialog {} {
-	global current_branch use_ttk NS
+	global current_branch
 
 	make_dialog top w
 	wm withdraw $w
@@ -20,31 +20,27 @@ constructor dialog {} {
 	set oldname $current_branch
 	set newname [get_config gui.newbranchtemplate]
 
-	${NS}::label $w.header -text [mc "Rename Branch"]\
+	ttk::label $w.header -text [mc "Rename Branch"]\
 		-font font_uibold -anchor center
 	pack $w.header -side top -fill x
 
-	${NS}::frame $w.buttons
-	${NS}::button $w.buttons.rename -text [mc Rename] \
+	ttk::frame $w.buttons
+	ttk::button $w.buttons.rename -text [mc Rename] \
 		-default active \
 		-command [cb _rename]
 	pack $w.buttons.rename -side right
-	${NS}::button $w.buttons.cancel -text [mc Cancel] \
+	ttk::button $w.buttons.cancel -text [mc Cancel] \
 		-command [list destroy $w]
 	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
-	${NS}::frame $w.rename
-	${NS}::label $w.rename.oldname_l -text [mc "Branch:"]
-	if {$use_ttk} {
-		ttk::combobox $w.rename.oldname_m -textvariable @oldname \
-			-values [load_all_heads] -state readonly
-	} else {
-		eval tk_optionMenu $w.rename.oldname_m @oldname [load_all_heads]
-	}
+	ttk::frame $w.rename
+	ttk::label $w.rename.oldname_l -text [mc "Branch:"]
+	ttk::combobox $w.rename.oldname_m -textvariable @oldname \
+		-values [load_all_heads] -state readonly
 
-	${NS}::label $w.rename.newname_l -text [mc "New Name:"]
-	${NS}::entry $w.rename.newname_t \
+	ttk::label $w.rename.newname_l -text [mc "New Name:"]
+	ttk::entry $w.rename.newname_t \
 		-width 40 \
 		-textvariable @newname \
 		-validate key \

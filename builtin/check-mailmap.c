@@ -1,6 +1,7 @@
 #define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
+#include "environment.h"
 #include "gettext.h"
 #include "ident.h"
 #include "mailmap.h"
@@ -56,15 +57,15 @@ int cmd_check_mailmap(int argc,
 	int i;
 	struct string_list mailmap = STRING_LIST_INIT_NODUP;
 
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 	argc = parse_options(argc, argv, prefix, check_mailmap_options,
 			     check_mailmap_usage, 0);
 	if (argc == 0 && !use_stdin)
 		die(_("no contacts specified"));
 
-	read_mailmap(&mailmap);
+	read_mailmap(the_repository, &mailmap);
 	if (mailmap_blob)
-		read_mailmap_blob(&mailmap, mailmap_blob);
+		read_mailmap_blob(the_repository, &mailmap, mailmap_blob);
 	if (mailmap_file)
 		read_mailmap_file(&mailmap, mailmap_file, 0);
 

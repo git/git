@@ -26,8 +26,8 @@ endif::git-log[]
 means "list all the commits which are reachable from 'foo' or 'bar', but
 not from 'baz'".
 
-A special notation "'<commit1>'..'<commit2>'" can be used as a
-short-hand for "^'<commit1>' '<commit2>'". For example, either of
+A special notation "`<commit1>..<commit2>`" can be used as a
+short-hand for "`^<commit1> <commit2>`". For example, either of
 the following may be used interchangeably:
 
 ifdef::git-rev-list[]
@@ -43,7 +43,7 @@ $ git log HEAD ^origin
 -----------------------------------------------------------------------
 endif::git-log[]
 
-Another special notation is "'<commit1>'...'<commit2>'" which is useful
+Another special notation is "`<commit1>...<commit2>`" which is useful
 for merges.  The resulting set of commits is the symmetric difference
 between the two operands.  The following two commands are equivalent:
 

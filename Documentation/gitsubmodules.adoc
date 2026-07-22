@@ -8,6 +8,7 @@ gitsubmodules - Mounting one repository inside another
 SYNOPSIS
 --------
  .gitmodules, $GIT_DIR/config
+
 ------------------
 git submodule
 git <command> --recurse-submodules
@@ -240,7 +241,7 @@ Workflow for a third party library
 
 
 Workflow for an artificially split repo
---------------------------------------
+---------------------------------------
 
   # Enable recursion for relevant commands, such that
   # regular commands recurse into submodules by default

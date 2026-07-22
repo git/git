@@ -29,13 +29,13 @@ howto_index = custom_target(
   output: 'howto-index.adoc',
 )
 
-custom_target(
+doc_targets += custom_target(
   command: asciidoc_html_options,
   input: howto_index,
   output: 'howto-index.html',
   depends: documentation_deps,
   install: true,
-  install_dir: get_option('datadir') / 'doc/git-doc',
+  install_dir: htmldir,
 )
 
 foreach howto : howto_sources
@@ -51,12 +51,12 @@ foreach howto : howto_sources
     capture: true,
   )
 
-  custom_target(
+  doc_targets += custom_target(
     command: asciidoc_html_options,
     input: howto_stripped,
     output: fs.stem(howto_stripped.full_path()) + '.html',
     depends: documentation_deps,
     install: true,
-    install_dir: get_option('datadir') / 'doc/git-doc/howto',
+    install_dir: htmldir / 'howto',
   )
 endforeach

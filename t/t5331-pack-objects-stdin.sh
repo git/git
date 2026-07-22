@@ -14,6 +14,7 @@ packed_objects () {
 
 test_expect_success 'setup for --stdin-packs tests' '
 	git init stdin-packs &&
+	git -C stdin-packs config set maintenance.auto false &&
 	(
 		cd stdin-packs &&
 
@@ -64,7 +65,7 @@ test_expect_success '--stdin-packs is incompatible with --filter' '
 		cd stdin-packs &&
 		test_must_fail git pack-objects --stdin-packs --stdout \
 			--filter=blob:none </dev/null 2>err &&
-		test_grep "cannot use --filter with --stdin-packs" err
+		test_grep "options .--stdin-packs. and .--filter. cannot be used together" err
 	)
 '
 
@@ -234,6 +235,184 @@ test_expect_success 'pack-objects --stdin with packfiles from main and alternate
 	git -C member pack-objects --stdin-packs generated-pack <packfiles &&
 	packed_objects member/generated-pack-*.idx >actual-objects &&
 	test_cmp expected-objects actual-objects
+'
+
+objdir=.git/objects
+packdir=$objdir/pack
+
+objects_in_packs () {
+	for p in "$@"
+	do
+		git show-index <"$packdir/pack-$p.idx" || return 1
+	done >objects.raw &&
+
+	cut -d' ' -f2 objects.raw | sort &&
+	rm -f objects.raw
+}
+
+test_expect_success '--stdin-packs=follow walks into unknown packs' '
+	test_when_finished "rm -fr repo" &&
+
+	git init repo &&
+	(
+		cd repo &&
+		git config set maintenance.auto false &&
+
+		for c in A B C D
+		do
+			test_commit "$c" || return 1
+		done &&
+
+		A="$(echo A | git pack-objects --revs $packdir/pack)" &&
+		B="$(echo A..B | git pack-objects --revs $packdir/pack)" &&
+		C="$(echo B..C | git pack-objects --revs $packdir/pack)" &&
+		D="$(echo C..D | git pack-objects --revs $packdir/pack)" &&
+		test_commit E &&
+
+		git prune-packed &&
+
+		cat >in <<-EOF &&
+		pack-$B.pack
+		^pack-$C.pack
+		pack-$D.pack
+		EOF
+
+		# With just --stdin-packs, pack "A" is unknown to us, so
+		# only objects from packs "B" and "D" are included in
+		# the output pack.
+		P=$(git pack-objects --stdin-packs $packdir/pack <in) &&
+		objects_in_packs $B $D >expect &&
+		objects_in_packs $P >actual &&
+		test_cmp expect actual &&
+
+		# But with --stdin-packs=follow, objects from both
+		# included packs reach objects from the unknown pack, so
+		# objects from pack "A" is included in the output pack
+		# in addition to the above.
+		P=$(git pack-objects --stdin-packs=follow $packdir/pack <in) &&
+		objects_in_packs $A $B $D >expect &&
+		objects_in_packs $P >actual &&
+		test_cmp expect actual &&
+
+		# And with --unpacked, we will pick up objects from unknown
+		# packs that are reachable from loose objects. Loose object E
+		# reaches objects in pack A, but there are three excluded packs
+		# in between.
+		#
+		# The resulting pack should include objects reachable from E
+		# that are not present in packs B, C, or D, along with those
+		# present in pack A.
+		cat >in <<-EOF &&
+		^pack-$B.pack
+		^pack-$C.pack
+		^pack-$D.pack
+		EOF
+
+		P=$(git pack-objects --stdin-packs=follow --unpacked \
+			$packdir/pack <in) &&
+
+		{
+			objects_in_packs $A &&
+			git rev-list --objects --no-object-names D..E
+		}>expect.raw &&
+		sort expect.raw >expect &&
+		objects_in_packs $P >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success '--stdin-packs with promisors' '
+	test_when_finished "rm -fr repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		git config set maintenance.auto false &&
+		git remote add promisor garbage &&
+		git config set remote.promisor.promisor true &&
+
+		for c in A B C D
+		do
+			echo "$c" >file &&
+			git add file &&
+			git commit --message "$c" &&
+			git tag "$c" || return 1
+		done &&
+
+		A="$(echo A | git pack-objects --revs $packdir/pack)" &&
+		B="$(echo A..B | git pack-objects --revs $packdir/pack --filter=blob:none)" &&
+		C="$(echo B..C | git pack-objects --revs $packdir/pack)" &&
+		D="$(echo C..D | git pack-objects --revs $packdir/pack)" &&
+		touch $packdir/pack-$B.promisor &&
+
+		test_must_fail git pack-objects --stdin-packs --exclude-promisor-objects pack- 2>err <<-EOF &&
+			pack-$B.pack
+		EOF
+		test_grep "is a promisor but --exclude-promisor-objects was given" err &&
+
+		PACK=$(git pack-objects --stdin-packs=follow --exclude-promisor-objects $packdir/pack <<-EOF
+			pack-$D.pack
+			EOF
+		) &&
+		objects_in_packs $C $D >expect &&
+		objects_in_packs $PACK >actual &&
+		test_cmp expect actual &&
+		rm -f $packdir/pack-$PACK.*
+	)
+'
+
+test_expect_success '--stdin-packs does not perform backfill fetch' '
+	test_when_finished "rm -rf remote client" &&
+
+	git init remote &&
+	test_commit_bulk -C remote 10 &&
+	git -C remote config set --local uploadpack.allowfilter 1 &&
+	git -C remote config set --local uploadpack.allowanysha1inwant 1 &&
+
+	git clone --filter=tree:0 "file://$(pwd)/remote" client &&
+	(
+		cd client &&
+		ls .git/objects/pack/*.promisor | sed "s|.*/||; s/\.promisor$/.pack/" >packs &&
+		test_line_count -gt 1 packs &&
+		GIT_TRACE2_EVENT="$(pwd)/event.log" git pack-objects --stdin-packs pack <packs &&
+		test_grep ! "\"event\":\"child_start\"" event.log
+	)
+'
+
+stdin_packs__follow_with_only () {
+	rm -fr stdin_packs__follow_with_only &&
+	git init stdin_packs__follow_with_only &&
+	(
+		cd stdin_packs__follow_with_only &&
+
+		test_commit A &&
+		test_commit B &&
+
+		git rev-parse "$@" >B.objects &&
+
+		echo A | git pack-objects --revs $packdir/pack &&
+		B="$(git pack-objects $packdir/pack <B.objects)" &&
+
+		git cat-file --batch-check="%(objectname)" --batch-all-objects >objs &&
+		for obj in $(cat objs)
+		do
+			rm -f $objdir/$(test_oid_to_path $obj) || return 1
+		done &&
+
+		( cd $packdir && ls pack-*.pack ) >in &&
+		git pack-objects --stdin-packs=follow --stdout >/dev/null <in
+	)
+}
+
+test_expect_success '--stdin-packs=follow tolerates missing blobs' '
+	stdin_packs__follow_with_only HEAD HEAD^{tree}
+'
+
+test_expect_success '--stdin-packs=follow tolerates missing trees' '
+	stdin_packs__follow_with_only HEAD HEAD:B.t
+'
+
+test_expect_success '--stdin-packs=follow tolerates missing commits' '
+	stdin_packs__follow_with_only HEAD HEAD^{tree}
 '
 
 test_done

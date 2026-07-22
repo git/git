@@ -104,7 +104,7 @@ struct repo {
 	int has_info_refs;
 	int can_update_info_refs;
 	int has_info_packs;
-	struct packed_git *packs;
+	struct packfile_list packs;
 	struct remote_lock *locks;
 };
 
@@ -208,7 +208,8 @@ static void curl_setup_http(CURL *curl, const char *url,
 	curl_easy_setopt(curl, CURLOPT_UPLOAD, 1L);
 	curl_easy_setopt(curl, CURLOPT_URL, url);
 	curl_easy_setopt(curl, CURLOPT_INFILE, buffer);
-	curl_easy_setopt(curl, CURLOPT_INFILESIZE, buffer->buf.len);
+	curl_easy_setopt(curl, CURLOPT_INFILESIZE_LARGE,
+			 cast_size_t_to_curl_off_t(buffer->buf.len));
 	curl_easy_setopt(curl, CURLOPT_READFUNCTION, fread_buffer);
 	curl_easy_setopt(curl, CURLOPT_SEEKFUNCTION, seek_buffer);
 	curl_easy_setopt(curl, CURLOPT_SEEKDATA, buffer);
@@ -310,7 +311,7 @@ static void start_fetch_packed(struct transfer_request *request)
 	struct transfer_request *check_request = request_queue_head;
 	struct http_pack_request *preq;
 
-	target = find_oid_pack(&request->obj->oid, repo->packs);
+	target = packfile_list_find_oid(repo->packs.head, &request->obj->oid);
 	if (!target) {
 		fprintf(stderr, "Unable to fetch %s, will not be able to update server info refs\n", oid_to_hex(&request->obj->oid));
 		repo->can_update_info_refs = 0;
@@ -682,7 +683,7 @@ static int add_send_request(struct object *obj, struct remote_lock *lock)
 		get_remote_object_list(obj->oid.hash[0]);
 	if (obj->flags & (REMOTE | PUSHING))
 		return 0;
-	target = find_oid_pack(&obj->oid, repo->packs);
+	target = packfile_list_find_oid(repo->packs.head, &obj->oid);
 	if (target) {
 		obj->flags |= REMOTE;
 		return 0;
@@ -1310,7 +1311,7 @@ static struct object_list **process_tree(struct tree *tree,
 
 	if (obj->flags & (UNINTERESTING | SEEN))
 		return p;
-	if (parse_tree(tree) < 0)
+	if (repo_parse_tree(the_repository, tree) < 0)
 		die("bad tree object %s", oid_to_hex(&obj->oid));
 
 	obj->flags |= SEEN;
@@ -1724,6 +1725,7 @@ int cmd_main(int argc, const char **argv)
 	int i;
 	int new_refs;
 	struct ref *ref, *local_refs = NULL;
+	const char *gitdir;
 
 	CALLOC_ARRAY(repo, 1);
 
@@ -1766,7 +1768,7 @@ int cmd_main(int argc, const char **argv)
 				usage(http_push_usage);
 		}
 		if (!repo->url) {
-			char *path = strstr(arg, "//");
+			const char *path = strstr(arg, "//");
 			str_end_url_with_slash(arg, &repo->url);
 			repo->path_len = strlen(repo->url);
 			if (path) {
@@ -1786,7 +1788,7 @@ int cmd_main(int argc, const char **argv)
 	if (delete_branch && rs.nr != 1)
 		die("You must specify only one branch name when deleting a remote branch");
 
-	setup_git_directory();
+	gitdir = setup_git_directory();
 
 	memset(remote_dir_exists, -1, 256);
 
@@ -1940,8 +1942,8 @@ int cmd_main(int argc, const char **argv)
 		if (!push_all && !is_null_oid(&ref->old_oid))
 			strvec_pushf(&commit_argv, "^%s",
 				     oid_to_hex(&ref->old_oid));
-		repo_init_revisions(the_repository, &revs, setup_git_directory());
-		setup_revisions(commit_argv.nr, commit_argv.v, &revs, NULL);
+		repo_init_revisions(the_repository, &revs, gitdir);
+		setup_revisions_from_strvec(&commit_argv, &revs, NULL);
 		revs.edge_hint = 0; /* just in case */
 
 		/* Generate a list of objects that need to be pushed */

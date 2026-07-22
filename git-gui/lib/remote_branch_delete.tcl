@@ -23,7 +23,7 @@ field full_cache
 field cached
 
 constructor dialog {} {
-	global all_remotes M1B use_ttk NS
+	global all_remotes M1B
 
 	make_dialog top w
 	wm title $top [mc "%s (%s): Delete Branch Remotely" [appname] [reponame]]
@@ -31,32 +31,28 @@ constructor dialog {} {
 		wm geometry $top "+[winfo rootx .]+[winfo rooty .]"
 	}
 
-	${NS}::label $w.header -text [mc "Delete Branch Remotely"] \
+	ttk::label $w.header -text [mc "Delete Branch Remotely"] \
 		-font font_uibold -anchor center
 	pack $w.header -side top -fill x
 
-	${NS}::frame $w.buttons
-	${NS}::button $w.buttons.delete -text [mc Delete] \
+	ttk::frame $w.buttons
+	ttk::button $w.buttons.delete -text [mc Delete] \
 		-default active \
 		-command [cb _delete]
 	pack $w.buttons.delete -side right
-	${NS}::button $w.buttons.cancel -text [mc "Cancel"] \
+	ttk::button $w.buttons.cancel -text [mc "Cancel"] \
 		-command [list destroy $w]
 	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
-	${NS}::labelframe $w.dest -text [mc "From Repository"]
+	ttk::labelframe $w.dest -text [mc "From Repository"]
 	if {$all_remotes ne {}} {
-		${NS}::radiobutton $w.dest.remote_r \
+		ttk::radiobutton $w.dest.remote_r \
 			-text [mc "Remote:"] \
 			-value remote \
 			-variable @urltype
-		if {$use_ttk} {
-			ttk::combobox $w.dest.remote_m -textvariable @remote \
-				-values $all_remotes -state readonly
-		} else {
-			eval tk_optionMenu $w.dest.remote_m @remote $all_remotes
-		}
+		ttk::combobox $w.dest.remote_m -textvariable @remote \
+			-values $all_remotes -state readonly
 		grid $w.dest.remote_r $w.dest.remote_m -sticky w
 		if {[lsearch -sorted -exact $all_remotes origin] != -1} {
 			set remote origin
@@ -68,11 +64,11 @@ constructor dialog {} {
 	} else {
 		set urltype url
 	}
-	${NS}::radiobutton $w.dest.url_r \
+	ttk::radiobutton $w.dest.url_r \
 		-text [mc "Arbitrary Location:"] \
 		-value url \
 		-variable @urltype
-	${NS}::entry $w.dest.url_t \
+	ttk::entry $w.dest.url_t \
 		-width 50 \
 		-textvariable @url \
 		-validate key \
@@ -85,19 +81,19 @@ constructor dialog {} {
 	grid columnconfigure $w.dest 1 -weight 1
 	pack $w.dest -anchor nw -fill x -pady 5 -padx 5
 
-	${NS}::labelframe $w.heads -text [mc "Branches"]
+	ttk::labelframe $w.heads -text [mc "Branches"]
 	slistbox $w.heads.l \
 		-height 10 \
 		-width 70 \
 		-listvariable @head_list \
 		-selectmode extended
 
-	${NS}::frame $w.heads.footer
-	${NS}::label $w.heads.footer.status \
+	ttk::frame $w.heads.footer
+	ttk::label $w.heads.footer.status \
 		-textvariable @status \
 		-anchor w \
 		-justify left
-	${NS}::button $w.heads.footer.rescan \
+	ttk::button $w.heads.footer.rescan \
 		-text [mc "Rescan"] \
 		-command [cb _rescan]
 	pack $w.heads.footer.status -side left -fill x
@@ -107,8 +103,8 @@ constructor dialog {} {
 	pack $w.heads.l -side left -fill both -expand 1
 	pack $w.heads -fill both -expand 1 -pady 5 -padx 5
 
-	${NS}::labelframe $w.validate -text [mc "Delete Only If"]
-	${NS}::radiobutton $w.validate.head_r \
+	ttk::labelframe $w.validate -text [mc "Delete Only If"]
+	ttk::radiobutton $w.validate.head_r \
 		-text [mc "Merged Into:"] \
 		-value head \
 		-variable @checktype
@@ -116,7 +112,7 @@ constructor dialog {} {
 	trace add variable @head_list write [cb _write_head_list]
 	trace add variable @check_head write [cb _write_check_head]
 	grid $w.validate.head_r $w.validate.head_m -sticky w
-	${NS}::radiobutton $w.validate.always_r \
+	ttk::radiobutton $w.validate.always_r \
 		-text [mc "Always (Do not perform merge checks)"] \
 		-value always \
 		-variable @checktype
@@ -311,7 +307,6 @@ method _load {cache uri} {
 		set active_ls [git_read [list ls-remote $uri]]
 		fconfigure $active_ls \
 			-blocking 0 \
-			-translation lf \
 			-encoding utf-8
 		fileevent $active_ls readable [cb _read $cache $active_ls]
 	} else {
@@ -323,6 +318,8 @@ method _load {cache uri} {
 }
 
 method _read {cache fd} {
+	global hashlength
+
 	if {$fd ne $active_ls} {
 		catch {close $fd}
 		return
@@ -330,7 +327,7 @@ method _read {cache fd} {
 
 	while {[gets $fd line] >= 0} {
 		if {[string match {*^{}} $line]} continue
-		if {[regexp {^([0-9a-f]{40})	(.*)$} $line _junk obj ref]} {
+		if {[regexp [string map "@@ $hashlength" {^([0-9a-f]{@@})	(.*)$}] $line _junk obj ref]} {
 			if {[regsub ^refs/heads/ $ref {} abr]} {
 				lappend head_list $abr
 				lappend head_cache($cache) $abr

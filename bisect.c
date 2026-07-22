@@ -257,7 +257,7 @@ static struct commit_list *best_bisection_sorted(struct commit_list *list, int n
 			p = p->next;
 	}
 	if (p) {
-		free_commit_list(p->next);
+		commit_list_free(p->next);
 		p->next = NULL;
 	}
 	strbuf_release(&buf);
@@ -438,7 +438,7 @@ void find_bisection(struct commit_list **commit_list, int *reaches,
 	if (best) {
 		if (!(bisect_flags & FIND_BISECTION_ALL)) {
 			list->item = best->item;
-			free_commit_list(list->next);
+			commit_list_free(list->next);
 			best = list;
 			best->next = NULL;
 		}
@@ -450,21 +450,20 @@ void find_bisection(struct commit_list **commit_list, int *reaches,
 	clear_commit_weight(&commit_weight);
 }
 
-static int register_ref(const char *refname, const char *referent UNUSED, const struct object_id *oid,
-			int flags UNUSED, void *cb_data UNUSED)
+static int register_ref(const struct reference *ref, void *cb_data UNUSED)
 {
 	struct strbuf good_prefix = STRBUF_INIT;
 	strbuf_addstr(&good_prefix, term_good);
 	strbuf_addstr(&good_prefix, "-");
 
-	if (!strcmp(refname, term_bad)) {
+	if (!strcmp(ref->name, term_bad)) {
 		free(current_bad_oid);
 		current_bad_oid = xmalloc(sizeof(*current_bad_oid));
-		oidcpy(current_bad_oid, oid);
-	} else if (starts_with(refname, good_prefix.buf)) {
-		oid_array_append(&good_revs, oid);
-	} else if (starts_with(refname, "skip-")) {
-		oid_array_append(&skipped_revs, oid);
+		oidcpy(current_bad_oid, ref->oid);
+	} else if (starts_with(ref->name, good_prefix.buf)) {
+		oid_array_append(&good_revs, ref->oid);
+	} else if (starts_with(ref->name, "skip-")) {
+		oid_array_append(&skipped_revs, ref->oid);
 	}
 
 	strbuf_release(&good_prefix);
@@ -474,8 +473,12 @@ static int register_ref(const char *refname, const char *referent UNUSED, const 
 
 static int read_bisect_refs(void)
 {
-	return refs_for_each_ref_in(get_main_ref_store(the_repository),
-				    "refs/bisect/", register_ref, NULL);
+	struct refs_for_each_ref_options opts = {
+		.prefix = "refs/bisect/",
+		.trim_prefix = strlen("refs/bisect/"),
+	};
+	return refs_for_each_ref_ext(get_main_ref_store(the_repository),
+				     register_ref, NULL, &opts);
 }
 
 static GIT_PATH_FUNC(git_path_bisect_names, "BISECT_NAMES")
@@ -560,8 +563,8 @@ struct commit_list *filter_skipped(struct commit_list *list,
 		} else {
 			if (!show_all) {
 				if (!skipped_first || !*skipped_first) {
-					free_commit_list(next);
-					free_commit_list(filtered);
+					commit_list_free(next);
+					commit_list_free(filtered);
 					return list;
 				}
 			} else if (skipped_first && !*skipped_first) {
@@ -674,9 +677,6 @@ static void bisect_rev_setup(struct repository *r, struct rev_info *revs,
 			     const char *bad_format, const char *good_format,
 			     int read_paths)
 {
-	struct setup_revision_opt opt = {
-		.free_removed_argv_elements = 1,
-	};
 	int i;
 
 	repo_init_revisions(r, revs, prefix);
@@ -693,7 +693,7 @@ static void bisect_rev_setup(struct repository *r, struct rev_info *revs,
 	if (read_paths)
 		read_bisect_paths(rev_argv);
 
-	setup_revisions(rev_argv->nr, rev_argv->v, revs, &opt);
+	setup_revisions_from_strvec(rev_argv, revs, NULL);
 }
 
 static void bisect_common(struct rev_info *revs)
@@ -883,7 +883,7 @@ static enum bisect_error check_merge_bases(size_t rev_nr, struct commit **rev, i
 		}
 	}
 
-	free_commit_list(result);
+	commit_list_free(result);
 	return res;
 }
 
@@ -1146,7 +1146,7 @@ enum bisect_error bisect_next_all(struct repository *r, const char *prefix)
 
 	res = bisect_checkout(bisect_rev, no_checkout);
 cleanup:
-	free_commit_list(tried);
+	commit_list_free(tried);
 	release_revisions(&revs);
 	strvec_clear(&rev_argv);
 	return res;
@@ -1181,32 +1181,29 @@ int estimate_bisect_steps(int all)
 	return (e < 3 * x) ? n : n - 1;
 }
 
-static int mark_for_removal(const char *refname,
-			    const char *referent UNUSED,
-			    const struct object_id *oid UNUSED,
-			    int flag UNUSED, void *cb_data)
+static int mark_for_removal(const struct reference *ref, void *cb_data)
 {
 	struct string_list *refs = cb_data;
-	char *ref = xstrfmt("refs/bisect%s", refname);
-	string_list_append(refs, ref);
+	string_list_append(refs, ref->name);
 	return 0;
 }
 
 int bisect_clean_state(void)
 {
+	struct refs_for_each_ref_options opts = {
+		.prefix = "refs/bisect/",
+	};
 	int result = 0;
 
 	/* There may be some refs packed during bisection */
-	struct string_list refs_for_removal = STRING_LIST_INIT_NODUP;
-	refs_for_each_ref_in(get_main_ref_store(the_repository),
-			     "refs/bisect", mark_for_removal,
-			     (void *) &refs_for_removal);
-	string_list_append(&refs_for_removal, xstrdup("BISECT_HEAD"));
-	string_list_append(&refs_for_removal, xstrdup("BISECT_EXPECTED_REV"));
+	struct string_list refs_for_removal = STRING_LIST_INIT_DUP;
+	refs_for_each_ref_ext(get_main_ref_store(the_repository),
+			      mark_for_removal, &refs_for_removal, &opts);
+	string_list_append(&refs_for_removal, "BISECT_HEAD");
+	string_list_append(&refs_for_removal, "BISECT_EXPECTED_REV");
 	result = refs_delete_refs(get_main_ref_store(the_repository),
 				  "bisect: remove", &refs_for_removal,
 				  REF_NO_DEREF);
-	refs_for_removal.strdup_strings = 1;
 	string_list_clear(&refs_for_removal, 0);
 	unlink_or_warn(git_path_bisect_ancestors_ok());
 	unlink_or_warn(git_path_bisect_log());

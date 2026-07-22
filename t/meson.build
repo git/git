@@ -1,13 +1,24 @@
 clar_test_suites = [
   'unit-tests/u-ctype.c',
+  'unit-tests/u-dir.c',
   'unit-tests/u-example-decorate.c',
   'unit-tests/u-hash.c',
   'unit-tests/u-hashmap.c',
+  'unit-tests/u-list-objects-filter-options.c',
   'unit-tests/u-mem-pool.c',
+  'unit-tests/u-mingw.c',
   'unit-tests/u-oid-array.c',
   'unit-tests/u-oidmap.c',
   'unit-tests/u-oidtree.c',
   'unit-tests/u-prio-queue.c',
+  'unit-tests/u-reftable-basics.c',
+  'unit-tests/u-reftable-block.c',
+  'unit-tests/u-reftable-merged.c',
+  'unit-tests/u-reftable-pq.c',
+  'unit-tests/u-reftable-readwrite.c',
+  'unit-tests/u-reftable-record.c',
+  'unit-tests/u-reftable-stack.c',
+  'unit-tests/u-reftable-table.c',
   'unit-tests/u-reftable-tree.c',
   'unit-tests/u-strbuf.c',
   'unit-tests/u-strcmp-offset.c',
@@ -15,12 +26,14 @@ clar_test_suites = [
   'unit-tests/u-strvec.c',
   'unit-tests/u-trailer.c',
   'unit-tests/u-urlmatch-normalization.c',
+  'unit-tests/u-utf8-width.c',
 ]
 
 clar_sources = [
   'unit-tests/clar/clar.c',
   'unit-tests/unit-test.c',
-  'unit-tests/lib-oid.c'
+  'unit-tests/lib-oid.c',
+  'unit-tests/lib-reftable.c'
 ]
 
 clar_decls_h = custom_target(
@@ -50,36 +63,12 @@ clar_sources += custom_target(
 
 clar_unit_tests = executable('unit-tests',
   sources: clar_sources + clar_test_suites,
+  c_args: [
+    '-DGIT_CLAR_DECLS_H="' + clar_decls_h.full_path() + '"',
+  ],
   dependencies: [libgit_commonmain],
 )
 test('unit-tests', clar_unit_tests, kwargs: test_kwargs)
-
-unit_test_programs = [
-  'unit-tests/t-reftable-basics.c',
-  'unit-tests/t-reftable-block.c',
-  'unit-tests/t-reftable-merged.c',
-  'unit-tests/t-reftable-pq.c',
-  'unit-tests/t-reftable-readwrite.c',
-  'unit-tests/t-reftable-record.c',
-  'unit-tests/t-reftable-stack.c',
-  'unit-tests/t-reftable-table.c',
-]
-
-foreach unit_test_program : unit_test_programs
-  unit_test_name = fs.stem(unit_test_program)
-  unit_test = executable(unit_test_name,
-    sources: [
-      'unit-tests/test-lib.c',
-      'unit-tests/lib-reftable.c',
-      unit_test_program,
-    ],
-    dependencies: [libgit_commonmain],
-  )
-  test(unit_test_name, unit_test,
-    workdir: meson.current_source_dir(),
-    kwargs: test_kwargs,
-  )
-endforeach
 
 subdir('helper')
 
@@ -93,6 +82,7 @@ integration_tests = [
   't0006-date.sh',
   't0007-git-var.sh',
   't0008-ignores.sh',
+  't0009-git-dir-validation.sh',
   't0010-racy-git.sh',
   't0012-help.sh',
   't0013-sha1dc.sh',
@@ -111,6 +101,7 @@ integration_tests = [
   't0028-working-tree-encoding.sh',
   't0029-core-unsetenvvars.sh',
   't0030-stripspace.sh',
+  't0031-lockfile-pid.sh',
   't0033-safe-directory.sh',
   't0034-root-safe-directory.sh',
   't0035-safe-bare-repository.sh',
@@ -145,6 +136,7 @@ integration_tests = [
   't0210-trace2-normal.sh',
   't0211-trace2-perf.sh',
   't0212-trace2-event.sh',
+  't0213-trace2-ancestry.sh',
   't0300-credentials.sh',
   't0301-credential-cache.sh',
   't0302-credential-store.sh',
@@ -160,6 +152,7 @@ integration_tests = [
   't0611-reftable-httpd.sh',
   't0612-reftable-jgit-compatibility.sh',
   't0613-reftable-write-options.sh',
+  't0614-reftable-fsck.sh',
   't1000-read-tree-m-3way.sh',
   't1001-read-tree-m-2way.sh',
   't1002-read-tree-m-u-2way.sh',
@@ -197,6 +190,7 @@ integration_tests = [
   't1308-config-set.sh',
   't1309-early-config.sh',
   't1310-config-default.sh',
+  't1311-config-optional.sh',
   't1350-config-hooks-path.sh',
   't1400-update-ref.sh',
   't1401-symbolic-ref.sh',
@@ -219,10 +213,16 @@ integration_tests = [
   't1418-reflog-exists.sh',
   't1419-exclude-refs.sh',
   't1420-lost-found.sh',
+  't1421-reflog-write.sh',
+  't1422-show-ref-exists.sh',
+  't1423-ref-backend.sh',
   't1430-bad-ref-name.sh',
   't1450-fsck.sh',
   't1451-fsck-buffer.sh',
   't1460-refs-migrate.sh',
+  't1461-refs-list.sh',
+  't1462-refs-exists.sh',
+  't1463-refs-optimize.sh',
   't1500-rev-parse.sh',
   't1501-work-tree.sh',
   't1502-rev-parse-parseopt.sh',
@@ -245,6 +245,8 @@ integration_tests = [
   't1700-split-index.sh',
   't1701-racy-split-index.sh',
   't1800-hook.sh',
+  't1900-repo-info.sh',
+  't1901-repo-structure.sh',
   't2000-conflict-when-checking-files-out.sh',
   't2002-checkout-cache-u.sh',
   't2003-checkout-cache-mkdir.sh',
@@ -273,6 +275,8 @@ integration_tests = [
   't2026-checkout-pathspec-file.sh',
   't2027-checkout-track.sh',
   't2030-unresolve-info.sh',
+  't2031-checkout-long-paths.sh',
+  't2040-checkout-symlink-attr.sh',
   't2050-git-dir-relative.sh',
   't2060-switch.sh',
   't2070-restore.sh',
@@ -296,6 +300,7 @@ integration_tests = [
   't2203-add-intent.sh',
   't2204-add-ignored.sh',
   't2205-add-worktree-config.sh',
+  't2206-add-submodule-ignored.sh',
   't2300-cd-to-toplevel.sh',
   't2400-worktree-add.sh',
   't2401-worktree-prune.sh',
@@ -391,6 +396,10 @@ integration_tests = [
   't3436-rebase-more-options.sh',
   't3437-rebase-fixup-options.sh',
   't3438-rebase-broken-files.sh',
+  't3440-rebase-trailer.sh',
+  't3450-history.sh',
+  't3451-history-reword.sh',
+  't3452-history-split.sh',
   't3500-cherry.sh',
   't3501-revert-cherry-pick.sh',
   't3502-cherry-pick-merge.sh',
@@ -501,6 +510,9 @@ integration_tests = [
   't4069-remerge-diff.sh',
   't4070-diff-pairs.sh',
   't4071-diff-minimal.sh',
+  't4072-diff-max-depth.sh',
+  't4073-diff-stat-name-width.sh',
+  't4074-diff-shifted-matched-group.sh',
   't4100-apply-stat.sh',
   't4101-apply-nonl.sh',
   't4102-apply-rename.sh',
@@ -617,6 +629,7 @@ integration_tests = [
   't5332-multi-pack-reuse.sh',
   't5333-pseudo-merge-bitmaps.sh',
   't5334-incremental-multi-pack-index.sh',
+  't5335-compact-multi-pack-index.sh',
   't5351-unpack-large-objects.sh',
   't5400-send-pack.sh',
   't5401-update-hooks.sh',
@@ -693,6 +706,7 @@ integration_tests = [
   't5562-http-backend-content-length.sh',
   't5563-simple-http-auth.sh',
   't5564-http-proxy.sh',
+  't5565-push-multiple.sh',
   't5570-git-daemon.sh',
   't5571-pre-push-hook.sh',
   't5572-pull-submodule.sh',
@@ -861,6 +875,7 @@ integration_tests = [
   't7105-reset-patch.sh',
   't7106-reset-unborn-branch.sh',
   't7107-reset-pathspec-file.sh',
+  't7108-reset-stdin.sh',
   't7110-reset-merge.sh',
   't7111-reset-table.sh',
   't7112-reset-submodule.sh',
@@ -889,6 +904,9 @@ integration_tests = [
   't7422-submodule-output.sh',
   't7423-submodule-symlinks.sh',
   't7424-submodule-mixed-ref-formats.sh',
+  't7425-submodule-gitdir-path-extension.sh',
+  't7426-submodule-get-default-remote.sh',
+  't7429-submodule-long-path.sh',
   't7450-bad-git-dotfiles.sh',
   't7500-commit-template-squash-signoff.sh',
   't7501-commit-basic-functionality.sh',
@@ -961,6 +979,9 @@ integration_tests = [
   't8012-blame-colors.sh',
   't8013-blame-ignore-revs.sh',
   't8014-blame-ignore-fuzzy.sh',
+  't8015-blame-diff-algorithm.sh',
+  't8020-last-modified.sh',
+  't8100-git-survey.sh',
   't9001-send-email.sh',
   't9002-column.sh',
   't9003-help-autocorrect.sh',
@@ -1041,6 +1062,8 @@ integration_tests = [
   't9302-fast-import-unpack-limit.sh',
   't9303-fast-import-compression.sh',
   't9304-fast-import-marks.sh',
+  't9305-fast-import-signatures.sh',
+  't9306-fast-import-signed-tags.sh',
   't9350-fast-export.sh',
   't9351-fast-export-anonymize.sh',
   't9400-git-cvsserver-server.sh',
@@ -1116,6 +1139,7 @@ benchmarks = [
   'perf/p1450-fsck.sh',
   'perf/p1451-fsck-skip-list.sh',
   'perf/p1500-graph-walks.sh',
+  'perf/p1501-rev-parse-oneline.sh',
   'perf/p2000-sparse-operations.sh',
   'perf/p3400-rebase.sh',
   'perf/p3404-rebase-interactive.sh',
@@ -1153,6 +1177,7 @@ benchmarks = [
   'perf/p7820-grep-engines.sh',
   'perf/p7821-grep-engines-fixed.sh',
   'perf/p7822-grep-perl-character.sh',
+  'perf/p8020-last-modified.sh',
   'perf/p9210-scalar.sh',
   'perf/p9300-fast-import-export.sh',
 ]
@@ -1162,8 +1187,6 @@ benchmarks = [
 # sufficient to catch missing test suites in our CI though.
 foreach glob, tests : {
   't[0-9][0-9][0-9][0-9]-*.sh': integration_tests,
-  'perf/p[0-9][0-9][0-9][0-9]-*.sh': benchmarks,
-  'unit-tests/t-*.c': unit_test_programs,
   'unit-tests/u-*.c': clar_test_suites,
 }
   actual_tests = run_command(shell, '-c', 'ls ' + glob,
@@ -1204,6 +1227,7 @@ endif
 
 test_environment = script_environment
 test_environment.set('GIT_BUILD_DIR', git_build_dir)
+test_environment.set('MERGE_TOOLS_DIR', meson.project_source_root() / 'mergetools')
 
 foreach integration_test : integration_tests
   test(fs.stem(integration_test), shell,

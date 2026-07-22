@@ -12,6 +12,7 @@ SYNOPSIS
 'git maintenance' run [<options>]
 'git maintenance' start [--scheduler=<scheduler>]
 'git maintenance' (stop|register|unregister) [<options>]
+'git maintenance' is-needed [<options>]
 
 
 DESCRIPTION
@@ -83,6 +84,16 @@ unregister::
 The `unregister` subcommand will report an error if the current repository
 is not already registered. Use the `--force` option to return success even
 when the current repository is not registered.
+
+is-needed::
+    Check whether maintenance needs to be run without actually running it.
+    Exits with a 0 status code if maintenance needs to be run, 1 otherwise.
+    Ideally used with the '--auto' flag.
++
+If one or more `--task` options are specified, then those tasks are checked
+in that order. Otherwise, the tasks are determined by which
+`maintenance.<task>.enabled` config options are true. By default, only
+`maintenance.gc.enabled` is true.
 
 TASKS
 -----
@@ -183,6 +194,8 @@ OPTIONS
 	in the `gc.auto` config setting, or when the number of pack-files
 	exceeds the `gc.autoPackLimit` config setting. Not compatible with
 	the `--schedule` option.
+	When combined with the `is-needed` subcommand, check if the required
+	thresholds are met without actually running maintenance.
 
 --schedule::
 	When combined with the `run` subcommand, run maintenance tasks

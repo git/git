@@ -6,6 +6,7 @@
 #define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
+#include "environment.h"
 #include "gettext.h"
 #include "hex.h"
 #include "tree.h"
@@ -35,6 +36,7 @@ int cmd_write_tree(int argc,
 			.type = OPTION_BIT,
 			.long_name = "ignore-cache-tree",
 			.value = &flags,
+			.precision = sizeof(flags),
 			.help = N_("only useful for debugging"),
 			.flags = PARSE_OPT_HIDDEN | PARSE_OPT_NOARG,
 			.defval = WRITE_TREE_IGNORE_CACHE_TREE,
@@ -42,7 +44,7 @@ int cmd_write_tree(int argc,
 		OPT_END()
 	};
 
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 	argc = parse_options(argc, argv, cmd_prefix, write_tree_options,
 			     write_tree_usage, 0);
 

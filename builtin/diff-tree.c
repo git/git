@@ -33,7 +33,7 @@ static int stdin_diff_commit(struct commit *commit, const char *p)
 		struct commit *parent = lookup_commit(the_repository, &oid);
 		if (!pptr) {
 			/* Free the real parent list */
-			free_commit_list(commit->parents);
+			commit_list_free(commit->parents);
 			commit->parents = NULL;
 			pptr = &(commit->parents);
 		}
@@ -52,7 +52,7 @@ static int stdin_diff_trees(struct tree *tree1, const char *p)
 	if (!isspace(*p++) || parse_oid_hex(p, &oid, &p) || *p)
 		return error("Need exactly two trees, separated by a space");
 	tree2 = lookup_tree(the_repository, &oid);
-	if (!tree2 || parse_tree(tree2))
+	if (!tree2 || repo_parse_tree(the_repository, tree2))
 		return -1;
 	printf("%s %s\n", oid_to_hex(&tree1->object.oid),
 			  oid_to_hex(&tree2->object.oid));
@@ -124,7 +124,7 @@ int cmd_diff_tree(int argc,
 
 	show_usage_if_asked(argc, argv, diff_tree_usage);
 
-	git_config(git_diff_basic_config, NULL); /* no "diff" UI options */
+	repo_config(the_repository, git_diff_basic_config, NULL); /* no "diff" UI options */
 
 	prepare_repo_settings(the_repository);
 	the_repository->settings.command_requires_full_index = 0;

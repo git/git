@@ -39,7 +39,6 @@ field operations ; # list of current ongoing operations
 field completed_operation_count
 
 constructor new {path} {
-	global use_ttk NS
 	set w $path
 	set w_l $w.l
 	set w_c $w.c
@@ -51,11 +50,8 @@ constructor new {path} {
 	set operations [list]
 	set completed_operation_count 0
 
-	${NS}::frame $w
-	if {!$use_ttk} {
-		$w configure -borderwidth 1 -relief sunken
-	}
-	${NS}::label $w_l \
+	ttk::frame $w
+	ttk::label $w_l \
 		-textvariable @status_bar_text \
 		-anchor w \
 		-justify left
@@ -72,7 +68,6 @@ method _oneline_pack {} {
 }
 
 constructor two_line {path} {
-	global NS
 	set w $path
 	set w_l $w.l
 	set w_c $w.c
@@ -84,8 +79,8 @@ constructor two_line {path} {
 	set operations [list]
 	set completed_operation_count 0
 
-	${NS}::frame $w
-	${NS}::label $w_l \
+	ttk::frame $w
+	ttk::label $w_l \
 		-textvariable @status_bar_text \
 		-anchor w \
 		-justify left

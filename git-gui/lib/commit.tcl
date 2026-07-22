@@ -28,7 +28,7 @@ You are currently in the middle of a merge that has not been fully completed.  Y
 			set name ""
 			set email ""
 			set fd [git_read [list cat-file commit $curHEAD]]
-			fconfigure $fd -encoding binary -translation lf
+			fconfigure $fd -encoding iso8859-1
 			# By default commits are assumed to be in utf-8
 			set enc utf-8
 			while {[gets $fd line] > 0} {
@@ -43,9 +43,9 @@ You are currently in the middle of a merge that has not been fully completed.  Y
 
 			set enc [tcl_encoding $enc]
 			if {$enc ne {}} {
-				set msg [encoding convertfrom $enc $msg]
-				set name [encoding convertfrom $enc $name]
-				set email [encoding convertfrom $enc $email]
+				set msg [convertfrom $enc $msg]
+				set name [convertfrom $enc $name]
+				set email [convertfrom $enc $email]
 			}
 			if {$name ne {} && $email ne {}} {
 				set commit_author [list name $name email $email date $time]
@@ -208,30 +208,6 @@ You must stage at least 1 file before you can commit.
 	# -- A message is required.
 	#
 	set msg [$ui_comm get 1.0 end]
-	# Strip trailing whitespace
-	regsub -all -line {[ \t\r]+$} $msg {} msg
-	# Strip comment lines
-	global comment_string
-	set cmt_rx [strcat {(^|\n)} [regsub -all {\W} $comment_string {\\&}] {[^\n]*}]
-	regsub -all $cmt_rx $msg {\1} msg
-	# Strip leading empty lines
-	regsub {^\n*} $msg {} msg
-	# Compress consecutive empty lines
-	regsub -all {\n{3,}} $msg "\n\n" msg
-	# Strip trailing empty line
-	regsub {\n\n$} $msg "\n" msg
-	if {$msg eq {}} {
-		error_popup [mc "Please supply a commit message.
-
-A good commit message has the following format:
-
-- First line: Describe in one sentence what you did.
-- Second line: Blank
-- Remaining lines: Describe why this change is good.
-"]
-		unlock_index
-		return
-	}
 
 	# -- Build the message file.
 	#
@@ -254,7 +230,7 @@ A good commit message has the following format:
 
 	ui_status [mc "Calling pre-commit hook..."]
 	set pch_error {}
-	fconfigure $fd_ph -blocking 0 -translation binary -eofchar {}
+	fconfigure $fd_ph -blocking 0 -translation binary
 	fileevent $fd_ph readable \
 		[list commit_prehook_wait $fd_ph $curHEAD $msg_p]
 }
@@ -309,7 +285,7 @@ Do you really want to proceed with your Commit?"]
 
 	ui_status [mc "Calling commit-msg hook..."]
 	set pch_error {}
-	fconfigure $fd_ph -blocking 0 -translation binary -eofchar {}
+	fconfigure $fd_ph -blocking 0 -translation binary
 	fileevent $fd_ph readable \
 		[list commit_commitmsg_wait $fd_ph $curHEAD $msg_p]
 }
@@ -334,7 +310,52 @@ proc commit_commitmsg_wait {fd_ph curHEAD msg_p} {
 	fconfigure $fd_ph -blocking 0
 }
 
+proc wash_commit_message {msg} {
+	# Strip trailing whitespace
+	regsub -all -line {[ \t\r]+$} $msg {} msg
+	# Strip comment lines
+	global comment_string
+	set cmt_rx [strcat {(^|\n)} [regsub -all {\W} $comment_string {\\&}] {[^\n]*}]
+	regsub -all $cmt_rx $msg {\1} msg
+	# Strip leading and trailing empty lines (puts adds one \n)
+	set msg [string trim $msg \n]
+	# Compress consecutive empty lines
+	regsub -all {\n{3,}} $msg \n\n msg
+
+	return $msg
+}
+
 proc commit_writetree {curHEAD msg_p} {
+	# -- Process the commit message after hooks have run.
+	#
+	set msg_fd [safe_open_file $msg_p r]
+	setup_commit_encoding $msg_fd 1
+	set msg [read $msg_fd]
+	close $msg_fd
+
+	# Process the message (strip whitespace, comments, etc.)
+	set msg [wash_commit_message $msg]
+
+	if {$msg eq {}} {
+		error_popup [mc "Please supply a commit message.
+
+A good commit message has the following format:
+
+- First line: Describe in one sentence what you did.
+- Second line: Blank
+- Remaining lines: Describe why this change is good.
+"]
+		unlock_index
+		return
+	}
+
+	# Write the processed message back to the file
+	set msg_wt [safe_open_file $msg_p w]
+	fconfigure $msg_wt -translation lf
+	setup_commit_encoding $msg_wt
+	puts $msg_wt $msg
+	close $msg_wt
+
 	ui_status [mc "Committing changes..."]
 	set fd_wt [git_read [list write-tree]]
 	fileevent $fd_wt readable \
@@ -348,6 +369,7 @@ proc commit_committree {fd_wt curHEAD msg_p} {
 	global file_states selected_paths rescan_active
 	global repo_config
 	global env
+	global hashlength
 
 	gets $fd_wt tree_id
 	if {[catch {close $fd_wt} err]} {
@@ -362,12 +384,12 @@ proc commit_committree {fd_wt curHEAD msg_p} {
 	#
 	if {$commit_type eq {normal}} {
 		set fd_ot [git_read [list cat-file commit $PARENT]]
-		fconfigure $fd_ot -encoding binary -translation lf
+		fconfigure $fd_ot -encoding iso8859-1
 		set old_tree [gets $fd_ot]
 		close $fd_ot
 
 		if {[string equal -length 5 {tree } $old_tree]
-			&& [string length $old_tree] == 45} {
+			&& [string length $old_tree] == [expr {$hashlength + 5}]} {
 			set old_tree [string range $old_tree 5 end]
 		} else {
 			error [mc "Commit %s appears to be corrupt" $PARENT]
@@ -461,7 +483,7 @@ A rescan will be automatically started now.
 	if {$fd_ph ne {}} {
 		global pch_error
 		set pch_error {}
-		fconfigure $fd_ph -blocking 0 -translation binary -eofchar {}
+		fconfigure $fd_ph -blocking 0 -translation binary
 		fileevent $fd_ph readable \
 			[list commit_postcommit_wait $fd_ph $cmt_id]
 	}

@@ -95,14 +95,14 @@ create_lib_submodule_repo () {
 			git commit -m "modified file2 and added file3" &&
 			git push origin modifications
 		) &&
-		git add sub1 &&
+		git add --force sub1 &&
 		git commit -m "Modify sub1" &&
 
 		git checkout -b add_nested_sub modify_sub1 &&
 		git -C sub1 checkout -b "add_nested_sub" &&
 		git -C sub1 submodule add --branch no_submodule ../submodule_update_sub2 sub2 &&
 		git -C sub1 commit -a -m "add a nested submodule" &&
-		git add sub1 &&
+		git add --force sub1 &&
 		git commit -a -m "update submodule, that updates a nested submodule" &&
 		git checkout -b modify_sub1_recursively &&
 		git -C sub1 checkout -b modify_sub1_recursively &&
@@ -112,7 +112,7 @@ create_lib_submodule_repo () {
 		git -C sub1/sub2 commit -m "make a change in nested sub" &&
 		git -C sub1 add sub2 &&
 		git -C sub1 commit -m "update nested sub" &&
-		git add sub1 &&
+		git add --force sub1 &&
 		git commit -m "update sub1, that updates nested sub" &&
 		git -C sub1 push origin modify_sub1_recursively &&
 		git -C sub1/sub2 push origin modify_sub1_recursively &&

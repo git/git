@@ -21,7 +21,7 @@ field browser_busy   1
 field ls_buf     {}; # Buffered record output from ls-tree
 
 constructor new {commit {path {}}} {
-	global cursor_ptr M1B use_ttk NS
+	global cursor_ptr M1B
 	make_dialog top w
 	wm withdraw $top
 	wm title $top [mc "%s (%s): File Browser" [appname] [reponame]]
@@ -35,15 +35,14 @@ constructor new {commit {path {}}} {
 	set browser_commit $commit
 	set browser_path "$browser_commit:[escape_path $path]"
 
-	${NS}::label $w.path \
+	ttk::label $w.path \
 		-textvariable @browser_path \
 		-anchor w \
 		-justify left \
 		-font font_uibold
-	if {!$use_ttk} { $w.path configure -borderwidth 1 -relief sunken}
 	pack $w.path -anchor w -side top -fill x
 
-	${NS}::frame $w.list
+	ttk::frame $w.list
 	set w_list $w.list.l
 	text $w_list -background white -foreground black \
 		-borderwidth 0 \
@@ -55,18 +54,17 @@ constructor new {commit {path {}}} {
 		-xscrollcommand [list $w.list.sbx set] \
 		-yscrollcommand [list $w.list.sby set]
 	rmsel_tag $w_list
-	${NS}::scrollbar $w.list.sbx -orient h -command [list $w_list xview]
-	${NS}::scrollbar $w.list.sby -orient v -command [list $w_list yview]
+	ttk::scrollbar $w.list.sbx -orient h -command [list $w_list xview]
+	ttk::scrollbar $w.list.sby -orient v -command [list $w_list yview]
 	pack $w.list.sbx -side bottom -fill x
 	pack $w.list.sby -side right -fill y
 	pack $w_list -side left -fill both -expand 1
 	pack $w.list -side top -fill both -expand 1
 
-	${NS}::label $w.status \
+	ttk::label $w.status \
 		-textvariable @browser_status \
 		-anchor w \
 		-justify left
-	if {!$use_ttk} { $w.status configure -borderwidth 1 -relief sunken}
 	pack $w.status -anchor w -side bottom -fill x
 
 	bind $w_list <Button-1>        "[cb _click 0 @%x,%y];break"
@@ -197,7 +195,7 @@ method _ls {tree_id {name {}}} {
 	$w conf -state disabled
 
 	set fd [git_read [list ls-tree -z $tree_id]]
-	fconfigure $fd -blocking 0 -translation binary -encoding utf-8
+	fconfigure $fd -blocking 0 -encoding utf-8
 	fileevent $fd readable [cb _read $fd]
 }
 
@@ -269,7 +267,6 @@ field w              ; # widget path
 field w_rev          ; # mega-widget to pick the initial revision
 
 constructor dialog {} {
-	global use_ttk NS
 	make_dialog top w
 	wm withdraw $top
 	wm title $top [mc "%s (%s): Browse Branch Files" [appname] [reponame]]
@@ -278,18 +275,18 @@ constructor dialog {} {
 		wm transient $top .
 	}
 
-	${NS}::label $w.header \
+	ttk::label $w.header \
 		-text [mc "Browse Branch Files"] \
 		-font font_uibold \
 		-anchor center
 	pack $w.header -side top -fill x
 
-	${NS}::frame $w.buttons
-	${NS}::button $w.buttons.browse -text [mc Browse] \
+	ttk::frame $w.buttons
+	ttk::button $w.buttons.browse -text [mc Browse] \
 		-default active \
 		-command [cb _open]
 	pack $w.buttons.browse -side right
-	${NS}::button $w.buttons.cancel -text [mc Cancel] \
+	ttk::button $w.buttons.cancel -text [mc Cancel] \
 		-command [list destroy $w]
 	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10

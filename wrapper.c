@@ -115,7 +115,7 @@ void *xmemdupz(const void *data, size_t len)
 
 char *xstrndup(const char *str, size_t len)
 {
-	char *p = memchr(str, '\0', len);
+	const char *p = memchr(str, '\0', len);
 	return xmemdupz(str, p ? p - str : len);
 }
 
@@ -323,6 +323,47 @@ ssize_t write_in_full(int fd, const void *buf, size_t count)
 	return total;
 }
 
+ssize_t writev_in_full(int fd, struct iovec *iov, int iovcnt)
+{
+	ssize_t total_written = 0;
+
+	while (iovcnt) {
+		ssize_t bytes_written = writev(fd, iov, iovcnt);
+		if (bytes_written < 0) {
+			if (errno == EINTR || errno == EAGAIN)
+				continue;
+			return -1;
+		}
+		if (!bytes_written) {
+			errno = ENOSPC;
+			return -1;
+		}
+
+		total_written += bytes_written;
+
+		/*
+		 * We first need to discard any iovec entities that have been
+		 * fully written.
+		 */
+		while (iovcnt && (size_t)bytes_written >= iov->iov_len) {
+			bytes_written -= iov->iov_len;
+			iov++;
+			iovcnt--;
+		}
+
+		/*
+		 * Finally, we need to adjust the last iovec in case we have
+		 * performed a partial write.
+		 */
+		if (iovcnt && bytes_written) {
+			iov->iov_base = (char *) iov->iov_base + bytes_written;
+			iov->iov_len -= bytes_written;
+		}
+	}
+
+	return total_written;
+}
+
 ssize_t pread_in_full(int fd, void *buf, size_t count, off_t offset)
 {
 	char *p = buf;
@@ -421,24 +462,7 @@ FILE *fopen_or_warn(const char *path, const char *mode)
 
 int xmkstemp(char *filename_template)
 {
-	int fd;
-	char origtemplate[PATH_MAX];
-	strlcpy(origtemplate, filename_template, sizeof(origtemplate));
-
-	fd = mkstemp(filename_template);
-	if (fd < 0) {
-		int saved_errno = errno;
-		const char *nonrelative_template;
-
-		if (strlen(filename_template) != strlen(origtemplate))
-			filename_template = origtemplate;
-
-		nonrelative_template = absolute_path(filename_template);
-		errno = saved_errno;
-		die_errno("Unable to create temporary file '%s'",
-			nonrelative_template);
-	}
-	return fd;
+	return xmkstemp_mode(filename_template, 0600);
 }
 
 /* Adapted from libiberty's mkstemp.c. */
@@ -446,7 +470,11 @@ int xmkstemp(char *filename_template)
 #undef TMP_MAX
 #define TMP_MAX 16384
 
-int git_mkstemps_mode(char *pattern, int suffix_len, int mode)
+/*
+ * Returns -1 on error, 0 if it created a directory, or an open file
+ * descriptor to the created regular file.
+ */
+static int git_mkdstemps_mode(char *pattern, int suffix_len, int mode, bool dir)
 {
 	static const char letters[] =
 		"abcdefghijklmnopqrstuvwxyz"
@@ -488,7 +516,10 @@ int git_mkstemps_mode(char *pattern, int suffix_len, int mode)
 			v /= num_letters;
 		}
 
-		fd = open(pattern, O_CREAT | O_EXCL | O_RDWR, mode);
+		if (dir)
+			fd = mkdir(pattern, mode);
+		else
+			fd = open(pattern, O_CREAT | O_EXCL | O_RDWR, mode);
 		if (fd >= 0)
 			return fd;
 		/*
@@ -501,6 +532,16 @@ int git_mkstemps_mode(char *pattern, int suffix_len, int mode)
 	/* We return the null string if we can't find a unique file name.  */
 	pattern[0] = '\0';
 	return -1;
+}
+
+char *git_mkdtemp(char *pattern)
+{
+	return git_mkdstemps_mode(pattern, 0, 0700, true) ? NULL : pattern;
+}
+
+int git_mkstemps_mode(char *pattern, int suffix_len, int mode)
+{
+	return git_mkdstemps_mode(pattern, suffix_len, mode, false);
 }
 
 int git_mkstemp_mode(char *pattern, int mode)
@@ -719,6 +760,19 @@ int xgethostname(char *buf, size_t len)
 	if (!ret)
 		buf[len - 1] = 0;
 	return ret;
+}
+
+int is_missing_file(const char *filename)
+{
+	struct stat st;
+
+	if (stat(filename, &st) < 0) {
+		if (errno == ENOENT)
+			return 1;
+		die_errno(_("could not stat %s"), filename);
+	}
+
+	return 0;
 }
 
 int is_empty_or_missing_file(const char *filename)

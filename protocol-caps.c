@@ -4,7 +4,6 @@
 #include "hex.h"
 #include "pkt-line.h"
 #include "hash.h"
-#include "hex.h"
 #include "object.h"
 #include "odb.h"
 #include "repository.h"

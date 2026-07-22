@@ -34,6 +34,7 @@ MAN5_TXT += gitformat-bundle.adoc
 MAN5_TXT += gitformat-chunk.adoc
 MAN5_TXT += gitformat-commit-graph.adoc
 MAN5_TXT += gitformat-index.adoc
+MAN5_TXT += gitformat-loose.adoc
 MAN5_TXT += gitformat-pack.adoc
 MAN5_TXT += gitformat-signature.adoc
 MAN5_TXT += githooks.adoc
@@ -52,6 +53,7 @@ MAN7_TXT += gitcli.adoc
 MAN7_TXT += gitcore-tutorial.adoc
 MAN7_TXT += gitcredentials.adoc
 MAN7_TXT += gitcvs-migration.adoc
+MAN7_TXT += gitdatamodel.adoc
 MAN7_TXT += gitdiffcore.adoc
 MAN7_TXT += giteveryday.adoc
 MAN7_TXT += gitfaq.adoc
@@ -119,19 +121,29 @@ TECH_DOCS += ToolsForGit
 TECH_DOCS += technical/bitmap-format
 TECH_DOCS += technical/build-systems
 TECH_DOCS += technical/bundle-uri
+TECH_DOCS += technical/commit-graph
+TECH_DOCS += technical/directory-rename-detection
 TECH_DOCS += technical/hash-function-transition
+TECH_DOCS += technical/large-object-promisors
 TECH_DOCS += technical/long-running-process-protocol
 TECH_DOCS += technical/multi-pack-index
+TECH_DOCS += technical/packfile-uri
 TECH_DOCS += technical/pack-heuristics
 TECH_DOCS += technical/parallel-checkout
 TECH_DOCS += technical/partial-clone
 TECH_DOCS += technical/platform-support
 TECH_DOCS += technical/racy-git
 TECH_DOCS += technical/reftable
+TECH_DOCS += technical/remembering-renames
+TECH_DOCS += technical/repository-version
+TECH_DOCS += technical/rerere
 TECH_DOCS += technical/scalar
 TECH_DOCS += technical/send-pack-pipeline
 TECH_DOCS += technical/shallow
+TECH_DOCS += technical/sparse-checkout
+TECH_DOCS += technical/sparse-index
 TECH_DOCS += technical/trivial-merge
+TECH_DOCS += technical/unambiguous-types
 TECH_DOCS += technical/unit-tests
 SP_ARTICLES += $(TECH_DOCS)
 SP_ARTICLES += technical/api-index
@@ -497,8 +509,25 @@ $(LINT_DOCS_FSCK_MSGIDS): ../fsck.h fsck-msgids.adoc
 	$(call mkdir_p_parent_template)
 	$(QUIET_GEN)$(PERL_PATH) lint-fsck-msgids.perl \
 		../fsck.h fsck-msgids.adoc $@
-
 lint-docs-fsck-msgids: $(LINT_DOCS_FSCK_MSGIDS)
+
+## Lint: delimited sections
+LINT_DOCS_DELIMITED_SECTIONS = $(patsubst %.adoc,.build/lint-docs/delimited-sections/%.ok,$(MAN_TXT))
+$(LINT_DOCS_DELIMITED_SECTIONS): lint-delimited-sections.perl
+$(LINT_DOCS_DELIMITED_SECTIONS): .build/lint-docs/delimited-sections/%.ok: %.adoc
+	$(call mkdir_p_parent_template)
+	$(QUIET_LINT_DELIMSEC)$(PERL_PATH) lint-delimited-sections.perl $< >$@
+.PHONY: lint-docs-delimited-sections
+lint-docs-delimited-sections: $(LINT_DOCS_DELIMITED_SECTIONS)
+
+## Lint: Documentation style
+LINT_DOCS_DOC_STYLE = $(patsubst %.adoc,.build/lint-docs/doc-style/%.ok,$(DOC_DEP_TXT))
+$(LINT_DOCS_DOC_STYLE): lint-documentation-style.perl
+$(LINT_DOCS_DOC_STYLE): .build/lint-docs/doc-style/%.ok: %.adoc
+	$(call mkdir_p_parent_template)
+	$(QUIET_LINT_DOCSTYLE)$(PERL_PATH) lint-documentation-style.perl $< >$@
+.PHONY: lint-docs-doc-style
+lint-docs-doc-style: $(LINT_DOCS_DOC_STYLE)
 
 lint-docs-manpages:
 	$(QUIET_GEN)./lint-manpages.sh
@@ -528,6 +557,8 @@ lint-docs: lint-docs-fsck-msgids
 lint-docs: lint-docs-gitlink
 lint-docs: lint-docs-man-end-blurb
 lint-docs: lint-docs-man-section-order
+lint-docs: lint-docs-delimited-sections
+lint-docs: lint-docs-doc-style
 lint-docs: lint-docs-manpages
 lint-docs: lint-docs-meson
 
