@@ -1598,6 +1598,61 @@ test_expect_success 'sparse-index is not expanded: stash' '
 	ensure_not_expanded stash pop
 '
 
+test_expect_success 'sparse-index is not expanded: stash in-cone pathspec' '
+	init_repos &&
+
+	echo unrelated >>sparse-index/deep/e &&
+	echo literal >>sparse-index/deep/a &&
+	ensure_not_expanded stash push -- deep/a &&
+	test_grep ! literal sparse-index/deep/a &&
+	test_grep unrelated sparse-index/deep/e &&
+	ensure_not_expanded stash pop &&
+	test_grep literal sparse-index/deep/a &&
+
+	echo prefixed >>sparse-index/deep/a &&
+	ensure_not_expanded -C deep stash push -- a &&
+	test_grep ! prefixed sparse-index/deep/a &&
+	test_grep unrelated sparse-index/deep/e &&
+	ensure_not_expanded stash pop &&
+	test_grep prefixed sparse-index/deep/a &&
+
+	echo wildcard >>sparse-index/deep/a &&
+	ensure_not_expanded stash push -- "deep/a*" &&
+	test_grep ! wildcard sparse-index/deep/a &&
+	test_grep unrelated sparse-index/deep/e &&
+	ensure_not_expanded stash pop &&
+	test_grep wildcard sparse-index/deep/a &&
+
+	echo pathspec-file >>sparse-index/deep/a &&
+	echo deep/a >pathspec-file &&
+	ensure_not_expanded stash push --pathspec-from-file=../pathspec-file &&
+	test_grep ! pathspec-file sparse-index/deep/a &&
+	test_grep unrelated sparse-index/deep/e &&
+	ensure_not_expanded stash pop &&
+	test_grep pathspec-file sparse-index/deep/a &&
+
+	echo multiple-a >>sparse-index/deep/a &&
+	echo multiple-e >>sparse-index/deep/e &&
+	ensure_not_expanded stash push -- deep/a deep/e &&
+	test_grep ! multiple-a sparse-index/deep/a &&
+	test_grep ! multiple-e sparse-index/deep/e &&
+	ensure_not_expanded stash pop &&
+	test_grep multiple-a sparse-index/deep/a &&
+	test_grep multiple-e sparse-index/deep/e &&
+
+	echo staged >>sparse-index/deep/a &&
+	git -C sparse-index add deep/a &&
+	ensure_not_expanded stash push --staged -- deep/a &&
+	test_grep ! staged sparse-index/deep/a &&
+	test_grep unrelated sparse-index/deep/e &&
+	ensure_not_expanded stash pop --index &&
+	test_grep staged sparse-index/deep/a &&
+	test_must_fail git -C sparse-index diff --cached --quiet -- deep/a &&
+
+	ensure_not_expanded ! stash push -- deep/does-not-exist &&
+	test_grep "did not match any file" sparse-index-error
+'
+
 test_expect_success 'describe tested on all' '
 	init_repos &&
 
@@ -2117,6 +2172,13 @@ test_expect_success 'sparse index is not expanded: rm' '
 	# test recursive rm
 	git -C sparse-index reset --hard &&
 	ensure_not_expanded rm -r deep
+'
+
+test_expect_success 'sparse index is not expanded: prefixed wildcard pathspec' '
+	init_repos &&
+
+	ensure_not_expanded -C deep rm --dry-run -- "a*" &&
+	ensure_not_expanded -C deep reset base -- "a*"
 '
 
 test_expect_success 'grep with and --cached' '
