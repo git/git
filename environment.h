@@ -101,6 +101,8 @@ struct repo_config_values {
 	int protect_hfs;
 	int protect_ntfs;
 	int ignore_case;
+	int trust_executable_bit;
+	int has_symlinks;
 
 	/* section "sparse" config values */
 	int sparse_expect_files_outside_of_patterns;
@@ -151,6 +153,10 @@ int repo_protect_ntfs(struct repository *repo);
  */
 int repo_ignore_case(struct repository *repo);
 
+int repo_trust_executable_bit(struct repository *repo);
+
+int repo_has_symlinks(struct repository *repo);
+
 void repo_config_values_init(struct repo_config_values *cfg);
 
 int is_bare_repository(struct repository *repo);
@@ -178,8 +184,6 @@ int is_bare_repository(struct repository *repo);
 int have_git_dir(void);
 
 /* Environment bits from configuration mechanism */
-extern int trust_executable_bit;
-extern int has_symlinks;
 extern int minimum_abbrev, default_abbrev;
 extern int assume_unchanged;
 extern char *apply_default_whitespace;

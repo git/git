@@ -245,6 +245,10 @@ static inline int git_is_dir_sep(int c)
 #define is_dir_sep git_is_dir_sep
 #endif
 
+#ifndef platform_has_symlinks
+#define platform_has_symlinks() 1
+#endif
+
 #ifndef offset_1st_component
 static inline int git_offset_1st_component(const char *path)
 {

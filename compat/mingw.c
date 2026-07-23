@@ -7,6 +7,7 @@
 #include "config.h"
 #include "dir.h"
 #include "environment.h"
+#include "repository.h"
 #include "gettext.h"
 #include "run-command.h"
 #include "strbuf.h"
@@ -1044,7 +1045,7 @@ int mingw_chdir(const char *dirname)
 	if (xutftowcs_path(wdirname, dirname) < 0)
 		return -1;
 
-	if (has_symlinks) {
+	if (repo_has_symlinks(the_repository)) {
 		HANDLE hnd = CreateFileW(wdirname, 0,
 				FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL,
 				OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
@@ -2914,7 +2915,7 @@ int symlink(const char *target, const char *link)
 	int len;
 
 	/* fail if symlinks are disabled or API is not supported (WinXP) */
-	if (!has_symlinks) {
+	if (!repo_has_symlinks(the_repository)) {
 		errno = ENOSYS;
 		return -1;
 	}
@@ -3184,15 +3185,23 @@ static void setup_windows_environment(void)
 		if (!tmp && (tmp = getenv("USERPROFILE")))
 			setenv("HOME", tmp, 1);
 	}
+}
 
+int mingw_platform_has_symlinks(void)
+{
+	static int has_symlinks = -1;
 	/*
 	 * Change 'core.symlinks' default to false, unless native symlinks are
 	 * enabled in MSys2 (via 'MSYS=winsymlinks:nativestrict'). Thus we can
 	 * run the test suite (which doesn't obey config files) with or without
 	 * symlink support.
 	 */
-	if (!(tmp = getenv("MSYS")) || !strstr(tmp, "winsymlinks:nativestrict"))
-		has_symlinks = 0;
+	if (has_symlinks < 0) {
+		const char *tmp = getenv("MSYS");
+		has_symlinks = (tmp && strstr(tmp, "winsymlinks:nativestrict")) ? 1 : 0;
+	}
+
+	return has_symlinks;
 }
 
 static void get_current_user_sid(PSID *sid, HANDLE *linked_token)
