@@ -12,6 +12,7 @@ git history drop <commit> [--dry-run] [--update-refs=(branches|head)] [--empty=(
 git history fixup <commit> [--dry-run] [--update-refs=(branches|head)] [--reedit-message] [--empty=(drop|keep|abort)]
 git history reword <commit> [--dry-run] [--update-refs=(branches|head)]
 git history split <commit> [--dry-run] [--update-refs=(branches|head)] [--] [<pathspec>...]
+git history squash [--dry-run] [--update-refs=(branches|head)] [--reedit-message] <revision-range>
 
 DESCRIPTION
 -----------
@@ -43,8 +44,11 @@ at once.
 LIMITATIONS
 -----------
 
-This command does not (yet) work with histories that contain merges. You
-should use linkgit:git-rebase[1] with the `--rebase-merges` flag instead.
+This command does not (yet) replay merge commits onto the rewritten
+history: if a commit that would be replayed is a merge, the operation is
+rejected, and you should use linkgit:git-rebase[1] with the
+`--rebase-merges` flag instead. The `squash` subcommand can still fold a
+merge that lies inside the range, as long as the range has a single base.
 
 Furthermore, the command does not support operations that can result in merge
 conflicts. This limitation is by design as history rewrites are not intended to
@@ -113,6 +117,50 @@ linkgit:gitglossary[7].
 It is invalid to select either all or no hunks, as that would lead to
 one of the commits becoming empty.
 
+`squash <revision-range>`::
+	Fold all commits in _<revision-range>_ into the oldest commit of that
+	range. The resulting commit keeps the oldest commit's authorship and
+	takes the tree of the range's newest commit, so the whole range
+	collapses into a single commit. Commits above the range are replayed
+	on top of the result.
++
+The range is given in the usual `<base>..<tip>` form, where _<base>_ is
+the commit just below the oldest commit to squash. For example, `git
+history squash HEAD~3..HEAD` folds the three most recent commits into
+one, and `git history squash HEAD~5..HEAD~2` squashes an interior range
+while leaving the two newest commits in place. Several revisions may be
+given, for example `HEAD~3..HEAD ^topic` to additionally exclude what is
+already on `topic`. Rev-list options may also be given, but any that would
+change how the range is walked are overridden with a warning.
++
+The oldest commit's message is preserved by default, except that an `amend!`
+commit targeting it replaces its message. With `--reedit-message`, an editor
+opens pre-filled with the messages of all the folded commits so you can
+combine them. A merge commit inside the range is folded like any other, but
+the range must have a single base, so a range that reaches more than one entry
+point (for example a side branch that forked before the range and was later
+merged into it) is rejected.
++
+A `fixup!`, `squash!`, or `amend!` commit is refused unless the commit it
+targets is also in the range, so the fold does not silently absorb a
+marker meant for a commit outside it. As an exception, a range made up entirely
+of markers for one target is combined into a single commit, keeping the last
+`amend!` message if there is one.
++
+With `--reedit-message` the template mirrors `git rebase -i --autosquash`:
+each `fixup!`, `squash!`, or `amend!` is grouped under the commit it
+targets rather than shown in commit order. A `fixup!` message is dropped
+(commented out in full), a `squash!` keeps its body with only the marker
+subject commented, and an `amend!` replaces its target's message, unless
+a `squash!` folded into that target first, in which case it keeps its
+body like a `squash!`.
++
+A branch or tag that points at a commit inside the range would be left
+dangling once those commits are folded away, so with the default
+`--update-refs=branches` the command refuses. Rerun with
+`--update-refs=head` to rewrite only the current branch and leave such
+refs pointing at the old commits.
+
 OPTIONS
 -------
 
@@ -123,7 +171,8 @@ OPTIONS
 	ref updates is generally safe.
 
 `--reedit-message`::
-	Open an editor to modify the target commit's message.
+	Open an editor to modify the rewritten commit's message. For `squash`
+	the editor is pre-filled with the messages of all the folded commits.
 
 `--empty=(drop|keep|abort)`::
 	Control what happens when a commit becomes empty as a result of the
