@@ -1,0 +1,5 @@
+class RIGHT {
+    let a = 1
+    // a comment
+    let b = ChangeMe
+}
