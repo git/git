@@ -90,6 +90,14 @@ test_expect_success 'clone with --revision and --bare' '
 	test_must_fail git -C dst config remote.origin.fetch
 '
 
+test_expect_success 'clone with --revision and protocol v0' '
+	test_when_finished "rm -rf dst" &&
+	git -c protocol.version=0 clone --no-local --revision=refs/heads/main . dst &&
+	git rev-parse refs/heads/main >expect &&
+	git -C dst rev-parse HEAD >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'clone with --revision being a short raw commit hash' '
 	test_when_finished "rm -rf dst" &&
 	oid=$(git rev-parse --short refs/heads/feature) &&
