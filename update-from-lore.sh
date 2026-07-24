@@ -1,5 +1,18 @@
 #!/bin/sh
 
+afresh () {
+	if git symbolic-ref -q HEAD
+	then
+		echo >&2 "HEAD not detached"
+		exit 1
+	fi
+	b4 am -o- -t "$1" |
+	tee ./+b4am.mbx |
+	git am -s3 && rm -f ./+b4am.mbx
+
+	exit $?
+}
+
 force=
 while case "$#" in 0) break;; esac
 do
@@ -17,6 +30,7 @@ done
 
 case "$#" in
 0)	: happy ;;
+1)	afresh "$1" ;;
 *)	echo >&2 "$0: extra arguments" ;;
 esac
 
