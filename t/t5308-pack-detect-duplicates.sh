@@ -59,6 +59,13 @@ test_expect_success 'index-pack will allow duplicate objects by default' '
 	git index-pack --stdin <dups.pack
 '
 
+test_expect_success 'bitmap writer rejects duplicate objects' '
+	pack=$(ls .git/objects/pack/pack-*.pack) &&
+	test_must_fail test-tool bitmap write "$(basename "$pack")" \
+		</dev/null 2>err &&
+	test_grep "fatal: pack contains duplicate object" err
+'
+
 test_expect_success 'create batch-check test vectors' '
 	cat >input <<-EOF &&
 	$LO_SHA1
