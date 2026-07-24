@@ -11,7 +11,8 @@
 #include "strbuf.h"
 
 struct requested_info {
-	unsigned size : 1;
+	unsigned size:1;
+	unsigned type:1;
 };
 
 /*
@@ -73,15 +74,20 @@ static void send_info(struct repository *r, struct packet_writer *writer,
 	if (info->size)
 		packet_writer_write(writer, "size");
 
+	if (info->type)
+		packet_writer_write(writer, "type");
+
 	for_each_string_list_item (item, oid_str_list) {
 		const char *oid_str = item->string;
+		enum object_type object_type;
 		struct object_id oid;
 		size_t object_size;
 
 		if (get_oid_hex_algop(oid_str, &oid, r->hash_algo) < 0) {
 			packet_writer_error(
 				writer,
-				"object-info: protocol error, expected to get oid, not '%s'",
+				"object-info: protocol error, expected to get "
+				"oid, not '%s'",
 				oid_str);
 			continue;
 		}
@@ -93,7 +99,8 @@ static void send_info(struct repository *r, struct packet_writer *writer,
 		 * If an object is not recognized by the server append SP to
 		 * the response.
 		 */
-		if (get_object_info(r->objects, &oid, &object_size) <= OBJ_NONE) {
+		object_type = get_object_info(r->objects, &oid, &object_size);
+		if (object_type <= OBJ_NONE) {
 			strbuf_addstr(&send_buffer, " ");
 			goto write;
 		}
@@ -102,6 +109,9 @@ static void send_info(struct repository *r, struct packet_writer *writer,
 			strbuf_addf(&send_buffer, " %"PRIuMAX,
 				    (uintmax_t)object_size);
 		}
+
+		if (info->type)
+			strbuf_addf(&send_buffer, " %s", type_name(object_type));
 
 write:
 		packet_writer_write(writer, "%s", send_buffer.buf);
@@ -121,6 +131,11 @@ int cap_object_info(struct repository *r, struct packet_reader *request)
 	while (packet_reader_read(request) == PACKET_READ_NORMAL) {
 		if (!strcmp("size", request->line)) {
 			info.size = 1;
+			continue;
+		}
+
+		if (!strcmp("type", request->line)) {
+			info.type = 1;
 			continue;
 		}
 
