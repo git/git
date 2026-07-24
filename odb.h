@@ -340,6 +340,12 @@ struct object_info {
 	 * or multiple times in the same source.
 	 */
 	struct odb_source_info *source_infop;
+
+	/*
+	 * object-info protocol specific. Set by the protocol when the remote
+	 * does not recognize the requested object.
+	 */
+	unsigned int unrecognized:1;
 };
 
 /*
@@ -628,5 +634,8 @@ void parse_alternates(const char *string,
 		      int sep,
 		      const char *relative_base,
 		      struct strvec *out);
+
+/* Free pointers inside of object_info, but not object_info itself */
+void free_object_info_contents(struct object_info *object_info);
 
 #endif /* ODB_H */

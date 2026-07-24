@@ -31,6 +31,32 @@ static int parse_oid(const char *line, struct string_list *oid_str_list)
 }
 
 /*
+ * odb_read_object_info_extended() wrapper. Similar to odb_read_object_info()
+ * but uses the flags:
+ *
+ * - OBJECT_INFO_SKIP_FETCH_OBJECT so a server won't fetch an object when a
+ *   object-info request asks for an OID that it doesn't have.
+ *
+ * - OBJECT_INFO_QUICK to avoid re-scanning packs when the object is not found.
+ */
+static enum object_type get_object_info(struct object_database *odb,
+			   const struct object_id *oid,
+			   size_t *sizep)
+{
+	enum object_type type;
+	struct object_info oi = OBJECT_INFO_INIT;
+
+	oi.typep = &type;
+	oi.sizep = sizep;
+	if (odb_read_object_info_extended(odb, oid, &oi,
+					  OBJECT_INFO_LOOKUP_REPLACE |
+					  OBJECT_INFO_SKIP_FETCH_OBJECT |
+					  OBJECT_INFO_QUICK) < 0)
+		return OBJ_BAD;
+	return type;
+}
+
+/*
  * Validates and send requested info back to the client. Any errors detected
  * are returned as they are detected.
  */
@@ -62,15 +88,22 @@ static void send_info(struct repository *r, struct packet_writer *writer,
 
 		strbuf_addstr(&send_buffer, oid_str);
 
-		if (info->size) {
-			if (odb_read_object_info(r->objects, &oid, &object_size) < 0) {
-				strbuf_addstr(&send_buffer, " ");
-			} else {
-				strbuf_addf(&send_buffer, " %"PRIuMAX,
-					    (uintmax_t)object_size);
-			}
+		/*
+		 * Check the existence of the object first.
+		 * If an object is not recognized by the server append SP to
+		 * the response.
+		 */
+		if (get_object_info(r->objects, &oid, &object_size) <= OBJ_NONE) {
+			strbuf_addstr(&send_buffer, " ");
+			goto write;
 		}
 
+		if (info->size) {
+			strbuf_addf(&send_buffer, " %"PRIuMAX,
+				    (uintmax_t)object_size);
+		}
+
+write:
 		packet_writer_write(writer, "%s", send_buffer.buf);
 		strbuf_reset(&send_buffer);
 	}
