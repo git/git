@@ -271,6 +271,34 @@ test_expect_success 'unsupported placeholder on remote returns empty string' '
 	)
 '
 
+test_expect_success 'requesting only objectname echoes back' '
+	(
+		set_transport_variables "$daemon_parent" &&
+		cd "$daemon_parent/daemon_client_empty" &&
+
+		echo $hello_oid >expect &&
+		git cat-file --batch-command="%(objectname)" >actual <<-EOF &&
+		remote-object-info "$GIT_DAEMON_URL/parent" $hello_oid
+		EOF
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'objectname goes through existence check' '
+	(
+		set_transport_variables "$daemon_parent" &&
+		cd "$daemon_parent/daemon_client_empty" &&
+
+		echo "$unstored_oid missing" >expect &&
+
+		git cat-file --batch-command="%(objectname)" >actual <<-EOF &&
+		remote-object-info "$GIT_DAEMON_URL/parent" $unstored_oid
+		EOF
+
+		test_cmp expect actual
+	)
+'
+
 # Test --batch-command remote-object-info with 'git://' and
 # transfer.advertiseobjectinfo set to false, i.e. server does not have object-info capability
 test_expect_success 'batch-command remote-object-info git:// fails when transfer.advertiseobjectinfo=false' '
