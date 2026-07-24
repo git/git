@@ -77,6 +77,20 @@ test_expect_success 'lookup in duplicated pack' '
 	test_cmp expect actual
 '
 
+test_expect_success 'verify MIDX containing duplicated pack objects' '
+	git multi-pack-index write &&
+	test-tool read-midx --show-objects .git/objects >midx-objects &&
+	midx_offset=$(
+		awk -v oid="$LO_SHA1" "\$1 == oid { print \$2 }" <midx-objects
+	) &&
+	lookup_offset=$(
+		test-tool find-pack --check-count=1 --show-offset "$LO_SHA1"
+	) &&
+	test "$midx_offset" -ne "$lookup_offset" &&
+	git multi-pack-index verify &&
+	git fsck --full
+'
+
 test_expect_success 'duplicate entries remain in pack reverse index' '
 	clear_packs &&
 	{
