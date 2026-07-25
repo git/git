@@ -96,8 +96,6 @@ static inline int discover_git_directory(struct strbuf *commondir,
 	return 0;
 }
 
-void set_git_work_tree(struct repository *repo, const char *tree);
-
 /* Flags that can be passed to `enter_repo()`. */
 enum {
 	/*
@@ -263,7 +261,9 @@ const char *get_template_dir(const char *option_template);
 #define INIT_DB_SKIP_REFDB (1 << 2)
 
 int init_db(struct repository *repo,
-	    const char *git_dir, const char *real_git_dir,
+	    const char *git_dir,
+	    const char *real_git_dir,
+	    const char *worktree,
 	    const char *template_dir, int hash_algo,
 	    enum ref_storage_format ref_storage_format,
 	    const char *initial_branch, int init_shared_repository,
@@ -299,7 +299,6 @@ struct startup_info {
 	bool force_bare_repository;
 
 	int have_repository;
-	const char *prefix;
 	const char *original_cwd;
 };
 extern struct startup_info *startup_info;

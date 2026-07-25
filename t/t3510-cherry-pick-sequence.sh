@@ -580,10 +580,10 @@ test_expect_success '--continue respects opts' '
 	git cat-file commit HEAD~1 >picked_msg &&
 	git cat-file commit HEAD~2 >unrelatedpick_msg &&
 	git cat-file commit HEAD~3 >initial_msg &&
-	! grep "cherry picked from" initial_msg &&
-	grep "cherry picked from" unrelatedpick_msg &&
-	grep "cherry picked from" picked_msg &&
-	grep "cherry picked from" anotherpick_msg
+	test_grep ! "cherry picked from" initial_msg &&
+	test_grep "cherry picked from" unrelatedpick_msg &&
+	test_grep "cherry picked from" picked_msg &&
+	test_grep "cherry picked from" anotherpick_msg
 '
 
 test_expect_success '--continue of single-pick respects -x' '
@@ -594,7 +594,7 @@ test_expect_success '--continue of single-pick respects -x' '
 	git cherry-pick --continue &&
 	test_path_is_missing .git/sequencer &&
 	git cat-file commit HEAD >msg &&
-	grep "cherry picked from" msg
+	test_grep "cherry picked from" msg
 '
 
 test_expect_success '--continue respects -x in first commit in multi-pick' '
@@ -606,7 +606,7 @@ test_expect_success '--continue respects -x in first commit in multi-pick' '
 	test_path_is_missing .git/sequencer &&
 	git cat-file commit HEAD^ >msg &&
 	picked=$(git rev-parse --verify picked) &&
-	grep "cherry picked from.*$picked" msg
+	test_grep "cherry picked from.*$picked" msg
 '
 
 test_expect_failure '--signoff is automatically propagated to resolved conflict' '
@@ -621,10 +621,10 @@ test_expect_failure '--signoff is automatically propagated to resolved conflict'
 	git cat-file commit HEAD~1 >picked_msg &&
 	git cat-file commit HEAD~2 >unrelatedpick_msg &&
 	git cat-file commit HEAD~3 >initial_msg &&
-	! grep "Signed-off-by:" initial_msg &&
-	grep "Signed-off-by:" unrelatedpick_msg &&
-	! grep "Signed-off-by:" picked_msg &&
-	grep "Signed-off-by:" anotherpick_msg
+	test_grep ! "Signed-off-by:" initial_msg &&
+	test_grep "Signed-off-by:" unrelatedpick_msg &&
+	test_grep ! "Signed-off-by:" picked_msg &&
+	test_grep "Signed-off-by:" anotherpick_msg
 '
 
 test_expect_failure '--signoff dropped for implicit commit of resolution, multi-pick case' '
@@ -637,7 +637,7 @@ test_expect_failure '--signoff dropped for implicit commit of resolution, multi-
 	git diff --exit-code HEAD &&
 	test_cmp_rev initial HEAD^^ &&
 	git cat-file commit HEAD^ >msg &&
-	! grep Signed-off-by: msg
+	test_grep ! Signed-off-by: msg
 '
 
 test_expect_failure 'sign-off needs to be reaffirmed after conflict resolution, single-pick case' '
@@ -650,7 +650,7 @@ test_expect_failure 'sign-off needs to be reaffirmed after conflict resolution, 
 	git diff --exit-code HEAD &&
 	test_cmp_rev initial HEAD^ &&
 	git cat-file commit HEAD >msg &&
-	! grep Signed-off-by: msg
+	test_grep ! Signed-off-by: msg
 '
 
 test_expect_success 'malformed instruction sheet 1' '

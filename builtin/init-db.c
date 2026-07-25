@@ -231,39 +231,25 @@ int cmd_init_db(int argc,
 	if (!bare) {
 		const char *git_dir_parent = strrchr(git_dir, '/');
 
-		if (work_tree) {
-			set_git_work_tree(the_repository, work_tree);
-		} else {
-			char *work_tree_cfg = NULL;
-
+		if (!work_tree) {
 			if (git_dir_parent) {
 				char *rel = xstrndup(git_dir, git_dir_parent - git_dir);
-				work_tree_cfg = real_pathdup(rel, 1);
+				work_tree = real_pathdup(rel, 1);
 				free(rel);
+			} else {
+				work_tree = xgetcwd();
 			}
-
-			if (!work_tree_cfg)
-				work_tree_cfg = xgetcwd();
-
-			set_git_work_tree(the_repository, work_tree_cfg);
-
-			free(work_tree_cfg);
 		}
 
-		if (access(repo_get_work_tree(the_repository), X_OK))
-			die_errno (_("Cannot access work tree '%s'"),
-				   repo_get_work_tree(the_repository));
-	}
-	else {
-		if (real_git_dir)
-			die(_("--separate-git-dir incompatible with bare repository"));
-		if (work_tree)
-			set_git_work_tree(the_repository, work_tree);
+		if (access(work_tree, X_OK))
+			die_errno (_("Cannot access work tree '%s'"), work_tree);
+	} else if (real_git_dir) {
+		die(_("--separate-git-dir incompatible with bare repository"));
 	}
 
 	flags |= INIT_DB_EXIST_OK;
-	ret = init_db(the_repository, git_dir, real_git_dir, template_dir, hash_algo,
-		      ref_storage_format, initial_branch,
+	ret = init_db(the_repository, git_dir, real_git_dir, work_tree,
+		      template_dir, hash_algo, ref_storage_format, initial_branch,
 		      init_shared_repository, flags);
 
 	free(template_dir_to_free);

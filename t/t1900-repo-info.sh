@@ -150,7 +150,7 @@ test_expect_success 'git repo info --keys uses lines as its default output forma
 '
 
 test_expect_success 'git repo info -h shows only repo info usage' '
-	test_must_fail git repo info -h >actual &&
+	git repo info -h >actual &&
 	test_grep "git repo info" actual &&
 	test_grep ! "git repo structure" actual
 '

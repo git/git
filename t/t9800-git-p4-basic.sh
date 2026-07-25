@@ -35,7 +35,7 @@ test_expect_success 'basic git p4 clone' '
 
 test_expect_success 'depot typo error' '
 	test_must_fail git p4 clone --dest="$git" /depot 2>errs &&
-	grep "Depot paths must start with" errs
+	test_grep "Depot paths must start with" errs
 '
 
 test_expect_success 'git p4 clone @all' '
@@ -356,7 +356,7 @@ test_expect_success 'unresolvable host in P4PORT should display error' '
 		P4PORT=nosuchhost:65537 &&
 		export P4PORT &&
 		test_expect_code 1 git p4 sync >out 2>err &&
-		grep "connect to nosuchhost" err
+		test_grep "connect to nosuchhost" err
 	)
 '
 
@@ -374,7 +374,7 @@ test_expect_success 'run hook p4-pre-submit before submit' '
 		git commit -m "add hello.txt" &&
 		git config git-p4.skipSubmitEdit true &&
 		git p4 submit --dry-run >out &&
-		grep "Would apply" out
+		test_grep "Would apply" out
 	) &&
 	test_hook -C "$git" p4-pre-submit <<-\EOF &&
 	exit 0
@@ -382,7 +382,7 @@ test_expect_success 'run hook p4-pre-submit before submit' '
 	(
 		cd "$git" &&
 		git p4 submit --dry-run >out &&
-		grep "Would apply" out
+		test_grep "Would apply" out
 	) &&
 	test_hook -C "$git" --clobber p4-pre-submit <<-\EOF &&
 	exit 1
@@ -390,7 +390,7 @@ test_expect_success 'run hook p4-pre-submit before submit' '
 	(
 		cd "$git" &&
 		test_must_fail git p4 submit --dry-run >errs 2>&1 &&
-		! grep "Would apply" errs
+		test_grep ! "Would apply" errs
 	)
 '
 

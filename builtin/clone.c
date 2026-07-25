@@ -1116,7 +1116,6 @@ int cmd_clone(int argc,
 			die_errno(_("could not create work tree dir '%s'"),
 				  work_tree);
 		junk_work_tree = work_tree;
-		set_git_work_tree(the_repository, work_tree);
 	}
 
 	if (real_git_dir) {
@@ -1186,9 +1185,10 @@ int cmd_clone(int argc,
 	 * repository, and reference backends may persist that information into
 	 * their on-disk data structures.
 	 */
-	init_db(the_repository, git_dir, real_git_dir, option_template, GIT_HASH_UNKNOWN,
-		ref_storage_format, NULL,
-		do_not_override_repo_unix_permissions, INIT_DB_QUIET | INIT_DB_SKIP_REFDB);
+	init_db(the_repository, git_dir, real_git_dir, work_tree, option_template,
+		GIT_HASH_UNKNOWN, ref_storage_format, NULL,
+		do_not_override_repo_unix_permissions,
+		INIT_DB_QUIET | INIT_DB_SKIP_REFDB);
 
 	if (real_git_dir) {
 		free((char *)git_dir);

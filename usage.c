@@ -188,7 +188,7 @@ static void show_usage_if_asked_helper(const char *err, ...)
 	va_start(params, err);
 	vfreportf(stdout, _("usage: "), err, params);
 	va_end(params);
-	exit(129);
+	exit(0);
 }
 
 void show_usage_if_asked(int ac, const char **av, const char *err)

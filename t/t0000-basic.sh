@@ -743,7 +743,7 @@ test_expect_success 'subtest: lazy prereqs do not turn off tracing' '
 	test_done
 	EOF
 
-	grep "echo trace" lazy-prereq-and-tracing/err
+	test_grep "echo trace" lazy-prereq-and-tracing/err
 '
 
 test_expect_success 'subtest: tests clean up after themselves' '
@@ -815,7 +815,7 @@ test_expect_success 'subtest: test_atexit is run' '
 
 test_expect_success 'test_oid provides sane info by default' '
 	test_oid zero >actual &&
-	grep "^00*\$" actual &&
+	test_grep "^00*\$" actual &&
 	rawsz="$(test_oid rawsz)" &&
 	hexsz="$(test_oid hexsz)" &&
 	# +1 accounts for the trailing newline
@@ -827,7 +827,7 @@ test_expect_success 'test_oid can look up data for SHA-1' '
 	test_when_finished "test_detect_hash" &&
 	test_set_hash sha1 &&
 	test_oid zero >actual &&
-	grep "^00*\$" actual &&
+	test_grep "^00*\$" actual &&
 	rawsz="$(test_oid rawsz)" &&
 	hexsz="$(test_oid hexsz)" &&
 	test $(wc -c <actual) -eq 41 &&
@@ -839,7 +839,7 @@ test_expect_success 'test_oid can look up data for SHA-256' '
 	test_when_finished "test_detect_hash" &&
 	test_set_hash sha256 &&
 	test_oid zero >actual &&
-	grep "^00*\$" actual &&
+	test_grep "^00*\$" actual &&
 	rawsz="$(test_oid rawsz)" &&
 	hexsz="$(test_oid hexsz)" &&
 	test $(wc -c <actual) -eq 65 &&
@@ -884,11 +884,11 @@ test_expect_success 'test_bool_env' '
 		# test script, hence the redirection of fd 7, and aborts
 		# with "exit 1", hence the subshell.
 		! ( test_bool_env envvar true ) 7>err &&
-		grep "error: test_bool_env requires bool values" err &&
+		test_grep "error: test_bool_env requires bool values" err &&
 
 		envvar=true &&
 		! ( test_bool_env envvar invalid ) 7>err &&
-		grep "error: test_bool_env requires bool values" err
+		test_grep "error: test_bool_env requires bool values" err
 	)
 '
 
@@ -1242,12 +1242,12 @@ test_expect_success 'test_must_fail on a failing git command with env' '
 
 test_expect_success 'test_must_fail rejects a non-git command' '
 	! test_must_fail grep ^$ notafile 2>err &&
-	grep -F "test_must_fail: only '"'"'git'"'"' is allowed" err
+	test_grep -F "test_must_fail: only '"'"'git'"'"' is allowed" err
 '
 
 test_expect_success 'test_must_fail rejects a non-git command with env' '
 	! test_must_fail env var1=a var2=b grep ^$ notafile 2>err &&
-	grep -F "test_must_fail: only '"'"'git'"'"' is allowed" err
+	test_grep -F "test_must_fail: only '"'"'git'"'"' is allowed" err
 '
 
 test_done

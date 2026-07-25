@@ -16,15 +16,15 @@ test_expect_success 'checkout-index -h in broken repository' '
 		cd broken &&
 		git init &&
 		>.git/index &&
-		test_expect_code 129 git checkout-index -h >usage 2>&1
+		git checkout-index -h >usage 2>&1
 	) &&
 	test_grep "[Uu]sage" broken/usage
 '
 
 test_expect_success 'checkout-index does not crash with -h' '
-	test_expect_code 129 git checkout-index -h >usage &&
+	git checkout-index -h >usage &&
 	test_grep "[Uu]sage: git checkout-index " usage &&
-	test_expect_code 129 nongit git checkout-index -h >usage &&
+	nongit git checkout-index -h >usage &&
 	test_grep "[Uu]sage: git checkout-index " usage
 '
 

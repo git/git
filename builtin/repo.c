@@ -84,7 +84,7 @@ static int get_path_commondir_absolute(struct repository *repo, struct strbuf *b
 	if (!common_dir)
 		return error(_("unable to get common directory"));
 
-	format_path(buf, common_dir, startup_info->prefix, PATH_FORMAT_CANONICAL);
+	format_path(buf, common_dir, repo->prefix, PATH_FORMAT_CANONICAL);
 	return 0;
 }
 
@@ -95,7 +95,7 @@ static int get_path_commondir_relative(struct repository *repo, struct strbuf *b
 	if (!common_dir)
 		return error(_("unable to get common directory"));
 
-	format_path(buf, common_dir, startup_info->prefix, PATH_FORMAT_RELATIVE);
+	format_path(buf, common_dir, repo->prefix, PATH_FORMAT_RELATIVE);
 	return 0;
 }
 
@@ -106,7 +106,7 @@ static int get_path_gitdir_absolute(struct repository *repo, struct strbuf *buf)
 	if (!git_dir)
 		return error(_("unable to get git directory"));
 
-	format_path(buf, git_dir, startup_info->prefix, PATH_FORMAT_CANONICAL);
+	format_path(buf, git_dir, repo->prefix, PATH_FORMAT_CANONICAL);
 	return 0;
 }
 
@@ -117,7 +117,7 @@ static int get_path_gitdir_relative(struct repository *repo, struct strbuf *buf)
 	if (!git_dir)
 		return error(_("unable to get git directory"));
 
-	format_path(buf, git_dir, startup_info->prefix, PATH_FORMAT_RELATIVE);
+	format_path(buf, git_dir, repo->prefix, PATH_FORMAT_RELATIVE);
 	return 0;
 }
 

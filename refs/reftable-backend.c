@@ -84,7 +84,8 @@ static int reftable_backend_read_ref(struct reftable_backend *be,
 	if (ret)
 		goto done;
 
-	if (strcmp(ref.refname, refname)) {
+	if (strcmp(ref.refname, refname) ||
+	    reftable_ref_record_is_deletion(&ref)) {
 		ret = 1;
 		goto done;
 	}
@@ -110,7 +111,6 @@ static int reftable_backend_read_ref(struct reftable_backend *be,
 		oidread(oid, reftable_ref_record_val1(&ref),
 			&hash_algos[hash_id]);
 	} else {
-		/* We got a tombstone, which should not happen. */
 		BUG("unhandled reference value type %d", ref.value_type);
 	}
 
@@ -651,6 +651,9 @@ static int reftable_ref_iterator_advance(struct ref_iterator *ref_iterator)
 			iter->err = 1;
 			break;
 		}
+
+		if (iter->ref.value_type == REFTABLE_REF_DELETION)
+			continue;
 
 		if (iter->exclude_patterns && should_exclude_current_ref(iter))
 			continue;
@@ -1532,6 +1535,8 @@ static int write_transaction_table(struct reftable_writer *writer, void *cb_data
 					ret = 0;
 					break;
 				}
+				if (reftable_log_record_is_deletion(&log))
+					continue;
 
 				ALLOC_GROW(logs, logs_nr + 1, logs_alloc);
 				tombstone = &logs[logs_nr++];
@@ -1929,6 +1934,8 @@ static int write_copy_table(struct reftable_writer *writer, void *cb_data)
 			ret = 0;
 			break;
 		}
+		if (reftable_log_record_is_deletion(&old_log))
+			continue;
 
 		free(old_log.refname);
 
@@ -2060,6 +2067,9 @@ static int reftable_reflog_iterator_advance(struct ref_iterator *ref_iterator)
 		iter->err = reftable_iterator_next_log(&iter->iter, &iter->log);
 		if (iter->err)
 			break;
+
+		if (reftable_log_record_is_deletion(&iter->log))
+			continue;
 
 		/*
 		 * We want the refnames that we have reflogs for, so we skip if
@@ -2220,6 +2230,8 @@ static int reftable_be_for_each_reflog_ent_reverse(struct ref_store *ref_store,
 			ret = 0;
 			break;
 		}
+		if (reftable_log_record_is_deletion(&log))
+			continue;
 
 		ret = yield_log_record(refs, &log, fn, cb_data);
 		if (ret)
@@ -2272,6 +2284,10 @@ static int reftable_be_for_each_reflog_ent(struct ref_store *ref_store,
 			ret = 0;
 			break;
 		}
+		if (reftable_log_record_is_deletion(&log)) {
+			reftable_log_record_release(&log);
+			continue;
+		}
 
 		ALLOC_GROW(logs, logs_nr + 1, logs_alloc);
 		logs[logs_nr++] = log;
@@ -2318,18 +2334,26 @@ static int reftable_be_reflog_exists(struct ref_store *ref_store,
 		goto done;
 
 	/*
-	 * Check whether we get at least one log record for the given ref name.
-	 * If so, the reflog exists, otherwise it doesn't.
+	 * Check whether we get at least one non-deleted log record for the
+	 * given ref name.  If so, the reflog exists, otherwise it doesn't.
 	 */
-	ret = reftable_iterator_next_log(&it, &log);
-	if (ret < 0)
-		goto done;
-	if (ret > 0) {
-		ret = 0;
-		goto done;
+	while (1) {
+		ret = reftable_iterator_next_log(&it, &log);
+		if (ret < 0)
+			goto done;
+		if (ret > 0) {
+			ret = 0;
+			goto done;
+		}
+		if (strcmp(log.refname, refname)) {
+			ret = 0;
+			goto done;
+		}
+		if (!reftable_log_record_is_deletion(&log))
+			break;
 	}
 
-	ret = strcmp(log.refname, refname) == 0;
+	ret = 1;
 
 done:
 	reftable_iterator_destroy(&it);
@@ -2442,6 +2466,8 @@ static int write_reflog_delete_table(struct reftable_writer *writer, void *cb_da
 			ret = 0;
 			break;
 		}
+		if (reftable_log_record_is_deletion(&log))
+			continue;
 
 		tombstone.refname = (char *)arg->refname;
 		tombstone.value_type = REFTABLE_LOG_DELETION;
@@ -2625,6 +2651,10 @@ static int reftable_be_reflog_expire(struct ref_store *ref_store,
 			reftable_log_record_release(&log);
 			break;
 		}
+		if (reftable_log_record_is_deletion(&log)) {
+			reftable_log_record_release(&log);
+			continue;
+		}
 
 		oidread(&old_oid, log.value.update.old_hash,
 			ref_store->repo->hash_algo);
@@ -2791,6 +2821,8 @@ static int reftable_be_fsck(struct ref_store *ref_store, struct fsck_options *o,
 		report.path = refname.buf;
 
 		switch (ref.value_type) {
+		case REFTABLE_REF_DELETION:
+			continue;
 		case REFTABLE_REF_VAL1:
 		case REFTABLE_REF_VAL2: {
 			struct object_id oid;

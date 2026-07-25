@@ -141,8 +141,8 @@ testrebase () {
 		git checkout -b rebased-feature-branch feature-branch &&
 		echo dirty >>file3 &&
 		git rebase$type unrelated-onto-branch >actual 2>&1 &&
-		grep unrelated file4 &&
-		grep dirty file3 &&
+		test_grep unrelated file4 &&
+		test_grep dirty file3 &&
 		git checkout feature-branch
 	'
 
@@ -165,8 +165,8 @@ testrebase () {
 		echo dirty >>file3 &&
 		git add file3 &&
 		git rebase$type unrelated-onto-branch &&
-		grep unrelated file4 &&
-		grep dirty file3 &&
+		test_grep unrelated file4 &&
+		test_grep dirty file3 &&
 		git checkout feature-branch
 	'
 
@@ -197,7 +197,7 @@ testrebase () {
 		git add file2 &&
 		git rebase --continue &&
 		test_path_is_missing $dotest/autostash &&
-		grep dirty file3 &&
+		test_grep dirty file3 &&
 		git checkout feature-branch
 	'
 
@@ -212,7 +212,7 @@ testrebase () {
 		test_path_is_missing file3 &&
 		git rebase --skip &&
 		test_path_is_missing $dotest/autostash &&
-		grep dirty file3 &&
+		test_grep dirty file3 &&
 		git checkout feature-branch
 	'
 
@@ -227,7 +227,7 @@ testrebase () {
 		test_path_is_missing file3 &&
 		git rebase --abort &&
 		test_path_is_missing $dotest/autostash &&
-		grep dirty file3 &&
+		test_grep dirty file3 &&
 		git checkout feature-branch
 	'
 
@@ -260,11 +260,11 @@ testrebase () {
 		git rebase$type unrelated-onto-branch >actual 2>&1 &&
 		test_path_is_missing $dotest &&
 		git reset --hard &&
-		grep unrelated file4 &&
-		! grep dirty file4 &&
+		test_grep unrelated file4 &&
+		test_grep ! dirty file4 &&
 		git checkout feature-branch &&
 		git stash pop &&
-		grep dirty file4
+		test_grep dirty file4
 	'
 
 	test_expect_success "rebase$type: check output with conflicting stash" '
@@ -286,7 +286,7 @@ test_expect_success "rebase: fast-forward rebase" '
 	test_when_finished git branch -D behind-feature-branch &&
 	echo dirty >>file1 &&
 	git rebase feature-branch &&
-	grep dirty file1 &&
+	test_grep dirty file1 &&
 	git checkout feature-branch
 '
 
@@ -297,7 +297,7 @@ test_expect_success "rebase: noop rebase" '
 	test_when_finished git branch -D same-feature-branch &&
 	echo dirty >>file1 &&
 	git rebase feature-branch &&
-	grep dirty file1 &&
+	test_grep dirty file1 &&
 	git checkout feature-branch
 '
 

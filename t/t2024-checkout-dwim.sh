@@ -311,7 +311,7 @@ test_expect_success 'loosely defined local base branch is reported correctly' '
 	git checkout loose >actual.raw 2>&1 &&
 	sed -e "s/loose/BRANCHNAME/g" <actual.raw >actual &&
 	status_uno_is_clean &&
-	grep BRANCHNAME actual &&
+	test_grep BRANCHNAME actual &&
 
 	test_cmp expect actual
 '
@@ -324,7 +324,7 @@ test_expect_success 'reject when arg could be part of dwim branch' '
 	echo bar >dwim-arg &&
 	test_must_fail git checkout dwim-arg &&
 	test_must_fail git rev-parse refs/heads/dwim-arg -- &&
-	grep bar dwim-arg
+	test_grep bar dwim-arg
 '
 
 test_expect_success 'disambiguate dwim branch and checkout path (1)' '
@@ -334,7 +334,7 @@ test_expect_success 'disambiguate dwim branch and checkout path (1)' '
 	echo bar >dwim-arg1 &&
 	git checkout -- dwim-arg1 &&
 	test_must_fail git rev-parse refs/heads/dwim-arg1 -- &&
-	grep foo dwim-arg1
+	test_grep foo dwim-arg1
 '
 
 test_expect_success 'disambiguate dwim branch and checkout path (2)' '
@@ -344,7 +344,7 @@ test_expect_success 'disambiguate dwim branch and checkout path (2)' '
 	echo bar >dwim-arg2 &&
 	git checkout dwim-arg2 -- &&
 	git rev-parse refs/heads/dwim-arg2 -- &&
-	grep bar dwim-arg2
+	test_grep bar dwim-arg2
 '
 
 test_done

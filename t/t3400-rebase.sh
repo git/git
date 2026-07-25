@@ -287,16 +287,16 @@ test_expect_success 'rebase commit with an ancient timestamp' '
 	git commit --date="@34567 +0600" -m "Old three" &&
 
 	git cat-file commit HEAD^^ >actual &&
-	grep "author .* 12345 +0400$" actual &&
+	test_grep "author .* 12345 +0400$" actual &&
 	git cat-file commit HEAD^ >actual &&
-	grep "author .* 23456 +0500$" actual &&
+	test_grep "author .* 23456 +0500$" actual &&
 	git cat-file commit HEAD >actual &&
-	grep "author .* 34567 +0600$" actual &&
+	test_grep "author .* 34567 +0600$" actual &&
 
 	git rebase --onto HEAD^^ HEAD^ &&
 
 	git cat-file commit HEAD >actual &&
-	grep "author .* 34567 +0600$" actual
+	test_grep "author .* 34567 +0600$" actual
 '
 
 test_expect_success 'rebase with "From " line in commit message' '
@@ -333,7 +333,7 @@ test_expect_success 'rebase --apply and --show-current-patch' '
 		git tag two &&
 		test_must_fail git rebase --apply -f --onto init HEAD^ &&
 		GIT_TRACE=1 git rebase --show-current-patch >/dev/null 2>stderr &&
-		grep "show.*$(git rev-parse two)" stderr
+		test_grep "show.*$(git rev-parse two)" stderr
 	)
 '
 
@@ -364,12 +364,12 @@ test_expect_success 'rebase --apply and .gitattributes' '
 
 		git checkout test &&
 		git rebase main &&
-		grep "smudged" a.txt &&
+		test_grep "smudged" a.txt &&
 
 		git checkout removal &&
 		git reset --hard &&
 		git rebase main &&
-		grep "clean" a.txt
+		test_grep "clean" a.txt
 	)
 '
 
@@ -386,7 +386,7 @@ test_expect_success 'rebase--merge.sh and --show-current-patch' '
 		test_must_fail git rebase --merge --onto init HEAD^ &&
 		git rebase --show-current-patch >actual.patch &&
 		GIT_TRACE=1 git rebase --show-current-patch >/dev/null 2>stderr &&
-		grep "show.*REBASE_HEAD" stderr &&
+		test_grep "show.*REBASE_HEAD" stderr &&
 		test "$(git rev-parse REBASE_HEAD)" = "$(git rev-parse two)"
 	)
 '

@@ -23,7 +23,7 @@ test_expect_success 'update-index -h with corrupt index' '
 		cd broken &&
 		git init &&
 		>.git/index &&
-		test_expect_code 129 git update-index -h >usage 2>&1
+		git update-index -h >usage 2>&1
 	) &&
 	test_grep "[Uu]sage: git update-index" broken/usage
 '

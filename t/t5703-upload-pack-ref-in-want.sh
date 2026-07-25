@@ -101,7 +101,7 @@ test_expect_success 'invalid want-ref line' '
 
 	test-tool pkt-line pack <pkt >in &&
 	test_must_fail test-tool serve-v2 --stateless-rpc 2>out <in &&
-	grep "unknown ref" out
+	test_grep "unknown ref" out
 '
 
 test_expect_success 'basic want-ref' '
@@ -235,11 +235,11 @@ test_expect_success 'fetching with exact OID' '
 		git -C local fetch origin \
 		"$oid":refs/heads/actual &&
 
-	grep \"key\":\"total_rounds\",\"value\":\"2\" trace2 &&
+	test_grep \"key\":\"total_rounds\",\"value\":\"2\" trace2 &&
 	git -C "$REPO" rev-parse "d" >expected &&
 	git -C local rev-parse refs/heads/actual >actual &&
 	test_cmp expected actual &&
-	grep "want $oid" log
+	test_grep "want $oid" log
 '
 
 test_expect_success 'fetching multiple refs' '
@@ -252,8 +252,8 @@ test_expect_success 'fetching multiple refs' '
 	git -C "$REPO" rev-parse "main" "baz" >expected &&
 	git -C local rev-parse refs/remotes/origin/main refs/remotes/origin/baz >actual &&
 	test_cmp expected actual &&
-	grep "want-ref refs/heads/main" log &&
-	grep "want-ref refs/heads/baz" log
+	test_grep "want-ref refs/heads/main" log &&
+	test_grep "want-ref refs/heads/baz" log
 '
 
 test_expect_success 'fetching ref and exact OID' '
@@ -268,8 +268,8 @@ test_expect_success 'fetching ref and exact OID' '
 	git -C "$REPO" rev-parse "main" "b" >expected &&
 	git -C local rev-parse refs/remotes/origin/main refs/heads/actual >actual &&
 	test_cmp expected actual &&
-	grep "want $oid" log &&
-	grep "want-ref refs/heads/main" log
+	test_grep "want $oid" log &&
+	test_grep "want-ref refs/heads/main" log
 '
 
 test_expect_success 'fetching with wildcard that does not match any refs' '
@@ -291,8 +291,8 @@ test_expect_success 'fetching with wildcard that matches multiple refs' '
 	git -C "$REPO" rev-parse "o/foo" "o/bar" >expected &&
 	git -C local rev-parse "o/foo" "o/bar" >actual &&
 	test_cmp expected actual &&
-	grep "want-ref refs/heads/o/foo" log &&
-	grep "want-ref refs/heads/o/bar" log
+	test_grep "want-ref refs/heads/o/foo" log &&
+	test_grep "want-ref refs/heads/o/bar" log
 '
 
 REPO="$(pwd)/repo-ns"
@@ -345,7 +345,7 @@ test_expect_success 'with namespace: want-ref outside namespace is unknown' '
 
 	test_must_fail env GIT_NAMESPACE=ns \
 		test-tool -C "$REPO" serve-v2 --stateless-rpc >out <in &&
-	grep "unknown ref" out
+	test_grep "unknown ref" out
 '
 
 # Cross-check refs/heads/ns-no indeed exists
@@ -381,7 +381,7 @@ test_expect_success 'with namespace: hideRefs is matched, relative to namespace'
 
 	test_must_fail env GIT_NAMESPACE=ns \
 		test-tool -C "$REPO" serve-v2 --stateless-rpc >out <in &&
-	grep "unknown ref" out
+	test_grep "unknown ref" out
 '
 
 # Cross-check refs/heads/hidden indeed exists

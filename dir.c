@@ -126,7 +126,7 @@ int count_slashes(const char *s)
 
 int git_fspathcmp(const char *a, const char *b)
 {
-	return ignore_case ? strcasecmp(a, b) : strcmp(a, b);
+	return repo_ignore_case(the_repository) ? strcasecmp(a, b) : strcmp(a, b);
 }
 
 int fspatheq(const char *a, const char *b)
@@ -136,7 +136,7 @@ int fspatheq(const char *a, const char *b)
 
 int git_fspathncmp(const char *a, const char *b, size_t count)
 {
-	return ignore_case ? strncasecmp(a, b, count) : strncmp(a, b, count);
+	return repo_ignore_case(the_repository) ? strncasecmp(a, b, count) : strncmp(a, b, count);
 }
 
 int paths_collide(const char *a, const char *b)
@@ -153,7 +153,7 @@ int paths_collide(const char *a, const char *b)
 
 unsigned int fspathhash(const char *str)
 {
-	return ignore_case ? strihash(str) : strhash(str);
+	return repo_ignore_case(the_repository) ? strihash(str) : strhash(str);
 }
 
 int git_fnmatch(const struct pathspec_item *item,
@@ -202,7 +202,7 @@ static int fnmatch_icase_mem(const char *pattern, int patternlen,
 		use_str = str_buf.buf;
 	}
 
-	if (ignore_case)
+	if (repo_ignore_case(the_repository))
 		flags |= WM_CASEFOLD;
 	match_status = wildmatch(use_pat, use_str, flags);
 
@@ -1851,7 +1851,7 @@ static struct dir_entry *dir_add_name(struct dir_struct *dir,
 				      struct index_state *istate,
 				      const char *pathname, int len)
 {
-	if (index_file_exists(istate, pathname, len, ignore_case))
+	if (index_file_exists(istate, pathname, len, repo_ignore_case(the_repository)))
 		return NULL;
 
 	ALLOC_GROW(dir->entries, dir->nr+1, dir->internal.alloc);
@@ -1888,7 +1888,7 @@ static enum exist_status directory_exists_in_index_icase(struct index_state *ist
 	if (index_dir_exists(istate, dirname, len))
 		return index_directory;
 
-	ce = index_file_exists(istate, dirname, len, ignore_case);
+	ce = index_file_exists(istate, dirname, len, repo_ignore_case(the_repository));
 	if (ce && S_ISGITLINK(ce->ce_mode))
 		return index_gitdir;
 
@@ -1907,7 +1907,7 @@ static enum exist_status directory_exists_in_index(struct index_state *istate,
 {
 	int pos;
 
-	if (ignore_case)
+	if (repo_ignore_case(the_repository))
 		return directory_exists_in_index_icase(istate, dirname, len);
 
 	pos = index_name_pos(istate, dirname, len);
@@ -2447,7 +2447,7 @@ static enum path_treatment treat_path(struct dir_struct *dir,
 
 	/* Always exclude indexed files */
 	has_path_in_index = !!index_file_exists(istate, path->buf, path->len,
-						ignore_case);
+						repo_ignore_case(the_repository));
 	if (dtype != DT_DIR && has_path_in_index)
 		return path_none;
 
@@ -3201,7 +3201,7 @@ static int cmp_icase(char a, char b)
 {
 	if (a == b)
 		return 0;
-	if (ignore_case)
+	if (repo_ignore_case(the_repository))
 		return toupper(a) - toupper(b);
 	return a - b;
 }

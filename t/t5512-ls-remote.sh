@@ -86,7 +86,7 @@ test_expect_success 'ls-remote -h is deprecated w/o warning' '
 '
 
 test_expect_success 'ls-remote --heads is deprecated and hidden w/o warning' '
-	test_expect_code 129 git ls-remote -h >short-help &&
+	git ls-remote -h >short-help &&
 	test_grep ! -e --head short-help &&
 	git ls-remote --heads self >actual 2>warning &&
 	test_cmp expected.branches actual &&
@@ -245,8 +245,8 @@ do
 		git config --add $configsection.hiderefs "!refs/tags/magic" &&
 		git config --add $configsection.hiderefs refs/tags/magic/one &&
 		git ls-remote . >actual &&
-		grep refs/tags/magic/two actual &&
-		! grep refs/tags/magic/one actual
+		test_grep refs/tags/magic/two actual &&
+		test_grep ! refs/tags/magic/one actual
 	'
 
 done
@@ -255,13 +255,13 @@ test_expect_success 'overrides work between mixed transfer/upload-pack hideRefs'
 	test_config uploadpack.hiderefs refs/tags &&
 	test_config transfer.hiderefs "!refs/tags/magic" &&
 	git ls-remote . >actual &&
-	grep refs/tags/magic actual
+	test_grep refs/tags/magic actual
 '
 
 test_expect_success 'protocol v2 supports hiderefs' '
 	test_config uploadpack.hiderefs refs/tags &&
 	git -c protocol.version=2 ls-remote . >actual &&
-	! grep refs/tags actual
+	test_grep ! refs/tags actual
 '
 
 test_expect_success 'ls-remote --symref' '

@@ -5,7 +5,10 @@
 #include "exec-cmd.h"
 #include "gettext.h"
 #include "attr.h"
+#include "odb.h"
+#include "parse.h"
 #include "repository.h"
+#include "replace-object.h"
 #include "setup.h"
 #include "strbuf.h"
 #include "trace2.h"
@@ -31,6 +34,22 @@ static void restore_sigpipe_to_default(void)
 	signal(SIGPIPE, SIG_DFL);
 }
 
+static void setup_environment(void)
+{
+	char *git_replace_ref_base;
+	const char *replace_ref_base;
+
+	if (getenv(NO_REPLACE_OBJECTS_ENVIRONMENT))
+		disable_replace_refs();
+	replace_ref_base = getenv(GIT_REPLACE_REF_BASE_ENVIRONMENT);
+	git_replace_ref_base = xstrdup(replace_ref_base ? replace_ref_base
+							  : "refs/replace/");
+	update_ref_namespace(NAMESPACE_REPLACE, git_replace_ref_base);
+
+	if (git_env_bool(NO_LAZY_FETCH_ENVIRONMENT, 0))
+		fetch_if_missing = 0;
+}
+
 void init_git(const char **argv)
 {
 	struct strbuf tmp = STRBUF_INIT;
@@ -51,6 +70,7 @@ void init_git(const char **argv)
 	git_setup_gettext();
 
 	initialize_repository(the_repository);
+	setup_environment();
 
 	attr_start();
 

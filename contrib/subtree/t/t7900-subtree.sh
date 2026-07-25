@@ -99,7 +99,7 @@ test_create_subtree_add () {
 }
 
 test_expect_success 'shows short help text for -h' '
-	test_expect_code 129 git subtree -h >out 2>err &&
+	git subtree -h >out 2>err &&
 	test_must_be_empty err &&
 	grep -e "^ *or: git subtree pull" out &&
 	grep -F -e "--[no-]annotate" out

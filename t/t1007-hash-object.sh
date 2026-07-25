@@ -205,7 +205,7 @@ done
 test_expect_success 'too-short tree' '
 	echo abc >malformed-tree &&
 	test_must_fail git hash-object -t tree malformed-tree 2>err &&
-	grep "too-short tree object" err
+	test_grep "too-short tree object" err
 '
 
 test_expect_success PERL_TEST_HELPERS 'malformed mode in tree' '
@@ -213,7 +213,7 @@ test_expect_success PERL_TEST_HELPERS 'malformed mode in tree' '
 	bin_oid=$(echo $hex_oid | hex2oct) &&
 	printf "9100644 \0$bin_oid" >tree-with-malformed-mode &&
 	test_must_fail git hash-object -t tree tree-with-malformed-mode 2>err &&
-	grep "malformed mode in tree entry" err
+	test_grep "malformed mode in tree entry" err
 '
 
 test_expect_success PERL_TEST_HELPERS 'empty filename in tree' '
@@ -221,7 +221,7 @@ test_expect_success PERL_TEST_HELPERS 'empty filename in tree' '
 	bin_oid=$(echo $hex_oid | hex2oct) &&
 	printf "100644 \0$bin_oid" >tree-with-empty-filename &&
 	test_must_fail git hash-object -t tree tree-with-empty-filename 2>err &&
-	grep "empty filename in tree entry" err
+	test_grep "empty filename in tree entry" err
 '
 
 test_expect_success PERL_TEST_HELPERS 'duplicate filename in tree' '
@@ -232,7 +232,7 @@ test_expect_success PERL_TEST_HELPERS 'duplicate filename in tree' '
 		printf "100644 file\0$bin_oid"
 	} >tree-with-duplicate-filename &&
 	test_must_fail git hash-object -t tree tree-with-duplicate-filename 2>err &&
-	grep "duplicateEntries" err
+	test_grep "duplicateEntries" err
 '
 
 test_expect_success 'corrupt commit' '

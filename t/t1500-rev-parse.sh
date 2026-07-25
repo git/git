@@ -204,7 +204,7 @@ test_expect_success 'rev-parse --show-object-format in repo' '
 	git rev-parse --show-object-format=output >actual &&
 	test_cmp expect actual &&
 	test_must_fail git rev-parse --show-object-format=squeamish-ossifrage 2>err &&
-	grep "unknown mode for --show-object-format: squeamish-ossifrage" err
+	test_grep "unknown mode for --show-object-format: squeamish-ossifrage" err
 '
 
 
@@ -228,7 +228,7 @@ test_expect_success RUST 'rev-parse --show-object-format in repo with compat mod
 		git rev-parse --show-object-format=compat >actual &&
 		test_cmp expect actual &&
 		test_must_fail git rev-parse --show-object-format=squeamish-ossifrage 2>err &&
-		grep "unknown mode for --show-object-format: squeamish-ossifrage" err
+		test_grep "unknown mode for --show-object-format: squeamish-ossifrage" err
 	) &&
 	mkdir repo2 &&
 	(
@@ -254,7 +254,7 @@ test_expect_success 'rev-parse --show-ref-format with invalid storage' '
 		cd repo &&
 		git config extensions.refstorage broken &&
 		test_must_fail git rev-parse --show-ref-format 2>err &&
-		grep "error: invalid value for ${SQ}extensions.refstorage${SQ}: ${SQ}broken${SQ}" err
+		test_grep "error: invalid value for ${SQ}extensions.refstorage${SQ}: ${SQ}broken${SQ}" err
 	)
 '
 

@@ -20,8 +20,8 @@ test_expect_success 'Ensure we restore original state if no merge strategy handl
 	# just hit conflicts, it completely fails and says that it cannot
 	# handle this type of merge.
 	test_expect_code 2 git merge branch2 branch3 >output 2>&1 &&
-	grep "fatal: merge program failed" output &&
-	grep "Should not be doing an octopus" output &&
+	test_grep "fatal: merge program failed" output &&
+	test_grep "Should not be doing an octopus" output &&
 
 	# Make sure we did not leave stray changes around when no appropriate
 	# merge strategy was found

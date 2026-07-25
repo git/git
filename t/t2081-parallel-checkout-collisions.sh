@@ -78,8 +78,8 @@ test_expect_success CASE_INSENSITIVE_FS 'worker detects dirname collision' '
 
 	# Check that it used the right number of workers and detected the collisions
 	test_workers_in_event_trace 2 trace &&
-	grep "category.:.pcheckout.,.key.:.collision/dirname.,.value.:.A/B.}" trace &&
-	grep "category.:.pcheckout.,.key.:.collision/dirname.,.value.:.A/C.}" trace
+	test_grep "category.:.pcheckout.,.key.:.collision/dirname.,.value.:.A/B.}" trace &&
+	test_grep "category.:.pcheckout.,.key.:.collision/dirname.,.value.:.A/C.}" trace
 '
 
 test_expect_success SYMLINKS,CASE_INSENSITIVE_FS 'do not follow symlinks colliding with leading dir' '
@@ -115,11 +115,11 @@ test_expect_success CASE_INSENSITIVE_FS 'collision report on clone (w/ racy file
 	set_checkout_config 2 0 &&
 	test_checkout_workers 2 git clone . clone-repo 2>stderr &&
 
-	grep FILE_X stderr &&
-	grep FILE_x stderr &&
-	grep file_X stderr &&
-	grep file_x stderr &&
-	grep "the following paths have collided" stderr
+	test_grep FILE_X stderr &&
+	test_grep FILE_x stderr &&
+	test_grep file_X stderr &&
+	test_grep file_x stderr &&
+	test_grep "the following paths have collided" stderr
 '
 
 # This test ensures that the collision report code is correctly looking for
@@ -148,11 +148,11 @@ test_expect_success CASE_INSENSITIVE_FS,!MINGW,!CYGWIN \
 	test_checkout_workers 2 \
 		git -c core.ignoreCase=false clone . clone-repo 2>stderr &&
 
-	grep FILE_X stderr &&
-	grep FILE_x stderr &&
-	grep file_X stderr &&
-	grep file_x stderr &&
-	grep "the following paths have collided" stderr &&
+	test_grep FILE_X stderr &&
+	test_grep FILE_x stderr &&
+	test_grep file_X stderr &&
+	test_grep file_x stderr &&
+	test_grep "the following paths have collided" stderr &&
 
 	# Check that only "file_x" was filtered
 	echo file_x >expected.log &&

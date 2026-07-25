@@ -53,6 +53,14 @@ struct repository {
 	char *commondir;
 
 	/*
+	 * The "prefix", a path to the current working directory relative to
+	 * the work tree root, or NULL, if the current working directory is not
+	 * a strict subdirectory of the work tree root. The prefix always ends
+	 * with a '/' character.
+	 */
+	char *prefix;
+
+	/*
 	 * Holds any information related to accessing the raw object content.
 	 */
 	struct object_database *objects;

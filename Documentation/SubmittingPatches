@@ -123,6 +123,20 @@ of review.
   top, it gets merged to the 'master' branch and waits to become part
   of the next major release.
 
+But sometimes things do not work as planned:
+
+. If a mailing list discussion convinces you that your changes aren't
+  ideal, please explicitly retract the topic to save the maintainer
+  time and effort.
+
+. If you must drop a topic due to shifting priorities, lack of time,
+  or other commitments, notify the list as a courtesy so others can
+  take over. Anyone can resurrect the topic later when they have the
+  capacity to do so.
+
+. Topics with unaddressed review comments that remain inactive for
+  four weeks may be discarded by the maintainer.
+
 In the following sections, many techniques and conventions are listed
 to help your patches get reviewed effectively in such a life cycle.
 

@@ -1,8 +1,11 @@
 #include "unit-test.h"
 #include "lib-reftable.h"
+#include "reftable/basics.h"
+#include "reftable/block.h"
 #include "reftable/blocksource.h"
 #include "reftable/constants.h"
 #include "reftable/iter.h"
+#include "reftable/reftable-error.h"
 #include "reftable/table.h"
 #include "strbuf.h"
 
@@ -200,4 +203,93 @@ void test_reftable_table__block_iterator(void)
 	reftable_table_decref(table);
 	reftable_buf_release(&buf);
 	reftable_free(records);
+}
+
+void test_reftable_table__seek_invalid_log_offset(void)
+{
+	struct reftable_ref_record refs[] = {
+		{
+			.refname = (char *) "refs/heads/main",
+			.value_type = REFTABLE_REF_VAL1,
+			.value.val1 = { 42 },
+		},
+	};
+	struct reftable_log_record logs[] = {
+		{
+			.refname = (char *) "refs/heads/main",
+			.update_index = 1,
+			.value_type = REFTABLE_LOG_UPDATE,
+			.value.update = {
+				.name = (char *) "user",
+				.email = (char *) "user@example.com",
+				.message = (char *) "message\n",
+			},
+		},
+	};
+	struct reftable_block_source source = { 0 };
+	struct reftable_log_record log = { 0 };
+	struct reftable_iterator it = { 0 };
+	struct reftable_table *table;
+	struct reftable_buf buf = REFTABLE_BUF_INIT;
+	size_t fsize = footer_size(1);
+	uint8_t *footer;
+
+	cl_reftable_write_to_buf(&buf, refs, ARRAY_SIZE(refs),
+				 logs, ARRAY_SIZE(logs), REFTABLE_HASH_SHA1, NULL);
+
+	/*
+	 * Corrupt the log section offset stored in the footer so that it points
+	 * past the end of the table. The footer is checksummed, so we also have
+	 * to recompute and rewrite the CRC.
+	 */
+	footer = (uint8_t *) buf.buf + buf.len - fsize;
+	reftable_put_be64(footer + header_size(1) + 24, UINT64_MAX);
+	reftable_put_be32(footer + fsize - 4, crc32(0, footer, fsize - 4));
+
+	block_source_from_buf(&source, &buf);
+	cl_must_pass(reftable_table_new(&table, &source, "name"));
+
+	/*
+	 * Seeking the log iterator must not crash even though the log section
+	 * offset is bogus. As the offset points past the end of the table we
+	 * know that the table is corrupt, so the seek must report a format
+	 * error instead of pretending that the section is empty.
+	 */
+	reftable_table_init_log_iterator(table, &it);
+	cl_assert_equal_i(reftable_iterator_seek_log(&it, ""),
+			  REFTABLE_FORMAT_ERROR);
+
+	reftable_log_record_release(&log);
+	reftable_iterator_destroy(&it);
+	reftable_table_decref(table);
+	reftable_buf_release(&buf);
+}
+
+void test_reftable_table__new_with_truncated_table(void)
+{
+	struct reftable_ref_record refs[] = {
+		{
+			.refname = (char *) "refs/heads/main",
+			.value_type = REFTABLE_REF_VAL1,
+			.value.val1 = { 42 },
+		},
+	};
+	struct reftable_block_source source = { 0 };
+	struct reftable_table *table;
+	struct reftable_buf buf = REFTABLE_BUF_INIT;
+
+	cl_reftable_write_to_buf(&buf, refs, ARRAY_SIZE(refs), NULL, 0,
+				 REFTABLE_HASH_SHA1, NULL);
+
+	/*
+	 * Truncate the table so that it is large enough to read the header, but
+	 * too small to also contain the footer.
+	 */
+	buf.len = footer_size(1) - 1;
+	block_source_from_buf(&source, &buf);
+
+	cl_assert_equal_i(reftable_table_new(&table, &source, "name"),
+			  REFTABLE_FORMAT_ERROR);
+
+	reftable_buf_release(&buf);
 }

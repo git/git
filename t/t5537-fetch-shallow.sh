@@ -244,7 +244,7 @@ test_expect_success '.git/shallow is edited by repack' '
 		origin "+refs/heads/*:refs/remotes/origin/*" &&
 	git -C shallow-client repack -adfl &&
 	test_must_fail git -C shallow-client rev-parse --verify $d^0 &&
-	! grep $d shallow-client/.git/shallow &&
+	test_grep ! $d shallow-client/.git/shallow &&
 
 	git -C shallow-server branch branch-orig $d &&
 	git -C shallow-client fetch --prune --depth=2 \

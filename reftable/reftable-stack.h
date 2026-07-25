@@ -42,6 +42,8 @@ struct reftable_stack_options {
 	 */
 	void (*on_reload)(void *payload);
 	void *on_reload_payload;
+
+	int suppress_deletions;
 };
 
 /* open a new reftable stack. The tables along with the table list will be

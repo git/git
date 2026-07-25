@@ -144,7 +144,7 @@ test_expect_success 'rebase -i sets work tree properly' '
 	mkdir subdir &&
 	git rebase -x "(cd subdir && git rev-parse --show-toplevel)" HEAD^ \
 		>actual &&
-	! grep "/subdir$" actual
+	test_grep ! "/subdir$" actual
 '
 
 test_expect_success 'rebase -i with the exec command checks tree cleanness' '
@@ -196,7 +196,7 @@ test_expect_success 'rebase -i with exec of inexistent command' '
 		test_must_fail env FAKE_LINES="exec_this-command-does-not-exist 1" \
 			git rebase -i HEAD^ >actual 2>&1
 	) &&
-	! grep "Maybe git-rebase is broken" actual
+	test_grep ! "Maybe git-rebase is broken" actual
 '
 
 test_expect_success 'implicit interactive rebase does not invoke sequence editor' '
@@ -293,7 +293,7 @@ test_expect_success 'stop on conflicting pick' '
 
 test_expect_success 'show conflicted patch' '
 	GIT_TRACE=1 git rebase --show-current-patch >/dev/null 2>stderr &&
-	grep "show.*REBASE_HEAD" stderr &&
+	test_grep "show.*REBASE_HEAD" stderr &&
 	# the original stopped-sha1 is abbreviated
 	stopped_sha1="$(git rev-parse $(cat ".git/rebase-merge/stopped-sha"))" &&
 	test "$(git rev-parse REBASE_HEAD)" = "$stopped_sha1"
@@ -326,7 +326,7 @@ test_expect_success 'retain authorship' '
 	git tag twerp &&
 	git rebase -i --onto primary HEAD^ &&
 	git show HEAD >actual &&
-	grep "^Author: Twerp Snog" actual
+	test_grep "^Author: Twerp Snog" actual
 '
 
 test_expect_success 'retain authorship w/ conflicts' '
@@ -348,7 +348,7 @@ test_expect_success 'retain authorship w/ conflicts' '
 	git rebase --continue &&
 	test_cmp_rev conflict-a^0 HEAD^ &&
 	git show >out &&
-	grep AttributeMe out
+	test_grep AttributeMe out
 '
 
 test_expect_success 'squash' '
@@ -368,7 +368,7 @@ test_expect_success 'squash' '
 
 test_expect_success 'retain authorship when squashing' '
 	git show HEAD >actual &&
-	grep "^Author: Twerp Snog" actual
+	test_grep "^Author: Twerp Snog" actual
 '
 
 test_expect_success '--continue tries to commit' '
@@ -383,7 +383,7 @@ test_expect_success '--continue tries to commit' '
 	) &&
 	test_cmp_rev HEAD^ new-branch1 &&
 	git show HEAD >actual &&
-	grep chouette actual
+	test_grep chouette actual
 '
 
 test_expect_success 'verbose flag is heeded, even after --continue' '
@@ -393,7 +393,7 @@ test_expect_success 'verbose flag is heeded, even after --continue' '
 	echo resolved > file1 &&
 	git add file1 &&
 	git rebase --continue > output &&
-	grep "^ file1 | 2 +-$" output
+	test_grep "^ file1 | 2 +-$" output
 '
 
 test_expect_success 'multi-squash only fires up editor once' '
@@ -422,7 +422,7 @@ test_expect_success 'multi-fixup does not fire up editor' '
 	) &&
 	test $base = $(git rev-parse HEAD^) &&
 	git show >output &&
-	! grep NEVER output &&
+	test_grep ! NEVER output &&
 	git checkout @{-1} &&
 	git branch -D multi-fixup
 '
@@ -487,9 +487,9 @@ test_expect_success 'squash and fixup generate correct log messages' '
 	git cat-file commit HEAD | sed -e 1,/^\$/d > actual-squash-fixup &&
 	test_cmp expect-squash-fixup actual-squash-fixup &&
 	git cat-file commit HEAD@{2} >actual &&
-	grep "^# This is a combination of 3 commits\." actual &&
+	test_grep "^# This is a combination of 3 commits\." actual &&
 	git cat-file commit HEAD@{3} >actual &&
-	grep "^# This is a combination of 2 commits\." actual  &&
+	test_grep "^# This is a combination of 2 commits\." actual  &&
 	git checkout @{-1} &&
 	git branch -D squash-fixup
 '
@@ -593,7 +593,7 @@ test_expect_success '--continue tries to commit, even for "edit"' '
 	) &&
 	test edited = $(git show HEAD:file7) &&
 	git show HEAD >actual &&
-	grep chouette actual &&
+	test_grep chouette actual &&
 	test $parent = $(git rev-parse HEAD^)
 '
 
@@ -779,22 +779,22 @@ test_expect_success 'reword' '
 		FAKE_LINES="1 2 3 reword 4" FAKE_COMMIT_MESSAGE="E changed" \
 			git rebase -i A &&
 		git show HEAD >actual &&
-		grep "E changed" actual &&
+		test_grep "E changed" actual &&
 		test $(git rev-parse primary) != $(git rev-parse HEAD) &&
 		test_cmp_rev primary^ HEAD^ &&
 		FAKE_LINES="1 2 reword 3 4" FAKE_COMMIT_MESSAGE="D changed" \
 			git rebase -i A &&
 		git show HEAD^ >actual &&
-		grep "D changed" actual &&
+		test_grep "D changed" actual &&
 		FAKE_LINES="reword 1 2 3 4" FAKE_COMMIT_MESSAGE="B changed" \
 			git rebase -i A &&
 		git show HEAD~3 >actual &&
-		grep "B changed" actual &&
+		test_grep "B changed" actual &&
 		FAKE_LINES="1 r 2 pick 3 p 4" FAKE_COMMIT_MESSAGE="C changed" \
 			git rebase -i A
 	) &&
 	git show HEAD~2 >actual &&
-	grep "C changed" actual
+	test_grep "C changed" actual
 '
 
 test_expect_success 'reword fast-forwarded empty commit' '
@@ -1043,9 +1043,9 @@ test_expect_success 'rebase -i --root retain root commit author and message' '
 		FAKE_LINES="2" git rebase -i --root
 	) &&
 	git cat-file commit HEAD >output &&
-	grep -q "^author Twerp Snog" output &&
+	test_grep -q "^author Twerp Snog" output &&
 	git cat-file commit HEAD >actual &&
-	grep -q "^different author$" actual
+	test_grep -q "^different author$" actual
 '
 
 test_expect_success 'rebase -i --root temporary sentinel commit' '
@@ -1055,7 +1055,7 @@ test_expect_success 'rebase -i --root temporary sentinel commit' '
 		test_must_fail env FAKE_LINES="2" git rebase -i --root
 	) &&
 	git cat-file commit HEAD >actual &&
-	grep "^tree $EMPTY_TREE" actual &&
+	test_grep "^tree $EMPTY_TREE" actual &&
 	git rebase --abort
 '
 
@@ -1079,7 +1079,7 @@ test_expect_success 'rebase -i --root reword original root commit' '
 			git rebase -i --root
 	) &&
 	git show HEAD^ >actual &&
-	grep "A changed" actual &&
+	test_grep "A changed" actual &&
 	test -z "$(git show -s --format=%p HEAD^)"
 '
 
@@ -1092,7 +1092,7 @@ test_expect_success 'rebase -i --root reword new root commit' '
 		git rebase -i --root
 	) &&
 	git show HEAD^ >actual &&
-	grep "C changed" actual &&
+	test_grep "C changed" actual &&
 	test -z "$(git show -s --format=%p HEAD^)"
 '
 
@@ -1315,11 +1315,11 @@ test_expect_success 'short commit ID collide' '
 		FAKE_COMMIT_MESSAGE="collide2 $(test_oid t3404_collider)" \
 		FAKE_LINES="reword 1 break 2" git rebase -i HEAD~2 &&
 		test $colliding_id = "$(git rev-parse HEAD | cut -c 1-4)" &&
-		grep "^pick $colliding_id " \
+		test_grep "^pick $colliding_id " \
 			.git/rebase-merge/git-rebase-todo.tmp &&
-		grep -E "^pick [0-9a-f]{$hexsz}" \
+		test_grep -E "^pick [0-9a-f]{$hexsz}" \
 			.git/rebase-merge/git-rebase-todo &&
-		grep -E "^pick [0-9a-f]{$hexsz}" \
+		test_grep -E "^pick [0-9a-f]{$hexsz}" \
 			.git/rebase-merge/git-rebase-todo.backup &&
 		git rebase --continue
 	) &&
@@ -1371,7 +1371,7 @@ test_expect_success 'rebase -i commits that overwrite untracked files (pick)' '
 	echo changed >file1 &&
 	git add file1 &&
 	test_must_fail git rebase --continue 2>err &&
-	grep "error: you have staged changes in your working tree" err &&
+	test_grep "error: you have staged changes in your working tree" err &&
 	git reset --hard HEAD &&
 	git rebase --continue &&
 	test_cmp_rev HEAD D &&
@@ -1398,7 +1398,7 @@ test_expect_success 'rebase -i commits that overwrite untracked files (squash)' 
 	echo changed >file1 &&
 	git add file1 &&
 	test_must_fail git rebase --continue 2>err &&
-	grep "error: you have staged changes in your working tree" err &&
+	test_grep "error: you have staged changes in your working tree" err &&
 	git reset --hard HEAD &&
 	git rebase --continue &&
 	test $(git cat-file commit HEAD | sed -ne \$p) = I &&
@@ -1423,7 +1423,7 @@ test_expect_success 'rebase -i commits that overwrite untracked files (no ff)' '
 	echo changed >file1 &&
 	git add file1 &&
 	test_must_fail git rebase --continue 2>err &&
-	grep "error: you have staged changes in your working tree" err &&
+	test_grep "error: you have staged changes in your working tree" err &&
 	git reset --hard HEAD &&
 	git rebase --continue &&
 	test $(git cat-file commit HEAD | sed -ne \$p) = I
@@ -1709,15 +1709,15 @@ test_expect_success 'the first command cannot be a fixup' '
 		set_replace_editor orig &&
 		test_must_fail git rebase -i A 2>actual
 	) &&
-	grep "cannot .fixup. without a previous commit" actual &&
-	grep "You can fix this with .git rebase --edit-todo.." actual &&
+	test_grep "cannot .fixup. without a previous commit" actual &&
+	test_grep "You can fix this with .git rebase --edit-todo.." actual &&
 	# verify that the todo list has not been truncated
 	grep -v "^#" .git/rebase-merge/git-rebase-todo >actual &&
 	test_cmp orig actual &&
 
 	test_must_fail git rebase --edit-todo 2>actual &&
-	grep "cannot .fixup. without a previous commit" actual &&
-	grep "You can fix this with .git rebase --edit-todo.." actual &&
+	test_grep "cannot .fixup. without a previous commit" actual &&
+	test_grep "You can fix this with .git rebase --edit-todo.." actual &&
 	# verify that the todo list has not been truncated
 	grep -v "^#" .git/rebase-merge/git-rebase-todo >actual &&
 	test_cmp orig actual
@@ -2252,7 +2252,7 @@ test_expect_success '--update-refs: check failed ref update' '
 	git update-ref refs/heads/second third &&
 
 	test_must_fail git rebase --continue 2>err &&
-	grep "update_ref failed for ref '\''refs/heads/second'\''" err &&
+	test_grep "update_ref failed for ref '\''refs/heads/second'\''" err &&
 
 	q_to_tab >expect <<-\EOF &&
 	Updated the following refs with --update-refs:
@@ -2283,10 +2283,10 @@ test_expect_success 'bad labels and refs rejected when parsing todo list' '
 		set_replace_editor todo &&
 		test_must_fail git rebase -i HEAD 2>err
 	) &&
-	grep "'\''#'\'' is not a valid label" err &&
-	grep "'\'':invalid'\'' is not a valid label" err &&
-	grep "'\'':bad'\'' is not a valid refname" err &&
-	grep "update-ref requires a fully qualified refname e.g. refs/heads/topic" \
+	test_grep "'\''#'\'' is not a valid label" err &&
+	test_grep "'\'':invalid'\'' is not a valid label" err &&
+	test_grep "'\'':bad'\'' is not a valid refname" err &&
+	test_grep "update-ref requires a fully qualified refname e.g. refs/heads/topic" \
 		err &&
 	test_path_is_missing execed
 '

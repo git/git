@@ -916,8 +916,8 @@ test_expect_success 'rad-check: rename/add/delete conflict' '
 		# bar should have two-way merged contents of the different
 		# versions of bar; check that content from both sides is
 		# present.
-		grep original bar &&
-		grep different bar
+		test_grep original bar &&
+		test_grep different bar
 	)
 '
 
@@ -991,8 +991,8 @@ test_expect_success 'rrdd-check: rename/rename(2to1)/delete/delete conflict' '
 		# baz should have two-way merged contents of the original
 		# contents of foo and bar; check that content from both sides
 		# is present.
-		grep foo baz &&
-		grep bar baz
+		test_grep foo baz &&
+		test_grep bar baz
 	)
 '
 

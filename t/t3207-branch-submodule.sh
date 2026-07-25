@@ -136,7 +136,7 @@ test_expect_success 'should not create any branches if branch is not valid for a
 		git -C sub branch branch-a &&
 		test_must_fail git branch --recurse-submodules branch-a 2>actual &&
 		test_no_branch . branch-a &&
-		grep "submodule .sub.: fatal: a branch named .branch-a. already exists" actual
+		test_grep "submodule .sub.: fatal: a branch named .branch-a. already exists" actual
 	)
 '
 
@@ -251,7 +251,7 @@ test_expect_success 'should get fatal error upon branch creation when submodule 
 		git branch --recurse-submodules branch-a origin/branch-a &&
 		# This should fail because super-clone does not have sub2 .git/modules
 		test_must_fail git branch --recurse-submodules branch-b origin/branch-b 2>actual &&
-		grep "fatal: submodule .sub2.: unable to find submodule" actual &&
+		test_grep "fatal: submodule .sub2.: unable to find submodule" actual &&
 		test_no_branch . branch-b &&
 		test_no_branch sub branch-b &&
 		# User can fix themselves by initializing the submodule

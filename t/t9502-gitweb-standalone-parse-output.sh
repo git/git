@@ -111,7 +111,7 @@ test_debug 'cat gitweb.headers && cat file_list'
 
 test_expect_success 'snapshot: hierarchical branch name (xx/test)' '
 	gitweb_run "p=.git;a=snapshot;h=xx/test;sf=tar" &&
-	! grep "filename=.*/" gitweb.headers
+	test_grep ! "filename=.*/" gitweb.headers
 '
 test_debug 'cat gitweb.headers'
 
@@ -139,13 +139,13 @@ test_expect_success 'forks: setup' '
 
 test_expect_success 'forks: not skipped unless "forks" feature enabled' '
 	gitweb_run "a=project_list" &&
-	grep -q ">\\.git<"               gitweb.body &&
-	grep -q ">foo\\.git<"            gitweb.body &&
-	grep -q ">foo_baz\\.git<"        gitweb.body &&
-	grep -q ">foo\\.bar\\.git<"      gitweb.body &&
-	grep -q ">foo_baz\\.git<"        gitweb.body &&
-	grep -q ">foo/foo-forked\\.git<" gitweb.body &&
-	grep -q ">fork of .*<"           gitweb.body
+	test_grep -q ">\\.git<"               gitweb.body &&
+	test_grep -q ">foo\\.git<"            gitweb.body &&
+	test_grep -q ">foo_baz\\.git<"        gitweb.body &&
+	test_grep -q ">foo\\.bar\\.git<"      gitweb.body &&
+	test_grep -q ">foo_baz\\.git<"        gitweb.body &&
+	test_grep -q ">foo/foo-forked\\.git<" gitweb.body &&
+	test_grep -q ">fork of .*<"           gitweb.body
 '
 
 test_expect_success 'enable forks feature' '
@@ -156,25 +156,25 @@ test_expect_success 'enable forks feature' '
 
 test_expect_success 'forks: forks skipped if "forks" feature enabled' '
 	gitweb_run "a=project_list" &&
-	grep -q ">\\.git<"               gitweb.body &&
-	grep -q ">foo\\.git<"            gitweb.body &&
-	grep -q ">foo_baz\\.git<"        gitweb.body &&
-	grep -q ">foo\\.bar\\.git<"      gitweb.body &&
-	grep -q ">foo_baz\\.git<"        gitweb.body &&
-	grep -v ">foo/foo-forked\\.git<" gitweb.body &&
-	grep -v ">fork of .*<"           gitweb.body
+	test_grep -q ">\\.git<"               gitweb.body &&
+	test_grep -q ">foo\\.git<"            gitweb.body &&
+	test_grep -q ">foo_baz\\.git<"        gitweb.body &&
+	test_grep -q ">foo\\.bar\\.git<"      gitweb.body &&
+	test_grep -q ">foo_baz\\.git<"        gitweb.body &&
+	test_grep -v ">foo/foo-forked\\.git<" gitweb.body &&
+	test_grep -v ">fork of .*<"           gitweb.body
 '
 
 test_expect_success 'forks: "forks" action for forked repository' '
 	gitweb_run "p=foo.git;a=forks" &&
-	grep -q ">foo/foo-forked\\.git<" gitweb.body &&
-	grep -q ">fork of foo<"          gitweb.body
+	test_grep -q ">foo/foo-forked\\.git<" gitweb.body &&
+	test_grep -q ">fork of foo<"          gitweb.body
 '
 
 test_expect_success 'forks: can access forked repository' '
 	gitweb_run "p=foo/foo-forked.git;a=summary" &&
-	grep -q "200 OK"        gitweb.headers &&
-	grep -q ">fork of foo<" gitweb.body
+	test_grep -q "200 OK"        gitweb.headers &&
+	test_grep -q ">fork of foo<" gitweb.body
 '
 
 test_expect_success 'forks: project_index lists all projects (incl. forks)' '

@@ -196,7 +196,7 @@ test_expect_success 'read-tree will not throw away dirty changes, non-sparse' '
 	echo dirty >init.t &&
 	read_tree_u_must_fail -m -u HEAD^ &&
 	test_path_is_file init.t &&
-	grep -q dirty init.t
+	test_grep -q dirty init.t
 '
 
 test_expect_success 'read-tree will not throw away dirty changes, sparse' '
@@ -207,7 +207,7 @@ test_expect_success 'read-tree will not throw away dirty changes, sparse' '
 	echo sub/added >.git/info/sparse-checkout &&
 	read_tree_u_must_fail -m -u HEAD^ &&
 	test_path_is_file init.t &&
-	grep -q dirty init.t
+	test_grep -q dirty init.t
 '
 
 test_expect_success 'read-tree updates worktree, dirty case' '
@@ -215,7 +215,7 @@ test_expect_success 'read-tree updates worktree, dirty case' '
 	git checkout -f top &&
 	echo dirty >init.t &&
 	read_tree_u_must_fail -m -u HEAD^ &&
-	grep -q dirty init.t &&
+	test_grep -q dirty init.t &&
 	rm init.t
 '
 
@@ -224,7 +224,7 @@ test_expect_success 'read-tree removes worktree, dirty case' '
 	git checkout -f top &&
 	echo dirty >added &&
 	read_tree_u_must_succeed -m -u HEAD^ &&
-	grep -q dirty added
+	test_grep -q dirty added
 '
 
 test_expect_success 'read-tree adds to worktree, absent case' '
@@ -240,7 +240,7 @@ test_expect_success 'read-tree adds to worktree, dirty case' '
 	mkdir sub &&
 	echo dirty >sub/added &&
 	read_tree_u_must_succeed -u -m HEAD^ &&
-	grep -q dirty sub/added
+	test_grep -q dirty sub/added
 '
 
 test_expect_success 'index removal and worktree narrowing at the same time' '

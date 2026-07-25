@@ -19,14 +19,14 @@ test_expect_success setup '
 test_expect_success 'format normally' '
 
 	git format-patch --stdout -1 >output &&
-	! grep Content-Type output
+	test_grep ! Content-Type output
 
 '
 
 test_expect_success 'format with signoff without funny signer name' '
 
 	git format-patch -s --stdout -1 >output &&
-	! grep Content-Type output
+	test_grep ! Content-Type output
 
 '
 
@@ -34,7 +34,7 @@ test_expect_success 'format with non ASCII signer name' '
 
 	GIT_COMMITTER_NAME="はまの ふにおう" \
 	git format-patch -s --stdout -1 >output &&
-	grep Content-Type output
+	test_grep Content-Type output
 
 '
 

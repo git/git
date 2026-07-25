@@ -52,7 +52,7 @@ test_expect_success 'fetch through proxy works' '
 
 test_expect_success 'funny hostnames are rejected before running proxy' '
 	test_must_fail git fetch git://-remote/repo.git 2>stderr &&
-	! grep "proxying for" stderr
+	test_grep ! "proxying for" stderr
 '
 
 test_done

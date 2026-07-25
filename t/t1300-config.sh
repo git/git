@@ -856,7 +856,7 @@ test_expect_success 'renaming a section with an overly-long line' '
 		printf "[a] g = h\\n"
 	} >y &&
 	test_must_fail git config ${mode_prefix}rename-section -f y a xyz 2>err &&
-	grep "refusing to work with overly long line in .y. on line 2" err
+	test_grep "refusing to work with overly long line in .y. on line 2" err
 '
 
 cat >> .git/config << EOF
@@ -1671,9 +1671,9 @@ test_expect_success 'git --config-env=key=envvar support' '
 
 test_expect_success 'git --config-env with missing value' '
 	test_must_fail env ENVVAR=value git --config-env 2>error &&
-	grep "no config key given for --config-env" error &&
+	test_grep "no config key given for --config-env" error &&
 	test_must_fail env ENVVAR=value git --config-env config core.name 2>error &&
-	grep "invalid config format: config" error
+	test_grep "invalid config format: config" error
 '
 
 test_expect_success 'git --config-env fails with invalid parameters' '
@@ -2104,7 +2104,7 @@ test_expect_success '--unset last key removes section (except if commented)' '
 	key = true
 	EOF
 	git config ${mode_unset} two.key &&
-	! grep two .git/config &&
+	test_grep ! two .git/config &&
 
 	q_to_tab >.git/config <<-\EOF &&
 	[one]
@@ -2124,7 +2124,7 @@ test_expect_success '--unset last key removes section (except if commented)' '
 	Qkey = true
 	EOF
 	git config ${mode_unset} two.key &&
-	grep two .git/config &&
+	test_grep two .git/config &&
 
 	q_to_tab >.git/config <<-\EOF &&
 	[one]
@@ -2655,7 +2655,7 @@ test_expect_success '--type rejects unknown specifiers' '
 
 test_expect_success '--type=int requires at least one digit' '
 	test_must_fail git config --type int --default m some.key >out 2>error &&
-	grep "bad numeric config value" error &&
+	test_grep "bad numeric config value" error &&
 	test_must_be_empty out
 '
 
@@ -2967,12 +2967,12 @@ test_expect_success 'includeIf.hasconfig:remote.*.url forbids remote url in such
 
 	# test with any Git command
 	test_must_fail git -C hasremoteurlTest status 2>err &&
-	grep "fatal: remote URLs cannot be configured in file directly or indirectly included by includeIf.hasconfig:remote.*.url" err
+	test_grep "fatal: remote URLs cannot be configured in file directly or indirectly included by includeIf.hasconfig:remote.*.url" err
 '
 
 test_expect_success 'negated mode causes failure' '
 	test_must_fail git config --no-get 2>err &&
-	grep "unknown option \`no-get${SQ}" err
+	test_grep "unknown option \`no-get${SQ}" err
 '
 
 test_expect_success 'specifying multiple modes causes failure' '

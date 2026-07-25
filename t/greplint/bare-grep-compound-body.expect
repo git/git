@@ -1,0 +1,3 @@
+4: error: bare grep outside pipeline (use test_grep)
+8: error: bare grep outside pipeline (use test_grep)
+15: error: bare grep outside pipeline (use test_grep)

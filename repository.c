@@ -376,6 +376,7 @@ void repo_clear(struct repository *repo)
 
 	FREE_AND_NULL(repo->gitdir);
 	FREE_AND_NULL(repo->commondir);
+	FREE_AND_NULL(repo->prefix);
 	FREE_AND_NULL(repo->graft_file);
 	FREE_AND_NULL(repo->index_file);
 	FREE_AND_NULL(repo->worktree);

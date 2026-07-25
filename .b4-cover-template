@@ -8,4 +8,5 @@ ${diffstat}
 ${range_diff}
 ---
 base-commit: ${base_commit}
+change-id: ${change_id}
 ${prerequisites}

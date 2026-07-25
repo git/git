@@ -30,7 +30,7 @@ test_expect_success 'read-tree updates worktree, dirty case' '
 	git update-index --skip-worktree init.t &&
 	echo dirty >> init.t &&
 	test_must_fail git read-tree -m -u HEAD^ &&
-	grep -q dirty init.t &&
+	test_grep -q dirty init.t &&
 	test "$(git ls-files -t init.t)" = "S init.t" &&
 	git update-index --no-skip-worktree init.t
 '
@@ -48,7 +48,7 @@ test_expect_success 'read-tree removes worktree, dirty case' '
 	git update-index --skip-worktree added &&
 	echo dirty >> added &&
 	test_must_fail git read-tree -m -u HEAD^ &&
-	grep -q dirty added &&
+	test_grep -q dirty added &&
 	test "$(git ls-files -t added)" = "S added" &&
 	git update-index --no-skip-worktree added
 '
@@ -173,7 +173,7 @@ test_expect_success 'stash restore in sparse checkout' '
 		echo in the way >modified &&
 		test_must_fail git stash apply 2>error&&
 
-		grep "changes.*would be overwritten by merge" error &&
+		test_grep "changes.*would be overwritten by merge" error &&
 
 		echo in the way >expect &&
 		test_cmp expect modified &&

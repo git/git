@@ -31,7 +31,7 @@ test_expect_success pull '
 	git pull --no-rebase --log &&
 	git log -2 &&
 	git cat-file commit HEAD >result &&
-	grep Dollar result
+	test_grep Dollar result
 )
 '
 
@@ -44,8 +44,8 @@ test_expect_success '--log=1 limits shortlog length' '
 	git pull --no-rebase --log=1 &&
 	git log -3 &&
 	git cat-file commit HEAD >result &&
-	grep Dollar result &&
-	! grep "second commit" result
+	test_grep Dollar result &&
+	test_grep ! "second commit" result
 )
 '
 

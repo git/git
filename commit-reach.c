@@ -108,11 +108,14 @@ static int paint_down_to_common(struct repository *r,
 		{ compare_commits_by_gen_then_commit_date }
 	};
 	int i;
+	int gen_ordered = 1;
 	timestamp_t last_gen = GENERATION_NUMBER_INFINITY;
 	struct commit_list **tail = result;
 
-	if (!min_generation && !corrected_commit_dates_enabled(r))
+	if (!min_generation && !corrected_commit_dates_enabled(r)) {
 		queue.pq.compare = compare_commits_by_commit_date;
+		gen_ordered = 0;
+	}
 
 	one->object.flags |= PARENT1;
 	if (!n) {
@@ -147,11 +150,12 @@ static int paint_down_to_common(struct repository *r,
 				commit->object.flags |= RESULT;
 				tail = commit_list_append(commit, tail);
 				/*
-				 * The queue is generation-ordered; no
-				 * remaining common ancestor can be a
+				 * When the queue is generation-ordered,
+				 * no remaining common ancestor can be a
 				 * descendant of this one.
 				 */
 				if (!(mb_flags & MERGE_BASE_FIND_ALL) &&
+				    gen_ordered &&
 				    generation < GENERATION_NUMBER_INFINITY)
 					break;
 			}

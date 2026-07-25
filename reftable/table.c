@@ -242,6 +242,8 @@ static int table_iter_seek_to(struct table_iter *ti, uint64_t off, uint8_t typ)
 	int err;
 
 	err = table_init_block(ti->table, &ti->block, off, typ);
+	if (err > 0)
+		return REFTABLE_FORMAT_ERROR;
 	if (err != 0)
 		return err;
 
@@ -556,6 +558,11 @@ int reftable_table_new(struct reftable_table **out,
 	}
 	t->version = header.data[4];
 	if (t->version != 1 && t->version != 2) {
+		err = REFTABLE_FORMAT_ERROR;
+		goto done;
+	}
+
+	if (file_size < header_size(t->version) + footer_size(t->version)) {
 		err = REFTABLE_FORMAT_ERROR;
 		goto done;
 	}

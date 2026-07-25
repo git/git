@@ -318,7 +318,7 @@ test_expect_success 'checkout to detach HEAD' '
 	git checkout -f renamer &&
 	git clean -f &&
 	git checkout renamer^ 2>messages &&
-	grep "HEAD is now at $rev" messages &&
+	test_grep "HEAD is now at $rev" messages &&
 	test_line_count -gt 1 messages &&
 	H=$(git rev-parse --verify HEAD) &&
 	M=$(git show-ref -s --verify refs/heads/main) &&
@@ -794,7 +794,7 @@ test_expect_success 'switch out of non-branch' '
 	git checkout main^0 &&
 	echo modified >one &&
 	test_must_fail git checkout renamer 2>error.log &&
-	! grep "^Previous HEAD" error.log
+	test_grep ! "^Previous HEAD" error.log
 '
 
 (
@@ -844,7 +844,7 @@ test_expect_success 'custom merge driver with checkout -m' '
 	(
 		for t in filfre-common left right
 		do
-			grep $t arm || exit 1
+			test_grep $t arm || exit 1
 		done
 	) &&
 

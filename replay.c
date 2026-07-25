@@ -36,12 +36,16 @@ static struct commit *peel_committish(struct repository *repo,
 {
 	struct object *obj;
 	struct object_id oid;
+	struct commit *commit;
 
 	if (repo_get_oid(repo, name, &oid))
 		die(_("'%s' is not a valid commit-ish for %s"), name, mode);
 	obj = parse_object_or_die(repo, &oid, name);
-	return (struct commit *)repo_peel_to_type(repo, name, 0, obj,
-						  OBJ_COMMIT);
+	commit = (struct commit *)repo_peel_to_type(repo, name, 0, obj,
+						    OBJ_COMMIT);
+	if (!commit)
+		die(_("'%s' does not point to a commit for %s"), name, mode);
+	return commit;
 }
 
 static char *get_author(const char *message)

@@ -60,8 +60,8 @@ test_expect_success 'verify that .promisor file contains refs fetched' '
 	ls pc1/.git/objects/pack/pack-*.promisor >promisorlist &&
 	test_line_count = 1 promisorlist &&
 	git -C srv.bare rev-parse --verify HEAD >headhash &&
-	grep "$(cat headhash) HEAD" $(cat promisorlist) &&
-	grep "$(cat headhash) refs/heads/main" $(cat promisorlist)
+	test_grep "$(cat headhash) HEAD" $(cat promisorlist) &&
+	test_grep "$(cat headhash) refs/heads/main" $(cat promisorlist)
 '
 
 # checkout main to force dynamic object fetch of blobs at HEAD.
@@ -254,8 +254,8 @@ test_expect_success 'fetch --refetch triggers repacking' '
 	GIT_TRACE2_EVENT="$PWD/trace1.event" \
 	git -C pc1 fetch --refetch origin &&
 	test_subcommand git maintenance run --auto --no-quiet --no-detach <trace1.event &&
-	grep \"param\":\"gc.autopacklimit\",\"value\":\"1\" trace1.event &&
-	grep \"param\":\"maintenance.incremental-repack.auto\",\"value\":\"-1\" trace1.event &&
+	test_grep \"param\":\"gc.autopacklimit\",\"value\":\"1\" trace1.event &&
+	test_grep \"param\":\"maintenance.incremental-repack.auto\",\"value\":\"-1\" trace1.event &&
 
 	GIT_TRACE2_EVENT="$PWD/trace2.event" \
 	git -c protocol.version=0 \
@@ -263,8 +263,8 @@ test_expect_success 'fetch --refetch triggers repacking' '
 		-c maintenance.incremental-repack.auto=1234 \
 		-C pc1 fetch --refetch origin &&
 	test_subcommand git maintenance run --auto --no-quiet --no-detach <trace2.event &&
-	grep \"param\":\"gc.autopacklimit\",\"value\":\"0\" trace2.event &&
-	grep \"param\":\"maintenance.incremental-repack.auto\",\"value\":\"-1\" trace2.event &&
+	test_grep \"param\":\"gc.autopacklimit\",\"value\":\"0\" trace2.event &&
+	test_grep \"param\":\"maintenance.incremental-repack.auto\",\"value\":\"-1\" trace2.event &&
 
 	GIT_TRACE2_EVENT="$PWD/trace3.event" \
 	git -c protocol.version=0 \
@@ -272,8 +272,8 @@ test_expect_success 'fetch --refetch triggers repacking' '
 		-c maintenance.incremental-repack.auto=0 \
 		-C pc1 fetch --refetch origin &&
 	test_subcommand git maintenance run --auto --no-quiet --no-detach <trace3.event &&
-	grep \"param\":\"gc.autopacklimit\",\"value\":\"1\" trace3.event &&
-	grep \"param\":\"maintenance.incremental-repack.auto\",\"value\":\"0\" trace3.event
+	test_grep \"param\":\"gc.autopacklimit\",\"value\":\"1\" trace3.event &&
+	test_grep \"param\":\"maintenance.incremental-repack.auto\",\"value\":\"0\" trace3.event
 '
 
 test_expect_success 'partial clone with transfer.fsckobjects=1 works with submodules' '
@@ -308,7 +308,7 @@ test_expect_success 'partial clone with transfer.fsckobjects=1 uses index-pack -
 
 	GIT_TRACE="$(pwd)/trace" git -c transfer.fsckobjects=1 \
 		clone --filter="blob:none" "file://$(pwd)/src" dst &&
-	grep "git index-pack.*--fsck-objects" trace
+	test_grep "git index-pack.*--fsck-objects" trace
 '
 
 test_expect_success 'use fsck before and after manually fetching a missing subtree' '
@@ -336,7 +336,7 @@ test_expect_success 'use fsck before and after manually fetching a missing subtr
 
 	# Auto-fetch a tree with cat-file.
 	git -C dst cat-file -p $SUBTREE >tree_contents &&
-	grep file.txt tree_contents &&
+	test_grep file.txt tree_contents &&
 
 	# fsck still works after an auto-fetch of a tree.
 	git -C dst fsck &&
@@ -357,14 +357,14 @@ test_expect_success 'implicitly construct combine: filter with repeated flags' '
 	GIT_TRACE=$(pwd)/trace git clone --bare \
 		--filter=blob:none --filter=tree:1 \
 		"file://$(pwd)/srv.bare" pc2 &&
-	grep "trace:.* git pack-objects .*--filter=combine:blob:none+tree:1" \
+	test_grep "trace:.* git pack-objects .*--filter=combine:blob:none+tree:1" \
 		trace &&
 	git -C pc2 rev-list --objects --missing=allow-any HEAD >objects &&
 
 	# We should have gotten some root trees.
-	grep " $" objects &&
+	test_grep " $" objects &&
 	# Should not have gotten any non-root trees or blobs.
-	! grep " ." objects &&
+	test_grep ! " ." objects &&
 
 	xargs -n 1 git -C pc2 cat-file -t <objects >types &&
 	sort -u types >unique_types.actual &&
@@ -433,7 +433,7 @@ test_expect_success 'partial clone fetches blobs pointed to by refs even if norm
 	git -C src tag myblob "$BLOB" &&
 
 	git clone --filter="blob:none" "file://$(pwd)/src" dst 2>err &&
-	! grep "does not point to a valid object" err &&
+	test_grep ! "does not point to a valid object" err &&
 	git -C dst fsck
 '
 
@@ -448,10 +448,10 @@ test_expect_success 'fetch what is specified on CLI even if already promised' '
 
 	git clone --bare --filter=blob:none "file://$(pwd)/src" dst.git &&
 	git -C dst.git rev-list --objects --quiet --missing=print HEAD >missing_before &&
-	grep "?$(cat blob)" missing_before &&
+	test_grep "?$(cat blob)" missing_before &&
 	git -C dst.git fetch origin $(cat blob) &&
 	git -C dst.git rev-list --objects --quiet --missing=print HEAD >missing_after &&
-	! grep "?$(cat blob)" missing_after
+	test_grep ! "?$(cat blob)" missing_after
 '
 
 test_expect_success 'setup src repo for sparse filter' '
@@ -473,8 +473,8 @@ test_expect_success 'partial clone with sparse filter succeeds' '
 	(
 		cd dst.git &&
 		git rev-list --objects --missing=print HEAD >out &&
-		grep "^$(git rev-parse HEAD:one.t)" out &&
-		grep "^?$(git rev-parse HEAD:two.t)" out
+		test_grep "^$(git rev-parse HEAD:one.t)" out &&
+		test_grep "^?$(git rev-parse HEAD:two.t)" out
 	)
 '
 
@@ -545,7 +545,7 @@ test_expect_success 'fetch lazy-fetches only to resolve deltas' '
 	# Verify the assumption that the client needed to fetch the delta base
 	# to resolve the delta.
 	git -C server rev-parse HEAD~1^{tree} >hash &&
-	grep "want $(cat hash)" trace
+	test_grep "want $(cat hash)" trace
 '
 
 test_expect_success 'fetch lazy-fetches only to resolve deltas, protocol v2' '
@@ -562,12 +562,12 @@ test_expect_success 'fetch lazy-fetches only to resolve deltas, protocol v2' '
 		fetch "file://$(pwd)/server" main &&
 
 	# Verify that protocol version 2 was used.
-	grep "fetch< version 2" trace &&
+	test_grep "fetch< version 2" trace &&
 
 	# Verify the assumption that the client needed to fetch the delta base
 	# to resolve the delta.
 	git -C server rev-parse HEAD~1^{tree} >hash &&
-	grep "want $(cat hash)" trace
+	test_grep "want $(cat hash)" trace
 '
 
 test_expect_success 'fetch does not lazy-fetch missing targets of its refs' '
@@ -587,7 +587,7 @@ test_expect_success 'fetch does not lazy-fetch missing targets of its refs' '
 		--no-tags --recurse-submodules=no \
 		origin refs/tags/bar &&
 	FOO_HASH=$(git -C server rev-parse foo) &&
-	! grep "want $FOO_HASH" trace
+	test_grep ! "want $FOO_HASH" trace
 '
 
 # The following two tests must be in this order. It is important that
@@ -645,7 +645,7 @@ test_expect_success 'fetch from a partial clone, protocol v0' '
 	test_config -C client protocol.version 0 &&
 	test_commit -C client bar &&
 	GIT_TRACE_PACKET="$(pwd)/trace" git -C client fetch "file://$(pwd)/server" &&
-	! grep "version 2" trace
+	test_grep ! "version 2" trace
 '
 
 test_expect_success 'fetch from a partial clone, protocol v2' '
@@ -664,7 +664,7 @@ test_expect_success 'fetch from a partial clone, protocol v2' '
 	test_config -C client protocol.version 2 &&
 	test_commit -C client bar &&
 	GIT_TRACE_PACKET="$(pwd)/trace" git -C client fetch "file://$(pwd)/server" &&
-	grep "version 2" trace
+	test_grep "version 2" trace
 '
 
 test_expect_success 'repack does not loosen promisor objects' '
@@ -672,7 +672,7 @@ test_expect_success 'repack does not loosen promisor objects' '
 	git clone --bare --filter=blob:none "file://$(pwd)/srv.bare" client &&
 	test_when_finished "rm -rf client trace" &&
 	GIT_TRACE2_PERF="$(pwd)/trace" git -C client repack -A -d &&
-	grep "loosen_unused_packed_objects/loosened:0" trace
+	test_grep "loosen_unused_packed_objects/loosened:0" trace
 '
 
 test_expect_success 'lazy-fetch in submodule succeeds' '
@@ -848,7 +848,7 @@ test_expect_success 'when partial cloning, tolerate server not sending target of
 	# Exercise to make sure it works.
 	git -c protocol.version=2 clone \
 		--filter=blob:none $HTTPD_URL/one_time_script/server repo 2> err &&
-	! grep "missing object referenced by" err &&
+	test_grep ! "missing object referenced by" err &&
 
 	# Ensure that the one-time-script script was used.
 	! test -e "$HTTPD_ROOT_PATH/one-time-script"
@@ -905,13 +905,13 @@ test_expect_success PERL_TEST_HELPERS 'tolerate server sending REF_DELTA against
 	# by any 3 nybbles, then the OID of the delta base.
 	printf "f.,..%s" $(intersperse "," <deltabase_missing) >want &&
 	hex_unpack <thin.pack | intersperse "," >have &&
-	grep $(cat want) have &&
+	test_grep $(cat want) have &&
 
 	# Ensure that the pack contains one delta against HEAD^:have.txt,
 	# similar to the above.
 	printf "f.,..%s" $(intersperse "," <deltabase_have) >want &&
 	hex_unpack <thin.pack | intersperse "," >have &&
-	grep $(cat want) have &&
+	test_grep $(cat want) have &&
 
 	replace_packfile thin.pack &&
 
@@ -925,8 +925,8 @@ test_expect_success PERL_TEST_HELPERS 'tolerate server sending REF_DELTA against
 
 	# Ensure that the missing delta base was directly fetched, but not the
 	# one that the client has.
-	grep "want $(cat deltabase_missing)" trace &&
-	! grep "want $(cat deltabase_have)" trace &&
+	test_grep "want $(cat deltabase_missing)" trace &&
+	test_grep ! "want $(cat deltabase_have)" trace &&
 
 	# Ensure that the one-time-script script was used.
 	! test -e "$HTTPD_ROOT_PATH/one-time-script"

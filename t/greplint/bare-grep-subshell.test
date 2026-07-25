@@ -1,0 +1,5 @@
+test_expect_success 'grep in subshell is flagged' '
+	(
+		grep pattern file
+	)
+'

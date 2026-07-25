@@ -517,7 +517,7 @@ static void send_capabilities(int fd_out, struct packet_reader *reader)
 int get_remote_bundle_uri(int fd_out, struct packet_reader *reader,
 			  struct bundle_list *bundles, int stateless_rpc)
 {
-	int line_nr = 1;
+	int line_nr = 1, err = 0;
 
 	/* Assert bundle-uri support */
 	ensure_server_supports_v2("bundle-uri");
@@ -536,10 +536,19 @@ int get_remote_bundle_uri(int fd_out, struct packet_reader *reader,
 		const char *line = reader->line;
 		line_nr++;
 
+		/*
+		 * Do not parse if an error was encountered, but
+		 * continue draining the response so no stale data
+		 * is left in the reader for subsequent protocol
+		 * exchanges.
+		 */
+		if (err)
+			continue;
+
 		if (!bundle_uri_parse_line(bundles, line))
 			continue;
 
-		return error(_("error on bundle-uri response line %d: %s"),
+		err = error(_("error on bundle-uri response line %d: %s"),
 			     line_nr, line);
 	}
 
@@ -554,7 +563,7 @@ int get_remote_bundle_uri(int fd_out, struct packet_reader *reader,
 	check_stateless_delimiter(stateless_rpc, reader,
 				  _("expected response end packet after ref listing"));
 
-	return 0;
+	return err;
 }
 
 struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,

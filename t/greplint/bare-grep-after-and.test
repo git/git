@@ -1,0 +1,4 @@
+test_expect_success 'grep after && is flagged' '
+	cmd &&
+	grep pattern file
+'

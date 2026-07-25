@@ -131,3 +131,5 @@ option('test_utf8_locale', type: 'string',
   description: 'Name of a UTF-8 locale used for testing.')
 option('fuzzers', type: 'boolean', value: false,
   description: 'Enable building fuzzers.')
+option('fuzzers_link_args', type: 'array', value: [],
+  description: 'Linker arguments used to link fuzzers. Use -fsanitize=fuzzer for fuzzing.')
