@@ -24,6 +24,28 @@ setup_repository () {
 	)
 }
 
+setup_url_pushremote () {
+	rm -rf fork.git client &&
+	git clone --bare one fork.git &&
+	git clone one client &&
+	fork_url="file://$TRASH_DIRECTORY/fork.git" &&
+	(
+		cd client &&
+		git checkout -b topic --track origin/main &&
+		git commit --allow-empty -m topic-change &&
+		git config push.default current &&
+		git config status.compareBranches "@{upstream} @{push}" &&
+		git config branch.topic.pushRemote "$fork_url" &&
+		git push
+	)
+}
+
+check_status () {
+	git -C client status >actual &&
+	cat >expected &&
+	test_cmp expected actual
+}
+
 tokens_match () {
 	echo "$1" | tr ' ' '\012' | sort | sed -e '/^$/d' >expect &&
 	echo "$2" | tr ' ' '\012' | sort | sed -e '/^$/d' >actual &&
@@ -1016,6 +1038,128 @@ test_expect_success 'rename a remote renames repo remote.pushDefault but keeps g
 		test "$(git config --global remote.pushDefault)" = "origin" &&
 		test "$(git config --local remote.pushDefault)" = "upstream"
 	)
+'
+
+test_expect_success 'URL-valued pushRemote without matching remote is not trackable' '
+	setup_url_pushremote &&
+
+	check_status <<-EOF
+	On branch topic
+	Your branch is ahead of ${SQ}origin/main${SQ} by 1 commit.
+	  (use "git push" to publish your local commits)
+
+	nothing to commit, working tree clean
+	EOF
+'
+
+test_expect_success 'adding matching remote makes URL-valued pushRemote trackable' '
+	setup_url_pushremote &&
+
+	(
+		cd client &&
+		git remote rename origin upstream &&
+		git remote add -f origin "$fork_url"
+	) &&
+
+	check_status <<-EOF
+	On branch topic
+	Your branch is ahead of ${SQ}upstream/main${SQ} by 1 commit.
+
+	Your branch is up to date with ${SQ}origin/topic${SQ}.
+
+	nothing to commit, working tree clean
+	EOF
+'
+
+test_expect_success 'configured pushurl makes URL-valued pushRemote trackable' '
+	setup_url_pushremote &&
+
+	(
+		cd client &&
+		git remote rename origin upstream &&
+		git remote add -f origin ../fork.git &&
+		git remote set-url --push origin "$fork_url"
+	) &&
+
+	check_status <<-EOF
+	On branch topic
+	Your branch is ahead of ${SQ}upstream/main${SQ} by 1 commit.
+
+	Your branch is up to date with ${SQ}origin/topic${SQ}.
+
+	nothing to commit, working tree clean
+	EOF
+'
+
+test_expect_success 'pushInsteadOf URL pushRemote is trackable' '
+	setup_url_pushremote &&
+	(
+		cd client &&
+		git remote rename origin upstream &&
+		git remote add -f origin "$fork_url" &&
+		git config "url.$fork_url.pushInsteadOf" fork: &&
+		git config branch.topic.pushRemote fork:
+	) &&
+
+	check_status <<-EOF
+	On branch topic
+	Your branch is ahead of ${SQ}upstream/main${SQ} by 1 commit.
+
+	Your branch is up to date with ${SQ}origin/topic${SQ}.
+
+	nothing to commit, working tree clean
+	EOF
+'
+
+test_expect_success 'up-to-date URL push refreshes stale tracking branch' '
+	setup_url_pushremote &&
+	(
+		cd client &&
+		git remote rename origin upstream &&
+		git remote add -f origin "$fork_url" &&
+		git commit --allow-empty -m another-topic-change &&
+		git -C ../fork.git fetch ../client topic:topic
+	) &&
+
+	check_status <<-EOF &&
+	On branch topic
+	Your branch is ahead of ${SQ}upstream/main${SQ} by 2 commits.
+
+	Your branch is ahead of ${SQ}origin/topic${SQ} by 1 commit.
+	  (use "git push" to publish your local commits)
+
+	nothing to commit, working tree clean
+	EOF
+
+	git -C client push >actual 2>&1 &&
+	test_grep "Everything up-to-date" actual &&
+
+	check_status <<-EOF
+	On branch topic
+	Your branch is ahead of ${SQ}upstream/main${SQ} by 2 commits.
+
+	Your branch is up to date with ${SQ}origin/topic${SQ}.
+
+	nothing to commit, working tree clean
+	EOF
+'
+
+test_expect_success 'duplicate remote URL leaves URL-valued pushRemote ambiguous' '
+	setup_url_pushremote &&
+	(
+		cd client &&
+		git remote rename origin upstream &&
+		git remote add -f origin "$fork_url" &&
+		git remote add duplicate "$fork_url"
+	) &&
+
+	check_status <<-EOF
+	On branch topic
+	Your branch is ahead of ${SQ}upstream/main${SQ} by 1 commit.
+	  (use "git push" to publish your local commits)
+
+	nothing to commit, working tree clean
+	EOF
 '
 
 test_expect_success 'rename handles remote without fetch refspec' '
