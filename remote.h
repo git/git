@@ -358,8 +358,8 @@ struct remote_group_data {
 };
 
 int get_remote_group(const char *key, const char *value,
-                    const struct config_context *ctx,
-                    void *priv);
+		     const struct config_context *ctx,
+		     void *priv);
 
 int add_remote_or_group(const char *name, struct string_list *list);
 
