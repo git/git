@@ -570,10 +570,18 @@ static int odb_source_packed_find_abbrev_len(struct odb_source *source,
 }
 
 static int odb_source_packed_freshen_object(struct odb_source *source,
-					    const struct object_id *oid)
+					    const struct object_id *oid,
+					    const time_t *mtime)
 {
 	struct odb_source_packed *packed = odb_source_packed_downcast(source);
+	struct utimbuf times, *timesp = NULL;
 	struct pack_entry e;
+
+	if (mtime) {
+		times.actime = *mtime;
+		times.modtime = *mtime;
+		timesp = &times;
+	}
 
 	if (!find_pack_entry(packed, oid, &e))
 		return 0;
@@ -581,7 +589,7 @@ static int odb_source_packed_freshen_object(struct odb_source *source,
 		return 0;
 	if (e.p->freshened)
 		return 1;
-	if (utime(e.p->pack_name, NULL))
+	if (utime(e.p->pack_name, timesp))
 		return 0;
 	e.p->freshened = 1;
 
@@ -592,8 +600,9 @@ static int odb_source_packed_write_object(struct odb_source *source UNUSED,
 					  const void *buf UNUSED,
 					  size_t len UNUSED,
 					  enum object_type type UNUSED,
-					  struct object_id *oid UNUSED,
-					  struct object_id *compat_oid UNUSED,
+					  const struct object_id *oid UNUSED,
+					  const struct object_id *compat_oid UNUSED,
+					  const time_t *mtime UNUSED,
 					  unsigned flags UNUSED)
 {
 	return error("packed backend cannot write objects");

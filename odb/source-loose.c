@@ -11,8 +11,11 @@
 #include "odb/source-loose.h"
 #include "odb/streaming.h"
 #include "oidtree.h"
+#include "path.h"
 #include "repository.h"
 #include "strbuf.h"
+#include "tempfile.h"
+#include "write-or-die.h"
 
 static int append_loose_object(const struct object_id *oid,
 			       const char *path UNUSED,
@@ -574,53 +577,270 @@ out:
 }
 
 static int odb_source_loose_freshen_object(struct odb_source *source,
-					   const struct object_id *oid)
+					   const struct object_id *oid,
+					   const time_t *mtime)
 {
 	struct odb_source_loose *loose = odb_source_loose_downcast(source);
 	static struct strbuf path = STRBUF_INIT;
 	odb_loose_path(loose, &path, oid);
-	return !!check_and_freshen_file(path.buf, 1);
+	return !!check_and_freshen_file(path.buf, 1, mtime);
+}
+
+/* Finalize a file on disk, and close it. */
+static void close_loose_object(struct odb_source_loose *loose,
+			       int fd, const char *filename)
+{
+	if (loose->base.will_destroy)
+		goto out;
+
+	if (batch_fsync_enabled(FSYNC_COMPONENT_LOOSE_OBJECT))
+		odb_transaction_files_fsync(loose->base.odb->transaction, fd, filename);
+	else if (fsync_object_files > 0)
+		fsync_or_die(fd, filename);
+	else
+		fsync_component_or_die(FSYNC_COMPONENT_LOOSE_OBJECT, fd,
+				       filename);
+
+out:
+	if (close(fd) != 0)
+		die_errno(_("error when closing loose object file"));
+}
+
+/* Size of directory component, including the ending '/' */
+static inline int directory_size(const char *filename)
+{
+	const char *s = strrchr(filename, '/');
+	if (!s)
+		return 0;
+	return s - filename + 1;
+}
+
+/*
+ * This creates a temporary file in the same directory as the final
+ * 'filename'
+ *
+ * We want to avoid cross-directory filename renames, because those
+ * can have problems on various filesystems (FAT, NFS, Coda).
+ */
+static int create_tmpfile(struct repository *repo,
+			  struct strbuf *tmp, const char *filename)
+{
+	int fd, dirlen = directory_size(filename);
+
+	strbuf_reset(tmp);
+	strbuf_add(tmp, filename, dirlen);
+	strbuf_addstr(tmp, "tmp_obj_XXXXXX");
+	fd = git_mkstemp_mode(tmp->buf, 0444);
+	if (fd < 0 && dirlen && errno == ENOENT) {
+		/*
+		 * Make sure the directory exists; note that the contents
+		 * of the buffer are undefined after mkstemp returns an
+		 * error, so we have to rewrite the whole buffer from
+		 * scratch.
+		 */
+		strbuf_reset(tmp);
+		strbuf_add(tmp, filename, dirlen - 1);
+		if (mkdir(tmp->buf, 0777) && errno != EEXIST)
+			return -1;
+		if (adjust_shared_perm(repo, tmp->buf))
+			return -1;
+
+		/* Try again */
+		strbuf_addstr(tmp, "/tmp_obj_XXXXXX");
+		fd = git_mkstemp_mode(tmp->buf, 0444);
+	}
+	return fd;
+}
+
+/**
+ * Common steps for loose object writers to start writing loose
+ * objects:
+ *
+ * - Create tmpfile for the loose object.
+ * - Setup zlib stream for compression.
+ * - Start to feed header to zlib stream.
+ *
+ * Returns a "fd", which should later be provided to
+ * end_loose_object_common().
+ */
+static int start_loose_object_common(struct odb_source_loose *loose,
+				     struct strbuf *tmp_file,
+				     const char *filename, unsigned flags,
+				     git_zstream *stream,
+				     unsigned char *buf, size_t buflen,
+				     struct git_hash_ctx *c, struct git_hash_ctx *compat_c,
+				     char *hdr, int hdrlen)
+{
+	const struct git_hash_algo *algo = loose->base.odb->repo->hash_algo;
+	const struct git_hash_algo *compat = loose->base.odb->repo->compat_hash_algo;
+	int fd;
+	struct repo_config_values *cfg = repo_config_values(loose->base.odb->repo);
+
+	fd = create_tmpfile(loose->base.odb->repo, tmp_file, filename);
+	if (fd < 0) {
+		if (flags & ODB_WRITE_OBJECT_SILENT)
+			return -1;
+		else if (errno == EACCES)
+			return error(_("insufficient permission for adding "
+				       "an object to repository database %s"),
+				     loose->base.path);
+		else
+			return error_errno(
+				_("unable to create temporary file"));
+	}
+
+	/*  Setup zlib stream for compression */
+	git_deflate_init(stream, cfg->zlib_compression_level);
+	stream->next_out = buf;
+	stream->avail_out = buflen;
+	git_hash_init(c, algo);
+	if (compat && compat_c)
+		git_hash_init(compat_c, compat);
+
+	/*  Start to feed header to zlib stream */
+	stream->next_in = (unsigned char *)hdr;
+	stream->avail_in = hdrlen;
+	while (git_deflate(stream, 0) == Z_OK)
+		; /* nothing */
+	git_hash_update(c, hdr, hdrlen);
+	if (compat && compat_c)
+		git_hash_update(compat_c, hdr, hdrlen);
+
+	return fd;
+}
+
+/**
+ * Common steps for the inner git_deflate() loop for writing loose
+ * objects. Returns what git_deflate() returns.
+ */
+static int write_loose_object_common(struct odb_source_loose *loose,
+				     struct git_hash_ctx *c, struct git_hash_ctx *compat_c,
+				     git_zstream *stream, const int flush,
+				     unsigned char *in0, const int fd,
+				     unsigned char *compressed,
+				     const size_t compressed_len)
+{
+	const struct git_hash_algo *compat = loose->base.odb->repo->compat_hash_algo;
+	int ret;
+
+	ret = git_deflate(stream, flush ? Z_FINISH : 0);
+	git_hash_update(c, in0, stream->next_in - in0);
+	if (compat && compat_c)
+		git_hash_update(compat_c, in0, stream->next_in - in0);
+	if (write_in_full(fd, compressed, stream->next_out - compressed) < 0)
+		die_errno(_("unable to write loose object file"));
+	stream->next_out = compressed;
+	stream->avail_out = compressed_len;
+
+	return ret;
+}
+
+/**
+ * Common steps for loose object writers to end writing loose objects:
+ *
+ * - End the compression of zlib stream.
+ * - Get the calculated oid to "oid".
+ */
+static int end_loose_object_common(struct odb_source_loose *loose,
+				   struct git_hash_ctx *c, struct git_hash_ctx *compat_c,
+				   git_zstream *stream, struct object_id *oid,
+				   struct object_id *compat_oid)
+{
+	const struct git_hash_algo *compat = loose->base.odb->repo->compat_hash_algo;
+	int ret;
+
+	ret = git_deflate_end_gently(stream);
+	if (ret != Z_OK)
+		return ret;
+	git_hash_final_oid(oid, c);
+	if (compat && compat_c)
+		git_hash_final_oid(compat_oid, compat_c);
+
+	return Z_OK;
+}
+
+static int write_loose_object(struct odb_source_loose *loose,
+			      const struct object_id *oid, char *hdr,
+			      int hdrlen, const void *buf, unsigned long len,
+			      const time_t *mtime, unsigned flags)
+{
+	int fd, ret;
+	unsigned char compressed[4096];
+	git_zstream stream;
+	struct git_hash_ctx c;
+	struct object_id parano_oid;
+	static struct strbuf tmp_file = STRBUF_INIT;
+	static struct strbuf filename = STRBUF_INIT;
+
+	if (batch_fsync_enabled(FSYNC_COMPONENT_LOOSE_OBJECT))
+		odb_transaction_files_prepare(loose->base.odb->transaction);
+
+	odb_loose_path(loose, &filename, oid);
+
+	fd = start_loose_object_common(loose, &tmp_file, filename.buf, flags,
+				       &stream, compressed, sizeof(compressed),
+				       &c, NULL, hdr, hdrlen);
+	if (fd < 0)
+		return -1;
+
+	/* Then the data itself.. */
+	stream.next_in = (void *)buf;
+	stream.avail_in = len;
+	do {
+		unsigned char *in0 = stream.next_in;
+
+		ret = write_loose_object_common(loose, &c, NULL, &stream, 1, in0, fd,
+						compressed, sizeof(compressed));
+	} while (ret == Z_OK);
+
+	if (ret != Z_STREAM_END)
+		die(_("unable to deflate new object %s (%d)"), oid_to_hex(oid),
+		    ret);
+	ret = end_loose_object_common(loose, &c, NULL, &stream, &parano_oid, NULL);
+	if (ret != Z_OK)
+		die(_("deflateEnd on object %s failed (%d)"), oid_to_hex(oid),
+		    ret);
+	if (!oideq(oid, &parano_oid))
+		die(_("confused by unstable object source data for %s"),
+		    oid_to_hex(oid));
+
+	close_loose_object(loose, fd, tmp_file.buf);
+
+	if (mtime) {
+		struct utimbuf utb = {
+			.actime = *mtime,
+			.modtime = *mtime,
+		};
+
+		if (utime(tmp_file.buf, &utb) < 0 &&
+		    !(flags & ODB_WRITE_OBJECT_SILENT))
+			warning_errno(_("failed utime() on %s"), tmp_file.buf);
+	}
+
+	return finalize_object_file_flags(loose->base.odb->repo, tmp_file.buf, filename.buf,
+					  FOF_SKIP_COLLISION_CHECK);
 }
 
 static int odb_source_loose_write_object(struct odb_source *source,
 					 const void *buf, size_t len,
-					 enum object_type type, struct object_id *oid,
-					 struct object_id *compat_oid_in,
+					 enum object_type type,
+					 const struct object_id *oid,
+					 const struct object_id *compat_oid,
+					 const time_t *mtime,
 					 enum odb_write_object_flags flags)
 {
 	struct odb_source_loose *loose = odb_source_loose_downcast(source);
-	const struct git_hash_algo *algo = source->odb->repo->hash_algo;
-	const struct git_hash_algo *compat = source->odb->repo->compat_hash_algo;
-	struct object_id compat_oid;
 	char hdr[MAX_HEADER_LEN];
-	size_t hdrlen = sizeof(hdr);
+	int hdrlen;
 
-	/* Generate compat_oid */
-	if (compat) {
-		if (compat_oid_in)
-			oidcpy(&compat_oid, compat_oid_in);
-		else if (type == OBJ_BLOB)
-			hash_object_file(compat, buf, len, type, &compat_oid);
-		else {
-			struct strbuf converted = STRBUF_INIT;
-			convert_object_file(source->odb->repo, &converted, algo, compat,
-					    buf, len, type, 0);
-			hash_object_file(compat, converted.buf, converted.len,
-					 type, &compat_oid);
-			strbuf_release(&converted);
-		}
-	}
+	hdrlen = format_object_header(hdr, sizeof(hdr), type, len);
 
-	/* Normally if we have it in the pack then we do not bother writing
-	 * it out into .git/objects/??/?{38} file.
-	 */
-	write_object_file_prepare(algo, buf, len, type, oid, hdr, &hdrlen);
-	if (odb_freshen_object(source->odb, oid))
-		return 0;
-	if (write_loose_object(loose, oid, hdr, hdrlen, buf, len, 0, flags))
+	if (write_loose_object(loose, oid, hdr, hdrlen, buf, len, mtime, flags))
 		return -1;
-	if (compat)
-		return repo_add_loose_object_map(loose, oid, &compat_oid);
+
+	if (compat_oid)
+		return repo_add_loose_object_map(loose, oid, compat_oid);
+
 	return 0;
 }
 
@@ -629,12 +849,120 @@ static int odb_source_loose_write_object_stream(struct odb_source *source,
 						size_t len,
 						struct object_id *oid)
 {
-	/*
-	 * TODO: the implementation should be moved here, see the comment on
-	 * the called function in "object-file.h".
-	 */
 	struct odb_source_loose *loose = odb_source_loose_downcast(source);
-	return odb_source_loose_write_stream(loose, in_stream, len, oid);
+	const struct git_hash_algo *compat = loose->base.odb->repo->compat_hash_algo;
+	struct object_id compat_oid;
+	int fd, ret, err = 0, flush = 0;
+	unsigned char compressed[4096];
+	git_zstream stream;
+	struct git_hash_ctx c, compat_c;
+	struct strbuf tmp_file = STRBUF_INIT;
+	struct strbuf filename = STRBUF_INIT;
+	unsigned char buf[8192];
+	int dirlen;
+	char hdr[MAX_HEADER_LEN];
+	int hdrlen;
+
+	if (batch_fsync_enabled(FSYNC_COMPONENT_LOOSE_OBJECT))
+		odb_transaction_files_prepare(loose->base.odb->transaction);
+
+	/* Since oid is not determined, save tmp file to odb path. */
+	strbuf_addf(&filename, "%s/", loose->base.path);
+	hdrlen = format_object_header(hdr, sizeof(hdr), OBJ_BLOB, len);
+
+	/*
+	 * Common steps for write_loose_object and stream_loose_object to
+	 * start writing loose objects:
+	 *
+	 *  - Create tmpfile for the loose object.
+	 *  - Setup zlib stream for compression.
+	 *  - Start to feed header to zlib stream.
+	 */
+	fd = start_loose_object_common(loose, &tmp_file, filename.buf, 0,
+				       &stream, compressed, sizeof(compressed),
+				       &c, &compat_c, hdr, hdrlen);
+	if (fd < 0) {
+		err = -1;
+		goto cleanup;
+	}
+
+	/* Then the data itself.. */
+	do {
+		unsigned char *in0 = stream.next_in;
+
+		if (!stream.avail_in && !in_stream->is_finished) {
+			ssize_t read_len = odb_write_stream_read(in_stream, buf,
+								 sizeof(buf));
+			if (read_len < 0) {
+				close(fd);
+				err = -1;
+				goto cleanup;
+			}
+
+			stream.avail_in = read_len;
+			stream.next_in = buf;
+			in0 = buf;
+			/* All data has been read. */
+			if (in_stream->is_finished)
+				flush = 1;
+		}
+		ret = write_loose_object_common(loose, &c, &compat_c, &stream, flush, in0, fd,
+						compressed, sizeof(compressed));
+		/*
+		 * Unlike write_loose_object(), we do not have the entire
+		 * buffer. If we get Z_BUF_ERROR due to too few input bytes,
+		 * then we'll replenish them in the next input_stream->read()
+		 * call when we loop.
+		 */
+	} while (ret == Z_OK || ret == Z_BUF_ERROR);
+
+	if (stream.total_in != len + hdrlen)
+		die(_("write stream object %"PRIuMAX" != %"PRIuMAX), (uintmax_t)stream.total_in,
+		    (uintmax_t)len + hdrlen);
+
+	/*
+	 * Common steps for write_loose_object and stream_loose_object to
+	 * end writing loose object:
+	 *
+	 *  - End the compression of zlib stream.
+	 *  - Get the calculated oid.
+	 */
+	if (ret != Z_STREAM_END)
+		die(_("unable to stream deflate new object (%d)"), ret);
+	ret = end_loose_object_common(loose, &c, &compat_c, &stream, oid, &compat_oid);
+	if (ret != Z_OK)
+		die(_("deflateEnd on stream object failed (%d)"), ret);
+	close_loose_object(loose, fd, tmp_file.buf);
+
+	if (odb_freshen_object(loose->base.odb, oid)) {
+		unlink_or_warn(tmp_file.buf);
+		goto cleanup;
+	}
+	odb_loose_path(loose, &filename, oid);
+
+	/* We finally know the object path, and create the missing dir. */
+	dirlen = directory_size(filename.buf);
+	if (dirlen) {
+		struct strbuf dir = STRBUF_INIT;
+		strbuf_add(&dir, filename.buf, dirlen);
+
+		if (safe_create_dir_in_gitdir(loose->base.odb->repo, dir.buf) &&
+		    errno != EEXIST) {
+			err = error_errno(_("unable to create directory %s"), dir.buf);
+			strbuf_release(&dir);
+			goto cleanup;
+		}
+		strbuf_release(&dir);
+	}
+
+	err = finalize_object_file_flags(loose->base.odb->repo, tmp_file.buf, filename.buf,
+					 FOF_SKIP_COLLISION_CHECK);
+	if (!err && compat)
+		err = repo_add_loose_object_map(loose, oid, &compat_oid);
+cleanup:
+	strbuf_release(&tmp_file);
+	strbuf_release(&filename);
+	return err;
 }
 
 static int odb_source_loose_begin_transaction(struct odb_source *source UNUSED,

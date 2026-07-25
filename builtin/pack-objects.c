@@ -32,6 +32,7 @@
 #include "list.h"
 #include "packfile.h"
 #include "object-file.h"
+#include "object-file-convert.h"
 #include "odb.h"
 #include "odb/streaming.h"
 #include "replace-object.h"
@@ -4621,6 +4622,51 @@ static int loosened_object_can_be_discarded(const struct object_id *oid,
 	return 1;
 }
 
+static int force_object_loose(struct odb_source *source,
+			      const struct object_id *oid,
+			      const time_t *mtime)
+{
+	struct odb_source_files *files = odb_source_files_downcast(source);
+	const struct git_hash_algo *compat = source->odb->repo->compat_hash_algo;
+	struct object_info oi = OBJECT_INFO_INIT;
+	struct object_id compat_oid, *compat_oid_p = NULL;
+	enum object_type type;
+	void *buf = NULL;
+	size_t len;
+	int ret;
+
+	for (struct odb_source *s = source->odb->sources; s; s = s->next) {
+		struct odb_source_files *files = odb_source_files_downcast(s);
+		if (!odb_source_read_object_info(&files->loose->base, oid, NULL, 0))
+			return 0;
+	}
+
+	oi.typep = &type;
+	oi.sizep = &len;
+	oi.contentp = &buf;
+	if (odb_read_object_info_extended(source->odb, oid, &oi, 0)) {
+		ret = error(_("cannot read object for %s"), oid_to_hex(oid));
+		goto out;
+	}
+
+	if (compat) {
+		if (repo_oid_to_algop(source->odb->repo, oid, compat, &compat_oid)) {
+			ret = error(_("cannot map object %s to %s"),
+				    oid_to_hex(oid), compat->name);
+			goto out;
+		}
+
+		compat_oid_p = &compat_oid;
+	}
+
+	ret = odb_source_write_object(&files->loose->base, buf, len, type, oid,
+				      compat_oid_p, mtime, 0);
+
+out:
+	free(buf);
+	return ret;
+}
+
 static void loosen_unused_packed_objects(void)
 {
 	struct packed_git *p;
@@ -4641,7 +4687,7 @@ static void loosen_unused_packed_objects(void)
 			    !has_sha1_pack_kept_or_nonlocal(&oid) &&
 			    !loosened_object_can_be_discarded(&oid, p->mtime)) {
 				if (force_object_loose(the_repository->objects->sources,
-						       &oid, p->mtime))
+						       &oid, &p->mtime))
 					die(_("unable to force loose object"));
 				loosened_objects_nr++;
 			}

@@ -738,7 +738,7 @@ int odb_pretend_object(struct object_database *odb,
 		return 0;
 
 	return odb_source_write_object(odb->inmemory_objects,
-				       buf, len, type, oid, NULL, 0);
+				       buf, len, type, oid, NULL, NULL, 0);
 }
 
 void *odb_read_object(struct object_database *odb,
@@ -829,7 +829,7 @@ int odb_freshen_object(struct object_database *odb,
 	struct odb_source *source;
 	odb_prepare_alternates(odb);
 	for (source = odb->sources; source; source = source->next)
-		if (odb_source_freshen_object(source, oid))
+		if (odb_source_freshen_object(source, oid, NULL))
 			return 1;
 	return 0;
 }
@@ -989,11 +989,42 @@ int odb_write_object_ext(struct object_database *odb,
 			 const void *buf, unsigned long len,
 			 enum object_type type,
 			 struct object_id *oid,
-			 struct object_id *compat_oid,
+			 const struct object_id *compat_oid_in,
 			 enum odb_write_object_flags flags)
 {
+	const struct git_hash_algo *compat = odb->repo->compat_hash_algo;
+	struct object_id compat_oid, *compat_oid_p = NULL;
+
+	hash_object_file(odb->repo->hash_algo, buf, len, type, oid);
+
+	/*
+	 * We can skip the write in case we already have the object available.
+	 * In that case, we only freshen its mtime.
+	 */
+	if (odb_freshen_object(odb, oid))
+		return 0;
+
+	if (compat) {
+		const struct git_hash_algo *algo = odb->repo->hash_algo;
+
+		if (compat_oid_in) {
+			oidcpy(&compat_oid, compat_oid_in);
+		} else if (type == OBJ_BLOB) {
+			hash_object_file(compat, buf, len, type, &compat_oid);
+		} else {
+			struct strbuf converted = STRBUF_INIT;
+			convert_object_file(odb->repo, &converted, algo, compat,
+					    buf, len, type, 0);
+			hash_object_file(compat, converted.buf, converted.len,
+					 type, &compat_oid);
+			strbuf_release(&converted);
+		}
+
+		compat_oid_p = &compat_oid;
+	}
+
 	return odb_source_write_object(odb->sources, buf, len, type,
-				       oid, compat_oid, flags);
+				       oid, compat_oid_p, NULL, flags);
 }
 
 int odb_write_object_stream(struct object_database *odb,
