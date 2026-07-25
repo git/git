@@ -107,6 +107,12 @@ void create_branches_recursively(struct repository *r, const char *name,
 const char *branch_checked_out(const char *refname);
 
 /*
+ * If the branch at 'refname' is currently used for bisecting in a
+ * worktree, then return the path to that worktree.
+ */
+const char *branch_bisecting(const char *refname);
+
+/*
  * Check if 'name' can be a valid name for a branch; die otherwise.
  * Return 1 if the named branch already exists; return 0 otherwise.
  * Fill ref with the full refname for the branch.
