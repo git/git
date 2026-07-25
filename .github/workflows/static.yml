@@ -30,14 +30,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
+        uses: actions/checkout@v6
+      - name: Install dependencies
+        run: ci/install-dependencies.sh
+      - name: Build HTML documentation
+        run: make -C Documentation html
+      - name: Stage Pages content
+        run: |
+          rm -rf public
+          mkdir -p public
+          make -C Documentation install-webdoc WEBDOC_DEST="${GITHUB_WORKSPACE}/public"
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # Upload entire repository
-          path: '.'
+          path: 'public'
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
