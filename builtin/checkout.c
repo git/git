@@ -1242,7 +1242,8 @@ static int switch_branches(const struct checkout_opts *opts,
 					    new_branch_info->name,
 					    "local",
 					    stash_label_base,
-					    autostash_msg.buf);
+					    autostash_msg.buf,
+					    NULL);
 		}
 		if (ret) {
 			branch_info_release(&old_branch_info);

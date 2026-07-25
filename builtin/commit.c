@@ -1980,7 +1980,7 @@ int cmd_commit(int argc,
 	}
 
 	apply_autostash_ref(the_repository, "MERGE_AUTOSTASH",
-			    NULL, NULL, NULL, NULL);
+			    NULL, NULL, NULL, NULL, NULL);
 
 cleanup:
 	free_commit_extra_headers(extra);
