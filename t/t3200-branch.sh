@@ -2143,6 +2143,73 @@ test_expect_success "branch -d still deletes a deleteMerged=false branch" '
 	)
 '
 
+test_expect_success 'branch -d keeps the upstream of a surviving branch' '
+	setup_repo_for_delete_merged &&
+	(
+		cd repo &&
+		git branch foundation origin/next --track &&
+		git checkout -b topic foundation --track &&
+		git commit --allow-empty -m "topic work" &&
+		git checkout --detach &&
+
+		test_must_fail git branch -d foundation 2>err &&
+		test_grep "branch .foundation. is an upstream of another branch" err &&
+		test_ref_exists refs/heads/foundation &&
+		test_ref_exists refs/heads/topic &&
+
+		git branch -D foundation &&
+		test_ref_missing refs/heads/foundation &&
+		test_ref_exists refs/heads/topic
+	)
+'
+
+test_expect_success 'branch -d protects a base when another deletion fails' '
+	setup_repo_for_delete_merged &&
+	(
+		cd repo &&
+		git branch foundation origin/next --track &&
+		git checkout -b topic foundation --track &&
+		git commit --allow-empty -m "topic work" &&
+		git checkout --detach &&
+
+		test_must_fail git branch -d foundation topic 2>err &&
+		test_grep "branch .foundation. is an upstream of another branch" err &&
+		test_grep "branch .topic. is not fully merged" err &&
+		test_ref_exists refs/heads/foundation &&
+		test_ref_exists refs/heads/topic &&
+
+		test_must_fail git branch -d topic foundation 2>err &&
+		test_grep "branch .foundation. is an upstream of another branch" err &&
+		test_grep "branch .topic. is not fully merged" err &&
+		test_ref_exists refs/heads/foundation &&
+		test_ref_exists refs/heads/topic
+	)
+'
+
+test_expect_success 'branch -d protects a partial upstream chain' '
+	setup_repo_for_delete_merged &&
+	(
+		cd repo &&
+		git branch lower origin/next --track &&
+		git branch mid lower --track &&
+		git branch tip mid --track &&
+		git checkout --detach &&
+
+		test_must_fail git branch -d mid lower 2>err &&
+		test_grep "branch .lower. is an upstream of another branch" err &&
+		test_grep "branch .mid. is an upstream of another branch" err &&
+		test_ref_exists refs/heads/lower &&
+		test_ref_exists refs/heads/mid &&
+		test_ref_exists refs/heads/tip &&
+
+		git branch -d mid tip lower &&
+
+		test_ref_missing refs/heads/lower &&
+		test_ref_missing refs/heads/mid &&
+		test_ref_missing refs/heads/tip
+	)
+'
+
 test_expect_success '--dry-run without --delete-merged is rejected' '
 	test_must_fail git -C forked branch --dry-run 2>err &&
 	test_grep "requires --delete-merged" err

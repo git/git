@@ -302,12 +302,12 @@ static int delete_branches(int argc, const char **argv, int kinds,
 	struct object_id oid;
 	char *name = NULL;
 	const char *fmt;
-	int i;
 	int ret = 0;
 	int remote_branch = 0;
 	struct strbuf bname = STRBUF_INIT;
 	enum interpret_branch_kind allowed_interpret;
 	struct string_list refs_to_delete = STRING_LIST_INIT_DUP;
+	struct strset deletable_branch_names = STRSET_INIT;
 	struct string_list_item *item;
 	int branch_name_pos;
 	const char *fmt_remotes = "refs/remotes/%s";
@@ -334,7 +334,7 @@ static int delete_branches(int argc, const char **argv, int kinds,
 	    !(flags & DELETE_BRANCH_NO_HEAD_FALLBACK))
 		head_rev = lookup_commit_reference(the_repository, &head_oid);
 
-	for (i = 0; i < argc; i++, strbuf_reset(&bname)) {
+	for (int i = 0; i < argc; i++, strbuf_reset(&bname)) {
 		char *target = NULL;
 		int ref_flags = 0;
 
@@ -397,9 +397,40 @@ static int delete_branches(int argc, const char **argv, int kinds,
 		item->util = xstrdup((ref_flags & REF_ISBROKEN) ? "broken"
 				    : (ref_flags & REF_ISSYMREF) ? target
 				    : repo_find_unique_abbrev(the_repository, &oid, DEFAULT_ABBREV));
+		if (!remote_branch && !(flags & (DELETE_BRANCH_FORCE |
+						 DELETE_BRANCH_SKIP_UNMERGED)))
+			strset_add(&deletable_branch_names, bname.buf);
 
 	next:
 		free(target);
+	}
+
+	if (!remote_branch &&
+	    !(flags & (DELETE_BRANCH_FORCE | DELETE_BRANCH_SKIP_UNMERGED)) &&
+	    refs_to_delete.nr) {
+		protect_stacked_branch_bases(get_main_ref_store(the_repository),
+					     &deletable_branch_names);
+		for (size_t i = refs_to_delete.nr; i; i--) {
+			const char *branch_name;
+
+			item = &refs_to_delete.items[i - 1];
+			if (!skip_prefix(item->string, "refs/heads/",
+					 &branch_name))
+				BUG("expected local branch ref, got '%s'",
+				    item->string);
+			if (strset_contains(&deletable_branch_names, branch_name))
+				continue;
+
+			error(_("the branch '%s' is an upstream of another branch"),
+			      branch_name);
+			advise_if_enabled(ADVICE_FORCE_DELETE_BRANCH,
+					  _("If you are sure you want to delete it, "
+					    "run 'git branch -D %s'"),
+					  branch_name);
+			ret = 1;
+			unsorted_string_list_delete_item(&refs_to_delete, i - 1,
+							 1);
+		}
 	}
 
 	if (!(flags & DELETE_BRANCH_DRY_RUN) &&
@@ -428,6 +459,7 @@ static int delete_branches(int argc, const char **argv, int kinds,
 		free(describe_ref);
 	}
 	string_list_clear(&refs_to_delete, 0);
+	strset_clear(&deletable_branch_names);
 
 	free(name);
 	strbuf_release(&bname);
