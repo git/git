@@ -3281,7 +3281,13 @@ static int read_populate_opts(struct replay_opts *opts)
 			const char *p = ctx->current_fixups.buf;
 			ctx->current_fixup_count = 1;
 			while ((p = strchr(p, '\n'))) {
-				ctx->current_fixup_count++;
+				/*
+				 * Older versions of git accidentally
+				 * inserted blank lines when a fixup
+				 * was skipped.
+				 */
+				if (p[1] && p[1] != '\n')
+					ctx->current_fixup_count++;
 				p++;
 			}
 		}
@@ -5353,6 +5359,9 @@ static int commit_staged_changes(struct repository *r,
 			if (!len)
 				BUG("Incorrect current_fixups:\n%s", p);
 			while (len && p[len - 1] != '\n')
+				len--;
+			/* Remove trailing newline */
+			if (len)
 				len--;
 			strbuf_setlen(&ctx->current_fixups, len);
 			if (write_message(p, len, rebase_path_current_fixups(),
