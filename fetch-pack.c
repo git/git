@@ -1886,6 +1886,13 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 		}
 	}
 
+	if (packfile_uris.nr) {
+		trace2_region_enter("fetch-pack", "packfile-uris",
+				    the_repository);
+		trace2_data_intmax("fetch-pack", the_repository,
+				   "packfile-uris/count", packfile_uris.nr);
+	}
+
 	for (i = 0; i < packfile_uris.nr; i++) {
 		int j;
 		struct child_process cmd = CHILD_PROCESS_INIT;
@@ -1936,6 +1943,11 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 						 repo_get_object_directory(the_repository),
 						 packname));
 	}
+
+	if (packfile_uris.nr)
+		trace2_region_leave("fetch-pack", "packfile-uris",
+				    the_repository);
+
 	string_list_clear(&packfile_uris, 0);
 	strvec_clear(&index_pack_args);
 
