@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jul 2026, #11)
+Subject: What's cooking in git.git (Jul 2026, #12)
 X-master-at: 9a0c4701dcd5725c4184599322b52933ff5005ca
-X-next-at: e436a42272e5f75bb9ac8df1355c4593652372fe
+X-next-at: 244d577d9305226b47fecda6f8d041ceb0ff9aa4
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jul 2026, #11)
+What's cooking in git.git (Jul 2026, #12)
 -----------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -50,52 +50,90 @@ Release tarballs are available at:
 --------------------------------------------------
 [New Topics]
 
-* af/clone-revision-v0-segfault-fix (2026-07-24) 1 commit
- - builtin/clone: fix segfault when using --revision with protocol v0
+* jc/remote-insteadof-leakfix (2026-07-25) 1 commit
+ - remote: plug memory leaks
 
- 'git clone --revision' talking to a server that does not support
- protocol v2 (falling back to protocol v0) segfaulted, which has
- been corrected.
+ rewrites_release() in 'remote.c' has been updated to free 'struct
+ rewrite' instances and their '.instead_of' arrays, and their contents.
 
- Will merge to 'next'?
- cf. <xmqqldb08jcd.fsf@gitster.g>
- source: <20260724124138.666877-1-adrian.friedli@mt.com>
-
-
-* lo/mv-missing-dest-dir-check (2026-07-23) 2 commits
- - mv: check for missing destination directory before renaming
- - mv: name both source and destination when rename fails
-
- 'git mv' has been updated to check for a missing destination
- leading directory during the checking phase, allowing 'git mv -n'
- to report the failure.  The error message when the rename(2)
- syscall fails has also been improved to name both the source and
- the destination.
-
- Waiting for response.
- cf. <xmqq8q71k3fy.fsf@gitster.g>
- cf. <xmqqh5lpk3r3.fsf@gitster.g>
- source: <pull.2356.v2.git.git.1784812390.gitgitgadget@gmail.com>
+ Will merge to 'next'.
+ cf. <20260725161819.GA2343104@coredump.intra.peff.net>
+ source: <xmqqpl0b12gj.fsf@gitster.g>
 
 
-* ps/odb-make-creation-pluggable (2026-07-23) 5 commits
- - odb: make creation of on-disk structures pluggable
- - odb/source: introduce function to map source type to name
- - setup: defer object database creation
- - setup: detangle loading of loose object maps
- - loose: load loose object map for the correct source
+* tb/pack-with-duplicates (2026-07-24) 5 commits
+ - pack-bitmap: handle duplicate pack entries during MIDX reuse
+ - test-tool bitmap: reject packs with duplicate objects
+ - midx: verify duplicate pack entries by OID and offset
+ - packfile: recover delta cycles through duplicate entries
+ - t5308: test reverse indexes with duplicate objects
 
- The creation of the on-disk data structures for the object database
- has been made pluggable, allowing future backends to customize their
- setup.  As part of this, the initialization of the object database
- has been deferred, and the loading of the loose-object map has been
- detangled from repository initialization.
+ The handling of packfiles with duplicate object entries has been
+ hardened.  Specifically, reverse index lookup, delta cycle
+ recovery, multi-pack-index verification, and pack reuse paths have
+ been updated to correctly handle or gracefully reject duplicate
+ entries.
 
  Needs review.
- cf. <xmqq5x248fk9.fsf@gitster.g>
- cf. <xmqqh5lo6xi2.fsf@gitster.g>
- cf. <xmqq5x246x35.fsf@gitster.g>
- source: <20260724-pks-odb-create-on-disk-v1-0-3b3d265d979b@pks.im>
+ cf. <xmqqecgs3vg6.fsf@gitster.g>
+ source: <cover.1784927134.git.ttaylorr@openai.com>
+
+
+* ps/cat-file-remote-object-info-type (2026-07-25) 6 commits
+ - cat-file: unify default format
+ - serve: advertise type capability
+ - fetch-object-info: request all supported options dynamically
+ - fetch-object-info: parse type from server response
+ - protocol-caps: add type support to object-info
+ - Merge branch 'ps/cat-file-remote-object-info' into ps/cat-file-remote-object-info-type
+ (this branch uses ps/cat-file-remote-object-info.)
+
+ The 'remote-object-info' command for 'git cat-file --batch-command'
+ has been extended to support the '%(objecttype)' placeholder.
+
+ Needs review.
+ source: <20260725-objecttype-support-v1-0-2d4ca3bbabf1@gmail.com>
+
+
+* rs/branch-delete-bisect-warning (2026-07-25) 1 commit
+ - branch: report active bisect run when rejecting delete
+
+ 'git branch -d' learned to report when a branch cannot be deleted
+ because it is being used in an active bisect run.
+
+ Will merge to 'next'?
+ cf. <xmqqbjbtyd80.fsf@gitster.g>
+ source: <590382fb-731b-4e14-911e-ff68356d1082@web.de>
+
+
+* jk/ci-static-analysis-image-bump (2026-07-26) 2 commits
+ - ci: bump ubuntu image version for static-analysis job
+ - bloom: silence CHECK_ASSERTION_SIDE_EFFECTS false positive
+
+ The image version used by the static-analysis CI job has been bumped
+ to ubuntu-latest (Ubuntu 24.04), which brings in a newer Coccinelle
+ version that resolves a severe performance regression.  A false
+ positive warning from the CHECK_ASSERTION_SIDE_EFFECTS build with
+ GCC 15 in the Bloom filter code has also been silenced to facilitate
+ the image upgrade.
+
+ Will merge to 'next'?
+ cf. <xmqqo6ftvhed.fsf@gitster.g>
+ source: <20260726083254.GA3528497@coredump.intra.peff.net>
+
+
+* jk/diff-relative-cached-unmerged-more (2026-07-26) 3 commits
+ - diff-lib: skip paths outside prefix in oneway_diff()
+ - diff-lib: drop stale comment about advancing o->pos
+ - Merge branch 'jk/diff-relative-cached-unmerged' into jk/diff-relative-cached-unmerged-more
+ (this branch uses jk/diff-relative-cached-unmerged.)
+
+ The code path that deals with relative paths in the diff-lib has
+ been cleaned up.
+
+ Will merge to 'next'?
+ cf. <xmqqjyqhv7s7.fsf@gitster.g>
+ source: <20260726084550.GC2366012@coredump.intra.peff.net>
 
 --------------------------------------------------
 [Stalled]
@@ -119,8 +157,8 @@ Release tarballs are available at:
  collect unreachable objects.
 
  Waiting for response for too long, stalled.
- cf. <xmqqpl1d56dd.fsf@gitster.g>
- cf. <xmqqwlvl56vh.fsf@gitster.g>
+ cf. <aj8cvDCMcw+RayyO@nand.local>
+ cf. <aj8cOhH6hGVZIFft@nand.local>
  source: <cover.1782500507.git.me@ttaylorr.com>
 
 
@@ -131,9 +169,10 @@ Release tarballs are available at:
  The 'git checkout --track=...' command has been taught to optionally
  fetch the branch from the remote that the new branch will work with.
 
- Waiting for response for too long, stalled.
+ Will be discarded.
  cf. <xmqq5x37h6fj.fsf@gitster.g>
  cf. <CAL71e4MiijEiM26TKJcOYT7L4pfQeMM_F2oT3U3igP-wOZm2Ag@mail.gmail.com>
+ cf. <xmqq8q71clob.fsf@gitster.g>
  source: <pull.2281.v15.git.git.1782338098.gitgitgadget@gmail.com>
 
 
@@ -146,8 +185,8 @@ Release tarballs are available at:
  the path with a dot, matching standard shell-completion behavior.
 
  Waiting for response, stalled.
- cf. <xmqq1pe0g08t.fsf@gitster.g>
- cf. <xmqqik71t3nr.fsf@gitster.g>
+ cf. <xmqqbjd37i4y.fsf@gitster.g>
+ cf. <xmqq4ihpclo8.fsf@gitster.g>
  source: <pull.2311.v3.git.git.1781978156.gitgitgadget@gmail.com>
 
 
@@ -169,7 +208,7 @@ Release tarballs are available at:
  how comment lines in the input are treated.
 
  Expecting a reroll for too long, stalled.
- cf. <xmqq1pedthkv.fsf@gitster.g>
+ cf. <729baf6b-53ea-4e8d-95ab-5935667e66c2@app.fastmail.com>
  source: <V3_CV_doc_int-tr_key_format.8a3@msgid.xyz>
 
 
@@ -184,10 +223,59 @@ Release tarballs are available at:
 
  Waiting for response for too long, stalled.
  cf. <87cxwxofgv.fsf@emacs.iotcl.com>
+ cf. <xmqqv7a5b6n7.fsf@gitster.g>
  source: <V3_CV_doc_replay_config.780@msgid.xyz>
 
 --------------------------------------------------
 [Cooking]
+
+* af/clone-revision-v0-segfault-fix (2026-07-24) 1 commit
+ - builtin/clone: fix segfault when using --revision with protocol v0
+
+ 'git clone --revision' talking to a server that does not support
+ protocol v2 (falling back to protocol v0) segfaulted, which has
+ been corrected.
+
+ Will merge to 'next'.
+ cf. <xmqqldb08jcd.fsf@gitster.g>
+ source: <20260724124138.666877-1-adrian.friedli@mt.com>
+
+
+* lo/mv-missing-dest-dir-check (2026-07-26) 2 commits
+ - mv: reject a destination whose leading path is missing or a symlink
+ - mv: name both source and destination when rename fails
+
+ 'git mv' has been updated to check for a missing destination
+ leading directory during the checking phase, allowing 'git mv -n'
+ to report the failure.  The error message when the rename(2)
+ syscall fails has also been improved to name both the source and
+ the destination.
+
+ Needs review.
+ source: <pull.2356.v4.git.git.1785097071.gitgitgadget@gmail.com>
+
+
+* ps/odb-make-creation-pluggable (2026-07-23) 5 commits
+ - odb: make creation of on-disk structures pluggable
+ - odb/source: introduce function to map source type to name
+ - setup: defer object database creation
+ - setup: detangle loading of loose object maps
+ - loose: load loose object map for the correct source
+
+ The creation of the on-disk data structures for the object database
+ has been made pluggable, allowing future backends to customize their
+ setup.  As part of this, the initialization of the object database
+ has been deferred, and the loading of the loose-object map has been
+ detangled from repository initialization.
+
+ Waiting for response.
+ cf. <xmqq5x248fk9.fsf@gitster.g>
+ cf. <xmqqh5lo6xi2.fsf@gitster.g>
+ cf. <xmqq5x246x35.fsf@gitster.g>
+ cf. <xmqqfr15v6ba.fsf@gitster.g>
+ cf. <xmqqbjbtv5y6.fsf@gitster.g>
+ source: <20260724-pks-odb-create-on-disk-v1-0-3b3d265d979b@pks.im>
+
 
 * jt/config-lock-timeout (2026-05-17) 1 commit
   (merged to 'next' on 2026-07-24 at 3cb8da6b6a)
@@ -213,6 +301,7 @@ Release tarballs are available at:
 
  Waiting for a response.
  cf. <xmqqldb4xlqa.fsf@gitster.g>
+ cf. <db7edc66-9b2a-47bc-98db-87d01885cef0@gmail.com>
  source: <20260721140443.1809379-2-hugo@hsal.es>
 
 
@@ -240,8 +329,8 @@ Release tarballs are available at:
  resolve 'url.*.insteadOf' aliases before comparing the inventoried
  URL from '.gitmodules' with the URLs of configured remotes.
 
- Will merge to 'next'?
- cf. <xmqqbjbyole1.fsf@gitster.g>
+ Will merge to 'next'.
+ cf. <xmqqldb05dlo.fsf@gitster.g>
  source: <20260723002132.3989727-1-ccjmne@gmail.com>
 
 
@@ -252,19 +341,21 @@ Release tarballs are available at:
  FSEvents before waiting for the cookie file, to avoid premature
  timeouts on busy systems.
 
- Waiting for a resposne.
+ Waiting for response.
  cf. <CAOTNsDy4pKbPHdK1T688Ax6Mgz15K-qfZR-8fAvTk48z3E43Rg@mail.gmail.com>
+ cf. <xmqqh5lo5dib.fsf@gitster.g>
  source: <20260721-fsmonitor-darwin-cookie-flush-v1-1-357dc5e32040@gmail.com>
 
 
 * jc/exclude-first-parent-seen (2026-07-22) 1 commit
- - revision: honor --exclude-first-parent-only with SEEN first parent
+  (merged to 'next' on 2026-07-25 at 85755d1d45)
+ + revision: honor --exclude-first-parent-only with SEEN first parent
 
  Traversals with '--exclude-first-parent-only' have been corrected to
  properly stop after the first parent even when it has already been
  marked as SEEN.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <xmqqbjbzq7n2.fsf@gitster.g>
 
 
@@ -277,9 +368,11 @@ Release tarballs are available at:
  the current branch are skipped and duplicate updates are avoided to
  prevent failures when branch aliases are present.
 
- Waiting for a response.
- cf. <f982c386-e329-4ab0-b695-e540bcb9de3d@gmail.com>
+ Waiting for response.
+ cf. <5bece313-6ffb-450b-add1-29652b64de10@gmail.com>
  cf. <00e529b6-7ae7-463f-a4b3-0991e9411aba@gmail.com>
+ cf. <amSSYagL0jTgzElD@mbp>
+ cf. <xmqq7bmhycxq.fsf@gitster.g>
  source: <pull.2126.v3.git.1784708107.gitgitgadget@gmail.com>
 
 
@@ -313,31 +406,33 @@ Release tarballs are available at:
 
 
 * hn/url-push-tracking (2026-07-22) 2 commits
- - remote: find tracking branches for URL push destinations
- - remote: pass repository to push tracking helper
+  (merged to 'next' on 2026-07-25 at 9b776656fc)
+ + remote: find tracking branches for URL push destinations
+ + remote: pass repository to push tracking helper
 
  When the push remote is specified as a URL, the fetch refspec of a
  uniquely matching configured remote is now used to find and update
  the remote-tracking branch (e.g., '@{push}').
 
- Will merge to 'next'.
+ Will merge to 'master'.
  cf. <xmqqpl0eoniz.fsf@gitster.g>
  source: <pull.2358.v4.git.git.1784743738.gitgitgadget@gmail.com>
 
 
 * tl/gitweb-shorten-hashes-with-modes (2026-07-17) 1 commit
- - gitweb: shorten index hashes with trailing file modes
+  (merged to 'next' on 2026-07-25 at 5b92e8a325)
+ + gitweb: shorten index hashes with trailing file modes
 
  The object ID shortening and linking in the 'commitdiff' view of
  'gitweb' has been corrected to work even when the index line carries
  a trailing file mode.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  cf. <xmqqjyqu6u7i.fsf@gitster.g>
  source: <SA1PR10MB9977150C823C0751E53B150D5AF1C62@SA1PR10MB997715.namprd10.prod.outlook.com>
 
 
-* kj/repo-info-more-path-keys (2026-07-17) 7 commits
+* kj/repo-info-more-path-keys (2026-07-26) 7 commits
  - repo: add path.git-prefix path key
  - repo: add path.grafts with absolute and relative suffix formatting
  - repo: add path.index with absolute and relative suffix formatting
@@ -351,10 +446,8 @@ Release tarballs are available at:
  root, superproject working tree, object database, etc.), supporting
  both absolute and relative path formats.
 
- Waiting for response.
- cf. <845D6852-98F5-4168-82CD-90B3B476BCF5@gmail.com>
- cf. <xmqq33xejomv.fsf@gitster.g>
- source: <20260717133015.32040-1-jayatheerthkulkarni2005@gmail.com>
+ Needs review.
+ source: <20260726104343.16933-1-jayatheerthkulkarni2005@gmail.com>
 
 
 * sk/userdiff-swift (2026-07-20) 1 commit
@@ -372,16 +465,17 @@ Release tarballs are available at:
 
 
 * ps/odb-move-loose-object-writing (2026-07-17) 10 commits
- - object-file: move logic to write loose objects
- - object-file: move `force_object_loose()`
- - object-file: force objects loose via generic interface
- - object-file: fix memory leak in `force_object_loose()`
- - odb: support setting mtime when writing objects
- - odb: lift object existence check out of the "loose" backend
- - odb: compute object hash in `odb_write_object_ext()`
- - t/u-odb-inmemory: implement wrapper for writing objects
- - odb: compute compat object ID in `odb_write_object_ext()`
- - Merge branch 'jt/receive-pack-use-odb-transactions' into HEAD
+  (merged to 'next' on 2026-07-25 at 244d577d93)
+ + object-file: move logic to write loose objects
+ + object-file: move `force_object_loose()`
+ + object-file: force objects loose via generic interface
+ + object-file: fix memory leak in `force_object_loose()`
+ + odb: support setting mtime when writing objects
+ + odb: lift object existence check out of the "loose" backend
+ + odb: compute object hash in `odb_write_object_ext()`
+ + t/u-odb-inmemory: implement wrapper for writing objects
+ + odb: compute compat object ID in `odb_write_object_ext()`
+ + Merge branch 'jt/receive-pack-use-odb-transactions' into HEAD
 
  The logic to write loose objects has been refactored and moved from
  'object-file.c' to the loose backend source file 'odb/source-loose.c',
@@ -389,13 +483,12 @@ Release tarballs are available at:
  first refactoring force_object_loose() to use generic ODB write
  interfaces instead of loose-backend internals.
 
- Will merge to 'next'?
- cf. <87jyqnp365.fsf@emacs.iotcl.com>
- cf. <87fr1bp0bi.fsf@emacs.iotcl.com>
+ Will merge to 'master'.
+ cf. <xmqqecgzpm0y.fsf@gitster.g>
  source: <20260717-pks-odb-move-loose-object-writing-v1-0-46446a3cb5b7@pks.im>
 
 
-* pw/rebase-fixup-fixes (2026-07-17) 2 commits
+* pw/rebase-fixup-fixes (2026-07-26) 2 commits
  - rebase: remember fixup -c after skipping fixup/squash
  - rebase -i: fix counting of fixups after rebase --skip
 
@@ -405,8 +498,9 @@ Release tarballs are available at:
  and another prevented the editor from opening when the final command
  in a chain containing 'fixup -c' was skipped.
 
- Needs review.
- source: <cover.1784304378.git.phillip.wood@dunelm.org.uk>
+ Will merge to 'next'?
+ cf. <xmqqse55tp1k.fsf@gitster.g>
+ source: <cover.1785080337.git.phillip.wood@dunelm.org.uk>
 
 
 * tc/last-modified-bloom (2026-07-17) 4 commits
@@ -421,8 +515,8 @@ Release tarballs are available at:
  wildcard pathspecs are used.
 
  Waiting for a response.
- cf. <87cxwl1lb4.fsf@emacs.iotcl.com>
  cf. <20260720094218.GA681989@coredump.intra.peff.net>
+ cf. <alvulw2fk67duo8n@com-79390>
  source: <20260717-toon-speed-up-last-modified-v1-0-410418f18614@iotcl.com>
 
 
@@ -460,20 +554,26 @@ Release tarballs are available at:
  about unchecked returns.
 
  Waiting for response.
+ cf. <alcvmX3b6y92KE4y@pks.im>
+ cf. <alcvnm0xiOv5W0w_@pks.im>
  cf. <xmqqldbdqciy.fsf@gitster.g>
  cf. <xmqqh5m1qcfh.fsf@gitster.g>
- cf. <alcvnm0xiOv5W0w_@pks.im>
+ cf. <xmqqh5lui6wg.fsf@gitster.g>
+ cf. <xmqqcxwii6wd.fsf@gitster.g>
  source: <pull.2179.git.1784069325.gitgitgadget@gmail.com>
 
 
 * jk/diff-relative-cached-unmerged (2026-07-14) 1 commit
- - diff: ignore unmerged paths outside prefix with --relative --cached
+  (merged to 'next' on 2026-07-25 at 8829f9b348)
+ + diff: ignore unmerged paths outside prefix with --relative --cached
+ (this branch is used by jk/diff-relative-cached-unmerged-more.)
 
  'git diff --relative' running with '--cached' has been corrected to
  avoid a segfault when encountering unmerged paths outside the
  prefix.
 
- Will merge to 'next'?
+ Will merge to 'master'.
+ cf. <xmqqjyqwp9jh.fsf@gitster.g>
  source: <20260715060523.GA517940@coredump.intra.peff.net>
 
 
@@ -498,6 +598,8 @@ Release tarballs are available at:
  timestamps in the traces.
 
  Waiting for response.
+ cf. <alpXW5U6sndZtgqV@com-79390>
+ cf. <c8d443a5-3cfb-4752-8716-cf0d8fadd9d3@gmail.com>
  cf. <xmqqzezlhgyo.fsf@gitster.g>
  cf. <al4yrXXoZiHLwSvE@com-79390>
  source: <pull.2178.git.1784131932489.gitgitgadget@gmail.com>
@@ -512,7 +614,9 @@ Release tarballs are available at:
  before the walk reaches it does not prematurely mutate its tracked
  line ranges, making it safer for potential lookahead evaluations.
 
- Needs review.
+ Waiting for review.
+ cf. <xmqqjyqk3w7d.fsf@gitster.g>
+ cf. <CAC2QwmKP16cyw0get3hEWP8GjcFkUHB3uXxcQi9hBCCM-B+ECw@mail.gmail.com>
  source: <pull.2169.git.1784143793613.gitgitgadget@gmail.com>
 
 
@@ -591,6 +695,7 @@ Release tarballs are available at:
 
  Waiting for response.
  cf. <f8050598-392f-44c9-8d66-0454740a7a12@kdbg.org>
+ cf. <a2676ec6-39d5-4220-8549-10a17daec668@hogyros.de>
  cf. <xmqqwluuekbh.fsf@gitster.g>
  source: <20260716-pks-reintroduce-writev-v1-0-ea9038c884bc@pks.im>
 
@@ -622,7 +727,7 @@ Release tarballs are available at:
  source: <alQ7WKITYDXfiVn9@com-79390>
 
 
-* tn/packfile-uri-concurrency (2026-07-24) 3 commits
+* tn/packfile-uri-concurrency (2026-07-25) 3 commits
  - fetch-pack: accept "pack" output for packfile URIs
  - http: avoid concurrent appends to partial packs
  - http-fetch: correct --index-pack-arg documentation
@@ -634,9 +739,11 @@ Release tarballs are available at:
  'fetch-pack' command has also been updated to tolerate pre-existing
  '.keep' files.
 
- Needs review.
- cf. <xmqqldb19evx.fsf@gitster.g>
- source: <cover.1784874850.git.tnyman@openai.com>
+ Expecting a reroll.
+ cf. <20260726092027.GA3529827@coredump.intra.peff.net>
+ cf. <20260726102712.GA3535709@coredump.intra.peff.net>
+ cf. <20260726100421.12648-1-tnyman@openai.com>
+ source: <cover.1785047139.git.tnyman@openai.com>
 
 
 * rs/tempfile-wo-the-repository (2026-07-14) 5 commits
@@ -720,6 +827,8 @@ Release tarballs are available at:
 
  Waiting for response.
  cf. <690b965e-5f07-4aa4-a64c-96e60a86d73b@gmail.com>
+ cf. <xmqqh5m494yh.fsf@gitster.g>
+ cf. <b4cf8f14-1ffa-4395-bc3e-936538574665@gmail.com>
  source: <20260711-fz-autosquash-empty-v3-1-d227b63eb511@gmail.com>
 
 
@@ -758,7 +867,10 @@ Release tarballs are available at:
  database backends to implement their own housekeeping services.
 
  Waiting for response.
+ cf. <xmqqh5m2yhkm.fsf@gitster.g>
  cf. <xmqqwluyyhv1.fsf@gitster.g>
+ cf. <amCmwKjbq2aNt8mZ@pks.im>
+ cf. <xmqqwluhvhtu.fsf@gitster.g>
  source: <20260713-b4-pks-odb-optimize-v2-0-9c2c3ee94b38@pks.im>
 
 
@@ -803,7 +915,7 @@ Release tarballs are available at:
  script on repositories already managed by the new tool.
 
  Expecting a reroll.
- cf. <27215.27575.968985.583226@chiark.greenend.org.uk>
+ cf. <27219.20156.438730.881821@chiark.greenend.org.uk>
  source: <20260706115816.20267-1-ijackson@chiark.greenend.org.uk>
 
 
@@ -840,7 +952,8 @@ Release tarballs are available at:
  test_path_is_missing() helper functions instead of raw 'test -[fde]'
  commands.
 
- Waiting for response.
+ Waiting for response, stalled.
+ cf. <xmqqmrwbsybn.fsf@gitster.g>
  cf. <akTKHfKPsP3-Rn31@pks.im>
  source: <20260630020220.1559190-1-bblima@usp.br>
 
@@ -900,9 +1013,10 @@ Release tarballs are available at:
 
  Ejected for now, as it causes too many evil merges with other topics.
 
- Needs review.
- cf. <alR9GDNTbdjWB4dq@szeder.dev>
- cf. <2d455ecf-972e-e3ce-54bc-683050c04282@gmx.de>
+ Waiting for response.
+ cf. <xmqqqzkx9t95.fsf@gitster.g>
+ cf. <xmqqjyqpb96n.fsf@gitster.g>
+ cf. <al6Yz_QMlyU1GETv@fruit.crustytoothpaste.net>
  source: <20260713-pks-libgit-in-subdir-v4-0-696240876eb1@pks.im>
 
 
@@ -914,6 +1028,7 @@ Release tarballs are available at:
  - diff: emit -L hunk headers via xdiff's formatter
  - diff: simplify the line-range filter by classifying removals immediately
  - diff: rename and group the line-range filter for clarity
+ (this branch is used by mm/diff-process-hunks.)
 
  The 'git log -L<range>:<path>' command has been taught to limit
  various 'diff' operations, such as '--stat', '--check', and '-G', to
@@ -1004,6 +1119,7 @@ Release tarballs are available at:
  + t1006: extract helper functions into new 'lib-cat-file.sh'
  + cat-file: declare loop counter inside for()
  + transport-helper: fix memory leak of helper on disconnect
+ (this branch is used by ps/cat-file-remote-object-info-type.)
 
  The 'remote-object-info' command has been added to 'git cat-file
  --batch-command', allowing clients to request object metadata
@@ -1016,16 +1132,18 @@ Release tarballs are available at:
  source: <20260724-ps-eric-work-rebase-v21-0-ba67f024fdff@gmail.com>
 
 
-* mm/diff-process-hunks (2026-07-15) 9 commits
- . line-log: consult diff process for range tracking
- . diff: consult diff process for --stat counts
- . blame: consult diff process for no-hunk detection
- . diff: bypass diff process with --no-ext-diff and in format-patch
- . diff: add long-running diff process via diff.<driver>.process
- . sub-process: separate process lifecycle from hashmap management
- . userdiff: add diff.<driver>.process config
- . xdiff: support external hunks via xpparam_t
- . gitattributes: document how external diff drivers relate to diff features
+* mm/diff-process-hunks (2026-07-26) 10 commits
+ - line-log: consult diff process for range tracking
+ - diff: consult diff process for --stat counts
+ - blame: consult diff process for no-hunk detection
+ - diff: bypass diff process with --no-ext-diff and in format-patch
+ - diff: add long-running diff process via diff.<driver>.process
+ - sub-process: separate process lifecycle from hashmap management
+ - userdiff: add diff.<driver>.process config
+ - xdiff: support external hunks via xpparam_t
+ - gitattributes: document how external diff drivers relate to diff features
+ - Merge branch 'mm/line-log-limited-ops' into mm/diff-process-hunks
+ (this branch uses mm/line-log-limited-ops.)
 
  A new 'diff.<driver>.process' configuration has been introduced to
  allow a long-running external process to act as a hunk provider,
@@ -1035,9 +1153,8 @@ Release tarballs are available at:
 
  Ejected for now, as it conflicts badly with 'mm/line-log-limited-ops'.
 
- Expecting a reroll.
- cf. <CAC2QwmKRp90hmBAckug9PPvvD53Pi53q5csZhi15LRhzdQasQg@mail.gmail.com>
- source: <pull.2120.v5.git.1784149323.gitgitgadget@gmail.com>
+ Needs review.
+ source: <pull.2120.v6.git.1785091889.gitgitgadget@gmail.com>
 
 
 * ty/migrate-trust-executable-bit (2026-07-20) 4 commits
@@ -1069,7 +1186,7 @@ Release tarballs are available at:
  source: <cover.1779792311.git.erik@cervined.in>
 
 
-* hn/branch-delete-merged (2026-07-24) 7 commits
+* hn/branch-delete-merged (2026-07-25) 7 commits
  - branch: add --dry-run for --delete-merged
  - branch: add branch.<name>.deleteMerged opt-out
  - branch: add --delete-merged <branch>
@@ -1083,9 +1200,8 @@ Release tarballs are available at:
  remote-tracking branches.
 
  Will merge to 'next'?
- cf. <9b9b9a2c-dd0f-44f8-b80e-565eed9a55a8@gmail.com>
- cf. <xmqqik6an5t3.fsf@gitster.g>
- source: <pull.2285.v21.git.git.1784889377.gitgitgadget@gmail.com>
+ cf. <xmqqy0ez14s9.fsf@gitster.g>
+ source: <pull.2285.v23.git.git.1784979136.gitgitgadget@gmail.com>
 
 
 * ps/shift-root-in-graph (2026-07-14) 7 commits
@@ -1126,5 +1242,5 @@ Release tarballs are available at:
  yielding significant speedups for queries with one-sided histories.
 
  Needs review.
- cf. <xmqqse5en8wz.fsf@gitster.g>
+ cf. <CABPp-BGATrNJyT7trzUzAMB_v-1ssVe_SRqp+281X5GzU=2eow@mail.gmail.com>
  source: <pull.2149.v6.git.1783776466.gitgitgadget@gmail.com>
