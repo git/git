@@ -202,6 +202,67 @@ enum delete_branch_flags {
 	DELETE_BRANCH_DRY_RUN = (1 << 4),
 };
 
+struct stacked_branch_data {
+	struct strset *deletable_branch_names;
+	struct strset *protected_branch_names;
+	struct strset *visited_branch_names;
+};
+
+static int collect_stacked_branch_bases(const struct reference *ref,
+					void *cb_data)
+{
+	struct stacked_branch_data *data = cb_data;
+	const char *branch_name;
+
+	if (!skip_prefix(ref->name, "refs/heads/", &branch_name))
+		BUG("expected local branch ref, got '%s'", ref->name);
+	if (strset_contains(data->deletable_branch_names, branch_name))
+		return 0;
+
+	while (strset_add(data->visited_branch_names, branch_name)) {
+		struct branch *branch = branch_get(branch_name);
+		const char *upstream_refname = branch_get_upstream(branch, NULL);
+		const char *upstream_branch_name;
+
+		if (!upstream_refname ||
+		    !skip_prefix(upstream_refname, "refs/heads/",
+				 &upstream_branch_name) ||
+		    !strset_contains(data->deletable_branch_names,
+				    upstream_branch_name))
+			break;
+
+		strset_add(data->protected_branch_names, upstream_branch_name);
+		branch_name = upstream_branch_name;
+	}
+
+	return 0;
+}
+
+static void protect_stacked_branch_bases(struct ref_store *refs,
+					 struct strset *deletable_branch_names)
+{
+	struct strset protected_branch_names = STRSET_INIT;
+	struct strset visited_branch_names = STRSET_INIT;
+	struct stacked_branch_data data = {
+		.deletable_branch_names = deletable_branch_names,
+		.protected_branch_names = &protected_branch_names,
+		.visited_branch_names = &visited_branch_names,
+	};
+	struct refs_for_each_ref_options opts = {
+		.prefix = "refs/heads/",
+	};
+	struct hashmap_iter iter;
+	struct strmap_entry *entry;
+
+	refs_for_each_ref_ext(refs, collect_stacked_branch_bases, &data, &opts);
+
+	strset_for_each_entry(&protected_branch_names, &iter, entry)
+		strset_remove(deletable_branch_names, entry->key);
+
+	strset_clear(&visited_branch_names);
+	strset_clear(&protected_branch_names);
+}
+
 static int check_branch_commit(const char *branchname, const char *refname,
 			       const struct object_id *oid, struct commit *head_rev,
 			       int kinds, unsigned int flags)
@@ -707,67 +768,6 @@ static int parse_opt_forked(const struct option *opt, const char *arg, int unset
 	if (ref_filter_forked_add(filter, arg) < 0)
 		die(_("'%s' is not a valid branch or pattern"), arg);
 	return 0;
-}
-
-struct stacked_branch_data {
-	struct strset *deletable_branch_names;
-	struct strset *protected_branch_names;
-	struct strset *visited_branch_names;
-};
-
-static int collect_stacked_branch_bases(const struct reference *ref,
-					void *cb_data)
-{
-	struct stacked_branch_data *data = cb_data;
-	const char *branch_name;
-
-	if (!skip_prefix(ref->name, "refs/heads/", &branch_name))
-		BUG("expected local branch ref, got '%s'", ref->name);
-	if (strset_contains(data->deletable_branch_names, branch_name))
-		return 0;
-
-	while (strset_add(data->visited_branch_names, branch_name)) {
-		struct branch *branch = branch_get(branch_name);
-		const char *upstream_refname = branch_get_upstream(branch, NULL);
-		const char *upstream_branch_name;
-
-		if (!upstream_refname ||
-		    !skip_prefix(upstream_refname, "refs/heads/",
-				 &upstream_branch_name) ||
-		    !strset_contains(data->deletable_branch_names,
-				    upstream_branch_name))
-			break;
-
-		strset_add(data->protected_branch_names, upstream_branch_name);
-		branch_name = upstream_branch_name;
-	}
-
-	return 0;
-}
-
-static void protect_stacked_branch_bases(struct ref_store *refs,
-					 struct strset *deletable_branch_names)
-{
-	struct strset protected_branch_names = STRSET_INIT;
-	struct strset visited_branch_names = STRSET_INIT;
-	struct stacked_branch_data data = {
-		.deletable_branch_names = deletable_branch_names,
-		.protected_branch_names = &protected_branch_names,
-		.visited_branch_names = &visited_branch_names,
-	};
-	struct refs_for_each_ref_options opts = {
-		.prefix = "refs/heads/",
-	};
-	struct hashmap_iter iter;
-	struct strmap_entry *entry;
-
-	refs_for_each_ref_ext(refs, collect_stacked_branch_bases, &data, &opts);
-
-	strset_for_each_entry(&protected_branch_names, &iter, entry)
-		strset_remove(deletable_branch_names, entry->key);
-
-	strset_clear(&visited_branch_names);
-	strset_clear(&protected_branch_names);
 }
 
 static int branch_pushes_to_upstream(struct branch *branch,
