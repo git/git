@@ -508,11 +508,9 @@ static void do_oneway_diff(struct unpack_trees_options *o,
  * For diffing, the index is more important, and we only have a
  * single tree.
  *
- * We're supposed to advance o->pos to skip what we have already processed.
- *
  * This wrapper makes it all more readable, and takes care of all
  * the fairly complex unpack_trees() semantic requirements, including
- * the skipping, the path matching, the type conflict cases etc.
+ * the path matching, the type conflict cases etc.
  */
 static int oneway_diff(const struct cache_entry * const *src,
 		       struct unpack_trees_options *o)
