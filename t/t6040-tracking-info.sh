@@ -34,7 +34,7 @@ test_expect_success setup '
 		git checkout -b brokenbase origin &&
 		git checkout -b b5 --track brokenbase &&
 		advance g &&
-		git branch -d brokenbase &&
+		git branch -D brokenbase &&
 		git checkout -b b6 origin
 	) &&
 	git checkout -b follower --track main &&

@@ -102,7 +102,9 @@ OPTIONS
 `--delete`::
 	Delete a branch. The branch must be fully merged in its
 	upstream branch, or in `HEAD` if no upstream was set with
-	`--track` or `--set-upstream-to`.
+	`--track` or `--set-upstream-to`, and must not be an upstream,
+	directly or indirectly, of another local branch that will remain
+	after the operation.
 
 `-D`::
 	Shortcut for `--delete --force`.
