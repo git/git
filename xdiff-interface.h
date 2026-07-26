@@ -46,6 +46,19 @@ int xdi_diff_outf(mmfile_t *mf1, mmfile_t *mf2,
 		  xdiff_emit_line_fn line_fn,
 		  void *consume_callback_data,
 		  xpparam_t const *xpp, xdemitconf_t const *xecfg);
+
+struct range_set;
+/*
+ * Like xdi_diff_outf(), but forwards only the lines within the given
+ * (post-image) line ranges to line_fn, as "git log -L" scopes its output.
+ * Returns line_fn's latched return value (so a consumer can signal a hit
+ * with a non-zero return), or non-zero on xdiff failure.  Defined in
+ * diff.c (it reuses the line-range filter there).
+ */
+int diff_emit_line_ranges(mmfile_t *mf1, mmfile_t *mf2,
+			  const struct range_set *ranges,
+			  xdiff_emit_line_fn line_fn, void *cb_data,
+			  xpparam_t *xpp, xdemitconf_t *xecfg);
 int read_mmfile(mmfile_t *ptr, const char *filename);
 void read_mmblob(mmfile_t *ptr, struct object_database *odb,
 		 const struct object_id *oid);
@@ -75,5 +88,20 @@ int xdiff_compare_lines(const char *l1, long s1,
  * are treated for the hash.
  */
 unsigned long xdiff_hash_string(const char *s, size_t len, long flags);
+
+struct strbuf;
+
+/*
+ * Append a unified-diff hunk header to `out`, e.g.
+ * "@@ -<old> +<new> @@ func\n".  The header comes from wrapping xdiff's
+ * own hunk-header emitter, so it matches what a normal diff would
+ * produce for these begins and counts.  For a side with no lines
+ * (count 0) the begin is the line before the change, and a count of 1
+ * is omitted.
+ */
+void xdiff_emit_hunk_header(struct strbuf *out,
+			    long old_begin, long old_count,
+			    long new_begin, long new_count,
+			    const char *func, long funclen);
 
 #endif

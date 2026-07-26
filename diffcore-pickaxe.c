@@ -16,7 +16,8 @@
 
 typedef int (*pickaxe_fn)(mmfile_t *one, mmfile_t *two,
 			  struct diff_options *o,
-			  regex_t *regexp, kwset_t kws);
+			  regex_t *regexp, kwset_t kws,
+			  const struct range_set *ranges);
 
 struct diffgrep_cb {
 	regex_t *regexp;
@@ -42,7 +43,8 @@ static int diffgrep_consume(void *priv, char *line, unsigned long len)
 
 static int diff_grep(mmfile_t *one, mmfile_t *two,
 		     struct diff_options *o,
-		     regex_t *regexp, kwset_t kws UNUSED)
+		     regex_t *regexp, kwset_t kws UNUSED,
+		     const struct range_set *ranges)
 {
 	struct diffgrep_cb ecbdata;
 	xpparam_t xpp;
@@ -50,8 +52,11 @@ static int diff_grep(mmfile_t *one, mmfile_t *two,
 	int ret;
 
 	/*
-	 * We have both sides; need to run textual diff and see if
-	 * the pattern appears on added/deleted lines.
+	 * We have both sides; need to run textual diff and see if the
+	 * pattern appears on added/deleted lines.  Under -L (ranges set),
+	 * forward only the tracked range's lines so the match is scoped.
+	 * -G needs only a hit/no-hit answer, so the line-number bookkeeping
+	 * the filter does for -L patch and check output is irrelevant here.
 	 */
 	memset(&xpp, 0, sizeof(xpp));
 	memset(&xecfg, 0, sizeof(xecfg));
@@ -65,8 +70,12 @@ static int diff_grep(mmfile_t *one, mmfile_t *two,
 	 * An xdiff error might be our "data->hit" from above. See the
 	 * comment for xdiff_emit_line_fn in xdiff-interface.h
 	 */
-	ret = xdi_diff_outf(one, two, NULL, diffgrep_consume,
-			    &ecbdata, &xpp, &xecfg);
+	if (ranges)
+		ret = diff_emit_line_ranges(one, two, ranges, diffgrep_consume,
+					    &ecbdata, &xpp, &xecfg);
+	else
+		ret = xdi_diff_outf(one, two, NULL, diffgrep_consume,
+				    &ecbdata, &xpp, &xecfg);
 	if (ecbdata.hit)
 		return 1;
 	if (ret)
@@ -119,8 +128,13 @@ static unsigned int contains(mmfile_t *mf, regex_t *regexp, kwset_t kws,
 
 static int has_changes(mmfile_t *one, mmfile_t *two,
 		       struct diff_options *o UNUSED,
-		       regex_t *regexp, kwset_t kws)
+		       regex_t *regexp, kwset_t kws,
+		       const struct range_set *ranges UNUSED)
 {
+	/*
+	 * -S counts needle occurrences in each whole blob.  Scoping this to
+	 * a -L range is left to a follow-up; for now -S ignores the range.
+	 */
 	unsigned int c1 = one ? contains(one, regexp, kws, 0) : 0;
 	unsigned int c2 = two ? contains(two, regexp, kws, c1 + 1) : 0;
 	return c1 != c2;
@@ -132,6 +146,7 @@ static int pickaxe_match(struct diff_filepair *p, struct diff_options *o,
 	struct userdiff_driver *textconv_one = NULL;
 	struct userdiff_driver *textconv_two = NULL;
 	mmfile_t mf1, mf2;
+	const struct range_set *ranges;
 	int ret;
 
 	/* ignore unmerged */
@@ -169,7 +184,13 @@ static int pickaxe_match(struct diff_filepair *p, struct diff_options *o,
 	mf1.size = fill_textconv(o->repo, textconv_one, p->one, &mf1.ptr);
 	mf2.size = fill_textconv(o->repo, textconv_two, p->two, &mf2.ptr);
 
-	ret = fn(&mf1, &mf2, o, regexp, kws);
+	/*
+	 * -L scopes the search to the tracked range, but the range is in
+	 * original-file line coordinates that do not map onto textconv
+	 * output, so search the whole file when textconv is in play.
+	 */
+	ranges = (textconv_one || textconv_two) ? NULL : p->line_ranges;
+	ret = fn(&mf1, &mf2, o, regexp, kws, ranges);
 
 	if (textconv_one)
 		free(mf1.ptr);
