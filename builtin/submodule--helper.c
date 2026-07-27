@@ -3151,7 +3151,7 @@ static int push_check(int argc, const char **argv, const char *prefix UNUSED,
 	if (argc > 2) {
 		int i;
 		struct ref *local_refs = get_local_heads();
-		struct refspec refspec = REFSPEC_INIT_PUSH;
+		struct refspec refspec = REFSPEC_INIT_PUSH(the_hash_algo);
 
 		refspec_appendn(&refspec, argv + 2, argc - 2);
 

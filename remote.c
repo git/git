@@ -150,8 +150,8 @@ static struct remote *make_remote(struct remote_state *remote_state,
 	ret->prune = -1;  /* unspecified */
 	ret->prune_tags = -1;  /* unspecified */
 	ret->name = xstrndup(name, len);
-	refspec_init_push(&ret->push);
-	refspec_init_fetch(&ret->fetch);
+	refspec_init_push(&ret->push, the_hash_algo);
+	refspec_init_fetch(&ret->fetch, the_hash_algo);
 	string_list_init_dup(&ret->server_options);
 	string_list_init_dup(&ret->negotiation_restrict);
 	string_list_init_dup(&ret->negotiation_include);
@@ -3041,7 +3041,7 @@ int valid_remote_name(const char *name)
 	int result;
 	struct strbuf refspec = STRBUF_INIT;
 	strbuf_addf(&refspec, "refs/heads/test:refs/remotes/%s/test", name);
-	result = valid_fetch_refspec(refspec.buf);
+	result = valid_fetch_refspec(refspec.buf, the_hash_algo);
 	strbuf_release(&refspec);
 	return result;
 }

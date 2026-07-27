@@ -66,7 +66,7 @@ static enum transport_family family;
 
 static struct push_cas_option cas;
 
-static struct refspec rs = REFSPEC_INIT_PUSH;
+static struct refspec rs;
 
 static struct string_list push_options_config = STRING_LIST_INIT_DUP;
 
@@ -749,6 +749,8 @@ int cmd_push(int argc,
 		: &push_options_config);
 	set_push_cert_flags(&flags, push_cert);
 
+	refspec_init_push(&rs, the_hash_algo);
+
 	die_for_incompatible_opt4(deleterefs, "--delete",
 				  tags, "--tags",
 				  flags & TRANSPORT_PUSH_ALL, "--all/--branches",
@@ -855,7 +857,7 @@ int cmd_push(int argc,
 			}
 
 			refspec_clear(&rs);
-			rs = (struct refspec) REFSPEC_INIT_PUSH;
+			rs = (struct refspec) REFSPEC_INIT_PUSH(the_hash_algo);
 
 			if (tags)
 				refspec_append(&rs, "refs/tags/*");
