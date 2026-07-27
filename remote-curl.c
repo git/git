@@ -1340,10 +1340,9 @@ static void parse_get(const char *arg)
 	fflush(stdout);
 }
 
-static int push_dav(int nr_spec, const char **specs)
+static int push_dav(const char **specs)
 {
 	struct child_process child = CHILD_PROCESS_INIT;
-	size_t i;
 
 	child.git_cmd = 1;
 	strvec_push(&child.args, "http-push");
@@ -1353,15 +1352,14 @@ static int push_dav(int nr_spec, const char **specs)
 	if (options.verbosity > 1)
 		strvec_push(&child.args, "--verbose");
 	strvec_push(&child.args, url.buf);
-	for (i = 0; i < nr_spec; i++)
-		strvec_push(&child.args, specs[i]);
+	strvec_pushv(&child.args, specs);
 
 	if (run_command(&child))
 		die(_("git-http-push failed"));
 	return 0;
 }
 
-static int push_git(struct discovery *heads, int nr_spec, const char **specs)
+static int push_git(struct discovery *heads, const char **specs)
 {
 	struct rpc_state rpc = RPC_STATE_INIT;
 	int i, err;
@@ -1400,8 +1398,8 @@ static int push_git(struct discovery *heads, int nr_spec, const char **specs)
 		strvec_push(&args, "--force-if-includes");
 
 	strvec_push(&args, "--stdin");
-	for (i = 0; i < nr_spec; i++)
-		packet_buf_write(&preamble, "%s\n", specs[i]);
+	for (; *specs; specs++)
+		packet_buf_write(&preamble, "%s\n", *specs);
 	packet_buf_flush(&preamble);
 
 	memset(&rpc, 0, sizeof(rpc));
@@ -1416,15 +1414,15 @@ static int push_git(struct discovery *heads, int nr_spec, const char **specs)
 	return err;
 }
 
-static int push(int nr_spec, const char **specs)
+static int push(const char **specs)
 {
 	struct discovery *heads = discover_refs("git-receive-pack", 1);
 	int ret;
 
 	if (heads->proto_git)
-		ret = push_git(heads, nr_spec, specs);
+		ret = push_git(heads, specs);
 	else
-		ret = push_dav(nr_spec, specs);
+		ret = push_dav(specs);
 	free_discovery(heads);
 	return ret;
 }
@@ -1448,7 +1446,7 @@ static void parse_push(struct strbuf *buf)
 			break;
 	} while (1);
 
-	ret = push(specs.nr, specs.v);
+	ret = push(specs.v);
 	printf("\n");
 	fflush(stdout);
 
