@@ -1,5 +1,3 @@
-#define USE_THE_REPOSITORY_VARIABLE
-
 #include "git-compat-util.h"
 #include "copy.h"
 #include "path.h"
@@ -35,7 +33,8 @@ static int copy_times(const char *dst, const char *src)
 	return 0;
 }
 
-int copy_file(const char *dst, const char *src, int mode)
+int copy_file(struct repository *repo,
+	      const char *dst, const char *src, int mode)
 {
 	int fdi, fdo, status;
 
@@ -59,15 +58,16 @@ int copy_file(const char *dst, const char *src, int mode)
 	if (close(fdo) != 0)
 		return error_errno("%s: close error", dst);
 
-	if (!status && adjust_shared_perm(the_repository, dst))
+	if (!status && adjust_shared_perm(repo, dst))
 		return -1;
 
 	return status;
 }
 
-int copy_file_with_time(const char *dst, const char *src, int mode)
+int copy_file_with_time(struct repository *repo,
+			const char *dst, const char *src, int mode)
 {
-	int status = copy_file(dst, src, mode);
+	int status = copy_file(repo, dst, src, mode);
 	if (!status)
 		return copy_times(dst, src);
 	return status;

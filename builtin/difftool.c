@@ -552,7 +552,7 @@ static int run_dir_diff(struct repository *repo,
 					struct stat st;
 					if (stat(wtdir.buf, &st))
 						st.st_mode = 0644;
-					if (copy_file(rdir.buf, wtdir.buf,
+					if (copy_file(repo, rdir.buf, wtdir.buf,
 						      st.st_mode)) {
 						ret = error("could not copy '%s' to '%s'", wtdir.buf, rdir.buf);
 						goto finish;
@@ -658,7 +658,7 @@ static int run_dir_diff(struct repository *repo,
 				warning("%s", "");
 				err = 1;
 			} else if (unlink(wtdir.buf) ||
-				   copy_file(wtdir.buf, rdir.buf, st.st_mode))
+				   copy_file(repo, wtdir.buf, rdir.buf, st.st_mode))
 				warning_errno(_("could not copy '%s' to '%s'"),
 					      rdir.buf, wtdir.buf);
 		}
