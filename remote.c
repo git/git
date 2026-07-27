@@ -309,8 +309,15 @@ static struct rewrite *make_rewrite(struct rewrites *r,
 
 static void rewrites_release(struct rewrites *r)
 {
-	for (int i = 0; i < r->rewrite_nr; i++)
-		free((char *)r->rewrite[i]->base);
+	for (int i = 0; i < r->rewrite_nr; i++) {
+		struct rewrite *rewrite = r->rewrite[i];
+
+		free((char *)rewrite->base);
+		for (int j = 0; j < rewrite->instead_of_nr; j++)
+			free((char *)rewrite->instead_of[j].s);
+		free(rewrite->instead_of);
+		free(rewrite);
+	}
 	free(r->rewrite);
 	memset(r, 0, sizeof(*r));
 }
