@@ -1611,6 +1611,24 @@ test_expect_success 'checking that first commit is in all tags (hash)' '
 	test_cmp expected actual
 '
 
+test_expect_success 'tag --contains rejects cyclic replacement histories' '
+	first=$(git rev-parse HEAD~2) &&
+	second=$(git rev-parse HEAD~) &&
+	third=$(git rev-parse HEAD) &&
+	test_when_finished "
+		git replace -d $first &&
+		git replace -d $third &&
+		git tag -d cycle-a cycle-b
+	" &&
+	git tag cycle-a "$first" &&
+	git tag cycle-b "$third" &&
+	git replace --graft "$first" "$third" "$second" &&
+	git replace --graft "$third" "$first" &&
+	test_must_fail git tag --contains="$second" --list "cycle-*" \
+		>/dev/null 2>err &&
+	test_grep "fatal: commit ancestry contains a cycle" err
+'
+
 # other ways of specifying the commit
 test_expect_success 'checking that first commit is in all tags (tag)' '
 	cat >expected <<-\EOF &&
