@@ -1839,17 +1839,25 @@ const char *repo_default_remote(struct repository *repo)
 
 const char *repo_remote_from_url(struct repository *repo, const char *url)
 {
+	char *rewritten_url;
+	const char *remote_name = NULL;
+
 	read_config(repo, 0);
+	if ((rewritten_url = alias_url(url, &repo->remote_state->rewrites)))
+		url = rewritten_url;
 
 	for (int i = 0; i < repo->remote_state->remotes_nr; i++) {
 		struct remote *remote = repo->remote_state->remotes[i];
 		if (!remote)
 			continue;
 
-		if (remote_has_url(remote, url))
-			return remote->name;
+		if (remote_has_url(remote, url)) {
+			remote_name = remote->name;
+			break;
+		}
 	}
-	return NULL;
+	free(rewritten_url);
+	return remote_name;
 }
 
 int branch_has_merge_config(struct branch *branch)
