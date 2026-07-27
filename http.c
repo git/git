@@ -2746,7 +2746,22 @@ struct http_pack_request *new_direct_http_pack_request(
 
 	odb_pack_name(the_repository, &preq->tmpfile, packed_git_hash, "pack");
 	strbuf_addstr(&preq->tmpfile, ".temp");
-	fd = open(preq->tmpfile.buf, O_RDWR | O_CREAT, 0666);
+	/*
+	 * MinGW's non-append O_RDWR open grants FILE_SHARE_DELETE only for an
+	 * existing file; reopen a newly created file so others may unlink it.
+	 */
+	for (;;) {
+		fd = open(preq->tmpfile.buf, O_RDWR);
+		if (fd >= 0 || errno != ENOENT)
+			break;
+		fd = open(preq->tmpfile.buf, O_RDWR | O_CREAT | O_EXCL, 0666);
+		if (fd >= 0) {
+			close(fd);
+			continue;
+		}
+		if (errno != EEXIST)
+			break;
+	}
 	if (fd < 0) {
 		error_errno("unable to open local file %s for pack",
 			    preq->tmpfile.buf);

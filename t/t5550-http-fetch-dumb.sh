@@ -328,6 +328,27 @@ test_expect_success 'http-fetch --packfile resumes a partial download' '
 	git -C packfileclient-resume cat-file -e "$HASH"
 '
 
+test_expect_success 'http-fetch --packfile permits unlink while indexing' '
+	git init packfileclient-unlink &&
+	p=$(cd "$HTTPD_DOCUMENT_ROOT_PATH"/repo_pack.git &&
+		ls objects/pack/pack-*.pack) &&
+	tmpfile="packfileclient-unlink/.git/objects/pack/pack-$ARBITRARY.pack.temp" &&
+	write_script git-unlink-index-pack <<-\EOF &&
+	test -f "$GIT_TEST_PACK_TEMP" || exit 1
+	rm "$GIT_TEST_PACK_TEMP" || exit 1
+	exec git index-pack "$@"
+	EOF
+	test_when_finished "rm -f git-unlink-index-pack" &&
+	PATH="$TRASH_DIRECTORY:$PATH" \
+	GIT_TEST_PACK_TEMP="$TRASH_DIRECTORY/$tmpfile" \
+	git -C packfileclient-unlink http-fetch --packfile="$ARBITRARY" \
+		--index-pack-arg=unlink-index-pack \
+		--index-pack-arg=--stdin --index-pack-arg=--keep \
+		"$HTTPD_URL/dumb/repo_pack.git/$p" >out &&
+	test_path_is_missing "$tmpfile" &&
+	git -C packfileclient-unlink cat-file -e "$HASH"
+'
+
 test_expect_success PERL,PIPE 'concurrent http-fetch --packfile cannot corrupt an overlapping download' '
 	git init packfileclient-overlap &&
 	blob=$(test-tool genrandom pack-overlap 2m |
