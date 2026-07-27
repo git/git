@@ -270,10 +270,22 @@ test_expect_success 'rebase can copy notes' '
 	test "a note" = "$(git notes show HEAD)"
 '
 
-test_expect_success 'rebase -m can copy notes' '
+test_expect_success 'rebase --apply can copy notes' '
 	git reset --hard n3 &&
-	git rebase -m --onto n1 n2 &&
+	git rebase --apply --onto n1 n2 &&
 	test "a note" = "$(git notes show HEAD)"
+'
+
+test_expect_success 'rebase drops notes of dropped commits' '
+	git checkout n1 &&
+	echo n3 >n3.t &&
+	echo n4 >n4.t &&
+	git add n3.t n4.t &&
+	git commit -m n34 &&
+	git rebase HEAD n3 &&
+	test_commit_message HEAD -m n2 &&
+	test_must_fail git notes list HEAD >actual &&
+	test_must_be_empty actual
 '
 
 test_expect_success 'rebase commit with an ancient timestamp' '

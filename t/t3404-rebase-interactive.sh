@@ -1251,6 +1251,17 @@ test_expect_success 'interrupted rebase -i with --strategy and -X' '
 	test $(cat file1) = Z
 '
 
+test_expect_success 'failing pick with --strategy is rescheduled' '
+	test_when_finished "rm -rf bin; test_might_fail git rebase --abort" &&
+	mkdir bin &&
+	echo exit 2 | write_script bin/git-merge-fail &&
+	git log -1 --format="pick %H # %s" HEAD >expect &&
+	test_must_fail env PATH="$PWD/bin:$PATH" \
+		git rebase --no-ff --strategy fail HEAD^ &&
+	test_cmp expect .git/rebase-merge/git-rebase-todo &&
+	test_cmp expect .git/rebase-merge/done
+'
+
 test_expect_success 'rebase -i error on commits with \ in message' '
 	current_head=$(git rev-parse HEAD) &&
 	test_when_finished "git rebase --abort; git reset --hard $current_head; rm -f error" &&
