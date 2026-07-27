@@ -70,7 +70,8 @@ static void fetch_single_packfile(struct object_id *packfile_hash,
 
 	if (start_active_slot(preq->slot)) {
 		run_active_slot(preq->slot);
-		if (results.curl_result != CURLE_OK) {
+		if (results.curl_result != CURLE_OK &&
+		    results.http_code != 416) {
 			struct url_info url;
 			char *nurl = url_normalize(preq->url, &url);
 			if (!nurl || !git_env_bool("GIT_TRACE_REDACT", 1)) {

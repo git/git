@@ -293,6 +293,25 @@ test_expect_success 'http-fetch --packfile' '
 	git -C packfileclient cat-file -e "$HASH"
 '
 
+test_expect_success 'http-fetch --packfile accepts an already complete partial' '
+	git init packfileclient-complete &&
+	p=$(cd "$HTTPD_DOCUMENT_ROOT_PATH"/repo_pack.git &&
+		ls objects/pack/pack-*.pack) &&
+	packhash=$(basename "$p" .pack) &&
+	packhash=${packhash#pack-} &&
+	tmpfile="packfileclient-complete/.git/objects/pack/pack-$packhash.pack.temp" &&
+	cp "$HTTPD_DOCUMENT_ROOT_PATH/repo_pack.git/$p" "$tmpfile" &&
+	chmod u+w "$tmpfile" &&
+	GIT_TRACE_CURL="$TRASH_DIRECTORY/complete.trace" \
+	git -C packfileclient-complete http-fetch --packfile="$packhash" \
+		--index-pack-arg=index-pack \
+		--index-pack-arg=--stdin --index-pack-arg=--keep \
+		"$HTTPD_URL/dumb/repo_pack.git/$p" >out &&
+	test_grep "416 Requested Range Not Satisfiable" complete.trace &&
+	test_path_is_missing "$tmpfile" &&
+	git -C packfileclient-complete cat-file -e "$HASH"
+'
+
 test_expect_success 'fetch notices corrupt pack' '
 	cp -R "$HTTPD_DOCUMENT_ROOT_PATH"/repo_pack.git "$HTTPD_DOCUMENT_ROOT_PATH"/repo_bad1.git &&
 	(cd "$HTTPD_DOCUMENT_ROOT_PATH"/repo_bad1.git &&
