@@ -716,6 +716,9 @@ sub update_issue {
 
 	my $btext = $cooking->{'topic_description'}{$blurb}{'text'};
 	if ($btext !~ s/\A$blurb_match//) {
+		for my $line (split(/\n/, $btext)) {
+			print STDERR ">>> $line\n";
+		}
 		die "match pattern broken?";
 	}
 	my ($mon, $year, $issue, $dow, $date) = ($1, $2, $3, $4, $5);
