@@ -48,8 +48,9 @@ commit-id::
 	line (which is not expected in
 	this case), 'git http-fetch' fetches the packfile directly at the given
 	URL and uses index-pack to generate corresponding .idx and .keep files.
-	The hash is used to determine the name of the temporary file and is
-	arbitrary. The output of index-pack is printed to stdout. Requires
+	The hash is used to determine the name of the temporary file. It need
+	not be the pack hash, but it must uniquely identify the pack contents
+	for resumption. The output of index-pack is printed to stdout. Requires
 	one or more --index-pack-arg options.
 
 --index-pack-arg=<arg>::
