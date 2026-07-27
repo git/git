@@ -62,7 +62,7 @@ static void add_rebase_files(struct rev_info *revs)
 		"rebase-merge/autostash",
 		"rebase-merge/orig-head",
 	};
-	struct worktree **worktrees = get_worktrees();
+	struct worktree **worktrees = get_worktrees(the_repository);
 
 	for (struct worktree **wt = worktrees; *wt; wt++) {
 		char *wt_gitdir = get_worktree_git_dir(*wt);
@@ -322,7 +322,7 @@ void mark_reachable_objects(struct rev_info *revs, int mark_reflog,
 
 	/* detached HEAD is not included in the list above */
 	refs_head_ref(get_main_ref_store(the_repository), add_one_ref, revs);
-	other_head_refs(add_one_ref, revs);
+	other_head_refs(the_repository, add_one_ref, revs);
 
 	/* rebase autostash and orig-head */
 	add_rebase_files(revs);

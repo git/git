@@ -989,7 +989,7 @@ static int merge(int argc, const char **argv, const char *prefix,
 				"NOTES_MERGE_PARTIAL", &result_oid, NULL,
 				0, UPDATE_REFS_DIE_ON_ERR);
 		/* Store ref-to-be-updated into .git/NOTES_MERGE_REF */
-		worktrees = get_worktrees();
+		worktrees = get_worktrees(the_repository);
 		wt = find_shared_symref(worktrees, "NOTES_MERGE_REF",
 					notes_ref);
 		if (wt)

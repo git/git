@@ -1711,7 +1711,7 @@ static void add_other_reflogs_to_pending(struct all_refs_cb *cb)
 {
 	struct worktree **worktrees, **p;
 
-	worktrees = get_worktrees();
+	worktrees = get_worktrees(the_repository);
 	for (p = worktrees; *p; p++) {
 		struct worktree *wt = *p;
 
@@ -1837,7 +1837,7 @@ void add_index_objects_to_pending(struct rev_info *revs, unsigned int flags)
 	if (revs->single_worktree)
 		return;
 
-	worktrees = get_worktrees();
+	worktrees = get_worktrees(the_repository);
 	for (p = worktrees; *p; p++) {
 		struct worktree *wt = *p;
 		struct index_state istate = INDEX_STATE_INIT(revs->repo);
@@ -2824,7 +2824,7 @@ static int handle_revision_pseudo_opt(struct rev_info *revs,
 			struct all_refs_cb cb;
 
 			init_all_refs_cb(&cb, revs, *flags);
-			other_head_refs(handle_one_ref, &cb);
+			other_head_refs(the_repository, handle_one_ref, &cb);
 		}
 		clear_ref_exclusions(&revs->ref_excludes);
 	} else if (!strcmp(arg, "--branches")) {

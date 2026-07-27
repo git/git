@@ -412,7 +412,7 @@ static int worktree_prune_condition(struct gc_config *cfg)
 	while (limit && (d = readdir_skip_dot_and_dotdot(dir))) {
 		char *wtpath;
 		strbuf_reset(&buf);
-		if (should_prune_worktree(d->d_name, &buf, &wtpath, expiry_date))
+		if (should_prune_worktree(the_repository, d->d_name, &buf, &wtpath, expiry_date))
 			limit--;
 		free(wtpath);
 	}

@@ -250,7 +250,7 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix,
 		struct string_list_item *item;
 		struct worktree **worktrees, **p;
 
-		worktrees = get_worktrees();
+		worktrees = get_worktrees(the_repository);
 		for (p = worktrees; *p; p++) {
 			if (single_worktree && !(*p)->is_current)
 				continue;
@@ -374,7 +374,7 @@ static int cmd_reflog_drop(int argc, const char **argv, const char *prefix,
 		struct string_list_item *item;
 		struct worktree **worktrees, **p;
 
-		worktrees = get_worktrees();
+		worktrees = get_worktrees(the_repository);
 		for (p = worktrees; *p; p++) {
 			if (single_worktree && !(*p)->is_current)
 				continue;

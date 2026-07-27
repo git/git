@@ -113,7 +113,7 @@ static int cmd_refs_verify(int argc, const char **argv, const char *prefix,
 	repo_config(repo, git_fsck_config, &fsck_refs_options);
 	prepare_repo_settings(repo);
 
-	worktrees = get_worktrees_without_reading_head();
+	worktrees = get_worktrees_without_reading_head(repo);
 	for (size_t i = 0; worktrees[i]; i++)
 		ret |= refs_fsck(get_worktree_ref_store(worktrees[i]),
 				 &fsck_refs_options, worktrees[i]);
