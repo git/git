@@ -1,6 +1,8 @@
 #include "git-compat-util.h"
 #include "abspath.h"
+#include "blob.h"
 #include "chdir-notify.h"
+#include "config.h"
 #include "gettext.h"
 #include "lockfile.h"
 #include "object-file.h"
@@ -8,8 +10,16 @@
 #include "odb/source.h"
 #include "odb/source-files.h"
 #include "odb/source-loose.h"
+#include "pack-objects.h"
 #include "packfile.h"
+#include "path.h"
+#include "promisor-remote.h"
+#include "repack.h"
+#include "run-command.h"
 #include "strbuf.h"
+#include "string-list.h"
+#include "strvec.h"
+#include "tree.h"
 #include "write-or-die.h"
 
 static void odb_source_files_reparent(const char *name UNUSED,
@@ -261,6 +271,464 @@ out:
 	return ret;
 }
 
+static int too_many_loose_objects(struct odb_source_files *files, int limit)
+{
+	unsigned long loose_count;
+
+	if (limit <= 0)
+		return 0;
+
+	if (odb_source_count_objects(&files->loose->base, ODB_COUNT_OBJECTS_APPROXIMATE,
+				     &loose_count) < 0)
+		return 0;
+
+	/*
+	 * This is weird, but stems from legacy behaviour: the GC auto
+	 * threshold was always essentially interpreted as if it was rounded up
+	 * to the next multiple 256 of, so we retain this behaviour for now.
+	 */
+	return loose_count > (DIV_ROUND_UP(((unsigned long) limit), 256) * 256);
+}
+
+static struct packed_git *find_base_packs(struct odb_source_files *files,
+					  struct string_list *packs,
+					  unsigned long limit)
+{
+	struct packfile_list_entry *e;
+	struct packed_git *base = NULL;
+
+	for (e = packfile_store_get_packs(files->packed); e; e = e->next) {
+		if (e->pack->is_cruft)
+			continue;
+		if (limit) {
+			if ((uintmax_t) e->pack->pack_size >= limit)
+				string_list_append(packs, e->pack->pack_name);
+		} else if (!base || base->pack_size < e->pack->pack_size) {
+			base = e->pack;
+		}
+	}
+
+	if (base)
+		string_list_append(packs, base->pack_name);
+
+	return base;
+}
+
+static int too_many_packs(struct odb_source_files *files, int gc_auto_pack_limit)
+{
+	struct packfile_list_entry *e;
+	int cnt = 0;
+
+	if (gc_auto_pack_limit <= 0)
+		return 0;
+
+	for (e = packfile_store_get_packs(files->packed); e; e = e->next) {
+		if (e->pack->pack_keep)
+			continue;
+		/*
+		 * Perhaps check the size of the pack and count only
+		 * very small ones here?
+		 */
+		cnt++;
+	}
+	return gc_auto_pack_limit < cnt;
+}
+
+static uint64_t total_ram(void)
+{
+#if defined(HAVE_SYSINFO)
+	struct sysinfo si;
+
+	if (!sysinfo(&si)) {
+		uint64_t total = si.totalram;
+
+		if (si.mem_unit > 1)
+			total *= (uint64_t)si.mem_unit;
+		return total;
+	}
+#elif defined(HAVE_BSD_SYSCTL) && (defined(HW_MEMSIZE) || defined(HW_PHYSMEM) || defined(HW_PHYSMEM64))
+	uint64_t physical_memory;
+	int mib[2];
+	size_t length;
+
+	mib[0] = CTL_HW;
+# if defined(HW_MEMSIZE)
+	mib[1] = HW_MEMSIZE;
+# elif defined(HW_PHYSMEM64)
+	mib[1] = HW_PHYSMEM64;
+# else
+	mib[1] = HW_PHYSMEM;
+# endif
+	length = sizeof(physical_memory);
+	if (!sysctl(mib, 2, &physical_memory, &length, NULL, 0)) {
+		if (length == 4) {
+			uint32_t mem;
+
+			if (!sysctl(mib, 2, &mem, &length, NULL, 0))
+				physical_memory = mem;
+		}
+		return physical_memory;
+	}
+#elif defined(GIT_WINDOWS_NATIVE)
+	MEMORYSTATUSEX memInfo;
+
+	memInfo.dwLength = sizeof(MEMORYSTATUSEX);
+	if (GlobalMemoryStatusEx(&memInfo))
+		return memInfo.ullTotalPhys;
+#endif
+	return 0;
+}
+
+static uint64_t estimate_repack_memory(struct odb_source_files *files,
+				       struct packed_git *pack)
+{
+	unsigned long max_delta_cache_size = DEFAULT_DELTA_CACHE_SIZE;
+	unsigned long delta_base_cache_limit = DEFAULT_DELTA_BASE_CACHE_LIMIT;
+	unsigned long nr_objects;
+	size_t os_cache, heap;
+
+	if (odb_source_count_objects(&files->base, ODB_COUNT_OBJECTS_APPROXIMATE,
+				     &nr_objects) < 0)
+		return 0;
+
+	if (!pack || !nr_objects)
+		return 0;
+
+	repo_config_get_ulong(files->base.odb->repo, "pack.deltacachesize",
+			      &max_delta_cache_size);
+	repo_config_get_ulong(files->base.odb->repo, "core.deltabasecachelimit",
+			      &delta_base_cache_limit);
+
+	/*
+	 * First we have to scan through at least one pack.
+	 * Assume enough room in OS file cache to keep the entire pack
+	 * or we may accidentally evict data of other processes from
+	 * the cache.
+	 */
+	os_cache = pack->pack_size + pack->index_size;
+	/* then pack-objects needs lots more for book keeping */
+	heap = sizeof(struct object_entry) * nr_objects;
+	/*
+	 * internal rev-list --all --objects takes up some memory too,
+	 * let's say half of it is for blobs
+	 */
+	heap += sizeof(struct blob) * nr_objects / 2;
+	/*
+	 * and the other half is for trees (commits and tags are
+	 * usually insignificant)
+	 */
+	heap += sizeof(struct tree) * nr_objects / 2;
+	/* and then obj_hash[], underestimated in fact */
+	heap += sizeof(struct object *) * nr_objects;
+	/* revindex is used also */
+	heap += (sizeof(off_t) + sizeof(uint32_t)) * nr_objects;
+	/*
+	 * read_sha1_file() (either at delta calculation phase, or
+	 * writing phase) also fills up the delta base cache
+	 */
+	heap += delta_base_cache_limit;
+	/* and of course pack-objects has its own delta cache */
+	heap += max_delta_cache_size;
+
+	return os_cache + heap;
+}
+
+static int keep_one_pack(struct string_list_item *item, void *data)
+{
+	struct strvec *args = data;
+	strvec_pushf(args, "--keep-pack=%s", basename(item->string));
+	return 0;
+}
+
+static void add_repack_all_option(struct repository *repo,
+				  const struct odb_optimize_options *opts,
+				  struct string_list *keep_pack,
+				  struct strvec *args)
+{
+	char *repack_filter = NULL;
+	char *repack_filter_to = NULL;
+
+	repo_config_get_string(repo, "gc.repackfilter", &repack_filter);
+	repo_config_get_string(repo, "gc.repackfilterto", &repack_filter_to);
+
+	if (opts->prune_expire && !strcmp(opts->prune_expire, "now") &&
+	    !(opts->cruft_packs && opts->expire_to))
+		strvec_push(args, "-a");
+	else if (opts->cruft_packs) {
+		strvec_push(args, "--cruft");
+		if (opts->prune_expire)
+			strvec_pushf(args, "--cruft-expiration=%s", opts->prune_expire);
+		if (opts->max_cruft_size)
+			strvec_pushf(args, "--max-cruft-size=%lu",
+				     opts->max_cruft_size);
+		if (opts->expire_to)
+			strvec_pushf(args, "--expire-to=%s", opts->expire_to);
+	} else {
+		strvec_push(args, "-A");
+		if (opts->prune_expire)
+			strvec_pushf(args, "--unpack-unreachable=%s", opts->prune_expire);
+	}
+
+	if (keep_pack)
+		for_each_string_list(keep_pack, keep_one_pack, args);
+
+	if (repack_filter && *repack_filter)
+		strvec_pushf(args, "--filter=%s", repack_filter);
+	if (repack_filter_to && *repack_filter_to)
+		strvec_pushf(args, "--filter-to=%s", repack_filter_to);
+
+	free(repack_filter);
+	free(repack_filter_to);
+}
+
+static void add_repack_incremental_option(struct strvec *args)
+{
+	strvec_push(args, "--no-write-bitmap-index");
+}
+
+bool odb_source_files_optimize_required(struct odb_source *source,
+					const struct odb_optimize_options *opts)
+{
+	struct odb_source_files *files = odb_source_files_downcast(source);
+	struct repository *repo = source->odb->repo;
+
+	switch (opts->strategy) {
+	case ODB_OPTIMIZE_INCREMENTAL: {
+		int gc_auto_threshold = 6700;
+		int gc_auto_pack_limit = 50;
+
+		repo_config_get_int(repo, "gc.auto", &gc_auto_threshold);
+		repo_config_get_int(repo, "gc.autopacklimit", &gc_auto_pack_limit);
+
+		/*
+		 * Setting gc.auto to 0 or negative can disable the
+		 * automatic gc.
+		 */
+		if (gc_auto_threshold <= 0)
+			return false;
+		if (!too_many_packs(files, gc_auto_pack_limit) &&
+		    !too_many_loose_objects(files, gc_auto_threshold))
+			return false;
+
+		return true;
+	}
+	case ODB_OPTIMIZE_GEOMETRIC: {
+		struct pack_geometry geometry = {
+			.split_factor = 2,
+		};
+		struct pack_objects_args po_args = {
+			.local = 1,
+		};
+		struct existing_packs existing_packs = EXISTING_PACKS_INIT;
+		struct string_list kept_packs = STRING_LIST_INIT_DUP;
+		int auto_value = 100;
+		bool ret;
+
+		repo_config_get_int(repo, "maintenance.geometric-repack.auto",
+				    &auto_value);
+		if (!auto_value)
+			return false;
+		if (auto_value < 0)
+			return true;
+
+		repo_config_get_int(repo, "maintenance.geometric-repack.splitFactor",
+				    &geometry.split_factor);
+
+		existing_packs.repo = repo;
+		existing_packs_collect(&existing_packs, &kept_packs);
+		pack_geometry_init(&geometry, &existing_packs, &po_args);
+		pack_geometry_split(&geometry);
+
+		/*
+		 * When we'd merge at least two packs with one another we always
+		 * perform the repack.
+		 */
+		if (geometry.split) {
+			ret = true;
+			goto out;
+		}
+
+		/*
+		 * Otherwise, we estimate the number of loose objects to determine
+		 * whether we want to create a new packfile or not.
+		 */
+		if (too_many_loose_objects(files, auto_value)) {
+			ret = true;
+			goto out;
+		}
+
+		ret = false;
+
+	out:
+		existing_packs_release(&existing_packs);
+		pack_geometry_release(&geometry);
+		return ret;
+	}
+	default:
+		BUG("unknown maintenance strategy '%d'", opts->strategy);
+	}
+}
+
+int odb_source_files_optimize(struct odb_source *source,
+			      const struct odb_optimize_options *opts)
+{
+	struct odb_source_files *files = odb_source_files_downcast(source);
+	struct repository *repo = source->odb->repo;
+	struct child_process repack_cmd = CHILD_PROCESS_INIT;
+	unsigned long big_pack_threshold = 0;
+	int gc_auto_threshold = 6700;
+	int gc_auto_pack_limit = 50;
+	int ret;
+
+	repo_config_get_int(repo, "gc.auto", &gc_auto_threshold);
+	repo_config_get_int(repo, "gc.autopacklimit", &gc_auto_pack_limit);
+	repo_config_get_ulong(repo, "gc.bigpackthreshold", &big_pack_threshold);
+
+	if (repo->repository_format_precious_objects)
+		return 0;
+
+	repack_cmd.git_cmd = 1;
+	repack_cmd.odb_to_close = repo->objects;
+
+	strvec_pushl(&repack_cmd.args, "repack", "-d", "-l", NULL);
+	if (opts->flags & ODB_OPTIMIZE_NO_REUSE_DELTAS)
+		strvec_push(&repack_cmd.args, "-f");
+	if (opts->depth > 0)
+		strvec_pushf(&repack_cmd.args, "--depth=%d", opts->depth);
+	if (opts->window > 0)
+		strvec_pushf(&repack_cmd.args, "--window=%d", opts->window);
+	if (!(opts->flags & ODB_OPTIMIZE_VERBOSE))
+		strvec_push(&repack_cmd.args, "-q");
+
+	/*
+	 * There's three cases we need to consider:
+	 *
+	 *   - If we're invoked without `--auto` we'll need to perform a full
+	 *     repack.
+	 *
+	 *   - If we're invoked with `--auto` and there's too many packs, then
+	 *     we perform a full repack, as well.
+	 *
+	 *   - Otherwise we perform an incremental repack.
+	 */
+	switch (opts->strategy) {
+	case ODB_OPTIMIZE_INCREMENTAL:
+		if (!(opts->flags & ODB_OPTIMIZE_AUTO)) {
+			struct string_list keep_pack = STRING_LIST_INIT_NODUP;
+
+			if (opts->keep_largest_pack != -1) {
+				if (opts->keep_largest_pack)
+					find_base_packs(files, &keep_pack, 0);
+			} else if (big_pack_threshold) {
+				find_base_packs(files, &keep_pack, big_pack_threshold);
+			}
+
+			add_repack_all_option(repo, opts, &keep_pack, &repack_cmd.args);
+			string_list_clear(&keep_pack, 0);
+		} else {
+			if (too_many_packs(files, gc_auto_pack_limit)) {
+				struct string_list keep_pack = STRING_LIST_INIT_NODUP;
+
+				if (big_pack_threshold) {
+					find_base_packs(files, &keep_pack, big_pack_threshold);
+					if (keep_pack.nr >= (unsigned long) gc_auto_pack_limit) {
+						string_list_clear(&keep_pack, 0);
+						find_base_packs(files, &keep_pack, 0);
+					}
+				} else {
+					struct packed_git *p = find_base_packs(files, &keep_pack, 0);
+					uint64_t mem_have, mem_want;
+
+					mem_have = total_ram();
+					mem_want = estimate_repack_memory(files, p);
+
+					/*
+					 * Only allow 1/2 of memory for pack-objects, leave
+					 * the rest for the OS and other processes in the
+					 * system.
+					 */
+					if (!mem_have || mem_want < mem_have / 2)
+						string_list_clear(&keep_pack, 0);
+				}
+
+				add_repack_all_option(repo, opts, &keep_pack, &repack_cmd.args);
+				string_list_clear(&keep_pack, 0);
+			} else {
+				add_repack_incremental_option(&repack_cmd.args);
+			}
+		}
+
+		break;
+	case ODB_OPTIMIZE_GEOMETRIC: {
+		struct pack_geometry geometry = {
+			.split_factor = 2,
+		};
+		struct pack_objects_args po_args = {
+			.local = 1,
+		};
+		struct existing_packs existing_packs = EXISTING_PACKS_INIT;
+		struct string_list kept_packs = STRING_LIST_INIT_DUP;
+
+		repo_config_get_int(repo, "maintenance.geometric-repack.splitFactor",
+				    &geometry.split_factor);
+
+		existing_packs.repo = repo;
+		existing_packs_collect(&existing_packs, &kept_packs);
+		pack_geometry_init(&geometry, &existing_packs, &po_args);
+		pack_geometry_split(&geometry);
+
+		if (geometry.split < geometry.pack_nr) {
+			strvec_pushf(&repack_cmd.args, "--geometric=%d",
+				     geometry.split_factor);
+		} else {
+			add_repack_all_option(repo, opts, NULL, &repack_cmd.args);
+		}
+		if (repo->settings.core_multi_pack_index)
+			strvec_push(&repack_cmd.args, "--write-midx");
+
+		existing_packs_release(&existing_packs);
+		pack_geometry_release(&geometry);
+		break;
+	}
+	default:
+		die("unknown maintenance strategy '%d'", opts->strategy);
+	}
+
+	if (run_command(&repack_cmd)) {
+		ret = error("failed to run %s", repack_cmd.args.v[0]);
+		goto out;
+	}
+
+	/* Geometric repacking uses cruft packs, so we don't have to prune separately. */
+	if (opts->strategy != ODB_OPTIMIZE_GEOMETRIC && opts->prune_expire) {
+		struct child_process prune_cmd = CHILD_PROCESS_INIT;
+
+		strvec_pushl(&prune_cmd.args, "prune", "--expire", NULL);
+		/* run `git prune` even if using cruft packs */
+		strvec_push(&prune_cmd.args, opts->prune_expire);
+		if (!(opts->flags & ODB_OPTIMIZE_VERBOSE))
+			strvec_push(&prune_cmd.args, "--no-progress");
+		if (repo_has_promisor_remote(repo))
+			strvec_push(&prune_cmd.args,
+				    "--exclude-promisor-objects");
+		prune_cmd.git_cmd = 1;
+
+		if (run_command(&prune_cmd)) {
+			ret = error("failed to run %s", prune_cmd.args.v[0]);
+			goto out;
+		}
+	}
+
+	if (opts->flags & ODB_OPTIMIZE_AUTO && too_many_loose_objects(files, gc_auto_threshold))
+		warning(_("There are too many unreachable loose objects; "
+			"run 'git prune' to remove them."));
+
+	ret = 0;
+
+out:
+	return ret;
+}
+
 struct odb_source_files *odb_source_files_new(struct object_database *odb,
 					      const char *path,
 					      bool local)
@@ -286,6 +754,8 @@ struct odb_source_files *odb_source_files_new(struct object_database *odb,
 	files->base.begin_transaction = odb_source_files_begin_transaction;
 	files->base.read_alternates = odb_source_files_read_alternates;
 	files->base.write_alternate = odb_source_files_write_alternate;
+	files->base.optimize = odb_source_files_optimize;
+	files->base.optimize_required = odb_source_files_optimize_required;
 
 	/*
 	 * Ideally, we would only ever store absolute paths in the source. This
