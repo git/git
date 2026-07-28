@@ -1165,4 +1165,21 @@ test_expect_success 'suggested names are not ambiguous' '
 	grep remotes/origin/not-local stderr
 '
 
+test_expect_success 'merge with no argument defaults to upstream' '
+	test_when_finished "rm -rf upstream downstream" &&
+	git init upstream &&
+	(
+		cd upstream &&
+		test_commit one &&
+		test_commit two
+	) &&
+	git clone upstream downstream &&
+	(
+		cd downstream &&
+		git reset --hard HEAD^ &&
+		git merge &&
+		test_cmp_rev origin/main HEAD
+	)
+'
+
 test_done
