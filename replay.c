@@ -284,25 +284,19 @@ static void put_mapped_commit(kh_oid_map_t *replayed_commits,
 
 static struct commit *pick_regular_commit(struct repository *repo,
 					  struct commit *pickme,
-					  kh_oid_map_t *replayed_commits,
-					  struct commit *onto,
+					  struct commit *replayed_base,
 					  struct merge_options *merge_opt,
 					  struct merge_result *result,
 					  enum replay_mode mode,
 					  enum replay_empty_commit_action empty)
 {
-	struct commit *base, *replayed_base;
 	struct tree *pickme_tree, *base_tree, *replayed_base_tree;
 
-	if (pickme->parents) {
-		base = pickme->parents->item;
-		base_tree = repo_get_commit_tree(repo, base);
-	} else {
-		base = NULL;
+	if (pickme->parents)
+		base_tree = repo_get_commit_tree(repo, pickme->parents->item);
+	else
 		base_tree = lookup_tree(repo, repo->hash_algo->empty_tree);
-	}
 
-	replayed_base = get_mapped_commit(replayed_commits, base, onto);
 	replayed_base_tree = repo_get_commit_tree(repo, replayed_base);
 	pickme_tree = repo_get_commit_tree(repo, pickme);
 
@@ -443,12 +437,26 @@ int replay_revisions(struct rev_info *revs,
 	while ((commit = get_revision(revs))) {
 		const struct name_decoration *decoration;
 
+		/*
+		 * Decide where to replay this commit on.
+		 * If the parent commit was replayed already, the replayed result
+		 * can be found in `replayed_commits`. Otherwise fall back to `onto`.
+		 * When reverting, commits are replayed in reverse order and thus
+		 * its parent isn't replayed yet. Therefore revert commits are
+		 * always replayed onto `last_commit`.
+		 */
+		struct commit *parent = commit->parents ? commit->parents->item : NULL;
+		struct commit *base = get_mapped_commit(replayed_commits, parent, onto);
+
+		if (mode == REPLAY_MODE_REVERT)
+			base = last_commit;
+
 		if (commit->parents && commit->parents->next)
 			die(_("replaying merge commits is not supported yet!"));
 
-		last_commit = pick_regular_commit(revs->repo, commit, replayed_commits,
-						  mode == REPLAY_MODE_REVERT ? last_commit : onto,
-						  &merge_opt, &result, mode, opts->empty);
+		last_commit = pick_regular_commit(revs->repo, commit, base,
+						  &merge_opt, &result,
+						  mode, opts->empty);
 		if (!last_commit)
 			break;
 
