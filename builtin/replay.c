@@ -85,7 +85,7 @@ int cmd_replay(int argc,
 	const char *const replay_usage[] = {
 		N_("(EXPERIMENTAL!) git replay "
 		   "([--contained] --onto=<newbase> | --advance=<branch> | --revert=<branch>)\n"
-		   "[--ref=<ref>] [--ref-action=<mode>] [--linearize] <revision-range>"),
+		   "[--ref=<ref>] [--ref-action=<mode>] <revision-range>"),
 		NULL
 	};
 	struct option replay_options[] = {
@@ -111,8 +111,6 @@ int cmd_replay(int argc,
 			     N_("mode"),
 			     N_("control ref update behavior (update|print)"),
 			     PARSE_OPT_NONEG),
-		OPT_BOOL(0, "linearize", &opts.linearize,
-			 N_("drop merge commits, replaying only non-merge commits")),
 		OPT_END()
 	};
 

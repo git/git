@@ -52,19 +52,8 @@ test_expect_success 'setup' '
 	test_merge P O --no-ff &&
 	git switch main &&
 
-	git switch --orphan unrelated &&
-	test_commit unrelated-root &&
-
 	git switch -c conflict B &&
-	test_commit C.conflict C.t conflict &&
-	git branch -D unrelated &&
-
-	git switch -c divergent-x main &&
-	test_commit X &&
-	git switch -c divergent-y main &&
-	test_commit Y &&
-	git switch divergent-x &&
-	test_merge Z divergent-y --no-ff
+	test_commit C.conflict C.t conflict
 '
 
 test_expect_success 'setup bare' '
@@ -574,133 +563,6 @@ test_expect_success '--ref requires fully qualified ref' '
 test_expect_success '--onto with --ref rejects multiple revision ranges' '
 	test_must_fail git replay --onto=main --ref=refs/heads/topic2 ^topic1 topic2 topic4 2>err &&
 	test_grep "cannot be used with multiple revision ranges" err
-'
-
-test_expect_success 'replay to rebase merge commit with --linearize' '
-	git replay --ref-action=print --linearize \
-		--onto main I..topic-with-merge >result &&
-
-	test_line_count = 1 result &&
-
-	git log --format=%s $(cut -f 3 -d " " result) >actual &&
-	test_write_lines O N J M L B A >expect &&
-	test_cmp expect actual
-'
-
-test_expect_success 'replay to rebase merge commit with --linearize down to the root commit' '
-	git replay --ref-action=print --linearize \
-		--onto unrelated-root topic-with-merge >result &&
-
-	test_line_count = 1 result &&
-
-	git log --format=%s $(cut -f 3 -d " " result) >actual &&
-	test_write_lines O N J I B A unrelated-root >expect &&
-	test_cmp expect actual
-'
-
-test_expect_success 'replay to cherry-pick merge commit with --linearize' '
-	git replay --ref-action=print --linearize \
-		--advance main I..topic-with-merge >result &&
-
-	test_line_count = 1 result &&
-
-	git log --format=%s $(cut -f 3 -d " " result) >actual &&
-	test_write_lines O N J M L B A >expect &&
-	test_cmp expect actual &&
-
-	printf "update refs/heads/main " >expect &&
-	printf "%s " $(cut -f 3 -d " " result) >>expect &&
-	git rev-parse main >>expect &&
-	test_cmp expect result
-'
-
-test_expect_success 'replay --linearize produces the same patches' '
-	git replay --ref-action=print --linearize \
-		--onto main I..topic-with-merge >result &&
-
-	test_line_count = 1 result &&
-	tip=$(cut -f 3 -d " " result) &&
-
-	# range-diff does not care about the dropped merge,
-	# so the original commits (I..topic-with-merge)
-	# and the replayed chain (main..tip) must produce identical patches.
-	git range-diff I..topic-with-merge main..$tip >out &&
-	test_file_not_empty out &&
-	test_grep ! -v "=" out &&
-
-	git log --oneline main..$tip >out &&
-	test_line_count = 3 out
-'
-
-test_expect_success 'replay with --linearize rebase multiple divergent branches into a single line' '
-	git replay --ref-action=print --linearize \
-		--onto main ^B topic2 topic3 topic4 >result &&
-
-	test_line_count = 3 result &&
-	cut -f 3 -d " " result >new-branch-tips &&
-
-	>expect &&
-	for i in 2 3 4
-	do
-		printf "update refs/heads/topic$i " >>expect &&
-		printf "%s " $(grep topic$i result | cut -f 3 -d " ") >>expect &&
-		git rev-parse topic$i >>expect || return 1
-	done &&
-
-	test_cmp expect result &&
-
-	test_write_lines           E D C M L B A >expect2 &&
-	test_write_lines     H G F E D C M L B A >expect3 &&
-	test_write_lines J I H G F E D C M L B A >expect4 &&
-
-	for i in 2 3 4
-	do
-		git log --format=%s $(grep topic$i result | cut -f 3 -d " ") >actual &&
-		test_cmp expect$i actual || return 1
-	done
-'
-
-test_expect_success 'replay with --linearize of a divergent merge keeps both sides' '
-	git replay --ref-action=print --linearize \
-		--onto main main..divergent-x >result &&
-	test_line_count = 1 result &&
-	tip=$(cut -f 3 -d " " result) &&
-
-	# The merge Z is dropped, but both X and Y are linearized onto main;
-	# neither side is lost.
-	git log --format=%s main..$tip >actual &&
-	test_write_lines Y X >expect &&
-	test_cmp expect actual
-'
-
-test_expect_success '--linearize with --contained updates contained refs' '
-	git replay --ref-action=print --linearize --contained \
-		--onto main ^B topic-with-merge >result &&
-
-	test_line_count = 2 result &&
-
-	git log --format=%s $(head -n 1 result | cut -f 3 -d " ") >actual &&
-	test_write_lines J I M L B A >expect &&
-	test_cmp expect actual &&
-
-	git log --format=%s $(tail -n 1 result | cut -f 3 -d " ") >actual &&
-	test_write_lines O N J I M L B A >expect &&
-	test_cmp expect actual
-'
-
-test_expect_success 'replay --revert with --linearize reverts a range containing a merge' '
-	git replay --ref-action=print --revert=divergent-x --linearize \
-		main..divergent-x >result &&
-	test_line_count = 1 result &&
-	tip=$(cut -f 3 -d " " result) &&
-
-	git log --format=%s $tip >actual &&
-	test_write_lines \
-		"Revert \"X\"" "Revert \"Y\"" Z Y X M L B A >expect &&
-	test_cmp expect actual &&
-
-	test_must_fail git cat-file -e $tip:X.t &&
-	test_must_fail git cat-file -e $tip:Y.t
 '
 
 test_done
