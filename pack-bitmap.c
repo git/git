@@ -1559,7 +1559,7 @@ static struct bitmap *find_objects(struct bitmap_index *bitmap_git,
 
 		if (base) {
 			int pos = bitmap_position(bitmap_git, &object->oid);
-			if (pos > 0 && bitmap_get(base, pos)) {
+			if (pos >= 0 && bitmap_get(base, pos)) {
 				object->flags |= SEEN;
 				continue;
 			}
