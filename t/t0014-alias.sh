@@ -27,10 +27,15 @@ test_expect_success 'looping aliases - internal execution' '
 	test_grep "^fatal: alias loop detected: expansion of" output
 '
 
-deprecated1=whatchanged
-deprecated2=pack-redundant
+test_expect_success 'detect deprecated commands' '
+	git --list-cmds=deprecated >deprecated &&
+	if read deprecated1 && read deprecated2
+	then
+		test_set_prereq HAVE_DEPRECATED
+	fi <deprecated
+'
 
-test_expect_success 'looping aliases - deprecated builtins' '
+test_expect_success HAVE_DEPRECATED 'looping aliases - deprecated builtins' '
 	test_config alias.$deprecated1 $deprecated2 &&
 	test_config alias.$deprecated2 $deprecated1 &&
 	cat >expect <<-EOF &&
@@ -89,7 +94,7 @@ test_expect_success 'can alias-shadow deprecated builtins' '
 	done
 '
 
-test_expect_success 'can alias-shadow via two deprecated builtins' '
+test_expect_success HAVE_DEPRECATED 'can alias-shadow via two deprecated builtins' '
 	# some git(1) commands will fail... (see above)
 	test_might_fail git status -h >expect &&
 	test_file_not_empty expect &&
