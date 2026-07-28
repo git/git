@@ -530,6 +530,16 @@ static int oneway_diff(const struct cache_entry * const *src,
 	if (tree == o->df_conflict_entry)
 		tree = NULL;
 
+	/*
+	 * We should only see a NULL idx when the entry was present in the tree
+	 * but deleted in the idx. In which case it should be impossible
+	 * that a NULL tree was passed in (there would have been no entry at
+	 * all) or that we got a df conflict above (you need a directory and a
+	 * file to get such a conflict, which implies both sides are present).
+	 */
+	if (!idx && !tree)
+		BUG("oneway_diff with neither idx nor tree");
+
 	if (ce_path_match(revs->diffopt.repo->index,
 			  idx ? idx : tree,
 			  &revs->prune_data, NULL)) {
