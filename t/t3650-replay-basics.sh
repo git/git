@@ -52,8 +52,19 @@ test_expect_success 'setup' '
 	test_merge P O --no-ff &&
 	git switch main &&
 
+	git switch --orphan unrelated &&
+	test_commit unrelated-root &&
+
 	git switch -c conflict B &&
-	test_commit C.conflict C.t conflict
+	test_commit C.conflict C.t conflict &&
+	git branch -D unrelated &&
+
+	git switch -c divergent-x main &&
+	test_commit X &&
+	git switch -c divergent-y main &&
+	test_commit Y &&
+	git switch divergent-x &&
+	test_merge Z divergent-y --no-ff
 '
 
 test_expect_success 'setup bare' '
@@ -563,6 +574,102 @@ test_expect_success '--ref requires fully qualified ref' '
 test_expect_success '--onto with --ref rejects multiple revision ranges' '
 	test_must_fail git replay --onto=main --ref=refs/heads/topic2 ^topic1 topic2 topic4 2>err &&
 	test_grep "cannot be used with multiple revision ranges" err
+'
+
+test_expect_success 'replay to rebase merge commit with --linearize' '
+	git replay --ref-action=print --linearize \
+		--onto main I..topic-with-merge >result &&
+
+	test_line_count = 1 result &&
+
+	git log --format=%s $(cut -f 3 -d " " result) >actual &&
+	test_write_lines O N J M L B A >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'replay to rebase merge commit with --linearize down to the root commit' '
+	git replay --ref-action=print --linearize \
+		--onto unrelated-root topic-with-merge >result &&
+
+	test_line_count = 1 result &&
+
+	git log --format=%s $(cut -f 3 -d " " result) >actual &&
+	test_write_lines O N J I B A unrelated-root >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'replay to cherry-pick merge commit with --linearize' '
+	git replay --ref-action=print --linearize \
+		--advance main I..topic-with-merge >result &&
+
+	test_line_count = 1 result &&
+
+	git log --format=%s $(cut -f 3 -d " " result) >actual &&
+	test_write_lines O N J M L B A >expect &&
+	test_cmp expect actual &&
+
+	printf "update refs/heads/main " >expect &&
+	printf "%s " $(cut -f 3 -d " " result) >>expect &&
+	git rev-parse main >>expect &&
+	test_cmp expect result
+'
+
+test_expect_success 'replay --linearize produces the same patches' '
+	git replay --ref-action=print --linearize \
+		--onto main I..topic-with-merge >result &&
+
+	test_line_count = 1 result &&
+	tip=$(cut -f 3 -d " " result) &&
+
+	# range-diff does not care about the dropped merge,
+	# so the original commits (I..topic-with-merge)
+	# and the replayed chain (main..tip) must produce identical patches.
+	git range-diff I..topic-with-merge main..$tip >out &&
+	test_file_not_empty out &&
+	test_grep ! -v "=" out &&
+
+	git log --oneline main..$tip >out &&
+	test_line_count = 3 out
+'
+
+test_expect_success '--linearize rejects multiple revision ranges' '
+	test_must_fail git replay --ref-action=print --linearize \
+		--onto main ^B topic2 topic3 topic4 2>err &&
+	test_grep "cannot be used with multiple revision ranges" err
+'
+
+test_expect_success 'replay with --linearize of a divergent merge keeps both sides' '
+	git replay --ref-action=print --linearize \
+		--onto main main..divergent-x >result &&
+	test_line_count = 1 result &&
+	tip=$(cut -f 3 -d " " result) &&
+
+	# The merge Z is dropped, but both X and Y are linearized onto main;
+	# neither side is lost.
+	git log --format=%s main..$tip >actual &&
+	test_write_lines Y X >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success '--linearize and --contained cannot be used together' '
+	test_must_fail git replay --ref-action=print --linearize --contained \
+		--onto main ^B topic-with-merge 2>err &&
+	test_grep "cannot be used together" err
+'
+
+test_expect_success 'replay --revert with --linearize reverts a range containing a merge' '
+	git replay --ref-action=print --revert=divergent-x --linearize \
+		main..divergent-x >result &&
+	test_line_count = 1 result &&
+	tip=$(cut -f 3 -d " " result) &&
+
+	git log --format=%s $tip >actual &&
+	test_write_lines \
+		"Revert \"X\"" "Revert \"Y\"" Z Y X M L B A >expect &&
+	test_cmp expect actual &&
+
+	test_must_fail git cat-file -e $tip:X.t &&
+	test_must_fail git cat-file -e $tip:Y.t
 '
 
 test_done
