@@ -6,7 +6,11 @@ enum hexkind {
 	HEX_KIND_LOWER = 1,
 };
 
+#ifdef WITH_BREAKING_CHANGES
+#define HEX_KIND_OID HEX_KIND_LOWER
+#else
 #define HEX_KIND_OID HEX_KIND_MIXED
+#endif
 
 extern const signed char hexval_table[256];
 extern const signed char hexval_lc_table[256];
