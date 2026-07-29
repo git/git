@@ -443,7 +443,7 @@ static void load_subtree(struct notes_tree *t, struct leaf_node *subtree,
 				goto handle_non_note;
 
 			if (hex_to_bytes(object_oid.hash + len++, entry.path, 1,
-					 HEX_KIND_MIXED))
+					 HEX_KIND_OID))
 				goto handle_non_note; /* entry.path is not a SHA1 */
 
 			/*
