@@ -227,7 +227,7 @@ test:fuzz-smoke-tests:
     - ./ci/run-build-and-minimal-fuzzers.sh
 
 static-analysis:
-  image: ubuntu:22.04
+  image: ubuntu:latest
   stage: analyze
   needs: [ ]
   variables:
