@@ -72,7 +72,7 @@ static int get_hex_color(const char **inp, int width, unsigned char *out)
 	unsigned int val;
 
 	assert(width == 1 || width == 2);
-	val = (hexval(in[0]) << 4) | hexval(in[width - 1]);
+	val = (hexval(in[0], HEX_KIND_MIXED) << 4) | hexval(in[width - 1], HEX_KIND_MIXED);
 	if (val & ~0xff)
 		return -1;
 	*inp += width;

@@ -1,10 +1,16 @@
 #ifndef HEX_LL_H
 #define HEX_LL_H
 
+enum hexkind {
+	HEX_KIND_MIXED = 0,
+	HEX_KIND_LOWER = 1,
+};
+
 extern const signed char hexval_table[256];
-static inline unsigned int hexval(unsigned char c)
+extern const signed char hexval_lc_table[256];
+static inline unsigned int hexval(unsigned char c, enum hexkind kind)
 {
-	return hexval_table[c];
+	return kind == HEX_KIND_MIXED ? hexval_table[c] : hexval_lc_table[c];
 }
 
 /*
@@ -13,8 +19,8 @@ static inline unsigned int hexval(unsigned char c)
  */
 static inline int hex2chr(const char *s)
 {
-	unsigned int val = hexval(s[0]);
-	return (val & ~0xf) ? val : (val << 4) | hexval(s[1]);
+	unsigned int val = hexval(s[0], HEX_KIND_MIXED);
+	return (val & ~0xf) ? val : (val << 4) | hexval(s[1], HEX_KIND_MIXED);
 }
 
 /*
