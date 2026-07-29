@@ -71,10 +71,10 @@ const signed char hexval_lc_table[256] = {
 	 -1, -1, -1, -1, -1, -1, -1, -1,		/* f8-ff */
 };
 
-int hex_to_bytes(unsigned char *binary, const char *hex, size_t len)
+int hex_to_bytes(unsigned char *binary, const char *hex, size_t len, enum hexkind kind)
 {
 	for (; len; len--, hex += 2) {
-		unsigned int val = (hexval(hex[0], HEX_KIND_MIXED) << 4) | hexval(hex[1], HEX_KIND_MIXED);
+		unsigned int val = (hexval(hex[0], kind) << 4) | hexval(hex[1], kind);
 
 		if (val & ~0xff)
 			return -1;
