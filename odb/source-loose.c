@@ -770,7 +770,7 @@ static int end_loose_object_common(struct odb_source_loose *loose,
 
 static int write_loose_object(struct odb_source_loose *loose,
 			      const struct object_id *oid, char *hdr,
-			      int hdrlen, const void *buf, unsigned long len,
+			      int hdrlen, const void *buf, size_t len,
 			      const time_t *mtime, unsigned flags)
 {
 	int fd, ret;
