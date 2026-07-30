@@ -3893,8 +3893,8 @@ static int check_preimage(struct apply_state *state,
 		if (*ce && !(*ce)->ce_mode)
 			BUG("ce_mode == 0 for path '%s'", old_name);
 
-		if (trust_executable_bit || !S_ISREG(st->st_mode))
-			st_mode = ce_mode_from_stat(*ce, st->st_mode);
+		if (repo_trust_executable_bit(state->repo) || !S_ISREG(st->st_mode))
+			st_mode = ce_mode_from_stat(state->repo, *ce, st->st_mode);
 		else if (*ce)
 			st_mode = (*ce)->ce_mode;
 		else
@@ -4512,7 +4512,7 @@ static int try_create_file(struct apply_state *state, const char *path,
 		return !!mkdir(path, 0777);
 	}
 
-	if (has_symlinks && S_ISLNK(mode))
+	if (repo_has_symlinks(state->repo) && S_ISLNK(mode))
 		/* Although buf:size is counted string, it also is NUL
 		 * terminated.
 		 */
