@@ -209,6 +209,10 @@ This replays the range `aabbcc..ddeeff` onto commit `112233` and updates
 `refs/heads/mybranch` to point at the result. This can be useful when you want
 to use bare commit IDs instead of branch names.
 
+CONFIGURATION
+-------------
+include::config/replay.adoc[]
+
 GIT
 ---
 Part of the linkgit:git[1] suite

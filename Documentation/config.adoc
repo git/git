@@ -511,6 +511,8 @@ include::config/remotes.adoc[]
 
 include::config/repack.adoc[]
 
+include::config/replay.adoc[]
+
 include::config/rerere.adoc[]
 
 include::config/revert.adoc[]
