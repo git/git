@@ -80,7 +80,10 @@ incompatible with `--contained` (which is a modifier for `--onto` only).
 	Control how references are updated. The mode can be:
 +
 --
-`update` (default);; Update refs directly using an atomic transaction.
+////
+Expanded description list compared to 'replay.refAction'.
+////
+`update`;; (default) Update refs directly using an atomic transaction.
 	All refs are updated or none are (all-or-nothing behavior).
 `print`;; Output update-ref commands for pipeline use. This is the
 	traditional behavior where output can be piped to `git update-ref --stdin`.

@@ -3,7 +3,10 @@ replay.refAction::
 	The value can be:
 +
 --
-`update`;; Update refs directly using an atomic transaction (default behavior).
+////
+These use the first sentences from the description list in git-replay(1).
+////
+`update`;; (default) Update refs directly using an atomic transaction.
 `print`;; Output update-ref commands for pipeline use.
 --
 +
