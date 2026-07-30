@@ -2231,7 +2231,7 @@ __git_log_show_options="
 __git_diff_merges_opts="off none on first-parent 1 separate m combined c dense-combined cc remerge r"
 
 __git_log_pretty_formats="oneline short medium full fuller reference email raw format: tformat: mboxrd"
-__git_log_date_formats="relative iso8601 iso8601-strict rfc2822 short local default human raw unix auto: format:"
+__git_log_date_formats="relative iso8601 iso8601-strict rfc2822 short local default human raw unix elapsed auto: format:"
 
 # Complete porcelain (i.e. not git-rev-list) options and at least some
 # option arguments accepted by git-log.  Note that this same set of options
