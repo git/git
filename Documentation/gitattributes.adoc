@@ -914,6 +914,8 @@ patterns are available:
 - `scheme` suitable for source code in most Lisp dialects,
   including Scheme, Emacs Lisp, Common Lisp, and Clojure.
 
+- `swift` suitable for source code in the Swift language.
+
 - `tex` suitable for source code for LaTeX documents.
 
 

@@ -1,0 +1,5 @@
+extension RIGHT {
+    static let a = 1
+    // a comment
+    static let b = ChangeMe
+}
