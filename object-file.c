@@ -146,7 +146,7 @@ int stream_object_signature(struct repository *r,
  * Map and close the given loose object fd. The path argument is used for
  * error reporting.
  */
-static void *map_fd(int fd, const char *path, unsigned long *size)
+static void *map_fd(int fd, const char *path, size_t *size)
 {
 	void *map = NULL;
 	struct stat st;
@@ -167,9 +167,9 @@ static void *map_fd(int fd, const char *path, unsigned long *size)
 
 enum unpack_loose_header_result unpack_loose_header(git_zstream *stream,
 						    unsigned char *map,
-						    unsigned long mapsize,
+						    size_t mapsize,
 						    void *buffer,
-						    unsigned long bufsiz)
+						    size_t bufsiz)
 {
 	int status;
 
@@ -200,7 +200,7 @@ enum unpack_loose_header_result unpack_loose_header(git_zstream *stream,
 }
 
 void *unpack_loose_rest(git_zstream *stream,
-			void *buffer, unsigned long size,
+			void *buffer, size_t size,
 			const struct object_id *oid)
 {
 	size_t bytes = strlen(buffer) + 1, n;
@@ -1613,7 +1613,7 @@ int read_loose_object(struct repository *repo,
 	int ret = -1;
 	int fd;
 	void *map = NULL;
-	unsigned long mapsize;
+	size_t mapsize;
 	git_zstream stream;
 	char hdr[MAX_HEADER_LEN];
 	size_t *size = oi->sizep;

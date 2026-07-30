@@ -68,7 +68,7 @@ static int read_object_info_from_path(struct odb_source_loose *loose,
 {
 	int ret;
 	int fd;
-	unsigned long mapsize;
+	size_t mapsize;
 	void *map = NULL;
 	git_zstream stream, *stream_to_end = NULL;
 	char hdr[MAX_HEADER_LEN];
@@ -248,7 +248,7 @@ static int open_loose_object(struct odb_source_loose *loose,
 
 static void *odb_source_loose_map_object(struct odb_source_loose *loose,
 					 const struct object_id *oid,
-					 unsigned long *size)
+					 size_t *size)
 {
 	const char *p;
 	int fd = open_loose_object(loose, oid, &p);
@@ -283,7 +283,7 @@ struct odb_loose_read_stream {
 		ODB_LOOSE_READ_STREAM_ERROR,
 	} z_state;
 	void *mapped;
-	unsigned long mapsize;
+	size_t mapsize;
 	char hdr[32];
 	int hdr_avail;
 	int hdr_used;
@@ -354,7 +354,7 @@ static int odb_source_loose_read_object_stream(struct odb_read_stream **out,
 	struct odb_source_loose *loose = odb_source_loose_downcast(source);
 	struct object_info oi = OBJECT_INFO_INIT;
 	struct odb_loose_read_stream *st;
-	unsigned long mapsize;
+	size_t mapsize;
 	void *mapped;
 
 	mapped = odb_source_loose_map_object(loose, oid, &mapsize);
