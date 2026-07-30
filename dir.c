@@ -3481,11 +3481,11 @@ static GIT_PATH_FUNC(git_path_info_exclude, "info/exclude")
 
 void setup_standard_excludes(struct dir_struct *dir)
 {
+	const char *excludes_file = repo_excludes_file(the_repository);
+
 	dir->exclude_per_dir = ".gitignore";
 
 	/* core.excludesfile defaulting to $XDG_CONFIG_HOME/git/ignore */
-	if (!excludes_file)
-		excludes_file = xdg_config_home("ignore");
 	if (excludes_file && !access_or_warn(excludes_file, R_OK, 0))
 		add_patterns_from_file_1(dir, excludes_file,
 					 dir->untracked ? &dir->internal.ss_excludes_file : NULL);

@@ -29,8 +29,8 @@ const char *git_editor(void)
 	const char *editor = getenv("GIT_EDITOR");
 	int terminal_is_dumb = is_terminal_dumb();
 
-	if (!editor && editor_program)
-		editor = editor_program;
+	if (!editor)
+		editor = repo_config_values(the_repository)->editor_program;
 	if (!editor && !terminal_is_dumb)
 		editor = getenv("VISUAL");
 	if (!editor)

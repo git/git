@@ -45,25 +45,17 @@ int minimum_abbrev = 4, default_abbrev = -1;
 int assume_unchanged;
 char *git_commit_encoding;
 char *git_log_output_encoding;
-char *apply_default_whitespace;
-char *apply_default_ignorewhitespace;
 int fsync_object_files = -1;
 int use_fsync = -1;
 enum fsync_method fsync_method = FSYNC_METHOD_DEFAULT;
 enum fsync_component fsync_components = FSYNC_COMPONENTS_DEFAULT;
-char *editor_program;
-char *askpass_program;
-char *excludes_file;
 enum auto_crlf auto_crlf = AUTO_CRLF_FALSE;
 enum eol core_eol = EOL_UNSET;
 int global_conv_flags_eol = CONV_EOL_RNDTRP_WARN;
 char *check_roundtrip_encoding;
-enum rebase_setup_type autorebase = AUTOREBASE_NEVER;
-enum push_default_type push_default = PUSH_DEFAULT_UNSPECIFIED;
 #ifndef OBJECT_CREATION_MODE
 #define OBJECT_CREATION_MODE OBJECT_CREATION_USES_HARDLINKS
 #endif
-enum object_creation_mode object_creation_mode = OBJECT_CREATION_MODE;
 int grafts_keep_true_parents;
 unsigned long pack_size_limit_cfg;
 
@@ -158,6 +150,16 @@ int repo_has_symlinks(struct repository *repo)
 	return repo->initialized
 		? repo_config_values(repo)->has_symlinks
 		: platform_has_symlinks();
+}
+
+const char *repo_excludes_file(struct repository *repo)
+{
+	struct repo_config_values *cfg = repo_config_values(repo);
+
+	if (!cfg->excludes_file)
+		cfg->excludes_file = xdg_config_home("ignore");
+
+	return cfg->excludes_file;
 }
 
 int have_git_dir(void)
@@ -455,8 +457,8 @@ int git_default_core_config(const char *var, const char *value,
 	}
 
 	if (!strcmp(var, "core.editor")) {
-		FREE_AND_NULL(editor_program);
-		return git_config_string(&editor_program, var, value);
+		FREE_AND_NULL(cfg->editor_program);
+		return git_config_string(&cfg->editor_program, var, value);
 	}
 
 	if (!strcmp(var, "core.commentchar") ||
@@ -483,13 +485,13 @@ int git_default_core_config(const char *var, const char *value,
 	}
 
 	if (!strcmp(var, "core.askpass")) {
-		FREE_AND_NULL(askpass_program);
-		return git_config_string(&askpass_program, var, value);
+		FREE_AND_NULL(cfg->askpass_program);
+		return git_config_string(&cfg->askpass_program, var, value);
 	}
 
 	if (!strcmp(var, "core.excludesfile")) {
-		FREE_AND_NULL(excludes_file);
-		return git_config_pathname(&excludes_file, var, value);
+		FREE_AND_NULL(cfg->excludes_file);
+		return git_config_pathname(&cfg->excludes_file, var, value);
 	}
 
 	if (!strcmp(var, "core.whitespace")) {
@@ -536,9 +538,9 @@ int git_default_core_config(const char *var, const char *value,
 		if (!value)
 			return config_error_nonbool(var);
 		if (!strcmp(value, "rename"))
-			object_creation_mode = OBJECT_CREATION_USES_RENAMES;
+			cfg->object_creation_mode = OBJECT_CREATION_USES_RENAMES;
 		else if (!strcmp(value, "link"))
-			object_creation_mode = OBJECT_CREATION_USES_HARDLINKS;
+			cfg->object_creation_mode = OBJECT_CREATION_USES_HARDLINKS;
 		else
 			die(_("invalid mode for object creation: %s"), value);
 		return 0;
@@ -624,13 +626,13 @@ static int git_default_branch_config(const char *var, const char *value)
 		if (!value)
 			return config_error_nonbool(var);
 		else if (!strcmp(value, "never"))
-			autorebase = AUTOREBASE_NEVER;
+			cfg->autorebase = AUTOREBASE_NEVER;
 		else if (!strcmp(value, "local"))
-			autorebase = AUTOREBASE_LOCAL;
+			cfg->autorebase = AUTOREBASE_LOCAL;
 		else if (!strcmp(value, "remote"))
-			autorebase = AUTOREBASE_REMOTE;
+			cfg->autorebase = AUTOREBASE_REMOTE;
 		else if (!strcmp(value, "always"))
-			autorebase = AUTOREBASE_ALWAYS;
+			cfg->autorebase = AUTOREBASE_ALWAYS;
 		else
 			return error(_("malformed value for %s"), var);
 		return 0;
@@ -642,21 +644,23 @@ static int git_default_branch_config(const char *var, const char *value)
 
 static int git_default_push_config(const char *var, const char *value)
 {
+	struct repo_config_values *cfg = repo_config_values(the_repository);
+
 	if (!strcmp(var, "push.default")) {
 		if (!value)
 			return config_error_nonbool(var);
 		else if (!strcmp(value, "nothing"))
-			push_default = PUSH_DEFAULT_NOTHING;
+			cfg->push_default = PUSH_DEFAULT_NOTHING;
 		else if (!strcmp(value, "matching"))
-			push_default = PUSH_DEFAULT_MATCHING;
+			cfg->push_default = PUSH_DEFAULT_MATCHING;
 		else if (!strcmp(value, "simple"))
-			push_default = PUSH_DEFAULT_SIMPLE;
+			cfg->push_default = PUSH_DEFAULT_SIMPLE;
 		else if (!strcmp(value, "upstream"))
-			push_default = PUSH_DEFAULT_UPSTREAM;
+			cfg->push_default = PUSH_DEFAULT_UPSTREAM;
 		else if (!strcmp(value, "tracking")) /* deprecated */
-			push_default = PUSH_DEFAULT_UPSTREAM;
+			cfg->push_default = PUSH_DEFAULT_UPSTREAM;
 		else if (!strcmp(value, "current"))
-			push_default = PUSH_DEFAULT_CURRENT;
+			cfg->push_default = PUSH_DEFAULT_CURRENT;
 		else {
 			error(_("malformed value for %s: %s"), var, value);
 			return error(_("must be one of nothing, matching, simple, "
@@ -742,6 +746,15 @@ int git_default_config(const char *var, const char *value,
 void repo_config_values_init(struct repo_config_values *cfg)
 {
 	cfg->attributes_file = NULL;
+	cfg->excludes_file = NULL;
+	cfg->editor_program = NULL;
+	cfg->pager_program = NULL;
+	cfg->askpass_program = NULL;
+	cfg->apply_default_whitespace = NULL;
+	cfg->apply_default_ignorewhitespace = NULL;
+	cfg->push_default = PUSH_DEFAULT_UNSPECIFIED;
+	cfg->autorebase = AUTOREBASE_NEVER;
+	cfg->object_creation_mode = OBJECT_CREATION_MODE;
 	cfg->apply_sparse_checkout = 0;
 	cfg->protect_hfs = PROTECT_HFS_DEFAULT;
 	cfg->protect_ntfs = PROTECT_NTFS_DEFAULT;
@@ -757,4 +770,15 @@ void repo_config_values_init(struct repo_config_values *cfg)
 	cfg->core_sparse_checkout_cone = 0;
 	cfg->sparse_expect_files_outside_of_patterns = 0;
 	cfg->warn_on_object_refname_ambiguity = 1;
+}
+
+void repo_config_values_clear(struct repo_config_values *cfg)
+{
+	FREE_AND_NULL(cfg->attributes_file);
+	FREE_AND_NULL(cfg->excludes_file);
+	FREE_AND_NULL(cfg->editor_program);
+	FREE_AND_NULL(cfg->pager_program);
+	FREE_AND_NULL(cfg->askpass_program);
+	FREE_AND_NULL(cfg->apply_default_whitespace);
+	FREE_AND_NULL(cfg->apply_default_ignorewhitespace);
 }

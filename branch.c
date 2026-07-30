@@ -61,7 +61,7 @@ static int find_tracked_branch(struct remote *remote, void *priv)
 
 static int should_setup_rebase(const char *origin)
 {
-	switch (autorebase) {
+	switch (repo_config_values(the_repository)->autorebase) {
 	case AUTOREBASE_NEVER:
 		return 0;
 	case AUTOREBASE_LOCAL:
