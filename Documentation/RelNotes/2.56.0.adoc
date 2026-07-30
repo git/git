@@ -61,6 +61,21 @@ UI, Workflows & Features
    simplification) by indenting them, preventing them from appearing
    falsely related to unrelated commits rendered immediately above them.
 
+ * Userdiff patterns for Swift have been added, with support for
+   Swift-specific constructs such as attributes, modifiers, failable
+   initializers, and generics.
+
+ * Configuration file locking has been updated to retry for a short
+   period, avoiding failures when multiple processes attempt to update
+   the configuration simultaneously.
+
+ * The 'remote-object-info' command has been added to 'git cat-file
+   --batch-command', allowing clients to request object metadata
+   (currently size) from a remote server via protocol v2 without
+   downloading the entire object.  Format placeholders are dynamically
+   filtered on the client based on server-advertised capabilities,
+   returning empty strings for inapplicable or unsupported fields.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -241,6 +256,30 @@ Performance, Internal Implementation, Development Support etc.
    implicit dependency on the global 'the_repository' variable in
    'copy.c'.
 
+ * The tempfile and lockfile APIs have been refactored to stop depending
+   on the 'the_repository' global variable, and their callers have been
+   updated to use the repository-aware variants.
+
+ * The 'trust_executable_bit' (coming from the 'core.filemode'
+   configuration) has been migrated into 'struct repo_config_values' to
+   tie it to a specific repository instance.
+
+ * The 'excludes_file' and various other global configuration variables
+   (including 'editor_program', 'pager_program', 'askpass_program', and
+   'push_default') have been migrated into the per-repository structure.
+
+ * The 'git stash push' command has been optimized to avoid unnecessary
+   sparse index expansion when pathspecs are wholly inside the
+   sparse-checkout cone.  Also, a potential out-of-bounds read in the
+   sparse-index expansion check helper pathspec_needs_expanded_index()
+   has been fixed by consistently using the parsed, prefixed path.
+
+ * The logic to write loose objects has been refactored and moved from
+   'object-file.c' to the loose backend source file 'odb/source-loose.c',
+   making the loose backend more self-contained.  This is achieved by
+   first refactoring force_object_loose() to use generic ODB write
+   interfaces instead of loose-backend internals.
+
 
 Fixes since v2.55
 -----------------
@@ -401,3 +440,8 @@ Fixes since v2.55
    been corrected.  The 'Clone' implementation of 'CryptoHasher' now
    properly initializes the context before cloning, and its 'Drop'
    implementation now discards the context to prevent leaks.
+
+ * The object ID shortening and linking in the 'commitdiff' view of
+   'gitweb' has been corrected to work even when the index line carries
+   a trailing file mode.
+   (merge fda513d6fe tl/gitweb-shorten-hashes-with-modes later to maint).
