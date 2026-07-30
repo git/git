@@ -568,21 +568,26 @@ An `object-info` request takes the following arguments:
 
 	oid <oid>
 	Indicates to the server an object which the client wants to obtain
-	information for.
+	information for. They must be full OIDs.
 
-The response of `object-info` is a list of the requested object ids
-and associated requested information, each separated by a single space.
+The response of `object-info` consists of one pkt-line per requested attribute,
+echoing the attributes the server will report, followed by one pkt-line per
+requested object id with its information, each field separated by a single
+space.
 
 	output = info flush-pkt
 
-	info = PKT-LINE(attrs) LF)
-		*PKT-LINE(obj-info LF)
-
-	attrs = attr | attrs SP attrs
+	info = *PKT-LINE(attr LF)
+	       *PKT-LINE(obj-info LF)
 
 	attr = "size"
 
-	obj-info = obj-id SP obj-size
+	obj-size = 1*DIGIT
+
+	obj-info = obj-id [SP [obj-size]]
+
+If the server does not recognize the OID, the response will be `<oid> SP`
+regardless of the number of attributes requested.
 
 bundle-uri
 ~~~~~~~~~~
