@@ -211,6 +211,7 @@ to use bare commit IDs instead of branch names.
 
 CONFIGURATION
 -------------
+:git-replay: 1
 include::config/replay.adoc[]
 
 GIT
