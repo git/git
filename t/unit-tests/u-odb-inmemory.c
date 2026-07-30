@@ -1,5 +1,6 @@
 #include "unit-test.h"
 #include "hex.h"
+#include "object-file.h"
 #include "odb/source-inmemory.h"
 #include "odb/streaming.h"
 #include "oidset.h"
@@ -34,6 +35,17 @@ static void cl_assert_object_info(struct odb_source_inmemory *source,
 	cl_assert_equal_s((char *) actual_content, expected_content);
 
 	free(actual_content);
+}
+
+static void cl_assert_write_object(struct odb_source_inmemory *source,
+				   const char *content,
+				   enum object_type type,
+				   struct object_id *oid)
+{
+	size_t content_len = strlen(content);
+	hash_object_file(repo.hash_algo, content, content_len, type, oid);
+	cl_must_pass(odb_source_write_object(&source->base, content, content_len,
+					     type, oid, NULL, NULL, 0));
 }
 
 void test_odb_inmemory__initialize(void)
@@ -78,8 +90,7 @@ void test_odb_inmemory__read_written_object(void)
 	const char data[] = "foobar";
 	struct object_id written_oid;
 
-	cl_must_pass(odb_source_write_object(&source->base, data, strlen(data),
-					     OBJ_BLOB, &written_oid, NULL, 0));
+	cl_assert_write_object(source, data, OBJ_BLOB, &written_oid);
 	cl_assert_equal_s(oid_to_hex(&written_oid), FOOBAR_OID);
 	cl_assert_object_info(source, &written_oid, OBJ_BLOB, "foobar");
 
@@ -94,8 +105,7 @@ void test_odb_inmemory__read_stream_object(void)
 	const char data[] = "foobar";
 	char buf[3] = { 0 };
 
-	cl_must_pass(odb_source_write_object(&source->base, data, strlen(data),
-					     OBJ_BLOB, &written_oid, NULL, 0));
+	cl_assert_write_object(source, data, OBJ_BLOB, &written_oid);
 
 	cl_must_pass(odb_source_read_object_stream(&stream, &source->base,
 						   &written_oid));
@@ -141,8 +151,7 @@ void test_odb_inmemory__for_each_object(void)
 		strbuf_reset(&buf);
 		strbuf_addf(&buf, "%d", i);
 
-		cl_must_pass(odb_source_write_object(&source->base, buf.buf, buf.len,
-						     OBJ_BLOB, &written_oid, NULL, 0));
+		cl_assert_write_object(source, buf.buf, OBJ_BLOB, &written_oid);
 		cl_must_pass(oidset_insert(&expected_oids, &written_oid));
 	}
 
@@ -174,12 +183,9 @@ void test_odb_inmemory__for_each_object_can_abort_iteration(void)
 	struct object_id written_oid;
 	unsigned counter = 0;
 
-	cl_must_pass(odb_source_write_object(&source->base, "1", 1,
-					     OBJ_BLOB, &written_oid, NULL, 0));
-	cl_must_pass(odb_source_write_object(&source->base, "2", 1,
-					     OBJ_BLOB, &written_oid, NULL, 0));
-	cl_must_pass(odb_source_write_object(&source->base, "3", 1,
-					     OBJ_BLOB, &written_oid, NULL, 0));
+	cl_assert_write_object(source, "1", OBJ_BLOB, &written_oid);
+	cl_assert_write_object(source, "2", OBJ_BLOB, &written_oid);
+	cl_assert_write_object(source, "3", OBJ_BLOB, &written_oid);
 
 	cl_assert_equal_i(odb_source_for_each_object(&source->base, NULL,
 						     abort_after_two_objects,
@@ -199,12 +205,9 @@ void test_odb_inmemory__count_objects(void)
 	cl_must_pass(odb_source_count_objects(&source->base, 0, &count));
 	cl_assert_equal_u(count, 0);
 
-	cl_must_pass(odb_source_write_object(&source->base, "1", 1,
-					     OBJ_BLOB, &written_oid, NULL, 0));
-	cl_must_pass(odb_source_write_object(&source->base, "2", 1,
-					     OBJ_BLOB, &written_oid, NULL, 0));
-	cl_must_pass(odb_source_write_object(&source->base, "3", 1,
-					     OBJ_BLOB, &written_oid, NULL, 0));
+	cl_assert_write_object(source, "1", OBJ_BLOB, &written_oid);
+	cl_assert_write_object(source, "2", OBJ_BLOB, &written_oid);
+	cl_assert_write_object(source, "3", OBJ_BLOB, &written_oid);
 
 	cl_must_pass(odb_source_count_objects(&source->base, 0, &count));
 	cl_assert_equal_u(count, 3);
@@ -228,8 +231,7 @@ void test_odb_inmemory__find_abbrev_len(void)
 	 *
 	 * With only one blob written we expect a length of 4.
 	 */
-	cl_must_pass(odb_source_write_object(&source->base, "368317", strlen("368317"),
-					     OBJ_BLOB, &oid1, NULL, 0));
+	cl_assert_write_object(source, "368317", OBJ_BLOB, &oid1);
 	cl_must_pass(odb_source_find_abbrev_len(&source->base, &oid1, 4,
 						&abbrev_len));
 	cl_assert_equal_u(abbrev_len, 4);
@@ -238,8 +240,7 @@ void test_odb_inmemory__find_abbrev_len(void)
 	 * With both objects present, the shared 10-character prefix means we
 	 * need at least 11 characters to uniquely identify either object.
 	 */
-	cl_must_pass(odb_source_write_object(&source->base, "514796", strlen("514796"),
-					     OBJ_BLOB, &oid2, NULL, 0));
+	cl_assert_write_object(source, "514796", OBJ_BLOB, &oid2);
 	cl_must_pass(odb_source_find_abbrev_len(&source->base, &oid1, 4,
 						&abbrev_len));
 	cl_assert_equal_u(abbrev_len, 11);
@@ -255,13 +256,11 @@ void test_odb_inmemory__freshen_object(void)
 	const char *end;
 
 	cl_must_pass(parse_oid_hex_algop(RANDOM_OID, &oid, &end, repo.hash_algo));
-	cl_assert_equal_i(odb_source_freshen_object(&source->base, &oid), 0);
+	cl_assert_equal_i(odb_source_freshen_object(&source->base, &oid, NULL), 0);
 
-	cl_must_pass(odb_source_write_object(&source->base, "foobar",
-					     strlen("foobar"), OBJ_BLOB,
-					     &written_oid, NULL, 0));
+	cl_assert_write_object(source, "foobar", OBJ_BLOB, &written_oid);
 	cl_assert_equal_i(odb_source_freshen_object(&source->base,
-						    &written_oid), 1);
+						    &written_oid, NULL), 1);
 
 	odb_source_free(&source->base);
 }
