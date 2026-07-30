@@ -911,9 +911,9 @@ int setup_rerere(struct repository *r, struct string_list *merge_rr, int flags)
 	if (flags & RERERE_READONLY)
 		fd = 0;
 	else
-		fd = hold_lock_file_for_update(&write_lock,
-					       git_path_merge_rr(r),
-					       LOCK_DIE_ON_ERROR);
+		fd = repo_hold_lock_file_for_update(r, &write_lock,
+						    git_path_merge_rr(r),
+						    LOCK_DIE_ON_ERROR);
 	read_rr(r, merge_rr);
 	return fd;
 }

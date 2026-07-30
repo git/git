@@ -21,7 +21,7 @@ struct ref_store *packed_ref_store_init(struct repository *repo,
 
 /*
  * Lock the packed-refs file for writing. Flags is passed to
- * hold_lock_file_for_update(). Return 0 on success. On errors, write
+ * repo_hold_lock_file_for_update(). Return 0 on success. On errors, write
  * an error message to `err` and return a nonzero value.
  */
 int packed_refs_lock(struct ref_store *ref_store, int flags, struct strbuf *err);

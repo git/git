@@ -1790,7 +1790,7 @@ static int maintenance_run_tasks(struct maintenance_run_opts *opts,
 	struct repository *r = the_repository;
 	char *lock_path = xstrfmt("%s/maintenance", r->objects->sources->path);
 
-	if (hold_lock_file_for_update(&lk, lock_path, LOCK_NO_DEREF) < 0) {
+	if (repo_hold_lock_file_for_update(r, &lk, lock_path, LOCK_NO_DEREF) < 0) {
 		/*
 		 * Another maintenance command is running.
 		 *

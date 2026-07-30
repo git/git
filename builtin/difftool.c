@@ -636,7 +636,7 @@ static int run_dir_diff(struct repository *repo,
 			struct lock_file lock = LOCK_INIT;
 			strbuf_reset(&buf);
 			strbuf_addf(&buf, "%s/wtindex", tmpdir.buf);
-			if (hold_lock_file_for_update(&lock, buf.buf, 0) < 0 ||
+			if (repo_hold_lock_file_for_update(repo, &lock, buf.buf, 0) < 0 ||
 			    write_locked_index(&wtindex, &lock, COMMIT_LOCK)) {
 				ret = error("could not write %s", buf.buf);
 				goto finish;

@@ -2127,8 +2127,8 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 	if (ctx->split) {
 		char *lock_name = get_commit_graph_chain_filename(ctx->odb_source);
 
-		hold_lock_file_for_update_mode(&lk, lock_name,
-					       LOCK_DIE_ON_ERROR, 0444);
+		repo_hold_lock_file_for_update_mode(ctx->r, &lk, lock_name,
+						    LOCK_DIE_ON_ERROR, 0444);
 		free(lock_name);
 
 		graph_layer = mks_tempfile_m(ctx->graph_name, 0444);
@@ -2146,8 +2146,9 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 		f = hashfd(ctx->r->hash_algo,
 			   get_tempfile_fd(graph_layer), get_tempfile_path(graph_layer));
 	} else {
-		hold_lock_file_for_update_mode(&lk, ctx->graph_name,
-					       LOCK_DIE_ON_ERROR, 0444);
+		repo_hold_lock_file_for_update_mode(ctx->r, &lk,
+						    ctx->graph_name,
+						    LOCK_DIE_ON_ERROR, 0444);
 		f = hashfd(ctx->r->hash_algo,
 			   get_lock_file_fd(&lk), get_lock_file_path(&lk));
 	}

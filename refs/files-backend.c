@@ -844,7 +844,7 @@ retry:
 		goto error_return;
 	}
 
-	if (hold_lock_file_for_update_timeout(
+	if (repo_hold_lock_file_for_update_timeout(refs->base.repo,
 			    &lock->lk, ref_file.buf, LOCK_NO_DEREF,
 			    get_files_ref_lock_timeout_ms(transaction->ref_store->repo)) < 0) {
 		int myerr = errno;
@@ -1253,8 +1253,8 @@ struct create_reflock_cb {
 static int create_reflock(const char *path, void *cb)
 {
 	struct create_reflock_cb *data = cb;
-	return hold_lock_file_for_update_timeout(
-			data->lk, path, LOCK_NO_DEREF,
+	return repo_hold_lock_file_for_update_timeout(
+			data->repo, data->lk, path, LOCK_NO_DEREF,
 			get_files_ref_lock_timeout_ms(data->repo)) < 0 ? -1 : 0;
 }
 
@@ -3584,7 +3584,9 @@ static int files_reflog_expire(struct ref_store *ref_store,
 		 * work we need, including cleaning up if the program
 		 * exits unexpectedly.
 		 */
-		if (hold_lock_file_for_update(&reflog_lock, log_file, 0) < 0) {
+		if (repo_hold_lock_file_for_update(ref_store->repo,
+						   &reflog_lock, log_file,
+						   0) < 0) {
 			struct strbuf err = STRBUF_INIT;
 			unable_to_lock_message(log_file, errno, &err);
 			error("%s", err.buf);

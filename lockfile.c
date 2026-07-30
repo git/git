@@ -2,11 +2,14 @@
  * Copyright (c) 2005, Junio C Hamano
  */
 
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "abspath.h"
 #include "gettext.h"
 #include "lockfile.h"
 #include "parse.h"
+#include "repository.h"
 #include "strbuf.h"
 #include "wrapper.h"
 
@@ -162,8 +165,8 @@ out:
 }
 
 /* Make sure errno contains a meaningful value on error */
-static int lock_file(struct lock_file *lk, const char *path, int flags,
-		     int mode)
+static int lock_file(struct repository *r, struct lock_file *lk,
+		     const char *path, int flags, int mode)
 {
 	struct strbuf base_path = STRBUF_INIT;
 	struct strbuf lock_path = STRBUF_INIT;
@@ -176,7 +179,7 @@ static int lock_file(struct lock_file *lk, const char *path, int flags,
 	get_lock_path(&lock_path, base_path.buf);
 	get_pid_path(&pid_path, base_path.buf);
 
-	lk->tempfile = create_tempfile_mode(lock_path.buf, mode);
+	lk->tempfile = repo_create_tempfile_mode(r, lock_path.buf, mode);
 	if (lk->tempfile)
 		lk->pid_tempfile = create_lock_pid_file(pid_path.buf, mode);
 
@@ -200,8 +203,9 @@ static int lock_file(struct lock_file *lk, const char *path, int flags,
  * timeout_ms milliseconds. If timeout_ms is 0, try locking the file
  * exactly once. If timeout_ms is -1, try indefinitely.
  */
-static int lock_file_timeout(struct lock_file *lk, const char *path,
-			     int flags, long timeout_ms, int mode)
+static int lock_file_timeout(struct repository *r, struct lock_file *lk,
+			     const char *path, int flags, long timeout_ms,
+			     int mode)
 {
 	int n = 1;
 	int multiplier = 1;
@@ -209,7 +213,7 @@ static int lock_file_timeout(struct lock_file *lk, const char *path,
 	static int random_initialized = 0;
 
 	if (timeout_ms == 0)
-		return lock_file(lk, path, flags, mode);
+		return lock_file(r, lk, path, flags, mode);
 
 	if (!random_initialized) {
 		srand((unsigned int)getpid());
@@ -223,7 +227,7 @@ static int lock_file_timeout(struct lock_file *lk, const char *path,
 		long backoff_ms, wait_ms;
 		int fd;
 
-		fd = lock_file(lk, path, flags, mode);
+		fd = lock_file(r, lk, path, flags, mode);
 
 		if (fd >= 0)
 			return fd; /* success */
@@ -308,7 +312,17 @@ int hold_lock_file_for_update_timeout_mode(struct lock_file *lk,
 					   const char *path, int flags,
 					   long timeout_ms, int mode)
 {
-	int fd = lock_file_timeout(lk, path, flags, timeout_ms, mode);
+	return repo_hold_lock_file_for_update_timeout_mode(the_repository,
+							   lk, path, flags,
+							   timeout_ms, mode);
+}
+
+int repo_hold_lock_file_for_update_timeout_mode(struct repository *r,
+						struct lock_file *lk,
+						const char *path, int flags,
+						long timeout_ms, int mode)
+{
+	int fd = lock_file_timeout(r, lk, path, flags, timeout_ms, mode);
 	if (fd < 0) {
 		if (flags & LOCK_DIE_ON_ERROR)
 			unable_to_lock_die(path, errno);
