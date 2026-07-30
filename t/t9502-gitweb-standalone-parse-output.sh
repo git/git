@@ -115,6 +115,19 @@ test_expect_success 'snapshot: hierarchical branch name (xx/test)' '
 '
 test_debug 'cat gitweb.headers'
 
+test_expect_success 'commitdiff: index line shortens hashes with mode' '
+	old_blob=$(git rev-parse HEAD:foo) &&
+	old_short=$(git rev-parse --short=7 HEAD:foo) &&
+	echo changed >foo &&
+	git commit -am "change foo" &&
+	new_blob=$(git rev-parse HEAD:foo) &&
+	new_short=$(git rev-parse --short=7 HEAD:foo) &&
+	gitweb_run "p=.git;a=commitdiff;h=HEAD" &&
+	test_grep ">${old_short}</a>\\.\\.<a [^>]*>${new_short}</a> 100644<span class=\"info\"> (file)</span>" \
+		gitweb.body &&
+	test_grep ! "index ${old_blob}\\.\\.${new_blob} 100644" gitweb.body
+'
+
 # ----------------------------------------------------------------------
 # forks of projects
 
