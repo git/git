@@ -3002,4 +3002,21 @@ test_expect_success 'writing value with trailing CR not stripped on read' '
 	test_cmp expect actual
 '
 
+test_expect_success 'writing config fails immediately with core.configLockTimeout=0' '
+	test_when_finished "rm -f .git/config.lock" &&
+	>.git/config.lock &&
+	test_must_fail git -c core.configLockTimeout=0 config foo.bar baz 2>err &&
+	test_grep "could not lock config file" err
+'
+
+test_expect_success 'writing config retries until lock is released' '
+	test_when_finished "rm -f .git/config.lock" &&
+	>.git/config.lock &&
+	{
+		( sleep 1 && rm -f .git/config.lock ) &
+	} &&
+	git -c core.configLockTimeout=5000 config retried.key value &&
+	test "$(git config retried.key)" = value
+'
+
 test_done
