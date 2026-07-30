@@ -139,7 +139,7 @@ void write_object_file_prepare(const struct git_hash_algo *algo,
 			       char *hdr, size_t *hdrlen);
 int write_loose_object(struct odb_source_loose *loose,
 		       const struct object_id *oid, char *hdr,
-		       int hdrlen, const void *buf, unsigned long len,
+		       int hdrlen, const void *buf, size_t len,
 		       time_t mtime, unsigned flags);
 
 /* Helper to check and "touch" a file */
