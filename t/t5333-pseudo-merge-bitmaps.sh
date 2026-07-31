@@ -50,7 +50,15 @@ test_expect_success 'bitmap traversal without pseudo-merges' '
 	test_pseudo_merges_cascades 0 <trace2.txt &&
 	test_pseudo_merges >merges &&
 	test_must_be_empty merges &&
-	test_cmp expect actual
+	test_cmp expect actual &&
+
+	: >trace2.txt &&
+	GIT_TRACE2_EVENT=$PWD/trace2.txt \
+		git rev-list --objects --use-bitmap-index HEAD HEAD >/dev/null &&
+
+	# The first HEAD initializes base from its position-zero bitmap. The
+	# duplicate root should not count as another bitmap hit.
+	test_trace2_data bitmap bitmap/hits 1 <trace2.txt
 '
 
 test_expect_success 'pseudo-merges accurately represent their objects' '
@@ -85,6 +93,10 @@ test_expect_success 'bitmap traversal with pseudo-merges' '
 
 	test_pseudo_merges_satisfied 8 <trace2.txt &&
 	test_pseudo_merges_cascades 1 <trace2.txt &&
+
+	# Position zero is named by HEAD, its branch, and its tag, but it
+	# should count as only one bitmap hit.
+	test_trace2_data bitmap bitmap/hits 1 <trace2.txt &&
 	test_cmp expect actual
 '
 
