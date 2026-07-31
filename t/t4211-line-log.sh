@@ -781,4 +781,24 @@ test_expect_success '--summary shows new file on root commit' '
 	test_grep "create mode 100644 file.c" actual
 '
 
+test_expect_success 'get_commit_action() does not mutate a not-yet-walked commit' '
+	git init peek &&
+	(
+		cd peek &&
+		test_write_lines 1 2 3 4 5 >f.c &&
+		git add f.c && test_tick && git commit -m base &&
+		test_write_lines 1 two 3 4 5 >f.c &&
+		test_tick && git commit -am change &&
+
+		# Peek HEAD^, which the walk has not reached (the out-of-order
+		# call a lookahead makes), and confirm get_commit_action() leaves
+		# it untouched.  A side effect is invisible in the commit list
+		# (range merges are idempotent), so the helper reports whether the
+		# call mutated the peeked commit at all.
+		echo "mutated 0" >expect &&
+		test-tool revision-walking line-log-peek HEAD^ 1,3:f.c HEAD >actual &&
+		test_cmp expect actual
+	)
+'
+
 test_done
