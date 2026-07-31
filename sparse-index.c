@@ -113,10 +113,17 @@ static int convert_to_sparse_rec(struct index_state *istate,
 			continue;
 		}
 
+		span = ct->down[pos]->cache_tree->entry_count;
+		if (span < 0) {
+			/* cache-tree entry is invalidated, cannot collapse. */
+			istate->cache[num_converted++] = ce;
+			i++;
+			continue;
+		}
+
 		strbuf_setlen(&child_path, 0);
 		strbuf_add(&child_path, ce->name, slash - ce->name + 1);
 
-		span = ct->down[pos]->cache_tree->entry_count;
 		count = convert_to_sparse_rec(istate,
 					      num_converted, i, i + span,
 					      child_path.buf, child_path.len,
