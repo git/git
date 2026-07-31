@@ -499,3 +499,28 @@ int is_conflict_marker_line(const char *line, unsigned long len, int marker_size
 
 	return firstchar;
 }
+
+int has_conflict_markers(struct index_state *istate, const char *path)
+{
+	FILE *f;
+	struct strbuf sb = STRBUF_INIT;
+	int marker_size = ll_merge_marker_size(istate, path);
+	int has_markers = 0;
+
+	f = fopen(path, "r");
+	if (!f)
+		return 0;
+
+	while (strbuf_getwholeline(&sb, f, '\n') != EOF) {
+		if (is_conflict_marker_line(sb.buf, sb.len, marker_size)) {
+			has_markers = 1;
+			break;
+		}
+		if (buffer_is_binary(sb.buf,
+				     ULONG_MAX <= sb.len ? ULONG_MAX : sb.len))
+			break;
+	}
+	fclose(f);
+	strbuf_release(&sb);
+	return has_markers;
+}
