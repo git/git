@@ -468,3 +468,34 @@ int ll_merge_marker_size(struct index_state *istate, const char *path)
 	}
 	return marker_size;
 }
+
+int is_conflict_marker_line(const char *line, unsigned long len, int marker_size)
+{
+	char firstchar;
+	int cnt;
+
+	if (len < marker_size + 1)
+		return 0;
+
+	firstchar = line[0];
+	switch (firstchar) {
+	case '=': case '>': case '<': case '|':
+		break;
+	default:
+		return 0;
+	}
+
+	for (cnt = 1; cnt < marker_size; cnt++) {
+		if (line[cnt] != firstchar)
+			return 0;
+	}
+
+	if (((firstchar == '<') || (firstchar == '>')) &&
+	    line[marker_size] != ' ')
+		return 0;
+
+	if (!isspace((unsigned char)line[marker_size]))
+		return 0;
+
+	return firstchar;
+}

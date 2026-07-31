@@ -331,33 +331,6 @@ static int rerere_file_getline(struct strbuf *sb, struct rerere_io *io_)
 	return strbuf_getwholeline(sb, io->input, '\n');
 }
 
-/*
- * Require the exact number of conflict marker letters, no more, no
- * less, followed by SP or any whitespace
- * (including LF).
- */
-static int is_cmarker(char *buf, int marker_char, int marker_size)
-{
-	int want_sp;
-
-	/*
-	 * The beginning of our version and the end of their version
-	 * always are labeled like "<<<<< ours" or ">>>>> theirs",
-	 * hence we set want_sp for them.  Note that the version from
-	 * the common ancestor in diff3-style output is not always
-	 * labelled (e.g. "||||| common" is often seen but "|||||"
-	 * alone is also valid), so we do not set want_sp.
-	 */
-	want_sp = (marker_char == '<') || (marker_char == '>');
-
-	while (marker_size--)
-		if (*buf++ != marker_char)
-			return 0;
-	if (want_sp && *buf != ' ')
-		return 0;
-	return isspace(*buf);
-}
-
 static void rerere_strbuf_putconflict(struct strbuf *buf, int ch, size_t size)
 {
 	strbuf_addchars(buf, ch, size);
@@ -375,7 +348,8 @@ static int handle_conflict(struct strbuf *out, struct rerere_io *io,
 	int has_conflicts = -1;
 
 	while (!io->getline(&buf, io)) {
-		if (is_cmarker(buf.buf, '<', marker_size)) {
+		int marker = is_conflict_marker_line(buf.buf, buf.len, marker_size);
+		if (marker == '<') {
 			if (handle_conflict(&conflict, io, marker_size, NULL) < 0)
 				break;
 			if (hunk == RR_SIDE_1)
@@ -383,15 +357,15 @@ static int handle_conflict(struct strbuf *out, struct rerere_io *io,
 			else
 				strbuf_addbuf(&two, &conflict);
 			strbuf_release(&conflict);
-		} else if (is_cmarker(buf.buf, '|', marker_size)) {
+		} else if (marker == '|') {
 			if (hunk != RR_SIDE_1)
 				break;
 			hunk = RR_ORIGINAL;
-		} else if (is_cmarker(buf.buf, '=', marker_size)) {
+		} else if (marker == '=') {
 			if (hunk != RR_SIDE_1 && hunk != RR_ORIGINAL)
 				break;
 			hunk = RR_SIDE_2;
-		} else if (is_cmarker(buf.buf, '>', marker_size)) {
+		} else if (marker == '>') {
 			if (hunk != RR_SIDE_2)
 				break;
 			if (strbuf_cmp(&one, &two) > 0)
@@ -442,7 +416,7 @@ static int handle_path(unsigned char *hash, struct rerere_io *io, int marker_siz
 		git_hash_init(&ctx, the_hash_algo);
 
 	while (!io->getline(&buf, io)) {
-		if (is_cmarker(buf.buf, '<', marker_size)) {
+		if (is_conflict_marker_line(buf.buf, buf.len, marker_size) == '<') {
 			has_conflicts = handle_conflict(&out, io, marker_size,
 							hash ? &ctx : NULL);
 			if (has_conflicts < 0)

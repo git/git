@@ -109,6 +109,7 @@ enum ll_merge_result ll_merge(mmbuffer_t *result_buf,
 	     const struct ll_merge_options *opts);
 
 int ll_merge_marker_size(struct index_state *istate, const char *path);
+int is_conflict_marker_line(const char *line, unsigned long len, int marker_size);
 void reset_merge_attributes(void);
 
 #endif
