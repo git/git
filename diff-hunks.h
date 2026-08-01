@@ -63,6 +63,14 @@ struct diff_hunks_store *repo_diff_hunks_store(struct repository *r);
 void close_diff_hunks_store(struct object_database *o);
 
 /*
+ * Consultation counters for the repository's store: pairs the store
+ * served (hits) and pairs it was consulted for but could not serve
+ * (misses). Both zero when reading is disabled or no store exists.
+ */
+void diff_hunks_read_stats(struct repository *r,
+			   unsigned long *hits, unsigned long *misses);
+
+/*
  * Replay the recorded hunks of an (old blob, new blob) pair diffed
  * under xdl_opts through hunk_func. The sequence is validated before
  * any callback runs: on a hit (return 1) every hunk is emitted, on a

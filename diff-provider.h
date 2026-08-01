@@ -26,6 +26,8 @@
  * sees it.
  */
 
+struct diff_options;
+struct object_id;
 struct repository;
 
 /*
@@ -89,14 +91,34 @@ enum diff_provider_outcome {
  * A consultation request.  The interface consults providers from
  * these fields alone; no content is loaded before an answer.
  *
- * repo owns the provider chain the request walks.  xpp carries the
- * parameters the diff runs with.  Each provider gates itself on the
- * fields that concern it.
+ * repo owns the provider chain the request walks.  old_oid/new_oid
+ * name the blobs whose bytes are diffed; pass NULL for a side whose
+ * bytes are not a stored blob (a working-tree file, textconv output,
+ * a gitlink), so no provider answers from an id it cannot look up.
+ * diffopt carries the diff settings that live outside xpp; xpp
+ * carries the parameters the diff runs with.  Each provider gates
+ * itself on the fields that concern it.
  */
 struct diff_provider_request {
 	struct repository *repo;
+	const struct object_id *old_oid;
+	const struct object_id *new_oid;
+	struct diff_options *diffopt;
 	const xpparam_t *xpp;
 };
+
+/*
+ * Consult the providers for the request's pair without computing.
+ * On DIFF_PROVIDER_ANSWERED the hunks were emitted through hunk_cb
+ * (0-based emission coordinates, context 0) and were validated
+ * before the first callback ran, so a consumer may accumulate
+ * directly into its result.  Never returns DIFF_PROVIDER_ERROR.
+ * The callback's return value is not consulted: emission of a
+ * validated answer has no error leg, so the callback must return 0.
+ */
+enum diff_provider_outcome
+diff_provider_consult(const struct diff_provider_request *req,
+		      xdl_emit_hunk_consume_func_t hunk_cb, void *cb_data);
 
 /*
  * Load the pair's content.  Called at most once per request, only

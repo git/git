@@ -17,6 +17,7 @@
 #include "quote.h"
 #include "diff.h"
 #include "diff-hunks.h"
+#include "diff-provider.h"
 #include "diffcore.h"
 #include "delta.h"
 #include "hex.h"
@@ -35,6 +36,7 @@
 #include "tmp-objdir.h"
 #include "graph.h"
 #include "oid-array.h"
+#include "trace2.h"
 #include "packfile.h"
 #include "pager.h"
 #include "parse-options.h"
@@ -2992,6 +2994,11 @@ void diff_hunks_attach(struct diff_options *o)
 
 void diff_hunks_detach(struct diff_options *o)
 {
+	unsigned long hits, misses;
+
+	diff_hunks_read_stats(o->repo, &hits, &misses);
+	if (hits)
+		trace2_data_intmax("diff-hunks", o->repo, "read-hits", hits);
 	diff_hunks_writer_finish(o->hunks_writer);
 	o->hunks_writer = NULL;
 }
@@ -4321,18 +4328,35 @@ static const char *get_compact_summary(const struct diff_filepair *p, int is_ren
 }
 
 /*
- * Fill data->added/deleted for a modified pair by collecting its hunk
- * coordinates, and record them into the store. Runs only on a warming
- * run; returns 1 when it produced the counts, 0 when the caller must
- * compute the diffstat itself.
+ * Hunk callback for the provider interface: sum counts into a
+ * diffstat entry.
+ */
+static int diffstat_sum_hunk_cb(long start_a UNUSED, long count_a,
+				long start_b UNUSED, long count_b,
+				void *cb_data)
+{
+	struct diffstat_file *data = cb_data;
+
+	data->added += count_b;
+	data->deleted += count_a;
+	return 0;
+}
+
+/*
+ * Fill data->added/deleted for a modified pair through the hunk provider
+ * interface: on an answer, sum the provided counts; on a warming run,
+ * compute and record them. Returns 1 when it produced the counts, 0 when
+ * the caller must compute the diffstat itself.
  *
- * --ignore-blank-lines is excluded: that flag is part of the store
- * key, but it coalesces hunks differently between the emit and
- * hunk-callback paths, so a recorded entry would not match a
- * store-less run's --stat output. (--inter-hunk-context is not
- * excluded: it only groups hunks, and diffstat sums their counts,
- * which grouping does not change.) Recording requires both sides to
- * be valid regular files whose blobs the key can name.
+ * The providers own the exclusions the request can express (-B, -I,
+ * and --anchored are outside the store key). This consumer additionally
+ * excludes --ignore-blank-lines before consulting: that flag is part of
+ * the key, but it coalesces hunks differently between the emit and
+ * hunk-callback paths, so a served answer would not match a store-less
+ * run's --stat output. (--inter-hunk-context is not excluded: it only
+ * groups hunks, and diffstat sums their counts, which grouping does not
+ * change.) Recording requires both sides to be valid regular files whose
+ * blobs the key can name.
  */
 static int diffstat_from_hunks(struct diff_options *o,
 			       struct diff_filespec *one,
@@ -4347,23 +4371,37 @@ static int diffstat_from_hunks(struct diff_options *o,
 			  .ignore_regex_nr = o->ignore_regex_nr,
 			  .anchors = o->anchors,
 			  .anchors_nr = o->anchors_nr };
+	struct diff_provider_request req = {
+		.repo = o->repo,
+		.old_oid = (one->oid_valid && !S_ISGITLINK(one->mode)) ?
+			   &one->oid : NULL,
+		.new_oid = (two->oid_valid && !S_ISGITLINK(two->mode)) ?
+			   &two->oid : NULL,
+		.diffopt = o,
+		.xpp = &xpp,
+	};
 
 	if (o->xdl_opts & XDF_IGNORE_BLANK_LINES)
 		return 0;
+	/* format-patch keeps its diffstat off the store (see the flag). */
+	if (o->flags.no_precomputed_hunks)
+		return 0;
 
-	/* Not a warming run: the caller computes the diffstat. */
+	switch (diff_provider_consult(&req, diffstat_sum_hunk_cb, data)) {
+	case DIFF_PROVIDER_ANSWERED:
+		return 1;
+	case DIFF_PROVIDER_UNANSWERED:
+		break;
+	case DIFF_PROVIDER_ERROR: /* not returned by a consult */
+	case DIFF_PROVIDER_UNANSWERED_NO_RECORD:
+		return 0;
+	}
+
+	/* A miss on a read-only run: let the caller compute the diffstat. */
 	if (!o->hunks_writer)
 		return 0;
-	/*
-	 * -I patterns, --anchored anchors, and break detection (-B)
-	 * shape the diff outside the store key, so what they compute
-	 * must not be recorded under it.
-	 */
-	if (o->ignore_regex_nr || o->anchors_nr || o->break_opt != -1)
-		return 0;
 	/* Recording needs blobs the key can name, on both sides. */
-	if (!one->oid_valid || !two->oid_valid ||
-	    S_ISGITLINK(one->mode) || S_ISGITLINK(two->mode) ||
+	if (!req.old_oid || !req.new_oid ||
 	    !DIFF_FILE_VALID(one) || !DIFF_FILE_VALID(two) ||
 	    !S_ISREG(one->mode) || !S_ISREG(two->mode))
 		return 0;
@@ -4453,9 +4491,9 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 
 	else if (may_differ) {
 		/*
-		 * Record into the diff-hunks store on a warming run. A
-		 * "log -L" range-scoped stat is not the whole-pair diff
-		 * the store keys, so it does not record. Otherwise diff
+		 * Serve or record via the diff-hunks store. A "log -L"
+		 * range-scoped stat is not the whole-pair diff the store
+		 * keys, so it neither reads nor records. Otherwise diff
 		 * normally.
 		 */
 		if (p->line_ranges || !diffstat_from_hunks(o, one, two, data)) {

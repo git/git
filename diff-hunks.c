@@ -26,6 +26,7 @@
 #include "csum-file.h"
 #include "diff-hunks.h"
 #include "diff-provider-internal.h"
+#include "diff.h"
 #include "gettext.h"
 #include "hash.h"
 #include "hashmap.h"
@@ -140,6 +141,10 @@ struct diff_hunks_store {
 	uint32_t num_entries;
 	const unsigned char *hdat;
 	size_t hdat_size;
+
+	/* Consultation counters; see diff_hunks_read_stats(). */
+	unsigned long read_hits;
+	unsigned long read_misses;
 };
 
 static void free_store(struct diff_hunks_store *s)
@@ -254,6 +259,15 @@ struct diff_hunks_store *repo_diff_hunks_store(struct repository *r)
 	r->objects->diff_hunks_store_attempted = 1;
 	r->objects->diff_hunks_store = diff_hunks_store_load(r);
 	return r->objects->diff_hunks_store;
+}
+
+void diff_hunks_read_stats(struct repository *r,
+			   unsigned long *hits, unsigned long *misses)
+{
+	struct diff_hunks_store *s = repo_diff_hunks_store(r);
+
+	*hits = s ? s->read_hits : 0;
+	*misses = s ? s->read_misses : 0;
 }
 
 void close_diff_hunks_store(struct object_database *o)
@@ -413,16 +427,88 @@ int diff_hunks_replay(struct diff_hunks_store *s,
 	struct precomputed_entry e;
 	uint32_t i;
 
-	if (!diff_hunks_store_get(s, old_oid, new_oid, xdl_opts, &e) ||
-	    !replayable_hunks(&e))
+	if (!s)
 		return 0;
+	if (!diff_hunks_store_get(s, old_oid, new_oid, xdl_opts, &e) ||
+	    !replayable_hunks(&e)) {
+		s->read_misses++;
+		return 0;
+	}
 	for (i = 0; i < e.num_hunks; i++) {
 		struct precomputed_hunk h;
 		nth_precomputed_hunk(&e, i, &h);
 		hunk_func(h.old_start, h.old_count,
 			  h.new_start, h.new_count, cb_data);
 	}
+	s->read_hits++;
 	return 1;
+}
+
+/*
+ * The store's consult implementation.  The store is not
+ * authoritative, so it serves a recorded pair or passes; what the
+ * recording key cannot express, it excludes here with the
+ * stop-no-record disposition.  None of those legs reaches
+ * diff_hunks_replay(), so none of them counts as a miss.
+ */
+static enum diff_provider_disposition
+diff_hunks_store_consult(struct diff_provider *provider UNUSED,
+			 const struct diff_provider_request *req,
+			 diff_provider_fill_fn fill UNUSED,
+			 void *fill_data UNUSED,
+			 xdl_emit_hunk_consume_func_t hunk_cb, void *cb_data)
+{
+	/*
+	 * xpparam_t is the consult's parameter input.  Its flags are
+	 * the store key's xdl_opts; ignore_regex (-I) and anchors
+	 * (--anchored) shape the diff outside the key, so such a
+	 * request is neither served nor recorded.
+	 *
+	 * Adding an xpparam_t field fires this assert (its size no
+	 * longer matches the reference struct).  To clear it: (1) add
+	 * the field to the reference struct below; then (2) decide how
+	 * it affects the key: make it part of the key, or exclude
+	 * diffs that use it here with the disposition below.  The
+	 * assert only tracks size: a same-size reorder or a changed
+	 * field meaning slips past, so re-read the fields when it
+	 * fires.
+	 */
+	(void)BUILD_ASSERT_OR_ZERO(sizeof(xpparam_t) == sizeof(struct {
+		unsigned long flags;
+		regex_t **ignore_regex;
+		size_t ignore_regex_nr;
+		char **anchors;
+		size_t anchors_nr;
+	}));
+	if (req->xpp->ignore_regex_nr || req->xpp->anchors_nr)
+		return DIFF_PROVIDER_DISP_STOP_NO_RECORD;
+	/*
+	 * Break detection (-B) rescores the pair outside xpparam_t, so
+	 * it is outside the key for the same reason.
+	 */
+	if (req->diffopt && req->diffopt->break_opt != -1)
+		return DIFF_PROVIDER_DISP_STOP_NO_RECORD;
+
+	if (!req->old_oid || !req->new_oid)
+		return DIFF_PROVIDER_DISP_PASS;
+	if (diff_hunks_replay(repo_diff_hunks_store(req->repo),
+			      req->old_oid, req->new_oid,
+			      req->xpp->flags, hunk_cb, cb_data))
+		return DIFF_PROVIDER_DISP_ANSWERED;
+	return DIFF_PROVIDER_DISP_PASS;
+}
+
+/*
+ * The provider borrows the repository's store through
+ * repo_diff_hunks_store() per request; the object database owns the
+ * file and tears it down, so there is nothing to release here.
+ */
+struct diff_provider *diff_hunks_store_provider_new(void)
+{
+	struct diff_provider *p = xcalloc(1, sizeof(*p));
+
+	p->consult = diff_hunks_store_consult;
+	return p;
 }
 
 /* Validate one store file. Returns 0 if valid or absent, -1 on any error. */
