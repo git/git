@@ -150,11 +150,12 @@ out:
 }
 
 static int odb_source_files_freshen_object(struct odb_source *source,
-					   const struct object_id *oid)
+					   const struct object_id *oid,
+					   const time_t *mtime)
 {
 	struct odb_source_files *files = odb_source_files_downcast(source);
-	if (odb_source_freshen_object(&files->packed->base, oid) ||
-	    odb_source_freshen_object(&files->loose->base, oid))
+	if (odb_source_freshen_object(&files->packed->base, oid, mtime) ||
+	    odb_source_freshen_object(&files->loose->base, oid, mtime))
 		return 1;
 	return 0;
 }
@@ -162,13 +163,14 @@ static int odb_source_files_freshen_object(struct odb_source *source,
 static int odb_source_files_write_object(struct odb_source *source,
 					 const void *buf, size_t len,
 					 enum object_type type,
-					 struct object_id *oid,
-					 struct object_id *compat_oid,
+					 const struct object_id *oid,
+					 const struct object_id *compat_oid,
+					 const time_t *mtime,
 					 enum odb_write_object_flags flags)
 {
 	struct odb_source_files *files = odb_source_files_downcast(source);
 	return odb_source_write_object(&files->loose->base, buf, len, type,
-				       oid, compat_oid, flags);
+				       oid, compat_oid, mtime, flags);
 }
 
 static int odb_source_files_write_object_stream(struct odb_source *source,
@@ -215,7 +217,8 @@ static int odb_source_files_write_alternate(struct odb_source *source,
 	int found = 0;
 	int ret;
 
-	hold_lock_file_for_update(&lock, path, LOCK_DIE_ON_ERROR);
+	repo_hold_lock_file_for_update(source->odb->repo, &lock, path,
+				       LOCK_DIE_ON_ERROR);
 	out = fdopen_lock_file(&lock, "w");
 	if (!out) {
 		ret = error_errno(_("unable to fdopen alternates lockfile"));

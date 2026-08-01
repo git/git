@@ -51,7 +51,7 @@ static int show_original_ids;
 static int mark_tags;
 static struct string_list extra_refs = STRING_LIST_INIT_DUP;
 static struct string_list tag_refs = STRING_LIST_INIT_DUP;
-static struct refspec refspecs = REFSPEC_INIT_FETCH;
+static struct refspec refspecs;
 static int anonymize;
 static struct hashmap anonymized_seeds;
 static struct revision_sources revision_sources;
@@ -1371,6 +1371,8 @@ int cmd_fast_export(int argc,
 
 	/* we handle encodings */
 	repo_config(the_repository, git_default_config, NULL);
+
+	refspec_init_fetch(&refspecs, the_hash_algo);
 
 	repo_init_revisions(the_repository, &revs, prefix);
 	init_revision_sources(&revision_sources);

@@ -56,6 +56,26 @@ UI, Workflows & Features
    standardized to make them consistent with each other and with other
    commands.
 
+ * 'git log --graph' has been modified to visually distinguish parentless
+   'root' commits (and commits that become roots due to history
+   simplification) by indenting them, preventing them from appearing
+   falsely related to unrelated commits rendered immediately above them.
+
+ * Userdiff patterns for Swift have been added, with support for
+   Swift-specific constructs such as attributes, modifiers, failable
+   initializers, and generics.
+
+ * Configuration file locking has been updated to retry for a short
+   period, avoiding failures when multiple processes attempt to update
+   the configuration simultaneously.
+
+ * The 'remote-object-info' command has been added to 'git cat-file
+   --batch-command', allowing clients to request object metadata
+   (currently size) from a remote server via protocol v2 without
+   downloading the entire object.  Format placeholders are dynamically
+   filtered on the client based on server-advertised capabilities,
+   returning empty strings for inapplicable or unsupported fields.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -206,6 +226,60 @@ Performance, Internal Implementation, Development Support etc.
    pathspec filtering, which was lost when the streaming walk was
    refactored.
 
+ * The ref subsystem and the worktree API have been refactored to pass a
+   repository pointer down the call chain, allowing them to drop
+   references to the global 'the_repository' variable.  As part of this,
+   the handling of the 'core.packedRefsTimeout' configuration has been
+   moved into the per-repository ref store structure.
+
+ * 'git branch --contains' and 'git for-each-ref --contains' have been
+   optimized to use the memoized commit traversal previously used only by
+   'git tag --contains', significantly speeding up connectivity checks
+   across many candidate refs with shared history.
+
+ * The passing of push destination specifications in the 'remote-curl'
+   helper has been simplified by removing the explicit 'count' parameter
+   and relying on the NULL-termination of the array.
+
+ * The dependency on the global 'the_repository' variable in the
+   'refspec.c' API has been removed by passing the hash algorithm
+   explicitly to refspec-parsing functions and storing it in 'struct
+   refspec'.
+
+ * The enumeration of untracked and ignored files in 'git status' has
+   been optimized by avoiding quadratic complexity when inserting into
+   string lists, reducing the construction cost from O(n^2) to O(n log
+   n).
+
+ * The copy_file() and copy_file_with_time() functions have been
+   refactored to take a repository parameter, allowing the removal of the
+   implicit dependency on the global 'the_repository' variable in
+   'copy.c'.
+
+ * The tempfile and lockfile APIs have been refactored to stop depending
+   on the 'the_repository' global variable, and their callers have been
+   updated to use the repository-aware variants.
+
+ * The 'trust_executable_bit' (coming from the 'core.filemode'
+   configuration) has been migrated into 'struct repo_config_values' to
+   tie it to a specific repository instance.
+
+ * The 'excludes_file' and various other global configuration variables
+   (including 'editor_program', 'pager_program', 'askpass_program', and
+   'push_default') have been migrated into the per-repository structure.
+
+ * The 'git stash push' command has been optimized to avoid unnecessary
+   sparse index expansion when pathspecs are wholly inside the
+   sparse-checkout cone.  Also, a potential out-of-bounds read in the
+   sparse-index expansion check helper pathspec_needs_expanded_index()
+   has been fixed by consistently using the parsed, prefixed path.
+
+ * The logic to write loose objects has been refactored and moved from
+   'object-file.c' to the loose backend source file 'odb/source-loose.c',
+   making the loose backend more self-contained.  This is achieved by
+   first refactoring force_object_loose() to use generic ODB write
+   interfaces instead of loose-backend internals.
+
 
 Fixes since v2.55
 -----------------
@@ -350,3 +424,24 @@ Fixes since v2.55
    'git submodule update' command until it was broken in a modernization
    of the option-parsing code, has been restored.
    (merge ff1da37f58 dm/submodule-update-i-shorthand later to maint).
+
+ * An accidental use of the '%zu' format specifier in 'git
+   submodule--helper' has been corrected to use 'PRIuMAX' and cast the
+   value to 'uintmax_t' to avoid portability issues.
+   (merge 3279c13c00 jc/submodule-helper-avoid-zu later to maint).
+
+ * The rebase post-rewrite notes-copying logic has been corrected.  When
+   a commit is dropped during rebase (e.g., because its changes are
+   already upstream), it is no longer recorded as rewritten, preventing
+   its notes from being copied to an unrelated commit.
+   (merge 42554b78fd pw/rebase-drop-notes-with-commit later to maint).
+
+ * A few memory problems in the Rust interface to C hash functions have
+   been corrected.  The 'Clone' implementation of 'CryptoHasher' now
+   properly initializes the context before cloning, and its 'Drop'
+   implementation now discards the context to prevent leaks.
+
+ * The object ID shortening and linking in the 'commitdiff' view of
+   'gitweb' has been corrected to work even when the index line carries
+   a trailing file mode.
+   (merge fda513d6fe tl/gitweb-shorten-hashes-with-modes later to maint).

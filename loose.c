@@ -137,7 +137,8 @@ int repo_write_loose_object_map(struct repository *repo)
 		return 0;
 
 	repo_common_path_replace(repo, &path, "objects/loose-object-idx");
-	fd = hold_lock_file_for_update_timeout(&lock, path.buf, LOCK_DIE_ON_ERROR, -1);
+	fd = repo_hold_lock_file_for_update_timeout(repo, &lock, path.buf,
+						    LOCK_DIE_ON_ERROR, -1);
 	iter = kh_begin(map);
 	if (write_in_full(fd, loose_object_header, strlen(loose_object_header)) < 0)
 		goto errout;
@@ -179,7 +180,8 @@ static int write_one_object(struct odb_source_loose *loose,
 	struct strbuf buf = STRBUF_INIT, path = STRBUF_INIT;
 
 	strbuf_addf(&path, "%s/loose-object-idx", loose->base.path);
-	hold_lock_file_for_update_timeout(&lock, path.buf, LOCK_DIE_ON_ERROR, -1);
+	repo_hold_lock_file_for_update_timeout(loose->base.odb->repo, &lock,
+					       path.buf, LOCK_DIE_ON_ERROR, -1);
 
 	fd = open(path.buf, O_WRONLY | O_CREAT | O_APPEND, 0666);
 	if (fd < 0)

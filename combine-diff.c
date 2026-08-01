@@ -1080,7 +1080,7 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 			/* if symlinks don't work, assume symlink if all parents
 			 * are symlinks
 			 */
-			is_file = has_symlinks;
+			is_file = repo_has_symlinks(rev->repo);
 			for (i = 0; !is_file && i < num_parent; i++)
 				is_file = !S_ISLNK(elem->parent[i].mode);
 			if (!is_file)

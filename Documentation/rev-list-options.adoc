@@ -1269,6 +1269,14 @@ This implies the `--topo-order` option by default, but the
 	By default it is set to 0 (no limit), zero and negative values
 	are ignored and treated as no limit.
 
+`--no-graph-indent`::
+`--graph-indent`::
+	When used with `--graph`, indent visual roots (commits with no parents
+	or whose parents are not shown) to differentiate them from commits that
+	are vertically adjacent but unrelated. Enabled by default. Use
+	`--no-graph-indent` to disable or set `log.graphIndent` to set a
+	default preference.
+
 ifdef::git-rev-list[]
 `--count`::
 	Print a number stating how many commits would have been

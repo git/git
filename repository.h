@@ -167,7 +167,7 @@ struct repository {
 	/* Repository's compatibility hash algorithm. */
 	const struct git_hash_algo *compat_hash_algo;
 
-	/* Repository's config values parsed by git_default_config() */
+	/* Repository-specific configuration values. */
 	struct repo_config_values config_values_private_;
 
 	/* Repository's reference storage format, as serialized on disk. */

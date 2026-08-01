@@ -954,7 +954,8 @@ static int write_midx_incremental(struct repack_write_midx_opts *opts)
 					    lock_name.buf))
 		die_errno(_("unable to create leading directories of %s"),
 			  lock_name.buf);
-	hold_lock_file_for_update(&lf, lock_name.buf, LOCK_DIE_ON_ERROR);
+	repo_hold_lock_file_for_update(opts->existing->repo, &lf, lock_name.buf,
+				       LOCK_DIE_ON_ERROR);
 
 	if (!fdopen_lock_file(&lf, "w")) {
 		ret = error_errno(_("unable to open multi-pack-index chain file"));

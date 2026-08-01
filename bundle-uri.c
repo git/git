@@ -396,7 +396,7 @@ static int copy_uri_to_file(const char *filename, const char *uri)
 		uri = out;
 
 	/* Copy as a file */
-	return copy_file(filename, uri, 0);
+	return copy_file(the_repository, filename, uri, 0);
 }
 
 static int unbundle_from_file(struct repository *r, const char *file)

@@ -795,7 +795,7 @@ static int write_ondisk_index(struct repository *repo,
 
 	prime_cache_tree(repo, &index, tree);
 
-	if (hold_lock_file_for_update(&lock, path, 0) < 0) {
+	if (repo_hold_lock_file_for_update(repo, &lock, path, 0) < 0) {
 		ret = error_errno(_("unable to acquire index lock"));
 		goto out;
 	}

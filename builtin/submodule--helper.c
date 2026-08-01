@@ -549,7 +549,8 @@ static void create_default_gitdir_config(const char *submodule_name)
 	}
 
 	/* Case 2.4: If all the above failed, try a hash of the name as a last resort */
-	header_len = snprintf(header, sizeof(header), "blob %zu", strlen(submodule_name));
+	header_len = snprintf(header, sizeof(header),
+			      "blob %"PRIuMAX, (uintmax_t)strlen(submodule_name));
 	git_hash_init(&ctx, the_hash_algo);
 	git_hash_update(&ctx, header, header_len);
 	git_hash_update(&ctx, "\0", 1);
@@ -3150,7 +3151,7 @@ static int push_check(int argc, const char **argv, const char *prefix UNUSED,
 	if (argc > 2) {
 		int i;
 		struct ref *local_refs = get_local_heads();
-		struct refspec refspec = REFSPEC_INIT_PUSH;
+		struct refspec refspec = REFSPEC_INIT_PUSH(the_hash_algo);
 
 		refspec_appendn(&refspec, argv + 2, argc - 2);
 

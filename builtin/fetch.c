@@ -96,7 +96,7 @@ static struct string_list deepen_not = STRING_LIST_INIT_NODUP;
 static struct strbuf default_rla = STRBUF_INIT;
 static struct transport *gtransport;
 static struct transport *gsecondary;
-static struct refspec refmap = REFSPEC_INIT_FETCH;
+static struct refspec refmap;
 static struct string_list server_options = STRING_LIST_INIT_DUP;
 static struct string_list negotiation_restrict = STRING_LIST_INIT_NODUP;
 static struct string_list negotiation_include = STRING_LIST_INIT_NODUP;
@@ -601,7 +601,8 @@ static struct ref *get_ref_map(struct remote *remote,
 		struct refspec_item tag_refspec;
 
 		/* also fetch all tags */
-		refspec_item_init_push(&tag_refspec, TAG_REFSPEC);
+		refspec_item_init_push(&tag_refspec, TAG_REFSPEC,
+				       the_hash_algo);
 		get_fetch_map(remote_refs, &tag_refspec, &tail, 0);
 		refspec_item_clear(&tag_refspec);
 	} else if (tags == TAGS_DEFAULT && *autotags) {
@@ -2428,7 +2429,7 @@ static int fetch_one(struct remote *remote, int argc, const char **argv,
 		     const struct fetch_config *config,
 		     struct list_objects_filter_options *filter_options)
 {
-	struct refspec rs = REFSPEC_INIT_FETCH;
+	struct refspec rs = REFSPEC_INIT_FETCH(the_hash_algo);
 	int i;
 	int exit_code;
 	int maybe_prune_tags;
@@ -2629,6 +2630,8 @@ int cmd_fetch(int argc,
 	};
 
 	filter_options.allow_auto_filter = 1;
+
+	refspec_init_fetch(&refmap, the_hash_algo);
 
 	packet_trace_identity("fetch");
 

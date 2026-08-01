@@ -2355,7 +2355,7 @@ static void copy_templates_1(struct repository *repo,
 			strbuf_release(&lnk);
 		}
 		else if (S_ISREG(st_template.st_mode)) {
-			if (copy_file(path->buf, template_path->buf, st_template.st_mode))
+			if (copy_file(repo, path->buf, template_path->buf, st_template.st_mode))
 				die_errno(_("cannot copy '%s' to '%s'"),
 					  template_path->buf, path->buf);
 		}
@@ -2674,7 +2674,8 @@ static void create_object_directory(struct repository *repo)
 	strbuf_release(&path);
 }
 
-static void separate_git_dir(const char *git_dir, const char *git_link)
+static void separate_git_dir(struct repository *repo,
+			     const char *git_dir, const char *git_link)
 {
 	struct stat st;
 
@@ -2690,7 +2691,7 @@ static void separate_git_dir(const char *git_dir, const char *git_link)
 
 		if (rename(src, git_dir))
 			die_errno(_("unable to move %s to %s"), src, git_dir);
-		repair_worktrees_after_gitdir_move(src);
+		repair_worktrees_after_gitdir_move(repo, src);
 	}
 
 	write_file(git_link, "gitdir: %s", git_dir);
@@ -2849,7 +2850,7 @@ int init_db(struct repository *repo,
 
 		apply_and_export_relative_gitdir(repo, real_git_dir, 1);
 		git_dir = repo_get_git_dir(repo);
-		separate_git_dir(git_dir, original_git_dir);
+		separate_git_dir(repo, git_dir, original_git_dir);
 	} else {
 		apply_and_export_relative_gitdir(repo, git_dir, 1);
 		git_dir = repo_get_git_dir(repo);

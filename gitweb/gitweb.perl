@@ -2339,12 +2339,14 @@ sub format_extended_diff_header_line {
 		$line .= $cgi->a({-href=>$to->{'href'}, -class=>"path"},
 		                 esc_path($to->{'file'}));
 	}
-	# match single <mode>
-	if ($line =~ m/\s(\d{6})$/) {
-		$line .= '<span class="info"> (' .
-		         file_type_long($1) .
-		         ')</span>';
+
+	# Temporarily remove a trailing <mode> so an index line ends with its
+	# object IDs and can be shortened below.
+	my $mode;
+	if ($line =~ s/\s(\d{6})$//) {
+		$mode = $1;
 	}
+
 	# match <hash>
 	if ($line =~ oid_nlen_prefix_infix_regex($sha1_len, "index ", ",") |
 	    $line =~ oid_nlen_prefix_infix_regex($sha256_len, "index ", ",")) {
@@ -2387,6 +2389,12 @@ sub format_extended_diff_header_line {
 		}
 		my ($from_id, $to_id) = ($diffinfo->{'from_id'}, $diffinfo->{'to_id'});
 		$line =~ s!$from_id\.\.$to_id!$from_link..$to_link!;
+	}
+	if (defined $mode) {
+		$line .= " $mode" .
+		         '<span class="info"> (' .
+		         file_type_long($mode) .
+		         ')</span>';
 	}
 
 	return $line . "<br/>\n";

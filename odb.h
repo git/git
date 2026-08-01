@@ -340,6 +340,12 @@ struct object_info {
 	 * or multiple times in the same source.
 	 */
 	struct odb_source_info *source_infop;
+
+	/*
+	 * object-info protocol specific. Set by the protocol when the remote
+	 * does not recognize the requested object.
+	 */
+	unsigned int unrecognized:1;
 };
 
 /*
@@ -597,9 +603,11 @@ enum odb_write_object_flags {
 
 /*
  * Write an object into the object database. The object is being written into
- * the local alternate of the repository. If provided, the converted object ID
- * as well as the compatibility object ID are written to the respective
- * pointers.
+ * the local alternate of the repository. If provided, the object ID of the
+ * final object is written into `oid`.
+ *
+ * If the caller provides a `compat_oid`, then this compatibility object hash
+ * will be stored instead of computing the compatibility hash ad-hoc.
  *
  * Returns 0 on success, a negative error code otherwise.
  */
@@ -607,7 +615,7 @@ int odb_write_object_ext(struct object_database *odb,
 			 const void *buf, unsigned long len,
 			 enum object_type type,
 			 struct object_id *oid,
-			 struct object_id *compat_oid,
+			 const struct object_id *compat_oid,
 			 enum odb_write_object_flags flags);
 
 static inline int odb_write_object(struct object_database *odb,
@@ -628,5 +636,8 @@ void parse_alternates(const char *string,
 		      int sep,
 		      const char *relative_base,
 		      struct strvec *out);
+
+/* Free pointers inside of object_info, but not object_info itself */
+void free_object_info_contents(struct object_info *object_info);
 
 #endif /* ODB_H */

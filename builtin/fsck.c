@@ -632,7 +632,7 @@ static void snapshot_refs(struct repository *repo,
 	refs_for_each_ref_ext(get_main_ref_store(repo),
 			      snapshot_ref, &data, &opts);
 
-	worktrees = get_worktrees();
+	worktrees = get_worktrees(repo);
 	for (p = worktrees; *p; p++) {
 		struct worktree *wt = *p;
 		struct strbuf refname = STRBUF_INIT;
@@ -685,7 +685,7 @@ static void process_refs(struct repository *repo, struct snapshot *snap)
 	}
 
 	if (include_reflogs) {
-		worktrees = get_worktrees();
+		worktrees = get_worktrees(repo);
 		for (p = worktrees; *p; p++) {
 			struct worktree *wt = *p;
 
@@ -1121,7 +1121,7 @@ int cmd_fsck(int argc,
 		verify_index_checksum = 1;
 		verify_ce_order = 1;
 
-		worktrees = get_worktrees();
+		worktrees = get_worktrees(repo);
 		for (p = worktrees; *p; p++) {
 			struct worktree *wt = *p;
 			struct index_state istate =
