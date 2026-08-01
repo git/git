@@ -2010,17 +2010,25 @@ static void pass_blame_to_parent(struct blame_scoreboard *sb,
 	 * compute.  The working-tree/--contents pseudo-commit (marked by
 	 * its null commit id) holds a blob that is not a stored object,
 	 * so its pairs withhold identity too: no id may be sent that
-	 * names bytes a provider cannot look up.
+	 * names bytes a process cannot look up.
 	 */
 	provider_usable = !sb->reverse && !ignore_diffs &&
 		!is_null_oid(&target->commit->object.oid) &&
 		!blame_textconv_active(sb, target->path) &&
 		!blame_textconv_active(sb, parent->path);
 
+	/*
+	 * Look up the driver by the parent (old) path, as builtin_diff()
+	 * does with name_a, so a renamed file resolves to the same driver
+	 * across diff and blame.  A process that reports a pair
+	 * equivalent emits no hunks, so blame passes the whole commit
+	 * through and looks past it.
+	 */
 	if (provider_usable) {
 		req.old_oid = &parent->blob_oid;
 		req.new_oid = &target->blob_oid;
 	}
+	req.path = parent->path;
 	req.diffopt = &sb->revs->diffopt;
 	if (diff_provider_emit_hunks(&req, blame_diff_fill, &fill_data,
 				     blame_chunk_cb, &d) == DIFF_PROVIDER_ERROR)

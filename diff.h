@@ -174,6 +174,15 @@ struct diff_flags {
 	unsigned allow_external;
 
 	/**
+	 * Allows diff.<driver>.process to be consulted.  Set by the
+	 * porcelain commands whose output may reflect a diff process
+	 * (diff, log, show, blame) and by --ext-diff or --diff-process;
+	 * plumbing does not set it by default, so its output stays
+	 * builtin.  Cleared by --no-ext-diff or --no-diff-process.
+	 */
+	unsigned allow_diff_process;
+
+	/**
 	 * For communication between the calling program and the options parser;
 	 * tell the calling program to signal the presence of difference using
 	 * program exit code.
