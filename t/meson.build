@@ -1158,6 +1158,7 @@ benchmarks = [
   'perf/p4205-log-pretty-formats.sh',
   'perf/p4209-pickaxe.sh',
   'perf/p4211-line-log.sh',
+  'perf/p4218-diff-hunks.sh',
   'perf/p4220-log-grep-engines.sh',
   'perf/p4221-log-grep-engines-fixed.sh',
   'perf/p5302-pack-index.sh',

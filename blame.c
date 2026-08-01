@@ -24,6 +24,7 @@
 #include "bloom.h"
 #include "commit-graph.h"
 #include "diff-provider.h"
+#include "userdiff.h"
 
 define_commit_slab(blame_suspects, struct blame_origin *);
 static struct blame_suspects blame_suspects;
@@ -1937,6 +1938,24 @@ static int blame_chunk_cb(long start_a, long count_a,
 	return 0;
 }
 
+/*
+ * A hunk provider's key names the (old blob, new blob) pair and may only
+ * serve a diff whose result is determined by that pair and the xdiff
+ * settings. Textconv rewrites the buffers being diffed away from the
+ * blob contents the key names, so any origin whose path has a textconv
+ * driver must withhold the pair's identity.
+ */
+static int blame_textconv_active(struct blame_scoreboard *sb,
+				 const char *path)
+{
+	struct userdiff_driver *drv;
+
+	if (!sb->revs->diffopt.flags.allow_textconv)
+		return 0;
+	drv = userdiff_find_by_path(sb->repo->index, path);
+	return drv && drv->textconv;
+}
+
 struct blame_diff_fill_data {
 	struct blame_scoreboard *sb;
 	struct blame_origin *parent, *target;
@@ -1973,6 +1992,7 @@ static void pass_blame_to_parent(struct blame_scoreboard *sb,
 	struct blame_diff_fill_data fill_data = { sb, parent, target, ignore_diffs };
 	xpparam_t xpp = { .flags = sb->xdl_opts };
 	struct diff_provider_request req = { .repo = sb->repo, .xpp = &xpp };
+	int provider_usable;
 
 	if (!target->suspects)
 		return; /* nothing remains for this target */
@@ -1983,6 +2003,25 @@ static void pass_blame_to_parent(struct blame_scoreboard *sb,
 	d.ignore_diffs = ignore_diffs;
 	d.dstq = &newdest; d.srcq = &target->suspects;
 
+	/*
+	 * Offer the pair's identity only where blame's diff is the plain
+	 * blob-pair diff the recording key describes; reverse blame,
+	 * ignored revisions, and textconv paths withhold it and always
+	 * compute.  The working-tree/--contents pseudo-commit (marked by
+	 * its null commit id) holds a blob that is not a stored object,
+	 * so its pairs withhold identity too: no id may be sent that
+	 * names bytes a provider cannot look up.
+	 */
+	provider_usable = !sb->reverse && !ignore_diffs &&
+		!is_null_oid(&target->commit->object.oid) &&
+		!blame_textconv_active(sb, target->path) &&
+		!blame_textconv_active(sb, parent->path);
+
+	if (provider_usable) {
+		req.old_oid = &parent->blob_oid;
+		req.new_oid = &target->blob_oid;
+	}
+	req.diffopt = &sb->revs->diffopt;
 	if (diff_provider_emit_hunks(&req, blame_diff_fill, &fill_data,
 				     blame_chunk_cb, &d) == DIFF_PROVIDER_ERROR)
 		die("unable to generate diff (%s -> %s)",

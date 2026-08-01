@@ -231,6 +231,17 @@ static inline void diff_flags_or(struct diff_flags *a,
 
 #define DIFF_WITH_ALG(opts, flag)   (((opts)->xdl_opts & ~XDF_DIFF_ALGORITHM_MASK) | XDF_##flag)
 
+/*
+ * The xdl_opts bits git turns on by default that a from-scratch xdl_opts
+ * (git blame's own option parsing) does not set, and so must OR in to match
+ * a store warmed at the default diff settings; a diff_options-based consumer
+ * (diffstat) already has them in o->xdl_opts. Today this is only the indent
+ * heuristic. It does NOT cover a non-default diff.algorithm: a repo that
+ * configures one records under that algorithm, and a consumer keying without
+ * it misses (a lost hit, not wrong output).
+ */
+#define DIFF_HUNKS_DEFAULT_XDL_OPTS XDF_INDENT_HEURISTIC
+
 enum diff_words_type {
 	DIFF_WORDS_NONE = 0,
 	DIFF_WORDS_PORCELAIN,
