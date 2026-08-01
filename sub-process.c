@@ -49,6 +49,30 @@ int subprocess_read_status(int fd, struct strbuf *status)
 	return (len < 0) ? len : 0;
 }
 
+int subprocess_read_status_gently(int fd, struct strbuf *status)
+{
+	for (;;) {
+		int pktlen = -1;
+		enum packet_read_status rs;
+		const char *value;
+
+		rs = packet_read_with_status(fd, NULL, NULL, packet_buffer,
+					     sizeof(packet_buffer), &pktlen,
+					     PACKET_READ_CHOMP_NEWLINE |
+					     PACKET_READ_GENTLE_ON_EOF |
+					     PACKET_READ_GENTLE_ON_READ_ERROR);
+		if (rs == PACKET_READ_FLUSH)
+			return 0;
+		if (rs != PACKET_READ_NORMAL || !pktlen)
+			return -1;
+		if (skip_prefix(packet_buffer, "status=", &value)) {
+			/* the last "status=<foo>" line wins */
+			strbuf_reset(status);
+			strbuf_addstr(status, value);
+		}
+	}
+}
+
 void subprocess_stop_command(struct subprocess_entry *entry)
 {
 	if (!entry)
