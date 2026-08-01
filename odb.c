@@ -2,6 +2,7 @@
 #include "abspath.h"
 #include "commit-graph.h"
 #include "config.h"
+#include "diff-hunks.h"
 #include "dir.h"
 #include "environment.h"
 #include "gettext.h"
@@ -1033,6 +1034,7 @@ void odb_close(struct object_database *o)
 	for (source = o->sources; source; source = source->next)
 		odb_source_close(source);
 	close_commit_graph(o);
+	close_diff_hunks_store(o);
 }
 
 static void odb_free_sources(struct object_database *o)
