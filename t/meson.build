@@ -586,6 +586,7 @@ integration_tests = [
   't4217-log-limit.sh',
   't4218-log-graph-indentation.sh',
   't4219-log-follow-merge.sh',
+  't4220-diff-hunks.sh',
   't4252-am-options.sh',
   't4253-am-keep-cr-dos.sh',
   't4254-am-corrupt.sh',

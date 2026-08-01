@@ -420,6 +420,13 @@ struct diff_options {
 	 */
 	int max_depth;
 	int max_depth_valid;
+
+	/*
+	 * Precomputed diff hunks (see diff-hunks.h). When hunks_writer is
+	 * set (a warming run), diffstat records the hunks it computes;
+	 * the writer is attached only for the stat output formats.
+	 */
+	struct diff_hunks_writer *hunks_writer;
 };
 
 unsigned diff_filter_bit(char status);
@@ -668,6 +675,16 @@ void diffcore_fix_diff_index(void);
 int diff_queue_is_empty(struct diff_options *o);
 void diff_flush(struct diff_options*);
 void diff_free(struct diff_options*);
+
+/*
+ * Attach a diff-hunks writer to a diff producing a stat format, so a
+ * warming run records the hunks it computes; a no-op when writing is off
+ * or for other formats. Pair with diff_hunks_detach() once the diff is
+ * done.
+ */
+void diff_hunks_attach(struct diff_options *o);
+void diff_hunks_detach(struct diff_options *o);
+
 void diff_warn_rename_limit(const char *varname, int needed, int degraded_cc);
 
 /* diff-raw status letters */

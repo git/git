@@ -94,7 +94,8 @@ struct diff_hunks_writer *diff_hunks_writer_maybe_new(struct repository *r);
  * Record a blob pair's hunks as computed under xdl_opts; a later lookup
  * with a matching key is served these hunks. The caller must have
  * checked that the pair's trimmed and untrimmed diffs are identical
- * (see the top of this file), so the entry answers at any context.
+ * (see the top of this file), so the entry answers at any context;
+ * diff_hunks_writer_record_stable() below performs that check.
  * NULL-safe. Returns 1 when the entry was recorded, 0 when the writer
  * refused it (no hunks, a null object id, or values the on-disk
  * 32-bit fields cannot hold).
@@ -105,6 +106,21 @@ int diff_hunks_writer_add(struct diff_hunks_writer *w,
 			  int xdl_opts,
 			  const struct precomputed_hunk *hunks,
 			  size_t nr_hunks);
+
+/*
+ * Record the pair only if it is trim-stable: the recording caller
+ * hands over both the trimmed (xdi_diff) and untrimmed (xdl_diff)
+ * zero-context hunk sequences it computed, and the entry is added
+ * only when the two are identical. NULL-safe.
+ */
+void diff_hunks_writer_record_stable(struct diff_hunks_writer *w,
+				     const struct object_id *old_oid,
+				     const struct object_id *new_oid,
+				     int xdl_opts,
+				     const struct precomputed_hunk *trimmed,
+				     size_t nr_trimmed,
+				     const struct precomputed_hunk *full,
+				     size_t nr_full);
 
 /* Flush the accumulated entries to the store and free the writer. NULL-safe. */
 void diff_hunks_writer_finish(struct diff_hunks_writer *w);

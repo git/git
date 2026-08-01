@@ -651,6 +651,38 @@ int diff_hunks_writer_add(struct diff_hunks_writer *w,
 	return 1;
 }
 
+void diff_hunks_writer_record_stable(struct diff_hunks_writer *w,
+				     const struct object_id *old_oid,
+				     const struct object_id *new_oid,
+				     int xdl_opts,
+				     const struct precomputed_hunk *trimmed,
+				     size_t nr_trimmed,
+				     const struct precomputed_hunk *full,
+				     size_t nr_full)
+{
+	size_t i;
+
+	if (!w)
+		return;
+	/*
+	 * Record only a trim-stable pair, one whose trimmed and
+	 * untrimmed diffs are identical, so the single entry answers
+	 * any consumer at any context (see the top of this file).  A
+	 * pair where the two diffs differ is never recorded and every
+	 * consumer computes it.
+	 */
+	if (nr_trimmed != nr_full)
+		return;
+	for (i = 0; i < nr_trimmed; i++)
+		if (trimmed[i].old_start != full[i].old_start ||
+		    trimmed[i].old_count != full[i].old_count ||
+		    trimmed[i].new_start != full[i].new_start ||
+		    trimmed[i].new_count != full[i].new_count)
+			return;
+	diff_hunks_writer_add(w, old_oid, new_oid, xdl_opts,
+			      trimmed, nr_trimmed);
+}
+
 /*
  * Seed the writer with fname's entries so a rewrite preserves them,
  * setting *pruned when the rewrite will not carry the whole file

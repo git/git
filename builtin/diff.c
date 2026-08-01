@@ -568,6 +568,15 @@ int cmd_diff(int argc,
 		}
 	}
 
+	/*
+	 * The hunk store is keyed by blob pair, so any diff whose
+	 * file pairs carry known blob object IDs (tree-to-tree,
+	 * index-to-tree) can consult the same entries that
+	 * "git log --stat" and "git blame" use; pairs without known
+	 * blobs bypass it at lookup time.
+	 */
+	diff_hunks_attach(&rev.diffopt);
+
 	symdiff_prepare(&rev, &sdiff);
 	for (i = 0; i < rev.pending.nr; i++) {
 		struct object_array_entry *entry = &rev.pending.objects[i];
@@ -648,6 +657,7 @@ int cmd_diff(int argc,
 	result = diff_result_code(&rev);
 	if (1 < rev.diffopt.skip_stat_unmatch)
 		refresh_index_quietly();
+	diff_hunks_detach(&rev.diffopt);
 	release_revisions(&rev);
 	object_array_clear(&ent);
 	symdiff_release(&sdiff);
