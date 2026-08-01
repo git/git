@@ -15,6 +15,7 @@
 #include "hex.h"
 #include "commit.h"
 #include "diff.h"
+#include "diff-hunks.h"
 #include "revision.h"
 #include "quote.h"
 #include "string-list.h"
@@ -1060,7 +1061,7 @@ int cmd_blame(int argc,
 parse_done:
 	revision_opts_finish(&revs);
 	no_whole_file_rename = !revs.diffopt.flags.follow_renames;
-	xdl_opts |= revs.diffopt.xdl_opts & XDF_INDENT_HEURISTIC;
+	xdl_opts |= revs.diffopt.xdl_opts & DIFF_HUNKS_DEFAULT_XDL_OPTS;
 	revs.diffopt.flags.follow_renames = 0;
 	argc = parse_options_end(&ctx);
 
@@ -1315,9 +1316,14 @@ parse_done:
 	output(&sb, output_option);
 
 	if (show_stats) {
+		unsigned long hunk_hits, hunk_misses;
+
+		diff_hunks_read_stats(sb.repo, &hunk_hits, &hunk_misses);
 		printf("num read blob: %d\n", sb.num_read_blob);
 		printf("num get patch: %d\n", sb.num_get_patch);
 		printf("num commits: %d\n", sb.num_commits);
+		printf("num precomputed hits: %lu\n", hunk_hits);
+		printf("num precomputed misses: %lu\n", hunk_misses);
 	}
 
 cleanup:
