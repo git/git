@@ -101,4 +101,14 @@ int subprocess_handshake(struct subprocess_entry *entry,
 
 int subprocess_read_status(int fd, struct strbuf *status);
 
+/*
+ * Like subprocess_read_status(), but a malformed status section fails
+ * instead of dying: a truncated or malformed packet, and an empty
+ * packet where a status line or the terminating flush belongs, return
+ * -1 and leave the stream unusable.  subprocess_read_status() cannot
+ * tell an empty packet from the flush that ends the section, and dies
+ * on a framing error inside packet_read_line_gently().
+ */
+int subprocess_read_status_gently(int fd, struct strbuf *status);
+
 #endif
