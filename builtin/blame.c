@@ -1025,6 +1025,7 @@ int cmd_blame(int argc,
 	repo_init_revisions(the_repository, &revs, NULL);
 	revs.date_mode = blame_date_mode;
 	revs.diffopt.flags.allow_textconv = 1;
+	revs.diffopt.flags.allow_diff_process = 1;
 	revs.diffopt.flags.follow_renames = 1;
 
 	save_commit_buffer = 0;

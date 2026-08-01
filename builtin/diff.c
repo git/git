@@ -510,6 +510,7 @@ int cmd_diff(int argc,
 	init_diffstat_widths(&rev.diffopt);
 	rev.diffopt.flags.allow_external = 1;
 	rev.diffopt.flags.allow_textconv = 1;
+	rev.diffopt.flags.allow_diff_process = 1;
 
 	/* If this is a no-index diff, just run it and exit there. */
 	if (no_index)

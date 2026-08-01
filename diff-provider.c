@@ -41,11 +41,11 @@ static struct diff_provider *builtin_provider_new(void)
 
 /*
  * The repository's chain, assembled on first walk.  The composition
- * is fixed, and the order is the authority resolution: the store is
- * consulted before the builtin computation, the terminal provider,
- * so the chain always ends in an implementor that can answer.
- * Nothing is decided per repository here; each provider gates itself
- * per request.
+ * is fixed, and the order is the authority resolution: the process
+ * outranks the store, and the builtin computation is the terminal
+ * provider, so the chain always ends in an implementor that can
+ * answer.  Nothing is decided per repository here; each provider
+ * gates itself per request.
  */
 static struct diff_provider *provider_chain(struct repository *r)
 {
@@ -53,6 +53,8 @@ static struct diff_provider *provider_chain(struct repository *r)
 
 	if (*tail)
 		return *tail;
+	*tail = diff_process_provider_new();
+	tail = &(*tail)->next;
 	*tail = diff_hunks_store_provider_new();
 	tail = &(*tail)->next;
 	*tail = builtin_provider_new();

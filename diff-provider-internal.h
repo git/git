@@ -93,6 +93,7 @@ struct diff_provider {
  * diff-provider.c holds itself.  Each call returns a fresh provider
  * for one repository's chain.
  */
+struct diff_provider *diff_process_provider_new(void);
 struct diff_provider *diff_hunks_store_provider_new(void);
 
 /*

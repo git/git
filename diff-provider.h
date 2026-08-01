@@ -11,19 +11,23 @@
  * its content is loaded.
  *
  * A hunk provider answers a consumer's request from the pair's
- * identity (its blob object ids) and the parameters that determine
- * the diff; a request no provider answers falls through to the
- * consumer's own computation.  A provider is either authoritative for
- * its requests, meaning its answer may deliberately differ from the
- * builtin diff, or not, meaning its answer must reproduce the builtin
- * result exactly.  The interface resolves that authority through a
- * provider chain owned by the repository, built on first consultation
- * and released by repo_clear(): chain order is the resolution, and
- * the builtin computation itself is the chain's terminal provider.  A
- * consumer never names a provider; it reads the outcome below.
- * Every answer a provider serves from identity passes the shared
- * coordinate check (diff-provider-internal.h) before any consumer
- * sees it.
+ * identity, its blob object ids and the settings that determine the
+ * diff, before any content is loaded; a request no provider answers
+ * falls through to the consumer's own computation.  Two providers implement this
+ * interface with different authority.  The diff-hunks store
+ * (diff-hunks.h) is in-process and not authoritative: it may only
+ * reproduce the builtin result, so it never asserts a pair
+ * equivalent, and it stands aside wherever a process outranks it.  A
+ * process configured in diff.<driver>.process (diff-process.c) is
+ * authoritative for its paths: its answer may deliberately differ
+ * from the builtin diff, including asserting a pair equivalent.  The
+ * interface resolves that authority through a provider chain owned
+ * by the repository, built on first consultation and released by
+ * repo_clear(): chain order is the resolution, and the builtin
+ * computation itself is the chain's terminal provider.  A consumer
+ * never names a provider; it reads the outcome below.  Every answer a
+ * provider serves from identity passes the shared coordinate check
+ * (diff-provider-internal.h) before any consumer sees it.
  */
 
 struct diff_options;
@@ -95,14 +99,17 @@ enum diff_provider_outcome {
  * name the blobs whose bytes are diffed; pass NULL for a side whose
  * bytes are not a stored blob (a working-tree file, textconv output,
  * a gitlink), so no provider answers from an id it cannot look up.
- * diffopt carries the diff settings that live outside xpp; xpp
- * carries the parameters the diff runs with.  Each provider gates
- * itself on the fields that concern it.
+ * path names the file the pair is diffed as; a provider selected by
+ * path applies only where it is set.  diffopt carries the diff
+ * settings that live outside xpp; xpp carries the parameters the
+ * diff runs with.  Each provider gates itself on the fields that
+ * concern it.
  */
 struct diff_provider_request {
 	struct repository *repo;
 	const struct object_id *old_oid;
 	const struct object_id *new_oid;
+	const char *path;
 	struct diff_options *diffopt;
 	const xpparam_t *xpp;
 };
