@@ -89,6 +89,13 @@ struct diff_provider {
 };
 
 /*
+ * The providers Git ships, besides the builtin computation that
+ * diff-provider.c holds itself.  Each call returns a fresh provider
+ * for one repository's chain.
+ */
+struct diff_provider *diff_hunks_store_provider_new(void);
+
+/*
  * Incremental well-formedness check for a provider-supplied hunk
  * sequence, shared by every provider.  Each coordinate, and each
  * hunk's end (its start plus count), must fit int32 (a consumer may

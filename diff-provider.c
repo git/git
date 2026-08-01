@@ -1,5 +1,7 @@
 #include "git-compat-util.h"
+#include "diff.h"
 #include "diff-provider-internal.h"
+#include "replace-object.h"
 #include "repository.h"
 
 /*
@@ -39,10 +41,11 @@ static struct diff_provider *builtin_provider_new(void)
 
 /*
  * The repository's chain, assembled on first walk.  The composition
- * is fixed; the builtin computation is the terminal provider, so the
- * chain always ends in an implementor that can answer.  Nothing is
- * decided per repository here; each provider gates itself per
- * request.
+ * is fixed, and the order is the authority resolution: the store is
+ * consulted before the builtin computation, the terminal provider,
+ * so the chain always ends in an implementor that can answer.
+ * Nothing is decided per repository here; each provider gates itself
+ * per request.
  */
 static struct diff_provider *provider_chain(struct repository *r)
 {
@@ -50,6 +53,8 @@ static struct diff_provider *provider_chain(struct repository *r)
 
 	if (*tail)
 		return *tail;
+	*tail = diff_hunks_store_provider_new();
+	tail = &(*tail)->next;
 	*tail = builtin_provider_new();
 	return r->diff_providers;
 }
@@ -70,16 +75,16 @@ void diff_providers_clear(struct repository *r)
 }
 
 /*
- * The walk behind diff_provider_emit_hunks(): consult the chain in
- * order and map its dispositions onto the outcome set.  The first
- * answer ends the walk.  A stop-no-record disposition
- * (diff-provider-internal.h) is a refusal, not a pass: the provider
- * does not answer, but rules the pair out of identity service and
- * out of recording, so from then on the walk consults only the
- * computing provider, and a walk that ends unanswered carries the
- * no-record verdict.  With a fill callback the terminal provider
- * computes instead of passing, so an emit walk returns only
- * answered or error.
+ * The walk shared by diff_provider_consult() and
+ * diff_provider_emit_hunks(): consult the chain in order and map its
+ * dispositions onto the outcome set.  The first answer ends the
+ * walk.  A stop-no-record disposition (diff-provider-internal.h)
+ * is a refusal, not a pass: the provider does not answer, but rules
+ * the pair out of identity service and out of recording, so from
+ * then on the walk consults only the computing provider, and a walk
+ * that ends unanswered carries the no-record verdict.  With a fill
+ * callback the terminal provider computes instead of passing, so an
+ * emit walk returns only answered or error.
  */
 static enum diff_provider_outcome
 walk_providers(const struct diff_provider_request *req,
@@ -88,6 +93,28 @@ walk_providers(const struct diff_provider_request *req,
 {
 	struct diff_provider *p;
 	int no_record = 0;
+
+	if (req->diffopt && req->diffopt->repo != req->repo)
+		BUG("diff provider request walks one repository's chain "
+		    "with another repository's diff options");
+
+	/*
+	 * An object replacement redirects a blob's content
+	 * (OBJECT_INFO_LOOKUP_REPLACE) while leaving the id that names it
+	 * unchanged, so an answer keyed on the raw id would be the
+	 * pre-replacement diff.  A replacement is therefore a parameter
+	 * outside the recording key: no provider may serve a replaced pair
+	 * from its identity, and a result computed for it must not be
+	 * recorded under the raw id.  Mark the walk no-record so the
+	 * identity providers step aside and the builtin computes from the
+	 * replaced content.  The check is a no-op when the repository has
+	 * no replace refs.
+	 */
+	if ((req->old_oid &&
+	     lookup_replace_object(req->repo, req->old_oid) != req->old_oid) ||
+	    (req->new_oid &&
+	     lookup_replace_object(req->repo, req->new_oid) != req->new_oid))
+		no_record = 1;
 
 	for (p = provider_chain(req->repo); p; p = p->next) {
 		enum diff_provider_disposition disp;
@@ -116,6 +143,13 @@ walk_providers(const struct diff_provider_request *req,
 	}
 	return no_record ? DIFF_PROVIDER_UNANSWERED_NO_RECORD :
 		DIFF_PROVIDER_UNANSWERED;
+}
+
+enum diff_provider_outcome
+diff_provider_consult(const struct diff_provider_request *req,
+		      xdl_emit_hunk_consume_func_t hunk_cb, void *cb_data)
+{
+	return walk_providers(req, NULL, NULL, hunk_cb, cb_data);
 }
 
 enum diff_provider_hunks_error
