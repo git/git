@@ -1,75 +1,83 @@
-[![GitHub build status](https://github.com/git/git/workflows/CI/badge.svg)](https://github.com/git/git/actions?query=branch%3Amaster+event%3Apush)
-[![GitLab build status](https://gitlab.com/git-scm/git/badges/master/pipeline.svg)](https://gitlab.com/git-scm/git/-/pipelines?ref=master)
+# This workflow installs the latest version of Terraform CLI and configures the Terraform CLI configuration file
+# with an API token for Terraform Cloud (app.terraform.io). On pull request events, this workflow will run
+# `terraform init`, `terraform fmt`, and `terraform plan` (speculative plan via Terraform Cloud). On push events
+# to the "master" branch, `terraform apply` will be executed.
+#
+# Documentation for `hashicorp/setup-terraform` is located here: https://github.com/hashicorp/setup-terraform
+#
+# To use this workflow, you will need to complete the following setup steps.
+#
+# 1. Create a `main.tf` file in the root of this repository with the `remote` backend and one or more resources defined.
+# 2. Generate a Terraform Cloud user API token and store it as a GitHub secret (e.g. TF_API_TOKEN) on this repository.
+# 3. Reference the GitHub secret in the Setup Terraform step using the `hashicorp/setup-terraform` GitHub Action.
+name: 'Terraform'
 
-Git - fast, scalable, distributed revision control system
-=========================================================
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
 
-Git is a fast, scalable, distributed revision control system with an
-unusually rich command set that provides both high-level operations
-and full access to internals.
+permissions:
+  contents: read
 
-Git is an Open Source project covered by the GNU General Public
-License version 2 (some parts of it are under different licenses,
-compatible with the GPLv2). It was originally written by Linus
-Torvalds with help of a group of hackers around the net.
+jobs:
+  terraform:
+    name: 'Terraform'
+    runs-on: ubuntu-latest
+    environment: production
 
-Please read the file [INSTALL][] for installation instructions.
+    # Use the Bash shell regardless whether the GitHub Actions runner is ubuntu-latest, macos-latest, or windows-latest
+    defaults:
+      run:
+        shell: bash
 
-Many Git online resources are accessible from <https://git-scm.com/>
-including full documentation and Git related tools.
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
 
-See [Documentation/gittutorial.adoc][] to get started, then see
-[Documentation/giteveryday.adoc][] for a useful minimum set of commands, and
-`Documentation/git-<commandname>.adoc` for documentation of each command.
-If git has been correctly installed, then the tutorial can also be
-read with `man gittutorial` or `git help tutorial`, and the
-documentation of each command with `man git-<commandname>` or `git help
-<commandname>`.
+    # Skip running Terraform unless this repo actually contains Terraform files.
+    - name: Detect Terraform files
+      id: detect_tf
+      run: |
+        # Check for any tracked .tf files in the repository
+        if git ls-files '*.tf' | grep -q .; then
+          echo "found=true" >> $GITHUB_OUTPUT
+        else
+          echo "found=false" >> $GITHUB_OUTPUT
+        fi
 
-CVS users may also want to read [Documentation/gitcvs-migration.adoc][]
-(`man gitcvs-migration` or `git help cvs-migration` if git is
-installed).
+    # If Terraform files are present, ensure a TF API token is configured. This avoids terraform init failing when
+    # a remote backend (Terraform Cloud) requires authentication.
+    - name: Require TF API Token
+      if: steps.detect_tf.outputs.found == 'true'
+      id: token_check
+      run: |
+        if [ -z "${{ secrets.TF_API_TOKEN }}" ]; then
+          echo "has_token=false" >> $GITHUB_OUTPUT
+        else
+          echo "has_token=true" >> $GITHUB_OUTPUT
+        fi
 
-The user discussion and development of Git take place on the Git
-mailing list -- everyone is welcome to post bug reports, feature
-requests, comments and patches to git@vger.kernel.org (read
-[Documentation/SubmittingPatches][] for instructions on patch submission
-and [Documentation/CodingGuidelines][]).
+    # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
+    - name: Setup Terraform
+      if: steps.detect_tf.outputs.found == 'true' && steps.token_check.outputs.has_token == 'true'
+      uses: hashicorp/setup-terraform@v1
+      with:
+        cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
 
-Those wishing to help with error message, usage and informational message
-string translations (localization l10) should see [po/README.md][]
-(a `po` file is a Portable Object file that holds the translations).
+    - name: Terraform Init
+      if: steps.detect_tf.outputs.found == 'true' && steps.token_check.outputs.has_token == 'true'
+      run: terraform init
 
-To subscribe to the list, send an email to <git+subscribe@vger.kernel.org>
-(see https://subspace.kernel.org/subscribing.html for details). The mailing
-list archives are available at <https://lore.kernel.org/git/>,
-<https://marc.info/?l=git> and other archival sites.
+    - name: Terraform Format
+      if: steps.detect_tf.outputs.found == 'true' && steps.token_check.outputs.has_token == 'true'
+      run: terraform fmt -check
 
-Issues which are security relevant should be disclosed privately to
-the Git Security mailing list <git-security@googlegroups.com>.
+    - name: Terraform Plan
+      if: steps.detect_tf.outputs.found == 'true' && steps.token_check.outputs.has_token == 'true'
+      run: terraform plan -input=false
 
-The maintainer frequently sends the "What's cooking" reports that
-list the current status of various development topics to the mailing
-list.  The discussion following them give a good reference for
-project status, development direction and remaining tasks.
-
-The name "git" was given by Linus Torvalds when he wrote the very
-first version. He described the tool as "the stupid content tracker"
-and the name as (depending on your mood):
-
- - random three-letter combination that is pronounceable, and not
-   actually used by any common UNIX command.  The fact that it is a
-   mispronunciation of "get" may or may not be relevant.
- - stupid. contemptible and despicable. simple. Take your pick from the
-   dictionary of slang.
- - "global information tracker": you're in a good mood, and it actually
-   works for you. Angels sing, and a light suddenly fills the room.
- - "goddamn idiotic truckload of sh*t": when it breaks
-
-[INSTALL]: INSTALL
-[Documentation/gittutorial.adoc]: Documentation/gittutorial.adoc
-[Documentation/giteveryday.adoc]: Documentation/giteveryday.adoc
-[Documentation/gitcvs-migration.adoc]: Documentation/gitcvs-migration.adoc
-[Documentation/SubmittingPatches]: Documentation/SubmittingPatches
-[Documentation/CodingGuidelines]: Documentation/CodingGuidelines
-[po/README.md]: po/README.md
+    # On push to "master", build or change infrastructure according to Terraform configuration files
+    - name: Terraform Apply
+      if: steps.detect_tf.outputs.found == 'true' && steps.token_check.outputs.has_token == 'true' && github.ref == 'refs/heads/master' && github.event_name == 'push'
+      run: terraform apply -auto-approve -input=false
