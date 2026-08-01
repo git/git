@@ -693,8 +693,11 @@ int cmd_show(int argc,
 	opt.tweak = show_setup_revisions_tweak;
 	cmd_log_init(argc, argv, prefix, &rev, &opt, &cfg);
 
+	diff_hunks_attach(&rev.diffopt);
+
 	if (!rev.no_walk) {
 		ret = cmd_log_walk(&rev);
+		diff_hunks_detach(&rev.diffopt);
 		release_revisions(&rev);
 		log_config_release(&cfg);
 		return ret;
@@ -767,6 +770,7 @@ int cmd_show(int argc,
 	}
 
 	rev.diffopt.no_free = 0;
+	diff_hunks_detach(&rev.diffopt);
 	diff_free(&rev.diffopt);
 	release_revisions(&rev);
 	log_config_release(&cfg);
@@ -846,8 +850,11 @@ int cmd_log(int argc,
 	opt.tweak = log_setup_revisions_tweak;
 	cmd_log_init(argc, argv, prefix, &rev, &opt, &cfg);
 
+	diff_hunks_attach(&rev.diffopt);
+
 	ret = cmd_log_walk(&rev);
 
+	diff_hunks_detach(&rev.diffopt);
 	release_revisions(&rev);
 	log_config_release(&cfg);
 	return ret;

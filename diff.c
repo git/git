@@ -16,6 +16,7 @@
 #include "revision.h"
 #include "quote.h"
 #include "diff.h"
+#include "diff-hunks.h"
 #include "diffcore.h"
 #include "delta.h"
 #include "hex.h"
@@ -2929,6 +2930,72 @@ static struct diffstat_file *diffstat_add(struct diffstat_t *diffstat,
 	return x;
 }
 
+struct diffstat_hunk_cb_data {
+	struct precomputed_hunk **h;
+	size_t *nr, *alloc;
+};
+
+/*
+ * Hunk callback that appends each hunk's coordinates to a growable
+ * array, so one xdiff pass can both sum a diffstat and record hunks for
+ * the store.
+ */
+static int diffstat_hunk_cb(long start_a, long count_a,
+			    long start_b, long count_b,
+			    void *cb_data)
+{
+	struct diffstat_hunk_cb_data *d = cb_data;
+
+	ALLOC_GROW(*d->h, *d->nr + 1, *d->alloc);
+	(*d->h)[*d->nr].old_start = start_a;
+	(*d->h)[*d->nr].old_count = count_a;
+	(*d->h)[*d->nr].new_start = start_b;
+	(*d->h)[*d->nr].new_count = count_b;
+	(*d->nr)++;
+	return 0;
+}
+
+/*
+ * Collect the hunks of the two files at zero context. diff_fn chooses
+ * whether trimming runs: xdi_diff applies trim_common_tail, yielding the
+ * zero-context hunks blame reads; xdl_diff does not, yielding the
+ * untrimmed hunks. Both run at zero context, so the untrimmed hunks are
+ * not grouped the way a nonzero context would group them; diffstat only
+ * sums their counts, which grouping does not change. Sets *ph (caller
+ * frees) and *ph_nr.
+ */
+typedef int (*xdiff_fn)(mmfile_t *, mmfile_t *, xpparam_t const *,
+			xdemitconf_t const *, xdemitcb_t *);
+static int collect_hunks(xdiff_fn diff_fn, mmfile_t *mf1, mmfile_t *mf2,
+			       xpparam_t *xpp, struct precomputed_hunk **ph,
+			       size_t *ph_nr)
+{
+	size_t ph_alloc = 0;
+	xdemitcb_t ecb = { 0 };
+	xdemitconf_t xecfg = { 0 };
+	struct diffstat_hunk_cb_data cd = { ph, ph_nr, &ph_alloc };
+
+	*ph = NULL;
+	*ph_nr = 0;
+	xecfg.hunk_func = diffstat_hunk_cb;
+	ecb.priv = &cd;
+	return diff_fn(mf1, mf2, xpp, &xecfg, &ecb);
+}
+
+void diff_hunks_attach(struct diff_options *o)
+{
+	if (!(o->output_format &
+	      (DIFF_FORMAT_DIFFSTAT | DIFF_FORMAT_SHORTSTAT | DIFF_FORMAT_NUMSTAT)))
+		return;
+	o->hunks_writer = diff_hunks_writer_maybe_new(o->repo);
+}
+
+void diff_hunks_detach(struct diff_options *o)
+{
+	diff_hunks_writer_finish(o->hunks_writer);
+	o->hunks_writer = NULL;
+}
+
 static int diffstat_consume(void *priv, char *line, unsigned long len)
 {
 	struct diffstat_t *diffstat = priv;
@@ -4253,6 +4320,87 @@ static const char *get_compact_summary(const struct diff_filepair *p, int is_ren
 	return NULL;
 }
 
+/*
+ * Fill data->added/deleted for a modified pair by collecting its hunk
+ * coordinates, and record them into the store. Runs only on a warming
+ * run; returns 1 when it produced the counts, 0 when the caller must
+ * compute the diffstat itself.
+ *
+ * --ignore-blank-lines is excluded: that flag is part of the store
+ * key, but it coalesces hunks differently between the emit and
+ * hunk-callback paths, so a recorded entry would not match a
+ * store-less run's --stat output. (--inter-hunk-context is not
+ * excluded: it only groups hunks, and diffstat sums their counts,
+ * which grouping does not change.) Recording requires both sides to
+ * be valid regular files whose blobs the key can name.
+ */
+static int diffstat_from_hunks(struct diff_options *o,
+			       struct diff_filespec *one,
+			       struct diff_filespec *two,
+			       struct diffstat_file *data)
+{
+	struct precomputed_hunk *ph_trim, *ph_full, *counts;
+	size_t n_trim, n_full, n_counts, k;
+	mmfile_t mf1, mf2;
+	xpparam_t xpp = { .flags = o->xdl_opts,
+			  .ignore_regex = o->ignore_regex,
+			  .ignore_regex_nr = o->ignore_regex_nr,
+			  .anchors = o->anchors,
+			  .anchors_nr = o->anchors_nr };
+
+	if (o->xdl_opts & XDF_IGNORE_BLANK_LINES)
+		return 0;
+
+	/* Not a warming run: the caller computes the diffstat. */
+	if (!o->hunks_writer)
+		return 0;
+	/*
+	 * -I patterns, --anchored anchors, and break detection (-B)
+	 * shape the diff outside the store key, so what they compute
+	 * must not be recorded under it.
+	 */
+	if (o->ignore_regex_nr || o->anchors_nr || o->break_opt != -1)
+		return 0;
+	/* Recording needs blobs the key can name, on both sides. */
+	if (!one->oid_valid || !two->oid_valid ||
+	    S_ISGITLINK(one->mode) || S_ISGITLINK(two->mode) ||
+	    !DIFF_FILE_VALID(one) || !DIFF_FILE_VALID(two) ||
+	    !S_ISREG(one->mode) || !S_ISREG(two->mode))
+		return 0;
+
+	if (fill_mmfile(o->repo, &mf1, one) < 0 ||
+	    fill_mmfile(o->repo, &mf2, two) < 0)
+		die("unable to read files to diff");
+
+	/*
+	 * Compute the zero-context trimmed diff (what blame reads) and the
+	 * untrimmed diff (whose counts a nonzero-context stat matches).
+	 * xdi_diff runs first: it enforces the size limit, so the xdl_diff
+	 * call is already bounded.
+	 */
+	if (collect_hunks(xdi_diff, &mf1, &mf2, &xpp, &ph_trim, &n_trim) ||
+	    collect_hunks(xdl_diff, &mf1, &mf2, &xpp, &ph_full, &n_full))
+		die("unable to generate diffstat for %s", one->path);
+
+	/*
+	 * Match a store-less run: at zero context xdi_diff trims, so sum the
+	 * trimmed diff; otherwise sum the untrimmed one.
+	 */
+	counts = o->context ? ph_full : ph_trim;
+	n_counts = o->context ? n_full : n_trim;
+	for (k = 0; k < n_counts; k++) {
+		data->added += counts[k].new_count;
+		data->deleted += counts[k].old_count;
+	}
+
+	diff_hunks_writer_record_stable(o->hunks_writer, &one->oid, &two->oid,
+					o->xdl_opts, ph_trim, n_trim,
+					ph_full, n_full);
+	free(ph_trim);
+	free(ph_full);
+	return 1;
+}
+
 static void builtin_diffstat(const char *name_a, const char *name_b,
 			     struct diff_filespec *one,
 			     struct diff_filespec *two,
@@ -4304,38 +4452,50 @@ static void builtin_diffstat(const char *name_a, const char *name_b,
 	}
 
 	else if (may_differ) {
-		/* Crazy xdl interfaces.. */
-		xpparam_t xpp;
-		xdemitconf_t xecfg;
+		/*
+		 * Record into the diff-hunks store on a warming run. A
+		 * "log -L" range-scoped stat is not the whole-pair diff
+		 * the store keys, so it does not record. Otherwise diff
+		 * normally.
+		 */
+		if (p->line_ranges || !diffstat_from_hunks(o, one, two, data)) {
+			/* Crazy xdl interfaces.. */
+			xpparam_t xpp;
+			xdemitconf_t xecfg;
 
-		if (fill_mmfile(o->repo, &mf1, one) < 0 ||
-		    fill_mmfile(o->repo, &mf2, two) < 0)
-			die("unable to read files to diff");
+			if (fill_mmfile(o->repo, &mf1, one) < 0 ||
+			    fill_mmfile(o->repo, &mf2, two) < 0)
+				die("unable to read files to diff");
 
-		memset(&xpp, 0, sizeof(xpp));
-		memset(&xecfg, 0, sizeof(xecfg));
-		xpp.flags = o->xdl_opts;
-		xpp.ignore_regex = o->ignore_regex;
-		xpp.ignore_regex_nr = o->ignore_regex_nr;
-		xpp.anchors = o->anchors;
-		xpp.anchors_nr = o->anchors_nr;
-		xecfg.ctxlen = o->context;
-		xecfg.interhunkctxlen = o->interhunkcontext;
-		xecfg.flags = XDL_EMIT_NO_HUNK_HDR;
+			memset(&xpp, 0, sizeof(xpp));
+			memset(&xecfg, 0, sizeof(xecfg));
+			xpp.flags = o->xdl_opts;
+			xpp.ignore_regex = o->ignore_regex;
+			xpp.ignore_regex_nr = o->ignore_regex_nr;
+			xpp.anchors = o->anchors;
+			xpp.anchors_nr = o->anchors_nr;
+			xecfg.ctxlen = o->context;
+			xecfg.interhunkctxlen = o->interhunkcontext;
+			xecfg.flags = XDL_EMIT_NO_HUNK_HDR;
 
-		if (p->line_ranges) {
-			struct line_range_filter lr_filter;
+			if (p->line_ranges) {
+				struct line_range_filter lr_filter;
 
-			line_range_filter_init(&lr_filter, p->line_ranges,
-					       diffstat_consume, diffstat);
+				line_range_filter_init(&lr_filter,
+						       p->line_ranges,
+						       diffstat_consume,
+						       diffstat);
 
-			if (line_range_filter_diff(&lr_filter, &mf1, &mf2,
-						   &xpp, &xecfg))
+				if (line_range_filter_diff(&lr_filter, &mf1,
+							   &mf2, &xpp, &xecfg))
+					die("unable to generate diffstat for %s",
+					    one->path);
+			} else if (xdi_diff_outf(&mf1, &mf2, NULL,
+						 diffstat_consume, diffstat,
+						 &xpp, &xecfg))
 				die("unable to generate diffstat for %s",
 				    one->path);
-		} else if (xdi_diff_outf(&mf1, &mf2, NULL,
-				  diffstat_consume, diffstat, &xpp, &xecfg))
-			die("unable to generate diffstat for %s", one->path);
+		}
 
 		if (DIFF_FILE_VALID(one) && DIFF_FILE_VALID(two)) {
 			struct diffstat_file *file =

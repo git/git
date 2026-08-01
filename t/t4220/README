@@ -1,0 +1,55 @@
+t4220 diff-hunks test fixtures
+==============================
+
+trim-divergent-old, trim-divergent-new
+--------------------------------------
+
+Two revisions of a single real file, used by t4220-diff-hunks.sh to
+exercise a "trim-divergent" blob pair: one whose diff hunk counts change
+with the amount of context, so the trimmed and untrimmed results
+disagree.
+
+They are two versions of git's own t/t6002-rev-list-bisect.sh, taken from
+git.git history around:
+
+  090af9957c ("t6002: fix use of `expr` with `set -e`",
+  Patrick Steinhardt, 2026-04-21)
+
+which rewrites `$(expr ...)` arithmetic as `$((...))` and reformats a few
+test_expect_success blocks.
+
+  trim-divergent-old = 090af9957c^:t/t6002-rev-list-bisect.sh  (blob daa009c9a1)
+  trim-divergent-new = 090af9957c :t/t6002-rev-list-bisect.sh  (blob f2de40b5ed)
+
+To regenerate them from any git.git checkout:
+
+  git show 090af9957c^:t/t6002-rev-list-bisect.sh >trim-divergent-old
+  git show 090af9957c:t/t6002-rev-list-bisect.sh  >trim-divergent-new
+
+Why this pair
+-------------
+
+The diff-hunks store records only "trim-stable" pairs: those whose hunks
+are identical whether or not xdiff trims the common head and tail (which
+it does at zero context, in trim_common_tail).  This pair is deliberately
+NOT trim-stable:
+
+  diff -U0 reports  9 added / 6 deleted
+  diff -U3 reports 10 added / 7 deleted
+
+Because the counts diverge with context, the writer must refuse to record
+this pair and every command must recompute it from the blobs.  t4220 uses
+it to prove that the displayed counts stay correct at each context, and
+that a divergent pair is never served from the store.  See
+t4220-diff-hunks.sh ("a trim-divergent file is correct at each context"
+and the store-poison test).
+
+Why not a synthesized fixture
+-----------------------------
+
+The divergence needs real content that makes xdiff's common-tail trimming
+shift a hunk boundary while the added/deleted balance stays equal.  A
+minimal hand-written file that reliably triggers the -U0 vs -U3 count
+disagreement has not been found yet; until one is, this real pair is kept
+verbatim.  If you synthesize a smaller equivalent, replace these two files
+and delete this note.
