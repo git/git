@@ -23,6 +23,7 @@
 #include "commit-slab.h"
 #include "bloom.h"
 #include "commit-graph.h"
+#include "diff-provider.h"
 
 define_commit_slab(blame_suspects, struct blame_origin *);
 static struct blame_suspects blame_suspects;
@@ -1936,6 +1937,28 @@ static int blame_chunk_cb(long start_a, long count_a,
 	return 0;
 }
 
+struct blame_diff_fill_data {
+	struct blame_scoreboard *sb;
+	struct blame_origin *parent, *target;
+	int ignore_diffs;
+};
+
+/*
+ * Content load for diff_provider_emit_hunks(): runs when the diff is
+ * computed.
+ */
+static int blame_diff_fill(void *data, mmfile_t *old_file, mmfile_t *new_file)
+{
+	struct blame_diff_fill_data *f = data;
+
+	fill_origin_blob(&f->sb->revs->diffopt, f->parent, old_file,
+			 &f->sb->num_read_blob, f->ignore_diffs);
+	fill_origin_blob(&f->sb->revs->diffopt, f->target, new_file,
+			 &f->sb->num_read_blob, f->ignore_diffs);
+	f->sb->num_get_patch++;
+	return 0;
+}
+
 /*
  * We are looking at the origin 'target' and aiming to pass blame
  * for the lines it is suspected to its parent.  Run diff to find
@@ -1945,9 +1968,11 @@ static void pass_blame_to_parent(struct blame_scoreboard *sb,
 				 struct blame_origin *target,
 				 struct blame_origin *parent, int ignore_diffs)
 {
-	mmfile_t file_p, file_o;
 	struct blame_chunk_cb_data d;
 	struct blame_entry *newdest = NULL;
+	struct blame_diff_fill_data fill_data = { sb, parent, target, ignore_diffs };
+	xpparam_t xpp = { .flags = sb->xdl_opts };
+	struct diff_provider_request req = { .repo = sb->repo, .xpp = &xpp };
 
 	if (!target->suspects)
 		return; /* nothing remains for this target */
@@ -1958,13 +1983,8 @@ static void pass_blame_to_parent(struct blame_scoreboard *sb,
 	d.ignore_diffs = ignore_diffs;
 	d.dstq = &newdest; d.srcq = &target->suspects;
 
-	fill_origin_blob(&sb->revs->diffopt, parent, &file_p,
-			 &sb->num_read_blob, ignore_diffs);
-	fill_origin_blob(&sb->revs->diffopt, target, &file_o,
-			 &sb->num_read_blob, ignore_diffs);
-	sb->num_get_patch++;
-
-	if (diff_hunks(&file_p, &file_o, blame_chunk_cb, &d, sb->xdl_opts))
+	if (diff_provider_emit_hunks(&req, blame_diff_fill, &fill_data,
+				     blame_chunk_cb, &d) == DIFF_PROVIDER_ERROR)
 		die("unable to generate diff (%s -> %s)",
 		    oid_to_hex(&parent->commit->object.oid),
 		    oid_to_hex(&target->commit->object.oid));
