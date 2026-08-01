@@ -10,6 +10,7 @@
 #include "thread-utils.h"
 
 struct cached_object_entry;
+struct diff_hunks_store;
 struct list_objects_filter_options;
 struct odb_source_inmemory;
 struct packed_git;
@@ -72,6 +73,9 @@ struct object_database {
 
 	struct commit_graph *commit_graph;
 	unsigned commit_graph_attempted : 1; /* if loading has been attempted */
+
+	struct diff_hunks_store *diff_hunks_store;
+	unsigned diff_hunks_store_attempted : 1; /* if loading has been attempted */
 
 	/*
 	 * This is meant to hold a *small* number of objects that you would

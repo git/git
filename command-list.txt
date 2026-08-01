@@ -95,6 +95,7 @@ git-describe                            mainporcelain
 git-diagnose                            ancillaryinterrogators
 git-diff                                mainporcelain           info
 git-diff-files                          plumbinginterrogators
+git-diff-hunks                          plumbingmanipulators
 git-diff-index                          plumbinginterrogators
 git-diff-pairs                          plumbinginterrogators
 git-diff-tree                           plumbinginterrogators
@@ -223,6 +224,7 @@ gitfaq                                  guide
 gitformat-bundle                        developerinterfaces
 gitformat-chunk                         developerinterfaces
 gitformat-commit-graph                  developerinterfaces
+gitformat-diff-hunks                    developerinterfaces
 gitformat-index                         developerinterfaces
 gitformat-pack                          developerinterfaces
 gitformat-signature                     developerinterfaces
