@@ -7,6 +7,8 @@
 #include "string-list.h"
 #include "connect.h"
 
+struct fetch_object_info_results;
+
 struct git_transport_options {
 	unsigned thin : 1;
 	unsigned keep : 1;
@@ -57,8 +59,7 @@ struct git_transport_options {
 	struct oidset *acked_commits;
 
 	struct oid_array *object_info_oids;
-	struct object_info *object_info_data;
-	struct string_list *object_info_options;
+	struct fetch_object_info_results *object_info_results;
 };
 
 enum transport_family {
