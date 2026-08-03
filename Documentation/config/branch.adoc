@@ -55,6 +55,7 @@ This option defaults to `never`.
 	repository), you would want to set `remote.pushDefault` to
 	specify the remote to push to for all branches, and use this
 	option to override it for a specific branch.
+	The value may be the name of a configured remote or a repository URL.
 
 `branch.<name>.merge`::
 	Defines, together with `branch.<name>.remote`, the upstream branch

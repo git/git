@@ -127,6 +127,9 @@ some output processing may assume ref names in UTF-8.
   `git push` were run while `branchname` was checked out (or the current
   `HEAD` if no branchname is specified). Like for '@\{upstream\}', we report
   the remote-tracking branch that corresponds to that branch at the remote.
+  If the push destination is a URL and exactly one configured remote uses
+  that URL for pushing, '@\{push}' reports that remote's remote-tracking
+  branch.
 +
 Here's an example to make it more clear:
 +
