@@ -11832,55 +11832,46 @@ proc prefspage_colors {notebook} {
 
     ttk::label $page.cdisp -text [mc "Colors: press to choose"] -font mainfontbold
     grid $page.cdisp - -sticky w -pady 10
-    label $page.bg -padx 40 -relief sunk
-    ttk::button $page.bgbut -text [mc "Background"] \
-        -command [list choosecolor bgcolor {} $page [mc "background"]]
-    grid x $page.bgbut $page.bg -sticky w
 
-    label $page.fg -padx 40 -relief sunk
-    ttk::button $page.fgbut -text [mc "Foreground"] \
-        -command [list choosecolor fgcolor {} $page [mc "foreground"]]
-    grid x $page.fgbut $page.fg -sticky w
+    set coloruielems [list \
+        bg          bgcolor {} \
+                    [mc "Background"] \
+                    [mc "background"] \
+        fg          fgcolor {} \
+                    [mc "Foreground"] \
+                    [mc "foreground"] \
+        diffold     diffcolors 0 \
+                    [mc "Diff: old lines"] \
+                    [mc "diff old lines"] \
+        diffoldbg   diffbgcolors 0 \
+                    [mc "Diff: old lines bg"] \
+                    [mc "diff old lines bg"] \
+        diffnew     diffcolors 1 \
+                    [mc "Diff: new lines"] \
+                    [mc "diff new lines"] \
+        diffnewbg   diffbgcolors 1 \
+                    [mc "Diff: new lines bg"] \
+                    [mc "diff new lines bg"] \
+        hunksep     diffcolors 2 \
+                    [mc "Diff: hunk header"] \
+                    [mc "diff hunk header"] \
+        markbg      markbgcolor {} \
+                    [mc "Marked line bg"] \
+                    [mc "marked line background"] \
+        selbg       selectbgcolor {} \
+                    [mc "Select bg"] \
+                    [mc "background"] \
+        linkfg      linkfgcolor {} \
+                    [mc "Link"] \
+                    [mc "link"] \
+    ]
 
-    label $page.diffold -padx 40 -relief sunk
-    ttk::button $page.diffoldbut -text [mc "Diff: old lines"] \
-        -command [list choosecolor diffcolors 0 $page [mc "diff old lines"]]
-    grid x $page.diffoldbut $page.diffold -sticky w
-
-    label $page.diffoldbg -padx 40 -relief sunk
-    ttk::button $page.diffoldbgbut -text [mc "Diff: old lines bg"] \
-        -command [list choosecolor diffbgcolors 0 $page [mc "diff old lines bg"]]
-    grid x $page.diffoldbgbut $page.diffoldbg -sticky w
-
-    label $page.diffnew -padx 40 -relief sunk
-    ttk::button $page.diffnewbut -text [mc "Diff: new lines"] \
-        -command [list choosecolor diffcolors 1 $page [mc "diff new lines"]]
-    grid x $page.diffnewbut $page.diffnew -sticky w
-
-    label $page.diffnewbg -padx 40 -relief sunk
-    ttk::button $page.diffnewbgbut -text [mc "Diff: new lines bg"] \
-        -command [list choosecolor diffbgcolors 1 $page [mc "diff new lines bg"]]
-    grid x $page.diffnewbgbut $page.diffnewbg -sticky w
-
-    label $page.hunksep -padx 40 -relief sunk
-    ttk::button $page.hunksepbut -text [mc "Diff: hunk header"] \
-        -command [list choosecolor diffcolors 2 $page [mc "diff hunk header"]]
-    grid x $page.hunksepbut $page.hunksep -sticky w
-
-    label $page.markbgsep -padx 40 -relief sunk
-    ttk::button $page.markbgbut -text [mc "Marked line bg"] \
-        -command [list choosecolor markbgcolor {} $page [mc "marked line background"]]
-    grid x $page.markbgbut $page.markbgsep -sticky w
-
-    label $page.selbgsep -padx 40 -relief sunk
-    ttk::button $page.selbgbut -text [mc "Select bg"] \
-        -command [list choosecolor selectbgcolor {} $page [mc "background"]]
-    grid x $page.selbgbut $page.selbgsep -sticky w
-
-    label $page.linkfg -padx 40 -relief sunk
-    ttk::button $page.linkfgbut -text [mc "Link"] \
-        -command [list choosecolor linkfgcolor {} $page [mc "link"]]
-    grid x $page.linkfgbut $page.linkfg -sticky w
+    foreach {uielem colorvar idx label title} $coloruielems {
+        label $page.$uielem -padx 40 -relief sunk
+        ttk::button $page.${uielem}btn -text $label \
+            -command [list choosecolor $colorvar $idx $page $title]
+        grid x $page.${uielem}btn $page.$uielem -sticky w
+    }
 
     grid columnconfigure $page 2 -weight 1
     prefspage_set_colorswatches $page
@@ -11892,16 +11883,21 @@ proc prefspage_set_colorswatches {page} {
     global bgcolor fgcolor diffcolors selectbgcolor markbgcolor
     global diffbgcolors linkfgcolor
 
-    $page.bg configure -background $bgcolor
-    $page.fg configure -background $fgcolor
-    $page.diffold configure -background [lindex $diffcolors 0]
-    $page.diffoldbg configure -background [lindex $diffbgcolors 0]
-    $page.diffnew configure -background [lindex $diffcolors 1]
-    $page.diffnewbg configure -background [lindex $diffbgcolors 1]
-    $page.hunksep configure -background [lindex $diffcolors 2]
-    $page.markbgsep configure -background $markbgcolor
-    $page.selbgsep configure -background $selectbgcolor
-    $page.linkfg configure -background $linkfgcolor
+    set coloruielems [list \
+        bg        $bgcolor \
+        fg        $fgcolor \
+        diffold   [lindex $diffcolors 0] \
+        diffoldbg [lindex $diffbgcolors 0] \
+        diffnew   [lindex $diffcolors 1] \
+        diffnewbg [lindex $diffbgcolors 1] \
+        hunksep   [lindex $diffcolors 2] \
+        markbg    $markbgcolor \
+        selbg     $selectbgcolor \
+        linkfg    $linkfgcolor \
+    ]
+    foreach {uielem color} $coloruielems {
+        $page.$uielem configure -background $color
+    }
 }
 
 proc prefspage_fonts {notebook} {
