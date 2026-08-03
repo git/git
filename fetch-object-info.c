@@ -106,11 +106,12 @@ int fetch_object_info(const enum protocol_version version, struct object_info_ar
 		}
 	}
 
-	for (size_t i = 0;
-	     packet_reader_read(reader) == PACKET_READ_NORMAL &&
-	     i < args->oids->nr;
-	     i++) {
+	for (size_t i = 0; i < args->oids->nr; i++) {
 		struct string_list object_info_values = STRING_LIST_INIT_DUP;
+
+		if (packet_reader_read(reader) != PACKET_READ_NORMAL)
+			die(_("object-info: expected %" PRIuMAX " objects, got %" PRIuMAX),
+			    (uintmax_t)args->oids->nr, (uintmax_t)i);
 
 		string_list_split(&object_info_values, reader->line, " ", -1);
 
@@ -150,6 +151,11 @@ int fetch_object_info(const enum protocol_version version, struct object_info_ar
 
 		string_list_clear(&object_info_values, 0);
 	}
+
+	if (packet_reader_read(reader) != PACKET_READ_FLUSH)
+		die(_("object-info: expected flush after %"PRIuMAX" objects"),
+		    (uintmax_t)args->oids->nr);
+
 	check_stateless_delimiter(stateless_rpc, reader, "stateless delimiter expected");
 
 	return 0;
