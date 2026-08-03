@@ -11838,31 +11838,31 @@ proc prefspage_colors {notebook} {
                     [mc "Background"] \
                     [mc "background"] \
         fg          fgcolor {} \
-                    [mc "Foreground"] \
+                    [mc "Main text"] \
                     [mc "foreground"] \
         diffold     diffcolors 0 \
-                    [mc "Diff: old lines"] \
+                    [mc "Old line text"] \
                     [mc "diff old lines"] \
         diffoldbg   diffbgcolors 0 \
-                    [mc "Diff: old lines bg"] \
+                    [mc "Old line background"] \
                     [mc "diff old lines bg"] \
         diffnew     diffcolors 1 \
-                    [mc "Diff: new lines"] \
+                    [mc "New line text"] \
                     [mc "diff new lines"] \
         diffnewbg   diffbgcolors 1 \
-                    [mc "Diff: new lines bg"] \
+                    [mc "New line background"] \
                     [mc "diff new lines bg"] \
         hunksep     diffcolors 2 \
-                    [mc "Diff: hunk header"] \
+                    [mc "Hunk header text"] \
                     [mc "diff hunk header"] \
         markbg      markbgcolor {} \
-                    [mc "Marked line bg"] \
+                    [mc "Marked line background"] \
                     [mc "marked line background"] \
         selbg       selectbgcolor {} \
-                    [mc "Select bg"] \
+                    [mc "Selected text background"] \
                     [mc "background"] \
         linkfg      linkfgcolor {} \
-                    [mc "Link"] \
+                    [mc "Link text"] \
                     [mc "link"] \
     ]
 
