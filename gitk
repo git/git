@@ -11836,34 +11836,34 @@ proc prefspage_colors {notebook} {
     set coloruielems [list \
         bg          bgcolor {} \
                     [mc "Background"] \
-                    [mc "background"] \
+                    [mc "choose background color"] \
         fg          fgcolor {} \
                     [mc "Main text"] \
-                    [mc "foreground"] \
+                    [mc "choose main text color"] \
         diffold     diffcolors 0 \
                     [mc "Old line text"] \
-                    [mc "diff old lines"] \
+                    [mc "choose text color of old lines"] \
         diffoldbg   diffbgcolors 0 \
                     [mc "Old line background"] \
-                    [mc "diff old lines bg"] \
+                    [mc "choose background color of old lines"] \
         diffnew     diffcolors 1 \
                     [mc "New line text"] \
-                    [mc "diff new lines"] \
+                    [mc "choose text color of new lines"] \
         diffnewbg   diffbgcolors 1 \
                     [mc "New line background"] \
-                    [mc "diff new lines bg"] \
+                    [mc "choose background color of new lines"] \
         hunksep     diffcolors 2 \
                     [mc "Hunk header text"] \
-                    [mc "diff hunk header"] \
+                    [mc "choose text color of hunk headers"] \
         markbg      markbgcolor {} \
                     [mc "Marked line background"] \
-                    [mc "marked line background"] \
+                    [mc "choose background color of marked lines"] \
         selbg       selectbgcolor {} \
                     [mc "Selected text background"] \
-                    [mc "background"] \
+                    [mc "choose background color of selected text"] \
         linkfg      linkfgcolor {} \
                     [mc "Link text"] \
-                    [mc "link"] \
+                    [mc "choose color of link text"] \
     ]
 
     foreach {uielem colorvar idx label title} $coloruielems {
@@ -12014,11 +12014,11 @@ proc choose_themeloader {prefspage} {
     }
 }
 
-proc choosecolor {v vi prefspage x} {
+proc choosecolor {v vi prefspage title} {
     global $v
 
     set c [tk_chooseColor -initialcolor [lindex [set $v] $vi] \
-               -title [mc "Gitk: choose color for %s" $x]]
+               -title "Gitk: $title"]
     if {$c eq {}} return
     lset $v $vi $c
     set_gui_colors
