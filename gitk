@@ -11867,10 +11867,10 @@ proc prefspage_colors {notebook} {
     ]
 
     foreach {uielem colorvar idx label title} $coloruielems {
-        label $page.$uielem -padx 40 -relief sunk
-        ttk::button $page.${uielem}btn -text $label \
+        ttk::label $page.$uielem -text $label
+        button $page.${uielem}btn -padx 40 -pady 0 -borderwidth 2 \
             -command [list choosecolor $colorvar $idx $page $title]
-        grid x $page.${uielem}btn $page.$uielem -sticky w
+        grid x $page.$uielem $page.${uielem}btn -sticky w -pady 1
     }
 
     grid columnconfigure $page 2 -weight 1
@@ -11896,7 +11896,7 @@ proc prefspage_set_colorswatches {page} {
         linkfg    $linkfgcolor \
     ]
     foreach {uielem color} $coloruielems {
-        $page.$uielem configure -background $color
+        $page.${uielem}btn configure -background $color -activebackground $color
     }
 }
 
