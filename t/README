@@ -945,6 +945,17 @@ see test-lib-functions.sh for the full list and their options.
    Merges the given rev using the given message.  Like test_commit,
    creates a tag and calls test_tick before committing.
 
+ - commit_body <rev>
+
+   Print the message body of <rev>, i.e. the contents of its commit
+   object with the header removed.  Use this instead of piping
+   "git cat-file commit" into "sed", which would hide a failure of
+   the git command.
+
+   Example:
+
+	commit_body HEAD >actual
+
  - test_set_prereq <prereq>
 
    Set a test prerequisite to be used later with test_have_prereq. The
