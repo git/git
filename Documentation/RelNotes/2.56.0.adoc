@@ -445,3 +445,24 @@ Fixes since v2.55
    'gitweb' has been corrected to work even when the index line carries
    a trailing file mode.
    (merge fda513d6fe tl/gitweb-shorten-hashes-with-modes later to maint).
+
+ * When the push remote is specified as a URL, the fetch refspec of a
+   uniquely matching configured remote is now used to find and update
+   the remote-tracking branch (e.g., '@{push}').
+
+ * Traversals with '--exclude-first-parent-only' have been corrected
+   to properly stop after the first parent even when it has already
+   been marked as 'SEEN'.
+   (merge 47382f7398 jc/exclude-first-parent-seen later to maint).
+
+ * A segfault when 'git clone --revision' talks to a server that does not
+   support protocol v2 (falling back to protocol v0) has been corrected.
+   (merge 1034ad383f af/clone-revision-v0-segfault-fix later to maint).
+
+ * rewrites_release() in 'remote.c' has been updated to free 'struct
+   rewrite' instances, their '.instead_of' arrays, and their contents.
+   (merge dcef3bf041 jc/remote-insteadof-leakfix later to maint).
+
+ * The remote-matching logic for submodules has been corrected to resolve
+   'url.*.insteadOf' aliases before comparing the inventoried URL from
+   '.gitmodules' with the URLs of configured remotes.
