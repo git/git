@@ -280,6 +280,10 @@ char *git_shell_path(void)
 	return xstrdup(SHELL_PATH);
 #else
 	char *p = locate_in_PATH("sh");
+	if (!p) {
+		errno = ENOENT;
+		return NULL;
+	}
 	convert_slashes(p);
 	return p;
 #endif
@@ -291,7 +295,11 @@ static const char **prepare_shell_cmd(struct strvec *out, const char **argv)
 		BUG("shell command is empty");
 
 	if (strcspn(argv[0], "|&;<>()$`\\\"' \t\n*?[#~=%") != strlen(argv[0])) {
-		strvec_push_nodup(out, git_shell_path());
+		char *shell = git_shell_path();
+
+		if (!shell)
+			return NULL;
+		strvec_push_nodup(out, shell);
 		strvec_push(out, "-c");
 
 		/*
@@ -939,8 +947,18 @@ end_of_spawn:
 
 	if (cmd->git_cmd)
 		cmd->args.v = prepare_git_cmd(&nargv, sargv);
-	else if (cmd->use_shell)
-		cmd->args.v = prepare_shell_cmd(&nargv, sargv);
+	else if (cmd->use_shell) {
+		const char **shell_argv = prepare_shell_cmd(&nargv, sargv);
+
+		if (!shell_argv) {
+			cmd->pid = -1;
+			failed_errno = errno;
+			if (!cmd->silent_exec_failure)
+				error(_("cannot find 'sh' in PATH"));
+			goto cleanup_mingw;
+		}
+		cmd->args.v = shell_argv;
+	}
 
 	trace_argv_printf(cmd->args.v, "trace: start_command:");
 	cmd->pid = mingw_spawnvpe(cmd->args.v[0], cmd->args.v,
@@ -952,6 +970,7 @@ end_of_spawn:
 	if (cmd->clean_on_exit && cmd->pid >= 0)
 		mark_child_for_cleanup(cmd->pid, cmd);
 
+cleanup_mingw:
 	strvec_clear(&nargv);
 	cmd->args.v = sargv;
 	if (fhin != 0)
