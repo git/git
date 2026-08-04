@@ -34,6 +34,8 @@
 	N_("git history reword <commit> [--dry-run] [--update-refs=(branches|head)]")
 #define GIT_HISTORY_SPLIT_USAGE \
 	N_("git history split <commit> [--dry-run] [--update-refs=(branches|head)] [--] [<pathspec>...]")
+#define GIT_HISTORY_SQUASH_USAGE \
+	N_("git history squash [--dry-run] [--update-refs=(branches|head)] [--[no-]edit] <revision-range>")
 
 static void change_data_free(void *util, const char *str UNUSED)
 {
@@ -1004,6 +1006,96 @@ out:
 	return ret;
 }
 
+static int setup_squash_revisions(struct repository *repo,
+				  int argc, const char **argv,
+				  struct rev_info *revs)
+{
+	repo_init_revisions(repo, revs, NULL);
+	revs->reverse = 1;
+	revs->topo_order = 1;
+	revs->sort_order = REV_SORT_IN_GRAPH_ORDER;
+	revs->simplify_history = 0;
+	revs->ancestry_path = 1;
+	revs->limited = 1;
+	revs->ancestry_path_implicit_bottoms = 1;
+
+	argc = setup_revisions(argc, argv, revs, NULL);
+	if (argc > 1)
+		return error(_("unrecognized argument: %s"), argv[1]);
+
+	if (revs->reverse != 1 || revs->topo_order != 1 ||
+	    revs->sort_order != REV_SORT_IN_GRAPH_ORDER ||
+	    revs->simplify_history != 0 || revs->boundary == 1 ||
+	    revs->ancestry_path != 1 || revs->limited != 1 ||
+	    revs->ancestry_path_implicit_bottoms != 1) {
+		warning(_("ignoring rev-list options that would change how the "
+			  "range is walked"));
+		revs->reverse = 1;
+		revs->topo_order = 1;
+		revs->sort_order = REV_SORT_IN_GRAPH_ORDER;
+		revs->simplify_history = 0;
+		revs->boundary = 0;
+		revs->ancestry_path = 1;
+		revs->limited = 1;
+		revs->ancestry_path_implicit_bottoms = 1;
+	}
+
+	/*
+	 * A squash needs a base to reparent onto, so the range has to exclude
+	 * something, as in "<base>..<tip>". A revision range with no such
+	 * bottom commit cannot be squashed.
+	 */
+	for (size_t i = 0; i < revs->cmdline.nr; i++)
+		if (revs->cmdline.rev[i].flags & BOTTOM)
+			return 0;
+
+	return error(_("not a '<base>..<tip>' revision range"));
+}
+
+static int cmd_history_squash(int argc,
+			      const char **argv,
+			      const char *prefix,
+			      struct repository *repo)
+{
+	const char * const usage[] = {
+		GIT_HISTORY_SQUASH_USAGE,
+		NULL,
+	};
+	enum ref_action action = REF_ACTION_DEFAULT;
+	int dry_run = 0;
+	int edit = 1;
+	struct option options[] = {
+		OPT_CALLBACK_F(0, "update-refs", &action, "(branches|head)",
+			       N_("control which refs should be updated"),
+			       PARSE_OPT_NONEG, parse_ref_action),
+		OPT_BOOL('n', "dry-run", &dry_run,
+			 N_("perform a dry-run without updating any refs")),
+		OPT_BOOL('e', "edit", &edit,
+			 N_("edit the commit message")),
+		OPT_END(),
+	};
+	struct rev_info revs = { 0 };
+	int ret;
+
+	argc = parse_options(argc, argv, prefix, options, usage,
+			     PARSE_OPT_KEEP_UNKNOWN_OPT | PARSE_OPT_KEEP_ARGV0);
+	if (argc < 2) {
+		ret = error(_("command expects a revision range"));
+		goto out;
+	}
+	repo_config(repo, git_default_config, NULL);
+
+	ret = setup_squash_revisions(repo, argc, argv, &revs);
+	if (ret < 0)
+		goto out;
+
+	ret = error(_("squashing commits is not implemented yet"));
+
+out:
+	release_revisions(&revs);
+	return ret;
+}
+
 static int update_worktree(struct repository *repo,
 			   const struct commit *old_head,
 			   const struct commit *new_head,
@@ -1192,6 +1284,7 @@ int cmd_history(int argc,
 		GIT_HISTORY_FIXUP_USAGE,
 		GIT_HISTORY_REWORD_USAGE,
 		GIT_HISTORY_SPLIT_USAGE,
+		GIT_HISTORY_SQUASH_USAGE,
 		NULL,
 	};
 	parse_opt_subcommand_fn *fn = NULL;
@@ -1200,6 +1293,7 @@ int cmd_history(int argc,
 		OPT_SUBCOMMAND("fixup", &fn, cmd_history_fixup),
 		OPT_SUBCOMMAND("reword", &fn, cmd_history_reword),
 		OPT_SUBCOMMAND("split", &fn, cmd_history_split),
+		OPT_SUBCOMMAND("squash", &fn, cmd_history_squash),
 		OPT_END(),
 	};
 
