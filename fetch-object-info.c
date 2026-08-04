@@ -47,13 +47,13 @@ static int parse_object_size(const char *s, size_t *res)
 	return 0;
 }
 
-int fetch_object_info(const enum protocol_version version,
-		      const struct string_list *server_options,
-		      struct oid_array *oids,
-		      struct packet_reader *reader,
-		      struct fetch_object_info_results *results,
-		      const int stateless_rpc,
-		      const int fd_out)
+void fetch_object_info(const enum protocol_version version,
+		       const struct string_list *server_options,
+		       struct oid_array *oids,
+		       struct packet_reader *reader,
+		       struct fetch_object_info_results *results,
+		       const int stateless_rpc,
+		       const int fd_out)
 {
 	unsigned ask_size = 0;
 	int size_index = -1;
@@ -89,7 +89,8 @@ int fetch_object_info(const enum protocol_version version,
 		if (packet_reader_read(reader) != PACKET_READ_NORMAL) {
 			check_stateless_delimiter(stateless_rpc, reader,
 						  "stateless delimiter expected");
-			return -1;
+			die(_("object-info: expected %" PRIuMAX " attributes, got %" PRIuMAX),
+			    (uintmax_t)wanted, (uintmax_t)i);
 		}
 
 		if (!strcmp(reader->line, "size")) {
@@ -156,8 +157,6 @@ int fetch_object_info(const enum protocol_version version,
 		    (uintmax_t)oids->nr);
 
 	check_stateless_delimiter(stateless_rpc, reader, "stateless delimiter expected");
-
-	return 0;
 }
 
 void free_fetch_object_info_results(struct fetch_object_info_results *results)
