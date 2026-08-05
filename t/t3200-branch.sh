@@ -1950,6 +1950,20 @@ test_expect_success '--delete-merged deletes only selected merged branches' '
 		git checkout -b tracks-other --track other/main &&
 		sha=$(git rev-parse --short merged) &&
 
+		git branch --dry-run --delete-merged origin/next merged \
+			>actual 2>&1 &&
+		echo "Would delete branch merged (was $sha)." >expect &&
+		test_cmp expect actual &&
+		git rev-parse --verify refs/heads/merged &&
+
+		check_branches <<-\EOF &&
+		also-merged
+		main
+		merged
+		tracks-other
+		unmerged
+		EOF
+
 		git branch --delete-merged origin/next merged >actual 2>&1 &&
 		echo "Deleted branch merged (was $sha)." >expect &&
 		test_cmp expect actual &&
@@ -2016,9 +2030,12 @@ test_expect_success '--delete-merged keeps the upstream of a surviving branch' '
 		git checkout -b topic --track feature &&
 		git commit --allow-empty -m "topic work" &&
 
-		git branch --delete-merged origin/next 2>err &&
+		git branch --dry-run --delete-merged origin/next >out &&
+		test_grep ! "feature" out &&
 
+		git branch --delete-merged origin/next 2>err &&
 		test_must_be_empty err &&
+
 		check_branches <<-\EOF &&
 		feature
 		main
@@ -2046,6 +2063,23 @@ test_expect_success '--delete-merged clears the deleted upstream of a protected 
 		git checkout -b tip --track mid &&
 		git commit --allow-empty -m "tip work" &&
 		sha=$(git rev-parse --short lower) &&
+
+		git branch --dry-run --delete-merged origin/next \
+			--delete-merged lower >actual 2>&1 &&
+		echo "Would delete branch lower (was $sha)." >expect &&
+		test_cmp expect actual &&
+
+		pattern="branch\\.(lower|mid|tip)\\.(merge|remote)" &&
+		git config --local --get-regexp "$pattern" >actual &&
+		cat >expect <<-\EOF &&
+		branch.lower.remote origin
+		branch.lower.merge refs/heads/next
+		branch.mid.remote .
+		branch.mid.merge refs/heads/lower
+		branch.tip.remote .
+		branch.tip.merge refs/heads/mid
+		EOF
+		test_cmp expect actual &&
 
 		git branch --delete-merged origin/next \
 			--delete-merged lower >actual 2>&1 &&
@@ -2135,6 +2169,11 @@ test_expect_success "branch -d still deletes a deleteMerged=false branch" '
 		main
 		EOF
 	)
+'
+
+test_expect_success '--dry-run without --delete-merged is rejected' '
+	test_must_fail git -C forked branch --dry-run 2>err &&
+	test_grep "requires --delete-merged" err
 '
 
 test_done
