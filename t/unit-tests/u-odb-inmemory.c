@@ -297,8 +297,11 @@ void test_odb_inmemory__write_object_stream(void)
 	struct odb_source_inmemory *source = odb_source_inmemory_new(odb);
 	const char data[] = "foobar";
 	struct membuf_write_stream stream = {
-		.base.read = membuf_write_stream_read,
-		.base.size = strlen(data),
+		.base = {
+			.read = membuf_write_stream_read,
+			.size = strlen(data),
+			.type = OBJ_BLOB,
+		},
 		.buf = data,
 	};
 	struct object_id written_oid;

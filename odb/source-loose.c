@@ -868,7 +868,7 @@ static int odb_source_loose_write_object_stream(struct odb_source *source,
 
 	/* Since oid is not determined, save tmp file to odb path. */
 	strbuf_addf(&filename, "%s/", loose->base.path);
-	hdrlen = format_object_header(hdr, sizeof(hdr), OBJ_BLOB, in_stream->size);
+	hdrlen = format_object_header(hdr, sizeof(hdr), in_stream->type, in_stream->size);
 
 	/*
 	 * Common steps for write_loose_object and stream_loose_object to

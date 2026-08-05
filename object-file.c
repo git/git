@@ -702,9 +702,9 @@ static void prepare_packfile_transaction(struct odb_transaction_files *transacti
 		die_errno("unable to write pack header");
 }
 
-static int hash_blob_stream(struct odb_write_stream *stream,
-			    const struct git_hash_algo *hash_algo,
-			    struct object_id *result_oid)
+static int hash_stream(struct odb_write_stream *stream,
+		       const struct git_hash_algo *hash_algo,
+		       struct object_id *result_oid)
 {
 	unsigned char buf[16384];
 	struct git_hash_ctx ctx;
@@ -712,7 +712,7 @@ static int hash_blob_stream(struct odb_write_stream *stream,
 	size_t bytes_hashed = 0;
 
 	header_len = format_object_header((char *)buf, sizeof(buf),
-					  OBJ_BLOB, stream->size);
+					  stream->type, stream->size);
 	git_hash_init(&ctx, hash_algo);
 	git_hash_update(&ctx, buf, header_len);
 
@@ -740,9 +740,9 @@ static int hash_blob_stream(struct odb_write_stream *stream,
  * Read the contents from the stream provided, streaming it to the
  * packfile in state while updating the hash in ctx.
  */
-static void stream_blob_to_pack(struct transaction_packfile *state,
-				struct git_hash_ctx *ctx,
-				struct odb_write_stream *stream)
+static void stream_to_pack(struct transaction_packfile *state,
+			   struct git_hash_ctx *ctx,
+			   struct odb_write_stream *stream)
 {
 	git_zstream s;
 	unsigned char ibuf[16384];
@@ -755,7 +755,7 @@ static void stream_blob_to_pack(struct transaction_packfile *state,
 
 	git_deflate_init(&s, cfg->pack_compression_level);
 
-	hdrlen = encode_in_pack_object_header(obuf, sizeof(obuf), OBJ_BLOB, stream->size);
+	hdrlen = encode_in_pack_object_header(obuf, sizeof(obuf), stream->type, stream->size);
 	s.next_out = obuf + hdrlen;
 	s.avail_out = sizeof(obuf) - hdrlen;
 
@@ -764,7 +764,7 @@ static void stream_blob_to_pack(struct transaction_packfile *state,
 			ssize_t rsize = odb_write_stream_read(stream, ibuf,
 							      sizeof(ibuf));
 			if (rsize < 0)
-				die("failed to read blob data");
+				die("failed to read object data");
 			if (!rsize)
 				is_finished = true;
 
@@ -797,7 +797,7 @@ static void stream_blob_to_pack(struct transaction_packfile *state,
 	}
 
 	if (bytes_read != stream->size)
-		die("read %" PRIuMAX " bytes of blob data, but expected %" PRIuMAX " bytes",
+		die("read %" PRIuMAX " bytes of object data, but expected %" PRIuMAX " bytes",
 		    (uintmax_t)bytes_read, (uintmax_t)stream->size);
 
 	git_deflate_end(&s);
@@ -868,7 +868,7 @@ clear_exit:
  * result, which we need to know beforehand when writing a git object.
  * Since the primary motivation for trying to stream from the working
  * tree file and to avoid mmaping it in core is to deal with large
- * binary blobs, they generally do not want to get any conversion, and
+ * objects, they generally do not want to get any conversion, and
  * callers should avoid this code path when filters are requested.
  */
 static int odb_transaction_files_write_object_stream(struct odb_transaction *base,
@@ -886,7 +886,7 @@ static int odb_transaction_files_write_object_stream(struct odb_transaction *bas
 	struct pack_idx_entry *idx;
 
 	header_len = format_object_header((char *)obuf, sizeof(obuf),
-					  OBJ_BLOB, stream->size);
+					  stream->type, stream->size);
 	git_hash_init(&ctx, transaction->base.source->odb->repo->hash_algo);
 	git_hash_update(&ctx, obuf, header_len);
 
@@ -911,7 +911,7 @@ static int odb_transaction_files_write_object_stream(struct odb_transaction *bas
 	hashfile_checkpoint(state->f, &checkpoint);
 	idx->offset = state->offset;
 	crc32_begin(state->f);
-	stream_blob_to_pack(state, &ctx, stream);
+	stream_to_pack(state, &ctx, stream);
 	git_hash_final_oid(result_oid, &ctx);
 
 	idx->crc32 = crc32_end(state->f);
@@ -953,7 +953,7 @@ int index_fd(struct index_state *istate, struct object_id *oid,
 				 type, path, flags);
 	} else {
 		struct odb_write_stream stream;
-		odb_write_stream_from_fd(&stream, fd, xsize_t(st->st_size));
+		odb_write_stream_from_fd(&stream, fd, xsize_t(st->st_size), OBJ_BLOB);
 
 		if (flags & INDEX_WRITE_OBJECT) {
 			struct object_database *odb = the_repository->objects;
@@ -968,8 +968,7 @@ int index_fd(struct index_state *istate, struct object_id *oid,
 			if (!inflight)
 				odb_transaction_commit(transaction);
 		} else {
-			ret = hash_blob_stream(&stream,
-					       the_repository->hash_algo, oid);
+			ret = hash_stream(&stream, the_repository->hash_algo, oid);
 		}
 
 		odb_write_stream_release(&stream);

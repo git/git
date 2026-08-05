@@ -393,6 +393,7 @@ static void stream_blob(unsigned long size, unsigned nr)
 		.read = feed_input_zstream,
 		.data = &data,
 		.size = size,
+		.type = OBJ_BLOB,
 	};
 	struct obj_info *info = &obj_list[nr];
 

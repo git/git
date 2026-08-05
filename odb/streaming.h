@@ -56,6 +56,7 @@ struct odb_write_stream {
 	ssize_t (*read)(struct odb_write_stream *, unsigned char *, size_t);
 	void *data;
 	size_t size;
+	enum object_type type;
 };
 
 /*
@@ -92,6 +93,6 @@ int odb_stream_blob_to_fd(struct object_database *odb,
  * Sets up an ODB write stream that reads from an fd.
  */
 void odb_write_stream_from_fd(struct odb_write_stream *stream, int fd,
-			      size_t size);
+			      size_t size, enum object_type type);
 
 #endif /* STREAMING_H */

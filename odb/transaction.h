@@ -24,7 +24,7 @@ struct odb_transaction {
 
 	/*
 	 * This callback is expected to write the given object stream into
-	 * the ODB transaction. Note that for now, only blobs support streaming.
+	 * the ODB transaction.
 	 *
 	 * The resulting object ID shall be written into the out pointer. The
 	 * callback is expected to return 0 on success, a negative error code

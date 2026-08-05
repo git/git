@@ -324,7 +324,7 @@ static ssize_t read_object_fd(struct odb_write_stream *stream,
 }
 
 void odb_write_stream_from_fd(struct odb_write_stream *stream, int fd,
-			      size_t size)
+			      size_t size, enum object_type type)
 {
 	struct read_object_fd_data *data;
 
@@ -335,4 +335,5 @@ void odb_write_stream_from_fd(struct odb_write_stream *stream, int fd,
 	stream->data = data;
 	stream->read = read_object_fd;
 	stream->size = size;
+	stream->type = type;
 }

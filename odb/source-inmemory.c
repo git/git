@@ -290,10 +290,11 @@ static int odb_source_inmemory_write_object_stream(struct odb_source *source,
 		goto out;
 	}
 
-	hash_object_file(source->odb->repo->hash_algo, data, total_read, OBJ_BLOB, oid);
+	hash_object_file(source->odb->repo->hash_algo, data, total_read,
+			 stream->type, oid);
 
 	ret = odb_source_inmemory_write_object(source, data, stream->size,
-					       OBJ_BLOB, oid, NULL, NULL, 0);
+					       stream->type, oid, NULL, NULL, 0);
 	if (ret < 0)
 		goto out;
 
