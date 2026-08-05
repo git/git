@@ -845,7 +845,7 @@ static int odb_source_loose_write_object(struct odb_source *source,
 }
 
 static int odb_source_loose_write_object_stream(struct odb_source *source,
-						struct odb_write_stream *in_stream,
+						struct odb_stream *in_stream,
 						struct object_id *oid)
 {
 	struct odb_source_loose *loose = odb_source_loose_downcast(source);
@@ -891,8 +891,8 @@ static int odb_source_loose_write_object_stream(struct odb_source *source,
 		unsigned char *in0 = stream.next_in;
 
 		if (!stream.avail_in && !is_finished) {
-			ssize_t read_len = odb_write_stream_read(in_stream, buf,
-								 sizeof(buf));
+			ssize_t read_len = odb_stream_read(in_stream, buf,
+							   sizeof(buf));
 			if (read_len < 0) {
 				close(fd);
 				err = -1;

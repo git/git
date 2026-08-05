@@ -359,20 +359,21 @@ static void unpack_non_delta_entry(enum object_type type, unsigned long size,
 }
 
 struct input_zstream_data {
+	struct odb_stream base;
 	git_zstream *zstream;
 	int status;
 };
 
-static ssize_t feed_input_zstream(struct odb_write_stream *in_stream,
-				  unsigned char *buf, size_t buf_len)
+static ssize_t feed_input_zstream(struct odb_stream *in_stream,
+				  char *buf, size_t buf_len)
 {
-	struct input_zstream_data *data = in_stream->data;
+	struct input_zstream_data *data = container_of(in_stream, struct input_zstream_data, base);
 	git_zstream *zstream = data->zstream;
 
 	if (data->status != Z_OK)
 		return 0;
 
-	zstream->next_out = buf;
+	zstream->next_out = (unsigned char *) buf;
 	zstream->avail_out = buf_len;
 
 	while (data->status == Z_OK && zstream->avail_out == buf_len) {
@@ -388,24 +389,24 @@ static ssize_t feed_input_zstream(struct odb_write_stream *in_stream,
 static void stream_blob(unsigned long size, unsigned nr)
 {
 	git_zstream zstream = { 0 };
-	struct input_zstream_data data = { 0 };
-	struct odb_write_stream in_stream = {
-		.read = feed_input_zstream,
-		.data = &data,
-		.size = size,
-		.type = OBJ_BLOB,
+	struct input_zstream_data in_stream = {
+		.base = {
+			.read = feed_input_zstream,
+			.size = size,
+			.type = OBJ_BLOB,
+		},
+		.zstream = &zstream,
+		.status = Z_OK,
 	};
 	struct obj_info *info = &obj_list[nr];
 
-	data.zstream = &zstream;
-	data.status = Z_OK;
 	git_inflate_init(&zstream);
 
-	if (odb_write_object_stream(the_repository->objects, &in_stream, &info->oid))
+	if (odb_write_object_stream(the_repository->objects, &in_stream.base, &info->oid))
 		die(_("failed to write object in stream"));
 
-	if (data.status != Z_STREAM_END)
-		die(_("inflate returned (%d)"), data.status);
+	if (in_stream.status != Z_STREAM_END)
+		die(_("inflate returned (%d)"), in_stream.status);
 	git_inflate_end(&zstream);
 
 	if (strict) {

@@ -256,7 +256,7 @@ static int odb_source_inmemory_write_object(struct odb_source *source,
 }
 
 static int odb_source_inmemory_write_object_stream(struct odb_source *source,
-						   struct odb_write_stream *stream,
+						   struct odb_stream *stream,
 						   struct object_id *oid)
 {
 	char buf[16384];
@@ -268,7 +268,7 @@ static int odb_source_inmemory_write_object_stream(struct odb_source *source,
 	while (1) {
 		ssize_t bytes_read;
 
-		bytes_read = odb_write_stream_read(stream, buf, sizeof(buf));
+		bytes_read = odb_stream_read(stream, buf, sizeof(buf));
 		if (bytes_read < 0) {
 			ret = error("failed to read object stream");
 			goto out;

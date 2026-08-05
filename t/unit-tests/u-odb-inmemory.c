@@ -266,13 +266,13 @@ void test_odb_inmemory__freshen_object(void)
 }
 
 struct membuf_write_stream {
-	struct odb_write_stream base;
+	struct odb_stream base;
 	const char *buf;
 	size_t offset;
 };
 
-static ssize_t membuf_write_stream_read(struct odb_write_stream *stream,
-					unsigned char *buf, size_t len)
+static ssize_t membuf_write_stream_read(struct odb_stream *stream,
+					char *buf, size_t len)
 {
 	struct membuf_write_stream *s = container_of(stream, struct membuf_write_stream, base);
 	size_t chunk_size = 2;

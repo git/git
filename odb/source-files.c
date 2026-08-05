@@ -174,7 +174,7 @@ static int odb_source_files_write_object(struct odb_source *source,
 }
 
 static int odb_source_files_write_object_stream(struct odb_source *source,
-						struct odb_write_stream *stream,
+						struct odb_stream *stream,
 						struct object_id *oid)
 {
 	struct odb_source_files *files = odb_source_files_downcast(source);

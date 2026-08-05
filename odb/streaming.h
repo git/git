@@ -15,8 +15,8 @@ typedef int (*odb_stream_close_fn)(struct odb_stream *);
 typedef ssize_t (*odb_stream_read_fn)(struct odb_stream *, char *, size_t);
 
 /*
- * A stream that can be used to read an object from the object database without
- * loading all of it into memory.
+ * A stream that can be used to read an object from or write an object into the
+ * object database without loading all of it into memory.
  */
 struct odb_stream {
 	odb_stream_close_fn close;
@@ -49,30 +49,6 @@ int odb_stream_close(struct odb_stream *stream);
 ssize_t odb_stream_read(struct odb_stream *stream, void *buf, size_t len);
 
 /*
- * A stream that provides an object to be written to the object database without
- * loading all of it into memory.
- */
-struct odb_write_stream {
-	ssize_t (*read)(struct odb_write_stream *, unsigned char *, size_t);
-	void *data;
-	size_t size;
-	enum object_type type;
-};
-
-/*
- * Read data from the stream into the buffer. Returns 0 when finished and the
- * number of bytes read on success. Returns a negative error code in case
- * reading from the stream fails.
- */
-ssize_t odb_write_stream_read(struct odb_write_stream *stream, void *buf,
-			      size_t len);
-
-/*
- * Releases memory allocated for underlying stream data.
- */
-void odb_write_stream_release(struct odb_write_stream *stream);
-
-/*
  * Look up the object by its ID and write the full contents to the file
  * descriptor. The object must be a blob, or the function will fail. When
  * provided, the filter is used to transform the blob contents.
@@ -92,7 +68,6 @@ int odb_stream_blob_to_fd(struct object_database *odb,
 /*
  * Sets up an ODB write stream that reads from an fd.
  */
-void odb_write_stream_from_fd(struct odb_write_stream *stream, int fd,
-			      size_t size, enum object_type type);
+struct odb_stream *odb_write_stream_from_fd(int fd, size_t size, enum object_type type);
 
 #endif /* STREAMING_H */

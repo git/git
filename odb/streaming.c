@@ -232,16 +232,6 @@ struct odb_stream *odb_read_stream_open(struct object_database *odb,
 	return st;
 }
 
-ssize_t odb_write_stream_read(struct odb_write_stream *st, void *buf, size_t sz)
-{
-	return st->read(st, buf, sz);
-}
-
-void odb_write_stream_release(struct odb_write_stream *st)
-{
-	free(st->data);
-}
-
 int odb_stream_blob_to_fd(struct object_database *odb,
 			  int fd,
 			  const struct object_id *oid,
@@ -299,14 +289,15 @@ int odb_stream_blob_to_fd(struct object_database *odb,
 }
 
 struct read_object_fd_data {
+	struct odb_stream base;
 	int fd;
 	size_t remaining;
 };
 
-static ssize_t read_object_fd(struct odb_write_stream *stream,
-			      unsigned char *buf, size_t len)
+static ssize_t read_object_fd(struct odb_stream *stream,
+			      char *buf, size_t len)
 {
-	struct read_object_fd_data *data = stream->data;
+	struct read_object_fd_data *data = container_of(stream, struct read_object_fd_data, base);
 	ssize_t read_result;
 	size_t count;
 
@@ -323,17 +314,23 @@ static ssize_t read_object_fd(struct odb_write_stream *stream,
 	return read_result;
 }
 
-void odb_write_stream_from_fd(struct odb_write_stream *stream, int fd,
-			      size_t size, enum object_type type)
+static int close_object_fd(struct odb_stream *stream UNUSED)
+{
+	/* The file descriptor is owned by the caller for now. */
+	return 0;
+}
+
+struct odb_stream *odb_write_stream_from_fd(int fd, size_t size, enum object_type type)
 {
 	struct read_object_fd_data *data;
 
 	CALLOC_ARRAY(data, 1);
+	data->base.read = read_object_fd;
+	data->base.close = close_object_fd;
+	data->base.size = size;
+	data->base.type = type;
 	data->fd = fd;
 	data->remaining = size;
 
-	stream->data = data;
-	stream->read = read_object_fd;
-	stream->size = size;
-	stream->type = type;
+	return &data->base;
 }

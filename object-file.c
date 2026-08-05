@@ -702,7 +702,7 @@ static void prepare_packfile_transaction(struct odb_transaction_files *transacti
 		die_errno("unable to write pack header");
 }
 
-static int hash_stream(struct odb_write_stream *stream,
+static int hash_stream(struct odb_stream *stream,
 		       const struct git_hash_algo *hash_algo,
 		       struct object_id *result_oid)
 {
@@ -717,8 +717,8 @@ static int hash_stream(struct odb_write_stream *stream,
 	git_hash_update(&ctx, buf, header_len);
 
 	while (1) {
-		ssize_t read_result = odb_write_stream_read(stream, buf,
-							    sizeof(buf));
+		ssize_t read_result = odb_stream_read(stream, buf,
+						      sizeof(buf));
 		if (read_result < 0)
 			return -1;
 		if (!read_result)
@@ -742,7 +742,7 @@ static int hash_stream(struct odb_write_stream *stream,
  */
 static void stream_to_pack(struct transaction_packfile *state,
 			   struct git_hash_ctx *ctx,
-			   struct odb_write_stream *stream)
+			   struct odb_stream *stream)
 {
 	git_zstream s;
 	unsigned char ibuf[16384];
@@ -761,8 +761,8 @@ static void stream_to_pack(struct transaction_packfile *state,
 
 	while (status != Z_STREAM_END) {
 		if (!is_finished && !s.avail_in) {
-			ssize_t rsize = odb_write_stream_read(stream, ibuf,
-							      sizeof(ibuf));
+			ssize_t rsize = odb_stream_read(stream, ibuf,
+							sizeof(ibuf));
 			if (rsize < 0)
 				die("failed to read object data");
 			if (!rsize)
@@ -872,7 +872,7 @@ clear_exit:
  * callers should avoid this code path when filters are requested.
  */
 static int odb_transaction_files_write_object_stream(struct odb_transaction *base,
-						     struct odb_write_stream *stream,
+						     struct odb_stream *stream,
 						     struct object_id *result_oid)
 {
 	struct odb_transaction_files *transaction = container_of(base,
@@ -952,8 +952,8 @@ int index_fd(struct index_state *istate, struct object_id *oid,
 		ret = index_core(istate, oid, fd, xsize_t(st->st_size),
 				 type, path, flags);
 	} else {
-		struct odb_write_stream stream;
-		odb_write_stream_from_fd(&stream, fd, xsize_t(st->st_size), OBJ_BLOB);
+		struct odb_stream *stream = odb_write_stream_from_fd(fd, xsize_t(st->st_size),
+								     OBJ_BLOB);
 
 		if (flags & INDEX_WRITE_OBJECT) {
 			struct object_database *odb = the_repository->objects;
@@ -963,15 +963,14 @@ int index_fd(struct index_state *istate, struct object_id *oid,
 			if (!inflight)
 				odb_transaction_begin_or_die(odb, &transaction, 0);
 			ret = odb_transaction_write_object_stream(transaction,
-								  &stream,
-								  oid);
+								  stream, oid);
 			if (!inflight)
 				odb_transaction_commit(transaction);
 		} else {
-			ret = hash_stream(&stream, the_repository->hash_algo, oid);
+			ret = hash_stream(stream, the_repository->hash_algo, oid);
 		}
 
-		odb_write_stream_release(&stream);
+		odb_stream_close(stream);
 	}
 
 	close(fd);

@@ -39,7 +39,7 @@ int odb_transaction_commit(struct odb_transaction *transaction)
 }
 
 int odb_transaction_write_object_stream(struct odb_transaction *transaction,
-					struct odb_write_stream *stream,
+					struct odb_stream *stream,
 					struct object_id *oid)
 {
 	return transaction->write_object_stream(transaction, stream, oid);

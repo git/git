@@ -31,7 +31,7 @@ struct odb_transaction {
 	 * otherwise.
 	 */
 	int (*write_object_stream)(struct odb_transaction *transaction,
-				   struct odb_write_stream *stream,
+				   struct odb_stream *stream,
 				   struct object_id *oid);
 
 	/*
@@ -81,7 +81,7 @@ int odb_transaction_commit(struct odb_transaction *transaction);
  * error code otherwise.
  */
 int odb_transaction_write_object_stream(struct odb_transaction *transaction,
-					struct odb_write_stream *stream,
+					struct odb_stream *stream,
 					struct object_id *oid);
 
 /*
