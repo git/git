@@ -347,7 +347,7 @@ static int write_zip_entry(struct archiver_args *args,
 			method = ZIP_METHOD_DEFLATE;
 
 		if (!buffer) {
-			stream = odb_read_stream_open(args->repo->objects, oid, NULL);
+			stream = odb_stream_from_object(args->repo->objects, oid, NULL);
 			if (!stream)
 				return error(_("cannot stream blob %s"),
 					     oid_to_hex(oid));

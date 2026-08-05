@@ -345,7 +345,7 @@ struct object *parse_object_with_flags(struct repository *r,
 	if ((!obj || obj->type == OBJ_NONE || obj->type == OBJ_BLOB) &&
 	    odb_read_object_info(r->objects, oid, NULL) == OBJ_BLOB) {
 		if (!skip_hash) {
-			struct odb_stream *stream = odb_read_stream_open(r->objects, oid, NULL);
+			struct odb_stream *stream = odb_stream_from_object(r->objects, oid, NULL);
 
 			if (!stream) {
 				error(_("unable to open object stream for %s"), oid_to_hex(oid));

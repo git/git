@@ -208,9 +208,9 @@ ssize_t odb_stream_read(struct odb_stream *st, void *buf, size_t sz)
 	return st->read(st, buf, sz);
 }
 
-struct odb_stream *odb_read_stream_open(struct object_database *odb,
-					const struct object_id *oid,
-					struct stream_filter *filter)
+struct odb_stream *odb_stream_from_object(struct object_database *odb,
+					  const struct object_id *oid,
+					  struct stream_filter *filter)
 {
 	struct odb_stream *st;
 	const struct object_id *real = lookup_replace_object(odb->repo, oid);
@@ -242,7 +242,7 @@ int odb_stream_blob_to_fd(struct object_database *odb,
 	ssize_t kept = 0;
 	int result = -1;
 
-	st = odb_read_stream_open(odb, oid, filter);
+	st = odb_stream_from_object(odb, oid, filter);
 	if (!st) {
 		if (filter)
 			free_stream_filter(filter);
@@ -320,7 +320,7 @@ static int fd_stream_close(struct odb_stream *stream UNUSED)
 	return 0;
 }
 
-struct odb_stream *odb_write_stream_from_fd(int fd, size_t size, enum object_type type)
+struct odb_stream *odb_stream_from_fd(int fd, size_t size, enum object_type type)
 {
 	struct fd_stream *fds;
 

@@ -133,7 +133,7 @@ static int stream_blocked(struct repository *r, const struct object_id *oid)
 	char buf[BLOCKSIZE];
 	ssize_t readlen;
 
-	st = odb_read_stream_open(r->objects, oid, NULL);
+	st = odb_stream_from_object(r->objects, oid, NULL);
 	if (!st)
 		return error(_("cannot stream blob %s"), oid_to_hex(oid));
 	for (;;) {

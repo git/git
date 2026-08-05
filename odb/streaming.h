@@ -26,14 +26,22 @@ struct odb_stream {
 };
 
 /*
- * Create a new object stream for the given object database. An optional filter
- * can be used to transform the object's content.
+ * Create a new object stream for the given object. An optional filter can be
+ * used to transform the object's content.
  *
  * Returns the stream on success, a `NULL` pointer otherwise.
  */
-struct odb_stream *odb_read_stream_open(struct object_database *odb,
-					const struct object_id *oid,
-					struct stream_filter *filter);
+struct odb_stream *odb_stream_from_object(struct object_database *odb,
+					  const struct object_id *oid,
+					  struct stream_filter *filter);
+
+/*
+ * Create a new object stream for the given file descriptor. This can be used
+ * to, for example, stream an object into the object database. This function
+ * does _not_ take ownership of the file descriptor. It's the responsibility of
+ * the caller to close it after the stream has been closed.
+ */
+struct odb_stream *odb_stream_from_fd(int fd, size_t size, enum object_type type);
 
 /*
  * Close the given object stream and release all resources associated with it.
@@ -64,10 +72,5 @@ int odb_stream_blob_to_fd(struct object_database *odb,
 			  const struct object_id *oid,
 			  struct stream_filter *filter,
 			  int can_seek);
-
-/*
- * Sets up an ODB write stream that reads from an fd.
- */
-struct odb_stream *odb_write_stream_from_fd(int fd, size_t size, enum object_type type);
 
 #endif /* STREAMING_H */

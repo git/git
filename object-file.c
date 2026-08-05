@@ -952,8 +952,8 @@ int index_fd(struct index_state *istate, struct object_id *oid,
 		ret = index_core(istate, oid, fd, xsize_t(st->st_size),
 				 type, path, flags);
 	} else {
-		struct odb_stream *stream = odb_write_stream_from_fd(fd, xsize_t(st->st_size),
-								     OBJ_BLOB);
+		struct odb_stream *stream = odb_stream_from_fd(fd, xsize_t(st->st_size),
+							       OBJ_BLOB);
 
 		if (flags & INDEX_WRITE_OBJECT) {
 			struct object_database *odb = the_repository->objects;
