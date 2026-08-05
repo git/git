@@ -1034,6 +1034,18 @@ int odb_write_object_stream(struct object_database *odb,
 	return odb_source_write_object_stream(odb->sources, stream, len, oid);
 }
 
+int odb_optimize(struct object_database *odb,
+		 const struct odb_optimize_options *opts)
+{
+	return odb_source_optimize(odb->sources, opts);
+}
+
+bool odb_optimize_required(struct object_database *odb,
+			   const struct odb_optimize_options *opts)
+{
+	return odb_source_optimize_required(odb->sources, opts);
+}
+
 struct object_database *odb_new(struct repository *repo,
 				const char *primary_source,
 				const char *secondary_sources)
