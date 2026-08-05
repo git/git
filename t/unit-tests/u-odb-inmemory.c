@@ -277,6 +277,9 @@ static ssize_t membuf_write_stream_read(struct odb_write_stream *stream,
 	struct membuf_write_stream *s = container_of(stream, struct membuf_write_stream, base);
 	size_t chunk_size = 2;
 
+	if (s->offset == s->base.size)
+		return 0;
+
 	if (chunk_size > len)
 		chunk_size = len;
 	if (chunk_size > s->base.size - s->offset)
@@ -285,8 +288,6 @@ static ssize_t membuf_write_stream_read(struct odb_write_stream *stream,
 	memcpy(buf, s->buf + s->offset, chunk_size);
 
 	s->offset += chunk_size;
-	if (s->offset == s->base.size)
-		s->base.is_finished = 1;
 
 	return chunk_size;
 }

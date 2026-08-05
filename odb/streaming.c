@@ -310,7 +310,7 @@ static ssize_t read_object_fd(struct odb_write_stream *stream,
 	ssize_t read_result;
 	size_t count;
 
-	if (stream->is_finished)
+	if (!data->remaining)
 		return 0;
 
 	count = data->remaining < len ? data->remaining : len;
@@ -319,8 +319,6 @@ static ssize_t read_object_fd(struct odb_write_stream *stream,
 		return -1;
 
 	data->remaining -= count;
-	if (!data->remaining)
-		stream->is_finished = 1;
 
 	return read_result;
 }
@@ -337,5 +335,4 @@ void odb_write_stream_from_fd(struct odb_write_stream *stream, int fd,
 	stream->data = data;
 	stream->read = read_object_fd;
 	stream->size = size;
-	stream->is_finished = 0;
 }

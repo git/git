@@ -265,10 +265,17 @@ static int odb_source_inmemory_write_object_stream(struct odb_source *source,
 	int ret;
 
 	CALLOC_ARRAY(data, stream->size);
-	while (!stream->is_finished) {
+	while (1) {
 		ssize_t bytes_read;
 
 		bytes_read = odb_write_stream_read(stream, buf, sizeof(buf));
+		if (bytes_read < 0) {
+			ret = error("failed to read object stream");
+			goto out;
+		}
+		if (!bytes_read)
+			break;
+
 		if (total_read + bytes_read > stream->size) {
 			ret = error("object stream yielded more bytes than expected");
 			goto out;

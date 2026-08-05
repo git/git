@@ -368,20 +368,20 @@ static ssize_t feed_input_zstream(struct odb_write_stream *in_stream,
 {
 	struct input_zstream_data *data = in_stream->data;
 	git_zstream *zstream = data->zstream;
-	void *in = fill(1);
 
-	if (in_stream->is_finished)
+	if (data->status != Z_OK)
 		return 0;
 
 	zstream->next_out = buf;
 	zstream->avail_out = buf_len;
-	zstream->next_in = in;
-	zstream->avail_in = len;
 
-	data->status = git_inflate(zstream, 0);
+	while (data->status == Z_OK && zstream->avail_out == buf_len) {
+		zstream->next_in = fill(1);
+		zstream->avail_in = len;
+		data->status = git_inflate(zstream, 0);
+		use(len - zstream->avail_in);
+	}
 
-	in_stream->is_finished = data->status != Z_OK;
-	use(len - zstream->avail_in);
 	return buf_len - zstream->avail_out;
 }
 
@@ -397,6 +397,7 @@ static void stream_blob(unsigned long size, unsigned nr)
 	struct obj_info *info = &obj_list[nr];
 
 	data.zstream = &zstream;
+	data.status = Z_OK;
 	git_inflate_init(&zstream);
 
 	if (odb_write_object_stream(the_repository->objects, &in_stream, &info->oid))

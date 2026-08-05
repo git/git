@@ -56,7 +56,6 @@ struct odb_write_stream {
 	ssize_t (*read)(struct odb_write_stream *, unsigned char *, size_t);
 	void *data;
 	size_t size;
-	int is_finished;
 };
 
 /*

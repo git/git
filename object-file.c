@@ -716,12 +716,13 @@ static int hash_blob_stream(struct odb_write_stream *stream,
 	git_hash_init(&ctx, hash_algo);
 	git_hash_update(&ctx, buf, header_len);
 
-	while (!stream->is_finished) {
+	while (1) {
 		ssize_t read_result = odb_write_stream_read(stream, buf,
 							    sizeof(buf));
-
 		if (read_result < 0)
 			return -1;
+		if (!read_result)
+			break;
 
 		git_hash_update(&ctx, buf, read_result);
 		bytes_hashed += read_result;
@@ -749,6 +750,7 @@ static void stream_blob_to_pack(struct transaction_packfile *state,
 	unsigned hdrlen;
 	int status = Z_OK;
 	struct repo_config_values *cfg = repo_config_values(the_repository);
+	bool is_finished = false;
 	size_t bytes_read = 0;
 
 	git_deflate_init(&s, cfg->pack_compression_level);
@@ -758,12 +760,13 @@ static void stream_blob_to_pack(struct transaction_packfile *state,
 	s.avail_out = sizeof(obuf) - hdrlen;
 
 	while (status != Z_STREAM_END) {
-		if (!stream->is_finished && !s.avail_in) {
+		if (!is_finished && !s.avail_in) {
 			ssize_t rsize = odb_write_stream_read(stream, ibuf,
 							      sizeof(ibuf));
-
 			if (rsize < 0)
 				die("failed to read blob data");
+			if (!rsize)
+				is_finished = true;
 
 			git_hash_update(ctx, ibuf, rsize);
 
@@ -772,7 +775,7 @@ static void stream_blob_to_pack(struct transaction_packfile *state,
 			bytes_read += rsize;
 		}
 
-		status = git_deflate(&s, stream->is_finished ? Z_FINISH : 0);
+		status = git_deflate(&s, is_finished ? Z_FINISH : 0);
 
 		if (!s.avail_out || status == Z_STREAM_END) {
 			size_t written = s.next_out - obuf;

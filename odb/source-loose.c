@@ -859,6 +859,7 @@ static int odb_source_loose_write_object_stream(struct odb_source *source,
 	struct strbuf filename = STRBUF_INIT;
 	unsigned char buf[8192];
 	int dirlen;
+	bool is_finished = false;
 	char hdr[MAX_HEADER_LEN];
 	int hdrlen;
 
@@ -889,7 +890,7 @@ static int odb_source_loose_write_object_stream(struct odb_source *source,
 	do {
 		unsigned char *in0 = stream.next_in;
 
-		if (!stream.avail_in && !in_stream->is_finished) {
+		if (!stream.avail_in && !is_finished) {
 			ssize_t read_len = odb_write_stream_read(in_stream, buf,
 								 sizeof(buf));
 			if (read_len < 0) {
@@ -898,12 +899,15 @@ static int odb_source_loose_write_object_stream(struct odb_source *source,
 				goto cleanup;
 			}
 
+			/* All data has been read. */
+			if (!read_len) {
+				is_finished = true;
+				flush = 1;
+			}
+
 			stream.avail_in = read_len;
 			stream.next_in = buf;
 			in0 = buf;
-			/* All data has been read. */
-			if (in_stream->is_finished)
-				flush = 1;
 		}
 		ret = write_loose_object_common(loose, &c, &compat_c, &stream, flush, in0, fd,
 						compressed, sizeof(compressed));
