@@ -76,6 +76,9 @@ UI, Workflows & Features
    filtered on the client based on server-advertised capabilities,
    returning empty strings for inapplicable or unsupported fields.
 
+ * 'git branch -d' has been taught to report when a branch cannot be
+   deleted because it is being used in an active bisect run.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -280,6 +283,21 @@ Performance, Internal Implementation, Development Support etc.
    first refactoring force_object_loose() to use generic ODB write
    interfaces instead of loose-backend internals.
 
+ * Object database housekeeping in 'git gc' and 'git maintenance' has
+   been refactored to be pluggable.  The files-backend-specific logic,
+   including incremental and geometric repacking as well as object
+   pruning, has been moved out of the command implementation and into the
+   files object database source, enabling future alternative object
+   database backends to implement their own housekeeping services.
+
+ * The image version used by the static-analysis CI job has been bumped
+   to ubuntu-latest (Ubuntu 24.04), which brings in a newer Coccinelle
+   version that resolves a severe performance regression.  A false
+   positive warning from the 'CHECK_ASSERTION_SIDE_EFFECTS' build with
+   GCC 15 in the Bloom filter code has also been silenced to facilitate
+   the image upgrade.
+   (merge 1a1579c42d jk/ci-static-analysis-image-bump later to maint).
+
 
 Fixes since v2.55
 -----------------
@@ -466,3 +484,26 @@ Fixes since v2.55
  * The remote-matching logic for submodules has been corrected to resolve
    'url.*.insteadOf' aliases before comparing the inventoried URL from
    '.gitmodules' with the URLs of configured remotes.
+
+ * 'git diff --relative' running with '--cached' has been corrected to
+   avoid a segfault when encountering unmerged paths outside the
+   prefix.
+   (merge 447126ed7d jk/diff-relative-cached-unmerged later to maint).
+
+ * Two bugs in how 'git rebase' handles skipped 'fixup' and 'squash'
+   commands have been fixed.  One bug caused an incorrect commit count to
+   be shown in the template message when multiple commands were skipped,
+   and another prevented the editor from opening when the final command
+   in a chain containing 'fixup -c' was skipped.
+
+ * The alias tests in 't/t0014-alias.sh' have been updated to dynamically
+   query the list of deprecated commands using 'git
+   --list-cmds=deprecated' to avoid test failures when running with
+   'WITH_BREAKING_CHANGES' in a build directory that contains stale
+   executables of formerly deprecated commands.
+   (merge bc57ecb915 jk/t0014-dynamic-deprecated-cmds later to maint).
+
+ * Git for Windows has been updated to avoid auto-detecting the symlink
+   type if the target path starts with a slash, preventing NTLM
+   credential leaks when checking out repositories with crafted
+   symbolic links pointing to network shares.
