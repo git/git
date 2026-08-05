@@ -629,7 +629,7 @@ static inline int odb_write_object(struct object_database *odb,
 struct odb_write_stream;
 
 int odb_write_object_stream(struct object_database *odb,
-			    struct odb_write_stream *stream, size_t len,
+			    struct odb_write_stream *stream,
 			    struct object_id *oid);
 
 void parse_alternates(const char *string,

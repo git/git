@@ -1028,10 +1028,10 @@ int odb_write_object_ext(struct object_database *odb,
 }
 
 int odb_write_object_stream(struct object_database *odb,
-			    struct odb_write_stream *stream, size_t len,
+			    struct odb_write_stream *stream,
 			    struct object_id *oid)
 {
-	return odb_source_write_object_stream(odb->sources, stream, len, oid);
+	return odb_source_write_object_stream(odb->sources, stream, oid);
 }
 
 struct object_database *odb_new(struct repository *repo,

@@ -846,7 +846,6 @@ static int odb_source_loose_write_object(struct odb_source *source,
 
 static int odb_source_loose_write_object_stream(struct odb_source *source,
 						struct odb_write_stream *in_stream,
-						size_t len,
 						struct object_id *oid)
 {
 	struct odb_source_loose *loose = odb_source_loose_downcast(source);
@@ -868,7 +867,7 @@ static int odb_source_loose_write_object_stream(struct odb_source *source,
 
 	/* Since oid is not determined, save tmp file to odb path. */
 	strbuf_addf(&filename, "%s/", loose->base.path);
-	hdrlen = format_object_header(hdr, sizeof(hdr), OBJ_BLOB, len);
+	hdrlen = format_object_header(hdr, sizeof(hdr), OBJ_BLOB, in_stream->size);
 
 	/*
 	 * Common steps for write_loose_object and stream_loose_object to
@@ -916,9 +915,9 @@ static int odb_source_loose_write_object_stream(struct odb_source *source,
 		 */
 	} while (ret == Z_OK || ret == Z_BUF_ERROR);
 
-	if (stream.total_in != len + hdrlen)
+	if (stream.total_in != in_stream->size + hdrlen)
 		die(_("write stream object %"PRIuMAX" != %"PRIuMAX), (uintmax_t)stream.total_in,
-		    (uintmax_t)len + hdrlen);
+		    (uintmax_t)in_stream->size + hdrlen);
 
 	/*
 	 * Common steps for write_loose_object and stream_loose_object to

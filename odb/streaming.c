@@ -336,5 +336,6 @@ void odb_write_stream_from_fd(struct odb_write_stream *stream, int fd,
 
 	stream->data = data;
 	stream->read = read_object_fd;
+	stream->size = size;
 	stream->is_finished = 0;
 }

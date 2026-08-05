@@ -392,13 +392,14 @@ static void stream_blob(unsigned long size, unsigned nr)
 	struct odb_write_stream in_stream = {
 		.read = feed_input_zstream,
 		.data = &data,
+		.size = size,
 	};
 	struct obj_info *info = &obj_list[nr];
 
 	data.zstream = &zstream;
 	git_inflate_init(&zstream);
 
-	if (odb_write_object_stream(the_repository->objects, &in_stream, size, &info->oid))
+	if (odb_write_object_stream(the_repository->objects, &in_stream, &info->oid))
 		die(_("failed to write object in stream"));
 
 	if (data.status != Z_STREAM_END)

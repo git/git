@@ -221,7 +221,7 @@ struct odb_source {
 	 * otherwise.
 	 */
 	int (*write_object_stream)(struct odb_source *source,
-				   struct odb_write_stream *stream, size_t len,
+				   struct odb_write_stream *stream,
 				   struct object_id *oid);
 
 	/*
@@ -437,10 +437,9 @@ static inline int odb_source_write_object(struct odb_source *source,
  */
 static inline int odb_source_write_object_stream(struct odb_source *source,
 						 struct odb_write_stream *stream,
-						 size_t len,
 						 struct object_id *oid)
 {
-	return source->write_object_stream(source, stream, len, oid);
+	return source->write_object_stream(source, stream, oid);
 }
 
 /*

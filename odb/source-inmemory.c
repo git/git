@@ -257,7 +257,6 @@ static int odb_source_inmemory_write_object(struct odb_source *source,
 
 static int odb_source_inmemory_write_object_stream(struct odb_source *source,
 						   struct odb_write_stream *stream,
-						   size_t len,
 						   struct object_id *oid)
 {
 	char buf[16384];
@@ -265,12 +264,12 @@ static int odb_source_inmemory_write_object_stream(struct odb_source *source,
 	char *data;
 	int ret;
 
-	CALLOC_ARRAY(data, len);
+	CALLOC_ARRAY(data, stream->size);
 	while (!stream->is_finished) {
 		ssize_t bytes_read;
 
 		bytes_read = odb_write_stream_read(stream, buf, sizeof(buf));
-		if (total_read + bytes_read > len) {
+		if (total_read + bytes_read > stream->size) {
 			ret = error("object stream yielded more bytes than expected");
 			goto out;
 		}
@@ -279,15 +278,15 @@ static int odb_source_inmemory_write_object_stream(struct odb_source *source,
 		total_read += bytes_read;
 	}
 
-	if (total_read != len) {
+	if (total_read != stream->size) {
 		ret = error("object stream yielded less bytes than expected");
 		goto out;
 	}
 
 	hash_object_file(source->odb->repo->hash_algo, data, total_read, OBJ_BLOB, oid);
 
-	ret = odb_source_inmemory_write_object(source, data, len, OBJ_BLOB, oid,
-					       NULL, NULL, 0);
+	ret = odb_source_inmemory_write_object(source, data, stream->size,
+					       OBJ_BLOB, oid, NULL, NULL, 0);
 	if (ret < 0)
 		goto out;
 

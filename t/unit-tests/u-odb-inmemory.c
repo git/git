@@ -269,7 +269,6 @@ struct membuf_write_stream {
 	struct odb_write_stream base;
 	const char *buf;
 	size_t offset;
-	size_t size;
 };
 
 static ssize_t membuf_write_stream_read(struct odb_write_stream *stream,
@@ -280,13 +279,13 @@ static ssize_t membuf_write_stream_read(struct odb_write_stream *stream,
 
 	if (chunk_size > len)
 		chunk_size = len;
-	if (chunk_size > s->size - s->offset)
-		chunk_size = s->size - s->offset;
+	if (chunk_size > s->base.size - s->offset)
+		chunk_size = s->base.size - s->offset;
 
 	memcpy(buf, s->buf + s->offset, chunk_size);
 
 	s->offset += chunk_size;
-	if (s->offset == s->size)
+	if (s->offset == s->base.size)
 		s->base.is_finished = 1;
 
 	return chunk_size;
@@ -298,13 +297,13 @@ void test_odb_inmemory__write_object_stream(void)
 	const char data[] = "foobar";
 	struct membuf_write_stream stream = {
 		.base.read = membuf_write_stream_read,
+		.base.size = strlen(data),
 		.buf = data,
-		.size = strlen(data),
 	};
 	struct object_id written_oid;
 
 	cl_must_pass(odb_source_write_object_stream(&source->base, &stream.base,
-						    strlen(data), &written_oid));
+						    &written_oid));
 	cl_assert_equal_s(oid_to_hex(&written_oid), FOOBAR_OID);
 	cl_assert_object_info(source, &written_oid, OBJ_BLOB, "foobar");
 

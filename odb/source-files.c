@@ -175,11 +175,10 @@ static int odb_source_files_write_object(struct odb_source *source,
 
 static int odb_source_files_write_object_stream(struct odb_source *source,
 						struct odb_write_stream *stream,
-						size_t len,
 						struct object_id *oid)
 {
 	struct odb_source_files *files = odb_source_files_downcast(source);
-	return odb_source_write_object_stream(&files->loose->base, stream, len, oid);
+	return odb_source_write_object_stream(&files->loose->base, stream, oid);
 }
 
 static int odb_source_files_begin_transaction(struct odb_source *source,
