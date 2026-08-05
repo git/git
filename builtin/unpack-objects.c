@@ -358,16 +358,16 @@ static void unpack_non_delta_entry(enum object_type type, unsigned long size,
 		write_object(nr, type, buf, size);
 }
 
-struct input_zstream_data {
+struct zlib_stream {
 	struct odb_stream base;
 	git_zstream *zstream;
 	int status;
 };
 
-static ssize_t feed_input_zstream(struct odb_stream *in_stream,
-				  char *buf, size_t buf_len)
+static ssize_t zlib_stream_read(struct odb_stream *in_stream,
+				char *buf, size_t buf_len)
 {
-	struct input_zstream_data *data = container_of(in_stream, struct input_zstream_data, base);
+	struct zlib_stream *data = container_of(in_stream, struct zlib_stream, base);
 	git_zstream *zstream = data->zstream;
 
 	if (data->status != Z_OK)
@@ -389,9 +389,9 @@ static ssize_t feed_input_zstream(struct odb_stream *in_stream,
 static void stream_blob(unsigned long size, unsigned nr)
 {
 	git_zstream zstream = { 0 };
-	struct input_zstream_data in_stream = {
+	struct zlib_stream in_stream = {
 		.base = {
-			.read = feed_input_zstream,
+			.read = zlib_stream_read,
 			.size = size,
 			.type = OBJ_BLOB,
 		},
