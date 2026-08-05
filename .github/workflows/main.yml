@@ -460,8 +460,8 @@ jobs:
     if: needs.ci-config.outputs.enabled == 'yes'
     env:
       jobname: StaticAnalysis
-      CI_JOB_IMAGE: ubuntu-22.04
-    runs-on: ubuntu-22.04
+      CI_JOB_IMAGE: ubuntu-latest
+    runs-on: ubuntu-latest
     concurrency:
       group: static-analysis-${{ github.ref }}
       cancel-in-progress: ${{ needs.ci-config.outputs.skip_concurrent == 'yes' }}

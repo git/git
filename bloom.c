@@ -610,10 +610,10 @@ int bloom_filter_contains_vec(const struct bloom_filter *filter,
 uint32_t test_bloom_murmur3_seeded(uint32_t seed, const char *data, size_t len,
 				   int version)
 {
-	assert(version == 1 || version == 2);
-
 	if (version == 2)
 		return murmur3_seeded_v2(seed, data, len);
-	else
+	else if (version == 1)
 		return murmur3_seeded_v1(seed, data, len);
+	else
+		BUG("unexpected bloom version: %d", version);
 }
