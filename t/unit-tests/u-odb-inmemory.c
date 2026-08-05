@@ -100,7 +100,7 @@ void test_odb_inmemory__read_written_object(void)
 void test_odb_inmemory__read_stream_object(void)
 {
 	struct odb_source_inmemory *source = odb_source_inmemory_new(odb);
-	struct odb_read_stream *stream;
+	struct odb_stream *stream;
 	struct object_id written_oid;
 	const char data[] = "foobar";
 	char buf[3] = { 0 };
@@ -112,15 +112,15 @@ void test_odb_inmemory__read_stream_object(void)
 	cl_assert_equal_i(stream->type, OBJ_BLOB);
 	cl_assert_equal_u(stream->size, 6);
 
-	cl_assert_equal_i(odb_read_stream_read(stream, buf, 2), 2);
+	cl_assert_equal_i(odb_stream_read(stream, buf, 2), 2);
 	cl_assert_equal_s(buf, "fo");
-	cl_assert_equal_i(odb_read_stream_read(stream, buf, 2), 2);
+	cl_assert_equal_i(odb_stream_read(stream, buf, 2), 2);
 	cl_assert_equal_s(buf, "ob");
-	cl_assert_equal_i(odb_read_stream_read(stream, buf, 2), 2);
+	cl_assert_equal_i(odb_stream_read(stream, buf, 2), 2);
 	cl_assert_equal_s(buf, "ar");
-	cl_assert_equal_i(odb_read_stream_read(stream, buf, 2), 0);
+	cl_assert_equal_i(odb_stream_read(stream, buf, 2), 0);
 
-	odb_read_stream_close(stream);
+	odb_stream_close(stream);
 	odb_source_free(&source->base);
 }
 

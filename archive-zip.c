@@ -309,7 +309,7 @@ static int write_zip_entry(struct archiver_args *args,
 	enum zip_method method;
 	unsigned char *out;
 	void *deflated = NULL;
-	struct odb_read_stream *stream = NULL;
+	struct odb_stream *stream = NULL;
 	unsigned long flags = 0;
 	int is_binary = -1;
 	const char *path_without_prefix = path + args->baselen;
@@ -428,7 +428,7 @@ static int write_zip_entry(struct archiver_args *args,
 		ssize_t readlen;
 
 		for (;;) {
-			readlen = odb_read_stream_read(stream, buf, sizeof(buf));
+			readlen = odb_stream_read(stream, buf, sizeof(buf));
 			if (readlen <= 0)
 				break;
 			crc = crc32(crc, buf, readlen);
@@ -438,7 +438,7 @@ static int write_zip_entry(struct archiver_args *args,
 							    buf, readlen);
 			write_or_die(1, buf, readlen);
 		}
-		odb_read_stream_close(stream);
+		odb_stream_close(stream);
 		if (readlen)
 			return readlen;
 
@@ -461,7 +461,7 @@ static int write_zip_entry(struct archiver_args *args,
 		zstream.avail_out = sizeof(compressed);
 
 		for (;;) {
-			readlen = odb_read_stream_read(stream, buf, sizeof(buf));
+			readlen = odb_stream_read(stream, buf, sizeof(buf));
 			if (readlen <= 0)
 				break;
 			crc = crc32(crc, buf, readlen);
@@ -485,7 +485,7 @@ static int write_zip_entry(struct archiver_args *args,
 			}
 
 		}
-		odb_read_stream_close(stream);
+		odb_stream_close(stream);
 		if (readlen)
 			return readlen;
 

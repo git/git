@@ -73,12 +73,12 @@ static int odb_source_inmemory_read_object_info(struct odb_source *source,
 }
 
 struct odb_read_stream_inmemory {
-	struct odb_read_stream base;
+	struct odb_stream base;
 	const unsigned char *buf;
 	size_t offset;
 };
 
-static ssize_t odb_read_stream_inmemory_read(struct odb_read_stream *stream,
+static ssize_t odb_read_stream_inmemory_read(struct odb_stream *stream,
 					     char *buf, size_t buf_len)
 {
 	struct odb_read_stream_inmemory *inmemory =
@@ -94,12 +94,12 @@ static ssize_t odb_read_stream_inmemory_read(struct odb_read_stream *stream,
 	return bytes;
 }
 
-static int odb_read_stream_inmemory_close(struct odb_read_stream *stream UNUSED)
+static int odb_read_stream_inmemory_close(struct odb_stream *stream UNUSED)
 {
 	return 0;
 }
 
-static int odb_source_inmemory_read_object_stream(struct odb_read_stream **out,
+static int odb_source_inmemory_read_object_stream(struct odb_stream **out,
 						  struct odb_source *source,
 						  const struct object_id *oid)
 {

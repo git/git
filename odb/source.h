@@ -26,7 +26,7 @@ enum odb_source_type {
 };
 
 struct object_id;
-struct odb_read_stream;
+struct odb_stream;
 struct strvec;
 
 /*
@@ -125,7 +125,7 @@ struct odb_source {
 	 * The callback is expected to return a negative error code in case
 	 * creating the object stream has failed, 0 otherwise.
 	 */
-	int (*read_object_stream)(struct odb_read_stream **out,
+	int (*read_object_stream)(struct odb_stream **out,
 				  struct odb_source *source,
 				  const struct object_id *oid);
 
@@ -339,7 +339,7 @@ static inline int odb_source_read_object_info(struct odb_source *source,
  * Create a new read stream for the given object ID. Returns 0 on success, a
  * negative error code otherwise.
  */
-static inline int odb_source_read_object_stream(struct odb_read_stream **out,
+static inline int odb_source_read_object_stream(struct odb_stream **out,
 						struct odb_source *source,
 						const struct object_id *oid)
 {

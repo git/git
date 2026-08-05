@@ -12,7 +12,7 @@
 
 /* in odb.h */
 struct object_info;
-struct odb_read_stream;
+struct odb_stream;
 
 struct packed_git {
 	struct pack_window *windows;
@@ -306,7 +306,7 @@ off_t get_delta_base(struct packed_git *p, struct pack_window **w_curs,
 		     off_t *curpos, enum object_type type,
 		     off_t delta_obj_offset);
 
-int packfile_read_object_stream(struct odb_read_stream **out,
+int packfile_read_object_stream(struct odb_stream **out,
 				const struct object_id *oid,
 				struct packed_git *pack,
 				off_t offset);

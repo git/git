@@ -129,7 +129,7 @@ static void write_trailer(void)
  */
 static int stream_blocked(struct repository *r, const struct object_id *oid)
 {
-	struct odb_read_stream *st;
+	struct odb_stream *st;
 	char buf[BLOCKSIZE];
 	ssize_t readlen;
 
@@ -137,12 +137,12 @@ static int stream_blocked(struct repository *r, const struct object_id *oid)
 	if (!st)
 		return error(_("cannot stream blob %s"), oid_to_hex(oid));
 	for (;;) {
-		readlen = odb_read_stream_read(st, buf, sizeof(buf));
+		readlen = odb_stream_read(st, buf, sizeof(buf));
 		if (readlen <= 0)
 			break;
 		do_write_blocked(buf, readlen);
 	}
-	odb_read_stream_close(st);
+	odb_stream_close(st);
 	if (!readlen)
 		finish_record();
 	return readlen;

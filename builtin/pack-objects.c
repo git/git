@@ -411,7 +411,7 @@ static unsigned long do_compress(void **pptr, unsigned long size)
 	return stream.total_out;
 }
 
-static unsigned long write_large_blob_data(struct odb_read_stream *st, struct hashfile *f,
+static unsigned long write_large_blob_data(struct odb_stream *st, struct hashfile *f,
 					   const struct object_id *oid)
 {
 	git_zstream stream;
@@ -425,7 +425,7 @@ static unsigned long write_large_blob_data(struct odb_read_stream *st, struct ha
 	for (;;) {
 		ssize_t readlen;
 		int zret = Z_OK;
-		readlen = odb_read_stream_read(st, ibuf, sizeof(ibuf));
+		readlen = odb_stream_read(st, ibuf, sizeof(ibuf));
 		if (readlen == -1)
 			die(_("unable to read %s"), oid_to_hex(oid));
 
@@ -521,7 +521,7 @@ static unsigned long write_no_reuse_object(struct hashfile *f, struct object_ent
 	unsigned hdrlen;
 	enum object_type type;
 	void *buf;
-	struct odb_read_stream *st = NULL;
+	struct odb_stream *st = NULL;
 	const unsigned hashsz = the_hash_algo->rawsz;
 
 	if (!usable_delta) {
@@ -589,7 +589,7 @@ static unsigned long write_no_reuse_object(struct hashfile *f, struct object_ent
 			dheader[--pos] = 128 | (--ofs & 127);
 		if (limit && hdrlen + sizeof(dheader) - pos + datalen + hashsz >= limit) {
 			if (st)
-				odb_read_stream_close(st);
+				odb_stream_close(st);
 			free(buf);
 			return 0;
 		}
@@ -603,7 +603,7 @@ static unsigned long write_no_reuse_object(struct hashfile *f, struct object_ent
 		 */
 		if (limit && hdrlen + hashsz + datalen + hashsz >= limit) {
 			if (st)
-				odb_read_stream_close(st);
+				odb_stream_close(st);
 			free(buf);
 			return 0;
 		}
@@ -613,7 +613,7 @@ static unsigned long write_no_reuse_object(struct hashfile *f, struct object_ent
 	} else {
 		if (limit && hdrlen + datalen + hashsz >= limit) {
 			if (st)
-				odb_read_stream_close(st);
+				odb_stream_close(st);
 			free(buf);
 			return 0;
 		}
@@ -621,7 +621,7 @@ static unsigned long write_no_reuse_object(struct hashfile *f, struct object_ent
 	}
 	if (st) {
 		datalen = write_large_blob_data(st, f, &entry->idx.oid);
-		odb_read_stream_close(st);
+		odb_stream_close(st);
 	} else {
 		hashwrite(f, buf, datalen);
 		free(buf);

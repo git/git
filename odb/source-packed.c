@@ -70,7 +70,7 @@ static int odb_source_packed_read_object_info(struct odb_source *source,
 	return 0;
 }
 
-static int odb_source_packed_read_object_stream(struct odb_read_stream **out,
+static int odb_source_packed_read_object_stream(struct odb_stream **out,
 						struct odb_source *source,
 						const struct object_id *oid)
 {

@@ -63,7 +63,7 @@ static int odb_source_files_read_object_info(struct odb_source *source,
 	return -1;
 }
 
-static int odb_source_files_read_object_stream(struct odb_read_stream **out,
+static int odb_source_files_read_object_stream(struct odb_stream **out,
 					       struct odb_source *source,
 					       const struct object_id *oid)
 {

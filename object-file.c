@@ -122,7 +122,7 @@ int check_object_signature(struct repository *r, const struct object_id *oid,
 }
 
 int stream_object_signature(struct repository *r,
-			    struct odb_read_stream *st,
+			    struct odb_stream *st,
 			    const struct object_id *oid)
 {
 	struct object_id real_oid;
@@ -138,7 +138,7 @@ int stream_object_signature(struct repository *r,
 	git_hash_update(&c, hdr, hdrlen);
 	for (;;) {
 		char buf[1024 * 16];
-		ssize_t readlen = odb_read_stream_read(st, buf, sizeof(buf));
+		ssize_t readlen = odb_stream_read(st, buf, sizeof(buf));
 		if (readlen < 0)
 			return -1;
 		if (!readlen)

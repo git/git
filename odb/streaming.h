@@ -8,19 +8,19 @@
 #include "odb.h"
 
 struct object_database;
-struct odb_read_stream;
+struct odb_stream;
 struct stream_filter;
 
-typedef int (*odb_read_stream_close_fn)(struct odb_read_stream *);
-typedef ssize_t (*odb_read_stream_read_fn)(struct odb_read_stream *, char *, size_t);
+typedef int (*odb_stream_close_fn)(struct odb_stream *);
+typedef ssize_t (*odb_stream_read_fn)(struct odb_stream *, char *, size_t);
 
 /*
  * A stream that can be used to read an object from the object database without
  * loading all of it into memory.
  */
-struct odb_read_stream {
-	odb_read_stream_close_fn close;
-	odb_read_stream_read_fn read;
+struct odb_stream {
+	odb_stream_close_fn close;
+	odb_stream_read_fn read;
 	enum object_type type;
 	size_t size; /* inflated size of full object */
 };
@@ -31,22 +31,22 @@ struct odb_read_stream {
  *
  * Returns the stream on success, a `NULL` pointer otherwise.
  */
-struct odb_read_stream *odb_read_stream_open(struct object_database *odb,
-					     const struct object_id *oid,
-					     struct stream_filter *filter);
+struct odb_stream *odb_read_stream_open(struct object_database *odb,
+					const struct object_id *oid,
+					struct stream_filter *filter);
 
 /*
- * Close the given read stream and release all resources associated with it.
+ * Close the given object stream and release all resources associated with it.
  * Returns 0 on success, a negative error code otherwise.
  */
-int odb_read_stream_close(struct odb_read_stream *stream);
+int odb_stream_close(struct odb_stream *stream);
 
 /*
  * Read data from the stream into the buffer. Returns 0 on EOF and the number
  * of bytes read on success. Returns a negative error code in case reading from
  * the stream fails.
  */
-ssize_t odb_read_stream_read(struct odb_read_stream *stream, void *buf, size_t len);
+ssize_t odb_stream_read(struct odb_stream *stream, void *buf, size_t len);
 
 /*
  * A stream that provides an object to be written to the object database without

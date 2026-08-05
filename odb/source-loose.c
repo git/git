@@ -278,7 +278,7 @@ out:
 }
 
 struct odb_loose_read_stream {
-	struct odb_read_stream base;
+	struct odb_stream base;
 	git_zstream z;
 	enum {
 		ODB_LOOSE_READ_STREAM_INUSE,
@@ -292,7 +292,7 @@ struct odb_loose_read_stream {
 	int hdr_used;
 };
 
-static ssize_t read_istream_loose(struct odb_read_stream *_st, char *buf, size_t sz)
+static ssize_t read_istream_loose(struct odb_stream *_st, char *buf, size_t sz)
 {
 	struct odb_loose_read_stream *st =
 		container_of(_st, struct odb_loose_read_stream, base);
@@ -339,7 +339,7 @@ static ssize_t read_istream_loose(struct odb_read_stream *_st, char *buf, size_t
 	return total_read;
 }
 
-static int close_istream_loose(struct odb_read_stream *_st)
+static int close_istream_loose(struct odb_stream *_st)
 {
 	struct odb_loose_read_stream *st =
 		container_of(_st, struct odb_loose_read_stream, base);
@@ -350,7 +350,7 @@ static int close_istream_loose(struct odb_read_stream *_st)
 	return 0;
 }
 
-static int odb_source_loose_read_object_stream(struct odb_read_stream **out,
+static int odb_source_loose_read_object_stream(struct odb_stream **out,
 					       struct odb_source *source,
 					       const struct object_id *oid)
 {
