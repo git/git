@@ -379,7 +379,7 @@ struct dir_rename_info {
 
 static char *get_dirname(const char *filename)
 {
-	char *slash = strrchr(filename, '/');
+	const char *slash = strrchr(filename, '/');
 	return slash ? xstrndup(filename, slash - filename) : xstrdup("");
 }
 

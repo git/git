@@ -725,7 +725,7 @@ static int has_proxy_cert_password(void)
 static int redact_sensitive_header(struct strbuf *header, size_t offset)
 {
 	int ret = 0;
-	const char *sensitive_header;
+	char *sensitive_header;
 
 	if (trace_curl_redact &&
 	    (skip_iprefix(header->buf + offset, "Authorization:", &sensitive_header) ||
@@ -742,7 +742,7 @@ static int redact_sensitive_header(struct strbuf *header, size_t offset)
 	} else if (trace_curl_redact &&
 		   skip_iprefix(header->buf + offset, "Cookie:", &sensitive_header)) {
 		struct strbuf redacted_header = STRBUF_INIT;
-		const char *cookie;
+		char *cookie;
 
 		while (isspace(*sensitive_header))
 			sensitive_header++;
@@ -1346,6 +1346,14 @@ void http_init(struct remote *remote, const char *url, int proactive_auth)
 
 	if (curl_global_init(CURL_GLOBAL_ALL) != CURLE_OK)
 		die("curl_global_init failed");
+
+#ifdef GIT_CURL_HAVE_GLOBAL_TRACE
+	{
+		const char *comp = getenv("GIT_TRACE_CURL_COMPONENTS");
+		if (comp)
+			curl_global_trace(comp);
+	}
+#endif
 
 	if (proactive_auth && http_proactive_auth == PROACTIVE_AUTH_NONE)
 		http_proactive_auth = PROACTIVE_AUTH_IF_CREDENTIALS;
@@ -2192,6 +2200,45 @@ static int http_request(const char *url,
 	return ret;
 }
 
+#ifndef GIT_CURL_HAVE_CURL_URL
+#define strip_url_credential(in) NULL
+#else
+static char *strip_url_credential(const char *in)
+{
+	char *ret = NULL;
+	CURLU *url;
+
+	url = curl_url();
+	if (!url)
+		goto out;
+
+	if (curl_url_set(url, CURLUPART_URL, in, 0))
+		goto out;
+
+	curl_url_set(url, CURLUPART_USER, NULL, 0);
+	curl_url_set(url, CURLUPART_PASSWORD, NULL, 0);
+	curl_url_get(url, CURLUPART_URL, &ret, 0);
+
+out:
+	curl_url_cleanup(url);
+	return ret;
+}
+#endif
+
+static int match_effective_url(const char *asked, const char *got)
+{
+	char *stripped;
+	int ret;
+
+	if (!strcmp(asked, got))
+		return 1;
+
+	stripped = strip_url_credential(asked);
+	ret = stripped && !strcmp(stripped, got);
+	curl_free(stripped);
+	return ret;
+}
+
 /*
  * Update the "base" url to a more appropriate value, as deduced by
  * redirects seen when requesting a URL starting with "url".
@@ -2224,7 +2271,7 @@ static int update_url_from_redirect(struct strbuf *base,
 	const char *tail;
 	size_t new_len;
 
-	if (!strcmp(asked, got->buf))
+	if (match_effective_url(asked, got->buf))
 		return 0;
 
 	if (!skip_prefix(asked, base->buf, &tail))

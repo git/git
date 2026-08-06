@@ -184,7 +184,7 @@ struct packet_reader {
 	int pktlen;
 
 	/* the last line read */
-	const char *line;
+	char *line;
 
 	/* indicates if a line has been peeked */
 	int line_peeked;

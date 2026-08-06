@@ -124,6 +124,7 @@ ifeq ($(uname_S),Darwin)
 	# - MacOS 10.0.* and MacOS 10.1.0 = Darwin 1.*
 	# - MacOS 10.x.* = Darwin (x+4).* for (1 <= x)
 	# i.e. "begins with [15678] and a dot" means "10.4.* or older".
+	DARWIN_MAJOR_VERSION = $(shell expr "$(uname_R)" : '\([0-9]*\)\.')
         ifeq ($(shell expr "$(uname_R)" : '[15678]\.'),2)
 		OLD_ICONV = UnfortunatelyYes
 		NO_APPLE_COMMON_CRYPTO = YesPlease
@@ -149,28 +150,14 @@ ifeq ($(uname_S),Darwin)
 	CSPRNG_METHOD = arc4random
 	USE_ENHANCED_BASIC_REGULAR_EXPRESSIONS = YesPlease
 
-	# Workaround for `gettext` being keg-only and not even being linked via
-	# `brew link --force gettext`, should be obsolete as of
-	# https://github.com/Homebrew/homebrew-core/pull/53489
-        ifeq ($(shell test -d /usr/local/opt/gettext/ && echo y),y)
-		BASIC_CFLAGS += -I/usr/local/include -I/usr/local/opt/gettext/include
-		BASIC_LDFLAGS += -L/usr/local/lib -L/usr/local/opt/gettext/lib
-                ifeq ($(shell test -x /usr/local/opt/gettext/bin/msgfmt && echo y),y)
-			MSGFMT = /usr/local/opt/gettext/bin/msgfmt
-                endif
-	# On newer ARM-based machines the default installation path has changed to
-	# /opt/homebrew. Include it in our search paths so that the user does not
-	# have to configure this manually.
-	#
-	# Note that we do not employ the same workaround as above where we manually
-	# add gettext. The issue was fixed more than three years ago by now, and at
-	# that point there haven't been any ARM-based Macs yet.
-        else ifeq ($(shell test -d /opt/homebrew/ && echo y),y)
-		BASIC_CFLAGS += -I/opt/homebrew/include
-		BASIC_LDFLAGS += -L/opt/homebrew/lib
-                ifeq ($(shell test -x /opt/homebrew/bin/msgfmt && echo y),y)
-			MSGFMT = /opt/homebrew/bin/msgfmt
-                endif
+        ifeq ($(uname_M),arm64)
+		HOMEBREW_PREFIX = /opt/homebrew
+        else
+		HOMEBREW_PREFIX = /usr/local
+        endif
+        ifeq ($(shell test "$(DARWIN_MAJOR_VERSION)" -ge 24 && echo 1),1)
+		USE_HOMEBREW_LIBICONV = UnfortunatelyYes
+		NEEDS_GOOD_LIBICONV = UnfortunatelyYes
         endif
 
 	# The builtin FSMonitor on MacOS builds upon Simple-IPC.  Both require
@@ -726,9 +713,8 @@ ifeq ($(uname_S),MINGW)
         ifeq (MINGW32,$(MSYSTEM))
 		prefix = /mingw32
 		HOST_CPU = i686
-		BASIC_LDFLAGS += -Wl,--pic-executable,-e,_mainCRTStartup
-        endif
-        ifeq (MINGW64,$(MSYSTEM))
+		BASIC_LDFLAGS += -Wl,--pic-executable,-e,_mainCRTStartup -Wl,--large-address-aware
+        else ifeq (MINGW64,$(MSYSTEM))
 		prefix = /mingw64
 		HOST_CPU = x86_64
 		BASIC_LDFLAGS += -Wl,--pic-executable,-e,mainCRTStartup
@@ -737,8 +723,6 @@ ifeq ($(uname_S),MINGW)
 		HOST_CPU = aarch64
 		BASIC_LDFLAGS += -Wl,--pic-executable,-e,mainCRTStartup
         else
-		COMPAT_CFLAGS += -D_USE_32BIT_TIME_T
-		BASIC_LDFLAGS += -Wl,--large-address-aware
         endif
 	CC = gcc
 	COMPAT_CFLAGS += -D__USE_MINGW_ANSI_STDIO=0 -DDETECT_MSYS_TTY \
@@ -750,9 +734,6 @@ ifeq ($(uname_S),MINGW)
 	HAVE_LIBCHARSET_H = YesPlease
 	USE_GETTEXT_SCHEME = fallthrough
 	USE_LIBPCRE = YesPlease
-        ifneq (CLANGARM64,$(MSYSTEM))
-		USE_NED_ALLOCATOR = YesPlease
-        endif
         ifeq (/mingw64,$(subst 32,64,$(subst clangarm,mingw,$(prefix))))
 		# Move system config into top-level /etc/
 		ETC_GITCONFIG = ../etc/gitconfig

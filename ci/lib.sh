@@ -356,6 +356,9 @@ linux-musl-meson)
 	;;
 linux-leaks|linux-reftable-leaks)
 	export SANITIZE=leak
+	export NO_CVS_TESTS=LetsSaveSomeTime
+	export NO_SVN_TESTS=LetsSaveSomeTime
+	export NO_P4_TESTS=LetsSaveSomeTime
 	;;
 linux-asan-ubsan)
 	export SANITIZE=address,undefined
