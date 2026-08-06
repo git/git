@@ -14,7 +14,6 @@
 #include "ref-filter.h"
 #include "refs.h"
 #include "revision.h"
-#include "setup.h"
 #include "strbuf.h"
 #include "string-list.h"
 #include "shallow.h"
