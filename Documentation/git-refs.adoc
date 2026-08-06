@@ -46,7 +46,7 @@ The ref format migration has several known limitations in its current form:
   ongoing migration. Concurrent writes can lead to an inconsistent migrated
   state. Users are expected to block writes on a higher level. If your
   repository is registered for scheduled maintenance, it is recommended to
-  unregister it first with git-maintenance(1).
+  unregister it first with linkgit:git-maintenance[1].
 
 These limitations may eventually be lifted.
 --
