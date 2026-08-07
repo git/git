@@ -750,7 +750,6 @@ static int check_maybe_different_in_bloom_filter(struct rev_info *revs,
 						 struct commit *commit)
 {
 	struct bloom_filter *filter;
-	int result = 0;
 
 	if (!revs->bloom_keyvecs_nr)
 		return -1;
@@ -765,18 +764,29 @@ static int check_maybe_different_in_bloom_filter(struct rev_info *revs,
 		return -1;
 	}
 
-	for (size_t nr = 0; !result && nr < revs->bloom_keyvecs_nr; nr++) {
-		result = bloom_filter_contains_vec(filter,
-						   revs->bloom_keyvecs[nr],
-						   revs->bloom_filter_settings);
+	if (revs_maybe_changed_in_bloom(revs, filter)) {
+		count_bloom_filter_maybe++;
+		return 1;
 	}
 
-	if (result)
-		count_bloom_filter_maybe++;
-	else
-		count_bloom_filter_definitely_not++;
+	count_bloom_filter_definitely_not++;
 
-	return result;
+	return 0;
+}
+
+bool revs_maybe_changed_in_bloom(struct rev_info *revs,
+				 struct bloom_filter *filter)
+{
+	if (!revs->bloom_keyvecs_nr || !filter)
+		return true;
+
+	for (size_t nr = 0; nr < revs->bloom_keyvecs_nr; nr++)
+		if (bloom_filter_contains_vec(filter,
+					      revs->bloom_keyvecs[nr],
+					      revs->bloom_filter_settings))
+			return true;
+
+	return false;
 }
 
 static int rev_compare_tree(struct rev_info *revs,
