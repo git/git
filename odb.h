@@ -118,6 +118,51 @@ struct object_database *odb_new(struct repository *repo,
 /* Free the object database and release all resources. */
 void odb_free(struct object_database *o);
 
+enum odb_optimize_strategy {
+	ODB_OPTIMIZE_INCREMENTAL,
+	ODB_OPTIMIZE_GEOMETRIC,
+};
+
+enum odb_optimize_flags {
+	/* Enable verbose logging and progress reporting. */
+	ODB_OPTIMIZE_VERBOSE = (1 << 0),
+
+	/* Perform auto-maintenance, only optimizing objects as required. */
+	ODB_OPTIMIZE_AUTO = (1 << 1),
+
+	/* Recompute existing deltas. */
+	ODB_OPTIMIZE_NO_REUSE_DELTAS = (1 << 2),
+};
+
+struct odb_optimize_options {
+	enum odb_optimize_strategy strategy;
+	enum odb_optimize_flags flags;
+	const char *prune_expire;
+	const char *expire_to;
+	int depth;
+	int window;
+
+	/* Backend-specific options. */
+	int keep_largest_pack;
+	int cruft_packs;
+	unsigned long max_cruft_size;
+};
+
+/*
+ * Optimize the object database. Returns 0 on success, a negative error code
+ * otherwise.
+ */
+int odb_optimize(struct object_database *odb,
+		 const struct odb_optimize_options *opts);
+
+/*
+ * Check whether optimization of the object database is required given the
+ * provided options. Returns true if optimization should be performed, false
+ * otherwise.
+ */
+bool odb_optimize_required(struct object_database *odb,
+			   const struct odb_optimize_options *opts);
+
 /*
  * Close the object database and all of its sources so that any held resources
  * will be released. The database can still be used after closing it, in which

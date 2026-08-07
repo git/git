@@ -266,6 +266,13 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 
 		if (kinds == FILTER_REFS_BRANCHES) {
 			const char *path;
+			if ((path = branch_bisecting(name))) {
+				error(_("cannot delete branch '%s' "
+					"used by worktree at '%s' for bisect"),
+					      bname.buf, path);
+				ret = 1;
+				continue;
+			}
 			if ((path = branch_checked_out(name))) {
 				error(_("cannot delete branch '%s' "
 					"used by worktree at '%s'"),

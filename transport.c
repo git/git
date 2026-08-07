@@ -1597,8 +1597,11 @@ int transport_push(struct repository *r,
 	if (!(flags & (TRANSPORT_PUSH_DRY_RUN |
 		       TRANSPORT_RECURSE_SUBMODULES_ONLY))) {
 		struct ref *ref;
+		struct remote *tracking_remote = repo_remote_for_push_tracking(
+			r, transport->remote);
+
 		for (ref = remote_refs; ref; ref = ref->next)
-			transport_update_tracking_ref(transport->remote, ref, verbose);
+			transport_update_tracking_ref(tracking_remote, ref, verbose);
 	}
 
 	if (porcelain && !push_ret)
