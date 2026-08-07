@@ -789,8 +789,11 @@ static void parse_cmd_contents(struct batch_options *opt,
 			     struct strbuf *output,
 			     struct expand_data *data)
 {
+	enum object_type *saved_typep = data->info.typep;
+	data->info.typep = &data->type;
 	opt->batch_mode = BATCH_MODE_CONTENTS;
 	batch_one_object(line, output, opt, data);
+	data->info.typep = saved_typep;
 }
 
 static void parse_cmd_info(struct batch_options *opt,
