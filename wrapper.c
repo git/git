@@ -323,17 +323,54 @@ ssize_t write_in_full(int fd, const void *buf, size_t count)
 	return total;
 }
 
+ssize_t xwritev(int fd, struct iovec *iov, int iovcnt)
+{
+	size_t allowed = MAX_IO_SIZE;
+	int i;
+
+	/*
+	 * Some platforms define a comparatively small `MAX_IO_SIZE` that
+	 * limits how many bytes can be written with a single call to
+	 * write(3p) or writev(3p); exceeding that limit causes the syscall to
+	 * fail with EINVAL. Just like xwrite() chomps overly large requests
+	 * for write(3p), pretend that the underlying writev(3p) performed a
+	 * short write by only passing along the leading iovec entries that
+	 * fit into that limit.
+	 */
+	for (i = 0; i < iovcnt; i++) {
+		if (iov[i].iov_len > allowed) {
+			/*
+			 * If the first buffer is larger than MAX_IO_SIZE,
+			 * let xwrite() deal with it.
+			 */
+			if (!i)
+				return xwrite(fd, iov->iov_base, iov->iov_len);
+			break;
+		}
+		allowed -= iov[i].iov_len;
+	}
+
+	while (1) {
+		ssize_t bytes_written = writev(fd, iov, i);
+		if (bytes_written < 0) {
+			if (errno == EINTR)
+				continue;
+			if (handle_nonblock(fd, POLLOUT, errno))
+				continue;
+		}
+
+		return bytes_written;
+	}
+}
+
 ssize_t writev_in_full(int fd, struct iovec *iov, int iovcnt)
 {
 	ssize_t total_written = 0;
 
 	while (iovcnt) {
-		ssize_t bytes_written = writev(fd, iov, iovcnt);
-		if (bytes_written < 0) {
-			if (errno == EINTR || errno == EAGAIN)
-				continue;
+		ssize_t bytes_written = xwritev(fd, iov, iovcnt);
+		if (bytes_written < 0)
 			return -1;
-		}
 		if (!bytes_written) {
 			errno = ENOSPC;
 			return -1;
