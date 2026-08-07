@@ -245,8 +245,8 @@ enum apply_repository_format_flags {
 
 /*
  * Apply the given repository format to the repo. This initializes extensions
- * and basic data structures required for normal operation. Returns 0 on
- * success, a negative error code when the format is not valid as determined by
+ * required for normal operation. Returns 0 on success, a negative error code
+ * when the format is not valid as determined by
  * `verify_repository_format()`.
  */
 int apply_repository_format(struct repository *repo,

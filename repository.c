@@ -294,6 +294,7 @@ int repo_init(struct repository *repo,
 		warning("%s", err.buf);
 		goto error;
 	}
+	repo->objects = odb_new(repo, 0);
 
 	if (worktree)
 		repo_set_worktree(repo, worktree);
