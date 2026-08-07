@@ -26,7 +26,7 @@ struct oid_array;
  */
 void fetch_object_info(enum protocol_version version,
 		       const struct string_list *server_options,
-		       struct oid_array *oids,
+		       const struct oid_array *oids,
 		       struct packet_reader *reader,
 		       struct fetch_object_info_results *results,
 		       int stateless_rpc,

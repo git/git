@@ -724,10 +724,8 @@ static int get_remote_info(int argc,
 		goto cleanup;
 	}
 
-	gtransport->smart_options->object_info_oids = object_info_oids;
-
-	gtransport->smart_options->object_info_results = results;
-	retval = transport_fetch_object_info(gtransport);
+	retval = transport_fetch_object_info(gtransport, object_info_oids,
+					     results);
 cleanup:
 	transport_disconnect(gtransport);
 	return retval;

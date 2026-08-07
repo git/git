@@ -7,6 +7,8 @@ struct ref;
 struct transport;
 struct strvec;
 struct transport_ls_refs_options;
+struct oid_array;
+struct fetch_object_info_results;
 
 struct transport_vtable {
 	/**
@@ -51,7 +53,9 @@ struct transport_vtable {
 	 *
 	 * Uses object-info capability of v2 protocol.
 	 */
-	int (*fetch_object_info)(struct transport *transport);
+	int (*fetch_object_info)(struct transport *transport,
+				 const struct oid_array *oids,
+				 struct fetch_object_info_results *results);
 
 	/**
 	 * Push the objects and refs. Send the necessary objects, and
