@@ -115,7 +115,6 @@ enum object_creation_mode {
 };
 
 struct repo_config_values {
-	/* section "core" config values */
 	char *attributes_file;
 	char *excludes_file;
 	char *editor_program;
@@ -139,11 +138,7 @@ struct repo_config_values {
 	int ignore_case;
 	int trust_executable_bit;
 	int has_symlinks;
-
-	/* section "sparse" config values */
 	int sparse_expect_files_outside_of_patterns;
-
-	/* section "branch" config values */
 	enum branch_track branch_track;
 };
 
