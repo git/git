@@ -3332,6 +3332,7 @@ static void cat_blob_write(const char *buf, unsigned long size)
 static void cat_blob(struct object_entry *oe, struct object_id *oid)
 {
 	struct strbuf line = STRBUF_INIT;
+	struct iovec iov[3];
 	unsigned long size;
 	enum object_type type = 0;
 	char *buf;
@@ -3365,10 +3366,21 @@ static void cat_blob(struct object_entry *oe, struct object_id *oid)
 	strbuf_reset(&line);
 	strbuf_addf(&line, "%s %s %"PRIuMAX"\n", oid_to_hex(oid),
 		    type_name(type), (uintmax_t)size);
-	cat_blob_write(line.buf, line.len);
+
+	/*
+	 * Write the header, the payload and the trailing newline with a
+	 * single writev(3p) call instead of three separate write(3p) calls.
+	 */
+	iov[0].iov_base = line.buf;
+	iov[0].iov_len = line.len;
+	iov[1].iov_base = buf;
+	iov[1].iov_len = size;
+	iov[2].iov_base = (void *) "\n";
+	iov[2].iov_len = 1;
+
+	if (writev_in_full(cat_blob_fd, iov, ARRAY_SIZE(iov)) < 0)
+		die_errno(_("write to frontend failed"));
 	strbuf_release(&line);
-	cat_blob_write(buf, size);
-	cat_blob_write("\n", 1);
 	if (oe && oe->pack_id == pack_id) {
 		last_blob.offset = oe->idx.offset;
 		strbuf_attach(&last_blob.data, buf, size, size + 1);
