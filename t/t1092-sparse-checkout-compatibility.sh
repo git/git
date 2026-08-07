@@ -384,6 +384,54 @@ test_expect_success 'add, commit, checkout' '
 	test_all_match git checkout -
 '
 
+test_expect_success 'intent-to-add entries outside sparse-checkout' '
+	init_repos &&
+
+	write_script edit-contents <<-\EOF &&
+	echo text >>$1
+	EOF
+
+	test_sparse_match git sparse-checkout set deep folder1 &&
+	run_on_sparse mkdir -p folder1 &&
+	run_on_all ../edit-contents folder1/newita &&
+	test_sparse_match git add -N folder1/newita &&
+
+	test_sparse_match git sparse-checkout set deep &&
+	test_sparse_match git status --porcelain=v2 &&
+	test_sparse_match git ls-files --stage
+'
+
+test_expect_success 'intent-to-add with --sparse outside sparse-checkout' '
+	init_repos &&
+
+	write_script edit-contents <<-\EOF &&
+	echo text >>$1
+	EOF
+
+	run_on_all mkdir -p folder1 &&
+	run_on_all ../edit-contents folder1/newita &&
+	test_all_match git add --sparse --intent-to-add folder1/newita &&
+
+	test_all_match git status --porcelain=v2 &&
+	test_all_match git ls-files --stage &&
+	test_all_match git diff --cached --stat &&
+
+	# Ensure sparse index stores correct sparse directories and
+	# intent-to-add path.
+	git -C sparse-index ls-files --format="%(path)" --sparse >out &&
+
+	# These paths should be present in index as-is.
+	test_grep "^before/\$" out &&
+	test_grep "^folder1/newita\$" out &&
+	test_grep "^folder2/\$" out &&
+	test_grep "^x/\$" out &&
+
+	# folder/0/ could theoretically be collapsed to a sparse
+	# directory entry, but the current implementation avoids the
+	# reduction because of folder1/newita
+	test_grep "^folder1/0/0/0\$" out
+'
+
 test_expect_success 'git add, checkout, and reset with -p' '
 	init_repos &&
 
