@@ -164,6 +164,17 @@ int bloom_filter_contains_vec(const struct bloom_filter *filter,
 			      const struct bloom_keyvec *v,
 			      const struct bloom_filter_settings *settings);
 
+/*
+ * bloom_filter_contains_any_vec - Check if any key in a key vector is in the
+ * Bloom filter.
+ *
+ * Returns 1 if **any** key in the vector is present in the filter, 0 if none
+ * of them are.
+ */
+int bloom_filter_contains_any_vec(const struct bloom_filter *filter,
+				  const struct bloom_keyvec *v,
+				  const struct bloom_filter_settings *settings);
+
 uint32_t test_bloom_murmur3_seeded(uint32_t seed, const char *data, size_t len,
 				   int version);
 
