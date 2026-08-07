@@ -272,6 +272,18 @@ static bool maybe_changed_path(struct last_modified *lm,
 	if (!filter)
 		return true;
 
+	/*
+	 * With --show-trees we also track the tree entries containing the
+	 * paths, so a change to any of those parent directories matters too.
+	 */
+	if (lm->show_trees) {
+		if (!revs_maybe_changed_in_bloom_with_parents(&lm->rev, filter))
+			return false;
+	} else {
+		if (!revs_maybe_changed_in_bloom(&lm->rev, filter))
+			return false;
+	}
+
 	hashmap_for_each_entry(&lm->paths, &iter, ent, hashent) {
 		if (active && !bitmap_get(active, ent->diff_idx))
 			continue;
