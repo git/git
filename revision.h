@@ -505,6 +505,14 @@ int prepare_revision_walk(struct rev_info *revs);
 bool revs_maybe_changed_in_bloom(struct rev_info *revs,
 				 struct bloom_filter *filter);
 
+/**
+ * Same as revs_maybe_changed_in_bloom(), but a change to any of the directories
+ * leading up to a path counts as well. Callers that track the tree entries
+ * containing the paths, and not just the paths themselves, need this.
+ */
+bool revs_maybe_changed_in_bloom_with_parents(struct rev_info *revs,
+					      struct bloom_filter *filter);
+
 /* Drain the commits linked list into the priority queue. */
 void rev_info_commit_list_to_queue(struct rev_info *revs);
 /**
