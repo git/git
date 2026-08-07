@@ -1765,7 +1765,7 @@ int apply_repository_format(struct repository *repo,
 			    enum apply_repository_format_flags flags,
 			    struct strbuf *err)
 {
-	char *object_directory = NULL, *alternate_object_directories = NULL;
+	enum odb_new_flags odb_new_flags = 0;
 
 	if (verify_repository_format(format, err) < 0)
 		return -1;
@@ -1779,8 +1779,6 @@ int apply_repository_format(struct repository *repo,
 	if (flags & APPLY_REPOSITORY_FORMAT_HONOR_ENV) {
 		const char *shallow_file;
 
-		object_directory = xstrdup_or_null(getenv(DB_ENVIRONMENT));
-		alternate_object_directories = xstrdup_or_null(getenv(ALTERNATE_DB_ENVIRONMENT));
 		shallow_file = getenv(GIT_SHALLOW_FILE_ENVIRONMENT);
 		if (shallow_file)
 			set_alternate_shallow_file(repo, shallow_file);
@@ -1803,11 +1801,10 @@ int apply_repository_format(struct repository *repo,
 	repo->repository_format_precious_objects =
 		format->precious_objects;
 
-	repo->objects = odb_new(repo, object_directory,
-				alternate_object_directories);
+	if (flags & APPLY_REPOSITORY_FORMAT_HONOR_ENV)
+		odb_new_flags |= ODB_NEW_HONOR_ENV;
+	repo->objects = odb_new(repo, odb_new_flags);
 
-	free(alternate_object_directories);
-	free(object_directory);
 	return 0;
 }
 
