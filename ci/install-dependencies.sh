@@ -59,7 +59,7 @@ ubuntu-*|i386/ubuntu-*|debian-*)
 	esac
 
 	sudo apt-get -q update
-	sudo apt-get -q -y install \
+	sudo apt-get -q -y --fix-missing install \
 		$LANGUAGES apache2 cvs cvsps git gnupg $SVN \
 		make libssl-dev libcurl4-openssl-dev libexpat-dev wget sudo default-jre \
 		tcl tk gettext zlib1g-dev perl-modules liberror-perl libauthen-sasl-perl \
