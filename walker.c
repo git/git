@@ -84,12 +84,12 @@ static struct prio_queue complete = { compare_commits_by_commit_date };
 static int process_commit(struct walker *walker, struct commit *commit)
 {
 	struct commit_list *parents;
+	struct commit *item;
 
 	if (repo_parse_commit(the_repository, commit))
 		return -1;
 
-	while (complete.nr) {
-		struct commit *item = prio_queue_peek(&complete);
+	while ((item = prio_queue_peek(&complete))) {
 		if (item->date < commit->date)
 			break;
 		pop_most_recent_commit(&complete, COMPLETE);

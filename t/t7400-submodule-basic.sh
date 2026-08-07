@@ -20,13 +20,13 @@ test_expect_success 'setup - enable local submodules' '
 
 test_expect_success 'submodule usage: -h' '
 	git submodule -h >out 2>err &&
-	grep "^usage: git submodule" out &&
+	test_grep "^usage: git submodule" out &&
 	test_must_be_empty err
 '
 
 test_expect_success 'submodule usage: --recursive' '
 	test_expect_code 1 git submodule --recursive >out 2>err &&
-	grep "^usage: git submodule" err &&
+	test_grep "^usage: git submodule" err &&
 	test_must_be_empty out
 '
 
@@ -214,14 +214,14 @@ test_expect_success 'setup parent and one repository' '
 test_expect_success 'redirected submodule add does not show progress' '
 	git -C addtest submodule add "file://$submodurl/parent" submod-redirected \
 		2>err &&
-	! grep % err &&
+	test_grep ! % err &&
 	test_grep ! "Checking connectivity" err
 '
 
 test_expect_success 'redirected submodule add --progress does show progress' '
 	git -C addtest submodule add --progress "file://$submodurl/parent" \
 		submod-redirected-progress 2>err && \
-	grep % err
+	test_grep % err
 '
 
 test_expect_success 'submodule add to .gitignored path fails' '
@@ -506,7 +506,7 @@ test_expect_success 'setup - fetch commit name from submodule' '
 
 test_expect_success 'status should initially be "missing"' '
 	git submodule status >lines &&
-	grep "^-$rev1" lines
+	test_grep "^-$rev1" lines
 '
 
 test_expect_success 'init should register submodule url in .git/config' '
@@ -524,7 +524,7 @@ test_expect_success 'status should still be "missing" after initializing' '
 	mkdir init &&
 	git submodule status >lines &&
 	rm -fr init &&
-	grep "^-$rev1" lines
+	test_grep "^-$rev1" lines
 '
 
 test_failure_with_unknown_submodule () {
@@ -584,7 +584,7 @@ test_expect_success 'update should work when path is an empty dir' '
 
 test_expect_success 'status should be "up-to-date" after update' '
 	git submodule status >list &&
-	grep "^ $rev1" list
+	test_grep "^ $rev1" list
 '
 
 test_expect_success 'status "up-to-date" from subdirectory' '
@@ -593,8 +593,8 @@ test_expect_success 'status "up-to-date" from subdirectory' '
 		cd sub &&
 		git submodule status >../list
 	) &&
-	grep "^ $rev1" list &&
-	grep "\\.\\./init" list
+	test_grep "^ $rev1" list &&
+	test_grep "\\.\\./init" list
 '
 
 test_expect_success 'status "up-to-date" from subdirectory with path' '
@@ -603,8 +603,8 @@ test_expect_success 'status "up-to-date" from subdirectory with path' '
 		cd sub &&
 		git submodule status ../init >../list
 	) &&
-	grep "^ $rev1" list &&
-	grep "\\.\\./init" list
+	test_grep "^ $rev1" list &&
+	test_grep "\\.\\./init" list
 '
 
 test_expect_success 'status should be "modified" after submodule commit' '
@@ -619,7 +619,7 @@ test_expect_success 'status should be "modified" after submodule commit' '
 	test -n "$rev2" &&
 	git submodule status >list &&
 
-	grep "^+$rev2" list
+	test_grep "^+$rev2" list
 '
 
 test_expect_success '"submodule --cached" command forms should be identical' '
@@ -634,12 +634,12 @@ test_expect_success '"submodule --cached" command forms should be identical' '
 
 test_expect_success 'the --cached sha1 should be rev1' '
 	git submodule --cached status >list &&
-	grep "^+$rev1" list
+	test_grep "^+$rev1" list
 '
 
 test_expect_success 'git diff should report the SHA1 of the new submodule commit' '
 	git diff >diff &&
-	grep "^+Subproject commit $rev2" diff
+	test_grep "^+Subproject commit $rev2" diff
 '
 
 test_expect_success 'update should checkout rev1' '
@@ -654,7 +654,7 @@ test_expect_success 'update should checkout rev1' '
 
 test_expect_success 'status should be "up-to-date" after update' '
 	git submodule status >list &&
-	grep "^ $rev1" list
+	test_grep "^ $rev1" list
 '
 
 test_expect_success 'checkout superproject with subproject already present' '
@@ -1407,7 +1407,7 @@ test_expect_success 'update submodules without url set in .gitconfig' '
 	done &&
 
 	test_must_fail git -C multisuper_clone submodule update 2>err &&
-	grep "cannot clone submodule .sub[0-3]. without a URL" err
+	test_grep "cannot clone submodule .sub[0-3]. without a URL" err
 '
 
 test_expect_success 'clone --recurse-submodules with a pathspec works' '

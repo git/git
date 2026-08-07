@@ -53,6 +53,35 @@ test_expect_success 'separate islands disallows delta' '
 	! is_delta_base $two $one
 '
 
+test_expect_success 'path-walk island repack respects islands' '
+	GIT_TRACE2_EVENT="$(pwd)/trace.path-walk-islands" \
+		git -c "pack.island=refs/heads/(.*)" repack -adfi \
+		--path-walk 2>err &&
+	test_region pack-objects path-walk trace.path-walk-islands &&
+	test_grep ! "cannot use --delta-islands with --path-walk" err &&
+	! is_delta_base $one $two &&
+	! is_delta_base $two $one
+'
+
+test_expect_success 'path-walk island bitmap repack respects islands' '
+	GIT_TRACE2_EVENT="$(pwd)/trace.path-walk-island-bitmap" \
+		git -c "pack.island=refs/heads/(.*)" repack -a -d -f -i -b \
+		--path-walk 2>err &&
+	test_region pack-objects path-walk trace.path-walk-island-bitmap &&
+	test_path_is_file .git/objects/pack/*.bitmap &&
+	git rev-list --test-bitmap --use-bitmap-index one &&
+	test_grep ! "cannot use --delta-islands with --path-walk" err &&
+	! is_delta_base $one $two &&
+	! is_delta_base $two $one
+'
+
+test_expect_success 'path-walk same island allows delta' '
+	GIT_TRACE2_EVENT="$(pwd)/trace.path-walk-same-island" \
+		git -c "pack.island=refs/heads" repack -adfi --path-walk &&
+	test_region pack-objects path-walk trace.path-walk-same-island &&
+	is_delta_base $one $two
+'
+
 test_expect_success 'same island allows delta' '
 	git -c "pack.island=refs/heads" repack -adfi &&
 	is_delta_base $one $two

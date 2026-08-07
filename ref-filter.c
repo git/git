@@ -2402,7 +2402,7 @@ static void lazy_init_worktree_map(void)
 	if (ref_to_worktree_map.worktrees)
 		return;
 
-	ref_to_worktree_map.worktrees = get_worktrees();
+	ref_to_worktree_map.worktrees = get_worktrees(the_repository);
 	hashmap_init(&(ref_to_worktree_map.map), ref_to_worktree_map_cmpfnc, NULL, 0);
 	populate_worktree_map(&(ref_to_worktree_map.map), ref_to_worktree_map.worktrees);
 }
@@ -3316,15 +3316,14 @@ static int do_filter_refs(struct ref_filter *filter, unsigned int type, refs_for
 
 	if (prefix) {
 		struct ref_iterator *iter;
+		struct ref_store *store = get_main_ref_store(the_repository);
 
-		iter = refs_ref_iterator_begin(get_main_ref_store(the_repository),
-					       "", NULL, 0, 0);
-
-		if (filter->start_after)
+		if (filter->start_after) {
+			iter = refs_ref_iterator_begin(store, "", NULL, 0, 0);
 			ret = start_ref_iterator_after(iter, filter->start_after);
-		else
-			ret = ref_iterator_seek(iter, prefix,
-						REF_ITERATOR_SEEK_SET_PREFIX);
+		} else {
+			iter = refs_ref_iterator_begin(store, prefix, NULL, 0, 0);
+		}
 
 		if (!ret)
 			ret = do_for_each_ref_iterator(iter, fn, cb_data);

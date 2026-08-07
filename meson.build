@@ -161,6 +161,21 @@
 # These machine files can be passed to `meson setup` via the `--native-file`
 # option.
 #
+# Fuzzing
+# =======
+#
+# Meson supports building the fuzzing targets by setting `-Dfuzzers=true`. By
+# default, the targets will be built without libFuzzer and thus won't be usable
+# for fuzzing. You have to configure a couple of options to properly wire up
+# libFuzzer:
+#
+#   $ meson setup build-fuzzers \
+#       -Db_sanitize=address,fuzzer-no-link \
+#       -Dfuzzers=true \
+#       -Dfuzzers_link_args=-fsanitize=fuzzer
+#   $ meson compile -C build-fuzzers
+#   $ ./build-fuzzers/oss-fuzz/fuzz-config <args>
+#
 # Cross compilation
 # =================
 #
@@ -278,7 +293,20 @@ compat_sources = [
   'compat/terminal.c',
 ]
 
+hook_list = custom_target(
+  input: 'Documentation/githooks.adoc',
+  output: 'hook-list.h',
+  command: [
+    shell,
+    meson.current_source_dir() + '/tools/generate-hooklist.sh',
+    meson.current_source_dir(),
+    '@OUTPUT@',
+  ],
+  env: script_environment,
+)
+
 libgit_sources = [
+  hook_list,
   'abspath.c',
   'add-interactive.c',
   'add-patch.c',
@@ -346,6 +374,7 @@ libgit_sources = [
   'ewah/ewah_rlw.c',
   'exec-cmd.c',
   'fetch-negotiator.c',
+  'fetch-object-info.c',
   'fetch-pack.c',
   'fmt-merge-msg.c',
   'fsck.c',
@@ -406,6 +435,7 @@ libgit_sources = [
   'odb/source-files.c',
   'odb/source-inmemory.c',
   'odb/source-loose.c',
+  'odb/source-packed.c',
   'odb/streaming.c',
   'odb/transaction.c',
   'oid-array.c',
@@ -421,6 +451,7 @@ libgit_sources = [
   'pack-revindex.c',
   'pack-write.c',
   'packfile.c',
+  'packfile-list.c',
   'pager.c',
   'parallel-checkout.c',
   'parse.c',
@@ -566,19 +597,8 @@ libgit_sources += custom_target(
   env: script_environment,
 )
 
-libgit_sources += custom_target(
-  input: 'Documentation/githooks.adoc',
-  output: 'hook-list.h',
-  command: [
-    shell,
-    meson.current_source_dir() + '/tools/generate-hooklist.sh',
-    meson.current_source_dir(),
-    '@OUTPUT@',
-  ],
-  env: script_environment,
-)
-
 builtin_sources = [
+  hook_list,
   'builtin/add.c',
   'builtin/am.c',
   'builtin/annotate.c',

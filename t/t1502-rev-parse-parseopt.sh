@@ -12,7 +12,7 @@ check_invalid_long_option () {
 			cat <<-\EOF &&
 			error: unknown option `'${opt#--}\''
 			EOF
-			sed -e 1d -e \$d <"$TEST_DIRECTORY/t1502/$spec.help"
+			sed -e 1d -e /EOF/d -e \$d <"$TEST_DIRECTORY/t1502/$spec.help"
 		} >expect &&
 		test_expect_code 129 git rev-parse --parseopt -- $opt \
 			2>output <"$TEST_DIRECTORY/t1502/$spec" &&
@@ -75,7 +75,7 @@ EOF
 '
 
 test_expect_success 'test --parseopt help output' '
-	test_expect_code 129 git rev-parse --parseopt -- -h > output < optionspec &&
+	git rev-parse --parseopt -- -h > output < optionspec &&
 	test_cmp "$TEST_DIRECTORY/t1502/optionspec.help" output
 '
 
@@ -87,8 +87,9 @@ test_expect_success 'test --parseopt help output no switches' '
 |    some-command does foo and bar!
 |
 |EOF
+|exit 0
 END_EXPECT
-	test_expect_code 129 git rev-parse --parseopt -- -h > output < optionspec_no_switches &&
+	git rev-parse --parseopt -- -h > output < optionspec_no_switches &&
 	test_cmp expect output
 '
 
@@ -100,8 +101,9 @@ test_expect_success 'test --parseopt help output hidden switches' '
 |    some-command does foo and bar!
 |
 |EOF
+|exit 0
 END_EXPECT
-	test_expect_code 129 git rev-parse --parseopt -- -h > output < optionspec_only_hidden_switches &&
+	git rev-parse --parseopt -- -h > output < optionspec_only_hidden_switches &&
 	test_cmp expect output
 '
 
@@ -115,8 +117,9 @@ test_expect_success 'test --parseopt help-all output hidden switches' '
 |    --[no-]hidden1        A hidden switch
 |
 |EOF
+|exit 0
 END_EXPECT
-	test_expect_code 129 git rev-parse --parseopt -- --help-all > output < optionspec_only_hidden_switches &&
+	git rev-parse --parseopt -- --help-all > output < optionspec_only_hidden_switches &&
 	test_cmp expect output
 '
 
@@ -125,7 +128,7 @@ test_expect_success 'test --parseopt invalid switch help output' '
 		cat <<-\EOF &&
 		error: unknown option `does-not-exist'\''
 		EOF
-		sed -e 1d -e \$d <"$TEST_DIRECTORY/t1502/optionspec.help"
+		sed -e 1d -e /EOF/d -e \$d <"$TEST_DIRECTORY/t1502/optionspec.help"
 	} >expect &&
 	test_expect_code 129 git rev-parse --parseopt -- --does-not-exist 1>/dev/null 2>output < optionspec &&
 	test_cmp expect output
@@ -252,9 +255,10 @@ test_expect_success 'test --parseopt help output: "wrapped" options normal "or:"
 	|    -h, --help            show the help
 	|
 	|EOF
+	|exit 0
 	END_EXPECT
 
-	test_must_fail git rev-parse --parseopt -- -h <spec >actual &&
+	git rev-parse --parseopt -- -h <spec >actual &&
 	test_cmp expect actual
 '
 
@@ -289,14 +293,15 @@ test_expect_success 'test --parseopt help output: multi-line blurb after empty l
 	|    -h, --help            show the help
 	|
 	|EOF
+	|exit 0
 	END_EXPECT
 
-	test_must_fail git rev-parse --parseopt -- -h <spec >actual &&
+	git rev-parse --parseopt -- -h <spec >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'test --parseopt help output for optionspec-neg' '
-	test_expect_code 129 git rev-parse --parseopt -- \
+	git rev-parse --parseopt -- \
 		-h >output <"$TEST_DIRECTORY/t1502/optionspec-neg" &&
 	test_cmp "$TEST_DIRECTORY/t1502/optionspec-neg.help" output
 '
@@ -331,7 +336,7 @@ test_expect_success 'ambiguous: --no matches both --noble and --no-noble' '
 	EOF
 	test_expect_code 129 env GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS=false \
 	git rev-parse --parseopt -- <spec 2>err --no &&
-	grep "error: ambiguous option: no (could be --noble or --no-noble)" err
+	test_grep "error: ambiguous option: no (could be --noble or --no-noble)" err
 '
 
 test_done

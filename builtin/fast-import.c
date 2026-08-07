@@ -969,7 +969,7 @@ static int store_object(
 
 	hdrlen = format_object_header((char *)hdr, sizeof(hdr), type,
 				      dat->len);
-	the_hash_algo->init_fn(&c);
+	git_hash_init(&c, the_hash_algo);
 	git_hash_update(&c, hdr, hdrlen);
 	git_hash_update(&c, dat->buf, dat->len);
 	git_hash_final_oid(&oid, &c);
@@ -1131,7 +1131,7 @@ static void stream_blob(uintmax_t len, struct object_id *oidout, uintmax_t mark)
 
 	hdrlen = format_object_header((char *)out_buf, out_sz, OBJ_BLOB, len);
 
-	the_hash_algo->init_fn(&c);
+	git_hash_init(&c, the_hash_algo);
 	git_hash_update(&c, out_buf, hdrlen);
 
 	crc32_begin(pack_file);
@@ -1216,6 +1216,7 @@ static void stream_blob(uintmax_t len, struct object_id *oidout, uintmax_t mark)
 out:
 	free(in_buf);
 	free(out_buf);
+	hashfile_checkpoint_release(&checkpoint);
 }
 
 /* All calls must be guarded by find_object() or find_mark() to

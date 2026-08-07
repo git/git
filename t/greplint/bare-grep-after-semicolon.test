@@ -1,0 +1,4 @@
+test_expect_success 'grep after semicolon is flagged' '
+	echo hello;
+	grep pattern file
+'

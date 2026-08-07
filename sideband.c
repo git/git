@@ -163,6 +163,10 @@ static int handle_ansi_sequence(struct strbuf *dest, const char *src, int n)
 	 *
 	 * ESC [ [<n> [; <n>]*] m
 	 *
+	 * where <n> can be either zero-length, or a decimal number, or a
+	 * series of decimal numbers separated by a colon (for 256-color or
+	 * true-color codes).
+	 *
 	 * These are part of the Select Graphic Rendition sequences which
 	 * contain more than just color sequences, for more details see
 	 * https://en.wikipedia.org/wiki/ANSI_escape_code#SGR.
@@ -210,7 +214,7 @@ static int handle_ansi_sequence(struct strbuf *dest, const char *src, int n)
 			strbuf_add(dest, src, i + 1);
 			return i;
 		}
-		if (!isdigit(src[i]) && src[i] != ';')
+		if (!isdigit(src[i]) && src[i] != ':' && src[i] != ';')
 			break;
 	}
 

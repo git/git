@@ -79,8 +79,8 @@ test_expect_success 'do not advice about sparse entries when they do not match t
 	git reset --hard &&
 	git sparse-checkout set a &&
 	test_must_fail git rm nonexistent 2>stderr &&
-	grep "fatal: pathspec .nonexistent. did not match any files" stderr &&
-	! grep -F -f sparse_error_header stderr
+	test_grep "fatal: pathspec .nonexistent. did not match any files" stderr &&
+	test_grep ! -F -f sparse_error_header stderr
 '
 
 test_expect_success 'do not warn about sparse entries when pathspec matches dense entries' '

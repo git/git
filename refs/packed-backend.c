@@ -1,4 +1,3 @@
-#define USE_THE_REPOSITORY_VARIABLE
 #define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "../git-compat-util.h"
@@ -162,6 +161,13 @@ struct packed_ref_store {
 	 * `packed_ref_store`) must not be freed.
 	 */
 	struct tempfile *tempfile;
+
+	/*
+	 * Timeout when taking the "packed-refs.lock" file. configurable via
+	 * "core.packedRefsTimeout".
+	 */
+	bool timeout_configured;
+	int timeout_value;
 };
 
 /*
@@ -211,6 +217,19 @@ static size_t snapshot_hexsz(const struct snapshot *snapshot)
 	return snapshot->refs->base.repo->hash_algo->hexsz;
 }
 
+static void packed_ref_store_reparent(const char *name UNUSED,
+				      const char *old_cwd,
+				      const char *new_cwd,
+				      void *payload)
+{
+	struct packed_ref_store *refs = payload;
+	char *tmp;
+
+	tmp = reparent_relative_path(old_cwd, new_cwd, refs->path);
+	free(refs->path);
+	refs->path = tmp;
+}
+
 /*
  * Since packed-refs is only stored in the common dir, don't parse the
  * payload and rely on the files-backend to set 'gitdir' correctly.
@@ -229,7 +248,7 @@ struct ref_store *packed_ref_store_init(struct repository *repo,
 
 	strbuf_addf(&sb, "%s/packed-refs", gitdir);
 	refs->path = strbuf_detach(&sb, NULL);
-	chdir_notify_reparent("packed-refs", &refs->path);
+	chdir_notify_register(NULL, packed_ref_store_reparent, refs);
 	return ref_store;
 }
 
@@ -274,6 +293,7 @@ static void packed_ref_store_release(struct ref_store *ref_store)
 	clear_snapshot(refs);
 	rollback_lock_file(&refs->lock);
 	delete_tempfile(&refs->tempfile);
+	chdir_notify_unregister(NULL, packed_ref_store_reparent, refs);
 	free(refs->path);
 }
 
@@ -1219,12 +1239,12 @@ int packed_refs_lock(struct ref_store *ref_store, int flags, struct strbuf *err)
 	struct packed_ref_store *refs =
 		packed_downcast(ref_store, REF_STORE_WRITE | REF_STORE_MAIN,
 				"packed_refs_lock");
-	static int timeout_configured = 0;
-	static int timeout_value = 1000;
 
-	if (!timeout_configured) {
-		repo_config_get_int(the_repository, "core.packedrefstimeout", &timeout_value);
-		timeout_configured = 1;
+	if (!refs->timeout_configured) {
+		if (repo_config_get_int(ref_store->repo, "core.packedrefstimeout",
+					&refs->timeout_value))
+			refs->timeout_value = 1000;
+		refs->timeout_configured = true;
 	}
 
 	/*
@@ -1232,10 +1252,9 @@ int packed_refs_lock(struct ref_store *ref_store, int flags, struct strbuf *err)
 	 * don't write new content to it, but rather to a separate
 	 * tempfile.
 	 */
-	if (hold_lock_file_for_update_timeout(
-			    &refs->lock,
-			    refs->path,
-			    flags, timeout_value) < 0) {
+	if (repo_hold_lock_file_for_update_timeout(ref_store->repo, &refs->lock,
+						   refs->path, flags,
+						   refs->timeout_value) < 0) {
 		unable_to_lock_message(refs->path, errno, err);
 		return -1;
 	}
@@ -1379,7 +1398,7 @@ static enum ref_transaction_error write_with_updates(struct packed_ref_store *re
 	packed_refs_path = get_locked_file_path(&refs->lock);
 	strbuf_addf(&sb, "%s.new", packed_refs_path);
 	free(packed_refs_path);
-	refs->tempfile = create_tempfile(sb.buf);
+	refs->tempfile = repo_create_tempfile(refs->base.repo, sb.buf);
 	if (!refs->tempfile) {
 		strbuf_addf(err, "unable to create file %s: %s",
 			    sb.buf, strerror(errno));

@@ -25,11 +25,12 @@ static int strbuf_writer_flush(void *arg UNUSED)
 }
 
 struct reftable_writer *cl_reftable_strbuf_writer(struct reftable_buf *buf,
+						 enum reftable_hash hash_id,
 						 struct reftable_write_options *opts)
 {
 	struct reftable_writer *writer;
 	int ret = reftable_writer_new(&writer, &strbuf_writer_write, &strbuf_writer_flush,
-				      buf, opts);
+				      buf, hash_id, opts);
 	cl_assert(!ret);
 	return writer;
 }
@@ -39,6 +40,7 @@ void cl_reftable_write_to_buf(struct reftable_buf *buf,
 			     size_t nrefs,
 			     struct reftable_log_record *logs,
 			     size_t nlogs,
+			     enum reftable_hash hash_id,
 			     struct reftable_write_options *_opts)
 {
 	struct reftable_write_options opts = { 0 };
@@ -66,7 +68,7 @@ void cl_reftable_write_to_buf(struct reftable_buf *buf,
 			min = ui;
 	}
 
-	writer = cl_reftable_strbuf_writer(buf, &opts);
+	writer = cl_reftable_strbuf_writer(buf, hash_id, &opts);
 	ret = reftable_writer_set_limits(writer, min, max);
 	cl_assert(!ret);
 
@@ -88,7 +90,7 @@ void cl_reftable_write_to_buf(struct reftable_buf *buf,
 		size_t off = i * (opts.block_size ? opts.block_size
 						  : DEFAULT_BLOCK_SIZE);
 		if (!off)
-			off = header_size(opts.hash_id == REFTABLE_HASH_SHA256 ? 2 : 1);
+			off = header_size(hash_id == REFTABLE_HASH_SHA256 ? 2 : 1);
 		cl_assert(buf->buf[off] == 'r');
 	}
 

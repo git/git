@@ -388,7 +388,6 @@ static int reftable_ref_record_decode(void *rec, struct reftable_buf key,
 	r->refname[key.len] = 0;
 
 	r->update_index = update_index;
-	r->value_type = val_type;
 	switch (val_type) {
 	case REFTABLE_REF_VAL1:
 		if (in.len < hash_size) {
@@ -426,9 +425,10 @@ static int reftable_ref_record_decode(void *rec, struct reftable_buf key,
 	case REFTABLE_REF_DELETION:
 		break;
 	default:
-		abort();
-		break;
+		err = REFTABLE_FORMAT_ERROR;
+		goto done;
 	}
+	r->value_type = val_type;
 
 	return start.len - in.len;
 

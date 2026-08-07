@@ -46,7 +46,7 @@ test_expect_success 'initialize old-style (v0) git svn layout' '
 test_expect_success 'initialize a multi-repository repo' '
 	git svn init "$svnrepo" -T trunk -t tags -b branches &&
 	git config --get-all svn-remote.svn.fetch > fetch.out &&
-	grep "^trunk:refs/remotes/origin/trunk$" fetch.out &&
+	test_grep "^trunk:refs/remotes/origin/trunk$" fetch.out &&
 	test -n "$(git config --get svn-remote.svn.branches \
 		    "^branches/\*:refs/remotes/origin/\*$")" &&
 	test -n "$(git config --get svn-remote.svn.tags \
@@ -63,13 +63,13 @@ test_expect_success 'initialize a multi-repository repo' '
 			$i:refs/remotes/origin/$i || return 1
 	done &&
 	git config --get-all svn-remote.svn.fetch > fetch.out &&
-	grep "^trunk:refs/remotes/origin/trunk$" fetch.out &&
-	grep "^branches/a:refs/remotes/origin/a$" fetch.out &&
-	grep "^branches/b:refs/remotes/origin/b$" fetch.out &&
-	grep "^tags/0\.1:refs/remotes/origin/tags/0\.1$" fetch.out &&
-	grep "^tags/0\.2:refs/remotes/origin/tags/0\.2$" fetch.out &&
-	grep "^tags/0\.3:refs/remotes/origin/tags/0\.3$" fetch.out &&
-	grep "^:refs/remotes/git-svn" fetch.out
+	test_grep "^trunk:refs/remotes/origin/trunk$" fetch.out &&
+	test_grep "^branches/a:refs/remotes/origin/a$" fetch.out &&
+	test_grep "^branches/b:refs/remotes/origin/b$" fetch.out &&
+	test_grep "^tags/0\.1:refs/remotes/origin/tags/0\.1$" fetch.out &&
+	test_grep "^tags/0\.2:refs/remotes/origin/tags/0\.2$" fetch.out &&
+	test_grep "^tags/0\.3:refs/remotes/origin/tags/0\.3$" fetch.out &&
+	test_grep "^:refs/remotes/git-svn" fetch.out
 	'
 
 # refs should all be different, but the trees should all be the same:
@@ -109,13 +109,13 @@ test_expect_success 'migrate --minimize on old inited layout' '
 	git svn migrate --minimize &&
 	test -z "$(git config -l | grep "^svn-remote\.git-svn\.")" &&
 	git config --get-all svn-remote.svn.fetch > fetch.out &&
-	grep "^trunk:refs/remotes/origin/trunk$" fetch.out &&
-	grep "^branches/a:refs/remotes/origin/a$" fetch.out &&
-	grep "^branches/b:refs/remotes/origin/b$" fetch.out &&
-	grep "^tags/0\.1:refs/remotes/origin/tags/0\.1$" fetch.out &&
-	grep "^tags/0\.2:refs/remotes/origin/tags/0\.2$" fetch.out &&
-	grep "^tags/0\.3:refs/remotes/origin/tags/0\.3$" fetch.out &&
-	grep "^:refs/remotes/git-svn" fetch.out
+	test_grep "^trunk:refs/remotes/origin/trunk$" fetch.out &&
+	test_grep "^branches/a:refs/remotes/origin/a$" fetch.out &&
+	test_grep "^branches/b:refs/remotes/origin/b$" fetch.out &&
+	test_grep "^tags/0\.1:refs/remotes/origin/tags/0\.1$" fetch.out &&
+	test_grep "^tags/0\.2:refs/remotes/origin/tags/0\.2$" fetch.out &&
+	test_grep "^tags/0\.3:refs/remotes/origin/tags/0\.3$" fetch.out &&
+	test_grep "^:refs/remotes/git-svn" fetch.out
 	'
 
 test_expect_success  ".rev_db auto-converted to .rev_map.UUID" '

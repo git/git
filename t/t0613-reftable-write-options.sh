@@ -278,4 +278,23 @@ test_expect_success 'object index can be disabled' '
 	)
 '
 
+test_expect_success 'write options can be set up via onbranch condition' '
+	test_config_global core.logAllRefUpdates false &&
+	test_when_finished "rm -rf repo" &&
+	init_repo &&
+	(
+		cd repo &&
+		test_commit A &&
+		test_commit B &&
+		cat >.git/include <<-\EOF &&
+		[reftable]
+			blockSize = 123
+		EOF
+		git config includeIf.onbranch:master.path "$(pwd)/.git/include" &&
+		git refs optimize &&
+		test-tool dump-reftable -b .git/reftable/*.ref >stats &&
+		test_grep "block_size: 123" stats
+	)
+'
+
 test_done

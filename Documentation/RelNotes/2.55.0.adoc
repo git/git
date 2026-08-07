@@ -85,8 +85,8 @@ Performance, Internal Implementation, Development Support etc.
  * Promisor remote handling has been refactored and fixed in
    preparation for auto-configuration of advertised remotes.
 
- * Rust support is enabled by default (but still allows opting out) in
-   some future version of Git.
+ * Rust support is enabled by default (but still allows opting out);
+   in Git version 3.0, Rust will become mandatory.
 
  * Preparation of the xdiff/ codebase to work with Rust.
 

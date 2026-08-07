@@ -242,6 +242,8 @@ static int table_iter_seek_to(struct table_iter *ti, uint64_t off, uint8_t typ)
 	int err;
 
 	err = table_init_block(ti->table, &ti->block, off, typ);
+	if (err > 0)
+		return REFTABLE_FORMAT_ERROR;
 	if (err != 0)
 		return err;
 
@@ -560,6 +562,11 @@ int reftable_table_new(struct reftable_table **out,
 		goto done;
 	}
 
+	if (file_size < header_size(t->version) + footer_size(t->version)) {
+		err = REFTABLE_FORMAT_ERROR;
+		goto done;
+	}
+
 	t->size = file_size - footer_size(t->version);
 	t->source = *source;
 	t->name = reftable_strdup(name);
@@ -709,6 +716,10 @@ out:
 		if (ti)
 			table_iter_close(ti);
 		reftable_free(ti);
+		if (filter) {
+			reftable_buf_release(&filter->oid);
+			reftable_free(filter);
+		}
 	}
 	return err;
 }

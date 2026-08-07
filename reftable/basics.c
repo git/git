@@ -152,6 +152,9 @@ size_t binsearch(size_t sz, int (*f)(size_t k, void *args), void *args)
 	size_t lo = 0;
 	size_t hi = sz;
 
+	if (!sz)
+		return 0;
+
 	/* Invariants:
 	 *
 	 *  (hi == sz) || f(hi) == true

@@ -80,9 +80,6 @@ static void options_set_defaults(struct reftable_write_options *opts)
 		opts->restart_interval = 16;
 	}
 
-	if (opts->hash_id == 0) {
-		opts->hash_id = REFTABLE_HASH_SHA1;
-	}
 	if (opts->block_size == 0) {
 		opts->block_size = DEFAULT_BLOCK_SIZE;
 	}
@@ -90,7 +87,7 @@ static void options_set_defaults(struct reftable_write_options *opts)
 
 static int writer_version(struct reftable_writer *w)
 {
-	return (w->opts.hash_id == 0 || w->opts.hash_id == REFTABLE_HASH_SHA1) ?
+	return (w->hash_id == 0 || w->hash_id == REFTABLE_HASH_SHA1) ?
 			     1 :
 			     2;
 }
@@ -107,7 +104,7 @@ static int writer_write_header(struct reftable_writer *w, uint8_t *dest)
 	if (writer_version(w) == 2) {
 		uint32_t hash_id;
 
-		switch (w->opts.hash_id) {
+		switch (w->hash_id) {
 		case REFTABLE_HASH_SHA1:
 			hash_id = REFTABLE_FORMAT_ID_SHA1;
 			break;
@@ -134,7 +131,7 @@ static int writer_reinit_block_writer(struct reftable_writer *w, uint8_t typ)
 	reftable_buf_reset(&w->last_key);
 	ret = block_writer_init(&w->block_writer_data, typ, w->block,
 				w->opts.block_size, block_start,
-				hash_size(w->opts.hash_id));
+				hash_size(w->hash_id));
 	if (ret < 0)
 		return ret;
 
@@ -147,20 +144,25 @@ static int writer_reinit_block_writer(struct reftable_writer *w, uint8_t typ)
 int reftable_writer_new(struct reftable_writer **out,
 			ssize_t (*writer_func)(void *, const void *, size_t),
 			int (*flush_func)(void *),
-			void *writer_arg, const struct reftable_write_options *_opts)
+			void *writer_arg,
+			enum reftable_hash hash_id,
+			const struct reftable_write_options *_opts)
 {
 	struct reftable_write_options opts = {0};
 	struct reftable_writer *wp;
-
-	wp = reftable_calloc(1, sizeof(*wp));
-	if (!wp)
-		return REFTABLE_OUT_OF_MEMORY_ERROR;
 
 	if (_opts)
 		opts = *_opts;
 	options_set_defaults(&opts);
 	if (opts.block_size >= (1 << 24))
 		return REFTABLE_API_ERROR;
+
+	if (!hash_id)
+		hash_id = REFTABLE_HASH_SHA1;
+
+	wp = reftable_calloc(1, sizeof(*wp));
+	if (!wp)
+		return REFTABLE_OUT_OF_MEMORY_ERROR;
 
 	reftable_buf_init(&wp->block_writer_data.last_key);
 	reftable_buf_init(&wp->last_key);
@@ -173,6 +175,7 @@ int reftable_writer_new(struct reftable_writer **out,
 	wp->write = writer_func;
 	wp->write_arg = writer_arg;
 	wp->opts = opts;
+	wp->hash_id = hash_id;
 	wp->flush = flush_func;
 	writer_reinit_block_writer(wp, REFTABLE_BLOCK_TYPE_REF);
 
@@ -367,7 +370,7 @@ int reftable_writer_add_ref(struct reftable_writer *w,
 	if (!w->opts.skip_index_objects && reftable_ref_record_val1(ref)) {
 		reftable_buf_reset(&w->scratch);
 		err = reftable_buf_add(&w->scratch, (char *)reftable_ref_record_val1(ref),
-				       hash_size(w->opts.hash_id));
+				       hash_size(w->hash_id));
 		if (err < 0)
 			goto out;
 
@@ -379,7 +382,7 @@ int reftable_writer_add_ref(struct reftable_writer *w,
 	if (!w->opts.skip_index_objects && reftable_ref_record_val2(ref)) {
 		reftable_buf_reset(&w->scratch);
 		err = reftable_buf_add(&w->scratch, reftable_ref_record_val2(ref),
-				       hash_size(w->opts.hash_id));
+				       hash_size(w->hash_id));
 		if (err < 0)
 			goto out;
 

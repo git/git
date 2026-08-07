@@ -7,6 +7,7 @@
 #include "config.h"
 #include "dir.h"
 #include "environment.h"
+#include "repository.h"
 #include "gettext.h"
 #include "run-command.h"
 #include "strbuf.h"
@@ -351,6 +352,29 @@ process_phantom_symlink(const wchar_t *wtarget, const wchar_t *wlink)
 	BY_HANDLE_FILE_INFORMATION fdata;
 	wchar_t relative[MAX_PATH];
 	const wchar_t *rel;
+
+	/*
+	 * Do not follow symlinks to network shares, to avoid NTLM credential
+	 * leak from crafted repositories (e.g. \\attacker-server\share).
+	 * Since paths come in all kind of enterprising shapes and forms (in
+	 * addition to the canonical `\\host\share` form, there's also
+	 * `\??\UNC\host\share`, `\GLOBAL??\UNC\host\share` and also
+	 * `\Device\Mup\host\share`, just to name a few), we simply avoid
+	 * following every symlink target that starts with a slash.
+	 *
+	 * This also catches drive-less absolute paths, of course. These are
+	 * uncommon in practice (and also fragile because they are relative to
+	 * the current working directory's drive). The only "harm" this does
+	 * is that it now requires users to specify via the Git attributes if
+	 * they have such an uncommon symbolic link and need it to be a
+	 * directory type link.
+	 */
+	if (is_wdir_sep(wtarget[0])) {
+		warning("created file symlink '%ls' pointing to '%ls';\n"
+			"set the `symlink` gitattribute to `dir` if a "
+			"directory symlink is required", wlink, wtarget);
+		return PHANTOM_SYMLINK_DONE;
+	}
 
 	/* check that wlink is still a file symlink */
 	if ((GetFileAttributesW(wlink)
@@ -1044,7 +1068,7 @@ int mingw_chdir(const char *dirname)
 	if (xutftowcs_path(wdirname, dirname) < 0)
 		return -1;
 
-	if (has_symlinks) {
+	if (repo_has_symlinks(the_repository)) {
 		HANDLE hnd = CreateFileW(wdirname, 0,
 				FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL,
 				OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
@@ -2269,10 +2293,8 @@ int mingw_kill(pid_t pid, int sig)
 			}
 			ret = terminate_process_tree(h, 128 + sig);
 		}
-		if (ret) {
+		if (ret)
 			errno = err_win_to_posix(GetLastError());
-			CloseHandle(h);
-		}
 		return ret;
 	} else if (pid > 0 && sig == 0) {
 		HANDLE h = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, pid);
@@ -2916,7 +2938,7 @@ int symlink(const char *target, const char *link)
 	int len;
 
 	/* fail if symlinks are disabled or API is not supported (WinXP) */
-	if (!has_symlinks) {
+	if (!repo_has_symlinks(the_repository)) {
 		errno = ENOSYS;
 		return -1;
 	}
@@ -3186,15 +3208,23 @@ static void setup_windows_environment(void)
 		if (!tmp && (tmp = getenv("USERPROFILE")))
 			setenv("HOME", tmp, 1);
 	}
+}
 
+int mingw_platform_has_symlinks(void)
+{
+	static int has_symlinks = -1;
 	/*
 	 * Change 'core.symlinks' default to false, unless native symlinks are
 	 * enabled in MSys2 (via 'MSYS=winsymlinks:nativestrict'). Thus we can
 	 * run the test suite (which doesn't obey config files) with or without
 	 * symlink support.
 	 */
-	if (!(tmp = getenv("MSYS")) || !strstr(tmp, "winsymlinks:nativestrict"))
-		has_symlinks = 0;
+	if (has_symlinks < 0) {
+		const char *tmp = getenv("MSYS");
+		has_symlinks = (tmp && strstr(tmp, "winsymlinks:nativestrict")) ? 1 : 0;
+	}
+
+	return has_symlinks;
 }
 
 static void get_current_user_sid(PSID *sid, HANDLE *linked_token)
@@ -3405,7 +3435,7 @@ int is_valid_win32_path(const char *path, int allow_literal_nul)
 	const char *p = path;
 	int preceding_space_or_period = 0, i = 0, periods = 0;
 
-	if (!protect_ntfs)
+	if (!repo_protect_ntfs(the_repository))
 		return 1;
 
 	skip_dos_drive_prefix((char **)&path);

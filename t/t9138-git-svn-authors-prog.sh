@@ -48,15 +48,15 @@ test_expect_success 'authors-prog ran correctly' '
 	(
 		cd x &&
 		git rev-list -1 --pretty=raw refs/remotes/git-svn~1 >actual &&
-		grep "^author ee-foo <ee-foo@example\.com> " actual &&
+		test_grep "^author ee-foo <ee-foo@example\.com> " actual &&
 		git rev-list -1 --pretty=raw refs/remotes/git-svn~2 >actual &&
-		grep "^author dd <dd@sub\.example\.com> " actual &&
+		test_grep "^author dd <dd@sub\.example\.com> " actual &&
 		git rev-list -1 --pretty=raw refs/remotes/git-svn~3 >actual &&
-		grep "^author cc <cc@sub\.example\.com> " actual &&
+		test_grep "^author cc <cc@sub\.example\.com> " actual &&
 		git rev-list -1 --pretty=raw refs/remotes/git-svn~4 >actual &&
-		grep "^author bb <bb@example\.com> " actual &&
+		test_grep "^author bb <bb@example\.com> " actual &&
 		git rev-list -1 --pretty=raw refs/remotes/git-svn~5 >actual &&
-		grep "^author aa <aa@example\.com> " actual
+		test_grep "^author aa <aa@example\.com> " actual
 	)
 '
 
@@ -64,7 +64,7 @@ test_expect_success 'authors-file overrode authors-prog' '
 	(
 		cd x &&
 		git rev-list -1 --pretty=raw refs/remotes/git-svn >actual &&
-		grep "^author FFFFFFF FFFFFFF <fFf@other\.example\.com> " actual
+		test_grep "^author FFFFFFF FFFFFFF <fFf@other\.example\.com> " actual
 	)
 '
 
@@ -99,7 +99,7 @@ test_expect_success 'authors-prog handled special characters in username' '
 		cd x &&
 		git svn --authors-prog=../svn-authors-prog fetch &&
 		git rev-list -1 --pretty=raw refs/remotes/git-svn >actual &&
-		grep "^author xyz; touch evil <xyz; touch evil@example\.com> " actual &&
+		test_grep "^author xyz; touch evil <xyz; touch evil@example\.com> " actual &&
 		! test -f evil
 	)
 '

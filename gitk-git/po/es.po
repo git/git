@@ -8,30 +8,30 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Gitk\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-05-17 14:32+1000\n"
-"PO-Revision-Date: 2008-03-25 11:20+0100\n"
-"Last-Translator: Santiago Gala <santiago.gala@gmail.com>\n"
+"POT-Creation-Date: 2026-04-18 18:45+0200\n"
+"PO-Revision-Date: 2026-04-19 20:18+0200\n"
+"Last-Translator: Luis B <basuradeluis@gmail.com>\n"
 "Language-Team: Spanish\n"
-"Language: \n"
+"Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.4.2\n"
 
 msgid "Couldn't get list of unmerged files:"
 msgstr "Imposible obtener la lista de archivos pendientes de fusión:"
 
 msgid "Color words"
-msgstr ""
+msgstr "Colorear palabras"
 
 msgid "Markup words"
-msgstr ""
+msgstr "Marcar cambios por palabras"
 
-#, fuzzy
 msgid "Error parsing revisions:"
-msgstr "Error al leer las diferencias de fusión:"
+msgstr "Error procesando revisiones:"
 
 msgid "Error executing --argscmd command:"
-msgstr ""
+msgstr "Error ejecutando comando --argscmd:"
 
 msgid "No files selected: --merge specified but no files are unmerged."
 msgstr ""
@@ -45,9 +45,8 @@ msgstr ""
 "No hay archivos seleccionados: se seleccionó la opción --merge pero los "
 "archivos especificados no necesitan fusión."
 
-#, fuzzy
 msgid "Error executing git log:"
-msgstr "Error al crear la etiqueta:"
+msgstr "Error ejecutando git log:"
 
 msgid "Reading"
 msgstr "Leyendo"
@@ -74,19 +73,19 @@ msgid "Cancel"
 msgstr "Cancelar"
 
 msgid "&Update"
-msgstr "Actualizar"
+msgstr "Act&ualizar"
 
 msgid "&Reload"
-msgstr ""
+msgstr "&Recargar"
 
 msgid "Reread re&ferences"
-msgstr "Releer referencias"
+msgstr "Releer re&ferencias"
 
 msgid "&List references"
-msgstr "Lista de referencias"
+msgstr "Mostrar &lista de referencias"
 
 msgid "Start git &gui"
-msgstr ""
+msgstr "Ejecutar 'git &gui'"
 
 msgid "&Quit"
 msgstr "Salir"
@@ -124,11 +123,11 @@ msgstr "Combinaciones de teclas"
 msgid "&Help"
 msgstr "Ayuda"
 
-msgid "SHA1 ID:"
-msgstr "SHA1 ID:"
+msgid "Commit ID:"
+msgstr "Commit ID:"
 
 msgid "Row"
-msgstr ""
+msgstr "Fila"
 
 msgid "Find"
 msgstr "Buscar"
@@ -146,7 +145,7 @@ msgid "adding/removing string:"
 msgstr "que añade/elimina cadena:"
 
 msgid "changing lines matching:"
-msgstr ""
+msgstr "que cambia líneas que coinciden con:"
 
 msgid "Exact"
 msgstr "Exacto"
@@ -170,7 +169,7 @@ msgid "Author"
 msgstr "Autor"
 
 msgid "Committer"
-msgstr ""
+msgstr "Comiteador"
 
 msgid "Search"
 msgstr "Buscar"
@@ -188,16 +187,19 @@ msgid "Lines of context"
 msgstr "Líneas de contexto"
 
 msgid "Ignore space change"
-msgstr "Ignora cambios de espaciado"
+msgstr "Ignorar cambios de espaciado"
 
 msgid "Line diff"
-msgstr ""
+msgstr "Diferencia de líneas"
 
 msgid "Patch"
 msgstr "Parche"
 
 msgid "Tree"
 msgstr "Árbol"
+
+msgid "Unknown windowing system, cannot bind mouse"
+msgstr "Sistema de ventanas desconocido, no se puede asociar el ratón"
 
 msgid "Diff this -> selected"
 msgstr "Diferencia de esta -> seleccionada"
@@ -206,10 +208,13 @@ msgid "Diff selected -> this"
 msgstr "Diferencia de seleccionada -> esta"
 
 msgid "Make patch"
-msgstr "Crear patch"
+msgstr "Crear parche"
 
 msgid "Create tag"
 msgstr "Crear etiqueta"
+
+msgid "Copy commit reference"
+msgstr "Copiar referencia de la revisión"
 
 msgid "Write commit to file"
 msgstr "Escribir revisiones a archivo"
@@ -223,39 +228,38 @@ msgstr "Añadir esta revisión a la rama actual (cherry-pick)"
 msgid "Reset HEAD branch to here"
 msgstr "Traer la rama HEAD aquí"
 
-#, fuzzy
 msgid "Mark this commit"
-msgstr "Añadir esta revisión a la rama actual (cherry-pick)"
+msgstr "Marcar esta revisión"
 
 msgid "Return to mark"
-msgstr ""
+msgstr "Volver a revisión marcada"
 
 msgid "Find descendant of this and mark"
-msgstr ""
+msgstr "Encontrar primer descendiente de esta y revisión marcada"
 
 msgid "Compare with marked commit"
-msgstr ""
+msgstr "Comparar con revisión marcada"
 
-#, fuzzy
 msgid "Diff this -> marked commit"
-msgstr "Diferencia de esta -> seleccionada"
+msgstr "Diferencia de esta -> revisión marcada"
 
-#, fuzzy
 msgid "Diff marked commit -> this"
-msgstr "Diferencia de seleccionada -> esta"
+msgstr "Diferencia de revisión marcada -> esta"
 
-#, fuzzy
 msgid "Revert this commit"
-msgstr "Añadir esta revisión a la rama actual (cherry-pick)"
+msgstr "Revertir este commit"
 
 msgid "Check out this branch"
 msgstr "Cambiar a esta rama"
+
+msgid "Rename this branch"
+msgstr "Renombrar esta rama"
 
 msgid "Remove this branch"
 msgstr "Eliminar esta rama"
 
 msgid "Copy branch name"
-msgstr ""
+msgstr "Copiar nombre de rama"
 
 msgid "Highlight this too"
 msgstr "Seleccionar también"
@@ -264,21 +268,23 @@ msgid "Highlight this only"
 msgstr "Seleccionar sólo"
 
 msgid "External diff"
-msgstr ""
+msgstr "Comparador de diferencias externo"
 
 msgid "Blame parent commit"
-msgstr ""
+msgstr "Ejecutar git blame en el commit padre"
 
 msgid "Copy path"
-msgstr ""
+msgstr "Copiar ruta"
 
 msgid "Show origin of this line"
-msgstr ""
+msgstr "Mostrar origen de esta línea"
 
 msgid "Run git gui blame on this line"
-msgstr ""
+msgstr "Ejecutar git gui blame en esta línea"
 
-#, fuzzy
+msgid "About gitk"
+msgstr "Acerca de gitk"
+
 msgid ""
 "\n"
 "Gitk - a commit viewer for git\n"
@@ -290,7 +296,7 @@ msgstr ""
 "\n"
 "Gitk - un visualizador de revisiones para git\n"
 "\n"
-"Copyright \\u00a9 2005-2016 Paul Mackerras\n"
+"Copyright © 2005-2016 Paul Mackerras\n"
 "\n"
 "Uso y redistribución permitidos según los términos de la Licencia Pública "
 "General de GNU (GNU GPL)"
@@ -308,9 +314,9 @@ msgstr "Combinaciones de tecla de Gitk:"
 msgid "<%s-Q>\t\tQuit"
 msgstr "<%s-Q>\t\tSalir"
 
-#, fuzzy, tcl-format
+#, tcl-format
 msgid "<%s-W>\t\tClose window"
-msgstr "<%s-F>\t\tBuscar"
+msgstr "<%s-W>\t\tCerrar ventana"
 
 msgid "<Home>\t\tMove to first commit"
 msgstr "<Home>\t\tIr a la primera revisión"
@@ -318,24 +324,21 @@ msgstr "<Home>\t\tIr a la primera revisión"
 msgid "<End>\t\tMove to last commit"
 msgstr "<End>\t\tIr a la última revisión"
 
-#, fuzzy
 msgid "<Up>, p, k\tMove up one commit"
-msgstr "<Up>, p, i\tSubir una revisión"
+msgstr "<Up>, p, k\tSubir una revisión"
 
-#, fuzzy
 msgid "<Down>, n, j\tMove down one commit"
-msgstr "<Down>, n, k\tBajar una revisión"
+msgstr "<Down>, n, j\tBajar una revisión"
 
-#, fuzzy
 msgid "<Left>, z, h\tGo back in history list"
-msgstr "<Left>, z, j\tRetroceder en la historia"
+msgstr "<Left>, z, h\tRetroceder en la historia"
 
 msgid "<Right>, x, l\tGo forward in history list"
 msgstr "<Right>, x, l\tAvanzar en la historia"
 
 #, tcl-format
 msgid "<%s-n>\tGo to n-th parent of current commit in history list"
-msgstr ""
+msgstr "<%s-n>\tIr al padre número N del commit actual"
 
 msgid "<PageUp>\tMove up one page in commit list"
 msgstr "<PageUp>\tSubir una página en la lista de revisiones"
@@ -399,12 +402,11 @@ msgstr "<%s-G>\t\tBuscar el siguiente"
 msgid "<Return>\tMove to next find hit"
 msgstr "<Return>\tBuscar el siguiente"
 
-#, fuzzy
 msgid "g\t\tGo to commit"
-msgstr "<End>\t\tIr a la última revisión"
+msgstr "g\t\tIr a la revisión"
 
 msgid "/\t\tFocus the search box"
-msgstr ""
+msgstr "/\t\tFoco en el cuadro de búsqueda"
 
 msgid "?\t\tMove to previous find hit"
 msgstr "?\t\tBuscar el anterior"
@@ -439,51 +441,54 @@ msgstr "<%s-minus>\tDisminuir tamaño del texto"
 msgid "<F5>\t\tUpdate"
 msgstr "<F5>\t\tActualizar"
 
-#, fuzzy, tcl-format
+#, tcl-format
 msgid "Error creating temporary directory %s:"
-msgstr "Error en la creación del parche:"
+msgstr "Error creando directorio temporal %s:"
 
-#, fuzzy, tcl-format
+#, tcl-format
 msgid "Error getting \"%s\" from %s:"
-msgstr "Error al leer las diferencias de fusión:"
+msgstr "Error obteniendo \"%s\" de %s:"
 
-#, fuzzy
 msgid "command failed:"
-msgstr "Línea de comandos"
+msgstr "el comando falló:"
 
-#, fuzzy
 msgid "No such commit"
-msgstr "No se han guardado cambios"
+msgstr "No existe el commit"
 
 msgid "git gui blame: command failed:"
-msgstr ""
+msgstr "git gui blame: error de ejecución:"
 
 #, tcl-format
 msgid "Couldn't read merge head: %s"
-msgstr ""
+msgstr "No se pudo leer merge head: %s"
 
-#, fuzzy, tcl-format
+#, tcl-format
 msgid "Error reading index: %s"
-msgstr "Error al crear la etiqueta:"
+msgstr "Error leyendo índice:%s"
 
 #, tcl-format
 msgid "Couldn't start git blame: %s"
-msgstr ""
+msgstr "No se pudo iniciar git blame: %s"
 
 msgid "Searching"
 msgstr "Buscando"
 
-#, fuzzy, tcl-format
+#, tcl-format
 msgid "Error running git blame: %s"
-msgstr "Error al crear la etiqueta:"
+msgstr "Error al ejecutar git blame: %s"
 
 #, tcl-format
 msgid "That line comes from commit %s,  which is not in this view"
-msgstr ""
+msgstr "Esa línea proviene del commit %s, que no está en esta vista"
 
-#, fuzzy
 msgid "External diff viewer failed:"
-msgstr "f\t\tDesplazar la vista de diferencias al archivo siguiente"
+msgstr "Visor de diferencias externo falló:"
+
+msgid "All files"
+msgstr "Todos los archivos"
+
+msgid "View"
+msgstr "Vista"
 
 msgid "Gitk view definition"
 msgstr "Definición de vistas de Gitk"
@@ -492,96 +497,93 @@ msgid "Remember this view"
 msgstr "Recordar esta vista"
 
 msgid "References (space separated list):"
-msgstr ""
+msgstr "Referencias (lista separada por espacios):"
 
 msgid "Branches & tags:"
-msgstr ""
+msgstr "Ramas y etiquetas:"
 
-#, fuzzy
 msgid "All refs"
-msgstr "Todos los archivos"
+msgstr "Todas las referencias"
 
 msgid "All (local) branches"
-msgstr ""
+msgstr "Todas las ramas (locales)"
 
 msgid "All tags"
-msgstr ""
+msgstr "Todas las etiquetas"
 
 msgid "All remote-tracking branches"
-msgstr ""
+msgstr "Todas las ramas remotas"
 
 msgid "Commit Info (regular expressions):"
-msgstr ""
+msgstr "Información del commit (expresiones regulares)"
 
-#, fuzzy
 msgid "Author:"
-msgstr "Autor"
+msgstr "Autor:"
 
-#, fuzzy
 msgid "Committer:"
-msgstr "revisión"
+msgstr "Comiteador:"
 
 msgid "Commit Message:"
-msgstr ""
+msgstr "Mensaje del commit:"
 
 msgid "Matches all Commit Info criteria"
-msgstr ""
+msgstr "Cumple todos los criterios de 'Información del commit'"
 
 msgid "Matches no Commit Info criteria"
-msgstr ""
+msgstr "Cumple ningún criterio de 'Información del commit'"
 
 msgid "Changes to Files:"
-msgstr ""
+msgstr "Cambios en ficheros:"
 
 msgid "Fixed String"
-msgstr ""
+msgstr "Texto exacto"
 
 msgid "Regular Expression"
-msgstr ""
+msgstr "Expresión regular"
 
-#, fuzzy
 msgid "Search string:"
-msgstr "Buscando"
+msgstr "Buscar cadena:"
 
+# Notice git log since and until format
 msgid ""
 "Commit Dates (\"2 weeks ago\", \"2009-03-17 15:27:38\", \"March 17, 2009 "
 "15:27:38\"):"
 msgstr ""
+"Fechas del commit (\"2 weeks ago\", \"2009-03-17 15:27:38\", \"March 17, "
+"2009 15:27:38\"):"
 
 msgid "Since:"
-msgstr ""
+msgstr "Desde:"
 
 msgid "Until:"
-msgstr ""
+msgstr "Hasta:"
 
 msgid "Limit and/or skip a number of revisions (positive integer):"
-msgstr ""
+msgstr "Limitar y/o saltar las siguientes revisiones (número positivo)"
 
 msgid "Number to show:"
-msgstr ""
+msgstr "Limitar a n revisiones:"
 
 msgid "Number to skip:"
-msgstr ""
+msgstr "Saltar n revisiones:"
 
 msgid "Miscellaneous options:"
-msgstr ""
+msgstr "Opciones varias:"
 
 msgid "Strictly sort by date"
-msgstr ""
+msgstr "Ordenar estrictamente por fecha"
 
 msgid "Mark branch sides"
-msgstr ""
+msgstr "Marcar lados de ramas"
 
-#, fuzzy
 msgid "Limit to first parent"
-msgstr "Limitar las diferencias a las rutas seleccionadas"
+msgstr "Limitar al primer padre"
 
 msgid "Simple history"
-msgstr ""
+msgstr "Historia simple"
 
-#, fuzzy
 msgid "Additional arguments to git log:"
-msgstr "Revisiones a incluir (argumentos a git log):"
+msgstr "Argumentos extra a git log:"
 
 msgid "Enter files and directories to include, one per line:"
 msgstr "Introducir archivos y directorios a incluir, uno por línea:"
@@ -590,17 +592,16 @@ msgid "Command to generate more commits to include:"
 msgstr "Comando que genera más revisiones a incluir:"
 
 msgid "Gitk: edit view"
-msgstr ""
+msgstr "Gitk: editar vista"
 
 msgid "-- criteria for selecting revisions"
-msgstr ""
+msgstr "-- criterios para filtrar revisiones"
 
-#, fuzzy
 msgid "View Name"
-msgstr "Vista"
+msgstr "Nombre de la vista"
 
 msgid "Apply (F5)"
-msgstr ""
+msgstr "Aplicar (F5)"
 
 msgid "Error in commit selection arguments:"
 msgstr "Error en los argumentos de selección de las revisiones:"
@@ -626,11 +627,14 @@ msgstr "Cambios locales añadidos al índice pero sin completar revisión"
 msgid "Local uncommitted changes, not checked in to index"
 msgstr "Cambios locales sin añadir al índice"
 
+msgid "Error starting web browser:"
+msgstr "Error al arrancar navegador web:"
+
 msgid "and many more"
-msgstr ""
+msgstr "y muchos más"
 
 msgid "many"
-msgstr ""
+msgstr "muchos"
 
 msgid "Tags:"
 msgstr "Etiquetas:"
@@ -650,28 +654,28 @@ msgstr "Sigue-a"
 msgid "Precedes"
 msgstr "Precede-a"
 
-#, fuzzy, tcl-format
+#, tcl-format
 msgid "Error getting diffs: %s"
-msgstr "Error al leer las diferencias de fusión:"
+msgstr "Error al leer las diferencias: %s"
 
 msgid "Goto:"
 msgstr "Ir a:"
 
 #, tcl-format
-msgid "Short SHA1 id %s is ambiguous"
-msgstr "La id SHA1 abreviada %s es ambigua"
-
-#, fuzzy, tcl-format
-msgid "Revision %s is not known"
-msgstr "La id SHA1 %s es desconocida"
+msgid "Short commit ID %s is ambiguous"
+msgstr "El id SHA1 abreviado %s es ambiguo"
 
 #, tcl-format
-msgid "SHA1 id %s is not known"
-msgstr "La id SHA1 %s es desconocida"
+msgid "Revision %s is not known"
+msgstr "Revisión %s es desconocida"
+
+#, tcl-format
+msgid "Commit ID %s is not known"
+msgstr "El id del commit %s es desconocido"
 
 #, tcl-format
 msgid "Revision %s is not in the current view"
-msgstr ""
+msgstr "La revisión %s no está en la vista actual"
 
 msgid "Date"
 msgstr "Fecha"
@@ -681,51 +685,55 @@ msgstr "Hijas"
 
 #, tcl-format
 msgid "Reset %s branch to here"
-msgstr "Poner la rama %s en esta revisión"
+msgstr "Resetear la rama %s en esta revisión"
 
 msgid "Detached head: can't reset"
-msgstr ""
+msgstr "En estado 'detached head': no se puede resetear la rama"
 
 msgid "Skipping merge commit "
-msgstr ""
+msgstr "Omitiendo el commit de merge "
 
-#, fuzzy
 msgid "Error getting patch ID for "
-msgstr "Error en la creación del parche:"
+msgstr "Error obteniendo ID del parche para "
 
 msgid " - stopping\n"
-msgstr ""
+msgstr " - deteniendo\n"
 
-#, fuzzy
 msgid "Commit "
-msgstr "revisión"
+msgstr "Revisión "
 
 msgid ""
 " is the same patch as\n"
 "       "
 msgstr ""
+" es el mismo parche que\n"
+"       "
 
 msgid ""
 " differs from\n"
 "       "
 msgstr ""
+" difiere de\n"
+"       "
 
 msgid ""
 "Diff of commits:\n"
 "\n"
 msgstr ""
+"Diferencia de commits:\n"
+"\n"
 
 #, tcl-format
 msgid " has %s children - stopping\n"
-msgstr ""
+msgstr " tiene %s hijos - parando\n"
 
-#, fuzzy, tcl-format
+#, tcl-format
 msgid "Error writing commit to file: %s"
-msgstr "Error al escribir revisión:"
+msgstr "Error al escribir revisión al fichero: %s"
 
-#, fuzzy, tcl-format
+#, tcl-format
 msgid "Error diffing commits: %s"
-msgstr "Error al escribir revisión:"
+msgstr "Error comparando revisiones: %s"
 
 msgid "Top"
 msgstr "Origen"
@@ -764,11 +772,10 @@ msgid "Tag name:"
 msgstr "Nombre de etiqueta:"
 
 msgid "Tag message is optional"
-msgstr ""
+msgstr "El mensaje de la etiqueta es opcional"
 
-#, fuzzy
 msgid "Tag message:"
-msgstr "Nombre de etiqueta:"
+msgstr "Mensaje de la etiqueta:"
 
 msgid "Create"
 msgstr "Crear"
@@ -792,15 +799,28 @@ msgstr "Escribir"
 msgid "Error writing commit:"
 msgstr "Error al escribir revisión:"
 
+msgid "Create branch"
+msgstr "Crear nueva rama"
+
+#, tcl-format
+msgid "Rename branch %s"
+msgstr "Renombrar rama '%s'"
+
+msgid "Rename"
+msgstr "Renombrar"
+
 msgid "Name:"
 msgstr "Nombre:"
 
 msgid "Please specify a name for the new branch"
 msgstr "Especifique un nombre para la nueva rama"
 
-#, fuzzy, tcl-format
+#, tcl-format
 msgid "Branch '%s' already exists. Overwrite?"
-msgstr "La etiqueta \"%s\" ya existe"
+msgstr "La rama '%s' ya existe. ¿Sobreescribir?"
+
+msgid "Please specify a new name for the branch"
+msgstr "Especifique un nuevo nombre para la rama"
 
 #, tcl-format
 msgid "Commit %s is already included in branch %s -- really re-apply it?"
@@ -814,33 +834,42 @@ msgid ""
 "Cherry-pick failed because of local changes to file '%s'.\n"
 "Please commit, reset or stash your changes and try again."
 msgstr ""
+"El comando cherry-pick falló por los cambios locales al fichero '%s'.\n"
+"Por favor, comiteé, reseteé o use stash con sus cambios y pruebe de nuevo"
 
 msgid ""
 "Cherry-pick failed because of merge conflict.\n"
 "Do you wish to run git citool to resolve it?"
 msgstr ""
+"El comando cherry-pick falló debido a un conflicto de fusión.\n"
+"¿Desea ejecutar git citool para resolverlo?"
 
 msgid "No changes committed"
 msgstr "No se han guardado cambios"
 
-#, fuzzy, tcl-format
+#, tcl-format
 msgid "Commit %s is not included in branch %s -- really revert it?"
-msgstr "La revisión %s ya está incluida en la rama %s -- ¿Volver a aplicarla?"
+msgstr ""
+"La revisión %s no está incluida en la rama %s -- ¿seguro que quiere "
+"revertirla?"
 
-#, fuzzy
 msgid "Reverting"
-msgstr "Reponiendo"
+msgstr "Revirtiendo"
 
 #, tcl-format
 msgid ""
 "Revert failed because of local changes to the following files:%s Please "
 "commit, reset or stash  your changes and try again."
 msgstr ""
+"El comando revert falló por los cambios locales a estos ficheros:%s Por "
+"favor, comitéelos, reseteé o use stash y pruebe otra vez"
 
 msgid ""
 "Revert failed because of merge conflict.\n"
 " Do you wish to run git citool to resolve it?"
 msgstr ""
+"Revert falló por un conflicto de fusión.\n"
+"¿Quiere ejecutar git citool para resolverlo?"
 
 msgid "Confirm reset"
 msgstr "Confirmar git reset"
@@ -868,6 +897,10 @@ msgstr ""
 msgid "Resetting"
 msgstr "Reponiendo"
 
+#, tcl-format
+msgid "A local branch named %s exists already"
+msgstr "Ya existe una rama local llamada '%s'"
+
 msgid "Checking out"
 msgstr "Creando copia de trabajo"
 
@@ -889,6 +922,9 @@ msgstr "Etiquetas y ramas: %s"
 msgid "Filter"
 msgstr "Filtro"
 
+msgid "Sort refs by type"
+msgstr "Ordenar referencias por tipo"
+
 msgid ""
 "Error reading commit topology information; branch and preceding/following "
 "tag information will be incomplete."
@@ -901,15 +937,6 @@ msgstr "Etiqueta"
 
 msgid "Id"
 msgstr "Id"
-
-msgid "Gitk font chooser"
-msgstr "Selector de tipografías gitk"
-
-msgid "B"
-msgstr "B"
-
-msgid "I"
-msgstr "I"
 
 msgid "Commit list display options"
 msgstr "Opciones de visualización de la lista de revisiones"
@@ -924,12 +951,23 @@ msgstr "Ancho máximo del gráfico (en % del panel)"
 msgid "Show local changes"
 msgstr "Mostrar cambios locales"
 
-#, fuzzy
-msgid "Auto-select SHA1 (length)"
-msgstr "Seleccionar automáticamente SHA1 hash"
-
 msgid "Hide remote refs"
-msgstr ""
+msgstr "Esconder referencias remotas"
+
+msgid "Refs to hide (space-separated globs)"
+msgstr "Referencias a esconder (globs separados por espacios)"
+
+msgid "Copy commit ID to clipboard"
+msgstr "Copiar id de la revisión al portapapeles"
+
+msgid "Copy commit ID to X11 selection"
+msgstr "Copiar id de la revisión a selección X11"
+
+msgid "Length of commit ID to copy"
+msgstr "Longitud del ID de la revisión al copiar"
+
+msgid "Wheel scrolling multiplier"
+msgstr "Multiplicador desplazamiento rueda del ratón"
 
 msgid "Diff display options"
 msgstr "Opciones de visualización de diferencias"
@@ -937,91 +975,107 @@ msgstr "Opciones de visualización de diferencias"
 msgid "Tab spacing"
 msgstr "Espaciado de tabulador"
 
-#, fuzzy
+msgid "Wrap comment text"
+msgstr "Ajustar texto de comentarios"
+
+msgid "Wrap other text"
+msgstr "Ajustar otros textos"
+
 msgid "Display nearby tags/heads"
-msgstr "Mostrar etiquetas cercanas"
+msgstr "Mostrar etiquetas/referencias cercanas"
 
 msgid "Maximum # tags/heads to show"
-msgstr ""
+msgstr "Máximo número de etiquetas/"
 
 msgid "Limit diffs to listed paths"
 msgstr "Limitar las diferencias a las rutas seleccionadas"
 
 msgid "Support per-file encodings"
-msgstr ""
+msgstr "Soporte para codificaciones por archivo"
 
 msgid "External diff tool"
-msgstr ""
+msgstr "Herramienta de comparación externa"
 
 msgid "Choose..."
-msgstr ""
+msgstr "Escoger..."
 
-#, fuzzy
-msgid "General options"
-msgstr "Generar parche"
+msgid "Web browser"
+msgstr "Navegador web"
 
-msgid "Use themed widgets"
-msgstr ""
+msgid "Themes - change requires restart"
+msgstr "Temas - los cambios requieren reinicio"
 
-msgid "(change requires restart)"
-msgstr ""
+msgid "Theme to use after restart"
+msgstr "Tema a usar tras reiniciar"
 
-msgid "(currently unavailable)"
-msgstr ""
+msgid "Theme definition file"
+msgstr "Fichero de definición del tema"
+
+msgid "The theme definition file may affect all themes."
+msgstr "El fichero de definición del tema puede afectar a todos los temas."
+
+msgid "Apply theme"
+msgstr "Aplicar tema"
 
 msgid "Colors: press to choose"
 msgstr "Colores: pulse para seleccionar"
 
-msgid "Interface"
-msgstr ""
-
-#, fuzzy
-msgid "interface"
-msgstr "Tipografía para interfaz de usuario"
-
 msgid "Background"
 msgstr "Fondo"
 
-#, fuzzy
 msgid "background"
-msgstr "Fondo"
+msgstr "fondo"
 
 msgid "Foreground"
 msgstr "Primer plano"
 
-#, fuzzy
 msgid "foreground"
-msgstr "Primer plano"
+msgstr "primer plano"
 
 msgid "Diff: old lines"
-msgstr "Diff: líneas viejas"
+msgstr "Diff: líneas antiguas"
 
-#, fuzzy
 msgid "diff old lines"
-msgstr "Diff: líneas viejas"
+msgstr "diff líneas antiguas"
+
+msgid "Diff: old lines bg"
+msgstr "Diff: fondo de líneas antiguas"
+
+msgid "diff old lines bg"
+msgstr "diff fondo de líneas antiguas"
 
 msgid "Diff: new lines"
 msgstr "Diff: líneas nuevas"
 
-#, fuzzy
 msgid "diff new lines"
-msgstr "Diff: líneas nuevas"
+msgstr "diff líneas nuevas"
+
+msgid "Diff: new lines bg"
+msgstr "Diff: fondo de líneas nuevas"
+
+msgid "diff new lines bg"
+msgstr "diff fondo de líneas nuevas"
 
 msgid "Diff: hunk header"
 msgstr "Diff: cabecera de fragmento"
 
-#, fuzzy
 msgid "diff hunk header"
-msgstr "Diff: cabecera de fragmento"
+msgstr "diff cabecera de fragmento"
 
 msgid "Marked line bg"
-msgstr ""
+msgstr "Fondo de línea marcada"
 
 msgid "marked line background"
-msgstr ""
+msgstr "fondo de linea marcada"
 
 msgid "Select bg"
 msgstr "Color de fondo de la selección"
+
+msgid "Link"
+msgstr "Enlace"
+
+msgid "link"
+msgstr "enlace"
 
 msgid "Fonts: press to choose"
 msgstr "Tipografías: pulse para elegir"
@@ -1038,26 +1092,21 @@ msgstr "Tipografía para interfaz de usuario"
 msgid "Gitk preferences"
 msgstr "Preferencias de gitk"
 
-#, fuzzy
 msgid "General"
-msgstr "Generar"
+msgstr "General"
 
 msgid "Colors"
-msgstr ""
+msgstr "Colores"
 
 msgid "Fonts"
-msgstr ""
+msgstr "Fuentes"
+
+msgid "Gitk: select theme definition"
+msgstr "Gitk: escoger definición de tema"
 
 #, tcl-format
 msgid "Gitk: choose color for %s"
 msgstr "Gitk: elegir color para %s"
-
-msgid ""
-"Sorry, gitk cannot run with this version of Tcl/Tk.\n"
-" Gitk requires at least Tcl/Tk 8.4."
-msgstr ""
-"Esta versión de Tcl/Tk es demasiado antigua.\n"
-" Gitk requiere Tcl/Tk versión 8.4 o superior."
 
 msgid "Cannot find a git repository here."
 msgstr "No hay un repositorio git aquí."
@@ -1069,6 +1118,37 @@ msgstr ""
 
 msgid "Bad arguments to gitk:"
 msgstr "Argumentos incorrectos a Gitk:"
+
+#~ msgid "SHA1 ID:"
+#~ msgstr "SHA1 ID:"
+
+#~ msgid "Gitk font chooser"
+#~ msgstr "Selector de tipografías gitk"
+
+#~ msgid "B"
+#~ msgstr "B"
+
+#~ msgid "I"
+#~ msgstr "I"
+
+#, fuzzy
+#~ msgid "Auto-select SHA1 (length)"
+#~ msgstr "Seleccionar automáticamente SHA1 hash"
+
+#, fuzzy
+#~ msgid "General options"
+#~ msgstr "Generar parche"
+
+#, fuzzy
+#~ msgid "interface"
+#~ msgstr "Tipografía para interfaz de usuario"
+
+#~ msgid ""
+#~ "Sorry, gitk cannot run with this version of Tcl/Tk.\n"
+#~ " Gitk requires at least Tcl/Tk 8.4."
+#~ msgstr ""
+#~ "Esta versión de Tcl/Tk es demasiado antigua.\n"
+#~ " Gitk requiere Tcl/Tk versión 8.4 o superior."
 
 #~ msgid "SHA1 ID: "
 #~ msgstr "SHA1 ID: "

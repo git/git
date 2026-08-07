@@ -174,7 +174,7 @@ static int dump_table(struct reftable_merged_table *mt)
 static int dump_stack(const char *stackdir, uint32_t hash_id)
 {
 	struct reftable_stack *stack = NULL;
-	struct reftable_write_options opts = { .hash_id = hash_id };
+	struct reftable_stack_options opts = { .hash_id = hash_id };
 	struct reftable_merged_table *merged = NULL;
 
 	int err = reftable_new_stack(&stack, stackdir, &opts);

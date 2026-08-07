@@ -1750,6 +1750,7 @@ static int curl_append_msgs_to_imap(struct imap_server_conf *server,
 
 	curl_easy_cleanup(curl);
 	curl_global_cleanup();
+	strbuf_release(&msgbuf.buf);
 
 	if (cred.username) {
 		if (res == CURLE_OK)

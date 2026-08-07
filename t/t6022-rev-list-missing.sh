@@ -68,7 +68,7 @@ do
 			allow-any)
 				;;
 			print)
-				grep ?$oid actual.raw &&
+				test_grep ?$oid actual.raw &&
 				echo ?$oid >>expect.raw
 				;;
 			esac &&
@@ -132,7 +132,7 @@ do
 				allow-any)
 					;;
 				print)
-					grep ?$oid actual.raw &&
+					test_grep ?$oid actual.raw &&
 					echo ?$oid >>expect.raw
 					;;
 				esac &&

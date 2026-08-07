@@ -374,7 +374,7 @@ static const char *open_pack_file(const char *pack_name)
 		output_fd = -1;
 		nothread_data.pack_fd = input_fd;
 	}
-	the_hash_algo->init_fn(&input_ctx);
+	git_hash_init(&input_ctx, the_hash_algo);
 	return pack_name;
 }
 
@@ -481,7 +481,7 @@ static void *unpack_entry_data(off_t offset, size_t size,
 
 	if (!is_delta_type(type)) {
 		hdrlen = format_object_header(hdr, sizeof(hdr), type, size);
-		the_hash_algo->init_fn(&c);
+		git_hash_init(&c, the_hash_algo);
 		git_hash_update(&c, hdr, hdrlen);
 	} else
 		oid = NULL;
@@ -1291,7 +1291,7 @@ static void parse_pack_objects(unsigned char *hash)
 
 	/* Check pack integrity */
 	flush();
-	the_hash_algo->init_fn(&tmp_ctx);
+	git_hash_init(&tmp_ctx, the_hash_algo);
 	git_hash_clone(&tmp_ctx, &input_ctx);
 	git_hash_final(hash, &tmp_ctx);
 	if (!hasheq(fill(the_hash_algo->rawsz), hash, the_repository->hash_algo))
@@ -1825,11 +1825,16 @@ static void repack_local_links(void)
 
 	oidset_iter_init(&outgoing_links, &iter);
 	while ((oid = oidset_iter_next(&iter))) {
-		struct object_info info = OBJECT_INFO_INIT;
+		struct odb_source_info source_info;
+		struct object_info info = {
+			.source_infop = &source_info,
+		};
+
 		if (odb_read_object_info_extended(the_repository->objects, oid, &info, 0))
 			/* Missing; assume it is a promisor object */
 			continue;
-		if (info.whence == OI_PACKED && info.u.packed.pack->pack_promisor)
+		if (source_info.source->type == ODB_SOURCE_PACKED &&
+		    source_info.u.packed.pack->pack_promisor)
 			continue;
 
 		if (!cmd.args.nr) {

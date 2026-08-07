@@ -519,8 +519,8 @@ int create_bundle(struct repository *r, const char *path,
 	if (bundle_to_stdout)
 		bundle_fd = 1;
 	else
-		bundle_fd = hold_lock_file_for_update(&lock, path,
-						      LOCK_DIE_ON_ERROR);
+		bundle_fd = repo_hold_lock_file_for_update(r, &lock, path,
+							   LOCK_DIE_ON_ERROR);
 
 	if (version == -1)
 		version = min_version;

@@ -144,7 +144,7 @@ test_expect_success 'do partial clone 2, backfill min batch size' '
 test_expect_success 'backfill --sparse without sparse-checkout fails' '
 	git init not-sparse &&
 	test_must_fail git -C not-sparse backfill --sparse 2>err &&
-	grep "problem loading sparse-checkout" err
+	test_grep "problem loading sparse-checkout" err
 '
 
 test_expect_success 'backfill --sparse' '
@@ -422,7 +422,7 @@ test_expect_success 'backfill range with include-edges enables fetch-free git-lo
 		-C backfill-log log -p HEAD~2..HEAD >log-output &&
 
 	# No promisor fetches should have been needed.
-	! grep "fetch_count" log-trace
+	test_grep ! "fetch_count" log-trace
 '
 
 test_expect_success 'backfill range without include edges causes on-demand fetches in git-log' '
@@ -439,7 +439,7 @@ test_expect_success 'backfill range without include edges causes on-demand fetch
 	GIT_TRACE2_EVENT="$(pwd)/log-no-bdy-trace" git \
 		-C backfill-log-no-bdy log -p HEAD~2..HEAD >log-output &&
 
-	grep "fetch_count" log-no-bdy-trace
+	test_grep "fetch_count" log-no-bdy-trace
 '
 
 test_expect_success 'backfill range enables fetch-free replay' '
@@ -470,7 +470,7 @@ test_expect_success 'backfill range enables fetch-free replay' '
 	GIT_TRACE2_EVENT="$(pwd)/replay-trace" git -C replay-dest.git \
 		replay --onto main topic~1..topic >replay-out &&
 
-	! grep "fetch_count" replay-trace
+	test_grep ! "fetch_count" replay-trace
 '
 
 test_expect_success 'backfill enables fetch-free merge' '
@@ -501,7 +501,7 @@ test_expect_success 'backfill enables fetch-free merge' '
 	GIT_TRACE2_EVENT="$(pwd)/merge-trace" git -C merge-dest \
 		merge origin/side -m "test merge" &&
 
-	! grep "fetch_count" merge-trace
+	test_grep ! "fetch_count" merge-trace
 '
 
 . "$TEST_DIRECTORY"/lib-httpd.sh
@@ -530,7 +530,7 @@ test_expect_success 'backfilling over HTTP succeeds' '
 	awk "{print \$1;}" <rev-list-out >oids &&
 	GIT_TRACE2_EVENT="$(pwd)/walk-trace" git -C backfill-http \
 		cat-file --batch-check <oids >batch-out &&
-	! grep missing batch-out
+	test_grep ! missing batch-out
 '
 
 # DO NOT add non-httpd-specific tests here, because the last part of this

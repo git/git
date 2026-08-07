@@ -60,6 +60,17 @@ void test_reftable_basics__binsearch(void)
 	}
 }
 
+static int unreachable_lesseq(size_t i UNUSED, void *args UNUSED)
+{
+	cl_fail("comparison function called for empty range");
+	return 0;
+}
+
+void test_reftable_basics__binsearch_empty(void)
+{
+	cl_assert_equal_i(binsearch(0, &unreachable_lesseq, NULL), 0);
+}
+
 void test_reftable_basics__names_length(void)
 {
 	const char *a[] = { "a", "b", NULL };

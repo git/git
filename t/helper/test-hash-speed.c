@@ -5,7 +5,7 @@
 
 static inline void compute_hash(const struct git_hash_algo *algo, struct git_hash_ctx *ctx, uint8_t *final, const void *p, size_t len)
 {
-	algo->init_fn(ctx);
+	git_hash_init(ctx, algo);
 	git_hash_update(ctx, p, len);
 	git_hash_final(final, ctx);
 }

@@ -19,6 +19,11 @@ typedef char *iconv_ibp;
 static const char *repo_encoding = "UTF-8";
 static const char *path_encoding = "UTF-8-MAC";
 
+static size_t dirent_prec_psx_size(size_t max_name_len)
+{
+	return st_add(offsetof(dirent_prec_psx, d_name), max_name_len);
+}
+
 static size_t has_non_ascii(const char *s, size_t maxlen, size_t *strlen_c)
 {
 	const uint8_t *ptr = (const uint8_t *)s;
@@ -114,8 +119,8 @@ const char *precompose_argv_prefix(int argc, const char **argv, const char *pref
 PREC_DIR *precompose_utf8_opendir(const char *dirname)
 {
 	PREC_DIR *prec_dir = xmalloc(sizeof(PREC_DIR));
-	prec_dir->dirent_nfc = xmalloc(sizeof(dirent_prec_psx));
-	prec_dir->dirent_nfc->max_name_len = sizeof(prec_dir->dirent_nfc->d_name);
+	prec_dir->dirent_nfc = xmalloc(dirent_prec_psx_size(NAME_MAX + 1));
+	prec_dir->dirent_nfc->max_name_len = NAME_MAX + 1;
 
 	prec_dir->dirp = opendir(dirname);
 	if (!prec_dir->dirp) {
@@ -145,8 +150,7 @@ struct dirent_prec_psx *precompose_utf8_readdir(PREC_DIR *prec_dir)
 		int ret_errno = errno;
 
 		if (new_maxlen > prec_dir->dirent_nfc->max_name_len) {
-			size_t new_len = sizeof(dirent_prec_psx) + new_maxlen -
-				sizeof(prec_dir->dirent_nfc->d_name);
+			size_t new_len = dirent_prec_psx_size(new_maxlen);
 
 			prec_dir->dirent_nfc = xrealloc(prec_dir->dirent_nfc, new_len);
 			prec_dir->dirent_nfc->max_name_len = new_maxlen;

@@ -294,7 +294,7 @@ static int add_one_path(const struct cache_entry *old, const char *path, int len
 	ce->ce_flags = create_ce_flags(0);
 	ce->ce_namelen = len;
 	fill_stat_cache_info(the_repository->index, ce, st);
-	ce->ce_mode = ce_mode_from_stat(old, st->st_mode);
+	ce->ce_mode = ce_mode_from_stat(the_repository, old, st->st_mode);
 
 	if (index_path(the_repository->index, &ce->oid, path, st,
 		       info_only ? 0 : INDEX_WRITE_OBJECT)) {
@@ -875,7 +875,7 @@ static enum parse_opt_result unresolve_callback(
 	const char *arg, int unset)
 {
 	int *has_errors = opt->value;
-	const char *prefix = startup_info->prefix;
+	const char *prefix = the_repository->prefix;
 
 	BUG_ON_OPT_NEG(unset);
 	BUG_ON_OPT_ARG(arg);
@@ -896,7 +896,7 @@ static enum parse_opt_result reupdate_callback(
 	const char *arg, int unset)
 {
 	int *has_errors = opt->value;
-	const char *prefix = startup_info->prefix;
+	const char *prefix = the_repository->prefix;
 
 	BUG_ON_OPT_NEG(unset);
 	BUG_ON_OPT_ARG(arg);
@@ -1124,7 +1124,7 @@ int cmd_update_index(int argc,
 	 * Allow the object layer to optimize adding multiple objects in
 	 * a batch.
 	 */
-	transaction = odb_transaction_begin(the_repository->objects);
+	odb_transaction_begin_or_die(the_repository->objects, &transaction, 0);
 	while (ctx.argc) {
 		if (parseopt_state != PARSE_OPT_DONE)
 			parseopt_state = parse_options_step(&ctx, options,
@@ -1133,6 +1133,8 @@ int cmd_update_index(int argc,
 			break;
 		switch (parseopt_state) {
 		case PARSE_OPT_HELP:
+			exit(0);
+		case PARSE_OPT_HELP_ERROR:
 		case PARSE_OPT_ERROR:
 			exit(129);
 		case PARSE_OPT_COMPLETE:

@@ -2879,7 +2879,7 @@ struct http_object_request *new_http_object_request(const char *base_url,
 
 	git_inflate_init(&freq->stream);
 
-	the_hash_algo->init_fn(&freq->c);
+	git_hash_init(&freq->c, the_hash_algo);
 
 	freq->url = get_remote_object_url(base_url, hex, 0);
 
@@ -2915,7 +2915,7 @@ struct http_object_request *new_http_object_request(const char *base_url,
 		git_inflate_end(&freq->stream);
 		memset(&freq->stream, 0, sizeof(freq->stream));
 		git_inflate_init(&freq->stream);
-		the_hash_algo->init_fn(&freq->c);
+		git_hash_init(&freq->c, the_hash_algo);
 		if (prev_posn>0) {
 			prev_posn = 0;
 			lseek(freq->localfile, 0, SEEK_SET);
@@ -3028,6 +3028,7 @@ void release_http_object_request(struct http_object_request **freq_p)
 	curl_slist_free_all(freq->headers);
 	strbuf_release(&freq->tmpfile);
 	git_inflate_end(&freq->stream);
+	git_hash_discard(&freq->c);
 
 	free(freq);
 	*freq_p = NULL;

@@ -23,6 +23,12 @@ test_xmllint () {
 	fi
 }
 
+test_maintenance_tasks () {
+	cat >expect &&
+	sed -ne "s/.*\"region_enter\".*\"category\":\"maintenance\([^\"]*\)\".*\"label\":\"\([^\"][^\"]*\)\".*/\2\1/p" "$1" >actual &&
+	test_cmp expect actual
+}
+
 test_lazy_prereq SYSTEMD_ANALYZE '
 	systemd-analyze verify /lib/systemd/system/basic.target
 '
@@ -35,7 +41,7 @@ test_systemd_analyze_verify () {
 }
 
 test_expect_success 'help text' '
-	test_expect_code 129 git maintenance -h >actual &&
+	git maintenance -h >actual &&
 	test_grep "usage: git maintenance <subcommand>" actual &&
 	test_expect_code 129 git maintenance barf 2>err &&
 	test_grep "unknown subcommand: \`barf'\''" err &&
@@ -180,8 +186,9 @@ test_expect_success 'maintenance.<task>.enabled' '
 	git config maintenance.gc.enabled false &&
 	git config maintenance.commit-graph.enabled true &&
 	GIT_TRACE2_EVENT="$(pwd)/run-config.txt" git maintenance run 2>err &&
-	test_subcommand ! git gc --quiet <run-config.txt &&
-	test_subcommand git commit-graph write --split --reachable --no-progress <run-config.txt
+	test_maintenance_tasks run-config.txt <<-\EOF
+	commit-graph
+	EOF
 '
 
 test_expect_success 'run --task=<task>' '
@@ -189,16 +196,20 @@ test_expect_success 'run --task=<task>' '
 		git maintenance run --task=commit-graph 2>/dev/null &&
 	GIT_TRACE2_EVENT="$(pwd)/run-gc.txt" \
 		git maintenance run --task=gc 2>/dev/null &&
-	GIT_TRACE2_EVENT="$(pwd)/run-commit-graph.txt" \
-		git maintenance run --task=commit-graph 2>/dev/null &&
 	GIT_TRACE2_EVENT="$(pwd)/run-both.txt" \
 		git maintenance run --task=commit-graph --task=gc 2>/dev/null &&
-	test_subcommand ! git gc --quiet --no-detach --skip-foreground-tasks <run-commit-graph.txt &&
-	test_subcommand git gc --quiet --no-detach --skip-foreground-tasks <run-gc.txt &&
-	test_subcommand git gc --quiet --no-detach --skip-foreground-tasks <run-both.txt &&
-	test_subcommand git commit-graph write --split --reachable --no-progress <run-commit-graph.txt &&
-	test_subcommand ! git commit-graph write --split --reachable --no-progress <run-gc.txt &&
-	test_subcommand git commit-graph write --split --reachable --no-progress <run-both.txt
+	test_maintenance_tasks run-commit-graph.txt <<-\EOF &&
+	commit-graph
+	EOF
+	test_maintenance_tasks run-gc.txt <<-\EOF &&
+	gc foreground
+	gc
+	EOF
+	test_maintenance_tasks run-both.txt <<-\EOF
+	gc foreground
+	commit-graph
+	gc
+	EOF
 '
 
 test_expect_success 'core.commitGraph=false prevents write process' '
@@ -235,12 +246,19 @@ test_expect_success 'commit-graph auto condition' '
 	GIT_TRACE2_EVENT="$(pwd)/cg-two-satisfied.txt" \
 		git -c maintenance.commit-graph.auto=2 $COMMAND &&
 
-	COMMIT_GRAPH_WRITE="git commit-graph write --split --reachable --no-progress" &&
-	test_subcommand ! $COMMIT_GRAPH_WRITE <cg-no.txt &&
-	test_subcommand $COMMIT_GRAPH_WRITE <cg-negative-means-yes.txt &&
-	test_subcommand ! $COMMIT_GRAPH_WRITE <cg-zero-means-no.txt &&
-	test_subcommand $COMMIT_GRAPH_WRITE <cg-one-satisfied.txt &&
-	test_subcommand $COMMIT_GRAPH_WRITE <cg-two-satisfied.txt
+	test_maintenance_tasks cg-no.txt <<-\EOF &&
+	EOF
+	test_maintenance_tasks cg-negative-means-yes.txt <<-\EOF &&
+	commit-graph
+	EOF
+	test_maintenance_tasks cg-zero-means-no.txt <<-\EOF &&
+	EOF
+	test_maintenance_tasks cg-one-satisfied.txt <<-\EOF &&
+	commit-graph
+	EOF
+	test_maintenance_tasks cg-two-satisfied.txt <<-\EOF
+	commit-graph
+	EOF
 '
 
 test_expect_success 'commit-graph auto condition with merges' '
@@ -305,7 +323,7 @@ test_expect_success 'prefetch multiple remotes' '
 	test_cmp_rev refs/remotes/remote2/two refs/prefetch/remotes/remote2/two &&
 
 	git log --oneline --decorate --all >log &&
-	! grep "prefetch" log &&
+	test_grep ! "prefetch" log &&
 
 	test_when_finished git config --unset remote.remote1.skipFetchAll &&
 	git config remote.remote1.skipFetchAll true &&
@@ -395,15 +413,15 @@ test_expect_success 'maintenance.loose-objects.batchSize' '
 
 	GIT_PROGRESS_DELAY=0 \
 	git -C loose-batch maintenance run --no-quiet --task=loose-objects 2>err &&
-	grep "Enumerating objects: 50, done." err &&
+	test_grep "Enumerating objects: 50, done." err &&
 
 	GIT_PROGRESS_DELAY=0 \
 	git -C loose-batch maintenance run --no-quiet --task=loose-objects 2>err &&
-	grep "Enumerating objects: 50, done." err &&
+	test_grep "Enumerating objects: 50, done." err &&
 
 	GIT_PROGRESS_DELAY=0 \
 	git -C loose-batch maintenance run --no-quiet --task=loose-objects 2>err &&
-	grep "Enumerating objects: 2, done." err &&
+	test_grep "Enumerating objects: 2, done." err &&
 
 	GIT_PROGRESS_DELAY=0 \
 	git -C loose-batch maintenance run --no-quiet --task=loose-objects 2>err &&
@@ -461,36 +479,42 @@ test_expect_success 'incremental-repack task' '
 '
 
 test_expect_success EXPENSIVE 'incremental-repack 2g limit' '
-	test_config core.compression 0 &&
+	test_when_finished rm -rf expensive-repo &&
+	git init expensive-repo &&
+	(
+		cd expensive-repo &&
+		git config set core.compression 0 &&
+		git config set maintenance.auto false &&
 
-	for i in $(test_seq 1 5)
-	do
-		test-tool genrandom foo$i $((512 * 1024 * 1024 + 1)) >>big ||
-		return 1
-	done &&
-	git add big &&
-	git commit -qm "Add big file (1)" &&
+		for i in $(test_seq 1 5)
+		do
+			test-tool genrandom foo$i $((512 * 1024 * 1024 + 1)) >>big ||
+			return 1
+		done &&
+		git add big &&
+		git commit -qm "Add big file (1)" &&
 
-	# ensure any possible loose objects are in a pack-file
-	git maintenance run --task=loose-objects &&
+		# ensure any possible loose objects are in a pack-file
+		git maintenance run --task=loose-objects &&
 
-	rm big &&
-	for i in $(test_seq 6 10)
-	do
-		test-tool genrandom foo$i $((512 * 1024 * 1024 + 1)) >>big ||
-		return 1
-	done &&
-	git add big &&
-	git commit -qm "Add big file (2)" &&
+		rm big &&
+		for i in $(test_seq 6 10)
+		do
+			test-tool genrandom foo$i $((512 * 1024 * 1024 + 1)) >>big ||
+			return 1
+		done &&
+		git add big &&
+		git commit -qm "Add big file (2)" &&
 
-	# ensure any possible loose objects are in a pack-file
-	git maintenance run --task=loose-objects &&
+		# ensure any possible loose objects are in a pack-file
+		git maintenance run --task=loose-objects &&
 
-	# Now run the incremental-repack task and check the batch-size
-	GIT_TRACE2_EVENT="$(pwd)/run-2g.txt" git maintenance run \
-		--task=incremental-repack 2>/dev/null &&
-	test_subcommand git multi-pack-index repack \
-		 --no-progress --batch-size=2147483647 <run-2g.txt
+		# Now run the incremental-repack task and check the batch-size
+		GIT_TRACE2_EVENT="$(pwd)/run-2g.txt" git maintenance run \
+			--task=incremental-repack 2>/dev/null &&
+		test_subcommand git multi-pack-index repack \
+			--no-progress --batch-size=2147483647 <run-2g.txt
+	)
 '
 
 run_incremental_repack_and_verify () {
@@ -556,8 +580,8 @@ run_and_verify_geometric_pack () {
 	rm -f "trace2.txt" &&
 	GIT_TRACE2_EVENT="$(pwd)/trace2.txt" \
 		git maintenance run --task=geometric-repack 2>/dev/null &&
-	test_subcommand git repack -d -l --geometric=2 \
-		--quiet --write-midx <trace2.txt &&
+	test_subcommand git repack -d -l -q --geometric=2 \
+		--write-midx <trace2.txt &&
 
 	# Verify that the number of packfiles matches our expectation.
 	ls -l .git/objects/pack/*.pack >packfiles &&
@@ -588,8 +612,8 @@ test_expect_success 'geometric repacking task' '
 		# The initial repack causes an all-into-one repack.
 		GIT_TRACE2_EVENT="$(pwd)/initial-repack.txt" \
 			git maintenance run --task=geometric-repack 2>/dev/null &&
-		test_subcommand git repack -d -l --cruft --cruft-expiration=2.weeks.ago \
-			--quiet --write-midx <initial-repack.txt &&
+		test_subcommand git repack -d -l -q --cruft --cruft-expiration=2.weeks.ago \
+			--write-midx <initial-repack.txt &&
 
 		# Repacking should now cause a no-op geometric repack because
 		# no packfiles need to be combined.
@@ -609,8 +633,8 @@ test_expect_success 'geometric repacking task' '
 		# an all-into-one-repack.
 		GIT_TRACE2_EVENT="$(pwd)/all-into-one-repack.txt" \
 			git maintenance run --task=geometric-repack 2>/dev/null &&
-		test_subcommand git repack -d -l --cruft --cruft-expiration=2.weeks.ago \
-			--quiet --write-midx <all-into-one-repack.txt &&
+		test_subcommand git repack -d -l -q --cruft --cruft-expiration=2.weeks.ago \
+			--write-midx <all-into-one-repack.txt &&
 
 		# The geometric repack soaks up unreachable objects.
 		echo blob-1 | git hash-object -w --stdin -t blob &&
@@ -644,8 +668,8 @@ test_expect_success 'geometric repacking task' '
 		run_and_verify_geometric_pack 3 &&
 		GIT_TRACE2_EVENT="$(pwd)/cruft-repack.txt" \
 			git maintenance run --task=geometric-repack 2>/dev/null &&
-		test_subcommand git repack -d -l --cruft --cruft-expiration=2.weeks.ago \
-			--quiet --write-midx <cruft-repack.txt &&
+		test_subcommand git repack -d -l -q --cruft --cruft-expiration=2.weeks.ago \
+			--write-midx <cruft-repack.txt &&
 		ls .git/objects/pack/*.pack >packs &&
 		test_line_count = 2 packs &&
 		ls .git/objects/pack/*.mtimes >cruft &&
@@ -736,7 +760,133 @@ test_expect_success 'geometric repacking honors configured split factor' '
 
 		test_geometric_repack_needed false splitFactor=2 &&
 		test_geometric_repack_needed true splitFactor=3 &&
-		test_subcommand git repack -d -l --geometric=3 --quiet --write-midx <trace2.txt
+		test_subcommand git repack -d -l -q --geometric=3 --write-midx <trace2.txt
+	)
+'
+
+test_expect_success 'pre-auto-gc hook runs exactly once' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		write_script .git/hooks/pre-auto-gc <<-\EOF &&
+		echo hook >>hook.log
+		EOF
+
+		# Satisfy the auto condition for multiple tasks, both in the
+		# foreground and in the background phase.
+		git config set maintenance.reflog-expire.auto -1 &&
+		git config set maintenance.geometric-repack.auto -1 &&
+		git config set maintenance.rerere-gc.auto -1 &&
+
+		GIT_TRACE2_EVENT="$(pwd)/trace2.txt" \
+			git maintenance run --auto 2>/dev/null &&
+
+		# The successful hook does not inhibit any of the tasks...
+		test_maintenance_tasks trace2.txt <<-\EOF &&
+		reflog-expire foreground
+		geometric-repack
+		rerere-gc
+		EOF
+		# ... but it must only have been executed a single time.
+		test_line_count = 1 hook.log
+	)
+'
+
+test_expect_success 'pre-auto-gc hook can inhibit geometric strategy' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		write_script .git/hooks/pre-auto-gc <<-\EOF &&
+		echo hook >>hook.log
+		exit 1
+		EOF
+
+		git config set maintenance.reflog-expire.auto -1 &&
+		git config set maintenance.geometric-repack.auto -1 &&
+		git config set maintenance.rerere-gc.auto -1 &&
+
+		# Maintenance would be required...
+		git maintenance is-needed --auto &&
+
+		GIT_TRACE2_EVENT="$(pwd)/trace2.txt" \
+			git maintenance run --auto 2>/dev/null &&
+
+		# ... but the failing hook inhibits all tasks. The hook itself
+		# is expected to be the only child process being spawned, and
+		# it must only run a single time.
+		test_grep "child_start.*pre-auto-gc" trace2.txt &&
+		test_maintenance_tasks trace2.txt <<-\EOF &&
+		EOF
+		test_line_count = 1 hook.log
+	)
+'
+
+test_expect_success 'pre-auto-gc hook can inhibit gc strategy' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		write_script .git/hooks/pre-auto-gc <<-\EOF &&
+		echo hook >>hook.log
+		exit 1
+		EOF
+
+		git config set maintenance.strategy gc &&
+		git config set maintenance.auto false &&
+		git config set gc.auto 3 &&
+
+		test_oid_init &&
+
+		# We need to create two objects whose hashes start with 17
+		# since this is what the gc task counts.
+		test_commit "$(test_oid blob17_1)" &&
+		test_commit "$(test_oid blob17_2)" &&
+
+		# Maintenance would be required...
+		git maintenance is-needed --auto &&
+
+		GIT_TRACE2_EVENT="$(pwd)/trace2.txt" \
+			git maintenance run --auto 2>/dev/null &&
+
+		# ... but the failing hook inhibits all tasks. The hook itself
+		# is expected to be the only child process being spawned, and
+		# it must only run a single time.
+		test_grep "child_start.*pre-auto-gc" trace2.txt &&
+		test_maintenance_tasks trace2.txt <<-\EOF &&
+		EOF
+		test_subcommand_flex ! git trace2 &&
+		test_line_count = 1 hook.log
+	)
+'
+
+test_expect_success 'pre-auto-gc hook does not run when no maintenance is needed' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		write_script .git/hooks/pre-auto-gc <<-\EOF &&
+		echo hook >>hook.log
+		EOF
+		test_must_fail git maintenance is-needed --auto &&
+		git maintenance run --auto 2>/dev/null &&
+		test_path_is_missing hook.log
+	)
+'
+
+test_expect_success 'pre-auto-gc hook does not run without --auto' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	test_hook -C repo pre-auto-gc <<-\EOF &&
+	echo hook >>hook.log
+	EOF
+	(
+		cd repo &&
+		GIT_TRACE2_EVENT="$(pwd)/trace2.txt" \
+			git maintenance run 2>/dev/null &&
+		test_grep "\[\"git\",\"repack\"," trace2.txt &&
+		test_path_is_missing hook.log
 	)
 '
 
@@ -910,24 +1060,28 @@ test_expect_success '--schedule inheritance weekly -> daily -> hourly' '
 
 	GIT_TRACE2_EVENT="$(pwd)/hourly.txt" \
 		git maintenance run --schedule=hourly 2>/dev/null &&
-	test_subcommand git prune-packed --quiet <hourly.txt &&
-	test_subcommand ! git commit-graph write --split --reachable \
-		--no-progress <hourly.txt &&
-	test_subcommand ! git multi-pack-index write --no-progress <hourly.txt &&
+	test_maintenance_tasks hourly.txt <<-\EOF &&
+	prefetch
+	loose-objects
+	EOF
 
 	GIT_TRACE2_EVENT="$(pwd)/daily.txt" \
 		git maintenance run --schedule=daily 2>/dev/null &&
-	test_subcommand git prune-packed --quiet <daily.txt &&
-	test_subcommand git commit-graph write --split --reachable \
-		--no-progress <daily.txt &&
-	test_subcommand ! git multi-pack-index write --no-progress <daily.txt &&
+	test_maintenance_tasks daily.txt <<-\EOF &&
+	prefetch
+	loose-objects
+	commit-graph
+	EOF
 
 	GIT_TRACE2_EVENT="$(pwd)/weekly.txt" \
 		git maintenance run --schedule=weekly 2>/dev/null &&
-	test_subcommand git prune-packed --quiet <weekly.txt &&
-	test_subcommand git commit-graph write --split --reachable \
-		--no-progress <weekly.txt &&
-	test_subcommand git multi-pack-index write --no-progress <weekly.txt
+	test_maintenance_tasks weekly.txt <<-\EOF
+	pack-refs foreground
+	prefetch
+	loose-objects
+	incremental-repack
+	commit-graph
+	EOF
 '
 
 test_expect_success 'maintenance.strategy inheritance' '
@@ -946,29 +1100,25 @@ test_expect_success 'maintenance.strategy inheritance' '
 	GIT_TRACE2_EVENT="$(pwd)/incremental-weekly.txt" \
 		git maintenance run --schedule=weekly --quiet &&
 
-	test_subcommand git commit-graph write --split --reachable \
-		--no-progress <incremental-hourly.txt &&
-	test_subcommand ! git prune-packed --quiet <incremental-hourly.txt &&
-	test_subcommand ! git multi-pack-index write --no-progress \
-		<incremental-hourly.txt &&
-	test_subcommand ! git pack-refs --all --prune \
-		<incremental-hourly.txt &&
+	test_maintenance_tasks incremental-hourly.txt <<-\EOF &&
+	prefetch
+	commit-graph
+	EOF
 
-	test_subcommand git commit-graph write --split --reachable \
-		--no-progress <incremental-daily.txt &&
-	test_subcommand git prune-packed --quiet <incremental-daily.txt &&
-	test_subcommand git multi-pack-index write --no-progress \
-		<incremental-daily.txt &&
-	test_subcommand ! git pack-refs --all --prune \
-		<incremental-daily.txt &&
+	test_maintenance_tasks incremental-daily.txt <<-\EOF &&
+	prefetch
+	loose-objects
+	incremental-repack
+	commit-graph
+	EOF
 
-	test_subcommand git commit-graph write --split --reachable \
-		--no-progress <incremental-weekly.txt &&
-	test_subcommand git prune-packed --quiet <incremental-weekly.txt &&
-	test_subcommand git multi-pack-index write --no-progress \
-		<incremental-weekly.txt &&
-	test_subcommand git pack-refs --all --prune \
-		<incremental-weekly.txt &&
+	test_maintenance_tasks incremental-weekly.txt <<-\EOF &&
+	pack-refs foreground
+	prefetch
+	loose-objects
+	incremental-repack
+	commit-graph
+	EOF
 
 	# Modify defaults
 	git config maintenance.commit-graph.schedule daily &&
@@ -980,30 +1130,26 @@ test_expect_success 'maintenance.strategy inheritance' '
 	GIT_TRACE2_EVENT="$(pwd)/modified-daily.txt" \
 		git maintenance run --schedule=daily --quiet &&
 
-	test_subcommand ! git commit-graph write --split --reachable \
-		--no-progress <modified-hourly.txt &&
-	test_subcommand git prune-packed --quiet <modified-hourly.txt &&
-	test_subcommand ! git multi-pack-index write --no-progress \
-		<modified-hourly.txt &&
+	test_maintenance_tasks modified-hourly.txt <<-\EOF &&
+	prefetch
+	loose-objects
+	EOF
 
-	test_subcommand git commit-graph write --split --reachable \
-		--no-progress <modified-daily.txt &&
-	test_subcommand git prune-packed --quiet <modified-daily.txt &&
-	test_subcommand ! git multi-pack-index write --no-progress \
-		<modified-daily.txt
+	test_maintenance_tasks modified-daily.txt <<-\EOF
+	prefetch
+	loose-objects
+	commit-graph
+	EOF
 '
 
 test_strategy () {
 	STRATEGY="$1"
 	shift
 
-	cat >expect &&
 	rm -f trace2.txt &&
 	GIT_TRACE2_EVENT="$(pwd)/trace2.txt" \
 		git -c maintenance.strategy=$STRATEGY maintenance run --quiet "$@" &&
-	sed -n 's/{"event":"child_start","sid":"[^/"]*",.*,"argv":\["\(.*\)\"]}/\1/p' <trace2.txt |
-		sed 's/","/ /g'  >actual
-	test_cmp expect actual
+	test_maintenance_tasks trace2.txt
 }
 
 test_expect_success 'maintenance.strategy is respected' '
@@ -1017,48 +1163,44 @@ test_expect_success 'maintenance.strategy is respected' '
 		test_grep "unknown maintenance strategy: .unknown." err &&
 
 		test_strategy incremental <<-\EOF &&
-		git pack-refs --all --prune
-		git reflog expire --all
-		git gc --quiet --no-detach --skip-foreground-tasks
+		gc foreground
+		gc
 		EOF
 
 		test_strategy incremental --schedule=weekly <<-\EOF &&
-		git pack-refs --all --prune
-		git prune-packed --quiet
-		git multi-pack-index write --no-progress
-		git multi-pack-index expire --no-progress
-		git multi-pack-index repack --no-progress --batch-size=1
-		git commit-graph write --split --reachable --no-progress
+		pack-refs foreground
+		prefetch
+		loose-objects
+		incremental-repack
+		commit-graph
 		EOF
 
 		test_strategy gc <<-\EOF &&
-		git pack-refs --all --prune
-		git reflog expire --all
-		git gc --quiet --no-detach --skip-foreground-tasks
+		gc foreground
+		gc
 		EOF
 
 		test_strategy gc --schedule=weekly <<-\EOF &&
-		git pack-refs --all --prune
-		git reflog expire --all
-		git gc --quiet --no-detach --skip-foreground-tasks
+		gc foreground
+		gc
 		EOF
 
 		test_strategy geometric <<-\EOF &&
-		git pack-refs --all --prune
-		git reflog expire --all
-		git repack -d -l --geometric=2 --quiet --write-midx
-		git commit-graph write --split --reachable --no-progress
-		git worktree prune --expire 3.months.ago
-		git rerere gc
+		pack-refs foreground
+		reflog-expire foreground
+		geometric-repack
+		commit-graph
+		worktree-prune
+		rerere-gc
 		EOF
 
 		test_strategy geometric --schedule=weekly <<-\EOF
-		git pack-refs --all --prune
-		git reflog expire --all
-		git repack -d -l --geometric=2 --quiet --write-midx
-		git commit-graph write --split --reachable --no-progress
-		git worktree prune --expire 3.months.ago
-		git rerere gc
+		pack-refs foreground
+		reflog-expire foreground
+		geometric-repack
+		commit-graph
+		worktree-prune
+		rerere-gc
 		EOF
 	)
 '
@@ -1067,7 +1209,7 @@ test_expect_success 'register and unregister' '
 	test_when_finished git config --global --unset-all maintenance.repo &&
 
 	test_must_fail git maintenance unregister 2>err &&
-	grep "is not registered" err &&
+	test_grep "is not registered" err &&
 	git maintenance unregister --force &&
 
 	git config --global --add maintenance.repo /existing1 &&
@@ -1101,11 +1243,11 @@ test_expect_success 'register and unregister' '
 	test_cmp before actual &&
 
 	test_must_fail git maintenance unregister 2>err &&
-	grep "is not registered" err &&
+	test_grep "is not registered" err &&
 	git maintenance unregister --force &&
 
 	test_must_fail git maintenance unregister --config-file ./other 2>err &&
-	grep "is not registered" err &&
+	test_grep "is not registered" err &&
 	git maintenance unregister --config-file ./other --force
 '
 
@@ -1194,9 +1336,9 @@ test_expect_success 'start from empty cron table' '
 	# start registers the repo
 	git config --get --global --fixed-value maintenance.repo "$(pwd)" &&
 
-	grep "for-each-repo --keep-going --config=maintenance.repo maintenance run --schedule=daily" cron.txt &&
-	grep "for-each-repo --keep-going --config=maintenance.repo maintenance run --schedule=hourly" cron.txt &&
-	grep "for-each-repo --keep-going --config=maintenance.repo maintenance run --schedule=weekly" cron.txt
+	test_grep "for-each-repo --keep-going --config=maintenance.repo maintenance run --schedule=daily" cron.txt &&
+	test_grep "for-each-repo --keep-going --config=maintenance.repo maintenance run --schedule=hourly" cron.txt &&
+	test_grep "for-each-repo --keep-going --config=maintenance.repo maintenance run --schedule=weekly" cron.txt
 '
 
 test_expect_success 'stop from existing schedule' '
@@ -1213,7 +1355,7 @@ test_expect_success 'stop from existing schedule' '
 test_expect_success 'start preserves existing schedule' '
 	echo "Important information!" >cron.txt &&
 	GIT_TEST_MAINT_SCHEDULER="crontab:test-tool crontab cron.txt" git maintenance start --scheduler=crontab &&
-	grep "Important information!" cron.txt
+	test_grep "Important information!" cron.txt
 '
 
 test_expect_success 'magic markers are correct' '
@@ -1228,8 +1370,8 @@ test_expect_success 'magic markers are correct' '
 test_expect_success 'stop preserves surrounding schedule' '
 	echo "Crucial information!" >>cron.txt &&
 	GIT_TEST_MAINT_SCHEDULER="crontab:test-tool crontab cron.txt" git maintenance stop &&
-	grep "Important information!" cron.txt &&
-	grep "Crucial information!" cron.txt
+	test_grep "Important information!" cron.txt &&
+	test_grep "Crucial information!" cron.txt
 '
 
 test_expect_success 'start and stop macOS maintenance' '
@@ -1259,7 +1401,7 @@ test_expect_success 'start and stop macOS maintenance' '
 	do
 		PLIST="$pfx/Library/LaunchAgents/org.git-scm.git.$frequency.plist" &&
 		test_xmllint "$PLIST" &&
-		grep schedule=$frequency "$PLIST" &&
+		test_grep schedule=$frequency "$PLIST" &&
 		echo "bootout gui/[UID] $PLIST" >>expect &&
 		echo "bootstrap gui/[UID] $PLIST" >>expect || return 1
 	done &&
@@ -1316,7 +1458,7 @@ test_expect_success 'start and stop Windows maintenance' '
 
 	for frequency in hourly daily weekly
 	do
-		grep "/create /tn Git Maintenance ($frequency) /f /xml" args &&
+		test_grep "/create /tn Git Maintenance ($frequency) /f /xml" args &&
 		file=$(ls .git/schedule_${frequency}*.xml) &&
 		test_xmllint "$file" || return 1
 	done &&
@@ -1355,8 +1497,8 @@ test_expect_success 'start and stop Linux/systemd maintenance' '
 	test_systemd_analyze_verify "systemd/user/git-maintenance@daily.service" &&
 	test_systemd_analyze_verify "systemd/user/git-maintenance@weekly.service" &&
 
-	grep "core.askPass=true" "systemd/user/git-maintenance@.service" &&
-	grep "credential.interactive=false" "systemd/user/git-maintenance@.service" &&
+	test_grep "core.askPass=true" "systemd/user/git-maintenance@.service" &&
+	test_grep "credential.interactive=false" "systemd/user/git-maintenance@.service" &&
 
 	printf -- "--user enable --now git-maintenance@%s.timer\n" hourly daily weekly >expect &&
 	test_cmp expect args &&

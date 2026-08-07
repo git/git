@@ -259,12 +259,20 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 		char *target = NULL;
 		int flags = 0;
 
-		copy_branchname(&bname, argv[i], allowed_interpret);
+		copy_branchname(the_repository, &bname,
+				argv[i], allowed_interpret);
 		free(name);
 		name = mkpathdup(fmt, bname.buf);
 
 		if (kinds == FILTER_REFS_BRANCHES) {
 			const char *path;
+			if ((path = branch_bisecting(name))) {
+				error(_("cannot delete branch '%s' "
+					"used by worktree at '%s' for bisect"),
+					      bname.buf, path);
+				ret = 1;
+				continue;
+			}
 			if ((path = branch_checked_out(name))) {
 				error(_("cannot delete branch '%s' "
 					"used by worktree at '%s'"),
@@ -579,9 +587,9 @@ static void copy_or_rename_branch(const char *oldname, const char *newname, int 
 	const char *interpreted_oldname = NULL;
 	const char *interpreted_newname = NULL;
 	int recovery = 0, oldref_usage = 0;
-	struct worktree **worktrees = get_worktrees();
+	struct worktree **worktrees = get_worktrees(the_repository);
 
-	if (check_branch_ref(&oldref, oldname)) {
+	if (check_branch_ref(the_repository, &oldref, oldname)) {
 		/*
 		 * Bad name --- this could be an attempt to rename a
 		 * ref that we used to allow to be created by accident.
@@ -704,6 +712,29 @@ static int edit_branch_description(const char *branch_name)
 	strbuf_release(&buf);
 
 	return 0;
+}
+
+static void die_if_upstream_looks_like_remote(const char *new_upstream, const char *branch_name)
+{
+	struct strbuf remote_ref = STRBUF_INIT;
+	int code;
+
+	if (strchr(new_upstream, '/') ||
+	    !remote_is_configured(remote_get(new_upstream), 0))
+		return;
+
+	strbuf_addf(&remote_ref, "refs/remotes/%s/%s", new_upstream, branch_name);
+	if (!refs_ref_exists(get_main_ref_store(the_repository), remote_ref.buf)) {
+		strbuf_release(&remote_ref);
+		return;
+	}
+
+	code = die_message(_("--set-upstream-to takes a single <remote>/<branch> argument"));
+	advise_if_enabled(ADVICE_SET_UPSTREAM_FAILURE,
+			  _("Did you mean to use: git branch --set-upstream-to=%s/%s?"),
+			  new_upstream, branch_name);
+	strbuf_release(&remote_ref);
+	exit(code);
 }
 
 int cmd_branch(int argc,
@@ -898,7 +929,8 @@ int cmd_branch(int argc,
 				die(_("cannot give description to detached HEAD"));
 			branch_name = head;
 		} else if (argc == 1) {
-			copy_branchname(&buf, argv[0], INTERPRET_BRANCH_LOCAL);
+			copy_branchname(the_repository, &buf, argv[0],
+					INTERPRET_BRANCH_LOCAL);
 			branch_name = buf.buf;
 		} else {
 			die(_("cannot edit description of more than one branch"));
@@ -941,7 +973,8 @@ int cmd_branch(int argc,
 		if (!argc)
 			branch = branch_get(NULL);
 		else if (argc == 1) {
-			copy_branchname(&buf, argv[0], INTERPRET_BRANCH_LOCAL);
+			copy_branchname(the_repository, &buf, argv[0],
+					INTERPRET_BRANCH_LOCAL);
 			branch = branch_get(buf.buf);
 		} else
 			die(_("too many arguments to set new upstream"));
@@ -957,6 +990,15 @@ int cmd_branch(int argc,
 		if (!refs_ref_exists(get_main_ref_store(the_repository), branch->refname)) {
 			if (!argc || branch_checked_out(branch->refname))
 				die(_("no commit on branch '%s' yet"), branch->name);
+			/*
+			 * Check the advice up front to avoid the ref
+			 * lookups when the hint is off. The helper still
+			 * calls advise_if_enabled() so the hint carries the
+			 * standard "disable this message" instructions.
+			 */
+			if (argc == 1 &&
+			    advice_enabled(ADVICE_SET_UPSTREAM_FAILURE))
+				die_if_upstream_looks_like_remote(new_upstream, argv[0]);
 			die(_("branch '%s' does not exist"), branch->name);
 		}
 
@@ -971,7 +1013,8 @@ int cmd_branch(int argc,
 		if (!argc)
 			branch = branch_get(NULL);
 		else if (argc == 1) {
-			copy_branchname(&buf, argv[0], INTERPRET_BRANCH_LOCAL);
+			copy_branchname(the_repository, &buf, argv[0],
+					INTERPRET_BRANCH_LOCAL);
 			branch = branch_get(buf.buf);
 		} else
 			die(_("too many arguments to unset upstream"));

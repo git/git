@@ -479,7 +479,7 @@ test_expect_success TTY 'git clean -i paints the header in HEADER color' '
 	test_decode_color |
 	head -n 1 >header &&
 	# not i18ngrep
-	grep "^<BOLD>" header
+	test_grep "^<BOLD>" header
 '
 
 test_done

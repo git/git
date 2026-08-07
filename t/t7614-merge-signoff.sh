@@ -45,7 +45,8 @@ test_expect_success 'git merge --signoff adds a sign-off line' '
 	test_commit main-branch-2 file2 2 &&
 	git checkout other-branch &&
 	git merge main --signoff --no-edit &&
-	git cat-file commit HEAD | sed -e "1,/^\$/d" >actual &&
+	git cat-file commit HEAD >commit &&
+	sed -e "1,/^\$/d" commit >actual &&
 	test_cmp expected-signed actual
 '
 
@@ -55,7 +56,8 @@ test_expect_success 'git merge does not add a sign-off line' '
 	test_commit main-branch-3 file3 3 &&
 	git checkout other-branch &&
 	git merge main --no-edit &&
-	git cat-file commit HEAD | sed -e "1,/^\$/d" >actual &&
+	git cat-file commit HEAD >commit &&
+	sed -e "1,/^\$/d" commit >actual &&
 	test_cmp expected-unsigned actual
 '
 
@@ -65,7 +67,8 @@ test_expect_success 'git merge --no-signoff flag cancels --signoff flag' '
 	test_commit main-branch-4 file4 4 &&
 	git checkout other-branch &&
 	git merge main --no-edit --signoff --no-signoff &&
-	git cat-file commit HEAD | sed -e "1,/^\$/d" >actual &&
+	git cat-file commit HEAD >commit &&
+	sed -e "1,/^\$/d" commit >actual &&
 	test_cmp expected-unsigned actual
 '
 

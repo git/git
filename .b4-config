@@ -1,0 +1,6 @@
+# Note that these are default values that you can tweak via the typical
+# git-config(1) machinery. You thus shouldn't ever have to change this file.
+# See also https://b4.docs.kernel.org/en/latest/config.html.
+[b4]
+send-same-thread = shallow
+prep-cover-template = ./.b4-cover-template

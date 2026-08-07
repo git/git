@@ -37,7 +37,7 @@ struct strvec;
 	"GIT_TEST_MULTI_PACK_INDEX_WRITE_INCREMENTAL"
 
 struct multi_pack_index {
-	struct odb_source *source;
+	struct odb_source_packed *source;
 
 	const unsigned char *data;
 	size_t data_len;
@@ -92,16 +92,16 @@ struct multi_pack_index {
 
 const char *midx_get_checksum_hex(const struct multi_pack_index *m) /* static buffer */;
 const unsigned char *midx_get_checksum_hash(const struct multi_pack_index *m);
-void get_midx_filename(struct odb_source *source, struct strbuf *out);
-void get_midx_filename_ext(struct odb_source *source, struct strbuf *out,
+void get_midx_filename(struct odb_source_packed *source, struct strbuf *out);
+void get_midx_filename_ext(struct odb_source_packed *source, struct strbuf *out,
 			   const unsigned char *hash, const char *ext);
-void get_midx_chain_dirname(struct odb_source *source, struct strbuf *out);
-void get_midx_chain_filename(struct odb_source *source, struct strbuf *out);
-void get_split_midx_filename_ext(struct odb_source *source, struct strbuf *buf,
+void get_midx_chain_dirname(struct odb_source_packed *source, struct strbuf *out);
+void get_midx_chain_filename(struct odb_source_packed *source, struct strbuf *out);
+void get_split_midx_filename_ext(struct odb_source_packed *source, struct strbuf *buf,
 				 const unsigned char *hash, const char *ext);
 
-struct multi_pack_index *get_multi_pack_index(struct odb_source *source);
-struct multi_pack_index *load_multi_pack_index(struct odb_source *source);
+struct multi_pack_index *get_multi_pack_index(struct odb_source_packed *source);
+struct multi_pack_index *load_multi_pack_index(struct odb_source_packed *source);
 int prepare_midx_pack(struct multi_pack_index *m, uint32_t pack_int_id);
 struct packed_git *nth_midxed_pack(struct multi_pack_index *m,
 				   uint32_t pack_int_id);
@@ -123,22 +123,22 @@ int midx_contains_pack(struct multi_pack_index *m,
 int midx_layer_contains_pack(struct multi_pack_index *m,
 			     const char *idx_or_pack_name);
 int midx_preferred_pack(struct multi_pack_index *m, uint32_t *pack_int_id);
-int prepare_multi_pack_index_one(struct odb_source *source);
+int prepare_multi_pack_index_one(struct odb_source_packed *source);
 
 /*
  * Variant of write_midx_file which writes a MIDX containing only the packs
  * specified in packs_to_include.
  */
-int write_midx_file(struct odb_source *source,
+int write_midx_file(struct odb_source_packed *source,
 		    const char *preferred_pack_name, const char *refs_snapshot,
 		    unsigned flags);
-int write_midx_file_only(struct odb_source *source,
+int write_midx_file_only(struct odb_source_packed *source,
 			 struct string_list *packs_to_include,
 			 const char *preferred_pack_name,
 			 const char *refs_snapshot,
 			 const char *incremental_base,
 			 unsigned flags);
-int write_midx_file_compact(struct odb_source *source,
+int write_midx_file_compact(struct odb_source_packed *source,
 			    struct multi_pack_index *from,
 			    struct multi_pack_index *to,
 			    const char *incremental_base,
@@ -146,9 +146,9 @@ int write_midx_file_compact(struct odb_source *source,
 void clear_midx_file(struct repository *r);
 void clear_incremental_midx_files(struct repository *r,
 				  const struct strvec *keep_hashes);
-int verify_midx_file(struct odb_source *source, unsigned flags);
-int expire_midx_packs(struct odb_source *source, unsigned flags);
-int midx_repack(struct odb_source *source, size_t batch_size, unsigned flags);
+int verify_midx_file(struct odb_source_packed *source, unsigned flags);
+int expire_midx_packs(struct odb_source_packed *source, unsigned flags);
+int midx_repack(struct odb_source_packed *source, size_t batch_size, unsigned flags);
 
 void close_midx(struct multi_pack_index *m);
 

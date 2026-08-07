@@ -1,0 +1,3 @@
+test_expect_success 'grep -e is flagged' '
+	grep -e pattern file
+'

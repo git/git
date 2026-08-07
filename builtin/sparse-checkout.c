@@ -341,7 +341,8 @@ static int write_patterns_and_update(struct repository *repo,
 	if (safe_create_leading_directories(repo, sparse_filename))
 		die(_("failed to create directory for sparse-checkout file"));
 
-	hold_lock_file_for_update(&lk, sparse_filename, LOCK_DIE_ON_ERROR);
+	repo_hold_lock_file_for_update(repo, &lk, sparse_filename,
+				       LOCK_DIE_ON_ERROR);
 
 	result = update_working_directory(repo, pl);
 	if (result) {

@@ -275,7 +275,7 @@ test_http_push_nonff () {
 	'
 
 	test_expect_success 'non-fast-forward push show ref status' '
-		grep "^ ! \[rejected\][ ]*$BRANCH -> $BRANCH (non-fast-forward)$" output
+		test_grep "^ ! \[rejected\][ ]*$BRANCH -> $BRANCH (non-fast-forward)$" output
 	'
 
 	test_expect_success 'non-fast-forward push shows help message' '

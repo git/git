@@ -20,7 +20,6 @@
 #include "userdiff.h"
 #include "oid-array.h"
 #include "packfile.h"
-#include "pack-bitmap.h"
 #include "object-file.h"
 #include "object-name.h"
 #include "odb.h"
@@ -29,6 +28,22 @@
 #include "promisor-remote.h"
 #include "mailmap.h"
 #include "write-or-die.h"
+#include "alias.h"
+#include "remote.h"
+#include "transport.h"
+
+/*
+ * Maximum length for a remote URL. While no universal standard exists,
+ * 8K is assumed to be a reasonable limit.
+ */
+#define MAX_REMOTE_URL_LEN (8 * 1024)
+
+/* Maximum number of objects allowed in a single remote-object-info request. */
+#define MAX_ALLOWED_OBJ_LIMIT 10000
+
+/* Maximum input size permitted for the remote-object-info command. */
+#define MAX_REMOTE_OBJ_INFO_LINE \
+	(MAX_REMOTE_URL_LEN + MAX_ALLOWED_OBJ_LIMIT * (GIT_MAX_HEXSZ + 1))
 
 enum batch_mode {
 	BATCH_MODE_CONTENTS,
@@ -317,8 +332,24 @@ struct expand_data {
 	 * optimized out.
 	 */
 	unsigned skip_object_info : 1;
+
+	/*
+	 * Flags about when an object info is being fetched from remote.
+	 */
+	unsigned is_remote:1;
+
+	/*
+	 * List of atoms (i.e. "objectsize") that the server supports. Built
+	 * from the server's object-info advertised capabilities.
+	 */
+	struct string_list remote_allowed_atoms;
 };
-#define EXPAND_DATA_INIT  { .mode = S_IFINVALID }
+
+#define EXPAND_DATA_INIT  {  \
+	.mode = S_IFINVALID, \
+	.type = OBJ_BAD,     \
+	.remote_allowed_atoms = STRING_LIST_INIT_NODUP, \
+}
 
 static int is_atom(const char *atom, const char *s, int slen)
 {
@@ -329,14 +360,26 @@ static int is_atom(const char *atom, const char *s, int slen)
 static int expand_atom(struct strbuf *sb, const char *atom, int len,
 		       struct expand_data *data)
 {
+	if (data->is_remote) {
+		size_t i;
+		for (i = 0; i < data->remote_allowed_atoms.nr; i++)
+			if (is_atom(data->remote_allowed_atoms.items[i].string,
+				    atom, len))
+				break;
+		if (i == data->remote_allowed_atoms.nr)
+			return 1;
+	}
+
 	if (is_atom("objectname", atom, len)) {
 		if (!data->mark_query)
 			strbuf_add_oid_hex(sb, &data->oid);
 	} else if (is_atom("objecttype", atom, len)) {
-		if (data->mark_query)
+		if (data->mark_query) {
 			data->info.typep = &data->type;
-		else
-			strbuf_addstr(sb, type_name(data->type));
+		} else {
+			const char *t = type_name(data->type);
+			strbuf_addstr(sb, t ? t : "");
+		}
 	} else if (is_atom("objectsize", atom, len)) {
 		if (data->mark_query)
 			data->info.sizep = &data->size;
@@ -458,9 +501,12 @@ static void print_object_or_die(struct batch_options *opt, struct expand_data *d
 static void print_default_format(struct strbuf *scratch, struct expand_data *data,
 				 struct batch_options *opt)
 {
-	strbuf_addf(scratch, "%s %s %"PRIuMAX"%c", oid_to_hex(&data->oid),
-		    type_name(data->type),
-		    (uintmax_t)data->size, opt->output_delim);
+	strbuf_add_oid_hex(scratch, &data->oid);
+	strbuf_addch(scratch, ' ');
+	strbuf_addstr(scratch, type_name(data->type));
+	strbuf_addch(scratch, ' ');
+	strbuf_add_uint(scratch, data->size);
+	strbuf_addch(scratch, opt->output_delim);
 }
 
 static void report_object_status(struct batch_options *opt,
@@ -497,7 +543,7 @@ static void batch_object_write(const char *obj_name,
 			data->info.sizep = &data->size;
 
 		if (pack)
-			ret = packed_object_info(pack, offset, &data->info);
+			ret = packed_object_info(NULL, pack, offset, &data->info);
 		else
 			ret = odb_read_object_info_extended(the_repository->objects,
 							    &data->oid, &data->info,
@@ -633,6 +679,62 @@ out:
 	object_context_release(&ctx);
 }
 
+static int get_remote_info(int argc,
+			   const char **argv,
+			   struct object_info **remote_object_info,
+			   struct oid_array *object_info_oids,
+			   struct string_list *object_info_options)
+{
+	int retval = 0;
+	struct remote *remote = NULL;
+	struct object_id oid;
+	struct transport *gtransport;
+
+	remote = remote_get(argv[0]);
+	if (!remote)
+		die(_("must supply valid remote when using remote-object-info"));
+
+	oid_array_clear(object_info_oids);
+	for (size_t i = 1; i < argc; i++) {
+		if (get_oid_hex(argv[i], &oid)) {
+			size_t len = strlen(argv[i]);
+
+			if (len < the_hash_algo->hexsz && len >= 4) {
+				size_t j;
+				for (j = 0; j < len; j++)
+					if (!isxdigit(argv[i][j]))
+						break;
+				if (j == len)
+					die(_("remote-object-info does not support "
+					      "short oids, %d characters required"),
+					    (int)the_hash_algo->hexsz);
+			}
+			die(_("not a valid object name '%s'"), argv[i]);
+		}
+		oid_array_append(object_info_oids, &oid);
+	}
+
+	if (!object_info_oids->nr)
+		die(_("remote-object-info requires objects"));
+
+	gtransport = transport_get(remote, NULL);
+
+	if (!gtransport->smart_options) {
+		retval = -1;
+		goto cleanup;
+	}
+
+	CALLOC_ARRAY(*remote_object_info, object_info_oids->nr);
+	gtransport->smart_options->object_info_oids = object_info_oids;
+
+	gtransport->smart_options->object_info_options = object_info_options;
+	gtransport->smart_options->object_info_data = *remote_object_info;
+	retval = transport_fetch_object_info(gtransport);
+cleanup:
+	transport_disconnect(gtransport);
+	return retval;
+}
+
 struct object_cb_data {
 	struct batch_options *opt;
 	struct expand_data *expand;
@@ -687,8 +789,11 @@ static void parse_cmd_contents(struct batch_options *opt,
 			     struct strbuf *output,
 			     struct expand_data *data)
 {
+	enum object_type *saved_typep = data->info.typep;
+	data->info.typep = &data->type;
 	opt->batch_mode = BATCH_MODE_CONTENTS;
 	batch_one_object(line, output, opt, data);
+	data->info.typep = saved_typep;
 }
 
 static void parse_cmd_info(struct batch_options *opt,
@@ -714,18 +819,115 @@ static void parse_cmd_mailmap(struct batch_options *opt UNUSED,
 		load_mailmap();
 }
 
+struct protocol_placeholder_entry {
+	const char *option;
+	const char *atom;
+};
+
+static const struct protocol_placeholder_entry remote_atom_map[] = {
+	{"size", "objectsize"},
+	{"type", "objecttype"},
+	/*
+	 * Add new protocol options here. Even if the server doesn't support
+	 * them the allow_list will drop them if the server doesn't advertise
+	 * them.
+	 */
+};
+
+static void parse_cmd_remote_object_info(struct batch_options *opt,
+					 const char *line, struct strbuf *output,
+					 struct expand_data *data)
+{
+	int count;
+	const char **argv;
+	char *line_to_split;
+	struct object_info *remote_object_info = NULL;
+	struct oid_array object_info_oids = OID_ARRAY_INIT;
+	struct string_list object_info_options = STRING_LIST_INIT_NODUP;
+	const char *saved_format = opt->format;
+
+	if (strlen(line) >= MAX_REMOTE_OBJ_INFO_LINE)
+		die(_("remote-object-info command too long"));
+	/*
+	 * TODO: Use the default format once %(objecttype) is supported.
+	 */
+	if (!opt->format)
+		opt->format = "%(objectname) %(objectsize)";
+
+	line_to_split = xstrdup(line);
+	count = split_cmdline(line_to_split, &argv);
+	if (count < 0)
+		die(_("remote-object-info: failed to parse command line: %s"),
+		    split_cmdline_strerror(count));
+	if (count - 1 > MAX_ALLOWED_OBJ_LIMIT)
+		die(_("remote-object-info supports at most %d objects"),
+		    MAX_ALLOWED_OBJ_LIMIT);
+
+	if (data->info.sizep)
+		string_list_append(&object_info_options, "size");
+	if (data->info.typep)
+		string_list_append(&object_info_options, "type");
+
+	if (get_remote_info(count, argv, &remote_object_info,
+			    &object_info_oids, &object_info_options))
+		die(_("failed to get object info from the remote: %s"), argv[0]);
+
+	string_list_clear(&data->remote_allowed_atoms, 0);
+	string_list_append(&data->remote_allowed_atoms, "objectname");
+	for (size_t i = 0; i < ARRAY_SIZE(remote_atom_map); i++)
+		if (unsorted_string_list_has_string(&object_info_options, remote_atom_map[i].option))
+			string_list_append(&data->remote_allowed_atoms,
+					   remote_atom_map[i].atom);
+
+	data->skip_object_info = 1;
+	for (size_t i = 0; i < object_info_oids.nr; i++) {
+		data->oid = object_info_oids.oid[i];
+
+		if (remote_object_info[i].unrecognized) {
+			report_object_status(opt, oid_to_hex(&data->oid),
+					     &data->oid, "missing");
+			continue;
+		}
+
+		/*
+		 * When reaching here, it means remote-object-info can retrieve
+		 * information from server without downloading them.
+		 */
+		if (remote_object_info[i].sizep) {
+			data->size = *remote_object_info[i].sizep;
+		}
+
+		if (remote_object_info[i].typep) {
+			data->type = *remote_object_info[i].typep;
+		}
+
+		opt->batch_mode = BATCH_MODE_INFO;
+		data->is_remote = 1;
+		batch_object_write(argv[i + 1], output, opt, data, NULL, 0);
+		data->is_remote = 0;
+	}
+	data->skip_object_info = 0;
+	opt->format = saved_format;
+
+	for (size_t i = 0; i < object_info_oids.nr; i++)
+		free_object_info_contents(&remote_object_info[i]);
+	string_list_clear(&object_info_options, 0);
+	free(line_to_split);
+	free(argv);
+	free(remote_object_info);
+	oid_array_clear(&object_info_oids);
+}
+
 static void dispatch_calls(struct batch_options *opt,
 		struct strbuf *output,
 		struct expand_data *data,
 		struct queued_cmd *cmd,
-		int nr)
+		size_t nr)
 {
-	int i;
-
 	if (!opt->buffer_output)
 		die(_("flush is only for --buffer mode"));
 
-	for (i = 0; i < nr; i++)
+	for (size_t i = 0; i < nr; i++)
 		cmd[i].fn(opt, cmd[i].line, output, data);
 
 	fflush(stdout);
@@ -733,9 +935,7 @@ static void dispatch_calls(struct batch_options *opt,
 
 static void free_cmds(struct queued_cmd *cmd, size_t *nr)
 {
-	size_t i;
-
-	for (i = 0; i < *nr; i++)
+	for (size_t i = 0; i < *nr; i++)
 		FREE_AND_NULL(cmd[i].line);
 
 	*nr = 0;
@@ -748,9 +948,10 @@ static const struct parse_cmd {
 	unsigned takes_args;
 } commands[] = {
 	{ "contents", parse_cmd_contents, 1 },
-	{ "info", parse_cmd_info, 1 },
 	{ "flush", NULL, 0 },
+	{ "info", parse_cmd_info, 1 },
 	{ "mailmap", parse_cmd_mailmap, 1 },
+	{ "remote-object-info", parse_cmd_remote_object_info, 1 },
 };
 
 static void batch_objects_command(struct batch_options *opt,
@@ -762,7 +963,6 @@ static void batch_objects_command(struct batch_options *opt,
 	size_t alloc = 0, nr = 0;
 
 	while (strbuf_getdelim_strip_crlf(&input, stdin, opt->input_delim) != EOF) {
-		int i;
 		const struct parse_cmd *cmd = NULL;
 		const char *p = NULL, *cmd_end;
 		struct queued_cmd call = {0};
@@ -772,7 +972,7 @@ static void batch_objects_command(struct batch_options *opt,
 		if (isspace(*input.buf))
 			die(_("whitespace before command: '%s'"), input.buf);
 
-		for (i = 0; i < ARRAY_SIZE(commands); i++) {
+		for (size_t i = 0; i < ARRAY_SIZE(commands); i++) {
 			if (!skip_prefix(input.buf, commands[i].name, &cmd_end))
 				continue;
 
@@ -834,32 +1034,11 @@ static int batch_one_object_oi(const struct object_id *oid,
 			       void *_payload)
 {
 	struct for_each_object_payload *payload = _payload;
-	if (oi && oi->whence == OI_PACKED)
-		return payload->callback(oid, oi->u.packed.pack, oi->u.packed.offset,
+	if (oi && oi->source_infop->source->type == ODB_SOURCE_PACKED)
+		return payload->callback(oid, oi->source_infop->u.packed.pack,
+					 oi->source_infop->u.packed.offset,
 					 payload->payload);
 	return payload->callback(oid, NULL, 0, payload->payload);
-}
-
-static int batch_one_object_packed(const struct object_id *oid,
-				   struct packed_git *pack,
-				   uint32_t pos,
-				   void *_payload)
-{
-	struct for_each_object_payload *payload = _payload;
-	return payload->callback(oid, pack, nth_packed_object_offset(pack, pos),
-				 payload->payload);
-}
-
-static int batch_one_object_bitmapped(const struct object_id *oid,
-				      enum object_type type UNUSED,
-				      int flags UNUSED,
-				      uint32_t hash UNUSED,
-				      struct packed_git *pack,
-				      off_t offset,
-				      void *_payload)
-{
-	struct for_each_object_payload *payload = _payload;
-	return payload->callback(oid, pack, offset, payload->payload);
 }
 
 static void batch_each_object(struct batch_options *opt,
@@ -871,53 +1050,17 @@ static void batch_each_object(struct batch_options *opt,
 		.callback = callback,
 		.payload = _payload,
 	};
+	struct odb_source_info source_info;
+	struct object_info oi = {
+		.source_infop = &source_info,
+	};
 	struct odb_for_each_object_options opts = {
 		.flags = flags,
+		.filter = &opt->objects_filter,
 	};
-	struct bitmap_index *bitmap = NULL;
-	struct odb_source *source;
 
-	/*
-	 * TODO: we still need to tap into implementation details of the object
-	 * database sources. Ideally, we should extend `odb_for_each_object()`
-	 * to handle object filters itself so that we can move the filtering
-	 * logic into the individual sources.
-	 */
-	odb_prepare_alternates(the_repository->objects);
-	for (source = the_repository->objects->sources; source; source = source->next) {
-		struct odb_source_files *files = odb_source_files_downcast(source);
-		int ret = odb_source_for_each_object(&files->loose->base, NULL, batch_one_object_oi,
-						     &payload, &opts);
-		if (ret)
-			break;
-	}
-
-	if (opt->objects_filter.choice != LOFC_DISABLED &&
-	    (bitmap = prepare_bitmap_git(the_repository)) &&
-	    !for_each_bitmapped_object(bitmap, &opt->objects_filter,
-				       batch_one_object_bitmapped, &payload)) {
-		struct packed_git *pack;
-
-		repo_for_each_pack(the_repository, pack) {
-			if (bitmap_index_contains_pack(bitmap, pack) ||
-			    open_pack_index(pack))
-				continue;
-			for_each_object_in_pack(pack, batch_one_object_packed,
-						&payload, flags);
-		}
-	} else {
-		struct object_info oi = { 0 };
-
-		for (source = the_repository->objects->sources; source; source = source->next) {
-			struct odb_source_files *files = odb_source_files_downcast(source);
-			int ret = packfile_store_for_each_object(files->packed, &oi,
-								 batch_one_object_oi, &payload, &opts);
-			if (ret)
-				break;
-		}
-	}
-
-	free_bitmap_index(bitmap);
+	odb_for_each_object_ext(the_repository->objects, &oi,
+				batch_one_object_oi, &payload, &opts);
 }
 
 static int batch_objects(struct batch_options *opt)
@@ -1027,6 +1170,7 @@ static int batch_objects(struct batch_options *opt)
  cleanup:
 	strbuf_release(&input);
 	strbuf_release(&output);
+	string_list_clear(&data.remote_allowed_atoms, 0);
 	cfg->warn_on_object_refname_ambiguity = save_warning;
 	return retval;
 }

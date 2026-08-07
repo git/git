@@ -289,6 +289,8 @@ void diffcore_merge_broken(void)
 			 */
 			for (j = i + 1; j < q->nr; j++) {
 				struct diff_filepair *pp = q->queue[j];
+				if (!pp)
+					continue;
 				if (pp->broken_pair &&
 				    !strcmp(pp->one->path, pp->two->path) &&
 				    !strcmp(p->one->path, pp->two->path)) {

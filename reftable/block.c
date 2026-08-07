@@ -260,6 +260,15 @@ int reftable_block_init(struct reftable_block *block,
 			goto done;
 	}
 
+	/*
+	 * Verify that the block size covers at least the table header, block
+	 * header and the 2 byte restart counter.
+	 */
+	if (block_size < header_size + 4 + 2) {
+		err = REFTABLE_FORMAT_ERROR;
+		goto done;
+	}
+
 	if (block_type == REFTABLE_BLOCK_TYPE_LOG) {
 		uint32_t block_header_skip = 4 + header_size;
 		uLong dst_len = block_size - block_header_skip;
@@ -331,8 +340,21 @@ int reftable_block_init(struct reftable_block *block,
 		full_block_size = block_size;
 	}
 
+	/*
+	 * Ensure that we have sufficient data available now to satisfy the
+	 * claimed block size.
+	 */
+	if (block_size > block->block_data.len) {
+		err = REFTABLE_FORMAT_ERROR;
+		goto done;
+	}
+
 	restart_count = reftable_get_be16(block->block_data.data + block_size - 2);
 	restart_off = block_size - 2 - 3 * restart_count;
+	if (restart_off < header_size + 4 || restart_off > block_size - 2) {
+		err = REFTABLE_FORMAT_ERROR;
+		goto done;
+	}
 
 	block->block_type = block_type;
 	block->hash_size = hash_size;
@@ -419,6 +441,15 @@ static int restart_needle_less(size_t idx, void *_args)
 	int n;
 
 	/*
+	 * The restart offset must point to a record, which is stored before
+	 * the restart table. Verify that this is the case.
+	 */
+	if (off >= args->block->restart_off) {
+		args->error = 1;
+		return -1;
+	}
+
+	/*
 	 * Records at restart points are stored without prefix compression, so
 	 * there is no need to fully decode the record key here. This removes
 	 * the need for allocating memory.
@@ -495,6 +526,10 @@ int block_iter_seek_key(struct block_iter *it, struct reftable_buf *want)
 	int err = 0;
 	size_t i;
 
+	err = reftable_record_init(&rec, reftable_block_type(it->block));
+	if (err < 0)
+		goto done;
+
 	/*
 	 * Perform a binary search over the block's restart points, which
 	 * avoids doing a linear scan over the whole block. Like this, we
@@ -535,10 +570,6 @@ int block_iter_seek_key(struct block_iter *it, struct reftable_buf *want)
 		it->next_off = block_restart_offset(it->block, i - 1);
 	else
 		it->next_off = it->block->header_off + 4;
-
-	err = reftable_record_init(&rec, reftable_block_type(it->block));
-	if (err < 0)
-		goto done;
 
 	/*
 	 * We're looking for the last entry less than the wanted key so that

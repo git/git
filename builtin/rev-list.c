@@ -486,7 +486,7 @@ static int show_object_fast(
 	void *payload UNUSED)
 {
 	fprintf(stdout, "%s\n", oid_to_hex(oid));
-	return 1;
+	return 0;
 }
 
 static void print_disk_usage(off_t size)

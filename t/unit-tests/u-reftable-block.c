@@ -14,6 +14,31 @@ https://developers.google.com/open-source/licenses/bsd
 #include "reftable/reftable-error.h"
 #include "strbuf.h"
 
+static int cl_reftable_write_block(struct reftable_buf *buf,
+				   uint8_t block_type,
+				   struct reftable_record *recs,
+				   size_t nrecs)
+{
+	struct block_writer writer = {
+		.last_key = REFTABLE_BUF_INIT,
+	};
+	uint8_t block[1024];
+	int block_end;
+
+	cl_must_pass(block_writer_init(&writer, block_type, block, 1024,
+				       0, hash_size(REFTABLE_HASH_SHA1)));
+	for (size_t i = 0; i < nrecs; i++)
+		cl_must_pass(block_writer_add(&writer, &recs[i]));
+
+	block_end = block_writer_finish(&writer);
+	cl_assert(block_end > 0);
+
+	cl_must_pass(reftable_buf_add(buf, block, block_end));
+
+	block_writer_release(&writer);
+	return block_end;
+}
+
 void test_reftable_block__read_write(void)
 {
 	const int header_off = 21; /* random */
@@ -381,24 +406,12 @@ void test_reftable_block__ref_read_write(void)
 void test_reftable_block__iterator(void)
 {
 	struct reftable_block_source source = { 0 };
-	struct block_writer writer = {
-		.last_key = REFTABLE_BUF_INIT,
-	};
 	struct reftable_record expected_refs[20];
 	struct reftable_ref_record ref = { 0 };
 	struct reftable_iterator it = { 0 };
 	struct reftable_block block = { 0 };
-	struct reftable_buf data;
+	struct reftable_buf data = REFTABLE_BUF_INIT;
 	int err;
-
-	data.len = 1024;
-	REFTABLE_CALLOC_ARRAY(data.buf, data.len);
-	cl_assert(data.buf != NULL);
-
-	err = block_writer_init(&writer, REFTABLE_BLOCK_TYPE_REF,
-				(uint8_t *) data.buf, data.len,
-				0, hash_size(REFTABLE_HASH_SHA1));
-	cl_assert(!err);
 
 	for (size_t i = 0; i < ARRAY_SIZE(expected_refs); i++) {
 		expected_refs[i] = (struct reftable_record) {
@@ -409,13 +422,10 @@ void test_reftable_block__iterator(void)
 			},
 		};
 		memset(expected_refs[i].u.ref.value.val1, i, REFTABLE_HASH_SIZE_SHA1);
-
-		err = block_writer_add(&writer, &expected_refs[i]);
-		cl_assert_equal_i(err, 0);
 	}
 
-	err = block_writer_finish(&writer);
-	cl_assert(err > 0);
+	cl_reftable_write_block(&data, REFTABLE_BLOCK_TYPE_REF,
+				expected_refs, ARRAY_SIZE(expected_refs));
 
 	block_source_from_buf(&source, &data);
 	reftable_block_init(&block, &source, 0, 0, data.len,
@@ -453,6 +463,147 @@ void test_reftable_block__iterator(void)
 	reftable_ref_record_release(&ref);
 	reftable_iterator_destroy(&it);
 	reftable_block_release(&block);
-	block_writer_release(&writer);
+	reftable_buf_release(&data);
+}
+
+void test_reftable_block__corrupt_log_block_size(void)
+{
+	struct reftable_block_source source = { 0 };
+	struct reftable_record rec = {
+		.type = REFTABLE_BLOCK_TYPE_LOG,
+		.u.log = {
+			.refname = (char *) "refs/heads/main",
+			.update_index = 1,
+			.value_type = REFTABLE_LOG_UPDATE,
+		},
+	};
+	struct reftable_block block = { 0 };
+	struct reftable_buf data = REFTABLE_BUF_INIT;
+
+	cl_reftable_write_block(&data, REFTABLE_BLOCK_TYPE_LOG, &rec, 1);
+
+	/*
+	 * Log blocks store their inflated size as a big-endian 24-bit integer
+	 * right after the one-byte block type. Rewrite it to claim a size that
+	 * is smaller than the block header.
+	 */
+	reftable_put_be24((uint8_t *) data.buf + 1, 1);
+
+	block_source_from_buf(&source, &data);
+	cl_assert_equal_i(reftable_block_init(&block, &source, 0, 0, data.len,
+					      REFTABLE_HASH_SIZE_SHA1, REFTABLE_BLOCK_TYPE_LOG),
+			  REFTABLE_FORMAT_ERROR);
+
+	reftable_block_release(&block);
+	reftable_buf_release(&data);
+}
+
+void test_reftable_block__corrupt_block_size(void)
+{
+	struct reftable_block_source source = { 0 };
+	struct reftable_record rec = {
+		.type = REFTABLE_BLOCK_TYPE_REF,
+		.u.ref = {
+			.value_type = REFTABLE_REF_VAL1,
+			.refname = (char *) "refs/heads/main",
+		},
+	};
+	struct reftable_block block = { 0 };
+	struct reftable_buf data = REFTABLE_BUF_INIT;
+	uint32_t block_size;
+	unsigned char *p;
+
+	cl_reftable_write_block(&data, REFTABLE_BLOCK_TYPE_REF, &rec, 1);
+
+	/*
+	 * The block size is stored as a big-endian 24-bit integer right after
+	 * the one-byte block type at the start of the block. Corrupt it to
+	 * claim a size that is larger than the data we actually have. Reading
+	 * the restart count and restart table relative to such a bogus block
+	 * size must not access out-of-bounds memory.
+	 */
+	p = (unsigned char *) data.buf + 1;
+	block_size = reftable_get_be24(p);
+	cl_assert_equal_i(block_size, 47);
+	reftable_put_be24(p, block_size + 1);
+
+	block_source_from_buf(&source, &data);
+	cl_assert_equal_i(reftable_block_init(&block, &source, 0, 0, data.len,
+					      REFTABLE_HASH_SIZE_SHA1, REFTABLE_BLOCK_TYPE_REF),
+			  REFTABLE_FORMAT_ERROR);
+
+	reftable_block_release(&block);
+	reftable_buf_release(&data);
+}
+
+void test_reftable_block__corrupt_restart_count(void)
+{
+	struct reftable_block_source source = { 0 };
+	struct reftable_record rec = {
+		.type = REFTABLE_BLOCK_TYPE_REF,
+		.u.ref = {
+			.value_type = REFTABLE_REF_VAL1,
+			.refname = (char *) "refs/heads/main",
+		},
+	};
+	struct reftable_block block = { 0 };
+	struct reftable_buf data = REFTABLE_BUF_INIT;
+	int block_size;
+
+	block_size = cl_reftable_write_block(&data, REFTABLE_BLOCK_TYPE_REF, &rec, 1);
+
+	/*
+	 * Corrupt the restart count to claim a bogus number of restart points.
+	 * Note that this would only cause us to perform an out-of-bounds
+	 * access when seeking into the block, but we want to refuse such a
+	 * block outright.
+	 */
+	reftable_put_be16((uint8_t *) data.buf + block_size - 2, 0xffff);
+
+	block_source_from_buf(&source, &data);
+	cl_assert_equal_i(reftable_block_init(&block, &source, 0, 0, data.len,
+					      REFTABLE_HASH_SIZE_SHA1, REFTABLE_BLOCK_TYPE_REF),
+			  REFTABLE_FORMAT_ERROR);
+
+	reftable_block_release(&block);
+	reftable_buf_release(&data);
+}
+
+void test_reftable_block__corrupt_restart_offset(void)
+{
+	struct reftable_block_source source = { 0 };
+	struct reftable_record rec = {
+		.type = REFTABLE_BLOCK_TYPE_REF,
+		.u.ref = {
+			.value_type = REFTABLE_REF_VAL1,
+			.refname = (char *) "refs/heads/main",
+		},
+	};
+	struct reftable_block block = { 0 };
+	struct block_iter it = BLOCK_ITER_INIT;
+	struct reftable_buf want = REFTABLE_BUF_INIT;
+	struct reftable_buf data = REFTABLE_BUF_INIT;
+
+	cl_reftable_write_block(&data, REFTABLE_BLOCK_TYPE_REF, &rec, 1);
+
+	block_source_from_buf(&source, &data);
+	cl_must_pass(reftable_block_init(&block, &source, 0, 0, data.len,
+					 REFTABLE_HASH_SIZE_SHA1, REFTABLE_BLOCK_TYPE_REF));
+
+	/*
+	 * Corrupt the first restart offset, stored as a big-endian 24-bit
+	 * integer at the start of the restart table, to point past the end of
+	 * the records section. Seeking such a block must fail gracefully.
+	 */
+	reftable_put_be24((uint8_t *) block.block_data.data + block.restart_off,
+			  0xffffff);
+
+	block_iter_init(&it, &block);
+	cl_must_pass(reftable_buf_addstr(&want, "refs/heads/main"));
+	cl_assert_equal_i(block_iter_seek_key(&it, &want), REFTABLE_FORMAT_ERROR);
+
+	reftable_buf_release(&want);
+	block_iter_close(&it);
+	reftable_block_release(&block);
 	reftable_buf_release(&data);
 }

@@ -3,6 +3,7 @@
 
 #include "object.h"
 #include "odb.h"
+#include "odb/transaction.h"
 
 enum odb_source_type {
 	/*
@@ -16,6 +17,9 @@ enum odb_source_type {
 
 	/* The "loose" backend that uses loose objects, only. */
 	ODB_SOURCE_LOOSE,
+
+	/* The "packed" backend that uses packfiles. */
+	ODB_SOURCE_PACKED,
 
 	/* The "in-memory" backend that stores objects in memory. */
 	ODB_SOURCE_INMEMORY,
@@ -80,11 +84,12 @@ struct odb_source {
 	void (*close)(struct odb_source *source);
 
 	/*
-	 * This callback is expected to clear underlying caches of the object
-	 * database source. The function is called when the repository has for
-	 * example just been repacked so that new objects will become visible.
+	 * This callback is expected to prepare the source so that it becomes
+	 * ready for use. It optionally clears underlying caches of the object
+	 * database source.
 	 */
-	void (*reprepare)(struct odb_source *source);
+	void (*prepare)(struct odb_source *source,
+			enum odb_prepare_flags flags);
 
 	/*
 	 * This callback is expected to read object information from the object
@@ -185,7 +190,8 @@ struct odb_source {
 	 * has been freshened.
 	 */
 	int (*freshen_object)(struct odb_source *source,
-			      const struct object_id *oid);
+			      const struct object_id *oid,
+			      const time_t *mtime);
 
 	/*
 	 * This callback is expected to persist the given object into the
@@ -199,10 +205,11 @@ struct odb_source {
 	 * return 0 on success, a negative error code otherwise.
 	 */
 	int (*write_object)(struct odb_source *source,
-			    const void *buf, unsigned long len,
+			    const void *buf, size_t len,
 			    enum object_type type,
-			    struct object_id *oid,
-			    struct object_id *compat_oid,
+			    const struct object_id *oid,
+			    const struct object_id *compat_oid,
+			    const time_t *mtime,
 			    enum odb_write_object_flags flags);
 
 	/*
@@ -228,7 +235,8 @@ struct odb_source {
 	 * negative error code otherwise.
 	 */
 	int (*begin_transaction)(struct odb_source *source,
-				 struct odb_transaction **out);
+				 struct odb_transaction **out,
+				 enum odb_transaction_flags flags);
 
 	/*
 	 * This callback is expected to read the list of alternate object
@@ -255,6 +263,21 @@ struct odb_source {
 	 */
 	int (*write_alternate)(struct odb_source *source,
 			       const char *alternate);
+
+	/*
+	 * This callback is expected to optimize the object database source.
+	 * Returns 0 on success, a negative error code otherwise.
+	 */
+	int (*optimize)(struct odb_source *source,
+			const struct odb_optimize_options *opts);
+
+	/*
+	 * This callback is expected to check whether optimization of the
+	 * object database source is required given the provided options.
+	 * Returns true if optimization should be performed, false otherwise.
+	 */
+	bool (*optimize_required)(struct odb_source *source,
+				  const struct odb_optimize_options *opts);
 };
 
 /*
@@ -305,13 +328,14 @@ static inline void odb_source_close(struct odb_source *source)
 }
 
 /*
- * Reprepare the object database source and clear any caches. Depending on the
+ * Prepare the object database source and clear any caches. Depending on the
  * backend used this may have the effect that concurrently-written objects
  * become visible.
  */
-static inline void odb_source_reprepare(struct odb_source *source)
+static inline void odb_source_prepare(struct odb_source *source,
+				      enum odb_prepare_flags flags)
 {
-	source->reprepare(source);
+	source->prepare(source, flags);
 }
 
 /*
@@ -396,9 +420,10 @@ static inline int odb_source_find_abbrev_len(struct odb_source *source,
  * not exist.
  */
 static inline int odb_source_freshen_object(struct odb_source *source,
-					    const struct object_id *oid)
+					    const struct object_id *oid,
+					    const time_t *mtime)
 {
-	return source->freshen_object(source, oid);
+	return source->freshen_object(source, oid, mtime);
 }
 
 /*
@@ -409,12 +434,13 @@ static inline int odb_source_freshen_object(struct odb_source *source,
 static inline int odb_source_write_object(struct odb_source *source,
 					  const void *buf, unsigned long len,
 					  enum object_type type,
-					  struct object_id *oid,
-					  struct object_id *compat_oid,
+					  const struct object_id *oid,
+					  const struct object_id *compat_oid,
+					  const time_t *mtime,
 					  enum odb_write_object_flags flags)
 {
 	return source->write_object(source, buf, len, type, oid,
-				    compat_oid, flags);
+				    compat_oid, mtime, flags);
 }
 
 /*
@@ -467,9 +493,31 @@ static inline int odb_source_write_alternate(struct odb_source *source,
  * Returns 0 on success, a negative error code otherwise.
  */
 static inline int odb_source_begin_transaction(struct odb_source *source,
-					       struct odb_transaction **out)
+					       struct odb_transaction **out,
+					       enum odb_transaction_flags flags)
 {
-	return source->begin_transaction(source, out);
+	return source->begin_transaction(source, out, flags);
+}
+
+/*
+ * Optimize the object database source. Returns 0 on success, a negative error
+ * code otherwise.
+ */
+static inline int odb_source_optimize(struct odb_source *source,
+				      const struct odb_optimize_options *opts)
+{
+	return source->optimize(source, opts);
+}
+
+/*
+ * Check whether optimization of the object database source is required given
+ * the provided options. Returns true if optimization should be performed,
+ * false otherwise.
+ */
+static inline bool odb_source_optimize_required(struct odb_source *source,
+						const struct odb_optimize_options *opts)
+{
+	return source->optimize_required(source, opts);
 }
 
 #endif

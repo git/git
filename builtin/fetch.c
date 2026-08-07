@@ -96,13 +96,14 @@ static struct string_list deepen_not = STRING_LIST_INIT_NODUP;
 static struct strbuf default_rla = STRBUF_INIT;
 static struct transport *gtransport;
 static struct transport *gsecondary;
-static struct refspec refmap = REFSPEC_INIT_FETCH;
+static struct refspec refmap;
 static struct string_list server_options = STRING_LIST_INIT_DUP;
 static struct string_list negotiation_restrict = STRING_LIST_INIT_NODUP;
 static struct string_list negotiation_include = STRING_LIST_INIT_NODUP;
 
 struct fetch_config {
 	enum display_format display_format;
+	enum follow_remote_head_settings follow_remote_head;
 	int all;
 	int prune;
 	int prune_tags;
@@ -171,6 +172,23 @@ static int git_fetch_config(const char *k, const char *v,
 		else
 			die(_("invalid value for '%s': '%s'"),
 			    "fetch.output", v);
+		return 0;
+	}
+
+	if (!strcmp(k, "fetch.followremotehead")) {
+		if (!v)
+			return config_error_nonbool(k);
+		else if (!strcmp(v, "never"))
+			fetch_config->follow_remote_head = FOLLOW_REMOTE_NEVER;
+		else if (!strcmp(v, "create"))
+			fetch_config->follow_remote_head = FOLLOW_REMOTE_CREATE;
+		else if (!strcmp(v, "warn"))
+			fetch_config->follow_remote_head = FOLLOW_REMOTE_WARN;
+		else if (!strcmp(v, "always"))
+			fetch_config->follow_remote_head = FOLLOW_REMOTE_ALWAYS;
+		else
+			warning(_("unrecognized fetch.followRemoteHEAD value '%s' ignored"), v);
+		return 0;
 	}
 
 	return git_default_config(k, v, ctx, cb);
@@ -583,7 +601,8 @@ static struct ref *get_ref_map(struct remote *remote,
 		struct refspec_item tag_refspec;
 
 		/* also fetch all tags */
-		refspec_item_init_push(&tag_refspec, TAG_REFSPEC);
+		refspec_item_init_push(&tag_refspec, TAG_REFSPEC,
+				       the_hash_algo);
 		get_fetch_map(remote_refs, &tag_refspec, &tail, 0);
 		refspec_item_clear(&tag_refspec);
 	} else if (tags == TAGS_DEFAULT && *autotags) {
@@ -1697,17 +1716,19 @@ static const char *strip_refshead(const char *name){
 static void set_head_advice_msg(const char *remote, const char *head_name)
 {
 	const char message_advice_set_head[] =
-	N_("Run 'git remote set-head %s %s' to follow the change, or set\n"
-	   "'remote.%s.followRemoteHEAD' configuration option to a different value\n"
-	   "if you do not want to see this message. Specifically running\n"
-	   "'git config set remote.%s.followRemoteHEAD warn-if-not-branch-%s'\n"
-	   "will disable the warning until the remote changes HEAD to something else.");
+	N_("Run 'git remote set-head %s %s' to follow the change, or modify\n"
+	   "either of the 'remote.%s.followRemoteHEAD' or 'fetch.followRemoteHEAD'\n"
+	   "configuration variables to handle the situation differently.\n\n"
+
+	   "Using this specific setting\n\n"
+	   "    git config set remote.%s.followRemoteHEAD warn-if-not-%s\n\n"
+	   "will suppress the warning until the remote changes HEAD to something else.");
 
 	advise_if_enabled(ADVICE_FETCH_SET_HEAD_WARN, _(message_advice_set_head),
 			remote, head_name, remote, remote, head_name);
 }
 
-static void report_set_head(const char *remote, const char *head_name,
+static void warn_set_head(const char *remote, const char *head_name,
 			struct strbuf *buf_prev, int updateres) {
 	struct strbuf buf_prefix = STRBUF_INIT;
 	const char *prev_head = NULL;
@@ -1729,12 +1750,12 @@ static void report_set_head(const char *remote, const char *head_name,
 	strbuf_release(&buf_prefix);
 }
 
-static int set_head(const struct ref *remote_refs, struct remote *remote)
+static int set_head(const struct ref *remote_refs, struct remote *remote,
+			int follow_remote_head)
 {
 	int result = 0, create_only, baremirror, was_detached;
 	struct strbuf b_head = STRBUF_INIT, b_remote_head = STRBUF_INIT,
 		      b_local_head = STRBUF_INIT;
-	int follow_remote_head = remote->follow_remote_head;
 	const char *no_warn_branch = remote->no_warn_branch;
 	char *head_name = NULL;
 	struct ref *ref, *matches;
@@ -1764,7 +1785,7 @@ static int set_head(const struct ref *remote_refs, struct remote *remote)
 
 	if (!head_name)
 		goto cleanup;
-	baremirror = is_bare_repository() && remote->mirror;
+	baremirror = is_bare_repository(the_repository) && remote->mirror;
 	create_only = follow_remote_head == FOLLOW_REMOTE_ALWAYS ? 0 : !baremirror;
 	if (baremirror) {
 		strbuf_addstr(&b_head, "HEAD");
@@ -1773,7 +1794,7 @@ static int set_head(const struct ref *remote_refs, struct remote *remote)
 		strbuf_addf(&b_head, "refs/remotes/%s/HEAD", remote->name);
 		strbuf_addf(&b_remote_head, "refs/remotes/%s/%s", remote->name, head_name);
 	}
-		/* make sure it's valid */
+	/* make sure it's valid */
 	if (!baremirror && !refs_ref_exists(refs, b_remote_head.buf)) {
 		result = 1;
 		goto cleanup;
@@ -1787,7 +1808,7 @@ static int set_head(const struct ref *remote_refs, struct remote *remote)
 	if (verbosity >= 0 &&
 		follow_remote_head == FOLLOW_REMOTE_WARN &&
 		(!no_warn_branch || strcmp(no_warn_branch, head_name)))
-		report_set_head(remote->name, head_name, &b_local_head, was_detached);
+		warn_set_head(remote->name, head_name, &b_local_head, was_detached);
 
 cleanup:
 	free(head_name);
@@ -1819,7 +1840,7 @@ static void ref_transaction_rejection_handler(const char *refname,
 {
 	struct ref_rejection_data *data = cb_data;
 
-	if (err == REF_TRANSACTION_ERROR_CASE_CONFLICT && ignore_case &&
+	if (err == REF_TRANSACTION_ERROR_CASE_CONFLICT && repo_ignore_case(the_repository) &&
 	    !data->case_sensitive_msg_shown) {
 		error(_("You're on a case-insensitive filesystem, and the remote you are\n"
 			"trying to fetch from has references that only differ in casing. It\n"
@@ -1901,6 +1922,7 @@ static int do_fetch(struct transport *transport,
 	struct ref_update_display_info_array display_array = { 0 };
 	struct strmap rejected_refs = STRMAP_INIT;
 	int summary_width = 0;
+	int follow_remote_head;
 
 	if (tags == TAGS_DEFAULT) {
 		if (transport->remote->fetch_tags == 2)
@@ -1916,6 +1938,22 @@ static int do_fetch(struct transport *transport,
 			goto cleanup;
 	}
 
+	/*
+	 * NEEDSWORK: By the time this function executes, we have already parsed
+	 * all such followRemoteHEAD values from the external configuration,
+	 * potentially emitting warning messages for bogus values.  Ideally, if
+	 * this fetch ends up not needing to consult these values, then git would
+	 * not ever output a value warning. (eg: when pulling from a URL directly -
+	 * rather than a configured remote, or when a remote's followRemoteHEAD
+	 * overrides the fallback fetch setting)
+	 */
+	if (transport->remote->follow_remote_head)
+		follow_remote_head = transport->remote->follow_remote_head;
+	else if (config->follow_remote_head)
+		follow_remote_head = config->follow_remote_head;
+	else
+		follow_remote_head = BUILTIN_FOLLOW_REMOTE_HEAD_DFLT;
+
 	if (rs->nr) {
 		refspec_ref_prefixes(rs, &transport_ls_refs_options.ref_prefixes);
 	} else {
@@ -1924,7 +1962,7 @@ static int do_fetch(struct transport *transport,
 		if (transport->remote->fetch.nr) {
 			refspec_ref_prefixes(&transport->remote->fetch,
 					     &transport_ls_refs_options.ref_prefixes);
-			if (transport->remote->follow_remote_head != FOLLOW_REMOTE_NEVER)
+			if (follow_remote_head != FOLLOW_REMOTE_NEVER)
 				do_set_head = 1;
 		}
 		if (branch && branch_has_merge_config(branch) &&
@@ -2131,7 +2169,7 @@ static int do_fetch(struct transport *transport,
 		 * Way too many cases where this can go wrong so let's just
 		 * ignore errors and fail silently for now.
 		 */
-		set_head(remote_refs, transport->remote);
+		set_head(remote_refs, transport->remote, follow_remote_head);
 	}
 
 cleanup:
@@ -2391,7 +2429,7 @@ static int fetch_one(struct remote *remote, int argc, const char **argv,
 		     const struct fetch_config *config,
 		     struct list_objects_filter_options *filter_options)
 {
-	struct refspec rs = REFSPEC_INIT_FETCH;
+	struct refspec rs = REFSPEC_INIT_FETCH(the_hash_algo);
 	int i;
 	int exit_code;
 	int maybe_prune_tags;
@@ -2471,6 +2509,7 @@ int cmd_fetch(int argc,
 {
 	struct fetch_config config = {
 		.display_format = DISPLAY_FORMAT_FULL,
+		.follow_remote_head = FOLLOW_REMOTE_UNCONFIGURED,
 		.prune = -1,
 		.prune_tags = -1,
 		.show_forced_updates = 1,
@@ -2591,6 +2630,8 @@ int cmd_fetch(int argc,
 	};
 
 	filter_options.allow_auto_filter = 1;
+
+	refspec_init_fetch(&refmap, the_hash_algo);
 
 	packet_trace_identity("fetch");
 

@@ -1418,6 +1418,8 @@ static int fsmonitor_run_daemon(void)
 	err = fsmonitor_run_daemon_1(&state);
 
 done:
+	fsmonitor_free_token_data(state.current_token_data);
+	state.current_token_data = NULL;
 	pthread_cond_destroy(&state.cookies_cond);
 	pthread_mutex_destroy(&state.main_lock);
 	{

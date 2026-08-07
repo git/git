@@ -89,7 +89,7 @@ test_expect_success PERL_TEST_HELPERS 'reader notices out-of-bounds generation o
 	git commit-graph write --reachable &&
 	corrupt_chunk_file $graph GDO2 clear &&
 	test_must_fail git log 2>err &&
-	grep "commit-graph overflow generation data is too small" err
+	test_grep "commit-graph overflow generation data is too small" err
 '
 
 test_done

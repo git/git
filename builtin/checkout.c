@@ -805,7 +805,7 @@ static void setup_branch_path(struct branch_info *branch)
 			   &branch->oid, &branch->refname, 0))
 		repo_get_oid_committish(the_repository, branch->name, &branch->oid);
 
-	copy_branchname(&buf, branch->name, INTERPRET_BRANCH_LOCAL);
+	copy_branchname(the_repository, &buf, branch->name, INTERPRET_BRANCH_LOCAL);
 	if (strcmp(buf.buf, branch->name)) {
 		free(branch->name);
 		branch->name = xstrdup(buf.buf);
@@ -952,9 +952,12 @@ static void update_refs_for_switch(const struct checkout_opts *opts,
 	const char *old_desc, *reflog_msg;
 	if (opts->new_branch) {
 		if (opts->new_orphan_branch) {
-			enum log_refs_config log_all_ref_updates =
-				repo_settings_get_log_all_ref_updates(the_repository);
+			enum log_refs_config log_all_ref_updates = LOG_REFS_UNSET;
+			const char *value;
 			char *refname;
+
+			if (!repo_config_get_string_tmp(the_repository, "core.logallrefupdates", &value))
+				log_all_ref_updates = refs_parse_log_all_ref_updates_config(value);
 
 			refname = mkpathdup("refs/heads/%s", opts->new_orphan_branch);
 			if (opts->new_branch_log &&

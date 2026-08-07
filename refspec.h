@@ -1,6 +1,10 @@
 #ifndef REFSPEC_H
 #define REFSPEC_H
 
+struct git_hash_algo;
+struct string_list;
+struct strvec;
+
 #define TAG_REFSPEC "refs/tags/*:refs/tags/*"
 
 /**
@@ -30,10 +34,11 @@ struct refspec_item {
 	char *raw;
 };
 
-struct string_list;
-
-#define REFSPEC_INIT_FETCH { .fetch = 1 }
-#define REFSPEC_INIT_PUSH { .fetch = 0 }
+int refspec_item_init_fetch(struct refspec_item *item, const char *refspec,
+			    const struct git_hash_algo *algo);
+int refspec_item_init_push(struct refspec_item *item, const char *refspec,
+			   const struct git_hash_algo *algo);
+void refspec_item_clear(struct refspec_item *item);
 
 /**
  * An array of strings can be parsed into a struct refspec using
@@ -44,23 +49,30 @@ struct refspec {
 	int alloc;
 	int nr;
 
+	const struct git_hash_algo *hash_algo;
 	unsigned fetch : 1;
 };
 
-int refspec_item_init_fetch(struct refspec_item *item, const char *refspec);
-int refspec_item_init_push(struct refspec_item *item, const char *refspec);
-void refspec_item_clear(struct refspec_item *item);
-void refspec_init_fetch(struct refspec *rs);
-void refspec_init_push(struct refspec *rs);
+#define REFSPEC_INIT_FETCH(algo) { \
+	.fetch = 1, \
+	.hash_algo = (algo), \
+}
+#define REFSPEC_INIT_PUSH(algo) { \
+	.fetch = 0, \
+	.hash_algo = (algo), \
+}
+
+void refspec_init_fetch(struct refspec *rs, const struct git_hash_algo *hash_algo);
+void refspec_init_push(struct refspec *rs, const struct git_hash_algo *hash_algo);
+void refspec_clear(struct refspec *rs);
+
 void refspec_append(struct refspec *rs, const char *refspec);
 __attribute__((format (printf,2,3)))
 void refspec_appendf(struct refspec *rs, const char *fmt, ...);
 void refspec_appendn(struct refspec *rs, const char **refspecs, int nr);
-void refspec_clear(struct refspec *rs);
 
-int valid_fetch_refspec(const char *refspec);
+int valid_fetch_refspec(const char *refspec, const struct git_hash_algo *algo);
 
-struct strvec;
 /*
  * Determine what <prefix> values to pass to the peer in ref-prefix lines
  * (see linkgit:gitprotocol-v2[5]).
@@ -76,7 +88,7 @@ int refname_matches_negative_refspec_item(const char *refname, struct refspec *r
  * Returns 1 if refname matches pattern, 0 otherwise.
  */
 int match_refname_with_pattern(const char *pattern, const char *refname,
-				   const char *replacement, char **result);
+			       const char *replacement, char **result);
 
 /*
  * Queries a refspec for a match and updates the query item.
@@ -89,8 +101,8 @@ int refspec_find_match(struct refspec *rs, struct refspec_item *query);
  * list.
  */
 void refspec_find_all_matches(struct refspec *rs,
-				    struct refspec_item *query,
-				    struct string_list *results);
+			      struct refspec_item *query,
+			      struct string_list *results);
 
 /*
  * Remove all entries in the input list which match any negative refspec in

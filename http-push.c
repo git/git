@@ -776,7 +776,7 @@ static void handle_new_lock_ctx(struct xml_ctx *ctx, int tag_closed)
 		} else if (!strcmp(ctx->name, DAV_ACTIVELOCK_TOKEN)) {
 			lock->token = xstrdup(ctx->cdata);
 
-			the_hash_algo->init_fn(&hash_ctx);
+			git_hash_init(&hash_ctx, the_hash_algo);
 			git_hash_update(&hash_ctx, lock->token, strlen(lock->token));
 			git_hash_final(lock_token_hash, &hash_ctx);
 
@@ -1716,7 +1716,7 @@ int cmd_main(int argc, const char **argv)
 {
 	struct transfer_request *request;
 	struct transfer_request *next_request;
-	struct refspec rs = REFSPEC_INIT_PUSH;
+	struct refspec rs = REFSPEC_INIT_PUSH(the_hash_algo);
 	struct remote_lock *ref_lock = NULL;
 	struct remote_lock *info_ref_lock = NULL;
 	int delete_branch = 0;

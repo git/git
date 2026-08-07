@@ -67,7 +67,7 @@ test_expect_success 'cherry-pick after renaming branch' '
 	git checkout rename2 &&
 	git cherry-pick added &&
 	test_cmp_rev rename2 HEAD^ &&
-	grep "Add extra line at the end" opos &&
+	test_grep "Add extra line at the end" opos &&
 	git reflog -1 | grep cherry-pick
 
 '
@@ -162,7 +162,7 @@ test_expect_success 'cherry-pick works with dirty renamed file' '
 	echo modified >renamed &&
 	git cherry-pick refs/heads/unrelated &&
 	test $(git rev-parse :0:renamed) = $(git rev-parse HEAD~2:to-rename.t) &&
-	grep -q "^modified$" renamed
+	test_grep -q "^modified$" renamed
 '
 
 test_expect_success 'advice from failed revert' '
@@ -253,7 +253,7 @@ test_expect_success 'identification of reverted commit (revert.reference)' '
 test_expect_success 'cherry-pick is unaware of --reference (for now)' '
 	test_when_finished "git reset --hard" &&
 	test_must_fail git cherry-pick --reference HEAD 2>actual &&
-	grep "^usage: git cherry-pick" actual
+	test_grep "^usage: git cherry-pick" actual
 '
 
 test_done

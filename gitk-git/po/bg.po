@@ -1,15 +1,15 @@
 # Bulgarian translation of gitk po-file.
-# Copyright (C) 2014, 2015, 2019, 2020, 2024, 2025 Alexander Shopov <ash@kambanaria.org>.
+# Copyright (C) 2014, 2015, 2019, 2020, 2024, 2025, 2026 Alexander Shopov <ash@kambanaria.org>.
 # This file is distributed under the same license as the git package.
-# Alexander Shopov <ash@kambanaria.org>, 2014, 2015, 2019, 2020, 2024, 2025.
+# Alexander Shopov <ash@kambanaria.org>, 2014, 2015, 2019, 2020, 2024, 2025, 2026.
 #
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: Gitk master\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-07-22 18:34+0200\n"
-"PO-Revision-Date: 2025-07-28 13:38+0200\n"
+"POT-Creation-Date: 2026-04-18 17:41+0200\n"
+"PO-Revision-Date: 2026-06-14 22:45+0200\n"
 "Last-Translator: Alexander Shopov <ash@kambanaria.org>\n"
 "Language-Team: Bulgarian <dict@fsa-bg.org>\n"
 "Language: bg\n"
@@ -183,10 +183,10 @@ msgid "New version"
 msgstr "Нова версия"
 
 msgid "Lines of context"
-msgstr "Контекст в редове"
+msgstr "Редове контекст"
 
 msgid "Ignore space change"
-msgstr "Празните знаци без значение"
+msgstr "Празни знаци без значение"
 
 msgid "Line diff"
 msgstr "Поредови разлики"
@@ -954,6 +954,9 @@ msgstr "Показване на локалните промени"
 msgid "Hide remote refs"
 msgstr "Скриване на отдалечените указатели"
 
+msgid "Refs to hide (space-separated globs)"
+msgstr "Указатели за скриване (шаблони разделени с интервал):"
+
 msgid "Copy commit ID to clipboard"
 msgstr "Копиране на контролната сума към буфера за обмен"
 
@@ -999,14 +1002,23 @@ msgstr "Избор…"
 msgid "Web browser"
 msgstr "Уеб браузър"
 
+msgid "Themes - change requires restart"
+msgstr "Теми — за прилагане трябва да рестартирате програмата"
+
+msgid "Theme to use after restart"
+msgstr "Тема за прилагане след рестартиране на програмата"
+
+msgid "Theme definition file"
+msgstr "Файл с тема"
+
+msgid "The theme definition file may affect all themes."
+msgstr "Файлът с тема може да повлияе на всички теми."
+
+msgid "Apply theme"
+msgstr "Прилагане на тема"
+
 msgid "Colors: press to choose"
 msgstr "Цветове: избира се с натискане"
-
-msgid "Interface"
-msgstr "Интерфейс"
-
-msgid "interface"
-msgstr "интерфейс"
 
 msgid "Background"
 msgstr "Фон"
@@ -1059,6 +1071,12 @@ msgstr "фон на отбелязан ред"
 msgid "Select bg"
 msgstr "Избор на фон"
 
+msgid "Link"
+msgstr "Връзка"
+
+msgid "link"
+msgstr "връзка"
+
 msgid "Fonts: press to choose"
 msgstr "Шрифтове: избира се с натискане"
 
@@ -1082,6 +1100,9 @@ msgstr "Цветове"
 
 msgid "Fonts"
 msgstr "Шрифтове"
+
+msgid "Gitk: select theme definition"
+msgstr "Gitk: избор на тема"
 
 #, tcl-format
 msgid "Gitk: choose color for %s"

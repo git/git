@@ -235,23 +235,20 @@ static int prepare_include_condition_pattern(const struct key_value_info *kvi,
 	return 0;
 }
 
-static int include_by_gitdir(const struct key_value_info *kvi,
-			     const struct config_options *opts,
-			     const char *cond, size_t cond_len, int icase)
+static int include_by_path(const struct key_value_info *kvi,
+			   const char *path,
+			   const char *cond, size_t cond_len, int icase)
 {
 	struct strbuf text = STRBUF_INIT;
 	struct strbuf pattern = STRBUF_INIT;
 	size_t prefix;
 	int ret = 0;
-	const char *git_dir;
 	int already_tried_absolute = 0;
 
-	if (opts->git_dir)
-		git_dir = opts->git_dir;
-	else
+	if (!path)
 		goto done;
 
-	strbuf_realpath(&text, git_dir, 1);
+	strbuf_realpath(&text, path, 1);
 	strbuf_add(&pattern, cond, cond_len);
 	ret = prepare_include_condition_pattern(kvi, &pattern, &prefix);
 	if (ret < 0)
@@ -284,7 +281,7 @@ again:
 		 * which'll do the right thing
 		 */
 		strbuf_reset(&text);
-		strbuf_add_absolute_path(&text, git_dir);
+		strbuf_add_absolute_path(&text, path);
 		already_tried_absolute = 1;
 		goto again;
 	}
@@ -400,9 +397,15 @@ static int include_condition_is_true(const struct key_value_info *kvi,
 	const struct config_options *opts = inc->opts;
 
 	if (skip_prefix_mem(cond, cond_len, "gitdir:", &cond, &cond_len))
-		return include_by_gitdir(kvi, opts, cond, cond_len, 0);
+		return include_by_path(kvi, opts->git_dir, cond, cond_len, 0);
 	else if (skip_prefix_mem(cond, cond_len, "gitdir/i:", &cond, &cond_len))
-		return include_by_gitdir(kvi, opts, cond, cond_len, 1);
+		return include_by_path(kvi, opts->git_dir, cond, cond_len, 1);
+	else if (skip_prefix_mem(cond, cond_len, "worktree:", &cond, &cond_len))
+		return include_by_path(kvi, inc->repo ? repo_get_work_tree(inc->repo) : NULL,
+				       cond, cond_len, 0);
+	else if (skip_prefix_mem(cond, cond_len, "worktree/i:", &cond, &cond_len))
+		return include_by_path(kvi, inc->repo ? repo_get_work_tree(inc->repo) : NULL,
+				       cond, cond_len, 1);
 	else if (skip_prefix_mem(cond, cond_len, "onbranch:", &cond, &cond_len))
 		return include_by_branch(inc, cond, cond_len);
 	else if (skip_prefix_mem(cond, cond_len, "hasconfig:remote.*.url:", &cond,
@@ -2951,6 +2954,24 @@ char *git_config_prepare_comment_string(const char *comment)
 	return prepared;
 }
 
+/*
+ * How long to retry acquiring config.lock when another process holds
+ * it. Default matches core.packedRefsTimeout; override via
+ * core.configLockTimeout.
+ */
+static long config_lock_timeout_ms(struct repository *r)
+{
+	static int configured;
+	static int timeout_ms = 1000;
+
+	if (!configured) {
+		repo_config_get_int(r, "core.configlocktimeout", &timeout_ms);
+		configured = 1;
+	}
+
+	return timeout_ms;
+}
+
 static void validate_comment_string(const char *comment)
 {
 	size_t leading_blanks;
@@ -3034,7 +3055,8 @@ int repo_config_set_multivar_in_file_gently(struct repository *r,
 	 * The lock serves a purpose in addition to locking: the new
 	 * contents of .git/config will be written into it.
 	 */
-	fd = hold_lock_file_for_update(&lock, config_filename, 0);
+	fd = repo_hold_lock_file_for_update_timeout(r, &lock, config_filename, 0,
+						    config_lock_timeout_ms(r));
 	if (fd < 0) {
 		error_errno(_("could not lock config file %s"), config_filename);
 		ret = CONFIG_NO_LOCK;
@@ -3379,7 +3401,9 @@ static int repo_config_copy_or_rename_section_in_file(
 	if (!config_filename)
 		config_filename = filename_buf = repo_git_path(r, "config");
 
-	out_fd = hold_lock_file_for_update(&lock, config_filename, 0);
+	out_fd = repo_hold_lock_file_for_update_timeout(r, &lock,
+							config_filename, 0,
+							config_lock_timeout_ms(r));
 	if (out_fd < 0) {
 		ret = error(_("could not lock config file %s"), config_filename);
 		goto out;

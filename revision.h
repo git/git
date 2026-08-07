@@ -66,6 +66,7 @@ struct repository;
 struct rev_info;
 struct string_list;
 struct saved_parents;
+struct follow_pathspec_slab;
 struct bloom_keyvec;
 struct bloom_filter_settings;
 struct option;
@@ -313,6 +314,8 @@ struct rev_info {
 	/* Display history graph */
 	struct git_graph *graph;
 	int graph_max_lanes;
+	unsigned int no_graph_indent:1;
+	unsigned int graph_indent_set:1;
 
 	/* special limits */
 	int skip_count;
@@ -362,6 +365,9 @@ struct rev_info {
 
 	/* copies of the parent lists, for --full-diff display */
 	struct saved_parents *saved_parents_slab;
+
+	/* per-commit pathspec for --follow across merges */
+	struct follow_pathspec_slab *follow_pathspec_slab;
 
 	struct commit_list *previous_parents;
 	struct commit_list *ancestry_path_bottoms;

@@ -384,6 +384,54 @@ test_expect_success 'add, commit, checkout' '
 	test_all_match git checkout -
 '
 
+test_expect_success 'intent-to-add entries outside sparse-checkout' '
+	init_repos &&
+
+	write_script edit-contents <<-\EOF &&
+	echo text >>$1
+	EOF
+
+	test_sparse_match git sparse-checkout set deep folder1 &&
+	run_on_sparse mkdir -p folder1 &&
+	run_on_all ../edit-contents folder1/newita &&
+	test_sparse_match git add -N folder1/newita &&
+
+	test_sparse_match git sparse-checkout set deep &&
+	test_sparse_match git status --porcelain=v2 &&
+	test_sparse_match git ls-files --stage
+'
+
+test_expect_success 'intent-to-add with --sparse outside sparse-checkout' '
+	init_repos &&
+
+	write_script edit-contents <<-\EOF &&
+	echo text >>$1
+	EOF
+
+	run_on_all mkdir -p folder1 &&
+	run_on_all ../edit-contents folder1/newita &&
+	test_all_match git add --sparse --intent-to-add folder1/newita &&
+
+	test_all_match git status --porcelain=v2 &&
+	test_all_match git ls-files --stage &&
+	test_all_match git diff --cached --stat &&
+
+	# Ensure sparse index stores correct sparse directories and
+	# intent-to-add path.
+	git -C sparse-index ls-files --format="%(path)" --sparse >out &&
+
+	# These paths should be present in index as-is.
+	test_grep "^before/\$" out &&
+	test_grep "^folder1/newita\$" out &&
+	test_grep "^folder2/\$" out &&
+	test_grep "^x/\$" out &&
+
+	# folder/0/ could theoretically be collapsed to a sparse
+	# directory entry, but the current implementation avoids the
+	# reduction because of folder1/newita
+	test_grep "^folder1/0/0/0\$" out
+'
+
 test_expect_success 'git add, checkout, and reset with -p' '
 	init_repos &&
 
@@ -454,10 +502,10 @@ test_expect_success 'add outside sparse cone' '
 	run_on_sparse ../edit-contents folder1/a &&
 	run_on_sparse ../edit-contents folder1/newfile &&
 	test_sparse_match test_must_fail git add folder1/a &&
-	grep "Disable or modify the sparsity rules" sparse-checkout-err &&
+	test_grep "Disable or modify the sparsity rules" sparse-checkout-err &&
 	test_sparse_unstaged folder1/a &&
 	test_sparse_match test_must_fail git add folder1/newfile &&
-	grep "Disable or modify the sparsity rules" sparse-checkout-err &&
+	test_grep "Disable or modify the sparsity rules" sparse-checkout-err &&
 	test_sparse_unstaged folder1/newfile
 '
 
@@ -509,13 +557,13 @@ test_expect_success 'status/add: outside sparse cone' '
 
 	# Adding the path outside of the sparse-checkout cone should fail.
 	test_sparse_match test_must_fail git add folder1/a &&
-	grep "Disable or modify the sparsity rules" sparse-checkout-err &&
+	test_grep "Disable or modify the sparsity rules" sparse-checkout-err &&
 	test_sparse_unstaged folder1/a &&
 	test_all_match git add --refresh folder1/a &&
 	test_must_be_empty sparse-checkout-err &&
 	test_sparse_unstaged folder1/a &&
 	test_sparse_match test_must_fail git add folder1/new &&
-	grep "Disable or modify the sparsity rules" sparse-checkout-err &&
+	test_grep "Disable or modify the sparsity rules" sparse-checkout-err &&
 	test_sparse_unstaged folder1/new &&
 	test_sparse_match git add --sparse folder1/a &&
 	test_sparse_match git add --sparse folder1/new &&
@@ -661,8 +709,8 @@ test_expect_success 'checkout and reset (mixed)' '
 	# in sparse-checkout or sparse-index.
 	git -C full-checkout reset update-folder1 >full-checkout-out &&
 	test_sparse_match git reset update-folder1 &&
-	grep "M	folder1/a" full-checkout-out &&
-	! grep "M	folder1/a" sparse-checkout-out &&
+	test_grep "M	folder1/a" full-checkout-out &&
+	test_grep ! "M	folder1/a" sparse-checkout-out &&
 	run_on_sparse test_path_is_missing folder1
 '
 
@@ -880,8 +928,8 @@ test_expect_success 'update-index with directories' '
 	# update-index will exit silently when provided with a directory name
 	# containing a trailing slash
 	test_all_match git update-index deep/ folder1/ &&
-	grep "Ignoring path deep/" sparse-checkout-err &&
-	grep "Ignoring path folder1/" sparse-checkout-err &&
+	test_grep "Ignoring path deep/" sparse-checkout-err &&
+	test_grep "Ignoring path folder1/" sparse-checkout-err &&
 
 	# When update-index is given a directory name WITHOUT a trailing slash, it will
 	# behave in different ways depending on the status of the directory on disk:
@@ -1067,7 +1115,7 @@ test_expect_success 'merge with conflict outside cone' '
 
 	# 2. Add the file with conflict markers
 	test_sparse_match test_must_fail git add folder1/a &&
-	grep "Disable or modify the sparsity rules" sparse-checkout-err &&
+	test_grep "Disable or modify the sparsity rules" sparse-checkout-err &&
 	test_sparse_unstaged folder1/a &&
 	test_all_match git add --sparse folder1/a &&
 	test_all_match git status --porcelain=v2 &&
@@ -1076,7 +1124,7 @@ test_expect_success 'merge with conflict outside cone' '
 	#    accept conflict markers as resolved content.
 	run_on_all mv folder2/a folder2/z &&
 	test_sparse_match test_must_fail git add folder2 &&
-	grep "Disable or modify the sparsity rules" sparse-checkout-err &&
+	test_grep "Disable or modify the sparsity rules" sparse-checkout-err &&
 	test_sparse_unstaged folder2/z &&
 	test_all_match git add --sparse folder2 &&
 	test_all_match git status --porcelain=v2 &&
@@ -1107,7 +1155,7 @@ test_expect_success 'cherry-pick/rebase with conflict outside cone' '
 		# SKIP_WORKTREE bit from the index entry for folder1/a, we should
 		# warn that this is a problematic add.
 		test_sparse_match test_must_fail git add folder1/a &&
-		grep "Disable or modify the sparsity rules" sparse-checkout-err &&
+		test_grep "Disable or modify the sparsity rules" sparse-checkout-err &&
 		test_sparse_unstaged folder1/a &&
 		test_all_match git add --sparse folder1/a &&
 		test_all_match git status --porcelain=v2 &&
@@ -1119,7 +1167,7 @@ test_expect_success 'cherry-pick/rebase with conflict outside cone' '
 		# existing index entry with the SKIP_WORKTREE bit cleared.
 		run_on_all mv folder2/a folder2/z &&
 		test_sparse_match test_must_fail git add folder2 &&
-		grep "Disable or modify the sparsity rules" sparse-checkout-err &&
+		test_grep "Disable or modify the sparsity rules" sparse-checkout-err &&
 		test_sparse_unstaged folder2/z &&
 		test_all_match git add --sparse folder2 &&
 		test_all_match git status --porcelain=v2 &&
@@ -1266,7 +1314,7 @@ test_expect_success 'checkout-index with folders' '
 	run_on_all test_must_fail git checkout-index -f -- folder1/ &&
 	test_cmp full-checkout-err sparse-checkout-err &&
 	! test_cmp full-checkout-err sparse-index-err &&
-	grep "is a sparse directory" sparse-index-err
+	test_grep "is a sparse directory" sparse-index-err
 '
 
 test_expect_success 'checkout-index --all' '
@@ -1374,8 +1422,8 @@ test_expect_success 'submodule handling' '
 	# having a submodule prevents "modules" from collapse
 	test_sparse_match git sparse-checkout set deep/deeper1 &&
 	git -C sparse-index ls-files --sparse --stage >cache &&
-	grep "100644 .*	modules/a" cache &&
-	grep "160000 $(git -C initial-repo rev-parse HEAD) 0	modules/sub" cache
+	test_grep "100644 .*	modules/a" cache &&
+	test_grep "160000 $(git -C initial-repo rev-parse HEAD) 0	modules/sub" cache
 '
 
 test_expect_success 'git apply functionality' '
@@ -1392,7 +1440,7 @@ test_expect_success 'git apply functionality' '
 
 	# Apply a patch to a file outside the sparse definition
 	test_sparse_match test_must_fail git apply ../patch-outside &&
-	grep "No such file or directory" sparse-checkout-err &&
+	test_grep "No such file or directory" sparse-checkout-err &&
 
 	# But it works with --index and --cached
 	test_all_match git apply --index --stat ../patch-outside &&
@@ -1596,6 +1644,61 @@ test_expect_success 'sparse-index is not expanded: stash' '
 	ensure_not_expanded stash store -m "test" $oid &&
 	ensure_not_expanded reset --hard &&
 	ensure_not_expanded stash pop
+'
+
+test_expect_success 'sparse-index is not expanded: stash in-cone pathspec' '
+	init_repos &&
+
+	echo unrelated >>sparse-index/deep/e &&
+	echo literal >>sparse-index/deep/a &&
+	ensure_not_expanded stash push -- deep/a &&
+	test_grep ! literal sparse-index/deep/a &&
+	test_grep unrelated sparse-index/deep/e &&
+	ensure_not_expanded stash pop &&
+	test_grep literal sparse-index/deep/a &&
+
+	echo prefixed >>sparse-index/deep/a &&
+	ensure_not_expanded -C deep stash push -- a &&
+	test_grep ! prefixed sparse-index/deep/a &&
+	test_grep unrelated sparse-index/deep/e &&
+	ensure_not_expanded stash pop &&
+	test_grep prefixed sparse-index/deep/a &&
+
+	echo wildcard >>sparse-index/deep/a &&
+	ensure_not_expanded stash push -- "deep/a*" &&
+	test_grep ! wildcard sparse-index/deep/a &&
+	test_grep unrelated sparse-index/deep/e &&
+	ensure_not_expanded stash pop &&
+	test_grep wildcard sparse-index/deep/a &&
+
+	echo pathspec-file >>sparse-index/deep/a &&
+	echo deep/a >pathspec-file &&
+	ensure_not_expanded stash push --pathspec-from-file=../pathspec-file &&
+	test_grep ! pathspec-file sparse-index/deep/a &&
+	test_grep unrelated sparse-index/deep/e &&
+	ensure_not_expanded stash pop &&
+	test_grep pathspec-file sparse-index/deep/a &&
+
+	echo multiple-a >>sparse-index/deep/a &&
+	echo multiple-e >>sparse-index/deep/e &&
+	ensure_not_expanded stash push -- deep/a deep/e &&
+	test_grep ! multiple-a sparse-index/deep/a &&
+	test_grep ! multiple-e sparse-index/deep/e &&
+	ensure_not_expanded stash pop &&
+	test_grep multiple-a sparse-index/deep/a &&
+	test_grep multiple-e sparse-index/deep/e &&
+
+	echo staged >>sparse-index/deep/a &&
+	git -C sparse-index add deep/a &&
+	ensure_not_expanded stash push --staged -- deep/a &&
+	test_grep ! staged sparse-index/deep/a &&
+	test_grep unrelated sparse-index/deep/e &&
+	ensure_not_expanded stash pop --index &&
+	test_grep staged sparse-index/deep/a &&
+	test_must_fail git -C sparse-index diff --cached --quiet -- deep/a &&
+
+	ensure_not_expanded ! stash push -- deep/does-not-exist &&
+	test_grep "did not match any file" sparse-index-error
 '
 
 test_expect_success 'describe tested on all' '
@@ -2013,9 +2116,9 @@ test_expect_success 'mv directory from out-of-cone to in-cone' '
 	test_all_match git status --porcelain=v2 &&
 	test_sparse_match git ls-files -t &&
 	git -C sparse-checkout ls-files -t >actual &&
-	grep -e "H deep/folder1/0/0/0" actual &&
-	grep -e "H deep/folder1/0/1" actual &&
-	grep -e "H deep/folder1/a" actual &&
+	test_grep -e "H deep/folder1/0/0/0" actual &&
+	test_grep -e "H deep/folder1/0/1" actual &&
+	test_grep -e "H deep/folder1/a" actual &&
 
 	test_all_match git reset --hard &&
 
@@ -2025,8 +2128,8 @@ test_expect_success 'mv directory from out-of-cone to in-cone' '
 	test_sparse_match git status --porcelain=v2 &&
 	test_sparse_match git ls-files -t &&
 	git -C sparse-checkout ls-files -t >actual &&
-	grep -e "H deep/0/0/0" actual &&
-	grep -e "H deep/0/1" actual
+	test_grep -e "H deep/0/0/0" actual &&
+	test_grep -e "H deep/0/1" actual
 '
 
 test_expect_success 'rm pathspec inside sparse definition' '
@@ -2117,6 +2220,13 @@ test_expect_success 'sparse index is not expanded: rm' '
 	# test recursive rm
 	git -C sparse-index reset --hard &&
 	ensure_not_expanded rm -r deep
+'
+
+test_expect_success 'sparse index is not expanded: prefixed wildcard pathspec' '
+	init_repos &&
+
+	ensure_not_expanded -C deep rm --dry-run -- "a*" &&
+	ensure_not_expanded -C deep reset base -- "a*"
 '
 
 test_expect_success 'grep with and --cached' '
@@ -2517,7 +2627,7 @@ test_expect_success 'advice.sparseIndexExpanded' '
 	mkdir -p sparse-index/deep/deeper2/deepest &&
 	touch sparse-index/deep/deeper2/deepest/bogus &&
 	git -C sparse-index status 2>err &&
-	grep "The sparse index is expanding to a full index" err &&
+	test_grep "The sparse index is expanding to a full index" err &&
 
 	git -C sparse-index sparse-checkout disable 2>err &&
 	test_line_count = 0 err

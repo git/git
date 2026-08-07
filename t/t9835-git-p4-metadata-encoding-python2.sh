@@ -84,7 +84,7 @@ test_expect_success 'clone non-utf8 repo with strict encoding' '
 	test_when_finished cleanup_git &&
 	test_when_finished remove_user_cache &&
 	test_must_fail git -c git-p4.metadataDecodingStrategy=strict p4-python2 clone --dest="$git" //depot@all 2>err &&
-	grep "Decoding perforce metadata failed!" err
+	test_grep "Decoding perforce metadata failed!" err
 '
 
 test_expect_success 'check utf-8 contents with passthrough strategy' '
@@ -94,8 +94,8 @@ test_expect_success 'check utf-8 contents with passthrough strategy' '
 	(
 		cd "$git" &&
 		git log >actual &&
-		grep "some utf-8 tǣxt" actual &&
-		grep "ǣuthor" actual
+		test_grep "some utf-8 tǣxt" actual &&
+		test_grep "ǣuthor" actual
 	)
 '
 
@@ -107,9 +107,9 @@ test_expect_success 'check latin-1 contents corrupted in git with passthrough st
 		cd "$git" &&
 		git log >actual &&
 		badly_encoded_in_git=$(echo "some latin-1 tæxt" | iconv -f utf8 -t latin1) &&
-		grep "$badly_encoded_in_git" actual &&
+		test_grep "$badly_encoded_in_git" actual &&
 		bad_author_in_git="$(echo æuthor | iconv -f utf8 -t latin1)" &&
-		grep "$bad_author_in_git" actual
+		test_grep "$bad_author_in_git" actual
 	)
 '
 
@@ -120,8 +120,8 @@ test_expect_success 'check utf-8 contents with fallback strategy' '
 	(
 		cd "$git" &&
 		git log >actual &&
-		grep "some utf-8 tǣxt" actual &&
-		grep "ǣuthor" actual
+		test_grep "some utf-8 tǣxt" actual &&
+		test_grep "ǣuthor" actual
 	)
 '
 
@@ -132,8 +132,8 @@ test_expect_success 'check latin-1 contents with fallback strategy' '
 	(
 		cd "$git" &&
 		git log >actual &&
-		grep "some latin-1 tæxt" actual &&
-		grep "æuthor" actual
+		test_grep "some latin-1 tæxt" actual &&
+		test_grep "æuthor" actual
 	)
 '
 
@@ -144,8 +144,8 @@ test_expect_success 'check cp-1252 contents with fallback strategy' '
 	(
 		cd "$git" &&
 		git log >actual &&
-		grep "sœme cp-1252 tæxt" actual &&
-		grep "æuthœr" actual
+		test_grep "sœme cp-1252 tæxt" actual &&
+		test_grep "æuthœr" actual
 	)
 '
 
@@ -156,8 +156,8 @@ test_expect_success 'check cp850 contents parsed with correct fallback' '
 	(
 		cd "$git" &&
 		git log >actual &&
-		grep "hÅs some cp850 text" actual &&
-		grep "Åuthor" actual
+		test_grep "hÅs some cp850 text" actual &&
+		test_grep "Åuthor" actual
 	)
 '
 
@@ -168,8 +168,8 @@ test_expect_success 'check cp850-only contents escaped when cp1252 is fallback' 
 	(
 		cd "$git" &&
 		git log >actual &&
-		grep "h%8Fs some cp850 text" actual &&
-		grep "%8Futhor" actual
+		test_grep "h%8Fs some cp850 text" actual &&
+		test_grep "%8Futhor" actual
 	)
 '
 
@@ -191,8 +191,8 @@ test_expect_success 'check cp-1252 contents on later sync after clone with fallb
 		git p4-python2 sync --branch=master &&
 
 		git log p4/master >actual &&
-		grep "sœme more cp-1252 tæxt" actual &&
-		grep "æuthœr" actual
+		test_grep "sœme more cp-1252 tæxt" actual &&
+		test_grep "æuthœr" actual
 	)
 '
 
@@ -208,7 +208,7 @@ test_expect_success 'passthrough (latin-1 contents corrupted in git) is the defa
 		cd "$git" &&
 		git log >actual &&
 		badly_encoded_in_git=$(echo "some latin-1 tæxt" | iconv -f utf8 -t latin1) &&
-		grep "$badly_encoded_in_git" actual
+		test_grep "$badly_encoded_in_git" actual
 	)
 '
 

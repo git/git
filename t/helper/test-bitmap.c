@@ -52,7 +52,7 @@ static int add_packed_object(const struct object_id *oid,
 
 	entry = packlist_alloc(packed, oid);
 	entry->idx.offset = nth_packed_object_offset(pack, pos);
-	if (packed_object_info(pack, entry->idx.offset, &oi) < 0)
+	if (packed_object_info(NULL, pack, entry->idx.offset, &oi) < 0)
 		die("could not get type of object %s",
 		    oid_to_hex(oid));
 	oe_set_type(entry, type);

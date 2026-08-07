@@ -580,7 +580,7 @@ test_expect_success 'am --keep really keeps the subject' '
 	git am --keep patch4 &&
 	test_path_is_missing .git/rebase-apply &&
 	git cat-file commit HEAD >actual &&
-	grep "Re: Re: Re: \[PATCH 1/5 v2\] \[foo\] third" actual
+	test_grep "Re: Re: Re: \[PATCH 1/5 v2\] \[foo\] third" actual
 '
 
 test_expect_success 'am --keep-non-patch really keeps the non-patch part' '
@@ -590,7 +590,7 @@ test_expect_success 'am --keep-non-patch really keeps the non-patch part' '
 	git am --keep-non-patch patch4 &&
 	test_path_is_missing .git/rebase-apply &&
 	git cat-file commit HEAD >actual &&
-	grep "^\[foo\] third" actual
+	test_grep "^\[foo\] third" actual
 '
 
 test_expect_success 'setup am -3' '
@@ -642,7 +642,7 @@ test_expect_success 'am with config am.threeWay overridden by --no-3way' '
 '
 
 test_expect_success 'am can rename a file' '
-	grep "^rename from" rename.patch &&
+	test_grep "^rename from" rename.patch &&
 	rm -fr .git/rebase-apply &&
 	git reset --hard &&
 	git checkout lorem^0 &&
@@ -653,7 +653,7 @@ test_expect_success 'am can rename a file' '
 '
 
 test_expect_success 'am -3 can rename a file' '
-	grep "^rename from" rename.patch &&
+	test_grep "^rename from" rename.patch &&
 	rm -fr .git/rebase-apply &&
 	git reset --hard &&
 	git checkout lorem^0 &&
@@ -664,7 +664,7 @@ test_expect_success 'am -3 can rename a file' '
 '
 
 test_expect_success 'am -3 can rename a file after falling back to 3-way merge' '
-	grep "^rename from" rename-add.patch &&
+	test_grep "^rename from" rename-add.patch &&
 	rm -fr .git/rebase-apply &&
 	git reset --hard &&
 	git checkout lorem^0 &&
@@ -884,7 +884,7 @@ test_expect_success 'am --ignore-date' '
 	git am --ignore-date patch1 &&
 	git cat-file commit HEAD | sed -e "/^\$/q" >head1 &&
 	sed -ne "/^author /s/.*> //p" head1 >at &&
-	grep "+0000" at
+	test_grep "+0000" at
 '
 
 test_expect_success 'am into an unborn branch' '
@@ -1066,7 +1066,7 @@ test_expect_success 'am --patch-format=mboxrd handles mboxrd' '
 	INPUT_END
 	git commit -F msg &&
 	git -c format.mboxrd format-patch --stdout -1 >mboxrd1 &&
-	grep "^>From could trip up a loose mbox parser" mboxrd1 &&
+	test_grep "^>From could trip up a loose mbox parser" mboxrd1 &&
 	git checkout -f first &&
 	git am --patch-format=mboxrd mboxrd1 &&
 	git cat-file commit HEAD | tail -n4 >out &&
@@ -1144,21 +1144,21 @@ test_expect_success 'am and .gitattibutes' '
 		git format-patch --stdout main..HEAD >patches &&
 		git reset --hard main &&
 		git am patches &&
-		grep "smudged" a.txt &&
+		test_grep "smudged" a.txt &&
 
 		git checkout removal &&
 		git reset --hard &&
 		git format-patch --stdout main..HEAD >patches &&
 		git reset --hard main &&
 		git am patches &&
-		grep "clean" a.txt &&
+		test_grep "clean" a.txt &&
 
 		git checkout conflict &&
 		git reset --hard &&
 		git format-patch --stdout main..HEAD >patches &&
 		git reset --hard fourth &&
 		test_must_fail git am -3 patches &&
-		grep "<<<<<<<<<<" a.txt
+		test_grep "<<<<<<<<<<" a.txt
 	)
 '
 
@@ -1196,13 +1196,13 @@ test_expect_success 'invalid when passing the --empty option alone' '
 test_expect_success 'a message without a patch is an error (default)' '
 	test_when_finished "git am --abort || :" &&
 	test_must_fail git am empty-commit.patch >err &&
-	grep "Patch is empty" err
+	test_grep "Patch is empty" err
 '
 
 test_expect_success 'a message without a patch is an error where an explicit "--empty=stop" is given' '
 	test_when_finished "git am --abort || :" &&
 	test_must_fail git am --empty=stop empty-commit.patch >err &&
-	grep "Patch is empty." err
+	test_grep "Patch is empty." err
 '
 
 test_expect_success 'a message without a patch will be skipped when "--empty=drop" is given' '
@@ -1210,7 +1210,7 @@ test_expect_success 'a message without a patch will be skipped when "--empty=dro
 	git rev-parse empty-commit^ >expected &&
 	git rev-parse HEAD >actual &&
 	test_cmp expected actual &&
-	grep "Skipping: empty commit" output
+	test_grep "Skipping: empty commit" output
 '
 
 test_expect_success 'record as an empty commit when meeting e-mail message that lacks a patch' '
@@ -1218,15 +1218,15 @@ test_expect_success 'record as an empty commit when meeting e-mail message that 
 	test_path_is_missing .git/rebase-apply &&
 	git show empty-commit --format="%B" >expected &&
 	git show HEAD --format="%B" >actual &&
-	grep -f actual expected &&
-	grep "Creating an empty commit: empty commit" output
+	test_grep -f actual expected &&
+	test_grep "Creating an empty commit: empty commit" output
 '
 
 test_expect_success 'skip an empty patch in the middle of an am session' '
 	git checkout empty-commit^ &&
 	test_must_fail git am empty-commit.patch >out 2>err &&
-	grep "Patch is empty." out &&
-	grep "To record the empty patch as an empty commit, run \"git am --allow-empty\"." err &&
+	test_grep "Patch is empty." out &&
+	test_grep "To record the empty patch as an empty commit, run \"git am --allow-empty\"." err &&
 	git am --skip &&
 	test_path_is_missing .git/rebase-apply &&
 	git rev-parse empty-commit^ >expected &&
@@ -1237,14 +1237,14 @@ test_expect_success 'skip an empty patch in the middle of an am session' '
 test_expect_success 'record an empty patch as an empty commit in the middle of an am session' '
 	git checkout empty-commit^ &&
 	test_must_fail git am empty-commit.patch >out 2>err &&
-	grep "Patch is empty." out &&
-	grep "To record the empty patch as an empty commit, run \"git am --allow-empty\"." err &&
+	test_grep "Patch is empty." out &&
+	test_grep "To record the empty patch as an empty commit, run \"git am --allow-empty\"." err &&
 	git am --allow-empty >output &&
-	grep "No changes - recorded it as an empty commit." output &&
+	test_grep "No changes - recorded it as an empty commit." output &&
 	test_path_is_missing .git/rebase-apply &&
 	git show empty-commit --format="%B" >expected &&
 	git show HEAD --format="%B" >actual &&
-	grep -f actual expected
+	test_grep -f actual expected
 '
 
 test_expect_success 'create an non-empty commit when the index IS changed though "--allow-empty" is given' '
@@ -1255,7 +1255,7 @@ test_expect_success 'create an non-empty commit when the index IS changed though
 	git am --allow-empty &&
 	git show empty-commit --format="%B" >expected &&
 	git show HEAD --format="%B" >actual &&
-	grep -f actual expected &&
+	test_grep -f actual expected &&
 	git diff HEAD^..HEAD --name-only
 '
 
@@ -1264,7 +1264,7 @@ test_expect_success 'cannot create empty commits when there is a clean index due
 	git rev-parse HEAD >expected &&
 	test_must_fail git am seq.patch &&
 	test_must_fail git am --allow-empty >err &&
-	! grep "To record the empty patch as an empty commit, run \"git am --allow-empty\"." err &&
+	test_grep ! "To record the empty patch as an empty commit, run \"git am --allow-empty\"." err &&
 	git rev-parse HEAD >actual &&
 	test_cmp actual expected
 '
@@ -1274,7 +1274,7 @@ test_expect_success 'cannot create empty commits when there is unmerged index du
 	git rev-parse HEAD >expected &&
 	test_must_fail git am -3 seq.patch &&
 	test_must_fail git am --allow-empty >err &&
-	! grep "To record the empty patch as an empty commit, run \"git am --allow-empty\"." err &&
+	test_grep ! "To record the empty patch as an empty commit, run \"git am --allow-empty\"." err &&
 	git rev-parse HEAD >actual &&
 	test_cmp actual expected
 '

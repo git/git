@@ -132,8 +132,8 @@ test_expect_success 'overriding --stage=all resets implied --temp' '
 test_expect_success '--stage=all --no-temp is rejected' '
 	rm -f path* .merge_* actual &&
 	test_must_fail git checkout-index --stage=all --no-temp -- path1 2>err &&
-	grep -v "already exists" err &&
-	grep "options .--stage=all. and .--no-temp. cannot be used together" err
+	test_grep -v "already exists" err &&
+	test_grep "options .--stage=all. and .--no-temp. cannot be used together" err
 '
 
 test_expect_success 'checkout some stages/one file to temporary files' '

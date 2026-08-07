@@ -6855,7 +6855,7 @@ void flush_one_hunk(struct object_id *result, struct git_hash_ctx *ctx)
 	int i;
 
 	git_hash_final(hash, ctx);
-	the_hash_algo->init_fn(ctx);
+	git_hash_init(ctx, the_hash_algo);
 	/* 20-byte sum, with carry */
 	for (i = 0; i < the_hash_algo->rawsz; ++i) {
 		carry += result->hash[i] + hash[i];
@@ -6899,7 +6899,7 @@ static int diff_get_patch_id(struct diff_options *options, struct object_id *oid
 	struct git_hash_ctx ctx;
 	struct patch_id_t data;
 
-	the_hash_algo->init_fn(&ctx);
+	git_hash_init(&ctx, the_hash_algo);
 	memset(&data, 0, sizeof(struct patch_id_t));
 	data.ctx = &ctx;
 	oidclr(oid, the_repository->hash_algo);
@@ -6987,6 +6987,7 @@ static int diff_get_patch_id(struct diff_options *options, struct object_id *oid
 		flush_one_hunk(oid, &ctx);
 	}
 
+	git_hash_discard(&ctx);
 	return 0;
 }
 

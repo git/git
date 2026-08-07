@@ -171,7 +171,8 @@ void reftable_stack_destroy(struct reftable_stack *st)
 		st->merged = NULL;
 	}
 
-	err = read_lines(st->list_file, &names);
+	if (st->list_file)
+		err = read_lines(st->list_file, &names);
 	if (err < 0) {
 		REFTABLE_FREE_AND_NULL(names);
 	}
@@ -337,7 +338,7 @@ static int reftable_stack_reload_once(struct reftable_stack *st,
 	/* Update the stack to point to the new tables. */
 	if (st->merged)
 		reftable_merged_table_free(st->merged);
-	new_merged->suppress_deletions = 1;
+	new_merged->suppress_deletions = st->opts.suppress_deletions;
 	st->merged = new_merged;
 
 	if (st->tables)
@@ -501,10 +502,10 @@ out:
 }
 
 int reftable_new_stack(struct reftable_stack **dest, const char *dir,
-		       const struct reftable_write_options *_opts)
+		       const struct reftable_stack_options *_opts)
 {
 	struct reftable_buf list_file_name = REFTABLE_BUF_INIT;
-	struct reftable_write_options opts = { 0 };
+	struct reftable_stack_options opts = { 0 };
 	struct reftable_stack *p;
 	int err;
 
@@ -629,6 +630,7 @@ int reftable_stack_reload(struct reftable_stack *st)
 struct reftable_addition {
 	struct reftable_flock tables_list_lock;
 	struct reftable_stack *stack;
+	struct reftable_write_options opts;
 
 	char **new_tables;
 	size_t new_tables_len, new_tables_cap;
@@ -657,6 +659,7 @@ static void reftable_addition_close(struct reftable_addition *add)
 
 static int reftable_stack_init_addition(struct reftable_addition *add,
 					struct reftable_stack *st,
+					const struct reftable_write_options *opts,
 					unsigned int flags)
 {
 	struct reftable_buf lock_file_name = REFTABLE_BUF_INIT;
@@ -664,15 +667,17 @@ static int reftable_stack_init_addition(struct reftable_addition *add,
 
 	memset(add, 0, sizeof(*add));
 	add->stack = st;
+	if (opts)
+		add->opts = *opts;
 
 	err = flock_acquire(&add->tables_list_lock, st->list_file,
-			    st->opts.lock_timeout_ms);
+			    add->opts.lock_timeout_ms);
 	if (err < 0)
 		goto done;
 
-	if (st->opts.default_permissions) {
+	if (add->opts.default_permissions) {
 		if (chmod(add->tables_list_lock.path,
-			  st->opts.default_permissions) < 0) {
+			  add->opts.default_permissions) < 0) {
 			err = REFTABLE_IO_ERROR;
 			goto done;
 		}
@@ -702,12 +707,14 @@ done:
 static int stack_try_add(struct reftable_stack *st,
 			 int (*write_table)(struct reftable_writer *wr,
 					    void *arg),
-			 void *arg, unsigned flags)
+			 void *arg,
+			 const struct reftable_write_options *opts,
+			 unsigned flags)
 {
 	struct reftable_addition add;
 	int err;
 
-	err = reftable_stack_init_addition(&add, st, flags);
+	err = reftable_stack_init_addition(&add, st, opts, flags);
 	if (err < 0)
 		goto done;
 
@@ -723,9 +730,11 @@ done:
 
 int reftable_stack_add(struct reftable_stack *st,
 		       int (*write)(struct reftable_writer *wr, void *arg),
-		       void *arg, unsigned flags)
+		       void *arg,
+		       const struct reftable_write_options *opts,
+		       unsigned flags)
 {
-	int err = stack_try_add(st, write, arg, flags);
+	int err = stack_try_add(st, write, arg, opts, flags);
 	if (err < 0) {
 		if (err == REFTABLE_OUTDATED_ERROR) {
 			/* Ignore error return, we want to propagate
@@ -810,7 +819,7 @@ int reftable_addition_commit(struct reftable_addition *add)
 	if (err)
 		goto done;
 
-	if (!add->stack->opts.disable_auto_compact) {
+	if (!add->opts.disable_auto_compact) {
 		/*
 		 * Auto-compact the stack to keep the number of tables in
 		 * control. It is possible that a concurrent writer is already
@@ -820,7 +829,7 @@ int reftable_addition_commit(struct reftable_addition *add)
 		 * concurrent writer, which causes `REFTABLE_OUTDATED_ERROR`.
 		 * Both of these errors are benign, so we simply ignore them.
 		 */
-		err = reftable_stack_auto_compact(add->stack);
+		err = reftable_stack_auto_compact(add->stack, &add->opts);
 		if (err < 0 && err != REFTABLE_LOCK_ERROR &&
 		    err != REFTABLE_OUTDATED_ERROR)
 			goto done;
@@ -834,6 +843,7 @@ done:
 
 int reftable_stack_new_addition(struct reftable_addition **dest,
 				struct reftable_stack *st,
+				const struct reftable_write_options *opts,
 				unsigned int flags)
 {
 	int err;
@@ -842,7 +852,7 @@ int reftable_stack_new_addition(struct reftable_addition **dest,
 	if (!*dest)
 		return REFTABLE_OUT_OF_MEMORY_ERROR;
 
-	err = reftable_stack_init_addition(*dest, st, flags);
+	err = reftable_stack_init_addition(*dest, st, opts, flags);
 	if (err) {
 		reftable_free(*dest);
 		*dest = NULL;
@@ -862,7 +872,7 @@ int reftable_addition_add(struct reftable_addition *add,
 	struct reftable_writer *wr = NULL;
 	struct reftable_tmpfile tab_file = REFTABLE_TMPFILE_INIT;
 	struct fd_writer writer = {
-		.opts = &add->stack->opts,
+		.opts = &add->opts,
 	};
 	int err = 0;
 
@@ -883,9 +893,9 @@ int reftable_addition_add(struct reftable_addition *add,
 	err = tmpfile_from_pattern(&tab_file, temp_tab_file_name.buf);
 	if (err < 0)
 		goto done;
-	if (add->stack->opts.default_permissions) {
+	if (add->opts.default_permissions) {
 		if (chmod(tab_file.path,
-			  add->stack->opts.default_permissions)) {
+			  add->opts.default_permissions)) {
 			err = REFTABLE_IO_ERROR;
 			goto done;
 		}
@@ -893,7 +903,7 @@ int reftable_addition_add(struct reftable_addition *add,
 
 	writer.fd = tab_file.fd;
 	err = reftable_writer_new(&wr, fd_writer_write, fd_writer_flush,
-				  &writer, &add->stack->opts);
+				  &writer, add->stack->opts.hash_id, &add->opts);
 	if (err < 0)
 		goto done;
 
@@ -1066,13 +1076,14 @@ done:
 static int stack_compact_locked(struct reftable_stack *st,
 				size_t first, size_t last,
 				struct reftable_log_expiry_config *config,
+				const struct reftable_write_options *opts,
 				struct reftable_tmpfile *tab_file_out)
 {
 	struct reftable_buf next_name = REFTABLE_BUF_INIT;
 	struct reftable_buf tab_file_path = REFTABLE_BUF_INIT;
 	struct reftable_writer *wr = NULL;
 	struct fd_writer writer=  {
-		.opts = &st->opts,
+		.opts = opts,
 	};
 	struct reftable_tmpfile tab_file = REFTABLE_TMPFILE_INIT;
 	int err = 0;
@@ -1094,15 +1105,15 @@ static int stack_compact_locked(struct reftable_stack *st,
 	if (err < 0)
 		goto done;
 
-	if (st->opts.default_permissions &&
-	    chmod(tab_file.path, st->opts.default_permissions) < 0) {
+	if (opts->default_permissions &&
+	    chmod(tab_file.path, opts->default_permissions) < 0) {
 		err = REFTABLE_IO_ERROR;
 		goto done;
 	}
 
 	writer.fd = tab_file.fd;
 	err = reftable_writer_new(&wr, fd_writer_write, fd_writer_flush,
-				  &writer, &st->opts);
+				  &writer, st->opts.hash_id, opts);
 	if (err < 0)
 		goto done;
 
@@ -1150,6 +1161,7 @@ enum stack_compact_range_flags {
 static int stack_compact_range(struct reftable_stack *st,
 			       size_t first, size_t last,
 			       struct reftable_log_expiry_config *expiry,
+			       const struct reftable_write_options *opts,
 			       unsigned int flags)
 {
 	struct reftable_buf tables_list_buf = REFTABLE_BUF_INIT;
@@ -1175,7 +1187,7 @@ static int stack_compact_range(struct reftable_stack *st,
 	 * Hold the lock so that we can read "tables.list" and lock all tables
 	 * which are part of the user-specified range.
 	 */
-	err = flock_acquire(&tables_list_lock, st->list_file, st->opts.lock_timeout_ms);
+	err = flock_acquire(&tables_list_lock, st->list_file, opts->lock_timeout_ms);
 	if (err < 0)
 		goto done;
 
@@ -1274,7 +1286,7 @@ static int stack_compact_range(struct reftable_stack *st,
 	 * these tables may end up with an empty new table in case tombstones
 	 * end up cancelling out all refs in that range.
 	 */
-	err = stack_compact_locked(st, first, last, expiry, &new_table);
+	err = stack_compact_locked(st, first, last, expiry, opts, &new_table);
 	if (err < 0) {
 		if (err != REFTABLE_EMPTY_TABLE_ERROR)
 			goto done;
@@ -1286,13 +1298,13 @@ static int stack_compact_range(struct reftable_stack *st,
 	 * "tables.list". We'll then replace the compacted range of tables with
 	 * the new table.
 	 */
-	err = flock_acquire(&tables_list_lock, st->list_file, st->opts.lock_timeout_ms);
+	err = flock_acquire(&tables_list_lock, st->list_file, opts->lock_timeout_ms);
 	if (err < 0)
 		goto done;
 
-	if (st->opts.default_permissions) {
+	if (opts->default_permissions) {
 		if (chmod(tables_list_lock.path,
-			  st->opts.default_permissions) < 0) {
+			  opts->default_permissions) < 0) {
 			err = REFTABLE_IO_ERROR;
 			goto done;
 		}
@@ -1513,10 +1525,16 @@ done:
 }
 
 int reftable_stack_compact_all(struct reftable_stack *st,
+			       const struct reftable_write_options *opts,
 			       struct reftable_log_expiry_config *config)
 {
+	struct reftable_write_options opts_default = { 0 };
 	size_t last = st->merged->tables_len ? st->merged->tables_len - 1 : 0;
-	return stack_compact_range(st, 0, last, config, 0);
+
+	if (!opts)
+		opts = &opts_default;
+
+	return stack_compact_range(st, 0, last, config, opts, 0);
 }
 
 static int segment_size(struct segment *s)
@@ -1601,6 +1619,7 @@ struct segment suggest_compaction_segment(uint64_t *sizes, size_t n,
 }
 
 static int stack_segments_for_compaction(struct reftable_stack *st,
+					 const struct reftable_write_options *opts,
 					 struct segment *seg)
 {
 	int version = (st->opts.hash_id == REFTABLE_HASH_SHA1) ? 1 : 2;
@@ -1615,13 +1634,14 @@ static int stack_segments_for_compaction(struct reftable_stack *st,
 		sizes[i] = st->tables[i]->size - overhead;
 
 	*seg = suggest_compaction_segment(sizes, st->merged->tables_len,
-					  st->opts.auto_compaction_factor);
+					  opts->auto_compaction_factor);
 	reftable_free(sizes);
 
 	return 0;
 }
 
 static int update_segment_if_compaction_required(struct reftable_stack *st,
+						 const struct reftable_write_options *opts,
 						 struct segment *seg,
 						 bool use_geometric,
 						 bool *required)
@@ -1638,7 +1658,7 @@ static int update_segment_if_compaction_required(struct reftable_stack *st,
 		return 0;
 	}
 
-	err = stack_segments_for_compaction(st, seg);
+	err = stack_segments_for_compaction(st, opts, seg);
 	if (err)
 		return err;
 
@@ -1647,27 +1667,40 @@ static int update_segment_if_compaction_required(struct reftable_stack *st,
 }
 
 int reftable_stack_compaction_required(struct reftable_stack *st,
+				       const struct reftable_write_options *opts,
 				       bool use_heuristics,
 				       bool *required)
 {
+	struct reftable_write_options opts_default = { 0 };
 	struct segment seg;
-	return update_segment_if_compaction_required(st, &seg, use_heuristics,
-						     required);
+
+	if (!opts)
+		opts = &opts_default;
+
+	return update_segment_if_compaction_required(st, opts, &seg,
+						     use_heuristics, required);
 }
 
-int reftable_stack_auto_compact(struct reftable_stack *st)
+int reftable_stack_auto_compact(struct reftable_stack *st,
+				const struct reftable_write_options *opts)
 {
+	struct reftable_write_options opts_default = { 0 };
 	struct segment seg;
 	bool required;
 	int err;
 
-	err = update_segment_if_compaction_required(st, &seg, true, &required);
+	if (!opts)
+		opts = &opts_default;
+
+	err = update_segment_if_compaction_required(st, opts, &seg, true,
+						    &required);
 	if (err)
 		return err;
 
 	if (required)
 		return stack_compact_range(st, seg.start, seg.end - 1,
-					   NULL, STACK_COMPACT_RANGE_BEST_EFFORT);
+					   NULL, opts,
+					   STACK_COMPACT_RANGE_BEST_EFFORT);
 
 	return 0;
 }
@@ -1807,7 +1840,7 @@ static int reftable_stack_clean_locked(struct reftable_stack *st)
 int reftable_stack_clean(struct reftable_stack *st)
 {
 	struct reftable_addition *add = NULL;
-	int err = reftable_stack_new_addition(&add, st, 0);
+	int err = reftable_stack_new_addition(&add, st, NULL, 0);
 	if (err < 0) {
 		goto done;
 	}

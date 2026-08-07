@@ -159,6 +159,7 @@ static int exit_process(HANDLE process, int exit_code)
 		return terminate_process_tree(process, exit_code);
 	}
 
+	CloseHandle(process);
 	return 0;
 }
 

@@ -12,7 +12,7 @@ static void check_hash_data(const void *data, size_t data_length,
 		unsigned char hash[GIT_MAX_HEXSZ];
 		const struct git_hash_algo *algop = &hash_algos[i];
 
-		algop->init_fn(&ctx);
+		git_hash_init(&ctx, algop);
 		git_hash_update(&ctx, data, data_length);
 		git_hash_final(hash, &ctx);
 

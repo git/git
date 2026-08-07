@@ -38,7 +38,7 @@ int is_nonbare_repository_dir(struct strbuf *path);
 #define READ_GITFILE_ERR_TOO_LARGE 8
 #define READ_GITFILE_ERR_MISSING 9
 #define READ_GITFILE_ERR_IS_A_DIR 10
-void read_gitfile_error_die(int error_code, const char *path, const char *dir);
+void read_gitfile_error_die(int error_code, const char *path);
 const char *read_gitfile_gently(const char *path, int *return_error_code);
 #define read_gitfile(path) read_gitfile_gently((path), NULL)
 const char *resolve_gitdir_gently(const char *suspect, int *return_error_code);
@@ -95,8 +95,6 @@ static inline int discover_git_directory(struct strbuf *commondir,
 		return -1;
 	return 0;
 }
-
-void set_git_work_tree(struct repository *repo, const char *tree);
 
 /* Flags that can be passed to `enter_repo()`. */
 enum {
@@ -263,7 +261,9 @@ const char *get_template_dir(const char *option_template);
 #define INIT_DB_SKIP_REFDB (1 << 2)
 
 int init_db(struct repository *repo,
-	    const char *git_dir, const char *real_git_dir,
+	    const char *git_dir,
+	    const char *real_git_dir,
+	    const char *worktree,
 	    const char *template_dir, int hash_algo,
 	    enum ref_storage_format ref_storage_format,
 	    const char *initial_branch, int init_shared_repository,
@@ -292,8 +292,13 @@ enum sharedrepo {
 int git_config_perm(const char *var, const char *value);
 
 struct startup_info {
+	/*
+	 * Whether the user is asking us to treat the repository as bare via
+	 * `git --bare`, even if it's not.
+	 */
+	bool force_bare_repository;
+
 	int have_repository;
-	const char *prefix;
 	const char *original_cwd;
 };
 extern struct startup_info *startup_info;

@@ -402,8 +402,8 @@ void fixup_pack_header_footer(const struct git_hash_algo *hash_algo,
 	char *buf;
 	ssize_t read_result;
 
-	hash_algo->init_fn(&old_hash_ctx);
-	hash_algo->init_fn(&new_hash_ctx);
+	git_hash_init(&old_hash_ctx, hash_algo);
+	git_hash_init(&new_hash_ctx, hash_algo);
 
 	if (lseek(pack_fd, 0, SEEK_SET) != 0)
 		die_errno("Failed seeking to start of '%s'", pack_name);
@@ -455,7 +455,7 @@ void fixup_pack_header_footer(const struct git_hash_algo *hash_algo,
 			 * pack, which also means making partial_pack_offset
 			 * big enough not to matter anymore.
 			 */
-			hash_algo->init_fn(&old_hash_ctx);
+			git_hash_init(&old_hash_ctx, hash_algo);
 			partial_pack_offset = ~partial_pack_offset;
 			partial_pack_offset -= MSB(partial_pack_offset, 1);
 		}

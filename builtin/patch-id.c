@@ -73,7 +73,7 @@ static size_t get_one_patchid(struct object_id *next_oid, struct object_id *resu
 	char pre_oid_str[GIT_MAX_HEXSZ + 1], post_oid_str[GIT_MAX_HEXSZ + 1];
 	struct git_hash_ctx ctx;
 
-	the_hash_algo->init_fn(&ctx);
+	git_hash_init(&ctx, the_hash_algo);
 	oidclr(result, the_repository->hash_algo);
 
 	while (strbuf_getwholeline(line_buf, stdin, '\n') != EOF) {
@@ -173,6 +173,7 @@ static size_t get_one_patchid(struct object_id *next_oid, struct object_id *resu
 		oidclr(next_oid, the_repository->hash_algo);
 
 	flush_one_hunk(result, &ctx);
+	git_hash_discard(&ctx);
 
 	return patchlen;
 }

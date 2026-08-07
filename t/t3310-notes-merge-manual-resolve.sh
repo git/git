@@ -382,12 +382,12 @@ EOF
 	test_cmp pre_merge_z actual &&
 	# Merge commit mentions the notes refs merged
 	git log -1 --format=%B refs/notes/m > merge_commit_msg &&
-	grep -q refs/notes/m merge_commit_msg &&
-	grep -q refs/notes/z merge_commit_msg &&
+	test_grep -q refs/notes/m merge_commit_msg &&
+	test_grep -q refs/notes/z merge_commit_msg &&
 	# Merge commit mentions conflicting notes
-	grep -q "Conflicts" merge_commit_msg &&
+	test_grep -q "Conflicts" merge_commit_msg &&
 	( for sha1 in $(cat expect_conflicts); do
-		grep -q "$sha1" merge_commit_msg ||
+		test_grep -q "$sha1" merge_commit_msg ||
 		exit 1
 	done ) &&
 	# Verify contents of merge result
@@ -512,12 +512,12 @@ EOF
 	test_cmp pre_merge_z actual &&
 	# Merge commit mentions the notes refs merged
 	git log -1 --format=%B refs/notes/m > merge_commit_msg &&
-	grep -q refs/notes/m merge_commit_msg &&
-	grep -q refs/notes/z merge_commit_msg &&
+	test_grep -q refs/notes/m merge_commit_msg &&
+	test_grep -q refs/notes/z merge_commit_msg &&
 	# Merge commit mentions conflicting notes
-	grep -q "Conflicts" merge_commit_msg &&
+	test_grep -q "Conflicts" merge_commit_msg &&
 	( for sha1 in $(cat expect_conflicts); do
-		grep -q "$sha1" merge_commit_msg ||
+		test_grep -q "$sha1" merge_commit_msg ||
 		exit 1
 	done ) &&
 	# Verify contents of merge result

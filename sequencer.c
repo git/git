@@ -1926,6 +1926,13 @@ static int seen_squash(struct replay_ctx *ctx)
 		strstr(ctx->current_fixups.buf, "\nsquash");
 }
 
+/* Does the current fixup chain contain a "fixup -c" command? */
+static int seen_fixup_edit_msg(struct replay_ctx *ctx)
+{
+	return starts_with(ctx->current_fixups.buf, "fixup -c") ||
+		strstr(ctx->current_fixups.buf, "\nfixup -c");
+}
+
 static void update_comment_bufs(struct strbuf *buf1, struct strbuf *buf2, int n)
 {
 	strbuf_setlen(buf1, strlen(comment_line_str) + 1);
@@ -2148,9 +2155,14 @@ static int update_squash_messages(struct repository *r,
 	strbuf_release(&buf);
 
 	if (!res) {
-		strbuf_addf(&ctx->current_fixups, "%s%s %s",
+		const char *fixup_flag = "";
+
+		if (is_fixup_flag(command, flag) && (flag & TODO_EDIT_FIXUP_MSG))
+			fixup_flag = " -c";
+
+		strbuf_addf(&ctx->current_fixups, "%s%s%s %s",
 			    ctx->current_fixups.len ? "\n" : "",
-			    command_to_string(command),
+			    command_to_string(command), fixup_flag,
 			    oid_to_hex(&commit->object.oid));
 		res = write_message(ctx->current_fixups.buf,
 				    ctx->current_fixups.len,
@@ -2260,10 +2272,17 @@ static const char *reflog_message(struct replay_opts *opts,
 	return buf.buf;
 }
 
-static int do_pick_commit(struct repository *r,
-			  struct todo_item *item,
-			  struct replay_opts *opts,
-			  int final_fixup, int *check_todo)
+enum pick_result {
+	PICK_RESULT_ERROR = -1,
+	PICK_RESULT_OK,
+	PICK_RESULT_CONFLICTS,
+	PICK_RESULT_DROPPED,
+};
+
+static enum pick_result do_pick_commit(struct repository *r,
+				       struct todo_item *item,
+				       struct replay_opts *opts,
+				       int final_fixup, int *check_todo)
 {
 	struct replay_ctx *ctx = opts->ctx;
 	unsigned int flags = should_edit(opts) ? EDIT_MSG : 0;
@@ -2273,7 +2292,7 @@ static int do_pick_commit(struct repository *r,
 	const char *base_label, *next_label, *reflog_action;
 	char *author = NULL;
 	struct commit_message msg = { NULL, NULL, NULL, NULL };
-	int res, unborn = 0, reword = 0, allow, drop_commit;
+	int res, unborn = 0, reword = 0, allow, drop_commit = 0;
 	enum todo_command command = item->command;
 	struct commit *commit = item->commit;
 
@@ -2419,7 +2438,7 @@ static int do_pick_commit(struct repository *r,
 		} else {
 			const char *dest = git_path_squash_msg(r);
 			unlink(dest);
-			if (copy_file(dest, rebase_path_squash_msg(), 0666)) {
+			if (copy_file(r, dest, rebase_path_squash_msg(), 0666)) {
 				res = error(_("could not copy '%s' to '%s'"),
 					    rebase_path_squash_msg(), dest);
 				goto leave;
@@ -2453,14 +2472,25 @@ static int do_pick_commit(struct repository *r,
 		struct commit_list *common = NULL;
 		struct commit_list *remotes = NULL;
 
-		res = write_message(ctx->message.buf, ctx->message.len,
-				    git_path_merge_msg(r), 0);
+		if (write_message(ctx->message.buf, ctx->message.len,
+				  git_path_merge_msg(r), 0)) {
+			res = -1;
+			goto leave;
+		}
 
 		commit_list_insert(base, &common);
 		commit_list_insert(next, &remotes);
-		res |= try_merge_command(r, opts->strategy,
-					 opts->xopts.nr, opts->xopts.v,
+		res = try_merge_command(r, opts->strategy,
+					opts->xopts.nr, opts->xopts.v,
 					common, oid_to_hex(&head), remotes);
+		/*
+		 * If there were conflicts, try_merge_command() returns 1,
+		 * any other no-zero return code means that either the merge
+		 * command could not be run, or it failed to merge.
+		 */
+		if (res && res != 1)
+			res = -1;
+
 		commit_list_free(common);
 		commit_list_free(remotes);
 	}
@@ -2492,7 +2522,6 @@ static int do_pick_commit(struct repository *r,
 		goto leave;
 	}
 
-	drop_commit = 0;
 	allow = allow_empty(r, opts, commit);
 	if (allow < 0) {
 		res = allow;
@@ -2531,6 +2560,12 @@ fast_forward_edit:
 			res = run_git_commit(NULL, reflog_action, opts, flags);
 			*check_todo = 1;
 		}
+		/*
+		 * If "git commit" failed to run then res == -1, but we don't
+		 * want reschedule the last command because the picking the
+		 * commit was successful.
+		 */
+		res = !!res;
 	}
 
 
@@ -2547,7 +2582,14 @@ leave:
 	free(author);
 	update_abort_safety_file();
 
-	return res;
+	if (res < 0)
+		return PICK_RESULT_ERROR;
+	else if (res > 0)
+		return PICK_RESULT_CONFLICTS;
+	else if (drop_commit)
+		return PICK_RESULT_DROPPED;
+	else
+		return PICK_RESULT_OK;
 }
 
 static int prepare_revs(struct replay_opts *opts)
@@ -2625,6 +2667,27 @@ static int is_command(enum todo_command command, const char **bol)
 		return 1;
 	}
 	return 0;
+}
+
+bool sequencer_parse_todo_command(const char **p, enum todo_command *cmd)
+{
+	const char *s = *p;
+
+	for (int i = 0; i < TODO_COMMENT; i++)
+		if (is_command(i, p)) {
+			*cmd = i;
+			return true;
+		}
+
+	if (starts_with(s, comment_line_str)) {
+		*cmd = TODO_COMMENT;
+		return true;
+	} else if (s[0] == '\n' || (s[0] == '\r' && s[1] == '\n') || !s[0]) {
+		*cmd = TODO_COMMENT;
+		return true;
+	}
+
+	return false;
 }
 
 static int check_label_or_ref_arg(enum todo_command command, const char *arg)
@@ -2716,29 +2779,23 @@ static int parse_insn_line(struct repository *r, struct replay_opts *opts,
 {
 	struct object_id commit_oid;
 	char *end_of_object_name;
-	int i, saved, status, padding;
+	int saved, status, padding;
 
 	item->flags = 0;
 
 	/* left-trim */
 	bol += strspn(bol, " \t");
 
-	if (bol == eol || *bol == '\r' || starts_with_mem(bol, eol - bol, comment_line_str)) {
-		item->command = TODO_COMMENT;
+	if (!sequencer_parse_todo_command(&bol, &item->command))
+		return error(_("invalid command '%.*s'"),
+			     (int)strcspn(bol, " \t\r\n"), bol);
+
+	if (item->command == TODO_COMMENT) {
 		item->commit = NULL;
 		item->arg_offset = bol - buf;
 		item->arg_len = eol - bol;
 		return 0;
 	}
-
-	for (i = 0; i < TODO_COMMENT; i++)
-		if (is_command(i, &bol)) {
-			item->command = i;
-			break;
-		}
-	if (i >= TODO_COMMENT)
-		return error(_("invalid command '%.*s'"),
-			     (int)strcspn(bol, " \t\r\n"), bol);
 
 	/* Eat up extra spaces/ tabs before object name */
 	padding = strspn(bol, " \t");
@@ -3266,7 +3323,13 @@ static int read_populate_opts(struct replay_opts *opts)
 			const char *p = ctx->current_fixups.buf;
 			ctx->current_fixup_count = 1;
 			while ((p = strchr(p, '\n'))) {
-				ctx->current_fixup_count++;
+				/*
+				 * Older versions of git accidentally
+				 * inserted blank lines when a fixup
+				 * was skipped.
+				 */
+				if (p[1] && p[1] != '\n')
+					ctx->current_fixup_count++;
 				p++;
 			}
 		}
@@ -3849,15 +3912,15 @@ static int error_failed_squash(struct repository *r,
 			       int subject_len,
 			       const char *subject)
 {
-	if (copy_file(rebase_path_message(), rebase_path_squash_msg(), 0666))
+	if (copy_file(r, rebase_path_message(), rebase_path_squash_msg(), 0666))
 		return error(_("could not copy '%s' to '%s'"),
 			rebase_path_squash_msg(), rebase_path_message());
 	unlink(git_path_merge_msg(r));
-	if (copy_file(git_path_merge_msg(r), rebase_path_message(), 0666))
+	if (copy_file(r, git_path_merge_msg(r), rebase_path_message(), 0666))
 		return error(_("could not copy '%s' to '%s'"),
 			     rebase_path_message(),
 			     git_path_merge_msg(r));
-	return error_with_patch(r, commit, subject, subject_len, opts, 1, 0);
+	return error_with_patch(r, commit, subject, subject_len, opts, 1, 1);
 }
 
 static int do_exec(struct repository *r, const char *command_line, int quiet)
@@ -4677,7 +4740,10 @@ static void create_autostash_internal(struct repository *r,
 	if (has_unstaged_changes(r, 1) ||
 	    has_uncommitted_changes(r, 1)) {
 		struct child_process stash = CHILD_PROCESS_INIT;
-		struct reset_head_opts ropts = { .flags = RESET_HEAD_HARD };
+		struct reset_working_tree_options ropts = {
+			.flags = RESET_WORKING_TREE_HARD |
+				 RESET_WORKING_TREE_UPDATE_HEAD,
+		};
 		struct object_id oid;
 
 		strvec_pushl(&stash.args,
@@ -4707,7 +4773,7 @@ static void create_autostash_internal(struct repository *r,
 
 		if (!silent)
 			printf(_("Created autostash: %s\n"), buf.buf);
-		if (reset_head(r, &ropts) < 0)
+		if (reset_working_tree(r, &ropts) < 0)
 			die(_("could not reset --hard"));
 		discard_index(r->index);
 		if (repo_read_index(r) < 0)
@@ -4867,16 +4933,18 @@ static int checkout_onto(struct repository *r, struct replay_opts *opts,
 			 const char *onto_name, const struct object_id *onto,
 			 const struct object_id *orig_head)
 {
-	struct reset_head_opts ropts = {
+	struct reset_working_tree_options ropts = {
 		.oid = onto,
 		.orig_head = orig_head,
-		.flags = RESET_HEAD_DETACH | RESET_ORIG_HEAD |
-				RESET_HEAD_RUN_POST_CHECKOUT_HOOK,
+		.flags = RESET_WORKING_TREE_DETACH |
+			 RESET_WORKING_TREE_UPDATE_HEAD |
+			 RESET_WORKING_TREE_UPDATE_ORIG_HEAD |
+			 RESET_WORKING_TREE_RUN_POST_CHECKOUT_HOOK,
 		.head_msg = reflog_message(opts, "start", "checkout %s",
 					   onto_name),
 		.default_reflog_action = sequencer_reflog_action(opts)
 	};
-	if (reset_head(r, &ropts)) {
+	if (reset_working_tree(r, &ropts)) {
 		apply_autostash(rebase_path_autostash());
 		sequencer_remove_state(opts);
 		return error(_("could not detach HEAD"));
@@ -4943,37 +5011,59 @@ static int pick_one_commit(struct repository *r,
 			   struct replay_opts *opts,
 			   int *check_todo, int* reschedule)
 {
-	int res;
+	enum pick_result pick_res;
 	struct todo_item *item = todo_list->items + todo_list->current;
 	const char *arg = todo_item_get_arg(todo_list, item);
 
-	res = do_pick_commit(r, item, opts, is_final_fixup(todo_list),
-			     check_todo);
-	if (is_rebase_i(opts) && res < 0) {
+	pick_res = do_pick_commit(r, item, opts, is_final_fixup(todo_list),
+				  check_todo);
+	if (!is_rebase_i(opts))
+		switch (pick_res) {
+		case PICK_RESULT_ERROR:
+			return -1;
+		case PICK_RESULT_CONFLICTS:
+			return 1;
+		default:
+			return 0;
+		}
+
+	if (pick_res == PICK_RESULT_ERROR) {
 		/* Reschedule */
 		*reschedule = 1;
 		return -1;
-	}
-	if (item->command == TODO_EDIT) {
+	} else if (item->command == TODO_EDIT) {
 		struct commit *commit = item->commit;
-		if (!res) {
+		int res = pick_res == PICK_RESULT_CONFLICTS;
+		int to_amend = pick_res != PICK_RESULT_CONFLICTS &&
+				pick_res != PICK_RESULT_DROPPED;
+
+		/*
+		 * NEEDSWORK: Do not record the commit as rewritten when
+		 * continuing if it was dropped. Does it even make sense
+		 * to stop if the commit was dropped?
+		 */
+		if (pick_res == PICK_RESULT_OK ||
+		    pick_res == PICK_RESULT_DROPPED) {
 			if (!opts->verbose)
 				term_clear_line();
 			fprintf(stderr, _("Stopped at %s...  %.*s\n"),
 				short_commit_name(r, commit), item->arg_len, arg);
 		}
-		return error_with_patch(r, commit,
-					arg, item->arg_len, opts, res, !res);
-	}
-	if (is_rebase_i(opts) && !res)
+		return error_with_patch(r, commit, arg, item->arg_len, opts,
+					res, to_amend);
+	} else if (pick_res == PICK_RESULT_OK) {
 		record_in_rewritten(&item->commit->object.oid,
 				    peek_command(todo_list, 1));
-	if (res && is_fixup(item->command)) {
-		if (res == 1)
-			intend_to_amend();
+		return 0;
+	} else if (pick_res == PICK_RESULT_DROPPED) {
+		if (is_final_fixup(todo_list))
+			flush_rewritten_pending();
+		return 0;
+	} else if (pick_res == PICK_RESULT_CONFLICTS &&
+		   is_fixup(item->command)) {
 		return error_failed_squash(r, item->commit, opts,
 					   item->arg_len, arg);
-	} else if (res && is_rebase_i(opts) && item->commit) {
+	} else if (pick_res == PICK_RESULT_CONFLICTS) {
 		int to_amend = 0;
 		struct object_id oid;
 
@@ -4990,11 +5080,11 @@ static int pick_one_commit(struct repository *r,
 		      oideq(&opts->squash_onto, &oid))))
 			to_amend = 1;
 
-		return res | error_with_patch(r, item->commit,
-					      arg, item->arg_len, opts,
-					      res, to_amend);
+		return error_with_patch(r, item->commit, arg, item->arg_len,
+					opts, 1, to_amend);
 	}
-	return res;
+
+	BUG("Unhandled return value from do_pick_commit()");
 }
 
 static int pick_commits(struct repository *r,
@@ -5334,6 +5424,9 @@ static int commit_staged_changes(struct repository *r,
 				BUG("Incorrect current_fixups:\n%s", p);
 			while (len && p[len - 1] != '\n')
 				len--;
+			/* Remove trailing newline */
+			if (len)
+				len--;
 			strbuf_setlen(&ctx->current_fixups, len);
 			if (write_message(p, len, rebase_path_current_fixups(),
 					  0) < 0) {
@@ -5362,8 +5455,8 @@ static int commit_staged_changes(struct repository *r,
 				 * message, no need to bother the user with
 				 * opening the commit message in the editor.
 				 */
-				if (!starts_with(p, "squash ") &&
-				    !strstr(p, "\nsquash "))
+				if (!seen_squash(ctx) &&
+				    !seen_fixup_edit_msg(ctx))
 					flags = (flags & ~EDIT_MSG) | CLEANUP_MSG;
 			} else if (is_fixup(peek_command(todo_list, 0))) {
 				/*
@@ -5530,7 +5623,15 @@ static int single_pick(struct repository *r,
 			TODO_PICK : TODO_REVERT;
 	item.commit = cmit;
 
-	return do_pick_commit(r, &item, opts, 0, &check_todo);
+	switch (do_pick_commit(r, &item, opts, 0, &check_todo)) {
+	case PICK_RESULT_ERROR:
+		return -1;
+	case PICK_RESULT_CONFLICTS:
+		return 1;
+	default:
+		return 0;
+	}
+
 }
 
 int sequencer_pick_revisions(struct repository *r,

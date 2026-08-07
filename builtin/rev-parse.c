@@ -255,7 +255,7 @@ static int show_file(const char *arg, int output_prefix)
 	show_default();
 	if ((filter & (DO_NONFLAGS|DO_NOREV)) == (DO_NONFLAGS|DO_NOREV)) {
 		if (output_prefix) {
-			const char *prefix = startup_info->prefix;
+			const char *prefix = the_repository->prefix;
 			char *fname = prefix_filename(prefix, arg);
 			show(fname);
 			free(fname);
@@ -653,53 +653,46 @@ enum default_type {
 	DEFAULT_UNMODIFIED,
 };
 
-static void print_path(const char *path, const char *prefix, enum format_type format, enum default_type def)
+static void print_path(const char *path, const char *prefix,
+		       enum format_type format, enum default_type def)
 {
-	char *cwd = NULL;
-	/*
-	 * We don't ever produce a relative path if prefix is NULL, so set the
-	 * prefix to the current directory so that we can produce a relative
-	 * path whenever possible.  If we're using RELATIVE_IF_SHARED mode, then
-	 * we want an absolute path unless the two share a common prefix, so don't
-	 * set it in that case, since doing so causes a relative path to always
-	 * be produced if possible.
-	 */
-	if (!prefix && (format != FORMAT_DEFAULT || def != DEFAULT_RELATIVE_IF_SHARED))
-		prefix = cwd = xgetcwd();
-	if (format == FORMAT_DEFAULT && def == DEFAULT_UNMODIFIED) {
-		puts(path);
-	} else if (format == FORMAT_RELATIVE ||
-		  (format == FORMAT_DEFAULT && def == DEFAULT_RELATIVE)) {
-		/*
-		 * In order for relative_path to work as expected, we need to
-		 * make sure that both paths are absolute paths.  If we don't,
-		 * we can end up with an unexpected absolute path that the user
-		 * didn't want.
-		 */
-		struct strbuf buf = STRBUF_INIT, realbuf = STRBUF_INIT, prefixbuf = STRBUF_INIT;
-		if (!is_absolute_path(path)) {
-			strbuf_realpath_forgiving(&realbuf, path,  1);
-			path = realbuf.buf;
+	struct strbuf sb = STRBUF_INIT;
+	enum path_format fmt;
+
+	if (format == FORMAT_DEFAULT) {
+		switch (def) {
+		case DEFAULT_RELATIVE:
+			fmt = PATH_FORMAT_RELATIVE;
+			break;
+		case DEFAULT_RELATIVE_IF_SHARED:
+			fmt = PATH_FORMAT_RELATIVE_IF_SHARED;
+			break;
+		case DEFAULT_CANONICAL:
+			fmt = PATH_FORMAT_CANONICAL;
+			break;
+		case DEFAULT_UNMODIFIED:
+		default:
+			fmt = PATH_FORMAT_UNMODIFIED;
+			break;
 		}
-		if (!is_absolute_path(prefix)) {
-			strbuf_realpath_forgiving(&prefixbuf, prefix, 1);
-			prefix = prefixbuf.buf;
-		}
-		puts(relative_path(path, prefix, &buf));
-		strbuf_release(&buf);
-		strbuf_release(&realbuf);
-		strbuf_release(&prefixbuf);
-	} else if (format == FORMAT_DEFAULT && def == DEFAULT_RELATIVE_IF_SHARED) {
-		struct strbuf buf = STRBUF_INIT;
-		puts(relative_path(path, prefix, &buf));
-		strbuf_release(&buf);
 	} else {
-		struct strbuf buf = STRBUF_INIT;
-		strbuf_realpath_forgiving(&buf, path, 1);
-		puts(buf.buf);
-		strbuf_release(&buf);
+		switch (format) {
+		case FORMAT_RELATIVE:
+			fmt = PATH_FORMAT_RELATIVE;
+			break;
+		case FORMAT_CANONICAL:
+			fmt = PATH_FORMAT_CANONICAL;
+			break;
+		default:
+			fmt = PATH_FORMAT_UNMODIFIED;
+			break;
+		}
 	}
-	free(cwd);
+
+	format_path(&sb, path, prefix, fmt);
+	puts(sb.buf);
+
+	strbuf_release(&sb);
 }
 
 int cmd_rev_parse(int argc,
@@ -839,7 +832,8 @@ int cmd_rev_parse(int argc,
 				prefix = argv[++i];
 				if (!prefix)
 					die(_("--prefix requires an argument"));
-				startup_info->prefix = prefix;
+				FREE_AND_NULL(the_repository->prefix);
+				the_repository->prefix = xstrdup(prefix);
 				output_prefix = 1;
 				continue;
 			}
@@ -1084,7 +1078,7 @@ int cmd_rev_parse(int argc,
 				continue;
 			}
 			if (!strcmp(arg, "--is-bare-repository")) {
-				printf("%s\n", is_bare_repository() ? "true"
+				printf("%s\n", is_bare_repository(the_repository) ? "true"
 						: "false");
 				continue;
 			}

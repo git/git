@@ -201,7 +201,7 @@ test_expect_success 'do not send "have" with ancestors of commits that server AC
 		export GIT_TEST_PROTOCOL_VERSION &&
 		trace_fetch client "$(pwd)/server" to_fetch
 	) &&
-	grep "  fetch" trace &&
+	test_grep "  fetch" trace &&
 
 	# fetch-pack sends 2 requests each containing 16 "have" lines before
 	# processing the first response. In these 2 requests, 4 commits from
@@ -211,8 +211,8 @@ test_expect_success 'do not send "have" with ancestors of commits that server AC
 
 	# While fetch-pack is processing the first response, it should read that
 	# the server ACKs b1.c19 and b1.c17.
-	grep "fetch< ACK $(git -C client rev-parse b1.c19) common" trace &&
-	grep "fetch< ACK $(git -C client rev-parse b1.c17) common" trace &&
+	test_grep "fetch< ACK $(git -C client rev-parse b1.c19) common" trace &&
+	test_grep "fetch< ACK $(git -C client rev-parse b1.c17) common" trace &&
 
 	# fetch-pack should thus not send any more commits in the b1 branch, but
 	# should still send the others (in this test, just check b2).

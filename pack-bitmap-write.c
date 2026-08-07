@@ -636,6 +636,8 @@ static int fill_bitmap_commit(struct bitmap_writer *writer,
 			      struct bitmap_index *old_bitmap,
 			      const uint32_t *mapping)
 {
+	struct commit *c;
+	struct tree *t;
 	int found;
 	int from_pseudo_merge = commit->object.flags & BITMAP_PSEUDO_MERGE;
 	uint32_t pos;
@@ -650,9 +652,8 @@ static int fill_bitmap_commit(struct bitmap_writer *writer,
 
 	prio_queue_put(queue, commit);
 
-	while (queue->nr) {
+	while ((c = prio_queue_get(queue))) {
 		struct commit_list *p;
-		struct commit *c = prio_queue_get(queue);
 
 		if (old_bitmap && mapping) {
 			struct ewah_bitmap *old;
@@ -740,8 +741,7 @@ static int fill_bitmap_commit(struct bitmap_writer *writer,
 		}
 	}
 
-	while (tree_queue->nr) {
-		struct tree *t = prio_queue_get(tree_queue);
+	while ((t = prio_queue_get(tree_queue))) {
 		int found;
 
 		pos = find_object_pos(writer, &t->object.oid, &found);

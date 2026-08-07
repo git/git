@@ -255,7 +255,7 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 				*envchanged = 1;
 		} else if (!strcmp(cmd, "--bare")) {
 			char *cwd = xgetcwd();
-			is_bare_repository_cfg = 1;
+			startup_info->force_bare_repository = true;
 			setenv(GIT_DIR_ENVIRONMENT, cwd, 0);
 			free(cwd);
 			setenv(GIT_IMPLICIT_WORK_TREE_ENVIRONMENT, "0", 1);
@@ -306,7 +306,7 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 		} else if (!strcmp(cmd, "--shallow-file")) {
 			(*argv)++;
 			(*argc)--;
-			set_alternate_shallow_file(the_repository, (*argv)[0], 1);
+			setenv(GIT_SHALLOW_FILE_ENVIRONMENT, (*argv)[0], 1);
 			if (envchanged)
 				*envchanged = 1;
 		} else if (!strcmp(cmd, "-C")) {

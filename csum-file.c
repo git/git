@@ -57,6 +57,7 @@ void hashflush(struct hashfile *f)
 
 void free_hashfile(struct hashfile *f)
 {
+	git_hash_discard(&f->ctx);
 	free(f->buffer);
 	free(f->check_buffer);
 	free(f);
@@ -99,15 +100,6 @@ int finalize_hashfile(struct hashfile *f, unsigned char *result,
 	}
 	free_hashfile(f);
 	return fd;
-}
-
-void discard_hashfile(struct hashfile *f)
-{
-	if (0 <= f->check_fd)
-		close(f->check_fd);
-	if (0 <= f->fd)
-		close(f->fd);
-	free_hashfile(f);
 }
 
 void hashwrite(struct hashfile *f, const void *buf, uint32_t count)
@@ -176,7 +168,7 @@ struct hashfile *hashfd_ext(const struct git_hash_algo *algop,
 	f->skip_hash = 0;
 
 	f->algop = unsafe_hash_algo(algop);
-	f->algop->init_fn(&f->ctx);
+	git_hash_init(&f->ctx, f->algop);
 
 	f->buffer_len = opts->buffer_len ? opts->buffer_len : DEFAULT_IO_BUFFER_SIZE;
 	f->buffer = xmalloc(f->buffer_len);
@@ -201,7 +193,7 @@ void hashfile_checkpoint_init(struct hashfile *f,
 			      struct hashfile_checkpoint *checkpoint)
 {
 	memset(checkpoint, 0, sizeof(*checkpoint));
-	f->algop->init_fn(&checkpoint->ctx);
+	git_hash_init(&checkpoint->ctx, f->algop);
 }
 
 void hashfile_checkpoint(struct hashfile *f, struct hashfile_checkpoint *checkpoint)
@@ -222,6 +214,11 @@ int hashfile_truncate(struct hashfile *f, struct hashfile_checkpoint *checkpoint
 	git_hash_clone(&f->ctx, &checkpoint->ctx);
 	f->offset = 0; /* hashflush() was called in checkpoint */
 	return 0;
+}
+
+void hashfile_checkpoint_release(struct hashfile_checkpoint *checkpoint)
+{
+	git_hash_discard(&checkpoint->ctx);
 }
 
 void crc32_begin(struct hashfile *f)
@@ -248,7 +245,7 @@ int hashfile_checksum_valid(const struct git_hash_algo *algop,
 	if (total_len < algop->rawsz)
 		return 0; /* say "too short"? */
 
-	algop->init_fn(&ctx);
+	git_hash_init(&ctx, algop);
 	git_hash_update(&ctx, data, data_len);
 	git_hash_final(got, &ctx);
 

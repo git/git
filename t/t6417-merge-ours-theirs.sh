@@ -26,31 +26,31 @@ test_expect_success setup '
 test_expect_success 'plain recursive - should conflict' '
 	git reset --hard main &&
 	test_must_fail git merge -s recursive side &&
-	grep nine file &&
-	grep nueve file &&
-	! grep 9 file &&
-	grep one file &&
-	! grep 1 file
+	test_grep nine file &&
+	test_grep nueve file &&
+	test_grep ! 9 file &&
+	test_grep one file &&
+	test_grep ! 1 file
 '
 
 test_expect_success 'recursive favouring theirs' '
 	git reset --hard main &&
 	git merge -s recursive -Xtheirs side &&
-	! grep nine file &&
-	grep nueve file &&
-	! grep 9 file &&
-	grep one file &&
-	! grep 1 file
+	test_grep ! nine file &&
+	test_grep nueve file &&
+	test_grep ! 9 file &&
+	test_grep one file &&
+	test_grep ! 1 file
 '
 
 test_expect_success 'recursive favouring ours' '
 	git reset --hard main &&
 	git merge -s recursive -X ours side &&
-	grep nine file &&
-	! grep nueve file &&
-	! grep 9 file &&
-	grep one file &&
-	! grep 1 file
+	test_grep nine file &&
+	test_grep ! nueve file &&
+	test_grep ! 9 file &&
+	test_grep one file &&
+	test_grep ! 1 file
 '
 
 test_expect_success 'binary file with -Xours/-Xtheirs' '

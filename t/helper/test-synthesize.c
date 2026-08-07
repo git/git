@@ -25,8 +25,7 @@ static const unsigned char zeros[BLOCK_SIZE];
  * Updates the pack checksum context.
  */
 static void write_uncompressed_zlib(FILE *f, struct git_hash_ctx *pack_ctx,
-				    const void *data, size_t len,
-				    const struct git_hash_algo *algo)
+				    const void *data, size_t len)
 {
 	unsigned char zlib_header[2] = { 0x78, 0x01 }; /* CMF, FLG */
 	unsigned char block_header[5];
@@ -37,7 +36,7 @@ static void write_uncompressed_zlib(FILE *f, struct git_hash_ctx *pack_ctx,
 
 	/* Write zlib header */
 	fwrite_or_die(f, zlib_header, sizeof(zlib_header));
-	algo->update_fn(pack_ctx, zlib_header, 2);
+	git_hash_update(pack_ctx, zlib_header, 2);
 
 	/* Write uncompressed blocks (max 64KB each) */
 	do {
@@ -52,11 +51,11 @@ static void write_uncompressed_zlib(FILE *f, struct git_hash_ctx *pack_ctx,
 		block_header[4] = block_header[2] ^ 0xff;
 
 		fwrite_or_die(f, block_header, sizeof(block_header));
-		algo->update_fn(pack_ctx, block_header, 5);
+		git_hash_update(pack_ctx, block_header, 5);
 
 		if (block_len) {
 			fwrite_or_die(f, block_data, block_len);
-			algo->update_fn(pack_ctx, block_data, block_len);
+			git_hash_update(pack_ctx, block_data, block_len);
 			adler = adler32(adler, block_data, block_len);
 		}
 
@@ -68,7 +67,7 @@ static void write_uncompressed_zlib(FILE *f, struct git_hash_ctx *pack_ctx,
 	/* Write adler32 checksum */
 	put_be32(adler_buf, adler);
 	fwrite_or_die(f, adler_buf, sizeof(adler_buf));
-	algo->update_fn(pack_ctx, adler_buf, 4);
+	git_hash_update(pack_ctx, adler_buf, 4);
 }
 
 /*
@@ -92,24 +91,24 @@ static void write_pack_object(FILE *f, struct git_hash_ctx *pack_ctx,
 						       sizeof(pack_header),
 						       type, len);
 	fwrite_or_die(f, pack_header, pack_header_len);
-	algo->update_fn(pack_ctx, pack_header, pack_header_len);
+	git_hash_update(pack_ctx, pack_header, pack_header_len);
 
 	/* Write the data as uncompressed zlib */
-	write_uncompressed_zlib(f, pack_ctx, data, len, algo);
+	write_uncompressed_zlib(f, pack_ctx, data, len);
 
-	algo->init_fn(&ctx);
+	git_hash_init(&ctx, algo);
 	object_header_len = format_object_header(object_header,
 						 sizeof(object_header),
 						 type, len);
-	algo->update_fn(&ctx, object_header, object_header_len);
+	git_hash_update(&ctx, object_header, object_header_len);
 	if (data)
-		algo->update_fn(&ctx, data, len);
+		git_hash_update(&ctx, data, len);
 	else {
 		for (size_t i = len / BLOCK_SIZE; i; i--)
-			algo->update_fn(&ctx, zeros, BLOCK_SIZE);
-		algo->update_fn(&ctx, zeros, len % BLOCK_SIZE);
+			git_hash_update(&ctx, zeros, BLOCK_SIZE);
+		git_hash_update(&ctx, zeros, len % BLOCK_SIZE);
 	}
-	algo->final_oid_fn(oid, &ctx);
+	git_hash_final_oid(oid, &ctx);
 }
 
 /*
@@ -430,11 +429,11 @@ static int generate_pack_with_large_object(const char *path, size_t blob_size,
 
 	f = xfopen(path, "wb");
 
-	algo->init_fn(&pack_ctx);
+	git_hash_init(&pack_ctx, algo);
 
 	/* Write pack header */
 	fwrite_or_die(f, &pack_header, sizeof(pack_header));
-	algo->update_fn(&pack_ctx, &pack_header, sizeof(pack_header));
+	git_hash_update(&pack_ctx, &pack_header, sizeof(pack_header));
 
 	/* 1. Write the large blob */
 	write_pack_object(f, &pack_ctx, OBJ_BLOB, NULL, blob_size, &blob_oid, algo);
@@ -472,7 +471,7 @@ static int generate_pack_with_large_object(const char *path, size_t blob_size,
 	write_pack_object(f, &pack_ctx, OBJ_COMMIT, buf.buf, buf.len, &final_commit_oid, algo);
 
 	/* Write pack trailer (checksum) */
-	algo->final_fn(pack_hash, &pack_ctx);
+	git_hash_final(pack_hash, &pack_ctx);
 	fwrite_or_die(f, pack_hash, algo->rawsz);
 	if (fclose(f))
 		die_errno(_("could not close '%s'"), path);

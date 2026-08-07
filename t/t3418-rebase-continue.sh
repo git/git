@@ -134,6 +134,7 @@ test_expect_success '--skip after failed fixup cleans commit message' '
 	EOF
 
 	: skip and continue &&
+	test_config commit.status false &&
 	echo "cp \"\$1\" .git/copy.txt" | write_script copy-editor.sh &&
 	(test_set_editor "$PWD/copy-editor.sh" && git rebase --skip) &&
 
@@ -145,7 +146,8 @@ test_expect_success '--skip after failed fixup cleans commit message' '
 
 	: now, let us ensure that "squash" is handled correctly &&
 	git reset --hard wants-fixup-3 &&
-	test_must_fail env FAKE_LINES="1 squash 2 squash 1 squash 3 squash 1" \
+	test_must_fail env \
+		FAKE_LINES="1 squash 2 squash 1 squash 3 squash 1 squash 4 squash 1" \
 		git rebase -i HEAD~4 &&
 
 	: the second squash failed, but there are two more in the chain &&
@@ -171,6 +173,32 @@ test_expect_success '--skip after failed fixup cleans commit message' '
 	fixup 2
 	EOF
 
+	(test_set_editor "$PWD/copy-editor.sh" &&
+	 test_must_fail git rebase --skip) &&
+	: not the final squash, no need to edit the commit message &&
+	test_path_is_missing .git/copy.txt &&
+
+	: The first, third and fifth squashes succeeded, therefore: &&
+	cat >expect <<-\EOF &&
+	# This is a combination of 4 commits.
+	# This is the 1st commit message:
+
+	wants-fixup
+
+	# This is the commit message #2:
+
+	fixup 1
+
+	# This is the commit message #3:
+
+	fixup 2
+
+	# This is the commit message #4:
+
+	fixup 3
+	EOF
+	test_commit_message HEAD expect &&
+
 	(test_set_editor "$PWD/copy-editor.sh" && git rebase --skip) &&
 	test_commit_message HEAD <<-\EOF &&
 	wants-fixup
@@ -178,12 +206,12 @@ test_expect_success '--skip after failed fixup cleans commit message' '
 	fixup 1
 
 	fixup 2
+
+	fixup 3
 	EOF
 
 	: Final squash failed, but there was still a squash &&
-	head -n1 .git/copy.txt >first-line &&
-	test_grep "# This is a combination of 3 commits" first-line &&
-	test_grep "# This is the commit message #3:" .git/copy.txt
+	test_cmp expect .git/copy.txt
 '
 
 test_expect_success 'setup rerere database' '
@@ -289,18 +317,18 @@ test_expect_success 'patch file is removed before break command' '
 test_expect_success '--reschedule-failed-exec' '
 	test_when_finished "git rebase --abort" &&
 	test_must_fail git rebase -x false --reschedule-failed-exec HEAD^ &&
-	grep "^exec false" .git/rebase-merge/git-rebase-todo &&
+	test_grep "^exec false" .git/rebase-merge/git-rebase-todo &&
 	git rebase --abort &&
 	test_must_fail git -c rebase.rescheduleFailedExec=true \
 		rebase -x false HEAD^ 2>err &&
-	grep "^exec false" .git/rebase-merge/git-rebase-todo &&
+	test_grep "^exec false" .git/rebase-merge/git-rebase-todo &&
 	test_grep "has been rescheduled" err
 '
 
 test_expect_success 'rebase.rescheduleFailedExec only affects `rebase -i`' '
 	test_config rebase.rescheduleFailedExec true &&
 	test_must_fail git rebase -x false HEAD^ &&
-	grep "^exec false" .git/rebase-merge/git-rebase-todo &&
+	test_grep "^exec false" .git/rebase-merge/git-rebase-todo &&
 	git rebase --abort &&
 	git rebase HEAD^
 '
@@ -310,7 +338,7 @@ test_expect_success 'rebase.rescheduleFailedExec=true & --no-reschedule-failed-e
 	test_config rebase.rescheduleFailedExec true &&
 	test_must_fail git rebase -x false --no-reschedule-failed-exec HEAD~2 &&
 	test_must_fail git rebase --continue 2>err &&
-	! grep "has been rescheduled" err
+	test_grep ! "has been rescheduled" err
 '
 
 test_expect_success 'new rebase.rescheduleFailedExec=true setting in an ongoing rebase is ignored' '
@@ -318,7 +346,7 @@ test_expect_success 'new rebase.rescheduleFailedExec=true setting in an ongoing 
 	test_must_fail git rebase -x false HEAD~2 &&
 	test_config rebase.rescheduleFailedExec true &&
 	test_must_fail git rebase --continue 2>err &&
-	! grep "has been rescheduled" err
+	test_grep ! "has been rescheduled" err
 '
 
 test_expect_success 'there is no --no-reschedule-failed-exec in an ongoing rebase' '

@@ -49,6 +49,42 @@ test_expect_success 'setup' '
 			git tag -a -m "$x-$i" tag-$x-$i commit-$x-$i || return 1
 		done
 	done &&
+	# Build a topology with clock skew to test the !FIND_ALL early
+	# exit in paint_down_to_common().  M2 is the correct merge base
+	# of P1 and P2, but its ancestor M1 has a higher committer date
+	# due to clock skew.  With date-only ordering (v1 commit graph
+	# without corrected commit dates), M1 pops from the queue first,
+	# gets both paint sides, and the early exit fires before M2 is
+	# ever visited.
+	#
+	#        P1     P2          @7000
+	#        |     /  \
+	#        A    B    D        @6000
+	#       / \   |    |
+	#      |  M2--+    |        @2000 (correct merge base)
+	#       \ |        |
+	#        M1--------+        @5000 (clock skew: date > M2)
+	#        |
+	#       root                @1000
+	#
+	git checkout --orphan skew-orphan &&
+	skew_tree=$(git mktree </dev/null) &&
+	skew_commit () {
+		GIT_COMMITTER_DATE="@$1 +0000" GIT_AUTHOR_DATE="@$1 +0000" \
+			git commit-tree -m "$2" "$skew_tree" $3 $4 $5 $6
+	} &&
+	skew_root=$(skew_commit 1000 root) &&
+	skew_M1=$(skew_commit 5000 M1 -p "$skew_root") &&
+	skew_M2=$(skew_commit 2000 M2 -p "$skew_M1") &&
+	skew_A=$(skew_commit 6000 A -p "$skew_M1" -p "$skew_M2") &&
+	skew_B=$(skew_commit 6000 B -p "$skew_M2") &&
+	skew_D=$(skew_commit 6000 D -p "$skew_M1") &&
+	skew_P1=$(skew_commit 7000 P1 -p "$skew_A") &&
+	skew_P2=$(skew_commit 7000 P2 -p "$skew_B" -p "$skew_D") &&
+	git branch -f skew-P1 "$skew_P1" &&
+	git branch -f skew-P2 "$skew_P2" &&
+	git tag skew-M2 "$skew_M2" &&
+
 	git commit-graph write --reachable &&
 	mv .git/objects/info/commit-graph commit-graph-full &&
 	chmod u+w commit-graph-full &&
@@ -958,13 +994,18 @@ test_expect_success 'merge-base without --all is one of --all results' '
 	git merge-base --all commit-5-7 commit-4-8 commit-6-6 commit-8-3 >all &&
 	git merge-base commit-5-7 commit-4-8 commit-6-6 commit-8-3 >single &&
 	test_line_count = 1 single &&
-	grep -F -f single all &&
+	test_grep -F -f single all &&
 
 	cp commit-graph-half .git/objects/info/commit-graph &&
 	git merge-base --all commit-5-7 commit-4-8 commit-6-6 commit-8-3 >all &&
 	git merge-base commit-5-7 commit-4-8 commit-6-6 commit-8-3 >single &&
 	test_line_count = 1 single &&
-	grep -F -f single all
+	test_grep -F -f single all
+'
+
+test_expect_success 'merge-base without --all, clock skew, v1 commit-graph' '
+	git rev-parse skew-M2 >expect &&
+	merge_base_all_modes skew-P1 skew-P2
 '
 
 test_done

@@ -8,6 +8,7 @@
 #include "advice.h"
 #include "branch.h"
 #include "config.h"
+#include "dir.h"
 #include "environment.h"
 #include "gettext.h"
 #include "hex.h"
@@ -65,7 +66,7 @@ static enum transport_family family;
 
 static struct push_cas_option cas;
 
-static struct refspec rs = REFSPEC_INIT_PUSH;
+static struct refspec rs;
 
 static struct string_list push_options_config = STRING_LIST_INIT_DUP;
 
@@ -73,6 +74,7 @@ static void refspec_append_mapped(struct refspec *refspec, const char *ref,
 				  struct remote *remote, struct ref *matched)
 {
 	const char *branch_name;
+	struct repo_config_values *cfg = repo_config_values(the_repository);
 
 	if (remote->push.nr) {
 		struct refspec_item query = {
@@ -88,7 +90,7 @@ static void refspec_append_mapped(struct refspec *refspec, const char *ref,
 		}
 	}
 
-	if (push_default == PUSH_DEFAULT_UPSTREAM &&
+	if (cfg->push_default == PUSH_DEFAULT_UPSTREAM &&
 	    skip_prefix(matched->name, "refs/heads/", &branch_name)) {
 		struct branch *branch = branch_get(branch_name);
 		if (branch->merge_nr == 1 && branch->merge[0]->src) {
@@ -160,7 +162,7 @@ static NORETURN void die_push_simple(struct branch *branch,
 	 * Don't show advice for people who explicitly set
 	 * push.default.
 	 */
-	if (push_default == PUSH_DEFAULT_UNSPECIFIED)
+	if (cfg->push_default == PUSH_DEFAULT_UNSPECIFIED)
 		advice_pushdefault_maybe = _("\n"
 				 "To choose either option permanently, "
 				 "see push.default in 'git help config'.\n");
@@ -231,8 +233,9 @@ static void setup_default_push_refspecs(int *flags, struct remote *remote)
 	struct branch *branch;
 	const char *dst;
 	int same_remote;
+	struct repo_config_values *cfg = repo_config_values(the_repository);
 
-	switch (push_default) {
+	switch (cfg->push_default) {
 	case PUSH_DEFAULT_MATCHING:
 		refspec_append(&rs, ":");
 		return;
@@ -252,7 +255,7 @@ static void setup_default_push_refspecs(int *flags, struct remote *remote)
 	dst = branch->refname;
 	same_remote = !strcmp(remote->name, remote_for_branch(branch, NULL));
 
-	switch (push_default) {
+	switch (cfg->push_default) {
 	default:
 	case PUSH_DEFAULT_UNSPECIFIED:
 	case PUSH_DEFAULT_SIMPLE:
@@ -662,6 +665,29 @@ static int push_multiple(struct string_list *list,
 	return result;
 }
 
+static void die_if_repo_looks_like_ref(const char *repo)
+{
+	const char *slash = strchr(repo, '/');
+	struct strbuf name = STRBUF_INIT;
+	int code;
+
+	if (!slash || !slash[1] || file_exists(repo))
+		return;
+
+	strbuf_add(&name, repo, slash - repo);
+	if (!remote_is_configured(remote_get(name.buf), 0)) {
+		strbuf_release(&name);
+		return;
+	}
+
+	code = die_message(_("'%s' is not a valid push target"), repo);
+	advise_if_enabled(ADVICE_PUSH_REPO_LOOKS_LIKE_REF,
+			  _("Did you mean to use: git push %s %s?"),
+			  name.buf, slash + 1);
+	strbuf_release(&name);
+	exit(code);
+}
+
 int cmd_push(int argc,
 	     const char **argv,
 	     const char *prefix,
@@ -725,6 +751,8 @@ int cmd_push(int argc,
 		: &push_options_config);
 	set_push_cert_flags(&flags, push_cert);
 
+	refspec_init_push(&rs, the_hash_algo);
+
 	die_for_incompatible_opt4(deleterefs, "--delete",
 				  tags, "--tags",
 				  flags & TRANSPORT_PUSH_ALL, "--all/--branches",
@@ -744,6 +772,17 @@ int cmd_push(int argc,
 
 	if (repo) {
 		if (!add_remote_or_group(repo, &remote_group)) {
+			struct remote *r;
+
+			/*
+			 * Check the advice up front to avoid the remote
+			 * lookup when the hint is off. The helper still
+			 * calls advise_if_enabled() so the hint carries the
+			 * standard "disable this message" instructions.
+			 */
+			if (advice_enabled(ADVICE_PUSH_REPO_LOOKS_LIKE_REF))
+				die_if_repo_looks_like_ref(repo);
+
 			/*
 			 * Not a configured remote name or group name.
 			 * Try treating it as a direct URL or path, e.g.
@@ -753,7 +792,7 @@ int cmd_push(int argc,
 			 * from the URL so the loop below can handle it
 			 * identically to a named remote.
 			 */
-			struct remote *r = pushremote_get(repo);
+			r = pushremote_get(repo);
 			if (!r)
 				die(_("bad repository '%s'"), repo);
 			string_list_append(&remote_group, r->name);
@@ -820,7 +859,7 @@ int cmd_push(int argc,
 			}
 
 			refspec_clear(&rs);
-			rs = (struct refspec) REFSPEC_INIT_PUSH;
+			rs = (struct refspec) REFSPEC_INIT_PUSH(the_hash_algo);
 
 			if (tags)
 				refspec_append(&rs, "refs/tags/*");

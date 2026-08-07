@@ -663,6 +663,11 @@ static int bisect_successful(struct bisect_terms *terms)
 
 	refs_read_ref(get_main_ref_store(the_repository), bad_ref, &oid);
 	commit = lookup_commit_reference_by_name(bad_ref);
+	if (!commit) {
+		error(_("could not find commit for '%s'"), bad_ref);
+		free(bad_ref);
+		return BISECT_FAILED;
+	}
 	repo_format_commit_message(the_repository, commit, "%s", &commit_name,
 				   &pp);
 
@@ -724,7 +729,7 @@ static enum bisect_error bisect_start(struct bisect_terms *terms, int argc,
 	struct object_id oid;
 	const char *head;
 
-	if (is_bare_repository())
+	if (is_bare_repository(the_repository))
 		no_checkout = 1;
 
 	/*
@@ -806,9 +811,11 @@ static enum bisect_error bisect_start(struct bisect_terms *terms, int argc,
 	 */
 	head = refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
 				       "HEAD", 0, &head_oid, &flags);
-	if (!head)
+	if (!head) {
 		if (repo_get_oid(the_repository, "HEAD", &head_oid))
 			return error(_("bad HEAD - I need a HEAD"));
+		head = "HEAD";
+	}
 
 	/*
 	 * Check if we are bisecting

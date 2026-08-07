@@ -378,7 +378,7 @@ test_expect_success 'ambiguous 40-hex ref' '
 	VAL=$(git commit-tree $TREE </dev/null) &&
 	git update-ref refs/heads/$REF $VAL &&
 	test $(git rev-parse $REF 2>err) = $REF &&
-	grep "refname.*${REF}.*ambiguous" err
+	test_grep "refname.*${REF}.*ambiguous" err
 '
 
 test_expect_success 'ambiguous short sha1 ref' '
@@ -387,7 +387,7 @@ test_expect_success 'ambiguous short sha1 ref' '
 	VAL=$(git commit-tree $TREE </dev/null) &&
 	git update-ref refs/heads/$REF $VAL &&
 	test $(git rev-parse $REF 2>err) = $VAL &&
-	grep "refname.*${REF}.*ambiguous" err
+	test_grep "refname.*${REF}.*ambiguous" err
 '
 
 test_expect_success 'ambiguity errors are not repeated (raw)' '

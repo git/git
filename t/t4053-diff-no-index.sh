@@ -283,14 +283,14 @@ test_expect_success "diff --no-index -R treats '-' as stdin" '
 
 test_expect_success 'diff --no-index refuses to diff stdin and a directory' '
 	test_must_fail git diff --no-index -- - a </dev/null 2>err &&
-	grep "fatal: cannot compare stdin to a directory" err
+	test_grep "fatal: cannot compare stdin to a directory" err
 '
 
 test_expect_success PIPE 'diff --no-index refuses to diff a named pipe and a directory' '
 	test_when_finished "rm -f pipe" &&
 	mkfifo pipe &&
 	test_must_fail git diff --no-index -- pipe a 2>err &&
-	grep "fatal: cannot compare a named pipe to a directory" err
+	test_grep "fatal: cannot compare a named pipe to a directory" err
 '
 
 test_expect_success PIPE,SYMLINKS 'diff --no-index reads from pipes' '

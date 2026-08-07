@@ -124,7 +124,7 @@ test_expect_success 'netrc authorized but forbidden credentials (fail on 403)' '
 	set_netrc 127.0.0.1 forbidden-user@host pass@host &&
 	test_must_fail git clone "$HTTPD_URL/auth/dumb/repo.git" clone-auth-netrc-403 2>err &&
 	expect_askpass none &&
-	grep "The requested URL returned error: 403" err
+	test_grep "The requested URL returned error: 403" err
 '
 
 test_expect_success 'http auth can use user/pass in URL' '
@@ -280,7 +280,7 @@ test_expect_success 'http-fetch --packfile' '
 		--index-pack-arg=--keep \
 		"$HTTPD_URL"/dumb/repo_pack.git/$p >out &&
 
-	grep -E "^keep.[0-9a-f]{16,}$" out &&
+	test_grep -E "^keep.[0-9a-f]{16,}$" out &&
 	cut -c6- out >packhash &&
 
 	# Ensure that the expected files are generated

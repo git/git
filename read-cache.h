@@ -4,15 +4,23 @@
 #include "read-cache-ll.h"
 #include "object.h"
 #include "pathspec.h"
+#include "environment.h"
 
-static inline unsigned int ce_mode_from_stat(const struct cache_entry *ce,
+/*
+ * Determine the appropriate index mode for a file based on its stat()
+ * information and the existing cache entry (if any).
+ *
+ * This function handles degradation for filesystems that lack
+ * symlink support or reliable executable bits.
+ */
+static inline unsigned int ce_mode_from_stat(struct repository *repo,
+					     const struct cache_entry *ce,
 					     unsigned int mode)
 {
-	extern int trust_executable_bit, has_symlinks;
-	if (!has_symlinks && S_ISREG(mode) &&
+	if (S_ISREG(mode) && !repo_has_symlinks(repo) &&
 	    ce && S_ISLNK(ce->ce_mode))
 		return ce->ce_mode;
-	if (!trust_executable_bit && S_ISREG(mode)) {
+	if (S_ISREG(mode) && !repo_trust_executable_bit(repo)) {
 		if (ce && S_ISREG(ce->ce_mode))
 			return ce->ce_mode;
 		return create_ce_mode(0666);

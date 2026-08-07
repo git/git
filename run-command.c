@@ -706,7 +706,7 @@ int start_command(struct child_process *cmd)
 			failed_errno = errno;
 			if (need_in)
 				close_pair(fdin);
-			else if (cmd->in)
+			else if (cmd->in > 0)
 				close(cmd->in);
 			str = "standard output";
 			goto fail_pipe;
@@ -720,11 +720,11 @@ int start_command(struct child_process *cmd)
 			failed_errno = errno;
 			if (need_in)
 				close_pair(fdin);
-			else if (cmd->in)
+			else if (cmd->in > 0)
 				close(cmd->in);
 			if (need_out)
 				close_pair(fdout);
-			else if (cmd->out)
+			else if (cmd->out > 0)
 				close(cmd->out);
 			str = "standard error";
 fail_pipe:

@@ -20,7 +20,7 @@ struct reftable_stack {
 
 	char *reftable_dir;
 
-	struct reftable_write_options opts;
+	struct reftable_stack_options opts;
 
 	struct reftable_table **tables;
 	size_t tables_len;

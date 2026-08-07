@@ -32,6 +32,7 @@
 #include "list.h"
 #include "packfile.h"
 #include "object-file.h"
+#include "object-file-convert.h"
 #include "odb.h"
 #include "odb/streaming.h"
 #include "replace-object.h"
@@ -1781,7 +1782,8 @@ static int want_object_in_pack_mtime(const struct object_id *oid,
 	odb_prepare_alternates(the_repository->objects);
 
 	for (source = the_repository->objects->sources; source; source = source->next) {
-		struct multi_pack_index *m = get_multi_pack_index(source);
+		struct odb_source_files *files = odb_source_files_downcast(source);
+		struct multi_pack_index *m = get_multi_pack_index(files->packed);
 		struct pack_entry e;
 
 		if (m && fill_midx_entry(m, oid, &e)) {
@@ -1866,8 +1868,8 @@ static const char no_closure_warning[] = N_(
 "disabling bitmap writing, as some objects are not being packed"
 );
 
-static int add_object_entry(const struct object_id *oid, enum object_type type,
-			    const char *name, int exclude)
+static void add_object_entry(const struct object_id *oid, enum object_type type,
+			     const char *name, int exclude)
 {
 	struct packed_git *found_pack = NULL;
 	off_t found_offset = 0;
@@ -1875,7 +1877,7 @@ static int add_object_entry(const struct object_id *oid, enum object_type type,
 	display_progress(progress_state, ++nr_seen);
 
 	if (have_duplicate_entry(oid, exclude))
-		return 0;
+		return;
 
 	if (!want_object_in_pack(oid, exclude, &found_pack, &found_offset)) {
 		/* The pack is missing an object, so it will not have closure */
@@ -1884,13 +1886,12 @@ static int add_object_entry(const struct object_id *oid, enum object_type type,
 				warning(_(no_closure_warning));
 			write_bitmap_index = 0;
 		}
-		return 0;
+		return;
 	}
 
 	create_object_entry(oid, type, pack_name_hash_fn(name),
 			    exclude, name && no_try_delta(name),
 			    found_pack, found_offset);
-	return 1;
 }
 
 static int add_object_entry_from_bitmap(const struct object_id *oid,
@@ -1908,7 +1909,7 @@ static int add_object_entry_from_bitmap(const struct object_id *oid,
 		return 0;
 
 	create_object_entry(oid, type, name_hash, 0, 0, pack, offset);
-	return 1;
+	return 0;
 }
 
 struct pbase_tree_cache {
@@ -2462,7 +2463,7 @@ static void drop_reused_delta(struct object_entry *entry)
 
 	oi.sizep = &size;
 	oi.typep = &type;
-	if (packed_object_info(IN_PACK(entry), entry->in_pack_offset, &oi) < 0) {
+	if (packed_object_info(NULL, IN_PACK(entry), entry->in_pack_offset, &oi) < 0) {
 		/*
 		 * We failed to get the info from this pack for some reason;
 		 * fall back to odb_read_object_info, which may find another copy.
@@ -2741,6 +2742,22 @@ static inline void oe_set_tree_depth(struct packing_data *pack,
 	if (!pack->tree_depth)
 		CALLOC_ARRAY(pack->tree_depth, pack->nr_alloc);
 	pack->tree_depth[e - pack->objects] = tree_depth;
+}
+
+static void record_tree_depth(const struct object_id *oid, const char *name)
+{
+	const char *p;
+	unsigned depth;
+	struct object_entry *ent;
+
+	/* the empty string is a root tree, which is depth 0 */
+	depth = *name ? 1 : 0;
+	for (p = strchr(name, '/'); p; p = strchr(p + 1, '/'))
+		depth++;
+
+	ent = packlist_find(&to_pack, oid);
+	if (ent && depth > oe_tree_depth(&to_pack, ent))
+		oe_set_tree_depth(&to_pack, ent, depth);
 }
 
 /*
@@ -3803,7 +3820,7 @@ static int add_object_entry_from_pack(const struct object_id *oid,
 	ofs = nth_packed_object_offset(p, pos);
 
 	oi.typep = &type;
-	if (packed_object_info(p, ofs, &oi) < 0) {
+	if (packed_object_info(NULL, p, ofs, &oi) < 0) {
 		die(_("could not get type of object %s in pack %s"),
 		    oid_to_hex(oid), p->pack_name);
 	} else if (type == OBJ_COMMIT) {
@@ -4405,20 +4422,8 @@ static void show_object(struct object *obj, const char *name,
 	add_preferred_base_object(name);
 	add_object_entry(&obj->oid, obj->type, name, 0);
 
-	if (use_delta_islands) {
-		const char *p;
-		unsigned depth;
-		struct object_entry *ent;
-
-		/* the empty string is a root tree, which is depth 0 */
-		depth = *name ? 1 : 0;
-		for (p = strchr(name, '/'); p; p = strchr(p + 1, '/'))
-			depth++;
-
-		ent = packlist_find(&to_pack, &obj->oid);
-		if (ent && depth > oe_tree_depth(&to_pack, ent))
-			oe_set_tree_depth(&to_pack, ent, depth);
-	}
+	if (use_delta_islands)
+		record_tree_depth(&obj->oid, name);
 }
 
 static void show_object__ma_allow_any(struct object *obj, const char *name, void *data)
@@ -4490,8 +4495,9 @@ static int add_object_in_unpacked_pack(const struct object_id *oid,
 				       void *data UNUSED)
 {
 	if (cruft) {
-		add_cruft_object_entry(oid, OBJ_NONE, oi->u.packed.pack,
-				       oi->u.packed.offset, NULL, *oi->mtimep);
+		add_cruft_object_entry(oid, OBJ_NONE, oi->source_infop->u.packed.pack,
+				       oi->source_infop->u.packed.offset, NULL,
+				       *oi->mtimep);
 	} else {
 		add_object_entry(oid, OBJ_NONE, "", 0);
 	}
@@ -4508,8 +4514,10 @@ static void add_objects_in_unpacked_packs(void)
 			 ODB_FOR_EACH_OBJECT_SKIP_IN_CORE_KEPT_PACKS |
 			 ODB_FOR_EACH_OBJECT_SKIP_ON_DISK_KEPT_PACKS,
 	};
+	struct odb_source_info source_info;
 	struct object_info oi = {
 		.mtimep = &mtime,
+		.source_infop = &source_info,
 	};
 
 	odb_prepare_alternates(to_pack.repo->objects);
@@ -4519,8 +4527,8 @@ static void add_objects_in_unpacked_packs(void)
 		if (!source->local)
 			continue;
 
-		if (packfile_store_for_each_object(files->packed, &oi,
-						   add_object_in_unpacked_pack, NULL, &opts))
+		if (odb_source_for_each_object(&files->packed->base, &oi,
+					       add_object_in_unpacked_pack, NULL, &opts))
 			die(_("cannot open pack index"));
 	}
 }
@@ -4614,6 +4622,51 @@ static int loosened_object_can_be_discarded(const struct object_id *oid,
 	return 1;
 }
 
+static int force_object_loose(struct odb_source *source,
+			      const struct object_id *oid,
+			      const time_t *mtime)
+{
+	struct odb_source_files *files = odb_source_files_downcast(source);
+	const struct git_hash_algo *compat = source->odb->repo->compat_hash_algo;
+	struct object_info oi = OBJECT_INFO_INIT;
+	struct object_id compat_oid, *compat_oid_p = NULL;
+	enum object_type type;
+	void *buf = NULL;
+	size_t len;
+	int ret;
+
+	for (struct odb_source *s = source->odb->sources; s; s = s->next) {
+		struct odb_source_files *files = odb_source_files_downcast(s);
+		if (!odb_source_read_object_info(&files->loose->base, oid, NULL, 0))
+			return 0;
+	}
+
+	oi.typep = &type;
+	oi.sizep = &len;
+	oi.contentp = &buf;
+	if (odb_read_object_info_extended(source->odb, oid, &oi, 0)) {
+		ret = error(_("cannot read object for %s"), oid_to_hex(oid));
+		goto out;
+	}
+
+	if (compat) {
+		if (repo_oid_to_algop(source->odb->repo, oid, compat, &compat_oid)) {
+			ret = error(_("cannot map object %s to %s"),
+				    oid_to_hex(oid), compat->name);
+			goto out;
+		}
+
+		compat_oid_p = &compat_oid;
+	}
+
+	ret = odb_source_write_object(&files->loose->base, buf, len, type, oid,
+				      compat_oid_p, mtime, 0);
+
+out:
+	free(buf);
+	return ret;
+}
+
 static void loosen_unused_packed_objects(void)
 {
 	struct packed_git *p;
@@ -4634,7 +4687,7 @@ static void loosen_unused_packed_objects(void)
 			    !has_sha1_pack_kept_or_nonlocal(&oid) &&
 			    !loosened_object_can_be_discarded(&oid, p->mtime)) {
 				if (force_object_loose(the_repository->objects->sources,
-						       &oid, p->mtime))
+						       &oid, &p->mtime))
 					die(_("unable to force loose object"));
 				loosened_objects_nr++;
 			}
@@ -4762,6 +4815,31 @@ static int add_objects_by_path(const char *path,
 			continue;
 
 		add_object_entry(oid, type, path, exclude);
+
+		if (type == OBJ_COMMIT) {
+			struct commit *commit;
+
+			if (!write_bitmap_index && !use_delta_islands)
+				continue;
+
+			commit = lookup_commit(the_repository, oid);
+			if (!commit)
+				die(_("could not find commit %s"), oid_to_hex(oid));
+			if (write_bitmap_index)
+				index_commit_for_bitmap(commit);
+			/*
+			 * Skip island propagation for boundary commits.
+			 * The regular traversal's show_commit() is only
+			 * called for interesting commits; matching that
+			 * here keeps path-walk from doing extra work that
+			 * would only be a no-op anyway (boundary commits
+			 * are not in island_marks).
+			 */
+			if (use_delta_islands && !exclude)
+				propagate_island_marks(the_repository, commit);
+		} else if (type == OBJ_TREE && use_delta_islands) {
+			record_tree_depth(oid, path);
+		}
 	}
 
 	oe_end = to_pack.nr_objects;
@@ -4793,6 +4871,13 @@ static int get_object_list_path_walk(struct rev_info *revs)
 	info.revs = revs;
 	info.path_fn = add_objects_by_path;
 	info.path_fn_data = &processed;
+
+	/*
+	 * Path-walk needs boundary commits to discover thin-pack bases, but
+	 * bitmap traversal does not understand the boundary state. Set it
+	 * here so any prior bitmap attempt sees the usual non-boundary walk.
+	 */
+	revs->boundary = 1;
 
 	/*
 	 * Allow the --[no-]sparse option to be interesting here, if only
@@ -4999,10 +5084,14 @@ static int option_parse_cruft_expiration(const struct option *opt UNUSED,
 
 static int is_not_in_promisor_pack_obj(struct object *obj, void *data UNUSED)
 {
-	struct object_info info = OBJECT_INFO_INIT;
+	struct odb_source_info source_info;
+	struct object_info info = {
+		.source_infop = &source_info,
+	};
+
 	if (odb_read_object_info_extended(the_repository->objects, &obj->oid, &info, 0))
 		BUG("should_include_obj should only be called on existing objects");
-	return info.whence != OI_PACKED || !info.u.packed.pack->pack_promisor;
+	return source_info.source->type != ODB_SOURCE_PACKED || !source_info.u.packed.pack->pack_promisor;
 }
 
 static int is_not_in_promisor_pack(struct commit *commit, void *data) {
@@ -5217,8 +5306,6 @@ int cmd_pack_objects(int argc,
 		const char *option = NULL;
 		if (!path_walk_filter_compatible(&filter_options))
 			option = "--filter";
-		else if (use_delta_islands)
-			option = "--delta-islands";
 
 		if (option) {
 			warning(_("cannot use %s with %s"),
@@ -5227,9 +5314,7 @@ int cmd_pack_objects(int argc,
 		}
 	}
 	if (path_walk) {
-		strvec_push(&rp, "--boundary");
 		strvec_push(&rp, "--objects");
-		use_bitmap_index = 0;
 	} else if (thin) {
 		use_internal_rev_list = 1;
 		strvec_push(&rp, shallow

@@ -439,7 +439,7 @@ static int handle_path(unsigned char *hash, struct rerere_io *io, int marker_siz
 	struct strbuf buf = STRBUF_INIT, out = STRBUF_INIT;
 	int has_conflicts = 0;
 	if (hash)
-		the_hash_algo->init_fn(&ctx);
+		git_hash_init(&ctx, the_hash_algo);
 
 	while (!io->getline(&buf, io)) {
 		if (is_cmarker(buf.buf, '<', marker_size)) {
@@ -756,7 +756,7 @@ static void do_rerere_one_path(struct index_state *istate,
 	/* Has the user resolved it already? */
 	if (variant >= 0) {
 		if (!handle_file(istate, path, NULL, NULL)) {
-			copy_file(rerere_path(&buf, id, "postimage"), path, 0666);
+			copy_file(the_repository, rerere_path(&buf, id, "postimage"), path, 0666);
 			id->collection->status[variant] |= RR_HAS_POSTIMAGE;
 			fprintf_ln(stderr, _("Recorded resolution for '%s'."), path);
 			free_rerere_id(rr_item);
@@ -911,9 +911,9 @@ int setup_rerere(struct repository *r, struct string_list *merge_rr, int flags)
 	if (flags & RERERE_READONLY)
 		fd = 0;
 	else
-		fd = hold_lock_file_for_update(&write_lock,
-					       git_path_merge_rr(r),
-					       LOCK_DIE_ON_ERROR);
+		fd = repo_hold_lock_file_for_update(r, &write_lock,
+						    git_path_merge_rr(r),
+						    LOCK_DIE_ON_ERROR);
 	read_rr(r, merge_rr);
 	return fd;
 }

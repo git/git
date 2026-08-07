@@ -207,6 +207,22 @@ test_expect_success "Add long precomposed filename" '
 	git commit -m "Long filename"
 '
 
+test_expect_success "status with long non-ASCII filename" '
+	test_when_finished "rm -rf long-utf8-status" &&
+	git init long-utf8-status &&
+	(
+		cd long-utf8-status &&
+		test "$(git config --bool core.precomposeunicode)" = true &&
+		long_utf8_name=$(
+			printf "%253s\342\200\224" "" |
+			tr " " a
+		) &&
+		test "$(printf "%s" "$long_utf8_name" | wc -c | tr -d " ")" = 256 &&
+		printf "content\n" >"$long_utf8_name" &&
+		git status --porcelain=v1 >actual
+	)
+'
+
 test_expect_failure 'handle existing decomposed filenames' '
 	echo content >"verbatim.$Adiarnfd" &&
 	git -c core.precomposeunicode=false add "verbatim.$Adiarnfd" &&

@@ -299,7 +299,7 @@ static const char *quote_crnl(const char *path)
 
 void trace_repo_setup(struct repository *r)
 {
-	const char *git_work_tree, *prefix = startup_info->prefix;
+	const char *git_work_tree, *prefix = r->prefix;
 	char *cwd;
 
 	if (!trace_want(&trace_setup_key))
@@ -310,7 +310,7 @@ void trace_repo_setup(struct repository *r)
 	if (!(git_work_tree = repo_get_work_tree(r)))
 		git_work_tree = "(null)";
 
-	if (!startup_info->prefix)
+	if (!r->prefix)
 		prefix = "(null)";
 
 	trace_printf_key(&trace_setup_key, "setup: git_dir: %s\n", quote_crnl(repo_get_git_dir(r)));

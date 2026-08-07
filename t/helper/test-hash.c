@@ -29,7 +29,7 @@ int cmd_hash_impl(int ac, const char **av, int algo, int unsafe)
 			die("OOPS");
 	}
 
-	algop->init_fn(&ctx);
+	git_hash_init(&ctx, algop);
 
 	while (1) {
 		ssize_t sz, this_sz;
