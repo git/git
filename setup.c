@@ -1788,8 +1788,6 @@ int apply_repository_format(struct repository *repo,
 
 	repo->bare_cfg = format->is_bare;
 	repo_set_hash_algo(repo, format->hash_algo);
-	repo->objects = odb_new(repo, object_directory,
-				alternate_object_directories);
 	repo_set_compat_hash_algo(repo, format->compat_hash_algo);
 	repo_set_ref_storage_format(repo,
 				    format->ref_storage_format,
@@ -1804,6 +1802,9 @@ int apply_repository_format(struct repository *repo,
 		xstrdup_or_null(format->partial_clone);
 	repo->repository_format_precious_objects =
 		format->precious_objects;
+
+	repo->objects = odb_new(repo, object_directory,
+				alternate_object_directories);
 
 	free(alternate_object_directories);
 	free(object_directory);
