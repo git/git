@@ -451,9 +451,8 @@ static int fetch_object_info_via_pack(struct transport *transport)
 	ret = fetch_object_info(data->version,
 				transport->server_options,
 				transport->smart_options->object_info_oids,
-				transport->smart_options->object_info_options,
 				&reader,
-				data->options.object_info_data,
+				data->options.object_info_results,
 				transport->stateless_rpc, data->fd[1]);
 
 	close(data->fd[0]);
