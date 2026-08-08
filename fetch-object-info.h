@@ -1,14 +1,17 @@
 #ifndef FETCH_OBJECT_INFO_H
 #define FETCH_OBJECT_INFO_H
 
+#include "object.h"
 #include "pkt-line.h"
 #include "protocol.h"
 
 struct fetch_object_info_results {
 	size_t *sizes;
+	enum object_type *types;
 	uint8_t *unrecognized;
 	size_t nr;
 	unsigned wants_size:1;
+	unsigned wants_type:1;
 };
 
 #define FETCH_OBJECT_INFO_RESULTS_INIT { 0 }

@@ -842,6 +842,8 @@ static void parse_cmd_remote_object_info(struct batch_options *opt,
 
 	if (data->info.sizep)
 		results.wants_size = 1;
+	if (data->info.typep)
+		results.wants_type = 1;
 
 	if (get_remote_info(count, argv, &results, &object_info_oids))
 		die(_("failed to get object info from the remote: %s"), argv[0]);
@@ -850,6 +852,8 @@ static void parse_cmd_remote_object_info(struct batch_options *opt,
 	string_list_append(&data->remote_allowed_atoms, "objectname");
 	if (results.sizes)
 		string_list_append(&data->remote_allowed_atoms, "objectsize");
+	if (results.types)
+		string_list_append(&data->remote_allowed_atoms, "objecttype");
 
 	data->skip_object_info = 1;
 	for (size_t i = 0; i < results.nr; i++) {
@@ -867,6 +871,9 @@ static void parse_cmd_remote_object_info(struct batch_options *opt,
 		 */
 		if (results.sizes)
 			data->size = results.sizes[i];
+
+		if (results.types)
+			data->type = results.types[i];
 
 		opt->batch_mode = BATCH_MODE_INFO;
 		data->is_remote = 1;

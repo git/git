@@ -1,6 +1,7 @@
 #include "git-compat-util.h"
 #include "gettext.h"
 #include "hex.h"
+#include "object.h"
 #include "pkt-line.h"
 #include "connect.h"
 #include "oid-array.h"
@@ -12,7 +13,8 @@
 static void send_object_info_request(const int fd_out,
 				     const struct string_list *server_options,
 				     const struct oid_array *oids,
-				     unsigned ask_size)
+				     unsigned ask_size,
+				     unsigned ask_type)
 {
 	struct strbuf req_buf = STRBUF_INIT;
 
@@ -20,6 +22,9 @@ static void send_object_info_request(const int fd_out,
 
 	if (ask_size)
 		packet_buf_write(&req_buf, "size");
+
+	if (ask_type)
+		packet_buf_write(&req_buf, "type");
 
 	if (oids)
 		for (size_t i = 0; i < oids->nr; i++)
@@ -56,7 +61,9 @@ void fetch_object_info(const enum protocol_version version,
 		       const int fd_out)
 {
 	unsigned ask_size = 0;
+	unsigned ask_type = 0;
 	int size_index = -1;
+	int type_index = -1;
 	size_t wanted;
 
 	results->nr = oids->nr;
@@ -71,11 +78,16 @@ void fetch_object_info(const enum protocol_version version,
 		    server_supports_feature("object-info", "size", 0))
 			ask_size = 1;
 
+		if (results->wants_type &&
+		    server_supports_feature("object-info", "type", 0))
+			ask_type = 1;
+
 		/*
 		 * Even if no options are left, we still send the oid so we get
 		 * at least an existence check.
 		 */
-		send_object_info_request(fd_out, server_options, oids, ask_size);
+		send_object_info_request(fd_out, server_options, oids, ask_size,
+					 ask_type);
 		break;
 	case protocol_v1:
 	case protocol_v0:
@@ -83,7 +95,7 @@ void fetch_object_info(const enum protocol_version version,
 	case protocol_unknown_version:
 		BUG("unknown protocol version");
 	}
-	wanted = ask_size;
+	wanted = ask_size + ask_type;
 
 	for (size_t i = 0; i < wanted; i++) {
 		if (packet_reader_read(reader) != PACKET_READ_NORMAL) {
@@ -100,6 +112,13 @@ void fetch_object_info(const enum protocol_version version,
 				die(_("object-info: duplicate 'size' attribute"));
 			size_index = (int)i;
 			CALLOC_ARRAY(results->sizes, results->nr);
+		} else if (!strcmp(reader->line, "type")) {
+			if (!ask_type)
+				die(_("object-info: unrequested 'type' attribute"));
+			if (results->types)
+				die(_("object-info: duplicate 'type' attribute"));
+			type_index = (int)i;
+			CALLOC_ARRAY(results->types, results->nr);
 		} else {
 			die(_("object-info: unknown attribute '%s'"),
 			    reader->line);
@@ -149,6 +168,18 @@ void fetch_object_info(const enum protocol_version version,
 			    object_info_values.items[0].string,
 			    object_info_values.items[size_index + 1].string);
 
+		if (results->types) {
+			const char *type_str =
+				object_info_values.items[type_index + 1].string;
+			int type = type_from_string_gently(type_str, -1, 1);
+
+			if (type < 0)
+				die(_("object-info: object %s has invalid type '%s'"),
+				    object_info_values.items[0].string, type_str);
+
+			results->types[i] = type;
+		}
+
 		string_list_clear(&object_info_values, 0);
 	}
 
@@ -162,6 +193,7 @@ void fetch_object_info(const enum protocol_version version,
 void free_fetch_object_info_results(struct fetch_object_info_results *results)
 {
 	free(results->sizes);
+	free(results->types);
 	free(results->unrecognized);
 	memset(results, 0, sizeof(*results));
 }
