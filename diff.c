@@ -3519,29 +3519,6 @@ struct checkdiff_t {
 	int last_line_kind;
 };
 
-static int is_conflict_marker(const char *line, int marker_size, unsigned long len)
-{
-	char firstchar;
-	int cnt;
-
-	if (len < marker_size + 1)
-		return 0;
-	firstchar = line[0];
-	switch (firstchar) {
-	case '=': case '>': case '<': case '|':
-		break;
-	default:
-		return 0;
-	}
-	for (cnt = 1; cnt < marker_size; cnt++)
-		if (line[cnt] != firstchar)
-			return 0;
-	/* line[1] through line[marker_size-1] are same as firstchar */
-	if (len < marker_size + 1 || !isspace(line[marker_size]))
-		return 0;
-	return 1;
-}
-
 static void checkdiff_consume_hunk(void *priv,
 				   long ob UNUSED, long on UNUSED,
 				   long nb, long nn UNUSED,
@@ -3571,7 +3548,7 @@ static int checkdiff_consume(void *priv, char *line, unsigned long len)
 	if (line[0] == '+') {
 		unsigned bad;
 		data->lineno++;
-		if (is_conflict_marker(line + 1, marker_size, len - 1)) {
+		if (is_conflict_marker_line(line + 1, len - 1, marker_size)) {
 			data->status |= 1;
 			fprintf(data->o->file,
 				"%s%s:%d: leftover conflict marker\n",
