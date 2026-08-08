@@ -24,13 +24,13 @@ struct oid_array;
  * attribute is not available.
  * Release them with free_fetch_object_info_results().
  */
-int fetch_object_info(enum protocol_version version,
-		      const struct string_list *server_options,
-		      struct oid_array *oids,
-		      struct packet_reader *reader,
-		      struct fetch_object_info_results *results,
-		      int stateless_rpc,
-		      int fd_out);
+void fetch_object_info(enum protocol_version version,
+		       const struct string_list *server_options,
+		       struct oid_array *oids,
+		       struct packet_reader *reader,
+		       struct fetch_object_info_results *results,
+		       int stateless_rpc,
+		       int fd_out);
 
 void free_fetch_object_info_results(struct fetch_object_info_results *results);
 

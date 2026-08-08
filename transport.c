@@ -448,12 +448,12 @@ static int fetch_object_info_via_pack(struct transport *transport)
 	data->version = discover_version(&reader);
 	transport->hash_algo = reader.hash_algo;
 
-	ret = fetch_object_info(data->version,
-				transport->server_options,
-				transport->smart_options->object_info_oids,
-				&reader,
-				data->options.object_info_results,
-				transport->stateless_rpc, data->fd[1]);
+	fetch_object_info(data->version,
+			  transport->server_options,
+			  transport->smart_options->object_info_oids,
+			  &reader,
+			  data->options.object_info_results,
+			  transport->stateless_rpc, data->fd[1]);
 
 	close(data->fd[0]);
 	if (data->fd[1] >= 0)
