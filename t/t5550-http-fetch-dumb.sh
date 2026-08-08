@@ -293,6 +293,210 @@ test_expect_success 'http-fetch --packfile' '
 	git -C packfileclient cat-file -e "$HASH"
 '
 
+test_expect_success 'http-fetch --packfile accepts an already complete partial' '
+	git init packfileclient-complete &&
+	p=$(cd "$HTTPD_DOCUMENT_ROOT_PATH"/repo_pack.git &&
+		ls objects/pack/pack-*.pack) &&
+	packhash=$(basename "$p" .pack) &&
+	packhash=${packhash#pack-} &&
+	tmpfile="packfileclient-complete/.git/objects/pack/pack-$packhash.pack.temp" &&
+	cp "$HTTPD_DOCUMENT_ROOT_PATH/repo_pack.git/$p" "$tmpfile" &&
+	chmod u+w "$tmpfile" &&
+	GIT_TRACE_CURL="$TRASH_DIRECTORY/complete.trace" \
+	git -C packfileclient-complete http-fetch --packfile="$packhash" \
+		--index-pack-arg=index-pack \
+		--index-pack-arg=--stdin --index-pack-arg=--keep \
+		"$HTTPD_URL/dumb/repo_pack.git/$p" >out &&
+	test_grep "416 Requested Range Not Satisfiable" complete.trace &&
+	test_path_is_missing "$tmpfile" &&
+	git -C packfileclient-complete cat-file -e "$HASH"
+'
+
+test_expect_success 'http-fetch --packfile resumes a partial download' '
+	git init packfileclient-resume &&
+	p=$(cd "$HTTPD_DOCUMENT_ROOT_PATH"/repo_pack.git &&
+		ls objects/pack/pack-*.pack) &&
+	tmpfile="packfileclient-resume/.git/objects/pack/pack-$ARBITRARY.pack.temp" &&
+	test_copy_bytes 64 <"$HTTPD_DOCUMENT_ROOT_PATH/repo_pack.git/$p" >"$tmpfile" &&
+	GIT_TRACE_CURL="$TRASH_DIRECTORY/resume.trace" \
+	git -C packfileclient-resume http-fetch --packfile="$ARBITRARY" \
+		--index-pack-arg=index-pack --index-pack-arg=--stdin \
+		--index-pack-arg=--keep \
+		"$HTTPD_URL/dumb/repo_pack.git/$p" >out &&
+	test_grep "Range: bytes=64-" resume.trace &&
+	test_path_is_missing "$tmpfile" &&
+	git -C packfileclient-resume cat-file -e "$HASH"
+'
+
+test_expect_success 'http-fetch --packfile permits unlink while indexing' '
+	git init packfileclient-unlink &&
+	p=$(cd "$HTTPD_DOCUMENT_ROOT_PATH"/repo_pack.git &&
+		ls objects/pack/pack-*.pack) &&
+	tmpfile="packfileclient-unlink/.git/objects/pack/pack-$ARBITRARY.pack.temp" &&
+	write_script git-unlink-index-pack <<-\EOF &&
+	test -f "$GIT_TEST_PACK_TEMP" || exit 1
+	rm "$GIT_TEST_PACK_TEMP" || exit 1
+	exec git index-pack "$@"
+	EOF
+	test_when_finished "rm -f git-unlink-index-pack" &&
+	PATH="$TRASH_DIRECTORY:$PATH" \
+	GIT_TEST_PACK_TEMP="$TRASH_DIRECTORY/$tmpfile" \
+	git -C packfileclient-unlink http-fetch --packfile="$ARBITRARY" \
+		--index-pack-arg=unlink-index-pack \
+		--index-pack-arg=--stdin --index-pack-arg=--keep \
+		"$HTTPD_URL/dumb/repo_pack.git/$p" >out &&
+	test_path_is_missing "$tmpfile" &&
+	git -C packfileclient-unlink cat-file -e "$HASH"
+'
+
+test_expect_success PERL,PIPE 'concurrent http-fetch --packfile cannot corrupt an overlapping download' '
+	git init packfileclient-overlap &&
+	blob=$(test-tool genrandom pack-overlap 2m |
+		git -C "$HTTPD_DOCUMENT_ROOT_PATH"/repo_pack.git \
+			hash-object -w --stdin) &&
+	packhash=$(printf "%s\n" "$blob" |
+		git -C "$HTTPD_DOCUMENT_ROOT_PATH"/repo_pack.git \
+			pack-objects "$TRASH_DIRECTORY/overlap-pack") &&
+	pack="$TRASH_DIRECTORY/overlap-pack-$packhash.pack" &&
+	tmpfile="packfileclient-overlap/.git/objects/pack/pack-$packhash.pack.temp" &&
+	mkfifo server-ready first-ready &&
+	exec 7<>server-ready &&
+	exec 8<>first-ready &&
+	write_script slow-pack-server "$PERL_PATH" <<-\EOF &&
+	use strict;
+	use warnings;
+	use IO::Socket::INET;
+
+	my ($packfile, $server_ready, $first_ready) = @ARGV;
+	my $completed = 0;
+	END {
+		if (!$completed) {
+			signal_ready($server_ready, "failed");
+			signal_ready($first_ready, "failed");
+		}
+	}
+
+	$SIG{ALRM} = sub { die "timed out serving concurrent pack requests\n" };
+	alarm 60;
+
+	open(my $in, "<:raw", $packfile) or die "open $packfile: $!";
+	my $pack = do { local $/; <$in> };
+	close($in) or die "close $packfile: $!";
+	my $server = IO::Socket::INET->new(LocalAddr => "127.0.0.1",
+		LocalPort => 0, Proto => "tcp", Listen => 2, ReuseAddr => 1)
+		or die "listen: $!";
+
+	sub signal_ready {
+		my ($file, $value) = @_;
+		open(my $out, ">", $file) or die "open $file: $!";
+		print $out "$value\n" or die "write $file: $!";
+		close($out) or die "close $file: $!";
+	}
+
+	sub write_all {
+		my ($out, $data) = @_;
+		my $offset = 0;
+		while ($offset < length($data)) {
+			my $written = syswrite($out, $data,
+				length($data) - $offset, $offset);
+			defined($written) && $written or die "write response: $!";
+			$offset += $written;
+		}
+	}
+
+	sub start_response {
+		my $out = $server->accept() or die "accept: $!";
+		<$out> or die "read request: $!";
+		my $start = 0;
+		while (<$out>) {
+			last if /^\r?\n$/;
+			$start = $1 if /^Range: bytes=(\d+)-/i;
+		}
+		$start < length($pack) or die "invalid range $start";
+		my $length = length($pack) - $start;
+		my $middle = int($length / 2);
+		my $status = $start ? "206 Partial Content" : "200 OK";
+		my $headers = "HTTP/1.1 $status\r\n" .
+			"Content-Length: $length\r\n" .
+			($start ? "Content-Range: bytes $start-" .
+				(length($pack) - 1) . "/" . length($pack) . "\r\n" : "") .
+			"Connection: close\r\n\r\n";
+		write_all($out, $headers);
+		write_all($out, substr($pack, $start, $middle));
+		return ($out, $start + $middle);
+	}
+
+	signal_ready($server_ready, $server->sockport());
+	my ($first, $first_pos) = start_response();
+	signal_ready($first_ready, "ready");
+	my ($second, $second_pos) = start_response();
+	write_all($first, substr($pack, $first_pos));
+	write_all($second, substr($pack, $second_pos));
+	close($first) or die "close first response: $!";
+	close($second) or die "close second response: $!";
+	$completed = 1;
+	alarm 0;
+	EOF
+	{
+		"$TRASH_DIRECTORY/slow-pack-server" "$pack" \
+			"$TRASH_DIRECTORY/server-ready" \
+			"$TRASH_DIRECTORY/first-ready" >server.log 2>&1 &
+		server_pid=$!
+	} &&
+	test_when_finished "
+		kill $server_pid 2>/dev/null || :
+		wait $server_pid 2>/dev/null || :
+		exec 7>&-
+		exec 8>&-
+		rm -f server-ready first-ready slow-pack-server
+	" &&
+	read port <&7 &&
+	url="http://127.0.0.1:$port/pack" &&
+	{
+		(
+			if ! GIT_TRACE_CURL="$TRASH_DIRECTORY/overlap-first.trace" \
+			GIT_TRACE_CURL_NO_DATA=1 \
+			git -C packfileclient-overlap http-fetch --packfile="$packhash" \
+				--index-pack-arg=index-pack \
+				--index-pack-arg=--stdin --index-pack-arg=--keep \
+				"$url" >first.out
+			then
+				echo failed >"$TRASH_DIRECTORY/first-ready" &&
+				exit 1
+			fi
+		) &
+		first_pid=$!
+	} &&
+	test_when_finished "
+		kill $first_pid 2>/dev/null || :
+		wait $first_pid 2>/dev/null || :
+	" &&
+	read ready <&8 &&
+	test "$ready" = ready &&
+	test_path_is_file "$tmpfile" &&
+	{
+		GIT_TRACE_CURL="$TRASH_DIRECTORY/overlap-second.trace" \
+		GIT_TRACE_CURL_NO_DATA=1 \
+		git -C packfileclient-overlap http-fetch --packfile="$packhash" \
+			--index-pack-arg=index-pack \
+			--index-pack-arg=--stdin --index-pack-arg=--keep \
+			"$url" >second.out &
+		second_pid=$!
+	} &&
+	test_when_finished "
+		kill $second_pid 2>/dev/null || :
+		wait $second_pid 2>/dev/null || :
+	" &&
+	wait "$second_pid" &&
+	wait "$first_pid" &&
+	wait "$server_pid" &&
+	printf "keep\t%s\npack\t%s\n" "$packhash" "$packhash" | sort >expect &&
+	sort first.out second.out >actual &&
+	test_cmp expect actual &&
+	test_path_is_missing "$tmpfile" &&
+	git -C packfileclient-overlap cat-file -e "$blob"
+'
+
 test_expect_success 'fetch notices corrupt pack' '
 	cp -R "$HTTPD_DOCUMENT_ROOT_PATH"/repo_pack.git "$HTTPD_DOCUMENT_ROOT_PATH"/repo_bad1.git &&
 	(cd "$HTTPD_DOCUMENT_ROOT_PATH"/repo_bad1.git &&
