@@ -31,12 +31,15 @@ PATH="$TTDIR:$PATH" && export PATH
 # no cmd_ancestry event is emitted.  We detect this at runtime and
 # skip the format-specific tests accordingly.
 
-# Determine if cmd_ancestry is supported on this platform.
+# Enable these tests only when cmd_ancestry reports real process names.
+# The procinfo stub emits no event; under user-mode emulation (e.g.
+# qemu-user) /proc reports the emulator, not the guest. Spawn test-tool
+# from test-tool and require "test-tool" in the child's ancestry.
 test_expect_success 'detect cmd_ancestry support' '
 	test_when_finished "rm -f trace.detect" &&
 	GIT_TRACE2_BRIEF=1 GIT_TRACE2="$(pwd)/trace.detect" \
-		test-tool trace2 001return 0 &&
-	if grep -q "^cmd_ancestry" trace.detect
+		test-tool trace2 004child test-tool trace2 001return 0 &&
+	if grep -q "^cmd_ancestry.*test-tool" trace.detect
 	then
 		test_set_prereq TRACE2_ANCESTRY
 	fi
