@@ -898,16 +898,18 @@ static int add(int ac, const char **av, const char *prefix,
 		/* DWIM: Infer --orphan when repo has no refs. */
 		opts.orphan = (!s) && dwim_orphan(&opts, !!opt_track, 1);
 	} else if (ac == 2) {
-		struct object_id oid;
-		struct commit *commit;
-		char *remote;
+		if (!new_branch) {
+			struct object_id oid;
+			struct commit *commit;
+			char *remote;
 
-		commit = lookup_commit_reference_by_name(branch);
-		if (!commit) {
-			remote = unique_tracking_name(branch, &oid, NULL);
-			if (remote) {
-				new_branch = branch;
-				branch = new_branch_to_free = remote;
+			commit = lookup_commit_reference_by_name(branch);
+			if (!commit) {
+				remote = unique_tracking_name(branch, &oid, NULL);
+				if (remote) {
+					new_branch = branch;
+					branch = new_branch_to_free = remote;
+				}
 			}
 		}
 
