@@ -9,20 +9,24 @@
 #include "string-list.h"
 
 /* Sends object-info command and its arguments into the request buffer. */
-static void send_object_info_request(const int fd_out, struct object_info_args *args)
+static void send_object_info_request(const int fd_out,
+				     const struct string_list *server_options,
+				     struct oid_array *oids,
+				     struct string_list *object_info_options)
 {
 	struct strbuf req_buf = STRBUF_INIT;
 
-	write_command_and_capabilities(&req_buf, "object-info", args->server_options);
+	write_command_and_capabilities(&req_buf, "object-info", server_options);
 
-	if (unsorted_string_list_has_string(args->object_info_options, "size"))
+	if (unsorted_string_list_has_string(object_info_options, "size"))
 		packet_buf_write(&req_buf, "size");
-	else if (args->object_info_options->nr)
+	else if (object_info_options->nr)
 		BUG("only size should be in object_info_options");
 
-	if (args->oids)
-		for (size_t i = 0; i < args->oids->nr; i++)
-			packet_buf_write(&req_buf, "oid %s", oid_to_hex(&args->oids->oid[i]));
+	if (oids)
+		for (size_t i = 0; i < oids->nr; i++)
+			packet_buf_write(&req_buf, "oid %s",
+					 oid_to_hex(&oids->oid[i]));
 
 	packet_buf_flush(&req_buf);
 	if (write_in_full(fd_out, req_buf.buf, req_buf.len) < 0)
@@ -45,8 +49,12 @@ static int parse_object_size(const char *s, size_t *res)
 	return 0;
 }
 
-int fetch_object_info(const enum protocol_version version, struct object_info_args *args,
-		      struct packet_reader *reader, struct object_info *object_info_data,
+int fetch_object_info(const enum protocol_version version,
+		      const struct string_list *server_options,
+		      struct oid_array *oids,
+		      struct string_list *object_info_options,
+		      struct packet_reader *reader,
+		      struct object_info *object_info_data,
 		      const int stateless_rpc, const int fd_out)
 {
 	int size_index = -1;
@@ -64,16 +72,17 @@ int fetch_object_info(const enum protocol_version version, struct object_info_ar
 		 * because the number of options is a small known number (the
 		 * supported placeholders which currently are size and type).
 		 */
-		for (int i = (int)args->object_info_options->nr - 1; i >= 0; i--)
+		for (int i = (int)object_info_options->nr - 1; i >= 0; i--)
 			if (!server_supports_feature("object-info",
-						     args->object_info_options->items[i].string, 0))
-				unsorted_string_list_delete_item(args->object_info_options, i, 0);
+						     object_info_options->items[i].string, 0))
+				unsorted_string_list_delete_item(object_info_options, i, 0);
 
 		/*
 		 * Even if no options are left, we still send the oid so we get
 		 * at least an existence check.
 		 */
-		send_object_info_request(fd_out, args);
+		send_object_info_request(fd_out, server_options, oids,
+					 object_info_options);
 		break;
 	case protocol_v1:
 	case protocol_v0:
@@ -82,14 +91,14 @@ int fetch_object_info(const enum protocol_version version, struct object_info_ar
 		BUG("unknown protocol version");
 	}
 
-	for (size_t i = 0; i < args->object_info_options->nr; i++) {
+	for (size_t i = 0; i < object_info_options->nr; i++) {
 		if (packet_reader_read(reader) != PACKET_READ_NORMAL) {
 			check_stateless_delimiter(stateless_rpc, reader,
 						  "stateless delimiter expected");
 			return -1;
 		}
 
-		if (!unsorted_string_list_has_string(args->object_info_options, reader->line))
+		if (!unsorted_string_list_has_string(object_info_options, reader->line))
 			return -1;
 
 		if (!strcmp(reader->line, "size")) {
@@ -98,7 +107,7 @@ int fetch_object_info(const enum protocol_version version, struct object_info_ar
 			 * is only size. No risk of overflow.
 			 */
 			size_index = (int)i;
-			for (size_t j = 0; j < args->oids->nr; j++)
+			for (size_t j = 0; j < oids->nr; j++)
 				object_info_data[j].sizep =
 					xcalloc(1, sizeof(*object_info_data[j].sizep));
 		} else {
@@ -106,19 +115,19 @@ int fetch_object_info(const enum protocol_version version, struct object_info_ar
 		}
 	}
 
-	for (size_t i = 0; i < args->oids->nr; i++) {
+	for (size_t i = 0; i < oids->nr; i++) {
 		struct string_list object_info_values = STRING_LIST_INIT_DUP;
 
 		if (packet_reader_read(reader) != PACKET_READ_NORMAL)
 			die(_("object-info: expected %" PRIuMAX " objects, got %" PRIuMAX),
-			    (uintmax_t)args->oids->nr, (uintmax_t)i);
+			    (uintmax_t)oids->nr, (uintmax_t)i);
 
 		string_list_split(&object_info_values, reader->line, " ", -1);
 
 		if (strcmp(object_info_values.items[0].string,
-			   oid_to_hex(&args->oids->oid[i])))
+			   oid_to_hex(&oids->oid[i])))
 			die(_("object-info: expected OID: %s, got %s"),
-			    oid_to_hex(&args->oids->oid[i]),
+			    oid_to_hex(&oids->oid[i]),
 			    object_info_values.items[0].string);
 
 		/*
@@ -138,7 +147,7 @@ int fetch_object_info(const enum protocol_version version, struct object_info_ar
 		 * the server we expect the server to answer with the same
 		 * number of attributes requested.
 		 */
-		if (args->object_info_options->nr + 1 != object_info_values.nr)
+		if (object_info_options->nr + 1 != object_info_values.nr)
 			die("object-info: unexpected number of attributes: %s",
 			    reader->line);
 
@@ -154,7 +163,7 @@ int fetch_object_info(const enum protocol_version version, struct object_info_ar
 
 	if (packet_reader_read(reader) != PACKET_READ_FLUSH)
 		die(_("object-info: expected flush after %" PRIuMAX " objects"),
-		    (uintmax_t)args->oids->nr);
+		    (uintmax_t)oids->nr);
 
 	check_stateless_delimiter(stateless_rpc, reader, "stateless delimiter expected");
 

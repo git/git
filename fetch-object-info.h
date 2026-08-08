@@ -4,22 +4,21 @@
 #include "pkt-line.h"
 #include "protocol.h"
 
-struct object_info_args {
-	struct string_list *object_info_options;
-	const struct string_list *server_options;
-	struct oid_array *oids;
-};
-
 struct object_info;
+struct oid_array;
 /*
  * Sends git-cat-file object-info command into the request buf and read the
  * results from packets.
  *
- * Modifies args->object_info_options, on return it contains only the supported
+ * Modifies object_info_options, on return it contains only the supported
  * options by the server.
  */
-int fetch_object_info(enum protocol_version version, struct object_info_args *args,
-		      struct packet_reader *reader, struct object_info *object_info_data,
+int fetch_object_info(enum protocol_version version,
+		      const struct string_list *server_options,
+		      struct oid_array *oids,
+		      struct string_list *object_info_options,
+		      struct packet_reader *reader,
+		      struct object_info *object_info_data,
 		      int stateless_rpc, int fd_out);
 
 #endif /* FETCH_OBJECT_INFO_H */
