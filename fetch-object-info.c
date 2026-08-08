@@ -11,7 +11,7 @@
 /* Sends object-info command and its arguments into the request buffer. */
 static void send_object_info_request(const int fd_out,
 				     const struct string_list *server_options,
-				     struct oid_array *oids,
+				     const struct oid_array *oids,
 				     unsigned ask_size)
 {
 	struct strbuf req_buf = STRBUF_INIT;
@@ -49,7 +49,7 @@ static int parse_object_size(const char *s, size_t *res)
 
 void fetch_object_info(const enum protocol_version version,
 		       const struct string_list *server_options,
-		       struct oid_array *oids,
+		       const struct oid_array *oids,
 		       struct packet_reader *reader,
 		       struct fetch_object_info_results *results,
 		       const int stateless_rpc,

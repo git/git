@@ -784,11 +784,14 @@ static int fetch_refs(struct transport *transport,
 	return -1;
 }
 
-static int fetch_object_info_helper(struct transport *transport)
+static int fetch_object_info_helper(struct transport *transport,
+				    const struct oid_array *oids,
+				    struct fetch_object_info_results *results)
 {
 	get_helper(transport);
 	if (process_connect(transport, 0))
-		return transport->vtable->fetch_object_info(transport);
+		return transport->vtable->fetch_object_info(transport, oids,
+							    results);
 
 	die(_("object-info requires protocol v2"));
 }
