@@ -11840,6 +11840,12 @@ proc prefspage_colors {notebook} {
         fg          fgcolor {} \
                     [mc "Main text"] \
                     [mc "choose main text color"] \
+        selbg       selectbgcolor {} \
+                    [mc "Selected text background"] \
+                    [mc "choose background color of selected text"] \
+        linkfg      linkfgcolor {} \
+                    [mc "Link text"] \
+                    [mc "choose color of link text"] \
         diffold     diffcolors 0 \
                     [mc "Old line text"] \
                     [mc "choose text color of old lines"] \
@@ -11858,12 +11864,6 @@ proc prefspage_colors {notebook} {
         markbg      markbgcolor {} \
                     [mc "Marked line background"] \
                     [mc "choose background color of marked lines"] \
-        selbg       selectbgcolor {} \
-                    [mc "Selected text background"] \
-                    [mc "choose background color of selected text"] \
-        linkfg      linkfgcolor {} \
-                    [mc "Link text"] \
-                    [mc "choose color of link text"] \
     ]
 
     foreach {uielem colorvar idx label title} $coloruielems {
