@@ -30,6 +30,10 @@
 #include "ident.h"
 #include "fsck.h"
 
+static const char *namespace_refname(const char *refname,
+				     struct strbuf *namespaced);
+static void strip_local_namespace(struct strbuf *refname);
+
 /*
  * List of all available backends
  */
@@ -1323,6 +1327,10 @@ struct ref_update *ref_transaction_add_update(
 {
 	struct string_list_item *item;
 	struct ref_update *update;
+	struct strbuf namespaced_refname = STRBUF_INIT;
+	struct strbuf namespaced_new_target = STRBUF_INIT;
+	struct strbuf namespaced_old_target = STRBUF_INIT;
+	const char *physical_refname;
 
 	if (transaction->state != REF_TRANSACTION_OPEN)
 		BUG("update called for transaction that is not open");
@@ -1332,15 +1340,20 @@ struct ref_update *ref_transaction_add_update(
 	if (new_oid && new_target)
 		BUG("only one of new_oid and new_target should be non NULL");
 
-	FLEX_ALLOC_STR(update, refname, refname);
+	physical_refname = namespace_refname(refname, &namespaced_refname);
+	FLEX_ALLOC_STR(update, refname, physical_refname);
 	ALLOC_GROW(transaction->updates, transaction->nr + 1, transaction->alloc);
 	transaction->updates[transaction->nr++] = update;
 
 	update->flags = flags;
 	update->rejection_err = 0;
 
-	update->new_target = xstrdup_or_null(new_target);
-	update->old_target = xstrdup_or_null(old_target);
+	update->new_target = xstrdup_or_null(
+		!strcmp(refname, "HEAD") ? new_target :
+		namespace_refname(new_target, &namespaced_new_target));
+	update->old_target = xstrdup_or_null(
+		!strcmp(refname, "HEAD") ? old_target :
+		namespace_refname(old_target, &namespaced_old_target));
 	if ((flags & REF_HAVE_NEW) && new_oid)
 		oidcpy(&update->new_oid, new_oid);
 	if ((flags & REF_HAVE_OLD) && old_oid)
@@ -1358,10 +1371,13 @@ struct ref_update *ref_transaction_add_update(
 	 * a single transaction.
 	 */
 	if (!(update->flags & REF_LOG_ONLY)) {
-		item = string_list_append(&transaction->refnames, refname);
+		item = string_list_append(&transaction->refnames, physical_refname);
 		item->util = update;
 	}
 
+	strbuf_release(&namespaced_refname);
+	strbuf_release(&namespaced_new_target);
+	strbuf_release(&namespaced_old_target);
 	return update;
 }
 
@@ -1838,6 +1854,22 @@ struct ref_iterator *refs_ref_iterator_begin(
 {
 	struct ref_iterator *iter;
 	struct strvec normalized_exclude_patterns = STRVEC_INIT;
+	struct strvec namespaced_exclude_patterns = STRVEC_INIT;
+	struct strbuf namespaced_prefix = STRBUF_INIT;
+	const char *namespace = get_git_namespace();
+	int local_namespace = git_namespace_is_local() && *namespace &&
+		!(flags & REFS_FOR_EACH_INCLUDE_ALL_NAMESPACES) &&
+		(!prefix || !starts_with(prefix, namespace));
+
+	if (local_namespace) {
+		strbuf_addstr(&namespaced_prefix, namespace);
+		if (prefix)
+			strbuf_addstr(&namespaced_prefix, prefix);
+		prefix = namespaced_prefix.buf;
+		exclude_patterns = get_namespaced_exclude_patterns(
+			exclude_patterns, namespace, &namespaced_exclude_patterns);
+		trim += strlen(namespace);
+	}
 
 	if (exclude_patterns) {
 		for (size_t i = 0; exclude_patterns[i]; i++) {
@@ -1855,6 +1887,8 @@ struct ref_iterator *refs_ref_iterator_begin(
 
 		exclude_patterns = normalized_exclude_patterns.v;
 	}
+
+	flags &= ~REFS_FOR_EACH_INCLUDE_ALL_NAMESPACES;
 
 	if (!(flags & REFS_FOR_EACH_INCLUDE_BROKEN)) {
 		static int ref_paranoia = -1;
@@ -1876,6 +1910,8 @@ struct ref_iterator *refs_ref_iterator_begin(
 		iter = prefix_ref_iterator_begin(iter, "", trim);
 
 	strvec_clear(&normalized_exclude_patterns);
+	strvec_clear(&namespaced_exclude_patterns);
+	strbuf_release(&namespaced_prefix);
 
 	return iter;
 }
@@ -1892,6 +1928,8 @@ int refs_for_each_ref_ext(struct ref_store *refs,
 	size_t trim_prefix = opts->trim_prefix;
 	const char **exclude_patterns;
 	const char *prefix;
+	const char *namespace = opts->namespace;
+	int local_namespace = 0;
 	int ret;
 
 	if (!refs)
@@ -1908,6 +1946,14 @@ int refs_for_each_ref_ext(struct ref_store *refs,
 			BUG("ref pattern must end in a trailing slash when trimming");
 	}
 
+	if (!namespace && git_namespace_is_local() &&
+	    !(opts->flags & REFS_FOR_EACH_INCLUDE_ALL_NAMESPACES) &&
+	    *get_git_namespace()) {
+		namespace = get_git_namespace();
+		local_namespace = 1;
+		trim_prefix += strlen(namespace);
+	}
+
 	if (opts->pattern) {
 		if (!opts->prefix && !starts_with(opts->pattern, "refs/"))
 			strbuf_addstr(&real_pattern, "refs/");
@@ -1922,8 +1968,12 @@ int refs_for_each_ref_ext(struct ref_store *refs,
 			strbuf_addch(&real_pattern, '*');
 		}
 
+		if (local_namespace)
+			strbuf_insertstr(&real_pattern, 0, namespace);
+
 		filter.pattern = real_pattern.buf;
-		filter.trim_prefix = opts->trim_prefix;
+		filter.trim_prefix = local_namespace ?
+			strlen(namespace) + opts->trim_prefix : opts->trim_prefix;
 		filter.fn = cb;
 		filter.cb_data = cb_data;
 
@@ -1937,8 +1987,8 @@ int refs_for_each_ref_ext(struct ref_store *refs,
 		cb_data = &filter;
 	}
 
-	if (opts->namespace) {
-		strbuf_addstr(&namespaced_prefix, opts->namespace);
+	if (namespace) {
+		strbuf_addstr(&namespaced_prefix, namespace);
 		if (opts->prefix)
 			strbuf_addstr(&namespaced_prefix, opts->prefix);
 		else
@@ -1946,7 +1996,7 @@ int refs_for_each_ref_ext(struct ref_store *refs,
 
 		prefix = namespaced_prefix.buf;
 		exclude_patterns = get_namespaced_exclude_patterns(opts->exclude_patterns,
-								   opts->namespace,
+								   namespace,
 								   &namespaced_exclude_patterns);
 	} else {
 		prefix = opts->prefix ? opts->prefix : "";
@@ -1967,6 +2017,14 @@ int refs_for_each_ref_ext(struct ref_store *refs,
 int refs_for_each_ref(struct ref_store *refs, refs_for_each_cb cb, void *cb_data)
 {
 	struct refs_for_each_ref_options opts = { 0 };
+	return refs_for_each_ref_ext(refs, cb, cb_data, &opts);
+}
+
+int refs_for_each_ref_all(struct ref_store *refs, refs_for_each_cb cb, void *cb_data)
+{
+	struct refs_for_each_ref_options opts = {
+		.flags = REFS_FOR_EACH_INCLUDE_ALL_NAMESPACES,
+	};
 	return refs_for_each_ref_ext(refs, cb, cb_data, &opts);
 }
 
@@ -2091,23 +2149,65 @@ done:
 	return result;
 }
 
+static const char *namespace_refname(const char *refname,
+				     struct strbuf *namespaced)
+{
+	const char *namespace = get_git_namespace();
+
+	if (!refname || !git_namespace_is_local() || !*namespace ||
+	    !starts_with(refname, "refs/") || starts_with(refname, namespace))
+		return refname;
+
+	strbuf_addstr(namespaced, namespace);
+	strbuf_addstr(namespaced, refname);
+	return namespaced->buf;
+}
+
+static void strip_local_namespace(struct strbuf *refname)
+{
+	const char *namespace = get_git_namespace();
+	const char *stripped;
+
+	if (!git_namespace_is_local() || !*namespace ||
+	    !skip_prefix(refname->buf, namespace, &stripped))
+		return;
+
+	strbuf_remove(refname, 0, stripped - refname->buf);
+}
+
 int refs_read_raw_ref(struct ref_store *ref_store, const char *refname,
 		      struct object_id *oid, struct strbuf *referent,
 		      unsigned int *type, int *failure_errno)
 {
+	struct strbuf namespaced = STRBUF_INIT;
+	int ret;
+
 	assert(failure_errno);
 	if (is_pseudo_ref(refname))
-		return refs_read_special_head(ref_store, refname, oid, referent,
-					      type, failure_errno);
+		ret = refs_read_special_head(ref_store, refname, oid, referent,
+					     type, failure_errno);
+	else
+		ret = ref_store->be->read_raw_ref(
+			ref_store, namespace_refname(refname, &namespaced), oid,
+			referent, type, failure_errno);
 
-	return ref_store->be->read_raw_ref(ref_store, refname, oid, referent,
-					   type, failure_errno);
+	if (!ret && (*type & REF_ISSYMREF))
+		strip_local_namespace(referent);
+	strbuf_release(&namespaced);
+	return ret;
 }
 
 int refs_read_symbolic_ref(struct ref_store *ref_store, const char *refname,
 			   struct strbuf *referent)
 {
-	return ref_store->be->read_symbolic_ref(ref_store, refname, referent);
+	struct strbuf namespaced = STRBUF_INIT;
+	int ret = ref_store->be->read_symbolic_ref(
+		ref_store, namespace_refname(refname, &namespaced), referent);
+
+	if (!ret)
+		strip_local_namespace(referent);
+	strbuf_release(&namespaced);
+	return ret;
 }
 
 const char *refs_resolve_ref_unsafe(struct ref_store *refs,
@@ -2487,7 +2587,14 @@ void base_ref_store_init(struct ref_store *refs, struct repository *repo,
 
 int refs_optimize(struct ref_store *refs, struct refs_optimize_opts *opts)
 {
-	return refs->be->optimize(refs, opts);
+	int local_namespace = git_namespace_is_local();
+	int ret;
+
+	/* Backends iterate and update physical refs while optimizing storage. */
+	set_git_namespace_is_local(0);
+	ret = refs->be->optimize(refs, opts);
+	set_git_namespace_is_local(local_namespace);
+	return ret;
 }
 
 int refs_optimize_required(struct ref_store *refs,
@@ -2976,7 +3083,14 @@ struct do_for_each_reflog_help {
 static int do_for_each_reflog_helper(const struct reference *ref, void *cb_data)
 {
 	struct do_for_each_reflog_help *hp = cb_data;
-	return hp->fn(ref->name, hp->cb_data);
+	const char *refname = ref->name;
+
+	if (git_namespace_is_local() && *get_git_namespace()) {
+		refname = strip_namespace(refname);
+		if (!refname)
+			return 0;
+	}
+	return hp->fn(refname, hp->cb_data);
 }
 
 int refs_for_each_reflog(struct ref_store *refs, each_reflog_fn fn, void *cb_data)
@@ -2994,30 +3108,49 @@ int refs_for_each_reflog_ent_reverse(struct ref_store *refs,
 				     each_reflog_ent_fn fn,
 				     void *cb_data)
 {
-	return refs->be->for_each_reflog_ent_reverse(refs, refname,
-						     fn, cb_data);
+	struct strbuf namespaced = STRBUF_INIT;
+	int ret = refs->be->for_each_reflog_ent_reverse(
+		refs, namespace_refname(refname, &namespaced), fn, cb_data);
+	strbuf_release(&namespaced);
+	return ret;
 }
 
 int refs_for_each_reflog_ent(struct ref_store *refs, const char *refname,
 			     each_reflog_ent_fn fn, void *cb_data)
 {
-	return refs->be->for_each_reflog_ent(refs, refname, fn, cb_data);
+	struct strbuf namespaced = STRBUF_INIT;
+	int ret = refs->be->for_each_reflog_ent(
+		refs, namespace_refname(refname, &namespaced), fn, cb_data);
+	strbuf_release(&namespaced);
+	return ret;
 }
 
 int refs_reflog_exists(struct ref_store *refs, const char *refname)
 {
-	return refs->be->reflog_exists(refs, refname);
+	struct strbuf namespaced = STRBUF_INIT;
+	int ret = refs->be->reflog_exists(
+		refs, namespace_refname(refname, &namespaced));
+	strbuf_release(&namespaced);
+	return ret;
 }
 
 int refs_create_reflog(struct ref_store *refs, const char *refname,
 		       struct strbuf *err)
 {
-	return refs->be->create_reflog(refs, refname, err);
+	struct strbuf namespaced = STRBUF_INIT;
+	int ret = refs->be->create_reflog(
+		refs, namespace_refname(refname, &namespaced), err);
+	strbuf_release(&namespaced);
+	return ret;
 }
 
 int refs_delete_reflog(struct ref_store *refs, const char *refname)
 {
-	return refs->be->delete_reflog(refs, refname);
+	struct strbuf namespaced = STRBUF_INIT;
+	int ret = refs->be->delete_reflog(
+		refs, namespace_refname(refname, &namespaced));
+	strbuf_release(&namespaced);
+	return ret;
 }
 
 int refs_reflog_expire(struct ref_store *refs,
@@ -3028,9 +3161,12 @@ int refs_reflog_expire(struct ref_store *refs,
 		       reflog_expiry_cleanup_fn cleanup_fn,
 		       void *policy_cb_data)
 {
-	return refs->be->reflog_expire(refs, refname, flags,
-				       prepare_fn, should_prune_fn,
-				       cleanup_fn, policy_cb_data);
+	struct strbuf namespaced = STRBUF_INIT;
+	int ret = refs->be->reflog_expire(
+		refs, namespace_refname(refname, &namespaced), flags,
+		prepare_fn, should_prune_fn, cleanup_fn, policy_cb_data);
+	strbuf_release(&namespaced);
+	return ret;
 }
 
 void ref_transaction_for_each_queued_update(struct ref_transaction *transaction,
@@ -3128,10 +3264,16 @@ int refs_rename_ref(struct ref_store *refs, const char *oldref,
 {
 	char *msg;
 	int retval;
+	struct strbuf namespaced_oldref = STRBUF_INIT;
+	struct strbuf namespaced_newref = STRBUF_INIT;
 
 	msg = normalize_reflog_message(logmsg);
-	retval = refs->be->rename_ref(refs, oldref, newref, msg);
+	retval = refs->be->rename_ref(
+		refs, namespace_refname(oldref, &namespaced_oldref),
+		namespace_refname(newref, &namespaced_newref), msg);
 	free(msg);
+	strbuf_release(&namespaced_oldref);
+	strbuf_release(&namespaced_newref);
 	return retval;
 }
 
@@ -3140,10 +3282,16 @@ int refs_copy_existing_ref(struct ref_store *refs, const char *oldref,
 {
 	char *msg;
 	int retval;
+	struct strbuf namespaced_oldref = STRBUF_INIT;
+	struct strbuf namespaced_newref = STRBUF_INIT;
 
 	msg = normalize_reflog_message(logmsg);
-	retval = refs->be->copy_ref(refs, oldref, newref, msg);
+	retval = refs->be->copy_ref(
+		refs, namespace_refname(oldref, &namespaced_oldref),
+		namespace_refname(newref, &namespaced_newref), msg);
 	free(msg);
+	strbuf_release(&namespaced_oldref);
+	strbuf_release(&namespaced_newref);
 	return retval;
 }
 

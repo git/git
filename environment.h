@@ -168,6 +168,8 @@ int use_optional_locks(void);
 
 const char *get_git_namespace(void);
 const char *strip_namespace(const char *namespaced_ref);
+int git_namespace_is_local(void);
+void set_git_namespace_is_local(int is_local);
 
 int git_default_config(const char *, const char *,
 		       const struct config_context *, void *);
