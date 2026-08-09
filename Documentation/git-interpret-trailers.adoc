@@ -117,6 +117,16 @@ key: This is a very long value, with spaces and
   newlines in it.
 ------------------------------------------------
 
+OTHER RULES
+-----------
+
+What was covered in the previous section are the rules that are relevant
+for regular use. The following points are included for completeness.
+
+This command ignores comment lines (see `core.commentString` in
+linkgit:git-config[1]). This is for use with the `prepare-commit-msg`
+and `commit-msg` hooks.
+
 OPTIONS
 -------
 `--in-place`::
