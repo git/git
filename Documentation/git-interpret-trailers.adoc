@@ -60,10 +60,18 @@ are applied to each input and the way any existing trailer in
 the input is changed. They also make it possible to
 automatically add some trailers.
 
-By default, a `<key>=<value>` or `<key>:<value>` argument given
-using `--trailer` will be appended after the existing trailers only if
-the last trailer has a different (_<key>_, _<value>_) pair (or if there
-is no existing trailer). The _<key>_ and _<value>_ parts will be trimmed
+Let's consider new trailers added with `--trailer`.
+By default, the new trailer will appear at the end of the trailer block.
+Also by default, this new trailer will only be added
+if the last trailer is different to it.
+A trailer block will be created with only that trailer if a trailer
+block does not already exist. Recall that a trailer block needs to be
+preceded by a blank line, so a blank line will be inserted before the
+new trailer block in that case.
+
+This is how the new trailer is added: a `<key>=<value>` or
+`<key>:<value>` argument given using `--trailer` will be appended after
+the existing trailers. The _<key>_ and _<value>_ parts will be trimmed
 to remove starting and trailing whitespace, and the resulting trimmed
 _<key>_ and _<value>_ will appear in the output like this:
 
@@ -73,12 +81,6 @@ key: value
 
 This means that the trimmed _<key>_ and _<value>_ will be separated by
 "`:`{nbsp}" (one colon followed by one space).
-
-By default the new trailer will appear at the end of the trailer block.
-A trailer block will be created with only that trailer if a trailer
-block does not already exist. Recall that a trailer block needs to be
-preceded by a blank line, so a blank line will be inserted before the
-new trailer block in that case.
 
 Existing trailers are extracted from the input by looking for the
 trailer block. A trailer block is a group of one or more lines that (i)
