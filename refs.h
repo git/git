@@ -448,6 +448,9 @@ enum refs_for_each_flag {
 	 * refs.
 	 */
 	REFS_FOR_EACH_INCLUDE_ROOT_REFS = (1 << 3),
+
+	/* Include references from every namespace, ignoring GIT_NAMESPACE. */
+	REFS_FOR_EACH_INCLUDE_ALL_NAMESPACES = (1 << 4),
 };
 
 /*
@@ -509,6 +512,8 @@ struct refs_for_each_ref_options {
 
 int refs_for_each_ref(struct ref_store *refs,
 		      refs_for_each_cb fn, void *cb_data);
+int refs_for_each_ref_all(struct ref_store *refs,
+			      refs_for_each_cb fn, void *cb_data);
 int refs_for_each_ref_ext(struct ref_store *refs,
 			  refs_for_each_cb cb, void *cb_data,
 			  const struct refs_for_each_ref_options *opts);

@@ -168,6 +168,18 @@ int have_git_dir(void)
 		|| the_repository->gitdir;
 }
 
+static int git_namespace_local = 1;
+
+int git_namespace_is_local(void)
+{
+	return git_namespace_local;
+}
+
+void set_git_namespace_is_local(int is_local)
+{
+	git_namespace_local = is_local;
+}
+
 const char *get_git_namespace(void)
 {
 	static const char *namespace;
