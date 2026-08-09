@@ -48,6 +48,18 @@ test_expect_success 'use a ref namespace as a local repository view' '
 	)
 '
 
+test_expect_success 'gc protects refs outside the active namespace' '
+	(
+		cd local &&
+		commit=$(env GIT_NAMESPACE=local git rev-parse refs/heads/main) &&
+		tree=$(git rev-parse "$commit^{tree}") &&
+		outside=$(printf outside | git commit-tree "$tree") &&
+		git update-ref refs/heads/outside "$outside" &&
+		env GIT_NAMESPACE=local git gc --prune=now --quiet &&
+		git cat-file -e "$outside"
+	)
+'
+
 test_expect_success 'pushing into a repository using a ref namespace' '
 	(
 		cd original &&
