@@ -7,6 +7,7 @@ test_tool_sources = [
   'test-cache-tree.c',
   'test-chmtime.c',
   'test-config.c',
+  'test-copy-file.c',
   'test-crontab.c',
   'test-csprng.c',
   'test-date.c',
