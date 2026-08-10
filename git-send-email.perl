@@ -863,7 +863,7 @@ sub get_patch_subject {
 		return "GIT: $1\n";
 	}
 	close $fh;
-	die sprintf(__("No subject line in %s?"), $fn);
+	die sprintf(__("No 'Subject:' line in '%s'\n"), $fn);
 }
 
 if ($compose) {
