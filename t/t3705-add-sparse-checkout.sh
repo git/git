@@ -233,4 +233,30 @@ test_expect_success 'refuse to add non-skip-worktree file from sparse dir' '
 	test_cmp expect stderr
 '
 
+test_expect_success 'intent-to-add entry and sparse index' '
+	test_when_finished "git sparse-checkout disable" &&
+	test_when_finished "git reset --hard" &&
+
+	git sparse-checkout disable &&
+	mkdir -p in out &&
+	echo base >in/file &&
+	echo base >out/file &&
+	git add in/file out/file &&
+	git commit -m "in and out directories" &&
+
+	# enable sparse-checkout, but with all child directories.
+	git config index.sparse true &&
+	git sparse-checkout set in out &&
+
+	# create a new path and set intent-to-add bit
+	echo new >out/newita &&
+	git add -N out/newita &&
+
+	# collapse sparse-checkout, and make sure that the sparse index
+	# maintains the intent-to-add bit.
+	git sparse-checkout set in &&
+	git ls-files --error-unmatch out/newita &&
+	git status --porcelain
+'
+
 test_done

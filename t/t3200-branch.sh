@@ -930,7 +930,7 @@ test_expect_success 'deleting currently checked out branch fails' '
 	git worktree add -b my7 my7 &&
 	test_must_fail git -C my7 branch -d my7 &&
 	test_must_fail git branch -d my7 2>actual &&
-	test_grep "^error: cannot delete branch .my7. used by worktree at " actual &&
+	test_grep "^error: cannot delete branch '"'"'my7'"'"' used by worktree at '"'.*'\$"'" actual &&
 	rm -r my7 &&
 	git worktree prune
 '
@@ -941,7 +941,7 @@ test_expect_success 'deleting in-use branch fails' '
 	git -C my7 bisect start HEAD HEAD~2 &&
 	test_must_fail git -C my7 branch -d my7 &&
 	test_must_fail git branch -d my7 2>actual &&
-	test_grep "^error: cannot delete branch .my7. used by worktree at " actual &&
+	test_grep "^error: cannot delete branch '"'"'my7'"'"' used by worktree at '"'.*' for bisect\$"'" actual &&
 	rm -r my7 &&
 	git worktree prune
 '

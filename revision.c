@@ -4196,37 +4196,39 @@ static timestamp_t comparison_date(const struct rev_info *revs,
 		commit->date;
 }
 
-enum commit_action get_commit_action(struct rev_info *revs, struct commit *commit)
+/*
+ * Whether the commit is ignored by the cheap checks that read only its
+ * traversal flags and pack membership (e.g. already shown, or marked
+ * uninteresting), before any check that examines the commit's date,
+ * parents, message, or diff.
+ */
+static int commit_early_ignore(struct rev_info *revs, struct commit *commit)
 {
 	if (commit->object.flags & SHOWN)
-		return commit_ignore;
+		return 1;
 	if (revs->maximal_only && (commit->object.flags & CHILD_VISITED))
-		return commit_ignore;
+		return 1;
 	if (revs->unpacked && has_object_pack(revs->repo, &commit->object.oid))
-		return commit_ignore;
-	if (revs->no_kept_objects) {
-		if (has_object_kept_pack(revs->repo, &commit->object.oid,
-					 revs->keep_pack_cache_flags))
-			return commit_ignore;
-	}
+		return 1;
+	if (revs->no_kept_objects &&
+	    has_object_kept_pack(revs->repo, &commit->object.oid,
+				 revs->keep_pack_cache_flags))
+		return 1;
 	if (commit->object.flags & UNINTERESTING)
+		return 1;
+	return 0;
+}
+
+/*
+ * Decide whether this commit is shown or ignored.  Keep it a pure
+ * predicate: callers such as the commit graph depend on it having no
+ * side effects, so per-commit mutations (such as -L range tracking)
+ * belong in the caller, simplify_commit(), not here.
+ */
+enum commit_action get_commit_action(struct rev_info *revs, struct commit *commit)
+{
+	if (commit_early_ignore(revs, commit))
 		return commit_ignore;
-	if (revs->line_level_traverse && !want_ancestry(revs)) {
-		/*
-		 * In case of line-level log with parent rewriting
-		 * prepare_revision_walk() already took care of all line-level
-		 * log filtering, and there is nothing left to do here.
-		 *
-		 * If parent rewriting was not requested, then this is the
-		 * place to perform the line-level log filtering.  Notably,
-		 * this check, though expensive, must come before the other,
-		 * cheaper filtering conditions, because the tracked line
-		 * ranges must be adjusted even when the commit will end up
-		 * being ignored based on other conditions.
-		 */
-		if (!line_log_process_ranges_arbitrary_commit(revs, commit))
-			return commit_ignore;
-	}
 	if (revs->min_age != -1 &&
 	    comparison_date(revs, commit) > revs->min_age)
 			return commit_ignore;
@@ -4335,7 +4337,23 @@ struct commit_list *get_saved_parents(struct rev_info *revs, const struct commit
 
 enum commit_action simplify_commit(struct rev_info *revs, struct commit *commit)
 {
-	enum commit_action action = get_commit_action(revs, commit);
+	enum commit_action action;
+
+	/*
+	 * For a line-level log without parent rewriting, fold each commit's
+	 * ranges as the walk reaches it (parent rewriting does this eagerly in
+	 * prepare_revision_walk()).  Fold before get_commit_action() so the
+	 * ranges carry across a commit that a later, cheaper check ignores;
+	 * the commit_early_ignore() guard skips a commit get_commit_action()
+	 * would ignore outright.
+	 */
+	if (revs->line_level_traverse && !want_ancestry(revs) &&
+	    !commit_early_ignore(revs, commit)) {
+		if (!line_log_process_ranges_arbitrary_commit(revs, commit))
+			return commit_ignore;
+	}
+
+	action = get_commit_action(revs, commit);
 
 	if (action == commit_show &&
 	    revs->prune && revs->dense && want_ancestry(revs)) {

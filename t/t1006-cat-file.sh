@@ -1340,6 +1340,14 @@ test_expect_success 'batch-command flush without --buffer' '
 	test_grep "^fatal:.*flush is only for --buffer mode.*" err
 '
 
+test_expect_success 'batch-command contents auto-handles type' '
+	echo "HEAD" |
+		git cat-file --batch="%(objectname)" >expect &&
+	echo "contents HEAD" |
+		git cat-file --batch-command="%(objectname)" >actual &&
+	test_cmp expect actual
+'
+
 perl_script='
 use warnings;
 use strict;
