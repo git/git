@@ -76,7 +76,11 @@ its child.
 Commits not in the commit-graph have generation INFINITY; v1
 commit-graphs saturate at V1_MAX. Both place commits in the
 unordered region. Any optimization that depends on generation
-ordering must account for this saturation boundary.
+ordering must account for this saturation boundary. The early
+exit gates compare against a topological ceiling --
+`GENERATION_NUMBER_V1_MAX` for v1 graphs and
+`GENERATION_NUMBER_INFINITY` for v2 graphs -- so that saturated
+commits are treated as unordered.
 
 With generation ordering, values in the unordered region exceed
 those in the ordered region. The walk may therefore transition
@@ -103,6 +107,9 @@ ends when one of the following conditions holds:
      a caller-supplied `min_generation` threshold.
   4. Single result: the caller only needs one merge base, one has
      been found, and the walk has entered the ordered region.
+  5. Side exhaustion: no pure PARENT1 or pure PARENT2 commits
+     remain in the queue, no pending merge-base candidates exist,
+     and the walk has entered the ordered region.
 
 Stale entry condition
 ~~~~~~~~~~~~~~~~~~~~~
@@ -112,6 +119,16 @@ each side meeting. Continuing the walk could still invalidate
 existing candidates by proving one is an ancestor of another, but
 `remove_redundant()` handles that as a post-processing step, so it
 is safe to exit early.
+
+Side-exhaustion condition
+~~~~~~~~~~~~~~~~~~~~~~~~~
+A new merge-base requires commits from both sides to meet. When one
+side's exclusive counter reaches zero and there are no pending
+merge-base candidates, no future traversal step can produce a new
+candidate. This optimization only activates in the ordered region,
+where paint flags are final at visit time; in the unordered region,
+a side that appears exhausted could reappear through late paint
+propagation.
 
 Generation cutoff
 ~~~~~~~~~~~~~~~~~
@@ -158,11 +175,15 @@ ordering via `compare_commits_by_commit_date`. Because commit
 dates are not monotonic (clock skew, rebases, etc.), the queue
 may visit commits out of topological order.
 
-This disables the optimization that depends on generation ordering:
+This disables the optimizations that depend on generation ordering:
 
   - *Single result*: the first merge-base candidate found may not
     be the shallowest, because a deeper ancestor with a higher
     commit date can be dequeued first.
+
+  - *Side exhaustion*: one paint side can appear to drain from the
+    queue while commits from that side are still waiting with lower
+    dates, causing premature termination.
 
 Related documentation
 ---------------------
