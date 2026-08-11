@@ -3751,25 +3751,55 @@ static void option_rewrite_submodules(const char *arg, struct string_list *list)
 	free(s);
 }
 
+static void option_max_pack_size(const char *arg)
+{
+	unsigned long v;
+
+	if (!git_parse_ulong(arg, &v))
+		die(_("--max-pack-size: argument must be a non-negative integer"));
+	if (v < 8192) {
+		warning(_("max-pack-size is now in bytes, assuming --max-pack-size=%lum"), v);
+		v *= 1024 * 1024;
+	} else if (v < 1024 * 1024) {
+		warning(_("minimum max-pack-size is 1 MiB"));
+		v = 1024 * 1024;
+	}
+	max_packsize = v;
+}
+
+static void option_big_file_threshold(const char *arg)
+{
+	unsigned long v;
+
+	if (!git_parse_ulong(arg, &v))
+		die(_("--big-file-threshold: argument must be a non-negative integer"));
+	repo_settings_set_big_file_threshold(the_repository, v);
+}
+
+static void option_signed_commits(const char *arg)
+{
+	if (parse_sign_mode(arg, &signed_commit_mode, &signed_commit_keyid))
+		usagef(_("unknown --signed-commits mode '%s'"), arg);
+}
+
+static void option_signed_tags(const char *arg)
+{
+	if (parse_sign_mode(arg, &signed_tag_mode, &signed_tag_keyid))
+		usagef(_("unknown --signed-tags mode '%s'"), arg);
+}
+
+static void option_quiet(void)
+{
+	show_stats = 0;
+	quiet = 1;
+}
+
 static int parse_one_option(const char *option)
 {
 	if (skip_prefix(option, "max-pack-size=", &option)) {
-		unsigned long v;
-		if (!git_parse_ulong(option, &v))
-			return 0;
-		if (v < 8192) {
-			warning(_("max-pack-size is now in bytes, assuming --max-pack-size=%lum"), v);
-			v *= 1024 * 1024;
-		} else if (v < 1024 * 1024) {
-			warning(_("minimum max-pack-size is 1 MiB"));
-			v = 1024 * 1024;
-		}
-		max_packsize = v;
+		option_max_pack_size(option);
 	} else if (skip_prefix(option, "big-file-threshold=", &option)) {
-		unsigned long v;
-		if (!git_parse_ulong(option, &v))
-			return 0;
-		repo_settings_set_big_file_threshold(the_repository, v);
+		option_big_file_threshold(option);
 	} else if (skip_prefix(option, "depth=", &option)) {
 		option_depth(option);
 	} else if (skip_prefix(option, "active-branches=", &option)) {
@@ -3777,14 +3807,11 @@ static int parse_one_option(const char *option)
 	} else if (skip_prefix(option, "export-pack-edges=", &option)) {
 		option_export_pack_edges(option);
 	} else if (skip_prefix(option, "signed-commits=", &option)) {
-		if (parse_sign_mode(option, &signed_commit_mode, &signed_commit_keyid))
-			usagef(_("unknown --signed-commits mode '%s'"), option);
+		option_signed_commits(option);
 	} else if (skip_prefix(option, "signed-tags=", &option)) {
-		if (parse_sign_mode(option, &signed_tag_mode, &signed_tag_keyid))
-			usagef(_("unknown --signed-tags mode '%s'"), option);
+		option_signed_tags(option);
 	} else if (!strcmp(option, "quiet")) {
-		show_stats = 0;
-		quiet = 1;
+		option_quiet();
 	} else if (!strcmp(option, "stats")) {
 		show_stats = 1;
 	} else if (!strcmp(option, "allow-unsafe-features")) {
