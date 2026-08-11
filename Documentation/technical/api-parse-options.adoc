@@ -150,6 +150,68 @@ Data Structure
 
 The main data structure is an array of the `option` struct,
 say `static struct option builtin_add_options[]`.
+
+Option flags
+~~~~~~~~~~~~
+
+Each option can carry flags in the `flags` field of its `option`
+struct. These are per-option flags and are distinct from the
+`parse_options()` flags described above; they are usually set through
+the `OPT_*_F()` macro variants (see below) rather than by hand. They
+are the bitwise-or of:
+
+`PARSE_OPT_OPTARG`::
+	The option's argument is optional, i.e. both `--option` and
+	`--option=<value>` are accepted.
+
+`PARSE_OPT_NOARG`::
+	The option takes no argument at all. Using `--option=<value>`
+	is rejected.
+
+`PARSE_OPT_NONEG`::
+	Disable the automatically generated negated `--no-option`
+	form.
+
+`PARSE_OPT_HIDDEN`::
+	Hide the option: it is omitted from the usage shown by
+	`git <cmd> -h`, but is still shown by `git <cmd> --help-all`.
+	The option is parsed as usual either way. This is meant for
+	deprecated, advanced or otherwise uncommon options.
+
+`PARSE_OPT_LASTARG_DEFAULT`::
+	The no-argument form is only accepted when the option is the
+	last token on the command line; used earlier, it still
+	requires an argument. Should not be combined with
+	`PARSE_OPT_OPTARG`.
+
+`PARSE_OPT_NODASH`::
+	The option is a single character without a leading dash, such
+	as the `+` used by some commands.
+
+`PARSE_OPT_LITERAL_ARGHELP`::
+	Use the argument help string (`argh`) verbatim in the usage
+	output instead of surrounding it with `<>` or `[]`. Useful when
+	`argh` already contains a hand-formatted description.
+
+`PARSE_OPT_FROM_ALIAS`::
+	Internal flag, set on options that were expanded from a
+	configured alias. It should not be set by callers.
+
+`PARSE_OPT_NOCOMPLETE`::
+	Do not offer this option for completion.
+
+`PARSE_OPT_COMP_ARG`::
+	The option's argument, rather than the option itself, is what
+	should be completed.
+
+`PARSE_OPT_CMDMODE`::
+	The option is one of several mutually exclusive "command mode"
+	options that share the same variable. Using more than one of
+	them at once is rejected.
+
+Macros
+~~~~~~
+
 There are some macros to easily define options:
 
 `OPT__ABBREV(&int_var)`::
