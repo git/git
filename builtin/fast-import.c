@@ -3867,30 +3867,28 @@ static int parse_one_option(struct fast_import_state *state, const char *option)
 }
 
 static void check_unsafe_feature(struct fast_import_state *state,
-				 const char *feature,
-				 int from_stream)
+				 const char *feature)
 {
-	if (from_stream && !state->allow_unsafe_features)
+	if (!state->allow_unsafe_features)
 		die(_("feature '%s' forbidden in input without --allow-unsafe-features"),
 		    feature);
 }
 
 static int parse_one_feature(struct fast_import_state *state,
-			     const char *feature,
-			     int from_stream)
+			     const char *feature)
 {
 	const char *arg;
 
 	if (skip_prefix(feature, "date-format=", &arg)) {
 		option_date_format(arg);
 	} else if (skip_prefix(feature, "import-marks=", &arg)) {
-		check_unsafe_feature(state, "import-marks", from_stream);
-		option_import_marks(state, arg, from_stream, 0);
+		check_unsafe_feature(state, "import-marks");
+		option_import_marks(state, arg, 1, 0);
 	} else if (skip_prefix(feature, "import-marks-if-exists=", &arg)) {
-		check_unsafe_feature(state, "import-marks-if-exists", from_stream);
-		option_import_marks(state, arg, from_stream, 1);
+		check_unsafe_feature(state, "import-marks-if-exists");
+		option_import_marks(state, arg, 1, 1);
 	} else if (skip_prefix(feature, "export-marks=", &arg)) {
-		check_unsafe_feature(state, feature, from_stream);
+		check_unsafe_feature(state, feature);
 		option_export_marks(state, arg);
 	} else if (!strcmp(feature, "alias")) {
 		; /* Don't die - this feature is supported */
@@ -3924,7 +3922,7 @@ static void parse_feature(struct fast_import_state *state, const char *feature)
 	if (state->seen_data_command)
 		die(_("got feature command '%s' after data command"), feature);
 
-	if (parse_one_feature(state, feature, 1))
+	if (parse_one_feature(state, feature))
 		return;
 
 	die(_("this version of fast-import does not support feature %s."), feature);
