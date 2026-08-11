@@ -1,0 +1,174 @@
+Merge-Base Computation and paint_down_to_common()
+==================================================
+
+The function `paint_down_to_common()` in `commit-reach.c` computes merge
+bases by walking the commit graph backwards from two sets of tips and
+finding where their ancestry meets.
+
+Use cases
+---------
+
+Computing merge bases is used in two different ways:
+
+ 1. *Finding all merge bases* (`merge-base --all`, `merge-tree`,
+    `merge`, `rebase`). A merge base is a common ancestor that is
+    not itself an ancestor of another common ancestor.
+
+ 2. *Ancestry checks* (`in_merge_bases`, used by `merge-base
+    --is-ancestor`, `branch -d`, `fetch`). These ask: "is commit A
+    an ancestor of commit B?" If a common ancestor equals one of the
+    inputs, that input is necessarily the only merge base -- no other
+    common ancestor can be both as recent and not an ancestor of it.
+
+Both use cases share the same algorithm and implementation.
+
+Algorithm
+---------
+
+Given a commit `one` and a set of commits `twos[]`, the walk paints
+commits with two colors:
+
+  - PARENT1: reachable from `one`
+  - PARENT2: reachable from any commit in `twos[]`
+
+The walk uses a priority queue ordered by generation number
+(highest first), breaking ties by commit date. Each step dequeues
+the highest-priority commit and propagates its paint flags to its
+parents, enqueuing any parent that gained new flags. When a
+commit receives both PARENT1 and PARENT2, it is a merge-base
+candidate. A candidate gains the STALE flag so its ancestors
+propagate staleness -- any deeper common ancestor is necessarily
+redundant.
+
+[[generation-regions]]
+Topologically ordered and unordered generation regions
+------------------------------------------------------
+
+Commits fall into two regions based on whether their generation
+numbers provide a topological ordering guarantee:
+
+....
+    +------------------------------------------+
+    |          Unordered region                |
+    |  generation = INFINITY or V1_MAX         |
+    |  queue order: heuristic (commit date)    |
+    +------------------------------------------+
+                      |
+                      v
+    +------------------------------------------+
+    |          Ordered region                  |
+    |  generation = finite, unsaturated        |
+    |  queue order: topological                |
+    +------------------------------------------+
+....
+
+In the ordered region, a child's generation is strictly greater
+than its parent's. Same-generation commits are necessarily
+independent, so the queue always processes children before
+their parents.
+
+In the unordered region, parent-child pairs can share the same
+generation number, so topological order is not guaranteed. The
+queue uses commit-date as a heuristic, which typically produces
+a reasonable traversal order but may process a parent before
+its child.
+
+Commits not in the commit-graph have generation INFINITY; v1
+commit-graphs saturate at V1_MAX. Both place commits in the
+unordered region. Any optimization that depends on generation
+ordering must account for this saturation boundary.
+
+With generation ordering, values in the unordered region exceed
+those in the ordered region. The walk may therefore transition
+from the unordered region into the ordered region, but never in
+the reverse direction. Without a commit-graph, every commit has INFINITY
+and the walk operates entirely in the unordered region.
+
+In the ordered region, paint on a dequeued commit is final --
+no future step can add flags to it. In the unordered region,
+a dequeued commit may later gain additional paint. Paint flags
+are only added, never removed, bounding the number of
+re-enqueues per commit.
+
+Termination
+-----------
+
+The walk uses a `nonstale_queue` wrapper around `prio_queue` that
+tracks `max_nonstale`: the lowest-priority non-stale commit enqueued
+so far. Once that commit is dequeued, every remaining entry is known
+to be STALE and the loop terminates. Specifically, the main loop
+ends when one of the following conditions holds:
+
+  1. The queue is empty.
+  2. `max_nonstale` has been dequeued, meaning the queue only contains
+     STALE entries.
+  3. Generation cutoff: the dequeued commit's generation is below
+     a caller-supplied `min_generation` threshold.
+  4. Single result: the caller only needs one merge base, one has
+     been found, and the walk has entered the ordered region.
+
+Stale entry condition
+~~~~~~~~~~~~~~~~~~~~~
+Once all queued entries are stale, no new merge-base candidates can
+be discovered -- that requires at least one non-stale commit from
+each side meeting. Continuing the walk could still invalidate
+existing candidates by proving one is an ancestor of another, but
+`remove_redundant()` handles that as a post-processing step, so it
+is safe to exit early.
+
+Generation cutoff
+~~~~~~~~~~~~~~~~~
+Some callers (notably `remove_redundant()`) supply a `min_generation`
+threshold equal to the minimum generation of the input commits.
+These callers only need to determine reachability among the inputs,
+not find deep merge bases, so the walk can safely terminate when it
+dequeues a commit below this threshold.
+
+Single result
+~~~~~~~~~~~~~
+When only one merge base is needed and the walk is in the
+ordered region with generation ordering, the first candidate
+found is necessarily the highest-generation common ancestor.
+No remaining commit in the queue can be a descendant of this
+candidate (generation ordering guarantees children are visited
+first), so it cannot be redundant and the walk can stop
+immediately.
+
+This optimization is NOT safe when the date-ordering fallback is
+active, because commit-date order can visit a deeper ancestor
+before a shallower one -- see <<date-ordering-fallback>>.
+
+[[date-ordering-fallback]]
+Date-ordering fallback
+----------------------
+
+When the commit-graph has generation numbers v1 and no
+generation floor is specified, topological ordering
+(via generation numbers) is disabled. Topological levels are
+correct but unbalanced -- ordering by such generation numbers
+can sometimes cause the walk to detour too far before finding
+merge bases. Commit-date ordering typically reaches them in
+fewer steps -- see this change for more details:
+
+   091f4cf3 (commit: don't use generation numbers if not needed,
+   2018-08-30)
+
+With generation number v2 (corrected commit dates) we have the best
+of both worlds and do not need this fallback.
+
+For v1, `paint_down_to_common()` falls back to pure commit-date
+ordering via `compare_commits_by_commit_date`. Because commit
+dates are not monotonic (clock skew, rebases, etc.), the queue
+may visit commits out of topological order.
+
+This disables the optimization that depends on generation ordering:
+
+  - *Single result*: the first merge-base candidate found may not
+    be the shallowest, because a deeper ancestor with a higher
+    commit date can be dequeued first.
+
+Related documentation
+---------------------
+
+  - `Documentation/technical/commit-graph.adoc` -- generation numbers
+    and the reachability closure property.
