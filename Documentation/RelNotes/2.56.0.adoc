@@ -79,6 +79,12 @@ UI, Workflows & Features
  * 'git branch -d' has been taught to report when a branch cannot be
    deleted because it is being used in an active bisect run.
 
+ * 'git mv' has been updated to check for a missing destination
+   leading directory during the checking phase, allowing 'git mv -n'
+   to report the failure.  The error message when the rename(2)
+   syscall fails has also been improved to name both the source and
+   the destination.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -314,6 +320,20 @@ Performance, Internal Implementation, Development Support etc.
    before the walk reaches it does not prematurely mutate its tracked
    line ranges, making it safer for potential lookahead evaluations.
 
+ * Synopsis and options in the documentation for 'git format-patch',
+   'git imap-send', 'git send-email', and 'git request-pull' have been
+   updated to the modern style.
+
+ * A new test helper commit_body() has been introduced to print the
+   message body of a commit, and various tests have been updated to use
+   it instead of spelling out the command pipeline manually and losing
+   the exit status of the 'git cat-file' command on the upstream of the
+   pipe.
+
+ * Tests for 'git merge-base --is-ancestor' have been added to cover
+   exit codes (0 for success, 1 for non-ancestor, 128 for errors) and
+   to ensure it cannot be combined with '--all'.
+
 
 Fixes since v2.55
 -----------------
@@ -535,3 +555,7 @@ Fixes since v2.55
    invalidated cache-tree node (due to an intent-to-add path) has been
    fixed by avoiding collapsing such subtrees.
    (merge eede1e69fe ds/sparse-index-ita-crash later to maint).
+
+ * Documentation for 'git replay' has been updated to refer to its
+   configuration variables.
+   (merge 48c0549f5c kh/doc-replay-config later to maint).
