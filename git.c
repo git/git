@@ -304,11 +304,15 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 			if (envchanged)
 				*envchanged = 1;
 		} else if (!strcmp(cmd, "--shallow-file")) {
-			(*argv)++;
-			(*argc)--;
-			setenv(GIT_SHALLOW_FILE_ENVIRONMENT, (*argv)[0], 1);
+			if (*argc < 2) {
+				fprintf(stderr, _("no file given for '%s' option\n" ), "--shallow-file");
+				usage(git_usage_string);
+			}
+			setenv(GIT_SHALLOW_FILE_ENVIRONMENT, (*argv)[1], 1);
 			if (envchanged)
 				*envchanged = 1;
+			(*argv)++;
+			(*argc)--;
 		} else if (!strcmp(cmd, "-C")) {
 			if (*argc < 2) {
 				fprintf(stderr, _("no directory given for '%s' option\n" ), "-C");
