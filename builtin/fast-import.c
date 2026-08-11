@@ -3975,31 +3975,11 @@ static const char *const fast_import_usage[] = {
 
 static void parse_argv(struct fast_import_state *state)
 {
-	unsigned int i;
+	int argc = parse_options(state->argc, state->argv, state->prefix,
+				 state->option, fast_import_usage,
+				 PARSE_OPT_KEEP_ARGV0);
 
-	for (i = 1; i < state->argc; i++) {
-		const char *a = state->argv[i];
-
-		if (*a != '-' || !strcmp(a, "--"))
-			break;
-
-		if (!skip_prefix(a, "--", &a))
-			die(_("unknown option %s"), a);
-
-		if (parse_one_option(state, a))
-			continue;
-
-		if (parse_one_feature(state, a, 0))
-			continue;
-
-		if (skip_prefix(a, "cat-blob-fd=", &a)) {
-			option_cat_blob_fd(state, a);
-			continue;
-		}
-
-		die(_("unknown option --%s"), a);
-	}
-	if (i != state->argc)
+	if (argc > 1)
 		usage_with_options(fast_import_usage, state->option);
 
 	state->seen_data_command = 1;
@@ -4135,11 +4115,6 @@ int cmd_fast_import(int argc,
 {
 	struct fast_import_state state;
 
-	/*
-	 * NEEDSWORK: For now this is used only to render
-	 * `-h`/`--help-all` usage messages. The actual parsing is
-	 * done by parse_one_option()/parse_one_feature().
-	 */
 	struct option fast_import_options[] = {
 		OPT_GROUP(N_("Common")),
 		OPT_CALLBACK_F(0, "date-format", NULL, N_("fmt"),
@@ -4230,6 +4205,16 @@ int cmd_fast_import(int argc,
 	 * "feature" lines at the start of the stream (which allows the command
 	 * line to override stream data). But we must do an early parse of any
 	 * command-line options that impact how we interpret the feature lines.
+	 *
+	 * NEEDSWORK: This scan only matches the exact "--allow-unsafe-features"
+	 * spelling and stops at the first argument that doesn't start with a
+	 * dash. As parse_options() below also accepts unambiguous abbreviations
+	 * and values separated by a space from their option, the two disagree
+	 * for command lines like "--allow-unsafe" or "--depth 5
+	 * --allow-unsafe-features": parse_options() accepts the option, but
+	 * this scan doesn't see it, so unsafe features from the stream are
+	 * still refused. This errs on the safe side, but should be fixed by
+	 * teaching this scan about the options that take a value.
 	 */
 	for (int i = 1; i < argc; i++) {
 		const char *arg = argv[i];
