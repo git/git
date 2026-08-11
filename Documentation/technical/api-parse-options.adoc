@@ -214,6 +214,13 @@ Macros
 
 There are some macros to easily define options:
 
+Many of the macros below have an `_F` variant (for example `OPT_BOOL_F`,
+`OPT_STRING_F`, `OPT_INTEGER_F`, `OPT_SET_INT_F`, `OPT_BIT_F` and
+`OPT_CALLBACK_F`) that takes an additional trailing `flags` argument.
+That argument is the bitwise-or of the per-option flags described in the
+"Option flags" section above; the non-`_F` macros are simply defined
+with `flags` set to `0`.
+
 `OPT__ABBREV(&int_var)`::
 	Add `--abbrev[=<n>]`.
 
@@ -237,9 +244,20 @@ There are some macros to easily define options:
 	describes the group or an empty string.
 	Start the description with an upper-case letter.
 
+`OPT_HIDDEN_GROUP(description)`::
+	Like `OPT_GROUP()`, but the group header carries
+	`PARSE_OPT_HIDDEN`, so it is only shown by `--help-all` and not
+	by `-h`. Use it to label a group that contains only hidden
+	options, which would otherwise show an empty header under `-h`.
+
 `OPT_BOOL(short, long, &int_var, description)`::
 	Introduce a boolean option. `int_var` is set to one with
 	`--option` and set to zero with `--no-option`.
+
+`OPT_HIDDEN_BOOL(short, long, &int_var, description)`::
+	Like `OPT_BOOL()`, but the option carries `PARSE_OPT_HIDDEN`,
+	so it is hidden from `-h` while still being shown by
+	`--help-all`.
 
 `OPT_COUNTUP(short, long, &int_var, description)`::
 	Introduce a count-up option.
