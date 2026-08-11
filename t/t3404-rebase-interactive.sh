@@ -484,7 +484,7 @@ test_expect_success 'squash and fixup generate correct log messages' '
 			EXPECT_HEADER_COUNT=4 \
 			git rebase -i $base
 	) &&
-	git cat-file commit HEAD | sed -e 1,/^\$/d > actual-squash-fixup &&
+	commit_body HEAD >actual-squash-fixup &&
 	test_cmp expect-squash-fixup actual-squash-fixup &&
 	git cat-file commit HEAD@{2} >actual &&
 	test_grep "^# This is a combination of 3 commits\." actual &&

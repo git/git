@@ -332,8 +332,7 @@ test_expect_success 'merge --squash c3 with c7' '
 	# Conflicts:
 	#	file
 	EOF
-	git cat-file commit HEAD >raw &&
-	sed -e "1,/^$/d" raw >actual &&
+	commit_body HEAD >actual &&
 	test_cmp expect actual
 '
 
@@ -363,8 +362,7 @@ test_expect_success 'merge c3 with c7 with commit.cleanup = scissors' '
 	# Conflicts:
 	#	file
 	EOF
-	git cat-file commit HEAD >raw &&
-	sed -e "1,/^$/d" raw >actual &&
+	commit_body HEAD >actual &&
 	test_cmp expect actual
 '
 
@@ -387,8 +385,7 @@ test_expect_success 'merge c3 with c7 with --squash commit.cleanup = scissors' '
 	# Conflicts:
 	#	file
 	EOF
-	git cat-file commit HEAD >raw &&
-	sed -e "1,/^$/d" raw >actual &&
+	commit_body HEAD >actual &&
 	test_cmp expect actual
 '
 
@@ -989,9 +986,8 @@ test_expect_success 'merge --no-ff --edit' '
 	git reset --hard c0 &&
 	EDITOR=./editor git merge --no-ff --edit c1 &&
 	verify_parents $c0 $c1 &&
-	git cat-file commit HEAD >raw &&
-	test_grep "work done on the side branch" raw &&
-	sed "1,/^$/d" >actual raw &&
+	commit_body HEAD >actual &&
+	test_grep "work done on the side branch" actual &&
 	test_cmp expected actual
 '
 
