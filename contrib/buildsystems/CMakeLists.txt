@@ -378,7 +378,7 @@ endif()
 #function checks
 set(function_checks
 	strcasestr memmem strlcpy strtoimax strtoumax strtoull
-	setenv mkdtemp poll pread memmem)
+	setenv mkdtemp poll pread memmem writev)
 
 #unsetenv,hstrerror are incompatible with windows build
 if(NOT WIN32)
@@ -421,6 +421,10 @@ endif()
 
 if(NOT HAVE_MEMMEM)
 	list(APPEND compat_SOURCES compat/memmem.c)
+endif()
+
+if(NOT HAVE_WRITEV)
+	list(APPEND compat_SOURCES compat/writev.c)
 endif()
 
 if(NOT WIN32)
