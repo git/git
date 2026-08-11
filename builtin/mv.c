@@ -22,6 +22,7 @@
 #include "string-list.h"
 #include "parse-options.h"
 #include "read-cache-ll.h"
+#include "symlinks.h"
 
 #include "setup.h"
 #include "strvec.h"
@@ -47,6 +48,12 @@ enum update_mode {
 	 */
 	MOVE_VIA_PARENT_DIR = (1 << 5),
 };
+
+static int needs_worktree_rename(enum update_mode mode, enum update_mode dst_mode)
+{
+	return !(mode & (INDEX | SPARSE | SKIP_WORKTREE_DIR)) &&
+	       !(dst_mode & (SKIP_WORKTREE_DIR | SPARSE));
+}
 
 #define DUP_BASENAME 1
 #define KEEP_TRAILING_SLASH 2
@@ -443,6 +450,41 @@ dir_check:
 			bad = _("destination directory does not exist");
 			goto act_on_entry;
 		}
+		if (has_symlink_leading_path(dst, strlen(dst))) {
+			bad = _("destination is beyond a symbolic link");
+			goto act_on_entry;
+		}
+
+		/*
+		 * If we are going to move SRC to DST on disk, DST's leading
+		 * directories must already exist.
+		 */
+		if (needs_worktree_rename(modes[i], dst_mode)) {
+			const char *slash_ = strrchr(dst, '/');
+
+			if (slash_) {
+				struct stat dir_st;
+				char *dst_dir = xstrdup(dst);
+				char *slash = &dst_dir[slash_ - dst];
+
+				*slash = '\0';
+				if (lstat(dst_dir, &dir_st) < 0) {
+					/*
+					 * other errors fall through to rename(),
+					 * which reports them
+					 */
+					if (errno == ENOENT || errno == ENOTDIR)
+						bad = _("destination directory does not exist");
+				} else if (!S_ISDIR(dir_st.st_mode)) {
+					bad = _("destination is not a directory");
+				}
+
+				free(dst_dir);
+			}
+
+			if (bad)
+				goto act_on_entry;
+		}
 
 		if (ignore_sparse &&
 		    (dst_mode & (SKIP_WORKTREE_DIR | SPARSE)) &&
@@ -544,12 +586,11 @@ remove_entry:
 			printf(_("Renaming %s to %s\n"), src, dst);
 		if (show_only)
 			continue;
-		if (!(mode & (INDEX | SPARSE | SKIP_WORKTREE_DIR)) &&
-		    !(dst_mode & (SKIP_WORKTREE_DIR | SPARSE)) &&
+		if (needs_worktree_rename(mode, dst_mode) &&
 		    rename(src, dst) < 0) {
 			if (ignore_errors)
 				continue;
-			die_errno(_("renaming '%s' failed"), src);
+			die_errno(_("renaming '%s' to '%s' failed"), src, dst);
 		}
 		if (submodule_gitfiles[i]) {
 			if (!update_path_in_gitmodules(src, dst))
