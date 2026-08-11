@@ -257,9 +257,7 @@ static struct recent_command *rc_free;
 static unsigned int cmd_save = 100;
 static uintmax_t next_mark;
 static struct strbuf new_data = STRBUF_INIT;
-static int seen_data_command;
 static int require_explicit_termination;
-static int allow_unsafe_features;
 
 /* Signal handling */
 static volatile sig_atomic_t checkpoint_requested;
@@ -277,6 +275,8 @@ struct fast_import_state {
 	int argc;
 	const char **argv;
 	const char *prefix;
+	int seen_data_command;
+	int allow_unsafe_features;
 };
 
 static void fast_import_state_init(struct fast_import_state *state,
@@ -1879,7 +1879,7 @@ static int read_next_command(struct fast_import_state *state)
 			if (stdin_eof)
 				return EOF;
 
-			if (!seen_data_command
+			if (!state->seen_data_command
 				&& !starts_with(command_buf.buf, "feature ")
 				&& !starts_with(command_buf.buf, "option ")) {
 				parse_argv(state);
@@ -3863,11 +3863,11 @@ static int parse_one_option(struct fast_import_state *state, const char *option)
 	return 1;
 }
 
-static void check_unsafe_feature(struct fast_import_state *state UNUSED,
+static void check_unsafe_feature(struct fast_import_state *state,
 				 const char *feature,
 				 int from_stream)
 {
-	if (from_stream && !allow_unsafe_features)
+	if (from_stream && !state->allow_unsafe_features)
 		die(_("feature '%s' forbidden in input without --allow-unsafe-features"),
 		    feature);
 }
@@ -3918,7 +3918,7 @@ static int parse_one_feature(struct fast_import_state *state,
 
 static void parse_feature(struct fast_import_state *state, const char *feature)
 {
-	if (seen_data_command)
+	if (state->seen_data_command)
 		die(_("got feature command '%s' after data command"), feature);
 
 	if (parse_one_feature(state, feature, 1))
@@ -3929,7 +3929,7 @@ static void parse_feature(struct fast_import_state *state, const char *feature)
 
 static void parse_option(struct fast_import_state *state, const char *option)
 {
-	if (seen_data_command)
+	if (state->seen_data_command)
 		die(_("got option command '%s' after data command"), option);
 
 	if (parse_one_option(state, option))
@@ -3997,7 +3997,7 @@ static void parse_argv(struct fast_import_state *state)
 	if (i != state->argc)
 		usage(fast_import_usage);
 
-	seen_data_command = 1;
+	state->seen_data_command = 1;
 	if (import_marks_file)
 		read_marks();
 	build_mark_map(&sub_marks_from, &sub_marks_to);
@@ -4011,6 +4011,8 @@ int cmd_fast_import(int argc,
 	struct fast_import_state state;
 
 	show_usage_if_asked(argc, argv, fast_import_usage);
+
+	fast_import_state_init(&state, argc, argv, prefix);
 
 	reset_pack_idx_option(&pack_idx_opts);
 	git_pack_config();
@@ -4035,10 +4037,8 @@ int cmd_fast_import(int argc,
 		if (*arg != '-' || !strcmp(arg, "--"))
 			break;
 		if (!strcmp(arg, "--allow-unsafe-features"))
-			allow_unsafe_features = 1;
+			state.allow_unsafe_features = 1;
 	}
-
-	fast_import_state_init(&state, argc, argv, prefix);
 
 	rc_free = mem_pool_alloc(&fi_mem_pool, cmd_save * sizeof(*rc_free));
 	for (unsigned int i = 0; i < (cmd_save - 1); i++)
@@ -4086,7 +4086,7 @@ int cmd_fast_import(int argc,
 	}
 
 	/* argv hasn't been parsed yet, do so */
-	if (!seen_data_command)
+	if (!state.seen_data_command)
 		parse_argv(&state);
 
 	if (require_explicit_termination && feof(stdin))
