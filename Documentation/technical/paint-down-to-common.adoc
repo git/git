@@ -148,43 +148,6 @@ candidate (generation ordering guarantees children are visited
 first), so it cannot be redundant and the walk can stop
 immediately.
 
-This optimization is NOT safe when the date-ordering fallback is
-active, because commit-date order can visit a deeper ancestor
-before a shallower one -- see <<date-ordering-fallback>>.
-
-[[date-ordering-fallback]]
-Date-ordering fallback
-----------------------
-
-When the commit-graph has generation numbers v1 and no
-generation floor is specified, topological ordering
-(via generation numbers) is disabled. Topological levels are
-correct but unbalanced -- ordering by such generation numbers
-can sometimes cause the walk to detour too far before finding
-merge bases. Commit-date ordering typically reaches them in
-fewer steps -- see this change for more details:
-
-   091f4cf3 (commit: don't use generation numbers if not needed,
-   2018-08-30)
-
-With generation number v2 (corrected commit dates) we have the best
-of both worlds and do not need this fallback.
-
-For v1, `paint_down_to_common()` falls back to pure commit-date
-ordering via `compare_commits_by_commit_date`. Because commit
-dates are not monotonic (clock skew, rebases, etc.), the queue
-may visit commits out of topological order.
-
-This disables the optimizations that depend on generation ordering:
-
-  - *Single result*: the first merge-base candidate found may not
-    be the shallowest, because a deeper ancestor with a higher
-    commit date can be dequeued first.
-
-  - *Side exhaustion*: one paint side can appear to drain from the
-    queue while commits from that side are still waiting with lower
-    dates, causing premature termination.
-
 Related documentation
 ---------------------
 
