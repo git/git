@@ -4008,16 +4008,132 @@ static void parse_argv(struct fast_import_state *state)
 	build_mark_map(&sub_marks_from, &sub_marks_to);
 }
 
+static int option_parse_date_format(const struct option *opt UNUSED,
+				    const char *arg, int unset)
+{
+	BUG_ON_OPT_NEG(unset);
+	option_date_format(arg);
+	return 0;
+}
+
+static int option_parse_export_pack_edges(const struct option *opt,
+					  const char *arg, int unset)
+{
+	BUG_ON_OPT_NEG(unset);
+	option_export_pack_edges(opt->value, arg);
+	return 0;
+}
+
+static int option_parse_max_pack_size(const struct option *opt UNUSED,
+				      const char *arg, int unset)
+{
+	BUG_ON_OPT_NEG(unset);
+	option_max_pack_size(arg);
+	return 0;
+}
+
+static int option_parse_big_file_threshold(const struct option *opt UNUSED,
+					   const char *arg, int unset)
+{
+	BUG_ON_OPT_NEG(unset);
+	option_big_file_threshold(arg);
+	return 0;
+}
+
+static int option_parse_signed_commits(const struct option *opt UNUSED,
+				       const char *arg, int unset)
+{
+	BUG_ON_OPT_NEG(unset);
+	option_signed_commits(arg);
+	return 0;
+}
+
+static int option_parse_signed_tags(const struct option *opt UNUSED,
+				    const char *arg, int unset)
+{
+	BUG_ON_OPT_NEG(unset);
+	option_signed_tags(arg);
+	return 0;
+}
+
+static int option_parse_rewrite_submodules_from(const struct option *opt,
+						const char *arg, int unset)
+{
+	BUG_ON_OPT_NEG(unset);
+	option_rewrite_submodules(opt->value, arg, &sub_marks_from);
+	return 0;
+}
+
+static int option_parse_rewrite_submodules_to(const struct option *opt,
+					      const char *arg, int unset)
+{
+	BUG_ON_OPT_NEG(unset);
+	option_rewrite_submodules(opt->value, arg, &sub_marks_to);
+	return 0;
+}
+
+static int option_parse_cat_blob_fd(const struct option *opt,
+				    const char *arg, int unset)
+{
+	BUG_ON_OPT_NEG(unset);
+	option_cat_blob_fd(opt->value, arg);
+	return 0;
+}
+
+static int option_parse_import_marks(const struct option *opt,
+				     const char *arg, int unset)
+{
+	BUG_ON_OPT_NEG(unset);
+	option_import_marks(opt->value, arg, 0, 0);
+	return 0;
+}
+
+static int option_parse_import_marks_if_exists(const struct option *opt,
+					       const char *arg, int unset)
+{
+	BUG_ON_OPT_NEG(unset);
+	option_import_marks(opt->value, arg, 0, 1);
+	return 0;
+}
+
+static int option_parse_export_marks(const struct option *opt,
+				     const char *arg, int unset)
+{
+	BUG_ON_OPT_NEG(unset);
+	option_export_marks(opt->value, arg);
+	return 0;
+}
+
+static int option_parse_depth(const struct option *opt UNUSED,
+			      const char *arg, int unset)
+{
+	BUG_ON_OPT_NEG(unset);
+	option_depth(arg);
+	return 0;
+}
+
+static int option_parse_active_branches(const struct option *opt UNUSED,
+					const char *arg, int unset)
+{
+	BUG_ON_OPT_NEG(unset);
+	option_active_branches(arg);
+	return 0;
+}
+
+static int option_parse_quiet(const struct option *opt UNUSED,
+			      const char *arg UNUSED, int unset)
+{
+	BUG_ON_OPT_NEG(unset);
+	option_quiet();
+	return 0;
+}
+
 int cmd_fast_import(int argc,
 		    const char **argv,
 		    const char *prefix,
 		    struct repository *repo)
 {
 	struct fast_import_state state;
-
-	unsigned long pack_size_limit, big_file_threshold;
-	char *edges, *signed_commits, *signed_tags, *date_format;
-	char *import_marks_if_exists, *submodules_from, *submodules_to;
 
 	/*
 	 * NEEDSWORK: For now this is used only to render
@@ -4026,58 +4142,70 @@ int cmd_fast_import(int argc,
 	 */
 	struct option fast_import_options[] = {
 		OPT_GROUP(N_("Common")),
-		OPT_STRING_F(0, "date-format", &date_format, N_("fmt"),
-			   N_("format of the commit/tag dates"), PARSE_OPT_NONEG),
+		OPT_CALLBACK_F(0, "date-format", NULL, N_("fmt"),
+			       N_("format of the commit/tag dates"),
+			       PARSE_OPT_NONEG, option_parse_date_format),
 		OPT_BOOL_F(0, "stats", &show_stats,
 			   N_("display some basic statistics (objects, packfiles and memory)"),
 			   PARSE_OPT_NONEG),
-		OPT_BOOL_F(0, "quiet", &quiet,
-			   N_("disable the output shown by --stats"), PARSE_OPT_NONEG),
+		OPT_CALLBACK_F(0, "quiet", NULL, NULL,
+			       N_("disable the output shown by --stats"),
+			       PARSE_OPT_NOARG | PARSE_OPT_NONEG,
+			       option_parse_quiet),
 		OPT_BOOL_F(0, "force", &force_update,
 			   N_("force updating modified existing branches"), PARSE_OPT_NONEG),
 		OPT_BOOL_F(0, "done", &require_explicit_termination,
 			   N_("require a terminating 'done' command"), PARSE_OPT_NONEG),
-		OPT_UNSIGNED(0, "max-pack-size", &pack_size_limit,
-			     N_("maximum size of each output pack file")),
-		OPT_UNSIGNED(0, "big-file-threshold", &big_file_threshold,
-			     N_("maximum size of a blob that will be deltified")),
-		OPT_UNSIGNED(0, "depth", &max_depth,
-			     N_("maximum delta depth")),
-		OPT_UNSIGNED(0, "active-branches", &max_active_branches,
-			     N_("maximum number of branches to maintain active")),
+		OPT_CALLBACK_F(0, "max-pack-size", NULL, N_("n"),
+			       N_("maximum size of each output pack file"),
+			       PARSE_OPT_NONEG, option_parse_max_pack_size),
+		OPT_CALLBACK_F(0, "big-file-threshold", NULL, N_("n"),
+			       N_("maximum size of a blob that will be deltified"),
+			       PARSE_OPT_NONEG, option_parse_big_file_threshold),
+		OPT_CALLBACK_F(0, "depth", NULL, N_("n"),
+			       N_("maximum delta depth"),
+			       PARSE_OPT_NONEG, option_parse_depth),
+		OPT_CALLBACK_F(0, "active-branches", NULL, N_("n"),
+			       N_("maximum number of branches to maintain active"),
+			       PARSE_OPT_NONEG, option_parse_active_branches),
 		OPT_GROUP(N_("Marks")),
-		OPT_STRING_F(0, "import-marks", &import_marks_file, N_("file"),
-			     N_("import marks from <file>"), PARSE_OPT_NONEG),
-		OPT_STRING_F(0, "import-marks-if-exists", &import_marks_if_exists, N_("file"),
-			     N_("import marks from <file> if it exists"), PARSE_OPT_NONEG),
-		OPT_STRING_F(0, "export-marks", &export_marks_file, N_("file"),
-			     N_("dump marks to <file>"), PARSE_OPT_NONEG),
+		OPT_CALLBACK_F(0, "import-marks", &state, N_("file"),
+			       N_("import marks from <file>"),
+			       PARSE_OPT_NONEG, option_parse_import_marks),
+		OPT_CALLBACK_F(0, "import-marks-if-exists", &state, N_("file"),
+			       N_("import marks from <file> if it exists"),
+			       PARSE_OPT_NONEG, option_parse_import_marks_if_exists),
+		OPT_CALLBACK_F(0, "export-marks", &state, N_("file"),
+			       N_("dump marks to <file>"),
+			       PARSE_OPT_NONEG, option_parse_export_marks),
 		OPT_BOOL(0, "relative-marks", &relative_marks_paths,
 			 N_("are --(import|export)-marks= paths relative to '.git/info/fast-import'?")),
 		OPT_GROUP(N_("Submodule rewrite")),
-		OPT_STRING_F(0, "rewrite-submodules-from", &submodules_from, N_("name:filename"),
-			     N_("rewrite object IDs for submodule <name> from <filename>"),
-			     PARSE_OPT_NONEG),
-		OPT_STRING_F(0, "rewrite-submodules-to", &submodules_to, N_("name:filename"),
-			     N_("rewrite object IDs for submodule <name> to <filename>"),
-			     PARSE_OPT_NONEG),
+		OPT_CALLBACK_F(0, "rewrite-submodules-from", &state, N_("name:filename"),
+			       N_("rewrite object IDs for submodule <name> from <filename>"),
+			       PARSE_OPT_NONEG, option_parse_rewrite_submodules_from),
+		OPT_CALLBACK_F(0, "rewrite-submodules-to", &state, N_("name:filename"),
+			       N_("rewrite object IDs for submodule <name> to <filename>"),
+			       PARSE_OPT_NONEG, option_parse_rewrite_submodules_to),
 		OPT_GROUP(N_("Signing")),
-		OPT_STRING_F(0, "signed-commits", &signed_commits, N_("mode"),
-			     N_("how to handle signed commits"),
-			     PARSE_OPT_NONEG),
-		OPT_STRING_F(0, "signed-tags", &signed_tags, N_("mode"),
-			     N_("how to handle signed tags"),
-			     PARSE_OPT_NONEG),
+		OPT_CALLBACK_F(0, "signed-commits", NULL, N_("mode"),
+			       N_("how to handle signed commits"),
+			       PARSE_OPT_NONEG, option_parse_signed_commits),
+		OPT_CALLBACK_F(0, "signed-tags", NULL, N_("mode"),
+			       N_("how to handle signed tags"),
+			       PARSE_OPT_NONEG, option_parse_signed_tags),
 		OPT_HIDDEN_GROUP(N_("Advanced")),
 		OPT_BOOL_F(0, "allow-unsafe-features", &state.allow_unsafe_features,
 			   N_("allow unsafe mark commands from the stream"),
 			   PARSE_OPT_HIDDEN | PARSE_OPT_NONEG),
-		OPT_STRING_F(0, "export-pack-edges", &edges, N_("file"),
-			     N_("dump edge commits to <file>"),
-			     PARSE_OPT_HIDDEN | PARSE_OPT_NONEG),
-		OPT_INTEGER_F(0, "cat-blob-fd", &cat_blob_fd,
-			    N_("write some responses to <fd> instead of stdout"),
-			      PARSE_OPT_HIDDEN | PARSE_OPT_NONEG),
+		OPT_CALLBACK_F(0, "export-pack-edges", &state, N_("file"),
+			       N_("dump edge commits to <file>"),
+			       PARSE_OPT_HIDDEN | PARSE_OPT_NONEG,
+			       option_parse_export_pack_edges),
+		OPT_CALLBACK_F(0, "cat-blob-fd", &state, N_("fd"),
+			       N_("write some responses to <fd> instead of stdout"),
+			       PARSE_OPT_HIDDEN | PARSE_OPT_NONEG,
+			       option_parse_cat_blob_fd),
 		OPT_END()
 	};
 
