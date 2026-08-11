@@ -30,6 +30,7 @@
 #include "khash.h"
 #include "date.h"
 #include "gpg-interface.h"
+#include "parse-options.h"
 
 #define PACK_ID_BITS 16
 #define MAX_PACK_ID ((1<<PACK_ID_BITS)-1)
@@ -277,16 +278,18 @@ struct fast_import_state {
 	const char *prefix;
 	int seen_data_command;
 	int allow_unsafe_features;
+	struct option *option;
 };
 
 static void fast_import_state_init(struct fast_import_state *state,
 				   int argc, const char **argv,
-				   const char *prefix)
+				   const char *prefix, struct option *option)
 {
 	memset(state, 0, sizeof(*state));
 	state->argc = argc;
 	state->argv = argv;
 	state->prefix = prefix;
+	state->option = option;
 }
 
 static void parse_argv(struct fast_import_state *state);
@@ -3965,8 +3968,10 @@ static void git_pack_config(void)
 	repo_config(the_repository, git_default_config, NULL);
 }
 
-static const char fast_import_usage[] =
-"git fast-import [--date-format=<f>] [--max-pack-size=<n>] [--big-file-threshold=<n>] [--depth=<n>] [--active-branches=<n>] [--export-marks=<marks.file>]";
+static const char *const fast_import_usage[] = {
+	N_("git fast-import [<options>]"),
+	NULL
+};
 
 static void parse_argv(struct fast_import_state *state)
 {
@@ -3995,7 +4000,7 @@ static void parse_argv(struct fast_import_state *state)
 		die(_("unknown option --%s"), a);
 	}
 	if (i != state->argc)
-		usage(fast_import_usage);
+		usage_with_options(fast_import_usage, state->option);
 
 	state->seen_data_command = 1;
 	if (import_marks_file)
@@ -4010,9 +4015,75 @@ int cmd_fast_import(int argc,
 {
 	struct fast_import_state state;
 
-	show_usage_if_asked(argc, argv, fast_import_usage);
+	unsigned long pack_size_limit, big_file_threshold;
+	char *edges, *signed_commits, *signed_tags, *date_format;
+	char *import_marks_if_exists, *submodules_from, *submodules_to;
 
-	fast_import_state_init(&state, argc, argv, prefix);
+	/*
+	 * NEEDSWORK: For now this is used only to render
+	 * `-h`/`--help-all` usage messages. The actual parsing is
+	 * done by parse_one_option()/parse_one_feature().
+	 */
+	struct option fast_import_options[] = {
+		OPT_GROUP(N_("Common")),
+		OPT_STRING_F(0, "date-format", &date_format, N_("fmt"),
+			   N_("format of the commit/tag dates"), PARSE_OPT_NONEG),
+		OPT_BOOL_F(0, "stats", &show_stats,
+			   N_("display some basic statistics (objects, packfiles and memory)"),
+			   PARSE_OPT_NONEG),
+		OPT_BOOL_F(0, "quiet", &quiet,
+			   N_("disable the output shown by --stats"), PARSE_OPT_NONEG),
+		OPT_BOOL_F(0, "force", &force_update,
+			   N_("force updating modified existing branches"), PARSE_OPT_NONEG),
+		OPT_BOOL_F(0, "done", &require_explicit_termination,
+			   N_("require a terminating 'done' command"), PARSE_OPT_NONEG),
+		OPT_UNSIGNED(0, "max-pack-size", &pack_size_limit,
+			     N_("maximum size of each output pack file")),
+		OPT_UNSIGNED(0, "big-file-threshold", &big_file_threshold,
+			     N_("maximum size of a blob that will be deltified")),
+		OPT_UNSIGNED(0, "depth", &max_depth,
+			     N_("maximum delta depth")),
+		OPT_UNSIGNED(0, "active-branches", &max_active_branches,
+			     N_("maximum number of branches to maintain active")),
+		OPT_GROUP(N_("Marks")),
+		OPT_STRING_F(0, "import-marks", &import_marks_file, N_("file"),
+			     N_("import marks from <file>"), PARSE_OPT_NONEG),
+		OPT_STRING_F(0, "import-marks-if-exists", &import_marks_if_exists, N_("file"),
+			     N_("import marks from <file> if it exists"), PARSE_OPT_NONEG),
+		OPT_STRING_F(0, "export-marks", &export_marks_file, N_("file"),
+			     N_("dump marks to <file>"), PARSE_OPT_NONEG),
+		OPT_BOOL(0, "relative-marks", &relative_marks_paths,
+			 N_("are --(import|export)-marks= paths relative to '.git/info/fast-import'?")),
+		OPT_GROUP(N_("Submodule rewrite")),
+		OPT_STRING_F(0, "rewrite-submodules-from", &submodules_from, N_("name:filename"),
+			     N_("rewrite object IDs for submodule <name> from <filename>"),
+			     PARSE_OPT_NONEG),
+		OPT_STRING_F(0, "rewrite-submodules-to", &submodules_to, N_("name:filename"),
+			     N_("rewrite object IDs for submodule <name> to <filename>"),
+			     PARSE_OPT_NONEG),
+		OPT_GROUP(N_("Signing")),
+		OPT_STRING_F(0, "signed-commits", &signed_commits, N_("mode"),
+			     N_("how to handle signed commits"),
+			     PARSE_OPT_NONEG),
+		OPT_STRING_F(0, "signed-tags", &signed_tags, N_("mode"),
+			     N_("how to handle signed tags"),
+			     PARSE_OPT_NONEG),
+		OPT_HIDDEN_GROUP(N_("Advanced")),
+		OPT_BOOL_F(0, "allow-unsafe-features", &state.allow_unsafe_features,
+			   N_("allow unsafe mark commands from the stream"),
+			   PARSE_OPT_HIDDEN | PARSE_OPT_NONEG),
+		OPT_STRING_F(0, "export-pack-edges", &edges, N_("file"),
+			     N_("dump edge commits to <file>"),
+			     PARSE_OPT_HIDDEN | PARSE_OPT_NONEG),
+		OPT_INTEGER_F(0, "cat-blob-fd", &cat_blob_fd,
+			    N_("write some responses to <fd> instead of stdout"),
+			      PARSE_OPT_HIDDEN | PARSE_OPT_NONEG),
+		OPT_END()
+	};
+
+	show_usage_with_options_if_asked(argc, argv, fast_import_usage, fast_import_options);
+
+	fast_import_state_init(&state, argc, argv, prefix, fast_import_options);
 
 	reset_pack_idx_option(&pack_idx_opts);
 	git_pack_config();
