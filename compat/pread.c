@@ -7,6 +7,8 @@ ssize_t git_pread(int fd, void *buf, size_t count, off_t offset)
         ssize_t rc;
 
         current_offset = lseek(fd, 0, SEEK_CUR);
+	if (current_offset < 0)
+		return -1;
 
         if (lseek(fd, offset, SEEK_SET) < 0)
                 return -1;
