@@ -7,9 +7,6 @@ test_description='git maintenance builtin'
 GIT_TEST_COMMIT_GRAPH=0
 GIT_TEST_MULTI_PACK_INDEX=0
 
-# Ensure that auto-maintenance detaches as usual.
-sane_unset GIT_TEST_MAINT_AUTO_DETACH
-
 test_lazy_prereq XMLLINT '
 	xmllint --version
 '
@@ -65,6 +62,7 @@ test_expect_success 'maintenance.auto config option' '
 	git init repo &&
 	(
 		cd repo &&
+		sane_unset GIT_TEST_MAINT_AUTO_DETACH &&
 
 		GIT_TRACE2_EVENT="$(pwd)/default" git commit --quiet --allow-empty -m 1 &&
 		test_subcommand git maintenance run --auto --quiet --detach <default &&
@@ -84,6 +82,7 @@ test_expect_success 'gc.auto config option' '
 	git init repo &&
 	(
 		cd repo &&
+		sane_unset GIT_TEST_MAINT_AUTO_DETACH &&
 
 		GIT_TRACE2_EVENT="$(pwd)/default" git commit --quiet --allow-empty -m 1 &&
 		test_subcommand git maintenance run --auto --quiet --detach <default &&
@@ -101,6 +100,7 @@ test_expect_success 'maintenance.auto overrides gc.auto' '
 	git init repo &&
 	(
 		cd repo &&
+		sane_unset GIT_TEST_MAINT_AUTO_DETACH &&
 
 		git config set maintenance.auto false &&
 		git config set gc.auto 1 &&
