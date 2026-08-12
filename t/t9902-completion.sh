@@ -2663,6 +2663,8 @@ test_expect_success 'setup for integration tests' '
 	echo content >file1 &&
 	echo more >file2 &&
 	git add file1 file2 &&
+	echo untracked >file3 &&
+	echo untracked >ufile &&
 	git commit -m one &&
 	git branch mybranch &&
 	git tag mytag
@@ -2709,6 +2711,62 @@ test_expect_success 'checkout completes pseudo refs case insensitively with GIT_
 test_expect_success 'git -C <path> checkout uses the right repo' '
 	test_completion "git -C subdir -C subsubdir -C .. -C ../otherrepo checkout b" <<-\EOF
 	branch-in-other Z
+	EOF
+'
+
+test_expect_success 'git diff completes tracked paths when no refs match' '
+	# file1 and file2 are tracked but file3 is not
+	# there is no ref that begins with f
+	test_completion "git diff f" <<-\EOF &&
+	file1
+	file2
+	EOF
+	test_completion "git diff -- f" <<-\EOF
+	file1
+	file2
+	EOF
+'
+
+test_expect_success 'git diff [--] completes untracked paths, too' '
+	# ufile is not tracked and there is no ref that begins with u
+	test_completion "git diff u" <<-\EOF &&
+	ufile
+	EOF
+	test_completion "git diff -- u" <<-\EOF
+	ufile
+	EOF
+'
+
+test_expect_success 'git -C <path> diff completes paths in specified repo' '
+	test_when_finished "rm -rf repo-for-diff" &&
+	git init repo-for-diff &&
+	echo content >repo-for-diff/otherfile &&
+	echo content >repo-for-diff/lostfile &&
+	git -C repo-for-diff add otherfile &&
+	git -C repo-for-diff add lostfile &&
+	git -C repo-for-diff commit -m otherfile &&
+	echo untracked >repo-for-diff/oops &&
+	echo untracked >repo-for-diff/ufile &&
+	rm -f repo-for-diff/lostfile &&
+
+	test_completion "git -C repo-for-diff diff o" <<-\EOF &&
+	otherfile
+	EOF
+	test_completion "git -C repo-for-diff diff l" <<-\EOF &&
+	lostfile
+	EOF
+	test_completion "git -C repo-for-diff diff u" <<-\EOF &&
+	ufile
+	EOF
+
+	test_completion "git -C repo-for-diff diff -- o" <<-\EOF &&
+	otherfile
+	EOF
+	test_completion "git -C repo-for-diff diff -- l" <<-\EOF &&
+	lostfile
+	EOF
+	test_completion "git -C repo-for-diff diff -- u" <<-\EOF
+	ufile
 	EOF
 '
 
