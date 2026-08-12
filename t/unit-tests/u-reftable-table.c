@@ -29,7 +29,8 @@ void test_reftable_table__seek_once(void)
 	ret = reftable_table_new(&table, &source, "name");
 	cl_assert(!ret);
 
-	reftable_table_init_ref_iterator(table, &it);
+	ret = reftable_table_init_ref_iterator(table, &it);
+	cl_assert_equal_i(ret, 0);
 	ret = reftable_iterator_seek_ref(&it, "");
 	cl_assert(!ret);
 	ret = reftable_iterator_next_ref(&it, &ref);
@@ -71,7 +72,8 @@ void test_reftable_table__reseek(void)
 	ret = reftable_table_new(&table, &source, "name");
 	cl_assert(!ret);
 
-	reftable_table_init_ref_iterator(table, &it);
+	ret = reftable_table_init_ref_iterator(table, &it);
+	cl_assert_equal_i(ret, 0);
 
 	for (size_t i = 0; i < 5; i++) {
 		ret = reftable_iterator_seek_ref(&it, "");
