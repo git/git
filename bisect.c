@@ -1019,10 +1019,12 @@ void read_bisect_terms(char **read_bad, char **read_good)
 			die_errno(_("could not read file '%s'"), filename);
 		}
 	} else {
-		strbuf_getline_lf(&str, fp);
+		if (strbuf_getline_lf(&str, fp) == EOF)
+			die(_("could not read bad term from file '%s'"), filename);
 		free(*read_bad);
 		*read_bad = strbuf_detach(&str, NULL);
-		strbuf_getline_lf(&str, fp);
+		if (strbuf_getline_lf(&str, fp) == EOF)
+			die(_("could not read good term from file '%s'"), filename);
 		free(*read_good);
 		*read_good = strbuf_detach(&str, NULL);
 	}

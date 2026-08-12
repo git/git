@@ -498,9 +498,16 @@ static int get_terms(struct bisect_terms *terms)
 	}
 
 	free_terms(terms);
-	strbuf_getline_lf(&str, fp);
+	if (strbuf_getline_lf(&str, fp) == EOF) {
+		res = -1;
+		goto finish;
+	}
 	terms->term_bad = strbuf_detach(&str, NULL);
-	strbuf_getline_lf(&str, fp);
+	if (strbuf_getline_lf(&str, fp) == EOF) {
+		res = -1;
+		FREE_AND_NULL(terms->term_bad);
+		goto finish;
+	}
 	terms->term_good = strbuf_detach(&str, NULL);
 
 finish:
