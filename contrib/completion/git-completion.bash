@@ -1985,6 +1985,10 @@ _git_diff ()
 	if [ ${#COMPREPLY[@]} -eq 0 ]; then
 		__git_complete_index_file ""
 	fi
+
+	if [ ${#COMPREPLY[@]} -eq 0 ]; then
+		__git_complete_index_file "--others --directory"
+	fi
 }
 
 __git_mergetools_common="diffuse diffmerge ecmerge emerge kdiff3 meld opendiff
