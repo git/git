@@ -1193,12 +1193,29 @@ sub newer {
 }
 
 ################################################################
+# Sources
+
+sub source {
+	my $fn = 'Meta/whats-cooking.txt';
+	my $fh;
+	my $last_topic;
+
+	open ($fh, '<', $fn) or die "$!: open $fn";
+	while (<$fh>) {
+		next if (/^\[(Graduated|Discarded)/../^-{20,}$/);
+		print if (s/^ source: //);
+	}
+	close ($fh);
+}
+
+################################################################
 # Main
 
 use Getopt::Long;
 
-my ($wildo, $havedone, $newer);
+my ($wildo, $havedone, $newer, $source);
 if (!GetOptions("wildo" => \$wildo,
+		"source" => \$source,
 		"newer" => \$newer,
 		"havedone" => \$havedone)) {
 	print STDERR "$0 [--wildo|--havedone]\n";
@@ -1230,6 +1247,8 @@ if ($wildo) {
 	wildo($fd);
 } elsif ($newer) {
 	newer();
+} elsif ($source) {
+	source();
 } elsif ($havedone) {
 	havedone();
 } elsif (@ARGV) {
