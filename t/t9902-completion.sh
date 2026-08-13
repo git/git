@@ -3127,7 +3127,11 @@ test_expect_success 'git history subcommand options' '
 	test_completion "git history fixup --ree" "--reedit-message " &&
 	test_completion "git history split --upd" "--update-refs=" &&
 	test_completion "git history split main --dry" "--dry-run " &&
-	test_completion "git history reword main -- --d" ""
+	test_completion "git history reword main -- --d" "" &&
+	test_completion "git history fixup --empty=ke" "keep " &&
+	test_completion "git history fixup --empty=drop" "drop " &&
+	test_completion "git history drop --empty=ab" "abort " &&
+	test_completion "git history reword --empty=ke" ""
 '
 
 test_expect_success 'git history revisions' '

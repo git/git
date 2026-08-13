@@ -2169,6 +2169,15 @@ _git_history ()
 
 	if ! __git_has_doubledash; then
 		case "$cur" in
+		--empty=*)
+			case "$subcommand" in
+			drop|fixup)
+				__gitcomp "drop keep abort" "" \
+					"${cur##--empty=}"
+				;;
+			esac
+			return
+			;;
 		--*)
 			__gitcomp_builtin "history_$subcommand"
 			return
