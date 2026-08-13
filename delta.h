@@ -14,7 +14,7 @@ struct delta_index;
  * using free_delta_index().
  */
 struct delta_index *
-create_delta_index(const void *buf, unsigned long bufsize);
+create_delta_index(const void *buf, size_t bufsize);
 
 /*
  * free_delta_index: free the index created by create_delta_index()

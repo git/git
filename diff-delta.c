@@ -132,7 +132,7 @@ struct delta_index {
 	struct index_entry *hash[FLEX_ARRAY];
 };
 
-struct delta_index * create_delta_index(const void *buf, unsigned long bufsize)
+struct delta_index * create_delta_index(const void *buf, size_t bufsize)
 {
 	unsigned int i, hsize, hmask, entries, prev_val, *hash_count;
 	const unsigned char *data, *buffer = buf;
