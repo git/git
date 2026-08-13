@@ -1784,6 +1784,10 @@ _git_checkout ()
 	if [ ${#COMPREPLY[@]} -eq 0 ]; then
 		__git_complete_index_file ""
 	fi
+
+	if [ ${#COMPREPLY[@]} -eq 0 ]; then
+		__git_complete_index_file "--others --directory"
+	fi
 }
 
 __git_sequencer_inprogress_options="--continue --quit --abort --skip"
