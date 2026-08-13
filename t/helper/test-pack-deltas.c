@@ -22,7 +22,7 @@ static unsigned long do_compress(void **pptr, unsigned long size)
 {
 	git_zstream stream;
 	void *in, *out;
-	unsigned long maxsize;
+	size_t maxsize;
 
 	git_deflate_init(&stream, 1);
 	maxsize = git_deflate_bound(&stream, size);
