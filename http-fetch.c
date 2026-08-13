@@ -14,7 +14,7 @@
 #include "trace2.h"
 
 static const char http_fetch_usage[] = "git http-fetch "
-"[-c] [-t] [-a] [-v] [--recover] [-w ref] [--stdin | --packfile=hash | commit-id] url";
+"[-c] [-t] [-a] [-v] [--recover] [-w ref] [--stdout] [--stdin | --packfile=hash | commit-id] url";
 
 static int fetch_using_walker(const char *raw_url, int get_verbosely,
 			      int get_recover, int commits, char **commit_id,
@@ -54,19 +54,28 @@ static int fetch_using_walker(const char *raw_url, int get_verbosely,
 
 static void fetch_single_packfile(struct object_id *packfile_hash,
 				  const char *url,
-				  const char **index_pack_args) {
+				  const char **index_pack_args,
+				  int packfile_to_stdout)
+{
 	struct http_pack_request *preq;
 	struct slot_results results;
 	int ret;
 
 	http_init(NULL, url, 0);
 
-	preq = new_direct_http_pack_request(packfile_hash->hash, xstrdup(url));
+	if (packfile_to_stdout)
+		preq = new_direct_http_pack_request_to_stdout(packfile_hash->hash,
+							      xstrdup(url));
+	else
+		preq = new_direct_http_pack_request(packfile_hash->hash,
+						    xstrdup(url));
 	if (!preq)
 		die("couldn't create http pack request");
 	preq->slot->results = &results;
-	preq->index_pack_args = index_pack_args;
-	preq->preserve_index_pack_stdout = 1;
+	if (!packfile_to_stdout) {
+		preq->index_pack_args = index_pack_args;
+		preq->preserve_index_pack_stdout = 1;
+	}
 
 	if (start_active_slot(preq->slot)) {
 		run_active_slot(preq->slot);
@@ -104,6 +113,7 @@ int cmd_main(int argc, const char **argv)
 	int get_verbosely = 0;
 	int get_recover = 0;
 	int packfile = 0;
+	int packfile_to_stdout = 0;
 	int nongit;
 	struct object_id packfile_hash;
 	struct strvec index_pack_args = STRVEC_INIT;
@@ -126,6 +136,8 @@ int cmd_main(int argc, const char **argv)
 			usage(http_fetch_usage);
 		} else if (!strcmp(argv[arg], "--recover")) {
 			get_recover = 1;
+		} else if (!strcmp(argv[arg], "--stdout")) {
+			packfile_to_stdout = 1;
 		} else if (!strcmp(argv[arg], "--stdin")) {
 			commits_on_stdin = 1;
 		} else if (skip_prefix(argv[arg], "--packfile=", &p)) {
@@ -154,15 +166,21 @@ int cmd_main(int argc, const char **argv)
 	repo_config(the_repository, git_default_config, NULL);
 
 	if (packfile) {
-		if (!index_pack_args.nr)
+		if (packfile_to_stdout && index_pack_args.nr)
+			die(_("the option '%s' cannot be used with '%s'"),
+			    "--stdout", "--index-pack-args");
+		if (!packfile_to_stdout && !index_pack_args.nr)
 			die(_("the option '%s' requires '%s'"), "--packfile", "--index-pack-args");
 
 		fetch_single_packfile(&packfile_hash, argv[arg],
-				      index_pack_args.v);
+				      index_pack_args.v,
+				      packfile_to_stdout);
 		ret = 0;
 		goto out;
 	}
 
+	if (packfile_to_stdout)
+		die(_("the option '%s' requires '%s'"), "--stdout", "--packfile");
 	if (index_pack_args.nr)
 		die(_("the option '%s' requires '%s'"), "--index-pack-args", "--packfile");
 
