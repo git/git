@@ -2137,6 +2137,51 @@ _git_help ()
 	fi
 }
 
+__git_history_has_revision ()
+{
+	local i
+
+	for ((i = __git_cmd_idx + 2; i < cword; i++)); do
+		case "${words[i]}" in
+		-*)
+			;;
+		*)
+			return 0
+			;;
+		esac
+	done
+	return 1
+}
+
+_git_history ()
+{
+	local subcommands subcommand
+
+	__git_resolve_builtins "history"
+
+	subcommands="$___git_resolved_builtins"
+	subcommand="$(__git_find_subcommand "$subcommands")"
+
+	if [ -z "$subcommand" ]; then
+		__gitcomp "$subcommands"
+		return
+	fi
+
+	if ! __git_has_doubledash; then
+		case "$cur" in
+		--*)
+			__gitcomp_builtin "history_$subcommand"
+			return
+			;;
+		esac
+	fi
+
+	if ! __git_history_has_revision; then
+		__git_complete_refs
+		return
+	fi
+}
+
 _git_init ()
 {
 	case "$cur" in
