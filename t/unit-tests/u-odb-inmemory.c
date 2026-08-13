@@ -50,7 +50,7 @@ static void cl_assert_write_object(struct odb_source_inmemory *source,
 
 void test_odb_inmemory__initialize(void)
 {
-	odb = odb_new(&repo, "", "");
+	odb = odb_new(&repo, 0);
 }
 
 void test_odb_inmemory__cleanup(void)
