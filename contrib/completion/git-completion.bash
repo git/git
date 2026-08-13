@@ -1780,6 +1780,10 @@ _git_checkout ()
 			;;
 		esac
 	fi
+
+	if [ ${#COMPREPLY[@]} -eq 0 ]; then
+		__git_complete_index_file ""
+	fi
 }
 
 __git_sequencer_inprogress_options="--continue --quit --abort --skip"
