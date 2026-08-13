@@ -2178,6 +2178,11 @@ _git_history ()
 			esac
 			return
 			;;
+		--update-refs=*)
+			__gitcomp "branches head" "" \
+				"${cur##--update-refs=}"
+			return
+			;;
 		--*)
 			__gitcomp_builtin "history_$subcommand"
 			return
