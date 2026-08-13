@@ -367,7 +367,7 @@ static void start_put(struct transfer_request *request)
 	void *unpacked;
 	size_t len;
 	int hdrlen;
-	ssize_t size;
+	size_t size;
 	git_zstream stream;
 	struct repo_config_values *cfg = repo_config_values(the_repository);
 
