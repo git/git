@@ -336,7 +336,7 @@ do
 			section breaking
 			did_test=did_test
 			Meta/Make >/dev/null distclean &&
-			Meta/Make $jobs WITH_BREAKING_CHANGES=YesPlease $T test &&
+			Meta/Make $jobs $T WITH_BREAKING_CHANGES=YesPlease test &&
 			Meta/Make >/dev/null distclean
 		fi &&
 
@@ -344,8 +344,8 @@ do
 		then
 			section test
 			Meta/Make $M $noprove ${test+"$test"} $jobs $test_long \
-				  $memtrash \
-			    -- ${with_dash:+SHELL_PATH=/bin/dash} "$@" $T $dotest
+				  $memtrash $T \
+			    -- ${with_dash:+SHELL_PATH=/bin/dash} "$@" $dotest
 		fi &&
 
 		# docs
