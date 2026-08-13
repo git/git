@@ -1329,8 +1329,9 @@ static int canonicalize_ceiling_entry(struct string_list_item *item,
 	}
 }
 
-static void path_allowlist_apply(const char *key, const char *value,
-				 const char *target_path, int *is_match)
+void path_allowlist_apply(const char *key, const char *value,
+			  const char *target_path, int *is_match,
+			  bool allow_dot)
 {
 	char *allowed = NULL;
 	char *normalized = NULL;
@@ -1356,7 +1357,7 @@ static void path_allowlist_apply(const char *key, const char *value,
 	 * OK", which is slightly tighter than "*" that allows
 	 * discovery.
 	 */
-	if (!is_absolute_path(allowed) && strcmp(allowed, ".")) {
+	if (!is_absolute_path(allowed) && (!allow_dot || strcmp(allowed, "."))) {
 		warning(_("%s '%s' not absolute"), key, allowed);
 		goto end;
 	}
@@ -1400,7 +1401,7 @@ static int safe_directory_cb(const char *key, const char *value,
 	if (strcmp(key, "safe.directory"))
 		return 0;
 
-	path_allowlist_apply(key, value, data->path, &data->is_safe);
+	path_allowlist_apply(key, value, data->path, &data->is_safe, true);
 
 	return 0;
 }
