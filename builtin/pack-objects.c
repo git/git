@@ -488,7 +488,7 @@ static void copy_pack_data(struct hashfile *f,
 		off_t len)
 {
 	unsigned char *in;
-	unsigned long avail;
+	size_t avail;
 
 	while (len) {
 		in = use_pack(p, w_curs, offset, &avail);
@@ -2260,7 +2260,7 @@ static void check_object(struct object_entry *entry, uint32_t object_index)
 		struct object_id base_ref;
 		struct object_entry *base_entry;
 		unsigned long used, used_0;
-		unsigned long avail;
+		size_t avail;
 		off_t ofs;
 		unsigned char *buf, c;
 		enum object_type type;
@@ -2756,8 +2756,8 @@ size_t oe_get_size_slow(struct packing_data *pack,
 	struct pack_window *w_curs;
 	unsigned char *buf;
 	enum object_type type;
-	unsigned long used, avail;
-	size_t size;
+	unsigned long used;
+	size_t avail, size;
 
 	if (e->type_ != OBJ_OFS_DELTA && e->type_ != OBJ_REF_DELTA) {
 		size_t sz;

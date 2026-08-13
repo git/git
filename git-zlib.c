@@ -33,7 +33,7 @@ static const char *zerr_to_string(int status)
 
 /* uLong is 32-bit on Windows, even on 64-bit systems */
 #define ULONG_MAX_VALUE maximum_unsigned_value_of_type(uLong)
-static inline uInt zlib_buf_cap(unsigned long len)
+static inline uInt zlib_buf_cap(size_t len)
 {
 	return (ZLIB_BUF_MAX < len) ? ZLIB_BUF_MAX : len;
 }
