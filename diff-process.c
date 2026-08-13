@@ -325,7 +325,7 @@ static int validate_external_hunks(const struct xdl_hunk *hunks, size_t nr,
  */
 static long blob_line_cap(struct repository *r, const struct object_id *oid)
 {
-	unsigned long size;
+	size_t size;
 	struct object_info oi = OBJECT_INFO_INIT;
 
 	oi.sizep = &size;
