@@ -1029,8 +1029,7 @@ sub wildo {
 			}
 			$count = "#$count";
 			printf " %s %-60s %s%s %5s\n", $sign, $name, $tip, $next, $count;
-			if ($what =~ /^Will merge to '\w+'/ && $what !~ /\?$/ ||
-			    $what eq $mergetomaster) {
+			if ($what eq $mergetomaster) {
 				next;
 			}
 
