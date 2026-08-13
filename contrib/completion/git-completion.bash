@@ -2194,6 +2194,12 @@ _git_history ()
 		__git_complete_refs
 		return
 	fi
+
+	case "$subcommand" in
+	split)
+		__git_complete_index_file "--cached"
+		;;
+	esac
 }
 
 _git_init ()

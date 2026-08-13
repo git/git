@@ -3144,6 +3144,19 @@ test_expect_success 'git history revisions' '
 	test_completion "git history reword main m" ""
 '
 
+test_expect_success 'git history split pathspecs' '
+	test_completion "git history split main -- --update-refs=h" "" &&
+	test_completion "git history split main -- --update-refs h" "" &&
+	test_completion "git history split --dry-run main file" <<-\EOF &&
+	file1Z
+	file2Z
+	EOF
+	test_completion "git history split main -- file" <<-\EOF
+	file1Z
+	file2Z
+	EOF
+'
+
 test_expect_success 'git reflog show' '
 	test_when_finished "git checkout - && git branch -d shown" &&
 	git checkout -b shown &&
