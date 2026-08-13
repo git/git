@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Aug 2026, #04)
-X-master-at: 010afd3166ddc64c9863b1506f12cbcdda0d4ea1
-X-next-at: 61afef3e370bc5ecfb9297553fed2382ff894e21
+Subject: What's cooking in git.git (Aug 2026, #05)
+X-master-at: 745601a9a94110d74769ab605ccd4f61339758d2
+X-next-at: 4f2b99511996c64e58c74e2b8bd3d7ec33452a47
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Aug 2026, #04)
+What's cooking in git.git (Aug 2026, #05)
 -----------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -17,10 +17,10 @@ A topic without enough support may be discarded after a long period
 of no activity (of course, it can be resubmitted when new interest
 arises).
 
-The 12th batch of topics have now graduated to the 'master' branch.
-We have 409 non-merge commits in 'master' since Git 2.55.  There
-are 61 non-merge commits cooking in 'next' (note that some have
-been reverted), and 261 non-merge commits, including those in and
+The 13th batch of topics have now graduated to the 'master' branch.
+We have 424 non-merge commits in 'master' since Git 2.55.  There
+are 58 non-merge commits cooking in 'next' (note that some have
+been reverted), and 266 non-merge commits, including those in and
 out of 'next', in 'seen' as of this writing.
 
 Copies of the source code to Git live in many repositories, and the
@@ -54,17 +54,210 @@ Release tarballs are available at:
 --------------------------------------------------
 [New Topics]
 
-* hn/send-email-missing-subject-error (2026-08-10) 1 commit
- - send-email: clarify missing subject error
+* cc/git-shallow-file-wo-value (2026-08-11) 1 commit
+ - git: avoid segfault on "git --shallow-file" without a value
 
- The error message given by 'git send-email' when a message file is
- missing a 'Subject:' header has been clarified, and the error string
- is now terminated with a newline so that Perl avoids appending its
- internal source location data.
+ The '--shallow-file' option of 'git' command requires a value, but the
+ code did not check the presence of a value and instead segfaulted
+ without one, which has been corrected.
 
  Will merge to 'next'?
- cf. <xmqqtsp165tj.fsf@gitster.g>
- source: <pull.2375.v2.git.git.1786384412423.gitgitgadget@gmail.com>
+ cf. <anxXbnuRt4I4uPdI@pks.im>
+ source: <20260811121446.2080190-1-christian.couder@gmail.com>
+
+
+* js/sequencer-release-odb-before-commit (2026-08-12) 1 commit
+ - sequencer: release the ODB before spawning git commit
+
+ The sequencer has been updated to release the object database before
+ spawning 'git commit'.  This prevents open file handles from
+ blocking auto-maintenance tasks, such as repacking, on systems like
+ Windows where open files cannot be easily unlinked.
+
+ Will merge to 'next'?
+ cf. <xmqqqzk3xqxs.fsf@gitster.g>
+ source: <pull.2198.v2.git.1786528498689.gitgitgadget@gmail.com>
+
+
+* jt/receive-pack-pluggable-writes (2026-08-11) 9 commits
+ - odb/transaction: add transaction interface to write packfiles
+ - odb: return temporary ODB source when set
+ - builtin/receive-pack: explicitly pass packfile fd
+ - builtin/receive-pack: report unpack errors via strbuf
+ - builtin/receive-pack: lift global state out of unpack()
+ - builtin/receive-pack: read unpack limit config lazily
+ - builtin/receive-pack: pass shallow file explicitly
+ - odb/transaction: add transaction finalize interface
+ - builtin/receive-pack: properly clean up keep files
+
+ The 'git receive-pack' command has been updated to use a new ODB
+ transaction interface for writing incoming packfiles, making it more
+ backend-agnostic.
+
+ Waiting for response.
+ cf. <anwNonpw5SZuHADv@pks.im>
+ cf. <anwNp8cbCOOuI7nK@pks.im>
+ source: <20260811175415.2044235-1-jltobler@gmail.com>
+
+
+* jc/complete-checkout (2026-08-12) 5 commits
+ - fixup! completion: 'git checkout' completes untracked paths as a last resort
+ - completion: 'git checkout' completes untracked paths as a last resort
+ - completion: complete tracked paths for "git checkout"
+ - completion: no-op refactoring of checkout completion
+ - Merge branch 'jc/complete-diff-tracked-paths' into jc/complete-checkout
+ (this branch uses jc/complete-diff-tracked-paths.)
+
+ Expecting a reroll.
+ cf. <xmqq7blvw0ro.fsf@gitster.g>
+ cf. <834FE315-FB34-47B7-9ACF-FC8194FBE8D5@gmail.com>
+ source: <20260812164846.2236221-1-gitster@pobox.com>
+
+
+* en/sequencer-lose-pretty-given (2026-08-11) 1 commit
+ - sequencer: remove unnecessary variable setting
+
+ The setting of a now-unused member revs.pretty_given in the
+ sequencer machinery has been removed.
+
+ Will merge to 'next'?
+ cf. <xmqqa4qrxneq.fsf@gitster.g>
+ source: <pull.1922.git.1786516959130.gitgitgadget@gmail.com>
+
+
+* en/serve-promisor-remote-fix (2026-08-11) 1 commit
+ - serve: reject valueless promisor-remote capability
+
+ A client requesting the promisor-remote capability without a value
+ caused a null pointer dereference, which has been corrected by
+ rejecting a request without an argument.
+
+ Needs review.
+ source: <pull.2199.git.1786516783909.gitgitgadget@gmail.com>
+
+
+* ps/odb-eagerly-load-alternates (2026-08-12) 5 commits
+ - odb: drop `alternates_db` field
+ - odb: drop `loaded_alternates` field
+ - odb: eagerly initialize alternates
+ - odb: decouple source path comparisons from `the_repository`
+ - Merge branch 'ps/odb-make-creation-pluggable' into ps/odb-eagerly-load-alternates
+ (this branch uses ps/odb-make-creation-pluggable.)
+
+ The object database layer has been simplified by eagerly loading
+ alternate object directories upon initialization, instead of
+ deferring it to the first object lookup.  This eliminates the need
+ for scattered lazy-loading calls throughout the codebase and paves
+ the way for integrating alternates with the pluggable backends.
+
+ Needs review.
+ cf. <anuP0Mh9aBz9VdBK@denethor>
+ source: <20260812-pks-odb-eagerly-prepare-alternates-v2-0-522b9a5bc1ea@pks.im>
+
+
+* gg/http-ssl-verify-status (2026-08-12) 1 commit
+ - http: add http.sslVerifyStatus to check stapled OCSP responses
+
+ The HTTP transport has been taught to check the revocation status of
+ the server certificate using the stapled OCSP response during the
+ TLS handshake via a new 'http.sslVerifyStatus' configuration
+ variable.
+
+ Needs review (Broken???)
+ cf. <xmqq1pc3vx9w.fsf@gitster.g>
+ source: <20260812182509.67358-1-ggordon@gitlab.com>
+
+
+* js/packfile-fast-append (2026-08-12) 1 commit
+ - packfile: fix perf regression with many packs
+
+ The performance of adding numerous new packfiles has been improved
+ by introducing a fast path for known-new packfiles to skip an
+ unnecessary traversal in packfile_list_append(), avoiding a
+ quadratic complexity regression on load.
+
+ Will merge to 'next'?
+ cf. <xmqqfr0jw20t.fsf@gitster.g>
+ cf. <20260812212955.GA152730@coredump.intra.peff.net>
+ source: <pull.2202.git.1786561870638.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[Graduated to 'master']
+
+* ja/doc-synopsis-style-yet-more (2026-07-23) 4 commits
+  (merged to 'next' on 2026-08-03 at c744bba04e)
+ + doc: convert git-request-pull synopsis and options to new style
+ + doc: convert git-send-email synopsis and options to new style
+ + doc: convert git-format-patch synopsis and options to new style
+ + doc: convert git-imap-send synopsis and options to new style
+
+ Synopsis and options in the documentation for 'git format-patch',
+ 'git imap-send', 'git send-email', and 'git request-pull' have been
+ updated to the modern style.
+
+ Graduated to 'master'.
+ cf. <xmqqldato56l.fsf@gitster.g>
+ source: <pull.2185.v2.git.1784841567.gitgitgadget@gmail.com>
+
+
+* kh/doc-replay-config (2026-07-30) 4 commits
+  (merged to 'next' on 2026-08-03 at 5450adb2e1)
+ + doc: replay: move “default” to the right-hand side
+ + doc: replay: use a nested description list
+ + doc: replay: improve config description
+ + doc: link to config for git-replay(1)
+
+ Documentation for 'git replay' has been updated to refer to its
+ configuration variables.
+
+ Graduated to 'master'.
+ cf. <xmqq4ihfduxi.fsf@gitster.g>
+ source: <V4_CV_doc_replay_config.af3@msgid.xyz>
+
+
+* lo/mv-missing-dest-dir-check (2026-07-30) 2 commits
+  (merged to 'next' on 2026-08-03 at 7643cf1c2a)
+ + mv: reject a destination whose leading path is missing or a symlink
+ + mv: name both source and destination when rename fails
+
+ 'git mv' has been updated to check for a missing destination
+ leading directory during the checking phase, allowing 'git mv -n'
+ to report the failure.  The error message when the rename(2)
+ syscall fails has also been improved to name both the source and
+ the destination.
+
+ Graduated to 'master'.
+ cf. <xmqqtspgjkwb.fsf@gitster.g>
+ source: <pull.2356.v5.git.git.1785410884.gitgitgadget@gmail.com>
+
+
+* ns/merge-base-is-ancestor-tests (2026-07-29) 1 commit
+  (merged to 'next' on 2026-08-03 at cf2c4e00eb)
+ + merge-base: add tests for --is-ancestor
+
+ Tests for 'git merge-base --is-ancestor' have been added to cover
+ exit codes (0 for success, 1 for non-ancestor, 128 for errors) and
+ to ensure it cannot be combined with '--all'.
+
+ Graduated to 'master'.
+ cf. <xmqq8q6slb2t.fsf@gitster.g>
+ source: <pull.2186.v2.git.1785392350660.gitgitgadget@gmail.com>
+
+
+* sk/test-commit-body-helper (2026-07-27) 2 commits
+  (merged to 'next' on 2026-08-03 at ce42e63135)
+ + t: use commit_body to extract commit message bodies
+ + test-lib-functions: add commit_body helper
+
+ A new test helper commit_body() has been introduced to print the
+ message body of a commit, and various tests have been updated to use
+ it instead of spelling out the command pipeline manually and losing
+ the exit status of the 'git cat-file' command on the upstream of the
+ pipe.
+
+ Graduated to 'master'.
+ cf. <xmqqpl05o5n7.fsf@gitster.g>
+ source: <20260727095656.75496-1-diy2903@gmail.com>
 
 --------------------------------------------------
 [Stalled]
@@ -131,21 +324,35 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* hn/send-email-missing-subject-error (2026-08-10) 1 commit
+ - send-email: clarify missing subject error
+
+ The error message given by 'git send-email' when a message file is
+ missing a 'Subject:' header has been clarified, and the error string
+ is now terminated with a newline so that Perl avoids appending its
+ internal source location data.
+
+ Will merge to 'next'?
+ cf. <xmqqtsp165tj.fsf@gitster.g>
+ source: <pull.2375.v2.git.git.1786384412423.gitgitgadget@gmail.com>
+
+
 * ss/repack-drop-filtered (2026-08-10) 7 commits
- - Documentation/git-repack: document --drop-filtered and --dry-run
- - builtin/repack: add guards for --drop-filtered
- - builtin/repack: actually drop filtered promisor blobs
- - builtin/repack: enumerate promisor blobs for --drop-filtered
- - repack-promisor: allow excluding objects from the rebuilt promisor pack
- - list-objects-filter: add list_objects_filter__filter_oidset()
- - builtin/repack.c: add --drop-filtered and --dry-run options
+ . Documentation/git-repack: document --drop-filtered and --dry-run
+ . builtin/repack: add guards for --drop-filtered
+ . builtin/repack: actually drop filtered promisor blobs
+ . builtin/repack: enumerate promisor blobs for --drop-filtered
+ . repack-promisor: allow excluding objects from the rebuilt promisor pack
+ . list-objects-filter: add list_objects_filter__filter_oidset()
+ . builtin/repack.c: add --drop-filtered and --dry-run options
 
  'git repack' has been taught '--drop-filtered' to delete local
  promisor blobs exceeding a limit (currently 'blob:limit=') in partial
  clones, reclaiming space.  Guards prevent running during other
  operations or if referenced by the index.
 
- Needs review.
+ Expecting a reroll.
+ cf. <CAGWgyh9bJ=BSq1B8LSEaQth_4fQHB_YHDgHmf5m5MYcENAkxrw@mail.gmail.com>
  source: <20260810174047.6524-1-r.siddharth.shrimali@gmail.com>
 
 
@@ -175,9 +382,6 @@ Release tarballs are available at:
 
  Waiting for response.
  cf. <anV7cHblfmGvbl-e@pks.im>
- cf. <anWEcfhdzvNQfskU@pks.im>
- cf. <CALnO6CBThicX2x_acKoSvWMOkr4pa5bVMH=RNMXO+BjEAxKSHg@mail.gmail.com>
- cf. <CALnO6CAudrCCr-bZOt5TCo6ZbmxuwE48-Zj-pkcj8Rq2T1-1wg@mail.gmail.com>
  source: <20260806-history_autocompletion-v2-0-7e60f52a1c20@kernel.org>
 
 
@@ -188,7 +392,8 @@ Release tarballs are available at:
  - setup: extract path_allowlist_apply()
  - promisor-remote: factor out lazy_fetch_objects()
 
- Needs review.
+ Expecting a reroll.
+ cf. <CAP8UFD1LxM1s-MJuffhVks6JfBXoMzKii4YU4iQRNzXJZCQkfQ@mail.gmail.com>
  source: <20260807135511.1818458-1-christian.couder@gmail.com>
 
 
@@ -202,12 +407,17 @@ Release tarballs are available at:
  source: <cover.1786103607.git.ben.knoble@gmail.com>
 
 
-* ps/t7900-deflake-maintenance (2026-08-07) 2 commits
+* ps/t7900-deflake-maintenance (2026-08-12) 2 commits
  - t7900: fix flaky "maintenance.strategy" test
  - t7900: adapt some tests to use a throwaway repository
 
+ Various tests in t7900-maintenance.sh have been updated to use a
+ throwaway repository, and auto-detaching of maintenance tasks is
+ now disabled for these tests to fix flaky races with concurrent
+ background maintenance jobs.
+
  Needs review.
- source: <20260807-pks-t7900-fix-flaky-test-v1-0-08d0ea0fbbc5@pks.im>
+ source: <20260812-pks-t7900-fix-flaky-test-v2-0-9ea0e1ac0edd@pks.im>
 
 
 * ps/odb-streams (2026-08-05) 8 commits
@@ -225,7 +435,8 @@ Release tarballs are available at:
  odb_stream' structure, simplifying object database streaming APIs
  and enabling streaming of arbitrary object types.
 
- Needs review.
+ Will merge to 'next'?
+ cf. <anuBdm29ye_qV_Rq@denethor>
  source: <20260805-pks-odb-stream-unification-v2-0-b8c369564641@pks.im>
 
 
@@ -246,7 +457,7 @@ Release tarballs are available at:
  source: <20260729233215.398654-1-sandals@crustytoothpaste.net>
 
 
-* js/mingw-build-updates (2026-08-05) 12 commits
+* js/mingw-build-updates (2026-08-12) 12 commits
  - mingw: allow `git.exe` to be used instead of the "Git wrapper"
  - mingw: ensure valid CTYPE
  - mingw: always define `ETC_*` for MSYS2 environments
@@ -266,21 +477,19 @@ Release tarballs are available at:
  the main 'git.exe' to be used directly without the extra wrapper
  process on Windows.
 
- Expecting a reroll.
- cf. <9f905100-003b-8ef2-3e2e-2f9ed57dda1b@gmx.de>
- source: <pull.2195.git.1785939999.gitgitgadget@gmail.com>
+ Needs review.
+ source: <pull.2195.v2.git.1786521173.gitgitgadget@gmail.com>
 
 
-* yn/worktree-add-no-dwim-with-b (2026-08-05) 1 commit
-  (merged to 'next' on 2026-08-08 at 9d682832cd)
- + worktree add: shouldn't dwim if -b or -B is given
+* yn/worktree-add-no-dwim-with-b (2026-08-10) 1 commit
+ - worktree add: improve message for ambiguous remote branch name
 
  'git worktree add' did not prevent DWIM behavior when '-b' or '-B' was
  specified, which has been corrected.
 
- Will merge to 'master'.
- cf. <xmqqtsp8qzc4.fsf@gitster.g>
- source: <pull.2192.v3.git.1785934486496.gitgitgadget@gmail.com>
+ Waiting for response.
+ cf. <xmqqjypvw3cg.fsf@gitster.g>
+ source: <pull.2197.v4.git.1786430155244.gitgitgadget@gmail.com>
 
 
 * hn/ci-cancel-stale-pr-runs (2026-07-31) 1 commit
@@ -295,8 +504,9 @@ Release tarballs are available at:
 
 
 * kh/doc-refs-migrate-limitations (2026-08-05) 2 commits
- - doc: refs: linkgit to git-maintenance(1)
- - doc: refs: put ref migration warning under the command
+  (merged to 'next' on 2026-08-11 at 2eb1041920)
+ + doc: refs: linkgit to git-maintenance(1)
+ + doc: refs: put ref migration warning under the command
 
  The known limitations of the ref format migration in 'git refs' have
  been moved to be displayed as a warning admonition directly under the
@@ -304,23 +514,24 @@ Release tarballs are available at:
  reference to 'git-maintenance' has also been corrected to use the
  'linkgit' macro.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  cf. <anQYWlv3UhpS3iE7@pks.im>
  cf. <CAOLa=ZQQnrRca60BAfnm6Azu=bHvnoVhcGwQ3KkDT7yqLDd8Dw@mail.gmail.com>
  source: <V3_CV_git_ref_migration_warning.b23@msgid.xyz>
 
 
-* jc/complete-diff-tracked-paths (2026-08-07) 3 commits
+* jc/complete-diff-tracked-paths (2026-08-12) 3 commits
  - completion: 'git diff' completes untracked paths as a last resort
  - completion: complete tracked paths for 'git diff'
  - completion: no-op refactoring of diff completion
+ (this branch is used by jc/complete-checkout.)
 
  'git -C <dir> diff fi<TAB>' did not complete 'dir/file', which has
  been corrected.
 
- Will merge to 'next'?
+ Needs review.
  cf. <CABPp-BFdwxTvkcWKNP0-Lk+mqQLnULoYuLHZe0aot4VYfHnjSw@mail.gmail.com>
- source: <20260807161956.1004889-1-gitster@pobox.com>
+ source: <20260812162551.2229680-1-gitster@pobox.com>
 
 
 * kh/trailers-no-urls (2026-08-02) 2 commits
@@ -370,40 +581,9 @@ Release tarballs are available at:
  replace outdated terminology, define key terms upfront, and document
  how comment lines in the input are treated.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  cf. <0687D60D-DF6B-4547-868C-FCFC5B27ECAF@gmail.com>
  source: <V5_CV_doc_int-tr_key_format.b26@msgid.xyz>
-
-
-* kh/doc-replay-config (2026-07-30) 4 commits
-  (merged to 'next' on 2026-08-03 at 5450adb2e1)
- + doc: replay: move “default” to the right-hand side
- + doc: replay: use a nested description list
- + doc: replay: improve config description
- + doc: link to config for git-replay(1)
-
- Documentation for 'git replay' has been updated to refer to its
- configuration variables.
-
- Will merge to 'master'.
- cf. <xmqq4ihfduxi.fsf@gitster.g>
- source: <V4_CV_doc_replay_config.af3@msgid.xyz>
-
-
-* sk/test-commit-body-helper (2026-07-27) 2 commits
-  (merged to 'next' on 2026-08-03 at ce42e63135)
- + t: use commit_body to extract commit message bodies
- + test-lib-functions: add commit_body helper
-
- A new test helper commit_body() has been introduced to print the
- message body of a commit, and various tests have been updated to use
- it instead of spelling out the command pipeline manually and losing
- the exit status of the 'git cat-file' command on the upstream of the
- pipe.
-
- Will merge to 'master'.
- cf. <xmqqpl05o5n7.fsf@gitster.g>
- source: <20260727095656.75496-1-diy2903@gmail.com>
 
 
 * cl/regexec-macos-leak (2026-07-28) 2 commits
@@ -434,19 +614,6 @@ Release tarballs are available at:
  Needs review.
  cf. <xmqqwluebuhb.fsf@gitster.g>
  source: <pull.2364.git.git.1784993669.gitgitgadget@gmail.com>
-
-
-* ns/merge-base-is-ancestor-tests (2026-07-29) 1 commit
-  (merged to 'next' on 2026-08-03 at cf2c4e00eb)
- + merge-base: add tests for --is-ancestor
-
- Tests for 'git merge-base --is-ancestor' have been added to cover
- exit codes (0 for success, 1 for non-ancestor, 128 for errors) and
- to ensure it cannot be combined with '--all'.
-
- Will merge to 'master'.
- cf. <xmqq8q6slb2t.fsf@gitster.g>
- source: <pull.2186.v2.git.1785392350660.gitgitgadget@gmail.com>
 
 
 * jc/add-resolved (2026-07-31) 4 commits
@@ -503,23 +670,8 @@ Release tarballs are available at:
  Will merge to 'next'?
  cf. <20260808074157.GA2915582@coredump.intra.peff.net>
  cf. <CA+J6zkR5ZkUc8c=xiXgKiAYmbgcoyGfwpgm6aaG0Gog8OVmOjw@mail.gmail.com>
+ cf. <CAOLa=ZTrf_WHiRHTjBGAus+YbRsUkbR3dzsW=fgCK0jit6fYzQ@mail.gmail.com>
  source: <20260808-objecttype-support-v6-0-e5cdaf27a49c@gmail.com>
-
-
-* lo/mv-missing-dest-dir-check (2026-07-30) 2 commits
-  (merged to 'next' on 2026-08-03 at 7643cf1c2a)
- + mv: reject a destination whose leading path is missing or a symlink
- + mv: name both source and destination when rename fails
-
- 'git mv' has been updated to check for a missing destination
- leading directory during the checking phase, allowing 'git mv -n'
- to report the failure.  The error message when the rename(2)
- syscall fails has also been improved to name both the source and
- the destination.
-
- Will merge to 'master'.
- cf. <xmqqtspgjkwb.fsf@gitster.g>
- source: <pull.2356.v5.git.git.1785410884.gitgitgadget@gmail.com>
 
 
 * ps/odb-make-creation-pluggable (2026-08-06) 6 commits
@@ -529,6 +681,7 @@ Release tarballs are available at:
  - setup: handle ODB-related environment variables in `odb_new()`
  - setup: detangle loading of loose object maps
  - loose: load loose object map for the correct source
+ (this branch is used by ps/odb-eagerly-load-alternates.)
 
  The creation of the on-disk data structures for the object database
  has been made pluggable, allowing future backends to customize their
@@ -536,7 +689,7 @@ Release tarballs are available at:
  has been deferred, and the loading of the loose-object map has been
  detangled from repository initialization.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  cf. <87jyq24cxm.fsf@emacs.iotcl.com>
  source: <20260807-pks-odb-create-on-disk-v5-0-399da0b0b140@pks.im>
 
@@ -562,9 +715,8 @@ Release tarballs are available at:
  FSEvents before waiting for the cookie file, to avoid premature
  timeouts on busy systems.
 
- Waiting for response.
- cf. <CAOTNsDy4pKbPHdK1T688Ax6Mgz15K-qfZR-8fAvTk48z3E43Rg@mail.gmail.com>
- cf. <anLtSOKqgcCrrNHo@pks.im>
+ Waiting for review.
+ cf. <CAJ-ks9=oV4SQSjTHNEOGBaQb8Rb4xBqVSp4wYum6yzU-zx3YtQ@mail.gmail.com>
  source: <20260721-fsmonitor-darwin-cookie-flush-v1-1-357dc5e32040@gmail.com>
 
 
@@ -581,22 +733,6 @@ Release tarballs are available at:
  cf. <1eba5fb2-ab76-41e9-955d-e283256ad25d@gmail.com>
  cf. <98682fa4-55d9-4829-97f1-02e244b35266@gmail.com>
  source: <pull.2126.v3.git.1784708107.gitgitgadget@gmail.com>
-
-
-* ja/doc-synopsis-style-yet-more (2026-07-23) 4 commits
-  (merged to 'next' on 2026-08-03 at c744bba04e)
- + doc: convert git-request-pull synopsis and options to new style
- + doc: convert git-send-email synopsis and options to new style
- + doc: convert git-format-patch synopsis and options to new style
- + doc: convert git-imap-send synopsis and options to new style
-
- Synopsis and options in the documentation for 'git format-patch',
- 'git imap-send', 'git send-email', and 'git request-pull' have been
- updated to the modern style.
-
- Will merge to 'master'.
- cf. <xmqqldato56l.fsf@gitster.g>
- source: <pull.2185.v2.git.1784841567.gitgitgadget@gmail.com>
 
 
 * kj/repo-info-more-path-keys (2026-08-06) 7 commits
@@ -630,25 +766,27 @@ Release tarballs are available at:
  to pre-filter commits, and maintains per-path Bloom filters even when
  wildcard pathspecs are used.
 
- Needs review.
+ Waiting for response.
+ cf. <xmqqtsp4a6c2.fsf@gitster.g>
  source: <20260807-toon-speed-up-last-modified-v2-0-7d87bbdeaf9b@iotcl.com>
 
 
 * hn/bisect-reset-when-found (2026-08-02) 2 commits
- - bisect: add --reset-when-found to leave when done
- - bisect: let bisect_reset() optionally check out quietly
+  (merged to 'next' on 2026-08-11 at cad4ed37c6)
+ + bisect: add --reset-when-found to leave when done
+ + bisect: let bisect_reset() optionally check out quietly
 
  The 'git bisect' command has been taught a
  '--reset-when-found[=<where>]' option that tells the command to
  automatically run 'git bisect reset' to jump back to the original
  state or to the found culprit.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  cf. <xmqqldajjgn3.fsf@gitster.g>
  source: <pull.2335.v6.git.git.1785705860.gitgitgadget@gmail.com>
 
 
-* js/coverity-unchecked-returns-fix (2026-08-05) 11 commits
+* js/coverity-unchecked-returns-fix (2026-08-12) 12 commits
  - bisect: handle dup() failure when redirecting stdout
  - bisect: check get_terms return at all call sites
  - bisect: check strbuf_getline_lf return when reading terms
@@ -658,6 +796,7 @@ Release tarballs are available at:
  - last-modified: handle repo_parse_commit() failures
  - reftable tests: check reftable_table_init_ref_iterator() return
  - reftable/block: check deflateInit() return value
+ - reftable: handle block-writer initialization errors
  - config: propagate launch_editor() failure in show_editor()
  - http: die on curl_easy_duphandle failure in get_active_slot
 
@@ -666,10 +805,10 @@ Release tarballs are available at:
  dup(), and strbuf_getline_lf(), resolving several Coverity warnings
  about unchecked returns.
 
- Waiting for response.
- cf. <20260806154103.GA1625706@coredump.intra.peff.net>
- cf. <xmqqse4sm4ss.fsf@gitster.g>
- source: <pull.2179.v2.git.1785954661.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ cf. <xmqq5x1fxn5u.fsf@gitster.g>
+ cf. <20260812213438.GC152730@coredump.intra.peff.net>
+ source: <pull.2179.v3.git.1786521801.gitgitgadget@gmail.com>
 
 
 * ds/trace2-tolerate-failed-timestamp (2026-07-15) 1 commit
@@ -685,7 +824,7 @@ Release tarballs are available at:
  source: <pull.2178.git.1784131932489.gitgitgadget@gmail.com>
 
 
-* cc/fast-import-usage (2026-08-04) 12 commits
+* cc/fast-import-usage (2026-08-11) 12 commits
  - fast-import: remove useless from_stream argument
  - fast-import: use parse_options() for command line options
  - fast-import: use callbacks to parse some options
@@ -703,27 +842,25 @@ Release tarballs are available at:
  parse_options() API for displaying help, and its SYNOPSIS in the
  documentation has been standardized to match.
 
- Waiting for response.
- cf. <CABPp-BGfeF1t+siEUuYgTtDG5LtfL5iskSHferbGwFj8axA+tA@mail.gmail.com>
- cf. <CABPp-BHoxLkYJmoJ1N5owJ5-S+yr-4JkuectxSVG8oa6PESkWA@mail.gmail.com>
- cf. <CABPp-BFfF+Vd6RY3pG=FVUH_93YZULfhcXdWCv6zcRSABfGBQQ@mail.gmail.com>
+ Will merge to 'next'?
  cf. <CABPp-BE_gVtCF+Y0AAyXSXnJ2hUK0pJiWqEhkD8kVc4S8-y7kQ@mail.gmail.com>
- source: <20260804100355.1299498-1-christian.couder@gmail.com>
+ source: <20260811083314.2023489-1-christian.couder@gmail.com>
 
 
 * ps/writev (2026-08-06) 5 commits
- - fast-import: use writev(3p) to send cat-blob responses
- - sideband: use writev(3p) to send pktlines
- - wrapper: properly handle MAX_IO_SIZE in writev(3p)
- - wrapper: introduce writev(3p) wrappers
- - compat/posix: introduce writev(3p) wrapper
+  (merged to 'next' on 2026-08-11 at bc2a935c92)
+ + fast-import: use writev(3p) to send cat-blob responses
+ + sideband: use writev(3p) to send pktlines
+ + wrapper: properly handle MAX_IO_SIZE in writev(3p)
+ + wrapper: introduce writev(3p) wrappers
+ + compat/posix: introduce writev(3p) wrapper
 
  A compatibility wrapper for writev(3p) has been reintroduced,
  including fixes for CMake build and 'MAX_IO_SIZE' limits on NonStop.
  Calls to write(3p) in send_sideband() and cat_blob() have been
  refactored to use writev(3p) wrappers to reduce syscall overhead.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  cf. <xmqqcxvvhu6q.fsf@gitster.g>
  source: <20260807-pks-reintroduce-writev-v2-0-30fcff0e89c1@pks.im>
 
@@ -833,8 +970,8 @@ Release tarballs are available at:
  to use atomic filesystem operations, preventing race conditions when
  Apache handles concurrent requests.
 
- Expecting a reroll.
- cf. <CAC2Qwm+Jni+xU=gaef1AWCMj9+GUQhMrCWX9DFpS3y757pxv=Q@mail.gmail.com>
+ Needs review.
+ (a newer iteration v3 exists as <pull.2171.v3.git.1786583137.gitgitgadget@gmail.com>)
  source: <pull.2171.v2.git.1783704657.gitgitgadget@gmail.com>
 
 
@@ -1010,19 +1147,19 @@ Release tarballs are available at:
  to remove local branches that are already merged into their tracked
  remote-tracking branches.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  cf. <10b22a6b-e028-469c-a117-8dc2ed5bed3b@gmail.com>
  source: <pull.2285.v25.git.git.1785939877.gitgitgadget@gmail.com>
 
 
-* kk/merge-base-exhaustion (2026-08-06) 11 commits
+* kk/merge-base-exhaustion (2026-08-11) 11 commits
  - commit-reach: remove commit-date ordering fallback
  - commit-reach: move min_generation check into paint_queue_get()
  - commit-reach: terminate merge-base walk when one paint side is exhausted
  - commit-reach: introduce struct paint_state with per-side counters
  - t6600: add clock-skew topologies and step counts for edge cases
  - commit-reach: add trace2 instrumentation to paint_down_to_common()
- - t6099, t6600: add side-exhaustion regression tests
+ - t6099: add side-exhaustion regression test
  - t6600: add test cases for side-exhaustion edge cases
  - test-lib-functions: improve diagnostic output for trace2 data assertions
  - Documentation/technical: add paint-down-to-common doc
@@ -1032,6 +1169,7 @@ Release tarballs are available at:
  early when one side's exclusive commits in the queue are exhausted,
  yielding significant speedups for queries with one-sided histories.
 
- Expecting a reroll.
- cf. <CAL71e4P1hRcDk0TiR_Gjapf=EScGNbeHqSQ6BqeiAkEvczNu4g@mail.gmail.com>
- source: <pull.2149.v7.git.1786013982.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ cf. <CABPp-BHuh_8q6Hy2-Bk7H6Chdb4+eeW1f4LZU0szZ4zU9Eeo+w@mail.gmail.com>
+ cf. <xmqqbjb7w1dq.fsf@gitster.g>
+ source: <pull.2149.v8.git.1786440533.gitgitgadget@gmail.com>
