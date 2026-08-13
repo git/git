@@ -49,7 +49,7 @@ static void write_ref_delta(struct hashfile *f,
 {
 	unsigned char header[MAX_PACK_OBJECT_HEADER];
 	unsigned long delta_size, compressed_size, hdrlen;
-	size_t size, base_size;
+	size_t size, base_size, delta_size_st = 0;
 	enum object_type type;
 	void *base_buf, *delta_buf;
 	void *buf = odb_read_object(the_repository->objects,
@@ -65,7 +65,8 @@ static void write_ref_delta(struct hashfile *f,
 		die("unable to read %s", oid_to_hex(base));
 
 	delta_buf = diff_delta(base_buf, base_size,
-			       buf, size, &delta_size, 0);
+			       buf, size, &delta_size_st, 0);
+	delta_size = cast_size_t_to_ulong(delta_size_st);
 
 	compressed_size = do_compress(&delta_buf, delta_size);
 

@@ -962,7 +962,7 @@ static int store_object(
 	struct object_entry *e;
 	unsigned char hdr[96];
 	struct object_id oid;
-	unsigned long hdrlen, deltalen;
+	unsigned long hdrlen, deltalen = 0;
 	struct git_hash_ctx c;
 	git_zstream s;
 	struct repo_config_values *cfg = repo_config_values(the_repository);
@@ -998,11 +998,13 @@ static int store_object(
 
 	if (last && last->data.len && last->data.buf && last->depth < max_depth
 		&& dat->len > the_hash_algo->rawsz) {
+		size_t deltalen_st;
 
 		delta_count_attempts_by_type[type]++;
 		delta = diff_delta(last->data.buf, last->data.len,
 			dat->buf, dat->len,
-			&deltalen, dat->len - the_hash_algo->rawsz);
+			&deltalen_st, dat->len - the_hash_algo->rawsz);
+		deltalen = cast_size_t_to_ulong(deltalen_st);
 	} else
 		delta = NULL;
 

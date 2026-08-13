@@ -32,7 +32,7 @@ int cmd__delta(int argc, const char **argv)
 		die_errno("unable to read '%s'", argv[3]);
 
 	if (argv[1][1] == 'd') {
-		unsigned long delta_size;
+		size_t delta_size;
 		out_buf = diff_delta(from.buf, from.len,
 				     data.buf, data.len,
 				     &delta_size, 0);
