@@ -2259,8 +2259,7 @@ static void check_object(struct object_entry *entry, uint32_t object_index)
 		int have_base = 0;
 		struct object_id base_ref;
 		struct object_entry *base_entry;
-		unsigned long used, used_0;
-		size_t avail;
+		size_t used, used_0, avail;
 		off_t ofs;
 		unsigned char *buf, c;
 		enum object_type type;
@@ -2756,8 +2755,7 @@ size_t oe_get_size_slow(struct packing_data *pack,
 	struct pack_window *w_curs;
 	unsigned char *buf;
 	enum object_type type;
-	unsigned long used;
-	size_t avail, size;
+	size_t used, avail, size;
 
 	if (e->type_ != OBJ_OFS_DELTA && e->type_ != OBJ_REF_DELTA) {
 		size_t sz;

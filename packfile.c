@@ -1134,12 +1134,11 @@ out:
 	return ret;
 }
 
-unsigned long unpack_object_header_buffer(const unsigned char *buf,
-		unsigned long len, enum object_type *type, size_t *sizep)
+size_t unpack_object_header_buffer(const unsigned char *buf, size_t len,
+				   enum object_type *type, size_t *sizep)
 {
 	unsigned shift;
-	size_t size, c;
-	unsigned long used = 0;
+	size_t size, c, used = 0;
 
 	c = buf[used++];
 	*type = (c >> 4) & 7;
@@ -1228,8 +1227,7 @@ int unpack_object_header(struct packed_git *p,
 			 size_t *sizep)
 {
 	unsigned char *base;
-	size_t left;
-	unsigned long used;
+	size_t left, used;
 	enum object_type type;
 
 	/* use_pack() assures us we have [base, base + 20) available
