@@ -17,6 +17,8 @@
 #include "list-objects-filter-options.h"
 #include "oidset.h"
 #include "hex.h"
+#include "wt-status.h"
+#include "read-cache-ll.h"
 
 #define ALL_INTO_ONE 1
 #define LOOSEN_UNREACHABLE 2
@@ -317,6 +319,33 @@ int cmd_repack(int argc,
 		if (!repo_has_promisor_remote(repo))
 			die(_("--drop-filtered requires a promisor remote"));
 
+		/*
+		 * Refuse to run while another operation is in progress. A
+		 * dropped object would just be lazily re-fetched when the
+		 * operation resumes, but triggering a network fetch in the
+		 * middle of a half-finished
+		 * merge/rebase/cherry-pick/revert/bisect is a poor
+		 * experience, so this is a UX convenience rather than a
+		 * safety measure. Bare repositories have no such state, so
+		 * the check is skipped there.
+		 */
+		if (!is_bare_repository(repo)) {
+			struct wt_status_state state = { 0 };
+
+			wt_status_get_state(repo, &state, 0);
+			if (state.merge_in_progress || state.revert_in_progress ||
+			    state.rebase_in_progress || state.bisect_in_progress ||
+			    state.cherry_pick_in_progress || state.am_in_progress ||
+			    state.rebase_interactive_in_progress) {
+				wt_status_state_free_buffers(&state);
+				die(_("--drop-filtered cannot be used while "
+				      "another operation (merge, rebase, am, "
+				      "cherry-pick, revert, or bisect) is in "
+				      "progress"));
+			}
+			wt_status_state_free_buffers(&state);
+		}
+
 		write_bitmaps = 0;
 
 		/*
@@ -331,6 +360,29 @@ int cmd_repack(int argc,
 
 		if (ret)
 			goto cleanup;
+
+		/*
+		 * Refuse to drop blobs that the current index references.
+		 * Such a blob would only be lazily re-fetched by the next
+		 * command that touches the worktree, so dropping it reclaims
+		 * nothing. This guard just avoids that churn. Bare
+		 * repositories have no index, so the check is skipped there.
+		 */
+		if (!is_bare_repository(repo) && oidset_size(&drop_oids)) {
+			struct index_state *istate = repo->index;
+			unsigned int i;
+
+			if (repo_read_index(repo) < 0)
+				die(_("could not read the index"));
+
+			for (i = 0; i < istate->cache_nr; i++) {
+				const struct cache_entry *ce = istate->cache[i];
+
+				if (oidset_contains(&drop_oids, &ce->oid))
+					die(_("cannot drop '%s' (%s): it is referenced by the current index"),
+						ce->name, oid_to_hex(&ce->oid));
+			}
+		}
 
 		if (dry_run) {
 			struct oidset_iter iter;

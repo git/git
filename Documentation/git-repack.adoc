@@ -204,6 +204,15 @@ and with bitmap writing (`-b`/`--write-bitmap-index`), since filtering
 breaks the single-pack closure that bitmaps require. A bitmap setting
 coming from configuration is silently disabled for the duration of the
 command.
++
+As a convenience, since dropped objects remain recoverable by lazy fetch,
+`--drop-filtered` refuses to run while another operation
+(merge, rebase, am, cherry-pick, revert, or bisect) is in progress, to
+avoid a surprising network fetch mid-operation, and refuses to drop any
+blob that the current index references, since such a blob would only be
+lazily re-fetched by the next command that inspects the working tree.
+These checks are skipped in bare repositories, which have neither a
+working tree nor an index.
 
 --dry-run::
 	Only meaningful with `--drop-filtered`. List the objects that

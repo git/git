@@ -147,4 +147,39 @@ test_expect_success '--drop-filtered removes the promisor blob locally' '
 	test_grep "$SMALL" present
 '
 
+test_expect_success '--drop-filtered refuses when a merge is in progress' '
+	test_when_finished "git -C repo merge --abort || :" &&
+
+	# Create a conflicting merge so wt_status reports it.
+	git -C repo checkout -B mergebase base &&
+	echo one >repo/conflict.txt &&
+	git -C repo add conflict.txt &&
+	git -C repo commit -m one &&
+
+	git -C repo checkout -B mergeother base &&
+	echo two >repo/conflict.txt &&
+	git -C repo add conflict.txt &&
+	git -C repo commit -m two &&
+
+	test_must_fail git -C repo merge mergebase &&
+
+	test_must_fail git -C repo -c repack.writeBitmaps=false \
+		repack --drop-filtered --filter=blob:limit=1k --dry-run -a 2>err &&
+	test_grep "in progress" err
+'
+
+test_expect_success '--drop-filtered refuses to drop an index-referenced blob' '
+	# Create a large blob, add it to the index and make it a promisor object
+	# so the index references it and enumeration picks it up.
+	test-tool genrandom idx 4096 >repo/tracked-big.bin &&
+	git -C repo add tracked-big.bin &&
+	OID=$(git -C repo rev-parse :tracked-big.bin) &&
+	printf "%s\n" "$OID" | pack_as_from_promisor >/dev/null &&
+	delete_object repo "$OID" &&
+
+	test_must_fail git -C repo -c repack.writeBitmaps=false \
+		repack --drop-filtered --filter=blob:limit=1k --dry-run -a 2>err &&
+	test_grep "referenced by the current index" err
+'
+
 test_done
