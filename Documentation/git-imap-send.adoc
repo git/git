@@ -24,9 +24,9 @@ that order.
 
 Typical usage is something like:
 
-------
+----
 $ git format-patch --signoff --stdout --attach origin | git imap-send
-------
+----
 
 
 OPTIONS
@@ -138,13 +138,13 @@ have set up) may not be verified correctly.
 
 Using Gmail's IMAP interface:
 
----------
+----
 [imap]
     folder = "[Gmail]/Drafts"
     host = imaps://imap.gmail.com
     user = user@gmail.com
     port = 993
----------
+----
 
 Gmail does not allow using your regular password for `git imap-send`.
 If you have multi-factor authentication set up on your Gmail account, you
@@ -167,32 +167,34 @@ than using app-specific passwords, and also does not enforce the need of
 having multi-factor authentication. You will have to use an OAuth2.0
 access token in place of your password when using this authentication.
 
----------
+----
 [imap]
     folder = "[Gmail]/Drafts"
     host = imaps://imap.gmail.com
     user = user@gmail.com
     port = 993
     authmethod = OAUTHBEARER
----------
+----
 
 Using Outlook's IMAP interface:
 
 Unlike Gmail, Outlook only supports OAuth2.0 based authentication. Also, it
 supports only `XOAUTH2` as the mechanism.
 
----------
+----
 [imap]
     folder = "Drafts"
     host = imaps://outlook.office365.com
     user = user@outlook.com
     port = 993
     authmethod = XOAUTH2
----------
+----
 
 Once the commits are ready to be sent, run the following command:
 
-  $ git format-patch --cover-letter -M --stdout origin/master | git imap-send
+----
+$ git format-patch --cover-letter -M --stdout origin/master | git imap-send
+----
 
 Just make sure to disable line wrapping in the email client (Gmail's web
 interface will wrap lines no matter what, so you need to use a real
@@ -217,7 +219,7 @@ users may wish to visit this web page for more information:
 
 SEE ALSO
 --------
-linkgit:git-format-patch[1], linkgit:git-send-email[1], mbox(5)
+linkgit:git-format-patch[1], linkgit:git-send-email[1], `mbox`(5)
 
 GIT
 ---

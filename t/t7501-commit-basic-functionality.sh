@@ -491,8 +491,7 @@ test_expect_success 'sign off (1)' '
 	echo 1 >positive &&
 	git add positive &&
 	git commit -s -m "thank you" &&
-	git cat-file commit HEAD >commit &&
-	sed -e "1,/^\$/d" commit >actual &&
+	commit_body HEAD >actual &&
 	(
 		echo thank you &&
 		echo &&
@@ -511,8 +510,7 @@ test_expect_success 'sign off (2)' '
 	git commit -s -m "thank you
 
 $existing" &&
-	git cat-file commit HEAD >commit &&
-	sed -e "1,/^\$/d" commit >actual &&
+	commit_body HEAD >actual &&
 	(
 		echo thank you &&
 		echo &&
@@ -532,8 +530,7 @@ test_expect_success 'signoff gap' '
 	git commit -s -m "welcome
 
 $alt" &&
-	git cat-file commit HEAD >commit &&
-	sed -e "1,/^\$/d" commit >actual &&
+	commit_body HEAD >actual &&
 	(
 		echo welcome &&
 		echo &&
@@ -553,8 +550,7 @@ test_expect_success 'signoff gap 2' '
 
 We have now
 $alt" &&
-	git cat-file commit HEAD >commit &&
-	sed -e "1,/^\$/d" commit >actual &&
+	commit_body HEAD >actual &&
 	(
 		echo welcome &&
 		echo &&
@@ -575,8 +571,7 @@ test_expect_success 'signoff respects trailer config' '
 
 non-trailer line
 Myfooter: x" &&
-	git cat-file commit HEAD >commit &&
-	sed -e "1,/^\$/d" commit >actual &&
+	commit_body HEAD >actual &&
 	(
 		echo subject &&
 		echo &&
@@ -593,8 +588,7 @@ Myfooter: x" &&
 
 non-trailer line
 Myfooter: x" &&
-	git cat-file commit HEAD >commit &&
-	sed -e "1,/^\$/d" commit >actual &&
+	commit_body HEAD >actual &&
 	(
 		echo subject &&
 		echo &&
@@ -626,8 +620,7 @@ test_expect_success 'multiple -m' '
 	>negative &&
 	git add negative &&
 	git commit -m "one" -m "two" -m "three" &&
-	git cat-file commit HEAD >commit &&
-	sed -e "1,/^\$/d" commit >actual &&
+	commit_body HEAD >actual &&
 	(
 		echo one &&
 		echo &&

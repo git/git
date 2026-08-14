@@ -13,8 +13,8 @@ endif::git-diff[]
 endif::git-format-patch[]
 
 ifdef::git-format-patch[]
--p::
---no-stat::
+`-p`::
+`--no-stat`::
 	Generate plain patches without any diffstats.
 endif::git-format-patch[]
 
@@ -893,8 +893,8 @@ endif::git-format-patch[]
 	reverted with `--ita-visible-in-index`. Both options are
 	experimental and could be removed in future.
 
---max-depth=<depth>::
-	For each pathspec given on command line, descend at most `<depth>`
+`--max-depth=<depth>`::
+	For each pathspec given on command line, descend at most _<depth>_
 	levels of directories. A value of `-1` means no limit.
 	Cannot be combined with wildcards in the pathspec.
 	Given a tree containing `foo/bar/baz`, the following list shows the

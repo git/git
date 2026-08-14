@@ -1433,6 +1433,14 @@ test_commit_message () {
 	test_cmp "$msg_file" actual.msg
 }
 
+# Print the message body of a commit
+# Usage: commit_body <rev>
+commit_body () {
+	git cat-file commit "$1" >.commit &&
+	sed -e "1,/^$/d" .commit &&
+	rm -f .commit
+}
+
 # Compare paths respecting core.ignoreCase
 test_cmp_fspath () {
 	if test "x$1" = "x$2"
