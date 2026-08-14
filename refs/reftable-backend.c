@@ -391,8 +391,7 @@ static const struct reftable_be_write_options *reftable_be_write_options(struct 
 	return opts;
 }
 
-static void reftable_be_reparent(const char *name UNUSED,
-				 const char *old_cwd,
+static void reftable_be_reparent(const char *old_cwd,
 				 const char *new_cwd,
 				 void *payload)
 {
@@ -465,7 +464,7 @@ static struct ref_store *reftable_be_init(struct repository *repo,
 			goto done;
 	}
 
-	chdir_notify_register(NULL, reftable_be_reparent, refs);
+	chdir_notify_register(reftable_be_reparent, refs);
 
 done:
 	assert(refs->err != REFTABLE_API_ERROR);
@@ -492,7 +491,7 @@ static void reftable_be_release(struct ref_store *ref_store)
 		free(be);
 	}
 	strmap_clear(&refs->worktree_backends, 0);
-	chdir_notify_unregister(NULL, reftable_be_reparent, refs);
+	chdir_notify_unregister(reftable_be_reparent, refs);
 }
 
 static int reftable_be_create_on_disk(struct ref_store *ref_store,

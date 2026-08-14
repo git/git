@@ -1082,8 +1082,7 @@ static void set_git_dir_1(struct repository *repo, const char *path)
 	setup_git_env_internal(repo, path);
 }
 
-static void update_relative_gitdir(const char *name UNUSED,
-				   const char *old_cwd,
+static void update_relative_gitdir(const char *old_cwd,
 				   const char *new_cwd,
 				   void *data)
 {
@@ -1108,7 +1107,7 @@ static void set_git_dir(struct repository *repo, const char *path, int make_real
 
 	set_git_dir_1(repo, path);
 	if (!is_absolute_path(path))
-		chdir_notify_register(NULL, update_relative_gitdir, repo);
+		chdir_notify_register(update_relative_gitdir, repo);
 
 	strbuf_release(&realpath);
 }

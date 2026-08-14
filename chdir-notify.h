@@ -33,13 +33,11 @@
  * $GIT_TRACE_SETUP. It may be NULL, but if non-NULL should point to
  * storage which lasts as long as the registration is active.
  */
-typedef void (*chdir_notify_callback)(const char *name,
-				      const char *old_cwd,
+typedef void (*chdir_notify_callback)(const char *old_cwd,
 				      const char *new_cwd,
 				      void *data);
-void chdir_notify_register(const char *name, chdir_notify_callback cb, void *data);
-void chdir_notify_unregister(const char *name, chdir_notify_callback cb,
-			     void *data);
+void chdir_notify_register(chdir_notify_callback cb, void *data);
+void chdir_notify_unregister(chdir_notify_callback cb, void *data);
 
 /*
  *
