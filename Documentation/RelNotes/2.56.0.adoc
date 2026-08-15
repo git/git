@@ -85,6 +85,11 @@ UI, Workflows & Features
    syscall fails has also been improved to name both the source and
    the destination.
 
+ * 'git add' has been taught a new '--resolved' option to stage
+   conflict-resolved paths, while leaving unrelated local changes
+   unstaged.  It scans the unmerged paths for leftover conflict
+   markers and aborts if any are found.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -333,6 +338,22 @@ Performance, Internal Implementation, Development Support etc.
  * Tests for 'git merge-base --is-ancestor' have been added to cover
    exit codes (0 for success, 1 for non-ancestor, 128 for errors) and
    to ensure it cannot be combined with '--all'.
+
+ * The 'TRACE2_ANCESTRY' prerequisite in the 't0213' test script has been
+   refined to avoid failures under user-mode emulation by verifying that
+   the ancestry collector reports the expected process names rather than
+   the emulator binary name.
+
+ * Concurrent downloads of packfiles via packfile URIs and dumb HTTP are
+   safer by avoiding concurrent appends to the staging file.  Opening in
+   read-write mode with separate file offsets prevents corruption and
+   preserves resumability.  'fetch-pack' now tolerates pre-existing
+   '.keep' files.
+
+ * The 'ssh-agent' tests in 't7528' have been fixed to work when the
+   user's login shell is csh-like, by explicitly passing '-s' to
+   'ssh-agent' to force Bourne shell syntax.
+   (merge d5dd17756d kl/t7528-ssh-agent-for-csh-users later to maint).
 
 
 Fixes since v2.55
