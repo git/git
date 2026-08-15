@@ -26,6 +26,7 @@
 #include "strvec.h"
 #include "submodule.h"
 #include "add-interactive.h"
+#include "merge-ll.h"
 
 static const char * const builtin_add_usage[] = {
 	N_("git add [<options>] [--] <pathspec>..."),
@@ -35,6 +36,7 @@ static int patch_interactive, add_interactive, edit_interactive;
 static struct interactive_options interactive_opts = INTERACTIVE_OPTIONS_INIT;
 static int take_worktree_changes;
 static int add_renormalize;
+static int add_resolved;
 static int pathspec_file_nul;
 static int include_sparse;
 static const char *pathspec_from_file;
@@ -265,6 +267,7 @@ static struct option builtin_add_options[] = {
 	OPT__FORCE(&ignored_too, N_("allow adding otherwise ignored files"), 0),
 	OPT_BOOL('u', "update", &take_worktree_changes, N_("update tracked files")),
 	OPT_BOOL(0, "renormalize", &add_renormalize, N_("renormalize EOL of tracked files (implies -u)")),
+	OPT_BOOL(0, "resolved", &add_resolved, N_("add conflict-resolved tracked files")),
 	OPT_BOOL('N', "intent-to-add", &intent_to_add, N_("record only the fact that the path will be added later")),
 	OPT_BOOL('A', "all", &addremove_explicit, N_("add changes from all tracked and untracked files")),
 	OPT_CALLBACK_F(0, "ignore-removal", &addremove_explicit,
@@ -379,6 +382,76 @@ static int add_files(struct repository *repo, struct dir_struct *dir, int flags)
 	return exit_status;
 }
 
+static int failed_to_add(int flags, const char *path)
+{
+	if (!(flags & ADD_CACHE_IGNORE_ERRORS))
+		die(_("updating file '%s' failed"), path);
+	return 1;
+}
+
+static int add_resolved_files(struct repository *repo,
+			      const struct pathspec *pathspec,
+			      int flags)
+{
+	struct index_state *istate = repo->index;
+	struct string_list unmerged_paths = STRING_LIST_INIT_DUP;
+	struct string_list unresolved_paths = STRING_LIST_INIT_DUP;
+	int exit_status = 0;
+	size_t i;
+
+	for (i = 0; i < istate->cache_nr; i++) {
+		struct cache_entry *ce = istate->cache[i];
+		if (!ce_stage(ce))
+			continue;
+		if (pathspec->nr && !ce_path_match(istate, ce, pathspec, NULL))
+			continue;
+		if (!unmerged_paths.nr ||
+		    strcmp(unmerged_paths.items[unmerged_paths.nr - 1].string, ce->name))
+			string_list_append(&unmerged_paths, ce->name);
+	}
+
+	if (!unmerged_paths.nr) {
+		string_list_clear(&unmerged_paths, 0);
+		return 0;
+	}
+
+	for (i = 0; i < unmerged_paths.nr; i++) {
+		const char *path = unmerged_paths.items[i].string;
+		struct stat st;
+
+		if (!lstat(path, &st) && S_ISREG(st.st_mode)) {
+			if (has_conflict_markers(istate, path))
+				string_list_append(&unresolved_paths, path);
+		}
+	}
+
+	if (unresolved_paths.nr) {
+		struct strbuf sb = STRBUF_INIT;
+		for (i = 0; i < unresolved_paths.nr; i++)
+			strbuf_addf(&sb, "\t%s\n", unresolved_paths.items[i].string);
+		die(_("the following paths still have conflict markers:\n%s"), sb.buf);
+	}
+
+	for (i = 0; i < unmerged_paths.nr; i++) {
+		const char *path = unmerged_paths.items[i].string;
+		struct stat st;
+
+		if (lstat(path, &st)) {
+			if (errno != ENOENT)
+				die_errno(_("cannot lstat: '%s'"), path);
+			if (remove_file_from_index_with_flags(istate, path, flags))
+				exit_status = failed_to_add(flags, path);
+		} else {
+			if (add_file_to_index(istate, path, flags))
+				exit_status = failed_to_add(flags, path);
+		}
+	}
+
+	string_list_clear(&unmerged_paths, 0);
+	string_list_clear(&unresolved_paths, 0);
+	return exit_status;
+}
+
 int cmd_add(int argc,
 	    const char **argv,
 	    const char *prefix,
@@ -438,8 +511,9 @@ int cmd_add(int argc,
 	else if (take_worktree_changes && ADDREMOVE_DEFAULT)
 		addremove = 0; /* "-u" was given but not "-A" */
 
-	if (addremove && take_worktree_changes)
-		die(_("options '%s' and '%s' cannot be used together"), "-A", "-u");
+	die_for_incompatible_opt3(take_worktree_changes, "-u/--update",
+				  0 < addremove_explicit, "-A/--all",
+				  add_resolved, "--resolved");
 
 	if (!show_only && ignore_missing)
 		die(_("the option '%s' requires '%s'"), "--ignore-missing", "--dry-run");
@@ -448,8 +522,11 @@ int cmd_add(int argc,
 			  chmod_arg[1] != 'x' || chmod_arg[2]))
 		die(_("--chmod param '%s' must be either -x or +x"), chmod_arg);
 
-	add_new_files = !take_worktree_changes && !refresh_only && !add_renormalize;
-	require_pathspec = !(take_worktree_changes || (0 < addremove_explicit));
+	add_new_files = !take_worktree_changes && !refresh_only &&
+			!add_renormalize && !add_resolved;
+	require_pathspec = !(take_worktree_changes ||
+			     (0 < addremove_explicit) ||
+			     add_resolved);
 
 	repo_hold_locked_index(repo, &lock_file, LOCK_DIE_ON_ERROR);
 
@@ -481,7 +558,8 @@ int cmd_add(int argc,
 		return 0;
 	}
 
-	if (!take_worktree_changes && addremove_explicit < 0 && pathspec.nr)
+	if (!take_worktree_changes && !add_resolved &&
+	    addremove_explicit < 0 && pathspec.nr)
 		/* Turn "git add pathspec..." to "git add -A pathspec..." */
 		addremove = 1;
 
@@ -584,7 +662,9 @@ int cmd_add(int argc,
 	odb_transaction_begin_or_die(repo->objects, &transaction, 0);
 
 	ps_matched = xcalloc(pathspec.nr, 1);
-	if (add_renormalize)
+	if (add_resolved)
+		exit_status |= add_resolved_files(repo, &pathspec, flags);
+	else if (add_renormalize)
 		exit_status |= renormalize_tracked_files(repo, &pathspec, flags);
 	else
 		exit_status |= add_files_to_cache(repo, prefix,
