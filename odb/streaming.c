@@ -20,8 +20,8 @@
  *****************************************************************/
 
 struct odb_filtered_read_stream {
-	struct odb_read_stream base;
-	struct odb_read_stream *upstream;
+	struct odb_stream base;
+	struct odb_stream *upstream;
 	struct stream_filter *filter;
 	char ibuf[FILTER_BUFFER];
 	char obuf[FILTER_BUFFER];
@@ -30,14 +30,14 @@ struct odb_filtered_read_stream {
 	int input_finished;
 };
 
-static int close_istream_filtered(struct odb_read_stream *_fs)
+static int close_istream_filtered(struct odb_stream *_fs)
 {
 	struct odb_filtered_read_stream *fs = (struct odb_filtered_read_stream *)_fs;
 	free_stream_filter(fs->filter);
-	return odb_read_stream_close(fs->upstream);
+	return odb_stream_close(fs->upstream);
 }
 
-static ssize_t read_istream_filtered(struct odb_read_stream *_fs, char *buf,
+static ssize_t read_istream_filtered(struct odb_stream *_fs, char *buf,
 				     size_t sz)
 {
 	struct odb_filtered_read_stream *fs = (struct odb_filtered_read_stream *)_fs;
@@ -86,7 +86,7 @@ static ssize_t read_istream_filtered(struct odb_read_stream *_fs, char *buf,
 
 		/* refill the input from the upstream */
 		if (!fs->input_finished) {
-			fs->i_end = odb_read_stream_read(fs->upstream, fs->ibuf, FILTER_BUFFER);
+			fs->i_end = odb_stream_read(fs->upstream, fs->ibuf, FILTER_BUFFER);
 			if (fs->i_end < 0)
 				return -1;
 			if (fs->i_end)
@@ -97,8 +97,8 @@ static ssize_t read_istream_filtered(struct odb_read_stream *_fs, char *buf,
 	return filled;
 }
 
-static struct odb_read_stream *attach_stream_filter(struct odb_read_stream *st,
-						    struct stream_filter *filter)
+static struct odb_stream *attach_stream_filter(struct odb_stream *st,
+					       struct stream_filter *filter)
 {
 	struct odb_filtered_read_stream *fs;
 
@@ -120,19 +120,19 @@ static struct odb_read_stream *attach_stream_filter(struct odb_read_stream *st,
  *****************************************************************/
 
 struct odb_incore_read_stream {
-	struct odb_read_stream base;
+	struct odb_stream base;
 	char *buf; /* from odb_read_object_info_extended() */
 	unsigned long read_ptr;
 };
 
-static int close_istream_incore(struct odb_read_stream *_st)
+static int close_istream_incore(struct odb_stream *_st)
 {
 	struct odb_incore_read_stream *st = (struct odb_incore_read_stream *)_st;
 	free(st->buf);
 	return 0;
 }
 
-static ssize_t read_istream_incore(struct odb_read_stream *_st, char *buf, size_t sz)
+static ssize_t read_istream_incore(struct odb_stream *_st, char *buf, size_t sz)
 {
 	struct odb_incore_read_stream *st = (struct odb_incore_read_stream *)_st;
 	size_t read_size = sz;
@@ -147,7 +147,7 @@ static ssize_t read_istream_incore(struct odb_read_stream *_st, char *buf, size_
 	return read_size;
 }
 
-static int open_istream_incore(struct odb_read_stream **out,
+static int open_istream_incore(struct odb_stream **out,
 			       struct object_database *odb,
 			       const struct object_id *oid)
 {
@@ -178,7 +178,7 @@ static int open_istream_incore(struct odb_read_stream **out,
  * static helpers variables and functions for users of streaming interface
  *****************************************************************************/
 
-static int istream_source(struct odb_read_stream **out,
+static int istream_source(struct odb_stream **out,
 			  struct object_database *odb,
 			  const struct object_id *oid)
 {
@@ -196,23 +196,23 @@ static int istream_source(struct odb_read_stream **out,
  * Users of streaming interface
  ****************************************************************/
 
-int odb_read_stream_close(struct odb_read_stream *st)
+int odb_stream_close(struct odb_stream *st)
 {
 	int r = st->close(st);
 	free(st);
 	return r;
 }
 
-ssize_t odb_read_stream_read(struct odb_read_stream *st, void *buf, size_t sz)
+ssize_t odb_stream_read(struct odb_stream *st, void *buf, size_t sz)
 {
 	return st->read(st, buf, sz);
 }
 
-struct odb_read_stream *odb_read_stream_open(struct object_database *odb,
-					     const struct object_id *oid,
-					     struct stream_filter *filter)
+struct odb_stream *odb_stream_from_object(struct object_database *odb,
+					  const struct object_id *oid,
+					  struct stream_filter *filter)
 {
-	struct odb_read_stream *st;
+	struct odb_stream *st;
 	const struct object_id *real = lookup_replace_object(odb->repo, oid);
 	int ret = istream_source(&st, odb, real);
 
@@ -221,9 +221,9 @@ struct odb_read_stream *odb_read_stream_open(struct object_database *odb,
 
 	if (filter) {
 		/* Add "&& !is_null_stream_filter(filter)" for performance */
-		struct odb_read_stream *nst = attach_stream_filter(st, filter);
+		struct odb_stream *nst = attach_stream_filter(st, filter);
 		if (!nst) {
-			odb_read_stream_close(st);
+			odb_stream_close(st);
 			return NULL;
 		}
 		st = nst;
@@ -232,27 +232,17 @@ struct odb_read_stream *odb_read_stream_open(struct object_database *odb,
 	return st;
 }
 
-ssize_t odb_write_stream_read(struct odb_write_stream *st, void *buf, size_t sz)
-{
-	return st->read(st, buf, sz);
-}
-
-void odb_write_stream_release(struct odb_write_stream *st)
-{
-	free(st->data);
-}
-
 int odb_stream_blob_to_fd(struct object_database *odb,
 			  int fd,
 			  const struct object_id *oid,
 			  struct stream_filter *filter,
 			  int can_seek)
 {
-	struct odb_read_stream *st;
+	struct odb_stream *st;
 	ssize_t kept = 0;
 	int result = -1;
 
-	st = odb_read_stream_open(odb, oid, filter);
+	st = odb_stream_from_object(odb, oid, filter);
 	if (!st) {
 		if (filter)
 			free_stream_filter(filter);
@@ -263,7 +253,7 @@ int odb_stream_blob_to_fd(struct object_database *odb,
 	for (;;) {
 		char buf[1024 * 16];
 		ssize_t wrote, holeto;
-		ssize_t readlen = odb_read_stream_read(st, buf, sizeof(buf));
+		ssize_t readlen = odb_stream_read(st, buf, sizeof(buf));
 
 		if (readlen < 0)
 			goto close_and_exit;
@@ -294,47 +284,53 @@ int odb_stream_blob_to_fd(struct object_database *odb,
 	result = 0;
 
  close_and_exit:
-	odb_read_stream_close(st);
+	odb_stream_close(st);
 	return result;
 }
 
-struct read_object_fd_data {
+struct fd_stream {
+	struct odb_stream base;
 	int fd;
 	size_t remaining;
 };
 
-static ssize_t read_object_fd(struct odb_write_stream *stream,
-			      unsigned char *buf, size_t len)
+static ssize_t fd_stream_read(struct odb_stream *stream,
+			      char *buf, size_t len)
 {
-	struct read_object_fd_data *data = stream->data;
+	struct fd_stream *fds = container_of(stream, struct fd_stream, base);
 	ssize_t read_result;
 	size_t count;
 
-	if (stream->is_finished)
+	if (!fds->remaining)
 		return 0;
 
-	count = data->remaining < len ? data->remaining : len;
-	read_result = read_in_full(data->fd, buf, count);
+	count = fds->remaining < len ? fds->remaining : len;
+	read_result = read_in_full(fds->fd, buf, count);
 	if (read_result < 0 || (size_t)read_result != count)
 		return -1;
 
-	data->remaining -= count;
-	if (!data->remaining)
-		stream->is_finished = 1;
+	fds->remaining -= count;
 
 	return read_result;
 }
 
-void odb_write_stream_from_fd(struct odb_write_stream *stream, int fd,
-			      size_t size)
+static int fd_stream_close(struct odb_stream *stream UNUSED)
 {
-	struct read_object_fd_data *data;
+	/* The file descriptor is owned by the caller for now. */
+	return 0;
+}
 
-	CALLOC_ARRAY(data, 1);
-	data->fd = fd;
-	data->remaining = size;
+struct odb_stream *odb_stream_from_fd(int fd, size_t size, enum object_type type)
+{
+	struct fd_stream *fds;
 
-	stream->data = data;
-	stream->read = read_object_fd;
-	stream->is_finished = 0;
+	CALLOC_ARRAY(fds, 1);
+	fds->base.read = fd_stream_read;
+	fds->base.close = fd_stream_close;
+	fds->base.size = size;
+	fds->base.type = type;
+	fds->fd = fd;
+	fds->remaining = size;
+
+	return &fds->base;
 }

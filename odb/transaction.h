@@ -24,14 +24,14 @@ struct odb_transaction {
 
 	/*
 	 * This callback is expected to write the given object stream into
-	 * the ODB transaction. Note that for now, only blobs support streaming.
+	 * the ODB transaction.
 	 *
 	 * The resulting object ID shall be written into the out pointer. The
 	 * callback is expected to return 0 on success, a negative error code
 	 * otherwise.
 	 */
 	int (*write_object_stream)(struct odb_transaction *transaction,
-				   struct odb_write_stream *stream, size_t len,
+				   struct odb_stream *stream,
 				   struct object_id *oid);
 
 	/*
@@ -81,8 +81,8 @@ int odb_transaction_commit(struct odb_transaction *transaction);
  * error code otherwise.
  */
 int odb_transaction_write_object_stream(struct odb_transaction *transaction,
-					struct odb_write_stream *stream,
-					size_t len, struct object_id *oid);
+					struct odb_stream *stream,
+					struct object_id *oid);
 
 /*
  * Populates the provided strvec with the environment variables that a child

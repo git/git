@@ -101,7 +101,7 @@ int check_object_signature(struct repository *r, const struct object_id *oid,
  * the streaming interface and rehash it to do the same.
  */
 int stream_object_signature(struct repository *r,
-			    struct odb_read_stream *stream,
+			    struct odb_stream *stream,
 			    const struct object_id *oid);
 
 enum finalize_object_file_flags {

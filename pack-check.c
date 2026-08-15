@@ -106,7 +106,7 @@ static int verify_packfile(struct repository *r,
 	QSORT(entries, nr_objects, compare_entries);
 
 	for (i = 0; i < nr_objects; i++) {
-		struct odb_read_stream *stream = NULL;
+		struct odb_stream *stream = NULL;
 		void *data;
 		struct object_id oid;
 		enum object_type type;
@@ -171,7 +171,7 @@ static int verify_packfile(struct repository *r,
 			display_progress(progress, base_count + i);
 
 		if (stream)
-			odb_read_stream_close(stream);
+			odb_stream_close(stream);
 		free(data);
 	}
 
