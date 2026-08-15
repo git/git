@@ -433,16 +433,13 @@ static int get_bundle_uri(struct transport *transport)
 				     transport->bundles, stateless_rpc);
 }
 
-static int fetch_object_info_via_pack(struct transport *transport)
+static int fetch_object_info_via_pack(struct transport *transport,
+				      const struct oid_array *oids,
+				      struct fetch_object_info_results *results)
 {
 	int ret = 0;
 	struct git_transport_data *data = transport->data;
 	struct packet_reader reader;
-	struct object_info_args args = { 0 };
-
-	args.server_options = transport->server_options;
-	args.oids = transport->smart_options->object_info_oids;
-	args.object_info_options = transport->smart_options->object_info_options;
 
 	connect_setup(transport, 0);
 	packet_reader_init(&reader, data->fd[0], NULL, 0,
@@ -453,9 +450,12 @@ static int fetch_object_info_via_pack(struct transport *transport)
 	data->version = discover_version(&reader);
 	transport->hash_algo = reader.hash_algo;
 
-	ret = fetch_object_info(data->version, &args, &reader,
-				data->options.object_info_data,
-				transport->stateless_rpc, data->fd[1]);
+	fetch_object_info(data->version,
+			  transport->server_options,
+			  oids,
+			  &reader,
+			  results,
+			  transport->stateless_rpc, data->fd[1]);
 
 	close(data->fd[0]);
 	if (data->fd[1] >= 0)
@@ -467,11 +467,13 @@ static int fetch_object_info_via_pack(struct transport *transport)
 	return ret;
 }
 
-int transport_fetch_object_info(struct transport *transport)
+int transport_fetch_object_info(struct transport *transport,
+				const struct oid_array *oids,
+				struct fetch_object_info_results *results)
 {
 	if (!transport->vtable->fetch_object_info)
 		die(_("remote does not support object-info"));
-	return transport->vtable->fetch_object_info(transport);
+	return transport->vtable->fetch_object_info(transport, oids, results);
 }
 
 static int fetch_refs_via_pack(struct transport *transport,
