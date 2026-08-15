@@ -12,7 +12,6 @@ column
 credential
 credential-cache
 credential-store
-fast-import
 fetch-pack
 fmt-merge-msg
 format-patch
