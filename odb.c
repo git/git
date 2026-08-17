@@ -2,11 +2,10 @@
 #include "abspath.h"
 #include "commit-graph.h"
 #include "config.h"
-#include "dir.h"
 #include "environment.h"
 #include "gettext.h"
+#include "hashmap.h"
 #include "hex.h"
-#include "khash.h"
 #include "lockfile.h"
 #include "loose.h"
 #include "midx.h"
@@ -29,8 +28,47 @@
 #include "trace2.h"
 #include "write-or-die.h"
 
-KHASH_INIT(odb_path_map, const char * /* key: odb_path */,
-	struct odb_source *, 1, fspathhash, fspatheq)
+/*
+ * NEEDSWORK: we're using "core.ignoreCase" to deduplicate alternates that
+ * _may_ be the same. This requires quite a bit of boilerplate for dubious
+ * benefit:
+ *
+ *   - Duplicating alternates should really only lead to regressed performance.
+ *
+ *   - We don't properly resolve symlinks or mointpoints, so we may still end
+ *     up duplicating alternates.
+ *
+ *   - The value may be lying, in which case we might deduplicate alternates
+ *     that are in fact not mapping to the same directory.
+ *
+ * We should investigate whether we can remove this whole mechanism outright.
+ */
+static int odb_source_paths_cmp(struct object_database *o,
+				const char *a, const char *b)
+{
+	if (o->source_paths_icase < 0) {
+		int icase = 0;
+		repo_config_get_bool(o->repo, "core.ignorecase", &icase);
+		o->source_paths_icase = icase;
+	}
+
+	return o->source_paths_icase ? strcasecmp(a, b) : strcmp(a, b);
+}
+
+static int odb_source_by_path_cmp(const void *cb_data,
+				  const struct hashmap_entry *entry,
+				  const struct hashmap_entry *entry_or_key,
+				  const void *keydata)
+{
+	struct object_database *o = (struct object_database *)cb_data;
+	const struct odb_source *source = container_of(entry, const struct odb_source, by_path_entry);
+	const char *path = keydata;
+
+	if (!path)
+		path = container_of(entry_or_key, const struct odb_source, by_path_entry)->path;
+
+	return odb_source_paths_cmp(o, source->path, path);
+}
 
 int odb_mkstemp(struct object_database *odb,
 		struct strbuf *temp_filename, const char *pattern)
@@ -58,8 +96,8 @@ int odb_mkstemp(struct object_database *odb,
  */
 static bool odb_is_source_usable(struct object_database *o, const char *path)
 {
-	int r;
 	struct strbuf normalized_objdir = STRBUF_INIT;
+	struct hashmap_entry key;
 	bool usable = false;
 
 	strbuf_realpath(&normalized_objdir, o->sources->path, 1);
@@ -76,20 +114,18 @@ static bool odb_is_source_usable(struct object_database *o, const char *path)
 	 * Prevent the common mistake of listing the same
 	 * thing twice, or object directory itself.
 	 */
-	if (!o->source_by_path) {
-		khiter_t p;
-
-		o->source_by_path = kh_init_odb_path_map();
+	if (!hashmap_get_size(&o->source_by_path)) {
 		assert(!o->sources->next);
-		p = kh_put_odb_path_map(o->source_by_path, o->sources->path, &r);
-		assert(r == 1); /* never used */
-		kh_value(o->source_by_path, p) = o->sources;
+		hashmap_entry_init(&o->sources->by_path_entry,
+				   strihash(o->sources->path));
+		hashmap_add(&o->source_by_path, &o->sources->by_path_entry);
 	}
 
-	if (fspatheq(path, normalized_objdir.buf))
+	if (!odb_source_paths_cmp(o, path, normalized_objdir.buf))
 		goto out;
 
-	if (kh_get_odb_path_map(o->source_by_path, path) < kh_end(o->source_by_path))
+	hashmap_entry_init(&key, strihash(path));
+	if (hashmap_get(&o->source_by_path, &key, path))
 		goto out;
 
 	usable = true;
@@ -172,8 +208,6 @@ static struct odb_source *odb_add_alternate_recursively(struct object_database *
 {
 	struct odb_source *alternate = NULL;
 	struct strvec sources = STRVEC_INIT;
-	khiter_t pos;
-	int ret;
 
 	if (!odb_is_source_usable(odb, source))
 		goto error;
@@ -184,10 +218,11 @@ static struct odb_source *odb_add_alternate_recursively(struct object_database *
 	*odb->sources_tail = alternate;
 	odb->sources_tail = &(alternate->next);
 
-	pos = kh_put_odb_path_map(odb->source_by_path, alternate->path, &ret);
-	if (!ret)
+	hashmap_entry_init(&alternate->by_path_entry, strihash(alternate->path));
+	if (hashmap_get(&odb->source_by_path, &alternate->by_path_entry,
+			alternate->path))
 		BUG("source must not yet exist");
-	kh_value(odb->source_by_path, pos) = alternate;
+	hashmap_add(&odb->source_by_path, &alternate->by_path_entry);
 
 	/* recursively add alternates */
 	odb_source_read_alternates(alternate, &sources);
@@ -1056,6 +1091,8 @@ struct object_database *odb_new(struct repository *repo,
 	o->repo = repo;
 	pthread_mutex_init(&o->replace_mutex, NULL);
 	string_list_init_dup(&o->submodule_source_paths);
+	hashmap_init(&o->source_by_path, odb_source_by_path_cmp, o, 0);
+	o->source_paths_icase = -1;
 
 	if (flags & ODB_NEW_HONOR_ENV) {
 		primary_source = xstrdup_or_null(getenv(DB_ENVIRONMENT));
@@ -1094,8 +1131,7 @@ static void odb_free_sources(struct object_database *o)
 	odb_source_free(o->inmemory_objects);
 	o->inmemory_objects = NULL;
 
-	kh_destroy_odb_path_map(o->source_by_path);
-	o->source_by_path = NULL;
+	hashmap_clear(&o->source_by_path);
 }
 
 void odb_free(struct object_database *o)

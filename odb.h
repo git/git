@@ -1,6 +1,7 @@
 #ifndef ODB_H
 #define ODB_H
 
+#include "hashmap.h"
 #include "object.h"
 #include "oidset.h"
 #include "oidmap.h"
@@ -54,7 +55,19 @@ struct object_database {
 	 */
 	struct odb_source *sources;
 	struct odb_source **sources_tail;
-	struct kh_odb_path_map *source_by_path;
+
+	/*
+	 * Map of object database sources, keyed by their respective paths.
+	 * This map is used to detect the case where the same source is
+	 * registered multiple times.
+	 */
+	struct hashmap source_by_path;
+
+	/*
+	 * Whether source paths shall be compared case-insensitively, as
+	 * determined by "core.ignoreCase".
+	 */
+	int source_paths_icase;
 
 	int loaded_alternates;
 
