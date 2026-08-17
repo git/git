@@ -505,12 +505,14 @@ int odb_for_each_alternate(struct object_database *odb,
 	return r;
 }
 
-static void odb_prepare_alternates(struct object_database *odb)
+static void odb_prepare_alternates(struct object_database *odb,
+				   const char *alternate_db)
 {
 	struct strvec sources = STRVEC_INIT;
 
-	parse_alternates(odb->alternate_db, PATH_SEP, NULL, &sources);
+	parse_alternates(alternate_db, PATH_SEP, NULL, &sources);
 	odb_source_read_alternates(odb->sources, &sources);
+
 	for (size_t i = 0; i < sources.nr; i++)
 		odb_add_alternate_recursively(odb, sources.v[i], 0);
 
@@ -1077,11 +1079,11 @@ struct object_database *odb_new(struct repository *repo,
 
 	o->sources = odb_source_new(o, primary_source, true);
 	o->sources_tail = &o->sources->next;
-	o->alternate_db = secondary_sources;
 	o->inmemory_objects = &odb_source_inmemory_new(o)->base;
 
-	odb_prepare_alternates(o);
+	odb_prepare_alternates(o, secondary_sources);
 
+	free(secondary_sources);
 	free(primary_source);
 	return o;
 }
@@ -1115,8 +1117,6 @@ void odb_free(struct object_database *o)
 	if (!o)
 		return;
 
-	free(o->alternate_db);
-
 	oidmap_clear(&o->replace_map, 1);
 	pthread_mutex_destroy(&o->replace_mutex);
 
@@ -1138,10 +1138,11 @@ void odb_prepare(struct object_database *o, enum odb_prepare_flags flags)
 	 * Reprepare alt odbs, in case the alternates file was modified
 	 * during the course of this process. This only _adds_ odbs to
 	 * the linked list, so existing odbs will continue to exist for
-	 * the lifetime of the process.
+	 * the lifetime of the process. Consequently, we don't have to
+	 * reprocess GIT_ALTERNATE_OBJECT_DIRECTORIES here.
 	 */
 	if (flags & ODB_PREPARE_FLUSH_CACHES) {
-		odb_prepare_alternates(o);
+		odb_prepare_alternates(o, NULL);
 		o->object_count_valid = 0;
 	}
 

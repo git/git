@@ -70,13 +70,6 @@ struct object_database {
 	int source_paths_icase;
 
 	/*
-	 * A list of alternate object directories loaded from the environment;
-	 * this should not generally need to be accessed directly, but will
-	 * populate the "sources" list when odb_prepare_alternates() is run.
-	 */
-	char *alternate_db;
-
-	/*
 	 * Objects that should be substituted by other objects
 	 * (see git-replace(1)).
 	 */
