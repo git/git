@@ -46,6 +46,9 @@ static int promisor_remote_advertise(struct repository *r,
 static void promisor_remote_receive(struct repository *r,
 				    const char *remotes)
 {
+	if (!remotes)
+		die("promisor-remote capability requires an argument");
+
 	mark_promisor_remotes_as_accepted(r, remotes);
 }
 
