@@ -1313,7 +1313,10 @@ static int show_editor(struct config_location_options *opts)
 		else if (errno != EEXIST)
 			die_errno(_("cannot create configuration file %s"), config_file);
 	}
-	launch_editor(config_file, NULL, NULL);
+	if (launch_editor(config_file, NULL, NULL)) {
+		free(config_file);
+		return -1;
+	}
 	free(config_file);
 
 	return 0;
