@@ -274,12 +274,6 @@ int odb_mkstemp(struct object_database *odb,
 		struct strbuf *temp_filename, const char *pattern);
 
 /*
- * Prepare alternate object sources for the given database by reading
- * "objects/info/alternates" and opening the respective sources.
- */
-void odb_prepare_alternates(struct object_database *odb);
-
-/*
  * Check whether the object database has any alternates. The primary object
  * source does not count as alternate.
  */

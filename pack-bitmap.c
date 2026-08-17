@@ -717,7 +717,6 @@ static int open_bitmap(struct repository *r,
 
 	assert(!bitmap_git->map);
 
-	odb_prepare_alternates(r->objects);
 	for (source = r->objects->sources; source; source = source->next) {
 		struct odb_source_files *files = odb_source_files_downcast(source);
 
@@ -3417,7 +3416,6 @@ int verify_bitmap_files(struct repository *r)
 	struct packed_git *p;
 	int res = 0;
 
-	odb_prepare_alternates(r->objects);
 	for (source = r->objects->sources; source; source = source->next) {
 		struct odb_source_files *files = odb_source_files_downcast(source);
 		struct multi_pack_index *m = get_multi_pack_index(files->packed);
