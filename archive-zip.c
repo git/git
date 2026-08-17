@@ -206,7 +206,7 @@ static void *zlib_deflate_raw(void *data, unsigned long size,
 			      unsigned long *compressed_size)
 {
 	git_zstream stream;
-	unsigned long maxsize;
+	size_t maxsize;
 	void *buffer;
 	int result;
 

@@ -240,7 +240,8 @@ uint32_t get_pack_fanout(struct packed_git *p, uint32_t value);
 
 struct object_database;
 
-unsigned char *use_pack(struct packed_git *, struct pack_window **, off_t, unsigned long *);
+unsigned char *use_pack(struct packed_git *, struct pack_window **, off_t,
+			size_t *);
 void close_pack_windows(struct packed_git *);
 void close_pack(struct packed_git *);
 void unuse_pack(struct pack_window **);
@@ -299,7 +300,8 @@ int packfile_fill_entry(struct packed_git *p,
 int is_pack_valid(struct packed_git *);
 void *unpack_entry(struct repository *r, struct packed_git *, off_t,
 		   enum object_type *, size_t *);
-unsigned long unpack_object_header_buffer(const unsigned char *buf, unsigned long len, enum object_type *type, size_t *sizep);
+size_t unpack_object_header_buffer(const unsigned char *buf, size_t len,
+				   enum object_type *type, size_t *sizep);
 size_t get_size_from_delta(struct packed_git *, struct pack_window **, off_t);
 int unpack_object_header(struct packed_git *, struct pack_window **, off_t *, size_t *);
 off_t get_delta_base(struct packed_git *p, struct pack_window **w_curs,
