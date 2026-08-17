@@ -245,8 +245,7 @@ void odb_add_to_alternates_file(struct object_database *odb,
 	int ret = odb_source_write_alternate(odb->sources, dir);
 	if (ret < 0)
 		die(NULL);
-	if (odb->loaded_alternates)
-		odb_add_alternate_recursively(odb, dir, 0);
+	odb_add_alternate_recursively(odb, dir, 0);
 }
 
 struct odb_source *odb_add_to_alternates_memory(struct object_database *odb,
@@ -510,15 +509,10 @@ static void odb_prepare_alternates(struct object_database *odb)
 {
 	struct strvec sources = STRVEC_INIT;
 
-	if (odb->loaded_alternates)
-		return;
-
 	parse_alternates(odb->alternate_db, PATH_SEP, NULL, &sources);
 	odb_source_read_alternates(odb->sources, &sources);
 	for (size_t i = 0; i < sources.nr; i++)
 		odb_add_alternate_recursively(odb, sources.v[i], 0);
-
-	odb->loaded_alternates = 1;
 
 	strvec_clear(&sources);
 }
@@ -1147,7 +1141,6 @@ void odb_prepare(struct object_database *o, enum odb_prepare_flags flags)
 	 * the lifetime of the process.
 	 */
 	if (flags & ODB_PREPARE_FLUSH_CACHES) {
-		o->loaded_alternates = 0;
 		odb_prepare_alternates(o);
 		o->object_count_valid = 0;
 	}

@@ -69,8 +69,6 @@ struct object_database {
 	 */
 	int source_paths_icase;
 
-	int loaded_alternates;
-
 	/*
 	 * A list of alternate object directories loaded from the environment;
 	 * this should not generally need to be accessed directly, but will
