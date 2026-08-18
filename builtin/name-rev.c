@@ -782,10 +782,10 @@ static int format_nul_cb(const struct option *option,
 			 int unset)
 {
 	struct format_nul_data *data = option->value;
-	data->nul_input = 1;
-	data->nul_output = 1;
 	BUG_ON_OPT_NEG(unset);
 	BUG_ON_OPT_ARG(arg);
+	data->nul_input = 1;
+	data->nul_output = 1;
 	return 0;
 }
 
