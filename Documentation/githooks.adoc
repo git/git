@@ -527,6 +527,29 @@ The exit status of the hook is ignored for any state except for the
 status will cause the transaction to be aborted. The hook will not be
 called with "aborted" state in that case.
 
+report
+~~~~~~
+
+This hook is invoked by linkgit:git-receive-pack[1] when it reacts to
+`git push` and updates reference(s) in its repository. It executes on
+the remote repository once after all refs have been updated, but before
+the status report is sent back to the client.
+
+The hook receives the pkt-line encoded status report on standard input
+and its standard output replaces the report sent to the client. Any
+output written to standard error is forwarded to the client over the
+sideband channel and will appear as `remote:` lines on the client's
+terminal. To reject individual ref updates, rewrite the corresponding
+`ok` lines to `ng` lines in the output report (with an explanatory
+error string) and exit zero; standard error can accompany this to
+provide a human-readable explanation. A non-zero exit status causes
+`receive-pack` to die.
+
+Note that by the time this hook runs, all ref updates have already been
+applied to the repository. A non-zero exit causes the client to see the
+push as failed, but does *not* roll back any ref changes that were
+already committed server-side.
+
 push-to-checkout
 ~~~~~~~~~~~~~~~~
 
