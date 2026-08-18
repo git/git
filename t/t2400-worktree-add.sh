@@ -40,10 +40,24 @@ test_expect_success '"add" using - shorthand' '
 	test_cmp expect actual
 '
 
-test_expect_success '"add" refuses to checkout locked branch' '
-	test_must_fail git worktree add zere main &&
-	test_path_is_missing zere &&
-	test_path_is_missing .git/worktrees/zere
+test_expect_success '"add" can check out a branch in use by another worktree' '
+	test_when_finished "git worktree remove -f zere || :" &&
+	git worktree add zere main &&
+	echo refs/heads/main >expect &&
+	git -C zere symbolic-ref HEAD >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'the same branch can be checked out in several worktrees' '
+	test_when_finished "git worktree remove -f shared1 || :; git worktree remove -f shared2 || :" &&
+	git branch -f sharedbr main &&
+	git worktree add shared1 sharedbr &&
+	git worktree add shared2 sharedbr &&
+	echo refs/heads/sharedbr >expect &&
+	git -C shared1 symbolic-ref HEAD >actual &&
+	test_cmp expect actual &&
+	git -C shared2 symbolic-ref HEAD >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'checking out paths not complaining about linked checkouts' '
@@ -304,10 +318,13 @@ test_expect_success '"add" checks out existing branch of dwimd name' '
 	)
 '
 
-test_expect_success '"add <path>" dwim fails with checked out branch' '
+test_expect_success '"add <path>" dwim shares a checked out branch' '
 	git checkout -b test-branch &&
-	test_must_fail git worktree add test-branch &&
-	test_path_is_missing test-branch
+	git worktree add test-branch &&
+	echo refs/heads/test-branch >expect &&
+	git -C test-branch symbolic-ref HEAD >actual &&
+	test_cmp expect actual &&
+	git worktree remove test-branch
 '
 
 test_expect_success '"add --force" with existing dwimd name doesnt die' '
@@ -1246,6 +1263,94 @@ test_expect_success 'relative worktree sets extension config' '
 	git -C repo worktree add --relative-paths ./foo &&
 	test_cmp_config -C repo 1 core.repositoryformatversion &&
 	test_cmp_config -C repo true extensions.relativeworktrees
+'
+
+test_expect_success '--reflink produces a correct checkout on any filesystem' '
+	test_when_finished "rm -rf reflinkrepo" &&
+	git init reflinkrepo &&
+	(
+		cd reflinkrepo &&
+		test_commit base file.txt base &&
+		test_commit next file.txt next &&
+		git worktree add --reflink wt -b reflinkbr base &&
+		echo base >expect &&
+		test_cmp expect wt/file.txt &&
+		git -C wt status --porcelain >status &&
+		test_must_be_empty status
+	)
+'
+
+test_expect_success '--reflink rejects incompatible options' '
+	test_must_fail git worktree add --reflink --no-checkout wt-bad HEAD 2>err &&
+	test_grep "cannot be used together" err &&
+	test_must_fail git worktree add --reflink --orphan wt-bad2 2>err &&
+	test_grep "cannot be used together" err
+'
+
+test_expect_success 'worktree.reflink config drives a correct checkout' '
+	test_when_finished "rm -rf reflinkcfg" &&
+	git init reflinkcfg &&
+	(
+		cd reflinkcfg &&
+		test_commit cfg file.txt value &&
+		git -c worktree.reflink=true worktree add wt HEAD &&
+		echo value >expect &&
+		test_cmp expect wt/file.txt
+	)
+'
+
+test_expect_success 'worktree.reflink=auto does not break --orphan' '
+	test_when_finished "rm -rf reflinkorphan" &&
+	git init reflinkorphan &&
+	(
+		cd reflinkorphan &&
+		test_commit base file.txt value &&
+		git -c worktree.reflink=auto worktree add --orphan wt &&
+		git -C wt symbolic-ref --short HEAD >actual &&
+		echo wt >expect &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success '--no-reflink overrides worktree.reflink' '
+	test_when_finished "rm -rf reflinkoff" &&
+	git init reflinkoff &&
+	(
+		cd reflinkoff &&
+		test_commit base file.txt value &&
+		git -c worktree.reflink=true worktree add --no-reflink wt HEAD &&
+		echo value >expect &&
+		test_cmp expect wt/file.txt
+	)
+'
+
+# Reflinks are only available on copy-on-write filesystems (btrfs, XFS,
+# bcachefs, APFS, ...). Where they are unavailable, --reflink transparently
+# falls back to a regular checkout, which the test above already covers.
+test_lazy_prereq REFLINK '
+	echo probe >reflink-src &&
+	cp --reflink=always reflink-src reflink-dst 2>/dev/null
+'
+
+test_expect_success REFLINK '--reflink carries untracked files and reconciles changes' '
+	test_when_finished "rm -rf cowrepo" &&
+	git init cowrepo &&
+	(
+		cd cowrepo &&
+		test_commit same same.txt content &&
+		test_commit old change.txt old-value &&
+		test_commit new change.txt new-value &&
+		echo artifact >untracked.bin &&
+		git worktree add --reflink wt -b cowbr old &&
+		echo content >expect &&
+		test_cmp expect wt/same.txt &&
+		echo old-value >expect &&
+		test_cmp expect wt/change.txt &&
+		echo artifact >expect &&
+		test_cmp expect wt/untracked.bin &&
+		git -C wt status --porcelain >status &&
+		grep "?? untracked.bin" status
+	)
 '
 
 test_done

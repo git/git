@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [synopsis]
 git worktree add [-f] [--detach] [--checkout] [--lock [--reason <string>]]
-		 [--orphan] [(-b | -B) <new-branch>] <path> [<commit-ish>]
+		 [--orphan] [--reflink] [(-b | -B) <new-branch>] <path> [<commit-ish>]
 git worktree list [-v | --porcelain [-z]]
 git worktree lock [--reason <string>] <worktree>
 git worktree move <worktree> <new-path>
@@ -93,8 +93,9 @@ then, as a convenience, the new worktree is associated with a branch (call
 it _<branch>_) named after `$(basename <path>)`.  If _<branch>_ doesn't
 exist, a new branch based on `HEAD` is automatically created as if
 `-b <branch>` was given.  If _<branch>_ does exist, it will be checked out
-in the new worktree, if it's not checked out anywhere else, otherwise the
-command will refuse to create the worktree (unless `--force` is used).
+in the new worktree, even if it is already checked out in another worktree.
+(A branch that another worktree is in the middle of rebasing or bisecting is
+refused unless `--force` is used.)
 +
 If _<commit-ish>_ is omitted, neither `--detach`, or `--orphan` is
 used, and there are no valid local branches (or remote branches if
@@ -177,12 +178,12 @@ OPTIONS
 
 `-f`::
 `--force`::
-	By default, `add` refuses to create a new worktree when
-	_<commit-ish>_ is a branch name and is already checked out by
-	another worktree, or if _<path>_ is already assigned to some
-	worktree but is missing (for instance, if _<path>_ was deleted
-	manually). This option overrides these safeguards. To add a missing but
-	locked worktree path, specify `--force` twice.
+	`add` refuses to create a new worktree when _<commit-ish>_ is a
+	branch that another worktree is in the middle of rebasing or
+	bisecting, or if _<path>_ is already assigned to some worktree but
+	is missing (for instance, if _<path>_ was deleted manually). This
+	option overrides these safeguards. To add a missing but locked
+	worktree path, specify `--force` twice.
 +
 `move` refuses to move a locked worktree unless `--force` is specified
 twice. If the destination is already assigned to some other worktree but is
@@ -212,6 +213,34 @@ To remove a locked worktree, specify `--force` twice.
 	be used to suppress checkout in order to make customizations,
 	such as configuring sparse-checkout. See "Sparse checkout"
 	in linkgit:git-read-tree[1].
+
+`--reflink`::
+`--no-reflink`::
+	Populate the new worktree by creating copy-on-write (reflink)
+	clones of the current worktree's files and index instead of
+	writing every file out from the object store. The checkout that
+	follows then only has to rewrite the paths that actually differ
+	between the current worktree and _<commit-ish>_; everything else
+	(including untracked files such as build outputs) keeps sharing
+	storage with the source worktree until modified. This makes
+	`add` much faster and far cheaper on disk when creating many
+	worktrees from the same base. `--no-reflink` forces an ordinary
+	checkout, overriding the `worktree.reflink` configuration.
++
+Reflinks require a copy-on-write filesystem (for example btrfs, XFS,
+bcachefs or ZFS on Linux, or APFS on macOS). On filesystems or platforms
+that do not support reflinks, `--reflink` transparently falls back to an
+ordinary checkout. Because the source worktree's untracked and ignored
+files are cloned as well, only use `--reflink` when that is acceptable.
++
+This option cannot be combined with `--no-checkout` or `--orphan`. It can
+be enabled by default with the `worktree.reflink` configuration; see
+linkgit:git-config[1].
++
+The checkout that populates a new worktree also honors the
+`checkout.workers` configuration (see linkgit:git-config[1]), so setting it
+parallelizes the file writes and can further speed up `add`, with or
+without `--reflink`.
 
 `--guess-remote`::
 `--no-guess-remote`::
