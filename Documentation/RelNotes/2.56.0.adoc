@@ -90,6 +90,17 @@ UI, Workflows & Features
    unstaged.  It scans the unmerged paths for leftover conflict
    markers and aborts if any are found.
 
+ * The known limitations of the ref format migration in 'git refs' have
+   been moved to be displayed as a warning admonition directly under the
+   description of the 'migrate' subcommand, improving visibility.  A
+   reference to 'git-maintenance' has also been corrected to use the
+   'linkgit' macro.
+
+ * The 'git bisect' command has been taught a
+   '--reset-when-found[=<where>]' option that tells the command to
+   automatically run 'git bisect reset' to jump back to the original
+   state or to the found culprit.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -354,6 +365,11 @@ Performance, Internal Implementation, Development Support etc.
    user's login shell is csh-like, by explicitly passing '-s' to
    'ssh-agent' to force Bourne shell syntax.
    (merge d5dd17756d kl/t7528-ssh-agent-for-csh-users later to maint).
+
+ * A compatibility wrapper for writev(3p) has been reintroduced,
+   including fixes for CMake build and 'MAX_IO_SIZE' limits on NonStop.
+   Calls to write(3p) in send_sideband() and cat_blob() have been
+   refactored to use writev(3p) wrappers to reduce syscall overhead.
 
 
 Fixes since v2.55
