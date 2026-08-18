@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Aug 2026, #07)
+Subject: What's cooking in git.git (Aug 2026, #08)
 X-master-at: 18e66859d87fb4b76599f73460b54f0848c76b16
-X-next-at: 20453c30ebd8948d4baea6c3b794c4c0fac8197c
+X-next-at: 4b6b3295ed0a0353274850d13b4360ed82b2335a
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Aug 2026, #07)
+What's cooking in git.git (Aug 2026, #08)
 -----------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -19,8 +19,8 @@ arises).
 
 The 14th batch of topics have now graduated to the 'master' branch.
 We have 437 non-merge commits in 'master' since Git 2.55.  There
-are 112 non-merge commits cooking in 'next' (note that some have
-been reverted), and 273 non-merge commits, including those in and
+are 143 non-merge commits cooking in 'next' (note that some have
+been reverted), and 260 non-merge commits, including those in and
 out of 'next', in 'seen' as of this writing.
 
 Copies of the source code to Git live in many repositories, and the
@@ -52,138 +52,39 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* jc/add-resolved (2026-07-31) 4 commits
-  (merged to 'next' on 2026-08-08 at 61afef3e37)
- + add: introduce '--resolved' option
- + read-cache: add remove_file_from_index_with_flags()
- + merge-ll: consolidate conflict marker scanning logic
- + read-cache: reindent
-
- 'git add' has been taught a new '--resolved' option to stage
- conflict-resolved paths, while leaving unrelated local changes
- unstaged.  It scans the unmerged paths for leftover conflict
- markers and aborts if any are found.
-
- Graduated to 'master'.
- cf. <20260801141414.GD2041176@coredump.intra.peff.net>
- source: <20260731125605.3638938-1-gitster@pobox.com>
-
-
-* jm/t0213-skip-emulated-ancestry-tests (2026-07-06) 1 commit
-  (merged to 'next' on 2026-08-08 at ea8486f2a7)
- + t0213: skip ancestry tests under user-mode emulation
-
- The 'TRACE2_ANCESTRY' prerequisite in the 't0213' test script has been
- refined to avoid failures under user-mode emulation by verifying that
- the ancestry collector reports the expected process names rather than
- the emulator binary name.
-
- Graduated to 'master'.
- cf. <xmqq8q6myl76.fsf@gitster.g>
- source: <pull.2168.git.1783359242130.gitgitgadget@gmail.com>
-
-
-* kl/t7528-ssh-agent-for-csh-users (2026-08-02) 1 commit
-  (merged to 'next' on 2026-08-08 at bb96050841)
- + t7528: fix failure under csh
-
- The 'ssh-agent' tests in 't7528' have been fixed to work when the
- user's login shell is csh-like, by explicitly passing '-s' to
- 'ssh-agent' to force Bourne shell syntax.
-
- Graduated to 'master'.
- cf. <am_5YymI-UnCT_s1@fruit.crustytoothpaste.net>
- source: <20260803004105.36913-2-keni@his.com>
-
-
-* tn/packfile-uri-concurrency (2026-07-26) 6 commits
-  (merged to 'next' on 2026-08-08 at 44df3a3ec5)
- + fetch-pack: accept "pack" output for packfile URIs
- + http: permit unlinking partial packs on Windows
- + http: avoid concurrent appends to partial packs
- + http: accept HTTP 416 for complete partial packs
- + http: avoid closing index-pack input twice
- + http-fetch: correct --index-pack-arg documentation
-
- Concurrent downloads of packfiles via packfile URIs and dumb HTTP are
- safer by avoiding concurrent appends to the staging file.  Opening in
- read-write mode with separate file offsets prevents corruption and
- preserves resumability.  'fetch-pack' now tolerates pre-existing
- '.keep' files.
-
- Graduated to 'master'.
- cf. <20260801140255.GC2041176@coredump.intra.peff.net>
- source: <cover.1785111375.git.tnyman@openai.com>
-
-
---------------------------------------------------
 [Stalled]
 
-* bl/t7412-use-test-path-helpers (2026-06-29) 1 commit
- - submodule absorbgitdirs tests: use test_* helper functions
+* hs/rebase-continue-edit (2026-07-21) 1 commit
+ - rebase: add --[no-]edit to --continue
 
- The test script 't7412' that tests 'git submodule absorbgitdirs' has
- been modernized to use test_path_is_file(), test_path_is_dir(), and
- test_path_is_missing() helper functions instead of raw 'test -[fde]'
- commands.
-
- Waiting for response for too long, stalled.
- cf. <akTKHfKPsP3-Rn31@pks.im>
- source: <20260630020220.1559190-1-bblima@usp.br>
-
-
-* tb/repack-geometric-cruft (2026-06-28) 11 commits
- - SQUASH??? bare grep !???
- - repack: support combining '--geometric' with '--cruft'
- - pack-objects: support '--refs-snapshot' with 'follow-reachable'
- - pack-objects: introduce '--stdin-packs=follow-reachable'
- - pack-objects: extract `stdin_packs_add_all_pack_entries()`
- - repack-geometry: drop unused redundant-pack removal
- - repack: delete geometric packs via existing_packs
- - repack: teach MIDX retention about geometric rollups
- - repack: mark geometric progression of packs as retained
- - repack: extract `locate_existing_pack()` helper
- - repack: unconditionally exclude non-kept packs
-
- 'git repack' has been taught to accept '--geometric' and '--cruft'
- together.  When both are given, non-cruft packs are rolled up by the
- geometric repack as usual, while a separate cruft pack is written to
- collect unreachable objects.
+ Support for skipping the editor when continuing a rebase after
+ conflict resolution has been added with the '--no-edit' option, and
+ forcing it with '--edit'.  A new configuration variable
+ 'rebase.noEdit' can be used to set the default behavior.
 
  Waiting for response for too long, stalled.
- source: <cover.1782500507.git.me@ttaylorr.com>
+ cf. <xmqqldb4xlqa.fsf@gitster.g>
+ cf. <db7edc66-9b2a-47bc-98db-87d01885cef0@gmail.com>
+ source: <20260721140443.1809379-2-hugo@hsal.es>
 
+--------------------------------------------------
+[New Topics]
 
-* hn/checkout-track-fetch (2026-06-24) 2 commits
- - checkout: extend --track with a "fetch" mode to refresh start-point
- - branch: expose helpers for finding the remote owning a tracking ref
+* sk/object-name-use-after-free (2026-08-17) 1 commit
+ - object-name: avoid use-after-free in get_oid_with_context_1()
 
- The 'git checkout --track=...' command has been taught to optionally
- fetch the branch from the remote that the new branch will work with.
+ A heap-use-after-free bug in the object name parsing code when
+ reporting failures with a relative path to a sparse directory has
+ been corrected.
 
- Will discard.
- cf. <xmqq8q71clob.fsf@gitster.g>
- source: <pull.2281.v15.git.git.1782338098.gitgitgadget@gmail.com>
-
-
-* za/completion-hide-dotfiles (2026-06-20) 2 commits
- - completion: hide dotfiles by default for path completion
- - completion: hide dotfiles for selected path completion
-
- Path completion for commands like 'git rm' and 'git mv' has been
- updated to hide dotfiles by default unless the user explicitly starts
- the path with a dot, matching standard shell-completion behavior.
-
- Waiting for response for too long, stalled.
- cf. <xmqq1pe0g08t.fsf@gitster.g>
- source: <pull.2311.v3.git.git.1781978156.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ cf. <xmqq1pbw7nwi.fsf@gitster.g>
+ source: <20260817082127.81132-1-diy2903@gmail.com>
 
 --------------------------------------------------
 [Cooking]
 
-* kh/format-rev-doc-synopsis (2026-08-13) 2 commits
+* kh/format-rev-doc-synopsis (2026-08-17) 2 commits
  - doc: format-rev: use [synopsis] on code block
  - doc: format-rev: quote subject placeholder before and after
 
@@ -192,27 +93,28 @@ Release tarballs are available at:
  placeholders, and a quoting inconsistency in the running text has
  been fixed.
 
- Expecting a reroll.
- cf. <ef8ee6fb-ef3d-4a83-b8fc-121448d58e53@app.fastmail.com>
- source: <V3_CV_synopsis_block.b64@msgid.xyz>
+ Will merge to 'next'?
+ cf. <xmqq33wc4dyq.fsf@gitster.g>
+ source: <V4_CV_synopsis_block.b8e@msgid.xyz>
 
 
-* kh/format-rev-more-options (2026-08-13) 4 commits
+* kh/format-rev-more-options (2026-08-18) 5 commits
  - format-rev: learn --abbrev, --color, and --date
  - doc: rev-list-options.adoc: factor out --date alts
  - format-rev: factor option variables into a struct
+ - format-rev: place BUG calls first in callback
  - format-rev: use lower case for opts description
 
  The experimental 'git format-rev' has been taught a few more
  formatting options.
 
- Waiting for response.
- cf. <xmqqbjb4ktz5.fsf@gitster.g>
- source: <CV_format-rev_three_more_opts.b80@msgid.xyz>
+ Needs review.
+ source: <V2_CV_format-rev_three_more_opts.bd3@msgid.xyz>
 
 
-* ps/odb-pluggable-pack-generation (2026-08-07) 5 commits
+* ps/odb-pluggable-pack-generation (2026-08-16) 6 commits
  - bundle: generate packfiles via the object database
+ - bundle: get (mostly) rid of `the_repository`
  - builtin/bundle: refactor option handling for progress meter
  - send-pack: generate packfiles via the object database
  - upload-pack: generate packfiles via the object database
@@ -224,9 +126,9 @@ Release tarballs are available at:
  'pack-objects' and enabling alternative ODBs to serve packfiles
  themselves.
 
- Expecting a reroll.
- cf. <an7GgQLQfleCPr-a@pks.im>
- source: <20260807-b4-pks-odb-generate-pack-v1-0-7dec431ae7cd@pks.im>
+ Waiting for review.
+ cf. <aoPtDyISRa0mVXRa@pks.im>
+ source: <20260817-b4-pks-odb-generate-pack-v2-0-4c8a96ccfdb3@pks.im>
 
 
 * ty/repository-fetch-if-missing (2026-08-14) 1 commit
@@ -253,11 +155,12 @@ Release tarballs are available at:
 
 
 * en/diff-l-opt-help (2026-08-13) 1 commit
- - diff: avoid misleading statement about -l option
+  (merged to 'next' on 2026-08-17 at 4b6b3295ed)
+ + diff: avoid misleading statement about -l option
 
  The help text for the '-l' option of 'git diff' has been updated.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  cf. <xmqqbjb4rd5q.fsf@gitster.g>
  source: <pull.2035.v2.git.1786673186855.gitgitgadget@gmail.com>
 
@@ -267,7 +170,7 @@ Release tarballs are available at:
 
  Typofix.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  cf. <xmqq7blsmru5.fsf@gitster.g>
  source: <pull.2383.git.git.1786733219160.gitgitgadget@gmail.com>
 
@@ -280,19 +183,20 @@ Release tarballs are available at:
  related callback signatures across several subsystems, simplifying the
  API now that trace output no longer uses it.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  cf. <20260815051213.GA26013@coredump.intra.peff.net>
  source: <20260814214210.1625-1-colinlewishinton@gmail.com>
 
 
 * cc/git-shallow-file-wo-value (2026-08-11) 1 commit
- - git: avoid segfault on "git --shallow-file" without a value
+  (merged to 'next' on 2026-08-17 at f6a6ff92a6)
+ + git: avoid segfault on "git --shallow-file" without a value
 
  The '--shallow-file' option of 'git' command requires a value, but the
  code did not check the presence of a value and instead segfaulted
  without one, which has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  cf. <an10XhFPo0nJWJIV@pks.im>
  cf. <xmqqcxvo1n8w.fsf@gitster.g>
  source: <20260811121446.2080190-1-christian.couder@gmail.com>
@@ -345,34 +249,37 @@ Release tarballs are available at:
 
 
 * en/sequencer-lose-pretty-given (2026-08-11) 1 commit
- - sequencer: remove unnecessary variable setting
+  (merged to 'next' on 2026-08-17 at 82d0706aef)
+ + sequencer: remove unnecessary variable setting
 
  The setting of a now-unused member '.pretty_given' in the sequencer
  machinery has been removed.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  cf. <an11zsTm-fanH8yt@pks.im>
  cf. <xmqqa4qrxneq.fsf@gitster.g>
  source: <pull.1922.git.1786516959130.gitgitgadget@gmail.com>
 
 
 * en/serve-promisor-remote-fix (2026-08-11) 1 commit
- - serve: reject valueless promisor-remote capability
+  (merged to 'next' on 2026-08-17 at a4d7a9d1d6)
+ + serve: reject valueless promisor-remote capability
 
  A client requesting the promisor-remote capability without a value
  caused a null pointer dereference, which has been corrected by
  rejecting a request without an argument.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  cf. <CAP8UFD0+iXC3VxWmuuuB7La-pP6hdz58tr6vaEJSKpXJ_4ZH2w@mail.gmail.com>
  source: <pull.2199.git.1786516783909.gitgitgadget@gmail.com>
 
 
-* ps/odb-eagerly-load-alternates (2026-08-12) 5 commits
+* ps/odb-eagerly-load-alternates (2026-08-17) 6 commits
  - odb: drop `alternates_db` field
  - odb: drop `loaded_alternates` field
  - odb: eagerly initialize alternates
  - odb: decouple source path comparisons from `the_repository`
+ - setup: create ref and object databases after config is written
  - Merge branch 'ps/odb-make-creation-pluggable' into ps/odb-eagerly-load-alternates
  (this branch uses ps/odb-make-creation-pluggable.)
 
@@ -382,14 +289,11 @@ Release tarballs are available at:
  for scattered lazy-loading calls throughout the codebase and paves
  the way for integrating alternates with the pluggable backends.
 
- Waiting for response.
- cf. <an36BA_Nw7eLAKYC@denethor>
- cf. <CAOLa=ZQARq2eoVegh1BsnKrvd9MuraNFJ3htKDxQ5H25WJUs1w@mail.gmail.com>
- source: <20260812-pks-odb-eagerly-prepare-alternates-v2-0-522b9a5bc1ea@pks.im>
+ Needs review.
+ source: <20260817-pks-odb-eagerly-prepare-alternates-v3-0-1115a7e02467@pks.im>
 
 
-* gg/http-ssl-verify-status (2026-08-12) 2 commits
- - SQUASH???
+* gg/http-ssl-verify-status (2026-08-17) 1 commit
  - http: add http.sslVerifyStatus to check stapled OCSP responses
 
  The HTTP transport has been taught to check the revocation status of
@@ -398,9 +302,8 @@ Release tarballs are available at:
  variable.
 
  Waiting for response.
- cf. <xmqq1pc3vx9w.fsf@gitster.g>
- cf. <xmqqmruqt36l.fsf@gitster.g>
- source: <20260812182509.67358-1-ggordon@gitlab.com>
+ cf. <aoQOxISPfEwh-ik2@pks.im>
+ source: <20260817185242.22736-1-ggordon@gitlab.com>
 
 
 * js/packfile-fast-append (2026-08-13) 1 commit
@@ -411,7 +314,7 @@ Release tarballs are available at:
  unnecessary traversal in packfile_list_append(), avoiding a
  quadratic complexity regression on load.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  cf. <an7ItVYrKZFXg2ci@pks.im>
  cf. <xmqqy0e8pxos.fsf@gitster.g>
  source: <pull.2202.v2.git.1786633010179.gitgitgadget@gmail.com>
@@ -444,7 +347,7 @@ Release tarballs are available at:
  clones, reclaiming space.  Guards prevent running during other
  operations or if referenced by the index.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  cf. <CAP8UFD1esJ0fk3xPXvAmQhMK_5wrpGKZJg9YaFV0-qUAC7bf5g@mail.gmail.com>
  source: <20260813200830.84348-1-r.siddharth.shrimali@gmail.com>
 
@@ -510,15 +413,16 @@ Release tarballs are available at:
 
 
 * ps/t7900-deflake-maintenance (2026-08-12) 2 commits
- - t7900: fix flaky "maintenance.strategy" test
- - t7900: adapt some tests to use a throwaway repository
+  (merged to 'next' on 2026-08-17 at 7ef446fd59)
+ + t7900: fix flaky "maintenance.strategy" test
+ + t7900: adapt some tests to use a throwaway repository
 
  Various tests in 't7900-maintenance.sh' have been updated to use a
  throwaway repository, and auto-detaching of maintenance tasks is now
  disabled for these tests to fix flaky races with concurrent background
  maintenance jobs.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  cf. <CAOLa=ZQmZ0spmdPOzCZe36i24nQh+o7d4fSz5dcJS7+O3p2skg@mail.gmail.com>
  source: <20260812-pks-t7900-fix-flaky-test-v2-0-9ea0e1ac0edd@pks.im>
 
@@ -634,7 +538,7 @@ Release tarballs are available at:
  'git -C <dir> diff fi<TAB>' did not complete 'dir/file', which has
  been corrected.
 
- Needs review.
+ Will merge to 'next'.
  cf. <CABPp-BFdwxTvkcWKNP0-Lk+mqQLnULoYuLHZe0aot4VYfHnjSw@mail.gmail.com>
  source: <20260812162551.2229680-1-gitster@pobox.com>
 
@@ -772,20 +676,6 @@ Release tarballs are available at:
  source: <20260807-pks-odb-create-on-disk-v5-0-399da0b0b140@pks.im>
 
 
-* hs/rebase-continue-edit (2026-07-21) 1 commit
- - rebase: add --[no-]edit to --continue
-
- Support for skipping the editor when continuing a rebase after
- conflict resolution has been added with the '--no-edit' option, and
- forcing it with '--edit'.  A new configuration variable
- 'rebase.noEdit' can be used to set the default behavior.
-
- Waiting for response.
- cf. <xmqqldb4xlqa.fsf@gitster.g>
- cf. <db7edc66-9b2a-47bc-98db-87d01885cef0@gmail.com>
- source: <20260721140443.1809379-2-hugo@hsal.es>
-
-
 * sn/rebase-update-refs-symrefs (2026-07-22) 2 commits
  - rebase: guard non-branch symref targets
  - rebase: skip branch symref aliases
@@ -855,25 +745,26 @@ Release tarballs are available at:
 
 
 * js/coverity-unchecked-returns-fix (2026-08-12) 12 commits
- - bisect: handle dup() failure when redirecting stdout
- - bisect: check get_terms return at all call sites
- - bisect: check strbuf_getline_lf return when reading terms
- - transport-helper: warn when export-marks file cannot be finalized
- - transport-helper: check dup() return in get_exporter
- - compat/pread: check initial lseek for errors
- - last-modified: handle repo_parse_commit() failures
- - reftable tests: check reftable_table_init_ref_iterator() return
- - reftable/block: check deflateInit() return value
- - reftable: handle block-writer initialization errors
- - config: propagate launch_editor() failure in show_editor()
- - http: die on curl_easy_duphandle failure in get_active_slot
+  (merged to 'next' on 2026-08-17 at 105f002870)
+ + bisect: handle dup() failure when redirecting stdout
+ + bisect: check get_terms return at all call sites
+ + bisect: check strbuf_getline_lf return when reading terms
+ + transport-helper: warn when export-marks file cannot be finalized
+ + transport-helper: check dup() return in get_exporter
+ + compat/pread: check initial lseek for errors
+ + last-modified: handle repo_parse_commit() failures
+ + reftable tests: check reftable_table_init_ref_iterator() return
+ + reftable/block: check deflateInit() return value
+ + reftable: handle block-writer initialization errors
+ + config: propagate launch_editor() failure in show_editor()
+ + http: die on curl_easy_duphandle failure in get_active_slot
 
  A handful of code paths have been corrected to check return values
  from functions like curl_easy_duphandle(), deflateInit(), lseek(),
  dup(), and strbuf_getline_lf(), resolving several Coverity warnings
  about unchecked returns.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  cf. <an1k0d5fI4EVsfsM@pks.im>
  source: <pull.2179.v3.git.1786521801.gitgitgadget@gmail.com>
 
@@ -934,25 +825,26 @@ Release tarballs are available at:
 
 
 * js/pack-objects-delta-size-t (2026-08-13) 13 commits
- - packfile: widen `unpack_object_header_buffer()` to `size_t`
- - git-zlib: widen `git_deflate_bound()` to `size_t`
- - t/helper/test-pack-deltas: widen `do_compress()`'s maxsize local to `size_t`
- - http-push: widen `start_put()`'s size local from `ssize_t` to `size_t`
- - diff: widen `deflate_it()`'s bound local from int to `size_t`
- - archive-zip: widen `zlib_deflate_raw()`'s maxsize local to `size_t`
- - packfile, git-zlib: widen `use_pack()` and zstream avail fields to `size_t`
- - delta: widen `create_delta()` and `diff_delta()` to `size_t`
- - pack-objects: widen `mem_usage` and `try_delta()`'s out-param to `size_t`
- - pack-objects: widen `free_unpacked()` return to `size_t`
- - pack-objects: widen delta-cache accounting to `size_t`
- - delta: widen `create_delta_index()` parameter to `size_t`
- - diff-delta: widen `struct delta_index`' size fields to `size_t`
+  (merged to 'next' on 2026-08-17 at b6778ce373)
+ + packfile: widen `unpack_object_header_buffer()` to `size_t`
+ + git-zlib: widen `git_deflate_bound()` to `size_t`
+ + t/helper/test-pack-deltas: widen `do_compress()`'s maxsize local to `size_t`
+ + http-push: widen `start_put()`'s size local from `ssize_t` to `size_t`
+ + diff: widen `deflate_it()`'s bound local from int to `size_t`
+ + archive-zip: widen `zlib_deflate_raw()`'s maxsize local to `size_t`
+ + packfile, git-zlib: widen `use_pack()` and zstream avail fields to `size_t`
+ + delta: widen `create_delta()` and `diff_delta()` to `size_t`
+ + pack-objects: widen `mem_usage` and `try_delta()`'s out-param to `size_t`
+ + pack-objects: widen `free_unpacked()` return to `size_t`
+ + pack-objects: widen delta-cache accounting to `size_t`
+ + delta: widen `create_delta_index()` parameter to `size_t`
+ + diff-delta: widen `struct delta_index`' size fields to `size_t`
 
  The 'pack-objects' and delta-encoding code paths have been updated to
  use 'size_t' instead of 'unsigned long' for object sizes and offset
  limits, avoiding potential truncation issues on 64-bit Windows.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  cf. <xmqqbjb6t179.fsf@gitster.g>
  source: <pull.2175.v3.git.1786632952.gitgitgadget@gmail.com>
 
@@ -1085,8 +977,8 @@ Release tarballs are available at:
  descendants replayed on top.
 
  Waiting for response.
- cf. <xmqq4igyszeb.fsf@gitster.g>
- cf. <xmqqtsoxr8lm.fsf@gitster.g>
+ cf. <xmqqecfw663u.fsf@gitster.g>
+ cf. <29d56a3e-6bde-49a2-b7b2-3eeb4c439e01@app.fastmail.com>
  source: <pull.2337.v13.git.git.1786088371.gitgitgadget@gmail.com>
 
 
@@ -1228,3 +1120,63 @@ Release tarballs are available at:
 
  Retracted for now.
  source: <cover.1783905084.git.ttaylorr@openai.com>
+
+
+* bl/t7412-use-test-path-helpers (2026-06-29) 1 commit
+ . submodule absorbgitdirs tests: use test_* helper functions
+
+ The test script 't7412' that tests 'git submodule absorbgitdirs' has
+ been modernized to use test_path_is_file(), test_path_is_dir(), and
+ test_path_is_missing() helper functions instead of raw 'test -[fde]'
+ commands.
+
+ Waited for response for too long, discarded.
+ cf. <akTKHfKPsP3-Rn31@pks.im>
+ source: <20260630020220.1559190-1-bblima@usp.br>
+
+
+* tb/repack-geometric-cruft (2026-06-28) 11 commits
+ . SQUASH??? bare grep !???
+ . repack: support combining '--geometric' with '--cruft'
+ . pack-objects: support '--refs-snapshot' with 'follow-reachable'
+ . pack-objects: introduce '--stdin-packs=follow-reachable'
+ . pack-objects: extract `stdin_packs_add_all_pack_entries()`
+ . repack-geometry: drop unused redundant-pack removal
+ . repack: delete geometric packs via existing_packs
+ . repack: teach MIDX retention about geometric rollups
+ . repack: mark geometric progression of packs as retained
+ . repack: extract `locate_existing_pack()` helper
+ . repack: unconditionally exclude non-kept packs
+
+ 'git repack' has been taught to accept '--geometric' and '--cruft'
+ together.  When both are given, non-cruft packs are rolled up by the
+ geometric repack as usual, while a separate cruft pack is written to
+ collect unreachable objects.
+
+ Waited for response for too long, discarded.
+ source: <cover.1782500507.git.me@ttaylorr.com>
+
+
+* hn/checkout-track-fetch (2026-06-24) 2 commits
+ . checkout: extend --track with a "fetch" mode to refresh start-point
+ . branch: expose helpers for finding the remote owning a tracking ref
+
+ The 'git checkout --track=...' command has been taught to optionally
+ fetch the branch from the remote that the new branch will work with.
+
+ Discarded.
+ cf. <xmqq8q71clob.fsf@gitster.g>
+ source: <pull.2281.v15.git.git.1782338098.gitgitgadget@gmail.com>
+
+
+* za/completion-hide-dotfiles (2026-06-20) 2 commits
+ . completion: hide dotfiles by default for path completion
+ . completion: hide dotfiles for selected path completion
+
+ Path completion for commands like 'git rm' and 'git mv' has been
+ updated to hide dotfiles by default unless the user explicitly starts
+ the path with a dot, matching standard shell-completion behavior.
+
+ Waited for response for too long, discarded.
+ cf. <xmqq1pe0g08t.fsf@gitster.g>
+ source: <pull.2311.v3.git.git.1781978156.gitgitgadget@gmail.com>
