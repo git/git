@@ -57,11 +57,12 @@ void packfile_list_prepend(struct packfile_list *list, struct packed_git *pack)
 		list->tail = entry;
 }
 
-void packfile_list_append(struct packfile_list *list, struct packed_git *pack)
+void packfile_list_append(struct packfile_list *list, struct packed_git *pack,
+			  int skip_dup_check)
 {
 	struct packfile_list_entry *entry;
 
-	entry = packfile_list_remove_internal(list, pack);
+	entry = skip_dup_check ? NULL : packfile_list_remove_internal(list, pack);
 	if (!entry) {
 		entry = xmalloc(sizeof(*entry));
 		entry->pack = pack;
