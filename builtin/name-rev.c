@@ -21,6 +21,7 @@
 #include "revision.h"
 #include "notes.h"
 #include "write-or-die.h"
+#include "date.h"
 
 /*
  * One day.  See the 'name a rev shortly after epoch' test in t6120 when
@@ -778,6 +779,8 @@ struct format_rev_data {
 	bool nul_input;
 	bool nul_output;
 	struct string_list notes;
+	struct rev_info rev;
+	int color;
 };
 
 static int format_nul_cb(const struct option *option,
@@ -789,6 +792,17 @@ static int format_nul_cb(const struct option *option,
 	BUG_ON_OPT_ARG(arg);
 	data->nul_input = 1;
 	data->nul_output = 1;
+	return 0;
+}
+
+static int date_cb(const struct option *option,
+		   const char *arg,
+		   int unset)
+{
+	struct rev_info *data = option->value;
+	BUG_ON_OPT_NEG(unset);
+	parse_date_format(arg, &data->date_mode);
+	data->date_mode_explicit = 1;
 	return 0;
 }
 
@@ -805,9 +819,8 @@ static enum stdin_mode parse_stdin_mode(const char *stdin_mode)
 }
 
 static char const *const format_rev_usage[] = {
-	N_("(EXPERIMENTAL!) git format-rev --stdin-mode=<mode> "
-	   "--format=<pretty> [--[no-]notes=<ref>] "
-	   "[-z] [--[no-]null-output] [--[no-]null-input]"),
+	N_("(EXPERIMENTAL!) git format-rev [<options>] "
+	   "--stdin-mode=<mode> --format=<pretty>"),
 	NULL
 };
 
@@ -818,12 +831,13 @@ int cmd_format_rev(int argc,
 {
 	struct format_rev_data data = {
 		.notes = STRING_LIST_INIT_NODUP,
+		.rev = REV_INFO_INIT,
+		.color = GIT_COLOR_AUTO,
 	};
 	enum stdin_mode stdin_mode;
 	char output_terminator;
 	strbuf_getline_fn getline_fn;
 	struct display_notes_opt format_notes_opt;
-	struct rev_info format_rev = REV_INFO_INIT;
 	struct pretty_format format_pp = { 0 };
 	struct strbuf scratch_buf = STRBUF_INIT;
 	struct command cmd;
@@ -834,6 +848,11 @@ int cmd_format_rev(int argc,
 			   N_("how revs are processed")),
 		OPT_STRING_LIST(0, "notes", &data.notes, N_("notes"),
 				N_("display notes for pretty format")),
+		OPT__ABBREV(&data.rev.abbrev),
+		OPT__COLOR(&data.color, N_("use colored output")),
+		OPT_CALLBACK_F(0, "date", &data.rev, N_("date"),
+			       N_("date format"),
+			       PARSE_OPT_NONEG, date_cb),
 		OPT_CALLBACK_F('z', "null", &data, N_("z"),
 			       N_("use NUL for input and output termination"),
 			       PARSE_OPT_NOARG | PARSE_OPT_NONEG, format_nul_cb),
@@ -862,13 +881,13 @@ int cmd_format_rev(int argc,
 	init_display_notes(&format_notes_opt);
 	stdin_mode = parse_stdin_mode(data.stdin_mode);
 
-	get_commit_format(data.format, &format_rev);
-	format_pp.ctx.rev = &format_rev;
-	format_pp.ctx.fmt = format_rev.commit_format;
-	format_pp.ctx.abbrev = format_rev.abbrev;
-	format_pp.ctx.date_mode_explicit = format_rev.date_mode_explicit;
-	format_pp.ctx.date_mode = format_rev.date_mode;
-	format_pp.ctx.color = GIT_COLOR_AUTO;
+	get_commit_format(data.format, &data.rev);
+	format_pp.ctx.rev = &data.rev;
+	format_pp.ctx.fmt = data.rev.commit_format;
+	format_pp.ctx.abbrev = data.rev.abbrev;
+	format_pp.ctx.date_mode_explicit = data.rev.date_mode_explicit;
+	format_pp.ctx.date_mode = data.rev.date_mode;
+	format_pp.ctx.color = data.color;
 
 	userformat_find_requirements(data.format,
 				     &format_pp.want);
@@ -935,6 +954,7 @@ int cmd_format_rev(int argc,
 		BUG("uncovered case: %d", stdin_mode);
 	}
 
+	date_mode_release(&data.rev.date_mode);
 	strbuf_release(&scratch_buf);
 	string_list_clear(&data.notes, 0);
 	release_display_notes(&format_notes_opt);
