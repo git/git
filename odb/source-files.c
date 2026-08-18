@@ -22,8 +22,7 @@
 #include "tree.h"
 #include "write-or-die.h"
 
-static void odb_source_files_reparent(const char *name UNUSED,
-				      const char *old_cwd,
+static void odb_source_files_reparent(const char *old_cwd,
 				      const char *new_cwd,
 				      void *cb_data)
 {
@@ -37,7 +36,7 @@ static void odb_source_files_reparent(const char *name UNUSED,
 static void odb_source_files_free(struct odb_source *source)
 {
 	struct odb_source_files *files = odb_source_files_downcast(source);
-	chdir_notify_unregister(NULL, odb_source_files_reparent, files);
+	chdir_notify_unregister(odb_source_files_reparent, files);
 	odb_source_free(&files->loose->base);
 	odb_source_free(&files->packed->base);
 	odb_source_release(&files->base);
@@ -780,7 +779,7 @@ struct odb_source_files *odb_source_files_new(struct object_database *odb,
 	 * paths in the primary ODB source in some user-facing functionality.
 	 */
 	if (!is_absolute_path(path))
-		chdir_notify_register(NULL, odb_source_files_reparent, files);
+		chdir_notify_register(odb_source_files_reparent, files);
 
 	return files;
 }
