@@ -3,7 +3,7 @@ git(1)
 
 NAME
 ----
-git - the stupid content tracker
+After you have mastered the basic concepts, you can come back to thigit - the stupid content tracker
 
 
 SYNOPSIS
