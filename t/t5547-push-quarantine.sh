@@ -70,4 +70,26 @@ test_expect_success 'updating a ref from quarantine is forbidden' '
 	git -C update.git fsck
 '
 
+test_expect_success '.keep file is removed after push' '
+	test_when_finished rm -rf keep.git &&
+	git init --bare keep.git &&
+
+	git -C keep.git config set receive.unpackLimit 0 &&
+
+	# While incoming objects are still quarantined, validate that the keep
+	# lockfile does indeed exist.
+	test_hook -C keep.git pre-receive <<-\EOF &&
+	keep="$(ls "$GIT_QUARANTINE_PATH"/pack/pack-*.keep)" &&
+	test -f "$keep"
+	EOF
+
+	test_commit foo &&
+	git push keep.git HEAD &&
+	pack="$(ls keep.git/objects/pack/pack-*.pack)" &&
+	keep="${pack%.pack}.keep" &&
+
+	test_path_is_file "$pack" &&
+	test_path_is_missing "$keep"
+'
+
 test_done

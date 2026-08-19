@@ -1075,7 +1075,7 @@ static int get_pack(struct fetch_pack_args *args,
 		die(_("fetch-pack: unable to fork off %s"), cmd_name);
 	if (do_keep && (pack_lockfiles || fsck_objects)) {
 		int is_well_formed;
-		char *pack_lockfile = index_pack_lockfile(the_repository,
+		char *pack_lockfile = index_pack_lockfile(the_repository->objects->sources,
 							  cmd.out,
 							  &is_well_formed);
 

@@ -2412,7 +2412,13 @@ static const char *unpack(int err_fd, struct shallow_info *si,
 		if (status)
 			return "index-pack fork failed";
 
-		lockfile = index_pack_lockfile(the_repository, child.out, NULL);
+		/*
+		 * The lockfile filepath is expected to be the final location of
+		 * the ".keep" file after being migrated to the main ODB source.
+		 * This ensures the lockfile can be found and removed later
+		 * after the ODB transaction has been committed.
+		 */
+		lockfile = index_pack_lockfile(transaction->source, child.out, NULL);
 		if (lockfile) {
 			pack_lockfile = register_tempfile(lockfile);
 			free(lockfile);
