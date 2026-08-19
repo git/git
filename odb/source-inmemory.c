@@ -59,7 +59,8 @@ static void populate_object_info(struct odb_source_inmemory *source,
 static enum odb_read_status odb_source_inmemory_read_object_info(struct odb_source *source,
 								 const struct object_id *oid,
 								 struct object_info *oi,
-								 enum object_info_flags flags UNUSED)
+								 enum object_info_flags flags UNUSED,
+								 struct strbuf *errmsg UNUSED)
 {
 	struct odb_source_inmemory *inmemory = odb_source_inmemory_downcast(source);
 	const struct inmemory_object *object;

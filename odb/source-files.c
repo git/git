@@ -62,16 +62,19 @@ static void odb_source_files_prepare(struct odb_source *source,
 static enum odb_read_status odb_source_files_read_object_info(struct odb_source *source,
 							      const struct object_id *oid,
 							      struct object_info *oi,
-							      enum object_info_flags flags)
+							      enum object_info_flags flags,
+							      struct strbuf *errmsg)
 {
 	struct odb_source_files *files = odb_source_files_downcast(source);
 	enum odb_read_status ret_packed, ret_loose;
 
-	ret_packed = odb_source_read_object_info(&files->packed->base, oid, oi, flags);
+	ret_packed = odb_source_read_object_info(&files->packed->base, oid, oi,
+						 flags, errmsg);
 	if (!ret_packed)
 		return 0;
 
-	ret_loose = odb_source_read_object_info(&files->loose->base, oid, oi, flags);
+	ret_loose = odb_source_read_object_info(&files->loose->base, oid, oi, flags,
+						ret_packed == ODB_READ_NOT_FOUND ? errmsg : NULL);
 	if (!ret_loose)
 		return 0;
 

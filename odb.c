@@ -560,7 +560,7 @@ static enum odb_read_status do_oid_object_info_extended(struct object_database *
 	if (is_null_oid(real))
 		return -1;
 
-	if (!odb_source_read_object_info(odb->inmemory_objects, oid, oi, flags))
+	if (!odb_source_read_object_info(odb->inmemory_objects, oid, oi, flags, NULL))
 		return 0;
 
 	odb_prepare_alternates(odb);
@@ -569,7 +569,7 @@ static enum odb_read_status do_oid_object_info_extended(struct object_database *
 		struct odb_source *source;
 
 		for (source = odb->sources; source; source = source->next)
-			if (!odb_source_read_object_info(source, real, oi, flags))
+			if (!odb_source_read_object_info(source, real, oi, flags, NULL))
 				return 0;
 
 		/*
@@ -580,7 +580,8 @@ static enum odb_read_status do_oid_object_info_extended(struct object_database *
 		if (!(flags & OBJECT_INFO_QUICK)) {
 			for (source = odb->sources; source; source = source->next)
 				if (!odb_source_read_object_info(source, real, oi,
-								 flags | OBJECT_INFO_SECOND_READ))
+								 flags | OBJECT_INFO_SECOND_READ,
+								 NULL))
 					return 0;
 		}
 

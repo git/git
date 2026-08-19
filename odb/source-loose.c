@@ -67,7 +67,8 @@ static int read_object_info_from_path(struct odb_source_loose *loose,
 				      const char *path,
 				      const struct object_id *oid,
 				      struct object_info *oi,
-				      enum object_info_flags flags)
+				      enum object_info_flags flags,
+				      struct strbuf *errmsg)
 {
 	int ret;
 	int fd;
@@ -191,9 +192,14 @@ static int read_object_info_from_path(struct odb_source_loose *loose,
 	ret = 0;
 
 out:
-	if (ret && ret != ODB_READ_NOT_FOUND && (flags & OBJECT_INFO_DIE_IF_CORRUPT))
-		die(_("loose object %s (stored in %s) is corrupt"),
-		    oid_to_hex(oid), path);
+	if (ret && ret != ODB_READ_NOT_FOUND) {
+		if ((flags & OBJECT_INFO_DIE_IF_CORRUPT))
+			die(_("loose object %s (stored in %s) is corrupt"),
+			    oid_to_hex(oid), path);
+		if (errmsg)
+			strbuf_addf(errmsg, _("loose object %s (stored in %s) is corrupt"),
+				    oid_to_hex(oid), path);
+	}
 
 	if (stream_to_end)
 		git_inflate_end(stream_to_end);
@@ -216,7 +222,8 @@ out:
 static enum odb_read_status odb_source_loose_read_object_info(struct odb_source *source,
 							      const struct object_id *oid,
 							      struct object_info *oi,
-							      enum object_info_flags flags)
+							      enum object_info_flags flags,
+							      struct strbuf *errmsg)
 {
 	struct odb_source_loose *loose = odb_source_loose_downcast(source);
 	static struct strbuf buf = STRBUF_INIT;
@@ -231,7 +238,7 @@ static enum odb_read_status odb_source_loose_read_object_info(struct odb_source 
 		return ODB_READ_NOT_FOUND;
 
 	odb_loose_path(loose, &buf, oid);
-	return read_object_info_from_path(loose, buf.buf, oid, oi, flags);
+	return read_object_info_from_path(loose, buf.buf, oid, oi, flags, errmsg);
 }
 
 /*
@@ -428,7 +435,7 @@ static int for_each_object_wrapper_cb(const struct object_id *oid,
 	if (data->request) {
 		struct object_info oi = *data->request;
 
-		if (read_object_info_from_path(data->loose, path, oid, &oi, 0) < 0)
+		if (read_object_info_from_path(data->loose, path, oid, &oi, 0, NULL) < 0)
 			return -1;
 
 		return data->cb(oid, &oi, data->cb_data);
@@ -446,7 +453,7 @@ static int for_each_prefixed_object_wrapper_cb(const struct object_id *oid,
 		struct object_info oi = *data->request;
 
 		if (odb_source_read_object_info(&data->loose->base,
-						oid, &oi, 0) < 0)
+						oid, &oi, 0, NULL) < 0)
 			return -1;
 
 		return data->cb(oid, &oi, data->cb_data);

@@ -2,7 +2,9 @@
 #include "abspath.h"
 #include "chdir-notify.h"
 #include "dir.h"
+#include "gettext.h"
 #include "git-zlib.h"
+#include "hex.h"
 #include "list-objects-filter-options.h"
 #include "mergesort.h"
 #include "midx.h"
@@ -10,6 +12,7 @@
 #include "odb/streaming.h"
 #include "packfile.h"
 #include "pack-bitmap.h"
+#include "strbuf.h"
 
 static int find_pack_entry(struct odb_source_packed *store,
 			   const struct object_id *oid,
@@ -38,7 +41,8 @@ static int find_pack_entry(struct odb_source_packed *store,
 static enum odb_read_status odb_source_packed_read_object_info(struct odb_source *source,
 							       const struct object_id *oid,
 							       struct object_info *oi,
-							       enum object_info_flags flags)
+							       enum object_info_flags flags,
+							       struct strbuf *errmsg)
 {
 	struct odb_source_packed *packed = odb_source_packed_downcast(source);
 	struct packed_git *bad_pack = NULL;
@@ -59,25 +63,39 @@ static enum odb_read_status odb_source_packed_read_object_info(struct odb_source
 		 * corrupt in one of the packfiles. Report the object as
 		 * corrupt instead of missing in that case.
 		 */
-		if (bad_pack)
-			return -1;
-		return ODB_READ_NOT_FOUND;
+		if (bad_pack) {
+			ret = -1;
+			goto out;
+		}
+
+		ret = ODB_READ_NOT_FOUND;
+		goto out;
 	}
 
 	/*
 	 * We know that the caller doesn't actually need the
 	 * information below, so return early.
 	 */
-	if (!oi)
-		return 0;
+	if (!oi) {
+		ret = 0;
+		goto out;
+	}
 
 	ret = packed_object_info(packed, e.p, e.offset, oi);
 	if (ret < 0) {
+		bad_pack = e.p;
 		mark_bad_packed_object(e.p, oid);
-		return -1;
+		goto out;
 	}
 
-	return 0;
+	ret = 0;
+
+out:
+	if (ret < 0 && bad_pack && errmsg)
+		strbuf_addf(errmsg, _("packed object %s (stored in %s) is corrupt"),
+			    oid_to_hex(oid), bad_pack->pack_name);
+
+	return ret;
 }
 
 static int odb_source_packed_read_object_stream(struct odb_read_stream **out,
