@@ -8,6 +8,7 @@
 #include "checkout.h"
 #include "config.h"
 #include "strbuf.h"
+#include "gettext.h"
 
 struct tracking_name_data {
 	/* const */ char *src_ref;
@@ -52,14 +53,23 @@ char *unique_tracking_name(const char *name, struct object_id *oid,
 {
 	struct tracking_name_data cb_data = TRACKING_NAME_DATA_INIT;
 	const char *default_remote = NULL;
+	char *templated_name = NULL;
+	const char *search_name;
+
 	if (!repo_config_get_string_tmp(the_repository, "checkout.defaultremote", &default_remote))
 		cb_data.default_remote = default_remote;
-	cb_data.src_ref = xstrfmt("refs/heads/%s", name);
+
+	templated_name = expand_remote_branch_template(name);
+	search_name = templated_name ? templated_name : name;
+
+	cb_data.src_ref = xstrfmt("refs/heads/%s", search_name);
 	cb_data.dst_oid = oid;
 	for_each_remote(check_tracking_name, &cb_data);
 	if (dwim_remotes_matched)
 		*dwim_remotes_matched = cb_data.num_matches;
 	free(cb_data.src_ref);
+	free(templated_name);
+
 	if (cb_data.num_matches == 1) {
 		free(cb_data.default_dst_ref);
 		free(cb_data.default_dst_oid);
@@ -72,4 +82,41 @@ char *unique_tracking_name(const char *name, struct object_id *oid,
 		return cb_data.default_dst_ref;
 	}
 	return NULL;
+}
+
+char *expand_remote_branch_template(const char *name)
+{
+	const char *tpl = NULL;
+	const char *fmt;
+	struct strbuf out = STRBUF_INIT;
+	int saw_placeholder = 0;
+
+	if (repo_config_get_string_tmp(the_repository,
+				       "checkout.remoteBranchTemplate",
+				       &tpl))
+		return NULL;
+
+	fmt = tpl;
+	while (strbuf_expand_step(&out, &fmt)) {
+		if (skip_prefix(fmt, "%", &fmt)) {
+			strbuf_addch(&out, '%');
+		} else if (skip_prefix(fmt, "s", &fmt)) {
+			strbuf_addstr(&out, name);
+			saw_placeholder = 1;
+		} else {
+			/*
+			 * Unknown placeholder: keep '%' literal to avoid
+			 * surprising behavior (e.g., "%x" stays "%x").
+			 */
+			strbuf_addch(&out, '%');
+		}
+	}
+
+	if (!saw_placeholder) {
+		strbuf_release(&out);
+		warning("%s", _("checkout.remoteBranchTemplate missing '%%s' placeholder; ignoring"));
+		return NULL;
+	}
+
+	return strbuf_detach(&out, NULL);
 }
