@@ -1,0 +1,78 @@
+name: Hypothesis Research Loop
+
+on:
+  schedule:
+    # Every 10 minutes — GH Actions minimum is 5 min but startup overhead
+    # makes 10 min the effective minimum for a clean 5-min experiment budget
+    - cron: '*/10 * * * *'
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for manual trigger'
+        required: false
+        default: 'manual'
+
+jobs:
+  research:
+    name: Run one research experiment
+    runs-on: ubuntu-latest
+    timeout-minutes: 9   # hard kill — leaves 1 min margin over TIME_BUDGET (300s)
+
+    permissions:
+      contents: write    # needed to push hypothesis.py commits back to repo
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          # Use PAT so the bot can push back to the repo
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0   # full history needed for git reset
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install --quiet requests
+
+      - name: Configure git identity
+        run: |
+          git config user.email "research-bot@learnzy.in"
+          git config user.name "Learnzy Research Bot"
+
+      - name: Run one research experiment
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: python agent.py 2>&1 | tee run.log
+
+      - name: Extract key metrics (grep-friendly, analog to autoresearch)
+        if: always()
+        run: |
+          echo "=== RESULTS ==="
+          grep "^evidence_score:\|^best_score:\|^status:\|^weakest_link:" run.log || true
+
+      - name: Push improved hypothesis.py and log results
+        if: always()
+        run: |
+          # results.tsv is gitignored locally but we DO want it in CI for cross-run persistence
+          # We commit it here (overriding .gitignore via -f)
+          git add hypothesis.py
+          git add -f results.tsv 2>/dev/null || true
+
+          # Only commit if there are actual changes
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "run $(date -u +%Y%m%dT%H%M%SZ) [ci]"
+            git push origin HEAD
+          fi
+
+      - name: Upload run log as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: run-log-${{ github.run_number }}
+          path: run.log
+          retention-days: 30
