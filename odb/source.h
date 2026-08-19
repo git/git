@@ -110,13 +110,13 @@ struct odb_source {
 	 *     second read in case they know that the first read would have
 	 *     already surfaced the object without reloading any on-disk state.
 	 *
-	 * The callback is expected to return a negative error code in case
-	 * reading the object has failed, 0 otherwise.
+	 * The callback is expected to return an `enum odb_read_status`. Please
+	 * refer to the individual values that can be returned.
 	 */
-	int (*read_object_info)(struct odb_source *source,
-				const struct object_id *oid,
-				struct object_info *oi,
-				enum object_info_flags flags);
+	enum odb_read_status (*read_object_info)(struct odb_source *source,
+						 const struct object_id *oid,
+						 struct object_info *oi,
+						 enum object_info_flags flags);
 
 	/*
 	 * This callback is expected to create a new read stream that can be
@@ -340,12 +340,12 @@ static inline void odb_source_prepare(struct odb_source *source,
 
 /*
  * Read an object from the object database source identified by its object ID.
- * Returns 0 on success, a negative error code otherwise.
+ * Please refer to `enum odb_read_status` for the individual error codes.
  */
-static inline int odb_source_read_object_info(struct odb_source *source,
-					      const struct object_id *oid,
-					      struct object_info *oi,
-					      enum object_info_flags flags)
+static inline enum odb_read_status odb_source_read_object_info(struct odb_source *source,
+							       const struct object_id *oid,
+							       struct object_info *oi,
+							       enum object_info_flags flags)
 {
 	return source->read_object_info(source, oid, oi, flags);
 }

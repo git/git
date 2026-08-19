@@ -547,9 +547,9 @@ static int register_all_submodule_sources(struct object_database *odb)
 	return ret;
 }
 
-static int do_oid_object_info_extended(struct object_database *odb,
-				       const struct object_id *oid,
-				       struct object_info *oi, unsigned flags)
+static enum odb_read_status do_oid_object_info_extended(struct object_database *odb,
+							const struct object_id *oid,
+							struct object_info *oi, unsigned flags)
 {
 	const struct object_id *real = oid;
 	int already_retried = 0;
@@ -696,12 +696,12 @@ static int oid_object_info_convert(struct repository *r,
 	return ret;
 }
 
-int odb_read_object_info_extended(struct object_database *odb,
-				  const struct object_id *oid,
-				  struct object_info *oi,
-				  enum object_info_flags flags)
+enum odb_read_status odb_read_object_info_extended(struct object_database *odb,
+						   const struct object_id *oid,
+						   struct object_info *oi,
+						   enum object_info_flags flags)
 {
-	int ret;
+	enum odb_read_status ret;
 
 	if (oid->algo && (hash_algo_by_ptr(odb->repo->hash_algo) != oid->algo))
 		return oid_object_info_convert(odb->repo, oid, oi, flags);

@@ -59,10 +59,10 @@ static void odb_source_files_prepare(struct odb_source *source,
 	odb_source_prepare(&files->packed->base, flags);
 }
 
-static int odb_source_files_read_object_info(struct odb_source *source,
-					     const struct object_id *oid,
-					     struct object_info *oi,
-					     enum object_info_flags flags)
+static enum odb_read_status odb_source_files_read_object_info(struct odb_source *source,
+							      const struct object_id *oid,
+							      struct object_info *oi,
+							      enum object_info_flags flags)
 {
 	struct odb_source_files *files = odb_source_files_downcast(source);
 

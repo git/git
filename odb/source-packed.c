@@ -35,10 +35,10 @@ static int find_pack_entry(struct odb_source_packed *store,
 	return 0;
 }
 
-static int odb_source_packed_read_object_info(struct odb_source *source,
-					      const struct object_id *oid,
-					      struct object_info *oi,
-					      enum object_info_flags flags)
+static enum odb_read_status odb_source_packed_read_object_info(struct odb_source *source,
+							       const struct object_id *oid,
+							       struct object_info *oi,
+							       enum object_info_flags flags)
 {
 	struct odb_source_packed *packed = odb_source_packed_downcast(source);
 	struct packed_git *bad_pack = NULL;

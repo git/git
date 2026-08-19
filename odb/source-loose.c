@@ -206,10 +206,10 @@ out:
 	return ret;
 }
 
-static int odb_source_loose_read_object_info(struct odb_source *source,
-					     const struct object_id *oid,
-					     struct object_info *oi,
-					     enum object_info_flags flags)
+static enum odb_read_status odb_source_loose_read_object_info(struct odb_source *source,
+							      const struct object_id *oid,
+							      struct object_info *oi,
+							      enum object_info_flags flags)
 {
 	struct odb_source_loose *loose = odb_source_loose_downcast(source);
 	static struct strbuf buf = STRBUF_INIT;
