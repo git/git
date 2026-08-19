@@ -234,67 +234,91 @@ else:
 
 
 class MetadataDecodingException(Exception):
-    def __init__(self, input_string):
+    def __init__(self, input_string, error=None):
         self.input_string = input_string
+        self.error = error
 
     def __str__(self):
-        return """Decoding perforce metadata failed!
+        message = """Decoding perforce metadata failed!
 The failing string was:
 ---
 {}
 ---
 Consider setting the git-p4.metadataDecodingStrategy config option to
 'fallback', to allow metadata to be decoded using a fallback encoding,
-defaulting to cp1252.""".format(self.input_string)
+defaulting to cp1252."""
+        if verbose and self.error is not None:
+            message += """
+---
+Error:
+---
+{}"""
+        return message.format(self.input_string, self.error)
 
 
-encoding_fallback_warning_issued = False
-encoding_escape_warning_issued = False
-def metadata_stream_to_writable_bytes(s):
-    encodingStrategy = gitConfig('git-p4.metadataDecodingStrategy') or defaultMetadataDecodingStrategy
-    fallbackEncoding = gitConfig('git-p4.metadataFallbackEncoding') or defaultFallbackMetadataEncoding
-    if not isinstance(s, bytes):
-        return s.encode('utf_8')
-    if encodingStrategy == 'passthrough':
-        return s
-    try:
-        s.decode('utf_8')
-        return s
-    except UnicodeDecodeError:
-        if encodingStrategy == 'fallback' and fallbackEncoding:
-            global encoding_fallback_warning_issued
-            global encoding_escape_warning_issued
-            try:
-                if not encoding_fallback_warning_issued:
-                    print("\nCould not decode value as utf-8; using configured fallback encoding %s: %s" % (fallbackEncoding, s))
-                    print("\n(this warning is only displayed once during an import)")
-                    encoding_fallback_warning_issued = True
-                return s.decode(fallbackEncoding).encode('utf_8')
-            except Exception as exc:
-                if not encoding_escape_warning_issued:
-                    print("\nCould not decode value with configured fallback encoding %s; escaping bytes over 127: %s" % (fallbackEncoding, s))
-                    print("\n(this warning is only displayed once during an import)")
-                    encoding_escape_warning_issued = True
-                escaped_bytes = b''
-                # bytes and strings work very differently in python2 vs python3...
-                if str is bytes:
-                    for byte in s:
-                        byte_number = struct.unpack('>B', byte)[0]
-                        if byte_number > 127:
-                            escaped_bytes += b'%'
-                            escaped_bytes += hex(byte_number)[2:].upper()
-                        else:
-                            escaped_bytes += byte
-                else:
-                    for byte_number in s:
-                        if byte_number > 127:
-                            escaped_bytes += b'%'
-                            escaped_bytes += hex(byte_number).upper().encode()[2:]
-                        else:
-                            escaped_bytes += bytes([byte_number])
-                return escaped_bytes
+class MetadataTranscoder:
+    def __init__(self, default_metadata_decoding_strategy, default_fallback_metadata_encoding):
+        self.decoding_fallback_warning_issued = False
+        self.decoding_escape_warning_issued = False
+        self.decodingStrategy = gitConfig('git-p4.metadataDecodingStrategy') or default_metadata_decoding_strategy
+        self.fallbackEncoding = gitConfig('git-p4.metadataFallbackEncoding') or default_fallback_metadata_encoding
 
-        raise MetadataDecodingException(s)
+    def decode_metadata(self, s, error_from_fallback=True):
+        try:
+            return [s.decode('utf_8'), 'utf_8']
+        except UnicodeDecodeError as decode_exception:
+            error = decode_exception
+            if self.decodingStrategy == 'fallback' and self.fallbackEncoding:
+                try:
+                    if not self.decoding_fallback_warning_issued:
+                        print("\nCould not decode value as utf-8; using configured fallback encoding %s: %s" % (self.fallbackEncoding, s))
+                        print("\n(this warning is only displayed once during an import)")
+                        self.decoding_fallback_warning_issued = True
+                    return [s.decode(self.fallbackEncoding), self.fallbackEncoding]
+                except Exception as decode_exception:
+                    if not error_from_fallback:
+                        return [s, None]
+                    error = decode_exception
+            raise MetadataDecodingException(s, error)
+
+    def metadata_stream_to_writable_bytes(self, s):
+        if not isinstance(s, bytes):
+            return s.encode('utf_8')
+        if self.decodingStrategy == 'passthrough':
+            return s
+
+        [text, encoding] = self.decode_metadata(s, False)
+        if encoding == 'utf_8':
+            # s is of utf-8 already
+            return s
+
+        if encoding is None:
+            # could not decode s, even with fallback encoding
+            if not self.decoding_escape_warning_issued:
+                print("\nCould not decode value with configured fallback encoding %s; escaping bytes over 127: %s" % (self.fallbackEncoding, s))
+                print("\n(this warning is only displayed once during an import)")
+                self.decoding_escape_warning_issued = True
+            escaped_bytes = b''
+            # bytes and strings work very differently in python2 vs python3...
+            if str is bytes:
+                for byte in s:
+                    byte_number = struct.unpack('>B', byte)[0]
+                    if byte_number > 127:
+                        escaped_bytes += b'%'
+                        escaped_bytes += hex(byte_number)[2:].upper()
+                    else:
+                        escaped_bytes += byte
+            else:
+                for byte_number in s:
+                    if byte_number > 127:
+                        escaped_bytes += b'%'
+                        escaped_bytes += hex(byte_number).upper().encode()[2:]
+                    else:
+                        escaped_bytes += bytes([byte_number])
+            return escaped_bytes
+
+        # were able to decode but not to utf-8
+        return text.encode('utf_8')
 
 
 def decode_path(path):
@@ -898,14 +922,14 @@ def p4CmdList(cmd, stdin=None, stdin_mode='w+b', cb=None, skip_info=False,
                     decoded_entry[key] = value
                 # Parse out data if it's an error response
                 if decoded_entry.get('code') == 'error' and 'data' in decoded_entry:
-                    decoded_entry['data'] = decoded_entry['data'].decode()
+                    decoded_entry['data'] = metadataTranscoder.decode_metadata(decoded_entry['data'])
                 entry = decoded_entry
             if skip_info:
                 if 'code' in entry and entry['code'] == 'info':
                     continue
             for key in p4KeysContainingNonUtf8Chars():
                 if key in entry:
-                    entry[key] = metadata_stream_to_writable_bytes(entry[key])
+                    entry[key] = metadataTranscoder.metadata_stream_to_writable_bytes(entry[key])
             if cb is not None:
                 cb(entry)
             else:
@@ -1718,7 +1742,7 @@ class P4UserMap:
             # python2 or python3. To support
             # git-p4.metadataDecodingStrategy=fallback, self.users dict values
             # are always bytes, ready to be written to git.
-            emailbytes = metadata_stream_to_writable_bytes(output["Email"])
+            emailbytes = metadataTranscoder.metadata_stream_to_writable_bytes(output["Email"])
             self.users[output["User"]] = output["FullName"] + b" <" + emailbytes + b">"
             self.emails[output["Email"]] = output["User"]
 
@@ -1730,12 +1754,12 @@ class P4UserMap:
                 fullname = mapUser[0][1]
                 email = mapUser[0][2]
                 fulluser = fullname + " <" + email + ">"
-                self.users[user] = metadata_stream_to_writable_bytes(fulluser)
+                self.users[user] = metadataTranscoder.metadata_stream_to_writable_bytes(fulluser)
                 self.emails[email] = user
 
         s = b''
         for (key, val) in self.users.items():
-            keybytes = metadata_stream_to_writable_bytes(key)
+            keybytes = metadataTranscoder.metadata_stream_to_writable_bytes(key)
             s += b"%s\t%s\n" % (keybytes.expandtabs(1), val.expandtabs(1))
 
         open(self.getUserCacheFilename(), 'wb').write(s)
@@ -3349,7 +3373,7 @@ class P4Sync(Command, P4UserMap):
         if userid in self.users:
             return self.users[userid]
         else:
-            userid_bytes = metadata_stream_to_writable_bytes(userid)
+            userid_bytes = metadataTranscoder.metadata_stream_to_writable_bytes(userid)
             return b"%s <a@b>" % userid_bytes
 
     def streamTag(self, gitStream, labelName, labelDetails, commit, epoch):
@@ -4561,6 +4585,7 @@ commands = {
     "unshelve": P4Unshelve,
 }
 
+metadataTranscoder = MetadataTranscoder(defaultMetadataDecodingStrategy, defaultFallbackMetadataEncoding)
 
 def main():
     if len(sys.argv[1:]) == 0:
