@@ -146,9 +146,9 @@ test_expect_success 'merge my-side@{u} records the correct name' '
 )
 '
 
-test_expect_success 'branch -d other@{u}' '
+test_expect_success 'branch -D other@{u}' '
 	git checkout -t -b other main &&
-	git branch -d @{u} &&
+	git branch -D @{u} &&
 	git for-each-ref refs/heads/main >actual &&
 	test_must_be_empty actual
 '
