@@ -65,12 +65,26 @@ static enum odb_read_status odb_source_files_read_object_info(struct odb_source 
 							      enum object_info_flags flags)
 {
 	struct odb_source_files *files = odb_source_files_downcast(source);
+	enum odb_read_status ret_packed, ret_loose;
 
-	if (!odb_source_read_object_info(&files->packed->base, oid, oi, flags) ||
-	    !odb_source_read_object_info(&files->loose->base, oid, oi, flags))
+	ret_packed = odb_source_read_object_info(&files->packed->base, oid, oi, flags);
+	if (!ret_packed)
 		return 0;
 
-	return -1;
+	ret_loose = odb_source_read_object_info(&files->loose->base, oid, oi, flags);
+	if (!ret_loose)
+		return 0;
+
+	/*
+	 * Reading the packed object may have failed even though the object
+	 * exists, for example because it is corrupt. Report this failure to
+	 * the caller in case neither of the sources was able to read the
+	 * object, and prefer the error of the packed source in case both
+	 * reads have failed.
+	 */
+	if (ret_packed != ODB_READ_NOT_FOUND)
+		return ret_packed;
+	return ret_loose;
 }
 
 static int odb_source_files_read_object_stream(struct odb_read_stream **out,

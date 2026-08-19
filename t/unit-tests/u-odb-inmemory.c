@@ -72,7 +72,8 @@ void test_odb_inmemory__read_missing_object(void)
 	const char *end;
 
 	cl_must_pass(parse_oid_hex_algop(RANDOM_OID, &oid, &end, repo.hash_algo));
-	cl_must_fail(odb_source_read_object_info(&source->base, &oid, NULL, 0));
+	cl_assert_equal_i(odb_source_read_object_info(&source->base, &oid, NULL, 0),
+			  ODB_READ_NOT_FOUND);
 
 	odb_source_free(&source->base);
 }

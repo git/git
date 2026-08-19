@@ -66,7 +66,7 @@ static enum odb_read_status odb_source_inmemory_read_object_info(struct odb_sour
 
 	object = find_cached_object(inmemory, oid);
 	if (!object)
-		return -1;
+		return ODB_READ_NOT_FOUND;
 
 	populate_object_info(inmemory, oi, object);
 	return 0;

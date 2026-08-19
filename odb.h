@@ -440,6 +440,8 @@ enum odb_read_status {
 	ODB_READ_OK = 0,
 	/* The read resulted in a generic error. */
 	ODB_READ_ERROR = -1,
+	/* The object could not be found. */
+	ODB_READ_NOT_FOUND = -2,
 };
 
 /*

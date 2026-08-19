@@ -61,7 +61,7 @@ static enum odb_read_status odb_source_packed_read_object_info(struct odb_source
 		 */
 		if (bad_pack)
 			return -1;
-		return 1;
+		return ODB_READ_NOT_FOUND;
 	}
 
 	/*
