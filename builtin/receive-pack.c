@@ -62,12 +62,9 @@ static enum deny_action deny_delete_current = DENY_UNCONFIGURED;
 static int receive_fsck_objects = -1;
 static int transfer_fsck_objects = -1;
 static struct strbuf fsck_msg_types = STRBUF_INIT;
-static int receive_unpack_limit = -1;
-static int transfer_unpack_limit = -1;
 static int advertise_atomic_push = 1;
 static int advertise_push_options;
 static int advertise_sid;
-static int unpack_limit = 100;
 static off_t max_input_size;
 static int report_status;
 static int report_status_v2;
@@ -154,16 +151,6 @@ static int receive_pack_config(const char *var, const char *value,
 
 	if (strcmp(var, "receive.denynonfastforwards") == 0) {
 		deny_non_fast_forwards = git_config_bool(var, value);
-		return 0;
-	}
-
-	if (strcmp(var, "receive.unpacklimit") == 0) {
-		receive_unpack_limit = git_config_int(var, value, ctx->kvi);
-		return 0;
-	}
-
-	if (strcmp(var, "transfer.unpacklimit") == 0) {
-		transfer_unpack_limit = git_config_int(var, value, ctx->kvi);
 		return 0;
 	}
 
@@ -2333,6 +2320,16 @@ static void push_header_arg(struct strvec *args, struct pack_header *hdr)
 		     ntohl(hdr->hdr_version), ntohl(hdr->hdr_entries));
 }
 
+static unsigned int get_unpack_limit(struct repository *repo)
+{
+	unsigned int limit = 100;
+
+	repo_config_get_uint(repo, "transfer.unpacklimit", &limit);
+	repo_config_get_uint(repo, "receive.unpacklimit", &limit);
+
+	return limit;
+}
+
 static const char *unpack(struct odb_transaction *transaction,
 			  const char *shallow_file, int err_fd)
 {
@@ -2360,7 +2357,7 @@ static const char *unpack(struct odb_transaction *transaction,
 
 	odb_transaction_env(transaction, &child.env);
 
-	if (ntohl(hdr.hdr_entries) < unpack_limit) {
+	if (ntohl(hdr.hdr_entries) < get_unpack_limit(the_repository)) {
 		strvec_push(&child.args, "unpack-objects");
 		push_header_arg(&child.args, &hdr);
 		if (quiet)
@@ -2657,11 +2654,6 @@ int cmd_receive_pack(int argc,
 	repo_config(the_repository, receive_pack_config, NULL);
 	if (cert_nonce_seed)
 		push_cert_nonce = prepare_push_cert_nonce(service_dir, time(NULL));
-
-	if (0 <= receive_unpack_limit)
-		unpack_limit = receive_unpack_limit;
-	else if (0 <= transfer_unpack_limit)
-		unpack_limit = transfer_unpack_limit;
 
 	switch (determine_protocol_version_server()) {
 	case protocol_v2:
