@@ -985,23 +985,6 @@ void mark_bad_packed_object(struct packed_git *p, const struct object_id *oid)
 	oidset_insert(&p->bad_objects, oid);
 }
 
-const struct packed_git *has_packed_and_bad(struct repository *r,
-					    const struct object_id *oid)
-{
-	struct odb_source *source;
-
-	for (source = r->objects->sources; source; source = source->next) {
-		struct odb_source_files *files = odb_source_files_downcast(source);
-		struct packfile_list_entry *e;
-
-		for (e = files->packed->packs.head; e; e = e->next)
-			if (oidset_contains(&e->pack->bad_objects, oid))
-				return e->pack;
-	}
-
-	return NULL;
-}
-
 off_t get_delta_base(struct packed_git *p,
 		     struct pack_window **w_curs,
 		     off_t *curpos,

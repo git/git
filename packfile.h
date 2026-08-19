@@ -329,7 +329,6 @@ int packed_object_info_with_index_pos(struct odb_source_packed *source,
 				      uint32_t *maybe_index_pos, struct object_info *oi);
 
 void mark_bad_packed_object(struct packed_git *, const struct object_id *);
-const struct packed_git *has_packed_and_bad(struct repository *, const struct object_id *);
 
 int has_object_pack(struct repository *r, const struct object_id *oid);
 int has_object_kept_pack(struct repository *r, const struct object_id *oid,

@@ -192,15 +192,9 @@ static int read_object_info_from_path(struct odb_source_loose *loose,
 	ret = 0;
 
 out:
-	if (ret && ret != ODB_READ_NOT_FOUND) {
-		if ((flags & OBJECT_INFO_DIE_IF_CORRUPT))
-			die(_("loose object %s (stored in %s) is corrupt"),
+	if (ret && ret != ODB_READ_NOT_FOUND && errmsg)
+		strbuf_addf(errmsg, _("loose object %s (stored in %s) is corrupt"),
 			    oid_to_hex(oid), path);
-		if (errmsg)
-			strbuf_addf(errmsg, _("loose object %s (stored in %s) is corrupt"),
-				    oid_to_hex(oid), path);
-	}
-
 	if (stream_to_end)
 		git_inflate_end(stream_to_end);
 	if (map)
