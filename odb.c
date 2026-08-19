@@ -226,7 +226,8 @@ struct odb_source *odb_add_to_alternates_memory(struct object_database *odb,
 }
 
 struct odb_source *odb_set_temporary_primary_source(struct object_database *odb,
-						    const char *dir, int will_destroy)
+						    const char *dir, int will_destroy,
+						    struct odb_source **prev_source)
 {
 	struct odb_source *source;
 
@@ -250,7 +251,11 @@ struct odb_source *odb_set_temporary_primary_source(struct object_database *odb,
 	source->will_destroy = will_destroy;
 	source->next = odb->sources;
 	odb->sources = source;
-	return source->next;
+
+	if (prev_source)
+		*prev_source = source->next;
+
+	return source;
 }
 
 void odb_restore_primary_source(struct object_database *odb,
