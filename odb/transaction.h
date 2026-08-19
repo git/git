@@ -23,6 +23,13 @@ struct odb_transaction {
 	int (*commit)(struct odb_transaction *transaction);
 
 	/*
+	 * Optional ODB source specific callback invoked when the transaction
+	 * needs to perform any deferred cleanup after objects have been
+	 * committed. Returns 0 on success, a negative error code otherwise.
+	 */
+	int (*finalize)(struct odb_transaction *transaction);
+
+	/*
 	 * This callback is expected to write the given object stream into
 	 * the ODB transaction. Note that for now, only blobs support streaming.
 	 *
@@ -74,6 +81,22 @@ static inline void odb_transaction_begin_or_die(struct object_database *odb,
  * transaction is NULL, the function is a no-op and no error is returned.
  */
 int odb_transaction_commit(struct odb_transaction *transaction);
+
+/*
+ * Finalizes an ODB transaction, performing any deferred cleanup and freeing it.
+ * Must be called for every successfully started transaction. Note that, if the
+ * specified transaction is NULL, the function is a no-op. Returns 0 on success,
+ * a negative error code otherwise.
+ */
+int odb_transaction_finalize(struct odb_transaction *transaction);
+
+static inline void odb_transaction_commit_and_finalize_or_die(struct odb_transaction *transaction)
+{
+	if (odb_transaction_commit(transaction))
+		die(_("failed to commit ODB transaction"));
+	if (odb_transaction_finalize(transaction))
+		die(_("failed to finalize ODB transaction"));
+}
 
 /*
  * Writes the object in the provided stream into the transaction. The resulting
