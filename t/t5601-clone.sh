@@ -642,6 +642,22 @@ test_expect_success 'shallow clone locally' '
 	( cd ddsstt && git fsck )
 '
 
+test_expect_success 'GIT_CLONE_DEPTH acts as a fallback for --depth' '
+	GIT_CLONE_DEPTH=1 git clone --no-local src depth-env &&
+	test_path_is_file depth-env/.git/shallow &&
+	test 1 = $(git -C depth-env rev-list --count HEAD)
+'
+
+test_expect_success 'explicit --depth overrides GIT_CLONE_DEPTH' '
+	GIT_CLONE_DEPTH=1 git clone --depth=2 --no-local src depth-override &&
+	test 2 = $(git -C depth-override rev-list --count HEAD)
+'
+
+test_expect_success 'empty GIT_CLONE_DEPTH is ignored' '
+	GIT_CLONE_DEPTH= git clone --no-local src depth-empty &&
+	test_path_is_missing depth-empty/.git/shallow
+'
+
 test_expect_success 'GIT_TRACE_PACKFILE produces a usable pack' '
 	rm -rf dst.git &&
 	GIT_TRACE_PACKFILE=$PWD/tmp.pack git clone --no-local --bare src dst.git &&
