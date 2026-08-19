@@ -591,7 +591,8 @@ uint32_t nth_midxed_pack_int_id(struct multi_pack_index *m, uint32_t pos)
 
 int fill_midx_entry(struct multi_pack_index *m,
 		    const struct object_id *oid,
-		    struct pack_entry *e)
+		    struct pack_entry *e,
+		    struct packed_git **bad_pack)
 {
 	uint32_t pos;
 	uint32_t pack_int_id;
@@ -618,8 +619,11 @@ int fill_midx_entry(struct multi_pack_index *m,
 		return 0;
 
 	if (oidset_size(&p->bad_objects) &&
-	    oidset_contains(&p->bad_objects, oid))
+	    oidset_contains(&p->bad_objects, oid)) {
+		if (bad_pack && !*bad_pack)
+			*bad_pack = p;
 		return 0;
+	}
 
 	e->offset = nth_midxed_offset(m, pos);
 	e->p = p;
@@ -1028,7 +1032,7 @@ int verify_midx_file(struct odb_source_packed *source, unsigned flags)
 
 		nth_midxed_object_oid(&oid, m, pairs[i].pos);
 
-		if (!fill_midx_entry(m, &oid, &e)) {
+		if (!fill_midx_entry(m, &oid, &e, NULL)) {
 			midx_report(_("failed to load pack entry for oid[%d] = %s"),
 				    pairs[i].pos, oid_to_hex(&oid));
 			continue;

@@ -1859,13 +1859,17 @@ int is_pack_valid(struct packed_git *p)
 
 int packfile_fill_entry(struct packed_git *p,
 			const struct object_id *oid,
-			struct pack_entry *e)
+			struct pack_entry *e,
+			struct packed_git **bad_pack)
 {
 	off_t offset;
 
 	if (oidset_size(&p->bad_objects) &&
-	    oidset_contains(&p->bad_objects, oid))
+	    oidset_contains(&p->bad_objects, oid)) {
+		if (bad_pack && !*bad_pack)
+			*bad_pack = p;
 		return 0;
+	}
 
 	offset = find_pack_entry_one(oid, p);
 	if (!offset)
@@ -1962,7 +1966,7 @@ int has_object_kept_pack(struct repository *r, const struct object_id *oid,
 
 		for (; *cache; cache++) {
 			struct packed_git *p = *cache;
-			if (packfile_fill_entry(p, oid, &e))
+			if (packfile_fill_entry(p, oid, &e, NULL))
 				return 1;
 		}
 	}

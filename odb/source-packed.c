@@ -13,18 +13,19 @@
 
 static int find_pack_entry(struct odb_source_packed *store,
 			   const struct object_id *oid,
-			   struct pack_entry *e)
+			   struct pack_entry *e,
+			   struct packed_git **bad_pack)
 {
 	struct packfile_list_entry *l;
 
 	odb_source_prepare(&store->base, 0);
-	if (store->midx && fill_midx_entry(store->midx, oid, e))
+	if (store->midx && fill_midx_entry(store->midx, oid, e, bad_pack))
 		return 1;
 
 	for (l = store->packs.head; l; l = l->next) {
 		struct packed_git *p = l->pack;
 
-		if (!p->multi_pack_index && packfile_fill_entry(p, oid, e)) {
+		if (!p->multi_pack_index && packfile_fill_entry(p, oid, e, bad_pack)) {
 			if (!store->skip_mru_updates)
 				packfile_list_prepend(&store->packs, p);
 			return 1;
@@ -40,6 +41,7 @@ static int odb_source_packed_read_object_info(struct odb_source *source,
 					      enum object_info_flags flags)
 {
 	struct odb_source_packed *packed = odb_source_packed_downcast(source);
+	struct packed_git *bad_pack = NULL;
 	struct pack_entry e;
 	int ret;
 
@@ -51,8 +53,16 @@ static int odb_source_packed_read_object_info(struct odb_source *source,
 	if (flags & OBJECT_INFO_SECOND_READ)
 		odb_source_prepare(source, ODB_PREPARE_FLUSH_CACHES);
 
-	if (!find_pack_entry(packed, oid, &e))
+	if (!find_pack_entry(packed, oid, &e, &bad_pack)) {
+		/*
+		 * The lookup may have failed because the object is known to be
+		 * corrupt in one of the packfiles. Report the object as
+		 * corrupt instead of missing in that case.
+		 */
+		if (bad_pack)
+			return -1;
 		return 1;
+	}
 
 	/*
 	 * We know that the caller doesn't actually need the
@@ -77,7 +87,7 @@ static int odb_source_packed_read_object_stream(struct odb_read_stream **out,
 	struct odb_source_packed *packed = odb_source_packed_downcast(source);
 	struct pack_entry e;
 
-	if (!find_pack_entry(packed, oid, &e))
+	if (!find_pack_entry(packed, oid, &e, NULL))
 		return -1;
 
 	return packfile_read_object_stream(out, oid, e.p, e.offset);
@@ -583,7 +593,7 @@ static int odb_source_packed_freshen_object(struct odb_source *source,
 		timesp = &times;
 	}
 
-	if (!find_pack_entry(packed, oid, &e))
+	if (!find_pack_entry(packed, oid, &e, NULL))
 		return 0;
 	if (e.p->is_cruft)
 		return 0;

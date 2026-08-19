@@ -294,7 +294,8 @@ off_t find_pack_entry_one(const struct object_id *oid, struct packed_git *);
 
 int packfile_fill_entry(struct packed_git *p,
 			const struct object_id *oid,
-			struct pack_entry *e);
+			struct pack_entry *e,
+			struct packed_git **bad_pack);
 
 int is_pack_valid(struct packed_git *);
 void *unpack_entry(struct repository *r, struct packed_git *, off_t,
