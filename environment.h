@@ -115,7 +115,6 @@ enum object_creation_mode {
 };
 
 struct repo_config_values {
-	/* section "core" config values */
 	char *attributes_file;
 	char *excludes_file;
 	char *editor_program;
@@ -139,11 +138,7 @@ struct repo_config_values {
 	int ignore_case;
 	int trust_executable_bit;
 	int has_symlinks;
-
-	/* section "sparse" config values */
 	int sparse_expect_files_outside_of_patterns;
-
-	/* section "branch" config values */
 	enum branch_track branch_track;
 };
 
@@ -175,22 +170,15 @@ int git_default_core_config(const char *var, const char *value,
 			    const struct config_context *ctx, void *cb);
 
 /*
- * Getters for the `protect_hfs` and `protect_ntfs` fields of `struct repo_config_values`.
- * They check `repo->initialized` to prevent calling `repo_config_values()`
- * before the repository setup is fully complete or in non-git environments.
+ * Getters for configuration variables in `struct repo_config_values`.
+ * These functions require a non-NULL repository pointer and handle
+ * repositories that are not fully initialized by returning appropriate
+ * default values.
  */
 int repo_protect_hfs(struct repository *repo);
 int repo_protect_ntfs(struct repository *repo);
-
-/*
- * Getter for the `ignore_case` field of `struct repo_config_values`.
- * It checks `repo->initialized` to prevent calling repo_config_values()`
- * before the repository setup is fully complete or in non-git environments.
- */
 int repo_ignore_case(struct repository *repo);
-
 int repo_trust_executable_bit(struct repository *repo);
-
 int repo_has_symlinks(struct repository *repo);
 
 const char *repo_excludes_file(struct repository *repo);
