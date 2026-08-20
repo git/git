@@ -485,6 +485,7 @@ struct odb_transaction_files {
 	struct odb_transaction base;
 
 	struct tmp_objdir *objdir;
+	struct odb_source *quarantine;
 	struct transaction_packfile packfile;
 	const char *prefix;
 };
@@ -507,7 +508,7 @@ int odb_transaction_files_prepare(struct odb_transaction *base)
 	if (!transaction->objdir)
 		return error(_("unable to create temporary object directory"));
 
-	tmp_objdir_replace_primary_odb(transaction->objdir, 0);
+	transaction->quarantine = tmp_objdir_replace_primary_odb(transaction->objdir, 0);
 
 	return 0;
 }
