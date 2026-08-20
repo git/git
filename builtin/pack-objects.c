@@ -1184,12 +1184,12 @@ static size_t write_reused_pack_verbatim(struct bitmapped_pack *reuse_packfile,
 	size_t pos = 0;
 	size_t end;
 
-	if (reuse_packfile->bitmap_pos) {
+	if (reuse_packfile->bitmap_pos ||
+	    reuse_packfile->bitmap_nr != reuse_packfile->p->num_objects) {
 		/*
-		 * We can't reuse whole chunks verbatim out of
-		 * non-preferred packs since we can't guarantee that
-		 * all duplicate objects were resolved in favor of
-		 * that pack.
+		 * We can't reuse whole chunks verbatim from non-preferred
+		 * packs or packs with entries missing from the bitmap because
+		 * bitmap and pack positions may differ.
 		 *
 		 * Even if we have a whole eword_t worth of bits that
 		 * could be reused, there may be objects between the
@@ -1198,7 +1198,7 @@ static size_t write_reused_pack_verbatim(struct bitmapped_pack *reuse_packfile,
 		 * pack, causing us to send duplicate or unwanted
 		 * objects.
 		 *
-		 * Handle non-preferred packs from within
+		 * Handle these packs from within
 		 * write_reused_pack(), which inspects and reuses
 		 * individual bits.
 		 */
@@ -1265,20 +1265,18 @@ static void write_reused_pack(struct bitmapped_pack *reuse_packfile,
 			if (pos + offset >= reuse_packfile->bitmap_pos + reuse_packfile->bitmap_nr)
 				goto done;
 
-			if (reuse_packfile->bitmap_pos) {
+			if (reuse_packfile->bitmap_pos ||
+			    reuse_packfile->bitmap_nr != reuse_packfile->p->num_objects) {
 				/*
-				 * When doing multi-pack reuse on a
-				 * non-preferred pack, translate bit positions
-				 * from the MIDX pseudo-pack order back to their
-				 * pack-relative positions before attempting
-				 * reuse.
+				 * Translate MIDX bitmap positions which do not
+				 * correspond directly to physical pack positions.
 				 */
 				struct multi_pack_index *m = reuse_packfile->from_midx;
 				uint32_t midx_pos;
 				off_t pack_ofs;
 
 				if (!m)
-					BUG("non-zero bitmap position without MIDX");
+					BUG("cannot translate bitmap position without MIDX");
 
 				midx_pos = pack_pos_to_midx(m, pos + offset);
 				pack_ofs = nth_midxed_offset(m, midx_pos);

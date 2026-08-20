@@ -11,12 +11,15 @@
  * Display the path(s), one per line, of the packfile(s) containing
  * the given object.
  *
+ * With '--show-offset', display the offset selected by
+ * find_pack_entry_one() instead of the packfile path.
+ *
  * If '--check-count <n>' is passed, then error out if the number of
  * packfiles containing the object is not <n>.
  */
 
 static const char *const find_pack_usage[] = {
-	"test-tool find-pack [--check-count <n>] <object>",
+	"test-tool find-pack [--check-count <n>] [--show-offset] <object>",
 	NULL
 };
 
@@ -24,11 +27,13 @@ int cmd__find_pack(int argc, const char **argv)
 {
 	struct object_id oid;
 	struct packed_git *p;
-	int count = -1, actual_count = 0;
+	int count = -1, actual_count = 0, show_offset = 0;
 	const char *prefix = setup_git_directory(the_repository);
 
 	struct option options[] = {
 		OPT_INTEGER('c', "check-count", &count, "expected number of packs"),
+		OPT_BOOL(0, "show-offset", &show_offset,
+			 "show matching pack offsets"),
 		OPT_END(),
 	};
 
@@ -40,8 +45,13 @@ int cmd__find_pack(int argc, const char **argv)
 		die("cannot parse %s as an object name", argv[0]);
 
 	repo_for_each_pack(the_repository, p) {
-		if (find_pack_entry_one(&oid, p)) {
-			printf("%s\n", p->pack_name);
+		off_t offset = find_pack_entry_one(&oid, p);
+
+		if (offset) {
+			if (show_offset)
+				printf("%"PRIuMAX"\n", (uintmax_t)offset);
+			else
+				printf("%s\n", p->pack_name);
 			actual_count++;
 		}
 	}
