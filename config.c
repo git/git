@@ -1271,6 +1271,15 @@ ssize_t git_config_ssize_t(const char *name, const char *value,
 	return ret;
 }
 
+size_t git_config_size_t(const char *name, const char *value,
+			 const struct key_value_info *kvi)
+{
+	size_t ret;
+	if (!git_parse_size_t(value, &ret))
+		die_bad_number(name, value, kvi);
+	return ret;
+}
+
 double git_config_double(const char *name, const char *value,
 			 const struct key_value_info *kvi)
 {
