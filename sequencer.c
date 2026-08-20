@@ -6549,34 +6549,65 @@ struct todo_add_branch_context {
 	size_t items_alloc;
 	struct strbuf *buf;
 	struct string_list refs_to_oids;
+	struct string_list symref_update_targets;
 };
 
 static int add_decorations_to_list(const struct commit *commit,
 				   struct todo_add_branch_context *ctx)
 {
 	const struct name_decoration *decoration = get_name_decoration(&commit->object);
-	const char *head_ref = refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
-						       "HEAD",
-						       RESOLVE_REF_READING,
-						       NULL,
-						       NULL);
+	struct ref_store *refs = get_main_ref_store(the_repository);
+	char *head_ref = refs_resolve_refdup(refs, "HEAD",
+					     RESOLVE_REF_READING,
+					     NULL, NULL);
 
 	while (decoration) {
 		struct todo_item *item;
 		const char *path;
+		const char *checked_ref;
+		char *resolved_ref;
+		int flags = 0;
 		size_t base_offset = ctx->buf->len;
 
 		/*
-		 * If the branch is the current HEAD, then it will be
-		 * updated by the default rebase behavior.
-		 * Exclude it from the list of refs to update,
-		 * as well as any non-branch decorations.
 		 * Non-branch decorations may be present if the pretty format
 		 * includes "%d", which would have loaded all refs
 		 * into the global decoration table.
 		 */
-		if ((head_ref && !strcmp(head_ref, decoration->name)) ||
-		    (decoration->type != DECORATION_REF_LOCAL)) {
+		if (decoration->type != DECORATION_REF_LOCAL) {
+			decoration = decoration->next;
+			continue;
+		}
+
+		resolved_ref = refs_resolve_refdup(refs, decoration->name,
+						      RESOLVE_REF_READING,
+						      NULL, &flags);
+		if (resolved_ref && (flags & REF_ISSYMREF) &&
+		    starts_with(resolved_ref, "refs/heads/")) {
+			free(resolved_ref);
+			decoration = decoration->next;
+			continue;
+		}
+
+		/*
+		 * If the branch is the current HEAD, then it will be
+		 * updated by the default rebase behavior.
+		 */
+		if (head_ref && !strcmp(head_ref, decoration->name)) {
+			free(resolved_ref);
+			decoration = decoration->next;
+			continue;
+		}
+
+		path = branch_checked_out(decoration->name);
+		if (!path && resolved_ref && (flags & REF_ISSYMREF)) {
+			checked_ref = resolved_ref;
+			path = branch_checked_out(checked_ref);
+		}
+		if (!path && resolved_ref && (flags & REF_ISSYMREF) &&
+		    string_list_has_string(&ctx->symref_update_targets,
+					   resolved_ref)) {
+			free(resolved_ref);
 			decoration = decoration->next;
 			continue;
 		}
@@ -6588,13 +6619,17 @@ static int add_decorations_to_list(const struct commit *commit,
 		memset(item, 0, sizeof(*item));
 
 		/* If the branch is checked out, then leave a comment instead. */
-		if ((path = branch_checked_out(decoration->name))) {
+		if (path) {
 			item->command = TODO_COMMENT;
 			strbuf_commented_addf(ctx->buf, comment_line_str,
 					      "Ref %s checked out at '%s'\n",
 					      decoration->name, path);
 		} else {
 			struct string_list_item *sti;
+
+			if (resolved_ref && (flags & REF_ISSYMREF))
+				string_list_insert(&ctx->symref_update_targets,
+						   resolved_ref);
 			item->command = TODO_UPDATE_REF;
 			strbuf_addf(ctx->buf, "%s\n", decoration->name);
 
@@ -6608,9 +6643,11 @@ static int add_decorations_to_list(const struct commit *commit,
 		item->arg_len = ctx->buf->len - base_offset;
 		ctx->items_nr++;
 
+		free(resolved_ref);
 		decoration = decoration->next;
 	}
 
+	free(head_ref);
 	return 0;
 }
 
@@ -6624,6 +6661,7 @@ static int todo_list_add_update_ref_commands(struct todo_list *todo_list)
 	struct todo_add_branch_context ctx = {
 		.buf = &todo_list->buf,
 		.refs_to_oids = STRING_LIST_INIT_DUP,
+		.symref_update_targets = STRING_LIST_INIT_DUP,
 	};
 
 	ctx.items_alloc = 2 * todo_list->nr + 1;
@@ -6649,6 +6687,7 @@ static int todo_list_add_update_ref_commands(struct todo_list *todo_list)
 	res = write_update_refs_state(&ctx.refs_to_oids);
 
 	string_list_clear(&ctx.refs_to_oids, 1);
+	string_list_clear(&ctx.symref_update_targets, 0);
 
 	if (res) {
 		/* we failed, so clean up the new list. */
