@@ -1266,6 +1266,10 @@ static int squash_check_subject(struct repository *repo,
 	return ret;
 }
 
+static int build_squash_message(struct repository *repo,
+				const struct strbuf *todo_buf,
+				struct strbuf *out);
+
 static int setup_squash_revisions(struct repository *repo,
 				  int argc, const char **argv,
 				  struct rev_info *revs)
@@ -1319,6 +1323,7 @@ static int setup_squash_revisions(struct repository *repo,
  */
 static int resolve_squash_range(struct repository *repo,
 				bool update_branches,
+				bool edit_message,
 				int argc, const char **argv,
 				struct commit **oldest_out,
 				struct commit **tip_out,
@@ -1327,11 +1332,13 @@ static int resolve_squash_range(struct repository *repo,
 	struct rev_info revs;
 	struct subject_data subject_data = SUBJECT_DATA_INIT;
 	struct commit *commit, *oldest = NULL, *tip = NULL;
+	struct strbuf todo_buf = STRBUF_INIT;
 	int ret, tip_count = 0;
 	bool walk_started = false;
 	struct ref_filter filter = REF_FILTER_INIT;
 	struct ref_array refs = { 0 };
 
+	subject_data.edit_message = edit_message;
 	ret = setup_squash_revisions(repo, argc, argv, &revs);
 	if (ret < 0)
 		goto out;
@@ -1343,6 +1350,10 @@ static int resolve_squash_range(struct repository *repo,
 	walk_started = true;
 	while ((commit = get_revision(&revs))) {
 		struct commit_list *p;
+
+		if (edit_message)
+			strbuf_addf(&todo_buf, "pick %s\n",
+				    oid_to_hex(&commit->object.oid));
 
 		if (!commit->parents) {
 			ret = error(_("cannot squash down to root commit"));
@@ -1457,6 +1468,13 @@ static int resolve_squash_range(struct repository *repo,
 		string_list_clear(&sorting_options, 0);
 		goto out;
 	}
+	if (edit_message) {
+		strbuf_reset(&subject_data.squash_message);
+		ret = build_squash_message(repo, &todo_buf,
+					   &subject_data.squash_message);
+		if (ret < 0)
+			goto out;
+	}
 
 	*oldest_out = oldest;
 	*tip_out = tip;
@@ -1464,6 +1482,7 @@ static int resolve_squash_range(struct repository *repo,
 	ret = 0;
 
 out:
+	strbuf_release(&todo_buf);
 	clear_object_flags(repo, SQUASH_SEEN | SQUASH_TIP |
 			   SQUASH_AMEND_TARGET);
 	if (walk_started)
@@ -1472,6 +1491,76 @@ out:
 	release_revisions(&revs);
 	ref_filter_clear(&filter);
 	ref_array_clear(&refs);
+	return ret;
+}
+
+static bool amend_replaces_target(struct todo_list *todo, int target)
+{
+	for (int i = target + 1; i < todo->nr &&
+				 todo->items[i].command != TODO_PICK; i++) {
+		if (todo->items[i].command == TODO_SQUASH)
+			return false;
+		if (todo->items[i].flags & TODO_REPLACE_FIXUP_MSG)
+			return true;
+	}
+	return false;
+}
+
+static int build_squash_message(struct repository *repo,
+				const struct strbuf *todo_buf,
+				struct strbuf *out)
+{
+	struct todo_list todo = TODO_LIST_INIT;
+	struct replay_opts opts = REPLAY_OPTS_INIT;
+	int nr_commits, ret;
+
+	if (todo_list_parse_insn_buffer(repo, &opts, todo_buf->buf, &todo) < 0 ||
+	    todo_list_rearrange_squash(&todo) < 0) {
+		ret = error(_("could not prepare the squash message"));
+		goto out;
+	}
+
+	nr_commits = todo.nr;
+	for (int i = 0; i < nr_commits; i++) {
+		struct todo_item *item = &todo.items[i];
+		const char *message, *body;
+		size_t commented_len;
+		bool skip, squashing;
+
+		squashing = item->command == TODO_SQUASH ||
+			    (item->flags & TODO_REPLACE_FIXUP_MSG);
+		if (item->command == TODO_PICK)
+			skip = amend_replaces_target(&todo, i);
+		else
+			skip = !squashing;
+
+		message = repo_logmsg_reencode(repo, item->commit, NULL, NULL);
+		find_commit_subject(message, &body);
+
+		if (skip)
+			commented_len = strlen(body);
+		else if (squashing)
+			commented_len = squash_subject_comment_len(body, 1);
+		else
+			commented_len = 0;
+
+		if (!i)
+			add_squash_combination_header(out, nr_commits);
+		strbuf_addch(out, '\n');
+		add_squash_message_header(out, i + 1, skip);
+		strbuf_addstr(out, "\n\n");
+		strbuf_add_commented_lines(out, body, commented_len, comment_line_str);
+		strbuf_addstr(out, body + commented_len);
+		strbuf_complete_line(out);
+
+		repo_unuse_commit_buffer(repo, item->commit, message);
+	}
+
+	ret = 0;
+
+out:
+	todo_list_release(&todo);
+	replay_opts_release(&opts);
 	return ret;
 }
 
@@ -1519,14 +1608,11 @@ static int cmd_history_squash(int argc,
 	strbuf_join_argv(&reflog_msg, argc - 1, argv + 1, ' ');
 
 	ret = resolve_squash_range(repo, action == REF_ACTION_BRANCHES,
+				   edit,
 				   argc, argv, &oldest, &tip,
 				   &message_template);
 	if (ret < 0)
 		goto out;
-	if (edit) {
-		ret = error(_("message editing is not supported yet; use '--no-edit'"));
-		goto out;
-	}
 
 	ret = setup_revwalk(repo, action, tip, &revs);
 	if (ret < 0)
@@ -1538,7 +1624,8 @@ static int cmd_history_squash(int argc,
 
 	ret = commit_tree_ext(repo, "squash", oldest, message_template,
 			      oldest->parents, base_tree_oid, tip_tree_oid,
-			      &rewritten, 0);
+			      &rewritten,
+			      edit ? COMMIT_TREE_EDIT_MESSAGE : 0);
 	if (ret < 0) {
 		ret = error(_("failed writing squashed commit"));
 		goto out;
