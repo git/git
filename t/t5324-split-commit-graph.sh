@@ -349,7 +349,7 @@ test_expect_success 'verify after commit-graph-chain corruption (base)' '
 		test_must_fail git commit-graph verify 2>test_err &&
 		grep -v "^+" test_err >err &&
 		test_grep "invalid commit-graph chain" err &&
-		corrupt_file "$graphdir/commit-graph-chain" 30 "A" &&
+		corrupt_file "$graphdir/commit-graph-chain" 30 "a" &&
 		test_must_fail git commit-graph verify 2>test_err &&
 		grep -v "^+" test_err >err &&
 		test_grep "unable to find all commit-graph files" err
@@ -364,7 +364,7 @@ test_expect_success 'verify after commit-graph-chain corruption (tip)' '
 		test_must_fail git commit-graph verify 2>test_err &&
 		grep -v "^+" test_err >err &&
 		test_grep "invalid commit-graph chain" err &&
-		corrupt_file "$graphdir/commit-graph-chain" 70 "A" &&
+		corrupt_file "$graphdir/commit-graph-chain" 70 "b" &&
 		test_must_fail git commit-graph verify 2>test_err &&
 		grep -v "^+" test_err >err &&
 		test_grep "unable to find all commit-graph files" err

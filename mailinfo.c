@@ -396,7 +396,7 @@ static int decode_q_segment(struct strbuf *out, const struct strbuf *q_seg,
 			int ch, d = *in;
 			if (d == '\n' || !d)
 				break; /* drop trailing newline */
-			ch = hex2chr(in);
+			ch = hex2chr(in, HEX_KIND_MIXED);
 			if (ch >= 0) {
 				strbuf_addch(out, ch);
 				in += 2;

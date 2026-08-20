@@ -457,7 +457,7 @@ size_t strbuf_expand_literal(struct strbuf *sb, const char *placeholder)
 		return 1;
 	case 'x':
 		/* %x00 == NUL, %x0a == LF, etc. */
-		ch = hex2chr(placeholder + 1);
+		ch = hex2chr(placeholder + 1, HEX_KIND_MIXED);
 		if (ch < 0)
 			return 0;
 		strbuf_addch(sb, ch);
