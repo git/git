@@ -988,6 +988,41 @@ static int run_update_hook(struct command *cmd)
 	return code;
 }
 
+static int run_report_hook(struct strbuf *report)
+{
+	struct child_process proc = CHILD_PROCESS_INIT;
+	struct async sideband_async;
+	int sideband_async_started = 0;
+	int saved_stderr = -1;
+	struct strbuf out = STRBUF_INIT;
+	const char *hook_path;
+	int code;
+
+	hook_path = find_hook(the_repository, "report");
+	if (!hook_path)
+		return 0;
+
+	strvec_push(&proc.args, hook_path);
+	proc.trace2_hook_name = "report";
+
+	prepare_sideband_async(&sideband_async, &saved_stderr,
+			       &sideband_async_started);
+
+	sigchain_push(SIGPIPE, SIG_IGN);
+	code = pipe_command(&proc, report->buf, report->len, &out,
+			    report->len, NULL, 0);
+	sigchain_pop(SIGPIPE);
+
+	finish_sideband_async(&sideband_async, saved_stderr,
+			      sideband_async_started);
+
+	if (!code)
+		strbuf_swap(&out, report);
+
+	strbuf_release(&out);
+	return code;
+}
+
 static struct command *find_command_by_refname(struct command *list,
 					       const char *refname)
 {
@@ -2426,6 +2461,9 @@ static void report(struct command *commands, const struct strbuf *unpack_status)
 	}
 	packet_buf_flush(&buf);
 
+	if (run_report_hook(&buf))
+		die("report hook failed");
+
 	if (use_sideband)
 		send_sideband(1, 1, buf.buf, buf.len, use_sideband);
 	else
@@ -2470,6 +2508,9 @@ static void report_v2(struct command *commands, const struct strbuf *unpack_stat
 		}
 	}
 	packet_buf_flush(&buf);
+
+	if (run_report_hook(&buf))
+		die("report hook failed");
 
 	if (use_sideband)
 		send_sideband(1, 1, buf.buf, buf.len, use_sideband);
