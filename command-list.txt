@@ -218,6 +218,7 @@ gitcli                                  userinterfaces
 gitcore-tutorial                        guide
 gitcredentials                          guide
 gitcvs-migration                        guide
+gitdatamodel                            guide
 gitdiffcore                             guide
 giteveryday                             guide
 gitfaq                                  guide
