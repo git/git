@@ -65,6 +65,24 @@ test_expect_success 'setup' '
 	test_commit P fileP
 '
 
+test_expect_success MINGW 'rebase releases object database before committing' '
+	test_when_finished "rm -f .git/hooks/post-commit repacked packs" &&
+	git switch -C repack-rewrite primary &&
+	git repack -ad &&
+	write_script .git/hooks/post-commit <<-\EOF &&
+	git repack -ad &&
+	>repacked
+	EOF
+	(
+		set_fake_editor &&
+		FAKE_LINES="reword 1" GIT_TEST_LEGACY_DELETE=1 \
+			git -c core.commitGraph=false rebase -i HEAD^
+	) &&
+	test_path_is_file repacked &&
+	ls .git/objects/pack/*.pack >packs &&
+	test_line_count = 1 packs
+'
+
 # "exec" commands are run with the user shell by default, but this may
 # be non-POSIX. For example, if SHELL=zsh then ">file" doesn't work
 # to create a file. Unsetting SHELL avoids such non-portable behavior
