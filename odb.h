@@ -100,6 +100,20 @@ struct object_database {
 	struct string_list submodule_source_paths;
 };
 
+enum odb_new_flags {
+	/*
+	 * Honor environment variables when constructing the object database
+	 * sources. This makes us respect the following environment variables:
+	 *
+	 *   - GIT_OBJECT_DIRECTORY to override the primary object directory.
+	 *
+	 *   - GIT_ALTERNATE_OBJECT_DIRECTORIES to override alternates.
+	 *
+	 * Environment variables may be backend-specific.
+	 */
+	ODB_NEW_HONOR_ENV = (1 << 0),
+};
+
 /*
  * Create a new object database for the given repository.
  *
@@ -112,8 +126,7 @@ struct object_database {
  * Returns the newly created object database.
  */
 struct object_database *odb_new(struct repository *repo,
-				const char *primary_source,
-				const char *alternate_sources);
+				enum odb_new_flags flags);
 
 /* Free the object database and release all resources. */
 void odb_free(struct object_database *o);

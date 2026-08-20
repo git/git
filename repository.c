@@ -201,8 +201,6 @@ void repo_set_compat_hash_algo(struct repository *repo MAYBE_UNUSED, uint32_t al
 	if (hash_algo_by_ptr(repo->hash_algo) == algo)
 		BUG("hash_algo and compat_hash_algo match");
 	repo->compat_hash_algo = algo ? &hash_algos[algo] : NULL;
-	if (repo->compat_hash_algo)
-		repo_read_loose_object_map(repo);
 #else
 	if (algo)
 		die(_("compatibility hash algorithm support requires Rust"));
@@ -296,6 +294,7 @@ int repo_init(struct repository *repo,
 		warning("%s", err.buf);
 		goto error;
 	}
+	repo->objects = odb_new(repo, 0);
 
 	if (worktree)
 		repo_set_worktree(repo, worktree);
