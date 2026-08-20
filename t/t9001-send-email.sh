@@ -1422,6 +1422,21 @@ test_expect_success $PREREQ 'detects ambiguous reference/file conflict' '
 	test_grep disambiguate errors
 '
 
+test_expect_success $PREREQ 'missing subject omits Perl location' '
+	cat >no-subject.patch <<-\EOF &&
+	This is the body.
+	EOF
+	test_must_fail git send-email \
+		--dry-run \
+		--from="Example <nobody@example.com>" \
+		--to=nobody@example.com \
+		no-subject.patch 2>actual &&
+	cat >expect <<-\EOF &&
+	No '\''Subject:'\'' line in '\''no-subject.patch'\''
+	EOF
+	test_cmp expect actual
+'
+
 test_expect_success $PREREQ 'feed two files' '
 	rm -fr outdir &&
 	git format-patch -2 -o outdir &&
