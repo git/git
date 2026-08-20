@@ -32,7 +32,7 @@ enum odb_source_type {
 const char *odb_source_type_to_name(enum odb_source_type type);
 
 struct object_id;
-struct odb_read_stream;
+struct odb_stream;
 struct strvec;
 
 /*
@@ -143,7 +143,7 @@ struct odb_source {
 	 * The callback is expected to return a negative error code in case
 	 * creating the object stream has failed, 0 otherwise.
 	 */
-	int (*read_object_stream)(struct odb_read_stream **out,
+	int (*read_object_stream)(struct odb_stream **out,
 				  struct odb_source *source,
 				  const struct object_id *oid);
 
@@ -239,7 +239,7 @@ struct odb_source {
 	 * otherwise.
 	 */
 	int (*write_object_stream)(struct odb_source *source,
-				   struct odb_write_stream *stream, size_t len,
+				   struct odb_stream *stream,
 				   struct object_id *oid);
 
 	/*
@@ -383,7 +383,7 @@ static inline int odb_source_read_object_info(struct odb_source *source,
  * Create a new read stream for the given object ID. Returns 0 on success, a
  * negative error code otherwise.
  */
-static inline int odb_source_read_object_stream(struct odb_read_stream **out,
+static inline int odb_source_read_object_stream(struct odb_stream **out,
 						struct odb_source *source,
 						const struct object_id *oid)
 {
@@ -480,11 +480,10 @@ static inline int odb_source_write_object(struct odb_source *source,
  * out pointer for the object ID.
  */
 static inline int odb_source_write_object_stream(struct odb_source *source,
-						 struct odb_write_stream *stream,
-						 size_t len,
+						 struct odb_stream *stream,
 						 struct object_id *oid)
 {
-	return source->write_object_stream(source, stream, len, oid);
+	return source->write_object_stream(source, stream, oid);
 }
 
 /*
