@@ -49,7 +49,31 @@ int subprocess_read_status(int fd, struct strbuf *status)
 	return (len < 0) ? len : 0;
 }
 
-void subprocess_stop(struct hashmap *hashmap, struct subprocess_entry *entry)
+int subprocess_read_status_gently(int fd, struct strbuf *status)
+{
+	for (;;) {
+		int pktlen = -1;
+		enum packet_read_status rs;
+		const char *value;
+
+		rs = packet_read_with_status(fd, NULL, NULL, packet_buffer,
+					     sizeof(packet_buffer), &pktlen,
+					     PACKET_READ_CHOMP_NEWLINE |
+					     PACKET_READ_GENTLE_ON_EOF |
+					     PACKET_READ_GENTLE_ON_READ_ERROR);
+		if (rs == PACKET_READ_FLUSH)
+			return 0;
+		if (rs != PACKET_READ_NORMAL || !pktlen)
+			return -1;
+		if (skip_prefix(packet_buffer, "status=", &value)) {
+			/* the last "status=<foo>" line wins */
+			strbuf_reset(status);
+			strbuf_addstr(status, value);
+		}
+	}
+}
+
+void subprocess_stop_command(struct subprocess_entry *entry)
 {
 	if (!entry)
 		return;
@@ -57,7 +81,14 @@ void subprocess_stop(struct hashmap *hashmap, struct subprocess_entry *entry)
 	entry->process.clean_on_exit = 0;
 	kill(entry->process.pid, SIGTERM);
 	finish_command(&entry->process);
+}
 
+void subprocess_stop(struct hashmap *hashmap, struct subprocess_entry *entry)
+{
+	if (!entry)
+		return;
+
+	subprocess_stop_command(entry);
 	hashmap_remove(hashmap, &entry->ent, NULL);
 }
 
@@ -72,7 +103,7 @@ static void subprocess_exit_handler(struct child_process *process)
 	finish_command(process);
 }
 
-int subprocess_start(struct hashmap *hashmap, struct subprocess_entry *entry, const char *cmd,
+int subprocess_start_command(struct subprocess_entry *entry, const char *cmd,
 	subprocess_start_fn startfn)
 {
 	int err;
@@ -96,15 +127,26 @@ int subprocess_start(struct hashmap *hashmap, struct subprocess_entry *entry, co
 		return err;
 	}
 
-	hashmap_entry_init(&entry->ent, strhash(cmd));
-
 	err = startfn(entry);
 	if (err) {
 		error("initialization for subprocess '%s' failed", cmd);
-		subprocess_stop(hashmap, entry);
+		subprocess_stop_command(entry);
 		return err;
 	}
 
+	return 0;
+}
+
+int subprocess_start(struct hashmap *hashmap, struct subprocess_entry *entry, const char *cmd,
+	subprocess_start_fn startfn)
+{
+	int err;
+
+	err = subprocess_start_command(entry, cmd, startfn);
+	if (err)
+		return err;
+
+	hashmap_entry_init(&entry->ent, strhash(cmd));
 	hashmap_add(hashmap, &entry->ent);
 	return 0;
 }

@@ -685,12 +685,13 @@ but risks losing recent work in the event of an unclean system shutdown.
 * `pack` hardens objects added to the repo in packfile form.
 * `pack-metadata` hardens packfile bitmaps and indexes.
 * `commit-graph` hardens the commit-graph file.
+* `diff-hunks` hardens the diff-hunks store.
 * `index` hardens the index when it is modified.
 * `objects` is an aggregate option that is equivalent to
   `loose-object,pack`.
 * `reference` hardens references modified in the repo.
 * `derived-metadata` is an aggregate option that is equivalent to
-  `pack-metadata,commit-graph`.
+  `pack-metadata,commit-graph,diff-hunks`.
 * `committed` is an aggregate option that is currently equivalent to
   `objects`. This mode sacrifices some performance to ensure that work
   that is committed to the repository with `git commit` or similar commands
@@ -764,6 +765,13 @@ core.commitGraph::
 	If true, then git will read the commit-graph file (if it exists)
 	to parse the graph structure of commits. Defaults to true. See
 	linkgit:git-commit-graph[1] for more information.
+
+core.diffHunks::
+	If true, then Git will consult the diff-hunks store (if it
+	exists) to skip recomputing diff hunk coordinates in commands
+	such as `git log --stat` and linkgit:git-blame[1]. This controls
+	only reading; writing the store is controlled by `diffHunks.write`.
+	See linkgit:git-diff-hunks[1] for more information. Defaults to true.
 
 core.useReplaceRefs::
 	If set to `false`, behave as if the `--no-replace-objects`
