@@ -607,6 +607,18 @@ int bloom_filter_contains_vec(const struct bloom_filter *filter,
 	return ret;
 }
 
+int bloom_filter_contains_any_vec(const struct bloom_filter *filter,
+				  const struct bloom_keyvec *vec,
+				  const struct bloom_filter_settings *settings)
+{
+	int ret = 0;
+
+	for (size_t nr = 0; !ret && nr < vec->count; nr++)
+		ret = bloom_filter_contains(filter, &vec->key[nr], settings);
+
+	return ret;
+}
+
 uint32_t test_bloom_murmur3_seeded(uint32_t seed, const char *data, size_t len,
 				   int version)
 {

@@ -269,6 +269,27 @@ test_expect_success 'last-modified merge undoes changes' '
 	EOF
 '
 
+test_expect_success 'last-modified with Bloom filters and --show-trees' '
+	test_when_finished rm -rf bloom &&
+	git init bloom &&
+	(
+		cd bloom &&
+		mkdir d &&
+		test_commit base-a d/a &&
+		test_commit base-b d/b &&
+		test_commit touch-a d/a &&
+		test_commit touch-b d/b &&
+
+		git commit-graph write --reachable --changed-paths &&
+		git -c core.commitGraph=false last-modified -t HEAD -- d/a \
+			>expect &&
+		git -c core.commitGraph=true last-modified -t HEAD -- d/a \
+			>actual &&
+
+		test_cmp expect actual
+	)
+'
+
 test_expect_success 'cannot run last-modified on two commits' '
 	test_must_fail git last-modified HEAD HEAD~1 2>err &&
 	test_grep "last-modified can only operate on one commit at a time" err
