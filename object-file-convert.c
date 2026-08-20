@@ -10,7 +10,120 @@
 #include "loose.h"
 #include "commit.h"
 #include "gpg-interface.h"
+#include "object-file.h"
 #include "object-file-convert.h"
+#include "odb.h"
+#include "oidmap.h"
+
+struct compat_oid_cache_entry {
+	struct oidmap_entry entry;
+	struct object_id compat_oid;
+};
+
+void repo_clear_compat_oid_cache(struct repository *repo)
+{
+	if (!repo->compat_oid_cache)
+		return;
+	oidmap_clear(repo->compat_oid_cache, 1);
+	FREE_AND_NULL(repo->compat_oid_cache);
+}
+
+static int lookup_computed_oid(struct repository *repo,
+			       const struct object_id *src,
+			       struct object_id *dest)
+{
+	struct compat_oid_cache_entry *found;
+
+	if (!repo->compat_oid_cache)
+		return -1;
+	found = oidmap_get(repo->compat_oid_cache, src);
+	if (!found)
+		return -1;
+	oidcpy(dest, &found->compat_oid);
+	return 0;
+}
+
+static void remember_computed_oid(struct repository *repo,
+				  const struct object_id *src,
+				  const struct object_id *dest)
+{
+	struct compat_oid_cache_entry *added;
+
+	if (!repo->compat_oid_cache) {
+		CALLOC_ARRAY(repo->compat_oid_cache, 1);
+		oidmap_init(repo->compat_oid_cache, 0);
+	}
+	CALLOC_ARRAY(added, 1);
+	oidcpy(&added->entry.oid, src);
+	oidcpy(&added->compat_oid, dest);
+	oidmap_put(repo->compat_oid_cache, added);
+}
+
+/*
+ * Compute the name an object has under another hash algorithm, by converting
+ * its contents and hashing the result.  Objects the contents refer to are
+ * resolved by recursing through repo_oid_to_algop(), so a tree costs a walk
+ * of everything reachable from it.
+ *
+ * Commits are deliberately not handled.  A commit names its parents, so
+ * converting one converts the whole history behind it; that is a repository
+ * conversion rather than something a caller asking for a single object name
+ * should trigger, and recursing over it here would also be unbounded.
+ */
+static int compute_oid_to_algop(struct repository *repo,
+				const struct object_id *src,
+				const struct git_hash_algo *from,
+				const struct git_hash_algo *to,
+				struct object_id *dest)
+{
+	struct strbuf converted = STRBUF_INIT;
+	enum object_type type;
+	size_t size;
+	void *buf;
+	int ret = -1;
+
+	/* We can only read objects that are stored the way the repo stores them. */
+	if (from != repo->hash_algo)
+		return -1;
+
+	buf = odb_read_object(repo->objects, src, &type, &size);
+	if (!buf)
+		return error(_("unable to read %s"), oid_to_hex(src));
+
+	switch (type) {
+	case OBJ_BLOB:
+		/*
+		 * A blob's contents are the same under either algorithm, so
+		 * there is nothing to convert, only to rehash.
+		 */
+		hash_object_file(to, buf, size, OBJ_BLOB, dest);
+		ret = 0;
+		break;
+	case OBJ_TREE:
+	case OBJ_TAG:
+		if (!convert_object_file(repo, &converted, from, to, buf, size,
+					 type, 1)) {
+			hash_object_file(to, converted.buf, converted.len, type,
+					 dest);
+			ret = 0;
+		}
+		break;
+	case OBJ_COMMIT:
+		error(_("cannot compute the %s name of commit %s"),
+		      to->name, oid_to_hex(src));
+		break;
+	default:
+		error(_("unknown type for object %s"), oid_to_hex(src));
+		break;
+	}
+
+	free(buf);
+	strbuf_release(&converted);
+
+	if (!ret)
+		remember_computed_oid(repo, src, dest);
+	return ret;
+}
 
 int repo_oid_to_algop(struct repository *repo, const struct object_id *srcoid,
 		      const struct git_hash_algo *to, struct object_id *dest)
@@ -43,14 +156,25 @@ int repo_oid_to_algop(struct repository *repo, const struct object_id *srcoid,
 		 * let's reload the map to see if the object has appeared.
 		 */
 		repo_read_loose_object_map(repo);
-		if (repo_loose_object_map_oid(repo, src, to, dest))
-			return -1;
+		if (repo_loose_object_map_oid(repo, src, to, dest)) {
+			/*
+			 * The map only covers objects written while
+			 * extensions.compatObjectFormat was in effect, so it
+			 * cannot answer for objects a repository already had.
+			 * Compute the name instead, remembering it so that
+			 * trees sharing a subtree only pay for it once.
+			 */
+			if (!lookup_computed_oid(repo, src, dest))
+				return 0;
+			return compute_oid_to_algop(repo, src, from, to, dest);
+		}
 	}
 	return 0;
 }
 
 static int decode_tree_entry_raw(struct object_id *oid, const char **path,
-				 size_t *len, const struct git_hash_algo *algo,
+				 size_t *len, uint16_t *modep,
+				 const struct git_hash_algo *algo,
 				 const char *buf, unsigned long size)
 {
 	uint16_t mode;
@@ -64,6 +188,7 @@ static int decode_tree_entry_raw(struct object_id *oid, const char **path,
 	if (!*path || !**path)
 		return -1;
 	*len = strlen(*path) + 1;
+	*modep = mode;
 
 	oidread(oid, (const unsigned char *)*path + *len, algo);
 	return 0;
@@ -81,10 +206,20 @@ static int convert_tree_object(struct repository *repo,
 		struct object_id entry_oid, mapped_oid;
 		const char *path = NULL;
 		size_t pathlen;
+		uint16_t mode;
 
-		if (decode_tree_entry_raw(&entry_oid, &path, &pathlen, from, p,
-					  end - p))
+		if (decode_tree_entry_raw(&entry_oid, &path, &pathlen, &mode,
+					  from, p, end - p))
 			return error(_("failed to decode tree entry"));
+		/*
+		 * A gitlink names a commit in the submodule's repository,
+		 * which we cannot read, so say so rather than complaining
+		 * about a missing object.
+		 */
+		if (S_ISGITLINK(mode))
+			return error(_("cannot map submodule entry '%s'; convert "
+				       "commit %s in the submodule repository first"),
+				     path, oid_to_hex(&entry_oid));
 		if (repo_oid_to_algop(repo, &entry_oid, to, &mapped_oid))
 			return error(_("failed to map tree entry for %s"), oid_to_hex(&entry_oid));
 		strbuf_add(out, p, path - p);

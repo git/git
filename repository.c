@@ -7,6 +7,7 @@
 #include "config.h"
 #include "gettext.h"
 #include "object.h"
+#include "object-file-convert.h"
 #include "lockfile.h"
 #include "path.h"
 #include "read-cache-ll.h"
@@ -384,6 +385,8 @@ void repo_clear(struct repository *repo)
 
 	odb_free(repo->objects);
 	repo->objects = NULL;
+
+	repo_clear_compat_oid_cache(repo);
 
 	parsed_object_pool_clear(repo->parsed_objects);
 	FREE_AND_NULL(repo->parsed_objects);

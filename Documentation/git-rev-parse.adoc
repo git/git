@@ -181,6 +181,19 @@ Specifying "sha256" translates if necessary and returns a sha256 oid.
 +
 Specifying "storage" translates if necessary and returns an oid in
 encoded in the storage hash algorithm.
++
+A translation that `extensions.compatObjectFormat` did not record, which is
+every object a repository already contained when that extension was turned
+on, is computed on demand.  Since an object's name in another algorithm is
+defined over the names of the objects it refers to, this reads everything
+reachable from the object, and so costs time proportional to the total size
+of that content.
++
+Commits cannot be named this way.  A commit refers to its parents, so naming
+one would mean converting the whole history behind it, which is a repository
+conversion rather than a question about a single object.  For the same
+reason a tree containing a submodule cannot be named, as its gitlink refers
+to a commit in another repository.
 
 Options for Objects
 ~~~~~~~~~~~~~~~~~~~
