@@ -2,7 +2,9 @@
 #include "abspath.h"
 #include "chdir-notify.h"
 #include "dir.h"
+#include "gettext.h"
 #include "git-zlib.h"
+#include "hex.h"
 #include "list-objects-filter-options.h"
 #include "mergesort.h"
 #include "midx.h"
@@ -10,21 +12,23 @@
 #include "odb/streaming.h"
 #include "packfile.h"
 #include "pack-bitmap.h"
+#include "strbuf.h"
 
 static int find_pack_entry(struct odb_source_packed *store,
 			   const struct object_id *oid,
-			   struct pack_entry *e)
+			   struct pack_entry *e,
+			   struct packed_git **bad_pack)
 {
 	struct packfile_list_entry *l;
 
 	odb_source_prepare(&store->base, 0);
-	if (store->midx && fill_midx_entry(store->midx, oid, e))
+	if (store->midx && fill_midx_entry(store->midx, oid, e, bad_pack))
 		return 1;
 
 	for (l = store->packs.head; l; l = l->next) {
 		struct packed_git *p = l->pack;
 
-		if (!p->multi_pack_index && packfile_fill_entry(p, oid, e)) {
+		if (!p->multi_pack_index && packfile_fill_entry(p, oid, e, bad_pack)) {
 			if (!store->skip_mru_updates)
 				packfile_list_prepend(&store->packs, p);
 			return 1;
@@ -34,12 +38,14 @@ static int find_pack_entry(struct odb_source_packed *store,
 	return 0;
 }
 
-static int odb_source_packed_read_object_info(struct odb_source *source,
-					      const struct object_id *oid,
-					      struct object_info *oi,
-					      enum object_info_flags flags)
+static enum odb_read_status odb_source_packed_read_object_info(struct odb_source *source,
+							       const struct object_id *oid,
+							       struct object_info *oi,
+							       enum object_info_flags flags,
+							       struct strbuf *errmsg)
 {
 	struct odb_source_packed *packed = odb_source_packed_downcast(source);
+	struct packed_git *bad_pack = NULL;
 	struct pack_entry e;
 	int ret;
 
@@ -51,23 +57,45 @@ static int odb_source_packed_read_object_info(struct odb_source *source,
 	if (flags & OBJECT_INFO_SECOND_READ)
 		odb_source_prepare(source, ODB_PREPARE_FLUSH_CACHES);
 
-	if (!find_pack_entry(packed, oid, &e))
-		return 1;
+	if (!find_pack_entry(packed, oid, &e, &bad_pack)) {
+		/*
+		 * The lookup may have failed because the object is known to be
+		 * corrupt in one of the packfiles. Report the object as
+		 * corrupt instead of missing in that case.
+		 */
+		if (bad_pack) {
+			ret = -1;
+			goto out;
+		}
+
+		ret = ODB_READ_NOT_FOUND;
+		goto out;
+	}
 
 	/*
 	 * We know that the caller doesn't actually need the
 	 * information below, so return early.
 	 */
-	if (!oi)
-		return 0;
+	if (!oi) {
+		ret = 0;
+		goto out;
+	}
 
 	ret = packed_object_info(packed, e.p, e.offset, oi);
 	if (ret < 0) {
+		bad_pack = e.p;
 		mark_bad_packed_object(e.p, oid);
-		return -1;
+		goto out;
 	}
 
-	return 0;
+	ret = 0;
+
+out:
+	if (ret < 0 && bad_pack && errmsg)
+		strbuf_addf(errmsg, _("packed object %s (stored in %s) is corrupt"),
+			    oid_to_hex(oid), bad_pack->pack_name);
+
+	return ret;
 }
 
 static int odb_source_packed_read_object_stream(struct odb_stream **out,
@@ -77,7 +105,7 @@ static int odb_source_packed_read_object_stream(struct odb_stream **out,
 	struct odb_source_packed *packed = odb_source_packed_downcast(source);
 	struct pack_entry e;
 
-	if (!find_pack_entry(packed, oid, &e))
+	if (!find_pack_entry(packed, oid, &e, NULL))
 		return -1;
 
 	return packfile_read_object_stream(out, oid, e.p, e.offset);
@@ -583,7 +611,7 @@ static int odb_source_packed_freshen_object(struct odb_source *source,
 		timesp = &times;
 	}
 
-	if (!find_pack_entry(packed, oid, &e))
+	if (!find_pack_entry(packed, oid, &e, NULL))
 		return 0;
 	if (e.p->is_cruft)
 		return 0;

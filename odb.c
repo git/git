@@ -15,7 +15,6 @@
 #include "object-name.h"
 #include "odb.h"
 #include "odb/source-inmemory.h"
-#include "packfile.h"
 #include "path.h"
 #include "promisor-remote.h"
 #include "quote.h"
@@ -568,12 +567,15 @@ static int register_all_submodule_sources(struct object_database *odb)
 	return ret;
 }
 
-static int do_oid_object_info_extended(struct object_database *odb,
-				       const struct object_id *oid,
-				       struct object_info *oi, unsigned flags)
+static enum odb_read_status do_oid_object_info_extended(struct object_database *odb,
+							const struct object_id *oid,
+							struct object_info *oi, unsigned flags)
 {
+	struct strbuf corrupt_err = STRBUF_INIT;
 	const struct object_id *real = oid;
+	enum odb_read_status ret;
 	int already_retried = 0;
+	bool corrupt = false;
 
 	if (flags & OBJECT_INFO_LOOKUP_REPLACE)
 		real = lookup_replace_object(odb->repo, oid);
@@ -581,15 +583,20 @@ static int do_oid_object_info_extended(struct object_database *odb,
 	if (is_null_oid(real))
 		return -1;
 
-	if (!odb_source_read_object_info(odb->inmemory_objects, oid, oi, flags))
+	if (!odb_source_read_object_info(odb->inmemory_objects, oid, oi, flags, NULL))
 		return 0;
 
 	while (1) {
 		struct odb_source *source;
 
-		for (source = odb->sources; source; source = source->next)
-			if (!odb_source_read_object_info(source, real, oi, flags))
-				return 0;
+		for (source = odb->sources; source; source = source->next) {
+			ret = odb_source_read_object_info(source, real, oi, flags,
+							  corrupt_err.len ? NULL : &corrupt_err);
+			if (!ret)
+				goto out;
+			if (ret != ODB_READ_NOT_FOUND)
+				corrupt = true;
+		}
 
 		/*
 		 * When the object hasn't been found we try a second read and
@@ -597,10 +604,15 @@ static int do_oid_object_info_extended(struct object_database *odb,
 		 * caches or reload on-disk state.
 		 */
 		if (!(flags & OBJECT_INFO_QUICK)) {
-			for (source = odb->sources; source; source = source->next)
-				if (!odb_source_read_object_info(source, real, oi,
-								 flags | OBJECT_INFO_SECOND_READ))
-					return 0;
+			for (source = odb->sources; source; source = source->next) {
+				ret = odb_source_read_object_info(source, real, oi,
+								  flags | OBJECT_INFO_SECOND_READ,
+								  corrupt_err.len ? NULL : &corrupt_err);
+				if (!ret)
+					goto out;
+				if (ret != ODB_READ_NOT_FOUND)
+					corrupt = true;
+			}
 		}
 
 		/*
@@ -623,16 +635,23 @@ static int do_oid_object_info_extended(struct object_database *odb,
 		}
 
 		if (flags & OBJECT_INFO_DIE_IF_CORRUPT) {
-			const struct packed_git *p;
 			if ((flags & OBJECT_INFO_LOOKUP_REPLACE) && !oideq(real, oid))
 				die(_("replacement %s not found for %s"),
 				    oid_to_hex(real), oid_to_hex(oid));
-			if ((p = has_packed_and_bad(odb->repo, real)))
-				die(_("packed object %s (stored in %s) is corrupt"),
-				    oid_to_hex(real), p->pack_name);
+			if (corrupt) {
+				if (corrupt_err.len)
+					die("%s", corrupt_err.buf);
+				die(_("object %s is corrupt"), oid_to_hex(real));
+			}
 		}
-		return -1;
+
+		ret = corrupt ? ODB_READ_ERROR : ODB_READ_NOT_FOUND;
+		goto out;
 	}
+
+out:
+	strbuf_release(&corrupt_err);
+	return ret;
 }
 
 static int oid_object_info_convert(struct repository *r,
@@ -715,12 +734,12 @@ static int oid_object_info_convert(struct repository *r,
 	return ret;
 }
 
-int odb_read_object_info_extended(struct object_database *odb,
-				  const struct object_id *oid,
-				  struct object_info *oi,
-				  enum object_info_flags flags)
+enum odb_read_status odb_read_object_info_extended(struct object_database *odb,
+						   const struct object_id *oid,
+						   struct object_info *oi,
+						   enum object_info_flags flags)
 {
-	int ret;
+	enum odb_read_status ret;
 
 	if (oid->algo && (hash_algo_by_ptr(odb->repo->hash_algo) != oid->algo))
 		return oid_object_info_convert(odb->repo, oid, oi, flags);
