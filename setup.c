@@ -1057,8 +1057,7 @@ static void apply_gitdir_and_environment(struct repository *repo, const char *pa
 	strvec_clear(&to_free);
 }
 
-static void update_relative_gitdir(const char *name UNUSED,
-				   const char *old_cwd,
+static void update_relative_gitdir(const char *old_cwd,
 				   const char *new_cwd,
 				   void *data)
 {
@@ -1086,7 +1085,7 @@ static void apply_and_export_relative_gitdir(struct repository *repo, const char
 	xsetenv(GIT_DIR_ENVIRONMENT, path, 1);
 
 	if (!is_absolute_path(path))
-		chdir_notify_register(NULL, update_relative_gitdir, repo);
+		chdir_notify_register(update_relative_gitdir, repo);
 
 	strbuf_release(&realpath);
 }
