@@ -500,7 +500,8 @@ static void print_disk_usage(off_t size)
 	strbuf_release(&sb);
 }
 
-static inline int parse_missing_action_value(const char *value)
+static inline int parse_missing_action_value(struct repository *repo,
+					     const char *value)
 {
 	if (!strcmp(value, "error")) {
 		arg_missing_action = MA_ERROR;
@@ -509,25 +510,25 @@ static inline int parse_missing_action_value(const char *value)
 
 	if (!strcmp(value, "allow-any")) {
 		arg_missing_action = MA_ALLOW_ANY;
-		fetch_if_missing = 0;
+		repo->fetch_if_missing = 0;
 		return 1;
 	}
 
 	if (!strcmp(value, "print")) {
 		arg_missing_action = MA_PRINT;
-		fetch_if_missing = 0;
+		repo->fetch_if_missing = 0;
 		return 1;
 	}
 
 	if (!strcmp(value, "print-info")) {
 		arg_missing_action = MA_PRINT_INFO;
-		fetch_if_missing = 0;
+		repo->fetch_if_missing = 0;
 		return 1;
 	}
 
 	if (!strcmp(value, "allow-promisor")) {
 		arg_missing_action = MA_ALLOW_PROMISOR;
-		fetch_if_missing = 0;
+		repo->fetch_if_missing = 0;
 		return 1;
 	}
 
@@ -692,7 +693,7 @@ static void prepare_maximal_independent(struct rev_info *revs)
 int cmd_rev_list(int argc,
 		 const char **argv,
 		 const char *prefix,
-		 struct repository *repo UNUSED)
+		 struct repository *repo)
 {
 	struct rev_info revs;
 	struct rev_list_info info;
@@ -745,10 +746,10 @@ int cmd_rev_list(int argc,
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 		if (!strcmp(arg, "--exclude-promisor-objects")) {
-			fetch_if_missing = 0;
+			repo->fetch_if_missing = 0;
 			revs.exclude_promisor_objects = 1;
 		} else if (skip_prefix(arg, "--missing=", &arg)) {
-			parse_missing_action_value(arg);
+			parse_missing_action_value(repo, arg);
 		} else if (!strcmp(arg, "-z")) {
 			line_term = '\0';
 			info_term = '\0';

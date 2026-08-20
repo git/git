@@ -528,8 +528,6 @@ void disable_obj_read_lock(void)
 	pthread_mutex_destroy(&obj_read_mutex);
 }
 
-int fetch_if_missing = 1;
-
 static int register_all_submodule_sources(struct object_database *odb)
 {
 	int ret = odb->submodule_source_paths.nr;
@@ -595,7 +593,7 @@ static int do_oid_object_info_extended(struct object_database *odb,
 			continue;
 
 		/* Check if it is a missing object */
-		if (fetch_if_missing && repo_has_promisor_remote(odb->repo) &&
+		if (odb->repo->fetch_if_missing && repo_has_promisor_remote(odb->repo) &&
 		    !already_retried &&
 		    !(flags & OBJECT_INFO_SKIP_FETCH_OBJECT)) {
 			promisor_remote_get_direct(odb->repo, real, 1);
