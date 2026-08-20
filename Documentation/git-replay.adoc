@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 (EXPERIMENTAL!) 'git replay' ([--contained] --onto=<newbase> | --advance=<branch> | --revert=<branch>)
-			     [--ref=<ref>] [--ref-action=<mode>] <revision-range>
+			     [--ref=<ref>] [--ref-action=<mode>] [--linearize] <revision-range>
 
 DESCRIPTION
 -----------
@@ -90,6 +90,23 @@ Expanded description list compared to 'replay.refAction'.
 --
 +
 The default mode can be configured via the `replay.refAction` configuration variable.
+
+--linearize::
+	In this mode, each replayed commit is stacked on top of the
+	previously replayed one, so all replayed commits are flattened into
+	a single linear history.
++
+When a merge commit is encountered, the behavior of git-rebase(1)'s
+option `--no-rebase-merges` is imitated. All commits in the range
+reachable from the merge commit are replayed into a linear history, and
+the merge commit itself is dropped. A ref that pointed to a merge commit
+is updated to the merge's last replayed ancestor.
++
+Only a single branch can be linearized at a time: `--linearize` cannot
+be combined with multiple positive revisions or with `--contained`,
+because that would concatenate otherwise unrelated histories into one
+line. To linearize several branches, replay them in separate `git
+replay` invocations.
 
 <revision-range>::
 	Range of commits to replay; see "Specifying Ranges" in

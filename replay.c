@@ -254,9 +254,9 @@ static void set_up_replay_mode(struct repository *repo,
 	strset_clear(&rinfo.positive_refs);
 }
 
-static struct commit *mapped_commit(kh_oid_map_t *replayed_commits,
-				    struct commit *commit,
-				    struct commit *fallback)
+static struct commit *get_mapped_commit(kh_oid_map_t *replayed_commits,
+					struct commit *commit,
+					struct commit *fallback)
 {
 	khint_t pos;
 	if (!commit)
@@ -267,27 +267,36 @@ static struct commit *mapped_commit(kh_oid_map_t *replayed_commits,
 	return kh_value(replayed_commits, pos);
 }
 
+static void put_mapped_commit(kh_oid_map_t *replayed_commits,
+			      struct commit *commit,
+			      struct commit *new_commit)
+{
+	khint_t pos;
+	int ret;
+
+	pos = kh_put_oid_map(replayed_commits, commit->object.oid, &ret);
+	if (ret == 0)
+		BUG("Duplicate rewritten commit: %s",
+		    oid_to_hex(&commit->object.oid));
+
+	kh_value(replayed_commits, pos) = new_commit;
+}
+
 static struct commit *pick_regular_commit(struct repository *repo,
 					  struct commit *pickme,
-					  kh_oid_map_t *replayed_commits,
-					  struct commit *onto,
+					  struct commit *replayed_base,
 					  struct merge_options *merge_opt,
 					  struct merge_result *result,
 					  enum replay_mode mode,
 					  enum replay_empty_commit_action empty)
 {
-	struct commit *base, *replayed_base;
 	struct tree *pickme_tree, *base_tree, *replayed_base_tree;
 
-	if (pickme->parents) {
-		base = pickme->parents->item;
-		base_tree = repo_get_commit_tree(repo, base);
-	} else {
-		base = NULL;
+	if (pickme->parents)
+		base_tree = repo_get_commit_tree(repo, pickme->parents->item);
+	else
 		base_tree = lookup_tree(repo, repo->hash_algo->empty_tree);
-	}
 
-	replayed_base = mapped_commit(replayed_commits, base, onto);
 	replayed_base_tree = repo_get_commit_tree(repo, replayed_base);
 	pickme_tree = repo_get_commit_tree(repo, pickme);
 
@@ -395,6 +404,12 @@ int replay_revisions(struct rev_info *revs,
 	set_up_replay_mode(revs->repo, &revs->cmdline, opts->onto,
 			   &detached_head, &advance, &revert, &onto, &update_refs);
 
+	if (opts->linearize &&
+	    update_refs && strset_get_size(update_refs) > 1) {
+		ret = error(_("'--linearize' cannot be used with multiple revision ranges"));
+		goto out;
+	}
+
 	if (opts->ref) {
 		struct object_id oid;
 
@@ -427,24 +442,46 @@ int replay_revisions(struct rev_info *revs,
 	replayed_commits = kh_init_oid_map();
 	while ((commit = get_revision(revs))) {
 		const struct name_decoration *decoration;
-		khint_t pos;
-		int hr;
 
-		if (commit->parents && commit->parents->next)
-			die(_("replaying merge commits is not supported yet!"));
+		if (commit->parents && commit->parents->next) {
+			if (!opts->linearize)
+				die(_("replaying merge commits is not supported yet!"));
+			/*
+			 * Drop the merge commit: do not pick it, leave
+			 * `last_commit` unchanged, and fall through to the
+			 * rest of the loop. As a result:
+			 * - refs pointing to the merge commit will be updated
+			 *   to `last_commit`.
+			 * - the next replayed commit uses `last_commit` as its
+			 *   `base`.
+			 */
+		} else {
+			/*
+			 * Decide where to replay this commit onto.
+			 * If the parent commit was replayed already, the replayed result
+			 * can be found in `replayed_commits`. Otherwise fall back to `onto`.
+			 * When reverting, commits are replayed in reverse order and thus
+			 * its parent isn't replayed yet. Therefore revert commits are
+			 * always replayed onto `last_commit`.
+			 * Also when opts->linearize is true, set the base to
+			 * `last_commit` to create a single linear history.
+			 */
+			struct commit *parent = commit->parents ? commit->parents->item : NULL;
+			struct commit *base = get_mapped_commit(replayed_commits, parent, onto);
 
-		last_commit = pick_regular_commit(revs->repo, commit, replayed_commits,
-						  mode == REPLAY_MODE_REVERT ? last_commit : onto,
-						  &merge_opt, &result, mode, opts->empty);
+			if (opts->linearize || mode == REPLAY_MODE_REVERT)
+				base = last_commit;
+
+			last_commit = pick_regular_commit(revs->repo, commit, base,
+							  &merge_opt, &result,
+							  mode, opts->empty);
+		}
+
 		if (!last_commit)
 			break;
 
 		/* Record commit -> last_commit mapping */
-		pos = kh_put_oid_map(replayed_commits, commit->object.oid, &hr);
-		if (hr == 0)
-			BUG("Duplicate rewritten commit: %s\n",
-			    oid_to_hex(&commit->object.oid));
-		kh_value(replayed_commits, pos) = last_commit;
+		put_mapped_commit(replayed_commits, commit, last_commit);
 
 		/* Update any necessary branches */
 		if (ref)
