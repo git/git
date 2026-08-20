@@ -304,4 +304,32 @@ struct startup_info {
 extern struct startup_info *startup_info;
 extern const char *tmp_original_cwd;
 
+/*
+ * Apply the path allowlist in 'value' against 'target_path' setting
+ * '*is_match' accordingly.
+ *
+ * `value` is the value of a multi-valued config variable named `key`
+ * that holds an allowlist of paths. `target_path` is the (normalized)
+ * path being tested. `*is_match` is updated in place:
+ *
+ *   - an empty value resets it to 0 (so a later, more specific config
+ *     scope can clear entries from a broader one),
+ *   - "*" sets it to 1 (allow everything),
+ *   - "<path>" sets it to 1 if <path> equals `target_path`,
+ *   - "<path>" + "/" + "*" sets it to 1 if <path> is a leading
+ *     directory of `target_path`,
+ *   - any other (unmatching) value leaves `*is_match` unchanged.
+ *
+ * Non-absolute values are rejected with a warning, except "." when
+ * `allow_dot` is set (used by 'safe.directory' to mean "the top level
+ * of the current repository").
+ *
+ * Callers are expected to invoke this once per config value,
+ * typically from a protected-config callback, so that untrusted
+ * repository config cannot influence the decision.
+ */
+void path_allowlist_apply(const char *key, const char *value,
+			  const char *target_path, int *is_match,
+			  bool allow_dot);
+
 #endif /* SETUP_H */

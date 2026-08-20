@@ -173,6 +173,76 @@ test_expect_success "clone with promisor.acceptfromserver set to 'None'" '
 	initialize_server 1 "$oid"
 '
 
+test_expect_success "clone with uploadpack.lazyFetchTrusted" '
+	# No promisors are advertised
+	git -C server config promisor.advertise false &&
+	test_when_finished "rm -rf client" &&
+
+	# The served repo is trusted for lazy fetching
+	test_config_global uploadpack.lazyFetchTrusted "$(pwd)/server" &&
+
+	# Clone without GIT_NO_LAZY_FETCH=0
+	git clone --no-local --filter="blob:limit=5k" server client &&
+
+	# Check that the largest object is not missing on the server
+	# This means the server lazy fetched it
+	check_missing_objects server 0 "" &&
+
+	# Reinitialize server so that the largest object is missing again
+	initialize_server 1 "$oid"
+'
+
+test_expect_success "clone without uploadpack.lazyFetchTrusted fails" '
+	# No promisors are advertised
+	git -C server config promisor.advertise false &&
+	test_when_finished "rm -rf client" &&
+
+	# Note: no uploadpack.lazyFetchTrusted config is set here, so
+	# the served repo is NOT trusted for lazy fetching.
+
+	# Clone without GIT_NO_LAZY_FETCH=0 fails
+	test_must_fail git clone --no-local --filter="blob:limit=5k" server client 2>err &&
+	test_grep "lazy fetching disabled" err &&
+
+	# Check that the largest object is still missing on the server
+	check_missing_objects server 1 "$oid"
+'
+
+test_expect_success "uploadpack.lazyFetchTrusted is ignored in repo config" '
+	# No promisors are advertised
+	git -C server config promisor.advertise false &&
+	test_when_finished "rm -rf client" &&
+
+	# The served repo is trusted for lazy fetching, but this is
+	# done in the repo config, not in protected config, so this is
+	# ignored.
+	test_config -C server uploadpack.lazyFetchTrusted "$(pwd)/server" &&
+
+	# Clone without GIT_NO_LAZY_FETCH=0 fails
+	test_must_fail git clone --no-local --filter="blob:limit=5k" server client 2>err &&
+	test_grep "lazy fetching disabled" err &&
+
+	# Check that the largest object is still missing on the server
+	check_missing_objects server 1 "$oid"
+'
+
+test_expect_success "explicit GIT_NO_LAZY_FETCH overrides uploadpack.lazyFetchTrusted" '
+	# No promisors are advertised
+	git -C server config promisor.advertise false &&
+	test_when_finished "rm -rf client" &&
+
+	# The served repo is trusted for lazy fetching
+	test_config_global uploadpack.lazyFetchTrusted "$(pwd)/server" &&
+
+	# But GIT_NO_LAZY_FETCH=1 disables lazy fetching, so clone fails
+	test_must_fail env GIT_NO_LAZY_FETCH=1 git clone --no-local \
+		--filter="blob:limit=5k" server client 2>err &&
+	test_grep "lazy fetching disabled" err &&
+
+	# Check that the largest object is still missing on the server
+	check_missing_objects server 1 "$oid"
+'
+
 test_expect_success "init + fetch with promisor.advertise set to 'true'" '
 	git -C server config promisor.advertise true &&
 	test_when_finished "rm -rf client" &&

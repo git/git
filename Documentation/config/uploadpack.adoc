@@ -86,3 +86,45 @@ uploadpack.allowRefInWant::
 	is intended for the benefit of load-balanced servers which may
 	not have the same view of what OIDs their refs point to due to
 	replication delay.
+
+uploadpack.lazyFetchTrusted::
+	These config entries specify repositories that `upload-pack` is
+	allowed to lazily fetch missing objects for. By default,
+	`upload-pack` refuses to lazily fetch (see the description of the
+	`GIT_NO_LAZY_FETCH` environment variable in
+	linkgit:git-upload-pack[1]), because doing so would run `git fetch`,
+	which may execute arbitrary commands specified in the configuration
+	and hooks of the served repository. Listing a repository here tells
+	`upload-pack` that it is trusted, so lazy fetching from the promisor
+	remotes configured in it is allowed. This is equivalent to setting
+	`GIT_NO_LAZY_FETCH` to `0` for the matching repositories. An
+	explicitly set `GIT_NO_LAZY_FETCH` takes precedence over this
+	setting.
++
+Note that this allows lazy fetching from any promisor remote
+configured in the served repository, not only from the promisor
+remotes that the client accepted using the "promisor-remote" protocol
+v2 capability (see linkgit:gitprotocol-v2[5]). The served repository
+is trusted as a whole, including its configuration, so the promisor
+remotes it configures are trusted too. It is the server operator's
+responsibility to make sure that the promisor remotes of a trusted
+repository are also trustworthy.
++
+This is a multi-valued setting, i.e. you can add more than one
+repository via `git config (--global|--system) --add`. To reset the
+list of trusted repositories (e.g. to override any such repositories
+specified in the system config), add a `uploadpack.lazyFetchTrusted`
+entry with an empty value.
++
+A repository is identified by its worktree, or its git directory for a bare
+repository, and the value must be an absolute path. Giving a path with `/*`
+appended to it will trust all repositories under the named directory. To trust
+all served repositories, set `uploadpack.lazyFetchTrusted` to the string `*`.
++
+The value of this setting is interpolated, i.e. `~/<path>` expands to a
+path relative to the home directory and `%(prefix)/<path>` expands to a
+path relative to Git's (runtime) prefix.
++
+Note that this configuration variable is only respected when it is specified
+in protected configuration (see <<SCOPES>>). This prevents untrusted
+repositories from tampering with this value.

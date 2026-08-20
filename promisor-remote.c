@@ -31,15 +31,6 @@ static int fetch_objects(struct repository *repo,
 	FILE *child_in;
 	int quiet;
 
-	if (git_env_bool(NO_LAZY_FETCH_ENVIRONMENT, 0)) {
-		static int warning_shown;
-		if (!warning_shown) {
-			warning_shown = 1;
-			warning(_("lazy fetching disabled; some objects may not be available"));
-		}
-		return -1;
-	}
-
 	child.git_cmd = 1;
 	child.in = -1;
 	if (repo != the_repository)
@@ -270,10 +261,15 @@ static int remove_fetched_oids(struct repository *repo,
 	return remaining_nr;
 }
 
-static int try_promisor_remotes(struct repository *repo,
-				struct object_id **remaining_oids,
-				int *remaining_nr, int *to_free,
-				bool accepted_only)
+/*
+ * Return 'true' if all the objects could be fetched from the
+ * (non-)accepted remotes, 'false' otherwise.
+ */
+static bool try_promisor_remotes(struct repository *repo,
+				 struct object_id **remaining_oids,
+				 int *remaining_nr,
+				 int *to_free,
+				 bool accepted_only)
 {
 	struct promisor_remote *r = repo->promisor_remote_config->promisors;
 
@@ -290,9 +286,37 @@ static int try_promisor_remotes(struct repository *repo,
 				continue;
 			}
 		}
-		return 1; /* all fetched */
+		return true; /* all fetched */
 	}
-	return 0;
+	return false;
+}
+
+/*
+ * Return 'true' if all the objects could be fetched, 'false' otherwise.
+ */
+static bool lazy_fetch_objects(struct repository *repo,
+			       struct object_id **remaining_oids,
+			       int *remaining_nr,
+			       int *to_free)
+{
+	if (git_env_bool(NO_LAZY_FETCH_ENVIRONMENT, 0)) {
+		static int warning_shown;
+		if (!warning_shown) {
+			warning_shown = 1;
+			warning(_("lazy fetching disabled; some objects may not be available"));
+		}
+		return false;
+	}
+
+	promisor_remote_init(repo);
+
+	/* Try accepted remotes first (those the server told us to use) */
+	if (try_promisor_remotes(repo, remaining_oids, remaining_nr,
+				 to_free, true))
+		return true;
+
+	return try_promisor_remotes(repo, remaining_oids, remaining_nr,
+				    to_free, false);
 }
 
 void promisor_remote_get_direct(struct repository *repo,
@@ -302,28 +326,18 @@ void promisor_remote_get_direct(struct repository *repo,
 	struct object_id *remaining_oids = (struct object_id *)oids;
 	int remaining_nr = oid_nr;
 	int to_free = 0;
-	int i;
 
 	if (oid_nr == 0)
 		return;
 
-	promisor_remote_init(repo);
-
-	/* Try accepted remotes first (those the server told us to use) */
-	if (try_promisor_remotes(repo, &remaining_oids, &remaining_nr,
-				 &to_free, true))
-		goto all_fetched;
-	if (try_promisor_remotes(repo, &remaining_oids, &remaining_nr,
-				 &to_free, false))
-		goto all_fetched;
-
-	for (i = 0; i < remaining_nr; i++) {
-		if (is_promisor_object(repo, &remaining_oids[i]))
-			die(_("could not fetch %s from promisor remote"),
-			    oid_to_hex(&remaining_oids[i]));
+	if (!lazy_fetch_objects(repo, &remaining_oids, &remaining_nr, &to_free)) {
+		for (int i = 0; i < remaining_nr; i++) {
+			if (is_promisor_object(repo, &remaining_oids[i]))
+				die(_("could not fetch %s from promisor remote"),
+				    oid_to_hex(&remaining_oids[i]));
+		}
 	}
 
-all_fetched:
 	if (to_free)
 		free(remaining_oids);
 }
