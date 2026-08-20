@@ -1374,6 +1374,9 @@ int parse_git_diff_header(struct strbuf *root,
 	 * the default name from the header.
 	 */
 	patch->def_name = git_header_name(p_value, line, len);
+	if (patch->def_name && !*patch->def_name)
+		FREE_AND_NULL(patch->def_name);
+
 	if (patch->def_name && root->len) {
 		char *s = xstrfmt("%s%s", root->buf, patch->def_name);
 		free(patch->def_name);
@@ -1644,15 +1647,27 @@ static int find_header(struct apply_state *state,
 		 * or mode change, so we handle that specially
 		 */
 		if (!memcmp("diff --git ", line, 11)) {
-			int git_hdr_len = parse_git_diff_header(&state->root,
-								state->patch_input_file,
-								&state->linenr,
-								state->p_value, line, len,
-								size, patch);
-			if (git_hdr_len < 0)
+			struct patch git_patch = { 0 };
+			int git_linenr = state->linenr;
+			int git_hdr_len;
+
+			git_patch.inaccurate_eof = patch->inaccurate_eof;
+			git_patch.recount = patch->recount;
+			git_hdr_len = parse_git_diff_header(&state->root,
+							    state->patch_input_file,
+							    &git_linenr,
+							    state->p_value, line, len,
+							    size, &git_patch);
+			if (git_hdr_len < 0) {
+				release_patch(&git_patch);
 				return -128;
-			if (git_hdr_len <= len)
+			}
+			if (git_hdr_len <= len) {
+				release_patch(&git_patch);
 				continue;
+			}
+			*patch = git_patch;
+			state->linenr = git_linenr;
 			*hdrsize = git_hdr_len;
 			return offset;
 		}

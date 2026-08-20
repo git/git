@@ -113,6 +113,31 @@ test_expect_success 'applying a patch with a missing filename reports the input'
 	test_cmp expect err
 '
 
+test_expect_success 'empty default filename reports the input' '
+	cat >empty-name.patch <<-\EOF &&
+	diff --git "a/""b/"
+
+	--- /dev/null
+	+++ "
+	@@ -0,0 +1 @@
+	+
+	EOF
+	test_must_fail git apply empty-name.patch 2>err &&
+	test_grep "git diff header lacks filename information" err
+'
+
+test_expect_success 'abandoned git header does not reuse names' '
+	cat >abandoned-git-header.patch <<-\EOF &&
+	diff --git a/foo b/foo
+
+	--- /dev/null
+	+++ b/foo
+	@@ -0,0 +1 @@
+	+x
+	EOF
+	git apply --check abandoned-git-header.patch
+'
+
 test_expect_success 'applying a patch with an invalid mode reports the input' '
 	cat >mode.patch <<-\EOF &&
 	diff --git a/f b/f
