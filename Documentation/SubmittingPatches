@@ -117,7 +117,7 @@ of review.
   can still continue to further improve them by adding more patches on
   top, but by the time a topic gets merged to 'next', it is expected
   that everybody agrees that the scope and the basic direction of the
-  topic are appropriate, so such an incremental updates are limited to
+  topic are appropriate, so such incremental updates are limited to
   small corrections and polishing.  After a topic cooks for some time
   (like 7 calendar days) in 'next' without needing further tweaks on
   top, it gets merged to the 'master' branch and waits to become part
