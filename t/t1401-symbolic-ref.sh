@@ -38,6 +38,16 @@ test_expect_success 'symbolic-ref refuses bare sha1' '
 
 reset_to_sane
 
+test_expect_success 'symbolic-ref reports a non-symbolic ref with exit code 128' '
+	test_expect_code 128 git symbolic-ref refs/heads/foo 2>err &&
+	test_grep "is not a symbolic ref" err
+'
+
+test_expect_success 'symbolic-ref -q is silent and exits 1 on a non-symbolic ref' '
+	test_expect_code 1 git symbolic-ref -q refs/heads/foo 2>err &&
+	test_must_be_empty err
+'
+
 test_expect_success 'HEAD cannot be removed' '
 	test_must_fail git symbolic-ref -d HEAD
 '
