@@ -13,6 +13,17 @@ afresh () {
 	exit $?
 }
 
+redo_or_afresh () {
+	if git show-ref --quiet --verify "refs/heads/$1"
+	then
+		git checkout "$1" || exit
+		return
+	else
+		afresh "$1"
+		return
+	fi
+}
+
 force=
 while case "$#" in 0) break;; esac
 do
@@ -30,7 +41,7 @@ done
 
 case "$#" in
 0)	: happy ;;
-1)	afresh "$1" ;;
+1)	redo_or_afresh "$1" ;;
 *)	echo >&2 "$0: extra arguments" ;;
 esac
 
