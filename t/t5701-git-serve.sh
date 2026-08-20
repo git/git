@@ -71,6 +71,17 @@ test_expect_success 'request invalid capability' '
 	test_grep "unknown capability" err
 '
 
+test_expect_success 'promisor-remote capability requires an argument' '
+	test-tool pkt-line pack >in <<-EOF &&
+	command=ls-refs
+	object-format=$(test_oid algo)
+	promisor-remote
+	0000
+	EOF
+	test_must_fail test-tool serve-v2 --stateless-rpc 2>err <in &&
+	test_grep "promisor-remote capability requires an argument" err
+'
+
 test_expect_success 'request with no command' '
 	test-tool pkt-line pack >in <<-EOF &&
 	agent=git/test
