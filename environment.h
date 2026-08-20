@@ -138,6 +138,7 @@ struct repo_config_values {
 	int ignore_case;
 	int trust_executable_bit;
 	int has_symlinks;
+	int use_nanosec;
 	int sparse_expect_files_outside_of_patterns;
 	enum branch_track branch_track;
 };
