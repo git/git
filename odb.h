@@ -208,10 +208,12 @@ struct odb_source *odb_find_source_or_die(struct object_database *odb, const cha
 
 /*
  * Replace the current writable object directory with the specified temporary
- * object directory; returns the former primary source.
+ * object directory and return the newly installed primary source. The former
+ * primary source is reported via `prev_source` when non-NULL.
  */
 struct odb_source *odb_set_temporary_primary_source(struct object_database *odb,
-						    const char *dir, int will_destroy);
+						    const char *dir, int will_destroy,
+						    struct odb_source **prev_source);
 
 /*
  * Restore the primary source that was previously replaced by
