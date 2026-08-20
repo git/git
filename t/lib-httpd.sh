@@ -159,6 +159,19 @@ prepare_httpd() {
 	mkdir -p "$HTTPD_DOCUMENT_ROOT_PATH"
 	cp "$TEST_PATH"/passwd "$HTTPD_ROOT_PATH"
 	cp "$TEST_PATH"/proxy-passwd "$HTTPD_ROOT_PATH"
+	# Apache runs each of these CGI scripts once per request. Apache can run one
+	# script for several requests at the same time. A helper that keeps state
+	# between requests must update that state with one atomic operation. A check
+	# and then a separate action is not safe: two requests can both pass the
+	# check before either one acts. Test the exit status of one atomic operation
+	# instead:
+	#   - "mkdir dir" fails if the directory exists, so only one request
+	#     succeeds. http-429.sh selects the first request this way.
+	#   - "rm marker" (without "-f") fails if the marker is gone, so only one
+	#     request consumes it. apply-one-time-script.sh claims its one-shot
+	#     marker this way.
+	# A scratch file name includes the process ID ($$), so concurrent requests
+	# do not overwrite each other's files.
 	install_script incomplete-length-upload-pack-v2-http.sh
 	install_script incomplete-body-upload-pack-v2-http.sh
 	install_script error-no-report.sh
