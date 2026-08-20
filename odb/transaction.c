@@ -33,6 +33,20 @@ int odb_transaction_commit(struct odb_transaction *transaction)
 
 	ret = transaction->commit(transaction);
 	transaction->source->odb->transaction = NULL;
+
+	return ret;
+}
+
+int odb_transaction_finalize(struct odb_transaction *transaction)
+{
+	int ret = 0;
+
+	if (!transaction)
+		return 0;
+
+	if (transaction->finalize)
+		ret = transaction->finalize(transaction);
+
 	free(transaction);
 
 	return ret;
