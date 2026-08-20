@@ -487,6 +487,8 @@ static int get_exporter(struct transport *transport,
 	/* we need to duplicate helper->in because we want to use it after
 	 * fastexport is done with it. */
 	fastexport->out = dup(helper->in);
+	if (fastexport->out < 0)
+		return error_errno(_("could not dup helper output fd"));
 	strvec_push(&fastexport->args, "fast-export");
 	strvec_push(&fastexport->args, "--use-done-feature");
 	strvec_push(&fastexport->args, data->signed_tags ?
@@ -1194,7 +1196,9 @@ static int push_refs_with_export(struct transport *transport,
 
 	if (data->export_marks) {
 		strbuf_addf(&buf, "%s.tmp", data->export_marks);
-		rename(buf.buf, data->export_marks);
+		if (rename(buf.buf, data->export_marks))
+			warning_errno(_("could not rename '%s' to '%s'"),
+				      buf.buf, data->export_marks);
 		strbuf_release(&buf);
 	}
 
