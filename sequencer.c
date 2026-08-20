@@ -2224,6 +2224,25 @@ static int should_edit(struct replay_opts *opts) {
 	return opts->edit;
 }
 
+static int should_edit_rebase_continue(struct replay_opts *opts)
+{
+	if (opts->edit < 0)
+		return 1;
+	return opts->edit;
+}
+
+static void finalize_continue_edit_flags(struct replay_opts *opts,
+					 unsigned int *flags)
+{
+	if (*flags & CLEANUP_MSG)
+		return;
+
+	if (should_edit_rebase_continue(opts))
+		*flags |= EDIT_MSG;
+	else
+		*flags &= ~EDIT_MSG;
+}
+
 static void refer_to_commit(struct repository *r, struct strbuf *msgbuf,
 			    const struct commit *commit,
 			    bool use_commit_reference)
@@ -5361,7 +5380,7 @@ static int commit_staged_changes(struct repository *r,
 				 struct todo_list *todo_list)
 {
 	struct replay_ctx *ctx = opts->ctx;
-	unsigned int flags = ALLOW_EMPTY | EDIT_MSG;
+	unsigned int flags = ALLOW_EMPTY;
 	unsigned int final_fixup = 0, is_clean;
 	struct strbuf rev = STRBUF_INIT;
 	const char *reflog_action = reflog_message(opts, "continue", NULL);
@@ -5529,6 +5548,8 @@ static int commit_staged_changes(struct repository *r,
 		}
 	}
 
+	finalize_continue_edit_flags(opts, &flags);
+
 	if (run_git_commit(final_fixup ? NULL : rebase_path_message(),
 			   reflog_action, opts, flags)) {
 		ret = error(_("could not commit staged changes."));
@@ -5586,6 +5607,12 @@ int sequencer_continue(struct repository *r, struct replay_opts *opts)
 			res = -1;
 			goto release_todo_list;
 		}
+
+		/*
+		 * Command-line --[no-]edit applies only to this
+		 * --continue invocation, not to subsequent picks.
+		 */
+		opts->edit = -1;
 	} else if (!file_exists(get_todo_path(opts)))
 		return continue_single_pick(r, opts);
 	else if ((res = read_populate_todo(r, &todo_list, opts)))

@@ -43,7 +43,7 @@ static char const * const builtin_rebase_usage[] = {
 		"[--onto <newbase> | --keep-base] [<upstream> [<branch>]]"),
 	N_("git rebase [-i] [options] [--exec <cmd>] [--onto <newbase>] "
 		"--root [<branch>]"),
-	"git rebase --continue | --abort | --skip | --edit-todo",
+	"git rebase --continue [--[no-]edit] | --abort | --skip | --edit-todo",
 	NULL
 };
 
@@ -135,6 +135,8 @@ struct rebase_options {
 	int config_autosquash;
 	int config_rebase_merges;
 	int config_update_refs;
+	int config_no_edit;
+	int edit;
 };
 
 #define REBASE_OPTIONS_INIT {			  	\
@@ -156,6 +158,8 @@ struct rebase_options {
 		.update_refs = -1,                      \
 		.config_update_refs = -1,               \
 		.strategy_opts = STRING_LIST_INIT_NODUP,\
+		.config_no_edit = -1,                   \
+		.edit = -1,                             \
 	}
 
 static void rebase_options_release(struct rebase_options *opts)
@@ -213,6 +217,13 @@ static struct replay_opts get_replay_opts(const struct rebase_options *opts)
 	if (opts->squash_onto) {
 		oidcpy(&replay.squash_onto, opts->squash_onto);
 		replay.have_squash_onto = 1;
+	}
+
+	if (opts->action == ACTION_CONTINUE) {
+		if (opts->edit >= 0)
+			replay.edit = opts->edit;
+		else if (opts->config_no_edit > 0)
+			replay.edit = 0;
 	}
 
 	return replay;
@@ -841,6 +852,11 @@ static int rebase_config(const char *var, const char *value,
 		return 0;
 	}
 
+	if (!strcmp(var, "rebase.noedit")) {
+		opts->config_no_edit = git_config_bool(var, value);
+		return 0;
+	}
+
 	if (!strcmp(var, "rebase.forkpoint")) {
 		opts->fork_point = git_config_bool(var, value) ? -1 : 0;
 		return 0;
@@ -1171,6 +1187,8 @@ int cmd_rebase(int argc,
 			    ACTION_CONTINUE),
 		OPT_CMDMODE(0, "skip", &options.action,
 			    N_("skip current patch and continue"), ACTION_SKIP),
+		OPT_BOOL('e', "edit", &options.edit,
+			 N_("edit the commit message")),
 		OPT_CMDMODE(0, "abort", &options.action,
 			    N_("abort and check out the original branch"),
 			    ACTION_ABORT),
@@ -1311,9 +1329,14 @@ int cmd_rebase(int argc,
 			"which is no longer supported; use 'merges' instead"));
 
 	if (options.action != ACTION_NONE && total_argc != 2) {
-		usage_with_options(builtin_rebase_usage,
-				   builtin_rebase_options);
+		if (options.action != ACTION_CONTINUE ||
+		    options.edit < 0 || total_argc != 3)
+			usage_with_options(builtin_rebase_usage,
+					   builtin_rebase_options);
 	}
+
+	if (options.edit >= 0 && options.action != ACTION_CONTINUE)
+		die(_("--edit and --no-edit can only be used with --continue"));
 
 	if (argc > 2)
 		usage_with_options(builtin_rebase_usage,
