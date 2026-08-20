@@ -35,6 +35,35 @@ static int find_pack_entry(struct odb_source_packed *store,
 		}
 	}
 
+	/*
+	 * Recovery for a concurrent-repack race: a MIDX can name an owning
+	 * pack for an object that a simultaneous repack has since deleted,
+	 * even though the object still exists in another pack the same MIDX
+	 * covers (e.g. a kept base pack that geometric repack did not rewrite).
+	 * If the object is present in a MIDX yet none of the paths above could
+	 * serve it, its recorded owning pack has become unavailable.  The
+	 * regular fallback above deliberately skips MIDX-covered packs, so
+	 * scan this MIDX's packs directly to find the surviving copy.  The
+	 * bsearch gate keeps genuine misses (objects absent from the MIDX) on
+	 * the fast path.
+	 */
+	if (store->midx) {
+		struct multi_pack_index *m = store->midx;
+		uint32_t midx_pos, i;
+
+		if (bsearch_midx(oid, m, &midx_pos)) {
+			for (i = 0; i < m->num_packs + m->num_packs_in_base; i++) {
+				struct packed_git *p;
+
+				if (prepare_midx_pack(m, i))
+					continue;
+				p = nth_midxed_pack(m, i);
+				if (p && packfile_fill_entry(p, oid, e, bad_pack))
+					return 1;
+			}
+		}
+	}
+
 	return 0;
 }
 
