@@ -538,7 +538,7 @@ static void finish(struct commit *head_commit,
 
 	if (new_head)
 		apply_autostash_ref(the_repository, "MERGE_AUTOSTASH",
-				    NULL, NULL, NULL, NULL);
+				    NULL, NULL, NULL, NULL, NULL);
 	strbuf_release(&reflog_message);
 }
 
@@ -1682,7 +1682,7 @@ int cmd_merge(int argc,
 					  &commit->object.oid,
 					  overwrite_ignore)) {
 			apply_autostash_ref(the_repository, "MERGE_AUTOSTASH",
-					    NULL, NULL, NULL, NULL);
+					    NULL, NULL, NULL, NULL, NULL);
 			ret = 1;
 			goto done;
 		}
@@ -1846,7 +1846,7 @@ int cmd_merge(int argc,
 			fprintf(stderr, _("Merge with strategy %s failed.\n"),
 				use_strategies[0]->name);
 		apply_autostash_ref(the_repository, "MERGE_AUTOSTASH",
-				    NULL, NULL, NULL, NULL);
+				    NULL, NULL, NULL, NULL, NULL);
 		ret = 2;
 		goto done;
 	} else if (best_strategy == wt_strategy)

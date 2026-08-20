@@ -240,6 +240,14 @@ test_expect_success 'checkout -m creates a recoverable stash on conflict' '
 	test_grep "git stash drop" actual &&
 	test_grep "git stash pop" actual &&
 	test_grep "The following paths have local changes" actual &&
+	sed -n "/apply the local changes later/,/Switched to branch/p" \
+		actual >separator.actual &&
+	cat >separator.expect <<-EOF &&
+	apply the local changes later by running "git stash pop".
+
+	Switched to branch ${SQ}side${SQ}
+	EOF
+	test_cmp separator.expect separator.actual &&
 	git log -p -1 --format="%gs%n%B" -g --diff-merges=1 refs/stash >actual &&
 	sed /^index/d actual >actual.trimmed &&
 	cat >expect <<-EOF &&
@@ -262,11 +270,18 @@ test_expect_success 'checkout -m creates a recoverable stash on conflict' '
 	git reset --hard
 '
 
-test_expect_success 'checkout -m which would overwrite untracked file' '
+test_expect_success 'checkout -m only retries untracked-file failure with local changes' '
 	git checkout -f --detach main &&
 	test_commit another-file &&
 	git checkout HEAD^ &&
 	>another-file.t &&
+	test_must_fail env GIT_TRACE2_EVENT="$(pwd)/trace" \
+		git checkout -m @{-1} 2>err &&
+	test_grep "untracked working tree files" err &&
+	grep "\"region_enter\".*\"category\":\"index\",\"label\":\"refresh\"" \
+		trace >refresh.events &&
+	test_line_count = 1 refresh.events &&
+
 	fill 1 2 3 4 5 >one &&
 	test_must_fail git checkout -m @{-1} 2>err &&
 	q_to_tab >expect <<-\EOF &&

@@ -4797,7 +4797,8 @@ void create_autostash_ref(struct repository *r, const char *refname,
 static int apply_save_autostash_oid(const char *stash_oid, int attempt_apply,
 				    const char *label_ours, const char *label_theirs,
 				    const char *label_base,
-				    const char *stash_msg)
+				    const char *stash_msg,
+				    bool *conflicted)
 {
 	struct child_process child = CHILD_PROCESS_INIT;
 	int ret = 0;
@@ -4832,14 +4833,16 @@ static int apply_save_autostash_oid(const char *stash_oid, int attempt_apply,
 		strvec_push(&store.args, stash_oid);
 		if (run_command(&store))
 			ret = error(_("cannot store %s"), stash_oid);
-		else if (attempt_apply)
+		else if (attempt_apply) {
+			if (conflicted)
+				*conflicted = true;
 			fprintf(stderr,
 				_("Your local changes are stashed, however applying them\n"
 				  "resulted in conflicts.  You can either resolve the conflicts\n"
 				  "and then discard the stash with \"git stash drop\", or, if you\n"
 				  "do not want to resolve them now, run \"git reset --hard\" and\n"
 				  "apply the local changes later by running \"git stash pop\".\n"));
-		else
+		} else
 			fprintf(stderr,
 				_("Autostash exists; creating a new stash entry.\n"
 				  "Your changes are safe in the stash.\n"
@@ -4863,7 +4866,7 @@ static int apply_save_autostash(const char *path, int attempt_apply)
 	strbuf_trim(&stash_oid);
 
 	ret = apply_save_autostash_oid(stash_oid.buf, attempt_apply,
-				      NULL, NULL, NULL, NULL);
+				      NULL, NULL, NULL, NULL, NULL);
 
 	unlink(path);
 	strbuf_release(&stash_oid);
@@ -4882,18 +4885,23 @@ int apply_autostash(const char *path)
 
 int apply_autostash_oid(const char *stash_oid)
 {
-	return apply_save_autostash_oid(stash_oid, 1, NULL, NULL, NULL, NULL);
+	return apply_save_autostash_oid(stash_oid, 1, NULL, NULL, NULL, NULL,
+				       NULL);
 }
 
 static int apply_save_autostash_ref(struct repository *r, const char *refname,
 				    int attempt_apply,
 				    const char *label_ours, const char *label_theirs,
 				    const char *label_base,
-				    const char *stash_msg)
+				    const char *stash_msg,
+				    bool *conflicted)
 {
 	struct object_id stash_oid;
 	char stash_oid_hex[GIT_MAX_HEXSZ + 1];
 	int flag, ret;
+
+	if (conflicted)
+		*conflicted = false;
 
 	if (!refs_ref_exists(get_main_ref_store(r), refname))
 		return 0;
@@ -4907,7 +4915,7 @@ static int apply_save_autostash_ref(struct repository *r, const char *refname,
 	oid_to_hex_r(stash_oid_hex, &stash_oid);
 	ret = apply_save_autostash_oid(stash_oid_hex, attempt_apply,
 				       label_ours, label_theirs, label_base,
-				       stash_msg);
+				       stash_msg, conflicted);
 
 	refs_delete_ref(get_main_ref_store(r), "", refname,
 			&stash_oid, REF_NO_DEREF);
@@ -4918,16 +4926,17 @@ static int apply_save_autostash_ref(struct repository *r, const char *refname,
 int save_autostash_ref(struct repository *r, const char *refname)
 {
 	return apply_save_autostash_ref(r, refname, 0,
-					NULL, NULL, NULL, NULL);
+					NULL, NULL, NULL, NULL, NULL);
 }
 
 int apply_autostash_ref(struct repository *r, const char *refname,
 			const char *label_ours, const char *label_theirs,
-			const char *label_base, const char *stash_msg)
+			const char *label_base, const char *stash_msg,
+			bool *conflicted)
 {
 	return apply_save_autostash_ref(r, refname, 1,
 					label_ours, label_theirs, label_base,
-					stash_msg);
+					stash_msg, conflicted);
 }
 
 static int checkout_onto(struct repository *r, struct replay_opts *opts,
