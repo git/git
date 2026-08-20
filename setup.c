@@ -2879,12 +2879,6 @@ int init_db(struct repository *repo,
 	reinit = create_default_files(repo, template_dir, original_git_dir,
 				      &repo_fmt, init_shared_repository);
 
-	if (!(flags & INIT_DB_SKIP_REFDB))
-		create_reference_database(repo, initial_branch, flags & INIT_DB_QUIET);
-	create_object_database(repo);
-
-	startup_info->have_repository = 1;
-
 	if (repo_settings_get_shared_repository(repo)) {
 		char buf[10];
 		/* We do not spell "group" and such, so that
@@ -2905,6 +2899,12 @@ int init_db(struct repository *repo,
 		repo_config_set(repo, "core.sharedrepository", buf);
 		repo_config_set(repo, "receive.denyNonFastforwards", "true");
 	}
+
+	if (!(flags & INIT_DB_SKIP_REFDB))
+		create_reference_database(repo, initial_branch, flags & INIT_DB_QUIET);
+	create_object_database(repo);
+
+	startup_info->have_repository = 1;
 
 	if (!(flags & INIT_DB_QUIET)) {
 		int len = strlen(git_dir);
