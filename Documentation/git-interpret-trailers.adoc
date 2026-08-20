@@ -123,9 +123,16 @@ OTHER RULES
 What was covered in the previous section are the rules that are relevant
 for regular use. The following points are included for completeness.
 
-This command ignores comment lines (see `core.commentString` in
-linkgit:git-config[1]). This is for use with the `prepare-commit-msg`
-and `commit-msg` hooks.
+--
+* This command ignores comment lines (see `core.commentString` in
+  linkgit:git-config[1]). This is for use with the `prepare-commit-msg`
+  and `commit-msg` hooks.
+
+* Candidate trailer lines that have `:` as the separator, that have no
+  whitespace before the value part, and that start with `//` are not
+  recognized as trailers. This is to avoid accidentally interpreting
+  URLs as trailers (e.g. lines that start with `https://`).
+--
 
 OPTIONS
 -------
