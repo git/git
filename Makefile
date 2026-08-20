@@ -110,6 +110,9 @@ include shared.mak
 # Define USE_HOMEBREW_LIBICONV to link against libiconv installed by
 # Homebrew, if present.
 #
+# Define DARWIN_REGEXEC if regexec() in your platform regex library
+# leaks when fed an invalid UTF-8 sequence.
+#
 # Define NO_APPLE_COMMON_CRYPTO if you are building on Darwin/Mac OS X
 # and do not want to use Apple's CommonCrypto library.  This allows you
 # to provide your own OpenSSL library, for example from MacPorts.
@@ -2281,6 +2284,10 @@ else
 ifdef USE_ENHANCED_BASIC_REGULAR_EXPRESSIONS
 	COMPAT_CFLAGS += -DUSE_ENHANCED_BASIC_REGULAR_EXPRESSIONS
 	COMPAT_OBJS += compat/regcomp_enhanced.o
+endif
+ifdef DARWIN_REGEXEC
+	COMPAT_OBJS += compat/darwin/regexec.o
+	BASIC_CFLAGS += -DDARWIN_REGEXEC
 endif
 endif
 ifdef NATIVE_CRLF
