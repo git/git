@@ -101,6 +101,10 @@ UI, Workflows & Features
    automatically run 'git bisect reset' to jump back to the original
    state or to the found culprit.
 
+ * The 'git branch' command has been taught the '--delete-merged' option
+   to remove local branches that are already merged into their tracked
+   remote-tracking branches.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -371,6 +375,12 @@ Performance, Internal Implementation, Development Support etc.
    Calls to write(3p) in send_sideband() and cat_blob() have been
    refactored to use writev(3p) wrappers to reduce syscall overhead.
 
+ * The creation of the on-disk data structures for the object database
+   has been made pluggable, allowing future backends to customize their
+   setup.  As part of this, the initialization of the object database
+   has been deferred, and the loading of the loose-object map has been
+   detangled from repository initialization.
+
 
 Fixes since v2.55
 -----------------
@@ -596,3 +606,9 @@ Fixes since v2.55
  * Documentation for 'git replay' has been updated to refer to its
    configuration variables.
    (merge 48c0549f5c kh/doc-replay-config later to maint).
+
+ * Documentation for 'git interpret-trailers' has been updated to explain
+   the format of trailer keys (alphanumeric characters and hyphens),
+   replace outdated terminology, define key terms upfront, and document
+   how comment lines in the input are treated.
+   (merge 4515c86fd9 kh/doc-trailers later to maint).
