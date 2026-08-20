@@ -3,6 +3,7 @@
 
 #include "list-objects-filter-options.h"
 #include "string-list.h"
+#include "oidset.h"
 
 struct pack_objects_args {
 	char *window;
@@ -100,7 +101,8 @@ void generated_pack_install(struct generated_pack *pack, const char *name,
 
 void repack_promisor_objects(struct repository *repo,
 			     const struct pack_objects_args *args,
-			     struct string_list *names, const char *packtmp);
+			     struct string_list *names, const char *packtmp,
+			     const struct oidset *to_drop);
 
 struct pack_geometry {
 	struct packed_git **pack;
@@ -164,6 +166,10 @@ int repack_write_midx(struct repack_write_midx_opts *opts);
 int write_filtered_pack(const struct write_pack_opts *opts,
 			struct existing_packs *existing,
 			struct string_list *names);
+
+int enumerate_promisor_blobs(struct repository *repo,
+			     const struct list_objects_filter_options *filter,
+			     struct oidset *to_drop);
 
 int write_cruft_pack(const struct write_pack_opts *opts,
 		     const char *cruft_expiration,
