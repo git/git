@@ -1006,6 +1006,9 @@ out:
 	return ret;
 }
 
+#define SQUASH_SEEN (1u << 11)
+#define SQUASH_TIP (1u << 12)
+
 static int setup_squash_revisions(struct repository *repo,
 				  int argc, const char **argv,
 				  struct rev_info *revs)
@@ -1052,6 +1055,104 @@ static int setup_squash_revisions(struct repository *repo,
 	return error(_("not a '<base>..<tip>' revision range"));
 }
 
+/*
+ * Resolve a revision range into its oldest commit and single tip. Every
+ * parent after the oldest commit must either be selected or also be a parent
+ * of the oldest commit.
+ */
+static int resolve_squash_range(struct repository *repo,
+				int argc, const char **argv,
+				struct commit **oldest_out,
+				struct commit **tip_out)
+{
+	struct rev_info revs;
+	struct commit *commit, *oldest = NULL, *tip = NULL;
+	int ret, tip_count = 0;
+	bool walk_started = false;
+
+	ret = setup_squash_revisions(repo, argc, argv, &revs);
+	if (ret < 0)
+		goto out;
+
+	if (prepare_revision_walk(&revs) < 0) {
+		ret = error(_("error preparing revisions"));
+		goto out;
+	}
+	walk_started = true;
+	while ((commit = get_revision(&revs))) {
+		struct commit_list *p;
+
+		if (!commit->parents) {
+			ret = error(_("cannot squash down to root commit"));
+			goto out;
+		}
+		for (p = commit->parents; oldest && p; p = p->next) {
+			struct commit_list *q;
+			struct object *o;
+			bool seen;
+
+			if (repo_parse_commit(repo, p->item)) {
+				ret = error(_("cannot parse commit"));
+				goto out;
+			}
+			o = &p->item->object;
+			seen = o->flags & SQUASH_SEEN;
+			/*
+			 * Allow parents that match the parents of the
+			 * squashed commit.
+			 */
+			for (q = oldest->parents; !seen && q; q = q->next)
+				if (p->item == q->item)
+					seen = true;
+			if (!seen) {
+				ret = error(_("parent %s of commit %s is "
+					      "outside the revision range"),
+					    repo_find_unique_abbrev(repo, &o->oid,
+								    DEFAULT_ABBREV),
+					    repo_find_unique_abbrev(repo,
+								    &commit->object.oid,
+								    DEFAULT_ABBREV));
+				goto out;
+			}
+			if (o->flags & SQUASH_TIP) {
+				tip_count--;
+				o->flags &= ~SQUASH_TIP;
+			}
+		}
+		if (!oldest)
+			oldest = commit;
+		tip = commit;
+		tip->object.flags |= SQUASH_SEEN | SQUASH_TIP;
+		tip_count++;
+	}
+
+	if (!tip_count) {
+		ret = error(_("the revision range is empty"));
+		goto out;
+	} else if (tip_count != 1) {
+		ret = error(_("the revision range contains more than one tip "
+			      "commit"));
+		goto out;
+	} else if (oldest == tip) {
+		ret = error(_("the revision range holds a single commit; "
+			      "nothing to squash"));
+		goto out;
+	} else if (!oldest->parents) {
+		BUG("an in-range commit must have a parent");
+	}
+
+	*oldest_out = oldest;
+	*tip_out = tip;
+	ret = 0;
+
+out:
+	clear_object_flags(repo, SQUASH_SEEN | SQUASH_TIP);
+	if (walk_started)
+		reset_revision_walk();
+	release_revisions(&revs);
+	return ret;
+}
+
 static int cmd_history_squash(int argc,
 			      const char **argv,
 			      const char *prefix,
@@ -1074,26 +1175,20 @@ static int cmd_history_squash(int argc,
 			 N_("edit the commit message")),
 		OPT_END(),
 	};
-	struct rev_info revs = { 0 };
+	struct commit *oldest, *tip;
 	int ret;
 
 	argc = parse_options(argc, argv, prefix, options, usage,
 			     PARSE_OPT_KEEP_UNKNOWN_OPT | PARSE_OPT_KEEP_ARGV0);
-	if (argc < 2) {
-		ret = error(_("command expects a revision range"));
-		goto out;
-	}
+	if (argc < 2)
+		return error(_("command expects a revision range"));
 	repo_config(repo, git_default_config, NULL);
 
-	ret = setup_squash_revisions(repo, argc, argv, &revs);
+	ret = resolve_squash_range(repo, argc, argv, &oldest, &tip);
 	if (ret < 0)
-		goto out;
+		return ret;
 
-	ret = error(_("squashing commits is not implemented yet"));
-
-out:
-	release_revisions(&revs);
-	return ret;
+	return error(_("squashing commits is not implemented yet"));
 }
 
 static int update_worktree(struct repository *repo,
