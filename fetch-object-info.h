@@ -1,25 +1,40 @@
 #ifndef FETCH_OBJECT_INFO_H
 #define FETCH_OBJECT_INFO_H
 
+#include "object.h"
 #include "pkt-line.h"
 #include "protocol.h"
 
-struct object_info_args {
-	struct string_list *object_info_options;
-	const struct string_list *server_options;
-	struct oid_array *oids;
+struct fetch_object_info_results {
+	size_t *sizes;
+	enum object_type *types;
+	uint8_t *unrecognized;
+	size_t nr;
+	unsigned wants_size:1;
+	unsigned wants_type:1;
 };
 
-struct object_info;
+#define FETCH_OBJECT_INFO_RESULTS_INIT { 0 }
+
+struct oid_array;
 /*
- * Sends git-cat-file object-info command into the request buf and read the
+ * Sends git-cat-file object-info command into the request buf and reads the
  * results from packets.
  *
- * Modifies args->object_info_options, on return it contains only the supported
- * options by the server.
+ * The caller sets the wants_* flags in "results" to indicate which attributes
+ * it is interested in. On return, "results" holds one array per attribute that
+ * the server both advertised and answered with. An array left NULL means the
+ * attribute is not available.
+ * Release them with free_fetch_object_info_results().
  */
-int fetch_object_info(enum protocol_version version, struct object_info_args *args,
-		      struct packet_reader *reader, struct object_info *object_info_data,
-		      int stateless_rpc, int fd_out);
+void fetch_object_info(enum protocol_version version,
+		       const struct string_list *server_options,
+		       const struct oid_array *oids,
+		       struct packet_reader *reader,
+		       struct fetch_object_info_results *results,
+		       int stateless_rpc,
+		       int fd_out);
+
+void free_fetch_object_info_results(struct fetch_object_info_results *results);
 
 #endif /* FETCH_OBJECT_INFO_H */
