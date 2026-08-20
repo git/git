@@ -6278,7 +6278,6 @@ int sequencer_make_script(struct repository *r, struct strbuf *out,
 	revs.sort_order = REV_SORT_IN_GRAPH_ORDER;
 	revs.topo_order = 1;
 
-	revs.pretty_given = 1;
 	repo_config_get_string(the_repository, "rebase.instructionFormat", &format);
 	if (!format || !*format) {
 		free(format);
