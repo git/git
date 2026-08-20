@@ -5324,6 +5324,8 @@ int cmd_pack_objects(int argc,
 		strvec_push(&rp, "--objects");
 
 	if (rev_list_all) {
+		/* --all must protect every namespace in the shared object store. */
+		set_git_namespace_is_local(0);
 		use_internal_rev_list = 1;
 		strvec_push(&rp, "--all");
 	}

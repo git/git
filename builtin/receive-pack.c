@@ -2632,6 +2632,7 @@ int cmd_receive_pack(int argc,
 		OPT_END()
 	};
 
+	set_git_namespace_is_local(0);
 	packet_trace_identity("receive-pack");
 
 	argc = parse_options(argc, argv, prefix, options, receive_pack_usage, 0);
