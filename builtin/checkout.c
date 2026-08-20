@@ -838,10 +838,11 @@ static void init_topts(struct unpack_trees_options *topts,
 static int merge_working_tree(const struct checkout_opts *opts,
 			      struct branch_info *old_branch_info,
 			      struct branch_info *new_branch_info,
-			      bool quiet,
+			      bool allow_autostash,
 			      int *writeout_error)
 {
 	int ret;
+	bool can_autostash = false;
 	struct lock_file lock_file = LOCK_INIT;
 	struct tree *new_tree;
 
@@ -888,9 +889,13 @@ static int merge_working_tree(const struct checkout_opts *opts,
 			return 1;
 		}
 
+		if (allow_autostash)
+			can_autostash = has_unstaged_changes(the_repository, 1) ||
+				has_uncommitted_changes(the_repository, 1);
+
 		/* 2-way merge to the new branch */
 		init_topts(&topts, opts->show_progress,
-			   opts->overwrite_ignore, quiet);
+			   opts->overwrite_ignore, can_autostash);
 		init_checkout_metadata(&topts.meta, new_branch_info->refname,
 				       new_branch_info->commit ?
 				       &new_branch_info->commit->object.oid :
@@ -917,7 +922,8 @@ static int merge_working_tree(const struct checkout_opts *opts,
 		clear_unpack_trees_porcelain(&topts);
 		if (ret == -1) {
 			rollback_lock_file(&lock_file);
-			return MERGE_WORKING_TREE_UNPACK_FAILED;
+			return can_autostash ?
+				MERGE_WORKING_TREE_UNPACK_FAILED : 1;
 		}
 	}
 
@@ -1166,6 +1172,7 @@ static int switch_branches(const struct checkout_opts *opts,
 	int flag, writeout_error = 0;
 	int do_merge = 1;
 	int created_autostash = 0;
+	bool autostash_conflicted = false;
 	struct strbuf old_commit_shortname = STRBUF_INIT;
 	struct strbuf autostash_msg = STRBUF_INIT;
 	const char *stash_label_base = NULL;
@@ -1242,7 +1249,8 @@ static int switch_branches(const struct checkout_opts *opts,
 					    new_branch_info->name,
 					    "local",
 					    stash_label_base,
-					    autostash_msg.buf);
+					    autostash_msg.buf,
+					    &autostash_conflicted);
 		}
 		if (ret) {
 			branch_info_release(&old_branch_info);
@@ -1255,6 +1263,8 @@ static int switch_branches(const struct checkout_opts *opts,
 	if (!opts->quiet && !old_branch_info.path && old_branch_info.commit && new_branch_info->commit != old_branch_info.commit)
 		orphaned_commit_warning(old_branch_info.commit, new_branch_info->commit);
 
+	if (autostash_conflicted && !opts->quiet)
+		fputc('\n', stderr);
 	update_refs_for_switch(opts, &old_branch_info, new_branch_info);
 
 	if (created_autostash) {
