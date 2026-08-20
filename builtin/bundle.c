@@ -69,7 +69,6 @@ static int parse_options_cmd_bundle(int argc,
 
 static int cmd_bundle_create(int argc, const char **argv, const char *prefix,
 			     struct repository *repo UNUSED) {
-	struct strvec pack_opts = STRVEC_INIT;
 	int progress = isatty(STDERR_FILENO);
 	int version = -1;
 	struct option options[] = {
@@ -92,16 +91,9 @@ static int cmd_bundle_create(int argc, const char **argv, const char *prefix,
 			builtin_bundle_create_usage, options, &bundle_file);
 	/* bundle internals use argv[1] as further parameters */
 
-	if (progress)
-		strvec_push(&pack_opts, "--progress");
-	else
-		strvec_push(&pack_opts, "--quiet");
-	strvec_push(&pack_opts, "--all-progress-implied");
-
 	if (!startup_info->have_repository)
 		die(_("Need a repository to create a bundle."));
-	ret = !!create_bundle(the_repository, bundle_file, argc, argv, &pack_opts, version);
-	strvec_clear(&pack_opts);
+	ret = !!create_bundle(the_repository, bundle_file, argc, argv, version, progress);
 	free(bundle_file);
 	return ret;
 }
