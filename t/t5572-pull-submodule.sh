@@ -106,6 +106,24 @@ test_expect_success " --[no-]recurse-submodule and submodule.recurse" '
 	test_path_is_file super/sub/merge_strategy_4.t
 '
 
+test_expect_success 'pull --hard honors submodule recursion' '
+	test_commit -C child hard_recurse &&
+	git -C parent submodule update --remote &&
+	git -C parent add sub &&
+	git -C parent commit -m "update submodule" &&
+
+	git -C super pull --hard --recurse-submodules &&
+	test_path_is_file super/sub/hard_recurse.t &&
+
+	test_commit -C child hard_no_recurse &&
+	git -C parent submodule update --remote &&
+	git -C parent add sub &&
+	git -C parent commit -m "update submodule" &&
+
+	git -C super -c submodule.recurse=true pull --hard --no-recurse-submodules &&
+	test_path_is_missing super/sub/hard_no_recurse.t
+'
+
 test_expect_success "fetch.recurseSubmodules option triggers recursive fetch (but not recursive update)" '
 	test_commit -C child merge_strategy_5 &&
 	# Omit the parent commit, otherwise this passes with the

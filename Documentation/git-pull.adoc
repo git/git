@@ -24,7 +24,7 @@ with no arguments this defaults to the <<UPSTREAM-BRANCHES,upstream>>
 for the current branch.
 Then it integrates that branch into the current branch.
 
-There are 4 main options for integrating the remote branch:
+There are 5 main options for integrating the remote branch:
 
 1. `git pull --ff-only` will only do "fast-forward" updates: it
    fails if your local branch has diverged from the remote branch.
@@ -32,6 +32,7 @@ There are 4 main options for integrating the remote branch:
 2. `git pull --rebase` runs `git rebase`
 3. `git pull --no-rebase` runs `git merge`.
 4. `git pull --squash` runs `git merge --squash`
+5. `git pull --hard` runs `git reset --hard` to the fetched branch.
 
 You can also set the configuration options `pull.rebase`, `pull.squash`,
 or `pull.ff` with your preferred behaviour.
@@ -118,6 +119,13 @@ unless you have read linkgit:git-rebase[1] carefully.
 
 `--no-rebase`::
 	This is shorthand for `--rebase=false`.
+
+`--hard`::
+	Reset the current branch, index, and working tree to the fetched branch.
+	The pull must select exactly one branch. Local commits and changes to
+	tracked files are discarded. Untracked files or directories in the way
+	of writing tracked files may also be deleted. This option cannot be
+	combined with merge or rebase options, or with `--append`.
 
 Options related to fetching
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
