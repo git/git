@@ -1146,6 +1146,12 @@ GIT_CHECK_FUNC(mkdtemp,
 [NO_MKDTEMP=YesPlease])
 GIT_CONF_SUBST([NO_MKDTEMP])
 #
+# Define NO_UTIMENSAT if you don't have utimensat in the C library.
+GIT_CHECK_FUNC(utimensat,
+[NO_UTIMENSAT=],
+[NO_UTIMENSAT=YesPlease])
+GIT_CONF_SUBST([NO_UTIMENSAT])
+#
 # Define NO_INITGROUPS if you don't have initgroups in the C library.
 GIT_CHECK_FUNC(initgroups,
 [NO_INITGROUPS=],

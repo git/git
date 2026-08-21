@@ -1475,6 +1475,8 @@ else
     'unsetenv' : ['unsetenv.c'],
     # provided by compat/mingw.c.
     'getpagesize' : [],
+    # provided by compat/mingw.c.
+    'utimensat' : ['utimensat.c'],
   }
 
   if get_option('b_sanitize').contains('address') or get_option('b_sanitize').contains('leak')

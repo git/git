@@ -70,6 +70,8 @@ include shared.mak
 #
 # Define NO_MKDTEMP if you don't have mkdtemp in the C library.
 #
+# Define NO_UTIMENSAT if you don't have utimensat.
+#
 # Define MKDIR_WO_TRAILING_SLASH if your mkdir() can't deal with trailing slash.
 #
 # Define NO_GECOS_IN_PWENT if you don't have pw_gecos in struct passwd
@@ -2048,6 +2050,10 @@ endif
 ifdef NO_WRITEV
 	COMPAT_CFLAGS += -DNO_WRITEV
 	COMPAT_OBJS += compat/writev.o
+endif
+ifdef NO_UTIMENSAT
+	COMPAT_CFLAGS += -DNO_UTIMENSAT
+	COMPAT_OBJS += compat/utimensat.o
 endif
 ifdef NO_FAST_WORKING_DIRECTORY
 	BASIC_CFLAGS += -DNO_FAST_WORKING_DIRECTORY
