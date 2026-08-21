@@ -760,7 +760,15 @@ static int submodule_create_branch(struct repository *r,
 		break;
 	}
 
-	strvec_pushl(&child.args, name, start_oid, tracking_name, NULL);
+	/*
+	 * The tracking name is absent when the start point named no ref.
+	 * Push it separately: strvec_pushl() stops at the first NULL, so
+	 * passing it inline would drop the argument by accident rather
+	 * than by intent.
+	 */
+	strvec_pushl(&child.args, name, start_oid, NULL);
+	if (tracking_name)
+		strvec_push(&child.args, tracking_name);
 
 	if ((ret = start_command(&child)))
 		return ret;

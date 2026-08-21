@@ -115,6 +115,19 @@ test_expect_success 'should move a branch to a start point that names no ref' '
 	)
 '
 
+test_expect_success 'should recurse into submodules from a start point that names no ref' '
+	test_when_finished "reset_test" &&
+	(
+		cd super &&
+		oid=$(git rev-parse HEAD) &&
+		git branch --recurse-submodules branch-a "$oid" &&
+		git rev-parse branch-a &&
+		git -C sub rev-parse branch-a &&
+		git -C sub/sub-sub rev-parse branch-a &&
+		git -C second/sub rev-parse branch-a
+	)
+'
+
 test_expect_success 'should ignore submodule.recurse when not creating branches' '
 	test_when_finished "reset_test" &&
 	(

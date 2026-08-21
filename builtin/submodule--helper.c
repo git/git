@@ -3336,7 +3336,7 @@ static int module_create_branch(int argc, const char **argv, const char *prefix,
 		OPT_END()
 	};
 	const char *const usage[] = {
-		N_("git submodule--helper create-branch [-f|--force] [--create-reflog] [-q|--quiet] [-t|--track] [-n|--dry-run] <name> <start-oid> <start-name>"),
+		N_("git submodule--helper create-branch [-f|--force] [--create-reflog] [-q|--quiet] [-t|--track] [-n|--dry-run] <name> <start-oid> [<start-name>]"),
 		NULL
 	};
 	struct repo_config_values *cfg = repo_config_values(the_repository);
@@ -3345,13 +3345,14 @@ static int module_create_branch(int argc, const char **argv, const char *prefix,
 	track = cfg->branch_track;
 	argc = parse_options(argc, argv, prefix, options, usage, 0);
 
-	if (argc != 3)
+	if (argc < 2 || argc > 3)
 		usage_with_options(usage, options);
 
 	if (!quiet && !dry_run)
 		printf_ln(_("creating branch '%s'"), argv[0]);
 
-	create_branches_recursively(the_repository, argv[0], argv[1], argv[2],
+	create_branches_recursively(the_repository, argv[0], argv[1],
+				    argc > 2 ? argv[2] : NULL,
 				    force, reflog, quiet, track, dry_run);
 	return 0;
 }
