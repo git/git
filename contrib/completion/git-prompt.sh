@@ -55,13 +55,14 @@
 # enabled.
 #
 # If you would like to see the difference between HEAD and its upstream,
-# set GIT_PS1_SHOWUPSTREAM="auto".  A "<" indicates you are behind, ">"
-# indicates you are ahead, "<>" indicates you have diverged and "="
-# indicates that there is no difference. You can further control
+# set GIT_PS1_SHOWUPSTREAM to a nonempty value.  A "<" indicates you are
+# behind, ">" indicates you are ahead, "<>" indicates you have diverged
+# and "=" indicates that there is no difference.  You can further control
 # behaviour by setting GIT_PS1_SHOWUPSTREAM to a space-separated list
 # of values:
 #
 #     verbose       show number of commits ahead/behind (+/-) upstream
+#     quiet         omit '=' when there is no difference to the upstream
 #     name          if verbose, then also show the upstream abbrev name
 #     legacy        don't use the '--count' option available in recent
 #                   versions of git-rev-list
@@ -157,7 +158,7 @@ __git_ps1_show_upstream ()
 {
 	local key value
 	local svn_remotes="" svn_url_pattern="" count n
-	local upstream_type=git legacy="" verbose="" name=""
+	local upstream_type=git legacy="" verbose="" quiet="" name=""
 	local LF="$__git_LF"
 
 	# get some config options from git-config
@@ -187,6 +188,7 @@ __git_ps1_show_upstream ()
 		case "$option" in
 		git|svn) upstream_type="$option" ;;
 		verbose) verbose=1 ;;
+		quiet)   quiet=1   ;;
 		legacy)  legacy=1  ;;
 		name)    name=1 ;;
 		esac
@@ -262,6 +264,8 @@ __git_ps1_show_upstream ()
 		"") # no upstream
 			p="" ;;
 		"0	0") # equal to upstream
+			[ "$quiet" ] &&
+			p="" ||
 			p="=" ;;
 		"0	"*) # ahead of upstream
 			p=">" ;;
@@ -275,6 +279,8 @@ __git_ps1_show_upstream ()
 		"") # no upstream
 			upstream="" ;;
 		"0	0") # equal to upstream
+			[ "$quiet" ] &&
+			upstream="|u" ||
 			upstream="|u=" ;;
 		"0	"*) # ahead of upstream
 			upstream="|u+${count#0	}" ;;
