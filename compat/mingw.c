@@ -1480,22 +1480,6 @@ revert_attrs:
 	return rc;
 }
 
-int mingw_utime(const char *file_name, const struct utimbuf *times)
-{
-	struct timespec ts[2];
-	struct timespec *tsp = NULL;
-
-	if (times) {
-		ts[0].tv_sec = times->actime;
-		ts[0].tv_nsec = 0;
-		ts[1].tv_sec = times->modtime;
-		ts[1].tv_nsec = 0;
-		tsp = ts;
-	}
-
-	return mingw_utimensat(AT_FDCWD, file_name, tsp, 0);
-}
-
 #undef strftime
 size_t mingw_strftime(char *s, size_t max,
 		      const char *format, const struct tm *tm)

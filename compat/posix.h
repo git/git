@@ -123,7 +123,6 @@
 #include <signal.h>
 #include <assert.h>
 #include <regex.h>
-#include <utime.h>
 #include <syslog.h>
 #if !defined(NO_POLL_H)
 #include <poll.h>
