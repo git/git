@@ -840,7 +840,7 @@ void create_branches_recursively(struct repository *r, const char *name,
 	 * tedious to determine whether or not tracking was set up in the
 	 * superproject.
 	 */
-	if (track)
+	if (tracking_name && track)
 		setup_tracking(name, tracking_name, track, quiet);
 
 	for (i = 0; i < submodule_entry_list.entry_nr; i++) {
