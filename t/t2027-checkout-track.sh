@@ -19,6 +19,43 @@ test_expect_success 'checkout --track -b creates a new tracking branch' '
 	test $(git config --get branch.branch1.merge) = refs/heads/main
 '
 
+test_expect_success 'checkout --create-if-missing --track creates branch from current branch' '
+	test_when_finished "
+		git checkout main &&
+		git branch -D branch2
+	" &&
+	git checkout main &&
+	git checkout --create-if-missing branch2 --track &&
+	test $(git rev-parse --abbrev-ref HEAD) = branch2 &&
+	test_cmp_config . branch.branch2.remote &&
+	test_cmp_config refs/heads/main branch.branch2.merge
+'
+
+test_expect_success 'checkout --create-if-missing --track uses current branch for existing branch' '
+	test_when_finished "
+		git checkout main &&
+		git branch -D branch3 branch3-source
+	" &&
+	git checkout -b branch3-source main &&
+	git branch branch3 main &&
+	git checkout --create-if-missing branch3 --track >out 2>err &&
+	test_grep "branch '\''branch3'\'' set up to track '\''branch3-source'\''." out &&
+	test_grep "Switched to existing branch '\''branch3'\''" err &&
+	test_cmp_config . branch.branch3.remote &&
+	test_cmp_config refs/heads/branch3-source branch.branch3.merge
+'
+
+test_expect_success 'checkout --create-if-missing --track fails from detached HEAD without start-point' '
+	test_when_finished "
+		git checkout main &&
+		git branch -D branch4
+	" &&
+	git branch branch4 main &&
+	git checkout --detach main &&
+	test_must_fail git checkout --create-if-missing branch4 --track 2>err &&
+	test_grep "cannot set up tracking information; starting point '\''HEAD'\'' is not a branch" err
+'
+
 test_expect_success 'checkout --track -b rejects an extra path argument' '
 	test_must_fail git checkout --track -b branch2 main one.t 2>err &&
 	test_grep "cannot be used with updating paths" err

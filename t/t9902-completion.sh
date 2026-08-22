@@ -2588,6 +2588,7 @@ test_expect_success 'double dash "git checkout"' '
 	--quiet Z
 	--detach Z
 	--track Z
+	--create-if-missing=Z
 	--orphan=Z
 	--ours Z
 	--theirs Z

@@ -146,6 +146,79 @@ test_expect_success 'tracking info copied with autoSetupMerge=inherit' '
 	test_cmp_config "" --default "" branch.main2.merge
 '
 
+test_expect_success 'switch --create-if-missing --track creates branch from current branch' '
+	test_when_finished "
+		git switch main || :
+		git branch -D ensure-new-current || :
+	" &&
+	git switch main &&
+	git switch --create-if-missing ensure-new-current --track &&
+	test_cmp_rev refs/heads/main refs/heads/ensure-new-current &&
+	test_cmp_config . branch.ensure-new-current.remote &&
+	test_cmp_config refs/heads/main branch.ensure-new-current.merge
+'
+
+test_expect_success 'switch --create-if-missing --track creates branch from remote-tracking branch' '
+	test_when_finished "
+		git switch main || :
+		git branch -D ensure-new || :
+	" &&
+	git switch --create-if-missing ensure-new --track origin/foo &&
+	test_cmp_rev refs/remotes/origin/foo refs/heads/ensure-new &&
+	test_cmp_config origin branch.ensure-new.remote &&
+	test_cmp_config refs/heads/foo branch.ensure-new.merge
+'
+
+test_expect_success 'switch --create-if-missing switches to existing branch' '
+	test_when_finished "
+		git switch main || :
+		git branch -D ensure-existing-plain || :
+	" &&
+	git branch ensure-existing-plain main &&
+	git switch --create-if-missing ensure-existing-plain 2>err &&
+	test_grep "Switched to existing branch '\''ensure-existing-plain'\''" err
+'
+
+test_expect_success 'switch --create-if-missing reports tracking for existing branch' '
+	test_when_finished "
+		git switch main || :
+		git branch -D ensure-existing-report || :
+		git update-ref refs/remotes/origin/foo first-branch || :
+	" &&
+	git branch ensure-existing-report first-branch &&
+	git config branch.ensure-existing-report.remote origin &&
+	git config branch.ensure-existing-report.merge refs/heads/foo &&
+	git update-ref refs/remotes/origin/foo main &&
+	git switch --create-if-missing ensure-existing-report >out 2>err &&
+	test_grep "Switched to existing branch '\''ensure-existing-report'\''" err &&
+	test_grep "Your branch is behind '\''origin/foo'\''" out
+'
+
+test_expect_success 'switch --create-if-missing --track uses current branch for existing branch' '
+	test_when_finished "
+		git switch main || :
+		git branch -D ensure-existing source-for-track || :
+	" &&
+	git switch -c source-for-track main &&
+	git branch ensure-existing main &&
+	git switch --create-if-missing ensure-existing --track >out 2>err &&
+	test_grep "branch '\''ensure-existing'\'' set up to track '\''source-for-track'\''." out &&
+	test_grep "Switched to existing branch '\''ensure-existing'\''" err &&
+	test_cmp_config . branch.ensure-existing.remote &&
+	test_cmp_config refs/heads/source-for-track branch.ensure-existing.merge
+'
+
+test_expect_success 'switch --create-if-missing --track fails from detached HEAD without start-point' '
+	test_when_finished "
+		git switch main || :
+		git branch -D detached-target || :
+	" &&
+	git branch detached-target main &&
+	git switch --detach main &&
+	test_must_fail git switch --create-if-missing detached-target --track 2>stderr &&
+	test_grep "cannot set up tracking information; starting point '\''HEAD'\'' is not a branch" stderr
+'
+
 test_expect_success 'switch back when temporarily detached and checked out elsewhere ' '
 	test_when_finished "
 		git worktree remove wt1 ||:

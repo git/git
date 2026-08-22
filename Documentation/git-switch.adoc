@@ -11,6 +11,7 @@ SYNOPSIS
 git switch [<options>] [--no-guess] <branch>
 git switch [<options>] --detach [<start-point>]
 git switch [<options>] (-c|-C) <new-branch> [<start-point>]
+git switch [<options>] --create-if-missing <branch> [<start-point>]
 git switch [<options>] --orphan <new-branch>
 
 DESCRIPTION
@@ -80,6 +81,20 @@ the start-point, either).
 $ git branch -f _<new-branch>_
 $ git switch _<new-branch>_
 ------------
+
+`--create-if-missing <branch>`::
+	Switch to _<branch>_ if it already exists, or create it from
+	_<start-point>_ before switching to it if it does not.
++
+When _<branch>_ does not already exist, this behaves like
+`git switch -c <branch> [<start-point>]`, including any `--track`
+or `--no-track` options.
++
+When _<branch>_ already exists, the branch tip is not changed. If
+`--track[=(direct|inherit)]` is given, the existing branch's upstream
+configuration is updated using _<start-point>_ when one is provided,
+or the current branch when _<start-point>_ is omitted. This form fails
+when `HEAD` is detached and no _<start-point>_ is given.
 
 `-d`::
 `--detach`::

@@ -81,6 +81,8 @@ struct checkout_opts {
 	const char *new_branch;
 	const char *new_branch_force;
 	const char *new_orphan_branch;
+	const char *create_if_missing_branch;
+	const char *create_if_missing_start;
 	int new_branch_log;
 	enum branch_track track;
 	struct diff_options diff_options;
@@ -551,6 +553,10 @@ static int checkout_paths(const struct checkout_opts *opts,
 		die(_("Cannot update paths and switch to branch '%s' at the same time."),
 		    opts->new_branch);
 
+	if (opts->create_if_missing_branch)
+		die(_("Cannot update paths and switch to branch '%s' at the same time."),
+		    opts->create_if_missing_branch);
+
 	if (!opts->checkout_worktree && !opts->checkout_index)
 		die(_("neither '%s' or '%s' is specified"),
 		    "--staged", "--worktree");
@@ -991,6 +997,14 @@ static void update_refs_for_switch(const struct checkout_opts *opts,
 		free(new_branch_info->refname);
 		new_branch_info->name = xstrdup(opts->new_branch);
 		setup_branch_path(new_branch_info);
+	} else if (opts->create_if_missing_branch && opts->branch_exists &&
+		   opts->track != BRANCH_TRACK_UNSPECIFIED) {
+		const char *tracking_source = opts->create_if_missing_start ?
+			opts->create_if_missing_start :
+			old_branch_info->name;
+		dwim_and_setup_tracking(the_repository, opts->create_if_missing_branch,
+					tracking_source, opts->track,
+					opts->quiet);
 	}
 
 	old_desc = old_branch_info->name;
@@ -1033,6 +1047,10 @@ static void update_refs_for_switch(const struct checkout_opts *opts,
 					fprintf(stderr, _("Switched to and reset branch '%s'\n"), new_branch_info->name);
 				else
 					fprintf(stderr, _("Switched to a new branch '%s'\n"), new_branch_info->name);
+			} else if (opts->create_if_missing_branch &&
+				   opts->branch_exists) {
+				fprintf(stderr, _("Switched to existing branch '%s'\n"),
+					new_branch_info->name);
 			} else {
 				fprintf(stderr, _("Switched to branch '%s'\n"),
 					new_branch_info->name);
@@ -1930,6 +1948,52 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 		die(_("options '-%c', '-%c', and '%s' cannot be used together"),
 			cb_option, toupper(cb_option), "--orphan");
 
+	if (opts->create_if_missing_branch) {
+		struct strbuf ref = STRBUF_INIT;
+		int exists;
+
+		if (opts->new_branch || opts->new_branch_force || opts->new_orphan_branch)
+			die(_("'%s' cannot be used with '%s'"), "--create-if-missing", "-c/-C/--orphan");
+		if (opts->force_detach)
+			die(_("'%s' cannot be used with '%s'"), "--create-if-missing", "--detach");
+
+		exists = validate_branchname(opts->create_if_missing_branch, &ref);
+		strbuf_release(&ref);
+
+		/* Save an explicit start point for tracking setup. */
+		if (argc > 0 && opts->track != BRANCH_TRACK_UNSPECIFIED)
+			opts->create_if_missing_start = argv[0];
+
+		if (exists) {
+			/*
+			 * Branch exists: just switch to it, don't reset.
+			 * We'll set up tracking after the switch if --track was given.
+			 */
+			opts->branch_exists = 1;
+		} else {
+			/* Branch doesn't exist: create it like -c */
+			opts->new_branch = opts->create_if_missing_branch;
+		}
+	}
+
+	if (opts->create_if_missing_branch && opts->branch_exists &&
+	    opts->track != BRANCH_TRACK_UNSPECIFIED &&
+	    !opts->create_if_missing_start) {
+		struct object_id head_oid;
+		char *head = refs_resolve_refdup(get_main_ref_store(the_repository),
+						 "HEAD", 0, &head_oid, NULL);
+		const char *branch;
+
+		if (!head)
+			die(_("failed to resolve HEAD as a valid ref"));
+		if (!strcmp(head, "HEAD"))
+			die(_("cannot set up tracking information; starting point '%s' is not a branch"),
+			    "HEAD");
+		if (!skip_prefix(head, "refs/heads/", &branch))
+			die(_("HEAD not found below refs/heads!"));
+		free(head);
+	}
+
 	if (opts->overlay_mode == 1 && opts->patch_mode)
 		die(_("options '%s' and '%s' cannot be used together"), "-p", "--overlay");
 
@@ -1964,8 +2028,9 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 	if (opts->new_orphan_branch)
 		opts->new_branch = opts->new_orphan_branch;
 
-	/* --track without -c/-C/-b/-B/--orphan should DWIM */
-	if (opts->track != BRANCH_TRACK_UNSPECIFIED && !opts->new_branch) {
+	/* --track without -c/-C/-b/-B/--orphan/--create-if-missing should DWIM */
+	if (opts->track != BRANCH_TRACK_UNSPECIFIED && !opts->new_branch &&
+	    !(opts->create_if_missing_branch && opts->branch_exists)) {
 		const char *argv0 = argv[0];
 		if (!argc || !strcmp(argv0, "--"))
 			die(_("--track needs a branch name"));
@@ -2013,6 +2078,24 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 
 		if (!opts->source_tree)
 			die(_("reference is not a tree: %s"), opts->from_treeish);
+	}
+
+	/*
+	 * Handle --create-if-missing with existing branch: set up
+	 * new_branch_info to switch to the existing branch.
+	 */
+	if (opts->create_if_missing_branch && opts->branch_exists) {
+		struct object_id rev;
+
+		if (repo_get_oid_mb(the_repository, opts->create_if_missing_branch,
+				    &rev))
+			die(_("could not resolve '%s'"),
+			    opts->create_if_missing_branch);
+
+		branch_info_release(&new_branch_info);
+		memset(&new_branch_info, 0, sizeof(new_branch_info));
+		setup_new_branch_info_and_source_tree(&new_branch_info, opts, &rev,
+						      opts->create_if_missing_branch);
 	}
 
 	if (argc) {
@@ -2101,6 +2184,9 @@ int cmd_checkout(int argc,
 			   N_("create and checkout a new branch")),
 		OPT_STRING('B', NULL, &opts.new_branch_force, N_("branch"),
 			   N_("create/reset and checkout a branch")),
+		OPT_STRING_F(0, "create-if-missing", &opts.create_if_missing_branch, N_("branch"),
+			     N_("create if needed and checkout branch"),
+			     PARSE_OPT_NONEG),
 		OPT_BOOL('l', NULL, &opts.new_branch_log, N_("create reflog for new branch")),
 		OPT_BOOL(0, "guess", &opts.dwim_new_local_branch,
 			 N_("second guess 'git checkout <no-such-branch>' (default)")),
@@ -2153,6 +2239,9 @@ int cmd_switch(int argc,
 			   N_("create and switch to a new branch")),
 		OPT_STRING('C', "force-create", &opts.new_branch_force, N_("branch"),
 			   N_("create/reset and switch to a branch")),
+		OPT_STRING_F(0, "create-if-missing", &opts.create_if_missing_branch, N_("branch"),
+			     N_("create if needed and switch to branch"),
+			     PARSE_OPT_NONEG),
 		OPT_BOOL(0, "guess", &opts.dwim_new_local_branch,
 			 N_("second guess 'git switch <no-such-branch>'")),
 		OPT_BOOL(0, "discard-changes", &opts.discard_changes,

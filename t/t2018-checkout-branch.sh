@@ -243,6 +243,33 @@ test_expect_success 'checkout -B to the current branch works' '
 	test_dirty_mergeable
 '
 
+test_expect_success 'checkout --create-if-missing creates a branch' '
+	test_when_finished "
+		git checkout branch1 &&
+		test_might_fail git branch -D create-if-missing-new
+	" &&
+	git checkout --create-if-missing create-if-missing-new $HEAD1 &&
+	echo refs/heads/create-if-missing-new >expect &&
+	git symbolic-ref HEAD >actual &&
+	test_cmp expect actual &&
+	test_cmp_rev $HEAD1 HEAD
+'
+
+test_expect_success 'checkout --create-if-missing switches to existing branch' '
+	test_when_finished "
+		git checkout branch1 &&
+		test_might_fail git branch -D create-if-missing-existing
+	" &&
+	git branch create-if-missing-existing $HEAD1 &&
+	git checkout branch1 &&
+	git checkout --create-if-missing create-if-missing-existing 2>err &&
+	test_grep "Switched to existing branch '\''create-if-missing-existing'\''" err &&
+	echo refs/heads/create-if-missing-existing >expect &&
+	git symbolic-ref HEAD >actual &&
+	test_cmp expect actual &&
+	test_cmp_rev $HEAD1 HEAD
+'
+
 test_expect_success 'checkout -b after clone --no-checkout does a checkout of HEAD' '
 	git init src &&
 	test_commit -C src a &&
@@ -283,6 +310,16 @@ test_expect_success 'checkout -b rejects an invalid start point' '
 test_expect_success 'checkout -b rejects an extra path argument' '
 	test_must_fail git checkout -b branch5 branch1 file1 2>err &&
 	test_grep "Cannot update paths and switch to branch" err
+'
+
+test_expect_success 'checkout --create-if-missing rejects a path argument' '
+	test_when_finished "
+		git checkout branch1 &&
+		test_might_fail git branch -D create-if-missing-path
+	" &&
+	git branch create-if-missing-path branch1 &&
+	test_must_fail git checkout --create-if-missing create-if-missing-path -- file1 2>err &&
+	test_grep "Cannot update paths and switch to branch '\''create-if-missing-path'\''" err
 '
 
 test_done

@@ -1740,7 +1740,7 @@ _git_checkout ()
 	local dwim_opt="$(__git_checkout_default_dwim_mode)"
 
 	case "$prev" in
-	-b|-B|--orphan)
+	-b|-B|--orphan|--create-if-missing)
 		# Complete local branches (and DWIM branch
 		# remote branch names) for an option argument
 		# specifying a new branch name. This is for
@@ -1762,14 +1762,16 @@ _git_checkout ()
 		;;
 	*)
 		# At this point, we've already handled special completion for
-		# the arguments to -b/-B, and --orphan. There are 3 main
-		# things left we can possibly complete:
-		# 1) a start-point for -b/-B, -d/--detach, or --orphan
+		# the arguments to -b/-B, --orphan, and
+		# --create-if-missing. There are 3 main things left
+		# we can possibly complete:
+		# 1) a start-point for -b/-B, -d/--detach, --orphan,
+		#    or --create-if-missing
 		# 2) a remote head, for --track
 		# 3) an arbitrary reference, possibly including DWIM names
 		#
 
-		if [ -n "$(__git_find_on_cmdline "-b -B -d --detach --orphan")" ]; then
+		if [ -n "$(__git_find_on_cmdline "-b -B -d --detach --orphan --create-if-missing")" ]; then
 			__git_complete_refs --mode="refs"
 		elif [ -n "$(__git_find_on_cmdline "-t --track")" ]; then
 			__git_complete_refs --mode="remote-heads"
@@ -2692,7 +2694,7 @@ _git_switch ()
 	local dwim_opt="$(__git_checkout_default_dwim_mode)"
 
 	case "$prev" in
-	-c|-C|--orphan)
+	-c|-C|--orphan|--create-if-missing)
 		# Complete local branches (and DWIM branch
 		# remote branch names) for an option argument
 		# specifying a new branch name. This is for
@@ -2721,13 +2723,13 @@ _git_switch ()
 		fi
 
 		# At this point, we've already handled special completion for
-		# -c/-C, and --orphan. There are 3 main things left to
-		# complete:
-		# 1) a start-point for -c/-C or -d/--detach
+		# -c/-C, --orphan, and --create-if-missing. There
+		# are 3 main things left to complete:
+		# 1) a start-point for -c/-C, -d/--detach, or --create-if-missing
 		# 2) a remote head, for --track
 		# 3) a branch name, possibly including DWIM remote branches
 
-		if [ -n "$(__git_find_on_cmdline "-c -C -d --detach")" ]; then
+		if [ -n "$(__git_find_on_cmdline "-c -C -d --detach --create-if-missing")" ]; then
 			__git_complete_refs --mode="refs"
 		elif [ -n "$(__git_find_on_cmdline "-t --track")" ]; then
 			__git_complete_refs --mode="remote-heads"

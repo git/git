@@ -12,6 +12,7 @@ git checkout [-q] [-f] [-m] [<branch>]
 git checkout [-q] [-f] [-m] --detach [<branch>]
 git checkout [-q] [-f] [-m] [--detach] <commit>
 git checkout [-q] [-f] [-m] [[-b|-B|--orphan] <new-branch>] [<start-point>]
+git checkout [-q] [-f] [-m] --create-if-missing <branch> [<start-point>]
 git checkout <tree-ish> [--] <pathspec>...
 git checkout <tree-ish> --pathspec-from-file=<file> [--pathspec-file-nul]
 git checkout [-f|--ours|--theirs|-m|--conflict=<style>] [--] <pathspec>...
@@ -57,6 +58,21 @@ to print out the tracking information for the current branch.
 This will fail if there's an error checking out _<new-branch>_, for
 example if checking out the `<start-point>` commit would overwrite your
 uncommitted changes.
+
+`git checkout --create-if-missing <branch> [<start-point>]`::
+
+	Check out _<branch>_ if it already exists, or create it from
+	_<start-point>_ before checking it out if it does not.
++
+When _<branch>_ does not already exist, this behaves like
+`git checkout -b <branch> [<start-point>]`, including any `--track`
+or `--no-track` options.
++
+When _<branch>_ already exists, the branch tip is not changed. If
+`--track[=(direct|inherit)]` is given, the existing branch's upstream
+configuration is updated using _<start-point>_ when one is provided,
+or the current branch when _<start-point>_ is omitted. This form fails
+when `HEAD` is detached and no _<start-point>_ is given.
 
 `git checkout -B <branch> [<start-point>]`::
 
@@ -156,6 +172,22 @@ of it").
 `-B <new-branch>`::
 	The same as `-b`, except that if the branch already exists it
 	resets _<branch>_ to the start point instead of failing.
+
+`--create-if-missing <branch>`::
+	Check out _<branch>_ if it already exists, or create it from
+	_<start-point>_ before checking it out if it does not.
++
+When _<branch>_ does not already exist, this behaves like
+`git checkout -b <branch> [<start-point>]`, including any `--track`
+or `--no-track` options.
++
+When _<branch>_ already exists, the branch tip is not changed. If
+`--track[=(direct|inherit)]` is given, the existing branch's upstream
+configuration is updated using _<start-point>_ when one is provided,
+or the current branch when _<start-point>_ is omitted. This form fails
+when `HEAD` is detached and no _<start-point>_ is given.
++
+This option cannot be used when checking out paths.
 
 `-t`::
 `--track[=(direct|inherit)]`::
