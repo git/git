@@ -85,14 +85,13 @@ static void insert_record(int line, struct hashmap *map, int pass)
 		map->env->xdf1.recs : map->env->xdf2.recs;
 	xrecord_t *record = &records[line - 1];
 	/*
-	 * After xdl_prepare_env() (or more precisely, due to
-	 * xdl_classify_record()), the "ha" member of the records (AKA lines)
-	 * is _not_ the hash anymore, but a linearized version of it.  In
-	 * other words, the "ha" member is guaranteed to start with 0 and
-	 * the second record's ha can only be 0 or 1, etc.
+	 * The "minimal_perfect_hash" member of the records (AKA lines) is a
+	 * linearized version of the hash.  In other words, it is guaranteed to
+	 * start with 0 and the second record's minimal_perfect_hash can only
+	 * be 0 or 1, etc.
 	 *
-	 * So we multiply ha by 2 in the hope that the hashing was
-	 * "unique enough".
+	 * So we multiply minimal_perfect_hash by 2 in the hope that the
+	 * hashing was "unique enough".
 	 */
 	int index = (int)((record->minimal_perfect_hash << 1) % map->alloc);
 
