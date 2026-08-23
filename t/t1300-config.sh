@@ -2350,6 +2350,38 @@ test_expect_success '--show-origin with --default' '
 	test_cmp expect actual
 '
 
+test_expect_success 'set up xdg config --show-origin tests' '
+	mkdir -p "$HOME"/.config/git &&
+	cat >"$HOME"/.config/git/config <<-EOF
+	[xdg]
+		config = true
+	EOF
+'
+
+test_expect_success MINGW '--show-origin converts backslashes in xdg path to forward slashes on Windows' '
+	backslash_home="$(echo "$HOME" | tr / \\\\)" &&
+	echo "file:$HOME/.config/git/config	true" >expect &&
+
+	(
+		sane_unset XDG_CONFIG_HOME &&
+		HOME="$backslash_home" git config ${mode_get} --show-origin xdg.config >actual
+	) &&
+	test_cmp expect actual &&
+
+	XDG_CONFIG_HOME="$backslash_home\\.config" git config ${mode_get} --show-origin xdg.config >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--show-origin with default xdg path' '
+	echo "file:$HOME/.config/git/config	true" >expect &&
+	git config ${mode_get} --show-origin xdg.config >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'clean up xdg config --show-origin tests' '
+	rm -rf "$HOME"/.config/git
+'
+
 test_expect_success '--show-scope with --list' '
 	cat >expect <<-EOF &&
 	global	user.global=true
