@@ -2469,6 +2469,77 @@ test_expect_success 'list --global with nonexistent global config fails' '
 	test_must_fail git config ${mode_prefix}list --global --show-scope
 '
 
+test_expect_success 'list and get --global with only home' '
+	rm -f "$HOME"/.config/git/config &&
+
+	test_when_finished rm -f \"\$HOME\"/.gitconfig &&
+	cat >"$HOME"/.gitconfig <<-EOF &&
+	[home]
+		config = true
+	EOF
+
+	cat >expect <<-EOF &&
+	global	home.config=true
+	EOF
+	git config ${mode_prefix}list --global --show-scope >actual &&
+	test_cmp expect actual &&
+
+	echo true >expect &&
+	git config ${mode_get} --global home.config >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'list and get --global with only xdg' '
+	rm -f "$HOME"/.gitconfig &&
+
+	test_when_finished rm -rf \"\$HOME\"/.config/git &&
+	mkdir -p "$HOME"/.config/git &&
+	cat >"$HOME"/.config/git/config <<-EOF &&
+	[xdg]
+		config = true
+	EOF
+
+	cat >expect <<-EOF &&
+	global	xdg.config=true
+	EOF
+	git config ${mode_prefix}list --global --show-scope >actual &&
+	test_cmp expect actual &&
+
+	echo true >expect &&
+	git config ${mode_get} --global xdg.config >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'list and get --global with both home and xdg' '
+	test_when_finished rm -f \"\$HOME\"/.gitconfig &&
+	cat >"$HOME"/.gitconfig <<-EOF &&
+	[home]
+		config = home
+	EOF
+
+	test_when_finished rm -rf \"\$HOME\"/.config/git &&
+	mkdir -p "$HOME"/.config/git &&
+	cat >"$HOME"/.config/git/config <<-EOF &&
+	[xdg]
+		config = xdg
+	EOF
+
+	cat >expect <<-EOF &&
+	global	file:$HOME/.config/git/config	xdg.config=xdg
+	global	file:$HOME/.gitconfig	home.config=home
+	EOF
+	git config ${mode_prefix}list --global --show-scope --show-origin >actual &&
+	test_cmp expect actual &&
+
+	echo xdg >expect &&
+	git config ${mode_get} --global xdg.config >actual &&
+	test_cmp expect actual &&
+
+	echo home >expect &&
+	git config ${mode_get} --global home.config >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'override global and system config' '
 	test_when_finished rm -f \"\$HOME\"/.gitconfig &&
 	cat >"$HOME"/.gitconfig <<-EOF &&

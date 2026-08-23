@@ -1587,26 +1587,31 @@ static int do_git_config_sequence(const struct config_options *opts,
 		worktree_config = NULL;
 	}
 
-	if (git_config_system() && system_config &&
+	if (!opts->ignore_system && git_config_system() && system_config &&
 	    !access_or_die(system_config, R_OK,
 			   opts->system_gently ? ACCESS_EACCES_OK : 0))
 		attempt_git_config_from_file_with_options(fn, system_config, data,
 							  CONFIG_SCOPE_SYSTEM, NULL,
 							  &success_count, &ret);
 
-	git_global_config_paths(&user_config, &xdg_config);
+	if (!opts->ignore_global) {
+		git_global_config_paths(&user_config, &xdg_config);
 
-	if (xdg_config && !access_or_die(xdg_config, R_OK, ACCESS_EACCES_OK))
-		attempt_git_config_from_file_with_options(fn, xdg_config,
-							  data,
-							  CONFIG_SCOPE_GLOBAL,
-							  NULL, &success_count, &ret);
+		if (xdg_config && !access_or_die(xdg_config, R_OK, ACCESS_EACCES_OK))
+			attempt_git_config_from_file_with_options(fn, xdg_config,
+								  data,
+								  CONFIG_SCOPE_GLOBAL,
+								  NULL, &success_count, &ret);
 
-	if (user_config && !access_or_die(user_config, R_OK, ACCESS_EACCES_OK))
-		attempt_git_config_from_file_with_options(fn, user_config,
-							  data,
-							  CONFIG_SCOPE_GLOBAL,
-							  NULL, &success_count, &ret);
+		if (user_config && !access_or_die(user_config, R_OK, ACCESS_EACCES_OK))
+			attempt_git_config_from_file_with_options(fn, user_config,
+								  data,
+								  CONFIG_SCOPE_GLOBAL,
+								  NULL, &success_count, &ret);
+
+		free(xdg_config);
+		free(user_config);
+	}
 
 	if (!opts->ignore_repo && repo_config &&
 	    !access_or_die(repo_config, R_OK, 0))
@@ -1624,8 +1629,6 @@ static int do_git_config_sequence(const struct config_options *opts,
 		die(_("unable to parse command-line config"));
 
 	free(system_config);
-	free(xdg_config);
-	free(user_config);
 	free(repo_config);
 	free(worktree_config);
 
@@ -1659,7 +1662,8 @@ int config_with_options(config_fn_t fn, void *data,
 	 */
 	if (config_source && config_source->use_stdin) {
 		ret = git_config_from_stdin(fn, data, config_source->scope);
-	} else if (config_source && config_source->file) {
+	} else if (config_source && config_source->file &&
+		   config_source->scope != CONFIG_SCOPE_GLOBAL) {
 		ret = git_config_from_file_with_options(fn, config_source->file,
 							data, config_source->scope,
 							NULL);
@@ -1667,7 +1671,8 @@ int config_with_options(config_fn_t fn, void *data,
 		ret = git_config_from_blob_ref(fn, repo, config_source->blob,
 					       data, config_source->scope);
 	} else {
-		ret = do_git_config_sequence(opts, repo, fn, data, 0);
+		ret = do_git_config_sequence(opts, repo, fn, data,
+					     config_source && config_source->scope == CONFIG_SCOPE_GLOBAL);
 	}
 
 	if (inc.remote_urls) {
