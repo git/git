@@ -2,6 +2,8 @@
 # between master..seen, are there merges that bring in 
 # more than one topic at a time?
 
+export LANG=C LC_ALL=C
+
 endpoint=${1-seen}
 
 cnt1=$(git lgf --grep="Merge branch '" master..$endpoint | wc -l)
