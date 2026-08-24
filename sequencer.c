@@ -1127,6 +1127,7 @@ static int run_git_commit(const char *defmsg,
 	struct child_process cmd = CHILD_PROCESS_INIT;
 
 	cmd.git_cmd = 1;
+	cmd.odb_to_close = the_repository->objects;
 
 	if (is_rebase_i(opts) &&
 	    ((opts->committer_date_is_author_date && !opts->ignore_date) ||
