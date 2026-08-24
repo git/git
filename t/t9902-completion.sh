@@ -3221,6 +3221,56 @@ test_expect_success 'git clone --config= - value' '
 	EOF
 '
 
+test_expect_success 'git history subcommands' '
+	test_completion "git history " <<-\EOF &&
+	drop Z
+	fixup Z
+	reword Z
+	split Z
+	EOF
+	test_completion "git history --" ""
+'
+
+test_expect_success 'git history subcommand options' '
+	test_completion "git history split main --" <<-\EOF &&
+	--update-refs=Z
+	--dry-run Z
+	--no-dry-run Z
+	EOF
+	test_completion "git history fixup --upd" "--update-refs=" &&
+	test_completion "git history fixup --ree" "--reedit-message " &&
+	test_completion "git history split --upd" "--update-refs=" &&
+	test_completion "git history split main --dry" "--dry-run " &&
+	test_completion "git history reword main -- --d" "" &&
+	test_completion "git history fixup --empty=ke" "keep " &&
+	test_completion "git history fixup --empty=drop" "drop " &&
+	test_completion "git history drop --empty=ab" "abort " &&
+	test_completion "git history reword --empty=ke" "" &&
+	test_completion "git history fixup --update-refs=branch" "branches " &&
+	test_completion "git history split --update-refs=he" "head " &&
+	test_completion "git history reword main -- --update-refs=he" ""
+'
+
+test_expect_success 'git history revisions' '
+	test_completion "git history split ma" "main " &&
+	test_completion "git history split --update-refs=head ma" "main " &&
+	test_completion "git history fixup --empty=drop ma" "main " &&
+	test_completion "git history reword main m" ""
+'
+
+test_expect_success 'git history split pathspecs' '
+	test_completion "git history split main -- --update-refs=h" "" &&
+	test_completion "git history split main -- --update-refs h" "" &&
+	test_completion "git history split --dry-run main file" <<-\EOF &&
+	file1Z
+	file2Z
+	EOF
+	test_completion "git history split main -- file" <<-\EOF
+	file1Z
+	file2Z
+	EOF
+'
+
 test_expect_success 'git reflog show' '
 	test_when_finished "git checkout - && git branch -d shown" &&
 	git checkout -b shown &&
