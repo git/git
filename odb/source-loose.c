@@ -67,7 +67,8 @@ static int read_object_info_from_path(struct odb_source_loose *loose,
 				      const char *path,
 				      const struct object_id *oid,
 				      struct object_info *oi,
-				      enum object_info_flags flags)
+				      enum object_info_flags flags,
+				      struct strbuf *errmsg)
 {
 	int ret;
 	int fd;
@@ -91,11 +92,16 @@ static int read_object_info_from_path(struct odb_source_loose *loose,
 		struct stat st;
 
 		if ((!oi || (!oi->disk_sizep && !oi->mtimep)) && (flags & OBJECT_INFO_QUICK)) {
-			ret = quick_has_loose(loose, oid) ? 0 : -1;
+			ret = quick_has_loose(loose, oid) ? 0 : ODB_READ_NOT_FOUND;
 			goto out;
 		}
 
 		if (lstat(path, &st) < 0) {
+			if (errno == ENOENT) {
+				ret = ODB_READ_NOT_FOUND;
+				goto out;
+			}
+
 			ret = -1;
 			goto out;
 		}
@@ -113,9 +119,12 @@ static int read_object_info_from_path(struct odb_source_loose *loose,
 
 	fd = git_open(path);
 	if (fd < 0) {
-		if (errno != ENOENT)
-			error_errno(_("unable to open loose object %s"), oid_to_hex(oid));
-		ret = -1;
+		if (errno == ENOENT) {
+			ret = ODB_READ_NOT_FOUND;
+			goto out;
+		}
+
+		ret = error_errno(_("unable to open loose object %s"), oid_to_hex(oid));
 		goto out;
 	}
 
@@ -155,7 +164,7 @@ static int read_object_info_from_path(struct odb_source_loose *loose,
 
 		if (parse_loose_header(hdr, oi) < 0) {
 			ret = error(_("unable to parse %s header"), oid_to_hex(oid));
-			goto corrupt;
+			goto out;
 		}
 
 		if (*oi->typep < 0)
@@ -165,7 +174,7 @@ static int read_object_info_from_path(struct odb_source_loose *loose,
 			*oi->contentp = unpack_loose_rest(&stream, hdr, *oi->sizep, oid);
 			if (!*oi->contentp) {
 				ret = -1;
-				goto corrupt;
+				goto out;
 			}
 		}
 
@@ -173,21 +182,19 @@ static int read_object_info_from_path(struct odb_source_loose *loose,
 	case ULHR_BAD:
 		ret = error(_("unable to unpack %s header"),
 			    oid_to_hex(oid));
-		goto corrupt;
+		goto out;
 	case ULHR_TOO_LONG:
 		ret = error(_("header for %s too long, exceeds %d bytes"),
 			    oid_to_hex(oid), MAX_HEADER_LEN);
-		goto corrupt;
+		goto out;
 	}
 
 	ret = 0;
 
-corrupt:
-	if (ret && (flags & OBJECT_INFO_DIE_IF_CORRUPT))
-		die(_("loose object %s (stored in %s) is corrupt"),
-		    oid_to_hex(oid), path);
-
 out:
+	if (ret && ret != ODB_READ_NOT_FOUND && errmsg)
+		strbuf_addf(errmsg, _("loose object %s (stored in %s) is corrupt"),
+			    oid_to_hex(oid), path);
 	if (stream_to_end)
 		git_inflate_end(stream_to_end);
 	if (map)
@@ -206,10 +213,11 @@ out:
 	return ret;
 }
 
-static int odb_source_loose_read_object_info(struct odb_source *source,
-					     const struct object_id *oid,
-					     struct object_info *oi,
-					     enum object_info_flags flags)
+static enum odb_read_status odb_source_loose_read_object_info(struct odb_source *source,
+							      const struct object_id *oid,
+							      struct object_info *oi,
+							      enum object_info_flags flags,
+							      struct strbuf *errmsg)
 {
 	struct odb_source_loose *loose = odb_source_loose_downcast(source);
 	static struct strbuf buf = STRBUF_INIT;
@@ -221,10 +229,10 @@ static int odb_source_loose_read_object_info(struct odb_source *source,
 	 * second time.
 	 */
 	if (flags & OBJECT_INFO_SECOND_READ)
-		return -1;
+		return ODB_READ_NOT_FOUND;
 
 	odb_loose_path(loose, &buf, oid);
-	return read_object_info_from_path(loose, buf.buf, oid, oi, flags);
+	return read_object_info_from_path(loose, buf.buf, oid, oi, flags, errmsg);
 }
 
 /*
@@ -421,7 +429,7 @@ static int for_each_object_wrapper_cb(const struct object_id *oid,
 	if (data->request) {
 		struct object_info oi = *data->request;
 
-		if (read_object_info_from_path(data->loose, path, oid, &oi, 0) < 0)
+		if (read_object_info_from_path(data->loose, path, oid, &oi, 0, NULL) < 0)
 			return -1;
 
 		return data->cb(oid, &oi, data->cb_data);
@@ -439,7 +447,7 @@ static int for_each_prefixed_object_wrapper_cb(const struct object_id *oid,
 		struct object_info oi = *data->request;
 
 		if (odb_source_read_object_info(&data->loose->base,
-						oid, &oi, 0) < 0)
+						oid, &oi, 0, NULL) < 0)
 			return -1;
 
 		return data->cb(oid, &oi, data->cb_data);

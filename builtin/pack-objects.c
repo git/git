@@ -1760,7 +1760,7 @@ static int want_object_in_pack_mtime(const struct object_id *oid,
 		struct odb_source *source = the_repository->objects->sources->next;
 		for (; source; source = source->next) {
 			struct odb_source_files *files = odb_source_files_downcast(source);
-			if (!odb_source_read_object_info(&files->loose->base, oid, NULL, 0))
+			if (!odb_source_read_object_info(&files->loose->base, oid, NULL, 0, NULL))
 				return 0;
 		}
 	}
@@ -1787,7 +1787,7 @@ static int want_object_in_pack_mtime(const struct object_id *oid,
 		struct multi_pack_index *m = get_multi_pack_index(files->packed);
 		struct pack_entry e;
 
-		if (m && fill_midx_entry(m, oid, &e)) {
+		if (m && fill_midx_entry(m, oid, &e, NULL)) {
 			want = want_object_in_pack_one(e.p, oid, exclude, found_pack, found_offset, found_mtime);
 			if (want != -1)
 				return want;
@@ -4171,7 +4171,7 @@ static void add_cruft_object_entry(const struct object_id *oid, enum object_type
 
 			for (; !found && source; source = source->next) {
 				struct odb_source_files *files = odb_source_files_downcast(source);
-				if (!odb_source_read_object_info(&files->loose->base, oid, NULL, 0))
+				if (!odb_source_read_object_info(&files->loose->base, oid, NULL, 0, NULL))
 					found = 1;
 			}
 
@@ -4637,7 +4637,7 @@ static int force_object_loose(struct odb_source *source,
 
 	for (struct odb_source *s = source->odb->sources; s; s = s->next) {
 		struct odb_source_files *files = odb_source_files_downcast(s);
-		if (!odb_source_read_object_info(&files->loose->base, oid, NULL, 0))
+		if (!odb_source_read_object_info(&files->loose->base, oid, NULL, 0, NULL))
 			return 0;
 	}
 

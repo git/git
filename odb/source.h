@@ -33,6 +33,7 @@ const char *odb_source_type_to_name(enum odb_source_type type);
 
 struct object_id;
 struct odb_stream;
+struct strbuf;
 struct strvec;
 
 /*
@@ -128,13 +129,17 @@ struct odb_source {
 	 *     second read in case they know that the first read would have
 	 *     already surfaced the object without reloading any on-disk state.
 	 *
-	 * The callback is expected to return a negative error code in case
-	 * reading the object has failed, 0 otherwise.
+	 * The callback is expected to return an `enum odb_read_status`. Please
+	 * refer to the individual values that can be returned. In case reading
+	 * the object has failed with a generic error and `errmsg` is non-NULL,
+	 * the callback is expected to populate it with a human-readable
+	 * message that describes the failure.
 	 */
-	int (*read_object_info)(struct odb_source *source,
-				const struct object_id *oid,
-				struct object_info *oi,
-				enum object_info_flags flags);
+	enum odb_read_status (*read_object_info)(struct odb_source *source,
+						 const struct object_id *oid,
+						 struct object_info *oi,
+						 enum object_info_flags flags,
+						 struct strbuf *errmsg);
 
 	/*
 	 * This callback is expected to create a new read stream that can be
@@ -369,14 +374,19 @@ static inline void odb_source_prepare(struct odb_source *source,
 
 /*
  * Read an object from the object database source identified by its object ID.
- * Returns 0 on success, a negative error code otherwise.
+ * Please refer to `enum odb_read_status` for the individual error codes.
+ *
+ * In case reading the object has failed with a generic error and `errmsg` is
+ * non-NULL it will be populated with a human-readable message that describes
+ * the failure.
  */
-static inline int odb_source_read_object_info(struct odb_source *source,
-					      const struct object_id *oid,
-					      struct object_info *oi,
-					      enum object_info_flags flags)
+static inline enum odb_read_status odb_source_read_object_info(struct odb_source *source,
+							       const struct object_id *oid,
+							       struct object_info *oi,
+							       enum object_info_flags flags,
+							       struct strbuf *errmsg)
 {
-	return source->read_object_info(source, oid, oi, flags);
+	return source->read_object_info(source, oid, oi, flags, errmsg);
 }
 
 /*
