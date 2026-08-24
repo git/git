@@ -90,7 +90,7 @@ static int odb_source_files_read_object_info(struct odb_source *source,
 	return -1;
 }
 
-static int odb_source_files_read_object_stream(struct odb_read_stream **out,
+static int odb_source_files_read_object_stream(struct odb_stream **out,
 					       struct odb_source *source,
 					       const struct object_id *oid)
 {
@@ -201,12 +201,11 @@ static int odb_source_files_write_object(struct odb_source *source,
 }
 
 static int odb_source_files_write_object_stream(struct odb_source *source,
-						struct odb_write_stream *stream,
-						size_t len,
+						struct odb_stream *stream,
 						struct object_id *oid)
 {
 	struct odb_source_files *files = odb_source_files_downcast(source);
-	return odb_source_write_object_stream(&files->loose->base, stream, len, oid);
+	return odb_source_write_object_stream(&files->loose->base, stream, oid);
 }
 
 static int odb_source_files_begin_transaction(struct odb_source *source,

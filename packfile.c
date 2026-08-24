@@ -2115,7 +2115,7 @@ int parse_pack_header_option(const char *in, unsigned char *out, unsigned int *l
 }
 
 struct odb_packed_read_stream {
-	struct odb_read_stream base;
+	struct odb_stream base;
 	struct packed_git *pack;
 	git_zstream z;
 	enum {
@@ -2127,7 +2127,7 @@ struct odb_packed_read_stream {
 	off_t pos;
 };
 
-static ssize_t read_istream_pack_non_delta(struct odb_read_stream *_st, char *buf,
+static ssize_t read_istream_pack_non_delta(struct odb_stream *_st, char *buf,
 					   size_t sz)
 {
 	struct odb_packed_read_stream *st = (struct odb_packed_read_stream *)_st;
@@ -2187,7 +2187,7 @@ static ssize_t read_istream_pack_non_delta(struct odb_read_stream *_st, char *bu
 	return total_read;
 }
 
-static int close_istream_pack_non_delta(struct odb_read_stream *_st)
+static int close_istream_pack_non_delta(struct odb_stream *_st)
 {
 	struct odb_packed_read_stream *st = (struct odb_packed_read_stream *)_st;
 	if (st->z_state == ODB_PACKED_READ_STREAM_INUSE)
@@ -2195,7 +2195,7 @@ static int close_istream_pack_non_delta(struct odb_read_stream *_st)
 	return 0;
 }
 
-int packfile_read_object_stream(struct odb_read_stream **out,
+int packfile_read_object_stream(struct odb_stream **out,
 				const struct object_id *oid,
 				struct packed_git *pack,
 				off_t offset)

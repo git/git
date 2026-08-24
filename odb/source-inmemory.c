@@ -73,12 +73,12 @@ static int odb_source_inmemory_read_object_info(struct odb_source *source,
 }
 
 struct odb_read_stream_inmemory {
-	struct odb_read_stream base;
+	struct odb_stream base;
 	const unsigned char *buf;
 	size_t offset;
 };
 
-static ssize_t odb_read_stream_inmemory_read(struct odb_read_stream *stream,
+static ssize_t odb_read_stream_inmemory_read(struct odb_stream *stream,
 					     char *buf, size_t buf_len)
 {
 	struct odb_read_stream_inmemory *inmemory =
@@ -94,12 +94,12 @@ static ssize_t odb_read_stream_inmemory_read(struct odb_read_stream *stream,
 	return bytes;
 }
 
-static int odb_read_stream_inmemory_close(struct odb_read_stream *stream UNUSED)
+static int odb_read_stream_inmemory_close(struct odb_stream *stream UNUSED)
 {
 	return 0;
 }
 
-static int odb_source_inmemory_read_object_stream(struct odb_read_stream **out,
+static int odb_source_inmemory_read_object_stream(struct odb_stream **out,
 						  struct odb_source *source,
 						  const struct object_id *oid)
 {
@@ -256,8 +256,7 @@ static int odb_source_inmemory_write_object(struct odb_source *source,
 }
 
 static int odb_source_inmemory_write_object_stream(struct odb_source *source,
-						   struct odb_write_stream *stream,
-						   size_t len,
+						   struct odb_stream *stream,
 						   struct object_id *oid)
 {
 	char buf[16384];
@@ -265,12 +264,19 @@ static int odb_source_inmemory_write_object_stream(struct odb_source *source,
 	char *data;
 	int ret;
 
-	CALLOC_ARRAY(data, len);
-	while (!stream->is_finished) {
+	CALLOC_ARRAY(data, stream->size);
+	while (1) {
 		ssize_t bytes_read;
 
-		bytes_read = odb_write_stream_read(stream, buf, sizeof(buf));
-		if (total_read + bytes_read > len) {
+		bytes_read = odb_stream_read(stream, buf, sizeof(buf));
+		if (bytes_read < 0) {
+			ret = error("failed to read object stream");
+			goto out;
+		}
+		if (!bytes_read)
+			break;
+
+		if (total_read + bytes_read > stream->size) {
 			ret = error("object stream yielded more bytes than expected");
 			goto out;
 		}
@@ -279,15 +285,16 @@ static int odb_source_inmemory_write_object_stream(struct odb_source *source,
 		total_read += bytes_read;
 	}
 
-	if (total_read != len) {
+	if (total_read != stream->size) {
 		ret = error("object stream yielded less bytes than expected");
 		goto out;
 	}
 
-	hash_object_file(source->odb->repo->hash_algo, data, total_read, OBJ_BLOB, oid);
+	hash_object_file(source->odb->repo->hash_algo, data, total_read,
+			 stream->type, oid);
 
-	ret = odb_source_inmemory_write_object(source, data, len, OBJ_BLOB, oid,
-					       NULL, NULL, 0);
+	ret = odb_source_inmemory_write_object(source, data, stream->size,
+					       stream->type, oid, NULL, NULL, 0);
 	if (ret < 0)
 		goto out;
 

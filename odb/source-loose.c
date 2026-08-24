@@ -278,7 +278,7 @@ out:
 }
 
 struct odb_loose_read_stream {
-	struct odb_read_stream base;
+	struct odb_stream base;
 	git_zstream z;
 	enum {
 		ODB_LOOSE_READ_STREAM_INUSE,
@@ -292,7 +292,7 @@ struct odb_loose_read_stream {
 	int hdr_used;
 };
 
-static ssize_t read_istream_loose(struct odb_read_stream *_st, char *buf, size_t sz)
+static ssize_t read_istream_loose(struct odb_stream *_st, char *buf, size_t sz)
 {
 	struct odb_loose_read_stream *st =
 		container_of(_st, struct odb_loose_read_stream, base);
@@ -339,7 +339,7 @@ static ssize_t read_istream_loose(struct odb_read_stream *_st, char *buf, size_t
 	return total_read;
 }
 
-static int close_istream_loose(struct odb_read_stream *_st)
+static int close_istream_loose(struct odb_stream *_st)
 {
 	struct odb_loose_read_stream *st =
 		container_of(_st, struct odb_loose_read_stream, base);
@@ -350,7 +350,7 @@ static int close_istream_loose(struct odb_read_stream *_st)
 	return 0;
 }
 
-static int odb_source_loose_read_object_stream(struct odb_read_stream **out,
+static int odb_source_loose_read_object_stream(struct odb_stream **out,
 					       struct odb_source *source,
 					       const struct object_id *oid)
 {
@@ -845,8 +845,7 @@ static int odb_source_loose_write_object(struct odb_source *source,
 }
 
 static int odb_source_loose_write_object_stream(struct odb_source *source,
-						struct odb_write_stream *in_stream,
-						size_t len,
+						struct odb_stream *in_stream,
 						struct object_id *oid)
 {
 	struct odb_source_loose *loose = odb_source_loose_downcast(source);
@@ -860,6 +859,7 @@ static int odb_source_loose_write_object_stream(struct odb_source *source,
 	struct strbuf filename = STRBUF_INIT;
 	unsigned char buf[8192];
 	int dirlen;
+	bool is_finished = false;
 	char hdr[MAX_HEADER_LEN];
 	int hdrlen;
 
@@ -868,7 +868,7 @@ static int odb_source_loose_write_object_stream(struct odb_source *source,
 
 	/* Since oid is not determined, save tmp file to odb path. */
 	strbuf_addf(&filename, "%s/", loose->base.path);
-	hdrlen = format_object_header(hdr, sizeof(hdr), OBJ_BLOB, len);
+	hdrlen = format_object_header(hdr, sizeof(hdr), in_stream->type, in_stream->size);
 
 	/*
 	 * Common steps for write_loose_object and stream_loose_object to
@@ -890,21 +890,24 @@ static int odb_source_loose_write_object_stream(struct odb_source *source,
 	do {
 		unsigned char *in0 = stream.next_in;
 
-		if (!stream.avail_in && !in_stream->is_finished) {
-			ssize_t read_len = odb_write_stream_read(in_stream, buf,
-								 sizeof(buf));
+		if (!stream.avail_in && !is_finished) {
+			ssize_t read_len = odb_stream_read(in_stream, buf,
+							   sizeof(buf));
 			if (read_len < 0) {
 				close(fd);
 				err = -1;
 				goto cleanup;
 			}
 
+			/* All data has been read. */
+			if (!read_len) {
+				is_finished = true;
+				flush = 1;
+			}
+
 			stream.avail_in = read_len;
 			stream.next_in = buf;
 			in0 = buf;
-			/* All data has been read. */
-			if (in_stream->is_finished)
-				flush = 1;
 		}
 		ret = write_loose_object_common(loose, &c, &compat_c, &stream, flush, in0, fd,
 						compressed, sizeof(compressed));
@@ -916,9 +919,9 @@ static int odb_source_loose_write_object_stream(struct odb_source *source,
 		 */
 	} while (ret == Z_OK || ret == Z_BUF_ERROR);
 
-	if (stream.total_in != len + hdrlen)
+	if (stream.total_in != in_stream->size + hdrlen)
 		die(_("write stream object %"PRIuMAX" != %"PRIuMAX), (uintmax_t)stream.total_in,
-		    (uintmax_t)len + hdrlen);
+		    (uintmax_t)in_stream->size + hdrlen);
 
 	/*
 	 * Common steps for write_loose_object and stream_loose_object to
