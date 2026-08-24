@@ -659,8 +659,7 @@ static void reftable_addition_close(struct reftable_addition *add)
 
 static int reftable_stack_init_addition(struct reftable_addition *add,
 					struct reftable_stack *st,
-					const struct reftable_write_options *opts,
-					unsigned int flags)
+					const struct reftable_write_options *opts)
 {
 	struct reftable_buf lock_file_name = REFTABLE_BUF_INIT;
 	int err;
@@ -686,14 +685,10 @@ static int reftable_stack_init_addition(struct reftable_addition *add,
 	err = stack_uptodate(st);
 	if (err < 0)
 		goto done;
-	if (err > 0 && flags & REFTABLE_STACK_NEW_ADDITION_RELOAD) {
+	if (err > 0) {
 		err = reftable_stack_reload_maybe_reuse(add->stack, 1);
 		if (err)
 			goto done;
-	}
-	if (err > 0) {
-		err = REFTABLE_OUTDATED_ERROR;
-		goto done;
 	}
 
 	add->next_update_index = reftable_stack_next_update_index(st);
@@ -708,13 +703,12 @@ static int stack_try_add(struct reftable_stack *st,
 			 int (*write_table)(struct reftable_writer *wr,
 					    void *arg),
 			 void *arg,
-			 const struct reftable_write_options *opts,
-			 unsigned flags)
+			 const struct reftable_write_options *opts)
 {
 	struct reftable_addition add;
 	int err;
 
-	err = reftable_stack_init_addition(&add, st, opts, flags);
+	err = reftable_stack_init_addition(&add, st, opts);
 	if (err < 0)
 		goto done;
 
@@ -731,17 +725,10 @@ done:
 int reftable_stack_add(struct reftable_stack *st,
 		       int (*write)(struct reftable_writer *wr, void *arg),
 		       void *arg,
-		       const struct reftable_write_options *opts,
-		       unsigned flags)
+		       const struct reftable_write_options *opts)
 {
-	int err = stack_try_add(st, write, arg, opts, flags);
+	int err = stack_try_add(st, write, arg, opts);
 	if (err < 0) {
-		if (err == REFTABLE_OUTDATED_ERROR) {
-			/* Ignore error return, we want to propagate
-			   REFTABLE_OUTDATED_ERROR.
-			*/
-			reftable_stack_reload(st);
-		}
 		return err;
 	}
 
@@ -843,8 +830,7 @@ done:
 
 int reftable_stack_new_addition(struct reftable_addition **dest,
 				struct reftable_stack *st,
-				const struct reftable_write_options *opts,
-				unsigned int flags)
+				const struct reftable_write_options *opts)
 {
 	int err;
 
@@ -852,7 +838,7 @@ int reftable_stack_new_addition(struct reftable_addition **dest,
 	if (!*dest)
 		return REFTABLE_OUT_OF_MEMORY_ERROR;
 
-	err = reftable_stack_init_addition(*dest, st, opts, flags);
+	err = reftable_stack_init_addition(*dest, st, opts);
 	if (err) {
 		reftable_free(*dest);
 		*dest = NULL;
@@ -1840,12 +1826,7 @@ static int reftable_stack_clean_locked(struct reftable_stack *st)
 int reftable_stack_clean(struct reftable_stack *st)
 {
 	struct reftable_addition *add = NULL;
-	int err = reftable_stack_new_addition(&add, st, NULL, 0);
-	if (err < 0) {
-		goto done;
-	}
-
-	err = reftable_stack_reload(st);
+	int err = reftable_stack_new_addition(&add, st, NULL);
 	if (err < 0) {
 		goto done;
 	}
