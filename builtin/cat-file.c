@@ -31,6 +31,7 @@
 #include "alias.h"
 #include "remote.h"
 #include "transport.h"
+#include "fetch-object-info.h"
 
 /*
  * Maximum length for a remote URL. While no universal standard exists,
@@ -681,9 +682,8 @@ out:
 
 static int get_remote_info(int argc,
 			   const char **argv,
-			   struct object_info **remote_object_info,
-			   struct oid_array *object_info_oids,
-			   struct string_list *object_info_options)
+			   struct fetch_object_info_results *results,
+			   struct oid_array *object_info_oids)
 {
 	int retval = 0;
 	struct remote *remote = NULL;
@@ -724,12 +724,8 @@ static int get_remote_info(int argc,
 		goto cleanup;
 	}
 
-	CALLOC_ARRAY(*remote_object_info, object_info_oids->nr);
-	gtransport->smart_options->object_info_oids = object_info_oids;
-
-	gtransport->smart_options->object_info_options = object_info_options;
-	gtransport->smart_options->object_info_data = *remote_object_info;
-	retval = transport_fetch_object_info(gtransport);
+	retval = transport_fetch_object_info(gtransport, object_info_oids,
+					     results);
 cleanup:
 	transport_disconnect(gtransport);
 	return retval;
@@ -819,21 +815,6 @@ static void parse_cmd_mailmap(struct batch_options *opt UNUSED,
 		load_mailmap();
 }
 
-struct protocol_placeholder_entry {
-	const char *option;
-	const char *atom;
-};
-
-static const struct protocol_placeholder_entry remote_atom_map[] = {
-	{"size", "objectsize"},
-	{"type", "objecttype"},
-	/*
-	 * Add new protocol options here. Even if the server doesn't support
-	 * them the allow_list will drop them if the server doesn't advertise
-	 * them.
-	 */
-};
-
 static void parse_cmd_remote_object_info(struct batch_options *opt,
 					 const char *line, struct strbuf *output,
 					 struct expand_data *data)
@@ -841,18 +822,11 @@ static void parse_cmd_remote_object_info(struct batch_options *opt,
 	int count;
 	const char **argv;
 	char *line_to_split;
-	struct object_info *remote_object_info = NULL;
+	struct fetch_object_info_results results = FETCH_OBJECT_INFO_RESULTS_INIT;
 	struct oid_array object_info_oids = OID_ARRAY_INIT;
-	struct string_list object_info_options = STRING_LIST_INIT_NODUP;
-	const char *saved_format = opt->format;
 
 	if (strlen(line) >= MAX_REMOTE_OBJ_INFO_LINE)
 		die(_("remote-object-info command too long"));
-	/*
-	 * TODO: Use the default format once %(objecttype) is supported.
-	 */
-	if (!opt->format)
-		opt->format = "%(objectname) %(objectsize)";
 
 	line_to_split = xstrdup(line);
 	count = split_cmdline(line_to_split, &argv);
@@ -864,26 +838,25 @@ static void parse_cmd_remote_object_info(struct batch_options *opt,
 		    MAX_ALLOWED_OBJ_LIMIT);
 
 	if (data->info.sizep)
-		string_list_append(&object_info_options, "size");
+		results.wants_size = 1;
 	if (data->info.typep)
-		string_list_append(&object_info_options, "type");
+		results.wants_type = 1;
 
-	if (get_remote_info(count, argv, &remote_object_info,
-			    &object_info_oids, &object_info_options))
+	if (get_remote_info(count, argv, &results, &object_info_oids))
 		die(_("failed to get object info from the remote: %s"), argv[0]);
 
 	string_list_clear(&data->remote_allowed_atoms, 0);
 	string_list_append(&data->remote_allowed_atoms, "objectname");
-	for (size_t i = 0; i < ARRAY_SIZE(remote_atom_map); i++)
-		if (unsorted_string_list_has_string(&object_info_options, remote_atom_map[i].option))
-			string_list_append(&data->remote_allowed_atoms,
-					   remote_atom_map[i].atom);
+	if (results.sizes)
+		string_list_append(&data->remote_allowed_atoms, "objectsize");
+	if (results.types)
+		string_list_append(&data->remote_allowed_atoms, "objecttype");
 
 	data->skip_object_info = 1;
-	for (size_t i = 0; i < object_info_oids.nr; i++) {
+	for (size_t i = 0; i < results.nr; i++) {
 		data->oid = object_info_oids.oid[i];
 
-		if (remote_object_info[i].unrecognized) {
+		if (results.unrecognized[i]) {
 			report_object_status(opt, oid_to_hex(&data->oid),
 					     &data->oid, "missing");
 			continue;
@@ -893,13 +866,11 @@ static void parse_cmd_remote_object_info(struct batch_options *opt,
 		 * When reaching here, it means remote-object-info can retrieve
 		 * information from server without downloading them.
 		 */
-		if (remote_object_info[i].sizep) {
-			data->size = *remote_object_info[i].sizep;
-		}
+		if (results.sizes)
+			data->size = results.sizes[i];
 
-		if (remote_object_info[i].typep) {
-			data->type = *remote_object_info[i].typep;
-		}
+		if (results.types)
+			data->type = results.types[i];
 
 		opt->batch_mode = BATCH_MODE_INFO;
 		data->is_remote = 1;
@@ -907,14 +878,10 @@ static void parse_cmd_remote_object_info(struct batch_options *opt,
 		data->is_remote = 0;
 	}
 	data->skip_object_info = 0;
-	opt->format = saved_format;
 
-	for (size_t i = 0; i < object_info_oids.nr; i++)
-		free_object_info_contents(&remote_object_info[i]);
-	string_list_clear(&object_info_options, 0);
+	free_fetch_object_info_results(&results);
 	free(line_to_split);
 	free(argv);
-	free(remote_object_info);
 	oid_array_clear(&object_info_oids);
 }
 
