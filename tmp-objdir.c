@@ -326,11 +326,13 @@ void tmp_objdir_add_as_alternate(const struct tmp_objdir *t)
 	odb_add_to_alternates_memory(t->repo->objects, t->path.buf);
 }
 
-void tmp_objdir_replace_primary_odb(struct tmp_objdir *t, int will_destroy)
+struct odb_source *tmp_objdir_replace_primary_odb(struct tmp_objdir *t,
+						  int will_destroy)
 {
 	if (t->prev_source)
 		BUG("the primary object database is already replaced");
-	t->prev_source = odb_set_temporary_primary_source(t->repo->objects,
-							  t->path.buf, will_destroy);
 	t->will_destroy = will_destroy;
+
+	return odb_set_temporary_primary_source(t->repo->objects, t->path.buf,
+						will_destroy, &t->prev_source);
 }
