@@ -12,23 +12,101 @@
 #include "config.h"
 #include "editor.h"
 #include "environment.h"
+#include "gpg-interface.h"
 #include "ident.h"
 #include "pager.h"
 #include "refs.h"
 #include "path.h"
 #include "strbuf.h"
+#include "strvec.h"
 #include "run-command.h"
 
-static const char var_usage[] = "git var (-l | <variable>)";
+static const char var_usage[] = "git var (-l [-z] | [-z] <variable>...)";
 
 static char *committer(int ident_flag)
 {
 	return xstrdup_or_null(git_committer_info(ident_flag));
 }
 
+static char *ident_part(const char *ident, char part)
+{
+	struct ident_split split;
+
+	if (!ident)
+		return NULL;
+	if (split_ident_line(&split, ident, strlen(ident)))
+		return NULL;
+
+	switch (part) {
+	case 'n':
+		if (!split.name_begin || !split.name_end)
+			return NULL;
+		return xmemdupz(split.name_begin, split.name_end - split.name_begin);
+	case 'e':
+		if (!split.mail_begin || !split.mail_end)
+			return NULL;
+		return xmemdupz(split.mail_begin, split.mail_end - split.mail_begin);
+	case 'd':
+		if (!split.date_begin)
+			return NULL;
+		if (split.tz_end)
+			return xmemdupz(split.date_begin, split.tz_end - split.date_begin);
+		if (split.date_end)
+			return xmemdupz(split.date_begin, split.date_end - split.date_begin);
+		return NULL;
+	default:
+		return NULL;
+	}
+}
+
+static char *committer_name(int ident_flag)
+{
+	return ident_part(git_committer_info(ident_flag), 'n');
+}
+
+static char *committer_email(int ident_flag)
+{
+	return ident_part(git_committer_info(ident_flag), 'e');
+}
+
+static char *committer_date(int ident_flag)
+{
+	return ident_part(git_committer_info(ident_flag), 'd');
+}
+
 static char *author(int ident_flag)
 {
 	return xstrdup_or_null(git_author_info(ident_flag));
+}
+
+static char *author_name(int ident_flag)
+{
+	return ident_part(git_author_info(ident_flag), 'n');
+}
+
+static char *author_email(int ident_flag)
+{
+	return ident_part(git_author_info(ident_flag), 'e');
+}
+
+static char *author_date(int ident_flag)
+{
+	return ident_part(git_author_info(ident_flag), 'd');
+}
+
+static char *default_key(int ident_flag UNUSED)
+{
+	int gpgsign = 0;
+	char *signing_key = NULL;
+
+	if (repo_config_get_string(the_repository, "user.signingkey", &signing_key) == 0 && signing_key && *signing_key)
+		return signing_key;
+	free(signing_key);
+
+	if (repo_config_get_bool(the_repository, "commit.gpgsign", &gpgsign) == 0 && gpgsign)
+		return get_signing_key_id();
+
+	return NULL;
 }
 
 static char *editor(int ident_flag UNUSED)
@@ -126,8 +204,32 @@ static struct git_var git_vars[] = {
 		.read = committer,
 	},
 	{
+		.name = "GIT_COMMITTER_NAME",
+		.read = committer_name,
+	},
+	{
+		.name = "GIT_COMMITTER_EMAIL",
+		.read = committer_email,
+	},
+	{
+		.name = "GIT_COMMITTER_DATE",
+		.read = committer_date,
+	},
+	{
 		.name = "GIT_AUTHOR_IDENT",
 		.read = author,
+	},
+	{
+		.name = "GIT_AUTHOR_NAME",
+		.read = author_name,
+	},
+	{
+		.name = "GIT_AUTHOR_EMAIL",
+		.read = author_email,
+	},
+	{
+		.name = "GIT_AUTHOR_DATE",
+		.read = author_date,
 	},
 	{
 		.name = "GIT_EDITOR",
@@ -144,6 +246,10 @@ static struct git_var git_vars[] = {
 	{
 		.name = "GIT_DEFAULT_BRANCH",
 		.read = default_branch,
+	},
+	{
+		.name = "GIT_DEFAULT_KEY",
+		.read = default_key,
 	},
 	{
 		.name = "GIT_SHELL_PATH",
@@ -172,10 +278,11 @@ static struct git_var git_vars[] = {
 	},
 };
 
-static void list_vars(void)
+static void list_vars(int null_term)
 {
 	struct git_var *ptr;
 	char *val;
+	char eol = null_term ? '\0' : '\n';
 
 	for (ptr = git_vars; ptr->read; ptr++)
 		if ((val = ptr->read(0))) {
@@ -184,10 +291,10 @@ static void list_vars(void)
 
 				string_list_split(&list, val, "\n", -1);
 				for (size_t i = 0; i < list.nr; i++)
-					printf("%s=%s\n", ptr->name, list.items[i].string);
+					printf("%s=%s%c", ptr->name, list.items[i].string, eol);
 				string_list_clear(&list, 0);
 			} else {
-				printf("%s=%s\n", ptr->name, val);
+				printf("%s=%s%c", ptr->name, val, eol);
 			}
 			free(val);
 		}
@@ -196,6 +303,8 @@ static void list_vars(void)
 static const struct git_var *get_git_var(const char *var)
 {
 	struct git_var *ptr;
+	if (!strcmp(var, "GIT_SIGNING_KEY"))
+		var = "GIT_DEFAULT_KEY";
 	for (ptr = git_vars; ptr->read; ptr++) {
 		if (strcmp(var, ptr->name) == 0) {
 			return ptr;
@@ -207,10 +316,13 @@ static const struct git_var *get_git_var(const char *var)
 static int show_config(const char *var, const char *value,
 		       const struct config_context *ctx, void *cb)
 {
+	int null_term = cb ? *(int *)cb : 0;
+	char eol = null_term ? '\0' : '\n';
+
 	if (value)
-		printf("%s=%s\n", var, value);
+		printf("%s=%s%c", var, value, eol);
 	else
-		printf("%s\n", var);
+		printf("%s%c", var, eol);
 	return git_default_config(var, value, ctx, cb);
 }
 
@@ -219,30 +331,65 @@ int cmd_var(int argc,
 	    const char *prefix UNUSED,
 	    struct repository *repo UNUSED)
 {
-	const struct git_var *git_var;
-	char *val;
+	struct strvec vars = STRVEC_INIT;
+	int list = 0;
+	int null_term = 0;
+	int i;
 
 	show_usage_if_asked(argc, argv, var_usage);
-	if (argc != 2)
-		usage(var_usage);
 
-	if (strcmp(argv[1], "-l") == 0) {
-		repo_config(the_repository, show_config, NULL);
-		list_vars();
+	for (i = 1; i < argc; i++) {
+		const char *arg = argv[i];
+
+		if (!strcmp(arg, "-l")) {
+			list = 1;
+		} else if (!strcmp(arg, "-z")) {
+			null_term = 1;
+		} else if (!strcmp(arg, "--")) {
+			for (i = i + 1; i < argc; i++)
+				strvec_push(&vars, argv[i]);
+			break;
+		} else if (arg[0] == '-') {
+			usage(var_usage);
+		} else {
+			strvec_push(&vars, arg);
+		}
+	}
+
+	if (list) {
+		if (vars.nr > 0) {
+			strvec_clear(&vars);
+			usage(var_usage);
+		}
+		repo_config(the_repository, show_config, &null_term);
+		list_vars(null_term);
 		return 0;
 	}
-	repo_config(the_repository, git_default_config, NULL);
 
-	git_var = get_git_var(argv[1]);
-	if (!git_var)
+	if (!vars.nr)
 		usage(var_usage);
 
-	val = git_var->read(IDENT_STRICT);
-	if (!val)
-		return 1;
+	repo_config(the_repository, git_default_config, NULL);
 
-	printf("%s\n", val);
-	free(val);
+	for (size_t j = 0; j < vars.nr; j++) {
+		const struct git_var *git_var = get_git_var(vars.v[j]);
+		char *val;
 
+		if (!git_var) {
+			strvec_clear(&vars);
+			usage(var_usage);
+		}
+
+		val = git_var->read(IDENT_STRICT);
+		if (!val) {
+			strvec_clear(&vars);
+			return 1;
+		}
+
+		printf("%s%c", val, null_term ? '\0' : '\n');
+		free(val);
+	}
+
+	strvec_clear(&vars);
 	return 0;
 }
