@@ -7,9 +7,6 @@ test_description='git maintenance builtin'
 GIT_TEST_COMMIT_GRAPH=0
 GIT_TEST_MULTI_PACK_INDEX=0
 
-# Ensure that auto-maintenance detaches as usual.
-sane_unset GIT_TEST_MAINT_AUTO_DETACH
-
 test_lazy_prereq XMLLINT '
 	xmllint --version
 '
@@ -67,41 +64,60 @@ test_expect_success 'run [--auto|--quiet] with gc strategy' '
 '
 
 test_expect_success 'maintenance.auto config option' '
-	GIT_TRACE2_EVENT="$(pwd)/default" git commit --quiet --allow-empty -m 1 &&
-	test_subcommand git maintenance run --auto --quiet --detach <default &&
-	GIT_TRACE2_EVENT="$(pwd)/true" \
-		git -c maintenance.auto=true \
-		commit --quiet --allow-empty -m 2 &&
-	test_subcommand git maintenance run --auto --quiet --detach <true &&
-	GIT_TRACE2_EVENT="$(pwd)/false" \
-		git -c maintenance.auto=false \
-		commit --quiet --allow-empty -m 3 &&
-	test_subcommand ! git maintenance run --auto --quiet --detach <false
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		sane_unset GIT_TEST_MAINT_AUTO_DETACH &&
+
+		GIT_TRACE2_EVENT="$(pwd)/default" git commit --quiet --allow-empty -m 1 &&
+		test_subcommand git maintenance run --auto --quiet --detach <default &&
+		GIT_TRACE2_EVENT="$(pwd)/true" \
+			git -c maintenance.auto=true \
+			commit --quiet --allow-empty -m 2 &&
+		test_subcommand git maintenance run --auto --quiet --detach <true &&
+		GIT_TRACE2_EVENT="$(pwd)/false" \
+			git -c maintenance.auto=false \
+			commit --quiet --allow-empty -m 3 &&
+		test_subcommand ! git maintenance run --auto --quiet --detach <false
+	)
 '
 
 test_expect_success 'gc.auto config option' '
-	GIT_TRACE2_EVENT="$(pwd)/default" git commit --quiet --allow-empty -m 1 &&
-	test_subcommand git maintenance run --auto --quiet --detach <default &&
-	GIT_TRACE2_EVENT="$(pwd)/true" \
-		git -c gc.auto=1 commit --quiet --allow-empty -m 2 &&
-	test_subcommand git maintenance run --auto --quiet --detach <true &&
-	GIT_TRACE2_EVENT="$(pwd)/false" \
-		git -c gc.auto=0 commit --quiet --allow-empty -m 3 &&
-	test_subcommand ! git maintenance run --auto --quiet --detach <false
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		sane_unset GIT_TEST_MAINT_AUTO_DETACH &&
+
+		GIT_TRACE2_EVENT="$(pwd)/default" git commit --quiet --allow-empty -m 1 &&
+		test_subcommand git maintenance run --auto --quiet --detach <default &&
+		GIT_TRACE2_EVENT="$(pwd)/true" \
+			git -c gc.auto=1 commit --quiet --allow-empty -m 2 &&
+		test_subcommand git maintenance run --auto --quiet --detach <true &&
+		GIT_TRACE2_EVENT="$(pwd)/false" \
+			git -c gc.auto=0 commit --quiet --allow-empty -m 3 &&
+		test_subcommand ! git maintenance run --auto --quiet --detach <false
+	)
 '
 
 test_expect_success 'maintenance.auto overrides gc.auto' '
-	test_when_finished "rm -f trace" &&
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		sane_unset GIT_TEST_MAINT_AUTO_DETACH &&
 
-	test_config maintenance.auto false &&
-	test_config gc.auto 1 &&
-	GIT_TRACE2_EVENT="$(pwd)/trace" git commit --quiet --allow-empty -m 1 &&
-	test_subcommand ! git maintenance run --auto --quiet --detach <trace &&
+		git config set maintenance.auto false &&
+		git config set gc.auto 1 &&
+		GIT_TRACE2_EVENT="$(pwd)/trace" git commit --quiet --allow-empty -m 1 &&
+		test_subcommand ! git maintenance run --auto --quiet --detach <trace &&
 
-	test_config maintenance.auto true &&
-	test_config gc.auto 0 &&
-	GIT_TRACE2_EVENT="$(pwd)/trace" git commit --quiet --allow-empty -m 1 &&
-	test_subcommand git maintenance run --auto --quiet --detach <trace
+		git config set maintenance.auto true &&
+		git config set gc.auto 0 &&
+		GIT_TRACE2_EVENT="$(pwd)/trace" git commit --quiet --allow-empty -m 1 &&
+		test_subcommand git maintenance run --auto --quiet --detach <trace
+	)
 '
 
 for cfg in maintenance.autoDetach gc.autoDetach
