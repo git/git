@@ -105,6 +105,18 @@ UI, Workflows & Features
    to remove local branches that are already merged into their tracked
    remote-tracking branches.
 
+ * The 'remote-object-info' command for 'git cat-file --batch-command'
+   has been extended to support the '%(objecttype)' placeholder.
+
+ * The usage string of 'git fast-import' has been updated to use the
+   parse_options() API for displaying help, and its SYNOPSIS in the
+   documentation has been standardized to match.
+
+ * The error message given by 'git send-email' when a message file is
+   missing a 'Subject:' header has been clarified, and the error string
+   is now terminated with a newline so that Perl avoids appending its
+   internal source location data.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -380,6 +392,20 @@ Performance, Internal Implementation, Development Support etc.
    setup.  As part of this, the initialization of the object database
    has been deferred, and the loading of the loose-object map has been
    detangled from repository initialization.
+
+ * The 'struct odb_read_stream' and 'struct odb_write_stream'
+   structures have been consolidated into a single unified 'struct
+   odb_stream' structure, simplifying object database streaming APIs
+   and enabling streaming of arbitrary object types.
+
+ * The sequencer has been updated to release the object database before
+   spawning 'git commit'.  This prevents open file handles from
+   blocking auto-maintenance tasks, such as repacking, on systems like
+   Windows where open files cannot be easily unlinked.
+
+ * The merge-base computation has been optimized by stopping the walk
+   early when one side's exclusive commits in the queue are exhausted,
+   yielding significant speedups for queries with one-sided histories.
 
 
 Fixes since v2.55
