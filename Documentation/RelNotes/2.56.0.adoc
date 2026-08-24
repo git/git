@@ -117,6 +117,10 @@ UI, Workflows & Features
    is now terminated with a newline so that Perl avoids appending its
    internal source location data.
 
+ * The '--shallow-file' option of 'git' command requires a value, but the
+   code did not check the presence of a value and instead segfaulted
+   without one, which has been corrected.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -407,6 +411,14 @@ Performance, Internal Implementation, Development Support etc.
    early when one side's exclusive commits in the queue are exhausted,
    yielding significant speedups for queries with one-sided histories.
 
+ * A handful of code paths have been corrected to check return values
+   from functions like curl_easy_duphandle(), deflateInit(), lseek(),
+   dup(), and strbuf_getline_lf(), resolving several Coverity warnings
+   about unchecked returns.
+
+ * The setting of a now-unused member '.pretty_given' in the sequencer
+   machinery has been removed.
+
 
 Fixes since v2.55
 -----------------
@@ -638,3 +650,22 @@ Fixes since v2.55
    replace outdated terminology, define key terms upfront, and document
    how comment lines in the input are treated.
    (merge 4515c86fd9 kh/doc-trailers later to maint).
+
+ * The 'pack-objects' and delta-encoding code paths have been updated to
+   use 'size_t' instead of 'unsigned long' for object sizes and offset
+   limits, avoiding potential truncation issues on 64-bit Windows.
+   (merge d50ac11724 js/pack-objects-delta-size-t later to maint).
+
+ * A client requesting the promisor-remote capability without a value
+   caused a null pointer dereference, which has been corrected by
+   rejecting a request without an argument.
+   (merge dd6b35ff71 en/serve-promisor-remote-fix later to maint).
+
+ * Various tests in 't7900-maintenance.sh' have been updated to use a
+   throwaway repository, and auto-detaching of maintenance tasks is now
+   disabled for these tests to fix flaky races with concurrent background
+   maintenance jobs.
+   (merge 2775d8bcd1 ps/t7900-deflake-maintenance later to maint).
+
+ * The help text for the '-l' option of 'git diff' has been updated.
+   (merge 764243bdf4 en/diff-l-opt-help later to maint).
