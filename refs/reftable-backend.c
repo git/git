@@ -1002,7 +1002,7 @@ static int prepare_transaction_update(struct write_transaction_table_arg **out,
 	if (!arg) {
 		struct reftable_addition *addition;
 
-		ret = reftable_stack_new_addition(&addition, be->stack,
+		ret = reftable_stack_addition_new(&addition, be->stack,
 						  &reftable_be_write_options(refs)->opts);
 		if (ret) {
 			if (ret == REFTABLE_LOCK_ERROR)
@@ -2616,7 +2616,7 @@ static int reftable_be_reflog_expire(struct ref_store *ref_store,
 	if (ret < 0)
 		goto done;
 
-	ret = reftable_stack_new_addition(&add, be->stack,
+	ret = reftable_stack_addition_new(&add, be->stack,
 					  &reftable_be_write_options(refs)->opts);
 	if (ret < 0)
 		goto done;

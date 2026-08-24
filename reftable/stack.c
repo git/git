@@ -828,7 +828,7 @@ done:
 	return err;
 }
 
-int reftable_stack_new_addition(struct reftable_addition **dest,
+int reftable_stack_addition_new(struct reftable_addition **dest,
 				struct reftable_stack *st,
 				const struct reftable_write_options *opts)
 {
@@ -1826,7 +1826,7 @@ static int reftable_stack_clean_locked(struct reftable_stack *st)
 int reftable_stack_clean(struct reftable_stack *st)
 {
 	struct reftable_addition *add = NULL;
-	int err = reftable_stack_new_addition(&add, st, NULL);
+	int err = reftable_stack_addition_new(&add, st, NULL);
 	if (err < 0) {
 		goto done;
 	}

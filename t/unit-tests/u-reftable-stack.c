@@ -257,7 +257,7 @@ void test_reftable_stack__transaction_api(void)
 
 	reftable_addition_destroy(add);
 
-	cl_assert_equal_i(reftable_stack_new_addition(&add, st, NULL), 0);
+	cl_assert_equal_i(reftable_stack_addition_new(&add, st, NULL), 0);
 	cl_assert_equal_i(reftable_addition_add(add, write_test_ref,
 						&ref), 0);
 	cl_assert_equal_i(reftable_addition_commit(add), 0);
@@ -298,7 +298,7 @@ void test_reftable_stack__transaction_with_reload(void)
 
 	cl_assert_equal_i(reftable_new_stack(&st1, dir, NULL), 0);
 	cl_assert_equal_i(reftable_new_stack(&st2, dir, NULL), 0);
-	cl_assert_equal_i(reftable_stack_new_addition(&add, st1, NULL), 0);
+	cl_assert_equal_i(reftable_stack_addition_new(&add, st1, NULL), 0);
 	cl_assert_equal_i(reftable_addition_add(add, write_test_ref,
 						&refs[0]), 0);
 	cl_assert_equal_i(reftable_addition_commit(add), 0);
@@ -308,7 +308,7 @@ void test_reftable_stack__transaction_with_reload(void)
 	 * The second stack is now outdated, but it should automatically reload it
 	 * with the newer updates.
 	 */
-	cl_assert_equal_i(reftable_stack_new_addition(&add, st2, NULL), 0);
+	cl_assert_equal_i(reftable_stack_addition_new(&add, st2, NULL), 0);
 	cl_assert_equal_i(reftable_addition_add(add, write_test_ref,
 						&refs[1]), 0);
 	cl_assert_equal_i(reftable_addition_commit(add), 0);
@@ -355,7 +355,7 @@ void test_reftable_stack__transaction_api_performs_auto_compaction(void)
 		 * we can ensure that we indeed honor this setting and have
 		 * better control over when exactly auto compaction runs.
 		 */
-		cl_assert_equal_i(reftable_stack_new_addition(&add,
+		cl_assert_equal_i(reftable_stack_addition_new(&add,
 							      st, &write_opts), 0);
 		cl_assert_equal_i(reftable_addition_add(add,
 							write_test_ref, &ref), 0);
@@ -1296,7 +1296,7 @@ void test_reftable_stack__invalid_limit_updates(void)
 
 	reftable_addition_destroy(add);
 
-	cl_assert_equal_i(reftable_stack_new_addition(&add, st, &opts), 0);
+	cl_assert_equal_i(reftable_stack_addition_new(&add, st, &opts), 0);
 
 	/*
 	 * write_limits_after_ref also updates the update indexes after adding

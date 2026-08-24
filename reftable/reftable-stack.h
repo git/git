@@ -62,7 +62,7 @@ struct reftable_addition;
  * returns a new transaction to add reftables to the given stack. As a side
  * effect, the ref database is locked.
  */
-int reftable_stack_new_addition(struct reftable_addition **dest,
+int reftable_stack_addition_new(struct reftable_addition **dest,
 				struct reftable_stack *st,
 				const struct reftable_write_options *opts);
 
