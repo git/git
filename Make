@@ -59,6 +59,11 @@ tests= jobs= oldtest= with_shell= testpen= silent=
 clean=:
 
 determine_branch () {
+	if test -n "$METAMAKEBRANCH"
+	then
+		echo "$METAMAKEBRANCH"
+		return
+	fi
 	expr "$($GIT symbolic-ref --no-recurse HEAD 2>/dev/null ||
 		$GIT symbolic-ref HEAD 2>/dev/null)" : 'refs/heads/\(.*\)' ||
 	echo detached

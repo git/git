@@ -179,6 +179,9 @@ do
 	vtree=$(git rev-parse --verify "$version^{tree}")
 	rtree=$(git rev-parse --verify "$revision^{tree}")
 	(
+		METAMAKEBRANCH=$branch
+		export METAMAKEBRANCH
+
 		skip_test=$notest
 		case "$doc" in no) skip_doc=1 ;; *) skip_doc= ;; esac
 		case "$force" in
@@ -213,7 +216,7 @@ do
 		esac
 
 		cd "$BUILDBASE/$branch"
-		git reset --hard  &&
+		git reset --hard "$branch" &&
 
 		case "$scratch$clean" in
 		'')
@@ -230,7 +233,7 @@ do
 		"refs/heads/$branch")
 			: ;;
 		*)
-			git checkout "$branch" &&
+			: git checkout "$branch" &&
 			git reset --hard || exit
 		esac &&
 
