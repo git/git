@@ -150,6 +150,7 @@ int reftable_writer_new(struct reftable_writer **out,
 {
 	struct reftable_write_options opts = {0};
 	struct reftable_writer *wp;
+	int err;
 
 	if (_opts)
 		opts = *_opts;
@@ -177,7 +178,12 @@ int reftable_writer_new(struct reftable_writer **out,
 	wp->opts = opts;
 	wp->hash_id = hash_id;
 	wp->flush = flush_func;
-	writer_reinit_block_writer(wp, REFTABLE_BLOCK_TYPE_REF);
+	err = writer_reinit_block_writer(wp, REFTABLE_BLOCK_TYPE_REF);
+	if (err < 0) {
+		reftable_free(wp->block);
+		reftable_free(wp);
+		return err;
+	}
 
 	*out = wp;
 
