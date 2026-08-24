@@ -101,7 +101,7 @@ maintenance.geometric-repack.auto::
 	there are packfiles that need to be merged together to retain the
 	geometric progression, or when there are at least this many loose
 	objects that would be written into a new packfile. The default value is
-	100.
+	6700.
 
 maintenance.geometric-repack.splitFactor::
 	This integer config option controls the factor used for the geometric
