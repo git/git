@@ -536,6 +536,8 @@ int reftable_new_stack(struct reftable_stack **dest, const char *dir,
 		goto out;
 	}
 
+	p->list_lock = REFTABLE_FLOCK_INIT;
+
 	err = reftable_stack_reload_maybe_reuse(p, 1);
 	if (err < 0)
 		goto out;
@@ -628,9 +630,15 @@ int reftable_stack_reload(struct reftable_stack *st)
 }
 
 struct reftable_addition {
-	struct reftable_flock tables_list_lock;
 	struct reftable_stack *stack;
 	struct reftable_write_options opts;
+
+	/*
+	 * While the list lock is acquired on the stack, we need to distinguish
+	 * which 'reftable_addition' is responsible for the lock. This avoids
+	 * clearing the lock of another 'reftable_addition'.
+	 */
+	unsigned int locked : 1;
 
 	char **new_tables;
 	size_t new_tables_len, new_tables_cap;
@@ -653,7 +661,9 @@ static void reftable_addition_close(struct reftable_addition *add)
 	add->new_tables_len = 0;
 	add->new_tables_cap = 0;
 
-	flock_release(&add->tables_list_lock);
+	if (add->locked)
+		flock_release(&add->stack->list_lock);
+	add->locked = 0;
 	reftable_buf_release(&nm);
 }
 
@@ -669,13 +679,14 @@ static int reftable_stack_init_addition(struct reftable_addition *add,
 	if (opts)
 		add->opts = *opts;
 
-	err = flock_acquire(&add->tables_list_lock, st->list_file,
+	err = flock_acquire(&add->stack->list_lock, st->list_file,
 			    add->opts.lock_timeout_ms);
 	if (err < 0)
 		goto done;
+	add->locked = 1;
 
 	if (add->opts.default_permissions) {
-		if (chmod(add->tables_list_lock.path,
+		if (chmod(add->stack->list_lock.path,
 			  add->opts.default_permissions) < 0) {
 			err = REFTABLE_IO_ERROR;
 			goto done;
@@ -774,7 +785,7 @@ int reftable_addition_commit(struct reftable_addition *add)
 			goto done;
 	}
 
-	err = reftable_write_data(add->tables_list_lock.fd,
+	err = reftable_write_data(add->stack->list_lock.fd,
 				  table_list.buf, table_list.len);
 	reftable_buf_release(&table_list);
 	if (err < 0) {
@@ -782,17 +793,18 @@ int reftable_addition_commit(struct reftable_addition *add)
 		goto done;
 	}
 
-	err = fsync(add->tables_list_lock.fd);
+	err = fsync(add->stack->list_lock.fd);
 	if (err < 0) {
 		err = REFTABLE_IO_ERROR;
 		goto done;
 	}
 
-	err = flock_commit(&add->tables_list_lock);
+	err = flock_commit(&add->stack->list_lock);
 	if (err < 0) {
 		err = REFTABLE_IO_ERROR;
 		goto done;
 	}
+	add->locked = 0;
 
 	/* success, no more state to clean up. */
 	for (i = 0; i < add->new_tables_len; i++)

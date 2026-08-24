@@ -1310,3 +1310,31 @@ void test_reftable_stack__invalid_limit_updates(void)
 	reftable_stack_destroy(st);
 	clear_dir(dir);
 }
+
+void test_reftable_stack__two_additions(void)
+{
+	struct reftable_stack *st = NULL;
+	char *dir = get_tmp_dir(__LINE__);
+	struct reftable_addition *add1 = NULL;
+	struct reftable_addition *add2 = NULL;
+
+	struct reftable_ref_record ref = {
+		.refname = (char *) "HEAD",
+		.update_index = 1,
+		.value_type = REFTABLE_REF_SYMREF,
+		.value.symref = (char *) "master",
+	};
+
+	cl_assert_equal_i(reftable_new_stack(&st, dir, NULL), 0);
+
+	cl_assert_equal_i(reftable_stack_addition_new(&add1, st, NULL), 0);
+	cl_assert_equal_i(reftable_stack_addition_new(&add2, st, NULL), REFTABLE_LOCK_ERROR);
+
+	cl_assert_equal_i(reftable_addition_add(add1, write_test_ref, &ref), 0);
+
+	cl_assert_equal_i(reftable_addition_commit(add1), 0);
+
+	reftable_addition_destroy(add1);
+	reftable_stack_destroy(st);
+	clear_dir(dir);
+}
