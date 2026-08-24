@@ -553,13 +553,20 @@ out:
 
 /*
  * Check whether the given stack is up-to-date with what we have in memory.
+ * If skip_if_locked is set skip stack reloading if the stack is currently
+ * locked. Stack reloading must _not_ be skipped right after obtaining the
+ * lock, to check for concurrent updates which may have happened.
+ *
  * Returns 0 if so, 1 if the stack is out-of-date or a negative error code
  * otherwise.
  */
-static int stack_uptodate(struct reftable_stack *st)
+static int stack_uptodate(struct reftable_stack *st, int skip_if_locked)
 {
 	char **names = NULL;
 	int err;
+
+	if (skip_if_locked && st->list_lock.fd != -1)
+		return 0;
 
 	/*
 	 * When we have cached stat information available then we use it to
@@ -623,7 +630,7 @@ done:
 
 int reftable_stack_reload(struct reftable_stack *st)
 {
-	int err = stack_uptodate(st);
+	int err = stack_uptodate(st, 1);
 	if (err > 0)
 		return reftable_stack_reload_maybe_reuse(st, 1);
 	return err;
@@ -693,7 +700,7 @@ static int reftable_stack_init_addition(struct reftable_addition *add,
 		}
 	}
 
-	err = stack_uptodate(st);
+	err = stack_uptodate(st, 0);
 	if (err < 0)
 		goto done;
 	if (err > 0) {
@@ -1200,7 +1207,7 @@ static int stack_compact_range(struct reftable_stack *st,
 	 * we could check that relevant tables still exist. But for now it's
 	 * good enough to just abort.
 	 */
-	err = stack_uptodate(st);
+	err = stack_uptodate(st, 0);
 	if (err < 0)
 		goto done;
 	if (err > 0) {
@@ -1319,7 +1326,7 @@ static int stack_compact_range(struct reftable_stack *st,
 	 * tables with our compacted version. If they don't, then we need to
 	 * abort.
 	 */
-	err = stack_uptodate(st);
+	err = stack_uptodate(st, 0);
 	if (err < 0)
 		goto done;
 	if (err > 0) {
