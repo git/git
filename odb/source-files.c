@@ -4,6 +4,7 @@
 #include "chdir-notify.h"
 #include "config.h"
 #include "gettext.h"
+#include "hex.h"
 #include "lockfile.h"
 #include "object-file.h"
 #include "odb.h"
@@ -761,6 +762,153 @@ out:
 	return ret;
 }
 
+struct odb_pack_generator_files {
+	struct odb_pack_generator base;
+	struct child_process cp;
+};
+
+static int odb_pack_generator_files_finish(struct odb_pack_generator *_generator)
+{
+	struct odb_pack_generator_files *generator =
+		(struct odb_pack_generator_files *)_generator;
+	int ret;
+
+	ret = finish_command(&generator->cp);
+	free(generator);
+
+	if (ret) {
+		/*
+		 * On failure, pack-objects is expected to have written a
+		 * useful error message to its standard error stream already.
+		 * Death by signal is worth mentioning, though, with the
+		 * exception of SIGPIPE: that is a normal occurrence when the
+		 * consumer of the pack hangs up.
+		 */
+		if (ret > 128 && ret - 128 == SIGPIPE)
+			return -1;
+		if (ret > 128)
+			error(_("pack-objects died of signal %d"), ret - 128);
+		return -1;
+	}
+
+	return 0;
+}
+
+static int odb_source_files_generate_pack(struct odb_source *source UNUSED,
+					  struct odb_pack_generator **out,
+					  const struct odb_generate_pack_options *opts)
+{
+	struct odb_pack_generator_files *generator;
+	struct child_process *cp;
+	FILE *in;
+
+	CALLOC_ARRAY(generator, 1);
+	child_process_init(&generator->cp);
+	cp = &generator->cp;
+
+	/*
+	 * The hook is expected to spawn "$hook git pack-objects <args...>"
+	 * and to behave like git-pack-objects(1) would have. This can for
+	 * example be used to serve precomputed packfiles.
+	 */
+	if (opts->pack_objects_hook) {
+		strvec_push(&cp->args, opts->pack_objects_hook);
+		strvec_push(&cp->args, "git");
+		cp->use_shell = 1;
+	} else {
+		cp->git_cmd = 1;
+	}
+
+	/*
+	 * The caller-provided shallow boundary overrides any shallow state
+	 * that the repository itself may have, so the shallow file needs to
+	 * be neutralized.
+	 */
+	if (opts->shallows.nr) {
+		strvec_push(&cp->args, "--shallow-file");
+		strvec_push(&cp->args, "");
+	}
+	strvec_push(&cp->args, "pack-objects");
+	strvec_push(&cp->args, "--revs");
+	strvec_push(&cp->args, "--stdout");
+	if (opts->thin)
+		strvec_push(&cp->args, "--thin");
+	if (opts->shallow)
+		strvec_push(&cp->args, "--shallow");
+	if (opts->ofs_delta)
+		strvec_push(&cp->args, "--delta-base-offset");
+	if (opts->include_tag)
+		strvec_push(&cp->args, "--include-tag");
+	if (opts->missing_allow_promisor)
+		strvec_push(&cp->args, "--missing=allow-promisor");
+	if (opts->disable_bitmaps)
+		strvec_push(&cp->args, "--no-use-bitmap-index");
+	switch (opts->progress) {
+	case ODB_GENERATE_PACK_PROGRESS_NONE:
+		strvec_push(&cp->args, "--quiet");
+		break;
+	case ODB_GENERATE_PACK_PROGRESS_STANDARD:
+		strvec_push(&cp->args, "--progress");
+		break;
+	case ODB_GENERATE_PACK_PROGRESS_VERBOSE:
+		strvec_push(&cp->args, "--all-progress");
+		break;
+	default:
+		BUG("unknown progress option %d", opts->progress);
+	}
+	if (opts->filter_spec)
+		strvec_pushf(&cp->args, "--filter=%s", opts->filter_spec);
+	if (opts->uri_protocols)
+		for (size_t i = 0; i < opts->uri_protocols->nr; i++)
+			strvec_pushf(&cp->args, "--uri-protocol=%s",
+				     opts->uri_protocols->items[i].string);
+
+	cp->in = -1;
+	cp->out = opts->pack_fd;
+	cp->err = opts->progress_fd;
+	cp->clean_on_exit = 1;
+
+	if (start_command(cp)) {
+		free(generator);
+		return error(_("could not spawn pack-objects"));
+	}
+
+	/*
+	 * Feed the objects to pack-objects. This is safe to do synchronously
+	 * because pack-objects consumes all of its standard input before it
+	 * starts to generate the pack.
+	 */
+	in = xfdopen(cp->in, "w");
+	for (size_t i = 0; i < opts->shallows.nr; i++)
+		fprintf(in, "--shallow %s\n", oid_to_hex(&opts->shallows.oid[i]));
+	for (size_t i = 0; i < opts->wants.nr; i++)
+		fprintf(in, "%s\n", oid_to_hex(&opts->wants.oid[i]));
+	fprintf(in, "--not\n");
+	for (size_t i = 0; i < opts->haves.nr; i++)
+		fprintf(in, "%s\n", oid_to_hex(&opts->haves.oid[i]));
+	fprintf(in, "\n");
+	fflush(in);
+	if (ferror(in)) {
+		error(_("error writing to pack-objects"));
+		fclose(in);
+		if (opts->pack_fd < 0)
+			close(cp->out);
+		if (opts->progress_fd < 0)
+			close(cp->err);
+		finish_command(cp);
+		free(generator);
+		return -1;
+	}
+	fclose(in);
+
+	generator->base.out = opts->pack_fd < 0 ? cp->out : -1;
+	generator->base.err = opts->progress_fd < 0 ? cp->err : -1;
+	generator->base.finish = odb_pack_generator_files_finish;
+
+	*out = &generator->base;
+	return 0;
+}
+
 struct odb_source_files *odb_source_files_new(struct object_database *odb,
 					      const char *path,
 					      bool local)
@@ -789,6 +937,7 @@ struct odb_source_files *odb_source_files_new(struct object_database *odb,
 	files->base.write_alternate = odb_source_files_write_alternate;
 	files->base.optimize = odb_source_files_optimize;
 	files->base.optimize_required = odb_source_files_optimize_required;
+	files->base.generate_pack = odb_source_files_generate_pack;
 
 	/*
 	 * Ideally, we would only ever store absolute paths in the source. This
