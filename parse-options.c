@@ -1414,6 +1414,8 @@ static enum parse_opt_result usage_with_options_internal(struct parse_opt_ctx_t 
 
 		if (opts->type == OPTION_SUBCOMMAND)
 			continue;
+		if (!full && (opts->flags & PARSE_OPT_HIDDEN))
+			continue;
 		if (opts->type == OPTION_GROUP) {
 			fputc('\n', outfile);
 			need_newline = 0;
@@ -1421,8 +1423,6 @@ static enum parse_opt_result usage_with_options_internal(struct parse_opt_ctx_t 
 				fprintf(outfile, "%s\n", _(opts->help));
 			continue;
 		}
-		if (!full && (opts->flags & PARSE_OPT_HIDDEN))
-			continue;
 
 		if (need_newline) {
 			fputc('\n', outfile);

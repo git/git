@@ -150,7 +150,76 @@ Data Structure
 
 The main data structure is an array of the `option` struct,
 say `static struct option builtin_add_options[]`.
+
+Option flags
+~~~~~~~~~~~~
+
+Each option can carry flags in the `flags` field of its `option`
+struct. These are per-option flags and are distinct from the
+`parse_options()` flags described above; they are usually set through
+the `OPT_*_F()` macro variants (see below) rather than by hand. They
+are the bitwise-or of:
+
+`PARSE_OPT_OPTARG`::
+	The option's argument is optional, i.e. both `--option` and
+	`--option=<value>` are accepted.
+
+`PARSE_OPT_NOARG`::
+	The option takes no argument at all. Using `--option=<value>`
+	is rejected.
+
+`PARSE_OPT_NONEG`::
+	Disable the automatically generated negated `--no-option`
+	form.
+
+`PARSE_OPT_HIDDEN`::
+	Hide the option: it is omitted from the usage shown by
+	`git <cmd> -h`, but is still shown by `git <cmd> --help-all`.
+	The option is parsed as usual either way. This is meant for
+	deprecated, advanced or otherwise uncommon options.
+
+`PARSE_OPT_LASTARG_DEFAULT`::
+	The no-argument form is only accepted when the option is the
+	last token on the command line; used earlier, it still
+	requires an argument. Should not be combined with
+	`PARSE_OPT_OPTARG`.
+
+`PARSE_OPT_NODASH`::
+	The option is a single character without a leading dash, such
+	as the `+` used by some commands.
+
+`PARSE_OPT_LITERAL_ARGHELP`::
+	Use the argument help string (`argh`) verbatim in the usage
+	output instead of surrounding it with `<>` or `[]`. Useful when
+	`argh` already contains a hand-formatted description.
+
+`PARSE_OPT_FROM_ALIAS`::
+	Internal flag, set on options that were expanded from a
+	configured alias. It should not be set by callers.
+
+`PARSE_OPT_NOCOMPLETE`::
+	Do not offer this option for completion.
+
+`PARSE_OPT_COMP_ARG`::
+	The option's argument, rather than the option itself, is what
+	should be completed.
+
+`PARSE_OPT_CMDMODE`::
+	The option is one of several mutually exclusive "command mode"
+	options that share the same variable. Using more than one of
+	them at once is rejected.
+
+Macros
+~~~~~~
+
 There are some macros to easily define options:
+
+Many of the macros below have an `_F` variant (for example `OPT_BOOL_F`,
+`OPT_STRING_F`, `OPT_INTEGER_F`, `OPT_SET_INT_F`, `OPT_BIT_F` and
+`OPT_CALLBACK_F`) that takes an additional trailing `flags` argument.
+That argument is the bitwise-or of the per-option flags described in the
+"Option flags" section above; the non-`_F` macros are simply defined
+with `flags` set to `0`.
 
 `OPT__ABBREV(&int_var)`::
 	Add `--abbrev[=<n>]`.
@@ -175,9 +244,20 @@ There are some macros to easily define options:
 	describes the group or an empty string.
 	Start the description with an upper-case letter.
 
+`OPT_HIDDEN_GROUP(description)`::
+	Like `OPT_GROUP()`, but the group header carries
+	`PARSE_OPT_HIDDEN`, so it is only shown by `--help-all` and not
+	by `-h`. Use it to label a group that contains only hidden
+	options, which would otherwise show an empty header under `-h`.
+
 `OPT_BOOL(short, long, &int_var, description)`::
 	Introduce a boolean option. `int_var` is set to one with
 	`--option` and set to zero with `--no-option`.
+
+`OPT_HIDDEN_BOOL(short, long, &int_var, description)`::
+	Like `OPT_BOOL()`, but the option carries `PARSE_OPT_HIDDEN`,
+	so it is hidden from `-h` while still being shown by
+	`--help-all`.
 
 `OPT_COUNTUP(short, long, &int_var, description)`::
 	Introduce a count-up option.

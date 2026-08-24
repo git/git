@@ -209,6 +209,10 @@ int cmd__parse_options(int argc, const char **argv)
 		OPT_GROUP("Alias"),
 		OPT_STRING('A', "alias-source", &string, "string", "get a string"),
 		OPT_ALIAS('Z', "alias-target", "alias-source"),
+		OPT_HIDDEN_GROUP("Hidden options"),
+		OPT_HIDDEN_BOOL(0, "hidden-bool", &boolean, "get a boolean"),
+		OPT_INTEGER_F('k', "hidden-integer", &integer, "get a integer",
+			      PARSE_OPT_HIDDEN),
 		OPT_END(),
 	};
 	int ret = 0;
