@@ -303,11 +303,9 @@ static const char *worktree_basename(const char *path, int *olen)
 	while (len && is_dir_sep(path[len - 1]))
 		len--;
 
-	for (name = path + len - 1; name > path; name--)
-		if (is_dir_sep(*name)) {
-			name++;
-			break;
-		}
+	name = path + len;
+	while (name > path && !is_dir_sep(name[-1]))
+		name--;
 
 	*olen = len;
 	return name;
