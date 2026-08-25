@@ -1009,8 +1009,7 @@ static void odb_source_loose_close(struct odb_source *source UNUSED)
 	/* Nothing to do. */
 }
 
-static void odb_source_loose_reparent(const char *name UNUSED,
-				      const char *old_cwd,
+static void odb_source_loose_reparent(const char *old_cwd,
 				      const char *new_cwd,
 				      void *cb_data)
 {
@@ -1026,7 +1025,7 @@ static void odb_source_loose_free(struct odb_source *source)
 	struct odb_source_loose *loose = odb_source_loose_downcast(source);
 	odb_source_loose_clear_cache(loose);
 	loose_object_map_clear(&loose->map);
-	chdir_notify_unregister(NULL, odb_source_loose_reparent, loose);
+	chdir_notify_unregister(odb_source_loose_reparent, loose);
 	odb_source_release(&loose->base);
 	free(loose);
 }
@@ -1056,7 +1055,7 @@ struct odb_source_loose *odb_source_loose_new(struct object_database *odb,
 	loose->base.write_alternate = odb_source_loose_write_alternate;
 
 	if (!is_absolute_path(loose->base.path))
-		chdir_notify_register(NULL, odb_source_loose_reparent, loose);
+		chdir_notify_register(odb_source_loose_reparent, loose);
 
 	loose_object_map_load(loose);
 

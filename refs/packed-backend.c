@@ -217,8 +217,7 @@ static size_t snapshot_hexsz(const struct snapshot *snapshot)
 	return snapshot->refs->base.repo->hash_algo->hexsz;
 }
 
-static void packed_ref_store_reparent(const char *name UNUSED,
-				      const char *old_cwd,
+static void packed_ref_store_reparent(const char *old_cwd,
 				      const char *new_cwd,
 				      void *payload)
 {
@@ -248,7 +247,7 @@ struct ref_store *packed_ref_store_init(struct repository *repo,
 
 	strbuf_addf(&sb, "%s/packed-refs", gitdir);
 	refs->path = strbuf_detach(&sb, NULL);
-	chdir_notify_register(NULL, packed_ref_store_reparent, refs);
+	chdir_notify_register(packed_ref_store_reparent, refs);
 	return ref_store;
 }
 
@@ -293,7 +292,7 @@ static void packed_ref_store_release(struct ref_store *ref_store)
 	clear_snapshot(refs);
 	rollback_lock_file(&refs->lock);
 	delete_tempfile(&refs->tempfile);
-	chdir_notify_unregister(NULL, packed_ref_store_reparent, refs);
+	chdir_notify_unregister(packed_ref_store_reparent, refs);
 	free(refs->path);
 }
 
