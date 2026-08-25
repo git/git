@@ -2714,6 +2714,62 @@ test_expect_success 'git -C <path> checkout uses the right repo' '
 	EOF
 '
 
+test_expect_success 'git checkout completes tracked paths when no refs match' '
+	# file1 and file2 are tracked but file3 is not
+	# there is no ref that begins with f
+	test_completion "git checkout f" <<-\EOF &&
+	file1
+	file2
+	EOF
+	test_completion "git checkout -- f" <<-\EOF
+	file1
+	file2
+	EOF
+'
+
+test_expect_success 'git checkout completes untracked paths, too' '
+	# ufile is not tracked and there is no ref that begins with u
+	test_completion "git checkout u" <<-\EOF &&
+	ufile
+	EOF
+	test_completion "git checkout -- u" <<-\EOF
+	ufile
+	EOF
+'
+
+test_expect_success 'git -C <path> checkout completes paths in specified repo' '
+	# otherfile is tracked, oops is not
+	# lostfile is tracked but lost, ufile is untracked.
+	test_when_finished "rm -rf repo-for-checkout" &&
+	git init repo-for-checkout &&
+	echo content >repo-for-checkout/otherfile &&
+	echo content >repo-for-checkout/lostfile &&
+	git -C repo-for-checkout add otherfile &&
+	git -C repo-for-checkout add lostfile &&
+	git -C repo-for-checkout commit -m otherfile &&
+	echo untracked >repo-for-checkout/oops &&
+	echo untracked >repo-for-checkout/ufile &&
+	rm -f repo-for-checkout/lostfile &&
+	test_completion "git -C repo-for-checkout checkout o" <<-\EOF &&
+	otherfile
+	EOF
+	test_completion "git -C repo-for-checkout checkout -- o" <<-\EOF &&
+	otherfile
+	EOF
+	test_completion "git -C repo-for-checkout checkout l" <<-\EOF &&
+	lostfile
+	EOF
+	test_completion "git -C repo-for-checkout checkout -- l" <<-\EOF &&
+	lostfile
+	EOF
+	test_completion "git -C repo-for-checkout checkout u" <<-\EOF &&
+	ufile
+	EOF
+	test_completion "git -C repo-for-checkout checkout -- u" <<-\EOF
+	ufile
+	EOF
+'
+
 test_expect_success 'git diff completes tracked paths when no refs match' '
 	# file1 and file2 are tracked but file3 is not
 	# there is no ref that begins with f
