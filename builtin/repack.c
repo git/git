@@ -14,6 +14,11 @@
 #include "promisor-remote.h"
 #include "repack.h"
 #include "shallow.h"
+#include "list-objects-filter-options.h"
+#include "oidset.h"
+#include "hex.h"
+#include "wt-status.h"
+#include "read-cache-ll.h"
 
 #define ALL_INTO_ONE 1
 #define LOOSEN_UNREACHABLE 2
@@ -28,11 +33,15 @@ static int use_delta_islands;
 static int run_update_server_info = 1;
 static char *packdir, *packtmp_name, *packtmp;
 static int midx_must_contain_cruft = 1;
+static int drop_filtered;
+static int dry_run;
+static int write_bitmaps_given;
 
 static const char *const git_repack_usage[] = {
 	N_("git repack [-a] [-A] [-d] [-f] [-F] [-l] [-n] [-q] [-b] [-m]\n"
 	   "[--window=<n>] [--depth=<n>] [--threads=<n>] [--keep-pack=<pack-name>]\n"
-	   "[--write-midx[=<mode>]] [--name-hash-version=<n>] [--path-walk]"),
+	   "[--write-midx[=<mode>]] [--name-hash-version=<n>] [--path-walk]\n"
+	   "[--filter=<filter-spec>] [--drop-filtered [--dry-run]]"),
 	NULL
 };
 
@@ -111,6 +120,21 @@ static int repack_config(const char *var, const char *value,
 	return git_default_config(var, value, ctx, cb);
 }
 
+static int option_parse_write_bitmaps(const struct option *opt, const char *arg,
+				      int unset)
+{
+	int *value = opt->value;
+
+	BUG_ON_OPT_ARG(arg);
+	if (unset)
+		*value = 0;
+	else
+		*value = 1;
+
+	write_bitmaps_given = 1;
+	return 0;
+}
+
 static int option_parse_write_midx(const struct option *opt, const char *arg,
 				   int unset)
 {
@@ -140,6 +164,7 @@ int cmd_repack(int argc,
 	struct string_list_item *item;
 	struct string_list names = STRING_LIST_INIT_DUP;
 	struct existing_packs existing = EXISTING_PACKS_INIT;
+	struct oidset drop_oids = OIDSET_INIT;
 	struct pack_geometry geometry = { 0 };
 	struct tempfile *refs_snapshot = NULL;
 	int i, ret;
@@ -194,8 +219,9 @@ int cmd_repack(int argc,
 		OPT__QUIET(&po_args.quiet, N_("be quiet")),
 		OPT_BOOL('l', "local", &po_args.local,
 				N_("pass --local to git-pack-objects")),
-		OPT_BOOL('b', "write-bitmap-index", &write_bitmaps,
-				N_("write bitmap index")),
+		OPT_CALLBACK_F('b', "write-bitmap-index", &write_bitmaps, NULL,
+				N_("write bitmap index"),
+				PARSE_OPT_NOARG, option_parse_write_bitmaps),
 		OPT_BOOL('i', "delta-islands", &use_delta_islands,
 				N_("pass --delta-islands to git-pack-objects")),
 		OPT_STRING(0, "unpack-unreachable", &unpack_unreachable, N_("approxidate"),
@@ -231,6 +257,10 @@ int cmd_repack(int argc,
 			   N_("pack prefix to store a pack containing pruned objects")),
 		OPT_STRING(0, "filter-to", &filter_to, N_("dir"),
 			   N_("pack prefix to store a pack containing filtered out objects")),
+		OPT_BOOL(0, "drop-filtered", &drop_filtered,
+				N_("delete filtered out objects (requires --filter)")),
+		OPT_BOOL(0, "dry-run", &dry_run,
+				N_("only show which objects would be dropped")),
 		OPT_END()
 	};
 
@@ -251,6 +281,118 @@ int cmd_repack(int argc,
 	po_args.window_memory = xstrdup_or_null(opt_window_memory);
 	po_args.depth = xstrdup_or_null(opt_depth);
 	po_args.threads = xstrdup_or_null(opt_threads);
+
+	die_for_incompatible_opt2(drop_filtered, "--drop-filtered",
+		!!filter_to, "--filter-to");
+
+	if (dry_run && !drop_filtered)
+		die(_("--dry-run only takes effect with --drop-filtered"));
+
+	if (drop_filtered) {
+		if (!po_args.filter_options.choice)
+			die(_("--drop-filtered requires --filter"));
+
+		if (!(pack_everything & ALL_INTO_ONE))
+			die(_("--drop-filtered requires -a"));
+
+		/*
+		 * Only blob:limit=<n> is supported for now. Reject other
+		 * filter choices early, before walking the object database.
+		 */
+		if (po_args.filter_options.choice != LOFC_BLOB_LIMIT)
+			die(_("--drop-filtered only supports --filter=blob:limit=<n> for now"));
+
+		/*
+		 * An explicit -b on the command line is a conflict we have to
+		 * report; a bitmap setting from config is silently overridden
+		 * for the duration of the command.
+		 */
+		if (write_bitmaps_given && write_bitmaps > 0)
+			die(_("options '%s' and '%s' cannot be used together"),
+				"--drop-filtered", "--write-bitmap-index");
+
+		/*
+		 * Without a promisor remote there is nowhere to re-fetch the
+		 * dropped objects from, so dropping them would be permanent
+		 * data loss.
+		 */
+		if (!repo_has_promisor_remote(repo))
+			die(_("--drop-filtered requires a promisor remote"));
+
+		/*
+		 * Refuse to run while another operation is in progress. A
+		 * dropped object would just be lazily re-fetched when the
+		 * operation resumes, but triggering a network fetch in the
+		 * middle of a half-finished
+		 * merge/rebase/cherry-pick/revert/bisect is a poor
+		 * experience, so this is a UX convenience rather than a
+		 * safety measure. Bare repositories have no such state, so
+		 * the check is skipped there.
+		 */
+		if (!is_bare_repository(repo)) {
+			struct wt_status_state state = { 0 };
+
+			wt_status_get_state(repo, &state, 0);
+			if (state.merge_in_progress || state.revert_in_progress ||
+			    state.rebase_in_progress || state.bisect_in_progress ||
+			    state.cherry_pick_in_progress || state.am_in_progress ||
+			    state.rebase_interactive_in_progress) {
+				wt_status_state_free_buffers(&state);
+				die(_("--drop-filtered cannot be used while "
+				      "another operation (merge, rebase, am, "
+				      "cherry-pick, revert, or bisect) is in "
+				      "progress"));
+			}
+			wt_status_state_free_buffers(&state);
+		}
+
+		write_bitmaps = 0;
+
+		/*
+		 * Dropping objects means rebuilding the promisor packs
+		 * without them and then removing the old packs, so the
+		 * redundant packs must be deleted. Imply -d on a real run.
+		 */
+		if (!dry_run)
+			delete_redundant = 1;
+
+		ret = enumerate_promisor_blobs(repo, &po_args.filter_options, &drop_oids);
+
+		if (ret)
+			goto cleanup;
+
+		/*
+		 * Refuse to drop blobs that the current index references.
+		 * Such a blob would only be lazily re-fetched by the next
+		 * command that touches the worktree, so dropping it reclaims
+		 * nothing. This guard just avoids that churn. Bare
+		 * repositories have no index, so the check is skipped there.
+		 */
+		if (!is_bare_repository(repo) && oidset_size(&drop_oids)) {
+			struct index_state *istate = repo->index;
+			unsigned int i;
+
+			if (repo_read_index(repo) < 0)
+				die(_("could not read the index"));
+
+			for (i = 0; i < istate->cache_nr; i++) {
+				const struct cache_entry *ce = istate->cache[i];
+
+				if (oidset_contains(&drop_oids, &ce->oid))
+					die(_("cannot drop '%s' (%s): it is referenced by the current index"),
+						ce->name, oid_to_hex(&ce->oid));
+			}
+		}
+
+		if (dry_run) {
+			struct oidset_iter iter;
+			const struct object_id *oid;
+
+			oidset_iter_init(&drop_oids, &iter);
+			while ((oid = oidset_iter_next(&iter)))
+				printf("%s\n", oid_to_hex(oid));
+		}
+	}
 
 	if (delete_redundant && repo->repository_format_precious_objects)
 		die(_("cannot delete packs in a precious-objects repo"));
@@ -362,7 +504,8 @@ int cmd_repack(int argc,
 		strvec_push(&cmd.args, "--delta-islands");
 
 	if (pack_everything & ALL_INTO_ONE) {
-		repack_promisor_objects(repo, &po_args, &names, packtmp);
+		repack_promisor_objects(repo, &po_args, &names, packtmp,
+			(drop_filtered && !dry_run) ? &drop_oids : NULL);
 
 		if (existing_packs_has_non_kept(&existing) &&
 		    delete_redundant &&
@@ -545,7 +688,7 @@ int cmd_repack(int argc,
 		}
 	}
 
-	if (po_args.filter_options.choice) {
+	if (po_args.filter_options.choice && !drop_filtered) {
 		struct write_pack_opts opts = {
 			.po_args = &po_args,
 			.destination = filter_to,
@@ -638,6 +781,7 @@ int cmd_repack(int argc,
 cleanup:
 	string_list_clear(&keep_pack_list, 0);
 	string_list_clear(&names, 1);
+	oidset_clear(&drop_oids);
 	existing_packs_release(&existing);
 	pack_geometry_release(&geometry);
 	pack_objects_args_release(&po_args);
