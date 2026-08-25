@@ -78,6 +78,20 @@ static int get_object_format(struct repository *repo, struct strbuf *buf)
 	return 0;
 }
 
+static int get_path_cdup(struct repository *repo, struct strbuf *buf)
+{
+	const char *pfx = repo->prefix;
+
+	while (pfx) {
+		pfx = strchr(pfx, '/');
+		if (pfx) {
+			pfx++;
+			strbuf_addstr(buf, "../");
+		}
+	}
+	return 0;
+}
+
 static int get_path_commondir_absolute(struct repository *repo, struct strbuf *buf)
 {
 	const char *common_dir = repo_get_common_dir(repo);
@@ -258,6 +272,7 @@ static const struct repo_info_field repo_info_field[] = {
 	{ "layout.bare", get_layout_bare },
 	{ "layout.shallow", get_layout_shallow },
 	{ "object.format", get_object_format },
+	{ "path.cdup", get_path_cdup },
 	{ "path.commondir.absolute", get_path_commondir_absolute },
 	{ "path.commondir.relative", get_path_commondir_relative },
 	{ "path.git-prefix", get_path_git_prefix },
