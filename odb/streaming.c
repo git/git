@@ -184,7 +184,6 @@ static int istream_source(struct odb_stream **out,
 {
 	struct odb_source *source;
 
-	odb_prepare_alternates(odb);
 	for (source = odb->sources; source; source = source->next)
 		if (!odb_source_read_object_stream(out, source, oid))
 			return 0;
