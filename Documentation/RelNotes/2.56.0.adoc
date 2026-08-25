@@ -121,6 +121,11 @@ UI, Workflows & Features
    code did not check the presence of a value and instead segfaulted
    without one, which has been corrected.
 
+ * 'git repack' has been taught '--drop-filtered' to delete local
+   promisor blobs exceeding a limit (currently 'blob:limit=') in partial
+   clones, reclaiming space.  Guards prevent running during other
+   operations or if referenced by the index.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -419,6 +424,16 @@ Performance, Internal Implementation, Development Support etc.
  * The setting of a now-unused member '.pretty_given' in the sequencer
    machinery has been removed.
 
+ * The performance of adding numerous new packfiles has been improved
+   by introducing a fast path for known-new packfiles to skip an
+   unnecessary traversal in packfile_list_append(), avoiding a
+   quadratic complexity regression on load.
+
+ * The unused name parameter in 'struct chdir_notify_entry' has been
+   removed from chdir_notify_register(), chdir_notify_unregister(), and
+   related callback signatures across several subsystems, simplifying the
+   API now that trace output no longer uses it.
+
 
 Fixes since v2.55
 -----------------
@@ -669,3 +684,14 @@ Fixes since v2.55
 
  * The help text for the '-l' option of 'git diff' has been updated.
    (merge 764243bdf4 en/diff-l-opt-help later to maint).
+
+ * 'git -C <dir> diff fi<TAB>' did not complete 'file', which has
+   been corrected.
+   (merge 354d1bf3a0 jc/complete-diff-tracked-paths later to maint).
+
+ * 'git -C <dir> checkout fi<TAB>' did not complete 'file', which has
+   been corrected.
+   (merge 05e2ab1f31 jc/complete-checkout later to maint).
+
+ * Other code cleanup, docfix, build fix, etc.
+   (merge 026636128f ss/submittingpatches-typofix later to maint).
