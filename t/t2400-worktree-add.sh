@@ -46,6 +46,10 @@ test_expect_success '"add" refuses to checkout locked branch' '
 	test_path_is_missing .git/worktrees/zere
 '
 
+test_expect_success '"add" rejects an empty path' '
+	test_must_fail git worktree add "" HEAD
+'
+
 test_expect_success 'checking out paths not complaining about linked checkouts' '
 	(
 	cd existing_empty &&

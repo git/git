@@ -491,6 +491,8 @@ static int add_worktree(const char *path, const char *refname,
 
 	name = worktree_basename(path, &len);
 	strbuf_add(&sb, name, path + len - name);
+	if (!sb.len)
+		die(_("invalid path '%s'"), path);
 	sanitize_refname_component(sb.buf, &sb_name);
 	if (!sb_name.len)
 		BUG("How come '%s' becomes empty after sanitization?", sb.buf);
