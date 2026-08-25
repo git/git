@@ -768,7 +768,7 @@ static char *dwim_branch(const char *path, char **new_branch)
 	int n;
 	int branch_exists;
 	const char *s = worktree_basename(path, &n);
-	char *branchname = xstrndup(s, n);
+	char *branchname = xmemdupz(s, path + n - s);
 	struct strbuf ref = STRBUF_INIT;
 
 	branch_exists = !check_branch_ref(&ref, branchname) &&
@@ -877,7 +877,7 @@ static int add(int ac, const char **av, const char *prefix,
 	if (opts.orphan && !new_branch) {
 		int n;
 		const char *s = worktree_basename(path, &n);
-		new_branch = new_branch_to_free = xstrndup(s, n);
+		new_branch = new_branch_to_free = xmemdupz(s, path + n - s);
 	} else if (opts.orphan) {
 		; /* no-op */
 	} else if (opts.detach) {

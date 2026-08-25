@@ -298,6 +298,11 @@ test_expect_success '"add" with <branch> omitted' '
 	test_cmp_rev HEAD bat
 '
 
+test_expect_success '"add" with trailing slash and <branch> omitted' '
+	git worktree add waffle/bit/ &&
+	test_cmp_rev HEAD bit
+'
+
 test_expect_success '"add" checks out existing branch of dwimd name' '
 	git branch dwim HEAD~1 &&
 	git worktree add dwim &&
@@ -383,6 +388,14 @@ test_expect_success '"add --orphan"' '
 test_expect_success '"add --orphan (no -b)"' '
 	test_when_finished "git worktree remove -f -f neworphan" &&
 	git worktree add --orphan neworphan &&
+	echo refs/heads/neworphan >expected &&
+	git -C neworphan symbolic-ref HEAD >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success '"add --orphan with trailing slash (no -b)"' '
+	test_when_finished "git worktree remove -f -f neworphan" &&
+	git worktree add --orphan ./neworphan/ &&
 	echo refs/heads/neworphan >expected &&
 	git -C neworphan symbolic-ref HEAD >actual &&
 	test_cmp expected actual
