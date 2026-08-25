@@ -15,7 +15,8 @@ struct packfile_list_entry {
 void packfile_list_clear(struct packfile_list *list);
 void packfile_list_remove(struct packfile_list *list, struct packed_git *pack);
 void packfile_list_prepend(struct packfile_list *list, struct packed_git *pack);
-void packfile_list_append(struct packfile_list *list, struct packed_git *pack);
+void packfile_list_append(struct packfile_list *list, struct packed_git *pack,
+			  int skip_dup_check);
 
 /*
  * Find the pack within the "packs" list whose index contains the object
