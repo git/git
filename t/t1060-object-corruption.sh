@@ -145,4 +145,22 @@ test_expect_success 'partial clone of corrupted repository' '
 	test_must_fail git -C corrupt-partial checkout --force
 '
 
+test_expect_success 'corrupted loose commit can be read from alternate' '
+	git init repo-a &&
+	tree=$(git -C repo-a write-tree) &&
+	commit=$(git -C repo-a commit-tree $tree </dev/null) &&
+
+	cp -r repo-a repo-b &&
+	(
+		cd repo-b &&
+		echo ../../../repo-a/.git/objects >.git/objects/info/alternates &&
+		corrupt_byte "$commit" 1
+	) &&
+
+	git -C repo-a cat-file -p "$commit" >expect &&
+	git -C repo-b cat-file -p "$commit" >actual 2>err &&
+	test_cmp expect actual &&
+	test_grep "inflate: data stream error" err
+'
+
 test_done

@@ -29,7 +29,7 @@ static void cl_assert_object_info(struct odb_source_inmemory *source,
 		.contentp = &actual_content,
 	};
 
-	cl_must_pass(odb_source_read_object_info(&source->base, oid, &oi, 0));
+	cl_must_pass(odb_source_read_object_info(&source->base, oid, &oi, 0, NULL));
 	cl_assert_equal_u(actual_size, strlen(expected_content));
 	cl_assert_equal_u(actual_type, expected_type);
 	cl_assert_equal_s((char *) actual_content, expected_content);
@@ -72,7 +72,8 @@ void test_odb_inmemory__read_missing_object(void)
 	const char *end;
 
 	cl_must_pass(parse_oid_hex_algop(RANDOM_OID, &oid, &end, repo.hash_algo));
-	cl_must_fail(odb_source_read_object_info(&source->base, &oid, NULL, 0));
+	cl_assert_equal_i(odb_source_read_object_info(&source->base, &oid, NULL, 0, NULL),
+			  ODB_READ_NOT_FOUND);
 
 	odb_source_free(&source->base);
 }

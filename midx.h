@@ -117,7 +117,8 @@ uint32_t nth_midxed_pack_int_id(struct multi_pack_index *m, uint32_t pos);
 struct object_id *nth_midxed_object_oid(struct object_id *oid,
 					struct multi_pack_index *m,
 					uint32_t n);
-int fill_midx_entry(struct multi_pack_index *m, const struct object_id *oid, struct pack_entry *e);
+int fill_midx_entry(struct multi_pack_index *m, const struct object_id *oid,
+		    struct pack_entry *e, struct packed_git **bad_pack);
 int midx_contains_pack(struct multi_pack_index *m,
 		       const char *idx_or_pack_name);
 int midx_layer_contains_pack(struct multi_pack_index *m,
