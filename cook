@@ -377,7 +377,11 @@ sub get_commit {
 
 	for my $branch (keys %topic) {
 		my @log = ();
-		my $n = scalar(@{$topic{$branch}{'log'}});
+		my $n = scalar(
+			grep {
+				$commit{$_}->{'log'} !~ /^[-.+] Merge branch/;
+			} @{$topic{$branch}{'log'}}
+		);
 		if (!$n) {
 			delete $topic{$branch};
 			next;
