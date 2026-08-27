@@ -333,4 +333,25 @@ test_expect_success 'rebase with commits that become empty' '
 	verify_hook_input
 '
 
+test_expect_success 'rebase drops a commit that its fixup empties' '
+	git checkout -b empty-fixup A &&
+	test_commit --no-tag P1 file1 one &&
+	test_commit --no-tag P2 file1 two &&
+	test_commit --no-tag P3 file2 three &&
+	echo one >file1 &&
+	git commit -m "fixup! P2" file1 &&
+	p1=$(git rev-parse HEAD~3) &&
+	p3=$(git rev-parse HEAD~1) &&
+	clear_hook_input &&
+
+	git rebase -i --autosquash --empty=drop B &&
+
+	echo rebase >expected.args &&
+	cat >expected.data <<-EOF &&
+	$p1 $(git rev-parse HEAD~1)
+	$p3 $(git rev-parse HEAD)
+	EOF
+	verify_hook_input
+'
+
 test_done

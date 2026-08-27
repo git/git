@@ -210,6 +210,31 @@ static GIT_PATH_FUNC(rebase_path_no_reschedule_failed_exec, "rebase-merge/no-res
 static GIT_PATH_FUNC(rebase_path_drop_redundant_commits, "rebase-merge/drop_redundant_commits")
 static GIT_PATH_FUNC(rebase_path_keep_redundant_commits, "rebase-merge/keep_redundant_commits")
 static GIT_PATH_FUNC(rebase_path_trailer, "rebase-merge/trailer")
+/*
+ * The file that remembers, across a stop for conflict resolution, what
+ * "enum fixup_target" recorded about the commit a chain of fixup and
+ * squash commands is being applied to.
+ */
+static GIT_PATH_FUNC(rebase_path_fixup_target, "rebase-merge/fixup-target")
+
+/*
+ * What we know about the commit that the current chain of fixup and squash
+ * commands is being applied to.  A commit is only dropped when squashing
+ * the fixups into it empties it out if it was picked with changes of its
+ * own, so anything but FIXUP_TARGET_PICKED_NONEMPTY keeps it.
+ */
+enum fixup_target {
+	/*
+	 * The commit was not created by a "pick", either because it was
+	 * dropped or because the todo list starts the chain with some
+	 * other command such as "reset", "exec" or "break".
+	 */
+	FIXUP_TARGET_UNKNOWN = 0,
+	/* The commit was picked empty, so the fixups did not empty it. */
+	FIXUP_TARGET_PICKED_EMPTY,
+	/* The commit was picked with changes, so the fixups may empty it. */
+	FIXUP_TARGET_PICKED_NONEMPTY
+};
 
 /*
  * A 'struct replay_ctx' represents the private state of the sequencer.
@@ -234,6 +259,11 @@ struct replay_ctx {
 	 * Whether message contains a commit message.
 	 */
 	unsigned have_message :1;
+	/*
+	 * What the commit that the current chain of fixup and squash
+	 * commands is being applied to was picked as.
+	 */
+	enum fixup_target fixup_target;
 };
 
 struct replay_ctx* replay_ctx_new(void)
@@ -585,6 +615,38 @@ static int write_message(const void *buf, size_t len, const char *filename,
 		return error(_("failed to finalize '%s'"), filename);
 
 	return 0;
+}
+
+/* The two names that rebase_path_fixup_target() stores. */
+static const char *const fixup_target_name[] = {
+	[FIXUP_TARGET_PICKED_EMPTY] = "picked-empty",
+	[FIXUP_TARGET_PICKED_NONEMPTY] = "picked-non-empty"
+};
+
+/*
+ * Remember what the commit that the current chain of fixup and squash
+ * commands is being applied to was picked as, both in the sequencer state
+ * and on disk so that it survives a stop for conflict resolution.
+ */
+static int set_fixup_target(struct replay_opts *opts, enum fixup_target target)
+{
+	struct replay_ctx *ctx = opts->ctx;
+	const char *name;
+
+	if (ctx->fixup_target == target)
+		return 0;
+
+	ctx->fixup_target = target;
+	if (!is_rebase_i(opts))
+		return 0;
+
+	if (target == FIXUP_TARGET_UNKNOWN) {
+		unlink(rebase_path_fixup_target());
+		return 0;
+	}
+
+	name = fixup_target_name[target];
+	return write_message(name, strlen(name), rebase_path_fixup_target(), 1);
 }
 
 int read_oneliner(struct strbuf *buf,
@@ -1818,6 +1880,41 @@ static int allow_empty(struct repository *r,
 		return 0;
 }
 
+/*
+ * A "fixup" or "squash" is applied by amending HEAD, so the commit it
+ * produces is empty when the index matches the tree of HEAD's parent,
+ * rather than the tree of HEAD itself that is_index_unchanged() looks at.
+ * Returns 1 if amending HEAD would leave it empty, 0 if not, and negative
+ * on error.
+ */
+static int is_amended_head_empty(struct repository *r)
+{
+	const struct object_id *parent_tree_oid;
+	struct object_id *cache_tree_oid;
+	struct commit *head;
+
+	head = lookup_commit_reference_by_name("HEAD");
+	if (!head || repo_parse_commit(r, head))
+		return error(_("could not parse HEAD commit"));
+
+	if (head->parents) {
+		struct commit *parent = head->parents->item;
+
+		if (repo_parse_commit(r, parent))
+			return error(_("could not parse parent commit %s"),
+				     oid_to_hex(&parent->object.oid));
+		parent_tree_oid = get_commit_tree_oid(parent);
+	} else {
+		parent_tree_oid = the_hash_algo->empty_tree; /* HEAD is root */
+	}
+
+	cache_tree_oid = get_cache_tree_oid(r->index);
+	if (!cache_tree_oid)
+		return -1;
+
+	return oideq(cache_tree_oid, parent_tree_oid);
+}
+
 static struct {
 	char c;
 	const char *str;
@@ -2273,11 +2370,39 @@ static const char *reflog_message(struct replay_opts *opts,
 	return buf.buf;
 }
 
+/*
+ * Drop the commit at HEAD by moving HEAD back to its parent.  The index and
+ * the worktree already match the tree of that parent, so nothing else needs
+ * to be updated.  "action" names the command doing the dropping and is only
+ * used for the reflog message.
+ */
+static int drop_head_commit(struct repository *r, struct replay_opts *opts,
+			    const char *action)
+{
+	struct commit *head = lookup_commit_reference_by_name("HEAD");
+
+	if (!head || repo_parse_commit(r, head))
+		return error(_("could not parse HEAD commit"));
+	if (!head->parents)
+		return error(_("cannot drop the root commit"));
+
+	return refs_update_ref(get_main_ref_store(r),
+			       reflog_message(opts, action,
+					      "dropping emptied commit"),
+			       "HEAD", &head->parents->item->object.oid,
+			       &head->object.oid, 0, UPDATE_REFS_MSG_ON_ERR);
+}
+
 enum pick_result {
 	PICK_RESULT_ERROR = -1,
 	PICK_RESULT_OK,
 	PICK_RESULT_CONFLICTS,
 	PICK_RESULT_DROPPED,
+	/*
+	 * The fixups were squashed into a commit that they emptied out, so
+	 * that commit was dropped along with them.
+	 */
+	PICK_RESULT_DROPPED_HEAD,
 };
 
 static enum pick_result do_pick_commit(struct repository *r,
@@ -2293,7 +2418,7 @@ static enum pick_result do_pick_commit(struct repository *r,
 	const char *base_label, *next_label, *reflog_action;
 	char *author = NULL;
 	struct commit_message msg = { NULL, NULL, NULL, NULL };
-	int res, unborn = 0, reword = 0, allow, drop_commit = 0;
+	int res, unborn = 0, reword = 0, allow, drop_commit = 0, drop_head = 0;
 	enum todo_command command = item->command;
 	struct commit *commit = item->commit;
 
@@ -2302,6 +2427,20 @@ static enum pick_result do_pick_commit(struct repository *r,
 			opts, command_to_string(item->command), NULL);
 	else
 		reflog_action = sequencer_reflog_action(opts);
+
+	/*
+	 * Remember whether this commit is picked with changes of its own, as
+	 * only such a commit is dropped when the fixups that follow it empty
+	 * it out again.
+	 */
+	if (is_rebase_i(opts) && command == TODO_PICK) {
+		int empty = is_original_commit_empty(commit);
+
+		if (empty < 0 ||
+		    set_fixup_target(opts, empty ? FIXUP_TARGET_PICKED_EMPTY :
+				     FIXUP_TARGET_PICKED_NONEMPTY))
+			return PICK_RESULT_ERROR;
+	}
 
 	if (opts->no_commit) {
 		/*
@@ -2540,7 +2679,51 @@ static enum pick_result do_pick_commit(struct repository *r,
 			_("dropping %s %s -- patch contents already upstream\n"),
 			oid_to_hex(&commit->object.oid), msg.subject);
 	} /* else allow == 0 and there's nothing special to do */
-	if (!opts->no_commit && !drop_commit) {
+
+	/*
+	 * allow_empty() above only notices a commit that adds nothing to
+	 * HEAD.  A "fixup" or "squash" can also cancel out the changes of
+	 * the commit it is squashed into, which leaves that commit empty
+	 * instead, so check for that here and honor --empty for it.
+	 */
+	if ((flags & AMEND_MSG) && !drop_commit &&
+	    ctx->fixup_target == FIXUP_TARGET_PICKED_NONEMPTY) {
+		int emptied = is_amended_head_empty(r);
+
+		if (emptied < 0) {
+			res = emptied;
+			goto leave;
+		}
+
+		if (emptied && (!final_fixup || opts->keep_redundant_commits)) {
+			/*
+			 * Keep the commit, empty for now, when more fixups
+			 * are still to be squashed into it, as dropping it
+			 * here would squash them into the previous commit
+			 * instead.  Also keep it when --empty=keep asks us to.
+			 */
+			flags |= ALLOW_EMPTY;
+		} else if (emptied && opts->drop_redundant_commits) {
+			unlink(git_path_merge_msg(r));
+			refs_delete_ref(get_main_ref_store(r), "", "AUTO_MERGE",
+					NULL, REF_NO_DEREF);
+			res = drop_head_commit(r, opts,
+					       command_to_string(command));
+			if (res)
+				goto leave;
+			drop_head = 1;
+			fprintf(stderr,
+				_("dropping %s %s -- squashing it in empties the commit\n"),
+				oid_to_hex(&commit->object.oid), msg.subject);
+		}
+		/*
+		 * Otherwise --empty=stop is in effect, and "git commit
+		 * --amend" below refuses to make the commit empty, which
+		 * halts the rebase.
+		 */
+	}
+
+	if (!opts->no_commit && !drop_commit && !drop_head) {
 		if (author || command == TODO_REVERT || (flags & AMEND_MSG))
 			res = do_commit(r, msg_file, author, reflog_action,
 					opts, flags,
@@ -2587,6 +2770,8 @@ leave:
 		return PICK_RESULT_ERROR;
 	else if (res > 0)
 		return PICK_RESULT_CONFLICTS;
+	else if (drop_head)
+		return PICK_RESULT_DROPPED_HEAD;
 	else if (drop_commit)
 		return PICK_RESULT_DROPPED;
 	else
@@ -3317,6 +3502,17 @@ static int read_populate_opts(struct replay_opts *opts)
 			goto done_rebase_i;
 		}
 		strbuf_reset(&buf);
+
+		if (read_oneliner(&buf, rebase_path_fixup_target(),
+				  READ_ONELINER_SKIP_IF_EMPTY)) {
+			enum fixup_target target;
+
+			for (target = FIXUP_TARGET_PICKED_EMPTY;
+			     target <= FIXUP_TARGET_PICKED_NONEMPTY; target++)
+				if (!strcmp(buf.buf, fixup_target_name[target]))
+					ctx->fixup_target = target;
+			strbuf_reset(&buf);
+		}
 
 		if (read_oneliner(&ctx->current_fixups,
 				  rebase_path_current_fixups(),
@@ -5057,8 +5253,25 @@ static int pick_one_commit(struct repository *r,
 				    peek_command(todo_list, 1));
 		return 0;
 	} else if (pick_res == PICK_RESULT_DROPPED) {
+		/*
+		 * When a "pick" is dropped HEAD stays where it was, so a
+		 * "fixup" that follows would be squashed into a commit we
+		 * know nothing about.  A dropped "fixup" on the other hand
+		 * leaves the commit it targets untouched.
+		 */
+		if (!is_fixup(item->command))
+			set_fixup_target(opts, FIXUP_TARGET_UNKNOWN);
 		if (is_final_fixup(todo_list))
 			flush_rewritten_pending();
+		return 0;
+	} else if (pick_res == PICK_RESULT_DROPPED_HEAD) {
+		/*
+		 * The commit the fixups were squashed into is gone, so
+		 * neither it nor any of them were rewritten and there is
+		 * nothing left for the post-rewrite machinery to report.
+		 */
+		unlink(rebase_path_rewritten_pending());
+		set_fixup_target(opts, FIXUP_TARGET_UNKNOWN);
 		return 0;
 	} else if (pick_res == PICK_RESULT_CONFLICTS &&
 		   is_fixup(item->command)) {
@@ -5115,6 +5328,16 @@ static int pick_commits(struct repository *r,
 
 		if (save_todo(todo_list, opts, reschedule))
 			return -1;
+
+		/*
+		 * Only a commit created by a "pick" is dropped when the
+		 * fixups squashed into it empty it out, so forget about the
+		 * last "pick" as soon as any other command runs.
+		 */
+		if (item->command != TODO_PICK && !is_fixup(item->command) &&
+		    !is_noop(item->command))
+			set_fixup_target(opts, FIXUP_TARGET_UNKNOWN);
+
 		if (is_rebase_i(opts)) {
 			if (item->command != TODO_COMMENT) {
 				FILE *f = fopen(rebase_path_msgnum(), "w");
@@ -5515,6 +5738,53 @@ static int commit_staged_changes(struct repository *r,
 		}
 
 		if (!final_fixup) {
+			ret = 0;
+			goto out;
+		}
+	}
+
+	/*
+	 * If resolving the conflicts of the last "fixup" or "squash" of a
+	 * chain undid the commit they are being squashed into, honor
+	 * --empty for that commit just as do_pick_commit() does when the
+	 * chain applies cleanly.
+	 */
+	if ((flags & AMEND_MSG) && opts->drop_redundant_commits &&
+	    ctx->fixup_target == FIXUP_TARGET_PICKED_NONEMPTY &&
+	    !is_fixup(peek_command(todo_list, 0))) {
+		int emptied = is_amended_head_empty(r);
+
+		if (emptied < 0) {
+			ret = emptied;
+			goto out;
+		}
+		if (emptied) {
+			ret = drop_head_commit(r, opts, "continue");
+			if (ret)
+				goto out;
+
+			/*
+			 * Neither the dropped commit nor the fixups squashed
+			 * into it were rewritten, so leave nothing behind for
+			 * the post-rewrite machinery to report.
+			 */
+			unlink(rebase_path_stopped_sha());
+			unlink(rebase_path_rewritten_pending());
+			set_fixup_target(opts, FIXUP_TARGET_UNKNOWN);
+
+			unlink(rebase_path_amend());
+			unlink(rebase_path_fixup_msg());
+			unlink(rebase_path_squash_msg());
+			unlink(git_path_merge_head(r));
+			unlink(git_path_merge_msg(r));
+			refs_delete_ref(get_main_ref_store(r), "", "AUTO_MERGE",
+					NULL, REF_NO_DEREF);
+			if (ctx->current_fixup_count > 0) {
+				unlink(rebase_path_current_fixups());
+				strbuf_reset(&ctx->current_fixups);
+				ctx->current_fixup_count = 0;
+			}
+
 			ret = 0;
 			goto out;
 		}
@@ -6488,6 +6758,7 @@ int todo_list_write_to_file(struct repository *r, struct todo_list *todo_list,
 
 /* skip picking commits whose parents are unchanged */
 static int skip_unnecessary_picks(struct repository *r,
+				  struct replay_opts *opts,
 				  struct todo_list *todo_list,
 				  struct object_id *base_oid)
 {
@@ -6527,8 +6798,28 @@ static int skip_unnecessary_picks(struct repository *r,
 		todo_list->current = 0;
 		todo_list->done_nr += i;
 
-		if (is_fixup(peek_command(todo_list, 0)))
+		if (is_fixup(peek_command(todo_list, 0))) {
+			/*
+			 * The picks that were skipped never reach
+			 * do_pick_commit(), so record here what the last of
+			 * them left at HEAD for the fixups that follow it.
+			 */
+			struct commit *base = lookup_commit_reference(r,
+								      base_oid);
+			int empty;
+
+			if (!base)
+				return error(_("could not parse commit '%s'"),
+					     oid_to_hex(base_oid));
+			empty = is_original_commit_empty(base);
+			if (empty < 0 ||
+			    set_fixup_target(opts,
+					     empty ? FIXUP_TARGET_PICKED_EMPTY :
+					     FIXUP_TARGET_PICKED_NONEMPTY))
+				return -1;
+
 			record_in_rewritten(base_oid, peek_command(todo_list, 0));
+		}
 	}
 
 	return 0;
@@ -6727,7 +7018,7 @@ int complete_action(struct repository *r, struct replay_opts *opts, unsigned fla
 		BUG("invalid todo list after expanding IDs:\n%s",
 		    new_todo.buf.buf);
 
-	if (opts->allow_ff && skip_unnecessary_picks(r, &new_todo, &oid)) {
+	if (opts->allow_ff && skip_unnecessary_picks(r, opts, &new_todo, &oid)) {
 		todo_list_release(&new_todo);
 		return error(_("could not skip unnecessary pick commands"));
 	}
