@@ -520,8 +520,6 @@ static const char *prepare_index(const char **argv, const char *prefix,
 			die(_("cannot do a partial commit during a merge."));
 		else if (is_from_cherry_pick(whence))
 			die(_("cannot do a partial commit during a cherry-pick."));
-		else if (is_from_rebase_now_empty(whence))
-			die(_("cannot do a partial commit during a rebase."));
 	}
 
 	if (list_paths(&partial, !current_head ? NULL : "HEAD", &pathspec))
