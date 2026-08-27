@@ -88,6 +88,9 @@ include shared.mak
 # tests.  These tests take up a significant amount of the total test time
 # but are not needed unless you plan to talk to SVN repos.
 #
+# Define NO_GIT_SVN if you don't want git-svn built or installed at all.
+# Implies NO_SVN_TESTS.
+#
 # Define NO_FINK if you are building on Darwin/Mac OS X, have Fink
 # installed in /sw, but don't want GIT to link against any libraries
 # installed there.  If defined you may specify your own (or Fink's)
@@ -744,7 +747,9 @@ SCRIPT_PERL += git-cvsexportcommit.perl
 SCRIPT_PERL += git-cvsimport.perl
 SCRIPT_PERL += git-cvsserver.perl
 SCRIPT_PERL += git-send-email.perl
+ifndef NO_GIT_SVN
 SCRIPT_PERL += git-svn.perl
+endif
 
 SCRIPT_PYTHON += git-p4.py
 
@@ -3382,6 +3387,9 @@ $(test_bindir_programs): bin-wrappers/%: bin-wrappers/wrap-for-bin.sh
 # However, the environment gets quite big, and some programs have problems
 # with that.
 
+ifdef NO_GIT_SVN
+NO_SVN_TESTS = YesPlease
+endif
 export NO_SVN_TESTS
 export TEST_NO_MALLOC_CHECK
 
