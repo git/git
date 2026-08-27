@@ -782,7 +782,7 @@ static void advise_disambiguating_remotes(const char *path, const char *branch,
 	       branch, path, branch);
 }
 
-static char *dwim_branch(const char *path, char **new_branch)
+static char *dwim_branch(const struct add_opts *opts, const char *path, char **new_branch)
 {
 	int n;
 	int branch_exists;
@@ -800,7 +800,21 @@ static char *dwim_branch(const char *path, char **new_branch)
 	*new_branch = branchname;
 	if (guess_remote) {
 		struct object_id oid;
-		char *remote = unique_tracking_name(*new_branch, &oid, NULL, NULL);
+		char *remote;
+		int num_matches = 0;
+		struct string_list matched_remote_names = STRING_LIST_INIT_DUP;
+
+		remote = unique_tracking_name(*new_branch, &oid, &num_matches,
+					      &matched_remote_names);
+		if (!remote && num_matches > 1) {
+			if (!opts->quiet &&
+			    advice_enabled(ADVICE_CHECKOUT_AMBIGUOUS_REMOTE_BRANCH_NAME))
+				advise_disambiguating_remotes(path, *new_branch,
+							      &matched_remote_names);
+			die(_("'%s' matched multiple (%d) remote tracking branches"),
+			    *new_branch, num_matches);
+		}
+		string_list_clear(&matched_remote_names, 0);
 		return remote;
 	}
 	return NULL;
@@ -908,7 +922,7 @@ static int add(int ac, const char **av, const char *prefix,
 		opts.orphan = dwim_orphan(&opts, !!opt_track, 0);
 	} else if (ac < 2) {
 		/* DWIM: Guess branch name from path. */
-		char *s = dwim_branch(path, &new_branch_to_free);
+		char *s = dwim_branch(&opts, path, &new_branch_to_free);
 		if (s)
 			branch = branch_to_free = s;
 		new_branch = new_branch_to_free;
