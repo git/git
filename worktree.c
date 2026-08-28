@@ -649,7 +649,8 @@ static void repair_gitfile(struct worktree *wt,
 	struct strbuf gitdir = STRBUF_INIT;
 	struct strbuf repo = STRBUF_INIT;
 	struct strbuf backlink = STRBUF_INIT;
-	char *dotgit_contents = NULL;
+	struct strbuf contents = STRBUF_INIT;
+	const char *dotgit_contents = NULL;
 	const char *repair = NULL;
 	char *path = NULL;
 	int err;
@@ -667,7 +668,9 @@ static void repair_gitfile(struct worktree *wt,
 	strbuf_realpath(&repo, path, 1);
 	strbuf_addf(&dotgit, "%s/.git", wt->path);
 	strbuf_addf(&gitdir, "%s/gitdir", repo.buf);
-	dotgit_contents = xstrdup_or_null(read_gitfile_gently(dotgit.buf, &err));
+	err = read_gitfile_raw(&contents, dotgit.buf);
+	if (!err)
+		dotgit_contents = contents.buf;
 
 	if (dotgit_contents) {
 		if (is_absolute_path(dotgit_contents)) {
@@ -681,7 +684,7 @@ static void repair_gitfile(struct worktree *wt,
 	if (err == READ_GITFILE_ERR_NOT_A_FILE ||
 		err == READ_GITFILE_ERR_IS_A_DIR)
 		fn(1, wt->path, _(".git is not a file"), cb_data);
-	else if (err)
+	else if (err || !is_git_directory(backlink.buf))
 		repair = _(".git file broken");
 	else if (fspathcmp(backlink.buf, repo.buf))
 		repair = _(".git file incorrect");
@@ -695,12 +698,12 @@ static void repair_gitfile(struct worktree *wt,
 	}
 
 done:
-	free(dotgit_contents);
 	free(path);
 	strbuf_release(&repo);
 	strbuf_release(&dotgit);
 	strbuf_release(&gitdir);
 	strbuf_release(&backlink);
+	strbuf_release(&contents);
 }
 
 static void repair_noop(int iserr UNUSED,
@@ -857,14 +860,7 @@ void repair_worktree_at_path(struct repository *repo,
 	strbuf_realpath_forgiving(&inferred_backlink, inferred_backlink.buf, 0);
 	dotgit_contents = xstrdup_or_null(read_gitfile_gently(dotgit.buf, &err));
 	if (dotgit_contents) {
-		if (is_absolute_path(dotgit_contents)) {
-			strbuf_addstr(&backlink, dotgit_contents);
-		} else {
-			strbuf_addbuf(&backlink, &dotgit);
-			strbuf_strip_suffix(&backlink, ".git");
-			strbuf_addstr(&backlink, dotgit_contents);
-			strbuf_realpath_forgiving(&backlink, backlink.buf, 0);
-		}
+		strbuf_addstr(&backlink, dotgit_contents);
 	} else if (err == READ_GITFILE_ERR_NOT_A_FILE ||
 			err == READ_GITFILE_ERR_IS_A_DIR) {
 		fn(1, dotgit.buf, _("unable to locate repository; .git is not a file"), cb_data);

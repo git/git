@@ -963,15 +963,53 @@ void read_gitfile_error_die(int error_code, const char *path)
  */
 const char *read_gitfile_gently(const char *path, int *return_error_code)
 {
+	int error_code = 0;
+	const char *slash;
+	struct strbuf contents = STRBUF_INIT;
+	static struct strbuf realpath = STRBUF_INIT;
+
+	error_code = read_gitfile_raw(&contents, path);
+	if (error_code)
+		goto cleanup_return;
+
+	if (!is_absolute_path(contents.buf) && (slash = strrchr(path, '/'))) {
+		size_t pathlen = slash+1 - path;
+		char *dir = xstrfmt("%.*s%s", (int)pathlen, path, contents.buf);
+		strbuf_reset(&contents);
+		strbuf_addstr(&contents, dir);
+		free(dir);
+	}
+	if (!is_git_directory(contents.buf)) {
+		error_code = READ_GITFILE_ERR_NOT_A_REPO;
+		goto cleanup_return;
+	}
+
+	strbuf_realpath(&realpath, contents.buf, 1);
+
+cleanup_return:
+	if (return_error_code)
+		*return_error_code = error_code;
+	else if (error_code)
+		read_gitfile_error_die(error_code, path);
+
+	strbuf_release(&contents);
+	return error_code ? NULL : realpath.buf;
+}
+
+/*
+ * Read the path following "gitdir: " from the .git file into strbuf.
+ *
+ * Unlike read_gitfile_gently(), this function does not resolve a
+ * relative path or validate it using is_git_directory().
+ */
+int read_gitfile_raw(struct strbuf *contents, const char *path)
+{
 	const int max_file_size = 1 << 20;  /* 1MB */
 	int error_code = 0;
 	char *buf = NULL;
-	char *dir = NULL;
-	const char *slash;
 	struct stat st;
 	int fd;
 	ssize_t len;
-	static struct strbuf realpath = STRBUF_INIT;
 
 	if (stat(path, &st)) {
 		if (errno == ENOENT || errno == ENOTDIR)
@@ -1014,32 +1052,11 @@ const char *read_gitfile_gently(const char *path, int *return_error_code)
 		error_code = READ_GITFILE_ERR_NO_PATH;
 		goto cleanup_return;
 	}
-	buf[len] = '\0';
-	dir = buf + 8;
-
-	if (!is_absolute_path(dir) && (slash = strrchr(path, '/'))) {
-		size_t pathlen = slash+1 - path;
-		dir = xstrfmt("%.*s%.*s", (int)pathlen, path,
-			      (int)(len - 8), buf + 8);
-		free(buf);
-		buf = dir;
-	}
-	if (!is_git_directory(dir)) {
-		error_code = READ_GITFILE_ERR_NOT_A_REPO;
-		goto cleanup_return;
-	}
-
-	strbuf_realpath(&realpath, dir, 1);
-	path = realpath.buf;
+	strbuf_add(contents, buf+8, len-8);
 
 cleanup_return:
-	if (return_error_code)
-		*return_error_code = error_code;
-	else if (error_code)
-		read_gitfile_error_die(error_code, path);
-
 	free(buf);
-	return error_code ? NULL : path;
+	return error_code;
 }
 
 static void apply_gitdir_and_environment(struct repository *repo, const char *path)
