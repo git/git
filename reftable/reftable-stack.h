@@ -58,22 +58,13 @@ uint64_t reftable_stack_next_update_index(struct reftable_stack *st);
 /* holds a transaction to add tables at the top of a stack. */
 struct reftable_addition;
 
-enum {
-	/*
-	 * Reload the stack when the stack is out-of-date after locking it.
-	 */
-	REFTABLE_STACK_NEW_ADDITION_RELOAD = (1 << 0),
-};
-
 /*
  * returns a new transaction to add reftables to the given stack. As a side
- * effect, the ref database is locked. Accepts REFTABLE_STACK_NEW_ADDITION_*
- * flags.
+ * effect, the ref database is locked.
  */
-int reftable_stack_new_addition(struct reftable_addition **dest,
+int reftable_stack_addition_new(struct reftable_addition **dest,
 				struct reftable_stack *st,
-				const struct reftable_write_options *opts,
-				unsigned int flags);
+				const struct reftable_write_options *opts);
 
 /* Adds a reftable to transaction. */
 int reftable_addition_add(struct reftable_addition *add,
@@ -93,14 +84,12 @@ void reftable_addition_destroy(struct reftable_addition *add);
 /*
  * Add a new table to the stack. The write_table function must call
  * reftable_writer_set_limits, add refs and return an error value.
- * The flags are passed through to `reftable_stack_new_addition()`.
  */
 int reftable_stack_add(struct reftable_stack *st,
 		       int (*write_table)(struct reftable_writer *wr,
 					  void *write_arg),
 		       void *write_arg,
-		       const struct reftable_write_options *opts,
-		       unsigned flags);
+		       const struct reftable_write_options *opts);
 
 struct reftable_iterator;
 
