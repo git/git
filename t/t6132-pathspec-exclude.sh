@@ -425,4 +425,56 @@ test_expect_success 'stash with all negative' '
 	test_cmp expect actual
 '
 
+# `ls-files` finds the length of the common prefix of the *positive* pathspecs.
+# In this example, there's only one positive pathspec, so the common prefix is `aaa/bbb`, with length 7.
+#
+# Before the bug described in https://lore.kernel.org/git/e2dbe996f6a7285fe0487e34d65eccf712867547.camel@redhat.com
+# was patched, as an optimization, we would then strip the first 7 characters from the path,
+# the positive pathspec, and (incorrectly) the negative pathspec.
+#
+# But stripping the negative pathspec would mean that `xxx/yyy/file` becomes `file`
+# and we'd wrongly end up excluding `aaa/bbb/file`.
+#
+# After this bug fix, `aaa/bbb/file` should no longer be excluded by `:(exclude)xxx/yyy/file`.
+test_expect_success 'exclude is not matched against the tail of the path' '
+	test_when_finished "git rm -q --cached -r aaa xxx && rm -rf aaa xxx" &&
+	mkdir -p aaa/bbb xxx/yyy &&
+	>aaa/bbb/file &&
+	>xxx/yyy/other &&
+	git add aaa xxx &&
+	echo aaa/bbb/file >expect &&
+	git ls-files -- aaa/bbb/file ":(exclude)xxx/yyy/file" >actual &&
+	test_cmp expect actual
+'
+
+# Before the bug described in https://lore.kernel.org/git/e2dbe996f6a7285fe0487e34d65eccf712867547.camel@redhat.com
+# was patched, when the negative pathspec had the same length or was
+# shorter than the common prefix of the positive pathspecs,
+# then stripping the common prefix from the negative pathspec would result in an empty string,
+# which would match everything, and thus exclude all files.
+#
+# In this test, the prefix for "sub/sub/sub/file" is "sub/sub/sub" (11 bytes).
+test_expect_success 'ls-files keeps entries when an exclude matches the common prefix length' '
+	echo sub/sub/sub/file >expect &&
+	git ls-files -- sub/sub/sub/file ":(exclude)nonexistent" >actual &&
+	test_cmp expect actual
+'
+
+# This test is similar to the above, but tests `git add` instead of `git ls-files`.
+#
+# `git add` does not exclude the trailing slash, so the common prefix is "sub/sub/sub/" (12 bytes).
+test_expect_success 'add keeps entries when an exclude matches the common prefix length' '
+	test_when_finished "git reset -q && rm -f sub/sub/sub/untracked" &&
+	>sub/sub/sub/untracked &&
+	git add -- sub/sub/sub/ ":(exclude)no/such/path" &&
+	echo sub/sub/sub/untracked >expect &&
+	git diff --cached --name-only HEAD >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'an exclude shorter than the common prefix still excludes' '
+	git ls-files -- sub/sub/sub/file ":(exclude)sub" >actual &&
+	test_must_be_empty actual
+'
+
 test_done

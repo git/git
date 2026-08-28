@@ -539,6 +539,17 @@ static int do_match_pathspec(struct index_state *istate,
 			return 0;
 	}
 
+	/*
+	 * The `prefix`, calculated by `common_prefix_len()`, only takes
+	 * positive pathspecs into account. Negative pathspecs are not
+	 * considered.
+	 *
+	 * Therefore, the prefix can only be stripped from positive
+	 * pathspecs, not from negative pathspecs.
+	 */
+	if (exclude)
+		prefix = 0;
+
 	name += prefix;
 	namelen -= prefix;
 
