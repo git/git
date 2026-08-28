@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy Raksha Bandhan - Special Dedication to Sisters</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            color: #333;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            animation: fadeIn 1.5s ease-in-out;
+        }
+
+        h1 {
+            color: #d81b60;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 10px;
+        }
+
+        p.subtitle {
+            font-size: 1.2rem;
+            color: #880e4f;
+        }
+
+        /* Marquee Image Styles */
+        .marquee-container {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.4);
+            padding: 15px 0;
+            margin: 15px 0;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        marquee img {
+            height: 120px;
+            border-radius: 8px;
+            margin: 0 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            transition: transform 0.3s ease;
+        }
+
+        marquee img:hover {
+            transform: scale(1.08);
+        }
+
+        /* Main Card Area */
+        .card-container {
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+            margin-top: 20px;
+            position: relative;
+        }
+
+        .question-box h2 {
+            color: #ad1457;
+            margin-bottom: 25px;
+            font-size: 1.5rem;
+        }
+
+        .btn-group {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            position: relative;
+            min-height: 60px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            transition: all 0.2s ease;
+        }
+
+        #good-btn {
+            background-color: #4caf50;
+            color: white;
+        }
+
+        #good-btn:hover {
+            background-color: #43a047;
+            transform: translateY(-2px);
+        }
+
+        #bad-btn {
+            background-color: #f44336;
+            color: white;
+            position: relative;
+            transition: 0.2s ease-out;
+        }
+
+        /* Greeting & Blessing Output */
+        #greeting-output {
+            display: none;
+            margin-top: 25px;
+            animation: fadeIn 0.8s ease-in-out;
+        }
+
+        #greeting-output h3 {
+            color: #c2185b;
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+        }
+
+        #greeting-output p {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: #555;
+            background: #fdf2f4;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 5px solid #d81b60;
+        }
+
+        /* Music Button Area */
+        .music-section {
+            margin-top: 25px;
+        }
+
+        .music-btn {
+            background: linear-gradient(45deg, #ff416c, #ff4b2b);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 30px;
+            font-size: 1rem;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: transform 0.2s;
+        }
+
+        .music-btn:hover {
+            transform: scale(1.05);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🌸 Happy Raksha Bandhan, Dearest Sisters! 🌸</h1>
+        <p class="subtitle">Celebrating the eternal bond of love and protection</p>
+    </header>
+
+    <!-- Marquee 1: Left to Right -->
+    <div class="marquee-container">
+        <marquee behavior="scroll" direction="left" scrollamount="5">
+            <img src="https://raw.githubusercontent.com/manthanbajaj371-tech/Image-2/main/1700410424333.jpg" alt="Rakhi 1">
+            <img src="https://raw.githubusercontent.com/manthanbajaj371-tech/Image-2/main/1700416394738.jpg" alt="Rakhi 2">
+            <img src="https://raw.githubusercontent.com/manthanbajaj371-tech/Image-2/main/1700416395775.jpg" alt="Rakhi 3">
+        </marquee>
+    </div>
+
+    <!-- Marquee 2: Right to Left -->
+    <div class="marquee-container">
+        <marquee behavior="scroll" direction="right" scrollamount="6">
+            <img src="https://raw.githubusercontent.com/manthanbajaj371-tech/Image-2/main/1700416396360.jpg" alt="Rakhi 4">
+            <img src="https://raw.githubusercontent.com/manthanbajaj371-tech/Image-2/main/1700416398811.jpg" alt="Rakhi 5">
+            <img src="https://raw.githubusercontent.com/manthanbajaj371-tech/Image-2/main/IMG-20240727-WA0074.jpg" alt="Rakhi 6">
+        </marquee>
+    </div>
+
+    <!-- Marquee 3: Left to Right (Alternative speed) -->
+    <div class="marquee-container">
+        <marquee behavior="scroll" direction="left" scrollamount="4">
+            <img src="https://raw.githubusercontent.com/manthanbajaj371-tech/Image-2/main/IMG-20260828-WA0009.jpg" alt="Celebration">
+            <img src="https://raw.githubusercontent.com/manthanbajaj371-tech/Image-2/main/IMG_20231112_214916.jpg" alt="Sisters">
+            <img src="https://raw.githubusercontent.com/manthanbajaj371-tech/Image-2/main/IMG_20240407_203821.jpg" alt="Festival">
+        </marquee>
+    </div>
+
+    <!-- Marquee 4: Right to Left -->
+    <div class="marquee-container">
+        <marquee behavior="scroll" direction="right" scrollamount="5">
+            <img src="https://raw.githubusercontent.com/manthanbajaj371-tech/Image-2/main/IMG_20240813_201048.jpg" alt="Joy">
+            <img src="https://raw.githubusercontent.com/manthanbajaj371-tech/Image-2/main/IMG_20240813_201052.jpg" alt="Gifts">
+            <img src="https://raw.githubusercontent.com/manthanbajaj371-tech/Image-2/main/IMG_20241031_213159.jpg" alt="Sweets">
+        </marquee>
+    </div>
+
+    <!-- Marquee 5: Left to Right (Final Free Size Effect) -->
+    <div class="marquee-container">
+        <marquee behavior="scroll" direction="left" scrollamount="7">
+            <img src="https://raw.githubusercontent.com/manthanbajaj371-tech/Image-2/main/IMG_20250618_203936.jpg" alt="Party">
+            <img src="https://raw.githubusercontent.com/manthanbajaj371-tech/Image-2/main/IMG_4189.JPG" alt="Love">
+            <img src="https://raw.githubusercontent.com/manthanbajaj371-tech/Image-2/main/Snapchat-1167708193.jpg" alt="Smile">
+        </marquee>
+    </div>
+
+    <!-- Interactive Card -->
+    <div class="card-container">
+        <div class="question-box">
+            <h2>Am I a Good Brother or a Bad Brother? 🤔</h2>
+            <div class="btn-group">
+                <button class="btn" id="good-btn" onclick="showBlessings()">Good Brother 😇</button>
+                <button class="btn" id="bad-btn" onmouseover="moveBadButton()" onclick="moveBadButton()">Bad Brother 😈</button>
+            </div>
+        </div>
+
+        <!-- Hidden Greeting & Blessings -->
+        <div id="greeting-output">
+            <h3>🎉 Happy Raksha Bandhan! 🎉</h3>
+            <p>
+                To my wonderful sister, thank you for always having my back, correcting my mistakes, and filling my life with boundless joy. May this sacred thread of Rakhi protect you from all harm and bless you with endless love, happiness, and success. You are not just my sister but my guardian angel. Wishing you a beautiful Raksha Bandhan filled with sweet moments and cherished memories!
+            </p>
+        </div>
+
+        <!-- Music Button -->
+        <div class="music-section">
+            <button class="music-btn" onclick="toggleMusic()">
+                🎵 Play / Pause Festival Song
+            </button>
+            <!-- Embedded background audio (Using a royalty-free celebratory upbeat tune) -->
+            <audio id="festive-song" loop>
+                <source src="https://github.com/user-attachments/files/31534097/Samjhawan.Humpty.Sharma.Ki.Dulhania.128.Kbps.mp3" type="audio/mpeg">
+                Your browser does not support the audio element.
+            </audio>
+        </div>
+    </div>
+
+    <script>
+        // Function to make the "Bad Brother" button run away when hovered or clicked
+        function moveBadButton() {
+            const badBtn = document.getElementById('bad-btn');
+            const x = Math.random() * (window.innerWidth - badBtn.offsetWidth - 100);
+            const y = Math.random() * (window.innerHeight - badBtn.offsetHeight - 100);
+            
+            badBtn.style.position = 'absolute';
+            badBtn.style.left = `${Math.max(20, x)}px`;
+            badBtn.style.top = `${Math.max(20, y)}px`;
+        }
+
+        // Function to reveal blessings when "Good Brother" is clicked
+        function showBlessings() {
+            const output = document.getElementById('greeting-output');
+            output.style.display = 'block';
+            output.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Function to play/pause the background song
+        let isPlaying = false;
+        function toggleMusic() {
+            const song = document.getElementById('festive-song');
+            if (isPlaying) {
+                song.pause();
+                isPlaying = false;
+            } else {
+                song.play().catch(error => {
+                    alert("Audio playback requires user interaction or browser permissions.");
+                });
+                isPlaying = true;
+            }
+        }
+    </script>
+</body>
+</html>
