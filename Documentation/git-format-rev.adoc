@@ -93,12 +93,13 @@ acts as a _terminator_, not a _separator_. In other words, the final
 line or record is also terminated by the terminator character.
 
 The mode `--stdin-mode=text` replaces each object name with the
-formatted commit, i.e. the format `%s` would transform some commit
-object name to `<subject>` without any termination. Like this:
+formatted commit, i.e. the format `"%s"` would transform some commit
+object name to `"<subject>"` without any termination. Like this:
 
-----
+[synopsis]
+--
 Did we not fix this in "<subject>"?
-----
+--
 
 It is safe to interactively read and write from this command since each
 record is immediately flushed.
