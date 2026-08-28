@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Aug 2026, #11)
-X-master-at: f78ce2f7b6df702f93d40b85d6bda92a3f65da79
-X-next-at: 62bdec98f9fa1a58f2e2016932af9bea677139c9
+Subject: What's cooking in git.git (Aug 2026, #12)
+X-master-at: c73e85354c275c9d409b26445089bc16940fc527
+X-next-at: 7e5102b832995d91251fb2e4744fc476a8089c99
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Aug 2026, #11)
+What's cooking in git.git (Aug 2026, #12)
 -----------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -17,10 +17,10 @@ A topic without enough support may be discarded after a long period
 of no activity (of course, it can be resubmitted when new interest
 arises).
 
-The 19th batch of topics have now graduated to the 'master' branch.
-We have 563 non-merge commits in 'master' since Git 2.55.  There
-are 75 non-merge commits cooking in 'next' (note that some have
-been reverted), and 209 non-merge commits, including those in and
+The 20th batch of topics have now graduated to the 'master' branch.
+We have 567 non-merge commits in 'master' since Git 2.55.  There
+are 76 non-merge commits cooking in 'next' (note that some have
+been reverted), and 215 non-merge commits, including those in and
 out of 'next', in 'seen' as of this writing.
 
 Copies of the source code to Git live in many repositories, and the
@@ -54,484 +54,81 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* cc/fast-import-usage (2026-08-11) 12 commits
-  (merged to 'next' on 2026-08-15 at a0434930b4)
- + fast-import: remove useless from_stream argument
- + fast-import: use parse_options() for command line options
- + fast-import: use callbacks to parse some options
- + fast-import: use struct option for usage string
- + fast-import: move command state globals into 'struct fast_import_state'
- + fast-import: introduce 'struct fast_import_state'
- + fast-import: factor out option_*() functions
- + fast-import: use int for some bool flags
- + fast-import: localize 'i' into the 'for' loops using it
- + api-parse-options.adoc: document hidden and OPT_*_F option macros
- + api-parse-options.adoc: document per-option flags
- + parse-options: introduce OPT_HIDDEN_GROUP
+* kh/format-rev-doc-synopsis (2026-08-17) 2 commits
+  (merged to 'next' on 2026-08-20 at b9c47eddd0)
+ + doc: format-rev: use [synopsis] on code block
+ + doc: format-rev: quote subject placeholder before and after
 
- The usage string of 'git fast-import' has been updated to use the
- parse_options() API for displaying help, and its SYNOPSIS in the
- documentation has been standardized to match.
+ The documentation for 'git format-rev' has been updated to use the
+ [synopsis] block definition on code blocks to properly highlight
+ placeholders, and a quoting inconsistency in the running text has
+ been fixed.
 
  Graduated to 'master'.
- cf. <CABPp-BE_gVtCF+Y0AAyXSXnJ2hUK0pJiWqEhkD8kVc4S8-y7kQ@mail.gmail.com>
- source: <20260811083314.2023489-1-christian.couder@gmail.com>
+ cf. <xmqq33wc4dyq.fsf@gitster.g>
+ source: <V4_CV_synopsis_block.b8e@msgid.xyz>
 
 
-* cc/git-shallow-file-wo-value (2026-08-11) 1 commit
-  (merged to 'next' on 2026-08-17 at f6a6ff92a6)
- + git: avoid segfault on "git --shallow-file" without a value
+* sk/object-name-use-after-free (2026-08-17) 1 commit
+  (merged to 'next' on 2026-08-20 at b0804dff5f)
+ + object-name: avoid use-after-free in get_oid_with_context_1()
 
- The '--shallow-file' option of 'git' command requires a value, but the
- code did not check the presence of a value and instead segfaulted
- without one, which has been corrected.
-
- Graduated to 'master'.
- cf. <an10XhFPo0nJWJIV@pks.im>
- cf. <xmqqcxvo1n8w.fsf@gitster.g>
- source: <20260811121446.2080190-1-christian.couder@gmail.com>
-
-
-* ch/chdir-notify-drop-name (2026-08-14) 1 commit
-  (merged to 'next' on 2026-08-18 at 973cefddd7)
- + chdir-notify.h: Removed unused param 'name'
-
- The unused name parameter in 'struct chdir_notify_entry' has been
- removed from chdir_notify_register(), chdir_notify_unregister(), and
- related callback signatures across several subsystems, simplifying the
- API now that trace output no longer uses it.
+ A heap-use-after-free bug in the object name parsing code when
+ reporting failures with a relative path to a sparse directory has
+ been corrected.
 
  Graduated to 'master'.
- cf. <20260815051213.GA26013@coredump.intra.peff.net>
- source: <20260814214210.1625-1-colinlewishinton@gmail.com>
-
-
-* en/diff-l-opt-help (2026-08-13) 1 commit
-  (merged to 'next' on 2026-08-17 at 4b6b3295ed)
- + diff: avoid misleading statement about -l option
-
- The help text for the '-l' option of 'git diff' has been updated.
-
- Graduated to 'master'.
- cf. <xmqqbjb4rd5q.fsf@gitster.g>
- source: <pull.2035.v2.git.1786673186855.gitgitgadget@gmail.com>
-
-
-* en/sequencer-lose-pretty-given (2026-08-11) 1 commit
-  (merged to 'next' on 2026-08-17 at 82d0706aef)
- + sequencer: remove unnecessary variable setting
-
- The setting of a now-unused member '.pretty_given' in the sequencer
- machinery has been removed.
-
- Graduated to 'master'.
- cf. <an11zsTm-fanH8yt@pks.im>
- cf. <xmqqa4qrxneq.fsf@gitster.g>
- source: <pull.1922.git.1786516959130.gitgitgadget@gmail.com>
-
-
-* en/serve-promisor-remote-fix (2026-08-11) 1 commit
-  (merged to 'next' on 2026-08-17 at a4d7a9d1d6)
- + serve: reject valueless promisor-remote capability
-
- A client requesting the promisor-remote capability without a value
- caused a null pointer dereference, which has been corrected by
- rejecting a request without an argument.
-
- Graduated to 'master'.
- cf. <CAP8UFD0+iXC3VxWmuuuB7La-pP6hdz58tr6vaEJSKpXJ_4ZH2w@mail.gmail.com>
- source: <pull.2199.git.1786516783909.gitgitgadget@gmail.com>
-
-
-* hn/send-email-missing-subject-error (2026-08-10) 1 commit
-  (merged to 'next' on 2026-08-15 at 6470901400)
- + send-email: clarify missing subject error
-
- The error message given by 'git send-email' when a message file is
- missing a 'Subject:' header has been clarified, and the error string
- is now terminated with a newline so that Perl avoids appending its
- internal source location data.
-
- Graduated to 'master'.
- cf. <xmqqtsp165tj.fsf@gitster.g>
- source: <pull.2375.v2.git.git.1786384412423.gitgitgadget@gmail.com>
-
-
-* jc/complete-checkout (2026-08-13) 4 commits
-  (merged to 'next' on 2026-08-19 at 758fc8c411)
- + completion: 'git checkout' completes untracked paths as a last resort
- + completion: complete tracked paths for "git checkout"
- + completion: no-op refactoring of checkout completion
- + Merge branch 'jc/complete-diff-tracked-paths' into jc/complete-checkout
- (this branch uses jc/complete-diff-tracked-paths.)
-
- 'git -C <dir> checkout fi<TAB>' did not complete, which has been
- corrected.
-
- Graduated to 'master'.
- cf. <CABPp-BFeLStBR3OeTCJoBmC7cn_VXrn4RcvBg-WWGyz4LpJxsg@mail.gmail.com>
- source: <20260813191234.1066662-1-gitster@pobox.com>
-
-
-* jc/complete-diff-tracked-paths (2026-08-12) 3 commits
-  (merged to 'next' on 2026-08-19 at 37263f6528)
- + completion: 'git diff' completes untracked paths as a last resort
- + completion: complete tracked paths for 'git diff'
- + completion: no-op refactoring of diff completion
- (this branch is used by jc/complete-checkout.)
-
- 'git -C <dir> diff fi<TAB>' did not complete 'file', which has been
- corrected.
-
- Graduated to 'master'.
- cf. <CABPp-BFdwxTvkcWKNP0-Lk+mqQLnULoYuLHZe0aot4VYfHnjSw@mail.gmail.com>
- source: <20260812162551.2229680-1-gitster@pobox.com>
-
-
-* js/coverity-unchecked-returns-fix (2026-08-12) 12 commits
-  (merged to 'next' on 2026-08-17 at 105f002870)
- + bisect: handle dup() failure when redirecting stdout
- + bisect: check get_terms return at all call sites
- + bisect: check strbuf_getline_lf return when reading terms
- + transport-helper: warn when export-marks file cannot be finalized
- + transport-helper: check dup() return in get_exporter
- + compat/pread: check initial lseek for errors
- + last-modified: handle repo_parse_commit() failures
- + reftable tests: check reftable_table_init_ref_iterator() return
- + reftable/block: check deflateInit() return value
- + reftable: handle block-writer initialization errors
- + config: propagate launch_editor() failure in show_editor()
- + http: die on curl_easy_duphandle failure in get_active_slot
-
- A handful of code paths have been corrected to check return values
- from functions like curl_easy_duphandle(), deflateInit(), lseek(),
- dup(), and strbuf_getline_lf(), resolving several Coverity warnings
- about unchecked returns.
-
- Graduated to 'master'.
- cf. <an1k0d5fI4EVsfsM@pks.im>
- source: <pull.2179.v3.git.1786521801.gitgitgadget@gmail.com>
-
-
-* js/pack-objects-delta-size-t (2026-08-13) 13 commits
-  (merged to 'next' on 2026-08-17 at b6778ce373)
- + packfile: widen `unpack_object_header_buffer()` to `size_t`
- + git-zlib: widen `git_deflate_bound()` to `size_t`
- + t/helper/test-pack-deltas: widen `do_compress()`'s maxsize local to `size_t`
- + http-push: widen `start_put()`'s size local from `ssize_t` to `size_t`
- + diff: widen `deflate_it()`'s bound local from int to `size_t`
- + archive-zip: widen `zlib_deflate_raw()`'s maxsize local to `size_t`
- + packfile, git-zlib: widen `use_pack()` and zstream avail fields to `size_t`
- + delta: widen `create_delta()` and `diff_delta()` to `size_t`
- + pack-objects: widen `mem_usage` and `try_delta()`'s out-param to `size_t`
- + pack-objects: widen `free_unpacked()` return to `size_t`
- + pack-objects: widen delta-cache accounting to `size_t`
- + delta: widen `create_delta_index()` parameter to `size_t`
- + diff-delta: widen `struct delta_index`' size fields to `size_t`
-
- The 'pack-objects' and delta-encoding code paths have been updated to
- use 'size_t' instead of 'unsigned long' for object sizes and offset
- limits, avoiding potential truncation issues on 64-bit Windows.
-
- Graduated to 'master'.
- cf. <xmqqbjb6t179.fsf@gitster.g>
- source: <pull.2175.v3.git.1786632952.gitgitgadget@gmail.com>
-
-
-* js/packfile-fast-append (2026-08-13) 1 commit
-  (merged to 'next' on 2026-08-18 at cc3da5a03d)
- + packfile: fix perf regression with many packs
-
- The performance of adding numerous new packfiles has been improved
- by introducing a fast path for known-new packfiles to skip an
- unnecessary traversal in packfile_list_append(), avoiding a
- quadratic complexity regression on load.
-
- Graduated to 'master'.
- cf. <an7ItVYrKZFXg2ci@pks.im>
- cf. <xmqqy0e8pxos.fsf@gitster.g>
- source: <pull.2202.v2.git.1786633010179.gitgitgadget@gmail.com>
-
-
-* js/sequencer-release-odb-before-commit (2026-08-12) 1 commit
-  (merged to 'next' on 2026-08-15 at 1c83dffd7a)
- + sequencer: release the ODB before spawning git commit
-
- The sequencer has been updated to release the object database before
- spawning 'git commit'.  This prevents open file handles from
- blocking auto-maintenance tasks, such as repacking, on systems like
- Windows where open files cannot be easily unlinked.
-
- Graduated to 'master'.
- cf. <xmqqqzk3xqxs.fsf@gitster.g>
- source: <pull.2198.v2.git.1786528498689.gitgitgadget@gmail.com>
-
-
-* kk/merge-base-exhaustion (2026-08-11) 11 commits
-  (merged to 'next' on 2026-08-15 at 3f836fa1e4)
- + commit-reach: remove commit-date ordering fallback
- + commit-reach: move min_generation check into paint_queue_get()
- + commit-reach: terminate merge-base walk when one paint side is exhausted
- + commit-reach: introduce struct paint_state with per-side counters
- + t6600: add clock-skew topologies and step counts for edge cases
- + commit-reach: add trace2 instrumentation to paint_down_to_common()
- + t6099: add side-exhaustion regression test
- + t6600: add test cases for side-exhaustion edge cases
- + test-lib-functions: improve diagnostic output for trace2 data assertions
- + Documentation/technical: add paint-down-to-common doc
- + Merge branch 'kk/commit-reach-find-all-fix' into kk/merge-base-exhaustion
-
- The merge-base computation has been optimized by stopping the walk
- early when one side's exclusive commits in the queue are exhausted,
- yielding significant speedups for queries with one-sided histories.
-
- Graduated to 'master'.
- cf. <CABPp-BHuh_8q6Hy2-Bk7H6Chdb4+eeW1f4LZU0szZ4zU9Eeo+w@mail.gmail.com>
- cf. <xmqqbjb7w1dq.fsf@gitster.g>
- source: <pull.2149.v8.git.1786440533.gitgitgadget@gmail.com>
-
-
-* ps/cat-file-remote-object-info-type (2026-08-07) 11 commits
-  (merged to 'next' on 2026-08-15 at 3f5daf59a8)
- + cat-file: unify default format
- + serve: advertise type capability
- + fetch-object-info: parse type from server response
- + protocol-caps: add type support to object-info
- + transport: drop remote object-info fields from transport struct
- + fetch-object-info: die() on the remaining error path
- + fetch-object-info: use dedicated struct for the results
- + fetch-object-info: pass arguments directly instead of a struct
- + fetch-object-info: detect malformed server responses
- + t5701: use test_file_size() to get the size of a file
- + Merge branch 'ps/cat-file-remote-object-info' into ps/cat-file-remote-object-info-type
-
- The 'remote-object-info' command for 'git cat-file --batch-command'
- has been extended to support the '%(objecttype)' placeholder.
-
- Graduated to 'master'.
- cf. <20260808074157.GA2915582@coredump.intra.peff.net>
- cf. <CA+J6zkR5ZkUc8c=xiXgKiAYmbgcoyGfwpgm6aaG0Gog8OVmOjw@mail.gmail.com>
- cf. <CAOLa=ZTrf_WHiRHTjBGAus+YbRsUkbR3dzsW=fgCK0jit6fYzQ@mail.gmail.com>
- source: <20260808-objecttype-support-v6-0-e5cdaf27a49c@gmail.com>
-
-
-* ps/odb-streams (2026-08-05) 8 commits
-  (merged to 'next' on 2026-08-15 at a8fbd74d00)
- + odb/streaming: unify function names to create new streams
- + odb/streaming: rename `struct input_zstream_data`
- + odb/streaming: rename `struct read_object_fd_data`
- + odb/streaming: consolidate read and write streams
- + odb/streaming: rename `struct odb_read_stream`
- + odb/streaming: support streaming arbitrary object types
- + odb/streaming: drop `is_finished` field
- + odb/streaming: track write stream size in the structure
-
- The 'struct odb_read_stream' and 'struct odb_write_stream'
- structures have been consolidated into a single unified 'struct
- odb_stream' structure, simplifying object database streaming APIs
- and enabling streaming of arbitrary object types.
-
- Graduated to 'master'.
- cf. <anuBdm29ye_qV_Rq@denethor>
- source: <20260805-pks-odb-stream-unification-v2-0-b8c369564641@pks.im>
-
-
-* ps/t7900-deflake-maintenance (2026-08-12) 2 commits
-  (merged to 'next' on 2026-08-17 at 7ef446fd59)
- + t7900: fix flaky "maintenance.strategy" test
- + t7900: adapt some tests to use a throwaway repository
-
- Various tests in 't7900-maintenance.sh' have been updated to use a
- throwaway repository, and auto-detaching of maintenance tasks is now
- disabled for these tests to fix flaky races with concurrent background
- maintenance jobs.
-
- Graduated to 'master'.
- cf. <CAOLa=ZQmZ0spmdPOzCZe36i24nQh+o7d4fSz5dcJS7+O3p2skg@mail.gmail.com>
- source: <20260812-pks-t7900-fix-flaky-test-v2-0-9ea0e1ac0edd@pks.im>
-
-
-* ss/repack-drop-filtered (2026-08-13) 6 commits
-  (merged to 'next' on 2026-08-18 at 23ad3f2b76)
- + builtin/repack: add guards for --drop-filtered
- + builtin/repack: actually drop filtered promisor blobs
- + builtin/repack: enumerate promisor blobs for --drop-filtered
- + repack-promisor: allow excluding objects from the rebuilt promisor pack
- + list-objects-filter: add list_objects_filter__filter_oidset()
- + builtin/repack: add --drop-filtered and --dry-run options
-
- 'git repack' has been taught '--drop-filtered' to delete local
- promisor blobs exceeding a limit (currently 'blob:limit=') in partial
- clones, reclaiming space.  Guards prevent running during other
- operations or if referenced by the index.
-
- Graduated to 'master'.
- cf. <CAP8UFD1esJ0fk3xPXvAmQhMK_5wrpGKZJg9YaFV0-qUAC7bf5g@mail.gmail.com>
- source: <20260813200830.84348-1-r.siddharth.shrimali@gmail.com>
-
-
-* ss/submittingpatches-typofix (2026-08-14) 1 commit
-  (merged to 'next' on 2026-08-18 at b251ddc3d7)
- + doc: fix typo in submitting patches
-
- Typofix.
-
- Graduated to 'master'.
- cf. <xmqq7blsmru5.fsf@gitster.g>
- source: <pull.2383.git.git.1786733219160.gitgitgadget@gmail.com>
+ cf. <xmqq1pbw7nwi.fsf@gitster.g>
+ source: <20260817082127.81132-1-diy2903@gmail.com>
 
 --------------------------------------------------
 [New Topics]
 
-* dw/config-read-both-global (2026-08-23) 3 commits
- - config: read global scope via config_sequence
- - config: let sequence require a successful file
- - path: use forward slashes in XDG config on Windows
+* jc/die-for-incompatible-opts (2026-08-27) 1 commit
+ - die_for_incompatible_opts(): unbounded number of options
 
- The git config --global read operations have been updated to respect
- both $HOME/.gitconfig and $XDG_CONFIG_HOME/git/config, fixing an
- inconsistency where only the former was read when both configuration
- files are present.
-
- Waiting for response.
- cf. <xmqqo6esti9o.fsf@gitster.g>
- cf. <xmqqecfkhify.fsf@gitster.g>
- cf. <xmqqy0dsg2vt.fsf@gitster.g>
- cf. <xmqqse40g22c.fsf@gitster.g>
- source: <20260823-fix-config-list-global-home-and-xdg-v2-0-b29cc63f017b@microsoft.com>
-
-
-* vv/branch-recurse-no-start-ref (2026-08-21) 2 commits
- - branch: allow recursion with no tracking name
- - branch: do not track a start point with no ref
-
- The --recurse-submodules option in 'git branch' has been fixed to
- avoid a crash when the start point is not a reference (e.g., a raw
- object ID).  The creation path now skips setting up tracking and
- properly forwards the absent tracking name to the submodule helper.
-
- Needs review.
- source: <20260822-vv-branch-recurse-no-start-ref-v1-0-46dc140acaa8@zitro.id>
-
-
-* kn/reftable-optimize-reloading (2026-08-24) 4 commits
- - reftable/stack: avoid reloading the stack when already locked
- - reftable/stack: move list lock to `struct reftable_stack`
- - reftable/stack: rename reftable_stack_new_addition()
- - reftable/stack: remove `REFTABLE_STACK_NEW_ADDITION_RELOAD`
-
- The reftable code has been optimized to avoid an unnecessary
- stat/reload of the stack when an addition already holds the
- list_file lock, reducing the number of newfstatat syscalls from
- linear to constant when writing refs.
+ The die_for_incompatible_opt[234]() family of functions has been
+ generalized to handle an arbitrary number of mutually exclusive
+ options via a variadic function.
 
  Will merge to 'next'?
- cf. <ao1uqpCxFHlOyTV-@pks.im>
- cf. <20260824225202.GA190620@coredump.intra.peff.net>
- source: <20260824-740-optimize-reloading-the-reftable-stack-v2-0-9c9de2eb0af7@gmail.com>
+ source: <xmqqbjana2wv.fsf@gitster.g>
 
 
-* kh/format-patch-range-diff-notes (2026-08-24) 3 commits
- - format-patch: learn --[no-]range-diff-notes
- - revision.h: rename struct member to reflect notes role
- - format-patch: simplify get_notes_arg parameters
+* jc/you-still-use-that (2026-08-27) 1 commit
+ - you_still_use_that(): reword the instructions
 
- The 'format-patch' command has been updated with options to
- configure notes specifically for range-diff output, allowing them to
- differ from the notes displayed on the patches themselves.
+ The instructions for deprecated commands emitted by
+ you_still_use_that() have been reworded to clarify that the removal
+ decision is final and to provide more assertive guidance on finding
+ a replacement.
 
- Waiting for response.
- cf. <xmqqjypfp2vl.fsf@gitster.g>
- source: <CV_format-patch_learn_--range-diff-notes.c57@msgid.xyz>
+ Will merge to 'next'?
+ source: <xmqqse3z8m5g.fsf_-_@gitster.g>
 
 
-* jc/rerere-doc-typofix (2026-08-24) 1 commit
-  (merged to 'next' on 2026-08-25 at 62bdec98f9)
- + rerere: technical documentation typofix
-
- A missing preposition in the rerere technical documentation has been
- fixed.
-
- Will merge to 'master'.
- source: <xmqqtsojp4zf.fsf@gitster.g>
-
-
-* ps/odb-alternates-at-creation (2026-08-25) 8 commits
- - odb/source: remove the ability to write alternates
- - builtin/clone: write alternates via `odb_create_on_disk()`
- - odb/source: support writing alternates when creating the database
- - builtin/clone: move setup of alternates for non-shared local clones
- - builtin/clone: move setup of alternates for shared local clones
- - builtin/clone: refactor handling of "--reference{,-if-able}"
- - builtin/clone: move around `setup_reference()`
- - builtin/clone: defer setup of the object database
- - Merge branch 'ps/odb-eagerly-load-alternates' into ps/odb-alternates-at-creation
- (this branch uses ps/odb-eagerly-load-alternates.)
-
- The setup of alternates has been deferred to object database
- creation time during clone, which drops the unused ad-hoc alternate
- writing API, simplifying the object database backend interface.
+* ws/squelch-svn-migrate (2026-08-27) 2 commits
+ - Makefile: add NO_GIT_SVN knob to skip building/installing git-svn
+ - git-svn: don't print v1-layout migration noise when there's nothing to migrate
 
  Needs review.
- source: <20260825-pks-odb-write-alternates-at-creation-time-v1-0-911513ba95c3@pks.im>
-
-
-* ps/odb-pluggable-fsck (2026-08-25) 10 commits
- - builtin/fsck: move loose object verification into the loose source
- - builtin/fsck: move multi-pack index verification into the packed source
- - builtin/fsck: move bitmap verification into the packed source
- - builtin/fsck: move reverse index verification into the packed source
- - builtin/fsck: move packfile verification into the packed source
- - odb: provide infrastructure for pluggable fsck checks
- - builtin/fsck: don't check alternates with "--no-full"
- - builtin/fsck: de-globalize option handling
- - builtin/fsck: merge `fsck_obj_buffer()` and `fsck_obj()`
- - builtin/fsck: use `fsck_obj_buffer()` when checking loose objects
- - Merge branch 'ps/odb-eagerly-load-alternates' into ps/odb-pluggable-fsck
- - Merge branch 'ps/odb-pluggable-pack-generation' into ps/odb-pluggable-fsck
- (this branch uses ps/odb-eagerly-load-alternates and ps/odb-pluggable-pack-generation.)
-
- The consistency checks for the object database (fsck) have been
- decoupled from the generic builtin implementation and moved into the
- backend-specific object source layers, making them pluggable for
- different object storage formats.
-
- Needs review.
- source: <20260825-pks-odb-source-fsck-v1-0-b756de0bf24f@pks.im>
-
-
-* rs/worktree-add-basename-fixes (2026-08-25) 4 commits
- - worktree add: let worktree_basename() return string copy
- - worktree add: trim slashes when deriving branch name from path
- - worktree add: reject separator-only path
- - worktree add: don't read out of bounds in worktree_basename()
-
- The string extraction logic for the branch name and worktree name
- from the given path in 'git worktree add' has been corrected and
- simplified to avoid out-of-bounds reads and improper handling of
- trailing slashes.
-
- Waiting for review.
- cf. <xmqq33w2m186.fsf@gitster.g>
- cf. <xmqqjypdj6g4.fsf@gitster.g>
- source: <20260825180350.2099-1-l.s.r@web.de>
-
-
-* en/no-amend-during-conflicts (2026-08-25) 1 commit
- - commit: refuse to amend during conflict resolution
-
- Teach 'am', 'revert', and 'rebase' that running 'commit --amend'
- makes no sense during operations that stop and return control to
- the user to resolve conflicts left in the working tree, just like
- 'cherry-pick' and 'merge' do.
-
- Waiting for response.
- cf. <4688ee19-b782-456a-bed2-8cd2a4415736@gmail.com>
- cf. <xmqqqzjkj0p2.fsf@gitster.g>
- source: <pull.2389.git.git.1787721681893.gitgitgadget@gmail.com>
+ source: <20260827234345.1037130-1-wesleys@opperschaap.net>
 
 --------------------------------------------------
 [Stalled]
+
+* ec/commit-fixup-options (2026-05-26) 2 commits
+ - commit: allow -c/-C for all kinds of --fixup
+ - commit: allow -m/-F for all kinds of --fixup
+
+ Support for '-m', '-F', '-c', or '-C' options to supply a commit log
+ message from outside the editor has been added for all 'git commit
+ --fixup' variations.
+
+ Waiting for response, stalled.
+ cf. <xmqq1pbkefh0.fsf@gitster.g>
+ source: <cover.1779792311.git.erik@cervined.in>
+
 
 * ps/libgit-in-subdir (2026-07-12) 2 commits
  . Move libgit.a sources into separate "lib/" directory
@@ -651,6 +248,165 @@ Release tarballs are available at:
 --------------------------------------------------
 [Cooking]
 
+* dw/config-read-both-global (2026-08-23) 3 commits
+ - config: read global scope via config_sequence
+ - config: let sequence require a successful file
+ - path: use forward slashes in XDG config on Windows
+
+ The git config --global read operations have been updated to respect
+ both $HOME/.gitconfig and $XDG_CONFIG_HOME/git/config, fixing an
+ inconsistency where only the former was read when both configuration
+ files are present.
+
+ Waiting for response.
+ cf. <xmqqo6esti9o.fsf@gitster.g>
+ cf. <xmqqecfkhify.fsf@gitster.g>
+ cf. <xmqqy0dsg2vt.fsf@gitster.g>
+ cf. <xmqqse40g22c.fsf@gitster.g>
+ source: <20260823-fix-config-list-global-home-and-xdg-v2-0-b29cc63f017b@microsoft.com>
+
+
+* vv/branch-recurse-no-start-ref (2026-08-21) 2 commits
+ - branch: allow recursion with no tracking name
+ - branch: do not track a start point with no ref
+
+ The --recurse-submodules option in 'git branch' has been fixed to
+ avoid a crash when the start point is not a reference (e.g., a raw
+ object ID).  The creation path now skips setting up tracking and
+ properly forwards the absent tracking name to the submodule helper.
+
+ Needs review.
+ source: <20260822-vv-branch-recurse-no-start-ref-v1-0-46dc140acaa8@zitro.id>
+
+
+* kn/reftable-optimize-reloading (2026-08-24) 4 commits
+  (merged to 'next' on 2026-08-28 at d714ed570a)
+ + reftable/stack: avoid reloading the stack when already locked
+ + reftable/stack: move list lock to `struct reftable_stack`
+ + reftable/stack: rename reftable_stack_new_addition()
+ + reftable/stack: remove `REFTABLE_STACK_NEW_ADDITION_RELOAD`
+
+ The reftable code has been optimized to avoid an unnecessary
+ stat/reload of the stack when an addition already holds the
+ list_file lock, reducing the number of newfstatat syscalls from
+ linear to constant when writing refs.
+
+ Will merge to 'master'.
+ cf. <ao1uqpCxFHlOyTV-@pks.im>
+ cf. <20260824225202.GA190620@coredump.intra.peff.net>
+ source: <20260824-740-optimize-reloading-the-reftable-stack-v2-0-9c9de2eb0af7@gmail.com>
+
+
+* kh/format-patch-range-diff-notes (2026-08-24) 3 commits
+ - format-patch: learn --[no-]range-diff-notes
+ - revision.h: rename struct member to reflect notes role
+ - format-patch: simplify get_notes_arg parameters
+
+ The 'format-patch' command has been updated with options to
+ configure notes specifically for range-diff output, allowing them to
+ differ from the notes displayed on the patches themselves.
+
+ Retracted.
+ cf. <9335a35f-e9c0-4e62-812c-e5855c201003@app.fastmail.com>
+ source: <CV_format-patch_learn_--range-diff-notes.c57@msgid.xyz>
+
+
+* jc/rerere-doc-typofix (2026-08-24) 1 commit
+  (merged to 'next' on 2026-08-25 at 62bdec98f9)
+ + rerere: technical documentation typofix
+
+ A missing preposition in the rerere technical documentation has been
+ fixed.
+
+ Will merge to 'master'.
+ source: <xmqqtsojp4zf.fsf@gitster.g>
+
+
+* ps/odb-alternates-at-creation (2026-08-25) 8 commits
+ - odb/source: remove the ability to write alternates
+ - builtin/clone: write alternates via `odb_create_on_disk()`
+ - odb/source: support writing alternates when creating the database
+ - builtin/clone: move setup of alternates for non-shared local clones
+ - builtin/clone: move setup of alternates for shared local clones
+ - builtin/clone: refactor handling of "--reference{,-if-able}"
+ - builtin/clone: move around `setup_reference()`
+ - builtin/clone: defer setup of the object database
+ - Merge branch 'ps/odb-eagerly-load-alternates' into ps/odb-alternates-at-creation
+ (this branch uses ps/odb-eagerly-load-alternates.)
+
+ The setup of alternates has been deferred to object database
+ creation time during clone, which drops the unused ad-hoc alternate
+ writing API, simplifying the object database backend interface.
+
+ Waiting for response.
+ cf. <874igeuwja.fsf@emacs.iotcl.com>
+ cf. <8733vyuwid.fsf@emacs.iotcl.com>
+ source: <20260825-pks-odb-write-alternates-at-creation-time-v1-0-911513ba95c3@pks.im>
+
+
+* ps/odb-pluggable-fsck (2026-08-25) 10 commits
+ - builtin/fsck: move loose object verification into the loose source
+ - builtin/fsck: move multi-pack index verification into the packed source
+ - builtin/fsck: move bitmap verification into the packed source
+ - builtin/fsck: move reverse index verification into the packed source
+ - builtin/fsck: move packfile verification into the packed source
+ - odb: provide infrastructure for pluggable fsck checks
+ - builtin/fsck: don't check alternates with "--no-full"
+ - builtin/fsck: de-globalize option handling
+ - builtin/fsck: merge `fsck_obj_buffer()` and `fsck_obj()`
+ - builtin/fsck: use `fsck_obj_buffer()` when checking loose objects
+ - Merge branch 'ps/odb-eagerly-load-alternates' into ps/odb-pluggable-fsck
+ - Merge branch 'ps/odb-pluggable-pack-generation' into ps/odb-pluggable-fsck
+ (this branch uses ps/odb-eagerly-load-alternates and ps/odb-pluggable-pack-generation.)
+
+ The consistency checks for the object database (fsck) have been
+ decoupled from the generic builtin implementation and moved into the
+ backend-specific object source layers, making them pluggable for
+ different object storage formats.
+
+ Waiting for response.
+ cf. <CAOLa=ZRYSje476JJDr5b8hHozwa5=4bw4E30i3AfLX176=12ZA@mail.gmail.com>
+ cf. <CAOLa=ZSmjfCD-5fPgJm4cbaKZOQa0S62wAf+vSxWFWLrrgczBA@mail.gmail.com>
+ source: <20260825-pks-odb-source-fsck-v1-0-b756de0bf24f@pks.im>
+
+
+* rs/worktree-add-basename-fixes (2026-08-25) 4 commits
+ - worktree add: let worktree_basename() return string copy
+ - worktree add: trim slashes when deriving branch name from path
+ - worktree add: reject separator-only path
+ - worktree add: don't read out of bounds in worktree_basename()
+
+ The string extraction logic for the branch name and worktree name
+ from the given path in 'git worktree add' has been corrected and
+ simplified to avoid out-of-bounds reads and improper handling of
+ trailing slashes.
+
+ Waiting for review.
+ cf. <xmqq33w2m186.fsf@gitster.g>
+ cf. <xmqqjypdj6g4.fsf@gitster.g>
+ source: <20260825180350.2099-1-l.s.r@web.de>
+
+
+* en/no-amend-during-conflicts (2026-08-28) 5 commits
+ - commit: refuse partial commits during conflict resolution
+ - commit: refuse to amend during conflict resolution
+ - commit: reword the empty-commit rebase amend error
+ - commit: allow a partial commit when a rebase pick becomes empty
+ - commit: clarify FROM_REBASE_PICK and is_from_rebase() names
+
+ Teach 'am', 'revert', and 'rebase' that running 'commit --amend' or a
+ partial 'commit <paths>' makes no sense during operations that stop
+ and return control to the user to resolve conflicts left in the
+ working tree, just like 'cherry-pick' and 'merge' do.
+
+ Waiting for response.
+ cf. <CABPp-BG0AmOgfT1CrS+hTo8sRBd4J1gT0_KN8TRBHSFo86hMvw@mail.gmail.com>
+ cf. <xmqq33vy6ydu.fsf@gitster.g>
+ cf. <xmqqy0dq5jpi.fsf@gitster.g>
+ cf. <xmqqqzji5id2.fsf@gitster.g>
+ source: <pull.2389.v3.git.git.1787903085.gitgitgadget@gmail.com>
+
+
 * as/utimensat-utimes (2026-08-21) 3 commits
  - compat/posix: drop legacy <utime.h> header and shims
  - treewide: use utimensat(2) instead of legacy utime(3p)
@@ -718,7 +474,8 @@ Release tarballs are available at:
  during a concurrent geometric repack, and 'git replay' has been
  fixed to not segfault when reading such missing objects.
 
- Needs review.
+ Expecting a reroll.
+ cf. <CABPp-BEmReAR-f-aweM=f=5QhRPxG1K-KLTsbyRt2aDQD_QnVA@mail.gmail.com>
  source: <pull.2207.v2.git.1787684429.gitgitgadget@gmail.com>
 
 
@@ -729,8 +486,9 @@ Release tarballs are available at:
  correctly locate the Git command after global options like '-C' by
  properly skipping them, similar to how the bash completion does.
 
- Needs review.
+ Will merge to 'next'?
  cf. <CALnO6CC35iuyJpKZtkEN7fGuGK7zKd_jbebyZdKSQ1pyfOBRZA@mail.gmail.com>
+ cf. <xmqqld9sczd0.fsf@gitster.g>
  source: <pull.2155.v2.git.1787144872870.gitgitgadget@gmail.com>
 
 
@@ -796,7 +554,7 @@ Release tarballs are available at:
  source: <V2_CV_doc_datamodel_advertize.c20@msgid.xyz>
 
 
-* yn/worktree-repair-relative (2026-08-21) 1 commit
+* yn/worktree-repair-relative (2026-08-28) 1 commit
  - worktree repair: detect relative path in .git file correctly
 
  The git worktree repair command failed to rewrite the .git file of
@@ -806,37 +564,9 @@ Release tarballs are available at:
  the path originally recorded in the file was absolute, and this new
  capability is used to correctly detect such mismatches.
 
- Needs review.
- cf. <xmqq4ignyv1z.fsf@gitster.g>
- source: <pull.2205.v3.git.1787344586470.gitgitgadget@gmail.com>
-
-
-* sk/object-name-use-after-free (2026-08-17) 1 commit
-  (merged to 'next' on 2026-08-20 at b0804dff5f)
- + object-name: avoid use-after-free in get_oid_with_context_1()
-
- A heap-use-after-free bug in the object name parsing code when
- reporting failures with a relative path to a sparse directory has
- been corrected.
-
- Will merge to 'master'.
- cf. <xmqq1pbw7nwi.fsf@gitster.g>
- source: <20260817082127.81132-1-diy2903@gmail.com>
-
-
-* kh/format-rev-doc-synopsis (2026-08-17) 2 commits
-  (merged to 'next' on 2026-08-20 at b9c47eddd0)
- + doc: format-rev: use [synopsis] on code block
- + doc: format-rev: quote subject placeholder before and after
-
- The documentation for 'git format-rev' has been updated to use the
- [synopsis] block definition on code blocks to properly highlight
- placeholders, and a quoting inconsistency in the running text has
- been fixed.
-
- Will merge to 'master'.
- cf. <xmqq33wc4dyq.fsf@gitster.g>
- source: <V4_CV_synopsis_block.b8e@msgid.xyz>
+ Will merge to 'next'?
+ cf. <xmqqh5ke3zxt.fsf@gitster.g>
+ source: <pull.2205.v4.git.1787930386252.gitgitgadget@gmail.com>
 
 
 * kh/format-rev-more-options (2026-08-18) 5 commits
@@ -850,6 +580,7 @@ Release tarballs are available at:
  formatting options.
 
  Needs review.
+ cf. <xmqqse40ei5f.fsf@gitster.g>
  source: <V2_CV_format-rev_three_more_opts.bd3@msgid.xyz>
 
 
@@ -952,7 +683,8 @@ Release tarballs are available at:
  TLS handshake via a new 'http.sslVerifyStatus' configuration
  variable.
 
- Needs review.
+ Waiting for review.
+ cf. <CALgUfNjd_y-e-zTKJ31o8_bQuRw8wFWe=sdsf2KJ7LOmmO21aQ@mail.gmail.com>
  source: <20260818214858.65122-1-ggordon@gitlab.com>
 
 
@@ -1060,7 +792,7 @@ Release tarballs are available at:
  source: <pull.2192.v4.git.1787221888406.gitgitgadget@gmail.com>
 
 
-* yn/worktree-ambiguous-remote-advice (2026-08-26) 4 commits
+* yn/worktree-ambiguous-remote-advice (2026-08-27) 4 commits
  - worktree add: treat multiple matches with --guess-remote as an error
  - worktree add: improve message for ambiguous remote branch name
  - checkout: improve message for ambiguous remote branch name
@@ -1069,8 +801,9 @@ Release tarballs are available at:
  'git worktree add' did not prevent DWIM behavior when '-b' or '-B' was
  specified, which has been corrected.
 
- Needs review.
- source: <pull.2197.v9.git.1787741111.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ cf. <xmqq4igfa2pv.fsf@gitster.g>
+ source: <pull.2197.v10.git.1787841717.gitgitgadget@gmail.com>
 
 
 * hn/ci-cancel-stale-pr-runs (2026-07-31) 1 commit
@@ -1110,7 +843,8 @@ Release tarballs are available at:
  visually separates autostash conflict advice from the subsequent
  branch-switch message.
 
- Needs review.
+ Waiting for response.
+ cf. <ec6c3986-94ab-4692-a4c2-47569b77e9ca@gmail.com>
  source: <pull.2364.git.git.1784993669.gitgitgadget@gmail.com>
 
 
@@ -1165,7 +899,7 @@ Release tarballs are available at:
 
  Waiting for response.
  cf. <CABPp-BHxpt1UBTY5LCn9OFMZ6EtOcUPc-61RMWvjpjDBmv1rzg@mail.gmail.com>
- cf. <CABPp-BFsSPJutOKManq-55ri=ddBpWLfN16xSNVs9O7+c2z0cg@mail.gmail.com>
+ cf. <20260827052318.GC176544@coredump.intra.peff.net>
  source: <pull.2178.v2.git.1787684181.gitgitgadget@gmail.com>
 
 
@@ -1191,22 +925,21 @@ Release tarballs are available at:
  to spawn a 'git apply' subprocess.
 
  Will merge to 'next'?
+ cf. <xmqq8q6to4em.fsf@gitster.g>
  cf. <xmqqbjaoiyzx.fsf@gitster.g>
  source: <20260711061246.58079-1-gatlavishweshwarreddy26@gmail.com>
 
 
-* fz/rebase-autosquash-empty (2026-07-11) 1 commit
- . sequencer: honor --empty when a fixup!/squash! empties its target
+* fz/rebase-autosquash-empty (2026-08-27) 1 commit
+ - sequencer: honor --empty when a fixup!/squash! empties its target
 
  A commit that is emptied by melding a 'fixup!' or 'squash!' commit
  during 'git rebase --autosquash' is now handled according to the
  '--empty' option, allowing it to be dropped, kept, or to halt the
- rebase.  This topic has been ejected due to conflicts with
- 'pw/rebase-drop-notes-with-commit'.
+ rebase.
 
- Expecting a reroll.
- cf. <DKJ2CZKJC6P0.VHLMCUDH6Z44@gmail.com>
- source: <20260711-fz-autosquash-empty-v3-1-d227b63eb511@gmail.com>
+ Needs review.
+ source: <20260827-fz-autosquash-empty-v4-1-f98ffd575780@gmail.com>
 
 
 * mm/lib-httpd-cgi-safe (2026-08-12) 3 commits
@@ -1245,6 +978,7 @@ Release tarballs are available at:
  the header is ultimately rejected.
 
  Will discard.
+ cf. <xmqqtsogei9d.fsf@gitster.g>
  source: <20260702041759.51572-1-zhihao.yao@njit.edu>
 
 
@@ -1296,8 +1030,9 @@ Release tarballs are available at:
  above the selected base were incorrectly skipped by the pack exclusion
  logic, and reachability closure for bitmaps was broken.
 
- Expecting a reroll.
- cf. <an4uIQA09rDCwwBp@com-79390>
+ Waiting for review.
+ cf. <an2FAWvyfX2LuGsG@pks.im>
+ cf. <ao945zRwDt9ThFTG@com-79390>
  source: <cover.1781294771.git.me@ttaylorr.com>
 
 
@@ -1325,15 +1060,3 @@ Release tarballs are available at:
  Expecting a reroll.
  cf. <CAC2Qwm+kzT_3_GKrpay=JLGYsxS10oWCg2MJPHrCVogFHA0OdA@mail.gmail.com>
  source: <20260801174156.2998808-1-mmontalbo@gmail.com>
-
-
-* ec/commit-fixup-options (2026-05-26) 2 commits
- - commit: allow -c/-C for all kinds of --fixup
- - commit: allow -m/-F for all kinds of --fixup
-
- Support for '-m', '-F', '-c', or '-C' options to supply a commit log
- message from outside the editor has been added for all 'git commit
- --fixup' variations.
-
- Needs review.
- source: <cover.1779792311.git.erik@cervined.in>
