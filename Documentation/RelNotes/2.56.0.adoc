@@ -126,6 +126,11 @@ UI, Workflows & Features
    clones, reclaiming space.  Guards prevent running during other
    operations or if referenced by the index.
 
+ * The documentation for 'git format-rev' has been updated to use the
+   [synopsis] block definition on code blocks to properly highlight
+   placeholders, and a quoting inconsistency in the running text has
+   been fixed.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -343,14 +348,12 @@ Performance, Internal Implementation, Development Support etc.
    positive warning from the 'CHECK_ASSERTION_SIDE_EFFECTS' build with
    GCC 15 in the Bloom filter code has also been silenced to facilitate
    the image upgrade.
-   (merge 1a1579c42d jk/ci-static-analysis-image-bump later to maint).
 
  * The alias tests in 't/t0014-alias.sh' have been updated to dynamically
    query the list of deprecated commands using 'git
    --list-cmds=deprecated' to avoid test failures when running with
    'WITH_BREAKING_CHANGES' in a build directory that contains stale
    executables of formerly deprecated commands.
-   (merge bc57ecb915 jk/t0014-dynamic-deprecated-cmds later to maint).
 
  * The code path that deals with relative paths in the diff-lib has
    been cleaned up.
@@ -389,7 +392,6 @@ Performance, Internal Implementation, Development Support etc.
  * The 'ssh-agent' tests in 't7528' have been fixed to work when the
    user's login shell is csh-like, by explicitly passing '-s' to
    'ssh-agent' to force Bourne shell syntax.
-   (merge d5dd17756d kl/t7528-ssh-agent-for-csh-users later to maint).
 
  * A compatibility wrapper for writev(3p) has been reintroduced,
    including fixes for CMake build and 'MAX_IO_SIZE' limits on NonStop.
@@ -433,6 +435,10 @@ Performance, Internal Implementation, Development Support etc.
    removed from chdir_notify_register(), chdir_notify_unregister(), and
    related callback signatures across several subsystems, simplifying the
    API now that trace output no longer uses it.
+
+ * A heap-use-after-free bug in the object name parsing code when
+   reporting failures with a relative path to a sparse directory has
+   been corrected.
 
 
 Fixes since v2.55
