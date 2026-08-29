@@ -200,8 +200,11 @@ int cmd_mktree(int ac,
 			puts(oid_to_hex(&oid));
 			fflush(stdout);
 		}
+		for (int i = 0; i < used; i++)
+			free(entries[i]);
 		used=0; /* reset tree entry buffer for re-use in batch mode */
 	}
+	free(entries);
 	strbuf_release(&sb);
 
 	return 0;
