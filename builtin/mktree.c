@@ -125,7 +125,6 @@ static void mktree_line(struct repository *repo, char *buf, int nul_term_line, i
 	oi.typep = &obj_type;
 	if (odb_read_object_info_extended(repo->objects, &oid, &oi,
 					  OBJECT_INFO_LOOKUP_REPLACE |
-					  OBJECT_INFO_QUICK |
 					  OBJECT_INFO_SKIP_FETCH_OBJECT) < 0)
 		obj_type = -1;
 
