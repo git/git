@@ -1864,15 +1864,18 @@ static void validate_path_options(struct checkout_opts *opts)
 
 	if (!opts->patch_mode) {
 		if (opts->patch_context != -1)
-			die(_("the option '%s' requires '%s'"), "--unified", "--patch");
+			die(_("the option '%s' requires '%s'"),
+			    "--unified", "--patch");
 		if (opts->patch_interhunk_context != -1)
-			die(_("the option '%s' requires '%s'"), "--inter-hunk-context", "--patch");
+			die(_("the option '%s' requires '%s'"),
+			    "--inter-hunk-context", "--patch");
 		if (!opts->auto_advance)
-			die(_("the option '%s' requires '%s'"), "--no-auto-advance", "--patch");
+			die(_("the option '%s' requires '%s'"),
+			    "--no-auto-advance", "--patch");
 	}
 
-	if (opts->overlay_mode == 1 && opts->patch_mode)
-		die(_("options '%s' and '%s' cannot be used together"), "-p", "--overlay");
+	die_for_incompatible_opt2(opts->patch_mode, "-p",
+				  opts->overlay_mode == 1, "--overlay");
 
 	if (opts->checkout_index >= 0 || opts->checkout_worktree >= 0) {
 		if (opts->checkout_index < 0)
@@ -1914,19 +1917,25 @@ static void parse_pathspec_from_file_options(struct checkout_opts *opts,
 {
 	if (opts->pathspec_from_file) {
 		if (opts->pathspec.nr)
-			die(_("'%s' and pathspec arguments cannot be used together"), "--pathspec-from-file");
+			die(_("'%s' and pathspec arguments cannot be used together"),
+			    "--pathspec-from-file");
 
-		if (opts->force_detach)
-			die(_("options '%s' and '%s' cannot be used together"), "--pathspec-from-file", "--detach");
+		die_for_incompatible_opt2(!!opts->pathspec_from_file,
+					  "--pathspec-from-file",
+					  opts->force_detach,
+					  "--detach");
 
-		if (opts->patch_mode)
-			die(_("options '%s' and '%s' cannot be used together"), "--pathspec-from-file", "--patch");
+		die_for_incompatible_opt2(!!opts->pathspec_from_file,
+					  "--pathspec-from-file",
+					  opts->patch_mode,
+					  "--patch");
 
-		parse_pathspec_file(&opts->pathspec, 0,
-				    0,
-				    prefix, opts->pathspec_from_file, opts->pathspec_file_nul);
+		parse_pathspec_file(&opts->pathspec, 0, 0,
+				    prefix, opts->pathspec_from_file,
+				    opts->pathspec_file_nul);
 	} else if (opts->pathspec_file_nul) {
-		die(_("the option '%s' requires '%s'"), "--pathspec-file-nul", "--pathspec-from-file");
+		die(_("the option '%s' requires '%s'"),
+		    "--pathspec-file-nul", "--pathspec-from-file");
 	}
 
 	opts->pathspec.recursive = 1;
@@ -1934,9 +1943,17 @@ static void parse_pathspec_from_file_options(struct checkout_opts *opts,
 
 static void validate_branch_options(struct checkout_opts *opts, char cb_option)
 {
-	if ((!!opts->new_branch + !!opts->new_branch_force + !!opts->new_orphan_branch) > 1)
-		die(_("options '-%c', '-%c', and '%s' cannot be used together"),
-			cb_option, toupper(cb_option), "--orphan");
+	char new_branch_opt[] = "-c";
+	char new_branch_force_opt[] = "-C";
+
+	new_branch_opt[1] = cb_option;
+	new_branch_force_opt[1] = toupper(cb_option);
+
+	die_for_incompatible_opt3(!!opts->new_branch,
+				  new_branch_opt,
+				  !!opts->new_branch_force,
+				  new_branch_force_opt,
+				  !!opts->new_orphan_branch, "--orphan");
 
 	if (opts->new_branch_force)
 		opts->new_branch = opts->new_branch_force;
@@ -2147,10 +2164,12 @@ int cmd_checkout(int argc,
 			   N_("create and checkout a new branch")),
 		OPT_STRING('B', NULL, &opts.new_branch_force, N_("branch"),
 			   N_("create/reset and checkout a branch")),
-		OPT_BOOL('l', NULL, &opts.new_branch_log, N_("create reflog for new branch")),
+		OPT_BOOL('l', NULL, &opts.new_branch_log,
+			 N_("create reflog for new branch")),
 		OPT_BOOL(0, "guess", &opts.dwim_new_local_branch,
 			 N_("second guess 'git checkout <no-such-branch>' (default)")),
-		OPT_BOOL(0, "overlay", &opts.overlay_mode, N_("use overlay mode (default)")),
+		OPT_BOOL(0, "overlay", &opts.overlay_mode,
+			 N_("use overlay mode (default)")),
 		OPT_BOOL(0, "auto-advance", &opts.auto_advance,
 			 N_("auto advance to the next file when selecting hunks interactively")),
 		OPT_END()
