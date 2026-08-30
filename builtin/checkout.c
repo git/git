@@ -1846,6 +1846,98 @@ static struct option *add_checkout_path_options(struct checkout_opts *opts,
 	return newopts;
 }
 
+static void init_checkout_opts(struct checkout_opts *opts, const char *prefix)
+{
+	opts->overwrite_ignore = 1;
+	opts->prefix = prefix;
+	opts->show_progress = -1;
+
+	repo_config(the_repository, git_checkout_config, opts);
+	if (the_repository->gitdir) {
+		prepare_repo_settings(the_repository);
+		the_repository->settings.command_requires_full_index = 0;
+	}
+
+	opts->track = BRANCH_TRACK_UNSPECIFIED;
+}
+
+static void validate_path_options(struct checkout_opts *opts)
+{
+	if (opts->patch_context < -1)
+		die(_("'%s' cannot be negative"), "--unified");
+	if (opts->patch_interhunk_context < -1)
+		die(_("'%s' cannot be negative"), "--inter-hunk-context");
+
+	if (!opts->patch_mode) {
+		if (opts->patch_context != -1)
+			die(_("the option '%s' requires '%s'"), "--unified", "--patch");
+		if (opts->patch_interhunk_context != -1)
+			die(_("the option '%s' requires '%s'"), "--inter-hunk-context", "--patch");
+		if (!opts->auto_advance)
+			die(_("the option '%s' requires '%s'"), "--no-auto-advance", "--patch");
+	}
+
+	if (opts->overlay_mode == 1 && opts->patch_mode)
+		die(_("options '%s' and '%s' cannot be used together"), "-p", "--overlay");
+
+	if (opts->checkout_index >= 0 || opts->checkout_worktree >= 0) {
+		if (opts->checkout_index < 0)
+			opts->checkout_index = 0;
+		if (opts->checkout_worktree < 0)
+			opts->checkout_worktree = 0;
+	} else {
+		if (opts->checkout_index < 0)
+			opts->checkout_index = -opts->checkout_index - 1;
+		if (opts->checkout_worktree < 0)
+			opts->checkout_worktree = -opts->checkout_worktree - 1;
+	}
+	if (opts->checkout_index < 0 || opts->checkout_worktree < 0)
+		BUG("these flags should be non-negative by now");
+}
+
+static void prepare_common_options(struct checkout_opts *opts)
+{
+	if (opts->show_progress < 0) {
+		if (opts->quiet)
+			opts->show_progress = 0;
+		else
+			opts->show_progress = isatty(2);
+	}
+
+	/* --conflicts implies --merge */
+	if (opts->merge == -1)
+		opts->merge = opts->conflict_style >= 0;
+
+	if (opts->force) {
+		opts->discard_changes = 1;
+		opts->ignore_unmerged_opt = "--force";
+		opts->ignore_unmerged = 1;
+	}
+}
+
+static void parse_pathspec_from_file_options(struct checkout_opts *opts,
+					     const char *prefix)
+{
+	if (opts->pathspec_from_file) {
+		if (opts->pathspec.nr)
+			die(_("'%s' and pathspec arguments cannot be used together"), "--pathspec-from-file");
+
+		if (opts->force_detach)
+			die(_("options '%s' and '%s' cannot be used together"), "--pathspec-from-file", "--detach");
+
+		if (opts->patch_mode)
+			die(_("options '%s' and '%s' cannot be used together"), "--pathspec-from-file", "--patch");
+
+		parse_pathspec_file(&opts->pathspec, 0,
+				    0,
+				    prefix, opts->pathspec_from_file, opts->pathspec_file_nul);
+	} else if (opts->pathspec_file_nul) {
+		die(_("the option '%s' requires '%s'"), "--pathspec-file-nul", "--pathspec-from-file");
+	}
+
+	opts->pathspec.recursive = 1;
+}
+
 static int checkout_main(int argc, const char **argv, const char *prefix,
 			 struct checkout_opts *opts, struct option *options,
 			 enum checkout_command which_command)
@@ -1887,17 +1979,7 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 		BUG("no such checkout variant %d", which_command);
 	}
 
-	opts->overwrite_ignore = 1;
-	opts->prefix = prefix;
-	opts->show_progress = -1;
-
-	repo_config(the_repository, git_checkout_config, opts);
-	if (the_repository->gitdir) {
-		prepare_repo_settings(the_repository);
-		the_repository->settings.command_requires_full_index = 0;
-	}
-
-	opts->track = BRANCH_TRACK_UNSPECIFIED;
+	init_checkout_opts(opts, prefix);
 
 	if (!opts->accept_pathspec && !opts->accept_ref)
 		BUG("make up your mind, you need to take _something_");
@@ -1907,57 +1989,13 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 	argc = parse_options(argc, argv, prefix, options,
 			     usagestr, parseopt_flags);
 
-	if (opts->patch_context < -1)
-		die(_("'%s' cannot be negative"), "--unified");
-	if (opts->patch_interhunk_context < -1)
-		die(_("'%s' cannot be negative"), "--inter-hunk-context");
-
-	if (!opts->patch_mode) {
-		if (opts->patch_context != -1)
-			die(_("the option '%s' requires '%s'"), "--unified", "--patch");
-		if (opts->patch_interhunk_context != -1)
-			die(_("the option '%s' requires '%s'"), "--inter-hunk-context", "--patch");
-		if (!opts->auto_advance)
-			die(_("the option '%s' requires '%s'"), "--no-auto-advance", "--patch");
-	}
-
-	if (opts->show_progress < 0) {
-		if (opts->quiet)
-			opts->show_progress = 0;
-		else
-			opts->show_progress = isatty(2);
-	}
-
-	/* --conflicts implies --merge */
-	if (opts->merge == -1)
-		opts->merge = opts->conflict_style >= 0;
-
-	if (opts->force) {
-		opts->discard_changes = 1;
-		opts->ignore_unmerged_opt = "--force";
-		opts->ignore_unmerged = 1;
-	}
+	validate_path_options(opts);
+	prepare_common_options(opts);
 
 	if ((!!opts->new_branch + !!opts->new_branch_force + !!opts->new_orphan_branch) > 1)
 		die(_("options '-%c', '-%c', and '%s' cannot be used together"),
 			cb_option, toupper(cb_option), "--orphan");
 
-	if (opts->overlay_mode == 1 && opts->patch_mode)
-		die(_("options '%s' and '%s' cannot be used together"), "-p", "--overlay");
-
-	if (opts->checkout_index >= 0 || opts->checkout_worktree >= 0) {
-		if (opts->checkout_index < 0)
-			opts->checkout_index = 0;
-		if (opts->checkout_worktree < 0)
-			opts->checkout_worktree = 0;
-	} else {
-		if (opts->checkout_index < 0)
-			opts->checkout_index = -opts->checkout_index - 1;
-		if (opts->checkout_worktree < 0)
-			opts->checkout_worktree = -opts->checkout_worktree - 1;
-	}
-	if (opts->checkout_index < 0 || opts->checkout_worktree < 0)
-		BUG("these flags should be non-negative by now");
 	/*
 	 * convenient shortcut: "git restore --staged [--worktree]" equals
 	 * "git restore --staged [--worktree] --source HEAD"
@@ -2048,24 +2086,7 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 			    argv[0]);
 	}
 
-	if (opts->pathspec_from_file) {
-		if (opts->pathspec.nr)
-			die(_("'%s' and pathspec arguments cannot be used together"), "--pathspec-from-file");
-
-		if (opts->force_detach)
-			die(_("options '%s' and '%s' cannot be used together"), "--pathspec-from-file", "--detach");
-
-		if (opts->patch_mode)
-			die(_("options '%s' and '%s' cannot be used together"), "--pathspec-from-file", "--patch");
-
-		parse_pathspec_file(&opts->pathspec, 0,
-				    0,
-				    prefix, opts->pathspec_from_file, opts->pathspec_file_nul);
-	} else if (opts->pathspec_file_nul) {
-		die(_("the option '%s' requires '%s'"), "--pathspec-file-nul", "--pathspec-from-file");
-	}
-
-	opts->pathspec.recursive = 1;
+	parse_pathspec_from_file_options(opts, prefix);
 
 	if (!opts->pathspec.nr) {
 		if (opts->accept_pathspec && !opts->empty_pathspec_ok &&
