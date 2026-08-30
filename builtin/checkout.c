@@ -1734,6 +1734,17 @@ static int checkout_branch(struct checkout_opts *opts,
 		free(full_ref);
 	}
 
+	if (opts->new_branch) {
+		struct strbuf buf = STRBUF_INIT;
+
+		if (opts->new_branch_force)
+			opts->branch_exists = validate_branchname(opts->new_branch, &buf);
+		else
+			opts->branch_exists =
+				validate_new_branchname(opts->new_branch, &buf, 0);
+		strbuf_release(&buf);
+	}
+
 	if (!new_branch_info->commit && opts->new_branch) {
 		struct object_id rev;
 		int flag;
@@ -2060,17 +2071,6 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 		if (opts->accept_pathspec && !opts->empty_pathspec_ok &&
 		    !opts->patch_mode)	/* patch mode is special */
 			die(_("you must specify path(s) to restore"));
-	}
-
-	if (opts->new_branch) {
-		struct strbuf buf = STRBUF_INIT;
-
-		if (opts->new_branch_force)
-			opts->branch_exists = validate_branchname(opts->new_branch, &buf);
-		else
-			opts->branch_exists =
-				validate_new_branchname(opts->new_branch, &buf, 0);
-		strbuf_release(&buf);
 	}
 
 	if (opts->patch_mode || opts->pathspec.nr)
