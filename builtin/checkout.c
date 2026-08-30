@@ -1346,7 +1346,7 @@ enum checkout_command {
 static char *parse_remote_branch(const char *arg,
 				 struct object_id *rev,
 				 int could_be_checkout_paths,
-				 enum checkout_command which_command)
+				 char cb_option)
 {
 	int num_matches = 0;
 	char *remote = unique_tracking_name(arg, rev, &num_matches);
@@ -1361,16 +1361,15 @@ static char *parse_remote_branch(const char *arg,
 	    if (advice_enabled(ADVICE_CHECKOUT_AMBIGUOUS_REMOTE_BRANCH_NAME)) {
 		    const char *cmdname;
 
-		    switch (which_command) {
-		    case CHECKOUT_CHECKOUT:
+		    switch (cb_option) {
+		    case 'b':
 			    cmdname = "checkout";
 			    break;
-		    case CHECKOUT_SWITCH:
+		    case 'c':
 			    cmdname = "switch";
 			    break;
 		    default:
-			    BUG("command <%d> should not reach parse_remote_branch",
-				which_command);
+			    BUG("unexpected cb_option '%c'", cb_option);
 			    break;
 		    }
 
@@ -1394,7 +1393,7 @@ static char *parse_remote_branch(const char *arg,
 
 static int parse_branchname_arg(int argc, const char **argv,
 				int dwim_new_local_branch_ok,
-				enum checkout_command which_command,
+				char cb_option,
 				struct branch_info *new_branch_info,
 				struct checkout_opts *opts,
 				struct object_id *rev)
@@ -1505,7 +1504,7 @@ static int parse_branchname_arg(int argc, const char **argv,
 		if (recover_with_dwim) {
 			remote = parse_remote_branch(arg, rev,
 						     could_be_checkout_paths,
-						     which_command);
+						     cb_option);
 			if (remote) {
 				*new_branch = arg;
 				arg = remote;
@@ -1832,9 +1831,6 @@ static struct option *add_checkout_path_options(struct checkout_opts *opts,
 	return newopts;
 }
 
-/* create-branch option (either b or c) */
-static char cb_option = 'b';
-
 static int checkout_main(int argc, const char **argv, const char *prefix,
 			 struct checkout_opts *opts, struct option *options,
 			 enum checkout_command which_command)
@@ -1842,6 +1838,7 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 	int parseopt_flags = 0;
 	struct branch_info new_branch_info = { 0 };
 	int ret;
+	char cb_option = (which_command == CHECKOUT_SWITCH) ? 'c' : 'b';
 
 	static const char * const checkout_usage[] = {
 		N_("git checkout [<options>] <branch>"),
@@ -1997,7 +1994,7 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 			opts->dwim_new_local_branch &&
 			opts->track == BRANCH_TRACK_UNSPECIFIED &&
 			!opts->new_branch;
-		int n = parse_branchname_arg(argc, argv, dwim_ok, which_command,
+		int n = parse_branchname_arg(argc, argv, dwim_ok, cb_option,
 					     &new_branch_info, opts, &rev);
 		argv += n;
 		argc -= n;
@@ -2173,8 +2170,6 @@ int cmd_switch(int argc,
 	options = parse_options_dup(switch_options);
 	options = add_common_options(&opts, options);
 	options = add_common_switch_branch_options(&opts, options);
-
-	cb_option = 'c';
 
 	return checkout_main(argc, argv, prefix, &opts, options,
 			     CHECKOUT_SWITCH);
