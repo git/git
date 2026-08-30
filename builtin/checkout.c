@@ -1938,6 +1938,57 @@ static void parse_pathspec_from_file_options(struct checkout_opts *opts,
 	opts->pathspec.recursive = 1;
 }
 
+static void validate_branch_options(struct checkout_opts *opts, char cb_option)
+{
+	if ((!!opts->new_branch + !!opts->new_branch_force + !!opts->new_orphan_branch) > 1)
+		die(_("options '-%c', '-%c', and '%s' cannot be used together"),
+			cb_option, toupper(cb_option), "--orphan");
+
+	if (opts->new_branch_force)
+		opts->new_branch = opts->new_branch_force;
+
+	if (opts->new_orphan_branch)
+		opts->new_branch = opts->new_orphan_branch;
+}
+
+static void dwim_branch_track_option(int argc, const char **argv,
+				     struct checkout_opts *opts, char cb_option)
+{
+	/* --track without -c/-C/-b/-B/--orphan should DWIM */
+	if (opts->track != BRANCH_TRACK_UNSPECIFIED && !opts->new_branch) {
+		const char *argv0 = argv[0];
+		if (!argc || !strcmp(argv0, "--"))
+			die(_("--track needs a branch name"));
+		skip_prefix(argv0, "refs/", &argv0);
+		skip_prefix(argv0, "remotes/", &argv0);
+		argv0 = strchr(argv0, '/');
+		if (!argv0 || !argv0[1])
+			die(_("missing branch name; try -%c"), cb_option);
+		opts->new_branch = argv0 + 1;
+	}
+}
+
+static int setup_branch_name_and_info(int argc, const char **argv,
+				      struct checkout_opts *opts,
+				      struct branch_info *new_branch_info,
+				      char cb_option)
+{
+	validate_branch_options(opts, cb_option);
+	dwim_branch_track_option(argc, argv, opts, cb_option);
+
+	if (argc) {
+		struct object_id rev;
+		int dwim_ok =
+			!opts->patch_mode &&
+			opts->dwim_new_local_branch &&
+			opts->track == BRANCH_TRACK_UNSPECIFIED &&
+			!opts->new_branch;
+		return parse_branchname_arg(argc, argv, dwim_ok, cb_option,
+					    new_branch_info, opts, &rev);
+	}
+	return 0;
+}
+
 static int checkout_main(int argc, const char **argv, const char *prefix,
 			 struct checkout_opts *opts, struct option *options,
 			 enum checkout_command which_command)
@@ -1992,10 +2043,6 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 	validate_path_options(opts);
 	prepare_common_options(opts);
 
-	if ((!!opts->new_branch + !!opts->new_branch_force + !!opts->new_orphan_branch) > 1)
-		die(_("options '-%c', '-%c', and '%s' cannot be used together"),
-			cb_option, toupper(cb_option), "--orphan");
-
 	/*
 	 * convenient shortcut: "git restore --staged [--worktree]" equals
 	 * "git restore --staged [--worktree] --source HEAD"
@@ -2003,52 +2050,9 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 	if (!opts->from_treeish && opts->checkout_index)
 		opts->from_treeish = "HEAD";
 
-	/*
-	 * From here on, new_branch will contain the branch to be checked out,
-	 * and new_branch_force and new_orphan_branch will tell us which one of
-	 * -b/-B/-c/-C/--orphan is being used.
-	 */
-	if (opts->new_branch_force)
-		opts->new_branch = opts->new_branch_force;
-
-	if (opts->new_orphan_branch)
-		opts->new_branch = opts->new_orphan_branch;
-
-	/* --track without -c/-C/-b/-B/--orphan should DWIM */
-	if (opts->track != BRANCH_TRACK_UNSPECIFIED && !opts->new_branch) {
-		const char *argv0 = argv[0];
-		if (!argc || !strcmp(argv0, "--"))
-			die(_("--track needs a branch name"));
-		skip_prefix(argv0, "refs/", &argv0);
-		skip_prefix(argv0, "remotes/", &argv0);
-		argv0 = strchr(argv0, '/');
-		if (!argv0 || !argv0[1])
-			die(_("missing branch name; try -%c"), cb_option);
-		opts->new_branch = argv0 + 1;
-	}
-
-	/*
-	 * Extract branch name from command line arguments, so
-	 * all that is left is pathspecs.
-	 *
-	 * Handle
-	 *
-	 *  1) git checkout <tree> -- [<paths>]
-	 *  2) git checkout -- [<paths>]
-	 *  3) git checkout <something> [<paths>]
-	 *
-	 * including "last branch" syntax and DWIM-ery for names of
-	 * remote branches, erroring out for invalid or ambiguous cases.
-	 */
-	if (argc && opts->accept_ref) {
-		struct object_id rev;
-		int dwim_ok =
-			!opts->patch_mode &&
-			opts->dwim_new_local_branch &&
-			opts->track == BRANCH_TRACK_UNSPECIFIED &&
-			!opts->new_branch;
-		int n = parse_branchname_arg(argc, argv, dwim_ok, cb_option,
-					     &new_branch_info, opts, &rev);
+	if (opts->accept_ref) {
+		int n = setup_branch_name_and_info(argc, argv, opts,
+						   &new_branch_info, cb_option);
 		argv += n;
 		argc -= n;
 	} else if (!opts->accept_ref && opts->from_treeish) {
