@@ -1341,12 +1341,6 @@ static void setup_new_branch_info_and_source_tree(
 }
 
 
-enum checkout_command {
-	CHECKOUT_CHECKOUT = 1,
-	CHECKOUT_SWITCH = 2,
-	CHECKOUT_RESTORE = 3,
-};
-
 static char *parse_remote_branch(const char *arg,
 				 struct object_id *rev,
 				 int could_be_checkout_paths,
@@ -1989,19 +1983,25 @@ static int setup_branch_name_and_info(int argc, const char **argv,
 	return 0;
 }
 
-static int checkout_main(int argc, const char **argv, const char *prefix,
-			 struct checkout_opts *opts, struct option *options,
-			 enum checkout_command which_command)
+int cmd_switch(int argc,
+	       const char **argv,
+	       const char *prefix,
+	       struct repository *repo UNUSED)
 {
-	int parseopt_flags = 0;
+	struct checkout_opts opts = CHECKOUT_OPTS_INIT;
+	struct option *options = NULL;
 	struct branch_info new_branch_info = { 0 };
 	int ret;
-	char cb_option = (which_command == CHECKOUT_SWITCH) ? 'c' : 'b';
-
-	static const char * const checkout_usage[] = {
-		N_("git checkout [<options>] <branch>"),
-		N_("git checkout [<options>] [<branch>] -- <file>..."),
-		NULL,
+	struct option switch_options[] = {
+		OPT_STRING('c', "create", &opts.new_branch, N_("branch"),
+			   N_("create and switch to a new branch")),
+		OPT_STRING('C', "force-create", &opts.new_branch_force, N_("branch"),
+			   N_("create/reset and switch to a branch")),
+		OPT_BOOL(0, "guess", &opts.dwim_new_local_branch,
+			 N_("second guess 'git switch <no-such-branch>'")),
+		OPT_BOOL(0, "discard-changes", &opts.discard_changes,
+			 N_("throw away local modifications")),
+		OPT_END()
 	};
 
 	static const char * const switch_branch_usage[] = {
@@ -2009,103 +2009,125 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 		NULL,
 	};
 
+	opts.dwim_new_local_branch = 1;
+	opts.accept_ref = 1;
+	opts.accept_pathspec = 0;
+	opts.switch_branch_doing_nothing_is_ok = 0;
+	opts.only_merge_on_switching_branches = 1;
+	opts.implicit_detach = 0;
+	opts.can_switch_when_in_progress = 0;
+	opts.orphan_from_empty_tree = 1;
+	opts.overlay_mode = -1;
+
+	init_checkout_opts(&opts, prefix);
+
+	options = parse_options_dup(switch_options);
+	options = add_common_options(&opts, options);
+	options = add_common_switch_branch_options(&opts, options);
+
+	argc = parse_options(argc, argv, prefix, options,
+			     switch_branch_usage, 0);
+
+	prepare_common_options(&opts);
+	setup_branch_name_and_info(argc, argv, &opts, &new_branch_info, 'c');
+
+	ret = checkout_branch(&opts, &new_branch_info);
+
+	branch_info_release(&new_branch_info);
+	clear_pathspec(&opts.pathspec);
+	free(opts.pathspec_from_file);
+	free(options);
+
+	return ret;
+}
+
+int cmd_restore(int argc,
+		const char **argv,
+		const char *prefix,
+		struct repository *repo UNUSED)
+{
+	struct checkout_opts opts = CHECKOUT_OPTS_INIT;
+	struct option *options;
+	struct branch_info new_branch_info = { 0 };
+	int ret;
+	struct option restore_options[] = {
+		OPT_STRING('s', "source", &opts.from_treeish, "<tree-ish>",
+			   N_("which tree-ish to checkout from")),
+		OPT_BOOL('S', "staged", &opts.checkout_index,
+			   N_("restore the index")),
+		OPT_BOOL('W', "worktree", &opts.checkout_worktree,
+			   N_("restore the working tree (default)")),
+		OPT_BOOL(0, "ignore-unmerged", &opts.ignore_unmerged,
+			 N_("ignore unmerged entries")),
+		OPT_BOOL(0, "overlay", &opts.overlay_mode, N_("use overlay mode")),
+		OPT_END()
+	};
+
 	static const char * const restore_usage[] = {
 		N_("git restore [<options>] [--source=<branch>] <file>..."),
 		NULL,
 	};
 
-	const char * const *usagestr;
+	opts.accept_ref = 0;
+	opts.accept_pathspec = 1;
+	opts.empty_pathspec_ok = 0;
+	opts.overlay_mode = 0;
+	opts.checkout_index = -1;    /* default off */
+	opts.checkout_worktree = -2; /* default on */
+	opts.ignore_unmerged_opt = "--ignore-unmerged";
 
-	switch (which_command) {
-	case CHECKOUT_CHECKOUT:
-		usagestr = checkout_usage;
-		break;
-	case CHECKOUT_SWITCH:
-		usagestr = switch_branch_usage;
-		break;
-	case CHECKOUT_RESTORE:
-		usagestr = restore_usage;
-		break;
-	default:
-		BUG("no such checkout variant %d", which_command);
-	}
+	init_checkout_opts(&opts, prefix);
 
-	init_checkout_opts(opts, prefix);
-
-	if (!opts->accept_pathspec && !opts->accept_ref)
-		BUG("make up your mind, you need to take _something_");
-	if (opts->accept_pathspec && opts->accept_ref)
-		parseopt_flags = PARSE_OPT_KEEP_DASHDASH;
+	options = parse_options_dup(restore_options);
+	options = add_common_options(&opts, options);
+	options = add_checkout_path_options(&opts, options);
 
 	argc = parse_options(argc, argv, prefix, options,
-			     usagestr, parseopt_flags);
+			     restore_usage, 0);
 
-	validate_path_options(opts);
-	prepare_common_options(opts);
+	validate_path_options(&opts);
+	prepare_common_options(&opts);
 
 	/*
 	 * convenient shortcut: "git restore --staged [--worktree]" equals
 	 * "git restore --staged [--worktree] --source HEAD"
 	 */
-	if (!opts->from_treeish && opts->checkout_index)
-		opts->from_treeish = "HEAD";
+	if (!opts.from_treeish && opts.checkout_index)
+		opts.from_treeish = "HEAD";
 
-	if (opts->accept_ref) {
-		int n = setup_branch_name_and_info(argc, argv, opts,
-						   &new_branch_info, cb_option);
-		argv += n;
-		argc -= n;
-	} else if (!opts->accept_ref && opts->from_treeish) {
+	if (opts.from_treeish) {
 		struct object_id rev;
 
-		if (repo_get_oid_mb(the_repository, opts->from_treeish, &rev))
-			die(_("could not resolve '%s'"), opts->from_treeish);
+		if (repo_get_oid_mb(the_repository, opts.from_treeish, &rev))
+			die(_("could not resolve '%s'"), opts.from_treeish);
 
 		setup_new_branch_info_and_source_tree(&new_branch_info,
-						      opts, &rev,
-						      opts->from_treeish);
+						      &opts, &rev,
+						      opts.from_treeish);
 
-		if (!opts->source_tree)
-			die(_("reference is not a tree: %s"), opts->from_treeish);
+		if (!opts.source_tree)
+			die(_("reference is not a tree: %s"), opts.from_treeish);
 	}
 
 	if (argc) {
-		parse_pathspec(&opts->pathspec, 0,
-			       opts->patch_mode ? PATHSPEC_PREFIX_ORIGIN : 0,
+		parse_pathspec(&opts.pathspec, 0,
+			       opts.patch_mode ? PATHSPEC_PREFIX_ORIGIN : 0,
 			       prefix, argv);
 
-		if (!opts->pathspec.nr)
+		if (!opts.pathspec.nr)
 			die(_("invalid path specification"));
-
-		/*
-		 * Try to give more helpful suggestion.
-		 * new_branch && argc > 1 will be caught later.
-		 */
-		if (opts->new_branch && argc == 1 && !new_branch_info.commit)
-			die(_("'%s' is not a commit and a branch '%s' cannot be created from it"),
-				argv[0], opts->new_branch);
-
-		if (opts->force_detach)
-			die(_("git checkout: --detach does not take a path argument '%s'"),
-			    argv[0]);
 	}
 
-	parse_pathspec_from_file_options(opts, prefix);
+	parse_pathspec_from_file_options(&opts, prefix);
 
-	if (!opts->pathspec.nr) {
-		if (opts->accept_pathspec && !opts->empty_pathspec_ok &&
-		    !opts->patch_mode)	/* patch mode is special */
-			die(_("you must specify path(s) to restore"));
-	}
+	if (!opts.pathspec.nr && !opts.patch_mode)
+		die(_("you must specify path(s) to restore"));
 
-	if (opts->patch_mode || opts->pathspec.nr)
-		ret = checkout_paths(opts, &new_branch_info);
-	else
-		ret = checkout_branch(opts, &new_branch_info);
+	ret = checkout_paths(&opts, &new_branch_info);
 
 	branch_info_release(&new_branch_info);
-	clear_pathspec(&opts->pathspec);
-	free(opts->pathspec_from_file);
+	clear_pathspec(&opts.pathspec);
+	free(opts.pathspec_from_file);
 	free(options);
 
 	return ret;
@@ -2118,6 +2140,8 @@ int cmd_checkout(int argc,
 {
 	struct checkout_opts opts = CHECKOUT_OPTS_INIT;
 	struct option *options;
+	struct branch_info new_branch_info = { 0 };
+	int ret, n;
 	struct option checkout_options[] = {
 		OPT_STRING('b', NULL, &opts.new_branch, N_("branch"),
 			   N_("create and checkout a new branch")),
@@ -2130,6 +2154,12 @@ int cmd_checkout(int argc,
 		OPT_BOOL(0, "auto-advance", &opts.auto_advance,
 			 N_("auto advance to the next file when selecting hunks interactively")),
 		OPT_END()
+	};
+
+	static const char * const checkout_usage[] = {
+		N_("git checkout [<options>] <branch>"),
+		N_("git checkout [<options>] [<branch>] -- <file>..."),
+		NULL,
 	};
 
 	opts.dwim_new_local_branch = 1;
@@ -2154,84 +2184,55 @@ int cmd_checkout(int argc,
 		opts.only_merge_on_switching_branches = 1;
 	}
 
+	init_checkout_opts(&opts, prefix);
+
 	options = parse_options_dup(checkout_options);
 	options = add_common_options(&opts, options);
 	options = add_common_switch_branch_options(&opts, options);
 	options = add_checkout_path_options(&opts, options);
 
-	return checkout_main(argc, argv, prefix, &opts, options,
-			     CHECKOUT_CHECKOUT);
-}
+	argc = parse_options(argc, argv, prefix, options,
+			     checkout_usage, PARSE_OPT_KEEP_DASHDASH);
 
-int cmd_switch(int argc,
-	       const char **argv,
-	       const char *prefix,
-	       struct repository *repo UNUSED)
-{
-	struct checkout_opts opts = CHECKOUT_OPTS_INIT;
-	struct option *options = NULL;
-	struct option switch_options[] = {
-		OPT_STRING('c', "create", &opts.new_branch, N_("branch"),
-			   N_("create and switch to a new branch")),
-		OPT_STRING('C', "force-create", &opts.new_branch_force, N_("branch"),
-			   N_("create/reset and switch to a branch")),
-		OPT_BOOL(0, "guess", &opts.dwim_new_local_branch,
-			 N_("second guess 'git switch <no-such-branch>'")),
-		OPT_BOOL(0, "discard-changes", &opts.discard_changes,
-			 N_("throw away local modifications")),
-		OPT_END()
-	};
+	validate_path_options(&opts);
+	prepare_common_options(&opts);
 
-	opts.dwim_new_local_branch = 1;
-	opts.accept_ref = 1;
-	opts.accept_pathspec = 0;
-	opts.switch_branch_doing_nothing_is_ok = 0;
-	opts.only_merge_on_switching_branches = 1;
-	opts.implicit_detach = 0;
-	opts.can_switch_when_in_progress = 0;
-	opts.orphan_from_empty_tree = 1;
-	opts.overlay_mode = -1;
+	n = setup_branch_name_and_info(argc, argv, &opts, &new_branch_info, 'b');
+	argv += n;
+	argc -= n;
 
-	options = parse_options_dup(switch_options);
-	options = add_common_options(&opts, options);
-	options = add_common_switch_branch_options(&opts, options);
+	if (argc) {
+		parse_pathspec(&opts.pathspec, 0,
+			       opts.patch_mode ? PATHSPEC_PREFIX_ORIGIN : 0,
+			       prefix, argv);
 
-	return checkout_main(argc, argv, prefix, &opts, options,
-			     CHECKOUT_SWITCH);
-}
+		if (!opts.pathspec.nr)
+			die(_("invalid path specification"));
 
-int cmd_restore(int argc,
-		const char **argv,
-		const char *prefix,
-		struct repository *repo UNUSED)
-{
-	struct checkout_opts opts = CHECKOUT_OPTS_INIT;
-	struct option *options;
-	struct option restore_options[] = {
-		OPT_STRING('s', "source", &opts.from_treeish, "<tree-ish>",
-			   N_("which tree-ish to checkout from")),
-		OPT_BOOL('S', "staged", &opts.checkout_index,
-			   N_("restore the index")),
-		OPT_BOOL('W', "worktree", &opts.checkout_worktree,
-			   N_("restore the working tree (default)")),
-		OPT_BOOL(0, "ignore-unmerged", &opts.ignore_unmerged,
-			 N_("ignore unmerged entries")),
-		OPT_BOOL(0, "overlay", &opts.overlay_mode, N_("use overlay mode")),
-		OPT_END()
-	};
+		/*
+		 * Try to give more helpful suggestion.
+		 * new_branch && argc > 1 will be caught later.
+		 */
+		if (opts.new_branch && argc == 1 && !new_branch_info.commit)
+			die(_("'%s' is not a commit and a branch '%s' cannot be created from it"),
+				argv[0], opts.new_branch);
 
-	opts.accept_ref = 0;
-	opts.accept_pathspec = 1;
-	opts.empty_pathspec_ok = 0;
-	opts.overlay_mode = 0;
-	opts.checkout_index = -1;    /* default off */
-	opts.checkout_worktree = -2; /* default on */
-	opts.ignore_unmerged_opt = "--ignore-unmerged";
+		if (opts.force_detach)
+			die(_("git checkout: --detach does not take a path argument '%s'"),
+			    argv[0]);
+	}
 
-	options = parse_options_dup(restore_options);
-	options = add_common_options(&opts, options);
-	options = add_checkout_path_options(&opts, options);
+	parse_pathspec_from_file_options(&opts, prefix);
 
-	return checkout_main(argc, argv, prefix, &opts, options,
-			     CHECKOUT_RESTORE);
+	if (opts.patch_mode || opts.pathspec.nr)
+		ret = checkout_paths(&opts, &new_branch_info);
+	else
+		ret = checkout_branch(&opts, &new_branch_info);
+
+	branch_info_release(&new_branch_info);
+	clear_pathspec(&opts.pathspec);
+	free(opts.pathspec_from_file);
+	free(options);
+
+	return ret;
 }
