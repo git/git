@@ -591,6 +591,10 @@ static int checkout_paths(const struct checkout_opts *opts,
 		die(_("'%s', '%s', or '%s' cannot be used when checking out of a tree"),
 		    "--merge", "--ours", "--theirs");
 
+	if (1 < !!opts->writeout_stage + !!opts->force + !!opts->merge)
+		die(_("git checkout: --ours/--theirs, --force and --merge are incompatible when\n"
+		      "checking out of the index."));
+
 	if (opts->patch_mode) {
 		enum add_p_mode patch_mode;
 		struct interactive_options interactive_opts = {
@@ -2063,11 +2067,7 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 
 	opts->pathspec.recursive = 1;
 
-	if (opts->pathspec.nr) {
-		if (1 < !!opts->writeout_stage + !!opts->force + !!opts->merge)
-			die(_("git checkout: --ours/--theirs, --force and --merge are incompatible when\n"
-			      "checking out of the index."));
-	} else {
+	if (!opts->pathspec.nr) {
 		if (opts->accept_pathspec && !opts->empty_pathspec_ok &&
 		    !opts->patch_mode)	/* patch mode is special */
 			die(_("you must specify path(s) to restore"));
