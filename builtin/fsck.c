@@ -1047,7 +1047,8 @@ int cmd_fsck(int argc,
 				    mark_object_for_connectivity, repo, 0);
 	} else {
 		for (source = repo->objects->sources; source; source = source->next)
-			fsck_source(repo, source);
+			if (check_full || source->local)
+				fsck_source(repo, source);
 
 		if (check_full) {
 			struct packed_git *p;
