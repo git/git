@@ -553,7 +553,7 @@ bool odb_source_files_optimize_required(struct odb_source *source,
 		};
 		struct existing_packs existing_packs = EXISTING_PACKS_INIT;
 		struct string_list kept_packs = STRING_LIST_INIT_DUP;
-		int auto_value = 100;
+		int auto_value = 6700;
 		bool ret;
 
 		repo_config_get_int(repo, "maintenance.geometric-repack.auto",
