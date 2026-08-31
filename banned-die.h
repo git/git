@@ -11,4 +11,7 @@
 #undef die
 #define die BANNED(die)
 
+#undef xsnprintf
+#define xsnprintf(...) BANNED(xsnprintf)
+
 #endif /* BANNED_DIE_H */
