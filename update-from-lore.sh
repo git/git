@@ -75,3 +75,16 @@ tee ./+b4am.mbx |
 git am -s3 && rm -f ./+b4am.mbx &&
 
 git range-diff --notes=amlog --crea=999 @{-1}...
+echo -n >&2 "Update [y/n]? "
+while read yesno
+do
+	case "$yesno" in
+	[Yy]*)
+		git co -B @{-1}
+		exit 0
+		;;
+	[Nn]*)
+		exit 1
+		;;
+	esac
+done
