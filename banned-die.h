@@ -17,6 +17,9 @@
 #undef xstrdup
 #define xstrdup(str) BANNED(xstrdup)
 
+#undef xcalloc
+#define xcalloc(nmemb, size) BANNED(xcalloc)
+
 #undef xstrfmt
 #define xstrfmt(...) BANNED(xstrfmt)
 

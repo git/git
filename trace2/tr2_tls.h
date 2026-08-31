@@ -55,6 +55,12 @@ struct tr2tls_thread_ctx *tr2tls_create_self(const char *thread_base_name,
 struct tr2tls_thread_ctx *tr2tls_get_self(void);
 
 /*
+ * Return true if the context is the non-allocating fallback used after an
+ * allocation failure. Callers must not modify a fallback context.
+ */
+int tr2tls_is_fallback(const struct tr2tls_thread_ctx *ctx);
+
+/*
  * return true if the current thread is the main thread.
  */
 int tr2tls_is_main_thread(void);
