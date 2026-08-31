@@ -506,7 +506,7 @@ static inline int odb_source_freshen_object(struct odb_source *source,
  * object ID and the compatibility object ID, if non-NULL.
  */
 static inline int odb_source_write_object(struct odb_source *source,
-					  const void *buf, unsigned long len,
+					  const void *buf, size_t len,
 					  enum object_type type,
 					  const struct object_id *oid,
 					  const struct object_id *compat_oid,
