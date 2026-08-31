@@ -722,7 +722,6 @@ static int fsck_loose(const struct object_id *oid, const char *path,
 		      void *cb_data)
 {
 	struct for_each_loose_cb *data = cb_data;
-	struct object *obj;
 	enum object_type type = OBJ_NONE;
 	size_t size;
 	void *contents = NULL;
@@ -751,21 +750,7 @@ static int fsck_loose(const struct object_id *oid, const char *path,
 	if (!contents && type != OBJ_BLOB)
 		BUG("read_loose_object streamed a non-blob");
 
-	obj = parse_object_buffer(data->repo, oid, type, size,
-				  contents, &eaten);
-
-	if (!obj) {
-		errors_found |= ERROR_OBJECT;
-		error(_("%s: object could not be parsed: %s"),
-		      oid_to_hex(oid), path);
-		if (!eaten)
-			free(contents);
-		return 0; /* keep checking other objects */
-	}
-
-	obj->flags &= ~(REACHABLE | SEEN);
-	obj->flags |= HAS_OBJ;
-	if (fsck_obj(data->repo, obj, contents, size))
+	if (fsck_obj_buffer(oid, type, size, contents, &eaten, data->repo))
 		errors_found |= ERROR_OBJECT;
 
 	if (!eaten)
