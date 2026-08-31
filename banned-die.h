@@ -14,4 +14,7 @@
 #undef xsnprintf
 #define xsnprintf(...) BANNED(xsnprintf)
 
+#undef xstrdup
+#define xstrdup(str) BANNED(xstrdup)
+
 #endif /* BANNED_DIE_H */
