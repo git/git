@@ -404,6 +404,12 @@ int replay_revisions(struct rev_info *revs,
 	set_up_replay_mode(revs->repo, &revs->cmdline, opts->onto,
 			   &detached_head, &advance, &revert, &onto, &update_refs);
 
+	if (opts->linearize &&
+	    update_refs && strset_get_size(update_refs) > 1) {
+		ret = error(_("'--linearize' cannot be used with multiple branches"));
+		goto out;
+	}
+
 	if (opts->ref) {
 		struct object_id oid;
 
@@ -437,26 +443,40 @@ int replay_revisions(struct rev_info *revs,
 	while ((commit = get_revision(revs))) {
 		const struct name_decoration *decoration;
 
-		/*
-		 * Decide where to replay this commit on.
-		 * If the parent commit was replayed already, the replayed result
-		 * can be found in `replayed_commits`. Otherwise fall back to `onto`.
-		 * When reverting, commits are replayed in reverse order and thus
-		 * its parent isn't replayed yet. Therefore revert commits are
-		 * always replayed onto `last_commit`.
-		 */
-		struct commit *parent = commit->parents ? commit->parents->item : NULL;
-		struct commit *base = get_mapped_commit(replayed_commits, parent, onto);
+		if (commit->parents && commit->parents->next) {
+			if (!opts->linearize)
+				die(_("replaying merge commits is not supported yet!"));
+			/*
+			 * Drop the merge commit: do not pick it, leave
+			 * `last_commit` unchanged, and fall through to the
+			 * rest of the loop. As a result:
+			 * - refs pointing to the merge commit will be updated
+			 *   to `last_commit`.
+			 * - the next replayed commit uses `last_commit` as its
+			 *   `base`.
+			 */
+		} else {
+			/*
+			 * Decide where to replay this commit onto.
+			 * If the parent commit was replayed already, the replayed result
+			 * can be found in `replayed_commits`. Otherwise fall back to `onto`.
+			 * When reverting, commits are replayed in reverse order and thus
+			 * its parent isn't replayed yet. Therefore revert commits are
+			 * always replayed onto `last_commit`.
+			 * Also when opts->linearize is true, set the base to
+			 * `last_commit` to create a single linear history.
+			 */
+			struct commit *parent = commit->parents ? commit->parents->item : NULL;
+			struct commit *base = get_mapped_commit(replayed_commits, parent, onto);
 
-		if (mode == REPLAY_MODE_REVERT)
-			base = last_commit;
+			if (opts->linearize || mode == REPLAY_MODE_REVERT)
+				base = last_commit;
 
-		if (commit->parents && commit->parents->next)
-			die(_("replaying merge commits is not supported yet!"));
+			last_commit = pick_regular_commit(revs->repo, commit, base,
+							  &merge_opt, &result,
+							  mode, opts->empty);
+		}
 
-		last_commit = pick_regular_commit(revs->repo, commit, base,
-						  &merge_opt, &result,
-						  mode, opts->empty);
 		if (!last_commit)
 			break;
 
