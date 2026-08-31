@@ -20,6 +20,7 @@ struct tr2tls_thread_ctx {
 	uint64_t *array_us_start;
 	size_t alloc;
 	size_t nr_open_regions; /* plays role of "nr" in ALLOC_GROW */
+	size_t nr_skipped_regions;
 	int thread_id;
 	struct tr2_timer_block timer_block;
 	struct tr2_counter_block counter_block;

@@ -23,4 +23,7 @@
 #undef ALLOC_ARRAY
 #define ALLOC_ARRAY(x, alloc) BANNED(ALLOC_ARRAY)
 
+#undef ALLOC_GROW
+#define ALLOC_GROW(x, nr, alloc) BANNED(ALLOC_GROW)
+
 #endif /* BANNED_DIE_H */
