@@ -23,7 +23,6 @@
 #include "run-command.h"
 #include "sparse-index.h"
 #include "worktree.h"
-#include "pack-bitmap.h"
 
 #define REACHABLE 0x0001
 #define SEEN      0x0002
@@ -50,7 +49,6 @@ static timestamp_t now;
 #define ERROR_REFS 010
 #define ERROR_COMMIT_GRAPH 020
 #define ERROR_MULTI_PACK_INDEX 040
-#define ERROR_BITMAP 0200
 
 static const char *describe_object(const struct object_id *oid)
 {
@@ -1067,9 +1065,6 @@ int cmd_fsck(int argc,
 		}
 		free_worktrees(worktrees);
 	}
-
-	if (verify_bitmap_files(repo))
-		errors_found |= ERROR_BITMAP;
 
 	check_connectivity(repo);
 
