@@ -1184,11 +1184,14 @@ int cmd_clone(int argc,
 	 * database. We do not yet know about the object format of the
 	 * repository, and reference backends may persist that information into
 	 * their on-disk data structures.
+	 *
+	 * Furthermore, we skip initializing the object database so that we can
+	 * first resolve potential alternates before creating it.
 	 */
 	init_db(the_repository, git_dir, real_git_dir, work_tree, option_template,
 		GIT_HASH_UNKNOWN, ref_storage_format, NULL,
 		do_not_override_repo_unix_permissions,
-		INIT_DB_QUIET | INIT_DB_SKIP_REFDB);
+		INIT_DB_QUIET | INIT_DB_SKIP_REFDB | INIT_DB_SKIP_ODB);
 
 	if (real_git_dir) {
 		free((char *)git_dir);
@@ -1311,9 +1314,6 @@ int cmd_clone(int argc,
 		strbuf_reset(&key);
 	}
 
-	if (option_required_reference.nr || option_optional_reference.nr)
-		setup_reference();
-
 	remote = remote_get_early(remote_name);
 
 	if (!option_rev)
@@ -1341,6 +1341,10 @@ int cmd_clone(int argc,
 	}
 	if (option_local > 0 && !is_local)
 		warning(_("--local is ignored"));
+
+	create_object_database(the_repository);
+	if (option_required_reference.nr || option_optional_reference.nr)
+		setup_reference();
 
 	transport = transport_get(remote, path ? path : remote->url.v[0]);
 	transport_set_verbosity(transport, option_verbosity, option_progress);
