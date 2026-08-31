@@ -9,8 +9,10 @@
 #include "midx.h"
 #include "odb/source-packed.h"
 #include "odb/streaming.h"
+#include "pack.h"
 #include "packfile.h"
 #include "pack-bitmap.h"
+#include "progress.h"
 
 static int find_pack_entry(struct odb_source_packed *store,
 			   const struct object_id *oid,
@@ -827,10 +829,48 @@ static void odb_source_packed_free(struct odb_source *source)
 	free(packed);
 }
 
-static int odb_source_packed_fsck(struct odb_source *source UNUSED,
-				  struct odb_fsck_options *opts UNUSED)
+static int verify_packs(struct odb_source_packed *source,
+			struct odb_fsck_options *opts)
 {
-	return 0;
+	struct progress *progress = NULL;
+	struct packfile_list_entry *e;
+	uint32_t total = 0, count = 0;
+	int ret = 0;
+
+	if (opts->flags & ODB_FSCK_PROGRESS) {
+		for (e = packfile_store_get_packs(source); e; e = e->next) {
+			if (open_pack_index(e->pack))
+				continue;
+			total += e->pack->num_objects;
+		}
+
+		progress = start_progress(source->base.odb->repo,
+					  _("Checking objects"), total);
+	}
+
+	for (e = packfile_store_get_packs(source); e; e = e->next) {
+		/* verify gives error messages itself */
+		if (verify_pack(source->base.odb->repo, e->pack,
+				opts->object_cb, opts->object_payload,
+				progress, count))
+			ret = -1;
+		count += e->pack->num_objects;
+	}
+	stop_progress(&progress);
+
+	return ret;
+}
+
+static int odb_source_packed_fsck(struct odb_source *source,
+				  struct odb_fsck_options *opts)
+{
+	struct odb_source_packed *packed = odb_source_packed_downcast(source);
+	int ret = 0;
+
+	if ((opts->flags & ODB_FSCK_FULL) && verify_packs(packed, opts) < 0)
+		ret = -1;
+
+	return ret;
 }
 
 struct odb_source_packed *odb_source_packed_new(struct object_database *odb,

@@ -7,7 +7,6 @@
 #include "blob.h"
 #include "tag.h"
 #include "refs.h"
-#include "pack.h"
 #include "cache-tree.h"
 #include "fsck.h"
 #include "parse-options.h"
@@ -49,7 +48,6 @@ static int show_dangling = 1;
 static timestamp_t now;
 #define ERROR_OBJECT 01
 #define ERROR_REACHABLE 02
-#define ERROR_PACK 04
 #define ERROR_REFS 010
 #define ERROR_COMMIT_GRAPH 020
 #define ERROR_MULTI_PACK_INDEX 040
@@ -967,6 +965,8 @@ int cmd_fsck(int argc,
 {
 	struct odb_fsck_options odb_fsck_opts = {
 		.flags = ODB_FSCK_FULL,
+		.object_cb = fsck_obj_buffer,
+		.object_payload = repo,
 	};
 	int keep_cache_objects = 0;
 	int name_objects = 0;
@@ -1019,6 +1019,8 @@ int cmd_fsck(int argc,
 		show_progress = isatty(2);
 	if (verbose)
 		show_progress = 0;
+	if (show_progress)
+		odb_fsck_opts.flags |= ODB_FSCK_PROGRESS;
 
 	if (write_lost_and_found) {
 		odb_fsck_opts.flags |= ODB_FSCK_FULL;
@@ -1055,33 +1057,6 @@ int cmd_fsck(int argc,
 
 		if (odb_fsck(repo->objects, &odb_fsck_opts) < 0)
 			errors_found |= ERROR_OBJECT;
-
-		if (odb_fsck_opts.flags & ODB_FSCK_FULL) {
-			struct packed_git *p;
-			uint32_t total = 0, count = 0;
-			struct progress *progress = NULL;
-
-			if (show_progress) {
-				repo_for_each_pack(repo, p) {
-					if (open_pack_index(p))
-						continue;
-					total += p->num_objects;
-				}
-
-				progress = start_progress(repo,
-							  _("Checking objects"), total);
-			}
-
-			repo_for_each_pack(repo, p) {
-				/* verify gives error messages itself */
-				if (verify_pack(repo,
-						p, fsck_obj_buffer, repo,
-						progress, count))
-					errors_found |= ERROR_PACK;
-				count += p->num_objects;
-			}
-			stop_progress(&progress);
-		}
 
 		if (fsck_finish(&fsck_obj_options))
 			errors_found |= ERROR_OBJECT;
