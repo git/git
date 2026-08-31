@@ -448,14 +448,23 @@ enum object_info_flags {
 	OBJECT_INFO_FOR_PREFETCH = (OBJECT_INFO_SKIP_FETCH_OBJECT | OBJECT_INFO_QUICK),
 };
 
+enum odb_read_status {
+	/* The read was successful. */
+	ODB_READ_OK = 0,
+	/* The read resulted in a generic error. */
+	ODB_READ_ERROR = -1,
+	/* The object could not be found. */
+	ODB_READ_NOT_FOUND = -2,
+};
+
 /*
  * Read object info from the object database and populate the `object_info`
  * structure. Returns 0 on success, a negative error code otherwise.
  */
-int odb_read_object_info_extended(struct object_database *odb,
-				  const struct object_id *oid,
-				  struct object_info *oi,
-				  enum object_info_flags flags);
+enum odb_read_status odb_read_object_info_extended(struct object_database *odb,
+						   const struct object_id *oid,
+						   struct object_info *oi,
+						   enum object_info_flags flags);
 
 /*
  * Read a subset of object info for the given object ID. Returns an `enum
