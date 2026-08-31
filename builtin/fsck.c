@@ -965,7 +965,9 @@ int cmd_fsck(int argc,
 	     const char *prefix,
 	     struct repository *repo)
 {
-	int check_full = 1;
+	struct odb_fsck_options odb_fsck_opts = {
+		.flags = ODB_FSCK_FULL,
+	};
 	int keep_cache_objects = 0;
 	int name_objects = 0;
 	int check_references = 1;
@@ -977,7 +979,8 @@ int cmd_fsck(int argc,
 		OPT_BOOL(0, "root", &show_root, N_("report root nodes")),
 		OPT_BOOL(0, "cache", &keep_cache_objects, N_("make index objects head nodes")),
 		OPT_BOOL(0, "reflogs", &include_reflogs, N_("make reflogs head nodes (default)")),
-		OPT_BOOL(0, "full", &check_full, N_("also consider packs and alternate objects")),
+		OPT_BIT(0, "full", &odb_fsck_opts.flags,
+			N_("also consider packs and alternate objects"), ODB_FSCK_FULL),
 		OPT_BOOL(0, "connectivity-only", &connectivity_only, N_("check only connectivity")),
 		OPT_BOOL(0, "strict", &check_strict, N_("enable more strict checking")),
 		OPT_BOOL(0, "lost-found", &write_lost_and_found,
@@ -1018,7 +1021,7 @@ int cmd_fsck(int argc,
 		show_progress = 0;
 
 	if (write_lost_and_found) {
-		check_full = 1;
+		odb_fsck_opts.flags |= ODB_FSCK_FULL;
 		include_reflogs = 0;
 	}
 
@@ -1047,10 +1050,13 @@ int cmd_fsck(int argc,
 				    mark_object_for_connectivity, repo, 0);
 	} else {
 		for (source = repo->objects->sources; source; source = source->next)
-			if (check_full || source->local)
+			if ((odb_fsck_opts.flags & ODB_FSCK_FULL) || source->local)
 				fsck_source(repo, source);
 
-		if (check_full) {
+		if (odb_fsck(repo->objects, &odb_fsck_opts) < 0)
+			errors_found |= ERROR_OBJECT;
+
+		if (odb_fsck_opts.flags & ODB_FSCK_FULL) {
 			struct packed_git *p;
 			uint32_t total = 0, count = 0;
 			struct progress *progress = NULL;

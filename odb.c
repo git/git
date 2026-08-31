@@ -1177,3 +1177,12 @@ void odb_reprepare(struct object_database *o)
 {
 	odb_prepare(o, ODB_PREPARE_FLUSH_CACHES);
 }
+
+int odb_fsck(struct object_database *odb, struct odb_fsck_options *options)
+{
+	int ret = 0;
+	for (struct odb_source *source = odb->sources; source; source = source->next)
+		if ((options->flags & ODB_FSCK_FULL) || source->local)
+			ret |= odb_source_fsck(source, options);
+	return ret;
+}
