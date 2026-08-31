@@ -17,6 +17,8 @@
 #include "trace2/tr2_tgt.h"
 #include "trace2/tr2_tls.h"
 #include "trace2/tr2_tmr.h"
+/* banned-die must be last. */
+#include "banned-die.h"
 
 static int trace2_enabled;
 static int trace2_redact = 1;

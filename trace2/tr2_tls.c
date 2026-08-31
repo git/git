@@ -3,6 +3,8 @@
 #include "thread-utils.h"
 #include "trace.h"
 #include "trace2/tr2_tls.h"
+/* banned-die must be last. */
+#include "banned-die.h"
 
 /*
  * Initialize size of the thread stack for nested regions.

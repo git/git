@@ -4,6 +4,8 @@
 #include "config.h"
 #include "dir.h"
 #include "tr2_sysenv.h"
+/* banned-die must be last. */
+#include "banned-die.h"
 
 /*
  * Each entry represents a trace2 setting.

@@ -2,6 +2,8 @@
 #include "trace2/tr2_tgt.h"
 #include "trace2/tr2_tls.h"
 #include "trace2/tr2_ctr.h"
+/* banned-die must be last. */
+#include "banned-die.h"
 
 /*
  * A global counter block to aggregate values from the partial sums
