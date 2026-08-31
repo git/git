@@ -77,8 +77,6 @@ static inline struct repo_for_each_pack_data repo_for_eack_pack_data_init(struct
 {
 	struct repo_for_each_pack_data data = { 0 };
 
-	odb_prepare_alternates(repo->objects);
-
 	for (struct odb_source *source = repo->objects->sources; source; source = source->next) {
 		struct odb_source_files *files = odb_source_files_downcast(source);
 		struct packfile_list_entry *entry = packfile_store_get_packs(files->packed);

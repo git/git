@@ -1923,7 +1923,6 @@ int has_object_pack(struct repository *r, const struct object_id *oid)
 {
 	struct odb_source *source;
 
-	odb_prepare_alternates(r->objects);
 	for (source = r->objects->sources; source; source = source->next) {
 		struct odb_source_files *files = odb_source_files_downcast(source);
 		if (!odb_source_read_object_info(&files->packed->base, oid, NULL, 0, NULL))

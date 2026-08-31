@@ -1,6 +1,7 @@
 #ifndef ODB_SOURCE_H
 #define ODB_SOURCE_H
 
+#include "hashmap.h"
 #include "object.h"
 #include "odb.h"
 #include "odb/transaction.h"
@@ -50,6 +51,12 @@ struct strvec;
  */
 struct odb_source {
 	struct odb_source *next;
+
+	/*
+	 * Entry in the object database's map of sources, keyed by this
+	 * source's path.
+	 */
+	struct hashmap_entry by_path_entry;
 
 	/* Object database that owns this object source. */
 	struct object_database *odb;

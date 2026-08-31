@@ -115,7 +115,6 @@ int repo_read_loose_object_map(struct repository *repo)
 {
 	struct odb_source *source;
 
-	odb_prepare_alternates(repo->objects);
 	for (source = repo->objects->sources; source; source = source->next) {
 		struct odb_source_files *files = odb_source_files_downcast(source);
 		if (loose_object_map_load(files->loose) < 0)
