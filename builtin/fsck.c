@@ -12,7 +12,6 @@
 #include "parse-options.h"
 #include "progress.h"
 #include "packfile.h"
-#include "object-file.h"
 #include "object-name.h"
 #include "odb.h"
 #include "odb/streaming.h"
@@ -695,88 +694,6 @@ static void process_refs(struct repository *repo, struct snapshot *snap)
 	}
 }
 
-struct for_each_loose_cb {
-	struct repository *repo;
-	struct progress *progress;
-};
-
-static int fsck_loose(const struct object_id *oid, const char *path,
-		      void *cb_data)
-{
-	struct for_each_loose_cb *data = cb_data;
-	enum object_type type = OBJ_NONE;
-	size_t size;
-	void *contents = NULL;
-	int eaten;
-	struct object_info oi = OBJECT_INFO_INIT;
-	struct object_id real_oid = *null_oid(data->repo->hash_algo);
-	int err = 0;
-
-	oi.sizep = &size;
-	oi.typep = &type;
-
-	if (read_loose_object(data->repo, path, oid, &real_oid, &contents, &oi) < 0) {
-		if (contents && !oideq(&real_oid, oid))
-			err = error(_("%s: hash-path mismatch, found at: %s"),
-				    oid_to_hex(&real_oid), path);
-		else
-			err = error(_("%s: object corrupt or missing: %s"),
-				    oid_to_hex(oid), path);
-	}
-	if (err < 0) {
-		errors_found |= ERROR_OBJECT;
-		free(contents);
-		return 0; /* keep checking other objects */
-	}
-
-	if (!contents && type != OBJ_BLOB)
-		BUG("read_loose_object streamed a non-blob");
-
-	if (fsck_obj_buffer(oid, type, size, contents, &eaten, data->repo))
-		errors_found |= ERROR_OBJECT;
-
-	if (!eaten)
-		free(contents);
-	return 0; /* keep checking other objects, even if we saw an error */
-}
-
-static int fsck_cruft(const char *basename, const char *path,
-		      void *data UNUSED)
-{
-	if (!starts_with(basename, "tmp_obj_"))
-		fprintf_ln(stderr, _("bad sha1 file: %s"), path);
-	return 0;
-}
-
-static int fsck_subdir(unsigned int nr, const char *path UNUSED, void *data)
-{
-	struct for_each_loose_cb *cb_data = data;
-	struct progress *progress = cb_data->progress;
-	display_progress(progress, nr + 1);
-	return 0;
-}
-
-static void fsck_source(struct repository *repo, struct odb_source *source)
-{
-	struct progress *progress = NULL;
-	struct for_each_loose_cb cb_data = {
-		.repo = source->odb->repo,
-		.progress = progress,
-	};
-
-	if (verbose)
-		fprintf_ln(stderr, _("Checking object directory"));
-
-	if (show_progress)
-		progress = start_progress(repo,
-					  _("Checking object directories"), 256);
-
-	for_each_loose_file_in_source(source, fsck_loose,
-				      fsck_cruft, fsck_subdir, &cb_data);
-	display_progress(progress, 256);
-	stop_progress(&progress);
-}
-
 static int fsck_cache_tree(struct repository *repo, struct cache_tree *it, const char *index_path)
 {
 	int i;
@@ -978,8 +895,10 @@ int cmd_fsck(int argc,
 
 	if (show_progress == -1)
 		show_progress = isatty(2);
-	if (verbose)
+	if (verbose) {
 		show_progress = 0;
+		odb_fsck_opts.flags |= ODB_FSCK_VERBOSE;
+	}
 	if (show_progress)
 		odb_fsck_opts.flags |= ODB_FSCK_PROGRESS;
 
@@ -1012,10 +931,6 @@ int cmd_fsck(int argc,
 		odb_for_each_object(repo->objects, NULL,
 				    mark_object_for_connectivity, repo, 0);
 	} else {
-		for (source = repo->objects->sources; source; source = source->next)
-			if ((odb_fsck_opts.flags & ODB_FSCK_FULL) || source->local)
-				fsck_source(repo, source);
-
 		if (odb_fsck(repo->objects, &odb_fsck_opts) < 0)
 			errors_found |= ERROR_OBJECT;
 
