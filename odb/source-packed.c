@@ -14,6 +14,7 @@
 #include "packfile.h"
 #include "pack-bitmap.h"
 #include "progress.h"
+#include "run-command.h"
 
 static int find_pack_entry(struct odb_source_packed *store,
 			   const struct object_id *oid,
@@ -897,6 +898,29 @@ static int verify_reverse_indices(struct odb_source_packed *source,
 	return res;
 }
 
+static int verify_midx(struct odb_source_packed *source,
+		       struct odb_fsck_options *opts)
+{
+	struct child_process midx_verify = CHILD_PROCESS_INIT;
+	int ret = 0;
+
+	if (!source->base.odb->repo->settings.core_multi_pack_index)
+		return 0;
+
+	child_process_init(&midx_verify);
+	midx_verify.git_cmd = 1;
+	strvec_pushl(&midx_verify.args, "multi-pack-index",
+		     "verify", "--object-dir", source->base.path, NULL);
+	if (opts->flags & ODB_FSCK_PROGRESS)
+		strvec_push(&midx_verify.args, "--progress");
+	else
+		strvec_push(&midx_verify.args, "--no-progress");
+	if (run_command(&midx_verify))
+		ret = -1;
+
+	return ret;
+}
+
 static int odb_source_packed_fsck(struct odb_source *source,
 				  struct odb_fsck_options *opts)
 {
@@ -910,6 +934,9 @@ static int odb_source_packed_fsck(struct odb_source *source,
 		ret = -1;
 
 	if (verify_bitmap_files(packed))
+		ret = -1;
+
+	if (verify_midx(packed, opts) < 0)
 		ret = -1;
 
 	return ret;
