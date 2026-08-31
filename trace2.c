@@ -305,7 +305,11 @@ static const char **redact_argv(const char **argv)
 	for (j = 0; argv[j]; j++)
 		; /* keep counting */
 
-	ALLOC_ARRAY(ret, j + 1);
+	ret = calloc(j + 1, sizeof(*ret));
+	if (!ret) {
+		free((char *)redacted);
+		return NULL;
+	}
 	ret[j] = NULL;
 
 	for (j = 0; j < i; j++)
@@ -346,6 +350,8 @@ void trace2_cmd_start_fl(const char *file, int line, const char **argv)
 	us_elapsed_absolute = tr2tls_absolute_elapsed(us_now);
 
 	redacted = redact_argv(argv);
+	if (!redacted)
+		return;
 
 	for_each_wanted_builtin (j, tgt_j)
 		if (tgt_j->pfn_start_fl)
@@ -514,6 +520,7 @@ void trace2_child_start_fl(const char *file, int line,
 	uint64_t us_now;
 	uint64_t us_elapsed_absolute;
 	const char **orig_argv = cmd->args.v;
+	const char **redacted;
 
 	if (!trace2_enabled)
 		return;
@@ -531,7 +538,10 @@ void trace2_child_start_fl(const char *file, int line,
 	 * temporarily replace the original argv (inside the `strvec`)
 	 * with a possibly redacted version.
 	 */
-	cmd->args.v = redact_argv(orig_argv);
+	redacted = redact_argv(orig_argv);
+	if (!redacted)
+		return;
+	cmd->args.v = redacted;
 
 	for_each_wanted_builtin (j, tgt_j)
 		if (tgt_j->pfn_child_start_fl)
@@ -623,6 +633,8 @@ int trace2_exec_fl(const char *file, int line, const char *exe,
 	exec_id = tr2tls_locked_increment(&tr2_next_exec_id);
 
 	redacted = redact_argv(argv);
+	if (!redacted)
+		return exec_id;
 
 	for_each_wanted_builtin (j, tgt_j)
 		if (tgt_j->pfn_exec_fl)

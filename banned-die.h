@@ -17,4 +17,7 @@
 #undef xstrdup
 #define xstrdup(str) BANNED(xstrdup)
 
+#undef ALLOC_ARRAY
+#define ALLOC_ARRAY(x, alloc) BANNED(ALLOC_ARRAY)
+
 #endif /* BANNED_DIE_H */
