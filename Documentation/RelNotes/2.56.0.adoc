@@ -131,6 +131,14 @@ UI, Workflows & Features
    placeholders, and a quoting inconsistency in the running text has
    been fixed.
 
+ * The DWIM logic in 'git worktree add' sometimes tried to infer a
+   remote-tracking branch when an explicit '-b' or '-B' option was
+   given to create a new branch, causing the explicit branch name to
+   be ignored, which has been corrected.
+
+ * The command line completion (in contrib/) has been taught to handle
+   the experimental 'git history' command.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -440,6 +448,38 @@ Performance, Internal Implementation, Development Support etc.
    reporting failures with a relative path to a sparse directory has
    been corrected.
 
+ * The object database (odb) API has been refactored to distinguish
+   between missing objects and corrupt ones by returning more
+   descriptive error statuses.  Both the packed and loose backends now
+   faithfully propagate error details using a generic strbuf error
+   mechanism, removing backend-specific leakage from central lookup
+   paths.
+
+ * The object database layer has been simplified by eagerly loading
+   alternate object directories upon initialization, instead of
+   deferring it to the first object lookup.  This eliminates the need
+   for scattered lazy-loading calls throughout the codebase and paves
+   the way for integrating alternates with the pluggable backends.
+
+ * The threshold for geometric repacking to trigger based on loose
+   object count has been adjusted to match that of 'git gc --auto',
+   preventing over-aggressive repacking during concurrent writes.
+
+ * The 'git receive-pack' command has been updated to use a new ODB
+   transaction interface for writing incoming packfiles, making it more
+   backend-agnostic.
+
+ * The mechanism to generate a packfile corresponding to the result of
+   a fetch/push has been made pluggable through a set of object
+   database callback functions, removing hardcoded references to
+   'pack-objects' and enabling alternative ODBs to serve packfiles
+   themselves.
+
+ * The pack-objects command has been updated to record the total bytes
+   written to pack files in trace2 output, allowing performance
+   analysis of different compression settings by comparing the
+   resulting pack sizes.
+
 
 Fixes since v2.55
 -----------------
@@ -698,6 +738,11 @@ Fixes since v2.55
  * 'git -C <dir> checkout fi<TAB>' did not complete 'file', which has
    been corrected.
    (merge 05e2ab1f31 jc/complete-checkout later to maint).
+
+ * The trailer parsing machinery has been updated to avoid mistaking
+   lines that begin with a URL (e.g., 'https://...') as trailer lines.
+   This prevents intended textual URLs from being mangled or mistakenly
+   treated as metadata keys.
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 026636128f ss/submittingpatches-typofix later to maint).
