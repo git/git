@@ -139,7 +139,7 @@ void write_object_file_prepare(const struct git_hash_algo *algo,
 			       char *hdr, size_t *hdrlen);
 int write_loose_object(struct odb_source_loose *loose,
 		       const struct object_id *oid, char *hdr,
-		       int hdrlen, const void *buf, unsigned long len,
+		       int hdrlen, const void *buf, size_t len,
 		       time_t mtime, unsigned flags);
 
 /* Helper to check and "touch" a file */
@@ -180,11 +180,11 @@ enum unpack_loose_header_result {
  */
 enum unpack_loose_header_result unpack_loose_header(git_zstream *stream,
 						    unsigned char *map,
-						    unsigned long mapsize,
+						    size_t mapsize,
 						    void *buffer,
-						    unsigned long bufsiz);
+						    size_t bufsiz);
 void *unpack_loose_rest(git_zstream *stream,
-			void *buffer, unsigned long size,
+			void *buffer, size_t size,
 			const struct object_id *oid);
 
 int parse_loose_header(const char *hdr, struct object_info *oi);
