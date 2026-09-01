@@ -6855,7 +6855,7 @@ int sequencer_determine_whence(struct repository *r, enum commit_whence *whence)
 		    !repo_get_oid(r, "REBASE_HEAD", &rebase_head) &&
 		    !repo_get_oid(r, "CHERRY_PICK_HEAD", &cherry_pick_head) &&
 		    oideq(&rebase_head, &cherry_pick_head))
-			*whence = FROM_REBASE_PICK;
+			*whence = FROM_REBASE_NOW_EMPTY;
 		else
 			*whence = FROM_CHERRY_PICK_SINGLE;
 
