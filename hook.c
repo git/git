@@ -798,6 +798,7 @@ int run_hooks_opt(struct repository *r, const char *hook_name,
 
 		.processes = jobs,
 		.ungroup = jobs == 1,
+		.no_stdin_pipe = !options->feed_pipe,
 
 		.get_next_task = pick_next_hook,
 		.start_failure = notify_start_failure,
