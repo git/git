@@ -2317,8 +2317,11 @@ static timestamp_t parse_age(const char *arg)
  * usual const argv array, even when opt->free_removed_argv_elements is set).
  * We cast away the const on their behalf.
  */
-static void mark_argv_for_free(struct rev_info *revs, const char *str)
+static void mark_argv_for_free(const struct setup_revision_opt *opt,
+			       struct rev_info *revs, const char *str)
 {
+	if (!opt || !opt->free_removed_argv_elements)
+		return;
 	if (!str)
 		return;
 	strvec_push_nodup(&revs->argv_to_free, (char *)str);
@@ -2335,8 +2338,7 @@ static void overwrite_argv(int *argc, const char **argv,
 	 * cases around the free() and NULL operations.
 	 */
 	if (*value != argv[*argc]) {
-		if (opt && opt->free_removed_argv_elements)
-			mark_argv_for_free(revs, argv[*argc]);
+		mark_argv_for_free(opt, revs, argv[*argc]);
 		argv[*argc] = *value;
 		*value = NULL;
 	}
@@ -3055,8 +3057,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 			const char *arg = argv[i];
 			if (strcmp(arg, "--"))
 				continue;
-			if (opt && opt->free_removed_argv_elements)
-				mark_argv_for_free(revs, argv[i]);
+			mark_argv_for_free(opt, revs, argv[i]);
 			argv[i] = NULL;
 			argc = i;
 			if (argv[i + 1])
@@ -3260,8 +3261,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 	}
 
 	if (argv) {
-		if (opt && opt->free_removed_argv_elements)
-			mark_argv_for_free(revs, argv[left]);
+		mark_argv_for_free(opt, revs, argv[left]);
 		argv[left] = NULL;
 	}
 
@@ -3283,7 +3283,7 @@ void setup_revisions_from_strvec(struct strvec *argv, struct rev_info *revs,
 	ret = setup_revisions(argv->nr, argv->v, revs, opt);
 
 	for (size_t i = ret; i < argv->nr; i++)
-		mark_argv_for_free(revs, argv->v[i]);
+		mark_argv_for_free(opt, revs, argv->v[i]);
 	argv->nr = ret;
 }
 
