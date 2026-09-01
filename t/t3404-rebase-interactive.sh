@@ -1829,7 +1829,7 @@ test_expect_success 'post-commit hook is called' '
 	test_cmp expect actual
 '
 
-test_expect_success 'correct error message for partial commit after empty pick' '
+test_expect_success 'partial commit is allowed when a rebase pick becomes empty' '
 	test_when_finished "git rebase --abort" &&
 	(
 		set_fake_editor &&
@@ -1838,8 +1838,7 @@ test_expect_success 'correct error message for partial commit after empty pick' 
 		test_must_fail git rebase -i A D
 	) &&
 	echo x >file1 &&
-	test_must_fail git commit file1 2>err &&
-	test_grep "cannot do a partial commit during a rebase." err
+	git commit file1
 '
 
 test_expect_success 'correct error message for commit --amend after empty pick' '
