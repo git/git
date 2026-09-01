@@ -319,5 +319,41 @@ test_expect_success MINGW 'parallel checkout with fscache does not fail on new d
 		test_cmp expect2 sub/deep/dir/file2.txt
 	)
 '
+# Windows has no native poll(). compat/poll emulates it with
+# MsgWaitForMultipleObjects(), which cannot wait on more than
+# MAXIMUM_WAIT_OBJECTS objects, so run_parallel_checkout() caps the worker
+# count at MAXIMUM_WAIT_OBJECTS - 2. Without that cap, compat/poll collected
+# one wait handle per polled worker pipe in a fixed-size stack array and
+# smashed the stack.
+#
+# MAXIMUM_WAIT_OBJECTS is 64, hence the expected 62 below. The test is
+# MINGW-only because the cap only exists there; on other platforms the
+# requested 200 workers are used as-is.
+test_expect_success MINGW 'checkout caps workers at the poll limit' '
+	test_when_finished "rm -rf many-workers" &&
+	git init many-workers &&
+	(
+		cd many-workers &&
+		mkdir dir &&
+		for i in $(test_seq 1 200)
+		do
+			echo "content $i" >dir/file$i || return 1
+		done &&
+		git add -A &&
+		git commit -q -m base &&
+
+		git checkout -q -b other &&
+		for i in $(test_seq 1 200)
+		do
+			echo "changed $i" >dir/file$i || return 1
+		done &&
+		git commit -q -a -m changed &&
+		git checkout -q -
+	) &&
+
+	set_checkout_config 200 1 &&
+	test_checkout_workers 62 git -C many-workers checkout other &&
+	verify_checkout many-workers
+'
 
 test_done

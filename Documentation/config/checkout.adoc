@@ -30,6 +30,11 @@ commands or functionality in the future.
 	all commands that perform checkout. E.g. checkout, clone, reset,
 	sparse-checkout, etc.
 +
+On Windows the number of workers is capped at 62, because the `poll()`
+emulation cannot wait on more worker pipes than that. A higher configured
+value, including the logical core count on a machine with many cores, is
+silently reduced to the cap.
++
 NOTE: Parallel checkout usually delivers better performance for repositories
 located on SSDs or over NFS. For repositories on spinning disks and/or machines
 with a small number of cores, the default sequential checkout often performs
