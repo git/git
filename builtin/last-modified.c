@@ -18,6 +18,7 @@
 #include "quote.h"
 #include "repository.h"
 #include "revision.h"
+#include "trace2.h"
 
 /* Remember to update object flag allocation in object.h */
 #define PARENT1 (1u<<16) /* used instead of SEEN */
@@ -63,6 +64,8 @@ struct last_modified {
 
 	/* 'scratch' to avoid allocating a bitmap every process_parent() */
 	struct bitmap *scratch;
+
+	unsigned int count_bloom_filter_queries;
 };
 
 static struct bitmap *active_paths_for(struct last_modified *lm, struct commit *c)
@@ -272,6 +275,8 @@ static bool maybe_changed_path(struct last_modified *lm,
 	if (!filter)
 		return true;
 
+	lm->count_bloom_filter_queries++;
+
 	/*
 	 * With --show-trees we also track the tree entries containing the
 	 * paths, so a change to any of those parent directories matters too.
@@ -368,6 +373,14 @@ static int last_modified_run(struct last_modified *lm)
 	lm->rev.no_walk = 1;
 
 	prepare_revision_walk(&lm->rev);
+
+	/*
+	 * prepare_revision_walk() clears bloom_filter_settings for pathspecs
+	 * without a Bloom key. Restore it so the per-path check keeps working.
+	 */
+	if (!lm->rev.bloom_filter_settings)
+		lm->rev.bloom_filter_settings =
+			get_bloom_filter_settings(lm->rev.repo);
 
 	max_count = lm->rev.max_count;
 
@@ -475,6 +488,9 @@ cleanup:
 
 	if (hashmap_get_size(&lm->paths))
 		BUG("paths remaining beyond boundary in last-modified");
+
+	trace2_data_intmax("last-modified", lm->rev.repo, "bloom_queries",
+			   lm->count_bloom_filter_queries);
 
 	clear_prio_queue(&not_queue);
 	clear_prio_queue(&queue);

@@ -292,6 +292,32 @@ test_expect_success 'last-modified with Bloom filters and --show-trees' '
 	)
 '
 
+test_expect_success 'last-modified with Bloom filters and top-level wildcard' '
+	test_when_finished rm -rf wildcard &&
+	git init wildcard &&
+	(
+		cd wildcard &&
+		test_commit base-c a.c &&
+		test_commit base-h a.h &&
+		test_commit touch-c a.c &&
+		mkdir d &&
+		test_commit sub-c d/b.c &&
+
+		git commit-graph write --reachable --changed-paths &&
+		GIT_TEST_COMMIT_GRAPH=0 GIT_TRACE2_PERF="$(pwd)/off.perf" \
+			git -c core.commitGraph=false last-modified -r HEAD \
+			-- "*.c" >expect &&
+		test_grep "data .* bloom_queries:0$" off.perf &&
+
+		GIT_TEST_COMMIT_GRAPH=1 GIT_TRACE2_PERF="$(pwd)/on.perf" \
+			git -c core.commitGraph=true last-modified -r HEAD \
+			-- "*.c" >actual &&
+		test_grep "data .* bloom_queries:2$" on.perf &&
+
+		test_cmp expect actual
+	)
+'
+
 test_expect_success 'cannot run last-modified on two commits' '
 	test_must_fail git last-modified HEAD HEAD~1 2>err &&
 	test_grep "last-modified can only operate on one commit at a time" err
