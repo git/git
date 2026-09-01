@@ -303,6 +303,43 @@ compute_revents (int fd, int sought, fd_set *rfds, fd_set *wfds, fd_set *efds)
 }
 #endif /* !MinGW */
 
+#ifdef WIN32_NATIVE
+/* POLL_MAX_DESCRIPTORS descriptors, plus hEvent and the QS_ALLINPUT message
+   queue, must fit in one MsgWaitForMultipleObjects call, and the collected
+   handles plus the NULL sentinel must fit in handle_array.  */
+#if POLL_MAX_DESCRIPTORS + 2 > MAXIMUM_WAIT_OBJECTS
+#error POLL_MAX_DESCRIPTORS exceeds MAXIMUM_WAIT_OBJECTS
+#endif
+#if POLL_MAX_DESCRIPTORS + 2 > FD_SETSIZE + 2
+#error POLL_MAX_DESCRIPTORS does not fit in handle_array
+#endif
+
+/* Undo the WSAEventSelect() calls made for the first NFD descriptors.  */
+static void
+reset_socket_events (struct pollfd *pfd, nfds_t nfd)
+{
+  nfds_t i;
+
+  for (i = 0; i < nfd; i++)
+    {
+      HANDLE h;
+
+      if (pfd[i].fd < 0)
+	continue;
+      if (!(pfd[i].events & (POLLIN | POLLRDNORM | POLLOUT | POLLWRNORM |
+			     POLLWRBAND | POLLPRI | POLLRDBAND)))
+	continue;
+
+      h = (HANDLE) _get_osfhandle (pfd[i].fd);
+      if (h == NULL || h == INVALID_HANDLE_VALUE)
+	continue;
+
+      if (IsSocketHandle (h))
+	WSAEventSelect ((SOCKET) h, NULL, 0);
+    }
+}
+#endif
+
 int
 poll (struct pollfd *pfd, nfds_t nfd, int timeout)
 {
@@ -504,7 +541,16 @@ restart:
 	     bits for the "wrong" direction. */
 	  pfd[i].revents = win32_compute_revents (h, &sought);
 	  if (sought)
-	    handle_array[nhandles++] = h;
+	    {
+	      /* hEvent occupies handle_array[0].  See POLL_MAX_DESCRIPTORS.  */
+	      if (nhandles > POLL_MAX_DESCRIPTORS)
+		{
+		  reset_socket_events (pfd, i);
+		  errno = EINVAL;
+		  return -1;
+		}
+	      handle_array[nhandles++] = h;
+	    }
 	  if (pfd[i].revents)
 	    timeout = 0;
 	}
