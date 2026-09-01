@@ -1332,7 +1332,7 @@ static int parse_and_validate_options(int argc, const char *argv[],
 		else if (is_from_cherry_pick(whence))
 			die(_("You are in the middle of a cherry-pick -- cannot amend."));
 		else if (is_from_rebase_now_empty(whence))
-			die(_("You are in the middle of a rebase -- cannot amend."));
+			die(_("The now-empty commit has been dropped -- cannot amend."));
 	}
 	if (fixup_message && squash_message)
 		die(_("options '%s' and '%s' cannot be used together"), "--squash", "--fixup");

@@ -1851,7 +1851,7 @@ test_expect_success 'correct error message for commit --amend after empty pick' 
 	) &&
 	echo x>file1 &&
 	test_must_fail git commit -a --amend 2>err &&
-	test_grep "middle of a rebase -- cannot amend." err
+	test_grep "now-empty commit has been dropped -- cannot amend." err
 '
 
 test_expect_success 'todo has correct onto hash' '
