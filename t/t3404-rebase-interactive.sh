@@ -1941,6 +1941,40 @@ test_expect_success 'commit --amend is refused at an apply-backend conflict stop
 	)
 '
 
+test_expect_success 'partial commit is refused at a rebase conflict stop' '
+	test_when_finished "git rebase --abort" &&
+	git checkout --detach conflict-branch &&
+	(
+		set_fake_editor &&
+		FAKE_LINES="1 3" &&
+		export FAKE_LINES &&
+		test_must_fail git rebase -i A
+	) &&
+	echo resolved >conflict &&
+	git add conflict &&
+	test_must_fail git commit conflict 2>err &&
+	test_grep "cannot do a partial commit while resolving conflicts during a rebase." err
+'
+
+test_expect_success 'partial commit is refused at an apply-backend conflict stop' '
+	test_when_finished "rm -rf apply-backend" &&
+	test_create_repo apply-backend &&
+	(
+		cd apply-backend &&
+		test_commit base file &&
+		git branch -M mainline &&
+		test_commit upstream file upstream &&
+		git checkout -b side mainline~1 &&
+		test_commit conflicting file side &&
+		test_commit unrelated other &&
+		test_must_fail git rebase --apply mainline &&
+		echo resolved >file &&
+		git add file &&
+		test_must_fail git commit file 2>err &&
+		test_grep "cannot do a partial commit while resolving conflicts during a rebase." err
+	)
+'
+
 test_expect_success 'todo has correct onto hash' '
 	GIT_SEQUENCE_EDITOR=cat git rebase -i no-conflict-branch~4 no-conflict-branch >actual &&
 	onto=$(git rev-parse --short HEAD~4) &&

@@ -271,8 +271,9 @@ int sequencer_determine_whence(struct repository *r, enum commit_whence *whence)
 
 /*
  * An in-progress operation that records its result (often a conflict
- * resolution) as a new commit on top of HEAD, during which amending
- * HEAD via "git commit --amend" is almost always a mistake.
+ * resolution) as a new commit on top of HEAD.  Some ways of invoking
+ * "git commit" -- amending HEAD, or a partial commit -- are almost
+ * always a mistake during such an operation.
  */
 enum ongoing_operation {
 	ONGOING_NONE = 0,
