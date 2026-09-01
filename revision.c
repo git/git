@@ -789,6 +789,21 @@ bool revs_maybe_changed_in_bloom(struct rev_info *revs,
 	return false;
 }
 
+bool revs_maybe_changed_in_bloom_with_parents(struct rev_info *revs,
+					      struct bloom_filter *filter)
+{
+	if (!revs->bloom_keyvecs_nr || !filter)
+		return true;
+
+	for (size_t nr = 0; nr < revs->bloom_keyvecs_nr; nr++)
+		if (bloom_filter_contains_any_vec(filter,
+						  revs->bloom_keyvecs[nr],
+						  revs->bloom_filter_settings))
+			return true;
+
+	return false;
+}
+
 static int rev_compare_tree(struct rev_info *revs,
 			    struct commit *parent, struct commit *commit, int nth_parent)
 {
