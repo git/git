@@ -74,6 +74,7 @@ void initialize_repository(struct repository *repo)
 	index_state_init(repo->index, repo);
 	repo->check_deprecated_config = true;
 	repo->bare_cfg = -1;
+	repo->fetch_if_missing = 1;
 	repo_config_values_init(&repo->config_values_private_);
 
 	/*

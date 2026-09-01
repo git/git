@@ -49,7 +49,7 @@ static void add_sought_entry(struct ref ***sought, int *nr, int *alloc,
 int cmd_fetch_pack(int argc,
 		   const char **argv,
 		   const char *prefix UNUSED,
-		   struct repository *repo UNUSED)
+		   struct repository *repo)
 {
 	int i, ret;
 	struct ref *fetched_refs = NULL, *remote_refs = NULL;
@@ -67,8 +67,6 @@ int cmd_fetch_pack(int argc,
 	struct packet_reader reader;
 	enum protocol_version version;
 
-	fetch_if_missing = 0;
-
 	packet_trace_identity("fetch-pack");
 
 	memset(&args, 0, sizeof(args));
@@ -76,6 +74,8 @@ int cmd_fetch_pack(int argc,
 	args.uploadpack = "git-upload-pack";
 
 	show_usage_if_asked(argc, argv, fetch_pack_usage);
+
+	repo->fetch_if_missing = 0;
 
 	for (i = 1; i < argc && *argv[i] == '-'; i++) {
 		const char *arg = argv[i];

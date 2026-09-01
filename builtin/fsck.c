@@ -1017,14 +1017,14 @@ int cmd_fsck(int argc,
 		.ref = NULL
 	};
 
-	/* fsck knows how to handle missing promisor objects */
-	fetch_if_missing = 0;
-
 	errors_found = 0;
 	disable_replace_refs();
 	save_commit_buffer = 0;
 
 	argc = parse_options(argc, argv, prefix, fsck_opts, fsck_usage, 0);
+
+	/* fsck knows how to handle missing promisor objects */
+	repo->fetch_if_missing = 0;
 
 	fsck_options_init(&fsck_walk_options, repo, FSCK_OPTIONS_DEFAULT);
 	fsck_walk_options.walk = mark_object;

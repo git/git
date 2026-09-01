@@ -1886,7 +1886,7 @@ static void repack_local_links(void)
 int cmd_index_pack(int argc,
 		   const char **argv,
 		   const char *prefix,
-		   struct repository *repo UNUSED)
+		   struct repository *repo)
 {
 	int i, fix_thin_pack = 0, verify = 0, stat_only = 0, rev_index;
 	const char *curr_index;
@@ -1903,15 +1903,15 @@ int cmd_index_pack(int argc,
 	int report_end_of_input = 0;
 	int hash_algo = 0;
 
+	show_usage_if_asked(argc, argv, index_pack_usage);
+
 	/*
 	 * index-pack never needs to fetch missing objects except when
 	 * REF_DELTA bases are missing (which are explicitly handled). It only
 	 * accesses the repo to do hash collision checks and to check which
 	 * REF_DELTA bases need to be fetched.
 	 */
-	fetch_if_missing = 0;
-
-	show_usage_if_asked(argc, argv, index_pack_usage);
+	(repo ? repo : the_repository)->fetch_if_missing = 0;
 
 	disable_replace_refs();
 
