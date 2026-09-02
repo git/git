@@ -9,9 +9,6 @@ submodules.
 TEST_CREATE_REPO_NO_TEMPLATE=1
 . ./test-lib.sh
 
-GIT_TEST_FATAL_REGISTER_SUBMODULE_ODB=1
-export GIT_TEST_FATAL_REGISTER_SUBMODULE_ODB
-
 test_expect_success 'setup directory structure and submodule' '
 	echo "(1|2)d(3|4)" >a &&
 	mkdir b &&
