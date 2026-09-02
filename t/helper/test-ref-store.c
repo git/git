@@ -74,14 +74,6 @@ static const char **get_store(const char **argv, struct ref_store **refs)
 	} else if (!strcmp(argv[0], "main")) {
 		*refs = get_main_ref_store(the_repository);
 	} else if (skip_prefix(argv[0], "submodule:", &gitdir)) {
-		struct strbuf sb = STRBUF_INIT;
-
-		if (!repo_submodule_path_append(the_repository,
-						&sb, gitdir, "objects/"))
-			die("computing submodule path failed");
-		odb_add_to_alternates_memory(the_repository->objects, sb.buf);
-		strbuf_release(&sb);
-
 		*refs = repo_get_submodule_ref_store(the_repository, gitdir);
 	} else if (skip_prefix(argv[0], "worktree:", &gitdir)) {
 		struct worktree **p, **worktrees = get_worktrees(the_repository);
