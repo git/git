@@ -143,6 +143,13 @@ static GIT_PATH_FUNC(rebase_path_author_script, "rebase-merge/author-script")
  */
 static GIT_PATH_FUNC(rebase_path_amend, "rebase-merge/amend")
 /*
+ * The apply ("am") backend keeps its state in the rebase-apply directory;
+ * the "applying" file within it marks a plain `git am` (as opposed to an
+ * apply-based rebase).
+ */
+static GIT_PATH_FUNC(apply_dir, "rebase-apply")
+static GIT_PATH_FUNC(apply_path_applying, "rebase-apply/applying")
+/*
  * When we stop at a given patch via the "edit" command, this file contains
  * the commit object name of the corresponding patch.
  */
@@ -6956,7 +6963,7 @@ int sequencer_determine_whence(struct repository *r, enum commit_whence *whence)
 		    !repo_get_oid(r, "REBASE_HEAD", &rebase_head) &&
 		    !repo_get_oid(r, "CHERRY_PICK_HEAD", &cherry_pick_head) &&
 		    oideq(&rebase_head, &cherry_pick_head))
-			*whence = FROM_REBASE_PICK;
+			*whence = FROM_REBASE_NOW_EMPTY;
 		else
 			*whence = FROM_CHERRY_PICK_SINGLE;
 
@@ -6964,6 +6971,56 @@ int sequencer_determine_whence(struct repository *r, enum commit_whence *whence)
 	}
 
 	return 0;
+}
+
+enum ongoing_operation sequencer_ongoing_operation(struct repository *r,
+						   enum commit_whence whence)
+{
+	/*
+	 * The merge, cherry-pick, and (empty) rebase-pick stops are already
+	 * distinguished by 'whence'.
+	 */
+	switch (whence) {
+	case FROM_MERGE:
+		return ONGOING_MERGE;
+	case FROM_CHERRY_PICK_SINGLE:
+	case FROM_CHERRY_PICK_MULTI:
+		return ONGOING_CHERRY_PICK;
+	case FROM_REBASE_NOW_EMPTY:
+		return ONGOING_REBASE_NOW_EMPTY;
+	case FROM_COMMIT:
+		break;
+	}
+
+	/*
+	 * 'whence' is FROM_COMMIT, but we may still be in the middle of an
+	 * operation that records its result on top of HEAD; detect those
+	 * from their on-disk state.
+	 */
+
+	/* In the middle of a revert? */
+	if (refs_ref_exists(get_main_ref_store(r), "REVERT_HEAD"))
+		return ONGOING_REVERT;
+
+	/* In the middle of an `am`? */
+	if (file_exists(apply_path_applying()))
+		return ONGOING_AM;
+
+	/*
+	 * In the middle of a rebase that stopped for conflict resolution?
+	 * The apply backend only ever stops for conflicts, so the presence
+	 * of its state directory is enough.  The merge backend writes
+	 * stopped-sha whenever it hands control back to the user, but omits
+	 * `amend` unless it stopped with HEAD already pointing at the commit
+	 * to be amended (a clean edit/reword stop); its absence therefore
+	 * marks a conflicted stop.
+	 */
+	if (file_exists(apply_dir()) ||
+	    (file_exists(rebase_path_stopped_sha()) &&
+	     !file_exists(rebase_path_amend())))
+		return ONGOING_REBASE_CONFLICT;
+
+	return ONGOING_NONE;
 }
 
 int sequencer_get_update_refs_state(const char *wt_dir,
