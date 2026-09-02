@@ -275,20 +275,27 @@ static void discard_unused_subtrees(struct cache_tree *it)
 	}
 }
 
-int cache_tree_fully_valid(struct cache_tree *it)
+static int cache_tree_fully_valid_recursive(struct object_database *odb,
+					    struct cache_tree *it)
 {
 	int i;
 	if (!it)
 		return 0;
 	if (it->entry_count < 0 ||
-	    !odb_has_object(the_repository->objects, &it->oid,
+	    !odb_has_object(odb, &it->oid,
 			    ODB_HAS_OBJECT_RECHECK_PACKED | ODB_HAS_OBJECT_FETCH_PROMISOR))
 		return 0;
 	for (i = 0; i < it->subtree_nr; i++) {
-		if (!cache_tree_fully_valid(it->down[i]->cache_tree))
+		if (!cache_tree_fully_valid_recursive(odb, it->down[i]->cache_tree))
 			return 0;
 	}
 	return 1;
+}
+
+int cache_tree_fully_valid(struct index_state *istate)
+{
+	return cache_tree_fully_valid_recursive(istate->repo->objects,
+						istate->cache_tree);
 }
 
 static int must_check_existence(const struct cache_entry *ce)
@@ -775,7 +782,7 @@ struct tree *write_in_core_index_as_tree(struct repository *repo,
 	int was_valid, ret;
 
 	was_valid = index_state->cache_tree &&
-		    cache_tree_fully_valid(index_state->cache_tree);
+		    cache_tree_fully_valid(index_state);
 
 	ret = write_index_as_tree_internal(&o, index_state, was_valid, 0, NULL);
 	if (ret == WRITE_TREE_UNMERGED_INDEX) {
@@ -811,7 +818,7 @@ int write_index_as_tree(struct object_id *oid, struct index_state *index_state, 
 
 	was_valid = !(flags & WRITE_TREE_IGNORE_CACHE_TREE) &&
 		    index_state->cache_tree &&
-		    cache_tree_fully_valid(index_state->cache_tree);
+		    cache_tree_fully_valid(index_state);
 
 	ret = write_index_as_tree_internal(oid, index_state, was_valid, flags,
 					   prefix);
