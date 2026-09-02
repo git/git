@@ -922,4 +922,30 @@ test_expect_success 'early_scan_options() ignores abbreviated options' '
 	test_cmp expect actual
 '
 
+test_expect_success 'early_scan_options_from_options() derives takes_value' '
+	test-tool early-scan-from-options >actual &&
+	cat >expect <<-\EOF &&
+	option: string takes_value: 1 wanted: 0
+	option: int takes_value: 1 wanted: 0
+	option: bool takes_value: 0 wanted: 1
+	option: optarg takes_value: 0 wanted: 0
+	stopped at: 0 of 0
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'early_scan_options_from_options() skips values' '
+	test-tool early-scan-from-options --string --bool >out &&
+	tail -1 out >actual &&
+	echo "stopped at: 2 of 2" >expect &&
+	test_cmp expect actual &&
+	test-tool early-scan-from-options --string v --bool >out &&
+	tail -2 out >actual &&
+	cat >expect <<-\EOF &&
+	found: bool at 2
+	stopped at: 3 of 3
+	EOF
+	test_cmp expect actual
+'
+
 test_done

@@ -1323,6 +1323,45 @@ int early_scan_options(int argc, const char **argv,
 	return argc;
 }
 
+struct early_scan_option *
+early_scan_options_from_options(const struct option *options,
+				const char **wanted)
+{
+	struct early_scan_option *early;
+	size_t nr = 0;
+
+	for (const struct option *opt = options; opt->type != OPTION_END; opt++)
+		if (opt->long_name)
+			nr++;
+
+	CALLOC_ARRAY(early, nr + 1);
+
+	nr = 0;
+	for (const struct option *opt = options; opt->type != OPTION_END; opt++) {
+		if (!opt->long_name)
+			continue;
+		early[nr].name = opt->long_name;
+		early[nr].takes_value = !!parse_options_takes_argument(opt);
+		nr++;
+	}
+
+	for (; wanted && *wanted; wanted++) {
+		size_t i;
+
+		for (i = 0; i < nr; i++) {
+			if (strcmp(early[i].name, *wanted))
+				continue;
+			early[i].wanted = 1;
+			break;
+		}
+		if (i == nr)
+			BUG("wanted option '%s' is not in the options array",
+			    *wanted);
+	}
+
+	return early;
+}
+
 static int usage_argh(const struct option *opts, FILE *outfile)
 {
 	const char *s;

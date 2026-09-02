@@ -561,6 +561,28 @@ int early_scan_options(int argc, const char **argv,
 		       enum early_scan_flags flags,
 		       early_scan_fn *fn, void *data);
 
+/*
+ * Build the `struct early_scan_option` array to pass to
+ * early_scan_options() from the `options` array that the actual option
+ * parsing uses, so that both agree on which options take a value.
+ *
+ * Note some intentional limitations to keep the scan simple and fast:
+ * short options are ignored, options with PARSE_OPT_LASTARG_DEFAULT or
+ * PARSE_OPT_OPTARG are treated as not taking a separate value, negated
+ * options ("--no-...") are not automatically generated, and abbreviated
+ * options will not be matched.
+ *
+ * The options named in the NULL terminated `wanted` array get their
+ * `wanted` bit set, the other ones are only there to be skipped along
+ * with their value. It is a BUG() for a name in `wanted` not to appear
+ * in `options`.
+ *
+ * The returned array is allocated and should be free()d by the caller.
+ */
+struct early_scan_option *
+early_scan_options_from_options(const struct option *options,
+				const char **wanted);
+
 /*----- incremental advanced APIs -----*/
 
 struct parse_opt_cmdmode_list;
