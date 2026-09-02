@@ -384,7 +384,8 @@ void repo_clear(struct repository *repo)
 	odb_free(repo->objects);
 	repo->objects = NULL;
 
-	parsed_object_pool_clear(repo->parsed_objects);
+	if (repo->parsed_objects)
+		parsed_object_pool_clear(repo->parsed_objects);
 	FREE_AND_NULL(repo->parsed_objects);
 
 	repo_settings_clear(repo);
