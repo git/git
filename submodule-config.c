@@ -667,19 +667,20 @@ static int parse_config(const char *var, const char *value,
 	return ret;
 }
 
-static int gitmodule_oid_from_commit(const struct object_id *treeish_name,
+static int gitmodule_oid_from_commit(struct repository *repo,
+				     const struct object_id *treeish_name,
 				     struct object_id *gitmodules_oid,
 				     struct strbuf *rev)
 {
 	int ret = 0;
 
 	if (is_null_oid(treeish_name)) {
-		oidclr(gitmodules_oid, the_repository->hash_algo);
+		oidclr(gitmodules_oid, repo->hash_algo);
 		return 1;
 	}
 
 	strbuf_addf(rev, "%s:.gitmodules", oid_to_hex(treeish_name));
-	if (repo_get_oid(the_repository, rev->buf, gitmodules_oid) >= 0)
+	if (repo_get_oid(repo, rev->buf, gitmodules_oid) >= 0)
 		ret = 1;
 
 	return ret;
@@ -689,9 +690,11 @@ static int gitmodule_oid_from_commit(const struct object_id *treeish_name,
  * (key) with on-demand reading of the appropriate .gitmodules from
  * revisions.
  */
-static const struct submodule *config_from(struct submodule_cache *cache,
-		const struct object_id *treeish_name, const char *key,
-		enum lookup_type lookup_type)
+static const struct submodule *config_from(struct repository *repo,
+					   struct submodule_cache *cache,
+					   const struct object_id *treeish_name,
+					   const char *key,
+					   enum lookup_type lookup_type)
 {
 	struct strbuf rev = STRBUF_INIT;
 	size_t config_size;
@@ -718,7 +721,7 @@ static const struct submodule *config_from(struct submodule_cache *cache,
 		return entry->config;
 	}
 
-	if (!gitmodule_oid_from_commit(treeish_name, &oid, &rev))
+	if (!gitmodule_oid_from_commit(repo, treeish_name, &oid, &rev))
 		goto out;
 
 	switch (lookup_type) {
@@ -732,7 +735,7 @@ static const struct submodule *config_from(struct submodule_cache *cache,
 	if (submodule)
 		goto out;
 
-	config = odb_read_object(the_repository->objects, &oid,
+	config = odb_read_object(repo->objects, &oid,
 				 &type, &config_size);
 	if (!config || type != OBJ_BLOB)
 		goto out;
@@ -843,21 +846,22 @@ void repo_read_gitmodules(struct repository *repo, int skip_if_read)
 	repo->submodule_cache->gitmodules_read = 1;
 }
 
-void gitmodules_config_oid(const struct object_id *commit_oid)
+void gitmodules_config_oid(struct repository *repo,
+			   const struct object_id *commit_oid)
 {
 	struct strbuf rev = STRBUF_INIT;
 	struct object_id oid;
 
-	submodule_cache_check_init(the_repository);
+	submodule_cache_check_init(repo);
 
-	if (gitmodule_oid_from_commit(commit_oid, &oid, &rev)) {
+	if (gitmodule_oid_from_commit(repo, commit_oid, &oid, &rev)) {
 		git_config_from_blob_oid(gitmodules_cb, rev.buf,
-					 the_repository, &oid, the_repository,
+					 repo, &oid, repo,
 					 CONFIG_SCOPE_UNKNOWN);
 	}
 	strbuf_release(&rev);
 
-	the_repository->submodule_cache->gitmodules_read = 1;
+	repo->submodule_cache->gitmodules_read = 1;
 }
 
 const struct submodule *submodule_from_name(struct repository *r,
@@ -865,7 +869,7 @@ const struct submodule *submodule_from_name(struct repository *r,
 		const char *name)
 {
 	repo_read_gitmodules(r, 1);
-	return config_from(r->submodule_cache, treeish_name, name, lookup_name);
+	return config_from(r, r->submodule_cache, treeish_name, name, lookup_name);
 }
 
 const struct submodule *submodule_from_path(struct repository *r,
@@ -873,7 +877,7 @@ const struct submodule *submodule_from_path(struct repository *r,
 		const char *path)
 {
 	repo_read_gitmodules(r, 1);
-	return config_from(r->submodule_cache, treeish_name, path, lookup_path);
+	return config_from(r, r->submodule_cache, treeish_name, path, lookup_path);
 }
 
 /**
@@ -980,11 +984,12 @@ int print_config_from_gitmodules(struct repository *repo, const char *key)
 	return 0;
 }
 
-int config_set_in_gitmodules_file_gently(const char *key, const char *value)
+int config_set_in_gitmodules_file_gently(struct repository *repo,
+					 const char *key, const char *value)
 {
 	int ret;
 
-	ret = repo_config_set_in_file_gently(the_repository, GITMODULES_FILE, key, NULL, value);
+	ret = repo_config_set_in_file_gently(repo, GITMODULES_FILE, key, NULL, value);
 	if (ret < 0)
 		/* Maybe the user already did that, don't error out here */
 		warning(_("Could not update .gitmodules entry %s"), key);
@@ -1017,13 +1022,15 @@ static int gitmodules_fetch_config(const char *var, const char *value,
 	return 0;
 }
 
-void fetch_config_from_gitmodules(int *max_children, int *recurse_submodules)
+void fetch_config_from_gitmodules(struct repository *repo,
+				  int *max_children,
+				  int *recurse_submodules)
 {
 	struct fetch_config config = {
 		.max_children = max_children,
 		.recurse_submodules = recurse_submodules
 	};
-	config_from_gitmodules(gitmodules_fetch_config, the_repository, &config);
+	config_from_gitmodules(gitmodules_fetch_config, repo, &config);
 }
 
 static int gitmodules_update_clone_config(const char *var, const char *value,
@@ -1036,7 +1043,7 @@ static int gitmodules_update_clone_config(const char *var, const char *value,
 	return 0;
 }
 
-void update_clone_config_from_gitmodules(int *max_jobs)
+void update_clone_config_from_gitmodules(struct repository *repo, int *max_jobs)
 {
-	config_from_gitmodules(gitmodules_update_clone_config, the_repository, max_jobs);
+	config_from_gitmodules(gitmodules_update_clone_config, repo, max_jobs);
 }
