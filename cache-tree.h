@@ -28,8 +28,9 @@ struct cache_tree_sub *cache_tree_sub(struct cache_tree *, const char *);
 
 int cache_tree_subtree_pos(struct cache_tree *it, const char *path, int pathlen);
 
-void cache_tree_write(struct strbuf *, struct cache_tree *root);
-struct cache_tree *cache_tree_read(const char *buffer, unsigned long size);
+void cache_tree_write(struct repository *repo, struct strbuf *, struct cache_tree *root);
+struct cache_tree *cache_tree_read(struct repository *repo,
+				   const char *buffer, unsigned long size);
 
 int cache_tree_fully_valid(struct index_state *);
 int cache_tree_update(struct index_state *, int);
