@@ -17,3 +17,13 @@
 Note that setting `worktree.useRelativePaths` to "`true`" implies enabling the
 `extensions.relativeWorktrees` config (see linkgit:git-config[1]),
 thus making it incompatible with older versions of Git.
+
+`worktree.reflink`::
+	Controls whether `git worktree add` populates new worktrees with
+	copy-on-write (reflink) clones, as if `--reflink` had been given
+	(see linkgit:git-worktree[1]). May be set to "`true`", "`false`"
+	(the default), or "`auto`". With "`true`", a filesystem that does
+	not support reflinks produces a warning before falling back to an
+	ordinary checkout; with "`auto`", the fallback is silent. An
+	explicit `--reflink` or `--no-reflink` on the command line
+	overrides this setting.
