@@ -480,6 +480,10 @@ Performance, Internal Implementation, Development Support etc.
    analysis of different compression settings by comparing the
    resulting pack sizes.
 
+ * The global variable 'fetch_if_missing' has been moved to a member in
+   'struct repository', continuing the libification process and
+   allowing per-repository control (such as for submodules).
+
 
 Fixes since v2.55
 -----------------
@@ -746,3 +750,4 @@ Fixes since v2.55
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 026636128f ss/submittingpatches-typofix later to maint).
+   (merge d2af22cc21 jc/rerere-doc-typofix later to maint).
