@@ -133,7 +133,9 @@ void submodule_cache_free(struct submodule_cache *cache)
 static unsigned int hash_oid_string(const struct object_id *oid,
 				    const char *string)
 {
-	return memhash(oid->hash, the_hash_algo->rawsz) + strhash(string);
+	if (oid->algo == GIT_HASH_UNKNOWN)
+		BUG("hashing an object ID with unknown algorithm");
+	return memhash(oid->hash, hash_algos[oid->algo].rawsz) + strhash(string);
 }
 
 static void cache_put_path(struct submodule_cache *cache,
@@ -824,7 +826,7 @@ static int gitmodules_cb(const char *var, const char *value,
 
 	parameter.cache = repo->submodule_cache;
 	parameter.treeish_name = NULL;
-	parameter.gitmodules_oid = null_oid(the_hash_algo);
+	parameter.gitmodules_oid = null_oid(repo->hash_algo);
 	parameter.overwrite = 1;
 
 	return parse_config(var, value, ctx, &parameter);
