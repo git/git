@@ -491,6 +491,66 @@ static inline void die_for_incompatible_opt2(int opt1, const char *opt1_name,
 		BUG("option callback expects an argument"); \
 } while(0)
 
+/*----- Early scan: scanning argv before the actual option parsing -----*/
+
+/*
+ * Some commands need to look at a few options before they can parse
+ * their command line for real, for example because the result decides
+ * whether a repository is needed at all.
+ *
+ * Such an early scan has to know which options take their value as a
+ * separate argument, or it could mistake such a value for an option. The
+ * `struct early_scan_option` array passed to early_scan_options() below
+ * describes the options to look for, as well as the ones that only need
+ * to be skipped along with their value.
+ */
+struct early_scan_option {
+	const char *name; 	/* Option name, without the leading dashes */
+	unsigned takes_value:1; /* "--option=value" or "--option value" expected? */
+	unsigned wanted:1;      /* Report option to callback? */
+};
+
+#define EARLY_SCAN_SKIP_VALUE(n) { .name = (n), .takes_value = 1 }
+#define EARLY_SCAN_WANT(n) { .name = (n), .wanted = 1 }
+#define EARLY_SCAN_WANT_VALUE(n) { .name = (n), .takes_value = 1, .wanted = 1 }
+#define EARLY_SCAN_END() { NULL }
+
+/*
+ * Called by early_scan_options() for each argument matching a
+ * `struct early_scan_option` that has its `wanted` bit set.
+ *
+ * `option` is the matching option, `value` its value or NULL if it
+ * doesn't take one, and `pos` the index of the option in argv.
+ *
+ * Returning a non-zero value stops the scan.
+ */
+typedef int early_scan_fn(const struct early_scan_option *option,
+			  const char *value, int pos, void *data);
+
+enum early_scan_flags {
+	EARLY_SCAN_STOP_AT_DASHDASH = 1 << 0, /* Stop at "--" */
+	EARLY_SCAN_STOP_AT_NON_OPTION = 1 << 1,
+};
+
+/*
+ * Scan `argv` for the options described by `options`, calling `fn`
+ * for each of those that are `wanted`. `argv` is not modified.
+ *
+ * `fn` may be NULL when no option is `wanted`, which is useful to only
+ * find out where the scan stops.
+ *
+ * Note that abbreviated options are not recognized, as a scan cannot
+ * know about the options it hasn't been told about, and would then
+ * resolve abbreviations differently from the actual option parsing.
+ *
+ * Returns the index at which the scan stopped, which is `argc` when the
+ * whole array was scanned.
+ */
+int early_scan_options(int argc, const char **argv,
+		       const struct early_scan_option *options,
+		       enum early_scan_flags flags,
+		       early_scan_fn *fn, void *data);
+
 /*----- incremental advanced APIs -----*/
 
 struct parse_opt_cmdmode_list;

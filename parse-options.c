@@ -1244,6 +1244,76 @@ int parse_options(int argc, const char **argv,
 	return parse_options_end(&ctx);
 }
 
+/*
+ * Look for `arg` among `options`. On success, return the matching option
+ * and set `value` to the value stuck to it, if any, or to NULL.
+ */
+static const struct early_scan_option *
+find_early_scan_option(const char *arg,
+		       const struct early_scan_option *options,
+		       const char **value)
+{
+	if (!skip_prefix(arg, "--", &arg))
+		return NULL;
+
+	for (; options->name; options++) {
+		const char *rest;
+
+		if (!skip_prefix(arg, options->name, &rest))
+			continue;
+		if (!*rest) {
+			*value = NULL;
+			return options;
+		}
+		/* Only an option taking a value can be stuck to one. */
+		if (*rest == '=' && options->takes_value) {
+			*value = rest + 1;
+			return options;
+		}
+	}
+
+	return NULL;
+}
+
+int early_scan_options(int argc, const char **argv,
+		       const struct early_scan_option *options,
+		       enum early_scan_flags flags,
+		       early_scan_fn *fn, void *data)
+{
+	for (int i = 0; i < argc; i++) {
+		const char *arg = argv[i];
+		const char *value;
+		const struct early_scan_option *opt;
+		int pos = i;
+
+		if ((flags & EARLY_SCAN_STOP_AT_DASHDASH) &&
+		    !strcmp(arg, "--"))
+			return i;
+
+		opt = find_early_scan_option(arg, options, &value);
+		if (!opt) {
+			if ((flags & EARLY_SCAN_STOP_AT_NON_OPTION) &&
+			    (*arg != '-' || !arg[1]))
+				return i;
+			continue;
+		}
+
+		/*
+		 * When an option takes a value, but that value is not
+		 * stuck to it with '=', then the next argument is the
+		 * value and it has to be skipped so that it isn't
+		 * taken for an option itself.
+		 */
+		if (opt->takes_value && !value && i + 1 < argc)
+			value = argv[++i];
+
+		if (opt->wanted && fn(opt, value, pos, data))
+			return i;
+	}
+
+	return argc;
+}
+
 static int usage_argh(const struct option *opts, FILE *outfile)
 {
 	const char *s;
