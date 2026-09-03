@@ -738,6 +738,37 @@ test_expect_success '-L with -G filters to diff-text matches' '
 	test_grep "F2 + 2" actual
 '
 
+test_expect_success 'setup for trailing deletion test' '
+	git checkout --orphan trailing-del &&
+	git reset --hard &&
+	cat >file.c <<-\EOF &&
+	void tracked()
+	{
+	    return 1;
+	}
+	// trailing comment outside tracked range
+	EOF
+	git add file.c &&
+	test_tick &&
+	git commit -m "add file with trailing comment" &&
+	# Remove the trailing comment AND modify tracked() so there
+	# is a modification to the line range we track and a
+	# modification to the following line, which we do not track.
+	cat >file.c <<-\EOF &&
+	void tracked()
+	{
+	    return 2;
+	}
+	EOF
+	git commit -a -m "modify tracked and delete trailing comment"
+'
+
+test_expect_success '-L does not include deletions past end of tracked range' '
+	git log -L:tracked:file.c --format= -1 -p >actual &&
+	test_grep "return 2" actual &&
+	test_grep ! "trailing comment" actual
+'
+
 test_expect_success '-L with --diff-filter=M excludes root commit' '
 	git checkout parent-oids &&
 	git log -L:func2:file.c --diff-filter=M --format=%s --no-patch >actual &&

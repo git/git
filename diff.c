@@ -621,18 +621,13 @@ struct line_range_filter {
 	struct {
 		char func_name[80];
 		long func_name_len;
-		long old_begin, old_count;
-		long new_begin, new_count;
+		long old_begin;
+		long new_begin;
 		long lno_in_preimage;
 		long lno_in_postimage;
 		struct strbuf lines;
 		int active;
-		int has_changes;
 	} accumulating_hunk;
-
-	struct strbuf pending_rm;
-	int pending_rm_count;
-	long pending_rm_pre_begin;
 
 	int ret;
 };
@@ -2522,40 +2517,56 @@ static int quick_consume(void *priv, char *line UNUSED, unsigned long len UNUSED
 	return 1;
 }
 
-static void discard_pending_rm(struct line_range_filter *filter)
+static void begin_range_hunk(struct line_range_filter *filter)
 {
-	strbuf_reset(&filter->pending_rm);
-	filter->pending_rm_count = 0;
+	filter->accumulating_hunk.active = 1;
+	filter->accumulating_hunk.new_begin = filter->accumulating_hunk.lno_in_postimage;
+	filter->accumulating_hunk.old_begin = filter->accumulating_hunk.lno_in_preimage;
+	strbuf_reset(&filter->accumulating_hunk.lines);
 }
 
 static void flush_range_hunk(struct line_range_filter *filter)
 {
 	struct strbuf hdr = STRBUF_INIT;
 	const char *line_buf, *line_buf_end;
+	long old_count = 0, new_count = 0;
+	int has_changes = 0;
 
 	if (!filter->accumulating_hunk.active || filter->ret)
 		return;
 
-	if (filter->pending_rm_count) {
-		strbuf_addbuf(&filter->accumulating_hunk.lines, &filter->pending_rm);
-		filter->accumulating_hunk.old_count += filter->pending_rm_count;
-		filter->accumulating_hunk.has_changes = 1;
-		discard_pending_rm(filter);
+	line_buf = filter->accumulating_hunk.lines.buf;
+	line_buf_end = line_buf + filter->accumulating_hunk.lines.len;
+	while (line_buf < line_buf_end) {
+		const char *eol = memchr(line_buf, '\n', line_buf_end - line_buf);
+		if (*line_buf == ' ') {
+			old_count++;
+			new_count++;
+		}
+		else if (*line_buf == '-') {
+			old_count++;
+			has_changes = 1;
+		}
+		else if (*line_buf == '+') {
+			new_count++;
+			has_changes = 1;
+		}
+		line_buf = eol ? eol + 1 : line_buf_end;
 	}
 
-	if (!filter->accumulating_hunk.has_changes) {
+	if (!has_changes) {
 		filter->accumulating_hunk.active = 0;
 		strbuf_reset(&filter->accumulating_hunk.lines);
 		return;
 	}
 
 	strbuf_addf(&hdr, "@@ -%ld,%ld +%ld,%ld @@",
-		    filter->accumulating_hunk.old_begin, filter->accumulating_hunk.old_count,
-		    filter->accumulating_hunk.new_begin, filter->accumulating_hunk.new_count);
+		    filter->accumulating_hunk.old_begin, old_count,
+		    filter->accumulating_hunk.new_begin, new_count);
 	if (filter->accumulating_hunk.func_name_len > 0) {
 		strbuf_addch(&hdr, ' ');
 		strbuf_add(&hdr, filter->accumulating_hunk.func_name,
-	     filter->accumulating_hunk.func_name_len);
+			   filter->accumulating_hunk.func_name_len);
 	}
 	strbuf_addch(&hdr, '\n');
 
@@ -2598,84 +2609,48 @@ static void line_range_hunk_fn(void *data,
 static int line_range_line_fn(void *priv, char *line, unsigned long len)
 {
 	struct line_range_filter *filter = priv;
-	const struct range *cur;
-	long idx_in_postimage, cur_pre;
+	long idx_in_postimage;
+	int in_range;
 
 	if (filter->ret)
 		return filter->ret;
 
-	if (line[0] == '-') {
-		if (!filter->pending_rm_count)
-			filter->pending_rm_pre_begin =
-				filter->accumulating_hunk.lno_in_preimage;
-		filter->accumulating_hunk.lno_in_preimage++;
-		strbuf_add(&filter->pending_rm, line, len);
-		filter->pending_rm_count++;
-		return filter->ret;
-	}
-
 	if (line[0] == '\\') {
-		if (filter->pending_rm_count)
-			strbuf_add(&filter->pending_rm, line, len);
-		else if (filter->accumulating_hunk.active)
+		if (filter->accumulating_hunk.active)
 			strbuf_add(&filter->accumulating_hunk.lines, line, len);
 		return filter->ret;
 	}
 
-	if (line[0] != '+' && line[0] != ' ')
+	if (line[0] != '+' && line[0] != ' ' && line[0] != '-')
 		BUG("unexpected diff line type '%c'", line[0]);
 
 	idx_in_postimage = filter->accumulating_hunk.lno_in_postimage - 1;
-	cur_pre = filter->accumulating_hunk.lno_in_preimage;
-	filter->accumulating_hunk.lno_in_postimage++;
-	if (line[0] == ' ')
-		filter->accumulating_hunk.lno_in_preimage++;
 
 	while (filter->range_set_idx < filter->range_sets_to_filter_by->nr &&
 	       idx_in_postimage >=
 		filter->range_sets_to_filter_by->ranges[filter->range_set_idx].end) {
 		if (filter->accumulating_hunk.active)
 			flush_range_hunk(filter);
-		discard_pending_rm(filter);
 		filter->range_set_idx++;
 	}
 
-	if (filter->range_set_idx >= filter->range_sets_to_filter_by->nr) {
-		discard_pending_rm(filter);
-		return filter->ret;
+	in_range = filter->range_set_idx < filter->range_sets_to_filter_by->nr &&
+		   idx_in_postimage >=
+		filter->range_sets_to_filter_by->ranges[filter->range_set_idx].start &&
+		   idx_in_postimage <
+		filter->range_sets_to_filter_by->ranges[filter->range_set_idx].end;
+
+	if (in_range) {
+		if (!filter->accumulating_hunk.active)
+			begin_range_hunk(filter);
+
+		strbuf_add(&filter->accumulating_hunk.lines, line, len);
 	}
 
-	cur = &filter->range_sets_to_filter_by->ranges[filter->range_set_idx];
-
-	if (idx_in_postimage < cur->start) {
-		discard_pending_rm(filter);
-		return filter->ret;
-	}
-
-	if (!filter->accumulating_hunk.active) {
-		filter->accumulating_hunk.active = 1;
-		filter->accumulating_hunk.has_changes = 0;
-		filter->accumulating_hunk.new_begin = idx_in_postimage + 1;
-		filter->accumulating_hunk.old_begin = filter->pending_rm_count
-			? filter->pending_rm_pre_begin : cur_pre;
-		filter->accumulating_hunk.old_count = 0;
-		filter->accumulating_hunk.new_count = 0;
-		strbuf_reset(&filter->accumulating_hunk.lines);
-	}
-
-	if (filter->pending_rm_count) {
-		strbuf_addbuf(&filter->accumulating_hunk.lines, &filter->pending_rm);
-		filter->accumulating_hunk.old_count += filter->pending_rm_count;
-		filter->accumulating_hunk.has_changes = 1;
-		discard_pending_rm(filter);
-	}
-
-	strbuf_add(&filter->accumulating_hunk.lines, line, len);
-	filter->accumulating_hunk.new_count++;
-	if (line[0] == '+')
-		filter->accumulating_hunk.has_changes = 1;
-	else
-		filter->accumulating_hunk.old_count++;
+	if (line[0] == ' ' || line[0] == '+')
+		filter->accumulating_hunk.lno_in_postimage++;
+	if (line[0] == ' ' || line[0] == '-')
+		filter->accumulating_hunk.lno_in_preimage++;
 
 	return filter->ret;
 }
@@ -4033,7 +4008,6 @@ static void builtin_diff(const char *name_a,
 			lr_state.orig_cb_data = &ecbdata;
 			lr_state.range_sets_to_filter_by = line_ranges;
 			strbuf_init(&lr_state.accumulating_hunk.lines, 0);
-			strbuf_init(&lr_state.pending_rm, 0);
 
 			/*
 			 * Inflate ctxlen so that all changes within
@@ -4068,7 +4042,6 @@ static void builtin_diff(const char *name_a,
 				die("unable to generate diff for %s",
 				    one->path);
 			strbuf_release(&lr_state.accumulating_hunk.lines);
-			strbuf_release(&lr_state.pending_rm);
 		} else if (xdi_diff_outf(&mf1, &mf2, NULL, fn_out_consume,
 					 &ecbdata, &xpp, &xecfg))
 			die("unable to generate diff for %s", one->path);
