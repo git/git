@@ -310,6 +310,8 @@ static void copy_or_link_directory(struct strbuf *src, struct strbuf *dest,
 		if (unlink(dest->buf) && errno != ENOENT)
 			die_errno(_("failed to unlink '%s'"), dest->buf);
 		if (!option_no_hardlinks) {
+			int link_errno;
+
 			if (!link(src->buf, dest->buf)) {
 				struct stat st;
 
@@ -331,6 +333,16 @@ static void copy_or_link_directory(struct strbuf *src, struct strbuf *dest,
 
 				continue;
 			}
+			link_errno = errno;
+			if (!copy_file_reflink_with_time(the_repository, dest->buf,
+						  src->buf, 0666))
+				continue;
+			errno = link_errno;
+		} else if (!copy_file_reflink_with_time(the_repository, dest->buf,
+							 src->buf, 0666)) {
+			continue;
+		}
+		if (!option_no_hardlinks) {
 			if (option_local > 0)
 				die_errno(_("failed to create link '%s'"), dest->buf);
 			option_no_hardlinks = 1;
