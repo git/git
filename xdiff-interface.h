@@ -76,4 +76,17 @@ int xdiff_compare_lines(const char *l1, long s1,
  */
 unsigned long xdiff_hash_string(const char *s, size_t len, long flags);
 
+struct strbuf;
+
+/*
+ * Append a unified-diff hunk header to `out`, e.g.
+ * "@@ -<old> +<new> @@ func\n". The header comes from wrapping xdiff's
+ * own hunk-header emitter, so it matches what a normal diff would
+ * produce for the given line number begins and line counts.
+ */
+void xdiff_emit_hunk_header(struct strbuf *out,
+			    long old_begin, long old_nr,
+			    long new_begin, long new_nr,
+			    const char *func, long funclen);
+
 #endif

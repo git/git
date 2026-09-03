@@ -2560,15 +2560,10 @@ static void flush_range_hunk(struct line_range_filter *filter)
 		return;
 	}
 
-	strbuf_addf(&hdr, "@@ -%ld,%ld +%ld,%ld @@",
-		    filter->accumulating_hunk.old_begin, old_count,
-		    filter->accumulating_hunk.new_begin, new_count);
-	if (filter->accumulating_hunk.func_name_len > 0) {
-		strbuf_addch(&hdr, ' ');
-		strbuf_add(&hdr, filter->accumulating_hunk.func_name,
-			   filter->accumulating_hunk.func_name_len);
-	}
-	strbuf_addch(&hdr, '\n');
+	xdiff_emit_hunk_header(&hdr, filter->accumulating_hunk.old_begin, old_count,
+			       filter->accumulating_hunk.new_begin, new_count,
+			       filter->accumulating_hunk.func_name,
+			filter->accumulating_hunk.func_name_len);
 
 	filter->ret = filter->orig_line_fn(filter->orig_cb_data, hdr.buf, hdr.len);
 	strbuf_release(&hdr);
@@ -2589,14 +2584,14 @@ static void flush_range_hunk(struct line_range_filter *filter)
 }
 
 static void line_range_hunk_fn(void *data,
-			       long old_begin, long old_nr UNUSED,
-			       long new_begin, long new_nr UNUSED,
+			       long old_begin, long old_nr,
+			       long new_begin, long new_nr,
 			       const char *func, long funclen)
 {
 	struct line_range_filter *filter = data;
 
-	filter->accumulating_hunk.lno_in_postimage = new_begin;
-	filter->accumulating_hunk.lno_in_preimage = old_begin;
+	filter->accumulating_hunk.lno_in_postimage = new_nr ? new_begin : new_begin + 1;
+	filter->accumulating_hunk.lno_in_preimage = old_nr ? old_begin : old_begin + 1;
 
 	if (funclen > 0) {
 		if (funclen > (long)sizeof(filter->accumulating_hunk.func_name))
