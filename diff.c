@@ -2701,6 +2701,17 @@ static int line_range_filter_diff(struct line_range_filter *filter,
 	return ret;
 }
 
+int diff_emit_line_ranges(mmfile_t *one, mmfile_t *two,
+			  const struct range_set *ranges,
+			  xdiff_emit_line_fn line_fn, void *cb_data,
+			  xpparam_t *xpp, xdemitconf_t *xecfg)
+{
+	struct line_range_filter filter;
+
+	line_range_filter_init(&filter, ranges, line_fn, cb_data);
+	return line_range_filter_diff(&filter, one, two, xpp, xecfg);
+}
+
 static void pprint_rename(struct strbuf *name, const char *a, const char *b)
 {
 	const char *old_name = a;

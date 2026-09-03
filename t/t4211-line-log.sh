@@ -703,24 +703,18 @@ test_expect_success '-L suppresses deletions outside tracked range' '
 	test $(grep -c "^diff --git" actual) = 1
 '
 
-test_expect_success '-L with -S filters to string-count changes' '
+test_expect_success '-L with -S selects only the matching commit' '
 	git checkout parent-oids &&
-	git log -L:func2:file.c -S "F2 + 2" --format= >actual &&
-	# -S searches the whole file, not just the tracked range;
-	# combined with the -L range walk, this selects commits that
-	# both touch func2 and change the count of "F2 + 2" in the file.
-	test $(grep -c "^diff --git" actual) = 1 &&
-	test_grep "F2 + 2" actual
+	git log -L:func2:file.c -S "F2 + 2" --format=%s --no-patch >actual &&
+	echo "Modify func2() in file.c" >expect &&
+	test_cmp expect actual
 '
 
-test_expect_success '-L with -G filters to diff-text matches' '
+test_expect_success '-L with -G selects only the matching commit' '
 	git checkout parent-oids &&
-	git log -L:func2:file.c -G "F2 [+] 2" --format= >actual &&
-	# -G greps the whole-file diff text, not just the tracked range;
-	# combined with -L, this selects commits that both touch func2
-	# and have "F2 + 2" in their diff.
-	test $(grep -c "^diff --git" actual) = 1 &&
-	test_grep "F2 + 2" actual
+	git log -L:func2:file.c -G "F2 [+] 2" --format=%s --no-patch >actual &&
+	echo "Modify func2() in file.c" >expect &&
+	test_cmp expect actual
 '
 
 test_expect_success 'setup for trailing deletion test' '
@@ -1004,6 +998,65 @@ test_expect_success '--check does not report blank-at-eof outside the range' '
 	test_must_fail git log -L:tracked:eof.c --check --format= >raw &&
 	grep -E ":[0-9]+:" raw >actual &&
 	echo "eof.c:3: trailing whitespace." >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success '-L -G is limited to the tracked range' '
+	git checkout --orphan grep-range &&
+	git reset --hard &&
+	cat >gp.c <<-\EOF &&
+	int func1()
+	{
+	    return ALPHA;
+	}
+
+	int func2()
+	{
+	    return BETA;
+	}
+	EOF
+	git add gp.c &&
+	test_tick &&
+	git commit -m "add gp.c" &&
+	sed -e "s/ALPHA/ALPHA2/" -e "s/BETA/BETA2/" gp.c >tmp &&
+	mv tmp gp.c &&
+	git commit -a -m "touch both functions" &&
+	git log -L:func2:gp.c -G BETA --format=%s --no-patch >actual &&
+	cat >expect <<-\EOF &&
+	touch both functions
+	add gp.c
+	EOF
+	test_cmp expect actual &&
+	git log -L:func2:gp.c -G ALPHA --format=%s --no-patch >actual &&
+	test_must_be_empty actual
+'
+
+test_expect_success '-L -G searches the whole file under textconv' '
+	git checkout --orphan grep-textconv &&
+	git reset --hard &&
+	cat >tc.c <<-\EOF &&
+	int func1()
+	{
+	    return F1;
+	}
+
+	int func2()
+	{
+	    return F2;
+	}
+	EOF
+	git add tc.c &&
+	test_tick &&
+	git commit -m "add tc.c" &&
+	sed -e "s/F1/F1 + 1/" -e "s/return F2/return FINDME/" tc.c >tmp &&
+	mv tmp tc.c &&
+	git commit -a -m "change both funcs" &&
+	echo "tc.c diff=tc" >.gitattributes &&
+	git log -L:func1:tc.c -G FINDME --format=%s --no-patch >actual &&
+	test_must_be_empty actual &&
+	git config diff.tc.textconv cat &&
+	git log -L:func1:tc.c -G FINDME --format=%s --no-patch >actual &&
+	echo "change both funcs" >expect &&
 	test_cmp expect actual
 '
 
