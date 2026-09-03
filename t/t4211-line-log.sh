@@ -176,24 +176,9 @@ test_expect_success '--name-status shows status and path' '
 	test_grep ! "^@@" actual
 '
 
-test_expect_success '--stat is not yet supported with -L' '
-	test_must_fail git log -L1,24:b.c --stat 2>err &&
-	test_grep "does not yet support" err
-'
-
-test_expect_success '--numstat is not yet supported with -L' '
-	test_must_fail git log -L1,24:b.c --numstat 2>err &&
-	test_grep "does not yet support" err
-'
-
-test_expect_success '--shortstat is not yet supported with -L' '
-	test_must_fail git log -L1,24:b.c --shortstat 2>err &&
-	test_grep "does not yet support" err
-'
-
-test_expect_success '--dirstat is not yet supported with -L' '
+test_expect_success '--dirstat is not supported with -L' '
 	test_must_fail git log -L1,24:b.c --dirstat 2>err &&
-	test_grep "does not yet support" err
+	test_grep "does not support" err
 '
 
 test_expect_success 'setup for checking fancy rename following' '
@@ -793,9 +778,9 @@ test_expect_success '-L with -S suppresses non-matching commits' '
 	test_cmp expect actual
 '
 
-test_expect_success '--full-diff is not yet supported with -L' '
+test_expect_success '--full-diff is not supported with -L' '
 	test_must_fail git log -L1,24:b.c --full-diff 2>err &&
-	test_grep "does not yet support" err
+	test_grep "does not support" err
 '
 
 test_expect_success '-L --oneline has no extra blank line before diff' '
@@ -804,6 +789,113 @@ test_expect_success '-L --oneline has no extra blank line before diff' '
 	# Oneline header on line 1, diff starts immediately on line 2
 	sed -n 2p actual >line2 &&
 	test_grep "^diff --git" line2
+'
+
+test_expect_success 'setup for -L stat tests' '
+	git checkout --orphan stat-range &&
+	git reset --hard &&
+	cat >file.c <<-\EOF &&
+	int func1()
+	{
+	    return F1;
+	}
+
+	int tracked_fn()
+	{
+	    return F2;
+	}
+	EOF
+	git add file.c &&
+	test_tick &&
+	git commit -m "Add func1() and tracked_fn()" &&
+
+	# Modify both functions so whole-file stats (2 added, 2 deleted)
+	# differ from the tracked range of tracked_fn (1 and 1).
+	sed -e "s/F1/F1 + 1/" -e "s/F2/F2 + 2/" file.c >tmp &&
+	mv tmp file.c &&
+	git commit -a -m "Modify both functions"
+'
+
+test_expect_success '-L --numstat limits counts to the tracked range' '
+	git log -L:tracked_fn:file.c --numstat --format=%s >actual &&
+	cat >expect <<-\EOF &&
+	Modify both functions
+
+	1	1	file.c
+	Add func1() and tracked_fn()
+
+	4	0	file.c
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success '-L --stat and --shortstat limit counts to the tracked range' '
+	git log -L:tracked_fn:file.c --stat --format=%s -1 >actual &&
+	cat >expect <<-\EOF &&
+	Modify both functions
+
+	 file.c | 2 +-
+	 1 file changed, 1 insertion(+), 1 deletion(-)
+	EOF
+	test_cmp expect actual &&
+
+	git log -L:tracked_fn:file.c --shortstat --format=%s -1 >actual &&
+	cat >expect <<-\EOF &&
+	Modify both functions
+
+	 1 file changed, 1 insertion(+), 1 deletion(-)
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success '--numstat across renames and multiple commits' '
+	# parallel-change carries the tracked function f across an a.c -> b.c
+	# rename and a merge of two parallel histories.
+	git checkout parallel-change &&
+	git log -M -L ":f:b.c" --format= --numstat >actual &&
+	cat >expect <<-\EOF &&
+	1	1	b.c
+	1	1	a.c
+	1	1	a.c
+	1	1	a.c
+	1	0	a.c
+	13	0	a.c
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success '-L multiple ranges with --numstat excludes untracked change' '
+	git checkout --orphan multi-range &&
+	git reset --hard &&
+	cat >m.c <<-\EOF &&
+	int tracked_func1()
+	{
+	    return F1;
+	}
+
+	int tracked_func2()
+	{
+	    return F2;
+	}
+
+	int func3()
+	{
+	    return F3;
+	}
+	EOF
+	git add m.c &&
+	test_tick &&
+	git commit -m "add m.c" &&
+	sed -e "s/F1/F1 + 1/" -e "s/F2/F2 + 2/" -e "s/F3/F3 + 3/" m.c >tmp &&
+	mv tmp m.c &&
+	git commit -a -m "Modify all three functions" &&
+	git log -L:tracked_func1:m.c -L:tracked_func2:m.c --numstat --format=%s -1 >actual &&
+	cat >expect <<-\EOF &&
+	Modify all three functions
+
+	2	2	m.c
+	EOF
+	test_cmp expect actual
 '
 
 test_expect_success '--summary shows new file on root commit' '
