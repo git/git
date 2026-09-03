@@ -9,7 +9,7 @@ git-var - Show a Git logical variable
 SYNOPSIS
 --------
 [synopsis]
-git var (-l | <variable>)
+git var (-l [-z] | [-z] <variable>...)
 
 DESCRIPTION
 -----------
@@ -24,19 +24,54 @@ OPTIONS
 	as well. (However, the configuration variables listing functionality
 	is deprecated in favor of `git config list`.)
 
+`-z`::
+	Terminate entries with NUL instead of newline.
+
 EXAMPLES
 --------
-	$ git var GIT_AUTHOR_IDENT
-	Eric W. Biederman <ebiederm@lnxi.com> 1121223278 -0600
+* Get the author identity:
++
+------------
+$ git var GIT_AUTHOR_IDENT
+Eric W. Biederman <ebiederm@lnxi.com> 1121223278 -0600
+------------
 
+* Get the author name and email:
++
+------------
+$ git var GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL
+Eric W. Biederman
+ebiederm@lnxi.com
+------------
 
 VARIABLES
 ---------
 `GIT_AUTHOR_IDENT`::
     The author of a piece of code.
 
+`GIT_AUTHOR_NAME`::
+    The name of the author of a piece of code.
+
+`GIT_AUTHOR_EMAIL`::
+    The email of the author of a piece of code.
+
+`GIT_AUTHOR_DATE`::
+    The date and timezone of the author of a piece of code.
+
 `GIT_COMMITTER_IDENT`::
     The person who put a piece of code into Git.
+
+`GIT_COMMITTER_NAME`::
+    The name of the person who put a piece of code into Git.
+
+`GIT_COMMITTER_EMAIL`::
+    The email of the person who put a piece of code into Git.
+
+`GIT_COMMITTER_DATE`::
+    The date and timezone of the person who put a piece of code into Git.
+
+`GIT_DEFAULT_KEY`::
+    The default commit signing key ID or fingerprint, if configured or enabled.
 
 `GIT_EDITOR`::
     Text editor for use by Git commands.  The value is meant to be
