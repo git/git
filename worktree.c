@@ -156,6 +156,9 @@ struct worktree *get_linked_worktree(struct repository *repo,
 	strbuf_rtrim(&worktree_path);
 	strbuf_strip_suffix(&worktree_path, "/.git");
 
+	/* Convert Windows path to POSIX path or vice-versa. */
+	translate_windows_path(&worktree_path);
+
 	if (!is_absolute_path(worktree_path.buf)) {
 		strbuf_strip_suffix(&path, "gitdir");
 		strbuf_addbuf(&path, &worktree_path);
@@ -1008,6 +1011,18 @@ int should_prune_worktree(struct repository *repo,
 		goto done;
 	}
 	path[len] = '\0';
+
+	{
+		struct strbuf translated = STRBUF_INIT;
+		strbuf_addstr(&translated, path);
+		if (translate_windows_path(&translated)) {
+			free(path);
+			path = strbuf_detach(&translated, NULL);
+		} else {
+			strbuf_release(&translated);
+		}
+	}
+
 	if (is_absolute_path(path)) {
 		strbuf_addstr(&dotgit, path);
 	} else {

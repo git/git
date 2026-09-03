@@ -407,6 +407,15 @@ int cmd__path_utils(int argc, const char **argv)
 		return 0;
 	}
 
+	if (argc == 3 && !strcmp(argv[1], "translate_windows_path")) {
+		struct strbuf sb = STRBUF_INIT;
+		strbuf_addstr(&sb, argv[2]);
+		translate_windows_path(&sb);
+		puts(sb.buf);
+		strbuf_release(&sb);
+		return 0;
+	}
+
 	if (argc == 4 && !strcmp(argv[1], "relative_path")) {
 		struct strbuf sb = STRBUF_INIT;
 		const char *in, *prefix, *rel;

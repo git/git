@@ -611,4 +611,32 @@ test_expect_success !VALGRIND,RUNTIME_PREFIX,CAN_EXEC_IN_PWD '%(prefix)/ works' 
 	test_cmp expect actual
 '
 
+case "$(uname -s)" in
+*CYGWIN*)  MOUNT_PREFIX=/cygdrive ;;
+*MSYS_NT*) MOUNT_PREFIX= ;;
+*)         MOUNT_PREFIX=/mnt ;;
+esac
+
+translate_windows_path() {
+	test_expect_success !MINGW "translate_windows_path: $1 => $2" "
+		echo '$2' >expect &&
+		test-tool path-utils translate_windows_path '$1' >actual &&
+		test_cmp expect actual
+	"
+}
+
+translate_windows_path 'C:/foo/bar'                  "$MOUNT_PREFIX/c/foo/bar"
+translate_windows_path 'C:\foo\bar'                  "$MOUNT_PREFIX/c/foo/bar"
+translate_windows_path 'D:/repo/.git/worktrees/wt'   "$MOUNT_PREFIX/d/repo/.git/worktrees/wt"
+translate_windows_path 'Z:\path\with mixed/seps'     "$MOUNT_PREFIX/z/path/with mixed/seps"
+translate_windows_path 'c:/already-lower'            "$MOUNT_PREFIX/c/already-lower"
+
+# Inputs that must NOT be translated:
+translate_windows_path '/already/posix'              '/already/posix'
+translate_windows_path 'relative/path'               'relative/path'
+translate_windows_path 'C:relative-no-separator'     'C:relative-no-separator'
+translate_windows_path '1:/digit-prefix'             '1:/digit-prefix'
+translate_windows_path 'C'                           'C'
+translate_windows_path ''                            ''
+
 test_done

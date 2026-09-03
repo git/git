@@ -7,6 +7,25 @@ struct string_list;
 struct worktree;
 
 /*
+ * Translate worktree gitdir paths between native Windows and POSIX-mount
+ * forms, in the direction appropriate for the current build:
+ *
+ *   * Windows-native: `/mnt/<x>/`, `/cygdrive/<x>/`, or `/<x>/` -> `<x>:/...`
+ *   * MSYS:  `<x>:/` or `<x>:\` -> `/<x>/...`
+ *   * Cygwin:    `<x>:/` or `<x>:\` -> `/cygdrive/<x>/...`
+ *   * everything else (Linux/WSL/macOS/...): `<x>:/` or `<x>:\` -> `/mnt/<x>/...`
+ *
+ * `<x>` must be a single ASCII letter; multi-character segments
+ * (`/mnt/storage`) and digit-prefixed mounts pass through unchanged.
+ * Backslashes in the tail are normalised to forward slashes on the
+ * POSIX-direction translation.
+ *
+ * Edits `path` in place; may shrink (Windows direction) or grow (POSIX
+ * direction). Returns 1 if a translation occurred, 0 otherwise.
+ */
+int translate_windows_path(struct strbuf *path);
+
+/*
  * The result to all functions which return statically allocated memory may be
  * overwritten by another call to _any_ one of these functions. Consider using
  * the safer variants which operate on strbufs or return allocated memory.
