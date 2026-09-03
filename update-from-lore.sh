@@ -1,15 +1,38 @@
 #!/bin/sh
 
 afresh () {
-	if git symbolic-ref -q HEAD
+	URL="${1?URL}"
+	shift
+	if test $# != 0
+	then
+		branch="$1"
+		shift
+	fi
+	if test $# = 1
+	then
+		git checkout --detach "$1"
+		shift
+	elif git symbolic-ref -q HEAD
 	then
 		echo >&2 "HEAD not detached"
 		exit 1
 	fi
-	b4 am -o- -t "$1" |
+
+	if test $# != 0
+	then
+		echo >&2 "$0 URL topic-name [base]"
+		exit 1
+	fi
+
+	b4 am -o- -t "$URL" |
 	tee ./+b4am.mbx |
 	git am -s3 && rm -f ./+b4am.mbx
+	status=$?
 
+	if test $status = 0 && test -n "$branch"
+	then
+		git checkout -b "$branch"
+	fi
 	exit $?
 }
 
@@ -19,7 +42,7 @@ redo_or_afresh () {
 		git checkout "$1" || exit
 		return
 	else
-		afresh "$1"
+		afresh "$@"
 		return
 	fi
 }
@@ -39,9 +62,9 @@ do
 	shift
 done
 
-case "$#" in
+case $# in
 0)	: happy ;;
-1)	redo_or_afresh "$1" ;;
+1|2|3)	redo_or_afresh "$@" ;;
 *)	echo >&2 "$0: extra arguments" ;;
 esac
 
