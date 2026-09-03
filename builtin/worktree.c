@@ -294,7 +294,7 @@ static void remove_junk_on_signal(int signo)
 	raise(signo);
 }
 
-static const char *worktree_basename(const char *path, int *olen)
+static char *worktree_basename_dup(const char *path)
 {
 	const char *name;
 	int len;
@@ -303,14 +303,11 @@ static const char *worktree_basename(const char *path, int *olen)
 	while (len && is_dir_sep(path[len - 1]))
 		len--;
 
-	for (name = path + len - 1; name > path; name--)
-		if (is_dir_sep(*name)) {
-			name++;
-			break;
-		}
+	name = path + len;
+	while (name > path && !is_dir_sep(name[-1]))
+		name--;
 
-	*olen = len;
-	return name;
+	return xmemdupz(name, path + len - name);
 }
 
 /* check that path is viable location for worktree */
@@ -464,6 +461,7 @@ static int add_worktree(const char *path, const char *refname,
 	struct strbuf sb_git = STRBUF_INIT, sb_repo = STRBUF_INIT;
 	struct strbuf sb = STRBUF_INIT;
 	const char *name;
+	char *name_to_free = NULL;
 	struct strvec child_env = STRVEC_INIT;
 	unsigned int counter = 0;
 	int len, ret;
@@ -491,12 +489,12 @@ static int add_worktree(const char *path, const char *refname,
 	if (!commit && !opts->orphan)
 		die(_("invalid reference: %s"), refname);
 
-	name = worktree_basename(path, &len);
-	strbuf_add(&sb, name, path + len - name);
-	sanitize_refname_component(sb.buf, &sb_name);
+	name = name_to_free = worktree_basename_dup(path);
+	if (!*name)
+		die(_("invalid path '%s'"), path);
+	sanitize_refname_component(name, &sb_name);
 	if (!sb_name.len)
-		BUG("How come '%s' becomes empty after sanitization?", sb.buf);
-	strbuf_reset(&sb);
+		BUG("How come '%s' becomes empty after sanitization?", name);
 	name = sb_name.buf;
 	repo_git_path_replace(the_repository, &sb_repo, "worktrees/%s", name);
 	len = sb_repo.len;
@@ -630,6 +628,7 @@ done:
 	strbuf_release(&sb_git);
 	strbuf_release(&sb_name);
 	free_worktree(wt);
+	free(name_to_free);
 	return ret;
 }
 
@@ -785,10 +784,8 @@ static void advise_disambiguating_remotes(const char *path, const char *branch,
 
 static char *dwim_branch(const struct add_opts *opts, const char *path, char **new_branch)
 {
-	int n;
 	int branch_exists;
-	const char *s = worktree_basename(path, &n);
-	char *branchname = xstrndup(s, n);
+	char *branchname = worktree_basename_dup(path);
 	struct strbuf ref = STRBUF_INIT;
 
 	branch_exists = !check_branch_ref(the_repository, &ref, branchname) &&
@@ -909,9 +906,7 @@ static int add(int ac, const char **av, const char *prefix,
 	}
 
 	if (opts.orphan && !new_branch) {
-		int n;
-		const char *s = worktree_basename(path, &n);
-		new_branch = new_branch_to_free = xstrndup(s, n);
+		new_branch = new_branch_to_free = worktree_basename_dup(path);
 	} else if (opts.orphan) {
 		; /* no-op */
 	} else if (opts.detach) {
