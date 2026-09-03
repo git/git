@@ -3696,9 +3696,11 @@ proc find_ctext_fileinfo {line} {
 }
 
 proc pop_diff_menu {w X Y x y} {
-    global ctext diff_menu flist_menu_file
-    global diff_menu_txtpos diff_menu_line
-    global diff_menu_filebase
+    global ctext diff_menu flist_menu_file currentid
+    global diff_menu_txtpos diff_menu_line diff_menu_filebase
+    global usercmd_dd_name1 usercmd_dd_body1
+    global usercmd_dd_name2 usercmd_dd_body2
+    global usercmd_dd_name3 usercmd_dd_body3
 
     set diff_menu_txtpos [split [$w index "@$x,$y"] "."]
     set diff_menu_line [lindex $diff_menu_txtpos 0]
@@ -3711,6 +3713,10 @@ proc pop_diff_menu {w X Y x y} {
     if {$f eq {}} return
     set flist_menu_file [lindex $f 0]
     set diff_menu_filebase [lindex $f 1]
+    update_menu_custom_cmds $diff_menu $currentid \
+        [list $usercmd_dd_name1 $usercmd_dd_body1 \
+              $usercmd_dd_name2 $usercmd_dd_body2 \
+              $usercmd_dd_name3 $usercmd_dd_body3]
     tk_popup $diff_menu $X $Y
 }
 
@@ -9148,9 +9154,134 @@ proc mstime {} {
     return [format "%.3f" [expr {([clock click -milliseconds] - $startmstime) / 1000.0}]]
 }
 
+proc update_menu_custom_cmds {menu id cmds} {
+    if {![info exists ::usercmd_menu_count($menu)]} {
+        set ::usercmd_menu_count($menu) 0
+    }
+
+    for {set j 0} {$j < $::usercmd_menu_count($menu)} {incr j} {
+        $menu delete end
+    }
+
+    set ::usercmd_menu_count($menu) 0
+    foreach {name cmd_template} $cmds {
+        if {$name ne "" && $cmd_template ne ""} {
+            if {$::usercmd_menu_count($menu) == 0} {
+                $menu add separator
+                incr ::usercmd_menu_count($menu)
+            }
+            $menu add command -label $name \
+                -command [list exec_custom_cmd $cmd_template $id]
+            incr ::usercmd_menu_count($menu)
+        }
+    }
+}
+
+proc get_blame_origin {} {
+    global diff_menu_filebase diff_menu_line flist_menu_file
+    global currentid cmitmode parents curview cdup
+
+    set blame_id ""
+    set blame_line ""
+    catch {
+        if {$cmitmode eq "tree"} {
+            set line [expr {$diff_menu_line - $diff_menu_filebase}]
+            set blamefile [file join $cdup $flist_menu_file]
+            set blame_out [exec git blame -p -L$line,+1 $currentid -- $blamefile]
+            set first [lindex [split $blame_out "\n"] 0]
+            set blame_id [lindex $first 0]
+            set blame_line [lindex $first 1]
+        } else {
+            set h [find_hunk_blamespec $diff_menu_filebase $diff_menu_line]
+            if {$h ne {}} {
+                set pi [lindex $h 0]
+                if {$pi > 0} {
+                    incr pi -1
+                    set blame_parent [lindex $parents($curview,$currentid) $pi]
+                    set line [lindex $h 1]
+                    set blamefile [file join $cdup $flist_menu_file]
+                    set blame_out [exec git blame -p -L$line,+1 $blame_parent -- $blamefile]
+                    set first [lindex [split $blame_out "\n"] 0]
+                    set blame_id [lindex $first 0]
+                    set blame_line [lindex $first 1]
+                }
+            }
+        }
+    }
+    return [list $blame_id $blame_line]
+}
+
+proc get_diff_file {} {
+    global flist_menu_file
+    if {[info exists flist_menu_file]} {
+        return $flist_menu_file
+    }
+    return ""
+}
+
+proc exec_custom_cmd {cmd_template id} {
+    global commitinfo markedid
+
+    getcommit $id
+
+    set blame_computed 0
+    set blame_id ""
+    set blame_line ""
+
+    set cmd ""
+    set len [string length $cmd_template]
+    for {set i 0} {$i < $len} {incr i} {
+        if {[string index $cmd_template $i] eq "%" && $i + 1 < $len} {
+            set next [string index $cmd_template [expr {$i + 1}]]
+            if {!$blame_computed && ($next eq "b" || $next eq "l")} {
+                set blame [get_blame_origin]
+                set blame_id [lindex $blame 0]
+                set blame_line [lindex $blame 1]
+                set blame_computed 1
+            }
+            switch -- $next {
+                "%" { append cmd "%" }
+                "i" { append cmd $id }
+                "t" { append cmd [lindex $commitinfo($id) 0] }
+                "a" { append cmd [lindex $commitinfo($id) 1] }
+                "d" { append cmd [lindex $commitinfo($id) 2] }
+                "c" { append cmd [lindex $commitinfo($id) 3] }
+                "D" { append cmd [lindex $commitinfo($id) 4] }
+                "m" { append cmd [lindex $commitinfo($id) 5] }
+                "M" { if {[info exists markedid]} { append cmd $markedid } }
+                "b" { append cmd $blame_id }
+                "f" { append cmd [get_diff_file] }
+                "l" { append cmd $blame_line }
+                default { append cmd "%" $next }
+            }
+            incr i
+        } else {
+            append cmd [string index $cmd_template $i]
+        }
+    }
+
+    if {[catch {exec sh -c $cmd 2>@1} output]} {
+        set exitcode 1
+        if {[lindex $::errorCode 0] eq "CHILDSTATUS"} {
+            set exitcode [lindex $::errorCode 2]
+        }
+        if {$exitcode == 42} {
+            tk_messageBox -type ok -icon info \
+                -title [mc "Command output"] -message $output
+        } else {
+            tk_messageBox -type ok -icon error \
+                -title [mc "Command failed"] \
+                -message [mc "Exit code %d:\n%s" $exitcode $output]
+        }
+    }
+}
+
 proc rowmenu {x y id} {
     global rowctxmenu selectedline rowmenuid curview
     global nullid nullid2 fakerowmenu mainhead markedid
+    global usercmd_cl_name1 usercmd_cl_body1
+    global usercmd_cl_name2 usercmd_cl_body2
+    global usercmd_cl_name3 usercmd_cl_body3
 
     stopfinding
     set rowmenuid $id
@@ -9182,6 +9313,10 @@ proc rowmenu {x y id} {
     $menu entryconfigure [mca "Make patch"] -state $state
     $menu entryconfigure [mca "Diff this -> marked commit"] -state $mstate
     $menu entryconfigure [mca "Diff marked commit -> this"] -state $mstate
+    update_menu_custom_cmds $menu $id \
+        [list $usercmd_cl_name1 $usercmd_cl_body1 \
+              $usercmd_cl_name2 $usercmd_cl_body2 \
+              $usercmd_cl_name3 $usercmd_cl_body3]
     tk_popup $menu $x $y
 }
 
@@ -11916,6 +12051,60 @@ proc prefspage_fonts {notebook} {
     return $page
 }
 
+proc prefspage_commands {notebook} {
+    global {*}$::config_variables
+
+    set page [create_prefs_page $notebook.commands]
+
+    ttk::label $page.cl_header -text [mc "Commit list"] -font mainfontbold
+    grid $page.cl_header - - -sticky w -pady 10
+
+    ttk::label $page.cl_namelbl -text [mc "Name"]
+    ttk::label $page.cl_cmdlbl -text [mc "Command"]
+    grid x $page.cl_namelbl $page.cl_cmdlbl -sticky w
+
+    foreach i {1 2 3} {
+        ttk::label $page.cl_row${i}lbl -text "${i}."
+        ttk::entry $page.cl_name${i} -textvariable usercmd_cl_name${i} -width 20
+        ttk::entry $page.cl_body${i} -textvariable usercmd_cl_body${i} -width 40
+        grid $page.cl_row${i}lbl $page.cl_name${i} $page.cl_body${i} -sticky ew -padx 2
+    }
+
+    ttk::label $page.dd_header -text [mc "Diff display"] -font mainfontbold
+    grid $page.dd_header - - -sticky w -pady 10
+
+    ttk::label $page.dd_namelbl -text [mc "Name"]
+    ttk::label $page.dd_cmdlbl -text [mc "Command"]
+    grid x $page.dd_namelbl $page.dd_cmdlbl -sticky w
+
+    foreach i {1 2 3} {
+        ttk::label $page.dd_row${i}lbl -text "${i}."
+        ttk::entry $page.dd_name${i} -textvariable usercmd_dd_name${i} -width 20
+        ttk::entry $page.dd_body${i} -textvariable usercmd_dd_body${i} -width 40
+        grid $page.dd_row${i}lbl $page.dd_name${i} $page.dd_body${i} -sticky ew -padx 2
+    }
+
+    set explain "Commands with both name and command filled in will "
+    append explain "appear in the context menu (right-click) of the "
+    append explain "respective area. "
+    append explain "Substitution: %% = literal %, %i = commit id, "
+    append explain "%t = title, %m = message, %a = author, "
+    append explain "%d = author date, %c = committer, "
+    append explain "%D = committer date, %M = marked commit id, "
+    append explain "%f = file path (diff only), "
+    append explain "%b = blame origin id (diff only), "
+    append explain "%l = blame origin line number (diff only). "
+    append explain "Exit code 0 = silent; 42 = show output; "
+    append explain "other = show error. "
+    append explain "Append \"&\" to run asynchronously."
+    ttk::label $page.explain -text $explain -wraplength 500 -justify left
+    grid $page.explain - - -sticky w -pady 10 -padx 5
+
+    grid columnconfigure $page 2 -weight 1
+
+    return $page
+}
+
 proc doprefs {} {
     global oldprefs prefstop
     global {*}$::config_variables
@@ -11938,6 +12127,7 @@ proc doprefs {} {
     lappend pages [prefspage_general $notebook] [mc "General"]
     lappend pages [prefspage_colors $notebook] [mc "Colors"]
     lappend pages [prefspage_fonts $notebook] [mc "Fonts"]
+    lappend pages [prefspage_commands $notebook] [mc "Commands"]
     set col 0
     foreach {page title} $pages {
         $notebook add $page -text $title
@@ -12659,6 +12849,18 @@ set autocopy 0
 set autoselect 1
 set autosellen $hashlength
 set perfile_attrs 0
+set usercmd_cl_name1 ""
+set usercmd_cl_body1 ""
+set usercmd_cl_name2 ""
+set usercmd_cl_body2 ""
+set usercmd_cl_name3 ""
+set usercmd_cl_body3 ""
+set usercmd_dd_name1 ""
+set usercmd_dd_body1 ""
+set usercmd_dd_name2 ""
+set usercmd_dd_body2 ""
+set usercmd_dd_name3 ""
+set usercmd_dd_body3 ""
 
 if {[tk windowingsystem] eq "aqua"} {
     set extdifftool "opendiff"
@@ -12807,6 +13009,18 @@ set config_variables {
     uifgcolor
     uifgdisabledcolor
     uifont
+    usercmd_cl_body1
+    usercmd_cl_body2
+    usercmd_cl_body3
+    usercmd_cl_name1
+    usercmd_cl_name2
+    usercmd_cl_name3
+    usercmd_dd_body1
+    usercmd_dd_body2
+    usercmd_dd_body3
+    usercmd_dd_name1
+    usercmd_dd_name2
+    usercmd_dd_name3
     visiblerefs
     web_browser
     workingfilescirclecolor
