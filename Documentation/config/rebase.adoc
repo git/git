@@ -24,7 +24,12 @@ rebase.autoStash::
 	Defaults to false.
 
 rebase.updateRefs::
-	If set to true enable `--update-refs` option by default.
+	If set to true, enable the `--update-refs` option of
+	linkgit:git-rebase[1] by default. When set to 'interactive',
+	only enable `--update-refs` by default for interactive mode
+	(equivalent to `--update-refs=interactive`).
+	This option can be overridden by specifying any form of
+	`--update-refs` on the command line.
 
 rebase.missingCommitsCheck::
 	If set to "warn", git rebase -i will print a warning if some
