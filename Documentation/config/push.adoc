@@ -8,6 +8,9 @@
 	to be set. Workflows most likely to benefit from this option are
 	`simple` central workflows where all branches are expected to
 	have the same name on the remote.
++
+When combined with `checkout.remoteBranchTemplate`, creates remote
+branches using the templated name.
 
 `push.default`::
 	Defines the action `git push` should take if no refspec is
