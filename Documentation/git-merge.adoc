@@ -68,6 +68,7 @@ OPTIONS
 include::merge-options.adoc[]
 
 `-m <msg>`::
+`--message=<msg>`::
 	Set the commit message to be used for the merge commit (in
 	case one is created).
 +
