@@ -1163,6 +1163,7 @@ static int switch_branches(const struct checkout_opts *opts,
 	int flag, writeout_error = 0;
 	int do_merge = 1;
 	int created_autostash = 0;
+	enum stash_apply_result autostash_res = STASH_APPLY_CLEAN;
 	struct strbuf old_commit_shortname = STRBUF_INIT;
 	struct strbuf autostash_msg = STRBUF_INIT;
 	const char *stash_label_base = NULL;
@@ -1234,12 +1235,12 @@ static int switch_branches(const struct checkout_opts *opts,
 				git_config_push_parameter(cfg.buf);
 				strbuf_release(&cfg);
 			}
-			apply_autostash_ref(the_repository,
-					    "CHECKOUT_AUTOSTASH_HEAD",
-					    new_branch_info->name,
-					    "local",
-					    stash_label_base,
-					    autostash_msg.buf);
+			autostash_res = apply_autostash_ref(the_repository,
+				    "CHECKOUT_AUTOSTASH_HEAD",
+				    new_branch_info->name,
+				    "local",
+				    stash_label_base,
+				    autostash_msg.buf);
 		}
 		if (ret) {
 			branch_info_release(&old_branch_info);
@@ -1252,6 +1253,8 @@ static int switch_branches(const struct checkout_opts *opts,
 	if (!opts->quiet && !old_branch_info.path && old_branch_info.commit && new_branch_info->commit != old_branch_info.commit)
 		orphaned_commit_warning(old_branch_info.commit, new_branch_info->commit);
 
+	if (autostash_res == STASH_APPLY_CONFLICT && !opts->quiet)
+		fputc('\n', stderr);
 	update_refs_for_switch(opts, &old_branch_info, new_branch_info);
 
 	if (created_autostash) {
