@@ -755,6 +755,10 @@ static int write_ondisk_index(struct repository *repo,
 	opts.dst_index = &index;
 
 	tree = repo_parse_tree_indirect(repo, oid);
+	if (!tree) {
+		ret = error(_("unable to parse tree %s"), oid_to_hex(oid));
+		goto out;
+	}
 	init_tree_desc(&tree_desc, &tree->object.oid, tree->buffer, tree->size);
 
 	if (unpack_trees(1, &tree_desc, &opts)) {
