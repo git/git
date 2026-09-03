@@ -2517,6 +2517,18 @@ static int quick_consume(void *priv, char *line UNUSED, unsigned long len UNUSED
 	return 1;
 }
 
+static void line_range_filter_init(struct line_range_filter *filter,
+				   const struct range_set *ranges,
+				   xdiff_emit_line_fn line_fn,
+				   void *cb_data)
+{
+	memset(filter, 0, sizeof(*filter));
+	filter->orig_line_fn = line_fn;
+	filter->orig_cb_data = cb_data;
+	filter->range_sets_to_filter_by = ranges;
+	strbuf_init(&filter->accumulating_hunk.lines, 0);
+}
+
 static void begin_range_hunk(struct line_range_filter *filter)
 {
 	filter->accumulating_hunk.active = 1;
@@ -2648,6 +2660,37 @@ static int line_range_line_fn(void *priv, char *line, unsigned long len)
 		filter->accumulating_hunk.lno_in_preimage++;
 
 	return filter->ret;
+}
+
+
+static int line_range_filter_diff(struct line_range_filter *filter,
+				  mmfile_t *mf1, mmfile_t *mf2,
+				  xpparam_t *xpp, xdemitconf_t *xecfg)
+{
+	const struct range_set *ranges = filter->range_sets_to_filter_by;
+	long max_span = 0;
+	unsigned int i;
+	int ret;
+
+	for (i = 0; i < ranges->nr; i++) {
+		long span = ranges->ranges[i].end - ranges->ranges[i].start;
+		if (span > max_span)
+			max_span = span;
+	}
+	if (max_span > xecfg->ctxlen)
+		xecfg->ctxlen = max_span;
+
+	/* the filter seeds its per-image position from hunk headers */
+	xecfg->flags &= ~XDL_EMIT_NO_HUNK_HDR;
+
+	ret = xdi_diff_outf(mf1, mf2, line_range_hunk_fn,
+			    line_range_line_fn, filter, xpp, xecfg);
+	if (!ret) {
+		flush_range_hunk(filter);
+		ret = filter->ret;
+	}
+	strbuf_release(&filter->accumulating_hunk.lines);
+	return ret;
 }
 
 static void pprint_rename(struct strbuf *name, const char *a, const char *b)
@@ -3994,49 +4037,15 @@ static void builtin_diff(const char *name_a,
 			xdi_diff_outf(&mf1, &mf2, NULL, quick_consume,
 				      &ecbdata, &xpp, &xecfg);
 		} else if (line_ranges) {
-			struct line_range_filter lr_state;
-			unsigned int i;
-			long max_span = 0;
+			struct line_range_filter lr_filter;
 
-			memset(&lr_state, 0, sizeof(lr_state));
-			lr_state.orig_line_fn = fn_out_consume;
-			lr_state.orig_cb_data = &ecbdata;
-			lr_state.range_sets_to_filter_by = line_ranges;
-			strbuf_init(&lr_state.accumulating_hunk.lines, 0);
+			line_range_filter_init(&lr_filter, line_ranges,
+					       fn_out_consume, &ecbdata);
 
-			/*
-			 * Inflate ctxlen so that all changes within
-			 * any single range are merged into one xdiff
-			 * hunk and the inter-change context is emitted.
-			 * The callback clips back to range boundaries.
-			 *
-			 * The optimal ctxlen depends on where changes
-			 * fall within the range, which is only known
-			 * after xdiff runs; the max range span is the
-			 * upper bound that guarantees correctness in a
-			 * single pass.
-			 */
-			for (i = 0; i < line_ranges->nr; i++) {
-				long span = line_ranges->ranges[i].end -
-					    line_ranges->ranges[i].start;
-				if (span > max_span)
-					max_span = span;
-			}
-			if (max_span > xecfg.ctxlen)
-				xecfg.ctxlen = max_span;
-
-			if (xdi_diff_outf(&mf1, &mf2,
-					  line_range_hunk_fn,
-					  line_range_line_fn,
-					  &lr_state, &xpp, &xecfg))
+			if (line_range_filter_diff(&lr_filter, &mf1, &mf2,
+						   &xpp, &xecfg))
 				die("unable to generate diff for %s",
 				    one->path);
-
-			flush_range_hunk(&lr_state);
-			if (lr_state.ret)
-				die("unable to generate diff for %s",
-				    one->path);
-			strbuf_release(&lr_state.accumulating_hunk.lines);
 		} else if (xdi_diff_outf(&mf1, &mf2, NULL, fn_out_consume,
 					 &ecbdata, &xpp, &xecfg))
 			die("unable to generate diff for %s", one->path);
