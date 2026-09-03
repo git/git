@@ -1658,6 +1658,9 @@ static int pp_start_one(struct parallel_processes *pp,
 		}
 		return 1;
 	}
+	if (opts->no_stdin_pipe && pp->children[i].process.in < 0)
+		BUG("get_next_task requested a stdin pipe despite "
+		    "no_stdin_pipe");
 	if (!opts->ungroup) {
 		pp->children[i].process.err = -1;
 		pp->children[i].process.stdout_to_stderr = 1;
@@ -1905,15 +1908,17 @@ void run_processes_parallel(const struct run_process_parallel_opts *opts)
 
 	/*
 	 * Unless the caller handles its own output, pp_buffer_io() polls one
-	 * pipe for each child that is sending output and a second one for each
-	 * child that is being fed on stdin. Limit how many children run at once
-	 * so that the worst case stays within what poll() can wait on. Only
-	 * concurrency is limited; the configured maximum is still honoured for
-	 * the number of tasks that are run in total.
+	 * output pipe per child and, unless excluded by no_stdin_pipe, may also
+	 * poll an input pipe. Limit the number of live children so that all of
+	 * their descriptors fit in one poll() call.
 	 */
 	max_live = opts->processes;
-	if (!opts->ungroup && max_live > POLL_MAX_DESCRIPTORS / 2)
-		max_live = POLL_MAX_DESCRIPTORS / 2;
+	if (!opts->ungroup) {
+		size_t fds_per_process = opts->no_stdin_pipe ? 1 : 2;
+
+		if (max_live > POLL_MAX_DESCRIPTORS / fds_per_process)
+			max_live = POLL_MAX_DESCRIPTORS / fds_per_process;
+	}
 
 	if (do_trace2)
 		trace2_region_enter_printf(tr2_category, tr2_label, NULL,

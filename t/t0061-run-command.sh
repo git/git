@@ -164,6 +164,77 @@ test_expect_success 'run_command runs ungrouped in parallel with more tasks than
 	test_line_count = 4 err
 '
 
+wait_for_line_count () {
+	expected=$1 &&
+	file=$2 &&
+
+	for i in $(test_seq 1 100)
+	do
+		if test "$(wc -l <"$file")" -eq "$expected"
+		then
+			return 0
+		fi &&
+		sleep 0.1
+	done &&
+	return 1
+}
+
+cleanup_parallel () {
+	touch release
+	if test -n "$parallel_pid"
+	then
+		wait "$parallel_pid"
+	fi
+}
+
+test_expect_success MINGW 'setup poll descriptor limit test' '
+	write_script wait-for-release <<-\EOF
+	echo started >>"$1"
+	if test "$3" = stdin
+	then
+		while read line
+		do
+			:
+		done
+	fi
+	while ! test -e "$2"
+	do
+		sleep 0.1
+	done
+	EOF
+'
+
+test_expect_success MINGW 'run_command uses full poll limit without stdin' '
+	: >started &&
+	rm -f release &&
+	test-tool run-command run-command-parallel --tasks=40 40 \
+		./wait-for-release "$PWD/started" "$PWD/release" \
+		>out 2>err &
+	parallel_pid=$! &&
+	test_when_finished cleanup_parallel &&
+	wait_for_line_count 40 started &&
+	touch release &&
+	wait "$parallel_pid" &&
+	parallel_pid=
+'
+
+test_expect_success MINGW 'run_command limits children with stdin pipes' '
+	: >started &&
+	rm -f release &&
+	test-tool run-command run-command-stdin --tasks=40 40 \
+		./wait-for-release "$PWD/started" "$PWD/release" stdin \
+		>out 2>err &
+	parallel_pid=$! &&
+	test_when_finished cleanup_parallel &&
+	wait_for_line_count 31 started &&
+	sleep 1 &&
+	test_line_count = 31 started &&
+	touch release &&
+	wait "$parallel_pid" &&
+	parallel_pid= &&
+	test_line_count = 40 started
+'
+
 test_expect_success 'run_command listens to stdin' '
 	cat >expect <<-\EOF &&
 	preloaded output of a child

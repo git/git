@@ -489,6 +489,12 @@ struct run_process_parallel_opts
 	unsigned int ungroup:1;
 
 	/**
+	 * no_stdin_pipe: set if get_next_task will never request a pipe by
+	 * setting child_process.in to -1.
+	 */
+	unsigned int no_stdin_pipe:1;
+
+	/**
 	 * get_next_task: See get_next_task_fn() above. This must be
 	 * specified.
 	 */

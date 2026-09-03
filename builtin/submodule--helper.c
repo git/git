@@ -2914,6 +2914,7 @@ static int update_submodules(struct update_data *update_data)
 		.tr2_label = "parallel/update",
 
 		.processes = update_data->max_jobs,
+		.no_stdin_pipe = 1,
 
 		.get_next_task = update_clone_get_next_task,
 		.start_failure = update_clone_start_failure,
