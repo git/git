@@ -610,49 +610,31 @@ struct emit_callback {
 };
 
 /*
- * State for the line-range callback wrappers that sit between
- * xdi_diff_outf() and fn_out_consume().  xdiff produces a normal,
- * unfiltered diff; the wrappers intercept each hunk header and line,
- * track post-image position, and forward only lines that fall within
- * the requested ranges.  Contiguous in-range lines are collected into
- * range hunks and flushed with a synthetic @@ header so that
- * fn_out_consume() sees well-formed unified-diff fragments.
- *
- * Removal lines ('-') cannot be classified by post-image position, so
- * they are buffered in pending_rm until the next '+' or ' ' line
- * reveals whether they precede an in-range line (flush into range hunk) or
- * an out-of-range line (discard).
+ * Filter the line ranges that are emitted by diff.
  */
-struct line_range_callback {
+struct line_range_filter {
 	xdiff_emit_line_fn orig_line_fn;
 	void *orig_cb_data;
-	const struct range_set *ranges;	/* 0-based [start, end) */
-	unsigned int cur_range;		/* index into the range_set */
+	const struct range_set *range_sets_to_filter_by;
+	unsigned int range_set_idx;
 
-	/* Post/pre-image line counters (1-based, set from hunk headers) */
-	long lno_post;
-	long lno_pre;
+	struct {
+		char func_name[80];
+		long func_name_len;
+		long old_begin, old_count;
+		long new_begin, new_count;
+		long lno_in_preimage;
+		long lno_in_postimage;
+		struct strbuf lines;
+		int active;
+		int has_changes;
+	} accumulating_hunk;
 
-	/*
-	 * Function name from most recent xdiff hunk header;
-	 * size matches struct func_line.buf in xdiff/xemit.c.
-	 */
-	char func[80];
-	long funclen;
-
-	/* Range hunk being accumulated for the current range */
-	struct strbuf rhunk;
-	long rhunk_old_begin, rhunk_old_count;
-	long rhunk_new_begin, rhunk_new_count;
-	int rhunk_active;
-	int rhunk_has_changes;		/* any '+' or '-' lines? */
-
-	/* Removal lines not yet known to be in-range */
 	struct strbuf pending_rm;
 	int pending_rm_count;
-	long pending_rm_pre_begin;	/* pre-image line of first pending */
+	long pending_rm_pre_begin;
 
-	int ret;			/* latched error from orig_line_fn */
+	int ret;
 };
 
 static int count_lines(const char *data, int size)
@@ -2540,69 +2522,59 @@ static int quick_consume(void *priv, char *line UNUSED, unsigned long len UNUSED
 	return 1;
 }
 
-static void discard_pending_rm(struct line_range_callback *s)
+static void discard_pending_rm(struct line_range_filter *filter)
 {
-	strbuf_reset(&s->pending_rm);
-	s->pending_rm_count = 0;
+	strbuf_reset(&filter->pending_rm);
+	filter->pending_rm_count = 0;
 }
 
-static void flush_rhunk(struct line_range_callback *s)
+static void flush_range_hunk(struct line_range_filter *filter)
 {
 	struct strbuf hdr = STRBUF_INIT;
-	const char *p, *end;
+	const char *line_buf, *line_buf_end;
 
-	if (!s->rhunk_active || s->ret)
+	if (!filter->accumulating_hunk.active || filter->ret)
 		return;
 
-	/* Drain any pending removal lines into the range hunk */
-	if (s->pending_rm_count) {
-		strbuf_addbuf(&s->rhunk, &s->pending_rm);
-		s->rhunk_old_count += s->pending_rm_count;
-		s->rhunk_has_changes = 1;
-		discard_pending_rm(s);
+	if (filter->pending_rm_count) {
+		strbuf_addbuf(&filter->accumulating_hunk.lines, &filter->pending_rm);
+		filter->accumulating_hunk.old_count += filter->pending_rm_count;
+		filter->accumulating_hunk.has_changes = 1;
+		discard_pending_rm(filter);
 	}
 
-	/*
-	 * Suppress context-only hunks: they contain no actual changes
-	 * and would just be noise.  This can happen when the inflated
-	 * ctxlen causes xdiff to emit context covering a range that
-	 * has no changes in this commit.
-	 */
-	if (!s->rhunk_has_changes) {
-		s->rhunk_active = 0;
-		strbuf_reset(&s->rhunk);
+	if (!filter->accumulating_hunk.has_changes) {
+		filter->accumulating_hunk.active = 0;
+		strbuf_reset(&filter->accumulating_hunk.lines);
 		return;
 	}
 
 	strbuf_addf(&hdr, "@@ -%ld,%ld +%ld,%ld @@",
-		    s->rhunk_old_begin, s->rhunk_old_count,
-		    s->rhunk_new_begin, s->rhunk_new_count);
-	if (s->funclen > 0) {
+		    filter->accumulating_hunk.old_begin, filter->accumulating_hunk.old_count,
+		    filter->accumulating_hunk.new_begin, filter->accumulating_hunk.new_count);
+	if (filter->accumulating_hunk.func_name_len > 0) {
 		strbuf_addch(&hdr, ' ');
-		strbuf_add(&hdr, s->func, s->funclen);
+		strbuf_add(&hdr, filter->accumulating_hunk.func_name,
+	     filter->accumulating_hunk.func_name_len);
 	}
 	strbuf_addch(&hdr, '\n');
 
-	s->ret = s->orig_line_fn(s->orig_cb_data, hdr.buf, hdr.len);
+	filter->ret = filter->orig_line_fn(filter->orig_cb_data, hdr.buf, hdr.len);
 	strbuf_release(&hdr);
 
-	/*
-	 * Replay buffered lines one at a time through fn_out_consume.
-	 * The cast discards const because xdiff_emit_line_fn takes
-	 * char *, though fn_out_consume does not modify the buffer.
-	 */
-	p = s->rhunk.buf;
-	end = p + s->rhunk.len;
-	while (!s->ret && p < end) {
-		const char *eol = memchr(p, '\n', end - p);
-		unsigned long line_len = eol ? (unsigned long)(eol - p + 1)
-					     : (unsigned long)(end - p);
-		s->ret = s->orig_line_fn(s->orig_cb_data, (char *)p, line_len);
-		p += line_len;
+	line_buf = filter->accumulating_hunk.lines.buf;
+	line_buf_end = line_buf + filter->accumulating_hunk.lines.len;
+	while (!filter->ret && line_buf < line_buf_end) {
+		const char *eol = memchr(line_buf, '\n', line_buf_end - line_buf);
+		unsigned long line_len = eol ? (unsigned long)(eol - line_buf + 1)
+					     : (unsigned long)(line_buf_end - line_buf);
+		filter->ret = filter->orig_line_fn(filter->orig_cb_data,
+				     (char *)line_buf, line_len);
+		line_buf += line_len;
 	}
 
-	s->rhunk_active = 0;
-	strbuf_reset(&s->rhunk);
+	filter->accumulating_hunk.active = 0;
+	strbuf_reset(&filter->accumulating_hunk.lines);
 }
 
 static void line_range_hunk_fn(void *data,
@@ -2610,116 +2582,102 @@ static void line_range_hunk_fn(void *data,
 			       long new_begin, long new_nr UNUSED,
 			       const char *func, long funclen)
 {
-	struct line_range_callback *s = data;
+	struct line_range_filter *filter = data;
 
-	/*
-	 * When count > 0, begin is 1-based.  When count == 0, begin is
-	 * adjusted down by 1 by xdl_emit_hunk_hdr(), but no lines of
-	 * that type will arrive, so the value is unused.
-	 *
-	 * Any pending removal lines from the previous xdiff hunk are
-	 * intentionally left in pending_rm: the line callback will
-	 * flush or discard them when the next content line reveals
-	 * whether the removals precede in-range content.
-	 */
-	s->lno_post = new_begin;
-	s->lno_pre = old_begin;
+	filter->accumulating_hunk.lno_in_postimage = new_begin;
+	filter->accumulating_hunk.lno_in_preimage = old_begin;
 
 	if (funclen > 0) {
-		if (funclen > (long)sizeof(s->func))
-			funclen = sizeof(s->func);
-		memcpy(s->func, func, funclen);
+		if (funclen > (long)sizeof(filter->accumulating_hunk.func_name))
+			funclen = sizeof(filter->accumulating_hunk.func_name);
+		memcpy(filter->accumulating_hunk.func_name, func, funclen);
 	}
-	s->funclen = funclen;
+	filter->accumulating_hunk.func_name_len = funclen;
 }
 
 static int line_range_line_fn(void *priv, char *line, unsigned long len)
 {
-	struct line_range_callback *s = priv;
+	struct line_range_filter *filter = priv;
 	const struct range *cur;
-	long lno_0, cur_pre;
+	long idx_in_postimage, cur_pre;
 
-	if (s->ret)
-		return s->ret;
+	if (filter->ret)
+		return filter->ret;
 
 	if (line[0] == '-') {
-		if (!s->pending_rm_count)
-			s->pending_rm_pre_begin = s->lno_pre;
-		s->lno_pre++;
-		strbuf_add(&s->pending_rm, line, len);
-		s->pending_rm_count++;
-		return s->ret;
+		if (!filter->pending_rm_count)
+			filter->pending_rm_pre_begin =
+				filter->accumulating_hunk.lno_in_preimage;
+		filter->accumulating_hunk.lno_in_preimage++;
+		strbuf_add(&filter->pending_rm, line, len);
+		filter->pending_rm_count++;
+		return filter->ret;
 	}
 
 	if (line[0] == '\\') {
-		if (s->pending_rm_count)
-			strbuf_add(&s->pending_rm, line, len);
-		else if (s->rhunk_active)
-			strbuf_add(&s->rhunk, line, len);
-		/* otherwise outside tracked range; drop silently */
-		return s->ret;
+		if (filter->pending_rm_count)
+			strbuf_add(&filter->pending_rm, line, len);
+		else if (filter->accumulating_hunk.active)
+			strbuf_add(&filter->accumulating_hunk.lines, line, len);
+		return filter->ret;
 	}
 
 	if (line[0] != '+' && line[0] != ' ')
 		BUG("unexpected diff line type '%c'", line[0]);
 
-	lno_0 = s->lno_post - 1;
-	cur_pre = s->lno_pre;	/* save before advancing for context lines */
-	s->lno_post++;
+	idx_in_postimage = filter->accumulating_hunk.lno_in_postimage - 1;
+	cur_pre = filter->accumulating_hunk.lno_in_preimage;
+	filter->accumulating_hunk.lno_in_postimage++;
 	if (line[0] == ' ')
-		s->lno_pre++;
+		filter->accumulating_hunk.lno_in_preimage++;
 
-	/* Advance past ranges we've passed */
-	while (s->cur_range < s->ranges->nr &&
-	       lno_0 >= s->ranges->ranges[s->cur_range].end) {
-		if (s->rhunk_active)
-			flush_rhunk(s);
-		discard_pending_rm(s);
-		s->cur_range++;
+	while (filter->range_set_idx < filter->range_sets_to_filter_by->nr &&
+	       idx_in_postimage >=
+		filter->range_sets_to_filter_by->ranges[filter->range_set_idx].end) {
+		if (filter->accumulating_hunk.active)
+			flush_range_hunk(filter);
+		discard_pending_rm(filter);
+		filter->range_set_idx++;
 	}
 
-	/* Past all ranges */
-	if (s->cur_range >= s->ranges->nr) {
-		discard_pending_rm(s);
-		return s->ret;
+	if (filter->range_set_idx >= filter->range_sets_to_filter_by->nr) {
+		discard_pending_rm(filter);
+		return filter->ret;
 	}
 
-	cur = &s->ranges->ranges[s->cur_range];
+	cur = &filter->range_sets_to_filter_by->ranges[filter->range_set_idx];
 
-	/* Before current range */
-	if (lno_0 < cur->start) {
-		discard_pending_rm(s);
-		return s->ret;
+	if (idx_in_postimage < cur->start) {
+		discard_pending_rm(filter);
+		return filter->ret;
 	}
 
-	/* In range so start a new range hunk if needed */
-	if (!s->rhunk_active) {
-		s->rhunk_active = 1;
-		s->rhunk_has_changes = 0;
-		s->rhunk_new_begin = lno_0 + 1;
-		s->rhunk_old_begin = s->pending_rm_count
-			? s->pending_rm_pre_begin : cur_pre;
-		s->rhunk_old_count = 0;
-		s->rhunk_new_count = 0;
-		strbuf_reset(&s->rhunk);
+	if (!filter->accumulating_hunk.active) {
+		filter->accumulating_hunk.active = 1;
+		filter->accumulating_hunk.has_changes = 0;
+		filter->accumulating_hunk.new_begin = idx_in_postimage + 1;
+		filter->accumulating_hunk.old_begin = filter->pending_rm_count
+			? filter->pending_rm_pre_begin : cur_pre;
+		filter->accumulating_hunk.old_count = 0;
+		filter->accumulating_hunk.new_count = 0;
+		strbuf_reset(&filter->accumulating_hunk.lines);
 	}
 
-	/* Flush pending removals into range hunk */
-	if (s->pending_rm_count) {
-		strbuf_addbuf(&s->rhunk, &s->pending_rm);
-		s->rhunk_old_count += s->pending_rm_count;
-		s->rhunk_has_changes = 1;
-		discard_pending_rm(s);
+	if (filter->pending_rm_count) {
+		strbuf_addbuf(&filter->accumulating_hunk.lines, &filter->pending_rm);
+		filter->accumulating_hunk.old_count += filter->pending_rm_count;
+		filter->accumulating_hunk.has_changes = 1;
+		discard_pending_rm(filter);
 	}
 
-	strbuf_add(&s->rhunk, line, len);
-	s->rhunk_new_count++;
+	strbuf_add(&filter->accumulating_hunk.lines, line, len);
+	filter->accumulating_hunk.new_count++;
 	if (line[0] == '+')
-		s->rhunk_has_changes = 1;
+		filter->accumulating_hunk.has_changes = 1;
 	else
-		s->rhunk_old_count++;
+		filter->accumulating_hunk.old_count++;
 
-	return s->ret;
+	return filter->ret;
 }
 
 static void pprint_rename(struct strbuf *name, const char *a, const char *b)
@@ -4066,15 +4024,15 @@ static void builtin_diff(const char *name_a,
 			xdi_diff_outf(&mf1, &mf2, NULL, quick_consume,
 				      &ecbdata, &xpp, &xecfg);
 		} else if (line_ranges) {
-			struct line_range_callback lr_state;
+			struct line_range_filter lr_state;
 			unsigned int i;
 			long max_span = 0;
 
 			memset(&lr_state, 0, sizeof(lr_state));
 			lr_state.orig_line_fn = fn_out_consume;
 			lr_state.orig_cb_data = &ecbdata;
-			lr_state.ranges = line_ranges;
-			strbuf_init(&lr_state.rhunk, 0);
+			lr_state.range_sets_to_filter_by = line_ranges;
+			strbuf_init(&lr_state.accumulating_hunk.lines, 0);
 			strbuf_init(&lr_state.pending_rm, 0);
 
 			/*
@@ -4105,11 +4063,11 @@ static void builtin_diff(const char *name_a,
 				die("unable to generate diff for %s",
 				    one->path);
 
-			flush_rhunk(&lr_state);
+			flush_range_hunk(&lr_state);
 			if (lr_state.ret)
 				die("unable to generate diff for %s",
 				    one->path);
-			strbuf_release(&lr_state.rhunk);
+			strbuf_release(&lr_state.accumulating_hunk.lines);
 			strbuf_release(&lr_state.pending_rm);
 		} else if (xdi_diff_outf(&mf1, &mf2, NULL, fn_out_consume,
 					 &ecbdata, &xpp, &xecfg))
