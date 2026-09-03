@@ -10,11 +10,12 @@
 	You can specify this option more than once. Implies `--patch`.
 	Patch output can be suppressed using `--no-patch`.
 	The following non-patch diff formats are supported: `--raw`,
-	`--name-only`, `--name-status`, `--summary`, `--stat`, `--numstat`,
-	and `--shortstat`. The stat formats count only lines within the tracked
-	range. `--dirstat` is not supported with `-L`: it summarizes change as each
-	directory's share of the total churn, not as counts for the tracked lines.
-	Use `--numstat` for exact per-file counts within the range.
+	`--name-only`, `--name-status`, `--summary`, `--check`, `--stat`,
+	`--numstat`, and `--shortstat`. The stat formats count only lines
+	within the tracked range. `--dirstat` is not supported with `-L`: it
+	reports how change is distributed across directories over whole files,
+	which is not meaningful for line ranges within a file. Use `--numstat`
+	for exact per-file counts within the range.
 +
 Patch formatting options such as `--word-diff`, `--color-moved`,
 `--no-prefix`, and whitespace options (`-w`, `-b`) are supported,

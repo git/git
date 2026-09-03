@@ -924,4 +924,87 @@ test_expect_success 'get_commit_action() does not mutate a not-yet-walked commit
 	)
 '
 
+test_expect_success 'setup for --check test' '
+	git checkout --orphan check-test &&
+	git reset --hard &&
+	cat >check.c <<-\EOF &&
+	void tracked()
+	{
+	    return;
+	}
+
+	void other()
+	{
+	    return;
+	}
+	EOF
+	git add check.c &&
+	test_tick &&
+	git commit -m "add check.c" &&
+	sed "s/return;/return; /" check.c >check.c.tmp &&
+	mv check.c.tmp check.c &&
+	git commit -a -m "introduce trailing whitespace"
+'
+
+test_expect_success '--check is limited to tracked ranges and reports real file line numbers' '
+	test_must_fail git log -L:tracked:check.c --check --format= >raw &&
+	grep -E ":[0-9]+:" raw >actual &&
+	echo "check.c:3: trailing whitespace." >expect &&
+	test_cmp expect actual &&
+
+	test_must_fail git log -L:tracked:check.c -L:other:check.c \
+		--check --format= >raw &&
+	grep -E ":[0-9]+:" raw >actual &&
+	cat >expect <<-\EOF &&
+	check.c:3: trailing whitespace.
+	check.c:8: trailing whitespace.
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success '--check reports each error at its real line across a gap in one range' '
+	git checkout --orphan check-gap &&
+	git reset --hard &&
+	cat >gap.c <<-\EOF &&
+	void tracked()
+	{
+	    int a = 1;
+	    int b = 2;
+	    int c = 3;
+	    int d = 4;
+	    int e = 5;
+	    int g = 7;
+	    return;
+	}
+	EOF
+	git add gap.c &&
+	test_tick &&
+	git commit -m "add gap.c" &&
+	sed -e "s/int a = 1;/int a = 1; /" -e "s/int g = 7;/int g = 7; /" gap.c >tmp &&
+	mv tmp gap.c &&
+	git commit -a -m "ws errors with a gap" &&
+	test_must_fail git log -L:tracked:gap.c --check --format= >raw &&
+	grep -E ":[0-9]+:" raw >actual &&
+	cat >expect <<-\EOF &&
+	gap.c:3: trailing whitespace.
+	gap.c:8: trailing whitespace.
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success '--check does not report blank-at-eof outside the range' '
+	git checkout --orphan check-eof &&
+	git reset --hard &&
+	printf "void tracked()\n{\n    return;\n}\n\nint tail = 1;\n" >eof.c &&
+	git add eof.c &&
+	test_tick &&
+	git commit -m "add eof.c" &&
+	printf "void tracked()\n{\n    return; \n}\n\nint tail = 1;\n\n" >eof.c &&
+	git commit -a -m "ws in range, blank at eof out of range" &&
+	test_must_fail git log -L:tracked:eof.c --check --format= >raw &&
+	grep -E ":[0-9]+:" raw >actual &&
+	echo "eof.c:3: trailing whitespace." >expect &&
+	test_cmp expect actual
+'
+
 test_done

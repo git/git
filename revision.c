@@ -3231,7 +3231,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 		DIFF_FORMAT_RAW | DIFF_FORMAT_NAME |
 		DIFF_FORMAT_NAME_STATUS | DIFF_FORMAT_SUMMARY |
 		DIFF_FORMAT_NUMSTAT | DIFF_FORMAT_DIFFSTAT |
-		DIFF_FORMAT_SHORTSTAT))))
+		DIFF_FORMAT_SHORTSTAT | DIFF_FORMAT_CHECKDIFF))))
 		die(_("-L does not support the requested diff format"));
 
 	if (revs->expand_tabs_in_log < 0)
