@@ -326,6 +326,9 @@ reset_socket_events (struct pollfd *pfd, nfds_t nfd)
 
       if (pfd[i].fd < 0)
 	continue;
+      if (!(pfd[i].events & (POLLIN | POLLRDNORM | POLLOUT | POLLWRNORM |
+			     POLLWRBAND | POLLPRI | POLLRDBAND)))
+	continue;
 
       h = (HANDLE) _get_osfhandle (pfd[i].fd);
       if (h == NULL || h == INVALID_HANDLE_VALUE)
