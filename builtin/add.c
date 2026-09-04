@@ -13,7 +13,6 @@
 #include "dir.h"
 #include "gettext.h"
 #include "pathspec.h"
-#include "run-command.h"
 #include "object-file.h"
 #include "odb.h"
 #include "odb/transaction.h"
@@ -23,10 +22,10 @@
 #include "diff.h"
 #include "read-cache.h"
 #include "revision.h"
-#include "strvec.h"
 #include "submodule.h"
 #include "add-interactive.h"
 #include "merge-ll.h"
+#include "apply.h"
 
 static const char * const builtin_add_usage[] = {
 	N_("git add [<options>] [--] <pathspec>..."),
@@ -189,7 +188,8 @@ static int edit_patch(struct repository *repo,
 		      const char *prefix)
 {
 	char *file = repo_git_path(repo, "ADD_EDIT.patch");
-	struct child_process child = CHILD_PROCESS_INIT;
+	struct apply_state state;
+	const char *apply_argv[2];
 	struct rev_info rev;
 	int out;
 	struct stat st;
@@ -219,11 +219,16 @@ static int edit_patch(struct repository *repo,
 	if (!st.st_size)
 		die(_("empty patch. aborted"));
 
-	child.git_cmd = 1;
-	strvec_pushl(&child.args, "apply", "--recount", "--cached", file,
-		     NULL);
-	if (run_command(&child))
+	apply_argv[0] = file;
+	apply_argv[1] = NULL;
+	if (init_apply_state(&state, repo, NULL))
+		die(_("could not initialize apply state"));
+	state.cached = 1;
+	if (check_apply_state(&state, 0))
+		die(_("could not check apply state"));
+	if (apply_all_patches(&state, 1, apply_argv, APPLY_OPT_RECOUNT))
 		die(_("could not apply '%s'"), file);
+	clear_apply_state(&state);
 
 	unlink(file);
 	free(file);
