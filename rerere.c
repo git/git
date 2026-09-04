@@ -1173,22 +1173,44 @@ static void unlink_rr_item(struct rerere_id *id)
 	strbuf_release(&buf);
 }
 
-static void prune_one(struct rerere_id *id,
-		      timestamp_t cutoff_resolve, timestamp_t cutoff_noresolve)
+static void rerere_gc_cutoffs(struct repository *r,
+			      timestamp_t *cutoff_resolve,
+			      timestamp_t *cutoff_noresolve)
+{
+	timestamp_t now = time(NULL);
+
+	if (repo_config_get_expiry_in_days(r, "gc.rerereresolved",
+					   cutoff_resolve, now))
+		*cutoff_resolve = now - 60 * 86400;
+	if (repo_config_get_expiry_in_days(r, "gc.rerereunresolved",
+					   cutoff_noresolve, now))
+		*cutoff_noresolve = now - 15 * 86400;
+}
+
+static bool rerere_id_is_stale(struct rerere_id *id,
+			       timestamp_t cutoff_resolve,
+			       timestamp_t cutoff_noresolve)
 {
 	timestamp_t then;
 	timestamp_t cutoff;
 
 	then = rerere_last_used_at(id);
-	if (then)
+	if (then) {
 		cutoff = cutoff_resolve;
-	else {
+	} else {
 		then = rerere_created_at(id);
 		if (!then)
-			return;
+			return false;
 		cutoff = cutoff_noresolve;
 	}
-	if (then < cutoff)
+
+	return then < cutoff;
+}
+
+static void prune_one(struct rerere_id *id,
+		      timestamp_t cutoff_resolve, timestamp_t cutoff_noresolve)
+{
+	if (rerere_id_is_stale(id, cutoff_resolve, cutoff_noresolve))
 		unlink_rr_item(id);
 }
 
@@ -1206,18 +1228,14 @@ void rerere_gc(struct repository *r, struct string_list *rr)
 	DIR *dir;
 	struct dirent *e;
 	int i;
-	timestamp_t now = time(NULL);
-	timestamp_t cutoff_noresolve = now - 15 * 86400;
-	timestamp_t cutoff_resolve = now - 60 * 86400;
+	timestamp_t cutoff_noresolve;
+	timestamp_t cutoff_resolve;
 	struct strbuf buf = STRBUF_INIT;
 
 	if (setup_rerere(r, rr, 0) < 0)
 		return;
 
-	repo_config_get_expiry_in_days(the_repository, "gc.rerereresolved",
-				       &cutoff_resolve, now);
-	repo_config_get_expiry_in_days(the_repository, "gc.rerereunresolved",
-				       &cutoff_noresolve, now);
+	rerere_gc_cutoffs(r, &cutoff_resolve, &cutoff_noresolve);
 	repo_config(the_repository, git_default_config, NULL);
 	dir = opendir(repo_git_path_replace(the_repository, &buf, "rr-cache"));
 	if (!dir)
