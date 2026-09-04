@@ -780,6 +780,23 @@ test_expect_success 'stash show --patience shows diff' '
 	diff_cmp expected actual
 '
 
+test_expect_success 'stash show supports prefixes' '
+	git reset --hard &&
+	echo foo >>file &&
+	git stash &&
+	cat >expected <<-\EOF &&
+	diff --git foo/file bar/file
+	index 7601807..71b52c4 100644
+	--- foo/file
+	+++ bar/file
+	@@ -1 +1,2 @@
+	 baz
+	+foo
+	EOF
+	git stash show --src-prefix=foo/ --dst-prefix=bar/ >actual &&
+	diff_cmp expected actual
+'
+
 test_expect_success 'drop: fail early if specified stash is not a stash ref' '
 	git stash clear &&
 	test_when_finished "git reset --hard HEAD && git stash clear" &&
