@@ -89,6 +89,10 @@ test_expect_success setup '
 	function dummy() {}
 	EOF
 	printf "\200\nASCII\n" >invalid-utf8 &&
+	printf "before\346world\n" >invalid-utf8-embedded &&
+	printf "a\346b\347c\n" >invalid-utf8-multi &&
+	printf "\346world\n" >invalid-utf8-leading &&
+	printf "before\346\n" >invalid-utf8-trailing &&
 	if test_have_prereq FUNNYNAMES
 	then
 		echo unusual >"\"unusual\" pathname" &&
@@ -593,6 +597,39 @@ test_expect_success MB_REGEX 'grep exactly one char in single-char multibyte fil
 
 test_expect_success MB_REGEX 'grep two chars in single-char multibyte file' '
 	LC_ALL=en_US.UTF-8 test_expect_code 1 git grep ".." reverse-question-mark
+'
+
+test_expect_success MACOS,MB_REGEX 'grep matches valid text on both sides of invalid UTF-8' '
+	LC_ALL=en_US.UTF-8 git grep -h "befo[r]e" invalid-utf8-embedded >actual &&
+	test_cmp invalid-utf8-embedded actual &&
+	LC_ALL=en_US.UTF-8 git grep -h "worl[d]" invalid-utf8-embedded >actual &&
+	test_cmp invalid-utf8-embedded actual &&
+	LC_ALL=en_US.UTF-8 git grep -h -o "worl[d]" invalid-utf8-embedded >actual &&
+	echo world >expected &&
+	test_cmp expected actual
+'
+
+test_expect_success MACOS,MB_REGEX 'grep matches a run between two invalid sequences' '
+	LC_ALL=en_US.UTF-8 git grep -h "[b]" invalid-utf8-multi >actual &&
+	test_cmp invalid-utf8-multi actual
+'
+
+test_expect_success MB_REGEX 'grep does not anchor ^ or $ inside an invalid-byte line' '
+	test_expect_code 1 env LC_ALL=en_US.UTF-8 \
+		git grep -h "^world" invalid-utf8-embedded &&
+	test_expect_code 1 env LC_ALL=en_US.UTF-8 \
+		git grep -h "before\$" invalid-utf8-embedded
+'
+
+test_expect_success MACOS,MB_REGEX 'grep anchors ^ and $ at true line ends past invalid UTF-8' '
+	LC_ALL=en_US.UTF-8 git grep -h "^before" invalid-utf8-embedded >actual &&
+	test_cmp invalid-utf8-embedded actual &&
+	LC_ALL=en_US.UTF-8 git grep -h "world\$" invalid-utf8-embedded >actual &&
+	test_cmp invalid-utf8-embedded actual &&
+	LC_ALL=en_US.UTF-8 git grep -h "^" invalid-utf8-leading >actual &&
+	test_cmp invalid-utf8-leading actual &&
+	LC_ALL=en_US.UTF-8 git grep -h "\$" invalid-utf8-trailing >actual &&
+	test_cmp invalid-utf8-trailing actual
 '
 
 cat >expected <<EOF

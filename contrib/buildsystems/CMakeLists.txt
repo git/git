@@ -523,6 +523,9 @@ if(NOT HAVE_REGEX)
 	include_directories(${CMAKE_SOURCE_DIR}/compat/regex)
 	list(APPEND compat_SOURCES compat/regex/regex.c )
 	add_compile_definitions(NO_REGEX NO_MBSUPPORT GAWK)
+elseif(APPLE)
+	list(APPEND compat_SOURCES compat/darwin/regexec.c)
+	add_compile_definitions(DARWIN_REGEXEC)
 endif()
 
 

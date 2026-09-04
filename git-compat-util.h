@@ -162,6 +162,9 @@ static inline int is_xplatform_dir_sep(int c)
 #include "compat/win32/path-utils.h"
 #include "compat/msvc.h"
 #endif
+#ifdef DARWIN_REGEXEC
+#include "compat/darwin.h"
+#endif
 
 /* used on Mac OS X */
 #ifdef PRECOMPOSE_UNICODE
@@ -996,6 +999,7 @@ static inline int strtol_i(char const *s, int base, int *result)
 #error "Git requires REG_STARTEND support. Compile with NO_REGEX=NeedsStartEnd"
 #endif
 
+#ifndef regexec_buf
 static inline int regexec_buf(const regex_t *preg, const char *buf, size_t size,
 			      size_t nmatch, regmatch_t pmatch[], int eflags)
 {
@@ -1004,6 +1008,7 @@ static inline int regexec_buf(const regex_t *preg, const char *buf, size_t size,
 	pmatch[0].rm_eo = size;
 	return regexec(preg, buf, nmatch, pmatch, eflags | REG_STARTEND);
 }
+#endif
 
 #ifdef USE_ENHANCED_BASIC_REGULAR_EXPRESSIONS
 int git_regcomp(regex_t *preg, const char *pattern, int cflags);

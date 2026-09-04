@@ -1407,6 +1407,11 @@ if not get_option('b_sanitize').contains('address') and get_option('regex').allo
     libgit_c_args += '-DUSE_ENHANCED_BASIC_REGULAR_EXPRESSIONS'
     compat_sources += 'compat/regcomp_enhanced.c'
   endif
+
+  if host_machine.system() == 'darwin'
+    libgit_c_args += '-DDARWIN_REGEXEC'
+    compat_sources += 'compat/darwin/regexec.c'
+  endif
 elif not get_option('regex').enabled()
   libgit_c_args += [
     '-DNO_REGEX',
