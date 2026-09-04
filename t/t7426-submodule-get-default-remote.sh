@@ -60,6 +60,23 @@ test_expect_success 'get-default-remote fails with non-submodule path' '
 	)
 '
 
+test_expect_success 'get-default-remote fails with uninitialized submodule' '
+	test_when_finished "
+		git -C super config -f .gitmodules --remove-section submodule.uninitialized &&
+		git -C super update-index --force-remove uninitialized
+	" &&
+	(
+		cd super &&
+		git config -f .gitmodules submodule.uninitialized.path uninitialized &&
+		git config -f .gitmodules submodule.uninitialized.url ../sub &&
+		head=$(git -C ../sub rev-parse HEAD) &&
+		git update-index --add --cacheinfo 160000,$head,uninitialized &&
+		test_must_fail git submodule--helper get-default-remote \
+			uninitialized 2>err &&
+		test_grep "could not get a repository handle" err
+	)
+'
+
 test_expect_success 'get-default-remote fails without path argument' '
 	(
 		cd super &&
