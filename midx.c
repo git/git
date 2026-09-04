@@ -589,23 +589,23 @@ uint32_t nth_midxed_pack_int_id(struct multi_pack_index *m, uint32_t pos)
 					       (off_t)pos * MIDX_CHUNK_OFFSET_WIDTH);
 }
 
-int fill_midx_entry(struct multi_pack_index *m,
-		    const struct object_id *oid,
-		    struct pack_entry *e,
-		    struct packed_git **bad_pack)
+enum midx_fill_result midx_fill_entry(struct multi_pack_index *m,
+				      const struct object_id *oid,
+				      struct pack_entry *e,
+				      struct packed_git **bad_pack)
 {
 	uint32_t pos;
 	uint32_t pack_int_id;
 	struct packed_git *p;
 
 	if (!bsearch_midx(oid, m, &pos))
-		return 0;
+		return MIDX_FILL_MISS;
 
 	midx_for_object(&m, pos);
 	pack_int_id = nth_midxed_pack_int_id(m, pos);
 
 	if (prepare_midx_pack(m, pack_int_id))
-		return 0;
+		return MIDX_FILL_OWNER_UNAVAILABLE;
 	p = m->packs[pack_int_id - m->num_packs_in_base];
 
 	/*
@@ -616,19 +616,19 @@ int fill_midx_entry(struct multi_pack_index *m,
 	* loaded!
 	*/
 	if (!is_pack_valid(p))
-		return 0;
+		return MIDX_FILL_OWNER_UNAVAILABLE;
 
 	if (oidset_size(&p->bad_objects) &&
 	    oidset_contains(&p->bad_objects, oid)) {
 		if (bad_pack && !*bad_pack)
 			*bad_pack = p;
-		return 0;
+		return MIDX_FILL_MISS;
 	}
 
 	e->offset = nth_midxed_offset(m, pos);
 	e->p = p;
 
-	return 1;
+	return MIDX_FILL_HIT;
 }
 
 /* Match "foo.idx" against either "foo.pack" _or_ "foo.idx". */
@@ -1032,7 +1032,7 @@ int verify_midx_file(struct odb_source_packed *source, unsigned flags)
 
 		nth_midxed_object_oid(&oid, m, pairs[i].pos);
 
-		if (!fill_midx_entry(m, &oid, &e, NULL)) {
+		if (midx_fill_entry(m, &oid, &e, NULL) != MIDX_FILL_HIT) {
 			midx_report(_("failed to load pack entry for oid[%d] = %s"),
 				    pairs[i].pos, oid_to_hex(&oid));
 			continue;

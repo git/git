@@ -117,8 +117,25 @@ uint32_t nth_midxed_pack_int_id(struct multi_pack_index *m, uint32_t pos);
 struct object_id *nth_midxed_object_oid(struct object_id *oid,
 					struct multi_pack_index *m,
 					uint32_t n);
-int fill_midx_entry(struct multi_pack_index *m, const struct object_id *oid,
-		    struct pack_entry *e, struct packed_git **bad_pack);
+/*
+ * Result of looking an object up in a multi-pack-index.  MIDX_FILL_HIT means
+ * "e was filled in"; the two miss variants distinguish an object the midx does
+ * not know about (MIDX_FILL_MISS) from one it does know about but whose owning
+ * pack we can no longer open (MIDX_FILL_OWNER_UNAVAILABLE -- the signature of a
+ * concurrent repack having removed that pack).  A known-bad (corrupt) object
+ * reports MIDX_FILL_MISS but also sets *bad_pack, if provided, to the owning
+ * pack so the caller can tell "corrupt" apart from "absent".
+ */
+enum midx_fill_result {
+	MIDX_FILL_MISS = 0,
+	MIDX_FILL_HIT,
+	MIDX_FILL_OWNER_UNAVAILABLE,
+};
+
+enum midx_fill_result midx_fill_entry(struct multi_pack_index *m,
+				      const struct object_id *oid,
+				      struct pack_entry *e,
+				      struct packed_git **bad_pack);
 int midx_contains_pack(struct multi_pack_index *m,
 		       const char *idx_or_pack_name);
 int midx_layer_contains_pack(struct multi_pack_index *m,
