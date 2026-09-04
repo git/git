@@ -238,12 +238,6 @@ static struct odb_source *odb_add_alternate_recursively(struct object_database *
 	return alternate;
 }
 
-struct odb_source *odb_add_to_alternates_memory(struct object_database *odb,
-						const char *dir)
-{
-	return odb_add_alternate_recursively(odb, dir, 0);
-}
-
 struct odb_source *odb_set_temporary_primary_source(struct object_database *odb,
 						    const char *dir, int will_destroy,
 						    struct odb_source **prev_source)
@@ -377,12 +371,6 @@ struct odb_source *odb_find_source_or_die(struct object_database *odb, const cha
 	if (!source)
 		die(_("could not find object directory matching %s"), obj_dir);
 	return source;
-}
-
-void odb_add_submodule_source_by_path(struct object_database *odb,
-				      const char *path)
-{
-	string_list_insert(&odb->submodule_source_paths, path);
 }
 
 static void fill_alternate_refs_command(struct repository *repo,
@@ -540,23 +528,6 @@ void disable_obj_read_lock(void)
 	pthread_mutex_destroy(&obj_read_mutex);
 }
 
-static int register_all_submodule_sources(struct object_database *odb)
-{
-	int ret = odb->submodule_source_paths.nr;
-
-	for (size_t i = 0; i < odb->submodule_source_paths.nr; i++)
-		odb_add_to_alternates_memory(odb,
-					     odb->submodule_source_paths.items[i].string);
-	if (ret) {
-		string_list_clear(&odb->submodule_source_paths, 0);
-		trace2_data_intmax("submodule", odb->repo,
-				   "register_all_submodule_sources/registered", ret);
-		if (git_env_bool("GIT_TEST_FATAL_REGISTER_SUBMODULE_ODB", 0))
-			BUG("register_all_submodule_sources() called");
-	}
-	return ret;
-}
-
 static enum odb_read_status do_oid_object_info_extended(struct object_database *odb,
 							const struct object_id *oid,
 							struct object_info *oi, unsigned flags)
@@ -604,16 +575,6 @@ static enum odb_read_status do_oid_object_info_extended(struct object_database *
 					corrupt = true;
 			}
 		}
-
-		/*
-		 * This might be an attempt at accessing a submodule object as
-		 * if it were in main object store (having called
-		 * `odb_add_submodule_source_by_path()` on that submodule's
-		 * ODB). If any such ODBs exist, register them and try again.
-		 */
-		if (register_all_submodule_sources(odb))
-			/* We added some alternates; retry */
-			continue;
 
 		/* Check if it is a missing object */
 		if (odb->repo->fetch_if_missing && repo_has_promisor_remote(odb->repo) &&
@@ -1100,7 +1061,6 @@ struct object_database *odb_new(struct repository *repo,
 	CALLOC_ARRAY(o, 1);
 	o->repo = repo;
 	pthread_mutex_init(&o->replace_mutex, NULL);
-	string_list_init_dup(&o->submodule_source_paths);
 	hashmap_init(&o->source_by_path, odb_source_by_path_cmp, o, 0);
 	o->source_paths_icase = -1;
 
@@ -1156,8 +1116,6 @@ void odb_free(struct object_database *o)
 
 	odb_close(o);
 	odb_free_sources(o);
-
-	string_list_clear(&o->submodule_source_paths, 0);
 
 	free(o);
 }

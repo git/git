@@ -89,12 +89,6 @@ struct object_database {
 	unsigned long object_count;
 	unsigned object_count_flags;
 	unsigned object_count_valid : 1;
-
-	/*
-	 * Submodule source paths that will be added as additional sources to
-	 * allow lookup of submodule objects via the main object database.
-	 */
-	struct string_list submodule_source_paths;
 };
 
 enum odb_new_flags {
@@ -258,14 +252,6 @@ void odb_restore_primary_source(struct object_database *odb,
 				const char *old_path);
 
 /*
- * Call odb_add_submodule_source_by_path() to add the submodule at the given
- * path to a list. The object stores of all submodules in that list will be
- * added as additional sources in the object store when looking up objects.
- */
-void odb_add_submodule_source_by_path(struct object_database *odb,
-				      const char *path);
-
-/*
  * Iterate through all alternates of the database and execute the provided
  * callback function for each of them. Stop iterating once the callback
  * function returns a non-zero value, in which case the value is bubbled up
@@ -297,14 +283,6 @@ int odb_mkstemp(struct object_database *odb,
  * source does not count as alternate.
  */
 int odb_has_alternates(struct object_database *odb);
-
-/*
- * Add the directory to the in-memory list of alternate sources (along with any
- * recursive alternates it points to), but do not modify the on-disk alternates
- * file.
- */
-struct odb_source *odb_add_to_alternates_memory(struct object_database *odb,
-						const char *dir);
 
 /*
  * Read an object from the database. Returns the object data and assigns object
