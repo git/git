@@ -383,3 +383,74 @@ int cmd__parse_subcommand(int argc, const char **argv)
 
 	return parse_subcommand__cmd(argc, argv, test_flags);
 }
+
+static int show_early_option(const struct early_scan_option *opt,
+			     const char *value, int pos, void *data UNUSED)
+{
+	printf("found: %s at %d", opt->name, pos);
+	if (value)
+		printf(" value: %s", value);
+	putchar('\n');
+	return 0;
+}
+
+int cmd__early_scan_options(int argc, const char **argv)
+{
+	static const struct early_scan_option options[] = {
+		EARLY_SCAN_WANT("wanted"),
+		EARLY_SCAN_WANT_VALUE("wanted-value"),
+		EARLY_SCAN_SKIP_VALUE("skipped-value"),
+		EARLY_SCAN_END()
+	};
+	enum early_scan_flags flags = 0;
+	int stopped;
+
+	while (argc > 1 && *argv[1] == '-') {
+		if (!strcmp(argv[1], "--stop-at-dashdash"))
+			flags |= EARLY_SCAN_STOP_AT_DASHDASH;
+		else if (!strcmp(argv[1], "--stop-at-non-option"))
+			flags |= EARLY_SCAN_STOP_AT_NON_OPTION;
+		else
+			break;
+		argc--;
+		argv++;
+	}
+
+	stopped = early_scan_options(argc - 1, argv + 1, options, flags,
+				    show_early_option, NULL);
+	printf("stopped at: %d of %d\n", stopped, argc - 1);
+
+	return 0;
+}
+
+int cmd__early_scan_from_options(int argc, const char **argv)
+{
+	int an_int = 0, a_bool = 0;
+	char *a_string = NULL;
+	const struct option options[] = {
+		OPT_STRING(0, "string", &a_string, "str", "get a string"),
+		OPT_INTEGER(0, "int", &an_int, "get an integer"),
+		OPT_BOOL(0, "bool", &a_bool, "get a boolean"),
+		OPT_STRING_F(0, "optarg", &a_string, "str",
+			     "string with an optional value",
+			     PARSE_OPT_OPTARG),
+		OPT_END()
+	};
+	static const char *wanted[] = { "bool", NULL };
+	struct early_scan_option *early;
+	int stopped;
+
+	early = early_scan_options_from_options(options, wanted);
+
+	for (const struct early_scan_option *o = early; o->name; o++)
+		printf("option: %s takes_value: %d wanted: %d\n",
+		       o->name, o->takes_value, o->wanted);
+
+	stopped = early_scan_options(argc - 1, argv + 1, early, 0,
+				     show_early_option, NULL);
+	printf("stopped at: %d of %d\n", stopped, argc - 1);
+
+	free(early);
+
+	return 0;
+}

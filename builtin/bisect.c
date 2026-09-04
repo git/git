@@ -803,6 +803,19 @@ static enum bisect_error bisect_auto_next(struct bisect_terms *terms,
 	return bisect_next(terms, prefix);
 }
 
+/*
+ * The options "git bisect start" accepts. Only the ones taking their
+ * value as a separate argument matter to the scan looking for "--" below,
+ * as their value has to be skipped along with them.
+ */
+static const struct early_scan_option bisect_start_early_options[] = {
+	EARLY_SCAN_SKIP_VALUE("term-good"),
+	EARLY_SCAN_SKIP_VALUE("term-old"),
+	EARLY_SCAN_SKIP_VALUE("term-bad"),
+	EARLY_SCAN_SKIP_VALUE("term-new"),
+	EARLY_SCAN_END()
+};
+
 static enum bisect_error bisect_start(struct bisect_terms *terms, int argc,
 				      const char **argv)
 {
@@ -825,13 +838,15 @@ static enum bisect_error bisect_start(struct bisect_terms *terms, int argc,
 
 	/*
 	 * Check for one bad and then some good revisions
+	 *
+	 * The scan below has to know about the options taking their value
+	 * as a separate argument, or such a value that happens to be "--"
+	 * would be mistaken for the "--" separating revisions from paths.
 	 */
-	for (i = 0; i < argc; i++) {
-		if (!strcmp(argv[i], "--")) {
-			has_double_dash = 1;
-			break;
-		}
-	}
+	i = early_scan_options(argc, argv, bisect_start_early_options,
+			       EARLY_SCAN_STOP_AT_DASHDASH, NULL, NULL);
+	if (i < argc)
+		has_double_dash = 1;
 
 	for (i = 0; i < argc; i++) {
 		const char *arg = argv[i];

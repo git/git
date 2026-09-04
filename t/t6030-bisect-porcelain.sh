@@ -1297,6 +1297,14 @@ test_expect_success 'bisect start takes options and revs in any order' '
 	test_cmp expected actual
 '
 
+test_expect_success 'bisect start with "--" as a term name' '
+	git bisect reset &&
+	git bisect start --term-good -- hello &&
+	git bisect terms --term-good >actual &&
+	echo -- >expected &&
+	test_cmp expected actual
+'
+
 # Bisect is started with --term-new and --term-old arguments,
 # then skip. The HEAD should be changed.
 test_expect_success 'bisect skip works with --term*' '

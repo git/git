@@ -695,6 +695,17 @@ static void print_path(const char *path, const char *prefix,
 	strbuf_release(&sb);
 }
 
+/*
+ * The options taking their value as a separate argument, which the scan
+ * looking for "--" below has to skip along with their value.
+ */
+static const struct early_scan_option rev_parse_early_options[] = {
+	EARLY_SCAN_SKIP_VALUE("default"),
+	EARLY_SCAN_SKIP_VALUE("prefix"),
+	EARLY_SCAN_SKIP_VALUE("resolve-git-dir"),
+	EARLY_SCAN_END()
+};
+
 int cmd_rev_parse(int argc,
 		  const char **argv,
 		  const char *prefix,
@@ -724,12 +735,15 @@ int cmd_rev_parse(int argc,
 	if (argc > 1 && !strcmp("-h", argv[1]))
 		usage(builtin_rev_parse_usage);
 
-	for (i = 1; i < argc; i++) {
-		if (!strcmp(argv[i], "--")) {
-			has_dashdash = 1;
-			break;
-		}
-	}
+	/*
+	 * The scan below has to know about the options taking their value
+	 * as a separate argument, or such a value that happens to be "--"
+	 * would be mistaken for the "--" separating revisions from paths.
+	 */
+	i = early_scan_options(argc - 1, argv + 1, rev_parse_early_options,
+			       EARLY_SCAN_STOP_AT_DASHDASH, NULL, NULL);
+	if (i < argc - 1)
+		has_dashdash = 1;
 
 	/* No options; just report on whether we're in a git repo or not. */
 	if (argc == 1) {
