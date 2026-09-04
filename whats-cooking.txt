@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2026, #01)
+Subject: What's cooking in git.git (Sep 2026, #02)
 X-master-at: 3cb9185f65410273787f74333cc027d2ea5daada
-X-next-at: 17ff1f980877b90e8f08b7f40578888091f39337
+X-next-at: 73a4cd73de3e5a9f546c977afafb394d293a2882
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Sep 2026, #01)
+What's cooking in git.git (Sep 2026, #02)
 -----------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -19,8 +19,8 @@ arises).
 
 The 22nd batch of topics have now graduated to the 'master' branch.
 We have 604 non-merge commits in 'master' since Git 2.55.  There
-are 49 non-merge commits cooking in 'next' (note that some have
-been reverted), and 213 non-merge commits, including those in and
+are 66 non-merge commits cooking in 'next' (note that some have
+been reverted), and 223 non-merge commits, including those in and
 out of 'next', in 'seen' as of this writing.
 
 Copies of the source code to Git live in many repositories, and the
@@ -52,172 +52,71 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* jc/rerere-doc-typofix (2026-08-24) 1 commit
-  (merged to 'next' on 2026-08-25 at 62bdec98f9)
- + rerere: technical documentation typofix
-
- A missing preposition in the rerere technical documentation has been
- fixed.
-
- Graduated to 'master'.
- source: <xmqqtsojp4zf.fsf@gitster.g>
-
-
-* ty/repository-fetch-if-missing (2026-08-14) 1 commit
-  (merged to 'next' on 2026-08-25 at 2cc77c1ca1)
- + repository: move fetch_if_missing into struct repository
- (this branch is used by ps/odb-stop-registering-in-memory-sources.)
-
- The global variable 'fetch_if_missing' has been moved to a member in
- 'struct repository', continuing the libification process and
- allowing per-repository control (such as for submodules).
-
- Graduated to 'master'.
- cf. <xmqqmrun8jeu.fsf@gitster.g>
- source: <20260815064747.2196896-1-cat@malon.dev>
-
---------------------------------------------------
 [New Topics]
 
-* jk/rev-info-argv-to-free (2026-08-31) 2 commits
- - revision: simplify mark_argv_for_free() callers
- - revision: hang on to "freed" argv elements
+* jc/history-missing-tree-errorfix (2026-09-02) 1 commit
+ - history: do not dereference NULL when parent tree is missing
 
- The memory ownership of argv elements passed to the revision
- machinery has been made more robust by keeping logically "freed"
- elements alive until the rev_info struct is released, preventing
- use-after-free bugs when options store references to them.
+ Running "git history" in a corrupt repository can (unsurprisingly)
+ segfault when a necessary tree object is not found.
 
  Will merge to 'next'?
- cf. <apaSDqIEyc82Q_zE@pks.im>
- cf. <apayIuf9kXQcQPvS@pks.im>
- cf. <xmqq8q5ksvd8.fsf@gitster.g>
- source: <20260901062815.GC1075462@coredump.intra.peff.net>
+ cf. <apknMr9Jk-CzdLAR@pks.im>
+ source: <20260903063657.2067303-1-zkd18cjb@mail.ustc.edu.cn>
 
 
-* ps/ci-depends-on-ruby (2026-09-01) 1 commit
- - ci: fix missing Ruby dependency in "documentation" job
+* jc/pathspec-match-const (2026-09-03) 1 commit
+ - pathspec: match and original in pathspec_item are const
+ (this branch is used by yt/pathspec-negative-prefix.)
 
- The CI job that builds the documentation failed because it lacked
- the 'gem' command. The 'asciidoc' package apparently stopped pulling
- in the 'ruby' package as a transitive dependency.  The CI script has
- been updated to explicitly install 'ruby'.
+ Two members in "struct pathspec_item" were of type "char *", but
+ nobody updated the string through these pointers.  They have been
+ made "const char *" instead.
 
  Will merge to 'next'?
- cf. <20260902071113.GA70165@coredump.intra.peff.net>
- source: <20260901-b4-pks-ci-fix-documentation-job-v1-1-a8257ee2a9a4@pks.im>
+ cf. <4439BA70-2C03-499D-B3CE-E43700C0A8DA@ytausch.de>
+ source: <xmqqy0dib3ue.fsf_-_@gitster.g>
 
 
-* ps/odb-stop-registering-in-memory-sources (2026-09-02) 13 commits
- - odb: remove the ability to link sources ad-hoc
- - t/helper: stop registering alternates in "ref-store" command
- - t/helper: adapt read-midx to not link ad-hoc source anymore
- - builtin/multi-pack-index: refuse unknown sources with "--object-dir="
- - odb/packed: fix memory leaks when freeing source
- - tmp-objdir: drop unused function to register alternate
- - odb: remove infrastructure to register submodule sources
- - builtin/grep: stop registering submodule ODB as source
- - submodule-config: stop registering submodule sources
- - submodule-config: stop using `the_hash_algo`
- - submodule-config: remove uses of `the_repository`
- - cache-tree: remove dependency on `the_repository`
- - cache-tree: drop `the_repository` in `cache_tree_fully_valid()`
- - Merge branch 'ty/repository-fetch-if-missing' into ps/ps/odb-stop-registering-in-memory-sources
+* ps/tune-rerere-gc (2026-09-04) 2 commits
+ - builtin/maintenance: improve heuristic for "rerere gc"
+ - rerere: extract logic to determine whether entries are stale
 
- The mechanism to register in-memory alternate object sources has
- been removed, as submodule object databases are now accessed
- natively via their own repository structures.  This simplifies
- object database management and prepares the codebase for migrating
- alternate tracking into the files backend.
-
- Needs review.
- source: <20260902-pks-odb-registering-in-memory-sources-v2-0-c6ca12fdea4d@pks.im>
-
-
-* jk/ci-use-system-asciidoctor (2026-09-02) 2 commits
- - ci: drop ALREADY_HAVE_ASCIIDOCTOR variable
- - ci: fix missing Ruby dependency in "documentation" job
-
- The CI script to install dependencies for the documentation build
- has been updated to install asciidoctor directly via the system
- package manager instead of pinning to an older version via gem.
- Additionally, an obsolete variable used for retired Azure Pipelines
- environments has been removed.
+ "git maintenance" triggered "rerere gc" in unappropriate times and
+ interfered with "git rebase" etc. too much.  The conditions "rerere
+ gc" gets triggered have been tweaked.
 
  Will merge to 'next'?
- cf. <apfWhYF6nmcFGKE3@pks.im>
- cf. <apfzihj-1YAhn5lT@pks.im>
- source: <20260902071409.GA641414@coredump.intra.peff.net>
+ cf. <15a488b2-b4ae-4ac8-8cb3-f06ef5bbb52b@gmail.com>
+ source: <20260904-b4-pks-maintenance-rerere-gc-heuristic-v2-0-b1691121fe1c@pks.im>
 
 
-* jk/submodule-error-leak (2026-09-01) 2 commits
- - submodule--helper: free URL when repository setup fails
- - repository: make repo_clear() idempotent
+* as/push-force-if-includes-no-reflog (2026-09-04) 1 commit
+ - push: fix --force-if-includes when remote-tracking ref has no reflog
 
- The error path in 'git submodule--helper' has been updated to plug a
- memory leak when a repository handle could not be obtained,
- leveraging an updated idempotent repo_clear().
-
- Will merge to 'next'?
- cf. <apfoO5br4MMZv7nR@pks.im>
- source: <20260902055117.GA41587@coredump.intra.peff.net>
-
-
-* sa/rev-list-missing-only (2026-09-01) 1 commit
- - rev-list: add --missing-only option to filter output
-
- The git rev-list command has been augmented with a '--missing-only'
- option that filters the output to only show missing objects,
- stripping the leading '?' character and suppressing present objects,
- which is useful when used in combination with '--missing=print' or
- '--missing=print-info'.
-
- Expecting a reroll.
- cf. <29b5003e-48b3-490b-a4ec-c57088acc441@gmail.com>
- source: <20260901185100.33948-2-siddharthasthana31@gmail.com>
-
-
-* wf/imap-send-draft (2026-09-01) 1 commit
- - imap-send: add --draft to set IMAP \Draft flag
-
- The 'git imap-send' command has been taught to take the '--draft'
- option to mark uploaded messages as drafts, which helps some email
- clients render them properly for editing and sending.
-
- Will merge to 'next'?
- source: <761c3f1b-e280-48b1-a2ad-770b68be3434@slotpi01m90>
-
-
-* yt/pathspec-negative-prefix (2026-09-02) 1 commit
- - dir: do not apply prefix to negative pathspecs
-
- The pathspec matching logic has been updated to avoid out-of-bounds
- memory accesses when a negative pathspec is shorter than the common
- prefix of positive pathspecs.
-
- Needs review.
- source: <0CA8678D-0540-4A2E-B314-B9BEB04E2BF5@ytausch.de>
-
-
-* cc/early-scan-options (2026-09-02) 6 commits
- - fast-import: use early_scan_options() for --allow-unsafe-features
- - parse-options: build early scan options from a struct option array
- - parse-options: add parse_options_takes_argument()
- - rev-parse: fix "--" detection when it is an option value
- - bisect: fix "--" detection when a term name is "--"
- - parse-options: add early_scan_options()
-
- The process of parsing command-line options in commands that
- perform an early scan over their arguments (such as 'git bisect',
- 'git rev-parse', and 'git fast-import') has been unified using a
- new early-scan sub-API, which parses and skips known options taking
- separate values to prevent logic bugs.
+ The timestamp used for checking the reflog of a remote-tracking
+ branch during 'git push --force-if-includes' was left uninitialized
+ when the reflog was completely empty, which has been corrected.
 
  Waiting for response.
- cf. <xmqqpkyviizc.fsf@gitster.g>
- source: <20260902161047.476753-1-christian.couder@gmail.com>
+ cf. <xmqqzexx58hc.fsf@gitster.g>
+ source: <20260904124433.12840-1-f@lex.la>
+
+
+* tb/rerere-lock-grace (2026-09-04) 3 commits
+ - sequencer: keep auto maintenance out of the commands a sequence spawns
+ - sequencer: run auto maintenance once a sequence is done
+ - config: add git_config_append_parameter()
+
+ The sequencer machinery (used by 'git rebase', 'git cherry-pick', and
+ 'git revert') has been updated to defer automatic maintenance tasks
+ until the end of the operation, preventing nested 'git commit', 'git
+ merge', and 'exec' commands from triggering GC operations that could
+ contend for locks or delete open packs while the sequence is in
+ progress.
+
+ Needs review.
+ source: <pull.2217.v2.git.1788537086.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [Stalled]
@@ -302,6 +201,8 @@ Release tarballs are available at:
  cf. <anL7qL2-4h8ZlLcg@pks.im>
  source: <20260728052538.12429-1-chungmin@chungminlee.com>
 
+--------------------------------------------------
+[Cooking]
 
 * cc/lazy-fetch-trusted-bit (2026-08-13) 5 commits
  - builtin/upload-pack: set GIT_NO_LAZY_FETCH to 0 on trusted repo
@@ -314,16 +215,157 @@ Release tarballs are available at:
  introduced to allow 'upload-pack' to lazily fetch missing objects from
  configured promisor remotes when serving trusted repositories.
 
- Waiting for response for too long, stalled.
- cf. <xmqq1pc0mr5i.fsf@gitster.g>
- cf. <xmqqecg0oabe.fsf@gitster.g>
- cf. <xmqqy0e8mv0k.fsf@gitster.g>
- cf. <xmqqjypsoami.fsf@gitster.g>
- cf. <xmqq1pc0mr5i.fsf@gitster.g>
+ Expecting a reroll.
+ cf. <CAP8UFD0iAvN2=j_15xUWiWuRMSJpBcS6WiYvOaB=wbdsdJyZ7w@mail.gmail.com>
  source: <20260813154748.2378747-1-christian.couder@gmail.com>
 
---------------------------------------------------
-[Cooking]
+
+* jk/rev-info-argv-to-free (2026-08-31) 2 commits
+  (merged to 'next' on 2026-09-04 at 9826377f2b)
+ + revision: simplify mark_argv_for_free() callers
+ + revision: hang on to "freed" argv elements
+
+ The memory ownership of argv elements passed to the revision
+ machinery has been made more robust by keeping logically "freed"
+ elements alive until the rev_info struct is released, preventing
+ use-after-free bugs when options store references to them.
+
+ Will merge to 'master'.
+ cf. <apaSDqIEyc82Q_zE@pks.im>
+ cf. <apayIuf9kXQcQPvS@pks.im>
+ cf. <xmqq8q5ksvd8.fsf@gitster.g>
+ source: <20260901062815.GC1075462@coredump.intra.peff.net>
+
+
+* ps/ci-depends-on-ruby (2026-09-01) 1 commit
+ - ci: fix missing Ruby dependency in "documentation" job
+
+ The CI job that builds the documentation failed because it lacked
+ the 'gem' command. The 'asciidoc' package apparently stopped pulling
+ in the 'ruby' package as a transitive dependency.  The CI script has
+ been updated to explicitly install 'ruby'.
+
+ Will merge to 'next'?
+ cf. <87pkyxwf9b.fsf@emacs.iotcl.com>
+ source: <20260901-b4-pks-ci-fix-documentation-job-v1-1-a8257ee2a9a4@pks.im>
+
+
+* ps/odb-stop-registering-in-memory-sources (2026-09-02) 13 commits
+ - odb: remove the ability to link sources ad-hoc
+ - t/helper: stop registering alternates in "ref-store" command
+ - t/helper: adapt read-midx to not link ad-hoc source anymore
+ - builtin/multi-pack-index: refuse unknown sources with "--object-dir="
+ - odb/packed: fix memory leaks when freeing source
+ - tmp-objdir: drop unused function to register alternate
+ - odb: remove infrastructure to register submodule sources
+ - builtin/grep: stop registering submodule ODB as source
+ - submodule-config: stop registering submodule sources
+ - submodule-config: stop using `the_hash_algo`
+ - submodule-config: remove uses of `the_repository`
+ - cache-tree: remove dependency on `the_repository`
+ - cache-tree: drop `the_repository` in `cache_tree_fully_valid()`
+ - Merge branch 'ty/repository-fetch-if-missing' into ps/ps/odb-stop-registering-in-memory-sources
+
+ The mechanism to register in-memory alternate object sources has
+ been removed, as submodule object databases are now accessed
+ natively via their own repository structures.  This simplifies
+ object database management and prepares the codebase for migrating
+ alternate tracking into the files backend.
+
+ Needs review.
+ source: <20260902-pks-odb-registering-in-memory-sources-v2-0-c6ca12fdea4d@pks.im>
+
+
+* jk/ci-use-system-asciidoctor (2026-09-02) 2 commits
+ - ci: drop ALREADY_HAVE_ASCIIDOCTOR variable
+ - ci: fix missing Ruby dependency in "documentation" job
+
+ The CI script to install dependencies for the documentation build
+ has been updated to install asciidoctor directly via the system
+ package manager instead of pinning to an older version via gem.
+ Additionally, an obsolete variable used for retired Azure Pipelines
+ environments has been removed.
+
+ Will merge to 'next'?
+ cf. <apfWhYF6nmcFGKE3@pks.im>
+ cf. <apfzihj-1YAhn5lT@pks.im>
+ source: <20260902071409.GA641414@coredump.intra.peff.net>
+
+
+* jk/submodule-error-leak (2026-09-01) 2 commits
+ - submodule--helper: free URL when repository setup fails
+ - repository: make repo_clear() idempotent
+
+ The error path in 'git submodule--helper' has been updated to plug a
+ memory leak when a repository handle could not be obtained,
+ leveraging an updated idempotent repo_clear().
+
+ Will merge to 'next'?
+ cf. <apfoO5br4MMZv7nR@pks.im>
+ source: <20260902055117.GA41587@coredump.intra.peff.net>
+
+
+* sa/rev-list-missing-only (2026-09-03) 1 commit
+ - rev-list: add --missing-only option to filter output
+
+ The git rev-list command has been augmented with a '--missing-only'
+ option that filters the output to only show missing objects,
+ stripping the leading '?' character and suppressing present objects,
+ which is useful when used in combination with '--missing=print' or
+ '--missing=print-info'.
+
+ Will merge to 'next'?
+ source: <20260903204551.65592-2-siddharthasthana31@gmail.com>
+
+
+* wf/imap-send-draft (2026-09-01) 1 commit
+ - imap-send: add --draft to set IMAP \Draft flag
+
+ The 'git imap-send' command has been taught to take the '--draft'
+ option to mark uploaded messages as drafts, which helps some email
+ clients render them properly for editing and sending.
+
+ Will merge to 'next'?
+ cf. <xmqq8q5kl4gq.fsf@gitster.g>
+ cf. <31d24dc3-3ef6-41cb-acbd-4cb4fb0d2338@app.fastmail.com>
+ source: <761c3f1b-e280-48b1-a2ad-770b68be3434@slotpi01m90>
+
+
+* yt/pathspec-negative-prefix (2026-09-03) 2 commits
+ - dir: find common prefix among non-exclude pathspec items
+ - dir: do not apply prefix to negative pathspecs
+ - Merge branch 'jc/pathspec-match-const' into yt/pathspec-negative-prefix
+ (this branch uses jc/pathspec-match-const.)
+
+ The pathspec matching logic has been updated to avoid out-of-bounds
+ memory accesses when a negative pathspec is shorter than the common
+ prefix of positive pathspecs.
+
+ Waiting for response.
+ cf. <CABPp-BF6hps9DibSV4ghbowkOD-NfEsHYFdLoKab0hCfEi9rgw@mail.gmail.com>
+ cf. <CABPp-BFJo80oE=rtWc0FRNUxVh=6NHZeQmHD2q69VGwDcrHNhw@mail.gmail.com>
+ cf. <xmqqmrtx6qsk.fsf@gitster.g>
+ source: <887D6D84-F76E-4DCB-9633-CD78DA02BCC5@ytausch.de>
+
+
+* cc/early-scan-options (2026-09-02) 6 commits
+ - fast-import: use early_scan_options() for --allow-unsafe-features
+ - parse-options: build early scan options from a struct option array
+ - parse-options: add parse_options_takes_argument()
+ - rev-parse: fix "--" detection when it is an option value
+ - bisect: fix "--" detection when a term name is "--"
+ - parse-options: add early_scan_options()
+
+ The process of parsing command-line options in commands that
+ perform an early scan over their arguments (such as 'git bisect',
+ 'git rev-parse', and 'git fast-import') has been unified using a
+ new early-scan sub-API, which parses and skips known options taking
+ separate values to prevent logic bugs.
+
+ Waiting for response.
+ cf. <xmqqpkyviizc.fsf@gitster.g>
+ source: <20260902161047.476753-1-christian.couder@gmail.com>
+
 
 * ec/commit-fixup-options (2026-05-26) 2 commits
  - commit: allow -c/-C for all kinds of --fixup
@@ -333,21 +375,22 @@ Release tarballs are available at:
  message from outside the editor has been added for all 'git commit
  --fixup' variations.
 
- Waiting for response.
- cf. <xmqq1pbkefh0.fsf@gitster.g>
+ Expecting a reroll.
+ cf. <CA+JQ7M__GOnM9LHt0txry-G2z2CKhdZr0b-rU=Yd_A0gCEwmaQ@mail.gmail.com>
  source: <cover.1779792311.git.erik@cervined.in>
 
 
 * tc/replay-linearize (2026-08-31) 3 commits
- - replay: offer an option to linearize the commit topology
- - replay: resolve the replay base outside pick_regular_commit()
- - replay: add helper to put entry into replayed_commits
+  (merged to 'next' on 2026-09-04 at 92ae794bfc)
+ + replay: offer an option to linearize the commit topology
+ + replay: resolve the replay base outside pick_regular_commit()
+ + replay: add helper to put entry into replayed_commits
 
  The 'git replay' command has been taught the '--linearize' option to
  drop merge commits and linearize the replayed history, mimicking 'git
  rebase --no-rebase-merges'.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  cf. <CABPp-BF1=DZAxX5Now4pCKPi8=cpXo506z=8QVu2vYCSiKdqMA@mail.gmail.com>
  source: <20260831-toon-git-replay-drop-merges-v9-0-61c4232c6f36@iotcl.com>
 
@@ -368,17 +411,19 @@ Release tarballs are available at:
  way to libify utility helpers.
 
  Waiting for response.
- cf. <CAOLa=ZSQs5umaTxT6RKQJdnnAEbK+AHgj0n5yiTM0jsbZcyiig@mail.gmail.com>
+ cf. <xmqqo6el1xz0.fsf@gitster.g>
+ cf. <xmqqse3x1y20.fsf@gitster.g>
  source: <20260830204835.1040408-1-gitster@pobox.com>
 
 
 * hk/typofix (2026-08-31) 1 commit
- - versioncmp: fix typo in versioncmp.c, t/t0022-crlf-rename.sh
+  (merged to 'next' on 2026-09-03 at d33f0c0813)
+ + versioncmp: fix typo in versioncmp.c, t/t0022-crlf-rename.sh
 
  Various spelling mistakes in comments and test descriptions have
  been corrected.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <20260901-typo-fix-v3-1-cc342f329190@gmail.com>
 
 
@@ -507,17 +552,18 @@ Release tarballs are available at:
 
 
 * rs/worktree-add-basename-fixes (2026-08-25) 4 commits
- - worktree add: let worktree_basename() return string copy
- - worktree add: trim slashes when deriving branch name from path
- - worktree add: reject separator-only path
- - worktree add: don't read out of bounds in worktree_basename()
+  (merged to 'next' on 2026-09-03 at b04ceb887c)
+ + worktree add: let worktree_basename() return string copy
+ + worktree add: trim slashes when deriving branch name from path
+ + worktree add: reject separator-only path
+ + worktree add: don't read out of bounds in worktree_basename()
 
  The string extraction logic for the branch name and worktree name
  from the given path in 'git worktree add' has been corrected and
  simplified to avoid out-of-bounds reads and improper handling of
  trailing slashes.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  cf. <xmqqfqzuw23a.fsf@gitster.g>
  source: <20260825180350.2099-1-l.s.r@web.de>
 
@@ -534,9 +580,10 @@ Release tarballs are available at:
  and return control to the user to resolve conflicts left in the
  working tree, just like 'cherry-pick' and 'merge' do.
 
- Looking good.
- (a newer iteration v4 exists as <pull.2389.v4.git.git.1788301481.gitgitgadget@gmail.com>)
- cf. <03b9f094-c969-4309-b2cc-f7cd01959d49@gmail.com>
+ Will merge to 'next'?
+ cf. <1c3f07e0-63c0-483d-8e46-e4edbdd6991a@gmail.com>
+ cf. <4ed77ebd-e4ba-4d37-9c92-d987b70135a6@gmail.com>
+ cf. <xmqqqzji5id2.fsf@gitster.g>
  source: <pull.2389.v4.git.git.1788301481.gitgitgadget@gmail.com>
 
 
@@ -554,33 +601,34 @@ Release tarballs are available at:
  source: <pull.2209.git.1787322203.gitgitgadget@gmail.com>
 
 
-* kn/receive-report-hook (2026-09-01) 3 commits
+* kn/receive-report-hook (2026-09-04) 4 commits
  - hook: introduce the receive-report hook
  - receive-pack: move message generation to separate function
+ - receive-pack: drop static variables to track report status version
  - doc: add proc-receive hook info in 'git-receive-pack.adoc'
 
  A new hook 'report' is added to 'git receive-pack', which runs after
  reference updates and allows the server to filter or modify the
  packet-line status report sent back to the client.
 
- Waiting for response.
- cf. <xmqqik4nihyd.fsf@gitster.g>
- source: <20260901-758-introduce-hook-v5-0-35cdc6be3cc1@gmail.com>
+ Needs review.
+ source: <20260904-758-introduce-hook-v7-0-6c66f0a3a572@gmail.com>
 
 
 * en/midx-missing-pack-fallback (2026-08-29) 4 commits
- - packfile: recover when a multi-pack-index names a removed pack
- - mktree: do not use OBJECT_INFO_QUICK when checking objects
- - mktree: plug per-tree leak in --batch mode
- - replay: fail gracefully when a merge input is unreadable
- - Merge branch 'ps/odb-generic-corrupt-objects' into en/midx-missing-pack-fallback
+  (merged to 'next' on 2026-09-04 at 73a4cd73de)
+ + packfile: recover when a multi-pack-index names a removed pack
+ + mktree: do not use OBJECT_INFO_QUICK when checking objects
+ + mktree: plug per-tree leak in --batch mode
+ + replay: fail gracefully when a merge input is unreadable
+ + Merge branch 'ps/odb-generic-corrupt-objects' into en/midx-missing-pack-fallback
 
  The object lookup machinery has been taught to gracefully recover
  when a multi-pack-index points to an owning pack that was removed
  during a concurrent geometric repack, and 'git replay' has been
  fixed to not segfault when reading such missing objects.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  cf. <20260831231005.GA973618@coredump.intra.peff.net>
  cf. <374bffe1-47ff-4cb6-9d69-f4b7da7292da@gmail.com>
  source: <pull.2207.v3.git.1787986831.gitgitgadget@gmail.com>
@@ -622,9 +670,9 @@ Release tarballs are available at:
  The gitdatamodel documentation page has been linked from a handful
  of key documentaiton pages.
 
- Waiting for response.
+ Will merge to 'next'?
  cf. <apUrC_ROf9lyiuAm@pks.im>
- cf. <5e12e3ad-a80c-4c7b-81f7-e028e461fdd1@app.fastmail.com>
+ cf. <954865cf-5984-4e0d-9e8c-7c874896a1f2@app.fastmail.com>
  source: <V2_CV_doc_datamodel_advertize.c20@msgid.xyz>
 
 
@@ -655,18 +703,18 @@ Release tarballs are available at:
  formatting options.
 
  Needs review.
- cf. <xmqqse40ei5f.fsf@gitster.g>
  source: <V2_CV_format-rev_three_more_opts.bd3@msgid.xyz>
 
 
 * ns/ref-symref-additional-tests (2026-08-20) 2 commits
- - t1402: test forbidden characters in refnames
- - t1401: check symbolic-ref failure and --quiet silence on a non-symbolic ref
+  (merged to 'next' on 2026-09-03 at 67a1cf3baa)
+ + t1402: test forbidden characters in refnames
+ + t1401: check symbolic-ref failure and --quiet silence on a non-symbolic ref
 
  A few tests for the reference handling subsystem have been added to
  exercise the handling of forbidden characters and symbolic references.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  cf. <apUdDyG98D5upbhj@pks.im>
  source: <pull.2203.v2.git.1787264417682.gitgitgadget@gmail.com>
  source: <pull.2204.v3.git.1787763107646.gitgitgadget@gmail.com>
@@ -710,6 +758,7 @@ Release tarballs are available at:
  capabilities dynamically.
 
  Waiting for response.
+ cf. <xmqqbjaefhwo.fsf@gitster.g>
  source: <cover.1788206466.git.ben.knoble@gmail.com>
 
 
@@ -763,8 +812,10 @@ Release tarballs are available at:
  + checkout: improve message for ambiguous remote branch name
  + checkout: extract function to display advice for ambiguous remotes
 
- 'git worktree add' did not prevent DWIM behavior when '-b' or '-B' was
- specified, which has been corrected.
+ 'git checkout' and 'git worktree add' makes guesses based on a name
+ of a remote-tracking branch, but does not give an error when such a
+ remote-tracking branch cannot be uniquely identified, which has
+ been corrected.
 
  Will merge to 'master'.
  cf. <xmqq4igfa2pv.fsf@gitster.g>
@@ -772,17 +823,18 @@ Release tarballs are available at:
 
 
 * hn/ci-cancel-stale-pr-runs (2026-08-31) 1 commit
- - ci: cancel stale pull request workflow runs
+  (merged to 'next' on 2026-09-03 at e4d4816938)
+ + ci: cancel stale pull request workflow runs
 
  GitHub Actions CI workflow runs triggered by pull requests have
  been configured to cancel older runs when a new push is made to the
  same pull request.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <pull.2369.v3.git.git.1788193095825.gitgitgadget@gmail.com>
 
 
-* hn/checkout-m-autostash-refine (2026-09-02) 2 commits
+* hn/checkout-m-autostash-refine (2026-09-03) 2 commits
  - checkout: separate autostash conflict advice from branch-switch message
  - stash: reserve exit status 1 for conflicts
 
@@ -791,10 +843,9 @@ Release tarballs are available at:
  visually separates autostash conflict advice from the subsequent
  branch-switch message.
 
- Waiting for response.
- cf. <xmqqse3rh1mp.fsf@gitster.g>
- cf. <xmqqmrtzh0vx.fsf@gitster.g>
- source: <pull.2364.v4.git.git.1788373743.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ cf. <xmqq7bl2b1zs.fsf@gitster.g>
+ source: <pull.2364.v5.git.git.1788446398.gitgitgadget@gmail.com>
 
 
 * kj/repo-info-more-path-keys (2026-08-25) 7 commits
@@ -811,7 +862,8 @@ Release tarballs are available at:
  root, superproject working tree, object database, etc.), supporting
  both absolute and relative path formats.
 
- Needs review.
+ Needs review (Broken???)
+ cf. <CA+rGoLcZ6u+Rbz2PNGiaPbeHB=LSAqxi0r6jYZL3RjG6wimJ3Q@mail.gmail.com>
  source: <20260825175818.645579-1-jayatheerthkulkarni2005@gmail.com>
 
 
@@ -899,7 +951,7 @@ Release tarballs are available at:
  Apache handles concurrent requests.
 
  Will merge to 'next'?
- cf. <apa0N7VNNkcKurbi@pks.im>
+ cf. <apkFyvN4hcEOadQq@pks.im>
  source: <pull.2171.v5.git.1788277983.gitgitgadget@gmail.com>
 
 
@@ -917,14 +969,14 @@ Release tarballs are available at:
  source: <20260706115816.20267-1-ijackson@chiark.greenend.org.uk>
 
 
-* mm/line-log-limited-ops (2026-06-27) 7 commits
- - diffcore-pickaxe: scope -G to the -L tracked range
+* mm/line-log-limited-ops (2026-09-02) 7 commits
+ - diffcore-pickaxe: limit -G to the -L tracked range
  - diff: support --check with -L line ranges
- - line-log: support diff stat formats with -L
+ - diff: support stat formats with -L
  - diff: extract a line-range diff helper for reuse
  - diff: emit -L hunk headers via xdiff's formatter
  - diff: simplify the line-range filter by classifying removals immediately
- - diff: rename and group the line-range filter for clarity
+ - diff: rename line-range filter struct and clarify fields
  (this branch is used by mm/diff-process-hunks.)
 
  The 'git log -L<range>:<path>' command has been taught to limit
@@ -932,7 +984,7 @@ Release tarballs are available at:
  the specified range and path.
 
  Needs review.
- source: <pull.2152.v2.git.1782581342.gitgitgadget@gmail.com>
+ source: <pull.2152.v3.git.1788411919.gitgitgadget@gmail.com>
 
 
 * hn/history-squash (2026-08-20) 8 commits
