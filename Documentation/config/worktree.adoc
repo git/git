@@ -5,8 +5,9 @@
 	set to true, `worktree add` tries to find a remote-tracking
 	branch whose name uniquely matches the new branch name.  If
 	such a branch exists, it is checked out and set as "upstream"
-	for the new branch.  If no such match can be found, it falls
-	back to creating a new branch from the current `HEAD`.
+	for the new branch.  If multiple matches are found, the command
+	fails.  If no such match can be found, it falls back to
+	creating a new branch from the current `HEAD`.
 
 `worktree.useRelativePaths`::
 	Link worktrees using relative paths (when "`true`") or absolute
