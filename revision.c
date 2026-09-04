@@ -2307,9 +2307,30 @@ static timestamp_t parse_age(const char *arg)
 	return num;
 }
 
+/*
+ * When asked to free argv strings, we should not do so immediately. Some
+ * option parsing may have stored a reference to the string (either the whole
+ * thing, or a substring inside it). We should keep it valid until the rev_info
+ * struct itself is freed.
+ *
+ * Note that we take a const str for the convenience of callers (who have the
+ * usual const argv array, even when opt->free_removed_argv_elements is set).
+ * We cast away the const on their behalf.
+ */
+static void mark_argv_for_free(const struct setup_revision_opt *opt,
+			       struct rev_info *revs, const char *str)
+{
+	if (!opt || !opt->free_removed_argv_elements)
+		return;
+	if (!str)
+		return;
+	strvec_push_nodup(&revs->argv_to_free, (char *)str);
+}
+
 static void overwrite_argv(int *argc, const char **argv,
 			   const char **value,
-			   const struct setup_revision_opt *opt)
+			   const struct setup_revision_opt *opt,
+			   struct rev_info *revs)
 {
 	/*
 	 * Detect the case when we are overwriting ourselves. The assignment
@@ -2317,8 +2338,7 @@ static void overwrite_argv(int *argc, const char **argv,
 	 * cases around the free() and NULL operations.
 	 */
 	if (*value != argv[*argc]) {
-		if (opt && opt->free_removed_argv_elements)
-			free((char *)argv[*argc]);
+		mark_argv_for_free(opt, revs, argv[*argc]);
 		argv[*argc] = *value;
 		*value = NULL;
 	}
@@ -2346,7 +2366,7 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 	    starts_with(arg, "--branches=") || starts_with(arg, "--tags=") ||
 	    starts_with(arg, "--remotes=") || starts_with(arg, "--no-walk="))
 	{
-		overwrite_argv(unkc, unkv, &argv[0], opt);
+		overwrite_argv(unkc, unkv, &argv[0], opt, revs);
 		return 1;
 	}
 
@@ -2738,7 +2758,7 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 	} else {
 		int opts = diff_opt_parse(&revs->diffopt, argv, argc, revs->prefix);
 		if (!opts)
-			overwrite_argv(unkc, unkv, &argv[0], opt);
+			overwrite_argv(unkc, unkv, &argv[0], opt, revs);
 		return opts;
 	}
 
@@ -3037,8 +3057,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 			const char *arg = argv[i];
 			if (strcmp(arg, "--"))
 				continue;
-			if (opt && opt->free_removed_argv_elements)
-				free((char *)argv[i]);
+			mark_argv_for_free(opt, revs, argv[i]);
 			argv[i] = NULL;
 			argc = i;
 			if (argv[i + 1])
@@ -3068,7 +3087,8 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 
 			if (!strcmp(arg, "--stdin")) {
 				if (revs->disable_stdin) {
-					overwrite_argv(&left, argv, &argv[i], opt);
+					overwrite_argv(&left, argv, &argv[i],
+						       opt, revs);
 					continue;
 				}
 				if (revs->read_from_stdin++)
@@ -3241,8 +3261,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 	}
 
 	if (argv) {
-		if (opt && opt->free_removed_argv_elements)
-			free((char *)argv[left]);
+		mark_argv_for_free(opt, revs, argv[left]);
 		argv[left] = NULL;
 	}
 
@@ -3264,7 +3283,7 @@ void setup_revisions_from_strvec(struct strvec *argv, struct rev_info *revs,
 	ret = setup_revisions(argv->nr, argv->v, revs, opt);
 
 	for (size_t i = ret; i < argv->nr; i++)
-		free((char *)argv->v[i]);
+		mark_argv_for_free(opt, revs, argv->v[i]);
 	argv->nr = ret;
 }
 
@@ -3326,6 +3345,7 @@ void release_revisions(struct rev_info *revs)
 	oidset_clear(&revs->missing_commits);
 	release_revisions_bloom_keyvecs(revs);
 	release_follow_pathspec_slab(revs);
+	strvec_clear(&revs->argv_to_free);
 }
 
 static void add_child(struct rev_info *revs, struct commit *parent, struct commit *child)
