@@ -2,6 +2,8 @@
 #include "trace2/tr2_tgt.h"
 #include "trace2/tr2_tls.h"
 #include "trace2/tr2_ctr.h"
+/* banned-die must be last. */
+#include "banned-die.h"
 
 /*
  * A global counter block to aggregate values from the partial sums
@@ -53,7 +55,11 @@ static struct tr2_counter_metadata tr2_counter_metadata[TRACE2_NUMBER_OF_COUNTER
 void tr2_counter_increment(enum trace2_counter_id cid, uint64_t value)
 {
 	struct tr2tls_thread_ctx *ctx = tr2tls_get_self();
-	struct tr2_counter *c = &ctx->counter_block.counter[cid];
+	struct tr2_counter *c;
+
+	if (tr2tls_is_fallback(ctx))
+		return;
+	c = &ctx->counter_block.counter[cid];
 
 	c->value += value;
 
@@ -67,6 +73,8 @@ void tr2_update_final_counters(void)
 	struct tr2tls_thread_ctx *ctx = tr2tls_get_self();
 	enum trace2_counter_id cid;
 
+	if (tr2tls_is_fallback(ctx))
+		return;
 	if (!ctx->used_any_counter)
 		return;
 
@@ -88,6 +96,8 @@ void tr2_emit_per_thread_counters(tr2_tgt_evt_counter_t *fn_apply)
 	struct tr2tls_thread_ctx *ctx = tr2tls_get_self();
 	enum trace2_counter_id cid;
 
+	if (tr2tls_is_fallback(ctx))
+		return;
 	if (!ctx->used_any_per_thread_counter)
 		return;
 
