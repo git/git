@@ -5314,6 +5314,12 @@ cleanup_head_ref:
 	}
 
 	/*
+	 * We ignore errors in 'git maintenance run --auto', since the
+	 * user should see them.
+	 */
+	run_auto_maintenance(r, opts->quiet);
+
+	/*
 	 * Sequence of picks finished successfully; cleanup by
 	 * removing the .git/sequencer directory
 	 */
@@ -5577,10 +5583,14 @@ int sequencer_continue(struct repository *r, struct replay_opts *opts)
 			res = -1;
 			goto release_todo_list;
 		}
-	} else if (!file_exists(get_todo_path(opts)))
-		return continue_single_pick(r, opts);
-	else if ((res = read_populate_todo(r, &todo_list, opts)))
+	} else if (!file_exists(get_todo_path(opts))) {
+		res = continue_single_pick(r, opts);
+		if (!res)
+			run_auto_maintenance(r, opts->quiet);
+		return res;
+	} else if ((res = read_populate_todo(r, &todo_list, opts))) {
 		goto release_todo_list;
+	}
 
 	if (!is_rebase_i(opts)) {
 		/* Verify that the conflict has been resolved */
@@ -5698,6 +5708,8 @@ int sequencer_pick_revisions(struct repository *r,
 			BUG("unexpected extra commit from walk");
 
 		res = single_pick(r, cmit, opts);
+		if (!res)
+			run_auto_maintenance(r, opts->quiet);
 		goto out;
 	}
 
