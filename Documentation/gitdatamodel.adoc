@@ -24,6 +24,8 @@ Git's core operations use 4 kinds of data:
 3. <<index,The index>>, also known as the staging area
 4. <<reflogs,Reflogs>>: logs of changes to references ("ref log")
 
+See linkgit:gitglossary[7] for a comprehensive terminology reference.
+
 [[objects]]
 OBJECTS
 -------
@@ -299,6 +301,10 @@ $ git reflog main --date=iso --no-decorate
 750b4ea main@{2025-09-29 15:17:05 -0400}: commit: Add README
 4ccb6d7 main@{2025-09-29 15:16:48 -0400}: commit (initial): Initial commit
 ----
+
+SEE ALSO
+--------
+linkgit:gitglossary[7]
 
 GIT
 ---
