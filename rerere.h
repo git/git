@@ -39,6 +39,12 @@ int rerere_remaining(struct repository *, struct string_list *);
 void rerere_clear(struct repository *, struct string_list *);
 void rerere_gc(struct repository *, struct string_list *);
 
+/*
+ * Check whether garbage collection for rerere entries is needed, which is
+ * the case when there's at least `limit` stale entries that would be pruned.
+ */
+bool rerere_gc_needed(struct repository *r, size_t limit);
+
 #define OPT_RERERE_AUTOUPDATE(v) OPT_UYN(0, "rerere-autoupdate", (v), \
 	N_("update the index with reused conflict resolution if possible"))
 

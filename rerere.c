@@ -1222,6 +1222,56 @@ static int is_rr_cache_dirname(const char *path)
 	return !parse_oid_hex(path, &oid, &end) && !*end;
 }
 
+bool rerere_gc_needed(struct repository *r, size_t limit)
+{
+	timestamp_t cutoff_resolve, cutoff_noresolve;
+	struct strbuf buf = STRBUF_INIT;
+	bool needed = false;
+	struct dirent *e;
+	size_t count = 0;
+	DIR *dir;
+
+	dir = opendir(repo_git_path_replace(r, &buf, "rr-cache"));
+	if (!dir)
+		goto out;
+
+	rerere_gc_cutoffs(r, &cutoff_resolve, &cutoff_noresolve);
+
+	while ((e = readdir_skip_dot_and_dotdot(dir))) {
+		struct rerere_id id;
+
+		/*
+		 * We estimate the number of stale entries by only considering
+		 * those starting with "17". This is the same strategy that we
+		 * use for estimating the number of loose objects.
+		 */
+		if (!starts_with(e->d_name, "17") ||
+		    !is_rr_cache_dirname(e->d_name))
+			continue;
+
+		id.collection = find_rerere_dir(e->d_name);
+		for (id.variant = 0;
+		     id.variant < id.collection->status_nr;
+		     id.variant++) {
+			if (rerere_id_is_stale(&id, cutoff_resolve,
+					       cutoff_noresolve)) {
+				count += 256;
+				if (count >= limit) {
+					needed = true;
+					goto out;
+				}
+			}
+		}
+	}
+
+out:
+	if (dir)
+		closedir(dir);
+	free_rerere_dirs();
+	strbuf_release(&buf);
+	return needed;
+}
+
 void rerere_gc(struct repository *r, struct string_list *rr)
 {
 	struct string_list to_remove = STRING_LIST_INIT_DUP;
