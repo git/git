@@ -403,4 +403,22 @@ test_expect_success 'rebase runs auto maintenance at its end' '
 	test_subcommand_flex git maintenance run --auto <finish.txt
 '
 
+test_expect_success 'rebase spawns no auto maintenance before its end' '
+	git checkout -b two-conflicts topic &&
+	test_commit F2-again F2 222 &&
+	test_must_fail git rebase -x "git commit --allow-empty -m exec" main &&
+	echo resolved >F2 &&
+	git add F2 &&
+	test_must_fail env GIT_TRACE2_EVENT="$(pwd)/mid.txt" \
+		git rebase --continue &&
+	test_subcommand_flex git commit <mid.txt &&
+	test_subcommand_flex ! git maintenance run --auto <mid.txt &&
+	echo resolved >F2 &&
+	git add F2 &&
+	GIT_TRACE2_EVENT="$(pwd)/end.txt" git rebase --continue &&
+	test_subcommand_flex git maintenance run --auto <end.txt &&
+	grep "\"child_start\".*\"maintenance\"" end.txt >maintenance &&
+	test_line_count = 1 maintenance
+'
+
 test_done

@@ -234,6 +234,11 @@ struct replay_ctx {
 	 * Whether message contains a commit message.
 	 */
 	unsigned have_message :1;
+	/*
+	 * The GIT_CONFIG_PARAMETERS value that keeps auto maintenance out
+	 * of the commands we spawn, built on first use.
+	 */
+	struct strbuf config_parameters;
 };
 
 struct replay_ctx* replay_ctx_new(void)
@@ -242,6 +247,7 @@ struct replay_ctx* replay_ctx_new(void)
 
 	strbuf_init(&ctx->current_fixups, 0);
 	strbuf_init(&ctx->message, 0);
+	strbuf_init(&ctx->config_parameters, 0);
 
 	return ctx;
 }
@@ -407,6 +413,7 @@ static void replay_ctx_release(struct replay_ctx *ctx)
 {
 	strbuf_release(&ctx->current_fixups);
 	strbuf_release(&ctx->message);
+	strbuf_release(&ctx->config_parameters);
 }
 
 void replay_opts_release(struct replay_opts *opts)
@@ -1108,6 +1115,27 @@ static int run_command_silent_on_success(struct child_process *cmd)
 }
 
 /*
+ * A sequence runs auto maintenance once it is done, not from every command
+ * it spawns along the way: their background "rerere gc" or repack would
+ * race the sequencer for locks and files it still holds.
+ */
+static void disable_auto_maintenance(struct replay_opts *opts,
+				     struct child_process *cmd)
+{
+	struct strbuf *params = &opts->ctx->config_parameters;
+
+	if (!params->len) {
+		const char *old = getenv(CONFIG_DATA_ENVIRONMENT);
+
+		if (old && *old)
+			strbuf_addstr(params, old);
+		git_config_append_parameter(params, "maintenance.auto", "false");
+		git_config_append_parameter(params, "gc.auto", "0");
+	}
+	strvec_pushf(&cmd->env, "%s=%s", CONFIG_DATA_ENVIRONMENT, params->buf);
+}
+
+/*
  * If we are cherry-pick, and if the merge did not result in
  * hand-editing, we will hit this commit and inherit the original
  * author date and name.
@@ -1148,6 +1176,7 @@ static int run_git_commit(const char *defmsg,
 			     author_date_from_env(&cmd.env));
 	if (opts->ignore_date)
 		strvec_push(&cmd.env, "GIT_AUTHOR_DATE=");
+	disable_auto_maintenance(opts, &cmd);
 
 	strvec_push(&cmd.args, "commit");
 
@@ -3924,16 +3953,18 @@ static int error_failed_squash(struct repository *r,
 	return error_with_patch(r, commit, subject, subject_len, opts, 1, 1);
 }
 
-static int do_exec(struct repository *r, const char *command_line, int quiet)
+static int do_exec(struct repository *r, const char *command_line,
+		   struct replay_opts *opts)
 {
 	struct child_process cmd = CHILD_PROCESS_INIT;
 	int dirty, status;
 
-	if (!quiet)
+	if (!opts->quiet)
 		fprintf(stderr, _("Executing: %s\n"), command_line);
 	cmd.use_shell = 1;
 	strvec_push(&cmd.args, command_line);
 	strvec_push(&cmd.env, "GIT_CHERRY_PICK_HELP");
+	disable_auto_maintenance(opts, &cmd);
 	status = run_command(&cmd);
 
 	/* force re-reading of the cache */
@@ -4342,6 +4373,7 @@ static int do_merge(struct repository *r,
 				     author_date_from_env(&cmd.env));
 		if (opts->ignore_date)
 			strvec_push(&cmd.env, "GIT_AUTHOR_DATE=");
+		disable_auto_maintenance(opts, &cmd);
 
 		cmd.git_cmd = 1;
 		strvec_push(&cmd.args, "merge");
@@ -5158,7 +5190,7 @@ static int pick_commits(struct repository *r,
 			if (!opts->verbose)
 				term_clear_line();
 			*end_of_arg = '\0';
-			res = do_exec(r, arg, opts->quiet);
+			res = do_exec(r, arg, opts);
 			*end_of_arg = saved;
 
 			if (res) {
@@ -5335,6 +5367,7 @@ static int continue_single_pick(struct repository *r, struct replay_opts *opts)
 		return error(_("no cherry-pick or revert in progress"));
 
 	cmd.git_cmd = 1;
+	disable_auto_maintenance(opts, &cmd);
 	strvec_push(&cmd.args, "commit");
 
 	/*
