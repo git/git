@@ -35,6 +35,7 @@
 #include "setup.h"
 #include "strbuf.h"
 #ifdef USE_CURL_FOR_IMAP_SEND
+#include "git-curl-compat.h"
 #include "http.h"
 #endif
 
@@ -49,10 +50,11 @@
 static int verbosity;
 static int list_folders;
 static int use_curl = USE_CURL_DEFAULT;
+static int opt_draft;
 static char *opt_folder;
 
 static char const * const imap_send_usage[] = {
-	N_("git imap-send [-v] [-q] [--[no-]curl] [(--folder|-f) <folder>] < <mbox>"),
+	N_("git imap-send [-v] [-q] [--[no-]curl] [--[no-]draft] [(--folder|-f) <folder>] < <mbox>"),
 	"git imap-send --list",
 	NULL
 };
@@ -60,6 +62,7 @@ static char const * const imap_send_usage[] = {
 static struct option imap_send_options[] = {
 	OPT__VERBOSITY(&verbosity),
 	OPT_BOOL(0, "curl", &use_curl, "use libcurl to communicate with the IMAP server"),
+	OPT_BOOL(0, "draft", &opt_draft, "mark uploaded messages with the IMAP \\Draft flag"),
 	OPT_STRING('f', "folder", &opt_folder, "folder", "specify the IMAP folder"),
 	OPT_BOOL(0, "list", &list_folders, "list all folders on the IMAP server"),
 	OPT_END()
@@ -1416,7 +1419,8 @@ static int imap_store_msg(struct imap_store *ctx, struct strbuf *msg)
 
 	box = ctx->name;
 	prefix = !strcmp(box, "INBOX") ? "" : ctx->prefix;
-	ret = imap_exec_m(ctx, &cb, "APPEND \"%s%s\" ", prefix, box);
+	ret = imap_exec_m(ctx, &cb, "APPEND \"%s%s\" %s", prefix, box,
+			  opt_draft ? "(\\Draft) " : "");
 	imap->caps = imap->rcaps;
 	if (ret != DRV_OK)
 		return ret;
@@ -1718,6 +1722,13 @@ static int curl_append_msgs_to_imap(struct imap_server_conf *server,
 
 	curl_easy_setopt(curl, CURLOPT_READDATA, &msgbuf);
 
+	if (opt_draft) {
+#ifdef GIT_CURL_HAVE_CURLOPT_UPLOAD_FLAGS
+		curl_easy_setopt(curl, CURLOPT_UPLOAD_FLAGS, CURLULFLAG_DRAFT);
+#else
+		warning("--draft requires libcurl 8.13.0 or later");
+#endif
+	}
 	fprintf(stderr, "Sending %d message%s to %s folder...\n",
 		total, (total != 1) ? "s" : "", server->folder);
 	while (1) {
