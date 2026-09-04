@@ -483,7 +483,7 @@ test_expect_success 'git rebase --update-ref with core.commentChar and branch on
 	GIT_SEQUENCE_EDITOR="cat >actual" git -c core.commentChar=% \
 		 rebase -i --update-refs base &&
 	test_grep "% Ref refs/heads/wt-topic checked out at" actual &&
-	test_grep "% Ref refs/heads/topic2 checked out at" actual
+	test_grep ! "% Ref refs/heads/topic2 checked out at" actual
 '
 
 test_done

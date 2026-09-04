@@ -466,9 +466,24 @@ static void prepare_checked_out_branches(void)
 						     &update_refs)) {
 			struct string_list_item *item;
 			for_each_string_list_item(item, &update_refs) {
+				char *resolved_ref;
+				int flags = 0;
+
 				register_checked_out_branch("", item->string,
 							    wt->path,
 							    BRANCH_CHECKOUT_KIND_UPDATE_REF);
+
+				resolved_ref = refs_resolve_refdup(
+					get_main_ref_store(the_repository),
+					item->string, RESOLVE_REF_READING,
+					NULL, &flags);
+				if (resolved_ref && (flags & REF_ISSYMREF)) {
+					char *old = strmap_put(
+						&current_checked_out_branches,
+						resolved_ref, xstrdup(wt->path));
+					free(old);
+				}
+				free(resolved_ref);
 			}
 			string_list_clear(&update_refs, 1);
 		}
