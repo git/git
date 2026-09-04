@@ -634,13 +634,15 @@ static int odb_source_packed_freshen_object(struct odb_source *source,
 					    const time_t *mtime)
 {
 	struct odb_source_packed *packed = odb_source_packed_downcast(source);
-	struct utimbuf times, *timesp = NULL;
+	struct timespec times[2], *timesp = NULL;
 	struct pack_entry e;
 
 	if (mtime) {
-		times.actime = *mtime;
-		times.modtime = *mtime;
-		timesp = &times;
+		times[0].tv_sec = *mtime;
+		times[0].tv_nsec = 0;
+		times[1].tv_sec = *mtime;
+		times[1].tv_nsec = 0;
+		timesp = times;
 	}
 
 	if (!find_pack_entry(packed, oid, &e, 0, NULL))
@@ -649,7 +651,7 @@ static int odb_source_packed_freshen_object(struct odb_source *source,
 		return 0;
 	if (e.p->freshened)
 		return 1;
-	if (utime(e.p->pack_name, timesp))
+	if (utimensat(AT_FDCWD, e.p->pack_name, timesp, 0))
 		return 0;
 	e.p->freshened = 1;
 

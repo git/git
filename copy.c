@@ -23,12 +23,14 @@ int copy_fd(int ifd, int ofd)
 static int copy_times(const char *dst, const char *src)
 {
 	struct stat st;
-	struct utimbuf times;
+	struct timespec times[2];
 	if (stat(src, &st) < 0)
 		return -1;
-	times.actime = st.st_atime;
-	times.modtime = st.st_mtime;
-	if (utime(dst, &times) < 0)
+	times[0].tv_sec = st.st_atime;
+	times[0].tv_nsec = ST_ATIME_NSEC(st);
+	times[1].tv_sec = st.st_mtime;
+	times[1].tv_nsec = ST_MTIME_NSEC(st);
+	if (utimensat(AT_FDCWD, dst, times, 0) < 0)
 		return -1;
 	return 0;
 }

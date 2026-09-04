@@ -2480,18 +2480,13 @@ static void mark_commit_graphs(struct write_commit_graph_context *ctx)
 {
 	uint32_t i;
 	time_t now = time(NULL);
+	struct timespec times[2] = {
+		{ .tv_nsec = UTIME_OMIT },
+		{ .tv_sec = now, .tv_nsec = 0 },
+	};
 
-	for (i = ctx->num_commit_graphs_after - 1; i < ctx->num_commit_graphs_before; i++) {
-		struct stat st;
-		struct utimbuf updated_time;
-
-		if (stat(ctx->commit_graph_filenames_before[i], &st) < 0)
-			continue;
-
-		updated_time.actime = st.st_atime;
-		updated_time.modtime = now;
-		utime(ctx->commit_graph_filenames_before[i], &updated_time);
-	}
+	for (i = ctx->num_commit_graphs_after - 1; i < ctx->num_commit_graphs_before; i++)
+		utimensat(AT_FDCWD, ctx->commit_graph_filenames_before[i], times, 0);
 }
 
 static void expire_commit_graphs(struct write_commit_graph_context *ctx)

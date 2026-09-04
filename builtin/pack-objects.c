@@ -1442,11 +1442,13 @@ static void write_pack_file(void)
 			} else if (!last_mtime) {
 				last_mtime = st.st_mtime;
 			} else {
-				struct utimbuf utb;
-				utb.actime = st.st_atime;
-				utb.modtime = --last_mtime;
-				if (utime(pack_tmp_name, &utb) < 0)
-					warning_errno(_("failed utime() on %s"), pack_tmp_name);
+				struct timespec times[2];
+				times[0].tv_sec = st.st_atime;
+				times[0].tv_nsec = ST_ATIME_NSEC(st);
+				times[1].tv_sec = --last_mtime;
+				times[1].tv_nsec = 0;
+				if (utimensat(AT_FDCWD, pack_tmp_name, times, 0) < 0)
+					warning_errno(_("failed utimensat() on %s"), pack_tmp_name);
 			}
 
 			strbuf_addf(&tmpname, "%s-%s.", base_name,

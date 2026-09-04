@@ -1391,22 +1391,33 @@ int mingw_fstat(int fd, struct stat *buf)
 	}
 }
 
-static inline void time_t_to_filetime(time_t t, FILETIME *ft)
+static inline void timespec_to_filetime(const struct timespec *ts, FILETIME *ft)
 {
-	long long winTime = t * 10000000LL + 116444736000000000LL;
+	long long winTime = (long long)ts->tv_sec * 10000000LL + (ts->tv_nsec / 100) + 116444736000000000LL;
 	ft->dwLowDateTime = winTime;
 	ft->dwHighDateTime = winTime >> 32;
 }
 
-int mingw_utime (const char *file_name, const struct utimbuf *times)
+int mingw_utimensat(int fd, const char *path, const struct timespec times[2], int flag)
 {
 	FILETIME mft, aft;
+	FILETIME *paft = &aft, *pmft = &mft;
 	int rc;
 	DWORD attrs;
 	wchar_t wfilename[MAX_PATH];
 	HANDLE osfilehandle;
 
-	if (xutftowcs_path(wfilename, file_name) < 0)
+	if (fd != AT_FDCWD) {
+		errno = ENOSYS;
+		return -1;
+	}
+
+	if (flag) {
+		errno = ENOSYS;
+		return -1;
+	}
+
+	if (xutftowcs_path(wfilename, path) < 0)
 		return -1;
 
 	/* must have write permission */
@@ -1433,14 +1444,25 @@ int mingw_utime (const char *file_name, const struct utimbuf *times)
 	}
 
 	if (times) {
-		time_t_to_filetime(times->modtime, &mft);
-		time_t_to_filetime(times->actime, &aft);
+		if (times[0].tv_nsec == UTIME_NOW)
+			GetSystemTimeAsFileTime(&aft);
+		else if (times[0].tv_nsec == UTIME_OMIT)
+			paft = NULL;
+		else
+			timespec_to_filetime(&times[0], &aft);
+
+		if (times[1].tv_nsec == UTIME_NOW)
+			GetSystemTimeAsFileTime(&mft);
+		else if (times[1].tv_nsec == UTIME_OMIT)
+			pmft = NULL;
+		else
+			timespec_to_filetime(&times[1], &mft);
 	} else {
 		GetSystemTimeAsFileTime(&mft);
 		aft = mft;
 	}
 
-	if (!SetFileTime(osfilehandle, NULL, &aft, &mft)) {
+	if (!SetFileTime(osfilehandle, NULL, paft, pmft)) {
 		errno = EINVAL;
 		rc = -1;
 	} else

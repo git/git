@@ -658,8 +658,8 @@ static int merge(struct index_state *istate, const struct rerere_id *id, const c
 	 * A successful replay of recorded resolution.
 	 * Mark that "postimage" was used to help gc.
 	 */
-	if (utime(rerere_path(&buf, id, "postimage"), NULL) < 0)
-		warning_errno(_("failed utime() on '%s'"),
+	if (utimensat(AT_FDCWD, rerere_path(&buf, id, "postimage"), NULL, 0) < 0)
+		warning_errno(_("failed utimensat() on '%s'"),
 			      rerere_path(&buf, id, "postimage"));
 
 	/* Update "path" with the resolution */
