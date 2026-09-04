@@ -672,4 +672,38 @@ test_expect_success 'replay --revert with --linearize reverts a range containing
 	test_must_fail git cat-file -e $tip:Y.t
 '
 
+test_expect_success 'replay fails without segfault when objects are missing' '
+	test_when_finished "rm -fr unreadable" &&
+	git init unreadable &&
+	(
+		cd unreadable &&
+
+		test_write_lines l1 l2 l3 l4 l5 l6 l7 l8 >f &&
+		git add f &&
+		git commit -m base &&
+		git branch base &&
+
+		test_write_lines l1 l2 l3 l4 l5 l6 l7 CHANGED >f &&
+		git commit -am side &&
+		git branch side &&
+
+		git switch -c onto base &&
+		test_write_lines CHANGED l2 l3 l4 l5 l6 l7 l8 >f &&
+		git commit -am onto &&
+
+		# The replay works while every object is readable.
+		git replay --onto onto base..side &&
+
+		# Removing the onto tree makes parse_tree() fail during the
+		# incore merge, driving clean < 0 with a NULL result tree.
+		onto_tree=$(git rev-parse onto^{tree}) &&
+		obj=$(test_oid_to_path "$onto_tree") &&
+		mv .git/objects/${obj} saved-tree &&
+
+		# Ensure replay gracefully handles the missing object
+		test_must_fail git replay --onto onto base..side 2>err &&
+		test_grep -e "Could not read" -e "collecting merge info failed" err
+	)
+'
+
 test_done

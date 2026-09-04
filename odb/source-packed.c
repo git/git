@@ -17,13 +17,18 @@
 static int find_pack_entry(struct odb_source_packed *store,
 			   const struct object_id *oid,
 			   struct pack_entry *e,
+			   enum object_info_flags flags,
 			   struct packed_git **bad_pack)
 {
 	struct packfile_list_entry *l;
+	enum midx_fill_result midx_result = MIDX_FILL_MISS;
 
 	odb_source_prepare(&store->base, 0);
-	if (store->midx && fill_midx_entry(store->midx, oid, e, bad_pack))
-		return 1;
+	if (store->midx) {
+		midx_result = midx_fill_entry(store->midx, oid, e, bad_pack);
+		if (midx_result == MIDX_FILL_HIT)
+			return 1;
+	}
 
 	for (l = store->packs.head; l; l = l->next) {
 		struct packed_git *p = l->pack;
@@ -32,6 +37,33 @@ static int find_pack_entry(struct odb_source_packed *store,
 			if (!store->skip_mru_updates)
 				packfile_list_prepend(&store->packs, p);
 			return 1;
+		}
+	}
+
+	/*
+	 * Recovery for a concurrent-repack race: a stale MIDX may still name a
+	 * vanished owning pack even though the object survives in another pack
+	 * the same MIDX covers.  The regular fallback above skips MIDX-covered
+	 * packs, and repreparing the on-disk pack set does not reload the
+	 * borrowed, cached MIDX, so scan its packs directly for the survivor.
+	 *
+	 * Do this only on the second read, by which point repreparing packs has
+	 * already had a chance to find an object merely relocated into a new,
+	 * uncovered pack; only a genuine hidden duplicate reaches here.
+	 */
+	if (midx_result == MIDX_FILL_OWNER_UNAVAILABLE &&
+	    (flags & OBJECT_INFO_SECOND_READ)) {
+		struct multi_pack_index *m = store->midx;
+		uint32_t i;
+
+		for (i = 0; i < m->num_packs + m->num_packs_in_base; i++) {
+			struct packed_git *p;
+
+			if (prepare_midx_pack(m, i))
+				continue;
+			p = nth_midxed_pack(m, i);
+			if (p && packfile_fill_entry(p, oid, e, bad_pack))
+				return 1;
 		}
 	}
 
@@ -57,7 +89,7 @@ static enum odb_read_status odb_source_packed_read_object_info(struct odb_source
 	if (flags & OBJECT_INFO_SECOND_READ)
 		odb_source_prepare(source, ODB_PREPARE_FLUSH_CACHES);
 
-	if (!find_pack_entry(packed, oid, &e, &bad_pack)) {
+	if (!find_pack_entry(packed, oid, &e, flags, &bad_pack)) {
 		/*
 		 * The lookup may have failed because the object is known to be
 		 * corrupt in one of the packfiles. Report the object as
@@ -105,7 +137,7 @@ static int odb_source_packed_read_object_stream(struct odb_stream **out,
 	struct odb_source_packed *packed = odb_source_packed_downcast(source);
 	struct pack_entry e;
 
-	if (!find_pack_entry(packed, oid, &e, NULL))
+	if (!find_pack_entry(packed, oid, &e, 0, NULL))
 		return -1;
 
 	return packfile_read_object_stream(out, oid, e.p, e.offset);
@@ -611,7 +643,7 @@ static int odb_source_packed_freshen_object(struct odb_source *source,
 		timesp = &times;
 	}
 
-	if (!find_pack_entry(packed, oid, &e, NULL))
+	if (!find_pack_entry(packed, oid, &e, 0, NULL))
 		return 0;
 	if (e.p->is_cruft)
 		return 0;
