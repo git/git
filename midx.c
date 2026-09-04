@@ -911,6 +911,48 @@ static int compare_pair_pos_vs_id(const void *_a, const void *_b)
 }
 
 /*
+ * Return whether the pack index contains an entry with both "oid" and
+ * "offset". A pack index may contain duplicate OIDs, so an arbitrary
+ * OID lookup is not enough to validate a particular offset.
+ *
+ * Do not use offset_to_pack_pos() here: it may consult an optional '.rev'
+ * file, which is verified separately, or build an in-memory reverse index
+ * that remains attached to the pack. Verify the MIDX directly against its
+ * source pack index instead.
+ */
+static int pack_index_has_oid_at_offset(struct packed_git *p,
+					const struct object_id *oid,
+					off_t offset)
+{
+	struct object_id candidate;
+	uint32_t pos, i;
+
+	if (!bsearch_pack(oid, p, &pos))
+		return 0;
+
+	if (nth_packed_object_offset(p, pos) == offset)
+		return 1;
+
+	for (i = pos; i > 0; i--) {
+		if (nth_packed_object_id(&candidate, p, i - 1) ||
+		    !oideq(&candidate, oid))
+			break;
+		if (nth_packed_object_offset(p, i - 1) == offset)
+			return 1;
+	}
+
+	for (i = pos + 1; i < p->num_objects; i++) {
+		if (nth_packed_object_id(&candidate, p, i) ||
+		    !oideq(&candidate, oid))
+			break;
+		if (nth_packed_object_offset(p, i) == offset)
+			return 1;
+	}
+
+	return 0;
+}
+
+/*
  * Limit calls to display_progress() for performance reasons.
  * The interval here was arbitrarily chosen.
  */
@@ -1019,7 +1061,6 @@ int verify_midx_file(struct odb_source_packed *source, unsigned flags)
 	for (i = 0; i < m->num_objects + m->num_objects_in_base; i++) {
 		struct object_id oid;
 		struct pack_entry e;
-		off_t m_offset, p_offset;
 
 		if (i > 0 && pairs[i-1].pack_int_id != pairs[i].pack_int_id &&
 		    nth_midxed_pack(m, pairs[i-1].pack_int_id)) {
@@ -1044,12 +1085,16 @@ int verify_midx_file(struct odb_source_packed *source, unsigned flags)
 			break;
 		}
 
-		m_offset = e.offset;
-		p_offset = find_pack_entry_one(&oid, e.p);
-
-		if (m_offset != p_offset)
-			midx_report(_("incorrect object offset for oid[%d] = %s: %"PRIx64" != %"PRIx64),
-				    pairs[i].pos, oid_to_hex(&oid), m_offset, p_offset);
+		/*
+		 * Check that the exact offset recorded in the MIDX
+		 * belongs to this OID. A pack index may contain
+		 * duplicate OIDs, in which case an arbitrary OID lookup
+		 * can return a different, equally valid copy than the
+		 * one selected by the MIDX writer.
+		 */
+		if (!pack_index_has_oid_at_offset(e.p, &oid, e.offset))
+			midx_report(_("incorrect object offset for oid[%d] = %s: %"PRIx64),
+				    pairs[i].pos, oid_to_hex(&oid), e.offset);
 
 		midx_display_sparse_progress(progress, i + 1);
 	}

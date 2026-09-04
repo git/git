@@ -10,6 +10,7 @@
 #include "dir.h"
 #include "packfile.h"
 #include "delta.h"
+#include "ewah/ewok.h"
 #include "hash-lookup.h"
 #include "commit.h"
 #include "object.h"
@@ -1058,6 +1059,160 @@ static int get_delta_base_oid(struct packed_git *p,
 		return -1;
 }
 
+/*
+ * Search duplicate representations for a chain ending in a full object.
+ * Representations of the same OID are interchangeable as delta bases.
+ *
+ * Each path entry is the search frame for one OID. It walks that OID's
+ * contiguous .idx entries and retains the chosen entry's .pack offset
+ * for replay.
+ */
+struct delta_path_entry {
+	off_t selected_offset; /* zero until a candidate is selected */
+	uint32_t next; /* index position of the next candidate */
+	uint32_t remaining; /* total number of candidates remaining */
+};
+
+struct delta_path {
+	struct delta_path_entry *entries;
+	size_t nr, alloc;
+};
+
+static int push_oid_group(struct packed_git *p,
+			  const struct object_id *oid,
+			  struct bitmap *visited, struct delta_path *path)
+{
+	struct object_id candidate;
+	struct delta_path_entry *entry;
+	uint32_t first_index_pos, group_index_pos, index_pos;
+
+	/*
+	 * Determine the range of index positions referring to duplicate
+	 * copies of the given object.
+	 *
+	 * Any position within that range is OK, since we will determine
+	 * the exact range below.
+	 */
+	if (!bsearch_pack(oid, p, &group_index_pos))
+		return 0;
+	if (bitmap_get(visited, group_index_pos))
+		return 0;
+
+	first_index_pos = group_index_pos;
+	while (first_index_pos > 0) {
+		if (nth_packed_object_id(&candidate, p, first_index_pos - 1) < 0)
+			return -1;
+		if (!oideq(&candidate, oid))
+			break;
+		first_index_pos--;
+	}
+
+	for (index_pos = first_index_pos; index_pos < p->num_objects; index_pos++) {
+		if (nth_packed_object_id(&candidate, p, index_pos) < 0)
+			return -1;
+		if (!oideq(&candidate, oid))
+			break;
+	}
+
+	bitmap_set(visited, group_index_pos);
+
+	ALLOC_GROW(path->entries, path->nr + 1, path->alloc);
+	entry = &path->entries[path->nr++];
+	entry->selected_offset = 0;
+	entry->next = first_index_pos;
+	entry->remaining = index_pos - first_index_pos;
+
+	return 1;
+}
+
+static enum object_type find_delta_path(struct packed_git *p,
+					struct pack_window **w_curs,
+					off_t offset,
+					struct delta_path *path)
+{
+	struct object_id oid;
+	uint32_t pack_pos;
+	struct bitmap *visited;
+	enum object_type result = OBJ_BAD;
+
+	if (offset_to_pack_pos(p, offset, &pack_pos) < 0)
+		return OBJ_BAD;
+	if (nth_packed_object_id(&oid, p, pack_pos_to_index(p, pack_pos)) < 0)
+		return OBJ_BAD;
+
+	visited = bitmap_new();
+	if (push_oid_group(p, &oid, visited, path) != 1)
+		goto done;
+
+	/*
+	 * Search depth-first for a chain ending in a full object. Each frame
+	 * tries every representation of one OID; a delta pushes its base OID,
+	 * while exhausting a frame backtracks to its parent.
+	 */
+	while (path->nr) {
+		struct delta_path_entry *entry = &path->entries[path->nr - 1];
+		enum object_type candidate_type;
+		off_t curpos;
+		size_t size;
+
+		/*
+		 * This OID has no path to a full object. Let its parent try
+		 * another representation; exhausting the root fails the search.
+		 */
+		if (!entry->remaining) {
+			path->nr--;
+			continue;
+		}
+
+		entry->selected_offset =
+			nth_packed_object_offset(p, entry->next++);
+		entry->remaining--;
+		curpos = entry->selected_offset;
+		candidate_type = unpack_object_header(p, w_curs, &curpos, &size);
+
+		/*
+		 * A full object terminates the chain, and its type is
+		 * inherited by every delta above it. A delta continues
+		 * at its base; any other type rejects only this
+		 * representation.
+		 */
+		switch (candidate_type) {
+		case OBJ_COMMIT:
+		case OBJ_TREE:
+		case OBJ_BLOB:
+		case OBJ_TAG:
+			result = candidate_type;
+			goto done;
+		case OBJ_OFS_DELTA:
+		case OBJ_REF_DELTA:
+			break;
+		default:
+			/*
+			 * A bad or unknown type rejects only this copy;
+			 * another representation of the same OID may
+			 * still work.
+			 */
+			continue;
+		}
+
+		/*
+		 * Descend to this delta's base. A malformed reference
+		 * or a missing or already-visited base rejects this
+		 * copy. A newly pushed base is examined next; an index
+		 * error aborts the search.
+		 */
+		if (get_delta_base_oid(p, w_curs, curpos, &oid, candidate_type,
+				       entry->selected_offset))
+			continue;
+		if (push_oid_group(p, &oid, visited, path) < 0)
+			goto done;
+	}
+
+done:
+	bitmap_free(visited);
+	return result;
+}
+
 static int retry_bad_packed_offset(struct repository *r,
 				   struct packed_git *p,
 				   off_t obj_offset)
@@ -1086,11 +1241,27 @@ static enum object_type packed_to_object_type(struct repository *r,
 {
 	off_t small_poi_stack[POI_STACK_PREALLOC];
 	off_t *poi_stack = small_poi_stack;
+	off_t root_offset = obj_offset;
 	int poi_stack_nr = 0, poi_stack_alloc = POI_STACK_PREALLOC;
 
 	while (type == OBJ_OFS_DELTA || type == OBJ_REF_DELTA) {
 		off_t base_offset;
 		size_t size;
+
+		if (poi_stack_nr > 0 && poi_stack_nr % 2 == 0 &&
+		    obj_offset == poi_stack[poi_stack_nr / 2]) {
+			struct delta_path path = { 0 };
+			/*
+			 * Normal lookup returned to the same pack
+			 * entry. Restart from the requested object
+			 * using alternate representations.
+			 */
+			type = find_delta_path(p, w_curs, root_offset, &path);
+			free(path.entries);
+			if (type == OBJ_BAD)
+				goto unwind;
+			break;
+		}
 		/* Push the object we're going to leave behind */
 		if (poi_stack_nr >= poi_stack_alloc && poi_stack == small_poi_stack) {
 			poi_stack_alloc = alloc_nr(poi_stack_nr);
@@ -1506,9 +1677,11 @@ void *unpack_entry(struct repository *r, struct packed_git *p, off_t obj_offset,
 {
 	struct pack_window *w_curs = NULL;
 	off_t curpos = obj_offset;
+	off_t root_offset = obj_offset;
 	void *data = NULL;
 	size_t size;
 	enum object_type type;
+	struct delta_path path = { 0 };
 	struct unpack_entry_stack_ent small_delta_stack[UNPACK_ENTRY_STACK_PREALLOC];
 	struct unpack_entry_stack_ent *delta_stack = small_delta_stack;
 	int delta_stack_nr = 0, delta_stack_alloc = UNPACK_ENTRY_STACK_PREALLOC;
@@ -1532,6 +1705,22 @@ void *unpack_entry(struct repository *r, struct packed_git *p, off_t obj_offset,
 			detach_delta_base_cache_entry(ent);
 			base_from_cache = 1;
 			break;
+		}
+
+		if (!path.nr &&
+		    delta_stack_nr > 0 && delta_stack_nr % 2 == 0 &&
+		    obj_offset == delta_stack[delta_stack_nr / 2].obj_offset) {
+			/*
+			 * Normal lookup returned to the same pack
+			 * entry. Find an acyclic path if one exists,
+			 * discard this walk, and replay that path.
+			 */
+			if (find_delta_path(p, &w_curs, root_offset,
+					    &path) == OBJ_BAD)
+				break;
+			delta_stack_nr = 0;
+			curpos = obj_offset = path.entries[0].selected_offset;
+			continue;
 		}
 
 		if (do_check_packed_object_crc && p->index_version > 1) {
@@ -1570,6 +1759,15 @@ void *unpack_entry(struct repository *r, struct packed_git *p, off_t obj_offset,
 			/* bail to phase 2, in hopes of recovery */
 			data = NULL;
 			break;
+		}
+
+		/* Use the base chosen by recovery, not the one from normal lookup. */
+		if (path.nr) {
+			size_t path_pos = (size_t)delta_stack_nr + 1;
+
+			if (path_pos >= path.nr)
+				BUG("alternate delta path ends in a delta");
+			base_offset = path.entries[path_pos].selected_offset;
 		}
 
 		/* push object, proceed to base */
@@ -1712,6 +1910,7 @@ void *unpack_entry(struct repository *r, struct packed_git *p, off_t obj_offset,
 
 out:
 	unuse_pack(&w_curs);
+	free(path.entries);
 
 	if (delta_stack != small_delta_stack)
 		free(delta_stack);

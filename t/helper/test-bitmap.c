@@ -50,6 +50,9 @@ static int add_packed_object(const struct object_id *oid,
 
 	oi.typep = &type;
 
+	if (packlist_find(packed, oid))
+		die("pack contains duplicate object %s", oid_to_hex(oid));
+
 	entry = packlist_alloc(packed, oid);
 	entry->idx.offset = nth_packed_object_offset(pack, pos);
 	if (packed_object_info(NULL, pack, entry->idx.offset, &oi) < 0)
