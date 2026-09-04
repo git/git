@@ -257,9 +257,12 @@ int apply_repository_format(struct repository *repo,
 
 const char *get_template_dir(const char *option_template);
 
-#define INIT_DB_QUIET      (1 << 0)
-#define INIT_DB_EXIST_OK   (1 << 1)
-#define INIT_DB_SKIP_REFDB (1 << 2)
+enum init_db_flags {
+	INIT_DB_QUIET = (1 << 0),
+	INIT_DB_EXIST_OK = (1 << 1),
+	INIT_DB_SKIP_REFDB = (1 << 2),
+	INIT_DB_SKIP_ODB = (1 << 3),
+};
 
 int init_db(struct repository *repo,
 	    const char *git_dir,
@@ -267,13 +270,15 @@ int init_db(struct repository *repo,
 	    const char *worktree,
 	    const char *template_dir, int hash_algo,
 	    enum ref_storage_format ref_storage_format,
-	    const char *initial_branch, int init_shared_repository,
-	    unsigned int flags);
+	    const char *initial_branch,
+	    int init_shared_repository,
+	    enum init_db_flags flags);
 void initialize_repository_version(struct repository *repo,
 				   int hash_algo,
 				   enum ref_storage_format ref_storage_format,
 				   int reinit);
 void create_reference_database(struct repository *repo, const char *initial_branch, int quiet);
+void create_object_database(struct repository *repo, const struct strvec *alternates);
 
 /*
  * NOTE NOTE NOTE!!
