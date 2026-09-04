@@ -386,21 +386,19 @@ NORETURN void you_still_use_that(const char *command_name, const char *hint)
 				 STRBUF_ENCODE_SLASH);
 
 	fprintf(stderr,
-		_("'%s' is nominated for removal.\n"), command_name);
+		_("'%s' will be removed soon.\n"), command_name);
 
 	if (hint)
 		fputs(hint, stderr);
 
 	fprintf(stderr,
-		_("If you still use this command, here's what you can do:\n"
+		_("If you need a replacement:\n"
 		  "\n"
-		  "- read https://git-scm.com/docs/BreakingChanges.html\n"
-		  "- check if anyone has discussed this on the mailing\n"
-		  "  list and if they came up with something that can\n"
-		  "  help you: https://lore.kernel.org/git/?q=%s\n"
-		  "- send an email to <git@vger.kernel.org> to let us\n"
-		  "  know that you still use this command and were unable\n"
-		  "  to determine a suitable replacement\n"
+		  "- Read https://git-scm.com/docs/BreakingChanges.html.\n\n"
+		  "- Check what others on the mailing list suggest as a replacement:\n"
+		  "  https://lore.kernel.org/git/?q=%s\n\n"
+		  "- Send an email to <git@vger.kernel.org> asking for help, only if\n"
+		  "  suggestions by others do not work for you.\n"
 		  "\n"),
 		percent_encoded.buf);
 	strbuf_release(&percent_encoded);
